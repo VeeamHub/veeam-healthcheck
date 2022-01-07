@@ -2,7 +2,10 @@
 // MIT License
 using HC_Reporting.Html;
 using System;
+using System.Diagnostics;
 using System.Windows;
+using System.Windows.Controls;
+using System.Windows.Documents;
 using VeeamHealthCheck;
 using VeeamHealthCheck.DB;
 using VeeamHealthCheck.Logging;
@@ -221,7 +224,7 @@ namespace HC_Reporting
             });
 
         }
-
+        
         private void CheckBox_Checked(object sender, RoutedEventArgs e)
         {
 
@@ -236,5 +239,25 @@ namespace HC_Reporting
         {
             _openExplorer = false;
         }
+
+        private void kbLink_RequestNavigate(object sender, System.Windows.Navigation.RequestNavigateEventArgs e)
+        {
+            //Process.Start(e.Uri.ToString());
+            log.Info("opening kb_link");
+            Application.Current.Dispatcher.Invoke((Action)delegate
+            {
+                WebBrowser w1 = new();
+
+                var p = new Process();
+                p.StartInfo = new ProcessStartInfo(e.Uri.ToString())
+                {
+                    UseShellExecute = true
+                };
+                p.Start();
+            });
+
+            log.Info("opening kb_link..done!");
+        }
+
     }
 }

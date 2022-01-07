@@ -55,7 +55,13 @@ MIT License
         <Button Content="Accept Terms" HorizontalAlignment="Left" Margin="15,345,0,0" VerticalAlignment="Top" Height="25" Width="100" Click="Button_Click"/>
         <Button x:Name="importButton" Content="Import" HorizontalAlignment="Right" Margin="0,345,25,0" VerticalAlignment="Top" Height="25" Width="100" Click="Import" ToolTip="Creates a report based on previously collected data."/>
 
-        <TextBlock Margin="0,-25,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Height="260" Width="Auto"><Run FontWeight="Bold" TextDecorations="Underline" Text="Instructions:"/><LineBreak/><Run/><LineBreak/><Run Text="1. Accept Terms"/><LineBreak/><Run Text="2. Click Run."/><LineBreak/><Run Text="3. When complete, Windows Explorer will open at the output directory. (If enabled, the HTML report will be displayed)"/><LineBreak/><Run Text="4. Review the report as desired."/><LineBreak/><Run Text="5. Capture output from C:\temp\vHC*"/><LineBreak/><Run Text="6. Notify your Veeam SE and/or send them the results for review."/><LineBreak/><Run/><LineBreak/><Run Text="* If opted to remove sensitive data types, only HTML report and log files will have sensitive data removed."/><LineBreak/><Run Text="** Note, in larger environments, this tool can take up to 3 hours to complete."/><LineBreak/><Run/><LineBreak/><Run FontWeight="Bold" TextDecorations="Underline" Text="Options:"/></TextBlock>
+        <TextBlock Margin="0,-25,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Height="260" Width="Auto">
+            <Run FontWeight="Bold" TextDecorations="Underline" Text="Instructions:"/><LineBreak/><Run/>
+            <LineBreak/><Run Text="1. Accept Terms"/><LineBreak/><Run Text="2. Click Run."/><LineBreak/>
+            <Run Text="3. When complete, Windows Explorer will open at the output directory. (If enabled, the HTML report will be displayed)"/><LineBreak/>
+            <Run Text="4. Review the report as desired."/><LineBreak/><Run Text="5. Capture output from C:\temp\vHC*"/><LineBreak/>
+            <Run Text="6. Notify your Veeam SE and/or send them the results for review."/><LineBreak/>
+            <Run/><LineBreak/><Run Text="* If opted to remove "></Run><Hyperlink x:Name="kbLink" RequestNavigate="kbLink_RequestNavigate" NavigateUri="https://www.veeam.com/kb2462">sensitive data types</Hyperlink><Run>, only HTML report and log files will have sensitive data removed."/></Run><LineBreak/><Run Text="** Note, in larger environments, this tool can take up to 3 hours to complete."/><LineBreak/><Run/><LineBreak/><Run FontWeight="Bold" TextDecorations="Underline" Text="Options:"/></TextBlock>
         <CheckBox Content="Show HTML Report upon completion" HorizontalAlignment="Left" 
                   Margin="0,270,0,0" VerticalAlignment="Top" IsThreeState="False"
                   Checked="htmlChecked" 
