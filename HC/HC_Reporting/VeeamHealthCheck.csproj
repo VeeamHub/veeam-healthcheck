@@ -1,0 +1,62 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net5.0-windows</TargetFramework>
+    <UseWPF>true</UseWPF>
+    <Platforms>AnyCPU;x64</Platforms>
+    <PackageIcon></PackageIcon>
+    <PackageIconUrl />
+    <Company>Veeam</Company>
+    <Authors>AdamC</Authors>
+    <ApplicationIcon>Veeam_HealthCheck_228x228.ico</ApplicationIcon>
+    <AssemblyVersion>1.0.0.929</AssemblyVersion>
+    <SignAssembly>true</SignAssembly>
+    <AssemblyOriginatorKeyFile>vhc_keyfile2.pfx</AssemblyOriginatorKeyFile>
+    <DelaySign>false</DelaySign>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <None Remove="RVTools4.1.4.msi" />
+    <None Remove="Tools\Get-VBRConfig - Copy.ps1" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="AngleSharp" Version="0.16.0" />
+    <PackageReference Include="Cake.Powershell" Version="1.0.1" />
+    <PackageReference Include="CsvHelper" Version="27.2.1" />
+    <PackageReference Include="DotNetProjects.WpfToolkit.DataVisualization" Version="6.0.90" />
+    <PackageReference Include="HtmlAgilityPack" Version="1.11.36" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Content Include="Get-VBRConfig.ps1">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Get-VeeamSessionReport.ps1">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
+
+  <ItemGroup>
+    <Reference Include="Logger_core">
+      <HintPath>..\HC\libs\Logger_core.dll</HintPath>
+    </Reference>
+  </ItemGroup>
+
+  <ItemGroup>
+    <Content Include="Tools\RVTools4.1.4.msi">
+      <CopyToOutputDirectory>Never</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Update="SessionReport.xsl">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="Veeam_HealthCheck_228x228.ico">
+      <CopyToOutputDirectory>Never</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+
+</Project>

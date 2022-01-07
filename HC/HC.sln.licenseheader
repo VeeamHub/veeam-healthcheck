@@ -1,0 +1,17 @@
+﻿extensions: designer.cs generated.cs
+extensions: .cs .cpp .h
+// Copyright (c) 2021, Adam Congdon <adam.congdon2@gmail.com>
+// MIT License
+extensions: .aspx .ascx .xaml .xsl
+<%-- 
+Copyright (c) 2021, Adam Congdon <adam.congdon2@gmail.com>
+--%>
+extensions: .vb
+'Sample license text.
+extensions:  .xml .config .xsd
+<!--
+
+-->
+extensions: .txt .ps1
+# Copyright (c) 2021, Adam Congdon <adam.congdon2@gmail.com>
+# MIT License

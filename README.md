@@ -1,20 +1,16 @@
-# VeeamHub Repository Template
+# Veeam Health Check
 
-Here are instructions on how to use this template:
+**This repository contains the .EXE, dependency files, and source code for this utility.**
 
-* Navigate to the [main page of this repository](https://github.com/VeeamHub/veeamhub-template)
-* Follow instructions for [creating a repository from a template](https://help.github.com/en/articles/creating-a-repository-from-a-template)
-  * _Repository names **must** have the prefix:_ **veeam-**
-  * Example: _veeam-repo-name_
-* Replace **all** repository-specific links
-  * `issues` link in _README.md_
-  * `create an issue` link in _README.md_
-  * `opening a new issue` link in _CONTRIBUTING.md_
-* Remove the instructions from this section and replace it with information describing this repository.
+This Windows utility leverages the Veeam Backup & Replication's PowerShell module and native Windows code to query the backup server for various configuration data. After collecting the data and executing calculations, the data is then presented in HTML format for a portable, single-page report with descriptions, notes, and suggestions.
 
 ## 📗 Documentation
 
-_Place documentation or links to documentation here._
+**Author:** Adam Congdon (adam.congdon@veeam.com)
+
+**System Requirements:** Veeam Backup & Replication v11 or later
+
+**Operation:** This tool must be executed on a system where Veeam Backup & Replication is installed. The tool must also be executed with elevated permissions of a Backup Administrator. 
 
 ## ✍ Contributions
 
