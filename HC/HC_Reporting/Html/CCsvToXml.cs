@@ -1151,6 +1151,9 @@ namespace HC_Reporting.Html
             {
                 if (defaults._defaultKeys.ContainsKey(r.KeyName))
                 {
+                    string[] skipKeys = new string[] { "SqlSecuredPassword", "SqlLogin", "SqlServerName", "SqlInstanceName", "SqlDatabaseName", "SqlLockInfo" };
+                    if (skipKeys.Contains(r.KeyName))
+                        continue;
                     defaults._defaultKeys.TryGetValue(r.KeyName, out string setValue);
                     if (setValue != r.Value)
                     {
@@ -1161,6 +1164,15 @@ namespace HC_Reporting.Html
 
                         extElement.Add(xml);
                     }
+                }
+                if (!defaults._defaultKeys.ContainsKey(r.KeyName))
+                {
+                    defaults._defaultKeys.TryGetValue(r.KeyName, out string setValue);
+                    var xml = new XElement("rOpt",
+                        new XElement("key", r.KeyName),
+                        new XElement("value", r.Value)
+                        );
+                    extElement.Add(xml);
                 }
             }
             doc.Save(_testFile);

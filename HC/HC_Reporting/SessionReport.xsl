@@ -578,7 +578,7 @@
 				<div class="hdr">Notes:</div>
 				<br></br>
 				<div class="i2">
-					•	Ensure resource <a href="https://bp.veeam.com/vbr/3_Build_structures/B_Veeam_Components/B_VBR_Server/Backup_Server.html#compute-requirements">sizing</a> of the Backup Server are adequate for the amount of concurrently running jobs that it manages. See <a href="#jobConcurrency">Concurrency Table</a> in this report. Note: if combining other roles or components onto the Backup Server host, resource sizing is additive (e.g., Backup Server + SQL + Proxy + Repository, etc.).
+					•	Ensure resource <a href="https://bp.veeam.com/vbr/3_Build_structures/B_Veeam_Components/B_VBR_Server/Backup_Server.html#compute-requirements">sizing</a> of the Backup Server are adequate for the amount of concurrently running jobs that it manages. See <a href="#jobConcurrency7">Concurrency Table</a> in this report. Note: if combining other roles or components onto the Backup Server host, resource sizing is additive (e.g., Backup Server + SQL + Proxy + Repository, etc.).
 				</div>
 				<div class="i2">
 					•	Ensure resource <a href="https://bp.veeam.com/vbr/2_Design_Structures/D_Veeam_Components/D_VBR_DB/database.html#sizing">sizing</a> of the SQL server are adequate
