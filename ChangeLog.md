@@ -1,6 +1,9 @@
-﻿9.0.0.937
+﻿9.0.0.938
 - fixed out-of-order columns in jobsession reports
 - added GUI link to sensitive data kb
+- added back-port to v10; partially tested
+- fixed issue with registry key detection
+- fixed issue with HTML report links
 
 9.0.0.929
 - fixed issue with missing data when scrub option is enabled
