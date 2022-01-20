@@ -33,7 +33,7 @@ function Get-VeeamSessionReport {
 
     #Load the Veeam PSSnapin
     if (!(Get-PSSnapin -Name VeeamPSSnapIn -ErrorAction SilentlyContinue)) {
-      #Add-PSSnapin -Name VeeamPSSnapIn
+      Add-PSSnapin -Name VeeamPSSnapIn
       Connect-VBRServer -Server $VBRServer
     }
 
