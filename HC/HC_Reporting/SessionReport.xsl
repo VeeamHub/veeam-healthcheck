@@ -78,6 +78,7 @@
 			display: none;
 			overflow: hidden;
 			background-color: #f1f1f1;
+			transition: max-height 0.2s ease-out;
 			}
 			.th{
 			font-color: white;
@@ -85,6 +86,17 @@
 			th{
 			color: white;
 			background-color: #005f4b
+			}
+			.collapsible:after {
+			content: '\02795'; /* Unicode character for "plus" sign (+) */
+			font-size: 13px;
+			color: white;
+			float: right;
+			margin-left: 5px;
+			}
+
+			.active:after {
+			content: "\2796"; /* Unicode character for "minus" sign (-) */
 			}
 
 		</style>
@@ -117,36 +129,53 @@
 
 				<script type="text/javascript">
 					<xsl:text disable-output-escaping="yes" >
-            <![CDATA[
+			<![CDATA[
 var coll = document.getElementsByClassName("collapsible");
-				var i;
+var navLink = document.getElementsByClassName("smoothscroll");
+var i;
 
-				for (i = 0; i < coll.length; i++) {
-    coll[i].addEventListener("click", function () {
-        this.classList.toggle("active");
-        var content = this.nextElementSibling;
-        if (content.style.display === "block") {
-            content.style.display = "none";
-        } else {
-            content.style.display = "block";
-        }
-    });
+for (i = 0; i < coll.length; i++) {
+  coll[i].addEventListener("click", function() {
+    this.classList.toggle("active");
+    var content = this.nextElementSibling;
+    if (content.style.display === "block") {
+      content.style.display = "none";
+    } else {
+      content.style.display = "block";
+    }
+  });
 }
 
 
-        ]]>
-        </xsl:text>
+for (i = 0; i < navLink.length; i++) {
+  navLink[i].addEventListener("click", function() {
+    var link = this.dataset.link;
+    var sectionId = document.getElementById(link);
+
+    var divToOpen = sectionId.querySelector(".collapsible");
+    
+    divToOpen.classList.toggle("active");
+    var content = divToOpen.nextElementSibling;
+    if (content.style.display === "block") {
+      content.style.display = "block";
+    } else {
+      content.style.display = "block";
+    }
+  });
+}
+
+
+
+
+		]]>
+		</xsl:text>
 				</script>
 
 			</body>
 		</html>
 	</xsl:template>
 	<xsl:template name="user.header.content"  match="/root/header">
-
-
-
 		<html>
-
 			<body>
 				<div id="top"></div>
 				<HR/>
@@ -173,7 +202,7 @@ var coll = document.getElementsByClassName("collapsible");
 						<div class="i2">
 							- <b>Note</b> - During mouseover, a tool tip may appear containing explanatory data of the table header or data column.
 						</div>
-						
+
 						<div class="i2">
 							- <b>Note</b> - The tool you ran to generate this report is completely self-contained, does not ‘phone-home’ and was only executed on your Veeam Backup and Replication server. It queries the VBR database, registry, configuration and log files. It does not require access to vCenter or any other infrastructure.
 						</div>
@@ -181,18 +210,20 @@ var coll = document.getElementsByClassName("collapsible");
 				</h1>
 
 				<!--COMMENTING OUT NAVIGATION TEMPORARILY WHILE TESTING THE NEW COLLAPSIBLE LAYOUT-->
-				<!--<h4>
+				<h4>
 					Navigation:<br></br>
 					<table border="0">
 						<tr>
 							<td>
-								<a href="#backupServer">Backup Server</a>
+								<li>
+									<a class="smoothscroll" href="#backupserver" >Backup Server</a>
+								</li>
 							</td>
 							<td>Detailed information on the Backup Server, Configuration DB, roles, and resources.</td>
 						</tr>
 						<tr>
 							<td>
-								<a href="#sobrInfo">SOBR Info</a>
+								<li><a class="smoothscroll" data-link="linksobrInfo" href="#linksobrInfo">SOBR Info</a></li>
 							</td>
 							<td>Summary of SOBRs and config options.</td>
 						</tr>
@@ -275,8 +306,8 @@ var coll = document.getElementsByClassName("collapsible");
 							</td>
 							<td>Detailed breakdown of each job.</td>
 						</tr>
-						-->
-				<!--<tr>
+
+						<!--<tr>
 							<td>
 								<a href="#sessions">
 									Job Session Info
@@ -284,11 +315,10 @@ var coll = document.getElementsByClassName("collapsible");
 							</td>
 							<td>Detailed breakdown of each job session.</td>
 						</tr>-->
-				<!--
+
 					</table>
 
-				</h4>-->
-				<!--<xsl:apply-templates select="/root/extent"></xsl:apply-templates>-->
+				</h4>
 			</body>
 		</html>
 
@@ -298,80 +328,80 @@ var coll = document.getElementsByClassName("collapsible");
 		<h2>
 			<u>License Summary</u>
 		</h2>
-		<button type="button" class="collapsible">Show License Summary</button>
-		<div class="content">
-			<html>
-				<body>
-					<table border="1" style="background: lightgray">
+
+		<html>
+			<body>
+				<table border="1" style="background: lightgray">
+					<tr>
+						<th title="Veeam License Edition">Edition</th>
+						<th title="Veeam Licensing Status">Status</th>
+						<th title="Veeam License Type">Type</th>
+						<th title="Total Licensed Instances">Licensed Inst.</th>
+						<th title="Total Used Instances">Used Inst.</th>
+						<th title="New Instances">New Inst.</th>
+						<th title="Rental Instances">Rental Inst.</th>
+						<th title="Total Licensed Sockets">Licensed Sockets</th>
+						<th title="Total Used Sockets">Used Sockets</th>
+						<th title="Total Licensed NAS">Licensed NAS</th>
+						<th title="Total Used NAS">Used NAS</th>
+						<th title="Veeam License Expiration Date">Exp Date</th>
+						<th title="Veeam Support Expiration Date">Support Exp Date</th>
+						<th title="Is Cloud Connected Enabled?">Cloud Connect Enabled</th>
+					</tr>
+					<xsl:for-each select="licInfo">
 						<tr>
-							<th title="Veeam License Edition">Edition</th>
-							<th title="Veeam Licensing Status">Status</th>
-							<th title="Veeam License Type">Type</th>
-							<th title="Total Licensed Instances">Licensed Inst.</th>
-							<th title="Total Used Instances">Used Inst.</th>
-							<th title="New Instances">New Inst.</th>
-							<th title="Rental Instances">Rental Inst.</th>
-							<th title="Total Licensed Sockets">Licensed Sockets</th>
-							<th title="Total Used Sockets">Used Sockets</th>
-							<th title="Total Licensed NAS">Licensed NAS</th>
-							<th title="Total Used NAS">Used NAS</th>
-							<th title="Veeam License Expiration Date">Exp Date</th>
-							<th title="Veeam Support Expiration Date">Support Exp Date</th>
-							<th title="Is Cloud Connected Enabled?">Cloud Connect Enabled</th>
+							<td title="">
+								<xsl:value-of select="edition"/>
+							</td>
+							<td title="">
+								<xsl:value-of select="status"/>
+							</td>
+							<td title="">
+								<xsl:value-of select="type"/>
+							</td>
+							<td title="" style="text-align:right">
+								<xsl:value-of select="licInst"/>
+							</td>
+							<td title="" style="text-align:right">
+								<xsl:value-of select="usedInst"/>
+							</td>
+							<td title="" style="text-align:right">
+								<xsl:value-of select="newInst"/>
+							</td>
+							<td title="" style="text-align:right">
+								<xsl:value-of select="rentInst"/>
+							</td>
+							<td title="" style="text-align:right">
+								<xsl:value-of select="licSock"/>
+							</td>
+							<td title="" style="text-align:right">
+								<xsl:value-of select="usedSock"/>
+							</td>
+							<td title="" style="text-align:right">
+								<xsl:value-of select="licCap"/>
+							</td>
+							<td title="" style="text-align:right">
+								<xsl:value-of select="usedCap"/>
+							</td>
+							<td title="" style="text-align:right">
+								<xsl:value-of select="expire"/>
+							</td>
+							<td title="" style="text-align:right">
+								<xsl:value-of select="supExp"/>
+							</td>
+							<td title="" style="text-align:right">
+								<xsl:value-of select="cloudconnect"/>
+							</td>
 						</tr>
-						<xsl:for-each select="licInfo">
-							<tr>
-								<td title="">
-									<xsl:value-of select="edition"/>
-								</td>
-								<td title="">
-									<xsl:value-of select="status"/>
-								</td>
-								<td title="">
-									<xsl:value-of select="type"/>
-								</td>
-								<td title="" style="text-align:right">
-									<xsl:value-of select="licInst"/>
-								</td>
-								<td title="" style="text-align:right">
-									<xsl:value-of select="usedInst"/>
-								</td>
-								<td title="" style="text-align:right">
-									<xsl:value-of select="newInst"/>
-								</td>
-								<td title="" style="text-align:right">
-									<xsl:value-of select="rentInst"/>
-								</td>
-								<td title="" style="text-align:right">
-									<xsl:value-of select="licSock"/>
-								</td>
-								<td title="" style="text-align:right">
-									<xsl:value-of select="usedSock"/>
-								</td>
-								<td title="" style="text-align:right">
-									<xsl:value-of select="licCap"/>
-								</td>
-								<td title="" style="text-align:right">
-									<xsl:value-of select="usedCap"/>
-								</td>
-								<td title="" style="text-align:right">
-									<xsl:value-of select="expire"/>
-								</td>
-								<td title="" style="text-align:right">
-									<xsl:value-of select="supExp"/>
-								</td>
-								<td title="" style="text-align:right">
-									<xsl:value-of select="cloudconnect"/>
-								</td>
-							</tr>
-						</xsl:for-each>
-					</table>
-					<h5>
-						<a href="#top">Back To Top</a>
-					</h5>
-				</body>
-			</html>
-		</div>
+					</xsl:for-each>
+				</table>
+
+				<h5>
+					<a href="#top">Back To Top</a>
+				</h5>
+			</body>
+		</html>
+
 	</xsl:template>
 	<xsl:template match="/root/npjobSummary" name="npLoads">
 		<div id="npJobSummary">
@@ -379,7 +409,7 @@ var coll = document.getElementsByClassName("collapsible");
 				<u>Unprotected Workloads</u>
 			</h2>
 		</div>
-		<button type="button" class="collapsible">Show License Summary</button>
+		<button type="button" class="collapsible">Show details on unprotected workloads</button>
 		<div class="content">
 			<br></br>
 			<table border="1" title="Unprotected Workloads">
@@ -410,59 +440,60 @@ var coll = document.getElementsByClassName("collapsible");
 				<u>Security Summary</u>
 			</h2>
 		</div>
-		<button type="button" class="collapsible">Show Security Summary Notes</button>
-		<div class="content">
-			<html>
-				<body>
 
-					<table border="1">
+		<html>
+			<body>
+
+				<table border="1">
+					<tr>
+						<div class ="th">
+							<th title="">Immutability</th>
+							<th title="">Traffic Encryption</th>
+							<th>Backup File Encryption</th>
+							<th>Config Backup Encryption</th>
+						</div>
+					</tr>
+					<xsl:for-each select="secProfile">
 						<tr>
-							<div class ="th">
-								<th title="">Immutability</th>
-								<th title="">Traffic Encryption</th>
-								<th>Backup File Encryption</th>
-								<th>Config Backup Encryption</th>
-							</div>
+							<td title="" style="text-align:right">
+								<xsl:if test="immute='false'">
+									<xsl:attribute name="bgcolor">
+										<xsl:text>orangered</xsl:text>
+
+									</xsl:attribute>
+								</xsl:if>
+								<xsl:value-of select="immute"/>
+							</td>
+							<td title="" style="text-align:right">
+								<xsl:if test="trafficInc='false'">
+									<xsl:attribute name="bgcolor">
+										<xsl:text>orangered</xsl:text>
+									</xsl:attribute>
+								</xsl:if>
+								<xsl:value-of select="trafficEnc"/>
+							</td>
+							<td title="" style="text-align:right">
+								<xsl:if test="backupEnc='false'">
+									<xsl:attribute name="bgcolor">
+										<xsl:text>orangered</xsl:text>
+									</xsl:attribute>
+								</xsl:if>
+								<xsl:value-of select="backupEnc"/>
+							</td>
+							<td title="" style="text-align:right">
+								<xsl:if test="configEnc='false'">
+									<xsl:attribute name="bgcolor">
+										<xsl:text>orangered</xsl:text>
+									</xsl:attribute>
+								</xsl:if>
+								<xsl:value-of select="configEnc"/>
+							</td>
 						</tr>
-						<xsl:for-each select="secProfile">
-							<tr>
-								<td title="" style="text-align:right">
-									<xsl:if test="immute='false'">
-										<xsl:attribute name="bgcolor">
-											<xsl:text>orangered</xsl:text>
+					</xsl:for-each>
+				</table>
 
-										</xsl:attribute>
-									</xsl:if>
-									<xsl:value-of select="immute"/>
-								</td>
-								<td title="" style="text-align:right">
-									<xsl:if test="trafficInc='false'">
-										<xsl:attribute name="bgcolor">
-											<xsl:text>orangered</xsl:text>
-										</xsl:attribute>
-									</xsl:if>
-									<xsl:value-of select="trafficEnc"/>
-								</td>
-								<td title="" style="text-align:right">
-									<xsl:if test="backupEnc='false'">
-										<xsl:attribute name="bgcolor">
-											<xsl:text>orangered</xsl:text>
-										</xsl:attribute>
-									</xsl:if>
-									<xsl:value-of select="backupEnc"/>
-								</td>
-								<td title="" style="text-align:right">
-									<xsl:if test="configEnc='false'">
-										<xsl:attribute name="bgcolor">
-											<xsl:text>orangered</xsl:text>
-										</xsl:attribute>
-									</xsl:if>
-									<xsl:value-of select="configEnc"/>
-								</td>
-							</tr>
-						</xsl:for-each>
-					</table>
-
+				<button type="button" class="collapsible">Show details for security summary.</button>
+				<div class="content">
 					<br></br>
 					<div class="hdr">Summary:</div>
 					<br></br>
@@ -499,12 +530,12 @@ var coll = document.getElementsByClassName("collapsible");
 							<a href="#top">Back To Top</a>
 						</h5>
 					</div>
-				</body>
-			</html>
-		</div>
+				</div>
+			</body>
+		</html>
 
 	</xsl:template>
-	<xsl:template name="table">
+	<!--<xsl:template name="table">
 		<table border="1" title="TEST TABLE">
 			<tr >
 				<th>
@@ -521,130 +552,132 @@ var coll = document.getElementsByClassName("collapsible");
 				</tr>
 			</xsl:for-each>
 		</table>
-	</xsl:template>
+	</xsl:template>-->
 	<xsl:template match="/root/serverSummary">
 		<h2>
 			<u>Detected Infrastructure Types &amp; Count</u>
 		</h2>
-		<button type="button" class="collapsible">Show Infrastructure Summary</button>
-		<div class="content">
-			<html>
-				<body>
 
-					<table border="1">
-						<tr >
-							<th title="">Name</th>
-							<th title="">Count</th>
+		<html>
+			<body>
+
+				<table border="1">
+					<tr >
+						<th title="">Name</th>
+						<th title="">Count</th>
+					</tr>
+					<xsl:for-each select="server">
+						<tr>
+							<td title="Name">
+								<xsl:value-of select="name"/>
+							</td>
+							<td title="Total Detected Count" style="text-align:right">
+								<xsl:value-of select="count"/>
+							</td>
 						</tr>
-						<xsl:for-each select="server">
-							<tr>
-								<td title="Name">
-									<xsl:value-of select="name"/>
-								</td>
-								<td title="Total Detected Count" style="text-align:right">
-									<xsl:value-of select="count"/>
-								</td>
-							</tr>
-						</xsl:for-each>
-					</table>
+					</xsl:for-each>
+				</table>
+				<button type="button" class="collapsible">Show details for detected infrastructure types &amp; counts</button>
+				<div class="content">
 					<div class="hdr">Summary:</div>
 					<br></br>
 					<div class="i2">This table summarizes the different types and counts of infrastructure items that are manually added into the Veeam configuration by the user. </div>
-					<br></br>
+					<!--<br></br>
 					<div class="hdr">Notes:</div>
 					<br></br>
 					<div class="i2">
 						•
-					</div>
+					</div>-->
 					<h5>
 						<a href="#top">Back To Top</a>
 					</h5>
-				</body>
-			</html>
-		</div>
+				</div>
+			</body>
+		</html>
 	</xsl:template>
 	<xsl:template match="/root/backupServer">
-		<div id="backupServer">
+		<div id="backupserver">
 			<h2>
 				<u>Backup Server &amp; Config DB Info</u>
 			</h2>
 		</div>
-		<button type="button" class="collapsible">Show License Summary</button>
-		<div class="content">
-			<html>
-				<body>
-					<table border="1">
-						<tr >
-							<th>Name</th>
-							<th>Veeam Version</th>
-							<th>Cores</th>
-							<th>RAM</th>
-							<th>Config Backup Enabled</th>
-							<th>Config Backup Encryption</th>
-							<th>Config Backup Target</th>
-							<th>Local SQL</th>
-							<th>SQL Server Name</th>
-							<th>SQL Version</th>
-							<th>SQL Edition</th>
-							<th>SQL Cores</th>
-							<th>SQL RAM</th>
-							<th>Proxy Role</th>
-							<th>Repo/Gateway</th>
-							<th>WAN Acc.</th>
+
+		<html>
+			<body>
+				<table border="1">
+					<tr >
+						<th>Name</th>
+						<th>Veeam Version</th>
+						<th>Cores</th>
+						<th>RAM</th>
+						<th>Config Backup Enabled</th>
+						<th>Config Backup Encryption</th>
+						<th>Config Backup Target</th>
+						<th>Local SQL</th>
+						<th>SQL Server Name</th>
+						<th>SQL Version</th>
+						<th>SQL Edition</th>
+						<th>SQL Cores</th>
+						<th>SQL RAM</th>
+						<th>Proxy Role</th>
+						<th>Repo/Gateway</th>
+						<th>WAN Acc.</th>
+					</tr>
+					<xsl:for-each select="serverInfo">
+						<tr>
+							<td>
+								<xsl:value-of select="name"/>
+							</td>
+							<td style="text-align:right">
+								<xsl:value-of select="veeamVersion"/>
+							</td>
+							<td style="text-align:right">
+								<xsl:value-of select="cores"/>
+							</td>
+							<td style="text-align:right">
+								<xsl:value-of select="ram"/>
+							</td>
+							<td>
+								<xsl:value-of select="configBackupEnabled"/>
+							</td>
+							<td>
+								<xsl:value-of select="configBackupEncryption"/>
+							</td>
+							<td>
+								<xsl:value-of select="configBackupTarget"/>
+							</td>
+							<td style="text-align:left">
+								<xsl:value-of select="localSql"/>
+							</td>
+							<td>
+								<xsl:value-of select="sqlname"/>
+							</td>
+							<td>
+								<xsl:value-of select="sqlversion"/>
+							</td>
+							<td>
+								<xsl:value-of select="sqledition"/>
+							</td>
+							<td style="text-align:right">
+								<xsl:value-of select="sqlcpu"/>
+							</td>
+							<td style="text-align:right">
+								<xsl:value-of select="sqlram"/>
+							</td>
+							<td style="text-align:right">
+								<xsl:value-of select="proxyrole"/>
+							</td>
+							<td style="text-align:right">
+								<xsl:value-of select="repo"/>
+							</td>
+							<td style="text-align:right">
+								<xsl:value-of select="wanacc"/>
+							</td>
 						</tr>
-						<xsl:for-each select="serverInfo">
-							<tr>
-								<td>
-									<xsl:value-of select="name"/>
-								</td>
-								<td style="text-align:right">
-									<xsl:value-of select="veeamVersion"/>
-								</td>
-								<td style="text-align:right">
-									<xsl:value-of select="cores"/>
-								</td>
-								<td style="text-align:right">
-									<xsl:value-of select="ram"/>
-								</td>
-								<td>
-									<xsl:value-of select="configBackupEnabled"/>
-								</td>
-								<td>
-									<xsl:value-of select="configBackupEncryption"/>
-								</td>
-								<td>
-									<xsl:value-of select="configBackupTarget"/>
-								</td>
-								<td style="text-align:left">
-									<xsl:value-of select="localSql"/>
-								</td>
-								<td>
-									<xsl:value-of select="sqlname"/>
-								</td>
-								<td>
-									<xsl:value-of select="sqlversion"/>
-								</td>
-								<td>
-									<xsl:value-of select="sqledition"/>
-								</td>
-								<td style="text-align:right">
-									<xsl:value-of select="sqlcpu"/>
-								</td>
-								<td style="text-align:right">
-									<xsl:value-of select="sqlram"/>
-								</td>
-								<td style="text-align:right">
-									<xsl:value-of select="proxyrole"/>
-								</td>
-								<td style="text-align:right">
-									<xsl:value-of select="repo"/>
-								</td>
-								<td style="text-align:right">
-									<xsl:value-of select="wanacc"/>
-								</td>
-							</tr>
-						</xsl:for-each>
-					</table>
+					</xsl:for-each>
+				</table>
+				<button type="button" class="collapsible">Show backup server summary and notes.</button>
+				<div class="content">
 					<br></br>
 					<div class="hdr">Summary:</div>
 					<br></br>
@@ -678,17 +711,16 @@ var coll = document.getElementsByClassName("collapsible");
 					<h5>
 						<a href="#top">Back To Top</a>
 					</h5>
-				</body>
-			</html>
-		</div>
+				</div>
+			</body>
+		</html>
 	</xsl:template>
 
 	<xsl:template match="/root/sobrs">
-		<div id="sobrInfo">
+		<div id="linksobrInfo">
 			<h2>
 				<u>SOBR Details</u>
 			</h2>
-		</div>
 		<button type="button" class="collapsible">Show SOBR Details</button>
 
 		<div class="content">
@@ -803,6 +835,7 @@ var coll = document.getElementsByClassName("collapsible");
 					</h5>
 				</body>
 			</html>
+		</div>
 		</div>
 
 	</xsl:template>
@@ -1343,29 +1376,30 @@ var coll = document.getElementsByClassName("collapsible");
 				<u>Job Summary</u>
 			</h2>
 		</div>
-		<button type="button" class="collapsible">Show Job Summary</button>
-		<div class="content">
-			<html>
-				<body>
 
-					<!--Summary of servers manually added into Veeam<br></br>-->
-					<xsl:value-of select="info"/>
-					<table border="1" title="JobSummary">
-						<tr >
-							<th title="">Type</th>
-							<th title="" style="text-align:left">Total</th>
+		<html>
+			<body>
+
+				<!--Summary of servers manually added into Veeam<br></br>-->
+				<xsl:value-of select="info"/>
+				<table border="1" title="JobSummary">
+					<tr >
+						<th title="">Type</th>
+						<th title="" style="text-align:left">Total</th>
+					</tr>
+					<xsl:for-each select="summary">
+						<tr>
+							<td title="" style="text-align:right">
+								<xsl:value-of select="type"/>
+							</td>
+							<td title="" style="text-align:right">
+								<xsl:value-of select="typeCount"/>
+							</td>
 						</tr>
-						<xsl:for-each select="summary">
-							<tr>
-								<td title="" style="text-align:right">
-									<xsl:value-of select="type"/>
-								</td>
-								<td title="" style="text-align:right">
-									<xsl:value-of select="typeCount"/>
-								</td>
-							</tr>
-						</xsl:for-each>
-					</table>
+					</xsl:for-each>
+				</table>
+				<button type="button" class="collapsible">Show Job Summary Notes</button>
+				<div class="content">
 					<br></br>
 
 					<br></br>
@@ -1381,9 +1415,9 @@ var coll = document.getElementsByClassName("collapsible");
 					<h5>
 						<a href="#top">Back To Top</a>
 					</h5>
-				</body>
-			</html>
-		</div>
+				</div>
+			</body>
+		</html>
 	</xsl:template>
 	<xsl:template match="/root/concurrencyChart_job7">
 		<div id="jobConcurrency7">
