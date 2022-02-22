@@ -98,6 +98,13 @@
 			.active:after {
 			content: "\2796"; /* Unicode character for "minus" sign (-) */
 			}
+			.btn{
+			color: white;
+			background-color: #1d6b5b
+			}
+			.btn:hover{
+			background-color: #54b948
+			}
 
 		</style>
 		<html>
@@ -106,18 +113,21 @@
 				<xsl:apply-templates select="/root/header"></xsl:apply-templates>
 			</head>
 			<body>
-				<xsl:apply-templates select="/root/secSummary"></xsl:apply-templates>
-				<xsl:apply-templates select="/root/npjobSummary"></xsl:apply-templates>
-				<xsl:apply-templates select="/root/jobSummary"></xsl:apply-templates>
+				<!--EXPANDED-->
 				<xsl:apply-templates select="/root/license"></xsl:apply-templates>
 				<xsl:apply-templates select="/root/backupServer"></xsl:apply-templates>
+				<xsl:apply-templates select="/root/secSummary"></xsl:apply-templates>
+				<xsl:apply-templates select="/root/serverSummary"></xsl:apply-templates>
+				<xsl:apply-templates select="/root/jobSummary"></xsl:apply-templates>
+
+				<!--NOT-EXPANDED-->
+				<xsl:apply-templates select="/root/npjobSummary"></xsl:apply-templates>
+				<xsl:apply-templates select="/root/servers"></xsl:apply-templates>
 				<xsl:apply-templates select="/root/regOptions"></xsl:apply-templates>
+				<xsl:apply-templates select="/root/proxies"></xsl:apply-templates>
 				<xsl:apply-templates select="/root/sobrs"></xsl:apply-templates>
 				<xsl:apply-templates select="/root/extent"></xsl:apply-templates>
 				<xsl:apply-templates select="/root/repositories"></xsl:apply-templates>
-				<xsl:apply-templates select="/root/proxies"></xsl:apply-templates>
-				<xsl:apply-templates select="/root/serverSummary"></xsl:apply-templates>
-				<xsl:apply-templates select="/root/servers"></xsl:apply-templates>
 				<xsl:apply-templates select="/root/concurrencyChart_job7"></xsl:apply-templates>
 				<xsl:apply-templates select="/root/concurrencyChart_task7"></xsl:apply-templates>
 				<xsl:apply-templates select="/root/jobSessionsSummary"></xsl:apply-templates>
@@ -130,40 +140,61 @@
 				<script type="text/javascript">
 					<xsl:text disable-output-escaping="yes" >
 			<![CDATA[
+
+
+
+
 var coll = document.getElementsByClassName("collapsible");
 var navLink = document.getElementsByClassName("smoothscroll");
 var i;
 
 for (i = 0; i < coll.length; i++) {
   coll[i].addEventListener("click", function() {
-    this.classList.toggle("active");
-    var content = this.nextElementSibling;
-    if (content.style.display === "block") {
-      content.style.display = "none";
-    } else {
-      content.style.display = "block";
-    }
+	this.classList.toggle("active");
+	var content = this.nextElementSibling;
+	if (content.style.display === "block") {
+	  content.style.display = "none";
+	} else {
+	  content.style.display = "block";
+	}
   });
 }
 
 
 for (i = 0; i < navLink.length; i++) {
   navLink[i].addEventListener("click", function() {
-    var link = this.dataset.link;
-    var sectionId = document.getElementById(link);
+	var link = this.dataset.link;
+	var sectionId = document.getElementById(link);
 
-    var divToOpen = sectionId.querySelector(".collapsible");
-    
-    divToOpen.classList.toggle("active");
-    var content = divToOpen.nextElementSibling;
-    if (content.style.display === "block") {
-      content.style.display = "block";
-    } else {
-      content.style.display = "block";
-    }
+	var divToOpen = sectionId.querySelector(".collapsible");
+	
+	divToOpen.classList.toggle("active");
+	var content = divToOpen.nextElementSibling;
+	if (content.style.display === "block") {
+	  content.style.display = "block";
+	} else {
+	  content.style.display = "block";
+	}
   });
 }
 
+
+function test(){
+    var co = document.getElementsByClassName("collapsible");
+    var divs = document.querySelectorAll(".collapsible");
+    
+    divs.forEach(d => {
+        d.classList.toggle("active");
+        var content = d.nextElementSibling;
+        if(content.style.display === "block"){
+            content.style.display = "none";
+        } else{
+            content.style.display = "block";
+        }
+    });
+//alert("The function 'test' is executed");
+
+}
 
 
 
@@ -210,8 +241,12 @@ for (i = 0; i < navLink.length; i++) {
 				</h1>
 
 				<!--COMMENTING OUT NAVIGATION TEMPORARILY WHILE TESTING THE NEW COLLAPSIBLE LAYOUT-->
+
 				<h4>
 					Navigation:<br></br>
+					<button type="button" class="btn" onclick="test()">
+						Collapse/Expand All
+					</button>
 					<table border="0">
 						<tr>
 							<td>
@@ -223,21 +258,25 @@ for (i = 0; i < navLink.length; i++) {
 						</tr>
 						<tr>
 							<td>
-								<li><a class="smoothscroll" data-link="linksobrInfo" href="#linksobrInfo">SOBR Info</a></li>
+								<li>
+									<a class="smoothscroll" data-link="linksobrInfo" href="#linksobrInfo">SOBR Info</a>
+								</li>
 							</td>
 							<td>Summary of SOBRs and config options.</td>
 						</tr>
 						<tr>
 							<td>
-								<a href="#sobrExt">SOBR Extent Info</a>
+								<li>
+									<a class="smoothscroll" data-link="linksobrExt" href="#linksobrExt">SOBR Extent Info</a>
+								</li>
 							</td>
 							<td>Details on SOBR Extents, resources, and config</td>
 						</tr>
 						<tr>
 							<td>
-								<a href="#repo">
-									Repository Info
-								</a>
+								<li>
+									<a class="smoothscroll" data-link="linkrepo" href="#linkrepo">Repository Info</a>
+								</li>
 							</td>
 							<td>
 								Details on non-SOBR repositories, resources, and config.
@@ -245,9 +284,9 @@ for (i = 0; i < navLink.length; i++) {
 						</tr>
 						<tr>
 							<td>
-								<a href="#proxy">
-									Proxy Info
-								</a>
+								<li>
+									<a class="smoothscroll" data-link="linkproxy" href="#linkproxy">Proxy Info</a>
+								</li>
 							</td>
 							<td>
 								Details on proxy resources and config.
@@ -255,9 +294,9 @@ for (i = 0; i < navLink.length; i++) {
 						</tr>
 						<tr>
 							<td>
-								<a href="#serverList">
-									Server Info
-								</a>
+								<li>
+									<a class="smoothscroll" data-link="linkserverList" href="#linkserverList">Server Info</a>
+								</li>
 							</td>
 							<td>
 								List of all servers added into the Backup Console.
@@ -265,9 +304,9 @@ for (i = 0; i < navLink.length; i++) {
 						</tr>
 						<tr>
 							<td>
-								<a href="#jobSummary">
-									Job Summary
-								</a>
+								<li>
+									<a class="smoothscroll" data-link="linkjobSummary" href="#linkjobSummary">Job Summary</a>
+								</li>
 							</td>
 							<td>
 								Summary of found jobs by type and count.
@@ -275,34 +314,46 @@ for (i = 0; i < navLink.length; i++) {
 						</tr>
 						<tr>
 							<td>
-								<a href="#jobConcurrency7">
-									Job Concurrency
-								</a>
+								<li>
+									<a class="smoothscroll" data-link="linkjobConcurrency7" href="#linkjobConcurrency7">Job Concurrency</a>
+								</li>
 							</td>
 							<td>
-								Heatmap showing max concurrency found per hour.
+								Heatmap showing max job concurrency found per hour.
 							</td>
 						</tr>
 						<tr>
 							<td>
-								<a href="#regkeys">Non-Default Registry Keys</a>
+								<li>
+									<a class="smoothscroll" data-link="linktaskConcurrency7" href="#linktaskConcurrency7">VM Concurrency</a>
+								</li>
+							</td>
+							<td>
+								Heatmap showing max VM concurrency found per hour.
+							</td>
+						</tr>
+						<tr>
+							<td>
+								<li>
+									<a class="smoothscroll" data-link="linkregkeys" href="#linkregkeys">Non-Default Registry Keys</a>
+								</li>
 							</td>
 							<td>Shows any registry values differing from a vanilla install.</td>
 
 						</tr>
 						<tr>
 							<td>
-								<a href="#t">
-									Job Session Summary
-								</a>
+								<li>
+									<a class="smoothscroll" data-link="linkt" href="#linkt">Job Session Summary</a>
+								</li>
 							</td>
 							<td>Summary of job sessions by job name, item count, and min/max/avg time.</td>
 						</tr>
 						<tr>
 							<td>
-								<a href="#jobs">
-									Job Info
-								</a>
+								<li>
+									<a class="smoothscroll" data-link="linkjobs" href="#linkjobs">Job Info</a>
+								</li>
 							</td>
 							<td>Detailed breakdown of each job.</td>
 						</tr>
@@ -406,10 +457,10 @@ for (i = 0; i < navLink.length; i++) {
 	<xsl:template match="/root/npjobSummary" name="npLoads">
 		<div id="npJobSummary">
 			<h2>
-				<u>Unprotected Workloads</u>
+				<u>Missing Job Types</u>
 			</h2>
 		</div>
-		<button type="button" class="collapsible">Show details on unprotected workloads</button>
+		<button type="button" class="collapsible">Show details on missing job types</button>
 		<div class="content">
 			<br></br>
 			<table border="1" title="Unprotected Workloads">
@@ -721,657 +772,657 @@ for (i = 0; i < navLink.length; i++) {
 			<h2>
 				<u>SOBR Details</u>
 			</h2>
-		<button type="button" class="collapsible">Show SOBR Details</button>
+			<button type="button" class="collapsible">Show SOBR Details</button>
 
-		<div class="content">
-			<html>
-				<body>
-					<!--<h3>
+			<div class="content">
+				<html>
+					<body>
+						<!--<h3>
 						SOBR Details
 					</h3>-->
-					<table border="1">
-						<tr >
-							<th title="SOBR Name">Name</th>
-							<th title="Extent Count">Extents</th>
-							<th title="Total jobs pointing to the SOBR">JobCount</th>
-							<th title="Data policy">Policy</th>
-							<th title="Is Capacity Tier enabled?">Capacity Tier</th>
-							<th title="If Capacity Tier, is Copy Mode enabled?">Copy</th>
-							<th title="If Capacity Tier, is Move Mode enabled?">Move</th>
-							<th title="Is Archive Tier enabled?">Archive Tier</th>
-							<th title="Does the SOBR use Per-Machine backup files?">Per-Machine</th>
-							<th title="CapTier Type">CapTier Type</th>
-							<th title="Immutable">Immutable</th>
-							<th title="Immutable Period">Immutable Period</th>
-							<th title="Size Limit Enabled">Size Limit Enabled</th>
-							<th title="Size Limit">Size Limit</th>
-							<!--<th title="Are Plugin Backups offloaded?">Plugin Backups Offload</th>
+						<table border="1">
+							<tr >
+								<th title="SOBR Name">Name</th>
+								<th title="Extent Count">Extents</th>
+								<th title="Total jobs pointing to the SOBR">JobCount</th>
+								<th title="Data policy">Policy</th>
+								<th title="Is Capacity Tier enabled?">Capacity Tier</th>
+								<th title="If Capacity Tier, is Copy Mode enabled?">Copy</th>
+								<th title="If Capacity Tier, is Move Mode enabled?">Move</th>
+								<th title="Is Archive Tier enabled?">Archive Tier</th>
+								<th title="Does the SOBR use Per-Machine backup files?">Per-Machine</th>
+								<th title="CapTier Type">CapTier Type</th>
+								<th title="Immutable">Immutable</th>
+								<th title="Immutable Period">Immutable Period</th>
+								<th title="Size Limit Enabled">Size Limit Enabled</th>
+								<th title="Size Limit">Size Limit</th>
+								<!--<th title="Are Plugin Backups offloaded?">Plugin Backups Offload</th>
 						<th title="">Copy All Machine Backups</th>-->
-							<!--<th title="">Cost Optimized</th>-->
-						</tr>
-						<xsl:for-each select="sobr">
-							<tr>
-								<td title="Name">
-									<xsl:value-of select="name"/>
-								</td>
-								<td title="Extent Count" style="text-align:right">
-									<xsl:value-of select="extentCount"/>
-								</td>
-								<td title="Job Count" style="text-align:right">
-									<xsl:value-of select="jobcount"/>
-								</td>
-								<td title="Policy" style="text-align:right">
-									<xsl:value-of select="policy"/>
-								</td>
-								<td title="Capacity Tier enabled?" style="text-align:right">
-									<xsl:value-of select="captier"/>
-								</td>
+								<!--<th title="">Cost Optimized</th>-->
+							</tr>
+							<xsl:for-each select="sobr">
+								<tr>
+									<td title="Name">
+										<xsl:value-of select="name"/>
+									</td>
+									<td title="Extent Count" style="text-align:right">
+										<xsl:value-of select="extentCount"/>
+									</td>
+									<td title="Job Count" style="text-align:right">
+										<xsl:value-of select="jobcount"/>
+									</td>
+									<td title="Policy" style="text-align:right">
+										<xsl:value-of select="policy"/>
+									</td>
+									<td title="Capacity Tier enabled?" style="text-align:right">
+										<xsl:value-of select="captier"/>
+									</td>
 
-								<td title="Copy Mode enabled?" style="text-align:right">
-									<xsl:value-of select="copy"/>
-								</td>
-								<td title="Move Mode enabled?" style="text-align:right">
-									<xsl:value-of select="move"/>
-								</td>
-								<td title="Archive Tier enabled?" style="text-align:right">
-									<xsl:value-of select="archiveenabled"/>
-								</td>
-								<td title="Per-VM" style="text-align:right">
-									<xsl:value-of select="pervm"/>
-								</td>
-								<td title="" style="text-align:right">
-									<xsl:value-of select="captiertype"/>
-								</td>
-								<td title="" style="text-align:right">
-									<xsl:value-of select="immuteEnabled"/>
-								</td>
-								<td title="" style="text-align:right">
-									<xsl:value-of select="immutePeriod"/>
-								</td>
-								<td title="" style="text-align:right">
-									<xsl:value-of select="sizeLimitEnabled"/>
-								</td>
-								<td title="" style="text-align:right">
-									<xsl:value-of select="sizeLimit"/>
-								</td>
-								<!--<td title="Plugin Offload" style="text-align:right">
+									<td title="Copy Mode enabled?" style="text-align:right">
+										<xsl:value-of select="copy"/>
+									</td>
+									<td title="Move Mode enabled?" style="text-align:right">
+										<xsl:value-of select="move"/>
+									</td>
+									<td title="Archive Tier enabled?" style="text-align:right">
+										<xsl:value-of select="archiveenabled"/>
+									</td>
+									<td title="Per-VM" style="text-align:right">
+										<xsl:value-of select="pervm"/>
+									</td>
+									<td title="" style="text-align:right">
+										<xsl:value-of select="captiertype"/>
+									</td>
+									<td title="" style="text-align:right">
+										<xsl:value-of select="immuteEnabled"/>
+									</td>
+									<td title="" style="text-align:right">
+										<xsl:value-of select="immutePeriod"/>
+									</td>
+									<td title="" style="text-align:right">
+										<xsl:value-of select="sizeLimitEnabled"/>
+									</td>
+									<td title="" style="text-align:right">
+										<xsl:value-of select="sizeLimit"/>
+									</td>
+									<!--<td title="Plugin Offload" style="text-align:right">
 								<xsl:value-of select="plugin"/>
 							</td>
 							<td title="" style="text-align:right">
 								<xsl:value-of select="copyallmachine"/>
 							</td>-->
-								<!--<td title="" style="text-align:right">
+									<!--<td title="" style="text-align:right">
 				<xsl:value-of select="costoptimized"/>
 			  </td>-->
-							</tr>
-						</xsl:for-each>
-					</table>
-					<br></br>
-					<div class="hdr">Role Summary:</div>
-					<div class="i2">o	A scale-out backup repository ("SOBR") is a single logical repository namespace that consists of one or more underlying backup repositories, or "extents", enabling horizontal scaling across multiple tiers. Data lands on the SOBR's local Performance tier(s), which can be extended with object storage tiers for long-term and archive storage: capacity tier and archive tier.</div>
-					<div class="i3">•	SOBR can include multiple types of underlying extents, including: Window, Linux, NFS, SMB, Deduplication Appliances, and Object Storage</div>
-					<div class="hdr">Notes:</div>
-					<div class="i2">•	How many extents are in use? A large number of underlying extents can potentially lead to metadata management challenges and performance degradation. Discuss with your Veeam Engineer whether your extent count is satisfactory.</div>
-					<div class="i2">
-						•	Is the "Performance" <a href="https://helpcenter.veeam.com/docs/backup/vsphere/backup_repository_sobr_placement.html?ver=110">Placement Policy</a> in use? If so, consider whether there was a specific reason or use case? "Data Locality" Placement Policy is more often the ideal policy for most deployments and use cases.
-					</div>
-					<div class="i2">
-						•	If using ReFS or XFS <a href="https://helpcenter.veeam.com/docs/backup/vsphere/backup_repository_block_cloning.html?ver=110">block cloning</a>, the "Data Locality" placement policy is required in order to leverage block cloning ("Fast clone") functionality.
-					</div>
-					<div class="i2">
-						•	Is a <a href="https://helpcenter.veeam.com/docs/backup/hyperv/compatible_repository_account.html?ver=110"> gateway server in use for capacity tier copy/offload</a>? Ensure that the gateway server has adequate resources to act as the funnel for all backups sent to this object storage repository.
-					</div>
-					<div class="i2">
-						•	The "<a href="https://helpcenter.veeam.com/docs/backup/hyperv/sobr_add_extents.html?ver=110">Perform full backup when the required extent is offline</a>" option (configured in the VBR console) should be considered carefully. It ensures that backups occur when the expected extent is offline, but with the trade off of additional space consumed for additional Active Full(s), and possible loss of storage efficiencies from volume-based block sharing technologies such as ReFS &amp; XFS.
-					</div>
-					<div class="i2">
-						•	Is "<a href="https://helpcenter.veeam.com/docs/backup/vsphere/per_vm_backup_files.html?ver=110">Per-Machine</a>" false? If so, consider whether there was a specific reason or use case for disabling it? Enabling this is the ideal policy for most deployments and use cases. Consult with your Veeam Engineer.
-					</div>
-					<div class="i2">
-						•	Is Infrequent Access storage tier used in conjunction with Veeam copy mode or Immutability on object storage? There are <a href="https://forums.veeam.com/object-storage-f52/aws-s3-how-to-reduce-the-number-of-api-calls-t68858.html#p382566">additional API calls associated with these processes</a> that should be considered when budgeting access costs.
-					</div>
-					<h5>
-						<a href="#top">Back To Top</a>
-					</h5>
-				</body>
-			</html>
-		</div>
+								</tr>
+							</xsl:for-each>
+						</table>
+						<br></br>
+						<div class="hdr">Role Summary:</div>
+						<div class="i2">o	A scale-out backup repository ("SOBR") is a single logical repository namespace that consists of one or more underlying backup repositories, or "extents", enabling horizontal scaling across multiple tiers. Data lands on the SOBR's local Performance tier(s), which can be extended with object storage tiers for long-term and archive storage: capacity tier and archive tier.</div>
+						<div class="i3">•	SOBR can include multiple types of underlying extents, including: Window, Linux, NFS, SMB, Deduplication Appliances, and Object Storage</div>
+						<div class="hdr">Notes:</div>
+						<div class="i2">•	How many extents are in use? A large number of underlying extents can potentially lead to metadata management challenges and performance degradation. Discuss with your Veeam Engineer whether your extent count is satisfactory.</div>
+						<div class="i2">
+							•	Is the "Performance" <a href="https://helpcenter.veeam.com/docs/backup/vsphere/backup_repository_sobr_placement.html?ver=110">Placement Policy</a> in use? If so, consider whether there was a specific reason or use case? "Data Locality" Placement Policy is more often the ideal policy for most deployments and use cases.
+						</div>
+						<div class="i2">
+							•	If using ReFS or XFS <a href="https://helpcenter.veeam.com/docs/backup/vsphere/backup_repository_block_cloning.html?ver=110">block cloning</a>, the "Data Locality" placement policy is required in order to leverage block cloning ("Fast clone") functionality.
+						</div>
+						<div class="i2">
+							•	Is a <a href="https://helpcenter.veeam.com/docs/backup/hyperv/compatible_repository_account.html?ver=110"> gateway server in use for capacity tier copy/offload</a>? Ensure that the gateway server has adequate resources to act as the funnel for all backups sent to this object storage repository.
+						</div>
+						<div class="i2">
+							•	The "<a href="https://helpcenter.veeam.com/docs/backup/hyperv/sobr_add_extents.html?ver=110">Perform full backup when the required extent is offline</a>" option (configured in the VBR console) should be considered carefully. It ensures that backups occur when the expected extent is offline, but with the trade off of additional space consumed for additional Active Full(s), and possible loss of storage efficiencies from volume-based block sharing technologies such as ReFS &amp; XFS.
+						</div>
+						<div class="i2">
+							•	Is "<a href="https://helpcenter.veeam.com/docs/backup/vsphere/per_vm_backup_files.html?ver=110">Per-Machine</a>" false? If so, consider whether there was a specific reason or use case for disabling it? Enabling this is the ideal policy for most deployments and use cases. Consult with your Veeam Engineer.
+						</div>
+						<div class="i2">
+							•	Is Infrequent Access storage tier used in conjunction with Veeam copy mode or Immutability on object storage? There are <a href="https://forums.veeam.com/object-storage-f52/aws-s3-how-to-reduce-the-number-of-api-calls-t68858.html#p382566">additional API calls associated with these processes</a> that should be considered when budgeting access costs.
+						</div>
+						<h5>
+							<a href="#top">Back To Top</a>
+						</h5>
+					</body>
+				</html>
+			</div>
 		</div>
 
 	</xsl:template>
 	<xsl:template match="extent">
-		<div id="sobrExt">
+		<div id="linksobrExt">
 			<h2>
 				<u>SOBR Extent Details</u>
 			</h2>
-		</div>
-		<button type="button" class="collapsible">Show SOBR Extent Details</button>
-		<div class="content">
-			<html>
-				<body>
-					<!--<h3>SOBR Extent Details</h3>-->
-					<table border="1">
-						<tr >
-							<th title="Repository Name" style="text-align:left">Name</th>
-							<th title="SOBR Name" style="text-align:left">SOBR</th>
-							<th title="Tasks set for repository" style="text-align:left">Set Tasks</th>
-							<th title="CPU Cores detected" style="text-align:left">Cores</th>
-							<th title="Installed RAM detected" style="text-align:left">RAM(GB)</th>
-							<th title="Does the repository use Automatic Gateway or dedicated?" style="text-align:left">AutoGateway</th>
-							<th title="Host/Gateway Assigned if not Automatic Gateway" style="text-align:left">Host</th>
-							<th title="Repository Path" style="text-align:left">Path</th>
-							<th title="Detected Free Space based on last cached scan" style="text-align:left">FreeSpace(TB)</th>
-							<th title="Detected Capacity of repository" style="text-align:left">TotalSpace(TB)</th>
-							<th title="Calculated free space based on free space divided by total space" style="text-align:left">FreeSpace %</th>
-							<!--<th title="Does repository use Per-VM files?" styel="text-aligh:left">Per-VM</th>-->
-							<th title="Does repository decompress data before writing to storage?" style="text-align:left">DeCompress</th>
-							<th title="Does the repository align data blocks?" style="text-align:left">AlignBlocks</th>
-							<th title="Does repository use Rotated Drives" style="text-align:left">Rotated Drives</th>
-							<th title="Does repository use Immutability?" style="text-align:left">Use Immutability</th>
-							<th title="Repository Type" style="text-align:left">Type</th>
-						</tr>
-						<xsl:for-each select="repository">
-							<tr>
-								<td title="Name">
-									<xsl:value-of select="Name"/>
-								</td>
-								<td title="SOBR">
-									<xsl:value-of select="sobr"/>
-								</td>
+			<button type="button" class="collapsible">Show SOBR Extent Details</button>
+			<div class="content">
+				<html>
+					<body>
+						<!--<h3>SOBR Extent Details</h3>-->
+						<table border="1">
+							<tr >
+								<th title="Repository Name" style="text-align:left">Name</th>
+								<th title="SOBR Name" style="text-align:left">SOBR</th>
+								<th title="Tasks set for repository" style="text-align:left">Set Tasks</th>
+								<th title="CPU Cores detected" style="text-align:left">Cores</th>
+								<th title="Installed RAM detected" style="text-align:left">RAM(GB)</th>
+								<th title="Does the repository use Automatic Gateway or dedicated?" style="text-align:left">AutoGateway</th>
+								<th title="Host/Gateway Assigned if not Automatic Gateway" style="text-align:left">Host</th>
+								<th title="Repository Path" style="text-align:left">Path</th>
+								<th title="Detected Free Space based on last cached scan" style="text-align:left">FreeSpace(TB)</th>
+								<th title="Detected Capacity of repository" style="text-align:left">TotalSpace(TB)</th>
+								<th title="Calculated free space based on free space divided by total space" style="text-align:left">FreeSpace %</th>
+								<!--<th title="Does repository use Per-VM files?" styel="text-aligh:left">Per-VM</th>-->
+								<th title="Does repository decompress data before writing to storage?" style="text-align:left">DeCompress</th>
+								<th title="Does the repository align data blocks?" style="text-align:left">AlignBlocks</th>
+								<th title="Does repository use Rotated Drives" style="text-align:left">Rotated Drives</th>
+								<th title="Does repository use Immutability?" style="text-align:left">Use Immutability</th>
+								<th title="Repository Type" style="text-align:left">Type</th>
+							</tr>
+							<xsl:for-each select="repository">
+								<tr>
+									<td title="Name">
+										<xsl:value-of select="Name"/>
+									</td>
+									<td title="SOBR">
+										<xsl:value-of select="sobr"/>
+									</td>
 
-								<td title="Set Tasks" bgcolor="">
-									<xsl:if test="Tasks/@color='under'">
-										<xsl:attribute name="bgcolor">
-											<xsl:text>GreenYellow</xsl:text>
-										</xsl:attribute>
-										<script>
-										</script>
-									</xsl:if>
-									<xsl:if test="Tasks/@color='over'">
-										<xsl:attribute name="bgcolor">
-											<xsl:text>orangered</xsl:text>
-										</xsl:attribute>
-									</xsl:if>
-									<xsl:value-of select="Tasks"/>
-								</td>
-								<td title="Cores" style="text-align:right">
-									<xsl:value-of select="Cores"/>
-								</td>
-								<td title="RAM" style="text-align:right">
-									<xsl:value-of select="RAM"/>
-								</td>
-								<td title="AutoGate" style="text-align:right">
-									<xsl:value-of select="AutoGate"/>
-								</td>
-								<td title="Host">
-									<xsl:value-of select="Host"/>
-								</td>
-								<td title="Path">
-									<xsl:value-of select="Path"/>
-								</td>
-								<td title="Free Space" style="text-align:right">
-									<xsl:value-of select="freespace"/>
-								</td>
-								<td title="Total Space" style="text-align:right">
-									<xsl:value-of select="totalspace"/>
-								</td>
-								<!--<td title="Free Space %" style="text-align:right">
+									<td title="Set Tasks" bgcolor="">
+										<xsl:if test="Tasks/@color='under'">
+											<xsl:attribute name="bgcolor">
+												<xsl:text>GreenYellow</xsl:text>
+											</xsl:attribute>
+											<script>
+											</script>
+										</xsl:if>
+										<xsl:if test="Tasks/@color='over'">
+											<xsl:attribute name="bgcolor">
+												<xsl:text>orangered</xsl:text>
+											</xsl:attribute>
+										</xsl:if>
+										<xsl:value-of select="Tasks"/>
+									</td>
+									<td title="Cores" style="text-align:right">
+										<xsl:value-of select="Cores"/>
+									</td>
+									<td title="RAM" style="text-align:right">
+										<xsl:value-of select="RAM"/>
+									</td>
+									<td title="AutoGate" style="text-align:right">
+										<xsl:value-of select="AutoGate"/>
+									</td>
+									<td title="Host">
+										<xsl:value-of select="Host"/>
+									</td>
+									<td title="Path">
+										<xsl:value-of select="Path"/>
+									</td>
+									<td title="Free Space" style="text-align:right">
+										<xsl:value-of select="freespace"/>
+									</td>
+									<td title="Total Space" style="text-align:right">
+										<xsl:value-of select="totalspace"/>
+									</td>
+									<!--<td title="Free Space %" style="text-align:right">
 								<xsl:value-of select="freespacepercent"/>
 							</td>-->
-								<td title ="% Free Space" bgcolor ="" style="text-align:right">
-									<xsl:if test="not(freespacepercent >20) and (freespacepercent > 0)">
-										<xsl:attribute name="bgcolor">
-											<xsl:text>orangered</xsl:text>
-										</xsl:attribute>
-									</xsl:if>
+									<td title ="% Free Space" bgcolor ="" style="text-align:right">
+										<xsl:if test="not(freespacepercent >20) and (freespacepercent > 0)">
+											<xsl:attribute name="bgcolor">
+												<xsl:text>orangered</xsl:text>
+											</xsl:attribute>
+										</xsl:if>
 
-									<xsl:value-of select="freespacepercent"/>
-								</td>
-								<!--<td title="Per-VM" style="text-align:right">
+										<xsl:value-of select="freespacepercent"/>
+									</td>
+									<!--<td title="Per-VM" style="text-align:right">
 								<xsl:value-of select="pervm"/>
 							</td>-->
-								<td title="UnCompress" style="text-align:right">
-									<xsl:value-of select="uncompress"/>
-								</td>
-								<td title="Align Blocks" style="text-align:right">
-									<xsl:value-of select="align"/>
-								</td>
-								<td title="Rotated Drives" style="text-align:right">
-									<xsl:value-of select="rotate"/>
-								</td>
-								<td title="Immutable" style="text-align:right">
-									<xsl:value-of select="immute"/>
-								</td>
-								<td title="Type">
-									<xsl:value-of select="type"/>
-								</td>
+									<td title="UnCompress" style="text-align:right">
+										<xsl:value-of select="uncompress"/>
+									</td>
+									<td title="Align Blocks" style="text-align:right">
+										<xsl:value-of select="align"/>
+									</td>
+									<td title="Rotated Drives" style="text-align:right">
+										<xsl:value-of select="rotate"/>
+									</td>
+									<td title="Immutable" style="text-align:right">
+										<xsl:value-of select="immute"/>
+									</td>
+									<td title="Type">
+										<xsl:value-of select="type"/>
+									</td>
 
 
-							</tr>
-						</xsl:for-each>
-					</table>
-					* Red/Orange Highlights indicate an area for further investigation such as over-tasking or low available free space
-					<br></br><br></br>
-					<div class="hdr">Summary:</div><br></br>
-					<div class="i2">
-						•A SOBR is created by taking one, or many individual Veeam repositories (basic, or hardened) and placing them into the SOBR construct. The individual repositories comprising the SOBR are referred to as 'Extents'.
-					</div>
-					<div class="i2">
-						•This section of the Health Check report details repository setting as they are configured in the Veeam Backup and Replication UI.  These settings can affect, or help performance of a backup job.
-					</div><br></br>
-					<div class="hdr">Notes:</div><br></br>
-					<div class="subhdr">Set Tasks:</div>
-					<div class="i2">
-						•This column is the max concurrent task setting allowed to a repository. It specifies the maximum allowed number of concurrent tasks for the backup repository. If this value is exceeded, Veeam Backup &amp; Replication will not start a new task until one of current tasks finishes. For more information, see <a href="https://helpcenter.veeam.com/docs/backup/vsphere/limiting_tasks.html">Limiting the Number of Concurrent Tasks</a>.
-					</div>
-					<div class="i2">
-						•To determine the number of tasks/cores needed for a backup repository(s) use the following <a href="https://bp.veeam.com/vbr/2_Design_Structures/D_Veeam_Components/D_backup_repositories/">formula</a>:
-					</div>
-					<div class="i3">oThe number of proxy vCPU/cores / 3 = the number of needed repository tasks.</div>
-					<div class="i2">
-						•The setting should align with the next two columns: <a style="font-weight: bold">Cores</a>, and <a style="font-weight:bold">RAM(GB)</a>
-					</div>
-					<div class="subhdr">Cores:</div>
-					<div class="i2">•This number is equal to the number of CPU cores in the repository server.</div>
-					<div class="subhdr">RAM:</div>
-					<div class="i2">•This number is equal to the amount of RAM in the repository server.</div>
-					<div class="i2">•The amount of RAM should be 4x the number of cores.</div>
+								</tr>
+							</xsl:for-each>
+						</table>
+						* Red/Orange Highlights indicate an area for further investigation such as over-tasking or low available free space
+						<br></br><br></br>
+						<div class="hdr">Summary:</div><br></br>
+						<div class="i2">
+							•A SOBR is created by taking one, or many individual Veeam repositories (basic, or hardened) and placing them into the SOBR construct. The individual repositories comprising the SOBR are referred to as 'Extents'.
+						</div>
+						<div class="i2">
+							•This section of the Health Check report details repository setting as they are configured in the Veeam Backup and Replication UI.  These settings can affect, or help performance of a backup job.
+						</div><br></br>
+						<div class="hdr">Notes:</div><br></br>
+						<div class="subhdr">Set Tasks:</div>
+						<div class="i2">
+							•This column is the max concurrent task setting allowed to a repository. It specifies the maximum allowed number of concurrent tasks for the backup repository. If this value is exceeded, Veeam Backup &amp; Replication will not start a new task until one of current tasks finishes. For more information, see <a href="https://helpcenter.veeam.com/docs/backup/vsphere/limiting_tasks.html">Limiting the Number of Concurrent Tasks</a>.
+						</div>
+						<div class="i2">
+							•To determine the number of tasks/cores needed for a backup repository(s) use the following <a href="https://bp.veeam.com/vbr/2_Design_Structures/D_Veeam_Components/D_backup_repositories/">formula</a>:
+						</div>
+						<div class="i3">oThe number of proxy vCPU/cores / 3 = the number of needed repository tasks.</div>
+						<div class="i2">
+							•The setting should align with the next two columns: <a style="font-weight: bold">Cores</a>, and <a style="font-weight:bold">RAM(GB)</a>
+						</div>
+						<div class="subhdr">Cores:</div>
+						<div class="i2">•This number is equal to the number of CPU cores in the repository server.</div>
+						<div class="subhdr">RAM:</div>
+						<div class="i2">•This number is equal to the amount of RAM in the repository server.</div>
+						<div class="i2">•The amount of RAM should be 4x the number of cores.</div>
 
-					<div class="subhdr">Free Space (TB) and Free Space %</div>
-					<div class="i2">•Best practice is to maintain 20% free space in a repository. This is especially important if the SOBR extents are formatted with XFS/REFS file systems as the block cloning and spaceless synthetic backups need to have all the relevant Veeam backup files on the same disk.  Free space is also important on other file systems as Veeam needs working space to create synthetic full backups.</div>
-					<div class="i2">•In the General Options section of the VBR Console an alarm can be set to alert on repository low free disk space percentage.</div>
-					<div class="subhdr">Align Blocks</div>
-					<div class="i2">
-						•For storage systems using a fixed block size, select the <a style="font-weight:bold">Align backup file data blocks</a> check box. Veeam Backup &amp; Replication will align VM data saved to a backup file at a 4 KB block boundary.
-					</div>
-					<div class="i2">•This setting also helps speed data transfer and uses less RAM when transferring data to a block-based repository</div>
-					<div class="i2">
-						•For block-based repositories in Veeam Backup and Replication v11 and newer this setting should be set to <a style="font-weight:bold">true</a>.
-					</div>
-					<h5>
-						<a href="#top">Back To Top</a>
-					</h5>
-				</body>
-			</html>
+						<div class="subhdr">Free Space (TB) and Free Space %</div>
+						<div class="i2">•Best practice is to maintain 20% free space in a repository. This is especially important if the SOBR extents are formatted with XFS/REFS file systems as the block cloning and spaceless synthetic backups need to have all the relevant Veeam backup files on the same disk.  Free space is also important on other file systems as Veeam needs working space to create synthetic full backups.</div>
+						<div class="i2">•In the General Options section of the VBR Console an alarm can be set to alert on repository low free disk space percentage.</div>
+						<div class="subhdr">Align Blocks</div>
+						<div class="i2">
+							•For storage systems using a fixed block size, select the <a style="font-weight:bold">Align backup file data blocks</a> check box. Veeam Backup &amp; Replication will align VM data saved to a backup file at a 4 KB block boundary.
+						</div>
+						<div class="i2">•This setting also helps speed data transfer and uses less RAM when transferring data to a block-based repository</div>
+						<div class="i2">
+							•For block-based repositories in Veeam Backup and Replication v11 and newer this setting should be set to <a style="font-weight:bold">true</a>.
+						</div>
+						<h5>
+							<a href="#top">Back To Top</a>
+						</h5>
+					</body>
+				</html>
+			</div>
 		</div>
 	</xsl:template>
 	<xsl:template match="/root/repositories">
-		<div id="repo">
+		<div id="linkrepo">
 			<h2>
 				<u>Standalone Repository Details</u>
 			</h2>
-		</div>
-		<button type="button" class="collapsible">Show Repository Details</button>
-		<div class="content">
-			<html>
-				<body>
+			<button type="button" class="collapsible">Show Repository Details</button>
+			<div class="content">
+				<html>
+					<body>
 
-					<table border="1">
-						<tr >
-							<th title="Repository name" style="text-align:left">Name</th>
-							<!--<th style="text-align:left">Tasks</th>-->
-							<th title="Total tasks assigned in repository properties" style="text-align:left">Set Tasks</th>
-							<th title="Total detected CPU cores on repository server" style="text-align:left">Cores</th>
-							<th title="Total detected RAM on repository server" style="text-align:left">RAM(GB)</th>
-							<th title="Total jobs assigned to the repository" style="text-align:left">JobCount</th>
-							<th title="Does the repostory use Automatic Gateway?" style="text-align:left">AutoGateway</th>
-							<th title="Host assigned as gateway if not using Automatic" style="text-align:left">Host</th>
-							<th title="Path assigned to store the backup files" style="text-align:left">Path</th>
-							<th title="Detected free space based on most recent cache data" style="text-align:left">FreeSpace(TB)</th>
-							<th title="Detected total space." style="text-align:left">TotalSpace(TB)</th>
-							<th title="Calculated free space percent remaining based on most recent cache data" style="text-align:left">FreeSpace %</th>
-							<th title="Does the repository use per-VM backup files?" styel="text-aligh:left">Per-VM</th>
-							<th title="Does the repository decompress backup files before writing to disk?" style="text-align:left">DeCompress</th>
-							<th title="Is the repository configured to alight data blocks?" style="text-align:left">AlignBlocks</th>
-							<th title="Is the repository backed by rotated drives?" style="text-align:left">Rotated Drives</th>
-							<th title="Does the repsoitory use Immutability?" style="text-align:left">Use Immutability</th>
-							<th title="Repository Type" style="text-align:left">Type</th>
-						</tr>
-						<xsl:for-each select="repository">
-							<tr>
-								<td title="Name">
-									<xsl:value-of select="Name"/>
-								</td>
-								<td title="Tasks" bgcolor="">
-									<xsl:if test="Tasks/@color='under'">
-										<xsl:attribute name="bgcolor">
-											<xsl:text>GreenYellow</xsl:text>
-
-										</xsl:attribute>
-										<xsl:attribute name="title">
-											<xsl:text>Under Utilized</xsl:text>
-										</xsl:attribute>
-									</xsl:if>
-									<xsl:if test="Tasks/@color='over'">
-										<xsl:attribute name="bgcolor">
-											<xsl:text>orangered</xsl:text>
-
-										</xsl:attribute>
-										<xsl:attribute name="title">
-											<xsl:text>Over Utilized</xsl:text>
-										</xsl:attribute>
-									</xsl:if>
-									<xsl:value-of select="Tasks"/>
-								</td>
-								<td title="CPU Core Count" style="text-align:right">
-									<xsl:value-of select="Cores"/>
-								</td>
-								<td title="RAM" style="text-align:right">
-									<xsl:value-of select="RAM"/>
-								</td>
-								<td title="Job Count" style="text-align:right">
-									<xsl:value-of select="jobcount"/>
-								</td>
-								<td title="AutoGate" style="text-align:right">
-									<xsl:value-of select="AutoGate"/>
-								</td>
-								<td title="Host">
-									<xsl:value-of select="host"/>
-								</td>
-								<td title="Path">
-									<xsl:value-of select="Path"/>
-								</td>
-								<td title="Free Space" style="text-align:right">
-									<xsl:value-of select="freespace"/>
-								</td>
-								<td title="Total Space" style="text-align:right">
-									<xsl:value-of select="totalspace"/>
-								</td>
-								<td title ="% Free Space" bgcolor ="" style="text-align:right">
-									<xsl:if test="not(freespacepercent >20) and (freespacepercent > 0)">
-										<xsl:attribute name="bgcolor">
-											<xsl:text>orangered</xsl:text>
-										</xsl:attribute>
-									</xsl:if>
-
-									<xsl:value-of select="freespacepercent"/>
-								</td>
-								<td title="Per-VM" style="text-align:right">
-									<xsl:value-of select="pervm"/>
-								</td>
-								<td title="UnCompress" style="text-align:right">
-									<xsl:value-of select="uncompress"/>
-								</td>
-								<td title="Align Blocks" style="text-align:right">
-									<xsl:value-of select="align"/>
-								</td>
-								<td title="Rotated Drives" style="text-align:right">
-									<xsl:value-of select="rotate"/>
-								</td>
-								<td title="Immuteable" style="text-align:right">
-									<xsl:value-of select="immute"/>
-								</td>
-								<td title="Type">
-									<xsl:value-of select="type"/>
-								</td>
-
-
+						<table border="1">
+							<tr >
+								<th title="Repository name" style="text-align:left">Name</th>
+								<!--<th style="text-align:left">Tasks</th>-->
+								<th title="Total tasks assigned in repository properties" style="text-align:left">Set Tasks</th>
+								<th title="Total detected CPU cores on repository server" style="text-align:left">Cores</th>
+								<th title="Total detected RAM on repository server" style="text-align:left">RAM(GB)</th>
+								<th title="Total jobs assigned to the repository" style="text-align:left">JobCount</th>
+								<th title="Does the repostory use Automatic Gateway?" style="text-align:left">AutoGateway</th>
+								<th title="Host assigned as gateway if not using Automatic" style="text-align:left">Host</th>
+								<th title="Path assigned to store the backup files" style="text-align:left">Path</th>
+								<th title="Detected free space based on most recent cache data" style="text-align:left">FreeSpace(TB)</th>
+								<th title="Detected total space." style="text-align:left">TotalSpace(TB)</th>
+								<th title="Calculated free space percent remaining based on most recent cache data" style="text-align:left">FreeSpace %</th>
+								<th title="Does the repository use per-VM backup files?" styel="text-aligh:left">Per-VM</th>
+								<th title="Does the repository decompress backup files before writing to disk?" style="text-align:left">DeCompress</th>
+								<th title="Is the repository configured to alight data blocks?" style="text-align:left">AlignBlocks</th>
+								<th title="Is the repository backed by rotated drives?" style="text-align:left">Rotated Drives</th>
+								<th title="Does the repsoitory use Immutability?" style="text-align:left">Use Immutability</th>
+								<th title="Repository Type" style="text-align:left">Type</th>
 							</tr>
-						</xsl:for-each>
-					</table>
-					* Red/Orange Highlights indicate an area for further investigation, such as over-tasking or low available free space
+							<xsl:for-each select="repository">
+								<tr>
+									<td title="Name">
+										<xsl:value-of select="Name"/>
+									</td>
+									<td title="Tasks" bgcolor="">
+										<xsl:if test="Tasks/@color='under'">
+											<xsl:attribute name="bgcolor">
+												<xsl:text>GreenYellow</xsl:text>
 
-					<br></br><br></br>
-					<div class="hdr">Summary:</div><br></br>
-					<div class="i2">
-						•Standalone Repositories includes those not configured as part of a SOBR
-					</div>
-					<div class="i2">
-						•This section of the Health Check report details repository setting as they are configured in the Veeam Backup and Replication UI.  These settings can affect, or help performance of a backup job.
-					</div><br></br>
-					<div class="hdr">Notes:</div><br></br>
-					<div class="subhdr">Set Tasks:</div>
-					<div class="i2">
-						•This column is the max concurrent task setting allowed to a repository. It specifies the maximum allowed number of concurrent tasks for the backup repository. If this value is exceeded, Veeam Backup &amp; Replication will not start a new task until one of current tasks finishes. For more information, see <a href="https://helpcenter.veeam.com/docs/backup/vsphere/limiting_tasks.html">Limiting the Number of Concurrent Tasks</a>.
-					</div>
-					<div class="i2">
-						•To determine the number of tasks/cores needed for a backup repository(s) use the following <a href="https://bp.veeam.com/vbr/2_Design_Structures/D_Veeam_Components/D_backup_repositories/">formula</a>:
-					</div>
-					<div class="i3">oThe number of proxy vCPU/cores / 3 = the number of needed repository tasks.</div>
-					<div class="i2">
-						•The setting should align with the next two columns: <a style="font-weight: bold">Cores</a>, and <a style="font-weight:bold">RAM(GB)</a>
-					</div>
-					<div class="subhdr">Cores:</div>
-					<div class="i2">•This number is equal to the number of CPU cores in the repository server.</div>
-					<div class="subhdr">RAM:</div>
-					<div class="i2">•This number is equal to the amount of RAM in the repository server.</div>
-					<div class="i2">•The amount of RAM should be 4x the number of cores.</div>
+											</xsl:attribute>
+											<xsl:attribute name="title">
+												<xsl:text>Under Utilized</xsl:text>
+											</xsl:attribute>
+										</xsl:if>
+										<xsl:if test="Tasks/@color='over'">
+											<xsl:attribute name="bgcolor">
+												<xsl:text>orangered</xsl:text>
 
-					<div class="subhdr">Free Space (TB) and Free Space %</div>
-					<div class="i2">•Best practice is to maintain 20% free space in a repository. This is especially important if the repositories are formatted with XFS/REFS file systems as the block cloning and spaceless synthetic backups need to have all the relevant Veeam backup files on the same disk.  Free space is also important on other file systems as Veeam needs space to create synthetic full backups.</div>
-					<div class="i2">•In the General Options section of the VBR console an alarm can be set to alert on repository free disk space percentage.</div>
-					<div class="subhdr">Align Blocks</div>
-					<div class="i2">
-						•For storage systems using a fixed block size, select the <a style="font-weight:bold">Align backup file data blocks</a> check box. Veeam Backup &amp; Replication will align VM data saved to a backup file at a 4 KB block boundary.
-					</div>
-					<div class="i2">•This setting also helps speed data transfer and uses less RAM when transferring data to a block-based repository</div>
-					<div class="i2">
-						•For block-based repositories in Veeam Backup and Replication v11 and newer this setting should be set to <a style="font-weight:bold">true</a>.
-					</div>
-					<h5>
-						<a href="#top">Back To Top</a>
-					</h5>
-				</body>
-			</html>
+											</xsl:attribute>
+											<xsl:attribute name="title">
+												<xsl:text>Over Utilized</xsl:text>
+											</xsl:attribute>
+										</xsl:if>
+										<xsl:value-of select="Tasks"/>
+									</td>
+									<td title="CPU Core Count" style="text-align:right">
+										<xsl:value-of select="Cores"/>
+									</td>
+									<td title="RAM" style="text-align:right">
+										<xsl:value-of select="RAM"/>
+									</td>
+									<td title="Job Count" style="text-align:right">
+										<xsl:value-of select="jobcount"/>
+									</td>
+									<td title="AutoGate" style="text-align:right">
+										<xsl:value-of select="AutoGate"/>
+									</td>
+									<td title="Host">
+										<xsl:value-of select="host"/>
+									</td>
+									<td title="Path">
+										<xsl:value-of select="Path"/>
+									</td>
+									<td title="Free Space" style="text-align:right">
+										<xsl:value-of select="freespace"/>
+									</td>
+									<td title="Total Space" style="text-align:right">
+										<xsl:value-of select="totalspace"/>
+									</td>
+									<td title ="% Free Space" bgcolor ="" style="text-align:right">
+										<xsl:if test="not(freespacepercent >20) and (freespacepercent > 0)">
+											<xsl:attribute name="bgcolor">
+												<xsl:text>orangered</xsl:text>
+											</xsl:attribute>
+										</xsl:if>
+
+										<xsl:value-of select="freespacepercent"/>
+									</td>
+									<td title="Per-VM" style="text-align:right">
+										<xsl:value-of select="pervm"/>
+									</td>
+									<td title="UnCompress" style="text-align:right">
+										<xsl:value-of select="uncompress"/>
+									</td>
+									<td title="Align Blocks" style="text-align:right">
+										<xsl:value-of select="align"/>
+									</td>
+									<td title="Rotated Drives" style="text-align:right">
+										<xsl:value-of select="rotate"/>
+									</td>
+									<td title="Immuteable" style="text-align:right">
+										<xsl:value-of select="immute"/>
+									</td>
+									<td title="Type">
+										<xsl:value-of select="type"/>
+									</td>
+
+
+								</tr>
+							</xsl:for-each>
+						</table>
+						* Red/Orange Highlights indicate an area for further investigation, such as over-tasking or low available free space
+
+						<br></br><br></br>
+						<div class="hdr">Summary:</div><br></br>
+						<div class="i2">
+							•Standalone Repositories includes those not configured as part of a SOBR
+						</div>
+						<div class="i2">
+							•This section of the Health Check report details repository setting as they are configured in the Veeam Backup and Replication UI.  These settings can affect, or help performance of a backup job.
+						</div><br></br>
+						<div class="hdr">Notes:</div><br></br>
+						<div class="subhdr">Set Tasks:</div>
+						<div class="i2">
+							•This column is the max concurrent task setting allowed to a repository. It specifies the maximum allowed number of concurrent tasks for the backup repository. If this value is exceeded, Veeam Backup &amp; Replication will not start a new task until one of current tasks finishes. For more information, see <a href="https://helpcenter.veeam.com/docs/backup/vsphere/limiting_tasks.html">Limiting the Number of Concurrent Tasks</a>.
+						</div>
+						<div class="i2">
+							•To determine the number of tasks/cores needed for a backup repository(s) use the following <a href="https://bp.veeam.com/vbr/2_Design_Structures/D_Veeam_Components/D_backup_repositories/">formula</a>:
+						</div>
+						<div class="i3">oThe number of proxy vCPU/cores / 3 = the number of needed repository tasks.</div>
+						<div class="i2">
+							•The setting should align with the next two columns: <a style="font-weight: bold">Cores</a>, and <a style="font-weight:bold">RAM(GB)</a>
+						</div>
+						<div class="subhdr">Cores:</div>
+						<div class="i2">•This number is equal to the number of CPU cores in the repository server.</div>
+						<div class="subhdr">RAM:</div>
+						<div class="i2">•This number is equal to the amount of RAM in the repository server.</div>
+						<div class="i2">•The amount of RAM should be 4x the number of cores.</div>
+
+						<div class="subhdr">Free Space (TB) and Free Space %</div>
+						<div class="i2">•Best practice is to maintain 20% free space in a repository. This is especially important if the repositories are formatted with XFS/REFS file systems as the block cloning and spaceless synthetic backups need to have all the relevant Veeam backup files on the same disk.  Free space is also important on other file systems as Veeam needs space to create synthetic full backups.</div>
+						<div class="i2">•In the General Options section of the VBR console an alarm can be set to alert on repository free disk space percentage.</div>
+						<div class="subhdr">Align Blocks</div>
+						<div class="i2">
+							•For storage systems using a fixed block size, select the <a style="font-weight:bold">Align backup file data blocks</a> check box. Veeam Backup &amp; Replication will align VM data saved to a backup file at a 4 KB block boundary.
+						</div>
+						<div class="i2">•This setting also helps speed data transfer and uses less RAM when transferring data to a block-based repository</div>
+						<div class="i2">
+							•For block-based repositories in Veeam Backup and Replication v11 and newer this setting should be set to <a style="font-weight:bold">true</a>.
+						</div>
+						<h5>
+							<a href="#top">Back To Top</a>
+						</h5>
+					</body>
+				</html>
+			</div>
 		</div>
 	</xsl:template>
 	<xsl:template match="/root/proxies">
 
-		<div id="proxy">
+		<div id="linkproxy">
 			<h2>
 				<u>Proxy Info</u>
 			</h2>
-		</div>
-		<button type="button" class="collapsible">Show Proxy Summary</button>
-		<div class="content">
-			<html>
-				<body>
-					<table border="1">
-						<tr >
-							<th title="Proxy Name">Name</th>
-							<th title="Proxy Type">Type</th>
-							<th title="Total Assigned Tasks">Assigned Tasks</th>
-							<th title="Detected CPU Cores">Cores</th>
-							<th title="Detected RAM">RAM</th>
-							<th title="Manually Set Transport Mode">Transport Mode</th>
-							<th title="Is option to failover to NBD enabled?">Failover To Network</th>
-							<th title="Detected">Chassis</th>
-							<th title="Is Disabled">Is Disabled</th>
-							<th title="Cache Size">Cache Size</th>
-							<th title="Cache Path">Cache Path</th>
-							<th title="Proxy Host">Host</th>
-						</tr>
-						<xsl:for-each select="proxy">
-							<tr>
-								<td title="Proxy Name">
-									<xsl:value-of select="name"/>
-								</td>
-								<td title="Proxy Type">
-									<xsl:value-of select="type"/>
-								</td>
-								<!--<td style="text-align:right">
+			<button type="button" class="collapsible">Show Proxy Summary</button>
+			<div class="content">
+				<html>
+					<body>
+						<table border="1">
+							<tr >
+								<th title="Proxy Name">Name</th>
+								<th title="Proxy Type">Type</th>
+								<th title="Total Assigned Tasks">Assigned Tasks</th>
+								<th title="Detected CPU Cores">Cores</th>
+								<th title="Detected RAM">RAM</th>
+								<th title="Manually Set Transport Mode">Transport Mode</th>
+								<th title="Is option to failover to NBD enabled?">Failover To Network</th>
+								<th title="Detected">Chassis</th>
+								<th title="Is Disabled">Is Disabled</th>
+								<th title="Cache Size">Cache Size</th>
+								<th title="Cache Path">Cache Path</th>
+								<th title="Proxy Host">Host</th>
+							</tr>
+							<xsl:for-each select="proxy">
+								<tr>
+									<td title="Proxy Name">
+										<xsl:value-of select="name"/>
+									</td>
+									<td title="Proxy Type">
+										<xsl:value-of select="type"/>
+									</td>
+									<!--<td style="text-align:right">
 				<xsl:value-of select="host"/>
 			  </td>-->
-								<td title="Set Tasks" bgcolor="">
-									<xsl:if test="tasks/@color='under'">
-										<xsl:attribute name="bgcolor">
-											<xsl:text>GreenYellow</xsl:text>
-										</xsl:attribute>
-										<script>
-										</script>
-									</xsl:if>
-									<xsl:if test="tasks/@color='over'">
-										<xsl:attribute name="bgcolor">
-											<xsl:text>orangered</xsl:text>
-										</xsl:attribute>
-									</xsl:if>
-									<xsl:value-of select="tasks"/>
-								</td>
-								<td title="Cores" style="text-align:right">
-									<xsl:value-of select="cores"/>
-								</td>
-								<td title="RAM" style="text-align:right">
-									<xsl:value-of select="ram"/>
-								</td>
-								<td title="Transport Mode">
-									<xsl:value-of select="transport"/>
-								</td>
-								<td title="Failover Enabled" style="text-align:right">
-									<xsl:value-of select="failover"/>
-								</td>
-								<td title="Chassis">
-									<xsl:value-of select="chassis"/>
-								</td>
-								<td title="Is Disabled?" style="text-align:right">
-									<xsl:value-of select="disabled"/>
-								</td>
-								<td title="Cache Size" style="text-align:right">
-									<xsl:value-of select="cacheSize"/>
-								</td>
-								<td title="Cache Path" style="text-align:right">
-									<xsl:value-of select="cachePath"/>
-								</td>
-								<td title="Host" style="text-align:right">
-									<xsl:value-of select="host"/>
-								</td>
-							</tr>
-						</xsl:for-each>
-					</table>
-					<br></br>
-					<div class="hdr">Role Summary:</div>
-					Veeam proxies are a logical datamover component. There are two types of proxies: (<a href="https://helpcenter.veeam.com/docs/backup/vsphere/backup_proxy.html?zoom_highlight=proxy&amp;ver=110">Backup Proxies</a>, <a href="https://helpcenter.veeam.com/docs/backup/vsphere/cdp_proxy.html?ver=110">CDP Proxies</a>). Backup Proxies are further subdivided based on function or platform e.g. File Proxies for NAS-based backups, or different source hypervisors.
-					<div class="i2">•	Backup proxies sit between source data (VMs or File Shares) and the backup repositories. Their role is to process backup jobs and deliver backup traffic to the repositories.</div>
-					<div class="i3">
-						o	VM Backup proxies can leverage different <a href="https://helpcenter.veeam.com/docs/backup/vsphere/transport_modes.html?ver=110">transport modes</a>.
-					</div>
-					<div class="i3">
-						o	File Backup proxies can backup source data from manual or automated snapshot paths for <a href="https://helpcenter.veeam.com/docs/backup/vsphere/file_share_backup_nfs_share_advanced_settings.html?ver=110"> NFS</a>, <a href="https://helpcenter.veeam.com/docs/backup/vsphere/file_share_backup_smb_share_advanced_settings.html?ver=110">SMB</a>, Enterprise NAS filers. (Note: Managed servers do not leverage File Backup Proxies)
-					</div>
-					<div class="i3">o	Backup Proxies do not store or cache any data locally.</div>
-					<div class="i2">•	CDP proxies process CDP policies and operate as data movers between source and target VMware hosts.</div>
-					<div class="i3">
-						o	CDP proxies require a <a href="https://helpcenter.veeam.com/docs/backup/vsphere/system_requirements.html?ver=110#vmware-cdp-proxy-server">local cache.</a>
-					</div>
-					<br></br>
-					<div class="hdr">Notes:</div>
-					<div class="i2">
-						•	Review the “host” column and identify the host(s) that support <a href="https://helpcenter.veeam.com/docs/backup/vsphere/limiting_tasks.html?ver=110#task-limitation-for-components-with-several-roles">multiple</a> proxy roles:
-					</div>
-					<div class="i3">
-						o	Roles can be combined providing you allocate <a href="https://helpcenter.veeam.com/docs/backup/vsphere/limiting_tasks.html?ver=110">enough resources</a>.
-					</div>
-					<div class="i4">	If roles are non-concurrent then allocate the max resources calculated across all supported roles.</div>
-					<div class="i4">
-							If roles are concurrent then allocate <a href="https://helpcenter.veeam.com/docs/backup/vsphere/limiting_tasks.html?ver=110#task-limitation-for-components-with-several-roles">enough</a> resources for all roles
-					</div>
-					<div class="i4">	Keep in mind that CDP proxies are constantly active and transferring data, therefore it is imperative to “reserve” enough resources for its role and add what is necessary the combined role(s).</div>
-					<div class="i2">•	CDP proxies:</div>
-					<div class="i3">
-						o	Ensure <a href="https://helpcenter.veeam.com/docs/backup/vsphere/cdp_proxy.html?zoom_highlight=CDP+cache&amp;ver=110#vmware-cdp-proxy-cache">cache</a> is properly sized
-					</div>
-					<div class="i3">o	Flag CDP proxies with cache located on the C:\ drive as a potential risk.</div>
-					<div class="i2">
-						•	Compare assigned <a href="https://helpcenter.veeam.com/docs/backup/vsphere/limiting_tasks.html?ver=110">tasks</a> and core count and identify <a href="https://helpcenter.veeam.com/docs/backup/vsphere/limiting_tasks.html?ver=110#task-limitation-for-backup-proxies">oversubscription</a>.
-					</div>
-					<div class="i2">
-						•	Confirm the RAM to core ratio is <a href="https://helpcenter.veeam.com/docs/backup/vsphere/system_requirements.html?ver=110#vmware-cdp-proxy-server">adequate</a>.
-					</div>
-					<div class="i2">
-						•	Ensure there are enough resources for the base OS. (<a href="https://helpcenter.veeam.com/docs/backup/vsphere/system_requirements.html?ver=110#backup-proxy-server">backup proxy</a>, <a href="https://helpcenter.veeam.com/docs/backup/vsphere/system_requirements.html?ver=110#vmware-cdp-proxy-server">CDP proxy</a>)
-					</div>
-					<div class="i2">
-						•	Check selected <a href="https://helpcenter.veeam.com/docs/backup/vsphere/transport_modes.html?zoom_highlight=transport+mode&amp;ver=110">transport mode</a> and highlight where <a href="https://helpcenter.veeam.com/docs/backup/vsphere/network_mode_failover.html?ver=110">failover to network mode</a> is disabled when jobs are failing or where failover to network is enabled for jobs to run slower than expected (NBD traffic could flow through the <a href="https://helpcenter.veeam.com/docs/backup/vsphere/select_backup_network.html?zoom_highlight=preferred+network&amp;ver=110">wrong network</a>).
-					</div>
-					<div class="i2">
-						•	Hyper-V off host proxies should <a href="https://helpcenter.veeam.com/docs/backup/hyperv/offhost_backup_proxy.html?ver=110">match</a> protected Hyper-V host versions.
-					</div>
+									<td title="Set Tasks" bgcolor="">
+										<xsl:if test="tasks/@color='under'">
+											<xsl:attribute name="bgcolor">
+												<xsl:text>GreenYellow</xsl:text>
+											</xsl:attribute>
+											<script>
+											</script>
+										</xsl:if>
+										<xsl:if test="tasks/@color='over'">
+											<xsl:attribute name="bgcolor">
+												<xsl:text>orangered</xsl:text>
+											</xsl:attribute>
+										</xsl:if>
+										<xsl:value-of select="tasks"/>
+									</td>
+									<td title="Cores" style="text-align:right">
+										<xsl:value-of select="cores"/>
+									</td>
+									<td title="RAM" style="text-align:right">
+										<xsl:value-of select="ram"/>
+									</td>
+									<td title="Transport Mode">
+										<xsl:value-of select="transport"/>
+									</td>
+									<td title="Failover Enabled" style="text-align:right">
+										<xsl:value-of select="failover"/>
+									</td>
+									<td title="Chassis">
+										<xsl:value-of select="chassis"/>
+									</td>
+									<td title="Is Disabled?" style="text-align:right">
+										<xsl:value-of select="disabled"/>
+									</td>
+									<td title="Cache Size" style="text-align:right">
+										<xsl:value-of select="cacheSize"/>
+									</td>
+									<td title="Cache Path" style="text-align:right">
+										<xsl:value-of select="cachePath"/>
+									</td>
+									<td title="Host" style="text-align:right">
+										<xsl:value-of select="host"/>
+									</td>
+								</tr>
+							</xsl:for-each>
+						</table>
+						<br></br>
+						<div class="hdr">Role Summary:</div>
+						Veeam proxies are a logical datamover component. There are two types of proxies: (<a href="https://helpcenter.veeam.com/docs/backup/vsphere/backup_proxy.html?zoom_highlight=proxy&amp;ver=110">Backup Proxies</a>, <a href="https://helpcenter.veeam.com/docs/backup/vsphere/cdp_proxy.html?ver=110">CDP Proxies</a>). Backup Proxies are further subdivided based on function or platform e.g. File Proxies for NAS-based backups, or different source hypervisors.
+						<div class="i2">•	Backup proxies sit between source data (VMs or File Shares) and the backup repositories. Their role is to process backup jobs and deliver backup traffic to the repositories.</div>
+						<div class="i3">
+							o	VM Backup proxies can leverage different <a href="https://helpcenter.veeam.com/docs/backup/vsphere/transport_modes.html?ver=110">transport modes</a>.
+						</div>
+						<div class="i3">
+							o	File Backup proxies can backup source data from manual or automated snapshot paths for <a href="https://helpcenter.veeam.com/docs/backup/vsphere/file_share_backup_nfs_share_advanced_settings.html?ver=110"> NFS</a>, <a href="https://helpcenter.veeam.com/docs/backup/vsphere/file_share_backup_smb_share_advanced_settings.html?ver=110">SMB</a>, Enterprise NAS filers. (Note: Managed servers do not leverage File Backup Proxies)
+						</div>
+						<div class="i3">o	Backup Proxies do not store or cache any data locally.</div>
+						<div class="i2">•	CDP proxies process CDP policies and operate as data movers between source and target VMware hosts.</div>
+						<div class="i3">
+							o	CDP proxies require a <a href="https://helpcenter.veeam.com/docs/backup/vsphere/system_requirements.html?ver=110#vmware-cdp-proxy-server">local cache.</a>
+						</div>
+						<br></br>
+						<div class="hdr">Notes:</div>
+						<div class="i2">
+							•	Review the “host” column and identify the host(s) that support <a href="https://helpcenter.veeam.com/docs/backup/vsphere/limiting_tasks.html?ver=110#task-limitation-for-components-with-several-roles">multiple</a> proxy roles:
+						</div>
+						<div class="i3">
+							o	Roles can be combined providing you allocate <a href="https://helpcenter.veeam.com/docs/backup/vsphere/limiting_tasks.html?ver=110">enough resources</a>.
+						</div>
+						<div class="i4">	If roles are non-concurrent then allocate the max resources calculated across all supported roles.</div>
+						<div class="i4">
+								If roles are concurrent then allocate <a href="https://helpcenter.veeam.com/docs/backup/vsphere/limiting_tasks.html?ver=110#task-limitation-for-components-with-several-roles">enough</a> resources for all roles
+						</div>
+						<div class="i4">	Keep in mind that CDP proxies are constantly active and transferring data, therefore it is imperative to “reserve” enough resources for its role and add what is necessary the combined role(s).</div>
+						<div class="i2">•	CDP proxies:</div>
+						<div class="i3">
+							o	Ensure <a href="https://helpcenter.veeam.com/docs/backup/vsphere/cdp_proxy.html?zoom_highlight=CDP+cache&amp;ver=110#vmware-cdp-proxy-cache">cache</a> is properly sized
+						</div>
+						<div class="i3">o	Flag CDP proxies with cache located on the C:\ drive as a potential risk.</div>
+						<div class="i2">
+							•	Compare assigned <a href="https://helpcenter.veeam.com/docs/backup/vsphere/limiting_tasks.html?ver=110">tasks</a> and core count and identify <a href="https://helpcenter.veeam.com/docs/backup/vsphere/limiting_tasks.html?ver=110#task-limitation-for-backup-proxies">oversubscription</a>.
+						</div>
+						<div class="i2">
+							•	Confirm the RAM to core ratio is <a href="https://helpcenter.veeam.com/docs/backup/vsphere/system_requirements.html?ver=110#vmware-cdp-proxy-server">adequate</a>.
+						</div>
+						<div class="i2">
+							•	Ensure there are enough resources for the base OS. (<a href="https://helpcenter.veeam.com/docs/backup/vsphere/system_requirements.html?ver=110#backup-proxy-server">backup proxy</a>, <a href="https://helpcenter.veeam.com/docs/backup/vsphere/system_requirements.html?ver=110#vmware-cdp-proxy-server">CDP proxy</a>)
+						</div>
+						<div class="i2">
+							•	Check selected <a href="https://helpcenter.veeam.com/docs/backup/vsphere/transport_modes.html?zoom_highlight=transport+mode&amp;ver=110">transport mode</a> and highlight where <a href="https://helpcenter.veeam.com/docs/backup/vsphere/network_mode_failover.html?ver=110">failover to network mode</a> is disabled when jobs are failing or where failover to network is enabled for jobs to run slower than expected (NBD traffic could flow through the <a href="https://helpcenter.veeam.com/docs/backup/vsphere/select_backup_network.html?zoom_highlight=preferred+network&amp;ver=110">wrong network</a>).
+						</div>
+						<div class="i2">
+							•	Hyper-V off host proxies should <a href="https://helpcenter.veeam.com/docs/backup/hyperv/offhost_backup_proxy.html?ver=110">match</a> protected Hyper-V host versions.
+						</div>
 
 
 
 
-					<h5>
-						<a href="#top">Back To Top</a>
-					</h5>
-				</body>
-			</html>
+						<h5>
+							<a href="#top">Back To Top</a>
+						</h5>
+					</body>
+				</html>
+			</div>
 		</div>
 	</xsl:template>
 	<xsl:template match="/root/servers">
 
-		<div id="serverList">
+		<div id="linkserverList">
 			<h2>
 				<u>Managed Server Info</u>
 			</h2>
-		</div>
-		<button type="button" class="collapsible">Show Managed Server Details</button>
-		<div class="content">
-			<html>
-				<body>
-					<table border="1">
-						<tr >
-							<th title="Server or Share name">Name</th>
-							<th title="Detected CPU Cores">Cores</th>
-							<th title="Detected RAM">RAM</th>
-							<th title="Server or Share Type">Type</th>
-							<th title="VMware API Version">Api Version</th>
-							<th title="Is the Server a Veeam Proxy?">Is Proxy</th>
-							<th title="Is the Server a Veeam Repository?">Is Repo</th>
-							<th title="Is the Server a Veeam WAN Accelerator?">Is WAN Acc.</th>
-							<th title="Is the Server unavailable?">Is UnAvailable</th>
-						</tr>
-						<xsl:for-each select="server">
-							<tr>
-								<td title="Name">
-									<xsl:value-of select="Name"/>
-								</td>
-								<td title="Cores" style="text-align:right">
-									<xsl:value-of select="Cores"/>
-								</td>
-								<td title="RAM" style="text-align:right">
-									<xsl:value-of select="RAM"/>
-								</td>
-								<td title="Type">
-									<xsl:value-of select="Type"/>
-								</td>
-								<td title="API Version" style="text-align:right">
-									<xsl:value-of select="ApiVersion"/>
-								</td>
-								<td  title="Is Proxy?" style="text-align:right">
-									<xsl:value-of select="proxyrole"/>
-								</td>
-								<td title="Is Repo?" style="text-align:right">
-									<xsl:value-of select="repo"/>
-								</td>
-								<td title="Is WAN Acc?" style="text-align:right">
-									<xsl:value-of select="wanacc"/>
-								</td>
-								<td title="Is Unavailable?" style="text-align:right">
-									<xsl:value-of select="isavailable"/>
-								</td>
+			<button type="button" class="collapsible">Show Managed Server Details</button>
+			<div class="content">
+				<html>
+					<body>
+						<table border="1">
+							<tr >
+								<th title="Server or Share name">Name</th>
+								<th title="Detected CPU Cores">Cores</th>
+								<th title="Detected RAM">RAM</th>
+								<th title="Server or Share Type">Type</th>
+								<th title="VMware API Version">Api Version</th>
+								<th title="Is the Server a Veeam Proxy?">Is Proxy</th>
+								<th title="Is the Server a Veeam Repository?">Is Repo</th>
+								<th title="Is the Server a Veeam WAN Accelerator?">Is WAN Acc.</th>
+								<th title="Is the Server unavailable?">Is UnAvailable</th>
 							</tr>
-						</xsl:for-each>
-					</table>
-					<br></br>
-					<div class="hdr">Summary:</div>
-					This lists all servers <a href="https://helpcenter.veeam.com/docs/backup/vsphere/setup_add_server.html?ver=110">managed</a> by Veeam that identify data sources (Hypervisors),  backup infrastructure servers (windows, linux) and Veeam Backup for AWS/Azure/GCP appliances.
-					<br></br><br></br>
-					<div class="hdr">Notes:</div>
-					<div class="i2">
-						•	Review the API version column and ensure they are <a href="https://helpcenter.veeam.com/docs/backup/vsphere/platform_support.html?ver=110">supported</a> and meet the minimum <a href="https://helpcenter.veeam.com/docs/backup/vsphere/system_requirements.html?ver=110">requirements</a>.
-					</div>
-					<div class="i2">
-						•	Highlight host supporting multiple roles and confirm <a href="">enough resources</a> are available to support them.
-					</div>
+							<xsl:for-each select="server">
+								<tr>
+									<td title="Name">
+										<xsl:value-of select="Name"/>
+									</td>
+									<td title="Cores" style="text-align:right">
+										<xsl:value-of select="Cores"/>
+									</td>
+									<td title="RAM" style="text-align:right">
+										<xsl:value-of select="RAM"/>
+									</td>
+									<td title="Type">
+										<xsl:value-of select="Type"/>
+									</td>
+									<td title="API Version" style="text-align:right">
+										<xsl:value-of select="ApiVersion"/>
+									</td>
+									<td  title="Is Proxy?" style="text-align:right">
+										<xsl:value-of select="proxyrole"/>
+									</td>
+									<td title="Is Repo?" style="text-align:right">
+										<xsl:value-of select="repo"/>
+									</td>
+									<td title="Is WAN Acc?" style="text-align:right">
+										<xsl:value-of select="wanacc"/>
+									</td>
+									<td title="Is Unavailable?" style="text-align:right">
+										<xsl:value-of select="isavailable"/>
+									</td>
+								</tr>
+							</xsl:for-each>
+						</table>
+						<br></br>
+						<div class="hdr">Summary:</div>
+						This lists all servers <a href="https://helpcenter.veeam.com/docs/backup/vsphere/setup_add_server.html?ver=110">managed</a> by Veeam that identify data sources (Hypervisors),  backup infrastructure servers (windows, linux) and Veeam Backup for AWS/Azure/GCP appliances.
+						<br></br><br></br>
+						<div class="hdr">Notes:</div>
+						<div class="i2">
+							•	Review the API version column and ensure they are <a href="https://helpcenter.veeam.com/docs/backup/vsphere/platform_support.html?ver=110">supported</a> and meet the minimum <a href="https://helpcenter.veeam.com/docs/backup/vsphere/system_requirements.html?ver=110">requirements</a>.
+						</div>
+						<div class="i2">
+							•	Highlight host supporting multiple roles and confirm <a href="">enough resources</a> are available to support them.
+						</div>
 
-					<h5>
-						<a href="#top">Back To Top</a>
-					</h5>
-				</body>
-			</html>
+						<h5>
+							<a href="#top">Back To Top</a>
+						</h5>
+					</body>
+				</html>
+			</div>
 		</div>
 	</xsl:template>
 	<xsl:template match="/root/jobSummary">
-		<div id ="jobSummary">
+		<div id ="linkjobSummary">
 			<h2>
 				<u>Job Summary</u>
 			</h2>
@@ -1420,342 +1471,342 @@ for (i = 0; i < navLink.length; i++) {
 		</html>
 	</xsl:template>
 	<xsl:template match="/root/concurrencyChart_job7">
-		<div id="jobConcurrency7">
+		<div id="linkjobConcurrency7">
 			<h2>
 				<u>Job Concurrency Table (7 days)</u>
 			</h2>
-		</div>
-		<button type="button" class="collapsible">Show Concurrency Table</button>
-		<div class="content">
-			<html>
-				<body>
-					<table border="1">
-						<tr >
-							<th title="">Hour</th>
-							<th title="">Sunday</th>
-							<th title="">Monday</th>
-							<th title="">Tuesday</th>
-							<th title="">Wednesday</th>
-							<th title="">Thursday</th>
-							<th title="">Friday</th>
-							<th title="">Saturday</th>
-						</tr>
-						<xsl:for-each select="day">
-							<tr>
-								<td title="" style="text-align:right">
-									<xsl:value-of select="hour"/>
-								</td>
-								<td title="">
-									<xsl:value-of select="count[@day='Sunday']"/>
-								</td>
-								<td title="">
-									<xsl:value-of select="count[@day='Monday']"/>
-								</td>
-								<td title="">
-									<xsl:value-of select="count[@day='Tuesday']"/>
-								</td>
-								<td title="">
-									<xsl:value-of select="count[@day='Wednesday']"/>
-								</td>
-								<td title="">
-									<xsl:value-of select="count[@day='Thursday']"/>
-								</td>
-								<td title="">
-									<xsl:value-of select="count[@day='Friday']"/>
-								</td>
-								<td title="">
-									<xsl:value-of select="count[@day='Saturday']"/>
-								</td>
-
-
-
-
+			<button type="button" class="collapsible">Show Concurrency Table</button>
+			<div class="content">
+				<html>
+					<body>
+						<table border="1">
+							<tr >
+								<th title="">Hour</th>
+								<th title="">Sunday</th>
+								<th title="">Monday</th>
+								<th title="">Tuesday</th>
+								<th title="">Wednesday</th>
+								<th title="">Thursday</th>
+								<th title="">Friday</th>
+								<th title="">Saturday</th>
 							</tr>
-						</xsl:for-each>
-					</table>
-					<br></br>
-					<div class="hdr">Summary:</div><br></br>
-					The concurrency table is meant to serve as a heat map. Each hour of each day is represented. The number in each cell represents the highest calculated number of total concurrent running jobs within the specific hour. This data can be used to ensure more accurate VBR server sizing.
-					<br></br><br></br>
-					<div class="hdr">Notes:</div><br></br>
-					<div class="subhdr">Compute</div><br></br>
-					<div class="i2">Recommended Veeam backup server configuration is 1 CPU core (physical or virtual) and 4 GB RAM per 10 concurrently running jobs. Concurrent jobs include any running backup or replication jobs as well as any job with a continuous schedule such as backup copy jobs and tape jobs.</div>
-					<br></br>
-					<div class="i2">
-						<a href="https://bp.veeam.com/vbr/3_Build_structures/B_Veeam_Components/B_VBR_Server/Backup_Server.html" target="_blank">
-							The minimum recommendation is 2 CPU cores and 8 GB RAM.
-						</a>
-					</div><br>
-					</br>
-					<div class ="i2">
-						If the required resources exceed the current VBR CPU and RAM, job scheduling should be analyzed to minimize the number of concurrent jobs. If job scheduling changes are not possible, multiple VBR servers should be deployed, and jobs migrated to the new servers.
-					</div>
-					<br>
-					</br>
-					<div class="subhdr">Veeam Microsoft SQL Database</div><br></br>
-					<!--<div class="i2">
+							<xsl:for-each select="day">
+								<tr>
+									<td title="" style="text-align:right">
+										<xsl:value-of select="hour"/>
+									</td>
+									<td title="">
+										<xsl:value-of select="count[@day='Sunday']"/>
+									</td>
+									<td title="">
+										<xsl:value-of select="count[@day='Monday']"/>
+									</td>
+									<td title="">
+										<xsl:value-of select="count[@day='Tuesday']"/>
+									</td>
+									<td title="">
+										<xsl:value-of select="count[@day='Wednesday']"/>
+									</td>
+									<td title="">
+										<xsl:value-of select="count[@day='Thursday']"/>
+									</td>
+									<td title="">
+										<xsl:value-of select="count[@day='Friday']"/>
+									</td>
+									<td title="">
+										<xsl:value-of select="count[@day='Saturday']"/>
+									</td>
+
+
+
+
+								</tr>
+							</xsl:for-each>
+						</table>
+						<br></br>
+						<div class="hdr">Summary:</div><br></br>
+						The concurrency table is meant to serve as a heat map. Each hour of each day is represented. The number in each cell represents the highest calculated number of total concurrent running jobs within the specific hour. This data can be used to ensure more accurate VBR server sizing.
+						<br></br><br></br>
+						<div class="hdr">Notes:</div><br></br>
+						<div class="subhdr">Compute</div><br></br>
+						<div class="i2">Recommended Veeam backup server configuration is 1 CPU core (physical or virtual) and 4 GB RAM per 10 concurrently running jobs. Concurrent jobs include any running backup or replication jobs as well as any job with a continuous schedule such as backup copy jobs and tape jobs.</div>
+						<br></br>
+						<div class="i2">
+							<a href="https://bp.veeam.com/vbr/3_Build_structures/B_Veeam_Components/B_VBR_Server/Backup_Server.html" target="_blank">
+								The minimum recommendation is 2 CPU cores and 8 GB RAM.
+							</a>
+						</div><br>
+						</br>
+						<div class ="i2">
+							If the required resources exceed the current VBR CPU and RAM, job scheduling should be analyzed to minimize the number of concurrent jobs. If job scheduling changes are not possible, multiple VBR servers should be deployed, and jobs migrated to the new servers.
+						</div>
+						<br>
+						</br>
+						<div class="subhdr">Veeam Microsoft SQL Database</div><br></br>
+						<!--<div class="i2">
 					Veeam Backup &amp; Replication may consume high amounts of CPU and RAM while processing backup or replication jobs. To achieve better performance and load balancing it is necessary to provide sufficient RAM and CPU resources to Veeam components. Remember to add additional resources, if the backup server is responsible for multiple roles, such as repository server or backup proxy.
 				</div><br></br>-->
-					<div class="i2">
-						<div class="bld">
-							Please follow these guidelines:
+						<div class="i2">
+							<div class="bld">
+								Please follow these guidelines:
+							</div>
+						</div><br></br>
+						<div class="i4">
+							<table border="1">
+								<tr bgcolor="lightblue">
+									<th>Number of concurrently running jobs</th>
+									<th>CPU</th>
+									<th>RAM</th>
+								</tr>
+								<tr>
+									<td>Up to 25</td>
+									<td>2 CPU</td>
+									<td>4 GB</td>
+								</tr>
+								<tr>
+									<td>Up to 50</td>
+									<td>4 CPU</td>
+									<td>8 GB</td>
+								</tr>
+								<tr>
+									<td>Up to 100</td>
+									<td>8 CPU</td>
+									<td>16 GB</td>
+								</tr>
+							</table>
 						</div>
-					</div><br></br>
-					<div class="i4">
-						<table border="1">
-							<tr bgcolor="lightblue">
-								<th>Number of concurrently running jobs</th>
-								<th>CPU</th>
-								<th>RAM</th>
-							</tr>
-							<tr>
-								<td>Up to 25</td>
-								<td>2 CPU</td>
-								<td>4 GB</td>
-							</tr>
-							<tr>
-								<td>Up to 50</td>
-								<td>4 CPU</td>
-								<td>8 GB</td>
-							</tr>
-							<tr>
-								<td>Up to 100</td>
-								<td>8 CPU</td>
-								<td>16 GB</td>
-							</tr>
-						</table>
-					</div>
-					<br></br>
-					<div class="i2">
-						It is recommended to install SQL Standard or Enterprise Edition if any of the following apply:
-					</div><br></br>
-					<div class="i3">• When protecting more than 500 servers. The max database size allowed by Express Edition is usually sufficient, so do not consider this a constraint. Veeam Backup &amp; Replication console and job processing may however slow down as a result of CPU and RAM constraints on the SQL Server Express instance.</div>
-					<div class="i3">• When using Files to Tape jobs extensively, the database may grow significantly, and the 10 GB limitation may be exceeded quickly.</div>
-					<div class="i3">
-						• When unable to configure an external staging server for use with Veeam Explorer for Microsoft SQL Server or Veeam Explorer for Microsoft SharePoint. When working with databases larger than 10 GB, SQL Server Express cannot mount the databases.<br></br>
-					</div>
-					<div class="i3">
-						• When databases are using advanced features of Microsoft SQL Server. Such as encryption or table partitioning, the licensing level of the staging server (local or remote) must match the level of the original instance.
-					</div>
-					<h5>
-						<a href="#top">Back To Top</a>
-					</h5>
-				</body>
-			</html>
+						<br></br>
+						<div class="i2">
+							It is recommended to install SQL Standard or Enterprise Edition if any of the following apply:
+						</div><br></br>
+						<div class="i3">• When protecting more than 500 servers. The max database size allowed by Express Edition is usually sufficient, so do not consider this a constraint. Veeam Backup &amp; Replication console and job processing may however slow down as a result of CPU and RAM constraints on the SQL Server Express instance.</div>
+						<div class="i3">• When using Files to Tape jobs extensively, the database may grow significantly, and the 10 GB limitation may be exceeded quickly.</div>
+						<div class="i3">
+							• When unable to configure an external staging server for use with Veeam Explorer for Microsoft SQL Server or Veeam Explorer for Microsoft SharePoint. When working with databases larger than 10 GB, SQL Server Express cannot mount the databases.<br></br>
+						</div>
+						<div class="i3">
+							• When databases are using advanced features of Microsoft SQL Server. Such as encryption or table partitioning, the licensing level of the staging server (local or remote) must match the level of the original instance.
+						</div>
+						<h5>
+							<a href="#top">Back To Top</a>
+						</h5>
+					</body>
+				</html>
+			</div>
 		</div>
 	</xsl:template>
 	<xsl:template match="/root/concurrencyChart_task7">
-		<div id="jobConcurrency31">
+		<div id="linktaskConcurrency7">
 			<h2>
-				<u>VM Concurrency Table (7 days)</u>
+				<u>VM Task Concurrency Table (7 days)</u>
 			</h2>
-		</div>
-		<button type="button" class="collapsible">Show Concurrency Table</button>
-		<div class="content">
-			<html>
-				<body>
-					<table border="1">
-						<tr >
-							<th title="">Hour</th>
-							<th title="">Sunday</th>
-							<th title="">Monday</th>
-							<th title="">Tuesday</th>
-							<th title="">Wednesday</th>
-							<th title="">Thursday</th>
-							<th title="">Friday</th>
-							<th title="">Saturday</th>
-						</tr>
-						<xsl:for-each select="day">
-							<tr>
-								<td title="" style="text-align:right">
-									<xsl:value-of select="hour"/>
-								</td>
-								<td title="">
-									<xsl:value-of select="count[@day='Sunday']"/>
-								</td>
-								<td title="">
-									<xsl:value-of select="count[@day='Monday']"/>
-								</td>
-								<td title="">
-									<xsl:value-of select="count[@day='Tuesday']"/>
-								</td>
-								<td title="">
-									<xsl:value-of select="count[@day='Wednesday']"/>
-								</td>
-								<td title="">
-									<xsl:value-of select="count[@day='Thursday']"/>
-								</td>
-								<td title="">
-									<xsl:value-of select="count[@day='Friday']"/>
-								</td>
-								<td title="">
-									<xsl:value-of select="count[@day='Saturday']"/>
-								</td>
-
-
-
-
+			<button type="button" class="collapsible">Show Concurrency Table</button>
+			<div class="content">
+				<html>
+					<body>
+						<table border="1">
+							<tr >
+								<th title="">Hour</th>
+								<th title="">Sunday</th>
+								<th title="">Monday</th>
+								<th title="">Tuesday</th>
+								<th title="">Wednesday</th>
+								<th title="">Thursday</th>
+								<th title="">Friday</th>
+								<th title="">Saturday</th>
 							</tr>
-						</xsl:for-each>
-					</table>
-					<br></br>
-					<div class="hdr">Summary:</div><br></br>
-					The concurrency table is meant to serve as a heat map. Each hour of each day is represented. The number in each cell represents the highest calculated number of concurrent running Tasks within the specific hour. This data can be used to aid in job scheduling and proxy/repository task sizing.
-					<br></br><br></br>
-					<div class="hdr">Notes:</div><br></br>
-					<div class="i2">
-						Use this chart to check maximum concurrency. Each task here should be backed by 1 corresponding Proxy Task and 1/3 corresponding Repository Task.
-					</div>
-					<h5>
-						<a href="#top">Back To Top</a>
-					</h5>
-				</body>
-			</html>
+							<xsl:for-each select="day">
+								<tr>
+									<td title="" style="text-align:right">
+										<xsl:value-of select="hour"/>
+									</td>
+									<td title="">
+										<xsl:value-of select="count[@day='Sunday']"/>
+									</td>
+									<td title="">
+										<xsl:value-of select="count[@day='Monday']"/>
+									</td>
+									<td title="">
+										<xsl:value-of select="count[@day='Tuesday']"/>
+									</td>
+									<td title="">
+										<xsl:value-of select="count[@day='Wednesday']"/>
+									</td>
+									<td title="">
+										<xsl:value-of select="count[@day='Thursday']"/>
+									</td>
+									<td title="">
+										<xsl:value-of select="count[@day='Friday']"/>
+									</td>
+									<td title="">
+										<xsl:value-of select="count[@day='Saturday']"/>
+									</td>
+
+
+
+
+								</tr>
+							</xsl:for-each>
+						</table>
+						<br></br>
+						<div class="hdr">Summary:</div><br></br>
+						The concurrency table is meant to serve as a heat map. Each hour of each day is represented. The number in each cell represents the highest calculated number of concurrent running Tasks within the specific hour. This data can be used to aid in job scheduling and proxy/repository task sizing.
+						<br></br><br></br>
+						<div class="hdr">Notes:</div><br></br>
+						<div class="i2">
+							Use this chart to check maximum concurrency. Each task here should be backed by 1 corresponding Proxy Task and 1/3 corresponding Repository Task.
+						</div>
+						<h5>
+							<a href="#top">Back To Top</a>
+						</h5>
+					</body>
+				</html>
+			</div>
 		</div>
 	</xsl:template>
 	<xsl:template match="/root/regOptions">
-		<div id="regkeys">
+		<div id="linkregkeys">
 			<h2>
 				<u>Non-Default Registry Keys</u>
 			</h2>
-		</div>
-		<button type="button" class="collapsible">Show RegKey Details</button>
-		<div class="content">
-			<html>
-				<body>
-					<table border="1">
-						<tr >
-							<th title="">Key</th>
-							<th title="">Value</th>
-						</tr>
-						<xsl:for-each select="rOpt">
-							<tr>
-								<td title="" style="text-align:right">
-									<xsl:value-of select="key"/>
-								</td>
-								<td title="">
-									<xsl:value-of select="value"/>
-								</td>
+			<button type="button" class="collapsible">Show RegKey Details</button>
+			<div class="content">
+				<html>
+					<body>
+						<table border="1">
+							<tr >
+								<th title="">Key</th>
+								<th title="">Value</th>
 							</tr>
-						</xsl:for-each>
-					</table>
-					<br></br>
-					<div class="hdr">Summary:</div><br></br>
-					This table details any Registry Keys that are different from the default keys set during a basic install of Veeam Backup &amp; Replication. Specifically in <a class="bld">HKLM\SOFTWARE\Veeam\Veeam Backup and Replication</a>
-					<br></br>
-					<div class="hdr">Notes:</div><br></br>
-					Because some registry keys are tied to bug fixes and/or other tweaks recommended for various reasons, it's best advised to consult your past support case emails and notes or contact your Veeam Engineer for any questions regarding keys shown here.<br></br>
-					<br></br>
-					Some keys, such as LoggingLevel and other "Log" related keys are perfectly fine to adjust, if required, when following the corresponding <a href="https://www.veeam.com/kb1825">KB Article.</a>
-					<br></br><br></br>
-					<!--<div class="hdr">Identify Potential Issues:</div><br></br>-->
+							<xsl:for-each select="rOpt">
+								<tr>
+									<td title="" style="text-align:right">
+										<xsl:value-of select="key"/>
+									</td>
+									<td title="">
+										<xsl:value-of select="value"/>
+									</td>
+								</tr>
+							</xsl:for-each>
+						</table>
+						<br></br>
+						<div class="hdr">Summary:</div><br></br>
+						This table details any Registry Keys that are different from the default keys set during a basic install of Veeam Backup &amp; Replication. Specifically in <a class="bld">HKLM\SOFTWARE\Veeam\Veeam Backup and Replication</a>
+						<br></br>
+						<div class="hdr">Notes:</div><br></br>
+						Because some registry keys are tied to bug fixes and/or other tweaks recommended for various reasons, it's best advised to consult your past support case emails and notes or contact your Veeam Engineer for any questions regarding keys shown here.<br></br>
+						<br></br>
+						Some keys, such as LoggingLevel and other "Log" related keys are perfectly fine to adjust, if required, when following the corresponding <a href="https://www.veeam.com/kb1825">KB Article.</a>
+						<br></br><br></br>
+						<!--<div class="hdr">Identify Potential Issues:</div><br></br>-->
 
-					<h5>
-						<a href="#top">Back To Top</a>
-					</h5>
-				</body>
-			</html>
+						<h5>
+							<a href="#top">Back To Top</a>
+						</h5>
+					</body>
+				</html>
+			</div>
 		</div>
 	</xsl:template>
 	<xsl:template match="/root/jobs">
-		<div id="jobs">
+		<div id="linkjobs">
 			<h2>
 				<u>Job Info</u>
 			</h2>
-		</div>
-		<button type="button" class="collapsible">Show Job Details</button>
-		<div class="content">
-			<html>
-				<body>
-					<h3>
-						Job Info<h5>
-							<!--Summary of servers manually added into Veeam<br></br>-->
-							<xsl:value-of select="info"/>
-						</h5>
-					</h3>
-					<div class="hdr">Summary:</div>
-					<div class="i2">•	Jobs define source data, destination, schedule, and advanced settings on handling that source data. There are multiple job types within Veeam Backup &amp; Replication, including Backup, Backup Copy, CDP Policy, NAS Backup, and more. Not all job types will have data in every column.</div>
-					<br></br>
-					<div class="hdr">Notes:</div>
-					<div class="i2">
-						•	Verify that the Restore Points and Schedule Options listed for the Job match with the source application’s required RPO. See <a href="https://helpcenter.veeam.com/docs/backup/vsphere/backup_job_schedule_vm.html?ver=110">Job Scheduling</a>.
-					</div>
-					<table border="1">
-						<tr >
-							<th title="Job Name">Name</th>
-							<th title="Target Repository Name">Repository</th>
-							<th title="Actual used size of source data in job">Source Size</th>
-							<th title="Desired Restore Points to be kept">Restore Points</th>
-							<th title="Is encryption enabled for the job?">Encrypted</th>
-							<th title="">Job Type</th>
-							<th title="">Algorithm</th>
-							<th title="">Schedule Enabled Time</th>
-							<th title="">Full Backup Days</th>
-							<th title="">Full Backup Schedule</th>
-							<th title="">Schedule Options</th>
-							<th title="">Transform Full To Synth</th>
-							<th title="">Transform Inc To Synth</th>
-							<th title="">Transform Days</th>
-						</tr>
-						<xsl:for-each select="job">
-							<tr>
-								<td title="Name" style="text-align:right">
-									<xsl:value-of select="name"/>
-								</td>
-								<td title="Repository">
-									<xsl:value-of select="repo"/>
-								</td>
-								<td title="Actual size of source data">
-									<xsl:value-of select ="sourceSize"/>
-								</td>
-								<td title="Restore Points" style="text-align:right">
-									<xsl:value-of select="restorePoints"/>
-								</td>
-								<td title="">
-									<xsl:value-of select ="encrypted"/>
-								</td>
-								<td title="Job Type">
-									<xsl:value-of select="jobType"/>
-								</td>
-								<td title="">
-
-									<xsl:value-of select="alg"/>
-								</td>
-								<td title="" style="text-align:right">
-									<xsl:value-of select="scheduleEnabledTime"/>
-								</td>
-								<td title="">
-									<xsl:value-of select="fulldays"/>
-								</td>
-								<td title="">
-									<xsl:value-of select="fullkind"/>
-								</td>
-
-
-								<td title="Schedule Options">
-									<xsl:value-of select="scheduleoptions"/>
-								</td>
-
-								<td title="Transform Full to Synthetic" style="text-align:right">
-									<xsl:value-of select="transformfulltosynth"/>
-								</td>
-								<td title="Transform Increment to Synthetic" style="text-align:right">
-									<xsl:value-of select="transforminctosynth"/>
-								</td>
-								<td title="Transform days" style="text-align:right">
-									<xsl:value-of select="transformdays"/>
-								</td>
+			<button type="button" class="collapsible">Show Job Details</button>
+			<div class="content">
+				<html>
+					<body>
+						<h3>
+							Job Info<h5>
+								<!--Summary of servers manually added into Veeam<br></br>-->
+								<xsl:value-of select="info"/>
+							</h5>
+						</h3>
+						<div class="hdr">Summary:</div>
+						<div class="i2">•	Jobs define source data, destination, schedule, and advanced settings on handling that source data. There are multiple job types within Veeam Backup &amp; Replication, including Backup, Backup Copy, CDP Policy, NAS Backup, and more. Not all job types will have data in every column.</div>
+						<br></br>
+						<div class="hdr">Notes:</div>
+						<div class="i2">
+							•	Verify that the Restore Points and Schedule Options listed for the Job match with the source application’s required RPO. See <a href="https://helpcenter.veeam.com/docs/backup/vsphere/backup_job_schedule_vm.html?ver=110">Job Scheduling</a>.
+						</div>
+						<table border="1">
+							<tr >
+								<th title="Job Name">Name</th>
+								<th title="Target Repository Name">Repository</th>
+								<th title="Actual used size of source data in job">Source Size</th>
+								<th title="Desired Restore Points to be kept">Restore Points</th>
+								<th title="Is encryption enabled for the job?">Encrypted</th>
+								<th title="">Job Type</th>
+								<th title="">Algorithm</th>
+								<th title="">Schedule Enabled Time</th>
+								<th title="">Full Backup Days</th>
+								<th title="">Full Backup Schedule</th>
+								<th title="">Schedule Options</th>
+								<th title="">Transform Full To Synth</th>
+								<th title="">Transform Inc To Synth</th>
+								<th title="">Transform Days</th>
 							</tr>
-						</xsl:for-each>
-					</table>
-					<br></br>
+							<xsl:for-each select="job">
+								<tr>
+									<td title="Name" style="text-align:right">
+										<xsl:value-of select="name"/>
+									</td>
+									<td title="Repository">
+										<xsl:value-of select="repo"/>
+									</td>
+									<td title="Actual size of source data">
+										<xsl:value-of select ="sourceSize"/>
+									</td>
+									<td title="Restore Points" style="text-align:right">
+										<xsl:value-of select="restorePoints"/>
+									</td>
+									<td title="">
+										<xsl:value-of select ="encrypted"/>
+									</td>
+									<td title="Job Type">
+										<xsl:value-of select="jobType"/>
+									</td>
+									<td title="">
+
+										<xsl:value-of select="alg"/>
+									</td>
+									<td title="" style="text-align:right">
+										<xsl:value-of select="scheduleEnabledTime"/>
+									</td>
+									<td title="">
+										<xsl:value-of select="fulldays"/>
+									</td>
+									<td title="">
+										<xsl:value-of select="fullkind"/>
+									</td>
 
 
-					<h5>
-						<a href="#top">Back To Top</a>
-					</h5>
-				</body>
-			</html>
+									<td title="Schedule Options">
+										<xsl:value-of select="scheduleoptions"/>
+									</td>
+
+									<td title="Transform Full to Synthetic" style="text-align:right">
+										<xsl:value-of select="transformfulltosynth"/>
+									</td>
+									<td title="Transform Increment to Synthetic" style="text-align:right">
+										<xsl:value-of select="transforminctosynth"/>
+									</td>
+									<td title="Transform days" style="text-align:right">
+										<xsl:value-of select="transformdays"/>
+									</td>
+								</tr>
+							</xsl:for-each>
+						</table>
+						<br></br>
+
+
+						<h5>
+							<a href="#top">Back To Top</a>
+						</h5>
+					</body>
+				</html>
+			</div>
 		</div>
 	</xsl:template>
 
@@ -1764,160 +1815,160 @@ for (i = 0; i < navLink.length; i++) {
   </xsl:template>-->
 	<xsl:template match="/root/jobSessionsSummary">
 
-		<div id ="t">
+		<div id ="linkt">
 			<h2>
 				<u>Job Session Summary (7 Days)</u>
 			</h2>
-		</div>
-		<button type="button" class="collapsible">Show Job Details</button>
-		<div class="content">
-			<html>
-				<header>
-					<link rel="stylesheet" type="text/css" href="vhc.css"></link>
-				</header>
-				<body>
-					<table border="1">
-						<tr >
-							<th title="Job Name">
-								Job Name
-							</th>
-							<th title="Number of Items in the job">
-								Items
-							</th>
-							<th title="Minimum calculated run time in minutes">
-								Min Time (min)
-							</th>
-							<th title="Maximum calculated run time in minutes">
-								Max Time (min)
-							</th>
-							<th title="Average run time in minutes">
-								Avg Time (min)
-							</th>
-							<th title="Total detected sessions">
-								Total Sessions
-							</th>
-							<th title="Success rate over all detected sessions">
-								Success Rate %
-							</th>
-							<th title="Average calculated size of the backup files">
-								Avg Backup Size TB
-							</th>
-							<th title="Largest single backup file size for this job">
-								Max Backup Size TB
-							</th>
-							<th title="Average calculated size of data to be backed up (provisioned, not actual)">
-								Avg Data Size TB
-							</th>
-							<th title="Largest VM/Server size (provisioned, not actual)">
-								Max Data Size TB
-							</th>
-							<th title="Average calculated changerate of the job">
-								Avg ChangeRate %
-							</th>
-							<th title="Number of times the job had to wait for resources">
-								Wait For Res. Count
-							</th>
-							<th title="Logest detected wait time the job experienced">
-								Max Wait (dd.hh:mm:ss)
-							</th>
-							<th title="Average calculated wait time over all detected waits">
-								Avg Wait (dd.hh:mm:ss)
-							</th>
-							<th title="Job Type">JobType</th>
-						</tr>
-						<xsl:for-each select="session">
-							<tr>
-								<td title="Job Name">
-									<xsl:value-of select="name"/>
-								</td>
-								<td title="Items" style="text-align:right">
-									<xsl:value-of select="items"/>
-								</td>
-								<td title="Min Time" style="text-align:right">
-									<xsl:value-of select="mintime"/>
-								</td>
-								<td title="Max Time" style="text-align:right">
-									<xsl:value-of select="maxtime"/>
-								</td>
-								<td title="Avg Time" style="text-align:right">
-									<xsl:value-of select="avgtime"/>
-								</td>
-								<td title="Session count" style="text-align:right">
-									<xsl:value-of select="sessions"/>
-								</td>
-								<td title="Success rate" style="text-align:right">
-									<xsl:value-of select="successrate"/>
-								</td>
-								<td title="Avg backup size" style="text-align:right">
-									<xsl:value-of select="avgBackupSize"/>
-								</td>
-								<td title="Max backup size" style="text-align:right">
-									<xsl:value-of select="maxBackupSize"/>
-								</td>
-								<td title="Avg data size" style="text-align:right">
-									<xsl:value-of select="avgDataSize"/>
-								</td>
-								<td title="Max data size" style="text-align:right">
-									<xsl:value-of select="maxDataSize"/>
-								</td>
-								<td title="Change rate" style="text-align:right">
-									<xsl:value-of select="changerate"/>
-								</td>
-								<td title="Wait count" style="text-align:right">
-									<xsl:value-of select="waitCount"/>
-								</td>
-								<td title="Max wait" style="text-align:right">
-									<xsl:value-of select="maxWait"/>
-								</td>
-								<td title="Avg wait" style="text-align:right">
-									<xsl:value-of select="avgWait"/>
-								</td>
-								<td title="Type">
-									<xsl:value-of select="type"/>
-								</td>
+			<button type="button" class="collapsible">Show Job Details</button>
+			<div class="content">
+				<html>
+					<header>
+						<link rel="stylesheet" type="text/css" href="vhc.css"></link>
+					</header>
+					<body>
+						<table border="1">
+							<tr >
+								<th title="Job Name">
+									Job Name
+								</th>
+								<th title="Number of Items in the job">
+									Items
+								</th>
+								<th title="Minimum calculated run time in minutes">
+									Min Time (min)
+								</th>
+								<th title="Maximum calculated run time in minutes">
+									Max Time (min)
+								</th>
+								<th title="Average run time in minutes">
+									Avg Time (min)
+								</th>
+								<th title="Total detected sessions">
+									Total Sessions
+								</th>
+								<th title="Success rate over all detected sessions">
+									Success Rate %
+								</th>
+								<th title="Average calculated size of the backup files">
+									Avg Backup Size TB
+								</th>
+								<th title="Largest single backup file size for this job">
+									Max Backup Size TB
+								</th>
+								<th title="Average calculated size of data to be backed up (provisioned, not actual)">
+									Avg Data Size TB
+								</th>
+								<th title="Largest VM/Server size (provisioned, not actual)">
+									Max Data Size TB
+								</th>
+								<th title="Average calculated changerate of the job">
+									Avg ChangeRate %
+								</th>
+								<th title="Number of times the job had to wait for resources">
+									Wait For Res. Count
+								</th>
+								<th title="Logest detected wait time the job experienced">
+									Max Wait (dd.hh:mm:ss)
+								</th>
+								<th title="Average calculated wait time over all detected waits">
+									Avg Wait (dd.hh:mm:ss)
+								</th>
+								<th title="Job Type">JobType</th>
 							</tr>
-						</xsl:for-each>
-					</table>
-					<br>
-						<br></br>
-					</br>
-					<div class="hdr">Summary:</div>
-					This table is meant to detail the recent history of individual jobs over the last 7 days.
-					<div class="hdr">
-						Notes:
-						<br></br>
-						<br></br>
-					</div>
-					<div class="subhdr">
-						Waiting for Resources / job session length issues:
-					</div>
-					<div class="i2">
-						•	Scheduling jobs to start at different time slots will help to distribute resources and prevent the bottleneck that is a job waiting on available resources. (Ex. Instead of scheduling your jobs to all start at 8:00PM, start one job at 8:00, another at 8:30, and another at 9:00.)<br></br>
-					</div>
-					<div class="i2">
-						•	If resources allow, increase the number of concurrent tasks allowed on your proxies.
-						<a href="https://helpcenter.veeam.com/docs/backup/vsphere/vmware_proxy_server.html?ver=110#:~:text=In%20the%20Max%20concurrent%20tasks%20field%2C%20specify%20the%20number%20of%20tasks%20that%20the%20backup%20proxy%20must%20handle%20in%20parallel.%20If%20this%20value%20is%20exceeded%2C%20the%20backup%20proxy%20will%20not%20start%20a%20new%20task%20until%20one%20of%20current%20tasks%20finishes.">
-							See How to set max concurrent tasks.
-						</a>
-					</div>
-					<div class="i3">o	If your backup proxy does not have adequate resources to increase tasks, and it is a virtual machine, you should consider increasing the amount of CPU and RAM available to the proxy.</div>
-					<div class="i3">o	If adding resources to existing proxies is not an options, consider deploying additional backup proxies from within “Backup Infrastructure->Backup Proxies”</div>
-					<div class="i2">•	Make sure that your backup job or replication job is selecting the correct proxies by viewing the job session statistics in the VBR Console.</div>
-					<div class="i2">•	Investigate backup job performance. If specific jobs are taking longer to process than normal, check for warnings, compare the bottleneck statistics to previous jobs sessions, and try to isolate the problem to a specific proxy, repository, host, or datastore.</div>
-					<div class="i3">o	Move larger VMs / servers to their own job and schedule to ensure conflict does not occur with faster completing job's backup window (schedule these jobs before all other jobs or after all other jobs, for example)</div>
-					<div class="i2">•	Separate NAS Proxies, Cache Repos, and Repositories from VM proxies and VM and Agent Repositories</div>
-					<div class="i2">
-						•	<a href="https://helpcenter.veeam.com/docs/backup/vsphere/gateway_server.html?ver=110#gateway-servers-deployment">Use Static Gateways and Mount Servers</a>
-						if possible to offload resources consumption required for synthetic operations, SOBR offload processing, backup copy jobs, and other tasks.
-					</div>
-					<div class="i2">
-						•	If appropriate,<a href="https://www.veeam.com/kb2660">review Architecture Guidelines for deduplicating storage systems.</a>
-					</div>
-					<h5>
-						<a href="#top">Back To Top</a>
-					</h5>
-				</body>
-			</html>
+							<xsl:for-each select="session">
+								<tr>
+									<td title="Job Name">
+										<xsl:value-of select="name"/>
+									</td>
+									<td title="Items" style="text-align:right">
+										<xsl:value-of select="items"/>
+									</td>
+									<td title="Min Time" style="text-align:right">
+										<xsl:value-of select="mintime"/>
+									</td>
+									<td title="Max Time" style="text-align:right">
+										<xsl:value-of select="maxtime"/>
+									</td>
+									<td title="Avg Time" style="text-align:right">
+										<xsl:value-of select="avgtime"/>
+									</td>
+									<td title="Session count" style="text-align:right">
+										<xsl:value-of select="sessions"/>
+									</td>
+									<td title="Success rate" style="text-align:right">
+										<xsl:value-of select="successrate"/>
+									</td>
+									<td title="Avg backup size" style="text-align:right">
+										<xsl:value-of select="avgBackupSize"/>
+									</td>
+									<td title="Max backup size" style="text-align:right">
+										<xsl:value-of select="maxBackupSize"/>
+									</td>
+									<td title="Avg data size" style="text-align:right">
+										<xsl:value-of select="avgDataSize"/>
+									</td>
+									<td title="Max data size" style="text-align:right">
+										<xsl:value-of select="maxDataSize"/>
+									</td>
+									<td title="Change rate" style="text-align:right">
+										<xsl:value-of select="changerate"/>
+									</td>
+									<td title="Wait count" style="text-align:right">
+										<xsl:value-of select="waitCount"/>
+									</td>
+									<td title="Max wait" style="text-align:right">
+										<xsl:value-of select="maxWait"/>
+									</td>
+									<td title="Avg wait" style="text-align:right">
+										<xsl:value-of select="avgWait"/>
+									</td>
+									<td title="Type">
+										<xsl:value-of select="type"/>
+									</td>
+								</tr>
+							</xsl:for-each>
+						</table>
+						<br>
+							<br></br>
+						</br>
+						<div class="hdr">Summary:</div>
+						This table is meant to detail the recent history of individual jobs over the last 7 days.
+						<div class="hdr">
+							Notes:
+							<br></br>
+							<br></br>
+						</div>
+						<div class="subhdr">
+							Waiting for Resources / job session length issues:
+						</div>
+						<div class="i2">
+							•	Scheduling jobs to start at different time slots will help to distribute resources and prevent the bottleneck that is a job waiting on available resources. (Ex. Instead of scheduling your jobs to all start at 8:00PM, start one job at 8:00, another at 8:30, and another at 9:00.)<br></br>
+						</div>
+						<div class="i2">
+							•	If resources allow, increase the number of concurrent tasks allowed on your proxies.
+							<a href="https://helpcenter.veeam.com/docs/backup/vsphere/vmware_proxy_server.html?ver=110#:~:text=In%20the%20Max%20concurrent%20tasks%20field%2C%20specify%20the%20number%20of%20tasks%20that%20the%20backup%20proxy%20must%20handle%20in%20parallel.%20If%20this%20value%20is%20exceeded%2C%20the%20backup%20proxy%20will%20not%20start%20a%20new%20task%20until%20one%20of%20current%20tasks%20finishes.">
+								See How to set max concurrent tasks.
+							</a>
+						</div>
+						<div class="i3">o	If your backup proxy does not have adequate resources to increase tasks, and it is a virtual machine, you should consider increasing the amount of CPU and RAM available to the proxy.</div>
+						<div class="i3">o	If adding resources to existing proxies is not an options, consider deploying additional backup proxies from within “Backup Infrastructure->Backup Proxies”</div>
+						<div class="i2">•	Make sure that your backup job or replication job is selecting the correct proxies by viewing the job session statistics in the VBR Console.</div>
+						<div class="i2">•	Investigate backup job performance. If specific jobs are taking longer to process than normal, check for warnings, compare the bottleneck statistics to previous jobs sessions, and try to isolate the problem to a specific proxy, repository, host, or datastore.</div>
+						<div class="i3">o	Move larger VMs / servers to their own job and schedule to ensure conflict does not occur with faster completing job's backup window (schedule these jobs before all other jobs or after all other jobs, for example)</div>
+						<div class="i2">•	Separate NAS Proxies, Cache Repos, and Repositories from VM proxies and VM and Agent Repositories</div>
+						<div class="i2">
+							•	<a href="https://helpcenter.veeam.com/docs/backup/vsphere/gateway_server.html?ver=110#gateway-servers-deployment">Use Static Gateways and Mount Servers</a>
+							if possible to offload resources consumption required for synthetic operations, SOBR offload processing, backup copy jobs, and other tasks.
+						</div>
+						<div class="i2">
+							•	If appropriate,<a href="https://www.veeam.com/kb2660">review Architecture Guidelines for deduplicating storage systems.</a>
+						</div>
+						<h5>
+							<a href="#top">Back To Top</a>
+						</h5>
+					</body>
+				</html>
+			</div>
 		</div>
 	</xsl:template>
 
