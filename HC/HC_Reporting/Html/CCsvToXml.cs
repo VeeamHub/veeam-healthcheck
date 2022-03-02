@@ -200,7 +200,7 @@ namespace HC_Reporting.Html
                 if (configBackup.EncryptionOptions == "True")
                     _configBackupEncrypted = true;
             }
-            catch(Exception)
+            catch (Exception)
             {
                 log.Error("Config backup not detected. Marking false");
                 //log.Info(e.Message);
@@ -212,7 +212,7 @@ namespace HC_Reporting.Html
                 if (netTraffic.Any(x => x.EncryptionEnabled == "True"))
                     _trafficEncrypted = true;
             }
-            catch(Exception)
+            catch (Exception)
             {
                 log.Info("Traffic encryption not detected. Marking false");
                 _trafficEncrypted = false;
@@ -313,7 +313,7 @@ namespace HC_Reporting.Html
             foreach (var c in cv)
             {
                 configBackupEnabled = c.Enabled;
-                if(c.Enabled != "False")
+                if (c.Enabled != "False")
                 {
                     configBackupTarget = c.Target;
                     configBackupEncryption = c.EncryptionOptions;
@@ -714,6 +714,19 @@ namespace HC_Reporting.Html
             doc.Save(_testFile);
             log.Info("converting proxy info to xml..done!");
         }
+
+        private void ProtectedVmCounter(List<CViProtected> protectedList, List<string> uniqueVmList, int vmcounter, int protectedCounter)
+        {
+            foreach(var p in protectedList)
+            {
+                if (!uniqueVmList.Contains(p.Name))
+                {
+                    vmcounter++;
+                    protectedCounter++;
+                    uniqueVmList.Add(p.Name);
+                }
+            }
+        }
         private void ServerXmlFromCsv()
         {
             log.Info("converting server info to xml");
@@ -722,6 +735,10 @@ namespace HC_Reporting.Html
             csv = csv.OrderBy(x => x.Name).ToList();
             csv = csv.OrderBy(x => x.Type).ToList();
 
+            CCsvParser csvp = new();
+            var protectedVms = csvp.ViProtectedReader().ToList();
+            var unProtectedVms = csvp.ViUnProtectedReader().ToList();
+
             XDocument doc = XDocument.Load(_testFile);
             XElement serverRoot = new XElement("servers");
             doc.Root.Add(serverRoot);
@@ -729,8 +746,57 @@ namespace HC_Reporting.Html
             var summary = new XElement("info", fillerText.ServerInfo);
             serverRoot.Add(summary);
 
+            //list to ensure we only count unique VMs
+            List<string> countedVMs = new();
+
             foreach (var c in csv)
             {
+                //match server and VM count
+                int vmCount = 0;
+                int protectedCount = 0;
+                int unProtectedCount = 0;
+                
+                foreach (var p in protectedVms)
+                {
+                    if (!countedVMs.Contains(p.Name))
+                    {
+                        if (p.Path.StartsWith(c.Name))
+                        {
+                            vmCount++;
+                            protectedCount++;
+                            countedVMs.Add(p.Name);
+                        }
+                    }
+                    
+                }
+                foreach(var u in unProtectedVms)
+                {
+                    if (!countedVMs.Contains(u.Name))
+                    {
+                        if (u.Path.StartsWith(c.Name))
+                        {
+                            vmCount++;
+                            unProtectedCount++;
+                            countedVMs.Add(u.Name);
+                        }
+                    }
+                    
+                }
+
+                string pVmStr = "";
+                if (protectedCount != 0)
+                    pVmStr = protectedCount.ToString();
+
+                string upVmStr = "";
+                if (unProtectedCount != 0)
+                    upVmStr = unProtectedCount.ToString();
+                string tVmStr = "";
+                if (vmCount != 0)
+                    tVmStr = vmCount.ToString();
+             
+
+
+                //check for VBR Roles
                 CheckServerRoles(c.Id);
                 string repoRole = "";
                 string proxyRole = "";
@@ -742,10 +808,12 @@ namespace HC_Reporting.Html
                 if (_isBackupServerWan)
                     wanRole = "True";
 
+                //scrub name if selected
                 string newName = c.Name;
                 if (_scrub)
                     newName = Scrub(newName);
 
+                //create XML entries
                 var xml = new XElement("server",
                     new XElement("Name", newName),
                     new XElement("Cores", c.Cores),
@@ -755,7 +823,10 @@ namespace HC_Reporting.Html
                     new XElement("proxyrole", proxyRole),
                     new XElement("repo", repoRole),
                     new XElement("wanacc", wanRole),
-                    new XElement("isavailable", c.IsUnavailable
+                    new XElement("isavailable", c.IsUnavailable),
+                    new XElement("protectedVms", pVmStr),
+                    new XElement("unProtectedVms", upVmStr),
+                    new XElement("totalVms", tVmStr
                     ));
 
                 serverRoot.Add(xml);

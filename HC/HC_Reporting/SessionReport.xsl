@@ -904,7 +904,7 @@ function test(){
 							<tr >
 								<th title="Repository Name" style="text-align:left">Name</th>
 								<th title="SOBR Name" style="text-align:left">SOBR</th>
-								<th title="Tasks set for repository" style="text-align:left">Set Tasks</th>
+								<th title="Tasks set for repository (-1 = unlimited)" style="text-align:left">Set Tasks</th>
 								<th title="CPU Cores detected" style="text-align:left">Cores</th>
 								<th title="Installed RAM detected" style="text-align:left">RAM(GB)</th>
 								<th title="Does the repository use Automatic Gateway or dedicated?" style="text-align:left">AutoGateway</th>
@@ -1060,7 +1060,7 @@ function test(){
 							<tr >
 								<th title="Repository name" style="text-align:left">Name</th>
 								<!--<th style="text-align:left">Tasks</th>-->
-								<th title="Total tasks assigned in repository properties" style="text-align:left">Set Tasks</th>
+								<th title="Total tasks assigned in repository properties (-1 = unlimited)" style="text-align:left">Set Tasks</th>
 								<th title="Total detected CPU cores on repository server" style="text-align:left">Cores</th>
 								<th title="Total detected RAM on repository server" style="text-align:left">RAM(GB)</th>
 								<th title="Total jobs assigned to the repository" style="text-align:left">JobCount</th>
@@ -1364,6 +1364,9 @@ function test(){
 								<th title="Detected RAM">RAM</th>
 								<th title="Server or Share Type">Type</th>
 								<th title="VMware API Version">Api Version</th>
+								<th title="Total VMs detected on this host with associated backups">Protected VMs</th>
+								<th title="Total VMs detected on this host without associated backups">Not Protected VMs</th>
+								<th title="Total VMs detected on this host">Total VMs</th>
 								<th title="Is the Server a Veeam Proxy?">Is Proxy</th>
 								<th title="Is the Server a Veeam Repository?">Is Repo</th>
 								<th title="Is the Server a Veeam WAN Accelerator?">Is WAN Acc.</th>
@@ -1385,6 +1388,15 @@ function test(){
 									</td>
 									<td title="API Version" style="text-align:right">
 										<xsl:value-of select="ApiVersion"/>
+									</td>
+									<td title="" style="text-align:right">
+										<xsl:value-of select="protectedVms"/>
+									</td>
+									<td title="" style="text-align:right">
+										<xsl:value-of select="unProtectedVms"/>
+									</td>
+									<td title="" style="text-align:right">
+										<xsl:value-of select="totalVms"/>
 									</td>
 									<td  title="Is Proxy?" style="text-align:right">
 										<xsl:value-of select="proxyrole"/>

@@ -223,8 +223,20 @@ $repoInfo = $Repositories | Select-Object "Id", "Name","HostId","Description","C
     $Servers = $Servers | Select-Object -Property "Info","ParentId","Id","Uid","Name","Reference","Description","IsUnavailable","Type","ApiVersion","PhysHostId","ProxyServicesCreds", @{name='Cores';expression={$_.GetPhysicalHost().hardwareinfo.CoresCount}},@{name='CPUCount';expression={$_.GetPhysicalHost().hardwareinfo.CPUCount}}, @{name='RAM';expression={$_.GetPhysicalHost().hardwareinfo.PhysicalRamTotal}}
 $nasProxyOut = $nasProxy | Select-Object -Property "ConcurrentTaskNumber", @{n="Host";e={$_.Server.Name}}, @{n="HostId";e={$_.Server.Id}}
 #$hvProxyOut = $hvProxy | Select-Object -Property "Name", "HostId", @{n=Host}
+
+#Protected Workloads Area
+$vmbackups = Get-VBRBackup | ? {$_.TypeToString -eq "VMware Backup" }
+$vmNames = $vmbackups.GetLastOibs()
+$unprotectedEntityInfo = Find-VBRViEntity | ? {$_.Name -notin $vmNames.Name}
+$protectedEntityInfo = Find-VBRViEntity -Name $vmNames.Name
+$protectedEntityInfo | select Name,PowerState,ProvisionedSize,UsedSize,Path | sort PoweredOn,Path,Name | Export-Csv -Path $("$ReportPath\$VBRServer" + '_ViProtected.csv') -NoTypeInformation
+$unprotectedEntityInfo | select Name,PowerState,ProvisionedSize,UsedSize,Path,Type | sort Type,PoweredOn,Path,Name | Export-Csv -Path $("$ReportPath\$VBRServer" + '_ViUnprotected.csv') -NoTypeInformation
+
+#end protected workloads Area
+
+
 #GetVbrVersion:
-    $corePath = Get-ItemProperty -Path "HKLM:\Software\Veeam\Veeam Backup and Replication\" -Name "CorePath"
+$corePath = Get-ItemProperty -Path "HKLM:\Software\Veeam\Veeam Backup and Replication\" -Name "CorePath"
 $dbPath = Get-ItemProperty -Path "HKLM:\Software\Veeam\Veeam Backup and Replication\" -Name "SqlDataBaseName"
 $instancePath = Get-ItemProperty -Path "HKLM:\Software\Veeam\Veeam Backup and Replication\" -Name "SqlInstanceName"
 $dbServerPath = Get-ItemProperty -Path "HKLM:\Software\Veeam\Veeam Backup and Replication\" -Name "SqlServerName"
@@ -236,6 +248,7 @@ $fixes = $file.VersionInfo.Comments
 
 #endGetVbrVersion
 
+#output VBR Versioning
 $VbrOutput = [pscustomobject][ordered] @{
         'Version'   = $version
         'Fixes' = $fixes

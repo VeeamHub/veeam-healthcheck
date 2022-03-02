@@ -44,6 +44,8 @@ namespace HC_Reporting.CsvHandlers
         private readonly string _configBackup = "configBackup";
         private readonly string _regOptions = "regkeys";
         private readonly string _waits = "waits";
+        private readonly string _ViProtected = "ViProtected";
+        private readonly string _viUnprotected = "ViUnprotected";
 
         public CCsvParser()
         {
@@ -75,6 +77,14 @@ namespace HC_Reporting.CsvHandlers
         public IEnumerable<CWaitsCsv> WaitsCsvReader()
         {
             return FileFinder(_waits).GetRecords<CWaitsCsv>();
+        }
+        public IEnumerable<CViProtected> ViProtectedReader()
+        {
+            return FileFinder(_ViProtected).GetRecords<CViProtected>();
+        }
+        public IEnumerable<CViProtected> ViUnProtectedReader()
+        {
+            return FileFinder(_viUnprotected).GetRecords<CViProtected>();
         }
         public IEnumerable<CRegOptionsCsv> RegOptionsCsvParser()
         {
