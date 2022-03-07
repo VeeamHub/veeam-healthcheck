@@ -188,7 +188,7 @@ namespace HC_Reporting.Html
 
             foreach (var v in notProtectedTypes)
             {
-                var xml2 = AddXelement(v, "Type");
+                var xml2 = AddXelement(v, "Type", "");
                 extElement.Add(xml2);
             }
             doc.Save(_testFile);
@@ -810,24 +810,22 @@ namespace HC_Reporting.Html
                     c.Host = Scrub(c.Host);
                 }
 
-                var xml = new XElement("proxy",
-                    new XElement("name", c.Name),
-                    //new XElement("host", c.Host), this returns something that needs further parsed....
-                    new XElement("tasks", c.MaxTasksCount,
-                    new XAttribute("color", c.Provisioning)),
-                    new XElement("cores", c.Cores),
-                    new XElement("ram", c.Ram),
-                    new XElement("type", c.Type),
-                    new XElement("transport", c.TransportMode),
-                    new XElement("failover", c.FailoverToNetwork),
-                    new XElement("chassis", c.ChassisType),
-                    new XElement("cachePath", c.CachePath),
-                    new XElement("cacheSize", c.CacheSize),
-                    new XElement("host", c.Host),
-                    new XElement("disabled", c.IsDisabled
-                    ));
+                var xml2 = new XElement("proxy");
+                xml2.Add(AddXelement(c.Name, "Name", "Proxy Host Name"));
+                xml2.Add(AddXelement(c.MaxTasksCount.ToString(), "Tasks", "Max tasks proxy is set to accept", c.Provisioning));
+                xml2.Add(AddXelement(c.Cores.ToString(), "Cores", "Total detecte CPU Cores (no hyper-threading)"));
+                xml2.Add(AddXelement(c.Ram.ToString(), "RAM", "Total deteced ram on server"));
+                xml2.Add(AddXelement(c.Type, "Proxy Type", "Proxy type defined in VBR"));
+                xml2.Add(AddXelement(c.TransportMode, "Transport Mode", "Transport mode assigned to proxy"));
+                xml2.Add(AddXelement(c.FailoverToNetwork, "Failover to NBD", "If true, proxy is configured to fail back to network mode if primary transport mode fails"));
+                xml2.Add(AddXelement(c.ChassisType, "Chassis", "Shows if proxy is physical or virtual"));
+                xml2.Add(AddXelement(c.CachePath, "Cache Path", "Path defined for CDP proxy to use. Applies to CDP proxy only"));
+                xml2.Add(AddXelement(c.CacheSize, "Cache Size", "Cache size specified for CDP proxy. Applies to CDP proxy only."));
+                xml2.Add(AddXelement(c.Host, "Host", "Actual server name that the proxy role is installed on."));
+                xml2.Add(AddXelement(c.IsDisabled, "Is Disabled", "Defines if the proxy is manually disabled. If true, the user has selected this option in the GUI."));
 
-                serverRoot.Add(xml);
+
+                serverRoot.Add(xml2);
 
                 //doc.Add(xml);
 
@@ -1539,10 +1537,21 @@ namespace HC_Reporting.Html
 
             return s;
         }
+        private XElement AddXelement(string data, string headerName, string tooltip)
+        {
+            return AddXelement(data, headerName, tooltip, "");
+        }
         private XElement AddXelement(string data, string headerName)
         {
+            return AddXelement(data, headerName, "", "");
+        }
+        private XElement AddXelement(string data, string headerName, string tooltip, string provisioning)
+        {
+            
             var xml = new XElement("td", data,
-                new XAttribute("headerName", headerName)
+                new XAttribute("headerName", headerName),
+                new XAttribute("tooltip", tooltip),
+                new XAttribute("color", provisioning)
                 );
 
             return xml;

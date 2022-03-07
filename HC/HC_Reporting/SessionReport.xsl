@@ -496,27 +496,28 @@ function test(){
 		<div class="content">
 			<br></br>
 			<table border="1" title="Protected Workloads">
-					<tr>
-						<!--<xsl:for-each select="td">
+				<tr>
+					<!--<xsl:for-each select="td">
 							<th>
 								<xsl:value-of select="current()/@headerName"/>
 							</th>	
 						</xsl:for-each>-->
-						<th title="Total VMware VMs found.">Vi Total</th>
-						<th title="Total VMware VMs found with backups">Vi Protected</th>
-						<th title="Total VMwar VMs found with no backups">Vi Not Prot</th>
-						<th title="Potentially duplicated workloads">Vi Potential Dupes</th>
-						<th title="Total count of servers added into Protection Groups">Phys Total</th>
-						<th title="Total count of servers with backups">Phys Protected</th>
-						<th title="Total count of servers in a Protection Group but with no current backups">Phys Not Prot</th>
-						<!--<th title=""></th>-->
+					<th title="Total VMware VMs found.">Vi Total</th>
+					<th title="Total VMware VMs found with backups">Vi Protected</th>
+					<th title="Total VMwar VMs found with no backups">Vi Not Prot</th>
+					<th title="Potentially duplicated workloads">Vi Potential Dupes</th>
+					<th title="Total count of servers added into Protection Groups">Phys Total</th>
+					<th title="Total count of servers with backups">Phys Protected</th>
+					<th title="Total count of servers in a Protection Group but with no current backups">Phys Not Prot</th>
+					<!--<th title=""></th>-->
 
-					</tr>
-				<tr><xsl:for-each select="td">
+				</tr>
+				<tr>
+					<xsl:for-each select="td">
 						<td title="" style="text-align:left">
 							<xsl:value-of select="current()"/>
 						</td>
-				</xsl:for-each>
+					</xsl:for-each>
 				</tr>
 			</table>
 			<div class="hdr">Summary:</div>
@@ -1256,8 +1257,8 @@ function test(){
 			</div>
 		</div>
 	</xsl:template>
-	<xsl:template match="/root/proxies">
-
+	<xsl:key name="proxyHeader" match="/root/proxies/proxy/td/@headerName" use="." />
+	<xsl:template match="/root/proxies" name="proxy">
 		<div id="linkproxy">
 			<h2>
 				<u>Proxy Info</u>
@@ -1266,78 +1267,28 @@ function test(){
 			<div class="content">
 				<html>
 					<body>
-						<table border="1">
-							<tr >
-								<th title="Proxy Name">Name</th>
-								<th title="Proxy Type">Type</th>
-								<th title="Total Assigned Tasks">Assigned Tasks</th>
-								<th title="Detected CPU Cores">Cores</th>
-								<th title="Detected RAM">RAM</th>
-								<th title="Manually Set Transport Mode">Transport Mode</th>
-								<th title="Is option to failover to NBD enabled?">Failover To Network</th>
-								<th title="Detected">Chassis</th>
-								<th title="Is Disabled">Is Disabled</th>
-								<th title="Cache Size">Cache Size</th>
-								<th title="Cache Path">Cache Path</th>
-								<th title="Proxy Host">Host</th>
-							</tr>
+						<table border="1" >
+							<xsl:for-each select="proxy/td/@headerName[generate-id() = generate-id(key('proxyHeader',.)[1])]">
+								<!--<xsl:for-each select="distinct-values(/proxy/td/@headerName)">-->
+								<th title="{../@tooltip}">
+									<!--tooltip works-->
+									<xsl:value-of select="."/>
+								</th>
+							</xsl:for-each>
+
 							<xsl:for-each select="proxy">
 								<tr>
-									<td title="Proxy Name">
-										<xsl:value-of select="name"/>
-									</td>
-									<td title="Proxy Type">
-										<xsl:value-of select="type"/>
-									</td>
-									<!--<td style="text-align:right">
-				<xsl:value-of select="host"/>
-			  </td>-->
-									<td title="Set Tasks" bgcolor="">
-										<xsl:if test="tasks/@color='under'">
-											<xsl:attribute name="bgcolor">
-												<xsl:text>GreenYellow</xsl:text>
-											</xsl:attribute>
-											<script>
-											</script>
-										</xsl:if>
-										<xsl:if test="tasks/@color='over'">
-											<xsl:attribute name="bgcolor">
-												<xsl:text>orangered</xsl:text>
-											</xsl:attribute>
-										</xsl:if>
-										<xsl:value-of select="tasks"/>
-									</td>
-									<td title="Cores" style="text-align:right">
-										<xsl:value-of select="cores"/>
-									</td>
-									<td title="RAM" style="text-align:right">
-										<xsl:value-of select="ram"/>
-									</td>
-									<td title="Transport Mode">
-										<xsl:value-of select="transport"/>
-									</td>
-									<td title="Failover Enabled" style="text-align:right">
-										<xsl:value-of select="failover"/>
-									</td>
-									<td title="Chassis">
-										<xsl:value-of select="chassis"/>
-									</td>
-									<td title="Is Disabled?" style="text-align:right">
-										<xsl:value-of select="disabled"/>
-									</td>
-									<td title="Cache Size" style="text-align:right">
-										<xsl:value-of select="cacheSize"/>
-									</td>
-									<td title="Cache Path" style="text-align:right">
-										<xsl:value-of select="cachePath"/>
-									</td>
-									<td title="Host" style="text-align:right">
-										<xsl:value-of select="host"/>
-									</td>
+									<xsl:for-each select ="td">
+										<td>
+											<xsl:value-of select="current()"/>
+										</td>
+									</xsl:for-each>
+
 								</tr>
+
 							</xsl:for-each>
-						</table>
-						<br></br>
+
+						</table><br></br>
 						<div class="hdr">Role Summary:</div>
 						Veeam proxies are a logical datamover component. There are two types of proxies: (<a href="https://helpcenter.veeam.com/docs/backup/vsphere/backup_proxy.html?zoom_highlight=proxy&amp;ver=110">Backup Proxies</a>, <a href="https://helpcenter.veeam.com/docs/backup/vsphere/cdp_proxy.html?ver=110">CDP Proxies</a>). Backup Proxies are further subdivided based on function or platform e.g. File Proxies for NAS-based backups, or different source hypervisors.
 						<div class="i2">•	Backup proxies sit between source data (VMs or File Shares) and the backup repositories. Their role is to process backup jobs and deliver backup traffic to the repositories.</div>
@@ -1396,7 +1347,58 @@ function test(){
 				</html>
 			</div>
 		</div>
+
 	</xsl:template>
+	<xsl:template match="/root/TEMPLATEfromProxies" name="TEMPLATE">
+		<div id="linkproxy">
+			<h2>
+				<u>Proxy Info</u>
+			</h2>
+			<button type="button" class="collapsible">Show Proxy Summary</button>
+			<div class="content">
+				<html>
+					<body>
+						<table border="1" >
+							<xsl:for-each select="proxy/td/@headerName[generate-id() = generate-id(key('proxyHeader',.)[1])]">
+								<!--<xsl:for-each select="distinct-values(/proxy/td/@headerName)">-->
+								<th title="{../@tooltip}">
+									<!--tooltip works-->
+									<xsl:value-of select="."/>
+								</th>
+							</xsl:for-each>
+
+							<xsl:for-each select="proxy">
+								<tr>
+									<xsl:for-each select ="td">
+										<td>
+											<xsl:value-of select="current()"/>
+										</td>
+									</xsl:for-each>
+
+								</tr>
+
+							</xsl:for-each>
+
+						</table><br></br>
+						<div class="hdr">Role Summary:</div>
+						Veeam proxies are a logical datamover component. There are two types of proxies: (<a href="https://helpcenter.veeam.com/docs/backup/vsphere/backup_proxy.html?zoom_highlight=proxy&amp;ver=110">Backup Proxies</a>, <a href="https://helpcenter.veeam.com/docs/backup/vsphere/cdp_proxy.html?ver=110">CDP Proxies</a>). Backup Proxies are further subdivided based on function or platform e.g. File Proxies for NAS-based backups, or different source hypervisors.
+						<div class="i2">•	Backup proxies sit between source data (VMs or File Shares) and the backup repositories. Their role is to process backup jobs and deliver backup traffic to the repositories.</div>
+						<div class="i3">
+							o	VM Backup proxies can leverage different <a href="https://helpcenter.veeam.com/docs/backup/vsphere/transport_modes.html?ver=110">transport modes</a>.
+						</div>
+
+						<h5>
+							<a href="#top">Back To Top</a>
+						</h5>
+					</body>
+				</html>
+			</div>
+		</div>
+
+	</xsl:template>
+	
+
+
 	<xsl:template match="/root/servers">
 
 		<div id="linkserverList">
