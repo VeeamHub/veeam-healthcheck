@@ -224,7 +224,7 @@ $repoInfo = $Repositories | Select-Object "Id", "Name","HostId","Description","C
 $nasProxyOut = $nasProxy | Select-Object -Property "ConcurrentTaskNumber", @{n="Host";e={$_.Server.Name}}, @{n="HostId";e={$_.Server.Id}}
 #$hvProxyOut = $hvProxy | Select-Object -Property "Name", "HostId", @{n=Host}
 
-#Protected Workloads Area
+##Protected Workloads Area
 $vmbackups = Get-VBRBackup | ? {$_.TypeToString -eq "VMware Backup" }
 $vmNames = $vmbackups.GetLastOibs()
 $unprotectedEntityInfo = Find-VBRViEntity | ? {$_.Name -notin $vmNames.Name}
@@ -232,7 +232,19 @@ $protectedEntityInfo = Find-VBRViEntity -Name $vmNames.Name
 $protectedEntityInfo | select Name,PowerState,ProvisionedSize,UsedSize,Path | sort PoweredOn,Path,Name | Export-Csv -Path $("$ReportPath\$VBRServer" + '_ViProtected.csv') -NoTypeInformation
 $unprotectedEntityInfo | select Name,PowerState,ProvisionedSize,UsedSize,Path,Type | sort Type,PoweredOn,Path,Name | Export-Csv -Path $("$ReportPath\$VBRServer" + '_ViUnprotected.csv') -NoTypeInformation
 
-#end protected workloads Area
+#protected physical Loads
+$phys = Get-VBRDiscoveredComputer
+
+$physbackups = Get-VBRBackup | ? {$_.TypeToString -like "*Agent*" }
+$pvmNames = $physbackups.GetLastOibs()
+
+$notprotected =$phys | ? {$_.Name -notin $pvmNames.Name}
+$protected = $phys | ? {$_.Name -in $pvmNames.Name}
+
+$protected | Export-Csv -Path $("$ReportPath\$VBRServer" + '_PhysProtected.csv') -NoTypeInformation
+$notprotected | Export-Csv -Path $("$ReportPath\$VBRServer" + '_PhysNotProtected.csv') -NoTypeInformation
+
+##end protected workloads Area
 
 
 #GetVbrVersion:
@@ -273,8 +285,8 @@ $VbrOutput | Export-Csv -Path $("$ReportPath\$VBRServer" + '_vbrinfo.csv') -NoTy
     $hvProxy | Export-csv -Path $("$ReportPath\$VBRServer" + '_HvProxy.csv') -NoTypeInformation
     $nasProxyOut | Export-csv -Path $("$ReportPath\$VBRServer" + '_NasProxy.csv') -NoTypeInformation
     $piJob | Export-csv -Path $("$ReportPath\$VBRServer" + '_pluginjobs.csv') -NoTypeInformation
-    $pc | Export-csv -Path $("$ReportPath\$VBRServer" + '_protectedComputers.csv') -NoTypeInformation
-    $pg | Export-csv -Path $("$ReportPath\$VBRServer" + '_protectionGroups.csv') -NoTypeInformation
+    #$pc | Export-csv -Path $("$ReportPath\$VBRServer" + '_protectedComputers.csv') -NoTypeInformation
+    #$pg | Export-csv -Path $("$ReportPath\$VBRServer" + '_protectionGroups.csv') -NoTypeInformation
     $output | Export-csv -Path $("$ReportPath\$VBRServer" + '_regkeys.csv') -NoTypeInformation
     $capOut    | Export-csv -Path $("$ReportPath\$VBRServer" + '_capTier.csv') -NoTypeInformation
     $trafficRules | Export-csv -Path $("$ReportPath\$VBRServer" + '_trafficRules.csv') -NoTypeInformation

@@ -122,6 +122,7 @@
 
 				<!--NOT-EXPANDED-->
 				<xsl:apply-templates select="/root/npjobSummary"></xsl:apply-templates>
+				<xsl:apply-templates select="/root/protectedWorkloads"></xsl:apply-templates>
 				<xsl:apply-templates select="/root/servers"></xsl:apply-templates>
 				<xsl:apply-templates select="/root/regOptions"></xsl:apply-templates>
 				<xsl:apply-templates select="/root/proxies"></xsl:apply-templates>
@@ -482,6 +483,51 @@ function test(){
 			<div class="hdr">Summary:</div>
 			<br></br>
 			<div class="">This table summarizes job types that are either missing from your configuration or could not be analyzed. Please consult with your Veeam Engineer for more information.</div>
+		</div>
+
+	</xsl:template>
+	<xsl:template match="/root/protectedWorkloads" name="pLoads">
+		<div id="protectedWorkloads">
+			<h2>
+				<u>Protected Workloads</u>
+			</h2>
+		</div>
+		<button type="button" class="collapsible">Show count of protected workloads</button>
+		<div class="content">
+			<br></br>
+			<table border="1" title="Protected Workloads">
+					<tr>
+						<!--<xsl:for-each select="td">
+							<th>
+								<xsl:value-of select="current()/@headerName"/>
+							</th>	
+						</xsl:for-each>-->
+						<th title="Total VMware VMs found.">Vi Total</th>
+						<th title="Total VMware VMs found with backups">Vi Protected</th>
+						<th title="Total VMwar VMs found with no backups">Vi Not Prot</th>
+						<th title="Potentially duplicated workloads">Vi Potential Dupes</th>
+						<th title="Total count of servers added into Protection Groups">Phys Total</th>
+						<th title="Total count of servers with backups">Phys Protected</th>
+						<th title="Total count of servers in a Protection Group but with no current backups">Phys Not Prot</th>
+						<!--<th title=""></th>-->
+
+					</tr>
+				<tr><xsl:for-each select="td">
+						<td title="" style="text-align:left">
+							<xsl:value-of select="current()"/>
+						</td>
+				</xsl:for-each>
+				</tr>
+			</table>
+			<div class="hdr">Summary:</div>
+			<br></br>
+			<div class="">This table summarizes the amount of workload detected in the current backup server. The VMware count is determined by the local cache and compares those VMs and count to the existing backups. The physical workloads are determined by the number of VMs added to Protection Groups.</div>
+			<br></br>
+			<div class="hdr">Notes:</div>
+			<br></br>
+			<div class="i2">
+				Potentially duplicated workloads can be in many forms
+			</div>
 		</div>
 
 	</xsl:template>

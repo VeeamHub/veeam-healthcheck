@@ -181,8 +181,8 @@ namespace HC_Reporting.Html
 
             XDocument doc = XDocument.Load(_testFile);
             XElement extElement = new XElement("npjobSummary");
-            var summary = new XElement("info", fillerText.JobSummary);
-            extElement.Add(summary);
+            //var summary = new XElement("info", fillerText.JobSummary);
+            //extElement.Add(summary);
             doc.Root.Add(extElement);
 
             foreach (var v in notProtectedTypes)
@@ -293,6 +293,124 @@ namespace HC_Reporting.Html
             }
             doc.Save(_testFile);
             log.Info("converting server summary to xml.done!");
+        }
+        private void ProtectedWorkloadsToXml()
+        {
+            //customize the log line:
+            log.Info("Converting protected workloads data to xml...");
+
+
+            // gather data needed for input
+            CCsvParser csvp = new();
+
+            #region viProtected
+            var protectedVms = csvp.ViProtectedReader().ToList();
+            var unProtectedVms = csvp.ViUnProtectedReader().ToList();
+            #endregion
+
+            #region physProtected
+            var physProtected = csvp.PhysProtectedReader().ToList();
+            var physNotProtected = csvp.PhysNotProtectedReader().ToList();
+            #endregion
+
+
+
+            // begin XML info input
+            XDocument doc = XDocument.Load(_testFile);
+
+            // NEW NODE NAME HERE
+            XElement extElement = new XElement("protectedWorkloads");
+            doc.Root.Add(extElement);
+
+            // Filter duplicates
+            List<string> vmNames = new();
+            List<string> viProtectedNames = new();
+            int viTotal = 0;
+            int viDupes = 0;
+
+            foreach(var p in protectedVms)
+            {
+                vmNames.Add(p.Name);
+                viProtectedNames.Add(p.Name);
+            }
+            foreach (var un in unProtectedVms)
+                vmNames.Add(un.Name);
+
+            viTotal = vmNames.Distinct().Count();
+            viDupes = vmNames.Count - viTotal;
+
+            List<string> physNames = new();
+            List<string> physProtNames = new();
+
+            foreach(var p in physProtected)
+            {
+                physNames.Add(p.Name);
+                physProtNames.Add(p.Name);
+            }
+            foreach (var u in physNotProtected)
+                physNames.Add(u.Name);
+      
+
+            //var xml2 = AddXelement(protectedVms.Count.ToString(), "ViProtected");
+            extElement.Add(AddXelement((protectedVms.Count+unProtectedVms.Count).ToString(), "Vi Total"));
+            extElement.Add(AddXelement(viProtectedNames.Distinct().Count().ToString(), "Vi Protected"));
+            extElement.Add(AddXelement(unProtectedVms.Count.ToString(), "Vi Not Prot."));
+            extElement.Add(AddXelement(viDupes.ToString(), "Vi Potential Duplicates"));
+
+            extElement.Add(AddXelement(physNames.Distinct().Count().ToString(), "Phys Total"));
+            extElement.Add(AddXelement(physProtNames.Distinct().Count().ToString(), "Phys Protected"));
+            extElement.Add(AddXelement(physNotProtected.Count.ToString(), "Phys Not Prot."));
+            //set items to XML + save
+            //var xml = new XElement("workloads",
+            //    new XElement("viTotal", protectedVms.Count + unProtectedVms.Count),
+            //    new XElement("viProtected", protectedVms.Count),
+            //    new XElement("viNotProtected", unProtectedVms.Count),
+            //    new XElement("physTotal", physProtected.Count + physNotProtected.Count),
+            //    new XElement("physProtected", physProtected.Count),
+            //    new XElement("physNotProtected", physNotProtected.Count)
+            //    );
+
+            //extElement.Add(xml);
+            doc.Save(_testFile);
+
+            log.Info("Converting protected workloads data to xml..done!");
+        }
+        private void NewXmlNodeTemplate()
+        {
+            //customize the log line:
+            log.Info("xml node template start...");
+
+
+            // gather data needed for input
+            List<CServerTypeInfos> csv = _dTypeParser.ServerInfo();
+            CServerTypeInfos backupServer = csv.Find(x => (x.Id == _backupServerId));
+            CCsvParser config = new();
+
+            // begin XML info input
+            XDocument doc = XDocument.Load(_testFile);
+            
+            // NEW NODE NAME HERE
+            XElement extElement = new XElement("backupServer");
+            doc.Root.Add(extElement);
+
+            // Check for items needing scrubbed
+            if (_scrub)
+            {
+                // set items to scrub
+            }
+
+            //set items to XML + save
+            var xml = new XElement("serverInfo",
+                new XElement("name", backupServer.Name),
+                new XElement("cores", backupServer.Cores),
+                new XElement("ram", backupServer.Ram),
+                new XElement("wanacc", _isBackupServerWan)
+                );
+
+            extElement.Add(xml);
+            doc.Save(_testFile);
+
+            log.Info("xml template..done!");
         }
         private void BackupServerInfoToXml()
         {
@@ -1564,6 +1682,7 @@ namespace HC_Reporting.Html
             JobSummaryInfoToXml();
             JobConcurrency(true, 7);
             TaskConcurrency(7);
+            ProtectedWorkloadsToXml();
             //JobConcurrency(31); //does sum instead
             RegOptions();
             //JobSessionSummaryToXml();

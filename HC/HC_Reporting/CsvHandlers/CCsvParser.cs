@@ -46,6 +46,8 @@ namespace HC_Reporting.CsvHandlers
         private readonly string _waits = "waits";
         private readonly string _ViProtected = "ViProtected";
         private readonly string _viUnprotected = "ViUnprotected";
+        private readonly string _physProtected = "PhysProtected";
+        private readonly string _physNotProtected = "PhysNotProtected";
 
         public CCsvParser()
         {
@@ -77,6 +79,14 @@ namespace HC_Reporting.CsvHandlers
         public IEnumerable<CWaitsCsv> WaitsCsvReader()
         {
             return FileFinder(_waits).GetRecords<CWaitsCsv>();
+        }
+        public IEnumerable<CViProtected> PhysProtectedReader()
+        {
+            return FileFinder(_physProtected).GetRecords<CViProtected>();
+        }
+        public IEnumerable<CViProtected> PhysNotProtectedReader()
+        {
+            return FileFinder(_physNotProtected).GetRecords<CViProtected>();
         }
         public IEnumerable<CViProtected> ViProtectedReader()
         {
