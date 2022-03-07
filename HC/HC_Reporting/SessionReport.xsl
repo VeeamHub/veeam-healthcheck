@@ -708,6 +708,7 @@ function test(){
 						<th>Cores</th>
 						<th>RAM</th>
 						<th>Config Backup Enabled</th>
+						<th>Config Backup Last Result</th>
 						<th>Config Backup Encryption</th>
 						<th>Config Backup Target</th>
 						<th>Local SQL</th>
@@ -736,6 +737,9 @@ function test(){
 							</td>
 							<td>
 								<xsl:value-of select="configBackupEnabled"/>
+							</td>
+							<td>
+								<xsl:value-of select="configBackupLastResult"/>
 							</td>
 							<td>
 								<xsl:value-of select="configBackupEncryption"/>

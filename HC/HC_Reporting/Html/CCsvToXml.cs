@@ -424,6 +424,7 @@ namespace HC_Reporting.Html
             string configBackupEnabled = "";
             string configBackupTarget = "";
             string configBackupEncryption = "";
+            string configBackupLastResult = "";
 
             //if(cv.Count() == 0)
             //{
@@ -436,6 +437,7 @@ namespace HC_Reporting.Html
                 {
                     configBackupTarget = c.Target;
                     configBackupEncryption = c.EncryptionOptions;
+                    configBackupLastResult = c.LastResult;
                 }
             }
 
@@ -560,6 +562,7 @@ namespace HC_Reporting.Html
                 new XElement("cores", backupServer.Cores),
                 new XElement("ram", backupServer.Ram),
                 new XElement("configBackupEnabled", configBackupEnabled),
+                new XElement("configBackupLastResult", configBackupLastResult),
                 new XElement("configBackupEncryption", configBackupEncryption),
                 new XElement("configBackupTarget", configBackupTarget),
                 new XElement("localSql", _isSqlLocal),
