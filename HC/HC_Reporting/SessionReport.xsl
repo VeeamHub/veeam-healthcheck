@@ -1349,6 +1349,8 @@ function test(){
 		</div>
 
 	</xsl:template>
+	
+	<!--<xsl:key name="header" match="/root/category/entity/td/@headerName" use="." />
 	<xsl:template match="/root/TEMPLATEfromProxies" name="TEMPLATE">
 		<div id="linkproxy">
 			<h2>
@@ -1359,10 +1361,10 @@ function test(){
 				<html>
 					<body>
 						<table border="1" >
-							<xsl:for-each select="proxy/td/@headerName[generate-id() = generate-id(key('proxyHeader',.)[1])]">
-								<!--<xsl:for-each select="distinct-values(/proxy/td/@headerName)">-->
+							<xsl:for-each select="entity/td/@headerName[generate-id() = generate-id(key('proxyHeader',.)[1])]">
+								--><!--<xsl:for-each select="distinct-values(/proxy/td/@headerName)">--><!--
 								<th title="{../@tooltip}">
-									<!--tooltip works-->
+									--><!--tooltip works--><!--
 									<xsl:value-of select="."/>
 								</th>
 							</xsl:for-each>
@@ -1395,7 +1397,7 @@ function test(){
 			</div>
 		</div>
 
-	</xsl:template>
+	</xsl:template>-->
 	
 
 

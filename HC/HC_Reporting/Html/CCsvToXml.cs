@@ -797,6 +797,10 @@ namespace HC_Reporting.Html
             XDocument doc = XDocument.Load(_testFile);
 
             XElement serverRoot = new XElement("proxies");
+            //testbelow
+            //XElement serverRoot2 = new XElement("category", new XAttribute("catagory","proxies"));
+            //doc.Root.Add(serverRoot2);
+            //testabove
             doc.Root.Add(serverRoot);
             var summary = new XElement("info", fillerText.ProxySummary);
             serverRoot.Add(summary);
@@ -826,6 +830,29 @@ namespace HC_Reporting.Html
 
 
                 serverRoot.Add(xml2);
+
+
+                //test area
+                //#region testARea
+                //var xml = new XElement("entity",
+                //    new XAttribute("entityName", "Proxy"));
+                //xml.Add(AddXelement(c.Name, "Name", "Proxy Host Name"));
+                //xml.Add(AddXelement(c.MaxTasksCount.ToString(), "Tasks", "Max tasks proxy is set to accept", c.Provisioning));
+                //xml.Add(AddXelement(c.Cores.ToString(), "Cores", "Total detecte CPU Cores (no hyper-threading)"));
+                //xml.Add(AddXelement(c.Ram.ToString(), "RAM", "Total deteced ram on server"));
+                //xml.Add(AddXelement(c.Type, "Proxy Type", "Proxy type defined in VBR"));
+                //xml.Add(AddXelement(c.TransportMode, "Transport Mode", "Transport mode assigned to proxy"));
+                //xml.Add(AddXelement(c.FailoverToNetwork, "Failover to NBD", "If true, proxy is configured to fail back to network mode if primary transport mode fails"));
+                //xml.Add(AddXelement(c.ChassisType, "Chassis", "Shows if proxy is physical or virtual"));
+                //xml.Add(AddXelement(c.CachePath, "Cache Path", "Path defined for CDP proxy to use. Applies to CDP proxy only"));
+                //xml.Add(AddXelement(c.CacheSize, "Cache Size", "Cache size specified for CDP proxy. Applies to CDP proxy only."));
+                //xml.Add(AddXelement(c.Host, "Host", "Actual server name that the proxy role is installed on."));
+                //xml.Add(AddXelement(c.IsDisabled, "Is Disabled", "Defines if the proxy is manually disabled. If true, the user has selected this option in the GUI."));
+
+
+                //serverRoot2.Add(xml);
+
+                //#endregion
 
                 //doc.Add(xml);
 
