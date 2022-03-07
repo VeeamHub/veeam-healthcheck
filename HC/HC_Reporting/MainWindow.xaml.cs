@@ -22,10 +22,11 @@ namespace HC_Reporting
         private bool _collectSessionData = true;
         private bool _openHtml = false;
         public static bool _openExplorer = true;
+        public static string _desiredPath = CVariables.unsafeDir;
         public MainWindow()
         {
             InitializeComponent();
-            
+            pathBox.Text = CVariables.unsafeDir;
             //testing new UI
             //Wizard_1 w = new();
             //w.Show();
@@ -187,6 +188,7 @@ namespace HC_Reporting
         private void HandleCheck(object sender, RoutedEventArgs e)
         {
             _scrub = true;
+            pathBox.Text = CVariables.safeDir;
         }
 
         private void htmlChecked(object sender, RoutedEventArgs e)
@@ -201,6 +203,7 @@ namespace HC_Reporting
         }
         private void HandleUnchecked(object sender, RoutedEventArgs e)
         {
+            pathBox.Text = CVariables.unsafeDir;
             _scrub = false;
         }
 
@@ -259,5 +262,9 @@ namespace HC_Reporting
             log.Info("opening kb_link..done!");
         }
 
+        private void pathBox_TextChanged(object sender, TextChangedEventArgs e)
+        {
+            _desiredPath = pathBox.Text;
+        }
     }
 }

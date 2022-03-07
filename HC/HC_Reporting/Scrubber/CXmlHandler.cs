@@ -11,7 +11,7 @@ namespace VeeamHealthCheck.Scrubber
 {
     class CXmlHandler
     {
-        private readonly string _matchListPath = @"C:\temp\vHC\vHC_KeyFile.xml";
+        private readonly string _matchListPath = CVariables.unsafeDir + @"\vHC_KeyFile.xml";
         private Dictionary<string,string> _matchDictionary;
         private XDocument _doc;
         public CXmlHandler()

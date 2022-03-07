@@ -21,8 +21,7 @@ namespace VeeamHealthCheck.Logging
             DateTime dt = DateTime.Now;
             //string currentDir = Environment.CurrentDirectory;
 
-            CVariables cv = new();
-            string currentDir = cv.OutDir;
+            string currentDir = CVariables.unsafeDir;
             string logDir = Path.Combine(currentDir + "\\Log");
             if (!Directory.Exists(logDir))
                 Directory.CreateDirectory(logDir);

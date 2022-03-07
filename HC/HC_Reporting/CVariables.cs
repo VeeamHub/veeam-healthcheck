@@ -11,6 +11,13 @@ namespace VeeamHealthCheck
     class CVariables
     {
         public readonly string OutDir = @"C:\temp\vHC";
-        public readonly string safeDir = @"C:\temp\vHC\scrubbed";
+        public static string safeDir = @"C:\temp\vHC\Scrubbed";
+        public static string unsafeDir = @"C:\temp\vHC\Contains_Sensitive_Data";
+        public static string desiredDir { get; set; }
+        public  string unSafeDir2()
+        {
+            return unsafeDir;
+        }
+        
     }
 }

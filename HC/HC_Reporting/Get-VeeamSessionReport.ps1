@@ -144,6 +144,6 @@ function Get-VeeamSessionReport {
 
 
 
-Get-VeeamSessionReport -VBRServer localhost | Export-Csv 'C:\Temp\vHC\Raw_Data\VeeamSessionReport.csv' -NoTypeInformation
+Get-VeeamSessionReport -VBRServer localhost | Export-Csv 'C:\Temp\vHC\Contains_Sensitive_Data\Raw_Data\VeeamSessionReport.csv' -NoTypeInformation
 #Read-host("Complete! Press ENTER to close...")
 Disconnect-VBRServer

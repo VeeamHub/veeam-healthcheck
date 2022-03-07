@@ -16,6 +16,7 @@ using System.Xml.Linq;
 using System.Xml.Xsl;
 using HC_Reporting.CsvHandlers;
 using HC_Reporting.DataTypes;
+using VeeamHealthCheck;
 using VeeamHealthCheck.CsvHandlers;
 using VeeamHealthCheck.DataTypes;
 using VeeamHealthCheck.DB;
@@ -30,7 +31,7 @@ namespace HC_Reporting.Html
     class CCsvToXml
     {
         private readonly string _testFile = "xml\\xmlout.xml";
-        private readonly string _outPath = @"C:\temp\vHC";
+        private string _outPath = CVariables.unsafeDir;
         private readonly string _htmlName = "Veeam HealthCheck Report";
         private readonly string _backupServerId = "6745a759-2205-4cd2-b172-8ec8f7e60ef8";
         private string _backupServerName;
@@ -1819,7 +1820,12 @@ namespace HC_Reporting.Html
             log.Info("exporting xml to html");
             string s = TransformXMLToHTML(_testFile, "SessionReport.xsl");
             DateTime dateTime = DateTime.Now;
-            string name = _outPath + "\\" + _htmlName + "_" + _backupServerName + dateTime.ToString("_yyyy.MM.dd_HHmmss") + ".html";
+            string n = MainWindow._desiredPath;
+            string htmlCore = "\\" + _htmlName + "_" + _backupServerName + dateTime.ToString("_yyyy.MM.dd_HHmmss") + ".html";
+            //string name = _outPath + htmlCore;
+            string name = n + htmlCore;
+            //if (_scrub)
+            //    name = CVariables.safeDir + htmlCore;
             _latestReport = name;
 
             using (StreamWriter sw = new StreamWriter(name))
@@ -1835,12 +1841,18 @@ namespace HC_Reporting.Html
         {
             log.Info("exporting xml to html");
             string s = TransformXMLToHTML(xmlFile, "SessionReport.xsl");
+            string reportsFolder = "\\JobSessionReports\\";
 
             string jname = Path.GetFileNameWithoutExtension(xmlFile);
             if (_scrub)
                 jname = _scrubber.ScrubItem(jname, "job");
             DateTime dateTime = DateTime.Now;
-            string outFolder = _outPath + "\\JobSessionReports\\";
+
+            string n = MainWindow._desiredPath;
+            string outFolder = _outPath + reportsFolder;
+            outFolder = n + reportsFolder;
+            //if (_scrub)
+            //    outFolder = CVariables.safeDir + reportsFolder;
             if (!Directory.Exists(outFolder))
                 Directory.CreateDirectory(outFolder);
             string name = outFolder + jname + dateTime.ToString("_yyyy.MM.dd_HHmmss") + ".html";

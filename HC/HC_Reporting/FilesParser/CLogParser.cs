@@ -15,7 +15,7 @@ namespace VeeamHealthCheck.FilesParser
         private CLogger log = HC_Reporting.MainWindow.log;
         private string LogLocation;
         private Dictionary<string, List<TimeSpan>> _waits = new();
-        private string _pathToCsv = @"C:\temp\vHC\Raw_Data\waits.csv";
+        private string _pathToCsv = CVariables.unsafeDir + @"\Raw_Data\waits.csv";
 
         public CLogParser()
         {

@@ -23,8 +23,8 @@ namespace HC_Reporting.CsvHandlers
         private CLogger log = MainWindow.log;
 
         //CSV Paths.
-        private readonly string _sessionPath = @"C:\Temp\vHC\Raw_Data\VeeamSessionReport.csv";
-        private readonly string _outPath = @"C:\Temp\vHC\Raw_Data";
+        private readonly string _sessionPath = CVariables.unsafeDir + @"\Raw_Data\VeeamSessionReport.csv";
+        private readonly string _outPath = CVariables.unsafeDir + "\\Raw_Data";
         private readonly string _sobrExtReportName = "SOBRExtents";
         private readonly string _jobReportName = "Jobs";
         private readonly string _proxyReportName = "Proxies";

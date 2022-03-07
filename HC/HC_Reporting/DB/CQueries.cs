@@ -57,7 +57,7 @@ namespace VeeamHealthCheck.DB
         }
         private void DumpDataToCsv(DataTable data)
         {
-            using (StreamWriter sw = new StreamWriter(@"C:\temp\vHC\Raw_Data\bjobs.csv", false))
+            using (StreamWriter sw = new StreamWriter(CVariables.unsafeDir + @"\Raw_Data\bjobs.csv", false))
             {
                 //headers    
                 for (int i = 0; i < data.Columns.Count; i++)

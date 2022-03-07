@@ -77,6 +77,8 @@ MIT License
                   Checked="explorerShowBox_Checked" Unchecked="explorerShowBox_Unchecked"
                   IsChecked="True"
                   ></CheckBox>
+        <TextBlock Height="15" Width="75" HorizontalAlignment="Left" Margin="0,324,0,86">Output Path:</TextBlock>
+        <TextBox x:Name="pathBox" Height="20" Width="270"  TextChanged="pathBox_TextChanged" Margin="77,320,3,85"></TextBox>
         <!--<CheckBox Content="Collect Session Data" HorizontalAlignment="Left" Margin="1,252,0,0" 
                   VerticalAlignment="Top" 
                   Checked="SessionCollectChecked" 
