@@ -682,7 +682,12 @@ namespace HC_Reporting.Html
                     hostName = Scrub(hostName);
                     path = Scrub(path);
                 }
-
+                string type;
+                if (c.TypeDisplay == null)
+                    type = c.Type;
+                else
+                    type = c.TypeDisplay;
+                
                 var freePercent = FreePercent(c.FreeSPace, c.TotalSpace);
 
                 var xml = new XElement("repository",
@@ -699,6 +704,7 @@ namespace HC_Reporting.Html
                     new XElement("totalspace", Math.Round((decimal)c.TotalSpace / 1024, 2)),
                     new XElement("freespacepercent", freePercent),
                     new XElement("align", c.AlignBlocks),
+                    new XElement("type", type),
                     new XElement("rotate", c.IsRotatedDriveRepository),
                     new XElement("uncompress", c.IsDecompress),
                     new XElement("immute", c.IsImmutabilitySupported

@@ -302,5 +302,5 @@ function AddTypeInfo ($object, $jobType)
     $object | Add-Member -MemberType NoteProperty -Name JobType -Value $jobType
 
 }
-Get-VBRConfig -VBRServer localhost -ReportPath 'C:\temp\vHC\Contains_Sensitive_Data\Raw_Data'
+Get-VBRConfig -VBRServer localhost -ReportPath 'C:\temp\vHC\Original\Raw_Data'
 #Read-host("Complete! Press ENTER to close...")

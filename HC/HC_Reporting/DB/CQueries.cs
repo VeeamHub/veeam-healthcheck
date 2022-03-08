@@ -46,7 +46,7 @@ namespace VeeamHealthCheck.DB
             }
             catch(Exception e)
             {
-                MessageBox.Show("SQL Processing Failed. Some information will be skipped.\n" +e.Message);
+                //MessageBox.Show("SQL Processing Failed. Some information will be skipped.\n" +e.Message);
                 log.Error(e.Message);
             }
             
