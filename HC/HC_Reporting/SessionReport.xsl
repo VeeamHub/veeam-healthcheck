@@ -252,10 +252,89 @@ function test(){
 						<tr>
 							<td>
 								<li>
-									<a class="smoothscroll" href="#backupserver" >Backup Server</a>
+									<a class="smoothscroll" data-link="license" href="#license" >License Info</a>
+								</li>
+							</td>
+							<td>Displays license information.</td>
+						</tr>
+						<tr>
+							<td>
+								<li>
+									<a class="smoothscroll" data-link="backupserver" href="#backupserver" >Backup Server</a>
 								</li>
 							</td>
 							<td>Detailed information on the Backup Server, Configuration DB, roles, and resources.</td>
+						</tr>
+						<tr>
+							<td>
+								<li>
+									<a class="smoothscroll" data-link="secSummary" href="#secSummary" >Security Summary</a>
+								</li>
+							</td>
+							<td>Brief table showing security features in use.</td>
+						</tr>
+						<tr>
+							<td>
+								<li>
+									<a class="smoothscroll" data-link="serverSummary" href="#serverSummary" >Server Summary</a>
+								</li>
+							</td>
+							<td>Summary of detected infrastructure types and count.</td>
+						</tr>
+						<tr>
+							<td>
+								<li>
+									<a class="smoothscroll" data-link="linkjobSummary" href="#linkjobSummary">Job Summary</a>
+								</li>
+							</td>
+							<td>
+								Summary of found jobs by type and count.
+							</td>
+						</tr>
+						<tr>
+							<td>
+								<li>
+									<a class="smoothscroll" data-link="npJobSummary" href="#npJobSummary" >Missing Job Types</a>
+								</li>
+							</td>
+							<td>Displays workloads and types that are not utilized.</td>
+						</tr>
+						<tr>
+							<td>
+								<li>
+									<a class="smoothscroll" data-link="protectedWorkloads" href="#protectedWorkloads" >Protected Workloads</a>
+								</li>
+							</td>
+							<td>Shows count of detected VM &amp; Physical objects compared to objects with backups.</td>
+						</tr>
+						<tr>
+							<td>
+								<li>
+									<a class="smoothscroll" data-link="linkserverList" href="#linkserverList">Server Info</a>
+								</li>
+							</td>
+							<td>
+								List of all servers added into the Backup Console.
+							</td>
+						</tr>
+						<tr>
+							<td>
+								<li>
+									<a class="smoothscroll" data-link="linkregkeys" href="#linkregkeys">Non-Default Registry Keys</a>
+								</li>
+							</td>
+							<td>Shows any registry values differing from a vanilla install.</td>
+
+						</tr>
+						<tr>
+							<td>
+								<li>
+									<a class="smoothscroll" data-link="linkproxy" href="#linkproxy">Proxy Info</a>
+								</li>
+							</td>
+							<td>
+								Details on proxy resources and config.
+							</td>
 						</tr>
 						<tr>
 							<td>
@@ -283,36 +362,9 @@ function test(){
 								Details on non-SOBR repositories, resources, and config.
 							</td>
 						</tr>
-						<tr>
-							<td>
-								<li>
-									<a class="smoothscroll" data-link="linkproxy" href="#linkproxy">Proxy Info</a>
-								</li>
-							</td>
-							<td>
-								Details on proxy resources and config.
-							</td>
-						</tr>
-						<tr>
-							<td>
-								<li>
-									<a class="smoothscroll" data-link="linkserverList" href="#linkserverList">Server Info</a>
-								</li>
-							</td>
-							<td>
-								List of all servers added into the Backup Console.
-							</td>
-						</tr>
-						<tr>
-							<td>
-								<li>
-									<a class="smoothscroll" data-link="linkjobSummary" href="#linkjobSummary">Job Summary</a>
-								</li>
-							</td>
-							<td>
-								Summary of found jobs by type and count.
-							</td>
-						</tr>
+
+
+
 						<tr>
 							<td>
 								<li>
@@ -333,15 +385,7 @@ function test(){
 								Heatmap showing max VM concurrency found per hour.
 							</td>
 						</tr>
-						<tr>
-							<td>
-								<li>
-									<a class="smoothscroll" data-link="linkregkeys" href="#linkregkeys">Non-Default Registry Keys</a>
-								</li>
-							</td>
-							<td>Shows any registry values differing from a vanilla install.</td>
 
-						</tr>
 						<tr>
 							<td>
 								<li>
@@ -377,10 +421,11 @@ function test(){
 	</xsl:template>
 
 	<xsl:template match="/root/license" >
-		<h2>
-			<u>License Summary</u>
-		</h2>
-
+		<div id="license">
+			<h2>
+				<u>License Summary</u>
+			</h2>
+		</div>
 		<html>
 			<body>
 				<table border="1" style="background: lightgray">
@@ -460,7 +505,6 @@ function test(){
 			<h2>
 				<u>Missing Job Types</u>
 			</h2>
-		</div>
 		<button type="button" class="collapsible">Show details on missing job types</button>
 		<div class="content">
 			<br></br>
@@ -484,6 +528,7 @@ function test(){
 			<br></br>
 			<div class="">This table summarizes job types that are either missing from your configuration or could not be analyzed. Please consult with your Veeam Engineer for more information.</div>
 		</div>
+		</div>
 
 	</xsl:template>
 	<xsl:template match="/root/protectedWorkloads" name="pLoads">
@@ -491,7 +536,6 @@ function test(){
 			<h2>
 				<u>Protected Workloads</u>
 			</h2>
-		</div>
 		<button type="button" class="collapsible">Show count of protected workloads</button>
 		<div class="content">
 			<br></br>
@@ -529,6 +573,7 @@ function test(){
 			<div class="i2">
 				Potentially duplicated workloads can be in many forms
 			</div>
+		</div>
 		</div>
 
 	</xsl:template>
@@ -652,10 +697,11 @@ function test(){
 		</table>
 	</xsl:template>-->
 	<xsl:template match="/root/serverSummary">
+		<div id="serverSummary">
 		<h2>
 			<u>Detected Infrastructure Types &amp; Count</u>
 		</h2>
-
+		</div>
 		<html>
 			<body>
 

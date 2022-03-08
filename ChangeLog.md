@@ -1,4 +1,4 @@
-﻿1.0.1.X
+﻿Upcoming: 1.0.1.X
 - redesigned UI
 	- updated colors
 	- collapsible sections
