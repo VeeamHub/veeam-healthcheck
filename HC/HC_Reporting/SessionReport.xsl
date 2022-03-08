@@ -928,7 +928,7 @@ function test(){
 										<xsl:value-of select="pervm"/>
 									</td>
 									<td title="" style="text-align:right">
-										<xsl:value-of select="captiertype"/>
+										<xsl:value-of select="capacitytext"/>
 									</td>
 									<td title="" style="text-align:right">
 										<xsl:value-of select="immuteEnabled"/>

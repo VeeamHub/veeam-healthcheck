@@ -623,7 +623,7 @@ namespace HC_Reporting.Html
                     new XElement("performfull", c.PerformFullWhenExtentOffline),
                     new XElement("captier", c.EnableCapacityTier),
                     new XElement("restoreperiod", c.OperationalRestorePeriod),
-                    new XElement("capacityext", c.CapacityExtent),
+                    new XElement("capacitytext", c.CapacityExtent),
                     new XElement("offloadwindow", c.OffloadWindowOptions),
                     new XElement("overridespace", c.OverrideSpaceThreshold),
                     new XElement("encryption", c.EncryptionEnabled),
