@@ -566,12 +566,12 @@ function test(){
 			</table>
 			<div class="hdr">Summary:</div>
 			<br></br>
-			<div class="">This table summarizes the amount of workload detected in the current backup server. The VMware count is determined by the local cache and compares those VMs and count to the existing backups. The physical workloads are determined by the number of VMs added to Protection Groups.</div>
+			<div class="">This table summarizes the amount of workloads detected in the current backup server. The VMware (Vi Total) count is determined by the local Veeam Broker service and compares that VM count with the existing backups. The physical workloads (Phys Total) are determined by the number of VMs added to Protection Groups and then compared to what is in backup jobs.</div>
 			<br></br>
 			<div class="hdr">Notes:</div>
 			<br></br>
 			<div class="i2">
-				Potentially duplicated workloads can be in many forms
+				"Duplicates" shows the discrepancy between unique workloads in backup jobs and those workloads across multiple backup jobs as may be reflected in the VMC file. It does not mean VM's (or their license consumption) is being duplicated.
 			</div>
 		</div>
 		</div>
