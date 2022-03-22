@@ -10,17 +10,24 @@
     <Company>Veeam</Company>
     <Authors>AdamC</Authors>
     <ApplicationIcon>Veeam_HealthCheck_228x228.ico</ApplicationIcon>
-    <AssemblyVersion>1.0.1.1215</AssemblyVersion>
+    <AssemblyVersion>1.0.1.1218</AssemblyVersion>
     <SignAssembly>true</SignAssembly>
     <AssemblyOriginatorKeyFile>vhc_keyfile2.pfx</AssemblyOriginatorKeyFile>
     <DelaySign>false</DelaySign>
-    <FileVersion>1.0.0.1215</FileVersion>
+    <FileVersion>1.0.0.1218</FileVersion>
     <DebugType>none</DebugType>
 	  <PublishSingleFile>true</PublishSingleFile>
 	  <SelfContained>true</SelfContained>
 	  <IncludeAllContentForSelfExtract>true</IncludeAllContentForSelfExtract>
 	  <RuntimeIdentifier>win-x64</RuntimeIdentifier>
   </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Remove="VBO\**" />
+    <EmbeddedResource Remove="VBO\**" />
+    <None Remove="VBO\**" />
+    <Page Remove="VBO\**" />
+  </ItemGroup>
 
   <ItemGroup>
     <None Remove="RVTools4.1.4.msi" />
@@ -60,7 +67,9 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="VBO\" />
+    <Folder Include="Shared\" />
+    <Folder Include="Softwares\VB365\CsvHandlers\" />
+    <Folder Include="Softwares\VBR\" />
   </ItemGroup>
 
 </Project>
