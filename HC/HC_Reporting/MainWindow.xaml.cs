@@ -23,6 +23,25 @@ namespace HC_Reporting
         private bool _openHtml = false;
         public static bool _openExplorer = true;
         public static string _desiredPath = CVariables.unsafeDir;
+        public MainWindow(string[] args)
+        {
+            InitializeComponent();
+            pathBox.Text = CVariables.unsafeDir;
+            //testing new UI
+            //Wizard_1 w = new();
+            //w.Show();
+
+            //testing password lock
+            //DecryptSystem();
+
+            //maybe disable for mass distrib?
+            //importButton.IsEnabled = false;
+
+            //core functions
+            PreCheck();
+            hideProgressBar();
+            run.IsEnabled = false;
+        }
         public MainWindow()
         {
             InitializeComponent();

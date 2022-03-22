@@ -5,9 +5,19 @@ VisualStudioVersion = 17.1.32228.430
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "VeeamHealthCheck", "HC_Reporting\VeeamHealthCheck.csproj", "{52D9E987-6873-4FAC-ABCB-C9B7AE7B7A2E}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "vHC_VB365", "vHC_VB365\vHC_VB365.csproj", "{FC6A17E8-D14F-4AAC-890D-0F4DFAAA9A10}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "vHC_VB365", "vHC_VB365\vHC_VB365.csproj", "{FC6A17E8-D14F-4AAC-890D-0F4DFAAA9A10}"
+EndProject
+Project("{D954291E-2A0B-460D-934E-DC6B0785DB48}") = "vHC_Common", "vHC_Common\vHC_Common.shproj", "{92AEC4B8-6DCB-4729-BB3A-C28A7CB81AC4}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "vHC-VB365", "vHC-VB365", "{7571C73B-2C4B-4EDF-ACF9-C1F4794A2277}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "vHC", "vHC", "{9C071CDE-DEFE-4EA7-9DD0-E56A46D87547}"
 EndProject
 Global
+	GlobalSection(SharedMSBuildProjectFiles) = preSolution
+		vHC_Common\vHC_Common.projitems*{92aec4b8-6dcb-4729-bb3a-c28a7cb81ac4}*SharedItemsImports = 13
+		vHC_Common\vHC_Common.projitems*{fc6a17e8-d14f-4aac-890d-0f4dfaaa9a10}*SharedItemsImports = 5
+	EndGlobalSection
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
 		Debug|x64 = Debug|x64
@@ -25,8 +35,7 @@ Global
 		{52D9E987-6873-4FAC-ABCB-C9B7AE7B7A2E}.Release|x64.Build.0 = Release|Any CPU
 		{FC6A17E8-D14F-4AAC-890D-0F4DFAAA9A10}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{FC6A17E8-D14F-4AAC-890D-0F4DFAAA9A10}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{FC6A17E8-D14F-4AAC-890D-0F4DFAAA9A10}.Debug|x64.ActiveCfg = Debug|Any CPU
-		{FC6A17E8-D14F-4AAC-890D-0F4DFAAA9A10}.Debug|x64.Build.0 = Debug|Any CPU
+		{FC6A17E8-D14F-4AAC-890D-0F4DFAAA9A10}.Debug|x64.ActiveCfg = Debug|x64
 		{FC6A17E8-D14F-4AAC-890D-0F4DFAAA9A10}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{FC6A17E8-D14F-4AAC-890D-0F4DFAAA9A10}.Release|Any CPU.Build.0 = Release|Any CPU
 		{FC6A17E8-D14F-4AAC-890D-0F4DFAAA9A10}.Release|x64.ActiveCfg = Release|Any CPU
@@ -34,6 +43,9 @@ Global
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{52D9E987-6873-4FAC-ABCB-C9B7AE7B7A2E} = {9C071CDE-DEFE-4EA7-9DD0-E56A46D87547}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {F04F6FBC-5D61-4D15-8F3A-D68B9D0A1E6B}
