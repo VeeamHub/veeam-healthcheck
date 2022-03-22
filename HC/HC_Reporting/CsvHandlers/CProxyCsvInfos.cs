@@ -12,6 +12,7 @@ namespace HC_Reporting.CsvHandlers
     class CProxyCsvInfos
     {
         [Index(0)]
+        //[ColumnDetails()]
         public string Id { get; set; }
         [Index(1)]
         public string Name { get; set; }
@@ -41,5 +42,10 @@ namespace HC_Reporting.CsvHandlers
         public string ChosenVm { get; set; }
         [Index(14)]
         public string ChassisType { get; set; }
+
+        public string ProxyName()
+        {
+
+        }
     }
 }
