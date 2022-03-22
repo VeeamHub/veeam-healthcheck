@@ -10,11 +10,11 @@
     <Company>Veeam</Company>
     <Authors>AdamC</Authors>
     <ApplicationIcon>Veeam_HealthCheck_228x228.ico</ApplicationIcon>
-    <AssemblyVersion>1.0.1.1188</AssemblyVersion>
+    <AssemblyVersion>1.0.1.1189</AssemblyVersion>
     <SignAssembly>true</SignAssembly>
     <AssemblyOriginatorKeyFile>vhc_keyfile2.pfx</AssemblyOriginatorKeyFile>
     <DelaySign>false</DelaySign>
-    <FileVersion>1.0.0.1188</FileVersion>
+    <FileVersion>1.0.0.1189</FileVersion>
   </PropertyGroup>
 
   <ItemGroup>
@@ -52,10 +52,6 @@
     <None Update="Veeam_HealthCheck_228x228.ico">
       <CopyToOutputDirectory>Never</CopyToOutputDirectory>
     </None>
-  </ItemGroup>
-
-  <ItemGroup>
-    <Folder Include="VBO\" />
   </ItemGroup>
 
 </Project>
