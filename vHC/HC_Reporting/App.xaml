@@ -1,0 +1,13 @@
+﻿<!--
+Copyright (c) 2021, Adam Congdon <adam.congdon2@gmail.com>
+MIT License
+-->
+<Application x:Class="VeeamHealthCheck.App"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:local="clr-namespace:VeeamHealthCheck"
+             StartupUri="MainWindow.xaml">
+    <Application.Resources>
+         
+    </Application.Resources>
+</Application>
