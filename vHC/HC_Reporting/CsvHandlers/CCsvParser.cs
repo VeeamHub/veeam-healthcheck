@@ -163,11 +163,7 @@ namespace VeeamHealthCheck.CsvHandlers
             var r = FileFinder(_repoReportName).GetRecords<CRepoCsvInfos>();
             return r;
         }
-        //public IEnumerable<CLicCsvInfo> LicCsvParser()
-        //{
-        //    var r = FileFinder(_licReportName).GetRecords<CLicCsvInfo>();
-        //    return r;
-        //}
+
         public IEnumerable<CCdpProxyCsvInfo> CdpProxCsvParser()
         {
             var r = FileFinder(_cdpProxReportName).GetRecords<CCdpProxyCsvInfo>();

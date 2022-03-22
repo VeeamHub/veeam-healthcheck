@@ -80,7 +80,6 @@ namespace VeeamHealthCheck.Html
         private void HeaderInfoToXml()
         {
             log.Info("converting header info to xml");
-            //List<CLicTypeInfo> csv = _dTypeParser.LicInfo;
             var parser = new CCsvParser();
             var rec = parser.GetDynamicRecs();
 
@@ -90,8 +89,6 @@ namespace VeeamHealthCheck.Html
                 cxName = r.licensedto;
             }
 
-            //csv = csv.OrderBy(x => x.Name).ToList();
-            //csv = csv.OrderBy(x => x.Type).ToList();
             XDocument doc = new XDocument(new XElement("root"));
 
             XElement serverRoot = new XElement("header");
@@ -115,7 +112,6 @@ namespace VeeamHealthCheck.Html
         private void LicInfoToXml()
         {
             log.Info("converting lic info to xml");
-            //List<CLicTypeInfo> csv = _dTypeParser.LicInfo;
             CCsvParser parser = new();
             var recs = parser.GetDynamicRecs();
 

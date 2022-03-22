@@ -468,42 +468,7 @@ namespace VeeamHealthCheck.DataTypes
             return d;
         }
 
-        //private List<CLicTypeInfo> LicInfos()
-        //{
 
-        //    var records = _csvParser.LicCsvParser();
-        //    List<CLicTypeInfo> eInfoList = new List<CLicTypeInfo>();
-
-        //    foreach (CLicCsvInfo s in records)
-        //    {
-        //        CLicTypeInfo eInfo = new CLicTypeInfo();
-
-        //        eInfo.AutoUpdateEnabled = s.AutoUpdateEnabled;
-        //        eInfo.CloudConnect = s.CloudConnect;
-        //        eInfo.Edition = s.Edition;
-        //        eInfo.ExpirationDate = s.ExpirationDate;
-        //        eInfo.FreeAgentInstanceConsumptionEnabled = eInfo.FreeAgentInstanceConsumptionEnabled;
-        //        eInfo.LicensedCapacityTb = s.LicensedCapacityTb;
-        //        eInfo.LicensedInstances = ParseToInt(s.LicensedInstances);
-        //        eInfo.LicensedSockets = ParseToInt(s.LicensedSockets);
-        //        eInfo.LicensedTo = s.LicensedTo;
-        //        eInfo.NewInstances = ParseToInt(s.NewInstances);
-        //        eInfo.RemainingSockets = ParseToInt(s.RemainingSockets);
-        //        eInfo.RentalInstances = ParseToInt(s.RentalInstances);
-        //        eInfo.Status = s.Status;
-        //        eInfo.SupportExpirationDate = s.SupportExpirationDate;
-        //        eInfo.SupportId = s.SupportId;
-        //        eInfo.Type = s.Type;
-        //        eInfo.UsedCapacityTb = s.UsedCapacityTb;
-        //        eInfo.UsedInstances = ParseToInt(s.UsedInstances);
-        //        eInfo.UsedSockets = ParseToInt(s.UsedSockets);
-
-        //        eInfoList.Add(eInfo);
-
-        //    }
-
-        //    return eInfoList;
-        //}
         private string CalcRepoOptimalTasks(int assignedTasks, int cores, int ram)
         {
             if (cores == 0 && ram == 0)
