@@ -34,7 +34,7 @@ namespace VeeamHealthCheck.DataTypes
         public List<CProxyTypeInfos> ProxyInfos { get { return _proxyInfo; } }
         public Dictionary<string, int> ServerSummaryInfo { get { return _serverSummaryInfo; } }
         public List<CSobrTypeInfos> SobrInfo { get { return _sobrInfo; } }
-        public List<CLicTypeInfo> LicInfo { get { return LicInfos(); } }
+        //public List<CLicTypeInfo> LicInfo { get { return LicInfos(); } }
         public List<CRepoTypeInfos> RepoInfos { get { return RepoInfo(); } }
         public List<CWanTypeInfo> WanInfos { get { return WanInfo(); } }
         public CConfigBackupCsv ConfigBackup { get { return ConfigBackupInfo(); } }
@@ -468,42 +468,42 @@ namespace VeeamHealthCheck.DataTypes
             return d;
         }
 
-        private List<CLicTypeInfo> LicInfos()
-        {
+        //private List<CLicTypeInfo> LicInfos()
+        //{
 
-            var records = _csvParser.LicCsvParser();
-            List<CLicTypeInfo> eInfoList = new List<CLicTypeInfo>();
+        //    var records = _csvParser.LicCsvParser();
+        //    List<CLicTypeInfo> eInfoList = new List<CLicTypeInfo>();
 
-            foreach (CLicCsvInfo s in records)
-            {
-                CLicTypeInfo eInfo = new CLicTypeInfo();
+        //    foreach (CLicCsvInfo s in records)
+        //    {
+        //        CLicTypeInfo eInfo = new CLicTypeInfo();
 
-                eInfo.AutoUpdateEnabled = s.AutoUpdateEnabled;
-                eInfo.CloudConnect = s.CloudConnect;
-                eInfo.Edition = s.Edition;
-                eInfo.ExpirationDate = s.ExpirationDate;
-                eInfo.FreeAgentInstanceConsumptionEnabled = eInfo.FreeAgentInstanceConsumptionEnabled;
-                eInfo.LicensedCapacityTb = s.LicensedCapacityTb;
-                eInfo.LicensedInstances = ParseToInt(s.LicensedInstances);
-                eInfo.LicensedSockets = ParseToInt(s.LicensedSockets);
-                eInfo.LicensedTo = s.LicensedTo;
-                eInfo.NewInstances = ParseToInt(s.NewInstances);
-                eInfo.RemainingSockets = ParseToInt(s.RemainingSockets);
-                eInfo.RentalInstances = ParseToInt(s.RentalInstances);
-                eInfo.Status = s.Status;
-                eInfo.SupportExpirationDate = s.SupportExpirationDate;
-                eInfo.SupportId = s.SupportId;
-                eInfo.Type = s.Type;
-                eInfo.UsedCapacityTb = s.UsedCapacityTb;
-                eInfo.UsedInstances = ParseToInt(s.UsedInstances);
-                eInfo.UsedSockets = ParseToInt(s.UsedSockets);
+        //        eInfo.AutoUpdateEnabled = s.AutoUpdateEnabled;
+        //        eInfo.CloudConnect = s.CloudConnect;
+        //        eInfo.Edition = s.Edition;
+        //        eInfo.ExpirationDate = s.ExpirationDate;
+        //        eInfo.FreeAgentInstanceConsumptionEnabled = eInfo.FreeAgentInstanceConsumptionEnabled;
+        //        eInfo.LicensedCapacityTb = s.LicensedCapacityTb;
+        //        eInfo.LicensedInstances = ParseToInt(s.LicensedInstances);
+        //        eInfo.LicensedSockets = ParseToInt(s.LicensedSockets);
+        //        eInfo.LicensedTo = s.LicensedTo;
+        //        eInfo.NewInstances = ParseToInt(s.NewInstances);
+        //        eInfo.RemainingSockets = ParseToInt(s.RemainingSockets);
+        //        eInfo.RentalInstances = ParseToInt(s.RentalInstances);
+        //        eInfo.Status = s.Status;
+        //        eInfo.SupportExpirationDate = s.SupportExpirationDate;
+        //        eInfo.SupportId = s.SupportId;
+        //        eInfo.Type = s.Type;
+        //        eInfo.UsedCapacityTb = s.UsedCapacityTb;
+        //        eInfo.UsedInstances = ParseToInt(s.UsedInstances);
+        //        eInfo.UsedSockets = ParseToInt(s.UsedSockets);
 
-                eInfoList.Add(eInfo);
+        //        eInfoList.Add(eInfo);
 
-            }
+        //    }
 
-            return eInfoList;
-        }
+        //    return eInfoList;
+        //}
         private string CalcRepoOptimalTasks(int assignedTasks, int cores, int ram)
         {
             if (cores == 0 && ram == 0)

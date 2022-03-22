@@ -99,27 +99,25 @@ namespace VeeamHealthCheck.Html
             doc.AddFirst(new XProcessingInstruction("xml-stylesheet", "type=\"text/xsl\" href=\"SessionReport.xsl\""));
             string summary = "This report provides data and insight into your Veeam Backup and Replication (VBR) deployment. The information provided here is intended to be used in collaboration with your Veeam representative.";
 
-            foreach (var c in rec)
-            {
-                var xml = new XElement("h1",
-                    new XElement("name", cxName),
-                    new XElement("hc", "Health Check Report"),
-                    new XElement("summary", summary)
-                    );
+            var xml = new XElement("h1",
+                new XElement("name", cxName),
+                new XElement("hc", "Health Check Report"),
+                new XElement("summary", summary)
+                );
 
-                serverRoot.Add(xml);
-
-                //doc.Add(xml);
+            serverRoot.Add(xml);
 
 
-            }
+
             doc.Save(_testFile);
             log.Info("converting header info to xml");
         }
         private void LicInfoToXml()
         {
             log.Info("converting lic info to xml");
-            List<CLicTypeInfo> csv = _dTypeParser.LicInfo;
+            //List<CLicTypeInfo> csv = _dTypeParser.LicInfo;
+            CCsvParser parser = new();
+            var recs = parser.GetDynamicRecs();
 
             XDocument doc = XDocument.Load(_testFile);
 
@@ -127,24 +125,24 @@ namespace VeeamHealthCheck.Html
             var summary = new XElement("info", fillerText.LicenseSummary);
             extElement.Add(summary);
             doc.Root.Add(extElement);
-            foreach (var c in csv)
+            foreach (var c in recs)
             {
                 var xml = new XElement("licInfo",
-                    new XElement("client", c.LicensedTo),
-                    new XElement("edition", c.Edition),
-                    new XElement("status", c.Status),
-                    new XElement("type", c.Type),
-                    new XElement("licInst", c.LicensedInstances),
-                    new XElement("usedInst", c.UsedInstances),
-                    new XElement("newInst", c.NewInstances),
-                    new XElement("rentInst", c.RentalInstances),
-                    new XElement("licSock", c.LicensedSockets),
-                    new XElement("usedSock", c.UsedSockets),
-                    new XElement("licCap", c.LicensedCapacityTb),
-                    new XElement("usedCap", c.UsedCapacityTb),
-                    new XElement("expire", c.ExpirationDate),
-                    new XElement("supExp", c.SupportExpirationDate),
-                    new XElement("cloudconnect", c.CloudConnect)
+                    new XElement("client", c.licensedto),
+                    new XElement("edition", c.edition),
+                    new XElement("status", c.status),
+                    new XElement("type", c.type),
+                    new XElement("licInst", c.licensedinstances),
+                    new XElement("usedInst", c.usedinstances),
+                    new XElement("newInst", c.newinstances),
+                    new XElement("rentInst", c.rentalinstances),
+                    new XElement("licSock", c.licensedsockets),
+                    new XElement("usedSock", c.usedsockets),
+                    new XElement("licCap", c.licensedcapacitytb),
+                    new XElement("usedCap", c.usedcapacitytb),
+                    new XElement("expire", c.expirationdate),
+                    new XElement("supExp", c.supportexpirationdate),
+                    new XElement("cloudconnect", c.cloudconnect)
                     );
 
                 extElement.Add(xml);
@@ -337,7 +335,7 @@ namespace VeeamHealthCheck.Html
             int viTotal = 0;
             int viDupes = 0;
 
-            foreach(var p in protectedVms)
+            foreach (var p in protectedVms)
             {
                 vmNames.Add(p.Name);
                 viProtectedNames.Add(p.Name);
@@ -351,17 +349,17 @@ namespace VeeamHealthCheck.Html
             List<string> physNames = new();
             List<string> physProtNames = new();
 
-            foreach(var p in physProtected)
+            foreach (var p in physProtected)
             {
                 physNames.Add(p.Name);
                 physProtNames.Add(p.Name);
             }
             foreach (var u in physNotProtected)
                 physNames.Add(u.Name);
-      
+
 
             //var xml2 = AddXelement(protectedVms.Count.ToString(), "ViProtected");
-            extElement.Add(AddXelement((protectedVms.Count+unProtectedVms.Count).ToString(), "Vi Total"));
+            extElement.Add(AddXelement((protectedVms.Count + unProtectedVms.Count).ToString(), "Vi Total"));
             extElement.Add(AddXelement(viProtectedNames.Distinct().Count().ToString(), "Vi Protected"));
             extElement.Add(AddXelement(unProtectedVms.Count.ToString(), "Vi Not Prot."));
             extElement.Add(AddXelement(viDupes.ToString(), "Vi Potential Duplicates"));
@@ -397,7 +395,7 @@ namespace VeeamHealthCheck.Html
 
             // begin XML info input
             XDocument doc = XDocument.Load(_testFile);
-            
+
             // NEW NODE NAME HERE
             XElement extElement = new XElement("backupServer");
             doc.Root.Add(extElement);
@@ -695,7 +693,7 @@ namespace VeeamHealthCheck.Html
                     type = c.Type;
                 else
                     type = c.TypeDisplay;
-                
+
                 var freePercent = FreePercent(c.FreeSPace, c.TotalSpace);
 
                 var xml = new XElement("repository",
@@ -878,7 +876,7 @@ namespace VeeamHealthCheck.Html
 
         private void ProtectedVmCounter(List<CViProtected> protectedList, List<string> uniqueVmList, int vmcounter, int protectedCounter)
         {
-            foreach(var p in protectedList)
+            foreach (var p in protectedList)
             {
                 if (!uniqueVmList.Contains(p.Name))
                 {
@@ -916,7 +914,7 @@ namespace VeeamHealthCheck.Html
                 int vmCount = 0;
                 int protectedCount = 0;
                 int unProtectedCount = 0;
-                
+
                 foreach (var p in protectedVms)
                 {
                     if (!countedVMs.Contains(p.Name))
@@ -928,9 +926,9 @@ namespace VeeamHealthCheck.Html
                             countedVMs.Add(p.Name);
                         }
                     }
-                    
+
                 }
-                foreach(var u in unProtectedVms)
+                foreach (var u in unProtectedVms)
                 {
                     if (!countedVMs.Contains(u.Name))
                     {
@@ -941,7 +939,7 @@ namespace VeeamHealthCheck.Html
                             countedVMs.Add(u.Name);
                         }
                     }
-                    
+
                 }
 
                 string pVmStr = "";
@@ -954,7 +952,7 @@ namespace VeeamHealthCheck.Html
                 string tVmStr = "";
                 if (vmCount != 0)
                     tVmStr = vmCount.ToString();
-             
+
 
 
                 //check for VBR Roles
@@ -1096,7 +1094,7 @@ namespace VeeamHealthCheck.Html
             Dictionary<DateTime, string> jobStartDict = new();
             List<string> jobNameList = new();
             jobNameList.AddRange(sessionInfo.Select(y => y.JobName).Distinct());
-            
+
             List<string> mirrorJobNamesList = new();
             List<string> nameDatesList = new();
             if (isJob)
@@ -1104,7 +1102,7 @@ namespace VeeamHealthCheck.Html
                 List<string> mirrorJobBjobList = new();
                 List<string> backupSyncNameList = new();
                 List<string> epAgentBackupList = new();
-                foreach(var backup in jobInfo)
+                foreach (var backup in jobInfo)
                 {
                     if (backup.JobType == "SimpleBackupCopyPolicy")
                         mirrorJobBjobList.Add(backup.Name);
@@ -1136,12 +1134,12 @@ namespace VeeamHealthCheck.Html
                                 ctList.Add(ParseConcurrency(sess, days));
                             }
                         }
-                        
+
                     }
                 }
 
                 var backupSyncJobs = jobInfo.Where(x => x.JobType == "BackupSync");
-                foreach(var b in backupSyncJobs)
+                foreach (var b in backupSyncJobs)
                 {
                     var v = sessionInfo.Where(x => x.JobName == b.Name);
 
@@ -1168,7 +1166,7 @@ namespace VeeamHealthCheck.Html
                 }
 
                 var epAgentBackupJobs = jobInfo.Where(x => x.JobType == "EpAgentBackup");
-                foreach(var e in epAgentBackupJobs)
+                foreach (var e in epAgentBackupJobs)
                 {
                     var epBcj = sessionInfo.Where(x => x.JobType == "EEndPoint");
 
@@ -1208,11 +1206,11 @@ namespace VeeamHealthCheck.Html
                     //}
                     //if (b.JobType == "BackupSync")
                     //{
-                        
+
                     //}
                     //if (b.JobType == "EpAgentBackup")
                     //{
-                       
+
                     //}
                     //if(b.JobType == "SimpleBackupCopyPolicy")
                     //{
@@ -1230,16 +1228,16 @@ namespace VeeamHealthCheck.Html
                     //}
                     //else
                     //{
-                        var remainingSessions = sessionInfo.Where(x => x.JobName.Equals(b.Name));
-                        foreach (var sess in remainingSessions)
+                    var remainingSessions = sessionInfo.Where(x => x.JobName.Equals(b.Name));
+                    foreach (var sess in remainingSessions)
+                    {
+                        string nameDate = sess.JobName + sess.CreationTime.ToString();
+                        if (!nameDatesList.Contains(nameDate))
                         {
-                            string nameDate = sess.JobName + sess.CreationTime.ToString();
-                            if (!nameDatesList.Contains(nameDate))
-                            {
-                                nameDatesList.Add(nameDate);
-                                ctList.Add(ParseConcurrency(sess, days));
-                            }
+                            nameDatesList.Add(nameDate);
+                            ctList.Add(ParseConcurrency(sess, days));
                         }
+                    }
 
                     //}
 
@@ -1588,7 +1586,7 @@ namespace VeeamHealthCheck.Html
         }
         private XElement AddXelement(string data, string headerName, string tooltip, string provisioning)
         {
-            
+
             var xml = new XElement("td", data,
                 new XAttribute("headerName", headerName),
                 new XAttribute("tooltip", tooltip),
