@@ -14,14 +14,18 @@ namespace VeeamHealthCheck.Scrubber
         private readonly string _matchListPath = CVariables.unsafeDir + @"\vHC_KeyFile.xml";
         private Dictionary<string,string> _matchDictionary;
         private XDocument _doc;
+        //private Logger_core.Log_Core log = new();
+
         public CXmlHandler()
         {
+            //log.CreateLogFile("ScrubLog");
+            //log.LogProgress("init");
             _matchDictionary = new();
             _doc = new XDocument(new XElement("root"));
         }
         private void AddItemToList(string type, string original, string obfuscated)
         {
-            
+            //log.Info("Scrubbing item: Original [" + original + "], New: [" + obfuscated + "].");
 
             //XElement serverRoot = new XElement(type);
             //_doc.Root.Add(serverRoot);

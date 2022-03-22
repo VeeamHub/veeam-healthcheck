@@ -21,7 +21,7 @@ using VeeamHealthCheck.CsvHandlers;
 using VeeamHealthCheck.DataTypes;
 using VeeamHealthCheck.DB;
 using VeeamHealthCheck.Html;
-using VeeamHealthCheck.Logging;
+using VeeamHealthCheck.Shared.Logging;
 using VeeamHealthCheck.RegSettings;
 using VeeamHealthCheck.Scrubber;
 using static VeeamHealthCheck.DB.CModel;
@@ -80,10 +80,18 @@ namespace VeeamHealthCheck.Html
         private void HeaderInfoToXml()
         {
             log.Info("converting header info to xml");
-            List<CLicTypeInfo> csv = _dTypeParser.LicInfo;
+            //List<CLicTypeInfo> csv = _dTypeParser.LicInfo;
+            var parser = new CCsvParser();
+            var rec = parser.GetDynamicRecs();
+
+            string cxName = "";
+            foreach (var r in rec)
+            {
+                cxName = r.licensedto;
+            }
 
             //csv = csv.OrderBy(x => x.Name).ToList();
-            csv = csv.OrderBy(x => x.Type).ToList();
+            //csv = csv.OrderBy(x => x.Type).ToList();
             XDocument doc = new XDocument(new XElement("root"));
 
             XElement serverRoot = new XElement("header");
@@ -91,10 +99,10 @@ namespace VeeamHealthCheck.Html
             doc.AddFirst(new XProcessingInstruction("xml-stylesheet", "type=\"text/xsl\" href=\"SessionReport.xsl\""));
             string summary = "This report provides data and insight into your Veeam Backup and Replication (VBR) deployment. The information provided here is intended to be used in collaboration with your Veeam representative.";
 
-            foreach (var c in csv)
+            foreach (var c in rec)
             {
                 var xml = new XElement("h1",
-                    new XElement("name", c.LicensedTo),
+                    new XElement("name", cxName),
                     new XElement("hc", "Health Check Report"),
                     new XElement("summary", summary)
                     );

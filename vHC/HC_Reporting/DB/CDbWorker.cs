@@ -8,7 +8,7 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using VeeamHealthCheck.Logging;
+using VeeamHealthCheck.Shared.Logging;
 using VeeamHealthCheck;
 using System.Windows;
 using System.Security.Principal;

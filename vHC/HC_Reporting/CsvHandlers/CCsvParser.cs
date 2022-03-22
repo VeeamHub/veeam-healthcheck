@@ -13,7 +13,8 @@ using System.Windows;
 using System.Xml.Linq;
 using VeeamHealthCheck;
 using VeeamHealthCheck.CsvHandlers;
-using VeeamHealthCheck.Logging;
+using VeeamHealthCheck.Shared.Logging;
+
 
 namespace VeeamHealthCheck.CsvHandlers
 {
@@ -55,6 +56,10 @@ namespace VeeamHealthCheck.CsvHandlers
         }
         public void Dispose() { }
 
+        public IEnumerable<dynamic> GetDynamicRecs()
+        {
+            return FileFinder(_licReportName).GetRecords<dynamic>();
+        }
         public IEnumerable<CJobSessionCsvInfos> SessionCsvParser()
         {
             try

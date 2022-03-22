@@ -10,12 +10,12 @@
     <Company>Veeam</Company>
     <Authors>AdamC</Authors>
     <ApplicationIcon>Veeam_HealthCheck_228x228.ico</ApplicationIcon>
-    <AssemblyVersion>1.0.1.1220</AssemblyVersion>
+    <AssemblyVersion>1.0.1.1242</AssemblyVersion>
     <SignAssembly>true</SignAssembly>
     <AssemblyOriginatorKeyFile>vhc_keyfile2.pfx</AssemblyOriginatorKeyFile>
     <DelaySign>false</DelaySign>
-    <FileVersion>1.0.0.1220</FileVersion>
-    <DebugType>none</DebugType>
+    <FileVersion>1.0.0.1242</FileVersion>
+    <DebugType>full</DebugType>
 	  <PublishSingleFile>true</PublishSingleFile>
 	  <SelfContained>true</SelfContained>
 	  <IncludeAllContentForSelfExtract>true</IncludeAllContentForSelfExtract>
@@ -67,7 +67,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="Shared\" />
     <Folder Include="Softwares\VB365\CsvHandlers\" />
     <Folder Include="Softwares\VBR\" />
   </ItemGroup>

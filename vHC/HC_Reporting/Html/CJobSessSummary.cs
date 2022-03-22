@@ -11,7 +11,7 @@ using System.Threading.Tasks;
 using System.Xml.Linq;
 using VeeamHealthCheck.CsvHandlers;
 using VeeamHealthCheck.DataTypes;
-using VeeamHealthCheck.Logging;
+using VeeamHealthCheck.Shared.Logging;
 
 namespace VeeamHealthCheck.Html
 {

@@ -7,7 +7,7 @@ using System.Text;
 using System.Threading.Tasks;
 using System.IO;
 
-namespace VeeamHealthCheck.Logging
+namespace VeeamHealthCheck.Shared.Logging
 {
     public class CLogger
     {

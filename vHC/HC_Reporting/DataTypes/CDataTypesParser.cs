@@ -8,7 +8,7 @@ using System.Text;
 using System.Threading.Tasks;
 using VeeamHealthCheck.DataTypes;
 using VeeamHealthCheck.CsvHandlers;
-using VeeamHealthCheck.Logging;
+using VeeamHealthCheck.Shared.Logging;
 
 namespace VeeamHealthCheck.DataTypes
 {
@@ -473,6 +473,7 @@ namespace VeeamHealthCheck.DataTypes
 
             var records = _csvParser.LicCsvParser();
             List<CLicTypeInfo> eInfoList = new List<CLicTypeInfo>();
+
             foreach (CLicCsvInfo s in records)
             {
                 CLicTypeInfo eInfo = new CLicTypeInfo();

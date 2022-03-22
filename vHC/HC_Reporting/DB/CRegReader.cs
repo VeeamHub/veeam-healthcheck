@@ -2,7 +2,6 @@
 // MIT License
 using System;
 using Microsoft.Win32;
-using Logger_core;
 using System.Windows;
 
 namespace VeeamHealthCheck.DB

@@ -9,7 +9,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows;
-using VeeamHealthCheck.Logging;
+using VeeamHealthCheck.Shared.Logging;
 
 namespace VeeamHealthCheck.DB
 {

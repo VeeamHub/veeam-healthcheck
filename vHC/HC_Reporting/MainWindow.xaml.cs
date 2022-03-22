@@ -8,7 +8,7 @@ using System.Windows.Controls;
 using System.Windows.Documents;
 using VeeamHealthCheck;
 using VeeamHealthCheck.DB;
-using VeeamHealthCheck.Logging;
+using VeeamHealthCheck.Shared.Logging;
 
 namespace VeeamHealthCheck
 {
