@@ -45,7 +45,7 @@ namespace HC_Reporting.CsvHandlers
 
         public string ProxyName()
         {
-
+            return null;
         }
     }
 }
