@@ -4,7 +4,7 @@
 	- collapsible sections
 	- expand/collapse all button
 - redirected output for HTML reports: 
-	- default = C:\temp\vHC\SensitiveData\
+	- default = C:\temp\vHC\Original\
 	- scrubbed = C:\temp\vHC\Anonymous
 	- optional custom output for report
 - added detected VM count (VMware)
