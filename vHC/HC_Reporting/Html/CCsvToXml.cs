@@ -81,7 +81,7 @@ namespace VeeamHealthCheck.Html
         {
             log.Info("converting header info to xml");
             var parser = new CCsvParser();
-            var rec = parser.GetDynamicRecs();
+            var rec = parser.GetDynamicLicenseCsv();
 
             string cxName = "";
             foreach (var r in rec)
@@ -113,7 +113,7 @@ namespace VeeamHealthCheck.Html
         {
             log.Info("converting lic info to xml");
             CCsvParser parser = new();
-            var recs = parser.GetDynamicRecs();
+            var recs = parser.GetDynamicLicenseCsv();
 
             XDocument doc = XDocument.Load(_testFile);
 
@@ -312,8 +312,10 @@ namespace VeeamHealthCheck.Html
             #endregion
 
             #region physProtected
-            var physProtected = csvp.PhysProtectedReader().ToList();
-            var physNotProtected = csvp.PhysNotProtectedReader().ToList();
+            //var physProtected = csvp.PhysProtectedReader().ToList();
+            var phProt = csvp.GetDynamicPhysProtected();
+            //var physNotProtected = csvp.PhysNotProtectedReader().ToList();
+            var phNotProt = csvp.GetDynamicPhysNotProtected();
             #endregion
 
 
@@ -331,6 +333,7 @@ namespace VeeamHealthCheck.Html
             int viTotal = 0;
             int viDupes = 0;
 
+
             foreach (var p in protectedVms)
             {
                 vmNames.Add(p.Name);
@@ -342,27 +345,35 @@ namespace VeeamHealthCheck.Html
             viTotal = vmNames.Distinct().Count();
             viDupes = vmNames.Count - viTotal;
 
+            
+
             List<string> physNames = new();
             List<string> physProtNames = new();
 
-            foreach (var p in physProtected)
+            foreach (var p in phProt)
             {
-                physNames.Add(p.Name);
-                physProtNames.Add(p.Name);
+                physNames.Add(p.name);
+                physProtNames.Add(p.name);
             }
-            foreach (var u in physNotProtected)
-                physNames.Add(u.Name);
+            foreach (var u in phNotProt)
+            {
+                physNames.Add(u.name);
+
+            }
+            int physTotal = physNames.Distinct().Count();
+            var v = phProt.Count();
+            var physProtTotal = physProtNames.Distinct().Count();
 
 
             //var xml2 = AddXelement(protectedVms.Count.ToString(), "ViProtected");
-            extElement.Add(AddXelement((protectedVms.Count + unProtectedVms.Count).ToString(), "Vi Total"));
-            extElement.Add(AddXelement(viProtectedNames.Distinct().Count().ToString(), "Vi Protected"));
-            extElement.Add(AddXelement(unProtectedVms.Count.ToString(), "Vi Not Prot."));
+            extElement.Add(AddXelement((viTotal).ToString(), "Vi Total"));
+            extElement.Add(AddXelement(protectedVms.Count.ToString(), "Vi Protected"));
+            extElement.Add(AddXelement((viTotal - protectedVms.Count()).ToString(), "Vi Not Prot."));
             extElement.Add(AddXelement(viDupes.ToString(), "Vi Potential Duplicates"));
 
-            extElement.Add(AddXelement(physNames.Distinct().Count().ToString(), "Phys Total"));
-            extElement.Add(AddXelement(physProtNames.Distinct().Count().ToString(), "Phys Protected"));
-            extElement.Add(AddXelement(physNotProtected.Count.ToString(), "Phys Not Prot."));
+            extElement.Add(AddXelement(physTotal.ToString(), "Phys Total"));
+            extElement.Add(AddXelement(physProtTotal.ToString(), "Phys Protected"));
+            extElement.Add(AddXelement((physTotal - physProtTotal).ToString(), "Phys Not Prot."));
             //set items to XML + save
             //var xml = new XElement("workloads",
             //    new XElement("viTotal", protectedVms.Count + unProtectedVms.Count),

@@ -14,11 +14,12 @@
     <SignAssembly>true</SignAssembly>
     <AssemblyOriginatorKeyFile>vhc_keyfile2.pfx</AssemblyOriginatorKeyFile>
     <DelaySign>false</DelaySign>
-    <FileVersion>1.0.0.1251</FileVersion>
+    <FileVersion>1.0.1.1251</FileVersion>
     <DebugType>full</DebugType>
-	  <PublishSingleFile>true</PublishSingleFile>
 	  <SelfContained>true</SelfContained>
-	  <IncludeAllContentForSelfExtract>true</IncludeAllContentForSelfExtract>
+	  <!--These 2 lines are what produce the single file utility. Possibly doesn't work...-->
+	  <!--<PublishSingleFile>true</PublishSingleFile>-->
+	  <!--<IncludeAllContentForSelfExtract>true</IncludeAllContentForSelfExtract>-->
 	  <RuntimeIdentifier>win-x64</RuntimeIdentifier>
   </PropertyGroup>
 
@@ -49,12 +50,6 @@
     <Content Include="Get-VeeamSessionReport.ps1">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
-  </ItemGroup>
-
-  <ItemGroup>
-    <Reference Include="Logger_core">
-      <HintPath>..\HC\libs\Logger_core.dll</HintPath>
-    </Reference>
   </ItemGroup>
 
   <ItemGroup>

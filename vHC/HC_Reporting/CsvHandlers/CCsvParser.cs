@@ -56,9 +56,17 @@ namespace VeeamHealthCheck.CsvHandlers
         }
         public void Dispose() { }
 
-        public IEnumerable<dynamic> GetDynamicRecs()
+        public IEnumerable<dynamic> GetDynamicLicenseCsv()
         {
             return FileFinder(_licReportName).GetRecords<dynamic>();
+        }
+        public IEnumerable<dynamic> GetDynamicPhysProtected()
+        {
+            return FileFinder(_physProtected).GetRecords<dynamic>();
+        }
+        public IEnumerable<dynamic> GetDynamicPhysNotProtected()
+        {
+            return FileFinder(_physNotProtected).GetRecords<dynamic>();
         }
         public IEnumerable<CJobSessionCsvInfos> SessionCsvParser()
         {
