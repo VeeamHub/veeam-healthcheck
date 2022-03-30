@@ -336,11 +336,19 @@ namespace VeeamHealthCheck.Html
 
             foreach (var p in protectedVms)
             {
-                vmNames.Add(p.Name);
-                viProtectedNames.Add(p.Name);
+                
+                    vmNames.Add(p.Name);
+                    viProtectedNames.Add(p.Name);
+                
+                
             }
             foreach (var un in unProtectedVms)
-                vmNames.Add(un.Name);
+            {
+                if (un.Type.Contains("Vm"))
+                {
+                    vmNames.Add(un.Name);
+                }
+            }
 
             viTotal = vmNames.Distinct().Count();
             viDupes = vmNames.Count - viTotal;
