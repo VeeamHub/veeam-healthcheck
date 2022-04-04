@@ -1740,7 +1740,6 @@ namespace VeeamHealthCheck.Html
             SecSummary();
             ServerSummaryToXml();
             BackupServerInfoToXml();
-            //OverallSummaryToXml();
             SobrInfoToXml();
             ExtentXmlFromCsv();
             RepoInfoToXml();
@@ -1750,9 +1749,7 @@ namespace VeeamHealthCheck.Html
             JobConcurrency(true, 7);
             TaskConcurrency(7);
             ProtectedWorkloadsToXml();
-            //JobConcurrency(31); //does sum instead
             RegOptions();
-            //JobSessionSummaryToXml();
             ConvertJobSessSummaryToXml();
 
             JobInfoToXml();
@@ -1763,7 +1760,6 @@ namespace VeeamHealthCheck.Html
             }
             catch (Exception e) { }
 
-            //_html.ExportHtml(_testFile, _backupServerName);
             ExportHtml();
             log.Info("Starting Data conversion...done!");
         }
