@@ -360,16 +360,6 @@ namespace VeeamHealthCheck.Html
             List<string> physProtNames = new();
             List<string> physNotProtNames = new();
 
-            foreach (var p in phProt)
-            {
-                physNames.Add(p.name);
-                physProtNames.Add(p.name);
-            }
-            foreach (var u in phNotProt)
-            {
-                physNames.Add(p.name);
-                physProtNames.Add(p.name);
-            }
             foreach (var u in physNotProtected)
             {
                 if(u.type == "Computer")
