@@ -393,17 +393,7 @@ namespace VeeamHealthCheck.Html
             extElement.Add(AddXelement((physNotProtNames.Distinct().Count() + physProtNames.Distinct().Count()).ToString(), "Phys Total"));
             extElement.Add(AddXelement(physProtNames.Distinct().Count().ToString(), "Phys Protected"));
             extElement.Add(AddXelement(physNotProtNames.Distinct().Count().ToString(), "Phys Not Prot."));
-            //set items to XML + save
-            //var xml = new XElement("workloads",
-            //    new XElement("viTotal", protectedVms.Count + unProtectedVms.Count),
-            //    new XElement("viProtected", protectedVms.Count),
-            //    new XElement("viNotProtected", unProtectedVms.Count),
-            //    new XElement("physTotal", physProtected.Count + physNotProtected.Count),
-            //    new XElement("physProtected", physProtected.Count),
-            //    new XElement("physNotProtected", physNotProtected.Count)
-            //    );
 
-            //extElement.Add(xml);
             doc.Save(_testFile);
 
             log.Info("Converting protected workloads data to xml..done!");
@@ -1758,18 +1748,18 @@ namespace VeeamHealthCheck.Html
             ProxyXmlFromCsv();
             ServerXmlFromCsv();
             JobSummaryInfoToXml();
-            //JobConcurrency(true, 7);
-            //TaskConcurrency(7);
+            JobConcurrency(true, 7);
+            TaskConcurrency(7);
             ProtectedWorkloadsToXml();
             //JobConcurrency(31); //does sum instead
             RegOptions();
             //JobSessionSummaryToXml();
-            //ConvertJobSessSummaryToXml();
+            ConvertJobSessSummaryToXml();
 
             JobInfoToXml();
             try
             {
-                //JobSessionInfoToXml();
+                JobSessionInfoToXml();
 
             }
             catch (Exception e) { }

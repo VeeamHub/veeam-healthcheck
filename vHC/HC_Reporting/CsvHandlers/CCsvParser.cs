@@ -97,14 +97,7 @@ namespace VeeamHealthCheck.CsvHandlers
         {
             return FileFinder(_waits).GetRecords<CWaitsCsv>();
         }
-        public IEnumerable<CViProtected> PhysProtectedReader()
-        {
-            return FileFinder(_physProtected).GetRecords<CViProtected>();
-        }
-        public IEnumerable<CViProtected> PhysNotProtectedReader()
-        {
-            return FileFinder(_physNotProtected).GetRecords<CViProtected>();
-        }
+
         public IEnumerable<CViProtected> ViProtectedReader()
         {
             return FileFinder(_ViProtected).GetRecords<CViProtected>();
