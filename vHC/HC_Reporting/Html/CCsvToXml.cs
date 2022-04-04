@@ -81,7 +81,7 @@ namespace VeeamHealthCheck.Html
         {
             log.Info("converting header info to xml");
             var parser = new CCsvParser();
-            var rec = parser.GetDynamicRecs();
+            var rec = parser.GetDynamicLicenseCsv();
 
             string cxName = "";
             foreach (var r in rec)
@@ -113,7 +113,7 @@ namespace VeeamHealthCheck.Html
         {
             log.Info("converting lic info to xml");
             CCsvParser parser = new();
-            var recs = parser.GetDynamicRecs();
+            var recs = parser.GetDynamicLicenseCsv();
 
             XDocument doc = XDocument.Load(_testFile);
 
@@ -334,10 +334,14 @@ namespace VeeamHealthCheck.Html
             List<string> viNotProtectedNames = new();
             int viDupes = 0;
 
+
             foreach (var p in protectedVms)
             {
-                vmNames.Add(p.Name);
-                viProtectedNames.Add(p.Name);
+                
+                    vmNames.Add(p.Name);
+                    viProtectedNames.Add(p.Name);
+                
+                
             }
             foreach (var un in unProtectedVms)
             {
@@ -356,7 +360,12 @@ namespace VeeamHealthCheck.Html
             List<string> physProtNames = new();
             List<string> physNotProtNames = new();
 
-            foreach (var p in physProtected)
+            foreach (var p in phProt)
+            {
+                physNames.Add(p.name);
+                physProtNames.Add(p.name);
+            }
+            foreach (var u in phNotProt)
             {
                 physNames.Add(p.name);
                 physProtNames.Add(p.name);

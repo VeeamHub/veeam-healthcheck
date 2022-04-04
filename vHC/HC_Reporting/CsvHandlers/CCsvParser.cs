@@ -56,7 +56,7 @@ namespace VeeamHealthCheck.CsvHandlers
         }
         public void Dispose() { }
 
-        public IEnumerable<dynamic> GetDynamicRecs()
+        public IEnumerable<dynamic> GetDynamicLicenseCsv()
         {
             return FileFinder(_licReportName).GetRecords<dynamic>();
         }

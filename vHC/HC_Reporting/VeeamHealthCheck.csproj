@@ -16,9 +16,10 @@
     <DelaySign>false</DelaySign>
     <FileVersion>1.0.0.1269</FileVersion>
     <DebugType>full</DebugType>
-	  <PublishSingleFile>true</PublishSingleFile>
 	  <SelfContained>true</SelfContained>
-	  <IncludeAllContentForSelfExtract>true</IncludeAllContentForSelfExtract>
+	  <!--These 2 lines are what produce the single file utility. Possibly doesn't work...-->
+	  <!--<PublishSingleFile>true</PublishSingleFile>-->
+	  <!--<IncludeAllContentForSelfExtract>true</IncludeAllContentForSelfExtract>-->
 	  <RuntimeIdentifier>win-x64</RuntimeIdentifier>
   </PropertyGroup>
 
@@ -32,6 +33,7 @@
   <ItemGroup>
     <None Remove="RVTools4.1.4.msi" />
     <None Remove="Tools\Get-VBRConfig - Copy.ps1" />
+    <None Remove="Tools\Veeam.Hotfix.Detector.zip" />
   </ItemGroup>
 
   <ItemGroup>
@@ -49,12 +51,9 @@
     <Content Include="Get-VeeamSessionReport.ps1">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
-  </ItemGroup>
-
-  <ItemGroup>
-    <Reference Include="Logger_core">
-      <HintPath>..\HC\libs\Logger_core.dll</HintPath>
-    </Reference>
+    <Content Include="Tools\Veeam.Hotfix.Detector.zip">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
   </ItemGroup>
 
   <ItemGroup>
