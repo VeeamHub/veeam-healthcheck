@@ -550,6 +550,7 @@ function test(){
 					<th title="Total VMware VMs found with backups">Vi Protected</th>
 					<th title="Total VMwar VMs found with no backups">Vi Not Prot</th>
 					<th title="Potentially duplicated workloads">Vi Potential Dupes</th>
+					<th title="VMs backed up via Agents as physical workloads">Vi Protected as physical</th>
 					<th title="Total count of servers added into Protection Groups">Phys Total</th>
 					<th title="Total count of servers with backups">Phys Protected</th>
 					<th title="Total count of servers in a Protection Group but with no current backups">Phys Not Prot</th>

@@ -60,6 +60,18 @@ namespace VeeamHealthCheck.CsvHandlers
         {
             return FileFinder(_licReportName).GetRecords<dynamic>();
         }
+        private IEnumerable<dynamic> GetDynamicCsvRecs(string file)
+        {
+            return FileFinder(file).GetRecords<dynamic>();
+        }
+        public IEnumerable<dynamic> GetPhysProtected()
+        {
+            return GetDynamicCsvRecs(_physProtected);
+        }
+        public IEnumerable<dynamic> GetPhysNotProtected()
+        {
+            return GetDynamicCsvRecs (_physNotProtected);
+        }
         public IEnumerable<CJobSessionCsvInfos> SessionCsvParser()
         {
             try
