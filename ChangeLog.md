@@ -1,4 +1,4 @@
-﻿Upcoming: 1.0.1.X
+﻿Upcoming: 1.0.1.1251
 - redesigned UI
 	- updated colors
 	- collapsible sections
@@ -9,6 +9,7 @@
 	- optional custom output for report
 - added detected VM count (VMware)
 	- compares VM count to VMs in backups to look for missing protection
+	- checks VMs backed up as physical servers
 - added detection of physical computers in Protection Groups
 	- compares to backups to find if any computers do not have a backup
 - + config backup last status
