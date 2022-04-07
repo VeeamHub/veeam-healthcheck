@@ -50,15 +50,31 @@ namespace VeeamHealthCheck.CsvHandlers
         private readonly string _physProtected = "PhysProtected";
         private readonly string _physNotProtected = "PhysNotProtected";
 
+        //VBO Files
+        private readonly string _vboGlobalCsv = "Global";
+        private readonly string _vboProxies= "Proxies";
+        private readonly string _vboRBAC = "RBACRoles";
+        private readonly string _vboRepositories = "Repositories";
+        private readonly string _vboSeurity = "Security";
+
         public CCsvParser()
         {
-            _csvConfig =  GetCsvConfig();
+            _csvConfig = GetCsvConfig();
         }
-        public void Dispose() { }
 
+        #region VboCsvParser
+        public IEnumerable<dynamic> GetDynamicVboGlobal()
+        {
+            return GetDynamicCsvRecs(_vboGlobalCsv);
+        }
+
+        #endregion
+
+        #region DynamicCsvParsers-VBR
         public IEnumerable<dynamic> GetDynamicLicenseCsv()
         {
-            return FileFinder(_licReportName).GetRecords<dynamic>();
+            return GetDynamicCsvRecs(_licReportName);
+            //return FileFinder(_licReportName).GetRecords<dynamic>();
         }
         private IEnumerable<dynamic> GetDynamicCsvRecs(string file)
         {
@@ -70,8 +86,43 @@ namespace VeeamHealthCheck.CsvHandlers
         }
         public IEnumerable<dynamic> GetPhysNotProtected()
         {
-            return GetDynamicCsvRecs (_physNotProtected);
+            return GetDynamicCsvRecs(_physNotProtected);
         }
+        public IEnumerable<dynamic> GetDynamicJobInfo()
+        {
+            return GetDynamicCsvRecs(_jobReportName);
+        }
+        public IEnumerable<dynamic> GetDynamicBjobs()
+        {
+            return GetDynamicCsvRecs (_bjobs);
+        }
+        public IEnumerable<dynamic> GetDynamincConfigBackup()
+        {
+            return GetDynamicCsvRecs(_configBackup);
+        }
+        public IEnumerable<dynamic> GetDynamincNetRules()
+        {
+            return GetDynamicCsvRecs(_trafficRules);
+        }
+        public IEnumerable<dynamic> GetDynamicRepo()
+        {
+            return GetDynamicCsvRecs(_repoReportName);
+        }
+        public IEnumerable<dynamic> GetDynamicSobrExt()
+        {
+            return GetDynamicCsvRecs(_sobrExtReportName);
+        }
+        public IEnumerable<dynamic> GetDynamicSobr()
+        {
+            return GetDynamicCsvRecs(_sobrReportName);
+        }
+        public IEnumerable<dynamic> GetDynamicCapTier()
+        {
+            return GetDynamicCsvRecs(_capTier);
+        }
+        #endregion
+
+        #region oldCsvParsers
         public IEnumerable<CJobSessionCsvInfos> SessionCsvParser()
         {
             try
@@ -79,7 +130,7 @@ namespace VeeamHealthCheck.CsvHandlers
                 var records = CReader(_sessionPath).GetRecords<CJobSessionCsvInfos>();
                 return records;
             }
-            catch(Exception e) { return null; }
+            catch (Exception e) { return null; }
         }
         public IEnumerable<CBnRCsvInfo> BnrCsvParser()
         {
@@ -184,6 +235,10 @@ namespace VeeamHealthCheck.CsvHandlers
             var r = FileFinder(_nasProxReportName).GetRecords<CFileProxyCsvInfo>();
             return r;
         }
+        #endregion
+
+        #region localFunctions
+        public void Dispose() { }
 
         private CsvReader FileFinder(string file)
         {
@@ -201,50 +256,16 @@ namespace VeeamHealthCheck.CsvHandlers
                 }
                 //HardExit();
             }
-            catch(Exception e)
-            {
-                string s = String.Format("File or Directory {0} not found!", _outPath + "\n" + e.Message);
-                log.Error(s);
-                MessageBox.Show(s);
-               // HardExit();
-            }
-            //return HardExit();
-            return null;
-        }
-
-        private CsvReader HardExit()
-        {
-            string msg = "Required files not found. Please use 'RUN' option. If issues persist, please contact your SE for assistance";
-            log.Error(msg);
-            MessageBox.Show(msg);
-            Environment.Exit(0);
-            return null;
-        }
-        private string FileFinders(string file)
-        {
-            try
-            {
-                string[] files = Directory.GetFiles(_outPath);
-                foreach (var f in files)
-                {
-                    FileInfo fi = new(f);
-                    if (fi.Name.Contains(file))
-                    {
-                        return f;
-                    }
-                }
-                return null;
-            }
             catch (Exception e)
             {
                 string s = String.Format("File or Directory {0} not found!", _outPath + "\n" + e.Message);
                 log.Error(s);
                 MessageBox.Show(s);
-                return null;
+                // HardExit();
             }
-
+            //return HardExit();
+            return null;
         }
-
 
         private CsvReader CReader(string csvToRead)
         {
@@ -261,5 +282,6 @@ namespace VeeamHealthCheck.CsvHandlers
             };
             return config;
         }
+        #endregion
     }
 }

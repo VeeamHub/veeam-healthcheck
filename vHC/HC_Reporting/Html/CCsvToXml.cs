@@ -58,6 +58,7 @@ namespace VeeamHealthCheck.Html
 
         private string _latestReport;
         private CDataTypesParser _dTypeParser;
+        private CCsvParser _csvParser = new();
         private CLogger log = MainWindow.log;
 
         private CFillerTexts fillerText = new();
@@ -150,30 +151,44 @@ namespace VeeamHealthCheck.Html
         {
             List<string> notProtectedTypes = new();
 
-            var bTypes = _dTypeParser.JobInfos;
+            //var bTypes = _dTypeParser.JobInfos;
+            var csv = new CCsvParser();
+            var jobInfos = csv.GetDynamicJobInfo();
+            var bjobInfos = csv.GetDynamicBjobs();
 
-            List<string> jtList = new();
-            List<int> protectedTypes = _dTypeParser.ProtectedJobIds;
-            List<string> unProtectedTypes = new();
-            foreach (CModel.EDbJobType jt in Enum.GetValues(typeof(CModel.EDbJobType)))
+            List<int> pTypes = new();
+
+            foreach (var bjob in bjobInfos)
             {
-                foreach (var b in bTypes)
+                int.TryParse(bjob.type, out int typeId);
+                if (!pTypes.Contains(typeId))
                 {
-                    int.TryParse(b.JobId, out int id);
+                    pTypes.Add(typeId);
 
-                    if (id == 52)
-                    {
-
-                    }
-                    if ((int)jt == 52)
-                    {
-
-                    }
                 }
             }
+
+                //List<int> protectedTypes = _dTypeParser.ProtectedJobIds;
+            //List<string> unProtectedTypes = new();
+            //foreach (CModel.EDbJobType jt in Enum.GetValues(typeof(CModel.EDbJobType)))
+            //{
+            //    foreach (var b in bTypes)
+            //    {
+            //        int.TryParse(b.JobId, out int id);
+
+            //        if (id == 52)
+            //        {
+
+            //        }
+            //        if ((int)jt == 52)
+            //        {
+
+            //        }
+            //    }
+            //}
             foreach (EDbJobType jt2 in Enum.GetValues(typeof(EDbJobType)))
             {
-                if (!protectedTypes.Contains((int)jt2))
+                if (!pTypes.Contains((int)jt2))
                 {
                     notProtectedTypes.Add(jt2.ToString());
                 }
@@ -197,10 +212,11 @@ namespace VeeamHealthCheck.Html
         }
         private void SecSummary()
         {
+            var csv = new CCsvParser();
             try
             {
-                var configBackup = _dTypeParser.ConfigBackup;
-                if (configBackup.EncryptionOptions == "True")
+                var cBackup = csv.GetDynamincConfigBackup();
+                if (cBackup.Any(x => x.encryptionoptions == "True"))
                     _configBackupEncrypted = true;
             }
             catch (Exception)
@@ -211,8 +227,8 @@ namespace VeeamHealthCheck.Html
             }
             try
             {
-                var netTraffic = _dTypeParser.NetTraffRules;
-                if (netTraffic.Any(x => x.EncryptionEnabled == "True"))
+                var netTraffic = csv.GetDynamincNetRules();
+                if (netTraffic.Any(x => x.encryptionenabled == "True"))
                     _trafficEncrypted = true;
             }
             catch (Exception)
@@ -222,8 +238,8 @@ namespace VeeamHealthCheck.Html
             }
             try
             {
-                var backupEnc = _dTypeParser.JobInfos;
-                if (backupEnc.Any(x => x.EncryptionEnabled == "True"))
+                var backupEnc = csv.GetDynamicJobInfo();
+                if (backupEnc.Any(x => (x.pwdkeyid != "00000000-0000-0000-0000-000000000000" && !String.IsNullOrEmpty(x.pwdkeyid))))
                     _backupsEncrypted = true;
             }
             catch (Exception)
@@ -233,14 +249,14 @@ namespace VeeamHealthCheck.Html
             }
             try
             {
-                var onPremRepo = _dTypeParser.RepoInfos;
-                if (onPremRepo.Any(x => x.IsImmutabilitySupported == "True"))
+                var onPremRepo = csv.GetDynamicRepo();
+                if (onPremRepo.Any(x => x.isimmutabilitysupported == "True"))
                     _immuteFound = true;
-                var sobrRepo = _dTypeParser.SobrInfo;
-                if (sobrRepo.Any(x => x.ImmuteEnabled == "True"))
+                var sobrRepo = csv.GetDynamicCapTier();
+                if (sobrRepo.Any(x => x.immute == "True"))
                     _immuteFound = true;
-                var extRepo = _dTypeParser.ExtentInfo;
-                if (extRepo.Any(x => x.IsImmutabilitySupported == "True"))
+                var extRepo = csv.GetDynamicSobrExt();
+                if (extRepo.Any(x => x.isimmutabilitysupported == "True"))
                     _immuteFound = true;
             }
             catch (Exception)
@@ -266,6 +282,27 @@ namespace VeeamHealthCheck.Html
 
             extElement.Add(xml);
             doc.Save(_testFile);
+        }
+        private void FilterAndCountTypes()
+        {
+            List<string> types = _typeList;
+            types.Sort();
+            foreach (var type in types)
+            {
+                int i = 0;
+                if (!_serverSummaryInfo.ContainsKey(type))
+                {
+                    foreach (var t in types)
+                    {
+                        if (type == t)
+                        {
+                            i++;
+                        }
+                    }
+                    _serverSummaryInfo.Add(type, i);
+                }
+
+            }
         }
         private void ServerSummaryToXml()
         {
@@ -438,6 +475,7 @@ namespace VeeamHealthCheck.Html
         {
             log.Info("converting backup server info to xml");
             CheckServerRoles(_backupServerId);
+            
             List<CServerTypeInfos> csv = _dTypeParser.ServerInfo();
             CServerTypeInfos backupServer = csv.Find(x => (x.Id == _backupServerId));
             CCsvParser config = new();
