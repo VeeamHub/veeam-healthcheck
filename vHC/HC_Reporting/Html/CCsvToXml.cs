@@ -41,7 +41,7 @@ namespace VeeamHealthCheck.Html
         private bool _isBackupServerWan;
         private CQueries _cq;
         private Dictionary<string, int> _repoJobCount;
-        private CXmlHandler _scrubber = new();
+        private CXmlHandler _scrubber;
         private bool _scrub;
         private bool _checkLogs;
         private bool _isImport;
@@ -61,30 +61,51 @@ namespace VeeamHealthCheck.Html
         private CCsvParser _csvParser = new();
         private CLogger log = MainWindow.log;
 
+        private CHtmlExporter exporter = new CHtmlExporter();
+
         private CFillerTexts fillerText = new();
 
         public void ConvertToXml(bool scrub, bool checkLogs, bool openHtml, bool isImport)
         {
             _isImport = isImport;
+            if (scrub)
+                _scrubber = new();
             _scrub = scrub;
+
             _checkLogs = checkLogs;
             if (!isImport)
                 _cq = new();
             _dTypeParser = new();
             Work();
             if (openHtml)
-                OpenHtml();
+                exporter.OpenHtml();
         }
-        //public CCsvToXml()
-        //{
-        //    //VBO starter
+        public CCsvToXml() // add string mode input
+        {
 
-        //    ParseVbo
-        //}
-        //private void ParseVbo()
-        //{
+            //switch (mode)
+            //{
+            //    case "vbr":
+            //        break;
+            //    case "m365":
+            //        ParseVbo();
+            //        break;
+            //    default:
+            //        break;
 
-        //}
+            //}
+            //VBO starter
+
+            
+        }
+        private void ParseVbr()
+        {
+            //ConvertToXml();
+        }
+        private void ParseVbo()
+        {
+
+        }
 
 
         #region XML Conversions
