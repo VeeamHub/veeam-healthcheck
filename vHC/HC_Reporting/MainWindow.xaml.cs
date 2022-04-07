@@ -115,9 +115,11 @@ namespace VeeamHealthCheck
             log.Info("Starting Run");
             Run();
 
-            CCsvToXml c = new();
-            c.ConvertToXml(_scrub, true, _openHtml, false);
-            c.Dispose();
+            CModeSelector cMode = new(_desiredPath, _scrub, _openHtml);
+            cMode.Run();
+            //CCsvToXml c = new();
+            //c.ConvertToXml(_scrub, true, _openHtml, false);
+            //c.Dispose();
             log.Info("Starting Run..done!");
             
         }

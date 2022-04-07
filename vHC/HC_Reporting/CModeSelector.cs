@@ -29,22 +29,23 @@ namespace VeeamHealthCheck
             if (fileList.Any(x => Path.GetFileName(x).StartsWith("m365")))
                 StartM365Report();
             if(fileList.Any(y => Path.GetFileName(y).StartsWith("vbr")))
-                StartVbrReportImport(_scrub, _openHtml);
+                StartVbrReportImport();
         }
         private void StartVbrReport()
         {
 
         }
-        private void StartVbrReportImport(bool scrub, bool openHtml)
+        private void StartVbrReportImport()
         {
-            CCsvToXml c = new();
+            CCsvToXml c = new("vbr", _scrub, false, _openHtml, true);
 
             //choose VBO or VBR
-            c.ConvertToXml(scrub, false, openHtml, true);
+            c.ConvertToXml();
         }
         private void StartM365Report()
         {
-            CCsvToXml m = new CCsvToXml();
+            //CCsvToXml m = new CCsvToXml("m365", _scrub, false, _openHtml, true);
+            CM365Converter converter = new CM365Converter();
         }
     }
 }

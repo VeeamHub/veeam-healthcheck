@@ -24,11 +24,12 @@ namespace VeeamHealthCheck.Html
         private bool _scrub;
         private CXmlHandler _scrubber;
         private string _outPath;
-        public CHtmlExporter()
+        public CHtmlExporter(string xmlFileName, string serverName)
         {
-
+            _testFile = xmlFileName;
+            _backupServerName = serverName;
         }
-        private void ExportHtml()
+        public void ExportHtml()
         {
             log.Info("exporting xml to html");
             string s = TransformXMLToHTML(_testFile, "SessionReport.xsl");
@@ -50,7 +51,7 @@ namespace VeeamHealthCheck.Html
             if (MainWindow._openExplorer)
                 OpenExplorer();
         }
-        private void ExportHtml(string xmlFile)
+        public void ExportHtml(string xmlFile)
         {
             log.Info("exporting xml to html");
             string s = TransformXMLToHTML(xmlFile, "SessionReport.xsl");

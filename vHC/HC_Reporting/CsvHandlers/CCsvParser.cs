@@ -62,7 +62,7 @@ namespace VeeamHealthCheck.CsvHandlers
             _csvConfig = GetCsvConfig();
         }
 
-        #region VboCsvParser
+        #region m365CsvParser
         public IEnumerable<dynamic> GetDynamicVboGlobal()
         {
             return GetDynamicCsvRecs(_vboGlobalCsv);
@@ -78,7 +78,13 @@ namespace VeeamHealthCheck.CsvHandlers
         }
         private IEnumerable<dynamic> GetDynamicCsvRecs(string file)
         {
-            return FileFinder(file).GetRecords<dynamic>();
+            var r = FileFinder(file);
+            if(r == null) { return Enumerable.Empty<dynamic>(); }
+            else
+            {
+                return FileFinder(file).GetRecords<dynamic>();
+
+            }
         }
         public IEnumerable<dynamic> GetPhysProtected()
         {
@@ -277,7 +283,7 @@ namespace VeeamHealthCheck.CsvHandlers
         {
             var config = new CsvConfiguration(CultureInfo.InvariantCulture)
             {
-                PrepareHeaderForMatch = args => args.Header.ToLower(),
+                PrepareHeaderForMatch = args => args.Header.ToLower().Replace(" ", string.Empty).Replace(".", string.Empty),
                 MissingFieldFound = null,
             };
             return config;

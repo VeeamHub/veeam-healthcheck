@@ -30,7 +30,7 @@ namespace VeeamHealthCheck.Html
 {
     class CCsvToXml
     {
-        private readonly string _testFile = "xml\\xmlout.xml";
+        private readonly string _testFile = "xml\\vbr.xml";
         private string _outPath = CVariables.unsafeDir;
         private readonly string _htmlName = "Veeam HealthCheck Report";
         private readonly string _backupServerId = "6745a759-2205-4cd2-b172-8ec8f7e60ef8";
@@ -61,11 +61,27 @@ namespace VeeamHealthCheck.Html
         private CCsvParser _csvParser = new();
         private CLogger log = MainWindow.log;
 
-        private CHtmlExporter exporter = new CHtmlExporter();
+        private CHtmlExporter exporter;
+        private CXmlFunctions XML;
 
         private CFillerTexts fillerText = new();
 
-        public void ConvertToXml(bool scrub, bool checkLogs, bool openHtml, bool isImport)
+        public void ConvertToXml()
+        {
+            _dTypeParser = new();
+            Work();
+        }
+        public CCsvToXml(string mode, bool scrub, bool checkLogs, bool openHtml, bool isImport) // add string mode input
+        {
+            XML = new("vbr");
+            
+            ConvertToXml();
+            //VBO starter
+
+            if (openHtml)
+                exporter.OpenHtml();
+        }
+        private void SetGlobalVariables(bool scrub, bool checkLogs, bool openHtml, bool isImport)
         {
             _isImport = isImport;
             if (scrub)
@@ -75,28 +91,6 @@ namespace VeeamHealthCheck.Html
             _checkLogs = checkLogs;
             if (!isImport)
                 _cq = new();
-            _dTypeParser = new();
-            Work();
-            if (openHtml)
-                exporter.OpenHtml();
-        }
-        public CCsvToXml() // add string mode input
-        {
-
-            //switch (mode)
-            //{
-            //    case "vbr":
-            //        break;
-            //    case "m365":
-            //        ParseVbo();
-            //        break;
-            //    default:
-            //        break;
-
-            //}
-            //VBO starter
-
-            
         }
         private void ParseVbr()
         {
@@ -109,38 +103,7 @@ namespace VeeamHealthCheck.Html
 
 
         #region XML Conversions
-        private void HeaderInfoToXml()
-        {
-            log.Info("converting header info to xml");
-            var parser = new CCsvParser();
-            var rec = parser.GetDynamicLicenseCsv();
 
-            string cxName = "";
-            foreach (var r in rec)
-            {
-                cxName = r.licensedto;
-            }
-
-            XDocument doc = new XDocument(new XElement("root"));
-
-            XElement serverRoot = new XElement("header");
-            doc.Root.Add(serverRoot);
-            doc.AddFirst(new XProcessingInstruction("xml-stylesheet", "type=\"text/xsl\" href=\"SessionReport.xsl\""));
-            string summary = "This report provides data and insight into your Veeam Backup and Replication (VBR) deployment. The information provided here is intended to be used in collaboration with your Veeam representative.";
-
-            var xml = new XElement("h1",
-                new XElement("name", cxName),
-                new XElement("hc", "Health Check Report"),
-                new XElement("summary", summary)
-                );
-
-            serverRoot.Add(xml);
-
-
-
-            doc.Save(_testFile);
-            log.Info("converting header info to xml");
-        }
         private void LicInfoToXml()
         {
             log.Info("converting lic info to xml");
@@ -236,7 +199,7 @@ namespace VeeamHealthCheck.Html
 
             foreach (var v in notProtectedTypes)
             {
-                var xml2 = AddXelement(v, "Type", "");
+                var xml2 = XML.AddXelement(v, "Type", "");
                 extElement.Add(xml2);
             }
             doc.Save(_testFile);
@@ -450,16 +413,16 @@ namespace VeeamHealthCheck.Html
                 }
             }
 
-            //var xml2 = AddXelement(protectedVms.Count.ToString(), "ViProtected");
-            extElement.Add(AddXelement((viProtectedNames.Distinct().Count() + viNotProtectedNames.Distinct().Count()).ToString(), "Vi Total"));
-            extElement.Add(AddXelement(viProtectedNames.Distinct().Count().ToString(), "Vi Protected"));
-            extElement.Add(AddXelement(viNotProtectedNames.Distinct().Count().ToString(), "Vi Not Prot."));
-            extElement.Add(AddXelement(viDupes.ToString(), "Vi Potential Duplicates"));
-            extElement.Add(AddXelement(vmProtectedByPhys.Distinct().Count().ToString(), "VM Protected as Physical"));
+            //var xml2 = XML.AddXelement(protectedVms.Count.ToString(), "ViProtected");
+            extElement.Add(XML.AddXelement((viProtectedNames.Distinct().Count() + viNotProtectedNames.Distinct().Count()).ToString(), "Vi Total"));
+            extElement.Add(XML.AddXelement(viProtectedNames.Distinct().Count().ToString(), "Vi Protected"));
+            extElement.Add(XML.AddXelement(viNotProtectedNames.Distinct().Count().ToString(), "Vi Not Prot."));
+            extElement.Add(XML.AddXelement(viDupes.ToString(), "Vi Potential Duplicates"));
+            extElement.Add(XML.AddXelement(vmProtectedByPhys.Distinct().Count().ToString(), "VM Protected as Physical"));
 
-            extElement.Add(AddXelement((physNotProtNames.Distinct().Count() + physProtNames.Distinct().Count()).ToString(), "Phys Total"));
-            extElement.Add(AddXelement(physProtNames.Distinct().Count().ToString(), "Phys Protected"));
-            extElement.Add(AddXelement(physNotProtNames.Distinct().Count().ToString(), "Phys Not Prot."));
+            extElement.Add(XML.AddXelement((physNotProtNames.Distinct().Count() + physProtNames.Distinct().Count()).ToString(), "Phys Total"));
+            extElement.Add(XML.AddXelement(physProtNames.Distinct().Count().ToString(), "Phys Protected"));
+            extElement.Add(XML.AddXelement(physNotProtNames.Distinct().Count().ToString(), "Phys Not Prot."));
 
             doc.Save(_testFile);
 
@@ -911,18 +874,18 @@ namespace VeeamHealthCheck.Html
                 }
 
                 var xml2 = new XElement("proxy");
-                xml2.Add(AddXelement(c.Name, "Name", "Proxy Host Name"));
-                xml2.Add(AddXelement(c.MaxTasksCount.ToString(), "Tasks", "Max tasks proxy is set to accept", c.Provisioning));
-                xml2.Add(AddXelement(c.Cores.ToString(), "Cores", "Total detecte CPU Cores (no hyper-threading)"));
-                xml2.Add(AddXelement(c.Ram.ToString(), "RAM", "Total deteced ram on server"));
-                xml2.Add(AddXelement(c.Type, "Proxy Type", "Proxy type defined in VBR"));
-                xml2.Add(AddXelement(c.TransportMode, "Transport Mode", "Transport mode assigned to proxy"));
-                xml2.Add(AddXelement(c.FailoverToNetwork, "Failover to NBD", "If true, proxy is configured to fail back to network mode if primary transport mode fails"));
-                xml2.Add(AddXelement(c.ChassisType, "Chassis", "Shows if proxy is physical or virtual"));
-                xml2.Add(AddXelement(c.CachePath, "Cache Path", "Path defined for CDP proxy to use. Applies to CDP proxy only"));
-                xml2.Add(AddXelement(c.CacheSize, "Cache Size", "Cache size specified for CDP proxy. Applies to CDP proxy only."));
-                xml2.Add(AddXelement(c.Host, "Host", "Actual server name that the proxy role is installed on."));
-                xml2.Add(AddXelement(c.IsDisabled, "Is Disabled", "Defines if the proxy is manually disabled. If true, the user has selected this option in the GUI."));
+                xml2.Add(XML.AddXelement(c.Name, "Name", "Proxy Host Name"));
+                xml2.Add(XML.AddXelement(c.MaxTasksCount.ToString(), "Tasks", "Max tasks proxy is set to accept", c.Provisioning));
+                xml2.Add(XML.AddXelement(c.Cores.ToString(), "Cores", "Total detecte CPU Cores (no hyper-threading)"));
+                xml2.Add(XML.AddXelement(c.Ram.ToString(), "RAM", "Total deteced ram on server"));
+                xml2.Add(XML.AddXelement(c.Type, "Proxy Type", "Proxy type defined in VBR"));
+                xml2.Add(XML.AddXelement(c.TransportMode, "Transport Mode", "Transport mode assigned to proxy"));
+                xml2.Add(XML.AddXelement(c.FailoverToNetwork, "Failover to NBD", "If true, proxy is configured to fail back to network mode if primary transport mode fails"));
+                xml2.Add(XML.AddXelement(c.ChassisType, "Chassis", "Shows if proxy is physical or virtual"));
+                xml2.Add(XML.AddXelement(c.CachePath, "Cache Path", "Path defined for CDP proxy to use. Applies to CDP proxy only"));
+                xml2.Add(XML.AddXelement(c.CacheSize, "Cache Size", "Cache size specified for CDP proxy. Applies to CDP proxy only."));
+                xml2.Add(XML.AddXelement(c.Host, "Host", "Actual server name that the proxy role is installed on."));
+                xml2.Add(XML.AddXelement(c.IsDisabled, "Is Disabled", "Defines if the proxy is manually disabled. If true, the user has selected this option in the GUI."));
 
 
                 serverRoot.Add(xml2);
@@ -932,18 +895,18 @@ namespace VeeamHealthCheck.Html
                 //#region testARea
                 //var xml = new XElement("entity",
                 //    new XAttribute("entityName", "Proxy"));
-                //xml.Add(AddXelement(c.Name, "Name", "Proxy Host Name"));
-                //xml.Add(AddXelement(c.MaxTasksCount.ToString(), "Tasks", "Max tasks proxy is set to accept", c.Provisioning));
-                //xml.Add(AddXelement(c.Cores.ToString(), "Cores", "Total detecte CPU Cores (no hyper-threading)"));
-                //xml.Add(AddXelement(c.Ram.ToString(), "RAM", "Total deteced ram on server"));
-                //xml.Add(AddXelement(c.Type, "Proxy Type", "Proxy type defined in VBR"));
-                //xml.Add(AddXelement(c.TransportMode, "Transport Mode", "Transport mode assigned to proxy"));
-                //xml.Add(AddXelement(c.FailoverToNetwork, "Failover to NBD", "If true, proxy is configured to fail back to network mode if primary transport mode fails"));
-                //xml.Add(AddXelement(c.ChassisType, "Chassis", "Shows if proxy is physical or virtual"));
-                //xml.Add(AddXelement(c.CachePath, "Cache Path", "Path defined for CDP proxy to use. Applies to CDP proxy only"));
-                //xml.Add(AddXelement(c.CacheSize, "Cache Size", "Cache size specified for CDP proxy. Applies to CDP proxy only."));
-                //xml.Add(AddXelement(c.Host, "Host", "Actual server name that the proxy role is installed on."));
-                //xml.Add(AddXelement(c.IsDisabled, "Is Disabled", "Defines if the proxy is manually disabled. If true, the user has selected this option in the GUI."));
+                //xml.Add(XML.AddXelement(c.Name, "Name", "Proxy Host Name"));
+                //xml.Add(XML.AddXelement(c.MaxTasksCount.ToString(), "Tasks", "Max tasks proxy is set to accept", c.Provisioning));
+                //xml.Add(XML.AddXelement(c.Cores.ToString(), "Cores", "Total detecte CPU Cores (no hyper-threading)"));
+                //xml.Add(XML.AddXelement(c.Ram.ToString(), "RAM", "Total deteced ram on server"));
+                //xml.Add(XML.AddXelement(c.Type, "Proxy Type", "Proxy type defined in VBR"));
+                //xml.Add(XML.AddXelement(c.TransportMode, "Transport Mode", "Transport mode assigned to proxy"));
+                //xml.Add(XML.AddXelement(c.FailoverToNetwork, "Failover to NBD", "If true, proxy is configured to fail back to network mode if primary transport mode fails"));
+                //xml.Add(XML.AddXelement(c.ChassisType, "Chassis", "Shows if proxy is physical or virtual"));
+                //xml.Add(XML.AddXelement(c.CachePath, "Cache Path", "Path defined for CDP proxy to use. Applies to CDP proxy only"));
+                //xml.Add(XML.AddXelement(c.CacheSize, "Cache Size", "Cache size specified for CDP proxy. Applies to CDP proxy only."));
+                //xml.Add(XML.AddXelement(c.Host, "Host", "Actual server name that the proxy role is installed on."));
+                //xml.Add(XML.AddXelement(c.IsDisabled, "Is Disabled", "Defines if the proxy is manually disabled. If true, the user has selected this option in the GUI."));
 
 
                 //serverRoot2.Add(xml);
@@ -1629,7 +1592,7 @@ namespace VeeamHealthCheck.Html
                     {
                         newDoc.Save(docName);
                         //string xmlString = newDoc.ToString();
-                        ExportHtml(docName);
+                        exporter.ExportHtml(docName);
                     }
                     catch (Exception e) { }
 
@@ -1660,25 +1623,7 @@ namespace VeeamHealthCheck.Html
 
             return s;
         }
-        private XElement AddXelement(string data, string headerName, string tooltip)
-        {
-            return AddXelement(data, headerName, tooltip, "");
-        }
-        private XElement AddXelement(string data, string headerName)
-        {
-            return AddXelement(data, headerName, "", "");
-        }
-        private XElement AddXelement(string data, string headerName, string tooltip, string provisioning)
-        {
 
-            var xml = new XElement("td", data,
-                new XAttribute("headerName", headerName),
-                new XAttribute("tooltip", tooltip),
-                new XAttribute("color", provisioning)
-                );
-
-            return xml;
-        }
         private List<ConcurentTracker> ParseBcjConcurrency(CJobSessionInfo session)
         {
             List<ConcurentTracker> ctL = new();
@@ -1803,12 +1748,15 @@ namespace VeeamHealthCheck.Html
         {
             log.Info("Starting Data conversion...");
             PreCalculations();
-            HeaderInfoToXml();
+            XML.HeaderInfoToXml();
             LicInfoToXml();
             ParseNonProtectedTypes();
             SecSummary();
             ServerSummaryToXml();
             BackupServerInfoToXml();
+
+            exporter = new(_testFile, _backupServerName);
+
             SobrInfoToXml();
             ExtentXmlFromCsv();
             RepoInfoToXml();
@@ -1829,7 +1777,7 @@ namespace VeeamHealthCheck.Html
             }
             catch (Exception e) { }
 
-            ExportHtml();
+            exporter.ExportHtml();
             log.Info("Starting Data conversion...done!");
         }
 
@@ -1852,14 +1800,8 @@ namespace VeeamHealthCheck.Html
                 }
             }
             _repoJobCount = repoJobCount;
-            CheckXmlFolder();
         }
 
-        private void CheckXmlFolder()
-        {
-            if (!Directory.Exists("xml"))
-                Directory.CreateDirectory("xml");
-        }
         private void ResetRoles()
         {
             _isBackupServerWan = false;
@@ -1945,103 +1887,5 @@ namespace VeeamHealthCheck.Html
         }
         #endregion
 
-        #region HTML Handling
-        private void ExportHtml()
-        {
-            log.Info("exporting xml to html");
-            string s = TransformXMLToHTML(_testFile, "SessionReport.xsl");
-            DateTime dateTime = DateTime.Now;
-            string n = MainWindow._desiredPath;
-            string htmlCore = "\\" + _htmlName + "_" + _backupServerName + dateTime.ToString("_yyyy.MM.dd_HHmmss") + ".html";
-            //string name = _outPath + htmlCore;
-            string name = n + htmlCore;
-            //if (_scrub)
-            //    name = CVariables.safeDir + htmlCore;
-            _latestReport = name;
-
-            using (StreamWriter sw = new StreamWriter(name))
-            {
-                sw.Write(s);
-            }
-            log.Info("exporting xml to html..done!");
-            //OpenHtml();
-            if (MainWindow._openExplorer)
-                OpenExplorer();
-        }
-        private void ExportHtml(string xmlFile)
-        {
-            log.Info("exporting xml to html");
-            string s = TransformXMLToHTML(xmlFile, "SessionReport.xsl");
-            string reportsFolder = "\\JobSessionReports\\";
-
-            string jname = Path.GetFileNameWithoutExtension(xmlFile);
-            if (_scrub)
-                jname = _scrubber.ScrubItem(jname, "job");
-            DateTime dateTime = DateTime.Now;
-
-            string n = MainWindow._desiredPath;
-            string outFolder = _outPath + reportsFolder;
-            outFolder = n + reportsFolder;
-            //if (_scrub)
-            //    outFolder = CVariables.safeDir + reportsFolder;
-            if (!Directory.Exists(outFolder))
-                Directory.CreateDirectory(outFolder);
-            string name = outFolder + jname + dateTime.ToString("_yyyy.MM.dd_HHmmss") + ".html";
-            _latestReport = name;
-            using (StreamWriter sw = new StreamWriter(name))
-            {
-                sw.Write(s);
-            }
-            log.Info("exporting xml to html..done!");
-            //OpenHtml();
-        }
-        private void OpenExplorer()
-        {
-            Process.Start("explorer.exe", @"C:\temp\vHC");
-        }
-        public static string TransformXMLToHTML(string xmlFile, string xsltFile)
-        {
-            //log.Info("transforming XML to HTML");
-            var transform = new XslCompiledTransform();
-            XsltArgumentList xList = new();
-            using (var reader = XmlReader.Create(File.OpenRead(xsltFile)))
-            {
-                transform.Load(reader);
-            }
-
-            var results = new StringWriter();
-            using (var reader = XmlReader.Create(File.OpenRead(xmlFile)))
-            {
-                transform.Transform(reader, null, results);
-            }
-            //log.Info("transforming XML to HTML..done!");
-            return results.ToString();
-        }
-
-        private void OpenHtml()
-        {
-            log.Info("opening html");
-            Application.Current.Dispatcher.Invoke((Action)delegate
-            {
-                WebBrowser w1 = new();
-                //w1.Navigate(("C:\\temp\\HC_Report.html", null,null,null));
-                //string report = SaveSessionReportToTemp(_htmlOut);
-                //string s = String.Format("cmd", $"/c start {0}", report);
-                //Process.Start(new ProcessStartInfo(s));
-
-                var p = new Process();
-                p.StartInfo = new ProcessStartInfo(_latestReport)
-                {
-                    UseShellExecute = true
-                };
-                p.Start();
-            });
-
-            log.Info("opening html..done!");
-
-            //CDataExport ex = new();
-            //ex.OpenFolder();
-        }
-        #endregion
     }
 }
