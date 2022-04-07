@@ -28,7 +28,7 @@ namespace VeeamHealthCheck
         }
         public static string vbrDir
         {
-            get { return desiredDir + _vbrDir; }
+            get { return unsafeDir + _vbrDir; }
         }
         
     }

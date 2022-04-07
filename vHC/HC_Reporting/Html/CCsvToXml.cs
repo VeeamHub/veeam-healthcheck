@@ -75,9 +75,8 @@ namespace VeeamHealthCheck.Html
         public CCsvToXml(string mode, bool scrub, bool checkLogs, bool openHtml, bool isImport) // add string mode input
         {
             XML = new("vbr");
-            
+            SetGlobalVariables(scrub, checkLogs, openHtml, isImport);
             ConvertToXml();
-            //VBO starter
 
             if (openHtml)
                 exporter.OpenHtml();
@@ -92,14 +91,6 @@ namespace VeeamHealthCheck.Html
             _checkLogs = checkLogs;
             if (!isImport)
                 _cq = new();
-        }
-        private void ParseVbr()
-        {
-            //ConvertToXml();
-        }
-        private void ParseVbo()
-        {
-
         }
 
 

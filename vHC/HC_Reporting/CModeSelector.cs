@@ -39,7 +39,7 @@ namespace VeeamHealthCheck
             CCsvToXml c = new("vbr", _scrub, false, _openHtml, true);
 
             //choose VBO or VBR
-            c.ConvertToXml();
+            //c.ConvertToXml();
         }
         private void StartM365Report()
         {

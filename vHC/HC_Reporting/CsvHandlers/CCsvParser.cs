@@ -24,8 +24,8 @@ namespace VeeamHealthCheck.CsvHandlers
         private CLogger log = MainWindow.log;
 
         //CSV Paths.
-        private readonly string _sessionPath = CVariables.unsafeDir + @"\Raw_Data\vbr_VeeamSessionReport.csv";
-        private readonly string _outPath = CVariables.unsafeDir + "\\Raw_Data";
+        private readonly string _sessionPath = CVariables.vbrDir + @"\VeeamSessionReport.csv";
+        private string _outPath;// = CVariables.vbrDir;
         private readonly string _sobrExtReportName = "SOBRExtents";
         private readonly string _jobReportName = "Jobs";
         private readonly string _proxyReportName = "Proxies";
@@ -60,6 +60,19 @@ namespace VeeamHealthCheck.CsvHandlers
         public CCsvParser()
         {
             _csvConfig = GetCsvConfig();
+            Start(null);
+        }
+        public CCsvParser(string csvRepo)
+        {
+            _csvConfig = GetCsvConfig();
+            Start(csvRepo);
+        }
+        private void Start(string csvRepo)
+        {
+            if (string.IsNullOrEmpty(csvRepo))
+                _outPath = CVariables.vbrDir;
+            else
+                _outPath = csvRepo;
         }
 
         #region m365CsvParser
@@ -282,7 +295,7 @@ namespace VeeamHealthCheck.CsvHandlers
             {
                 string s = String.Format("File or Directory {0} not found!", _outPath + "\n" + e.Message);
                 log.Error(s);
-                MessageBox.Show(s);
+                //MessageBox.Show(s);
                 // HardExit();
             }
             //return HardExit();

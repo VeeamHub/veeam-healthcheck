@@ -111,6 +111,8 @@ namespace VeeamHealthCheck.Html
             }
             catch (Exception ex) { }
             //Check VBO Key
+            parser.Dispose();
+            parser = new CCsvParser(CVariables.vb365dir);
             try
             {
                 var m365 = parser.GetDynamicVboGlobal().ToList();

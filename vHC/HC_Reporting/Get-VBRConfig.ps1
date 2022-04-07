@@ -302,5 +302,5 @@ function AddTypeInfo ($object, $jobType)
     $object | Add-Member -MemberType NoteProperty -Name JobType -Value $jobType
 
 }
-Get-VBRConfig -VBRServer localhost -ReportPath 'C:\temp\vHC\Original\Raw_Data'
+Get-VBRConfig -VBRServer localhost -ReportPath 'C:\temp\vHC\Original\VBR'
 #Read-host("Complete! Press ENTER to close...")

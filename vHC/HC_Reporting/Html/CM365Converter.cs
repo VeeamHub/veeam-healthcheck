@@ -15,7 +15,7 @@ namespace VeeamHealthCheck.Html
          *  2. convert to xml
          *  3. export to HTML
          */
-        private CCsvParser csv = new CCsvParser();
+        private CCsvParser csv = new CCsvParser(CVariables.vb365dir);
         private CXmlFunctions XML = new("m365");
         private string _xmlFile = "xml\\m365.xml";
         private CHtmlExporter _exporter;
