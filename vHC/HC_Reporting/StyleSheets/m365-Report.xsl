@@ -76,7 +76,7 @@
 			.content {
 			padding: 0 18px;
 			display: none;
-			overflow: hidden;
+			overflow: visible;
 			background-color: #f1f1f1;
 			transition: max-height 0.2s ease-out;
 			}
@@ -113,31 +113,11 @@
 				<xsl:apply-templates select="/root/header"></xsl:apply-templates>
 			</head>
 			<body>
-				<!--EXPANDED-->
-				<xsl:apply-templates select="/root/license"></xsl:apply-templates>
-				<xsl:apply-templates select="/root/backupServer"></xsl:apply-templates>
-				<xsl:apply-templates select="/root/secSummary"></xsl:apply-templates>
-				<xsl:apply-templates select="/root/serverSummary"></xsl:apply-templates>
-				<xsl:apply-templates select="/root/jobSummary"></xsl:apply-templates>
 
-				<!--NOT-EXPANDED-->
-				<xsl:apply-templates select="/root/npjobSummary"></xsl:apply-templates>
-				<xsl:apply-templates select="/root/protectedWorkloads"></xsl:apply-templates>
-				<xsl:apply-templates select="/root/servers"></xsl:apply-templates>
-				<xsl:apply-templates select="/root/regOptions"></xsl:apply-templates>
-				<xsl:apply-templates select="/root/proxies"></xsl:apply-templates>
-				<xsl:apply-templates select="/root/sobrs"></xsl:apply-templates>
-				<xsl:apply-templates select="/root/extent"></xsl:apply-templates>
-				<xsl:apply-templates select="/root/repositories"></xsl:apply-templates>
-				<xsl:apply-templates select="/root/concurrencyChart_job7"></xsl:apply-templates>
-				<xsl:apply-templates select="/root/concurrencyChart_task7"></xsl:apply-templates>
-				<xsl:apply-templates select="/root/jobSessionsSummary"></xsl:apply-templates>
-				<xsl:apply-templates select="/root/jobs"></xsl:apply-templates>
-				<xsl:apply-templates select="/root/jobSessions"></xsl:apply-templates>
-				<xsl:apply-templates select="/root/footer"></xsl:apply-templates>
 
 				<!--m365-->
-				<xsl:apply-templates select="/root/Global"></xsl:apply-templates>
+				<xsl:apply-templates select="/root/section"></xsl:apply-templates>
+
 				<!--<script type="text/javascript" src="JavaScript1.js"></script>-->
 
 				<script type="text/javascript">
@@ -422,7 +402,7 @@ function test(){
 
 	</xsl:template>
 
-	
+
 
 	<xsl:template match="/root/jobSessions">
 		<div id="sessions"></div>
@@ -545,98 +525,59 @@ function test(){
 	<!--m365 area-->
 
 	<xsl:key name="m365globalheader" match="/root/Global/td/@headerName" use="." />
-	<xsl:template match="/root/Global" name="global">
+	<xsl:template match="/root/section" name="universal">
 		<div id="linkGlobal">
 			<h2>
-				<u>Global Info</u>
+				<u>
+					<xsl:value-of select="@title"/>
+				</u>
 			</h2>
-			<button type="button" class="collapsible">Show Global Information</button>
+			<button type="button" class="collapsible">Expand to show more details</button>
 			<div class="content">
 				<html>
 					<body>
 						<table border="1" >
-							<xsl:for-each select="td/@headerName">
-								<!--<xsl:for-each select="distinct-values(/proxy/td/@headerName)">-->
+							<xsl:for-each select="node/td/@headerName">
 								<th title="{../@tooltip}">
-									<!--tooltip works-->
 									<xsl:value-of select="."/>
 								</th>
 							</xsl:for-each>
-							<tr>
-							<xsl:for-each select="td">
+							<xsl:for-each select="node">
+
+								<tr>
+									<xsl:for-each select="td">
 										<td>
 											<xsl:value-of select="current()"/>
 										</td>
 
 
-							</xsl:for-each>
-							</tr>
-						</table><br></br>
-						<!--<table>
-							<xsl:for-each select="td">
-								<tr>
-									<th>
-										<xsl:value-of select="@headerName"/>
-									</th>
-								</tr>
-								<tr>
-								<td>
-									<xsl:value-of select="current()"/>
-								</td>
+									</xsl:for-each>
 								</tr>
 							</xsl:for-each>
-						</table>-->
-						<div class="hdr">Summary:</div>
-						Veeam proxies are a logical datamover component. There are two types of proxies: (<a href="https://helpcenter.veeam.com/docs/backup/vsphere/backup_proxy.html?zoom_highlight=proxy&amp;ver=110">Backup Proxies</a>, <a href="https://helpcenter.veeam.com/docs/backup/vsphere/cdp_proxy.html?ver=110">CDP Proxies</a>). Backup Proxies are further subdivided based on function or platform e.g. File Proxies for NAS-based backups, or different source hypervisors.
-						<div class="i2">•	Backup proxies sit between source data (VMs or File Shares) and the backup repositories. Their role is to process backup jobs and deliver backup traffic to the repositories.</div>
-						<div class="i3">
-							o	VM Backup proxies can leverage different <a href="https://helpcenter.veeam.com/docs/backup/vsphere/transport_modes.html?ver=110">transport modes</a>.
+						</table>
+
+						<div class="hdr">
+							<xsl:value-of select="summary/summaryheader"/>
 						</div>
-						<div class="i3">
-							o	File Backup proxies can backup source data from manual or automated snapshot paths for <a href="https://helpcenter.veeam.com/docs/backup/vsphere/file_share_backup_nfs_share_advanced_settings.html?ver=110"> NFS</a>, <a href="https://helpcenter.veeam.com/docs/backup/vsphere/file_share_backup_smb_share_advanced_settings.html?ver=110">SMB</a>, Enterprise NAS filers. (Note: Managed servers do not leverage File Backup Proxies)
-						</div>
-						<div class="i3">o	Backup Proxies do not store or cache any data locally.</div>
-						<div class="i2">•	CDP proxies process CDP policies and operate as data movers between source and target VMware hosts.</div>
-						<div class="i3">
-							o	CDP proxies require a <a href="https://helpcenter.veeam.com/docs/backup/vsphere/system_requirements.html?ver=110#vmware-cdp-proxy-server">local cache.</a>
-						</div>
+						<xsl:for-each select="summary/text">
+							<xsl:if test="summary/text/@indent='hdr'">
+								<xsl:attribute name="class">
+									<xsl:text>hdr</xsl:text>
+								</xsl:attribute>
+							</xsl:if>
+							<xsl:if test="summary/text/@indent='i2'">
+								<xsl:attribute name="class">
+									i2
+								</xsl:attribute>
+							</xsl:if>
+							<div class="{@indent}">
+								<xsl:value-of select ="."/>
+							</div>
+						</xsl:for-each>
+						<!--<div class="hdr">
+							<xsl:value-of select="summary"/>
+						</div>-->
 						<br></br>
-						<div class="hdr">Notes:</div>
-						<div class="i2">
-							•	Review the “host” column and identify the host(s) that support <a href="https://helpcenter.veeam.com/docs/backup/vsphere/limiting_tasks.html?ver=110#task-limitation-for-components-with-several-roles">multiple</a> proxy roles:
-						</div>
-						<div class="i3">
-							o	Roles can be combined providing you allocate <a href="https://helpcenter.veeam.com/docs/backup/vsphere/limiting_tasks.html?ver=110">enough resources</a>.
-						</div>
-						<div class="i4">	If roles are non-concurrent then allocate the max resources calculated across all supported roles.</div>
-						<div class="i4">
-								If roles are concurrent then allocate <a href="https://helpcenter.veeam.com/docs/backup/vsphere/limiting_tasks.html?ver=110#task-limitation-for-components-with-several-roles">enough</a> resources for all roles
-						</div>
-						<div class="i4">	Keep in mind that CDP proxies are constantly active and transferring data, therefore it is imperative to “reserve” enough resources for its role and add what is necessary the combined role(s).</div>
-						<div class="i2">•	CDP proxies:</div>
-						<div class="i3">
-							o	Ensure <a href="https://helpcenter.veeam.com/docs/backup/vsphere/cdp_proxy.html?zoom_highlight=CDP+cache&amp;ver=110#vmware-cdp-proxy-cache">cache</a> is properly sized
-						</div>
-						<div class="i3">o	Flag CDP proxies with cache located on the C:\ drive as a potential risk.</div>
-						<div class="i2">
-							•	Compare assigned <a href="https://helpcenter.veeam.com/docs/backup/vsphere/limiting_tasks.html?ver=110">tasks</a> and core count and identify <a href="https://helpcenter.veeam.com/docs/backup/vsphere/limiting_tasks.html?ver=110#task-limitation-for-backup-proxies">oversubscription</a>.
-						</div>
-						<div class="i2">
-							•	Confirm the RAM to core ratio is <a href="https://helpcenter.veeam.com/docs/backup/vsphere/system_requirements.html?ver=110#vmware-cdp-proxy-server">adequate</a>.
-						</div>
-						<div class="i2">
-							•	Ensure there are enough resources for the base OS. (<a href="https://helpcenter.veeam.com/docs/backup/vsphere/system_requirements.html?ver=110#backup-proxy-server">backup proxy</a>, <a href="https://helpcenter.veeam.com/docs/backup/vsphere/system_requirements.html?ver=110#vmware-cdp-proxy-server">CDP proxy</a>)
-						</div>
-						<div class="i2">
-							•	Check selected <a href="https://helpcenter.veeam.com/docs/backup/vsphere/transport_modes.html?zoom_highlight=transport+mode&amp;ver=110">transport mode</a> and highlight where <a href="https://helpcenter.veeam.com/docs/backup/vsphere/network_mode_failover.html?ver=110">failover to network mode</a> is disabled when jobs are failing or where failover to network is enabled for jobs to run slower than expected (NBD traffic could flow through the <a href="https://helpcenter.veeam.com/docs/backup/vsphere/select_backup_network.html?zoom_highlight=preferred+network&amp;ver=110">wrong network</a>).
-						</div>
-						<div class="i2">
-							•	Hyper-V off host proxies should <a href="https://helpcenter.veeam.com/docs/backup/hyperv/offhost_backup_proxy.html?ver=110">match</a> protected Hyper-V host versions.
-						</div>
-
-
-
-
 						<h5>
 							<a href="#top">Back To Top</a>
 						</h5>
@@ -646,6 +587,9 @@ function test(){
 		</div>
 
 	</xsl:template>
+
+
+	
 </xsl:stylesheet>
 
 

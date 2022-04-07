@@ -25,10 +25,9 @@ namespace VeeamHealthCheck
         }
         private void FileChecker()
         {
-            string[] fileList = Directory.GetFiles(_path + "\\Raw_Data");
-            if (fileList.Any(x => Path.GetFileName(x).StartsWith("m365")))
+            if(Directory.Exists(CVariables.vb365dir))
                 StartM365Report();
-            if(fileList.Any(y => Path.GetFileName(y).StartsWith("vbr")))
+            if(Directory.Exists(CVariables.vbrDir))
                 StartVbrReportImport();
         }
         private void StartVbrReport()

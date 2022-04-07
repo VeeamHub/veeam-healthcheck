@@ -66,6 +66,35 @@ namespace VeeamHealthCheck.Html
 
             return xml;
         }
+        public XElement AddSummaryHeader(string summaryOrNotes)
+        {
+            var xml = new XElement("summaryheader", summaryOrNotes);
+
+            return xml;
+        }
+        public XElement AddSummaryText(string summaryOrNotes, string indent)
+        {
+            var xml = new XElement("text", summaryOrNotes,
+                new XAttribute("indent", indent));
+
+            return xml;
+        }
+        //public XElement AddIndent1()
+        //{
+
+        //}
+        //public XElement AddIndent2()
+        //{
+
+        //}
+        //public XElement AddIndent3()
+        //{
+            
+        //}
+        //public XElement AddIndent4()
+        //{
+
+        //}
         private string GetLicNameForHeader()
         {
             var parser = new CCsvParser();

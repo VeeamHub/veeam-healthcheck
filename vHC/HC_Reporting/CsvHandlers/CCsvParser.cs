@@ -55,7 +55,7 @@ namespace VeeamHealthCheck.CsvHandlers
         private readonly string _vboProxies= "Proxies";
         private readonly string _vboRBAC = "RBACRoles";
         private readonly string _vboRepositories = "Repositories";
-        private readonly string _vboSeurity = "Security";
+        private readonly string _vboSecurity = "Security";
 
         public CCsvParser()
         {
@@ -66,6 +66,22 @@ namespace VeeamHealthCheck.CsvHandlers
         public IEnumerable<dynamic> GetDynamicVboGlobal()
         {
             return GetDynamicCsvRecs(_vboGlobalCsv);
+        }
+        public IEnumerable<dynamic> GetDynamicVboProxies()
+        {
+            return GetDynamicCsvRecs(_vboProxies);
+        }
+        public IEnumerable<dynamic> GetDynamicVboRbac()
+        {
+            return GetDynamicCsvRecs(_vboRBAC);
+        }
+        public IEnumerable<dynamic> GetDynamicVboRepo()
+        {
+            return GetDynamicCsvRecs(_vboRepositories);
+        }
+        public IEnumerable<dynamic> GetDynamicVboSec()
+        {
+            return GetDynamicCsvRecs(_vboSecurity);
         }
 
         #endregion
@@ -283,7 +299,11 @@ namespace VeeamHealthCheck.CsvHandlers
         {
             var config = new CsvConfiguration(CultureInfo.InvariantCulture)
             {
-                PrepareHeaderForMatch = args => args.Header.ToLower().Replace(" ", string.Empty).Replace(".", string.Empty),
+                PrepareHeaderForMatch = args => args.Header.ToLower()
+                .Replace(" ", string.Empty)
+                .Replace(".", string.Empty)
+                .Replace("?", string.Empty)
+                .Replace("-", string.Empty),
                 MissingFieldFound = null,
             };
             return config;
