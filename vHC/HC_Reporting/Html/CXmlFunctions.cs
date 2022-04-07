@@ -66,17 +66,43 @@ namespace VeeamHealthCheck.Html
 
             return xml;
         }
+        private string GetLicNameForHeader()
+        {
+            var parser = new CCsvParser();
+
+            //check for VBR key
+            try
+            {
+                var rec = parser.GetDynamicLicenseCsv();
+                foreach (var r in rec)
+                {
+                    return r.licensedto;
+                }
+
+            }
+            catch (Exception ex) { }
+            //Check VBO Key
+            try
+            {
+                var m365 = parser.GetDynamicVboGlobal().ToList();
+                foreach(var m in m365)
+                {
+                    return m.licensedto;
+                }
+                
+            }
+            catch(Exception ex) { } 
+            
+
+            return "";
+        }
         public void HeaderInfoToXml()
         {
             log.Info("converting header info to xml");
-            var parser = new CCsvParser();
-            var rec = parser.GetDynamicLicenseCsv();
+            
 
-            string cxName = "";
-            foreach (var r in rec)
-            {
-                cxName = r.licensedto;
-            }
+            string cxName = GetLicNameForHeader();
+            
 
             XDocument doc = new XDocument(new XElement("root"));
 

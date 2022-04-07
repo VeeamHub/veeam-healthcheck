@@ -24,15 +24,17 @@ namespace VeeamHealthCheck.Html
         private bool _scrub;
         private CXmlHandler _scrubber;
         private string _outPath;
-        public CHtmlExporter(string xmlFileName, string serverName)
+        private string _styleSheet;
+        public CHtmlExporter(string xmlFileName, string serverName, string styleSheet)
         {
             _testFile = xmlFileName;
             _backupServerName = serverName;
+            _styleSheet = styleSheet;
         }
         public void ExportHtml()
         {
             log.Info("exporting xml to html");
-            string s = TransformXMLToHTML(_testFile, "SessionReport.xsl");
+            string s = TransformXMLToHTML(_testFile, _styleSheet);
             DateTime dateTime = DateTime.Now;
             string n = MainWindow._desiredPath;
             string htmlCore = "\\" + _htmlName + "_" + _backupServerName + dateTime.ToString("_yyyy.MM.dd_HHmmss") + ".html";
@@ -54,7 +56,7 @@ namespace VeeamHealthCheck.Html
         public void ExportHtml(string xmlFile)
         {
             log.Info("exporting xml to html");
-            string s = TransformXMLToHTML(xmlFile, "SessionReport.xsl");
+            string s = TransformXMLToHTML(xmlFile, _styleSheet);
             string reportsFolder = "\\JobSessionReports\\";
 
             string jname = Path.GetFileNameWithoutExtension(xmlFile);

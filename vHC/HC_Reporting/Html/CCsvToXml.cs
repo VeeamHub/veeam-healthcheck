@@ -65,6 +65,7 @@ namespace VeeamHealthCheck.Html
         private CXmlFunctions XML;
 
         private CFillerTexts fillerText = new();
+        private string _styleSheet = "StyleSheets\\vbr-Report.xsl";
 
         public void ConvertToXml()
         {
@@ -1755,7 +1756,7 @@ namespace VeeamHealthCheck.Html
             ServerSummaryToXml();
             BackupServerInfoToXml();
 
-            exporter = new(_testFile, _backupServerName);
+            exporter = new(_testFile, _backupServerName, _styleSheet);
 
             SobrInfoToXml();
             ExtentXmlFromCsv();
