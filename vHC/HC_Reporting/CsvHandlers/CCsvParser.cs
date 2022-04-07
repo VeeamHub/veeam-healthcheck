@@ -24,7 +24,7 @@ namespace VeeamHealthCheck.CsvHandlers
         private CLogger log = MainWindow.log;
 
         //CSV Paths.
-        private readonly string _sessionPath = CVariables.unsafeDir + @"\Raw_Data\VeeamSessionReport.csv";
+        private readonly string _sessionPath = CVariables.unsafeDir + @"\Raw_Data\vbr_VeeamSessionReport.csv";
         private readonly string _outPath = CVariables.unsafeDir + "\\Raw_Data";
         private readonly string _sobrExtReportName = "SOBRExtents";
         private readonly string _jobReportName = "Jobs";

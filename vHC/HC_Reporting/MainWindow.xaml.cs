@@ -23,10 +23,11 @@ namespace VeeamHealthCheck
         private bool _openHtml = false;
         public static bool _openExplorer = true;
         public static string _desiredPath = CVariables.unsafeDir;
+        private string _path;
         public MainWindow(string[] args)
         {
             InitializeComponent();
-            pathBox.Text = CVariables.unsafeDir;
+            SetPathBoxText(CVariables.unsafeDir);
             //testing new UI
             //Wizard_1 w = new();
             //w.Show();
@@ -45,7 +46,7 @@ namespace VeeamHealthCheck
         public MainWindow()
         {
             InitializeComponent();
-            pathBox.Text = CVariables.unsafeDir;
+            SetPathBoxText(CVariables.unsafeDir);
             //testing new UI
             //Wizard_1 w = new();
             //w.Show();
@@ -60,6 +61,11 @@ namespace VeeamHealthCheck
             PreCheck();
             hideProgressBar();
             run.IsEnabled = false;
+        }
+        private void SetPathBoxText(string text)
+        {
+            pathBox.Text = text;
+            _path = text;
         }
         private void DecryptSystem()
         {
@@ -94,9 +100,14 @@ namespace VeeamHealthCheck
         }
         private void Import()
         {
-            CCsvToXml c = new();
-            c.ConvertToXml(_scrub, false, _openHtml, true);
-            c.Dispose();
+            CModeSelector cMode = new(_desiredPath, _scrub, _openHtml);
+            cMode.Run();
+            
+            //CCsvToXml c = new();
+
+            ////choose VBO or VBR
+            //c.ConvertToXml(_scrub, false, _openHtml, true);
+            //c.Dispose();
         }
 
         private void JustRun()
@@ -207,7 +218,7 @@ namespace VeeamHealthCheck
         private void HandleCheck(object sender, RoutedEventArgs e)
         {
             _scrub = true;
-            pathBox.Text = CVariables.safeDir;
+            SetPathBoxText(CVariables.safeDir);
         }
 
         private void htmlChecked(object sender, RoutedEventArgs e)
@@ -222,7 +233,7 @@ namespace VeeamHealthCheck
         }
         private void HandleUnchecked(object sender, RoutedEventArgs e)
         {
-            pathBox.Text = CVariables.unsafeDir;
+            SetPathBoxText(CVariables.unsafeDir);
             _scrub = false;
         }
 

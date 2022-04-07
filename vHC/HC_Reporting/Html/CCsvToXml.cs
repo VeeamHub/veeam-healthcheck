@@ -75,6 +75,16 @@ namespace VeeamHealthCheck.Html
             if (openHtml)
                 OpenHtml();
         }
+        //public CCsvToXml()
+        //{
+        //    //VBO starter
+
+        //    ParseVbo
+        //}
+        //private void ParseVbo()
+        //{
+
+        //}
 
 
         #region XML Conversions
@@ -283,27 +293,27 @@ namespace VeeamHealthCheck.Html
             extElement.Add(xml);
             doc.Save(_testFile);
         }
-        private void FilterAndCountTypes()
-        {
-            List<string> types = _typeList;
-            types.Sort();
-            foreach (var type in types)
-            {
-                int i = 0;
-                if (!_serverSummaryInfo.ContainsKey(type))
-                {
-                    foreach (var t in types)
-                    {
-                        if (type == t)
-                        {
-                            i++;
-                        }
-                    }
-                    _serverSummaryInfo.Add(type, i);
-                }
+        //private void FilterAndCountTypes()
+        //{
+        //    List<string> types = _typeList;
+        //    types.Sort();
+        //    foreach (var type in types)
+        //    {
+        //        int i = 0;
+        //        if (!_serverSummaryInfo.ContainsKey(type))
+        //        {
+        //            foreach (var t in types)
+        //            {
+        //                if (type == t)
+        //                {
+        //                    i++;
+        //                }
+        //            }
+        //            _serverSummaryInfo.Add(type, i);
+        //        }
 
-            }
-        }
+        //    }
+        //}
         private void ServerSummaryToXml()
         {
             log.Info("converting server summary to xml");
