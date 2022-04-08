@@ -100,7 +100,7 @@ namespace VeeamHealthCheck
         }
         private void Import()
         {
-            CModeSelector cMode = new(_desiredPath, _scrub, _openHtml);
+            CModeSelector cMode = new(_desiredPath, _scrub, _openHtml, true) ;
             cMode.Run();
             
             //CCsvToXml c = new();
@@ -114,8 +114,10 @@ namespace VeeamHealthCheck
         {
             log.Info("Starting Run");
             Run();
+            bool import = false;
+            
 
-            CModeSelector cMode = new(_desiredPath, _scrub, _openHtml);
+            CModeSelector cMode = new(_desiredPath, _scrub, _openHtml, import);
             cMode.Run();
             //CCsvToXml c = new();
             //c.ConvertToXml(_scrub, true, _openHtml, false);

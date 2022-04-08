@@ -13,11 +13,13 @@ namespace VeeamHealthCheck
         private readonly string _path;
         private readonly bool _scrub;
         private readonly bool _openHtml;
-        public CModeSelector(string path, bool scrub, bool openHtml)
+        private readonly bool _import;
+        public CModeSelector(string path, bool scrub, bool openHtml, bool import)
         {
             _path = path;
             _scrub = scrub;
             _openHtml = openHtml;
+            _import = import;
         }
         public void Run()
         {
@@ -28,11 +30,16 @@ namespace VeeamHealthCheck
             if(Directory.Exists(CVariables.vb365dir))
                 StartM365Report();
             if(Directory.Exists(CVariables.vbrDir))
-                StartVbrReportImport();
+                StartVbrReport();
         }
         private void StartVbrReport()
         {
-
+            if (!_import)
+            {
+                CCsvToXml c = new("vbr", _scrub, true, _openHtml, _import);
+            }
+            else
+                StartVbrReportImport();
         }
         private void StartVbrReportImport()
         {
