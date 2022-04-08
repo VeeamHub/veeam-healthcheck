@@ -100,11 +100,7 @@ namespace VeeamHealthCheck.CsvHandlers
         #endregion
 
         #region DynamicCsvParsers-VBR
-        public IEnumerable<dynamic> GetDynamicLicenseCsv()
-        {
-            return GetDynamicCsvRecs(_licReportName);
-            //return FileFinder(_licReportName).GetRecords<dynamic>();
-        }
+
         private IEnumerable<dynamic> GetDynamicCsvRecs(string file)
         {
             var r = FileFinder(file);
@@ -114,6 +110,11 @@ namespace VeeamHealthCheck.CsvHandlers
                 return FileFinder(file).GetRecords<dynamic>();
 
             }
+        }
+        public IEnumerable<dynamic> GetDynamicLicenseCsv()
+        {
+            return GetDynamicCsvRecs(_licReportName);
+            //return FileFinder(_licReportName).GetRecords<dynamic>();
         }
         public IEnumerable<dynamic> GetPhysProtected()
         {
@@ -154,6 +155,23 @@ namespace VeeamHealthCheck.CsvHandlers
         public IEnumerable<dynamic> GetDynamicCapTier()
         {
             return GetDynamicCsvRecs(_capTier);
+        }
+
+        public IEnumerable<dynamic> GetDynViProxy()
+        {
+            return GetDynamicCsvRecs(_proxyReportName);
+        }
+        public IEnumerable<dynamic> GetDynHvProxy()
+        {
+            return GetDynamicCsvRecs(_hvProxReportName);
+        }
+        public IEnumerable<dynamic> GetDynNasProxy()
+        {
+            return GetDynamicCsvRecs(_nasProxReportName);
+        }
+        public IEnumerable<dynamic> GetDynCdpProxy()
+        {
+            return GetDynamicCsvRecs(_cdpProxReportName);
         }
         #endregion
 

@@ -154,7 +154,7 @@ namespace VeeamHealthCheck.Html
                 }
             }
 
-                //List<int> protectedTypes = _dTypeParser.ProtectedJobIds;
+            //List<int> protectedTypes = _dTypeParser.ProtectedJobIds;
             //List<string> unProtectedTypes = new();
             //foreach (CModel.EDbJobType jt in Enum.GetValues(typeof(CModel.EDbJobType)))
             //{
@@ -360,15 +360,15 @@ namespace VeeamHealthCheck.Html
 
             foreach (var p in protectedVms)
             {
-                
-                    vmNames.Add(p.Name);
-                    viProtectedNames.Add(p.Name);
-                
-                
+
+                vmNames.Add(p.Name);
+                viProtectedNames.Add(p.Name);
+
+
             }
             foreach (var un in unProtectedVms)
             {
-                if(un.Type == "Vm")
+                if (un.Type == "Vm")
                 {
                     viNotProtectedNames.Add(un.Name);
                     vmNames.Add(un.Name);
@@ -385,7 +385,7 @@ namespace VeeamHealthCheck.Html
 
             foreach (var u in physNotProtected)
             {
-                if(u.type == "Computer")
+                if (u.type == "Computer")
                 {
                     physNames.Add(u.name);
                     physNotProtNames.Add(u.name);
@@ -393,12 +393,12 @@ namespace VeeamHealthCheck.Html
 
             }
             List<string> vmProtectedByPhys = new();
-            foreach(var p in physProtected)
+            foreach (var p in physProtected)
             {
-                foreach(var v in protectedVms)
-                    if(p.name.Contains(v.Name))
+                foreach (var v in protectedVms)
+                    if (p.name.Contains(v.Name))
                         vmProtectedByPhys.Add(v.Name);
-                foreach(var w in unProtectedVms)
+                foreach (var w in unProtectedVms)
                 {
                     if (p.name.Contains(w.Name))
                         vmProtectedByPhys.Add(w.Name);
@@ -461,7 +461,7 @@ namespace VeeamHealthCheck.Html
         {
             log.Info("converting backup server info to xml");
             CheckServerRoles(_backupServerId);
-            
+
             List<CServerTypeInfos> csv = _dTypeParser.ServerInfo();
             CServerTypeInfos backupServer = csv.Find(x => (x.Id == _backupServerId));
             CCsvParser config = new();
@@ -1811,41 +1811,29 @@ namespace VeeamHealthCheck.Html
             List<CRepoTypeInfos> repos = _dTypeParser.RepoInfos;
             List<CWanTypeInfo> wans = _dTypeParser.WanInfos;
 
-            //List<bool> enabledList = new();
-            //if (proxy.Any(x => x.HostId == serverId))
-            //    _isBackupServerProxy = true;
-            //if ((proxy.Any(y => y.HostId == serverId && y.IsDisabled == "False")))
-            //{
-            //    //if(proxy.)
-            //    enabledList.Add(false);
-            //}
-            //if ((proxy.Any(y => y.HostId == serverId && y.IsDisabled == "True")))
-            //{
-            //    enabledList.Add(true);
-            //}
+            // file, other proxy...
 
-            //if (enabledList.Any(x => x == false))
-            //    _isBackupServerProxyDisabled = false;
 
-            //else
-            //    _isBackupServerProxyDisabled = true;
+
             _isBackupServerProxyDisabled = true;
+            _isBackupServerProxy = CheckProxyRole(serverId);
 
-            foreach (var p in proxy)
-            {
-                if (p.HostId == serverId)
-                {
-                    _isBackupServerProxy = true;
-                    if (p.IsDisabled == "False")
-                    {
-                        _isBackupServerProxyDisabled = false;
-                        //break;
-                    }
-                    if (p.IsDisabled == "TRUE")
-                    {
-                    }
-                }
-            }
+            //foreach (var p in proxy)
+            //{
+            //    if (p.HostId == serverId)
+            //    {
+            //        _isBackupServerProxy = true;
+            //        if (p.IsDisabled == "False")
+            //        {
+            //            _isBackupServerProxyDisabled = false;
+            //            break;
+            //        }
+            //        if (p.IsDisabled == "TRUE")
+            //        {
+            //        }
+            //    }
+            //}
+
             foreach (var e in extents)
             {
                 if (e.HostId == serverId)
@@ -1862,6 +1850,35 @@ namespace VeeamHealthCheck.Html
                     _isBackupServerWan = true;
             }
             //log.Info("Checking server roles..done!");
+        }
+        private bool CheckProxyRole(string serverId)
+        {
+            var viProxy = _csvParser.GetDynViProxy();
+            var hvProxy = _csvParser.GetDynHvProxy();
+            var nasProxy = _csvParser.GetDynNasProxy();
+            var cdpProxy = _csvParser.GetDynCdpProxy();
+            foreach(var v in viProxy)
+            {
+                if (v.id == serverId)
+                    return true;
+            }
+            foreach (var h in hvProxy)
+            {
+                if (h.id == serverId)
+                    return true;
+            }
+            foreach (var n in nasProxy)
+            {
+                if (n.hostid == serverId)
+                    return true;
+            }
+            
+            foreach(var c in cdpProxy)
+            {
+                if (c.serverid == serverId)
+                    return true;
+            }
+            return false;
         }
         private string Scrub(string item)
         {

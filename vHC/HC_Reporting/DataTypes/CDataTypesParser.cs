@@ -305,7 +305,8 @@ namespace VeeamHealthCheck.DataTypes
         {
             log.Info("Starting Job Csv Parse..");
 
-            var bjobCsv = _csvParser.BJobCsvParser();
+            //var bjobCsv = _csvParser.BJobCsvParser();
+            var bjobCsv = _csvParser.GetDynamicBjobs();
             var jobCsv = _csvParser.JobCsvParser();
             List<CJobTypeInfos> eInfoList = new();
             try
