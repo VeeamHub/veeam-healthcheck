@@ -18,18 +18,22 @@ namespace VeeamHealthCheck.Html
     {
         private CLogger log = MainWindow.log;
         private readonly string _testFile;
-        private string _htmlName;
+        private readonly string _htmlName = "Veeam Health Check Report";
+
         private string _backupServerName;
         private string _latestReport;
         private bool _scrub;
         private CXmlHandler _scrubber;
-        private string _outPath;
+        private string _outPath = CVariables.unsafeDir;
         private string _styleSheet;
-        public CHtmlExporter(string xmlFileName, string serverName, string styleSheet)
+        public CHtmlExporter(string xmlFileName, string serverName, string styleSheet, bool scrub)
         {
             _testFile = xmlFileName;
             _backupServerName = serverName;
             _styleSheet = styleSheet;
+            _scrub = scrub;
+            if(scrub)
+                _scrubber = new CXmlHandler();
         }
         public void ExportHtml()
         {

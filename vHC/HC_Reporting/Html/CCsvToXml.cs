@@ -3,27 +3,15 @@
 using System;
 using System.Collections.Generic;
 using System.Data;
-using System.Diagnostics;
 using System.IO;
 using System.Linq;
-using System.Text;
-using System.Text.RegularExpressions;
-using System.Threading.Tasks;
-using System.Windows;
-using System.Windows.Controls;
-using System.Xml;
 using System.Xml.Linq;
-using System.Xml.Xsl;
-using VeeamHealthCheck.CsvHandlers;
-using VeeamHealthCheck.DataTypes;
-using VeeamHealthCheck;
 using VeeamHealthCheck.CsvHandlers;
 using VeeamHealthCheck.DataTypes;
 using VeeamHealthCheck.DB;
-using VeeamHealthCheck.Html;
-using VeeamHealthCheck.Shared.Logging;
 using VeeamHealthCheck.RegSettings;
 using VeeamHealthCheck.Scrubber;
+using VeeamHealthCheck.Shared.Logging;
 using static VeeamHealthCheck.DB.CModel;
 
 namespace VeeamHealthCheck.Html
@@ -32,11 +20,9 @@ namespace VeeamHealthCheck.Html
     {
         private readonly string _testFile = "xml\\vbr.xml";
         private string _outPath = CVariables.unsafeDir;
-        private readonly string _htmlName = "Veeam HealthCheck Report";
         private readonly string _backupServerId = "6745a759-2205-4cd2-b172-8ec8f7e60ef8";
         private string _backupServerName;
         private bool _isBackupServerProxy;
-        private bool _isBackupServerProxyDisabled;
         private bool _isBackupServerRepo;
         private bool _isBackupServerWan;
         private CQueries _cq;
@@ -56,16 +42,15 @@ namespace VeeamHealthCheck.Html
         private int _cores;
         private int _ram;
 
-        private string _latestReport;
         private CDataTypesParser _dTypeParser;
-        private CCsvParser _csvParser = new();
-        private CLogger log = MainWindow.log;
+        private readonly CCsvParser _csvParser = new();
+        private readonly CLogger log = MainWindow.log;
 
         private CHtmlExporter exporter;
-        private CXmlFunctions XML;
+        private readonly CXmlFunctions XML;
 
-        private CFillerTexts fillerText = new();
-        private string _styleSheet = "StyleSheets\\vbr-Report.xsl";
+        private readonly CFillerTexts fillerText = new();
+        private readonly string _styleSheet = "StyleSheets\\vbr-Report.xsl";
 
         public void ConvertToXml()
         {
@@ -1747,7 +1732,7 @@ namespace VeeamHealthCheck.Html
             ServerSummaryToXml();
             BackupServerInfoToXml();
 
-            exporter = new(_testFile, _backupServerName, _styleSheet);
+            exporter = new(_testFile, _backupServerName, _styleSheet, _scrub);
 
             SobrInfoToXml();
             ExtentXmlFromCsv();
@@ -1857,9 +1842,9 @@ namespace VeeamHealthCheck.Html
             var hvProxy = _csvParser.GetDynHvProxy();
             var nasProxy = _csvParser.GetDynNasProxy();
             var cdpProxy = _csvParser.GetDynCdpProxy();
-            foreach(var v in viProxy)
+            foreach(var v in viProxy.ToList())
             {
-                if (v.id == serverId)
+                if (v.hostid == serverId)
                     return true;
             }
             foreach (var h in hvProxy)

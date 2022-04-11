@@ -5,6 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Xml.Linq;
 using VeeamHealthCheck.CsvHandlers;
+using VeeamHealthCheck.Scrubber;
 
 namespace VeeamHealthCheck.Html
 {
@@ -22,12 +23,17 @@ namespace VeeamHealthCheck.Html
         private string _ServerName = "M365-Server";
         private string _styleSheet = "StyleSheets\\m365-Report.xsl";
         private XDocument _doc;
+        private bool _scrub;
+        private CXmlHandler _scrubber;
 
-        public CM365Converter()
+        public CM365Converter(bool scrub)
         {
+            _scrub = scrub;
+            if (scrub)
+                _scrubber = new();
             XML.HeaderInfoToXml();
             Run();
-            _exporter = new(_xmlFile, _ServerName, _styleSheet);
+            _exporter = new(_xmlFile, _ServerName, _styleSheet, scrub);
             _exporter.ExportHtml();
             _exporter.OpenHtml();
         }

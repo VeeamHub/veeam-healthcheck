@@ -317,19 +317,19 @@ namespace VeeamHealthCheck.DataTypes
 
                     foreach (var b in bjobCsv)
                     {
-                        int.TryParse(b.JobType, out int typeId);
+                        int.TryParse(b.type, out int typeId);
                         if (!_protectedJobIds.Contains(typeId))
                         {
                             _protectedJobIds.Add(typeId);
 
                         }
-                        if (b.Name == s.Name)
+                        if (b.name == s.Name)
                         {
-                            jInfo.Name = b.Name;
-                            jInfo.ActualSize = b.actualSize;
-                            jInfo.RepoName = MatchRepoIdToRepo(b.RepositoryId);
-                            jInfo.JobId = b.JobType;
-                            if(b.JobType == "63")
+                            jInfo.Name = b.name;
+                            jInfo.ActualSize = b.included_size;
+                            jInfo.RepoName = MatchRepoIdToRepo(b.repository_id);
+                            jInfo.JobId = b.type;
+                            if(b.type == "63")
                             {
 
                             }

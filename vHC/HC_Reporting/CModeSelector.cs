@@ -51,7 +51,7 @@ namespace VeeamHealthCheck
         private void StartM365Report()
         {
             //CCsvToXml m = new CCsvToXml("m365", _scrub, false, _openHtml, true);
-            CM365Converter converter = new CM365Converter();
+            CM365Converter converter = new CM365Converter(_scrub);
         }
     }
 }
