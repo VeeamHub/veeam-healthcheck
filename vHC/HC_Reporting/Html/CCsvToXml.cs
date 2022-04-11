@@ -1784,7 +1784,7 @@ namespace VeeamHealthCheck.Html
             _isBackupServerWan = false;
             _isBackupServerRepo = false;
             _isBackupServerProxy = false;
-            _isBackupServerProxyDisabled = false;
+            //_isBackupServerProxyDisabled = false;
         }
         private void CheckServerRoles(string serverId)
         {
@@ -1800,7 +1800,7 @@ namespace VeeamHealthCheck.Html
 
 
 
-            _isBackupServerProxyDisabled = true;
+           // _isBackupServerProxyDisabled = true;
             _isBackupServerProxy = CheckProxyRole(serverId);
 
             //foreach (var p in proxy)

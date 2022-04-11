@@ -757,7 +757,7 @@ namespace VeeamHealthCheck.DataTypes
                 p.MaxTasksCount = ParseToInt(fp.ConcurrentTaskNumber);
                 p.Type = "File";
                 p.Cores = MatchHostIdToCPU(fp.HostId);
-                p.Ram = MatchHostIdToCPU(fp.Host);
+                p.Ram = MatchHostIdtoRam(fp.HostId);
                 p.CachePath = "";
                 p.CacheSize = "";
                 p.ChassisType = "";
