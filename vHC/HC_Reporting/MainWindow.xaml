@@ -10,7 +10,7 @@ MIT License
         xmlns:DVC="clr-namespace:System.Windows.Controls.DataVisualization.Charting;assembly=DotNetProjects.DataVisualization.Toolkit"
         xmlns:local="clr-namespace:VeeamHealthCheck"
         mc:Ignorable="d"
-        Title="Veeam Health Check Tool" Height="507" Width="361"
+        Title="Veeam Health Check Tool" Height="524" Width="361"
         WindowStartupLocation="CenterScreen"
         ResizeMode="NoResize"
         >
@@ -52,32 +52,42 @@ MIT License
             </DVC:Chart.Series>
         </DVC:Chart>-->
         <Button x:Name="run" Content="Run" HorizontalAlignment="Left" Margin="121,345,0,0" VerticalAlignment="Top" Click="run_Click" Height="25" Width="100"/>
-        <Button Content="Accept Terms" HorizontalAlignment="Left" Margin="15,345,0,0" VerticalAlignment="Top" Height="25" Width="100" Click="Button_Click"/>
+        <Button Name="termsBtn" Content="Accept Terms" HorizontalAlignment="Left" Margin="15,345,0,0" VerticalAlignment="Top" Height="25" Width="100" Click="Button_Click"/>
         <Button x:Name="importButton" Content="Import" HorizontalAlignment="Right" Margin="0,345,25,0" VerticalAlignment="Top" Height="25" Width="100" Click="Import" ToolTip="Creates a report based on previously collected data."/>
 
-        <TextBlock Margin="0,-25,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Height="260" Width="Auto">
-            <Run FontWeight="Bold" TextDecorations="Underline" Text="Instructions:"/><LineBreak/><Run/>
-            <LineBreak/><Run Text="1. Accept Terms"/><LineBreak/><Run Text="2. Click Run."/><LineBreak/>
-            <Run Text="3. When complete, Windows Explorer will open at the output directory. (If enabled, the HTML report will be displayed)"/><LineBreak/>
-            <Run Text="4. Review the report as desired."/><LineBreak/><Run Text="5. Capture output from C:\temp\vHC*"/><LineBreak/>
-            <Run Text="6. Notify your Veeam SE and/or send them the results for review."/><LineBreak/>
-            <Run/><LineBreak/><Run Text="* If opted to remove "></Run><Hyperlink x:Name="kbLink" RequestNavigate="kbLink_RequestNavigate" NavigateUri="https://www.veeam.com/kb2462">sensitive data types</Hyperlink><Run>, only HTML report and log files will have sensitive data removed."/></Run><LineBreak/><Run Text="** Note, in larger environments, this tool can take up to 3 hours to complete."/><LineBreak/><Run/><LineBreak/><Run FontWeight="Bold" TextDecorations="Underline" Text="Options:"/></TextBlock>
-        <CheckBox Content="Show HTML Report upon completion" HorizontalAlignment="Left" 
+        <TextBlock Margin="0,-25,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Height="270" Width="Auto">
+            <Run FontWeight="Bold" TextDecorations="Underline" Name="InsHeader" /><LineBreak/><Run/>
+            <LineBreak/>
+            <Run Name="line1"/><LineBreak/>
+            <Run Name="line2"/><LineBreak/>
+            <Run Name="line3" /><LineBreak/>
+            <Run Name="line4" /><LineBreak/>
+            <Run Name="line5" /><LineBreak/>
+            <Run Name="line6" /><LineBreak/>
+            <Run/><LineBreak/>
+            <Run Name="Cav1Part1"></Run>
+            <Hyperlink Name="kbLink" RequestNavigate="kbLink_RequestNavigate" 
+                       NavigateUri="https://www.veeam.com/kb2462">https://www.veeam.com/kb2462
+            </Hyperlink>    
+            <Run Name="Cav1Part2" Text=""></Run><LineBreak/>
+            <Run Name="Cav2" /><LineBreak/><Run/><LineBreak/>
+            <Run Name="OptHdr" FontWeight="Bold" TextDecorations="Underline" /></TextBlock>
+        <CheckBox Name="htmlCheckBox" HorizontalAlignment="Left" 
                   Margin="0,270,0,0" VerticalAlignment="Top" IsThreeState="False"
                   Checked="htmlChecked" 
                   Unchecked="htmlUnchecked" 
                   ToolTip="This option will anonymize the report to protect sensitive data types as found in Veeam KB 2462"
              />
-        <CheckBox Content="Remove sensitive data types from report" HorizontalAlignment="Left" Margin="0,290,0,0" VerticalAlignment="Top" IsThreeState="False"
+        <CheckBox x:Name="scrubBox"  HorizontalAlignment="Left" Margin="0,290,0,0" VerticalAlignment="Top" IsThreeState="False"
             Checked="HandleCheck" Unchecked="HandleUnchecked" 
                   ToolTip="This option will anonymize the report to protect sensitive data types as found in Veeam KB 2462"
              />
-        <CheckBox x:Name="explorerShowBox" Content="Show files on completion" HorizontalAlignment="Left"
+        <CheckBox x:Name="explorerShowBox"  HorizontalAlignment="Left"
                   Margin="0,250,0,0" VerticalAlignment="Top" IsThreeState="False"
                   Checked="explorerShowBox_Checked" Unchecked="explorerShowBox_Unchecked"
                   IsChecked="True"
                   ></CheckBox>
-        <TextBlock Height="15" Width="75" HorizontalAlignment="Left" Margin="0,324,0,86">Output Path:</TextBlock>
+        <TextBlock Name="outPath" Height="15" Width="75" HorizontalAlignment="Left" Margin="0,324,0,86"></TextBlock>
         <TextBox x:Name="pathBox" Height="20" Width="270"  TextChanged="pathBox_TextChanged" Margin="77,320,3,85"></TextBox>
         <!--<CheckBox Content="Collect Session Data" HorizontalAlignment="Left" Margin="1,252,0,0" 
                   VerticalAlignment="Top" 

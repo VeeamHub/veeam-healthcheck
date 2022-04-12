@@ -21,6 +21,7 @@
 	  <!--<PublishSingleFile>true</PublishSingleFile>-->
 	  <!--<IncludeAllContentForSelfExtract>true</IncludeAllContentForSelfExtract>-->
 	  <RuntimeIdentifier>win-x64</RuntimeIdentifier>
+	  <NeutralLanguage>en-US</NeutralLanguage>
   </PropertyGroup>
 
   <ItemGroup>
@@ -42,6 +43,7 @@
     <PackageReference Include="CsvHelper" Version="27.2.1" />
     <PackageReference Include="DotNetProjects.WpfToolkit.DataVisualization" Version="6.0.90" />
     <PackageReference Include="HtmlAgilityPack" Version="1.11.36" />
+    <PackageReference Include="System.Resources.ResourceManager" Version="4.3.0" />
   </ItemGroup>
 
   <ItemGroup>
@@ -71,6 +73,31 @@
   <ItemGroup>
     <Folder Include="Softwares\VB365\CsvHandlers\" />
     <Folder Include="Softwares\VBR\" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Update="Resources.en-US.Designer.cs">
+      <DependentUpon>Resources.en-US.resx</DependentUpon>
+      <DesignTime>True</DesignTime>
+      <AutoGen>True</AutoGen>
+    </Compile>
+    <Compile Update="Resources.Designer.cs">
+      <DesignTime>True</DesignTime>
+      <AutoGen>True</AutoGen>
+      <DependentUpon>Resources.resx</DependentUpon>
+    </Compile>
+  </ItemGroup>
+
+  <ItemGroup>
+    <EmbeddedResource Update="Resources.en-US.resx">
+      <LastGenOutput>Resources.en-US.Designer.cs</LastGenOutput>
+      <Generator>ResXFileCodeGenerator</Generator>
+    </EmbeddedResource>
+    <EmbeddedResource Update="Resources.resx">
+      <Generator>ResXFileCodeGenerator</Generator>
+      <LastGenOutput>Resources.Designer.cs</LastGenOutput>
+      <CustomToolNamespace></CustomToolNamespace>
+    </EmbeddedResource>
   </ItemGroup>
 
 </Project>

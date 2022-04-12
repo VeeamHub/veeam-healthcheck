@@ -9,6 +9,7 @@ using System.Windows.Documents;
 using VeeamHealthCheck;
 using VeeamHealthCheck.DB;
 using VeeamHealthCheck.Shared.Logging;
+using System.Resources;
 
 namespace VeeamHealthCheck
 {
@@ -46,6 +47,8 @@ namespace VeeamHealthCheck
         public MainWindow()
         {
             InitializeComponent();
+            SetUiText();
+
             SetPathBoxText(CVariables.unsafeDir);
             //testing new UI
             //Wizard_1 w = new();
@@ -61,6 +64,29 @@ namespace VeeamHealthCheck
             PreCheck();
             hideProgressBar();
             run.IsEnabled = false;
+        }
+        private void SetUiText()
+        {
+            ResourceManager rm = new ResourceManager("VeeamHealthCheck.Resources", typeof(MainWindow).Assembly);
+
+            this.InsHeader.Text = rm.GetString("GuiInstHeader");
+            this.line1.Text = rm.GetString("GuiInstLine1");
+            this.line2.Text = rm.GetString("GuiInstLine2");
+            this.line3.Text = rm.GetString("GuiInstLine3");
+            this.line4.Text = rm.GetString("GuiInstLine4");
+            this.line5.Text = rm.GetString("GuiInstLine5");
+            this.line6.Text = rm.GetString("GuiInstLine6");
+            this.Cav1Part1.Text = rm.GetString("GuiInstCaveat1");
+            this.Cav2.Text = rm.GetString("GuiInstCaveat2");
+            this.OptHdr.Text = rm.GetString("GuiOptionsHeader");
+            this.htmlCheckBox.Content = rm.GetString("GuiShowHtml");
+            this.scrubBox.Content = rm.GetString("GuiSensData");
+            this.explorerShowBox.Content = rm.GetString("GuiShowFiles");
+            this.outPath.Text = rm.GetString("GuiOutPath");
+            this.termsBtn.Content = rm.GetString("GuiAcceptButton");
+            this.run.Content = rm.GetString("GuiRunButton");
+            this.importButton.Content = rm.GetString("GuiImportButton");
+            
         }
         private void SetPathBoxText(string text)
         {
