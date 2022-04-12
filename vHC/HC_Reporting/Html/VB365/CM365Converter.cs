@@ -73,8 +73,8 @@ namespace VeeamHealthCheck.Html
                 node.Add(XML.AddXelement(info.licensetype, "Lic Type"));
                 node.Add(XML.AddXelement(info.licensedto, "Lic To"));
                 node.Add(XML.AddXelement(info.licensecontact, "Lic Contact"));
-                node.Add(XML.AddXelement(info.licenseusage, "Lic Usage"));
-                node.Add(XML.AddXelement(info.licensedusers, "Lic Users"));
+                node.Add(XML.AddXelement(info.licensedfor, "Lic Usage"));
+                node.Add(XML.AddXelement(info.licensesused, "Lic Users"));
                 node.Add(XML.AddXelement(info.supportexpiry, "Sup Expire"));
                 node.Add(XML.AddXelement(info.globalfolderexclusions, "Global Folder Excl."));
                 node.Add(XML.AddXelement(info.globalretexclusions, "Global Ret Excl"));
