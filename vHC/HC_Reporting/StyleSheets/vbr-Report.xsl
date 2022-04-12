@@ -221,25 +221,25 @@ function test(){
 					<br></br>
 					<h2 style="color: green; font-style: italic;background:lightgray;text-align:center">
 						<!--<xsl:apply-templates select="//h1/hc"></xsl:apply-templates>-->
-						Health Check Report
+						<xsl:value-of select="summaryheader"/>
 					</h2>
 					<a class="GenText">
-						<div class="i2">
-							- This report provides data and insight into your Veeam Backup and Replication (VBR) deployment. The information provided here is intended to be used in collaboration with your Veeam representative.
-						</div>
-						<div class="i2">
-							- The raw data is captured in CSV format and is accessible locally in the Export Folder. CSV will let you manipulate the data in tools such as Excel.
-						</div>
-						<div class="i2">
-							- Additional information on individual job sessions can be found in the <a href="C:\temp\vHC\JobSessionReports"> output folder at C:\temp\vHC\JobSessionReports</a>
-						</div>
-						<div class="i2">
-							- <b>Note</b> - During mouseover, a tool tip may appear containing explanatory data of the table header or data column.
-						</div>
-
-						<div class="i2">
-							- <b>Note</b> - The tool you ran to generate this report is completely self-contained, does not ‘phone-home’ and was only executed on your Veeam Backup and Replication server. It queries the VBR database, registry, configuration and log files. It does not require access to vCenter or any other infrastructure.
-						</div>
+						<xsl:for-each select="text">
+							<xsl:if test="text/@indent='hdr'">
+								<xsl:attribute name="class">
+									<xsl:text>hdr</xsl:text>
+								</xsl:attribute>
+							</xsl:if>
+							<xsl:if test="text/@indent='i2'">
+								<xsl:attribute name="class">
+									i2
+								</xsl:attribute>
+							</xsl:if>
+							<div class="{@indent}">
+								<xsl:value-of select ="."/>
+							</div>
+						</xsl:for-each>
+						
 					</a>
 				</h1>
 

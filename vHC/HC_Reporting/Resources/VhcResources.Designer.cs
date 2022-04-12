@@ -8,7 +8,7 @@
 // </auto-generated>
 //------------------------------------------------------------------------------
 
-namespace VeeamHealthCheck {
+namespace VeeamHealthCheck.Resources {
     using System;
     
     
@@ -22,24 +22,24 @@ namespace VeeamHealthCheck {
     [global::System.CodeDom.Compiler.GeneratedCodeAttribute("System.Resources.Tools.StronglyTypedResourceBuilder", "17.0.0.0")]
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
     [global::System.Runtime.CompilerServices.CompilerGeneratedAttribute()]
-    internal class Resources {
+    public class VhcResources {
         
         private static global::System.Resources.ResourceManager resourceMan;
         
         private static global::System.Globalization.CultureInfo resourceCulture;
         
         [global::System.Diagnostics.CodeAnalysis.SuppressMessageAttribute("Microsoft.Performance", "CA1811:AvoidUncalledPrivateCode")]
-        internal Resources() {
+        internal VhcResources() {
         }
         
         /// <summary>
         ///   Returns the cached ResourceManager instance used by this class.
         /// </summary>
         [global::System.ComponentModel.EditorBrowsableAttribute(global::System.ComponentModel.EditorBrowsableState.Advanced)]
-        internal static global::System.Resources.ResourceManager ResourceManager {
+        public static global::System.Resources.ResourceManager ResourceManager {
             get {
                 if (object.ReferenceEquals(resourceMan, null)) {
-                    global::System.Resources.ResourceManager temp = new global::System.Resources.ResourceManager("VeeamHealthCheck.Resources", typeof(Resources).Assembly);
+                    global::System.Resources.ResourceManager temp = new global::System.Resources.ResourceManager("VeeamHealthCheck.Resources.VhcResources", typeof(VhcResources).Assembly);
                     resourceMan = temp;
                 }
                 return resourceMan;
@@ -51,7 +51,7 @@ namespace VeeamHealthCheck {
         ///   resource lookups using this strongly typed resource class.
         /// </summary>
         [global::System.ComponentModel.EditorBrowsableAttribute(global::System.ComponentModel.EditorBrowsableState.Advanced)]
-        internal static global::System.Globalization.CultureInfo Culture {
+        public static global::System.Globalization.CultureInfo Culture {
             get {
                 return resourceCulture;
             }
@@ -63,25 +63,16 @@ namespace VeeamHealthCheck {
         /// <summary>
         ///   Looks up a localized string similar to Accept Terms.
         /// </summary>
-        internal static string GuiAcceptButton {
+        public static string GuiAcceptButton {
             get {
                 return ResourceManager.GetString("GuiAcceptButton", resourceCulture);
             }
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to .
-        /// </summary>
-        internal static string GuiCaveat1Part2 {
-            get {
-                return ResourceManager.GetString("GuiCaveat1Part2", resourceCulture);
-            }
-        }
-        
-        /// <summary>
         ///   Looks up a localized string similar to Import.
         /// </summary>
-        internal static string GuiImportButton {
+        public static string GuiImportButton {
             get {
                 return ResourceManager.GetString("GuiImportButton", resourceCulture);
             }
@@ -90,7 +81,7 @@ namespace VeeamHealthCheck {
         /// <summary>
         ///   Looks up a localized string similar to * If opted to remove sensitive data types, only HTML report will be cleansed. See: .
         /// </summary>
-        internal static string GuiInstCaveat1 {
+        public static string GuiInstCaveat1 {
             get {
                 return ResourceManager.GetString("GuiInstCaveat1", resourceCulture);
             }
@@ -99,7 +90,7 @@ namespace VeeamHealthCheck {
         /// <summary>
         ///   Looks up a localized string similar to &quot;** Note, in larger environments, this tool can take up to 3 hours to complete.&quot;.
         /// </summary>
-        internal static string GuiInstCaveat2 {
+        public static string GuiInstCaveat2 {
             get {
                 return ResourceManager.GetString("GuiInstCaveat2", resourceCulture);
             }
@@ -108,7 +99,7 @@ namespace VeeamHealthCheck {
         /// <summary>
         ///   Looks up a localized string similar to Instructions:.
         /// </summary>
-        internal static string GuiInstHeader {
+        public static string GuiInstHeader {
             get {
                 return ResourceManager.GetString("GuiInstHeader", resourceCulture);
             }
@@ -117,7 +108,7 @@ namespace VeeamHealthCheck {
         /// <summary>
         ///   Looks up a localized string similar to 1. Accept Terms.
         /// </summary>
-        internal static string GuiInstLine1 {
+        public static string GuiInstLine1 {
             get {
                 return ResourceManager.GetString("GuiInstLine1", resourceCulture);
             }
@@ -126,7 +117,7 @@ namespace VeeamHealthCheck {
         /// <summary>
         ///   Looks up a localized string similar to 2. Click RUN.
         /// </summary>
-        internal static string GuiInstLine2 {
+        public static string GuiInstLine2 {
             get {
                 return ResourceManager.GetString("GuiInstLine2", resourceCulture);
             }
@@ -135,7 +126,7 @@ namespace VeeamHealthCheck {
         /// <summary>
         ///   Looks up a localized string similar to 3. Upon completion, Windows Explorer will open to the output directory. (If enabled, HTML report will be shown).
         /// </summary>
-        internal static string GuiInstLine3 {
+        public static string GuiInstLine3 {
             get {
                 return ResourceManager.GetString("GuiInstLine3", resourceCulture);
             }
@@ -144,7 +135,7 @@ namespace VeeamHealthCheck {
         /// <summary>
         ///   Looks up a localized string similar to 4. Review the report as desired.
         /// </summary>
-        internal static string GuiInstLine4 {
+        public static string GuiInstLine4 {
             get {
                 return ResourceManager.GetString("GuiInstLine4", resourceCulture);
             }
@@ -153,7 +144,7 @@ namespace VeeamHealthCheck {
         /// <summary>
         ///   Looks up a localized string similar to 5. Capture output from C:\temp\vHC* - or whichever directory was specified..
         /// </summary>
-        internal static string GuiInstLine5 {
+        public static string GuiInstLine5 {
             get {
                 return ResourceManager.GetString("GuiInstLine5", resourceCulture);
             }
@@ -162,7 +153,7 @@ namespace VeeamHealthCheck {
         /// <summary>
         ///   Looks up a localized string similar to 6. Notify your Veeam SE and/or send them the results for review.
         /// </summary>
-        internal static string GuiInstLine6 {
+        public static string GuiInstLine6 {
             get {
                 return ResourceManager.GetString("GuiInstLine6", resourceCulture);
             }
@@ -171,7 +162,7 @@ namespace VeeamHealthCheck {
         /// <summary>
         ///   Looks up a localized string similar to Options:.
         /// </summary>
-        internal static string GuiOptionsHeader {
+        public static string GuiOptionsHeader {
             get {
                 return ResourceManager.GetString("GuiOptionsHeader", resourceCulture);
             }
@@ -180,7 +171,7 @@ namespace VeeamHealthCheck {
         /// <summary>
         ///   Looks up a localized string similar to Output path.
         /// </summary>
-        internal static string GuiOutPath {
+        public static string GuiOutPath {
             get {
                 return ResourceManager.GetString("GuiOutPath", resourceCulture);
             }
@@ -189,7 +180,7 @@ namespace VeeamHealthCheck {
         /// <summary>
         ///   Looks up a localized string similar to Run.
         /// </summary>
-        internal static string GuiRunButton {
+        public static string GuiRunButton {
             get {
                 return ResourceManager.GetString("GuiRunButton", resourceCulture);
             }
@@ -198,25 +189,16 @@ namespace VeeamHealthCheck {
         /// <summary>
         ///   Looks up a localized string similar to Remove sensitive data types from report.
         /// </summary>
-        internal static string GuiSensData {
+        public static string GuiSensData {
             get {
                 return ResourceManager.GetString("GuiSensData", resourceCulture);
             }
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to .
-        /// </summary>
-        internal static string GuiSensDataString {
-            get {
-                return ResourceManager.GetString("GuiSensDataString", resourceCulture);
-            }
-        }
-        
-        /// <summary>
         ///   Looks up a localized string similar to Show files on completion.
         /// </summary>
-        internal static string GuiShowFiles {
+        public static string GuiShowFiles {
             get {
                 return ResourceManager.GetString("GuiShowFiles", resourceCulture);
             }
@@ -225,9 +207,63 @@ namespace VeeamHealthCheck {
         /// <summary>
         ///   Looks up a localized string similar to Show HTML report upon completion.
         /// </summary>
-        internal static string GuiShowHtml {
+        public static string GuiShowHtml {
             get {
                 return ResourceManager.GetString("GuiShowHtml", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Health Check Report.
+        /// </summary>
+        public static string HtmlHeader {
+            get {
+                return ResourceManager.GetString("HtmlHeader", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to - This report provides data and insight into your Veeam Backup and Replication (VBR) deployment. The information provided here is intended to be used in collaboration with your Veeam representative..
+        /// </summary>
+        public static string HtmlIntroLine1 {
+            get {
+                return ResourceManager.GetString("HtmlIntroLine1", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to - The raw data is captured in CSV format and is accessible locally in the Export Folder. CSV will let you manipulate the data in tools such as Excel..
+        /// </summary>
+        public static string HtmlIntroLine2 {
+            get {
+                return ResourceManager.GetString("HtmlIntroLine2", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to - Additional information on individual job sessions can be found in the &lt;a href=&quot;C:\temp\vHC\JobSessionReports&quot;&gt; output folder at C:\temp\vHC\JobSessionReports.
+        /// </summary>
+        public static string HtmlIntroLine3 {
+            get {
+                return ResourceManager.GetString("HtmlIntroLine3", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to - NOTE: During mouseover, a tool tip may appear containing explanatory data of the table header or data column..
+        /// </summary>
+        public static string HtmlIntroLine4 {
+            get {
+                return ResourceManager.GetString("HtmlIntroLine4", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to - \bNOTE: The tool you ran to generate this report is completely self-contained, does not ‘phone-home’ and was only executed on your Veeam Backup and Replication server. It queries the VBR database, registry, configuration and log files. It does not require access to vCenter or any other infrastructure..
+        /// </summary>
+        public static string HtmlIntroLine5 {
+            get {
+                return ResourceManager.GetString("HtmlIntroLine5", resourceCulture);
             }
         }
     }

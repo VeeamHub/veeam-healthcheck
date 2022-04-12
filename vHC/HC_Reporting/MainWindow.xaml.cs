@@ -9,7 +9,7 @@ using System.Windows.Documents;
 using VeeamHealthCheck;
 using VeeamHealthCheck.DB;
 using VeeamHealthCheck.Shared.Logging;
-using System.Resources;
+using System.Threading;
 
 namespace VeeamHealthCheck
 {
@@ -67,27 +67,26 @@ namespace VeeamHealthCheck
         }
         private void SetUiText()
         {
-            ResourceManager rm = new ResourceManager("VeeamHealthCheck.Resources", typeof(MainWindow).Assembly);
-
-            this.InsHeader.Text = rm.GetString("GuiInstHeader");
-            this.line1.Text = rm.GetString("GuiInstLine1");
-            this.line2.Text = rm.GetString("GuiInstLine2");
-            this.line3.Text = rm.GetString("GuiInstLine3");
-            this.line4.Text = rm.GetString("GuiInstLine4");
-            this.line5.Text = rm.GetString("GuiInstLine5");
-            this.line6.Text = rm.GetString("GuiInstLine6");
-            this.Cav1Part1.Text = rm.GetString("GuiInstCaveat1");
-            this.Cav2.Text = rm.GetString("GuiInstCaveat2");
-            this.OptHdr.Text = rm.GetString("GuiOptionsHeader");
-            this.htmlCheckBox.Content = rm.GetString("GuiShowHtml");
-            this.scrubBox.Content = rm.GetString("GuiSensData");
-            this.explorerShowBox.Content = rm.GetString("GuiShowFiles");
-            this.outPath.Text = rm.GetString("GuiOutPath");
-            this.termsBtn.Content = rm.GetString("GuiAcceptButton");
-            this.run.Content = rm.GetString("GuiRunButton");
-            this.importButton.Content = rm.GetString("GuiImportButton");
+            this.InsHeader.Text = ResourceHandler.GetResourceText("GuiInstHeader");
+            this.line1.Text = ResourceHandler.GetResourceText("GuiInstLine1");
+            this.line2.Text = ResourceHandler.GetResourceText("GuiInstLine2");
+            this.line3.Text = ResourceHandler.GetResourceText("GuiInstLine3");
+            this.line4.Text = ResourceHandler.GetResourceText("GuiInstLine4");
+            this.line5.Text = ResourceHandler.GetResourceText("GuiInstLine5");
+            this.line6.Text = ResourceHandler.GetResourceText("GuiInstLine6");
+            this.Cav1Part1.Text = ResourceHandler.GetResourceText("GuiInstCaveat1");
+            this.Cav2.Text = ResourceHandler.GetResourceText("GuiInstCaveat2");
+            this.OptHdr.Text = ResourceHandler.GetResourceText("GuiOptionsHeader");
+            this.htmlCheckBox.Content = ResourceHandler.GetResourceText("GuiShowHtml");
+            this.scrubBox.Content = ResourceHandler.GetResourceText("GuiSensData");
+            this.explorerShowBox.Content = ResourceHandler.GetResourceText("GuiShowFiles");
+            this.outPath.Text = ResourceHandler.GetResourceText("GuiOutPath");
+            this.termsBtn.Content = ResourceHandler.GetResourceText("GuiAcceptButton");
+            this.run.Content = ResourceHandler.GetResourceText("GuiRunButton");
+            this.importButton.Content = ResourceHandler.GetResourceText("GuiImportButton");
             
         }
+
         private void SetPathBoxText(string text)
         {
             pathBox.Text = text;

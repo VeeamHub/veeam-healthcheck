@@ -118,7 +118,7 @@
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
   <data name="GuiAcceptButton" xml:space="preserve">
-    <value>Accept Terms</value>
+    <value>Qui I'm French!</value>
   </data>
   <data name="GuiCaveat1Part2" xml:space="preserve">
     <value />
@@ -173,5 +173,8 @@
   </data>
   <data name="GuiShowHtml" xml:space="preserve">
     <value>Show HTML report upon completion</value>
+  </data>
+  <data name="HtmlHeader" xml:space="preserve">
+    <value>Le Health Check Report</value>
   </data>
 </root>

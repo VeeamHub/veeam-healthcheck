@@ -1796,28 +1796,9 @@ namespace VeeamHealthCheck.Html
             List<CRepoTypeInfos> repos = _dTypeParser.RepoInfos;
             List<CWanTypeInfo> wans = _dTypeParser.WanInfos;
 
-            // file, other proxy...
-
-
-
-           // _isBackupServerProxyDisabled = true;
             _isBackupServerProxy = CheckProxyRole(serverId);
 
-            //foreach (var p in proxy)
-            //{
-            //    if (p.HostId == serverId)
-            //    {
-            //        _isBackupServerProxy = true;
-            //        if (p.IsDisabled == "False")
-            //        {
-            //            _isBackupServerProxyDisabled = false;
-            //            break;
-            //        }
-            //        if (p.IsDisabled == "TRUE")
-            //        {
-            //        }
-            //    }
-            //}
+
 
             foreach (var e in extents)
             {

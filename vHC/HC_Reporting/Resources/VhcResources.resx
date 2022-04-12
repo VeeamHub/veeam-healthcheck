@@ -120,9 +120,6 @@
   <data name="GuiAcceptButton" xml:space="preserve">
     <value>Accept Terms</value>
   </data>
-  <data name="GuiCaveat1Part2" xml:space="preserve">
-    <value />
-  </data>
   <data name="GuiImportButton" xml:space="preserve">
     <value>Import</value>
   </data>
@@ -165,13 +162,28 @@
   <data name="GuiSensData" xml:space="preserve">
     <value>Remove sensitive data types from report</value>
   </data>
-  <data name="GuiSensDataString" xml:space="preserve">
-    <value />
-  </data>
   <data name="GuiShowFiles" xml:space="preserve">
     <value>Show files on completion</value>
   </data>
   <data name="GuiShowHtml" xml:space="preserve">
     <value>Show HTML report upon completion</value>
+  </data>
+  <data name="HtmlHeader" xml:space="preserve">
+    <value>Health Check Report</value>
+  </data>
+  <data name="HtmlIntroLine1" xml:space="preserve">
+    <value>- This report provides data and insight into your Veeam Backup and Replication (VBR) deployment. The information provided here is intended to be used in collaboration with your Veeam representative.</value>
+  </data>
+  <data name="HtmlIntroLine2" xml:space="preserve">
+    <value>- The raw data is captured in CSV format and is accessible locally in the Export Folder. CSV will let you manipulate the data in tools such as Excel.</value>
+  </data>
+  <data name="HtmlIntroLine3" xml:space="preserve">
+    <value>- Additional information on individual job sessions can be found in the &lt;a href="C:\temp\vHC\JobSessionReports"&gt; output folder at C:\temp\vHC\JobSessionReports</value>
+  </data>
+  <data name="HtmlIntroLine4" xml:space="preserve">
+    <value>- NOTE: During mouseover, a tool tip may appear containing explanatory data of the table header or data column.</value>
+  </data>
+  <data name="HtmlIntroLine5" xml:space="preserve">
+    <value>- \bNOTE: The tool you ran to generate this report is completely self-contained, does not ‘phone-home’ and was only executed on your Veeam Backup and Replication server. It queries the VBR database, registry, configuration and log files. It does not require access to vCenter or any other infrastructure.</value>
   </data>
 </root>

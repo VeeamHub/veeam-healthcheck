@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 using System.Xml.Linq;
 using VeeamHealthCheck.CsvHandlers;
 using VeeamHealthCheck.Shared.Logging;
+using System.Resources;
 
 namespace VeeamHealthCheck.Html
 {
@@ -130,7 +131,7 @@ namespace VeeamHealthCheck.Html
         public void HeaderInfoToXml()
         {
             log.Info("converting header info to xml");
-            
+            ResourceManager rm = new("VeeamHealthCheck.Resources", typeof(MainWindow).Assembly);
 
             string cxName = GetLicNameForHeader();
             
@@ -140,16 +141,13 @@ namespace VeeamHealthCheck.Html
             XElement serverRoot = new XElement("header");
             doc.Root.Add(serverRoot);
             doc.AddFirst(new XProcessingInstruction("xml-stylesheet", "type=\"text/xsl\" href=\"SessionReport.xsl\""));
-            string summary = "This report provides data and insight into your Veeam Backup and Replication (VBR) deployment. The information provided here is intended to be used in collaboration with your Veeam representative.";
 
-            var xml = new XElement("h1",
-                new XElement("name", cxName),
-                new XElement("hc", "Health Check Report"),
-                new XElement("summary", summary)
-                );
-
-            serverRoot.Add(xml);
-
+            serverRoot.Add(AddSummaryHeader(ResourceHandler.GetResourceText("HtmlHeader")));
+            serverRoot.Add(AddSummaryText(ResourceHandler.GetResourceText("HtmlIntroLine1"), "i2"));
+            serverRoot.Add(AddSummaryText(ResourceHandler.GetResourceText("HtmlIntroLine2"), "i2"));
+            serverRoot.Add(AddSummaryText(ResourceHandler.GetResourceText("HtmlIntroLine3"), "i2"));
+            serverRoot.Add(AddSummaryText(ResourceHandler.GetResourceText("HtmlIntroLine4"), "i3"));
+            serverRoot.Add(AddSummaryText(ResourceHandler.GetResourceText("HtmlIntroLine5"), "i3"));
 
 
             doc.Save(_xmlOut);
