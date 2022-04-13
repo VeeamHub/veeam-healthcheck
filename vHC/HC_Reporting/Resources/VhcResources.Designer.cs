@@ -61,6 +61,234 @@ namespace VeeamHealthCheck.Resources {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Show backup server summary and notes..
+        /// </summary>
+        public static string BkpSrvButton {
+            get {
+                return ResourceManager.GetString("BkpSrvButton", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to The Backup Server (aka VBS or VBR Server) is the core component in the backup infrastructure that fills the role of the “configuration and control center”. The backup server performs all types of administrative activities, including: coordinating data protection &amp; recovery tasks, task scheduling &amp; resource allocation, and managing other backup infrastructure components.
+        ///
+        ///
+        ///.
+        /// </summary>
+        public static string BkpSrvSummary1 {
+            get {
+                return ResourceManager.GetString("BkpSrvSummary1", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to • Backup Servers run on Microsoft Windows.
+        /// </summary>
+        public static string BkpSrvSummary2 {
+            get {
+                return ResourceManager.GetString("BkpSrvSummary2", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to • Stores data about the backup infrastructure, jobs, sessions, and other configuration data in either a local or remote SQL server. In a default installation, SQL Server Express is installed locally..
+        /// </summary>
+        public static string BkpSrvSummary3 {
+            get {
+                return ResourceManager.GetString("BkpSrvSummary3", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to • Has additional components deployed by default: Proxy, Repository.
+        /// </summary>
+        public static string BkpSrvSummary4 {
+            get {
+                return ResourceManager.GetString("BkpSrvSummary4", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Config Backup(CB) Enabled.
+        /// </summary>
+        public static string BkpSrvTblCfgEnabled {
+            get {
+                return ResourceManager.GetString("BkpSrvTblCfgEnabled", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to CB Encrypted.
+        /// </summary>
+        public static string BkpSrvTblCfgEncrypt {
+            get {
+                return ResourceManager.GetString("BkpSrvTblCfgEncrypt", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to CB Last Result.
+        /// </summary>
+        public static string BkpSrvTblCfgLastRes {
+            get {
+                return ResourceManager.GetString("BkpSrvTblCfgLastRes", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Cores.
+        /// </summary>
+        public static string BkpSrvTblCore {
+            get {
+                return ResourceManager.GetString("BkpSrvTblCore", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Backup Server &amp; Config DB Info.
+        /// </summary>
+        public static string BkpSrvTblHead {
+            get {
+                return ResourceManager.GetString("BkpSrvTblHead", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Name.
+        /// </summary>
+        public static string BkpSrvTblName {
+            get {
+                return ResourceManager.GetString("BkpSrvTblName", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Proxy Role.
+        /// </summary>
+        public static string BkpSrvTblProxyRole {
+            get {
+                return ResourceManager.GetString("BkpSrvTblProxyRole", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to RAM.
+        /// </summary>
+        public static string BkpSrvTblRam {
+            get {
+                return ResourceManager.GetString("BkpSrvTblRam", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Repo/Gateway Role.
+        /// </summary>
+        public static string BkpSrvTblRepoRole {
+            get {
+                return ResourceManager.GetString("BkpSrvTblRepoRole", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to SQL Cores.
+        /// </summary>
+        public static string BkpSrvTblSqlCores {
+            get {
+                return ResourceManager.GetString("BkpSrvTblSqlCores", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to SQL Edition.
+        /// </summary>
+        public static string BkpSrvTblSqlEdition {
+            get {
+                return ResourceManager.GetString("BkpSrvTblSqlEdition", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Local SQL.
+        /// </summary>
+        public static string BkpSrvTblSqlLocal {
+            get {
+                return ResourceManager.GetString("BkpSrvTblSqlLocal", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to SQL Server Name.
+        /// </summary>
+        public static string BkpSrvTblSqlName {
+            get {
+                return ResourceManager.GetString("BkpSrvTblSqlName", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to SQL RAM.
+        /// </summary>
+        public static string BkpSrvTblSqlRam {
+            get {
+                return ResourceManager.GetString("BkpSrvTblSqlRam", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to SQL Version.
+        /// </summary>
+        public static string BkpSrvTblSqlVersion {
+            get {
+                return ResourceManager.GetString("BkpSrvTblSqlVersion", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to CB Target.
+        /// </summary>
+        public static string BkpSrvTblTarget {
+            get {
+                return ResourceManager.GetString("BkpSrvTblTarget", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Veeam Version.
+        /// </summary>
+        public static string BkpSrvTblVersion {
+            get {
+                return ResourceManager.GetString("BkpSrvTblVersion", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to WAN Acc..
+        /// </summary>
+        public static string BkpSrvTblWanRole {
+            get {
+                return ResourceManager.GetString("BkpSrvTblWanRole", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Notes:.
+        /// </summary>
+        public static string GeneralNotesHeader {
+            get {
+                return ResourceManager.GetString("GeneralNotesHeader", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Summary:.
+        /// </summary>
+        public static string GeneralSummaryHeader {
+            get {
+                return ResourceManager.GetString("GeneralSummaryHeader", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Accept Terms.
         /// </summary>
         public static string GuiAcceptButton {
@@ -214,7 +442,7 @@ namespace VeeamHealthCheck.Resources {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Health Check Report.
+        ///   Looks up a localized string similar to VBR Health Check Report.
         /// </summary>
         public static string HtmlHeader {
             get {
@@ -259,11 +487,470 @@ namespace VeeamHealthCheck.Resources {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to - \bNOTE: The tool you ran to generate this report is completely self-contained, does not ‘phone-home’ and was only executed on your Veeam Backup and Replication server. It queries the VBR database, registry, configuration and log files. It does not require access to vCenter or any other infrastructure..
+        ///   Looks up a localized string similar to - NOTE: The tool you ran to generate this report is completely self-contained, does not ‘phone-home’ and was only executed on your Veeam Backup and Replication server. It queries the VBR database, registry, configuration and log files. It does not require access to vCenter or any other infrastructure..
         /// </summary>
         public static string HtmlIntroLine5 {
             get {
                 return ResourceManager.GetString("HtmlIntroLine5", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to License Summary.
+        /// </summary>
+        public static string LicTableHeader {
+            get {
+                return ResourceManager.GetString("LicTableHeader", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Cloud Connect Enabled.
+        /// </summary>
+        public static string LicTblCc {
+            get {
+                return ResourceManager.GetString("LicTblCc", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Edition.
+        /// </summary>
+        public static string LicTblEdition {
+            get {
+                return ResourceManager.GetString("LicTblEdition", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Exp Date.
+        /// </summary>
+        public static string LicTblExpDate {
+            get {
+                return ResourceManager.GetString("LicTblExpDate", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Licensed Inst..
+        /// </summary>
+        public static string LicTblLicInst {
+            get {
+                return ResourceManager.GetString("LicTblLicInst", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Licensed Nas.
+        /// </summary>
+        public static string LicTblLicNas {
+            get {
+                return ResourceManager.GetString("LicTblLicNas", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Licensed Sockets.
+        /// </summary>
+        public static string LicTblLicSock {
+            get {
+                return ResourceManager.GetString("LicTblLicSock", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to New Inst..
+        /// </summary>
+        public static string LicTblNewInst {
+            get {
+                return ResourceManager.GetString("LicTblNewInst", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Rental Inst..
+        /// </summary>
+        public static string LicTblRentInst {
+            get {
+                return ResourceManager.GetString("LicTblRentInst", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Status.
+        /// </summary>
+        public static string LicTblStatus {
+            get {
+                return ResourceManager.GetString("LicTblStatus", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Support Exp Date.
+        /// </summary>
+        public static string LicTblSupExpDate {
+            get {
+                return ResourceManager.GetString("LicTblSupExpDate", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Types.
+        /// </summary>
+        public static string LicTblType {
+            get {
+                return ResourceManager.GetString("LicTblType", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Used Inst..
+        /// </summary>
+        public static string LicTblUsedInst {
+            get {
+                return ResourceManager.GetString("LicTblUsedInst", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Used Nas.
+        /// </summary>
+        public static string LicTblUsedNas {
+            get {
+                return ResourceManager.GetString("LicTblUsedNas", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Used Sockets.
+        /// </summary>
+        public static string LicTblUsedSock {
+            get {
+                return ResourceManager.GetString("LicTblUsedSock", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Detailed information on the Backup Server, Configuration DB, roles, and resources..
+        /// </summary>
+        public static string NavBkpSrvDeet {
+            get {
+                return ResourceManager.GetString("NavBkpSrvDeet", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Backup Server.
+        /// </summary>
+        public static string NavBkpSrvLink {
+            get {
+                return ResourceManager.GetString("NavBkpSrvLink", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Collapse/Expand All.
+        /// </summary>
+        public static string NavColapse {
+            get {
+                return ResourceManager.GetString("NavColapse", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Navigation:.
+        /// </summary>
+        public static string NavHeader {
+            get {
+                return ResourceManager.GetString("NavHeader", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Heatmap showing max job concurrency found per hour..
+        /// </summary>
+        public static string NavJobConDeet {
+            get {
+                return ResourceManager.GetString("NavJobConDeet", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Job Concurrency.
+        /// </summary>
+        public static string NavJobConLink {
+            get {
+                return ResourceManager.GetString("NavJobConLink", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Detailed breakdown of each job..
+        /// </summary>
+        public static string NavJobInfoDeet {
+            get {
+                return ResourceManager.GetString("NavJobInfoDeet", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Job Info.
+        /// </summary>
+        public static string NavJobInfoLink {
+            get {
+                return ResourceManager.GetString("NavJobInfoLink", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Summary of job sessions by job name..
+        /// </summary>
+        public static string NavJobSessSumDeet {
+            get {
+                return ResourceManager.GetString("NavJobSessSumDeet", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Job Session Summary.
+        /// </summary>
+        public static string NavJobSessSumLink {
+            get {
+                return ResourceManager.GetString("NavJobSessSumLink", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Summary of found jobs by type and count..
+        /// </summary>
+        public static string NavJobSumDeet {
+            get {
+                return ResourceManager.GetString("NavJobSumDeet", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Job Summary.
+        /// </summary>
+        public static string NavJobSumLink {
+            get {
+                return ResourceManager.GetString("NavJobSumLink", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Displays license information..
+        /// </summary>
+        public static string NavLicInfoDetail {
+            get {
+                return ResourceManager.GetString("NavLicInfoDetail", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to License Info.
+        /// </summary>
+        public static string NavLicInfoLink {
+            get {
+                return ResourceManager.GetString("NavLicInfoLink", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Displays workloads and types that are not utilized..
+        /// </summary>
+        public static string NavMissingDeet {
+            get {
+                return ResourceManager.GetString("NavMissingDeet", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Missing Job Types.
+        /// </summary>
+        public static string NavMissingJobLink {
+            get {
+                return ResourceManager.GetString("NavMissingJobLink", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Shows count of detected VM &amp; Physical objects compared to objects with backups..
+        /// </summary>
+        public static string NavProtWkldDeet {
+            get {
+                return ResourceManager.GetString("NavProtWkldDeet", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Protected Workloads.
+        /// </summary>
+        public static string NavProtWrkld {
+            get {
+                return ResourceManager.GetString("NavProtWrkld", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Details on proxy resources and config..
+        /// </summary>
+        public static string NavProxyDeet {
+            get {
+                return ResourceManager.GetString("NavProxyDeet", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Proxy Info.
+        /// </summary>
+        public static string NavProxyInfoLink {
+            get {
+                return ResourceManager.GetString("NavProxyInfoLink", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Shows any registry values differing from a vanilla install..
+        /// </summary>
+        public static string NavRegKeyDeet {
+            get {
+                return ResourceManager.GetString("NavRegKeyDeet", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Non-Default Registry Keys.
+        /// </summary>
+        public static string NavRegKeyLink {
+            get {
+                return ResourceManager.GetString("NavRegKeyLink", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Details on non-SOBR repositories, resources, and config..
+        /// </summary>
+        public static string NavRepoDeet {
+            get {
+                return ResourceManager.GetString("NavRepoDeet", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Repository Info.
+        /// </summary>
+        public static string NavRepoInfoLink {
+            get {
+                return ResourceManager.GetString("NavRepoInfoLink", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Brief table showing security features in use..
+        /// </summary>
+        public static string NavSecSumDeet {
+            get {
+                return ResourceManager.GetString("NavSecSumDeet", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Security Summary.
+        /// </summary>
+        public static string NavSecSumLink {
+            get {
+                return ResourceManager.GetString("NavSecSumLink", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Summayr of SOBRs and config options..
+        /// </summary>
+        public static string NavSobrDeet {
+            get {
+                return ResourceManager.GetString("NavSobrDeet", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Details on SOBR Extents, resources, and config..
+        /// </summary>
+        public static string NavSobrExtDeet {
+            get {
+                return ResourceManager.GetString("NavSobrExtDeet", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to SOBR Extent Info.
+        /// </summary>
+        public static string NavSobrExtLink {
+            get {
+                return ResourceManager.GetString("NavSobrExtLink", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to SOBR Info.
+        /// </summary>
+        public static string NavSobrInfoLink {
+            get {
+                return ResourceManager.GetString("NavSobrInfoLink", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to List of all servers added into the configuration by the user..
+        /// </summary>
+        public static string NavSrvInfoDeet {
+            get {
+                return ResourceManager.GetString("NavSrvInfoDeet", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Server Info.
+        /// </summary>
+        public static string NavSrvInfoLink {
+            get {
+                return ResourceManager.GetString("NavSrvInfoLink", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Summary of detected infrastructure types and counts..
+        /// </summary>
+        public static string NavSrvSumDeet {
+            get {
+                return ResourceManager.GetString("NavSrvSumDeet", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Server Summary.
+        /// </summary>
+        public static string NavSrvSumLink {
+            get {
+                return ResourceManager.GetString("NavSrvSumLink", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Heatmap showing max VM concurrency found per hour..
+        /// </summary>
+        public static string NavTaskConDeet {
+            get {
+                return ResourceManager.GetString("NavTaskConDeet", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to VM Concurrency.
+        /// </summary>
+        public static string NavTaskConLink {
+            get {
+                return ResourceManager.GetString("NavTaskConLink", resourceCulture);
             }
         }
     }

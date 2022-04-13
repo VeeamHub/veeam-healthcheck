@@ -117,6 +117,84 @@
   <resheader name="writer">
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
+  <data name="BkpSrvButton" xml:space="preserve">
+    <value>Show backup server summary and notes.</value>
+  </data>
+  <data name="BkpSrvSummary1" xml:space="preserve">
+    <value>The Backup Server (aka VBS or VBR Server) is the core component in the backup infrastructure that fills the role of the “configuration and control center”. The backup server performs all types of administrative activities, including: coordinating data protection &amp; recovery tasks, task scheduling &amp; resource allocation, and managing other backup infrastructure components.
+
+
+</value>
+  </data>
+  <data name="BkpSrvSummary2" xml:space="preserve">
+    <value>• Backup Servers run on Microsoft Windows</value>
+  </data>
+  <data name="BkpSrvSummary3" xml:space="preserve">
+    <value>• Stores data about the backup infrastructure, jobs, sessions, and other configuration data in either a local or remote SQL server. In a default installation, SQL Server Express is installed locally.</value>
+  </data>
+  <data name="BkpSrvSummary4" xml:space="preserve">
+    <value>• Has additional components deployed by default: Proxy, Repository</value>
+  </data>
+  <data name="BkpSrvTblCfgEnabled" xml:space="preserve">
+    <value>Config Backup(CB) Enabled</value>
+  </data>
+  <data name="BkpSrvTblCfgEncrypt" xml:space="preserve">
+    <value>CB Encrypted</value>
+  </data>
+  <data name="BkpSrvTblCfgLastRes" xml:space="preserve">
+    <value>CB Last Result</value>
+  </data>
+  <data name="BkpSrvTblCore" xml:space="preserve">
+    <value>Cores</value>
+  </data>
+  <data name="BkpSrvTblHead" xml:space="preserve">
+    <value>Backup Server &amp; Config DB Info</value>
+  </data>
+  <data name="BkpSrvTblName" xml:space="preserve">
+    <value>Name</value>
+  </data>
+  <data name="BkpSrvTblProxyRole" xml:space="preserve">
+    <value>Proxy Role</value>
+  </data>
+  <data name="BkpSrvTblRam" xml:space="preserve">
+    <value>RAM</value>
+  </data>
+  <data name="BkpSrvTblRepoRole" xml:space="preserve">
+    <value>Repo/Gateway Role</value>
+  </data>
+  <data name="BkpSrvTblSqlCores" xml:space="preserve">
+    <value>SQL Cores</value>
+  </data>
+  <data name="BkpSrvTblSqlEdition" xml:space="preserve">
+    <value>SQL Edition</value>
+  </data>
+  <data name="BkpSrvTblSqlLocal" xml:space="preserve">
+    <value>Local SQL</value>
+  </data>
+  <data name="BkpSrvTblSqlName" xml:space="preserve">
+    <value>SQL Server Name</value>
+  </data>
+  <data name="BkpSrvTblSqlRam" xml:space="preserve">
+    <value>SQL RAM</value>
+  </data>
+  <data name="BkpSrvTblSqlVersion" xml:space="preserve">
+    <value>SQL Version</value>
+  </data>
+  <data name="BkpSrvTblTarget" xml:space="preserve">
+    <value>CB Target</value>
+  </data>
+  <data name="BkpSrvTblVersion" xml:space="preserve">
+    <value>Veeam Version</value>
+  </data>
+  <data name="BkpSrvTblWanRole" xml:space="preserve">
+    <value>WAN Acc.</value>
+  </data>
+  <data name="GeneralNotesHeader" xml:space="preserve">
+    <value>Notes:</value>
+  </data>
+  <data name="GeneralSummaryHeader" xml:space="preserve">
+    <value>Summary:</value>
+  </data>
   <data name="GuiAcceptButton" xml:space="preserve">
     <value>Accept Terms</value>
   </data>
@@ -169,7 +247,7 @@
     <value>Show HTML report upon completion</value>
   </data>
   <data name="HtmlHeader" xml:space="preserve">
-    <value>Health Check Report</value>
+    <value>VBR Health Check Report</value>
   </data>
   <data name="HtmlIntroLine1" xml:space="preserve">
     <value>- This report provides data and insight into your Veeam Backup and Replication (VBR) deployment. The information provided here is intended to be used in collaboration with your Veeam representative.</value>
@@ -184,6 +262,159 @@
     <value>- NOTE: During mouseover, a tool tip may appear containing explanatory data of the table header or data column.</value>
   </data>
   <data name="HtmlIntroLine5" xml:space="preserve">
-    <value>- \bNOTE: The tool you ran to generate this report is completely self-contained, does not ‘phone-home’ and was only executed on your Veeam Backup and Replication server. It queries the VBR database, registry, configuration and log files. It does not require access to vCenter or any other infrastructure.</value>
+    <value>- NOTE: The tool you ran to generate this report is completely self-contained, does not ‘phone-home’ and was only executed on your Veeam Backup and Replication server. It queries the VBR database, registry, configuration and log files. It does not require access to vCenter or any other infrastructure.</value>
+  </data>
+  <data name="LicTableHeader" xml:space="preserve">
+    <value>License Summary</value>
+  </data>
+  <data name="LicTblCc" xml:space="preserve">
+    <value>Cloud Connect Enabled</value>
+  </data>
+  <data name="LicTblEdition" xml:space="preserve">
+    <value>Edition</value>
+  </data>
+  <data name="LicTblExpDate" xml:space="preserve">
+    <value>Exp Date</value>
+  </data>
+  <data name="LicTblLicInst" xml:space="preserve">
+    <value>Licensed Inst.</value>
+  </data>
+  <data name="LicTblLicNas" xml:space="preserve">
+    <value>Licensed Nas</value>
+  </data>
+  <data name="LicTblLicSock" xml:space="preserve">
+    <value>Licensed Sockets</value>
+  </data>
+  <data name="LicTblNewInst" xml:space="preserve">
+    <value>New Inst.</value>
+  </data>
+  <data name="LicTblRentInst" xml:space="preserve">
+    <value>Rental Inst.</value>
+  </data>
+  <data name="LicTblStatus" xml:space="preserve">
+    <value>Status</value>
+  </data>
+  <data name="LicTblSupExpDate" xml:space="preserve">
+    <value>Support Exp Date</value>
+  </data>
+  <data name="LicTblType" xml:space="preserve">
+    <value>Types</value>
+  </data>
+  <data name="LicTblUsedInst" xml:space="preserve">
+    <value>Used Inst.</value>
+  </data>
+  <data name="LicTblUsedNas" xml:space="preserve">
+    <value>Used Nas</value>
+  </data>
+  <data name="LicTblUsedSock" xml:space="preserve">
+    <value>Used Sockets</value>
+  </data>
+  <data name="NavBkpSrvDeet" xml:space="preserve">
+    <value>Detailed information on the Backup Server, Configuration DB, roles, and resources.</value>
+  </data>
+  <data name="NavBkpSrvLink" xml:space="preserve">
+    <value>Backup Server</value>
+  </data>
+  <data name="NavColapse" xml:space="preserve">
+    <value>Collapse/Expand All</value>
+  </data>
+  <data name="NavHeader" xml:space="preserve">
+    <value>Navigation:</value>
+  </data>
+  <data name="NavJobConDeet" xml:space="preserve">
+    <value>Heatmap showing max job concurrency found per hour.</value>
+  </data>
+  <data name="NavJobConLink" xml:space="preserve">
+    <value>Job Concurrency</value>
+  </data>
+  <data name="NavJobInfoDeet" xml:space="preserve">
+    <value>Detailed breakdown of each job.</value>
+  </data>
+  <data name="NavJobInfoLink" xml:space="preserve">
+    <value>Job Info</value>
+  </data>
+  <data name="NavJobSessSumDeet" xml:space="preserve">
+    <value>Summary of job sessions by job name.</value>
+  </data>
+  <data name="NavJobSessSumLink" xml:space="preserve">
+    <value>Job Session Summary</value>
+  </data>
+  <data name="NavJobSumDeet" xml:space="preserve">
+    <value>Summary of found jobs by type and count.</value>
+  </data>
+  <data name="NavJobSumLink" xml:space="preserve">
+    <value>Job Summary</value>
+  </data>
+  <data name="NavLicInfoDetail" xml:space="preserve">
+    <value>Displays license information.</value>
+  </data>
+  <data name="NavLicInfoLink" xml:space="preserve">
+    <value>License Info</value>
+  </data>
+  <data name="NavMissingDeet" xml:space="preserve">
+    <value>Displays workloads and types that are not utilized.</value>
+  </data>
+  <data name="NavMissingJobLink" xml:space="preserve">
+    <value>Missing Job Types</value>
+  </data>
+  <data name="NavProtWkldDeet" xml:space="preserve">
+    <value>Shows count of detected VM &amp; Physical objects compared to objects with backups.</value>
+  </data>
+  <data name="NavProtWrkld" xml:space="preserve">
+    <value>Protected Workloads</value>
+  </data>
+  <data name="NavProxyDeet" xml:space="preserve">
+    <value>Details on proxy resources and config.</value>
+  </data>
+  <data name="NavProxyInfoLink" xml:space="preserve">
+    <value>Proxy Info</value>
+  </data>
+  <data name="NavRegKeyDeet" xml:space="preserve">
+    <value>Shows any registry values differing from a vanilla install.</value>
+  </data>
+  <data name="NavRegKeyLink" xml:space="preserve">
+    <value>Non-Default Registry Keys</value>
+  </data>
+  <data name="NavRepoDeet" xml:space="preserve">
+    <value>Details on non-SOBR repositories, resources, and config.</value>
+  </data>
+  <data name="NavRepoInfoLink" xml:space="preserve">
+    <value>Repository Info</value>
+  </data>
+  <data name="NavSecSumDeet" xml:space="preserve">
+    <value>Brief table showing security features in use.</value>
+  </data>
+  <data name="NavSecSumLink" xml:space="preserve">
+    <value>Security Summary</value>
+  </data>
+  <data name="NavSobrDeet" xml:space="preserve">
+    <value>Summayr of SOBRs and config options.</value>
+  </data>
+  <data name="NavSobrExtDeet" xml:space="preserve">
+    <value>Details on SOBR Extents, resources, and config.</value>
+  </data>
+  <data name="NavSobrExtLink" xml:space="preserve">
+    <value>SOBR Extent Info</value>
+  </data>
+  <data name="NavSobrInfoLink" xml:space="preserve">
+    <value>SOBR Info</value>
+  </data>
+  <data name="NavSrvInfoDeet" xml:space="preserve">
+    <value>List of all servers added into the configuration by the user.</value>
+  </data>
+  <data name="NavSrvInfoLink" xml:space="preserve">
+    <value>Server Info</value>
+  </data>
+  <data name="NavSrvSumDeet" xml:space="preserve">
+    <value>Summary of detected infrastructure types and counts.</value>
+  </data>
+  <data name="NavSrvSumLink" xml:space="preserve">
+    <value>Server Summary</value>
+  </data>
+  <data name="NavTaskConDeet" xml:space="preserve">
+    <value>Heatmap showing max VM concurrency found per hour.</value>
+  </data>
+  <data name="NavTaskConLink" xml:space="preserve">
+    <value>VM Concurrency</value>
   </data>
 </root>

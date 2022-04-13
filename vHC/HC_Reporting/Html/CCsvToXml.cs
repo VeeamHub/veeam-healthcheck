@@ -50,7 +50,8 @@ namespace VeeamHealthCheck.Html
         private readonly CXmlFunctions XML;
 
         private readonly CFillerTexts fillerText = new();
-        private readonly string _styleSheet = "StyleSheets\\vbr-Report.xsl";
+        //private readonly string _styleSheet = "StyleSheets\\vbr-Report.xsl";
+        private readonly string _styleSheet = "StyleSheets\\myHtml.xsl";
 
         public void ConvertToXml()
         {

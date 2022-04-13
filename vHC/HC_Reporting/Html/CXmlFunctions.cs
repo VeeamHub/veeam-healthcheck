@@ -130,6 +130,10 @@ namespace VeeamHealthCheck.Html
         }
         public void HeaderInfoToXml()
         {
+            //test area
+            CHtmlCompiler cXslCompiler = new CHtmlCompiler();
+            //end test area
+
             log.Info("converting header info to xml");
             ResourceManager rm = new("VeeamHealthCheck.Resources", typeof(MainWindow).Assembly);
 

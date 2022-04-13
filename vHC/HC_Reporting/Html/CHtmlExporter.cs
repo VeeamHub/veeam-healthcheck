@@ -38,6 +38,7 @@ namespace VeeamHealthCheck.Html
         public void ExportHtml()
         {
             log.Info("exporting xml to html");
+            
             string s = TransformXMLToHTML(_testFile, _styleSheet);
             DateTime dateTime = DateTime.Now;
             string n = MainWindow._desiredPath;
@@ -88,10 +89,11 @@ namespace VeeamHealthCheck.Html
         {
             //log.Info("transforming XML to HTML");
             var transform = new XslCompiledTransform();
+            XsltSettings settings = new XsltSettings(true, true);
             XsltArgumentList xList = new();
             using (var reader = XmlReader.Create(File.OpenRead(xsltFile)))
             {
-                transform.Load(reader);
+                transform.Load(reader, settings, new XmlUrlResolver());
             }
 
             var results = new StringWriter();

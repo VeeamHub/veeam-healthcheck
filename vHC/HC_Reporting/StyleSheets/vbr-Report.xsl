@@ -2,6 +2,7 @@
 <xsl:stylesheet version="1.0"
 				xmlns:xsl="http://www.w3.org/1999/XSL/Transform"
 				xmlns:msxsl="urn:schemas-microsoft-com:xslt"
+				
 >
 	<xsl:output method="html" indent="yes" />
 	<xsl:strip-space elements="*"/>
@@ -208,6 +209,8 @@ function test(){
 			</body>
 		</html>
 	</xsl:template>
+				<xsl:param name="lang">en</xsl:param>
+	
 	<xsl:template name="user.header.content"  match="/root/header">
 		<html>
 			<body>
@@ -241,6 +244,7 @@ function test(){
 						</xsl:for-each>
 						
 					</a>
+				
 				</h1>
 
 				<!--COMMENTING OUT NAVIGATION TEMPORARILY WHILE TESTING THE NEW COLLAPSIBLE LAYOUT-->
@@ -507,29 +511,29 @@ function test(){
 			<h2>
 				<u>Missing Job Types</u>
 			</h2>
-		<button type="button" class="collapsible">Show details on missing job types</button>
-		<div class="content">
-			<br></br>
-			<table border="1" title="Unprotected Workloads">
-				<tr>
-					<th>
-						<xsl:value-of select="td/@headerName"/>
-					</th>
-					<th>Count</th>
-				</tr>
-				<xsl:for-each select="td">
+			<button type="button" class="collapsible">Show details on missing job types</button>
+			<div class="content">
+				<br></br>
+				<table border="1" title="Unprotected Workloads">
 					<tr>
-						<td title="" style="text-align:left">
-							<xsl:value-of select="current()"/>
-						</td>
-						<td>0</td>
+						<th>
+							<xsl:value-of select="td/@headerName"/>
+						</th>
+						<th>Count</th>
 					</tr>
-				</xsl:for-each>
-			</table>
-			<div class="hdr">Summary:</div>
-			<br></br>
-			<div class="">This table summarizes job types that are either missing from your configuration or could not be analyzed. Please consult with your Veeam Engineer for more information.</div>
-		</div>
+					<xsl:for-each select="td">
+						<tr>
+							<td title="" style="text-align:left">
+								<xsl:value-of select="current()"/>
+							</td>
+							<td>0</td>
+						</tr>
+					</xsl:for-each>
+				</table>
+				<div class="hdr">Summary:</div>
+				<br></br>
+				<div class="">This table summarizes job types that are either missing from your configuration or could not be analyzed. Please consult with your Veeam Engineer for more information.</div>
+			</div>
 		</div>
 
 	</xsl:template>
@@ -538,45 +542,45 @@ function test(){
 			<h2>
 				<u>Protected Workloads</u>
 			</h2>
-		<button type="button" class="collapsible">Show count of protected workloads</button>
-		<div class="content">
-			<br></br>
-			<table border="1" title="Protected Workloads">
-				<tr>
-					<!--<xsl:for-each select="td">
+			<button type="button" class="collapsible">Show count of protected workloads</button>
+			<div class="content">
+				<br></br>
+				<table border="1" title="Protected Workloads">
+					<tr>
+						<!--<xsl:for-each select="td">
 							<th>
 								<xsl:value-of select="current()/@headerName"/>
 							</th>	
 						</xsl:for-each>-->
-					<th title="Total VMware VMs found.">Vi Total</th>
-					<th title="Total VMware VMs found with backups">Vi Protected</th>
-					<th title="Total VMwar VMs found with no backups">Vi Not Prot</th>
-					<th title="Potentially duplicated workloads">Vi Potential Dupes</th>
-					<th title="VMs backed up via Agents as physical workloads">Vi Protected as physical</th>
-					<th title="Total count of servers added into Protection Groups">Phys Total</th>
-					<th title="Total count of servers with backups">Phys Protected</th>
-					<th title="Total count of servers in a Protection Group but with no current backups">Phys Not Prot</th>
-					<!--<th title=""></th>-->
+						<th title="Total VMware VMs found.">Vi Total</th>
+						<th title="Total VMware VMs found with backups">Vi Protected</th>
+						<th title="Total VMwar VMs found with no backups">Vi Not Prot</th>
+						<th title="Potentially duplicated workloads">Vi Potential Dupes</th>
+						<th title="VMs backed up via Agents as physical workloads">Vi Protected as physical</th>
+						<th title="Total count of servers added into Protection Groups">Phys Total</th>
+						<th title="Total count of servers with backups">Phys Protected</th>
+						<th title="Total count of servers in a Protection Group but with no current backups">Phys Not Prot</th>
+						<!--<th title=""></th>-->
 
-				</tr>
-				<tr>
-					<xsl:for-each select="td">
-						<td title="" style="text-align:left">
-							<xsl:value-of select="current()"/>
-						</td>
-					</xsl:for-each>
-				</tr>
-			</table>
-			<div class="hdr">Summary:</div>
-			<br></br>
-			<div class="">This table summarizes the amount of workloads detected in the current backup server. The VMware (Vi Total) count is determined by the local Veeam Broker service and compares that VM count with the existing backups. The physical workloads (Phys Total) are determined by the number of VMs added to Protection Groups and then compared to what is in backup jobs.</div>
-			<br></br>
-			<div class="hdr">Notes:</div>
-			<br></br>
-			<div class="i2">
-				"Duplicates" shows the discrepancy between unique workloads in backup jobs and those workloads across multiple backup jobs as may be reflected in the VMC file. It does not mean VM's (or their license consumption) is being duplicated.
+					</tr>
+					<tr>
+						<xsl:for-each select="td">
+							<td title="" style="text-align:left">
+								<xsl:value-of select="current()"/>
+							</td>
+						</xsl:for-each>
+					</tr>
+				</table>
+				<div class="hdr">Summary:</div>
+				<br></br>
+				<div class="">This table summarizes the amount of workloads detected in the current backup server. The VMware (Vi Total) count is determined by the local Veeam Broker service and compares that VM count with the existing backups. The physical workloads (Phys Total) are determined by the number of VMs added to Protection Groups and then compared to what is in backup jobs.</div>
+				<br></br>
+				<div class="hdr">Notes:</div>
+				<br></br>
+				<div class="i2">
+					"Duplicates" shows the discrepancy between unique workloads in backup jobs and those workloads across multiple backup jobs as may be reflected in the VMC file. It does not mean VM's (or their license consumption) is being duplicated.
+				</div>
 			</div>
-		</div>
 		</div>
 
 	</xsl:template>
@@ -701,9 +705,9 @@ function test(){
 	</xsl:template>-->
 	<xsl:template match="/root/serverSummary">
 		<div id="serverSummary">
-		<h2>
-			<u>Detected Infrastructure Types &amp; Count</u>
-		</h2>
+			<h2>
+				<u>Detected Infrastructure Types &amp; Count</u>
+			</h2>
 		</div>
 		<html>
 			<body>
@@ -1398,7 +1402,7 @@ function test(){
 		</div>
 
 	</xsl:template>
-	
+
 	<!--<xsl:key name="header" match="/root/category/entity/td/@headerName" use="." />
 	<xsl:template match="/root/TEMPLATEfromProxies" name="TEMPLATE">
 		<div id="linkproxy">
@@ -1411,9 +1415,13 @@ function test(){
 					<body>
 						<table border="1" >
 							<xsl:for-each select="entity/td/@headerName[generate-id() = generate-id(key('proxyHeader',.)[1])]">
-								--><!--<xsl:for-each select="distinct-values(/proxy/td/@headerName)">--><!--
+								-->
+	<!--<xsl:for-each select="distinct-values(/proxy/td/@headerName)">-->
+	<!--
 								<th title="{../@tooltip}">
-									--><!--tooltip works--><!--
+									-->
+	<!--tooltip works-->
+	<!--
 									<xsl:value-of select="."/>
 								</th>
 							</xsl:for-each>
@@ -1447,7 +1455,7 @@ function test(){
 		</div>
 
 	</xsl:template>-->
-	
+
 
 
 	<xsl:template match="/root/servers">
@@ -2227,13 +2235,13 @@ function test(){
 								</th>
 							</xsl:for-each>
 							<tr>
-							<xsl:for-each select="td">
-										<td>
-											<xsl:value-of select="current()"/>
-										</td>
+								<xsl:for-each select="td">
+									<td>
+										<xsl:value-of select="current()"/>
+									</td>
 
 
-							</xsl:for-each>
+								</xsl:for-each>
 							</tr>
 						</table><br></br>
 						<!--<table>
