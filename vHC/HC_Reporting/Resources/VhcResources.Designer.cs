@@ -1445,15 +1445,6 @@ namespace VeeamHealthCheck.Resources {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to PlHdr7.
-        /// </summary>
-        public static string PlHdr7TT {
-            get {
-                return ResourceManager.GetString("PlHdr7TT", resourceCulture);
-            }
-        }
-        
-        /// <summary>
         ///   Looks up a localized string similar to .
         /// </summary>
         public static string PlHdr8 {
@@ -1477,6 +1468,15 @@ namespace VeeamHealthCheck.Resources {
         public static string PlTitle {
             get {
                 return ResourceManager.GetString("PlTitle", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to PlHdr7.
+        /// </summary>
+        public static string String6 {
+            get {
+                return ResourceManager.GetString("String6", resourceCulture);
             }
         }
     }
