@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 using System.Xml.Linq;
 using VeeamHealthCheck.CsvHandlers;
 using VeeamHealthCheck.Resources;
+using VeeamHealthCheck.Shared.Logging;
 
 namespace VeeamHealthCheck.Html
 {
@@ -22,6 +23,7 @@ namespace VeeamHealthCheck.Html
         private string body = "<body>";
         private string bodyend = "</body>";
         private string _endDiv = "</div>";
+        private string _collapsible = "collapsible";
 
 
         #endregion
@@ -56,20 +58,10 @@ namespace VeeamHealthCheck.Html
             SetBannerAndIntro();
             SetNavigation();
             SetLicTable();
+            SetVbrTable();
 
 
-            _htmldoc += "<div id=\"backupserver\">";
-            _htmldoc += "<h2>";
-            _htmldoc += "<u>Backup Server & Config DB </u>";
-            _htmldoc += "</h2>";
 
-            _htmldoc += "<button type=\"button\" class=\"collapsible\">Show count of protected workloads</button>";
-
-            _htmldoc += "<div class=\"content\">Here is some content";
-            _htmldoc += "<div class=\"hdr\">Summary</div>";
-            _htmldoc += HyperLink("https://veeam.com", "This my website");
-            _htmldoc += "</div>";
-            _htmldoc += "</div>";
             _htmldoc += "<script type=\"text/javascript\">";
             _htmldoc += CssStyler.JavaScriptBlock();
             _htmldoc += "</script>";
@@ -183,6 +175,43 @@ namespace VeeamHealthCheck.Html
             }
             return tableString;
         }
+
+        private string AddBkpSrvTable()
+        {
+            string s = "<tr>" +
+                TableHeader(VhcResources.BkpSrvTblName, VhcResources.BstNameTT) +
+                TableHeader(VhcResources.BkpSrvTblVersion, VhcResources.BstVerTT) +
+                TableHeader(VhcResources.BkpSrvTblCore, VhcResources.BstCpuTT) +
+                TableHeader(VhcResources.BkpSrvTblRam, VhcResources.BstRamTT) +
+                TableHeader(VhcResources.BkpSrvTblCfgEnabled, VhcResources.BstCfgEnabledTT) +
+                TableHeader(VhcResources.BkpSrvTblCfgLastRes, VhcResources.BstCfgLastResTT) +
+                TableHeader(VhcResources.BkpSrvTblCfgEncrypt, VhcResources.BstCfgEncTT) +
+                TableHeader(VhcResources.BkpSrvTblTarget, VhcResources.BstCfgTarTT) +
+                TableHeader(VhcResources.BkpSrvTblSqlLocal, VhcResources.BstSqlLocTT) +
+                TableHeader(VhcResources.BkpSrvTblSqlName, VhcResources.BstSqlNameTT) +
+                TableHeader(VhcResources.BkpSrvTblSqlVersion, VhcResources.BstSqlVerTT) +
+                TableHeader(VhcResources.BkpSrvTblSqlEdition, VhcResources.BstSqlEdTT) +
+                TableHeader(VhcResources.BkpSrvTblSqlCores, VhcResources.BstSqlCpuTT) +
+                TableHeader(VhcResources.BkpSrvTblSqlRam, VhcResources.BstSqlRamTT) +
+                TableHeader(VhcResources.BkpSrvTblProxyRole, VhcResources.BstPrxTT) +
+                TableHeader(VhcResources.BkpSrvTblRepoRole, VhcResources.BstRepTT) +
+                TableHeader(VhcResources.BkpSrvTblWanRole, VhcResources.BstWaTT) +
+                "</tr>";
+            CDataFormer cd = new();
+            List<string> list = cd.BackupServerInfoToXml();
+            s += "<tr>";
+
+            for (int i = 0; i < list.Count(); i++)
+            {
+                s += TableData(list[i], "");
+
+            }
+            s += "</tr>";
+
+            return s;
+
+        }
+
         private string MakeNavTable()
         {
             return FormNavRows(VhcResources.NavLicInfoLink, "license", VhcResources.NavLicInfoDetail) +
@@ -246,6 +275,9 @@ namespace VeeamHealthCheck.Html
                 case "navigation":
                     tableString += MakeNavTable();
                     break;
+                case "vbrInfo":
+                    tableString += AddBkpSrvTable();
+                    break;
                 default:
                     break;
             }
@@ -255,16 +287,57 @@ namespace VeeamHealthCheck.Html
 
             tableString +=
                 "</tbody>" +
-                "</table>" +
-                BackToTop() +
-                "</div>";
-            AddToHtml(tableString);
+                "</table>";
+                AddToHtml(tableString);
+        }
+        private void EndSection()
+        {
+            _htmldoc += BackToTop() +
+                "</div>"; ;
         }
         private void SetLicTable()
         {
             Table("License Summary", "license");
+            EndSection();
 
         }
+        private void SetVbrTable()
+        {
+            Table("Backup Server & Config DB Info", "vbrInfo");
+            SetVbrSummary();
+            EndSection();
+        }
+        private void SetVbrSummary()
+        {
+            _htmldoc += SectionButton(_collapsible, VhcResources.BkpSrvButton);
+
+            _htmldoc += "<div class=\"content\">";
+            _htmldoc += AddA("hdr", VhcResources.GeneralSummaryHeader)+ LineBreak() +
+                AddA("i2", VhcResources.BkpSrvSummary1)+
+                AddA("i3", VhcResources.BkpSrvSummary2) +
+                AddA("i3", VhcResources.BkpSrvSummary3) +
+                AddA("i3", VhcResources.BkpSrvSummary4) +
+                DoubleLineBreak() +
+                AddA("hdr", VhcResources.GeneralNotesHeader)+ LineBreak()+
+                AddA("i2", VhcResources.BkpSrvNotes1)+
+                AddA("i2", VhcResources.BkpSrvNotes2) +
+                AddA("i2", VhcResources.BkpSrvNotes3) +
+                AddA("i2", VhcResources.BkpSrvNotes4) +
+                AddA("i2", VhcResources.BkpSrvNotes5) +
+                AddA("i2", VhcResources.BkpSrvNotes6) 
+                ;
+            _htmldoc += "</div>";
+            _htmldoc += "</div>";
+        }
+        private string SectionButton(string classType, string displayText)
+        {
+            return String.Format("<button type=\"button\" class=\"{0}\">{1}</button>", classType, displayText);
+        }
+        private string AddA(string classInfo, string displaytext)
+        {
+            return String.Format("<a class=\"{0}\">{1}</a>" + LineBreak(), classInfo, displaytext);
+        }
+        
         private string BackToTop()
         {
             return String.Format("<a href=\"#top\">Back To Top</a>");
@@ -294,8 +367,13 @@ namespace VeeamHealthCheck.Html
         {
             return "<br/>";
         }
+        private string DoubleLineBreak()
+        {
+            return "<br/><br/>";
+        }
 
     }
+
     class CssStyler
     {
         public static string StyleString()

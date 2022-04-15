@@ -116,6 +116,14 @@ namespace VeeamHealthCheck.CsvHandlers
             return GetDynamicCsvRecs(_licReportName);
             //return FileFinder(_licReportName).GetRecords<dynamic>();
         }
+        public IEnumerable<dynamic> GetDynamicVbrInfo()
+        {
+            return GetDynamicCsvRecs(_bnrInfoName);
+        }
+        public IEnumerable<dynamic> GetDynamicConfigBackup()
+        {
+            return GetDynamicCsvRecs(_configBackup);
+        }
         public IEnumerable<dynamic> GetPhysProtected()
         {
             return GetDynamicCsvRecs(_physProtected);

@@ -184,18 +184,18 @@ for (i = 0; i < navLink.length; i++) {
 
 
 function test(){
-    var co = document.getElementsByClassName("collapsible");
-    var divs = document.querySelectorAll(".collapsible");
-    
-    divs.forEach(d => {
-        d.classList.toggle("active");
-        var content = d.nextElementSibling;
-        if(content.style.display === "block"){
-            content.style.display = "none";
-        } else{
-            content.style.display = "block";
-        }
-    });
+	var co = document.getElementsByClassName("collapsible");
+	var divs = document.querySelectorAll(".collapsible");
+	
+	divs.forEach(d => {
+		d.classList.toggle("active");
+		var content = d.nextElementSibling;
+		if(content.style.display === "block"){
+			content.style.display = "none";
+		} else{
+			content.style.display = "block";
+		}
+	});
 //alert("The function 'test' is executed");
 
 }
@@ -854,7 +854,8 @@ function test(){
 						<a href="https://bp.veeam.com/vbr/2_Design_Structures/D_Veeam_Components/D_VBR_DB/database.html#sql-server-edition">hard-coded limits</a>
 						(e.g., # of CPUs, cores, memory, and database capacity). A slow, non-responsive, or error-laden backup server can often be a result of reaching these SQL limits.
 					</div>
-					<div class="i2">•	Assigning data protection tasks to use the Default Proxy or Default Backup Repository components can lead to contention for backup server resources or other unintended traffic. Disabling, removing, and/or reassigning these away from the Backup Server may be desired in larger or distributed deployments.</div>
+					<div class="i2">
+						•	Assigning data protection tasks to use the Default Proxy or Default Backup Repository components can lead to contention for backup server resources or other unintended traffic. Disabling, removing, and/or reassigning these away from the Backup Server may be desired in larger or distributed deployments.</div>
 					<div class="i2">
 						•	Fast-performing disk is recommended for the <a href="https://bp.veeam.com/vbr/3_Build_structures/B_Veeam_Components/B_VBR_Server/Backup_Server.html#log-files">log location</a>, which by default is "%ProgramData%\Veeam\Backup"
 					</div>

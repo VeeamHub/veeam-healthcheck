@@ -70,6 +70,64 @@ namespace VeeamHealthCheck.Resources {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to •	Ensure resource &lt;a href=&quot;https://bp.veeam.com/vbr/3_Build_structures/B_Veeam_Components/B_VBR_Server/Backup_Server.html#compute-requirements&quot;&gt;sizing&lt;/a&gt; of the Backup Server are adequate for the amount of concurrently running jobs that it manages. See &lt;a href=&quot;#jobConcurrency7&quot;&gt;Concurrency Table&lt;/a&gt; in this report. Note: if combining other roles or components onto the Backup Server host, resource sizing is additive (e.g., Backup Server + SQL + Proxy + Repository, etc.)..
+        /// </summary>
+        public static string BkpSrvNotes1 {
+            get {
+                return ResourceManager.GetString("BkpSrvNotes1", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to •	Ensure resource &lt;a href=&quot;https://bp.veeam.com/vbr/2_Design_Structures/D_Veeam_Components/D_VBR_DB/database.html#sizing&quot;&gt;sizing&lt;/a&gt; of the SQL server are adequate.
+        /// </summary>
+        public static string BkpSrvNotes2 {
+            get {
+                return ResourceManager.GetString("BkpSrvNotes2", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to •	If using SQL Express, ensure it is not breaching the SQL Express
+        ///						&lt;a href=&quot;https://bp.veeam.com/vbr/2_Design_Structures/D_Veeam_Components/D_VBR_DB/database.html#sql-server-edition&quot;&gt;hard-coded limits&lt;/a&gt;
+        ///						(e.g., # of CPUs, cores, memory, and database capacity). A slow, non-responsive, or error-laden backup server can often be a result of reaching these SQL limits..
+        /// </summary>
+        public static string BkpSrvNotes3 {
+            get {
+                return ResourceManager.GetString("BkpSrvNotes3", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to •	Assigning data protection tasks to use the Default Proxy or Default Backup Repository components can lead to contention for backup server resources or other unintended traffic. Disabling, removing, and/or reassigning these away from the Backup Server may be desired in larger or distributed deployments..
+        /// </summary>
+        public static string BkpSrvNotes4 {
+            get {
+                return ResourceManager.GetString("BkpSrvNotes4", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to •	Fast-performing disk is recommended for the &lt;a href=&quot;https://bp.veeam.com/vbr/3_Build_structures/B_Veeam_Components/B_VBR_Server/Backup_Server.html#log-files&quot;&gt;log location&lt;/a&gt;, which by default is &quot;%ProgramData%\Veeam\Backup&quot;.
+        /// </summary>
+        public static string BkpSrvNotes5 {
+            get {
+                return ResourceManager.GetString("BkpSrvNotes5", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to •	DNS is a key component. Ensure
+        ///						&lt;a href=&quot;https://bp.veeam.com/vbr/3_Build_structures/B_Other/dns_resolution.html#dns-resolution&quot;&gt;DNS resolution&lt;/a&gt;
+        ///						both from the Backup Server, and for other systems to the Backup Server is functioning correctly. Other components in the environment should be able to resolve the Backup Server and other Veeam infrastructure components (e.g., Proxy, Repository) by FQDN. Both forward and reverse queries should be functional..
+        /// </summary>
+        public static string BkpSrvNotes6 {
+            get {
+                return ResourceManager.GetString("BkpSrvNotes6", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to The Backup Server (aka VBS or VBR Server) is the core component in the backup infrastructure that fills the role of the “configuration and control center”. The backup server performs all types of administrative activities, including: coordinating data protection &amp; recovery tasks, task scheduling &amp; resource allocation, and managing other backup infrastructure components.
         ///
         ///
@@ -267,6 +325,159 @@ namespace VeeamHealthCheck.Resources {
         public static string BkpSrvTblWanRole {
             get {
                 return ResourceManager.GetString("BkpSrvTblWanRole", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Config Backup enabled/disabled.
+        /// </summary>
+        public static string BstCfgEnabledTT {
+            get {
+                return ResourceManager.GetString("BstCfgEnabledTT", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Config Backup encryption status.
+        /// </summary>
+        public static string BstCfgEncTT {
+            get {
+                return ResourceManager.GetString("BstCfgEncTT", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Config Backup Last Result.
+        /// </summary>
+        public static string BstCfgLastResTT {
+            get {
+                return ResourceManager.GetString("BstCfgLastResTT", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Config Backup target repository name.
+        /// </summary>
+        public static string BstCfgTarTT {
+            get {
+                return ResourceManager.GetString("BstCfgTarTT", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Detected physical cores on B&amp;R server.
+        /// </summary>
+        public static string BstCpuTT {
+            get {
+                return ResourceManager.GetString("BstCpuTT", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Hostname of the B&amp;R Server.
+        /// </summary>
+        public static string BstNameTT {
+            get {
+                return ResourceManager.GetString("BstNameTT", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Is backup server also a proxy?.
+        /// </summary>
+        public static string BstPrxTT {
+            get {
+                return ResourceManager.GetString("BstPrxTT", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Detected total RAM on B&amp;R server.
+        /// </summary>
+        public static string BstRamTT {
+            get {
+                return ResourceManager.GetString("BstRamTT", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Is backup server also a repository or gateway server?.
+        /// </summary>
+        public static string BstRepTT {
+            get {
+                return ResourceManager.GetString("BstRepTT", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to SQL Server CPU (if not local).
+        /// </summary>
+        public static string BstSqlCpuTT {
+            get {
+                return ResourceManager.GetString("BstSqlCpuTT", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to SQL Server Edition.
+        /// </summary>
+        public static string BstSqlEdTT {
+            get {
+                return ResourceManager.GetString("BstSqlEdTT", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Is SQL installed on the same server as B&amp;R?.
+        /// </summary>
+        public static string BstSqlLocTT {
+            get {
+                return ResourceManager.GetString("BstSqlLocTT", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to SQL Server hostname (if not local).
+        /// </summary>
+        public static string BstSqlNameTT {
+            get {
+                return ResourceManager.GetString("BstSqlNameTT", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to SQL Server RAM (if not local).
+        /// </summary>
+        public static string BstSqlRamTT {
+            get {
+                return ResourceManager.GetString("BstSqlRamTT", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to SQL Server Version.
+        /// </summary>
+        public static string BstSqlVerTT {
+            get {
+                return ResourceManager.GetString("BstSqlVerTT", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Detected version of B&amp;R software.
+        /// </summary>
+        public static string BstVerTT {
+            get {
+                return ResourceManager.GetString("BstVerTT", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Is backup server also a WAN Accelerator?.
+        /// </summary>
+        public static string BstWaTT {
+            get {
+                return ResourceManager.GetString("BstWaTT", resourceCulture);
             }
         }
         
