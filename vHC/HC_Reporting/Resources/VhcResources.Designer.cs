@@ -1479,5 +1479,28 @@ namespace VeeamHealthCheck.Resources {
                 return ResourceManager.GetString("String6", resourceCulture);
             }
         }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to #protworkload
+        ///PlHdr0 = Vi Total
+        ///PlHdrTT0 = Total VMware VMs found.
+        ///PlHdr1 = Vi Protected
+        ///PlHdrTT1 = Total VMware VMs found with backups
+        ///PlHdr2 = Vi Not Prot
+        ///PlHdrTT2 = Total VMwar VMs found with no backups
+        ///PlHdr3 = Vi Potential Dupes
+        ///PlHdrTT3 = Potentially duplicated workloads
+        ///PlHdr4 = Vi Protected as Physical
+        ///PlHdrTT4 = VMs backed up via Agents as physical workloads
+        ///PlHdr5 = Phys Total
+        ///PlHdrTT5 = Total count of servers added into Protection Groups
+        ///PlHdr6 = Phy Protected
+        ///PlHdrTT6 = Total count [rest of string was truncated]&quot;;.
+        /// </summary>
+        public static string vhcres {
+            get {
+                return ResourceManager.GetString("vhcres", resourceCulture);
+            }
+        }
     }
 }

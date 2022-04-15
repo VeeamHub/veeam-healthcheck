@@ -75,7 +75,7 @@ namespace VeeamHealthCheck.Html
             AddToHtml(String.Format("<h4>{0}</h4>", VhcResources.NavHeader));
             AddToHtml(String.Format("<button type=\"button\" class=\"btn\" onclick=\"test()\">{0}</button>", VhcResources.NavColapse));
             NavTable();
-
+            
 
             AddToHtml(_endDiv);
         }
