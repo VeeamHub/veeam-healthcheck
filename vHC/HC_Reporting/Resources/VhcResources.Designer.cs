@@ -707,6 +707,33 @@ namespace VeeamHealthCheck.Resources {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Is Cloud Connect enabled?.
+        /// </summary>
+        public static string LicCcTT {
+            get {
+                return ResourceManager.GetString("LicCcTT", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to License expiration date.
+        /// </summary>
+        public static string LicExpTT {
+            get {
+                return ResourceManager.GetString("LicExpTT", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Support expiration date.
+        /// </summary>
+        public static string LicSupExpTT {
+            get {
+                return ResourceManager.GetString("LicSupExpTT", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to License Summary.
         /// </summary>
         public static string LicTableHeader {
@@ -838,6 +865,105 @@ namespace VeeamHealthCheck.Resources {
         public static string LicTblUsedSock {
             get {
                 return ResourceManager.GetString("LicTblUsedSock", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Veeam License Edition.
+        /// </summary>
+        public static string LtEdTT {
+            get {
+                return ResourceManager.GetString("LtEdTT", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Total licensed instances.
+        /// </summary>
+        public static string LtInstLicTT {
+            get {
+                return ResourceManager.GetString("LtInstLicTT", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Total new instances.
+        /// </summary>
+        public static string LtInstNewTT {
+            get {
+                return ResourceManager.GetString("LtInstNewTT", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Totaly rental instances.
+        /// </summary>
+        public static string LtInstRentalTT {
+            get {
+                return ResourceManager.GetString("LtInstRentalTT", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Total used instances.
+        /// </summary>
+        public static string LtInstUsedTT {
+            get {
+                return ResourceManager.GetString("LtInstUsedTT", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Total NAS licensed.
+        /// </summary>
+        public static string LtNasLicTT {
+            get {
+                return ResourceManager.GetString("LtNasLicTT", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Total NAS license used.
+        /// </summary>
+        public static string LtNasUsedTT {
+            get {
+                return ResourceManager.GetString("LtNasUsedTT", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Total sockets licensed.
+        /// </summary>
+        public static string LtSocLicTT {
+            get {
+                return ResourceManager.GetString("LtSocLicTT", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Total sockets used.
+        /// </summary>
+        public static string LtSocUsedTT {
+            get {
+                return ResourceManager.GetString("LtSocUsedTT", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Veeam License Status.
+        /// </summary>
+        public static string LtStatusTT {
+            get {
+                return ResourceManager.GetString("LtStatusTT", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Veeam License Type.
+        /// </summary>
+        public static string LtTypeTT {
+            get {
+                return ResourceManager.GetString("LtTypeTT", resourceCulture);
             }
         }
         
@@ -1162,6 +1288,195 @@ namespace VeeamHealthCheck.Resources {
         public static string NavTaskConLink {
             get {
                 return ResourceManager.GetString("NavTaskConLink", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Show details on missing job types.
+        /// </summary>
+        public static string NpButton {
+            get {
+                return ResourceManager.GetString("NpButton", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to This table summarizes job types that are either missing from your configuration or could not be analyzed. Please consult with your Veeam Engineer for more information..
+        /// </summary>
+        public static string NpSum1 {
+            get {
+                return ResourceManager.GetString("NpSum1", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Missing Job Types.
+        /// </summary>
+        public static string NpTitle {
+            get {
+                return ResourceManager.GetString("NpTitle", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Show count of protected workloads.
+        /// </summary>
+        public static string PlButton {
+            get {
+                return ResourceManager.GetString("PlButton", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to .
+        /// </summary>
+        public static string PlHdr1 {
+            get {
+                return ResourceManager.GetString("PlHdr1", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to PlHdr1.
+        /// </summary>
+        public static string PlHdr1TT {
+            get {
+                return ResourceManager.GetString("PlHdr1TT", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to .
+        /// </summary>
+        public static string PlHdr2 {
+            get {
+                return ResourceManager.GetString("PlHdr2", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to PlHdr2.
+        /// </summary>
+        public static string PlHdr2TT {
+            get {
+                return ResourceManager.GetString("PlHdr2TT", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to .
+        /// </summary>
+        public static string PlHdr3 {
+            get {
+                return ResourceManager.GetString("PlHdr3", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to PlHdr3.
+        /// </summary>
+        public static string PlHdr3TT {
+            get {
+                return ResourceManager.GetString("PlHdr3TT", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to .
+        /// </summary>
+        public static string PlHdr4 {
+            get {
+                return ResourceManager.GetString("PlHdr4", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to PlHdr4.
+        /// </summary>
+        public static string PlHdr4TT {
+            get {
+                return ResourceManager.GetString("PlHdr4TT", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to .
+        /// </summary>
+        public static string PlHdr5 {
+            get {
+                return ResourceManager.GetString("PlHdr5", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to PlHdr5.
+        /// </summary>
+        public static string PlHdr5TT {
+            get {
+                return ResourceManager.GetString("PlHdr5TT", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to .
+        /// </summary>
+        public static string PlHdr6 {
+            get {
+                return ResourceManager.GetString("PlHdr6", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to PlHdr6.
+        /// </summary>
+        public static string PlHdr6TT {
+            get {
+                return ResourceManager.GetString("PlHdr6TT", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to .
+        /// </summary>
+        public static string PlHdr7 {
+            get {
+                return ResourceManager.GetString("PlHdr7", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to PlHdr7.
+        /// </summary>
+        public static string PlHdr7TT {
+            get {
+                return ResourceManager.GetString("PlHdr7TT", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to .
+        /// </summary>
+        public static string PlHdr8 {
+            get {
+                return ResourceManager.GetString("PlHdr8", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to .
+        /// </summary>
+        public static string PlHdr8TT {
+            get {
+                return ResourceManager.GetString("PlHdr8TT", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Protected Workloads.
+        /// </summary>
+        public static string PlTitle {
+            get {
+                return ResourceManager.GetString("PlTitle", resourceCulture);
             }
         }
     }

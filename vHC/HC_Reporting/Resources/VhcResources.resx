@@ -337,6 +337,15 @@
   <data name="HtmlIntroLine5" xml:space="preserve">
     <value>- NOTE: The tool you ran to generate this report is completely self-contained, does not ‘phone-home’ and was only executed on your Veeam Backup and Replication server. It queries the VBR database, registry, configuration and log files. It does not require access to vCenter or any other infrastructure.</value>
   </data>
+  <data name="LicCcTT" xml:space="preserve">
+    <value>Is Cloud Connect enabled?</value>
+  </data>
+  <data name="LicExpTT" xml:space="preserve">
+    <value>License expiration date</value>
+  </data>
+  <data name="LicSupExpTT" xml:space="preserve">
+    <value>Support expiration date</value>
+  </data>
   <data name="LicTableHeader" xml:space="preserve">
     <value>License Summary</value>
   </data>
@@ -381,6 +390,39 @@
   </data>
   <data name="LicTblUsedSock" xml:space="preserve">
     <value>Used Sockets</value>
+  </data>
+  <data name="LtEdTT" xml:space="preserve">
+    <value>Veeam License Edition</value>
+  </data>
+  <data name="LtInstLicTT" xml:space="preserve">
+    <value>Total licensed instances</value>
+  </data>
+  <data name="LtInstNewTT" xml:space="preserve">
+    <value>Total new instances</value>
+  </data>
+  <data name="LtInstRentalTT" xml:space="preserve">
+    <value>Totaly rental instances</value>
+  </data>
+  <data name="LtInstUsedTT" xml:space="preserve">
+    <value>Total used instances</value>
+  </data>
+  <data name="LtNasLicTT" xml:space="preserve">
+    <value>Total NAS licensed</value>
+  </data>
+  <data name="LtNasUsedTT" xml:space="preserve">
+    <value>Total NAS license used</value>
+  </data>
+  <data name="LtSocLicTT" xml:space="preserve">
+    <value>Total sockets licensed</value>
+  </data>
+  <data name="LtSocUsedTT" xml:space="preserve">
+    <value>Total sockets used</value>
+  </data>
+  <data name="LtStatusTT" xml:space="preserve">
+    <value>Veeam License Status</value>
+  </data>
+  <data name="LtTypeTT" xml:space="preserve">
+    <value>Veeam License Type</value>
   </data>
   <data name="NavBkpSrvDeet" xml:space="preserve">
     <value>Detailed information on the Backup Server, Configuration DB, roles, and resources.</value>
@@ -489,5 +531,68 @@
   </data>
   <data name="NavTaskConLink" xml:space="preserve">
     <value>VM Concurrency</value>
+  </data>
+  <data name="NpButton" xml:space="preserve">
+    <value>Show details on missing job types</value>
+  </data>
+  <data name="NpSum1" xml:space="preserve">
+    <value>This table summarizes job types that are either missing from your configuration or could not be analyzed. Please consult with your Veeam Engineer for more information.</value>
+  </data>
+  <data name="NpTitle" xml:space="preserve">
+    <value>Missing Job Types</value>
+  </data>
+  <data name="PlButton" xml:space="preserve">
+    <value>Show count of protected workloads</value>
+  </data>
+  <data name="PlHdr1" xml:space="preserve">
+    <value />
+  </data>
+  <data name="PlHdr1TT" xml:space="preserve">
+    <value>PlHdr1</value>
+  </data>
+  <data name="PlHdr2" xml:space="preserve">
+    <value />
+  </data>
+  <data name="PlHdr2TT" xml:space="preserve">
+    <value>PlHdr2</value>
+  </data>
+  <data name="PlHdr3" xml:space="preserve">
+    <value />
+  </data>
+  <data name="PlHdr3TT" xml:space="preserve">
+    <value>PlHdr3</value>
+  </data>
+  <data name="PlHdr4" xml:space="preserve">
+    <value />
+  </data>
+  <data name="PlHdr4TT" xml:space="preserve">
+    <value>PlHdr4</value>
+  </data>
+  <data name="PlHdr5" xml:space="preserve">
+    <value />
+  </data>
+  <data name="PlHdr5TT" xml:space="preserve">
+    <value>PlHdr5</value>
+  </data>
+  <data name="PlHdr6" xml:space="preserve">
+    <value />
+  </data>
+  <data name="PlHdr6TT" xml:space="preserve">
+    <value>PlHdr6</value>
+  </data>
+  <data name="PlHdr7" xml:space="preserve">
+    <value />
+  </data>
+  <data name="PlHdr8" xml:space="preserve">
+    <value />
+  </data>
+  <data name="PlHdr8TT" xml:space="preserve">
+    <value />
+  </data>
+  <data name="PlTitle" xml:space="preserve">
+    <value>Protected Workloads</value>
+  </data>
+  <data name="String6" xml:space="preserve">
+    <value>PlHdr7</value>
   </data>
 </root>
