@@ -17,6 +17,9 @@ namespace VeeamHealthCheck.Html
         private XDocument xdoc;
         private string _htmldoc;
 
+        // section links
+        string _serverSumLink = "serverSummary";
+
         #region htmlstrings
         private string html = "<html>";
         private string htmlend = "</html>";
@@ -76,7 +79,7 @@ namespace VeeamHealthCheck.Html
             AddToHtml(String.Format("<button type=\"button\" class=\"btn\" onclick=\"test()\">{0}</button>", VhcResources.NavColapse));
             NavTable();
             
-
+            
             AddToHtml(_endDiv);
         }
         private void SetBannerAndIntro()
@@ -126,6 +129,51 @@ namespace VeeamHealthCheck.Html
         private string h2UnderLine(string text)
         {
             return String.Format("<h2><u>{0}</u></h2>", text);
+        }
+        private void Section(string sectionType)
+        {
+            /* div id=nameInLink
+             * h2 section name (i.e. Detected Infr Types)
+             * break
+             * Table
+             * div content
+                * Summary
+                * Summary Text
+                * Notes
+                * Notes text
+                * end div
+             * BackToTop
+             * end div
+             */
+            AddSectionHeader(sectionType);
+            AddTable(sectionType);
+            
+        }
+        private void AddTable(string type)
+        {
+            switch (type)
+            {
+                case "serverSummary":
+
+                    break;
+
+                default:
+                    break;
+            }
+        }
+        private void AddSectionHeader(string sectionType)
+        {
+            switch (sectionType)
+            {
+                case "serverSummary":
+                    SectionHeader("serverSummary", "");
+                    break;
+            }
+
+        }
+        private void SectionHeader(string sectionLinkName, string headerText)
+        {
+            _htmldoc += String.Format("<div id=\"{0}\">{1}", sectionLinkName, headerText);
         }
         private string AddLicHeaderToTable()
         {
