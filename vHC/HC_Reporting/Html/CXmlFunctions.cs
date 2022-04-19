@@ -146,12 +146,13 @@ namespace VeeamHealthCheck.Html
             doc.Root.Add(serverRoot);
             doc.AddFirst(new XProcessingInstruction("xml-stylesheet", "type=\"text/xsl\" href=\"SessionReport.xsl\""));
 
-            serverRoot.Add(AddSummaryHeader(ResourceHandler.GetResourceText("HtmlHeader")));
-            serverRoot.Add(AddSummaryText(ResourceHandler.GetResourceText("HtmlIntroLine1"), "i2"));
-            serverRoot.Add(AddSummaryText(ResourceHandler.GetResourceText("HtmlIntroLine2"), "i2"));
-            serverRoot.Add(AddSummaryText(ResourceHandler.GetResourceText("HtmlIntroLine3"), "i2"));
-            serverRoot.Add(AddSummaryText(ResourceHandler.GetResourceText("HtmlIntroLine4"), "i3"));
-            serverRoot.Add(AddSummaryText(ResourceHandler.GetResourceText("HtmlIntroLine5"), "i3"));
+
+            serverRoot.Add(AddSummaryHeader(ResourceHandler.HtmlHeader));
+            serverRoot.Add(AddSummaryText(ResourceHandler.HtmlIntroLine1, "i2"));
+            serverRoot.Add(AddSummaryText(ResourceHandler.HtmlIntroLine2, "i2"));
+            serverRoot.Add(AddSummaryText(ResourceHandler.HtmlIntroLine3, "i2"));
+            serverRoot.Add(AddSummaryText(ResourceHandler.HtmlIntroLine4, "i3"));
+            serverRoot.Add(AddSummaryText(ResourceHandler.HtmlIntroLine5, "i3"));
 
 
             doc.Save(_xmlOut);

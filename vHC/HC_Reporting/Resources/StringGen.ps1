@@ -1,4 +1,5 @@
 ﻿$content = Get-Content -LiteralPath "vhcres.txt"
+echo $null | out-file pubstrings.txt
 
 foreach($line in $content){
     if(!$line.StartsWith("#")){

@@ -67,23 +67,23 @@ namespace VeeamHealthCheck
         }
         private void SetUiText()
         {
-            this.InsHeader.Text = ResourceHandler.GetResourceText("GuiInstHeader");
-            this.line1.Text = ResourceHandler.GetResourceText("GuiInstLine1");
-            this.line2.Text = ResourceHandler.GetResourceText("GuiInstLine2");
-            this.line3.Text = ResourceHandler.GetResourceText("GuiInstLine3");
-            this.line4.Text = ResourceHandler.GetResourceText("GuiInstLine4");
-            this.line5.Text = ResourceHandler.GetResourceText("GuiInstLine5");
-            this.line6.Text = ResourceHandler.GetResourceText("GuiInstLine6");
-            this.Cav1Part1.Text = ResourceHandler.GetResourceText("GuiInstCaveat1");
-            this.Cav2.Text = ResourceHandler.GetResourceText("GuiInstCaveat2");
-            this.OptHdr.Text = ResourceHandler.GetResourceText("GuiOptionsHeader");
-            this.htmlCheckBox.Content = ResourceHandler.GetResourceText("GuiShowHtml");
-            this.scrubBox.Content = ResourceHandler.GetResourceText("GuiSensData");
-            this.explorerShowBox.Content = ResourceHandler.GetResourceText("GuiShowFiles");
-            this.outPath.Text = ResourceHandler.GetResourceText("GuiOutPath");
-            this.termsBtn.Content = ResourceHandler.GetResourceText("GuiAcceptButton");
-            this.run.Content = ResourceHandler.GetResourceText("GuiRunButton");
-            this.importButton.Content = ResourceHandler.GetResourceText("GuiImportButton");
+            this.InsHeader.Text = ResourceHandler.GuiInstHeader;
+            this.line1.Text = ResourceHandler.GuiInstLine1;
+            this.line2.Text = ResourceHandler.GuiInstLine2;
+            this.line3.Text = ResourceHandler.GuiInstLine3;
+            this.line4.Text = ResourceHandler.GuiInstLine4;
+            this.line5.Text = ResourceHandler.GuiInstLine5;
+            this.line6.Text = ResourceHandler.GuiInstLine6;
+            this.Cav1Part1.Text = ResourceHandler.GuiInstCaveat1;
+            this.Cav2.Text = ResourceHandler.GuiInstCaveat2;
+            this.OptHdr.Text = ResourceHandler.GuiOptionsHeader;
+            this.htmlCheckBox.Content = ResourceHandler.GuiShowHtml;
+            this.scrubBox.Content = ResourceHandler.GuiSensData;
+            this.explorerShowBox.Content = ResourceHandler.GuiShowFiles;
+            this.outPath.Text = ResourceHandler.GuiOutPath;
+            this.termsBtn.Content = ResourceHandler.GuiAcceptButton;
+            this.run.Content = ResourceHandler.GuiRunButton;
+            this.importButton.Content = ResourceHandler.GuiImportButton;
             
         }
 

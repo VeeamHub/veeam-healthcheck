@@ -33,7 +33,6 @@
 
   <ItemGroup>
     <None Remove="Html\JavaScript1.js" />
-    <None Remove="Resources\BaseResources.resources" />
     <None Remove="Resources\vhcres.resources" />
     <None Remove="RVTools4.1.4.msi" />
     <None Remove="Tools\Get-VBRConfig - Copy.ps1" />
@@ -68,7 +67,6 @@
     <EmbeddedResource Include="Resources\vhcres.resources">
       <Generator></Generator>
     </EmbeddedResource>
-    <EmbeddedResource Include="Resources\BaseResources.resources" />
   </ItemGroup>
 
   <ItemGroup>
@@ -89,31 +87,6 @@
   <ItemGroup>
     <Folder Include="Softwares\VB365\CsvHandlers\" />
     <Folder Include="Softwares\VBR\" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <Compile Update="Resources\VhcResources.fr-LU.Designer.cs">
-      <DependentUpon>VhcResources.fr-LU.resx</DependentUpon>
-      <DesignTime>True</DesignTime>
-      <AutoGen>True</AutoGen>
-    </Compile>
-    <Compile Update="Resources\VhcResources.Designer.cs">
-      <DesignTime>True</DesignTime>
-      <AutoGen>True</AutoGen>
-      <DependentUpon>VhcResources.resx</DependentUpon>
-    </Compile>
-  </ItemGroup>
-
-  <ItemGroup>
-    <EmbeddedResource Update="Resources\VhcResources.fr-LU.resx">
-      <LastGenOutput>VhcResources.fr-LU.Designer.cs</LastGenOutput>
-      <Generator>PublicResXFileCodeGenerator</Generator>
-    </EmbeddedResource>
-    <EmbeddedResource Update="Resources\VhcResources.resx">
-      <Generator>PublicResXFileCodeGenerator</Generator>
-      <LastGenOutput>VhcResources.Designer.cs</LastGenOutput>
-      <CustomToolNamespace></CustomToolNamespace>
-    </EmbeddedResource>
   </ItemGroup>
 
 </Project>

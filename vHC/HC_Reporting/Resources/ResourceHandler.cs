@@ -92,6 +92,7 @@ namespace VeeamHealthCheck
         public static string NavTaskConLink = m4.GetString("NavTaskConLink");
         public static string LicCcTT = m4.GetString("LicCcTT");
         public static string LicExpTT = m4.GetString("LicExpTT");
+        public static string LicTblLicTo = m4.GetString("LicTblLicTo");
         public static string LicSupExpTT = m4.GetString("LicSupExpTT");
         public static string LicTableHeader = m4.GetString("LicTableHeader");
         public static string LicTblCc = m4.GetString("LicTblCc");
@@ -520,6 +521,7 @@ namespace VeeamHealthCheck
         public static string JssNote8 = m4.GetString("JssNote8");
         public static string JssNote9 = m4.GetString("JssNote9");
         public static string JssNote10 = m4.GetString("JssNote10");
+
 
 
     }
