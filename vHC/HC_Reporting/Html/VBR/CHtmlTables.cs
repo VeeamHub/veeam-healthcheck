@@ -120,13 +120,26 @@ namespace VeeamHealthCheck.Html.VBR
         }
         public string AddSecSummaryTable()
         {
-            string s = "<tr>"+
+            string s = "<tr>" +
                 TableHeader(ResourceHandler.SSHdr0, ResourceHandler.SSHdrTT0) +
                 TableHeader(ResourceHandler.SSHdr1, ResourceHandler.SSHdrTT1) +
                 TableHeader(ResourceHandler.SSHdr2, ResourceHandler.SSHdrTT2) +
                 TableHeader(ResourceHandler.SSHdr3, ResourceHandler.SSHdrTT3) +
-                "</tr>";
-            return null;
+                "</tr>" +
+                "<tr>";
+            var df = new CDataFormer();
+            List<int> list = df.SecSummary();
+
+            for(int i = 0; i < list.Count(); i++)
+            {
+                if (list[i] == 0)
+                    s += TableData("False", "");
+                else if (list[i] == 1)
+                    s += TableData("True", "");
+            }
+            s += "</tr>";
+
+            return s;
         }
         public string AddSrvSummaryTable()
         {

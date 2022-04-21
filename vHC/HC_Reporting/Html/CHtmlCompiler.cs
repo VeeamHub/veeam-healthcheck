@@ -62,7 +62,7 @@ namespace VeeamHealthCheck.Html
             SetNavigation();
             SetLicTable();
             SetVbrTable();
-
+            SetSecSumTable();
 
 
             _htmldoc += "<script type=\"text/javascript\">";
@@ -217,6 +217,9 @@ namespace VeeamHealthCheck.Html
                 case "vbrInfo":
                     tableString += tables.AddBkpSrvTable();
                     break;
+                case "secSum":
+                    tableString += tables.AddSecSummaryTable();
+                    break;
                 default:
                     break;
             }
@@ -244,6 +247,12 @@ namespace VeeamHealthCheck.Html
         {
             Table("Backup Server & Config DB Info", "vbrInfo");
             SetVbrSummary();
+            EndSection();
+        }
+        private void SetSecSumTable()
+        {
+            Table("Security Summary", "secSum");
+            
             EndSection();
         }
         private void SetVbrSummary()

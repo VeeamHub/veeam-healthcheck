@@ -37,18 +37,18 @@ namespace VeeamHealthCheck.Html
         private static bool _immuteFound = false;
         private static bool _trafficEncrypted = false;
         private static bool _configBackupEncrypted = false;
-                
+
         private static bool _isSqlLocal;
         private static int _cores;
         private static int _ram;
-                
+
         private static CDataTypesParser _dTypeParser;
         private static readonly CCsvParser _csvParser = new();
         private static readonly CLogger log = MainWindow.log;
-                
+
         private static CHtmlExporter exporter;
         private static readonly CXmlFunctions XML;
-                
+
         private static readonly CFillerTexts fillerText = new();
         //privatstatic e readonly string _styleSheet = "StyleSheets\\vbr-Report.xsl";
         private static readonly string _styleSheet = "StyleSheets\\myHtml.xsl";
@@ -183,78 +183,99 @@ namespace VeeamHealthCheck.Html
             }
             doc.Save(_testFile);
         }
-        private void SecSummary()
+        public List<int> SecSummary()
         {
+            List<int> secSummary = new List<int>();
             var csv = new CCsvParser();
             try
             {
                 var cBackup = csv.GetDynamincConfigBackup();
                 if (cBackup.Any(x => x.encryptionoptions == "True"))
-                    _configBackupEncrypted = true;
+                    secSummary.Add(1);
+                else secSummary.Add(0);
             }
             catch (Exception)
             {
                 log.Error("Config backup not detected. Marking false");
                 //log.Info(e.Message);
-                _configBackupEncrypted = false;
+                secSummary.Add(0);
             }
             try
             {
                 var netTraffic = csv.GetDynamincNetRules();
                 if (netTraffic.Any(x => x.encryptionenabled == "True"))
-                    _trafficEncrypted = true;
+                    secSummary.Add(1);
+                else secSummary.Add(0);
             }
             catch (Exception)
             {
                 log.Info("Traffic encryption not detected. Marking false");
-                _trafficEncrypted = false;
+                secSummary.Add(0);
             }
             try
             {
                 var backupEnc = csv.GetDynamicJobInfo();
                 if (backupEnc.Any(x => (x.pwdkeyid != "00000000-0000-0000-0000-000000000000" && !String.IsNullOrEmpty(x.pwdkeyid))))
-                    _backupsEncrypted = true;
+                    secSummary.Add(1);
+                else secSummary.Add(0);
             }
             catch (Exception)
             {
                 log.Error("Unable to detect backup encryption. Marking false");
-                _backupsEncrypted = false;
+                secSummary.Add(0);
             }
             try
             {
                 var onPremRepo = csv.GetDynamicRepo();
                 if (onPremRepo.Any(x => x.isimmutabilitysupported == "True"))
-                    _immuteFound = true;
+                {
+                    secSummary.Add(1);
+                    return secSummary;
+                }
                 var sobrRepo = csv.GetDynamicCapTier();
+
                 if (sobrRepo.Any(x => x.immute == "True"))
-                    _immuteFound = true;
+                {
+                    secSummary.Add(1);
+                    return secSummary;
+                }
+
                 var extRepo = csv.GetDynamicSobrExt();
+
                 if (extRepo.Any(x => x.isimmutabilitysupported == "True"))
-                    _immuteFound = true;
+                {
+                    secSummary.Add(1);
+                    return secSummary;
+                }
+                else
+                {
+                    secSummary.Add(0);
+                }
+
             }
             catch (Exception)
             {
                 log.Error("Unable to find immutability. Marking false");
-                _immuteFound = false;
+                secSummary.Add(0);
             }
 
+            return secSummary;
+
+            //XDocument doc = XDocument.Load(_testFile);
+
+            //XElement extElement = new XElement("secSummary");
+            //doc.Root.Add(extElement);
 
 
-            XDocument doc = XDocument.Load(_testFile);
+            //var xml = new XElement("secProfile",
+            //    new XElement("immute", _immuteFound),
+            //    new XElement("trafficEnc", _trafficEncrypted),
+            //    new XElement("configEnc", _configBackupEncrypted),
+            //    new XElement("backupEnc", _backupsEncrypted)
+            //    );
 
-            XElement extElement = new XElement("secSummary");
-            doc.Root.Add(extElement);
-
-
-            var xml = new XElement("secProfile",
-                new XElement("immute", _immuteFound),
-                new XElement("trafficEnc", _trafficEncrypted),
-                new XElement("configEnc", _configBackupEncrypted),
-                new XElement("backupEnc", _backupsEncrypted)
-                );
-
-            extElement.Add(xml);
-            doc.Save(_testFile);
+            //extElement.Add(xml);
+            //doc.Save(_testFile);
         }
         //private void FilterAndCountTypes()
         //{
@@ -444,11 +465,11 @@ namespace VeeamHealthCheck.Html
 
             log.Info("xml template..done!");
         }
-        public  List<string> BackupServerInfoToXml()
+        public List<string> BackupServerInfoToXml()
         {
             log.Info("converting backup server info to xml");
             List<string> list = new List<string>();
-            
+
             CheckServerRoles(_backupServerId);
 
             List<CServerTypeInfos> csv = _dTypeParser.ServerInfo();
@@ -1844,7 +1865,7 @@ namespace VeeamHealthCheck.Html
             var hvProxy = _csvParser.GetDynHvProxy();
             var nasProxy = _csvParser.GetDynNasProxy();
             var cdpProxy = _csvParser.GetDynCdpProxy();
-            foreach(var v in viProxy.ToList())
+            foreach (var v in viProxy.ToList())
             {
                 if (v.hostid == serverId)
                     return true;
@@ -1859,8 +1880,8 @@ namespace VeeamHealthCheck.Html
                 if (n.hostid == serverId)
                     return true;
             }
-            
-            foreach(var c in cdpProxy)
+
+            foreach (var c in cdpProxy)
             {
                 if (c.serverid == serverId)
                     return true;
