@@ -72,6 +72,8 @@ namespace VeeamHealthCheck.Html
             jobSessionsCsv = jobSessionsCsv.OrderBy(x => x.Name).ToList();
             //csv = csv.OrderBy(x => x.CreationTime).ToList();
 
+            var bjobsCsvInfo = new CCsvParser().GetDynamicBjobs();
+
             XDocument doc = XDocument.Load(xmlFile);
 
             XElement extElement = new XElement("jobSessionsSummary");
@@ -233,6 +235,9 @@ namespace VeeamHealthCheck.Html
                     maxBackupSize.Add(info.MaxBackupSize);
 
                     info.JobType = type;
+
+                    //TODO: adjust this to pull VM Original Size, calculate compress & dedupe as well..
+                    var originalSize = bjobsCsvInfo.Where(x => x.name == j).Select(x => x.originalsize);
 
                     if (info.AvgBackupSize != 0 && info.AvgDataSize != 0)
                     {
