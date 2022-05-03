@@ -15,6 +15,7 @@ namespace VeeamHealthCheck
     class PSInvoker
     {
         private readonly string _sessionReport = "Get-VBRConfig.ps1";
+        private readonly string _vb365Script = @"\Tools\Scripts\";
         public PSInvoker()
         {
             //PowerShell shell = PowerShell.Create();
@@ -80,6 +81,35 @@ namespace VeeamHealthCheck
 
             //var output = shell.Invoke();
 
+        }
+        public void InvokeVb365Collect()
+        {
+            var scriptFile = Vb365ScriptFile();
+            UnblockFile(scriptFile);
+
+            var startInfo = new ProcessStartInfo()
+            {
+                FileName = "powershell.exe",
+                Arguments = $"-NoProfile -ExecutionPolicy unrestricted -file \"{scriptFile}\"",
+                UseShellExecute = false,
+                CreateNoWindow = true
+            };
+
+        }
+        private ProcessStartInfo psInfo(string scriptFile)
+        {
+            return new ProcessStartInfo()
+            {
+                FileName = "powershell.exe",
+                Arguments = $"",
+                UseShellExecute=false,
+                CreateNoWindow=true
+            };
+        }
+        private string Vb365ScriptFile()
+        {
+            string[] script = Directory.GetFiles(_vb365Script);
+            return script[0];
         }
         private void UnblockFile(string file)
         {

@@ -25,8 +25,12 @@ namespace VeeamHealthCheck
         public static bool _openExplorer = true;
         public static string _desiredPath = CVariables.unsafeDir;
         private string _path;
+
+        private bool _isVbr = false;
+        private bool _isVb365 = false;
         public MainWindow(string[] args)
         {
+            // do not use this method..
             InitializeComponent();
             SetPathBoxText(CVariables.unsafeDir);
             //testing new UI
@@ -47,6 +51,8 @@ namespace VeeamHealthCheck
         public MainWindow()
         {
             InitializeComponent();
+            ModeCheck();
+
             SetUiText();
 
             SetPathBoxText(CVariables.unsafeDir);
@@ -84,7 +90,9 @@ namespace VeeamHealthCheck
             this.termsBtn.Content = ResourceHandler.GuiAcceptButton;
             this.run.Content = ResourceHandler.GuiRunButton;
             this.importButton.Content = ResourceHandler.GuiImportButton;
-            
+
+            this.Title = ResourceHandler.GuiTitle;
+
         }
 
         private void SetPathBoxText(string text)
@@ -94,11 +102,11 @@ namespace VeeamHealthCheck
         }
         private void DecryptSystem()
         {
-    //        string input =
-    //Microsoft.VisualBasic.Interaction.InputBox("My Prompt",
-    //                                           "The Title",
-    //                                           "",
-    //                                           -1, -1);
+            //        string input =
+            //Microsoft.VisualBasic.Interaction.InputBox("My Prompt",
+            //                                           "The Title",
+            //                                           "",
+            //                                           -1, -1);
 
 
             //if (!String.IsNullOrEmpty(input))
@@ -125,9 +133,9 @@ namespace VeeamHealthCheck
         }
         private void Import()
         {
-            CModeSelector cMode = new(_desiredPath, _scrub, _openHtml, true) ;
+            CModeSelector cMode = new(_desiredPath, _scrub, _openHtml, true);
             cMode.Run();
-            
+
             //CCsvToXml c = new();
 
             ////choose VBO or VBR
@@ -140,7 +148,7 @@ namespace VeeamHealthCheck
             log.Info("Starting Run");
             Run();
             bool import = false;
-            
+
 
             CModeSelector cMode = new(_desiredPath, _scrub, _openHtml, import);
             cMode.Run();
@@ -148,23 +156,64 @@ namespace VeeamHealthCheck
             //c.ConvertToXml(_scrub, true, _openHtml, false);
             //c.Dispose();
             log.Info("Starting Run..done!");
-            
+
         }
         private void Run()
         {
             log.Info("Starting PS Invoke");
             PSInvoker p = new PSInvoker();
 
-            try
+            if (_isVbr)
             {
-                p.Invoke(_collectSessionData);
+                try
+                {
+                    p.Invoke(_collectSessionData);
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show(ex.Message);
+                    log.Error(ex.Message);
+                }
             }
-            catch (Exception ex)
+            if (_isVb365)
             {
-                MessageBox.Show(ex.Message);
-                log.Error(ex.Message);
+                try
+                {
+                    p.InvokeVb365Collect();
+                }
+                catch (Exception ex) { log.Error(ex.Message); }
             }
+
             log.Info("Starting PS Invoke...done!");
+        }
+        private void RunVbr()
+        {
+
+        }
+        private void RunVb365()
+        {
+
+        }
+        private void ModeCheck()
+        {
+            var processes = Process.GetProcesses();
+            foreach (var process in processes)
+            {
+                if (process.ProcessName == "Veeam.Archiver.Service")
+                {
+                    this.Title = this.Title + " " + ResourceHandler.GuiTitleVB365;
+                    _isVb365 = true;
+                }
+                if (process.ProcessName == "Veeam.Backup.Service")
+                {
+                    this.Title = this.Title + " " + ResourceHandler.GuiTitleBnR;
+                    _isVbr = true;
+                }
+                if (_isVbr && _isVb365)
+                {
+                    this.Title = ResourceHandler.GuiTitle + " " + ResourceHandler.GuiTitleBnR + " & " + ResourceHandler.GuiTitleVB365;
+                }
+            }
         }
         private void PreCheck()
         {
@@ -286,7 +335,7 @@ namespace VeeamHealthCheck
             });
 
         }
-        
+
         private void CheckBox_Checked(object sender, RoutedEventArgs e)
         {
 

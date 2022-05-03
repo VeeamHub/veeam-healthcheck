@@ -28,6 +28,9 @@ namespace VeeamHealthCheck
         public static string GuiSensData = m4.GetString("GuiSensData");
         public static string GuiShowFiles = m4.GetString("GuiShowFiles");
         public static string GuiShowHtml = m4.GetString("GuiShowHtml");
+        public static string GuiTitle = m4.GetString("GuiTitle");
+        public static string GuiTitleBnR = m4.GetString("GuiTitleBnR");
+        public static string GuiTitleVB365 = m4.GetString("GuiTitleVB365");
         public static string PlHdr0 = m4.GetString("PlHdr0");
         public static string PlHdrTT0 = m4.GetString("PlHdrTT0");
         public static string PlHdr1 = m4.GetString("PlHdr1");
@@ -521,6 +524,7 @@ namespace VeeamHealthCheck
         public static string JssNote8 = m4.GetString("JssNote8");
         public static string JssNote9 = m4.GetString("JssNote9");
         public static string JssNote10 = m4.GetString("JssNote10");
+
 
 
 

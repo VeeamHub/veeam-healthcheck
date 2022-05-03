@@ -49,7 +49,6 @@ namespace VeeamHealthCheck.Html
         private CHtmlExporter exporter;
         private readonly CXmlFunctions XML;
 
-        private readonly CFillerTexts fillerText = new();
         //private readonly string _styleSheet = "StyleSheets\\vbr-Report.xsl";
         private readonly string _styleSheet = "StyleSheets\\myHtml.xsl";
 
@@ -91,8 +90,6 @@ namespace VeeamHealthCheck.Html
             XDocument doc = XDocument.Load(_testFile);
 
             XElement extElement = new XElement("license");
-            var summary = new XElement("info", fillerText.LicenseSummary);
-            extElement.Add(summary);
             doc.Root.Add(extElement);
             foreach (var c in recs)
             {
@@ -288,8 +285,6 @@ namespace VeeamHealthCheck.Html
             doc.Root.Add(serverRoot);
 
 
-            var summary = new XElement("info", fillerText.serverSummary);
-            serverRoot.Add(summary);
             foreach (var c in di)
             {
                 var xml = new XElement("server",
@@ -570,8 +565,6 @@ namespace VeeamHealthCheck.Html
             XElement extElement = new XElement("backupServer");
             doc.Root.Add(extElement);
 
-            XElement summary = new XElement("info", fillerText.BackupServerSummary);
-            extElement.Add(summary);
 
             if (_scrub)
             {
@@ -628,9 +621,7 @@ namespace VeeamHealthCheck.Html
             csv = csv.OrderBy(x => x.Name).ToList();
 
             XDocument doc = XDocument.Load(_testFile);
-            var summary = new XElement("info", fillerText.SobrSummary);
             XElement extElement = new XElement("sobrs");
-            extElement.Add(summary);
             doc.Root.Add(extElement);
             //doc.AddFirst(new XProcessingInstruction("xml-stylesheet", "type=\"text/xsl\" href=\"SessionReport.xsl\""));
 
@@ -694,8 +685,6 @@ namespace VeeamHealthCheck.Html
             XDocument doc = XDocument.Load(_testFile);
 
             XElement extElement = new XElement("extent");
-            var summary = new XElement("info", fillerText.SobrExtentSummary);
-            extElement.Add(summary);
             doc.Root.Add(extElement);
             //doc.AddFirst(new XProcessingInstruction("xml-stylesheet", "type=\"text/xsl\" href=\"SessionReport.xsl\""));
 
@@ -756,8 +745,6 @@ namespace VeeamHealthCheck.Html
             XDocument doc = XDocument.Load(_testFile);
 
             XElement extElement = new XElement("repositories");
-            var summary = new XElement("info", fillerText.RepoSummary);
-            extElement.Add(summary);
             doc.Root.Add(extElement);
             //doc.AddFirst(new XProcessingInstruction("xml-stylesheet", "type=\"text/xsl\" href=\"SessionReport.xsl\""));
 
@@ -839,8 +826,6 @@ namespace VeeamHealthCheck.Html
             //doc.Root.Add(serverRoot2);
             //testabove
             doc.Root.Add(serverRoot);
-            var summary = new XElement("info", fillerText.ProxySummary);
-            serverRoot.Add(summary);
 
             foreach (var c in csv)
             {
@@ -927,8 +912,6 @@ namespace VeeamHealthCheck.Html
             XElement serverRoot = new XElement("servers");
             doc.Root.Add(serverRoot);
             doc.AddFirst(new XProcessingInstruction("xml-stylesheet", "type=\"text/xsl\" href=\"SessionReport.xsl\""));
-            var summary = new XElement("info", fillerText.ServerInfo);
-            serverRoot.Add(summary);
 
             //list to ensure we only count unique VMs
             List<string> countedVMs = new();
@@ -1083,8 +1066,6 @@ namespace VeeamHealthCheck.Html
                 XDocument doc = XDocument.Load(_testFile);
 
                 XElement extElement = new XElement("jobSummary");
-                var summary = new XElement("info", fillerText.JobSummary);
-                extElement.Add(summary);
                 doc.Root.Add(extElement);
                 foreach (var d in typeSummary)
                 {
@@ -1443,8 +1424,6 @@ namespace VeeamHealthCheck.Html
             XDocument doc = XDocument.Load(_testFile);
 
             XElement extElement = new XElement("jobs");
-            var summary = new XElement("info", fillerText.JobInfoSummary);
-            extElement.Add(summary);
             doc.Root.Add(extElement);
             //doc.AddFirst(new XProcessingInstruction("xml-stylesheet", "type=\"text/xsl\" href=\"SessionReport.xsl\""));
 
