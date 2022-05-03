@@ -304,7 +304,7 @@ namespace VeeamHealthCheck.Html
                 new XElement("maxtime", ""),
                 new XElement("mintime", ""),
                 new XElement("sessions", ""),
-                new XElement("successrate", Math.Round(successRates.Average(), 0)),
+                new XElement("successrate", Math.Round(successRates.Average(), 0)), //TODO: Make this total sessions - total failed sessions / total sessions
                 new XElement("avgBackupSize", Math.Round(avgBackupSizes.Average(), 0)),
                 new XElement("maxBackupSize", Math.Round(maxBackupSize.Sum(), 0)),
                 new XElement("avgDataSize", Math.Round(avgDataSizes.Average(), 0)),
