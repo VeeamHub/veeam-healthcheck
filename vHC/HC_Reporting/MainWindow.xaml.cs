@@ -212,6 +212,7 @@ namespace VeeamHealthCheck
         }
         private void ModeCheck()
         {
+            log.Info("Checking processes to determine execution mode..");
             string title = ResourceHandler.GuiTitle;
             var processes = Process.GetProcesses();
             foreach (var process in processes)

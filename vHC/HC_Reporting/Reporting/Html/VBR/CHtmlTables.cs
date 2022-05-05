@@ -105,7 +105,7 @@ namespace VeeamHealthCheck.Html.VBR
                 TableHeader(ResourceHandler.BkpSrvTblRepoRole, ResourceHandler.BstRepTT) +
                 TableHeader(ResourceHandler.BkpSrvTblWanRole, ResourceHandler.BstWaTT) +
                 "</tr>";
-            CDataFormer cd = new();
+            CDataFormer cd = new(true);
             List<string> list = cd.BackupServerInfoToXml();
             s += "<tr>";
 
@@ -128,7 +128,7 @@ namespace VeeamHealthCheck.Html.VBR
                 TableHeader(ResourceHandler.SSHdr3, ResourceHandler.SSHdrTT3) +
                 "</tr>" +
                 "<tr>";
-            CDataFormer df = new();
+            CDataFormer df = new(true);
             List<int> list = df.SecSummary();
 
             for(int i = 0; i < list.Count(); i++)

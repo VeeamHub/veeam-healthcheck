@@ -19,9 +19,11 @@ namespace VeeamHealthCheck.Html
     {
         private Dictionary<string, List<TimeSpan>> _waits = new();
         private CLogger log = MainWindow.log;
+        private bool _checkLogs;
 
         public CJobSessSummary(string xmlFile, CLogger log, bool scrub, bool checkLogs, Scrubber.CXmlHandler scrubber, CDataTypesParser dp)
         {
+            _checkLogs = checkLogs;
             if (checkLogs)
                 PopulateWaits();
             JobSessionSummaryToXml(xmlFile, log, scrub, scrubber, dp);
@@ -97,55 +99,47 @@ namespace VeeamHealthCheck.Html
                 try
                 {
                     CCsvParser csv = new();
-                    var waitList = csv.WaitsCsvReader();
-
+                    IEnumerable<CWaitsCsv> waitList;
                     List<TimeSpan> tList = new();
 
-                    foreach (var w in waitList)
-                    {
-                        string fixedName = j.Replace(" ", "_");
-                        
-                        if (w.JobName == j || w.JobName == fixedName)
-                        {
-                            DateTime.TryParse(w.StartTime, out DateTime startTime);
-                            DateTime.TryParse(w.EndTime, out DateTime endTime);
-                            DateTime now = DateTime.Now;
-                            double startDiff = (now - startTime).TotalDays;
-                            double endDiff = (now - endTime).TotalDays;
 
-                            if (endDiff < 7 || startDiff < 7)
+                    if (_checkLogs)
+                    {
+                        waitList = csv.WaitsCsvReader();
+
+
+                        foreach (var w in waitList)
+                        {
+                            string fixedName = j.Replace(" ", "_");
+
+                            if (w.JobName == j || w.JobName == fixedName)
                             {
-                                TimeSpan.TryParse(w.Duration, out TimeSpan duration);
-                                tList.Add(duration);
+                                DateTime.TryParse(w.StartTime, out DateTime startTime);
+                                DateTime.TryParse(w.EndTime, out DateTime endTime);
+                                DateTime now = DateTime.Now;
+                                double startDiff = (now - startTime).TotalDays;
+                                double endDiff = (now - endTime).TotalDays;
+
+                                if (endDiff < 7 || startDiff < 7)
+                                {
+                                    TimeSpan.TryParse(w.Duration, out TimeSpan duration);
+                                    tList.Add(duration);
+                                }
                             }
                         }
+                        string mWait = tList.Max().ToString(@"dd\.hh\:mm\:ss");
+                        info.maxWait = mWait;
+
+                        var avg = tList.Average(x => x.Ticks);
+                        long longAvg = Convert.ToInt64(avg);
+                        TimeSpan t = new TimeSpan(longAvg);
+                        info.avgwait = t.ToString(@"dd\.hh\:mm\:ss");
+                        info.waitCount = tList.Count();
                     }
-                    string mWait = tList.Max().ToString(@"dd\.hh\:mm\:ss");
-                    info.maxWait = mWait;
 
-                    var avg = tList.Average(x => x.Ticks);
-                    long longAvg = Convert.ToInt64(avg);
-                    TimeSpan t = new TimeSpan(longAvg);
-                    info.avgwait = t.ToString(@"dd\.hh\:mm\:ss");
-                    info.waitCount = tList.Count();
 
-                    //if (_waits.Count != 0)
-                    //{
-                    //    _waits.TryGetValue(j, out List<TimeSpan> r);
-                    //    if (r == null)
-                    //    {
-                    //        string fixedName = j.Replace(" ", "_");
-                    //        _waits.TryGetValue(fixedName, out r);
-                    //    }
 
-                    //    //if (r.Count !=0)
-                    //    //{
-                    //    //    //do
-                    //    //}
-                    //    //var v = r.Max();
-                        
 
-                    //}
 
                 }
                 catch (Exception e) { }
@@ -184,8 +178,8 @@ namespace VeeamHealthCheck.Html
                             type = c.JobType;
                         }
                     }
-                    catch(Exception e) { }
-                   
+                    catch (Exception e) { }
+
                 }
                 List<TimeSpan> nonZeros = new();
                 foreach (var du in durations)
@@ -200,7 +194,7 @@ namespace VeeamHealthCheck.Html
                 try
                 {
                     info.sessionCount = (int)sessionCount;
-                    if(sessionCount != 0)
+                    if (sessionCount != 0)
                     {
                         double percent = ((sessionCount - fails) / sessionCount) * 100;
                         info.SuccessRate = (int)Math.Round(percent, 0, MidpointRounding.ToEven);
@@ -294,7 +288,7 @@ namespace VeeamHealthCheck.Html
 
                     extElement.Add(xml);
                 }
-                catch(Exception e) { }
+                catch (Exception e) { }
             }
 
             var summaryXml = new XElement("session",
@@ -321,7 +315,7 @@ namespace VeeamHealthCheck.Html
 
         private static CJobSummaryTypes SetBackupDataSizes(CJobSummaryTypes info, List<double> dataSize, List<double> backupSize)
         {
-            if(backupSize.Count != 0)
+            if (backupSize.Count != 0)
             {
                 info.MinBackupSize = backupSize.Min() / 1024;
                 info.MaxBackupSize = backupSize.Max() / 1024;
@@ -333,8 +327,8 @@ namespace VeeamHealthCheck.Html
                 info.MaxBackupSize = 0;
                 info.AvgBackupSize = 0;
             }
-            
-            if(dataSize.Count != 0)
+
+            if (dataSize.Count != 0)
             {
                 info.MinDataSize = dataSize.Min() / 1024;
                 info.MaxDataSize = dataSize.Max() / 1024;
@@ -346,7 +340,7 @@ namespace VeeamHealthCheck.Html
                 info.MaxDataSize = 0;
                 info.AvgDataSize = 0;
             }
-            return info;   
+            return info;
         }
 
         private int SplitDurationToMinutes(string duration)

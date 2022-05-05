@@ -20,48 +20,47 @@ namespace VeeamHealthCheck.Reporting.Html
 {
     class CDataFormer
     {
-        private static readonly string _testFile = "xml\\vbr.xml";
-        private static string _outPath = CVariables.unsafeDir;
-        private static readonly string _backupServerId = "6745a759-2205-4cd2-b172-8ec8f7e60ef8";
-        private static string _backupServerName;
-        private static bool _isBackupServerProxy;
-        private static bool _isBackupServerRepo;
-        private static bool _isBackupServerWan;
-        private static CQueries _cq = new();
-        private static Dictionary<string, int> _repoJobCount;
-        private static CXmlHandler _scrubber;
-        private static bool _scrub;
-        private static bool _checkLogs;
-        private static bool _isImport;
+        private readonly string _testFile = "xml\\vbr.xml";
+        private string _outPath = CVariables.unsafeDir;
+        private readonly string _backupServerId = "6745a759-2205-4cd2-b172-8ec8f7e60ef8";
+        private string _backupServerName;
+        private bool _isBackupServerProxy;
+        private bool _isBackupServerRepo;
+        private bool _isBackupServerWan;
+        //private CQueries _cq = new();
+        private Dictionary<string, int> _repoJobCount;
+        private CXmlHandler _scrubber;
+        private bool _scrub;
+        private bool _checkLogs;
+        private bool _isImport;
 
         //Security Summary parts
-        private static bool _backupsEncrypted = false;
-        private static bool _immuteFound = false;
-        private static bool _trafficEncrypted = false;
-        private static bool _configBackupEncrypted = false;
+        private bool _backupsEncrypted = false;
+        private bool _immuteFound = false;
+        private bool _trafficEncrypted = false;
+        private bool _configBackupEncrypted = false;
 
-        private static bool _isSqlLocal;
-        private static int _cores;
-        private static int _ram;
-
-        private static CDataTypesParser _dTypeParser;
-        private static readonly CCsvParser _csvParser = new();
-        private static readonly CLogger log = MainWindow.log;
-
-        private static CHtmlExporter exporter;
-        private static readonly CXmlFunctions XML;
+        private bool _isSqlLocal;
+        private int _cores;
+        private int _ram;
+        private CDataTypesParser _dTypeParser;
+        private readonly CCsvParser _csvParser = new();
+        private readonly CLogger log = MainWindow.log;
+        private CHtmlExporter exporter;
+        private readonly CXmlFunctions XML;
 
         //privatstatic e readonly string _styleSheet = "StyleSheets\\vbr-Report.xsl";
-        private static readonly string _styleSheet = "StyleSheets\\myHtml.xsl";
+        private static readonly string _styleSheet = "Reporting\\StyleSheets\\myHtml.xsl";
 
         public void ConvertToXml()
         {
             _dTypeParser = new();
             //Work();
         }
-        public CDataFormer() // add string mode input
+        public CDataFormer(bool isImport) // add string mode input
         {
-            //_dTypeParser = new();
+            _dTypeParser = new();
+            _isImport = isImport;
             //XML = new("vbr");
             //SetGlobalVariables(scrub, checkLogs, openHtml, isImport);
             //ConvertToXml();
@@ -77,8 +76,6 @@ namespace VeeamHealthCheck.Reporting.Html
             _scrub = scrub;
 
             _checkLogs = checkLogs;
-            if (!isImport)
-                _cq = new();
         }
 
 
@@ -430,7 +427,7 @@ namespace VeeamHealthCheck.Reporting.Html
         }
         public List<string> BackupServerInfoToXml()
         {
-            
+
             log.Info("converting backup server info to xml");
             List<string> list = new List<string>();
 
@@ -487,9 +484,9 @@ namespace VeeamHealthCheck.Reporting.Html
                 {
                     log.Info("starting sql queries");
                     //CQueries cq = _cq;
-                    si = _cq.SqlServerInfo;
-                    edition = _cq.SqlEdition;
-                    version = _cq.SqlVerion;
+                    //si = _cq.SqlServerInfo;
+                    //edition = _cq.SqlEdition;
+                    //version = _cq.SqlVerion;
                     //veeamVersion = _cq.VbrVersion;
                     log.Info("starting sql queries..done!");
                 }
@@ -1033,20 +1030,20 @@ namespace VeeamHealthCheck.Reporting.Html
                 }
                 if (!_isImport)
                 {
-                    try
-                    {
-                        foreach (DataRow r in _cq.JobTypes.Rows)
-                        {
-                            string typeString = r["type"].ToString();
-                            int.TryParse(typeString, out int i);
-                            types.Add((CModel.EDbJobType)i);
-                        }
-                    }
-                    catch (Exception e)
-                    {
-                        log.Error("Error processing SQL JobTypes:");
-                        log.Error(e.Message);
-                    }
+                    //try
+                    //{
+                    //    foreach (DataRow r in _cq.JobTypes.Rows)
+                    //    {
+                    //        string typeString = r["type"].ToString();
+                    //        int.TryParse(typeString, out int i);
+                    //        types.Add((CModel.EDbJobType)i);
+                    //    }
+                    //}
+                    //catch (Exception e)
+                    //{
+                    //    log.Error("Error processing SQL JobTypes:");
+                    //    log.Error(e.Message);
+                    //}
                 }
 
                 Dictionary<string, int> typeSummary = new();
@@ -1769,14 +1766,14 @@ namespace VeeamHealthCheck.Reporting.Html
             _repoJobCount = repoJobCount;
         }
 
-        private static void ResetRoles()
+        private  void ResetRoles()
         {
             _isBackupServerWan = false;
             _isBackupServerRepo = false;
             _isBackupServerProxy = false;
             //_isBackupServerProxyDisabled = false;
         }
-        private static void CheckServerRoles(string serverId)
+        private  void CheckServerRoles(string serverId)
         {
             //log.Info("Checking server roles..");
             ResetRoles();
@@ -1807,7 +1804,7 @@ namespace VeeamHealthCheck.Reporting.Html
             }
             //log.Info("Checking server roles..done!");
         }
-        private static bool CheckProxyRole(string serverId)
+        private  bool CheckProxyRole(string serverId)
         {
             var viProxy = _csvParser.GetDynViProxy();
             var hvProxy = _csvParser.GetDynHvProxy();
@@ -1836,7 +1833,7 @@ namespace VeeamHealthCheck.Reporting.Html
             }
             return false;
         }
-        private static string Scrub(string item)
+        private  string Scrub(string item)
         {
             return _scrubber.ScrubItem(item);
         }
