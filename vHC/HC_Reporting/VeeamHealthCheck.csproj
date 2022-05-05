@@ -25,14 +25,18 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Remove="Softwares\**" />
     <Compile Remove="VBO\**" />
+    <EmbeddedResource Remove="Softwares\**" />
     <EmbeddedResource Remove="VBO\**" />
+    <None Remove="Softwares\**" />
     <None Remove="VBO\**" />
+    <Page Remove="Softwares\**" />
     <Page Remove="VBO\**" />
   </ItemGroup>
 
   <ItemGroup>
-    <None Remove="Html\JavaScript1.js" />
+    <None Remove="Reporting\Html\JavaScript1.js" />
     <None Remove="Resources\vhcres.resources" />
     <None Remove="RVTools4.1.4.msi" />
     <None Remove="Tools\Get-VBRConfig - Copy.ps1" />
@@ -50,10 +54,13 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Content Include="Get-VBRConfig.ps1">
+    <Content Include="Reporting\Html\JavaScript1.js">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Tools\Scripts\Get-VBRConfig.ps1">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
-    <Content Include="Get-VeeamSessionReport.ps1">
+    <Content Include="Tools\Scripts\Get-VeeamSessionReport.ps1">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
     <Content Include="Tools\Veeam.Hotfix.Detector.zip">
@@ -62,10 +69,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Content Include="Html\JavaScript1.js">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
-    <EmbeddedResource Include="Resources\vhcres.resources">
+    <EmbeddedResource Include="Resources\Localization\vhcres.resources">
       <Generator></Generator>
     </EmbeddedResource>
     <Content Include="Tools\Scripts\Collect-VB365Data.ps1">
@@ -74,13 +78,13 @@
   </ItemGroup>
 
   <ItemGroup>
-    <None Update="Resources\vhcres.txt">
+    <None Update="Resources\Localization\vhcres.txt">
       <Generator></Generator>
     </None>
-    <None Update="StyleSheets\m365-Report.xsl">
+    <None Update="Reporting\StyleSheets\m365-Report.xsl">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <None Update="StyleSheets\vbr-Report.xsl">
+    <None Update="Reporting\StyleSheets\vbr-Report.xsl">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
     <None Update="Veeam_HealthCheck_228x228.ico">
@@ -89,8 +93,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="Softwares\VB365\CsvHandlers\" />
-    <Folder Include="Softwares\VBR\" />
+    <Folder Include="Startup\GUI\" />
   </ItemGroup>
 
 </Project>

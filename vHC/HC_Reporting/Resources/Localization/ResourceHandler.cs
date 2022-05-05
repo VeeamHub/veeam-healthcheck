@@ -9,10 +9,12 @@ namespace VeeamHealthCheck
 {
     class ResourceHandler
     {
-        private static ResourceManager m4 = new("VeeamHealthCheck.Resources.vhcres", typeof(ResourceHandler).Assembly);
+        private static ResourceManager m4 = new("VeeamHealthCheck.Resources.Localization.vhcres", typeof(ResourceHandler).Assembly);
 
         public static string GuiAcceptButton = m4.GetString("GuiAcceptButton");
+        public static string GuiAcceptText = m4.GetString("GuiAcceptText");
         public static string GuiImportButton = m4.GetString("GuiImportButton");
+        public static string GuiImportModeOnly = m4.GetString("GuiImportModeOnly");
         public static string GuiInstCaveat1 = m4.GetString("GuiInstCaveat1");
         public static string GuiInstCaveat2 = m4.GetString("GuiInstCaveat2");
         public static string GuiInstHeader = m4.GetString("GuiInstHeader");
@@ -524,9 +526,6 @@ namespace VeeamHealthCheck
         public static string JssNote8 = m4.GetString("JssNote8");
         public static string JssNote9 = m4.GetString("JssNote9");
         public static string JssNote10 = m4.GetString("JssNote10");
-
-
-
 
     }
 }

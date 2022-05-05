@@ -11,6 +11,7 @@ using VeeamHealthCheck.DB;
 using VeeamHealthCheck.Shared.Logging;
 using System.Threading;
 
+
 namespace VeeamHealthCheck
 {
     /// <summary>
@@ -30,47 +31,29 @@ namespace VeeamHealthCheck
         private bool _isVb365 = false;
         public MainWindow(string[] args)
         {
-            // do not use this method..
-            InitializeComponent();
-            SetPathBoxText(CVariables.unsafeDir);
-            //testing new UI
-            //Wizard_1 w = new();
-            //w.Show();
 
-            //testing password lock
-            //DecryptSystem();
-
-            //maybe disable for mass distrib?
-            //importButton.IsEnabled = false;
-
-            //core functions
-            PreCheck();
-            hideProgressBar();
-            run.IsEnabled = false;
         }
         public MainWindow()
         {
             InitializeComponent();
+            
+            SetUi();
+
+
+        }
+        private void SetUi()
+        {
             ModeCheck();
+            PreCheck();
 
             SetUiText();
 
-            SetPathBoxText(CVariables.unsafeDir);
-            //testing new UI
-            //Wizard_1 w = new();
-            //w.Show();
-
-            //testing password lock
-            //DecryptSystem();
-
-            //maybe disable for mass distrib?
-            //importButton.IsEnabled = false;
-
-            //core functions
-            PreCheck();
             hideProgressBar();
             run.IsEnabled = false;
         }
+
+        #region UI Functions
+
         private void SetUiText()
         {
             this.InsHeader.Text = ResourceHandler.GuiInstHeader;
@@ -91,7 +74,10 @@ namespace VeeamHealthCheck
             this.run.Content = ResourceHandler.GuiRunButton;
             this.importButton.Content = ResourceHandler.GuiImportButton;
 
-            this.Title = ResourceHandler.GuiTitle;
+            //this.Title = ResourceHandler.GuiTitle;
+
+
+            SetPathBoxText(CVariables.unsafeDir);
 
         }
 
@@ -100,21 +86,7 @@ namespace VeeamHealthCheck
             pathBox.Text = text;
             _path = text;
         }
-        private void DecryptSystem()
-        {
-            //        string input =
-            //Microsoft.VisualBasic.Interaction.InputBox("My Prompt",
-            //                                           "The Title",
-            //                                           "",
-            //                                           -1, -1);
 
-
-            //if (!String.IsNullOrEmpty(input))
-            //{
-            //    if (input != "HealthCheck!")
-            //        Environment.Exit(0);
-            //}
-        }
         private void hideProgressBar()
         {
             this.Dispatcher.Invoke((Action)(() =>
@@ -131,9 +103,12 @@ namespace VeeamHealthCheck
                 pBar.Visibility = Visibility.Visible;
             }));
         }
+        #endregion
+
+        #region Buttons
         private void Import()
         {
-            CModeSelector cMode = new(_desiredPath, _scrub, _openHtml, true);
+            CReportModeSelector cMode = new(_desiredPath, _scrub, _openHtml, true);
             cMode.Run();
 
             //CCsvToXml c = new();
@@ -142,15 +117,28 @@ namespace VeeamHealthCheck
             //c.ConvertToXml(_scrub, false, _openHtml, true);
             //c.Dispose();
         }
+        private void Import_click(object sender, RoutedEventArgs e)
+        {
+            //   Import();
+            LogUIAction("PopulateData");
+            showProgressBar();
 
-        private void JustRun()
+            System.Threading.Tasks.Task.Factory.StartNew(() =>
+            {
+                Import();
+            }).ContinueWith(t =>
+            {
+                hideProgressBar();
+            });
+
+        }
+        private void RunAction()
         {
             log.Info("Starting Run");
-            Run();
-            bool import = false;
+            ExecPsScripts();
 
 
-            CModeSelector cMode = new(_desiredPath, _scrub, _openHtml, import);
+            CReportModeSelector cMode = new(_desiredPath, _scrub, _openHtml, false); ;
             cMode.Run();
             //CCsvToXml c = new();
             //c.ConvertToXml(_scrub, true, _openHtml, false);
@@ -158,7 +146,42 @@ namespace VeeamHealthCheck
             log.Info("Starting Run..done!");
 
         }
-        private void Run()
+        private void run_Click(object sender, RoutedEventArgs e)
+        {
+            //if (!IsVbrServer())
+            //{
+            //    string msg = "Server is not VBR Server. Please run the program on the actual VBR server";
+            //    MessageBox.Show(msg);
+            //    log.Error(msg);
+            //    Environment.Exit(0);
+            //}
+            LogUIAction("PopulateData");
+            showProgressBar();
+
+            System.Threading.Tasks.Task.Factory.StartNew(() =>
+            {
+                RunAction();
+                //Import();
+                //JustRunNoPs();
+            }).ContinueWith(t =>
+            {
+                hideProgressBar();
+            });
+        }
+        private void AcceptButton_click(object sender, RoutedEventArgs e)
+        {
+            string message = ResourceHandler.GuiAcceptText;
+
+            var res = MessageBox.Show(message, "Terms", MessageBoxButton.YesNo);
+            if (res.ToString() == "Yes")
+            {
+                EnableRun();
+            }
+
+        }
+
+        #endregion
+        private void ExecPsScripts()
         {
             log.Info("Starting PS Invoke");
             PSInvoker p = new PSInvoker();
@@ -167,11 +190,11 @@ namespace VeeamHealthCheck
             {
                 try
                 {
+                    log.Info("Entering vbr ps invoker");
                     p.Invoke(_collectSessionData);
                 }
                 catch (Exception ex)
                 {
-                    MessageBox.Show(ex.Message);
                     log.Error(ex.Message);
                 }
             }
@@ -179,6 +202,7 @@ namespace VeeamHealthCheck
             {
                 try
                 {
+                    log.Info("Entering vb365 ps invoker");
                     p.InvokeVb365Collect();
                 }
                 catch (Exception ex) { log.Error(ex.Message); }
@@ -186,34 +210,33 @@ namespace VeeamHealthCheck
 
             log.Info("Starting PS Invoke...done!");
         }
-        private void RunVbr()
-        {
-
-        }
-        private void RunVb365()
-        {
-
-        }
         private void ModeCheck()
         {
+            string title = ResourceHandler.GuiTitle;
             var processes = Process.GetProcesses();
             foreach (var process in processes)
             {
                 if (process.ProcessName == "Veeam.Archiver.Service")
                 {
-                    this.Title = this.Title + " " + ResourceHandler.GuiTitleVB365;
+                    
                     _isVb365 = true;
+                    log.Info("VB365 software detected");
                 }
                 if (process.ProcessName == "Veeam.Backup.Service")
                 {
-                    this.Title = this.Title + " " + ResourceHandler.GuiTitleBnR;
                     _isVbr = true;
+                    log.Info("VBR software detected");
                 }
-                if (_isVbr && _isVb365)
-                {
-                    this.Title = ResourceHandler.GuiTitle + " " + ResourceHandler.GuiTitleBnR + " & " + ResourceHandler.GuiTitleVB365;
-                }
+
             }
+            if(_isVbr)
+                this.Title = title + " - " + ResourceHandler.GuiTitleBnR;
+            if(_isVb365)
+                this.Title = title + " - " + ResourceHandler.GuiTitleVB365;
+            if (_isVbr && _isVb365)
+                this.Title = title + " - " + ResourceHandler.GuiTitleBnR + " & " + ResourceHandler.GuiTitleVB365;
+            if (!_isVb365 && !_isVbr)
+                this.Title = title + " - " + ResourceHandler.GuiImportModeOnly;
         }
         private void PreCheck()
         {
@@ -234,8 +257,10 @@ namespace VeeamHealthCheck
         {
             try
             {
-                CRegReader rr = new();
-                return true;
+                if (_isVbr)
+                    return true;
+                else
+                    return false;
             }
             catch (Exception e)
             {
@@ -248,57 +273,12 @@ namespace VeeamHealthCheck
             log.Info(s);
         }
 
-
-        private void run_Click(object sender, RoutedEventArgs e)
-        {
-            if (!IsVbrServer())
-            {
-                string msg = "Server is not VBR Server. Please run the program on the actual VBR server";
-                MessageBox.Show(msg);
-                log.Error(msg);
-                Environment.Exit(0);
-            }
-            LogUIAction("PopulateData");
-            showProgressBar();
-
-            System.Threading.Tasks.Task.Factory.StartNew(() =>
-            {
-                JustRun();
-                //Import();
-                //JustRunNoPs();
-            }).ContinueWith(t =>
-            {
-                hideProgressBar();
-            });
-        }
-
-
-
-
-
-        private void Button_Click(object sender, RoutedEventArgs e)
-        {
-            string message = "This tool is offered as a free utility to assess your Veeam Configuration. It is offered \"at your own risk\"." +
-                "\n\nThe tool will engage PowerShell and SQL to gather data and then output files and folders to local disk." +
-                "\n\nThe files may be anonymized to hide sensitive data. Accepting the Terms means that the user agrees to execute this program in its full capacity.";
-
-            var res = MessageBox.Show(message, "Terms", MessageBoxButton.YesNo);
-            if (res.ToString() == "Yes")
-            {
-                EnableRun();
-            }
-
-        }
-        private void EnableRun()
-        {
-            run.IsEnabled = true;
-        }
+        #region Check Boxes
         private void HandleCheck(object sender, RoutedEventArgs e)
         {
             _scrub = true;
             SetPathBoxText(CVariables.safeDir);
         }
-
         private void htmlChecked(object sender, RoutedEventArgs e)
         {
             //export HTML
@@ -314,43 +294,30 @@ namespace VeeamHealthCheck
             SetPathBoxText(CVariables.unsafeDir);
             _scrub = false;
         }
-
         private void HandleThirdState(object sender, RoutedEventArgs e)
         {
             // do nothing
             _scrub = false;
         }
-        private void Import(object sender, RoutedEventArgs e)
-        {
-            //   Import();
-            LogUIAction("PopulateData");
-            showProgressBar();
-
-            System.Threading.Tasks.Task.Factory.StartNew(() =>
-            {
-                Import();
-            }).ContinueWith(t =>
-            {
-                hideProgressBar();
-            });
-
-        }
-
         private void CheckBox_Checked(object sender, RoutedEventArgs e)
         {
 
         }
-
         private void explorerShowBox_Checked(object sender, RoutedEventArgs e)
         {
             _openExplorer = true;
         }
-
         private void explorerShowBox_Unchecked(object sender, RoutedEventArgs e)
         {
             _openExplorer = false;
         }
 
+        #endregion
+
+        private void EnableRun()
+        {
+            run.IsEnabled = true;
+        }
         private void kbLink_RequestNavigate(object sender, System.Windows.Navigation.RequestNavigateEventArgs e)
         {
             //Process.Start(e.Uri.ToString());
@@ -369,7 +336,6 @@ namespace VeeamHealthCheck
 
             log.Info("opening kb_link..done!");
         }
-
         private void pathBox_TextChanged(object sender, TextChangedEventArgs e)
         {
             _desiredPath = pathBox.Text;

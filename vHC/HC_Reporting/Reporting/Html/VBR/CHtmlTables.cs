@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using VeeamHealthCheck.CsvHandlers;
+using VeeamHealthCheck.Reporting.Html;
 
 namespace VeeamHealthCheck.Html.VBR
 {
@@ -127,7 +128,7 @@ namespace VeeamHealthCheck.Html.VBR
                 TableHeader(ResourceHandler.SSHdr3, ResourceHandler.SSHdrTT3) +
                 "</tr>" +
                 "<tr>";
-            var df = new CDataFormer();
+            CDataFormer df = new();
             List<int> list = df.SecSummary();
 
             for(int i = 0; i < list.Count(); i++)

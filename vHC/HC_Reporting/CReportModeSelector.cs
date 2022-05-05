@@ -1,20 +1,17 @@
-﻿using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using System.IO;
 using VeeamHealthCheck.Html;
+using VeeamHealthCheck.Shared.Logging;
 
 namespace VeeamHealthCheck
 {
-    internal class CModeSelector
+    internal class CReportModeSelector
     {
         private readonly string _path;
         private readonly bool _scrub;
         private readonly bool _openHtml;
         private readonly bool _import;
-        public CModeSelector(string path, bool scrub, bool openHtml, bool import)
+        private CLogger _log = MainWindow.log;
+        public CReportModeSelector(string path, bool scrub, bool openHtml, bool import)
         {
             _path = path;
             _scrub = scrub;
@@ -27,13 +24,15 @@ namespace VeeamHealthCheck
         }
         private void FileChecker()
         {
-            if(Directory.Exists(CVariables.vb365dir))
+            _log.Info("Checking output directories..");
+            if (Directory.Exists(CVariables.vb365dir))
                 StartM365Report();
-            if(Directory.Exists(CVariables.vbrDir))
+            if (Directory.Exists(CVariables.vbrDir))
                 StartVbrReport();
         }
         private void StartVbrReport()
         {
+            _log.Info("Starting B&R report generation");
             if (!_import)
             {
                 CCsvToXml c = new("vbr", _scrub, true, _openHtml, _import);
@@ -43,6 +42,7 @@ namespace VeeamHealthCheck
         }
         private void StartVbrReportImport()
         {
+            _log.Info("Running report in import mode");
             CCsvToXml c = new("vbr", _scrub, false, _openHtml, true);
 
             //choose VBO or VBR
@@ -50,6 +50,7 @@ namespace VeeamHealthCheck
         }
         private void StartM365Report()
         {
+            _log.Info("Starting VB365 Report genration");
             //CCsvToXml m = new CCsvToXml("m365", _scrub, false, _openHtml, true);
             CM365Converter converter = new CM365Converter(_scrub);
         }

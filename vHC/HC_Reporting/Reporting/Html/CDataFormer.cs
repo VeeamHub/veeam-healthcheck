@@ -9,12 +9,14 @@ using System.Xml.Linq;
 using VeeamHealthCheck.CsvHandlers;
 using VeeamHealthCheck.DataTypes;
 using VeeamHealthCheck.DB;
+using VeeamHealthCheck.Html;
 using VeeamHealthCheck.RegSettings;
 using VeeamHealthCheck.Scrubber;
 using VeeamHealthCheck.Shared.Logging;
 using static VeeamHealthCheck.DB.CModel;
 
-namespace VeeamHealthCheck.Html
+
+namespace VeeamHealthCheck.Reporting.Html
 {
     class CDataFormer
     {
@@ -25,7 +27,7 @@ namespace VeeamHealthCheck.Html
         private static bool _isBackupServerProxy;
         private static bool _isBackupServerRepo;
         private static bool _isBackupServerWan;
-        private static CQueries _cq;
+        private static CQueries _cq = new();
         private static Dictionary<string, int> _repoJobCount;
         private static CXmlHandler _scrubber;
         private static bool _scrub;
@@ -59,7 +61,7 @@ namespace VeeamHealthCheck.Html
         }
         public CDataFormer() // add string mode input
         {
-            _dTypeParser = new();
+            //_dTypeParser = new();
             //XML = new("vbr");
             //SetGlobalVariables(scrub, checkLogs, openHtml, isImport);
             //ConvertToXml();
@@ -258,43 +260,9 @@ namespace VeeamHealthCheck.Html
 
             return secSummary;
 
-            //XDocument doc = XDocument.Load(_testFile);
 
-            //XElement extElement = new XElement("secSummary");
-            //doc.Root.Add(extElement);
-
-
-            //var xml = new XElement("secProfile",
-            //    new XElement("immute", _immuteFound),
-            //    new XElement("trafficEnc", _trafficEncrypted),
-            //    new XElement("configEnc", _configBackupEncrypted),
-            //    new XElement("backupEnc", _backupsEncrypted)
-            //    );
-
-            //extElement.Add(xml);
-            //doc.Save(_testFile);
         }
-        //private void FilterAndCountTypes()
-        //{
-        //    List<string> types = _typeList;
-        //    types.Sort();
-        //    foreach (var type in types)
-        //    {
-        //        int i = 0;
-        //        if (!_serverSummaryInfo.ContainsKey(type))
-        //        {
-        //            foreach (var t in types)
-        //            {
-        //                if (type == t)
-        //                {
-        //                    i++;
-        //                }
-        //            }
-        //            _serverSummaryInfo.Add(type, i);
-        //        }
 
-        //    }
-        //}
         private void ServerSummaryToXml()
         {
             log.Info("converting server summary to xml");
@@ -462,6 +430,7 @@ namespace VeeamHealthCheck.Html
         }
         public List<string> BackupServerInfoToXml()
         {
+            
             log.Info("converting backup server info to xml");
             List<string> list = new List<string>();
 

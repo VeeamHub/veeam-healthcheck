@@ -49,8 +49,8 @@ namespace VeeamHealthCheck.Html
         private CHtmlExporter exporter;
         private readonly CXmlFunctions XML;
 
-        //private readonly string _styleSheet = "StyleSheets\\vbr-Report.xsl";
-        private readonly string _styleSheet = "StyleSheets\\myHtml.xsl";
+        private readonly string _styleSheet = "StyleSheets\\vbr-Report.xsl";
+        //private readonly string _styleSheet = "StyleSheets\\myHtml.xsl";
 
         public void ConvertToXml()
         {

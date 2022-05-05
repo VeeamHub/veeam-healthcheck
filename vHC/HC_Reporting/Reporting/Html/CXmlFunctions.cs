@@ -135,10 +135,6 @@ namespace VeeamHealthCheck.Html
             //end test area
 
             log.Info("converting header info to xml");
-            ResourceManager rm = new("VeeamHealthCheck.Resources", typeof(MainWindow).Assembly);
-
-            string cxName = GetLicNameForHeader();
-            
 
             XDocument doc = new XDocument(new XElement("root"));
 
