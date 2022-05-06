@@ -21,7 +21,7 @@ namespace VeeamHealthCheck.Html
         private string _xmlFile = "xml\\m365.xml";
         private CHtmlExporter _exporter;
         private string _ServerName = "M365-Server";
-        private string _styleSheet = "StyleSheets\\m365-Report.xsl";
+        private string _styleSheet = "Reporting\\StyleSheets\\m365-Report.xsl";
         private XDocument _doc;
         private bool _scrub;
         private CXmlHandler _scrubber;

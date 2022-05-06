@@ -1,13 +1,16 @@
 Clear-Host
-# *************** SETTINGS *************** #
-$global:DEBUG = $true
-$global:SKIP_COLLECT = $false
-$global:EXPORT_JSON = $false
-$global:EXPORT_XML = $false
-$global:OUTPUT_PATH = "C:\temp\vHC\VB365"
-$global:REPORTING_INTERVAL_DAYS = 7
-$global:VBO_SERVER_FQDN_OR_IP = "drt-vbo-1.drt.davidtosoff.com."
-# *************** END SETTINGS *************** #
+
+#### CUSTOM SETTINGS CAN BE APPLIED IN "ControllerConfig.json" ####
+
+$global:SETTINGS = '{"Debug":false,"SkipCollect":false,"ExportJson":false,"ExportXml":false,"OutputPath":"C:\\temp\\vHC\\Original\\VB365","ReportingIntervalDays":7,"VBOServerFqdnOrIp":"localhost"}' | ConvertFrom-Json
+if (Test-Path ($global:SETTINGS.OutputPath + "\CollectorConfig.json")) {
+    [pscustomobject]$json = Get-Content -Path ($global:SETTINGS.OutputPath + "\CollectorConfig.json") | ConvertFrom-Json
+    foreach ($property in $json.PSObject.Properties) {
+        $global:SETTINGS.($property.Name) = $json.($property.Name)
+    }
+} else {
+    $global:SETTINGS | ConvertTo-Json | Out-File -FilePath ($global:SETTINGS.OutputPath + "\CollectorConfig.json") -Force
+}
 
 <#
 function Function-Template {
@@ -32,7 +35,7 @@ function Write-LogFile {
         )
     begin { }
     process {
-        (get-date).ToString("yyyy-MM-dd hh:mm:ss") + "`t-`t" + $Message | Out-File -FilePath ($global:OUTPUT_PATH.Trim('\') + "\Collector" + $LogName + ".log") -Append
+        (get-date).ToString("yyyy-MM-dd hh:mm:ss") + "`t-`t" + $Message | Out-File -FilePath ($global:SETTINGS.OutputPath.Trim('\') + "\Collector" + $LogName + ".log") -Append
     }
     end { }
 }
@@ -65,7 +68,7 @@ function Lap {
 
         $message = "$($Note): $($stopwatch.Elapsed.TotalSeconds)"
         
-        if ($global:DEBUG) {
+        if ($global:SETTINGS.Debug) {
             Write-Host -ForegroundColor Yellow $message
         }
 
@@ -77,11 +80,6 @@ function Lap {
 }
 
 function Join([string[]]$array, $Delimiter=", ") {
-    #$output = ""
-    #foreach ($item in $array) {
-    #    $output += $item + ", "
-    #}
-    #return $output
     return $array -join $Delimiter
 }
 
@@ -106,8 +104,6 @@ function Expand-Expression {
                 $expandedExpression = $split[1].Replace('$.','$BaseObject.')
             } else {
                 $result.ColumnName = $Expression.Replace('$.','')
-
-                #$expandedExpression = '$.'+$Expression
             }
 
             if ($expandedExpression.Replace(" ","").Contains('+"')) {
@@ -140,7 +136,7 @@ function Expand-Expression {
                 if ($null -eq $result.value -and $null -ne $BaseObject) {
                     
                     $message = "$expression produced no result."
-                    if ($global:DEBUG) { 
+                    if ($global:SETTINGS.Debug) { 
                         Write-Warning $message
                     }
 
@@ -151,7 +147,7 @@ function Expand-Expression {
             } catch {
 
                 $message = "$expression not valid."
-                if ($global:DEBUG) { 
+                if ($global:SETTINGS.Debug) { 
                     Write-Warning "$expression not valid."
                     ($Error | Select-Object -Last 1).ToString()
                 }
@@ -379,7 +375,7 @@ function Get-VBOEnvironment {
         $e.VBORepository = Get-VBORepository
         $e.VBOObjectStorageRepository = Get-VBOObjectStorageRepository
         $e.VBOProxy = Get-VBOProxy
-        $e.AzureInstance = Invoke-RestMethod -Headers @{"Metadata"="true"} -Method GET -Uri "http://169.254.169.254/metadata/instance?api-version=2021-02-01"
+        $e.AzureInstance = Invoke-RestMethod -Headers @{"Metadata"="true"} -Method GET -Uri "http://169.254.169.254/metadata/instance?api-version=2021-02-01" -ErrorAction SilentlyContinue
         Write-MemoryUsageToLog -Message "Infra collected"
 
         #Archiver applainces
@@ -465,10 +461,10 @@ function Get-VBOEnvironment {
         #reports
         Lap "Collection: Generating Reports..."
         Write-Progress @progressSplat -PercentComplete ($progress++) -CurrentOperation "Generating reports..."
-        Get-ChildItem -Path ($global:OUTPUT_PATH + "\Veeam_*Report*.csv") | Remove-Item -Force
-        $e.VBOOrganization | ForEach-Object { Get-VBOMailboxProtectionReport -Organization $_ -Path $global:OUTPUT_PATH -Format CSV }
-        $e.VBOOrganization | ForEach-Object { Get-VBOStorageConsumptionReport -StartTime (Get-Date).AddDays(-$global:REPORTING_INTERVAL_DAYS) -EndTime (Get-Date) -Path $global:OUTPUT_PATH -Format CSV }
-        $e.VBOOrganization | ForEach-Object { Get-VBOLicenseOverviewReport -StartTime (Get-Date).AddDays(-$global:REPORTING_INTERVAL_DAYS) -EndTime (Get-Date) -Path $global:OUTPUT_PATH -Format CSV }
+        Get-ChildItem -Path ($global:SETTINGS.OutputPath + "\Veeam_*Report*.csv") | Remove-Item -Force
+        $e.VBOOrganization | ForEach-Object { Get-VBOMailboxProtectionReport -Organization $_ -Path $global:SETTINGS.OutputPath -Format CSV; Start-Sleep -Seconds 1.1 }
+        $e.VBOOrganization | ForEach-Object { Get-VBOStorageConsumptionReport -StartTime (Get-Date).AddDays(-$global:SETTINGS.ReportingIntervalDays) -EndTime (Get-Date) -Path $global:SETTINGS.OutputPath -Format CSV; Start-Sleep -Seconds 1.1 }
+        $e.VBOOrganization | ForEach-Object { Get-VBOLicenseOverviewReport -StartTime (Get-Date).AddDays(-$global:SETTINGS.ReportingIntervalDays) -EndTime (Get-Date) -Path $global:SETTINGS.OutputPath -Format CSV; Start-Sleep -Seconds 1.1 }
         Write-MemoryUsageToLog -Message "Reports generated"
 
         Lap "Collection: Parse VMC Log..."
@@ -504,40 +500,40 @@ Write-LogFile ""
 
 # Import modules & connect to server
 Import-Module -Name Veeam.Archiver.PowerShell,Veeam.Exchange.PowerShell,Veeam.SharePoint.PowerShell,Veeam.Teams.PowerShell
-if ($global:VBO_SERVER_FQDN_OR_IP -ne "localhost") {
+if ($global:SETTINGS.VBOServerFqdnOrIp -ne "localhost") {
     if ($null -eq $global:VBO_SERVER_CREDS) {
         $global:VBO_SERVER_CREDS = Get-Credential -Message "Enter authorized VBO Server credentials"
     }
-    Connect-VBOServer -Server $global:VBO_SERVER_FQDN_OR_IP -Credential $global:VBO_SERVER_CREDS -ErrorAction Stop;
+    Connect-VBOServer -Server $global:SETTINGS.VBOServerFqdnOrIp -Credential $global:VBO_SERVER_CREDS -ErrorAction Stop;
 } else {
     Connect-VBOServer -Server localhost -ErrorAction Stop;
 }
 
 #check if path exists
-if (!(Test-Path $global:OUTPUT_PATH)) {
-    New-Item -ItemType Directory -Path $global:OUTPUT_PATH
+if (!(Test-Path $global:SETTINGS.OutputPath)) {
+    New-Item -ItemType Directory -Path $global:SETTINGS.OutputPath
 }
 
 Lap "Ready to collect"
 Write-MemoryUsageToLog -Message "Start"
 
-if (!$global:SKIP_COLLECT) { 
+if (!$global:SETTINGS.SkipCollect) { 
     $WarningPreference = "SilentlyContinue"
     # Start the data collection
     Write-Host "Collecting VBO Environment`'s stats..."
     Write-LogFile "Collecting VBO Environment`'s stats..."
 
     $Global:VBOEnvironment = Get-VBOEnvironment 
-    if ($global:DEBUG) { $v = $Global:VBOEnvironment; $v.Keys; }
+    if ($global:SETTINGS.Debug) { $v = $Global:VBOEnvironment; $v.Keys; }
 
     Write-MemoryUsageToLog -Message "Done collecting"
-    if ($global:EXPORT_JSON) {
-        $VBOEnvironment | ConvertTo-Json -Depth 100 | Out-File ($global:OUTPUT_PATH.Trim('\')+"\VBOEnvironment.json") -Force
+    if ($global:SETTINGS.ExportJson) {
+        $VBOEnvironment | ConvertTo-Json -Depth 100 | Out-File ($global:SETTINGS.OutputPath.Trim('\')+"\VBOEnvironment.json") -Force
         [GC]::Collect()
         Write-MemoryUsageToLog -Message "JSON Exported"
     }
-    if ($global:EXPORT_XML) {
-        $VBOEnvironment | Export-Clixml -Depth 100 -Path ($global:OUTPUT_PATH.Trim('\')+"\VBOEnvironment.xml") -Force
+    if ($global:SETTINGS.ExportXml) {
+        $VBOEnvironment | Export-Clixml -Depth 100 -Path ($global:SETTINGS.OutputPath.Trim('\')+"\VBOEnvironment.xml") -Force
         [GC]::Collect()
         Write-MemoryUsageToLog -Message "XML Exported"
     }
@@ -741,7 +737,7 @@ $map.Proxies = $Global:VBOEnvironment.VBOProxy | mde @(
     'CPUs=>($Global:VBOEnvironment.VMCLog.ProxyDetails | ? { $.Id -eq $_.ProxyID }).CPUCount'
 )
 Write-Progress @progressSplat -PercentComplete ($progress++) -CurrentOperation "Repositories...";
-$map.Repositories = $Global:VBOEnvironment.VBORepository | mde @(
+$map.LocalRepositories = $Global:VBOEnvironment.VBORepository | mde @(
     'Bound Proxy=>($Global:VBOEnvironment.VBOProxy | ? { $_.id -eq $.ProxyId }).Hostname'
     'Name'
     'Description'
@@ -829,7 +825,7 @@ $map.JobStats = $Global:VBOEnvironment.VBOJobSession | Where-Object { $_.JobName
     'Typical Bottleneck=>($.Group.Statistics.Bottleneck | ? { $_ -ne "NA" } | group | sort Count -Descending | select -first 1).Name'
 )
 Write-Progress @progressSplat -PercentComplete ($progress++) -CurrentOperation "JobSessions...";
-$map.JobSessions = $Global:VBOEnvironment.VBOJobSession | Where-Object { $_.JobName -in $Global:VBOEnvironment.VBOJob.Name -and $_.CreationTime -gt (Get-Date).AddDays(-$global:REPORTING_INTERVAL_DAYS)} | Sort-Object @{Expression={$_.JobName}; Descending=$false },@{Expression={$_.CreationTime}; Descending=$true } | mde @(
+$map.JobSessions = $Global:VBOEnvironment.VBOJobSession | Where-Object { $_.JobName -in $Global:VBOEnvironment.VBOJob.Name -and $_.CreationTime -gt (Get-Date).AddDays(-$global:SETTINGS.ReportingIntervalDays)} | Sort-Object @{Expression={$_.JobName}; Descending=$false },@{Expression={$_.CreationTime}; Descending=$true } | mde @(
     'Name=>JobName'
     'Status'
     'Start Time=>$.CreationTime.ToString("yyyy/MM/dd HH:mm:ss")'
@@ -838,18 +834,14 @@ $map.JobSessions = $Global:VBOEnvironment.VBOJobSession | Where-Object { $_.JobN
     'Log=>Join -Array $($.Log.Title | ? { !$_.Contains("[Success]") }) -Delimiter "`r`n"'
 )
 Write-Progress @progressSplat -PercentComplete ($progress++) -CurrentOperation "Protection Status...";
-$map.ProtectionStatus = Import-Csv -Path ($global:OUTPUT_PATH + "\Veeam_MailboxProtectionReport*.csv") | Where-Object { $_."Protection Status" -eq "Unprotected"} | Sort-Object "Protection Status",User -Descending | mde @(
+$map.ProtectionStatus = (Get-Item -Path ($global:SETTINGS.OutputPath + "\Veeam_MailboxProtectionReport*.csv")).FullName | Import-Csv | Where-Object { $_."Protection Status" -eq "Unprotected" -or $_."Last Backup Date" -lt (Get-date).AddDays(-$global:SETTINGS.ReportingIntervalDays)} | Sort-Object "Protection Status",User -Descending | mde @(
     'User=>Mailbox'
     'E-mail=>$."E-mail"'
     'Organization'
-    'Protection Status=>$."Protection Status"'
+    'Protection Status=> if ($."Protection Status" -eq "Protected") { "Stale Backup" } else { "Unprotected" }'
     'Last Backup Date=>$."Last Backup Date"'
 )
 Write-Progress @progressSplat -PercentComplete ($progress++) -CurrentOperation "Done." -Completed
-
-#VMC log, server components, Cloud accounts and archivers (renebale)
-#pull unprotected from report
-#strike: encryptionkey
 
 
 ######### END MAPS ############
@@ -861,14 +853,12 @@ Lap "Ready to map"
 $Global:HealthCheckResult = MDE $map.Keys
 
 foreach ($sectionName in $map.Keys) {
-#foreach ($section in $Global:HealthCheckResult.PSObject.Properties) {
-    #$map = Get-Variable -Name ("map_"+$section.Name) -ErrorAction SilentlyContinue -ValueOnly
-
     $section = $map.$sectionName
 
     if ($null -eq $section) {
-        throw "No map found for: "+$section+". Please define."
-        return
+        Write-Warning "No map found for: "+$section+". Please define."
+        Write-LogFile -Message ("No map found for: "+$section+". Please define.") -LogName Errors
+        # used to throw & then return
     } else {
         if ($section.GetType().Name -eq "PSCustomObject" -or $section.GetType().Name -eq "Object[]") {
             $Global:HealthCheckResult.$sectionName = $section
@@ -876,7 +866,7 @@ foreach ($sectionName in $map.Keys) {
             $Global:HealthCheckResult.$sectionName = MDE $section
         }
 
-        if ($global:DEBUG) {
+        if ($global:SETTINGS.Debug) {
             Write-Host -ForegroundColor Green "SECTION: $($sectionName.ToUpper())"
             $Global:HealthCheckResult.$sectionName | Format-Table *
         }
@@ -890,7 +880,7 @@ Write-MemoryUsageToLog -Message "Done mapping"
 
 Lap "Ready to Export"
 
-$Global:HealthCheckResult.psobject.Properties.Name | ForEach-Object { $Global:HealthCheckResult.$_ | ConvertTo-Csv -NoTypeInformation | Out-File $($global:OUTPUT_PATH.Trim('\') + "\" +$_+".csv") -Force }
+$Global:HealthCheckResult.psobject.Properties.Name | ForEach-Object { $Global:HealthCheckResult.$_ | ConvertTo-Csv -NoTypeInformation | Out-File $($global:SETTINGS.OutputPath.Trim('\') + "\" +$_+".csv") -Force }
 
 Lap "All done"
 Write-MemoryUsageToLog -Message "Done export"
@@ -904,5 +894,3 @@ Write-LogFile -Message $($proc = (get-process -Id $PID); "CPU (s): " + $proc.CPU
 $stopwatch.Stop()
 
 [GC]::Collect()
-
-#Extended logging may affect...

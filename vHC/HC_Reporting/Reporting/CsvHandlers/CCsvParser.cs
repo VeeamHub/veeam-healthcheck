@@ -54,7 +54,7 @@ namespace VeeamHealthCheck.CsvHandlers
         private readonly string _vboGlobalCsv = "Global";
         private readonly string _vboProxies= "Proxies";
         private readonly string _vboRBAC = "RBACRoles";
-        private readonly string _vboRepositories = "Repositories";
+        private readonly string _vboRepositories = "LocalRepositories";
         private readonly string _vboSecurity = "Security";
 
         public CCsvParser()

@@ -15,7 +15,7 @@ namespace VeeamHealthCheck
     class PSInvoker
     {
         private readonly string _sessionReport = "Get-VBRConfig.ps1";
-        private readonly string _vb365Script = @"\Tools\Scripts\";
+        private readonly string _vb365Script = Environment.CurrentDirectory +  @"\Tools\Scripts\";
         public PSInvoker()
         {
         }
@@ -65,6 +65,9 @@ namespace VeeamHealthCheck
                 UseShellExecute = false,
                 CreateNoWindow = true
             };
+
+            var result = Process.Start(startInfo);
+            result.WaitForExit();
 
         }
         private ProcessStartInfo psInfo(string scriptFile)
