@@ -57,10 +57,10 @@
     <Content Include="Reporting\Html\JavaScript1.js">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
-    <Content Include="Tools\Scripts\Get-VBRConfig.ps1">
+    <Content Include="Get-VBRConfig.ps1">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
-    <Content Include="Tools\Scripts\Get-VeeamSessionReport.ps1">
+    <Content Include="Get-VeeamSessionReport.ps1">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
     <Content Include="Tools\Veeam.Hotfix.Detector.zip">

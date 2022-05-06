@@ -108,14 +108,14 @@ namespace VeeamHealthCheck
         #region Buttons
         private void Import()
         {
-            CReportModeSelector cMode = new(_desiredPath, _scrub, _openHtml, true);
-            cMode.Run();
+            //CReportModeSelector cMode = new(_desiredPath, _scrub, _openHtml, true);
+            //cMode.Run();
 
-            //CCsvToXml c = new();
+            CCsvToXml c = new("vbr", _scrub, false, _openHtml, true);
 
-            ////choose VBO or VBR
-            //c.ConvertToXml(_scrub, false, _openHtml, true);
-            //c.Dispose();
+            //choose VBO or VBR
+            //c.ConvertToXml();
+            c.Dispose();
         }
         private void Import_click(object sender, RoutedEventArgs e)
         {
@@ -137,12 +137,15 @@ namespace VeeamHealthCheck
             log.Info("Starting Run");
             ExecPsScripts();
 
+            //new mode : not yet working
+            //CReportModeSelector cMode = new(_desiredPath, _scrub, _openHtml, false); ;
+            //cMode.Run();
 
-            CReportModeSelector cMode = new(_desiredPath, _scrub, _openHtml, false); ;
-            cMode.Run();
-            //CCsvToXml c = new();
-            //c.ConvertToXml(_scrub, true, _openHtml, false);
-            //c.Dispose();
+
+            //old mode: uses XSL files
+            CCsvToXml c = new("vbr",_scrub, true, _openHtml, false);
+            c.ConvertToXml();
+            c.Dispose();
             log.Info("Starting Run..done!");
 
         }

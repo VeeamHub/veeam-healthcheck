@@ -21,7 +21,7 @@ namespace VeeamHealthCheck
         }
         public void Invoke(bool collectSessionData)
         {
-            var ps1File = @"\Tools\Scripts\Get-VBRConfig.ps1";
+            var ps1File = "Get-VBRConfig.ps1";
             UnblockFile(ps1File);
             var startInfo = new ProcessStartInfo()
             {
@@ -34,7 +34,7 @@ namespace VeeamHealthCheck
 
             if (collectSessionData)
             {
-                var ps1File2 = @"\Tools\Scripts\Get-VeeamSessionReport.ps1";
+                var ps1File2 = "Get-VeeamSessionReport.ps1";
                 UnblockFile(ps1File2);
                 var startInfo2 = new ProcessStartInfo()
                 {

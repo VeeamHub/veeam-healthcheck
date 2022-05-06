@@ -1705,6 +1705,7 @@ namespace VeeamHealthCheck.Html
         {
             log.Info("Starting Data conversion...");
             PreCalculations();
+            
             XML.HeaderInfoToXml();
             LicInfoToXml();
             ParseNonProtectedTypes();

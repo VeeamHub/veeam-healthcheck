@@ -61,12 +61,18 @@ namespace VeeamHealthCheck.Reporting.Html
         {
             _dTypeParser = new();
             _isImport = isImport;
+            CheckXmlFile();
             //XML = new("vbr");
             //SetGlobalVariables(scrub, checkLogs, openHtml, isImport);
             //ConvertToXml();
 
             //if (openHtml)
             //    exporter.OpenHtml();
+        }
+        private void CheckXmlFile()
+        {
+            if (!File.Exists(_testFile))
+                File.Create(_testFile).Dispose();
         }
         private void SetGlobalVariables(bool scrub, bool checkLogs, bool openHtml, bool isImport)
         {
