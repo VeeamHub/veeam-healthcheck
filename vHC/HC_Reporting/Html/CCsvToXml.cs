@@ -512,8 +512,6 @@ namespace VeeamHealthCheck.Html
                     {
                         veeamVersion = r.Version;
                         sqlHostName = r.SqlServer;
-                        if (_scrub)
-                            sqlHostName = Scrub(sqlHostName);
                     }
                 }
                 catch (Exception f)
@@ -544,7 +542,10 @@ namespace VeeamHealthCheck.Html
                         sqlHostName = Scrub(sqlHostName);
                 }
                 else if (backupServer.Name == sqlHostName)
+                {
                     sqlHostName = "";
+                    _isSqlLocal = true;
+                }
                 _cores = backupServer.Cores;
                 _ram = backupServer.Ram;
             }
@@ -567,6 +568,8 @@ namespace VeeamHealthCheck.Html
             {
                 backupServer.Name = Scrub(backupServer.Name);
                 configBackupTarget = Scrub(configBackupTarget);
+                sqlHostName = Scrub(sqlHostName);
+
             }
             string proxyRole = "";
             //if (_isBackupServerProxy && _isBackupServerProxyDisabled)

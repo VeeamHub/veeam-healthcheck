@@ -80,12 +80,18 @@ namespace VeeamHealthCheck.Html
             List<string> jobNameList = jobSessionsCsv.Select(x => x.Name).ToList();
             List<CJobSummaryTypes> outList = new();
 
+            CCsvParser csv = new();
+            var waitList = csv.WaitsCsvReader();
+
             List<double> avgRates = new();
             List<double> avgDataSizes = new();
             List<double> avgBackupSizes = new();
             List<double> maxBackupSize = new();
             List<double> maxDataSizes = new();
             List<int> successRates = new();
+            double totalSessions = 0;
+            double totalFailedSessions = 0;
+            double totalRetries = 0;
 
             int totatlProtectedInstances = 0;
             foreach (var j in jobNameList.Distinct())
@@ -94,9 +100,6 @@ namespace VeeamHealthCheck.Html
 
                 try
                 {
-                    CCsvParser csv = new();
-                    var waitList = csv.WaitsCsvReader();
-
                     List<TimeSpan> tList = new();
 
                     foreach (var w in waitList)
@@ -149,6 +152,7 @@ namespace VeeamHealthCheck.Html
                 catch (Exception e) { }
                 double sessionCount = 0;
                 double fails = 0;
+                int retries = 0;
                 List<TimeSpan> durations = new();
                 List<string> vmNames = new();
                 List<double> dataSize = new();
@@ -169,8 +173,17 @@ namespace VeeamHealthCheck.Html
                         if (j == c.Name && diff < 7)
                         {
                             sessionCount++;
+                            totalSessions++;
                             if (c.Status == "Failed")
+                            {
                                 fails++;
+                                totalFailedSessions++;
+                            }
+                            if(c.IsRetry == "True")
+                            {
+                                retries++;
+                                totalRetries++;
+                            }
 
                             TimeSpan.TryParse(c.JobDuration, out TimeSpan jDur);
 
@@ -200,7 +213,7 @@ namespace VeeamHealthCheck.Html
                     info.sessionCount = (int)sessionCount;
                     if(sessionCount != 0)
                     {
-                        double percent = ((sessionCount - fails) / sessionCount) * 100;
+                        double percent = ((sessionCount - fails + retries) / sessionCount) * 100;
                         info.SuccessRate = (int)Math.Round(percent, 0, MidpointRounding.ToEven);
                     }
 
@@ -236,7 +249,7 @@ namespace VeeamHealthCheck.Html
 
                     if (info.AvgBackupSize != 0 && info.AvgDataSize != 0)
                     {
-                        info.AvgChangeRate = Math.Round(((info.AvgBackupSize / info.AvgDataSize) * 100), 0);
+                        info.AvgChangeRate = Math.Round((((info.AvgBackupSize * 2 )/ info.MaxDataSize) * 100), 0);
                         avgRates.Add(info.AvgChangeRate);
                     }
                     else
@@ -292,6 +305,9 @@ namespace VeeamHealthCheck.Html
                 catch(Exception e) { }
             }
 
+            double totalSessionSuccessPercent = ((totalSessions - totalFailedSessions + totalRetries)/ totalSessions) * 100;
+            double p = ((totalSessions - totalFailedSessions + totalRetries) / totalSessions) * 100;
+
             var summaryXml = new XElement("session",
                 new XElement("name", "Total"),
                 new XElement("items", totatlProtectedInstances),
@@ -299,11 +315,11 @@ namespace VeeamHealthCheck.Html
                 new XElement("maxtime", ""),
                 new XElement("mintime", ""),
                 new XElement("sessions", ""),
-                new XElement("successrate", Math.Round(successRates.Average(), 0)),
+                new XElement("successrate", Math.Round(totalSessionSuccessPercent, 2)),
                 new XElement("avgBackupSize", Math.Round(avgBackupSizes.Average(), 0)),
                 new XElement("maxBackupSize", Math.Round(maxBackupSize.Sum(), 0)),
                 new XElement("avgDataSize", Math.Round(avgDataSizes.Average(), 0)),
-                new XElement("changerate", Math.Round(avgRates.Average(), 0)),
+                new XElement("changerate", Math.Round(avgRates.Average(), 2)),
                 new XElement("maxDataSize", Math.Round(maxDataSizes.Sum(), 2))
                 );
             extElement.Add(summaryXml);
