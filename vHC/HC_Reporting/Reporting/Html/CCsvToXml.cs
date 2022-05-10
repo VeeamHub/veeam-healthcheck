@@ -544,8 +544,6 @@ namespace VeeamHealthCheck.Html
                         sqlRam = ((mem / 1024 / 1024) + 1).ToString();
 
                     }
-                    if (_scrub)
-                        sqlHostName = Scrub(sqlHostName);
                 }
                 else if (backupServer.Name == sqlHostName)
                 {
