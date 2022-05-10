@@ -120,7 +120,7 @@ namespace VeeamHealthCheck.DB
             d.Add("11.0.0.591", 7819);
             d.Add("11.0.0.825", 8073);
             d.Add("11.0.0.837", 8078);
-
+            d.Add("11.0.1.1261", 8378);
 
             return d;
         }
