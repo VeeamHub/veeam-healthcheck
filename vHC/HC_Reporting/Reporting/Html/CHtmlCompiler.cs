@@ -16,6 +16,8 @@ namespace VeeamHealthCheck.Html
         private string xslFileName = "StyleSheets\\myHtml.xsl"; // maybe just do memory instead of disk??
         private XDocument xdoc;
         private string _htmldoc;
+        private bool _vbrmode = false;
+        private bool _vb365mode = false;
 
         // section links
         string _serverSumLink = "serverSummary";
@@ -31,9 +33,21 @@ namespace VeeamHealthCheck.Html
 
         #endregion
 
-        public CHtmlCompiler()
+        public CHtmlCompiler(string reportType)
         {
             FormHeader();
+            if(reportType == "vbr")
+            {
+                _vbrmode = true;
+                FormHeader();
+                FormBody();
+            }
+            if (reportType == "vb365")
+            {
+                _vb365mode = true;
+                FormVb365Body();
+            }
+
         }
         private void CheckFile()
         {
@@ -50,7 +64,20 @@ namespace VeeamHealthCheck.Html
             _htmldoc += CssStyler.StyleString();
             _htmldoc += "</style></head>";
 
-            FormBody();
+            //FormBody();
+        }
+        private void FormVb365Body()
+        {
+            _htmldoc += body;
+
+            // add sections here
+            SetHeaderAndLogo();
+
+            _htmldoc += "<script type=\"text/javascript\">";
+            _htmldoc += CssStyler.JavaScriptBlock();
+            _htmldoc += "</script>";
+
+            File.WriteAllText("myHtml2.html", _htmldoc);
         }
         private void FormBody()
         {
