@@ -272,6 +272,21 @@ function Import-PermissionsFromLogs {
                 $orgNames = (($content | Select-String "(.+Counting items in: |.+Tenant: )(.+)(\s\(.+\)\s\(.+\).+|, Auth.+)") -replace "(.+Counting items in: |.+Tenant: )(.+)(\s\(.+\)\s\(.+\).+|, Auth.+)",'$2' | Group-Object).Name
 
                 foreach ($orgName in $orgNames) {
+                    $DEFAULT_PERMS = @(
+                        "Directory.Read.All"
+                        "Group.Read.All"
+                        "Sites.Read.All"
+                        "TeamSettings.ReadWrite.All"
+                        "full_access_as_app"
+                        "Sites.FullControl.All"
+                        "User.Read.All"
+                        "offline_access"
+                        "EWS.AccessAsUser.All"
+                        "full_access_as_user"
+                        "AllSites.FullControl"
+                    )
+                    #TODO: Make this a subractive report against the above const
+
                     $permName = $Prefix + " - " + $orgName + ": No operations run"
                     if (!$hasDoneAtLeastOneOperation -and ($Permissions.Keys -match ($Prefix + " - " + $orgName)).Count -eq 0) {
                         $Permissions.$permName = [PSCustomObject]@{Type=$Prefix; Organization=$orgName; API=""; Permission="No backup/restore operations found"}
@@ -502,7 +517,7 @@ Write-LogFile ""
 Import-Module -Name Veeam.Archiver.PowerShell,Veeam.Exchange.PowerShell,Veeam.SharePoint.PowerShell,Veeam.Teams.PowerShell
 if ($global:SETTINGS.VBOServerFqdnOrIp -ne "localhost") {
     if ($null -eq $global:VBO_SERVER_CREDS) {
-        $global:VBO_SERVER_CREDS = Get-Credential -Message "Enter authorized VBO Server credentials"
+        $global:VBO_SERVER_CREDS = Get-Credential -Message "Enter authorized VBO credentials for '$($global:SETTINGS.VBOServerFqdnOrIp)':"
     }
     Connect-VBOServer -Server $global:SETTINGS.VBOServerFqdnOrIp -Credential $global:VBO_SERVER_CREDS -ErrorAction Stop;
 } else {
@@ -606,6 +621,23 @@ function ConvertData {
     end {
         return $results
     }
+}
+function 95P {
+    [CmdletBinding()]
+    param (
+        [Parameter(ValueFromPipeline)][object[]]$Items,
+        [string]$Property,
+        [int]$Percentile=95
+        )
+    begin { }
+    process {
+        $sortedItems = $Items.$Property | Sort-Object
+
+        $result = $sortedItems | Select-Object -First ([int]$Items.Count*$Percentile/100)
+
+        return $result
+    }
+    end { }
 }
 
 
@@ -731,7 +763,7 @@ $map.Proxies = $Global:VBOEnvironment.VBOProxy | mde @(
     'Type'
     'Outdated?=>IsOutdated'
     'Internet Proxy=>InternetProxy.UseInternetProxy'
-    'Objects Managed=>($Global:VBOEnvironment.VBOEntityData | ? { $.Id -eq $_.Proxy.Id } | group Proxy,Type | measure-object -Sum Count).Sum'
+    'Objects Managed=>(($Global:VBOEnvironment.VBOJobSession | ? { $_.JobId -in ($Global:VBOEnvironment.VBOJob | ? { $.Id -eq $_.Repository.ProxyId }).Id} | group JobId | % { $_.Group | Measure-Object -Property Progress -Average} ).Average | measure-object -Sum ).Sum.ToString("0")'
     'OS Version=>($Global:VBOEnvironment.VMCLog.ProxyDetails | ? { $.Id -eq $_.ProxyID }).OSVersion'
     'RAM=>(($Global:VBOEnvironment.VMCLog.ProxyDetails | ? { $.Id -eq $_.ProxyID }).RAMTotalSize/1GB).ToString("0.0 GB")'
     'CPUs=>($Global:VBOEnvironment.VMCLog.ProxyDetails | ? { $.Id -eq $_.ProxyID }).CPUCount'
@@ -812,17 +844,21 @@ $map.JobStats = $Global:VBOEnvironment.VBOJobSession | Where-Object { $_.JobName
     'Max Duration (min)=>($.Group | select *,@{n="Duration";e={($_.EndTime-$_.CreationTime).TotalMinutes}} | ? { $_.Duration -gt 0 } | measure Duration -Maximum).Maximum.ToString("0.00")'
     'Average Data Transferred=>(($.Group.Statistics.TransferredData | ConvertData -To "GB" -Format "0.0000" | measure -Average).Average.ToString("0.00 GB"))'
     'Max Data Transferred=>(($.Group.Statistics.TransferredData | ConvertData -To "GB" -Format "0.0000" | measure -Maximum).Maximum.ToString("0.00 GB") )'
-    'Average Objects (#)=>($.Group.Statistics | measure ProcessedObjects -Average).Average.ToString("0")'
-    'Max Objects (#)=>($.Group.Statistics | measure ProcessedObjects -Maximum).Maximum.ToString("0")'
-    'Average Processing Rate=>(($.Group.Statistics.ProcessingRate -replace "(\d+.+)\s\((.+)\)","`$1" | ConvertData -To "MB" -Format "0.0000" | measure -Average).Average.ToString("0.00 MB/s"))'
-    'Max Processing Rate=>(($.Group.Statistics.ProcessingRate -replace "(\d+.+)\s\((.+)\)","`$1" | ConvertData -To "MB" -Format "0.0000" | measure -Maximum).Maximum.ToString("0.00 MB/s") )'
-    'Average Item Proc Rate=>(($.Group.Statistics.ProcessingRate -replace "(\d+.+)\s\((.+)items/s\)","`$2" | measure -Average).Average.ToString("0.0 items/s"))'
-    'Max Item Proc Rate=>(($.Group.Statistics.ProcessingRate -replace "(\d+.+)\s\((.+)items/s\)","`$2" | measure -Maximum).Maximum.ToString("0.0 items/s") )'
-    'Average Read Rate=>(($.Group.Statistics.ReadRate | ConvertData -To "MB" -Format "0.0000" | measure -Average).Average.ToString("0.00 MB/s"))'
-    'Max Read Rate=>(($.Group.Statistics.ReadRate | ConvertData -To "MB" -Format "0.0000" | measure -Maximum).Maximum.ToString("0.00 MB/s") )'
-    'Average Write Rate=>(($.Group.Statistics.WriteRate | ConvertData -To "MB" -Format "0.0000" | measure -Average).Average.ToString("0.00 MB/s"))'
-    'Max Write Rate=>(($.Group.Statistics.WriteRate | ConvertData -To "MB" -Format "0.0000" | measure -Maximum).Maximum.ToString("0.00 MB/s") )'
+    'Average Objects (#)=>($.Group.Progress | measure -Average).Average.ToString("0")'
+    'Max Objects (#)=>($.Group.Progress | measure -Maximum).Maximum.ToString("0")'
+    'Average Items (#)=>($.Group.Statistics | measure ProcessedObjects -Average).Average.ToString("0")'
+    'Max Items (#)=>($.Group.Statistics | measure ProcessedObjects -Maximum).Maximum.ToString("0")'
+    #'Average Processing Rate=>(($.Group.Statistics.ProcessingRate -replace "(\d+.+)\s\((.+)\)","`$1" | ConvertData -To "MB" -Format "0.0000" | measure -Average).Average.ToString("0.000 MB/s"))'
+    #'Max Processing Rate=>(($.Group.Statistics.ProcessingRate -replace "(\d+.+)\s\((.+)\)","`$1" | ConvertData -To "MB" -Format "0.0000" | measure -Maximum).Maximum.ToString("0.000 MB/s") )'
+    #'Average Item Proc Rate=>(($.Group.Statistics.ProcessingRate -replace "(\d+.+)\s\((.+)items/s\)","`$2" | measure -Average).Average.ToString("0.0 items/s"))'
+    #'Max Item Proc Rate=>(($.Group.Statistics.ProcessingRate -replace "(\d+.+)\s\((.+)items/s\)","`$2" | measure -Maximum).Maximum.ToString("0.0 items/s") )'
+    #'Average Read Rate=>(($.Group.Statistics.ReadRate | ConvertData -To "MB" -Format "0.0000" | measure -Average).Average.ToString("0.000 MB/s"))'
+    #'Max Read Rate=>(($.Group.Statistics.ReadRate | ConvertData -To "MB" -Format "0.0000" | measure -Maximum).Maximum.ToString("0.000 MB/s") )'
+    #'Average Write Rate=>(($.Group.Statistics.WriteRate | ConvertData -To "MB" -Format "0.0000" | measure -Average).Average.ToString("0.000 MB/s"))'
+    #'Max Write Rate=>(($.Group.Statistics.WriteRate | ConvertData -To "MB" -Format "0.0000" | measure -Maximum).Maximum.ToString("0.000 MB/s") )'
     'Typical Bottleneck=>($.Group.Statistics.Bottleneck | ? { $_ -ne "NA" } | group | sort Count -Descending | select -first 1).Name'
+    'Job Avg Throughput=>(($.Group.Statistics.TransferredData | ConvertData -To "MB" -Format "0.0000" | measure -Sum).Sum / ($.Group | select @{n="Duration";e={ $(if ($_.Status -eq "Running") { (get-date)-$_.CreationTime } else { $_.EndTime-$_.CreationTime } ).TotalSeconds}} | ? { $_.Duration -gt 0 } | measure Duration -Sum).Sum).ToString("0.000 MB/s")'
+    'Job Avg Processing Rate=>(($.Group.Statistics | measure ProcessedObjects -Sum).Sum / ($.Group | select @{n="Duration";e={ $(if ($_.Status -eq "Running") { (get-date)-$_.CreationTime } else { $_.EndTime-$_.CreationTime } ).TotalSeconds}} | ? { $_.Duration -gt 0 } | measure Duration -Sum).Sum).ToString("0.000 items/s")'
 )
 Write-Progress @progressSplat -PercentComplete ($progress++) -CurrentOperation "JobSessions...";
 $map.JobSessions = $Global:VBOEnvironment.VBOJobSession | Where-Object { $_.JobName -in $Global:VBOEnvironment.VBOJob.Name -and $_.CreationTime -gt (Get-Date).AddDays(-$global:SETTINGS.ReportingIntervalDays)} | Sort-Object @{Expression={$_.JobName}; Descending=$false },@{Expression={$_.CreationTime}; Descending=$true } | mde @(
@@ -830,7 +866,7 @@ $map.JobSessions = $Global:VBOEnvironment.VBOJobSession | Where-Object { $_.JobN
     'Status'
     'Start Time=>$.CreationTime.ToString("yyyy/MM/dd HH:mm:ss")'
     'End Time=>$.EndTime.ToString("yyyy/MM/dd HH:mm:ss")'
-    'Duration=>( $. | select *,@{n="Duration";e={($_.EndTime-$_.CreationTime).TotalMinutes}}).Duration.ToString("0.0 min")'
+    'Duration=>$sessWithDuration =  $. | select *,@{n="Duration";e={ $(if ($_.Status -eq "Running") { (get-date)-$_.CreationTime } else { $_.EndTime-$_.CreationTime } ).TotalMinutes}}; $sessWithDuration.Duration.ToString("0.0 min") + " (" + $sessWithDuration.Status.ToString() + ")"'
     'Log=>Join -Array $($.Log.Title | ? { !$_.Contains("[Success]") }) -Delimiter "`r`n"'
 )
 Write-Progress @progressSplat -PercentComplete ($progress++) -CurrentOperation "Protection Status...";
