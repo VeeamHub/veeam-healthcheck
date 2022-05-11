@@ -63,6 +63,32 @@ namespace VeeamHealthCheck.Html
             SetLicTable();
             SetVbrTable();
             SetSecSumTable();
+            SetServerSummaryTable();
+            SetJobSummaryTable();
+            SetMissingJobTypeTable();
+            SetProtectedWkldTable();
+            SetMgdSrvInfoTable();
+            SetRegKeyTable();
+            SetProxyTable();
+            SetSobrTable();
+            SetExtentTable();
+            SetRepoTable();
+            SetJobConTable();
+            SetTaskConTable();
+            SetJobSessSumTable();
+            SetJobInfoTable();
+            /*
+            managed server info
+            regkeys
+            Proxy info
+            SOBR 
+            Extents
+            Repos
+            Job con
+            Task COn
+            Job Session Sum
+            Job Info
+             */
 
 
             _htmldoc += "<script type=\"text/javascript\">";
@@ -220,6 +246,48 @@ namespace VeeamHealthCheck.Html
                 case "secSum":
                     tableString += tables.AddSecSummaryTable();
                     break;
+                case "srvSummary":
+                    tableString += tables.AddSrvSummaryTable();
+                    break;
+                case "jobSummary":
+                    tableString += tables.AddJobSummaryTable();
+                    break;
+                case "missingJobs":
+                    tableString += tables.AddMissingJobsTable();
+                    break;
+                case "protectedWklds":
+                    tableString += tables.AddProtectedWorkLoadsTable();
+                    break;
+                case "serverInfo":
+                    tableString += tables.AddManagedServersTable();
+                    break;
+                case "regKeys":
+                    tableString += tables.AddRegKeysTable();
+                    break;
+                case "proxyInfo":
+                    tableString += tables.AddProxyTable();
+                    break;
+                case "sobr":
+                    tableString += tables.AddSobrTable();
+                    break;
+                case "extents":
+                    tableString += tables.AddSobrExtTable();
+                    break;
+                case "repos":
+                    tableString += tables.AddRepoTable();
+                    break;
+                case "jobConcurrency":
+                    tableString += tables.AddJobConTable();
+                    break;
+                case "taskConcurrency":
+                    tableString += tables.AddTaskConTable();
+                    break;
+                case "jobSessSummary":
+                    tableString += tables.AddJobSessSummTable();
+                    break;
+                case "jobs":
+                    tableString += tables.AddJobInfoTable();
+                    break;
                 default:
                     break;
             }
@@ -249,15 +317,120 @@ namespace VeeamHealthCheck.Html
             SetVbrSummary();
             EndSection();
         }
+
+        /*
+ Server Summary
+Job summary
+missing jobs types
+protected workloads
+managed server info
+regkeys
+Proxy info
+SOBR 
+Extents
+Repos
+Job con
+Task COn
+Job Session Sum
+Job Info
+ */
+        private void SetServerSummaryTable()
+        {
+            Table("Detected Infrastructure Types & Counts", "srvSummary");
+            //taable
+            EndSection();
+        }
+        private void SetJobSummaryTable()
+        {
+            Table("Job Summary", "jobSummary");
+            //taable
+            EndSection();
+        }
+        private void SetMissingJobTypeTable()
+        {
+            Table("Missing Job Types", "missingJobs");
+            //taable
+            EndSection();
+        }
+        private void SetProtectedWkldTable()
+        {
+            Table("Protected Workloads", "protectedWklds");
+            //taable
+            EndSection();
+        }
+        private void SetMgdSrvInfoTable()
+        {
+            Table("Managed Server Info", "serverInfo");
+            //taable
+            EndSection();
+        }
+        private void SetRegKeyTable()
+        {
+            Table("Non-Default Registry Keys", "regKeys");
+            //taable
+            EndSection();
+        }
+        private void SetProxyTable()
+        {
+            Table("Proxy Info", "proxyInfo");
+            //taable
+            EndSection();
+        }
+        private void SetSobrTable()
+        {
+            Table("SOBR Details", "sobr");
+            //taable
+            EndSection();
+        }
+        private void SetExtentTable()
+        {
+            Table("SOBR Extent Info", "extents");
+            //taable
+            EndSection();
+        }
+        private void SetRepoTable()
+        {
+            Table("Standalone Repository Details", "repos");
+            //taable
+            EndSection();
+        }
+        private void SetJobConTable()
+        {
+            Table("Job Concurrency (7 days)", "jobConcurrency");
+            //taable
+            EndSection();
+        }
+        private void SetTaskConTable()
+        {
+            Table("Task Concurrency - 7 days", "taskConcurrency");
+            //taable
+            EndSection();
+        }
+        private void SetJobSessSumTable()
+        {
+            Table("Job Session Summary", "jobSessSummary");
+            //taable
+            EndSection();
+        }
+        private void SetJobInfoTable()
+        {
+            Table("Job Info", "jobs");
+            //taable
+            EndSection();
+        }
         private void SetSecSumTable()
         {
             Table("Security Summary", "secSum");
-            
+
             EndSection();
+        }
+        private string CollapsibleButton(string buttonText)
+        {
+            return SectionButton(_collapsible, buttonText);
         }
         private void SetVbrSummary()
         {
-            _htmldoc += SectionButton(_collapsible, ResourceHandler.BkpSrvButton);
+            _htmldoc += CollapsibleButton(ResourceHandler.BkpSrvButton);
 
             _htmldoc += "<div class=\"content\">";
             _htmldoc += AddA("hdr", ResourceHandler.GeneralSummaryHeader) + LineBreak() +

@@ -131,7 +131,7 @@ namespace VeeamHealthCheck.Html.VBR
             CDataFormer df = new(true);
             List<int> list = df.SecSummary();
 
-            for(int i = 0; i < list.Count(); i++)
+            for (int i = 0; i < list.Count(); i++)
             {
                 if (list[i] == 0)
                     s += TableData("False", "");
@@ -144,43 +144,323 @@ namespace VeeamHealthCheck.Html.VBR
         }
         public string AddSrvSummaryTable()
         {
-            return null;
+            string s = "<tr>" +
+                TableHeader(ResourceHandler.MssHdr1, ResourceHandler.MssHdr1TT) +
+                TableHeader(ResourceHandler.MssHdr2, ResourceHandler.MssHdr2TT) +
+                "</tr>";
+            CDataFormer cd = new(true);
+            Dictionary<string, int> list = cd.ServerSummaryToXml();
+
+            foreach (var d in list)
+            {
+                s += "<tr>";
+                s += TableData(d.Key, "");
+                s += TableData(d.Value.ToString(), "");
+                s += "</tr>";
+            }
+
+            return s;
         }
         public string AddJobSummaryTable()
         {
-            return null;
+            string s = "<tr>" +
+    TableHeader(ResourceHandler.JobSum0, ResourceHandler.JobSum0TT) +
+    TableHeader(ResourceHandler.JobSum1, ResourceHandler.JobSum1TT) +
+    "</tr>";
+            CDataFormer cd = new(true);
+            Dictionary<string, int> list = cd.JobSummaryInfoToXml();
+
+            foreach (var d in list)
+            {
+                s += "<tr>";
+                s += TableData(d.Key, "");
+                s += TableData(d.Value.ToString(), "");
+                s += "</tr>";
+            }
+
+            return s;
         }
         public string AddMissingJobsTable()
         {
-            return null;
+            string s = "<tr>" +
+                TableHeader(ResourceHandler.JobSum0, "") +
+                //TableHeader("Count", "Total detected of this type") +
+                "</tr>";
+            CDataFormer cd = new(true);
+            List<string> list = cd.ParseNonProtectedTypes();
+
+            for (int i = 0; i < list.Count(); i++)
+            {
+                s += "<tr>";
+
+                s += TableData(list[i], "");
+                s += "</tr>";
+
+            }
+
+            return s;
         }
         public string AddProtectedWorkLoadsTable()
         {
-            return null;
+            string s = "<tr>" +
+            TableHeader(ResourceHandler.PlHdr0, ResourceHandler.PlHdrTT0) +
+            TableHeader(ResourceHandler.PlHdr1, ResourceHandler.PlHdrTT1) +
+            TableHeader(ResourceHandler.PlHdr2, ResourceHandler.PlHdrTT2) +
+            TableHeader(ResourceHandler.PlHdr3, ResourceHandler.PlHdrTT3) +
+            TableHeader(ResourceHandler.PlHdr4, ResourceHandler.PlHdrTT4) +
+            TableHeader(ResourceHandler.PlHdr5, ResourceHandler.PlHdrTT5) +
+            TableHeader(ResourceHandler.PlHdr6, ResourceHandler.PlHdrTT6) +
+            TableHeader(ResourceHandler.PlHdr7, ResourceHandler.PlHdrTT7) +
+
+    "</tr>";
+            CDataFormer cd = new(true);
+            cd.ProtectedWorkloadsToXml();
+            s += "<tr>";
+            s += TableData((cd._viProtectedNames.Distinct().Count() + cd._viNotProtectedNames.Distinct().Count()).ToString(), "");
+            s += TableData(cd._viProtectedNames.Distinct().Count().ToString(), "");
+            s += TableData(cd._viNotProtectedNames.Distinct().Count().ToString(), "");
+            s += TableData(cd._viDupes.ToString(), "");
+            s += TableData((cd._physNotProtNames.Distinct().Count() + cd._physProtNames.Distinct().Count()).ToString(), "");
+            s += TableData(cd._physProtNames.Distinct().Count().ToString(), "");
+            s += TableData(cd._physNotProtNames.Distinct().Count().ToString(), "");
+
+            s += "</tr>";
+
+            return s;
         }
         public string AddManagedServersTable()
         {
-            return null;
+            string s = "<tr>" +
+            TableHeader(ResourceHandler.ManSrv0, ResourceHandler.ManSrv0TT) +
+            TableHeader(ResourceHandler.ManSrv1, ResourceHandler.ManSrv1TT) +
+            TableHeader(ResourceHandler.ManSrv2, ResourceHandler.ManSrv2TT) +
+            TableHeader(ResourceHandler.ManSrv3, ResourceHandler.ManSrv3TT) +
+            TableHeader(ResourceHandler.ManSrv4, ResourceHandler.ManSrv4TT) +
+            TableHeader(ResourceHandler.ManSrv5, ResourceHandler.ManSrv5TT) +
+            TableHeader(ResourceHandler.ManSrv6, ResourceHandler.ManSrv6TT) +
+            TableHeader(ResourceHandler.ManSrv7, ResourceHandler.ManSrv7TT) +
+            TableHeader(ResourceHandler.ManSrv8, ResourceHandler.ManSrv8TT) +
+            TableHeader(ResourceHandler.ManSrv9, ResourceHandler.ManSrv9TT) +
+            TableHeader(ResourceHandler.ManSrv10, ResourceHandler.ManSrv10TT) +
+            TableHeader(ResourceHandler.ManSrv11, ResourceHandler.ManSrv11TT) +
+            "</tr>";
+            CDataFormer cd = new(true);
+            List<string[]> list = cd.ServerXmlFromCsv();
+
+            foreach (var d in list)
+            {
+                s += "<tr>";
+                s += TableData(d[0], "");
+                s += TableData(d[1], "");
+                s += TableData(d[2], "");
+                s += TableData(d[3], "");
+                s += TableData(d[4], "");
+                s += TableData(d[5], "");
+                s += TableData(d[6], "");
+                s += TableData(d[7], "");
+                s += TableData(d[8], "");
+                s += TableData(d[9], "");
+                s += TableData(d[10], "");
+                s += TableData(d[11], "");
+                s += "</tr>";
+            }
+
+
+            return s;
         }
         public string AddRegKeysTable()
         {
-            return null;
+            string s = "<tr>" +
+                TableHeader(ResourceHandler.Reg0, ResourceHandler.Reg0TT) +
+                TableHeader(ResourceHandler.Reg1, ResourceHandler.Reg1TT) +
+                "</tr>";
+            CDataFormer cd = new(true);
+            Dictionary<string, string> list = cd.RegOptions();
+
+            foreach (var d in list)
+            {
+                s += "<tr>";
+                s += TableData(d.Key, "");
+                s += TableData(d.Value.ToString(), "");
+                s += "</tr>";
+            }
+
+            return s;
         }
         public string AddProxyTable()
         {
-            return null;
+            string s = "<tr>" +
+            TableHeader(ResourceHandler.Prx0, ResourceHandler.Prx0TT) +
+            TableHeader(ResourceHandler.Prx1, ResourceHandler.Prx1TT) +
+            TableHeader(ResourceHandler.Prx2, ResourceHandler.Prx2TT) +
+            TableHeader(ResourceHandler.Prx3, ResourceHandler.Prx3TT) +
+            TableHeader(ResourceHandler.Prx4, ResourceHandler.Prx4TT) +
+            TableHeader(ResourceHandler.Prx5, ResourceHandler.Prx5TT) +
+            TableHeader(ResourceHandler.Prx6, ResourceHandler.Prx6TT) +
+            TableHeader(ResourceHandler.Prx7, ResourceHandler.Prx7TT) +
+            TableHeader(ResourceHandler.Prx8, ResourceHandler.Prx8TT) +
+            TableHeader(ResourceHandler.Prx9, ResourceHandler.Prx9TT) +
+            TableHeader(ResourceHandler.Prx10, ResourceHandler.Prx10TT) +
+            TableHeader(ResourceHandler.Prx11, ResourceHandler.Prx11TT) +
+    "</tr>";
+            CDataFormer cd = new(true);
+            List<string[]> list = cd.ProxyXmlFromCsv();
+
+            foreach (var d in list)
+            {
+                s += "<tr>";
+                s += TableData(d[0], "");
+                s += TableData(d[1], "");
+                s += TableData(d[2], "");
+                s += TableData(d[3], "");
+                s += TableData(d[4], "");
+                s += TableData(d[5], "");
+                s += TableData(d[6], "");
+                s += TableData(d[7], "");
+                s += TableData(d[8], "");
+                s += TableData(d[9], "");
+                s += TableData(d[10], "");
+                s += TableData(d[11], "");
+                s += "</tr>";
+            }
+
+            return s;
         }
         public string AddSobrTable()
         {
-            return null;
+            string s = "<tr>" +
+            TableHeader(ResourceHandler.Sbr0, ResourceHandler.Sbr0TT) +
+            TableHeader(ResourceHandler.Sbr1, ResourceHandler.Sbr1TT) +
+            TableHeader(ResourceHandler.Sbr2, ResourceHandler.Sbr2TT) +
+            TableHeader(ResourceHandler.Sbr3, ResourceHandler.Sbr3TT) +
+            TableHeader(ResourceHandler.Sbr4, ResourceHandler.Sbr4TT) +
+            TableHeader(ResourceHandler.Sbr5, ResourceHandler.Sbr5TT) +
+            TableHeader(ResourceHandler.Sbr6, ResourceHandler.Sbr6TT) +
+            TableHeader(ResourceHandler.Sbr7, ResourceHandler.Sbr7TT) +
+            TableHeader(ResourceHandler.Sbr8, ResourceHandler.Sbr8TT) +
+            TableHeader(ResourceHandler.Sbr9, ResourceHandler.Sbr9TT) +
+            TableHeader(ResourceHandler.Sbr10, ResourceHandler.Sbr10TT) +
+            TableHeader(ResourceHandler.Sbr11, ResourceHandler.Sbr11TT) +
+            TableHeader(ResourceHandler.Sbr12, ResourceHandler.Sbr12TT) +
+            "</tr>";
+            CDataFormer cd = new(true);
+            List<string[]> list = cd.SobrInfoToXml();
+
+            foreach (var d in list)
+            {
+                s += "<tr>";
+                s += TableData(d[0], "");
+                s += TableData(d[3], "");
+                s += TableData(d[30], "");
+                s += TableData(d[1], "");
+                s += TableData(d[4], "");
+                s += TableData(d[6], "");
+                s += TableData(d[6], "");
+                s += TableData(d[7], "");
+                s += TableData(d[8], "");
+                s += TableData(d[9], "");
+                s += TableData(d[10], "");
+                s += TableData(d[11], "");
+                s += "</tr>";
+            }
+
+            return s;
         }
         public string AddSobrExtTable()
         {
-            return null;
+            string s = "<tr>" +
+TableHeader(ResourceHandler.SbrExt0, ResourceHandler.SbrExt0TT) +
+TableHeader(ResourceHandler.SbrExt1, ResourceHandler.SbrExt1TT) +
+TableHeader(ResourceHandler.SbrExt2, ResourceHandler.SbrExt2TT) +
+TableHeader(ResourceHandler.SbrExt3, ResourceHandler.SbrExt3TT) +
+TableHeader(ResourceHandler.SbrExt4, ResourceHandler.SbrExt4TT) +
+TableHeader(ResourceHandler.SbrExt5, ResourceHandler.SbrExt5TT) +
+TableHeader(ResourceHandler.SbrExt6, ResourceHandler.SbrExt6TT) +
+TableHeader(ResourceHandler.SbrExt7, ResourceHandler.SbrExt7TT) +
+TableHeader(ResourceHandler.SbrExt8, ResourceHandler.SbrExt8TT) +
+TableHeader(ResourceHandler.SbrExt9, ResourceHandler.SbrExt9TT) +
+TableHeader(ResourceHandler.SbrExt10, ResourceHandler.SbrExt10TT) +
+TableHeader(ResourceHandler.SbrExt11, ResourceHandler.SbrExt11TT) +
+TableHeader(ResourceHandler.SbrExt12, ResourceHandler.SbrExt12TT) +
+TableHeader(ResourceHandler.SbrExt13, ResourceHandler.SbrExt13TT) +
+TableHeader(ResourceHandler.SbrExt14, ResourceHandler.SbrExt14TT) +
+TableHeader(ResourceHandler.SbrExt15, ResourceHandler.SbrExt15TT) +
+"</tr>";
+            CDataFormer cd = new(true);
+            List<string[]> list = cd.SobrInfoToXml();
+
+            foreach (var d in list)
+            {
+                s += "<tr>";
+                s += TableData(d[0], "");
+                s += TableData(d[3], "");
+                s += TableData(d[30], "");
+                s += TableData(d[1], "");
+                s += TableData(d[4], "");
+                s += TableData(d[6], "");
+                s += TableData(d[6], "");
+                s += TableData(d[7], "");
+                s += TableData(d[8], "");
+                s += TableData(d[9], "");
+                s += TableData(d[10], "");
+                s += TableData(d[11], "");
+                s += TableData(d[12], "");
+                s += TableData(d[13], "");
+                s += TableData(d[14], "");
+                s += TableData(d[15], "");
+                s += "</tr>";
+            }
+
+            return s;
         }
         public string AddRepoTable()
         {
-            return null;
+            string s = "<tr>" +
+TableHeader(ResourceHandler.SbrExt0, ResourceHandler.SbrExt0TT) +
+TableHeader(ResourceHandler.SbrExt2, ResourceHandler.SbrExt2TT) +
+TableHeader(ResourceHandler.Repo0, ResourceHandler.Repo0TT) + 
+TableHeader(ResourceHandler.SbrExt3, ResourceHandler.SbrExt3TT) +
+TableHeader(ResourceHandler.SbrExt4, ResourceHandler.SbrExt4TT) +
+TableHeader(ResourceHandler.SbrExt5, ResourceHandler.SbrExt5TT) +
+TableHeader(ResourceHandler.SbrExt6, ResourceHandler.SbrExt6TT) +
+TableHeader(ResourceHandler.SbrExt7, ResourceHandler.SbrExt7TT) +
+TableHeader(ResourceHandler.SbrExt8, ResourceHandler.SbrExt8TT) +
+TableHeader(ResourceHandler.SbrExt9, ResourceHandler.SbrExt9TT) +
+TableHeader(ResourceHandler.SbrExt10, ResourceHandler.SbrExt10TT) +
+TableHeader(ResourceHandler.Repo1, ResourceHandler.Repo1TT) +
+TableHeader(ResourceHandler.SbrExt11, ResourceHandler.SbrExt11TT) +
+TableHeader(ResourceHandler.SbrExt12, ResourceHandler.SbrExt12TT) +
+TableHeader(ResourceHandler.SbrExt13, ResourceHandler.SbrExt13TT) +
+TableHeader(ResourceHandler.SbrExt14, ResourceHandler.SbrExt14TT) +
+TableHeader(ResourceHandler.SbrExt15, ResourceHandler.SbrExt15TT) +
+"</tr>";
+            CDataFormer cd = new(true);
+            List<string[]> list = cd.RepoInfoToXml();
+
+            foreach (var d in list)
+            {
+                s += "<tr>";
+                s += TableData(d[0], "");
+                s += TableData(d[3], "");
+                s += TableData(d[30], "");
+                s += TableData(d[1], "");
+                s += TableData(d[4], "");
+                s += TableData(d[6], "");
+                s += TableData(d[6], "");
+                s += TableData(d[7], "");
+                s += TableData(d[8], "");
+                s += TableData(d[9], "");
+                s += TableData(d[10], "");
+                s += TableData(d[11], "");
+                s += TableData(d[12], "");
+                s += TableData(d[13], "");
+                s += TableData(d[14], "");
+                s += TableData(d[15], "");
+                s += TableData(d[16], "");
+                s += "</tr>";
+            }
+
+            return s;
         }
         public string AddJobConTable()
         {

@@ -52,10 +52,21 @@ namespace VeeamHealthCheck.CsvHandlers
 
         //VBO Files
         private readonly string _vboGlobalCsv = "Global";
-        private readonly string _vboProxies= "Proxies";
+        private readonly string _vboProxies = "Proxies";
         private readonly string _vboRBAC = "RBACRoles";
         private readonly string _vboRepositories = "LocalRepositories";
         private readonly string _vboSecurity = "Security";
+        private readonly string _vboController = "Controller";
+        private readonly string _vboControllerDriver = "ControllerDrives";
+        private readonly string _vboJobSessions = "JobSessions";
+        private readonly string _vboJobStats = "JobStats";
+        private readonly string _vboObjectRepos = "ObjectRespositories";
+        private readonly string _vboOrganizations = "Organizations";
+        private readonly string _vboPermissions = "Permissions";
+        private readonly string _vboProtectionStatus = "ProtectionStatus";
+        private readonly string _vboLiceOverView = "LicenseOverviewReport";
+        private readonly string _vboMailboxProtection = "MailboxProtection";
+        private readonly string _StorageConsumption = "StorageConsumption";
 
         public CCsvParser()
         {
@@ -96,6 +107,50 @@ namespace VeeamHealthCheck.CsvHandlers
         {
             return GetDynamicCsvRecs(_vboSecurity);
         }
+        public IEnumerable<dynamic> GetDynVboControllerDrivers()
+        {
+            return GetDynamicCsvRecs(_vboController);
+        }
+        public IEnumerable<dynamic> GetDynVboControllerDriver()
+        {
+            return GetDynamicCsvRecs(_vboControllerDriver);
+        }
+        public IEnumerable<dynamic> GetDynVboJobSess()
+        {
+            return GetDynamicCsvRecs(_vboJobSessions);
+        }
+        public IEnumerable<dynamic> GetDynVboJobStats()
+        {
+            return GetDynamicCsvRecs(_vboJobStats);
+        }
+        public IEnumerable<dynamic> GetDynVboObjRepo()
+        {
+            return GetDynamicCsvRecs(_vboObjectRepos);
+        }
+        public IEnumerable<dynamic> GetDynVboOrg()
+        {
+            return GetDynamicCsvRecs(_vboOrganizations);
+        }
+        public IEnumerable<dynamic> GetDynVboPerms()
+        {
+            return GetDynamicCsvRecs(_vboPermissions);
+        }
+        public IEnumerable<dynamic> GetDynVboProtStat()
+        {
+            return GetDynamicCsvRecs(_vboProtectionStatus);
+        }
+        public IEnumerable<dynamic> GetDynVboLicOver()
+        {
+            return GetDynamicCsvRecs(_vboLiceOverView);
+        }
+        public IEnumerable<dynamic> GetDynVboMbProtRep()
+        {
+            return GetDynamicCsvRecs(_vboMailboxProtection);
+        }
+        public IEnumerable<dynamic> GetDynVboMbStgConsumption()
+        {
+            return GetDynamicCsvRecs(_StorageConsumption);
+        }
 
         #endregion
 
@@ -104,7 +159,7 @@ namespace VeeamHealthCheck.CsvHandlers
         private IEnumerable<dynamic> GetDynamicCsvRecs(string file)
         {
             var r = FileFinder(file);
-            if(r == null) { return Enumerable.Empty<dynamic>(); }
+            if (r == null) { return Enumerable.Empty<dynamic>(); }
             else
             {
                 return FileFinder(file).GetRecords<dynamic>();
@@ -138,7 +193,7 @@ namespace VeeamHealthCheck.CsvHandlers
         }
         public IEnumerable<dynamic> GetDynamicBjobs()
         {
-            return GetDynamicCsvRecs (_bjobs);
+            return GetDynamicCsvRecs(_bjobs);
         }
         public IEnumerable<dynamic> GetDynamincConfigBackup()
         {
@@ -342,7 +397,11 @@ namespace VeeamHealthCheck.CsvHandlers
                 .Replace(" ", string.Empty)
                 .Replace(".", string.Empty)
                 .Replace("?", string.Empty)
-                .Replace("-", string.Empty),
+                .Replace("-", string.Empty)
+                .Replace("(", string.Empty)
+                .Replace(")", string.Empty)
+                .Replace("/", string.Empty)
+                .Replace("#", string.Empty),
                 MissingFieldFound = null,
             };
             return config;

@@ -26,6 +26,7 @@ namespace VeeamHealthCheck
         public static bool _openExplorer = true;
         public static string _desiredPath = CVariables.unsafeDir;
         private string _path;
+        private bool _import;
 
         private bool _isVbr = false;
         private bool _isVb365 = false;
@@ -112,20 +113,24 @@ namespace VeeamHealthCheck
 
             if (_isVbr)
             {
-                CCsvToXml c = new("vbr", _scrub, false, _openHtml, true);
-                c.Dispose();
+                //CCsvToXml c = new("vbr", _scrub, false, _openHtml, _import);
+                //c.Dispose();
+
+                CReportModeSelector cMode = new(_desiredPath, _scrub, _openHtml, _import);
+                cMode.Run();
 
             }
             if (_isVb365)
             {
-                CReportModeSelector cMode = new(_desiredPath, _scrub, _openHtml, true);
+                CReportModeSelector cMode = new(_desiredPath, _scrub, _openHtml, _import);
                 cMode.Run();
             }
         }
         private void Import_click(object sender, RoutedEventArgs e)
         {
             //   Import();
-            LogUIAction("PopulateData");
+            LogUIAction("Import clicked");
+            _import = true;
             showProgressBar();
 
             System.Threading.Tasks.Task.Factory.StartNew(() =>
@@ -148,17 +153,9 @@ namespace VeeamHealthCheck
 
 
             //old mode: uses XSL files
-            if (_isVbr)
-            {
-                CCsvToXml c = new("vbr", _scrub, true, _openHtml, false);
-                c.ConvertToXml();
-                c.Dispose();
-            }
-            if (_isVb365)
-            {
-                CReportModeSelector cMode = new(_desiredPath, _scrub, _openHtml, false); ;
-                cMode.Run();
-            }
+
+            Import();
+
 
             log.Info("Starting Run..done!");
 
@@ -172,7 +169,8 @@ namespace VeeamHealthCheck
             //    log.Error(msg);
             //    Environment.Exit(0);
             //}
-            LogUIAction("PopulateData");
+            LogUIAction("Run selected");
+            _import = false;
             showProgressBar();
 
             System.Threading.Tasks.Task.Factory.StartNew(() =>

@@ -47,7 +47,7 @@ namespace VeeamHealthCheck.Reporting.Html
         private readonly CCsvParser _csvParser = new();
         private readonly CLogger log = MainWindow.log;
         private CHtmlExporter exporter;
-        private readonly CXmlFunctions XML;
+        private readonly CXmlFunctions XML = new("vbr");
 
         //privatstatic e readonly string _styleSheet = "StyleSheets\\vbr-Report.xsl";
         private static readonly string _styleSheet = "Reporting\\StyleSheets\\myHtml.xsl";
@@ -122,7 +122,7 @@ namespace VeeamHealthCheck.Reporting.Html
             doc.Save(_testFile);
             log.Info("converting lic info to xml..done!");
         }
-        private void ParseNonProtectedTypes()
+        public List<string> ParseNonProtectedTypes()
         {
             List<string> notProtectedTypes = new();
 
@@ -183,7 +183,9 @@ namespace VeeamHealthCheck.Reporting.Html
                 var xml2 = XML.AddXelement(v, "Type", "");
                 extElement.Add(xml2);
             }
-            doc.Save(_testFile);
+
+            return notProtectedTypes;
+
         }
         public List<int> SecSummary()
         {
@@ -266,7 +268,7 @@ namespace VeeamHealthCheck.Reporting.Html
 
         }
 
-        private void ServerSummaryToXml()
+        public Dictionary<string,int> ServerSummaryToXml()
         {
             log.Info("converting server summary to xml");
             Dictionary<string, int> di = _dTypeParser.ServerSummaryInfo;
@@ -291,10 +293,11 @@ namespace VeeamHealthCheck.Reporting.Html
 
 
             }
-            doc.Save(_testFile);
+            
             log.Info("converting server summary to xml.done!");
+            return di;
         }
-        private void ProtectedWorkloadsToXml()
+        public void ProtectedWorkloadsToXml()
         {
             //customize the log line:
             log.Info("Converting protected workloads data to xml...");
@@ -390,10 +393,24 @@ namespace VeeamHealthCheck.Reporting.Html
             extElement.Add(XML.AddXelement(physProtNames.Distinct().Count().ToString(), "Phys Protected"));
             extElement.Add(XML.AddXelement(physNotProtNames.Distinct().Count().ToString(), "Phys Not Prot."));
 
+            _viProtectedNames = viProtectedNames;
+            _viNotProtectedNames = viNotProtectedNames;
+            _viDupes = viDupes;
+            _physNotProtNames = physNotProtNames;
+            _physProtNames = physProtNames;
+
             doc.Save(_testFile);
 
             log.Info("Converting protected workloads data to xml..done!");
         }
+        public int _viDupes;
+        public List<string> _vmProtectedByPhys;
+        public List<string> _viProtectedNames;
+        public List<string> _vmNotProtectedNames;
+        
+        public List<string> _viNotProtectedNames;
+        public List<string> _physNotProtNames;
+        public List<string> _physProtNames;
         private void NewXmlNodeTemplate()
         {
             //customize the log line:
@@ -626,83 +643,75 @@ namespace VeeamHealthCheck.Reporting.Html
             log.Info("converting backup server info to xml..done!");
             return list;
         }
-        private void SobrInfoToXml()
+        public List<string[]> SobrInfoToXml()
         {
             log.Info("Starting SOBR conversion to xml..");
+            List<string[]> list = new();
+
             List<CSobrTypeInfos> csv = _dTypeParser.SobrInfo;
             List<CRepoTypeInfos> repos = _dTypeParser.ExtentInfo;
             csv = csv.OrderBy(x => x.Name).ToList();
 
-            XDocument doc = XDocument.Load(_testFile);
-            XElement extElement = new XElement("sobrs");
-            doc.Root.Add(extElement);
-            //doc.AddFirst(new XProcessingInstruction("xml-stylesheet", "type=\"text/xsl\" href=\"SessionReport.xsl\""));
 
             foreach (var c in csv)
             {
+                string[] s = new string[30];
                 int repoCount = repos.Count(x => x.SobrName == c.Name);
 
                 string newName = c.Name;
                 if (_scrub)
                     newName = _scrubber.ScrubItem(c.Name, "sobr");
-
-
-
                 _repoJobCount.TryGetValue(c.Name, out int jobCount);
-                var xml = new XElement("sobr",
-                    new XElement("name", newName),
-                    new XElement("policy", c.PolicyType),
-                    new XElement("extentCount", repoCount),
-                    new XElement("extents", c.Extents.Count()),
-                    new XElement("pervm", c.UsePerVMBackupFiles),
-                    new XElement("performfull", c.PerformFullWhenExtentOffline),
-                    new XElement("captier", c.EnableCapacityTier),
-                    new XElement("restoreperiod", c.OperationalRestorePeriod),
-                    new XElement("capacitytext", c.CapacityExtent),
-                    new XElement("offloadwindow", c.OffloadWindowOptions),
-                    new XElement("overridespace", c.OverrideSpaceThreshold),
-                    new XElement("encryption", c.EncryptionEnabled),
-                    new XElement("copy", c.CapacityTierCopyPolicyEnabled),
-                    new XElement("move", c.CapacityTierMovePolicyEnabled),
-                    new XElement("archiveenabled", c.ArchiveTierEnabled),
-                    new XElement("archiveextent", c.ArchiveExtent),
-                    new XElement("archiveperiod", c.ArchivePeriod),
-                    new XElement("costoptimized", c.CostOptimizedArchiveEnabled),
-                    new XElement("archivefull", c.ArchiveFullBackupModeEnabled),
-                    new XElement("plugin", c.PluginBackupsOffloadEnabled),
-                    new XElement("plugincopy", c.CopyAllPluginBackupsEnabled),
-                    new XElement("copyallmachine", c.CopyAllMachineBackupsEnabled),
-                    new XElement("id", c.Id),
-                    new XElement("desc", c.Description),
-                    new XElement("overridepolicy", c.OverridePolicyEnabled),
-                    new XElement("captiertype", c.CapTierType),
-                    new XElement("immuteEnabled", c.ImmuteEnabled),
-                    new XElement("immutePeriod", c.ImmutePeriod),
-                    new XElement("sizeLimit", c.SizeLimit),
-                    new XElement("sizeLimitEnabled", c.SizeLimitEnabled),
-                    new XElement("jobcount", jobCount
-                    ));
 
-                extElement.Add(xml);
+                s[0] += newName;
+                s[1] += c.Extents.Count();
+                s[2] += jobCount;
+                s[3] += c.PolicyType;
+                s[4] += c.EnableCapacityTier;
+                s[5] += c.CapacityTierCopyPolicyEnabled;
+                s[6] += c.CapacityTierMovePolicyEnabled;
+                s[7] += c.ArchiveTierEnabled;
+                s[8] += c.UsePerVMBackupFiles;
+                s[9] += c.CapTierType;
+                s[10] += c.ImmuteEnabled;
+                s[11] += c.ImmutePeriod;
+                s[12] += c.SizeLimitEnabled;
+                s[13] += c.SizeLimit;
+                //s[14] += 
+                //s[15] += c.ArchiveExtent;
+                //s[16] += c.CostOptimizedArchiveEnabled;
+                //s[17] += c.ArchiveFullBackupModeEnabled;
+                //s[18] += c.PluginBackupsOffloadEnabled;
+                //s[19] += c.CopyAllMachineBackupsEnabled;
+                //s[20] += c.CopyAllPluginBackupsEnabled;
+                //s[21] += c.Id;
+                //s[22] += c.Description;
+                //s[23] += c.OverridePolicyEnabled;
+                //s[24] += c.CapTierType;
+                //s[25] += c.CapTierName;
+                //s[26] += c.ImmuteEnabled;
+                //s[27] += c.ImmutePeriod;
+                //s[28] += c.SizeLimit;
+                //s[29] += c.SizeLimitEnabled;
+                //s[30] += 
+
+                list.Add(s);
             }
-            doc.Save(_testFile);
             log.Info("Starting SOBR conversion to xml..done!");
+            return list;
         }
-        private void ExtentXmlFromCsv()
+        public List<string[]> ExtentXmlFromCsv()
         {
             log.Info("converting extent info to xml");
+            List<string[]> list = new List<string[]>();
             List<CRepoTypeInfos> csv = _dTypeParser.ExtentInfo;
             csv = csv.OrderBy(x => x.RepoName).ToList();
             csv = csv.OrderBy(y => y.SobrName).ToList();
 
-            XDocument doc = XDocument.Load(_testFile);
-
-            XElement extElement = new XElement("extent");
-            doc.Root.Add(extElement);
-            //doc.AddFirst(new XProcessingInstruction("xml-stylesheet", "type=\"text/xsl\" href=\"SessionReport.xsl\""));
 
             foreach (var c in csv)
             {
+                string[] s = new string[16];
                 string newName = c.RepoName;
                 string sobrName = c.SobrName;
                 string hostName = c.Host;
@@ -723,34 +732,34 @@ namespace VeeamHealthCheck.Reporting.Html
 
                 var freePercent = FreePercent(c.FreeSPace, c.TotalSpace);
 
-                var xml = new XElement("repository",
-                    new XElement("Name", newName),
-                    new XElement("Tasks", c.MaxTasks,
-                    new XAttribute("color", c.Povisioning)),
-                    new XElement("Path", path),
-                    new XElement("sobr", sobrName),
-                    new XElement("RAM", c.Ram),
-                    new XElement("AutoGate", c.IsAutoGateway),
-                    new XElement("Cores", c.Cores),
-                    new XElement("Host", hostName),
-                    new XElement("freespace", Math.Round((decimal)c.FreeSPace / 1024, 2)),
-                    new XElement("totalspace", Math.Round((decimal)c.TotalSpace / 1024, 2)),
-                    new XElement("freespacepercent", freePercent),
-                    new XElement("align", c.AlignBlocks),
-                    new XElement("type", type),
-                    new XElement("rotate", c.IsRotatedDriveRepository),
-                    new XElement("uncompress", c.IsDecompress),
-                    new XElement("immute", c.IsImmutabilitySupported
-                    ));
+                s[0] += newName;
+                s[1] += sobrName;
+                s[2] += c.MaxTasks;
+                s[3] += c.Cores;
+                s[4] += c.Ram;
+                s[5] += c.IsAutoGateway;
+                s[6] += c.Host;
+                s[7] += c.Path;
+                s[8] += Math.Round((decimal)c.FreeSPace / 1024, 2);
+                s[9] += Math.Round((decimal)c.TotalSpace / 1024, 2);
+                s[10] += freePercent;
+                s[11] += c.IsDecompress;
+                s[12] += c.AlignBlocks;
+                s[13] += c.IsRotatedDriveRepository;
+                s[14] += c.IsImmutabilitySupported;
+                s[15] += c.Type;
 
-                extElement.Add(xml);
+
+                list.Add(s);
             }
-            doc.Save(_testFile);
             log.Info("converting extent info to xml..done!");
+            return list;
         }
-        private void RepoInfoToXml()
+        public List<string[]> RepoInfoToXml()
         {
             log.Info("converting repository info to xml");
+            List<string[]> list = new();
+
             List<CRepoTypeInfos> csv = _dTypeParser.RepoInfos;
             csv = csv.OrderBy(x => x.Name).ToList();
             //csv = csv.OrderBy(y => y.sobrName).ToList();
@@ -763,6 +772,7 @@ namespace VeeamHealthCheck.Reporting.Html
 
             foreach (var c in csv)
             {
+                string[] s = new string[17];
                 string name = c.Name;
                 string host = c.Host;
                 string path = c.Path;
@@ -789,112 +799,65 @@ namespace VeeamHealthCheck.Reporting.Html
 
 
                 _repoJobCount.TryGetValue(c.Name, out int jobCount);
+                s[0] += name;
+                s[1] += c.MaxTasks;
+                s[2] += jobCount;
+                s[3] += c.Cores;
+                s[4] += c.Ram;
+                s[5] += c.IsAutoGateway;
+                s[6] += c.Host;
+                s[7] += c.Path;
+                s[8] += Math.Round((decimal)c.FreeSPace / 1024, 2);
+                s[9] += Math.Round((decimal)c.TotalSpace / 1024, 2);
+                s[10] += freePercent;
+                s[11] += c.SplitStoragesPerVm;
+                s[12] += c.IsDecompress;
+                s[13] += c.AlignBlocks;
+                s[14] += c.IsRotatedDriveRepository;
+                s[15] += c.IsImmutabilitySupported;
+                s[16] += c.Type;
 
-
-                var xml = new XElement("repository",
-                    new XElement("Name", name),
-                    new XElement("Tasks", c.MaxTasks,
-                    new XAttribute("color", c.Povisioning)),
-                    new XElement("Path", path),
-                    new XElement("RAM", FilterZeros(c.Ram)),
-                    new XElement("AutoGate", c.IsAutoGateway),
-                    new XElement("Cores", FilterZeros(c.Cores)),
-                    new XElement("freespace", freeSpace),
-                    new XElement("totalspace", totalSpace),
-                    new XElement("freespacepercent", percentFree),
-                    new XElement("uncompress", c.IsDecompress),
-                    new XElement("fpath", c.FriendlyPath),
-                    new XElement("chainlimit", c.HasBackupChainLengthLimitation),
-                    new XElement("dedup", c.IsDedupStorage),
-                    new XElement("rotated", c.IsRotatedDriveRepository),
-                    new XElement("sansnaponly", c.IsSanSnapshotOnly),
-                    new XElement("isUnavailable", c.IsUnavailable),
-                    new XElement("pervm", c.SplitStoragesPerVm),
-                    new XElement("align", c.AlignBlocks),
-                    new XElement("rotate", c.IsRotatedDriveRepository),
-                    new XElement("status", c.Status),
-                    new XElement("type", c.TypeDisplay),
-                    new XElement("host", host),
-                    new XElement("immute", c.IsImmutabilitySupported),
-                    new XElement("jobcount", jobCount
-                    ));
-
-                extElement.Add(xml);
+                list.Add(s);
             }
-            doc.Save(_testFile);
             log.Info("converting repository info to xml..done!");
+            return list;
         }
-        private void ProxyXmlFromCsv()
+        public List<string[]> ProxyXmlFromCsv()
         {
             log.Info("converting proxy info to xml");
+            List<string[]> list = new();
             List<CProxyTypeInfos> csv = _dTypeParser.ProxyInfo();
 
             csv = csv.OrderBy(x => x.Name).ToList();
             csv = csv.OrderBy(y => y.Type).ToList();
-            XDocument doc = XDocument.Load(_testFile);
 
-            XElement serverRoot = new XElement("proxies");
-            //testbelow
-            //XElement serverRoot2 = new XElement("category", new XAttribute("catagory","proxies"));
-            //doc.Root.Add(serverRoot2);
-            //testabove
-            doc.Root.Add(serverRoot);
 
             foreach (var c in csv)
             {
-
+                string[] s = new string[12];
                 if (_scrub)
                 {
                     c.Name = Scrub(c.Name);
                     c.Host = Scrub(c.Host);
                 }
+                s[0] += c.Name;
+                s[1] += c.MaxTasksCount;
+                s[2] += c.Cores.ToString();
+                s[3] += c.Ram.ToString();
+                s[4] += c.Type;
+                s[5] += c.TransportMode;
+                s[6] += c.FailoverToNetwork;
+                s[7] += c.ChassisType;
+                s[8] += c.CachePath;
+                s[9] += c.CacheSize;
+                s[10] += c.Host;
+                s[11] += c.IsDisabled;
 
-                var xml2 = new XElement("proxy");
-                xml2.Add(XML.AddXelement(c.Name, "Name", "Proxy Host Name"));
-                xml2.Add(XML.AddXelement(c.MaxTasksCount.ToString(), "Tasks", "Max tasks proxy is set to accept", c.Provisioning));
-                xml2.Add(XML.AddXelement(c.Cores.ToString(), "Cores", "Total detecte CPU Cores (no hyper-threading)"));
-                xml2.Add(XML.AddXelement(c.Ram.ToString(), "RAM", "Total deteced ram on server"));
-                xml2.Add(XML.AddXelement(c.Type, "Proxy Type", "Proxy type defined in VBR"));
-                xml2.Add(XML.AddXelement(c.TransportMode, "Transport Mode", "Transport mode assigned to proxy"));
-                xml2.Add(XML.AddXelement(c.FailoverToNetwork, "Failover to NBD", "If true, proxy is configured to fail back to network mode if primary transport mode fails"));
-                xml2.Add(XML.AddXelement(c.ChassisType, "Chassis", "Shows if proxy is physical or virtual"));
-                xml2.Add(XML.AddXelement(c.CachePath, "Cache Path", "Path defined for CDP proxy to use. Applies to CDP proxy only"));
-                xml2.Add(XML.AddXelement(c.CacheSize, "Cache Size", "Cache size specified for CDP proxy. Applies to CDP proxy only."));
-                xml2.Add(XML.AddXelement(c.Host, "Host", "Actual server name that the proxy role is installed on."));
-                xml2.Add(XML.AddXelement(c.IsDisabled, "Is Disabled", "Defines if the proxy is manually disabled. If true, the user has selected this option in the GUI."));
-
-
-                serverRoot.Add(xml2);
-
-
-                //test area
-                //#region testARea
-                //var xml = new XElement("entity",
-                //    new XAttribute("entityName", "Proxy"));
-                //xml.Add(XML.AddXelement(c.Name, "Name", "Proxy Host Name"));
-                //xml.Add(XML.AddXelement(c.MaxTasksCount.ToString(), "Tasks", "Max tasks proxy is set to accept", c.Provisioning));
-                //xml.Add(XML.AddXelement(c.Cores.ToString(), "Cores", "Total detecte CPU Cores (no hyper-threading)"));
-                //xml.Add(XML.AddXelement(c.Ram.ToString(), "RAM", "Total deteced ram on server"));
-                //xml.Add(XML.AddXelement(c.Type, "Proxy Type", "Proxy type defined in VBR"));
-                //xml.Add(XML.AddXelement(c.TransportMode, "Transport Mode", "Transport mode assigned to proxy"));
-                //xml.Add(XML.AddXelement(c.FailoverToNetwork, "Failover to NBD", "If true, proxy is configured to fail back to network mode if primary transport mode fails"));
-                //xml.Add(XML.AddXelement(c.ChassisType, "Chassis", "Shows if proxy is physical or virtual"));
-                //xml.Add(XML.AddXelement(c.CachePath, "Cache Path", "Path defined for CDP proxy to use. Applies to CDP proxy only"));
-                //xml.Add(XML.AddXelement(c.CacheSize, "Cache Size", "Cache size specified for CDP proxy. Applies to CDP proxy only."));
-                //xml.Add(XML.AddXelement(c.Host, "Host", "Actual server name that the proxy role is installed on."));
-                //xml.Add(XML.AddXelement(c.IsDisabled, "Is Disabled", "Defines if the proxy is manually disabled. If true, the user has selected this option in the GUI."));
-
-
-                //serverRoot2.Add(xml);
-
-                //#endregion
-
-                //doc.Add(xml);
-
-
+                list.Add(s);
             }
-            doc.Save(_testFile);
             log.Info("converting proxy info to xml..done!");
+
+            return list;
         }
 
         private void ProtectedVmCounter(List<CViProtected> protectedList, List<string> uniqueVmList, int vmcounter, int protectedCounter)
@@ -909,9 +872,10 @@ namespace VeeamHealthCheck.Reporting.Html
                 }
             }
         }
-        private void ServerXmlFromCsv()
+        public List<string[]> ServerXmlFromCsv()
         {
             log.Info("converting server info to xml");
+            List<string[]> list = new List<string[]>();
             List<CServerTypeInfos> csv = _dTypeParser.ServerInfo();
 
             csv = csv.OrderBy(x => x.Name).ToList();
@@ -931,6 +895,8 @@ namespace VeeamHealthCheck.Reporting.Html
 
             foreach (var c in csv)
             {
+                string[] s = new string[12];
+
                 //match server and VM count
                 int vmCount = 0;
                 int protectedCount = 0;
@@ -992,36 +958,29 @@ namespace VeeamHealthCheck.Reporting.Html
                 string newName = c.Name;
                 if (_scrub)
                     newName = Scrub(newName);
+                s[0] = newName;
+                s[1] += c.Cores;
+                s[2] += c.Ram;
+                s[3] += c.Type;
+                s[4] += c.ApiVersion;
+                s[5] += proxyRole;
+                s[6] += repoRole;
+                s[7] += wanRole;
+                s[8] += c.IsUnavailable;
+                s[9] += pVmStr;
+                s[10] += upVmStr;
+                s[11] += tVmStr;
 
-                //create XML entries
-                var xml = new XElement("server",
-                    new XElement("Name", newName),
-                    new XElement("Cores", c.Cores),
-                    new XElement("RAM", c.Ram),
-                    new XElement("Type", c.Type),
-                    new XElement("ApiVersion", c.ApiVersion),
-                    new XElement("proxyrole", proxyRole),
-                    new XElement("repo", repoRole),
-                    new XElement("wanacc", wanRole),
-                    new XElement("isavailable", c.IsUnavailable),
-                    new XElement("protectedVms", pVmStr),
-                    new XElement("unProtectedVms", upVmStr),
-                    new XElement("totalVms", tVmStr
-                    ));
-
-                serverRoot.Add(xml);
 
                 //doc.Add(xml);
 
-
+                list.Add(s);
             }
-            doc.Save(_testFile);
             log.Info("converting server info to xml..done!");
+            return list;
         }
-        private void JobSummaryInfoToXml()
+        public Dictionary<string, int> JobSummaryInfoToXml()
         {
-            try
-            {
                 log.Info("converting job summary info to xml");
                 List<CJobTypeInfos> csv = _dTypeParser.JobInfos;
 
@@ -1034,23 +993,7 @@ namespace VeeamHealthCheck.Reporting.Html
                 {
                     types2.Add(c.JobType);
                 }
-                if (!_isImport)
-                {
-                    //try
-                    //{
-                    //    foreach (DataRow r in _cq.JobTypes.Rows)
-                    //    {
-                    //        string typeString = r["type"].ToString();
-                    //        int.TryParse(typeString, out int i);
-                    //        types.Add((CModel.EDbJobType)i);
-                    //    }
-                    //}
-                    //catch (Exception e)
-                    //{
-                    //    log.Error("Error processing SQL JobTypes:");
-                    //    log.Error(e.Message);
-                    //}
-                }
+
 
                 Dictionary<string, int> typeSummary = new();
                 foreach (var t in types2)
@@ -1095,11 +1038,8 @@ namespace VeeamHealthCheck.Reporting.Html
                 extElement.Add(totalElement);
 
 
-
-                doc.Save(_testFile);
                 log.Info("converting job summary info to xml..done!");
-            }
-            catch (Exception e) { log.Error(e.Message); }
+                return typeSummary;
         }
 
 
@@ -1386,8 +1326,10 @@ namespace VeeamHealthCheck.Reporting.Html
         {
             JobConcurrency(false, days);
         }
-        private void RegOptions()
+        public Dictionary<string,string> RegOptions()
         {
+            Dictionary<string, string> returnDict = new();
+
             var reg = new CCsvParser();
             var RegOptions = reg.RegOptionsCsvParser();
             CDefaultRegOptions defaults = new();
@@ -1406,25 +1348,16 @@ namespace VeeamHealthCheck.Reporting.Html
                     defaults._defaultKeys.TryGetValue(r.KeyName, out string setValue);
                     if (setValue != r.Value)
                     {
-                        var xml = new XElement("rOpt",
-                            new XElement("key", r.KeyName),
-                            new XElement("value", r.Value)
-                            );
-
-                        extElement.Add(xml);
+                        returnDict.Add(r.KeyName, r.Value);
                     }
                 }
                 if (!defaults._defaultKeys.ContainsKey(r.KeyName))
                 {
                     defaults._defaultKeys.TryGetValue(r.KeyName, out string setValue);
-                    var xml = new XElement("rOpt",
-                        new XElement("key", r.KeyName),
-                        new XElement("value", r.Value)
-                        );
-                    extElement.Add(xml);
+                    returnDict.Add(r.KeyName, r.Value);
                 }
             }
-            doc.Save(_testFile);
+            return returnDict;
         }
         private void JobInfoToXml()
         {
