@@ -58,8 +58,9 @@ namespace VeeamHealthCheck.DataTypes
 
         private List<CSobrTypeInfos> SobrInfos()
         {
-            var sobrCsv = _csvParser.SobrCsvParser();
-            var capTierCsv = _csvParser.CapTierCsvParser();
+            var sobrCsv = _csvParser.SobrCsvParser().ToList();
+            List<CCapTierCsv> capTierCsv = _csvParser.CapTierCsvParser().ToList();
+
 
             List<CSobrTypeInfos> eInfoList = new List<CSobrTypeInfos>();
             foreach (CSobrCsvInfo s in sobrCsv)
