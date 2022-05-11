@@ -54,9 +54,11 @@ namespace VeeamHealthCheck.Html
             m365Orgs();
             m365Perms();
             m365ProtStat();
-            m365LicOverView();
-            m365MbProtReport();
-            m365StgConsumption();
+
+            // David said these 3 are not needed:
+            //m365LicOverView();
+            //m365MbProtReport();
+            //m365StgConsumption();
 
             SaveDoc();
         }
@@ -448,15 +450,11 @@ namespace VeeamHealthCheck.Html
                 node.Add(XML.AddXelement(info.maxdatatransferred, "Max Data Transferred"));
                 node.Add(XML.AddXelement(info.averageobjects, "Average Objects "));
                 node.Add(XML.AddXelement(info.maxobjects, "Max Objects "));
-                node.Add(XML.AddXelement(info.averageprocessingrate, "Average Processing Rate"));
-                node.Add(XML.AddXelement(info.maxprocessingrate, "Max Processing Rate"));
-                node.Add(XML.AddXelement(info.averageitemprocrate, "Average Item Proc Rate"));
-                node.Add(XML.AddXelement(info.maxitemprocrate, "Max Item Proc Rate"));
-                node.Add(XML.AddXelement(info.averagereadrate, "Average Read Rate"));
-                node.Add(XML.AddXelement(info.maxreadrate, "Max Read Rate"));
-                node.Add(XML.AddXelement(info.averagewriterate, "Average Write Rate"));
-                node.Add(XML.AddXelement(info.maxwriterate, "Max Write Rate"));
+                node.Add(XML.AddXelement(info.averageitems, "Average Items "));
+                node.Add(XML.AddXelement(info.maxitems, "Max Items "));
                 node.Add(XML.AddXelement(info.typicalbottleneck, "Typical Bottleneck"));
+                node.Add(XML.AddXelement(info.jobavgthroughput, "Job Avg Throughput"));
+                node.Add(XML.AddXelement(info.jobavgprocessingrate, "Job Avg Processing Rate"));
 
 
             }

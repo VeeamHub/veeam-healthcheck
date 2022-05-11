@@ -1,5 +1,5 @@
-cd C:\Users\adam\Source\Repos\VeeamHub\veeam-healthcheck\vHC\HC_Reporting\Resources\Localization
-$source = Get-Content "vhcres.txt"
+cd C:\Users\adam\Source\Repos\VeeamHub\veeam-healthcheck\vHC\HC_Reporting\Resources\VB365_Localization
+$source = Get-Content "vb365res.txt"
 $output = "test.csv"
 
 $null | Export-Csv test.csv -NoTypeInformation
