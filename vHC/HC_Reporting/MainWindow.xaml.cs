@@ -125,6 +125,11 @@ namespace VeeamHealthCheck
                 CReportModeSelector cMode = new(_desiredPath, _scrub, _openHtml, _import);
                 cMode.Run();
             }
+            else
+            {
+                CReportModeSelector cMode = new(_desiredPath, _scrub, _openHtml, _import);
+                cMode.Run();
+            }
         }
         private void Import_click(object sender, RoutedEventArgs e)
         {

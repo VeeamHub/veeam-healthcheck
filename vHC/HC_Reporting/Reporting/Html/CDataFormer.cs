@@ -93,33 +93,33 @@ namespace VeeamHealthCheck.Reporting.Html
             CCsvParser parser = new();
             var recs = parser.GetDynamicLicenseCsv();
 
-            XDocument doc = XDocument.Load(_testFile);
+            //XDocument doc = XDocument.Load(_testFile);
 
-            XElement extElement = new XElement("license");
-            doc.Root.Add(extElement);
-            foreach (var c in recs)
-            {
-                var xml = new XElement("licInfo",
-                    new XElement("client", c.licensedto),
-                    new XElement("edition", c.edition),
-                    new XElement("status", c.status),
-                    new XElement("type", c.type),
-                    new XElement("licInst", c.licensedinstances),
-                    new XElement("usedInst", c.usedinstances),
-                    new XElement("newInst", c.newinstances),
-                    new XElement("rentInst", c.rentalinstances),
-                    new XElement("licSock", c.licensedsockets),
-                    new XElement("usedSock", c.usedsockets),
-                    new XElement("licCap", c.licensedcapacitytb),
-                    new XElement("usedCap", c.usedcapacitytb),
-                    new XElement("expire", c.expirationdate),
-                    new XElement("supExp", c.supportexpirationdate),
-                    new XElement("cloudconnect", c.cloudconnect)
-                    );
+            //XElement extElement = new XElement("license");
+            //doc.Root.Add(extElement);
+            //foreach (var c in recs)
+            //{
+            //    var xml = new XElement("licInfo",
+            //        new XElement("client", c.licensedto),
+            //        new XElement("edition", c.edition),
+            //        new XElement("status", c.status),
+            //        new XElement("type", c.type),
+            //        new XElement("licInst", c.licensedinstances),
+            //        new XElement("usedInst", c.usedinstances),
+            //        new XElement("newInst", c.newinstances),
+            //        new XElement("rentInst", c.rentalinstances),
+            //        new XElement("licSock", c.licensedsockets),
+            //        new XElement("usedSock", c.usedsockets),
+            //        new XElement("licCap", c.licensedcapacitytb),
+            //        new XElement("usedCap", c.usedcapacitytb),
+            //        new XElement("expire", c.expirationdate),
+            //        new XElement("supExp", c.supportexpirationdate),
+            //        new XElement("cloudconnect", c.cloudconnect)
+            //        );
 
-                extElement.Add(xml);
-            }
-            doc.Save(_testFile);
+            //    extElement.Add(xml);
+            //}
+            //doc.Save(_testFile);
             log.Info("converting lic info to xml..done!");
         }
         public List<string> ParseNonProtectedTypes()
@@ -172,17 +172,17 @@ namespace VeeamHealthCheck.Reporting.Html
             notProtectedTypes.Add("Kubernetes");
             notProtectedTypes.Add("Microsoft 365");
 
-            XDocument doc = XDocument.Load(_testFile);
-            XElement extElement = new XElement("npjobSummary");
-            //var summary = new XElement("info", fillerText.JobSummary);
-            //extElement.Add(summary);
-            doc.Root.Add(extElement);
+            //XDocument doc = XDocument.Load(_testFile);
+            //XElement extElement = new XElement("npjobSummary");
+            ////var summary = new XElement("info", fillerText.JobSummary);
+            ////extElement.Add(summary);
+            //doc.Root.Add(extElement);
 
-            foreach (var v in notProtectedTypes)
-            {
-                var xml2 = XML.AddXelement(v, "Type", "");
-                extElement.Add(xml2);
-            }
+            //foreach (var v in notProtectedTypes)
+            //{
+            //    var xml2 = XML.AddXelement(v, "Type", "");
+            //    extElement.Add(xml2);
+            //}
 
             return notProtectedTypes;
 
@@ -272,27 +272,26 @@ namespace VeeamHealthCheck.Reporting.Html
         {
             log.Info("converting server summary to xml");
             Dictionary<string, int> di = _dTypeParser.ServerSummaryInfo;
-            XDocument doc = XDocument.Load(_testFile);
 
 
 
-            XElement serverRoot = new XElement("serverSummary");
-            doc.Root.Add(serverRoot);
+            //XElement serverRoot = new XElement("serverSummary");
+            //doc.Root.Add(serverRoot);
 
 
-            foreach (var c in di)
-            {
-                var xml = new XElement("server",
-                    new XElement("name", c.Key),
-                    new XElement("count", c.Value)
-                    );
+            //foreach (var c in di)
+            //{
+            //    var xml = new XElement("server",
+            //        new XElement("name", c.Key),
+            //        new XElement("count", c.Value)
+            //        );
 
-                serverRoot.Add(xml);
+            //    serverRoot.Add(xml);
 
-                //doc.Add(xml);
+            //    //doc.Add(xml);
 
 
-            }
+            //}
             
             log.Info("converting server summary to xml.done!");
             return di;
@@ -322,11 +321,8 @@ namespace VeeamHealthCheck.Reporting.Html
 
 
             // begin XML info input
-            XDocument doc = XDocument.Load(_testFile);
 
             // NEW NODE NAME HERE
-            XElement extElement = new XElement("protectedWorkloads");
-            doc.Root.Add(extElement);
 
             // Filter duplicates
             List<string> vmNames = new();
@@ -383,15 +379,6 @@ namespace VeeamHealthCheck.Reporting.Html
             }
 
             //var xml2 = XML.AddXelement(protectedVms.Count.ToString(), "ViProtected");
-            extElement.Add(XML.AddXelement((viProtectedNames.Distinct().Count() + viNotProtectedNames.Distinct().Count()).ToString(), "Vi Total"));
-            extElement.Add(XML.AddXelement(viProtectedNames.Distinct().Count().ToString(), "Vi Protected"));
-            extElement.Add(XML.AddXelement(viNotProtectedNames.Distinct().Count().ToString(), "Vi Not Prot."));
-            extElement.Add(XML.AddXelement(viDupes.ToString(), "Vi Potential Duplicates"));
-            extElement.Add(XML.AddXelement(vmProtectedByPhys.Distinct().Count().ToString(), "VM Protected as Physical"));
-
-            extElement.Add(XML.AddXelement((physNotProtNames.Distinct().Count() + physProtNames.Distinct().Count()).ToString(), "Phys Total"));
-            extElement.Add(XML.AddXelement(physProtNames.Distinct().Count().ToString(), "Phys Protected"));
-            extElement.Add(XML.AddXelement(physNotProtNames.Distinct().Count().ToString(), "Phys Not Prot."));
 
             _viProtectedNames = viProtectedNames;
             _viNotProtectedNames = viNotProtectedNames;
@@ -399,7 +386,6 @@ namespace VeeamHealthCheck.Reporting.Html
             _physNotProtNames = physNotProtNames;
             _physProtNames = physProtNames;
 
-            doc.Save(_testFile);
 
             log.Info("Converting protected workloads data to xml..done!");
         }
@@ -423,11 +409,11 @@ namespace VeeamHealthCheck.Reporting.Html
             CCsvParser config = new();
 
             // begin XML info input
-            XDocument doc = XDocument.Load(_testFile);
+            //XDocument doc = XDocument.Load(_testFile);
 
-            // NEW NODE NAME HERE
-            XElement extElement = new XElement("backupServer");
-            doc.Root.Add(extElement);
+            //// NEW NODE NAME HERE
+            //XElement extElement = new XElement("backupServer");
+            //doc.Root.Add(extElement);
 
             // Check for items needing scrubbed
             if (_scrub)
@@ -436,15 +422,15 @@ namespace VeeamHealthCheck.Reporting.Html
             }
 
             //set items to XML + save
-            var xml = new XElement("serverInfo",
-                new XElement("name", backupServer.Name),
-                new XElement("cores", backupServer.Cores),
-                new XElement("ram", backupServer.Ram),
-                new XElement("wanacc", _isBackupServerWan)
-                );
+            //var xml = new XElement("serverInfo",
+            //    new XElement("name", backupServer.Name),
+            //    new XElement("cores", backupServer.Cores),
+            //    new XElement("ram", backupServer.Ram),
+            //    new XElement("wanacc", _isBackupServerWan)
+            //    );
 
-            extElement.Add(xml);
-            doc.Save(_testFile);
+            //extElement.Add(xml);
+            //doc.Save(_testFile);
 
             log.Info("xml template..done!");
         }
@@ -573,10 +559,10 @@ namespace VeeamHealthCheck.Reporting.Html
             }
 
 
-            XDocument doc = XDocument.Load(_testFile);
+            //XDocument doc = XDocument.Load(_testFile);
 
-            XElement extElement = new XElement("backupServer");
-            doc.Root.Add(extElement);
+            //XElement extElement = new XElement("backupServer");
+            //doc.Root.Add(extElement);
 
 
             if (_scrub)
@@ -614,8 +600,8 @@ namespace VeeamHealthCheck.Reporting.Html
                 new XElement("wanacc", _isBackupServerWan)
                 );
 
-            extElement.Add(xml);
-            doc.Save(_testFile);
+            //extElement.Add(xml);
+            //doc.Save(_testFile);
 
 
             list.Add(backupServer.Name);
@@ -645,6 +631,7 @@ namespace VeeamHealthCheck.Reporting.Html
         }
         public List<string[]> SobrInfoToXml()
         {
+            PreCalculations();
             log.Info("Starting SOBR conversion to xml..");
             List<string[]> list = new();
 
@@ -757,6 +744,7 @@ namespace VeeamHealthCheck.Reporting.Html
         }
         public List<string[]> RepoInfoToXml()
         {
+            PreCalculations();
             log.Info("converting repository info to xml");
             List<string[]> list = new();
 
@@ -764,10 +752,10 @@ namespace VeeamHealthCheck.Reporting.Html
             csv = csv.OrderBy(x => x.Name).ToList();
             //csv = csv.OrderBy(y => y.sobrName).ToList();
 
-            XDocument doc = XDocument.Load(_testFile);
+            //XDocument doc = XDocument.Load(_testFile);
 
             XElement extElement = new XElement("repositories");
-            doc.Root.Add(extElement);
+            //doc.Root.Add(extElement);
             //doc.AddFirst(new XProcessingInstruction("xml-stylesheet", "type=\"text/xsl\" href=\"SessionReport.xsl\""));
 
             foreach (var c in csv)
@@ -885,10 +873,10 @@ namespace VeeamHealthCheck.Reporting.Html
             var protectedVms = csvp.ViProtectedReader().ToList();
             var unProtectedVms = csvp.ViUnProtectedReader().ToList();
 
-            XDocument doc = XDocument.Load(_testFile);
-            XElement serverRoot = new XElement("servers");
-            doc.Root.Add(serverRoot);
-            doc.AddFirst(new XProcessingInstruction("xml-stylesheet", "type=\"text/xsl\" href=\"SessionReport.xsl\""));
+            //XDocument doc = XDocument.Load(_testFile);
+            //XElement serverRoot = new XElement("servers");
+            //doc.Root.Add(serverRoot);
+            //doc.AddFirst(new XProcessingInstruction("xml-stylesheet", "type=\"text/xsl\" href=\"SessionReport.xsl\""));
 
             //list to ensure we only count unique VMs
             List<string> countedVMs = new();
@@ -1019,23 +1007,23 @@ namespace VeeamHealthCheck.Reporting.Html
 
                 //ParseNonProtectedTypes(notProtectedTypes);
 
-                XDocument doc = XDocument.Load(_testFile);
+                //XDocument doc = XDocument.Load(_testFile);
 
-                XElement extElement = new XElement("jobSummary");
-                doc.Root.Add(extElement);
-                foreach (var d in typeSummary)
-                {
-                    var xml = new XElement("summary",
-                        new XElement("type", d.Key),
-                        new XElement("typeCount", d.Value));
+                //XElement extElement = new XElement("jobSummary");
+                //doc.Root.Add(extElement);
+                //foreach (var d in typeSummary)
+                //{
+                //    var xml = new XElement("summary",
+                //        new XElement("type", d.Key),
+                //        new XElement("typeCount", d.Value));
 
-                    extElement.Add(xml);
+                //    extElement.Add(xml);
 
-                }
-                var totalElement = new XElement("summary",
-                    new XElement("type", "TotalJobs"),
-                    new XElement("typeCount", totalJobs));
-                extElement.Add(totalElement);
+                //}
+                //var totalElement = new XElement("summary",
+                //    new XElement("type", "TotalJobs"),
+                //    new XElement("typeCount", totalJobs));
+                //extElement.Add(totalElement);
 
 
                 log.Info("converting job summary info to xml..done!");
@@ -1334,9 +1322,9 @@ namespace VeeamHealthCheck.Reporting.Html
             var RegOptions = reg.RegOptionsCsvParser();
             CDefaultRegOptions defaults = new();
 
-            XDocument doc = XDocument.Load(_testFile);
-            XElement extElement = new XElement("regOptions");
-            doc.Root.Add(extElement);
+            //XDocument doc = XDocument.Load(_testFile);
+            //XElement extElement = new XElement("regOptions");
+            //doc.Root.Add(extElement);
 
             foreach (var r in RegOptions)
             {

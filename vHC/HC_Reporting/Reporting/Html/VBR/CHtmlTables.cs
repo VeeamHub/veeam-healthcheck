@@ -351,7 +351,7 @@ namespace VeeamHealthCheck.Html.VBR
                 s += "<tr>";
                 s += TableData(d[0], "");
                 s += TableData(d[3], "");
-                s += TableData(d[30], "");
+                s += TableData(d[29], "");
                 s += TableData(d[1], "");
                 s += TableData(d[4], "");
                 s += TableData(d[6], "");
@@ -394,7 +394,7 @@ TableHeader(ResourceHandler.SbrExt15, ResourceHandler.SbrExt15TT) +
                 s += "<tr>";
                 s += TableData(d[0], "");
                 s += TableData(d[3], "");
-                s += TableData(d[30], "");
+                s += TableData(d[29], "");
                 s += TableData(d[1], "");
                 s += TableData(d[4], "");
                 s += TableData(d[6], "");
@@ -442,7 +442,7 @@ TableHeader(ResourceHandler.SbrExt15, ResourceHandler.SbrExt15TT) +
                 s += "<tr>";
                 s += TableData(d[0], "");
                 s += TableData(d[3], "");
-                s += TableData(d[30], "");
+                s += TableData(d[16], "");
                 s += TableData(d[1], "");
                 s += TableData(d[4], "");
                 s += TableData(d[6], "");
