@@ -28,22 +28,13 @@ namespace VeeamHealthCheck.Html
         // section links
         string _serverSumLink = "serverSummary";
 
-        
 
-        public CHtmlCompiler(string reportType)
+
+        public CHtmlCompiler()
         {
             FormHeader();
-            if(reportType == "vbr")
-            {
-                _vbrmode = true;
-                FormHeader();
-                FormBody();
-            }
-            if (reportType == "vb365")
-            {
-                _vb365mode = true;
-                //FormVb365Body();
-            }
+            FormBody();
+
 
         }
         public void Dispose()
@@ -61,7 +52,7 @@ namespace VeeamHealthCheck.Html
 
             //FormBody();
         }
-        
+
         #region HtmlHeaders
 
 
@@ -489,5 +480,5 @@ Job Info
 
     }
 
-    
+
 }
