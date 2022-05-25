@@ -71,18 +71,18 @@ namespace VeeamHealthCheck.Html
             // Navigation!
 
             CHtmlTables tables = new();
-            _htmldoc += "<h1>Overview:</h1>";
+            _htmldoc += header1("Overview");
             _htmldoc += tables.Globals();
             _htmldoc += tables.Vb365ProtStat();
             // other workloads prompt??
-            _htmldoc += "<h1>Backup Infrastructure</h1>";
+            _htmldoc += header1("Backup Infrastructure");
             _htmldoc += tables.Vb365Controllers();
             _htmldoc += tables.Vb365ControllerDrivers();
             _htmldoc += tables.Vb365Proxies();
             _htmldoc += tables.Vb365Repos();
             _htmldoc += tables.Vb365ObjectRepos();
 
-            _htmldoc += "<h1>Security</h1>";
+            _htmldoc += header1("Security");
             _htmldoc += tables.Vb365Security();
             _htmldoc += tables.Vb365Rbac();
             _htmldoc += tables.Vb365Permissions();
@@ -103,7 +103,7 @@ namespace VeeamHealthCheck.Html
         #region HtmlHeaders
         private string header1(string text)
         {
-            return String.Format("<h1><u>{0}</h1>");
+            return String.Format("<h1><u>{0}</u></h1>", text);
         }
         private void SetNavigation()
         {

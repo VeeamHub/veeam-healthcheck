@@ -492,9 +492,7 @@ TableHeader(ResourceHandler.SbrExt15, ResourceHandler.SbrExt15TT) +
         public string Globals()
         {
             string s = "<div class=\"Global\" id=\"Global\">";
-            s += "<h1>";
-            s += "Globals";
-            s += "</h1>";
+            s += header2("Global Configuration");
             s += "<br>";
             s += "<table border=\"1\"><tr>";
             s += TableHeader("License Status", "License Status");
@@ -522,6 +520,8 @@ TableHeader(ResourceHandler.SbrExt15, ResourceHandler.SbrExt15TT) +
             }
             s += "</tr></table>";
 
+            // summary
+            s += GlobalSummary();
 
             s += "</div>";
             return s;
@@ -529,9 +529,7 @@ TableHeader(ResourceHandler.SbrExt15, ResourceHandler.SbrExt15TT) +
         public string Vb365Proxies()
         {
             string s = "<div class=\"Proxies\" id=\"Proxies\">";
-            s += "<h1>";
-            s += "Proxies";
-            s += "</h1>";
+            s += header2("Proxies");
             s += "<br>";
             s += "<table border=\"1\"><tr>";
             s += TableHeader("Proxy Name", "");
@@ -568,9 +566,7 @@ TableHeader(ResourceHandler.SbrExt15, ResourceHandler.SbrExt15TT) +
         public string Vb365Repos()
         {
             string s = "<div class=\"Repos\" id=\"Repos\">";
-            s += "<h1>";
-            s += "Repositories";
-            s += "</h1>";
+            s += header2("Repositories");
             s += "<br>";
             s += "<table border=\"1\"><tr>";
             s += TableHeader("Bound Proxy", "Bound Proxy");
@@ -610,9 +606,7 @@ TableHeader(ResourceHandler.SbrExt15, ResourceHandler.SbrExt15TT) +
         public string Vb365Rbac()
         {
             string s = "<div class=\"rbac\" id=\"rbac\">";
-            s += "<h1>";
-            s += "RBAC";
-            s += "</h1>";
+            s += header2("RBAC Roles Info");
             s += "<br>";
             s += "<table border=\"1\"><tr>";
             s += TableHeader("Name", "");
@@ -643,9 +637,7 @@ TableHeader(ResourceHandler.SbrExt15, ResourceHandler.SbrExt15TT) +
         public string Vb365Security()
         {
             string s = "<div class=\"security\" id=\"security\">";
-            s += "<h1>";
-            s += "Security";
-            s += "</h1>";
+            s += header2("Security Info");
             s += "<br>";
             s += "<table border=\"1\"><tr>";
             s += TableHeader("Win. Firewall Enabled?", "Win. Firewall Enabled?");
@@ -697,9 +689,7 @@ TableHeader(ResourceHandler.SbrExt15, ResourceHandler.SbrExt15TT) +
         public string Vb365Controllers()
         {
             string s = "<div class=\"controllers\" id=\"controllers\">";
-            s += "<h1>";
-            s += "Controllers";
-            s += "</h1>";
+            s += header2("Backup Server");
             s += "<br>";
             s += "<table border=\"1\"><tr>";
             s += TableHeader("VB365 Version", "VB365 Version");
@@ -742,9 +732,7 @@ TableHeader(ResourceHandler.SbrExt15, ResourceHandler.SbrExt15TT) +
         public string Vb365ControllerDrivers()
         {
             string s = "<div class=\"controllerdrivers\" id=\"controllerdrivers\">";
-            s += "<h1>";
-            s += "Controller Drivers";
-            s += "</h1>";
+            s += header2("Backup Server Disks");
             s += "<br>";
             s += "<table border=\"1\"><tr>";
             s += TableHeader("Friendly Name", "Friendly Name");
@@ -780,9 +768,7 @@ TableHeader(ResourceHandler.SbrExt15, ResourceHandler.SbrExt15TT) +
         public string Vb365JobSessions()
         {
             string s = "<div class=\"jobsessions\" id=\"jobsessions\">";
-            s += "<h1>";
-            s += "Job Sessions";
-            s += "</h1>";
+            s += header2("Job Sessions");
             //s += "<br>";
             s += CollapsibleButton("Show Job Sessions");
 
@@ -815,9 +801,7 @@ TableHeader(ResourceHandler.SbrExt15, ResourceHandler.SbrExt15TT) +
         public string Vb365JobStats()
         {
             string s = "<div class=\"jobstats\" id=\"jobstats\">";
-            s += "<h1>";
-            s += "Job Stats";
-            s += "</h1>";
+            s += header2("Job Statistics");
             //s += "<br>";
             s += CollapsibleButton("Show Job Stats");
             s += "<table border=\"1\" style=\"display: none;\"><tr>";
@@ -855,9 +839,7 @@ TableHeader(ResourceHandler.SbrExt15, ResourceHandler.SbrExt15TT) +
         public string Vb365ObjectRepos()
         {
             string s = "<div class=\"objrepos\" id=\"objrepos\">";
-            s += "<h1>";
-            s += "Object Repos";
-            s += "</h1>";
+            s += header2("Object Storage");
             s += "<br>";
             s += "<table border=\"1\"><tr>";
             s += TableHeader("Name", "Name");
@@ -891,9 +873,7 @@ TableHeader(ResourceHandler.SbrExt15, ResourceHandler.SbrExt15TT) +
         public string Vb365Orgs()
         {
             string s = "<div class=\"orgs\" id=\"orgs\">";
-            s += "<h1>";
-            s += "Organizations";
-            s += "</h1>";
+            s += header2("Organizations");
             s += "<br>";
             s += "<table border=\"1\"><tr>";
             s += TableHeader("Friendly Name", "Friendly Name");
@@ -931,9 +911,7 @@ TableHeader(ResourceHandler.SbrExt15, ResourceHandler.SbrExt15TT) +
         public string Vb365Permissions()
         {
             string s = "<div class=\"perms\" id=\"perms\">";
-            s += "<h1>";
-            s += "Permissions";
-            s += "</h1>";
+            s += header2("Permissions Check");
             s += "<br>";
             s += "<table border=\"1\"><tr>";
             s += TableHeader("Type", "Type");
@@ -962,37 +940,109 @@ TableHeader(ResourceHandler.SbrExt15, ResourceHandler.SbrExt15TT) +
         public string Vb365ProtStat()
         {
             string s = "<div class=\"protstat\" id=\"protstat\">";
-            s += header2("Protection Statistics");
-            s += CollapsibleButton("Show Protection Statistics");
-            s += "<table border=\"1\" style=\"display: none;\"><tr>";
-            //s += "<table border=\"1\"><tr>";
-            s += TableHeader("User", "User");
-            s += TableHeader("E-mail", "E-mail");
-            s += TableHeader("Organization", "Organization");
-            s += TableHeader("Protection Status", "Protection Status");
-            s += TableHeader("Last Backup Date", "Last Backup Date");
+            s += header2("Unprotected Users");
+            //s += CollapsibleButton("Show Protection Statistics");
+            //s += "<table border=\"1\" style=\"display: none;\"><tr>";
+            s += "<table border=\"1\"><tr>";
+            //s += TableHeader("User", "User");
+            //s += TableHeader("E-mail", "E-mail");
+            //s += TableHeader("Organization", "Organization");
+            //s += TableHeader("Protection Status", "Protection Status");
+            //s += TableHeader("Last Backup Date", "Last Backup Date");
 
+            //s += "</tr>";
+
+            s += "<tr>";
+            s += TableHeader("Unprotected Users", "");
             s += "</tr>";
-
+            int counter = 0;
             var global = _csv.GetDynVboProtStat().ToList();
             foreach (var gl in global)
             {
-                s += "<tr>";
+                //s += "<tr>";
 
                 foreach (var g in gl)
-                    s += TableData(g.Value, "");
+                    counter++;
+                    //s += TableData(g.Value, "");
 
-                s += "</tr>";
+                //s += "</tr>";
             }
+            s += "<tr>";
+            s += TableData(counter.ToString(), "");
+            s += "</tr>";
+
+            
+
+
             s += "</table>";
 
 
             s += "</div>";
             return s;
         }
+        private string SummaryTemplate()
+        {
+            string s = CollapsibleButton(ResourceHandler.BkpSrvButton);
+
+            s += "<div class=\"content\">";
+            s += AddA("hdr", ResourceHandler.GeneralSummaryHeader) + LineBreak() +
+                AddA("i2", ResourceHandler.BkpSrvSummary1) +
+                AddA("i3", ResourceHandler.BkpSrvSummary2) +
+                AddA("i3", ResourceHandler.BkpSrvSummary3) +
+                AddA("i3", ResourceHandler.BkpSrvSummary4) +
+                DoubleLineBreak() +
+                AddA("hdr", ResourceHandler.GeneralNotesHeader) + LineBreak() +
+                AddA("i2", ResourceHandler.BkpSrvNotes1) +
+                AddA("i2", ResourceHandler.BkpSrvNotes2) +
+                AddA("i2", ResourceHandler.BkpSrvNotes3) +
+                AddA("i2", ResourceHandler.BkpSrvNotes4) +
+                AddA("i2", ResourceHandler.BkpSrvNotes5) +
+                AddA("i2", ResourceHandler.BkpSrvNotes6)
+                ;
+            s += "</div>";
+            s += "</div>";
+
+            return s;
+        }
+        private string GlobalSummary()
+        {
+            string s = CollapsibleButton("Show Summary");
+
+            s += "<div class=\"content\">";
+            s += AddA("hdr", ResourceHandler.GeneralSummaryHeader) + LineBreak() +
+                AddA("i2", ResourceHandler.BkpSrvSummary1) +
+                AddA("i3", ResourceHandler.BkpSrvSummary2) +
+                AddA("i3", ResourceHandler.BkpSrvSummary3) +
+                AddA("i3", ResourceHandler.BkpSrvSummary4) +
+                DoubleLineBreak() +
+                AddA("hdr", ResourceHandler.GeneralNotesHeader) + LineBreak() +
+                AddA("i2", ResourceHandler.BkpSrvNotes1) +
+                AddA("i2", ResourceHandler.BkpSrvNotes2) +
+                AddA("i2", ResourceHandler.BkpSrvNotes3) +
+                AddA("i2", ResourceHandler.BkpSrvNotes4) +
+                AddA("i2", ResourceHandler.BkpSrvNotes5) +
+                AddA("i2", ResourceHandler.BkpSrvNotes6)
+                ;
+            s += "</div>";
+            s += "</div>";
+
+            return s;
+        }
+        private string AddA(string classInfo, string displaytext)
+        {
+            return String.Format("<a class=\"{0}\">{1}</a>" + LineBreak(), classInfo, displaytext);
+        }
         private string header2(string text)
         {
-            return String.Format("<h2>{0}</h2>", text);
+            return String.Format("<h2>{0}:</h2>", text);
+        }
+        private string LineBreak()
+        {
+            return "<br/>";
+        }
+        private string DoubleLineBreak()
+        {
+            return "<br/><br/>";
         }
         #endregion
         private string SectionButton(string classType, string displayText)
