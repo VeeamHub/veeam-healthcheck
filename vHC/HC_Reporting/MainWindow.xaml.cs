@@ -20,13 +20,13 @@ namespace VeeamHealthCheck
     public partial class MainWindow : Window
     {
         public static CLogger log = new("HealthCheck");
-        private bool _scrub = false;
+        public static bool _scrub = false;
         private bool _collectSessionData = true;
-        private bool _openHtml = false;
+        public static bool _openHtml = false;
         public static bool _openExplorer = true;
         public static string _desiredPath = CVariables.unsafeDir;
         private string _path;
-        private bool _import;
+        public static bool _import;
 
         private bool _isVbr = false;
         private bool _isVb365 = false;
@@ -116,18 +116,18 @@ namespace VeeamHealthCheck
                 //CCsvToXml c = new("vbr", _scrub, false, _openHtml, _import);
                 //c.Dispose();
 
-                CReportModeSelector cMode = new(_desiredPath, _scrub, _openHtml, _import);
+                CReportModeSelector cMode = new();
                 cMode.Run();
 
             }
             if (_isVb365)
             {
-                CReportModeSelector cMode = new(_desiredPath, _scrub, _openHtml, _import);
+                CReportModeSelector cMode = new();
                 cMode.Run();
             }
             else
             {
-                CReportModeSelector cMode = new(_desiredPath, _scrub, _openHtml, _import);
+                CReportModeSelector cMode = new();
                 cMode.Run();
             }
         }

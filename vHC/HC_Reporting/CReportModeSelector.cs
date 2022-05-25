@@ -1,5 +1,6 @@
 ﻿using System.IO;
 using VeeamHealthCheck.Html;
+using VeeamHealthCheck.Reporting.Html.VB365;
 using VeeamHealthCheck.Shared.Logging;
 
 namespace VeeamHealthCheck
@@ -11,12 +12,8 @@ namespace VeeamHealthCheck
         private readonly bool _openHtml;
         private readonly bool _import;
         private CLogger _log = MainWindow.log;
-        public CReportModeSelector(string path, bool scrub, bool openHtml, bool import)
+        public CReportModeSelector()
         {
-            _path = path;
-            _scrub = scrub;
-            _openHtml = openHtml;
-            _import = import;
         }
         public void Run()
         {
@@ -38,7 +35,7 @@ namespace VeeamHealthCheck
         private void StartVbrReportImport()
         {
             _log.Info("Running report in import mode");
-            CCsvToXml c = new("vbr", _scrub, false, _openHtml, true);
+            CCsvToXml c = new("vbr", MainWindow._scrub, false, MainWindow._openHtml, true);
 
             //choose VBO or VBR
             //c.ConvertToXml();
@@ -46,11 +43,9 @@ namespace VeeamHealthCheck
         private void StartM365Report()
         {
             _log.Info("Starting VB365 Report genration");
-            //CCsvToXml m = new CCsvToXml("m365", _scrub, false, _openHtml, true);
-            CM365Converter converter = new CM365Converter(_scrub);
-
-            //HTML direct area:
-            CHtmlCompiler compiler = new("vb365");
+            //CHtmlCompiler compiler = new("vb365");
+            CVb365HtmlCompiler compiler = new();
+            //compiler.Dispose();
         }
     }
 }
