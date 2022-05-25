@@ -527,7 +527,36 @@ namespace VeeamHealthCheck
         public static string JssNote9 = m4.GetString("JssNote9");
         public static string JssNote10 = m4.GetString("JssNote10");
         public static string Vb365Banner = m4.GetString("Vb365Banner");
+        public static string v365NavTitle0 = m4.GetString("v365NavTitle0");
+        public static string v365NavValue0 = m4.GetString("v365NavValue0");
+        public static string v365NavTitle1 = m4.GetString("v365NavTitle1");
+        public static string v365NavValue1 = m4.GetString("v365NavValue1");
+        public static string v365NavTitle2 = m4.GetString("v365NavTitle2");
+        public static string v365NavValue2 = m4.GetString("v365NavValue2");
+        public static string v365NavTitle3 = m4.GetString("v365NavTitle3");
+        public static string v365NavValue3 = m4.GetString("v365NavValue3");
+        public static string v365NavTitle4 = m4.GetString("v365NavTitle4");
+        public static string v365NavValue4 = m4.GetString("v365NavValue4");
+        public static string v365NavTitle5 = m4.GetString("v365NavTitle5");
+        public static string v365NavValue5 = m4.GetString("v365NavValue5");
+        public static string v365NavTitle6 = m4.GetString("v365NavTitle6");
+        public static string v365NavValue6 = m4.GetString("v365NavValue6");
+        public static string v365NavTitle7 = m4.GetString("v365NavTitle7");
+        public static string v365NavValue7 = m4.GetString("v365NavValue7");
+        public static string v365NavTitle8 = m4.GetString("v365NavTitle8");
+        public static string v365NavValue8 = m4.GetString("v365NavValue8");
+        public static string v365NavTitle9 = m4.GetString("v365NavTitle9");
+        public static string v365NavValue9 = m4.GetString("v365NavValue9");
+        public static string v365NavTitle10 = m4.GetString("v365NavTitle10");
+        public static string v365NavValue10 = m4.GetString("v365NavValue10");
+        public static string v365NavTitle11 = m4.GetString("v365NavTitle11");
+        public static string v365NavValue11 = m4.GetString("v365NavValue11");
+        public static string v365NavTitle12 = m4.GetString("v365NavTitle12");
+        public static string v365NavValue12 = m4.GetString("v365NavValue12");
+        public static string v365NavTitle13 = m4.GetString("v365NavTitle13");
+        public static string v365NavValue13 = m4.GetString("v365NavValue13");
         public static string VboGloH1 = m4.GetString("VboGloH1");
+
 
 
     }

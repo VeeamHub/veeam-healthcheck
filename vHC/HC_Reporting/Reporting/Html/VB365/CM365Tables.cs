@@ -19,7 +19,7 @@ namespace VeeamHealthCheck.Reporting.Html.VB365
         }
         public string Globals()
         {
-            string s = "<div class=\"Global\" id=\"Global\">";
+            string s = "<div class=\"global\" id=\"global\">";
             s += _form.header2("Global Configuration");
             s += "<br>";
             s += "<table border=\"1\"><tr>";
@@ -56,7 +56,7 @@ namespace VeeamHealthCheck.Reporting.Html.VB365
         }
         public string Vb365Proxies()
         {
-            string s = "<div class=\"Proxies\" id=\"Proxies\">";
+            string s = "<div class=\"proxies\" id=\"proxies\">";
             s += _form.header2("Proxies");
             s += "<br>";
             s += "<table border=\"1\"><tr>";
@@ -93,7 +93,7 @@ namespace VeeamHealthCheck.Reporting.Html.VB365
         }
         public string Vb365Repos()
         {
-            string s = "<div class=\"Repos\" id=\"Repos\">";
+            string s = "<div class=\"repos\" id=\"repos\">";
             s += _form.header2("Repositories");
             s += "<br>";
             s += "<table border=\"1\"><tr>";
@@ -164,7 +164,7 @@ namespace VeeamHealthCheck.Reporting.Html.VB365
         }
         public string Vb365Security()
         {
-            string s = "<div class=\"security\" id=\"security\">";
+            string s = "<div class=\"sec\" id=\"sec\">";
             s += _form.header2("Security Info");
             s += "<br>";
             s += "<table border=\"1\"><tr>";
@@ -216,7 +216,7 @@ namespace VeeamHealthCheck.Reporting.Html.VB365
         }
         public string Vb365Controllers()
         {
-            string s = "<div class=\"controllers\" id=\"controllers\">";
+            string s = "<div class=\"controller\" id=\"controller\">";
             s += _form.header2("Backup Server");
             s += "<br>";
             s += "<table border=\"1\"><tr>";
@@ -259,7 +259,7 @@ namespace VeeamHealthCheck.Reporting.Html.VB365
         }
         public string Vb365ControllerDrivers()
         {
-            string s = "<div class=\"controllerdrivers\" id=\"controllerdrivers\">";
+            string s = "<div class=\"controllerdrives\" id=\"controllerdrives\">";
             s += _form.header2("Backup Server Disks");
             s += "<br>";
             s += "<table border=\"1\"><tr>";
@@ -367,7 +367,7 @@ namespace VeeamHealthCheck.Reporting.Html.VB365
         }
         public string Vb365ObjectRepos()
         {
-            string s = "<div class=\"objrepos\" id=\"objrepos\">";
+            string s = "<div class=\"objrepo\" id=\"objrepo\">";
             s += _form.header2("Object Storage");
             s += "<br>";
             s += "<table border=\"1\"><tr>";
@@ -509,6 +509,68 @@ namespace VeeamHealthCheck.Reporting.Html.VB365
 
             s += "</div>";
             return s;
+        }
+        public string Jobs()
+        {
+            string s = "<div class=\"jobs\" id=\"jobs\">";
+            s += _form.header2("Jobs");
+            //s += CollapsibleButton("Show Protection Statistics");
+            //s += "<table border=\"1\" style=\"display: none;\"><tr>";
+            s += "<table border=\"1\"><tr>";
+            s += _form.TableHeader("Organization", "Organization");
+            s += _form.TableHeader("Name", "Name");
+            s += _form.TableHeader("Description", "Description");
+            s += _form.TableHeader("Job Type", "Job Type");
+            s += _form.TableHeader("Scope Type", "Scope Type");
+            s += _form.TableHeader("Selected Items", "Selected Items");
+            s += _form.TableHeader("Excluded Items", "Excluded Items");
+            s += _form.TableHeader("Repository", "Repository");
+            s += _form.TableHeader("Bound Proxy", "Bound Proxy");
+            s += _form.TableHeader("Enabled?", "Enabled?");
+            s += _form.TableHeader("Schedule", "Schedule");
+            s += _form.TableHeader("Related Job", "Related Job");
+
+            s += "</tr>";
+
+            var global = _csv.GetDynamicVboJobs().ToList();
+            foreach (var gl in global)
+            {
+                s += "<tr>";
+
+                foreach (var g in gl)
+                    s += _form.TableData(g.Value, "");
+
+                s += "</tr>";
+            }
+            //s += "<tr>";
+            //s += _form.TableData(counter.ToString(), "");
+            //s += "</tr>";
+
+
+
+            s += "</table>";
+
+            s += _summary.ProtStatSummary();
+
+            s += "</div>";
+            return s;
+        }
+        public string MakeVb365NavTable()
+        {
+            return _form.FormNavRows(ResourceHandler.v365NavTitle0, "global", ResourceHandler.v365NavValue1) + 
+                _form.FormNavRows(ResourceHandler.v365NavTitle1, "protstat", ResourceHandler.v365NavValue1) +
+                _form.FormNavRows(ResourceHandler.v365NavTitle2, "controller", ResourceHandler.v365NavValue2) +
+                _form.FormNavRows(ResourceHandler.v365NavTitle3, "controllerdrives", ResourceHandler.v365NavValue3) +
+                _form.FormNavRows(ResourceHandler.v365NavTitle4, "proxies", ResourceHandler.v365NavValue4) +
+                _form.FormNavRows(ResourceHandler.v365NavTitle5, "repos", ResourceHandler.v365NavValue5) +
+                _form.FormNavRows(ResourceHandler.v365NavTitle6, "objrepo", ResourceHandler.v365NavValue6) +
+                _form.FormNavRows(ResourceHandler.v365NavTitle7, "sec", ResourceHandler.v365NavValue7) +
+                _form.FormNavRows(ResourceHandler.v365NavTitle8, "rbac", ResourceHandler.v365NavValue8) +
+                _form.FormNavRows(ResourceHandler.v365NavTitle9, "perms", ResourceHandler.v365NavValue9) +
+                _form.FormNavRows(ResourceHandler.v365NavTitle10, "orgs", ResourceHandler.v365NavValue10) +
+                _form.FormNavRows(ResourceHandler.v365NavTitle11, "jobs", ResourceHandler.v365NavValue11) +
+                _form.FormNavRows(ResourceHandler.v365NavTitle12, "jobstats", ResourceHandler.v365NavValue12) +
+                _form.FormNavRows(ResourceHandler.v365NavTitle13, "jobsessions", ResourceHandler.v365NavValue13);
         }
 
     }

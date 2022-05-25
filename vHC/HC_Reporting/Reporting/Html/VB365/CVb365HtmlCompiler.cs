@@ -31,7 +31,7 @@ namespace VeeamHealthCheck.Reporting.Html.VB365
             _htmldoc += _form.SetHeaderAndLogo(SetLicHolder());
             _htmldoc += _form.SetBannerAndIntro();
             // add sections here
-
+            _htmldoc += SetNavigation();
             // Navigation!
 
             CM365Tables tables = new();
@@ -53,6 +53,7 @@ namespace VeeamHealthCheck.Reporting.Html.VB365
 
             _htmldoc += _form.header1("M365 Backups");
             _htmldoc += tables.Vb365Orgs();
+            _htmldoc += tables.Jobs();
             _htmldoc += tables.Vb365JobSessions();
             _htmldoc += tables.Vb365JobStats();
 
@@ -64,6 +65,39 @@ namespace VeeamHealthCheck.Reporting.Html.VB365
 
             //File.WriteAllText("myHtml2.html", _htmldoc);
             ExportHtml();
+        }
+        private string SetNavigation()
+        {
+
+            string s = String.Empty;
+            s += _form.DivId("navigation");
+            
+            s +=String.Format("<h4>{0}</h4>", ResourceHandler.NavHeader);
+            s +=String.Format("<button type=\"button\" class=\"btn\" onclick=\"test()\">{0}</button>", ResourceHandler.NavColapse);
+            s += NavTable();
+
+
+            s += _form._endDiv;
+
+            return s;
+        }
+        private string NavTable()
+        {
+            CM365Tables tables = new();
+            string tableString =
+    "<table border=\"0\" style=\"background: \">" +
+    "<tbody>";
+            tableString += tables.MakeVb365NavTable();
+
+
+
+
+            tableString +=
+                "</tbody>" +
+                "</table>" +
+                //_form.BackToTop() +
+                "</div>";
+            return tableString;
         }
         private void ExportHtml()
         {

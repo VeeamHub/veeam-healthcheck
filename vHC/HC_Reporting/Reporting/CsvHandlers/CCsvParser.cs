@@ -67,6 +67,7 @@ namespace VeeamHealthCheck.CsvHandlers
         private readonly string _vboLiceOverView = "LicenseOverviewReport";
         private readonly string _vboMailboxProtection = "MailboxProtection";
         private readonly string _StorageConsumption = "StorageConsumption";
+        private readonly string _vboJobs = "Jobs";
 
         public CCsvParser()
         {
@@ -98,6 +99,10 @@ namespace VeeamHealthCheck.CsvHandlers
         public IEnumerable<dynamic> GetDynamicVboRbac()
         {
             return GetDynamicCsvRecs(_vboRBAC);
+        }
+        public IEnumerable<dynamic> GetDynamicVboJobs()
+        {
+            return GetDynamicCsvRecs(_vboJobs);
         }
         public IEnumerable<dynamic> GetDynamicVboRepo()
         {
