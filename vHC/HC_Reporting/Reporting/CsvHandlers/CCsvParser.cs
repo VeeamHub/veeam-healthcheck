@@ -107,7 +107,7 @@ namespace VeeamHealthCheck.CsvHandlers
         {
             return GetDynamicCsvRecs(_vboSecurity);
         }
-        public IEnumerable<dynamic> GetDynVboControllerDrivers()
+        public IEnumerable<dynamic> GetDynVboController()
         {
             return GetDynamicCsvRecs(_vboController);
         }

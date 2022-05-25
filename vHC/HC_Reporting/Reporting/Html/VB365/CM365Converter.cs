@@ -26,6 +26,10 @@ namespace VeeamHealthCheck.Html
         private bool _scrub;
         private CXmlHandler _scrubber;
 
+
+        // HTML constants
+        private readonly string _html = "vb365_report.html";
+
         public CM365Converter(bool scrub)
         {
             _scrub = scrub;
@@ -39,6 +43,8 @@ namespace VeeamHealthCheck.Html
         }
         private void Run()
         {
+            // make HTML file
+
             LoadDoc();
 
             m365Global();
@@ -282,7 +288,7 @@ namespace VeeamHealthCheck.Html
         }
         private void m365Controllers()
         {
-            var c = csv.GetDynVboControllerDrivers();
+            var c = csv.GetDynVboController();
 
             XElement section = Element("section");
             section.Add(new XAttribute("title", "Controller"));

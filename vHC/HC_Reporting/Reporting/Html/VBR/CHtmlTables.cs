@@ -10,6 +10,15 @@ namespace VeeamHealthCheck.Html.VBR
 {
     internal class CHtmlTables
     {
+        private CCsvParser _csv = new(CVariables.vb365dir);
+
+
+        private string html = "<html>";
+        private string htmlend = "</html>";
+        private string body = "<body>";
+        private string bodyend = "</body>";
+        private string _endDiv = "</div>";
+        private string _collapsible = "collapsible";
         public CHtmlTables()
         {
 
@@ -418,7 +427,7 @@ TableHeader(ResourceHandler.SbrExt15, ResourceHandler.SbrExt15TT) +
             string s = "<tr>" +
 TableHeader(ResourceHandler.SbrExt0, ResourceHandler.SbrExt0TT) +
 TableHeader(ResourceHandler.SbrExt2, ResourceHandler.SbrExt2TT) +
-TableHeader(ResourceHandler.Repo0, ResourceHandler.Repo0TT) + 
+TableHeader(ResourceHandler.Repo0, ResourceHandler.Repo0TT) +
 TableHeader(ResourceHandler.SbrExt3, ResourceHandler.SbrExt3TT) +
 TableHeader(ResourceHandler.SbrExt4, ResourceHandler.SbrExt4TT) +
 TableHeader(ResourceHandler.SbrExt5, ResourceHandler.SbrExt5TT) +
@@ -479,6 +488,521 @@ TableHeader(ResourceHandler.SbrExt15, ResourceHandler.SbrExt15TT) +
             return null;
         }
 
+        #region VB365 Tables
+        public string Globals()
+        {
+            string s = "<div class=\"Global\" id=\"Global\">";
+            s += "<h1>";
+            s += "Globals";
+            s += "</h1>";
+            s += "<br>";
+            s += "<table border=\"1\"><tr>";
+            s += TableHeader("License Status", "License Status");
+            s += TableHeader("License Expiry", "License Expiry");
+            s += TableHeader("License Type", "License Type");
+            s += TableHeader("Licensed To", "Licensed To");
+            s += TableHeader("License Contact", "License Contact");
+            s += TableHeader("Licensed For", "Licensed For");
+            s += TableHeader("Licenses Used", "Licenses Used");
+            s += TableHeader("Support Expiry", "Support Expiry");
+            s += TableHeader("Global Folder Exclusions", "Global Folder Exclusions");
+            s += TableHeader("Global Ret. Exclusions", "Global Ret. Exclusions");
+            s += TableHeader("Log Retention", "Log Retention");
+            s += TableHeader("Notification Enabled", "Notification Enabled");
+            s += TableHeader("Notifify On", "Notifify On");
+            s += TableHeader("Automatic Updates?", "Automatic Updates?");
+            s += "</tr>";
+
+            var global = _csv.GetDynamicVboGlobal().ToList();
+            s += "<tr>";
+            foreach (var gl in global)
+            {
+                foreach (var g in gl)
+                    s += TableData(g.Value, "");
+            }
+            s += "</tr></table>";
+
+
+            s += "</div>";
+            return s;
+        }
+        public string Vb365Proxies()
+        {
+            string s = "<div class=\"Proxies\" id=\"Proxies\">";
+            s += "<h1>";
+            s += "Proxies";
+            s += "</h1>";
+            s += "<br>";
+            s += "<table border=\"1\"><tr>";
+            s += TableHeader("Proxy Name", "");
+            s += TableHeader("Description", "");
+            s += TableHeader("Threads", "");
+            s += TableHeader("Throttling", "");
+            s += TableHeader("State", "");
+            s += TableHeader("Type", "");
+            s += TableHeader("Outdated", "");
+            s += TableHeader("Internet Proxy", "");
+            s += TableHeader("Objects Managed", "");
+            s += TableHeader("OS Version", "");
+            s += TableHeader("RAM", "");
+            s += TableHeader("CPUs", "");
+
+            s += "</tr>";
+
+            var global = _csv.GetDynamicVboProxies().ToList();
+            foreach (var gl in global)
+            {
+                s += "<tr>";
+
+                foreach (var g in gl)
+                    s += TableData(g.Value, "");
+
+                s += "</tr>";
+            }
+            s += "</table>";
+
+
+            s += "</div>";
+            return s;
+        }
+        public string Vb365Repos()
+        {
+            string s = "<div class=\"Repos\" id=\"Repos\">";
+            s += "<h1>";
+            s += "Repositories";
+            s += "</h1>";
+            s += "<br>";
+            s += "<table border=\"1\"><tr>";
+            s += TableHeader("Bound Proxy", "Bound Proxy");
+            s += TableHeader("Name", "Name");
+            s += TableHeader("Description", "Description");
+            s += TableHeader("Type", "Type");
+            s += TableHeader("Path", "Path");
+            s += TableHeader("Object Repo", "Object Repo");
+            s += TableHeader("Encryption?", "Encryption?");
+            s += TableHeader("Out of Sync?", "Out of Sync?");
+            s += TableHeader("Outdated?", "Outdated?");
+            s += TableHeader("Capacity", "Capacity");
+            s += TableHeader("Local Space Used", "Local Space Used");
+            s += TableHeader("Cache Space Used", "Cache Space Used");
+            s += TableHeader("Object Space Used", "Object Space Used");
+            s += TableHeader("Free", "Free");
+            s += TableHeader("Retention", "Retention");
+
+            s += "</tr>";
+
+            var global = _csv.GetDynamicVboRepo().ToList();
+            foreach (var gl in global)
+            {
+                s += "<tr>";
+
+                foreach (var g in gl)
+                    s += TableData(g.Value, "");
+
+                s += "</tr>";
+            }
+            s += "</table>";
+
+
+            s += "</div>";
+            return s;
+        }
+        public string Vb365Rbac()
+        {
+            string s = "<div class=\"rbac\" id=\"rbac\">";
+            s += "<h1>";
+            s += "RBAC";
+            s += "</h1>";
+            s += "<br>";
+            s += "<table border=\"1\"><tr>";
+            s += TableHeader("Name", "");
+            s += TableHeader("Description", "");
+            s += TableHeader("Role Type", "");
+            s += TableHeader("Operators", "");
+            s += TableHeader("Selected Items", "");
+            s += TableHeader("Excluded Items", "");
+
+            s += "</tr>";
+
+            var global = _csv.GetDynamicVboRbac().ToList();
+            foreach (var gl in global)
+            {
+                s += "<tr>";
+
+                foreach (var g in gl)
+                    s += TableData(g.Value, "");
+
+                s += "</tr>";
+            }
+            s += "</table>";
+
+
+            s += "</div>";
+            return s;
+        }
+        public string Vb365Security()
+        {
+            string s = "<div class=\"security\" id=\"security\">";
+            s += "<h1>";
+            s += "Security";
+            s += "</h1>";
+            s += "<br>";
+            s += "<table border=\"1\"><tr>";
+            s += TableHeader("Win. Firewall Enabled?", "Win. Firewall Enabled?");
+            s += TableHeader("Internet proxy?", "Internet proxy?");
+            s += TableHeader("Server Cert", "Server Cert");
+            s += TableHeader("Server Cert PK Exportable?", "Server Cert PK Exportable?");
+            s += TableHeader("Server Cert Expires", "Server Cert Expires");
+            s += TableHeader("Server Cert Self-Signed?", "Server Cert Self-Signed?");
+            s += TableHeader("API Enabled?", "API Enabled?");
+            s += TableHeader("API Port", "API Port");
+            s += TableHeader("API Cert", "API Cert");
+            s += TableHeader("API Cert PK Exportable?", "API Cert PK Exportable?");
+            s += TableHeader("API Cert Expires", "API Cert Expires");
+            s += TableHeader("API Cert Self-Signed?", "API Cert Self-Signed?");
+            s += TableHeader("Tenant Auth Enabled?", "Tenant Auth Enabled?");
+            s += TableHeader("Tenant Auth Cert", "Tenant Auth Cert");
+            s += TableHeader("Tenant Auth PK Exportable?", "Tenant Auth PK Exportable?");
+            s += TableHeader("Tenant Auth Cert Expires", "Tenant Auth Cert Expires");
+            s += TableHeader("Tenant Auth Cert Self-Signed?", "Tenant Auth Cert Self-Signed?");
+            s += TableHeader("Restore Portal Enabled?", "Restore Portal Enabled?");
+            s += TableHeader("Restore Portal Cert", "Restore Portal Cert");
+            s += TableHeader("Restore Portal Cert PK Exportable?", "Restore Portal Cert PK Exportable?");
+            s += TableHeader("Restore Portal Cert Expires", "Restore Portal Cert Expires");
+            s += TableHeader("Restore Portal Cert Self-Signed?", "Restore Portal Cert Self-Signed?");
+            s += TableHeader("Operator Auth Enabled?", "Operator Auth Enabled?");
+            s += TableHeader("Operator Auth Cert", "Operator Auth Cert");
+            s += TableHeader("Operator Auth Cert PK Exportable?", "Operator Auth Cert PK Exportable?");
+            s += TableHeader("Operator Auth Cert Expires", "Operator Auth Cert Expires");
+            s += TableHeader("Operator Auth Cert Self-Signed?", "Operator Auth Cert Self-Signed?");
+
+            s += "</tr>";
+
+            var global = _csv.GetDynamicVboSec().ToList();
+            foreach (var gl in global)
+            {
+                s += "<tr>";
+
+                foreach (var g in gl)
+                    s += TableData(g.Value, "");
+
+                s += "</tr>";
+            }
+            s += "</table>";
+
+
+            s += "</div>";
+            return s;
+        }
+        public string Vb365Controllers()
+        {
+            string s = "<div class=\"controllers\" id=\"controllers\">";
+            s += "<h1>";
+            s += "Controllers";
+            s += "</h1>";
+            s += "<br>";
+            s += "<table border=\"1\"><tr>";
+            s += TableHeader("VB365 Version", "VB365 Version");
+            s += TableHeader("OS Version", "OS Version");
+            s += TableHeader("RAM", "RAM");
+            s += TableHeader("CPUs", "CPUs");
+            s += TableHeader("Proxies Managed", "Proxies Managed");
+            s += TableHeader("Repos Managed", "Repos Managed");
+            s += TableHeader("Orgs Managed", "Orgs Managed");
+            s += TableHeader("Jobs Managed", "Jobs Managed");
+            s += TableHeader("PowerShell Installed?", "PowerShell Installed?");
+            s += TableHeader("Proxy Installed?", "Proxy Installed?");
+            s += TableHeader("REST Installed?", "REST Installed?");
+            s += TableHeader("Console Installed?", "Console Installed?");
+            s += TableHeader("VM Name", "VM Name");
+            s += TableHeader("VM Location", "VM Location");
+            s += TableHeader("VM SKU", "VM SKU");
+            s += TableHeader("VM Size", "VM Size");
+
+
+
+            s += "</tr>";
+
+            var global = _csv.GetDynVboController().ToList();
+            foreach (var gl in global)
+            {
+                s += "<tr>";
+
+                foreach (var g in gl)
+                    s += TableData(g.Value, "");
+
+                s += "</tr>";
+            }
+            s += "</table>";
+
+
+            s += "</div>";
+            return s;
+        }
+        public string Vb365ControllerDrivers()
+        {
+            string s = "<div class=\"controllerdrivers\" id=\"controllerdrivers\">";
+            s += "<h1>";
+            s += "Controller Drivers";
+            s += "</h1>";
+            s += "<br>";
+            s += "<table border=\"1\"><tr>";
+            s += TableHeader("Friendly Name", "Friendly Name");
+            s += TableHeader("DeviceId", "DeviceId");
+            s += TableHeader("Bus Type", "Bus Type");
+            s += TableHeader("Media Type", "Media Type");
+            s += TableHeader("Manufacturer", "Manufacturer");
+            s += TableHeader("Model", "Model");
+            s += TableHeader("Size", "Size");
+            s += TableHeader("Allocated Size", "Allocated Size");
+            s += TableHeader("Operational Status", "Operational Status");
+            s += TableHeader("Health Status", "Health Status");
+            s += TableHeader("Boot Drive", "Boot Drive");
+
+            s += "</tr>";
+
+            var global = _csv.GetDynVboControllerDriver().ToList();
+            foreach (var gl in global)
+            {
+                s += "<tr>";
+
+                foreach (var g in gl)
+                    s += TableData(g.Value, "");
+
+                s += "</tr>";
+            }
+            s += "</table>";
+
+
+            s += "</div>";
+            return s;
+        }
+        public string Vb365JobSessions()
+        {
+            string s = "<div class=\"jobsessions\" id=\"jobsessions\">";
+            s += "<h1>";
+            s += "Job Sessions";
+            s += "</h1>";
+            //s += "<br>";
+            s += CollapsibleButton("Show Job Sessions");
+
+            s += "<table border=\"1\" style=\"display: none;\"><tr>";
+            s += TableHeader("Name", "Name");
+            s += TableHeader("Status", "Status");
+            s += TableHeader("Start Time", "Start Time");
+            s += TableHeader("End Time", "End Time");
+            s += TableHeader("Duration", "Duration");
+            s += TableHeader("Log", "Log");
+
+            s += "</tr>";
+
+            var global = _csv.GetDynVboJobSess().ToList();
+            foreach (var gl in global)
+            {
+                s += "<tr>";
+
+                foreach (var g in gl)
+                    s += TableData(g.Value, "");
+
+                s += "</tr>";
+            }
+            s += "</table>";
+
+
+            s += "</div>";
+            return s;
+        }
+        public string Vb365JobStats()
+        {
+            string s = "<div class=\"jobstats\" id=\"jobstats\">";
+            s += "<h1>";
+            s += "Job Stats";
+            s += "</h1>";
+            //s += "<br>";
+            s += CollapsibleButton("Show Job Stats");
+            s += "<table border=\"1\" style=\"display: none;\"><tr>";
+            s += TableHeader("Name", "Name");
+            s += TableHeader("Average Duration (min)", "Average Duration (min)");
+            s += TableHeader("Max Duration (min)", "Max Duration (min)");
+            s += TableHeader("Average Data Transferred", "Average Data Transferred");
+            s += TableHeader("Max Data Transferred", "Max Data Transferred");
+            s += TableHeader("Average Objects (#)", "Average Objects (#)");
+            s += TableHeader("Max Objects (#)", "Max Objects (#)");
+            s += TableHeader("Average Items (#)", "Average Items (#)");
+            s += TableHeader("Max Items (#)", "Max Items (#)");
+            s += TableHeader("Typical Bottleneck", "Typical Bottleneck");
+            s += TableHeader("Job Avg Throughput", "Job Avg Throughput");
+            s += TableHeader("Job Avg Processing Rate", "Job Avg Processing Rate");
+
+            s += "</tr>";
+
+            var global = _csv.GetDynVboJobSess().ToList();
+            foreach (var gl in global)
+            {
+                s += "<tr>";
+
+                foreach (var g in gl)
+                    s += TableData(g.Value, "");
+
+                s += "</tr>";
+            }
+            s += "</table>";
+
+
+            s += "</div>";
+            return s;
+        }
+        public string Vb365ObjectRepos()
+        {
+            string s = "<div class=\"objrepos\" id=\"objrepos\">";
+            s += "<h1>";
+            s += "Object Repos";
+            s += "</h1>";
+            s += "<br>";
+            s += "<table border=\"1\"><tr>";
+            s += TableHeader("Name", "Name");
+            s += TableHeader("Description", "Description");
+            s += TableHeader("Cloud", "Cloud");
+            s += TableHeader("Type", "Type");
+            s += TableHeader("Bucket/Container", "Bucket/Container");
+            s += TableHeader("Path", "Path");
+            s += TableHeader("Size Limit", "Size Limit");
+            s += TableHeader("Used Space", "Used Space");
+            s += TableHeader("Free Space", "Free Space");
+
+            s += "</tr>";
+
+            var global = _csv.GetDynVboObjRepo().ToList();
+            foreach (var gl in global)
+            {
+                s += "<tr>";
+
+                foreach (var g in gl)
+                    s += TableData(g.Value, "");
+
+                s += "</tr>";
+            }
+            s += "</table>";
+
+
+            s += "</div>";
+            return s;
+        }
+        public string Vb365Orgs()
+        {
+            string s = "<div class=\"orgs\" id=\"orgs\">";
+            s += "<h1>";
+            s += "Organizations";
+            s += "</h1>";
+            s += "<br>";
+            s += "<table border=\"1\"><tr>";
+            s += TableHeader("Friendly Name", "Friendly Name");
+            s += TableHeader("Real Name", "Real Name");
+            s += TableHeader("Type", "Type");
+            s += TableHeader("Protected Apps", "Protected Apps");
+            s += TableHeader("EXO Settings", "EXO Settings");
+            s += TableHeader("EXO App Cert", "EXO App Cert");
+            s += TableHeader("SPO Settings", "SPO Settings");
+            s += TableHeader("SPO App Cert", "SPO App Cert");
+            s += TableHeader("On-Prem Exch Settings", "On-Prem Exch Settings");
+            s += TableHeader("On-Prem SP Settings", "On-Prem SP Settings");
+            s += TableHeader("Licensed Users", "Licensed Users");
+            s += TableHeader("Grant SC Admin", "Grant SC Admin");
+            s += TableHeader("Aux Accounts/Apps", "Aux Accounts/Apps");
+
+            s += "</tr>";
+
+            var global = _csv.GetDynVboOrg().ToList();
+            foreach (var gl in global)
+            {
+                s += "<tr>";
+
+                foreach (var g in gl)
+                    s += TableData(g.Value, "");
+
+                s += "</tr>";
+            }
+            s += "</table>";
+
+
+            s += "</div>";
+            return s;
+        }
+        public string Vb365Permissions()
+        {
+            string s = "<div class=\"perms\" id=\"perms\">";
+            s += "<h1>";
+            s += "Permissions";
+            s += "</h1>";
+            s += "<br>";
+            s += "<table border=\"1\"><tr>";
+            s += TableHeader("Type", "Type");
+            s += TableHeader("Organization", "Organization");
+            s += TableHeader("API", "API");
+            s += TableHeader("Permission", "Permission");
+
+            s += "</tr>";
+
+            var global = _csv.GetDynVboPerms().ToList();
+            foreach (var gl in global)
+            {
+                s += "<tr>";
+
+                foreach (var g in gl)
+                    s += TableData(g.Value, "");
+
+                s += "</tr>";
+            }
+            s += "</table>";
+
+
+            s += "</div>";
+            return s;
+        }
+        public string Vb365ProtStat()
+        {
+            string s = "<div class=\"protstat\" id=\"protstat\">";
+            s += header2("Protection Statistics");
+            s += CollapsibleButton("Show Protection Statistics");
+            s += "<table border=\"1\" style=\"display: none;\"><tr>";
+            //s += "<table border=\"1\"><tr>";
+            s += TableHeader("User", "User");
+            s += TableHeader("E-mail", "E-mail");
+            s += TableHeader("Organization", "Organization");
+            s += TableHeader("Protection Status", "Protection Status");
+            s += TableHeader("Last Backup Date", "Last Backup Date");
+
+            s += "</tr>";
+
+            var global = _csv.GetDynVboProtStat().ToList();
+            foreach (var gl in global)
+            {
+                s += "<tr>";
+
+                foreach (var g in gl)
+                    s += TableData(g.Value, "");
+
+                s += "</tr>";
+            }
+            s += "</table>";
+
+
+            s += "</div>";
+            return s;
+        }
+        private string header2(string text)
+        {
+            return String.Format("<h2>{0}</h2>", text);
+        }
+        #endregion
+        private string SectionButton(string classType, string displayText)
+        {
+            return String.Format("<button type=\"button\" class=\"{0}\">{1}</button>", classType, displayText);
+        }
+        private string CollapsibleButton(string buttonText)
+        {
+            return SectionButton(_collapsible, buttonText);
+        }
 
         private string TableHeader(string header, string tooltip)
         {

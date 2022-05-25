@@ -48,6 +48,9 @@ namespace VeeamHealthCheck
             _log.Info("Starting VB365 Report genration");
             //CCsvToXml m = new CCsvToXml("m365", _scrub, false, _openHtml, true);
             CM365Converter converter = new CM365Converter(_scrub);
+
+            //HTML direct area:
+            CHtmlCompiler compiler = new("vb365");
         }
     }
 }

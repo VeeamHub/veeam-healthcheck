@@ -9,6 +9,7 @@
 	<xsl:template match="/">
 
 		<style>
+			<!--css styling-->
 			<!--@top-right {
 			content: url("Veeam_HealthCheck_228x228.png");
 			width: 49.634px;
