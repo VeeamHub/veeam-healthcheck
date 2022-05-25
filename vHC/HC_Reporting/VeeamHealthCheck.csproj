@@ -81,9 +81,6 @@
     <None Update="Resources\Localization\vhcres.txt">
       <Generator></Generator>
     </None>
-    <None Update="Reporting\StyleSheets\m365-Report.xsl">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
     <None Update="Reporting\StyleSheets\vbr-Report.xsl">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
