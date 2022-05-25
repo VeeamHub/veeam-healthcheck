@@ -629,17 +629,24 @@ function 95P {
         [string]$Property,
         [int]$Percentile=95
         )
-    begin { }
-    process {
-        $sortedItems = $Items.$Property | Sort-Object
-
-        $result = $sortedItems | Select-Object -First ([int]$Items.Count*$Percentile/100)
-
-        return $result
+    begin {
+        $allItems = @()
     }
-    end { }
-}
+    process {
+        $allItems += $Items;
+    }
+    end {
+        if ([string]::IsNullOrEmpty($Property)) {
+            $sortedItems = $allItems | Sort-Object
+        } else {
+            $sortedItems = $allItems.$Property | Sort-Object
+        }
 
+        $result = $sortedItems | Select-Object -First ([math]::Floor(($allItems.Count*$Percentile/100)))
+
+        return $result | Select-Object -Last 1
+    }
+}
 
 ################################ HERE IS WHERE THE PROPERTY MAPPING STARTS ################################
 
@@ -780,10 +787,21 @@ $map.LocalRepositories = $Global:VBOEnvironment.VBORepository | mde @(
     'Out of Sync?=>IsOutOfSync'
     'Outdated?=>IsOutdated'
     'Capacity=>($.Capacity/1TB).ToString("0.00") + " TB"'
-    'Local Space Used=>((($Global:VBOEnvironment.VBOUsageData | ? { $_.RepositoryId -eq $.Id}).UsedSpace | measure -Sum).Sum/1GB).ToString("0.00 GB")'
-    'Cache Space Used=>((($Global:VBOEnvironment.VBOUsageData | ? { $_.RepositoryId -eq $.Id}).LocalCacheUsedSpace | measure -Sum).Sum/1GB).ToString("0.00 GB")'
-    'Object Space Used=>((($Global:VBOEnvironment.VBOUsageData | ? { $_.RepositoryId -eq $.Id}).ObjectStorageUsedSpace | measure -Sum).Sum/1GB).ToString("0.00 GB")'
     'Free=>($.FreeSpace/1TB).ToString("0.00") + " TB"'
+    'Data Stored=>$repoUsage = ($Global:VBOEnvironment.VBOUsageData | ? { $_.RepositoryId -eq $.Id}); $GBUsed = if (($repoUsage.ObjectStorageUsedSpace | measure -Sum).Sum/1GB -gt 0) {($repoUsage.ObjectStorageUsedSpace | measure -Sum).Sum/1GB} else {($repoUsage.UsedSpace | measure -Sum).Sum/1GB}; $GBUsed.ToString("0.00 GB")'
+    'Cache Space Used=>((($Global:VBOEnvironment.VBOUsageData | ? { $_.RepositoryId -eq $.Id}).LocalCacheUsedSpace | measure -Sum).Sum/1GB).ToString("0.00 GB")'
+    #'Local Space Used=>((($Global:VBOEnvironment.VBOUsageData | ? { $_.RepositoryId -eq $.Id}).UsedSpace | measure -Sum).Sum/1GB).ToString("0.00 GB")'
+    #'Object Space Used=>((($Global:VBOEnvironment.VBOUsageData | ? { $_.RepositoryId -eq $.Id}).ObjectStorageUsedSpace | measure -Sum).Sum/1GB).ToString("0.00 GB")'
+    'Daily Change Rate=>$changesByDay = (($VBOEnvironment.VBOJobSession | ? {($VBOEnvironment.VBOJob | ? { $_.Repository.Id -eq $.Id }).Id -eq $_.JobId })| select @{n="CreationDate"; e={$_.CreationTime.Date}},* | sort CreationDate -Descending | group CreationDate | % { $_.Group.Statistics.TransferredData | ConvertData -To "GB" -Format "0.000000" | measure -Sum }).Sum;
+        #$weeklyChange = ($changesByDay | select -first 7 | measure -Sum).Sum;
+        $dailyChangeAvg = ($changesByDay | measure -Average).Average
+        #$dailyChange95p = $changesByDay | 95P
+        
+        $repoUsage = ($Global:VBOEnvironment.VBOUsageData | ? { $_.RepositoryId -eq $.Id})
+        $GBUsed = if (($repoUsage.ObjectStorageUsedSpace | measure -Sum).Sum/1GB -gt 0) {($repoUsage.ObjectStorageUsedSpace | measure -Sum).Sum/1GB} else {($repoUsage.UsedSpace | measure -Sum).Sum/1GB}
+
+        $DCR = $dailyChangeAvg/$GBUsed
+        $DCR.ToString("0.0%")'
     'Retention=>($.RetentionPeriod.ToString() -replace "(Years?)(.+)","`$2 `$1" )+", "+$.RetentionType+", Applied "+$.RetentionFrequencyType'
 )
 Write-Progress @progressSplat -PercentComplete ($progress++) -CurrentOperation "ObjectRepositories...";
