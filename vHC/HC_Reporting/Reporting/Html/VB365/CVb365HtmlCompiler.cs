@@ -34,7 +34,7 @@ namespace VeeamHealthCheck.Reporting.Html.VB365
 
             // Navigation!
 
-            CHtmlTables tables = new();
+            CM365Tables tables = new();
             _htmldoc += _form.header1("Overview");
             _htmldoc += tables.Globals();
             _htmldoc += tables.Vb365ProtStat();

@@ -526,6 +526,9 @@ namespace VeeamHealthCheck
         public static string JssNote8 = m4.GetString("JssNote8");
         public static string JssNote9 = m4.GetString("JssNote9");
         public static string JssNote10 = m4.GetString("JssNote10");
+        public static string Vb365Banner = m4.GetString("Vb365Banner");
+        public static string VboGloH1 = m4.GetString("VboGloH1");
+
 
     }
 }

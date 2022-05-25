@@ -104,7 +104,7 @@ namespace VeeamHealthCheck.Reporting.Html.Shared
         }
         public string SetBannerAndIntro()
         {
-            string s = "<h2 style=\"color: green; font-style: italic; background: lightgray; text-align:center\">" + ResourceHandler.HtmlHeader + "</h2>";
+            string s = "<h2 style=\"color: green; font-style: italic; background: lightgray; text-align:center\">" + ResourceHandler.Vb365Banner + "</h2>";
 
 
             s += "<div class=\"i2\">" + ResourceHandler.HtmlIntroLine1 + "</a>\n";

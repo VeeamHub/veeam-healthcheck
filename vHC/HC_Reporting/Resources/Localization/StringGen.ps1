@@ -1,4 +1,5 @@
-﻿$content = Get-Content -LiteralPath "vhcres.txt"
+﻿cd C:\Users\cac89\Source\Repos\VeeamHub\veeam-healthcheck\vHC\HC_Reporting\Resources\Localization
+$content = Get-Content -LiteralPath "vhcres.txt"
 echo $null | out-file pubstrings.txt
 
 foreach($line in $content){
