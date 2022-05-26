@@ -60,7 +60,7 @@ namespace VeeamHealthCheck.CsvHandlers
         private readonly string _vboControllerDriver = "ControllerDrives";
         private readonly string _vboJobSessions = "JobSessions";
         private readonly string _vboJobStats = "JobStats";
-        private readonly string _vboObjectRepos = "ObjectRespositories";
+        private readonly string _vboObjectRepos = "ObjectRepositories";
         private readonly string _vboOrganizations = "Organizations";
         private readonly string _vboPermissions = "Permissions";
         private readonly string _vboProtectionStatus = "ProtectionStatus";

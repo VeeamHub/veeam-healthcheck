@@ -14,6 +14,8 @@ namespace VeeamHealthCheck.Reporting.Html.VB365
     internal class CVb365HtmlCompiler
     {
         CHtmlFormatting _form = new();
+        CM365Tables _tables = new CM365Tables();
+
         private string _htmldoc = String.Empty;
         public CVb365HtmlCompiler()
         {
@@ -29,7 +31,7 @@ namespace VeeamHealthCheck.Reporting.Html.VB365
             _htmldoc += _form.body;
 
             _htmldoc += _form.SetHeaderAndLogo(SetLicHolder());
-            _htmldoc += _form.SetBannerAndIntro();
+            _htmldoc += _form.SetBannerAndIntroVb365();
             // add sections here
             _htmldoc += SetNavigation();
             // Navigation!

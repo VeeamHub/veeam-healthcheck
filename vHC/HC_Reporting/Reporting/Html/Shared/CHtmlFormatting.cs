@@ -76,6 +76,23 @@ namespace VeeamHealthCheck.Reporting.Html.Shared
                 String.Format("<td>{0}</td>", info) +
                 "</tr>";
         }
+        public string SectionEnd(string summary)
+        {
+            string s = "</tr>";
+            s += "</table>";
+            s += summary;
+            s += _endDiv;
+
+            return s;
+        }
+        public string SectionStart(string id, string header)
+        {
+            string s = SectionId(id);
+            s += header2(header);
+            s += Table();
+            s += "<tr>";
+            return s;
+        }
         public string TableHeader(string header, string tooltip)
         {
             return String.Format("<th title=\"{0}\">{1}</th>", tooltip, header);
@@ -83,6 +100,21 @@ namespace VeeamHealthCheck.Reporting.Html.Shared
         public string TableData(string data, string toolTip)
         {
             return String.Format("<td title=\"{0}\">{1}</td>", toolTip, data);
+        }
+        public string TableData(string data, string toolTip, int shading)
+        {
+            Type shade = typeof(CellShade);
+            var color = shade.GetEnumName(shading);
+            
+            return String.Format("<td title=\"{0}\" bgcolor=\"{2}\">{1}</td>", toolTip, data, color);
+        }
+        public string Table()
+        {
+            return "<table border=\"1\">";
+        }
+        public string TableCollapsible()
+        {
+            return "<table border =\"1\" style=\"display: none;\">";
         }
         public string header1(string text)
         {
@@ -122,6 +154,26 @@ namespace VeeamHealthCheck.Reporting.Html.Shared
             return s;
 
         }
+        public string SetBannerAndIntroVb365()
+        {
+            string s = "<h2 style=\"color: green; font-style: italic; background: lightgray; text-align:center\">" + ResourceHandler.Vb365Banner + "</h2>";
+
+
+            s += "<div class=\"i2\">" + ResourceHandler.HtmlIntroLine1 + "</a>\n";
+            s += LineBreak();
+            s += "<a class=\"\">" + ResourceHandler.HtmlIntroLine2 + "</a>\n";
+            s += LineBreak();
+            s += "<a class=\"\">" + ResourceHandler.HtmlIntroLine3 + "</a>\n";
+            s += LineBreak();
+            s += "<a class=\"\">" + ResourceHandler.HtmlIntroLine4 + "</a>\n";
+            s += LineBreak();
+            s += "<a class=\"\">" + ResourceHandler.HtmlIntroLine5vb365 + "</a>\n";
+            s += "</div>";
+            s += LineBreak();
+
+            return s;
+
+        }
         public string SetHeaderAndLogo(string licenseHolder)
         {
 
@@ -134,6 +186,16 @@ namespace VeeamHealthCheck.Reporting.Html.Shared
             return s;
 
         }
+        public string SectionId(string identifier)
+        {
+            return String.Format("<div class=\"{0}\" id=\"{1}\">", identifier,identifier);
+        }
 
     }
+    enum CellShade
+    {
+        orangered = 1,
+        greenyellow = 2
+        
+    };
 }

@@ -349,7 +349,7 @@ namespace VeeamHealthCheck.Reporting.Html.VB365
 
             s += "</tr>";
 
-            var global = _csv.GetDynVboJobSess().ToList();
+            var global = _csv.GetDynVboJobStats().ToList();
             foreach (var gl in global)
             {
                 s += "<tr>";
@@ -483,29 +483,53 @@ namespace VeeamHealthCheck.Reporting.Html.VB365
             //s += "</tr>";
 
             s += "<tr>";
+            s += _form.TableHeader("Total Users", "");
+            s += _form.TableHeader("Protected Users", "");
             s += _form.TableHeader("Unprotected Users", "");
             s += "</tr>";
-            int counter = 0;
+            double protectedUsers = 0;
+            double notProtectedUsers = 0;
             var global = _csv.GetDynVboProtStat().ToList();
+            var lic = _csv.GetDynamicVboGlobal().ToList();
+            foreach(var li in lic)
+            {
+                string s2 = li.licensesused;
+                double.TryParse(s2, out protectedUsers);
+            }
+            //int.TryParse(p, out int protectedUsers);
             foreach (var gl in global)
             {
                 //s += "<tr>";
+                if (gl.protectionstatus == "Unprotected")
+                    notProtectedUsers++;
+                //foreach (var g in gl)
+                //{
+                //    if (gl.protectionstatus == "Unprotected")
+                //        notProtectedUsers++;
 
-                foreach (var g in gl)
-                    counter++;
-                //s += _form.TableData(g.Value, "");
-
-                //s += "</tr>";
+                //}
             }
+
+            double percent = notProtectedUsers / (notProtectedUsers + protectedUsers) * 100;
+            double targetPercent = 20;
+            int shade = 0;
+            if(percent > targetPercent)
+            {
+                shade = 1;
+            }
+
             s += "<tr>";
-            s += _form.TableData(counter.ToString(), "");
+            s += _form.TableData((protectedUsers + notProtectedUsers).ToString(), "");
+            s += _form.TableData(protectedUsers.ToString(), "");
+            s += _form.TableData(notProtectedUsers.ToString(), "", shade);
             s += "</tr>";
 
-            s += _summary.ProtStatSummary();
+
 
 
             s += "</table>";
 
+            s += _summary.ProtStatSummary();
 
             s += "</div>";
             return s;

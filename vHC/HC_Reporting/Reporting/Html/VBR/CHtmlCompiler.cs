@@ -16,7 +16,7 @@ namespace VeeamHealthCheck.Html
     internal class CHtmlCompiler
     {
         private string xslFileName = "StyleSheets\\myHtml.xsl"; // maybe just do memory instead of disk??
-        private string _htmldoc;
+        private string _htmldoc = String.Empty;
         private bool _vbrmode = false;
         private bool _vb365mode = false;
 
@@ -24,9 +24,9 @@ namespace VeeamHealthCheck.Html
 
 
         CHtmlFormatting _form = new();
+        CHtmlTables _tables = new();
 
         // section links
-        string _serverSumLink = "serverSummary";
 
 
 
@@ -82,41 +82,32 @@ namespace VeeamHealthCheck.Html
         #endregion
         private void FormBody()
         {
-            _htmldoc += "<body>";
-
+            _htmldoc += _form.body;
 
             _htmldoc += _form.SetHeaderAndLogo(SetLicHolder());
             _htmldoc += _form.SetBannerAndIntro();
+
+            //nav
             SetNavigation();
-            SetLicTable();
-            SetVbrTable();
-            SetSecSumTable();
-            SetServerSummaryTable();
-            SetJobSummaryTable();
-            SetMissingJobTypeTable();
-            SetProtectedWkldTable();
-            SetMgdSrvInfoTable();
-            SetRegKeyTable();
-            SetProxyTable();
-            SetSobrTable();
-            SetExtentTable();
-            SetRepoTable();
-            SetJobConTable();
-            SetTaskConTable();
-            SetJobSessSumTable();
-            SetJobInfoTable();
-            /*
-            managed server info
-            regkeys
-            Proxy info
-            SOBR 
-            Extents
-            Repos
-            Job con
-            Task COn
-            Job Session Sum
-            Job Info
-             */
+
+            //tables
+            _htmldoc += _tables.LicTable();
+            _htmldoc += _tables.AddBkpSrvTable();
+            _htmldoc += _tables.AddSecSummaryTable();
+            _htmldoc += _tables.AddSrvSummaryTable();
+            _htmldoc += _tables.AddMissingJobsTable();
+            _htmldoc += _tables.AddProtectedWorkLoadsTable();
+            _htmldoc += _tables.AddManagedServersTable();
+            _htmldoc += _tables.AddRegKeysTable();
+            _htmldoc += _tables.AddProxyTable();
+            _htmldoc += _tables.AddSobrTable();
+            _htmldoc += _tables.AddSobrExtTable();
+            _htmldoc += _tables.AddRepoTable();
+            _htmldoc += _tables.AddJobConTable();
+            _htmldoc += _tables.AddTaskConTable();
+            _htmldoc += _tables.AddJobSessSummTable();
+            _htmldoc += _tables.AddJobInfoTable();
+
 
 
             _htmldoc += "<script type=\"text/javascript\">";
@@ -207,8 +198,8 @@ namespace VeeamHealthCheck.Html
             switch (type)
             {
                 case "license":
-                    tableString += (tables.AddLicHeaderToTable());
-                    tableString += (tables.AddLicDataToTable());
+                    //tableString += (tables.AddLicHeaderToTable());
+                    tableString += (tables.LicTable());
                     break;
                 case "navigation":
                     tableString += tables.MakeNavTable();
@@ -286,8 +277,10 @@ namespace VeeamHealthCheck.Html
         }
         private void SetVbrTable()
         {
-            Table("Backup Server & Config DB Info", "vbrInfo");
-            SetVbrSummary();
+            _htmldoc += _tables.AddBkpSrvTable();
+
+            //Table("Backup Server & Config DB Info", "vbrInfo");
+            //SetVbrSummary();
             EndSection();
         }
 
@@ -393,7 +386,8 @@ Job Info
         }
         private void SetSecSumTable()
         {
-            Table("Security Summary", "secSum");
+            _htmldoc += _tables.AddSecSummaryTable();
+            //Table("Security Summary", "secSum");
 
             EndSection();
         }

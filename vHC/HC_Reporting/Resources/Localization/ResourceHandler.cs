@@ -59,6 +59,7 @@ namespace VeeamHealthCheck
         public static string HtmlIntroLine3 = m4.GetString("HtmlIntroLine3");
         public static string HtmlIntroLine4 = m4.GetString("HtmlIntroLine4");
         public static string HtmlIntroLine5 = m4.GetString("HtmlIntroLine5");
+        public static string HtmlIntroLine5vb365 = m4.GetString("HtmlIntroLine5vb365");
         public static string NavBkpSrvDeet = m4.GetString("NavBkpSrvDeet");
         public static string NavBkpSrvLink = m4.GetString("NavBkpSrvLink");
         public static string NavColapse = m4.GetString("NavColapse");
@@ -556,6 +557,7 @@ namespace VeeamHealthCheck
         public static string v365NavTitle13 = m4.GetString("v365NavTitle13");
         public static string v365NavValue13 = m4.GetString("v365NavValue13");
         public static string VboGloH1 = m4.GetString("VboGloH1");
+
 
 
 
