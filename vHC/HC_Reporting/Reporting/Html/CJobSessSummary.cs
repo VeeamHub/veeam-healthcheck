@@ -21,12 +21,23 @@ namespace VeeamHealthCheck.Html
         private CLogger log = MainWindow.log;
         private bool _checkLogs;
 
+        private string _xmlFile;
+        private CLogger _log;
+        private bool _scrub;
+        private Scrubber.CXmlHandler _scrubber;
+        private CDataTypesParser _parsers;
+
         public CJobSessSummary(string xmlFile, CLogger log, bool scrub, bool checkLogs, Scrubber.CXmlHandler scrubber, CDataTypesParser dp)
         {
             _checkLogs = checkLogs;
+            _xmlFile = xmlFile;
+            _log = log;
+            _scrubber = scrubber;
+            _parsers = dp;
+
             if (checkLogs)
                 PopulateWaits();
-            JobSessionSummaryToXml(xmlFile, log, scrub, scrubber, dp);
+            //JobSessionSummaryToXml(xmlFile, log, scrub, scrubber, dp);
         }
 
         private void PopulateWaits()
@@ -67,8 +78,13 @@ namespace VeeamHealthCheck.Html
 
             return xml;
         }
-        private void JobSessionSummaryToXml(string xmlFile, CLogger log, bool scrub, Scrubber.CXmlHandler scrubber, CDataTypesParser d)
+        public List<List<string>> JobSessionSummaryToXml()
         {
+            return JobSessionSummaryToXml(_xmlFile, _log, _scrub, _scrubber, _parsers);
+        }
+        public List<List<string>> JobSessionSummaryToXml(string xmlFile, CLogger log, bool scrub, Scrubber.CXmlHandler scrubber, CDataTypesParser d)
+        {
+            List<List<string>> sendBack = new();
             log.Info("converting job session summary to xml");
             List<CJobSessionInfo> jobSessionsCsv = d.JobSessions;
             jobSessionsCsv = jobSessionsCsv.OrderBy(x => x.Name).ToList();
@@ -268,6 +284,7 @@ namespace VeeamHealthCheck.Html
 
             foreach (var o in outList)
             {
+                List<string> row = new();
                 try
                 {
                     string jname = o.JobName;
@@ -278,53 +295,49 @@ namespace VeeamHealthCheck.Html
                     if (o.waitCount == 0)
                         wait = "";
 
+                    row.Add(jname);
+                    row.Add(o.ItemCount.ToString());
+                    row.Add(o.AvgJobTime);
+                    row.Add(o.MaxJobTime);
+                    row.Add(o.MinJobTime);
+                    row.Add(o.sessionCount.ToString());
+                    row.Add(o.SuccessRate.ToString());
+                    row.Add(Math.Round(o.AvgBackupSize, 2).ToString());
+                    row.Add(Math.Round(o.MaxBackupSize, 2).ToString());
+                    row.Add(Math.Round(o.AvgDataSize, 2).ToString());
+                    row.Add(Math.Round(o.AvgChangeRate, 2).ToString());
+                    row.Add(Math.Round(o.MaxDataSize, 2).ToString());
+                    row.Add(wait);
+                    row.Add(o.avgwait);
+                    row.Add(o.maxWait);
+                    row.Add(o.JobType);
 
-                    var xml = new XElement("session",
-                new XElement("name", jname),
-                new XElement("items", o.ItemCount),
-                new XElement("avgtime", o.AvgJobTime),
-                new XElement("maxtime", o.MaxJobTime),
-                new XElement("mintime", o.MinJobTime),
-                new XElement("sessions", o.sessionCount),
-                new XElement("successrate", o.SuccessRate),
-                new XElement("avgBackupSize", Math.Round(o.AvgBackupSize, 2)),
-                new XElement("maxBackupSize", Math.Round(o.MaxBackupSize, 2)),
-                new XElement("avgDataSize", Math.Round(o.AvgDataSize, 2)),
-                new XElement("changerate", Math.Round(o.AvgChangeRate, 2)),
-                new XElement("maxDataSize", Math.Round(o.MaxDataSize, 2)),
-                new XElement("waitCount", wait),
-                new XElement("avgWait", o.avgwait),
-                new XElement("maxWait", o.maxWait),
-                new XElement("type", o.JobType)
-    );
-
-                    extElement.Add(xml);
+                    sendBack.Add(row);
                 }
                 catch (Exception e) { }
             }
 
             double totalSessionSuccessPercent = ((totalSessions - totalFailedSessions + totalRetries) / totalSessions) * 100;
-
-            var summaryXml = new XElement("session",
-                new XElement("name", "Total"),
-                new XElement("items", totatlProtectedInstances),
-                new XElement("avgtime", ""),
-                new XElement("maxtime", ""),
-                new XElement("mintime", ""),
-                new XElement("sessions", ""),
-                new XElement("successrate", Math.Round(totalSessionSuccessPercent, 2)), //TODO: Make this total sessions - total failed sessions / total sessions
-                new XElement("avgBackupSize", Math.Round(avgBackupSizes.Average(), 0)),
-                new XElement("maxBackupSize", Math.Round(maxBackupSize.Sum(), 0)),
-                new XElement("avgDataSize", Math.Round(avgDataSizes.Average(), 0)),
-                new XElement("changerate", Math.Round(avgRates.Average(), 2)),
-                new XElement("maxDataSize", Math.Round(maxDataSizes.Sum(), 2))
-                );
-            extElement.Add(summaryXml);
-
+            List<string> summary = new();
+            summary.Add("Total");
+            summary.Add(totatlProtectedInstances.ToString());
+            summary.Add("");
+            summary.Add("");
+            summary.Add("");
+            summary.Add("");
+            summary.Add(Math.Round(totalSessionSuccessPercent, 2).ToString()); //TODO: Make this total sessions - total failed sessions / total session;
+            summary.Add(Math.Round(avgBackupSizes.Average(), 0).ToString());
+            summary.Add(Math.Round(maxBackupSize.Sum(), 0).ToString());
+            summary.Add(Math.Round(avgDataSizes.Average(), 0).ToString());
+            summary.Add(Math.Round(avgRates.Average(), 2).ToString());
+            summary.Add(Math.Round(maxDataSizes.Sum(), 2).ToString());
+            
+            sendBack.Add(summary);
             //extElement.Add(ReccomendationText());
 
             doc.Save(xmlFile);
             log.Info("converting job session summary to xml..done!");
+            return sendBack;
         }
 
         private static CJobSummaryTypes SetBackupDataSizes(CJobSummaryTypes info, List<double> dataSize, List<double> backupSize)

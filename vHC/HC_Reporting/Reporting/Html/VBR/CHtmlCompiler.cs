@@ -184,7 +184,7 @@ namespace VeeamHealthCheck.Html
             tableString +=
                 "</tbody>" +
                 "</table>" +
-                BackToTop() +
+                //BackToTop() +
                 "</div>";
             AddToHtml(tableString);
         }

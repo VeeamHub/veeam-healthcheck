@@ -268,7 +268,7 @@ namespace VeeamHealthCheck.Reporting.Html
 
         }
 
-        public Dictionary<string,int> ServerSummaryToXml()
+        public Dictionary<string, int> ServerSummaryToXml()
         {
             log.Info("converting server summary to xml");
             Dictionary<string, int> di = _dTypeParser.ServerSummaryInfo;
@@ -292,7 +292,7 @@ namespace VeeamHealthCheck.Reporting.Html
 
 
             //}
-            
+
             log.Info("converting server summary to xml.done!");
             return di;
         }
@@ -393,7 +393,7 @@ namespace VeeamHealthCheck.Reporting.Html
         public List<string> _vmProtectedByPhys;
         public List<string> _viProtectedNames;
         public List<string> _vmNotProtectedNames;
-        
+
         public List<string> _viNotProtectedNames;
         public List<string> _physNotProtNames;
         public List<string> _physProtNames;
@@ -664,7 +664,7 @@ namespace VeeamHealthCheck.Reporting.Html
                 s[11] += c.ImmutePeriod;
                 s[12] += c.SizeLimitEnabled;
                 s[13] += c.SizeLimit;
-                //s[14] += 
+                //s[14] += c.
                 //s[15] += c.ArchiveExtent;
                 //s[16] += c.CostOptimizedArchiveEnabled;
                 //s[17] += c.ArchiveFullBackupModeEnabled;
@@ -698,7 +698,7 @@ namespace VeeamHealthCheck.Reporting.Html
 
             foreach (var c in csv)
             {
-                string[] s = new string[16];
+                string[] s = new string[17];
                 string newName = c.RepoName;
                 string sobrName = c.SobrName;
                 string hostName = c.Host;
@@ -735,6 +735,7 @@ namespace VeeamHealthCheck.Reporting.Html
                 s[13] += c.IsRotatedDriveRepository;
                 s[14] += c.IsImmutabilitySupported;
                 s[15] += c.Type;
+                s[16] += c.Povisioning;
 
 
                 list.Add(s);
@@ -760,7 +761,7 @@ namespace VeeamHealthCheck.Reporting.Html
 
             foreach (var c in csv)
             {
-                string[] s = new string[17];
+                string[] s = new string[18];
                 string name = c.Name;
                 string host = c.Host;
                 string path = c.Path;
@@ -804,6 +805,7 @@ namespace VeeamHealthCheck.Reporting.Html
                 s[14] += c.IsRotatedDriveRepository;
                 s[15] += c.IsImmutabilitySupported;
                 s[16] += c.Type;
+                s[17] += c.Povisioning;
 
                 list.Add(s);
             }
@@ -969,71 +971,74 @@ namespace VeeamHealthCheck.Reporting.Html
         }
         public Dictionary<string, int> JobSummaryInfoToXml()
         {
-                log.Info("converting job summary info to xml");
-                List<CJobTypeInfos> csv = _dTypeParser.JobInfos;
+            log.Info("converting job summary info to xml");
+            List<CJobTypeInfos> csv = _dTypeParser.JobInfos;
 
-                //CQueries cq = _cq;
+            //CQueries cq = _cq;
 
-                List<CModel.EDbJobType> types = new();
+            List<CModel.EDbJobType> types = new();
 
-                List<string> types2 = new();
-                foreach (var c in csv)
+            List<string> types2 = new();
+            foreach (var c in csv)
+            {
+                types2.Add(c.JobType);
+            }
+
+
+            Dictionary<string, int> typeSummary = new();
+            foreach (var t in types2)
+            {
+                int typeCount = 0;
+                foreach (var t2 in types2)
                 {
-                    types2.Add(c.JobType);
-                }
-
-
-                Dictionary<string, int> typeSummary = new();
-                foreach (var t in types2)
-                {
-                    int typeCount = 0;
-                    foreach (var t2 in types2)
+                    if (t == t2)
                     {
-                        if (t == t2)
-                        {
-                            typeCount++;
-                        }
+                        typeCount++;
                     }
-                    if (!typeSummary.ContainsKey(t))
-                        typeSummary.Add(t, typeCount);
                 }
+                if (!typeSummary.ContainsKey(t))
+                    typeSummary.Add(t, typeCount);
+            }
 
-                //sum of all jobs:
-                int totalJobs = 0;
-                foreach (var c in typeSummary)
-                {
-                    totalJobs += c.Value;
-                }
+            //sum of all jobs:
+            int totalJobs = 0;
+            foreach (var c in typeSummary)
+            {
+                totalJobs += c.Value;
+            }
 
-                //ParseNonProtectedTypes(notProtectedTypes);
+            //ParseNonProtectedTypes(notProtectedTypes);
 
-                //XDocument doc = XDocument.Load(_testFile);
+            //XDocument doc = XDocument.Load(_testFile);
 
-                //XElement extElement = new XElement("jobSummary");
-                //doc.Root.Add(extElement);
-                //foreach (var d in typeSummary)
-                //{
-                //    var xml = new XElement("summary",
-                //        new XElement("type", d.Key),
-                //        new XElement("typeCount", d.Value));
+            //XElement extElement = new XElement("jobSummary");
+            //doc.Root.Add(extElement);
+            //foreach (var d in typeSummary)
+            //{
+            //    var xml = new XElement("summary",
+            //        new XElement("type", d.Key),
+            //        new XElement("typeCount", d.Value));
 
-                //    extElement.Add(xml);
+            //    extElement.Add(xml);
 
-                //}
-                //var totalElement = new XElement("summary",
-                //    new XElement("type", "TotalJobs"),
-                //    new XElement("typeCount", totalJobs));
-                //extElement.Add(totalElement);
+            //}
+            //var totalElement = new XElement("summary",
+            //    new XElement("type", "TotalJobs"),
+            //    new XElement("typeCount", totalJobs));
+            //extElement.Add(totalElement);
 
 
-                log.Info("converting job summary info to xml..done!");
-                return typeSummary;
+            log.Info("converting job summary info to xml..done!");
+            return typeSummary;
         }
 
 
-        private void JobConcurrency(bool isJob, int days)
+        public Dictionary<int, string[]> JobConcurrency(bool isJob, int days)
         {
             log.Info("calculating concurrency");
+            Dictionary<int, string[]> sendBack = new();
+
+            string htmlString = String.Empty;
             List<CJobSessionInfo> sessionInfo = _dTypeParser.JobSessions;
             List<CJobTypeInfos> jobInfo = _dTypeParser.JobInfos;
 
@@ -1059,8 +1064,6 @@ namespace VeeamHealthCheck.Reporting.Html
                         epAgentBackupList.Add(backup.Name);
                 }
 
-                //var mirrorJobs = jobInfo.Select(x => x.JobType == "SimpleBackupCopyPolicy");
-                //int mtest = mirrorJobs.Count();
 
                 foreach (var m in mirrorJobBjobList)
                 {
@@ -1130,51 +1133,11 @@ namespace VeeamHealthCheck.Reporting.Html
                             }
                         }
 
-
-
                     }
                 }
                 foreach (var b in jobInfo)
                 {
 
-                    //if (b.JobType == "EpAgentBackup")
-                    //{
-                    //    var v = sessionInfo.Where(x => x.JobName.StartsWith(b.Name));
-
-                    //    foreach (var s in v)
-                    //    {
-                    //        string n = b.Name + s.CreationTime;
-                    //        if (!nameDatesList.Contains(n))
-                    //        {
-                    //            nameDatesList.Add(n);
-                    //            ctList.Add(ParseConcurrency(s, 7));
-                    //        }
-                    //    }
-                    //}
-                    //if (b.JobType == "BackupSync")
-                    //{
-
-                    //}
-                    //if (b.JobType == "EpAgentBackup")
-                    //{
-
-                    //}
-                    //if(b.JobType == "SimpleBackupCopyPolicy")
-                    //{
-                    //    var mirrorSessions = sessionInfo.Where(x => x.JobName.StartsWith(b.Name));
-
-                    //    foreach (var sess in mirrorSessions)
-                    //    {
-                    //        string nameDate = sess.JobName + sess.CreationTime.ToString();
-                    //        if (!nameDatesList.Contains(nameDate))
-                    //        {
-                    //            nameDatesList.Add(nameDate);
-                    //            ctList.Add(ParseConcurrency(sess, days));
-                    //        }
-                    //    }
-                    //}
-                    //else
-                    //{
                     var remainingSessions = sessionInfo.Where(x => x.JobName.Equals(b.Name));
                     foreach (var sess in remainingSessions)
                     {
@@ -1185,8 +1148,6 @@ namespace VeeamHealthCheck.Reporting.Html
                             ctList.Add(ParseConcurrency(sess, days));
                         }
                     }
-
-                    //}
 
                 }
             }
@@ -1271,20 +1232,10 @@ namespace VeeamHealthCheck.Reporting.Html
                 orderedNumList.Add(i);
             }
 
-            XDocument doc = XDocument.Load(_testFile);
-            string jobOrTask = "";
-            if (isJob)
-                jobOrTask = "job";
-            if (!isJob)
-                jobOrTask = "task";
-            string name = "concurrencyChart" + "_" + jobOrTask + days;
-            XElement extElement = new XElement(name);
-            doc.Root.Add(extElement);
-
-            foreach (var o in orderedNumList.Distinct())
+            foreach (var o in orderedNumList.Distinct()) // o is every hour starting with 0
             {
-                var xml = new XElement("day",
-                    new XElement("hour", o));
+                string[] weekdays = new string[7];
+                string[] rows = new string[7];
                 foreach (var c in dict1)
                 {
                     foreach (var d in c.Value)
@@ -1298,23 +1249,38 @@ namespace VeeamHealthCheck.Reporting.Html
                                 count = d.Value.ToString();
                             //string count = d.Value.ToString();
 
-                            xml.Add(
-                        new XElement("count", count,
-                        new XAttribute("day", c.Key)));
+                            if (c.Key == DayOfWeek.Sunday)
+                                rows[0] = count;
+                            if (c.Key == DayOfWeek.Monday)
+                                rows[1] = count;
+                            if (c.Key == DayOfWeek.Tuesday)
+                                rows[2] = count;
+                            if (c.Key == DayOfWeek.Wednesday)
+                                rows[3] = count;
+                            if (c.Key == DayOfWeek.Thursday)
+                                rows[4] = count;
+                            if (c.Key == DayOfWeek.Friday)
+                                rows[5] = count;
+                            if (c.Key == DayOfWeek.Saturday)
+                                rows[6] = count;
+
 
                         }
                     }
+
                 }
-                extElement.Add(xml);
+                sendBack.Add(o, rows);
+
             }
-            doc.Save(_testFile);
             log.Info("calculating concurrency...done!");
+
+            return sendBack;
         }
-        private void TaskConcurrency(int days)
+        public Dictionary<int, string[]> TaskConcurrency(int days)
         {
-            JobConcurrency(false, days);
+            return JobConcurrency(false, days);
         }
-        public Dictionary<string,string> RegOptions()
+        public Dictionary<string, string> RegOptions()
         {
             Dictionary<string, string> returnDict = new();
 
@@ -1347,8 +1313,9 @@ namespace VeeamHealthCheck.Reporting.Html
             }
             return returnDict;
         }
-        private void JobInfoToXml()
+        public List<List<string>> JobInfoToXml()
         {
+            List<List<string>> sendBack = new();
             log.Info("converting job info to xml");
             List<CJobTypeInfos> csv = _dTypeParser.JobInfos;
             csv = csv.OrderBy(x => x.RepoName).ToList();
@@ -1363,6 +1330,7 @@ namespace VeeamHealthCheck.Reporting.Html
 
             foreach (var c in csv)
             {
+                List<string> job = new();
                 string jname = c.Name;
                 string repo = c.RepoName;
                 if (c.EncryptionEnabled == "True")
@@ -1374,36 +1342,32 @@ namespace VeeamHealthCheck.Reporting.Html
                 }
                 decimal.TryParse(c.ActualSize, out decimal actualSize);
 
-                var xml = new XElement("job",
-                    new XElement("name", jname),
-                    new XElement("repo", repo),
-                    new XElement("sourceSize", Math.Round(actualSize / 1024 / 1024 / 1024, 2)),
-                    new XElement("encrypted", c.EncryptionEnabled),
-                    new XElement("alg", c.Algorithm),
-                    new XElement("fulldays", c.FullBackupDays),
-                    new XElement("fullkind", c.FullBackupScheduleKind),
-                    new XElement("jobType", c.JobType),
-                    new XElement("restorePoints", c.RestorePoints),
-                    new XElement("scheduleoptions", c.ScheduleOptions),
-                    new XElement("scheduleEnabledTime", c.SheduleEnabledTime),
-                    new XElement("transformfulltosynth", c.TransformFullToSyntethic),
-                    new XElement("transforminctosynth", c.TransformIncrementsToSyntethic),
-                    new XElement("transformdays", c.TransformToSyntethicDays
-                    ));
+                job.Add(jname);
+                job.Add(repo);
+                job.Add(Math.Round(actualSize / 1024 / 1024 / 1024, 2).ToString());
+                job.Add(c.EncryptionEnabled);
+                job.Add(c.Algorithm);
+                job.Add(c.FullBackupDays);
+                job.Add(c.FullBackupScheduleKind);
+                job.Add(c.JobType);
+                job.Add(c.RestorePoints.ToString());
+                job.Add(c.ScheduleOptions);
+                job.Add(c.SheduleEnabledTime);
+                job.Add(c.TransformFullToSyntethic);
+                job.Add(c.TransformIncrementsToSyntethic);
+                job.Add(c.TransformToSyntethicDays);
 
-                extElement.Add(xml);
+                sendBack.Add(job);
             }
             doc.Save(_testFile);
             log.Info("converting job info to xml..done!");
+            return sendBack;
         }
-        private void ConvertJobSessSummaryToXml()
+        public List<List<string>> ConvertJobSessSummaryToXml()
         {
-            try
-            {
-                CJobSessSummary jss = new(_testFile, log, _scrub, _checkLogs, _scrubber, _dTypeParser);
+            CJobSessSummary jss = new(_testFile, log, _scrub, _checkLogs, _scrubber, _dTypeParser);
+            return jss.JobSessionSummaryToXml();
 
-            }
-            catch (Exception e) { }
         }
         private void JobSessionInfoToXml()
         {
@@ -1693,14 +1657,14 @@ namespace VeeamHealthCheck.Reporting.Html
             _repoJobCount = repoJobCount;
         }
 
-        private  void ResetRoles()
+        private void ResetRoles()
         {
             _isBackupServerWan = false;
             _isBackupServerRepo = false;
             _isBackupServerProxy = false;
             //_isBackupServerProxyDisabled = false;
         }
-        private  void CheckServerRoles(string serverId)
+        private void CheckServerRoles(string serverId)
         {
             //log.Info("Checking server roles..");
             ResetRoles();
@@ -1731,7 +1695,7 @@ namespace VeeamHealthCheck.Reporting.Html
             }
             //log.Info("Checking server roles..done!");
         }
-        private  bool CheckProxyRole(string serverId)
+        private bool CheckProxyRole(string serverId)
         {
             var viProxy = _csvParser.GetDynViProxy();
             var hvProxy = _csvParser.GetDynHvProxy();
@@ -1760,7 +1724,7 @@ namespace VeeamHealthCheck.Reporting.Html
             }
             return false;
         }
-        private  string Scrub(string item)
+        private string Scrub(string item)
         {
             return _scrubber.ScrubItem(item);
         }

@@ -26,7 +26,7 @@ namespace VeeamHealthCheck.Reporting.Html.Shared
             "padding-left: 40px;\n" +
             "}\n" +
             ".i4 {\n" +
-            "padding-left: 100px;\n" +
+            "padding-left: 60px;\n" +
             "}\n" +
             "\n" +
             ".hdr{\n" +

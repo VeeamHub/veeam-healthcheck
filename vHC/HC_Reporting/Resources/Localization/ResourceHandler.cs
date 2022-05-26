@@ -294,6 +294,8 @@ namespace VeeamHealthCheck
         public static string Repo0TT = m4.GetString("Repo0TT");
         public static string Repo1 = m4.GetString("Repo1");
         public static string Repo1TT = m4.GetString("Repo1TT");
+        public static string RepoSum0 = m4.GetString("RepoSum0");
+        public static string RepoSum1 = m4.GetString("RepoSum1");
         public static string PrxTitle = m4.GetString("PrxTitle");
         public static string PrxBtn = m4.GetString("PrxBtn");
         public static string Prx0 = m4.GetString("Prx0");
@@ -557,6 +559,7 @@ namespace VeeamHealthCheck
         public static string v365NavTitle13 = m4.GetString("v365NavTitle13");
         public static string v365NavValue13 = m4.GetString("v365NavValue13");
         public static string VboGloH1 = m4.GetString("VboGloH1");
+
 
 
 

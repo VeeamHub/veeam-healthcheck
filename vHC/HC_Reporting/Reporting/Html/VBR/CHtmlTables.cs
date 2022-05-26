@@ -49,9 +49,9 @@ namespace VeeamHealthCheck.Html.VBR
 
         public string LicTable()
         {
-            string s = _form.SectionStart("license", "License Info");
-            string summary = _sum.SummaryTemplate();
-            
+            string s = _form.SectionStart("license", ResourceHandler.LicTableHeader);
+            string summary = _sum.LicSum();
+
             s += _form.TableHeader(ResourceHandler.LicTblLicTo, "") +
             _form.TableHeader(ResourceHandler.LicTblEdition, ResourceHandler.LtEdTT) +
                 _form.TableHeader(ResourceHandler.LicTblStatus, ResourceHandler.LtStatusTT) +
@@ -96,13 +96,13 @@ namespace VeeamHealthCheck.Html.VBR
                 "</tr>";
             }
 
-            _form.SectionEnd(summary);
+            s += _form.SectionEnd(summary);
             return s;
         }
         public string AddBkpSrvTable()
         {
             string s = _form.SectionStart("vbrserver", "Backup Server & Config DB Info");
-            string summary = _sum.SummaryTemplate();
+            string summary = _sum.SetVbrSummary();
 
             s += _form.TableHeader(ResourceHandler.BkpSrvTblName, ResourceHandler.BstNameTT);
             s += _form.TableHeader(ResourceHandler.BkpSrvTblVersion, ResourceHandler.BstVerTT);
@@ -131,7 +131,7 @@ namespace VeeamHealthCheck.Html.VBR
                 s += _form.TableData(list[i], "");
 
             }
-            _form.SectionEnd(summary);
+            s += _form.SectionEnd(summary);
             return s;
 
         }
@@ -140,8 +140,8 @@ namespace VeeamHealthCheck.Html.VBR
         {
             List<int> list = _df.SecSummary();
 
-            string s = _form.SectionStart("license", "License Info");
-            string summary = _sum.SummaryTemplate();
+            string s = _form.SectionStart("secsummary", "Security Summary");
+            string summary = _sum.SecSum();
 
             s += _form.TableHeader(ResourceHandler.SSHdr0, ResourceHandler.SSHdrTT0) +
                 _form.TableHeader(ResourceHandler.SSHdr1, ResourceHandler.SSHdrTT1) +
@@ -159,16 +159,16 @@ namespace VeeamHealthCheck.Html.VBR
                     s += _form.TableData("True", "");
             }
 
-            _form.SectionEnd(summary);
+            s += _form.SectionEnd(summary);
 
             return s;
         }
         public string AddSrvSummaryTable()
         {
-            string summary = _sum.SummaryTemplate();
+            string summary = _sum.SrvSum();
             Dictionary<string, int> list = _df.ServerSummaryToXml();
 
-            string s = _form.SectionStart("license", "License Info");
+            string s = _form.SectionStart("serversummary", ResourceHandler.MssTitle);
 
             s += _form.TableHeader(ResourceHandler.MssHdr1, ResourceHandler.MssHdr1TT) +
                             _form.TableHeader(ResourceHandler.MssHdr2, ResourceHandler.MssHdr2TT) +
@@ -182,17 +182,15 @@ namespace VeeamHealthCheck.Html.VBR
                 s += "</tr>";
             }
 
-            _form.SectionEnd(summary);
+            s += _form.SectionEnd(summary);
             return s;
         }
         public string AddJobSummaryTable()
         {
-            string id = "securitysummary";
-            string header = "Security Summary";
-            string summary = _sum.SummaryTemplate();
+            string summary = _sum.JobSummary();
             Dictionary<string, int> list = _df.JobSummaryInfoToXml();
 
-            string s = _form.SectionStart("license", "License Info");
+            string s = _form.SectionStart("jobsummary", "Job Summary");
 
             s += _form.TableHeader(ResourceHandler.JobSum0, ResourceHandler.JobSum0TT) +
                 _form.TableHeader(ResourceHandler.JobSum1, ResourceHandler.JobSum1TT) +
@@ -206,14 +204,14 @@ namespace VeeamHealthCheck.Html.VBR
                 s += "</tr>";
             }
 
-            _form.SectionEnd(summary);
+            s += _form.SectionEnd(summary);
             return s;
         }
 
         public string AddMissingJobsTable()
         {
-            string s = _form.SectionStart("license", "License Info");
-            string summary = _sum.SummaryTemplate();
+            string s = _form.SectionStart("missingjobs", "Missing Job Types");
+            string summary = _sum.MissingJobsSUmmary();
 
             s += _form.TableHeader(ResourceHandler.JobSum0, "") +
                 //_form.TableHeader("Count", "Total detected of this type") +
@@ -230,13 +228,13 @@ namespace VeeamHealthCheck.Html.VBR
 
             }
 
-            _form.SectionEnd(summary);
+            s += _form.SectionEnd(summary);
             return s;
         }
         public string AddProtectedWorkLoadsTable()
         {
-            string s = _form.SectionStart("license", "License Info");
-            string summary = _sum.SummaryTemplate();
+            string s = _form.SectionStart("protectedworkloads", "Protected Workloads");
+            string summary = _sum.ProtectedWorkloads();
             s += "<tr>" +
             _form.TableHeader(ResourceHandler.PlHdr0, ResourceHandler.PlHdrTT0) +
             _form.TableHeader(ResourceHandler.PlHdr1, ResourceHandler.PlHdrTT1) +
@@ -260,27 +258,27 @@ namespace VeeamHealthCheck.Html.VBR
             s += _form.TableData(cd._physNotProtNames.Distinct().Count().ToString(), "");
 
             s += "</tr>";
-            _form.SectionEnd(summary);
+            s += _form.SectionEnd(summary);
             return s;
         }
         public string AddManagedServersTable()
         {
-            string s = _form.SectionStart("license", "License Info");
-            string summary = _sum.SummaryTemplate();
-             s += "<tr>" +
-            _form.TableHeader(ResourceHandler.ManSrv0, ResourceHandler.ManSrv0TT) +
-            _form.TableHeader(ResourceHandler.ManSrv1, ResourceHandler.ManSrv1TT) +
-            _form.TableHeader(ResourceHandler.ManSrv2, ResourceHandler.ManSrv2TT) +
-            _form.TableHeader(ResourceHandler.ManSrv3, ResourceHandler.ManSrv3TT) +
-            _form.TableHeader(ResourceHandler.ManSrv4, ResourceHandler.ManSrv4TT) +
-            _form.TableHeader(ResourceHandler.ManSrv5, ResourceHandler.ManSrv5TT) +
-            _form.TableHeader(ResourceHandler.ManSrv6, ResourceHandler.ManSrv6TT) +
-            _form.TableHeader(ResourceHandler.ManSrv7, ResourceHandler.ManSrv7TT) +
-            _form.TableHeader(ResourceHandler.ManSrv8, ResourceHandler.ManSrv8TT) +
-            _form.TableHeader(ResourceHandler.ManSrv9, ResourceHandler.ManSrv9TT) +
-            _form.TableHeader(ResourceHandler.ManSrv10, ResourceHandler.ManSrv10TT) +
-            _form.TableHeader(ResourceHandler.ManSrv11, ResourceHandler.ManSrv11TT) +
-            "</tr>";
+            string s = _form.SectionStart("managedServerInfo", "Managed Server Info");
+            string summary = _sum.ManagedServers();
+            s += "<tr>" +
+           _form.TableHeader(ResourceHandler.ManSrv0, ResourceHandler.ManSrv0TT) +
+           _form.TableHeader(ResourceHandler.ManSrv1, ResourceHandler.ManSrv1TT) +
+           _form.TableHeader(ResourceHandler.ManSrv2, ResourceHandler.ManSrv2TT) +
+           _form.TableHeader(ResourceHandler.ManSrv3, ResourceHandler.ManSrv3TT) +
+           _form.TableHeader(ResourceHandler.ManSrv4, ResourceHandler.ManSrv4TT) +
+           _form.TableHeader(ResourceHandler.ManSrv5, ResourceHandler.ManSrv5TT) +
+           _form.TableHeader(ResourceHandler.ManSrv6, ResourceHandler.ManSrv6TT) +
+           _form.TableHeader(ResourceHandler.ManSrv7, ResourceHandler.ManSrv7TT) +
+           _form.TableHeader(ResourceHandler.ManSrv8, ResourceHandler.ManSrv8TT) +
+           _form.TableHeader(ResourceHandler.ManSrv9, ResourceHandler.ManSrv9TT) +
+           _form.TableHeader(ResourceHandler.ManSrv10, ResourceHandler.ManSrv10TT) +
+           _form.TableHeader(ResourceHandler.ManSrv11, ResourceHandler.ManSrv11TT) +
+           "</tr>";
             CDataFormer cd = new(true);
             List<string[]> list = cd.ServerXmlFromCsv();
 
@@ -302,13 +300,13 @@ namespace VeeamHealthCheck.Html.VBR
                 s += "</tr>";
             }
 
-            _form.SectionEnd(summary);
+            s += _form.SectionEnd(summary);
             return s;
         }
         public string AddRegKeysTable()
         {
-            string s = _form.SectionStart("license", "License Info");
-            string summary = _sum.SummaryTemplate();
+            string s = _form.SectionStart("regkeys", "Non-Default Registry Keys");
+            string summary = _sum.RegKeys();
             s += "<tr>" +
                 _form.TableHeader(ResourceHandler.Reg0, ResourceHandler.Reg0TT) +
                 _form.TableHeader(ResourceHandler.Reg1, ResourceHandler.Reg1TT) +
@@ -323,27 +321,27 @@ namespace VeeamHealthCheck.Html.VBR
                 s += _form.TableData(d.Value.ToString(), "");
                 s += "</tr>";
             }
-            _form.SectionEnd(summary);
+            s += _form.SectionEnd(summary);
             return s;
         }
         public string AddProxyTable()
         {
-            string s = _form.SectionStart("license", "License Info");
-            string summary = _sum.SummaryTemplate();
-             s += "<tr>" +
-            _form.TableHeader(ResourceHandler.Prx0, ResourceHandler.Prx0TT) +
-            _form.TableHeader(ResourceHandler.Prx1, ResourceHandler.Prx1TT) +
-            _form.TableHeader(ResourceHandler.Prx2, ResourceHandler.Prx2TT) +
-            _form.TableHeader(ResourceHandler.Prx3, ResourceHandler.Prx3TT) +
-            _form.TableHeader(ResourceHandler.Prx4, ResourceHandler.Prx4TT) +
-            _form.TableHeader(ResourceHandler.Prx5, ResourceHandler.Prx5TT) +
-            _form.TableHeader(ResourceHandler.Prx6, ResourceHandler.Prx6TT) +
-            _form.TableHeader(ResourceHandler.Prx7, ResourceHandler.Prx7TT) +
-            _form.TableHeader(ResourceHandler.Prx8, ResourceHandler.Prx8TT) +
-            _form.TableHeader(ResourceHandler.Prx9, ResourceHandler.Prx9TT) +
-            _form.TableHeader(ResourceHandler.Prx10, ResourceHandler.Prx10TT) +
-            _form.TableHeader(ResourceHandler.Prx11, ResourceHandler.Prx11TT) +
-    "</tr>";
+            string s = _form.SectionStart("proxies", "Proxy Info");
+            string summary = _sum.Proxies();
+            s += "<tr>" +
+           _form.TableHeader(ResourceHandler.Prx0, ResourceHandler.Prx0TT) +
+           _form.TableHeader(ResourceHandler.Prx1, ResourceHandler.Prx1TT) +
+           _form.TableHeader(ResourceHandler.Prx2, ResourceHandler.Prx2TT) +
+           _form.TableHeader(ResourceHandler.Prx3, ResourceHandler.Prx3TT) +
+           _form.TableHeader(ResourceHandler.Prx4, ResourceHandler.Prx4TT) +
+           _form.TableHeader(ResourceHandler.Prx5, ResourceHandler.Prx5TT) +
+           _form.TableHeader(ResourceHandler.Prx6, ResourceHandler.Prx6TT) +
+           _form.TableHeader(ResourceHandler.Prx7, ResourceHandler.Prx7TT) +
+           _form.TableHeader(ResourceHandler.Prx8, ResourceHandler.Prx8TT) +
+           _form.TableHeader(ResourceHandler.Prx9, ResourceHandler.Prx9TT) +
+           _form.TableHeader(ResourceHandler.Prx10, ResourceHandler.Prx10TT) +
+           _form.TableHeader(ResourceHandler.Prx11, ResourceHandler.Prx11TT) +
+   "</tr>";
             CDataFormer cd = new(true);
             List<string[]> list = cd.ProxyXmlFromCsv();
 
@@ -364,28 +362,28 @@ namespace VeeamHealthCheck.Html.VBR
                 s += _form.TableData(d[11], "");
                 s += "</tr>";
             }
-            _form.SectionEnd(summary);
+            s += _form.SectionEnd(summary);
             return s;
         }
         public string AddSobrTable()
         {
-            string s = _form.SectionStart("license", "License Info");
-            string summary = _sum.SummaryTemplate();
-             s += "<tr>" +
-            _form.TableHeader(ResourceHandler.Sbr0, ResourceHandler.Sbr0TT) +
-            _form.TableHeader(ResourceHandler.Sbr1, ResourceHandler.Sbr1TT) +
-            _form.TableHeader(ResourceHandler.Sbr2, ResourceHandler.Sbr2TT) +
-            _form.TableHeader(ResourceHandler.Sbr3, ResourceHandler.Sbr3TT) +
-            _form.TableHeader(ResourceHandler.Sbr4, ResourceHandler.Sbr4TT) +
-            _form.TableHeader(ResourceHandler.Sbr5, ResourceHandler.Sbr5TT) +
-            _form.TableHeader(ResourceHandler.Sbr6, ResourceHandler.Sbr6TT) +
-            _form.TableHeader(ResourceHandler.Sbr7, ResourceHandler.Sbr7TT) +
-            _form.TableHeader(ResourceHandler.Sbr8, ResourceHandler.Sbr8TT) +
-            _form.TableHeader(ResourceHandler.Sbr9, ResourceHandler.Sbr9TT) +
-            _form.TableHeader(ResourceHandler.Sbr10, ResourceHandler.Sbr10TT) +
-            _form.TableHeader(ResourceHandler.Sbr11, ResourceHandler.Sbr11TT) +
-            _form.TableHeader(ResourceHandler.Sbr12, ResourceHandler.Sbr12TT) +
-            "</tr>";
+            string s = _form.SectionStart("sobr", "SOBR Details");
+            string summary = _sum.Sobr();
+            s += "<tr>" +
+           _form.TableHeader(ResourceHandler.Sbr0, ResourceHandler.Sbr0TT) +
+           _form.TableHeader(ResourceHandler.Sbr1, ResourceHandler.Sbr1TT) +
+           _form.TableHeader(ResourceHandler.Sbr2, ResourceHandler.Sbr2TT) +
+           _form.TableHeader(ResourceHandler.Sbr3, ResourceHandler.Sbr3TT) +
+           _form.TableHeader(ResourceHandler.Sbr4, ResourceHandler.Sbr4TT) +
+           _form.TableHeader(ResourceHandler.Sbr5, ResourceHandler.Sbr5TT) +
+           _form.TableHeader(ResourceHandler.Sbr6, ResourceHandler.Sbr6TT) +
+           _form.TableHeader(ResourceHandler.Sbr7, ResourceHandler.Sbr7TT) +
+           _form.TableHeader(ResourceHandler.Sbr8, ResourceHandler.Sbr8TT) +
+           _form.TableHeader(ResourceHandler.Sbr9, ResourceHandler.Sbr9TT) +
+           _form.TableHeader(ResourceHandler.Sbr10, ResourceHandler.Sbr10TT) +
+           _form.TableHeader(ResourceHandler.Sbr11, ResourceHandler.Sbr11TT) +
+           _form.TableHeader(ResourceHandler.Sbr12, ResourceHandler.Sbr12TT) +
+           "</tr>";
             CDataFormer cd = new(true);
             List<string[]> list = cd.SobrInfoToXml();
 
@@ -406,14 +404,14 @@ namespace VeeamHealthCheck.Html.VBR
                 s += _form.TableData(d[11], "");
                 s += "</tr>";
             }
-            _form.SectionEnd(summary);
+            s += _form.SectionEnd(summary);
             return s;
         }
         public string AddSobrExtTable()
         {
-            string s = _form.SectionStart("license", "License Info");
-            string summary = _sum.SummaryTemplate();
-             s += "<tr>" +
+            string s = _form.SectionStart("extents", "SOBR Extent Details");
+            string summary = _sum.Extents();
+            s += "<tr>" +
 _form.TableHeader(ResourceHandler.SbrExt0, ResourceHandler.SbrExt0TT) +
 _form.TableHeader(ResourceHandler.SbrExt1, ResourceHandler.SbrExt1TT) +
 _form.TableHeader(ResourceHandler.SbrExt2, ResourceHandler.SbrExt2TT) +
@@ -431,41 +429,54 @@ _form.TableHeader(ResourceHandler.SbrExt13, ResourceHandler.SbrExt13TT) +
 _form.TableHeader(ResourceHandler.SbrExt14, ResourceHandler.SbrExt14TT) +
 _form.TableHeader(ResourceHandler.SbrExt15, ResourceHandler.SbrExt15TT) +
 "</tr>";
-            CDataFormer cd = new(true);
-            List<string[]> list = cd.SobrInfoToXml();
+            List<string[]> list = _df.ExtentXmlFromCsv();
 
             foreach (var d in list)
             {
+                var prov = d[16];
+                int shade = 0;
+                if (prov == "under")
+                    shade = 2;
+                if (prov == "over")
+                    shade = 1;
+
+                int freeSpaceShade = 0;
+                decimal.TryParse(d[10], out decimal i);
+                if (i < 20) { freeSpaceShade = 1; }
+
+
+
                 s += "<tr>";
                 s += _form.TableData(d[0], "");
-                s += _form.TableData(d[3], "");
-                s += _form.TableData(d[29], "");
                 s += _form.TableData(d[1], "");
+                s += _form.TableData(d[2], "", shade);
+                s += _form.TableData(d[3], "");
                 s += _form.TableData(d[4], "");
-                s += _form.TableData(d[6], "");
+                s += _form.TableData(d[5], "");
                 s += _form.TableData(d[6], "");
                 s += _form.TableData(d[7], "");
                 s += _form.TableData(d[8], "");
                 s += _form.TableData(d[9], "");
-                s += _form.TableData(d[10], "");
+                s += _form.TableData(d[10], "", freeSpaceShade);
                 s += _form.TableData(d[11], "");
                 s += _form.TableData(d[12], "");
                 s += _form.TableData(d[13], "");
                 s += _form.TableData(d[14], "");
                 s += _form.TableData(d[15], "");
+                //s += _form.TableData(d[16], "");
                 s += "</tr>";
             }
-            _form.SectionEnd(summary);
+            s += _form.SectionEnd(summary);
             return s;
         }
         public string AddRepoTable()
         {
-            string s = _form.SectionStart("license", "License Info");
-            string summary = _sum.SummaryTemplate();
-             s += "<tr>" +
+            string s = _form.SectionStart("repos", "Standalone Repository Details");
+            string summary = _sum.Repos();
+            s += "<tr>" +
 _form.TableHeader(ResourceHandler.SbrExt0, ResourceHandler.SbrExt0TT) +
-_form.TableHeader(ResourceHandler.SbrExt2, ResourceHandler.SbrExt2TT) +
 _form.TableHeader(ResourceHandler.Repo0, ResourceHandler.Repo0TT) +
+_form.TableHeader(ResourceHandler.SbrExt2, ResourceHandler.SbrExt2TT) +
 _form.TableHeader(ResourceHandler.SbrExt3, ResourceHandler.SbrExt3TT) +
 _form.TableHeader(ResourceHandler.SbrExt4, ResourceHandler.SbrExt4TT) +
 _form.TableHeader(ResourceHandler.SbrExt5, ResourceHandler.SbrExt5TT) +
@@ -481,23 +492,31 @@ _form.TableHeader(ResourceHandler.SbrExt13, ResourceHandler.SbrExt13TT) +
 _form.TableHeader(ResourceHandler.SbrExt14, ResourceHandler.SbrExt14TT) +
 _form.TableHeader(ResourceHandler.SbrExt15, ResourceHandler.SbrExt15TT) +
 "</tr>";
-            CDataFormer cd = new(true);
-            List<string[]> list = cd.RepoInfoToXml();
+            List<string[]> list = _df.RepoInfoToXml();
 
             foreach (var d in list)
             {
+                var prov = d[17];
+                int shade = 0;
+                if (prov == "under")
+                    shade = 2;
+                if (prov == "over")
+                    shade = 1;
+                int freeSpaceShade = 0;
+                decimal.TryParse(d[10], out decimal i);
+                if (i < 20) { freeSpaceShade = 1; }
                 s += "<tr>";
                 s += _form.TableData(d[0], "");
+                s += _form.TableData(d[2], "");
+                s += _form.TableData(d[1], "", shade);
                 s += _form.TableData(d[3], "");
-                s += _form.TableData(d[16], "");
-                s += _form.TableData(d[1], "");
                 s += _form.TableData(d[4], "");
-                s += _form.TableData(d[6], "");
+                s += _form.TableData(d[5], "");
                 s += _form.TableData(d[6], "");
                 s += _form.TableData(d[7], "");
                 s += _form.TableData(d[8], "");
                 s += _form.TableData(d[9], "");
-                s += _form.TableData(d[10], "");
+                s += _form.TableData(d[10], "", freeSpaceShade);
                 s += _form.TableData(d[11], "");
                 s += _form.TableData(d[12], "");
                 s += _form.TableData(d[13], "");
@@ -506,37 +525,149 @@ _form.TableHeader(ResourceHandler.SbrExt15, ResourceHandler.SbrExt15TT) +
                 s += _form.TableData(d[16], "");
                 s += "</tr>";
             }
-            _form.SectionEnd(summary);
+            s += _form.SectionEnd(summary);
             return s;
         }
         public string AddJobConTable()
         {
-            string s = _form.SectionStart("license", "License Info");
-            string summary = _sum.SummaryTemplate();
-            _form.SectionEnd(summary);
-            return null;
+            string s = _form.SectionStart("jobcon", "Job Concurrency Table");
+            string summary = _sum.JobCon();
+            s += _form.TableHeader(ResourceHandler.JobCon0, "");
+            s += _form.TableHeader(ResourceHandler.JobCon1, "");
+            s += _form.TableHeader(ResourceHandler.JobCon2, "");
+            s += _form.TableHeader(ResourceHandler.JobCon3, "");
+            s += _form.TableHeader(ResourceHandler.JobCon4, "");
+            s += _form.TableHeader(ResourceHandler.JobCon5, "");
+            s += _form.TableHeader(ResourceHandler.JobCon6, "");
+            s += _form.TableHeader(ResourceHandler.JobCon7, "");
+            s += "</tr>";
+
+            var stuff = _df.JobConcurrency(true, 7);
+
+            foreach (var stu in stuff)
+            {
+                s += "<tr>";
+                s += _form.TableData(stu.Key.ToString(), "");
+
+                foreach (var st in stu.Value)
+                {
+                    s += _form.TableData(st, "");
+                }
+                s += "</tr>";
+            }
+
+
+
+            s += _form.SectionEnd(summary);
+            return s;
         }
         public string AddTaskConTable()
         {
-            string s = _form.SectionStart("license", "License Info");
-            string summary = _sum.SummaryTemplate();
-            _form.SectionEnd(summary);
-            return null;
+            string s = _form.SectionStart("taskcon", "Task Concurrency Table");
+            string summary = _sum.TaskCon();
+
+            s += _form.TableHeader(ResourceHandler.TaskCon0, "");
+            s += _form.TableHeader(ResourceHandler.TaskCon1, "");
+            s += _form.TableHeader(ResourceHandler.TaskCon2, "");
+            s += _form.TableHeader(ResourceHandler.TaskCon3, "");
+            s += _form.TableHeader(ResourceHandler.TaskCon4, "");
+            s += _form.TableHeader(ResourceHandler.TaskCon5, "");
+            s += _form.TableHeader(ResourceHandler.TaskCon6, "");
+            s += _form.TableHeader(ResourceHandler.TaskCon7, "");
+            s += "</tr>";
+
+            var stuff = _df.JobConcurrency(true, 7);
+
+            foreach (var stu in stuff)
+            {
+                s += "<tr>";
+                s += _form.TableData(stu.Key.ToString(), "");
+
+                foreach (var st in stu.Value)
+                {
+                    s += _form.TableData(st, "");
+                }
+                s += "</tr>";
+            }
+
+
+
+            s += _form.SectionEnd(summary);
+            return s;
         }
         public string AddJobSessSummTable()
         {
-            string s = _form.SectionStart("license", "License Info");
-            string summary = _sum.SummaryTemplate();
-            _form.SectionEnd(summary);
-            return null;
+            string s = _form.SectionStart("jobsesssum", "Job Session Summary (7 days)");
+            string summary = _sum.JobSessSummary();
+
+            s+= _form.TableHeader(ResourceHandler.Jss0, ResourceHandler.Jss0TT);
+            s += _form.TableHeader(ResourceHandler.Jss1, ResourceHandler.Jss1TT);
+            s += _form.TableHeader(ResourceHandler.Jss2, ResourceHandler.Jss2TT);
+            s += _form.TableHeader(ResourceHandler.Jss3, ResourceHandler.Jss3TT);
+            s += _form.TableHeader(ResourceHandler.Jss4, ResourceHandler.Jss4TT);
+            s += _form.TableHeader(ResourceHandler.Jss5, ResourceHandler.Jss5TT);
+            s += _form.TableHeader(ResourceHandler.Jss6, ResourceHandler.Jss6TT);
+            s += _form.TableHeader(ResourceHandler.Jss7, ResourceHandler.Jss7TT);
+            s += _form.TableHeader(ResourceHandler.Jss8, ResourceHandler.Jss8TT);
+            s += _form.TableHeader(ResourceHandler.Jss9, ResourceHandler.Jss9TT);
+            s += _form.TableHeader(ResourceHandler.Jss10, ResourceHandler.Jss10TT);
+            s += _form.TableHeader(ResourceHandler.Jss11, ResourceHandler.Jss11TT);
+            s += _form.TableHeader(ResourceHandler.Jss12, ResourceHandler.Jss12TT);
+            s += _form.TableHeader(ResourceHandler.Jss13, ResourceHandler.Jss13TT);
+            s += _form.TableHeader(ResourceHandler.Jss14, ResourceHandler.Jss14TT);
+            s += _form.TableHeader(ResourceHandler.Jss15, ResourceHandler.Jss15TT);
+
+
+            var stuff = _df.ConvertJobSessSummaryToXml();
+
+            foreach (var stu in stuff)
+            {
+                s += "<tr>";
+
+                foreach (var st in stu)
+                {
+                    s += _form.TableData(st, "");
+                }
+            }
+
+
+            s += _form.SectionEnd(summary);
+            return s;
         }
         public string AddJobInfoTable()
         {
-            string s = _form.SectionStart("license", "License Info");
-            string summary = _sum.SummaryTemplate();
-            _form.SectionEnd(summary);
-            return null;
-        }
+            string s = _form.SectionStart("jobs", "Job Info");
+            string summary = _sum.JobInfo();
 
+            s += _form.TableHeader(ResourceHandler.JobInfo0, ResourceHandler.JobInfo0TT);
+            s += _form.TableHeader(ResourceHandler.JobInfo1, ResourceHandler.JobInfo1TT);
+            s += _form.TableHeader(ResourceHandler.JobInfo2, ResourceHandler.JobInfo2TT);
+            s += _form.TableHeader(ResourceHandler.JobInfo3, ResourceHandler.JobInfo3TT);
+            s += _form.TableHeader(ResourceHandler.JobInfo4, ResourceHandler.JobInfo4TT);
+            s += _form.TableHeader(ResourceHandler.JobInfo5, ResourceHandler.JobInfo5TT);
+            s += _form.TableHeader(ResourceHandler.JobInfo6, ResourceHandler.JobInfo6TT);
+            s += _form.TableHeader(ResourceHandler.JobInfo7, ResourceHandler.JobInfo7TT);
+            s += _form.TableHeader(ResourceHandler.JobInfo8, ResourceHandler.JobInfo8TT);
+            s += _form.TableHeader(ResourceHandler.JobInfo9, ResourceHandler.JobInfo9TT);
+            s += _form.TableHeader(ResourceHandler.JobInfo10, ResourceHandler.JobInfo10TT);
+            s += _form.TableHeader(ResourceHandler.JobInfo11, ResourceHandler.JobInfo11TT);
+            s += _form.TableHeader(ResourceHandler.JobInfo12, ResourceHandler.JobInfo12TT);
+            s += _form.TableHeader(ResourceHandler.JobInfo13, ResourceHandler.JobInfo13TT);
+            var stuff = _df.JobInfoToXml();
+
+            foreach (var stu in stuff)
+            {
+                s += "<tr>";
+
+                foreach (var st in stu)
+                {
+                    s += _form.TableData(st, "");
+                }
+            }
+
+
+            s += _form.SectionEnd(summary);
+            return s;
+        }
     }
 }
