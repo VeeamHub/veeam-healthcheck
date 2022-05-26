@@ -41,10 +41,7 @@ namespace VeeamHealthCheck.Reporting.Html.VBR
         }
         public string LicSum()
         {
-            string s = _form.CollapsibleButton("Show Summary");
-
-            s += "<div class=\"content\" style=\"display: none\">";
-            s += _form.AddA("hdr", ResourceHandler.GeneralSummaryHeader) +// _form.LineBreak() +
+            string s =  _form.AddA("hdr", ResourceHandler.GeneralSummaryHeader) +// _form.LineBreak() +
                 _form.AddA("i2", "") +
                 _form.AddA("i3", "") +
                 _form.AddA("i3", "") +
@@ -91,7 +88,7 @@ namespace VeeamHealthCheck.Reporting.Html.VBR
         }
         public string SecSum()
         {
-            string s = _form.CollapsibleButton("Show Summary");
+            string s = _form.CollapsibleButton(ResourceHandler.SSButton);
 
             s += "<div class=\"content\" style=\"display: none\">";
             s += _form.AddA("hdr", ResourceHandler.GeneralSummaryHeader) +
@@ -120,7 +117,7 @@ namespace VeeamHealthCheck.Reporting.Html.VBR
         }
         public string SrvSum()
         {
-            string s = _form.CollapsibleButton("Show Summary");
+            string s = _form.CollapsibleButton(ResourceHandler.MssButton);
 
             s += "<div class=\"content\" style=\"display: none\">";
             s += _form.AddA("hdr", ResourceHandler.GeneralSummaryHeader) +// _form.LineBreak() +
@@ -135,7 +132,7 @@ namespace VeeamHealthCheck.Reporting.Html.VBR
         }
         public string JobSummary()
         {
-            string s = _form.CollapsibleButton("Show Summary");
+            string s = _form.CollapsibleButton(ResourceHandler.JobSumBtn);
 
             s += "<div class=\"content\" style=\"display: none\">";
             s += _form.AddA("hdr", ResourceHandler.GeneralSummaryHeader) +
@@ -419,9 +416,6 @@ namespace VeeamHealthCheck.Reporting.Html.VBR
         {
             string s =  _form.AddA("hdr", ResourceHandler.GeneralSummaryHeader) + //_form.LineBreak() +
                 _form.AddA("i2", ResourceHandler.JobInfoSum0) +
-                _form.AddA("i3", "") +
-                _form.AddA("i3", "") +
-                _form.AddA("i3", "") +
               //  _form.DoubleLineBreak() +
                 _form.AddA("hdr", ResourceHandler.GeneralNotesHeader) +// _form.LineBreak() +
                 _form.AddA("i2", ResourceHandler.JobInfoNote0) +

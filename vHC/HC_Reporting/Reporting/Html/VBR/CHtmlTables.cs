@@ -101,7 +101,7 @@ namespace VeeamHealthCheck.Html.VBR
         }
         public string AddBkpSrvTable()
         {
-            string s = _form.SectionStart("vbrserver", "Backup Server & Config DB Info");
+            string s = _form.SectionStart("vbrserver", ResourceHandler.BkpSrvTblHead);
             string summary = _sum.SetVbrSummary();
 
             s += _form.TableHeader(ResourceHandler.BkpSrvTblName, ResourceHandler.BstNameTT);
@@ -140,7 +140,7 @@ namespace VeeamHealthCheck.Html.VBR
         {
             List<int> list = _df.SecSummary();
 
-            string s = _form.SectionStart("secsummary", "Security Summary");
+            string s = _form.SectionStart("secsummary", ResourceHandler.SSTitle);
             string summary = _sum.SecSum();
 
             s += _form.TableHeader(ResourceHandler.SSHdr0, ResourceHandler.SSHdrTT0) +
@@ -210,7 +210,7 @@ namespace VeeamHealthCheck.Html.VBR
 
         public string AddMissingJobsTable()
         {
-            string s =  _form.SectionStartWithButton("missingjobs", "Missing Job Types", ResourceHandler.NpButton);
+            string s =  _form.SectionStartWithButton("missingjobs", ResourceHandler.NpTitle, ResourceHandler.NpButton);
 
 
             string summary = _sum.MissingJobsSUmmary();
@@ -235,7 +235,7 @@ namespace VeeamHealthCheck.Html.VBR
         }
         public string AddProtectedWorkLoadsTable()
         {
-            string s = _form.SectionStartWithButton("protectedworkloads", "Protected Workloads", "Show details on protected workloads");
+            string s = _form.SectionStartWithButton("protectedworkloads", ResourceHandler.PlTitle, ResourceHandler.PlButton);
             string summary = _sum.ProtectedWorkloads();
             s += "<tr>" +
             _form.TableHeader(ResourceHandler.PlHdr0, ResourceHandler.PlHdrTT0) +
@@ -265,7 +265,7 @@ namespace VeeamHealthCheck.Html.VBR
         }
         public string AddManagedServersTable()
         {
-            string s = _form.SectionStartWithButton("managedServerInfo", "Managed Server Info", "");
+            string s = _form.SectionStartWithButton("managedServerInfo", ResourceHandler.ManSrvTitle, ResourceHandler.ManSrvBtn);
             string summary = _sum.ManagedServers();
             s += "<tr>" +
            _form.TableHeader(ResourceHandler.ManSrv0, ResourceHandler.ManSrv0TT) +
@@ -307,7 +307,7 @@ namespace VeeamHealthCheck.Html.VBR
         }
         public string AddRegKeysTable()
         {
-            string s = _form.SectionStartWithButton("regkeys", "Non-Default Registry Keys", "");
+            string s = _form.SectionStartWithButton("regkeys", ResourceHandler.RegTitle, ResourceHandler.RegBtn);
             string summary = _sum.RegKeys();
             s += "<tr>" +
                 _form.TableHeader(ResourceHandler.Reg0, ResourceHandler.Reg0TT) +
@@ -328,7 +328,7 @@ namespace VeeamHealthCheck.Html.VBR
         }
         public string AddProxyTable()
         {
-            string s = _form.SectionStartWithButton("proxies", "Proxy Info", "");
+            string s = _form.SectionStartWithButton("proxies", ResourceHandler.PrxTitle, ResourceHandler.PrxBtn);
             string summary = _sum.Proxies();
             s += "<tr>" +
            _form.TableHeader(ResourceHandler.Prx0, ResourceHandler.Prx0TT) +
@@ -369,7 +369,7 @@ namespace VeeamHealthCheck.Html.VBR
         }
         public string AddSobrTable()
         {
-            string s = _form.SectionStartWithButton("sobr", "SOBR Details", "");
+            string s = _form.SectionStartWithButton("sobr", ResourceHandler.SbrTitle, ResourceHandler.SbrBtn);
             string summary = _sum.Sobr();
             s += "<tr>" +
            _form.TableHeader(ResourceHandler.Sbr0, ResourceHandler.Sbr0TT) +
@@ -411,7 +411,7 @@ namespace VeeamHealthCheck.Html.VBR
         }
         public string AddSobrExtTable()
         {
-            string s = _form.SectionStartWithButton("extents", "SOBR Extent Details", "");
+            string s = _form.SectionStartWithButton("extents", ResourceHandler.SbrExtTitle, ResourceHandler.SbrExtBtn);
             string summary = _sum.Extents();
             s += "<tr>" +
 _form.TableHeader(ResourceHandler.SbrExt0, ResourceHandler.SbrExt0TT) +
@@ -473,7 +473,7 @@ _form.TableHeader(ResourceHandler.SbrExt15, ResourceHandler.SbrExt15TT) +
         }
         public string AddRepoTable()
         {
-            string s = _form.SectionStartWithButton("repos", "Standalone Repository Details", "");
+            string s = _form.SectionStartWithButton("repos", ResourceHandler.RepoTitle, ResourceHandler.RepoBtn);
             string summary = _sum.Repos();
             s += "<tr>" +
 _form.TableHeader(ResourceHandler.SbrExt0, ResourceHandler.SbrExt0TT) +
@@ -532,7 +532,7 @@ _form.TableHeader(ResourceHandler.SbrExt15, ResourceHandler.SbrExt15TT) +
         }
         public string AddJobConTable()
         {
-            string s = _form.SectionStartWithButton("jobcon", "Job Concurrency Table", "");
+            string s = _form.SectionStartWithButton("jobcon", ResourceHandler.JobConTitle, ResourceHandler.JobConBtn);
             string summary = _sum.JobCon();
             s += _form.TableHeader(ResourceHandler.JobCon0, "");
             s += _form.TableHeader(ResourceHandler.JobCon1, "");
@@ -565,7 +565,7 @@ _form.TableHeader(ResourceHandler.SbrExt15, ResourceHandler.SbrExt15TT) +
         }
         public string AddTaskConTable()
         {
-            string s = _form.SectionStartWithButton("taskcon", "Task Concurrency Table", "");
+            string s = _form.SectionStartWithButton("taskcon", ResourceHandler.TaskConTitle, ResourceHandler.TaskConBtn);
             string summary = _sum.TaskCon();
 
             s += _form.TableHeader(ResourceHandler.TaskCon0, "");
@@ -599,7 +599,7 @@ _form.TableHeader(ResourceHandler.SbrExt15, ResourceHandler.SbrExt15TT) +
         }
         public string AddJobSessSummTable()
         {
-            string s = _form.SectionStartWithButton("jobsesssum", "Job Session Summary (7 days)", "");
+            string s = _form.SectionStartWithButton("jobsesssum", ResourceHandler.JssTitle, ResourceHandler.JssBtn);
             string summary = _sum.JobSessSummary();
 
             s+= _form.TableHeader(ResourceHandler.Jss0, ResourceHandler.Jss0TT);
@@ -638,7 +638,7 @@ _form.TableHeader(ResourceHandler.SbrExt15, ResourceHandler.SbrExt15TT) +
         }
         public string AddJobInfoTable()
         {
-            string s = _form.SectionStartWithButton("jobs", "Job Info","");
+            string s = _form.SectionStartWithButton("jobs", ResourceHandler.JobInfoTitle, ResourceHandler.JobInfoBtn);
             string summary = _sum.JobInfo();
 
             s += _form.TableHeader(ResourceHandler.JobInfo0, ResourceHandler.JobInfo0TT);
@@ -651,7 +651,7 @@ _form.TableHeader(ResourceHandler.SbrExt15, ResourceHandler.SbrExt15TT) +
             s += _form.TableHeader(ResourceHandler.JobInfo7, ResourceHandler.JobInfo7TT);
             s += _form.TableHeader(ResourceHandler.JobInfo8, ResourceHandler.JobInfo8TT);
             s += _form.TableHeader(ResourceHandler.JobInfo9, ResourceHandler.JobInfo9TT);
-            s += _form.TableHeader(ResourceHandler.JobInfo10, ResourceHandler.JobInfo10TT);
+            //s += _form.TableHeader(ResourceHandler.JobInfo10, ResourceHandler.JobInfo10TT);
             s += _form.TableHeader(ResourceHandler.JobInfo11, ResourceHandler.JobInfo11TT);
             s += _form.TableHeader(ResourceHandler.JobInfo12, ResourceHandler.JobInfo12TT);
             s += _form.TableHeader(ResourceHandler.JobInfo13, ResourceHandler.JobInfo13TT);

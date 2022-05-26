@@ -51,6 +51,8 @@ namespace VeeamHealthCheck
         public static string PlHdrTT7 = m4.GetString("PlHdrTT7");
         public static string PlSum1 = m4.GetString("PlSum1");
         public static string PlNote1 = m4.GetString("PlNote1");
+        public static string PlButton = m4.GetString("PlButton");
+        public static string PlTitle = m4.GetString("PlTitle");
         public static string GeneralNotesHeader = m4.GetString("GeneralNotesHeader");
         public static string GeneralSummaryHeader = m4.GetString("GeneralSummaryHeader");
         public static string HtmlHeader = m4.GetString("HtmlHeader");
@@ -146,12 +148,15 @@ namespace VeeamHealthCheck
         public static string SSNote2 = m4.GetString("SSNote2");
         public static string SSNote3 = m4.GetString("SSNote3");
         public static string SSNote4 = m4.GetString("SSNote4");
+        public static string SSButton = m4.GetString("SSButton");
+        public static string SSTitle = m4.GetString("SSTitle");
         public static string MssTitle = m4.GetString("MssTitle");
         public static string MssHdr1 = m4.GetString("MssHdr1");
         public static string MssHdr2 = m4.GetString("MssHdr2");
         public static string MssHdr1TT = m4.GetString("MssHdr1TT");
         public static string MssHdr2TT = m4.GetString("MssHdr2TT");
         public static string MssSum1 = m4.GetString("MssSum1");
+        public static string MssButton = m4.GetString("MssButton");
         public static string BkpSrvButton = m4.GetString("BkpSrvButton");
         public static string BkpSrvNotes1 = m4.GetString("BkpSrvNotes1");
         public static string BkpSrvNotes2 = m4.GetString("BkpSrvNotes2");
@@ -235,6 +240,7 @@ namespace VeeamHealthCheck
         public static string SbrNote4 = m4.GetString("SbrNote4");
         public static string SbrNote5 = m4.GetString("SbrNote5");
         public static string SbrNote6 = m4.GetString("SbrNote6");
+        public static string SbrButton = m4.GetString("SbrButton");
         public static string SbrExtTitle = m4.GetString("SbrExtTitle");
         public static string SbrExtBtn = m4.GetString("SbrExtBtn");
         public static string SbrExt0 = m4.GetString("SbrExt0");
@@ -559,6 +565,7 @@ namespace VeeamHealthCheck
         public static string v365NavTitle13 = m4.GetString("v365NavTitle13");
         public static string v365NavValue13 = m4.GetString("v365NavValue13");
         public static string VboGloH1 = m4.GetString("VboGloH1");
+
 
 
 
