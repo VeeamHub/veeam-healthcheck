@@ -486,9 +486,11 @@ namespace VeeamHealthCheck.Reporting.Html.VB365
             s += _form.TableHeader("Total Users", "");
             s += _form.TableHeader("Protected Users", "");
             s += _form.TableHeader("Unprotected Users", "");
+            s += _form.TableHeader("Stale Backups", "");
             s += "</tr>";
             double protectedUsers = 0;
             double notProtectedUsers = 0;
+            double stale = 0;
             var global = _csv.GetDynVboProtStat().ToList();
             var lic = _csv.GetDynamicVboGlobal().ToList();
             foreach(var li in lic)
@@ -502,6 +504,8 @@ namespace VeeamHealthCheck.Reporting.Html.VB365
                 //s += "<tr>";
                 if (gl.protectionstatus == "Unprotected")
                     notProtectedUsers++;
+                if(gl.protectionstatus == "Stale Backup")
+                    stale++;
                 //foreach (var g in gl)
                 //{
                 //    if (gl.protectionstatus == "Unprotected")
@@ -522,6 +526,7 @@ namespace VeeamHealthCheck.Reporting.Html.VB365
             s += _form.TableData((protectedUsers + notProtectedUsers).ToString(), "");
             s += _form.TableData(protectedUsers.ToString(), "");
             s += _form.TableData(notProtectedUsers.ToString(), "", shade);
+            s += _form.TableData(stale.ToString(), "", shade);
             s += "</tr>";
 
 
