@@ -95,6 +95,7 @@ namespace VeeamHealthCheck.Html
             _htmldoc += _tables.AddBkpSrvTable();
             _htmldoc += _tables.AddSecSummaryTable();
             _htmldoc += _tables.AddSrvSummaryTable();
+            _htmldoc += _tables.AddJobSummaryTable();
             _htmldoc += _tables.AddMissingJobsTable();
             _htmldoc += _tables.AddProtectedWorkLoadsTable();
             _htmldoc += _tables.AddManagedServersTable();

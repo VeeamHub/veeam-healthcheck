@@ -54,7 +54,7 @@ namespace VeeamHealthCheck.Reporting.Html.Shared
         }
         public string AddA(string classInfo, string displaytext)
         {
-            return String.Format("<a class=\"{0}\">{1}</a>" + LineBreak(), classInfo, displaytext);
+            return String.Format("<div class=\"{0}\">{1}</div>" + LineBreak(), classInfo, displaytext);
         }
 
         public string BackToTop()
@@ -93,6 +93,17 @@ namespace VeeamHealthCheck.Reporting.Html.Shared
             s += "<tr>";
             return s;
         }
+        public string SectionStartWithButton(string id, string header, string buttonName)
+        {
+            string s = SectionId(id);
+            s += header2(header);
+            s += CollapsibleButton( buttonName);
+            s += "<div class=\"content\" style=\"display: none\">";
+            s += Table();
+            s += "<tr>";
+
+            return s;
+        }
         public string TableHeader(string header, string tooltip)
         {
             return String.Format("<th title=\"{0}\">{1}</th>", tooltip, header);
@@ -122,7 +133,7 @@ namespace VeeamHealthCheck.Reporting.Html.Shared
         }
         public string header2(string text)
         {
-            return String.Format("<h2>{0}:</h2>", text);
+            return String.Format("<h2><u>{0}:</u></h2>", text);
         }
         public string FormHeader()
         {
