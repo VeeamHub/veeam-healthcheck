@@ -23,7 +23,7 @@ namespace VeeamHealthCheck
         public static string vb365dir
         {
             get {
-                return desiredDir + vb365Dir;
+                return unsafeDir + vb365Dir;
             }
         }
         public static string vbrDir

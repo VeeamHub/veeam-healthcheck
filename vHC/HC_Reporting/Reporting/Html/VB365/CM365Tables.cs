@@ -13,6 +13,7 @@ namespace VeeamHealthCheck.Reporting.Html.VB365
         private CHtmlFormatting _form = new();
         private CCsvParser _csv = new(CVariables.vb365dir);
         private CM365Summaries _summary = new CM365Summaries();
+        private Scrubber.CXmlHandler _scrubber = new();
         public CM365Tables()
         {
 
@@ -43,8 +44,18 @@ namespace VeeamHealthCheck.Reporting.Html.VB365
             s += "<tr>";
             foreach (var gl in global)
             {
+                int counter = 0;
                 foreach (var g in gl)
-                    s += _form.TableData(g.Value, "");
+                {
+                    string output = g.Value;
+                    if (MainWindow._scrub)
+                    {
+                        if (counter == 4)
+                            output = _scrubber.ScrubItem(output);
+                    }
+                    s += _form.TableData(output, "");
+                    counter++;
+                }
             }
             s += "</tr></table>";
 
@@ -78,10 +89,22 @@ namespace VeeamHealthCheck.Reporting.Html.VB365
             var global = _csv.GetDynamicVboProxies().ToList();
             foreach (var gl in global)
             {
+                int counter = 0;
+
                 s += "<tr>";
 
                 foreach (var g in gl)
-                    s += _form.TableData(g.Value, "");
+                {
+                    string output = g.Value;
+                    if (MainWindow._scrub)
+                    {
+                        if (counter == 0 || counter == 1)
+                            output = _scrubber.ScrubItem(output);
+                    }
+                    s += _form.TableData(output, "");
+                    counter++;
+
+                }
 
                 s += "</tr>";
             }
@@ -119,9 +142,20 @@ namespace VeeamHealthCheck.Reporting.Html.VB365
             foreach (var gl in global)
             {
                 s += "<tr>";
-
+                int counter = 0;
                 foreach (var g in gl)
-                    s += _form.TableData(g.Value, "");
+                {
+                    string output = g.Value;
+                    if (MainWindow._scrub)
+                    {
+                        if (counter == 0 || counter == 1 || counter == 2
+                            || counter == 4
+                            || counter == 5)
+                            output = _scrubber.ScrubItem(output);
+                    }
+                    s += _form.TableData(output, "");
+                    counter++;
+                }
 
                 s += "</tr>";
             }
@@ -151,8 +185,17 @@ namespace VeeamHealthCheck.Reporting.Html.VB365
             {
                 s += "<tr>";
 
+                int counter = 0;
                 foreach (var g in gl)
-                    s += _form.TableData(g.Value, "");
+                {
+                    string output = g.Value;
+                    if (MainWindow._scrub)
+                    {
+                        output = _scrubber.ScrubItem(output);
+                    }
+                    s += _form.TableData(output, "");
+                    counter++;
+                }
 
                 s += "</tr>";
             }
@@ -170,31 +213,7 @@ namespace VeeamHealthCheck.Reporting.Html.VB365
             s += "<table border=\"1\"><tr>";
             s += _form.TableHeader("Win. Firewall Enabled?", "Win. Firewall Enabled?");
             s += _form.TableHeader("Internet proxy?", "Internet proxy?");
-            s += _form.TableHeader("Server Cert", "Server Cert");
-            s += _form.TableHeader("Server Cert PK Exportable?", "Server Cert PK Exportable?");
-            s += _form.TableHeader("Server Cert Expires", "Server Cert Expires");
-            s += _form.TableHeader("Server Cert Self-Signed?", "Server Cert Self-Signed?");
-            s += _form.TableHeader("API Enabled?", "API Enabled?");
-            s += _form.TableHeader("API Port", "API Port");
-            s += _form.TableHeader("API Cert", "API Cert");
-            s += _form.TableHeader("API Cert PK Exportable?", "API Cert PK Exportable?");
-            s += _form.TableHeader("API Cert Expires", "API Cert Expires");
-            s += _form.TableHeader("API Cert Self-Signed?", "API Cert Self-Signed?");
-            s += _form.TableHeader("Tenant Auth Enabled?", "Tenant Auth Enabled?");
-            s += _form.TableHeader("Tenant Auth Cert", "Tenant Auth Cert");
-            s += _form.TableHeader("Tenant Auth PK Exportable?", "Tenant Auth PK Exportable?");
-            s += _form.TableHeader("Tenant Auth Cert Expires", "Tenant Auth Cert Expires");
-            s += _form.TableHeader("Tenant Auth Cert Self-Signed?", "Tenant Auth Cert Self-Signed?");
-            s += _form.TableHeader("Restore Portal Enabled?", "Restore Portal Enabled?");
-            s += _form.TableHeader("Restore Portal Cert", "Restore Portal Cert");
-            s += _form.TableHeader("Restore Portal Cert PK Exportable?", "Restore Portal Cert PK Exportable?");
-            s += _form.TableHeader("Restore Portal Cert Expires", "Restore Portal Cert Expires");
-            s += _form.TableHeader("Restore Portal Cert Self-Signed?", "Restore Portal Cert Self-Signed?");
-            s += _form.TableHeader("Operator Auth Enabled?", "Operator Auth Enabled?");
-            s += _form.TableHeader("Operator Auth Cert", "Operator Auth Cert");
-            s += _form.TableHeader("Operator Auth Cert PK Exportable?", "Operator Auth Cert PK Exportable?");
-            s += _form.TableHeader("Operator Auth Cert Expires", "Operator Auth Cert Expires");
-            s += _form.TableHeader("Operator Auth Cert Self-Signed?", "Operator Auth Cert Self-Signed?");
+
 
             s += "</tr>";
 
@@ -203,8 +222,87 @@ namespace VeeamHealthCheck.Reporting.Html.VB365
             {
                 s += "<tr>";
 
+                int counter = 0;
+                int certcounter = 0;
+                int nameIterator = 0;
                 foreach (var g in gl)
-                    s += _form.TableData(g.Value, "");
+                {
+                    if (counter == 2)
+                    {
+                        s += "</table><table border =\"1\"><tr><br/>";
+                        s += _form.TableHeader("Cert/Label", "Enabled");
+                        s += _form.TableHeader("Enabled", "Enabled");
+                        s += _form.TableHeader("Port", "Server Cert");
+                        s += _form.TableHeader("Cert", "Server Cert PK Exportable?");
+                        s += _form.TableHeader("Exportable", "Server Cert Expires");
+                        s += _form.TableHeader("Expires", "Server Cert Self-Signed?");
+                        s += _form.TableHeader("Self-Signed", "API Enabled?");
+                        //s += _form.TableHeader("API Port", "API Port");
+                        //s += _form.TableHeader("API Cert", "API Cert");
+                        //s += _form.TableHeader("API Cert PK Exportable?", "API Cert PK Exportable?");
+                        //s += _form.TableHeader("API Cert Expires", "API Cert Expires");
+                        //s += _form.TableHeader("API Cert Self-Signed?", "API Cert Self-Signed?");
+                        //s += _form.TableHeader("Tenant Auth Enabled?", "Tenant Auth Enabled?");
+                        //s += _form.TableHeader("Tenant Auth Cert", "Tenant Auth Cert");
+                        //s += _form.TableHeader("Tenant Auth PK Exportable?", "Tenant Auth PK Exportable?");
+                        //s += _form.TableHeader("Tenant Auth Cert Expires", "Tenant Auth Cert Expires");
+                        //s += _form.TableHeader("Tenant Auth Cert Self-Signed?", "Tenant Auth Cert Self-Signed?");
+                        //s += _form.TableHeader("Restore Portal Enabled?", "Restore Portal Enabled?");
+                        //s += _form.TableHeader("Restore Portal Cert", "Restore Portal Cert");
+                        //s += _form.TableHeader("Restore Portal Cert PK Exportable?", "Restore Portal Cert PK Exportable?");
+                        //s += _form.TableHeader("Restore Portal Cert Expires", "Restore Portal Cert Expires");
+                        //s += _form.TableHeader("Restore Portal Cert Self-Signed?", "Restore Portal Cert Self-Signed?");
+                        //s += _form.TableHeader("Operator Auth Enabled?", "Operator Auth Enabled?");
+                        //s += _form.TableHeader("Operator Auth Cert", "Operator Auth Cert");
+                        //s += _form.TableHeader("Operator Auth Cert PK Exportable?", "Operator Auth Cert PK Exportable?");
+                        //s += _form.TableHeader("Operator Auth Cert Expires", "Operator Auth Cert Expires");
+                        //s += _form.TableHeader("Operator Auth Cert Self-Signed?", "Operator Auth Cert Self-Signed?");
+                        s += "</tr><tr>";
+                        s += _form.TableData("Server", "");
+                        s += _form.TableData("", "");
+                        s += _form.TableData("", "");
+                        certcounter++;
+                    }
+                    if (certcounter == 7 ||
+                        certcounter == 13 ||
+                        certcounter == 18 ||
+                        certcounter == 23)
+                    {
+                        s += "</tr><tr>";
+                        if(nameIterator == 0)
+                            s+= _form.TableData("API", "");
+                        if (nameIterator == 1)
+                            s += _form.TableData("Tenant", "");
+                        if (nameIterator == 2)
+                            s += _form.TableData("Restore Portal", "");
+                        if (nameIterator == 3)
+                            s += _form.TableData("Operator Auth", "");
+
+                        nameIterator++;
+                    }
+                    if (certcounter == 15)
+                        s += _form.TableData("", "");
+                    if (certcounter == 19)
+                        s += _form.TableData("", "");
+                    if (certcounter == 24)
+                        s += _form.TableData("", "");
+
+                    string output = g.Value;
+
+                    // 6 columns: Enabled? Port Cert Exportable? Expires Self-Signed
+                    if (MainWindow._scrub)
+                    {
+                        if (counter == 2 ||
+                            counter == 8 ||
+                            counter == 13 ||
+                            counter == 18 ||
+                            counter == 23)
+                            output = _scrubber.ScrubItem(output);
+                    }
+                    s += _form.TableData(output, "");
+                    counter++;
+                    certcounter++;
+                }
 
                 s += "</tr>";
             }
@@ -246,8 +344,18 @@ namespace VeeamHealthCheck.Reporting.Html.VB365
             {
                 s += "<tr>";
 
+                int counter = 0;
                 foreach (var g in gl)
-                    s += _form.TableData(g.Value, "");
+                {
+                    string output = g.Value;
+                    if (MainWindow._scrub)
+                    {
+                        if (counter == 12 || counter == 13)
+                            output = _scrubber.ScrubItem(output);
+                    }
+                    s += _form.TableData(output, "");
+                    counter++;
+                }
 
                 s += "</tr>";
             }
@@ -315,8 +423,18 @@ namespace VeeamHealthCheck.Reporting.Html.VB365
             {
                 s += "<tr>";
 
+                int counter = 0;
                 foreach (var g in gl)
-                    s += _form.TableData(g.Value, "");
+                {
+                    string output = g.Value;
+                    if (MainWindow._scrub)
+                    {
+                        if (counter == 0 || counter == 5)
+                            output = _scrubber.ScrubItem(output);
+                    }
+                    s += _form.TableData(output, "");
+                    counter++;
+                }
 
                 s += "</tr>";
             }
@@ -354,8 +472,18 @@ namespace VeeamHealthCheck.Reporting.Html.VB365
             {
                 s += "<tr>";
 
+                int counter = 0;
                 foreach (var g in gl)
-                    s += _form.TableData(g.Value, "");
+                {
+                    string output = g.Value;
+                    if (MainWindow._scrub)
+                    {
+                        if (counter == 0)
+                            output = _scrubber.ScrubItem(output);
+                    }
+                    s += _form.TableData(output, "");
+                    counter++;
+                }
 
                 s += "</tr>";
             }
@@ -388,8 +516,21 @@ namespace VeeamHealthCheck.Reporting.Html.VB365
             {
                 s += "<tr>";
 
+                int counter = 0;
                 foreach (var g in gl)
-                    s += _form.TableData(g.Value, "");
+                {
+                    string output = g.Value;
+                    if (MainWindow._scrub)
+                    {
+                        if (counter == 0 ||
+                            counter == 1 ||
+                            counter == 4 ||
+                            counter == 5)
+                            output = _scrubber.ScrubItem(output);
+                    }
+                    s += _form.TableData(output, "");
+                    counter++;
+                }
 
                 s += "</tr>";
             }
@@ -427,8 +568,24 @@ namespace VeeamHealthCheck.Reporting.Html.VB365
             {
                 s += "<tr>";
 
+                int counter = 0;
                 foreach (var g in gl)
-                    s += _form.TableData(g.Value, "");
+                {
+                    string output = g.Value;
+                    if (MainWindow._scrub)
+                    {
+                        if (counter == 0 ||
+                            counter == 1 ||
+                            counter == 4 ||
+                            counter == 5 ||
+                            counter == 6 ||
+                            counter == 8 ||
+                            counter == 9)
+                            output = _scrubber.ScrubItem(output);
+                    }
+                    s += _form.TableData(output, "");
+                    counter++;
+                }
 
                 s += "</tr>";
             }
@@ -456,8 +613,18 @@ namespace VeeamHealthCheck.Reporting.Html.VB365
             {
                 s += "<tr>";
 
+                int counter = 0;
                 foreach (var g in gl)
-                    s += _form.TableData(g.Value, "");
+                {
+                    string output = g.Value;
+                    if (MainWindow._scrub)
+                    {
+                        if (counter == 1)
+                            output = _scrubber.ScrubItem(output);
+                    }
+                    s += _form.TableData(output, "");
+                    counter++;
+                }
 
                 s += "</tr>";
             }
@@ -493,7 +660,7 @@ namespace VeeamHealthCheck.Reporting.Html.VB365
             double stale = 0;
             var global = _csv.GetDynVboProtStat().ToList();
             var lic = _csv.GetDynamicVboGlobal().ToList();
-            foreach(var li in lic)
+            foreach (var li in lic)
             {
                 string s2 = li.licensesused;
                 double.TryParse(s2, out protectedUsers);
@@ -504,20 +671,14 @@ namespace VeeamHealthCheck.Reporting.Html.VB365
                 //s += "<tr>";
                 if (gl.protectionstatus == "Unprotected")
                     notProtectedUsers++;
-                if(gl.protectionstatus == "Stale Backup")
+                if (gl.protectionstatus == "Stale Backup")
                     stale++;
-                //foreach (var g in gl)
-                //{
-                //    if (gl.protectionstatus == "Unprotected")
-                //        notProtectedUsers++;
-
-                //}
             }
 
             double percent = notProtectedUsers / (notProtectedUsers + protectedUsers) * 100;
             double targetPercent = 20;
             int shade = 0;
-            if(percent > targetPercent)
+            if (percent > targetPercent)
             {
                 shade = 1;
             }
@@ -526,7 +687,7 @@ namespace VeeamHealthCheck.Reporting.Html.VB365
             s += _form.TableData((protectedUsers + notProtectedUsers).ToString(), "");
             s += _form.TableData(protectedUsers.ToString(), "");
             s += _form.TableData(notProtectedUsers.ToString(), "", shade);
-            s += _form.TableData(stale.ToString(), "", shade);
+            s += _form.TableData(stale.ToString(), "");
             s += "</tr>";
 
 
@@ -566,8 +727,23 @@ namespace VeeamHealthCheck.Reporting.Html.VB365
             {
                 s += "<tr>";
 
+                int counter = 0;
                 foreach (var g in gl)
-                    s += _form.TableData(g.Value, "");
+                {
+                    string output = g.Value;
+                    if (MainWindow._scrub)
+                    {
+                        if (counter == 0 ||
+                            counter == 1 ||
+                            counter == 2 ||
+                            counter == 7 ||
+                            counter == 8 ||
+                            counter == 11)
+                            output = _scrubber.ScrubItem(output);
+                    }
+                    s += _form.TableData(output, "");
+                    counter++;
+                }
 
                 s += "</tr>";
             }
@@ -586,7 +762,7 @@ namespace VeeamHealthCheck.Reporting.Html.VB365
         }
         public string MakeVb365NavTable()
         {
-            return _form.FormNavRows(ResourceHandler.v365NavTitle0, "global", ResourceHandler.v365NavValue1) + 
+            return _form.FormNavRows(ResourceHandler.v365NavTitle0, "global", ResourceHandler.v365NavValue1) +
                 _form.FormNavRows(ResourceHandler.v365NavTitle1, "protstat", ResourceHandler.v365NavValue1) +
                 _form.FormNavRows(ResourceHandler.v365NavTitle2, "controller", ResourceHandler.v365NavValue2) +
                 _form.FormNavRows(ResourceHandler.v365NavTitle3, "controllerdrives", ResourceHandler.v365NavValue3) +

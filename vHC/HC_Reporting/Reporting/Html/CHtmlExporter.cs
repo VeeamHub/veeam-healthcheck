@@ -64,6 +64,8 @@ namespace VeeamHealthCheck.Html
 
             DateTime dateTime = DateTime.Now;
             string n = MainWindow._desiredPath;
+            if (!Directory.Exists(n))
+                Directory.CreateDirectory(n);
             string htmlCore = "\\" + _htmlName + "_" + _backupServerName + dateTime.ToString("_yyyy.MM.dd_HHmmss") + ".html";
             string name = n + htmlCore;
             _latestReport = name;
