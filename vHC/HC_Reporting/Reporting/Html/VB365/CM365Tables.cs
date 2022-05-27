@@ -230,7 +230,7 @@ namespace VeeamHealthCheck.Reporting.Html.VB365
                     if (counter == 2)
                     {
                         s += "</table><table border =\"1\"><tr><br/>";
-                        s += _form.TableHeader("Cert/Label", "Enabled");
+                        s += _form.TableHeader("Service", "Enabled");
                         s += _form.TableHeader("Enabled", "Enabled");
                         s += _form.TableHeader("Port", "Server Cert");
                         s += _form.TableHeader("Cert", "Server Cert PK Exportable?");
@@ -272,7 +272,7 @@ namespace VeeamHealthCheck.Reporting.Html.VB365
                         if(nameIterator == 0)
                             s+= _form.TableData("API", "");
                         if (nameIterator == 1)
-                            s += _form.TableData("Tenant", "");
+                            s += _form.TableData("Tenant Auth", "");
                         if (nameIterator == 2)
                             s += _form.TableData("Restore Portal", "");
                         if (nameIterator == 3)
