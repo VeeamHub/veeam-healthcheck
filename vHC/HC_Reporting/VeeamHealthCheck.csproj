@@ -116,6 +116,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Folder Include="Reporting\CsvHandlers\VB365\" />
     <Folder Include="Startup\GUI\" />
   </ItemGroup>
 

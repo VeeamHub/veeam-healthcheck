@@ -51,7 +51,7 @@ namespace VeeamHealthCheck.Reporting.Html.VB365
             _htmldoc += _form.header1("Security");
             _htmldoc += tables.Vb365Security();
             _htmldoc += tables.Vb365Rbac();
-            _htmldoc += tables.Vb365Permissions();
+            //_htmldoc += tables.Vb365Permissions();
 
             _htmldoc += _form.header1("M365 Backups");
             _htmldoc += tables.Vb365Orgs();
