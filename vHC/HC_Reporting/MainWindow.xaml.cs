@@ -10,7 +10,7 @@ using VeeamHealthCheck;
 using VeeamHealthCheck.DB;
 using VeeamHealthCheck.Shared.Logging;
 using System.Threading;
-
+using System.Globalization;
 
 namespace VeeamHealthCheck
 {
@@ -30,14 +30,15 @@ namespace VeeamHealthCheck
 
         private bool _isVbr = false;
         private bool _isVb365 = false;
-        public MainWindow(string[] args)
-        {
 
-        }
         public MainWindow()
         {
+            CultureInfo.CurrentCulture = Thread.CurrentThread.CurrentCulture;
+            CultureInfo.CurrentCulture = CultureInfo.GetCultureInfo("zh-cn");
+            MessageBox.Show(ResourceHandler.GuiAcceptText);
+            //Thread.CurrentThread.CurrentCulture = CultureInfo.CurrentCulture.Name;
             InitializeComponent();
-            
+
             SetUi();
 
 
@@ -109,7 +110,7 @@ namespace VeeamHealthCheck
         #region Buttons
         private void Import()
         {
-            
+
 
             if (_isVbr)
             {
@@ -239,7 +240,7 @@ namespace VeeamHealthCheck
             {
                 if (process.ProcessName == "Veeam.Archiver.Service")
                 {
-                    
+
                     _isVb365 = true;
                     log.Info("VB365 software detected");
                 }
@@ -250,9 +251,9 @@ namespace VeeamHealthCheck
                 }
 
             }
-            if(_isVbr)
+            if (_isVbr)
                 this.Title = title + " - " + ResourceHandler.GuiTitleBnR;
-            if(_isVb365)
+            if (_isVb365)
                 this.Title = title + " - " + ResourceHandler.GuiTitleVB365;
             if (_isVbr && _isVb365)
                 this.Title = title + " - " + ResourceHandler.GuiTitleBnR + " & " + ResourceHandler.GuiTitleVB365;
