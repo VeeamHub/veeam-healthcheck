@@ -135,6 +135,7 @@ namespace VeeamHealthCheck.Reporting.Html.VB365
             s += _form.TableHeader("Object Space Used", "Object Space Used");
             s += _form.TableHeader("Daily Change", "Daily Change");
             s += _form.TableHeader("Retention", "Retention");
+            s += _form.TableHeader("Data Stored", "");
 
             s += "</tr>";
 
@@ -478,8 +479,8 @@ namespace VeeamHealthCheck.Reporting.Html.VB365
             s += _form.CollapsibleButton("Show Job Stats");
             s += "<table border=\"1\" style=\"display: none;\"><tr>";
             s += _form.TableHeader("Name", "Name");
-            s += _form.TableHeader("Average Duration (min)", "Average Duration (min)");
-            s += _form.TableHeader("Max Duration (min)", "Max Duration (min)");
+            s += _form.TableHeader("Average Duration (hh:mm:ss)", "Average Duration (hh:mm:ss)");
+            s += _form.TableHeader("Max Duration (hh:mm:ss)", "Max Duration (hh:mm:ss)");
             s += _form.TableHeader("Average Data Transferred", "Average Data Transferred");
             s += _form.TableHeader("Max Data Transferred", "Max Data Transferred");
             s += _form.TableHeader("Average Objects (#)", "Average Objects (#)");
@@ -533,6 +534,7 @@ namespace VeeamHealthCheck.Reporting.Html.VB365
             s += _form.TableHeader("Size Limit", "Size Limit");
             s += _form.TableHeader("Used Space", "Used Space");
             s += _form.TableHeader("Free Space", "Free Space");
+            s += _form.TableHeader("Bound Repo", "Bound Repository");
 
             s += "</tr>";
 
@@ -744,6 +746,7 @@ namespace VeeamHealthCheck.Reporting.Html.VB365
             s += _form.TableHeader("Enabled?", "Enabled?");
             s += _form.TableHeader("Schedule", "Schedule");
             s += _form.TableHeader("Related Job", "Related Job");
+            s += _form.TableHeader("Processing Options", "");
 
             s += "</tr>";
 
