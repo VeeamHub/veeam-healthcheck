@@ -31,7 +31,7 @@ function Write-LogFile {
     [CmdletBinding()]
     param (
         [string]$Message,
-        [ValidateSet("Main","Errors")][string]$LogName="Main"
+        [ValidateSet("Main","Errors","NoResult")][string]$LogName="Main"
         )
     begin { }
     process {
@@ -137,12 +137,13 @@ function Expand-Expression {
                     
                     $message = "$expression produced no result."
                     if ($global:SETTINGS.Debug) { 
-                        Write-Warning $message
+                        Write-Host -ForegroundColor DarkYellow $message
                     }
 
-                    Write-LogFile -Message $message
-                    Write-LogFile -Message $message -LogName Errors
-                    Write-LogFile -Message "`tExpanded Expression: $expandedExpression" -LogName Errors
+                    #Write-LogFile -Message $message
+                    #Write-LogFile -Message $message -LogName Errors
+                    Write-LogFile -Message $message -LogName NoResult
+                    Write-LogFile -Message "`tExpanded Expression: $expandedExpression" -LogName NoResult
                 }
             } catch {
 
@@ -378,10 +379,11 @@ function Get-VBOEnvironment {
         Write-Progress @progressSplat -PercentComplete ($progress++) -CurrentOperation "Collecting organization..."
         $e.VBOOrganization = Get-VBOOrganization
             # we can optionally collect user, site, group,team org info. excluded for now: https://helpcenter.veeam.com/docs/vbo365/powershell/organization_items.html?ver=60
+        $e.VBOOrganizationUsers = $e.VBOOrganization | Get-VBOOrganizationUser
         $e.VBOApplication = $e.VBOOrganization | Get-VBOApplication
-        $e.VBOBackupApplication = $e.VBOOrganization `
-            | Where-Object {$_.Office365ExchangeConnectionSettings.AuthenticationType -ne [Veeam.Archiver.PowerShell.Model.Enums.VBOOffice365AuthenticationType]::Basic} `
-            | Get-VBOBackupApplication
+        #Diabled Jun1/22 - Not used #$e.VBOBackupApplication = $e.VBOOrganization `
+            #Diabled Jun1/22 - Not used #| Where-Object {$_.Office365ExchangeConnectionSettings.AuthenticationType -ne [Veeam.Archiver.PowerShell.Model.Enums.VBOOffice365AuthenticationType]::Basic} `
+            #Diabled Jun1/22 - Not used #| Get-VBOBackupApplication
         Write-MemoryUsageToLog -Message "Org collected"
 
         #infra settings:
@@ -405,15 +407,15 @@ function Get-VBOEnvironment {
         #$e.VBOAzureVirtualMachineSize = Get-VBOAzureVirtualMachineSize
         #$e.VBOAzureVirtualNetwork = Get-VBOAzureVirtualNetwork
         #Object details
-        $e.VBOAzureBlobAccount = Get-VBOAzureBlobAccount
-        $e.VBOAzureServiceAccount = Get-VBOAzureServiceAccount
+        #Diabled Jun1/22 - Not used #$e.VBOAzureBlobAccount = Get-VBOAzureBlobAccount
+        #Diabled Jun1/22 - Not used #$e.VBOAzureServiceAccount = Get-VBOAzureServiceAccount
         #$e.VBOAzureSubscription = Get-VBOAzureSubscription
         #$e.VBOAzureBlobFolder = Get-VBOAzureBlobFolder
-        $e.VBOAmazonS3Account = Get-VBOAmazonS3Account
-        $e.VBOAmazonS3CompatibleAccount = Get-VBOAmazonS3CompatibleAccount
+        #Diabled Jun1/22 - Not used #$e.VBOAmazonS3Account = Get-VBOAmazonS3Account
+        #Diabled Jun1/22 - Not used #$e.VBOAmazonS3CompatibleAccount = Get-VBOAmazonS3CompatibleAccount
         #$e.VBOAmazonS3Bucket = Get-VBOAmazonS3Bucket
         #$e.VBOAmazonS3Folder = Get-VBOAmazonS3Folder
-        $e.VBOEncryptionKey = Get-VBOEncryptionKey
+        #Diabled Jun1/22 - Not used #$e.VBOEncryptionKey = Get-VBOEncryptionKey
         Write-MemoryUsageToLog -Message "Object & cloud collected"
 
         #jobs
@@ -422,7 +424,7 @@ function Get-VBOEnvironment {
         $e.VBOJob = Get-VBOJob
         $e.VBOBackupItem = $e.VBOJob | ForEach-Object { Get-VBOBackupItem -Job $_ | Select-Object @{n="Job";e={$_.Name}},*}
         $e.VBOBackupItem = $e.VBOJob | ForEach-Object { Get-VBOExcludedBackupItem -Job $_ | Select-Object @{n="Job";e={$_.Name}},*}
-        $e.VBOOrganizationRetentionExclusion = $e.VBOOrganization | ForEach-Object { Get-VBOOrganizationRetentionExclusion -Organization $_ | Select-Object @{n="Job";e={$_}},*}
+        #Diabled Jun1/22 - Not used #$e.VBOOrganizationRetentionExclusion = $e.VBOOrganization | ForEach-Object { Get-VBOOrganizationRetentionExclusion -Organization $_ | Select-Object @{n="Job";e={$_}},*}
         $e.VBOCopyJob = Get-VBOCopyJob
         Write-MemoryUsageToLog -Message "Jobs collected"
 
@@ -431,22 +433,23 @@ function Get-VBOEnvironment {
         #    | ForEach-Object { $e.VBORepository | Get-VBOEntityData -Type $_ -WarningAction SilentlyContinue} | select *,@{n="Repository",} #slow/long-running
         $e.VBOEntityData = $(
             foreach ($repo in $e.VBORepository) {
-                foreach ($entityType in @('Mailbox','OneDrive','Group','Site','Team')) { #[Veeam.Archiver.PowerShell.Cmdlets.DataManagement.VBOEntityDataType].GetEnumNames()
+                foreach ($entityType in @('Mailbox','OneDrive','Group','Site','Team','User')) { #[Veeam.Archiver.PowerShell.Cmdlets.DataManagement.VBOEntityDataType].GetEnumNames()
                     $repo | Get-VBOEntityData -Type $entityType -WarningAction SilentlyContinue | Select-Object *,@{n="Repository";e={@{Id=$repo.Id;Name=$repo.Name}}},@{n="Proxy";e={$proxy=($e.VBOProxy | Where-Object { $_.id -eq $repo.ProxyId}); @{Id=$proxy.Id;Name=$proxy.Hostname}}} #slow/long-running
                 }
             }
         )
+        #$e.VBOUserEntityData = Get-VBORepository | Get-VBOEntityData -Type User
         Write-MemoryUsageToLog -Message "Entities collected"
 
         #backups
         Write-Progress @progressSplat -PercentComplete ($progress++) -CurrentOperation "Collecting restore points..."
-        $e.VBORestorePoint = Get-VBORestorePoint
+        #Diabled Jun1/22 - Not used #$e.VBORestorePoint = Get-VBORestorePoint
         Write-MemoryUsageToLog -Message "RPs collected"
         #Global
         Lap "Collection: Global settings..."
         Write-Progress @progressSplat -PercentComplete ($progress++) -CurrentOperation "Collecting global settings..."
         $e.VBOLicense = Get-VBOLicense
-        $e.VBOLicensedUser = Get-VBOLicensedUser
+        #Diabled Jun1/22 - Not used #$e.VBOLicensedUser = Get-VBOLicensedUser
         $e.VBOFolderExclusions = Get-VBOFolderExclusions
         $e.VBOGlobalRetentionExclusion = Get-VBOGlobalRetentionExclusion
         $e.VBOEmailSettings = Get-VBOEmailSettings
@@ -468,18 +471,18 @@ function Get-VBOEnvironment {
         Lap "Collection: Job & session stats..."
         Write-Progress @progressSplat -PercentComplete ($progress++) -CurrentOperation "Collecting sessions & statistics..."
         $e.VBOJobSession = Get-VBOJobSession
-        $e.VBORestoreSession = Get-VBORestoreSession
+        #Diabled Jun1/22 - Not used #$e.VBORestoreSession = Get-VBORestoreSession
         $e.VBOUsageData = $e.VBORepository | ForEach-Object { Get-VBOUsageData -Repository $_ }
-        $e.VBODataRetrievalSession = Get-VBODataRetrievalSession
+        #Diabled Jun1/22 - Not used #$e.VBODataRetrievalSession = Get-VBODataRetrievalSession
         Write-MemoryUsageToLog -Message "Sessions & stats collected"
 
         #reports
         Lap "Collection: Generating Reports..."
         Write-Progress @progressSplat -PercentComplete ($progress++) -CurrentOperation "Generating reports..."
-        Get-ChildItem -Path ($global:SETTINGS.OutputPath + "\Veeam_*Report*.csv") | Remove-Item -Force
-        $e.VBOOrganization | ForEach-Object { Get-VBOMailboxProtectionReport -Organization $_ -Path $global:SETTINGS.OutputPath -Format CSV; Start-Sleep -Seconds 1.1 }
-        $e.VBOOrganization | ForEach-Object { Get-VBOStorageConsumptionReport -StartTime (Get-Date).AddDays(-$global:SETTINGS.ReportingIntervalDays) -EndTime (Get-Date) -Path $global:SETTINGS.OutputPath -Format CSV; Start-Sleep -Seconds 1.1 }
-        $e.VBOOrganization | ForEach-Object { Get-VBOLicenseOverviewReport -StartTime (Get-Date).AddDays(-$global:SETTINGS.ReportingIntervalDays) -EndTime (Get-Date) -Path $global:SETTINGS.OutputPath -Format CSV; Start-Sleep -Seconds 1.1 }
+        #Diabled Jun1/22 - No longer used #Get-ChildItem -Path ($global:SETTINGS.OutputPath + "\Veeam_*Report*.csv") | Remove-Item -Force
+        #Diabled Jun1/22 - No longer used #$e.VBOOrganization | ForEach-Object { Get-VBOMailboxProtectionReport -Organization $_ -Path $global:SETTINGS.OutputPath -Format CSV; Start-Sleep -Seconds 1.1 }
+        #Diabled Jun1/22 - No longer used #$e.VBOOrganization | ForEach-Object { Get-VBOStorageConsumptionReport -StartTime (Get-Date).AddDays(-$global:SETTINGS.ReportingIntervalDays) -EndTime (Get-Date) -Path $global:SETTINGS.OutputPath -Format CSV; Start-Sleep -Seconds 1.1 }
+        #Diabled Jun1/22 - No longer used #$e.VBOOrganization | ForEach-Object { Get-VBOLicenseOverviewReport -StartTime (Get-Date).AddDays(-$global:SETTINGS.ReportingIntervalDays) -EndTime (Get-Date) -Path $global:SETTINGS.OutputPath -Format CSV; Start-Sleep -Seconds 1.1 }
         Write-MemoryUsageToLog -Message "Reports generated"
 
         Lap "Collection: Parse VMC Log..."
@@ -488,8 +491,8 @@ function Get-VBOEnvironment {
         Write-MemoryUsageToLog -Message "VMC Log Parsed"
         Lap "Collection: Parse Job Logs..."
         Write-Progress @progressSplat -PercentComplete ($progress++) -CurrentOperation "Parsing Job Log..."
-        $e.PermissionsCheck = Import-PermissionsFromLogs -Jobs $e.VBOJob
-        Write-MemoryUsageToLog -Message "VMC Job Parsed"
+        #Diabled Jun1/22 - Needs improvement #$e.PermissionsCheck = Import-PermissionsFromLogs -Jobs $e.VBOJob
+        Write-MemoryUsageToLog -Message "Job Logs Parsed"
 
         Write-Progress @progressSplat -PercentComplete 100 -CurrentOperation "Done"
         Start-Sleep -Seconds 1
@@ -530,6 +533,8 @@ if (!(Test-Path $global:SETTINGS.OutputPath)) {
 }
 
 Lap "Ready to collect"
+$processor = (Get-ComputerInfo -Property CsProcessors).CsProcessors
+Write-LogFile -Message ("Processor: " + $processor[0].Name + " (" + $processor[0].Architecture +");  " + "Phy Cores: " + ($processor | Measure-Object -Sum NumberOfCores).Sum + ";  " + "Log. Cores: " + ($processor | Measure-Object -Sum NumberOfLogicalProcessors).Sum + ";  " + "Clock Speed: " + ($processor | Measure-Object -Average CurrentClockSpeed).Average + "/" + ($processor | Measure-Object -Average MaxClockSpeed).Average)
 Write-MemoryUsageToLog -Message "Start"
 
 if (!$global:SETTINGS.SkipCollect) { 
@@ -558,7 +563,7 @@ if (!$global:SETTINGS.SkipCollect) {
 
 Write-Host "VB365 Environment stats collected."
 Write-LogFile "VB365 Environment stats collected."
-Lap "Time"
+Lap "Collection finished. Building maps next."
 
 
 ####### FUNCTIONS THAT SUPPORT MAPPING PROCESS ######
@@ -659,6 +664,7 @@ function 95P {
     # This example would set the Name column to either the baseobject's "Hostname" property or to the $othervariable's "othername" property depending on whether X is true.
     # These expressions can be as advanced as you like, as long as they evaluate back to a single result
 
+Lap "Done Mapping. Exporting next."
 Write-MemoryUsageToLog -Message "Start Mapping"
 $progress=0
 $progressSplat = @{Id=2; Activity="Building maps..."}
@@ -669,10 +675,10 @@ Write-Progress @progressSplat -PercentComplete ($progress++) -CurrentOperation "
 $map.Controller = $Global:VBOEnvironment.VMCLog.HostDetails | mde @(
     'VB365 Version=>$Global:VBOEnvironment.VMCLog.ProductDetails.Version'
     'OS Version=>OSVersion'
-    'RAM=>($.RAMTotalSize/1GB).ToString("0.0 GB")'
+    'RAM=>($.RAMTotalSize/1GB).ToString("#,##0 GB")'
     'CPUs=>CPUCount'
     'Proxies Managed=>$VBOEnvironment.VMCLog.InfraCounts.BackupProxiesCount'
-    'Repos Managed=>[int]$VBOEnvironment.VMCLog.InfraCounts.BackupRepositoriesCount + [int]$VBOEnvironment.VMCLog.InfraCounts.ObjStgCount'
+    'Repos Managed=>[int]$VBOEnvironment.VMCLog.InfraCounts.BackupRepositoriesCount ' #just count true repo definitions -- old: + [int]$VBOEnvironment.VMCLog.InfraCounts.ObjStgCount'
     'Orgs Managed=>$VBOEnvironment.VMCLog.InfraCounts.OrganizationsCount'
     'Jobs Managed=>$VBOEnvironment.VMCLog.InfraCounts.BackupJobsCount'
     'PowerShell Installed?=>IsPowerShellServiceInstalled'
@@ -691,8 +697,8 @@ $map.ControllerDrives = Get-PhysicalDisk | mde @(
     'Media Type=>MediaType'
     'Manufacturer'
     'Model'
-    'Size'
-    'Allocated Size=>AllocatedSize'
+    'Size=>($.Size/1TB).ToString("#,##0.00") + " TB"'
+    'Allocated Size=>($.AllocatedSize/1TB).ToString("#,##0.00") + " TB"'
     'Operational Status=>OperationalStatus'
     'Health Status=>HealthStatus'
     'Boot Drive=>(get-disk | ? { $_.Number -eq $.DeviceId }).IsBoot'
@@ -700,13 +706,13 @@ $map.ControllerDrives = Get-PhysicalDisk | mde @(
 Write-Progress @progressSplat -PercentComplete ($progress++) -CurrentOperation "Global...";
 $map.Global = $Global:VBOEnvironment.VBOLicense | mde @(
     'License Status=>Status'
-    'License Expiry=>ExpirationDate'
+    'License Expiry=>$.ExpirationDate.ToShortDateString()'
     'License Type=>Type'
     'Licensed To=>LicensedTo'
     'License Contact=>ContactPerson'
     'Licensed For=>TotalNumber'
     'Licenses Used=>UsedNumber'
-    'Support Expiry=>SupportExpirationDate'
+    'Support Expiry=>$.SupportExpirationDate.ToShortDateString()'
     'Global Folder Exclusions=>Join(($Global:VBOEnvironment.VBOFolderExclusions.psobject.Properties | ? { $_.Value -eq $true}).Name)'
     'Global Ret. Exclusions=>Join(($Global:VBOEnvironment.VBOGlobalRetentionExclusion.psobject.Properties | ? { $_.Value -eq $true}).Name)'
     'Log Retention=>if($Global:VBOEnvironment.VBOHistorySettings.KeepAllSessions) { "Keep All" } else {$Global:VBOEnvironment.VBOHistorySettings.KeepOnlyLastXWeeks }'
@@ -720,28 +726,28 @@ $map.Security = $null | mde @(
     'Internet proxy?=>$v=$Global:VBOEnvironment.VBOInternetProxySettings; if($v.UseInternetProxy) { $v.Host+":"+$v.Port } else { $false}'
     'Server Cert=>$Global:VBOEnvironment.VBOSecuritySettings.CertificateFriendlyName'
     'Server Cert PK Exportable?=>Test-CertPKExportable($Global:VBOEnvironment.VBOSecuritySettings.CertificateThumbprint)'
-    'Server Cert Expires=>$Global:VBOEnvironment.VBOSecuritySettings.CertificateExpirationDate'
+    'Server Cert Expires=>$expiryDate = $Global:VBOEnvironment.VBOSecuritySettings.CertificateExpirationDate; if ($expiryDate -ne [datetime]::MinValue) { $expiryDate.ToShortDateString() }'
     'Server Cert Self-Signed?=>$Global:VBOEnvironment.VBOSecuritySettings.CertificateIssuedTo -eq $Global:VBOEnvironment.VBOSecuritySettings.CertificateIssuedBy'
     'API Enabled?=>$Global:VBOEnvironment.VBORestAPISettings.IsServiceEnabled'
     'API Port=>$Global:VBOEnvironment.VBORestAPISettings.HTTPSPort'
     'API Cert=>$Global:VBOEnvironment.VBORestAPISettings.CertificateFriendlyName'
     'API Cert PK Exportable?=>Test-CertPKExportable($Global:VBOEnvironment.VBORestAPISettings.CertificateThumbprint)'
-    'API Cert Expires=>$Global:VBOEnvironment.VBORestAPISettings.CertificateExpirationDate'
+    'API Cert Expires=>$expiryDate = $Global:VBOEnvironment.VBORestAPISettings.CertificateExpirationDate; if ($expiryDate -ne [datetime]::MinValue) { $expiryDate.ToShortDateString() }'
     'API Cert Self-Signed?=>$Global:VBOEnvironment.VBORestAPISettings.CertificateIssuedTo -eq $global:VBOEnvironment.VBORestAPISettings.CertificateIssuedBy'
     'Tenant Auth Enabled?=>$Global:VBOEnvironment.VBOTenantAuthenticationSettings.AuthenticationEnabled'
     'Tenant Auth Cert=>$Global:VBOEnvironment.VBOTenantAuthenticationSettings.CertificateFriendlyName'
     'Tenant Auth PK Exportable?=>Test-CertPKExportable($Global:VBOEnvironment.VBOTenantAuthenticationSettings.CertificateThumbprint)'
-    'Tenant Auth Cert Expires=>$Global:VBOEnvironment.VBOTenantAuthenticationSettings.CertificateExpirationDate'
+    'Tenant Auth Cert Expires=>$expiryDate = $Global:VBOEnvironment.VBOTenantAuthenticationSettings.CertificateExpirationDate; if ($expiryDate -ne [datetime]::MinValue) { $expiryDate.ToShortDateString() }'
     'Tenant Auth Cert Self-Signed?=>$Global:VBOEnvironment.VBOTenantAuthenticationSettings.CertificateIssuedTo -eq $global:VBOEnvironment.VBOTenantAuthenticationSettings.CertificateIssuedBy'
     'Restore Portal Enabled?=>$Global:VBOEnvironment.VBORestorePortalSettings.IsServiceEnabled'
     'Restore Portal Cert=>$Global:VBOEnvironment.VBORestorePortalSettings.CertificateFriendlyName'
     'Restore Portal Cert PK Exportable?=>Test-CertPKExportable($Global:VBOEnvironment.VBORestorePortalSettings.CertificateThumbprint)'
-    'Restore Portal Cert Expires=>$Global:VBOEnvironment.VBORestorePortalSettings.CertificateExpirationDate'
+    'Restore Portal Cert Expires=>$expiryDate = $Global:VBOEnvironment.VBORestorePortalSettings.CertificateExpirationDate; if ($expiryDate -ne [datetime]::MinValue) { $expiryDate.ToShortDateString() }'
     'Restore Portal Cert Self-Signed?=>$Global:VBOEnvironment.VBORestorePortalSettings.CertificateIssuedTo -eq $global:VBOEnvironment.VBORestorePortalSettings.CertificateIssuedBy'
     'Operator Auth Enabled?=>$Global:VBOEnvironment.VBOOperatorAuthenticationSettings.AuthenticationEnabled'
     'Operator Auth Cert=>$Global:VBOEnvironment.VBOOperatorAuthenticationSettings.CertificateFriendlyName'
     'Operator Auth Cert PK Exportable?=>Test-CertPKExportable($Global:VBOEnvironment.VBOOperatorAuthenticationSettings.CertificateThumbprint)'
-    'Operator Auth Cert Expires=>$Global:VBOEnvironment.VBOOperatorAuthenticationSettings.CertificateExpirationDate'
+    'Operator Auth Cert Expires=>$expiryDate = $Global:VBOEnvironment.VBOOperatorAuthenticationSettings.CertificateExpirationDate; if ($expiryDate -ne [datetime]::MinValue) { $expiryDate.ToShortDateString() }'
     'Operator Auth Cert Self-Signed?=>$Global:VBOEnvironment.VBOOperatorAuthenticationSettings.CertificateIssuedTo -eq $global:VBOEnvironment.VBOOperatorAuthenticationSettings.CertificateIssuedBy'
 )
 Write-Progress @progressSplat -PercentComplete ($progress++) -CurrentOperation "RBACRoles...";
@@ -753,13 +759,13 @@ $map.RBACRoles = $Global:VBOEnvironment.VBORbacRole | mde @(
     'Selected Items=>Join($.SelectedItems.DisplayName)'
     'Excluded Items=>Join($.ExcludedItems.DisplayName)'
 )
-Write-Progress @progressSplat -PercentComplete ($progress++) -CurrentOperation "Permissions Check...";
+<#Write-Progress @progressSplat -PercentComplete ($progress++) -CurrentOperation "Permissions Check...";
 $map.Permissions = $Global:VBOEnvironment.PermissionsCheck.Values | mde @(
     'Type'
     'Organization'
     'API'
     'Permission'
-)
+)#>
 Write-Progress @progressSplat -PercentComplete ($progress++) -CurrentOperation "Proxies...";
 $map.Proxies = $Global:VBOEnvironment.VBOProxy | mde @(
     'Name=>Hostname'
@@ -772,7 +778,7 @@ $map.Proxies = $Global:VBOEnvironment.VBOProxy | mde @(
     'Internet Proxy=>InternetProxy.UseInternetProxy'
     'Objects Managed=>(($Global:VBOEnvironment.VBOJobSession | ? { $_.JobId -in ($Global:VBOEnvironment.VBOJob | ? { $.Id -eq $_.Repository.ProxyId }).Id} | group JobId | % { $_.Group | Measure-Object -Property Progress -Average} ).Average | measure-object -Sum ).Sum.ToString("0")'
     'OS Version=>($Global:VBOEnvironment.VMCLog.ProxyDetails | ? { $.Id -eq $_.ProxyID }).OSVersion'
-    'RAM=>(($Global:VBOEnvironment.VMCLog.ProxyDetails | ? { $.Id -eq $_.ProxyID }).RAMTotalSize/1GB).ToString("0.0 GB")'
+    'RAM=>(($Global:VBOEnvironment.VMCLog.ProxyDetails | ? { $.Id -eq $_.ProxyID }).RAMTotalSize/1GB).ToString("###0 GB")'
     'CPUs=>($Global:VBOEnvironment.VMCLog.ProxyDetails | ? { $.Id -eq $_.ProxyID }).CPUCount'
 )
 Write-Progress @progressSplat -PercentComplete ($progress++) -CurrentOperation "Repositories...";
@@ -786,12 +792,12 @@ $map.LocalRepositories = $Global:VBOEnvironment.VBORepository | mde @(
     'Encryption?=>EnableObjectStorageEncryption'
     'Out of Sync?=>IsOutOfSync'
     'Outdated?=>IsOutdated'
-    'Capacity=>($.Capacity/1TB).ToString("0.00") + " TB"'
-    'Free=>($.FreeSpace/1TB).ToString("0.00") + " TB"'
-    'Data Stored=>$repoUsage = ($Global:VBOEnvironment.VBOUsageData | ? { $_.RepositoryId -eq $.Id}); $GBUsed = if (($repoUsage.ObjectStorageUsedSpace | measure -Sum).Sum/1GB -gt 0) {($repoUsage.ObjectStorageUsedSpace | measure -Sum).Sum/1GB} else {($repoUsage.UsedSpace | measure -Sum).Sum/1GB}; $GBUsed.ToString("0.00 GB")'
-    'Cache Space Used=>((($Global:VBOEnvironment.VBOUsageData | ? { $_.RepositoryId -eq $.Id}).LocalCacheUsedSpace | measure -Sum).Sum/1GB).ToString("0.00 GB")'
-    #'Local Space Used=>((($Global:VBOEnvironment.VBOUsageData | ? { $_.RepositoryId -eq $.Id}).UsedSpace | measure -Sum).Sum/1GB).ToString("0.00 GB")'
-    #'Object Space Used=>((($Global:VBOEnvironment.VBOUsageData | ? { $_.RepositoryId -eq $.Id}).ObjectStorageUsedSpace | measure -Sum).Sum/1GB).ToString("0.00 GB")'
+    'Capacity=>($.Capacity/1TB).ToString("#,##0.000 TB")'
+    'Free=>($.FreeSpace/1TB).ToString("#,##0.000 TB")'
+    'Data Stored=>$repoUsage = ($Global:VBOEnvironment.VBOUsageData | ? { $_.RepositoryId -eq $.Id}); $SpaceUsed = if (($repoUsage.ObjectStorageUsedSpace | measure -Sum).Sum/1TB -gt 0) {($repoUsage.ObjectStorageUsedSpace | measure -Sum).Sum/1TB} else {($repoUsage.UsedSpace | measure -Sum).Sum/1TB}; $SpaceUsed.ToString("#,##0.000 TB")'
+    'Cache Space Used=>((($Global:VBOEnvironment.VBOUsageData | ? { $_.RepositoryId -eq $.Id}).LocalCacheUsedSpace | measure -Sum).Sum/1TB).ToString("#,##0.000 TB")'
+    'Local Space Used=>((($Global:VBOEnvironment.VBOUsageData | ? { $_.RepositoryId -eq $.Id}).UsedSpace | measure -Sum).Sum/1TB).ToString("#,##0.000 TB")'
+    'Object Space Used=>((($Global:VBOEnvironment.VBOUsageData | ? { $_.RepositoryId -eq $.Id}).ObjectStorageUsedSpace | measure -Sum).Sum/1TB).ToString("#,##0.000 TB")'
     'Daily Change Rate=>$changesByDay = (($VBOEnvironment.VBOJobSession | ? {($VBOEnvironment.VBOJob | ? { $_.Repository.Id -eq $.Id }).Id -eq $_.JobId })| select @{n="CreationDate"; e={$_.CreationTime.Date}},* | sort CreationDate -Descending | group CreationDate | % { $_.Group.Statistics.TransferredData | ConvertData -To "GB" -Format "0.000000" | measure -Sum }).Sum;
         #$weeklyChange = ($changesByDay | select -first 7 | measure -Sum).Sum;
         $dailyChangeAvg = ($changesByDay | measure -Average).Average
@@ -801,7 +807,7 @@ $map.LocalRepositories = $Global:VBOEnvironment.VBORepository | mde @(
         $GBUsed = if (($repoUsage.ObjectStorageUsedSpace | measure -Sum).Sum/1GB -gt 0) {($repoUsage.ObjectStorageUsedSpace | measure -Sum).Sum/1GB} else {($repoUsage.UsedSpace | measure -Sum).Sum/1GB}
 
         $DCR = $dailyChangeAvg/$GBUsed
-        $DCR.ToString("0.0%")'
+        $DCR.ToString("##0.000%")'
     'Retention=>($.RetentionPeriod.ToString() -replace "(Years?)(.+)","`$2 `$1" )+", "+$.RetentionType+", Applied "+$.RetentionFrequencyType'
 )
 Write-Progress @progressSplat -PercentComplete ($progress++) -CurrentOperation "ObjectRepositories...";
@@ -812,22 +818,51 @@ $map.ObjectRepositories = $Global:VBOEnvironment.VBOObjectStorageRepository | md
     'Type=>if($.IsLongTerm) {"Archive"} else {"Primary"}'
     'Bucket/Container=>if($null -ne $.Folder.Container) { $.Folder.Container } else { $.Folder.Bucket }'
     'Path=>$.Folder.Path'
-    'Size Limit=>if($.EnableSizeLimit) { ($.SizeLimit/1024).ToString() + " TB" } else { "Unlimited" }'
-    'Used Space=>($.UsedSpace/1TB).ToString("0.00") + " TB"'
-    'Free Space=>($.FreeSpace/1TB).ToString("0.00") + " TB"'
+    'Size Limit=>if($.EnableSizeLimit) { ($.SizeLimit/1024).ToString("#,##0.00 TB")} else { "Unlimited" }'
+    'Used Space=>($.UsedSpace/1TB).ToString("#,##0.00 TB")'
+    'Free Space=>($.FreeSpace/1TB).ToString("#,##0.00 TB")'
+    'Bound Repo=>($Global:VBOEnvironment.VBORepository | Where-Object {$.id -in $_.ObjectStorageRepository.Id }).Name'
 )
 Write-Progress @progressSplat -PercentComplete ($progress++) -CurrentOperation "Organizations...";
+
+<#$map.Organizations2 = $Global:VBOEnvironment.VBOOrganization | ForEach-Object {
+    $exoSettings = $_ | mde @(
+        'Name'
+        'OfficeName'
+        'Type'
+        'Settings=>Office365ExchangeConnectionSettings'
+        'AppCert=>$v = (Get-ChildItem -Recurse cert:\* | Where-Object { $_.Thumbprint -eq $.Office365ExchangeConnectionSettings.ApplicationCertificateThumbprint } | Select-Object -first 1)'
+
+    )
+}#>
+<#$Global:VBOEnvironment.VBOOrganization | ForEach-Object {
+    $certDetails = [pscustomobject]@{}
+    $certDetails | Add-Member -MemberType NoteProperty -Name "OrgName" -Value $_.Name
+    $certDetails | Add-Member -MemberType NoteProperty -Name "ExchangeAppCert" -Value (Get-ChildItem -Recurse cert:\* | Where-Object { $_.Thumbprint -eq $_.Office365ExchangeConnectionSettings.ApplicationCertificateThumbprint } | Select-Object -first 1)
+    $certDetails | Add-Member -MemberType NoteProperty -Name "SharePointAppCert" -Value (Get-ChildItem -Recurse cert:\* | Where-Object { $_.Thumbprint -eq $_.Office365SharePointConnectionSettings.ApplicationCertificateThumbprint } | Select-Object -first 1)
+    $i=0
+    foreach ($backupApp in $_.BackupApplications) {
+        $certDetails | Add-Member -MemberType NoteProperty -Name ("AuxApp"+($i)+"Id") -Value $backupApp.ApplicationId
+        $certDetails | Add-Member -MemberType NoteProperty -Name ("AuxApp"+(++$i)+"Cert") -Value (Get-ChildItem -Recurse cert:\* | Where-Object { $_.Thumbprint -eq $backupApp.ApplicationCertificateThumbprint } | Select-Object -first 1)
+    }
+    $certDetails
+} | mde @(
+    "Organization Name=>OrgName"
+    "Cert=>$.Value.FriendlyName"
+    "Expires=>$.Value.NotAfter"
+    "Self-Signed=>($.Value.Subject -eq $.Value.Issuer)"
+)#> ## This is still in progress.
 $map.Organizations = $Global:VBOEnvironment.VBOOrganization | mde @(
     'Friendly Name=>Name'
     'Real Name=>OfficeName'
     'Type'
     'Protected Apps=>Join($.BackupParts -replace "Office365","")'
-    'EXO Settings=>$.Office365ExchangeConnectionSettings.AuthenticationType.ToString() + " (App: " + ($VBOEnvironment.VBOApplication | ? { $.Office365ExchangeConnectionSettings.ApplicationId -eq $_.Id}).DisplayName + " / User: " + $.Office365ExchangeConnectionSettings.ImpersonationAccountName +")"'
+    'EXO Settings=>$.Office365ExchangeConnectionSettings.AuthenticationType.ToString() + " (App: " + ($VBOEnvironment.VBOApplication | ? { $.Office365ExchangeConnectionSettings.ApplicationId -eq $_.Id}).DisplayName + " / User: " + ($.Office365ExchangeConnectionSettings.ImpersonationAccountName,$.Office365ExchangeConnectionSettings.UserName) +")"'
     'EXO App Cert=>$v = Get-ChildItem -Recurse cert:\* | Where-Object {$_.Thumbprint -eq $.Office365ExchangeConnectionSettings.ApplicationCertificateThumbprint}; $v.FriendlyName + " (Self-signed?: " + ($v.Subject -eq $v.Issuer) + ")"'
-    'SPO Settings=>$.Office365SharePointConnectionSettings.AuthenticationType.ToString() + " (App: " + ($VBOEnvironment.VBOApplication | ? { $.Office365SharePointConnectionSettings.ApplicationId -eq $_.Id}).DisplayName + " / User: " + $.Office365SharePointConnectionSettings.ImpersonationAccountName +")"'
+    'SPO Settings=>$.Office365SharePointConnectionSettings.AuthenticationType.ToString() + " (App: " + ($VBOEnvironment.VBOApplication | ? { $.Office365SharePointConnectionSettings.ApplicationId -eq $_.Id}).DisplayName + " / User: " + ($.Office365SharePointConnectionSettings.ImpersonationAccountName,$.Office365SharePointConnectionSettings.UserName) +")"'
     'SPO App Cert=>$v = Get-ChildItem -Recurse cert:\* | Where-Object {$_.Thumbprint -eq $.Office365SharePointConnectionSettings.ApplicationCertificateThumbprint}; $v.FriendlyName + " (Self-signed?: " + ($v.Subject -eq $v.Issuer) + ")"'
-    'On-Prem Exch Settings=>("Server: " + $.OnPremExchangeConnectionSettings.ServerName + " (" + $.OnPremExchangeConnectionSettings.UserName + ")")'
-    'On-Prem SP Settings=>("Server: " + $.OnPremSharePointConnectionSettings.ServerName + " (" + $.OnPremSharePointConnectionSettings.UserName + ")")'
+    'On-Prem Exch Settings=>if ($null -ne $.OnPremExchangeConnectionSettings) { ("Server: " + $.OnPremExchangeConnectionSettings.ServerName + " (" + $.OnPremExchangeConnectionSettings.UserName + ")") }'
+    'On-Prem SP Settings=>if ($null -ne $.OnPremSharePointConnectionSettings) { ("Server: " + $.OnPremSharePointConnectionSettings.ServerName + " (" + $.OnPremSharePointConnectionSettings.UserName + ")") }'
     'Licensed Users=>$.LicensingOptions.LicensedUsersCount'
     'Grant SC Admin=>GrantAccessToSiteCollections'
     'Aux Accounts/Apps=>[math]::Max($.BackupAccounts.Count,$.BackupApplications.Count)'
@@ -839,8 +874,9 @@ $map.Jobs = $Global:VBOEnvironment.VBOJob + $Global:VBOEnvironment.VBOCopyJob | 
     'Description'
     'Job Type=>if ($null -eq $.BackupJob) { "Backup" } else { "Backup Copy" }'
     'Scope Type=>JobBackupType'
-    'Selected Items=>$.SelectedItems.Count'
-    'Excluded Items=>$.ExcludedItems.Count'
+    'Processing Options=>@(if ($.SelectedItems.Mailbox) {"Mailbox"}; if ($.SelectedItems.ArchiveMailbox) {"Archive"}; if ($.SelectedItems.OneDrive) {"OneDrive"}; if ($.SelectedItems.Site -or "Site" -in $.SelectedItems.Type) {"Site"}; if ($.SelectedItems.Teams -or "Team" -in $.SelectedItems.Type) {"Teams"}; if ($.SelectedItems.GroupMailbox) {"Group Mailbox"}; if ($.SelectedItems.GroupSite) {"Group Site"}) -join ", "'
+    'Selected Items=>$objectCountStr = (($Global:VBOEnvironment.VBOJobSession | Where-Object { $_.JobId -eq $.Id } | Sort-Object CreationTime -Descending) | Select-Object -First 1).Log.Title -match "Found (\d+) objects"; [Regex]::Match($objectCountStr,"(?<=Found )(\d+)(?= objects)")' #$.SelectedItems.Count
+    'Excluded Items=>$objectCountStr = (($Global:VBOEnvironment.VBOJobSession | Where-Object { $_.JobId -eq $.Id } | Sort-Object CreationTime -Descending) | Select-Object -First 1).Log.Title -match "Found (\d+) excluded objects"; [Regex]::Match($objectCountStr,"(?<=Found )(\d+)(?= excluded objects)")' # $.ExcludedItems.Count'
     'Repository'
     'Bound Proxy=>($Global:VBOEnvironment.VBOProxy | ? { $_.id -eq $.Repository.ProxyId }).Hostname'
     'Enabled?=>IsEnabled'
@@ -858,10 +894,10 @@ $map.Jobs = $Global:VBOEnvironment.VBOJob + $Global:VBOEnvironment.VBOCopyJob | 
 Write-Progress @progressSplat -PercentComplete ($progress++) -CurrentOperation "JobStats...";
 $map.JobStats = $Global:VBOEnvironment.VBOJobSession | Where-Object { $_.JobName -in $Global:VBOEnvironment.VBOJob.Name} | Group-Object JobName | mde @(
     'Name'
-    'Average Duration (min)=>($.Group | select *,@{n="Duration";e={($_.EndTime-$_.CreationTime).TotalMinutes}} | ? { $_.Duration -gt 0 } | measure Duration -Average).Average.ToString("0.00")'
-    'Max Duration (min)=>($.Group | select *,@{n="Duration";e={($_.EndTime-$_.CreationTime).TotalMinutes}} | ? { $_.Duration -gt 0 } | measure Duration -Maximum).Maximum.ToString("0.00")'
-    'Average Data Transferred=>(($.Group.Statistics.TransferredData | ConvertData -To "GB" -Format "0.0000" | measure -Average).Average.ToString("0.00 GB"))'
-    'Max Data Transferred=>(($.Group.Statistics.TransferredData | ConvertData -To "GB" -Format "0.0000" | measure -Maximum).Maximum.ToString("0.00 GB") )'
+    'Average Duration (min)=>$totalMin = ($.Group | select *,@{n="Duration";e={($_.EndTime-$_.CreationTime).TotalMinutes}} | ? { $_.Duration -gt 0 } | measure Duration -Average).Average; [DateTime]::MinValue.AddMinutes($totalMin).ToString("HH\:mm\:ss")'
+    'Max Duration (min)=>$totalMin = ($.Group | select *,@{n="Duration";e={($_.EndTime-$_.CreationTime).TotalMinutes}} | ? { $_.Duration -gt 0 } | measure Duration -Maximum).Maximum; [DateTime]::MinValue.AddMinutes($totalMin).ToString("HH\:mm\:ss")'
+    'Average Data Transferred=>(($.Group.Statistics.TransferredData | ConvertData -To "GB" -Format "0.0000" | measure -Average).Average.ToString("#,##0.000 GB"))'
+    'Max Data Transferred=>(($.Group.Statistics.TransferredData | ConvertData -To "GB" -Format "0.0000" | measure -Maximum).Maximum.ToString("#,##0.000 GB") )'
     'Average Objects (#)=>($.Group.Progress | measure -Average).Average.ToString("0")'
     'Max Objects (#)=>($.Group.Progress | measure -Maximum).Maximum.ToString("0")'
     'Average Items (#)=>($.Group.Statistics | measure ProcessedObjects -Average).Average.ToString("0")'
@@ -875,8 +911,8 @@ $map.JobStats = $Global:VBOEnvironment.VBOJobSession | Where-Object { $_.JobName
     #'Average Write Rate=>(($.Group.Statistics.WriteRate | ConvertData -To "MB" -Format "0.0000" | measure -Average).Average.ToString("0.000 MB/s"))'
     #'Max Write Rate=>(($.Group.Statistics.WriteRate | ConvertData -To "MB" -Format "0.0000" | measure -Maximum).Maximum.ToString("0.000 MB/s") )'
     'Typical Bottleneck=>($.Group.Statistics.Bottleneck | ? { $_ -ne "NA" } | group | sort Count -Descending | select -first 1).Name'
-    'Job Avg Throughput=>(($.Group.Statistics.TransferredData | ConvertData -To "MB" -Format "0.0000" | measure -Sum).Sum / ($.Group | select @{n="Duration";e={ $(if ($_.Status -eq "Running") { (get-date)-$_.CreationTime } else { $_.EndTime-$_.CreationTime } ).TotalSeconds}} | ? { $_.Duration -gt 0 } | measure Duration -Sum).Sum).ToString("0.000 MB/s")'
-    'Job Avg Processing Rate=>(($.Group.Statistics | measure ProcessedObjects -Sum).Sum / ($.Group | select @{n="Duration";e={ $(if ($_.Status -eq "Running") { (get-date)-$_.CreationTime } else { $_.EndTime-$_.CreationTime } ).TotalSeconds}} | ? { $_.Duration -gt 0 } | measure Duration -Sum).Sum).ToString("0.000 items/s")'
+    'Job Avg Throughput=>(($.Group.Statistics.TransferredData | ConvertData -To "MB" -Format "0.0000" | measure -Sum).Sum / ($.Group | select @{n="Duration";e={ $(if ($_.Status -eq "Running") { (get-date)-$_.CreationTime } else { $_.EndTime-$_.CreationTime } ).TotalSeconds}} | ? { $_.Duration -gt 0 } | measure Duration -Sum).Sum).ToString("#,##0.000 MB/s")'
+    'Job Avg Processing Rate=>(($.Group.Statistics | measure ProcessedObjects -Sum).Sum / ($.Group | select @{n="Duration";e={ $(if ($_.Status -eq "Running") { (get-date)-$_.CreationTime } else { $_.EndTime-$_.CreationTime } ).TotalSeconds}} | ? { $_.Duration -gt 0 } | measure Duration -Sum).Sum).ToString("#,##0.000 items/s")'
 )
 Write-Progress @progressSplat -PercentComplete ($progress++) -CurrentOperation "JobSessions...";
 $map.JobSessions = $Global:VBOEnvironment.VBOJobSession | Where-Object { $_.JobName -in $Global:VBOEnvironment.VBOJob.Name -and $_.CreationTime -gt (Get-Date).AddDays(-$global:SETTINGS.ReportingIntervalDays)} | Sort-Object @{Expression={$_.JobName}; Descending=$false },@{Expression={$_.CreationTime}; Descending=$true } | mde @(
@@ -884,16 +920,34 @@ $map.JobSessions = $Global:VBOEnvironment.VBOJobSession | Where-Object { $_.JobN
     'Status'
     'Start Time=>$.CreationTime.ToString("yyyy/MM/dd HH:mm:ss")'
     'End Time=>$.EndTime.ToString("yyyy/MM/dd HH:mm:ss")'
-    'Duration=>$sessWithDuration =  $. | select *,@{n="Duration";e={ $(if ($_.Status -eq "Running") { (get-date)-$_.CreationTime } else { $_.EndTime-$_.CreationTime } ).TotalMinutes}}; $sessWithDuration.Duration.ToString("0.0 min") + " (" + $sessWithDuration.Status.ToString() + ")"'
+    'Duration=>$sessWithDuration =  $. | select *,@{n="Duration";e={ $(if ($_.Status -eq "Running") { (get-date)-$_.CreationTime } else { $_.EndTime-$_.CreationTime } )}}; $sessWithDuration.Duration.ToString("hh\:mm\:ss")'
     'Log=>Join -Array $($.Log.Title | ? { !$_.Contains("[Success]") }) -Delimiter "`r`n"'
 )
 Write-Progress @progressSplat -PercentComplete ($progress++) -CurrentOperation "Protection Status...";
-$map.ProtectionStatus = (Get-Item -Path ($global:SETTINGS.OutputPath + "\Veeam_MailboxProtectionReport*.csv")).FullName | Import-Csv | Where-Object { $_."Protection Status" -eq "Unprotected" -or $_."Last Backup Date" -lt (Get-date).AddDays(-$global:SETTINGS.ReportingIntervalDays)} | Sort-Object "Protection Status",User -Descending | mde @(
+<#$map.ProtectionStatus = (Get-Item -Path ($global:SETTINGS.OutputPath + "\Veeam_MailboxProtectionReport*.csv")).FullName | Import-Csv | Where-Object { $_."Protection Status" -eq "Unprotected" -or $_."Last Backup Date" -lt (Get-date).AddDays(-$global:SETTINGS.ReportingIntervalDays)} | Sort-Object "Protection Status",User -Descending | mde @(
     'User=>Mailbox'
     'E-mail=>$."E-mail"'
     'Organization'
     'Protection Status=> if ($."Protection Status" -eq "Protected") { "Stale Backup" } else { "Unprotected" }'
     'Last Backup Date=>$."Last Backup Date"'
+)#>
+$map.ProtectionStatus2 = $Global:VBOEnvironment.VBOOrganizationUsers | Select-Object -ExcludeProperty "IsBackedup" | mde @(
+    'Organization=>($Global:VBOEnvironment.VBOOrganization | ? { $_.Id -eq $.OrganizationId }).Name'
+    #'Office ID=>OfficeId'
+    #'On-Prem ID=>OnPremisesId'
+    'Display Name=>DisplayName'
+    'Username=>UserName'
+    'Type' # user/sharedmailbox/etc
+    'Location=>LocationType'
+    'Has Backup=>!!($Global:VBOEnvironment.VBOEntityData | ? { $_.Organization.DisplayName -eq ($Global:VBOEnvironment.VBOOrganization | ? { $_.Id -eq $.OrganizationId }).Name -and $_.Email -eq $.UserName -and ($_.IsMailboxBackedUp -or $_.IsArchiveBackedUp -or $_.IsOnedriveBackedUp -or $_.IsPersonalSiteBackedUp) })'
+    'Mail Backed Up=>!!($Global:VBOEnvironment.VBOEntityData | ? { $_.Organization.DisplayName -eq ($Global:VBOEnvironment.VBOOrganization | ? { $_.Id -eq $.OrganizationId }).Name -and $_.Email -eq $.UserName -and $_.IsMailboxBackedUp })'
+    'Mail Backup Date=>($Global:VBOEnvironment.VBOEntityData | ? { $_.Organization.DisplayName -eq ($Global:VBOEnvironment.VBOOrganization | ? { $_.Id -eq $.OrganizationId }).Name -and $_.Email -eq $.UserName}).MailboxBackedUpTime.DateTime'
+    'Archive Backed Up=>!!($Global:VBOEnvironment.VBOEntityData | ? { $_.Organization.DisplayName -eq ($Global:VBOEnvironment.VBOOrganization | ? { $_.Id -eq $.OrganizationId }).Name -and $_.Email -eq $.UserName -and $_.IsArchiveBackedUp })'
+    'Archive Backup Date=>($Global:VBOEnvironment.VBOEntityData | ? { $_.Organization.DisplayName -eq ($Global:VBOEnvironment.VBOOrganization | ? { $_.Id -eq $.OrganizationId }).Name -and $_.Email -eq $.UserName}).ArchiveBackedUpTime.DateTime'
+    'Onedrive Backed Up=>!!($Global:VBOEnvironment.VBOEntityData | ? { $_.Organization.DisplayName -eq ($Global:VBOEnvironment.VBOOrganization | ? { $_.Id -eq $.OrganizationId }).Name -and $_.Email -eq $.UserName -and $_.IsOnedriveBackedUp })'
+    'Onedrive Backup Date=>($Global:VBOEnvironment.VBOEntityData | ? { $_.Organization.DisplayName -eq ($Global:VBOEnvironment.VBOOrganization | ? { $_.Id -eq $.OrganizationId }).Name -and $_.Email -eq $.UserName}).OneDriveBackedUpTime.DateTime'
+    'Site Backed Up=>!!($Global:VBOEnvironment.VBOEntityData | ? { $_.Organization.DisplayName -eq ($Global:VBOEnvironment.VBOOrganization | ? { $_.Id -eq $.OrganizationId }).Name -and $_.Email -eq $.UserName -and $_.IsPersonalSiteBackedUp })'
+    'Site Backup Date=>($Global:VBOEnvironment.VBOEntityData | ? { $_.Organization.DisplayName -eq ($Global:VBOEnvironment.VBOOrganization | ? { $_.Id -eq $.OrganizationId }).Name -and $_.Email -eq $.UserName}).PersonalSiteBackedUpTime.DateTime'
 )
 Write-Progress @progressSplat -PercentComplete ($progress++) -CurrentOperation "Done." -Completed
 
@@ -901,7 +955,8 @@ Write-Progress @progressSplat -PercentComplete ($progress++) -CurrentOperation "
 ######### END MAPS ############
 
 
-Lap "Ready to map"
+Lap "Done Mapping. Aggregating next."
+Write-MemoryUsageToLog -Message "Done Mapping. Aggregating next."
 
 # Build the objects & sections
 $Global:HealthCheckResult = MDE $map.Keys
@@ -928,11 +983,8 @@ foreach ($sectionName in $map.Keys) {
 }
 
 
-Lap "Done mapping"
-Write-MemoryUsageToLog -Message "Done mapping"
-
-
-Lap "Ready to Export"
+Lap "Done Aggregating. Exporting Next."
+Write-MemoryUsageToLog -Message "Done Aggregating. Exporting Next."
 
 $Global:HealthCheckResult.psobject.Properties.Name | ForEach-Object { $Global:HealthCheckResult.$_ | ConvertTo-Csv -NoTypeInformation | Out-File $($global:SETTINGS.OutputPath.Trim('\') + "\" +$_+".csv") -Force }
 

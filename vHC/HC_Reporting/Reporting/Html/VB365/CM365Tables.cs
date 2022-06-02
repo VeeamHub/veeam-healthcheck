@@ -234,7 +234,7 @@ namespace VeeamHealthCheck.Reporting.Html.VB365
                         s += _form.TableHeader("Enabled", "Enabled");
                         s += _form.TableHeader("Port", "Server Cert");
                         s += _form.TableHeader("Cert", "Server Cert PK Exportable?");
-                        s += _form.TableHeader("Exportable", "Server Cert Expires");
+                        // s += _form.TableHeader("Exportable", "Server Cert Expires");
                         s += _form.TableHeader("Expires", "Server Cert Self-Signed?");
                         s += _form.TableHeader("Self-Signed", "API Enabled?");
                         //s += _form.TableHeader("API Port", "API Port");
@@ -269,8 +269,8 @@ namespace VeeamHealthCheck.Reporting.Html.VB365
                         certcounter == 23)
                     {
                         s += "</tr><tr>";
-                        if(nameIterator == 0)
-                            s+= _form.TableData("API", "");
+                        if (nameIterator == 0)
+                            s += _form.TableData("API", "");
                         if (nameIterator == 1)
                             s += _form.TableData("Tenant Auth", "");
                         if (nameIterator == 2)
@@ -282,10 +282,30 @@ namespace VeeamHealthCheck.Reporting.Html.VB365
                     }
                     if (certcounter == 15)
                         s += _form.TableData("", "");
+                    if (certcounter == 4)
+                    {
+                        counter++;
+                        certcounter++;
+                        continue;
+                    }
+                    if (certcounter == 10)
+                    {
+                        counter++;
+                        certcounter++;
+                        continue;
+                    }
+                    //skipped on purpose
+                    if (certcounter == 16) { counter++; certcounter++; continue; }
+                    //skipped on purpose
                     if (certcounter == 19)
                         s += _form.TableData("", "");
+                    if (certcounter == 20) { counter++; certcounter++; continue; }
+                    //skipped on purpose
                     if (certcounter == 24)
                         s += _form.TableData("", "");
+                    if (certcounter == 25) { counter++; certcounter++; continue; }
+                    //skipped on purpose
+
 
                     string output = g.Value;
 
@@ -299,7 +319,12 @@ namespace VeeamHealthCheck.Reporting.Html.VB365
                             counter == 23)
                             output = _scrubber.ScrubItem(output);
                     }
-                    s += _form.TableData(output, "");
+                    else
+                    {
+                        s += _form.TableData(output, "");
+
+                    }
+                    //s += _form.TableData(output, "");
                     counter++;
                     certcounter++;
                 }
