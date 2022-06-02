@@ -130,12 +130,13 @@ namespace VeeamHealthCheck.Reporting.Html.VB365
             s += _form.TableHeader("Out of Sync?", "Out of Sync?");
             s += _form.TableHeader("Outdated?", "Outdated?");
             s += _form.TableHeader("Capacity", "Capacity");
-            s += _form.TableHeader("Local Space Used", "Local Space Used");
+            s += _form.TableHeader("Free", "");
+            s += _form.TableHeader("Data Stored", "");
             s += _form.TableHeader("Cache Space Used", "Cache Space Used");
+            s += _form.TableHeader("Local Space Used", "Local Space Used");
             s += _form.TableHeader("Object Space Used", "Object Space Used");
             s += _form.TableHeader("Daily Change", "Daily Change");
             s += _form.TableHeader("Retention", "Retention");
-            s += _form.TableHeader("Data Stored", "");
 
             s += "</tr>";
 
