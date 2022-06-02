@@ -796,7 +796,7 @@ namespace VeeamHealthCheck.Reporting.Html.VB365
                 _form.FormNavRows(ResourceHandler.v365NavTitle6, "objrepo", ResourceHandler.v365NavValue6) +
                 _form.FormNavRows(ResourceHandler.v365NavTitle7, "sec", ResourceHandler.v365NavValue7) +
                 _form.FormNavRows(ResourceHandler.v365NavTitle8, "rbac", ResourceHandler.v365NavValue8) +
-                _form.FormNavRows(ResourceHandler.v365NavTitle9, "perms", ResourceHandler.v365NavValue9) +
+                //_form.FormNavRows(ResourceHandler.v365NavTitle9, "perms", ResourceHandler.v365NavValue9) +
                 _form.FormNavRows(ResourceHandler.v365NavTitle10, "orgs", ResourceHandler.v365NavValue10) +
                 _form.FormNavRows(ResourceHandler.v365NavTitle11, "jobs", ResourceHandler.v365NavValue11) +
                 _form.FormNavRows(ResourceHandler.v365NavTitle12, "jobstats", ResourceHandler.v365NavValue12) +
