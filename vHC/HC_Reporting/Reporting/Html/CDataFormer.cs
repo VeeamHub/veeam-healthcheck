@@ -193,15 +193,37 @@ namespace VeeamHealthCheck.Reporting.Html
             var csv = new CCsvParser();
             try
             {
-                var cBackup = csv.GetDynamincConfigBackup();
-                if (cBackup.Any(x => x.encryptionoptions == "True"))
+                var sobrRepo = csv.GetDynamicCapTier();
+                var extRepo = csv.GetDynamicSobrExt();
+                var onPremRepo = csv.GetDynamicRepo();
+                if (onPremRepo.Any(x => x.isimmutabilitysupported == "True"))
+                {
                     secSummary.Add(1);
-                else secSummary.Add(0);
+                    //return secSummary;
+                }
+
+                else if (sobrRepo.Any(x => x.immute == "True"))
+                {
+                    secSummary.Add(1);
+                    
+                    //return secSummary;
+                }
+
+
+                else if (extRepo.Any(x => x.isimmutabilitysupported == "True"))
+                {
+                    secSummary.Add(1);
+                    //return secSummary;
+                }
+                else
+                {
+                    secSummary.Add(0);
+                }
+
             }
             catch (Exception)
             {
-                log.Error("Config backup not detected. Marking false");
-                //log.Info(e.Message);
+                log.Error("Unable to find immutability. Marking false");
                 secSummary.Add(0);
             }
             try
@@ -228,38 +250,18 @@ namespace VeeamHealthCheck.Reporting.Html
                 log.Error("Unable to detect backup encryption. Marking false");
                 secSummary.Add(0);
             }
+
             try
             {
-                var onPremRepo = csv.GetDynamicRepo();
-                if (onPremRepo.Any(x => x.isimmutabilitysupported == "True"))
-                {
+                var cBackup = csv.GetDynamincConfigBackup();
+                if (cBackup.Any(x => x.encryptionoptions == "True"))
                     secSummary.Add(1);
-                    return secSummary;
-                }
-                var sobrRepo = csv.GetDynamicCapTier();
-
-                if (sobrRepo.Any(x => x.immute == "True"))
-                {
-                    secSummary.Add(1);
-                    return secSummary;
-                }
-
-                var extRepo = csv.GetDynamicSobrExt();
-
-                if (extRepo.Any(x => x.isimmutabilitysupported == "True"))
-                {
-                    secSummary.Add(1);
-                    return secSummary;
-                }
-                else
-                {
-                    secSummary.Add(0);
-                }
-
+                else secSummary.Add(0);
             }
             catch (Exception)
             {
-                log.Error("Unable to find immutability. Marking false");
+                log.Error("Config backup not detected. Marking false");
+                //log.Info(e.Message);
                 secSummary.Add(0);
             }
 

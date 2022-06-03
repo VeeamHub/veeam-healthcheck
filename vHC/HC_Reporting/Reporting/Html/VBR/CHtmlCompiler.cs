@@ -34,8 +34,17 @@ namespace VeeamHealthCheck.Html
         {
             FormHeader();
             FormBody();
+            ExportHtml();
 
-
+        }
+        private void ExportHtml()
+        {
+            CHtmlExporter exporter = new("", GetServerName(), "", MainWindow._scrub);
+            exporter.ExportVbrHtml(_htmldoc);
+        }
+        private string GetServerName()
+        {
+            return Dns.GetHostName();
         }
         public void Dispose()
         {

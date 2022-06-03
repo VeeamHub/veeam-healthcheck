@@ -81,6 +81,29 @@ namespace VeeamHealthCheck.Html
             if(MainWindow._openHtml)
                 OpenHtml();
         }
+        public void ExportVbrHtml(string htmlString)
+        {
+            log.Info("exporting xml to html");
+
+            DateTime dateTime = DateTime.Now;
+            string n = MainWindow._desiredPath;
+            if (!Directory.Exists(n))
+                Directory.CreateDirectory(n);
+            string htmlCore = "\\" + _htmlName + "_" + _backupServerName + dateTime.ToString("_yyyy.MM.dd_HHmmss") + ".html";
+            string name = n + htmlCore;
+            _latestReport = name;
+
+            using (StreamWriter sw = new StreamWriter(name))
+            {
+                sw.Write(htmlString);
+            }
+            log.Info("exporting xml to html..done!");
+            //OpenHtml();
+            if (MainWindow._openExplorer)
+                OpenExplorer();
+            if (MainWindow._openHtml)
+                OpenHtml();
+        }
         public void ExportHtml(string xmlFile)
         {
             log.Info("exporting xml to html");

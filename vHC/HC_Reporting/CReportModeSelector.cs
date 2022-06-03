@@ -32,7 +32,7 @@ namespace VeeamHealthCheck
             _log.Info("Starting B&R report generation");
             CHtmlCompiler html = new();
 
-            CCsvToXml c = new("vbr", MainWindow._scrub, false, MainWindow._openHtml, true);
+            //CCsvToXml c = new("vbr", MainWindow._scrub, false, MainWindow._openHtml, true);
         }
         private void StartVbrReportImport()
         {
