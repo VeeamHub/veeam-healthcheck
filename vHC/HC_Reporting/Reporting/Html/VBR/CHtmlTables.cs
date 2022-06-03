@@ -190,6 +190,12 @@ namespace VeeamHealthCheck.Html.VBR
             string summary = _sum.JobSummary();
             Dictionary<string, int> list = _df.JobSummaryInfoToXml();
 
+            int totalJobs = 0;
+            foreach (var c in list)
+            {
+                totalJobs += c.Value;
+            }
+
             string s = _form.SectionStart("jobsummary", ResourceHandler.JobSumTitle);
 
             s += _form.TableHeader(ResourceHandler.JobSum0, ResourceHandler.JobSum0TT) +
@@ -203,6 +209,11 @@ namespace VeeamHealthCheck.Html.VBR
                 s += _form.TableData(d.Value.ToString(), "");
                 s += "</tr>";
             }
+
+            s += "<tr>";
+            s += _form.TableData("<b>Total Jobs", "");
+            s += _form.TableData(totalJobs.ToString() + "</b>", "");
+            s += "</tr>";
 
             s += _form.SectionEnd(summary);
             return s;
