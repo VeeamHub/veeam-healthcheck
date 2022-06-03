@@ -1322,10 +1322,10 @@ namespace VeeamHealthCheck.Reporting.Html
             csv = csv.OrderBy(y => y.JobType).ToList();
             csv = csv.OrderBy(x => x.Name).ToList();
 
-            XDocument doc = XDocument.Load(_testFile);
+            //XDocument doc = XDocument.Load(_testFile);
 
             XElement extElement = new XElement("jobs");
-            doc.Root.Add(extElement);
+            //doc.Root.Add(extElement);
             //doc.AddFirst(new XProcessingInstruction("xml-stylesheet", "type=\"text/xsl\" href=\"SessionReport.xsl\""));
 
             foreach (var c in csv)
@@ -1359,7 +1359,7 @@ namespace VeeamHealthCheck.Reporting.Html
 
                 sendBack.Add(job);
             }
-            doc.Save(_testFile);
+            //doc.Save(_testFile);
             log.Info("converting job info to xml..done!");
             return sendBack;
         }

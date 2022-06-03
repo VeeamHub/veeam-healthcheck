@@ -92,16 +92,21 @@ namespace VeeamHealthCheck.Html
 
             var bjobsCsvInfo = new CCsvParser().GetDynamicBjobs();
 
-            XDocument doc = XDocument.Load(xmlFile);
+            //XDocument doc = XDocument.Load(xmlFile);
 
             XElement extElement = new XElement("jobSessionsSummary");
-            doc.Root.Add(extElement);
+            //doc.Root.Add(extElement);
 
             List<string> jobNameList = jobSessionsCsv.Select(x => x.Name).ToList();
             List<CJobSummaryTypes> outList = new();
 
             CCsvParser csv = new();
-            IEnumerable<CWaitsCsv> waitList = csv.WaitsCsvReader();
+            IEnumerable<CWaitsCsv> waitList = null;
+            if (_checkLogs)
+            {
+                waitList = csv.WaitsCsvReader();
+
+            }
 
 
             List<double> avgRates = new();
@@ -335,7 +340,7 @@ namespace VeeamHealthCheck.Html
             sendBack.Add(summary);
             //extElement.Add(ReccomendationText());
 
-            doc.Save(xmlFile);
+            //doc.Save(xmlFile);
             log.Info("converting job session summary to xml..done!");
             return sendBack;
         }

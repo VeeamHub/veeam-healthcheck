@@ -33,9 +33,9 @@ namespace VeeamHealthCheck
 
         public MainWindow()
         {
-            CultureInfo.CurrentCulture = Thread.CurrentThread.CurrentCulture;
-            CultureInfo.CurrentCulture = CultureInfo.GetCultureInfo("zh-cn");
-            MessageBox.Show(ResourceHandler.GuiAcceptText);
+            //CultureInfo.CurrentCulture = Thread.CurrentThread.CurrentCulture;
+            //CultureInfo.CurrentCulture = CultureInfo.GetCultureInfo("zh-cn");
+            //MessageBox.Show(ResourceHandler.GuiAcceptText);
             //Thread.CurrentThread.CurrentCulture = CultureInfo.CurrentCulture.Name;
             InitializeComponent();
 
