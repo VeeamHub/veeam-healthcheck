@@ -222,13 +222,13 @@ namespace VeeamHealthCheck.Reporting.Html.VBR
                 //   _form.DoubleLineBreak() +
                 _form.AddA("hdr", ResourceHandler.GeneralNotesHeader) + //_form.LineBreak() +
                 _form.AddA("i2", ResourceHandler.PrxNote0) +
-                _form.AddA("i2", ResourceHandler.PrxNote1) +
-                _form.AddA("i2", ResourceHandler.PrxNote2) +
-                _form.AddA("i2", ResourceHandler.PrxNote3) +
-                _form.AddA("i2", ResourceHandler.PrxNote4) +
+                _form.AddA("i3", ResourceHandler.PrxNote1) +
+                _form.AddA("i4", ResourceHandler.PrxNote2) +
+                _form.AddA("i4", ResourceHandler.PrxNote3) +
+                _form.AddA("i4", ResourceHandler.PrxNote4) +
                 _form.AddA("i2", ResourceHandler.PrxNote5) +
-                _form.AddA("i2", ResourceHandler.PrxNote6) +
-                _form.AddA("i2", ResourceHandler.PrxNote7) +
+                _form.AddA("i3", ResourceHandler.PrxNote6) +
+                _form.AddA("i3", ResourceHandler.PrxNote7) +
                 _form.AddA("i2", ResourceHandler.PrxNote8) +
                 _form.AddA("i2", ResourceHandler.PrxNote9) +
                 _form.AddA("i2", ResourceHandler.PrxNote10) +

@@ -54,7 +54,7 @@ namespace VeeamHealthCheck.Reporting.Html.Shared
         }
         public string AddA(string classInfo, string displaytext)
         {
-            return String.Format("<div class=\"{0}\">{1}</div>" + LineBreak(), classInfo, displaytext);
+            return String.Format("<div class=\"{0}\">{1}</div>", classInfo, displaytext);
         }
 
         public string BackToTop()
