@@ -740,6 +740,7 @@ namespace VeeamHealthCheck.Reporting.Html.VB365
             s += _form.TableHeader("Description", "Description");
             s += _form.TableHeader("Job Type", "Job Type");
             s += _form.TableHeader("Scope Type", "Scope Type");
+            s += _form.TableHeader("Processing Options", "");
             s += _form.TableHeader("Selected Items", "Selected Items");
             s += _form.TableHeader("Excluded Items", "Excluded Items");
             s += _form.TableHeader("Repository", "Repository");
@@ -747,7 +748,6 @@ namespace VeeamHealthCheck.Reporting.Html.VB365
             s += _form.TableHeader("Enabled?", "Enabled?");
             s += _form.TableHeader("Schedule", "Schedule");
             s += _form.TableHeader("Related Job", "Related Job");
-            s += _form.TableHeader("Processing Options", "");
 
             s += "</tr>";
 

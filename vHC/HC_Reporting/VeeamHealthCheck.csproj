@@ -10,11 +10,11 @@
     <Company>Veeam</Company>
     <Authors>AdamC</Authors>
     <ApplicationIcon>Veeam_HealthCheck_228x228.ico</ApplicationIcon>
-    <AssemblyVersion>1.0.2.460</AssemblyVersion>
+    <AssemblyVersion>1.0.2.462</AssemblyVersion>
     <SignAssembly>true</SignAssembly>
     <AssemblyOriginatorKeyFile>vhc_keyfile2.pfx</AssemblyOriginatorKeyFile>
     <DelaySign>false</DelaySign>
-    <FileVersion>1.0.2.460</FileVersion>
+    <FileVersion>1.0.2.462</FileVersion>
     <DebugType>full</DebugType>
 	  <SelfContained>true</SelfContained>
 	  <!--These 2 lines are what produce the single file utility. Possibly doesn't work...-->
@@ -63,6 +63,10 @@
 
   <ItemGroup>
     <None Remove="Reporting\Html\JavaScript1.js" />
+    <None Remove="Resources\Localization\vhcres.fr-FR.resources" />
+    <None Remove="Resources\Localization\vhcres.ja.resources" />
+    <None Remove="Resources\Localization\vhcres.zh-cn.resources" />
+    <None Remove="Resources\Localization\vhcres.zh-tw.resources" />
     <None Remove="Resources\vhcres.resources" />
     <None Remove="RVTools4.1.4.msi" />
     <None Remove="Tools\Get-VBRConfig - Copy.ps1" />
@@ -95,9 +99,13 @@
   </ItemGroup>
 
   <ItemGroup>
+    <EmbeddedResource Include="Resources\Localization\vhcres.fr-FR.resources" />
+    <EmbeddedResource Include="Resources\Localization\vhcres.ja.resources" />
     <EmbeddedResource Include="Resources\Localization\vhcres.resources">
       <Generator></Generator>
     </EmbeddedResource>
+    <EmbeddedResource Include="Resources\Localization\vhcres.zh-cn.resources" />
+    <EmbeddedResource Include="Resources\Localization\vhcres.zh-tw.resources" />
     <Content Include="Tools\Scripts\Collect-VB365Data.ps1">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
