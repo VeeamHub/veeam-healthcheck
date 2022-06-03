@@ -80,6 +80,7 @@ namespace VeeamHealthCheck.Reporting.Html.Shared
         {
             string s = "</tr>";
             s += "</table>";
+            s += LineBreak();
             s += summary;
             s += _endDiv;
 

@@ -79,7 +79,7 @@ namespace VeeamHealthCheck.Reporting.Html.VBR
                 _form.AddA("i2", ResourceHandler.BkpSrvNotes5) +
                 _form.AddA("i2", ResourceHandler.BkpSrvNotes6)
                 ;
-            s += //_form.LineBreak() +
+            s += _form.LineBreak() +
                _form.BackToTop();
             s += "</div>";
             s += "</div>";
@@ -106,8 +106,8 @@ namespace VeeamHealthCheck.Reporting.Html.VBR
                 _form.AddA("i2", ResourceHandler.SSNote3) +
                 //  _form.LineBreak() +
                 _form.AddA("subhdr", ResourceHandler.SSSubHdr4) +
-                _form.AddA("i2", ResourceHandler.SSNote4)
-            //   _form.LineBreak();
+                _form.AddA("i2", ResourceHandler.SSNote4) + 
+               _form.LineBreak();
             ;
             s += _form.BackToTop();
             s += "</div>";
@@ -122,7 +122,7 @@ namespace VeeamHealthCheck.Reporting.Html.VBR
             s += "<div class=\"content\" style=\"display: none\">";
             s += _form.AddA("hdr", ResourceHandler.GeneralSummaryHeader) +// _form.LineBreak() +
                 _form.AddA("i2", ResourceHandler.MssSum1) +
-                //_form.LineBreak() +
+                _form.LineBreak() +
                 _form.BackToTop();
 
             s += "</div>";
@@ -141,7 +141,7 @@ namespace VeeamHealthCheck.Reporting.Html.VBR
                 _form.AddA("hdr", ResourceHandler.GeneralNotesHeader) +
                 _form.AddA("i2", ResourceHandler.JobSumNote0) +
                 _form.AddA("i2", ResourceHandler.JobSumNote1) +
-                //_form.LineBreak() +
+                _form.LineBreak() +
                 _form.BackToTop()
                 ;
             s += "</div>";
@@ -153,7 +153,7 @@ namespace VeeamHealthCheck.Reporting.Html.VBR
         {
             string s = _form.AddA("hdr", ResourceHandler.GeneralSummaryHeader) + //_form.LineBreak() +
                 _form.AddA("i2", ResourceHandler.NpSum1) +
-                //  _form.LineBreak() +
+                  _form.LineBreak() +
                 _form.BackToTop();
             ;
             s += "</div>";
@@ -169,7 +169,7 @@ namespace VeeamHealthCheck.Reporting.Html.VBR
                 //  _form.DoubleLineBreak() +
                 _form.AddA("hdr", ResourceHandler.GeneralNotesHeader) +// _form.LineBreak() +
                 _form.AddA("i2", ResourceHandler.PlNote1) +
-                //     _form.LineBreak();
+                     _form.LineBreak();
                 _form.BackToTop();
             ;
             s += "</div>";
@@ -185,7 +185,7 @@ namespace VeeamHealthCheck.Reporting.Html.VBR
                 _form.AddA("hdr", ResourceHandler.GeneralNotesHeader) +// _form.LineBreak() +
                 _form.AddA("i2", ResourceHandler.ManSrvNote0) +
                 _form.AddA("i2", ResourceHandler.ManSrvNote1) +
-                //  _form.LineBreak() +
+                  _form.LineBreak() +
                 _form.BackToTop()
                 ;
             s += "</div>";
@@ -201,7 +201,7 @@ namespace VeeamHealthCheck.Reporting.Html.VBR
                 _form.AddA("hdr", ResourceHandler.GeneralNotesHeader) +// _form.LineBreak() +
                 _form.AddA("i2", ResourceHandler.RegNote0) +
                 _form.AddA("i2", ResourceHandler.RegNote1) +
-                //    _form.LineBreak() +
+                    _form.LineBreak() +
                 _form.BackToTop()
                 ;
             s += "</div>";
@@ -234,7 +234,7 @@ namespace VeeamHealthCheck.Reporting.Html.VBR
                 _form.AddA("i2", ResourceHandler.PrxNote10) +
                 _form.AddA("i2", ResourceHandler.PrxNote11) +
                 _form.AddA("i2", ResourceHandler.PrxNote12) +
-            //    _form.LineBreak() +
+                _form.LineBreak() +
                 _form.BackToTop()
                 ;
             s += "</div>";
@@ -256,7 +256,7 @@ namespace VeeamHealthCheck.Reporting.Html.VBR
                 _form.AddA("i2", ResourceHandler.SbrNote4) +
                 _form.AddA("i2", ResourceHandler.SbrNote5) +
                 _form.AddA("i2", ResourceHandler.SbrNote6) +
-                //  _form.LineBreak()+
+                  _form.LineBreak()+
                 _form.BackToTop()
                 ;
             s += "</div>";
@@ -288,7 +288,7 @@ namespace VeeamHealthCheck.Reporting.Html.VBR
                 _form.AddA("i2", ResourceHandler.SbrExtNote14) +
                 _form.AddA("i2", ResourceHandler.SbrExtNote15) +
                 _form.AddA("i2", ResourceHandler.SbrExtNote16) +
-                //  _form.LineBreak() +
+                  _form.LineBreak() +
                 _form.BackToTop()
                 ;
             s += "</div>";
@@ -320,7 +320,7 @@ namespace VeeamHealthCheck.Reporting.Html.VBR
                 _form.AddA("i2", ResourceHandler.SbrExtNote14) +
                 _form.AddA("i2", ResourceHandler.SbrExtNote15) +
                 _form.AddA("i2", ResourceHandler.SbrExtNote16) +
-            //    _form.LineBreak() +
+                _form.LineBreak() +
                 _form.BackToTop()
                 ;
             s += "</div>";
@@ -364,7 +364,7 @@ namespace VeeamHealthCheck.Reporting.Html.VBR
                 _form.AddA("i2", ResourceHandler.JobConNoteSqlTableNote2) +
                 _form.AddA("i2", ResourceHandler.JobConNoteSqlTableNote3) +
                 _form.AddA("i2", ResourceHandler.JobConNoteSqlTableNote4) +
-                //  _form.LineBreak() + 
+                  _form.LineBreak() + 
                 _form.BackToTop()
                 ;
             s += "</div>";
@@ -379,7 +379,7 @@ namespace VeeamHealthCheck.Reporting.Html.VBR
                 //  _form.DoubleLineBreak() +
                 _form.AddA("hdr", ResourceHandler.GeneralNotesHeader) +// _form.LineBreak() +
                 _form.AddA("i2", ResourceHandler.TaskConNote0) +
-              //  _form.LineBreak() +
+                _form.LineBreak() +
               _form.BackToTop()
                 ;
             s += "</div>";
@@ -404,7 +404,7 @@ namespace VeeamHealthCheck.Reporting.Html.VBR
                 _form.AddA("i2", ResourceHandler.JssNote8) +
                 _form.AddA("i2", ResourceHandler.JssNote9) +
                 _form.AddA("i2", ResourceHandler.JssNote10) +
-                //_form.LineBreak() +
+                _form.LineBreak() +
                 _form.BackToTop()
                 ;
             s += "</div>";
@@ -419,7 +419,7 @@ namespace VeeamHealthCheck.Reporting.Html.VBR
               //  _form.DoubleLineBreak() +
                 _form.AddA("hdr", ResourceHandler.GeneralNotesHeader) +// _form.LineBreak() +
                 _form.AddA("i2", ResourceHandler.JobInfoNote0) +
-               // _form.LineBreak() + 
+                _form.LineBreak() + 
                 _form.BackToTop()
                 ;
             s += "</div>";

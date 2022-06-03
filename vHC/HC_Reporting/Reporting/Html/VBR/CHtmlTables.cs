@@ -158,7 +158,7 @@ namespace VeeamHealthCheck.Html.VBR
                 else if (list[i] == 1)
                     s += _form.TableData("True", "");
             }
-
+            s += "</tr>";
             s += _form.SectionEnd(summary);
 
             return s;
