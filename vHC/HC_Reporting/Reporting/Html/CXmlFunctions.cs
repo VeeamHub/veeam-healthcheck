@@ -146,7 +146,7 @@ namespace VeeamHealthCheck.Html
             serverRoot.Add(AddSummaryHeader(ResourceHandler.HtmlHeader));
             serverRoot.Add(AddSummaryText(ResourceHandler.HtmlIntroLine1, "i2"));
             serverRoot.Add(AddSummaryText(ResourceHandler.HtmlIntroLine2, "i2"));
-            serverRoot.Add(AddSummaryText(ResourceHandler.HtmlIntroLine3, "i2"));
+          //  serverRoot.Add(AddSummaryText(ResourceHandler.HtmlIntroLine3, "i2"));
             serverRoot.Add(AddSummaryText(ResourceHandler.HtmlIntroLine4, "i3"));
             serverRoot.Add(AddSummaryText(ResourceHandler.HtmlIntroLine5, "i3"));
 
