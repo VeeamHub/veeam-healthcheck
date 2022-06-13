@@ -542,7 +542,7 @@ namespace VeeamHealthCheck.Reporting.Html
                         int.TryParse(hyperthread, out int h);
                         int.TryParse(memory, out int mem);
 
-                        sqlCpu = (c * h).ToString();
+                        sqlCpu = cpu;//(c * h).ToString();
                         sqlRam = ((mem / 1024 / 1024) + 1).ToString();
 
                     }
