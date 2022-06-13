@@ -111,11 +111,11 @@ namespace VeeamHealthCheck.DataTypes
                 eInfo.PolicyType = s.PolicyType;
                 eInfo.UsePerVMBackupFiles = bool.Parse(s.UsePerVMBackupFiles);
 
-                int c = eInfo.Extents.Count();
+                //int c = eInfo.Extents.Count();
                 
-                var v = ExtentInfo.Count();
-                string[] eCount = eInfo.Extents.Split();
-                eInfo.ExtentCount = eCount.Count();
+                //var v = ExtentInfo.Count();
+                //string[] eCount = eInfo.Extents.Split();
+                //eInfo.ExtentCount = eCount.Count();
 
 
                 eInfoList.Add(eInfo);

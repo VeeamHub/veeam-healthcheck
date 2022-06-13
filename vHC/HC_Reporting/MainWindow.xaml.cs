@@ -11,6 +11,7 @@ using VeeamHealthCheck.DB;
 using VeeamHealthCheck.Shared.Logging;
 using System.Threading;
 using System.Globalization;
+using VeeamHealthCheck.Scrubber;
 
 namespace VeeamHealthCheck
 {

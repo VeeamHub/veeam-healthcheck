@@ -28,22 +28,22 @@ namespace VeeamHealthCheck.Html.VBR
         public string MakeNavTable()
         {
             return _form.FormNavRows(ResourceHandler.NavLicInfoLink, "license", ResourceHandler.NavLicInfoDetail) +
-                _form.FormNavRows(ResourceHandler.NavBkpSrvLink, "backupserver", ResourceHandler.NavBkpSrvDeet) +
-                _form.FormNavRows(ResourceHandler.NavSecSumLink, "", ResourceHandler.NavSecSumDeet) +
-                _form.FormNavRows(ResourceHandler.NavSrvSumLink, "", ResourceHandler.NavSrvSumDeet) +
-                _form.FormNavRows(ResourceHandler.NavJobSumLink, "", ResourceHandler.NavJobSumDeet) +
-                _form.FormNavRows(ResourceHandler.NavMissingJobLink, "", ResourceHandler.NavMissingDeet) +
-                _form.FormNavRows(ResourceHandler.NavProtWrkld, "", ResourceHandler.NavProtWkldDeet) +
-                _form.FormNavRows(ResourceHandler.NavSrvInfoLink, "", ResourceHandler.NavSrvInfoDeet) +
-                _form.FormNavRows(ResourceHandler.NavRegKeyLink, "", ResourceHandler.NavRegKeyDeet) +
-                _form.FormNavRows(ResourceHandler.NavProxyInfoLink, "", ResourceHandler.NavProxyDeet) +
-                _form.FormNavRows(ResourceHandler.NavSobrInfoLink, "", ResourceHandler.NavSobrDeet) +
-                _form.FormNavRows(ResourceHandler.NavSobrExtLink, "", ResourceHandler.NavSobrExtDeet) +
-                _form.FormNavRows(ResourceHandler.NavRepoInfoLink, "", ResourceHandler.NavRepoDeet) +
-                _form.FormNavRows(ResourceHandler.NavJobConLink, "", ResourceHandler.NavJobConDeet) +
-                _form.FormNavRows(ResourceHandler.NavTaskConLink, "", ResourceHandler.NavTaskConDeet) +
-                _form.FormNavRows(ResourceHandler.NavJobSessSumLink, "", ResourceHandler.NavJobSessSumDeet) +
-                _form.FormNavRows(ResourceHandler.NavJobInfoLink, "", ResourceHandler.NavJobInfoDeet);
+                _form.FormNavRows(ResourceHandler.NavBkpSrvLink, "vbrserver", ResourceHandler.NavBkpSrvDeet) +
+                _form.FormNavRows(ResourceHandler.NavSecSumLink, "secsummary", ResourceHandler.NavSecSumDeet) +
+                _form.FormNavRows(ResourceHandler.NavSrvSumLink, "serversummary", ResourceHandler.NavSrvSumDeet) +
+                _form.FormNavRows(ResourceHandler.NavJobSumLink, "jobsummary", ResourceHandler.NavJobSumDeet) +
+                _form.FormNavRows(ResourceHandler.NavMissingJobLink, "missingjobs", ResourceHandler.NavMissingDeet) +
+                _form.FormNavRows(ResourceHandler.NavProtWrkld, "protectedworkloads", ResourceHandler.NavProtWkldDeet) +
+                _form.FormNavRows(ResourceHandler.NavSrvInfoLink, "managedServerInfo", ResourceHandler.NavSrvInfoDeet) +
+                _form.FormNavRows(ResourceHandler.NavRegKeyLink, "regkeys", ResourceHandler.NavRegKeyDeet) +
+                _form.FormNavRows(ResourceHandler.NavProxyInfoLink, "proxies", ResourceHandler.NavProxyDeet) +
+                _form.FormNavRows(ResourceHandler.NavSobrInfoLink, "sobr", ResourceHandler.NavSobrDeet) +
+                _form.FormNavRows(ResourceHandler.NavSobrExtLink, "extents", ResourceHandler.NavSobrExtDeet) +
+                _form.FormNavRows(ResourceHandler.NavRepoInfoLink, "repos", ResourceHandler.NavRepoDeet) +
+                _form.FormNavRows(ResourceHandler.NavJobConLink, "jobcon", ResourceHandler.NavJobConDeet) +
+                _form.FormNavRows(ResourceHandler.NavTaskConLink, "taskcon", ResourceHandler.NavTaskConDeet) +
+                _form.FormNavRows(ResourceHandler.NavJobSessSumLink, "jobsesssum", ResourceHandler.NavJobSessSumDeet) +
+                _form.FormNavRows(ResourceHandler.NavJobInfoLink, "jobs", ResourceHandler.NavJobInfoDeet);
         }
 
 

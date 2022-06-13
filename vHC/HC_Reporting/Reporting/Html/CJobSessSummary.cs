@@ -293,7 +293,7 @@ namespace VeeamHealthCheck.Html
                 try
                 {
                     string jname = o.JobName;
-                    if (scrub)
+                    if (MainWindow._scrub)
                         jname = scrubber.ScrubItem(o.JobName, "job");
 
                     string wait = o.waitCount.ToString();

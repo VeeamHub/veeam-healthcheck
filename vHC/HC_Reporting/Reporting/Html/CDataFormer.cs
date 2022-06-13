@@ -30,7 +30,7 @@ namespace VeeamHealthCheck.Reporting.Html
         private bool _isBackupServerWan;
         //private CQueries _cq = new();
         private Dictionary<string, int> _repoJobCount;
-        private CXmlHandler _scrubber = new();
+        private CXmlHandler _scrubber = new ();
         private bool _scrub;
         private bool _checkLogs;
         private bool _isImport;
@@ -419,7 +419,7 @@ namespace VeeamHealthCheck.Reporting.Html
             //doc.Root.Add(extElement);
 
             // Check for items needing scrubbed
-            if (_scrub)
+            if (MainWindow._scrub)
             {
                 // set items to scrub
             }
@@ -518,7 +518,7 @@ namespace VeeamHealthCheck.Reporting.Html
                     {
                         veeamVersion = r.Version;
                         sqlHostName = r.SqlServer;
-                        if (_scrub)
+                        if (MainWindow._scrub)
                             sqlHostName = Scrub(sqlHostName);
                     }
                 }
@@ -547,7 +547,7 @@ namespace VeeamHealthCheck.Reporting.Html
                         sqlRam = ((mem / 1024 / 1024) + 1).ToString();
 
                     }
-                    if (_scrub)
+                    if (MainWindow._scrub)
                         sqlHostName = Scrub(sqlHostName);
                 }
                 else if (backupServer.Name == sqlHostName)
@@ -568,7 +568,7 @@ namespace VeeamHealthCheck.Reporting.Html
             //doc.Root.Add(extElement);
 
 
-            if (_scrub)
+            if (MainWindow._scrub)
             {
                 backupServer.Name = Scrub(backupServer.Name);
                 configBackupTarget = Scrub(configBackupTarget);
@@ -649,12 +649,12 @@ namespace VeeamHealthCheck.Reporting.Html
                 int repoCount = repos.Count(x => x.SobrName == c.Name);
 
                 string newName = c.Name;
-                if (_scrub)
+                if (MainWindow._scrub)
                     newName = _scrubber.ScrubItem(c.Name, "sobr");
                 _repoJobCount.TryGetValue(c.Name, out int jobCount);
 
                 s[0] += newName;
-                s[1] += c.Extents.Count();
+                s[1] += repoCount;
                 s[2] += jobCount;
                 s[3] += c.PolicyType;
                 s[4] += c.EnableCapacityTier;
@@ -707,7 +707,7 @@ namespace VeeamHealthCheck.Reporting.Html
                 string hostName = c.Host;
                 string path = c.Path;
 
-                if (_scrub)
+                if (MainWindow._scrub)
                 {
                     newName = Scrub(newName);
                     sobrName = Scrub(sobrName);
@@ -728,8 +728,8 @@ namespace VeeamHealthCheck.Reporting.Html
                 s[3] += c.Cores;
                 s[4] += c.Ram;
                 s[5] += c.IsAutoGateway;
-                s[6] += c.Host;
-                s[7] += c.Path;
+                s[6] += hostName;
+                s[7] += path;
                 s[8] += Math.Round((decimal)c.FreeSPace / 1024, 2);
                 s[9] += Math.Round((decimal)c.TotalSpace / 1024, 2);
                 s[10] += freePercent;
@@ -769,7 +769,7 @@ namespace VeeamHealthCheck.Reporting.Html
                 string host = c.Host;
                 string path = c.Path;
 
-                if (_scrub)
+                if (MainWindow._scrub)
                 {
                     name = _scrubber.ScrubItem(c.Name, "repo");
                     host = _scrubber.ScrubItem(c.Host, "server");
@@ -797,8 +797,8 @@ namespace VeeamHealthCheck.Reporting.Html
                 s[3] += c.Cores;
                 s[4] += c.Ram;
                 s[5] += c.IsAutoGateway;
-                s[6] += c.Host;
-                s[7] += c.Path;
+                s[6] += host;
+                s[7] += path;
                 s[8] += Math.Round((decimal)c.FreeSPace / 1024, 2);
                 s[9] += Math.Round((decimal)c.TotalSpace / 1024, 2);
                 s[10] += freePercent;
@@ -828,7 +828,7 @@ namespace VeeamHealthCheck.Reporting.Html
             foreach (var c in csv)
             {
                 string[] s = new string[12];
-                if (_scrub)
+                if (MainWindow._scrub)
                 {
                     c.Name = Scrub(c.Name);
                     c.Host = Scrub(c.Host);
@@ -949,7 +949,7 @@ namespace VeeamHealthCheck.Reporting.Html
 
                 //scrub name if selected
                 string newName = c.Name;
-                if (_scrub)
+                if (MainWindow._scrub)
                     newName = Scrub(newName);
                 s[0] = newName;
                 s[1] += c.Cores;
@@ -1338,7 +1338,7 @@ namespace VeeamHealthCheck.Reporting.Html
                 string repo = c.RepoName;
                 if (c.EncryptionEnabled == "True")
                     _backupsEncrypted = true;
-                if (_scrub)
+                if (MainWindow._scrub)
                 {
                     jname = _scrubber.ScrubItem(c.Name, "job");
                     repo = _scrubber.ScrubItem(c.RepoName, "repo");

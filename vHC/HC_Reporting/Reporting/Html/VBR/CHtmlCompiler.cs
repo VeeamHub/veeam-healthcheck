@@ -184,11 +184,10 @@ namespace VeeamHealthCheck.Html
 
         private void NavTable()
         {
-            CHtmlTables tables = new();
             string tableString =
     "<table border=\"0\" style=\"background: \">" +
     "<tbody>";
-            tableString += tables.MakeNavTable();
+            tableString += _tables.MakeNavTable();
 
 
 
@@ -202,7 +201,7 @@ namespace VeeamHealthCheck.Html
         }
         private void Table(string header, string type)
         {
-            CHtmlTables tables = new();
+            //CHtmlTables tables = new();
             string tableString = DivId(type) +
                 h2UnderLine(header) +
                 "<table border=\"1\" style=\"background: lightgray\">" +
@@ -211,58 +210,58 @@ namespace VeeamHealthCheck.Html
             {
                 case "license":
                     //tableString += (tables.AddLicHeaderToTable());
-                    tableString += (tables.LicTable());
+                    tableString += (_tables.LicTable());
                     break;
                 case "navigation":
-                    tableString += tables.MakeNavTable();
+                    tableString += _tables.MakeNavTable();
                     break;
                 case "vbrInfo":
-                    tableString += tables.AddBkpSrvTable();
+                    tableString += _tables.AddBkpSrvTable();
                     break;
                 case "secSum":
-                    tableString += tables.AddSecSummaryTable();
+                    tableString += _tables.AddSecSummaryTable();
                     break;
                 case "srvSummary":
-                    tableString += tables.AddSrvSummaryTable();
+                    tableString += _tables.AddSrvSummaryTable();
                     break;
                 case "jobSummary":
-                    tableString += tables.AddJobSummaryTable();
+                    tableString += _tables.AddJobSummaryTable();
                     break;
                 case "missingJobs":
-                    tableString += tables.AddMissingJobsTable();
+                    tableString += _tables.AddMissingJobsTable();
                     break;
                 case "protectedWklds":
-                    tableString += tables.AddProtectedWorkLoadsTable();
+                    tableString += _tables.AddProtectedWorkLoadsTable();
                     break;
                 case "serverInfo":
-                    tableString += tables.AddManagedServersTable();
+                    tableString += _tables.AddManagedServersTable();
                     break;
                 case "regKeys":
-                    tableString += tables.AddRegKeysTable();
+                    tableString += _tables.AddRegKeysTable();
                     break;
                 case "proxyInfo":
-                    tableString += tables.AddProxyTable();
+                    tableString += _tables.AddProxyTable();
                     break;
                 case "sobr":
-                    tableString += tables.AddSobrTable();
+                    tableString += _tables.AddSobrTable();
                     break;
                 case "extents":
-                    tableString += tables.AddSobrExtTable();
+                    tableString += _tables.AddSobrExtTable();
                     break;
                 case "repos":
-                    tableString += tables.AddRepoTable();
+                    tableString += _tables.AddRepoTable();
                     break;
                 case "jobConcurrency":
-                    tableString += tables.AddJobConTable();
+                    tableString += _tables.AddJobConTable();
                     break;
                 case "taskConcurrency":
-                    tableString += tables.AddTaskConTable();
+                    tableString += _tables.AddTaskConTable();
                     break;
                 case "jobSessSummary":
-                    tableString += tables.AddJobSessSummTable();
+                    tableString += _tables.AddJobSessSummTable();
                     break;
                 case "jobs":
-                    tableString += tables.AddJobInfoTable();
+                    tableString += _tables.AddJobInfoTable();
                     break;
                 default:
                     break;
