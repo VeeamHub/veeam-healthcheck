@@ -522,7 +522,7 @@ namespace VeeamHealthCheck.Html
             try
             {
                 _backupServerName = backupServer.Name;
-                if (!backupServer.Name.Contains(sqlHostName, StringComparison.OrdinalIgnoreCase))
+                if (!backupServer.Name.Contains(sqlHostName, StringComparison.OrdinalIgnoreCase) && sqlHostName != "LOCALHOST" && sqlHostName != "localhost")
                 {
                     _isSqlLocal = false;
                     foreach (DataRow row in si.Rows)
