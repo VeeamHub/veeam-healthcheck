@@ -39,7 +39,7 @@ namespace VeeamHealthCheck.DB
                 GetSqlServerInfo();
                 GetSqlServerVersion();
                 GetJobSummary();
-                GetVbrVersion();
+                //GetVbrVersion();
                 GetBjobInfo();
                 //CDbWorker db = new();
                 //db.GetVbrJobsAll();
@@ -174,27 +174,7 @@ namespace VeeamHealthCheck.DB
             _jobTypes = Fetch(query);
             log.Info("getting job summary info..ok!");
         }
-        private void GetVbrVersion()
-        {
-            log.Info("getting VBR version info");
-            string query = "select * from [Version]";
-            DataTable t = Fetch(query);
-            if (t == null)
-                _vbrVersion = "";
-            else
-            {
-                string versionId = "";
-                foreach (DataRow r in t.Rows)
-                {
-                    versionId = r["current_version"].ToString();
-                }
-                int.TryParse(versionId, out int i);
-                CVersions cv = new(i);
-                _vbrVersion = cv.VbrVersion;
-            }
 
-            log.Info("getting VBR version info..done!");
-        }
         private DataTable Fetch(string query)
         {
             try
