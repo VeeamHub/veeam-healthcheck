@@ -229,7 +229,7 @@ function test(){
 							- The raw data is captured in CSV format and is accessible locally in the Export Folder. CSV will let you manipulate the data in tools such as Excel.
 						</div>
 						<div class="i2">
-							- Additional information on individual job sessions can be found in the <a href="C:\temp\vHC\JobSessionReports"> output folder at C:\temp\vHC\JobSessionReports</a>
+							- Additional information on individual job sessions can be found in the <a href="C:\temp\vHC\Anonymous\JobSessionReports"> output folder at C:\temp\vHC\Anonymous\JobSessionReports</a>
 						</div>
 						<div class="i2">
 							- <b>Note</b> - During mouseover, a tool tip may appear containing explanatory data of the table header or data column.
