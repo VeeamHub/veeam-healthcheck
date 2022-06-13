@@ -15,7 +15,7 @@ namespace VeeamHealthCheck.Html.VBR
         private CCsvParser _csv = new(CVariables.vb365dir);
 
         CDataFormer _df = new(true);
-
+        Scrubber.CXmlHandler _scrub = new();
 
         private CHtmlFormatting _form = new();
         private CVbrSummaries _sum = new();
@@ -76,9 +76,11 @@ namespace VeeamHealthCheck.Html.VBR
 
             foreach (var l in lic)
             {
+
+                
                 s +=
                 "<tr>" +
-                _form.TableData(l.licensedto, "") +
+                //_form.TableData(l.licensedto, "") +
                 _form.TableData(l.edition, "") +
                 _form.TableData(l.status, "") +
                 _form.TableData(l.type, "") +
@@ -128,7 +130,13 @@ namespace VeeamHealthCheck.Html.VBR
 
             for (int i = 0; i < list.Count(); i++)
             {
-                s += _form.TableData(list[i], "");
+
+                if(MainWindow._scrub && i == 0 || i == 7 || i == 9)
+                {
+                    s += _form.TableData(_scrub.ScrubItem(list[i]), "");
+                }
+                else
+                    s += _form.TableData(list[i], "");
 
             }
             s += _form.SectionEnd(summary);
@@ -298,7 +306,10 @@ namespace VeeamHealthCheck.Html.VBR
             foreach (var d in list)
             {
                 s += "<tr>";
-                s += _form.TableData(d[0], "");
+                if (MainWindow._scrub)
+                    s += _form.TableData(_scrub.ScrubItem(d[0]), "");
+                else
+                    s += _form.TableData(d[0], "");
                 s += _form.TableData(d[1], "");
                 s += _form.TableData(d[2], "");
                 s += _form.TableData(d[3], "");
@@ -361,7 +372,10 @@ namespace VeeamHealthCheck.Html.VBR
             foreach (var d in list)
             {
                 s += "<tr>";
-                s += _form.TableData(d[0], "");
+                if(MainWindow._scrub)
+                    s += _form.TableData(_scrub.ScrubItem(d[0]), "");
+                else
+                    s += _form.TableData(d[0], "");
                 s += _form.TableData(d[1], "");
                 s += _form.TableData(d[2], "");
                 s += _form.TableData(d[3], "");
@@ -371,7 +385,10 @@ namespace VeeamHealthCheck.Html.VBR
                 s += _form.TableData(d[7], "");
                 s += _form.TableData(d[8], "");
                 s += _form.TableData(d[9], "");
-                s += _form.TableData(d[10], "");
+                if (MainWindow._scrub)
+                    s += _form.TableData(_scrub.ScrubItem(d[10]), "");
+                else
+                    s += _form.TableData(d[10], "");
                 s += _form.TableData(d[11], "");
                 s += "</tr>";
             }
@@ -385,6 +402,7 @@ namespace VeeamHealthCheck.Html.VBR
             s += "<tr>" +
            _form.TableHeader(ResourceHandler.Sbr0, ResourceHandler.Sbr0TT) +
            _form.TableHeader(ResourceHandler.Sbr1, ResourceHandler.Sbr1TT) +
+           _form.TableHeader(ResourceHandler.Repo0, ResourceHandler.Repo1TT) +
            _form.TableHeader(ResourceHandler.Sbr2, ResourceHandler.Sbr2TT) +
            _form.TableHeader(ResourceHandler.Sbr3, ResourceHandler.Sbr3TT) +
            _form.TableHeader(ResourceHandler.Sbr4, ResourceHandler.Sbr4TT) +
@@ -404,9 +422,9 @@ namespace VeeamHealthCheck.Html.VBR
             {
                 s += "<tr>";
                 s += _form.TableData(d[0], "");
-                s += _form.TableData(d[3], "");
-                s += _form.TableData(d[29], "");
                 s += _form.TableData(d[1], "");
+                s += _form.TableData(d[2], "");
+                s += _form.TableData(d[3], "");
                 s += _form.TableData(d[4], "");
                 s += _form.TableData(d[6], "");
                 s += _form.TableData(d[6], "");
@@ -414,7 +432,9 @@ namespace VeeamHealthCheck.Html.VBR
                 s += _form.TableData(d[8], "");
                 s += _form.TableData(d[9], "");
                 s += _form.TableData(d[10], "");
-                s += _form.TableData(d[11], "");
+                s += _form.TableData(d[11], ""); 
+                s += _form.TableData(d[12], "");
+                s += _form.TableData(d[13], "");
                 s += "</tr>";
             }
             s += _form.SectionEnd(summary);

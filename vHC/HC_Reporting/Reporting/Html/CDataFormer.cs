@@ -478,7 +478,7 @@ namespace VeeamHealthCheck.Reporting.Html
             string version = "";
             DataTable si = new DataTable();
 
-            if (!_isImport)
+            if (!MainWindow._import)
             {
                 try
                 {
@@ -495,11 +495,10 @@ namespace VeeamHealthCheck.Reporting.Html
                 try
                 {
                     log.Info("starting sql queries");
-                    //CQueries cq = _cq;
-                    //si = _cq.SqlServerInfo;
-                    //edition = _cq.SqlEdition;
-                    //version = _cq.SqlVerion;
-                    //veeamVersion = _cq.VbrVersion;
+                    CQueries cq = new();
+                    si = cq.SqlServerInfo;
+                    edition = cq.SqlEdition;
+                    version = cq.SqlVerion;
                     log.Info("starting sql queries..done!");
                 }
                 catch (Exception e)
@@ -1384,7 +1383,7 @@ namespace VeeamHealthCheck.Reporting.Html
             csv = csv.OrderBy(y => y.CreationTime).ToList();
             csv.Reverse();
             //csv = csv.OrderBy(x => x.CreationTime).ToList();
-            
+
             //XDocument doc = XDocument.Load(_testFile);
 
             //doc.Root.Add(extElement);
@@ -1400,11 +1399,20 @@ namespace VeeamHealthCheck.Reporting.Html
                     //XElement extElement = new XElement("jobSessions");
 
                     //newDoc.Root.Add(extElement);
-                    string outDir = CVariables.desiredDir + "\\JobSessions";
-                    if(!Directory.Exists(outDir))
+                    string outDir = CVariables.desiredDir + "\\JobSessionReports";
+                    if (!Directory.Exists(outDir))
                         Directory.CreateDirectory(outDir);
-                            
-                      string docName = outDir + "\\" + cs.JobName + ".html";
+
+                    string docName = outDir + "\\";
+                    if (MainWindow._scrub)
+                    {
+                        outDir += _scrubber.ScrubItem(cs.JobName) + ".html";
+                    }
+                    else
+                    {
+                        outDir += cs.JobName + ".html";
+                    }
+                     
                     string s = _form.FormHeader();
                     s += "<h2>" + cs.JobName + "</h2>";
 
@@ -1459,9 +1467,9 @@ namespace VeeamHealthCheck.Reporting.Html
                                 s += TableData(c.DedupRatio, "dedupratio");
                                 s += TableData(c.IsRetry, "isretry");
                                 s += TableData(c.JobDuration, "jobDuration");
-                                s += TableData(c.minTime.ToString(),"minTime");
-                                s += TableData(c.maxTime.ToString(),"maxtime");
-                                s += TableData(c.avgTime.ToString(),"avgTime");
+                                s += TableData(c.minTime.ToString(), "minTime");
+                                s += TableData(c.maxTime.ToString(), "maxtime");
+                                s += TableData(c.avgTime.ToString(), "avgTime");
                                 s += TableData(c.ProcessingMode, "processingmode");
                                 s += TableData(c.Status, "status");
                                 s += TableData(c.TaskDuration, "taskDuration");

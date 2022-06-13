@@ -21,6 +21,7 @@ namespace VeeamHealthCheck.Reporting.Html.VB365
         {
             RunCompiler();
         }
+        public void Dispose() { }
         private void RunCompiler()
         {
             _htmldoc += _form.FormHeader();

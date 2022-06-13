@@ -112,25 +112,26 @@ namespace VeeamHealthCheck
         {
 
 
-            if (_isVbr)
-            {
-                //CCsvToXml c = new("vbr", _scrub, false, _openHtml, _import);
-                //c.Dispose();
+            //if (_isVbr)
+            //{
+            //    //CCsvToXml c = new("vbr", _scrub, false, _openHtml, _import);
+            //    //c.Dispose();
 
-                CReportModeSelector cMode = new();
-                cMode.Run();
+            //    CReportModeSelector cMode = new();
+            //    cMode.Run();
 
-            }
-            if (_isVb365)
-            {
-                CReportModeSelector cMode = new();
-                cMode.Run();
-            }
-            else
-            {
-                CReportModeSelector cMode = new();
-                cMode.Run();
-            }
+            //}
+            //if (_isVb365)
+            //{
+            //    CReportModeSelector cMode = new();
+            //    cMode.Run();
+            //}
+            //else
+            //{
+            CReportModeSelector cMode = new();
+            cMode.Run();
+            cMode.Dispose();
+            //}
         }
         private void Import_click(object sender, RoutedEventArgs e)
         {

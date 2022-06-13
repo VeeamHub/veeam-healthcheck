@@ -331,11 +331,26 @@ namespace VeeamHealthCheck.Html
             summary.Add("");
             summary.Add("");
             summary.Add(Math.Round(totalSessionSuccessPercent, 2).ToString()); //TODO: Make this total sessions - total failed sessions / total session;
-            summary.Add(Math.Round(avgBackupSizes.Average(), 0).ToString());
+            if (avgBackupSizes.Count > 0)
+                summary.Add(Math.Round(avgBackupSizes.Average(), 0).ToString());
+            else
+                summary.Add("0");
             summary.Add(Math.Round(maxBackupSize.Sum(), 0).ToString());
-            summary.Add(Math.Round(avgDataSizes.Average(), 0).ToString());
-            summary.Add(Math.Round(avgRates.Average(), 2).ToString());
-            summary.Add(Math.Round(maxDataSizes.Sum(), 2).ToString());
+
+            if (avgDataSizes.Count > 0)
+                summary.Add(Math.Round(avgDataSizes.Average(), 0).ToString());
+            else
+                summary.Add("0");
+
+            if (avgRates.Count > 0)
+                summary.Add(Math.Round(avgRates.Average(), 2).ToString());
+            else
+                summary.Add("0");
+
+            if (maxDataSizes.Count > 0)
+                summary.Add(Math.Round(maxDataSizes.Sum(), 2).ToString());
+            else
+                summary.Add("0");
             
             sendBack.Add(summary);
             //extElement.Add(ReccomendationText());

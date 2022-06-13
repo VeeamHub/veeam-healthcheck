@@ -112,6 +112,8 @@ namespace VeeamHealthCheck.DataTypes
                 eInfo.UsePerVMBackupFiles = bool.Parse(s.UsePerVMBackupFiles);
 
                 int c = eInfo.Extents.Count();
+                
+                var v = ExtentInfo.Count();
                 string[] eCount = eInfo.Extents.Split();
                 eInfo.ExtentCount = eCount.Count();
 
