@@ -682,5 +682,10 @@ _form.TableHeader(ResourceHandler.SbrExt15, ResourceHandler.SbrExt15TT) +
             s += _form.SectionEnd(summary);
             return s;
         }
+        public void AddSessionsFiles()
+        {
+            _df.JobSessionInfoToXml();
+        }
+
     }
 }

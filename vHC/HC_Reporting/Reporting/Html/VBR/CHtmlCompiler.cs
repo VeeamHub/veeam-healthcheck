@@ -118,6 +118,8 @@ namespace VeeamHealthCheck.Html
             _htmldoc += _tables.AddJobSessSummTable();
             _htmldoc += _tables.AddJobInfoTable();
 
+            _tables.AddSessionsFiles();
+
 
 
             _htmldoc += "<script type=\"text/javascript\">";

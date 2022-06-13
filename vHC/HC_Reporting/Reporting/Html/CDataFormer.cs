@@ -11,6 +11,7 @@ using VeeamHealthCheck.DataTypes;
 using VeeamHealthCheck.DB;
 using VeeamHealthCheck.Html;
 using VeeamHealthCheck.RegSettings;
+using VeeamHealthCheck.Reporting.Html.Shared;
 using VeeamHealthCheck.Scrubber;
 using VeeamHealthCheck.Shared.Logging;
 using static VeeamHealthCheck.DB.CModel;
@@ -29,7 +30,7 @@ namespace VeeamHealthCheck.Reporting.Html
         private bool _isBackupServerWan;
         //private CQueries _cq = new();
         private Dictionary<string, int> _repoJobCount;
-        private CXmlHandler _scrubber;
+        private CXmlHandler _scrubber = new();
         private bool _scrub;
         private bool _checkLogs;
         private bool _isImport;
@@ -205,7 +206,7 @@ namespace VeeamHealthCheck.Reporting.Html
                 else if (sobrRepo.Any(x => x.immute == "True"))
                 {
                     secSummary.Add(1);
-                    
+
                     //return secSummary;
                 }
 
@@ -1372,16 +1373,18 @@ namespace VeeamHealthCheck.Reporting.Html
             return jss.JobSessionSummaryToXml();
 
         }
-        private void JobSessionInfoToXml()
+        public void JobSessionInfoToXml()
         {
             log.Info("converting job session info to xml");
+            CHtmlFormatting _form = new();
+
             List<CJobSessionInfo> csv = _dTypeParser.JobSessions;
             csv = csv.OrderBy(x => x.Name).ToList();
 
             csv = csv.OrderBy(y => y.CreationTime).ToList();
             csv.Reverse();
             //csv = csv.OrderBy(x => x.CreationTime).ToList();
-
+            
             //XDocument doc = XDocument.Load(_testFile);
 
             //doc.Root.Add(extElement);
@@ -1393,14 +1396,41 @@ namespace VeeamHealthCheck.Reporting.Html
                 if (!processedJobs.Contains(cs.JobName))
                 {
                     processedJobs.Add(cs.JobName);
-                    XDocument newDoc = new XDocument(new XElement("root"));
-                    XElement extElement = new XElement("jobSessions");
+                    //XDocument newDoc = new XDocument(new XElement("root"));
+                    //XElement extElement = new XElement("jobSessions");
 
-                    newDoc.Root.Add(extElement);
-                    string docName = "xml\\" + cs.JobName + ".xml";
-                    docName = VerifyDocName(docName);
-                    newDoc.AddFirst(new XProcessingInstruction("xml-stylesheet", "type=\"text/xsl\" href=\"SessionReport.xsl\""));
-                    XElement xml = null;
+                    //newDoc.Root.Add(extElement);
+                    string outDir = CVariables.desiredDir + "\\JobSessions";
+                    if(!Directory.Exists(outDir))
+                        Directory.CreateDirectory(outDir);
+                            
+                      string docName = outDir + "\\" + cs.JobName + ".html";
+                    string s = _form.FormHeader();
+                    s += "<h2>" + cs.JobName + "</h2>";
+
+                    s += "<table border=\"1\"><tr>";
+                    s += _form.TableHeader("Job Name", "Name of job");
+                    s += _form.TableHeader("VM Name", "Name of VM/Server within the job");
+                    s += _form.TableHeader("Alg", "Job Algorithm");
+                    s += _form.TableHeader("Primary Bottleneck", "Primary detected bottleneck");
+                    s += _form.TableHeader("BottleNeck", "Detected bottleneck breakdown");
+                    s += _form.TableHeader("CompressionRatio", "Calculated compression ratio");
+                    s += _form.TableHeader("Start Time", "Start time of the backup job");
+                    s += _form.TableHeader("BackupSize", "Detected size of backup file");
+                    s += _form.TableHeader("DataSize", "Detected size of original VM/server (provisioned, not actual)");
+                    s += _form.TableHeader("DedupRatio", "Calculated deduplication ratio");
+                    s += _form.TableHeader("Is Retry", "Is this a retry run?");
+                    s += _form.TableHeader("Job Duration", "Duration of job in minutes");
+                    s += _form.TableHeader("Min Time", "Shorted detected job duration in minutes");
+                    s += _form.TableHeader("Max Time", "Longest detected job duration in minutes");
+                    s += _form.TableHeader("Avg Time", "Average job duration in minutes");
+                    s += _form.TableHeader("Processing Mode", "Processing mode used in the job (blank = SAN)");
+                    s += _form.TableHeader("Status", "Final status of the job");
+                    s += _form.TableHeader("Task Duration", "Duration of the VM/server within the job in minutes");
+                    s += "</tr>";
+                    //docName = VerifyDocName(docName);
+                    //newDoc.AddFirst(new XProcessingInstruction("xml-stylesheet", "type=\"text/xsl\" href=\"SessionReport.xsl\""));
+                    //XElement xml = null;
                     foreach (var c in csv)
                     {
                         try
@@ -1410,47 +1440,50 @@ namespace VeeamHealthCheck.Reporting.Html
                                 string jname = c.JobName;
                                 string vmName = c.VmName;
                                 //string repo = _scrubber.ScrubItem(c.)
-                                if (_scrub)
+                                if (MainWindow._scrub)
                                 {
                                     jname = _scrubber.ScrubItem(c.JobName, "job");
                                     vmName = _scrubber.ScrubItem(c.VmName, "vm");
                                 }
 
-
-                                xml = new XElement("session",
-                                    new XElement("alg", c.Alg),
-                                    new XElement("backupsize", c.BackupSize),
-                                    new XElement("bottleneck", c.Bottleneck),
-                                    new XElement("compression", c.CompressionRatio),
-                                    new XElement("creationtime", c.CreationTime),
-                                    new XElement("datasize", c.DataSize),
-                                    new XElement("dedupratio", c.DedupRatio),
-                                    new XElement("isretry", c.IsRetry),
-                                    new XElement("jobDuration", c.JobDuration),
-                                    new XElement("jobName", jname),
-                                    new XElement("minTime", c.minTime),
-                                    new XElement("maxtime", c.maxTime),
-                                    new XElement("avgTime", c.avgTime),
-                                    new XElement("primBottleneck", c.PrimaryBottleneck),
-                                    new XElement("processingmode", c.ProcessingMode),
-                                    new XElement("status", c.Status),
-                                    new XElement("taskDuration", c.TaskDuration),
-                                    new XElement("vmName", vmName
-
-                                    )); ;
-
-                                extElement.Add(xml);
+                                s += "<tr>";
+                                s += TableData(jname, "jobName");
+                                s += TableData(vmName, "vmName");
+                                s += TableData(c.Alg, "alg");
+                                s += TableData(c.PrimaryBottleneck, "primBottleneck");
+                                s += TableData(c.Bottleneck, "bottleneck");
+                                s += TableData(c.CompressionRatio, "compression");
+                                s += TableData(c.CreationTime.ToString(), "creationtime");
+                                s += TableData(c.BackupSize.ToString(), "backupsize");
+                                s += TableData(c.DataSize.ToString(), "datasize");
+                                s += TableData(c.DedupRatio, "dedupratio");
+                                s += TableData(c.IsRetry, "isretry");
+                                s += TableData(c.JobDuration, "jobDuration");
+                                s += TableData(c.minTime.ToString(),"minTime");
+                                s += TableData(c.maxTime.ToString(),"maxtime");
+                                s += TableData(c.avgTime.ToString(),"avgTime");
+                                s += TableData(c.ProcessingMode, "processingmode");
+                                s += TableData(c.Status, "status");
+                                s += TableData(c.TaskDuration, "taskDuration");
+                                s += "</tr>";
 
                             }
                         }
                         catch (Exception e) { }
 
+
+                        //write HTML
+
                     }
                     try
                     {
-                        newDoc.Save(docName);
+                        string dir = Path.GetDirectoryName(docName);
+                        if (!Directory.Exists(dir))
+                            Directory.CreateDirectory(dir);
+                        File.WriteAllText(docName, s);
+                        // newDoc.Save(docName);
                         //string xmlString = newDoc.ToString();
-                        exporter.ExportHtml(docName);
+                        //exporter.ExportHtml(docName);
                     }
                     catch (Exception e) { }
 
@@ -1462,6 +1495,10 @@ namespace VeeamHealthCheck.Reporting.Html
             }
             //doc.Save(_testFile);
             log.Info("converting job session summary to xml..done!");
+        }
+        public string TableData(string data, string toolTip)
+        {
+            return String.Format("<td title=\"{0}\">{1}</td>", toolTip, data);
         }
 
 
