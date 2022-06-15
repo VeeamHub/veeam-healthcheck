@@ -1,0 +1,78 @@
+GlobalHeader = •	Global Configuration:
+GlobalColHeadLicStatus = Lic. Status
+GlobalColHeadLicExp = Lic. Expiry
+GlobalColHeadLicType = Lic. Type
+GlobalColHeadLicTo = Lic. To
+GlobalColHeadLicContact = Lic. Contact
+GlobalColHeadLicFor = Lic. For
+GlobalColHeadLicUsed = Lic Used
+GlobalColHeadSupExp = Support Expiry
+GlobalColHeadGFolderExcl = Global Folder Exclusions
+GlobalColHeadGRetExcl = Global Ret. Exclusions
+GlobalColHeadSessHisRet = Session History Retention
+GlobalColHeadNotifyEnabled = Notification Enabled
+GlobalColHeadNotifyOn = Notify On
+GlobalColHeadAutoUpdate = Automatic Updates
+GlobalSummaryHeader = Summary: 
+GlobalSummary1 = o	This section describes key data points from within the <a href="https://helpcenter.veeam.com/docs/vbo365/guide/vbo_general_application_settings.html" target="_blank"> General Options</a> configuration dialog of VB365, located under the Main Menu. Settings here apply globally to the entire VB365 environment (VB365 Server + Proxies + Repositories).
+GlobalNotesHeader = Notes:
+GlobalNotes1 = 	If current Licenses Used are getting close to the subscribed limit (“Licensed For”), consider reviewing current license usage and any upcoming needs.
+GlobalNotes2 = 	Default values for Folder Exclusions are designed for the most common use case, where Junk E-mail, Sync Issues, and hold items aren’t typically required within the backup dataset.
+GlobalNotes3 = 	Default values for Retention Policy Exclusions are designed for the most common use case, where items like Contacts & Calendars are seldom modified & typically minimal in storage consumption. Changes to these settings could lead to premature removal of these item types, where it may not be desired.
+GlobalNotes4 = •	Note: If multiple organizations (i.e. M365 tenants) are managed within a single VB365 environment that do require different Contact & Calendar treatment, Retention Exclusions can also be configured per-organization, instead of globally, within <a href="https://helpcenter.veeam.com/docs/vbo365/powershell/add-vboorganizationretentionexclusion.htm" target="_blank">PowerShell cmdlets<a>.
+GlobalNotes5 = 	It is highly recommended that <a href="https://helpcenter.veeam.com/docs/vbo365/guide/vbo_notification_settings.html" target="_blank" >e-mail notifications</a> are enabled, in the event that jobs encounter warnings and/or errors, to ensure that critical data is fully protected.
+GlobalNotes6 = 	Enabling automatic updates is recommended to ensure the VB365 environment is kept up-to-date. Alternatively, it is highly recommended that at least the “<a href="https://helpcenter.veeam.com/docs/vbo365/guide/vbo_configuring_update.html" target="_blank">Send email notification on available updates</a>” option is selected to ensure that critical update notifications are received.
+GlobalFolderExclTT = Folders that are excluded from processing in all backup jobs
+GlobalRetExclTT = Item types that that skipped when retention is applied (i.e. all of these item type will be kept indefinitely)
+GlobalLogRetTT = Period to keep session history for
+GlobalNotificationEnabledTT = Whether VB365 will send e-mail notifications
+GlobalNotifyOnTT = Notifications can be emailed on Job Success, Warning, and/or Failures
+
+
+BkpSrvDisksHeader = •	Backup Server Disks:
+BkpSrvDisksSummaryHeader = Summary: 
+BkpSrvDisksSummary1 = o	This section captures disks that are attached to the VB365 Backup Server, and their current state. Disk performance plays a role in determining the overall environment’s performance, especially on Proxy Servers where a local disk cache is created for Object Storage Repositories.
+BkpSrvDisksSummary2 = 	NOTE: This tool only captures the disk configuration of the VB365 Backup Server where the Health Check was initiated, and does not capture the current disk configuration of other servers (e.g. Proxy Servers) running external to that server; for this reason, you may consider collecting & reviewing those details with your Veeam Engineer.
+BkpSrvDisksNotesHeader = Notes:
+BkpSrvDisksNotes1 = 	Fast-performing disk (Flash/SSD) is recommended for the boot drive, logs storage location, as most importantly any Object Storage cache storage location(s).
+BkpSrvDisksNotes2 = 	For a similar set of data points to the above table for each of your VB365 Proxy Servers, you can execute “Get-PhysicalDisk | Select-Object FriendlyName,DeviceId,BusType,MediaType,Manufacturer,Model,Size,AllocatedSize,OperationalStatus,HealthStatus” from a PowerShell console on those machines.
+BkpSrvDisksDeviceIdTT = The ID that Windows has registered to this disk based on the storage adapter addresses
+BkpSrvDisksAllocatedSize = Amount of available space currently allocated to overlying partitions
+BkpSrvDisksSizePhysical = Amount of available space on the disk
+
+
+ObjStgHeader = •	Object Storage:
+ObjStgSummaryHeader = Summary:
+ObjStgSummary1 = o	This section captures configuration of Object Storage targets that are used as the backing for a given VB365 Repository. When a VB365 Repository is extended with an Object Storage target, VB365 will create a <a href="https://helpcenter.veeam.com/docs/vbo365/guide/understanding_cache.html" target="_blank">local cache for metadata</a> in the specified location (see “Path” column in the <a href="#repos">Repositories table</a> above this section), and will transfer all backup data directly to the defined destination bucket/container.
+ObjStgNotesHeader = Notes:
+ObjStgNotes1 = 	Any targets defined in this table that have an empty value under Bound Repo should be reviewed, as they may not be in use. Object Storage targets can only be used when <a href="https://helpcenter.veeam.com/docs/vbo365/guide/new_repository_3.html" target="_blank">"bound”/assigned to a VB365 Backup Repository</a> definition (see <a href="#repos">Repositories table</a> above).
+ObjStgNotes2 = 	If a <a href="https://helpcenter.veeam.com/docs/vbo365/guide/s3_object_storage_bucket.html" target="_blank">Size Limit</a> has been defined for a given object storage target, the Free Space column in this report will indicate how close to that usage limit it is. Upon reaching this limit, current running jobs will be able to finish writing, but subsequent runs of jobs to this target will be prevented from starting.
+ObjStgNotes3 = 	It is often the default thought that “Cool” or “Infrequent” classes of object storage are best suited to backup datasets, however, depending on retention period, the <a href="https://helpcenter.veeam.com/docs/vbo365/guide/retention_policy.html" target=_blank">retention policy</a> selected, and the churn rate of the data, a “Hot” or “Standard” classes may be end up being more cost-optimized. Many factors can effect storage & API costs, but generally speaking, targeting short retentions to Hot/Standard storage classes may achieve a more optimized balance of API vs storage costs.
+ObjStgNotes4 = 	Ensure no data/storage lifecycle or tiering policies are applied to object storage buckets/containers used by VB365. This is not supported, and has potential to irreparably damage the backup dataset. Instead consider adding <a href="https://helpcenter.veeam.com/docs/vbo365/guide/vbo_new_copy_job.html" target="_blank">Backup Copy Jobs</a> for longer retention, which can support an Archive-class object storage repository within VB365.
+ObjStgNotes5 = 	As your dataset grows within the bucket/container, keep in mind that the required metadata in the local cache will also grow. Review the <a href="https://bp.veeam.com/vbo/guide/buildconfig/proxy-repo.html#object-storage-repository" target="_blank">VB365 Best Practices guide</a> for estimating this required space.
+ObjStgNotes6 = 	Review credentials/keys & IAM. As a best practice, limit credentials access to as few systems/persons as possible, and apply restrictive access policies for solely what is required. Generally, it is better to have a more individualized credentials with lesser access (e.g. per-bucket/container), than having fewer credentials with wider access (e.g. per-cloud/account/subscription). In the former scenario, if one bucket is compromised, the remaining ones remain secured.
+ObjStgType	= Primary bucket/container for backup jobs vs. Archive bucket/container for backup copy jobs
+ObjStgPath = The ‘folder’ (aka key name prefix) that objects destined for this bucket/container will end up within
+ObjStgSizeLimit = Storage consumption soft limit that is applied in the Advanced section of the bucket/container definition
+ObjStgFreeSpace = The remaining space available against the defined storage consumption limit
+
+
+JobStatHeader = •	Job Statistics:
+JobStatSummaryHeader = Summary:
+JobStatSummary1 = 	This section summarizes some key measurements about the performance of each defined job in the environment.
+JobStatSummary2 = •	Duration metrics serve as an indicator for comparing normal vs long-running jobs.
+JobStatSummary3 = •	Data Transferred metrics serves as an indicator for how much work is typically required to be done in the job run, as well as how much change is occurring in a job’s backup dataset between job runs.
+JobStatSummary4 = •	Object count metrics serve as an indicator for how balanced a job, proxy, or repository might be. An object, in VB365 terms, is anything that can be selected in a backup job: a Mailbox, Mail Archive, OneDrive, or SP Site all count as 1 object. Teams count as 3 (Team + Team Mailbox + Team Site).
+JobStatSummary5 = •	Item count metrics describe the number of items, across all processed objects in the job, that had changes to be backed up. They can serve as another indicator of how much work is typically required to be done in the job run (how many items must be enumerated & processed by proxy threads).
+JobStatSummary6 = •	Typical Bottleneck describes the most commonly occurring bottleneck across the set of job sessions analyzed. It serves as an indicator for where a performance bottleneck may exists. Review the <a href="https://helpcenter.veeam.com/docs/vbo365/guide/backup_metrics.html" target="_blank">Session Metrics section</a> of the help center for detailed descriptions.
+JobStatSummary7 = •	Job Average Throughput describes how much data the job was able to transfer during the duration of its run. It serves as an indicator for overall performance of all of the job operations combined (i.e. it doesn’t perform measurement solely when data is transferred, it instead includes all time spent in the job, including waits, retries, throttles, etc).
+JobStatSummary8 = •	Similar to the above, Job Average Processing Rate measures against the # of items processed during the duration of the job. It likewise serves as an indicator for overall performance of the job from an item perspective.
+JobStatNoteHeader = Notes:
+JobStatNote1 = 	Are your target backup windows completing on time? If so, then duration and job throughput may not be of concern. Microsoft 365 commonly throttles large amount of requests for data (such as backups), thus throughput rates typically report as quite a bit lower than one might expect within traditional self-managed services. If, however, your backups are not meeting your backup windows, then discuss performance tuning options with your Veeam Engineer.
+JobStatNote2 = •	<a href="https://bp.veeam.com/vbo/guide/operate/throttling.html#identify-throttling" target="_blank">Review your VB365 Proxy logs</a> for instances of HTTP errors 500 & 429, and/or the references to “throttling” or “throttled”, as potential indicators of Microsoft 365 service throttling.
+JobStatNote3 = 	Review <a href="https://bp.veeam.com/vbo/guide/design/maxconfig.html#recommended-maximums" target="_blank">recommended max object-count</a> guidelines from the VB365 Best Practices guide.
+JobStatNote4 = 	Review some of the <a href="https://bp.veeam.com/vbo/guide/design/networking.html" target="_blank">Networking guidance</a> from the VB365 Best Practices guide.
+JobStatNote5 = 	Ensure that <a href="https://www.veeam.com/kb3074" target="_blank">antivirus exclusions</a> are set for Veeam related services files, to avoid possible performance impacts of these types of engines
+JobStatNote6 = 	Open a support case if experiencing challenges solving performance issues, as support may be able to perform detailed log review, and provide fine tuning options and configuration parameters. It is typically recommended to enable <a href="https://helpcenter.veeam.com/docs/vbo365/guide/vbo_extended_logging.html" target="_blank">Extended Logging</a> temporarily, before submitting logs to support, to ensure the most detail available.
+
+#<a href="" target="_blank"> </a>

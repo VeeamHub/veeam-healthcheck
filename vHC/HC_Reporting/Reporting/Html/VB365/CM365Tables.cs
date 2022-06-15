@@ -5,6 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 using VeeamHealthCheck.CsvHandlers;
 using VeeamHealthCheck.Reporting.Html.Shared;
+using VeeamHealthCheck.Resources.Localization.VB365;
 
 namespace VeeamHealthCheck.Reporting.Html.VB365
 {
@@ -24,20 +25,20 @@ namespace VeeamHealthCheck.Reporting.Html.VB365
             s += _form.header2("Global Configuration");
             s += "<br>";
             s += "<table border=\"1\"><tr>";
-            s += _form.TableHeader("License Status", "License Status");
-            s += _form.TableHeader("License Expiry", "License Expiry");
-            s += _form.TableHeader("License Type", "License Type");
-            s += _form.TableHeader("Licensed To", "Licensed To");
-            s += _form.TableHeader("License Contact", "License Contact");
-            s += _form.TableHeader("Licensed For", "Licensed For");
-            s += _form.TableHeader("Licenses Used", "Licenses Used");
-            s += _form.TableHeader("Support Expiry", "Support Expiry");
-            s += _form.TableHeader("Global Folder Exclusions", "Global Folder Exclusions");
-            s += _form.TableHeader("Global Ret. Exclusions", "Global Ret. Exclusions");
-            s += _form.TableHeader("Log Retention", "Log Retention");
-            s += _form.TableHeader("Notification Enabled", "Notification Enabled");
-            s += _form.TableHeader("Notifify On", "Notifify On");
-            s += _form.TableHeader("Automatic Updates?", "Automatic Updates?");
+            s += _form.TableHeader(Vb365ResourceHandler.GlobalColHeadLicStatus, "License Status");
+            s += _form.TableHeader(Vb365ResourceHandler.GlobalColHeadLicExp, "License Expiry");
+            s += _form.TableHeader(Vb365ResourceHandler.GlobalColHeadLicType, "License Type");
+            s += _form.TableHeader(Vb365ResourceHandler.GlobalColHeadLicTo, "Licensed To");
+            s += _form.TableHeader(Vb365ResourceHandler.GlobalColHeadLicContact, "License Contact");
+            s += _form.TableHeader(Vb365ResourceHandler.GlobalColHeadLicFor, "Licensed For");
+            s += _form.TableHeader(Vb365ResourceHandler.GlobalColHeadLicUsed, "Licenses Used");
+            s += _form.TableHeader(Vb365ResourceHandler.GlobalColHeadSupExp, "Support Expiry");
+            s += _form.TableHeader(Vb365ResourceHandler.GlobalColHeadGFolderExcl, "Global Folder Exclusions");
+            s += _form.TableHeader(Vb365ResourceHandler.GlobalColHeadGRetExcl, "Global Ret. Exclusions");
+            s += _form.TableHeader(Vb365ResourceHandler.GlobalColHeadSessHisRet, "Log Retention");
+            s += _form.TableHeader(Vb365ResourceHandler.GlobalColHeadNotifyEnabled, "Notification Enabled");
+            s += _form.TableHeader(Vb365ResourceHandler.GlobalColHeadNotifyOn, "Notifify On");
+            s += _form.TableHeader(Vb365ResourceHandler.GlobalColHeadAutoUpdate, "Automatic Updates?");
             s += "</tr>";
 
             var global = _csv.GetDynamicVboGlobal().ToList();
@@ -45,6 +46,9 @@ namespace VeeamHealthCheck.Reporting.Html.VB365
             foreach (var gl in global)
             {
                 int counter = 0;
+               // List<string> g2 = gl;
+                
+                //s += _form.TableData("","");
                 foreach (var g in gl)
                 {
                     string output = g.Value;

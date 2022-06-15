@@ -10,11 +10,11 @@
     <Company>Veeam</Company>
     <Authors>AdamC</Authors>
     <ApplicationIcon>Veeam_HealthCheck_228x228.ico</ApplicationIcon>
-    <AssemblyVersion>1.0.2.481</AssemblyVersion>
+    <AssemblyVersion>1.0.2.495</AssemblyVersion>
     <SignAssembly>true</SignAssembly>
     <AssemblyOriginatorKeyFile>vhc_keyfile2.pfx</AssemblyOriginatorKeyFile>
     <DelaySign>false</DelaySign>
-    <FileVersion>1.0.2.481</FileVersion>
+    <FileVersion>1.0.2.495</FileVersion>
     <DebugType>full</DebugType>
 	  <SelfContained>true</SelfContained>
 	  <!--These 2 lines are what produce the single file utility. Possibly doesn't work...-->
@@ -63,6 +63,7 @@
 
   <ItemGroup>
     <None Remove="Reporting\Html\JavaScript1.js" />
+    <None Remove="Resources\Localization\VB365\vb365_vhcres.resources" />
     <None Remove="Resources\Localization\vhcres.fr-FR.resources" />
     <None Remove="Resources\Localization\vhcres.ja.resources" />
     <None Remove="Resources\Localization\vhcres.zh-cn.resources" />
@@ -99,6 +100,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <EmbeddedResource Include="Resources\Localization\VB365\vb365_vhcres.resources" />
     <EmbeddedResource Include="Resources\Localization\vhcres.fr-FR.resources" />
     <EmbeddedResource Include="Resources\Localization\vhcres.ja.resources" />
     <EmbeddedResource Include="Resources\Localization\vhcres.resources">
