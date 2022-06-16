@@ -33,11 +33,11 @@ namespace VeeamHealthCheck.Reporting.Html.VB365
             s += _form.TableHeader(Vb365ResourceHandler.GlobalColHeadLicFor, "Licensed For");
             s += _form.TableHeader(Vb365ResourceHandler.GlobalColHeadLicUsed, "Licenses Used");
             s += _form.TableHeader(Vb365ResourceHandler.GlobalColHeadSupExp, "Support Expiry");
-            s += _form.TableHeader(Vb365ResourceHandler.GlobalColHeadGFolderExcl, "Global Folder Exclusions");
-            s += _form.TableHeader(Vb365ResourceHandler.GlobalColHeadGRetExcl, "Global Ret. Exclusions");
-            s += _form.TableHeader(Vb365ResourceHandler.GlobalColHeadSessHisRet, "Log Retention");
-            s += _form.TableHeader(Vb365ResourceHandler.GlobalColHeadNotifyEnabled, "Notification Enabled");
-            s += _form.TableHeader(Vb365ResourceHandler.GlobalColHeadNotifyOn, "Notifify On");
+            s += _form.TableHeader(Vb365ResourceHandler.GlobalColHeadGFolderExcl, Vb365ResourceHandler.GlobalFolderExclTT);
+            s += _form.TableHeader(Vb365ResourceHandler.GlobalColHeadGRetExcl, Vb365ResourceHandler.GlobalRetExclTT);
+            s += _form.TableHeader(Vb365ResourceHandler.GlobalColHeadSessHisRet, Vb365ResourceHandler.GlobalLogRetTT);
+            s += _form.TableHeader(Vb365ResourceHandler.GlobalColHeadNotifyEnabled, Vb365ResourceHandler.GlobalNotificationEnabledTT);
+            s += _form.TableHeader(Vb365ResourceHandler.GlobalColHeadNotifyOn, Vb365ResourceHandler.GlobalNotifyOnTT);
             s += _form.TableHeader(Vb365ResourceHandler.GlobalColHeadAutoUpdate, "Automatic Updates?");
             s += "</tr>";
 
