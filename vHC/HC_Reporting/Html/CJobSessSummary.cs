@@ -305,8 +305,9 @@ namespace VeeamHealthCheck.Html
                 catch(Exception e) { }
             }
 
-            double totalSessionSuccessPercent = ((totalSessions - totalFailedSessions + totalRetries)/ totalSessions) * 100;
-            double p = ((totalSessions - totalFailedSessions + totalRetries) / totalSessions) * 100;
+            //double totalSessionSuccessPercent = ((totalSessions - totalFailedSessions + totalRetries)/ totalSessions) * 100;
+            double totalSessionSuccessPercent = ((totalSessions - totalFailedSessions) / totalSessions) * 100; // removed + totalRetries because they should be already counted in the totalsessions
+            //double p = ((totalSessions - totalFailedSessions + totalRetries) / totalSessions) * 100;
 
             var summaryXml = new XElement("session",
                 new XElement("name", "Total"),
