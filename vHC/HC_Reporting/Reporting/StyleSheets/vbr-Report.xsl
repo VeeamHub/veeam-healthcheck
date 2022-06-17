@@ -77,7 +77,7 @@
 			.content {
 			padding: 0 18px;
 			display: none;
-			overflow: hidden;
+			overflow: scroll;
 			background-color: #f1f1f1;
 			transition: max-height 0.2s ease-out;
 			}

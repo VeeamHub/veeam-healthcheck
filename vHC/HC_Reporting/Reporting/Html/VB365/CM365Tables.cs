@@ -403,7 +403,7 @@ namespace VeeamHealthCheck.Reporting.Html.VB365
             s += "<br>";
             s += "<table border=\"1\"><tr>";
             s += _form.TableHeader("Friendly Name", "Friendly Name");
-            s += _form.TableHeader("DeviceId", "DeviceId");
+            s += _form.TableHeader("DeviceId", Vb365ResourceHandler.BkpSrvDisksDeviceIdTT);
             s += _form.TableHeader("Bus Type", "Bus Type");
             s += _form.TableHeader("Media Type", "Media Type");
             s += _form.TableHeader("Manufacturer", "Manufacturer");
