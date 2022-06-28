@@ -692,18 +692,19 @@ namespace VeeamHealthCheck.Reporting.Html.VB365
             double stale = 0;
             var global = _csv.GetDynVboProtStat().ToList();
             var lic = _csv.GetDynamicVboGlobal().ToList();
-            foreach (var li in lic)
-            {
-                string s2 = li.licensesused;
-                double.TryParse(s2, out protectedUsers);
-            }
+            //foreach (var li in lic)
+            //{
+            //    string s2 = li.licensesused;
+            //    double.TryParse(s2, out protectedUsers);
+            //}
             //int.TryParse(p, out int protectedUsers);
             foreach (var gl in global)
             {
-                //s += "<tr>";
-                if (gl.protectionstatus == "Unprotected")
+                if (gl.hasbackup == "True" && gl.isstale == "False")
+                    protectedUsers++;
+                if (gl.hasbackup == "False")
                     notProtectedUsers++;
-                if (gl.protectionstatus == "Stale Backup")
+                if (gl.isstale == "True")
                     stale++;
             }
 
