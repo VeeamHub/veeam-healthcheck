@@ -33,11 +33,11 @@ namespace VeeamHealthCheck.Reporting.Html.VB365
             s += _form.TableHeader(Vb365ResourceHandler.GlobalColHeadLicFor, "Licensed For");
             s += _form.TableHeader(Vb365ResourceHandler.GlobalColHeadLicUsed, "Licenses Used");
             s += _form.TableHeader(Vb365ResourceHandler.GlobalColHeadSupExp, "Support Expiry");
-            s += _form.TableHeader(Vb365ResourceHandler.GlobalColHeadGFolderExcl, "Global Folder Exclusions");
-            s += _form.TableHeader(Vb365ResourceHandler.GlobalColHeadGRetExcl, "Global Ret. Exclusions");
-            s += _form.TableHeader(Vb365ResourceHandler.GlobalColHeadSessHisRet, "Log Retention");
-            s += _form.TableHeader(Vb365ResourceHandler.GlobalColHeadNotifyEnabled, "Notification Enabled");
-            s += _form.TableHeader(Vb365ResourceHandler.GlobalColHeadNotifyOn, "Notifify On");
+            s += _form.TableHeader(Vb365ResourceHandler.GlobalColHeadGFolderExcl, Vb365ResourceHandler.GlobalFolderExclTT);
+            s += _form.TableHeader(Vb365ResourceHandler.GlobalColHeadGRetExcl, Vb365ResourceHandler.GlobalRetExclTT);
+            s += _form.TableHeader(Vb365ResourceHandler.GlobalColHeadSessHisRet, Vb365ResourceHandler.GlobalLogRetTT);
+            s += _form.TableHeader(Vb365ResourceHandler.GlobalColHeadNotifyEnabled, Vb365ResourceHandler.GlobalNotificationEnabledTT);
+            s += _form.TableHeader(Vb365ResourceHandler.GlobalColHeadNotifyOn, Vb365ResourceHandler.GlobalNotifyOnTT);
             s += _form.TableHeader(Vb365ResourceHandler.GlobalColHeadAutoUpdate, "Automatic Updates?");
             s += "</tr>";
 
@@ -403,7 +403,7 @@ namespace VeeamHealthCheck.Reporting.Html.VB365
             s += "<br>";
             s += "<table border=\"1\"><tr>";
             s += _form.TableHeader("Friendly Name", "Friendly Name");
-            s += _form.TableHeader("DeviceId", "DeviceId");
+            s += _form.TableHeader("DeviceId", Vb365ResourceHandler.BkpSrvDisksDeviceIdTT);
             s += _form.TableHeader("Bus Type", "Bus Type");
             s += _form.TableHeader("Media Type", "Media Type");
             s += _form.TableHeader("Manufacturer", "Manufacturer");
@@ -707,6 +707,8 @@ namespace VeeamHealthCheck.Reporting.Html.VB365
                 if (gl.isstale == "True")
                     stale++;
             }
+            // TODO from ProtectionStatus -> (SUM of HasBackup = False) / total rows - 1 = percentage protected
+            // (SUM of HasBackup = False) is unprotected users
 
             double percent = notProtectedUsers / (notProtectedUsers + protectedUsers) * 100;
             double targetPercent = 20;

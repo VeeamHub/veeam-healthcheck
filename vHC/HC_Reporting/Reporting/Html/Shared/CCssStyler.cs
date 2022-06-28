@@ -70,7 +70,7 @@ namespace VeeamHealthCheck.Reporting.Html.Shared
             ".content {\n" +
             "padding: 0 18px;\n" +
             "display: none;\n" +
-            "overflow: hidden;\n" +
+            "overflow: scroll;\n" +
             "background-color: #f1f1f1;\n" +
             "transition: max-height 0.2s ease-out;\n" +
             "}\n" +
