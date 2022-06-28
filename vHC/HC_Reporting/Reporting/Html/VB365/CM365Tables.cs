@@ -706,6 +706,8 @@ namespace VeeamHealthCheck.Reporting.Html.VB365
                 if (gl.protectionstatus == "Stale Backup")
                     stale++;
             }
+            // TODO from ProtectionStatus -> (SUM of HasBackup = False) / total rows - 1 = percentage protected
+            // (SUM of HasBackup = False) is unprotected users
 
             double percent = notProtectedUsers / (notProtectedUsers + protectedUsers) * 100;
             double targetPercent = 20;
