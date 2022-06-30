@@ -10,11 +10,11 @@
     <Company>Veeam</Company>
     <Authors>AdamC</Authors>
     <ApplicationIcon>Veeam_HealthCheck_228x228.ico</ApplicationIcon>
-    <AssemblyVersion>1.0.2.498</AssemblyVersion>
+    <AssemblyVersion>1.0.2.507</AssemblyVersion>
     <SignAssembly>true</SignAssembly>
     <AssemblyOriginatorKeyFile>vhc_keyfile2.pfx</AssemblyOriginatorKeyFile>
     <DelaySign>false</DelaySign>
-    <FileVersion>1.0.2.498</FileVersion>
+    <FileVersion>1.0.2.507</FileVersion>
     <DebugType>full</DebugType>
 	  <SelfContained>true</SelfContained>
 	  <!--These 2 lines are what produce the single file utility. Possibly doesn't work...-->
@@ -126,7 +126,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="Reporting\CsvHandlers\VB365\" />
     <Folder Include="Startup\GUI\" />
   </ItemGroup>
 

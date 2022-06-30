@@ -119,7 +119,7 @@ namespace VeeamHealthCheck.Html
                 var m365 = parser.GetDynamicVboGlobal().ToList();
                 foreach(var m in m365)
                 {
-                    return m.licensedto;
+                    return m.LicensedTo;
                 }
                 
             }

@@ -1,4 +1,4 @@
-GlobalHeader = •	Global Configuration:
+﻿GlobalHeader = •	Global Configuration:
 GlobalColHeadLicStatus = Lic. Status
 GlobalColHeadLicExp = Lic. Expiry
 GlobalColHeadLicType = Lic. Type
@@ -76,3 +76,42 @@ JobStatNote5 = 	Ensure that <a href="https://www.veeam.com/kb3074" target="_b
 JobStatNote6 = 	Open a support case if experiencing challenges solving performance issues, as support may be able to perform detailed log review, and provide fine tuning options and configuration parameters. It is typically recommended to enable <a href="https://helpcenter.veeam.com/docs/vbo365/guide/vbo_extended_logging.html" target="_blank">Extended Logging</a> temporarily, before submitting logs to support, to ensure the most detail available.
 
 #<a href="" target="_blank"> </a>
+
+RepoColumn1 = Bound Proxy
+RepoColumn2 = Name
+RepoColumn3 = Description
+RepoColumn4 = Type
+RepoColumn5 = Path
+RepoColumn6 = Object Repo
+RepoColumn7 = Encryption
+RepoColumn8 = State
+RepoColumn9 = Capacity
+RepoColumn10 = Free
+RepoColumn11 = Data Stored
+RepoColumn12 = Cache Free Space
+RepoColumn13 = Daily Change Rate
+RepoColumn14 = Retention
+RepoColumnTT1 = Which proxy is the repository bound?
+RepoColumnTT2 = Name of the repository
+RepoColumnTT3 = Description given during repository creation
+RepoColumnTT4 = Type of repository
+RepoColumnTT5 = Path to location of files
+RepoColumnTT6 = Which Object Repository is linked, if any
+RepoColumnTT7 = Does the repository use encryption?
+RepoColumnTT8 = What is the current state of the repository?
+RepoColumnTT9 = What is the total capacity of the repository?
+RepoColumnTT10 = What is the current free space of the repository?
+RepoColumnTT11 = What is the total of data stored on repository?
+RepoColumnTT12 = How much space is free in cache?
+RepoColumnTT13 = What is the daily change rate?
+RepoColumnTT14 = Current retention settings.
+
+
+SecurityTableColumn1 = Win. Firewall Enabled?
+SecurityTableColumn2 = Internet Proxy?
+SecurityTable2Column1 = Service
+SecurityTable2Column2 = Enabled
+SecurityTable2Column3 = Port
+SecurityTable2Column4 = Cert
+SecurityTable2Column5 = Expires
+SecurityTable2Column6 = Self-Signed

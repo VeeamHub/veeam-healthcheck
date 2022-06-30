@@ -27,12 +27,12 @@ namespace VeeamHealthCheck.Reporting.Html.VB365
             s += "<table border=\"1\"><tr>";
             s += _form.TableHeader(Vb365ResourceHandler.GlobalColHeadLicStatus, "License Status");
             s += _form.TableHeader(Vb365ResourceHandler.GlobalColHeadLicExp, "License Expiry");
+            s += _form.TableHeader(Vb365ResourceHandler.GlobalColHeadSupExp, "Support Expiry");
             s += _form.TableHeader(Vb365ResourceHandler.GlobalColHeadLicType, "License Type");
             s += _form.TableHeader(Vb365ResourceHandler.GlobalColHeadLicTo, "Licensed To");
             s += _form.TableHeader(Vb365ResourceHandler.GlobalColHeadLicContact, "License Contact");
             s += _form.TableHeader(Vb365ResourceHandler.GlobalColHeadLicFor, "Licensed For");
             s += _form.TableHeader(Vb365ResourceHandler.GlobalColHeadLicUsed, "Licenses Used");
-            s += _form.TableHeader(Vb365ResourceHandler.GlobalColHeadSupExp, "Support Expiry");
             s += _form.TableHeader(Vb365ResourceHandler.GlobalColHeadGFolderExcl, Vb365ResourceHandler.GlobalFolderExclTT);
             s += _form.TableHeader(Vb365ResourceHandler.GlobalColHeadGRetExcl, Vb365ResourceHandler.GlobalRetExclTT);
             s += _form.TableHeader(Vb365ResourceHandler.GlobalColHeadSessHisRet, Vb365ResourceHandler.GlobalLogRetTT);
@@ -41,25 +41,24 @@ namespace VeeamHealthCheck.Reporting.Html.VB365
             s += _form.TableHeader(Vb365ResourceHandler.GlobalColHeadAutoUpdate, "Automatic Updates?");
             s += "</tr>";
 
-            var global = _csv.GetDynamicVboGlobal().ToList();
+            var global = _csv.GetDynamicVboGlobal();
             s += "<tr>";
             foreach (var gl in global)
             {
-                int counter = 0;
-               // List<string> g2 = gl;
-                
-                //s += _form.TableData("","");
-                foreach (var g in gl)
-                {
-                    string output = g.Value;
-                    if (MainWindow._scrub)
-                    {
-                        if (counter == 4)
-                            output = _scrubber.ScrubItem(output);
-                    }
-                    s += _form.TableData(output, "");
-                    counter++;
-                }
+                s += _form.TableData(gl.LicenseStatus, "");
+                s += _form.TableData(gl.LicenseExpiry, "");
+                s += _form.TableData(gl.SupportExpiry, "");
+                s += _form.TableData(gl.LicenseType, "");
+                s += _form.TableData(gl.LicensedTo, "");
+                s += _form.TableData(gl.LicenseContact, "");
+                s += _form.TableData(gl.LicensedFor, "");
+                s += _form.TableData(gl.LicensesUsed, "");
+                s += _form.TableData(gl.GlobalFolderExclusions, "");
+                s += _form.TableData(gl.GlobalRetExclusions, "");
+                s += _form.TableData(gl.LogRetention, "");
+                s += _form.TableData(gl.NotificationEnabled, "");
+                s += _form.TableData(gl.NotififyOn, "");
+                s += _form.TableData(gl.AutomaticUpdates, "");
             }
             s += "</tr></table>";
 
@@ -87,6 +86,7 @@ namespace VeeamHealthCheck.Reporting.Html.VB365
             s += _form.TableHeader("OS Version", "");
             s += _form.TableHeader("RAM", "");
             s += _form.TableHeader("CPUs", "");
+            s += _form.TableHeader("Extended Logging?", "");
 
             s += "</tr>";
 
@@ -124,47 +124,63 @@ namespace VeeamHealthCheck.Reporting.Html.VB365
             s += _form.header2("Repositories");
             s += "<br>";
             s += "<table border=\"1\"><tr>";
-            s += _form.TableHeader("Bound Proxy", "Bound Proxy");
-            s += _form.TableHeader("Name", "Name");
-            s += _form.TableHeader("Description", "Description");
-            s += _form.TableHeader("Type", "Type");
-            s += _form.TableHeader("Path", "Path");
-            s += _form.TableHeader("Object Repo", "Object Repo");
-            s += _form.TableHeader("Encryption?", "Encryption?");
-            s += _form.TableHeader("Out of Sync?", "Out of Sync?");
-            s += _form.TableHeader("Outdated?", "Outdated?");
-            s += _form.TableHeader("Capacity", "Capacity");
-            s += _form.TableHeader("Free", "");
-            s += _form.TableHeader("Data Stored", "");
-            s += _form.TableHeader("Cache Space Used", "Cache Space Used");
-            s += _form.TableHeader("Local Space Used", "Local Space Used");
-            s += _form.TableHeader("Object Space Used", "Object Space Used");
-            s += _form.TableHeader("Daily Change", "Daily Change");
-            s += _form.TableHeader("Retention", "Retention");
+            s += _form.TableHeader(Vb365ResourceHandler.RepoColumn1, Vb365ResourceHandler.RepoColumnTT1);
+            s += _form.TableHeader(Vb365ResourceHandler.RepoColumn2, Vb365ResourceHandler.RepoColumnTT2);
+            s += _form.TableHeader(Vb365ResourceHandler.RepoColumn3, Vb365ResourceHandler.RepoColumnTT3);
+            s += _form.TableHeader(Vb365ResourceHandler.RepoColumn4, Vb365ResourceHandler.RepoColumnTT4);
+            s += _form.TableHeader(Vb365ResourceHandler.RepoColumn5, Vb365ResourceHandler.RepoColumnTT5);
+            s += _form.TableHeader(Vb365ResourceHandler.RepoColumn6, Vb365ResourceHandler.RepoColumnTT6);
+            s += _form.TableHeader(Vb365ResourceHandler.RepoColumn7, Vb365ResourceHandler.RepoColumnTT7);
+            s += _form.TableHeader(Vb365ResourceHandler.RepoColumn8, Vb365ResourceHandler.RepoColumnTT8);
+            s += _form.TableHeader(Vb365ResourceHandler.RepoColumn9, Vb365ResourceHandler.RepoColumnTT9);
+            s += _form.TableHeader(Vb365ResourceHandler.RepoColumn10, Vb365ResourceHandler.RepoColumnTT10);
+            s += _form.TableHeader(Vb365ResourceHandler.RepoColumn11, Vb365ResourceHandler.RepoColumnTT11);
+            s += _form.TableHeader(Vb365ResourceHandler.RepoColumn12, Vb365ResourceHandler.RepoColumnTT12);
+            s += _form.TableHeader(Vb365ResourceHandler.RepoColumn13, Vb365ResourceHandler.RepoColumnTT13);
+            s += _form.TableHeader(Vb365ResourceHandler.RepoColumn14, Vb365ResourceHandler.RepoColumnTT14);
 
             s += "</tr>";
 
             var global = _csv.GetDynamicVboRepo().ToList();
-            foreach (var gl in global)
+
+            foreach (var g in global)
             {
                 s += "<tr>";
-                int counter = 0;
-                foreach (var g in gl)
-                {
-                    string output = g.Value;
-                    if (MainWindow._scrub)
-                    {
-                        if (counter == 0 || counter == 1 || counter == 2
-                            || counter == 4
-                            || counter == 5)
-                            output = _scrubber.ScrubItem(output);
-                    }
-                    s += _form.TableData(output, "");
-                    counter++;
-                }
+                //int counter = 0;
+                //string output = g.ToString();
+                string boundProxy = g.BoundProxy;
+                string name = g.Name;
+                string desc = g.Description;
+                string path = g.Path;
+                string objRepo = g.ObjectRepo;
 
+
+                if (MainWindow._scrub)
+                {
+                    boundProxy = _scrubber.ScrubItem(g.BoundProxy);
+                    name = _scrubber.ScrubItem(g.Name);
+                    desc = _scrubber.ScrubItem(g.Description);
+                    path = _scrubber.ScrubItem(g.Path);
+                    objRepo = _scrubber.ScrubItem(g.ObjectRepo);
+                }
+                s += _form.TableData(boundProxy, "");
+                s += _form.TableData(name, "");
+                s += _form.TableData(desc, "");
+                s += _form.TableData(g.Type, "");
+                s += _form.TableData(path, "");
+                s += _form.TableData(objRepo, "");
+                s += _form.TableData(g.Encryption, "");
+                s += _form.TableData(g.State, "");
+                s += _form.TableData(g.Capacity, "");
+                s += _form.TableData(g.Free, "");
+                s += _form.TableData(g.DataStored, "");
+                s += _form.TableData(g.CacheSpaceUsed, "");
+                s += _form.TableData(g.DailyChangeRate, "");
+                s += _form.TableData(g.Retention, "");
                 s += "</tr>";
+
             }
+
             s += "</table>";
 
             s += _summary.RepoSummary();
@@ -217,126 +233,78 @@ namespace VeeamHealthCheck.Reporting.Html.VB365
             s += _form.header2("Security Info");
             s += "<br>";
             s += "<table border=\"1\"><tr>";
-            s += _form.TableHeader("Win. Firewall Enabled?", "Win. Firewall Enabled?");
-            s += _form.TableHeader("Internet proxy?", "Internet proxy?");
-
-
+            s += _form.TableHeader(Vb365ResourceHandler.SecurityTableColumn1, "Win. Firewall Enabled?");
+            s += _form.TableHeader(Vb365ResourceHandler.SecurityTableColumn2, "Internet proxy?");
             s += "</tr>";
 
+
+
             var global = _csv.GetDynamicVboSec().ToList();
-            foreach (var gl in global)
+
+            foreach (var g in global)
             {
-                s += "<tr>";
+                string apiCert = g.APICert;
+                string serverCert = g.ServerCert;
+                string tenantCert = g.TenantAuthCert;
+                string portalCert = g.RestorePortalCert;
 
-                int counter = 0;
-                int certcounter = 0;
-                int nameIterator = 0;
-                foreach (var g in gl)
+
+                if (MainWindow._scrub)
                 {
-                    if (counter == 2)
-                    {
-                        s += "</table><table border =\"1\"><tr><br/>";
-                        s += _form.TableHeader("Service", "Enabled");
-                        s += _form.TableHeader("Enabled", "Enabled");
-                        s += _form.TableHeader("Port", "Server Cert");
-                        s += _form.TableHeader("Cert", "Server Cert PK Exportable?");
-                        // s += _form.TableHeader("Exportable", "Server Cert Expires");
-                        s += _form.TableHeader("Expires", "Server Cert Self-Signed?");
-                        s += _form.TableHeader("Self-Signed", "API Enabled?");
-                        //s += _form.TableHeader("API Port", "API Port");
-                        //s += _form.TableHeader("API Cert", "API Cert");
-                        //s += _form.TableHeader("API Cert PK Exportable?", "API Cert PK Exportable?");
-                        //s += _form.TableHeader("API Cert Expires", "API Cert Expires");
-                        //s += _form.TableHeader("API Cert Self-Signed?", "API Cert Self-Signed?");
-                        //s += _form.TableHeader("Tenant Auth Enabled?", "Tenant Auth Enabled?");
-                        //s += _form.TableHeader("Tenant Auth Cert", "Tenant Auth Cert");
-                        //s += _form.TableHeader("Tenant Auth PK Exportable?", "Tenant Auth PK Exportable?");
-                        //s += _form.TableHeader("Tenant Auth Cert Expires", "Tenant Auth Cert Expires");
-                        //s += _form.TableHeader("Tenant Auth Cert Self-Signed?", "Tenant Auth Cert Self-Signed?");
-                        //s += _form.TableHeader("Restore Portal Enabled?", "Restore Portal Enabled?");
-                        //s += _form.TableHeader("Restore Portal Cert", "Restore Portal Cert");
-                        //s += _form.TableHeader("Restore Portal Cert PK Exportable?", "Restore Portal Cert PK Exportable?");
-                        //s += _form.TableHeader("Restore Portal Cert Expires", "Restore Portal Cert Expires");
-                        //s += _form.TableHeader("Restore Portal Cert Self-Signed?", "Restore Portal Cert Self-Signed?");
-                        //s += _form.TableHeader("Operator Auth Enabled?", "Operator Auth Enabled?");
-                        //s += _form.TableHeader("Operator Auth Cert", "Operator Auth Cert");
-                        //s += _form.TableHeader("Operator Auth Cert PK Exportable?", "Operator Auth Cert PK Exportable?");
-                        //s += _form.TableHeader("Operator Auth Cert Expires", "Operator Auth Cert Expires");
-                        //s += _form.TableHeader("Operator Auth Cert Self-Signed?", "Operator Auth Cert Self-Signed?");
-                        s += "</tr><tr>";
-                        s += _form.TableData("Server", "");
-                        s += _form.TableData("", "");
-                        s += _form.TableData("", "");
-                        certcounter++;
-                    }
-                    if (certcounter == 7 ||
-                        certcounter == 13 ||
-                        certcounter == 18 ||
-                        certcounter == 23)
-                    {
-                        s += "</tr><tr>";
-                        if (nameIterator == 0)
-                            s += _form.TableData("API", "");
-                        if (nameIterator == 1)
-                            s += _form.TableData("Tenant Auth", "");
-                        if (nameIterator == 2)
-                            s += _form.TableData("Restore Portal", "");
-                        if (nameIterator == 3)
-                            s += _form.TableData("Operator Auth", "");
-
-                        nameIterator++;
-                    }
-                    if (certcounter == 15)
-                        s += _form.TableData("", "");
-                    if (certcounter == 4)
-                    {
-                        counter++;
-                        certcounter++;
-                        continue;
-                    }
-                    if (certcounter == 10)
-                    {
-                        counter++;
-                        certcounter++;
-                        continue;
-                    }
-                    //skipped on purpose
-                    if (certcounter == 16) { counter++; certcounter++; continue; }
-                    //skipped on purpose
-                    if (certcounter == 19)
-                        s += _form.TableData("", "");
-                    if (certcounter == 20) { counter++; certcounter++; continue; }
-                    //skipped on purpose
-                    if (certcounter == 24)
-                        s += _form.TableData("", "");
-                    if (certcounter == 25) { counter++; certcounter++; continue; }
-                    //skipped on purpose
-
-
-                    string output = g.Value;
-
-                    // 6 columns: Enabled? Port Cert Exportable? Expires Self-Signed
-                    if (MainWindow._scrub)
-                    {
-                        if (counter == 2 ||
-                            counter == 8 ||
-                            counter == 13 ||
-                            counter == 18 ||
-                            counter == 23)
-                            output = _scrubber.ScrubItem(output);
-                    }
-                    else
-                    {
-                        s += _form.TableData(output, "");
-
-                    }
-                    //s += _form.TableData(output, "");
-                    counter++;
-                    certcounter++;
+                    apiCert = _scrubber.ScrubItem(apiCert);
+                    serverCert = _scrubber.ScrubItem(serverCert);
+                    tenantCert = _scrubber.ScrubItem(tenantCert);
+                    portalCert = _scrubber.ScrubItem(portalCert);
                 }
 
+
+                s += "<tr>";
+                s += _form.TableData(g.WinFirewallEnabled, "");
+                s += _form.TableData(g.Internetproxy, "");
                 s += "</tr>";
+
+                s += "</table><table border =\"1\"><tr><br/>";
+                s += _form.TableHeader(Vb365ResourceHandler.SecurityTable2Column1, "Enabled");
+                s += _form.TableHeader(Vb365ResourceHandler.SecurityTable2Column2, "Enabled");
+                s += _form.TableHeader(Vb365ResourceHandler.SecurityTable2Column3, "Server Cert");
+                s += _form.TableHeader(Vb365ResourceHandler.SecurityTable2Column4, "Server Cert PK Exportable?");
+                s += _form.TableHeader(Vb365ResourceHandler.SecurityTable2Column5, "Server Cert PK Exportable?");
+                s += _form.TableHeader(Vb365ResourceHandler.SecurityTable2Column6, "Server Cert PK Exportable?");
+                s += "</tr><tr>";
+                s += _form.TableData("Server", "");
+                s += _form.TableData("", "");// enabled
+                s += _form.TableData("", "");// port
+                s += _form.TableData(g.ServerCert, "");// cert
+                s += _form.TableData(g.ServerCertExpires, "");// expires
+                s += _form.TableData(g.ServerCertSelfSigned, "");// self signed
+                s += "</tr><tr>";
+
+                s += _form.TableData("API", "");
+                s += _form.TableData(g.APIEnabled, "");
+                s += _form.TableData(g.APIPort, "");
+                s += _form.TableData(g.APICert, "");
+                s += _form.TableData(g.APICertExpires, "");
+                s += _form.TableData(g.APICertSelfSigned, "");
+                s += "</tr><tr>";
+                s += _form.TableData("Tenant Auth", "");
+                s += _form.TableData(g.TenantAuthEnabled, "");
+                s += _form.TableData("", "");
+                s += _form.TableData(g.TenantAuthCert, "");
+                s += _form.TableData(g.TenantAuthCertExpires, "");
+                s += _form.TableData(g.TenantAuthCertSelfSigned, "");
+                s += "</tr><tr>";
+                s += _form.TableData("Restore Portal", "");
+                s += _form.TableData(g.RestorePortalEnabled, "");
+                s += _form.TableData("", "");
+                s += _form.TableData(g.RestorePortalCert, "");
+                s += _form.TableData(g.RestorePortalCertExpires, "");
+                s += _form.TableData(g.RestorePortalCertSelfSigned, "");
+                s += "</tr>";
+
+
             }
+
+
             s += "</table>";
             s += _summary.SecSummary();
 

@@ -302,19 +302,24 @@ function New-DataTableEntry {
         )
     begin { }
     process {
-        $OutputObject = New-Object -TypeName pscustomobject
+        #if ($null -ne $Object)  {
+            $OutputObject = New-Object -TypeName pscustomobject
+            $parsedResults = @()
+            $parsedResults = Expand-Expression -BaseObject $Object -Expressions $PropertyNames
 
-        $parsedResults = Expand-Expression -BaseObject $Object -Expressions $PropertyNames
-
-        foreach ($result in $parsedResults) {
             
-            if (!$result.ColumnName.StartsWith("!")) {
-                $OutputObject | Add-Member -MemberType NoteProperty -Name $result.ColumnName -Value $result.Value
+
+
+            foreach ($result in $parsedResults) {
+                
+                if (!$result.ColumnName.StartsWith("!")) {
+                    $OutputObject | Add-Member -MemberType NoteProperty -Name $result.ColumnName -Value $result.Value
+                }
+
             }
 
-        }
-
-        return $OutputObject
+            return $OutputObject
+        #}
     }
     end { }
 }
@@ -588,13 +593,14 @@ function Get-VBOEnvironment {
         $e.VBOEntityData = $e.VBORepository | Where-Object {!($_.IsOutOfOrder -and $null -ne $_.ObjectStorageRepository)} | Get-VBOEntityData -Type User -WarningAction SilentlyContinue | Select-Object *,@{n="Repository";e={@{Id=$repo.Id;Name=$repo.Name}}},@{n="Proxy";e={$proxy=($e.VBOProxy | Where-Object { $_.id -eq $repo.ProxyId}); @{Id=$proxy.Id;Name=$proxy.Hostname}}} #slow/long-running. Exclude for IsOutOfOrder object repos added Jun 15
         # Build and index so that the search in the next function is orders of magnitude faster.
         $e.EntitiesIndex = @{}
-        foreach ($org in $e.VBOOrganization) { $Global:VBOEnvironment.EntitiesIndex[$org.Name] = @{}}
+        foreach ($org in $e.VBOOrganization) { $e.EntitiesIndex[$org.Name] = @{}}
         $e.EntitiesIndex.Test = @{}
         foreach ($ent in $e.VBOEntityData) {
             if ($ent.Type -eq "User") {
-                if ($null -ne $e.EntitiesIndex[$ent.Organization.DisplayName]) {
-                    if ($null -eq $e.EntitiesIndex[$ent.Organization.DisplayName][$ent.Email]) {
-                        $e.EntitiesIndex[$ent.Organization.DisplayName][$ent.Email] = $ent
+                if ($ent.Organization.DisplayName -in $e.EntitiesIndex.Keys) { # if the org name is actually needing collection (is in the index keys)
+                    if ($ent.Email -notin $e.EntitiesIndex[$ent.Organization.DisplayName].Keys) { # if the email is not already a key in the index, add it.
+                        $entityKey = ($ent.DisplayName+"-"+$ent.Email).Replace(" ","")
+                        $e.EntitiesIndex[$ent.Organization.DisplayName][$entityKey] = $ent
                     } else {
                         Write-LogFile -Message "Duplicate entity encountered in index: $($ent.Email)" -LogLevel DEBUG
                     }
@@ -821,10 +827,14 @@ function 95P {
         [int]$Percentile=95
         )
     begin {
-        $allItems = @()
+        $allItems = [System.Collections.ArrayList]@()
     }
     process {
-        $allItems += $Items;
+        if ($Items.Count -gt 1) {
+            $allItems = $Items
+        } else {
+            $allItems.Add($Items);
+        }
     }
     end {
         if ([string]::IsNullOrEmpty($Property)) {
@@ -835,7 +845,7 @@ function 95P {
 
         $result = $sortedItems | Select-Object -First ([math]::Floor(($allItems.Count*$Percentile/100)))
 
-        return $result | Select-Object -Last 1
+        return $result.GetValue($result.Length-1)
     }
 }
 function GetItemsLeft() {
@@ -1118,7 +1128,7 @@ Write-ElapsedAndMemUsage -Message "Mapped Orgs" -LogLevel PROFILE
 
 Write-LogFile -Message "Mapping Jobs..." -LogLevel DEBUG
 Write-Progress @progressSplat -PercentComplete ($progress++) -Status "Jobs...";
-$map.Jobs = $Global:VBOEnvironment.VBOJob + $Global:VBOEnvironment.VBOCopyJob | mde @(
+$map.Jobs = @($Global:VBOEnvironment.VBOJob) + @($Global:VBOEnvironment.VBOCopyJob) | mde @(
     'Organization=>if($null -ne $.Organization) { $.Organization } else { $.BackupJob.Organization }'
     'Name'
     'Description'
@@ -1171,26 +1181,36 @@ Write-ElapsedAndMemUsage -Message "Mapped Job Stats" -LogLevel PROFILE
 
 Write-LogFile -Message "Mapping Processing/Task Stats..." -LogLevel DEBUG
 Write-Progress @progressSplat -PercentComplete ($progress++) -Status "ProcessingStats...";
-$map.ProcessingStats = $Global:VBOEnvironment.VBOJobSession | Where-Object { $_.JobName -in $Global:VBOEnvironment.VBOJob.Name} | Group-Object JobName | mde @(
+$global:CollectorCurrentProcessItems = $Global:VBOEnvironment.VBOJobSession.Log.Count
+$map.ProcessingStats = $Global:VBOEnvironment.VBOJobSession | Where-Object { $_.JobName -in $Global:VBOEnvironment.VBOJob.Name} | Group-Object JobName | mde @(    
     '!Vars=>
         $PRIVATE:Vars = @{
             Times = @{
-                Startup=@()
-                Exclude=@()
-                Found=@()
-                Processing=@()
-                Wrapup=@()
+                Startup=[System.Collections.ArrayList]@()
+                Exclude=[System.Collections.ArrayList]@()
+                Found=[System.Collections.ArrayList]@()
+                Processing=[System.Collections.ArrayList]@()
+                Wrapup=[System.Collections.ArrayList]@()
             }
             Stats = @{}
         }
+        
         foreach ($session in $.Group) {
             $ObjectEntries = @()
+
+            $ExcludeEntry = $session.Log -imatch "Found \d+ excluded objects"
+            $FoundEntry = $session.Log -imatch "Found \d+ objects"
+            $SummaryEntry = $session.Log -imatch "Transferred: \d+"
+            $ObjectEntries = $session.Log -imatch "(?<!\[Running\].+)Processing .+:"
+
+            <#too slow too. see above
             foreach ($line in $session.Log) {
-                if ($_.Title -imatch "Found \d+ excluded objects") { $ExcludeEntry = $line }
-                if ($_.Title -imatch "Found \d+ objects") { $FoundEntry = $line }
-                if ($_.Title -imatch "Transferred: \d+") { $SummaryEntry = $line }
-                if ($_.Title -imatch "(?<!\[Running\].+)Processing .+:") { $ObjectEntries += $line } # excludes running tasks, as they have same end & start and skew results.
-            }
+                $(GetItemsLeft)
+                if ($line.Title -imatch "Found \d+ excluded objects") { $ExcludeEntry = $line }
+                if ($line.Title -imatch "Found \d+ objects") { $FoundEntry = $line }
+                if ($line.Title -imatch "Transferred: \d+") { $SummaryEntry = $line }
+                if ($line.Title -imatch "(?<!\[Running\].+)Processing .+:") { $ObjectEntries += $line } # excludes running tasks, as they have same end & start and skew results.
+            }#>
             <#Too Slow rewrote above:
             $ExcludeEntry = ($session.Log | ? { $_.Title -imatch "Found \d+ excluded objects" } )
             $FoundEntry = ($session.Log | ? { $_.Title -imatch "Found \d+ objects" } )
@@ -1199,58 +1219,71 @@ $map.ProcessingStats = $Global:VBOEnvironment.VBOJobSession | Where-Object { $_.
             #>
 
             if ($FoundEntry) {
-                $PRIVATE:Vars.Times.Startup += ($FoundEntry.EndTime - $session.CreationTime).TotalSeconds
-                $PRIVATE:Vars.Times.Found += ($FoundEntry.EndTime - $FoundEntry.CreationTime).TotalSeconds }
+                $startupSeconds = ($FoundEntry.EndTime - $session.CreationTime).TotalSeconds
+                if ($startupSeconds -gt 0) { $PRIVATE:Vars.Times.Startup.Add($startupSeconds)}
+                $foundSeconds = ($FoundEntry.EndTime - $FoundEntry.CreationTime).TotalSeconds
+                if ($foundSeconds -gt 0) {$PRIVATE:Vars.Times.Found.Add($foundSeconds)} }
             if ($ExcludeEntry) {
-                $PRIVATE:Vars.Times.Exclude += ($ExcludeEntry.EndTime - $ExcludeEntry.CreationTime).TotalSeconds }
+                $excludeSeconds = ($ExcludeEntry.EndTime - $ExcludeEntry.CreationTime).TotalSeconds 
+                if ($excludeSeconds -gt 0) { $PRIVATE:Vars.Times.Exclude.Add($excludeSeconds)} }
             if ($SummaryEntry) {
-                $PRIVATE:Vars.Times.Wrapup += ($session.EndTime - $SummaryEntry.CreationTime).TotalSeconds }
-            foreach ($objEntry in $ObjectEntries) { $PRIVATE:Vars.Times.Processing += ($objEntry.EndTime - $objEntry.CreationTime).TotalSeconds } # grab time for every processed object
+                $wrapSeconds = ($session.EndTime - $SummaryEntry.CreationTime).TotalSeconds
+                if ($wrapSeconds -gt 0) { $PRIVATE:Vars.Times.Wrapup.Add($wrapSeconds)} }
+            
+            foreach ($objEntry in $ObjectEntries) {
+                GetItemsLeft
+                $taskSeconds = ($objEntry.EndTime - $objEntry.CreationTime).TotalSeconds
+                if ($taskSeconds -gt 0) { $PRIVATE:Vars.Times.Processing.Add($taskSeconds) }
+            } # grab time for every processed object
+
+            
         }
-        
         #Time Analysis
         foreach ($statkey in $PRIVATE:Vars.Times.Keys) {
-            $measurements = $PRIVATE:Vars.Times.$statkey | ? { $_ -gt 0 } | Measure-Object -Average -Minimum -Maximum  #use gt 0 to account for problems with daily ssavings negative values skewing results
+            $measurements = $PRIVATE:Vars.Times.$statkey | Measure-Object -Average -Minimum -Maximum  #use gt 0 to account for problems with daily ssavings negative values skewing results
+
             $PRIVATE:Vars.Stats.$statkey = @{}
-            $PRIVATE:Vars.Stats.$statkey.Latest = ($PRIVATE:Vars.Times.$statkey)[0]
+            $PRIVATE:Vars.Stats.$statkey.Latest = ($PRIVATE:Vars.Times.$statkey) | select-object -first 1
             $PRIVATE:Vars.Stats.$statkey.Average = $measurements.Average
             $PRIVATE:Vars.Stats.$statkey.Minimum = $measurements.Minimum
             $PRIVATE:Vars.Stats.$statkey.Maximum = $measurements.Maximum
-            $PRIVATE:Vars.Stats.$statkey.Median = $PRIVATE:Vars.Times.$statkey | 95p -Percentile 50
-            $PRIVATE:Vars.Stats.$statkey.Ninety = $PRIVATE:Vars.Times.$statkey | 95p -Percentile 90
+            $PRIVATE:Vars.Stats.$statkey.Median = ,$PRIVATE:Vars.Times.$statkey | 95p -Percentile 50
+            $PRIVATE:Vars.Stats.$statkey.Ninety = ,$PRIVATE:Vars.Times.$statkey | 95p -Percentile 90
         }'
     'Name'
     'Startup Time (Latest)=>($PRIVATE:Vars.Stats.Startup.Latest) | ToLongHHmmss'
+    'Startup Time (Median)=>($PRIVATE:Vars.Stats.Startup.Median) | ToLongHHmmss'
     'Startup Time (Min)=>($PRIVATE:Vars.Stats.Startup.Minimum) | ToLongHHmmss'
     'Startup Time (Avg)=>($PRIVATE:Vars.Stats.Startup.Average) | ToLongHHmmss'
     'Startup Time (Max)=>($PRIVATE:Vars.Stats.Startup.Maximum) | ToLongHHmmss'
-    'Startup Time (Median)=>($PRIVATE:Vars.Stats.Startup.Median) | ToLongHHmmss'
     'Startup Time (90%)=>($PRIVATE:Vars.Stats.Startup.Ninety) | ToLongHHmmss'
     'Exclude Time (Latest)=>($PRIVATE:Vars.Stats.Exclude.Latest) | ToLongHHmmss'
+    'Exclude Time (Median)=>($PRIVATE:Vars.Stats.Exclude.Median) | ToLongHHmmss'
     'Exclude Time (Min)=>($PRIVATE:Vars.Stats.Exclude.Minimum) | ToLongHHmmss'
     'Exclude Time (Avg)=>($PRIVATE:Vars.Stats.Exclude.Average) | ToLongHHmmss'
     'Exclude Time (Max)=>($PRIVATE:Vars.Stats.Exclude.Maximum) | ToLongHHmmss'
-    'Exclude Time (Median)=>($PRIVATE:Vars.Stats.Exclude.Median) | ToLongHHmmss'
     'Exclude Time (90%)=>($PRIVATE:Vars.Stats.Exclude.Ninety) | ToLongHHmmss'
     'Found Time (Latest)=>($PRIVATE:Vars.Stats.Found.Latest) | ToLongHHmmss'
+    'Found Time (Median)=>($PRIVATE:Vars.Stats.Found.Median) | ToLongHHmmss'
     'Found Time (Min)=>($PRIVATE:Vars.Stats.Found.Minimum) | ToLongHHmmss'
     'Found Time (Avg)=>($PRIVATE:Vars.Stats.Found.Average) | ToLongHHmmss'
     'Found Time (Max)=>($PRIVATE:Vars.Stats.Found.Maximum) | ToLongHHmmss'
-    'Found Time (Median)=>($PRIVATE:Vars.Stats.Found.Median) | ToLongHHmmss'
     'Found Time (90%)=>($PRIVATE:Vars.Stats.Found.Ninety) | ToLongHHmmss'
     'Processing Time (Latest)=>($PRIVATE:Vars.Stats.Processing.Latest) | ToLongHHmmss'
+    'Processing Time (Median)=>($PRIVATE:Vars.Stats.Processing.Median) | ToLongHHmmss'
     'Processing Time (Min)=>($PRIVATE:Vars.Stats.Processing.Minimum) | ToLongHHmmss'
     'Processing Time (Avg)=>($PRIVATE:Vars.Stats.Processing.Average) | ToLongHHmmss'
     'Processing Time (Max)=>($PRIVATE:Vars.Stats.Processing.Maximum) | ToLongHHmmss'
-    'Processing Time (Median)=>($PRIVATE:Vars.Stats.Processing.Median) | ToLongHHmmss'
     'Processing Time (90%)=>($PRIVATE:Vars.Stats.Processing.Ninety) | ToLongHHmmss'
     'Wrapup Time (Latest)=>($PRIVATE:Vars.Stats.Wrapup.Latest) | ToLongHHmmss'
+    'Wrapup Time (Median)=>($PRIVATE:Vars.Stats.Wrapup.Median) | ToLongHHmmss'
     'Wrapup Time (Min)=>($PRIVATE:Vars.Stats.Wrapup.Minimum) | ToLongHHmmss'
     'Wrapup Time (Avg)=>($PRIVATE:Vars.Stats.Wrapup.Average) | ToLongHHmmss'
     'Wrapup Time (Max)=>($PRIVATE:Vars.Stats.Wrapup.Maximum) | ToLongHHmmss'
-    'Wrapup Time (Median)=>($PRIVATE:Vars.Stats.Wrapup.Median) | ToLongHHmmss'
     'Wrapup Time (90%)=>($PRIVATE:Vars.Stats.Wrapup.Ninety) | ToLongHHmmss'
 )
+#transform the output for CSV
+$map.ProcessingStats = ($map.ProcessingStats | ForEach-Object { foreach ($op in @("Startup","Exclude","Found","Processing","Wrapup")) { $_ | Select-Object Name,@{n="Operation";e={$op}},*$op* }} | ConvertTo-Json) -replace "Startup\s|Exclude\s|Found\s|Processing\s|Wrapup\s","" | convertfrom-json
 Write-ElapsedAndMemUsage -Message "Mapped Processing/Task Stats" -LogLevel PROFILE
 
 Write-LogFile -Message "Mapping Job Sessions..." -LogLevel DEBUG
@@ -1300,7 +1333,8 @@ $map.ProtectionStatus = $Global:VBOEnvironment.VBOOrganizationUsers | Select-Obj
         #$PRIVATE:Entity = ($Global:VBOEnvironment.VBOEntityData | ? { $_.Organization.DisplayName -eq $self.Name -and $_.Email -eq $.UserName})
         #THIS IS DECENT #$PRIVATE:Entity = ($Global:VBOEnvironment.VBOEntityData | . {Process { if($_.Organization.DisplayName -eq $self.Name -and $_.Email -eq $.UserName) {$_} } })
         #THIS IS BETTER #$PRIVATE:Entity = foreach ($ent in $Global:VBOEnvironment.VBOEntityData) { if($ent.Organization.DisplayName -eq $self.Organization -and $ent.Email -eq $.UserName -and $ent.Type -eq "User") {$ent; break} }
-        $PRIVATE:Entity = $Global:VBOEnvironment.EntitiesIndex[$self.Organization][$.UserName]
+        $entityKey = ($.DisplayName+"-"+$.UserName).Replace(" ","")
+        $PRIVATE:Entity = $Global:VBOEnvironment.EntitiesIndex[$self.Organization][$entityKey]
     '
     #'Office ID=>OfficeId'
     #'On-Prem ID=>OnPremisesId'

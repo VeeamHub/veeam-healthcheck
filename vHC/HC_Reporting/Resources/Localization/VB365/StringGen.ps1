@@ -1,6 +1,12 @@
-﻿cd C:\Users\cac89\Source\Repos\VeeamHub\veeam-healthcheck\vHC\HC_Reporting\Resources\Localization\VB365
+﻿#Write-Host(Get-Location)
+#$input = Read-Host("hit a key")
+#cd C:\Users\Administrator\Source\Repos\VeeamHub\veeam-healthcheck\vHC\HC_Reporting\Resources\Localization\VB365
 $content = Get-Content -LiteralPath "vb365_vhcres.txt"
+
+echo $null | out-file .\Vb365ResourceHandler.cs
 echo $null | out-file pubstrings.txt
+
+"using System.Resources;`nnamespace VeeamHealthCheck.Resources.Localization.VB365`n{`n`nclass Vb365ResourceHandler`n{private static ResourceManager vb365res = new(`"VeeamHealthCheck.Resources.Localization.VB365.vb365_vhcres`", typeof(ResourceHandler).Assembly);`n" | out-file .\Vb365ResourceHandler.cs
 
 foreach($line in $content){
     if(!$line.StartsWith("#")){
@@ -13,8 +19,9 @@ foreach($line in $content){
                 
                 #Write-Host($string)
                 $string | Out-File -Append pubstrings.txt
-
+                $string | Out-File -Append .\Vb365ResourceHandler.cs
             }
         }
     }
 }
+"}}" | Out-File -Append .\Vb365ResourceHandler.cs

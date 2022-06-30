@@ -13,6 +13,7 @@ using System.Windows;
 using System.Xml.Linq;
 using VeeamHealthCheck;
 using VeeamHealthCheck.CsvHandlers;
+using VeeamHealthCheck.Reporting.CsvHandlers.VB365;
 using VeeamHealthCheck.Shared.Logging;
 
 
@@ -88,9 +89,9 @@ namespace VeeamHealthCheck.CsvHandlers
         }
 
         #region m365CsvParser
-        public IEnumerable<dynamic> GetDynamicVboGlobal()
+        public IEnumerable<CGlobalCsv> GetDynamicVboGlobal()
         {
-            return GetDynamicCsvRecs(_vboGlobalCsv);
+            return FileFinder(_vboGlobalCsv).GetRecords<CGlobalCsv>();
         }
         public IEnumerable<dynamic> GetDynamicVboProxies()
         {
@@ -104,13 +105,13 @@ namespace VeeamHealthCheck.CsvHandlers
         {
             return GetDynamicCsvRecs(_vboJobs);
         }
-        public IEnumerable<dynamic> GetDynamicVboRepo()
+        public IEnumerable<CLocalRepos> GetDynamicVboRepo()
         {
-            return GetDynamicCsvRecs(_vboRepositories);
+            return FileFinder(_vboRepositories).GetRecords<CLocalRepos>();
         }
-        public IEnumerable<dynamic> GetDynamicVboSec()
+        public IEnumerable<CSecurityCsv> GetDynamicVboSec()
         {
-            return GetDynamicCsvRecs(_vboSecurity);
+            return FileFinder(_vboSecurity).GetRecords<CSecurityCsv>();
         }
         public IEnumerable<dynamic> GetDynVboController()
         {

@@ -116,7 +116,7 @@ namespace VeeamHealthCheck.Reporting.Html.VB365
             CCsvParser csv = new(CVariables.vb365dir);
             var lic = csv.GetDynamicVboGlobal().ToList();
             foreach (var l in lic)
-                return l.licensedto;
+                return l.LicensedTo;
             return "";
         }
 
