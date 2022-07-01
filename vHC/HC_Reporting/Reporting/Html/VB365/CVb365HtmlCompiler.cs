@@ -44,14 +44,14 @@ namespace VeeamHealthCheck.Reporting.Html.VB365
             // other workloads prompt??
             _htmldoc += _form.header1("Backup Infrastructure");
             _htmldoc += tables.Vb365Controllers();
-            _htmldoc += tables.Vb365ControllerDrivers();
+            _htmldoc += tables.Vb365ControllerDrives();
             _htmldoc += tables.Vb365Proxies();
             _htmldoc += tables.Vb365Repos();
             _htmldoc += tables.Vb365ObjectRepos();
 
             _htmldoc += _form.header1("Security");
             _htmldoc += tables.Vb365Security();
-            _htmldoc += tables.Vb365Rbac();
+            //_htmldoc += tables.Vb365Rbac();
             //_htmldoc += tables.Vb365Permissions();
 
             _htmldoc += _form.header1("M365 Backups");

@@ -1,7 +1,19 @@
 ﻿#Write-Host(Get-Location)
 #$input = Read-Host("hit a key")
 #cd C:\Users\Administrator\Source\Repos\VeeamHub\veeam-healthcheck\vHC\HC_Reporting\Resources\Localization\VB365
+$loc = Get-Location
+
+& 'C:\Program Files\Microsoft Visual Studio\2022\Professional\Common7\Tools\Launch-VsDevShell.ps1'
+start-sleep -Seconds 2
+
+cd $loc
+$files = gci -Name "vb365_vhcres*.txt"
+foreach($f in $files){
+ ResGen.exe $f
+}
+
 $content = Get-Content -LiteralPath "vb365_vhcres.txt"
+
 
 echo $null | out-file .\Vb365ResourceHandler.cs
 echo $null | out-file pubstrings.txt

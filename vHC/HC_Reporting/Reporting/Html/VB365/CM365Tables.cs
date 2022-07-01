@@ -77,15 +77,15 @@ namespace VeeamHealthCheck.Reporting.Html.VB365
             s += _form.TableHeader("Proxy Name", "");
             s += _form.TableHeader("Description", "");
             s += _form.TableHeader("Threads", "");
-            s += _form.TableHeader("Throttling", "");
-            s += _form.TableHeader("State", "");
-            s += _form.TableHeader("Type", "");
-            s += _form.TableHeader("Outdated", "");
-            s += _form.TableHeader("Internet Proxy", "");
-            s += _form.TableHeader("Objects Managed", "");
+            s += _form.TableHeader("Throttling", Vb365ResourceHandler.proxyTTThrottling);
+            s += _form.TableHeader("State", Vb365ResourceHandler.proxyTTState);
+            //s += _form.TableHeader("Type", "");
+            s += _form.TableHeader("Outdated", Vb365ResourceHandler.proxyTTOutdated);
+            s += _form.TableHeader("Internet Proxy", Vb365ResourceHandler.proxyTTInternet);
+            s += _form.TableHeader("Objects Managed", Vb365ResourceHandler.proxyTTObjects);
             s += _form.TableHeader("OS Version", "");
             s += _form.TableHeader("RAM", "");
-            s += _form.TableHeader("CPUs", "");
+            s += _form.TableHeader("CPUs", Vb365ResourceHandler.proxyTTCPUs);
             s += _form.TableHeader("Extended Logging?", "");
 
             s += "</tr>";
@@ -99,9 +99,14 @@ namespace VeeamHealthCheck.Reporting.Html.VB365
 
                 foreach (var g in gl)
                 {
+                    if (g.Key == "type")
+                    {
+                        continue;
+                    }
                     string output = g.Value;
                     if (MainWindow._scrub)
                     {
+                        
                         if (counter == 0 || counter == 1)
                             output = _scrubber.ScrubItem(output);
                     }
@@ -264,12 +269,12 @@ namespace VeeamHealthCheck.Reporting.Html.VB365
                 s += "</tr>";
 
                 s += "</table><table border =\"1\"><tr><br/>";
-                s += _form.TableHeader(Vb365ResourceHandler.SecurityTable2Column1, "Enabled");
-                s += _form.TableHeader(Vb365ResourceHandler.SecurityTable2Column2, "Enabled");
-                s += _form.TableHeader(Vb365ResourceHandler.SecurityTable2Column3, "Server Cert");
-                s += _form.TableHeader(Vb365ResourceHandler.SecurityTable2Column4, "Server Cert PK Exportable?");
-                s += _form.TableHeader(Vb365ResourceHandler.SecurityTable2Column5, "Server Cert PK Exportable?");
-                s += _form.TableHeader(Vb365ResourceHandler.SecurityTable2Column6, "Server Cert PK Exportable?");
+                s += _form.TableHeader(Vb365ResourceHandler.SecurityTable2Column1, Vb365ResourceHandler.securityTTServices);
+                s += _form.TableHeader(Vb365ResourceHandler.SecurityTable2Column2, "");
+                s += _form.TableHeader(Vb365ResourceHandler.SecurityTable2Column3, Vb365ResourceHandler.securityTTPort);
+                s += _form.TableHeader(Vb365ResourceHandler.SecurityTable2Column4, Vb365ResourceHandler.securityTTCert);
+                s += _form.TableHeader(Vb365ResourceHandler.SecurityTable2Column5, "");
+                s += _form.TableHeader(Vb365ResourceHandler.SecurityTable2Column6, "");
                 s += "</tr><tr>";
                 s += _form.TableData("Server", "");
                 s += _form.TableData("", "");// enabled
@@ -364,7 +369,7 @@ namespace VeeamHealthCheck.Reporting.Html.VB365
             s += "</div>";
             return s;
         }
-        public string Vb365ControllerDrivers()
+        public string Vb365ControllerDrives()
         {
             string s = "<div class=\"controllerdrives\" id=\"controllerdrives\">";
             s += _form.header2("Backup Server Disks");
@@ -551,10 +556,10 @@ namespace VeeamHealthCheck.Reporting.Html.VB365
             s += _form.TableHeader("Real Name", "Real Name");
             s += _form.TableHeader("Type", "Type");
             s += _form.TableHeader("Protected Apps", "Protected Apps");
-            s += _form.TableHeader("EXO Settings", "EXO Settings");
-            s += _form.TableHeader("EXO App Cert", "EXO App Cert");
-            s += _form.TableHeader("SPO Settings", "SPO Settings");
-            s += _form.TableHeader("SPO App Cert", "SPO App Cert");
+            s += _form.TableHeader("EXO Settings", Vb365ResourceHandler.orgTTEXOSettings);
+            s += _form.TableHeader("EXO App Cert", Vb365ResourceHandler.orgTTEXOApp);
+            s += _form.TableHeader("SPO Settings", Vb365ResourceHandler.orgTTSPOSettings);
+            s += _form.TableHeader("SPO App Cert", Vb365ResourceHandler.orgTTSPOApp);
             s += _form.TableHeader("On-Prem Exch Settings", "On-Prem Exch Settings");
             s += _form.TableHeader("On-Prem SP Settings", "On-Prem SP Settings");
             s += _form.TableHeader("Licensed Users", "Licensed Users");
@@ -710,19 +715,19 @@ namespace VeeamHealthCheck.Reporting.Html.VB365
             //s += CollapsibleButton("Show Protection Statistics");
             //s += "<table border=\"1\" style=\"display: none;\"><tr>";
             s += "<table border=\"1\"><tr>";
-            s += _form.TableHeader("Organization", "Organization");
-            s += _form.TableHeader("Name", "Name");
-            s += _form.TableHeader("Description", "Description");
-            s += _form.TableHeader("Job Type", "Job Type");
-            s += _form.TableHeader("Scope Type", "Scope Type");
+            s += _form.TableHeader("Organization", Vb365ResourceHandler.jobsTTOrganization );
+            s += _form.TableHeader("Name", Vb365ResourceHandler.jobsTTName);
+            s += _form.TableHeader("Description", Vb365ResourceHandler.jobsTTDescription);
+            s += _form.TableHeader("Job Type", Vb365ResourceHandler.jobsTTJobType );
+            s += _form.TableHeader("Scope Type", Vb365ResourceHandler.jobsTTScopeType);
             s += _form.TableHeader("Processing Options", "");
-            s += _form.TableHeader("Selected Items", "Selected Items");
-            s += _form.TableHeader("Excluded Items", "Excluded Items");
-            s += _form.TableHeader("Repository", "Repository");
-            s += _form.TableHeader("Bound Proxy", "Bound Proxy");
-            s += _form.TableHeader("Enabled?", "Enabled?");
-            s += _form.TableHeader("Schedule", "Schedule");
-            s += _form.TableHeader("Related Job", "Related Job");
+            s += _form.TableHeader("Selected Items", Vb365ResourceHandler.jobsTTSelectedItems);
+            s += _form.TableHeader("Excluded Items", Vb365ResourceHandler.jobsTTExcludedItems );
+            s += _form.TableHeader("Repository", Vb365ResourceHandler.jobsTTRepository);
+            s += _form.TableHeader("Bound Proxy", Vb365ResourceHandler.jobsTTBoundProxy);
+            s += _form.TableHeader("Enabled?","");
+            s += _form.TableHeader("Schedule", "");
+            s += _form.TableHeader("Related Job", Vb365ResourceHandler.jobsTTRelatedJob);
 
             s += "</tr>";
 
