@@ -164,6 +164,18 @@ namespace VeeamHealthCheck
 
             Import();
 
+            //// change scrub to opposite + gen 2nd report
+            //if (_scrub)
+            //{
+            //    _desiredPath = CVariables.unsafeDir;
+            //    _scrub = false;
+            //}
+            //else if (!_scrub)
+            //{
+            //    _desiredPath =  CVariables.safeDir;
+            //    _scrub = true;
+            //}
+            //Import();
 
             log.Info("Starting Run..done!");
 

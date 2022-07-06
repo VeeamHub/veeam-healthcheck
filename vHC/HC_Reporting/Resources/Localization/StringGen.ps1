@@ -16,7 +16,7 @@ $content = Get-Content -LiteralPath "vhcres.txt"
 echo $null | out-file .\ResourceHandler.cs
 echo $null | out-file pubstrings.txt
 
-"using System.Resources;`nnamespace VeeamHealthCheck.Resources.Localization.VB365`n{`n`nclass ResourceHandler`n{private static ResourceManager m4 = new(`"VeeamHealthCheck.Resources.Localization.vhcres`", typeof(ResourceHandler).Assembly);`n" | out-file .\ResourceHandler.cs
+"using System.Resources;`nnamespace VeeamHealthCheck`n{`n`nclass ResourceHandler`n{private static ResourceManager m4 = new(`"VeeamHealthCheck.Resources.Localization.vhcres`", typeof(ResourceHandler).Assembly);`n" | out-file .\ResourceHandler.cs
 
 foreach($line in $content){
     if(!$line.StartsWith("#")){
