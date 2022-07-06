@@ -1,54 +1,75 @@
+# This is the base file where Resource (String) edits will be completed.
+# All translations will need to be based on this file
+#
+# To translate:
+# information left of the "=" is off limits.
+# The information to the right (->) side of "=" is what shall be translated.
+
+# GUI
 GuiAcceptButton = 利用規約に同意する
-GuiAcceptText = このツールは、Veeam構成を評価するための無料のユーティリティとして提供されています。 「自己責任で」提供されます。\n\nこのツールは、PowerShellとSQLを使用してデータを収集し、ファイルとフォルダーをローカルディスクに出力します。 \n\n機密データを隠すために、ファイルを匿名化することができます。規約に同意するということは、ユーザーがこのプログラムを最大限に実行することに同意することを意味します。
-GuiImportButton = 輸入
+GuiAcceptText = このツールは、Veeam構成を評価するための無料のユーティリティとして提供されています。 「自己責任で」提供されます。\n\nこのツールは、PowerShellとSQLを使用してデータを収集し、ファイルとフォルダーをローカルディスクに出力します。 \n\nファイルは、機密データを隠すために匿名化されている場合があります。本規約に同意することは、ユーザーが本プログラムをフルに実行することに同意することを意味します。
+GuiImportButton = インポート
 GuiImportModeOnly = インポートモード
 GuiInstCaveat1 = *機密データ型を削除することを選択した場合、HTMLレポートのみがクレンジングされます。見る：
 GuiInstCaveat2 = **大規模な環境では、このツールが完了するまでに最大3時間かかる場合があることに注意してください。
 GuiInstHeader = 指示：
-GuiInstLine1 = 1.利用規約に同意する
-GuiInstLine2 = 2.[実行]をクリックします
-GuiInstLine3 = 3.完了すると、Windowsエクスプローラーが出力ディレクトリを開きます。 （有効にすると、HTMLレポートが表示されます）
-GuiInstLine4 = 4.必要に応じてレポートを確認します
+GuiInstLine1 = 1. 利用規約に同意する
+GuiInstLine2 = 2. [RUN]をクリックします
+GuiInstLine3 = 3. 完了すると、Windowsエクスプローラーが出力ディレクトリを開きます。 （有効にすると、HTMLレポートが表示されます）
+GuiInstLine4 = 4. 必要に応じてレポートを確認します
 GuiInstLine5 = 5. C:\\temp\\vHC*または指定されたディレクトリからの出力をキャプチャします。
 GuiInstLine6 = 6. Veeam SEに通知するか、レビューのために結果を送信します
 GuiOptionsHeader = オプション：
 GuiOutPath = 出力パス
-GuiRunButton = 走る
+GuiRunButton = 実行
 GuiSensData = レポートから機密データタイプを削除する
 GuiShowFiles = 完了時にファイルを表示
 GuiShowHtml = 完了時にHTMLレポートを表示する
 GuiTitle = Veeamヘルスチェック
 GuiTitleBnR = B&R
 GuiTitleVB365 = VB365
+
+#protworkload
 PlHdr0 = Vi合計
-PlHdrTT0 = 見つかったVMwareVMの総数。
+PlHdrTT0 = VMwareVMの総数。
 PlHdr1 = Viプロテクト
-PlHdrTT1 = バックアップで見つかったVMwareVMの総数
+PlHdrTT1 = バックアップ利用するVMwareVMの総数
 PlHdr2 = Vi Not Prot
-PlHdrTT2 = バックアップなしで見つかったVMwareVMの総数
+PlHdrTT2 = バックアップ利用しないVMwareVMの総数
 PlHdr3 = Vi潜在的な重複
 PlHdrTT3 = 重複する可能性のあるワークロード
-PlHdr4 = Viは物理的に保護されています
+PlHdr4 = Vi物理的な保護
 PlHdrTT4 = 物理ワークロードとしてエージェントを介してバックアップされたVM
 PlHdr5 = 物理合計
 PlHdrTT5 = 保護グループに追加されたサーバーの総数
 PlHdr6 = Phy Protected
-PlHdrTT6 = バックアップを備えたサーバーの総数
+PlHdrTT6 = バックアップ対象のサーバー総数
 PlHdr7 = Phys Not Prot
 PlHdrTT7 = 保護グループ内のサーバーの総数ですが、現在のバックアップはありません
 PlSum1 = この表は、現在のバックアップサーバーで検出されたワークロードの量をまとめたものです。 VMware（Vi Total）カウントは、ローカルのVeeam Brokerサービスによって決定され、そのVMカウントを既存のバックアップと比較します。物理ワークロード（Phys Total）は、保護グループに追加されたVMの数によって決定され、バックアップジョブの数と比較されます。
 PlNote1 = 
-PlButton = 保護されたワークロードの数を表示する
+PlButton = 保護されたワークロードの数を表示
 PlTitle = 保護されたワークロード
+#end protected workload section
+
+
+
+
+
+# general strings
 GeneralNotesHeader = ノート：
 GeneralSummaryHeader = 概要：
+
+#header 
 HtmlHeader = VBRヘルスチェックレポート
-HtmlIntroLine1 = -このレポートは、Veeam Backup and Replication（VBR）の展開に関するデータと洞察を提供します。ここに記載されている情報は、Veeamの担当者と共同で使用することを目的としています。
-HtmlIntroLine2 = -生データはCSV形式でキャプチャされ、エクスポートフォルダからローカルにアクセスできます。 CSVを使用すると、Excelなどのツールでデータを操作できます。
-HtmlIntroLine3 = 	- 個々のジョブセッションに関する追加情報は、<a href=
-HtmlIntroLine4 = -注：マウスオーバー中に、テーブルヘッダーまたはデータ列の説明データを含むツールチップが表示される場合があります。
-HtmlIntroLine5 = -注：このレポートを生成するために実行したツールは完全に自己完結型であり、「phone-home」ではなく、Veeam BackupandReplicationサーバーでのみ実行されました。 VBRデータベース、レジストリ、構成、およびログファイルを照会します。 vCenterやその他のインフラストラクチャにアクセスする必要はありません。
-HtmlIntroLine5vb365 = -注：このレポートを生成するために実行したツールは完全に自己完結型であり、「phone-home」ではなく、Veeam Backup forMicrosoft365サーバーでのみ実行されました。 VB365データベース、レジストリ、構成、およびログファイルを照会します。 M365やその他のインフラストラクチャにアクセスする必要はありません。
+HtmlIntroLine1 =	- このレポートは、Veeam Backup and Replication（VBR）の展開に関するデータと洞察を提供します。ここに記載されている情報は、Veeamの担当者と共同で使用することを目的としています。
+HtmlIntroLine2 =	- 生データはCSV形式でキャプチャされ、エクスポートフォルダからローカルにアクセスできます。 CSVを使用すると、Excelなどのツールでデータを操作できます。
+HtmlIntroLine3 = 	- 個々のジョブセッションに関する追加情報は、<a href="C:\\temp\\vHC\\JobSessionReports"> 出力フォルダ C:\\temp\\vHC\\JobSessionReports
+HtmlIntroLine4 =	- 注：マウスオーバー中に、テーブルヘッダーまたはデータ列の説明データを含むツールチップが表示される場合があります。
+HtmlIntroLine5 =	- 注：このレポートを生成するために実行したツールは完全に自己完結型であり、「phone-home」ではなく、Veeam BackupandReplicationサーバーでのみ実行されました。 VBRデータベース、レジストリ、構成、およびログファイルを照会します。 vCenterやその他のインフラストラクチャにアクセスする必要はありません。
+HtmlIntroLine5vb365 =	- 注：このレポートを生成するために実行したツールは完全に自己完結型であり、「phone-home」ではなく、Veeam Backup forMicrosoft365サーバーでのみ実行されました。 VB365データベース、レジストリ、構成、およびログファイルを照会します。 M365やその他のインフラストラクチャにアクセスする必要はありません。
+
+# navigation
 NavBkpSrvDeet = バックアップサーバー、構成DB、役割、およびリソースに関する詳細情報。
 NavBkpSrvLink = バックアップサーバー
 NavColapse = すべて折りたたむ/展開する
@@ -85,6 +106,9 @@ NavSrvSumDeet = 検出されたインフラストラクチャの種類と数の�
 NavSrvSumLink = サーバーの概要
 NavTaskConDeet = 1時間あたりに検出された最大VM同時実行性を示すヒートマップ。
 NavTaskConLink = VMの同時実行性
+
+
+#License table
 LicCcTT = Cloud Connectは有効になっていますか？
 LicExpTT = ライセンスの有効期限
 LicTblLicTo = ライセンス供与先
@@ -92,7 +116,7 @@ LicSupExpTT = サポートの有効期限
 LicTableHeader = ライセンスの概要
 LicTblCc = クラウドコネクト対応
 LicTblEdition = 	エディション
-LicTblExpDate = 賞味期限
+LicTblExpDate = 有効期限
 LicTblLicInst = ライセンス機関
 LicTblLicNas = ライセンスされたNas
 LicTblLicSock = ライセンスソケット
@@ -115,9 +139,15 @@ LtSocLicTT = ライセンスされたソケットの総数
 LtSocUsedTT = 使用されたソケットの総数
 LtStatusTT = Veeamライセンスステータス
 LtTypeTT = Veeamライセンスタイプ
+
+
+# not protected workloads
 NpButton = 不足しているジョブタイプの詳細を表示する
 NpSum1 = この表は、構成から欠落しているか、分析できなかったジョブタイプをまとめたものです。詳細については、Veeamエンジニアにご相談ください。
 NpTitle = 不足しているジョブタイプ
+
+#sec Summary
+
 SSHdr0 = Immutability
 SSHdrTT0 = このサーバーのどこかで不変性が使用されていますか？
 SSHdr1 = トラフィックの暗号化
@@ -131,12 +161,14 @@ SSSubHdr1 = Immutability
 SSSubHdr2 = トラフィックの暗号化
 SSSubHdr3 = バックアップファイルの暗号化
 SSSubHdr4 = 構成バックアップ暗号化
-SSNote1 = 不変のバックアップの場合は、 を展開することを検討してください。<a href=
-SSNote2 = <a href=
-SSNote3 = バックアップファイルの暗号化は、部外者がバックアップをインポートしてコンテンツにアクセスするのを防ぎます。バックアップがオフサイトに保存されている場合は、 を検討してください。<a href=
-SSNote4 = The <a href=
+SSNote1 = 不変のバックアップの場合は、<a href="https://helpcenter.veeam.com/docs/backup/vsphere/hardened_repository.html?ver=110">Hardened Linux Repository</a> またはを選択します<a href="https://helpcenter.veeam.com/docs/backup/vsphere/object_storage_repository.html?ver=110">パブリッククラウドまたはS3互換</a>不変性を提供するオプション。
+SSNote2 = <a href="https://helpcenter.veeam.com/docs/backup/vsphere/security_considerations.html?zoom_highlight=traffic+encryption&amp;ver=110#:~:text=Encrypt%20network%20traffic,Network%20Data%20Encryption.">トラフィック暗号化</a>は、デフォルトですべてのパブリックトラフィックに対して有効になっています。 この値がfalseと表示された場合は、インターネットまたはその他の機密性の高い転送の設定を再度有効にすることを検討してください。
+SSNote3 = バックアップファイルの暗号化は、部外者がバックアップをインポートしてコンテンツにアクセスするのを防ぎます。 バックアップがオフサイトに保存されている場合は、<a href="https://helpcenter.veeam.com/docs/backup/vsphere/backup_job_advanced_storage_vm.html?ver=110#:~:text=To%20encrypt%20the%20content%20of%20backup%20files%2C%20select%20the%20Enable%20backup%20file%20encryption%20check%20box.">バックアップファイルの暗号化を有効にして</a>バックアップを不要なアクセスから保護します。
+SSNote4 = <a href="https://helpcenter.veeam.com/docs/backup/vsphere/vbr_config.html?ver=110">構成のバックアップ</a>によりB&amp;R構成がバックアップされ、復元できるようになります。 停止または移行が発生した場合。 構成のバックアップを<a href="https://helpcenter.veeam.com/docs/backup/vsphere/config_backup_encrypted.html?ver=110">暗号化</a>することで、不要なアクセスからの保護と、 以前に構成内に保存されたパスワードを復元します。 <a style="font-weight:bold"> BackupEnterpriseManagerの使用を検討してください</a> <a href="https://helpcenter.veeam.com/docs/backup/em/em_manage_keys.html?ver=110">パスワード保護</a> <a style="font-weight:bold"> 失われたパスワードを確実に回復できるようにし、壊滅的な停止が発生した場合にEnterpriseManagerとVBRを分離します。 キーセットを安全な場所にエクスポートすることも検討してください。 この保護がないと、パスワードを紛失時、バックアップファイルを使用できなくなる可能性があります。</a>
 SSButton = セキュリティの概要の詳細を表示します。
 SSTitle = セキュリティの概要
+
+#managed server Summary
 MssTitle = 検出されたインフラストラクチャの種類と数
 MssHdr1 = 名前
 MssHdr2 = カウント
@@ -144,13 +176,15 @@ MssHdr1TT = サーバー/共有名
 MssHdr2TT = 検出された総数
 MssSum1 = この表は、ユーザーがVeeam構成に手動で追加したインフラストラクチャアイテムのさまざまなタイプと数をまとめたものです。
 MssButton = 検出されたインフラストラクチャの種類と数の詳細を表示する
+
+#backup server section
 BkpSrvButton = バックアップサーバーの概要とメモを表示します。
-BkpSrvNotes1 = •リソースを確認します<a href=
-BkpSrvNotes2 = •リソースを確認します<a href=
-BkpSrvNotes3 = •SQLExpressを使用している場合は、SQLExpressに違反していないことを確認してください<a href=
-BkpSrvNotes4 = •デフォルトプロキシまたはデフォルトバックアップリポジトリコンポーネントを使用するようにデータ保護タスクを割り当てると、バックアップサーバーリソースまたはその他の意図しないトラフィックの競合が発生する可能性があります。大規模な展開または分散展開では、これらを無効化、削除、および/またはバックアップサーバーから離れた場所に再割り当てすることが望ましい場合があります。
-BkpSrvNotes5 = • には、パフォーマンスの高いディスクをお勧めします<a href=
-BkpSrvNotes6 = •DNSは重要なコンポーネントです。 を確認してください<a href=
+BkpSrvNotes1 = •バックアップサーバーのリソース<a href="https://bp.veeam.com/vbr/3_Build_structures/B_Veeam_Components/B_VBR_Server/Backup_Server.html#compute-requirements">サイジング</a>が 管理するジョブを同時に実行します。 このレポートの<a href="＃jobConcurrency7">同時実行テーブル</a>を参照してください。 注：他の役割またはコンポーネントをバックアップサーバーホストに組み合わせる場合、リソースのサイズ設定は追加的です（たとえば、バックアップサーバー+ SQL +プロキシ+リポジトリなど）。
+BkpSrvNotes2 = •SQLサーバーのリソース<a href="https://bp.veeam.com/vbr/2_Design_Structures/D_Veeam_Components/D_VBR_DB/database.html#sizing">サイジング</a>が適切であることを確認します
+BkpSrvNotes3 =	• SQLExpressを使用している場合は、SQL Express <a href="https://bp.veeam.com/vbr/2_Design_Structures/D_Veeam_Components/D_VBR_DB/database.html#sql-server-edition">hard-に違反していないことを確認してください。 コード化された制限</a>（CPU、コア、メモリ、データベース容量など）。 低速、応答しない、またはエラーの多いバックアップサーバーは、多くの場合、これらのSQL制限に達した結果である可能性があります。
+BkpSrvNotes4 =	• デフォルトプロキシまたはデフォルトバックアップリポジトリコンポーネントを使用するようにデータ保護タスクを割り当てると、バックアップサーバーリソースまたはその他の意図しないトラフィックの競合が発生する可能性があります。大規模な展開または分散展開では、これらを無効化、削除、および/またはバックアップサーバーから離れた場所に再割り当てすることが望ましい場合があります。
+BkpSrvNotes5 =	• <a href="https://bp.veeam.com/vbr/3_Build_structures/B_Veeam_Components/B_VBR_Server/Backup_Server.html#log-files">ログの場所</a>には、パフォーマンスの高いディスクをお勧めします。 デフォルトは「％ProgramData％\\ Veeam \\Backup」です
+BkpSrvNotes6 =	• DNSは重要なコンポーネントです。 バックアップサーバーと他のシステムの両方からバックアップへの<a href="https://bp.veeam.com/vbr/3_Build_structures/B_Other/dns_resolution.html#dns-resolution">DNS解決</a>を確認します サーバーは正しく機能しています。 環境内の他のコンポーネントは、バックアップサーバーおよび他のVeeamインフラストラクチャコンポーネント（プロキシ、リポジトリなど）をFQDNで解決できる必要があります。 順方向クエリと逆方向クエリの両方が機能する必要があります。
 BkpSrvSummary1 = バックアップサーバー（別名VBSまたはVBRサーバー）は、「構成および制御センター」の役割を果たすバックアップインフラストラクチャのコアコンポーネントです。バックアップサーバーは、データ保護とリカバリタスクの調整、タスクのスケジューリングとリソース割り当て、その他のバックアップインフラストラクチャコンポーネントの管理など、あらゆる種類の管理アクティビティを実行します。
 BkpSrvSummary2 = •バックアップサーバーはMicrosoftWindowsで実行されます
 BkpSrvSummary3 = •バックアップインフラストラクチャ、ジョブ、セッション、およびその他の構成データに関するデータを、ローカルまたはリモートのSQLサーバーに格納します。デフォルトのインストールでは、SQLServerExpressがローカルにインストールされます。
@@ -190,6 +224,8 @@ BstSqlRamTT = SQL Server RAM（ローカルでない場合）
 BstSqlVerTT = SQLServerバージョン
 BstVerTT = B＆Rソフトウェアの検出されたバージョン
 BstWaTT = バックアップサーバーもWANアクセラレータですか？
+
+#SOBRs 
 SbrTitle = SOBRの詳細
 SbrBtn = SOBRの詳細を表示
 Sbr0 = 名前
@@ -199,7 +235,7 @@ Sbr1TT = Extent count
 Sbr2 = ポリシー
 Sbr2TT = データポリシー
 Sbr3 = キャパシティティア
-Sbr3TT = 容量層は有効になっていますか？
+Sbr3TT = キャパシティ層は有効になっていますか？
 Sbr4 = コピー
 Sbr4TT = コピーモードを使用していますか？
 Sbr5 = 動く
@@ -218,16 +254,19 @@ Sbr11 = サイズ制限を有効にする
 Sbr11TT = 容量階層は総容量によって制限されますか？
 Sbr12 = サイズ制限
 Sbr12TT = キャパシティティアは、ユーザーが設定した最大キャパシティ制限をアップロードします
-SbrSum0 = oスケールアウトバックアップリポジトリ（
+SbrSum0 = oスケールアウトバックアップリポジトリ（「SOBR」）は、1つ以上の基盤となるバックアップリポジトリまたは「エクステント」で構成される単一の論理リポジトリ名前空間であり、複数の層にわたる水平スケーリングを可能にします。 データはSOBRのローカルパフォーマンス層に到達します。パフォーマンス層は、長期およびアーカイブストレージ用のオブジェクトストレージ層（キャパシティ層とアーカイブ層）で拡張できます。
 SbrSum1 = •SOBRには、ウィンドウ、Linux、NFS、SMB、重複排除アプライアンス、オブジェクトストレージなど、複数の種類の基になるエクステントを含めることができます。
-SbrNote0 = •いくつのエクステントが使用されていますか？基になるエクステントが多数あると、メタデータ管理の課題やパフォーマンスの低下につながる可能性があります。エクステントカウントが十分かどうかについて、Veeamエンジニアと話し合ってください。
-SbrNote1 = • それは
-SbrNote2 = •ReFSまたはXFSを使用している場合<a href=
-SbrNote3 = • <a href=
-SbrNote4 = •
-SbrNote5 = • は
-SbrNote6 = •InfrequentAccessストレージ階層は、Veeamコピーモードまたはオブジェクトストレージの不変性と組み合わせて使用されていますか？がありま<a href=
+SbrNote0 = •	いくつのエクステントが使用されていますか？基になるエクステントが多数あると、メタデータ管理の課題やパフォーマンスの低下につながる可能性があります。エクステントカウントが十分かどうかについて、Veeamエンジニアと話し合ってください。
+SbrNote1 = •	「パフォーマンス」<a href="https://helpcenter.veeam.com/docs/backup/vsphere/backup_repository_sobr_placement.html?ver=110">Placement Policy</a>は使用されていますか？ もしそうなら、特定の理由やユースケースがあったかどうかを検討しますか？ 「Data Locality」配置ポリシーは、ほとんどの場合、ほとんどの展開とユースケースにとって理想的なポリシーです。
+SbrNote2 = •	ReFSまたはXFS<a href="https://helpcenter.veeam.com/docs/backup/vsphere/backup_repository_block_cloning.html?ver=110">ブロッククローン作成</a>を使用している場合、「Data Locality」配置ポリシーは次のようになります。 ブロッククローン（「高速クローン」）機能を活用するために必要です。
+SbrNote3 = •	<a href="https://helpcenter.veeam.com/docs/backup/hyperv/compatible_repository_account.html?ver=110">ゲートウェイサーバーがキャパシティ層のコピー/オフロードに使用されていますか</a>？ ゲートウェイサーバーに、このオブジェクトストレージリポジトリに送信されるすべてのバックアップのファネルとして機能するのに十分なリソースがあることを確認してください。
+SbrNote4 = •	「<a href="https://helpcenter.veeam.com/docs/backup/hyperv/sobr_add_extents.html?ver=110">Perform full backup when the required extent is offline</a>」オプション（ VBRコンソール）は慎重に検討する必要があります。 これにより、予想されるエクステントがオフラインのときにバックアップが確実に実行されますが、追加のアクティブフルのために消費される追加のスペースと、ReFSやReFSなどのボリュームベースのブロック共有テクノロジーによるストレージ効率の低下の可能性が犠牲になります。 XFS。
+SbrNote5 = •	「<a href="https://helpcenter.veeam.com/docs/backup/vsphere/per_vm_backup_files.html?ver=110">Per-Machine</a>」は誤りですか？ もしそうなら、それを無効にする特定の理由またはユースケースがあったかどうかを検討しますか？ これを有効にすることは、ほとんどの展開とユースケースにとって理想的なポリシーです。 Veeamエンジニアに相談してください。
+SbrNote6 = •	Infrequent Accessストレージ階層は、Veeamコピーモードまたはオブジェクトストレージの不変性と組み合わせて使用されますか？ <a href="https://forums.veeam.com/object-storage-f52/aws-s3-how-to-reduce-the-number-of-api-calls-t68858.html#p382566">があります これらのプロセスに関連する追加のAPI呼び出し</a>は、アクセスコストの予算を立てるときに考慮する必要があります。
 SbrButton = SOBRの詳細を表示
+
+# sobr extents
+
 SbrExtTitle = SOBRエクステントの詳細
 SbrExtBtn = SOBRエクステントの詳細を表示
 SbrExt0 = 名前
@@ -240,7 +279,7 @@ SbrExt3 = コア
 SbrExt3TT = リポジトリサーバーで検出された物理CPUコア
 SbrExt4 = メモリー
 SbrExt4TT = リポジトリサーバーで検出されたRAMの合計
-SbrExt5 = オートゲートウェイ
+SbrExt5 = 自動ゲートウェイ
 SbrExt5TT = リポジトリはAutmaticaGatewayを使用していますか？
 SbrExt6 = ホスト
 SbrExt6TT = 自動ゲートウェイを使用するように設定されていない場合に割り当てられたホスト/ゲートウェイ
@@ -256,8 +295,8 @@ SbrExt11 = 解凍
 SbrExt11TT = リポジトリは、最終的なストレージの前にバックアップファイルを解凍しますか？
 SbrExt12 = ブロックを揃える
 SbrExt12TT = リポジトリはデータブロックを調整しますか？
-SbrExt13 = 回転ドライブ
-SbrExt13TT = リポジトリは回転したドライブによってバックアップされていますか？
+SbrExt13 = ローテーションドライブ
+SbrExt13TT = リポジトリはローテーションしたドライブによってバックアップされていますか？
 SbrExt14 = 不変性を使用する
 SbrExt14TT = リポジトリは不変性を使用していますか？
 SbrExt15 = タイプ
@@ -265,10 +304,10 @@ SbrExt15TT = リポジトリタイプ
 SbrExtSum0 = •SOBRは、1つまたは複数の個別のVeeamリポジトリ（基本または強化）を取得し、それらをSOBRコンストラクトに配置することによって作成されます。 SOBRを構成する個々のリポジトリは、「エクステント」と呼ばれます。
 SbrExtSum1 = •ヘルスチェックレポートのこのセクションでは、Veeam Backup andReplicationUIで構成されているリポジトリ設定について詳しく説明します。これらの設定は、バックアップジョブのパフォーマンスに影響を与えるか、パフォーマンスを向上させる可能性があります。
 SbrExtNote0subhdr = タスクの設定：
-SbrExtNote1 = •この列は、リポジトリに許可されている最大同時タスク設定です。バックアップリポジトリの同時タスクの最大許容数を指定します。この値を超えると、Veeam Backup &現在のタスクの1つが終了するまで、レプリケーションは新しいタスクを開始しません。詳細については、 < ahref=を参照してください。
-SbrExtNote2 = •バックアップリポジトリに必要なタスク/コアの数を決定するには、次のを使用します。<a href=
-SbrExtNote3 = oプロキシvCPU/コアの数/3=
-SbrExtNote4 = •設定は次の2つの列と一致している必要があります： <a href=
+SbrExtNote1 = •この列は、リポジトリに許可されている最大同時タスク設定です。 バックアップリポジトリの同時タスクの最大許容数を指定します。 この値を超えると、Veeam Backup＆amp; 現在のタスクの1つが終了するまで、レプリケーションは新しいタスクを開始しません。 詳細については、<a href="https://helpcenter.veeam.com/docs/backup/vsphere/limiting_tasks.html">同時タスク数の制限</a>を参照してください。
+SbrExtNote2 = •バックアップリポジトリに必要なタスク/コアの数を決定するには、次の<a href="https://bp.veeam.com/vbr/2_Design_Structures/D_Veeam_Components/D_backup_repositories/">式</a>を使用します。
+SbrExtNote3 = oプロキシvCPU/コアの数÷3=必要なリポジトリタスクの数。
+SbrExtNote4 = •設定は、次の2つの列（<a style="font-weight：bold">コア</a>と<a style="font-weight：bold"> RAM（GB）</a>）と一致している必要があります。
 SbrExtNote5subhdr = コア：
 SbrExtNote6 = •この数は、リポジトリサーバー内のCPUコアの数と同じです。
 SbrExtNote7 = メモリー：
@@ -278,9 +317,12 @@ SbrExtNote10subhdr = 空き領域（TB）と空き領域％
 SbrExtNote11 = •ベストプラクティスは、リポジトリに20％の空き領域を維持することです。これは、SOBRエクステントがXFS / REFSファイルシステムでフォーマットされている場合に特に重要です。ブロッククローン作成とスペースレス合成バックアップでは、関連するすべてのVeeamバックアップファイルを同じディスクに配置する必要があるためです。 Veeamは合成フルバックアップを作成するための作業スペースを必要とするため、他のファイルシステムでも空き領域が重要です。
 SbrExtNote12 = •VBRコンソールの[一般オプション]セクションで、リポジトリの空きディスク容量の割合が少ないことを警告するようにアラームを設定できます。
 SbrExtNote13subhdr = ブロックを揃える
-SbrExtNote14 = •固定ブロックサイズを使用するストレージシステムの場合は、 < astyle=を選択します。
+SbrExtNote14 = •固定ブロックサイズを使用するストレージシステムの場合は、[<a style="font-weight:bold">バックアップファイルのデータブロックを整列する</a>]チェックボックスをオンにします。 Veeam Backup＆amp; レプリケーションは、バックアップファイルに保存されたVMデータを4KBのブロック境界で整列させます。
 SbrExtNote15 = •この設定は、データ転送の高速化にも役立ち、ブロックベースのリポジトリにデータを転送するときに使用するRAMが少なくなります
-SbrExtNote16 = •VeeamBackupand Replication v11以降のブロックベースのリポジトリの場合、この設定は< astyle=に設定する必要があります。
+SbrExtNote16 = •Veeam Backup and Replication v11以降のブロックベースのリポジトリの場合、この設定は<a style="font-weight：bold">true</a>に設定する必要があります。
+
+#Repositories
+
 RepoTitle = スタンドアロンリポジトリの詳細
 RepoBtn = リポジトリの詳細を表示
 Repo0 = ジョブカウント
@@ -289,6 +331,10 @@ Repo1 = VMごと
 Repo1TT = リポジトリはVM/マシンごとのバックアップファイルを使用しますか？
 RepoSum0 = •スタンドアロンリポジトリには、SOBRの一部として構成されていないリポジトリが含まれます
 RepoSum1 = •ヘルスチェックレポートのこのセクションでは、Veeam Backup andReplicationUIで構成されているリポジトリ設定について詳しく説明します。これらの設定は、バックアップジョブのパフォーマンスに影響を与えるか、パフォーマンスを向上させる可能性があります。
+
+
+# Proxies
+
 PrxTitle = プロキシ情報
 PrxBtn = プロキシの概要を表示
 Prx0 = 名前
@@ -301,12 +347,12 @@ Prx3 = メモリー
 Prx3TT = プロキシホストで検出されたRAMの合計
 Prx4 = プロキシタイプ
 Prx4TT = Vi（Vmware）、HV、CDP、ファイル
-Prx5 = 輸送モード
+Prx5 = 転送モード
 Prx5TT = プロキシ構成で指定されたトランスポートモード
 Prx6 = NBDへのフェイルオーバー
 Prx6TT = プロキシはNBDへのフェイルオーバーを許可されていますか（ネットワークモード）
 Prx7 = シャーシ
-Prx7TT = プロキシは物理的ですか、それとも仮想的ですか？
+Prx7TT = プロキシは物理ですか、それとも仮想ですか？
 Prx8 = キャッシュパス
 Prx8TT = CDPプロキシキャッシュに指定されたパス
 Prx9 = キャッシュサイズ
@@ -315,26 +361,30 @@ Prx10 = ホスト
 Prx10TT = 
 Prx11 = 無効になっています
 Prx11TT = プロキシはユーザーによって無効にされていますか？
-PrxSum0 = Veeamプロキシは論理的なデータムーバーコンポーネントです。プロキシには2つのタイプがあります：(<a href=
+PrxSum0 = Veeamプロキシは論理的なデータムーバーコンポーネントです。 プロキシには2つのタイプがあります：（<a href="https://helpcenter.veeam.com/docs/backup/vsphere/backup_proxy.html?zoom_highlight=proxy&amp;ver=110">バックアッププロキシ</a>、<a href="https://helpcenter.veeam.com/docs/backup/vsphere/cdp_proxy.html?ver=110"> CDPプロキシ</a>）。 バックアッププロキシは、機能またはプラットフォームに基づいてさらに細分化されます。 NASベースのバックアップ用のファイルプロキシ、またはさまざまなソースハイパーバイザー。
 PrxSum1 = •バックアッププロキシは、ソースデータ（VMまたはファイル共有）とバックアップリポジトリの間に配置されます。彼らの役割は、バックアップジョブを処理し、バックアップトラフィックをリポジトリに配信することです。
-PrxSum2 = oVMバックアッププロキシはさまざまなを活用できます<a href=
-PrxSum3 = oファイルバックアッププロキシは、 の手動または自動スナップショットパスからソースデータをバックアップできます。<a href=
-PrxSum4 = oバックアッププロキシは、データをローカルに保存またはキャッシュしません。
+PrxSum2 = o	VMバックアッププロキシは、さまざまな<a href="https://helpcenter.veeam.com/docs/backup/vsphere/transport_modes.html?ver=110">トランスポートモード</a>を活用できます。
+PrxSum3 = o	ファイルバックアッププロキシは、<a href="https://helpcenter.veeam.com/docs/backup/vsphere/file_share_backup_nfs_share_advanced_settings.html?ver=110">NFS</a>の手動または自動スナップショットパスからソースデータをバックアップできます。 <a href="https://helpcenter.veeam.com/docs/backup/vsphere/file_share_backup_smb_share_advanced_settings.html?ver=110"> SMB </a>、エンタープライズNASファイラー。 （注：管理対象サーバーはファイルバックアッププロキシを利用しません）
+PrxSum4 = o	バックアッププロキシは、データをローカルに保存またはキャッシュしません。
 PrxSum5 = •CDPプロキシはCDPポリシーを処理し、ソースとターゲットのVMwareホスト間のデータムーバーとして機能します。
-PrxSum6 = oCDPプロキシにはが必要です<a href=
-PrxNote0 = •「ホスト」列を確認し、 をサポートするホストを特定します。<a href=
-PrxNote1 = o を割り当てることで、役割を組み合わせることができます。<a href=
-PrxNote2 = 役割が非並行である場合は、サポートされているすべての役割にわたって計算された最大リソースを割り当てます。
-PrxNote3 = 役割が同時である場合は、 < ahref=を割り当てます。
-PrxNote4 = CDPプロキシは常にアクティブでデータを転送しているため、その役割のために十分なリソースを「予約」し、結合された役割に必要なものを追加することが不可欠であることに注意してください。
-PrxNote5 = •CDPプロキシ：
-PrxNote6 = o を確認します<a href=
-PrxNote7 = o C：\\ドライブにあるキャッシュでCDPプロキシに潜在的なリスクとしてフラグを立てます。
-PrxNote8 = •割り当てられたを比較します<a href=
-PrxNote9 = •RAMとコアの比率がであることを確認します<a href=
-PrxNote10 = •ベースOSに十分なリソースがあることを確認します。 （<a href=
-PrxNote11 = •選択したを確認します<a href=
-PrxNote12 = •Hyper-Vオフホストプロキシはである必要があります<a href=
+PrxSum6 = o	CDPプロキシには、<a href="https://helpcenter.veeam.com/docs/backup/vsphere/system_requirements.html?ver=110#vmware-cdp-proxy-server">ローカルキャッシュ</a>が必要です。
+PrxNote0 = •	「ホスト」列を確認し、 をサポートするホストを特定します。<a href="https://helpcenter.veeam.com/docs/backup/vsphere/limiting_tasks.html?ver=110#task-limitation-for-components-with-several-roles">多数</a> プロキシの役割：
+PrxNote1 = o	を割り当てることで、役割を組み合わせることができます。<a href="https://helpcenter.veeam.com/docs/backup/vsphere/limiting_tasks.html?ver=110">十分なリソース</a>
+PrxNote2 = 	役割が非並行である場合は、サポートされているすべての役割にわたって計算された最大リソースを割り当てます。
+PrxNote3 = 	ロールが並行している場合は、<a href="https://helpcenter.veeam.com/docs/backup/vsphere/limiting_tasks.html?ver=110#task-limitation-for-components-with-several-roles">を割り当てます。 すべての役割に十分な</a>リソース
+PrxNote4 = 	CDPプロキシは常にアクティブでデータを転送しているため、その役割のために十分なリソースを「予約」し、結合された役割に必要なものを追加することが不可欠であることに注意してください。
+PrxNote5 = •	CDPプロキシ：
+PrxNote6 = o	<a href="https://helpcenter.veeam.com/docs/backup/vsphere/cdp_proxy.html?zoom_highlight=CDP+cache&amp;ver=110#vmware-cdp-proxy-cache">キャッシュ</a>を確認します 適切なサイズです
+PrxNote7 = o	C：\\ドライブにあるキャッシュでCDPプロキシに潜在的なリスクとしてフラグを立てます。
+PrxNote8 = •	割り当てられた<a href="https://helpcenter.veeam.com/docs/backup/vsphere/limiting_tasks.html?ver=110">タスク</a>とコア数を比較し、<a href="https://helpcenter.veeam.com/docs/backup/vsphere/limiting_tasks.html?ver=110#task-limitation-for-backup-proxies">オーバーサブスクリプション</a>。
+PrxNote9 = •	RAMとコアの比率が<a href="https://helpcenter.veeam.com/docs/backup/vsphere/system_requirements.html?ver=110#vmware-cdp-proxy-server">適切</a>であることを確認します 。
+PrxNote10 = •	ベースOSに十分なリソースがあることを確認してください。 （<a href="https://helpcenter.veeam.com/docs/backup/vsphere/system_requirements.html?ver=110#backup-proxy-server">バックアッププロキシ</a>、<a href="https ://helpcenter.veeam.com/docs/backup/vsphere/system_requirements.html?ver=110#vmware-cdp-proxy-server"> CDPプロキシ</a>）
+PrxNote11 = •	選択した<a href="https://helpcenter.veeam.com/docs/backup/vsphere/transport_modes.html?zoom_highlight=transport+mode&amp;ver=110">トランスポートモード</a>を確認し、<a href="https://helpcenter.veeam.com/docs/backup/vsphere/network_mode_failover.html?ver=110">ネットワークモードへのフェイルオーバー</a>は、ジョブが失敗した場合、またはネットワークへのフェイルオーバーがジョブに対して有効になっている場合は無効になります 予想よりも低速で実行される（NBDトラフィックが<a href="https://helpcenter.veeam.com/docs/backup/vsphere/select_backup_network.html?zoom_highlight=preferred+network&amp;ver=110">間違ったネットワークを流れる可能性があります </a>）。
+PrxNote12 = •	Hyper-V off host proxiesは、保護されたHyper-Vホストのバージョンと<a href="https://helpcenter.veeam.com/docs/backup/hyperv/offhost_backup_proxy.html?ver=110">一致</a>する必要があります。
+
+
+# managed servers
+
 ManSrvTitle = 管理対象サーバー情報
 ManSrvBtn = 管理対象サーバーの詳細を表示する
 ManSrv0 = 名前
@@ -361,9 +411,11 @@ ManSrv10 = WANAccです。
 ManSrv10TT = サーバーはVeeamWANアクセラレータとして機能していますか？
 ManSrv11 = 利用できません
 ManSrv11TT = サーバーは利用できませんか？
-ManSrvSum0 = これにより、すべてのサーバーが一覧表示されます<a href =
-ManSrvNote0 = •APIバージョンの列を確認し、それらがであることを確認します。<ahref=
-ManSrvNote1 = •複数の役割をサポートするホストを強調表示し、 を確認します<ahref=
+ManSrvSum0 = これは、データソース（ハイパーバイザー）、バックアップを識別するVeeamによって<a href="https://helpcenter.veeam.com/docs/backup/vsphere/setup_add_server.html?ver=110">管理されている</a>すべてのサーバーを一覧表示します インフラストラクチャサーバー（Windows、Linux）およびVeeam Backup for AWS / Azure/GCPアプライアンス。
+ManSrvNote0 = •	APIバージョンの列を確認し、それらが<a href="https://helpcenter.veeam.com/docs/backup/vsphere/platform_support.html?ver=110">サポート</a>されており、最小値<a href="https://helpcenter.veeam.com/docs/backup/vsphere/system_requirements.html?ver=110">要件</a>。
+ManSrvNote1 = •	複数の役割をサポートするホストを強調表示し、それらをサポートするために<a href="">十分なリソース</a>が利用可能であることを確認します。
+
+# Job Summary
 JobSumTitle = 仕事の概要
 JobSumBtn = ジョブサマリーノートを表示する
 JobSum0 = タイプ
@@ -372,7 +424,10 @@ JobSum1 = 合計
 JobSum1TT = このタイプで検出されたジョブの総数
 JobSumSum0 = Veeam Backup and Replicationサーバーで作成されたすべてのジョブタイプのカウント、およびすべてのジョブの合計。同時に実行されるジョブの数は、VBRサーバーのサイズ設定とパフォーマンスに直接影響します。
 JobSumNote0 = バックアップコピージョブなどの一部のジョブは、継続的に実行するように構成されている場合が多いことに注意してください。
-JobSumNote1 = を参照してください<ahref=
+JobSumNote1 = <a href="＃jobConcurrency7">同時実行テーブル</a>を参照してください
+
+
+#job concurrency table
 JobConTitle = ジョブ同時実行テーブル（7日）
 JobConBtn = 同時実行テーブルを表示する
 JobCon0 = 時間
@@ -394,13 +449,13 @@ JobCon7TT =
 JobConSum0 = 同時実行テーブルは、ヒートマップとして機能することを目的としています。毎日の各時間が表されます。各セルの数値は、特定の時間内に同時に実行されているジョブの合計の計算された最大数を表します。このデータは、より正確なVBRサーバーのサイズ設定を保証するために使用できます。
 JobConNote0subhdr = 計算
 JobConNote1 = 推奨されるVeeamバックアップサーバーの構成は、同時に実行される10個のジョブごとに1つのCPUコア（物理または仮想）と4GBのRAMです。並行ジョブには、実行中のバックアップまたはレプリケーションジョブのほか、バックアップコピージョブやテープジョブなどの継続的なスケジュールを持つジョブが含まれます。
-JobConNote2 = <a href=
+JobConNote2 = <a href="https://bp.veeam.com/vbr/3_Build_structures/B_Veeam_Components/B_VBR_Server/Backup_Server.html" target="_blank">推奨される最小値は、2つのCPUコアと8GBのRAMです。
 JobConNote3 = 必要なリソースが現在のVBRCPUおよびRAMを超える場合は、ジョブスケジューリングを分析して、同時ジョブの数を最小限に抑える必要があります。ジョブスケジュールの変更が不可能な場合は、複数のVBRサーバーを展開し、ジョブを新しいサーバーに移行する必要があります。
 JobConNote4subhdr = VeeamMicrosoftSQLデータベース
 JobConNote5bold = 次のガイドラインに従ってください。
 JobConNoteSqlTableRow1Col1 = 同時に実行されているジョブの数
 JobConNoteSqlTableRow1Col2 = CPU
-JobConNoteSqlTableRow1Col3 = メモリー
+JobConNoteSqlTableRow1Col3 = メモリ
 JobConNoteSqlTableRow2Col1 = 25まで
 JobConNoteSqlTableRow2Col2 = 2 CPU
 JobConNoteSqlTableRow2Col3 = 4ギガバイト
@@ -415,6 +470,9 @@ JobConNoteSqlTableNote1 = •500台を超えるサーバーを保護する場合
 JobConNoteSqlTableNote2 = •FilestoTapeジョブを広範囲に使用すると、データベースが大幅に増大し、10GBの制限をすぐに超える可能性があります。
 JobConNoteSqlTableNote3 = •VeeamExplorerfor MicrosoftSQLServerまたはVeeamExplorerforMicrosoftSharePointで使用する外部ステージングサーバーを構成できない場合。 10 GBを超えるデータベースを操作する場合、SQLServerExpressはデータベースをマウントできません。
 JobConNoteSqlTableNote4 = •データベースがMicrosoftSQLServerの高度な機能を使用している場合。暗号化やテーブルのパーティション分割など、ステージングサーバーのライセンスレベル（ローカルまたはリモート）は、元のインスタンスのレベルと一致する必要があります。
+
+
+# VM concurrency chart
 TaskConTitle = VMタスクの同時実行（7日間）
 TaskConBtn = 同時実行テーブルを表示する
 TaskCon0 = 時間
@@ -435,16 +493,21 @@ TaskCon7 = 土曜日
 TaskCon7TT = 
 TaskConSum0 = 同時実行テーブルは、ヒートマップとして機能することを目的としています。毎日の各時間が表されます。各セルの数値は、特定の時間内に同時に実行されているタスクの計算された最大数を表します。このデータは、ジョブのスケジューリングとプロキシ/リポジトリのタスクのサイズ設定に役立ちます。
 TaskConNote0 = このチャートを使用して、最大同時実行性を確認します。ここでの各タスクは、1つの対応するプロキシタスクと1/3の対応するリポジトリタスクによってサポートされる必要があります。
+
+# Reg options
 RegTitle = デフォルト以外のレジストリキー
 RegBtn = RegKeyの詳細を表示
 Reg0 = 鍵
 Reg0TT = 
 Reg1 = 価値
 Reg1TT = 
-RegSum0 = この表は、Veeam Backup &amp; Replicationの基本インストール中に設定されたデフォルトのキーとは異なるレジストリキーの詳細を示しています。レプリケーション。具体的には<クラス<a class=
+RegSum0 = この表は、Veeam Backup &amp; Replicationの基本的なインストール中に設定されたデフォルトのキーとは異なるレジストリキーの詳細を示しています。具体的には、<a class="bld"> HKLM \\ SOFTWARE \\ Veeam \\ Veeam Backup andReplication</a>です。
 RegNote0 = 一部のレジストリキーは、さまざまな理由で推奨されるバグ修正やその他の調整に関連付けられているため、ここに表示されるキーに関する質問については、過去のサポートケースのメールやメモを参照するか、Veeamエンジニアに問い合わせることをお勧めします。
-RegNote1 = LoggingLevelやその他のいくつかのキー
-JobInfoTitle = 仕事情報
+RegNote1 = LoggingLevelやその他の「ログ」関連のキーなどの一部のキーは、必要に応じて、対応するものに従うときに調整できます。<a href="https://www.veeam.com/kb1825">KB Article.</a>
+
+
+#Job Info
+JobInfoTitle = ジョブ情報
 JobInfoBtn = ジョブ情報の詳細を表示
 JobInfo0 = 名前
 JobInfo0TT = コンソールに表示されるジョブ名
@@ -456,26 +519,28 @@ JobInfo3 = 復元ポイント
 JobInfo3TT = ジョブ構成で設定された望ましい復元ポイント
 JobInfo4 = 暗号化
 JobInfo4TT = ジョブはバックアップを暗号化しますか？
-JobInfo5 = 職種
-JobInfo5TT = 仕事の種類
+JobInfo5 = ジョブの種類
+JobInfo5TT = ジョブの種類
 JobInfo6 = アルゴリズム
 JobInfo6TT = 
 JobInfo7 = スケジュール有効時間
 JobInfo7TT = 
 JobInfo8 = フルバックアップ日数
 JobInfo8TT = 
-JobInfo9 = 完全バックアップスケジュール
+JobInfo9 = フルバックアップスケジュール
 JobInfo9TT = 
 JobInfo10 = スケジュールオプション
 JobInfo10TT = 
-JobInfo11 = フルからシンセに変換
+JobInfo11 = フルから合成に変換
 JobInfo11TT = 
-JobInfo12 = Incをシンセに変換
+JobInfo12 = Incを合成に変換
 JobInfo12TT = 
 JobInfo13 = 変換日
 JobInfo13TT = 
 JobInfoSum0 = •ジョブは、ソースデータ、宛先、スケジュール、およびそのソースデータの処理に関する詳細設定を定義します。 Veeam Backup &amp; Replicationには複数のジョブタイプがあります。バックアップ、バックアップコピー、CDPポリシー、NASバックアップなどを含むレプリケーション。すべてのジョブタイプのすべての列にデータがあるわけではありません。
-JobInfoNote0 = •ジョブにリストされている復元ポイントとスケジュールオプションが、ソースアプリケーションに必要なRPOと一致していることを確認します。 を参照してください<ahref=
+JobInfoNote0 = •	ジョブにリストされている復元ポイントとスケジュールオプションが、ソースアプリケーションの必要なRPOと一致していることを確認します。 <a href="https://helpcenter.veeam.com/docs/backup/vsphere/backup_job_schedule_vm.html?ver=110">ジョブスケジューリング</a>を参照してください。
+
+# job session summary
 JssTitle = ジョブセッションの概要（7日間）
 JssBtn = ジョブの詳細を表示
 Jss0 = 職種名
@@ -513,16 +578,20 @@ Jss15TT = 職種
 JssSum0 = この表は、過去7日間の個々の仕事の最近の履歴を詳しく説明することを目的としています。
 JssNote0subhdr = リソース/ジョブセッションの長さの問題を待機しています：
 JssNote1 = •異なるタイムスロットで開始するようにジョブをスケジュールすると、リソースを分散し、使用可能なリソースを待機しているジョブであるボトルネックを防ぐのに役立ちます。 （例：すべてのジョブを午後8時に開始するようにスケジュールする代わりに、1つのジョブを8:00に開始し、別のジョブを8:30に開始し、別のジョブを9:00に開始します。）
-JssNote2 = •リソースが許す場合は、プロキシで許可される同時タスクの数を増やします。 <a href =
-JssNote3 = oバックアッププロキシにタスクを増やすための十分なリソースがなく、仮想マシンである場合は、プロキシで使用できるCPUとRAMの量を増やすことを検討する必要があります。
-JssNote4 = o既存のプロキシにリソースを追加するオプションがない場合は、「バックアップインフラストラクチャ- >バックアッププロキシ」内から追加のバックアッププロキシを展開することを検討してください。
-JssNote5 = •VBRコンソールでジョブセッション統計を表示して、バックアップジョブまたはレプリケーションジョブが正しいプロキシを選択していることを確認します。
-JssNote6 = •バックアップジョブのパフォーマンスを調査します。特定のジョブの処理に通常よりも時間がかかる場合は、警告を確認し、ボトルネック統計を以前のジョブセッションと比較して、問題を特定のプロキシ、リポジトリ、ホスト、またはデータストアに切り分けてみてください。
-JssNote7 = oより大きなVM/サーバーを独自のジョブに移動し、ジョブのバックアップウィンドウをより速く完了することで競合が発生しないようにスケジュールします（たとえば、これらのジョブを他のすべてのジョブの前または他のすべてのジョブの後にスケジュールします）
-JssNote8 = •NASプロキシ、キャッシュリポジトリ、およびリポジトリをVMプロキシおよびVMとエージェントのリポジトリから分離します
-JssNote9 = •	<a href=
-JssNote10 = •必要に応じて、 <a href=
+JssNote2 = •	リソースが許す場合は、プロキシで許可される同時タスクの数を増やします。 <a href="https://helpcenter.veeam.com/docs/backup/vsphere/vmware_proxy_server.html?ver=110#:~:text=In%20the%20Max%20concurrent%20tasks%20field%2C%20specify%20the%20number%20of%20tasks%20that%20the%20backup%20proxy%20must%20handle%20in%20parallel.%20If%20this%20value%20is%20exceeded%2C%20the%20backup%20proxy%20will%20not%20start%20a%20new%20task%20until%20one%20of%20current%20tasks%20finishes.">最大同時タスクを設定する方法を参照してください。</a>
+JssNote3 = o	バックアッププロキシにタスクを増やすための十分なリソースがなく、仮想マシンである場合は、プロキシで使用できるCPUとRAMの量を増やすことを検討する必要があります。
+JssNote4 = o	既存のプロキシにリソースを追加するオプションがない場合は、「バックアップインフラストラクチャ- >バックアッププロキシ」内から追加のバックアッププロキシを展開することを検討してください。
+JssNote5 = •	VBRコンソールでジョブセッション統計を表示して、バックアップジョブまたはレプリケーションジョブが正しいプロキシを選択していることを確認します。
+JssNote6 = •	バックアップジョブのパフォーマンスを調査します。特定のジョブの処理に通常よりも時間がかかる場合は、警告を確認し、ボトルネック統計を以前のジョブセッションと比較して、問題を特定のプロキシ、リポジトリ、ホスト、またはデータストアに切り分けてみてください。
+JssNote7 = o	より大きなVM/サーバーを独自のジョブに移動し、ジョブのバックアップウィンドウをより速く完了することで競合が発生しないようにスケジュールします（たとえば、これらのジョブを他のすべてのジョブの前または他のすべてのジョブの後にスケジュールします）
+JssNote8 = •	NASプロキシ、キャッシュリポジトリ、およびリポジトリをVMプロキシおよびVMとエージェントのリポジトリから分離します
+JssNote9 = •	<a href="https://helpcenter.veeam.com/docs/backup/vsphere/gateway_server.html?ver=110#gateway-servers-deployment">静的ゲートウェイとマウントサーバーを使用する</a>可能であれば、合成操作、SOBRオフロード処理、バックアップコピージョブ、およびその他のタスクに必要なリソース消費をオフロードします。
+JssNote10 = •	必要に応じて、 <a href="https://www.veeam.com/kb2660">ストレージシステムの重複排除に関するアーキテクチャガイドラインを確認します。</a>
+
+
+######## VB365
 Vb365Banner = VB365ヘルスチェックレポート
+#navigation
 v365NavTitle0 = グローバル構成
 v365NavValue0 = ライセンスとグローバル設定の概要。
 v365NavTitle1 = 保護されたユーザー
@@ -551,3 +620,6 @@ v365NavTitle12 = 仕事の統計
 v365NavValue12 = 最近のジョブ実行の分析。
 v365NavTitle13 = ジョブセッション
 v365NavValue13 = 最近のジョブ実行の詳細。
+
+# Global Config
+VboGloH1

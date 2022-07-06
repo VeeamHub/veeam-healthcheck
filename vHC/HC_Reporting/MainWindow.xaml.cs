@@ -21,7 +21,7 @@ namespace VeeamHealthCheck
     public partial class MainWindow : Window
     {
         public static CLogger log = new("HealthCheck");
-        public static bool _scrub = false;
+        public static bool _scrub = true;
         private bool _collectSessionData = true;
         public static bool _openHtml = false;
         public static bool _openExplorer = true;
@@ -50,7 +50,7 @@ namespace VeeamHealthCheck
             PreCheck();
 
             SetUiText();
-
+            scrubBox.IsChecked = true;
             hideProgressBar();
             run.IsEnabled = false;
         }
@@ -150,7 +150,7 @@ namespace VeeamHealthCheck
             });
 
         }
-        private void RunAction()
+        public void RunAction()
         {
             log.Info("Starting Run");
             ExecPsScripts();

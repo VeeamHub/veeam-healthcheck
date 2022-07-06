@@ -1,197 +1,233 @@
+# This is the base file where Resource (String) edits will be completed.
+# All translations will need to be based on this file
+#
+# To translate:
+# information left of the "=" is off limits.
+# The information to the right (->) side of "=" is what shall be translated.
+
+# GUI
 GuiAcceptButton = 接受條款
-GuiAcceptText = 該工具作為免費實用程序提供，用於評估您的 Veeam 配置。它是“自擔風險”提供的。\n\n該工具將使用 PowerShell 和 SQL 來收集數據，然後將文件和文件夾輸出到本地磁盤。 \n\n這些文件可能會被匿名化以隱藏敏感數據。接受條款意味著用戶同意以全部能力執行此程序。
+GuiAcceptText = 該工具作為提供免費的實用程式，用於評估您的 Veeam 配置。此工具的使用風險需由客戶自行評估及承擔。\n\n該工具將使用 PowerShell 和 SQL 來收集數據，然後將文件和文件夾輸出到本地磁碟。 \n\n這些文件可以被匿名化以隱藏敏感數據。接受條款意味著用戶同意執行此程式。
 GuiImportButton = 導入
 GuiImportModeOnly = 導入模式
-GuiInstCaveat1 = * 如果選擇刪除敏感數據類型，則只會清除 HTML 報告。看：
-GuiInstCaveat2 = ** 請注意，在較大的環境中，此工具最多可能需要 3 小時才能完成。
+GuiInstCaveat1 = * 如果選擇刪除敏感數據類型，則只會清除 HTML 相關報告：
+GuiInstCaveat2 = ** 請注意，規模較大的環境中，此工具最多可能需花費 3 小時完成。
 GuiInstHeader = 指示：
 GuiInstLine1 = 1. 接受條款
-GuiInstLine2 = 2.點擊運行
-GuiInstLine3 = 3. 完成後，Windows 資源管理器將打開到輸出目錄。 （如果啟用，將顯示 HTML 報告）
-GuiInstLine4 = 4. 根據需要查看報告
-GuiInstLine5 = 5. 從 C:\\temp\\vHC* 或指定的任何目錄捕獲輸出。
-GuiInstLine6 = 6. 通知您的 Veeam SE 和/或將結果發送給他們以供審核
+GuiInstLine2 = 2. 點擊運作
+GuiInstLine3 = 3. 完成後，Windows 檔案總管將打開到輸出目錄。 （如果啟用HTML報告功能，將在完成時顯示HTML報告）
+GuiInstLine4 = 4. 依據需求查看報告
+GuiInstLine5 = 5. 從 C:\\temp\\vHC* 或指定的任何目錄查詢輸出檔案。
+GuiInstLine6 = 6. 通知您的 Veeam SE 和/或將結果發送給他們以評估
 GuiOptionsHeader = 選項：
 GuiOutPath = 輸出路徑
-GuiRunButton = 運行
+GuiRunButton = 運作
 GuiSensData = 從報告中刪除敏感數據類型
 GuiShowFiles = 完成時顯示文件
 GuiShowHtml = 完成後顯示 HTML 報告
 GuiTitle = Veeam 健康檢查
 GuiTitleBnR = B&R
 GuiTitleVB365 = VB365
+
+#protworkload
 PlHdr0 = Vi 總計
-PlHdrTT0 = 找到的 VMware VM 總數。
+PlHdrTT0 = 查詢的 VMware VM 總數。
 PlHdr1 = Vi 受保護
-PlHdrTT1 = 通過備份找到的 VMware VM 總數
+PlHdrTT1 = 通過備份查詢的 VMware VM 總數
 PlHdr2 = Vi 不保護
-PlHdrTT2 = 找到的沒有備份的 VMware 虛擬機總數
+PlHdrTT2 = 查詢沒有備份的 VMware 虛擬機總數
 PlHdr3 = Vi 潛在重複的
 PlHdrTT3 = 可能重複的工作負載
-PlHdr4 = Vi 作為物理保護
-PlHdrTT4 = 通過代理備份的虛擬機作為物理工作負載
-PlHdr5 = 物理總量
-PlHdrTT5 = 添加到保護組的服務器總數
-PlHdr6 = 物理保護
-PlHdrTT6 = 具有備份的服務器總數
-PlHdr7 = 物理不保護
-PlHdrTT7 = 保護組中但當前沒有備份的服務器總數
-PlSum1 = 此表匯總了在當前備份服務器中檢測到的工作負載量。 VMware (Vi Total) 計數由本地 Veeam Broker 服務確定，並將該 VM 計數與現有備份進行比較。物理工作負載 (Phys Total) 由添加到保護組的 VM 數量確定，然後與備份作業中的內容進行比較。
+PlHdr4 = Vi 實體機保護
+PlHdrTT4 = 通過代理備份的虛擬機作為實體機工作負載 
+PlHdr5 = 實體機總量
+PlHdrTT5 = 添加到保護群元件的伺服器總數
+PlHdr6 = 實體機保護群元件
+PlHdrTT6 = 具有備份的伺服器總數
+PlHdr7 = 實體機不保護群元件
+PlHdrTT7 = 保護群元件中但當前沒有備份的伺服器總數
+PlSum1 = 此表匯總了在當前備份伺服器中檢測到的工作負載量。 VMware (Vi Total) 數量由本地 Veeam Broker 服務確認，並將該 VM 數量與現有備份進行比較。實體機工作負載 (Phys Total) 由添加到保護群元件的 VM 數量確定，然後與備份作業中的內容進行比較。
 PlNote1 = 
 PlButton = 顯示受保護工作負載的數量
 PlTitle = 受保護的工作負載
+#end protected workload section
+
+
+
+
+
+# general strings
 GeneralNotesHeader = 筆記：
-GeneralSummaryHeader = 概括：
+GeneralSummaryHeader = 總結：
+
+#header 
 HtmlHeader = VBR 健康檢查報告
-HtmlIntroLine1 = - 此報告提供有關 Veeam Backup and Replication (VBR) 部署的數據和見解。此處提供的信息旨在與您的 Veeam 代表合作使用。
-HtmlIntroLine2 = - 原始數據以 CSV 格式捕獲，可在導出文件夾中本地訪問。 CSV 將允許您在 Excel 等工具中操作數據。
-HtmlIntroLine3 = 	- 有关各个作业会话的其他信息，请参见<a href=
-HtmlIntroLine4 = - 注意：在鼠標懸停期間，可能會出現一個工具提示，其中包含表頭或數據列的解釋性數據。
-HtmlIntroLine5 = - 注意：您為生成此報告而運行的工具是完全獨立的，不會“打電話回家”，並且僅在 Veeam Backup and Replication 服務器上執行。它查詢 VBR 數據庫、註冊表、配置和日誌文件。它不需要訪問 vCenter 或任何其他基礎架構。
-HtmlIntroLine5vb365 = - 注意：您為生成此報告而運行的工具是完全獨立的，不會“打電話回家”，並且僅在 Veeam Backup for Microsoft 365 服務器上執行。它查詢 VB365 數據庫、註冊表、配置和日誌文件。它不需要訪問 M365 或任何其他基礎設施。
-NavBkpSrvDeet = 有關備份服務器、配置數據庫、角色和資源的詳細信息。
-NavBkpSrvLink = 備份服務器
+HtmlIntroLine1 =	- 此報告提供有關 Veeam Backup and Replication (VBR) 部署的數據和說明。此處提供的訊息在與您的 Veeam 代表共同使用。
+HtmlIntroLine2 =	- 原始數據以 CSV 格式收集，可在匯出文件夾中本地存取。 CSV 將允許您在 Excel 等工具中操作數據。
+HtmlIntroLine3 =	- 可以在 <a href 中查詢有關各個工作會話的其他訊息
+HtmlIntroLine4 =	- 注意：在滑鼠停止期間，可能會出現一個工具提示，其中包含表頭或數據列的說明數據
+HtmlIntroLine5 =	- 注意：您為產生此報告而運作的工具是完全獨立的，不會觸發“Phone-Home”，並且僅在 Veeam Backup and Replication 伺服器上執行。它查詢 VBR 資料庫、註冊表、配置和日誌文件。它不需要存取 vCenter 或任何其他基礎架構。
+HtmlIntroLine5vb365 =	- 注意：您為產生此報告而運作的工具是完全獨立的，不會觸發“hone-Home”，並且僅在 Veeam Backup for Microsoft 365 伺服器上執行。它查詢 VB365 資料庫、註冊表、配置和日誌文件。它不需要存取 M365 或任何其他基礎設施。
+
+# navigation
+NavBkpSrvDeet = 有關備份伺服器、配置資料庫、角色和資源的詳細訊息。
+NavBkpSrvLink = 備份伺服器
 NavColapse = 折疊/展開全部
 NavHeader = 導航：
-NavJobConDeet = 顯示每小時發現的最大作業並發的熱圖。
-NavJobConLink = 作業並發
-NavJobInfoDeet = 每項工作的詳細分類。
-NavJobInfoLink = 工作信息
+NavJobConDeet = 顯示每小時發現的最大作業並行的熱圖
+NavJobConLink = 作業並行
+NavJobInfoDeet = 每項工作的詳細分類
+NavJobInfoLink = 工作訊息
 NavJobSessSumDeet = 按作業名稱匯總的作業會話。
-NavJobSessSumLink = 	作业会话摘要
-NavJobSumDeet = 	按类型和计数列出的找到的作业摘要。
-NavJobSumLink = 	作业摘要
-NavLicInfoDetail = 顯示許可證信息。
-NavLicInfoLink = 許可證信息
+NavJobSessSumLink = 	工作會話摘要
+NavJobSumDeet = 	按類型和數量列出的已查詢工作的摘要。
+NavJobSumLink = 	工作總結
+NavLicInfoDetail = 顯示許可證訊息。
+NavLicInfoLink = 許可證訊息
 NavMissingDeet = 顯示未使用的工作負載和類型。
-NavMissingJobLink = 	缺少作业类型
-NavProtWkldDeet = 顯示檢測到的虛擬機和物理對象的計數與具有備份的對象相比。
+NavMissingJobLink = 	缺少作業類型
+NavProtWkldDeet = 顯示檢測到的虛擬機和實體機目標的數量與具有備份的目標相比。
 NavProtWrkld = 受保護的工作負載
-NavProxyDeet = 有關代理資源和配置的詳細信息。
-NavProxyInfoLink = 代理信息
+NavProxyDeet = 有關代理資源和配置的詳細訊息。
+NavProxyInfoLink = 代理訊息
 NavRegKeyDeet = 顯示與普通安裝不同的任何註冊表值。
-NavRegKeyLink = 非默認註冊表項
-NavRepoDeet = 有關非 SOBR 存儲庫、資源和配置的詳細信息。
-NavRepoInfoLink = 存儲庫信息
+NavRegKeyLink = 非預設註冊表項
+NavRepoDeet = 有關非 SOBR 儲存庫、資源和配置的詳細訊息。
+NavRepoInfoLink = 儲存庫訊息
 NavSecSumDeet = 簡要表顯示正在使用的安全功能。
 NavSecSumLink = 安全摘要
 NavSobrDeet = SOBR 和配置選項的總結。
-NavSobrExtDeet = SOBR 範圍、資源和配置的詳細信息。
-NavSobrExtLink = SOBR 範圍信息
-NavSobrInfoLink = SOBR 信息
-NavSrvInfoDeet = 用戶添加到配置中的所有服務器的列表。
-NavSrvInfoLink = 服務器信息
-NavSrvSumDeet = 檢測到的基礎設施類型和計數的摘要。
-NavSrvSumLink = 服務器摘要
-NavTaskConDeet = 顯示每小時發現的最大 VM 並發的熱圖。
-NavTaskConLink = 虛擬機並發
+NavSobrExtDeet = SOBR 範圍、資源和配置的詳細訊息。
+NavSobrExtLink = SOBR 範圍訊息
+NavSobrInfoLink = SOBR 訊息
+NavSrvInfoDeet = 用戶添加到配置中的所有伺服器的列表。
+NavSrvInfoLink = 伺服器訊息
+NavSrvSumDeet = 檢測到的基礎設施類型和數量的摘要。
+NavSrvSumLink = 伺服器摘要
+NavTaskConDeet = 顯示每小時發現的最大 VM 並行的熱圖。
+NavTaskConLink = 虛擬機並行
+
+
+#License table
 LicCcTT = 是否啟用了Cloud Connect？
 LicExpTT = 許可證到期日期
 LicTblLicTo = 授權給
-LicSupExpTT = 支持有效期
+LicSupExpTT = 支援有效期
 LicTableHeader = 許可證摘要
 LicTblCc = Cloud Connect 已啟用
 LicTblEdition = 	版本
 LicTblExpDate = 過期日期
-LicTblLicInst = 許可的實例。
+LicTblLicInst = 許可的Instance。
 LicTblLicNas = 許可的NAS
 LicTblLicSock = 許可的Socket
-LicTblNewInst = 新實例
-LicTblRentInst = 租賃實例
-LicTblStatus = 狀況
-LicTblSupExpDate = 支持有效期
+LicTblNewInst = New Inst
+LicTblRentInst = 租賃 Inst
+LicTblStatus = 狀態
+LicTblSupExpDate = 支援有效期
 LicTblType = 類型
-LicTblUsedInst = 已使用的實例
+LicTblUsedInst = 已使用的Instance
 LicTblUsedNas = 已使用的NAS
 LicTblUsedSock = 已使用的Sockets
 LtEdTT = Veeam 許可版本
-LtInstLicTT = 許可實例總數
-LtInstNewTT = 新實例總數
-LtInstRentalTT = 總租用實例
-LtInstUsedTT = 使用的實例總數
+LtInstLicTT = 許可Instance總數
+LtInstNewTT = 新Instance總數
+LtInstRentalTT = 總租用Instance
+LtInstUsedTT = 使用的Instance總數
 LtNasLicTT = 許可的 NAS 總數
 LtNasUsedTT = 使用的 NAS 許可證總數
 LtSocLicTT = 許可的插座總數
 LtSocUsedTT = 使用的套接字總數
 LtStatusTT = Veeam 許可證狀態
 LtTypeTT = Veeam 許可類型
-NpButton = 顯示有關缺少的作業類型的詳細信息
-NpSum1 = 此表匯總了您的配置中缺少或無法分析的作業類型。有關更多信息，請諮詢您的 Veeam 工程師。
+
+
+# not protected workloads
+NpButton = 顯示有關缺少的作業類型的詳細訊息
+NpSum1 = 此表匯總了您的配置中缺少或無法分析的作業類型。有關更多訊息，請諮詢您的 Veeam 工程師。
 NpTitle = 缺少作業類型
+
+#sec Summary
+
 SSHdr0 = Immutability
-SSHdrTT0 = 此服務器中的任何地方都使用了不變性嗎？
+SSHdrTT0 = 此伺服器中的任何地方都使用了Immutability？
 SSHdr1 = 流量加密
 SSHdrTT1 = 是否啟用了流量加密？
 SSHdr2 = 備份文件加密
 SSHdrTT2 = 備份文件是否被加密？
 SSHdr3 = 配置備份加密
 SSHdrTT3 = 配置備份是否加密？
-SSSum1 = 安全摘要表可讓您一目了然地查看B&amp;R中的一個或多個組件上啟用了哪些安全功能。一個值
+SSSum1 = 安全摘要表可讓您一目了然地查看B&amp;R中的一個或多個元件上啟用了哪些安全功能。
 SSSubHdr1 = Immutability
 SSSubHdr2 = 流量加密
 SSSubHdr3 = 備份文件加密
 SSSubHdr4 = 配置備份加密
-SSNote1 = 對於不可變的備份，考慮部署一個<a href=
-SSNote2 = <a href=
-SSNote3 = 備份文件加密可防止外人導入您的備份並訪問內容。如果備份存儲在異地，請考慮<a href=
-SSNote4 = The <a href=
-SSButton = 顯示安全摘要的詳細信息。
+SSNote1 = 對於Immutability，請考慮部署 <a href="https://helpcenter.veeam.com/docs/backup/vsphere/hardened_repository.html?ver=110">強化 Linux 儲存庫</a> 或選擇 <a href ="https://helpcenter.veeam.com/docs/backup/vsphere/object_storage_repository.html?ver=110">提供不變性的公有雲或 S3 兼容</a> 選項。
+SSNote2 = <a href="https://helpcenter.veeam.com/docs/backup/vsphere/security_considerations.html?zoom_highlight=traffic+encryption&amp;ver=110#:~:text=Encrypt%20network%20traffic,Network%20Data%20Encryption.">流量加密</a>預設為所有公共流量啟用。 如果此值顯示為 false，請考慮重新啟用 Internet 或任何其他潛在敏感傳輸的設置。
+SSNote3 = 備份文件加密可防止外人導入您的備份並存取內容。 如果備份儲存在異地，請考慮啟用 <a href="https://helpcenter.veeam.com/docs/backup/vsphere/backup_job_advanced_storage_vm.html?ver=110#:~:text=To%20encrypt%20the%20content%20of%20backup%20files%2C%20select%20the%20Enable%20backup%20file%20encryption%20check%20box.">啟用</a>備份文件加密以保護備份免受不必要的存取。
+SSNote4 = <a href="https://helpcenter.veeam.com/docs/backup/vsphere/vbr_config.html?ver=110">配置備份</a>可確保您的B&amp;R配置已備份並準備好在在中斷或遷移的情況下恢復設定。將配置備份 <a href="https://helpcenter.veeam.com/docs/backup/vsphere/config_backup_encrypted.html?ver=110">加密</a> 可以防止不必要的存取以及能夠 恢復以前儲存在配置中的密碼。 <a style="font-weight:bold">考慮使用 Backup Enterprise Manager 的</a> <a href="https://helpcenter.veeam.com/docs/backup/em/em_manage_keys.html?ver=110">密碼保護</a> <a style="font-weight:bold"> 確保丟失的密碼可恢復，並在發生災難性中斷時將 Enterprise Manager 和 VBR 分開。 還可以考慮將密鑰集匯出到安全位置。 如果沒有這種保護，丟失的密碼可能會削弱使用備份文件的能力。</a>
+SSButton = 顯示安全摘要的詳細訊息。
 SSTitle = 安全摘要
+
+#managed server Summary
 MssTitle = 檢測到的基礎設施類型和數量
 MssHdr1 = 名稱
-MssHdr2 = 计数
-MssHdr1TT = 服務器/共享名稱
+MssHdr2 = 數量
+MssHdr1TT = 伺服器/共享名稱
 MssHdr2TT = 檢測到的總數
 MssSum1 = 此表總結了用戶手動添加到 Veeam 配置中的不同類型和數量的基礎設施項目。
-MssButton = 顯示檢測到的基礎設施類型和計數的詳細信息
-BkpSrvButton = 顯示備份服務器摘要和註釋。
-BkpSrvNotes1 = • 確保資源<a href=
-BkpSrvNotes2 = • 確保資源<a href=
-BkpSrvNotes3 = • 如果使用 SQL Express，請確保它沒有違反 SQL Express <a href=
-BkpSrvNotes4 = • 分配數據保護任務以使用默認代理或默認備份存儲庫組件可能會導致爭用備份服務器資源或其他意外流量。在大型或分佈式部署中，可能需要禁用、刪除和/或重新分配這些備份服務器。
-BkpSrvNotes5 = • 推薦使用快速性能磁盤<a href=
-BkpSrvNotes6 = • DNS 是一個關鍵組件。確保<a href=
-BkpSrvSummary1 = 備份服務器（又名 VBS 或 VBR 服務器）是備份基礎架構中的核心組件，充當“配置和控制中心”的角色。備份服務器執行所有類型的管理活動，包括：協調數據保護和恢復任務、任務調度和資源分配，以及管理其他備份基礎架構組件。
-BkpSrvSummary2 = • 備份服務器在 Microsoft Windows 上運行
-BkpSrvSummary3 = • 將有關備份基礎架構、作業、會話和其他配置數據的數據存儲在本地或遠程 SQL 服務器中。在默認安裝中，SQL Server Express 安裝在本地。
-BkpSrvSummary4 = • 默認部署了其他組件：代理、存儲庫
+MssButton = 顯示檢測到的基礎設施類型和數量的詳細訊息
+
+#backup server section
+BkpSrvButton = 顯示備份伺服器摘要和註釋。
+BkpSrvNotes1 = • 確保備份伺服器的資源<a href="https://bp.veeam.com/vbr/3_Build_structures/B_Veeam_Components/B_VBR_Server/Backup_Server.html#compute-requirements">大小</a>足以滿足 同時運作它管理的作業。 請參閱此報告中的<a href="#jobConcurrency7">並行表</a>。 注意：如果將其他角色或元件元件合到 Backup Server 主機上，則資源大小是附加的（例如，Backup Server + SQL + Proxy + Repository 等）。
+BkpSrvNotes2 = • 確保 SQL 伺服器的資源 <a href="https://bp.veeam.com/vbr/2_Design_Structures/D_Veeam_Components/D_VBR_DB/database.html#sizing">sizing</a> 足夠
+BkpSrvNotes3 =	• 如果使用 SQL Express，請確保它沒有違反 SQL Express <a href="https://bp.veeam.com/vbr/2_Design_Structures/D_Veeam_Components/D_VBR_DB/database.html#sql-server-edition">版本限制</a>（例如，CPU 數量、核心、記憶體和資料庫容量）。 一個緩慢、無回應或充滿錯誤的備份伺服器通常可能是達到這些 SQL 限制的結果。
+BkpSrvNotes4 =	• 分配數據保護任務以使用預設代理或預設備份儲存庫元件可能會導致爭用備份伺服器資源或其他意外流量。在大型或分佈式部署中，可能需要禁用、刪除和/或重新分配這些備份伺服器。
+BkpSrvNotes5 =	• 建議將效能較好的磁碟用於<a href="https://bp.veeam.com/vbr/3_Build_structures/B_Veeam_Components/B_VBR_Server/Backup_Server.html#log-files">日誌位置</a>，該位置預設值為“%ProgramData%\\Veeam\\Backup”
+BkpSrvNotes6 =	• DNS 是一個關鍵元件。 確保從備份伺服器和其他系統到備份的 <a href="https://bp.veeam.com/vbr/3_Build_structures/B_Other/dns_resolution.html#dns-resolution">DNS 解析</a> 伺服器運作正常。 環境中的其他元件應該能夠通過 FQDN 解析 Backup Server 和其他 Veeam 基礎架構元件（例如代理、儲存庫）。 正向和反向查詢都應該是正常的。
+BkpSrvSummary1 = 備份伺服器（又名 VBS 或 VBR 伺服器）是備份基礎架構中的核心元件，充當“配置和控制中心”的角色。備份伺服器執行所有類型的管理活動，包括：協調數據保護和恢復任務、任務調度和資源分配，以及管理其他備份基礎架構元件。
+BkpSrvSummary2 = • 備份伺服器在 Microsoft Windows 上運作
+BkpSrvSummary3 = • 將有關備份基礎架構、作業、會話和其他配置數據的數據儲存在本地或遠程 SQL 伺服器中。在預設安裝中，SQL Server Express 安裝在本機。
+BkpSrvSummary4 = • 預設部署了其他元件：代理、儲存庫
 BkpSrvTblCfgEnabled = 配置備份（CB）啟用
 BkpSrvTblCfgEncrypt = CB 加密
 BkpSrvTblCfgLastRes = CB 最後結果
 BkpSrvTblCore = 核心
-BkpSrvTblHead = 備份服務器和配置數據庫信息
+BkpSrvTblHead = 備份伺服器和配置資料庫訊息
 BkpSrvTblName = 名稱
 BkpSrvTblProxyRole = 代理角色
-BkpSrvTblRam = 內存
-BkpSrvTblRepoRole = 存儲庫/網關角色
+BkpSrvTblRam = 記憶體
+BkpSrvTblRepoRole = 資料庫/閘道角色
 BkpSrvTblSqlCores = SQL 核心
 BkpSrvTblSqlEdition = SQL版
 BkpSrvTblSqlLocal = 本地 SQL
-BkpSrvTblSqlName = SQL 服務器名稱
-BkpSrvTblSqlRam = SQL 內存
+BkpSrvTblSqlName = SQL 伺服器名稱
+BkpSrvTblSqlRam = SQL 記憶體
 BkpSrvTblSqlVersion = SQL 版本
 BkpSrvTblTarget = CB目標
 BkpSrvTblVersion = Veeam 版本
 BkpSrvTblWanRole = 廣域網加速器
-BstCfgEnabledTT = 配置備份啟用/禁用
+BstCfgEnabledTT = 配置備份啟用/停用
 BstCfgEncTT = 配置備份加密狀態
 BstCfgLastResTT = 配置備份最後結果
-BstCfgTarTT = 配置備份目標倉庫名稱
-BstCpuTT = 檢測到 B&R 服務器上的物理內核
-BstNameTT = B&R 服務器的主機名
-BstPrxTT = 備份服務器也是代理嗎？
-BstRamTT = 檢測到 B&R 服務器上的總 RAM
-BstRepTT = 備份服務器也是存儲庫或網關服務器嗎？
+BstCfgTarTT = 配置備份目標儲存庫名稱
+BstCpuTT = 檢測到 B&R 伺服器上的實體機核心
+BstNameTT = B&R 伺服器的主機名
+BstPrxTT = 備份伺服器也是代理嗎？
+BstRamTT = 檢測到 B&R 伺服器上的總 RAM
+BstRepTT = 備份伺服器也是儲存庫或閘道伺服器嗎？
 BstSqlCpuTT = SQL Server CPU（如果不是本地的）
-BstSqlEdTT = SQL 服務器版
-BstSqlLocTT = SQL 是否與 B&R 安裝在同一台服務器上？
+BstSqlEdTT = SQL 伺服器版本
+BstSqlLocTT = SQL 是否與 B&R 安裝在同一台伺服器上？
 BstSqlNameTT = SQL Server 主機名（如果不是本地的）
 BstSqlRamTT = SQL Server RAM（如果不是本地的）
 BstSqlVerTT = SQL Server 版本
 BstVerTT = 檢測到的B&R軟件版本
-BstWaTT = 備份服務器也是廣域網加速器嗎？
-SbrTitle = SOBR 詳細信息
-SbrBtn = 顯示 SOBR 詳細信息
+BstWaTT = 備份伺服器也是廣域網加速器嗎？
+
+#SOBRs 
+SbrTitle = SOBR 詳細訊息
+SbrBtn = 顯示 SOBR 詳細訊息
 Sbr0 = 名稱
 Sbr0TT = SOBR 名稱
 Sbr1 = Extents
@@ -207,144 +243,158 @@ Sbr5TT = 是否正在使用移動模式？
 Sbr6 = 存檔層
 Sbr6TT = 存檔層是否啟用？
 Sbr7 = 每台機器
-Sbr7TT = SOBR 是否使用 Per-Machine 備份文件？
+Sbr7TT = 每一台虛擬機是否使用SOBR備份文件？
 Sbr8 = CapTier 類型
 Sbr8TT = 正在使用的容量層類型
 Sbr9 = Immutable
 Sbr9TT = CapTier 是否使用不變性
-Sbr10 = 不可變時期
-Sbr10TT = 不變性的時間段
+Sbr10 = Immutable時期
+Sbr10TT = immutability的時間段
 Sbr11 = 啟用大小限制
 Sbr11TT = 容量層是否受總容量限制？
 Sbr12 = 尺寸限制
 Sbr12TT = 容量層上傳用戶設置的最大容量限制
-SbrSum0 = o 橫向擴展備份存儲庫 (
-SbrSum1 = • SOBR 可以包括多種類型的底層擴展，包括：Window、Linux、NFS、SMB、重複數據刪除設備和對象存儲
-SbrNote0 = • 有多少個盤區正在使用？大量底層範圍可能會導致元數據管理挑戰和性能下降。與您的 Veeam 工程師討論您的範圍計數是否令人滿意。
-SbrNote1 = • 是個
-SbrNote2 = • 如果使用 ReFS 或 XFS <a href=
-SbrNote3 = • 是<a href=
-SbrNote4 = • 這
-SbrNote5 = • 是
-SbrNote6 = • Infrequent Access 存儲層是否與 Veeam 複製模式或對象存儲上的不變性結合使用？有<a href=
-SbrButton = 顯示 SOBR 詳細信息
-SbrExtTitle = SOBR 範圍詳細信息
-SbrExtBtn = 顯示 SOBR 範圍詳細信息
+SbrSum0 = o 橫向擴展備份儲存庫 (“SOBR”) 是一個單一的邏輯儲存庫命名空間，由一個或多個底層備份儲存庫或“範圍”元件成，可實現跨多個層的水平擴展。 數據位於 SOBR 的本地效能層上，可以使用對象儲存層進行擴展以實現長期和歸檔儲存：容量層和歸檔層。
+SbrSum1 = • SOBR 可以包括多種類型的底層擴展，包括：Window、Linux、NFS、SMB、重複數據刪除設備和對象儲存
+SbrNote0 = •	有多少規模正在使用？大量底層範圍可能會導致元數據管理挑戰和效能下降。與您的 Veeam 工程師討論您的範圍數量是否令人滿意。
+SbrNote1 = •	是否正在使用“效能”<a href="https://helpcenter.veeam.com/docs/backup/vsphere/backup_repository_sobr_placement.html?ver=110">Placement Policy</a>？ 如果是這樣，請考慮是否存在特定原因或用例？ “Data Locality”放置策略通常是大多數部署和用例的理想策略。
+SbrNote2 = •	如果使用 ReFS 或 XFS <a href="https://helpcenter.veeam.com/docs/backup/vsphere/backup_repository_block_cloning.html?ver=110">BlockClone</a>，則“Data Locality”放置策略為 需要以利用BlockClone（“快速Clone”）功能。
+SbrNote3 = •	<a href="https://helpcenter.veeam.com/docs/backup/hyperv/compatible_repository_account.html?ver=110">閘道伺服器是否正在用於容量層複製/卸載</a>？ 確保閘道伺服器有足夠的資源充當發送到此對象儲存庫的所有備份的渠道。
+SbrNote4 = •	“<a href="https://helpcenter.veeam.com/docs/backup/hyperv/sobr_add_extents.html?ver=110">Perform full backup when the required extent is offline</a>”選項（在 VBR 控制台）應仔細考慮。 它确保在预期的范围处于脱机状态时进行备份，但要权衡额外的 Active Full(s) 消耗的额外空间，以及 ReFS 和 XFS。
+SbrNote5 = •	“<a href="https://helpcenter.veeam.com/docs/backup/vsphere/per_vm_backup_files.html?ver=110">Per-Machine</a>”是否為假？ 如果是這樣，請考慮是否有禁用它的特定原因或用例？ 啟用此功能是大多數部署和用例的理想策略。 請諮詢您的 Veeam 工程師。
+SbrNote6 = •	Infrequent Access 存储层是否与 Veeam 复制模式或对象存储上的 Immutability 结合使用？ 有 <a href="https://forums.veeam.com/object-storage-f52/aws-s3-how-to-reduce-the-number-of-api-calls-t68858.html#p382566"> 在預算存取成本時應考慮與這些流程相關的額外 API 調用</a>。
+SbrButton = 顯示 SOBR 詳細訊息
+
+# sobr extents
+
+SbrExtTitle = SOBR 範圍詳細訊息
+SbrExtBtn = 顯示 SOBR 範圍詳細訊息
 SbrExt0 = 名稱
-SbrExt0TT = 存儲庫名稱
+SbrExt0TT = 儲存庫名稱
 SbrExt1 = SOBR
 SbrExt1TT = 連接範圍的 SOBR。
 SbrExt2 = 設置任務
 SbrExt2TT = 指定的任務限制（-1 表示無限制）
 SbrExt3 = 核心
-SbrExt3TT = 在存儲庫服務器上檢測到物理 CPU 內核
-SbrExt4 = 內存
-SbrExt4TT = 在存儲庫服務器上檢測到的總 RAM
-SbrExt5 = 自動網關
-SbrExt5TT = 存儲庫是否使用 Autmatica Gateway？
-SbrExt6 = 主机
-SbrExt6TT = 如果未設置為使用自動網關，則分配主機/網關
-SbrExt7 = 路径
-SbrExt7TT = 為存儲庫指定的文件路徑
+SbrExt3TT = 在儲存庫伺服器上檢測到實體機 CPU 核心
+SbrExt4 = 記憶體
+SbrExt4TT = 在儲存庫伺服器上檢測到的總記憶體
+SbrExt5 = Auto Gateway
+SbrExt5TT = 儲存庫是否使用 Auto Gateway？
+SbrExt6 = 主機
+SbrExt6TT = 如果未設置為使用Auto Gateway，則分配主機/閘道
+SbrExt7 = 路徑
+SbrExt7TT = 為儲存庫指定的文件路徑
 SbrExt8 = 可用空間 (TB)
-SbrExt8TT = 基於上次緩存掃描檢測到的可用空間
+SbrExt8TT = 基於上次快取掃描檢測到的可用空間
 SbrExt9 = 總空間 (TB)
-SbrExt9TT = 檢測到的存儲庫容量
+SbrExt9TT = 檢測到的儲存庫容量
 SbrExt10 = 可用空間 ％
 SbrExt10TT = 計算的可用空間百分比（可用空間/總空間）
 SbrExt11 = 解壓縮
-SbrExt11TT = 存儲庫是否在最終存儲之前解壓縮備份文件？
-SbrExt12 = 對齊塊
-SbrExt12TT = 存儲庫是否對齊數據塊？
+SbrExt11TT = 儲存庫是否在最終儲存之前解壓縮備份文件？
+SbrExt12 = 對齊Block
+SbrExt12TT = 儲存庫是否對齊數據Block？
 SbrExt13 = 旋轉驅動器
-SbrExt13TT = 存儲庫是否由旋轉驅動器支持？
-SbrExt14 = 使用不變性
-SbrExt14TT = 存儲庫是否使用不變性？
+SbrExt13TT = 儲存庫是否由旋轉驅動器支援？
+SbrExt14 = 使用Immutability
+SbrExt14TT = 儲存庫是否使用Immutability？
 SbrExt15 = 類型
-SbrExt15TT = 存儲庫類型
-SbrExtSum0 = • SOBR 是通過獲取一個或多個單獨的 Veeam 存儲庫（基本或強化）並將它們放入 SOBR 構造而創建的。組成 SOBR 的各個存儲庫稱為“範圍”。
-SbrExtSum1 = •健康檢查報告的這一部分詳細介紹了存儲庫設置，因為它們是在 Veeam Backup and Replication UI 中配置的。這些設置可以影響或幫助備份作業的性能。
+SbrExt15TT = 儲存庫類型
+SbrExtSum0 = • SOBR 是通過獲取一個或多個單獨的 Veeam 儲存庫（基本或強化）並將它們放入 SOBR 構造而創建的。元件成 SOBR 的各個儲存庫稱為“範圍”。
+SbrExtSum1 = •健康檢查報告的這一部分詳細介紹了儲存庫設置，因為它們是在 Veeam Backup and Replication UI 中配置的。這些設置可以影響或幫助備份作業的效能。
 SbrExtNote0subhdr = 設置任務：
-SbrExtNote1 = •此列是存儲庫允許的最大並發任務設置。它指定備份存儲庫允許的最大並發任務數。如果超過此值，Veeam Backup &在當前任務之一完成之前，複製不會啟動新任務。有關詳細信息，請參閱< a href=
-SbrExtNote2 = •要確定備份存儲庫所需的任務/核心數，請使用以下<a href=
-SbrExtNote3 = o代理 vCPU/核心數 / 3 =
-SbrExtNote4 = •設置應與接下來的兩列對齊： <a href=
+SbrExtNote1 = •此列是儲存庫允許最大作業任務設置。 它指定備份儲存庫允許的最大作業任務數。 如果超過此值，Veeam Backup &amp; 在當前任務之一完成之前，複製不會啟動新任務。 有關詳細訊息，請參閱<a href="https://helpcenter.veeam.com/docs/backup/vsphere/limiting_tasks.html">限制並行任務數</a>。
+SbrExtNote2 = •要確定備份儲存庫所需的任務/核心數量，請使用以下<a href="https://bp.veeam.com/vbr/2_Design_Structures/D_Veeam_Components/D_backup_repositories/">公式</a>：
+SbrExtNote3 = o代理 vCPU/核心數 ÷ 3 = 所需的儲存庫任務數。
+SbrExtNote4 = •該設置應與接下來的兩列對齊：<a style="font-weight: bold">Cores</a> 和 <a style="font-weight:bold">RAM(GB)</a>
 SbrExtNote5subhdr = 核心：
-SbrExtNote6 = • 此數字等於存儲庫服務器中的 CPU 內核數。
-SbrExtNote7 = 內存：
-SbrExtNote8 = • 此數字等於存儲庫服務器中的 RAM 量。
-SbrExtNote9 = • RAM 的數量應該是內核數量的 4 倍。
+SbrExtNote6 = • 此數字等於儲存庫伺服器中的 CPU 核心數。
+SbrExtNote7 = 記憶體：
+SbrExtNote8 = • 此數字等於儲存庫伺服器中的記憶體量。
+SbrExtNote9 = • 記憶體的容量應該是核心數量的 4 倍。
 SbrExtNote10subhdr = 可用空間 (TB) 和可用空間百分比
-SbrExtNote11 = • 最佳做法是在存儲庫中保留 20% 的可用空間。如果 SOBR 擴展區使用 XFS/REFS 文件系統格式化，這一點尤其重要，因為塊克隆和無空間合成備份需要在同一個磁盤上擁有所有相關的 Veeam 備份文件。可用空間在其他文件系統上也很重要，因為 Veeam 需要工作空間來創建合成完整備份。
-SbrExtNote12 = • 在 VBR 控制台的常規選項部分，可以設置警報以提醒存儲庫可用磁盤空間百分比低。
-SbrExtNote13subhdr = 對齊塊
-SbrExtNote14 = •對於使用固定塊大小的存儲系統，選擇< a style=
-SbrExtNote15 = •此設置還有助於加快數據傳輸並在將數據傳輸到基於塊的存儲庫時使用更少的 RAM
-SbrExtNote16 = • 對於 Veeam Backup and Replication v11 及更高版本中基於塊的存儲庫，此設置應設置為< a style=
-RepoTitle = 獨立存儲庫詳細信息
-RepoBtn = 顯示存儲庫詳細信息
-Repo0 = 作业计数
-Repo0TT = 分配給存儲庫的總作業
+SbrExtNote11 = • 最佳做法是在儲存庫中保留 20% 的可用空間。如果 SOBR 擴展區使用 XFS/REFS 文件系統格式化，這一點尤其重要，因為BlockClone和無空間合成備份需要在同一個磁碟上擁有所有相關的 Veeam 備份文件。可用空間在其他文件系統上也很重要，因為 Veeam 需要工作空間來創建合成完整備份。
+SbrExtNote12 = • 在 VBR 控制台的常規選項部分，可以設置警報以提醒儲存庫可用磁碟空間百分比低。
+SbrExtNote13subhdr = 對齊Block
+SbrExtNote14 = •對於使用固定Block大小的儲存系統，請選中<a style="font-weight:bold">對齊備份文件數據Block</a>複選框。 Veeam Backup &amp; Replication將在 4 KB Block邊界對齊保存到備份文件的 VM 數據。
+SbrExtNote15 = •此設置還有助於加快數據傳輸並在將數據傳輸到基於Block的儲存庫時使用更少的記憶體
+SbrExtNote16 = •對於 Veeam Backup and Replication v11 及更高版本中基於Block的儲存庫，此設置應設置為 <a style="font-weight:bold">true</a>。
+
+#Repositories
+
+RepoTitle = 獨立儲存庫詳細訊息
+RepoBtn = 顯示儲存庫詳細訊息
+Repo0 = 作業數量
+Repo0TT = 分配給儲存庫的總作業數量
 Repo1 = 每個虛擬機
-Repo1TT = 存儲庫是否使用 Per-VM/Machine 備份文件？
-RepoSum0 = •獨立存儲庫包括未配置為 SOBR 一部分的存儲庫
-RepoSum1 = •健康檢查報告的這一部分詳細介紹了存儲庫設置，因為它們是在 Veeam Backup and Replication UI 中配置的。這些設置可以影響或幫助備份作業的性能。
-PrxTitle = 代理信息
+Repo1TT = 儲存庫是否使用 Per-VM/Machine 備份文件？
+RepoSum0 = •獨立儲存庫包括未配置為 SOBR 一部分的儲存庫
+RepoSum1 = •健康檢查報告的這一部分詳細介紹了儲存庫設置，因為它們是在 Veeam Backup and Replication UI 中配置的。這些設置可以影響或幫助備份作業的效能。
+
+
+# Proxies
+
+PrxTitle = 代理訊息
 PrxBtn = 顯示代理摘要
 Prx0 = 名稱
 Prx0TT = 代理的主機名
 Prx1 = 任務
 Prx1TT = 代理配置中分配的任務限制。
 Prx2 = 核心
-Prx2TT = 檢測到物理 CPU 內核（不計算超線程）
-Prx3 = 內存
-Prx3TT = 在代理主機上檢測到的總 RAM
+Prx2TT = 檢測到實體機 CPU 核心（不計算超線程）
+Prx3 = 記憶體
+Prx3TT = 在代理主機上檢測到的總記憶體
 Prx4 = 代理類型
 Prx4TT = Vi (Vmware)、HV、CDP、文件
 Prx5 = 運輸方式
 Prx5TT = 代理配置中指定的傳輸模式
 Prx6 = 故障轉移到 NBD
-Prx6TT = 是否允許代理故障轉移到 NBD（網絡模式）
+Prx6TT = 是否允許代理故障轉移到 NBD（網路模式）
 Prx7 = 機殼
-Prx7TT = 代理是物理的還是虛擬的？
-Prx8 = 緩存路徑
-Prx8TT = 為 CDP 代理緩存指定的路徑
-Prx9 = 緩存大小
-Prx9TT = 為 CDP 代理指定的緩存大小
-Prx10 = 主机
+Prx7TT = 代理是實體機的還是虛擬的？
+Prx8 = 快取路徑
+Prx8TT = 為 CDP 代理快取指定的路徑
+Prx9 = 快取大小
+Prx9TT = 為 CDP 代理指定的快取大小
+Prx10 = 主機
 Prx10TT = 
 Prx11 = 被禁用
 Prx11TT = 用戶是否禁用了代理？
-PrxSum0 = Veeam 代理是一個邏輯數據移動器組件。有兩種類型的代理：(<a href=
-PrxSum1 = • 備份代理位於源數據（VM 或文件共享）和備份存儲庫之間。它們的作用是處理備份作業並將備份流量傳送到存儲庫。
-PrxSum2 = o VM 備份代理可以利用不同的<a href=
-PrxSum3 = o 文件備份代理可以從手動或自動快照路徑備份源數據<a href=
-PrxSum4 = o 備份代理不會在本地存儲或緩存任何數據。
-PrxSum5 = • CDP 代理處理CDP 策略並作為源和目標VMware 主機之間的數據移動器運行。
-PrxSum6 = o CDP 代理需要<a href=
-PrxNote0 = • 查看“主機”列並確定支持的主機<a href=
-PrxNote1 = o 角色可以組合，只要您分配<a href=
-PrxNote2 =  如果角色是非並發的，則分配跨所有支持的角色計算的最大資源。
-PrxNote3 =  如果角色是並發的，那麼分配<a href=
-PrxNote4 =  請記住，CDP 代理始終處於活動狀態並傳輸數據，因此必須為其角色“保留”足夠的資源並添加必要的組合角色。
-PrxNote5 = • CDP 代理：
-PrxNote6 = o 確保<a href=
-PrxNote7 = o 將緩存位於 C:\\ 驅動器上的 CDP 代理標記為潛在風險。
-PrxNote8 = • 比較分配的<a href=
-PrxNote9 = • 確認 RAM 與內核的比率為<a href=
-PrxNote10 = • 確保有足夠的資源用於基本操作系統。 （<a href=
-PrxNote11 = • 檢查選定<a href=
-PrxNote12 = • Hyper-V 關閉主機代理應<a href=
-ManSrvTitle = 託管服務器信息
-ManSrvBtn = 顯示託管服務器詳細信息
+PrxSum0 = Veeam 代理是一個邏輯數據移動器元件。 有兩種類型的代理：（<a href="https://helpcenter.veeam.com/docs/backup/vsphere/backup_proxy.html?zoom_highlight=proxy&amp;ver=110">備份代理</a>，< a href="https://helpcenter.veeam.com/docs/backup/vsphere/cdp_proxy.html?ver=110">CDP 代理</a>）。 備份代理根據功能或平台進一步細分，例如 用於基於 NAS 的備份或不同來源虛擬機管理程式的文件代理。
+PrxSum1 = • 備份代理位於來源數據（VM 或文件共享）和備份儲存庫之間。它們的作用是處理備份作業並將備份流量傳送到儲存庫。
+PrxSum2 = o VM 備份代理可以利用不同的<a href="https://helpcenter.veeam.com/docs/backup/vsphere/transport_modes.html?ver=110">傳輸模式</a>。
+PrxSum3 = o 文件備份代理可以從 <a href="https://helpcenter.veeam.com/docs/backup/vsphere/file_share_backup_nfs_share_advanced_settings.html?ver=110"> NFS</a> 的手動或自動快照路徑備份來源數據， <a href="https://helpcenter.veeam.com/docs/backup/vsphere/file_share_backup_smb_share_advanced_settings.html?ver=110">SMB</a>，企業 NAS 文件管理器。 （注意：託管伺服器不利用文件備份代理）
+PrxSum4 = o 備份代理不會在本地儲存或快取任何數據。
+PrxSum5 = • CDP 代理處理CDP 策略並作為來源和目標VMware 主機之間的數據移動器運作。
+PrxSum6 = o CDP 代理需要<a href="https://helpcenter.veeam.com/docs/backup/vsphere/system_requirements.html?ver=110#vmware-cdp-proxy-server">本地快取。</a>
+PrxNote0 = •	查看“主機”列並確定支援的主機<a href="https://helpcenter.veeam.com/docs/backup/vsphere/limiting_tasks.html?ver=110#task-limitation-for-components-with-several-roles">多個</a>代理角色:
+PrxNote1 = o	角色可以元件合，只要您分配<a href="https://helpcenter.veeam.com/docs/backup/vsphere/limiting_tasks.html?ver=110">足夠的資源</a>
+PrxNote2 = 	如果角色是非並行的，則分配跨所有支援的角色計算的最大資源。
+PrxNote3 = 	如果角色是並行的，則分配 <a href="https://helpcenter.veeam.com/docs/backup/vsphere/limiting_tasks.html?ver=110#task-limitation-for-components-with-several-roles"> 足夠</a> 資源供所有角色使用
+PrxNote4 = 	請記住，CDP 代理始終處於活動狀態並傳輸數據，因此必須為其角色“保留”足夠的資源並添加必要的元件合角色。
+PrxNote5 = •	CDP 代理：
+PrxNote6 = o	確保 <a href="https://helpcenter.veeam.com/docs/backup/vsphere/cdp_proxy.html?zoom_highlight=CDP+cache&amp;ver=110#vmware-cdp-proxy-cache">快取</a> 大小適當
+PrxNote7 = o	將快取位於 C:\\ 驅動器上的 CDP 代理標記為潛在風險。
+PrxNote8 = •	比較分配的 <a href="https://helpcenter.veeam.com/docs/backup/vsphere/limiting_tasks.html?ver=110">任務</a> 和核心數量並識別 <a href="https://helpcenter.veeam.com/docs/backup/vsphere/limiting_tasks.html?ver=110#task-limitation-for-backup-proxies">超額訂閱</a>。
+PrxNote9 = •	確認記憶體與核心的比率<a href="https://helpcenter.veeam.com/docs/backup/vsphere/system_requirements.html?ver=110#vmware-cdp-proxy-server">足夠</a> .
+PrxNote10 = •	確保基本操作系統有足夠的資源。 （<a href="https://helpcenter.veeam.com/docs/backup/vsphere/system_requirements.html?ver=110#backup-proxy-server">備份代理</a>，<a href="https://helpcenter.veeam.com/docs/backup/vsphere/system_requirements.html?ver=110#vmware-cdp-proxy-server">CDP 代理</a>)
+PrxNote11 = •	檢查所選<a href="https://helpcenter.veeam.com/docs/backup/vsphere/transport_modes.html?zoom_highlight=transport+mode&amp;ver=110">傳輸模式</a>並突出顯示<a href ="https://helpcenter.veeam.com/docs/backup/vsphere/network_mode_failover.html?ver=110">故障轉移到網路模式</a>在作業失敗或為作業啟用故障轉移到網路時禁用 運作速度低於預期（NBD 流量可能流經 <a href="https://helpcenter.veeam.com/docs/backup/vsphere/select_backup_network.html?zoom_highlight=preferred+network&amp;ver=110">錯誤的網路 </a>）。
+PrxNote12 = •	Hyper-V off host proxies應<a href="https://helpcenter.veeam.com/docs/backup/hyperv/offhost_backup_proxy.html?ver=110">匹配</a>受保護的 Hyper-V 主機版本。
+
+
+# managed servers
+
+ManSrvTitle = 託管伺服器訊息
+ManSrvBtn = 顯示託管伺服器詳細訊息
 ManSrv0 = 名稱
 ManSrv0TT = 主機/文件共享名稱
 ManSrv1 = 核心
-ManSrv1TT = 檢測到物理 CPU 內核（如果適用）
-ManSrv2 = 內存
-ManSrv2TT = 檢測到物理 RAM（如果適用）
+ManSrv1TT = 檢測到實體機 CPU 核心（如果適用）
+ManSrv2 = 記憶體
+ManSrv2TT = 檢測到實體機記憶體（如果適用）
 ManSrv3 = 類型
-ManSrv3TT = 服務器或共享類型
+ManSrv3TT = 伺服器或共享類型
 ManSrv4 = API 版本
 ManSrv4TT = VMware API 版本
 ManSrv5 = 受保護的虛擬機
@@ -354,30 +404,35 @@ ManSrv6TT = 在此主機上檢測到的沒有關聯備份的虛擬機總數
 ManSrv7 = 虛擬機總數
 ManSrv7TT = 在此主機上檢測到的虛擬機總數
 ManSrv8 = 是代理
-ManSrv8TT = 服務器是否用作 Veeam 代理？
-ManSrv9 = 是存儲庫
-ManSrv9TT = 服務器是否用作 Veeam 存儲庫？
+ManSrv8TT = 伺服器是否用作 Veeam 代理？
+ManSrv9 = 是儲存庫
+ManSrv9TT = 伺服器是否用作 Veeam 儲存庫？
 ManSrv10 = 是 WAN Acc。
-ManSrv10TT = 服務器是否用作 Veeam WAN 加速器？
+ManSrv10TT = 伺服器是否用作 Veeam WAN 加速器？
 ManSrv11 = 不可用
-ManSrv11TT = 服務器不可用？
-ManSrvSum0 = 這列出了所有服務器<a href=
-ManSrvNote0 = • 查看 API 版本列並確保它們是<a href=
-ManSrvNote1 = • 突出顯示支持多個角色的主機並確認<a href=
-JobSumTitle = 	作业摘要
+ManSrv11TT = 伺服器不可用？
+ManSrvSum0 = 這列出了由 Veeam <a href="https://helpcenter.veeam.com/docs/backup/vsphere/setup_add_server.html?ver=110">管理</a>的所有伺服器，這些伺服器可識別數據來源（管理程式）、備份 基礎設施伺服器（windows、linux）和 Veeam Backup for AWS/Azure/GCP 設備。
+ManSrvNote0 = • 查看 API 版本並確保他們<a href="https://helpcenter.veeam.com/docs/backup/vsphere/platform_support.html?ver=110">受支援</a>並滿足最低要求<a href="https://helpcenter.veeam.com/docs/backup/vsphere/system_requirements.html?ver=110">要求</a>。
+ManSrvNote1 = • 突出顯示支援多個角色的主機並確認有<a href="">足夠的資源</a> 可用於支援他們。
+
+# Job Summary
+JobSumTitle = 	作業摘要
 JobSumBtn = 顯示工作總結筆記
 JobSum0 = 類型
 JobSum0TT = 工作類型
 JobSum1 = 全部的
 JobSum1TT = 檢測到的此類作業總數
-JobSumSum0 = 在 Veeam Backup 和復制服務器上創建的所有作業類型的計數，以及所有作業的總和。並發運行的作業數量直接影響 VBR 服務器的大小和性能。
-JobSumNote0 = 請注意，某些作業（例如備份複製作業）通常配置為連續運行。
-JobSumNote1 = 見<a href=
-JobConTitle = 作業並發表（7天）
-JobConBtn = 顯示並發表
+JobSumSum0 = 在 Veeam Backup 和複製伺服器上創建的所有作業類型的數量，以及所有作業的總和。並行運作的作業數量直接影響 VBR 伺服器的大小和效能。
+JobSumNote0 = 請注意，某些作業（例如備份複製作業）通常配置為連續運作。
+JobSumNote1 = 請參閱<a href="#jobConcurrency7">並行表</a>
+
+
+#job concurrency table
+JobConTitle = 作業並行表（7天）
+JobConBtn = 顯示並行表記憶體
 JobCon0 = 小時
 JobCon0TT = 一天中的小時（24 小時格式）
-JobCon1 = 星期日
+JobCon1 = 週日
 JobCon1TT = 
 JobCon2 = 週一
 JobCon2TT = 
@@ -387,20 +442,20 @@ JobCon4 = 週三
 JobCon4TT = 
 JobCon5 = 週四
 JobCon5TT = 
-JobCon6 = 星期五
+JobCon6 = 週五
 JobCon6TT = 
 JobCon7 = 週六
 JobCon7TT = 
-JobConSum0 = 並發表旨在用作熱圖。表示每天的每個小時。每個單元格中的數字代表特定小時內計算的最高並發運行作業總數。此數據可用於確保更準確地確定 VBR 服務器大小。
+JobConSum0 = 並行表於在用作熱圖。表示每天的每個小時。每個單元格中的數字代表特定小時內計算的最高並行運作作業總數。此數據可用於確保更準確地確定 VBR 伺服器大小。
 JobConNote0subhdr = 計算
-JobConNote1 = 建議的 Veeam 備份服務器配置為每 10 個並發運行的作業 1 個 CPU 內核（物理或虛擬）和 4 GB RAM。並發作業包括任何正在運行的備份或複製作業以及任何具有連續計劃的作業，例如備份複製作業和磁帶作業。
-JobConNote2 = <a href=
-JobConNote3 = 如果所需資源超過當前 VBR CPU 和 RAM，則應分析作業調度以最小化並發作業數。如果無法更改作業調度，則應部署多個 VBR 服務器，並將作業遷移到新服務器。
-JobConNote4subhdr = Veeam Microsoft SQL 數據庫
+JobConNote1 = 建議 Veeam 備份伺服器配置為每 10 個並行運作的作業 1 個 CPU 核心（實體機或虛擬）和 4 GB RAM。並行作業包括任何正在運作的備份或複製作業以及任何具有連續計劃的作業，例如備份複製作業和磁帶作業。
+JobConNote2 = <a href="https://bp.veeam.com/vbr/3_Build_structures/B_Veeam_Components/B_VBR_Server/Backup_Server.html" target="_blank">最低建議是 2 個 CPU 核心和 8 GB 記憶體。
+JobConNote3 = 如果所需資源超過當前 VBR CPU 和 RAM，則應分析作業調度以最小化並行作業數。如果無法更改作業調度，則應部署多個 VBR 伺服器，並將作業遷移到新伺服器。
+JobConNote4subhdr = Veeam Microsoft SQL 資料庫
 JobConNote5bold = 請遵循以下準則：
-JobConNoteSqlTableRow1Col1 = 並發運行的作業數
+JobConNoteSqlTableRow1Col1 = 並行運作的作業數
 JobConNoteSqlTableRow1Col2 = 中央處理器
-JobConNoteSqlTableRow1Col3 = 內存
+JobConNoteSqlTableRow1Col3 = 記憶體
 JobConNoteSqlTableRow2Col1 = 最多 25 個
 JobConNoteSqlTableRow2Col2 = 2個中央處理器
 JobConNoteSqlTableRow2Col3 = 4GB
@@ -411,15 +466,18 @@ JobConNoteSqlTableRow4Col1 = 最多 100 個
 JobConNoteSqlTableRow4Col2 = 8個中央處理器
 JobConNoteSqlTableRow4Col3 = 16 GB
 JobConNoteSqlTableNote0 = 如果以下任何一項適用，建議安裝 SQL Standard 或 Enterprise Edition：
-JobConNoteSqlTableNote1 = • 保護超過 500 台服務器時。 Express Edition 允許的最大數據庫大小通常就足夠了，因此不要將其視為約束。 Veeam Backup &amp; Replication 但是，由於 SQL Server Express 實例上的 CPU 和 RAM 限制，控制台和作業處理可能會變慢。
-JobConNoteSqlTableNote2 = • 當廣泛使用文件到磁帶作業時，數據庫可能會顯著增長，並且可能會很快超過 10 GB 的限制。
-JobConNoteSqlTableNote3 = • 當無法配置外部登台服務器以與 Veeam Explorer for Microsoft SQL Server 或 Veeam Explorer for Microsoft SharePoint 一起使用時。處理大於 10 GB 的數據庫時，SQL Server Express 無法裝載數據庫。
-JobConNoteSqlTableNote4 = • 當數據庫使用 Microsoft SQL Server 的高級功能時。例如加密或表分區，登台服務器（本地或遠程）的許可級別必須與原始實例的級別匹配。
-TaskConTitle = 虛擬機任務並發（7 天）
-TaskConBtn = 顯示並發表
+JobConNoteSqlTableNote1 = • 保護超過 500 台伺服器時。 Express Edition 允許的最大資料庫大小通常就足夠了，因此不要將其視為約束。 Veeam Backup &amp; Replication 但是，由於 SQL Server Express Instance上的 CPU 和 RAM 限制，控制台和作業處理可能會變慢。
+JobConNoteSqlTableNote2 = • 當廣泛使用文件到磁帶作業時，資料庫可能會顯著增長，並且可能會很快超過 10 GB 的限制。
+JobConNoteSqlTableNote3 = • 當無法配置外部登台伺服器以與 Veeam Explorer for Microsoft SQL Server 或 Veeam Explorer for Microsoft SharePoint 一起使用時。處理大於 10 GB 的資料庫時，SQL Server Express 無法裝載資料庫。
+JobConNoteSqlTableNote4 = • 當資料庫使用 Microsoft SQL Server 的高級功能時。例如加密或表分區，登台伺服器（本地或遠程）的許可級別必須與原始Instance的級別匹配。
+
+
+# VM concurrency chart
+TaskConTitle = 虛擬機任務並行（7 天）
+TaskConBtn = 顯示並行表
 TaskCon0 = 小時
 TaskCon0TT = 一天中的小時（24 小時格式）
-TaskCon1 = 星期日
+TaskCon1 = 週日
 TaskCon1TT = 
 TaskCon2 = 週一
 TaskCon2TT = 
@@ -429,29 +487,34 @@ TaskCon4 = 週三
 TaskCon4TT = 
 TaskCon5 = 週四
 TaskCon5TT = 
-TaskCon6 = 星期五
+TaskCon6 = 週五
 TaskCon6TT = 
 TaskCon7 = 週六
 TaskCon7TT = 
-TaskConSum0 = 並發表旨在用作熱圖。表示每天的每個小時。每個單元格中的數字代表特定小時內計算的最高並發運行任務數。此數據可用於輔助作業調度和代理/存儲庫任務大小調整。
-TaskConNote0 = 使用此圖表檢查最大並發性。這裡的每個任務都應該有 1 個對應的 Proxy Task 和 1/3 對應的 Repository Task 支持。
-RegTitle = 非默認註冊表項
-RegBtn = 顯示 RegKey 詳細信息
+TaskConSum0 = 並行表旨在用作熱圖。表示每天的每個小時。每個單元格中的數字代表特定小時內計算的最高並行運作任務數。此數據可用於輔助作業調度和代理/儲存庫任務大小調整。
+TaskConNote0 = 使用此圖表檢查最大並行性。這裡的每個任務都應該有 1 個對應的 Proxy Task 和 1/3 對應的 Repository Task 支援。
+
+# Reg options
+RegTitle = 非預設註冊表項
+RegBtn = 顯示 RegKey 詳細訊息
 Reg0 = 鑰匙
 Reg0TT = 
-Reg1 = 價值
+Reg1 = 值
 Reg1TT = 
-RegSum0 = 此表詳細說明了與 Veeam Backup &amp; Replication基本安裝期間設置的默認鍵不同的所有註冊表鍵。具體在<a class=
-RegNote0 = 由於某些註冊表項與錯誤修復和/或出於各種原因推薦的其他調整相關聯，因此最好查閱您過去的支持案例電子郵件和說明，或聯繫您的 Veeam 工程師以了解有關此處顯示的密鑰的任何問題。
-RegNote1 = 一些鍵，例如 LoggingLevel 和其他
-JobInfoTitle = 工作信息
-JobInfoBtn = 顯示工作信息詳情
+RegSum0 = 此表詳細列出了與 Veeam Backup &amp; Replication 基本安裝期間設置的預設鍵不同的任何註冊表鍵，特別是在 <a class="bld">HKLM\\SOFTWARE\\Veeam\\Veeam Backup and Replication</a>
+RegNote0 = 由於某些註冊表項與錯誤修復和/或出於各種原因推薦的其他調整相關聯，因此最好查閱您過去的支援案例電子郵件和說明，或聯繫您的 Veeam 工程師以了解有關此處顯示的密鑰的任何問題。
+RegNote1 = 如果需要，在遵循使用的按鍵，例如 LoggingLevel 和其他與“日誌”相關的鍵<a href="https://www.veeam.com/kb1825">KB Article.</a>
+
+
+#Job Info
+JobInfoTitle = 工作訊息
+JobInfoBtn = 顯示工作訊息詳情
 JobInfo0 = 名稱
 JobInfo0TT = 控制台中顯示的作業名稱
-JobInfo1 = 存儲庫
-JobInfo1TT = 作業所針對的存儲庫
-JobInfo2 = 源大小
-JobInfo2TT = 作業源數據的實際大小
+JobInfo1 = 儲存庫
+JobInfo1TT = 作業所針對的儲存庫
+JobInfo2 = 來源大小
+JobInfo2TT = 作業來源數據的實際大小
 JobInfo3 = 還原點
 JobInfo3TT = 作業配置中設置的所需還原點
 JobInfo4 = 加密
@@ -474,18 +537,20 @@ JobInfo12 = 將 Inc 轉換為 Synth
 JobInfo12TT = 
 JobInfo13 = 轉變天數
 JobInfo13TT = 
-JobInfoSum0 = • 作業定義源數據、目標、計劃和處理該源數據的高級設置。 Veeam Backup &amp; Replication中有多種作業類型。包括備份、備份複製、CDP 策略、NAS 備份等。並非所有工作類型的每一列都有數據。
-JobInfoNote0 = • 驗證為作業列出的還原點和計劃選項與源應用程序所需的RPO 匹配。見<a href=
+JobInfoSum0 = • 作業定義來源數據、目標、計劃和處理該來源數據的高級設置。 Veeam Backup &amp; Replication中有多種作業類型。包括備份、備份複製、CDP 策略、NAS 備份等。並非所有工作類型的每一列都有數據。
+JobInfoNote0 = •	驗證為作業列出的還原點和計劃選項是否與來源應用程式所需的 RPO 匹配。 請參閱<a href="https://helpcenter.veeam.com/docs/backup/vsphere/backup_job_schedule_vm.html?ver=110">作業調度</a>。
+
+# job session summary
 JssTitle = 工作會議總結（7 天）
 JssBtn = 顯示工作詳情
-Jss0 = 職位名稱
+Jss0 = 作業名稱
 Jss0TT = B&R 控制台中顯示的作業名稱
 Jss1 = 項目
 Jss1TT = 作業包含的項目數
 Jss2 = 最短時間（分鐘）
-Jss2TT = 檢測到作業運行短路
+Jss2TT = 檢測到作業運作短路
 Jss3 = 最長時間（分鐘）
-Jss3TT = 檢測到的最長作業運行
+Jss3TT = 檢測到的最長作業運作
 Jss4 = 平均時間（分鐘）
 Jss4TT = 平均工作時間
 Jss5 = 總會話數
@@ -497,57 +562,64 @@ Jss7TT = 備份文件的平均大小（TB）
 Jss8 = 最大備份大小 (TB)
 Jss8TT = TB 中最大的備份文件
 Jss9 = 平均數據大小 (TB)
-Jss9TT = 以 TB 為單位的平均源數據大小
+Jss9TT = 以 TB 為單位的平均來源數據大小
 Jss10 = 最大數據大小 (TB)
-Jss10TT = 以 TB 為單位的最大源數據大小
+Jss10TT = 以 TB 為單位的最大來源數據大小
 Jss11 = 平均變化率 %
 Jss11TT = 作業的平均計算變化率
-Jss12 = 等待水庫。數數
+Jss12 = 等待儲存庫。數量
 Jss12TT = 作業被迫等待可用資源的總次數
 Jss13 = 最大等待 (dd.hh:mm:ss)
 Jss13TT = 檢測到的最長等待資源
 Jss14 = 平均等待時間 (dd.hh:mm:ss)
 Jss14TT = 平均持續時間作業正在等待可用資源
-Jss15 = 作业类型
-Jss15TT = 作业类型
-JssSum0 = 此表旨在詳細說明過去 7 天內各個作業的近期歷史記錄。
-JssNote0subhdr = 等待資源/作業會話長度問題：
+Jss15 = 作業類型
+Jss15TT = 作業類型
+JssSum0 = 此表格詳細說明過去 7 天內各個作業的近期歷史記錄。
+JssNote0subhdr = 等資源源/作業會話長度問題：
 JssNote1 = • 將作業安排在不同的時間段開始將有助於分配資源並防止作業等待可用資源的瓶頸。 （例如，不要將所有工作安排在晚上 8:00 開始，而是在 8:00 開始一個工作，另一個在 8:30 開始，另一個在 9:00 開始。）
-JssNote2 = • 如果資源允許，增加代理上允許的並發任務數。 <a href=
-JssNote3 = o 如果您的備份代理沒有足夠的資源來增加任務，並且它是一個虛擬機，您應該考慮增加代理可用的 CPU 和 RAM 量。
-JssNote4 = o 如果無法向現有代理添加資源，請考慮從“備份基礎架構- >備份代理”中部署其他備份代理
-JssNote5 = • 通過查看 VBR 控制台中的作業會話統計信息，確保您的備份作業或複製作業選擇了正確的代理。
-JssNote6 = • 調查備份作業性能。如果特定作業的處理時間比正常情況長，請檢查警告，將瓶頸統計信息與以前的作業會話進行比較，並嘗試將問題隔離到特定代理、存儲庫、主機或數據存儲。
-JssNote7 = o 將較大的虛擬機/服務器移動到自己的作業和計劃中，以確保不會發生衝突並更快地完成作業的備份窗口（例如，將這些作業安排在所有其他作業之前或所有其他作業之後）
-JssNote8 = • 將 NAS 代理、緩存存儲庫和存儲庫與 VM 代理以及 VM 和代理存儲庫分開
-JssNote9 = •	<a href=
-JssNote10 = • 如果合適， <a href=
+JssNote2 = •	如果資源允許，增加代理上允許的並行任務數。 <a href="https://helpcenter.veeam.com/docs/backup/vsphere/vmware_proxy_server.html?ver=110#:~:text=In%20the%20Max%20concurrent%20tasks%20field%2C%20specify%20the%20number%20of%20tasks%20that%20the%20backup%20proxy%20must%20handle%20in%20parallel.%20If%20this%20value%20is%20exceeded%2C%20the%20backup%20proxy%20will%20not%20start%20a%20new%20task%20until%20one%20of%20current%20tasks%20finishes.">請參閱如何設置最大並行任務。</a>
+JssNote3 = o	如果您的備份代理沒有足夠的資源來增加任務，並且它是一個虛擬機，您應該考慮增加代理可用的 CPU 和 RAM 量。
+JssNote4 = o	如果無法向現有代理添加資源，請考慮從“備份基礎架構- >備份代理”中部署其他備份代理
+JssNote5 = •	通過查看 VBR 控制台中的作業會話統計訊息，確保您的備份作業或複製作業選擇了正確的代理。
+JssNote6 = •	調查備份作業效能。如果特定作業的處理時間比正常情況長，請檢查警告，將瓶頸統計訊息與以前的作業會話進行比較，並嘗試將問題隔離到特定代理、儲存庫、主機或數據儲存。
+JssNote7 = o	將較大的虛擬機/伺服器移動到自己的作業和計劃中，以確保不會發生衝突並更快地完成作業的備份窗口（例如，將這些作業安排在所有其他作業之前或所有其他作業之後）
+JssNote8 = •	將 NAS 代理、快取儲存庫和儲存庫與 VM 代理以及 VM 和代理儲存庫分開
+JssNote9 = •	<a href="https://helpcenter.veeam.com/docs/backup/vsphere/gateway_server.html?ver=110#gateway-servers-deployment">使用靜態閘道和掛載伺服器</a>如果可能，卸載合成操作、SOBR 卸載處理、備份複製作業和其他任務所需的資源消耗。
+JssNote10 = •	如果合適， <a href="https://www.veeam.com/kb2660">查看重複數據刪除儲存系統的體系結構指南。</a>
+
+
+######## VB365
 Vb365Banner = VB365 健康檢查報告
+#navigation
 v365NavTitle0 = 全局配置
 v365NavValue0 = 許可證和全局設置摘要。
 v365NavTitle1 = 受保護的用戶
 v365NavValue1 = 受保護和未受保護用戶的摘要。
-v365NavTitle2 = 備份服務器
-v365NavValue2 = VB365 服務器的詳細信息。
-v365NavTitle3 = 備份服務器磁盤
-v365NavValue3 = 有關連接到 VB365 服務器的磁盤的詳細信息。
+v365NavTitle2 = 備份伺服器
+v365NavValue2 = VB365 伺服器的詳細訊息。
+v365NavTitle3 = 備份伺服器硬碟
+v365NavValue3 = 有關連接到 VB365 伺服器的硬碟的詳細訊息。
 v365NavTitle4 = 代理
-v365NavValue4 = 添加到當前 VB365 服務器的代理的詳細信息。
-v365NavTitle5 = 存儲庫
-v365NavValue5 = 添加到當前 VB365 的存儲庫的詳細信息。
-v365NavTitle6 = 對象存儲
-v365NavValue6 = 有關使用的對象存儲的詳細信息。
-v365NavTitle7 = 安全信息
+v365NavValue4 = 添加到當前 VB365 伺服器的代理的詳細訊息。
+v365NavTitle5 = 儲存庫
+v365NavValue5 = 添加到當前 VB365 的儲存庫的詳細訊息。
+v365NavTitle6 = 對象儲存
+v365NavValue6 = 有關使用的對象儲存的詳細訊息。
+v365NavTitle7 = 安全訊息
 v365NavValue7 = 與 VB365 相關的安全設置摘要。
-v365NavTitle8 = RBAC 角色信息
-v365NavValue8 = 基於角色的訪問控制設置摘要。
+v365NavTitle8 = RBAC 角色訊息
+v365NavValue8 = 基於角色的存取控制設置摘要。
 v365NavTitle9 = 權限檢查
 v365NavValue9 = 授予和使用的權限摘要。
 v365NavTitle10 = 組織
-v365NavValue10 = 有關受 VB365 保護的組織的詳細信息。
+v365NavValue10 = 有關受 VB365 保護的組織的詳細訊息。
 v365NavTitle11 = 備份作業
-v365NavValue11 = 此 VB365 服務器上配置的作業的詳細信息。
+v365NavValue11 = 此 VB365 伺服器上配置的作業的詳細訊息。
 v365NavTitle12 = 工作統計
-v365NavValue12 = 分析最近的作業運行。
-v365NavTitle13 = 作业会话
-v365NavValue13 = 最近作業運行的詳細信息。
+v365NavValue12 = 分析最近的作業運作。
+v365NavTitle13 = 工作連線
+v365NavValue13 = 最近作業運作的詳細訊息。
+
+# Global Config
+VboGloH1
