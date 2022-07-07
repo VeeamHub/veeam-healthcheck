@@ -127,7 +127,6 @@ namespace VeeamHealthCheck.Html
             _htmldoc += CssStyler.JavaScriptBlock();
             _htmldoc += "</script>";
 
-            File.WriteAllText("myHtml2.html", _htmldoc);
 
         }
 

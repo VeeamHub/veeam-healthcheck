@@ -67,7 +67,6 @@ namespace VeeamHealthCheck.Reporting.Html.VB365
             _htmldoc += CssStyler.JavaScriptBlock();
             _htmldoc += "</script>";
 
-            //File.WriteAllText("myHtml2.html", _htmldoc);
             ExportHtml();
         }
         private string SetNavigation()
