@@ -9,6 +9,7 @@ using System.Xml.Linq;
 using VeeamHealthCheck.CsvHandlers;
 using VeeamHealthCheck.Html.VBR;
 using VeeamHealthCheck.Reporting.Html.Shared;
+using VeeamHealthCheck.Shared;
 using VeeamHealthCheck.Shared.Logging;
 
 namespace VeeamHealthCheck.Html
@@ -120,7 +121,7 @@ namespace VeeamHealthCheck.Html
 
             _tables.AddSessionsFiles();
 
-
+            _htmldoc += "<a>vHC Version: " + CVersionSetter.GetFileVersion() + "</a>";
 
             _htmldoc += "<script type=\"text/javascript\">";
             _htmldoc += CssStyler.JavaScriptBlock();

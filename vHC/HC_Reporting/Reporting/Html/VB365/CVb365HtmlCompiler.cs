@@ -8,6 +8,7 @@ using VeeamHealthCheck.CsvHandlers;
 using VeeamHealthCheck.Html;
 using VeeamHealthCheck.Html.VBR;
 using VeeamHealthCheck.Reporting.Html.Shared;
+using VeeamHealthCheck.Shared;
 
 namespace VeeamHealthCheck.Reporting.Html.VB365
 {
@@ -60,7 +61,7 @@ namespace VeeamHealthCheck.Reporting.Html.VB365
             _htmldoc += tables.Vb365JobSessions();
             _htmldoc += tables.Vb365JobStats();
 
-
+            _htmldoc += "<a>vHC Version: " + CVersionSetter.GetFileVersion() + "</a>";
 
             _htmldoc += "<script type=\"text/javascript\">";
             _htmldoc += CssStyler.JavaScriptBlock();
