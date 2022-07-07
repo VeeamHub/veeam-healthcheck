@@ -15,13 +15,13 @@ namespace VeeamHealthCheck
     class PSInvoker
     {
         private readonly string _sessionReport = "Get-VBRConfig.ps1";
-        private readonly string _vb365Script = Environment.CurrentDirectory +  @"\Tools\Scripts\";
+        private readonly string _vb365Script = Environment.CurrentDirectory + @"\Tools\Scripts\Collect-VB365Data.ps1";
         public PSInvoker()
         {
         }
         public void Invoke(bool collectSessionData)
         {
-            var ps1File = "Get-VBRConfig.ps1";
+            var ps1File = Environment.CurrentDirectory + @"\Tools\Scripts\Get-VBRConfig.ps1";
             UnblockFile(ps1File);
             var startInfo = new ProcessStartInfo()
             {
@@ -34,7 +34,7 @@ namespace VeeamHealthCheck
 
             if (collectSessionData)
             {
-                var ps1File2 = "Get-VeeamSessionReport.ps1";
+                var ps1File2 = Environment.CurrentDirectory + @"\Tools\Scripts\Get-VeeamSessionReport.ps1";
                 UnblockFile(ps1File2);
                 var startInfo2 = new ProcessStartInfo()
                 {
@@ -55,7 +55,7 @@ namespace VeeamHealthCheck
         }
         public void InvokeVb365Collect()
         {
-            var scriptFile = Vb365ScriptFile();
+            var scriptFile = _vb365Script;
             UnblockFile(scriptFile);
 
             var startInfo = new ProcessStartInfo()

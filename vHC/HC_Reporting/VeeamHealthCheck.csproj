@@ -10,11 +10,11 @@
     <Company>Veeam</Company>
     <Authors>AdamC</Authors>
     <ApplicationIcon>Veeam_HealthCheck_228x228.ico</ApplicationIcon>
-    <AssemblyVersion>1.0.2.574</AssemblyVersion>
+    <AssemblyVersion>1.0.2.578</AssemblyVersion>
     <SignAssembly>true</SignAssembly>
     <AssemblyOriginatorKeyFile>vhc_keyfile2.pfx</AssemblyOriginatorKeyFile>
     <DelaySign>false</DelaySign>
-    <FileVersion>1.0.2.574</FileVersion>
+    <FileVersion>1.0.2.578</FileVersion>
     <DebugType>full</DebugType>
 	  <SelfContained>true</SelfContained>
 	  <!--These 2 lines are what produce the single file utility. Possibly doesn't work...-->
@@ -62,7 +62,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <None Remove="Reporting\Html\JavaScript1.js" />
     <None Remove="Resources\Localization\VB365\vb365_vhcres.resources" />
     <None Remove="Resources\Localization\vhcres.fr-FR.resources" />
     <None Remove="Resources\Localization\vhcres.ja.resources" />
@@ -72,6 +71,8 @@
     <None Remove="RVTools4.1.4.msi" />
     <None Remove="Tools\Get-VBRConfig - Copy.ps1" />
     <None Remove="Tools\Scripts\Collect-VB365Data.ps1" />
+    <None Remove="Tools\Scripts\Get-VBRConfig.ps1" />
+    <None Remove="Tools\Scripts\Get-VeeamSessionReport.ps1" />
     <None Remove="Tools\Veeam.Hotfix.Detector.zip" />
   </ItemGroup>
 
@@ -85,13 +86,10 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Content Include="Reporting\Html\JavaScript1.js">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
-    <Content Include="Get-VBRConfig.ps1">
+    <Content Include="Tools\Scripts\Get-VBRConfig.ps1">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
-    <Content Include="Get-VeeamSessionReport.ps1">
+    <Content Include="Tools\Scripts\Get-VeeamSessionReport.ps1">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
     <Content Include="Tools\Veeam.Hotfix.Detector.zip">
