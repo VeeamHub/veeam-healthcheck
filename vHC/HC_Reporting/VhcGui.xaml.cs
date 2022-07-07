@@ -159,6 +159,7 @@ namespace VeeamHealthCheck
         }
         public void CliRun()
         {
+            log.Info("Setting openexplorer & openhtml to false for CLI execution", false);
             _openExplorer = false;
             _openHtml = false;
             RunAction();
@@ -195,14 +196,14 @@ namespace VeeamHealthCheck
         #endregion
         private void ExecPsScripts()
         {
-            log.Info("Starting PS Invoke");
+            log.Info("Starting PS Invoke", false);
             PSInvoker p = new PSInvoker();
 
             if (_isVbr)
             {
                 try
                 {
-                    log.Info("Entering vbr ps invoker");
+                    log.Info("Entering vbr ps invoker", false);
                     p.Invoke(_collectSessionData);
                 }
                 catch (Exception ex)
@@ -214,13 +215,13 @@ namespace VeeamHealthCheck
             {
                 try
                 {
-                    log.Info("Entering vb365 ps invoker");
+                    log.Info("Entering vb365 ps invoker", false);
                     p.InvokeVb365Collect();
                 }
                 catch (Exception ex) { log.Error(ex.Message); }
             }
 
-            log.Info("Starting PS Invoke...done!");
+            log.Info("Starting PS Invoke...done!", false);
         }
         private void ModeCheck()
         {
