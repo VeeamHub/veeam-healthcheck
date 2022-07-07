@@ -210,7 +210,8 @@ namespace VeeamHealthCheck.Reporting.Html.Shared
     enum CellShade
     {
         orangered = 1,
-        greenyellow = 2
+        greenyellow = 2,
+        yellow = 3
         
     };
 }

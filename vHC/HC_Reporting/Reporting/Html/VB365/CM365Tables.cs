@@ -49,10 +49,19 @@ namespace VeeamHealthCheck.Reporting.Html.VB365
                 decimal.TryParse(gl.LicensedFor, out decimal licFor);
                 decimal.TryParse(gl.LicensesUsed, out decimal licUsed);
                 decimal percentUsed = licUsed / licFor * 100;
-                
+
+                DateTime.TryParse(gl.LicenseExpiry, out DateTime expireDate);
+
 
                 s += _form.TableData(gl.LicenseStatus, "");
-                s += _form.TableData(gl.LicenseExpiry, "");
+
+                if (expireDate < DateTime.Now)
+                    s += _form.TableData(gl.LicenseExpiry, "", 1);
+                else if(expireDate < DateTime.Now.AddDays(60) )
+                    s += _form.TableData(gl.LicenseExpiry, "", 3);
+                else
+                    s += _form.TableData(gl.LicenseExpiry, "");
+
                 s += _form.TableData(gl.SupportExpiry, "");
                 s += _form.TableData(gl.LicenseType, "");
                 s += _form.TableData(gl.LicensedTo, "");
@@ -62,7 +71,7 @@ namespace VeeamHealthCheck.Reporting.Html.VB365
                 if(percentUsed > 95)
                     s += _form.TableData(gl.LicensesUsed, "", 1);
                 else if(percentUsed > 90)
-                    s += _form.TableData(gl.LicensesUsed, "", 2);
+                    s += _form.TableData(gl.LicensesUsed, "", 3);
                 else
                     s += _form.TableData(gl.LicensesUsed, "");
 
@@ -70,14 +79,14 @@ namespace VeeamHealthCheck.Reporting.Html.VB365
                 s += _form.TableData(gl.GlobalRetExclusions, "");
                 s += _form.TableData(gl.LogRetention, "");
                 if(gl.NotificationEnabled == "False")
-                    s += _form.TableData(gl.NotificationEnabled, "", 2);
+                    s += _form.TableData(gl.NotificationEnabled, "", 3);
                 else
                     s += _form.TableData(gl.NotificationEnabled, "");
 
                 s += _form.TableData(gl.NotififyOn, "");
                 
                 if(gl.AutomaticUpdates == "False")
-                    s += _form.TableData(gl.AutomaticUpdates, "", 2);
+                    s += _form.TableData(gl.AutomaticUpdates, "", 3);
                 else
                     s += _form.TableData(gl.AutomaticUpdates, "");
             }
