@@ -1406,11 +1406,11 @@ namespace VeeamHealthCheck.Reporting.Html
                     string docName = outDir + "\\";
                     if (MainWindow._scrub)
                     {
-                        outDir += _scrubber.ScrubItem(cs.JobName) + ".html";
+                        outDir += "\\" +_scrubber.ScrubItem(cs.JobName) + ".html";
                     }
                     else
                     {
-                        outDir += cs.JobName + ".html";
+                        outDir += "\\" + cs.JobName + ".html";
                     }
                      
                     string s = _form.FormHeader();
@@ -1488,7 +1488,7 @@ namespace VeeamHealthCheck.Reporting.Html
                         string dir = Path.GetDirectoryName(docName);
                         if (!Directory.Exists(dir))
                             Directory.CreateDirectory(dir);
-                        File.WriteAllText(docName, s);
+                        File.WriteAllText(outDir, s);
                         // newDoc.Save(docName);
                         //string xmlString = newDoc.ToString();
                         //exporter.ExportHtml(docName);

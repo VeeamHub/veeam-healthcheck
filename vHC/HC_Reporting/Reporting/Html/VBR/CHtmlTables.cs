@@ -131,11 +131,11 @@ namespace VeeamHealthCheck.Html.VBR
             for (int i = 0; i < list.Count(); i++)
             {
 
-                if(MainWindow._scrub && i == 0 || i == 7 || i == 9)
-                {
-                    s += _form.TableData(_scrub.ScrubItem(list[i]), "");
-                }
-                else
+                //if(MainWindow._scrub && i == 0 || i == 7 || i == 9)
+                //{
+                //    s += _form.TableData(_scrub.ScrubItem(list[i]), "");
+                //}
+                //else
                     s += _form.TableData(list[i], "");
 
             }
