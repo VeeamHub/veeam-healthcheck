@@ -7,12 +7,14 @@ using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Threading;
 using System.Runtime.InteropServices;
+using VeeamHealthCheck.Shared.Logging;
 
 namespace VeeamHealthCheck
 {
     public class EntryPoint
     {
         private static string _helpMenu = "HELP MENU:\n\nrun - Executes the program";
+        private static CLogger _log = VhcGui.log;
         [STAThread]
         public static void Main(string[] args)
         {
@@ -25,9 +27,10 @@ namespace VeeamHealthCheck
                         Console.WriteLine(_helpMenu);
                         break;
                     case "run":
-                        //
+                        _log.Info("Starting RUN...", false);
                         VhcGui app = new VhcGui();
-                        app.RunAction();
+                        app.CliRun();
+                        _log.Info("Starting RUN...complete!", false);
                         break;
                 }
             }

@@ -98,7 +98,10 @@ namespace VeeamHealthCheck.Html
                 sw.Write(htmlString);
             }
             log.Info("exporting xml to html..done!");
-            
+            if (VhcGui._openExplorer)
+                OpenExplorer();
+            if (VhcGui._openHtml)
+                OpenHtml();
         }
         public void ExportHtml(string xmlFile)
         {

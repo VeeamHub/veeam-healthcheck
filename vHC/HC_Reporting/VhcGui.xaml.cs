@@ -134,7 +134,7 @@ namespace VeeamHealthCheck
             });
 
         }
-        public void RunAction()
+        private void RunAction()
         {
             log.Info("Starting Run");
             ExecPsScripts();
@@ -156,6 +156,12 @@ namespace VeeamHealthCheck
 
             log.Info("Starting Run..done!");
 
+        }
+        public void CliRun()
+        {
+            _openExplorer = false;
+            _openHtml = false;
+            RunAction();
         }
         private void run_Click(object sender, RoutedEventArgs e)
         {
