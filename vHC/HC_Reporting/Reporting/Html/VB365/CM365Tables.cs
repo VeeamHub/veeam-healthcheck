@@ -279,7 +279,7 @@ namespace VeeamHealthCheck.Reporting.Html.VB365
                 s += _form.TableData("Server", "");
                 s += _form.TableData("", "");// enabled
                 s += _form.TableData("", "");// port
-                s += _form.TableData(g.ServerCert, "");// cert
+                s += _form.TableData(serverCert, "");// cert
                 s += _form.TableData(g.ServerCertExpires, "");// expires
                 s += _form.TableData(g.ServerCertSelfSigned, "");// self signed
                 s += "</tr><tr>";
@@ -287,21 +287,21 @@ namespace VeeamHealthCheck.Reporting.Html.VB365
                 s += _form.TableData("API", "");
                 s += _form.TableData(g.APIEnabled, "");
                 s += _form.TableData(g.APIPort, "");
-                s += _form.TableData(g.APICert, "");
+                s += _form.TableData(apiCert, "");
                 s += _form.TableData(g.APICertExpires, "");
                 s += _form.TableData(g.APICertSelfSigned, "");
                 s += "</tr><tr>";
                 s += _form.TableData("Tenant Auth", "");
                 s += _form.TableData(g.TenantAuthEnabled, "");
                 s += _form.TableData("", "");
-                s += _form.TableData(g.TenantAuthCert, "");
+                s += _form.TableData(tenantCert, "");
                 s += _form.TableData(g.TenantAuthCertExpires, "");
                 s += _form.TableData(g.TenantAuthCertSelfSigned, "");
                 s += "</tr><tr>";
                 s += _form.TableData("Restore Portal", "");
                 s += _form.TableData(g.RestorePortalEnabled, "");
                 s += _form.TableData("", "");
-                s += _form.TableData(g.RestorePortalCert, "");
+                s += _form.TableData(portalCert, "");
                 s += _form.TableData(g.RestorePortalCertExpires, "");
                 s += _form.TableData(g.RestorePortalCertSelfSigned, "");
                 s += "</tr>";
@@ -732,27 +732,99 @@ namespace VeeamHealthCheck.Reporting.Html.VB365
             s += "</tr>";
 
             var global = _csv.GetDynamicVboJobs().ToList();
+            
+
             foreach (var gl in global)
             {
+                var org = "";
+                var name = "";
+                var desc = "";
+                var jobType = "";
+                var scopeType = "";
+                var procOpt = "";
+                var selItems = "";
+                var exclItem = "";
+                var repo = "";
+                var boundProxy = "";
+                var enabled = "";
+                var schedul = "";
+                var relJob = "";
+
                 s += "<tr>";
 
                 int counter = 0;
                 foreach (var g in gl)
                 {
+                    switch (g.Key)
+                    {
+                        case "boundproxy":
+                            boundProxy = g.Value;
+                            break;
+                        case "organization":
+                            org = g.Value;
+                            break;
+                        case "name":
+                            name = g.Value;
+                            break;
+                        case "description":
+                            desc = g.Value;
+                            break;
+                        case "jobtype":
+                            jobType = g.Value;
+                            break;
+                        case "scopetype":
+                            scopeType = g.Value;
+                            break;
+                        case "procOpt":
+                            procOpt = g.Value;
+                            break;
+                        case "selecteditems":
+                            selItems = g.Value;
+                            break;
+                        case "excludeditems":
+                            exclItem = g.Value;
+                            break;
+                        case "repo":
+                            repo = g.Value;
+                            break;
+                        case "enabled":
+                            enabled = g.Value;
+                            break;
+                        case "schedule":
+                            schedul = g.Value;
+                            break;
+                        case "relatedjob":
+                            relJob = g.Value;
+                            break;
+                        default:
+                            break;
+
+
+
+                    }
                     string output = g.Value;
                     if (VhcGui._scrub)
                     {
-                        if (counter == 0 ||
-                            counter == 1 ||
-                            counter == 2 ||
-                            counter == 7 ||
-                            counter == 8 ||
-                            counter == 11)
-                            output = _scrubber.ScrubItem(output);
+                        org = _scrubber.ScrubItem(org);
+                        name = _scrubber.ScrubItem(name);
+                        desc = _scrubber.ScrubItem(desc);
+                        repo = _scrubber.ScrubItem(repo);
+                        boundProxy = _scrubber.ScrubItem(boundProxy);
                     }
-                    s += _form.TableData(output, "");
-                    counter++;
                 }
+                s += _form.TableData(org, "");
+                s += _form.TableData(name, "");
+                s += _form.TableData(desc, "");
+                s += _form.TableData(jobType, "");
+                s += _form.TableData(scopeType, "");
+                s += _form.TableData(procOpt, "");
+                s += _form.TableData(selItems, "");
+                s += _form.TableData(exclItem, "");
+                s += _form.TableData(repo, "");
+                s += _form.TableData(boundProxy, "");
+                s += _form.TableData(enabled, "");
+                s += _form.TableData(schedul, "");
+                s += _form.TableData(relJob, "");
 
                 s += "</tr>";
             }
