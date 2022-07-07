@@ -14,7 +14,7 @@ namespace VeeamHealthCheck.Reporting.Html.VB365
         private CHtmlFormatting _form = new();
         private CCsvParser _csv = new(CVariables.vb365dir);
         private CM365Summaries _summary = new CM365Summaries();
-        private Scrubber.CXmlHandler _scrubber = new();
+        private Scrubber.CScrubHandler _scrubber = new();
         public CM365Tables()
         {
 

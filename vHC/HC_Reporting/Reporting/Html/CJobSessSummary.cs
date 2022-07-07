@@ -24,10 +24,10 @@ namespace VeeamHealthCheck.Html
         private string _xmlFile;
         private CLogger _log;
         private bool _scrub;
-        private Scrubber.CXmlHandler _scrubber;
+        private Scrubber.CScrubHandler _scrubber;
         private CDataTypesParser _parsers;
 
-        public CJobSessSummary(string xmlFile, CLogger log, bool scrub, bool checkLogs, Scrubber.CXmlHandler scrubber, CDataTypesParser dp)
+        public CJobSessSummary(string xmlFile, CLogger log, bool scrub, bool checkLogs, Scrubber.CScrubHandler scrubber, CDataTypesParser dp)
         {
             _checkLogs = checkLogs;
             _xmlFile = xmlFile;
@@ -82,7 +82,7 @@ namespace VeeamHealthCheck.Html
         {
             return JobSessionSummaryToXml(_xmlFile, _log, _scrub, _scrubber, _parsers);
         }
-        public List<List<string>> JobSessionSummaryToXml(string xmlFile, CLogger log, bool scrub, Scrubber.CXmlHandler scrubber, CDataTypesParser d)
+        public List<List<string>> JobSessionSummaryToXml(string xmlFile, CLogger log, bool scrub, Scrubber.CScrubHandler scrubber, CDataTypesParser d)
         {
             List<List<string>> sendBack = new();
             log.Info("converting job session summary to xml");

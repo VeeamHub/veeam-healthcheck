@@ -10,11 +10,11 @@
     <Company>Veeam</Company>
     <Authors>AdamC</Authors>
     <ApplicationIcon>Veeam_HealthCheck_228x228.ico</ApplicationIcon>
-    <AssemblyVersion>1.0.2.532</AssemblyVersion>
+    <AssemblyVersion>1.0.2.535</AssemblyVersion>
     <SignAssembly>true</SignAssembly>
     <AssemblyOriginatorKeyFile>vhc_keyfile2.pfx</AssemblyOriginatorKeyFile>
     <DelaySign>false</DelaySign>
-    <FileVersion>1.0.2.532</FileVersion>
+    <FileVersion>1.0.2.535</FileVersion>
     <DebugType>full</DebugType>
 	  <SelfContained>true</SelfContained>
 	  <!--These 2 lines are what produce the single file utility. Possibly doesn't work...-->
@@ -117,9 +117,6 @@
     <None Update="Resources\Localization\vhcres.txt">
       <Generator></Generator>
     </None>
-    <None Update="Reporting\StyleSheets\vbr-Report.xsl">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
     <None Update="Veeam_HealthCheck_228x228.ico">
       <CopyToOutputDirectory>Never</CopyToOutputDirectory>
     </None>
@@ -127,7 +124,6 @@
 
   <ItemGroup>
     <Folder Include="Startup\GUI\" />
-    <Folder Include="Tools\NewFolder\" />
   </ItemGroup>
 
 </Project>

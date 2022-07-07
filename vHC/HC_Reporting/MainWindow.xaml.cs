@@ -300,6 +300,7 @@ namespace VeeamHealthCheck
             }
             catch (Exception e)
             {
+                log.Error(e.Message);
                 return false;
             }
         }

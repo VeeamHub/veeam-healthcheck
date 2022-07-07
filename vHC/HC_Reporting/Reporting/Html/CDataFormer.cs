@@ -30,7 +30,7 @@ namespace VeeamHealthCheck.Reporting.Html
         private bool _isBackupServerWan;
         //private CQueries _cq = new();
         private Dictionary<string, int> _repoJobCount;
-        private CXmlHandler _scrubber = new ();
+        private CScrubHandler _scrubber = new();
         private bool _scrub;
         private bool _checkLogs;
         private bool _isImport;
@@ -50,25 +50,16 @@ namespace VeeamHealthCheck.Reporting.Html
         private CHtmlExporter exporter;
         private readonly CXmlFunctions XML = new("vbr");
 
-        //privatstatic e readonly string _styleSheet = "StyleSheets\\vbr-Report.xsl";
-        private static readonly string _styleSheet = "Reporting\\StyleSheets\\myHtml.xsl";
 
         public void ConvertToXml()
         {
             _dTypeParser = new();
-            //Work();
         }
         public CDataFormer(bool isImport) // add string mode input
         {
             _dTypeParser = new();
             _isImport = isImport;
             CheckXmlFile();
-            //XML = new("vbr");
-            //SetGlobalVariables(scrub, checkLogs, openHtml, isImport);
-            //ConvertToXml();
-
-            //if (openHtml)
-            //    exporter.OpenHtml();
         }
         private void CheckXmlFile()
         {
@@ -94,33 +85,7 @@ namespace VeeamHealthCheck.Reporting.Html
             CCsvParser parser = new();
             var recs = parser.GetDynamicLicenseCsv();
 
-            //XDocument doc = XDocument.Load(_testFile);
-
-            //XElement extElement = new XElement("license");
-            //doc.Root.Add(extElement);
-            //foreach (var c in recs)
-            //{
-            //    var xml = new XElement("licInfo",
-            //        new XElement("client", c.licensedto),
-            //        new XElement("edition", c.edition),
-            //        new XElement("status", c.status),
-            //        new XElement("type", c.type),
-            //        new XElement("licInst", c.licensedinstances),
-            //        new XElement("usedInst", c.usedinstances),
-            //        new XElement("newInst", c.newinstances),
-            //        new XElement("rentInst", c.rentalinstances),
-            //        new XElement("licSock", c.licensedsockets),
-            //        new XElement("usedSock", c.usedsockets),
-            //        new XElement("licCap", c.licensedcapacitytb),
-            //        new XElement("usedCap", c.usedcapacitytb),
-            //        new XElement("expire", c.expirationdate),
-            //        new XElement("supExp", c.supportexpirationdate),
-            //        new XElement("cloudconnect", c.cloudconnect)
-            //        );
-
-            //    extElement.Add(xml);
-            //}
-            //doc.Save(_testFile);
+            
             log.Info("converting lic info to xml..done!");
         }
         public List<string> ParseNonProtectedTypes()
@@ -144,24 +109,7 @@ namespace VeeamHealthCheck.Reporting.Html
                 }
             }
 
-            //List<int> protectedTypes = _dTypeParser.ProtectedJobIds;
-            //List<string> unProtectedTypes = new();
-            //foreach (CModel.EDbJobType jt in Enum.GetValues(typeof(CModel.EDbJobType)))
-            //{
-            //    foreach (var b in bTypes)
-            //    {
-            //        int.TryParse(b.JobId, out int id);
-
-            //        if (id == 52)
-            //        {
-
-            //        }
-            //        if ((int)jt == 52)
-            //        {
-
-            //        }
-            //    }
-            //}
+            
             foreach (EDbJobType jt2 in Enum.GetValues(typeof(EDbJobType)))
             {
                 if (!pTypes.Contains((int)jt2))
@@ -172,18 +120,6 @@ namespace VeeamHealthCheck.Reporting.Html
 
             notProtectedTypes.Add("Kubernetes");
             notProtectedTypes.Add("Microsoft 365");
-
-            //XDocument doc = XDocument.Load(_testFile);
-            //XElement extElement = new XElement("npjobSummary");
-            ////var summary = new XElement("info", fillerText.JobSummary);
-            ////extElement.Add(summary);
-            //doc.Root.Add(extElement);
-
-            //foreach (var v in notProtectedTypes)
-            //{
-            //    var xml2 = XML.AddXelement(v, "Type", "");
-            //    extElement.Add(xml2);
-            //}
 
             return notProtectedTypes;
 
@@ -276,26 +212,6 @@ namespace VeeamHealthCheck.Reporting.Html
             log.Info("converting server summary to xml");
             Dictionary<string, int> di = _dTypeParser.ServerSummaryInfo;
 
-
-
-            //XElement serverRoot = new XElement("serverSummary");
-            //doc.Root.Add(serverRoot);
-
-
-            //foreach (var c in di)
-            //{
-            //    var xml = new XElement("server",
-            //        new XElement("name", c.Key),
-            //        new XElement("count", c.Value)
-            //        );
-
-            //    serverRoot.Add(xml);
-
-            //    //doc.Add(xml);
-
-
-            //}
-
             log.Info("converting server summary to xml.done!");
             return di;
         }
@@ -321,13 +237,6 @@ namespace VeeamHealthCheck.Reporting.Html
 
             #endregion
 
-
-
-            // begin XML info input
-
-            // NEW NODE NAME HERE
-
-            // Filter duplicates
             List<string> vmNames = new();
             List<string> viProtectedNames = new();
             List<string> viNotProtectedNames = new();
@@ -411,12 +320,7 @@ namespace VeeamHealthCheck.Reporting.Html
             CServerTypeInfos backupServer = csv.Find(x => (x.Id == _backupServerId));
             CCsvParser config = new();
 
-            // begin XML info input
-            //XDocument doc = XDocument.Load(_testFile);
-
-            //// NEW NODE NAME HERE
-            //XElement extElement = new XElement("backupServer");
-            //doc.Root.Add(extElement);
+            
 
             // Check for items needing scrubbed
             if (MainWindow._scrub)
@@ -524,7 +428,7 @@ namespace VeeamHealthCheck.Reporting.Html
                 }
                 catch (Exception f)
                 {
-
+                    log.Error(f.Message);
                 }
             }
             try
@@ -562,22 +466,13 @@ namespace VeeamHealthCheck.Reporting.Html
             }
 
 
-            //XDocument doc = XDocument.Load(_testFile);
-
-            //XElement extElement = new XElement("backupServer");
-            //doc.Root.Add(extElement);
-
-
             if (MainWindow._scrub)
             {
                 backupServer.Name = Scrub(backupServer.Name);
                 configBackupTarget = Scrub(configBackupTarget);
             }
             string proxyRole = "";
-            //if (_isBackupServerProxy && _isBackupServerProxyDisabled)
-            //   proxyRole = "True: Disabled";
-            //if (_isBackupServerProxy && !_isBackupServerProxyDisabled)
-            //    proxyRole = "True: Enabled";
+            
             if (_isBackupServerProxy)
                 proxyRole = "True";
             if (!_isBackupServerProxy)
@@ -603,8 +498,7 @@ namespace VeeamHealthCheck.Reporting.Html
                 new XElement("wanacc", _isBackupServerWan)
                 );
 
-            //extElement.Add(xml);
-            //doc.Save(_testFile);
+            
 
 
             list.Add(backupServer.Name);
@@ -1203,7 +1097,6 @@ namespace VeeamHealthCheck.Reporting.Html
                     for (int hour = 0; hour < 24; hour++)
                     {
                         int highestCount = 0;
-                        int minuteWithHighestCount;
                         foreach (var h in minuteMapper.Keys)
                         {
                             var p = Math.Round((decimal)h / 60, 0, MidpointRounding.ToZero);
@@ -1406,13 +1299,13 @@ namespace VeeamHealthCheck.Reporting.Html
                     string docName = outDir + "\\";
                     if (MainWindow._scrub)
                     {
-                        outDir += "\\" +_scrubber.ScrubItem(cs.JobName) + ".html";
+                        outDir += "\\" + _scrubber.ScrubItem(cs.JobName) + ".html";
                     }
                     else
                     {
                         outDir += "\\" + cs.JobName + ".html";
                     }
-                     
+
                     string s = _form.FormHeader();
                     s += "<h2>" + cs.JobName + "</h2>";
 
@@ -1477,7 +1370,7 @@ namespace VeeamHealthCheck.Reporting.Html
 
                             }
                         }
-                        catch (Exception e) { }
+                        catch (Exception e) { log.Error(e.Message); }
 
 
                         //write HTML
@@ -1493,7 +1386,10 @@ namespace VeeamHealthCheck.Reporting.Html
                         //string xmlString = newDoc.ToString();
                         //exporter.ExportHtml(docName);
                     }
-                    catch (Exception e) { }
+                    catch (Exception e)
+                    {
+                        log.Error(e.Message);
+                    }
 
                 }
 
@@ -1610,80 +1506,6 @@ namespace VeeamHealthCheck.Reporting.Html
         {
 
         }
-        private int SplitDurationToMinutes(string duration)
-        {
-            try
-            {
-                //log.Info("splitting duration..");
-                int i = 0;
-                //00:01:59.4060000
-                string[] split = duration.Split(':');
-                int hours = 0;
-                int minutes = 0;
-                int seconds = 0;
-
-                if (split[0] != "00")
-                {
-                    int.TryParse(split[0], out int h);
-                    hours = h;
-                }
-                if (split[1] != "00")
-                {
-                    int.TryParse(split[1], out int m);
-                    minutes = m;
-                }
-                minutes = minutes + (hours * 60);
-
-                //log.Info("splitting duration..done!");
-                return minutes;
-            }
-            catch (Exception e) { return 0; }
-        }
-
-        //public void ConvertToXml(bool import, bool scrub)
-        //{
-        //    _scrub = scrub;
-        //    Work();
-        //}
-
-
-        private void Work()
-        {
-            log.Info("Starting Data conversion...");
-            PreCalculations();
-            XML.HeaderInfoToXml();
-            LicInfoToXml();
-            ParseNonProtectedTypes();
-            SecSummary();
-            ServerSummaryToXml();
-            BackupServerInfoToXml();
-
-            exporter = new(_testFile, _backupServerName, _styleSheet, _scrub);
-
-            SobrInfoToXml();
-            ExtentXmlFromCsv();
-            RepoInfoToXml();
-            ProxyXmlFromCsv();
-            ServerXmlFromCsv();
-            JobSummaryInfoToXml();
-            JobConcurrency(true, 7);
-            TaskConcurrency(7);
-            ProtectedWorkloadsToXml();
-            RegOptions();
-            ConvertJobSessSummaryToXml();
-
-            JobInfoToXml();
-            try
-            {
-                JobSessionInfoToXml();
-
-            }
-            catch (Exception e) { }
-
-            exporter.ExportHtml();
-            log.Info("Starting Data conversion...done!");
-        }
-
         private void PreCalculations()
         {
             // calc all the things prior to adding XML entries... such as job count per repo....

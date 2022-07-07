@@ -23,7 +23,7 @@ namespace VeeamHealthCheck.Html
         private string _backupServerName;
         private string _latestReport;
         private bool _scrub;
-        private CXmlHandler _scrubber;
+        private CScrubHandler _scrubber;
         private string _outPath = CVariables.unsafeDir;
         private string _styleSheet;
         public CHtmlExporter(string xmlFileName, string serverName, string styleSheet, bool scrub)
@@ -33,7 +33,7 @@ namespace VeeamHealthCheck.Html
             _styleSheet = styleSheet;
             _scrub = scrub;
             if(scrub)
-                _scrubber = new CXmlHandler();
+                _scrubber = new CScrubHandler();
         }
         public void ExportHtml()
         {

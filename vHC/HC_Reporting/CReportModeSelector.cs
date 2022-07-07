@@ -38,14 +38,7 @@ namespace VeeamHealthCheck
             html.Dispose();
             //CCsvToXml c = new("vbr", MainWindow._scrub, false, MainWindow._openHtml, true);
         }
-        private void StartVbrReportImport()
-        {
-            _log.Info("Running report in import mode");
-            CCsvToXml c = new("vbr", MainWindow._scrub, false, MainWindow._openHtml, true);
-
-            //choose VBO or VBR
-            //c.ConvertToXml();
-        }
+        
         private void StartM365Report()
         {
             _log.Info("Starting VB365 Report genration");
