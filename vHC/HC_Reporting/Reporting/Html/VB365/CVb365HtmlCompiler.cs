@@ -60,8 +60,9 @@ namespace VeeamHealthCheck.Reporting.Html.VB365
             _htmldoc += tables.Jobs();
             _htmldoc += tables.Vb365JobSessions();
             _htmldoc += tables.Vb365JobStats();
-
-            _htmldoc += "<a>vHC Version: " + CVersionSetter.GetFileVersion() + "</a>";
+            _htmldoc += tables.Vb365ProcStats();
+            _htmldoc += _form.LineBreak();
+            _htmldoc += "<a align=\"center\">vHC Version: " + CVersionSetter.GetFileVersion() + "</a>";
 
             _htmldoc += "<script type=\"text/javascript\">";
             _htmldoc += CssStyler.JavaScriptBlock();

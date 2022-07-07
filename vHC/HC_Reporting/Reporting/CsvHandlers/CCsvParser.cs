@@ -69,6 +69,7 @@ namespace VeeamHealthCheck.CsvHandlers
         private readonly string _vboMailboxProtection = "MailboxProtection";
         private readonly string _StorageConsumption = "StorageConsumption";
         private readonly string _vboJobs = "Jobs";
+        private readonly string _vboProcStat = "ProcessingStats";
 
         public CCsvParser()
         {
@@ -104,6 +105,10 @@ namespace VeeamHealthCheck.CsvHandlers
         public IEnumerable<dynamic> GetDynamicVboJobs()
         {
             return GetDynamicCsvRecs(_vboJobs);
+        }
+        public IEnumerable<dynamic> GetDynamicVboProcStat()
+        {
+            return GetDynamicCsvRecs(_vboProcStat);
         }
         public IEnumerable<CLocalRepos> GetDynamicVboRepo()
         {

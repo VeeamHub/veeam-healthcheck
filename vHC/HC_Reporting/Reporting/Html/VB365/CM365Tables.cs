@@ -45,6 +45,12 @@ namespace VeeamHealthCheck.Reporting.Html.VB365
             s += "<tr>";
             foreach (var gl in global)
             {
+                //parse lic to int:
+                decimal.TryParse(gl.LicensedFor, out decimal licFor);
+                decimal.TryParse(gl.LicensesUsed, out decimal licUsed);
+                decimal percentUsed = licUsed / licFor * 100;
+                
+
                 s += _form.TableData(gl.LicenseStatus, "");
                 s += _form.TableData(gl.LicenseExpiry, "");
                 s += _form.TableData(gl.SupportExpiry, "");
@@ -52,13 +58,28 @@ namespace VeeamHealthCheck.Reporting.Html.VB365
                 s += _form.TableData(gl.LicensedTo, "");
                 s += _form.TableData(gl.LicenseContact, "");
                 s += _form.TableData(gl.LicensedFor, "");
-                s += _form.TableData(gl.LicensesUsed, "");
+
+                if(percentUsed > 95)
+                    s += _form.TableData(gl.LicensesUsed, "", 1);
+                else if(percentUsed > 90)
+                    s += _form.TableData(gl.LicensesUsed, "", 2);
+                else
+                    s += _form.TableData(gl.LicensesUsed, "");
+
                 s += _form.TableData(gl.GlobalFolderExclusions, "");
                 s += _form.TableData(gl.GlobalRetExclusions, "");
                 s += _form.TableData(gl.LogRetention, "");
-                s += _form.TableData(gl.NotificationEnabled, "");
+                if(gl.NotificationEnabled == "False")
+                    s += _form.TableData(gl.NotificationEnabled, "", 2);
+                else
+                    s += _form.TableData(gl.NotificationEnabled, "");
+
                 s += _form.TableData(gl.NotififyOn, "");
-                s += _form.TableData(gl.AutomaticUpdates, "");
+                
+                if(gl.AutomaticUpdates == "False")
+                    s += _form.TableData(gl.AutomaticUpdates, "", 2);
+                else
+                    s += _form.TableData(gl.AutomaticUpdates, "");
             }
             s += "</tr></table>";
 
@@ -446,6 +467,45 @@ namespace VeeamHealthCheck.Reporting.Html.VB365
 
             s += _summary.JobSessSummary();
 
+            s += "</div>";
+            return s;
+        }
+        public string Vb365ProcStats()
+        {
+            string s = "<div class=\"procstats\" id=\"procstats\">";
+            s += _form.header2("Processing Statistics");
+            //s += "<br>";
+            s += _form.CollapsibleButton("Show Processing Stats");
+            s += "<table border=\"1\" style=\"display: none;\"><tr>";
+            s += _form.TableHeader("Name", "");
+            s += _form.TableHeader("Operation", "");
+            s += _form.TableHeader("Time (latest)", "");
+            s += _form.TableHeader("Time (Median)", "");
+            s += _form.TableHeader("Time (Min)", "");
+            s += _form.TableHeader("Time (Avg)","");
+            s += _form.TableHeader("Time (Max)", "");
+            s += _form.TableHeader("Time (90%)", "");
+
+            s += "</tr>";
+
+            var global = _csv.GetDynamicVboProcStat().ToList();
+            foreach (var gl in global)
+            {
+                s += "<tr>";
+
+                int counter = 0;
+                foreach (var g in gl)
+                {
+                    string output = g.Value;
+                    s += _form.TableData(output, "");
+                    counter++;
+                }
+
+                s += "</tr>";
+            }
+            s += "</table>";
+
+            //s += _summary.JobStatSummary();
             s += "</div>";
             return s;
         }
