@@ -11,7 +11,7 @@ namespace VeeamHealthCheck
         private readonly bool _scrub;
         private readonly bool _openHtml;
         private readonly bool _import;
-        private CLogger _log = MainWindow.log;
+        private CLogger _log = VhcGui.log;
         public CReportModeSelector()
         {
         }

@@ -16,7 +16,7 @@ namespace VeeamHealthCheck.Html
 {
     internal class CHtmlExporter
     {
-        private CLogger log = MainWindow.log;
+        private CLogger log = VhcGui.log;
         private readonly string _testFile;
         private readonly string _htmlName = "Veeam Health Check Report";
 
@@ -41,7 +41,7 @@ namespace VeeamHealthCheck.Html
             
             string s = TransformXMLToHTML(_testFile, _styleSheet);
             DateTime dateTime = DateTime.Now;
-            string n = MainWindow._desiredPath;
+            string n = VhcGui._desiredPath;
             string htmlCore = "\\" + _htmlName + "_" + _backupServerName + dateTime.ToString("_yyyy.MM.dd_HHmmss") + ".html";
             //string name = _outPath + htmlCore;
             string name = n + htmlCore;
@@ -55,7 +55,7 @@ namespace VeeamHealthCheck.Html
             }
             log.Info("exporting xml to html..done!");
             //OpenHtml();
-            if (MainWindow._openExplorer)
+            if (VhcGui._openExplorer)
                 OpenExplorer();
         }
         public void ExportVb365Html(string htmlString)
@@ -63,7 +63,7 @@ namespace VeeamHealthCheck.Html
             log.Info("exporting xml to html");
 
             DateTime dateTime = DateTime.Now;
-            string n = MainWindow._desiredPath;
+            string n = VhcGui._desiredPath;
             if (!Directory.Exists(n))
                 Directory.CreateDirectory(n);
             string htmlCore = "\\" + _htmlName + "_" + _backupServerName + dateTime.ToString("_yyyy.MM.dd_HHmmss") + ".html";
@@ -76,9 +76,9 @@ namespace VeeamHealthCheck.Html
             }
             log.Info("exporting xml to html..done!");
             //OpenHtml();
-            if (MainWindow._openExplorer)
+            if (VhcGui._openExplorer)
                 OpenExplorer();
-            if(MainWindow._openHtml)
+            if(VhcGui._openHtml)
                 OpenHtml();
         }
         public void ExportVbrHtml(string htmlString)
@@ -86,7 +86,7 @@ namespace VeeamHealthCheck.Html
             log.Info("exporting xml to html");
 
             DateTime dateTime = DateTime.Now;
-            string n = MainWindow._desiredPath;
+            string n = VhcGui._desiredPath;
             if (!Directory.Exists(n))
                 Directory.CreateDirectory(n);
             string htmlCore = "\\" + _htmlName + "_" + _backupServerName + dateTime.ToString("_yyyy.MM.dd_HHmmss") + ".html";
@@ -98,11 +98,7 @@ namespace VeeamHealthCheck.Html
                 sw.Write(htmlString);
             }
             log.Info("exporting xml to html..done!");
-            //OpenHtml();
-            if (MainWindow._openExplorer)
-                OpenExplorer();
-            if (MainWindow._openHtml)
-                OpenHtml();
+            
         }
         public void ExportHtml(string xmlFile)
         {
@@ -115,7 +111,7 @@ namespace VeeamHealthCheck.Html
                 jname = _scrubber.ScrubItem(jname, "job");
             DateTime dateTime = DateTime.Now;
 
-            string n = MainWindow._desiredPath;
+            string n = VhcGui._desiredPath;
             string outFolder = _outPath + reportsFolder;
             outFolder = n + reportsFolder;
             //if (_scrub)

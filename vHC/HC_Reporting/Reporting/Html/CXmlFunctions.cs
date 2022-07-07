@@ -13,7 +13,7 @@ namespace VeeamHealthCheck.Html
 {
     internal class CXmlFunctions
     {
-        private CLogger log = MainWindow.log;
+        private CLogger log = VhcGui.log;
         private string _xmlOut;
         private XDocument _doc;
         public CXmlFunctions(string mode)

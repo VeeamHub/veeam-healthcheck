@@ -18,7 +18,7 @@ namespace VeeamHealthCheck.DB
     class CDbWorker
     {
         private readonly string _cString;
-        private CLogger log = MainWindow.log;
+        private CLogger log = VhcGui.log;
         public CDbWorker()
         {
             log.Info("init db worker");

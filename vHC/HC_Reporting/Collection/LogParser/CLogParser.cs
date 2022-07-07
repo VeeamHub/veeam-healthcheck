@@ -12,7 +12,7 @@ namespace VeeamHealthCheck.FilesParser
 {
     class CLogParser
     {
-        private CLogger log = VeeamHealthCheck.MainWindow.log;
+        private CLogger log = VeeamHealthCheck.VhcGui.log;
         private string LogLocation;
         private Dictionary<string, List<TimeSpan>> _waits = new();
         private string _pathToCsv = CVariables.vbrDir + @"\waits.csv";

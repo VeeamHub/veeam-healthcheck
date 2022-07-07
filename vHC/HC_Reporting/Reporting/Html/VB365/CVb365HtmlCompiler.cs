@@ -105,7 +105,7 @@ namespace VeeamHealthCheck.Reporting.Html.VB365
         }
         private void ExportHtml()
         {
-            CHtmlExporter exporter = new("", GetServerName(), "", MainWindow._scrub);
+            CHtmlExporter exporter = new("", GetServerName(), "", VhcGui._scrub);
             exporter.ExportVb365Html(_htmldoc);
         }
         private string GetServerName()

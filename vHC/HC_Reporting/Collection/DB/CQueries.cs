@@ -15,7 +15,7 @@ namespace VeeamHealthCheck.DB
 {
     class CQueries
     {
-        private CLogger log = MainWindow.log;
+        private CLogger log = VhcGui.log;
 
         private DataTable _sqlInfo;
         private string _sqlEdition;

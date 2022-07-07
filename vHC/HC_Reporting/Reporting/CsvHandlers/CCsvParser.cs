@@ -22,7 +22,7 @@ namespace VeeamHealthCheck.CsvHandlers
     class CCsvParser
     {
         private readonly CsvConfiguration _csvConfig;
-        private CLogger log = MainWindow.log;
+        private CLogger log = VhcGui.log;
 
         //CSV Paths.
         private readonly string _sessionPath = CVariables.vbrDir + @"\VeeamSessionReport.csv";

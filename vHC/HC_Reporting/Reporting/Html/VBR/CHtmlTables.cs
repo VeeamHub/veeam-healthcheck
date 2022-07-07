@@ -306,7 +306,7 @@ namespace VeeamHealthCheck.Html.VBR
             foreach (var d in list)
             {
                 s += "<tr>";
-                if (MainWindow._scrub)
+                if (VhcGui._scrub)
                     s += _form.TableData(_scrub.ScrubItem(d[0]), "");
                 else
                     s += _form.TableData(d[0], "");
@@ -372,7 +372,7 @@ namespace VeeamHealthCheck.Html.VBR
             foreach (var d in list)
             {
                 s += "<tr>";
-                if(MainWindow._scrub)
+                if(VhcGui._scrub)
                     s += _form.TableData(_scrub.ScrubItem(d[0]), "");
                 else
                     s += _form.TableData(d[0], "");
@@ -385,7 +385,7 @@ namespace VeeamHealthCheck.Html.VBR
                 s += _form.TableData(d[7], "");
                 s += _form.TableData(d[8], "");
                 s += _form.TableData(d[9], "");
-                if (MainWindow._scrub)
+                if (VhcGui._scrub)
                     s += _form.TableData(_scrub.ScrubItem(d[10]), "");
                 else
                     s += _form.TableData(d[10], "");

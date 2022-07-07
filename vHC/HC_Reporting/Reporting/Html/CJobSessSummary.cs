@@ -18,7 +18,7 @@ namespace VeeamHealthCheck.Html
     class CJobSessSummary
     {
         private Dictionary<string, List<TimeSpan>> _waits = new();
-        private CLogger log = MainWindow.log;
+        private CLogger log = VhcGui.log;
         private bool _checkLogs;
 
         private string _xmlFile;
@@ -293,7 +293,7 @@ namespace VeeamHealthCheck.Html
                 try
                 {
                     string jname = o.JobName;
-                    if (MainWindow._scrub)
+                    if (VhcGui._scrub)
                         jname = scrubber.ScrubItem(o.JobName, "job");
 
                     string wait = o.waitCount.ToString();

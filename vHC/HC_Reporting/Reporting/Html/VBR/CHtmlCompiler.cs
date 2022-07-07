@@ -40,7 +40,7 @@ namespace VeeamHealthCheck.Html
         }
         private void ExportHtml()
         {
-            CHtmlExporter exporter = new("", GetServerName(), "", MainWindow._scrub);
+            CHtmlExporter exporter = new("", GetServerName(), "", VhcGui._scrub);
             exporter.ExportVbrHtml(_htmldoc);
         }
         private string GetServerName()

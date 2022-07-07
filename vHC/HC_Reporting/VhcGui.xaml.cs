@@ -18,7 +18,7 @@ namespace VeeamHealthCheck
     /// <summary>
     /// Interaction logic for MainWindow.xaml
     /// </summary>
-    public partial class MainWindow : Window
+    public partial class VhcGui : System.Windows.Window
     {
         public static CLogger log = new("HealthCheck");
         public static bool _scrub = true;
@@ -32,7 +32,8 @@ namespace VeeamHealthCheck
         private bool _isVbr = false;
         private bool _isVb365 = false;
 
-        public MainWindow()
+
+        public VhcGui()
         {
             //CultureInfo.CurrentCulture = Thread.CurrentThread.CurrentCulture;
             //CultureInfo.CurrentCulture = CultureInfo.GetCultureInfo("zh-cn");
@@ -112,23 +113,6 @@ namespace VeeamHealthCheck
         private void Import()
         {
 
-
-            //if (_isVbr)
-            //{
-            //    //CCsvToXml c = new("vbr", _scrub, false, _openHtml, _import);
-            //    //c.Dispose();
-
-            //    CReportModeSelector cMode = new();
-            //    cMode.Run();
-
-            //}
-            //if (_isVb365)
-            //{
-            //    CReportModeSelector cMode = new();
-            //    cMode.Run();
-            //}
-            //else
-            //{
             CReportModeSelector cMode = new();
             cMode.Run();
             cMode.Dispose();
@@ -155,40 +139,27 @@ namespace VeeamHealthCheck
             log.Info("Starting Run");
             ExecPsScripts();
 
-            //new mode : not yet working
-            //CReportModeSelector cMode = new(_desiredPath, _scrub, _openHtml, false); ;
-            //cMode.Run();
-
-
-            //old mode: uses XSL files
-
             Import();
 
-            //// change scrub to opposite + gen 2nd report
-            //if (_scrub)
-            //{
-            //    _desiredPath = CVariables.unsafeDir;
-            //    _scrub = false;
-            //}
-            //else if (!_scrub)
-            //{
-            //    _desiredPath =  CVariables.safeDir;
-            //    _scrub = true;
-            //}
-            //Import();
+            // change scrub to opposite + gen 2nd report
+            if (_scrub)
+            {
+                _desiredPath = CVariables.unsafeDir;
+                _scrub = false;
+            }
+            else if (!_scrub)
+            {
+                _desiredPath = CVariables.safeDir;
+                _scrub = true;
+            }
+            Import();
 
             log.Info("Starting Run..done!");
 
         }
         private void run_Click(object sender, RoutedEventArgs e)
         {
-            //if (!IsVbrServer())
-            //{
-            //    string msg = "Server is not VBR Server. Please run the program on the actual VBR server";
-            //    MessageBox.Show(msg);
-            //    log.Error(msg);
-            //    Environment.Exit(0);
-            //}
+            
             LogUIAction("Run selected");
             _import = false;
             showProgressBar();

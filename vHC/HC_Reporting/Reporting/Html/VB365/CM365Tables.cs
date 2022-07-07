@@ -104,7 +104,7 @@ namespace VeeamHealthCheck.Reporting.Html.VB365
                         continue;
                     }
                     string output = g.Value;
-                    if (MainWindow._scrub)
+                    if (VhcGui._scrub)
                     {
                         
                         if (counter == 0 || counter == 1)
@@ -160,7 +160,7 @@ namespace VeeamHealthCheck.Reporting.Html.VB365
                 string objRepo = g.ObjectRepo;
 
 
-                if (MainWindow._scrub)
+                if (VhcGui._scrub)
                 {
                     boundProxy = _scrubber.ScrubItem(g.BoundProxy);
                     name = _scrubber.ScrubItem(g.Name);
@@ -216,7 +216,7 @@ namespace VeeamHealthCheck.Reporting.Html.VB365
                 foreach (var g in gl)
                 {
                     string output = g.Value;
-                    if (MainWindow._scrub)
+                    if (VhcGui._scrub)
                     {
                         output = _scrubber.ScrubItem(output);
                     }
@@ -254,7 +254,7 @@ namespace VeeamHealthCheck.Reporting.Html.VB365
                 string portalCert = g.RestorePortalCert;
 
 
-                if (MainWindow._scrub)
+                if (VhcGui._scrub)
                 {
                     apiCert = _scrubber.ScrubItem(apiCert);
                     serverCert = _scrubber.ScrubItem(serverCert);
@@ -352,7 +352,7 @@ namespace VeeamHealthCheck.Reporting.Html.VB365
                 foreach (var g in gl)
                 {
                     string output = g.Value;
-                    if (MainWindow._scrub)
+                    if (VhcGui._scrub)
                     {
                         if (counter == 12 || counter == 13)
                             output = _scrubber.ScrubItem(output);
@@ -431,7 +431,7 @@ namespace VeeamHealthCheck.Reporting.Html.VB365
                 foreach (var g in gl)
                 {
                     string output = g.Value;
-                    if (MainWindow._scrub)
+                    if (VhcGui._scrub)
                     {
                         if (counter == 0 || counter == 5)
                             output = _scrubber.ScrubItem(output);
@@ -480,7 +480,7 @@ namespace VeeamHealthCheck.Reporting.Html.VB365
                 foreach (var g in gl)
                 {
                     string output = g.Value;
-                    if (MainWindow._scrub)
+                    if (VhcGui._scrub)
                     {
                         if (counter == 0)
                             output = _scrubber.ScrubItem(output);
@@ -525,7 +525,7 @@ namespace VeeamHealthCheck.Reporting.Html.VB365
                 foreach (var g in gl)
                 {
                     string output = g.Value;
-                    if (MainWindow._scrub)
+                    if (VhcGui._scrub)
                     {
                         if (counter == 0 ||
                             counter == 1 ||
@@ -577,7 +577,7 @@ namespace VeeamHealthCheck.Reporting.Html.VB365
                 foreach (var g in gl)
                 {
                     string output = g.Value;
-                    if (MainWindow._scrub)
+                    if (VhcGui._scrub)
                     {
                         if (counter == 0 ||
                             counter == 1 ||
@@ -622,7 +622,7 @@ namespace VeeamHealthCheck.Reporting.Html.VB365
                 foreach (var g in gl)
                 {
                     string output = g.Value;
-                    if (MainWindow._scrub)
+                    if (VhcGui._scrub)
                     {
                         if (counter == 1)
                             output = _scrubber.ScrubItem(output);
@@ -740,7 +740,7 @@ namespace VeeamHealthCheck.Reporting.Html.VB365
                 foreach (var g in gl)
                 {
                     string output = g.Value;
-                    if (MainWindow._scrub)
+                    if (VhcGui._scrub)
                     {
                         if (counter == 0 ||
                             counter == 1 ||

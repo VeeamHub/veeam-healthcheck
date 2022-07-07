@@ -14,7 +14,7 @@ namespace VeeamHealthCheck.DataTypes
 {
     class CDataTypesParser
     {
-        private CLogger log = MainWindow.log;
+        private CLogger log = VhcGui.log;
         private CCsvParser _csvParser = new();
 
         private List<CServerTypeInfos> _serverInfo;

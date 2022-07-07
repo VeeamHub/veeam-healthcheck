@@ -46,7 +46,7 @@ namespace VeeamHealthCheck.Reporting.Html
         private int _ram;
         private CDataTypesParser _dTypeParser;
         private readonly CCsvParser _csvParser = new();
-        private readonly CLogger log = MainWindow.log;
+        private readonly CLogger log = VhcGui.log;
         private CHtmlExporter exporter;
         private readonly CXmlFunctions XML = new("vbr");
 
@@ -323,7 +323,7 @@ namespace VeeamHealthCheck.Reporting.Html
             
 
             // Check for items needing scrubbed
-            if (MainWindow._scrub)
+            if (VhcGui._scrub)
             {
                 // set items to scrub
             }
@@ -382,7 +382,7 @@ namespace VeeamHealthCheck.Reporting.Html
             string version = "";
             DataTable si = new DataTable();
 
-            if (!MainWindow._import)
+            if (!VhcGui._import)
             {
                 try
                 {
@@ -422,7 +422,7 @@ namespace VeeamHealthCheck.Reporting.Html
                     {
                         veeamVersion = r.Version;
                         sqlHostName = r.SqlServer;
-                        if (MainWindow._scrub)
+                        if (VhcGui._scrub)
                             sqlHostName = Scrub(sqlHostName);
                     }
                 }
@@ -451,7 +451,7 @@ namespace VeeamHealthCheck.Reporting.Html
                         sqlRam = ((mem / 1024 / 1024) + 1).ToString();
 
                     }
-                    if (MainWindow._scrub)
+                    if (VhcGui._scrub)
                         sqlHostName = Scrub(sqlHostName);
                 }
                 else if (backupServer.Name == sqlHostName)
@@ -466,7 +466,7 @@ namespace VeeamHealthCheck.Reporting.Html
             }
 
 
-            if (MainWindow._scrub)
+            if (VhcGui._scrub)
             {
                 backupServer.Name = Scrub(backupServer.Name);
                 configBackupTarget = Scrub(configBackupTarget);
@@ -543,7 +543,7 @@ namespace VeeamHealthCheck.Reporting.Html
                 int repoCount = repos.Count(x => x.SobrName == c.Name);
 
                 string newName = c.Name;
-                if (MainWindow._scrub)
+                if (VhcGui._scrub)
                     newName = _scrubber.ScrubItem(c.Name, "sobr");
                 _repoJobCount.TryGetValue(c.Name, out int jobCount);
 
@@ -601,7 +601,7 @@ namespace VeeamHealthCheck.Reporting.Html
                 string hostName = c.Host;
                 string path = c.Path;
 
-                if (MainWindow._scrub)
+                if (VhcGui._scrub)
                 {
                     newName = Scrub(newName);
                     sobrName = Scrub(sobrName);
@@ -663,7 +663,7 @@ namespace VeeamHealthCheck.Reporting.Html
                 string host = c.Host;
                 string path = c.Path;
 
-                if (MainWindow._scrub)
+                if (VhcGui._scrub)
                 {
                     name = _scrubber.ScrubItem(c.Name, "repo");
                     host = _scrubber.ScrubItem(c.Host, "server");
@@ -722,7 +722,7 @@ namespace VeeamHealthCheck.Reporting.Html
             foreach (var c in csv)
             {
                 string[] s = new string[12];
-                if (MainWindow._scrub)
+                if (VhcGui._scrub)
                 {
                     c.Name = Scrub(c.Name);
                     c.Host = Scrub(c.Host);
@@ -843,7 +843,7 @@ namespace VeeamHealthCheck.Reporting.Html
 
                 //scrub name if selected
                 string newName = c.Name;
-                if (MainWindow._scrub)
+                if (VhcGui._scrub)
                     newName = Scrub(newName);
                 s[0] = newName;
                 s[1] += c.Cores;
@@ -1231,7 +1231,7 @@ namespace VeeamHealthCheck.Reporting.Html
                 string repo = c.RepoName;
                 if (c.EncryptionEnabled == "True")
                     _backupsEncrypted = true;
-                if (MainWindow._scrub)
+                if (VhcGui._scrub)
                 {
                     jname = _scrubber.ScrubItem(c.Name, "job");
                     repo = _scrubber.ScrubItem(c.RepoName, "repo");
@@ -1297,7 +1297,7 @@ namespace VeeamHealthCheck.Reporting.Html
                         Directory.CreateDirectory(outDir);
 
                     string docName = outDir + "\\";
-                    if (MainWindow._scrub)
+                    if (VhcGui._scrub)
                     {
                         outDir += "\\" + _scrubber.ScrubItem(cs.JobName) + ".html";
                     }
@@ -1341,7 +1341,7 @@ namespace VeeamHealthCheck.Reporting.Html
                                 string jname = c.JobName;
                                 string vmName = c.VmName;
                                 //string repo = _scrubber.ScrubItem(c.)
-                                if (MainWindow._scrub)
+                                if (VhcGui._scrub)
                                 {
                                     jname = _scrubber.ScrubItem(c.JobName, "job");
                                     vmName = _scrubber.ScrubItem(c.VmName, "vm");

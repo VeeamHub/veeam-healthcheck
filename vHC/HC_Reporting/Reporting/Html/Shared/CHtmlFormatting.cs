@@ -155,7 +155,7 @@ namespace VeeamHealthCheck.Reporting.Html.Shared
             s += LineBreak();
             s += "<a class=\"\">" + ResourceHandler.HtmlIntroLine2 + "</a>\n";
             s += LineBreak();
-            if(MainWindow._scrub)
+            if(VhcGui._scrub)
                 s += "<a class=\"\">" + ResourceHandler.HtmlIntroLine3Anon + "</a>\n";
             else
                 s += "<a class=\"\">" + ResourceHandler.HtmlIntroLine3Original + "</a>\n";
