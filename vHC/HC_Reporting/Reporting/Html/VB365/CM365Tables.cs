@@ -57,7 +57,7 @@ namespace VeeamHealthCheck.Reporting.Html.VB365
 
                 if (expireDate < DateTime.Now)
                     s += _form.TableData(gl.LicenseExpiry, "", 1);
-                else if(expireDate < DateTime.Now.AddDays(60) )
+                else if (expireDate < DateTime.Now.AddDays(60))
                     s += _form.TableData(gl.LicenseExpiry, "", 3);
                 else
                     s += _form.TableData(gl.LicenseExpiry, "");
@@ -68,9 +68,9 @@ namespace VeeamHealthCheck.Reporting.Html.VB365
                 s += _form.TableData(gl.LicenseContact, "");
                 s += _form.TableData(gl.LicensedFor, "");
 
-                if(percentUsed > 95)
+                if (percentUsed > 95)
                     s += _form.TableData(gl.LicensesUsed, "", 1);
-                else if(percentUsed > 90)
+                else if (percentUsed > 90)
                     s += _form.TableData(gl.LicensesUsed, "", 3);
                 else
                     s += _form.TableData(gl.LicensesUsed, "");
@@ -78,14 +78,14 @@ namespace VeeamHealthCheck.Reporting.Html.VB365
                 s += _form.TableData(gl.GlobalFolderExclusions, "");
                 s += _form.TableData(gl.GlobalRetExclusions, "");
                 s += _form.TableData(gl.LogRetention, "");
-                if(gl.NotificationEnabled == "False")
+                if (gl.NotificationEnabled == "False")
                     s += _form.TableData(gl.NotificationEnabled, "", 3);
                 else
                     s += _form.TableData(gl.NotificationEnabled, "");
 
                 s += _form.TableData(gl.NotififyOn, "");
-                
-                if(gl.AutomaticUpdates == "False")
+
+                if (gl.AutomaticUpdates == "False")
                     s += _form.TableData(gl.AutomaticUpdates, "", 3);
                 else
                     s += _form.TableData(gl.AutomaticUpdates, "");
@@ -125,25 +125,132 @@ namespace VeeamHealthCheck.Reporting.Html.VB365
             {
                 int counter = 0;
 
+                string proxyname = "";
+                string description = "";
+                string threads = "";
+                string throttling = "";
+                string state = "";
+                string outdated = "";
+                string internetproxy = "";
+                string objectsmanaged = "";
+                string osversion = "";
+                string ram = "";
+                string cpus = "";
+                string extendedlogging = "";
+
                 s += "<tr>";
 
                 foreach (var g in gl)
                 {
-                    if (g.Key == "type")
+                    switch (g.Key)
                     {
-                        continue;
+                        case "name":
+                            proxyname = g.Value;
+                            break;
+                        case "description":
+                            description = g.Value;
+                            break;
+                        case "threads":
+                            threads = g.Value;
+                            break;
+                        case "throttling":
+                            throttling = g.Value;
+                            break;
+                        case "state":
+                            state = g.Value;
+                            break;
+                        case "outdated":
+                            outdated = g.Value;
+                            break;
+                        case "internetproxy":
+                            internetproxy = g.Value;
+                            break;
+                        case "objectsmanaged":
+                            osversion = g.Value;
+                            break;
+                        case "osversion":
+                            osversion = g.Value;
+                            break;
+                        case "ram":
+                            ram = g.Value;
+                            break;
+                        case "cpus":
+                            cpus = g.Value;
+                            break;
+                        case "extendedlogging":
+                            extendedlogging = g.Value;
+                            break;
                     }
+                    
                     string output = g.Value;
                     if (VhcGui._scrub)
                     {
-                        
-                        if (counter == 0 || counter == 1)
-                            output = _scrubber.ScrubItem(output);
+                        proxyname = _scrubber.ScrubItem(proxyname);
+                        description = _scrubber.ScrubItem(description);
                     }
-                    s += _form.TableData(output, "");
-                    counter++;
+                    
 
                 }
+
+                int threadShade = 0;
+                int throttleShade = 0;
+                int stateShade = 0;
+                int outdatedShade = 0;
+                int objManagedShade = 0;
+                int osVersionShade = 0;
+                int ramShade = 0;
+                int cpuShade = 0;
+
+                int.TryParse(threads, out int threadCount);
+                if (threadCount != 64)
+                    threadShade = 3;
+
+                if (throttling != "disabled")
+                    throttleShade = 3;
+
+                if(state != "Online")
+                    stateShade = 1;
+                if(outdated == "True")
+                    outdatedShade = 1;
+
+                string[] osVersionString = osversion.Split();
+                string[] osVersionNumbers = osVersionString[3].Split(".");
+                int.TryParse(osVersionNumbers[0], out int osversionNumber);
+                int.TryParse(osVersionNumbers[1], out int osSubVersion);
+                int osShade = 0;
+                if (osversionNumber < 10)
+                    osShade = 3;
+                if (osversionNumber == 6 && osSubVersion < 2)
+                    osShade = 1;
+
+                string[] ramInt = ram.Split();
+                int.TryParse(ramInt[0], out int ramNumber);
+                int.TryParse(cpus, out int cpuNumber);
+
+                if (cpuNumber < 4)
+                    cpuShade = 1;
+                if (cpuNumber > 8)
+                    cpuShade = 3;
+                if (ramNumber > 32)
+                    ramShade = 3;
+                if (ramNumber < 8)
+                    ramShade = 1;
+
+                // objectsmanaged RAM scales at 1GB X 250 X 2.5 = max objects managed.
+                // cores scale at 1 * 500 * 5 = max objects managed
+
+                s += _form.TableData(proxyname , "");
+                s += _form.TableData(description , "");
+                s += _form.TableData(threads , "", threadShade);
+                s += _form.TableData(throttling , "", throttleShade);
+                s += _form.TableData(state , "", stateShade);
+                s += _form.TableData(outdated , "", outdatedShade);
+                s += _form.TableData(internetproxy , "");
+                s += _form.TableData(objectsmanaged , "", objManagedShade);
+                s += _form.TableData(osversion , "", osVersionShade);
+                s += _form.TableData(ram , "", ramShade);
+                s += _form.TableData(cpus , "", cpuShade);
+                s += _form.TableData(extendedlogging, "");
 
                 s += "</tr>";
             }
@@ -189,6 +296,28 @@ namespace VeeamHealthCheck.Reporting.Html.VB365
                 string path = g.Path;
                 string objRepo = g.ObjectRepo;
 
+                int pathShade = 0;
+                int objencshade = 0;
+                int stateShade = 0;
+                int freeShade = 0;
+
+                if (path.StartsWith("C:"))
+                    pathShade = 2;
+                if (!String.IsNullOrEmpty(objRepo) && g.Encryption == "False")
+                    objencshade = 3;
+
+                double.TryParse(g.Free, out double freeSpace);
+                double.TryParse(g.Capacity, out double capacity);
+
+                if ((freeSpace / capacity * 100) < 10)
+                    freeShade = 3;
+                if((freeSpace /capacity * 100) < 5)
+                    freeSpace = 1;
+
+                if (g.State == "Out of Date")
+                    stateShade = 2;
+                if (g.State == "Out of Sync" || g.State == "Invalid")
+                    stateShade = 1;
 
                 if (VhcGui._scrub)
                 {
@@ -202,12 +331,12 @@ namespace VeeamHealthCheck.Reporting.Html.VB365
                 s += _form.TableData(name, "");
                 s += _form.TableData(desc, "");
                 s += _form.TableData(g.Type, "");
-                s += _form.TableData(path, "");
-                s += _form.TableData(objRepo, "");
-                s += _form.TableData(g.Encryption, "");
-                s += _form.TableData(g.State, "");
+                s += _form.TableData(path, "", pathShade);
+                s += _form.TableData(objRepo, "", objencshade);
+                s += _form.TableData(g.Encryption, "", objencshade);
+                s += _form.TableData(g.State, "", stateShade);
                 s += _form.TableData(g.Capacity, "");
-                s += _form.TableData(g.Free, "");
+                s += _form.TableData(g.Free, "", freeShade);
                 s += _form.TableData(g.DataStored, "");
                 s += _form.TableData(g.CacheSpaceUsed, "");
                 s += _form.TableData(g.DailyChangeRate, "");
@@ -377,20 +506,128 @@ namespace VeeamHealthCheck.Reporting.Html.VB365
             foreach (var gl in global)
             {
                 s += "<tr>";
-
+                string vbVersion = "";// g.Select(x => x.Key).Where(y=>y == "vb365version");
+                string osVersion = "";
+                string ram = "";
+                string cpu = "";
+                string proxies = "";
+                string repos = "";
+                string orgs = "";
+                string jobs = "";
+                string psEnabled = "";
+                string proxyInstalled = "";
+                string restEnabled = "";
+                string consoleInstalled = "";
+                string vmName = "";
+                string vmLoc = "";
+                string vmSku = "";
+                string vmSize = "";
                 int counter = 0;
                 foreach (var g in gl)
                 {
+
+                    switch (g.Key)
+                    {
+                        case "vb365version":
+                            vbVersion = g.Value;// g.Select(x => x.Key).Where(y=>y == "vb365version");
+                            break;
+                        case "osversion":
+                            osVersion = g.Value;
+                            break;
+                        case "ram":
+                            ram = g.Value;
+                            break;
+                        case "cpus":
+                            cpu = g.Value;
+                            break;
+                        case "proxiesmanaged":
+                            proxies = g.Value;
+                            break;
+                        case "reposmanaged":
+                            repos = g.Value;
+                            break;
+                        case "orgsmanaged":
+                            orgs = g.Value;
+                            break;
+                        case "jobsmanaged":
+                            jobs = g.Value;
+                            break;
+                        case "powershellinstalled":
+                            psEnabled = g.Value;
+                            break;
+                        case "proxyinstalled":
+                            proxyInstalled = g.Value;
+                            break;
+                        case "restinstalled":
+                            restEnabled = g.Value;
+                            break;
+                        case "consoleinstalled":
+                            consoleInstalled = g.Value;
+                            break;
+                        case "vmname":
+                            vmName = g.Value;
+                            break;
+                        case "vmlocation":
+                            vmLoc = g.Value;
+                            break;
+                        case "vmsku":
+                            vmSku = g.Value;
+                            break;
+                        case "vmsize":
+                            vmSize = g.Value;
+                            break;
+                    }
+
+
                     string output = g.Value;
                     if (VhcGui._scrub)
                     {
-                        if (counter == 12 || counter == 13)
-                            output = _scrubber.ScrubItem(output);
+                        vmName = _scrubber.ScrubItem(vmName);
                     }
-                    s += _form.TableData(output, "");
-                    counter++;
+
+
+                }
+                string[] osVersionString = osVersion.Split();
+                string[] osVersionNumbers = osVersionString[3].Split(".");
+                int.TryParse(osVersionNumbers[0], out int osversion);
+                int.TryParse(osVersionNumbers[1], out int osSubVersion);
+                int osShade = 0;
+                if (osversion < 10)
+                    osShade = 3;
+                if (osversion == 6 && osSubVersion < 2)
+                    osShade = 1;
+                string[] ramInt = ram.Split();
+                int.TryParse(ramInt[0], out int ramNumber);
+                int.TryParse(cpu, out int cpuNumber);
+                int cpuShade = 0;
+                int ramShade = 0;
+
+                if (cpuNumber < 4)
+                    cpuShade = 3;
+                if (ramNumber < 8)
+                    ramShade = 3;
+                if (restEnabled == "True")
+                {
+                    if (ramNumber < 16)
+                        ramShade = 3;
                 }
 
+                s += _form.TableData(vbVersion, "");
+                s += _form.TableData(osVersion, "", osShade);
+                s += _form.TableData(ram, "", ramShade);
+                s += _form.TableData(cpu, "", cpuShade);
+                s += _form.TableData(proxies, "");
+                s += _form.TableData(repos, "");
+                s += _form.TableData(orgs, "");
+                s += _form.TableData(jobs, "");
+                s += _form.TableData(psEnabled, "");
+                s += _form.TableData(proxyInstalled, "");
+                s += _form.TableData(restEnabled, "");
+                s += _form.TableData(consoleInstalled, "");
+                s += _form.TableData(vmName, "");
+                s += _form.TableData(vmLoc, "");
+                s += _form.TableData(vmSku, "");
+                s += _form.TableData(vmSize, "");
                 s += "</tr>";
             }
             s += "</table>";
@@ -423,9 +660,83 @@ namespace VeeamHealthCheck.Reporting.Html.VB365
             foreach (var gl in global)
             {
                 s += "<tr>";
+                string friendlyname = "";
+                string deviceid = "";
+                string bustype = "";
+                string mediatype = "";
+                string manufacturer = "";
+                string model = "";
+                string size = "";
+                string allocatedsize = "";
+                string operationalstatus = "";
+                string healthstatus = "";
+                string bootdrive = "";
 
                 foreach (var g in gl)
-                    s += _form.TableData(g.Value, "");
+                {
+                    switch (g.Key)
+                    {
+                        case "friendlyname":
+                            friendlyname = g.Value;
+                            break;
+                        case "deviceid":
+                            deviceid = g.Value;
+                            break;
+                        case "bustype":
+                            bustype = g.Value;
+                            break;
+                        case "mediatype":
+                            mediatype = g.Value;
+                            break;
+                        case "manufacturer":
+                            manufacturer = g.Value;
+                            break;
+                        case "model":
+                            model = g.Value;
+                            break;
+                        case "size":
+                            size = g.Value;
+                            break;
+                        case "allocatedsize":
+                            allocatedsize = g.Value;
+                            break;
+                        case "operationalstatus":
+                            operationalstatus = g.Value;
+                            break;
+                        case "healthstatus":
+                            healthstatus = g.Value;
+                            break;
+                        case "bootdrive":
+                            bootdrive = g.Value;
+                            break;
+                        default:
+                            break;
+                    }
+
+                }
+                int mediaTypeShade = 0;
+                int opStatShade = 0;
+                int healthStatShade = 0;
+
+                if (mediatype != "SSD")
+                    mediaTypeShade = 3;
+                if (operationalstatus != "OK")
+                    opStatShade = 3;
+                if (healthstatus != "Healthy")
+                    healthStatShade = 3;
+
+
+                s += _form.TableData(friendlyname, "");
+                s += _form.TableData(deviceid, "");
+                s += _form.TableData(bustype, "");
+                s += _form.TableData(mediatype, "", mediaTypeShade);
+                s += _form.TableData(manufacturer, "");
+                s += _form.TableData(model, "");
+                s += _form.TableData(size, "");
+                s += _form.TableData(allocatedsize, "");
+                s += _form.TableData(operationalstatus, "", opStatShade);
+                s += _form.TableData(healthstatus, "", healthStatShade);
+                s += _form.TableData(bootdrive, "");
 
                 s += "</tr>";
             }
@@ -491,7 +802,7 @@ namespace VeeamHealthCheck.Reporting.Html.VB365
             s += _form.TableHeader("Time (latest)", "");
             s += _form.TableHeader("Time (Median)", "");
             s += _form.TableHeader("Time (Min)", "");
-            s += _form.TableHeader("Time (Avg)","");
+            s += _form.TableHeader("Time (Avg)", "");
             s += _form.TableHeader("Time (Max)", "");
             s += _form.TableHeader("Time (90%)", "");
 
@@ -754,10 +1065,15 @@ namespace VeeamHealthCheck.Reporting.Html.VB365
 
             double percent = notProtectedUsers / (notProtectedUsers + protectedUsers) * 100;
             double targetPercent = 20;
+            double yellowPercent = 10;
             int shade = 0;
             if (percent > targetPercent)
             {
                 shade = 1;
+            }
+            if (percent > yellowPercent && percent < targetPercent)
+            {
+                shade = 3;
             }
 
             s += "<tr>";
@@ -784,24 +1100,24 @@ namespace VeeamHealthCheck.Reporting.Html.VB365
             //s += CollapsibleButton("Show Protection Statistics");
             //s += "<table border=\"1\" style=\"display: none;\"><tr>";
             s += "<table border=\"1\"><tr>";
-            s += _form.TableHeader("Organization", Vb365ResourceHandler.jobsTTOrganization );
+            s += _form.TableHeader("Organization", Vb365ResourceHandler.jobsTTOrganization);
             s += _form.TableHeader("Name", Vb365ResourceHandler.jobsTTName);
             s += _form.TableHeader("Description", Vb365ResourceHandler.jobsTTDescription);
-            s += _form.TableHeader("Job Type", Vb365ResourceHandler.jobsTTJobType );
+            s += _form.TableHeader("Job Type", Vb365ResourceHandler.jobsTTJobType);
             s += _form.TableHeader("Scope Type", Vb365ResourceHandler.jobsTTScopeType);
             s += _form.TableHeader("Processing Options", "");
             s += _form.TableHeader("Selected Items", Vb365ResourceHandler.jobsTTSelectedItems);
-            s += _form.TableHeader("Excluded Items", Vb365ResourceHandler.jobsTTExcludedItems );
+            s += _form.TableHeader("Excluded Items", Vb365ResourceHandler.jobsTTExcludedItems);
             s += _form.TableHeader("Repository", Vb365ResourceHandler.jobsTTRepository);
             s += _form.TableHeader("Bound Proxy", Vb365ResourceHandler.jobsTTBoundProxy);
-            s += _form.TableHeader("Enabled?","");
+            s += _form.TableHeader("Enabled?", "");
             s += _form.TableHeader("Schedule", "");
             s += _form.TableHeader("Related Job", Vb365ResourceHandler.jobsTTRelatedJob);
 
             s += "</tr>";
 
             var global = _csv.GetDynamicVboJobs().ToList();
-            
+
 
             foreach (var gl in global)
             {
