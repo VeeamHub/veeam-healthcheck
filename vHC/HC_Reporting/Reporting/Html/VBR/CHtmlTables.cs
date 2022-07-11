@@ -420,6 +420,10 @@ namespace VeeamHealthCheck.Html.VBR
 
             foreach (var d in list)
             {
+                int perVmShade = 0;
+                if (d[8] == "False")
+                    perVmShade = 3;
+
                 s += "<tr>";
                 s += _form.TableData(d[0], "");
                 s += _form.TableData(d[1], "");
@@ -429,7 +433,7 @@ namespace VeeamHealthCheck.Html.VBR
                 s += _form.TableData(d[6], "");
                 s += _form.TableData(d[6], "");
                 s += _form.TableData(d[7], "");
-                s += _form.TableData(d[8], "");
+                s += _form.TableData(d[8], "", perVmShade);
                 s += _form.TableData(d[9], "");
                 s += _form.TableData(d[10], "");
                 s += _form.TableData(d[11], ""); 
@@ -537,6 +541,11 @@ _form.TableHeader(ResourceHandler.SbrExt15, ResourceHandler.SbrExt15TT) +
                     shade = 1;
                 int freeSpaceShade = 0;
                 decimal.TryParse(d[10], out decimal i);
+
+                int perVmShade = 0;
+                if (d[11] == "False")
+                    perVmShade = 3;
+
                 if (i < 20) { freeSpaceShade = 1; }
                 s += "<tr>";
                 s += _form.TableData(d[0], "");
@@ -550,7 +559,7 @@ _form.TableHeader(ResourceHandler.SbrExt15, ResourceHandler.SbrExt15TT) +
                 s += _form.TableData(d[8], "");
                 s += _form.TableData(d[9], "");
                 s += _form.TableData(d[10], "", freeSpaceShade);
-                s += _form.TableData(d[11], "");
+                s += _form.TableData(d[11], "", perVmShade);
                 s += _form.TableData(d[12], "");
                 s += _form.TableData(d[13], "");
                 s += _form.TableData(d[14], "");
