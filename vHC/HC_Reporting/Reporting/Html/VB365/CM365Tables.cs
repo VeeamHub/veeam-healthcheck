@@ -302,7 +302,7 @@ namespace VeeamHealthCheck.Reporting.Html.VB365
                 int freeShade = 0;
 
                 if (path.StartsWith("C:"))
-                    pathShade = 2;
+                    pathShade = 1;
                 if (!String.IsNullOrEmpty(objRepo) && g.Encryption == "False")
                     objencshade = 3;
 
@@ -399,11 +399,16 @@ namespace VeeamHealthCheck.Reporting.Html.VB365
             s += "<table border=\"1\"><tr>";
             s += _form.TableHeader(Vb365ResourceHandler.SecurityTableColumn1, "Win. Firewall Enabled?");
             s += _form.TableHeader(Vb365ResourceHandler.SecurityTableColumn2, "Internet proxy?");
+            s += _form.TableHeader("RBAC has > 0 rows", "");
             s += "</tr>";
 
 
 
             var global = _csv.GetDynamicVboSec().ToList();
+            var rbacCsv = _csv.GetDynamicVboRbac().ToList();
+            bool rbacRowsCount = false;
+            if(rbacCsv.Count > 0)
+                rbacRowsCount = true;
 
             foreach (var g in global)
             {
@@ -411,6 +416,63 @@ namespace VeeamHealthCheck.Reporting.Html.VB365
                 string serverCert = g.ServerCert;
                 string tenantCert = g.TenantAuthCert;
                 string portalCert = g.RestorePortalCert;
+                string operatorCert = g.OperatorAuthCert;
+
+                int apiCertSignShade = 0;
+                int portalCertSignShade = 0;
+                int serverCertSignShade = 0;
+                int tenantCertSignShade = 0;
+                int operatorCertSignShade = 0;
+                if (g.APICertSelfSigned == "True")
+                    apiCertSignShade = 1;
+                if (g.RestorePortalCertSelfSigned == "True")
+                    portalCertSignShade = 1;
+                if(g.ServerCertSelfSigned == "True")
+                    serverCertSignShade = 3;
+                if (g.OperatorAuthCertSelfSigned == "True")
+                    operatorCertSignShade = 3;
+                if (g.TenantAuthCertSelfSigned == "True")
+                    tenantCertSignShade = 3;
+
+                int serverDateShade = 0;
+                int apiDateShade = 0;
+                int tenantDateShade = 0;
+                int portalDateShade = 0;
+                int operatorDateShade = 0;
+
+                DateTime.TryParse(g.ServerCertExpires, out DateTime sCertExpiry);
+                DateTime.TryParse(g.APICertExpires, out DateTime aCertExpiry);
+                DateTime.TryParse(g.TenantAuthCertExpires, out DateTime tCertExpiry);
+                DateTime.TryParse(g.RestorePortalCertExpires, out DateTime pCertExpiry);
+                DateTime.TryParse(g.OperatorAuthCertExpires, out DateTime oCertExpiry);
+
+                if (sCertExpiry < DateTime.Now)
+                    serverDateShade = 1;
+                if (sCertExpiry > DateTime.Now && sCertExpiry < DateTime.Now.AddDays(60))
+                    serverDateShade |= 3;
+
+                if (aCertExpiry < DateTime.Now)
+                    apiDateShade = 1;
+                if (aCertExpiry > DateTime.Now && aCertExpiry < DateTime.Now.AddDays(60))
+                    apiDateShade |= 3; 
+
+                if (tCertExpiry < DateTime.Now)
+                    tenantDateShade = 1;
+                if (tCertExpiry > DateTime.Now && tCertExpiry < DateTime.Now.AddDays(60))
+                    tenantDateShade |= 3; 
+
+                if (pCertExpiry < DateTime.Now)
+                    portalDateShade = 1;
+                if (pCertExpiry > DateTime.Now && pCertExpiry < DateTime.Now.AddDays(60))
+                    portalDateShade |= 3;
+
+                if (oCertExpiry < DateTime.Now)
+                    operatorDateShade = 1;
+                if (oCertExpiry > DateTime.Now && oCertExpiry < DateTime.Now.AddDays(60))
+                    operatorDateShade |= 3;
+
+
+
 
 
                 if (VhcGui._scrub)
@@ -419,12 +481,14 @@ namespace VeeamHealthCheck.Reporting.Html.VB365
                     serverCert = _scrubber.ScrubItem(serverCert);
                     tenantCert = _scrubber.ScrubItem(tenantCert);
                     portalCert = _scrubber.ScrubItem(portalCert);
+                    operatorCert = _scrubber.ScrubItem(operatorCert);
                 }
 
 
                 s += "<tr>";
                 s += _form.TableData(g.WinFirewallEnabled, "");
                 s += _form.TableData(g.Internetproxy, "");
+                s += _form.TableData(rbacRowsCount.ToString(), "");
                 s += "</tr>";
 
                 s += "</table><table border =\"1\"><tr><br/>";
@@ -440,7 +504,7 @@ namespace VeeamHealthCheck.Reporting.Html.VB365
                 s += _form.TableData("", "");// port
                 s += _form.TableData(serverCert, "");// cert
                 s += _form.TableData(g.ServerCertExpires, "");// expires
-                s += _form.TableData(g.ServerCertSelfSigned, "");// self signed
+                s += _form.TableData(g.ServerCertSelfSigned, "", serverCertSignShade);// self signed
                 s += "</tr><tr>";
 
                 s += _form.TableData("API", "");
@@ -448,21 +512,29 @@ namespace VeeamHealthCheck.Reporting.Html.VB365
                 s += _form.TableData(g.APIPort, "");
                 s += _form.TableData(apiCert, "");
                 s += _form.TableData(g.APICertExpires, "");
-                s += _form.TableData(g.APICertSelfSigned, "");
+                s += _form.TableData(g.APICertSelfSigned, "", apiCertSignShade);
                 s += "</tr><tr>";
                 s += _form.TableData("Tenant Auth", "");
                 s += _form.TableData(g.TenantAuthEnabled, "");
                 s += _form.TableData("", "");
                 s += _form.TableData(tenantCert, "");
                 s += _form.TableData(g.TenantAuthCertExpires, "");
-                s += _form.TableData(g.TenantAuthCertSelfSigned, "");
+                s += _form.TableData(g.TenantAuthCertSelfSigned, "", tenantCertSignShade);
                 s += "</tr><tr>";
                 s += _form.TableData("Restore Portal", "");
                 s += _form.TableData(g.RestorePortalEnabled, "");
                 s += _form.TableData("", "");
                 s += _form.TableData(portalCert, "");
                 s += _form.TableData(g.RestorePortalCertExpires, "");
-                s += _form.TableData(g.RestorePortalCertSelfSigned, "");
+                s += _form.TableData(g.RestorePortalCertSelfSigned, "", portalCertSignShade);
+                s += "</tr>";
+                s += "</tr><tr>";
+                s += _form.TableData("Operator Auth", "");
+                s += _form.TableData(g.OperatorAuthEnabled, "");
+                s += _form.TableData("", "");
+                s += _form.TableData(operatorCert, "");
+                s += _form.TableData(g.OperatorAuthCertExpires, "");
+                s += _form.TableData(g.OperatorAuthCertSelfSigned, "", operatorCertSignShade);
                 s += "</tr>";
 
 
@@ -901,22 +973,89 @@ namespace VeeamHealthCheck.Reporting.Html.VB365
             {
                 s += "<tr>";
 
+                string name = "";
+                string description = "";
+                string cloud = "";
+                string type = "";
+                string bucketcontainer = "";
+                string path = "";
+                string sizelimit = "";
+                string usedspace = "";
+                string freespace = "";
+                string boundrepo = "";
+
+
                 int counter = 0;
                 foreach (var g in gl)
                 {
+                    switch (g.Key)
+                    {
+                        case "name":
+                            name = g.Value;
+                            break;
+                        case "description":
+                            description = g.Value;
+                            break;
+                        case "cloud":
+                            cloud = g.Value;
+                            break;
+                        case "type":
+                            type = g.Value;
+                            break;
+                        case "bucketcontainer":
+                            bucketcontainer = g.Value;
+                            break;
+                        case "path":
+                            path = g.Value;
+                            break;
+                        case "sizelimit":
+                            sizelimit = g.Value;
+                            break;
+                        case "usedspace":
+                            usedspace = g.Value;
+                            break;
+                        case "freespace":
+                            freespace = g.Value;
+                            break;
+                        case "boundrepo":
+                            boundrepo = g.Value;
+                            break;
+                    }
                     string output = g.Value;
                     if (VhcGui._scrub)
                     {
-                        if (counter == 0 ||
-                            counter == 1 ||
-                            counter == 4 ||
-                            counter == 5)
-                            output = _scrubber.ScrubItem(output);
+                        name = _scrubber.ScrubItem(name);
+                        description = _scrubber.ScrubItem(description);
+                        path = _scrubber.ScrubItem(path);
+                        boundrepo = _scrubber.ScrubItem(boundrepo);
                     }
-                    s += _form.TableData(output, "");
-                    counter++;
+                 
                 }
+                int boundRepoShade = 0;
+                if (String.IsNullOrEmpty(boundrepo))
+                    boundRepoShade = 1;
 
+                int freeSpaceShade = 0;
+                string[] sizeLimitArray = sizelimit.Split();
+                double.TryParse(sizeLimitArray[0], out double sizeLimitNumber);
+
+                string[] freeSpaceArray = freespace.Split();
+                double.TryParse(freeSpaceArray[0], out double freeSpaceNumber);
+                if ((freeSpaceNumber / sizeLimitNumber) * 100 < 10)
+                    freeSpaceShade = 3;
+                if ((freeSpaceNumber / sizeLimitNumber) * 100 < 5)
+                    freeSpaceShade = 1;
+
+                s += _form.TableData(name, "");
+                s += _form.TableData(description , "");
+                s += _form.TableData(cloud , "");
+                s += _form.TableData(type , "");
+                s += _form.TableData(bucketcontainer , "");
+                s += _form.TableData(path , "");
+                s += _form.TableData(sizelimit , "");
+                s += _form.TableData(usedspace , "");
+                s += _form.TableData(freespace , "");
+                s += _form.TableData(boundrepo , "", boundRepoShade);
                 s += "</tr>";
             }
             s += "</table>";
@@ -1137,7 +1276,12 @@ namespace VeeamHealthCheck.Reporting.Html.VB365
 
                 s += "<tr>";
 
-                int counter = 0;
+                int selectedItemsShade= 0;
+                int excludedItemsShade = 0;
+                int enabledShade = 0;
+                int scheduleShade = 0;
+
+
                 foreach (var g in gl)
                 {
                     switch (g.Key)
@@ -1197,18 +1341,33 @@ namespace VeeamHealthCheck.Reporting.Html.VB365
                         boundProxy = _scrubber.ScrubItem(boundProxy);
                     }
                 }
+
+                int.TryParse(selItems, out int selectedItemsCount);
+                if (selectedItemsCount > 5000)
+                    selectedItemsShade = 3;
+
+                int.TryParse(exclItem, out int excludedCount);
+                if (excludedCount > 50)
+                    excludedItemsShade = 3;
+
+                if (enabled == "False")
+                    enabledShade = 3;
+
+                if (schedul == "Not Scheduled")
+                    scheduleShade = 3;
+
                 s += _form.TableData(org, "");
                 s += _form.TableData(name, "");
                 s += _form.TableData(desc, "");
                 s += _form.TableData(jobType, "");
                 s += _form.TableData(scopeType, "");
                 s += _form.TableData(procOpt, "");
-                s += _form.TableData(selItems, "");
-                s += _form.TableData(exclItem, "");
+                s += _form.TableData(selItems, "", selectedItemsShade);
+                s += _form.TableData(exclItem, "", excludedItemsShade);
                 s += _form.TableData(repo, "");
                 s += _form.TableData(boundProxy, "");
-                s += _form.TableData(enabled, "");
-                s += _form.TableData(schedul, "");
+                s += _form.TableData(enabled, "", enabledShade);
+                s += _form.TableData(schedul, "", scheduleShade);
                 s += _form.TableData(relJob, "");
 
                 s += "</tr>";
