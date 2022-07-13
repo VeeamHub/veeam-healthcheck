@@ -298,28 +298,31 @@ function New-DataTableEntry {
     [CmdletBinding()]
     param (
         [string[]]$PropertyNames,
-        [Parameter(ValueFromPipeline)]$Object
+        [Parameter(ValueFromPipeline)]$Object,
+        [switch]$Empty
         )
     begin { }
     process {
-        #if ($null -ne $Object)  {
-            $OutputObject = New-Object -TypeName pscustomobject
-            $parsedResults = @()
-            $parsedResults = Expand-Expression -BaseObject $Object -Expressions $PropertyNames
+        $OutputObject = New-Object -TypeName pscustomobject
 
-            
+        $parsedResults = Expand-Expression -BaseObject $Object -Expressions $PropertyNames
 
-
+        if ($null -ne $Object -or $Empty.IsPresent) { 
             foreach ($result in $parsedResults) {
                 
                 if (!$result.ColumnName.StartsWith("!")) {
-                    $OutputObject | Add-Member -MemberType NoteProperty -Name $result.ColumnName -Value $result.Value
+                    if ($null -eq $Object) {
+                        $OutputObject | Add-Member -MemberType NoteProperty -Name $result.ColumnName -Value $null #if the source object is empty, then assume the values returned, including defaults, should be null.
+                    } else {
+                        $OutputObject | Add-Member -MemberType NoteProperty -Name $result.ColumnName -Value $result.Value
+                    }
                 }
-
             }
+        } else {
+            #do nothing if source object is empty. essentially return empty outputobject
+        }
 
-            return $OutputObject
-        #}
+        return $OutputObject
     }
     end { }
 }
@@ -867,9 +870,31 @@ function ToLongHHmmss {
         $mm = $time.TimeOfDay.Minutes.ToString("00")
         $ss = $time.TimeOfDay.Seconds.ToString("00")
 
-        
         return "{0}:{1}:{2}" -f $hh,$mm,$ss
+    }
+    end { }
+}
+
+function Append-VB365ProductVersion {
+    [CmdletBinding()]
+    param (
+        [Parameter(ValueFromPipeline)][string]$BuildVersion
+        )
+    begin { 
+        $ProductVersions = @{
+            "11.1.0"=" (v6)"
+            "10.0.5"=" (v5d)"
+            "10.0.4"=" (v5c)"
+            "10.0.3"=" (v5b)"
+            "10.0.2"=" (v5a)"
+            "10.0.1"=" (v4c)"
+        }
+    }
+    process {
+        $versionMatch = [regex]::Match($BuildVersion,"(?<prefix>(?<major>\d+)\.(?<minor>\d+)\.(?<update>\d+))\.(?<patch>\d+)")
+        $prefix = $versionMatch.Groups["prefix"].Value
         
+        return $BuildVersion + $ProductVersions.$prefix
     }
     end { }
 }
@@ -898,7 +923,7 @@ $map = [ordered]@{}
 Write-LogFile -Message "Mapping Controllers..." -LogLevel DEBUG
 Write-Progress @progressSplat -PercentComplete ($progress++) -Status "Management Server...";
 $map.Controller = $Global:VBOEnvironment.VMCLog.HostDetails | mde @(
-    'VB365 Version=>$Global:VBOEnvironment.VMCLog.ProductDetails.Version'
+    'VB365 Version=>$Global:VBOEnvironment.VMCLog.ProductDetails.Version | Append-VB365ProductVersion'
     'OS Version=>OSVersion'
     'RAM=>($.RAMTotalSize/1GB).ToString("#,##0 GB")'
     'CPUs=>CPUCount'
@@ -1045,9 +1070,10 @@ $map.LocalRepositories = $Global:VBOEnvironment.VBORepository | mde @(
     'Cache Space Used=>((($Global:VBOEnvironment.VBOUsageData | ? { $_.RepositoryId -eq $.Id}).LocalCacheUsedSpace | measure -Sum).Sum/1TB).ToString("#,##0.000 TB")'
     #Dropped Jun 17 #'Local Space Used=>((($Global:VBOEnvironment.VBOUsageData | ? { $_.RepositoryId -eq $.Id}).UsedSpace | measure -Sum).Sum/1TB).ToString("#,##0.000 TB")'
     #Dropped Jun 17 #'Object Space Used=>((($Global:VBOEnvironment.VBOUsageData | ? { $_.RepositoryId -eq $.Id}).ObjectStorageUsedSpace | measure -Sum).Sum/1TB).ToString("#,##0.000 TB")'
-    #the below isnt perfect, as its based on creationtime not a true per day amount....
-    'Daily Change Rate=>$changesByDay = (($VBOEnvironment.VBOJobSession | ? {($VBOEnvironment.VBOJob | ? { $_.Repository.Id -eq $.Id }).Id -eq $_.JobId })| select @{n="CreationDate"; e={$_.CreationTime.Date}},* | sort CreationDate -Descending | group CreationDate | % { $_.Group.Statistics.TransferredData | ConvertData -To "GB" -Format "0.000000" | measure -Sum }).Sum;
-        #$weeklyChange = ($changesByDay | select -first 7 | measure -Sum).Sum;
+    #the below isnt perfect, as its based on creationtime not a true per day amount; its also based on repo change not dataset change....
+    #replaced below with change to a GB rate rather than %. Then it reflects just the change in the data transferred and not against the repo storage.
+    '!OLD Daily Change Rate=>$changesByDay = (($VBOEnvironment.VBOJobSession | ? {($VBOEnvironment.VBOJob | ? { $_.Repository.Id -eq $.Id }).Id -eq $_.JobId })| select @{n="CreationDate"; e={$_.CreationTime.Date}},* | sort CreationDate -Descending | group CreationDate | % { $_.Group.Statistics.TransferredData | ConvertData -To "GB" -Format "0.000000" | measure -Sum }).Sum;
+        $weeklyChange = ($changesByDay | select -first 7 | measure -Sum).Sum;
         $dailyChangeAvg = ($changesByDay | measure -Average).Average
         #$dailyChange95p = $changesByDay | 95P
         
@@ -1059,6 +1085,7 @@ $map.LocalRepositories = $Global:VBOEnvironment.VBORepository | mde @(
             $DCR = $dailyChangeAvg/$GBUsed * $(if ($isObject) {0.5} else {0.9}) ################## HARD CODED COMPRESSION RATES ARE AN APPROXIMATION ##############
             $DCR.ToString("~##0.000%")
         }'
+    'Daily Change Rate=>($weeklyChange/7).ToString("#,##0.000 GB")'
     'Retention=>($.RetentionPeriod.ToString() -replace "(Years?)(.+)","`$2 `$1" )+", "+$.RetentionType+", Applied "+$.RetentionFrequencyType'
 )
 Write-ElapsedAndMemUsage -Message "Mapped Local Repos" -LogLevel PROFILE
@@ -1128,7 +1155,7 @@ Write-ElapsedAndMemUsage -Message "Mapped Orgs" -LogLevel PROFILE
 
 Write-LogFile -Message "Mapping Jobs..." -LogLevel DEBUG
 Write-Progress @progressSplat -PercentComplete ($progress++) -Status "Jobs...";
-$map.Jobs = @($Global:VBOEnvironment.VBOJob) + @($Global:VBOEnvironment.VBOCopyJob) | mde @(
+$map.Jobs = $Global:VBOEnvironment.VBOJob + $Global:VBOEnvironment.VBOCopyJob | mde @(
     'Organization=>if($null -ne $.Organization) { $.Organization } else { $.BackupJob.Organization }'
     'Name'
     'Description'
@@ -1173,7 +1200,7 @@ $map.JobStats = $Global:VBOEnvironment.VBOJobSession | Where-Object { $_.JobName
     #'Max Read Rate=>(($.Group.Statistics.ReadRate | ConvertData -To "MB" -Format "0.0000" | measure -Maximum).Maximum.ToString("0.000 MB/s") )'
     #'Average Write Rate=>(($.Group.Statistics.WriteRate | ConvertData -To "MB" -Format "0.0000" | measure -Average).Average.ToString("0.000 MB/s"))'
     #'Max Write Rate=>(($.Group.Statistics.WriteRate | ConvertData -To "MB" -Format "0.0000" | measure -Maximum).Maximum.ToString("0.000 MB/s") )'
-    'Typical Bottleneck=>($.Group.Statistics.Bottleneck | ? { $_ -ne "NA" } | group | sort Count -Descending | select -first 1).Name'
+    'Typical Bottleneck=>($.Group.Statistics.Bottleneck | group | sort Count -Descending | select -first 1).Name.Replace("NA","None")'
     'Job Avg Throughput=>(($.Group.Statistics.TransferredData | ConvertData -To "MB" -Format "0.0000" | measure -Sum).Sum / ($.Group | select @{n="Duration";e={ $(if ($_.Status -eq "Running") { (get-date)-$_.CreationTime } else { $_.EndTime-$_.CreationTime } ).TotalSeconds}} | ? { $_.Duration -gt 0 } | measure Duration -Sum).Sum).ToString("#,##0.000 MB/s")'
     'Job Avg Processing Rate=>(($.Group.Statistics | measure ProcessedObjects -Sum).Sum / ($.Group | select @{n="Duration";e={ $(if ($_.Status -eq "Running") { (get-date)-$_.CreationTime } else { $_.EndTime-$_.CreationTime } ).TotalSeconds}} | ? { $_.Duration -gt 0 } | measure Duration -Sum).Sum).ToString("#,##0.000 items/s")'
 )
@@ -1181,6 +1208,13 @@ Write-ElapsedAndMemUsage -Message "Mapped Job Stats" -LogLevel PROFILE
 
 Write-LogFile -Message "Mapping Processing/Task Stats..." -LogLevel DEBUG
 Write-Progress @progressSplat -PercentComplete ($progress++) -Status "ProcessingStats...";
+#$Global:VBOEnvironment.VBOJobSession += $Global:VBOEnvironment.VBOJobSession #.2
+#$Global:VBOEnvironment.VBOJobSession += $Global:VBOEnvironment.VBOJobSession #.4
+#$Global:VBOEnvironment.VBOJobSession += $Global:VBOEnvironment.VBOJobSession #.8
+#$Global:VBOEnvironment.VBOJobSession += $Global:VBOEnvironment.VBOJobSession #1.6
+#$Global:VBOEnvironment.VBOJobSession += $Global:VBOEnvironment.VBOJobSession #3.2
+#$Global:VBOEnvironment.VBOJobSession += $Global:VBOEnvironment.VBOJobSession #6.4
+#$Global:VBOEnvironment.VBOJobSession += $Global:VBOEnvironment.VBOJobSession #12.8k
 $global:CollectorCurrentProcessItems = $Global:VBOEnvironment.VBOJobSession.Log.Count
 $map.ProcessingStats = $Global:VBOEnvironment.VBOJobSession | Where-Object { $_.JobName -in $Global:VBOEnvironment.VBOJob.Name} | Group-Object JobName | mde @(    
     '!Vars=>
@@ -1351,8 +1385,8 @@ $map.ProtectionStatus = $Global:VBOEnvironment.VBOOrganizationUsers | Select-Obj
     'Onedrive Backup Date=>$PRIVATE:Entity.OneDriveBackedUpTime.DateTime'
     #'Site Backed Up=>!!($Global:VBOEnvironment.VBOEntityData | ? { $_.Organization.DisplayName -eq ($Global:VBOEnvironment.VBOOrganization | ? { $_.Id -eq $.OrganizationId }).Name -and $_.Email -eq $.UserName -and $_.IsPersonalSiteBackedUp })'
     'Site Backup Date=>$PRIVATE:Entity.PersonalSiteBackedUpTime.DateTime'
-    'Has Backup=>!!(($self."Mail Backup Date", $self."Archive Backup Date", $self."Onedrive Backup Date", $self."Site Backup Date") | measure-Object -Maximum).Maximum'
-    'Is Stale=> if ($self."Has Backup") { (($self."Mail Backup Date", $self."Archive Backup Date", $self."Onedrive Backup Date", $self."Site Backup Date") | measure-Object -Maximum).Maximum -lt (Get-date).AddDays(-$global:SETTINGS.ReportingIntervalDays) }'
+    'Has Backup=>!!(($PRIVATE:Entity.MailboxBackedUpTime, $PRIVATE:Entity.ArchiveBackedUpTime, $PRIVATE:Entity.OneDriveBackedUpTime, $PRIVATE:Entity.PersonalSiteBackedUpTime) | measure-Object -Maximum).Maximum'
+    'Is Stale=> if ($self."Has Backup") { (($PRIVATE:Entity.MailboxBackedUpTime, $PRIVATE:Entity.ArchiveBackedUpTime, $PRIVATE:Entity.OneDriveBackedUpTime, $PRIVATE:Entity.PersonalSiteBackedUpTime) | measure-Object -Maximum).Maximum -lt (Get-date).AddDays(-$global:SETTINGS.ReportingIntervalDays) }'
 )
 Write-ElapsedAndMemUsage -Message "Mapped Protection Status" -LogLevel PROFILE
 Write-Progress @progressSplat -PercentComplete ($progress++) -Status "Done." -Completed
@@ -1366,14 +1400,14 @@ Write-LogFile -Message "Done mapping CSV structures." -LogLevel INFO
 Write-LogFile -Message "Aggregating results..." -LogLevel INFO
 
 # Build the objects & sections
-$Global:HealthCheckResult = MDE $map.Keys
+$Global:HealthCheckResult = MDE $map.Keys -Empty
 
 foreach ($sectionName in $map.Keys) {
     $section = $map.$sectionName
 
     if ($null -eq $section) {
-        Write-Warning "No map found for: "+$section+". Please define."
-        Write-LogFile -Message ("No map found for: "+$section+". Please define.") -LogName Errors -LogLevel ERROR
+        Write-Warning "No map found for: "+$sectionName+". Please define."
+        Write-LogFile -Message ("No map found for: "+$sectionName+". Please define.") -LogName Errors -LogLevel ERROR
         # used to throw & then return
     } else {
         if ($section.GetType().Name -eq "PSCustomObject" -or $section.GetType().Name -eq "Object[]") {
