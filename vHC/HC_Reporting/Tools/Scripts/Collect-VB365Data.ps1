@@ -693,6 +693,11 @@ function Get-VBOEnvironment {
 }
 
 ############## START OF MAIN EXECUTION  ################
+#check if output path exists
+if (!(Test-Path $global:SETTINGS.OutputPath)) {
+    New-Item -ItemType Directory -Path $global:SETTINGS.OutputPath
+}
+
 Write-LogFile -Message "" -LogLevel INFO
 Write-LogFile -Message "Starting new VB365 data collection session." -LogLevel INFO
 Write-LogFile -Message "" -LogLevel INFO
@@ -722,11 +727,6 @@ if ($global:SETTINGS.VBOServerFqdnOrIp -ne "localhost") {
     Connect-VBOServer -Server $global:SETTINGS.VBOServerFqdnOrIp -Credential $global:VBO_SERVER_CREDS -ErrorAction Stop;
 } else {
     Connect-VBOServer -Server localhost -ErrorAction Stop;
-}
-
-#check if path exists
-if (!(Test-Path $global:SETTINGS.OutputPath)) {
-    New-Item -ItemType Directory -Path $global:SETTINGS.OutputPath
 }
 
 Lap "Ready to collect"
@@ -980,7 +980,7 @@ Write-ElapsedAndMemUsage -Message "Mapped Global" -LogLevel PROFILE
 
 Write-LogFile -Message "Mapping Security..." -LogLevel DEBUG
 Write-Progress @progressSplat -PercentComplete ($progress++) -Status "Security...";
-$map.Security = $null | mde @(
+$map.Security = 1 | mde @(
     'Win. Firewall Enabled?=>$v = ((Get-NetConnectionProfile).NetworkCategory -replace "Authenticated","" | % {Get-NetFirewallProfile -Name $_}); Join( $v | % { $_.Name +": " + $_.Enabled } )'
     'Internet proxy?=>$v=$Global:VBOEnvironment.VBOInternetProxySettings; if($v.UseInternetProxy) { $v.Host+":"+$v.Port } else { $false}'
     'Server Cert=>$Global:VBOEnvironment.VBOSecuritySettings.CertificateFriendlyName'
@@ -1155,7 +1155,7 @@ Write-ElapsedAndMemUsage -Message "Mapped Orgs" -LogLevel PROFILE
 
 Write-LogFile -Message "Mapping Jobs..." -LogLevel DEBUG
 Write-Progress @progressSplat -PercentComplete ($progress++) -Status "Jobs...";
-$map.Jobs = $Global:VBOEnvironment.VBOJob + $Global:VBOEnvironment.VBOCopyJob | mde @(
+$map.Jobs = @($Global:VBOEnvironment.VBOJob) + @($Global:VBOEnvironment.VBOCopyJob) | mde @(
     'Organization=>if($null -ne $.Organization) { $.Organization } else { $.BackupJob.Organization }'
     'Name'
     'Description'
