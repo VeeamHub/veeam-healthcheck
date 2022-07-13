@@ -132,7 +132,6 @@ namespace VeeamHealthCheck.Reporting.Html.VB365
                 var global = _csv.GetDynamicVboProxies().ToList();
                 foreach (var gl in global)
                 {
-                    int counter = 0;
 
                     string proxyname = "";
                     string description = "";
@@ -436,7 +435,7 @@ namespace VeeamHealthCheck.Reporting.Html.VB365
             s += "<table border=\"1\"><tr>";
             s += _form.TableHeader(Vb365ResourceHandler.SecurityTableColumn1, "Win. Firewall Enabled?");
             s += _form.TableHeader(Vb365ResourceHandler.SecurityTableColumn2, "Internet proxy?");
-            s += _form.TableHeader("RBAC has > 0 rows", "");
+            s += _form.TableHeader("RBAC Roles Defined", "");
             s += "</tr>";
 
 
@@ -1412,16 +1411,16 @@ namespace VeeamHealthCheck.Reporting.Html.VB365
                             case "scopetype":
                                 scopeType = g.Value;
                                 break;
-                            case "procOpt":
+                            case "processingoptions":
                                 procOpt = g.Value;
                                 break;
-                            case "selecteditems":
+                            case "selectedobjects":
                                 selItems = g.Value;
                                 break;
-                            case "excludeditems":
+                            case "excludedobjects":
                                 exclItem = g.Value;
                                 break;
-                            case "repo":
+                            case "repository":
                                 repo = g.Value;
                                 break;
                             case "enabled":
@@ -1449,7 +1448,8 @@ namespace VeeamHealthCheck.Reporting.Html.VB365
                             boundProxy = _scrubber.ScrubItem(boundProxy);
                         }
                     }
-
+                    if (string.IsNullOrEmpty(org))
+                        break;
                     int.TryParse(selItems, out int selectedItemsCount);
                     if (selectedItemsCount > 5000)
                         selectedItemsShade = 3;
@@ -1493,7 +1493,7 @@ namespace VeeamHealthCheck.Reporting.Html.VB365
 
             s += "</table>";
 
-            s += _summary.ProtStatSummary();
+            s += _summary.JobsSummary();
 
             s += "</div>";
             return s;

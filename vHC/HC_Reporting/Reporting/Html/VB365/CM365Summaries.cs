@@ -199,6 +199,25 @@ namespace VeeamHealthCheck.Reporting.Html.VB365
 
             return s;
         }
+        public string JobsSummary()
+        {
+            string s = _form.CollapsibleButton("Show Summary");
+
+            s += "<div class=\"content\">";
+            s += _form.AddA("hdr", Vb365ResourceHandler.JobStatSummaryHeader) + 
+                _form.AddA("i2", Vb365ResourceHandler.jobsSummary) + //_form.LineBreak() +
+                _form.DoubleLineBreak() +
+                _form.AddA("hdr", Vb365ResourceHandler.JobStatNoteHeader) + //_form.LineBreak() +
+                _form.AddA("i2", Vb365ResourceHandler.jobsNote1) +
+
+                _form.AddA("i3", Vb365ResourceHandler.jobsNote2) +
+                _form.AddA("i2", Vb365ResourceHandler.jobsNote3) 
+                ;
+            s += "</div>";
+            s += "</div>";
+
+            return s;
+        }
         public string ObjRepoSummary()
         {
             string s = _form.CollapsibleButton("Show Summary");
