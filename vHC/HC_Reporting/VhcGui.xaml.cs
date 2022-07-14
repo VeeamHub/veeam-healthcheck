@@ -139,9 +139,15 @@ namespace VeeamHealthCheck
             log.Info("Starting Run");
             ExecPsScripts();
 
+            bool userSetScrub = _scrub;
+            bool userOpenHtml = _openHtml;
+            bool userOpenExplorer = _openExplorer;
+
+            _openHtml = false;
+            _openExplorer = false;
             Import();
 
-            // change scrub to opposite + gen 2nd report
+
             if (_scrub)
             {
                 _desiredPath = CVariables.unsafeDir;
@@ -152,7 +158,24 @@ namespace VeeamHealthCheck
                 _desiredPath = CVariables.safeDir;
                 _scrub = true;
             }
+            _scrub = userSetScrub;
+            _openHtml = userOpenHtml;
+            _openExplorer = userOpenExplorer;
             Import();
+
+
+            //// change scrub to opposite + gen 2nd report
+            //if (_scrub)
+            //{
+            //    _desiredPath = CVariables.unsafeDir;
+            //    _scrub = false;
+            //}
+            //else if (!_scrub)
+            //{
+            //    _desiredPath = CVariables.safeDir;
+            //    _scrub = true;
+            //}
+            //Import();
 
             log.Info("Starting Run..done!");
 
@@ -166,7 +189,7 @@ namespace VeeamHealthCheck
         }
         private void run_Click(object sender, RoutedEventArgs e)
         {
-            
+
             LogUIAction("Run selected");
             _import = false;
             showProgressBar();
