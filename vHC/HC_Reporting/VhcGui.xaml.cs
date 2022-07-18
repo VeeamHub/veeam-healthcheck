@@ -177,7 +177,7 @@ namespace VeeamHealthCheck
                 _desiredPath = CVariables.safeDir;
                 _scrub = true;
             }
-            _scrub = userSetScrub;
+            //_scrub = userSetScrub;
             _openHtml = userOpenHtml;
             _openExplorer = userOpenExplorer;
             Import();
