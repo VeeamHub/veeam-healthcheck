@@ -8,7 +8,7 @@ MIT License
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         mc:Ignorable="d"
-        Title="" Height="524" Width="361"
+        Title="" Height="524" Width="370"
         WindowStartupLocation="CenterScreen"
         ResizeMode="NoResize"
         >
@@ -49,9 +49,9 @@ MIT License
                 </DVC:BarSeries>
             </DVC:Chart.Series>
         </DVC:Chart>-->
-        <Button x:Name="run" Content="" HorizontalAlignment="Left" Margin="121,345,0,0" VerticalAlignment="Top" Click="run_Click" Height="25" Width="100"/>
-        <Button Name="termsBtn" Content="" HorizontalAlignment="Left" Margin="15,345,0,0" VerticalAlignment="Top" Height="25" Width="100" Click="AcceptButton_click"/>
-        <Button x:Name="importButton" Content="" HorizontalAlignment="Right" Margin="0,345,25,0" VerticalAlignment="Top" Height="25" Width="100" Click="Import_click" ToolTip="Creates a report based on previously collected data."/>
+        <Button x:Name="run" Content="" HorizontalAlignment="Left" Margin="180,345,0,0" VerticalAlignment="Top" Click="run_Click" Height="25" Width="160"/>
+        <Button Name="termsBtn" Content="" HorizontalAlignment="Left" Margin="8,345,0,0" VerticalAlignment="Top" Height="25" Width="160" Click="AcceptButton_click"/>
+        <Button x:Name="importButton" Content="" HorizontalAlignment="Right" Margin="0,220,23,0" VerticalAlignment="Top" Height="25" Width="100" Click="Import_click" ToolTip="Creates a report based on previously collected data."/>
 
         <TextBlock Margin="0,-25,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Height="270" Width="Auto">
             <Run FontWeight="Bold" TextDecorations="Underline" Name="InsHeader" /><LineBreak/><Run/>
@@ -86,7 +86,7 @@ MIT License
                   IsChecked="True"
                   ></CheckBox>
         <TextBlock Name="outPath" Height="15" Width="75" HorizontalAlignment="Left" Margin="0,324,0,86"></TextBlock>
-        <TextBox x:Name="pathBox" Height="20" Width="270"  TextChanged="pathBox_TextChanged" Margin="77,320,3,85"></TextBox>
+        <TextBox x:Name="pathBox" Height="20" Width="260"  TextChanged="pathBox_TextChanged" Margin="77,320,3,85"></TextBox>
         <!--<CheckBox Content="Collect Session Data" HorizontalAlignment="Left" Margin="1,252,0,0" 
                   VerticalAlignment="Top" 
                   Checked="SessionCollectChecked" 

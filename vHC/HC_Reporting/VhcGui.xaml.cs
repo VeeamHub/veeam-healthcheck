@@ -33,6 +33,7 @@ namespace VeeamHealthCheck
         private bool _isVb365 = false;
 
 
+
         public VhcGui()
         {
             //CultureInfo.CurrentCulture = Thread.CurrentThread.CurrentCulture;
@@ -47,6 +48,11 @@ namespace VeeamHealthCheck
         }
         private void SetUi()
         {
+            SetImportRelease();
+
+#if DEBUG
+            SetImportDebug();
+#endif
             ModeCheck();
             PreCheck();
 
@@ -54,6 +60,19 @@ namespace VeeamHealthCheck
             scrubBox.IsChecked = true;
             hideProgressBar();
             run.IsEnabled = false;
+        }
+        private void SetImportRelease()
+        {
+            importButton.IsEnabled = true;
+            importButton.Width = 0;
+            //run.HorizontalAlignment = HorizontalAlignment.Center;
+            //run.Margin.Right = new Thickness(10);
+            //termsBtn.HorizontalAlignment = HorizontalAlignment.Left;
+        }
+        private void SetImportDebug()
+        {
+            importButton.IsEnabled = true;
+            importButton.Width = 100;
         }
 
         #region UI Functions
