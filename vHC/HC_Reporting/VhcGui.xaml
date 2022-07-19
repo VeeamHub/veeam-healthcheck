@@ -51,7 +51,7 @@ MIT License
         </DVC:Chart>-->
         <Button x:Name="run" Content="" HorizontalAlignment="Left" Margin="180,345,0,0" VerticalAlignment="Top" Click="run_Click" Height="25" Width="160"/>
         <Button Name="termsBtn" Content="" HorizontalAlignment="Left" Margin="8,345,0,0" VerticalAlignment="Top" Height="25" Width="160" Click="AcceptButton_click"/>
-        <Button x:Name="importButton" Content="" HorizontalAlignment="Right" Margin="0,220,23,0" VerticalAlignment="Top" Height="25" Width="100" Click="Import_click" ToolTip="Creates a report based on previously collected data."/>
+        <Button x:Name="importButton" Content="" HorizontalAlignment="Right" Margin="0,261,8,0" VerticalAlignment="Top" Height="38" Width="100" Click="Import_click" ToolTip="Creates a report based on previously collected data."/>
 
         <TextBlock Margin="0,-25,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Height="270" Width="Auto">
             <Run FontWeight="Bold" TextDecorations="Underline" Name="InsHeader" /><LineBreak/><Run/>

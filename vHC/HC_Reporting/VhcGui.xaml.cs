@@ -63,7 +63,7 @@ namespace VeeamHealthCheck
         }
         private void SetImportRelease()
         {
-            importButton.IsEnabled = true;
+            importButton.IsEnabled = false;
             importButton.Width = 0;
             //run.HorizontalAlignment = HorizontalAlignment.Center;
             //run.Margin.Right = new Thickness(10);
