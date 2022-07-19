@@ -208,6 +208,11 @@ namespace VeeamHealthCheck.Reporting.Html.VB365
                     int osVersionShade = 0;
                     int ramShade = 0;
                     int cpuShade = 0;
+                    int proxyShade = 0;
+
+                    if (internetproxy == "True")
+                        proxyShade = 3;
+                    
 
                     int.TryParse(threads, out int threadCount);
                     if (threadCount != 64)
@@ -1508,11 +1513,12 @@ namespace VeeamHealthCheck.Reporting.Html.VB365
                 _form.FormNavRows(ResourceHandler.v365NavTitle5, "repos", ResourceHandler.v365NavValue5) +
                 _form.FormNavRows(ResourceHandler.v365NavTitle6, "objrepo", ResourceHandler.v365NavValue6) +
                 _form.FormNavRows(ResourceHandler.v365NavTitle7, "sec", ResourceHandler.v365NavValue7) +
-                _form.FormNavRows(ResourceHandler.v365NavTitle8, "rbac", ResourceHandler.v365NavValue8) +
+                //_form.FormNavRows(ResourceHandler.v365NavTitle8, "rbac", ResourceHandler.v365NavValue8) +
                 //_form.FormNavRows(ResourceHandler.v365NavTitle9, "perms", ResourceHandler.v365NavValue9) +
                 _form.FormNavRows(ResourceHandler.v365NavTitle10, "orgs", ResourceHandler.v365NavValue10) +
                 _form.FormNavRows(ResourceHandler.v365NavTitle11, "jobs", ResourceHandler.v365NavValue11) +
                 _form.FormNavRows(ResourceHandler.v365NavTitle12, "jobstats", ResourceHandler.v365NavValue12) +
+                _form.FormNavRows(ResourceHandler.v365NavTitle12, "procstat", ResourceHandler.v365NavValue12) +
                 _form.FormNavRows(ResourceHandler.v365NavTitle13, "jobsessions", ResourceHandler.v365NavValue13);
         }
 

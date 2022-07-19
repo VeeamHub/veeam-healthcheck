@@ -58,9 +58,10 @@ namespace VeeamHealthCheck.Reporting.Html.VB365
             _htmldoc += _form.header1("M365 Backups");
             _htmldoc += tables.Vb365Orgs();
             _htmldoc += tables.Jobs();
-            _htmldoc += tables.Vb365JobSessions();
+            
             _htmldoc += tables.Vb365JobStats();
             _htmldoc += tables.Vb365ProcStats();
+            _htmldoc += tables.Vb365JobSessions();
             _htmldoc += _form.LineBreak();
             _htmldoc += "<a align=\"center\">vHC Version: " + CVersionSetter.GetFileVersion() + "</a>";
 
