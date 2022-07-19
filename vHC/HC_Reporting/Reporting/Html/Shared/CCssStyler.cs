@@ -97,7 +97,13 @@ namespace VeeamHealthCheck.Reporting.Html.Shared
             "}\n" +
             ".btn:hover{\n" +
             "background-color: #54b948\n" +
-            "}";
+            "}" +
+            "div:not(#procstats,#navigation) table tr:nth-child(2n+1){" +
+            "background - color: #dcf7ea;" +
+    "}" +
+    "#procstats tr:nth-child(10n+7), #procstats tr:nth-child(10n+8), #procstats tr:nth-child(10n+9), #procstats tr:nth-child(10n+10), #procstats tr:nth-child(10n+11) {" +
+        "background-color: #dcf7ea;" +
+        "}";
 
 
 
