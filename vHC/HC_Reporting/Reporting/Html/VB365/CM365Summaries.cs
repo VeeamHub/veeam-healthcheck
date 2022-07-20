@@ -65,7 +65,7 @@ namespace VeeamHealthCheck.Reporting.Html.VB365
                 _form.AddA("hdr", ResourceHandler.GeneralNotesHeader) + //_form.LineBreak() +
                 _form.AddA("i2", Vb365ResourceHandler.reposNote1) +
                 _form.AddA("i2", Vb365ResourceHandler.reposNote2) +
-                _form.AddA("i2", Vb365ResourceHandler.reposNote3) +
+                //_form.AddA("i2", Vb365ResourceHandler.reposNote3) +
                 _form.AddA("i2", Vb365ResourceHandler.reposNote4) +
                 _form.AddA("i2", Vb365ResourceHandler.reposNote5) 
                 ;
