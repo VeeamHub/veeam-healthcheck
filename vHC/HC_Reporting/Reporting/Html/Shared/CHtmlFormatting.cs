@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using VeeamHealthCheck.CsvHandlers;
+using VeeamHealthCheck.Resources.Localization.VB365;
 
 namespace VeeamHealthCheck.Reporting.Html.Shared
 {
@@ -174,15 +175,15 @@ namespace VeeamHealthCheck.Reporting.Html.Shared
             string s = "<h2 style=\"color: green; font-style: italic; background: lightgray; text-align:center\">" + ResourceHandler.Vb365Banner + "</h2>";
 
 
-            s += "<div class=\"i2\">" + ResourceHandler.HtmlIntroLine1 + "</a>\n";
+            s += "<div class=\"i2\">" + Vb365ResourceHandler.HtmlIntroLine1 + "</a>\n";
             s += LineBreak();
-            s += "<a class=\"\">" + ResourceHandler.HtmlIntroLine2 + "</a>\n";
+            s += "<a class=\"\">" + Vb365ResourceHandler.HtmlIntroLine2 + "</a>\n";
             s += LineBreak();
-            s += "<a class=\"\">" + ResourceHandler.HtmlIntroLine3Original + "</a>\n";
+            //s += "<a class=\"\">" + Vb365ResourceHandler.HtmlIntroLine3Original + "</a>\n";
+            //s += LineBreak();
+            s += "<a class=\"\">" + Vb365ResourceHandler.HtmlIntroLine4 + "</a>\n";
             s += LineBreak();
-            s += "<a class=\"\">" + ResourceHandler.HtmlIntroLine4 + "</a>\n";
-            s += LineBreak();
-            s += "<a class=\"\">" + ResourceHandler.HtmlIntroLine5vb365 + "</a>\n";
+            s += "<a class=\"\">" + Vb365ResourceHandler.HtmlIntroLine5vb365 + "</a>\n";
             s += "</div>";
             s += LineBreak();
 

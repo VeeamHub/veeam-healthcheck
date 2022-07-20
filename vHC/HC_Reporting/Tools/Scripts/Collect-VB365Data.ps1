@@ -1,10 +1,28 @@
-<#param (
+<#
+    .SYNOPSIS
+        Data collection and analysis script for Veeam Health Check (vHC) for VB365
+    .DESCRIPTION
+        This collection script is broken into 3 main phases:
+        - The Collection Phase gathers configuration information from the VB365 server
+        into a single large collection variable.
+        - The Mapping Phase maps those raw data points into column:row formatted custom objects
+        using a short-hand code interpretter/translator/expander.
+        - Lastly, it Aggregates those maps into structures ready for CSV, at which point they are
+        exported to CSV files. These CSVs are then ingested into the main EXE which formats,
+        scrubs/anonymizes, and outputs an HTML report for review with a Veeam SE.
+
+        
+#>
+
+<# Not implemented yet
+param (
     [bool]$Debug,
     [string]$OutputPath = "",
     [int]$ReportingIntervalDays = -1,
     [string]$VBOServerFqdnOrIp = "",
     [switch]$PersistParams = $false
-)#>
+)
+#>
 enum LogLevel {
     TRACE
     PROFILE
@@ -22,7 +40,7 @@ Clear-Host
     [bool]ExportXml to export entire raw $VBOEnvironment capture as xml;
     [bool]DebugInConsole to get output to PS host/console;
     [Bool]Watch to launch logwatcher & resmon
-    [string]VBOServerFqdnOrIp -- dont use/change this unless, you're writing this code remote from VB365 server.
+    [string]VBOServerFqdnOrIp -- dont use/change this unless you're writing this code remote, away from VB365 server.
     [string]LogLevel to change verbosity of logging. Log messages with level above or equal to this are output. DEBUG shows minimal debugging & profiling; PROFILE outputs detailed timers & resource usage; TRACE outputs "No Result" warnings & log
 #>  
 
@@ -60,13 +78,11 @@ if ($global:SETTINGS.Watch) {
     $logWatcher = Start-Process powershell.exe -ArgumentList '-NoExit -Command "& { start-sleep -seconds 5; while ($true) { clear-host; cat C:\temp\vHC\Original\VB365\CollectorMain.log |select -last 40; sleep -seconds 3} }"' -PassThru
     $taskmgr = Start-Process taskmgr.exe -PassThru
 
-    #$netWatcher = Start-Process powershell.exe -ArgumentList '-NoExit -Command "& { while ($true) { clear-host; write-host; netstat -ano -p TCP | select-string -Pattern $((Get-Process -Name Veeam*).Id -join ''| '') | Select-String -NotMatch -Pattern ''(?:10|192|172|127)\.\d+\.\d+\.\d+:\d+\s+(?:10|192|172|127)\.\d+\.\d+\.\d+:\d+\s+''; sleep -seconds 3} }"' -PassThru
     #Start-Process perfmon.exe -ArgumentList "/res"
 }
 
 $process = Get-Process -Id $pid
 $process.PriorityClass = 'BelowNormal'
-#$process.ProcessorAffinity = 2
 
 <#
 function Function-Template {
@@ -265,7 +281,6 @@ function Expand-Expression {
                         Write-Host -ForegroundColor DarkYellow $message
                     }
 
-                    #Write-LogFile -Message $message -LogName Errors
                     Write-LogFile -Message $message -LogName NoResult -LogLevel TRACE
                     Write-LogFile -Message "`tExpanded Expression: $expandedExpression" -LogName NoResult -LogLevel TRACE
                 }
@@ -277,10 +292,9 @@ function Expand-Expression {
                     ($Error | Select-Object -Last 1).ToString()
                 }
 
-                #Write-LogFile -Message $message -LogLevel ERROR
                 Write-LogFile -Message $message -LogName Errors -LogLevel ERROR
                 Write-LogFile -Message "`tExpanded Expression: $expandedExpression" -LogName Errors -LogLevel ERROR
-                Write-LogFile -Message ($Error | Select-Object -Last 1).ToString() -LogName Errors -LogLevel ERROR
+                Write-LogFile -Message ($Error | Select-Object -Last 1).ToString() -LogName Errors -LogLevel DEBUG
 
                 $result.Value = $null;
 
@@ -519,14 +533,13 @@ function Get-VBOEnvironment {
         Write-Progress @progressSplat -PercentComplete ($progress++) -Status "Collecting organization..."
         $e.VBOOrganization = Get-VBOOrganization
         Write-ElapsedAndMemUsage -Message "Collected: VBOOrganization" -LogLevel PROFILE
-            # we can optionally collect user, site, group,team org info. excluded for now: https://helpcenter.veeam.com/docs/vbo365/powershell/organization_items.html?ver=60
         $e.VBOOrganizationUsers = $e.VBOOrganization | Get-VBOOrganizationUser -Type User
         Write-ElapsedAndMemUsage -Message "Collected: VBOOrganizationUsers" -LogLevel PROFILE
         $e.VBOApplication = $e.VBOOrganization | Get-VBOApplication
         Write-ElapsedAndMemUsage -Message "Collected: VBOApplication" -LogLevel PROFILE
-        #Diabled Jun1/22 - Not used #$e.VBOBackupApplication = $e.VBOOrganization `
-            #Diabled Jun1/22 - Not used #| Where-Object {$_.Office365ExchangeConnectionSettings.AuthenticationType -ne [Veeam.Archiver.PowerShell.Model.Enums.VBOOffice365AuthenticationType]::Basic} `
-            #Diabled Jun1/22 - Not used #| Get-VBOBackupApplication
+            #Diabled Jun1/22 - Not used #$e.VBOBackupApplication = $e.VBOOrganization `
+                #Diabled Jun1/22 - Not used #| Where-Object {$_.Office365ExchangeConnectionSettings.AuthenticationType -ne [Veeam.Archiver.PowerShell.Model.Enums.VBOOffice365AuthenticationType]::Basic} `
+                #Diabled Jun1/22 - Not used #| Get-VBOBackupApplication
         Write-ResourceUsageToLog -Message "Org collected"
 
         #infra settings:
@@ -581,20 +594,8 @@ function Get-VBOEnvironment {
         Write-ResourceUsageToLog -Message "Jobs collected"
 
         Write-Progress @progressSplat -PercentComplete ($progress++) -Status "Collecting entity details..."
-        #$e.VBOEntityData = [Veeam.Archiver.PowerShell.Cmdlets.DataManagement.VBOEntityDataType].GetEnumNames() `
-        #    | ForEach-Object { $e.VBORepository | Get-VBOEntityData -Type $_ -WarningAction SilentlyContinue} | select *,@{n="Repository",} #slow/long-running
-        #changed Jun 27
-        <#
-        $e.VBOEntityData = $(
-            foreach ($repo in $e.VBORepository) {
-                foreach ($entityType in @('Mailbox','OneDrive','Group','Site','Team','User')) { #[Veeam.Archiver.PowerShell.Cmdlets.DataManagement.VBOEntityDataType].GetEnumNames()
-                    #Didnt work as hoped # $repo | Where-Object {!($_.IsOutOfOrder -and $null -ne $_.ObjectStorageRepository)} | Get-VBOEntityData -Type $entityType -WarningAction SilentlyContinue | Select-Object Email,@{n="DisplayName";e={$_.Organization.DisplayName}},*BackedUpTIme,Is*BackedUp,@{n="Repository";e={@{Id=$repo.Id;Name=$repo.Name}}},@{n="Proxy";e={$proxy=($e.VBOProxy | Where-Object { $_.id -eq $repo.ProxyId}); @{Id=$proxy.Id;Name=$proxy.Hostname}}} #slow/long-running. Testing Jun 24 for collecting specific fields only. Exclude for IsOutOfOrder object repos added Jun 15
-                    $repo | Where-Object {!($_.IsOutOfOrder -and $null -ne $_.ObjectStorageRepository)} | Get-VBOEntityData -Type $entityType -WarningAction SilentlyContinue | Select-Object *,@{n="Repository";e={@{Id=$repo.Id;Name=$repo.Name}}},@{n="Proxy";e={$proxy=($e.VBOProxy | Where-Object { $_.id -eq $repo.ProxyId}); @{Id=$proxy.Id;Name=$proxy.Hostname}}} #slow/long-running. Exclude for IsOutOfOrder object repos added Jun 15
-                }
-            }
-        )#>
         $e.VBOEntityData = $e.VBORepository | Where-Object {!($_.IsOutOfOrder -and $null -ne $_.ObjectStorageRepository)} | Get-VBOEntityData -Type User -WarningAction SilentlyContinue | Select-Object *,@{n="Repository";e={@{Id=$repo.Id;Name=$repo.Name}}},@{n="Proxy";e={$proxy=($e.VBOProxy | Where-Object { $_.id -eq $repo.ProxyId}); @{Id=$proxy.Id;Name=$proxy.Hostname}}} #slow/long-running. Exclude for IsOutOfOrder object repos added Jun 15
-        # Build and index so that the search in the next function is orders of magnitude faster.
+        # Build an index (hashtable keyed to email) so that the search in the next function is orders of magnitude faster.
         $e.EntitiesIndex = @{}
         foreach ($org in $e.VBOOrganization) { $e.EntitiesIndex[$org.Name] = @{}}
         $e.EntitiesIndex.Test = @{}
@@ -610,7 +611,6 @@ function Get-VBOEnvironment {
                 }
             }
         }
-        #$e.VBOUserEntityData = Get-VBORepository | Get-VBOEntityData -Type User
         Write-ElapsedAndMemUsage -Message "Collected: VBOEntityData" -LogLevel PROFILE
         Write-ResourceUsageToLog -Message "Entities collected"
 
@@ -756,7 +756,6 @@ if (!$global:SETTINGS.SkipCollect) {
     $WarningPreference = "continue"
  }
 
-#Write-Host "VB365 Environment stats collected."
 Write-LogFile "VB365 Environment stats collected." -LogLevel INFO
 Lap "Collection finished. Building maps next."
 
@@ -775,7 +774,7 @@ function Test-CertPKExportable([string]$thumbprint) {
                 }
             }
 
-            return $false; #if no other return true first, then result to false
+            return $false; #if no other return true first, then result false
         } else {
             return "Failed to find cert."
         }
@@ -805,7 +804,7 @@ function ConvertData {
                 }
             }
 
-            if ($To -ieq "b") {
+            if ($To -ieq "b") { #is destined for Bytes/bits; adjust for the fact that "1B" is meaningless to powershell; "1KB" however is meaningful.
                 $To = "KB"
                 $multiplier = $multiplier/1024
             }
@@ -864,7 +863,6 @@ function 95P {
 function GetItemsLeft() {
     $global:CollectorCurrentProcessItems--
     if ($global:CollectorCurrentProcessItems % 1000 -eq 0) {
-        #Write-LogFile -Message "Items left: $global:CollectorCurrentItems" -LogLevel PROFILE
         Lap -Note "Items left: $global:CollectorCurrentProcessItems. Seconds for previous 1000" -LogLevel PROFILE
     }
 }
@@ -924,10 +922,10 @@ function GetEndTime {
         }
 
         if ($endTime -gt (get-date) -or $null -eq $endTime) {
-            #End time is in future, and thus is likely still running.
+            #End time is in future, and thus is likely still running. Return current time instead.
             return (get-date)
         } else {
-            #end time is in past
+            #end time is in past; return it
             return $endTime
         }
     }
@@ -935,17 +933,19 @@ function GetEndTime {
 }
 
 ################################ HERE IS WHERE THE PROPERTY MAPPING INTERPRETER STARTS ################################
+# This started as a way to make things easier to map, and then morphed into a lot.
 
 #USAGE examples:
 # 'Name'                                                            :: will populate the column name as "Name", and the value from the passed in object (BaseObject)
-# 'Name=>Hostname'                                                  :: will populate the column name as "Name", and the value from "Hostname" property of the passed in object (BaseObject)
-# 'Name=>$.Hostname'                                                :: use of "$." is the shorthand for the base object
+# 'Name=>Hostname'                                                  :: will populate the column name as "Name", and the value from "Hostname" property of the passed in object (BaseObject)\
+# 'Name=>Hostname.Subproperty'                                      :: will populate the column name as "Name", and the value from subproperty X of the "Hostname" property of the passed in object (BaseObject)
 # 'Listener=>Host + ":" + Port'                                     :: use of an expression that includes '+"' or "+ "' is a simple way to concatenate two or more of the same BaseObject's properties together with a string.
+# 'Name=>$.Hostname'                                                :: use of "$." is the shorthand for the $BaseObject (object passed in). "$." is implied in the above examples; use it if doing something more advanced.
 # 'Name=>if (x) { $.Hostname } else { $othervariable.othername }'   :: advanced expression will be evaluated/invoked from the string to a command. You must use the "$." short hand for the BaseObject's properties.
     # This example would set the Name column to either the baseobject's "Hostname" property or to the $othervariable's "othername" property depending on whether X is true.
     # These expressions can be as advanced as you like, as long as they evaluate back to a single result
 # NOTE: You can use $self.columnName to refer to a previously created column (must be above where $self is used)
-# NOTE: You can add a "!" sign before a column name to have it not include in the returned object
+# NOTE: You can add a "!" sign before a column name to have it not include in the returned object. Useful for defining variables or doing something before/after other entries are invoked.
 
 Write-LogFile "Mapping CSV Structures..." -LogLevel INFO
 Write-ElapsedAndMemUsage -Message "Start Mapping"
@@ -1120,7 +1120,7 @@ $map.LocalRepositories = $Global:VBOEnvironment.VBORepository | mde @(
             $DCR = $dailyChangeAvg/$GBUsed * $(if ($isObject) {0.5} else {0.9}) ################## HARD CODED COMPRESSION RATES ARE AN APPROXIMATION ##############
             $DCR.ToString("~##0.000%")
         }'
-    'Daily Change Rate=>($weeklyChange/7).ToString("#,##0.000 GB")'
+    'Daily Change Rate=>($weeklyChange/7).ToString("#,##0.000 GB")' #uses $weeklyChange from object above.
     'Retention=>($.RetentionPeriod.ToString() -replace "(Years?)(.+)","`$2 `$1" )+", "+$.RetentionType+", Applied "+$.RetentionFrequencyType'
 )
 Write-ElapsedAndMemUsage -Message "Mapped Local Repos" -LogLevel PROFILE
@@ -1170,8 +1170,8 @@ $map.Jobs = @($Global:VBOEnvironment.VBOJob) + @($Global:VBOEnvironment.VBOCopyJ
     'Job Type=>if ($null -eq $.BackupJob) { "Backup" } else { "Backup Copy" }'
     'Scope Type=>JobBackupType'
     'Processing Options=>@(if ($.SelectedItems.Mailbox) {"Mailbox"}; if ($.SelectedItems.ArchiveMailbox) {"Archive"}; if ($.SelectedItems.OneDrive) {"OneDrive"}; if ($.SelectedItems.Site -or "Site" -in $.SelectedItems.Type) {"Site"}; if ($.SelectedItems.Teams -or "Team" -in $.SelectedItems.Type) {"Teams"}; if ($.SelectedItems.GroupMailbox) {"Group Mailbox"}; if ($.SelectedItems.GroupSite) {"Group Site"}) -join ", "'
-    'Selected Objects=>$objectCountStr = (($Global:VBOEnvironment.VBOJobSession | Where-Object { $_.JobId -eq $.Id } | Sort-Object CreationTime -Descending) | Select-Object -First 1).Log.Title -match "Found (\d+) objects"; [Regex]::Match($objectCountStr,"(?<=Found )(\d+)(?= objects)")' #$.SelectedItems.Count
-    'Excluded Objects=>$objectCountStr = (($Global:VBOEnvironment.VBOJobSession | Where-Object { $_.JobId -eq $.Id } | Sort-Object CreationTime -Descending) | Select-Object -First 1).Log.Title -match "Found (\d+) excluded objects"; [Regex]::Match($objectCountStr,"(?<=Found )(\d+)(?= excluded objects)")' # $.ExcludedItems.Count'
+    'Selected Objects=>$objectCountStr = (($Global:VBOEnvironment.VBOJobSession | Where-Object { $_.JobId -eq $.Id } | Sort-Object CreationTime -Descending) | Select-Object -First 1).Log.Title -match "Found (\d+) objects"; [Regex]::Match($objectCountStr,"(?<=Found )(\d+)(?= objects)")' #OLD: used to look at defined things selected. now looks at actual resolved. #$.SelectedItems.Count
+    'Excluded Objects=>$objectCountStr = (($Global:VBOEnvironment.VBOJobSession | Where-Object { $_.JobId -eq $.Id } | Sort-Object CreationTime -Descending) | Select-Object -First 1).Log.Title -match "Found (\d+) excluded objects"; [Regex]::Match($objectCountStr,"(?<=Found )(\d+)(?= excluded objects)")' #OLD: used to look at defined things selected. now looks at actual resolved. #$.ExcludedItems.Count'
     'Repository'
     'Bound Proxy=>($Global:VBOEnvironment.VBOProxy | ? { $_.id -eq $.Repository.ProxyId }).Hostname'
     'Enabled?=>IsEnabled'
@@ -1200,7 +1200,7 @@ $map.JobStats = $Global:VBOEnvironment.VBOJobSession | Where-Object { $_.JobName
     'Max Objects (#)=>($.Group.Progress | measure -Maximum).Maximum.ToString("0")'
     'Average Items (#)=>($.Group.Statistics | measure ProcessedObjects -Average).Average.ToString("0")'
     'Max Items (#)=>($.Group.Statistics | measure ProcessedObjects -Maximum).Maximum.ToString("0")'
-    <# The columns below removed as they are using the in-built stats, which are point-in-time, and thus not very informative. Excluded...
+    <# The columns below removed as they are using the in-built stats, which are point-in-time, and thus not very informative for this. Excluded...
         'Average Processing Rate=>(($.Group.Statistics.ProcessingRate -replace "(\d+.+)\s\((.+)\)","`$1" | ConvertData -To "MB" -Format "0.0000" | measure -Average).Average.ToString("0.000 MB/s"))'
         'Max Processing Rate=>(($.Group.Statistics.ProcessingRate -replace "(\d+.+)\s\((.+)\)","`$1" | ConvertData -To "MB" -Format "0.0000" | measure -Maximum).Maximum.ToString("0.000 MB/s") )'
         'Average Item Proc Rate=>(($.Group.Statistics.ProcessingRate -replace "(\d+.+)\s\((.+)items/s\)","`$2" | measure -Average).Average.ToString("0.0 items/s"))'
@@ -1344,11 +1344,8 @@ Write-Progress @progressSplat -PercentComplete ($progress++) -Status "Protection
 $global:CollectorCurrentProcessItems = $Global:VBOEnvironment.VBOOrganizationUsers.Count
 $map.ProtectionStatus = $Global:VBOEnvironment.VBOOrganizationUsers | Select-Object -ExcludeProperty "IsBackedup" | mde @(
     '!Profiling=>$(GetItemsLeft)'
-    'Organization=>($Global:VBOEnvironment.VBOOrganization | ? { $_.Id -eq $.OrganizationId }).Name' #$("test")#
+    'Organization=>($Global:VBOEnvironment.VBOOrganization | ? { $_.Id -eq $.OrganizationId }).Name'
     '!Vars=>
-        #$PRIVATE:Entity = ($Global:VBOEnvironment.VBOEntityData | ? { $_.Organization.DisplayName -eq $self.Name -and $_.Email -eq $.UserName})
-        #THIS IS DECENT #$PRIVATE:Entity = ($Global:VBOEnvironment.VBOEntityData | . {Process { if($_.Organization.DisplayName -eq $self.Name -and $_.Email -eq $.UserName) {$_} } })
-        #THIS IS BETTER #$PRIVATE:Entity = foreach ($ent in $Global:VBOEnvironment.VBOEntityData) { if($ent.Organization.DisplayName -eq $self.Organization -and $ent.Email -eq $.UserName -and $ent.Type -eq "User") {$ent; break} }
         $entityKey = ($.DisplayName+"-"+$.UserName).Replace(" ","")
         $PRIVATE:Entity = $Global:VBOEnvironment.EntitiesIndex[$self.Organization][$entityKey]
     '
@@ -1385,7 +1382,6 @@ foreach ($sectionName in $map.Keys) {
     if ($null -eq $section) {
         Write-Warning "No map found for: "+$sectionName+". Please define."
         Write-LogFile -Message ("No map found for: "+$sectionName+". Please define.") -LogName Errors -LogLevel ERROR
-        # used to throw & then return
     } else {
         if ($section.GetType().Name -eq "PSCustomObject" -or $section.GetType().Name -eq "Object[]") {
             $Global:HealthCheckResult.$sectionName = $section
@@ -1412,8 +1408,8 @@ Write-LogFile -Message "Done Exporting to CSVs." -LogLevel INFO
 
 if ($Error.Count -gt 0) {
     Write-LogFile -Message "Some errors were encountered. See 'CollectorErrors.log'" -LogLevel INFO
-    Write-LogFile -Message "All Errors:" -LogName Errors -LogLevel ERROR
-    $Error | ForEach-Object {Write-LogFile -Message ($_.ToString() + "`r`n" + $_.InvocationInfo.Line.ToString() + "`r`n" + $_.ScriptStackTrace.ToString()+ "`r`n" +$_.Exception.StackTrace.ToString()) -LogName Errors -LogLevel ERROR }
+    Write-LogFile -Message "All Errors:" -LogName Errors -LogLevel DEBUG
+    $Error | ForEach-Object {Write-LogFile -Message ($_.ToString() + "`r`n" + $_.InvocationInfo.Line.ToString() + "`r`n" + $_.ScriptStackTrace.ToString()+ "`r`n" +$_.Exception.StackTrace.ToString()) -LogName Errors -LogLevel DEBUG }
 }
 
 Write-ResourceUsageToLog -Message "All done"
@@ -1437,9 +1433,6 @@ if ([LogLevel]$global:SETTINGS.LogLevel -le [LogLevel]::DEBUG ) {
 Start-Sleep -Seconds 10
 if ($null -ne $logWatcher -and !$logWatcher.HasExited) {
     $logWatcher.Kill()
-}
-if ($null -ne $netWatcher -and !$netWatcher.HasExited) {
-    $netWatcher.Kill()
 }
 if ($null -ne $taskmgr -and !$taskmgr.HasExited) {
     $taskmgr.Kill()

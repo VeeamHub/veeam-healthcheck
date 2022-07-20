@@ -265,7 +265,7 @@ namespace VeeamHealthCheck.Reporting.Html.VB365
                     s += _form.TableData(throttling, "", throttleShade);
                     s += _form.TableData(state, "", stateShade);
                     s += _form.TableData(outdated, "", outdatedShade);
-                    s += _form.TableData(internetproxy, "");
+                    s += _form.TableData(internetproxy, "", proxyShade);
                     s += _form.TableData(objectsmanaged, "", objManagedShade);
                     s += _form.TableData(osversion, "", osVersionShade);
                     s += _form.TableData(ram, "", ramShade);
@@ -1505,21 +1505,21 @@ namespace VeeamHealthCheck.Reporting.Html.VB365
         }
         public string MakeVb365NavTable()
         {
-            return _form.FormNavRows(ResourceHandler.v365NavTitle0, "global", ResourceHandler.v365NavValue1) +
-                _form.FormNavRows(ResourceHandler.v365NavTitle1, "protstat", ResourceHandler.v365NavValue1) +
-                _form.FormNavRows(ResourceHandler.v365NavTitle2, "controller", ResourceHandler.v365NavValue2) +
-                _form.FormNavRows(ResourceHandler.v365NavTitle3, "controllerdrives", ResourceHandler.v365NavValue3) +
-                _form.FormNavRows(ResourceHandler.v365NavTitle4, "proxies", ResourceHandler.v365NavValue4) +
-                _form.FormNavRows(ResourceHandler.v365NavTitle5, "repos", ResourceHandler.v365NavValue5) +
-                _form.FormNavRows(ResourceHandler.v365NavTitle6, "objrepo", ResourceHandler.v365NavValue6) +
-                _form.FormNavRows(ResourceHandler.v365NavTitle7, "sec", ResourceHandler.v365NavValue7) +
+            return _form.FormNavRows(Vb365ResourceHandler.v365NavTitle0, "global", Vb365ResourceHandler.v365NavValue1) +
+                _form.FormNavRows(Vb365ResourceHandler.v365NavTitle1, "protstat", Vb365ResourceHandler.v365NavValue1) +
+                _form.FormNavRows(Vb365ResourceHandler.v365NavTitle2, "controller", Vb365ResourceHandler.v365NavValue2) +
+                _form.FormNavRows(Vb365ResourceHandler.v365NavTitle3, "controllerdrives", Vb365ResourceHandler.v365NavValue3) +
+                _form.FormNavRows(Vb365ResourceHandler.v365NavTitle4, "proxies", Vb365ResourceHandler.v365NavValue4) +
+                _form.FormNavRows(Vb365ResourceHandler.v365NavTitle5, "repos", Vb365ResourceHandler.v365NavValue5) +
+                _form.FormNavRows(Vb365ResourceHandler.v365NavTitle6, "objrepo", Vb365ResourceHandler.v365NavValue6) +
+                _form.FormNavRows(Vb365ResourceHandler.v365NavTitle7, "sec", Vb365ResourceHandler.v365NavValue7) +
                 //_form.FormNavRows(ResourceHandler.v365NavTitle8, "rbac", ResourceHandler.v365NavValue8) +
                 //_form.FormNavRows(ResourceHandler.v365NavTitle9, "perms", ResourceHandler.v365NavValue9) +
-                _form.FormNavRows(ResourceHandler.v365NavTitle10, "orgs", ResourceHandler.v365NavValue10) +
-                _form.FormNavRows(ResourceHandler.v365NavTitle11, "jobs", ResourceHandler.v365NavValue11) +
-                _form.FormNavRows(ResourceHandler.v365NavTitle12, "jobstats", ResourceHandler.v365NavValue12) +
-                _form.FormNavRows(ResourceHandler.v365NavTitle12, "procstat", ResourceHandler.v365NavValue12) +
-                _form.FormNavRows(ResourceHandler.v365NavTitle13, "jobsessions", ResourceHandler.v365NavValue13);
+                _form.FormNavRows(Vb365ResourceHandler.v365NavTitle10, "orgs", Vb365ResourceHandler.v365NavValue10) +
+                _form.FormNavRows(Vb365ResourceHandler.v365NavTitle11, "jobs", Vb365ResourceHandler.v365NavValue11) +
+                _form.FormNavRows(Vb365ResourceHandler.v365NavTitle12, "jobstats", Vb365ResourceHandler.v365NavValue12) +
+                _form.FormNavRows(Vb365ResourceHandler.v365NavTitle14, "procstats", Vb365ResourceHandler.v365NavValue14) +
+                _form.FormNavRows(Vb365ResourceHandler.v365NavTitle13, "jobsessions", Vb365ResourceHandler.v365NavValue13);
         }
 
     }

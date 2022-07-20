@@ -164,18 +164,21 @@ namespace VeeamHealthCheck
 
             _openHtml = false;
             _openExplorer = false;
-            Import();
 
 
             if (_scrub)
             {
                 _desiredPath = CVariables.unsafeDir;
                 _scrub = false;
+                Import();
+                _scrub = true;
             }
             else if (!_scrub)
             {
                 _desiredPath = CVariables.safeDir;
                 _scrub = true;
+                Import();
+                _scrub = false;
             }
             //_scrub = userSetScrub;
             _openHtml = userOpenHtml;

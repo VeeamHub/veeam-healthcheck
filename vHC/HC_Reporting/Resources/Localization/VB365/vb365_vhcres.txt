@@ -1,4 +1,49 @@
-﻿GlobalHeader = •	Global Configuration:
+﻿#header 
+HtmlHeader =	VB365 Health Check Report
+HtmlIntroLine1 =	- This report provides data and insight into your Veeam deployment. The information provided here is intended to be used in collaboration with your Veeam representative.
+HtmlIntroLine2 =	- The raw data is captured in CSV format and is accessible locally in the Export Folder. CSV will let you manipulate the data in tools such as Excel.
+HtmlIntroLine3Original =	- Additional information on individual job sessions can be found in the <a href="C:\\temp\\vHC\\Original\\JobSessionReports"> output folder at C:\\temp\\vHC\\Original\\JobSessionReports
+HtmlIntroLine3Anon =	- Additional information on individual job sessions can be found in the <a href="C:\\temp\\vHC\\Anonymous\\JobSessionReports"> output folder at C:\\temp\\vHC\\Anonymous\\JobSessionReports
+HtmlIntroLine4 =	- NOTE: During mouseover, a tool tip may appear containing explanatory data of the table header or data column.
+HtmlIntroLine5 =	- NOTE: The tool you ran to generate this report is completely self-contained, does not ‘phone-home’ and was only executed on your Veeam Backup and Replication server. It queries the VBR database, registry, configuration and log files. It does not require access to vCenter or any other infrastructure.
+HtmlIntroLine5vb365 =	- NOTE: The tool you ran to generate this report is completely self-contained, does not ‘phone-home’ and was only executed on your Veeam Backup for Microsoft 365 server. It queries the VB365 database, registry, configuration and log files. It does not require access to M365 or any other infrastructure.
+
+# nav
+######## VB365
+Vb365Banner = VB365 Health Check Report
+#navigation
+v365NavTitle0 = Global Configuration
+v365NavValue0 = Summary of license and global settings.
+v365NavTitle1 = Unprotected Users
+v365NavValue1 = Summary of protected and unprotected users.
+v365NavTitle2 = Backup Server
+v365NavValue2 = Details on the VB365 Server.
+v365NavTitle3 = Backup Server Disks
+v365NavValue3 = Details on the disks attached to the VB365 Server.
+v365NavTitle4 = Proxies
+v365NavValue4 = Details on proxies added to the current VB365 Server.
+v365NavTitle5 = Repositories
+v365NavValue5 = Details on reposiories added to the current VB365.
+v365NavTitle6 = Object Storage
+v365NavValue6 = Details on object storage used.
+v365NavTitle7 = Security Info
+v365NavValue7 = Summary of security settings relevant to VB365.
+v365NavTitle8 = RBAC Roles Info
+v365NavValue8 = Summary of Role Based Access Control settings.
+v365NavTitle9 = Permissions Check
+v365NavValue9 = Summary of permissions granted & used.
+v365NavTitle10 = Organizations
+v365NavValue10 = Details on organizations protected by VB365.
+v365NavTitle11 = Backup Jobs
+v365NavValue11 = Details on jobs configued on this VB365 Server.
+v365NavTitle12 = Job Statistics
+v365NavValue12 = Analysis of recent job runs.
+v365NavTitle13 = Job Sessions
+v365NavValue13 = Details on recent job runs.
+v365NavTitle14 = Processing Statistics
+v365NavValue14 = Analysis of timings for individual steps of the job runs.
+
+GlobalHeader = •	Global Configuration:
 GlobalColHeadLicStatus = Lic. Status
 GlobalColHeadLicExp = Lic. Expiry
 GlobalColHeadLicType = Lic. Type
