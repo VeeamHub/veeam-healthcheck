@@ -151,7 +151,7 @@ namespace VeeamHealthCheck.Html
         }
         public void OpenExplorer()
         {
-            Process.Start("explorer.exe", @"C:\temp\vHC");
+            Process.Start("explorer.exe", CVariables.desiredDir);
         }
         public void OpenHtml()
         {

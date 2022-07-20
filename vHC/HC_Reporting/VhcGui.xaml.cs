@@ -161,6 +161,7 @@ namespace VeeamHealthCheck
             bool userSetScrub = _scrub;
             bool userOpenHtml = _openHtml;
             bool userOpenExplorer = _openExplorer;
+            string userPath = _desiredPath;
 
             _openHtml = false;
             _openExplorer = false;
@@ -168,17 +169,19 @@ namespace VeeamHealthCheck
 
             if (_scrub)
             {
-                _desiredPath = CVariables.unsafeDir;
+                _desiredPath = userPath + CVariables._unsafeSuffix;
                 _scrub = false;
                 Import();
                 _scrub = true;
+                _desiredPath = userPath + CVariables._safeSuffix;
             }
             else if (!_scrub)
             {
-                _desiredPath = CVariables.safeDir;
+                _desiredPath = userPath + CVariables._safeSuffix;
                 _scrub = true;
                 Import();
                 _scrub = false;
+                _desiredPath = userPath + CVariables._unsafeSuffix;
             }
             //_scrub = userSetScrub;
             _openHtml = userOpenHtml;
@@ -213,18 +216,42 @@ namespace VeeamHealthCheck
         {
 
             LogUIAction("Run selected");
+
+            // disable UI Buttons and boxes
+            DisableButtons();
+
+
             _import = false;
             showProgressBar();
 
             System.Threading.Tasks.Task.Factory.StartNew(() =>
             {
                 RunAction();
-                //Import();
-                //JustRunNoPs();
+                // should be done here?
+                Environment.Exit(0);
+
             }).ContinueWith(t =>
             {
                 hideProgressBar();
             });
+            //EnableButtons();
+        }
+        private void DisableButtons()
+        {
+            explorerShowBox.IsEnabled = false;
+            htmlCheckBox.IsEnabled = false;
+            scrubBox.IsEnabled = false;
+            termsBtn.IsEnabled = false;
+            importButton.IsEnabled = false;
+            pathBox.IsEnabled = false;
+        }
+        private void EnableButtons()
+        {
+            explorerShowBox.IsEnabled = true;
+            htmlCheckBox.IsEnabled = true;
+            scrubBox.IsEnabled = true;
+            termsBtn.IsEnabled = true;
+            importButton.IsEnabled = true;
         }
         private void AcceptButton_click(object sender, RoutedEventArgs e)
         {

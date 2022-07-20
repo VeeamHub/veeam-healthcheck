@@ -13,7 +13,8 @@ namespace VeeamHealthCheck
 {
     public class EntryPoint
     {
-        private static string _helpMenu = "HELP MENU:\n\nrun - Executes the program";
+        private static string _helpMenu = "\nHELP MENU:\nrun - Executes the program via CLI" +
+            "\n";
         private static CLogger _log = VhcGui.log;
 
         [DllImport("kernel32.dll")]
@@ -42,7 +43,14 @@ namespace VeeamHealthCheck
                         app.CliRun();
                         _log.Info("Starting RUN...complete!", false);
                         break;
+                    case "show:files":
+                        break;
+                    case "show:report":
+                        break;
+                    case "show:all":
+                        break;
                 }
+                _log.Info("Complete! Output is stored in C:\\temp\\vHC", false);
             }
             else
             {

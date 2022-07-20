@@ -15,6 +15,8 @@ namespace VeeamHealthCheck
         public static string unsafeDir = @"C:\temp\vHC\Original";
         private static string vb365Dir = "\\VB365";
         private static string _vbrDir = "\\VBR";
+        public static string _safeSuffix = @"\vHC\Anonymous";
+        public static string _unsafeSuffix = @"\vHC\Original";
         public static string desiredDir { get { return VhcGui._desiredPath; } }
         public  string unSafeDir2()
         {
