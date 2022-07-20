@@ -205,11 +205,12 @@ namespace VeeamHealthCheck
             log.Info("Starting Run..done!");
 
         }
-        public void CliRun()
+        public void CliRun(string targetForOutput)
         {
             log.Info("Setting openexplorer & openhtml to false for CLI execution", false);
             _openExplorer = false;
             _openHtml = false;
+            _desiredPath = targetForOutput;
             RunAction();
         }
         private void run_Click(object sender, RoutedEventArgs e)

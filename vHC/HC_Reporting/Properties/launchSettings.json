@@ -1,7 +1,8 @@
 {
   "profiles": {
     "VeeamHealthCheck": {
-      "commandName": "Project"
+      "commandName": "Project",
+      "commandLineArgs": "run outdir:\\\\HOME-SERVER\\test"
     }
   }
 }
