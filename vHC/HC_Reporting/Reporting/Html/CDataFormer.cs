@@ -22,7 +22,7 @@ namespace VeeamHealthCheck.Reporting.Html
     class CDataFormer
     {
         private readonly string _testFile = "xml\\vbr.xml";
-        private string _outPath = CVariables.unsafeDir;
+        
         private readonly string _backupServerId = "6745a759-2205-4cd2-b172-8ec8f7e60ef8";
         private string _backupServerName;
         private bool _isBackupServerProxy;

@@ -100,7 +100,8 @@ namespace VeeamHealthCheck
             //this.Title = ResourceHandler.GuiTitle;
 
 
-            SetPathBoxText(CVariables.unsafeDir);
+            SetPathBoxText(CVariables.outDir);
+            _desiredPath = CVariables.outDir;
 
         }
 
@@ -365,7 +366,7 @@ namespace VeeamHealthCheck
         private void HandleCheck(object sender, RoutedEventArgs e)
         {
             _scrub = true;
-            SetPathBoxText(CVariables.safeDir);
+            //SetPathBoxText(_desiredPath + CVariables._safeSuffix);
         }
         private void htmlChecked(object sender, RoutedEventArgs e)
         {
@@ -379,7 +380,7 @@ namespace VeeamHealthCheck
         }
         private void HandleUnchecked(object sender, RoutedEventArgs e)
         {
-            SetPathBoxText(CVariables.unsafeDir);
+            //SetPathBoxText(_desiredPath + CVariables._unsafeSuffix);
             _scrub = false;
         }
         private void HandleThirdState(object sender, RoutedEventArgs e)
