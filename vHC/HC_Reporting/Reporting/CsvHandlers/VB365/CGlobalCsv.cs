@@ -34,7 +34,7 @@ namespace VeeamHealthCheck.Reporting.CsvHandlers.VB365
         [Index(11)]
         public string NotificationEnabled { get; set; }
         [Index(12)]
-        public string NotififyOn { get; set; }
+        public string NotifyOn { get; set; }
         [Index(13)]
         public string AutomaticUpdates { get; set; }
     }

@@ -1008,7 +1008,8 @@ $map.Global = $Global:VBOEnvironment.VBOLicense | mde @(
     'Global Ret. Exclusions=>Join(($Global:VBOEnvironment.VBOGlobalRetentionExclusion.psobject.Properties | ? { $_.Value -eq $true}).Name)'
     'Log Retention=>if($Global:VBOEnvironment.VBOHistorySettings.KeepAllSessions) { "Keep All" } else {$Global:VBOEnvironment.VBOHistorySettings.KeepOnlyLastXWeeks }'
     'Notification Enabled=>$Global:VBOEnvironment.VBOEmailSettings.EnableNotification'
-    'Notifify On=>Join((($Global:VBOEnvironment.VBOEmailSettings | select NotifyOn*).psobject.Properties | ? { $_.Value -eq $false}).Name)'
+    #'Notifify On=>Join((($Global:VBOEnvironment.VBOEmailSettings | select NotifyOn*).psobject.Properties | ? { $_.Value -eq $false}).Name)'
+    <#fixed Jul 21#>'Notify On=>Join((($Global:VBOEnvironment.VBOEmailSettings | select NotifyOn*,Supress*).psobject.Properties | ? { $_.Value -eq $true}).Name.Replace("NotifyOn",""))'
     'Automatic Updates?=>$Global:VBOEnvironment.VMCLog.SettingsDetails.UpdatesAutoCheckEnabled'
 )
 Write-ElapsedAndMemUsage -Message "Mapped Global" -LogLevel PROFILE
@@ -1121,7 +1122,18 @@ $map.LocalRepositories = $Global:VBOEnvironment.VBORepository | mde @(
             $DCR.ToString("~##0.000%")
         }'
     'Daily Change Rate=>($weeklyChange/7).ToString("#,##0.000 GB")' #uses $weeklyChange from object above.
-    'Retention=>($.RetentionPeriod.ToString() -replace "(Years?)(.+)","`$2 `$1" )+", "+$.RetentionType+", Applied "+$.RetentionFrequencyType'
+    #'!OLD_Retention=>($.RetentionPeriod.ToString() -replace "(Years?)(.+)","`$2 `$1" )+", "+$.RetentionType+", Applied "+$.RetentionFrequencyType'
+    <#fixed Jul 21#>'Retention=>if ($.CustomRetentionPeriodType -eq "Months") {
+        $period = ($.RetentionPeriod.value__/12);
+        if ($period -le 25) {
+            $retPeriod = ($.RetentionPeriod.value__/12).ToString() + " Years"
+        } else {
+            $retPeriod = "Forever"
+        }
+    } else {
+        $retPeriod = $.RetentionPeriod.value__.ToString() + " Days"
+    };
+    return $retPeriod + ", " + $.RetentionType + ", Applied " + $.RetentionFrequencyType'
 )
 Write-ElapsedAndMemUsage -Message "Mapped Local Repos" -LogLevel PROFILE
 
@@ -1169,9 +1181,10 @@ $map.Jobs = @($Global:VBOEnvironment.VBOJob) + @($Global:VBOEnvironment.VBOCopyJ
     'Description'
     'Job Type=>if ($null -eq $.BackupJob) { "Backup" } else { "Backup Copy" }'
     'Scope Type=>JobBackupType'
-    'Processing Options=>@(if ($.SelectedItems.Mailbox) {"Mailbox"}; if ($.SelectedItems.ArchiveMailbox) {"Archive"}; if ($.SelectedItems.OneDrive) {"OneDrive"}; if ($.SelectedItems.Site -or "Site" -in $.SelectedItems.Type) {"Site"}; if ($.SelectedItems.Teams -or "Team" -in $.SelectedItems.Type) {"Teams"}; if ($.SelectedItems.GroupMailbox) {"Group Mailbox"}; if ($.SelectedItems.GroupSite) {"Group Site"}) -join ", "'
-    'Selected Objects=>$objectCountStr = (($Global:VBOEnvironment.VBOJobSession | Where-Object { $_.JobId -eq $.Id } | Sort-Object CreationTime -Descending) | Select-Object -First 1).Log.Title -match "Found (\d+) objects"; [Regex]::Match($objectCountStr,"(?<=Found )(\d+)(?= objects)")' #OLD: used to look at defined things selected. now looks at actual resolved. #$.SelectedItems.Count
-    'Excluded Objects=>$objectCountStr = (($Global:VBOEnvironment.VBOJobSession | Where-Object { $_.JobId -eq $.Id } | Sort-Object CreationTime -Descending) | Select-Object -First 1).Log.Title -match "Found (\d+) excluded objects"; [Regex]::Match($objectCountStr,"(?<=Found )(\d+)(?= excluded objects)")' #OLD: used to look at defined things selected. now looks at actual resolved. #$.ExcludedItems.Count'
+    <#Fixed jul 21#>'Processing Options=>@("Mailbox","ArchiveMailbox","OneDrive","Sites","Teams","GroupMailbox","GroupSite" | Where-Object { $.SelectedItems.$_ -eq $true -or $_.Replace("Teams","Team").Replace("Sites","Site")  -in $.SelectedItems.Type }).Replace("ArchiveMailbox","Archive").Replace("GroupMailbox","Group Mailbox").Replace("GroupSite","Group Site") -join ", "'
+    #'Processing Options=>@(if ($.SelectedItems.Mailbox.Count -gt 0) {"Mailbox"}; if ($.SelectedItems.ArchiveMailbox.Count -gt 0) {"Archive"}; if ($.SelectedItems.OneDrive.Count -gt 0) {"OneDrive"}; if ($.SelectedItems.Sites.Count -gt 0 -or "Site" -in $.SelectedItems.Type) {"Site"}; if ($.SelectedItems.Teams.Count -gt 0 -or "Team" -in $.SelectedItems.Type) {"Teams"}; if ($.SelectedItems.GroupMailbox.Count -gt 0) {"Group Mailbox"}; if ($.SelectedItems.GroupSite.Count -gt 0) {"Group Site"}) -join ", "'
+    <#Fixed jul 21#>'Selected Objects=>$objectCountStr = ($Global:VBOEnvironment.VBOJobSession | Where-Object { $_.JobId -eq $.Id } | Sort-Object CreationTime -Descending | Select-Object -First 1); [Regex]::Match($objectCountStr.Log.Title,"(?<=Found )(\d+)(?= objects)").Value' #OLD: used to look at defined things selected. now looks at actual resolved. #$.SelectedItems.Count
+    <#Fixed jul 21#>'Excluded Objects=>$objectCountStr = ($Global:VBOEnvironment.VBOJobSession | Where-Object { $_.JobId -eq $.Id } | Sort-Object CreationTime -Descending | Select-Object -First 1); [Regex]::Match($objectCountStr.Log.Title,"(?<=Found )(\d+)(?= excluded objects)").Value' #OLD: used to look at defined things selected. now looks at actual resolved. #$.ExcludedItems.Count'
     'Repository'
     'Bound Proxy=>($Global:VBOEnvironment.VBOProxy | ? { $_.id -eq $.Repository.ProxyId }).Hostname'
     'Enabled?=>IsEnabled'

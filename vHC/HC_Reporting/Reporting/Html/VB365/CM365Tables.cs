@@ -85,7 +85,7 @@ namespace VeeamHealthCheck.Reporting.Html.VB365
                     else
                         s += _form.TableData(gl.NotificationEnabled, "");
 
-                    s += _form.TableData(gl.NotififyOn, "");
+                    s += _form.TableData(gl.NotifyOn, "");
 
                     if (gl.AutomaticUpdates == "False")
                         s += _form.TableData(gl.AutomaticUpdates, "", 3);
