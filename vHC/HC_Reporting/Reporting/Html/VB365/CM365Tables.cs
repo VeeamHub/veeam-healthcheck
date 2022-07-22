@@ -1355,8 +1355,8 @@ namespace VeeamHealthCheck.Reporting.Html.VB365
             s += _form.TableHeader("Job Type", Vb365ResourceHandler.jobsTTJobType);
             s += _form.TableHeader("Scope Type", Vb365ResourceHandler.jobsTTScopeType);
             s += _form.TableHeader("Processing Options", "");
-            s += _form.TableHeader("Selected Items", Vb365ResourceHandler.jobsTTSelectedItems);
-            s += _form.TableHeader("Excluded Items", Vb365ResourceHandler.jobsTTExcludedItems);
+            s += _form.TableHeader("Selected Objects", Vb365ResourceHandler.jobsTTSelectedItems);
+            s += _form.TableHeader("Excluded Objects", Vb365ResourceHandler.jobsTTExcludedItems);
             s += _form.TableHeader("Repository", Vb365ResourceHandler.jobsTTRepository);
             s += _form.TableHeader("Bound Proxy", Vb365ResourceHandler.jobsTTBoundProxy);
             s += _form.TableHeader("Enabled?", "");
