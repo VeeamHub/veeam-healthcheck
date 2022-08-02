@@ -295,6 +295,7 @@ namespace VeeamHealthCheck.Reporting.Html
             _viProtectedNames = viProtectedNames;
             _viNotProtectedNames = viNotProtectedNames;
             _viDupes = viDupes;
+            _vmProtectedByPhys = vmProtectedByPhys;
             _physNotProtNames = physNotProtNames;
             _physProtNames = physProtNames;
 

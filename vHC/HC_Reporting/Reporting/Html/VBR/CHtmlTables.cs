@@ -80,7 +80,7 @@ namespace VeeamHealthCheck.Html.VBR
                 
                 s +=
                 "<tr>" +
-                //_form.TableData(l.licensedto, "") +
+                _form.TableData(l.licensedto, "") +
                 _form.TableData(l.edition, "") +
                 _form.TableData(l.status, "") +
                 _form.TableData(l.type, "") +
@@ -274,6 +274,7 @@ namespace VeeamHealthCheck.Html.VBR
             s += _form.TableData(cd._viProtectedNames.Distinct().Count().ToString(), "");
             s += _form.TableData(cd._viNotProtectedNames.Distinct().Count().ToString(), "");
             s += _form.TableData(cd._viDupes.ToString(), "");
+            s += _form.TableData(cd._vmProtectedByPhys.Distinct().Count().ToString(), "");
             s += _form.TableData((cd._physNotProtNames.Distinct().Count() + cd._physProtNames.Distinct().Count()).ToString(), "");
             s += _form.TableData(cd._physProtNames.Distinct().Count().ToString(), "");
             s += _form.TableData(cd._physNotProtNames.Distinct().Count().ToString(), "");
