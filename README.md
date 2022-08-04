@@ -2,7 +2,7 @@
 
 **[Download the latest release on the Releases page](https://github.com/VeeamHub/veeam-healthcheck/releases/) and select the VeeamHealthCheck zip file.**
 
-This Windows utility is a lightweight executable that will generate an advanced configuration report covering details about the current Veeam Backup & Replication installation. Simply download, extract, and execute to generate the report. 
+This Windows utility is a lightweight executable that will generate an advanced configuration report covering details about the current Veeam Backup & Replication  or Veeam Backup for Microsoft 365 installation. Simply download, extract, and execute to generate the report. 
 
 **[Sample Report](https://htmlpreview.github.io/?https://github.com/VeeamHub/veeam-healthcheck/blob/master/SAMPLE/Veeam_HealthCheck_Report_live-backup_2022.01.10_102711.html)**
 
@@ -13,8 +13,8 @@ This Windows utility is a lightweight executable that will generate an advanced 
 **System Requirements:**
 - Must be run as elevated user
 	- User must have Backup Administrator role in B&R
-- Veeam Backup & Replication v11
-- Must be executed on system where Veeam Backup & Replication is installed (no remote execution)
+- Veeam Backup & Replication v11 OR Veeam Backup for Microsoft 365 v6
+- Must be executed on system where Veeam Backup & Replication or Veeam Backup for Microsoft 365 is installed (no remote execution)
 - C:\ must have at least 500MB free space: Output is sent to C:\temp\vHC
 - Veeam Cloud Service Provider Servers are not supported.
 
@@ -28,7 +28,7 @@ This Windows utility is a lightweight executable that will generate an advanced 
 7. Review the report
 
 **Features**
-- Single-page report with B&R Configuration information
+- Single-page report with B&R/VB365 Configuration information
 - Custom calculations and tables:
 	- Highlighting areas of potential improvement
 	- Job sessions analysis:
