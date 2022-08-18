@@ -1323,7 +1323,7 @@ namespace VeeamHealthCheck.Reporting.Html.VB365
                 }
 
                 s += "<tr>";
-                s += _form.TableData((protectedUsers + notProtectedUsers).ToString(), "");
+                s += _form.TableData((protectedUsers + notProtectedUsers + stale).ToString(), "");
                 s += _form.TableData(protectedUsers.ToString(), "");
                 s += _form.TableData(notProtectedUsers.ToString(), "", shade);
                 s += _form.TableData(stale.ToString(), "");
