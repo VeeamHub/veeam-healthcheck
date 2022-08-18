@@ -23,6 +23,7 @@ namespace VeeamHealthCheck.Html
 
         private bool _scrub = false;
 
+        private CLogger log = VhcGui.log;
 
         CHtmlFormatting _form = new();
         CHtmlTables _tables = new();
@@ -33,10 +34,11 @@ namespace VeeamHealthCheck.Html
 
         public CHtmlCompiler()
         {
+            log.Info("Init VBR Compiler");
             FormHeader();
             FormBody();
             ExportHtml();
-
+            log.Info("Init VBR Compiler...done!");
         }
         private void ExportHtml()
         {
@@ -45,7 +47,9 @@ namespace VeeamHealthCheck.Html
         }
         private string GetServerName()
         {
+            log.Info("Checking for server name...");
             return Dns.GetHostName();
+            log.Info("Checking for server name...done!");
         }
         public void Dispose()
         {
@@ -54,12 +58,14 @@ namespace VeeamHealthCheck.Html
 
         private void FormHeader()
         {
+            log.Info("[HTML] Forming Header...");
             _htmldoc = "<html>";
             _htmldoc += "<head>";
             _htmldoc += "<style>";
             _htmldoc += CssStyler.StyleString();
             _htmldoc += "</style></head>";
 
+            log.Info("[HTML] Forming Header...done!");
             //FormBody();
         }
 
@@ -69,6 +75,7 @@ namespace VeeamHealthCheck.Html
 
         private void SetNavigation()
         {
+            log.Info("[HTML] setting HTML navigation");
             AddToHtml(DivId("navigation"));
             AddToHtml(String.Format("<h4>{0}</h4>", ResourceHandler.NavHeader));
             AddToHtml(String.Format("<button type=\"button\" class=\"btn\" onclick=\"test()\">{0}</button>", ResourceHandler.NavColapse));
@@ -76,14 +83,17 @@ namespace VeeamHealthCheck.Html
 
 
             AddToHtml(_form._endDiv);
+            log.Info("[HTML] setting HTML navigation...done!");
         }
 
 
 
         private string SetLicHolder()
         {
+            log.Info("Setting license holder name...");
             CCsvParser csv = new();
             var lic = csv.GetDynamicLicenseCsv();
+            log.Info("Setting license holder name...done!");
             foreach (var l in lic)
                 return l.licensedto;
             return "";
@@ -92,6 +102,7 @@ namespace VeeamHealthCheck.Html
         #endregion
         private void FormBody()
         {
+            log.Info("[HTML] forming HTML body");
             _htmldoc += _form.body;
 
             _htmldoc += _form.SetHeaderAndLogo(SetLicHolder());
@@ -127,60 +138,10 @@ namespace VeeamHealthCheck.Html
             _htmldoc += CssStyler.JavaScriptBlock();
             _htmldoc += "</script>";
 
-
+            log.Info("[HTML] forming HTML body...done!");
         }
 
         #region TableFormation
-
-        private void Section(string sectionType)
-        {
-            /* div id=nameInLink
-             * h2 section name (i.e. Detected Infr Types)
-             * break
-             * Table
-             * div content
-                * Summary
-                * Summary Text
-                * Notes
-                * Notes text
-                * end div
-             * BackToTop
-             * end div
-             */
-            AddSectionHeader(sectionType);
-            AddTable(sectionType);
-
-        }
-        private void AddTable(string type)
-        {
-            switch (type)
-            {
-                case "serverSummary":
-
-                    break;
-
-                default:
-                    break;
-            }
-        }
-        private void AddSectionHeader(string sectionType)
-        {
-            switch (sectionType)
-            {
-                case "serverSummary":
-                    SectionHeader("serverSummary", "");
-                    break;
-            }
-
-        }
-        private void SectionHeader(string sectionLinkName, string headerText)
-        {
-            _htmldoc += String.Format("<div id=\"{0}\">{1}", sectionLinkName, headerText);
-        }
-
-
-
-
 
         private void NavTable()
         {
@@ -201,6 +162,8 @@ namespace VeeamHealthCheck.Html
         }
         private void Table(string header, string type)
         {
+            string logString = string.Format("[HTML] creating table {0} of type {1}", header, type);
+            log.Info(logString);
             //CHtmlTables tables = new();
             string tableString = DivId(type) +
                 h2UnderLine(header) +
@@ -280,20 +243,7 @@ namespace VeeamHealthCheck.Html
             _htmldoc += BackToTop() +
                 "</div>"; ;
         }
-        private void SetLicTable()
-        {
-            Table("License Summary", "license");
-            EndSection();
 
-        }
-        private void SetVbrTable()
-        {
-            _htmldoc += _tables.AddBkpSrvTable();
-
-            //Table("Backup Server & Config DB Info", "vbrInfo");
-            //SetVbrSummary();
-            EndSection();
-        }
 
         /*
  Server Summary
@@ -311,137 +261,11 @@ Task COn
 Job Session Sum
 Job Info
  */
-        private void SetServerSummaryTable()
-        {
-            Table("Detected Infrastructure Types & Counts", "srvSummary");
-            //taable
-            EndSection();
-        }
-        private void SetJobSummaryTable()
-        {
-            Table("Job Summary", "jobSummary");
-            //taable
-            EndSection();
-        }
-        private void SetMissingJobTypeTable()
-        {
-            Table("Missing Job Types", "missingJobs");
-            //taable
-            EndSection();
-        }
-        private void SetProtectedWkldTable()
-        {
-            Table("Protected Workloads", "protectedWklds");
-            //taable
-            EndSection();
-        }
-        private void SetMgdSrvInfoTable()
-        {
-            Table("Managed Server Info", "serverInfo");
-            //taable
-            EndSection();
-        }
-        private void SetRegKeyTable()
-        {
-            Table("Non-Default Registry Keys", "regKeys");
-            //taable
-            EndSection();
-        }
-        private void SetProxyTable()
-        {
-            Table("Proxy Info", "proxyInfo");
-            //taable
-            EndSection();
-        }
-        private void SetSobrTable()
-        {
-            Table("SOBR Details", "sobr");
-            //taable
-            EndSection();
-        }
-        private void SetExtentTable()
-        {
-            Table("SOBR Extent Info", "extents");
-            //taable
-            EndSection();
-        }
-        private void SetRepoTable()
-        {
-            Table("Standalone Repository Details", "repos");
-            //taable
-            EndSection();
-        }
-        private void SetJobConTable()
-        {
-            Table("Job Concurrency (7 days)", "jobConcurrency");
-            //taable
-            EndSection();
-        }
-        private void SetTaskConTable()
-        {
-            Table("Task Concurrency - 7 days", "taskConcurrency");
-            //taable
-            EndSection();
-        }
-        private void SetJobSessSumTable()
-        {
-            Table("Job Session Summary", "jobSessSummary");
-            //taable
-            EndSection();
-        }
-        private void SetJobInfoTable()
-        {
-            Table("Job Info", "jobs");
-            //taable
-            EndSection();
-        }
-        private void SetSecSumTable()
-        {
-            _htmldoc += _tables.AddSecSummaryTable();
-            //Table("Security Summary", "secSum");
-
-            EndSection();
-        }
-        private string CollapsibleButton(string buttonText)
-        {
-            return SectionButton(_form._collapsible, buttonText);
-        }
-        private void SetVbrSummary()
-        {
-            _htmldoc += CollapsibleButton(ResourceHandler.BkpSrvButton);
-
-            _htmldoc += "<div class=\"content\">";
-            _htmldoc += AddA("hdr", ResourceHandler.GeneralSummaryHeader) + LineBreak() +
-                AddA("i2", ResourceHandler.BkpSrvSummary1) +
-                AddA("i3", ResourceHandler.BkpSrvSummary2) +
-                AddA("i3", ResourceHandler.BkpSrvSummary3) +
-                AddA("i3", ResourceHandler.BkpSrvSummary4) +
-                DoubleLineBreak() +
-                AddA("hdr", ResourceHandler.GeneralNotesHeader) + LineBreak() +
-                AddA("i2", ResourceHandler.BkpSrvNotes1) +
-                AddA("i2", ResourceHandler.BkpSrvNotes2) +
-                AddA("i2", ResourceHandler.BkpSrvNotes3) +
-                AddA("i2", ResourceHandler.BkpSrvNotes4) +
-                AddA("i2", ResourceHandler.BkpSrvNotes5) +
-                AddA("i2", ResourceHandler.BkpSrvNotes6)
-                ;
-            _htmldoc += "</div>";
-            _htmldoc += "</div>";
-        }
-        private string SectionButton(string classType, string displayText)
-        {
-            return String.Format("<button type=\"button\" class=\"{0}\">{1}</button>", classType, displayText);
-        }
-        private string AddA(string classInfo, string displaytext)
-        {
-            return String.Format("<a class=\"{0}\">{1}</a>" + LineBreak(), classInfo, displaytext);
-        }
 
         private string BackToTop()
         {
             return String.Format("<a href=\"#top\">Back To Top</a>");
         }
-
 
         #endregion
 
@@ -455,26 +279,6 @@ Job Info
             return String.Format("<h2><u>{0}</u></h2>", text);
         }
 
-        private string Button(string displayText)
-        {
-            return String.Format("<button type=\"button\" class=\"collapsible\">{0}</button>", displayText);
-        }
-
-
-        private string HyperLink(string link, string displayText)
-        {
-            string s = String.Format("<a href=\"{0}\" target=\"_blank\">{1}</a>", link, displayText);
-            return s;
-        }
-
-        private string LineBreak()
-        {
-            return "<br/>";
-        }
-        private string DoubleLineBreak()
-        {
-            return "<br/><br/>";
-        }
         private void AddToHtml(string infoString)
         {
             _htmldoc += infoString;

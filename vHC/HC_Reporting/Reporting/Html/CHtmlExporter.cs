@@ -60,7 +60,7 @@ namespace VeeamHealthCheck.Html
         }
         public void ExportVb365Html(string htmlString)
         {
-            log.Info("exporting xml to html");
+            log.Info("writing HTML to file...");
 
             DateTime dateTime = DateTime.Now;
             string n = VhcGui._desiredPath;
@@ -74,7 +74,7 @@ namespace VeeamHealthCheck.Html
             {
                 sw.Write(htmlString);
             }
-            log.Info("exporting xml to html..done!");
+            log.Info("writing HTML to file..done!");
             //OpenHtml();
             if (VhcGui._openExplorer)
                 OpenExplorer();

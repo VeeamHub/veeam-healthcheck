@@ -9,6 +9,7 @@ using VeeamHealthCheck.Html;
 using VeeamHealthCheck.Html.VBR;
 using VeeamHealthCheck.Reporting.Html.Shared;
 using VeeamHealthCheck.Shared;
+using VeeamHealthCheck.Shared.Logging;
 
 namespace VeeamHealthCheck.Reporting.Html.VB365
 {
@@ -18,15 +19,23 @@ namespace VeeamHealthCheck.Reporting.Html.VB365
         CM365Tables _tables = new CM365Tables();
 
         private string _htmldoc = String.Empty;
+        private CLogger log = VhcGui.log;
         public CVb365HtmlCompiler()
         {
+            log.Info("[VB365] HTML complier init...");
             RunCompiler();
+            log.Info("[VB365] HTML complier complete!");
         }
         public void Dispose() { }
         private void RunCompiler()
         {
+            log.Info("[VB365][HTML] forming header...");
             _htmldoc += _form.FormHeader();
+            log.Info("[VB365][HTML] forming header...done!");
+
+            log.Info("[VB365][HTML] forming body...");
             FormVb365Body();
+            log.Info("[VB365][HTML] forming body...done!");
         }
         private void FormVb365Body()
         {
@@ -73,7 +82,7 @@ namespace VeeamHealthCheck.Reporting.Html.VB365
         }
         private string SetNavigation()
         {
-
+            log.Info("[VB365][HTML] forming navigation...");
             string s = String.Empty;
             s += _form.DivId("navigation");
             
@@ -83,7 +92,7 @@ namespace VeeamHealthCheck.Reporting.Html.VB365
 
 
             s += _form._endDiv;
-
+            log.Info("[VB365][HTML] forming navigation...done!");
             return s;
         }
         private string NavTable()
@@ -106,8 +115,10 @@ namespace VeeamHealthCheck.Reporting.Html.VB365
         }
         private void ExportHtml()
         {
+            log.Info("[VB365][HTML] exporting HTML file...");
             CHtmlExporter exporter = new("", GetServerName(), "", VhcGui._scrub);
             exporter.ExportVb365Html(_htmldoc);
+            log.Info("[VB365][HTML] exporting HTML...done!");
         }
         private string GetServerName()
         {

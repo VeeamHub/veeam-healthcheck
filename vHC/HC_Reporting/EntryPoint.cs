@@ -9,11 +9,13 @@ using System.Windows.Threading;
 using System.Runtime.InteropServices;
 using VeeamHealthCheck.Shared.Logging;
 using System.Text.RegularExpressions;
+using VeeamHealthCheck.Shared.Logging;
 
 namespace VeeamHealthCheck
 {
     public class EntryPoint
     {
+        private static CLogger logger = VhcGui.log;
         private static string _helpMenu = "\nHELP MENU:\nrun\tExecutes the program via CLI" +
             "\noutdir:\tSpecifies desired location for HTML reports. Usage: \"outdir:D:\\example\". Default = C:\\temp\\vHC" +
             "\n\n" +
@@ -34,6 +36,7 @@ namespace VeeamHealthCheck
         [STAThread]
         public static void Main(string[] args)
         {
+            logger.Info("Args count = " + args.Count().ToString());
             var handle = GetConsoleWindow();
             if (args != null && args.Length > 0)
             {
@@ -44,11 +47,12 @@ namespace VeeamHealthCheck
                     switch (a)
                     {
                         case "help":
+                            logger.Info("entering help menu");
                             Console.WriteLine(_helpMenu);
                             break;
                         case "run":
                             run = true;
-                            
+                            logger.Info("Run = true");
                             break;
                         case "show:files":
                             break;
@@ -59,6 +63,7 @@ namespace VeeamHealthCheck
                         case var match when new Regex("outdir:.*").IsMatch(a):
                             string[] outputDir = a.Split(":");
                             targetDir = outputDir[1];
+                            logger.Info("Output directory: " + targetDir);
                             break;
                     }
                 }
@@ -74,6 +79,7 @@ namespace VeeamHealthCheck
             }
             else
             {
+                logger.Info("Executing GUI");
                 ShowWindow(handle, SW_HIDE);
                 var app = new System.Windows.Application();
                 app.Run(new VhcGui());

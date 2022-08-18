@@ -12,6 +12,7 @@ using VeeamHealthCheck.Shared.Logging;
 using System.Threading;
 using System.Globalization;
 using VeeamHealthCheck.Scrubber;
+using System.ComponentModel.Composition.Primitives;
 
 namespace VeeamHealthCheck
 {
@@ -164,15 +165,29 @@ namespace VeeamHealthCheck
             bool userOpenExplorer = _openExplorer;
             string userPath = _desiredPath;
 
-            _openHtml = false;
+            
+            string userSettingsString = String.Format(
+                "User Settings:\n"+
+                "\tScrub = {0}"+
+                "\tOpen HTML = {1}"+
+                "\tOpen Explorer = {2}"+
+                "\tPath = {3}",
+                _scrub,_openHtml, _openExplorer, _desiredPath
+                );
+
+            log.Info(userSettingsString);
+
+                _openHtml = false;
             _openExplorer = false;
-
-
             if (_scrub)
             {
                 _desiredPath = userPath + CVariables._unsafeSuffix;
                 _scrub = false;
+
+                log.Info("Creating Original Report to directory: " + _desiredPath);
+
                 Import();
+                log.Info("Creating Original Report to directory...done! ");
                 _scrub = true;
                 _desiredPath = userPath + CVariables._safeSuffix;
             }
@@ -180,14 +195,22 @@ namespace VeeamHealthCheck
             {
                 _desiredPath = userPath + CVariables._safeSuffix;
                 _scrub = true;
+                log.Info("Creating Anonymous Report to directory: " + _desiredPath);
                 Import();
+                log.Info("Creating Anonymous Report to directory...done!");
                 _scrub = false;
                 _desiredPath = userPath + CVariables._unsafeSuffix;
             }
             //_scrub = userSetScrub;
             _openHtml = userOpenHtml;
             _openExplorer = userOpenExplorer;
+            if(_scrub)
+                log.Info("Creating Anonymous Report to directory: " + _desiredPath);
+            if (!_scrub)
+                log.Info("Creating Original Report to directory: " + _desiredPath);
             Import();
+
+            log.Info("Creating Report done!");
 
 
             //// change scrub to opposite + gen 2nd report

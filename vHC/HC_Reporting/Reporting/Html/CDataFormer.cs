@@ -51,10 +51,7 @@ namespace VeeamHealthCheck.Reporting.Html
         private readonly CXmlFunctions XML = new("vbr");
 
 
-        public void ConvertToXml()
-        {
-            _dTypeParser = new();
-        }
+
         public CDataFormer(bool isImport) // add string mode input
         {
             _dTypeParser = new();
@@ -66,28 +63,12 @@ namespace VeeamHealthCheck.Reporting.Html
             if (!File.Exists(_testFile))
                 File.Create(_testFile).Dispose();
         }
-        private void SetGlobalVariables(bool scrub, bool checkLogs, bool openHtml, bool isImport)
-        {
-            _isImport = isImport;
-            if (scrub)
-                _scrubber = new();
-            _scrub = scrub;
 
-            _checkLogs = checkLogs;
-        }
 
 
         #region XML Conversions
 
-        private void LicInfoToXml()
-        {
-            log.Info("converting lic info to xml");
-            CCsvParser parser = new();
-            var recs = parser.GetDynamicLicenseCsv();
 
-            
-            log.Info("converting lic info to xml..done!");
-        }
         public List<string> ParseNonProtectedTypes()
         {
             List<string> notProtectedTypes = new();
@@ -748,18 +729,6 @@ namespace VeeamHealthCheck.Reporting.Html
             return list;
         }
 
-        private void ProtectedVmCounter(List<CViProtected> protectedList, List<string> uniqueVmList, int vmcounter, int protectedCounter)
-        {
-            foreach (var p in protectedList)
-            {
-                if (!uniqueVmList.Contains(p.Name))
-                {
-                    vmcounter++;
-                    protectedCounter++;
-                    uniqueVmList.Add(p.Name);
-                }
-            }
-        }
         public List<string[]> ServerXmlFromCsv()
         {
             log.Info("converting server info to xml");
@@ -1173,10 +1142,7 @@ namespace VeeamHealthCheck.Reporting.Html
 
             return sendBack;
         }
-        public Dictionary<int, string[]> TaskConcurrency(int days)
-        {
-            return JobConcurrency(false, days);
-        }
+
         public Dictionary<string, string> RegOptions()
         {
             Dictionary<string, string> returnDict = new();
@@ -1410,10 +1376,6 @@ namespace VeeamHealthCheck.Reporting.Html
         #endregion
 
         #region localFunctions
-        private string FilterZeros(int value)
-        {
-            return FilterZeros((decimal)value);
-        }
         private string FilterZeros(decimal value)
         {
             string s = "";
@@ -1485,24 +1447,6 @@ namespace VeeamHealthCheck.Reporting.Html
             return ct;
         }
 
-        private string VerifyDocName(string docName)
-        {
-            if (docName.Contains('/'))
-            {
-                docName = docName.Replace('/', ' ');
-            }
-            VerifyDocPath(docName);
-            return docName;
-
-        }
-        private void VerifyDocPath(string docName)
-        {
-            string dir = Path.GetDirectoryName(docName);
-            if (!Directory.Exists(dir))
-            {
-                Directory.CreateDirectory(dir);
-            }
-        }
         public void Dispose()
         {
 
