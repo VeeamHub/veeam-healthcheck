@@ -142,7 +142,7 @@ namespace VeeamHealthCheck
         private void Import_click(object sender, RoutedEventArgs e)
         {
             //   Import();
-            LogUIAction("Import clicked");
+            LogUIAction("Import");
             _import = true;
             showProgressBar();
 
@@ -168,10 +168,10 @@ namespace VeeamHealthCheck
             
             string userSettingsString = String.Format(
                 "User Settings:\n"+
-                "\tScrub = {0}"+
-                "\tOpen HTML = {1}"+
-                "\tOpen Explorer = {2}"+
-                "\tPath = {3}",
+                "\t\t\t\t\t\t\t\t\tScrub = {0}\n"+
+                "\t\t\t\t\t\t\t\t\tOpen HTML = {1}\n"+
+                "\t\t\t\t\t\t\t\t\tOpen Explorer = {2}\n"+
+                "\t\t\t\t\t\t\t\t\tPath = {3}\n",
                 _scrub,_openHtml, _openExplorer, _desiredPath
                 );
 
@@ -240,7 +240,7 @@ namespace VeeamHealthCheck
         private void run_Click(object sender, RoutedEventArgs e)
         {
 
-            LogUIAction("Run selected");
+            LogUIAction("Run");
 
             // disable UI Buttons and boxes
             DisableButtons();
@@ -280,6 +280,7 @@ namespace VeeamHealthCheck
         }
         private void AcceptButton_click(object sender, RoutedEventArgs e)
         {
+            LogUIAction("Accecpt");
             string message = ResourceHandler.GuiAcceptText;
 
             var res = MessageBox.Show(message, "Terms", MessageBoxButton.YesNo);
@@ -388,26 +389,31 @@ namespace VeeamHealthCheck
         #region Check Boxes
         private void HandleCheck(object sender, RoutedEventArgs e)
         {
+            LogUIAction("Scrub = true");
             _scrub = true;
             //SetPathBoxText(_desiredPath + CVariables._safeSuffix);
         }
         private void htmlChecked(object sender, RoutedEventArgs e)
         {
+            LogUIAction("Open HTML = true");
             //export HTML
             _openHtml = true;
         }
         private void htmlUnchecked(object sender, RoutedEventArgs e)
         {
+            LogUIAction("Open HTML = false");
             //don't export html
             _openHtml = false;
         }
         private void HandleUnchecked(object sender, RoutedEventArgs e)
         {
+            LogUIAction("Scrub = false");
             //SetPathBoxText(_desiredPath + CVariables._unsafeSuffix);
             _scrub = false;
         }
         private void HandleThirdState(object sender, RoutedEventArgs e)
         {
+            LogUIAction("Scrub 3rd state = false");
             // do nothing
             _scrub = false;
         }
@@ -417,10 +423,12 @@ namespace VeeamHealthCheck
         }
         private void explorerShowBox_Checked(object sender, RoutedEventArgs e)
         {
+            LogUIAction("Show Explorer = true");
             _openExplorer = true;
         }
         private void explorerShowBox_Unchecked(object sender, RoutedEventArgs e)
         {
+            LogUIAction("Show Explorer = false");
             _openExplorer = false;
         }
 
@@ -433,6 +441,7 @@ namespace VeeamHealthCheck
         private void kbLink_RequestNavigate(object sender, System.Windows.Navigation.RequestNavigateEventArgs e)
         {
             //Process.Start(e.Uri.ToString());
+            LogUIAction("KB Link");
             log.Info("opening kb_link");
             Application.Current.Dispatcher.Invoke((Action)delegate
             {
@@ -450,6 +459,7 @@ namespace VeeamHealthCheck
         }
         private void pathBox_TextChanged(object sender, TextChangedEventArgs e)
         {
+            log.Info("Changing path from" + _desiredPath + " to " + pathBox.Text);
             _desiredPath = pathBox.Text;
         }
     }

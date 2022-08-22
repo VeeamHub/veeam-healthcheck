@@ -23,7 +23,7 @@ namespace VeeamHealthCheck
         }
         public void Invoke(bool collectSessionData)
         {
-            log.Info("Enter Config Collection Invoker...");
+            log.Info("[PS] Enter Config Collection Invoker...");
             var ps1File = Environment.CurrentDirectory + @"\Tools\Scripts\Get-VBRConfig.ps1";
             //log.Info("Checking file block..");
             UnblockFile(ps1File);
@@ -34,13 +34,13 @@ namespace VeeamHealthCheck
                 UseShellExecute = false,
                 CreateNoWindow = true
             };
-            log.Info("Starting PowerShell Process...");
+            log.Info("[PS][VBR Config] Starting PowerShell Process...");
             var res1 = Process.Start(startInfo);
-            log.Info("Process started with ID: " +  res1.Id.ToString());
+            log.Info("[PS][VBR Config] Process started with ID: " +  res1.Id.ToString());
 
             if (collectSessionData)
             {
-                log.Info("Enter Session Collection Invoker...");
+                log.Info("[PS][VBR Sessions] Enter Session Collection Invoker...");
                 var ps1File2 = Environment.CurrentDirectory + @"\Tools\Scripts\Get-VeeamSessionReport.ps1";
                 UnblockFile(ps1File2);
                 var startInfo2 = new ProcessStartInfo()
@@ -50,15 +50,15 @@ namespace VeeamHealthCheck
                     UseShellExecute = false,
                     CreateNoWindow = true
                 };
-                log.Info("Starting Session Collection PowerShell Process...");
+                log.Info("[PS][VBR Sessions] Starting Session Collection PowerShell Process...");
                 var result = Process.Start(startInfo2);
-                log.Info("Process started with ID: " + result.Id.ToString());
+                log.Info("[PS][VBR Sessions] Process started with ID: " + result.Id.ToString());
                 result.WaitForExit();
-                log.Info("Session collection complete!");
+                log.Info("[PS][VBR Sessions] Session collection complete!");
             }
 
             res1.WaitForExit();
-            log.Info("Config collection complete!");
+            log.Info("[PS][VBR Config] Config collection complete!");
             //shell.AddCommand("Get-VeeamSessionReport").AddParameter("VBRServer","localhost").AddParameter("ReportPath","C:\\temp\\vbrout");
 
             //var output = shell.Invoke();
@@ -66,7 +66,7 @@ namespace VeeamHealthCheck
         }
         public void InvokeVb365Collect()
         {
-            log.Info("Enter VB365 collection invoker...");
+            log.Info("[PS] Enter VB365 collection invoker...");
             var scriptFile = _vb365Script;
             UnblockFile(scriptFile);
 
@@ -77,11 +77,11 @@ namespace VeeamHealthCheck
                 UseShellExecute = false,
                 CreateNoWindow = true
             };
-            log.Info("Starting VB365 Collection Powershell process");
+            log.Info("[PS] Starting VB365 Collection Powershell process");
             var result = Process.Start(startInfo);
-            log.Info("Process started with ID: " + result.Id.ToString());
+            log.Info("[PS] Process started with ID: " + result.Id.ToString());
             result.WaitForExit();
-            log.Info("VB365 collection complete!");
+            log.Info("[PS] VB365 collection complete!");
 
         }
         private ProcessStartInfo psInfo(string scriptFile)

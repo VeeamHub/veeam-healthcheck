@@ -5,13 +5,68 @@
     Simple Veeam report to dump server & job configurations
 .Notes
     Version: 0.2
-    Author: Joe Houghes
+    Original Author: Joe Houghes
+    Butchered by: Adam Congdon
     Modified Date: 4-24-2020
 .EXAMPLE
     Get-VBRConfig -VBRServer ausveeambr -ReportPath C:\Temp\VBROutput
     Get-VBRconfig -VBRSERVER localhost -ReportPath C:\HealthCheck\output
 #>
+
+#functions
+enum LogLevel {
+  TRACE
+  PROFILE
+  DEBUG
+  INFO
+  WARNING
+  ERROR
+  FATAL
+}
+Clear-Host
+
 Write-host("Executing VBR Config Collection...")
+
+$global:SETTINGS = '{"LogLevel":"INFO","OutputPath":"C:\\temp\\vHC\\Original\\VBR","ReportingIntervalDays":7,"VBOServerFqdnOrIp":"localhost"}'<#,"SkipCollect":false,"ExportJson":false,"ExportXml":false,"DebugInConsole":false,"Watch":false}#> | ConvertFrom-Json
+if (Test-Path ($global:SETTINGS.OutputPath + "\CollectorConfig.json")) {
+    [pscustomobject]$json = Get-Content -Path ($global:SETTINGS.OutputPath + "\CollectorConfig.json") | ConvertFrom-Json
+    foreach ($property in $json.PSObject.Properties) {
+        if ($null -eq $global:SETTINGS.($property.Name)) {
+            $global:SETTINGS | Add-Member -MemberType NoteProperty -Name ($property.Name) -Value $json.($property.Name)
+        } else {
+            $global:SETTINGS.($property.Name) = $json.($property.Name)
+        }   
+    }
+}
+function Write-LogFile {
+    [CmdletBinding()]
+    param (
+        [string]$Message,
+        [ValidateSet("Main","Errors","NoResult")][string]$LogName="Main",
+        [ValidateSet("TRACE", "PROFILE", "DEBUG", "INFO", "WARNING", "ERROR", "FATAL")][String]$LogLevel=[LogLevel]::INFO
+        )
+    begin {
+    }
+    process {
+        # if message log level is higher/equal to config log level, post it.
+        if ([LogLevel]$LogLevel -ge [LogLevel]$global:SETTINGS.loglevel) {
+            (get-date).ToString("yyyy-MM-dd hh:mm:ss") + "`t"+$LogLevel+"`t`t" + $Message | Out-File -FilePath ($global:SETTINGS.OutputPath.Trim('\') + "\Collector" + $LogName + ".log") -Append
+            
+            #write it to console if enabled.
+            if ($global:SETTINGS.DebugInConsole) {
+                switch ([LogLevel]$LogLevel) {
+                    [LogLevel]::WARNING {Write-Warning -Message $message;break; }
+                    [LogLevel]::ERROR {Write-Error -Message $message;break; }
+                    [LogLevel]::INFO {Write-Information -Message $message;break; }
+                    [LogLevel]::DEBUG {Write-Debug -Message $message;break; }
+                    [LogLevel]::PROFILE {Write-Debug -Message $message;break; }
+                    [LogLevel]::TRACE {Write-Verbose -Message $message;break; }
+                }
+            }
+        }
+    }
+    end { }
+}
 function Get-VBRConfig {
   param(
     # VBRServer
@@ -69,6 +124,7 @@ $capOut = $cap | Select-Object Status, @{n='Type';e={$_.Repository.Type}}, @{n='
 #Traffic Rules
 $trafficRules = Get-VBRNetworkTrafficRule  
 
+Write-LogFile("Starting Registry query...")
 #regSettings
         $reg = get-item "HKLM:\SOFTWARE\Veeam\Veeam Backup and Replication"
 
@@ -85,7 +141,7 @@ $trafficRules = Get-VBRNetworkTrafficRule
         }
 
 
-
+Write-LogFile("Collecting Job Types...")
 #JobTypes & conversion
     $catCopy = Get-VBRCatalystCopyJob
     $vaBcj = Get-VBRComputerBackupCopyJob
