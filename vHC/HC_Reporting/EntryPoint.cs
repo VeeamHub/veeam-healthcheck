@@ -37,12 +37,15 @@ namespace VeeamHealthCheck
         public static void Main(string[] args)
         {
             logger.Info("Args count = " + args.Count().ToString());
+            foreach(var arg in args)
+                logger.Info("Input: " + arg);
             var handle = GetConsoleWindow();
             if (args != null && args.Length > 0)
             {
                 bool run = false;
                 string targetDir = @"C:\temp\vHC";
-                foreach(var a in args)
+                int reportDays = 7;
+                foreach (var a in args)
                 {
                     switch (a)
                     {
@@ -59,6 +62,14 @@ namespace VeeamHealthCheck
                         case "show:report":
                             break;
                         case "show:all":
+                            break;
+                        case "days:7":
+                            logger.Info("Days set to 7");
+                            VhcGui._reportDays = 7;
+                            break;
+                        case "days:30":
+                            logger.Info("Days set to 30");
+                            VhcGui._reportDays = 30;
                             break;
                         case var match when new Regex("outdir:.*").IsMatch(a):
                             string[] outputDir = a.Split(":");
@@ -80,7 +91,7 @@ namespace VeeamHealthCheck
             else
             {
                 logger.Info("Executing GUI");
-                ShowWindow(handle, SW_HIDE);
+                //ShowWindow(handle, SW_HIDE);
                 var app = new System.Windows.Application();
                 app.Run(new VhcGui());
             }

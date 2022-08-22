@@ -143,7 +143,7 @@ namespace VeeamHealthCheck.Html
                                 double startDiff = (now - startTime).TotalDays;
                                 double endDiff = (now - endTime).TotalDays;
 
-                                if (endDiff < 7 || startDiff < 7)
+                                if (endDiff < VhcGui._reportDays || startDiff < VhcGui._reportDays)
                                 {
                                     TimeSpan.TryParse(w.Duration, out TimeSpan duration);
                                     tList.Add(duration);
@@ -186,7 +186,7 @@ namespace VeeamHealthCheck.Html
 
                         ////}
                         //if (diff < days)
-                        if (j == c.Name && diff < 7)
+                        if (j == c.Name && diff < VhcGui._reportDays)
                         {
                             sessionCount++;
                             totalSessions++;

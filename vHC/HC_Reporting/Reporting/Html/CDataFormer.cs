@@ -941,7 +941,7 @@ namespace VeeamHealthCheck.Reporting.Html
                         int i = mirrorSessions.Count();
                         DateTime now = DateTime.Now;
                         double diff = (now - sess.CreationTime).TotalDays;
-                        if (diff < 7)
+                        if (diff < VhcGui._reportDays)
                         {
                             mirrorJobNamesList.Add(sess.JobName);
                             string nameDate = sess.JobName + sess.CreationTime.ToString();
@@ -996,7 +996,7 @@ namespace VeeamHealthCheck.Reporting.Html
                             if (!nameDatesList.Contains(n1))
                             {
                                 nameDatesList.Add(n1);
-                                ctList.Add(ParseConcurrency(epB, 7));
+                                ctList.Add(ParseConcurrency(epB, VhcGui._reportDays));
                             }
                         }
 
@@ -1026,7 +1026,7 @@ namespace VeeamHealthCheck.Reporting.Html
                 {
                     DateTime now = DateTime.Now;
                     double diff = (now - session.CreationTime).TotalDays;
-                    if (diff < 7)
+                    if (diff < VhcGui._reportDays)
                     {
                         ctList.Add(ParseConcurrency(session, days));
 

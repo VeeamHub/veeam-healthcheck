@@ -30,6 +30,8 @@ namespace VeeamHealthCheck
         private string _path;
         public static bool _import;
 
+        public static int _reportDays = 7;
+
         private bool _isVbr = false;
         private bool _isVb365 = false;
 
@@ -461,6 +463,18 @@ namespace VeeamHealthCheck
         {
             log.Info("Changing path from" + _desiredPath + " to " + pathBox.Text);
             _desiredPath = pathBox.Text;
+        }
+
+        private void ComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            if(daysSelector.SelectedIndex == 0)
+            {
+                _reportDays = 7;
+            }
+            if (daysSelector.SelectedIndex == 1)
+            {
+                _reportDays = 30;
+            }
         }
     }
 }
