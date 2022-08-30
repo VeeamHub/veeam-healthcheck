@@ -105,7 +105,10 @@ namespace VeeamHealthCheck.Html
             log.Info("[HTML] forming HTML body");
             _htmldoc += _form.body;
 
-            _htmldoc += _form.SetHeaderAndLogo(SetLicHolder());
+            if(!VhcGui._scrub)
+                _htmldoc += _form.SetHeaderAndLogo(SetLicHolder());
+            if(VhcGui._scrub)
+                _htmldoc += _form.SetHeaderAndLogo(" ");
             _htmldoc += _form.SetBannerAndIntro();
 
             //nav
