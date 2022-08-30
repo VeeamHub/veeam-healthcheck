@@ -161,6 +161,7 @@ namespace VeeamHealthCheck
         {
             log.Info("Starting Run");
             ExecPsScripts();
+            Collection.LogParser.CLogOptions logOptions = new();
 
             bool userSetScrub = _scrub;
             bool userOpenHtml = _openHtml;

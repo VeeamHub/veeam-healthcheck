@@ -369,6 +369,7 @@ namespace VeeamHealthCheck.Reporting.Html
                 try
                 {
                     CRegReader regReader = new();
+                    regReader.GetDbInfo();
                     sqlHostName = regReader.Host;
                 }
                 catch (Exception q)

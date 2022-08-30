@@ -66,7 +66,11 @@ namespace VeeamHealthCheck.Html
             string n = VhcGui._desiredPath;
             if (!Directory.Exists(n))
                 Directory.CreateDirectory(n);
-            string htmlCore = "\\" + _htmlName + "_" + _backupServerName + dateTime.ToString("_yyyy.MM.dd_HHmmss") + ".html";
+            string htmlCore = "";
+            if (VhcGui._scrub)
+                htmlCore = "\\" + _htmlName + "_" + Collection.LogParser.CLogOptions.INSTALLID.Substring(0, 7) + dateTime.ToString("_yyyy.MM.dd.HHmmss") + ".html";
+            else if(!VhcGui._scrub)
+                htmlCore = "\\" + _htmlName + "_" + _backupServerName + dateTime.ToString("_yyyy.MM.dd.HHmmss") + ".html";
             string name = n + htmlCore;
             _latestReport = name;
 
@@ -89,7 +93,11 @@ namespace VeeamHealthCheck.Html
             string n = VhcGui._desiredPath;
             if (!Directory.Exists(n))
                 Directory.CreateDirectory(n);
-            string htmlCore = "\\" + _htmlName + "_" + _backupServerName + dateTime.ToString("_yyyy.MM.dd_HHmmss") + ".html";
+            string htmlCore = "";
+            if (VhcGui._scrub)
+                htmlCore = "\\" + _htmlName + "_" + Collection.LogParser.CLogOptions.INSTALLID.Substring(0, 7) + dateTime.ToString("_yyyy.MM.dd.HHmmss") + ".html";
+            else if (!VhcGui._scrub)
+                htmlCore = "\\" + _htmlName + "_" + _backupServerName + dateTime.ToString("_yyyy.MM.dd.HHmmss") + ".html";
             string name = n + htmlCore;
             _latestReport = name;
 

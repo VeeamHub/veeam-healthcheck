@@ -30,6 +30,17 @@ namespace VeeamHealthCheck.DB
 
         public CRegReader()
         {
+            
+
+            //catch (Exception ex)
+            //{
+            //    //Logger.Log.Warning("Something went awry with reading registry. Let's try manual DB connection:", false);
+            //    string msg = "Registry parsing failed. DB collections will not be possible. Does this server have Veeam Backup & Replication installed?";
+            //    MessageBox.Show(msg + "\n" + ex.Message);
+            //}
+        }
+        public void GetDbInfo()
+        {
             using (RegistryKey key =
                 Registry.LocalMachine.OpenSubKey("Software\\Veeam\\Veeam Backup and Replication"))
             {
@@ -56,15 +67,7 @@ namespace VeeamHealthCheck.DB
                     }
                 }
             }
-
-            //catch (Exception ex)
-            //{
-            //    //Logger.Log.Warning("Something went awry with reading registry. Let's try manual DB connection:", false);
-            //    string msg = "Registry parsing failed. DB collections will not be possible. Does this server have Veeam Backup & Replication installed?";
-            //    MessageBox.Show(msg + "\n" + ex.Message);
-            //}
         }
-
         public string DefaultLogDir()
         {
             var logDir = "C:\\ProgramData\\Veeam\\Backup";

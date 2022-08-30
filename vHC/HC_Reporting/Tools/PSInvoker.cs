@@ -37,6 +37,8 @@ namespace VeeamHealthCheck
             log.Info("[PS][VBR Config] Starting PowerShell Process...");
             var res1 = Process.Start(startInfo);
             log.Info("[PS][VBR Config] Process started with ID: " +  res1.Id.ToString());
+            res1.WaitForExit();
+            log.Info("[PS][VBR Config] Config collection complete!");
 
             if (collectSessionData)
             {
@@ -57,8 +59,7 @@ namespace VeeamHealthCheck
                 log.Info("[PS][VBR Sessions] Session collection complete!");
             }
 
-            res1.WaitForExit();
-            log.Info("[PS][VBR Config] Config collection complete!");
+            
             //shell.AddCommand("Get-VeeamSessionReport").AddParameter("VBRServer","localhost").AddParameter("ReportPath","C:\\temp\\vbrout");
 
             //var output = shell.Invoke();

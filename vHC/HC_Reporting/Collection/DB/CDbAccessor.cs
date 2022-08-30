@@ -25,46 +25,13 @@ namespace VeeamHealthCheck.DB
             SqlConnectionStringBuilder builder = SimpleConnectionBuilder();
             return builder;
         }
-        private static SqlConnectionStringBuilder ComplexConnectionBuilder()
-        {
-            SqlConnectionStringBuilder builder = new SqlConnectionStringBuilder(GetConnectionString());
-            builder.Remove("Initial Catalog");
-            //builder["Server"] = server;
-            CRegReader reg = new CRegReader();
-            string host = reg.HostString;
-            string db = reg.DbString;
-            string user = reg.User;
-            string pass = reg.PassString;
-
-            if (!String.IsNullOrEmpty(user))
-            {
-                builder.UserID = user;
-                string p = DecryptPass(pass);
-               // MessageBox.Show(p);
-                builder.Password = p;
-                builder["Server"] = host;
-                builder["Database"] = db;
-                return builder;
-            }
-
-            if (host == null || db == null)
-            {
-                Console.WriteLine("Please enter SQL Host Name & Instance (i.e. vbr-server\\sqlserver2016):");
-                host = Console.ReadLine();
-                Console.WriteLine("Please enter DB name:");
-                db = Console.ReadLine();
-            }
-
-            builder["Data Source"] = "(local)";
-            builder["integrated security"] = "SSPI";
-            return builder;
-        }
         private SqlConnectionStringBuilder SimpleConnectionBuilder()
         {
             SqlConnectionStringBuilder builder = new SqlConnectionStringBuilder(GetConnectionString());
             builder.Remove("Initial Catalog");
             //builder["Server"] = server;
             CRegReader reg = new CRegReader();
+            reg.GetDbInfo();
             string host = reg.HostString;
             string db = reg.DbString;
             if (host == null || db == null)
