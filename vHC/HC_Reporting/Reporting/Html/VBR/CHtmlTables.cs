@@ -77,25 +77,27 @@ namespace VeeamHealthCheck.Html.VBR
             foreach (var l in lic)
             {
 
-                
-                s +=
-                "<tr>" +
-                _form.TableData(l.licensedto, "") +
-                _form.TableData(l.edition, "") +
-                _form.TableData(l.status, "") +
-                _form.TableData(l.type, "") +
-                _form.TableData(l.licensedinstances, "") +
-                _form.TableData(l.usedinstances, "") +
-                _form.TableData(l.newinstances, "") +
-                _form.TableData(l.rentalinstances, "") +
-                _form.TableData(l.licensedsockets, "") +
-                _form.TableData(l.usedsockets, "") +
-                _form.TableData(l.licensedcapacitytb, "") +
-                _form.TableData(l.usedcapacitytb, "") +
-                _form.TableData(l.expirationdate, "") +
-                _form.TableData(l.supportexpirationdate, "") +
-                _form.TableData(l.cloudconnect, "") +
-                "</tr>";
+
+                s += "<tr>";
+                if(VhcGui._scrub)
+                    s += _form.TableData(_scrub.ScrubItem(l.licensedto), "") ;
+                if (!VhcGui._scrub)
+                    s += _form.TableData(l.licensedto, "");
+                s += _form.TableData(l.edition, "") ;
+                s += _form.TableData(l.status, "") ;
+                s += _form.TableData(l.type, "") ;
+                s += _form.TableData(l.licensedinstances, "") ;
+                s += _form.TableData(l.usedinstances, "") ;
+                s += _form.TableData(l.newinstances, "") ;
+                s += _form.TableData(l.rentalinstances, "") ;
+                s += _form.TableData(l.licensedsockets, "") ;
+                s += _form.TableData(l.usedsockets, "") ;
+                s += _form.TableData(l.licensedcapacitytb, "") ;
+                s += _form.TableData(l.usedcapacitytb, "") ;
+                s += _form.TableData(l.expirationdate, "") ;
+                s += _form.TableData(l.supportexpirationdate, "") ;
+                s += _form.TableData(l.cloudconnect, "") ;
+                s += "</tr>";
             }
 
             s += _form.SectionEnd(summary);
