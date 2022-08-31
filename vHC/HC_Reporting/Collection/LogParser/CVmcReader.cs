@@ -11,28 +11,61 @@ namespace VeeamHealthCheck.Collection.LogParser
     {
         private string LOGLOCATION;
         public string INSTALLID;
-        public CVmcReader()
-        {
 
+        private string _mode;
+        private string _vb365Logs = @"C:\ProgramData\Veeam\Backup365\Logs\";
+
+        public CVmcReader(string mode)
+        {
+            _mode = mode;
         }
         public void PopulateVmc()
         {
             GetLogDir();
-            ReadVmc();
+            try
+            {
+                ReadVmc();
+
+            }
+            catch (Exception e)
+            {
+                VhcGui.log.Error(e.Message);
+            }
         }
-        
+
         private void GetLogDir()
         {
-            DB.CRegReader reg = new();
-            string regDir = reg.DefaultLogDir();
-            LOGLOCATION = Path.Combine(regDir + CLogOptions.VMCLOG);
+            if(_mode == "vbr")
+            {
+                DB.CRegReader reg = new();
+                string regDir = reg.DefaultLogDir();
+                LOGLOCATION = Path.Combine(regDir + CLogOptions.VMCLOG);
+            }
+            else if(_mode == "vb365")
+            {
+                string[] filesList = Directory.GetFiles(_vb365Logs);
+                List<FileInfo> fileInfoList = new();
+                foreach(var f in filesList)
+                {
+                    if (f.Contains("VMC.log"))
+                    {
+                        FileInfo fileInfo = new FileInfo(f);
+                        fileInfoList.Add(fileInfo);
+                        
+                    }
+                }
+                fileInfoList.OrderBy(x => x.Name);
+                string fileName = fileInfoList.FirstOrDefault().Name;
+                LOGLOCATION = Path.Combine(_vb365Logs + fileName);
+            }
+            
         }
         private void ReadVmc()
         {
-            using(StreamReader sr = new StreamReader(LOGLOCATION))
+            using (StreamReader sr = new StreamReader(LOGLOCATION))
             {
                 string line = "";
-                while((line = sr.ReadLine())!= null)
+                while ((line = sr.ReadLine()) != null)
                 {
                     if (line.Contains(CLogOptions.installIdLine))
                     {

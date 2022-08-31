@@ -79,6 +79,7 @@ namespace VeeamHealthCheck
                 CreateNoWindow = true
             };
             log.Info("[PS] Starting VB365 Collection Powershell process");
+            log.Info("[PS] [ARGS]: " + startInfo.Arguments);
             var result = Process.Start(startInfo);
             log.Info("[PS] Process started with ID: " + result.Id.ToString());
             result.WaitForExit();

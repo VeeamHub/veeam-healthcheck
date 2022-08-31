@@ -14,9 +14,9 @@ namespace VeeamHealthCheck.Collection.LogParser
 
         private static string _installId;
 
-        public CLogOptions()
+        public CLogOptions(string mode)
         {
-            CVmcReader vReader = new();
+            CVmcReader vReader = new(mode);
             vReader.PopulateVmc();
             _installId = vReader.INSTALLID;
         }

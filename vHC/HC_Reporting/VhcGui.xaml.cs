@@ -161,7 +161,14 @@ namespace VeeamHealthCheck
         {
             log.Info("Starting Run");
             ExecPsScripts();
-            Collection.LogParser.CLogOptions logOptions = new();
+            if (_isVbr)
+            {
+                Collection.LogParser.CLogOptions logOptions = new("vbr");
+            }
+            if (_isVb365)
+            {
+                Collection.LogParser.CLogOptions logOptions = new("vb365");
+            }
 
             bool userSetScrub = _scrub;
             bool userOpenHtml = _openHtml;
@@ -174,8 +181,9 @@ namespace VeeamHealthCheck
                 "\t\t\t\t\t\t\t\t\tScrub = {0}\n"+
                 "\t\t\t\t\t\t\t\t\tOpen HTML = {1}\n"+
                 "\t\t\t\t\t\t\t\t\tOpen Explorer = {2}\n"+
-                "\t\t\t\t\t\t\t\t\tPath = {3}\n",
-                _scrub,_openHtml, _openExplorer, _desiredPath
+                "\t\t\t\t\t\t\t\t\tPath = {3}\n" +
+                "\t\t\t\t\t\t\t\t\tInterval = {4}",
+                _scrub,_openHtml, _openExplorer, _desiredPath, _reportDays.ToString()
                 );
 
             log.Info(userSettingsString);
@@ -471,10 +479,12 @@ namespace VeeamHealthCheck
             if(daysSelector.SelectedIndex == 0)
             {
                 _reportDays = 7;
+                LogUIAction("Interval set to " + _reportDays);
             }
             if (daysSelector.SelectedIndex == 1)
             {
                 _reportDays = 30;
+                LogUIAction("Interval set to " + _reportDays);
             }
         }
     }

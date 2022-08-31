@@ -16,12 +16,17 @@ namespace VeeamHealthCheck
     public class EntryPoint
     {
         private static CLogger logger = VhcGui.log;
-        private static string _helpMenu = "\nHELP MENU:\nrun\tExecutes the program via CLI" +
-            "\noutdir:\tSpecifies desired location for HTML reports. Usage: \"outdir:D:\\example\". Default = C:\\temp\\vHC" +
+        private static string _helpMenu = "\nHELP MENU:\n" +
+            "run\tExecutes the program via CLI" +
+            "\n" +
+            "outdir:\tSpecifies desired location for HTML reports. Usage: \"outdir:D:\\example\". Default = C:\\temp\\vHC" +
+            "\n" +
+            "days:\tSpecifies reporting interval. Choose 7 or 30. 7 is default. USAGE: 'days:30'" +
             "\n\n" +
             "EXAMPLES:\n" +
             "1. Run to default location:\t .\\VeeamHealthCheck.exe run\n" +
-            "2. Run to custom location:\t .\\VeeamHealthCheck.exe run outdir:\\\\myshare\\folder" +
+            "2. Run to custom location:\t .\\VeeamHealthCheck.exe run outdir:\\\\myshare\\folder\n" +
+            "3. Run with 30 day report:\t .\\VeeamHealthCheck.exe run days:30" +
             "\n";
         private static CLogger _log = VhcGui.log;
 
