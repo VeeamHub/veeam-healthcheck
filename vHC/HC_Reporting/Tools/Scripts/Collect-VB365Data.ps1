@@ -14,15 +14,15 @@
         
 #>
 
-<# Not implemented yet
+# Bound Parameters that can be passed in via script execution to override the default or config.json settings:
 param (
-    [bool]$Debug,
     [string]$OutputPath = "",
     [int]$ReportingIntervalDays = -1,
     [string]$VBOServerFqdnOrIp = "",
-    [switch]$PersistParams = $false
+    [switch]$PersistParams = $false,
+    [switch]$Debug = $false,
+    [switch]$DebugProfiling = $false
 )
-#>
 enum LogLevel {
     TRACE
     PROFILE
@@ -44,7 +44,13 @@ Clear-Host
     [string]LogLevel to change verbosity of logging. Log messages with level above or equal to this are output. DEBUG shows minimal debugging & profiling; PROFILE outputs detailed timers & resource usage; TRACE outputs "No Result" warnings & log
 #>  
 
+# Default config settings
 $global:SETTINGS = '{"LogLevel":"INFO","OutputPath":"C:\\temp\\vHC\\Original\\VB365","ReportingIntervalDays":7,"VBOServerFqdnOrIp":"localhost"}'<#,"SkipCollect":false,"ExportJson":false,"ExportXml":false,"DebugInConsole":false,"Watch":false}#> | ConvertFrom-Json
+
+# if path passed in via argument/param, override to that path for the run.
+if ($OutputPath -ne "") { $global:SETTINGS.OutputPath = $OutputPath }
+
+# if config.json exists, pull in the values
 if (Test-Path ($global:SETTINGS.OutputPath + "\CollectorConfig.json")) {
     [pscustomobject]$json = Get-Content -Path ($global:SETTINGS.OutputPath + "\CollectorConfig.json") | ConvertFrom-Json
     foreach ($property in $json.PSObject.Properties) {
@@ -56,7 +62,26 @@ if (Test-Path ($global:SETTINGS.OutputPath + "\CollectorConfig.json")) {
     }
 }
 # Write or update config
+if (!(Test-Path ($global:SETTINGS.OutputPath))) {
+    New-Item -ItemType Directory -Path $global:SETTINGS.OutputPath -Force | Out-Null
+}
 $global:SETTINGS | ConvertTo-Json | Out-File -FilePath ($global:SETTINGS.OutputPath + "\CollectorConfig.json") -Force
+
+#Override any config.json settings from other args/bound parameters.
+if ($ReportingIntervalDays -gt 0 <#default is -1#>) { $global:SETTINGS.ReportingIntervalDays = $ReportingIntervalDays }
+if ($VBOServerFqdnOrIp -ne "" <#default is ""#>) { $global:SETTINGS.VBOServerFqdnOrIp = $VBOServerFqdnOrIp }
+if ($Debug <#default is -$false#>) {
+    $global:SETTINGS | Add-Member -MemberType NoteProperty -Name DebugInConsole -Value $true -Force
+    $global:SETTINGS | Add-Member -MemberType NoteProperty -Name Watch -Value $true -Force
+    $global:SETTINGS.LogLevel = "DEBUG"
+}
+if ($DebugProfiling <#default is -$false#>) {
+    $global:SETTINGS | Add-Member -MemberType NoteProperty -Name DebugInConsole -Value $true -Force
+    $global:SETTINGS | Add-Member -MemberType NoteProperty -Name Watch -Value $true -Force
+    $global:SETTINGS.LogLevel = "PROFILE"
+}
+if ($PersistParams) { $global:SETTINGS | ConvertTo-Json | Out-File -FilePath ($global:SETTINGS.OutputPath + "\CollectorConfig.json") -Force }
+
 
 $VerbosePreference = "SilentlyContinue"
 $DebugPreference = "SilentlyContinue"
@@ -98,7 +123,16 @@ function Function-Template {
     end { }
 }
 #>
-
+class EndTimeComparer:System.Collections.IComparer {
+    [int]Compare($x,$y) {
+        return $y.EndTime.CompareTo($x.EndTime)
+    }
+}
+class CreationTimeComparer:System.Collections.IComparer {
+    [int]Compare($x,$y) {
+        return $y.CreationTime.CompareTo($x.CreationTime)
+    }
+}
 function Write-LogFile {
     [CmdletBinding()]
     param (
@@ -533,7 +567,7 @@ function Get-VBOEnvironment {
         Write-Progress @progressSplat -PercentComplete ($progress++) -Status "Collecting organization..."
         $e.VBOOrganization = Get-VBOOrganization
         Write-ElapsedAndMemUsage -Message "Collected: VBOOrganization" -LogLevel PROFILE
-        $e.VBOOrganizationUsers = $e.VBOOrganization | Get-VBOOrganizationUser -Type User
+        $e.VBOOrganizationUsers = $e.VBOOrganization | ForEach-Object { Get-VBOOrganizationUser -Organization $_ }
         Write-ElapsedAndMemUsage -Message "Collected: VBOOrganizationUsers" -LogLevel PROFILE
         $e.VBOApplication = $e.VBOOrganization | Get-VBOApplication
         Write-ElapsedAndMemUsage -Message "Collected: VBOApplication" -LogLevel PROFILE
@@ -598,7 +632,6 @@ function Get-VBOEnvironment {
         # Build an index (hashtable keyed to email) so that the search in the next function is orders of magnitude faster.
         $e.EntitiesIndex = @{}
         foreach ($org in $e.VBOOrganization) { $e.EntitiesIndex[$org.Name] = @{}}
-        $e.EntitiesIndex.Test = @{}
         foreach ($ent in $e.VBOEntityData) {
             if ($ent.Type -eq "User") {
                 if ($ent.Organization.DisplayName -in $e.EntitiesIndex.Keys) { # if the org name is actually needing collection (is in the index keys)
@@ -655,7 +688,38 @@ function Get-VBOEnvironment {
         #stats
         Lap "Collection: Job & session stats..."
         Write-Progress @progressSplat -PercentComplete ($progress++) -Status "Collecting sessions & statistics..."
-        $e.VBOJobSession = Get-VBOJobSession | Where-Object { $_.EndTime -gt [DateTime]::Now.AddDays(-$global:SETTINGS.ReportingIntervalDays) }
+        $e.VBOJobSession = Get-VBOJobSession | Where-Object { $_.EndTime -gt [DateTime]::Now.AddDays(-$global:SETTINGS.ReportingIntervalDays) }   
+        #added below session index to enable capturing certain metrics further back than reporting interval, but efficiently.
+        [System.Collections.IComparer] $CreationTimeComparer = [CreationTimeComparer]::new()
+        $e.VBOJobSession_All = Get-VBOJobSession
+        $e.JobSessionIndex = @{}
+        foreach ($session in $e.VBOJobSession_All) {
+            $jobId = $session.JobId.Guid
+            if ($null -eq $e.JobSessionIndex[$jobId]) {
+                $e.JobSessionIndex[$jobId] = @{}
+                $e.JobSessionIndex[$jobId].All = [System.Collections.ArrayList]@()
+                $e.JobSessionIndex[$jobId].Latest = $null
+                $e.JobSessionIndex[$jobId].LatestComplete = $null
+                $e.JobSessionIndex[$jobId].LastXDays = [System.Collections.ArrayList]@()
+                $e.JobSessionIndex[$jobId].LastXSessions = $null
+                $e.JobSessionIndex[$jobId].LastXSessionsComplete = $null
+            }
+
+            $addResult = $e.JobSessionIndex[$jobId].All.Add($session) #add to "All" index
+
+            if ($session.EndTime -gt [DateTime]::Now.AddDays(-$global:SETTINGS.ReportingIntervalDays)) { #add if < X days
+                $addResult = $e.JobSessionIndex[$jobId].LastXDays.Add($session)
+            }
+        }
+        foreach ($key in $e.JobSessionIndex.Keys) {
+            $e.JobSessionIndex[$key].All.Sort($CreationTimeComparer)
+            $e.JobSessionIndex[$key].LastXDays.Sort($CreationTimeComparer)
+            $e.JobSessionIndex[$key].LastXSessions = $e.JobSessionIndex[$key].All | Select-Object -First $global:SETTINGS.ReportingIntervalDays
+            $i=1
+            $e.JobSessionIndex[$key].LastXSessionsComplete =  foreach($session in $e.JobSessionIndex[$key].All) { if ($session.Status -in @("Success","Warning")) { $session; if($i -ge $global:SETTINGS.ReportingIntervalDays) {break;}; $i++ } }
+            $e.JobSessionIndex[$key].Latest = $e.JobSessionIndex[$key].All[0]
+            $e.JobSessionIndex[$key].LatestComplete = foreach($session in $e.JobSessionIndex[$key].All) { if ($session.Status -in @("Success","Warning")) { $session;break } }
+        }
         Write-ElapsedAndMemUsage -Message "Collected: VBOJobSession" -LogLevel PROFILE
         #Diabled Jun1/22 - Not used #$e.VBORestoreSession = Get-VBORestoreSession
         $e.VBOUsageData = $e.VBORepository | Where-Object {!($_.IsOutOfOrder -and $null -ne $_.ObjectStorageRepository)} | ForEach-Object { Get-VBOUsageData -Repository $_ } # added OutOfOrder exclusion for broken repos.
@@ -890,6 +954,7 @@ function Append-VB365ProductVersion {
         )
     begin { 
         $ProductVersions = @{
+            "11.2.0"=" (v6a)"
             "11.1.0"=" (v6)"
             "10.0.5"=" (v5d)"
             "10.0.4"=" (v5c)"
@@ -1079,7 +1144,8 @@ $map.Proxies = $Global:VBOEnvironment.VBOProxy | mde @(
     'Type'
     'Outdated?=>IsOutdated'
     'Internet Proxy=>InternetProxy.UseInternetProxy'
-    'Objects Managed=>(($Global:VBOEnvironment.VBOJobSession | ? { $_.JobId -in ($Global:VBOEnvironment.VBOJob | ? { $.Id -eq $_.Repository.ProxyId }).Id} | group JobId | % { $_.Group | Measure-Object -Property Progress -Average} ).Average | measure-object -Sum ).Sum.ToString("0")'
+    #replaced Aug 11/22 with below, more efficient & accurate # 'Objects Managed_Old=>(($Global:VBOEnvironment.VBOJobSession | ? { $_.JobId -in ($Global:VBOEnvironment.VBOJob | ? { $.Id -eq $_.Repository.ProxyId }).Id} | group JobId | % { $_.Group | Measure-Object -Property Progress -Average} ).Average | measure-object -Sum ).Sum.ToString("0")'
+    'Objects Managed=>(($Global:VBOEnvironment.VBOJob | ? { $.Id -eq $_.Repository.ProxyId }).Id.Guid | % {$Global:VBOEnvironment.JobSessionIndex[$_].LatestComplete.Progress} | Measure-Object -Sum).Sum'
     'OS Version=>($Global:VBOEnvironment.VMCLog.ProxyDetails | ? { $.Id -eq $_.ProxyID }).OSVersion'
     'RAM=>(($Global:VBOEnvironment.VMCLog.ProxyDetails | ? { $.Id -eq $_.ProxyID }).RAMTotalSize/1GB).ToString("###0 GB")'
     'CPUs=>($Global:VBOEnvironment.VMCLog.ProxyDetails | ? { $.Id -eq $_.ProxyID }).CPUCount'
@@ -1108,6 +1174,13 @@ $map.LocalRepositories = $Global:VBOEnvironment.VBORepository | mde @(
     #Dropped Jun 17 #'Object Space Used=>((($Global:VBOEnvironment.VBOUsageData | ? { $_.RepositoryId -eq $.Id}).ObjectStorageUsedSpace | measure -Sum).Sum/1TB).ToString("#,##0.000 TB")'
     #the below isnt perfect, as its based on creationtime not a true per day amount; its also based on repo change not dataset change....
     #replaced below with change to a GB rate rather than %. Then it reflects just the change in the data transferred and not against the repo storage.
+    '!Calcs=>$changesByDay = ((($Global:VBOEnvironment.VBOJob | ? { $.Id -eq $_.Repository.Id }).Id.Guid | % {$Global:VBOEnvironment.JobSessionIndex[$_].LastXSessionsComplete})| select @{n="CreationDate"; e={$_.CreationTime.Date}},* | sort CreationDate -Descending | group CreationDate | % { $_.Group.Statistics.TransferredData | ConvertData -To "GB" -Format "0.000000" | measure -Sum }).Sum;
+        $weeklyChange = ($changesByDay | select -first 7 | measure -Sum).Sum;
+        $dailyChangeAvg = ($changesByDay | measure -Average).Average;
+        $dailyChangeMed = $changesByDay | 95P -Percentile 50;
+        $dailyChange90p = $changesByDay | 95P -Percentile 90;'
+    'Daily Change Rate=>"AVG: " + $dailyChangeAvg.ToString("#,##0.000 GB") + ";<br/>MED: " + $dailyChangeMed.ToString("#,##0.000 GB") + ";<br/>90th: " + $dailyChange90p.ToString("#,##0.000 GB")' #uses $weeklyChange from object above.
+    <#replaced aug 11/22. See above #
     '!OLD Daily Change Rate=>$changesByDay = (($VBOEnvironment.VBOJobSession | ? {($VBOEnvironment.VBOJob | ? { $_.Repository.Id -eq $.Id }).Id -eq $_.JobId })| select @{n="CreationDate"; e={$_.CreationTime.Date}},* | sort CreationDate -Descending | group CreationDate | % { $_.Group.Statistics.TransferredData | ConvertData -To "GB" -Format "0.000000" | measure -Sum }).Sum;
         $weeklyChange = ($changesByDay | select -first 7 | measure -Sum).Sum;
         $dailyChangeAvg = ($changesByDay | measure -Average).Average
@@ -1122,6 +1195,7 @@ $map.LocalRepositories = $Global:VBOEnvironment.VBORepository | mde @(
             $DCR.ToString("~##0.000%")
         }'
     'Daily Change Rate=>($weeklyChange/7).ToString("#,##0.000 GB")' #uses $weeklyChange from object above.
+    #>
     #'!OLD_Retention=>($.RetentionPeriod.ToString() -replace "(Years?)(.+)","`$2 `$1" )+", "+$.RetentionType+", Applied "+$.RetentionFrequencyType'
     <#fixed Jul 21#>'Retention=>if ($.CustomRetentionPeriodType -eq "Months") {
         $period = ($.RetentionPeriod.value__/12);
@@ -1183,8 +1257,10 @@ $map.Jobs = @($Global:VBOEnvironment.VBOJob) + @($Global:VBOEnvironment.VBOCopyJ
     'Scope Type=>JobBackupType'
     <#Fixed jul 21#>'Processing Options=>@("Mailbox","ArchiveMailbox","OneDrive","Sites","Teams","GroupMailbox","GroupSite" | Where-Object { $.SelectedItems.$_ -eq $true -or $_.Replace("Teams","Team").Replace("Sites","Site")  -in $.SelectedItems.Type }).Replace("ArchiveMailbox","Archive").Replace("GroupMailbox","Group Mailbox").Replace("GroupSite","Group Site") -join ", "'
     #'Processing Options=>@(if ($.SelectedItems.Mailbox.Count -gt 0) {"Mailbox"}; if ($.SelectedItems.ArchiveMailbox.Count -gt 0) {"Archive"}; if ($.SelectedItems.OneDrive.Count -gt 0) {"OneDrive"}; if ($.SelectedItems.Sites.Count -gt 0 -or "Site" -in $.SelectedItems.Type) {"Site"}; if ($.SelectedItems.Teams.Count -gt 0 -or "Team" -in $.SelectedItems.Type) {"Teams"}; if ($.SelectedItems.GroupMailbox.Count -gt 0) {"Group Mailbox"}; if ($.SelectedItems.GroupSite.Count -gt 0) {"Group Site"}) -join ", "'
-    <#Fixed jul 21#>'Selected Objects=>$objectCountStr = ($Global:VBOEnvironment.VBOJobSession | Where-Object { $_.JobId -eq $.Id } | Sort-Object CreationTime -Descending | Select-Object -First 1); [Regex]::Match($objectCountStr.Log.Title,"(?<=Found )(\d+)(?= objects)").Value' #OLD: used to look at defined things selected. now looks at actual resolved. #$.SelectedItems.Count
-    <#Fixed jul 21#>'Excluded Objects=>$objectCountStr = ($Global:VBOEnvironment.VBOJobSession | Where-Object { $_.JobId -eq $.Id } | Sort-Object CreationTime -Descending | Select-Object -First 1); [Regex]::Match($objectCountStr.Log.Title,"(?<=Found )(\d+)(?= excluded objects)").Value' #OLD: used to look at defined things selected. now looks at actual resolved. #$.ExcludedItems.Count'
+    'Selected Objects=>$objectCountStr = $Global:VBOEnvironment.JobSessionIndex[$($.Id.Guid)].LatestComplete; [Regex]::Match($objectCountStr.Log.Title,"(?<=Found )(\d+)(?= objects)").Value'
+    'Excluded Objects=>$objectCountStr = $Global:VBOEnvironment.JobSessionIndex[$($.Id.Guid)].LatestComplete; [Regex]::Match($objectCountStr.Log.Title,"(?<=Found )(\d+)(?= excluded objects)").Value'
+    #replaced aug 11/22 with above # <#Fixed jul 21#>'Selected Objects=>$objectCountStr = ($Global:VBOEnvironment.VBOJobSession | Where-Object { $_.JobId -eq $.Id } | Sort-Object CreationTime -Descending | Select-Object -First 1); [Regex]::Match($objectCountStr.Log.Title,"(?<=Found )(\d+)(?= objects)").Value' #OLD: used to look at defined things selected. now looks at actual resolved. #$.SelectedItems.Count
+    #replaced aug 11/22 with above # #<#Fixed jul 21#>'Excluded Objects=>$objectCountStr = ($Global:VBOEnvironment.VBOJobSession | Where-Object { $_.JobId -eq $.Id } | Sort-Object CreationTime -Descending | Select-Object -First 1); [Regex]::Match($objectCountStr.Log.Title,"(?<=Found )(\d+)(?= excluded objects)").Value' #OLD: used to look at defined things selected. now looks at actual resolved. #$.ExcludedItems.Count'
     'Repository'
     'Bound Proxy=>($Global:VBOEnvironment.VBOProxy | ? { $_.id -eq $.Repository.ProxyId }).Hostname'
     'Enabled?=>IsEnabled'
@@ -1203,7 +1279,8 @@ Write-ElapsedAndMemUsage -Message "Mapped Jobs" -LogLevel PROFILE
 
 Write-LogFile -Message "Mapping Job Stats..." -LogLevel DEBUG
 Write-Progress @progressSplat -PercentComplete ($progress++) -Status "JobStats...";
-$map.JobStats = $Global:VBOEnvironment.VBOJobSession | Where-Object { $_.JobName -in $Global:VBOEnvironment.VBOJob.Name} | Group-Object JobName | mde @(
+#replaced aug 11/22 with below # $map.JobStats = $Global:VBOEnvironment.VBOJobSession | Where-Object { $_.JobName -in $Global:VBOEnvironment.VBOJob.Name} | Group-Object JobName | mde @(
+$map.JobStats = ($Global:VBOEnvironment.VBOJob).Id.Guid | % {$Global:VBOEnvironment.JobSessionIndex[$_].LastXSessionsComplete } | Group-Object JobName | mde @(
     'Name'
     'Average Duration (min)=>$totalMin = ($.Group | select *,@{n="Duration";e={(($_.EndTime | GetEndTime)-$_.CreationTime).TotalMinutes}} | ? { $_.Duration -gt 0 } | measure Duration -Average).Average; $totalMin*60 | ToLongHHmmss'
     'Max Duration (min)=>$totalMin = ($.Group | select *,@{n="Duration";e={(($_.EndTime | GetEndTime)-$_.CreationTime).TotalMinutes}} | ? { $_.Duration -gt 0 } | measure Duration -Maximum).Maximum; $totalMin*60 | ToLongHHmmss'
@@ -1232,14 +1309,15 @@ Write-ElapsedAndMemUsage -Message "Mapped Job Stats" -LogLevel PROFILE
 Write-LogFile -Message "Mapping Processing/Task Stats..." -LogLevel DEBUG
 Write-Progress @progressSplat -PercentComplete ($progress++) -Status "ProcessingStats...";
 $global:CollectorCurrentProcessItems = $Global:VBOEnvironment.VBOJobSession.Log.Count
-$map.ProcessingStats = $Global:VBOEnvironment.VBOJobSession | Where-Object { $_.JobName -in $Global:VBOEnvironment.VBOJob.Name} | Group-Object JobName | mde @(    
+# replaced aug 11/22 w/ below # $map.ProcessingStats = $Global:VBOEnvironment.VBOJobSession | Where-Object { $_.JobName -in $Global:VBOEnvironment.VBOJob.Name} | Group-Object JobName | mde @(
+$map.ProcessingStats = ($Global:VBOEnvironment.VBOJob).Id.Guid | % {$Global:VBOEnvironment.JobSessionIndex[$_].LastXSessionsComplete } | Group-Object JobName | mde @(   
     '!Vars=>
         $PRIVATE:Vars = @{
             Times = @{
                 Startup=[System.Collections.ArrayList]@()
                 Exclude=[System.Collections.ArrayList]@()
                 Found=[System.Collections.ArrayList]@()
-                "Processing per Item"=[System.Collections.ArrayList]@()
+                "Processing per Object"=[System.Collections.ArrayList]@()
                 "Processing per Session"=[System.Collections.ArrayList]@()
                 Wrapup=[System.Collections.ArrayList]@()
             }
@@ -1254,7 +1332,7 @@ $map.ProcessingStats = $Global:VBOEnvironment.VBOJobSession | Where-Object { $_.
             $SummaryEntry = $session.Log -imatch "Transferred: \d+"
             $ObjectEntries = $session.Log -imatch "(?<!\[Running\].+)Processing .+:"
 
-            if ($FoundEntry) {
+            if ($FoundEntry.Count -gt 0) {
                 #there should always be a found entry, unless a running job, thus we should only add stats if its !$null.
                 
                 $startupSeconds = (($FoundEntry.EndTime | GetEndTime) - $session.CreationTime).TotalSeconds
@@ -1263,25 +1341,31 @@ $map.ProcessingStats = $Global:VBOEnvironment.VBOJobSession | Where-Object { $_.
                 if ($foundSeconds -gt 0) {$PRIVATE:Vars.Times.Found.Add($foundSeconds)}
             }
                 
-            if ($ExcludeEntry) {
+            if ($ExcludeEntry.Count -gt 0) {
                 $excludeSeconds = (($ExcludeEntry.EndTime | GetEndTime) - $ExcludeEntry.CreationTime).TotalSeconds 
                 if ($excludeSeconds -gt 0) { $PRIVATE:Vars.Times.Exclude.Add($excludeSeconds)} }
-            if ($SummaryEntry) {
+            if ($SummaryEntry.Count -gt 0) {
                 $wrapSeconds = (($session.EndTime | GetEndTime) - $SummaryEntry.CreationTime).TotalSeconds
                 if ($wrapSeconds -gt 0) { $PRIVATE:Vars.Times.Wrapup.Add($wrapSeconds)} }
             
             foreach ($objEntry in $ObjectEntries) {
                 GetItemsLeft
                 $taskSeconds = (($objEntry.EndTime | GetEndTime) - $objEntry.CreationTime).TotalSeconds
-                if ($taskSeconds -gt 0) { $PRIVATE:Vars.Times."Processing per Item".Add($taskSeconds) }
+                if ($taskSeconds -gt 0) { $PRIVATE:Vars.Times."Processing per Object".Add($taskSeconds) }
             } # grab time for every processed object
+            
+            $firstObjEntry = $ObjectEntries | Sort-Object CreationTime | Select-Object -First 1
+            $lastObjEntry = $ObjectEntries | Sort-Object CreationTime | Select-Object -Last 1
 
-            $PRIVATE:Vars.Times."Processing per Session".Add(($PRIVATE:Vars.Times."Processing per Item" | Measure-Object -Sum).Sum)
+            $totalSessionTime = (($lastObjEntry.EndTime | GetEndTime)-$firstObjEntry.CreationTime).TotalSeconds
+            $PRIVATE:Vars.Times."Processing per Session".Add($totalSessionTime)
+
+            #Deprecated with the above fix # $PRIVATE:Vars.Times."Processing per Session".Add(($PRIVATE:Vars.Times."Processing per Object" | Measure-Object -Sum).Sum)
         }
         #Time Analysis
         foreach ($statkey in $PRIVATE:Vars.Times.Keys) {
             $measurements = $PRIVATE:Vars.Times.$statkey | Measure-Object -Average -Minimum -Maximum  #use gt 0 to account for problems with daylight ssavings negative values skewing results
-
+            
             $PRIVATE:Vars.Stats.$statkey = @{}
             $PRIVATE:Vars.Stats.$statkey.Latest = ($PRIVATE:Vars.Times.$statkey) | select-object -first 1
             $PRIVATE:Vars.Stats.$statkey.Average = $measurements.Average
@@ -1309,12 +1393,12 @@ $map.ProcessingStats = $Global:VBOEnvironment.VBOJobSession | Where-Object { $_.
     'Found Time (Avg)=>($PRIVATE:Vars.Stats.Found.Average) | ToLongHHmmss'
     'Found Time (Max)=>($PRIVATE:Vars.Stats.Found.Maximum) | ToLongHHmmss'
     'Found Time (90%)=>($PRIVATE:Vars.Stats.Found.Ninety) | ToLongHHmmss'
-    'Processing per Item Time (Latest)=>($PRIVATE:Vars.Stats."Processing per Item".Latest) | ToLongHHmmss'
-    'Processing per Item Time (Median)=>($PRIVATE:Vars.Stats."Processing per Item".Median) | ToLongHHmmss'
-    'Processing per Item Time (Min)=>($PRIVATE:Vars.Stats."Processing per Item".Minimum) | ToLongHHmmss'
-    'Processing per Item Time (Avg)=>($PRIVATE:Vars.Stats."Processing per Item".Average) | ToLongHHmmss'
-    'Processing per Item Time (Max)=>($PRIVATE:Vars.Stats."Processing per Item".Maximum) | ToLongHHmmss'
-    'Processing per Item Time (90%)=>($PRIVATE:Vars.Stats."Processing per Item".Ninety) | ToLongHHmmss'
+    'Processing per Object Time (Latest)=>($PRIVATE:Vars.Stats."Processing per Object".Latest) | ToLongHHmmss'
+    'Processing per Object Time (Median)=>($PRIVATE:Vars.Stats."Processing per Object".Median) | ToLongHHmmss'
+    'Processing per Object Time (Min)=>($PRIVATE:Vars.Stats."Processing per Object".Minimum) | ToLongHHmmss'
+    'Processing per Object Time (Avg)=>($PRIVATE:Vars.Stats."Processing per Object".Average) | ToLongHHmmss'
+    'Processing per Object Time (Max)=>($PRIVATE:Vars.Stats."Processing per Object".Maximum) | ToLongHHmmss'
+    'Processing per Object Time (90%)=>($PRIVATE:Vars.Stats."Processing per Object".Ninety) | ToLongHHmmss'
     'Processing per Session Time (Latest)=>($PRIVATE:Vars.Stats."Processing per Session".Latest) | ToLongHHmmss'
     'Processing per Session Time (Median)=>($PRIVATE:Vars.Stats."Processing per Session".Median) | ToLongHHmmss'
     'Processing per Session Time (Min)=>($PRIVATE:Vars.Stats."Processing per Session".Minimum) | ToLongHHmmss'
@@ -1329,9 +1413,9 @@ $map.ProcessingStats = $Global:VBOEnvironment.VBOJobSession | Where-Object { $_.
     'Wrapup Time (90%)=>($PRIVATE:Vars.Stats.Wrapup.Ninety) | ToLongHHmmss'
 )
 #transform the output for CSV
-$map.ProcessingStats = ($map.ProcessingStats | ForEach-Object { foreach ($op in @("Startup","Exclude","Found","Processing per Item","Processing per Session","Wrapup")) { $_ | Select-Object Name,@{n="Operation";e={$op}},*$op* }} | ConvertTo-Json) -replace "Startup\s|Exclude\s|Found\s|Processing per Item\s|Processing per Session\s|Wrapup\s","" | convertfrom-json
+$map.ProcessingStats = ($map.ProcessingStats | ForEach-Object { foreach ($op in @("Startup","Exclude","Found","Processing per Object","Processing per Session","Wrapup")) { $_ | Select-Object Name,@{n="Operation";e={$op}},*$op* }} | ConvertTo-Json) -replace "Startup\s|Exclude\s|Found\s|Processing per Object\s|Processing per Session\s|Wrapup\s","" | convertfrom-json
 Write-ElapsedAndMemUsage -Message "Mapped Processing/Task Stats" -LogLevel PROFILE
-
+    
 Write-LogFile -Message "Mapping Job Sessions..." -LogLevel DEBUG
 Write-Progress @progressSplat -PercentComplete ($progress++) -Status "JobSessions...";
 $map.JobSessions = $Global:VBOEnvironment.VBOJobSession | Where-Object { $_.JobName -in $Global:VBOEnvironment.VBOJob.Name} | Sort-Object @{Expression={$_.JobName}; Descending=$false },@{Expression={$_.CreationTime}; Descending=$true } | mde @(

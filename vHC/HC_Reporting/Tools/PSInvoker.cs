@@ -74,7 +74,7 @@ namespace VeeamHealthCheck
             var startInfo = new ProcessStartInfo()
             {
                 FileName = "powershell.exe",
-                Arguments = $"-NoProfile -ExecutionPolicy unrestricted -file \"{scriptFile}\"",
+                Arguments = $"-NoProfile -ExecutionPolicy unrestricted -file \"{scriptFile}\" -ReportingIntervalDays \"{VhcGui._reportDays}\"",
                 UseShellExecute = false,
                 CreateNoWindow = true
             };
