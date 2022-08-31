@@ -353,6 +353,7 @@ namespace VeeamHealthCheck.Reporting.Html.VB365
                         desc = _scrubber.ScrubItem(g.Description);
                         path = _scrubber.ScrubItem(g.Path);
                         objRepo = _scrubber.ScrubItem(g.ObjectRepo);
+                        
                     }
                     s += _form.TableData(boundProxy, "");
                     s += _form.TableData(name, "");
@@ -955,11 +956,22 @@ namespace VeeamHealthCheck.Reporting.Html.VB365
                 foreach (var gl in global)
                 {
                     s += "<tr>";
+                    string name;
+                    string operation;
+                    string tLatest;
+                    string tMed;
+                    string tMin;
+                    string tAvg;
+                    string tMax;
+                    string tNinety;
 
                     int counter = 0;
                     foreach (var g in gl)
                     {
                         string output = g.Value;
+
+                        if (counter == 0)
+                            output = _scrubber.ScrubItem(output);
                         s += _form.TableData(output, "");
                         counter++;
                     }
@@ -1113,6 +1125,7 @@ namespace VeeamHealthCheck.Reporting.Html.VB365
                             description = _scrubber.ScrubItem(description);
                             path = _scrubber.ScrubItem(path);
                             boundrepo = _scrubber.ScrubItem(boundrepo);
+                            bucketcontainer = _scrubber.ScrubItem(bucketcontainer);
                         }
 
                     }
@@ -1451,6 +1464,7 @@ namespace VeeamHealthCheck.Reporting.Html.VB365
                             desc = _scrubber.ScrubItem(desc);
                             repo = _scrubber.ScrubItem(repo);
                             boundProxy = _scrubber.ScrubItem(boundProxy);
+                            relJob = _scrubber.ScrubItem(relJob);
                         }
                     }
                     if (string.IsNullOrEmpty(org))

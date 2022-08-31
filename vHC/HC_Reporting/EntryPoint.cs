@@ -21,12 +21,14 @@ namespace VeeamHealthCheck
             "\n" +
             "outdir:\tSpecifies desired location for HTML reports. Usage: \"outdir:D:\\example\". Default = C:\\temp\\vHC" +
             "\n" +
-            "days:\tSpecifies reporting interval. Choose 7 or 30. 7 is default. USAGE: 'days:30'" +
+            "days:\tSpecifies reporting interval. Choose 7 or 30. 7 is default. USAGE: 'days:30'\n" +
+            "gui\tStarts GUI. GUI overrides other commands." +
             "\n\n" +
             "EXAMPLES:\n" +
             "1. Run to default location:\t .\\VeeamHealthCheck.exe run\n" +
             "2. Run to custom location:\t .\\VeeamHealthCheck.exe run outdir:\\\\myshare\\folder\n" +
-            "3. Run with 30 day report:\t .\\VeeamHealthCheck.exe run days:30" +
+            "3. Run with 30 day report:\t .\\VeeamHealthCheck.exe run days:30\n" +
+            "4. Run GUI from CLI:\t .\\VeeamHealthCheck.exe gui" +
             "\n";
         private static CLogger _log = VhcGui.log;
 
@@ -42,14 +44,28 @@ namespace VeeamHealthCheck
         public static void Main(string[] args)
         {
             logger.Info("Args count = " + args.Count().ToString());
-            foreach(var arg in args)
+            foreach (var arg in args)
                 logger.Info("Input: " + arg);
             var handle = GetConsoleWindow();
-            if (args != null && args.Length > 0)
+            if (args.Length == 0)
+            {
+                var pos = Console.GetCursorPosition();
+                if (pos == (0, 0))
+                {
+                    logger.Info("0s");
+                    LaunchUi(handle, true);
+                }
+                if (pos != (0, 0))
+                {
+                    logger.Info("not 0");
+                    Console.WriteLine(_helpMenu);
+                }
+            }
+            else if (args != null && args.Length > 0)
             {
                 bool run = false;
+                bool ui = false;
                 string targetDir = @"C:\temp\vHC";
-                int reportDays = 7;
                 foreach (var a in args)
                 {
                     switch (a)
@@ -76,6 +92,9 @@ namespace VeeamHealthCheck
                             logger.Info("Days set to 30");
                             VhcGui._reportDays = 30;
                             break;
+                        case "gui":
+                            ui = true;
+                            break;
                         case var match when new Regex("outdir:.*").IsMatch(a):
                             string[] outputDir = a.Split(":");
                             targetDir = outputDir[1];
@@ -83,7 +102,9 @@ namespace VeeamHealthCheck
                             break;
                     }
                 }
-                if (run)
+                if (ui)
+                    LaunchUi(handle, false);
+                else if (run)
                 {
                     _log.Info("Starting RUN...", false);
                     VhcGui app = new VhcGui();
@@ -95,11 +116,16 @@ namespace VeeamHealthCheck
             }
             else
             {
-                logger.Info("Executing GUI");
-                //ShowWindow(handle, SW_HIDE);
-                var app = new System.Windows.Application();
-                app.Run(new VhcGui());
+                LaunchUi(handle, true);
             }
+        }
+        private static void LaunchUi(IntPtr handle, bool hide)
+        {
+            logger.Info("Executing GUI");
+            if(hide)
+                ShowWindow(handle, SW_HIDE);
+            var app = new System.Windows.Application();
+            app.Run(new VhcGui());
         }
 
     }

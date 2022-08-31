@@ -64,13 +64,20 @@ namespace VeeamHealthCheck.Html
 
             DateTime dateTime = DateTime.Now;
             string n = VhcGui._desiredPath;
+            string installID = "";
+            try
+            {
+                if (!String.IsNullOrEmpty(Collection.LogParser.CLogOptions.INSTALLID)) ;
+                installID = Collection.LogParser.CLogOptions.INSTALLID.Substring(0, 7);
+            }
+            catch (Exception e) { installID = "anon"; }
             if (!Directory.Exists(n))
                 Directory.CreateDirectory(n);
             string htmlCore = "";
             if (VhcGui._scrub)
-                htmlCore = "\\" + _htmlName + "_" + Collection.LogParser.CLogOptions.INSTALLID.Substring(0, 7) + dateTime.ToString("_yyyy.MM.dd.HHmmss") + ".html";
+                htmlCore = "\\" + _htmlName + "_VB365" + "_" + installID + dateTime.ToString("_yyyy.MM.dd.HHmmss") + ".html";
             else if(!VhcGui._scrub)
-                htmlCore = "\\" + _htmlName + "_" + _backupServerName + dateTime.ToString("_yyyy.MM.dd.HHmmss") + ".html";
+                htmlCore = "\\" + _htmlName + "_VB365" + "_" + _backupServerName + dateTime.ToString("_yyyy.MM.dd.HHmmss") + ".html";
             string name = n + htmlCore;
             _latestReport = name;
 
@@ -91,13 +98,20 @@ namespace VeeamHealthCheck.Html
 
             DateTime dateTime = DateTime.Now;
             string n = VhcGui._desiredPath;
+            string installID = "";
+            try
+            {
+                if (!String.IsNullOrEmpty(Collection.LogParser.CLogOptions.INSTALLID)) ;
+                installID = Collection.LogParser.CLogOptions.INSTALLID.Substring(0, 7);
+            }
+            catch(Exception e) { installID = "anon"; }
             if (!Directory.Exists(n))
                 Directory.CreateDirectory(n);
             string htmlCore = "";
             if (VhcGui._scrub)
-                htmlCore = "\\" + _htmlName + "_" + Collection.LogParser.CLogOptions.INSTALLID.Substring(0, 7) + dateTime.ToString("_yyyy.MM.dd.HHmmss") + ".html";
+                htmlCore = "\\" + _htmlName + "_VBR" + "_" + installID + dateTime.ToString("_yyyy.MM.dd.HHmmss") + ".html";
             else if (!VhcGui._scrub)
-                htmlCore = "\\" + _htmlName + "_" + _backupServerName + dateTime.ToString("_yyyy.MM.dd.HHmmss") + ".html";
+                htmlCore = "\\" + _htmlName + "_VBR" + "_" + _backupServerName + dateTime.ToString("_yyyy.MM.dd.HHmmss") + ".html";
             string name = n + htmlCore;
             _latestReport = name;
 

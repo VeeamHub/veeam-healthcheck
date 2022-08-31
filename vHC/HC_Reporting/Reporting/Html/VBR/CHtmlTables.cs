@@ -575,7 +575,7 @@ _form.TableHeader(ResourceHandler.SbrExt15, ResourceHandler.SbrExt15TT) +
         }
         public string AddJobConTable()
         {
-            string s = _form.SectionStartWithButton("jobcon", ResourceHandler.JobConTitle, ResourceHandler.JobConBtn);
+            string s = _form.SectionStartWithButton("jobcon", ResourceHandler.JobConTitle, ResourceHandler.JobConBtn, VhcGui._reportDays);
             string summary = _sum.JobCon();
             s += _form.TableHeader(ResourceHandler.JobCon0, "");
             s += _form.TableHeader(ResourceHandler.JobCon1, "");
@@ -608,7 +608,7 @@ _form.TableHeader(ResourceHandler.SbrExt15, ResourceHandler.SbrExt15TT) +
         }
         public string AddTaskConTable()
         {
-            string s = _form.SectionStartWithButton("taskcon", ResourceHandler.TaskConTitle, ResourceHandler.TaskConBtn);
+            string s = _form.SectionStartWithButton("taskcon", ResourceHandler.TaskConTitle, ResourceHandler.TaskConBtn, VhcGui._reportDays);
             string summary = _sum.TaskCon();
 
             s += _form.TableHeader(ResourceHandler.TaskCon0, "");
@@ -642,7 +642,7 @@ _form.TableHeader(ResourceHandler.SbrExt15, ResourceHandler.SbrExt15TT) +
         }
         public string AddJobSessSummTable()
         {
-            string s = _form.SectionStartWithButton("jobsesssum", ResourceHandler.JssTitle, ResourceHandler.JssBtn);
+            string s = _form.SectionStartWithButton("jobsesssum", ResourceHandler.JssTitle, ResourceHandler.JssBtn, VhcGui._reportDays);
             string summary = _sum.JobSessSummary();
 
             s+= _form.TableHeader(ResourceHandler.Jss0, ResourceHandler.Jss0TT);

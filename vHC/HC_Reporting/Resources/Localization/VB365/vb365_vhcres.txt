@@ -162,7 +162,7 @@ SecurityTable2Column5 = Expires
 SecurityTable2Column6 = Self-Signed
 
 protectedUsersSummary1 = o	The number of unprotected users in the organization is shown here, along with protected users and a total user count for the organization.  
-protectedUsersNote1 = o	Any user mailbox backed up will mark the user as protected. If no backup was run within the last 7 days, but a previous backup of the mailbox was taken, the resource will be marked as “stale.”
+protectedUsersNote1 = o	Any user mailbox backed up will mark the user as protected. If no backup was run within the period selected (7 or 30 days, but a previous backup of the mailbox was taken, the resource will be marked as “stale.”
 protectedUsersNote2 = o	The Mailbox Protection Report can be found within the Veeam Backup for Microsoft 365 console: <a href="https://helpcenter.veeam.com/docs/vbo365/guide/mailbox_protection_reports.html?ver=60" target="_blank">Creating Mailbox Protection Reports - Veeam Backup for Microsoft 365 Guide</a>
 
 proxySummary1 = o	Proxies are the data movers for Veeam Backup for Microsoft 365.  They are responsible for running the backup job assign, downloading data from M365, and writing data to the local or object storage repositories.
@@ -209,7 +209,7 @@ backupServerNotes3 = •	PowerShell, Proxy, REST, and Console components refer t
 
 reposSummary = •	Repositories store data backed up by jobs. Repositories play a role in the environments' overall performance as they are utilized by backup jobs.  A Bound Proxy interacts with a Repository during data protection operations.
 reposNote1 = •	Repositories include Jet DBs used to store backup data, those used as a cache for repositories extended to Object Storage, and those used as Archive targets.  
-reposNote2 = •	Daily Change is calculated using the average amount of data transferred per day over the last 7 days
+reposNote2 = •	Daily Change is calculated using the average amount of data transferred per day over the selected period (7 or 30 days)
 
 reposNote4 = •	Understand more about <a href="https://helpcenter.veeam.com/docs/vbo365/guide/understanding_cache.html?ver=60" target="_blank">Object Storage cache</a>.
 reposNote5 = •	Repositories extended to object storage will detail the cache directory and the object repository used.
