@@ -1174,12 +1174,12 @@ $map.LocalRepositories = $Global:VBOEnvironment.VBORepository | mde @(
     #Dropped Jun 17 #'Object Space Used=>((($Global:VBOEnvironment.VBOUsageData | ? { $_.RepositoryId -eq $.Id}).ObjectStorageUsedSpace | measure -Sum).Sum/1TB).ToString("#,##0.000 TB")'
     #the below isnt perfect, as its based on creationtime not a true per day amount; its also based on repo change not dataset change....
     #replaced below with change to a GB rate rather than %. Then it reflects just the change in the data transferred and not against the repo storage.
-    '!Calcs=>$changesByDay = ((($Global:VBOEnvironment.VBOJob | ? { $.Id -eq $_.Repository.Id }).Id.Guid | % {$Global:VBOEnvironment.JobSessionIndex[$_].LastXSessionsComplete})| select @{n="CreationDate"; e={$_.CreationTime.Date}},* | sort CreationDate -Descending | group CreationDate | % { $_.Group.Statistics.TransferredData | ConvertData -To "GB" -Format "0.000000" | measure -Sum }).Sum;
+    '!Calcs=>$changesByDay = (((@($Global:VBOEnvironment.VBOJob) + @($Global:VBOEnvironment.VBOCopyJob) | ? { $.Id -eq $_.Repository.Id }).Id.Guid | % {$Global:VBOEnvironment.JobSessionIndex[$_].LastXSessionsComplete})| select @{n="CreationDate"; e={$_.CreationTime.Date}},* | sort CreationDate -Descending | group CreationDate | % { $_.Group.Statistics.TransferredData | ConvertData -To "GB" -Format "0.000000" | measure -Sum }).Sum;
         $weeklyChange = ($changesByDay | select -first 7 | measure -Sum).Sum;
         $dailyChangeAvg = ($changesByDay | measure -Average).Average;
         $dailyChangeMed = $changesByDay | 95P -Percentile 50;
         $dailyChange90p = $changesByDay | 95P -Percentile 90;'
-    'Daily Change Rate=>"AVG: " + $dailyChangeAvg.ToString("#,##0.000 GB") + ";<br/>MED: " + $dailyChangeMed.ToString("#,##0.000 GB") + ";<br/>90th: " + $dailyChange90p.ToString("#,##0.000 GB")' #uses $weeklyChange from object above.
+        'Daily Change Rate=>$dailyChangeAvg.ToString("#,##0.000 GB") + " (avg);<br/>" + $dailyChangeMed.ToString("#,##0.000 GB") + " (med.);<br/>" + $dailyChange90p.ToString("#,##0.000 GB") + " (90th)"' #uses $weeklyChange from object above.
     <#replaced aug 11/22. See above #
     '!OLD Daily Change Rate=>$changesByDay = (($VBOEnvironment.VBOJobSession | ? {($VBOEnvironment.VBOJob | ? { $_.Repository.Id -eq $.Id }).Id -eq $_.JobId })| select @{n="CreationDate"; e={$_.CreationTime.Date}},* | sort CreationDate -Descending | group CreationDate | % { $_.Group.Statistics.TransferredData | ConvertData -To "GB" -Format "0.000000" | measure -Sum }).Sum;
         $weeklyChange = ($changesByDay | select -first 7 | measure -Sum).Sum;
@@ -1280,7 +1280,7 @@ Write-ElapsedAndMemUsage -Message "Mapped Jobs" -LogLevel PROFILE
 Write-LogFile -Message "Mapping Job Stats..." -LogLevel DEBUG
 Write-Progress @progressSplat -PercentComplete ($progress++) -Status "JobStats...";
 #replaced aug 11/22 with below # $map.JobStats = $Global:VBOEnvironment.VBOJobSession | Where-Object { $_.JobName -in $Global:VBOEnvironment.VBOJob.Name} | Group-Object JobName | mde @(
-$map.JobStats = ($Global:VBOEnvironment.VBOJob).Id.Guid | % {$Global:VBOEnvironment.JobSessionIndex[$_].LastXSessionsComplete } | Group-Object JobName | mde @(
+$map.JobStats = (@($Global:VBOEnvironment.VBOJob) + @($Global:VBOEnvironment.VBOCopyJob)).Id.Guid | % {$Global:VBOEnvironment.JobSessionIndex[$_].LastXSessionsComplete } | Group-Object JobName | mde @(
     'Name'
     'Average Duration (min)=>$totalMin = ($.Group | select *,@{n="Duration";e={(($_.EndTime | GetEndTime)-$_.CreationTime).TotalMinutes}} | ? { $_.Duration -gt 0 } | measure Duration -Average).Average; $totalMin*60 | ToLongHHmmss'
     'Max Duration (min)=>$totalMin = ($.Group | select *,@{n="Duration";e={(($_.EndTime | GetEndTime)-$_.CreationTime).TotalMinutes}} | ? { $_.Duration -gt 0 } | measure Duration -Maximum).Maximum; $totalMin*60 | ToLongHHmmss'
@@ -1308,9 +1308,11 @@ Write-ElapsedAndMemUsage -Message "Mapped Job Stats" -LogLevel PROFILE
 
 Write-LogFile -Message "Mapping Processing/Task Stats..." -LogLevel DEBUG
 Write-Progress @progressSplat -PercentComplete ($progress++) -Status "ProcessingStats...";
-$global:CollectorCurrentProcessItems = $Global:VBOEnvironment.VBOJobSession.Log.Count
+$sessionCollection = (@($Global:VBOEnvironment.VBOJob) + @($Global:VBOEnvironment.VBOCopyJob)).Id.Guid | % {$Global:VBOEnvironment.JobSessionIndex[$_].LastXSessionsComplete }
+#$global:CollectorCurrentProcessItems = $Global:VBOEnvironment.VBOJobSession.Log.Count
+$global:CollectorCurrentProcessItems = $sessionCollection.Log.Count
 # replaced aug 11/22 w/ below # $map.ProcessingStats = $Global:VBOEnvironment.VBOJobSession | Where-Object { $_.JobName -in $Global:VBOEnvironment.VBOJob.Name} | Group-Object JobName | mde @(
-$map.ProcessingStats = ($Global:VBOEnvironment.VBOJob).Id.Guid | % {$Global:VBOEnvironment.JobSessionIndex[$_].LastXSessionsComplete } | Group-Object JobName | mde @(   
+$map.ProcessingStats = $sessionCollection | Group-Object JobName | mde @(   
     '!Vars=>
         $PRIVATE:Vars = @{
             Times = @{
@@ -1330,14 +1332,23 @@ $map.ProcessingStats = ($Global:VBOEnvironment.VBOJob).Id.Guid | % {$Global:VBOE
             $ExcludeEntry = $session.Log -imatch "Found \d+ excluded objects"
             $FoundEntry = $session.Log -imatch "Found \d+ objects"
             $SummaryEntry = $session.Log -imatch "Transferred: \d+"
-            $ObjectEntries = $session.Log -imatch "(?<!\[Running\].+)Processing .+:"
+            $ObjectEntries = $session.Log -imatch "(?<!\[Running\].+)(?:Processing|Copying) .+:"
+
+
+            $firstObjEntry = $ObjectEntries | Sort-Object CreationTime | Select-Object -First 1
+            $lastObjEntry = $ObjectEntries | Sort-Object CreationTime | Select-Object -Last 1
+
+            $totalSessionTime = (($lastObjEntry.EndTime | GetEndTime)-$firstObjEntry.CreationTime).TotalSeconds
+            $PRIVATE:Vars.Times."Processing per Session".Add($totalSessionTime)
 
             if ($FoundEntry.Count -gt 0) {
                 #there should always be a found entry, unless a running job, thus we should only add stats if its !$null.
                 
-                $startupSeconds = (($FoundEntry.EndTime | GetEndTime) - $session.CreationTime).TotalSeconds
+                $startupSeconds = ($firstObjEntry.CreationTime - $session.CreationTime).TotalSeconds            #Time spent from start of session to first object processing start (true startup)
+                #$startupSeconds = (($FoundEntry.EndTime | GetEndTime) - $session.CreationTime).TotalSeconds    #Time spent from start of session to end of "found" phase)
                 if ($startupSeconds -gt 0) { $PRIVATE:Vars.Times.Startup.Add($startupSeconds)}
-                $foundSeconds = (($FoundEntry.EndTime | GetEndTime) - $FoundEntry.CreationTime).TotalSeconds
+                #$foundSeconds = ($firstObjEntry.CreationTime - $FoundEntry.CreationTime).TotalSeconds          #Time spent from start of find to first object processing start
+                $foundSeconds = (($FoundEntry.EndTime | GetEndTime) - $FoundEntry.CreationTime).TotalSeconds    #Time spent from start of find to end of find (which can run past the first handful of objects)
                 if ($foundSeconds -gt 0) {$PRIVATE:Vars.Times.Found.Add($foundSeconds)}
             }
                 
@@ -1354,11 +1365,6 @@ $map.ProcessingStats = ($Global:VBOEnvironment.VBOJob).Id.Guid | % {$Global:VBOE
                 if ($taskSeconds -gt 0) { $PRIVATE:Vars.Times."Processing per Object".Add($taskSeconds) }
             } # grab time for every processed object
             
-            $firstObjEntry = $ObjectEntries | Sort-Object CreationTime | Select-Object -First 1
-            $lastObjEntry = $ObjectEntries | Sort-Object CreationTime | Select-Object -Last 1
-
-            $totalSessionTime = (($lastObjEntry.EndTime | GetEndTime)-$firstObjEntry.CreationTime).TotalSeconds
-            $PRIVATE:Vars.Times."Processing per Session".Add($totalSessionTime)
 
             #Deprecated with the above fix # $PRIVATE:Vars.Times."Processing per Session".Add(($PRIVATE:Vars.Times."Processing per Object" | Measure-Object -Sum).Sum)
         }
@@ -1418,13 +1424,14 @@ Write-ElapsedAndMemUsage -Message "Mapped Processing/Task Stats" -LogLevel PROFI
     
 Write-LogFile -Message "Mapping Job Sessions..." -LogLevel DEBUG
 Write-Progress @progressSplat -PercentComplete ($progress++) -Status "JobSessions...";
-$map.JobSessions = $Global:VBOEnvironment.VBOJobSession | Where-Object { $_.JobName -in $Global:VBOEnvironment.VBOJob.Name} | Sort-Object @{Expression={$_.JobName}; Descending=$false },@{Expression={$_.CreationTime}; Descending=$true } | mde @(
+$map.JobSessions = (@($Global:VBOEnvironment.VBOJob) + @($Global:VBOEnvironment.VBOCopyJob)).Id.Guid | % {$Global:VBOEnvironment.JobSessionIndex[$_].LastXDays } | mde @(
+#$map.JobSessions = $Global:VBOEnvironment.VBOJobSession | Where-Object { $_.JobName -in (@($Global:VBOEnvironment.VBOJob) + @($Global:VBOEnvironment.VBOCopyJob)).Name} | Sort-Object @{Expression={$_.JobName}; Descending=$false },@{Expression={$_.CreationTime}; Descending=$true } | mde @(
     'Name=>JobName'
     'Status'
     'Start Time=>$.CreationTime.ToString("yyyy/MM/dd HH:mm:ss")'
     'End Time=>$.EndTime.ToString("yyyy/MM/dd HH:mm:ss")'
     'Duration=>$sessWithDuration =  $. | select *,@{n="Duration";e={ $(if ($_.Status -eq "Running") { (get-date)-$_.CreationTime } else { $_.EndTime-$_.CreationTime } )}}; $sessWithDuration.Duration.TotalSeconds | ToLongHHmmss'
-    'Log=>Join -Array $($.Log.Title | ? { !$_.Contains("[Success]") }) -Delimiter "`r`n"'
+    'Log=>Join -Array $($.Log.Title | ? { !$_.Contains("[Success]") }) -Delimiter "`r`n<br />"'
 )
 Write-ElapsedAndMemUsage -Message "Mapped Sessions" -LogLevel PROFILE
 

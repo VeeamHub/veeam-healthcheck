@@ -970,7 +970,7 @@ namespace VeeamHealthCheck.Reporting.Html.VB365
                     {
                         string output = g.Value;
 
-                        if (counter == 0)
+                        if (counter == 0 && VhcGui._scrub)
                             output = _scrubber.ScrubItem(output);
                         s += _form.TableData(output, "");
                         counter++;
