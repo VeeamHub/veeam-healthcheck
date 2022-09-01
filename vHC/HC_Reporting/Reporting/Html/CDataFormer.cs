@@ -821,13 +821,13 @@ namespace VeeamHealthCheck.Reporting.Html
                 s[2] += c.Ram;
                 s[3] += c.Type;
                 s[4] += c.ApiVersion;
-                s[5] += proxyRole;
-                s[6] += repoRole;
-                s[7] += wanRole;
-                s[8] += c.IsUnavailable;
-                s[9] += pVmStr;
-                s[10] += upVmStr;
-                s[11] += tVmStr;
+                s[5] += pVmStr;// proxyRole;
+                s[6] += upVmStr;// repoRole;
+                s[7] += tVmStr;// wanRole;
+                s[8] += proxyRole;// c.IsUnavailable;
+                s[9] += repoRole;// pVmStr;
+                s[10] += wanRole;// upVmStr;
+                s[11] += c.IsUnavailable;// tVmStr;
 
 
                 //doc.Add(xml);
