@@ -41,7 +41,11 @@ namespace VeeamHealthCheck.Reporting.Html.VB365
         {
             _htmldoc += _form.body;
 
-            _htmldoc += _form.SetHeaderAndLogo(SetLicHolder());
+            //_htmldoc += _form.SetHeaderAndLogo(SetLicHolder());
+            if (!VhcGui._scrub)
+                _htmldoc += _form.SetHeaderAndLogo(SetLicHolder());
+            if (VhcGui._scrub)
+                _htmldoc += _form.SetHeaderAndLogo(" ");
             _htmldoc += _form.SetBannerAndIntroVb365();
             // add sections here
             _htmldoc += SetNavigation();
