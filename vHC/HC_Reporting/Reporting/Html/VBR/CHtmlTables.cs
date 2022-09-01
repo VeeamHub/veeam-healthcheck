@@ -15,7 +15,7 @@ namespace VeeamHealthCheck.Html.VBR
         private CCsvParser _csv = new(CVariables.vb365dir);
 
         CDataFormer _df = new(true);
-        Scrubber.CScrubHandler _scrub = new();
+        Scrubber.CScrubHandler _scrub = VhcGui._scrubberMain;
 
         private CHtmlFormatting _form = new();
         private CVbrSummaries _sum = new();

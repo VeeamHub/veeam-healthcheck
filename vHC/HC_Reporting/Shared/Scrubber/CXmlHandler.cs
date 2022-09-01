@@ -9,7 +9,7 @@ using System.Xml.Linq;
 
 namespace VeeamHealthCheck.Scrubber
 {
-    class CScrubHandler
+    public class CScrubHandler
     {
         private readonly string _matchListPath = CVariables.unsafeDir+ @"\vHC_KeyFile.xml";
         private Dictionary<string,string> _matchDictionary;

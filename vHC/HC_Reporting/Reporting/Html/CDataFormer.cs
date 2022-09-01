@@ -30,7 +30,7 @@ namespace VeeamHealthCheck.Reporting.Html
         private bool _isBackupServerWan;
         //private CQueries _cq = new();
         private Dictionary<string, int> _repoJobCount;
-        private CScrubHandler _scrubber = new();
+        private CScrubHandler _scrubber = VhcGui._scrubberMain;
         private bool _scrub;
         private bool _checkLogs;
         private bool _isImport;

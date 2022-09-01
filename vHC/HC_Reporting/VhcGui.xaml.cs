@@ -28,13 +28,12 @@ namespace VeeamHealthCheck
         public static bool _openExplorer = true;
         public static string _desiredPath = CVariables.unsafeDir;
         private string _path;
+
+        public static CScrubHandler _scrubberMain = new();
         public static bool _import;
-
         public static int _reportDays = 7;
-
         private bool _isVbr = false;
         private bool _isVb365 = false;
-
 
 
         public VhcGui()

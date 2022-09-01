@@ -32,8 +32,8 @@ namespace VeeamHealthCheck.Html
             _backupServerName = serverName;
             _styleSheet = styleSheet;
             _scrub = scrub;
-            if(scrub)
-                _scrubber = new CScrubHandler();
+            if (scrub)
+                _scrubber = VhcGui._scrubberMain;
         }
         public void ExportHtml()
         {
