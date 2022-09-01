@@ -51,7 +51,7 @@ function Get-VeeamSessionReport {
     $jobs = $null
     $jobTypes = [Veeam.Backup.Model.EDbJobType].GetEnumNames()
     foreach ($jt in $jobTypes) {
-        $jobs += [Veeam.Backup.Core.CBackupSession]::GetByTypeAndTimeInterval($jt,[datetime]::Now.AddDays(-30),[datetime]::Now)# | select @{Name="JobName";Expression={$_.Name -replace "\((Incremental|[A-Za-z\s]*Full|Retry\s\d+)\)"}} #| group JobName
+        $jobs += [Veeam.Backup.Core.CBackupSession]::GetByTypeAndTimeInterval($jt,[datetime]::Now.AddDays(-90),[datetime]::Now)# | select @{Name="JobName";Expression={$_.Name -replace "\((Incremental|[A-Za-z\s]*Full|Retry\s\d+)\)"}} #| group JobName
     }
     #$jobs.count
 

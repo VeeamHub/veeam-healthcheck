@@ -621,7 +621,7 @@ _form.TableHeader(ResourceHandler.SbrExt15, ResourceHandler.SbrExt15TT) +
             s += _form.TableHeader(ResourceHandler.TaskCon7, "");
             s += "</tr>";
 
-            var stuff = _df.JobConcurrency(true, VhcGui._reportDays);
+            var stuff = _df.JobConcurrency(false, VhcGui._reportDays);
 
             foreach (var stu in stuff)
             {
