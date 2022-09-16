@@ -97,7 +97,7 @@ namespace VeeamHealthCheck.Html
             XElement extElement = new XElement("jobSessionsSummary");
             //doc.Root.Add(extElement);
 
-            List<string> jobNameList = jobSessionsCsv.Select(x => x.Name).ToList();
+            List<string> jobNameList = trimmedSessionInfo.Select(x => x.Name).ToList();
             List<CJobSummaryTypes> outList = new();
 
             CCsvParser csv = new();
