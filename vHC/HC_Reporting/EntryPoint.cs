@@ -96,6 +96,10 @@ namespace VeeamHealthCheck
                             logger.Info("Days set to 90");
                             VhcGui._reportDays = 90;
                             break;
+                        case "days:12":
+                            logger.Info("Days set to 12");
+                            VhcGui._reportDays = 12;
+                            break;
                         case "gui":
                             ui = true;
                             break;

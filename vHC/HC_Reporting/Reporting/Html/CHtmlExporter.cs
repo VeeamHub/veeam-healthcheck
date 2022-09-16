@@ -92,7 +92,7 @@ namespace VeeamHealthCheck.Html
             if(VhcGui._openHtml)
                 OpenHtml();
         }
-        public void ExportVbrHtml(string htmlString)
+        public void ExportVbrHtml(string htmlString, bool scrub)
         {
             log.Info("exporting xml to html");
 
@@ -107,11 +107,13 @@ namespace VeeamHealthCheck.Html
             catch(Exception e) { installID = "anon"; }
             if (!Directory.Exists(n))
                 Directory.CreateDirectory(n);
+            if (!Directory.Exists(n + "\\Anon"))
+                Directory.CreateDirectory(n + "\\Anon");
             string htmlCore = "";
-            if (VhcGui._scrub)
-                htmlCore = "\\" + _htmlName + "_VBR" + "_" + installID + dateTime.ToString("_yyyy.MM.dd.HHmmss") + ".html";
-            else if (!VhcGui._scrub)
-                htmlCore = "\\" + _htmlName + "_VBR" + "_" + _backupServerName + dateTime.ToString("_yyyy.MM.dd.HHmmss") + ".html";
+            if (scrub)
+                htmlCore = "\\Anon\\" + _htmlName + "_VBR" + "_" + installID + dateTime.ToString("_yyyy.MM.dd.HHmmss") + ".html";
+            else if (!scrub)
+                htmlCore = "\\Original\\" + _htmlName + "_VBR" + "_" + _backupServerName + dateTime.ToString("_yyyy.MM.dd.HHmmss") + ".html";
             string name = n + htmlCore;
             _latestReport = name;
 

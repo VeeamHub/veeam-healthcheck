@@ -79,7 +79,6 @@ namespace VeeamHealthCheck.FilesParser
                 jobsAndWaits.Add(jobname, waits);
             }
             _waits = jobsAndWaits;
-            //DumpWaitsToFile();
             return jobsAndWaits;
         }
         private List<TimeSpan> CheckFileWait(string file, string jobName)

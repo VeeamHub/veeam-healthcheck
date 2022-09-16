@@ -90,6 +90,7 @@ MIT License
         <ComboBox Name="daysSelector" HorizontalAlignment="Left" Margin="220,239,0,0" VerticalAlignment="Top" Width="120" SelectionChanged="ComboBox_SelectionChanged">
             <ComboBoxItem Content="7 Days" IsSelected="True"/>
             <ComboBoxItem Content="30 Days"/>
+            <ComboBoxItem Content="90 Days"/>
         </ComboBox>
         <!--<CheckBox Content="Collect Session Data" HorizontalAlignment="Left" Margin="1,252,0,0" 
                   VerticalAlignment="Top" 

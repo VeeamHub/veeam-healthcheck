@@ -17,7 +17,8 @@ namespace VeeamHealthCheck.Html
     internal class CHtmlCompiler
     {
         private string xslFileName = "StyleSheets\\myHtml.xsl"; // maybe just do memory instead of disk??
-        private string _htmldoc = String.Empty;
+        private string _htmldocOriginal = String.Empty;
+        private string _htmldocScrubbed = String.Empty;
         private bool _vbrmode = false;
         private bool _vb365mode = false;
 
@@ -43,7 +44,8 @@ namespace VeeamHealthCheck.Html
         private void ExportHtml()
         {
             CHtmlExporter exporter = new("", GetServerName(), "", VhcGui._scrub);
-            exporter.ExportVbrHtml(_htmldoc);
+            exporter.ExportVbrHtml(_htmldocOriginal, false);
+            exporter.ExportVbrHtml(_htmldocScrubbed, true);
         }
         private string GetServerName()
         {
@@ -59,12 +61,17 @@ namespace VeeamHealthCheck.Html
         private void FormHeader()
         {
             log.Info("[HTML] Forming Header...");
-            _htmldoc = "<html>";
-            _htmldoc += "<head>";
-            _htmldoc += "<style>";
-            _htmldoc += CssStyler.StyleString();
-            _htmldoc += "</style></head>";
+            _htmldocOriginal = "<html>";
+            _htmldocOriginal += "<head>";
+            _htmldocOriginal += "<style>";
+            _htmldocOriginal += CssStyler.StyleString();
+            _htmldocOriginal += "</style></head>";
 
+            _htmldocScrubbed = "<html>";
+            _htmldocScrubbed += "<head>";
+            _htmldocScrubbed += "<style>";
+            _htmldocScrubbed += CssStyler.StyleString();
+            _htmldocScrubbed += "</style></head>";
             log.Info("[HTML] Forming Header...done!");
             //FormBody();
         }
@@ -103,43 +110,67 @@ namespace VeeamHealthCheck.Html
         private void FormBody()
         {
             log.Info("[HTML] forming HTML body");
-            _htmldoc += _form.body;
+            _htmldocOriginal += _form.body;
+            _htmldocScrubbed += _form.body;
 
-            if(!VhcGui._scrub)
-                _htmldoc += _form.SetHeaderAndLogo(SetLicHolder());
-            if(VhcGui._scrub)
-                _htmldoc += _form.SetHeaderAndLogo(" ");
-            _htmldoc += _form.SetBannerAndIntro();
+            // set correct logo for ORIGINAL and set blank logo for Scrubbed
+            _htmldocOriginal += _form.SetHeaderAndLogo(SetLicHolder());
+            _htmldocScrubbed += _form.SetHeaderAndLogo(" ");
+
+            _htmldocOriginal += _form.SetBannerAndIntro();
+            _htmldocScrubbed += _form.SetBannerAndIntro();
 
             //nav
             SetNavigation();
 
             //tables
-            _htmldoc += _tables.LicTable();
-            _htmldoc += _tables.AddBkpSrvTable();
-            _htmldoc += _tables.AddSecSummaryTable();
-            _htmldoc += _tables.AddSrvSummaryTable();
-            _htmldoc += _tables.AddJobSummaryTable();
-            _htmldoc += _tables.AddMissingJobsTable();
-            _htmldoc += _tables.AddProtectedWorkLoadsTable();
-            _htmldoc += _tables.AddManagedServersTable();
-            _htmldoc += _tables.AddRegKeysTable();
-            _htmldoc += _tables.AddProxyTable();
-            _htmldoc += _tables.AddSobrTable();
-            _htmldoc += _tables.AddSobrExtTable();
-            _htmldoc += _tables.AddRepoTable();
-            _htmldoc += _tables.AddJobConTable();
-            _htmldoc += _tables.AddTaskConTable();
-            _htmldoc += _tables.AddJobSessSummTable();
-            _htmldoc += _tables.AddJobInfoTable();
+            _htmldocOriginal += _tables.LicTable(false);
+            _htmldocOriginal += _tables.AddBkpSrvTable(false);
+            _htmldocOriginal += _tables.AddSecSummaryTable(false);
+            _htmldocOriginal += _tables.AddSrvSummaryTable(false);
+            _htmldocOriginal += _tables.AddJobSummaryTable(false);
+            _htmldocOriginal += _tables.AddMissingJobsTable(false);
+            _htmldocOriginal += _tables.AddProtectedWorkLoadsTable(false);
+            _htmldocOriginal += _tables.AddManagedServersTable(false);
+            _htmldocOriginal += _tables.AddRegKeysTable(false);
+            _htmldocOriginal += _tables.AddProxyTable(false);
+            _htmldocOriginal += _tables.AddSobrTable(false);
+            _htmldocOriginal += _tables.AddSobrExtTable(false);
+            _htmldocOriginal += _tables.AddRepoTable(false);
+            _htmldocOriginal += _tables.AddJobConTable(false);
+            _htmldocOriginal += _tables.AddTaskConTable(false);
+            _htmldocOriginal += _tables.AddJobSessSummTable(false);
+            _htmldocOriginal += _tables.AddJobInfoTable(false);
 
-            _tables.AddSessionsFiles();
+            _htmldocScrubbed += _tables.LicTable(true);
+            _htmldocScrubbed += _tables.AddBkpSrvTable(true);
+            _htmldocScrubbed += _tables.AddSecSummaryTable(true);
+            _htmldocScrubbed += _tables.AddSrvSummaryTable(true);
+            _htmldocScrubbed += _tables.AddJobSummaryTable(true);
+            _htmldocScrubbed += _tables.AddMissingJobsTable(true);
+            _htmldocScrubbed += _tables.AddProtectedWorkLoadsTable(true);
+            _htmldocScrubbed += _tables.AddManagedServersTable(true);
+            _htmldocScrubbed += _tables.AddRegKeysTable(true);
+            _htmldocScrubbed += _tables.AddProxyTable(true);
+            _htmldocScrubbed += _tables.AddSobrTable(true);
+            _htmldocScrubbed += _tables.AddSobrExtTable(true);
+            _htmldocScrubbed += _tables.AddRepoTable(true);
+            _htmldocScrubbed += _tables.AddJobConTable(true);
+            _htmldocScrubbed += _tables.AddTaskConTable(true);
+            _htmldocScrubbed += _tables.AddJobSessSummTable(true);
+            _htmldocScrubbed += _tables.AddJobInfoTable(true);
 
-            _htmldoc += "<a>vHC Version: " + CVersionSetter.GetFileVersion() + "</a>";
+            //_tables.AddSessionsFiles();
 
-            _htmldoc += "<script type=\"text/javascript\">";
-            _htmldoc += CssStyler.JavaScriptBlock();
-            _htmldoc += "</script>";
+            _htmldocOriginal += "<a>vHC Version: " + CVersionSetter.GetFileVersion() + "</a>";
+            _htmldocOriginal += "<script type=\"text/javascript\">";
+            _htmldocOriginal += CssStyler.JavaScriptBlock();
+            _htmldocOriginal += "</script>";
+
+            _htmldocScrubbed += "<a>vHC Version: " + CVersionSetter.GetFileVersion() + "</a>";
+            _htmldocScrubbed += "<script type=\"text/javascript\">";
+            _htmldocScrubbed += CssStyler.JavaScriptBlock();
+            _htmldocScrubbed += "</script>";
 
             log.Info("[HTML] forming HTML body...done!");
         }
@@ -162,89 +193,6 @@ namespace VeeamHealthCheck.Html
                 //BackToTop() +
                 "</div>";
             AddToHtml(tableString);
-        }
-        private void Table(string header, string type)
-        {
-            string logString = string.Format("[HTML] creating table {0} of type {1}", header, type);
-            log.Info(logString);
-            //CHtmlTables tables = new();
-            string tableString = DivId(type) +
-                h2UnderLine(header) +
-                "<table border=\"1\" style=\"background: lightgray\">" +
-                "<tbody>";
-            switch (type)
-            {
-                case "license":
-                    //tableString += (tables.AddLicHeaderToTable());
-                    tableString += (_tables.LicTable());
-                    break;
-                case "navigation":
-                    tableString += _tables.MakeNavTable();
-                    break;
-                case "vbrInfo":
-                    tableString += _tables.AddBkpSrvTable();
-                    break;
-                case "secSum":
-                    tableString += _tables.AddSecSummaryTable();
-                    break;
-                case "srvSummary":
-                    tableString += _tables.AddSrvSummaryTable();
-                    break;
-                case "jobSummary":
-                    tableString += _tables.AddJobSummaryTable();
-                    break;
-                case "missingJobs":
-                    tableString += _tables.AddMissingJobsTable();
-                    break;
-                case "protectedWklds":
-                    tableString += _tables.AddProtectedWorkLoadsTable();
-                    break;
-                case "serverInfo":
-                    tableString += _tables.AddManagedServersTable();
-                    break;
-                case "regKeys":
-                    tableString += _tables.AddRegKeysTable();
-                    break;
-                case "proxyInfo":
-                    tableString += _tables.AddProxyTable();
-                    break;
-                case "sobr":
-                    tableString += _tables.AddSobrTable();
-                    break;
-                case "extents":
-                    tableString += _tables.AddSobrExtTable();
-                    break;
-                case "repos":
-                    tableString += _tables.AddRepoTable();
-                    break;
-                case "jobConcurrency":
-                    tableString += _tables.AddJobConTable();
-                    break;
-                case "taskConcurrency":
-                    tableString += _tables.AddTaskConTable();
-                    break;
-                case "jobSessSummary":
-                    tableString += _tables.AddJobSessSummTable();
-                    break;
-                case "jobs":
-                    tableString += _tables.AddJobInfoTable();
-                    break;
-                default:
-                    break;
-            }
-
-
-
-
-            tableString +=
-                "</tbody>" +
-                "</table>";
-            AddToHtml(tableString);
-        }
-        private void EndSection()
-        {
-            _htmldoc += BackToTop() +
-                "</div>"; ;
         }
 
 
@@ -284,7 +232,12 @@ Job Info
 
         private void AddToHtml(string infoString)
         {
-            _htmldoc += infoString;
+            _htmldocOriginal += infoString;
+            _htmldocScrubbed += infoString;
+        }
+        private void AddToHtml(string infoString, bool scrub)
+        {
+            
         }
 
         #endregion

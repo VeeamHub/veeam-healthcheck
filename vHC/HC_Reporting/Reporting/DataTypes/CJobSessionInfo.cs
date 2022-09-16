@@ -44,6 +44,7 @@ namespace VeeamHealthCheck
         {
 
         }
+        public void Dispose() { }
 
     }
 }

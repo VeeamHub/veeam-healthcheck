@@ -12,7 +12,7 @@ using VeeamHealthCheck.Shared.Logging;
 
 namespace VeeamHealthCheck.DataTypes
 {
-    class CDataTypesParser
+    class CDataTypesParser : IDisposable
     {
         private CLogger log = VhcGui.log;
         private CCsvParser _csvParser = new();
@@ -26,14 +26,15 @@ namespace VeeamHealthCheck.DataTypes
         private List<CJobSessionInfo> _jobSession;
         private List<int> _protectedJobIds = new();
         private List<string> _typeList = new();
+        //private List<CServerTypeInfos> _serverInfo;
 
         public List<CJobTypeInfos> JobInfos { get { return JobInfo(); } }
-        public List<CJobSessionInfo> JobSessions { get { return _jobSession; } }
-        public List<CServerTypeInfos> ServerInfos { get { return _serverInfo; } }
-        public List<CRepoTypeInfos> ExtentInfo { get { return _extentInfo; } }
-        public List<CProxyTypeInfos> ProxyInfos { get { return _proxyInfo; } }
+        public List<CJobSessionInfo> JobSessions { get { return JobSessionInfo(); } }
+        public List<CServerTypeInfos> ServerInfos { get { return ServerInfo(); } }
+        public List<CRepoTypeInfos> ExtentInfo { get { return SobrExtInfo(); } }
+        public List<CProxyTypeInfos> ProxyInfos { get { return ProxyInfo(); } }
         public Dictionary<string, int> ServerSummaryInfo { get { return _serverSummaryInfo; } }
-        public List<CSobrTypeInfos> SobrInfo { get { return _sobrInfo; } }
+        public List<CSobrTypeInfos> SobrInfo { get { return SobrInfos(); } }
         //public List<CLicTypeInfo> LicInfo { get { return LicInfos(); } }
         public List<CRepoTypeInfos> RepoInfos { get { return RepoInfo(); } }
         public List<CWanTypeInfo> WanInfos { get { return WanInfo(); } }
@@ -45,17 +46,9 @@ namespace VeeamHealthCheck.DataTypes
         {
             _serverSummaryInfo = new Dictionary<string, int>();
 
-
-            _serverInfo = ServerInfo();
-            _extentInfo = SobrExtInfo();
-            _proxyInfo = ProxyInfo();
-            _sobrInfo = SobrInfos();
-            //_jobInfo = JobInfo();
-            _jobSession = JobSessionInfo();
-
             FilterAndCountTypes();
         }
-
+        public void Dispose() { }
         private List<CSobrTypeInfos> SobrInfos()
         {
             var sobrCsv = _csvParser.SobrCsvParser().ToList();
@@ -121,6 +114,7 @@ namespace VeeamHealthCheck.DataTypes
                 eInfoList.Add(eInfo);
 
             }
+            //_sobrInfo = eInfoList;
             return eInfoList;
         }
 
@@ -386,7 +380,7 @@ namespace VeeamHealthCheck.DataTypes
 
         private string MatchRepoIdToRepo(string repoId)
         {
-            foreach (var e in _sobrInfo)
+            foreach (var e in SobrInfos())
             {
                 if (repoId == e.Id)
                     return e.Name;
@@ -609,7 +603,7 @@ namespace VeeamHealthCheck.DataTypes
                 l.Add(ti);
             }
             log.Info("parsing server csv data..ok!");
-
+            _serverInfo = l;
             return l;
         }
         private int CalculateServerTasks(string type, string serverId)
@@ -625,6 +619,7 @@ namespace VeeamHealthCheck.DataTypes
         }
         private void FilterAndCountTypes()
         {
+            ServerInfo();
             List<string> types = _typeList;
             types.Sort();
             foreach (var type in types)

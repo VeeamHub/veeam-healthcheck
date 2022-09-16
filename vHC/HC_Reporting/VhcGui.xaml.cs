@@ -156,10 +156,25 @@ namespace VeeamHealthCheck
             });
 
         }
+        private void PopulateWaits()
+        {
+            try
+            {
+                FilesParser.CLogParser lp = new();
+                lp.GetWaitsFromFiles();
+            }
+            catch (Exception e)
+            {
+                log.Error("Error checking log files:");
+                log.Error(e.Message);
+            }
+
+        }
         private void RunAction()
         {
             log.Info("Starting Run");
             ExecPsScripts();
+            PopulateWaits();
             if (_isVbr)
             {
                 Collection.LogParser.CLogOptions logOptions = new("vbr");
@@ -186,39 +201,39 @@ namespace VeeamHealthCheck
                 );
 
             log.Info(userSettingsString);
-
-                _openHtml = false;
-            _openExplorer = false;
-            if (_scrub)
-            {
-                _desiredPath = userPath + CVariables._unsafeSuffix;
-                _scrub = false;
-
-                log.Info("Creating Original Report to directory: " + _desiredPath);
-
-                Import();
-                log.Info("Creating Original Report to directory...done! ");
-                _scrub = true;
-                _desiredPath = userPath + CVariables._safeSuffix;
-            }
-            else if (!_scrub)
-            {
-                _desiredPath = userPath + CVariables._safeSuffix;
-                _scrub = true;
-                log.Info("Creating Anonymous Report to directory: " + _desiredPath);
-                Import();
-                log.Info("Creating Anonymous Report to directory...done!");
-                _scrub = false;
-                _desiredPath = userPath + CVariables._unsafeSuffix;
-            }
-            //_scrub = userSetScrub;
-            _openHtml = userOpenHtml;
-            _openExplorer = userOpenExplorer;
-            if(_scrub)
-                log.Info("Creating Anonymous Report to directory: " + _desiredPath);
-            if (!_scrub)
-                log.Info("Creating Original Report to directory: " + _desiredPath);
             Import();
+            //    _openHtml = false;
+            //_openExplorer = false;
+            //if (_scrub)
+            //{
+            //    _desiredPath = userPath + CVariables._unsafeSuffix;
+            //    _scrub = false;
+
+            //    log.Info("Creating Original Report to directory: " + _desiredPath);
+
+            //    Import();
+            //    log.Info("Creating Original Report to directory...done! ");
+            //    _scrub = true;
+            //    _desiredPath = userPath + CVariables._safeSuffix;
+            //}
+            //else if (!_scrub)
+            //{
+            //    _desiredPath = userPath + CVariables._safeSuffix;
+            //    _scrub = true;
+            //    log.Info("Creating Anonymous Report to directory: " + _desiredPath);
+            //    Import();
+            //    log.Info("Creating Anonymous Report to directory...done!");
+            //    _scrub = false;
+            //    _desiredPath = userPath + CVariables._unsafeSuffix;
+            //}
+            ////_scrub = userSetScrub;
+            //_openHtml = userOpenHtml;
+            //_openExplorer = userOpenExplorer;
+            //if(_scrub)
+            //    log.Info("Creating Anonymous Report to directory: " + _desiredPath);
+            //if (!_scrub)
+            //    log.Info("Creating Original Report to directory: " + _desiredPath);
+            //Import();
 
             log.Info("Creating Report done!");
 
@@ -483,6 +498,11 @@ namespace VeeamHealthCheck
             if (daysSelector.SelectedIndex == 1)
             {
                 _reportDays = 30;
+                LogUIAction("Interval set to " + _reportDays);
+            }
+            if (daysSelector.SelectedIndex == 2)
+            {
+                _reportDays = 90;
                 LogUIAction("Interval set to " + _reportDays);
             }
         }

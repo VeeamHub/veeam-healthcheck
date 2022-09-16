@@ -45,6 +45,7 @@ namespace VeeamHealthCheck.Reporting.Html
         private int _cores;
         private int _ram;
         private CDataTypesParser _dTypeParser;
+        private List<CServerTypeInfos> _csv;
         private readonly CCsvParser _csvParser = new();
         private readonly CLogger log = VhcGui.log;
         private CHtmlExporter exporter;
@@ -55,7 +56,10 @@ namespace VeeamHealthCheck.Reporting.Html
         public CDataFormer(bool isImport) // add string mode input
         {
             _dTypeParser = new();
+            _csv = _dTypeParser.ServerInfo();
             _isImport = isImport;
+            if (!isImport)
+                _checkLogs = true;
             CheckXmlFile();
         }
         private void CheckXmlFile()
@@ -291,21 +295,20 @@ namespace VeeamHealthCheck.Reporting.Html
         public List<string> _viNotProtectedNames;
         public List<string> _physNotProtNames;
         public List<string> _physProtNames;
-        private void NewXmlNodeTemplate()
+        private void NewXmlNodeTemplate(bool scrub)
         {
             //customize the log line:
             log.Info("xml node template start...");
 
 
             // gather data needed for input
-            List<CServerTypeInfos> csv = _dTypeParser.ServerInfo();
-            CServerTypeInfos backupServer = csv.Find(x => (x.Id == _backupServerId));
+            CServerTypeInfos backupServer = _csv.Find(x => (x.Id == _backupServerId));
             CCsvParser config = new();
 
             
 
             // Check for items needing scrubbed
-            if (VhcGui._scrub)
+            if (scrub)
             {
                 // set items to scrub
             }
@@ -323,7 +326,7 @@ namespace VeeamHealthCheck.Reporting.Html
 
             log.Info("xml template..done!");
         }
-        public List<string> BackupServerInfoToXml()
+        public List<string> BackupServerInfoToXml(bool scrub)
         {
 
             log.Info("converting backup server info to xml");
@@ -331,8 +334,7 @@ namespace VeeamHealthCheck.Reporting.Html
 
             CheckServerRoles(_backupServerId);
 
-            List<CServerTypeInfos> csv = _dTypeParser.ServerInfo();
-            CServerTypeInfos backupServer = csv.Find(x => (x.Id == _backupServerId));
+            CServerTypeInfos backupServer = _csv.Find(x => (x.Id == _backupServerId));
             CCsvParser config = new();
             var cv = config.ConfigBackupCsvParser();
             string configBackupEnabled = "";
@@ -405,7 +407,7 @@ namespace VeeamHealthCheck.Reporting.Html
                     {
                         veeamVersion = r.Version;
                         sqlHostName = r.SqlServer;
-                        if (VhcGui._scrub)
+                        if (scrub)
                             sqlHostName = Scrub(sqlHostName);
                     }
                 }
@@ -434,7 +436,7 @@ namespace VeeamHealthCheck.Reporting.Html
                         sqlRam = ((mem / 1024 / 1024) + 1).ToString();
 
                     }
-                    if (VhcGui._scrub)
+                    if (scrub)
                         sqlHostName = Scrub(sqlHostName);
                 }
                 else if (backupServer.Name == sqlHostName)
@@ -449,7 +451,7 @@ namespace VeeamHealthCheck.Reporting.Html
             }
 
 
-            if (VhcGui._scrub)
+            if (scrub)
             {
                 backupServer.Name = Scrub(backupServer.Name);
                 configBackupTarget = Scrub(configBackupTarget);
@@ -509,7 +511,7 @@ namespace VeeamHealthCheck.Reporting.Html
             log.Info("converting backup server info to xml..done!");
             return list;
         }
-        public List<string[]> SobrInfoToXml()
+        public List<string[]> SobrInfoToXml(bool scrub)
         {
             PreCalculations();
             log.Info("Starting SOBR conversion to xml..");
@@ -526,7 +528,7 @@ namespace VeeamHealthCheck.Reporting.Html
                 int repoCount = repos.Count(x => x.SobrName == c.Name);
 
                 string newName = c.Name;
-                if (VhcGui._scrub)
+                if (scrub)
                     newName = _scrubber.ScrubItem(c.Name, "sobr");
                 _repoJobCount.TryGetValue(c.Name, out int jobCount);
 
@@ -567,7 +569,7 @@ namespace VeeamHealthCheck.Reporting.Html
             log.Info("Starting SOBR conversion to xml..done!");
             return list;
         }
-        public List<string[]> ExtentXmlFromCsv()
+        public List<string[]> ExtentXmlFromCsv(bool scrub)
         {
             log.Info("converting extent info to xml");
             List<string[]> list = new List<string[]>();
@@ -584,7 +586,7 @@ namespace VeeamHealthCheck.Reporting.Html
                 string hostName = c.Host;
                 string path = c.Path;
 
-                if (VhcGui._scrub)
+                if (scrub)
                 {
                     newName = Scrub(newName);
                     sobrName = Scrub(sobrName);
@@ -623,7 +625,7 @@ namespace VeeamHealthCheck.Reporting.Html
             log.Info("converting extent info to xml..done!");
             return list;
         }
-        public List<string[]> RepoInfoToXml()
+        public List<string[]> RepoInfoToXml(bool scrub)
         {
             PreCalculations();
             log.Info("converting repository info to xml");
@@ -646,7 +648,7 @@ namespace VeeamHealthCheck.Reporting.Html
                 string host = c.Host;
                 string path = c.Path;
 
-                if (VhcGui._scrub)
+                if (scrub)
                 {
                     name = _scrubber.ScrubItem(c.Name, "repo");
                     host = _scrubber.ScrubItem(c.Host, "server");
@@ -692,7 +694,7 @@ namespace VeeamHealthCheck.Reporting.Html
             log.Info("converting repository info to xml..done!");
             return list;
         }
-        public List<string[]> ProxyXmlFromCsv()
+        public List<string[]> ProxyXmlFromCsv(bool scrub)
         {
             log.Info("converting proxy info to xml");
             List<string[]> list = new();
@@ -705,7 +707,7 @@ namespace VeeamHealthCheck.Reporting.Html
             foreach (var c in csv)
             {
                 string[] s = new string[12];
-                if (VhcGui._scrub)
+                if (scrub)
                 {
                     c.Name = Scrub(c.Name);
                     c.Host = Scrub(c.Host);
@@ -730,11 +732,11 @@ namespace VeeamHealthCheck.Reporting.Html
             return list;
         }
 
-        public List<string[]> ServerXmlFromCsv()
+        public List<string[]> ServerXmlFromCsv(bool scrub)
         {
             log.Info("converting server info to xml");
             List<string[]> list = new List<string[]>();
-            List<CServerTypeInfos> csv = _dTypeParser.ServerInfo();
+            List<CServerTypeInfos> csv = _csv;
 
             csv = csv.OrderBy(x => x.Name).ToList();
             csv = csv.OrderBy(x => x.Type).ToList();
@@ -814,7 +816,7 @@ namespace VeeamHealthCheck.Reporting.Html
 
                 //scrub name if selected
                 string newName = c.Name;
-                if (VhcGui._scrub)
+                if (scrub)
                     newName = Scrub(newName);
                 s[0] = newName;
                 s[1] += c.Cores;
@@ -906,14 +908,21 @@ namespace VeeamHealthCheck.Reporting.Html
             log.Info("calculating concurrency");
             Dictionary<int, string[]> sendBack = new();
 
-            string htmlString = String.Empty;
-            List<CJobSessionInfo> sessionInfo = _dTypeParser.JobSessions;
+            //string htmlString = String.Empty;
+            //List<CJobSessionInfo> sessionInfo = _dTypeParser.JobSessions;
+            // try to trim it up...
+            var targetDate = DateTime.Now.AddDays(- VhcGui._reportDays);
+            List<CJobSessionInfo> trimmedSessionInfo = new(); 
+            using (CDataTypesParser dt = new())
+            {
+                trimmedSessionInfo = dt.JobSessions.Where(c => c.CreationTime >= targetDate).ToList();
+            }
             List<CJobTypeInfos> jobInfo = _dTypeParser.JobInfos;
 
             List<ConcurentTracker> ctList = new();
-            Dictionary<DateTime, string> jobStartDict = new();
+            //Dictionary<DateTime, string> jobStartDict = new();
             List<string> jobNameList = new();
-            jobNameList.AddRange(sessionInfo.Select(y => y.JobName).Distinct());
+            jobNameList.AddRange(trimmedSessionInfo.Select(y => y.JobName).Distinct());
 
             List<string> mirrorJobNamesList = new();
             List<string> nameDatesList = new();
@@ -935,11 +944,11 @@ namespace VeeamHealthCheck.Reporting.Html
 
                 foreach (var m in mirrorJobBjobList)
                 {
-                    var mirrorSessions = sessionInfo.Where(y => y.JobName.StartsWith(m));
+                    var mirrorSessions = trimmedSessionInfo.Where(y => y.JobName.StartsWith(m));
 
                     foreach (var sess in mirrorSessions)
                     {
-                        int i = mirrorSessions.Count();
+                        //int i = mirrorSessions.Count();
                         DateTime now = DateTime.Now;
                         double diff = (now - sess.CreationTime).TotalDays;
                         if (diff < VhcGui._reportDays)
@@ -959,7 +968,7 @@ namespace VeeamHealthCheck.Reporting.Html
                 var backupSyncJobs = jobInfo.Where(x => x.JobType == "BackupSync");
                 foreach (var b in backupSyncJobs)
                 {
-                    var v = sessionInfo.Where(x => x.JobName == b.Name);
+                    var v = trimmedSessionInfo.Where(x => x.JobName == b.Name);
 
                     foreach (var s in v)
                     {
@@ -986,7 +995,7 @@ namespace VeeamHealthCheck.Reporting.Html
                 var epAgentBackupJobs = jobInfo.Where(x => x.JobType == "EpAgentBackup");
                 foreach (var e in epAgentBackupJobs)
                 {
-                    var epBcj = sessionInfo.Where(x => x.JobType == "EEndPoint");
+                    var epBcj = trimmedSessionInfo.Where(x => x.JobType == "EEndPoint");
 
                     foreach (var epB in epBcj)
                     {
@@ -1006,7 +1015,7 @@ namespace VeeamHealthCheck.Reporting.Html
                 foreach (var b in jobInfo)
                 {
 
-                    var remainingSessions = sessionInfo.Where(x => x.JobName.Equals(b.Name));
+                    var remainingSessions = trimmedSessionInfo.Where(x => x.JobName.Equals(b.Name));
                     foreach (var sess in remainingSessions)
                     {
                         string nameDate = sess.JobName + sess.CreationTime.ToString();
@@ -1023,7 +1032,7 @@ namespace VeeamHealthCheck.Reporting.Html
 
             else if (!isJob)
             {
-                foreach (var session in sessionInfo)
+                foreach (var session in trimmedSessionInfo)
                 {
                     DateTime now = DateTime.Now;
                     double diff = (now - session.CreationTime).TotalDays;
@@ -1177,7 +1186,7 @@ namespace VeeamHealthCheck.Reporting.Html
             }
             return returnDict;
         }
-        public List<List<string>> JobInfoToXml()
+        public List<List<string>> JobInfoToXml(bool scrub)
         {
             List<List<string>> sendBack = new();
             log.Info("converting job info to xml");
@@ -1199,7 +1208,7 @@ namespace VeeamHealthCheck.Reporting.Html
                 string repo = c.RepoName;
                 if (c.EncryptionEnabled == "True")
                     _backupsEncrypted = true;
-                if (VhcGui._scrub)
+                if (scrub)
                 {
                     jname = _scrubber.ScrubItem(c.Name, "job");
                     repo = _scrubber.ScrubItem(c.RepoName, "repo");
@@ -1227,18 +1236,26 @@ namespace VeeamHealthCheck.Reporting.Html
             log.Info("converting job info to xml..done!");
             return sendBack;
         }
-        public List<List<string>> ConvertJobSessSummaryToXml()
+        public List<List<string>> ConvertJobSessSummaryToXml(bool scrub)
         {
-            CJobSessSummary jss = new(_testFile, log, _scrub, _checkLogs, _scrubber, _dTypeParser);
-            return jss.JobSessionSummaryToXml();
+            CJobSessSummary jss = new(_testFile, log, scrub,  _scrubber, _dTypeParser);
+            return jss.JobSessionSummaryToXml(scrub);
 
         }
-        public void JobSessionInfoToXml()
+        public void JobSessionInfoToXml(bool scrub)
         {
             log.Info("converting job session info to xml");
             CHtmlFormatting _form = new();
 
-            List<CJobSessionInfo> csv = _dTypeParser.JobSessions;
+            List<CJobSessionInfo> csv = new();
+
+            var targetDate = DateTime.Now.AddDays(-VhcGui._reportDays);
+            //List<CJobSessionInfo> trimmedSessionInfo = new();
+            using (CDataTypesParser dt = new())
+            {
+                csv = dt.JobSessions.Where(c => c.CreationTime >= targetDate).ToList();
+            }
+
             csv = csv.OrderBy(x => x.Name).ToList();
 
             csv = csv.OrderBy(y => y.CreationTime).ToList();
@@ -1250,9 +1267,12 @@ namespace VeeamHealthCheck.Reporting.Html
             //doc.Root.Add(extElement);
             //doc.AddFirst(new XProcessingInstruction("xml-stylesheet", "type=\"text/xsl\" href=\"SessionReport.xsl\""));
             List<string> processedJobs = new();
-
+            double percentCounter = 0;
             foreach (var cs in csv)
             {
+                double percentComplete = percentCounter / csv.Count * 100;
+                string msg = String.Format("[JobSess]\t {0}%...", percentComplete);
+                log.Info(msg);
                 if (!processedJobs.Contains(cs.JobName))
                 {
                     processedJobs.Add(cs.JobName);
@@ -1265,7 +1285,7 @@ namespace VeeamHealthCheck.Reporting.Html
                         Directory.CreateDirectory(outDir);
 
                     string docName = outDir + "\\";
-                    if (VhcGui._scrub)
+                    if (scrub)
                     {
                         outDir += "\\" + _scrubber.ScrubItem(cs.JobName) + ".html";
                     }
@@ -1307,9 +1327,13 @@ namespace VeeamHealthCheck.Reporting.Html
                             if (cs.JobName == c.JobName)
                             {
                                 string jname = c.JobName;
+                                if (jname.Contains("\\"))
+                                {
+                                    jname = jname.Replace("\\", "--");
+                                }
                                 string vmName = c.VmName;
                                 //string repo = _scrubber.ScrubItem(c.)
-                                if (VhcGui._scrub)
+                                if (scrub)
                                 {
                                     jname = _scrubber.ScrubItem(c.JobName, "job");
                                     vmName = _scrubber.ScrubItem(c.VmName, "vm");
@@ -1363,10 +1387,10 @@ namespace VeeamHealthCheck.Reporting.Html
 
 
 
-
+                percentCounter++;
             }
             //doc.Save(_testFile);
-            log.Info("converting job session summary to xml..done!");
+            log.Info("converting job session info to xml..done!");
         }
         public string TableData(string data, string toolTip)
         {

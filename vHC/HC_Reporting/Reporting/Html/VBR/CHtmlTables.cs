@@ -47,7 +47,7 @@ namespace VeeamHealthCheck.Html.VBR
         }
 
 
-        public string LicTable()
+        public string LicTable(bool scrub)
         {
             string s = _form.SectionStart("license", ResourceHandler.LicTableHeader);
             string summary = _sum.LicSum();
@@ -79,9 +79,9 @@ namespace VeeamHealthCheck.Html.VBR
 
 
                 s += "<tr>";
-                if(VhcGui._scrub)
+                if(scrub)
                     s += _form.TableData(_scrub.ScrubItem(l.licensedto), "") ;
-                if (!VhcGui._scrub)
+                if (!scrub)
                     s += _form.TableData(l.licensedto, "");
                 s += _form.TableData(l.edition, "") ;
                 s += _form.TableData(l.status, "") ;
@@ -103,7 +103,7 @@ namespace VeeamHealthCheck.Html.VBR
             s += _form.SectionEnd(summary);
             return s;
         }
-        public string AddBkpSrvTable()
+        public string AddBkpSrvTable(bool scrub)
         {
             string s = _form.SectionStart("vbrserver", ResourceHandler.BkpSrvTblHead);
             string summary = _sum.SetVbrSummary();
@@ -126,8 +126,8 @@ namespace VeeamHealthCheck.Html.VBR
             s += _form.TableHeader(ResourceHandler.BkpSrvTblRepoRole, ResourceHandler.BstRepTT);
             s += _form.TableHeader(ResourceHandler.BkpSrvTblWanRole, ResourceHandler.BstWaTT);
             s += "</tr>";
-            CDataFormer cd = new(true);
-            List<string> list = cd.BackupServerInfoToXml();
+            //CDataFormer cd = new(true);
+            List<string> list = _df.BackupServerInfoToXml(scrub);
             s += "<tr>";
 
             for (int i = 0; i < list.Count(); i++)
@@ -146,7 +146,7 @@ namespace VeeamHealthCheck.Html.VBR
 
         }
 
-        public string AddSecSummaryTable()
+        public string AddSecSummaryTable(bool scrub)
         {
             List<int> list = _df.SecSummary();
 
@@ -173,7 +173,7 @@ namespace VeeamHealthCheck.Html.VBR
 
             return s;
         }
-        public string AddSrvSummaryTable()
+        public string AddSrvSummaryTable(bool scrub)
         {
             string summary = _sum.SrvSum();
             Dictionary<string, int> list = _df.ServerSummaryToXml();
@@ -195,7 +195,7 @@ namespace VeeamHealthCheck.Html.VBR
             s += _form.SectionEnd(summary);
             return s;
         }
-        public string AddJobSummaryTable()
+        public string AddJobSummaryTable(bool scrub)
         {
             string summary = _sum.JobSummary();
             Dictionary<string, int> list = _df.JobSummaryInfoToXml();
@@ -229,7 +229,7 @@ namespace VeeamHealthCheck.Html.VBR
             return s;
         }
 
-        public string AddMissingJobsTable()
+        public string AddMissingJobsTable(bool scrub)
         {
             string s =  _form.SectionStartWithButton("missingjobs", ResourceHandler.NpTitle, ResourceHandler.NpButton);
 
@@ -239,8 +239,8 @@ namespace VeeamHealthCheck.Html.VBR
             s += _form.TableHeader(ResourceHandler.JobSum0, "") +
                 //_form.TableHeader("Count", "Total detected of this type") +
                 "</tr>";
-            CDataFormer cd = new(true);
-            List<string> list = cd.ParseNonProtectedTypes();
+            //CDataFormer cd = new(true);
+            List<string> list = _df.ParseNonProtectedTypes();
 
             for (int i = 0; i < list.Count(); i++)
             {
@@ -254,7 +254,7 @@ namespace VeeamHealthCheck.Html.VBR
             s += _form.SectionEnd(summary);
             return s;
         }
-        public string AddProtectedWorkLoadsTable()
+        public string AddProtectedWorkLoadsTable(bool scrub)
         {
             string s = _form.SectionStartWithButton("protectedworkloads", ResourceHandler.PlTitle, ResourceHandler.PlButton);
             string summary = _sum.ProtectedWorkloads();
@@ -269,23 +269,23 @@ namespace VeeamHealthCheck.Html.VBR
             _form.TableHeader(ResourceHandler.PlHdr7, ResourceHandler.PlHdrTT7) +
 
     "</tr>";
-            CDataFormer cd = new(true);
-            cd.ProtectedWorkloadsToXml();
+            //CDataFormer cd = new(true);
+            _df.ProtectedWorkloadsToXml();
             s += "<tr>";
-            s += _form.TableData((cd._viProtectedNames.Distinct().Count() + cd._viNotProtectedNames.Distinct().Count()).ToString(), "");
-            s += _form.TableData(cd._viProtectedNames.Distinct().Count().ToString(), "");
-            s += _form.TableData(cd._viNotProtectedNames.Distinct().Count().ToString(), "");
-            s += _form.TableData(cd._viDupes.ToString(), "");
-            s += _form.TableData(cd._vmProtectedByPhys.Distinct().Count().ToString(), "");
-            s += _form.TableData((cd._physNotProtNames.Distinct().Count() + cd._physProtNames.Distinct().Count()).ToString(), "");
-            s += _form.TableData(cd._physProtNames.Distinct().Count().ToString(), "");
-            s += _form.TableData(cd._physNotProtNames.Distinct().Count().ToString(), "");
+            s += _form.TableData((_df._viProtectedNames.Distinct().Count() + _df._viNotProtectedNames.Distinct().Count()).ToString(), "");
+            s += _form.TableData(_df._viProtectedNames.Distinct().Count().ToString(), "");
+            s += _form.TableData(_df._viNotProtectedNames.Distinct().Count().ToString(), "");
+            s += _form.TableData(_df._viDupes.ToString(), "");
+            s += _form.TableData(_df._vmProtectedByPhys.Distinct().Count().ToString(), "");
+            s += _form.TableData((_df._physNotProtNames.Distinct().Count() + _df._physProtNames.Distinct().Count()).ToString(), "");
+            s += _form.TableData(_df._physProtNames.Distinct().Count().ToString(), "");
+            s += _form.TableData(_df._physNotProtNames.Distinct().Count().ToString(), "");
 
             s += "</tr>";
             s += _form.SectionEnd(summary);
             return s;
         }
-        public string AddManagedServersTable()
+        public string AddManagedServersTable(bool scrub)
         {
             string s = _form.SectionStartWithButton("managedServerInfo", ResourceHandler.ManSrvTitle, ResourceHandler.ManSrvBtn);
             string summary = _sum.ManagedServers();
@@ -303,13 +303,13 @@ namespace VeeamHealthCheck.Html.VBR
            _form.TableHeader(ResourceHandler.ManSrv10, ResourceHandler.ManSrv10TT) +
            _form.TableHeader(ResourceHandler.ManSrv11, ResourceHandler.ManSrv11TT) +
            "</tr>";
-            CDataFormer cd = new(true);
-            List<string[]> list = cd.ServerXmlFromCsv();
+            //CDataFormer cd = new(true);
+            List<string[]> list = _df.ServerXmlFromCsv(scrub);
 
             foreach (var d in list)
             {
                 s += "<tr>";
-                if (VhcGui._scrub)
+                if (scrub)
                     s += _form.TableData(_scrub.ScrubItem(d[0]), "");
                 else
                     s += _form.TableData(d[0], "");
@@ -330,7 +330,7 @@ namespace VeeamHealthCheck.Html.VBR
             s += _form.SectionEnd(summary);
             return s;
         }
-        public string AddRegKeysTable()
+        public string AddRegKeysTable(bool scrub)
         {
             string s = _form.SectionStartWithButton("regkeys", ResourceHandler.RegTitle, ResourceHandler.RegBtn);
             string summary = _sum.RegKeys();
@@ -338,8 +338,8 @@ namespace VeeamHealthCheck.Html.VBR
                 _form.TableHeader(ResourceHandler.Reg0, ResourceHandler.Reg0TT) +
                 _form.TableHeader(ResourceHandler.Reg1, ResourceHandler.Reg1TT) +
                 "</tr>";
-            CDataFormer cd = new(true);
-            Dictionary<string, string> list = cd.RegOptions();
+            //CDataFormer cd = new(true);
+            Dictionary<string, string> list = _df.RegOptions();
 
             foreach (var d in list)
             {
@@ -351,7 +351,7 @@ namespace VeeamHealthCheck.Html.VBR
             s += _form.SectionEnd(summary);
             return s;
         }
-        public string AddProxyTable()
+        public string AddProxyTable(bool scrub)
         {
             string s = _form.SectionStartWithButton("proxies", ResourceHandler.PrxTitle, ResourceHandler.PrxBtn);
             string summary = _sum.Proxies();
@@ -369,13 +369,13 @@ namespace VeeamHealthCheck.Html.VBR
            _form.TableHeader(ResourceHandler.Prx10, ResourceHandler.Prx10TT) +
            _form.TableHeader(ResourceHandler.Prx11, ResourceHandler.Prx11TT) +
    "</tr>";
-            CDataFormer cd = new(true);
-            List<string[]> list = cd.ProxyXmlFromCsv();
+            //CDataFormer cd = new(true);
+            List<string[]> list = _df.ProxyXmlFromCsv(scrub);
 
             foreach (var d in list)
             {
                 s += "<tr>";
-                if(VhcGui._scrub)
+                if(scrub)
                     s += _form.TableData(_scrub.ScrubItem(d[0]), "");
                 else
                     s += _form.TableData(d[0], "");
@@ -388,7 +388,7 @@ namespace VeeamHealthCheck.Html.VBR
                 s += _form.TableData(d[7], "");
                 s += _form.TableData(d[8], "");
                 s += _form.TableData(d[9], "");
-                if (VhcGui._scrub)
+                if (scrub)
                     s += _form.TableData(_scrub.ScrubItem(d[10]), "");
                 else
                     s += _form.TableData(d[10], "");
@@ -398,7 +398,7 @@ namespace VeeamHealthCheck.Html.VBR
             s += _form.SectionEnd(summary);
             return s;
         }
-        public string AddSobrTable()
+        public string AddSobrTable(bool scrub)
         {
             string s = _form.SectionStartWithButton("sobr", ResourceHandler.SbrTitle, ResourceHandler.SbrBtn);
             string summary = _sum.Sobr();
@@ -418,8 +418,8 @@ namespace VeeamHealthCheck.Html.VBR
            _form.TableHeader(ResourceHandler.Sbr11, ResourceHandler.Sbr11TT) +
            _form.TableHeader(ResourceHandler.Sbr12, ResourceHandler.Sbr12TT) +
            "</tr>";
-            CDataFormer cd = new(true);
-            List<string[]> list = cd.SobrInfoToXml();
+            //CDataFormer cd = new(true);
+            List<string[]> list = _df.SobrInfoToXml(scrub);
 
             foreach (var d in list)
             {
@@ -447,7 +447,7 @@ namespace VeeamHealthCheck.Html.VBR
             s += _form.SectionEnd(summary);
             return s;
         }
-        public string AddSobrExtTable()
+        public string AddSobrExtTable(bool scrub)
         {
             string s = _form.SectionStartWithButton("extents", ResourceHandler.SbrExtTitle, ResourceHandler.SbrExtBtn);
             string summary = _sum.Extents();
@@ -469,7 +469,7 @@ _form.TableHeader(ResourceHandler.SbrExt13, ResourceHandler.SbrExt13TT) +
 _form.TableHeader(ResourceHandler.SbrExt14, ResourceHandler.SbrExt14TT) +
 _form.TableHeader(ResourceHandler.SbrExt15, ResourceHandler.SbrExt15TT) +
 "</tr>";
-            List<string[]> list = _df.ExtentXmlFromCsv();
+            List<string[]> list = _df.ExtentXmlFromCsv(scrub);
 
             foreach (var d in list)
             {
@@ -509,7 +509,7 @@ _form.TableHeader(ResourceHandler.SbrExt15, ResourceHandler.SbrExt15TT) +
             s += _form.SectionEnd(summary);
             return s;
         }
-        public string AddRepoTable()
+        public string AddRepoTable(bool scrub)
         {
             string s = _form.SectionStartWithButton("repos", ResourceHandler.RepoTitle, ResourceHandler.RepoBtn);
             string summary = _sum.Repos();
@@ -532,7 +532,7 @@ _form.TableHeader(ResourceHandler.SbrExt13, ResourceHandler.SbrExt13TT) +
 _form.TableHeader(ResourceHandler.SbrExt14, ResourceHandler.SbrExt14TT) +
 _form.TableHeader(ResourceHandler.SbrExt15, ResourceHandler.SbrExt15TT) +
 "</tr>";
-            List<string[]> list = _df.RepoInfoToXml();
+            List<string[]> list = _df.RepoInfoToXml(scrub);
 
             foreach (var d in list)
             {
@@ -573,7 +573,7 @@ _form.TableHeader(ResourceHandler.SbrExt15, ResourceHandler.SbrExt15TT) +
             s += _form.SectionEnd(summary);
             return s;
         }
-        public string AddJobConTable()
+        public string AddJobConTable(bool scrub)
         {
             string s = _form.SectionStartWithButton("jobcon", ResourceHandler.JobConTitle, ResourceHandler.JobConBtn, VhcGui._reportDays);
             string summary = _sum.JobCon();
@@ -606,7 +606,7 @@ _form.TableHeader(ResourceHandler.SbrExt15, ResourceHandler.SbrExt15TT) +
             s += _form.SectionEnd(summary);
             return s;
         }
-        public string AddTaskConTable()
+        public string AddTaskConTable(bool scrub)
         {
             string s = _form.SectionStartWithButton("taskcon", ResourceHandler.TaskConTitle, ResourceHandler.TaskConBtn, VhcGui._reportDays);
             string summary = _sum.TaskCon();
@@ -640,7 +640,7 @@ _form.TableHeader(ResourceHandler.SbrExt15, ResourceHandler.SbrExt15TT) +
             s += _form.SectionEnd(summary);
             return s;
         }
-        public string AddJobSessSummTable()
+        public string AddJobSessSummTable(bool scrub)
         {
             string s = _form.SectionStartWithButton("jobsesssum", ResourceHandler.JssTitle, ResourceHandler.JssBtn, VhcGui._reportDays);
             string summary = _sum.JobSessSummary();
@@ -663,7 +663,7 @@ _form.TableHeader(ResourceHandler.SbrExt15, ResourceHandler.SbrExt15TT) +
             s += _form.TableHeader(ResourceHandler.Jss15, ResourceHandler.Jss15TT);
 
 
-            var stuff = _df.ConvertJobSessSummaryToXml();
+            var stuff = _df.ConvertJobSessSummaryToXml(scrub);
 
             foreach (var stu in stuff)
             {
@@ -679,7 +679,7 @@ _form.TableHeader(ResourceHandler.SbrExt15, ResourceHandler.SbrExt15TT) +
             s += _form.SectionEnd(summary);
             return s;
         }
-        public string AddJobInfoTable()
+        public string AddJobInfoTable(bool scrub)
         {
             string s = _form.SectionStartWithButton("jobs", ResourceHandler.JobInfoTitle, ResourceHandler.JobInfoBtn);
             string summary = _sum.JobInfo();
@@ -698,7 +698,7 @@ _form.TableHeader(ResourceHandler.SbrExt15, ResourceHandler.SbrExt15TT) +
             s += _form.TableHeader(ResourceHandler.JobInfo11, ResourceHandler.JobInfo11TT);
             s += _form.TableHeader(ResourceHandler.JobInfo12, ResourceHandler.JobInfo12TT);
             s += _form.TableHeader(ResourceHandler.JobInfo13, ResourceHandler.JobInfo13TT);
-            var stuff = _df.JobInfoToXml();
+            var stuff = _df.JobInfoToXml(scrub);
 
             foreach (var stu in stuff)
             {
@@ -714,9 +714,9 @@ _form.TableHeader(ResourceHandler.SbrExt15, ResourceHandler.SbrExt15TT) +
             s += _form.SectionEnd(summary);
             return s;
         }
-        public void AddSessionsFiles()
+        public void AddSessionsFiles(bool scrub)
         {
-            _df.JobSessionInfoToXml();
+            _df.JobSessionInfoToXml(scrub);
         }
 
     }

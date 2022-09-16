@@ -27,16 +27,17 @@ namespace VeeamHealthCheck.Html
         private Scrubber.CScrubHandler _scrubber;
         private CDataTypesParser _parsers;
 
-        public CJobSessSummary(string xmlFile, CLogger log, bool scrub, bool checkLogs, Scrubber.CScrubHandler scrubber, CDataTypesParser dp)
+        public CJobSessSummary(string xmlFile, CLogger log, bool scrub,   Scrubber.CScrubHandler scrubber, CDataTypesParser dp)
         {
-            _checkLogs = checkLogs;
+            if(!VhcGui._import)
+                _checkLogs = true;
             _xmlFile = xmlFile;
             _log = log;
             _scrubber = scrubber;
             _parsers = dp;
 
-            if (checkLogs)
-                PopulateWaits();
+            //if (_checkLogs)
+            //    PopulateWaits();
             //JobSessionSummaryToXml(xmlFile, log, scrub, scrubber, dp);
         }
 
@@ -78,16 +79,21 @@ namespace VeeamHealthCheck.Html
 
             return xml;
         }
-        public List<List<string>> JobSessionSummaryToXml()
+        public List<List<string>> JobSessionSummaryToXml(bool scrub)
         {
-            return JobSessionSummaryToXml(_xmlFile, _log, _scrub, _scrubber, _parsers);
+            return JobSessionSummaryToXml(_xmlFile, _log, scrub, _scrubber, _parsers);
         }
         public List<List<string>> JobSessionSummaryToXml(string xmlFile, CLogger log, bool scrub, Scrubber.CScrubHandler scrubber, CDataTypesParser d)
         {
             List<List<string>> sendBack = new();
             log.Info("converting job session summary to xml");
-            List<CJobSessionInfo> jobSessionsCsv = d.JobSessions;
-            jobSessionsCsv = jobSessionsCsv.OrderBy(x => x.Name).ToList();
+
+            var targetDate = DateTime.Now.AddDays(-VhcGui._reportDays);
+            List<CJobSessionInfo> trimmedSessionInfo = new();
+            using (CDataTypesParser dt = new())
+            {
+                trimmedSessionInfo = dt.JobSessions.Where(c => c.CreationTime >= targetDate).ToList();
+            }
             //csv = csv.OrderBy(x => x.CreationTime).ToList();
 
             var bjobsCsvInfo = new CCsvParser().GetDynamicBjobs();
@@ -175,7 +181,7 @@ namespace VeeamHealthCheck.Html
                 List<double> backupSize = new();
                 string type = "";
 
-                foreach (var c in jobSessionsCsv)
+                foreach (var c in trimmedSessionInfo)
                 {
                     try
                     {
@@ -293,7 +299,7 @@ namespace VeeamHealthCheck.Html
                 try
                 {
                     string jname = o.JobName;
-                    if (VhcGui._scrub)
+                    if (scrub)
                         jname = scrubber.ScrubItem(o.JobName, "job");
 
                     string wait = o.waitCount.ToString();

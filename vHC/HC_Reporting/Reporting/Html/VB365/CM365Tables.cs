@@ -341,9 +341,9 @@ namespace VeeamHealthCheck.Reporting.Html.VB365
                     if ((freeSpace / capacity * 100) < 5)
                         freeSpace = 1;
 
-                    if (g.State == "Out of Date")
+                    if (g.State.Contains("Out of Date"))
                         stateShade = 2;
-                    if (g.State == "Out of Sync" || g.State == "Invalid")
+                    if (g.State.Contains("Out of Sync") || g.State.Contains("Invalid"))
                         stateShade = 1;
 
                     if (VhcGui._scrub)
