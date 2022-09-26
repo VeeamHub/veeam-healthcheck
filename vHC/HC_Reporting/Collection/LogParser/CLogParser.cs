@@ -2,6 +2,7 @@
 // MIT License
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Text;
@@ -62,10 +63,16 @@ namespace VeeamHealthCheck.FilesParser
         }
         public Dictionary<string, List<TimeSpan>> GetWaitsFromFiles()
         {
+            log.Info("Checking Log files for waits..");
             Dictionary<string, List<TimeSpan>> jobsAndWaits = new();
             string[] dirList = Directory.GetDirectories(LogLocation);
+
+            int counter = 0;
             foreach (var d in dirList)
             {
+                counter++;
+                string info = String.Format("[LogParser] Parsing log {0} of {1}", counter, dirList.Count());
+                log.Info(info);
                 string jobname = Path.GetFileName(d);
 
                 List<TimeSpan> waits = new();
@@ -79,6 +86,7 @@ namespace VeeamHealthCheck.FilesParser
                 jobsAndWaits.Add(jobname, waits);
             }
             _waits = jobsAndWaits;
+            log.Info("Checking Log files for waits..Done!");
             return jobsAndWaits;
         }
         private List<TimeSpan> CheckFileWait(string file, string jobName)
@@ -137,9 +145,11 @@ namespace VeeamHealthCheck.FilesParser
             end = end.Trim(']');
 
 
-            DateTime.TryParse(start, out DateTime tStart);
-            DateTime.TryParse(end, out DateTime tEnd);
+            //DateTime.TryParse(start, out DateTime tStart);
+            //DateTime.TryParse(end, out DateTime tEnd);
 
+            DateTime.TryParseExact(start, "dd.MM.yyyy HH:mm:ss", CultureInfo.InvariantCulture, DateTimeStyles.None, out DateTime tStart);
+            DateTime.TryParseExact(end, "dd.MM.yyyy HH:mm:ss", CultureInfo.InvariantCulture, DateTimeStyles.None, out DateTime tEnd);
 
             var diffTime = (tEnd - tStart);
             //string t = diffTime.ToString("dd:HH:mm:ss");
