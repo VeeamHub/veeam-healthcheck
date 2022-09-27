@@ -110,7 +110,7 @@ namespace VeeamHealthCheck.Html
             IEnumerable<CWaitsCsv> waitList = null;
             if (_checkLogs)
             {
-                waitList = csv.WaitsCsvReader();
+                waitList = csv.WaitsCsvReader().ToList();
 
             }
 
