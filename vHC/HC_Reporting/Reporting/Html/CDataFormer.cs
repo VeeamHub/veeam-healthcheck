@@ -212,6 +212,39 @@ namespace VeeamHealthCheck.Reporting.Html
             #region viProtected
             var protectedVms = csvp.ViProtectedReader().ToList();
             var unProtectedVms = csvp.ViUnProtectedReader().ToList();
+
+            var HvProtectedVms = csvp.HvProtectedReader().ToList();
+            var HvUnProtectedVms = csvp.HvUnProtectedReader().ToList();
+            #endregion
+
+            #region hv logic
+            List<string> hvNames = new();
+            List<string> hvProtectedNames = new();
+            List<string> hvNotProtectedNames = new();
+            int hvDupes = 0;
+
+
+            foreach (var p in HvProtectedVms)
+            {
+
+                hvNames.Add(p.Name);
+                hvProtectedNames.Add(p.Name);
+
+
+            }
+            foreach (var un in HvUnProtectedVms)
+            {
+                if (un.Type == "Vm")
+                {
+                    hvNotProtectedNames.Add(un.Name);
+                    hvNames.Add(un.Name);
+
+                }
+
+            }
+
+            hvDupes = hvNames.Count - (hvProtectedNames.Distinct().Count() + hvNotProtectedNames.Distinct().Count());
+
             #endregion
 
             #region physProtected
@@ -284,6 +317,10 @@ namespace VeeamHealthCheck.Reporting.Html
             _physNotProtNames = physNotProtNames;
             _physProtNames = physProtNames;
 
+            _hvProtectedNames = hvProtectedNames;
+            _hvNotProtectedNames = hvNotProtectedNames;
+            _hvDupes = hvDupes;
+
 
             log.Info("Converting protected workloads data to xml..done!");
         }
@@ -291,6 +328,10 @@ namespace VeeamHealthCheck.Reporting.Html
         public List<string> _vmProtectedByPhys;
         public List<string> _viProtectedNames;
         public List<string> _vmNotProtectedNames;
+
+        public int _hvDupes;
+        public List<string> _hvProtectedNames;
+        public List<string> _hvNotProtectedNames;
 
         public List<string> _viNotProtectedNames;
         public List<string> _physNotProtNames;

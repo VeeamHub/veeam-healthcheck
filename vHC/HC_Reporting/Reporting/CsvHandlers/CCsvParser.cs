@@ -50,6 +50,8 @@ namespace VeeamHealthCheck.CsvHandlers
         private readonly string _viUnprotected = "ViUnprotected";
         private readonly string _physProtected = "PhysProtected";
         private readonly string _physNotProtected = "PhysNotProtected";
+        private readonly string _HvProtected = "HvProtected";
+        private readonly string _HvUnprotected = "HvUnprotected";
 
         //VBO Files
         private readonly string _vboGlobalCsv = "Global";
@@ -283,6 +285,14 @@ namespace VeeamHealthCheck.CsvHandlers
         public IEnumerable<CViProtected> ViUnProtectedReader()
         {
             return FileFinder(_viUnprotected).GetRecords<CViProtected>();
+        }
+        public IEnumerable<CViProtected> HvProtectedReader()
+        {
+            return FileFinder(_HvProtected).GetRecords<CViProtected>();
+        }
+        public IEnumerable<CViProtected> HvUnProtectedReader()
+        {
+            return FileFinder(_HvUnprotected).GetRecords<CViProtected>();
         }
         public IEnumerable<CRegOptionsCsv> RegOptionsCsvParser()
         {

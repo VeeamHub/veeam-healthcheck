@@ -79,24 +79,24 @@ namespace VeeamHealthCheck.Html.VBR
 
 
                 s += "<tr>";
-                if(scrub)
-                    s += _form.TableData(_scrub.ScrubItem(l.licensedto), "") ;
+                if (scrub)
+                    s += _form.TableData(_scrub.ScrubItem(l.licensedto), "");
                 if (!scrub)
                     s += _form.TableData(l.licensedto, "");
-                s += _form.TableData(l.edition, "") ;
-                s += _form.TableData(l.status, "") ;
-                s += _form.TableData(l.type, "") ;
-                s += _form.TableData(l.licensedinstances, "") ;
-                s += _form.TableData(l.usedinstances, "") ;
-                s += _form.TableData(l.newinstances, "") ;
-                s += _form.TableData(l.rentalinstances, "") ;
-                s += _form.TableData(l.licensedsockets, "") ;
-                s += _form.TableData(l.usedsockets, "") ;
-                s += _form.TableData(l.licensedcapacitytb, "") ;
-                s += _form.TableData(l.usedcapacitytb, "") ;
-                s += _form.TableData(l.expirationdate, "") ;
-                s += _form.TableData(l.supportexpirationdate, "") ;
-                s += _form.TableData(l.cloudconnect, "") ;
+                s += _form.TableData(l.edition, "");
+                s += _form.TableData(l.status, "");
+                s += _form.TableData(l.type, "");
+                s += _form.TableData(l.licensedinstances, "");
+                s += _form.TableData(l.usedinstances, "");
+                s += _form.TableData(l.newinstances, "");
+                s += _form.TableData(l.rentalinstances, "");
+                s += _form.TableData(l.licensedsockets, "");
+                s += _form.TableData(l.usedsockets, "");
+                s += _form.TableData(l.licensedcapacitytb, "");
+                s += _form.TableData(l.usedcapacitytb, "");
+                s += _form.TableData(l.expirationdate, "");
+                s += _form.TableData(l.supportexpirationdate, "");
+                s += _form.TableData(l.cloudconnect, "");
                 s += "</tr>";
             }
 
@@ -138,7 +138,7 @@ namespace VeeamHealthCheck.Html.VBR
                 //    s += _form.TableData(_scrub.ScrubItem(list[i]), "");
                 //}
                 //else
-                    s += _form.TableData(list[i], "");
+                s += _form.TableData(list[i], "");
 
             }
             s += _form.SectionEnd(summary);
@@ -231,7 +231,7 @@ namespace VeeamHealthCheck.Html.VBR
 
         public string AddMissingJobsTable(bool scrub)
         {
-            string s =  _form.SectionStartWithButton("missingjobs", ResourceHandler.NpTitle, ResourceHandler.NpButton);
+            string s = _form.SectionStartWithButton("missingjobs", ResourceHandler.NpTitle, ResourceHandler.NpButton);
 
 
             string summary = _sum.MissingJobsSUmmary();
@@ -258,24 +258,56 @@ namespace VeeamHealthCheck.Html.VBR
         {
             string s = _form.SectionStartWithButton("protectedworkloads", ResourceHandler.PlTitle, ResourceHandler.PlButton);
             string summary = _sum.ProtectedWorkloads();
+            _df.ProtectedWorkloadsToXml();
+
+
+            // vi table
+            s += "<h3>VMware Backups</h3>";
+            s += _form.Table();
             s += "<tr>" +
             _form.TableHeader(ResourceHandler.PlHdr0, ResourceHandler.PlHdrTT0) +
             _form.TableHeader(ResourceHandler.PlHdr1, ResourceHandler.PlHdrTT1) +
             _form.TableHeader(ResourceHandler.PlHdr2, ResourceHandler.PlHdrTT2) +
             _form.TableHeader(ResourceHandler.PlHdr3, ResourceHandler.PlHdrTT3) +
-            _form.TableHeader(ResourceHandler.PlHdr4, ResourceHandler.PlHdrTT4) +
-            _form.TableHeader(ResourceHandler.PlHdr5, ResourceHandler.PlHdrTT5) +
-            _form.TableHeader(ResourceHandler.PlHdr6, ResourceHandler.PlHdrTT6) +
-            _form.TableHeader(ResourceHandler.PlHdr7, ResourceHandler.PlHdrTT7) +
-
-    "</tr>";
-            //CDataFormer cd = new(true);
-            _df.ProtectedWorkloadsToXml();
-            s += "<tr>";
+            "</tr><tr>";
             s += _form.TableData((_df._viProtectedNames.Distinct().Count() + _df._viNotProtectedNames.Distinct().Count()).ToString(), "");
             s += _form.TableData(_df._viProtectedNames.Distinct().Count().ToString(), "");
             s += _form.TableData(_df._viNotProtectedNames.Distinct().Count().ToString(), "");
             s += _form.TableData(_df._viDupes.ToString(), "");
+            s += "</tr>";
+            s += "</table>";
+
+
+            //hv 
+            s += "<h3>HV Backups</h3>";
+            s += _form.Table();
+            // hv table
+            s += "<tr>";
+            s += _form.TableHeader("HV Total", "Total HV VMs found in environment");
+            s += _form.TableHeader("HV Protected", "Total HV VMs found with existing backup");
+            s += _form.TableHeader("HV Unprotected", "Total HV VMs found without backup");
+            s += _form.TableHeader("HV Duplicates", "Total HV VMs potentially found in multiple backups");
+            s += "</tr>";
+            s += "<tr>";
+            s += _form.TableData((_df._hvProtectedNames.Distinct().Count() + _df._hvNotProtectedNames.Distinct().Count()).ToString(), "");
+            s += _form.TableData(_df._hvProtectedNames.Distinct().Count().ToString(), "");
+            s += _form.TableData(_df._hvNotProtectedNames.Distinct().Count().ToString(), "");
+            s += _form.TableData(_df._hvDupes.ToString(), "");
+            s += "</tr></table>";
+
+
+            // phys
+            s += "<h3>Physical Backups</h3>";
+            s += _form.Table();
+            s += "<tr>";
+            s += _form.TableHeader(ResourceHandler.PlHdr4, ResourceHandler.PlHdrTT4);
+            s += _form.TableHeader(ResourceHandler.PlHdr5, ResourceHandler.PlHdrTT5);
+            s += _form.TableHeader(ResourceHandler.PlHdr6, ResourceHandler.PlHdrTT6);
+            s += _form.TableHeader(ResourceHandler.PlHdr7, ResourceHandler.PlHdrTT7);
+
+            s += "</tr>";
+            //CDataFormer cd = new(true);
+            s += "<tr>";
             s += _form.TableData(_df._vmProtectedByPhys.Distinct().Count().ToString(), "");
             s += _form.TableData((_df._physNotProtNames.Distinct().Count() + _df._physProtNames.Distinct().Count()).ToString(), "");
             s += _form.TableData(_df._physProtNames.Distinct().Count().ToString(), "");
@@ -375,7 +407,7 @@ namespace VeeamHealthCheck.Html.VBR
             foreach (var d in list)
             {
                 s += "<tr>";
-                if(scrub)
+                if (scrub)
                     s += _form.TableData(_scrub.ScrubItem(d[0]), "");
                 else
                     s += _form.TableData(d[0], "");
@@ -439,7 +471,7 @@ namespace VeeamHealthCheck.Html.VBR
                 s += _form.TableData(d[8], "", perVmShade);
                 s += _form.TableData(d[9], "");
                 s += _form.TableData(d[10], "");
-                s += _form.TableData(d[11], ""); 
+                s += _form.TableData(d[11], "");
                 s += _form.TableData(d[12], "");
                 s += _form.TableData(d[13], "");
                 s += "</tr>";
@@ -645,7 +677,7 @@ _form.TableHeader(ResourceHandler.SbrExt15, ResourceHandler.SbrExt15TT) +
             string s = _form.SectionStartWithButton("jobsesssum", ResourceHandler.JssTitle, ResourceHandler.JssBtn, VhcGui._reportDays);
             string summary = _sum.JobSessSummary();
 
-            s+= _form.TableHeader(ResourceHandler.Jss0, ResourceHandler.Jss0TT);
+            s += _form.TableHeader(ResourceHandler.Jss0, ResourceHandler.Jss0TT);
             s += _form.TableHeader(ResourceHandler.Jss1, ResourceHandler.Jss1TT);
             s += _form.TableHeader(ResourceHandler.Jss2, ResourceHandler.Jss2TT);
             s += _form.TableHeader(ResourceHandler.Jss3, ResourceHandler.Jss3TT);

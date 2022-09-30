@@ -74,6 +74,7 @@ function Get-VBRConfig {
     [string]$VBRServer,
     [Parameter(Mandatory)]
     [string]$ReportPath
+    [int]$ReportingIntervalDays = -1,
   )
 
   begin {
@@ -288,15 +289,14 @@ $protectedEntityInfo = Find-VBRViEntity -Name $vmNames.Name
 $protectedEntityInfo | select Name,PowerState,ProvisionedSize,UsedSize,Path | sort PoweredOn,Path,Name | Export-Csv -Path $("$ReportPath\$VBRServer" + '_ViProtected.csv') -NoTypeInformation
 $unprotectedEntityInfo | select Name,PowerState,ProvisionedSize,UsedSize,Path,Type | sort Type,PoweredOn,Path,Name | Export-Csv -Path $("$ReportPath\$VBRServer" + '_ViUnprotected.csv') -NoTypeInformation
 
-<# protected HV Workloads
-$hvvmbackups = Get-VBRBackup | ? {$_.TypeToString -eq "Hyper-v Backup" }
-$hvvmNames = $hvvmbackups.GetLastOibs()
-$unprotectedHvEntityInfo = Find-VBRHvEntity | ? {$_.Name -notin $hvvmNames.Name}
-$protectedHvEntityInfo = Find-VBRHvEntity -Name $hvvmNames.Name
-$protectedHvEntityInfo | select Name,PowerState,ProvisionedSize,UsedSize,Path | sort PoweredOn,Path,Name | Export-Csv -Path $("$ReportPath\$VBRServer" + '_ViProtected.csv') -NoTypeInformation
-$unprotectedHvEntityInfo | select Name,PowerState,ProvisionedSize,UsedSize,Path,Type | sort Type,PoweredOn,Path,Name | Export-Csv -Path $("$ReportPath\$VBRServer" + '_ViUnprotected.csv') -NoTypeInformation
+        # protected HV Workloads
+        $hvvmbackups = Get-VBRBackup | ? { $_.TypeToString -eq "Hyper-v Backup" }
+        $hvvmNames = $hvvmbackups.GetLastOibs()
+        $unprotectedHvEntityInfo = Find-VBRHvEntity | ? { $_.Name -notin $hvvmNames.Name }
+        $protectedHvEntityInfo = Find-VBRHvEntity -Name $hvvmNames.Name
+        $protectedHvEntityInfo | select Name, PowerState, ProvisionedSize, UsedSize, Path | sort PoweredOn, Path, Name | Export-Csv -Path $("$ReportPath\$VBRServer" + '_HvProtected.csv') -NoTypeInformation
+        $unprotectedHvEntityInfo | select Name, PowerState, ProvisionedSize, UsedSize, Path, Type | sort Type, PoweredOn, Path, Name | Export-Csv -Path $("$ReportPath\$VBRServer" + '_HvUnprotected.csv') -NoTypeInformation
 
-#>
 
 #protected physical Loads
 $phys = Get-VBRDiscoveredComputer
