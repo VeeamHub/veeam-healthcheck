@@ -30,7 +30,7 @@ namespace VeeamHealthCheck
             var startInfo = new ProcessStartInfo()
             {
                 FileName = "powershell.exe",
-                Arguments = $"-NoProfile -ExecutionPolicy unrestricted -file \"{ps1File}\"",
+                Arguments = $"-NoProfile -ExecutionPolicy unrestricted -file \"{ps1File}\" -VBRServer localhost ",
                 UseShellExecute = false,
                 CreateNoWindow = true
             };
@@ -48,7 +48,7 @@ namespace VeeamHealthCheck
                 var startInfo2 = new ProcessStartInfo()
                 {
                     FileName = "powershell.exe",
-                    Arguments = $"-NoProfile -ExecutionPolicy unrestricted -file \"{ps1File2}\" -VBRServer localhost -windowstyle hidden",
+                    Arguments = $"-NoProfile -ExecutionPolicy unrestricted -file {ps1File2} -VBRServer localhost -ReportInterval {VhcGui._reportDays}",
                     UseShellExecute = false,
                     CreateNoWindow = true
                 };
