@@ -27,6 +27,8 @@ namespace VeeamHealthCheck.Html
         private Scrubber.CScrubHandler _scrubber;
         private CDataTypesParser _parsers;
 
+        private string logStart = "[JssBuilder] ";
+
         public CJobSessSummary(string xmlFile, CLogger log, bool scrub,   Scrubber.CScrubHandler scrubber, CDataTypesParser dp)
         {
             if(!VhcGui._import)
@@ -110,8 +112,15 @@ namespace VeeamHealthCheck.Html
             IEnumerable<CWaitsCsv> waitList = null;
             if (_checkLogs)
             {
-                waitList = csv.WaitsCsvReader().ToList();
-
+                try
+                {
+                    waitList = csv.WaitsCsvReader().ToList();
+                }
+                catch (Exception)
+                {
+                    log.Error(logStart + "Failed to populate waits.csv. Skipping wait times.");
+                    _checkLogs = false;
+                }
             }
 
 

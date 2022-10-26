@@ -18,6 +18,8 @@ namespace VeeamHealthCheck.FilesParser
         private Dictionary<string, List<TimeSpan>> _waits = new();
         private string _pathToCsv = CVariables.vbrDir + @"\waits.csv";
 
+        private string logStart = "[LogParser] ";
+
         public CLogParser()
         {
             InitLogDir();
@@ -37,14 +39,31 @@ namespace VeeamHealthCheck.FilesParser
 
         private void InitLogDir()
         {
-            DB.CRegReader reg = new();
-            LogLocation = reg.DefaultLogDir();
+            log.Info(logStart + "Checking registry for default log location...");
+            try
+            {
+                DB.CRegReader reg = new();
+                LogLocation = reg.DefaultLogDir();
+                log.Info(logStart + "Log Location: " + LogLocation);
+            }
+            catch(Exception e)
+            {
+                log.Error(logStart + "Failed to return log location.");
+            }
         }
         private void InitWaitCsv()
         {
-            using (StreamWriter sw = new StreamWriter(_pathToCsv, append: false))
+            log.Info(logStart + "Init waits.csv");
+            try
             {
-                sw.WriteLine("JobName,StartTime,EndTime,Duration");
+                using (StreamWriter sw = new StreamWriter(_pathToCsv, append: false))
+                {
+                    sw.WriteLine("JobName,StartTime,EndTime,Duration");
+                }
+            }
+            catch(Exception)
+            {
+                log.Error(logStart + "Failed to init waits.csv");
             }
         }
         private void DumpWaitsToFile(string JobName, DateTime start, DateTime end, TimeSpan diff)
@@ -52,7 +71,7 @@ namespace VeeamHealthCheck.FilesParser
 
             using (StreamWriter sw = new StreamWriter(_pathToCsv, append: true))
             {
-                sw.WriteLine(JobName + ","+ start + "," +end + "," +diff);
+                sw.WriteLine(JobName + "," + start + "," + end + "," + diff);
             }
 
             //String csv = String.Join(
