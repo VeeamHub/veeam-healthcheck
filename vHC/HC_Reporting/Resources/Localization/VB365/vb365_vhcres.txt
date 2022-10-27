@@ -1,0 +1,228 @@
+﻿#header 
+HtmlHeader =	VB365 Health Check Report
+HtmlIntroLine1 =	- This report provides data and insight into your Veeam deployment. The information provided here is intended to be used in collaboration with your Veeam representative.
+HtmlIntroLine2 =	- The raw data is captured in CSV format and is accessible locally in the Export Folder. CSV will let you manipulate the data in tools such as Excel.
+HtmlIntroLine3Original =	- Additional information on individual job sessions can be found in the <a href="C:\\temp\\vHC\\Original\\JobSessionReports"> output folder at C:\\temp\\vHC\\Original\\JobSessionReports
+HtmlIntroLine3Anon =	- Additional information on individual job sessions can be found in the <a href="C:\\temp\\vHC\\Anonymous\\JobSessionReports"> output folder at C:\\temp\\vHC\\Anonymous\\JobSessionReports
+HtmlIntroLine4 =	- NOTE: During mouseover, a tool tip may appear containing explanatory data of the table header or data column.
+HtmlIntroLine5 =	- NOTE: The tool you ran to generate this report is completely self-contained, does not ‘phone-home’ and was only executed on your Veeam Backup and Replication server. It queries the VBR database, registry, configuration and log files. It does not require access to vCenter or any other infrastructure.
+HtmlIntroLine5vb365 =	- NOTE: The tool you ran to generate this report is completely self-contained, does not ‘phone-home’ and was only executed on your Veeam Backup for Microsoft 365 server (VB365). The tool only requires communication directly with the VB365 Backup Server to query to VB365 environment, database, registry, configuration, and log files.
+
+# nav
+######## VB365
+Vb365Banner = VB365 Health Check Report
+#navigation
+v365NavTitle0 = Global Configuration
+v365NavValue0 = Summary of license and global settings.
+v365NavTitle1 = Unprotected Users
+v365NavValue1 = Summary of protected and unprotected users.
+v365NavTitle2 = Backup Server
+v365NavValue2 = Details on the VB365 Server.
+v365NavTitle3 = Backup Server Disks
+v365NavValue3 = Details on the disks attached to the VB365 Server.
+v365NavTitle4 = Proxies
+v365NavValue4 = Details on proxies added to the current VB365 Server.
+v365NavTitle5 = Repositories
+v365NavValue5 = Details on repositories added to the current VB365.
+v365NavTitle6 = Object Storage
+v365NavValue6 = Details on object storage used.
+v365NavTitle7 = Security Info
+v365NavValue7 = Summary of security settings relevant to VB365.
+v365NavTitle8 = RBAC Roles Info
+v365NavValue8 = Summary of Role Based Access Control settings.
+v365NavTitle9 = Permissions Check
+v365NavValue9 = Summary of permissions granted & used.
+v365NavTitle10 = Organizations
+v365NavValue10 = Details on organizations protected by VB365.
+v365NavTitle11 = Backup Jobs
+v365NavValue11 = Details on jobs configured on this VB365 Server.
+v365NavTitle12 = Job Statistics
+v365NavValue12 = Analysis of recent job runs.
+v365NavTitle13 = Job Sessions
+v365NavValue13 = Details on recent job runs.
+v365NavTitle14 = Processing Statistics
+v365NavValue14 = Analysis of timings for individual steps of the job runs.
+
+GlobalHeader = •	Global Configuration:
+GlobalColHeadLicStatus = Lic. Status
+GlobalColHeadLicExp = Lic. Expiry
+GlobalColHeadLicType = Lic. Type
+GlobalColHeadLicTo = Lic. To
+GlobalColHeadLicContact = Lic. Contact
+GlobalColHeadLicFor = Lic. For
+GlobalColHeadLicUsed = Lic Used
+GlobalColHeadSupExp = Support Expiry
+GlobalColHeadGFolderExcl = Global Folder Exclusions
+GlobalColHeadGRetExcl = Global Ret. Exclusions
+GlobalColHeadSessHisRet = Session History Retention
+GlobalColHeadNotifyEnabled = Notification Enabled
+GlobalColHeadNotifyOn = Notify On
+GlobalColHeadAutoUpdate = Automatic Updates
+GlobalSummaryHeader = Summary: 
+GlobalSummary1 = o	This section describes key data points from within the <a href="https://helpcenter.veeam.com/docs/vbo365/guide/vbo_general_application_settings.html" target="_blank"> General Options</a> configuration dialog of VB365, located under the Main Menu. Settings here apply globally to the entire VB365 environment (VB365 Server + Proxies + Repositories).
+GlobalNotesHeader = Notes:
+GlobalNotes1 = o	If current Licenses Used are getting close to the subscribed limit (“Licensed For”), consider reviewing current license usage and upcoming needs.
+GlobalNotes2 = o	Default values for Folder Exclusions are designed for the most common use case, where Junk E-mail, Sync Issues, and hold items aren’t typically required within the backup dataset.
+GlobalNotes3 = o	Default values for Retention Policy Exclusions are designed for the most common use case, where items like Contacts and Calendars are seldom modified and typically minimal in storage consumption. Changes to these settings could lead to premature removal of these item types, where it may not be desired.
+GlobalNotes4 = •	Note: If multiple organizations (i.e. M365 tenants) are managed within a single VB365 environment that do require different Contact and Calendar treatment, Retention Exclusions can also be configured per-organization, instead of globally, within <a href="https://helpcenter.veeam.com/docs/vbo365/powershell/add-vboorganizationretentionexclusion.htm" target="_blank">PowerShell cmdlets<a>.
+GlobalNotes5 = o	It is highly recommended that <a href="https://helpcenter.veeam.com/docs/vbo365/guide/vbo_notification_settings.html" target="_blank" >e-mail notifications</a> are enabled, in the event that jobs encounter warnings and/or errors, to ensure that critical data is fully protected.
+GlobalNotes6 = o	Enabling automatic updates is recommended to ensure the VB365 environment is kept up to date. Alternatively, it is highly recommended that at least the “<a href="https://helpcenter.veeam.com/docs/vbo365/guide/vbo_configuring_update.html" target="_blank">Send email notification on available updates</a>” option is selected to ensure that critical update notifications are received.
+GlobalFolderExclTT = Folders that are excluded from processing in all backup jobs
+GlobalRetExclTT = Item types that that skipped when retention is applied (i.e. all of these item type will be kept indefinitely)
+GlobalLogRetTT = Period to keep session history for
+GlobalNotificationEnabledTT = Whether VB365 will send e-mail notifications
+GlobalNotifyOnTT = Notifications can be emailed on Job Success, Warning, and/or Failures
+
+
+BkpSrvDisksHeader = •	Backup Server Disks:
+BkpSrvDisksSummaryHeader = Summary: 
+BkpSrvDisksSummary1 = o	This section captures information on disks that are attached to the VB365 Backup Server, and their current state. Disk performance plays a role in determining the overall environment’s performance, especially on Proxy Servers where a local disk cache is created for Object Storage Repositories.
+BkpSrvDisksSummary2 = o	NOTE: This tool only captures the disk configuration of the VB365 Backup Server where the Health Check was initiated, and does not capture the current disk configuration of other servers (e.g. Proxy Servers) running external to that server; for this reason, you may consider collecting and reviewing those details with your Veeam Engineer.
+BkpSrvDisksNotesHeader = Notes:
+BkpSrvDisksNotes1 = o	Fast-performing disk (Flash/SSD) is recommended for the boot drive, logs storage location, as most importantly any Object Storage cache storage location(s).
+BkpSrvDisksNotes2 = o	For a similar set of data points to the above table for each of your VB365 Proxy Servers, you can execute “Get-PhysicalDisk | Select-Object FriendlyName,DeviceId,BusType,MediaType,Manufacturer,Model,Size,AllocatedSize,OperationalStatus,HealthStatus” from a PowerShell console on those machines.
+BkpSrvDisksDeviceIdTT = The ID that Windows has registered to this disk based on the storage adapter addresses
+BkpSrvDisksAllocatedSize = Amount of available space currently allocated to overlying partitions
+BkpSrvDisksSizePhysical = Amount of available space on the disk
+
+
+ObjStgHeader = •	Object Storage:
+ObjStgSummaryHeader = Summary:
+ObjStgSummary1 = o	This section captures configuration of Object Storage targets that are used as the backing for a given VB365 Repository. When a VB365 Repository is extended with an Object Storage target, VB365 will create a <a href="https://helpcenter.veeam.com/docs/vbo365/guide/understanding_cache.html" target="_blank">local cache for metadata</a> in the specified location (see “Path” column in the <a href="#repos">Repositories table</a> above this section), and will transfer all backup data directly to the defined destination bucket/container.
+ObjStgNotesHeader = Notes:
+ObjStgNotes1 = o	Any targets defined in this table that have an empty value under Bound Repo should be reviewed, as they may not be in use. Object Storage targets can only be used when <a href="https://helpcenter.veeam.com/docs/vbo365/guide/new_repository_3.html" target="_blank">"bound”/assigned to a VB365 Backup Repository</a> definition (see <a href="#repos">Repositories table</a> above).
+ObjStgNotes2 = o	If a <a href="https://helpcenter.veeam.com/docs/vbo365/guide/s3_object_storage_bucket.html" target="_blank">Size Limit</a> has been defined for a given object storage target, the Free Space column in this report will indicate how close to that usage limit it is. Upon reaching this limit, current running jobs will be able to finish writing, but subsequent runs of jobs to this target will be prevented from stating.
+ObjStgNotes3 = o	It is often the default thought that “Cool” or “Infrequent” classes of object storage are best suited to backup datasets, however, depending on retention period, the <a href="https://helpcenter.veeam.com/docs/vbo365/guide/retention_policy.html" target=_blank">retention policy</a> selected, and the churn rate of the data, a “Hot” or “Standard” classes may be end up being more cost-effective. Many factors can affect storage and API costs, but generally speaking, targeting short retentions to Hot/Standard storage classes may achieve a more optimized balance of API vs storage costs.
+ObjStgNotes4 = o	Ensure no data/storage lifecycle or tiering policies are applied to object storage buckets/containers used by VB365. This is not supported and has potential to irreparably damage the backup dataset. Instead consider adding <a href="https://helpcenter.veeam.com/docs/vbo365/guide/vbo_new_copy_job.html" target="_blank">Backup Copy Jobs</a> for longer retention, which can support an Archive-class object storage repository within VB365.
+ObjStgNotes5 = o	As your dataset grows within the bucket/container, keep in mind that the required metadata in the local cache will also grow. Review the <a href="https://bp.veeam.com/vbo/guide/buildconfig/proxy-repo.html#object-storage-repository" target="_blank">VB365 Best Practices guide</a> for estimating this required space.
+ObjStgNotes6 = o	Review credentials/keys and IAM. As a best practice, limit credentials access to as few systems/persons as possible, and apply restrictive access policies for solely what is required. Generally, it is better to have a more individualized credentials with lesser access (e.g. per-bucket/container), than having fewer credentials with wider access (e.g. per-cloud/account/subscription). In the former scenario, if one bucket is compromised, the remaining ones remain secured.
+ObjStgType	= Primary bucket/container for backup jobs vs. Archive bucket/container for backup copy jobs
+ObjStgPath = The ‘folder’ (aka key name prefix) that objects destined for this bucket/container will end up within
+ObjStgSizeLimit = Storage consumption soft limit that is applied in the Advanced section of the bucket/container definition
+ObjStgFreeSpace = The remaining space available against the defined storage consumption limit
+
+
+JobStatHeader = •	Job Statistics:
+JobStatSummaryHeader = Summary:
+JobStatSummary1 = o	This section summarizes some key measurements about the performance of each defined job in the environment.
+JobStatSummary2 = •	Duration metrics serve as an indicator for comparing normal vs long-running jobs.
+JobStatSummary3 = •	Data Transferred metrics serves as an indicator for how much work is typically required to be done in the job run, as well as how much change is occurring in a job’s backup dataset between job runs.
+JobStatSummary4 = •	Object count metrics serve as an indicator for how balanced a job, proxy, or repository might be. An object, in VB365 terms, is anything that can be selected in a backup job: a Mailbox, Mail Archive, OneDrive, or SP Site all count as 1 object. Teams count as 3 (Team + Team Mailbox + Team Site).
+JobStatSummary5 = •	Item count metrics describe the number of items, across all processed objects in the job, that had changes to be backed up. They can serve as another indicator of how much work is typically required to be done in the job run (how many items must be enumerated and processed by proxy threads).
+JobStatSummary6 = •	Typical Bottleneck describes the most commonly occurring bottleneck across the set of job sessions analyzed. It serves as an indicator for where a performance bottleneck may exists. Review the <a href="https://helpcenter.veeam.com/docs/vbo365/guide/backup_metrics.html" target="_blank">Session Metrics section</a> of the Veeam help center for detailed descriptions.
+JobStatSummary7 = •	Job Average Throughput describes how much data the job was able to transfer during the duration of its run. It serves as an indicator for overall performance of all of the job operations combined (i.e. it doesn’t perform measurement solely when data is transferred, it instead includes all time spent in the job, including waits, retries, throttles, etc).
+JobStatSummary8 = •	Similar to the above, Job Average Processing Rate measures against the # of items processed during the duration of the job. It likewise serves as an indicator for overall performance of the job from an item perspective.
+JobStatNoteHeader = Notes:
+JobStatNote1 = o	Are your target backup windows completing on time? If so, then duration and job throughput may not be of concern. Microsoft 365 commonly throttles large amount of requests for data (such as backups), therefore throughput rates typically report as quite a bit lower than one might expect within traditional self-managed services. If your backups are not meeting your backup windows, then discuss performance tuning options with your Veeam Engineer.
+JobStatNote2 = •	<a href="https://bp.veeam.com/vbo/guide/operate/throttling.html#identify-throttling" target="_blank">Review your VB365 Proxy logs</a> for instances of HTTP errors 500 and 429, and/or the references to “throttling” or “throttled”, as potential indicators of Microsoft 365 service throttling.
+JobStatNote3 = o	Review <a href="https://bp.veeam.com/vbo/guide/design/maxconfig.html#recommended-maximums" target="_blank">recommended max object-count</a> guidelines from the VB365 Best Practices guide.
+JobStatNote4 = o	Review some of the <a href="https://bp.veeam.com/vbo/guide/design/networking.html" target="_blank">Networking guidance</a> from the VB365 Best Practices guide.
+JobStatNote5 = o	Ensure that <a href="https://www.veeam.com/kb3074" target="_blank">antivirus exclusions</a> are set for Veeam related services files, to avoid possible performance impacts of these types of engines
+JobStatNote6 = o	Open a support case if experiencing challenges solving performance issues, as support may be able to perform detailed log review, and provide fine tuning options and configuration parameters. It is typically recommended to enable <a href="https://helpcenter.veeam.com/docs/vbo365/guide/vbo_extended_logging.html" target="_blank">Extended Logging</a> temporarily, before submitting logs to support, to ensure the most detail available.
+
+#<a href="" target="_blank"> </a>
+
+RepoColumn1 = Bound Proxy
+RepoColumn2 = Name
+RepoColumn3 = Description
+RepoColumn4 = Type
+RepoColumn5 = Path
+RepoColumn6 = Object Repo
+RepoColumn7 = Encryption
+RepoColumn8 = State
+RepoColumn9 = Capacity
+RepoColumn10 = Free
+RepoColumn11 = Data Stored
+RepoColumn12 = Cache Space Used
+RepoColumn13 = Daily Change
+RepoColumn14 = Retention
+RepoColumnTT1 = Which proxy is the repository bound?
+RepoColumnTT2 = Name of the repository
+RepoColumnTT3 = Description given during repository creation
+RepoColumnTT4 = Type of repository
+RepoColumnTT5 = Path to location of files
+RepoColumnTT6 = Which Object Repository is linked, if any
+RepoColumnTT7 = Does the repository use encryption?
+RepoColumnTT8 = What is the current state of the repository?
+RepoColumnTT9 = What is the total capacity of the repository?
+RepoColumnTT10 = What is the current free space of the repository?
+RepoColumnTT11 = What is the total of data stored on repository?
+RepoColumnTT12 = How much space is free in cache?
+RepoColumnTT13 = What is the daily change rate?
+RepoColumnTT14 = Current retention settings.
+
+
+SecurityTableColumn1 = Win. Firewall Enabled?
+SecurityTableColumn2 = Internet Proxy?
+SecurityTable2Column1 = Service
+SecurityTable2Column2 = Enabled
+SecurityTable2Column3 = Port
+SecurityTable2Column4 = Cert
+SecurityTable2Column5 = Expires
+SecurityTable2Column6 = Self-Signed
+
+protectedUsersSummary1 = o	The number of unprotected users in the organization is shown here, along with protected users and a total user count for the organization.  
+protectedUsersNote1 = o	Any user mailbox backed up will mark the user as protected. If no backup was run within the period selected (7 or 30 days, but a previous backup of the mailbox was taken, the resource will be marked as “stale.”
+protectedUsersNote2 = o	The Mailbox Protection Report can be found within the Veeam Backup for Microsoft 365 console: <a href="https://helpcenter.veeam.com/docs/vbo365/guide/mailbox_protection_reports.html?ver=60" target="_blank">Creating Mailbox Protection Reports - Veeam Backup for Microsoft 365 Guide</a>
+
+proxySummary1 = o	Proxies are the data movers for Veeam Backup for Microsoft 365.  They are responsible for running the backup job assign, downloading data from M365, and writing data to the local or object storage repositories.
+proxyNote1 = o	The main VB365 server also acts as a proxy server.  A single mgmt. server can support up to 50 proxy servers. <a href="https://helpcenter.veeam.com/docs/vbo365/guide/vbo_backup_proxy_servers.html?ver=60" target="_blank">Backup Proxy Servers - Veeam Backup for Microsoft 365 Guide</a>
+proxyNote2 = o	Each of the following is 1 “object” (under Objects Managed): mailbox, archive mailbox, user’s OneDrive, personal SharePoint site, regular SharePoint site, and a Team. <a href="https://helpcenter.veeam.com/docs/vbo365/guide/select_objects_to_backup.html?ver=60" target="_blank">Step 3. Select Objects to Back Up - Veeam Backup for Microsoft 365 Guide</a>
+proxyNote3 = o	VB365 requires 8 cores and 16gb of ram when combining the Restore Portal with the mgmt. server. <a href="https://helpcenter.veeam.com/docs/vbo365/guide/vbo_system_requirements.html?ver=60" target="_blank">System Requirements - Veeam Backup for Microsoft 365 Guide</a>
+proxyTTThrottling = Status of user set network throttling rules.
+proxyTTState = Online or Offline
+proxyTTType = Local or Domain authentication connection to the mgmt. server
+proxyTTOutdated = Proxy’s patch status compared to the mgmt. server
+proxyTTInternet = Status of set internet proxy settings for if a proxy server is required for internet access
+proxyTTObjects = Number of items being protected by this proxy server
+proxyTTCPUs = Number of cores detected in the server
+
+securitySummary = o	This section displays the expiration date of the certificates used for VB365 services, including optional features like the Restore Portal.
+securityNote1 = o	Veeam Backup for Microsoft 365 utilizes certificates to secure communication between services and machines.  <a href="https://helpcenter.veeam.com/docs/vbo365/guide/vbo_ssl_usage_scenarios.html?ver=60" target="_blank">SSL Certificate Usage Scenarios - Veeam Backup for Microsoft 365 Guide</a>
+securityNote2 = o	For the Restore Portal and API Server, consider using trusted certificates as these are services accessed by end users. 
+securityNote3 = o	Tenant Auth is only used when VB365 is setup with a Cloud Connect service provider.  
+securityTTServices = All services optional except “server”
+securityTTPort = configured TCP port for service
+securityTTCert = Friendly name of certificate
+
+jobsSummary = o	A listing of all configured backup and backup copy jobs for the VB365 deployment are listed above.
+jobsNote1 =o	Veeam Backup for Microsoft 365 has 2 job types – Backup and Backup Copy.  <a href="" target="_blank">Data Backup and Backup Copy - Veeam Backup for Microsoft 365 Guide</a>
+jobsNote2 =o	It’s recommended to use groups as the source for backup jobs.  The groups selected for protection can also be edited to limit the scope of protection to just email, or onedrive, or sharepoint in order to have smaller backup jobs.  <a href="" target="_blank">Job Configuration - Veeam Backup for Microsoft 365 Best Practices</a>
+jobsNote3 =o	For smaller organizations, selecting the Entire Organization is acceptable.  For larger organizations, it’s recommended to use M365 Dynamic groups if the tenant has Azure AD P1 or P2 licensing. <a href="" target="_blank">Job Configuration - Veeam Backup for Microsoft 365 Best Practices</a>
+jobsTTOrganization = Name of the organization the job is protecting
+jobsTTName = Backup Job name
+jobsTTDescription = User entered job description
+jobsTTJobType = Backup or Backup Copy
+jobsTTScopeType = Entire Organization or Selected Objects
+jobsTTSelectedItems = Type of object selected for protection
+jobsTTExcludedItems = number of items selected to be excluded from job
+jobsTTRepository = Name of the repository job uses to store backups
+jobsTTBoundProxy = Jobs are owned by the specified proxy server
+jobsTTRelatedJob = Backup Copy jobs are bound to a primary backup job and vice versa
+
+backupServerSummary1 = •	The Backup Server (Controller) is the core component in the backup infrastructure that fills the role of the “configuration and control center”. The backup server performs all types of administrative activities, including: coordinating data protection and recovery tasks, creating jobs, and managing other backup infrastructure components.
+backupServerSummary2 = o	Stores data about the backup infrastructure, jobs, sessions, and other configuration data (in a local config database). 
+backupServerSummary3 = o	Has additional components deployed by default: Proxy
+backupServerNotes1 = •	Refer to the User Guide for system requirements of the Backup Server: <a href="" target="_blank">Veeam backup for Microsoft 365 Server</a>
+backupServerNotes2 = •	For additional sizing calculations refer to the <a href="https://calculator.veeam.com/vbo/" target="_blank">official sizing calculator</a>. 
+backupServerNotes3 = •	PowerShell, Proxy, REST, and Console components refer to a local install of the described component. 
+
+reposSummary = •	Repositories store data backed up by jobs. Repositories play a role in the environments' overall performance as they are utilized by backup jobs.  A Bound Proxy interacts with a Repository during data protection operations.
+reposNote1 = •	Repositories include Jet DBs used to store backup data, those used as a cache for repositories extended to Object Storage, and those used as Archive targets.  
+reposNote2 = •	Daily Change is calculated using the average amount of data transferred per day over the selected period (7 or 30 days)
+
+reposNote4 = •	Understand more about <a href="https://helpcenter.veeam.com/docs/vbo365/guide/understanding_cache.html?ver=60" target="_blank">Object Storage cache</a>.
+reposNote5 = •	Repositories extended to object storage will detail the cache directory and the object repository used.
+
+orgSummary = •	This section details information about the Organizations added to the Backup Server.  Azure Applications used to perform backups or On-Prem settings are included.
+orgNote1 = •	Basic, Modern w/ legacy protocols, and Modern app-only authentication configuration options can be <a href="https://helpcenter.veeam.com/docs/vbo365/guide/vbo_add_office365_org.html?ver=60" target="_blank">found here</a>.
+orgNote2 = •	Aux Apps (Backup Applications) configured for Organizations using modern authentication may impact production SharePoint environments.  This functionality will be deprecated in future versions of VB365.
+orgNote3 = •	Aux Accounts/Apps have evolving best practices <a href="https://helpcenter.veeam.com/docs/vbo365/guide/adding_backup_accounts.html?zoom_highlight=auxiliary&ver=60" target="_blank">detailed further here.</a>
+orgTTEXOSettings = Exchange Online Settings
+orgTTEXOApp Cert = Exchange Online Application Certificate
+orgTTSPOSettings = Sharepoint Online Settings
+orgTTSPOApp Cert = Sharepoint Online Application Certificate
+orgTTAuxAccountsApps = Auxi
+
+jobSessSummary = •	This section details historical job sessions in chronological order.  Warning and Error messages are provided if a session was not successful.
+jobSessNote1 = •	Sessions are listed in chronological order by start time with the most recent first.

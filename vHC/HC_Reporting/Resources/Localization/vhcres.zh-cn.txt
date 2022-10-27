@@ -1,0 +1,625 @@
+# This is the base file where Resource (String) edits will be completed.
+# All translations will need to be based on this file
+#
+# To translate:
+# information left of the "=" is off limits.
+# The information to the right (->) side of "=" is what shall be translated.
+
+# GUI
+GuiAcceptButton = 接受条款
+GuiAcceptText = 该工具作为免费实用程序提供，用于评估您的 Veeam 配置。它是“自担风险”提供的。 \n\n该工具将使用 PowerShell 和 SQL 来收集数据，然后将文件和文件夹输出到本地磁盘。\n\n这些文件可能会被匿名化以隐藏敏感数据。接受条款意味着用户同意以全部能力执行此程序。
+GuiImportButton = 导入
+GuiImportModeOnly = 导入模式
+GuiInstCaveat1 = * 如果选择删除敏感数据类型，则只会清除 HTML 报告。看：
+GuiInstCaveat2 = ** 注意，在较大的环境中，此工具最多可能需要 3 小时才能完成。
+GuiInstHeader = 指示：
+GuiInstLine1 = 1. 接受条款
+GuiInstLine2 = 2. 点击运行
+GuiInstLine3 = 3. 完成后，Windows 资源管理器将打开到输出目录。 （如果启用，将显示 HTML 报告）
+GuiInstLine4 = 4. 根据需要查看报告
+GuiInstLine5 = 5. 从 C:\\temp\\vHC* 或指定的任何目录捕获输出。
+GuiInstLine6 = 6. 通知您的 Veeam SE 和/或将结果发送给他们以供审核
+GuiOptionsHeader = 选项：
+GuiOutPath = 输出路径
+GuiRunButton = 运行
+GuiSensData = 从报告中删除敏感数据类型
+GuiShowFiles = 完成时显示文件
+GuiShowHtml = 完成后显示 HTML 报告
+GuiTitle = Veeam 健康检查
+GuiTitleBnR = B&R
+GuiTitleVB365 = VB365
+
+#protworkload
+PlHdr0 = Vi 总计
+PlHdrTT0 = 找到的 VMware VM 总数。
+PlHdr1 = Vi 受保护
+PlHdrTT1 = 通过备份找到的 VMware VM 总数
+PlHdr2 = Vi 不保护
+PlHdrTT2 = 找到的没有备份的 VMware 虚拟机总数
+PlHdr3 = Vi 潜在重复的
+PlHdrTT3 = 可能重复的工作负载
+PlHdr4 = Vi 作为物理保护
+PlHdrTT4 = 通过代理备份的虚拟机作为物理工作负载
+PlHdr5 = 物理总量
+PlHdrTT5 = 添加到保护组的服务器总数
+PlHdr6 = 物理保护
+PlHdrTT6 = 具有备份的服务器总数
+PlHdr7 = 物理不保护
+PlHdrTT7 = 保护组中但当前没有备份的服务器总数
+PlSum1 = 此表汇总了在当前备份服务器中检测到的工作负载量。 VMware (Vi Total) 计数由本地 Veeam Broker 服务确定，并将该 VM 计数与现有备份进行比较。物理工作负载 (Phys Total) 由添加到保护组的 VM 数量确定，然后与备份作业中的内容进行比较。
+PlNote1 = 
+PlButton = 显示受保护工作负载的数量
+PlTitle = 受保护的工作负载
+#end protected workload section
+
+
+
+
+
+# general strings
+GeneralNotesHeader = 笔记：
+GeneralSummaryHeader = 概括：
+
+#header 
+HtmlHeader = VBR 健康检查报告
+HtmlIntroLine1 =	- 此报告提供有关 Veeam Backup and Replication (VBR) 部署的数据和见解。此处提供的信息旨在与您的 Veeam 代表合作使用。
+HtmlIntroLine2 =	- 原始数据以 CSV 格式捕获，可在导出文件夹中本地访问。 CSV 将允许您在 Excel 等工具中操作数据。
+HtmlIntroLine3 = 	- 有关各个作业会话的其他信息，请参见<a href="C:\\temp\\vHC\\JobSessionReports"> 输出文件夹C:\\temp\\vHC\\JobSessionReports
+HtmlIntroLine4 =	- 注意：在鼠标悬停期间，可能会出现一个工具提示，其中包含表头或数据列的解释性数据。
+HtmlIntroLine5 =	- 注意：您为生成此报告而运行的工具是完全独立的，不会“打电话回家”，并且仅在 Veeam Backup and Replication 服务器上执行。它查询 VBR 数据库、注册表、配置和日志文件。它不需要访问 vCenter 或任何其他基础架构。
+HtmlIntroLine5vb365 =	- 注意：您为生成此报告而运行的工具是完全独立的，不会“打电话回家”，并且仅在 Veeam Backup for Microsoft 365 服务器上执行。它查询 VB365 数据库、注册表、配置和日志文件。它不需要访问 M365 或任何其他基础设施。
+
+# navigation
+NavBkpSrvDeet = 有关备份服务器、配置数据库、角色和资源的详细信息。
+NavBkpSrvLink = 备份服务器
+NavColapse = 折叠/展开全部
+NavHeader = 导航：
+NavJobConDeet = 显示每小时发现的最大作业并发的热图。
+NavJobConLink = 作业并发
+NavJobInfoDeet = 	每个作业的详细细分。
+NavJobInfoLink = 作业信息
+NavJobSessSumDeet = 按作业名称汇总的作业会话。
+NavJobSessSumLink = 	作业会话摘要
+NavJobSumDeet = 	按类型和计数列出的找到的作业摘要。
+NavJobSumLink = 	作业摘要
+NavLicInfoDetail = 显示许可证信息。
+NavLicInfoLink = 许可证信息
+NavMissingDeet = 显示未使用的工作负载和类型。
+NavMissingJobLink = 	缺少作业类型
+NavProtWkldDeet = 显示检测到的虚拟机和物理对象的计数与具有备份的对象相比。
+NavProtWrkld = 受保护的工作负载
+NavProxyDeet = 有关代理资源和配置的详细信息。
+NavProxyInfoLink = 代理信息
+NavRegKeyDeet = 显示与普通安装不同的任何注册表值。
+NavRegKeyLink = 非默认注册表项
+NavRepoDeet = 有关非 SOBR 存储库、资源和配置的详细信息。
+NavRepoInfoLink = 存储库信息
+NavSecSumDeet = 简要表显示正在使用的安全功能。
+NavSecSumLink = 安全摘要
+NavSobrDeet = SOBR 和配置选项的总结。
+NavSobrExtDeet = SOBR 范围、资源和配置的详细信息。
+NavSobrExtLink = SOBR 范围信息
+NavSobrInfoLink = SOBR 信息
+NavSrvInfoDeet = 用户添加到配置中的所有服务器的列表。
+NavSrvInfoLink = 服务器信息
+NavSrvSumDeet = 检测到的基础设施类型和计数的摘要。
+NavSrvSumLink = 服务器摘要
+NavTaskConDeet = 显示每小时发现的最大 VM 并发的热图。
+NavTaskConLink = 虚拟机并发
+
+
+#License table
+LicCcTT = 是否启用了Cloud Connect？
+LicExpTT = 许可证到期日期
+LicTblLicTo = 授权给
+LicSupExpTT = 支持有效期
+LicTableHeader = 许可证摘要
+LicTblCc = Cloud Connect 已启用
+LicTblEdition = 	版本
+LicTblExpDate = 过期日期
+LicTblLicInst = 许可的实例。
+LicTblLicNas = 许可的NAS
+LicTblLicSock = 许可的Socket
+LicTblNewInst = 新实例
+LicTblRentInst = 租赁实例
+LicTblStatus = 	状况
+LicTblSupExpDate = 支持有效期
+LicTblType = 类型
+LicTblUsedInst = 已使用的实例
+LicTblUsedNas = 已使用的NAS
+LicTblUsedSock = 已使用的Sockets
+LtEdTT = Veeam 许可版本
+LtInstLicTT = 许可实例总数
+LtInstNewTT = 新实例总数
+LtInstRentalTT = 总租用实例
+LtInstUsedTT = 使用的实例总数
+LtNasLicTT = 许可的 NAS 总数
+LtNasUsedTT = 使用的 NAS 许可证总数
+LtSocLicTT = 许可的插座总数
+LtSocUsedTT = 使用的套接字总数
+LtStatusTT = Veeam 许可证状态
+LtTypeTT = Veeam 许可类型
+
+
+# not protected workloads
+NpButton = 	显示缺少的作业类型的详细信息
+NpSum1 = 此表汇总了您的配置中缺少或无法分析的作业类型。有关更多信息，请咨询您的 Veeam 工程师。
+NpTitle = 	缺少作业类型
+
+#sec Summary
+
+SSHdr0 = Immutability
+SSHdrTT0 = 此服务器中的任何地方都使用了不变性吗？
+SSHdr1 = 流量加密
+SSHdrTT1 = 是否启用了流量加密？
+SSHdr2 = 备份文件加密
+SSHdrTT2 = 备份文件是否被加密？
+SSHdr3 = 配置备份加密
+SSHdrTT3 = 配置备份是否加密？
+SSSum1 = 安全摘要表可让您一目了然地查看B&amp;R中的一个或多个组件上启用了哪些安全功能。一个值
+SSSubHdr1 = Immutability
+SSSubHdr2 = 流量加密
+SSSubHdr3 = 备份文件加密
+SSSubHdr4 = 配置备份加密
+SSNote1 = 对于不可变备份，请考虑部署 <a href="https://helpcenter.veeam.com/docs/backup/vsphere/hardened_repository.html?ver=110">强化 Linux 存储库</a> 或选择 <a href="https://helpcenter.veeam.com/docs/backup/vsphere/object_storage_repository.html?ver=110">提供不变性的公共云或 S3 兼容</a> 选项。
+SSNote2 = <a href="https://helpcenter.veeam.com/docs/backup/vsphere/security_considerations.html?zoom_highlight=traffic+encryption&amp;ver=110#:~:text=Encrypt%20network%20traffic,Network%20Data%20Encryption.">流量加密</a>默认为所有公共流量启用。 如果此值显示为 false，请考虑重新启用 Internet 或任何其他潜在敏感传输的设置。
+SSNote3 = 备份文件加密可防止外人导入您的备份并访问内容。 如果备份存储在异地，请考虑 <a href="https://helpcenter.veeam.com/docs/backup/vsphere/backup_job_advanced_storage_vm.html?ver=110#:~:text=To%20encrypt%20the%20content%20of%20backup%20files%2C%20select%20the%20Enable%20backup%20file%20encryption%20check%20box.">启用</a>备份文件加密以保护备份免受不必要的访问。
+SSNote4 = <a href="https://helpcenter.veeam.com/docs/backup/vsphere/vbr_config.html?ver=110">配置备份</a>可确保您的B&amp;R配置已备份并准备好恢复在中断或迁移的情况下。 将配置备份<a href="https://helpcenter.veeam.com/docs/backup/vsphere/config_backup_encrypted.html?ver=110">加密</a>可以防止不必要的访问以及能够恢复以前存储在配置中的密码。 <a style="font-weight:bold">考虑使用 Backup Enterprise Manager 的</a> <a href="https://helpcenter.veeam.com/docs/backup/em/em_manage_keys.html?ver=110">密码保护</a> <a style="font-weight:bold"> 确保丢失的密码可恢复，并在发生灾难性中断时将 Enterprise Manager 和 VBR 分开。 还可以考虑将密钥集导出到安全位置。 如果没有这种保护，丢失的密码可能会削弱使用备份文件的能力。</a>
+SSButton = 显示安全摘要的详细信息。
+SSTitle = 安全摘要
+
+#managed server Summary
+MssTitle = 检测到的基础设施类型和数量
+MssHdr1 = 名称
+MssHdr2 = 计数
+MssHdr1TT = 服务器/共享名称
+MssHdr2TT = 检测到的总数
+MssSum1 = 此表总结了用户手动添加到 Veeam 配置中的不同类型和数量的基础设施项目。
+MssButton = 显示检测到的基础设施类型和计数的详细信息
+
+#backup server section
+BkpSrvButton = 显示备份服务器摘要和注释。
+BkpSrvNotes1 = • 确保备份服务器的资源<a href="https://bp.veeam.com/vbr/3_Build_structures/B_Veeam_Components/B_VBR_Server/Backup_Server.html#compute-requirements">大小</a>足以满足 同时运行它管理的作业。 请参阅此报告中的<a href="#jobConcurrency7">并发表</a>。 注意：如果将其他角色或组件组合到 Backup Server 主机上，则资源大小是附加的（例如，Backup Server + SQL + Proxy + Repository 等）。
+BkpSrvNotes2 = • 确保 SQL 服务器的资源 <a href="https://bp.veeam.com/vbr/2_Design_Structures/D_Veeam_Components/D_VBR_DB/database.html#sizing">sizing</a> 足够
+BkpSrvNotes3 =	• 如果使用 SQL Express，请确保它没有违反 SQL Express <a href="https://bp.veeam.com/vbr/2_Design_Structures/D_Veeam_Components/D_VBR_DB/database.html#sql-server-edition">版本限制</a>（例如，CPU 数量、内核、内存和数据库容量）。 一个缓慢、无响应或充满错误的备份服务器通常可能是达到这些 SQL 限制的结果。
+BkpSrvNotes4 =	• 分配数据保护任务以使用默认代理或默认备份存储库组件可能会导致争用备份服务器资源或其他意外流量。在大型或分布式部署中，可能需要禁用、删除和/或重新分配这些备份服务器。
+BkpSrvNotes5 =	• 建议将快速性能磁盘用于<a href="https://bp.veeam.com/vbr/3_Build_structures/B_Veeam_Components/B_VBR_Server/Backup_Server.html#log-files">日志位置</a>，该位置的默认值为“%ProgramData%\\Veeam\\Backup”
+BkpSrvNotes6 =	• DNS 是一个关键组件。 确保从备份服务器和其他系统到备份的 <a href="https://bp.veeam.com/vbr/3_Build_structures/B_Other/dns_resolution.html#dns-resolution">DNS 解析</a> 服务器运行正常。 环境中的其他组件应该能够通过 FQDN 解析 Backup Server 和其他 Veeam 基础架构组件（例如代理、存储库）。 正向和反向查询都应该是正常的。
+BkpSrvSummary1 = 备份服务器（又名 VBS 或 VBR 服务器）是备份基础架构中的核心组件，充当“配置和控制中心”的角色。备份服务器执行所有类型的管理活动，包括：协调数据保护和恢复任务、任务调度和资源分配，以及管理其他备份基础架构组件。
+BkpSrvSummary2 = • 备份服务器在 Microsoft Windows 上运行
+BkpSrvSummary3 = • 将有关备份基础架构、作业、会话和其他配置数据的数据存储在本地或远程 SQL 服务器中。在默认安装中，SQL Server Express 安装在本地。
+BkpSrvSummary4 = • 默认部署了其他组件：代理、存储库
+BkpSrvTblCfgEnabled = 配置备份（CB）启用
+BkpSrvTblCfgEncrypt = CB 加密
+BkpSrvTblCfgLastRes = CB 最后结果
+BkpSrvTblCore = 核心
+BkpSrvTblHead = 备份服务器和配置数据库信息
+BkpSrvTblName = 名称
+BkpSrvTblProxyRole = 代理角色
+BkpSrvTblRam = 内存
+BkpSrvTblRepoRole = 存储库/网关角色
+BkpSrvTblSqlCores = SQL 核心
+BkpSrvTblSqlEdition = SQL版
+BkpSrvTblSqlLocal = 本地 SQL
+BkpSrvTblSqlName = SQL 服务器名称
+BkpSrvTblSqlRam = SQL 内存
+BkpSrvTblSqlVersion = SQL 版本
+BkpSrvTblTarget = CB目标
+BkpSrvTblVersion = Veeam 版本
+BkpSrvTblWanRole = 广域网加速器
+BstCfgEnabledTT = 配置备份启用/禁用
+BstCfgEncTT = 配置备份加密状态
+BstCfgLastResTT = 配置备份最后结果
+BstCfgTarTT = 配置备份目标仓库名称
+BstCpuTT = 检测到 B&R 服务器上的物理内核
+BstNameTT = B&R 服务器的主机名
+BstPrxTT = 备份服务器也是代理吗？
+BstRamTT = 检测到 B&R 服务器上的总 RAM
+BstRepTT = 备份服务器也是存储库或网关服务器吗？
+BstSqlCpuTT = SQL Server CPU（如果不是本地的）
+BstSqlEdTT = SQL 服务器版
+BstSqlLocTT = SQL 是否与 B&R 安装在同一台服务器上？
+BstSqlNameTT = SQL Server 主机名（如果不是本地的）
+BstSqlRamTT = SQL Server RAM（如果不是本地的）
+BstSqlVerTT = SQL Server 版本
+BstVerTT = 	检测到的B&R软件的版本
+BstWaTT = 备份服务器也是广域网加速器吗？
+
+#SOBRs 
+SbrTitle = SOBR 详细信息
+SbrBtn = 显示 SOBR 详细信息
+Sbr0 = 名称
+Sbr0TT = SOBR 名称
+Sbr1 = Extents
+Sbr1TT = Extent count
+Sbr2 = 策略
+Sbr2TT = 数据策略
+Sbr3 = 容量层
+Sbr3TT = 容量层是否启用？
+Sbr4 = 复制
+Sbr4TT = 是否正在使用复制模式？
+Sbr5 = 移动
+Sbr5TT = 是否正在使用移动模式？
+Sbr6 = 存档层
+Sbr6TT = 存档层是否启用？
+Sbr7 = 每台机器
+Sbr7TT = SOBR 是否使用 Per-Machine 备份文件？
+Sbr8 = CapTier 类型
+Sbr8TT = 正在使用的容量层类型
+Sbr9 = Immutable
+Sbr9TT = CapTier 是否使用不变性
+Sbr10 = 不可变时期
+Sbr10TT = 不变性的时间段
+Sbr11 = 启用大小限制
+Sbr11TT = 容量层是否受总容量限制？
+Sbr12 = 尺寸限制
+Sbr12TT = 容量层上传用户设置的最大容量限制
+SbrSum0 = o 横向扩展备份存储库 (“SOBR”) 是一个单一的逻辑存储库命名空间，由一个或多个底层备份存储库或“范围”组成，可实现跨多个层的水平扩展。 数据位于 SOBR 的本地性能层上，可以使用对象存储层进行扩展以实现长期和归档存储：容量层和归档层。
+SbrSum1 = • SOBR 可以包括多种类型的底层扩展，包括：Window、Linux、NFS、SMB、重复数据删除设备和对象存储
+SbrNote0 = • 有多少个盘区正在使用？大量底层范围可能会导致元数据管理挑战和性能下降。与您的 Veeam 工程师讨论您的范围计数是否令人满意。
+SbrNote1 = •	是否正在使用“性能”<a href="https://helpcenter.veeam.com/docs/backup/vsphere/backup_repository_sobr_placement.html?ver=110">Placement Policy</a>？ 如果是这样，请考虑是否有特定的原因或用例？ “Data Locality”放置策略通常是大多数部署和用例的理想策略。
+SbrNote2 = •	如果使用 ReFS 或 XFS <a href="https://helpcenter.veeam.com/docs/backup/vsphere/backup_repository_block_cloning.html?ver=110">块克隆</a>，则“Data Locality”放置策略为 需要以利用块克隆（“快速克隆”）功能。
+SbrNote3 = •	<a href="https://helpcenter.veeam.com/docs/backup/hyperv/compatible_repository_account.html?ver=110">网关服务器是否正在用于容量层复制/卸载</a>？ 确保网关服务器有足够的资源充当发送到此对象存储库的所有备份的渠道。
+SbrNote4 = •	“<a href="https://helpcenter.veeam.com/docs/backup/hyperv/sobr_add_extents.html?ver=110">Perform full backup when the required extent is offline</a>”选项（在 VBR 控制台）应仔细考虑。 它确保在预期的范围处于脱机状态时进行备份，但要权衡额外的 Active Full(s) 消耗的额外空间，以及 ReFS 和 XFS。
+SbrNote5 = •	“<a href="https://helpcenter.veeam.com/docs/backup/vsphere/per_vm_backup_files.html?ver=110">Per-Machine</a>”是否为假？ 如果是这样，请考虑是否有禁用它的特定原因或用例？ 启用此功能是大多数部署和用例的理想策略。 请咨询您的 Veeam 工程师。
+SbrNote6 = •	Infrequent Access 存储层是否与 Veeam 复制模式或对象存储上的 Immutability 结合使用？ 有 <a href="https://forums.veeam.com/object-storage-f52/aws-s3-how-to-reduce-the-number-of-api-calls-t68858.html#p382566"> 在预算访问成本时应考虑与这些流程相关的额外 API 调用</a>。
+SbrButton = 显示 SOBR 详细信息
+
+# sobr extents
+
+SbrExtTitle = SOBR 范围详细信息
+SbrExtBtn = 显示 SOBR 范围详细信息
+SbrExt0 = 名称
+SbrExt0TT = 存储库名称
+SbrExt1 = SOBR
+SbrExt1TT = 连接范围的 SOBR。
+SbrExt2 = 设置任务
+SbrExt2TT = 指定的任务限制（-1 表示无限制）
+SbrExt3 = 核心
+SbrExt3TT = 在存储库服务器上检测到物理 CPU 内核
+SbrExt4 = 内存
+SbrExt4TT = 在存储库服务器上检测到的总 RAM
+SbrExt5 = 自动网关
+SbrExt5TT = 存储库是否使用 Autmatica Gateway？
+SbrExt6 = 主机
+SbrExt6TT = 如果未设置为使用自动网关，则分配主机/网关
+SbrExt7 = 路径
+SbrExt7TT = 为存储库指定的文件路径
+SbrExt8 = 可用空间 (TB)
+SbrExt8TT = 基于上次缓存扫描检测到的可用空间
+SbrExt9 = 总空间 (TB)
+SbrExt9TT = 检测到的存储库容量
+SbrExt10 = 可用空间 ％
+SbrExt10TT = 计算的可用空间百分比（可用空间/总空间）
+SbrExt11 = 解压缩
+SbrExt11TT = 存储库是否在最终存储之前解压缩备份文件？
+SbrExt12 = 对齐块
+SbrExt12TT = 存储库是否对齐数据块？
+SbrExt13 = 旋转驱动器
+SbrExt13TT = 存储库是否由旋转驱动器支持？
+SbrExt14 = 使用不变性
+SbrExt14TT = 存储库是否使用不变性？
+SbrExt15 = 类型
+SbrExt15TT = 存储库类型
+SbrExtSum0 = • SOBR 是通过获取一个或多个单独的 Veeam 存储库（基本或强化）并将它们放入 SOBR 构造而创建的。组成 SOBR 的各个存储库称为“范围”。
+SbrExtSum1 = •健康检查报告的这一部分详细介绍了存储库设置，因为它们是在 Veeam Backup and Replication UI 中配置的。这些设置可以影响或帮助备份作业的性能。
+SbrExtNote0subhdr = 设置任务：
+SbrExtNote1 = •此列是存储库允许的最大并发任务设置。 它指定备份存储库允许的最大并发任务数。 如果超过此值，Veeam Backup &amp; 在当前任务之一完成之前，复制不会启动新任务。 有关详细信息，请参阅<a href="https://helpcenter.veeam.com/docs/backup/vsphere/limiting_tasks.html">限制并发任务数</a>。
+SbrExtNote2 = •要确定备份存储库所需的任务/核心数量，请使用以下<a href="https://bp.veeam.com/vbr/2_Design_Structures/D_Veeam_Components/D_backup_repositories/">公式</a>：
+SbrExtNote3 = o代理 vCPU/核心数 ÷ 3 = 所需的存储库任务数。
+SbrExtNote4 = •该设置应与接下来的两列对齐：<a style="font-weight: bold">Cores</a> 和 <a style="font-weight:bold">RAM(GB)</a>
+SbrExtNote5subhdr = 核心：
+SbrExtNote6 = •此数字等于存储库服务器中的 CPU 内核数。
+SbrExtNote7 = 内存：
+SbrExtNote8 = •此数字等于存储库服务器中的 RAM 量。
+SbrExtNote9 = •RAM 的数量应该是内核数量的 4 倍。
+SbrExtNote10subhdr = 可用空间 (TB) 和可用空间百分比
+SbrExtNote11 = •最佳做法是在存储库中保留 20% 的可用空间。如果 SOBR 扩展区使用 XFS/REFS 文件系统格式化，这一点尤其重要，因为块克隆和无空间合成备份需要在同一个磁盘上拥有所有相关的 Veeam 备份文件。可用空间在其他文件系统上也很重要，因为 Veeam 需要工作空间来创建合成完整备份。
+SbrExtNote12 = •在 VBR 控制台的常规选项部分，可以设置警报以提醒存储库可用磁盘空间百分比低。
+SbrExtNote13subhdr = 对齐块
+SbrExtNote14 = •对于使用固定块大小的存储系统，请选中<a style="font-weight:bold">对齐备份文件数据块</a>复选框。 Veeam Backup &amp; Replication将在 4 KB 块边界对齐保存到备份文件的 VM 数据。
+SbrExtNote15 = •此设置还有助于加快数据传输并在将数据传输到基于块的存储库时使用更少的 RAM
+SbrExtNote16 = •对于 Veeam Backup and Replication v11 及更高版本中基于块的存储库，此设置应设置为 <a style="font-weight:bold">true</a>。
+
+#Repositories
+
+RepoTitle = 独立存储库详细信息
+RepoBtn = 显示存储库详细信息
+Repo0 = 作业计数
+Repo0TT = 分配给存储库的总作业
+Repo1 = 每个虚拟机
+Repo1TT = 存储库是否使用 Per-VM/Machine 备份文件？
+RepoSum0 = •独立存储库包括未配置为 SOBR 一部分的存储库
+RepoSum1 = •健康检查报告的这一部分详细介绍了存储库设置，因为它们是在 Veeam Backup and Replication UI 中配置的。这些设置可以影响或帮助备份作业的性能。
+
+
+# Proxies
+
+PrxTitle = 代理信息
+PrxBtn = 显示代理摘要
+Prx0 = 名称
+Prx0TT = 代理的主机名
+Prx1 = 任务
+Prx1TT = 代理配置中分配的任务限制。
+Prx2 = 核心
+Prx2TT = 检测到物理 CPU 内核（不计算超线程）
+Prx3 = 内存
+Prx3TT = 在代理主机上检测到的总 RAM
+Prx4 = 代理类型
+Prx4TT = Vi (Vmware)、HV、CDP、文件
+Prx5 = 运输方式
+Prx5TT = 代理配置中指定的传输模式
+Prx6 = 故障转移到 NBD
+Prx6TT = 是否允许代理故障转移到 NBD（网络模式）
+Prx7 = 机壳
+Prx7TT = 代理是物理的还是虚拟的？
+Prx8 = 缓存路径
+Prx8TT = 为 CDP 代理缓存指定的路径
+Prx9 = 缓存大小
+Prx9TT = 为 CDP 代理指定的缓存大小
+Prx10 = 主机
+Prx10TT = 
+Prx11 = 被禁用
+Prx11TT = 用户是否禁用了代理？
+PrxSum0 = Veeam 代理是一个逻辑数据移动器组件。 有两种类型的代理：（<a href="https://helpcenter.veeam.com/docs/backup/vsphere/backup_proxy.html?zoom_highlight=proxy&amp;ver=110">备份代理</a>，< a href="https://helpcenter.veeam.com/docs/backup/vsphere/cdp_proxy.html?ver=110">CDP 代理</a>）。 备份代理根据功能或平台进一步细分，例如 用于基于 NAS 的备份或不同源虚拟机管理程序的文件代理。
+PrxSum1 = • 备份代理位于源数据（VM 或文件共享）和备份存储库之间。它们的作用是处理备份作业并将备份流量传送到存储库。
+PrxSum2 = o	VM 备份代理可以利用不同的<a href="https://helpcenter.veeam.com/docs/backup/vsphere/transport_modes.html?ver=110">传输模式</a>。
+PrxSum3 = o	文件备份代理可以从 <a href="https://helpcenter.veeam.com/docs/backup/vsphere/file_share_backup_nfs_share_advanced_settings.html?ver=110"> NFS</a> 的手动或自动快照路径备份源数据， <a href="https://helpcenter.veeam.com/docs/backup/vsphere/file_share_backup_smb_share_advanced_settings.html?ver=110">SMB</a>，企业 NAS 文件管理器。 （注意：托管服务器不利用文件备份代理）
+PrxSum4 = o	备份代理不会在本地存储或缓存任何数据。
+PrxSum5 = • CDP 代理处理CDP 策略并作为源和目标VMware 主机之间的数据移动器运行。
+PrxSum6 = o	CDP 代理需要<a href="https://helpcenter.veeam.com/docs/backup/vsphere/system_requirements.html?ver=110#vmware-cdp-proxy-server">本地缓存。</a>
+PrxNote0 = •	查看“主机”列并确定支持的主机<a href="https://helpcenter.veeam.com/docs/backup/vsphere/limiting_tasks.html?ver=110#task-limitation-for-components-with-several-roles">多个</a>代理角色:
+PrxNote1 = o	角色可以组合，只要您分配<a href="https://helpcenter.veeam.com/docs/backup/vsphere/limiting_tasks.html?ver=110">足够的资源</a>。
+PrxNote2 = 	如果角色是非并发的，则分配跨所有支持的角色计算的最大资源。
+PrxNote3 = 	如果角色是并发的，则分配 <a href="https://helpcenter.veeam.com/docs/backup/vsphere/limiting_tasks.html?ver=110#task-limitation-for-components-with-several-roles"> 足够</a> 资源供所有角色使用
+PrxNote4 = 	请记住，CDP 代理始终处于活动状态并传输数据，因此必须为其角色“保留”足够的资源并添加必要的组合角色。
+PrxNote5 = •	CDP 代理：
+PrxNote6 = o	确保 <a href="https://helpcenter.veeam.com/docs/backup/vsphere/cdp_proxy.html?zoom_highlight=CDP+cache&amp;ver=110#vmware-cdp-proxy-cache">缓存</a> 大小适当
+PrxNote7 = o	将缓存位于 C:\\ 驱动器上的 CDP 代理标记为潜在风险。
+PrxNote8 = •	比较分配的 <a href="https://helpcenter.veeam.com/docs/backup/vsphere/limiting_tasks.html?ver=110">任务</a> 和核心计数并识别 <a href="https://helpcenter.veeam.com/docs/backup/vsphere/limiting_tasks.html?ver=110#task-limitation-for-backup-proxies">超额订阅</a>。
+PrxNote9 = •	确认 RAM 与内核的比率<a href="https://helpcenter.veeam.com/docs/backup/vsphere/system_requirements.html?ver=110#vmware-cdp-proxy-server">足够</a> .
+PrxNote10 = •	确保基本操作系统有足够的资源。 （<a href="https://helpcenter.veeam.com/docs/backup/vsphere/system_requirements.html?ver=110#backup-proxy-server">备份代理</a>，<a href="https://helpcenter.veeam.com/docs/backup/vsphere/system_requirements.html?ver=110#vmware-cdp-proxy-server">CDP 代理</a>)
+PrxNote11 = •	检查所选<a href="https://helpcenter.veeam.com/docs/backup/vsphere/transport_modes.html?zoom_highlight=transport+mode&amp;ver=110">传输模式</a>并突出显示<a href ="https://helpcenter.veeam.com/docs/backup/vsphere/network_mode_failover.html?ver=110">故障转移到网络模式</a>在作业失败或为作业启用故障转移到网络时禁用 运行速度低于预期（NBD 流量可能流经 <a href="https://helpcenter.veeam.com/docs/backup/vsphere/select_backup_network.html?zoom_highlight=preferred+network&amp;ver=110">错误的网络 </a>）。
+PrxNote12 = •	Hyper-V off host proxies应<a href="https://helpcenter.veeam.com/docs/backup/hyperv/offhost_backup_proxy.html?ver=110">匹配</a>受保护的 Hyper-V 主机版本。
+
+
+# managed servers
+
+ManSrvTitle = 托管服务器信息
+ManSrvBtn = 显示托管服务器详细信息
+ManSrv0 = 名称
+ManSrv0TT = 主机/文件共享名称
+ManSrv1 = 核心
+ManSrv1TT = 检测到物理 CPU 内核（如果适用）
+ManSrv2 = 内存
+ManSrv2TT = 检测到物理 RAM（如果适用）
+ManSrv3 = 类型
+ManSrv3TT = 服务器或共享类型
+ManSrv4 = API 版本
+ManSrv4TT = VMware API 版本
+ManSrv5 = 受保护的虚拟机
+ManSrv5TT = 在此主机上检测到的具有关联备份的虚拟机总数
+ManSrv6 = 不受保护的虚拟机
+ManSrv6TT = 在此主机上检测到的没有关联备份的虚拟机总数
+ManSrv7 = 虚拟机总数
+ManSrv7TT = 在此主机上检测到的虚拟机总数
+ManSrv8 = 是代理
+ManSrv8TT = 服务器是否用作 Veeam 代理？
+ManSrv9 = 是存储库
+ManSrv9TT = 服务器是否用作 Veeam 存储库？
+ManSrv10 = 是 WAN Acc。
+ManSrv10TT = 服务器是否用作 Veeam WAN 加速器？
+ManSrv11 = 不可用
+ManSrv11TT = 服务器不可用？
+ManSrvSum0 = 这列出了由 Veeam <a href="https://helpcenter.veeam.com/docs/backup/vsphere/setup_add_server.html?ver=110">管理</a>的所有服务器，这些服务器可识别数据源（管理程序）、备份 基础设施服务器（windows、linux）和 Veeam Backup for AWS/Azure/GCP 设备。
+ManSrvNote0 = • 查看 API 版本列并确保它们<a href="https://helpcenter.veeam.com/docs/backup/vsphere/platform_support.html?ver=110">受支持</a>并满足最低要求<a href="https://helpcenter.veeam.com/docs/backup/vsphere/system_requirements.html?ver=110">要求</a>。
+ManSrvNote1 = • 突出显示支持多个角色的主机并确认有<a href="">足够的资源</a> 可用于支持它们。
+
+# Job Summary
+JobSumTitle = 	作业摘要
+JobSumBtn = 显示工作总结笔记
+JobSum0 = 类型
+JobSum0TT = 作业类型
+JobSum1 = 全部的
+JobSum1TT = 检测到的此类作业总数
+JobSumSum0 = 在 Veeam Backup 和复制服务器上创建的所有作业类型的计数，以及所有作业的总和。并发运行的作业数量直接影响 VBR 服务器的大小和性能。
+JobSumNote0 = 请注意，某些作业（例如备份复制作业）通常配置为连续运行。
+JobSumNote1 = 请参阅<a href="#jobConcurrency7">并发表</a>
+
+
+#job concurrency table
+JobConTitle = 作业并发表（7天）
+JobConBtn = 显示并发表
+JobCon0 = 小时
+JobCon0TT = 一天中的小时（24 小时格式）
+JobCon1 = 周日
+JobCon1TT = 
+JobCon2 = 周一
+JobCon2TT = 
+JobCon3 = 周二
+JobCon3TT = 
+JobCon4 = 周三
+JobCon4TT = 
+JobCon5 = 周四
+JobCon5TT = 
+JobCon6 = 周五
+JobCon6TT = 
+JobCon7 = 周六
+JobCon7TT = 
+JobConSum0 = 并发表旨在用作热图。表示每天的每个小时。每个单元格中的数字代表特定小时内计算的最高并发运行作业总数。此数据可用于确保更准确地确定 VBR 服务器大小。
+JobConNote0subhdr = 计算
+JobConNote1 = 建议的 Veeam 备份服务器配置为每 10 个并发运行的作业 1 个 CPU 内核（物理或虚拟）和 4 GB RAM。并发作业包括任何正在运行的备份或复制作业以及任何具有连续计划的作业，例如备份复制作业和磁带作业。
+JobConNote2 = <a href="https://bp.veeam.com/vbr/3_Build_structures/B_Veeam_Components/B_VBR_Server/Backup_Server.html" target="_blank">最低建议是 2 个 CPU 内核和 8 GB RAM。</a>
+JobConNote3 = 如果所需资源超过当前 VBR CPU 和 RAM，则应分析作业调度以最小化并发作业数。如果无法更改作业调度，则应部署多个 VBR 服务器，并将作业迁移到新服务器。
+JobConNote4subhdr = Veeam Microsoft SQL 数据库
+JobConNote5bold = 请遵循以下准则：
+JobConNoteSqlTableRow1Col1 = 并发运行的作业数
+JobConNoteSqlTableRow1Col2 = 中央处理器
+JobConNoteSqlTableRow1Col3 = 内存
+JobConNoteSqlTableRow2Col1 = 最多 25 个
+JobConNoteSqlTableRow2Col2 = 2个中央处理器
+JobConNoteSqlTableRow2Col3 = 4GB
+JobConNoteSqlTableRowRow3Col1 = 高达50
+JobConNoteSqlTableRow3Col2 = 4 CPU
+JobConNoteSqlTableRow3Col3 = 8 GB
+JobConNoteSqlTableRow4Col1 = 最多 100 个
+JobConNoteSqlTableRow4Col2 = 8个中央处理器
+JobConNoteSqlTableRow4Col3 = 16 GB
+JobConNoteSqlTableNote0 = 如果以下任何一项适用，建议安装 SQL Standard 或 Enterprise Edition：
+JobConNoteSqlTableNote1 = • 保护超过 500 台服务器时。 Express Edition 允许的最大数据库大小通常就足够了，因此不要将其视为约束。 Veeam Backup &amp; Replication但是，由于 SQL Server Express 实例上的 CPU 和 RAM 限制，控制台和作业处理可能会变慢。
+JobConNoteSqlTableNote2 = • 当广泛使用文件到磁带作业时，数据库可能会显着增长，并且可能会很快超过 10 GB 的限制。
+JobConNoteSqlTableNote3 = • 当无法配置外部登台服务器以与 Veeam Explorer for Microsoft SQL Server 或 Veeam Explorer for Microsoft SharePoint 一起使用时。处理大于 10 GB 的数据库时，SQL Server Express 无法装载数据库。
+JobConNoteSqlTableNote4 = • 当数据库使用 Microsoft SQL Server 的高级功能时。例如加密或表分区，登台服务器（本地或远程）的许可级别必须与原始实例的级别匹配。
+
+
+# VM concurrency chart
+TaskConTitle = 虚拟机任务并发（7 天）
+TaskConBtn = 显示并发表
+TaskCon0 = 小时
+TaskCon0TT = 一天中的小时（24 小时格式）
+TaskCon1 = 周日
+TaskCon1TT = 
+TaskCon2 = 周一
+TaskCon2TT = 
+TaskCon3 = 周二
+TaskCon3TT = 
+TaskCon4 = 周三
+TaskCon4TT = 
+TaskCon5 = 周四
+TaskCon5TT = 
+TaskCon6 = 周五
+TaskCon6TT = 
+TaskCon7 = 周六
+TaskCon7TT = 
+TaskConSum0 = 并发表旨在用作热图。表示每天的每个小时。每个单元格中的数字代表特定小时内计算的最高并发运行任务数。此数据可用于辅助作业调度和代理/存储库任务大小调整。
+TaskConNote0 = 使用此图表检查最大并发性。这里的每个任务都应该有 1 个对应的 Proxy Task 和 1/3 对应的 Repository Task 支持。
+
+# Reg options
+RegTitle = 非默认注册表项
+RegBtn = 显示 RegKey 详细信息
+Reg0 = 钥匙
+Reg0TT = 
+Reg1 = 价值
+Reg1TT = 
+RegSum0 = 此表详细列出了与 Veeam Backup &amp; Replication 基本安装期间设置的默认键不同的任何注册表键，特别是在 <a class="bld">HKLM\\SOFTWARE\\Veeam\\Veeam Backup and Replication</a>
+RegNote0 = 由于某些注册表项与错误修复和/或出于各种原因推荐的其他调整相关联，因此最好查阅您过去的支持案例电子邮件和说明，或联系您的 Veeam 工程师以了解有关此处显示的密钥的任何问题。
+RegNote1 = 一些键，例如 LoggingLevel 和其他与“日志”相关的键，如果需要，在遵循相应的<a href="https://www.veeam.com/kb1825">KB Article.</a>
+
+
+#Job Info
+JobInfoTitle = 工作信息
+JobInfoBtn = 显示工作信息详情
+JobInfo0 = 名称
+JobInfo0TT = 控制台中显示的作业名称
+JobInfo1 = 存储库
+JobInfo1TT = 作业所针对的存储库
+JobInfo2 = 源大小
+JobInfo2TT = 作业源数据的实际大小
+JobInfo3 = 还原点
+JobInfo3TT = 作业配置中设置的所需还原点
+JobInfo4 = 加密
+JobInfo4TT = 作业是否加密备份？
+JobInfo5 = 工作类型
+JobInfo5TT = 工作类型
+JobInfo6 = 算法
+JobInfo6TT = 
+JobInfo7 = 计划启用时间
+JobInfo7TT = 
+JobInfo8 = 完全备份天数
+JobInfo8TT = 
+JobInfo9 = 完整备份计划
+JobInfo9TT = 
+JobInfo10 = 计划选项
+JobInfo10TT = 
+JobInfo11 = 将 Full 转换为 Synth
+JobInfo11TT = 
+JobInfo12 = 将 Inc 转换为 Synth
+JobInfo12TT = 
+JobInfo13 = 转变天数
+JobInfo13TT = 
+JobInfoSum0 = • 作业定义源数据、目标、计划和处理源数据的高级设置。 Veeam Backup &amp; Replication中有多种作业类型。包括备份、备份复制、CDP 策略、NAS 备份等。并非所有工作类型的每一列都有数据。
+JobInfoNote0 = •	验证为作业列出的还原点和计划选项是否与源应用程序所需的 RPO 匹配。 请参阅<a href="https://helpcenter.veeam.com/docs/backup/vsphere/backup_job_schedule_vm.html?ver=110">作业调度</a>。
+
+# job session summary
+JssTitle = 工作会议总结（7 天）
+JssBtn = 显示工作详情
+Jss0 = 职位名称
+Jss0TT = B&R 控制台中显示的作业名称
+Jss1 = 项目
+Jss1TT = 作业包含的项目数
+Jss2 = 最短时间（分钟）
+Jss2TT = 检测到作业运行短路
+Jss3 = 最长时间（分钟）
+Jss3TT = 检测到的最长作业运行
+Jss4 = 平均时间（分钟）
+Jss4TT = 平均工作时间
+Jss5 = 总会话数
+Jss5TT = 检测到的作业会话总数
+Jss6 = 成功率 ％
+Jss6TT = 检测到的会话的成功率
+Jss7 = 平均备份大小 (TB)
+Jss7TT = 备份文件的平均大小（TB）
+Jss8 = 最大备份大小 (TB)
+Jss8TT = TB 中最大的备份文件
+Jss9 = 平均数据大小 (TB)
+Jss9TT = 以 TB 为单位的平均源数据大小
+Jss10 = 最大数据大小 (TB)
+Jss10TT = 以 TB 为单位的最大源数据大小
+Jss11 = 平均变化率 %
+Jss11TT = 作业的平均计算变化率
+Jss12 = 等待水库。数数
+Jss12TT = 作业被迫等待可用资源的总次数
+Jss13 = 最大等待 (dd.hh:mm:ss)
+Jss13TT = 检测到的最长等待资源
+Jss14 = 平均等待时间 (dd.hh:mm:ss)
+Jss14TT = 平均持续时间作业正在等待可用资源
+Jss15 = 作业类型
+Jss15TT = 作业类型
+JssSum0 = 此表旨在详细说明过去 7 天内各个作业的近期历史记录。
+JssNote0subhdr = 等待资源/作业会话长度问题：
+JssNote1 = • 将作业安排在不同的时间段开始将有助于分配资源并防止作业等待可用资源的瓶颈。 （例如，不要将所有工作安排在晚上 8:00 开始，而是在 8:00 开始一个工作，另一个在 8:30 开始，另一个在 9:00 开始。）
+JssNote2 = •	如果资源允许，增加代理上允许的并发任务数。 <a href="https://helpcenter.veeam.com/docs/backup/vsphere/vmware_proxy_server.html?ver=110#:~:text=In%20the%20Max%20concurrent%20tasks%20field%2C%20specify%20the%20number%20of%20tasks%20that%20the%20backup%20proxy%20must%20handle%20in%20parallel.%20If%20this%20value%20is%20exceeded%2C%20the%20backup%20proxy%20will%20not%20start%20a%20new%20task%20until%20one%20of%20current%20tasks%20finishes.">请参阅如何设置最大并发任务。</a>
+JssNote3 = o	如果您的备份代理没有足够的资源来增加任务，并且它是一个虚拟机，您应该考虑增加代理可用的 CPU 和 RAM 量。
+JssNote4 = o	如果无法向现有代理添加资源，请考虑从“备份基础架构- >备份代理”中部署其他备份代理
+JssNote5 = •	通过查看 VBR 控制台中的作业会话统计信息，确保您的备份作业或复制作业选择了正确的代理。
+JssNote6 = •	调查备份作业性能。如果特定作业的处理时间比正常情况长，请检查警告，将瓶颈统计信息与以前的作业会话进行比较，并尝试将问题隔离到特定代理、存储库、主机或数据存储。
+JssNote7 = o	将较大的虚拟机/服务器移动到自己的作业和计划中，以确保不会发生冲突并更快地完成作业的备份窗口（例如，将这些作业安排在所有其他作业之前或所有其他作业之后）
+JssNote8 = •	将 NAS 代理、缓存存储库和存储库与 VM 代理以及 VM 和代理存储库分开
+JssNote9 = •	<a href="https://helpcenter.veeam.com/docs/backup/vsphere/gateway_server.html?ver=110#gateway-servers-deployment">使用静态网关和挂载服务器</a>如果可能，卸载合成操作、SOBR 卸载处理、备份复制作业和其他任务所需的资源消耗。
+JssNote10 = •	如果合适， <a href="https://www.veeam.com/kb2660">查看重复数据删除存储系统的体系结构指南。</a>
+
+
+######## VB365
+Vb365Banner = VB365 健康检查报告
+#navigation
+v365NavTitle0 = 全局配置
+v365NavValue0 = 许可证和全局设置摘要。
+v365NavTitle1 = 受保护的用户
+v365NavValue1 = 受保护和未受保护用户的摘要。
+v365NavTitle2 = 备份服务器
+v365NavValue2 = VB365 服务器的详细信息。
+v365NavTitle3 = 备份服务器磁盘
+v365NavValue3 = 有关连接到 VB365 服务器的磁盘的详细信息。
+v365NavTitle4 = 代理
+v365NavValue4 = 添加到当前 VB365 服务器的代理的详细信息。
+v365NavTitle5 = 存储库
+v365NavValue5 = 添加到当前 VB365 的存储库的详细信息。
+v365NavTitle6 = 对象存储
+v365NavValue6 = 有关使用的对象存储的详细信息。
+v365NavTitle7 = 安全信息
+v365NavValue7 = 与 VB365 相关的安全设置摘要。
+v365NavTitle8 = RBAC 角色信息
+v365NavValue8 = 基于角色的访问控制设置摘要。
+v365NavTitle9 = 权限检查
+v365NavValue9 = 授予和使用的权限摘要。
+v365NavTitle10 = 组织
+v365NavValue10 = 有关受 VB365 保护的组织的详细信息。
+v365NavTitle11 = 备份作业
+v365NavValue11 = 此 VB365 服务器上配置的作业的详细信息。
+v365NavTitle12 = 作业统计
+v365NavValue12 = 分析最近的作业运行。
+v365NavTitle13 = 作业会话
+v365NavValue13 = 最近作业运行的详细信息。
+
+# Global Config
+VboGloH1

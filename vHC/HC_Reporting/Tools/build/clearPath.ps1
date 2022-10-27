@@ -1,0 +1,1 @@
+gci -path "C:\temp\vHC" | remove-item -force -recurse

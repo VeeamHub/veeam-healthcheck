@@ -1,10 +1,31 @@
-﻿Upcoming: 1.0.1.X
+﻿1.0.2.675
+- VB365 HealthCheck
+	- Scripts added to create Health Check Report for VB365.
+- Software detection
+	- Software detects B&R or VB365 and creates report for detected software.
+- Localization
+	- Translating 'vhcres.txt' or 'vb365_vhcres.txt' and adding locale (i.e. vhcres.FR-FR.txt), program can be rebuilt and detect system locale to display GUI and Report in desired language.
+- CLI
+	- .\VeeamHealthCheck.exe help to see menu
+
+
+1.0.1.1273
+- Fixed Issues:
+ 	- #3
+	- #4
+ 	- #5
+- Fixed math where Job Sessions' success rate could be greater than 100%.
+
+1.0.1.1272
+- Fixed a bug where capacity tier NAME would show under TYPE. Issue also caused inconsistency with SOBR details.
+
+1.0.1.1251
 - redesigned UI
 	- updated colors
 	- collapsible sections
 	- expand/collapse all button
 - redirected output for HTML reports: 
-	- default = C:\temp\vHC\SensitiveData\
+	- default = C:\temp\vHC\Original\
 	- scrubbed = C:\temp\vHC\Anonymous
 	- optional custom output for report
 - added detected VM count (VMware)

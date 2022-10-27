@@ -1,0 +1,3 @@
+VHC TODO:
+
+- Dual mode (VBR + VB365) creates both anon reports with same install ID
