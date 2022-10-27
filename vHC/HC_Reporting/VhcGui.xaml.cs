@@ -13,6 +13,7 @@ using System.Threading;
 using System.Globalization;
 using VeeamHealthCheck.Scrubber;
 using System.ComponentModel.Composition.Primitives;
+using System.IO;
 
 namespace VeeamHealthCheck
 {
@@ -262,28 +263,55 @@ namespace VeeamHealthCheck
             _desiredPath = targetForOutput;
             RunAction();
         }
+        private bool VerifyPath()
+        {
+            try
+            {
+                if (!Directory.Exists(_desiredPath))
+                    Directory.CreateDirectory(_desiredPath);
+                return true;
+            }
+            catch(Exception e)
+            {
+                log.Error("[UI] Desired dir does not exist and cannot be created. Error: ");
+                log.Error("\t" + e.Message);
+                return false;
+            }
+        }
         private void run_Click(object sender, RoutedEventArgs e)
         {
 
             LogUIAction("Run");
 
-            // disable UI Buttons and boxes
-            DisableButtons();
-
-
-            _import = false;
-            showProgressBar();
-
-            System.Threading.Tasks.Task.Factory.StartNew(() =>
+            if (!VerifyPath())
             {
-                RunAction();
-                // should be done here?
-                Environment.Exit(0);
+                //MessageBox mb = new();
+                
+                MessageBox.Show("Error: Failed to validate desired output path. Please try a different path.");
 
-            }).ContinueWith(t =>
+            }
+            if (VerifyPath())
             {
-                hideProgressBar();
-            });
+
+
+                // disable UI Buttons and boxes
+                DisableButtons();
+
+
+                _import = false;
+                showProgressBar();
+
+                System.Threading.Tasks.Task.Factory.StartNew(() =>
+                {
+                    RunAction();
+                    // should be done here?
+                    Environment.Exit(0);
+
+                }).ContinueWith(t =>
+                {
+                    hideProgressBar();
+                });
+            }
             //EnableButtons();
         }
         private void DisableButtons()
@@ -484,7 +512,7 @@ namespace VeeamHealthCheck
         }
         private void pathBox_TextChanged(object sender, TextChangedEventArgs e)
         {
-            log.Info("Changing path from" + _desiredPath + " to " + pathBox.Text);
+            log.Info("Changing path from " + _desiredPath + " to " + pathBox.Text);
             _desiredPath = pathBox.Text;
         }
 

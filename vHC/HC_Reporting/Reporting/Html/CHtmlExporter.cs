@@ -101,19 +101,24 @@ namespace VeeamHealthCheck.Html
             string installID = "";
             try
             {
-                if (!String.IsNullOrEmpty(Collection.LogParser.CLogOptions.INSTALLID)) ;
-                installID = Collection.LogParser.CLogOptions.INSTALLID.Substring(0, 7);
+                if (!String.IsNullOrEmpty(Collection.LogParser.CLogOptions.INSTALLID)) 
+                    installID = Collection.LogParser.CLogOptions.INSTALLID.Substring(0, 7);
             }
             catch(Exception e) { installID = "anon"; }
             if (!Directory.Exists(n))
                 Directory.CreateDirectory(n);
             if (!Directory.Exists(n + "\\Anon"))
                 Directory.CreateDirectory(n + "\\Anon");
+            if (!Directory.Exists(n + "\\Original"))
+                Directory.CreateDirectory(n + "\\Original");
             string htmlCore = "";
             if (scrub)
                 htmlCore = "\\Anon\\" + _htmlName + "_VBR" + "_" + installID + dateTime.ToString("_yyyy.MM.dd.HHmmss") + ".html";
             else if (!scrub)
+            {
                 htmlCore = "\\Original\\" + _htmlName + "_VBR" + "_" + _backupServerName + dateTime.ToString("_yyyy.MM.dd.HHmmss") + ".html";
+
+            }
             string name = n + htmlCore;
             _latestReport = name;
 
