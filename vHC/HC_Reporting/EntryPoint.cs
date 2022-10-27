@@ -10,6 +10,7 @@ using System.Runtime.InteropServices;
 using VeeamHealthCheck.Shared.Logging;
 using System.Text.RegularExpressions;
 using VeeamHealthCheck.Shared.Logging;
+using VeeamHealthCheck.Shared;
 
 namespace VeeamHealthCheck
 {
@@ -43,6 +44,7 @@ namespace VeeamHealthCheck
         [STAThread]
         public static void Main(string[] args)
         {
+            logger.Info("vHC Version: " + CVersionSetter.GetFileVersion());
             logger.Info("Args count = " + args.Count().ToString());
             foreach (var arg in args)
                 logger.Info("Input: " + arg);
