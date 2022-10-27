@@ -3,16 +3,19 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using System.Windows.Controls.DataVisualization.Charting;
 using VeeamHealthCheck.CsvHandlers;
 using VeeamHealthCheck.Reporting.Html;
 using VeeamHealthCheck.Reporting.Html.Shared;
 using VeeamHealthCheck.Reporting.Html.VBR;
+using VeeamHealthCheck.Shared.Logging;
 
 namespace VeeamHealthCheck.Html.VBR
 {
     internal class CHtmlTables
     {
         private CCsvParser _csv = new(CVariables.vb365dir);
+        private readonly CLogger log = VhcGui.log;
 
         CDataFormer _df = new(true);
         Scrubber.CScrubHandler _scrub = VhcGui._scrubberMain;
@@ -127,23 +130,33 @@ namespace VeeamHealthCheck.Html.VBR
             s += _form.TableHeader(ResourceHandler.BkpSrvTblWanRole, ResourceHandler.BstWaTT);
             s += "</tr>";
             //CDataFormer cd = new(true);
-            List<string> list = _df.BackupServerInfoToXml(scrub);
-            s += "<tr>";
-
-            for (int i = 0; i < list.Count(); i++)
+            try
             {
 
-                //if(MainWindow._scrub && i == 0 || i == 7 || i == 9)
-                //{
-                //    s += _form.TableData(_scrub.ScrubItem(list[i]), "");
-                //}
-                //else
-                s += _form.TableData(list[i], "");
 
+                List<string> list = _df.BackupServerInfoToXml(scrub);
+                s += "<tr>";
+
+                for (int i = 0; i < list.Count(); i++)
+                {
+
+                    //if(MainWindow._scrub && i == 0 || i == 7 || i == 9)
+                    //{
+                    //    s += _form.TableData(_scrub.ScrubItem(list[i]), "");
+                    //}
+                    //else
+                    s += _form.TableData(list[i], "");
+
+                }
+                s += _form.SectionEnd(summary);
+                return s;
             }
-            s += _form.SectionEnd(summary);
-            return s;
-
+            catch(Exception e)
+            {
+                log.Error("Failed to add backup server table. Error:");
+                log.Error("\t" + e.Message);
+                return "";
+            }
         }
 
         public string AddSecSummaryTable(bool scrub)
