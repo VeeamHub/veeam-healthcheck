@@ -12,7 +12,7 @@ using VeeamHealthCheck.Shared.Logging;
 using System.Threading;
 using System.Globalization;
 using VeeamHealthCheck.Scrubber;
-using System.ComponentModel.Composition.Primitives;
+//using System.ComponentModel.Composition.Primitives;
 using System.IO;
 
 namespace VeeamHealthCheck
