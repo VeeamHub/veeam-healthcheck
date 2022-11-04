@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using System.Windows.Controls.DataVisualization.Charting;
 using VeeamHealthCheck.CsvHandlers;
 using VeeamHealthCheck.Reporting.Html;
 using VeeamHealthCheck.Reporting.Html.Shared;
