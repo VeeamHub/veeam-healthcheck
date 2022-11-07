@@ -14,7 +14,10 @@ This Windows utility is a lightweight executable that will generate an advanced 
 - Must be run as elevated user
 	- User must have Backup Administrator role in B&R
 - Veeam Backup & Replication v11
-- Must be executed on system where Veeam Backup & Replication is installed (no remote execution)
+- Must be executed on system where Veeam Backup & Replication is installed
+	- Remote execution is possible - but will skip certain scans:
+		- Logs will not be analyzed (Job wait analysis)
+		- SQL Server settings will not be detected
 - C:\ must have at least 500MB free space: Output is sent to C:\temp\vHC
 - Veeam Cloud Service Provider Servers are not supported.
 
@@ -22,6 +25,7 @@ This Windows utility is a lightweight executable that will generate an advanced 
 1. [Download the tool.](https://github.com/VeeamHub/veeam-healthcheck/releases/)
 2. Extract the archive on the Backup & Replication Server
 3. Run VeeamHealthCheck.exe from an elevated CMD/PS prompt or right-click 'Run as Administrator'
+	a. CLI options are available.
 4. Configure desired options on the single-page GUI
 5. Accept Terms
 6. RUN
