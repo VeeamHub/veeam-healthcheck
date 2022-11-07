@@ -488,7 +488,7 @@ namespace VeeamHealthCheck.Reporting.Html
             catch (Exception g)
             {
                 log.Error("Error processing SQL resource data");
-                log.Error(g.Message);
+                log.Error("\t" + g.Message);
             }
 
 

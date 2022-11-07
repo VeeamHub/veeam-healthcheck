@@ -16,6 +16,8 @@ namespace VeeamHealthCheck
 {
     public class EntryPoint
     {
+        public static bool _fullReport = true;
+        public static bool _secReport = false;
         private static CLogger logger = VhcGui.log;
         private static string _helpMenu = "\nHELP MENU:\n" +
             "run\tExecutes the program via CLI" +
@@ -110,8 +112,19 @@ namespace VeeamHealthCheck
                             targetDir = outputDir[1];
                             logger.Info("Output directory: " + targetDir);
                             break;
+                        case "security":
+                            // do sec report
+                            break;
                     }
                 }
+
+                if(args.Any(x => x == "security"))
+                {
+                    Console.WriteLine(true);
+                    _secReport = true;
+                    _fullReport = false;
+                }
+
                 if (ui)
                     LaunchUi(handle, false);
                 else if (run)

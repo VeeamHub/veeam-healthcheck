@@ -123,43 +123,68 @@ namespace VeeamHealthCheck.Html
             //nav
             SetNavigation();
 
+
             //tables
-            _htmldocOriginal += _tables.LicTable(false);
-            _htmldocOriginal += _tables.AddBkpSrvTable(false);
-            _htmldocOriginal += _tables.AddSecSummaryTable(false);
-            _htmldocOriginal += _tables.AddSrvSummaryTable(false);
-            _htmldocOriginal += _tables.AddJobSummaryTable(false);
-            _htmldocOriginal += _tables.AddMissingJobsTable(false);
-            _htmldocOriginal += _tables.AddProtectedWorkLoadsTable(false);
-            _htmldocOriginal += _tables.AddManagedServersTable(false);
-            _htmldocOriginal += _tables.AddRegKeysTable(false);
-            _htmldocOriginal += _tables.AddProxyTable(false);
-            _htmldocOriginal += _tables.AddSobrTable(false);
-            _htmldocOriginal += _tables.AddSobrExtTable(false);
-            _htmldocOriginal += _tables.AddRepoTable(false);
-            _htmldocOriginal += _tables.AddJobConTable(false);
-            _htmldocOriginal += _tables.AddTaskConTable(false);
-            _htmldocOriginal += _tables.AddJobSessSummTable(false);
-            _htmldocOriginal += _tables.AddJobInfoTable(false);
+            if (EntryPoint._fullReport)
+            {
+                _htmldocOriginal += _tables.LicTable(false);
+                _htmldocOriginal += _tables.AddBkpSrvTable(false);
+            }
+            
+            if(EntryPoint._secReport || EntryPoint._fullReport)
+                _htmldocOriginal += _tables.AddSecSummaryTable(false);
 
-            _htmldocScrubbed += _tables.LicTable(true);
-            _htmldocScrubbed += _tables.AddBkpSrvTable(true);
-            _htmldocScrubbed += _tables.AddSecSummaryTable(true);
-            _htmldocScrubbed += _tables.AddSrvSummaryTable(true);
-            _htmldocScrubbed += _tables.AddJobSummaryTable(true);
-            _htmldocScrubbed += _tables.AddMissingJobsTable(true);
-            _htmldocScrubbed += _tables.AddProtectedWorkLoadsTable(true);
-            _htmldocScrubbed += _tables.AddManagedServersTable(true);
-            _htmldocScrubbed += _tables.AddRegKeysTable(true);
-            _htmldocScrubbed += _tables.AddProxyTable(true);
-            _htmldocScrubbed += _tables.AddSobrTable(true);
-            _htmldocScrubbed += _tables.AddSobrExtTable(true);
-            _htmldocScrubbed += _tables.AddRepoTable(true);
-            _htmldocScrubbed += _tables.AddJobConTable(true);
-            _htmldocScrubbed += _tables.AddTaskConTable(true);
-            _htmldocScrubbed += _tables.AddJobSessSummTable(true);
-            _htmldocScrubbed += _tables.AddJobInfoTable(true);
+            if (EntryPoint._fullReport)
+            {
+                _htmldocOriginal += _tables.AddSrvSummaryTable(false);
+                _htmldocOriginal += _tables.AddJobSummaryTable(false);
+                _htmldocOriginal += _tables.AddMissingJobsTable(false);
+                _htmldocOriginal += _tables.AddProtectedWorkLoadsTable(false);
+                _htmldocOriginal += _tables.AddManagedServersTable(false);
+                _htmldocOriginal += _tables.AddRegKeysTable(false);
+                _htmldocOriginal += _tables.AddProxyTable(false);
+                _htmldocOriginal += _tables.AddSobrTable(false);
+                _htmldocOriginal += _tables.AddSobrExtTable(false);
+                _htmldocOriginal += _tables.AddRepoTable(false);
+                _htmldocOriginal += _tables.AddJobConTable(false);
+                _htmldocOriginal += _tables.AddTaskConTable(false);
+                _htmldocOriginal += _tables.AddJobSessSummTable(false);
+                _htmldocOriginal += _tables.AddJobInfoTable(false);
+            }
 
+
+
+            // anon report
+            if (EntryPoint._fullReport)
+            {
+                _htmldocScrubbed += _tables.LicTable(true);
+                _htmldocScrubbed += _tables.AddBkpSrvTable(true);
+            }
+            
+            
+            // anon sec report
+            if (EntryPoint._secReport || EntryPoint._fullReport)
+                _htmldocScrubbed += _tables.AddSecSummaryTable(true);
+
+            if (EntryPoint._fullReport)
+            {
+
+
+                _htmldocScrubbed += _tables.AddSrvSummaryTable(true);
+                _htmldocScrubbed += _tables.AddJobSummaryTable(true);
+                _htmldocScrubbed += _tables.AddMissingJobsTable(true);
+                _htmldocScrubbed += _tables.AddProtectedWorkLoadsTable(true);
+                _htmldocScrubbed += _tables.AddManagedServersTable(true);
+                _htmldocScrubbed += _tables.AddRegKeysTable(true);
+                _htmldocScrubbed += _tables.AddProxyTable(true);
+                _htmldocScrubbed += _tables.AddSobrTable(true);
+                _htmldocScrubbed += _tables.AddSobrExtTable(true);
+                _htmldocScrubbed += _tables.AddRepoTable(true);
+                _htmldocScrubbed += _tables.AddJobConTable(true);
+                _htmldocScrubbed += _tables.AddTaskConTable(true);
+                _htmldocScrubbed += _tables.AddJobSessSummTable(true);
+                _htmldocScrubbed += _tables.AddJobInfoTable(true);
+            }
             //_tables.AddSessionsFiles();
 
             _htmldocOriginal += "<a>vHC Version: " + CVersionSetter.GetFileVersion() + "</a>";
