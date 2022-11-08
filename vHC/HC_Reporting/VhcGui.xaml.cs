@@ -91,6 +91,8 @@ namespace VeeamHealthCheck
             this.line6.Text = ResourceHandler.GuiInstLine6;
             this.Cav1Part1.Text = ResourceHandler.GuiInstCaveat1;
             this.Cav2.Text = ResourceHandler.GuiInstCaveat2;
+            this.Cav3.Text = "*** This tool is community supported and not an officially supported Veeam product.\r\n";
+            this.Cav4.Text = "**** The tool does not automatically phone home, or reach out to any network infrastructure beyond the Veeam Backup and Replication components or the Veeam Backup for 365 components if appropriate.";
             this.OptHdr.Text = ResourceHandler.GuiOptionsHeader;
             this.htmlCheckBox.Content = ResourceHandler.GuiShowHtml;
             this.scrubBox.Content = ResourceHandler.GuiSensData;
