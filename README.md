@@ -4,6 +4,9 @@
 
 This Windows utility is a lightweight executable that will generate an advanced configuration report covering details about the current Veeam Backup & Replication installation. Simply download, extract, and execute to generate the report. 
 
+1. This tool is community supported and not an officially supported Veeam product.
+2. The tool does not automatically phone home, or reach out to any network infrastructure beyond the Veeam Backup and Replication components or the Veeam Backup for 365 components if appropriate.
+
 **[Sample Report](https://htmlpreview.github.io/?https://github.com/VeeamHub/veeam-healthcheck/blob/master/SAMPLE/Veeam_HealthCheck_Report_live-backup_2022.01.10_102711.html)**
 
 ## 📗 Documentation
