@@ -8,7 +8,7 @@ MIT License
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         mc:Ignorable="d"
-        Title="" Height="524" Width="370"
+        Title="" Height="628" Width="370"
         WindowStartupLocation="CenterScreen"
         ResizeMode="NoResize"
         >
@@ -53,7 +53,7 @@ MIT License
         <Button Name="termsBtn" Content="" HorizontalAlignment="Left" Margin="8,345,0,0" VerticalAlignment="Top" Height="25" Width="160" Click="AcceptButton_click"/>
         <Button x:Name="importButton" Content="" HorizontalAlignment="Right" Margin="0,261,8,0" VerticalAlignment="Top" Height="38" Width="100" Click="Import_click" ToolTip="Creates a report based on previously collected data."/>
 
-        <TextBlock Margin="0,-25,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Height="270" Width="Auto">
+        <TextBlock Margin="0,-147,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Height="392" Width="Auto">
             <Run FontWeight="Bold" TextDecorations="Underline" Name="InsHeader" /><LineBreak/><Run/>
             <LineBreak/>
             <Run Name="line1"/><LineBreak/>
@@ -68,7 +68,9 @@ MIT License
                        NavigateUri="https://www.veeam.com/kb2462">https://www.veeam.com/kb2462
             </Hyperlink>    
             <Run Name="Cav1Part2" Text=""></Run><LineBreak/>
-            <Run Name="Cav2" /><LineBreak/><Run/><LineBreak/>
+            <Run Name="Cav2" /><Run/><LineBreak/>
+            <Run Name="Cav3" /><Run/>
+            <Run Name="Cav4" /><LineBreak/><Run/><LineBreak/><LineBreak/>
             <Run Name="OptHdr" FontWeight="Bold" TextDecorations="Underline" /></TextBlock>
         <CheckBox Name="htmlCheckBox" HorizontalAlignment="Left" 
                   Margin="0,270,0,0" VerticalAlignment="Top" IsThreeState="False"

@@ -25,6 +25,7 @@ This Windows utility is a lightweight executable that will generate an advanced 
 1. [Download the tool.](https://github.com/VeeamHub/veeam-healthcheck/releases/)
 2. Extract the archive on the Backup & Replication Server
 3. Run VeeamHealthCheck.exe from an elevated CMD/PS prompt or right-click 'Run as Administrator'
+	a. CLI options are available.
 4. Configure desired options on the single-page GUI
 5. Accept Terms
 6. RUN
