@@ -71,37 +71,43 @@ namespace VeeamHealthCheck.Html.VBR
                 _form.TableHeader(ResourceHandler.LicTblCc, ResourceHandler.LicCcTT) +
                 "</tr>";
 
-
-            CCsvParser csv = new();
-            var lic = csv.GetDynamicLicenseCsv();
-
-
-            foreach (var l in lic)
+            try
             {
+                CCsvParser csv = new();
+                var lic = csv.GetDynamicLicenseCsv();
 
 
-                s += "<tr>";
-                if (scrub)
-                    s += _form.TableData(_scrub.ScrubItem(l.licensedto), "");
-                if (!scrub)
-                    s += _form.TableData(l.licensedto, "");
-                s += _form.TableData(l.edition, "");
-                s += _form.TableData(l.status, "");
-                s += _form.TableData(l.type, "");
-                s += _form.TableData(l.licensedinstances, "");
-                s += _form.TableData(l.usedinstances, "");
-                s += _form.TableData(l.newinstances, "");
-                s += _form.TableData(l.rentalinstances, "");
-                s += _form.TableData(l.licensedsockets, "");
-                s += _form.TableData(l.usedsockets, "");
-                s += _form.TableData(l.licensedcapacitytb, "");
-                s += _form.TableData(l.usedcapacitytb, "");
-                s += _form.TableData(l.expirationdate, "");
-                s += _form.TableData(l.supportexpirationdate, "");
-                s += _form.TableData(l.cloudconnect, "");
-                s += "</tr>";
+                foreach (var l in lic)
+                {
+
+
+                    s += "<tr>";
+                    if (scrub)
+                        s += _form.TableData(_scrub.ScrubItem(l.licensedto), "");
+                    if (!scrub)
+                        s += _form.TableData(l.licensedto, "");
+                    s += _form.TableData(l.edition, "");
+                    s += _form.TableData(l.status, "");
+                    s += _form.TableData(l.type, "");
+                    s += _form.TableData(l.licensedinstances, "");
+                    s += _form.TableData(l.usedinstances, "");
+                    s += _form.TableData(l.newinstances, "");
+                    s += _form.TableData(l.rentalinstances, "");
+                    s += _form.TableData(l.licensedsockets, "");
+                    s += _form.TableData(l.usedsockets, "");
+                    s += _form.TableData(l.licensedcapacitytb, "");
+                    s += _form.TableData(l.usedcapacitytb, "");
+                    s += _form.TableData(l.expirationdate, "");
+                    s += _form.TableData(l.supportexpirationdate, "");
+                    s += _form.TableData(l.cloudconnect, "");
+                    s += "</tr>";
+                }
             }
-
+            catch(Exception e)
+            {
+                log.Error("License Data import failed. ERROR:");
+                log.Error("\t" + e.Message);
+            }
             s += _form.SectionEnd(summary);
             return s;
         }
@@ -160,7 +166,6 @@ namespace VeeamHealthCheck.Html.VBR
 
         public string AddSecSummaryTable(bool scrub)
         {
-            List<int> list = _df.SecSummary();
 
             string s = _form.SectionStart("secsummary", ResourceHandler.SSTitle);
             string summary = _sum.SecSum();
@@ -172,15 +177,25 @@ namespace VeeamHealthCheck.Html.VBR
                 "</tr>" +
                 "<tr>";
 
-            //table data
-            for (int i = 0; i < list.Count(); i++)
+            try
             {
-                if (list[i] == 0)
-                    s += _form.TableData("False", "", 1);
-                else if (list[i] == 1)
-                    s += _form.TableData("True", "");
+                //table data
+                List<int> list = _df.SecSummary();
+
+                for (int i = 0; i < list.Count(); i++)
+                {
+                    if (list[i] == 0)
+                        s += _form.TableData("False", "", 1);
+                    else if (list[i] == 1)
+                        s += _form.TableData("True", "");
+                }
+                s += "</tr>";
             }
-            s += "</tr>";
+            catch(Exception e)
+            {
+                log.Error("Security Summary Data import failed. ERROR:");
+                log.Error("\t" + e.Message);
+            }
             s += _form.SectionEnd(summary);
 
             return s;
@@ -188,20 +203,28 @@ namespace VeeamHealthCheck.Html.VBR
         public string AddSrvSummaryTable(bool scrub)
         {
             string summary = _sum.SrvSum();
-            Dictionary<string, int> list = _df.ServerSummaryToXml();
 
             string s = _form.SectionStart("serversummary", ResourceHandler.MssTitle);
 
             s += _form.TableHeader(ResourceHandler.MssHdr1, ResourceHandler.MssHdr1TT) +
                             _form.TableHeader(ResourceHandler.MssHdr2, ResourceHandler.MssHdr2TT) +
                             "</tr>";
-
-            foreach (var d in list)
+            try
             {
-                s += "<tr>";
-                s += _form.TableData(d.Key, "");
-                s += _form.TableData(d.Value.ToString(), "");
-                s += "</tr>";
+                Dictionary<string, int> list = _df.ServerSummaryToXml();
+
+                foreach (var d in list)
+                {
+                    s += "<tr>";
+                    s += _form.TableData(d.Key, "");
+                    s += _form.TableData(d.Value.ToString(), "");
+                    s += "</tr>";
+                }
+            }
+            catch(Exception e)
+            {
+                log.Error("Server Summary Data import failed. ERROR:");
+                log.Error("\t" + e.Message);
             }
 
             s += _form.SectionEnd(summary);
@@ -210,33 +233,42 @@ namespace VeeamHealthCheck.Html.VBR
         public string AddJobSummaryTable(bool scrub)
         {
             string summary = _sum.JobSummary();
-            Dictionary<string, int> list = _df.JobSummaryInfoToXml();
-
-            int totalJobs = 0;
-            foreach (var c in list)
-            {
-                totalJobs += c.Value;
-            }
-
             string s = _form.SectionStart("jobsummary", ResourceHandler.JobSumTitle);
 
             s += _form.TableHeader(ResourceHandler.JobSum0, ResourceHandler.JobSum0TT) +
                 _form.TableHeader(ResourceHandler.JobSum1, ResourceHandler.JobSum1TT) +
                 "</tr>";
 
-            foreach (var d in list)
+            try
             {
+                Dictionary<string, int> list = _df.JobSummaryInfoToXml();
+
+                int totalJobs = 0;
+                foreach (var c in list)
+                {
+                    totalJobs += c.Value;
+                }
+
+
+
+                foreach (var d in list)
+                {
+                    s += "<tr>";
+                    s += _form.TableData(d.Key, "");
+                    s += _form.TableData(d.Value.ToString(), "");
+                    s += "</tr>";
+                }
+
                 s += "<tr>";
-                s += _form.TableData(d.Key, "");
-                s += _form.TableData(d.Value.ToString(), "");
+                s += _form.TableData("<b>Total Jobs", "");
+                s += _form.TableData(totalJobs.ToString() + "</b>", "");
                 s += "</tr>";
             }
-
-            s += "<tr>";
-            s += _form.TableData("<b>Total Jobs", "");
-            s += _form.TableData(totalJobs.ToString() + "</b>", "");
-            s += "</tr>";
-
+            catch(Exception e)
+            {
+                log.Error("Job Summary Data import failed. ERROR:");
+                log.Error("\t" + e.Message);
+            }
             s += _form.SectionEnd(summary);
             return s;
         }
@@ -252,15 +284,23 @@ namespace VeeamHealthCheck.Html.VBR
                 //_form.TableHeader("Count", "Total detected of this type") +
                 "</tr>";
             //CDataFormer cd = new(true);
-            List<string> list = _df.ParseNonProtectedTypes();
-
-            for (int i = 0; i < list.Count(); i++)
+            try
             {
-                s += "<tr>";
+                List<string> list = _df.ParseNonProtectedTypes();
 
-                s += _form.TableData(list[i], "");
-                s += "</tr>";
+                for (int i = 0; i < list.Count(); i++)
+                {
+                    s += "<tr>";
 
+                    s += _form.TableData(list[i], "");
+                    s += "</tr>";
+
+                }
+            }
+            catch(Exception e)
+            {
+                log.Error("Missing Jobs Data import failed. ERROR:");
+                log.Error("\t" + e.Message);
             }
 
             s += _form.SectionEnd(summary);
@@ -270,62 +310,70 @@ namespace VeeamHealthCheck.Html.VBR
         {
             string s = _form.SectionStartWithButton("protectedworkloads", ResourceHandler.PlTitle, ResourceHandler.PlButton);
             string summary = _sum.ProtectedWorkloads();
-            _df.ProtectedWorkloadsToXml();
+            try
+            {
+                _df.ProtectedWorkloadsToXml();
 
 
-            // vi table
-            s += "<h3>VMware Backups</h3>";
-            s += _form.Table();
-            s += "<tr>" +
-            _form.TableHeader(ResourceHandler.PlHdr0, ResourceHandler.PlHdrTT0) +
-            _form.TableHeader(ResourceHandler.PlHdr1, ResourceHandler.PlHdrTT1) +
-            _form.TableHeader(ResourceHandler.PlHdr2, ResourceHandler.PlHdrTT2) +
-            _form.TableHeader(ResourceHandler.PlHdr3, ResourceHandler.PlHdrTT3) +
-            "</tr><tr>";
-            s += _form.TableData((_df._viProtectedNames.Distinct().Count() + _df._viNotProtectedNames.Distinct().Count()).ToString(), "");
-            s += _form.TableData(_df._viProtectedNames.Distinct().Count().ToString(), "");
-            s += _form.TableData(_df._viNotProtectedNames.Distinct().Count().ToString(), "");
-            s += _form.TableData(_df._viDupes.ToString(), "");
-            s += "</tr>";
-            s += "</table>";
+                // vi table
+                s += "<h3>VMware Backups</h3>";
+                s += _form.Table();
+                s += "<tr>" +
+                _form.TableHeader(ResourceHandler.PlHdr0, ResourceHandler.PlHdrTT0) +
+                _form.TableHeader(ResourceHandler.PlHdr1, ResourceHandler.PlHdrTT1) +
+                _form.TableHeader(ResourceHandler.PlHdr2, ResourceHandler.PlHdrTT2) +
+                _form.TableHeader(ResourceHandler.PlHdr3, ResourceHandler.PlHdrTT3) +
+                "</tr><tr>";
+                s += _form.TableData((_df._viProtectedNames.Distinct().Count() + _df._viNotProtectedNames.Distinct().Count()).ToString(), "");
+                s += _form.TableData(_df._viProtectedNames.Distinct().Count().ToString(), "");
+                s += _form.TableData(_df._viNotProtectedNames.Distinct().Count().ToString(), "");
+                s += _form.TableData(_df._viDupes.ToString(), "");
+                s += "</tr>";
+                s += "</table>";
 
 
-            //hv 
-            s += "<h3>HV Backups</h3>";
-            s += _form.Table();
-            // hv table
-            s += "<tr>";
-            s += _form.TableHeader("HV Total", "Total HV VMs found in environment");
-            s += _form.TableHeader("HV Protected", "Total HV VMs found with existing backup");
-            s += _form.TableHeader("HV Unprotected", "Total HV VMs found without backup");
-            s += _form.TableHeader("HV Duplicates", "Total HV VMs potentially found in multiple backups");
-            s += "</tr>";
-            s += "<tr>";
-            s += _form.TableData((_df._hvProtectedNames.Distinct().Count() + _df._hvNotProtectedNames.Distinct().Count()).ToString(), "");
-            s += _form.TableData(_df._hvProtectedNames.Distinct().Count().ToString(), "");
-            s += _form.TableData(_df._hvNotProtectedNames.Distinct().Count().ToString(), "");
-            s += _form.TableData(_df._hvDupes.ToString(), "");
-            s += "</tr></table>";
+                //hv 
+                s += "<h3>HV Backups</h3>";
+                s += _form.Table();
+                // hv table
+                s += "<tr>";
+                s += _form.TableHeader("HV Total", "Total HV VMs found in environment");
+                s += _form.TableHeader("HV Protected", "Total HV VMs found with existing backup");
+                s += _form.TableHeader("HV Unprotected", "Total HV VMs found without backup");
+                s += _form.TableHeader("HV Duplicates", "Total HV VMs potentially found in multiple backups");
+                s += "</tr>";
+                s += "<tr>";
+                s += _form.TableData((_df._hvProtectedNames.Distinct().Count() + _df._hvNotProtectedNames.Distinct().Count()).ToString(), "");
+                s += _form.TableData(_df._hvProtectedNames.Distinct().Count().ToString(), "");
+                s += _form.TableData(_df._hvNotProtectedNames.Distinct().Count().ToString(), "");
+                s += _form.TableData(_df._hvDupes.ToString(), "");
+                s += "</tr></table>";
 
 
-            // phys
-            s += "<h3>Physical Backups</h3>";
-            s += _form.Table();
-            s += "<tr>";
-            s += _form.TableHeader(ResourceHandler.PlHdr4, ResourceHandler.PlHdrTT4);
-            s += _form.TableHeader(ResourceHandler.PlHdr5, ResourceHandler.PlHdrTT5);
-            s += _form.TableHeader(ResourceHandler.PlHdr6, ResourceHandler.PlHdrTT6);
-            s += _form.TableHeader(ResourceHandler.PlHdr7, ResourceHandler.PlHdrTT7);
+                // phys
+                s += "<h3>Physical Backups</h3>";
+                s += _form.Table();
+                s += "<tr>";
+                s += _form.TableHeader(ResourceHandler.PlHdr4, ResourceHandler.PlHdrTT4);
+                s += _form.TableHeader(ResourceHandler.PlHdr5, ResourceHandler.PlHdrTT5);
+                s += _form.TableHeader(ResourceHandler.PlHdr6, ResourceHandler.PlHdrTT6);
+                s += _form.TableHeader(ResourceHandler.PlHdr7, ResourceHandler.PlHdrTT7);
 
-            s += "</tr>";
-            //CDataFormer cd = new(true);
-            s += "<tr>";
-            s += _form.TableData(_df._vmProtectedByPhys.Distinct().Count().ToString(), "");
-            s += _form.TableData((_df._physNotProtNames.Distinct().Count() + _df._physProtNames.Distinct().Count()).ToString(), "");
-            s += _form.TableData(_df._physProtNames.Distinct().Count().ToString(), "");
-            s += _form.TableData(_df._physNotProtNames.Distinct().Count().ToString(), "");
+                s += "</tr>";
+                //CDataFormer cd = new(true);
+                s += "<tr>";
+                s += _form.TableData(_df._vmProtectedByPhys.Distinct().Count().ToString(), "");
+                s += _form.TableData((_df._physNotProtNames.Distinct().Count() + _df._physProtNames.Distinct().Count()).ToString(), "");
+                s += _form.TableData(_df._physProtNames.Distinct().Count().ToString(), "");
+                s += _form.TableData(_df._physNotProtNames.Distinct().Count().ToString(), "");
 
-            s += "</tr>";
+                s += "</tr>";
+            }
+            catch(Exception e)
+            {
+                log.Error("Protected Servers Data import failed. ERROR:");
+                log.Error("\t" + e.Message);
+            }
             s += _form.SectionEnd(summary);
             return s;
         }
@@ -348,29 +396,36 @@ namespace VeeamHealthCheck.Html.VBR
            _form.TableHeader(ResourceHandler.ManSrv11, ResourceHandler.ManSrv11TT) +
            "</tr>";
             //CDataFormer cd = new(true);
-            List<string[]> list = _df.ServerXmlFromCsv(scrub);
-
-            foreach (var d in list)
+            try
             {
-                s += "<tr>";
-                if (scrub)
-                    s += _form.TableData(_scrub.ScrubItem(d[0]), "");
-                else
-                    s += _form.TableData(d[0], "");
-                s += _form.TableData(d[1], "");
-                s += _form.TableData(d[2], "");
-                s += _form.TableData(d[3], "");
-                s += _form.TableData(d[4], "");
-                s += _form.TableData(d[5], "");
-                s += _form.TableData(d[6], "");
-                s += _form.TableData(d[7], "");
-                s += _form.TableData(d[8], "");
-                s += _form.TableData(d[9], "");
-                s += _form.TableData(d[10], "");
-                s += _form.TableData(d[11], "");
-                s += "</tr>";
-            }
+                List<string[]> list = _df.ServerXmlFromCsv(scrub);
 
+                foreach (var d in list)
+                {
+                    s += "<tr>";
+                    if (scrub)
+                        s += _form.TableData(_scrub.ScrubItem(d[0]), "");
+                    else
+                        s += _form.TableData(d[0], "");
+                    s += _form.TableData(d[1], "");
+                    s += _form.TableData(d[2], "");
+                    s += _form.TableData(d[3], "");
+                    s += _form.TableData(d[4], "");
+                    s += _form.TableData(d[5], "");
+                    s += _form.TableData(d[6], "");
+                    s += _form.TableData(d[7], "");
+                    s += _form.TableData(d[8], "");
+                    s += _form.TableData(d[9], "");
+                    s += _form.TableData(d[10], "");
+                    s += _form.TableData(d[11], "");
+                    s += "</tr>";
+                }
+            }
+            catch(Exception e)
+            {
+                log.Error("Managed Server Data import failed. ERROR:");
+                log.Error("\t" + e.Message);
+            }
             s += _form.SectionEnd(summary);
             return s;
         }
@@ -383,14 +438,22 @@ namespace VeeamHealthCheck.Html.VBR
                 _form.TableHeader(ResourceHandler.Reg1, ResourceHandler.Reg1TT) +
                 "</tr>";
             //CDataFormer cd = new(true);
-            Dictionary<string, string> list = _df.RegOptions();
-
-            foreach (var d in list)
+            try
             {
-                s += "<tr>";
-                s += _form.TableData(d.Key, "");
-                s += _form.TableData(d.Value.ToString(), "");
-                s += "</tr>";
+                Dictionary<string, string> list = _df.RegOptions();
+
+                foreach (var d in list)
+                {
+                    s += "<tr>";
+                    s += _form.TableData(d.Key, "");
+                    s += _form.TableData(d.Value.ToString(), "");
+                    s += "</tr>";
+                }
+            }
+            catch(Exception e)
+            {
+                log.Error("Registry Data import failed. ERROR:");
+                log.Error("\t" + e.Message);
             }
             s += _form.SectionEnd(summary);
             return s;
@@ -414,30 +477,38 @@ namespace VeeamHealthCheck.Html.VBR
            _form.TableHeader(ResourceHandler.Prx11, ResourceHandler.Prx11TT) +
    "</tr>";
             //CDataFormer cd = new(true);
-            List<string[]> list = _df.ProxyXmlFromCsv(scrub);
-
-            foreach (var d in list)
+            try
             {
-                s += "<tr>";
-                if (scrub)
-                    s += _form.TableData(_scrub.ScrubItem(d[0]), "");
-                else
-                    s += _form.TableData(d[0], "");
-                s += _form.TableData(d[1], "");
-                s += _form.TableData(d[2], "");
-                s += _form.TableData(d[3], "");
-                s += _form.TableData(d[4], "");
-                s += _form.TableData(d[5], "");
-                s += _form.TableData(d[6], "");
-                s += _form.TableData(d[7], "");
-                s += _form.TableData(d[8], "");
-                s += _form.TableData(d[9], "");
-                if (scrub)
-                    s += _form.TableData(_scrub.ScrubItem(d[10]), "");
-                else
-                    s += _form.TableData(d[10], "");
-                s += _form.TableData(d[11], "");
-                s += "</tr>";
+                List<string[]> list = _df.ProxyXmlFromCsv(scrub);
+
+                foreach (var d in list)
+                {
+                    s += "<tr>";
+                    if (scrub)
+                        s += _form.TableData(_scrub.ScrubItem(d[0]), "");
+                    else
+                        s += _form.TableData(d[0], "");
+                    s += _form.TableData(d[1], "");
+                    s += _form.TableData(d[2], "");
+                    s += _form.TableData(d[3], "");
+                    s += _form.TableData(d[4], "");
+                    s += _form.TableData(d[5], "");
+                    s += _form.TableData(d[6], "");
+                    s += _form.TableData(d[7], "");
+                    s += _form.TableData(d[8], "");
+                    s += _form.TableData(d[9], "");
+                    if (scrub)
+                        s += _form.TableData(_scrub.ScrubItem(d[10]), "");
+                    else
+                        s += _form.TableData(d[10], "");
+                    s += _form.TableData(d[11], "");
+                    s += "</tr>";
+                }
+            }
+            catch(Exception e)
+            {
+                log.Error("PROXY Data import failed. ERROR:");
+                log.Error("\t" + e.Message);
             }
             s += _form.SectionEnd(summary);
             return s;
@@ -523,6 +594,9 @@ _form.TableHeader(ResourceHandler.SbrExt13, ResourceHandler.SbrExt13TT) +
 _form.TableHeader(ResourceHandler.SbrExt14, ResourceHandler.SbrExt14TT) +
 _form.TableHeader(ResourceHandler.SbrExt15, ResourceHandler.SbrExt15TT) +
 "</tr>";
+            try
+            {
+
             List<string[]> list = _df.ExtentXmlFromCsv(scrub);
 
             foreach (var d in list)
@@ -560,6 +634,12 @@ _form.TableHeader(ResourceHandler.SbrExt15, ResourceHandler.SbrExt15TT) +
                 //s += _form.TableData(d[16], "");
                 s += "</tr>";
             }
+            }
+            catch(Exception e)
+            {
+                log.Error("Extents Data import failed. ERROR:");
+                log.Error("\t" + e.Message);
+            }
             s += _form.SectionEnd(summary);
             return s;
         }
@@ -586,43 +666,51 @@ _form.TableHeader(ResourceHandler.SbrExt13, ResourceHandler.SbrExt13TT) +
 _form.TableHeader(ResourceHandler.SbrExt14, ResourceHandler.SbrExt14TT) +
 _form.TableHeader(ResourceHandler.SbrExt15, ResourceHandler.SbrExt15TT) +
 "</tr>";
-            List<string[]> list = _df.RepoInfoToXml(scrub);
-
-            foreach (var d in list)
+            try
             {
-                var prov = d[17];
-                int shade = 0;
-                if (prov == "under")
-                    shade = 2;
-                if (prov == "over")
-                    shade = 1;
-                int freeSpaceShade = 0;
-                decimal.TryParse(d[10], out decimal i);
+                List<string[]> list = _df.RepoInfoToXml(scrub);
 
-                int perVmShade = 0;
-                if (d[11] == "False")
-                    perVmShade = 3;
+                foreach (var d in list)
+                {
+                    var prov = d[17];
+                    int shade = 0;
+                    if (prov == "under")
+                        shade = 2;
+                    if (prov == "over")
+                        shade = 1;
+                    int freeSpaceShade = 0;
+                    decimal.TryParse(d[10], out decimal i);
 
-                if (i < 20) { freeSpaceShade = 1; }
-                s += "<tr>";
-                s += _form.TableData(d[0], "");
-                s += _form.TableData(d[2], "");
-                s += _form.TableData(d[1], "", shade);
-                s += _form.TableData(d[3], "");
-                s += _form.TableData(d[4], "");
-                s += _form.TableData(d[5], "");
-                s += _form.TableData(d[6], "");
-                s += _form.TableData(d[7], "");
-                s += _form.TableData(d[8], "");
-                s += _form.TableData(d[9], "");
-                s += _form.TableData(d[10], "", freeSpaceShade);
-                s += _form.TableData(d[11], "", perVmShade);
-                s += _form.TableData(d[12], "");
-                s += _form.TableData(d[13], "");
-                s += _form.TableData(d[14], "");
-                s += _form.TableData(d[15], "");
-                s += _form.TableData(d[16], "");
-                s += "</tr>";
+                    int perVmShade = 0;
+                    if (d[11] == "False")
+                        perVmShade = 3;
+
+                    if (i < 20) { freeSpaceShade = 1; }
+                    s += "<tr>";
+                    s += _form.TableData(d[0], "");
+                    s += _form.TableData(d[2], "");
+                    s += _form.TableData(d[1], "", shade);
+                    s += _form.TableData(d[3], "");
+                    s += _form.TableData(d[4], "");
+                    s += _form.TableData(d[5], "");
+                    s += _form.TableData(d[6], "");
+                    s += _form.TableData(d[7], "");
+                    s += _form.TableData(d[8], "");
+                    s += _form.TableData(d[9], "");
+                    s += _form.TableData(d[10], "", freeSpaceShade);
+                    s += _form.TableData(d[11], "", perVmShade);
+                    s += _form.TableData(d[12], "");
+                    s += _form.TableData(d[13], "");
+                    s += _form.TableData(d[14], "");
+                    s += _form.TableData(d[15], "");
+                    s += _form.TableData(d[16], "");
+                    s += "</tr>";
+                }
+            }
+            catch(Exception e)
+            {
+                log.Error("REPO Data import failed. ERROR:");
+                log.Error("\t" + e.Message);
             }
             s += _form.SectionEnd(summary);
             return s;
@@ -641,21 +729,30 @@ _form.TableHeader(ResourceHandler.SbrExt15, ResourceHandler.SbrExt15TT) +
             s += _form.TableHeader(ResourceHandler.JobCon7, "");
             s += "</tr>";
 
-            var stuff = _df.JobConcurrency(true, VhcGui._reportDays);
-
-            foreach (var stu in stuff)
+            try
             {
-                s += "<tr>";
-                s += _form.TableData(stu.Key.ToString(), "");
 
-                foreach (var st in stu.Value)
+
+                var stuff = _df.JobConcurrency(true, VhcGui._reportDays);
+
+                foreach (var stu in stuff)
                 {
-                    s += _form.TableData(st, "");
+                    s += "<tr>";
+                    s += _form.TableData(stu.Key.ToString(), "");
+
+                    foreach (var st in stu.Value)
+                    {
+                        s += _form.TableData(st, "");
+                    }
+                    s += "</tr>";
                 }
-                s += "</tr>";
+
             }
-
-
+            catch(Exception e)
+            {
+                log.Error("JOB CONCURRENCY Data import failed. ERROR:");
+                log.Error("\t" + e.Message);
+            }
 
             s += _form.SectionEnd(summary);
             return s;
@@ -675,20 +772,27 @@ _form.TableHeader(ResourceHandler.SbrExt15, ResourceHandler.SbrExt15TT) +
             s += _form.TableHeader(ResourceHandler.TaskCon7, "");
             s += "</tr>";
 
-            var stuff = _df.JobConcurrency(false, VhcGui._reportDays);
-
-            foreach (var stu in stuff)
+            try
             {
-                s += "<tr>";
-                s += _form.TableData(stu.Key.ToString(), "");
+                var stuff = _df.JobConcurrency(false, VhcGui._reportDays);
 
-                foreach (var st in stu.Value)
+                foreach (var stu in stuff)
                 {
-                    s += _form.TableData(st, "");
-                }
-                s += "</tr>";
-            }
+                    s += "<tr>";
+                    s += _form.TableData(stu.Key.ToString(), "");
 
+                    foreach (var st in stu.Value)
+                    {
+                        s += _form.TableData(st, "");
+                    }
+                    s += "</tr>";
+                }
+            }
+            catch(Exception e)
+            {
+                log.Error("Task Concurrency Data import failed. ERROR:");
+                log.Error("\t" + e.Message);
+            }
 
 
             s += _form.SectionEnd(summary);
@@ -716,19 +820,25 @@ _form.TableHeader(ResourceHandler.SbrExt15, ResourceHandler.SbrExt15TT) +
             s += _form.TableHeader(ResourceHandler.Jss14, ResourceHandler.Jss14TT);
             s += _form.TableHeader(ResourceHandler.Jss15, ResourceHandler.Jss15TT);
 
-
-            var stuff = _df.ConvertJobSessSummaryToXml(scrub);
-
-            foreach (var stu in stuff)
+            try
             {
-                s += "<tr>";
+                var stuff = _df.ConvertJobSessSummaryToXml(scrub);
 
-                foreach (var st in stu)
+                foreach (var stu in stuff)
                 {
-                    s += _form.TableData(st, "");
+                    s += "<tr>";
+
+                    foreach (var st in stu)
+                    {
+                        s += _form.TableData(st, "");
+                    }
                 }
             }
-
+            catch (Exception e)
+            {
+                log.Error("Job Session Summary Data import failed. ERROR:");
+                log.Error("\t" + e.Message);
+            }
 
             s += _form.SectionEnd(summary);
             return s;
@@ -752,18 +862,26 @@ _form.TableHeader(ResourceHandler.SbrExt15, ResourceHandler.SbrExt15TT) +
             s += _form.TableHeader(ResourceHandler.JobInfo11, ResourceHandler.JobInfo11TT);
             s += _form.TableHeader(ResourceHandler.JobInfo12, ResourceHandler.JobInfo12TT);
             s += _form.TableHeader(ResourceHandler.JobInfo13, ResourceHandler.JobInfo13TT);
-            var stuff = _df.JobInfoToXml(scrub);
 
-            foreach (var stu in stuff)
+            try
             {
-                s += "<tr>";
+                var stuff = _df.JobInfoToXml(scrub);
 
-                foreach (var st in stu)
+                foreach (var stu in stuff)
                 {
-                    s += _form.TableData(st, "");
+                    s += "<tr>";
+
+                    foreach (var st in stu)
+                    {
+                        s += _form.TableData(st, "");
+                    }
                 }
             }
-
+            catch(Exception e)
+            {
+                log.Error("SOBR Data import failed. ERROR:");
+                log.Error("\t" + e.Message);
+            }
 
             s += _form.SectionEnd(summary);
             return s;
