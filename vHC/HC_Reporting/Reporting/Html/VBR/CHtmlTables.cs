@@ -495,7 +495,8 @@ namespace VeeamHealthCheck.Html.VBR
             }
             catch(Exception e)
             {
-                log.Error("SOBR Data import failed.");
+                log.Error("SOBR Data import failed. ERROR:");
+                log.Error("\t" + e.Message);
             }
             s += _form.SectionEnd(summary);
             return s;
