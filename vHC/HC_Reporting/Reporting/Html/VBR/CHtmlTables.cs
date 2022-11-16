@@ -463,6 +463,10 @@ namespace VeeamHealthCheck.Html.VBR
            _form.TableHeader(ResourceHandler.Sbr12, ResourceHandler.Sbr12TT) +
            "</tr>";
             //CDataFormer cd = new(true);
+
+            try
+            {
+
             List<string[]> list = _df.SobrInfoToXml(scrub);
 
             foreach (var d in list)
@@ -487,6 +491,11 @@ namespace VeeamHealthCheck.Html.VBR
                 s += _form.TableData(d[12], "");
                 s += _form.TableData(d[13], "");
                 s += "</tr>";
+            }
+            }
+            catch(Exception e)
+            {
+                log.Error("SOBR Data import failed.");
             }
             s += _form.SectionEnd(summary);
             return s;
