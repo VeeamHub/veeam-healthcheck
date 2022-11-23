@@ -403,9 +403,9 @@ namespace VeeamHealthCheck.Html.VBR
                 foreach (var d in list)
                 {
                     s += "<tr>";
-                    if (scrub)
-                        s += _form.TableData(_scrub.ScrubItem(d[0]), "");
-                    else
+                    //if (scrub)
+                    //    s += _form.TableData(_scrub.ScrubItem(d[0]), "");
+                    //else
                         s += _form.TableData(d[0], "");
                     s += _form.TableData(d[1], "");
                     s += _form.TableData(d[2], "");

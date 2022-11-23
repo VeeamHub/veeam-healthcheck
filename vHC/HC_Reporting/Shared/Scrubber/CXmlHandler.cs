@@ -37,6 +37,8 @@ namespace VeeamHealthCheck.Scrubber
         {
             if (String.IsNullOrEmpty(item))
                 return "";
+            if (item.StartsWith("Item_"))
+                return item;
             //item = RemoveLeadingSlashes(item);
             if (!_matchDictionary.ContainsKey(item))
             {
