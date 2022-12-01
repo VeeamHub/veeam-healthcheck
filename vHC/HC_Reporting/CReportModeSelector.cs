@@ -1,6 +1,7 @@
 ﻿using System.IO;
 using VeeamHealthCheck.Html;
 using VeeamHealthCheck.Reporting.Html.VB365;
+using VeeamHealthCheck.Shared;
 using VeeamHealthCheck.Shared.Logging;
 
 namespace VeeamHealthCheck
@@ -11,7 +12,7 @@ namespace VeeamHealthCheck
         private readonly bool _scrub;
         private readonly bool _openHtml;
         private readonly bool _import;
-        private CLogger _log = VhcGui.log;
+        private CLogger _log = CGlobals.Logger;
         public CReportModeSelector()
         {
         }

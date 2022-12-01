@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using VeeamHealthCheck.Shared;
 
 namespace VeeamHealthCheck
 {
@@ -17,7 +18,7 @@ namespace VeeamHealthCheck
         private static string _vbrDir = "\\VBR";
         public static string _safeSuffix = @"\vHC_Anonymous_Report";
         public static string _unsafeSuffix = @"\vHC_Original_Report";
-        public static string desiredDir { get { return VhcGui._desiredPath; } }
+        public static string desiredDir { get { return CGlobals._desiredPath; } }
         public  string unSafeDir2()
         {
             return unsafeDir;

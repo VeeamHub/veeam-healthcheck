@@ -4,6 +4,7 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using VeeamHealthCheck.Shared;
 
 namespace VeeamHealthCheck.Collection.LogParser
 {
@@ -29,7 +30,7 @@ namespace VeeamHealthCheck.Collection.LogParser
             }
             catch (Exception e)
             {
-                VhcGui.log.Error(e.Message);
+                CGlobals.Logger.Error(e.Message);
             }
         }
 

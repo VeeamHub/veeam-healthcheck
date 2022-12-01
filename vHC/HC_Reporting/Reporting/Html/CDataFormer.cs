@@ -13,6 +13,7 @@ using VeeamHealthCheck.Html;
 using VeeamHealthCheck.RegSettings;
 using VeeamHealthCheck.Reporting.Html.Shared;
 using VeeamHealthCheck.Scrubber;
+using VeeamHealthCheck.Shared;
 using VeeamHealthCheck.Shared.Logging;
 using static VeeamHealthCheck.DB.CModel;
 
@@ -22,7 +23,7 @@ namespace VeeamHealthCheck.Reporting.Html
     class CDataFormer
     {
         private readonly string _testFile = "xml\\vbr.xml";
-        
+
         private readonly string _backupServerId = "6745a759-2205-4cd2-b172-8ec8f7e60ef8";
         private string _backupServerName;
         private bool _isBackupServerProxy;
@@ -30,7 +31,7 @@ namespace VeeamHealthCheck.Reporting.Html
         private bool _isBackupServerWan;
         //private CQueries _cq = new();
         private Dictionary<string, int> _repoJobCount;
-        private CScrubHandler _scrubber = VhcGui._scrubberMain;
+        private CScrubHandler _scrubber = CGlobals.Scrubber;
         private bool _scrub;
         private bool _checkLogs;
         private bool _isImport;
@@ -47,7 +48,7 @@ namespace VeeamHealthCheck.Reporting.Html
         private CDataTypesParser _dTypeParser;
         private List<CServerTypeInfos> _csv;
         private readonly CCsvParser _csvParser = new();
-        private readonly CLogger log = VhcGui.log;
+        private readonly CLogger log = CGlobals.Logger;
         private CHtmlExporter exporter;
         private readonly CXmlFunctions XML = new("vbr");
 
@@ -94,7 +95,7 @@ namespace VeeamHealthCheck.Reporting.Html
                 }
             }
 
-            
+
             foreach (EDbJobType jt2 in Enum.GetValues(typeof(EDbJobType)))
             {
                 if (!pTypes.Contains((int)jt2))
@@ -346,7 +347,7 @@ namespace VeeamHealthCheck.Reporting.Html
             CServerTypeInfos backupServer = _csv.Find(x => (x.Id == _backupServerId));
             CCsvParser config = new();
 
-            
+
 
             // Check for items needing scrubbed
             if (scrub)
@@ -407,35 +408,32 @@ namespace VeeamHealthCheck.Reporting.Html
             string version = "";
             DataTable si = new DataTable();
 
-            if (!VhcGui._import)
+            try
             {
-                try
-                {
-                    CRegReader regReader = new();
-                    regReader.GetDbInfo();
-                    sqlHostName = regReader.Host;
-                }
-                catch (Exception q)
-                {
-                    log.Error(q.Message);
-                }
-                log.Info("entering registry reader..done!");
+                CRegReader regReader = new();
+                regReader.GetDbInfo();
+                sqlHostName = regReader.Host;
+            }
+            catch (Exception q)
+            {
+                log.Error(q.Message);
+            }
+            log.Info("entering registry reader..done!");
 
-                _isSqlLocal = true;
-                try
-                {
-                    log.Info("starting sql queries");
-                    CQueries cq = new();
-                    si = cq.SqlServerInfo;
-                    edition = cq.SqlEdition;
-                    version = cq.SqlVerion;
-                    log.Info("starting sql queries..done!");
-                }
-                catch (Exception e)
-                {
-                    log.Error(e.Message);
+            _isSqlLocal = true;
+            try
+            {
+                log.Info("starting sql queries");
+                CQueries cq = new();
+                si = cq.SqlServerInfo;
+                edition = cq.SqlEdition;
+                version = cq.SqlVerion;
+                log.Info("starting sql queries..done!");
+            }
+            catch (Exception e)
+            {
+                log.Error(e.Message);
 
-                }
             }
 
             if (veeamVersion == "" || sqlHostName == "")
@@ -498,7 +496,7 @@ namespace VeeamHealthCheck.Reporting.Html
                 configBackupTarget = Scrub(configBackupTarget);
             }
             string proxyRole = "";
-            
+
             if (_isBackupServerProxy)
                 proxyRole = "True";
             if (!_isBackupServerProxy)
@@ -524,7 +522,7 @@ namespace VeeamHealthCheck.Reporting.Html
                 new XElement("wanacc", _isBackupServerWan)
                 );
 
-            
+
 
 
             list.Add(backupServer.Name);
@@ -952,8 +950,8 @@ namespace VeeamHealthCheck.Reporting.Html
             //string htmlString = String.Empty;
             //List<CJobSessionInfo> sessionInfo = _dTypeParser.JobSessions;
             // try to trim it up...
-            var targetDate = DateTime.Now.AddDays(- VhcGui._reportDays);
-            List<CJobSessionInfo> trimmedSessionInfo = new(); 
+            var targetDate = DateTime.Now.AddDays(-CGlobals.ReportDays);
+            List<CJobSessionInfo> trimmedSessionInfo = new();
             using (CDataTypesParser dt = new())
             {
                 trimmedSessionInfo = dt.JobSessions.Where(c => c.CreationTime >= targetDate).ToList();
@@ -992,7 +990,7 @@ namespace VeeamHealthCheck.Reporting.Html
                         //int i = mirrorSessions.Count();
                         DateTime now = DateTime.Now;
                         double diff = (now - sess.CreationTime).TotalDays;
-                        if (diff < VhcGui._reportDays)
+                        if (diff < CGlobals.ReportDays)
                         {
                             mirrorJobNamesList.Add(sess.JobName);
                             string nameDate = sess.JobName + sess.CreationTime.ToString();
@@ -1047,7 +1045,7 @@ namespace VeeamHealthCheck.Reporting.Html
                             if (!nameDatesList.Contains(n1))
                             {
                                 nameDatesList.Add(n1);
-                                ctList.Add(ParseConcurrency(epB, VhcGui._reportDays));
+                                ctList.Add(ParseConcurrency(epB, CGlobals.ReportDays));
                             }
                         }
 
@@ -1077,7 +1075,7 @@ namespace VeeamHealthCheck.Reporting.Html
                 {
                     DateTime now = DateTime.Now;
                     double diff = (now - session.CreationTime).TotalDays;
-                    if (diff < VhcGui._reportDays)
+                    if (diff < CGlobals.ReportDays)
                     {
                         ctList.Add(ParseConcurrency(session, days));
 
@@ -1279,7 +1277,7 @@ namespace VeeamHealthCheck.Reporting.Html
         }
         public List<List<string>> ConvertJobSessSummaryToXml(bool scrub)
         {
-            CJobSessSummary jss = new(_testFile, log, scrub,  _scrubber, _dTypeParser);
+            CJobSessSummary jss = new(_testFile, log, scrub, _scrubber, _dTypeParser);
             return jss.JobSessionSummaryToXml(scrub);
 
         }
@@ -1290,7 +1288,7 @@ namespace VeeamHealthCheck.Reporting.Html
 
             List<CJobSessionInfo> csv = new();
 
-            var targetDate = DateTime.Now.AddDays(-VhcGui._reportDays);
+            var targetDate = DateTime.Now.AddDays(-CGlobals.ReportDays);
             //List<CJobSessionInfo> trimmedSessionInfo = new();
             using (CDataTypesParser dt = new())
             {

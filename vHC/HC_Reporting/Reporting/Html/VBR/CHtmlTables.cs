@@ -8,16 +8,17 @@ using VeeamHealthCheck.Reporting.Html;
 using VeeamHealthCheck.Reporting.Html.Shared;
 using VeeamHealthCheck.Reporting.Html.VBR;
 using VeeamHealthCheck.Shared.Logging;
+using VeeamHealthCheck.Shared;
 
 namespace VeeamHealthCheck.Html.VBR
 {
     internal class CHtmlTables
     {
         private CCsvParser _csv = new(CVariables.vb365dir);
-        private readonly CLogger log = VhcGui.log;
+        private readonly CLogger log = CGlobals.Logger;
 
         CDataFormer _df = new(true);
-        Scrubber.CScrubHandler _scrub = VhcGui._scrubberMain;
+        Scrubber.CScrubHandler _scrub = CGlobals.Scrubber;
 
         private CHtmlFormatting _form = new();
         private CVbrSummaries _sum = new();
@@ -717,7 +718,7 @@ _form.TableHeader(ResourceHandler.SbrExt15, ResourceHandler.SbrExt15TT) +
         }
         public string AddJobConTable(bool scrub)
         {
-            string s = _form.SectionStartWithButton("jobcon", ResourceHandler.JobConTitle, ResourceHandler.JobConBtn, VhcGui._reportDays);
+            string s = _form.SectionStartWithButton("jobcon", ResourceHandler.JobConTitle, ResourceHandler.JobConBtn, CGlobals.ReportDays);
             string summary = _sum.JobCon();
             s += _form.TableHeader(ResourceHandler.JobCon0, "");
             s += _form.TableHeader(ResourceHandler.JobCon1, "");
@@ -733,7 +734,7 @@ _form.TableHeader(ResourceHandler.SbrExt15, ResourceHandler.SbrExt15TT) +
             {
 
 
-                var stuff = _df.JobConcurrency(true, VhcGui._reportDays);
+                var stuff = _df.JobConcurrency(true, CGlobals.ReportDays);
 
                 foreach (var stu in stuff)
                 {
@@ -759,7 +760,7 @@ _form.TableHeader(ResourceHandler.SbrExt15, ResourceHandler.SbrExt15TT) +
         }
         public string AddTaskConTable(bool scrub)
         {
-            string s = _form.SectionStartWithButton("taskcon", ResourceHandler.TaskConTitle, ResourceHandler.TaskConBtn, VhcGui._reportDays);
+            string s = _form.SectionStartWithButton("taskcon", ResourceHandler.TaskConTitle, ResourceHandler.TaskConBtn, CGlobals.ReportDays);
             string summary = _sum.TaskCon();
 
             s += _form.TableHeader(ResourceHandler.TaskCon0, "");
@@ -774,7 +775,7 @@ _form.TableHeader(ResourceHandler.SbrExt15, ResourceHandler.SbrExt15TT) +
 
             try
             {
-                var stuff = _df.JobConcurrency(false, VhcGui._reportDays);
+                var stuff = _df.JobConcurrency(false, CGlobals.ReportDays);
 
                 foreach (var stu in stuff)
                 {
@@ -800,7 +801,7 @@ _form.TableHeader(ResourceHandler.SbrExt15, ResourceHandler.SbrExt15TT) +
         }
         public string AddJobSessSummTable(bool scrub)
         {
-            string s = _form.SectionStartWithButton("jobsesssum", ResourceHandler.JssTitle, ResourceHandler.JssBtn, VhcGui._reportDays);
+            string s = _form.SectionStartWithButton("jobsesssum", ResourceHandler.JssTitle, ResourceHandler.JssBtn, CGlobals.ReportDays);
             string summary = _sum.JobSessSummary();
 
             s += _form.TableHeader(ResourceHandler.Jss0, ResourceHandler.Jss0TT);

@@ -4,8 +4,10 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using VeeamHealthCheck.CsvHandlers;
+using VeeamHealthCheck.Reporting.CsvHandlers.VB365;
 using VeeamHealthCheck.Reporting.Html.Shared;
 using VeeamHealthCheck.Resources.Localization.VB365;
+using VeeamHealthCheck.Shared;
 
 namespace VeeamHealthCheck.Reporting.Html.VB365
 {
@@ -14,7 +16,7 @@ namespace VeeamHealthCheck.Reporting.Html.VB365
         private CHtmlFormatting _form = new();
         private CCsvParser _csv = new(CVariables.vb365dir);
         private CM365Summaries _summary = new CM365Summaries();
-        private Scrubber.CScrubHandler _scrubber = VhcGui._scrubberMain;
+        private Scrubber.CScrubHandler _scrubber = CGlobals.Scrubber;
         public CM365Tables()
         {
 
@@ -191,7 +193,7 @@ namespace VeeamHealthCheck.Reporting.Html.VB365
                         }
 
                         string output = g.Value;
-                        if (VhcGui._scrub)
+                        if (CGlobals.Scrub)
                         {
                             proxyname = _scrubber.ScrubItem(proxyname);
                             description = _scrubber.ScrubItem(description);
@@ -346,7 +348,7 @@ namespace VeeamHealthCheck.Reporting.Html.VB365
                     if (g.State.Contains("Out of Sync") || g.State.Contains("Invalid"))
                         stateShade = 1;
 
-                    if (VhcGui._scrub)
+                    if (CGlobals.Scrub)
                     {
                         boundProxy = _scrubber.ScrubItem(g.BoundProxy);
                         name = _scrubber.ScrubItem(g.Name);
@@ -411,7 +413,7 @@ namespace VeeamHealthCheck.Reporting.Html.VB365
                     foreach (var g in gl)
                     {
                         string output = g.Value;
-                        if (VhcGui._scrub)
+                        if (CGlobals.Scrub)
                         {
                             output = _scrubber.ScrubItem(output);
                         }
@@ -519,7 +521,7 @@ namespace VeeamHealthCheck.Reporting.Html.VB365
 
 
 
-                    if (VhcGui._scrub)
+                    if (CGlobals.Scrub)
                     {
                         apiCert = _scrubber.ScrubItem(apiCert);
                         serverCert = _scrubber.ScrubItem(serverCert);
@@ -703,7 +705,7 @@ namespace VeeamHealthCheck.Reporting.Html.VB365
 
 
                         string output = g.Value;
-                        if (VhcGui._scrub)
+                        if (CGlobals.Scrub)
                         {
                             vmName = _scrubber.ScrubItem(vmName);
                         }
@@ -909,7 +911,7 @@ namespace VeeamHealthCheck.Reporting.Html.VB365
                     foreach (var g in gl)
                     {
                         string output = g.Value;
-                        if (VhcGui._scrub)
+                        if (CGlobals.Scrub)
                         {
                             if (counter == 0 || counter == 5)
                                 output = _scrubber.ScrubItem(output);
@@ -970,7 +972,7 @@ namespace VeeamHealthCheck.Reporting.Html.VB365
                     {
                         string output = g.Value;
 
-                        if (counter == 0 && VhcGui._scrub)
+                        if (counter == 0 && CGlobals.Scrub)
                             output = _scrubber.ScrubItem(output);
                         s += _form.TableData(output, "");
                         counter++;
@@ -1022,7 +1024,7 @@ namespace VeeamHealthCheck.Reporting.Html.VB365
                     foreach (var g in gl)
                     {
                         string output = g.Value;
-                        if (VhcGui._scrub)
+                        if (CGlobals.Scrub)
                         {
                             if (counter == 0)
                                 output = _scrubber.ScrubItem(output);
@@ -1119,7 +1121,7 @@ namespace VeeamHealthCheck.Reporting.Html.VB365
                                 break;
                         }
                         string output = g.Value;
-                        if (VhcGui._scrub)
+                        if (CGlobals.Scrub)
                         {
                             name = _scrubber.ScrubItem(name);
                             description = _scrubber.ScrubItem(description);
@@ -1201,7 +1203,7 @@ namespace VeeamHealthCheck.Reporting.Html.VB365
                     foreach (var g in gl)
                     {
                         string output = g.Value;
-                        if (VhcGui._scrub)
+                        if (CGlobals.Scrub)
                         {
                             if (counter == 0 ||
                                 counter == 1 ||
@@ -1253,7 +1255,7 @@ namespace VeeamHealthCheck.Reporting.Html.VB365
                     foreach (var g in gl)
                     {
                         string output = g.Value;
-                        if (VhcGui._scrub)
+                        if (CGlobals.Scrub)
                         {
                             if (counter == 1)
                                 output = _scrubber.ScrubItem(output);
@@ -1457,7 +1459,7 @@ namespace VeeamHealthCheck.Reporting.Html.VB365
 
                         }
                         string output = g.Value;
-                        if (VhcGui._scrub)
+                        if (CGlobals.Scrub)
                         {
                             org = _scrubber.ScrubItem(org);
                             name = _scrubber.ScrubItem(name);

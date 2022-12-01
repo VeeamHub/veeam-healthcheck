@@ -1,20 +1,17 @@
 ﻿// Copyright (c) 2021, Adam Congdon <adam.congdon2@gmail.com>
 // MIT License
-using VeeamHealthCheck.CsvHandlers;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using VeeamHealthCheck.DataTypes;
 using VeeamHealthCheck.CsvHandlers;
+using VeeamHealthCheck.Shared;
 using VeeamHealthCheck.Shared.Logging;
 
 namespace VeeamHealthCheck.DataTypes
 {
     class CDataTypesParser : IDisposable
     {
-        private CLogger log = VhcGui.log;
+        private CLogger log = CGlobals.Logger;
         private CCsvParser _csvParser = new();
 
         private List<CServerTypeInfos> _serverInfo;

@@ -15,6 +15,7 @@ using VeeamHealthCheck;
 using VeeamHealthCheck.CsvHandlers;
 using VeeamHealthCheck.Reporting.CsvHandlers.VB365;
 using VeeamHealthCheck.Shared.Logging;
+using VeeamHealthCheck.Shared;
 
 
 namespace VeeamHealthCheck.CsvHandlers
@@ -22,7 +23,7 @@ namespace VeeamHealthCheck.CsvHandlers
     class CCsvParser
     {
         private readonly CsvConfiguration _csvConfig;
-        private CLogger log = VhcGui.log;
+        private CLogger log = CGlobals.Logger;
 
         //CSV Paths.
         private readonly string _sessionPath = CVariables.vbrDir + @"\VeeamSessionReport.csv";

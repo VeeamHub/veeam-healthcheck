@@ -10,26 +10,25 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Windows;
 using VeeamHealthCheck.Shared.Logging;
+using VeeamHealthCheck.Shared;
 
 namespace VeeamHealthCheck.DB
 {
     class CQueries
     {
-        private CLogger log = VhcGui.log;
+        private CLogger log = CGlobals.Logger;
 
         private DataTable _sqlInfo;
         private string _sqlEdition;
         private string _sqlVersion;
         private DataTable _jobInfo;
         private DataTable _jobTypes;
-        private string _vbrVersion;
         public DataTable SqlServerInfo { get { return _sqlInfo; }  }
         public string SqlEdition { get { return _sqlEdition; } }
         public string SqlVerion { get { return _sqlVersion; } }
         public DataTable JobInfo { get { return _jobInfo; } }
         public DataTable JobTypes { get { return _jobTypes; } }
 
-        public string VbrVersion { get { return _vbrVersion; } }
 
         public CDbWorker dbWorker = new();
         public CQueries()

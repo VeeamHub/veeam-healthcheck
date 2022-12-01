@@ -24,7 +24,7 @@ namespace VeeamHealthCheck.Html
 
         private bool _scrub = false;
 
-        private CLogger log = VhcGui.log;
+        private CLogger log = CGlobals.Logger;
 
         CHtmlFormatting _form = new();
         CHtmlTables _tables = new();
@@ -43,9 +43,11 @@ namespace VeeamHealthCheck.Html
         }
         private void ExportHtml()
         {
-            CHtmlExporter exporter = new("", GetServerName(), "", VhcGui._scrub);
+            CHtmlExporter exporter = new("", GetServerName(), "", CGlobals.Scrub);
             exporter.ExportVbrHtml(_htmldocOriginal, false);
             exporter.ExportVbrHtml(_htmldocScrubbed, true);
+            if (CGlobals.OpenExplorer)
+                exporter.OpenExplorer();
         }
         private string GetServerName()
         {
@@ -117,24 +119,24 @@ namespace VeeamHealthCheck.Html
             _htmldocOriginal += _form.SetHeaderAndLogo(SetLicHolder());
             _htmldocScrubbed += _form.SetHeaderAndLogo(" ");
 
-            _htmldocOriginal += _form.SetBannerAndIntro();
-            _htmldocScrubbed += _form.SetBannerAndIntro();
+            _htmldocOriginal += _form.SetBannerAndIntro(false);
+            _htmldocScrubbed += _form.SetBannerAndIntro(true);
 
             //nav
             SetNavigation();
 
 
             //tables
-            if (EntryPoint._fullReport)
+            if (CGlobals.RunFullReport)
             {
                 _htmldocOriginal += _tables.LicTable(false);
                 _htmldocOriginal += _tables.AddBkpSrvTable(false);
             }
             
-            if(EntryPoint._secReport || EntryPoint._fullReport)
+            if(CGlobals.RunSecReport || CGlobals.RunFullReport)
                 _htmldocOriginal += _tables.AddSecSummaryTable(false);
 
-            if (EntryPoint._fullReport)
+            if (CGlobals.RunFullReport)
             {
                 _htmldocOriginal += _tables.AddSrvSummaryTable(false);
                 _htmldocOriginal += _tables.AddJobSummaryTable(false);
@@ -155,7 +157,7 @@ namespace VeeamHealthCheck.Html
 
 
             // anon report
-            if (EntryPoint._fullReport)
+            if (CGlobals.RunFullReport)
             {
                 _htmldocScrubbed += _tables.LicTable(true);
                 _htmldocScrubbed += _tables.AddBkpSrvTable(true);
@@ -163,10 +165,10 @@ namespace VeeamHealthCheck.Html
             
             
             // anon sec report
-            if (EntryPoint._secReport || EntryPoint._fullReport)
+            if (CGlobals.RunSecReport || CGlobals.RunFullReport)
                 _htmldocScrubbed += _tables.AddSecSummaryTable(true);
 
-            if (EntryPoint._fullReport)
+            if (CGlobals.RunFullReport)
             {
 
 
