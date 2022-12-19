@@ -37,16 +37,13 @@ namespace VeeamHealthCheck
             _log.Info("Starting B&R report generation");
             CHtmlCompiler html = new();
             html.Dispose();
-            //CCsvToXml c = new("vbr", MainWindow._scrub, false, MainWindow._openHtml, true);
         }
         
         private void StartM365Report()
         {
             _log.Info("Starting VB365 Report genration");
-            //CHtmlCompiler compiler = new("vb365");
             CVb365HtmlCompiler compiler = new();
             compiler.Dispose();
-            //compiler.Dispose();
         }
     }
 }

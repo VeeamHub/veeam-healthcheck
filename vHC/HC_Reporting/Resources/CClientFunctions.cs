@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Reflection.Metadata;
 using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading.Tasks;
@@ -13,18 +14,15 @@ using VeeamHealthCheck.Shared;
 
 namespace VeeamHealthCheck.Resources
 {
-    internal class CClientFunctions
+    internal class CClientFunctions : IDisposable
     {
-        [DllImport("user32.dll")]
-        static extern bool ShowWindow(IntPtr hWnd, int nCmdShow);
 
-        const int SW_HIDE = 0;
-        const int SW_SHOW = 5;
+
         public CClientFunctions()
         {
 
         }
-
+        public void Dispose() { }
         public void KbLinkAction(System.Windows.Navigation.RequestNavigateEventArgs args)
         {
             CGlobals.Logger.Info("[GUI]\tOpening KB Link");
@@ -228,13 +226,6 @@ namespace VeeamHealthCheck.Resources
             WriteVhcVersion();
             WriteCliArgs(args);
         }
-        public  void LaunchUi(IntPtr handle, bool hide)
-        {
-            CGlobals.Logger.Info("Executing GUI");
-            if (hide)
-                ShowWindow(handle, SW_HIDE);
-            var app = new System.Windows.Application();
-            app.Run(new VhcGui());
-        }
+
     }
 }
