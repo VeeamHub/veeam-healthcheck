@@ -1,4 +1,45 @@
-﻿1.0.2.675
+﻿1.0.2.866
+- fixed issue where anonymized report contained inconsidtent item replacement
+
+1.0.2.863
+- Updated dependency to resolve vulnerability: Microsoft Security Advisory CVE 2022-41064
+
+1.0.2.862
+- Added Error handling to prevent crashes in the event some CSV files are not generated
+
+1.0.2.859
+- Modified GUI text
+- Modified ReadME
+
+1.0.2.847
+- Security:
+    - Removed deprecated/unused dependencies
+- Updated Hotfix Detector (/Tools/Hotfixdetector.zip)
+
+1.0.2.833
+- Fixed broken Job Wait calculation. This could cause the program to hang or crash
+- Fixed issue where custom path would cause program to hang
+- Added error handling + logging
+
+1.0.2.811
+- Fixed performance issue with data collection
+- Added Hyper-V to protected workloads counter
+
+1.0.2.793
+- Performance tweaks
+- multiple reports of "hangs" should be addressed.
+- Fixed "Waits" columns to populate correctly again.
+
+1.0.2.748
+- CLI enhancement
+- variable date ranges (7/30/90)
+- improved anonymizations
+- various issue/bug fixes
+
+1.0.2.676
+- Fixed minor bug with column alignment
+
+ 1.0.2.675
 - VB365 HealthCheck
 	- Scripts added to create Health Check Report for VB365.
 - Software detection
