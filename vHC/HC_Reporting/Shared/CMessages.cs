@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Security;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -8,6 +9,8 @@ namespace VeeamHealthCheck.Shared
 {
     internal class CMessages
     {
+        private static string ProcEnd = "DONE!";
+
         public static string helpMenu = "\nHELP MENU:\n" +
             "run\tExecutes the program via CLI" +
             "\n" +
@@ -23,5 +26,13 @@ namespace VeeamHealthCheck.Shared
             "4. Run GUI from CLI:\t .\\VeeamHealthCheck.exe gui" +
             "\n";
 
+        public static string PsVbrConfigStart = "[PS] Enter Config Collection Invoker...";
+        public static string PsVbrConfigDone = PsVbrConfigStart + ProcEnd;
+
+        public static string PsVbrConfigStartProc = "[PS][VBR Config] Starting PowerShell Process...";
+        public static string PsVbrConfigStartProcDone = PsVbrConfigStartProc+ ProcEnd;
+
+        public static string PsVbrConfigProcId = "[PS][VBR Config] PowerShell Process started with ID: ";
+        public static string PsVbrConfigProcIdDone = PsVbrConfigProcId+ ProcEnd;
     }
 }

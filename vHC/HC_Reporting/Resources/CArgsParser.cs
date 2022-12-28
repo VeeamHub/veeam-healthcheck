@@ -28,6 +28,7 @@ namespace VeeamHealthCheck.Resources
         }
         public void ParseArgs()
         {
+            CGlobals.RunFullReport = true;
             LogInitialInfo();
 
             if (_args.Length == 0)

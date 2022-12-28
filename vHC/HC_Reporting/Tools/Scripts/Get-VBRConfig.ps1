@@ -31,7 +31,7 @@ enum LogLevel {
   ERROR
   FATAL
 }
-Clear-Host
+#Clear-Host
 
 Write-host("Executing VBR Config Collection...")
 

@@ -11,7 +11,7 @@ namespace VeeamHealthCheck
     public class EntryPoint
     {
         private static CClientFunctions _functions = new();
-
+        [STAThread]
         public static void Main(string[] args)
         {
             CArgsParser ap = new(args);
