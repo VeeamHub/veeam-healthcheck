@@ -393,12 +393,16 @@ namespace VeeamHealthCheck.Reporting.Html
             //}
             foreach (var c in cv)
             {
-                configBackupEnabled = c.Enabled;
+                //configBackupEnabled = c.Enabled;
+                b.ConfigBackupEnabled = CObjectHelpers.ParseBool(c.Enabled);
                 if (c.Enabled != "False")
                 {
-                    configBackupTarget = c.Target;
-                    configBackupEncryption = c.EncryptionOptions;
-                    configBackupLastResult = c.LastResult;
+                    //configBackupTarget = c.Target;
+                    //configBackupEncryption = c.EncryptionOptions;
+                    //configBackupLastResult = c.LastResult;
+                    b.ConfigBackupTarget = c.Target;
+                    b.ConfigBackupEncryption = CObjectHelpers.ParseBool(c.EncryptionOptions);
+                    b.ConfigBackupLastResult = c.LastResult;
                 }
             }
 
@@ -500,10 +504,10 @@ namespace VeeamHealthCheck.Reporting.Html
             }
             string proxyRole = "";
 
-            if (_isBackupServerProxy)
-                proxyRole = "True";
-            if (!_isBackupServerProxy)
-                proxyRole = "False";
+            //if (_isBackupServerProxy)
+            //    proxyRole = "True";
+            //if (!_isBackupServerProxy)
+            //    proxyRole = "False";
 
 
 
@@ -519,17 +523,17 @@ namespace VeeamHealthCheck.Reporting.Html
             catch (NullReferenceException e)
             { log.Error("[VBR Config] failed to add backup server RAM:\n\t" + e.Message); }
 
-            b.ConfigBackupEnabled = CObjectHelpers.ParseBool(configBackupEnabled);
-            b.ConfigBackupLastResult = configBackupLastResult;
-            b.ConfigBackupEncryption = CObjectHelpers.ParseBool(configBackupEncryption);
-            b.ConfigBackupTarget = configBackupTarget;
+            //b.ConfigBackupEnabled = CObjectHelpers.ParseBool(configBackupEnabled);
+            //b.ConfigBackupLastResult = configBackupLastResult;
+            //b.ConfigBackupEncryption = CObjectHelpers.ParseBool(configBackupEncryption);
+            //b.ConfigBackupTarget = configBackupTarget;
             b.IsLocal = _isSqlLocal;
             b.DbHostName = sqlHostName;
             b.DbVersion = version;
             b.Edition = edition;
             b.DbCores = CObjectHelpers.ParseInt(sqlCpu);
             b.DbRAM = CObjectHelpers.ParseInt(sqlRam);
-            b.HasProxyRole = CObjectHelpers.ParseBool(proxyRole);
+            b.HasProxyRole = _isBackupServerProxy;
             b.HasRepoRole = _isBackupServerRepo;
             b.HasWanAccRole = _isBackupServerWan;
 

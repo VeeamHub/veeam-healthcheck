@@ -223,27 +223,6 @@ namespace VeeamHealthCheck.Html
         }
 
 
-        /*
- Server Summary
-Job summary
-missing jobs types
-protected workloads
-managed server info
-regkeys
-Proxy info
-SOBR 
-Extents
-Repos
-Job con
-Task COn
-Job Session Sum
-Job Info
- */
-
-        private string BackToTop()
-        {
-            return String.Format("<a href=\"#top\">Back To Top</a>");
-        }
 
         #endregion
 
