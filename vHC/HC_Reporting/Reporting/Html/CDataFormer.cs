@@ -12,8 +12,10 @@ using VeeamHealthCheck.DB;
 using VeeamHealthCheck.Html;
 using VeeamHealthCheck.RegSettings;
 using VeeamHealthCheck.Reporting.Html.Shared;
+using VeeamHealthCheck.Reporting.TableDatas;
 using VeeamHealthCheck.Scrubber;
 using VeeamHealthCheck.Shared;
+using VeeamHealthCheck.Shared.Common;
 using VeeamHealthCheck.Shared.Logging;
 using static VeeamHealthCheck.DB.CModel;
 
@@ -368,11 +370,12 @@ namespace VeeamHealthCheck.Reporting.Html
 
             log.Info("xml template..done!");
         }
-        public List<string> BackupServerInfoToXml(bool scrub)
+        public BackupServer BackupServerInfoToXml(bool scrub)
         {
 
             log.Info("converting backup server info to xml");
             List<string> list = new List<string>();
+            BackupServer b = new();
 
             CheckServerRoles(_backupServerId);
 
@@ -502,53 +505,45 @@ namespace VeeamHealthCheck.Reporting.Html
             if (!_isBackupServerProxy)
                 proxyRole = "False";
 
-            var xml = new XElement("serverInfo",
-                new XElement("name", backupServer.Name),
-                new XElement("cores", backupServer.Cores),
-                new XElement("ram", backupServer.Ram),
-                new XElement("configBackupEnabled", configBackupEnabled),
-                new XElement("configBackupLastResult", configBackupLastResult),
-                new XElement("configBackupEncryption", configBackupEncryption),
-                new XElement("configBackupTarget", configBackupTarget),
-                new XElement("localSql", _isSqlLocal),
-                new XElement("sqlname", sqlHostName),
-                new XElement("sqlversion", version),
-                new XElement("sqledition", edition),
-                new XElement("sqlcpu", sqlCpu),
-                new XElement("sqlram", sqlRam),
-                new XElement("proxyrole", proxyRole),
-                new XElement("repo", _isBackupServerRepo),
-                new XElement("veeamVersion", veeamVersion),
-                new XElement("wanacc", _isBackupServerWan)
-                );
 
 
+            try { b.Name = backupServer.Name; }
+            catch (NullReferenceException e)
+            { log.Error("[VBR Config] failed to add backup server Name:\n\t" + e.Message); }
 
+            b.Version = veeamVersion;
+            try { b.Cores = backupServer.Cores; }
+            catch (NullReferenceException e)
+            { log.Error("[VBR Config] failed to add backup server cores:\n\t" + e.Message); }
+            try { b.RAM = backupServer.Ram; }
+            catch (NullReferenceException e)
+            { log.Error("[VBR Config] failed to add backup server RAM:\n\t" + e.Message); }
 
-            list.Add(backupServer.Name);
-            list.Add(veeamVersion);
-            list.Add(backupServer.Cores.ToString());
-            list.Add(backupServer.Ram.ToString());
-            list.Add(configBackupEnabled);
-            list.Add(configBackupLastResult);
-            list.Add(configBackupEncryption);
-            list.Add(configBackupTarget);
-            list.Add(_isSqlLocal.ToString());
-            list.Add(sqlHostName);
-            list.Add(version);
-            list.Add(edition);
-            list.Add(sqlCpu);
-            list.Add(sqlRam);
-            list.Add(proxyRole);
-            list.Add(_isBackupServerRepo.ToString());
-            list.Add(_isBackupServerWan.ToString());
+            b.ConfigBackupEnabled = CObjectHelpers.ParseBool(configBackupEnabled);
+            b.ConfigBackupLastResult = configBackupLastResult;
+            b.ConfigBackupEncryption = CObjectHelpers.ParseBool(configBackupEncryption);
+            b.ConfigBackupTarget = configBackupTarget;
+            b.IsLocal = _isSqlLocal;
+            b.DbHostName = sqlHostName;
+            b.DbVersion = version;
+            b.Edition = edition;
+            b.DbCores = CObjectHelpers.ParseInt(sqlCpu);
+            b.DbRAM = CObjectHelpers.ParseInt(sqlRam);
+            b.HasProxyRole = CObjectHelpers.ParseBool(proxyRole);
+            b.HasRepoRole = _isBackupServerRepo;
+            b.HasWanAccRole = _isBackupServerWan;
 
 
 
 
 
             log.Info("converting backup server info to xml..done!");
-            return list;
+            return b;
+        }
+        private string ParseString(string input)
+        {
+            if (String.IsNullOrEmpty(input)) return "";
+            else return input;
         }
         public List<string[]> SobrInfoToXml(bool scrub)
         {

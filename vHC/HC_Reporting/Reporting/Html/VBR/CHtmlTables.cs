@@ -9,6 +9,7 @@ using VeeamHealthCheck.Reporting.Html.Shared;
 using VeeamHealthCheck.Reporting.Html.VBR;
 using VeeamHealthCheck.Shared.Logging;
 using VeeamHealthCheck.Shared;
+using VeeamHealthCheck.Reporting.TableDatas;
 
 namespace VeeamHealthCheck.Html.VBR
 {
@@ -116,7 +117,10 @@ namespace VeeamHealthCheck.Html.VBR
         {
             string s = _form.SectionStart("vbrserver", ResourceHandler.BkpSrvTblHead);
             string summary = _sum.SetVbrSummary();
+            CDataFormer cd = new(true);
+            BackupServer b = cd.BackupServerInfoToXml(scrub);
 
+            // Backup Server table
             s += _form.TableHeader(ResourceHandler.BkpSrvTblName, ResourceHandler.BstNameTT);
             s += _form.TableHeader(ResourceHandler.BkpSrvTblVersion, ResourceHandler.BstVerTT);
             s += _form.TableHeader(ResourceHandler.BkpSrvTblCore, ResourceHandler.BstCpuTT);
@@ -125,6 +129,19 @@ namespace VeeamHealthCheck.Html.VBR
             s += _form.TableHeader(ResourceHandler.BkpSrvTblCfgLastRes, ResourceHandler.BstCfgLastResTT);
             s += _form.TableHeader(ResourceHandler.BkpSrvTblCfgEncrypt, ResourceHandler.BstCfgEncTT);
             s += _form.TableHeader(ResourceHandler.BkpSrvTblTarget, ResourceHandler.BstCfgTarTT);
+            s += "</tr><<tr>";
+            s += _form.TableData(b.Name, "Hostname of the VBR Server");
+            s += _form.TableData(b.Version, "VBR Version of the current install");
+            s += _form.TableData(b.Cores.ToString(), "");
+            s += _form.TableData(b.RAM.ToString(), "");
+            s += _form.TableData(b.ConfigBackupEnabled.ToString(), "");
+            s += _form.TableData(b.ConfigBackupLastResult, "");
+            s += _form.TableData(b.ConfigBackupEncryption.ToString(), "");
+            s += _form.TableData(b.ConfigBackupTarget, "");
+            s += "</table><table border=\"1\">";
+
+            // config DB Table
+            s += _form.TableHeader("DataBase Type", "MS SQL or PostgreSQL");
             s += _form.TableHeader(ResourceHandler.BkpSrvTblSqlLocal, ResourceHandler.BstSqlLocTT);
             s += _form.TableHeader(ResourceHandler.BkpSrvTblSqlName, ResourceHandler.BstSqlNameTT);
             s += _form.TableHeader(ResourceHandler.BkpSrvTblSqlVersion, ResourceHandler.BstSqlVerTT);
@@ -140,20 +157,18 @@ namespace VeeamHealthCheck.Html.VBR
             {
 
 
-                List<string> list = _df.BackupServerInfoToXml(scrub);
                 s += "<tr>";
 
-                for (int i = 0; i < list.Count(); i++)
-                {
-
-                    //if(MainWindow._scrub && i == 0 || i == 7 || i == 9)
-                    //{
-                    //    s += _form.TableData(_scrub.ScrubItem(list[i]), "");
-                    //}
-                    //else
-                    s += _form.TableData(list[i], "");
-
-                }
+                s += _form.TableData(b.DbType, "");
+                s += _form.TableData(b.IsLocal.ToString(), "");
+                s += _form.TableData(b.DbHostName, "");
+                s += _form.TableData(b.DbVersion, "");
+                s += _form.TableData(b.Edition, "");
+                s += _form.TableData(b.DbCores.ToString(), "CPU Cores detected on SQL. 0 indicates SQL is local to VBR or there was an error in collection.");
+                s += _form.TableData(b.DbRAM.ToString(), "RAM detected on SQL. 0 indicates SQL is local to VBR or there was an error in collection.");
+                s += _form.TableData(b.HasProxyRole.ToString(), "");
+                s += _form.TableData(b.HasRepoRole.ToString(), "");
+                s += _form.TableData(b.HasWanAccRole.ToString(), "");
                 s += _form.SectionEnd(summary);
                 return s;
             }

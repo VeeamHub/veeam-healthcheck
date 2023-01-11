@@ -1,0 +1,35 @@
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+
+namespace VeeamHealthCheck.Reporting.TableDatas
+{
+    class BackupServer
+    {
+        public string Name { get; set; }
+        public string Version { get; set; }
+        public int Cores { get; set; }
+        public int RAM { get; set; }
+        public bool ConfigBackupEnabled { get; set; }
+        public string ConfigBackupLastResult { get; set; }
+        public bool ConfigBackupEncryption { get; set; }
+        public string ConfigBackupTarget { get; set; }
+        public bool HasProxyRole { get; set; }
+        public bool HasRepoRole { get; set; }
+        public bool HasWanAccRole { get; set; }
+
+
+        // Config DB Info
+        public string DbType { get; set; }
+        public string DbHostName { get; set; }
+        public string DbVersion { get; set; }
+        public string Edition { get; set; }
+        public int DbCores { get; set; }
+        public int DbRAM { get; set; }
+        public bool IsLocal { get; set; }
+
+    }
+
+}

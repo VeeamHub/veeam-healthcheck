@@ -559,7 +559,7 @@ namespace VeeamHealthCheck.DataTypes
         {
             log.Info("parsing server csv data");
 
-            var records = _csvParser.ServerCsvParser();
+            var records = _csvParser.ServerCsvParser().ToList();
             List<CServerTypeInfos> l = new();
             foreach (CServerCsvInfos s in records)
             {
