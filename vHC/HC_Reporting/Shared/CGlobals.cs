@@ -14,6 +14,8 @@ namespace VeeamHealthCheck.Shared
         public static CLogger _mainlog = new("HealthCheck");
         private static bool _scrub;
         private static CScrubHandler _scrubberMain = new();
+        public static  readonly string _backupServerId = "6745a759-2205-4cd2-b172-8ec8f7e60ef8";
+
 
         // GUI & CLI Options:
         private static int _reportDays;

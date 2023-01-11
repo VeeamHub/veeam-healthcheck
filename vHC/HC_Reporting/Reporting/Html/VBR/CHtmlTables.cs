@@ -130,8 +130,8 @@ namespace VeeamHealthCheck.Html.VBR
             s += _form.TableHeader(ResourceHandler.BkpSrvTblCfgEncrypt, ResourceHandler.BstCfgEncTT);
             s += _form.TableHeader(ResourceHandler.BkpSrvTblTarget, ResourceHandler.BstCfgTarTT);
             s += "</tr><<tr>";
-            s += _form.TableData(b.Name, "Hostname of the VBR Server");
-            s += _form.TableData(b.Version, "VBR Version of the current install");
+            s += _form.TableData(b.Name, "");
+            s += _form.TableData(b.Version, "");
             s += _form.TableData(b.Cores.ToString(), "");
             s += _form.TableData(b.RAM.ToString(), "");
             s += _form.TableData(b.ConfigBackupEnabled.ToString(), "");
@@ -139,7 +139,7 @@ namespace VeeamHealthCheck.Html.VBR
             s += _form.TableData(b.ConfigBackupEncryption.ToString(), "");
             s += _form.TableData(b.ConfigBackupTarget, "");
             s += "</table><table border=\"1\">";
-
+            s += _form.LineBreak();
             // config DB Table
             s += _form.TableHeader("DataBase Type", "MS SQL or PostgreSQL");
             s += _form.TableHeader(ResourceHandler.BkpSrvTblSqlLocal, ResourceHandler.BstSqlLocTT);

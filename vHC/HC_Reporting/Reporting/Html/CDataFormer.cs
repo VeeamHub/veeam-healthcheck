@@ -26,7 +26,6 @@ namespace VeeamHealthCheck.Reporting.Html
     {
         private readonly string _testFile = "xml\\vbr.xml";
 
-        private readonly string _backupServerId = "6745a759-2205-4cd2-b172-8ec8f7e60ef8";
         private string _backupServerName;
         private bool _isBackupServerProxy;
         private bool _isBackupServerRepo;
@@ -346,7 +345,7 @@ namespace VeeamHealthCheck.Reporting.Html
 
 
             // gather data needed for input
-            CServerTypeInfos backupServer = _csv.Find(x => (x.Id == _backupServerId));
+            //CServerTypeInfos backupServer = _csv.Find(x => (x.Id == _backupServerId));
             CCsvParser config = new();
 
 
@@ -375,169 +374,16 @@ namespace VeeamHealthCheck.Reporting.Html
 
             log.Info("converting backup server info to xml");
             List<string> list = new List<string>();
-            BackupServer b = new();
+            CBackupServerTableHelper bt = new(scrub);
+            BackupServer b = bt.SetBackupServerData();
 
-            CheckServerRoles(_backupServerId);
+            
+            
+            CheckServerRoles(CGlobals._backupServerId);
 
-            CServerTypeInfos backupServer = _csv.Find(x => (x.Id == _backupServerId));
-            CCsvParser config = new();
-            var cv = config.ConfigBackupCsvParser();
-            string configBackupEnabled = "";
-            string configBackupTarget = "";
-            string configBackupEncryption = "";
-            string configBackupLastResult = "";
-
-            //if(cv.Count() == 0)
-            //{
-            //    configBackupEnabled = "False";
-            //}
-            foreach (var c in cv)
-            {
-                //configBackupEnabled = c.Enabled;
-                b.ConfigBackupEnabled = CObjectHelpers.ParseBool(c.Enabled);
-                if (c.Enabled != "False")
-                {
-                    //configBackupTarget = c.Target;
-                    //configBackupEncryption = c.EncryptionOptions;
-                    //configBackupLastResult = c.LastResult;
-                    b.ConfigBackupTarget = c.Target;
-                    b.ConfigBackupEncryption = CObjectHelpers.ParseBool(c.EncryptionOptions);
-                    b.ConfigBackupLastResult = c.LastResult;
-                }
-            }
-
-            log.Info("entering registry reader");
-            string sqlHostName = "";
-            string veeamVersion = "";
-            string sqlCpu = "";
-            string sqlRam = "";
-            string edition = "";
-            string version = "";
-            DataTable si = new DataTable();
-
-            try
-            {
-                CRegReader regReader = new();
-                regReader.GetDbInfo();
-                sqlHostName = regReader.Host;
-            }
-            catch (Exception q)
-            {
-                log.Error(q.Message);
-            }
-            log.Info("entering registry reader..done!");
-
-            _isSqlLocal = true;
-            try
-            {
-                log.Info("starting sql queries");
-                CQueries cq = new();
-                si = cq.SqlServerInfo;
-                edition = cq.SqlEdition;
-                version = cq.SqlVerion;
-                log.Info("starting sql queries..done!");
-            }
-            catch (Exception e)
-            {
-                log.Error(e.Message);
-
-            }
-
-            if (veeamVersion == "" || sqlHostName == "")
-            {
-                try
-                {
-                    CCsvParser cp = new();
-                    var records = cp.BnrCsvParser();
-                    foreach (var r in records)
-                    {
-                        veeamVersion = r.Version;
-                        sqlHostName = r.SqlServer;
-                        if (scrub)
-                            sqlHostName = Scrub(sqlHostName);
-                    }
-                }
-                catch (Exception f)
-                {
-                    log.Error(f.Message);
-                }
-            }
-            try
-            {
-                _backupServerName = backupServer.Name;
-                if (!backupServer.Name.Contains(sqlHostName, StringComparison.OrdinalIgnoreCase)
-                    && sqlHostName != "localhost" && sqlHostName != "LOCALHOST")
-                {
-                    _isSqlLocal = false;
-                    foreach (DataRow row in si.Rows)
-                    {
-                        string cpu = row["cpu_count"].ToString();
-                        string hyperthread = row["hyperthread_ratio"].ToString();
-                        string memory = row["physical_memory_kb"].ToString();
-                        int.TryParse(cpu, out int c);
-                        int.TryParse(hyperthread, out int h);
-                        int.TryParse(memory, out int mem);
-
-                        sqlCpu = cpu;//(c * h).ToString();
-                        sqlRam = ((mem / 1024 / 1024) + 1).ToString();
-
-                    }
-                    //if (scrub)
-                    //    sqlHostName = Scrub(sqlHostName);
-                }
-                else if (backupServer.Name == sqlHostName)
-                    sqlHostName = "";
-                _cores = backupServer.Cores;
-                _ram = backupServer.Ram;
-            }
-            catch (Exception g)
-            {
-                log.Error("Error processing SQL resource data");
-                log.Error("\t" + g.Message);
-            }
-
-
-            if (scrub)
-            {
-                backupServer.Name = Scrub(backupServer.Name);
-                configBackupTarget = Scrub(configBackupTarget);
-            }
-            string proxyRole = "";
-
-            //if (_isBackupServerProxy)
-            //    proxyRole = "True";
-            //if (!_isBackupServerProxy)
-            //    proxyRole = "False";
-
-
-
-            try { b.Name = backupServer.Name; }
-            catch (NullReferenceException e)
-            { log.Error("[VBR Config] failed to add backup server Name:\n\t" + e.Message); }
-
-            b.Version = veeamVersion;
-            try { b.Cores = backupServer.Cores; }
-            catch (NullReferenceException e)
-            { log.Error("[VBR Config] failed to add backup server cores:\n\t" + e.Message); }
-            try { b.RAM = backupServer.Ram; }
-            catch (NullReferenceException e)
-            { log.Error("[VBR Config] failed to add backup server RAM:\n\t" + e.Message); }
-
-            //b.ConfigBackupEnabled = CObjectHelpers.ParseBool(configBackupEnabled);
-            //b.ConfigBackupLastResult = configBackupLastResult;
-            //b.ConfigBackupEncryption = CObjectHelpers.ParseBool(configBackupEncryption);
-            //b.ConfigBackupTarget = configBackupTarget;
-            b.IsLocal = _isSqlLocal;
-            b.DbHostName = sqlHostName;
-            b.DbVersion = version;
-            b.Edition = edition;
-            b.DbCores = CObjectHelpers.ParseInt(sqlCpu);
-            b.DbRAM = CObjectHelpers.ParseInt(sqlRam);
             b.HasProxyRole = _isBackupServerProxy;
             b.HasRepoRole = _isBackupServerRepo;
             b.HasWanAccRole = _isBackupServerWan;
-
-
 
 
 

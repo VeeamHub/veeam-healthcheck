@@ -16,9 +16,12 @@ namespace VeeamHealthCheck.Reporting.TableDatas
         public string ConfigBackupLastResult { get; set; }
         public bool ConfigBackupEncryption { get; set; }
         public string ConfigBackupTarget { get; set; }
+        public int ConfigBackupRetentionPoints { get; set; }
         public bool HasProxyRole { get; set; }
         public bool HasRepoRole { get; set; }
         public bool HasWanAccRole { get; set; }
+        public bool HasFixes { get; set; }
+        public string FixIds { get; set; }
 
 
         // Config DB Info
