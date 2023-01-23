@@ -529,6 +529,60 @@ namespace VeeamHealthCheck.Html.VBR
             s += _form.SectionEnd(summary);
             return s;
         }
+        public string AddMultiRoleTable(bool scrub)
+        {
+            string s = _form.SectionStartWithButton("proxies", ResourceHandler.PrxTitle, ResourceHandler.PrxBtn);
+            string summary = _sum.Proxies();
+            s += "<tr>" +
+           _form.TableHeader(ResourceHandler.Prx0, ResourceHandler.Prx0TT) +
+           _form.TableHeader(ResourceHandler.Prx1, ResourceHandler.Prx1TT) +
+           _form.TableHeader(ResourceHandler.Prx2, ResourceHandler.Prx2TT) +
+           _form.TableHeader(ResourceHandler.Prx3, ResourceHandler.Prx3TT) +
+           _form.TableHeader(ResourceHandler.Prx4, ResourceHandler.Prx4TT) +
+           _form.TableHeader(ResourceHandler.Prx5, ResourceHandler.Prx5TT) +
+           _form.TableHeader(ResourceHandler.Prx6, ResourceHandler.Prx6TT) +
+           _form.TableHeader(ResourceHandler.Prx7, ResourceHandler.Prx7TT) +
+           _form.TableHeader(ResourceHandler.Prx8, ResourceHandler.Prx8TT) +
+           _form.TableHeader(ResourceHandler.Prx9, ResourceHandler.Prx9TT) +
+           _form.TableHeader(ResourceHandler.Prx10, ResourceHandler.Prx10TT) +
+           _form.TableHeader(ResourceHandler.Prx11, ResourceHandler.Prx11TT) +
+   "</tr>";
+            try
+            {
+                List<string[]> list = _df.ProxyXmlFromCsv(scrub);
+
+                foreach (var d in list)
+                {
+                    s += "<tr>";
+                    if (scrub)
+                        s += _form.TableData(_scrub.ScrubItem(d[0]), "");
+                    else
+                        s += _form.TableData(d[0], "");
+                    s += _form.TableData(d[1], "");
+                    s += _form.TableData(d[2], "");
+                    s += _form.TableData(d[3], "");
+                    s += _form.TableData(d[4], "");
+                    s += _form.TableData(d[5], "");
+                    s += _form.TableData(d[6], "");
+                    s += _form.TableData(d[7], "");
+                    s += _form.TableData(d[8], "");
+                    s += _form.TableData(d[9], "");
+                    if (scrub)
+                        s += _form.TableData(_scrub.ScrubItem(d[10]), "");
+                    else
+                        s += _form.TableData(d[10], "");
+                    s += _form.TableData(d[11], "");
+                    s += "</tr>";
+                }
+            }
+            catch (Exception e)
+            {
+                log.Error("PROXY Data import failed. ERROR:");
+                log.Error("\t" + e.Message);
+            }
+            s += _form.SectionEnd(summary);
+            return s;
+        }
         public string AddSobrTable(bool scrub)
         {
             string s = _form.SectionStartWithButton("sobr", ResourceHandler.SbrTitle, ResourceHandler.SbrBtn);

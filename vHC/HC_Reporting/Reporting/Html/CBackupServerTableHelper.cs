@@ -39,8 +39,8 @@ namespace VeeamHealthCheck.Reporting.Html
         private void SetElements()
         {
             SetConfigBackupSettings();
-            SetDbHostNameOption2();
             TrySetSqlInfo();
+            SetDbHostNameOption2();
         }
         private void ScrubElements()
         {
