@@ -548,6 +548,23 @@ function Import-PermissionsFromLogs {
     }
 }
 
+function CheckVersion([string]$major,[string]$minor="",[switch]$UseInternalVersion) {
+    
+    if ($UseInternalVersion) {
+        $version = $VBOEnvironment.VMCLog.ProductDetails.Version    
+    } else {
+        $version = (Get-VBOVersion).ProductVersion
+    }
+    
+    if ($major.Contains(".")) {
+        $regExString = "^$($major.Replace(".","\."))"
+    } else {
+        $regExString = "^$major\.$minor"
+    }
+
+    return $version -match $regExString
+}
+
 # Collect one large object w/ all stats
 function Get-VBOEnvironment {
     [CmdletBinding()]
@@ -628,7 +645,13 @@ function Get-VBOEnvironment {
         Write-ResourceUsageToLog -Message "Jobs collected"
 
         Write-Progress @progressSplat -PercentComplete ($progress++) -Status "Collecting entity details..."
-        $e.VBOEntityData = $e.VBORepository | Where-Object {!($_.IsOutOfOrder -and $null -ne $_.ObjectStorageRepository)} | Get-VBOEntityData -Type User -WarningAction SilentlyContinue | Select-Object *,@{n="Repository";e={@{Id=$repo.Id;Name=$repo.Name}}},@{n="Proxy";e={$proxy=($e.VBOProxy | Where-Object { $_.id -eq $repo.ProxyId}); @{Id=$proxy.Id;Name=$proxy.Hostname}}} #slow/long-running. Exclude for IsOutOfOrder object repos added Jun 15
+        foreach ($repo in ($e.VBORepository | Where-Object {!($_.IsOutOfOrder -and $null -ne $_.ObjectStorageRepository)})) {
+            if (CheckVersion 7.) {
+                $e.VBOEntityData = $repo | Get-VBOEntityData -Type User -WarningAction SilentlyContinue | Select-Object *,@{n="Repository";e={@{Id=$repo.Id;Name=$repo.Name}}},@{n="Proxy";e={$proxy=$repo.Proxy; @{Id=$proxy.Id;Name=$proxy.Hostname}}} #Fixed 1/13/2023
+            } else {
+                $e.VBOEntityData = $repo | Get-VBOEntityData -Type User -WarningAction SilentlyContinue | Select-Object *,@{n="Repository";e={@{Id=$repo.Id;Name=$repo.Name}}},@{n="Proxy";e={$proxy=($e.VBOProxy | Where-Object { $_.id -eq $repo.ProxyId}); @{Id=$proxy.Id;Name=$proxy.Hostname}}} #Fixed 1/13/2023
+            }
+        }
         # Build an index (hashtable keyed to email) so that the search in the next function is orders of magnitude faster.
         $e.EntitiesIndex = @{}
         foreach ($org in $e.VBOOrganization) { $e.EntitiesIndex[$org.Name] = @{}}
@@ -954,6 +977,7 @@ function Append-VB365ProductVersion {
         )
     begin { 
         $ProductVersions = @{
+            "12.0.0"=" (v7)"
             "11.2.0"=" (v6a)"
             "11.1.0"=" (v6)"
             "10.0.5"=" (v5d)"
@@ -1145,7 +1169,13 @@ $map.Proxies = $Global:VBOEnvironment.VBOProxy | mde @(
     'Outdated?=>IsOutdated'
     'Internet Proxy=>InternetProxy.UseInternetProxy'
     #replaced Aug 11/22 with below, more efficient & accurate # 'Objects Managed_Old=>(($Global:VBOEnvironment.VBOJobSession | ? { $_.JobId -in ($Global:VBOEnvironment.VBOJob | ? { $.Id -eq $_.Repository.ProxyId }).Id} | group JobId | % { $_.Group | Measure-Object -Property Progress -Average} ).Average | measure-object -Sum ).Sum.ToString("0")'
-    'Objects Managed=>(($Global:VBOEnvironment.VBOJob | ? { $.Id -eq $_.Repository.ProxyId }).Id.Guid | % {$Global:VBOEnvironment.JobSessionIndex[$_].LatestComplete.Progress} | Measure-Object -Sum).Sum'
+    $(
+        if (CheckVersion 7.) {
+            'Objects Managed=>(($Global:VBOEnvironment.VBOJob | ? { $.Id -eq $_.Repository.Proxy }).Id.Guid | % {$Global:VBOEnvironment.JobSessionIndex[$_].LatestComplete.Progress} | Measure-Object -Sum).Sum'
+        } else {
+            'Objects Managed=>(($Global:VBOEnvironment.VBOJob | ? { $.Id -eq $_.Repository.ProxyId }).Id.Guid | % {$Global:VBOEnvironment.JobSessionIndex[$_].LatestComplete.Progress} | Measure-Object -Sum).Sum'
+        }
+    )
     'OS Version=>($Global:VBOEnvironment.VMCLog.ProxyDetails | ? { $.Id -eq $_.ProxyID }).OSVersion'
     'RAM=>(($Global:VBOEnvironment.VMCLog.ProxyDetails | ? { $.Id -eq $_.ProxyID }).RAMTotalSize/1GB).ToString("###0 GB")'
     'CPUs=>($Global:VBOEnvironment.VMCLog.ProxyDetails | ? { $.Id -eq $_.ProxyID }).CPUCount'
@@ -1156,7 +1186,13 @@ Write-ElapsedAndMemUsage -Message "Mapped Proxies" -LogLevel PROFILE
 Write-LogFile -Message "Mapping Repositories..." -LogLevel DEBUG
 Write-Progress @progressSplat -PercentComplete ($progress++) -Status "Repositories...";
 $map.LocalRepositories = $Global:VBOEnvironment.VBORepository | mde @(
-    'Bound Proxy=>($Global:VBOEnvironment.VBOProxy | ? { $_.id -eq $.ProxyId }).Hostname'
+    $(
+        if (CheckVersion 7.) {
+            'Bound Proxy=>$.Proxy.Hostname'
+        } else {
+            'Bound Proxy=>($Global:VBOEnvironment.VBOProxy | ? { $_.id -eq $.ProxyId }).Hostname'
+        }
+    )
     'Name'
     'Description'
     'Type=>if($.IsLongTerm) {"Archive"} else {"Primary"}'
@@ -1262,7 +1298,13 @@ $map.Jobs = @($Global:VBOEnvironment.VBOJob) + @($Global:VBOEnvironment.VBOCopyJ
     #replaced aug 11/22 with above # <#Fixed jul 21#>'Selected Objects=>$objectCountStr = ($Global:VBOEnvironment.VBOJobSession | Where-Object { $_.JobId -eq $.Id } | Sort-Object CreationTime -Descending | Select-Object -First 1); [Regex]::Match($objectCountStr.Log.Title,"(?<=Found )(\d+)(?= objects)").Value' #OLD: used to look at defined things selected. now looks at actual resolved. #$.SelectedItems.Count
     #replaced aug 11/22 with above # #<#Fixed jul 21#>'Excluded Objects=>$objectCountStr = ($Global:VBOEnvironment.VBOJobSession | Where-Object { $_.JobId -eq $.Id } | Sort-Object CreationTime -Descending | Select-Object -First 1); [Regex]::Match($objectCountStr.Log.Title,"(?<=Found )(\d+)(?= excluded objects)").Value' #OLD: used to look at defined things selected. now looks at actual resolved. #$.ExcludedItems.Count'
     'Repository'
-    'Bound Proxy=>($Global:VBOEnvironment.VBOProxy | ? { $_.id -eq $.Repository.ProxyId }).Hostname'
+    $(
+        if (CheckVersion 7.) {
+            'Bound Proxy=>$.Repository.Proxy.Hostname'
+        } else {
+            'Bound Proxy=>($Global:VBOEnvironment.VBOProxy | ? { $_.id -eq $.Repository.ProxyId }).Hostname'
+        }
+    )
     'Enabled?=>IsEnabled'
     'Schedule=>if ($.SchedulePolicy.EnableSchedule -or $.SchedulePolicy.Type.ToString() -eq "Immediate") {
         if ($.SchedulePolicy.Type.ToString() -eq "Immediate") {
@@ -1431,6 +1473,7 @@ $map.JobSessions = (@($Global:VBOEnvironment.VBOJob) + @($Global:VBOEnvironment.
     'Start Time=>$.CreationTime.ToString("yyyy/MM/dd HH:mm:ss")'
     'End Time=>$.EndTime.ToString("yyyy/MM/dd HH:mm:ss")'
     'Duration=>$sessWithDuration =  $. | select *,@{n="Duration";e={ $(if ($_.Status -eq "Running") { (get-date)-$_.CreationTime } else { $_.EndTime-$_.CreationTime } )}}; $sessWithDuration.Duration.TotalSeconds | ToLongHHmmss'
+    'Avg. Throughput=>(($.Statistics.TransferredData | ConvertData -To "MB" -Format "0.0000")/$sessWithDuration.Duration.TotalSeconds).ToString("#,##0.000 MB/s")'
     'Log=>Join -Array $($.Log.Title | ? { !$_.Contains("[Success]") }) -Delimiter "`r`n<br />"'
 )
 Write-ElapsedAndMemUsage -Message "Mapped Sessions" -LogLevel PROFILE
