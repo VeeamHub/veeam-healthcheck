@@ -16,7 +16,6 @@ namespace VeeamHealthCheck
         {
             CArgsParser ap = new(args);
             ap.ParseArgs();
-            _functions.LogVersionAndArgs(args);
         }
 
     }
