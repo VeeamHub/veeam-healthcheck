@@ -1,0 +1,1 @@
+Powershell.exe Robocopy.exe 'C:\Users\cac89\Source\Repos\VeeamHub\veeam-healthcheck\vHC\HC_Reporting\bin\Debug\net7.0-windows\win-x64\' '\\vbr-11-latest\c$\Users\cac89\Source\Repos\VeeamHub\veeam-healthcheck\vHC\HC_Reporting\bin\Debug\net7.0-windows\win-x64\'
