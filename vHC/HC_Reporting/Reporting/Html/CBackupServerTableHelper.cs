@@ -103,7 +103,7 @@ namespace VeeamHealthCheck.Reporting.Html
                         _backupServer.IsLocal = false;
 
                     }
-                    else if (backupServer.Name == _backupServer.DbHostName)
+                    else if (backupServer.Name.Contains(_backupServer.DbHostName, StringComparison.OrdinalIgnoreCase))
                     {
                         _backupServer.IsLocal = true;
                         _backupServer.DbHostName = "LocalHost";

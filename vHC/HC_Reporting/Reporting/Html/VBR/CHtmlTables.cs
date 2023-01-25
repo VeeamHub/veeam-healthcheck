@@ -129,6 +129,9 @@ namespace VeeamHealthCheck.Html.VBR
             s += _form.TableHeader(ResourceHandler.BkpSrvTblCfgLastRes, ResourceHandler.BstCfgLastResTT);
             s += _form.TableHeader(ResourceHandler.BkpSrvTblCfgEncrypt, ResourceHandler.BstCfgEncTT);
             s += _form.TableHeader(ResourceHandler.BkpSrvTblTarget, ResourceHandler.BstCfgTarTT);
+            s += _form.TableHeader(ResourceHandler.BkpSrvTblProxyRole, ResourceHandler.BstPrxTT);
+            s += _form.TableHeader(ResourceHandler.BkpSrvTblRepoRole, ResourceHandler.BstRepTT);
+            s += _form.TableHeader(ResourceHandler.BkpSrvTblWanRole, ResourceHandler.BstWaTT);
             s += "</tr><<tr>";
             s += _form.TableData(b.Name, "");
             s += _form.TableData(b.Version, "");
@@ -138,6 +141,9 @@ namespace VeeamHealthCheck.Html.VBR
             s += _form.TableData(b.ConfigBackupLastResult, "");
             s += _form.TableData(b.ConfigBackupEncryption.ToString(), "");
             s += _form.TableData(b.ConfigBackupTarget, "");
+            s += _form.TableData(b.HasProxyRole.ToString(), "");
+            s += _form.TableData(b.HasRepoRole.ToString(), "");
+            s += _form.TableData(b.HasWanAccRole.ToString(), "");
             s += "</table><table border=\"1\">";
             s += _form.LineBreak();
             // config DB Table
@@ -148,9 +154,7 @@ namespace VeeamHealthCheck.Html.VBR
             s += _form.TableHeader(ResourceHandler.BkpSrvTblSqlEdition, ResourceHandler.BstSqlEdTT);
             s += _form.TableHeader(ResourceHandler.BkpSrvTblSqlCores, ResourceHandler.BstSqlCpuTT);
             s += _form.TableHeader(ResourceHandler.BkpSrvTblSqlRam, ResourceHandler.BstSqlRamTT);
-            s += _form.TableHeader(ResourceHandler.BkpSrvTblProxyRole, ResourceHandler.BstPrxTT);
-            s += _form.TableHeader(ResourceHandler.BkpSrvTblRepoRole, ResourceHandler.BstRepTT);
-            s += _form.TableHeader(ResourceHandler.BkpSrvTblWanRole, ResourceHandler.BstWaTT);
+
             s += "</tr>";
             //CDataFormer cd = new(true);
             try
@@ -166,9 +170,7 @@ namespace VeeamHealthCheck.Html.VBR
                 s += _form.TableData(b.Edition, "");
                 s += _form.TableData(b.DbCores.ToString(), "CPU Cores detected on SQL. 0 indicates SQL is local to VBR or there was an error in collection.");
                 s += _form.TableData(b.DbRAM.ToString(), "RAM detected on SQL. 0 indicates SQL is local to VBR or there was an error in collection.");
-                s += _form.TableData(b.HasProxyRole.ToString(), "");
-                s += _form.TableData(b.HasRepoRole.ToString(), "");
-                s += _form.TableData(b.HasWanAccRole.ToString(), "");
+
                 s += _form.SectionEnd(summary);
                 return s;
             }

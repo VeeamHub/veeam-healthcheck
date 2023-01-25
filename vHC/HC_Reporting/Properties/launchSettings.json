@@ -4,7 +4,7 @@
       "commandName": "Project",
       "remoteDebugEnabled": true,
       "authenticationMode": "Windows",
-      "remoteDebugMachine": "192.168.20.163:4026"
+      "remoteDebugMachine": "VBR-11-Latest:4026"
     }
   }
 }

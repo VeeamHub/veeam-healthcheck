@@ -28,14 +28,10 @@ namespace VeeamHealthCheck
 
         public VhcGui()
         {
-            //CultureInfo.CurrentCulture = Thread.CurrentThread.CurrentCulture;
-            //CultureInfo.CurrentCulture = CultureInfo.GetCultureInfo("zh-cn");
-            //MessageBox.Show(ResourceHandler.GuiAcceptText);
-            //Thread.CurrentThread.CurrentCulture = CultureInfo.CurrentCulture.Name;
             InitializeComponent();
 
             SetUi();
-
+            pathBox.IsEnabled = false;
 
         }
         private void SetUi()
