@@ -19,7 +19,7 @@ namespace VeeamHealthCheck.Reporting.Html.VB365
         CM365Tables _tables = new CM365Tables();
 
         private string _htmldoc = String.Empty;
-        private CLogger log = VhcGui.log;
+        private CLogger log = CGlobals.Logger;
         public CVb365HtmlCompiler()
         {
             log.Info("[VB365] HTML complier init...");
@@ -42,9 +42,9 @@ namespace VeeamHealthCheck.Reporting.Html.VB365
             _htmldoc += _form.body;
 
             //_htmldoc += _form.SetHeaderAndLogo(SetLicHolder());
-            if (!VhcGui._scrub)
+            if (!CGlobals.Scrub)
                 _htmldoc += _form.SetHeaderAndLogo(SetLicHolder());
-            if (VhcGui._scrub)
+            if (CGlobals.Scrub)
                 _htmldoc += _form.SetHeaderAndLogo(" ");
             _htmldoc += _form.SetBannerAndIntroVb365();
             // add sections here
@@ -120,7 +120,7 @@ namespace VeeamHealthCheck.Reporting.Html.VB365
         private void ExportHtml()
         {
             log.Info("[VB365][HTML] exporting HTML file...");
-            CHtmlExporter exporter = new("", GetServerName(), "", VhcGui._scrub);
+            CHtmlExporter exporter = new("", GetServerName(), "", CGlobals.Scrub);
             exporter.ExportVb365Html(_htmldoc);
             log.Info("[VB365][HTML] exporting HTML...done!");
         }

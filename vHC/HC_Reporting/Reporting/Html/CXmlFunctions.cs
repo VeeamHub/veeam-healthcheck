@@ -8,12 +8,13 @@ using System.Xml.Linq;
 using VeeamHealthCheck.CsvHandlers;
 using VeeamHealthCheck.Shared.Logging;
 using System.Resources;
+using VeeamHealthCheck.Shared;
 
 namespace VeeamHealthCheck.Html
 {
     internal class CXmlFunctions
     {
-        private CLogger log = VhcGui.log;
+        private CLogger log = CGlobals.Logger;
         private string _xmlOut;
         private XDocument _doc;
         public CXmlFunctions(string mode)

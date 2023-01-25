@@ -7,13 +7,14 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using VeeamHealthCheck.Shared;
 using VeeamHealthCheck.Shared.Logging;
 
 namespace VeeamHealthCheck.FilesParser
 {
     class CLogParser
     {
-        private CLogger log = VeeamHealthCheck.VhcGui.log;
+        private CLogger log = CGlobals.Logger;
         private string LogLocation;
         private Dictionary<string, List<TimeSpan>> _waits = new();
         private string _pathToCsv = CVariables.vbrDir + @"\waits.csv";

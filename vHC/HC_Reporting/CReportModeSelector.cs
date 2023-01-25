@@ -1,6 +1,7 @@
 ﻿using System.IO;
 using VeeamHealthCheck.Html;
 using VeeamHealthCheck.Reporting.Html.VB365;
+using VeeamHealthCheck.Shared;
 using VeeamHealthCheck.Shared.Logging;
 
 namespace VeeamHealthCheck
@@ -11,7 +12,7 @@ namespace VeeamHealthCheck
         private readonly bool _scrub;
         private readonly bool _openHtml;
         private readonly bool _import;
-        private CLogger _log = VhcGui.log;
+        private CLogger _log = CGlobals.Logger;
         public CReportModeSelector()
         {
         }
@@ -36,16 +37,13 @@ namespace VeeamHealthCheck
             _log.Info("Starting B&R report generation");
             CHtmlCompiler html = new();
             html.Dispose();
-            //CCsvToXml c = new("vbr", MainWindow._scrub, false, MainWindow._openHtml, true);
         }
         
         private void StartM365Report()
         {
             _log.Info("Starting VB365 Report genration");
-            //CHtmlCompiler compiler = new("vb365");
             CVb365HtmlCompiler compiler = new();
             compiler.Dispose();
-            //compiler.Dispose();
         }
     }
 }

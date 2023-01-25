@@ -12,13 +12,14 @@ using VeeamHealthCheck.Shared.Logging;
 using VeeamHealthCheck;
 using System.Windows;
 using System.Security.Principal;
+using VeeamHealthCheck.Shared;
 
 namespace VeeamHealthCheck.DB
 {
     class CDbWorker
     {
         private readonly string _cString;
-        private CLogger log = VhcGui.log;
+        private CLogger log = CGlobals.Logger;
         public CDbWorker()
         {
             log.Info("init db worker");

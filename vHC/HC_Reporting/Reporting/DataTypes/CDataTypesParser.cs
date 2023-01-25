@@ -1,20 +1,18 @@
 ﻿// Copyright (c) 2021, Adam Congdon <adam.congdon2@gmail.com>
 // MIT License
-using VeeamHealthCheck.CsvHandlers;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using VeeamHealthCheck.DataTypes;
 using VeeamHealthCheck.CsvHandlers;
+using VeeamHealthCheck.Reporting.DataTypes.ProxyData;
+using VeeamHealthCheck.Shared;
 using VeeamHealthCheck.Shared.Logging;
 
 namespace VeeamHealthCheck.DataTypes
 {
     class CDataTypesParser : IDisposable
     {
-        private CLogger log = VhcGui.log;
+        private CLogger log = CGlobals.Logger;
         private CCsvParser _csvParser = new();
 
         private List<CServerTypeInfos> _serverInfo;
@@ -562,7 +560,7 @@ namespace VeeamHealthCheck.DataTypes
         {
             log.Info("parsing server csv data");
 
-            var records = _csvParser.ServerCsvParser();
+            var records = _csvParser.ServerCsvParser().ToList();
             List<CServerTypeInfos> l = new();
             foreach (CServerCsvInfos s in records)
             {
@@ -642,52 +640,9 @@ namespace VeeamHealthCheck.DataTypes
 
         private string CalcProxyOptimalTasks(int assignedTasks, int cores, int ram)
         {
-            if (cores == 0 && ram == 0)
-                return "NA";
-            CProvisionTypes pt = new();
-            // 1 core + 4 GB RAM per task
+            CProxyDataFormer df = new();
+            return df.CalcProxyTasks(assignedTasks, cores, ram);
 
-            // cores * 1.5 = Tasks
-
-            int availableMem = ram - 4;
-            int memTasks = (int)Math.Round((decimal)(ram / 2), 0, MidpointRounding.ToPositiveInfinity);
-            int coreTasks = cores;
-
-
-
-            if (coreTasks == memTasks)
-            {
-                if (assignedTasks == memTasks)
-                    return pt.WellProvisioned;
-                if (assignedTasks > memTasks)
-                    return pt.OverProvisioned;
-                if (assignedTasks < memTasks)
-                    return pt.UnderProvisioned;
-            }
-
-            if (coreTasks < memTasks)
-            {
-                if (assignedTasks == coreTasks)
-                    return pt.WellProvisioned;
-                if (assignedTasks <= coreTasks)
-                    return pt.UnderProvisioned;
-                if (assignedTasks > coreTasks)
-                    return pt.OverProvisioned;
-            }
-            if (coreTasks > memTasks)
-            {
-                if (assignedTasks == memTasks)
-                    return pt.WellProvisioned;
-                if (assignedTasks <= memTasks)
-                    return pt.UnderProvisioned;
-                if (assignedTasks > memTasks)
-                    return pt.OverProvisioned;
-            }
-
-
-
-            // 1 = underprov, 2 = on point, 3 = overprov
-            return "NA";
         }
         public List<CProxyTypeInfos> ProxyInfo()
         {

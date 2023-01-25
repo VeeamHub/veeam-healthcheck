@@ -31,7 +31,7 @@ enum LogLevel {
   ERROR
   FATAL
 }
-Clear-Host
+#Clear-Host
 
 Write-host("Executing VBR Config Collection...")
 
@@ -97,6 +97,8 @@ if (!(Test-Path $ReportPath)) {
 Push-Location -Path $ReportPath
 Write-Verbose ("Changing directory to '$ReportPath'")
 
+# general collection:
+try{
 $Servers = Get-VBRServer
 $Jobs = Get-VBRJob -WarningAction SilentlyContinue #| Where-Object { $_.JobType -eq 'Backup' -OR $_.JobType -eq 'BackupSync' }
 # Agent Jobs
@@ -120,10 +122,17 @@ $capOut = $cap | Select-Object Status, @{n = 'Type'; e = { $_.Repository.Type } 
 
 #Traffic Rules
 $trafficRules = Get-VBRNetworkTrafficRule  
+}
+catch{
+    Write-LogFile("Error on general info collection. ")
+}
+
 
 Write-LogFile("Starting Registry query...")
 #regSettings
+try{
 $reg = get-item "HKLM:\SOFTWARE\Veeam\Veeam Backup and Replication"
+
 
 [System.Collections.ArrayList]$output = @()
 foreach ($r in $reg.Property) {
@@ -136,9 +145,13 @@ foreach ($r in $reg.Property) {
   $null = $output.Add($regout2)
   # $regout2 += $reg | Select-Object @{n="KeyName";e={$r}}, @{n='value';e={$_.GetValue($r)}}
 }
-
+}
+catch{
+    Write-LogFile("Error on registry collection.")
+}
 
 Write-LogFile("Collecting Job Types...")
+try{
 #JobTypes & conversion
 $catCopy = Get-VBRCatalystCopyJob
 $vaBcj = Get-VBRComputerBackupCopyJob
@@ -176,7 +189,10 @@ $Jobs += $catCopy
     
 $vaBcj | Add-Member -MemberType NoteProperty -Name JobType -Value "Physical Backup Copy"
 #$Jobs += $vaBcj //pulled in jobs for now
-
+}
+catch{
+    Write-Log("Failed to collect job types")
+}
 try {
   $vaBJob += $epJob 
 }

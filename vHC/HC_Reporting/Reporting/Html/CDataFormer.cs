@@ -12,7 +12,10 @@ using VeeamHealthCheck.DB;
 using VeeamHealthCheck.Html;
 using VeeamHealthCheck.RegSettings;
 using VeeamHealthCheck.Reporting.Html.Shared;
+using VeeamHealthCheck.Reporting.TableDatas;
 using VeeamHealthCheck.Scrubber;
+using VeeamHealthCheck.Shared;
+using VeeamHealthCheck.Shared.Common;
 using VeeamHealthCheck.Shared.Logging;
 using static VeeamHealthCheck.DB.CModel;
 
@@ -22,15 +25,14 @@ namespace VeeamHealthCheck.Reporting.Html
     class CDataFormer
     {
         private readonly string _testFile = "xml\\vbr.xml";
-        
-        private readonly string _backupServerId = "6745a759-2205-4cd2-b172-8ec8f7e60ef8";
+
         private string _backupServerName;
         private bool _isBackupServerProxy;
         private bool _isBackupServerRepo;
         private bool _isBackupServerWan;
         //private CQueries _cq = new();
         private Dictionary<string, int> _repoJobCount;
-        private CScrubHandler _scrubber = VhcGui._scrubberMain;
+        private CScrubHandler _scrubber = CGlobals.Scrubber;
         private bool _scrub;
         private bool _checkLogs;
         private bool _isImport;
@@ -47,7 +49,7 @@ namespace VeeamHealthCheck.Reporting.Html
         private CDataTypesParser _dTypeParser;
         private List<CServerTypeInfos> _csv;
         private readonly CCsvParser _csvParser = new();
-        private readonly CLogger log = VhcGui.log;
+        private readonly CLogger log = CGlobals.Logger;
         private CHtmlExporter exporter;
         private readonly CXmlFunctions XML = new("vbr");
 
@@ -94,7 +96,7 @@ namespace VeeamHealthCheck.Reporting.Html
                 }
             }
 
-            
+
             foreach (EDbJobType jt2 in Enum.GetValues(typeof(EDbJobType)))
             {
                 if (!pTypes.Contains((int)jt2))
@@ -343,10 +345,10 @@ namespace VeeamHealthCheck.Reporting.Html
 
 
             // gather data needed for input
-            CServerTypeInfos backupServer = _csv.Find(x => (x.Id == _backupServerId));
+            //CServerTypeInfos backupServer = _csv.Find(x => (x.Id == _backupServerId));
             CCsvParser config = new();
 
-            
+
 
             // Check for items needing scrubbed
             if (scrub)
@@ -367,190 +369,31 @@ namespace VeeamHealthCheck.Reporting.Html
 
             log.Info("xml template..done!");
         }
-        public List<string> BackupServerInfoToXml(bool scrub)
+        public BackupServer BackupServerInfoToXml(bool scrub)
         {
 
             log.Info("converting backup server info to xml");
             List<string> list = new List<string>();
-
-            CheckServerRoles(_backupServerId);
-
-            CServerTypeInfos backupServer = _csv.Find(x => (x.Id == _backupServerId));
-            CCsvParser config = new();
-            var cv = config.ConfigBackupCsvParser();
-            string configBackupEnabled = "";
-            string configBackupTarget = "";
-            string configBackupEncryption = "";
-            string configBackupLastResult = "";
-
-            //if(cv.Count() == 0)
-            //{
-            //    configBackupEnabled = "False";
-            //}
-            foreach (var c in cv)
-            {
-                configBackupEnabled = c.Enabled;
-                if (c.Enabled != "False")
-                {
-                    configBackupTarget = c.Target;
-                    configBackupEncryption = c.EncryptionOptions;
-                    configBackupLastResult = c.LastResult;
-                }
-            }
-
-            log.Info("entering registry reader");
-            string sqlHostName = "";
-            string veeamVersion = "";
-            string sqlCpu = "";
-            string sqlRam = "";
-            string edition = "";
-            string version = "";
-            DataTable si = new DataTable();
-
-            if (!VhcGui._import)
-            {
-                try
-                {
-                    CRegReader regReader = new();
-                    regReader.GetDbInfo();
-                    sqlHostName = regReader.Host;
-                }
-                catch (Exception q)
-                {
-                    log.Error(q.Message);
-                }
-                log.Info("entering registry reader..done!");
-
-                _isSqlLocal = true;
-                try
-                {
-                    log.Info("starting sql queries");
-                    CQueries cq = new();
-                    si = cq.SqlServerInfo;
-                    edition = cq.SqlEdition;
-                    version = cq.SqlVerion;
-                    log.Info("starting sql queries..done!");
-                }
-                catch (Exception e)
-                {
-                    log.Error(e.Message);
-
-                }
-            }
-
-            if (veeamVersion == "" || sqlHostName == "")
-            {
-                try
-                {
-                    CCsvParser cp = new();
-                    var records = cp.BnrCsvParser();
-                    foreach (var r in records)
-                    {
-                        veeamVersion = r.Version;
-                        sqlHostName = r.SqlServer;
-                        if (scrub)
-                            sqlHostName = Scrub(sqlHostName);
-                    }
-                }
-                catch (Exception f)
-                {
-                    log.Error(f.Message);
-                }
-            }
-            try
-            {
-                _backupServerName = backupServer.Name;
-                if (!backupServer.Name.Contains(sqlHostName, StringComparison.OrdinalIgnoreCase)
-                    && sqlHostName != "localhost" && sqlHostName != "LOCALHOST")
-                {
-                    _isSqlLocal = false;
-                    foreach (DataRow row in si.Rows)
-                    {
-                        string cpu = row["cpu_count"].ToString();
-                        string hyperthread = row["hyperthread_ratio"].ToString();
-                        string memory = row["physical_memory_kb"].ToString();
-                        int.TryParse(cpu, out int c);
-                        int.TryParse(hyperthread, out int h);
-                        int.TryParse(memory, out int mem);
-
-                        sqlCpu = cpu;//(c * h).ToString();
-                        sqlRam = ((mem / 1024 / 1024) + 1).ToString();
-
-                    }
-                    //if (scrub)
-                    //    sqlHostName = Scrub(sqlHostName);
-                }
-                else if (backupServer.Name == sqlHostName)
-                    sqlHostName = "";
-                _cores = backupServer.Cores;
-                _ram = backupServer.Ram;
-            }
-            catch (Exception g)
-            {
-                log.Error("Error processing SQL resource data");
-                log.Error("\t" + g.Message);
-            }
-
-
-            if (scrub)
-            {
-                backupServer.Name = Scrub(backupServer.Name);
-                configBackupTarget = Scrub(configBackupTarget);
-            }
-            string proxyRole = "";
-            
-            if (_isBackupServerProxy)
-                proxyRole = "True";
-            if (!_isBackupServerProxy)
-                proxyRole = "False";
-
-            var xml = new XElement("serverInfo",
-                new XElement("name", backupServer.Name),
-                new XElement("cores", backupServer.Cores),
-                new XElement("ram", backupServer.Ram),
-                new XElement("configBackupEnabled", configBackupEnabled),
-                new XElement("configBackupLastResult", configBackupLastResult),
-                new XElement("configBackupEncryption", configBackupEncryption),
-                new XElement("configBackupTarget", configBackupTarget),
-                new XElement("localSql", _isSqlLocal),
-                new XElement("sqlname", sqlHostName),
-                new XElement("sqlversion", version),
-                new XElement("sqledition", edition),
-                new XElement("sqlcpu", sqlCpu),
-                new XElement("sqlram", sqlRam),
-                new XElement("proxyrole", proxyRole),
-                new XElement("repo", _isBackupServerRepo),
-                new XElement("veeamVersion", veeamVersion),
-                new XElement("wanacc", _isBackupServerWan)
-                );
+            CBackupServerTableHelper bt = new(scrub);
+            BackupServer b = bt.SetBackupServerData();
 
             
+            
+            CheckServerRoles(CGlobals._backupServerId);
 
-
-            list.Add(backupServer.Name);
-            list.Add(veeamVersion);
-            list.Add(backupServer.Cores.ToString());
-            list.Add(backupServer.Ram.ToString());
-            list.Add(configBackupEnabled);
-            list.Add(configBackupLastResult);
-            list.Add(configBackupEncryption);
-            list.Add(configBackupTarget);
-            list.Add(_isSqlLocal.ToString());
-            list.Add(sqlHostName);
-            list.Add(version);
-            list.Add(edition);
-            list.Add(sqlCpu);
-            list.Add(sqlRam);
-            list.Add(proxyRole);
-            list.Add(_isBackupServerRepo.ToString());
-            list.Add(_isBackupServerWan.ToString());
-
-
+            b.HasProxyRole = _isBackupServerProxy;
+            b.HasRepoRole = _isBackupServerRepo;
+            b.HasWanAccRole = _isBackupServerWan;
 
 
 
             log.Info("converting backup server info to xml..done!");
-            return list;
+            return b;
+        }
+        private string ParseString(string input)
+        {
+            if (String.IsNullOrEmpty(input)) return "";
+            else return input;
         }
         public List<string[]> SobrInfoToXml(bool scrub)
         {
@@ -952,8 +795,8 @@ namespace VeeamHealthCheck.Reporting.Html
             //string htmlString = String.Empty;
             //List<CJobSessionInfo> sessionInfo = _dTypeParser.JobSessions;
             // try to trim it up...
-            var targetDate = DateTime.Now.AddDays(- VhcGui._reportDays);
-            List<CJobSessionInfo> trimmedSessionInfo = new(); 
+            var targetDate = DateTime.Now.AddDays(-CGlobals.ReportDays);
+            List<CJobSessionInfo> trimmedSessionInfo = new();
             using (CDataTypesParser dt = new())
             {
                 trimmedSessionInfo = dt.JobSessions.Where(c => c.CreationTime >= targetDate).ToList();
@@ -992,7 +835,7 @@ namespace VeeamHealthCheck.Reporting.Html
                         //int i = mirrorSessions.Count();
                         DateTime now = DateTime.Now;
                         double diff = (now - sess.CreationTime).TotalDays;
-                        if (diff < VhcGui._reportDays)
+                        if (diff < CGlobals.ReportDays)
                         {
                             mirrorJobNamesList.Add(sess.JobName);
                             string nameDate = sess.JobName + sess.CreationTime.ToString();
@@ -1047,7 +890,7 @@ namespace VeeamHealthCheck.Reporting.Html
                             if (!nameDatesList.Contains(n1))
                             {
                                 nameDatesList.Add(n1);
-                                ctList.Add(ParseConcurrency(epB, VhcGui._reportDays));
+                                ctList.Add(ParseConcurrency(epB, CGlobals.ReportDays));
                             }
                         }
 
@@ -1077,7 +920,7 @@ namespace VeeamHealthCheck.Reporting.Html
                 {
                     DateTime now = DateTime.Now;
                     double diff = (now - session.CreationTime).TotalDays;
-                    if (diff < VhcGui._reportDays)
+                    if (diff < CGlobals.ReportDays)
                     {
                         ctList.Add(ParseConcurrency(session, days));
 
@@ -1279,7 +1122,7 @@ namespace VeeamHealthCheck.Reporting.Html
         }
         public List<List<string>> ConvertJobSessSummaryToXml(bool scrub)
         {
-            CJobSessSummary jss = new(_testFile, log, scrub,  _scrubber, _dTypeParser);
+            CJobSessSummary jss = new(_testFile, log, scrub, _scrubber, _dTypeParser);
             return jss.JobSessionSummaryToXml(scrub);
 
         }
@@ -1290,7 +1133,7 @@ namespace VeeamHealthCheck.Reporting.Html
 
             List<CJobSessionInfo> csv = new();
 
-            var targetDate = DateTime.Now.AddDays(-VhcGui._reportDays);
+            var targetDate = DateTime.Now.AddDays(-CGlobals.ReportDays);
             //List<CJobSessionInfo> trimmedSessionInfo = new();
             using (CDataTypesParser dt = new())
             {

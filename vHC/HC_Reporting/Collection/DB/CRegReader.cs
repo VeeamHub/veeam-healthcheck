@@ -3,6 +3,9 @@
 using System;
 using Microsoft.Win32;
 using System.Windows;
+using VeeamHealthCheck.Shared;
+using VeeamHealthCheck.Shared.Logging;
+using System.Windows.Input;
 
 namespace VeeamHealthCheck.DB
 {
@@ -13,6 +16,8 @@ namespace VeeamHealthCheck.DB
         private static string _host;
         private static string _user;
         private static string _passString;
+
+        private CLogger log = CGlobals.Logger;
 
         public string User { get { return _user; } }
         public string PassString { get { return _passString; } }
@@ -30,7 +35,7 @@ namespace VeeamHealthCheck.DB
 
         public CRegReader()
         {
-            
+
 
             //catch (Exception ex)
             //{
@@ -40,6 +45,24 @@ namespace VeeamHealthCheck.DB
             //}
         }
         public void GetDbInfo()
+        {
+
+            try
+            {
+                GetVbrElevenDbInfo();
+            }
+            catch (Exception e2)
+            {
+                log.Error("");
+            }
+            if (String.IsNullOrEmpty(_databaseName))
+            {
+                try { GetVbrTwelveDbInfo(); }
+                catch { Exception e3; }
+            }
+
+        }
+        private void GetVbrElevenDbInfo()
         {
             using (RegistryKey key =
                 Registry.LocalMachine.OpenSubKey("Software\\Veeam\\Veeam Backup and Replication"))
@@ -55,15 +78,66 @@ namespace VeeamHealthCheck.DB
                     _passString = key.GetValue("SqlSecuredPassword").ToString();
                     if (!string.IsNullOrEmpty(host))
                     {
-                        //if (!string.IsNullOrEmpty(instance))
-                        //{
                         if (!string.IsNullOrEmpty(database))
                         {
                             _databaseName = database;
                             _host = host;
                             _hostInstanceString = host + "\\" + instance;
                         }
-                        //}
+                    }
+                }
+            }
+        }
+        private string SetDbServerName(string input)
+        {
+            if (!String.IsNullOrEmpty(input))
+            {
+                return null; //placeholder
+            }
+            return null; //placeholder
+        }
+        private void GetVbrTwelveDbInfo()
+        {
+            using (RegistryKey key = Registry.LocalMachine.OpenSubKey("Software\\Veeam\\Veeam Backup and Replication\\DatabaseConfigurations"))
+            {
+                string host = "";
+
+                if (key != null)
+                {
+                    var dbType = key.GetValue("SqlActiveConfiguration").ToString();
+                    if (dbType == "MsSql")
+                    {
+                        using (RegistryKey sqlKey = Registry.LocalMachine.OpenSubKey("Software\\Veeam\\Veeam Backup and Replication\\DatabaseConfigurations\\MsSql"))
+                        {
+                            host = sqlKey.GetValue("SqlServerName").ToString();
+                            string inst = sqlKey.GetValue("").ToString();
+                            string db = sqlKey.GetValue("").ToString();
+                            // SqlInstanceName
+                            // SqlDatabaseName
+                        }
+                    }
+                    else if (dbType == "PostgreSql")
+                    {
+                        using (RegistryKey pgKey = Registry.LocalMachine.OpenSubKey("Software\\Veeam\\Veeam Backup and Replication\\DatabaseConfigurations\\PostgreSql"))
+                        {
+                            host = pgKey.GetValue("SqlHostName").ToString();
+                        }
+                    }
+                    var instance = key.GetValue("SqlInstanceName").ToString();
+                    
+                    var database =
+                        key.GetValue("SqlDatabaseName")
+                            .ToString();
+                    _user = key.GetValue("SqlLogin").ToString();
+                    _passString = key.GetValue("SqlSecuredPassword").ToString();
+                    if (!string.IsNullOrEmpty(host))
+                    {
+                        if (!string.IsNullOrEmpty(database))
+                        {
+                            _databaseName = database;
+                            _host = host;
+                            _hostInstanceString = host + "\\" + instance;
+                        }
                     }
                 }
             }

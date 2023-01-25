@@ -1,16 +1,12 @@
 ﻿// Copyright (c) 2021, Adam Congdon <adam.congdon2@gmail.com>
 // MIT License
-using VeeamHealthCheck;
-using VeeamHealthCheck.CsvHandlers;
-using VeeamHealthCheck.DataTypes;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Xml.Linq;
 using VeeamHealthCheck.CsvHandlers;
 using VeeamHealthCheck.DataTypes;
+using VeeamHealthCheck.Shared;
 using VeeamHealthCheck.Shared.Logging;
 
 namespace VeeamHealthCheck.Html
@@ -18,7 +14,7 @@ namespace VeeamHealthCheck.Html
     class CJobSessSummary
     {
         private Dictionary<string, List<TimeSpan>> _waits = new();
-        private CLogger log = VhcGui.log;
+        private CLogger log = CGlobals.Logger;
         private bool _checkLogs;
 
         private string _xmlFile;
@@ -31,16 +27,11 @@ namespace VeeamHealthCheck.Html
 
         public CJobSessSummary(string xmlFile, CLogger log, bool scrub,   Scrubber.CScrubHandler scrubber, CDataTypesParser dp)
         {
-            if(!VhcGui._import)
-                _checkLogs = true;
             _xmlFile = xmlFile;
             _log = log;
             _scrubber = scrubber;
             _parsers = dp;
 
-            //if (_checkLogs)
-            //    PopulateWaits();
-            //JobSessionSummaryToXml(xmlFile, log, scrub, scrubber, dp);
         }
 
         private void PopulateWaits()
@@ -57,30 +48,7 @@ namespace VeeamHealthCheck.Html
             }
 
         }
-        private XElement ReccomendationText()
-        {
-            var xml = new XElement("rh",
-                new XElement("title", "Recommendations"),
-                new XElement("ln", "Waiting for Resources / job session length issues"),
-                new XElement("bl", "•	Stagger your backup jobs and replication jobs at different time slots so that a job isn’t waiting on resources. (Ex. Instead of scheduling your jobs to all start at 8:00PM, start one job at 8:00, another at 8:30, and another at 9:00.)"),
-                new XElement("bl", "•	Increase the number of concurrent tasks allowed on your proxies. See How to set max concurrent tasks. "),
-                new XElement("bl", "o	If your backup proxy is a virtual machine, you should increase the amount of CPU and RAM available to the proxy.",
-                new XAttribute("ind", "sIndent")),
 
-                new XElement("bl", "•	Deploy additional backup proxies from within “Backup Infrastructure->Backup Proxies”"),
-                new XElement("bl", "•	Make sure that your backup job or replication job is selecting the correct proxies by viewing the job session statistics in the VBR Console."),
-                new XElement("bl", "•	Investigate backup job performance. If specific jobs are taking longer to process than normal, check for warnings, compare the bottleneck statistics to previous jobs sessions, and try to isolate the problem to a specific proxy, repository, host, or datastore."),
-                new XElement("bl", "o	Move larger VMs / servers to their own job and schedule so a conflict does not occur with faster completing jobs Expected backup window exceeded (schedule before all other jobs or after all other jobs, for example)",
-                new XAttribute("ind", "sIndent")),
-                new XElement("bl", "•	Separate NAS Proxies, Cache Repos, and Repositories from VM proxies and VM and Agent Repository"),
-                new XElement("bl", "•	Use Static Gateways and Mount Servers if possible to offload resources consumption required for synthetic operations, SOBR offload processing, backup copy jobs, and other tasks. -  https://helpcenter.veeam.com/docs/backup/vsphere/gateway_server.html?ver=110#gateway-servers-deployment"),
-                new XElement("bl", "•	If appropriate, review Architecture Guidelines for deduplicating storage systems"),
-                new XElement("bl", "o	https://www.veeam.com/kb2660",
-                new XAttribute("ind", "sIndent")
-                ));
-
-            return xml;
-        }
         public List<List<string>> JobSessionSummaryToXml(bool scrub)
         {
             return JobSessionSummaryToXml(_xmlFile, _log, scrub, _scrubber, _parsers);
@@ -90,20 +58,17 @@ namespace VeeamHealthCheck.Html
             List<List<string>> sendBack = new();
             log.Info("converting job session summary to xml");
 
-            var targetDate = DateTime.Now.AddDays(-VhcGui._reportDays);
+            var targetDate = DateTime.Now.AddDays(-CGlobals.ReportDays);
             List<CJobSessionInfo> trimmedSessionInfo = new();
             using (CDataTypesParser dt = new())
             {
                 trimmedSessionInfo = dt.JobSessions.Where(c => c.CreationTime >= targetDate).ToList();
             }
-            //csv = csv.OrderBy(x => x.CreationTime).ToList();
 
             var bjobsCsvInfo = new CCsvParser().GetDynamicBjobs();
 
-            //XDocument doc = XDocument.Load(xmlFile);
 
             XElement extElement = new XElement("jobSessionsSummary");
-            //doc.Root.Add(extElement);
 
             List<string> jobNameList = trimmedSessionInfo.Select(x => x.Name).ToList();
             List<CJobSummaryTypes> outList = new();
@@ -158,7 +123,7 @@ namespace VeeamHealthCheck.Html
                                 double startDiff = (now - startTime).TotalDays;
                                 double endDiff = (now - endTime).TotalDays;
 
-                                if (endDiff < VhcGui._reportDays || startDiff < VhcGui._reportDays)
+                                if (endDiff < CGlobals.ReportDays || startDiff < CGlobals.ReportDays)
                                 {
                                     TimeSpan.TryParse(w.Duration, out TimeSpan duration);
                                     tList.Add(duration);
@@ -201,7 +166,7 @@ namespace VeeamHealthCheck.Html
 
                         ////}
                         //if (diff < days)
-                        if (j == c.Name && diff < VhcGui._reportDays)
+                        if (j == c.Name && diff < CGlobals.ReportDays)
                         {
                             sessionCount++;
                             totalSessions++;

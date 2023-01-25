@@ -8,16 +8,18 @@ using VeeamHealthCheck.Reporting.Html;
 using VeeamHealthCheck.Reporting.Html.Shared;
 using VeeamHealthCheck.Reporting.Html.VBR;
 using VeeamHealthCheck.Shared.Logging;
+using VeeamHealthCheck.Shared;
+using VeeamHealthCheck.Reporting.TableDatas;
 
 namespace VeeamHealthCheck.Html.VBR
 {
     internal class CHtmlTables
     {
         private CCsvParser _csv = new(CVariables.vb365dir);
-        private readonly CLogger log = VhcGui.log;
+        private readonly CLogger log = CGlobals.Logger;
 
         CDataFormer _df = new(true);
-        Scrubber.CScrubHandler _scrub = VhcGui._scrubberMain;
+        Scrubber.CScrubHandler _scrub = CGlobals.Scrubber;
 
         private CHtmlFormatting _form = new();
         private CVbrSummaries _sum = new();
@@ -115,7 +117,10 @@ namespace VeeamHealthCheck.Html.VBR
         {
             string s = _form.SectionStart("vbrserver", ResourceHandler.BkpSrvTblHead);
             string summary = _sum.SetVbrSummary();
+            CDataFormer cd = new(true);
+            BackupServer b = cd.BackupServerInfoToXml(scrub);
 
+            // Backup Server table
             s += _form.TableHeader(ResourceHandler.BkpSrvTblName, ResourceHandler.BstNameTT);
             s += _form.TableHeader(ResourceHandler.BkpSrvTblVersion, ResourceHandler.BstVerTT);
             s += _form.TableHeader(ResourceHandler.BkpSrvTblCore, ResourceHandler.BstCpuTT);
@@ -124,35 +129,48 @@ namespace VeeamHealthCheck.Html.VBR
             s += _form.TableHeader(ResourceHandler.BkpSrvTblCfgLastRes, ResourceHandler.BstCfgLastResTT);
             s += _form.TableHeader(ResourceHandler.BkpSrvTblCfgEncrypt, ResourceHandler.BstCfgEncTT);
             s += _form.TableHeader(ResourceHandler.BkpSrvTblTarget, ResourceHandler.BstCfgTarTT);
+            s += _form.TableHeader(ResourceHandler.BkpSrvTblProxyRole, ResourceHandler.BstPrxTT);
+            s += _form.TableHeader(ResourceHandler.BkpSrvTblRepoRole, ResourceHandler.BstRepTT);
+            s += _form.TableHeader(ResourceHandler.BkpSrvTblWanRole, ResourceHandler.BstWaTT);
+            s += "</tr><<tr>";
+            s += _form.TableData(b.Name, "");
+            s += _form.TableData(b.Version, "");
+            s += _form.TableData(b.Cores.ToString(), "");
+            s += _form.TableData(b.RAM.ToString(), "");
+            s += _form.TableData(b.ConfigBackupEnabled.ToString(), "");
+            s += _form.TableData(b.ConfigBackupLastResult, "");
+            s += _form.TableData(b.ConfigBackupEncryption.ToString(), "");
+            s += _form.TableData(b.ConfigBackupTarget, "");
+            s += _form.TableData(b.HasProxyRole.ToString(), "");
+            s += _form.TableData(b.HasRepoRole.ToString(), "");
+            s += _form.TableData(b.HasWanAccRole.ToString(), "");
+            s += "</table><table border=\"1\">";
+            s += _form.LineBreak();
+            // config DB Table
+            s += _form.TableHeader("DataBase Type", "MS SQL or PostgreSQL");
             s += _form.TableHeader(ResourceHandler.BkpSrvTblSqlLocal, ResourceHandler.BstSqlLocTT);
             s += _form.TableHeader(ResourceHandler.BkpSrvTblSqlName, ResourceHandler.BstSqlNameTT);
             s += _form.TableHeader(ResourceHandler.BkpSrvTblSqlVersion, ResourceHandler.BstSqlVerTT);
             s += _form.TableHeader(ResourceHandler.BkpSrvTblSqlEdition, ResourceHandler.BstSqlEdTT);
             s += _form.TableHeader(ResourceHandler.BkpSrvTblSqlCores, ResourceHandler.BstSqlCpuTT);
             s += _form.TableHeader(ResourceHandler.BkpSrvTblSqlRam, ResourceHandler.BstSqlRamTT);
-            s += _form.TableHeader(ResourceHandler.BkpSrvTblProxyRole, ResourceHandler.BstPrxTT);
-            s += _form.TableHeader(ResourceHandler.BkpSrvTblRepoRole, ResourceHandler.BstRepTT);
-            s += _form.TableHeader(ResourceHandler.BkpSrvTblWanRole, ResourceHandler.BstWaTT);
+
             s += "</tr>";
             //CDataFormer cd = new(true);
             try
             {
 
 
-                List<string> list = _df.BackupServerInfoToXml(scrub);
                 s += "<tr>";
 
-                for (int i = 0; i < list.Count(); i++)
-                {
+                s += _form.TableData(b.DbType, "");
+                s += _form.TableData(b.IsLocal.ToString(), "");
+                s += _form.TableData(b.DbHostName, "");
+                s += _form.TableData(b.DbVersion, "");
+                s += _form.TableData(b.Edition, "");
+                s += _form.TableData(b.DbCores.ToString(), "CPU Cores detected on SQL. 0 indicates SQL is local to VBR or there was an error in collection.");
+                s += _form.TableData(b.DbRAM.ToString(), "RAM detected on SQL. 0 indicates SQL is local to VBR or there was an error in collection.");
 
-                    //if(MainWindow._scrub && i == 0 || i == 7 || i == 9)
-                    //{
-                    //    s += _form.TableData(_scrub.ScrubItem(list[i]), "");
-                    //}
-                    //else
-                    s += _form.TableData(list[i], "");
-
-                }
                 s += _form.SectionEnd(summary);
                 return s;
             }
@@ -513,6 +531,60 @@ namespace VeeamHealthCheck.Html.VBR
             s += _form.SectionEnd(summary);
             return s;
         }
+        public string AddMultiRoleTable(bool scrub)
+        {
+            string s = _form.SectionStartWithButton("proxies", ResourceHandler.PrxTitle, ResourceHandler.PrxBtn);
+            string summary = _sum.Proxies();
+            s += "<tr>" +
+           _form.TableHeader(ResourceHandler.Prx0, ResourceHandler.Prx0TT) +
+           _form.TableHeader(ResourceHandler.Prx1, ResourceHandler.Prx1TT) +
+           _form.TableHeader(ResourceHandler.Prx2, ResourceHandler.Prx2TT) +
+           _form.TableHeader(ResourceHandler.Prx3, ResourceHandler.Prx3TT) +
+           _form.TableHeader(ResourceHandler.Prx4, ResourceHandler.Prx4TT) +
+           _form.TableHeader(ResourceHandler.Prx5, ResourceHandler.Prx5TT) +
+           _form.TableHeader(ResourceHandler.Prx6, ResourceHandler.Prx6TT) +
+           _form.TableHeader(ResourceHandler.Prx7, ResourceHandler.Prx7TT) +
+           _form.TableHeader(ResourceHandler.Prx8, ResourceHandler.Prx8TT) +
+           _form.TableHeader(ResourceHandler.Prx9, ResourceHandler.Prx9TT) +
+           _form.TableHeader(ResourceHandler.Prx10, ResourceHandler.Prx10TT) +
+           _form.TableHeader(ResourceHandler.Prx11, ResourceHandler.Prx11TT) +
+   "</tr>";
+            try
+            {
+                List<string[]> list = _df.ProxyXmlFromCsv(scrub);
+
+                foreach (var d in list)
+                {
+                    s += "<tr>";
+                    if (scrub)
+                        s += _form.TableData(_scrub.ScrubItem(d[0]), "");
+                    else
+                        s += _form.TableData(d[0], "");
+                    s += _form.TableData(d[1], "");
+                    s += _form.TableData(d[2], "");
+                    s += _form.TableData(d[3], "");
+                    s += _form.TableData(d[4], "");
+                    s += _form.TableData(d[5], "");
+                    s += _form.TableData(d[6], "");
+                    s += _form.TableData(d[7], "");
+                    s += _form.TableData(d[8], "");
+                    s += _form.TableData(d[9], "");
+                    if (scrub)
+                        s += _form.TableData(_scrub.ScrubItem(d[10]), "");
+                    else
+                        s += _form.TableData(d[10], "");
+                    s += _form.TableData(d[11], "");
+                    s += "</tr>";
+                }
+            }
+            catch (Exception e)
+            {
+                log.Error("PROXY Data import failed. ERROR:");
+                log.Error("\t" + e.Message);
+            }
+            s += _form.SectionEnd(summary);
+            return s;
+        }
         public string AddSobrTable(bool scrub)
         {
             string s = _form.SectionStartWithButton("sobr", ResourceHandler.SbrTitle, ResourceHandler.SbrBtn);
@@ -717,7 +789,7 @@ _form.TableHeader(ResourceHandler.SbrExt15, ResourceHandler.SbrExt15TT) +
         }
         public string AddJobConTable(bool scrub)
         {
-            string s = _form.SectionStartWithButton("jobcon", ResourceHandler.JobConTitle, ResourceHandler.JobConBtn, VhcGui._reportDays);
+            string s = _form.SectionStartWithButton("jobcon", ResourceHandler.JobConTitle, ResourceHandler.JobConBtn, CGlobals.ReportDays);
             string summary = _sum.JobCon();
             s += _form.TableHeader(ResourceHandler.JobCon0, "");
             s += _form.TableHeader(ResourceHandler.JobCon1, "");
@@ -733,7 +805,7 @@ _form.TableHeader(ResourceHandler.SbrExt15, ResourceHandler.SbrExt15TT) +
             {
 
 
-                var stuff = _df.JobConcurrency(true, VhcGui._reportDays);
+                var stuff = _df.JobConcurrency(true, CGlobals.ReportDays);
 
                 foreach (var stu in stuff)
                 {
@@ -759,7 +831,7 @@ _form.TableHeader(ResourceHandler.SbrExt15, ResourceHandler.SbrExt15TT) +
         }
         public string AddTaskConTable(bool scrub)
         {
-            string s = _form.SectionStartWithButton("taskcon", ResourceHandler.TaskConTitle, ResourceHandler.TaskConBtn, VhcGui._reportDays);
+            string s = _form.SectionStartWithButton("taskcon", ResourceHandler.TaskConTitle, ResourceHandler.TaskConBtn, CGlobals.ReportDays);
             string summary = _sum.TaskCon();
 
             s += _form.TableHeader(ResourceHandler.TaskCon0, "");
@@ -774,7 +846,7 @@ _form.TableHeader(ResourceHandler.SbrExt15, ResourceHandler.SbrExt15TT) +
 
             try
             {
-                var stuff = _df.JobConcurrency(false, VhcGui._reportDays);
+                var stuff = _df.JobConcurrency(false, CGlobals.ReportDays);
 
                 foreach (var stu in stuff)
                 {
@@ -800,7 +872,7 @@ _form.TableHeader(ResourceHandler.SbrExt15, ResourceHandler.SbrExt15TT) +
         }
         public string AddJobSessSummTable(bool scrub)
         {
-            string s = _form.SectionStartWithButton("jobsesssum", ResourceHandler.JssTitle, ResourceHandler.JssBtn, VhcGui._reportDays);
+            string s = _form.SectionStartWithButton("jobsesssum", ResourceHandler.JssTitle, ResourceHandler.JssBtn, CGlobals.ReportDays);
             string summary = _sum.JobSessSummary();
 
             s += _form.TableHeader(ResourceHandler.Jss0, ResourceHandler.Jss0TT);

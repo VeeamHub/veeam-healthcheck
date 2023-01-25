@@ -9,6 +9,7 @@ using System.Linq;
 using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading.Tasks;
+using VeeamHealthCheck.Shared;
 using VeeamHealthCheck.Shared.Logging;
 
 namespace VeeamHealthCheck
@@ -17,53 +18,70 @@ namespace VeeamHealthCheck
     {
         private readonly string _sessionReport = "Get-VBRConfig.ps1";
         private readonly string _vb365Script = Environment.CurrentDirectory + @"\Tools\Scripts\Collect-VB365Data.ps1";
-        private CLogger log = VhcGui.log;
+        private readonly string _vbrConfigScript = Environment.CurrentDirectory + @"\Tools\Scripts\Get-VBRConfig.ps1";
+        private readonly string _vbrSessionScript = Environment.CurrentDirectory + @"\Tools\Scripts\Get-VeeamSessionReport.ps1";
+
+        private CLogger log = CGlobals.Logger;
         public PSInvoker()
         {
         }
-        public void Invoke(bool collectSessionData)
+        public void Invoke()
         {
-            log.Info("[PS] Enter Config Collection Invoker...");
-            var ps1File = Environment.CurrentDirectory + @"\Tools\Scripts\Get-VBRConfig.ps1";
-            //log.Info("Checking file block..");
-            UnblockFile(ps1File);
-            var startInfo = new ProcessStartInfo()
+            TryUnblockFiles();
+            
+            RunVbrConfigCollect();
+            RunVbrSessionCollection();
+        }
+        private void TryUnblockFiles()
+        {
+            UnblockFile(_vbrConfigScript);
+            UnblockFile(_vbrSessionScript);
+        }
+        private void RunVbrConfigCollect()
+        {
+            var res1 = Process.Start(VbrConfigStartInfo());
+            log.Info(CMessages.PsVbrConfigProcId + res1.Id.ToString());
+            
+            res1.WaitForExit();
+            
+            log.Info(CMessages.PsVbrConfigProcIdDone);
+        }
+        private ProcessStartInfo VbrConfigStartInfo()
+        {
+            log.Info(CMessages.PsVbrConfigStart);
+            return ConfigStartInfo(_vbrConfigScript, 0);
+        }
+        private void RunVbrSessionCollection()
+        {
+            log.Info("[PS][VBR Sessions] Enter Session Collection Invoker...");
+
+
+            var startInfo2 = ConfigStartInfo(_vbrSessionScript, CGlobals.ReportDays);
+                
+                
+            log.Info("[PS][VBR Sessions] Starting Session Collection PowerShell Process...");
+
+            var result = Process.Start(startInfo2);
+            
+            log.Info("[PS][VBR Sessions] Process started with ID: " + result.Id.ToString());
+            result.WaitForExit();
+            
+            log.Info("[PS][VBR Sessions] Session collection complete!");
+        }
+        private ProcessStartInfo ConfigStartInfo(string scriptLocation, int days)
+        {
+            string argString;
+            if (days != 0)
+                argString = $"-NoProfile -ExecutionPolicy unrestricted -file \"{scriptLocation}\" -VBRServer localhost -ReportInterval {CGlobals.ReportDays} ";
+            else
+                argString = $"-NoProfile -ExecutionPolicy unrestricted -file \"{scriptLocation}\" -VBRServer localhost ";
+            return new ProcessStartInfo()
             {
                 FileName = "powershell.exe",
-                Arguments = $"-NoProfile -ExecutionPolicy unrestricted -file \"{ps1File}\" -VBRServer localhost ",
+                Arguments = argString,
                 UseShellExecute = false,
                 CreateNoWindow = true
             };
-            log.Info("[PS][VBR Config] Starting PowerShell Process...");
-            var res1 = Process.Start(startInfo);
-            log.Info("[PS][VBR Config] Process started with ID: " +  res1.Id.ToString());
-            res1.WaitForExit();
-            log.Info("[PS][VBR Config] Config collection complete!");
-
-            if (collectSessionData)
-            {
-                log.Info("[PS][VBR Sessions] Enter Session Collection Invoker...");
-                var ps1File2 = Environment.CurrentDirectory + @"\Tools\Scripts\Get-VeeamSessionReport.ps1";
-                UnblockFile(ps1File2);
-                var startInfo2 = new ProcessStartInfo()
-                {
-                    FileName = "powershell.exe",
-                    Arguments = $"-NoProfile -ExecutionPolicy unrestricted -file {ps1File2} -VBRServer localhost -ReportInterval {VhcGui._reportDays}",
-                    UseShellExecute = false,
-                    CreateNoWindow = true
-                };
-                log.Info("[PS][VBR Sessions] Starting Session Collection PowerShell Process...");
-                var result = Process.Start(startInfo2);
-                log.Info("[PS][VBR Sessions] Process started with ID: " + result.Id.ToString());
-                result.WaitForExit();
-                log.Info("[PS][VBR Sessions] Session collection complete!");
-            }
-
-            
-            //shell.AddCommand("Get-VeeamSessionReport").AddParameter("VBRServer","localhost").AddParameter("ReportPath","C:\\temp\\vbrout");
-
-            //var output = shell.Invoke();
-
         }
         public void InvokeVb365Collect()
         {
@@ -74,7 +92,7 @@ namespace VeeamHealthCheck
             var startInfo = new ProcessStartInfo()
             {
                 FileName = "powershell.exe",
-                Arguments = $"-NoProfile -ExecutionPolicy unrestricted -file \"{scriptFile}\" -ReportingIntervalDays \"{VhcGui._reportDays}\"",
+                Arguments = $"-NoProfile -ExecutionPolicy unrestricted -file \"{scriptFile}\" -ReportingIntervalDays \"{CGlobals.ReportDays}\"",
                 UseShellExecute = false,
                 CreateNoWindow = true
             };
@@ -92,8 +110,8 @@ namespace VeeamHealthCheck
             {
                 FileName = "powershell.exe",
                 Arguments = $"",
-                UseShellExecute=false,
-                CreateNoWindow=true
+                UseShellExecute = false,
+                CreateNoWindow = true
             };
         }
         private string Vb365ScriptFile()
@@ -103,8 +121,17 @@ namespace VeeamHealthCheck
         }
         private void UnblockFile(string file)
         {
-            FileUnblocker fu = new();
-            fu.Unblock(file);
+            try
+            {
+                FileUnblocker fu = new();
+                fu.Unblock(file);
+            }
+            catch(Exception ex)
+            {
+                log.Warning("Script unblock failed. Manual unblocking of files may be required.\n\t");
+                log.Warning(ex.Message);
+            }
+            
         }
     }
     public class FileUnblocker
