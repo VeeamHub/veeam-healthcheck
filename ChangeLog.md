@@ -1,4 +1,10 @@
-﻿1.0.2.866
+﻿1.2.2.934
+- Disabled ability to change output. Will enable when breaking issues are resolved.
+
+1.0.2.867
+- Updaded collection script for VB365
+
+1.0.2.866
 - fixed issue where anonymized report contained inconsidtent item replacement
 
 1.0.2.863
@@ -13,7 +19,7 @@
 
 1.0.2.847
 - Security:
-    - Removed deprecated/unused dependencies
+	- Removed deprecated/unused dependencies
 - Updated Hotfix Detector (/Tools/Hotfixdetector.zip)
 
 1.0.2.833
@@ -52,9 +58,9 @@
 
 1.0.1.1273
 - Fixed Issues:
- 	- #3
+	- #3
 	- #4
- 	- #5
+	- #5
 - Fixed math where Job Sessions' success rate could be greater than 100%.
 
 1.0.1.1272
