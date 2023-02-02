@@ -10,11 +10,11 @@
     <Company>Veeam</Company>
     <Authors>AdamC</Authors>
     <ApplicationIcon>Veeam_HealthCheck_228x228.ico</ApplicationIcon>
-    <AssemblyVersion>1.0.2.969</AssemblyVersion>
+    <AssemblyVersion>1.0.2.976</AssemblyVersion>
     <SignAssembly>true</SignAssembly>
     <AssemblyOriginatorKeyFile>vhc_keyfile2.pfx</AssemblyOriginatorKeyFile>
     <DelaySign>false</DelaySign>
-    <FileVersion>1.0.2.969</FileVersion>
+    <FileVersion>1.0.2.976</FileVersion>
     <DebugType>full</DebugType>
 	  <SelfContained>true</SelfContained>
 	  <!--These 2 lines are what produce the single file utility. Possibly doesn't work...-->
@@ -129,7 +129,7 @@
   </ItemGroup>
 
   <Target Name="PostBuild" AfterTargets="PostBuildEvent">
-    <Exec Command="call C:\Users\cac89\Source\Repos\VeeamHub\veeam-healthcheck\vHC\HC_Reporting\Tools\build\test.bat" />
+    <Exec Command="call C:\code\VeeamHub\veeam-healthcheck\vHC\HC_Reporting\Tools\build\test.bat" />
   </Target>
 
 </Project>

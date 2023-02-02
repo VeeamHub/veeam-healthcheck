@@ -1,5 +1,6 @@
 ﻿// Copyright (c) 2021, Adam Congdon <adam.congdon2@gmail.com>
 // MIT License
+using CsvHelper;
 using System;
 using System.Collections.Generic;
 using System.Data;
@@ -1079,6 +1080,8 @@ namespace VeeamHealthCheck.Reporting.Html
             csv = csv.OrderBy(y => y.JobType).ToList();
             csv = csv.OrderBy(x => x.Name).ToList();
 
+            var cp = new CCsvParser();
+            var csv2 = cp.ServerCsvParser().ToList();
             //XDocument doc = XDocument.Load(_testFile);
 
             XElement extElement = new XElement("jobs");

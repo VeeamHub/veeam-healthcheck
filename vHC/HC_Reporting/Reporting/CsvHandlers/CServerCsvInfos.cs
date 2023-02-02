@@ -43,5 +43,7 @@ namespace VeeamHealthCheck.CsvHandlers
         public string CPU { get; set; }
         [Index(14)]
         public string Ram { get; set; }
+        [Index(15)]
+        public string OSInfo{ get; set; }
     }
 }
