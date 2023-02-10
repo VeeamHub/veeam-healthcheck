@@ -19,6 +19,8 @@ namespace VeeamHealthCheck.DB
         private static string _dbType;
         private static string _dbLocal;
 
+        private string logStart = "[RegistryReader]\t";
+
         private CLogger log = CGlobals.Logger;
 
         public string User { get { return _user; } }
@@ -55,12 +57,15 @@ namespace VeeamHealthCheck.DB
             }
             catch (Exception e2)
             {
-                log.Error("");
+                log.Error(logStart + "Failed to get v11 DB info from Registry. Trying v12 registry hives");
             }
             if (String.IsNullOrEmpty(_databaseName))
             {
                 try { GetVbrTwelveDbInfo(); }
-                catch { Exception e3; }
+                catch (Exception e3)
+                {
+                    log.Error(logStart + "Failed to get v12 DB info from Registry.")
+                }
             }
 
         }
@@ -109,7 +114,7 @@ namespace VeeamHealthCheck.DB
                     var dbType = key.GetValue("SqlActiveConfiguration").ToString();
                     if (dbType == "MsSql")
                     {
-                        _dbType= "MS SQL";
+                        _dbType = "MS SQL";
                         using (RegistryKey sqlKey = Registry.LocalMachine.OpenSubKey("Software\\Veeam\\Veeam Backup and Replication\\DatabaseConfigurations\\MsSql"))
                         {
                             host = sqlKey.GetValue("SqlServerName").ToString();
@@ -129,13 +134,13 @@ namespace VeeamHealthCheck.DB
                         using (RegistryKey pgKey = Registry.LocalMachine.OpenSubKey("Software\\Veeam\\Veeam Backup and Replication\\DatabaseConfigurations\\PostgreSql"))
                         {
                             host = pgKey.GetValue("SqlHostName").ToString();
-                            if(host == "localhost")
+                            if (host == "localhost")
                                 CGlobals.ISDBLOCAL = "True";
                             CGlobals.DBHOSTNAME = host;
-                                
+
                         }
                     }
-                    
+
                     //var database =
                     //    key.GetValue("SqlDatabaseName")
                     //        .ToString();

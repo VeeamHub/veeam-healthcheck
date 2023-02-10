@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using VeeamHealthCheck.Reporting.TableDatas;
 using VeeamHealthCheck.Scrubber;
 using VeeamHealthCheck.Shared.Logging;
 
@@ -17,6 +18,7 @@ namespace VeeamHealthCheck.Shared
         public static  readonly string _backupServerId = "6745a759-2205-4cd2-b172-8ec8f7e60ef8";
         public static bool IMPORT = false;
         public static int vbrVersion;
+        public static DateTime TOOLSTART;
 
         // GUI & CLI Options:
         private static int _reportDays;
@@ -34,6 +36,7 @@ namespace VeeamHealthCheck.Shared
 
 
         // config db values
+        public static BackupServer BACKUPSERVER;
         public static string ISDBLOCAL;
         public static string DBTYPE;
         public static string DBNAME;

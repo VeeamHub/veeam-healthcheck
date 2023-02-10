@@ -26,6 +26,7 @@ namespace VeeamHealthCheck.Resources
         public CArgsParser(string[] args)
         {
             _args = args;
+            CGlobals.TOOLSTART = DateTime.Now;
         }
         public void ParseArgs()
         {
@@ -81,38 +82,41 @@ namespace VeeamHealthCheck.Resources
             {
                 switch (a)
                 {
-                    case "help":
+                    case "/help":
                         CGlobals.Logger.Info("entering help menu");
                         Console.WriteLine(CMessages.helpMenu);
                         break;
-                    case "run":
+                    case "/run":
                         run = true;
                         CGlobals.Logger.Info("Run = true");
                         break;
-                    case "show:files":
+                    case "/show:files":
                         break;
-                    case "show:report":
+                    case "/show:report":
                         break;
-                    case "show:all":
+                    case "/show:all":
                         break;
-                    case "days:7":
+                    case "/days:7":
                         CGlobals.Logger.Info("Days set to 7");
                         CGlobals.ReportDays = 7;
                         break;
-                    case "days:30":
+                    case "/days:30":
                         CGlobals.Logger.Info("Days set to 30");
                         CGlobals.ReportDays = 30;
                         break;
-                    case "days:90":
+                    case "/days:90":
                         CGlobals.Logger.Info("Days set to 90");
                         CGlobals.ReportDays = 90;
                         break;
-                    case "days:12":
+                    case "/days:12":
                         CGlobals.Logger.Info("Days set to 12");
                         CGlobals.ReportDays = 12;
                         break;
-                    case "gui":
+                    case "/gui":
                         ui = true;
+                        break;
+                    case "/import":
+                        CGlobals.IMPORT = true;
                         break;
                     case var match when new Regex("outdir:.*").IsMatch(a):
                         string[] outputDir = a.Split(":");
@@ -126,7 +130,7 @@ namespace VeeamHealthCheck.Resources
                 }
             }
 
-            if (args.Any(x => x == "security"))
+            if (args.Any(x => x == "/security"))
             {
                 Console.WriteLine(true);
                 CGlobals.RunSecReport = true;
@@ -137,14 +141,36 @@ namespace VeeamHealthCheck.Resources
                 LaunchUi(Handle(), false);
             else if (run)
             {
-                CGlobals.Logger.Info("Starting RUN...", false);
-
-                CClientFunctions functions = new();
-                functions.CliRun(targetDir);
-
-                CGlobals.Logger.Info("Starting RUN...complete!", false);
-                CGlobals.Logger.Info("Output is stored in " + targetDir);
+                FullRun(targetDir);
             }
+            else if (CGlobals.IMPORT)
+            {
+                ImportRun(targetDir);
+            }
+        }
+        private void Run(string targetDir)
+        {
+            CClientFunctions functions = new();
+            functions.CliRun(targetDir);
+        }
+        private void FullRun(string targetDir)
+        {
+            CGlobals.Logger.Info("Starting RUN...", false);
+            Run(targetDir);
+
+
+            CGlobals.Logger.Info("Starting RUN...complete!", false);
+            CGlobals.Logger.Info("Output is stored in " + targetDir);
+
+        }
+        private void ImportRun(string targetDir)
+        {
+            CGlobals.Logger.Info("Starting IMPORT...", false);
+            Run(targetDir);
+
+
+            CGlobals.Logger.Info("Starting IMPORT...complete!", false);
+            CGlobals.Logger.Info("Output is stored in " + targetDir);
         }
     }
 }

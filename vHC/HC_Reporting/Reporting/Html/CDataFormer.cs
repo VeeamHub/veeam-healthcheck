@@ -797,7 +797,7 @@ namespace VeeamHealthCheck.Reporting.Html
             //string htmlString = String.Empty;
             //List<CJobSessionInfo> sessionInfo = _dTypeParser.JobSessions;
             // try to trim it up...
-            var targetDate = DateTime.Now.AddDays(-CGlobals.ReportDays);
+            var targetDate = CGlobals.TOOLSTART.AddDays(-CGlobals.ReportDays);
             List<CJobSessionInfo> trimmedSessionInfo = new();
             using (CDataTypesParser dt = new())
             {
@@ -1137,7 +1137,7 @@ namespace VeeamHealthCheck.Reporting.Html
 
             List<CJobSessionInfo> csv = new();
 
-            var targetDate = DateTime.Now.AddDays(-CGlobals.ReportDays);
+            var targetDate = CGlobals.TOOLSTART.AddDays(-CGlobals.ReportDays);
             //List<CJobSessionInfo> trimmedSessionInfo = new();
             using (CDataTypesParser dt = new())
             {
