@@ -16,6 +16,8 @@ namespace VeeamHealthCheck.DB
         private static string _host;
         private static string _user;
         private static string _passString;
+        private static string _dbType;
+        private static string _dbLocal;
 
         private CLogger log = CGlobals.Logger;
 
@@ -107,38 +109,47 @@ namespace VeeamHealthCheck.DB
                     var dbType = key.GetValue("SqlActiveConfiguration").ToString();
                     if (dbType == "MsSql")
                     {
+                        _dbType= "MS SQL";
                         using (RegistryKey sqlKey = Registry.LocalMachine.OpenSubKey("Software\\Veeam\\Veeam Backup and Replication\\DatabaseConfigurations\\MsSql"))
                         {
                             host = sqlKey.GetValue("SqlServerName").ToString();
-                            string inst = sqlKey.GetValue("").ToString();
-                            string db = sqlKey.GetValue("").ToString();
+                            if (host == "localhost")
+                                CGlobals.ISDBLOCAL = "True";
+                            CGlobals.DBHOSTNAME = host;
+                            //CGlobals.DBINSTANCE = key.GetValue("SqlInstanceName").ToString();
+
                             // SqlInstanceName
                             // SqlDatabaseName
                         }
                     }
                     else if (dbType == "PostgreSql")
                     {
+                        _dbType = "PostgreSQL";
+                        CGlobals.DBTYPE = "PostgreSQL";
                         using (RegistryKey pgKey = Registry.LocalMachine.OpenSubKey("Software\\Veeam\\Veeam Backup and Replication\\DatabaseConfigurations\\PostgreSql"))
                         {
                             host = pgKey.GetValue("SqlHostName").ToString();
+                            if(host == "localhost")
+                                CGlobals.ISDBLOCAL = "True";
+                            CGlobals.DBHOSTNAME = host;
+                                
                         }
                     }
-                    var instance = key.GetValue("SqlInstanceName").ToString();
                     
-                    var database =
-                        key.GetValue("SqlDatabaseName")
-                            .ToString();
-                    _user = key.GetValue("SqlLogin").ToString();
-                    _passString = key.GetValue("SqlSecuredPassword").ToString();
-                    if (!string.IsNullOrEmpty(host))
-                    {
-                        if (!string.IsNullOrEmpty(database))
-                        {
-                            _databaseName = database;
-                            _host = host;
-                            _hostInstanceString = host + "\\" + instance;
-                        }
-                    }
+                    //var database =
+                    //    key.GetValue("SqlDatabaseName")
+                    //        .ToString();
+                    //_user = key.GetValue("SqlLogin").ToString();
+                    //_passString = key.GetValue("SqlSecuredPassword").ToString();
+                    //if (!string.IsNullOrEmpty(host))
+                    //{
+                    //    if (!string.IsNullOrEmpty(database))
+                    //    {
+                    //        _databaseName = database;
+                    //        _host = host;
+                    //        _hostInstanceString = host + "\\" + instance;
+                    //    }
+                    //}
                 }
             }
         }

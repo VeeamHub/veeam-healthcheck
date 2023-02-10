@@ -6,7 +6,7 @@ using System.Runtime.InteropServices;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
-using VeeamHealthCheck.Reporting.vsac;
+//using VeeamHealthCheck.Reporting.vsac;
 using VeeamHealthCheck.Shared;
 
 namespace VeeamHealthCheck.Resources
@@ -119,10 +119,10 @@ namespace VeeamHealthCheck.Resources
                         targetDir = outputDir[1];
                         CGlobals.Logger.Info("Output directory: " + targetDir);
                         break;
-                    case "security":
-                        Class1 c = new Class1();
-                        c.init();
-                        break;
+                    //case "security":
+                    //    Class1 c = new Class1();
+                    //    c.init();
+                    //    break;
                 }
             }
 

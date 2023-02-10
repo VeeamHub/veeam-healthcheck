@@ -16,6 +16,8 @@ namespace VeeamHealthCheck.Collection.LogParser
         private string _mode;
         private string _vb365Logs = @"C:\ProgramData\Veeam\Backup365\Logs\";
 
+        private DateTime _DbLineDate;
+
         public CVmcReader(string mode)
         {
             _mode = mode;
@@ -72,8 +74,26 @@ namespace VeeamHealthCheck.Collection.LogParser
                     {
                         ParseInstallId(line);
                     }
+                    else if (line.Contains("[SQL Server version]"))
+                    {
+                        ParseConfigDbInfo(line);
+                    }
                 }
             }
+        }
+        private void ParseConfigDbInfo(string line)
+        {
+            DateTime dbLineDate = ParseLineDate(line);
+            if(_DbLineDate == null ||dbLineDate.Ticks - _DbLineDate.Ticks == 0 )
+            _DbLineDate = ParseLineDate(line);
+
+        }
+        private DateTime ParseLineDate(string line)
+        {
+            string newLine = line.Substring(1, 25);
+            DateTime.TryParse(newLine, out DateTime dt);
+            return dt;
+
         }
         private void ParseInstallId(string line)
         {

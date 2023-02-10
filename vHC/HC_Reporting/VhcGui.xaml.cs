@@ -116,6 +116,7 @@ namespace VeeamHealthCheck
         private void Import_click(object sender, RoutedEventArgs e)
         {
             _functions.LogUIAction("Import");
+            CGlobals.IMPORT = true;
             DisableGuiAndStartProgressBar();
             Run(true);
         }
@@ -140,6 +141,10 @@ namespace VeeamHealthCheck
         {
             System.Threading.Tasks.Task.Factory.StartNew(() =>
             {
+                // need a better start point but.... sec check here:
+
+
+
                 if(import)
                     _functions.Import();
                 else

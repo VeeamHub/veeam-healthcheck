@@ -640,7 +640,7 @@ namespace VeeamHealthCheck.Reporting.Html
 
             foreach (var c in csv)
             {
-                string[] s = new string[12];
+                string[] s = new string[13];
 
                 //match server and VM count
                 int vmCount = 0;
@@ -715,6 +715,7 @@ namespace VeeamHealthCheck.Reporting.Html
                 s[9] += repoRole;// pVmStr;
                 s[10] += wanRole;// upVmStr;
                 s[11] += c.IsUnavailable;// tVmStr;
+                s[12] += ParseString(c.OSInfo);
 
 
                 //doc.Add(xml);

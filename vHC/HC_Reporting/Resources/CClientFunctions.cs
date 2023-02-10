@@ -10,6 +10,7 @@ using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Documents;
+using VeeamHealthCheck.Security;
 using VeeamHealthCheck.Shared;
 
 namespace VeeamHealthCheck.Resources
@@ -127,6 +128,12 @@ namespace VeeamHealthCheck.Resources
             CGlobals.Logger.Info("Starting Run");
             ExecPSScripts();
             PopulateWaits();
+
+            // add in sec report area:
+            CSecurityInit securityInit= new CSecurityInit();
+            securityInit.Run();
+            //
+
             if (CGlobals.IsVbr)
             {
                 Collection.LogParser.CLogOptions logOptions = new("vbr");

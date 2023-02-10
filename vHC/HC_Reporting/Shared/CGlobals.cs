@@ -15,6 +15,7 @@ namespace VeeamHealthCheck.Shared
         private static bool _scrub;
         private static CScrubHandler _scrubberMain = new();
         public static  readonly string _backupServerId = "6745a759-2205-4cd2-b172-8ec8f7e60ef8";
+        public static bool IMPORT = false;
         public static int vbrVersion;
 
         // GUI & CLI Options:
@@ -27,6 +28,22 @@ namespace VeeamHealthCheck.Shared
         private static bool _runFullReport;
         private static bool _runSecReport;
 
+        // general global values
+        public static bool isConsoleLocal = false;
+        public static string _isRdpEnabled = "Undetermined";
+
+
+        // config db values
+        public static string ISDBLOCAL;
+        public static string DBTYPE;
+        public static string DBNAME;
+        public static string DBVERSION;
+        public static string DBHOSTNAME;
+        public static string DBVersion;
+        public static string DBEdition;
+        public static string DBINSTANCE;
+        public static string DBCORES;
+        public static string DBRAM;
 
         public CGlobals()
         {

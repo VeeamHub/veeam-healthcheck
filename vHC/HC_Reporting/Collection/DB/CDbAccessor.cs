@@ -36,10 +36,13 @@ namespace VeeamHealthCheck.DB
             string db = reg.DbString;
             if (host == null || db == null)
             {
-                Console.WriteLine("Please enter SQL Host Name & Instance (i.e. vbr-server\\sqlserver2016):");
-                host = Console.ReadLine();
-                Console.WriteLine("Please enter DB name:");
-                db = Console.ReadLine();
+
+                // why am i asking for interaction?
+
+                //Console.WriteLine("Please enter SQL Host Name & Instance (i.e. vbr-server\\sqlserver2016):");
+                //host = Console.ReadLine();
+                //Console.WriteLine("Please enter DB name:");
+                //db = Console.ReadLine();
             }
             builder["Server"] = host;
             builder["Database"] = db;

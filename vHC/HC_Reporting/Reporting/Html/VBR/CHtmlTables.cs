@@ -125,26 +125,39 @@ namespace VeeamHealthCheck.Html.VBR
             s += _form.TableHeader(ResourceHandler.BkpSrvTblVersion, ResourceHandler.BstVerTT);
             s += _form.TableHeader(ResourceHandler.BkpSrvTblCore, ResourceHandler.BstCpuTT);
             s += _form.TableHeader(ResourceHandler.BkpSrvTblRam, ResourceHandler.BstRamTT);
-            s += _form.TableHeader(ResourceHandler.BkpSrvTblCfgEnabled, ResourceHandler.BstCfgEnabledTT);
-            s += _form.TableHeader(ResourceHandler.BkpSrvTblCfgLastRes, ResourceHandler.BstCfgLastResTT);
-            s += _form.TableHeader(ResourceHandler.BkpSrvTblCfgEncrypt, ResourceHandler.BstCfgEncTT);
-            s += _form.TableHeader(ResourceHandler.BkpSrvTblTarget, ResourceHandler.BstCfgTarTT);
+            
             s += _form.TableHeader(ResourceHandler.BkpSrvTblProxyRole, ResourceHandler.BstPrxTT);
             s += _form.TableHeader(ResourceHandler.BkpSrvTblRepoRole, ResourceHandler.BstRepTT);
             s += _form.TableHeader(ResourceHandler.BkpSrvTblWanRole, ResourceHandler.BstWaTT);
+            s += _form.TableHeader("Console Installed", "");
+            s += _form.TableHeader("RDP Enabled", "");
             s += "</tr><<tr>";
             s += _form.TableData(b.Name, "");
             s += _form.TableData(b.Version, "");
             s += _form.TableData(b.Cores.ToString(), "");
             s += _form.TableData(b.RAM.ToString(), "");
+            s += _form.TableData(b.HasProxyRole.ToString(), "");
+            s += _form.TableData(b.HasRepoRole.ToString(), "");
+            s += _form.TableData(b.HasWanAccRole.ToString(), "");
+            s += _form.TableData(CGlobals.isConsoleLocal.ToString(), "");
+            s += _form.TableData(CGlobals._isRdpEnabled.ToString(), "");
+            s += "</table><br>";
+            
+            s += "<h3>Config Backup Info</h3>";
+            s += "<table border=\"1\">";
+            s += _form.TableHeader(ResourceHandler.BkpSrvTblCfgEnabled, ResourceHandler.BstCfgEnabledTT);
+            s += _form.TableHeader(ResourceHandler.BkpSrvTblCfgLastRes, ResourceHandler.BstCfgLastResTT);
+            s += _form.TableHeader(ResourceHandler.BkpSrvTblCfgEncrypt, ResourceHandler.BstCfgEncTT);
+            s += _form.TableHeader(ResourceHandler.BkpSrvTblTarget, ResourceHandler.BstCfgTarTT);
+            s += "<tr></tr>";
             s += _form.TableData(b.ConfigBackupEnabled.ToString(), "");
             s += _form.TableData(b.ConfigBackupLastResult, "");
             s += _form.TableData(b.ConfigBackupEncryption.ToString(), "");
             s += _form.TableData(b.ConfigBackupTarget, "");
-            s += _form.TableData(b.HasProxyRole.ToString(), "");
-            s += _form.TableData(b.HasRepoRole.ToString(), "");
-            s += _form.TableData(b.HasWanAccRole.ToString(), "");
-            s += "</table><table border=\"1\">";
+            s += "</table>";
+
+            s += "<h3>Config DB Info</h3>";
+            s += "<table border=\"1\">";
             s += _form.LineBreak();
             // config DB Table
             s += _form.TableHeader("DataBase Type", "MS SQL or PostgreSQL");
@@ -404,6 +417,7 @@ namespace VeeamHealthCheck.Html.VBR
            _form.TableHeader(ResourceHandler.ManSrv1, ResourceHandler.ManSrv1TT) +
            _form.TableHeader(ResourceHandler.ManSrv2, ResourceHandler.ManSrv2TT) +
            _form.TableHeader(ResourceHandler.ManSrv3, ResourceHandler.ManSrv3TT) +
+           _form.TableHeader("OS Info", ResourceHandler.ManSrv3TT) +
            _form.TableHeader(ResourceHandler.ManSrv4, ResourceHandler.ManSrv4TT) +
            _form.TableHeader(ResourceHandler.ManSrv5, ResourceHandler.ManSrv5TT) +
            _form.TableHeader(ResourceHandler.ManSrv6, ResourceHandler.ManSrv6TT) +
@@ -425,17 +439,18 @@ namespace VeeamHealthCheck.Html.VBR
                     //    s += _form.TableData(_scrub.ScrubItem(d[0]), "");
                     //else
                         s += _form.TableData(d[0], "");
-                    s += _form.TableData(d[1], "");
-                    s += _form.TableData(d[2], "");
-                    s += _form.TableData(d[3], "");
-                    s += _form.TableData(d[4], "");
-                    s += _form.TableData(d[5], "");
-                    s += _form.TableData(d[6], "");
-                    s += _form.TableData(d[7], "");
-                    s += _form.TableData(d[8], "");
-                    s += _form.TableData(d[9], "");
-                    s += _form.TableData(d[10], "");
-                    s += _form.TableData(d[11], "");
+                    s += _form.TableData(d[1], ""); // name
+                    s += _form.TableData(d[2], ""); // cores
+                    s += _form.TableData(d[3], ""); // ram
+                    s += _form.TableData(d[12], ""); // OS Info
+                    s += _form.TableData(d[4], ""); // api version
+                    s += _form.TableData(d[5], ""); // protected vms
+                    s += _form.TableData(d[6], ""); // not protected vms
+                    s += _form.TableData(d[7], ""); // total vms
+                    s += _form.TableData(d[8], ""); // is proxy
+                    s += _form.TableData(d[9], ""); // is repo
+                    s += _form.TableData(d[10], ""); // is wan
+                    s += _form.TableData(d[11], ""); // is unavailable
                     s += "</tr>";
                 }
             }

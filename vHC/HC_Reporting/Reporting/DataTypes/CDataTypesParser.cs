@@ -577,6 +577,7 @@ namespace VeeamHealthCheck.DataTypes
                 ti.Id = (s.Id);
                 ti.PhysHostId = s.PhysHostId;
                 ti.Info = s.Info;
+                ti.OSInfo = s.OSInfo;
                 ti.IsUnavailable = s.IsUnavailable;
                 if (ti.IsUnavailable == "False")
                     ti.IsUnavailable = "";

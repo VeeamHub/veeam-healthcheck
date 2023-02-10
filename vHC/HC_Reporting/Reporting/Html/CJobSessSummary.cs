@@ -58,7 +58,7 @@ namespace VeeamHealthCheck.Html
             List<List<string>> sendBack = new();
             log.Info("converting job session summary to xml");
 
-            var targetDate = DateTime.Now.AddDays(-CGlobals.ReportDays);
+            var targetDate = CGlobals.TOOLSTART.AddDays(-CGlobals.ReportDays);
             List<CJobSessionInfo> trimmedSessionInfo = new();
             using (CDataTypesParser dt = new())
             {
@@ -211,6 +211,10 @@ namespace VeeamHealthCheck.Html
                     {
                         double percent = ((sessionCount - fails + retries) / sessionCount) * 100;
                         info.SuccessRate = (int)Math.Round(percent, 0, MidpointRounding.ToEven);
+                        if(percent > 100)
+                        {
+
+                        }
                     }
 
                     successRates.Add(info.SuccessRate);
