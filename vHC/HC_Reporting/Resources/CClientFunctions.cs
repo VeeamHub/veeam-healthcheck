@@ -10,6 +10,7 @@ using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Documents;
+using VeeamHealthCheck.Collection;
 using VeeamHealthCheck.Security;
 using VeeamHealthCheck.Shared;
 
@@ -85,35 +86,7 @@ namespace VeeamHealthCheck.Resources
             else
                 return title;
         }
-        public  void ExecPSScripts()
-        {
-            CGlobals.Logger.Info("Starting PS Invoke", false);
-            PSInvoker p = new PSInvoker();
 
-            if (CGlobals.IsVbr)
-            {
-                try
-                {
-                    CGlobals.Logger.Info("Entering vbr ps invoker", false);
-                    p.Invoke();
-                }
-                catch (Exception ex)
-                {
-                    CGlobals.Logger.Error(ex.Message);
-                }
-            }
-            if (CGlobals.IsVb365)
-            {
-                try
-                {
-                    CGlobals.Logger.Info("Entering vb365 ps invoker", false);
-                    p.InvokeVb365Collect();
-                }
-                catch (Exception ex) { CGlobals.Logger.Error(ex.Message); }
-            }
-
-            CGlobals.Logger.Info("Starting PS Invoke...done!", false);
-        }
         public  bool AcceptTerms()
         {
             string message = ResourceHandler.GuiAcceptText;
@@ -126,30 +99,14 @@ namespace VeeamHealthCheck.Resources
         public  void RunClickAction()
         {
             CGlobals.Logger.Info("Starting Run");
-            ExecPSScripts();
-            PopulateWaits();
-
-            // add in sec report area:
-            CSecurityInit securityInit= new CSecurityInit();
-            securityInit.Run();
-            //
-
-            if (CGlobals.IsVbr)
+            if (!CGlobals.IMPORT)
             {
-                Collection.LogParser.CLogOptions logOptions = new("vbr");
+                CCollections collect = new();
+                collect.Run();
             }
-            if (CGlobals.IsVb365)
-            {
-                Collection.LogParser.CLogOptions logOptions = new("vb365");
-            }
-
-
-
-
 
             CGlobals.Logger.Info(ClientSettingsString());
             Import();
-
 
             CGlobals.Logger.Info("Creating Report done!");
 
@@ -181,20 +138,7 @@ namespace VeeamHealthCheck.Resources
                 return false;
             }
         }
-        private  void PopulateWaits()
-        {
-            try
-            {
-                FilesParser.CLogParser lp = new();
-                lp.GetWaitsFromFiles();
-            }
-            catch (Exception e)
-            {
-                CGlobals.Logger.Error("Error checking log files:");
-                CGlobals.Logger.Error(e.Message);
-            }
 
-        }
         public  void Import()
         {
             CReportModeSelector cMode = new();

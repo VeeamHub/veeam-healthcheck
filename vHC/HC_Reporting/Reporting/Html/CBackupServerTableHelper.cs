@@ -19,7 +19,7 @@ namespace VeeamHealthCheck.Reporting.Html
     internal class CBackupServerTableHelper
     {
         private static CLogger log = CGlobals.Logger;
-        private BackupServer _backupServer;
+        private BackupServer _backupServer = CGlobals.BACKUPSERVER;
         private readonly bool _scrub;
 
         private bool _hasFixes = false;
@@ -41,7 +41,7 @@ namespace VeeamHealthCheck.Reporting.Html
             SetConfigBackupSettings();
             if (!CGlobals.IMPORT)
             {
-                TrySetSqlInfo();
+                //TrySetSqlInfo();
                 SetDbHostNameOption2();
             }
             
@@ -146,45 +146,8 @@ namespace VeeamHealthCheck.Reporting.Html
         {
 
         }
-        private void TrySetSqlInfo()
-        {
-            try
-            {
-                log.Info("starting sql queries");
-                DataTable dbServerInfo = new DataTable();
-                CQueries cq = new();
-                dbServerInfo = cq.SqlServerInfo;
-                _backupServer.Edition = cq.SqlEdition;
-                _backupServer.DbVersion = cq.SqlVerion;
-                _backupServer = TryParseSqlResources(dbServerInfo, _backupServer);
-                _backupServer.DbType = "MS SQL";
 
-                log.Info("starting sql queries..done!");
-            }
-            catch (Exception e)
-            {
-                log.Error(e.Message);
 
-            }
-        }
-        private static BackupServer TryParseSqlResources(DataTable table, BackupServer b)
-        {
-            foreach (DataRow row in table.Rows)
-            {
-                string cpu = row["cpu_count"].ToString();
-                string hyperthread = row["hyperthread_ratio"].ToString();
-                string memory = row["physical_memory_kb"].ToString();
-                int.TryParse(cpu, out int c);
-                int.TryParse(hyperthread, out int h);
-                int.TryParse(memory, out int mem);
-
-                b.DbCores = c;//(c * h).ToString();
-                b.DbRAM = ((mem / 1024 / 1024) + 1);
-
-            }
-
-            return b;
-        }
         private string Scrub(string item)
         {
             CScrubHandler scrubber = CGlobals.Scrubber;

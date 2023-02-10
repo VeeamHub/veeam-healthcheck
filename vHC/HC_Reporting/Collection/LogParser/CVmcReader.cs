@@ -5,6 +5,8 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using VeeamHealthCheck.Shared;
+using VeeamHealthCheck.Collection.DB;
+using VeeamHealthCheck.DB;
 
 namespace VeeamHealthCheck.Collection.LogParser
 {
@@ -40,7 +42,7 @@ namespace VeeamHealthCheck.Collection.LogParser
         {
             if(_mode == "vbr")
             {
-                DB.CRegReader reg = new();
+                CRegReader reg = new();
                 string regDir = reg.DefaultLogDir();
                 LOGLOCATION = Path.Combine(regDir + CLogOptions.VMCLOG);
             }
