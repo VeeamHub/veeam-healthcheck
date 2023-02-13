@@ -30,10 +30,10 @@ namespace VeeamHealthCheck.Shared
         private static bool _runFullReport;
         private static bool _runSecReport;
 
-        // general global values
+        // B&R Server global values
         public static bool isConsoleLocal = false;
         public static string _isRdpEnabled = "Undetermined";
-
+        public static string _isDomainJoined = "";
 
         // config db values
         public static BackupServer BACKUPSERVER;

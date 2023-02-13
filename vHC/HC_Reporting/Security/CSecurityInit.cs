@@ -12,23 +12,49 @@ namespace VeeamHealthCheck.Security
 {
     internal class CSecurityInit
     {
+        private readonly string _appLogName = "Veeam.ServerApplications.log";
+
         private readonly CLogger LOG;
+        private readonly CLogger AppLOG;
+        private readonly string logStart = "[Security]\t";
         public CSecurityInit()
         {
             LOG = new CLogger("Veeam.Security.log");
+            AppLOG = new CLogger(_appLogName);
         }
 
         public void Run()
         {
-            //GetInstalledApps(); //TODO: uncomment before publish
+            GetInstalledApps(); //TODO: uncomment before publish
             IsRdpEnabled();
+            IsDomainJoined();
+        }
+        private void IsDomainJoined()
+        {
+            string domain = System.Net.NetworkInformation.IPGlobalProperties.GetIPGlobalProperties().DomainName;
+            if(String.IsNullOrEmpty(domain) )
+            {
+                LOG.Info(logStart + "host is not domain joined.");
+                CGlobals._isDomainJoined = "False";
+            } 
+            else if (domain.Length> 0)
+            {
+                LOG.Info(logStart + "host is domain joined.");
+                CGlobals._isDomainJoined = "True";
+            }
+            else
+            {
+                LOG.Warning(logStart + "unable to determine host domain status");
+                CGlobals._isDomainJoined = "Undetermined.";
+            }
         }
         private void GetInstalledApps()
         {
+            LOG.Info(logStart + "Getting list of apps. Output to be shown in " + _appLogName);
             string registry_key = @"SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall";
             using (RegistryKey key = Registry.LocalMachine.OpenSubKey(registry_key))
             {
-                LOG.Info("Installed apps: ", false);
+                AppLOG.Info("Installed apps: ", false);
                 foreach (string subkey_name in key.GetSubKeyNames())
                 {
                     using (RegistryKey subkey = key.OpenSubKey(subkey_name))
@@ -42,7 +68,7 @@ namespace VeeamHealthCheck.Security
                                 if (name == "Veeam Backup & Replication Console")
                                     CGlobals.isConsoleLocal = true;
                             }
-                            LOG.Info("\t" + subkey.GetValue("DisplayName").ToString(), true);
+                            AppLOG.Info("\t" + subkey.GetValue("DisplayName").ToString(), true);
 
                         }
                         catch (Exception e)

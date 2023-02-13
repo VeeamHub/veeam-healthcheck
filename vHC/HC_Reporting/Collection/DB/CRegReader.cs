@@ -74,23 +74,46 @@ namespace VeeamHealthCheck.DB
             using (RegistryKey key =
                 Registry.LocalMachine.OpenSubKey("Software\\Veeam\\Veeam Backup and Replication"))
             {
-                if (key != null)
+                SetSqlInfo(key);
+                //if (key != null)
+                //{
+                //    var instance = key.GetValue("SqlInstanceName").ToString();
+                //    var host = key.GetValue("SqlServerName").ToString();
+                //    var database =
+                //        key.GetValue("SqlDatabaseName")
+                //            .ToString();
+                //    _user = key.GetValue("SqlLogin").ToString();
+                //    _passString = key.GetValue("SqlSecuredPassword").ToString();
+                //    if (!string.IsNullOrEmpty(host))
+                //    {
+                //        if (!string.IsNullOrEmpty(database))
+                //        {
+                //            _databaseName = database;
+                //            _host = host;
+                //            _hostInstanceString = host + "\\" + instance;
+                //        }
+                //    }
+                //}
+            }
+        }
+        private void SetSqlInfo(RegistryKey key)
+        {
+            if (key != null)
+            {
+                var instance = key.GetValue("SqlInstanceName").ToString();
+                var host = key.GetValue("SqlServerName").ToString();
+                var database =
+                    key.GetValue("SqlDatabaseName")
+                        .ToString();
+                _user = key.GetValue("SqlLogin").ToString();
+                _passString = key.GetValue("SqlSecuredPassword").ToString();
+                if (!string.IsNullOrEmpty(host))
                 {
-                    var instance = key.GetValue("SqlInstanceName").ToString();
-                    var host = key.GetValue("SqlServerName").ToString();
-                    var database =
-                        key.GetValue("SqlDatabaseName")
-                            .ToString();
-                    _user = key.GetValue("SqlLogin").ToString();
-                    _passString = key.GetValue("SqlSecuredPassword").ToString();
-                    if (!string.IsNullOrEmpty(host))
+                    if (!string.IsNullOrEmpty(database))
                     {
-                        if (!string.IsNullOrEmpty(database))
-                        {
-                            _databaseName = database;
-                            _host = host;
-                            _hostInstanceString = host + "\\" + instance;
-                        }
+                        _databaseName = database;
+                        _host = host;
+                        _hostInstanceString = host + "\\" + instance;
                     }
                 }
             }
@@ -115,8 +138,11 @@ namespace VeeamHealthCheck.DB
                     if (dbType == "MsSql")
                     {
                         _dbType = "MS SQL";
+
                         using (RegistryKey sqlKey = Registry.LocalMachine.OpenSubKey("Software\\Veeam\\Veeam Backup and Replication\\DatabaseConfigurations\\MsSql"))
                         {
+                            SetSqlInfo(sqlKey);
+
                             host = sqlKey.GetValue("SqlServerName").ToString();
                             if (host == "localhost")
                                 CGlobals.ISDBLOCAL = "True";
