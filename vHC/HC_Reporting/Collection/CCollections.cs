@@ -48,7 +48,7 @@ namespace VeeamHealthCheck.Collection
         private void ExecSqlQueries()
         {
             CSqlExecutor sql = new();
-
+            sql.Run();
         }
         private void ExecPSScripts()
         {
@@ -77,8 +77,11 @@ namespace VeeamHealthCheck.Collection
         }
         private void ExecVb365Scripts(PSInvoker p)
         {
-            CGlobals.Logger.Info("Entering vb365 ps invoker", false);
-            p.InvokeVb365Collect();
+            if (CGlobals.IsVb365)
+            {
+                CGlobals.Logger.Info("Entering vb365 ps invoker", false);
+                p.InvokeVb365Collect();
+            }
         }
         private void PopulateWaits()
         {

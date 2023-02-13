@@ -64,7 +64,7 @@ namespace VeeamHealthCheck.DB
                 try { GetVbrTwelveDbInfo(); }
                 catch (Exception e3)
                 {
-                    log.Error(logStart + "Failed to get v12 DB info from Registry.")
+                    log.Error(logStart + "Failed to get v12 DB info from Registry.");
                 }
             }
 

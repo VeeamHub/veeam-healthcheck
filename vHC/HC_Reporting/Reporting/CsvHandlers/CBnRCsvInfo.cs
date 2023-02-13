@@ -19,5 +19,15 @@ namespace VeeamHealthCheck.CsvHandlers
         public string SqlServer { get; set; }
         [Index(3)]
         public string Instance { get; set; }
+        [Index(4)]
+        public string PgHost { get; set; }
+        [Index(5)]
+        public string PgDb { get; set; }
+        [Index(6)]
+        public string MsHost { get; set; }
+        [Index(7)]
+        public string MsDb { get; set; }
+        [Index(8)]
+        public string DbType { get; set; }
     }
 }

@@ -332,6 +332,11 @@ $corePath = Get-ItemProperty -Path "HKLM:\Software\Veeam\Veeam Backup and Replic
 $dbPath = Get-ItemProperty -Path "HKLM:\Software\Veeam\Veeam Backup and Replication\" -Name "SqlDataBaseName"
 $instancePath = Get-ItemProperty -Path "HKLM:\Software\Veeam\Veeam Backup and Replication\" -Name "SqlInstanceName"
 $dbServerPath = Get-ItemProperty -Path "HKLM:\Software\Veeam\Veeam Backup and Replication\" -Name "SqlServerName"
+$dbType = Get-ItemProperty -Path "HKLM:\Software\Veeam\Veeam Backup and Replication\DatabaseConfigurations" -Name "SqlActiveConfiguration"
+$pgDbHost = Get-ItemProperty -Path "HKLM:\Software\Veeam\Veeam Backup and Replication\DatabaseConfigurations\PostgreSql" -Name "SqlHostName"
+$pgDbDbName = Get-ItemProperty -Path "HKLM:\Software\Veeam\Veeam Backup and Replication\DatabaseConfigurations\PostgreSql" -Name "SqlDatabaseName"
+$msDbHost = Get-ItemProperty -Path "HKLM:\Software\Veeam\Veeam Backup and Replication\DatabaseConfigurations\MsSql" -Name "SqlServerName"
+$msDbName = Get-ItemProperty -Path "HKLM:\Software\Veeam\Veeam Backup and Replication\DatabaseConfigurations\MsSql" -Name "SqlDatabaseName"
 
 $depDLLPath = Join-Path -Path $corePath.CorePath -ChildPath "Packages\VeeamDeploymentDll.dll" -Resolve
 $file = Get-Item -Path $depDLLPath
@@ -346,6 +351,12 @@ $VbrOutput = [pscustomobject][ordered] @{
   'Fixes'     = $fixes
   'SqlServer' = $dbServerPath.SqlServerName
   'Instance'  = $instancePath.SqlInstanceName
+  'PgHost'    = $pgDbHost.SqlHostName
+  'PgDb'        = $pgDbDbName.SqlDatabaseName
+  'MsHost' = $msDbHost.SqlServerName
+  'MsDb'        = $msDbName.SqlDatabaseName
+  'DbType'  = $dbType.SqlActiveConfiguration
+
 }
 $VbrOutput | Export-Csv -Path $("$ReportPath\$VBRServer" + '_vbrinfo.csv') -NoTypeInformation
 
