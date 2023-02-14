@@ -20,7 +20,7 @@ namespace VeeamHealthCheck.Html
         private CLogger log = CGlobals.Logger;
         private readonly string _testFile;
         private readonly string _htmlName = "Veeam Health Check Report";
-        private readonly string _htmlSecurityReportName = "Veeam Healch Check Security Report";
+        //private readonly string _htmlSecurityReportName = "Veeam Healch Check Security Report";
 
         private string _backupServerName;
         private string _latestReport;
@@ -134,10 +134,10 @@ namespace VeeamHealthCheck.Html
                 Directory.CreateDirectory(n + "\\Original");
             string htmlCore = "";
             if (scrub)
-                htmlCore = "\\Anon\\" + _htmlSecurityReportName + "_VBR_Security" + "_" + installID + dateTime.ToString("_yyyy.MM.dd.HHmmss") + ".html";
+                htmlCore = "\\Anon\\" + _htmlName + "_VBR_Security" + "_" + installID + dateTime.ToString("_yyyy.MM.dd.HHmmss") + ".html";
             else if (!scrub)
             {
-                htmlCore = "\\Original\\" + _htmlSecurityReportName + "_VBR_Security" + "_" + _backupServerName + dateTime.ToString("_yyyy.MM.dd.HHmmss") + ".html";
+                htmlCore = "\\Original\\" + _htmlName + "_VBR_Security" + "_" + _backupServerName + dateTime.ToString("_yyyy.MM.dd.HHmmss") + ".html";
 
             }
             string name = n + htmlCore;
