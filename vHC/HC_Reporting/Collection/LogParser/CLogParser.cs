@@ -106,7 +106,7 @@ namespace VeeamHealthCheck.FilesParser
                 jobsAndWaits.Add(jobname, waits);
             }
             _waits = jobsAndWaits;
-            log.Info("Checking Log files for waits..Done!");
+            log.Info("Checking Log files for waits..Done!", false);
             return jobsAndWaits;
         }
         private List<TimeSpan> CheckFileWait(string file, string jobName)

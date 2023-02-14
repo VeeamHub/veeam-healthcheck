@@ -120,10 +120,15 @@ namespace VeeamHealthCheck.Resources
                         CGlobals.RunFullReport = true;
                         ui = true;
                         break;
+                    case "/lite":
+                        CGlobals.EXPORTINDIVIDUALJOBHTMLS = false;
+                        break;
                     case "/import":
                         CGlobals.IMPORT = true;
+                        CGlobals.EXPORTINDIVIDUALJOBHTMLS = false;
                         break;
                     case "/security":
+                        CGlobals.EXPORTINDIVIDUALJOBHTMLS = false;
                         CGlobals.RunSecReport= true;
                         break;
                     //case var match when new Regex("outdir:.*").IsMatch(a):

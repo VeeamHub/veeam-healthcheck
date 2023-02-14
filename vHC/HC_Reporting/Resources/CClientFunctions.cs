@@ -163,11 +163,11 @@ namespace VeeamHealthCheck.Resources
         {
             return String.Format(
                 "User Settings:\n" +
-                "\t\t\t\t\t\t\t\t\tScrub = {0}\n" +
-                "\t\t\t\t\t\t\t\t\tOpen HTML = {1}\n" +
-                "\t\t\t\t\t\t\t\t\tOpen Explorer = {2}\n" +
-                "\t\t\t\t\t\t\t\t\tPath = {3}\n" +
-                "\t\t\t\t\t\t\t\t\tInterval = {4}",
+                "\t\tScrub = {0}\n" +
+                "\t\tOpen HTML = {1}\n" +
+                "\t\tOpen Explorer = {2}\n" +
+                "\t\tPath = {3}\n" +
+                "\t\tInterval = {4}",
                 CGlobals.Scrub, CGlobals.OpenHtml, CGlobals.OpenExplorer, CGlobals._desiredPath, CGlobals.ReportDays.ToString()
                 );
         }

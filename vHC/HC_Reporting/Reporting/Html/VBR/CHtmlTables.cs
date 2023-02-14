@@ -138,8 +138,8 @@ namespace VeeamHealthCheck.Html.VBR
         {
             string s = _form.SectionStart("vbrserver", VbrLocalizationHelper.BkpSrvTblHead);
             string summary = _sum.SetVbrSummary();
-            CDataFormer cd = new(true);
-            BackupServer b = cd.BackupServerInfoToXml(scrub);
+            //CDataFormer cd = new(true);
+            BackupServer b = _df.BackupServerInfoToXml(scrub);
 
             // Backup Server table
             s += _form.TableHeader(VbrLocalizationHelper.BkpSrvTblName, VbrLocalizationHelper.BstNameTT);

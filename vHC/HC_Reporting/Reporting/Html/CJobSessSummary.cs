@@ -34,21 +34,6 @@ namespace VeeamHealthCheck.Html
 
         }
 
-        private void PopulateWaits()
-        {
-            try
-            {
-                FilesParser.CLogParser lp = new();
-                _waits = lp.GetWaitsFromFiles();
-            }
-            catch (Exception e)
-            {
-                log.Error("Error checking log files:");
-                log.Error(e.Message);
-            }
-
-        }
-
         public List<List<string>> JobSessionSummaryToXml(bool scrub)
         {
             return JobSessionSummaryToXml(_xmlFile, _log, scrub, _scrubber, _parsers);

@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using VeeamHealthCheck.Html.VBR;
+using VeeamHealthCheck.Shared;
 
 namespace VeeamHealthCheck.Reporting.Html.VBR
 {
@@ -37,6 +38,9 @@ namespace VeeamHealthCheck.Reporting.Html.VBR
             TaskConcurrencyTable();
             JobSessionSummaryTable();
             JobInfoTable();
+
+            if(CGlobals.EXPORTINDIVIDUALJOBHTMLS)
+                IndividualJobHtmlBuilder();
 
             return HTMLSTRING;
         }
@@ -134,6 +138,10 @@ namespace VeeamHealthCheck.Reporting.Html.VBR
         {
             HTMLSTRING += _tables.AddJobInfoTable(SCRUB);
 
+        }
+        private void IndividualJobHtmlBuilder()
+        {
+            _tables.AddSessionsFiles(SCRUB);
         }
     }
 }

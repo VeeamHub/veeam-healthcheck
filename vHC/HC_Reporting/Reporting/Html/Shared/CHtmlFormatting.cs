@@ -170,7 +170,7 @@ namespace VeeamHealthCheck.Reporting.Html.Shared
         }
         public string SetSecurityBannerAndIntro(bool scrub)
         {
-            string s = SetVbrHcReportTitle();
+            string s = SetVbrSecurityReportTitle();
             s += SetVbrHcIntro(scrub);
             return s;
         }

@@ -29,6 +29,7 @@ namespace VeeamHealthCheck.Shared
         private static bool _isVb365;
         private static bool _runFullReport;
         private static bool _runSecReport;
+        public static bool EXPORTINDIVIDUALJOBHTMLS = true;
 
         // B&R Server global values
         public static string isConsoleLocal = "Undetermined";

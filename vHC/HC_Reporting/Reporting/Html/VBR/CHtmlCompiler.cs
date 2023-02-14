@@ -162,11 +162,22 @@ namespace VeeamHealthCheck.Html
 
             return htmlString;
         }
+        private string SetVbrSecurityHeader()
+        {
+            return _form.SetHeaderAndLogo(SetLicHolder());
+        }
+        private string FormSecurityBodyStart(string htmlString, bool scrub)
+        {
+            htmlString += _form.body;
+            htmlString += SetVbrSecurityHeader();
+            htmlString += _form.SetSecurityBannerAndIntro(scrub);
+            return htmlString;
+        }
         private void FormSecurityBody()
         {
 
             log.Info("[HTML] forming HTML body");
-            _htmldocOriginal += FormBodyStart(_htmldocOriginal, false);
+            _htmldocOriginal += FormSecurityBodyStart(_htmldocOriginal, false);
 
             //nav
             SetSecurityNavigations(); // change for security
