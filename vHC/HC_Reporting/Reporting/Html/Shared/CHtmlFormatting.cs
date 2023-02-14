@@ -161,14 +161,37 @@ namespace VeeamHealthCheck.Reporting.Html.Shared
         }
         public string SetBannerAndIntro(bool scrub)
         {
-            string s = "<h2 style=\"color: green; font-style: italic; background: lightgray; text-align:center\">" + ResourceHandler.HtmlHeader + "</h2>";
+            string s = SetVbrHcReportTitle();
+            s += SetVbrHcIntro(scrub);
 
+            return s;
 
-            s += "<div class=\"i2\">" + ResourceHandler.HtmlIntroLine1 + "</a>\n";
+        }
+        public string SetSecurityBannerAndIntro(bool scrub)
+        {
+            string s = SetVbrHcReportTitle();
+            s += SetVbrHcIntro(scrub);
+            return s;
+        }
+        private string SetVbrSecurityReportTitle()
+        {
+            return "<h2 style=\"color: green; font-style: italic; background: lightgray; text-align:center\">" +
+                ResourceHandler.HtmlSecurityHeader +
+                "</h2>";
+        }
+        private string SetVbrHcReportTitle()
+        {
+            return "<h2 style=\"color: green; font-style: italic; background: lightgray; text-align:center\">" +
+                ResourceHandler.HtmlHeader +
+                "</h2>";
+        }
+        private string SetVbrHcIntro(bool scrub)
+        {
+            string s = "<div class=\"i2\">" + ResourceHandler.HtmlIntroLine1 + "</a>\n";
             s += LineBreak();
             s += "<a class=\"\">" + ResourceHandler.HtmlIntroLine2 + "</a>\n";
             s += LineBreak();
-            if(scrub)
+            if (scrub)
                 s += "<a class=\"\">" + ResourceHandler.HtmlIntroLine3Anon + "</a>\n";
             else
                 s += "<a class=\"\">" + ResourceHandler.HtmlIntroLine3Original + "</a>\n";
@@ -180,7 +203,6 @@ namespace VeeamHealthCheck.Reporting.Html.Shared
             s += LineBreak();
 
             return s;
-
         }
         public string SetBannerAndIntroVb365()
         {

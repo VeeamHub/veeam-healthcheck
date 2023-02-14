@@ -93,8 +93,10 @@ namespace VeeamHealthCheck.Resources
                         CGlobals.Logger.Info("Run = true");
                         break;
                     case "/show:files":
+                        CGlobals.OpenExplorer = true;
                         break;
                     case "/show:report":
+                        CGlobals.OpenHtml = true;
                         break;
                     case "/show:all":
                         break;

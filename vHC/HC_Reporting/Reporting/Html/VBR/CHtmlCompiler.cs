@@ -119,9 +119,9 @@ namespace VeeamHealthCheck.Html
         {
             SetUniversalNavStart();
             NavTable();
-            SetUniversalNavEnd  ();
+            SetUniversalNavEnd();
 
-            
+
         }
         private void SetSecurityNavigations()
         {
@@ -157,7 +157,7 @@ namespace VeeamHealthCheck.Html
                 htmlString += _form.SetHeaderAndLogo(SetLicHolder());
                 htmlString += _form.SetBannerAndIntro(false);
             }
-            
+
             return htmlString;
         }
         private void FormSecurityBody()
@@ -188,11 +188,11 @@ namespace VeeamHealthCheck.Html
             //nav
             SetNavigation();
 
-            CHtmlBodyHelper helper =  new();
+            CHtmlBodyHelper helper = new();
             _htmldocScrubbed = helper.FormVbrFullReport(_htmldocScrubbed, true);
             _htmldocOriginal = helper.FormVbrFullReport(_htmldocOriginal, false);
 
-           
+
             _htmldocOriginal += FormFooter();
             _htmldocScrubbed += FormFooter();
 
@@ -200,46 +200,36 @@ namespace VeeamHealthCheck.Html
         }
 
         #region TableFormation
-        
 
-        private void NavTable()
+        private string NavTableStarter()
         {
-            string tableString =
-    "<table border=\"0\" style=\"background: \">" +
-    "<tbody>";
-            tableString += _tables.MakeNavTable();
-
-
-
-
-            tableString +=
-                "</tbody>" +
+            return "<table border=\"0\" style=\"background: \"><tbody>";
+        }
+        private string NavtableEnd()
+        {
+            return "</tbody>" +
                 "</table>" +
                 //BackToTop() +
                 "</div>";
+        }
+        private void NavTable()
+        {
+            string tableString = NavTableStarter();
+            tableString += _tables.MakeNavTable();
+            tableString += NavtableEnd();
             AddToHtml(tableString);
         }
         private void SecurityNavTable()
         {
-            string tableString =
-    "<table border=\"0\" style=\"background: \">" +
-    "<tbody>";
+            string tableString = NavTableStarter();
             tableString += _tables.MakeSecurityNavTable();
-
-
-
-
-            tableString +=
-                "</tbody>" +
-                "</table>" +
-                //BackToTop() +
-                "</div>";
+            tableString += NavtableEnd();
             AddToHtml(tableString);
         }
 
         private string FormFooter()
         {
-            string s = ""; 
+            string s = "";
             s += "<a>vHC Version: " + CVersionSetter.GetFileVersion() + "</a>";
             s += "<script type=\"text/javascript\">";
             s += CssStyler.JavaScriptBlock();
