@@ -1,4 +1,5 @@
-﻿using System;
+﻿using VeeamHealthCheck.Resources.Localization;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -9,6 +10,7 @@ using VeeamHealthCheck.CsvHandlers;
 using VeeamHealthCheck.Shared.Logging;
 using System.Resources;
 using VeeamHealthCheck.Shared;
+
 
 namespace VeeamHealthCheck.Html
 {
@@ -144,12 +146,12 @@ namespace VeeamHealthCheck.Html
             doc.AddFirst(new XProcessingInstruction("xml-stylesheet", "type=\"text/xsl\" href=\"SessionReport.xsl\""));
 
 
-            serverRoot.Add(AddSummaryHeader(ResourceHandler.HtmlHeader));
-            serverRoot.Add(AddSummaryText(ResourceHandler.HtmlIntroLine1, "i2"));
-            serverRoot.Add(AddSummaryText(ResourceHandler.HtmlIntroLine2, "i2"));
+            serverRoot.Add(AddSummaryHeader(VbrLocalizationHelper.HtmlHeader));
+            serverRoot.Add(AddSummaryText(VbrLocalizationHelper.HtmlIntroLine1, "i2"));
+            serverRoot.Add(AddSummaryText(VbrLocalizationHelper.HtmlIntroLine2, "i2"));
           //  serverRoot.Add(AddSummaryText(ResourceHandler.HtmlIntroLine3, "i2"));
-            serverRoot.Add(AddSummaryText(ResourceHandler.HtmlIntroLine4, "i3"));
-            serverRoot.Add(AddSummaryText(ResourceHandler.HtmlIntroLine5, "i3"));
+            serverRoot.Add(AddSummaryText(VbrLocalizationHelper.HtmlIntroLine4, "i3"));
+            serverRoot.Add(AddSummaryText(VbrLocalizationHelper.HtmlIntroLine5, "i3"));
 
 
             doc.Save(_xmlOut);

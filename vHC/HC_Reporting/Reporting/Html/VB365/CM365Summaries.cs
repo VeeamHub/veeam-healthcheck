@@ -42,10 +42,10 @@ namespace VeeamHealthCheck.Reporting.Html.VB365
             string s = _form.CollapsibleButton("Show Summary");
 
             s += "<div class=\"content\">";
-            s += _form.AddA("hdr", ResourceHandler.GeneralSummaryHeader) +// _form.LineBreak() +
+            s += _form.AddA("hdr", VbrLocalizationHelper.GeneralSummaryHeader) +// _form.LineBreak() +
                 _form.AddA("i2", Vb365ResourceHandler.proxySummary1) +
                 _form.DoubleLineBreak() +
-                _form.AddA("hdr", ResourceHandler.GeneralNotesHeader) + //_form.LineBreak() +
+                _form.AddA("hdr", VbrLocalizationHelper.GeneralNotesHeader) + //_form.LineBreak() +
                 _form.AddA("i2", Vb365ResourceHandler.proxyNote1) +
                 _form.AddA("i2", Vb365ResourceHandler.proxyNote2) +
                 _form.AddA("i2", Vb365ResourceHandler.proxyNote3) 
@@ -60,10 +60,10 @@ namespace VeeamHealthCheck.Reporting.Html.VB365
             string s = _form.CollapsibleButton("Show Summary");
 
             s += "<div class=\"content\">";
-            s += _form.AddA("hdr", ResourceHandler.GeneralSummaryHeader) + //_form.LineBreak() +
+            s += _form.AddA("hdr", VbrLocalizationHelper.GeneralSummaryHeader) + //_form.LineBreak() +
                 _form.AddA("i2", Vb365ResourceHandler.reposSummary) +
                 _form.DoubleLineBreak() +
-                _form.AddA("hdr", ResourceHandler.GeneralNotesHeader) + //_form.LineBreak() +
+                _form.AddA("hdr", VbrLocalizationHelper.GeneralNotesHeader) + //_form.LineBreak() +
                 _form.AddA("i2", Vb365ResourceHandler.reposNote1) +
                 _form.AddA("i2", Vb365ResourceHandler.reposNote2) +
                 //_form.AddA("i2", Vb365ResourceHandler.reposNote3) +
@@ -80,13 +80,13 @@ namespace VeeamHealthCheck.Reporting.Html.VB365
             string s = _form.CollapsibleButton("Show Summary");
 
             s += "<div class=\"content\">";
-            s += _form.AddA("hdr", ResourceHandler.GeneralSummaryHeader) +// _form.LineBreak() +
+            s += _form.AddA("hdr", VbrLocalizationHelper.GeneralSummaryHeader) +// _form.LineBreak() +
                 _form.AddA("i2", "") +
                 _form.AddA("i3", "") +
                 _form.AddA("i3", "") +
                 _form.AddA("i3", "") +
                 _form.DoubleLineBreak() +
-                _form.AddA("hdr", ResourceHandler.GeneralNotesHeader) + //_form.LineBreak() +
+                _form.AddA("hdr", VbrLocalizationHelper.GeneralNotesHeader) + //_form.LineBreak() +
                 _form.AddA("i2", "") +
                 _form.AddA("i2", "") +
                 _form.AddA("i2", "") +
@@ -104,10 +104,10 @@ namespace VeeamHealthCheck.Reporting.Html.VB365
             string s = _form.CollapsibleButton("Show Summary");
 
             s += "<div class=\"content\">";
-            s += _form.AddA("hdr", ResourceHandler.GeneralSummaryHeader) +// _form.LineBreak() +
+            s += _form.AddA("hdr", VbrLocalizationHelper.GeneralSummaryHeader) +// _form.LineBreak() +
                 _form.AddA("i2", Vb365ResourceHandler.securitySummary) +
                 _form.DoubleLineBreak() +
-                _form.AddA("hdr", ResourceHandler.GeneralNotesHeader) + //_form.LineBreak() +
+                _form.AddA("hdr", VbrLocalizationHelper.GeneralNotesHeader) + //_form.LineBreak() +
                 _form.AddA("i2", Vb365ResourceHandler.securityNote1) +
                 _form.AddA("i2", Vb365ResourceHandler.securityNote2) +
                 _form.AddA("i2", Vb365ResourceHandler.securityNote3) 
@@ -122,12 +122,12 @@ namespace VeeamHealthCheck.Reporting.Html.VB365
             string s = _form.CollapsibleButton("Show Summary");
 
             s += "<div class=\"content\">";
-            s += _form.AddA("hdr", ResourceHandler.GeneralSummaryHeader) +// _form.LineBreak() +
+            s += _form.AddA("hdr", VbrLocalizationHelper.GeneralSummaryHeader) +// _form.LineBreak() +
                 _form.AddA("i2", Vb365ResourceHandler.backupServerSummary1) +
                 _form.AddA("i3", Vb365ResourceHandler.backupServerSummary2) +
                 _form.AddA("i3", Vb365ResourceHandler.backupServerSummary3) +
                 _form.DoubleLineBreak() +
-                _form.AddA("hdr", ResourceHandler.GeneralNotesHeader) + //_form.LineBreak() +
+                _form.AddA("hdr", VbrLocalizationHelper.GeneralNotesHeader) + //_form.LineBreak() +
                 _form.AddA("i2", Vb365ResourceHandler.backupServerNotes1) +
                 _form.AddA("i2", Vb365ResourceHandler.backupServerNotes2) +
                 _form.AddA("i2", Vb365ResourceHandler.backupServerNotes3) 
@@ -160,10 +160,10 @@ namespace VeeamHealthCheck.Reporting.Html.VB365
             string s = _form.CollapsibleButton("Show Summary");
 
             s += "<div class=\"content\">";
-            s += _form.AddA("hdr", ResourceHandler.GeneralSummaryHeader) + //_form.LineBreak() +
+            s += _form.AddA("hdr", VbrLocalizationHelper.GeneralSummaryHeader) + //_form.LineBreak() +
                 _form.AddA("i2", Vb365ResourceHandler.jobSessSummary) +
                 _form.DoubleLineBreak() +
-                _form.AddA("hdr", ResourceHandler.GeneralNotesHeader) + //_form.LineBreak() +
+                _form.AddA("hdr", VbrLocalizationHelper.GeneralNotesHeader) + //_form.LineBreak() +
                 _form.AddA("i2", Vb365ResourceHandler.jobSessNote1) 
                 ;
             s += "</div>";
@@ -245,10 +245,10 @@ namespace VeeamHealthCheck.Reporting.Html.VB365
             string s = _form.CollapsibleButton("Show Summary");
 
             s += "<div class=\"content\">";
-            s += _form.AddA("hdr", ResourceHandler.GeneralSummaryHeader) + //_form.LineBreak() +
+            s += _form.AddA("hdr", VbrLocalizationHelper.GeneralSummaryHeader) + //_form.LineBreak() +
                 _form.AddA("i2", Vb365ResourceHandler.orgSummary) +
                 _form.DoubleLineBreak() +
-                _form.AddA("hdr", ResourceHandler.GeneralNotesHeader) + //_form.LineBreak() +
+                _form.AddA("hdr", VbrLocalizationHelper.GeneralNotesHeader) + //_form.LineBreak() +
                 _form.AddA("i2", Vb365ResourceHandler.orgNote1) +
                 _form.AddA("i2", Vb365ResourceHandler.orgNote2) +
                 _form.AddA("i2", Vb365ResourceHandler.orgNote3) 
@@ -263,13 +263,13 @@ namespace VeeamHealthCheck.Reporting.Html.VB365
             string s = _form.CollapsibleButton("Show Summary");
 
             s += "<div class=\"content\">";
-            s += _form.AddA("hdr", ResourceHandler.GeneralSummaryHeader) + //_form.LineBreak() +
+            s += _form.AddA("hdr", VbrLocalizationHelper.GeneralSummaryHeader) + //_form.LineBreak() +
                 _form.AddA("i2", "") +
                 _form.AddA("i3", "") +
                 _form.AddA("i3", "") +
                 _form.AddA("i3", "") +
                 _form.DoubleLineBreak() +
-                _form.AddA("hdr", ResourceHandler.GeneralNotesHeader) + //_form.LineBreak() +
+                _form.AddA("hdr", VbrLocalizationHelper.GeneralNotesHeader) + //_form.LineBreak() +
                 _form.AddA("i2", "") +
                 _form.AddA("i2", "") +
                 _form.AddA("i2", "") +
@@ -287,10 +287,10 @@ namespace VeeamHealthCheck.Reporting.Html.VB365
             string s = _form.CollapsibleButton("Show Summary");
 
             s += "<div class=\"content\">";
-            s += _form.AddA("hdr", ResourceHandler.GeneralSummaryHeader) + //_form.LineBreak() +
+            s += _form.AddA("hdr", VbrLocalizationHelper.GeneralSummaryHeader) + //_form.LineBreak() +
                 _form.AddA("i2", Vb365ResourceHandler.protectedUsersSummary1) +
                 _form.DoubleLineBreak() +
-                _form.AddA("hdr", ResourceHandler.GeneralNotesHeader) + //_form.LineBreak() +
+                _form.AddA("hdr", VbrLocalizationHelper.GeneralNotesHeader) + //_form.LineBreak() +
                 _form.AddA("i2", Vb365ResourceHandler.protectedUsersNote1) +
                 _form.AddA("i2", Vb365ResourceHandler.protectedUsersNote2) 
                 ;

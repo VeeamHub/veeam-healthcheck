@@ -8,6 +8,7 @@ using VeeamHealthCheck.CsvHandlers;
 using VeeamHealthCheck.Html;
 using VeeamHealthCheck.Html.VBR;
 using VeeamHealthCheck.Reporting.Html.Shared;
+using VeeamHealthCheck.Resources.Localization;
 using VeeamHealthCheck.Shared;
 using VeeamHealthCheck.Shared.Logging;
 
@@ -90,8 +91,8 @@ namespace VeeamHealthCheck.Reporting.Html.VB365
             string s = String.Empty;
             s += _form.DivId("navigation");
             
-            s +=String.Format("<h4>{0}</h4>", ResourceHandler.NavHeader);
-            s +=String.Format("<button type=\"button\" class=\"btn\" onclick=\"test()\">{0}</button>", ResourceHandler.NavColapse);
+            s +=String.Format("<h4>{0}</h4>", VeeamHealthCheck.Resources.Localization.VbrLocalizationHelper.NavHeader);
+            s +=String.Format("<button type=\"button\" class=\"btn\" onclick=\"test()\">{0}</button>", VbrLocalizationHelper.NavColapse);
             s += NavTable();
 
 

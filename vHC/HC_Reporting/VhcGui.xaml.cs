@@ -15,6 +15,7 @@ using VeeamHealthCheck.Scrubber;
 using System.IO;
 using VeeamHealthCheck.Shared;
 using VeeamHealthCheck.Resources;
+using VeeamHealthCheck.Resources.Localization;
 
 namespace VeeamHealthCheck
 {
@@ -63,25 +64,25 @@ namespace VeeamHealthCheck
 
         private void SetUiText()
         {
-            this.InsHeader.Text = ResourceHandler.GuiInstHeader;
-            this.line1.Text = ResourceHandler.GuiInstLine1;
-            this.line2.Text = ResourceHandler.GuiInstLine2;
-            this.line3.Text = ResourceHandler.GuiInstLine3;
-            this.line4.Text = ResourceHandler.GuiInstLine4;
-            this.line5.Text = ResourceHandler.GuiInstLine5;
-            this.line6.Text = ResourceHandler.GuiInstLine6;
-            this.Cav1Part1.Text = ResourceHandler.GuiInstCaveat1;
-            this.Cav2.Text = ResourceHandler.GuiInstCaveat2;
+            this.InsHeader.Text = VbrLocalizationHelper.GuiInstHeader;
+            this.line1.Text = VbrLocalizationHelper.GuiInstLine1;
+            this.line2.Text = VbrLocalizationHelper.GuiInstLine2;
+            this.line3.Text = VbrLocalizationHelper.GuiInstLine3;
+            this.line4.Text = VbrLocalizationHelper.GuiInstLine4;
+            this.line5.Text = VbrLocalizationHelper.GuiInstLine5;
+            this.line6.Text = VbrLocalizationHelper.GuiInstLine6;
+            this.Cav1Part1.Text = VbrLocalizationHelper.GuiInstCaveat1;
+            this.Cav2.Text = VbrLocalizationHelper.GuiInstCaveat2;
             this.Cav3.Text = "*** This tool is community supported and not an officially supported Veeam product.\r\n";
             this.Cav4.Text = "**** The tool does not automatically phone home, or reach out to any network infrastructure beyond the Veeam Backup and Replication components or the Veeam Backup for 365 components if appropriate.";
-            this.OptHdr.Text = ResourceHandler.GuiOptionsHeader;
-            this.htmlCheckBox.Content = ResourceHandler.GuiShowHtml;
-            this.scrubBox.Content = ResourceHandler.GuiSensData;
-            this.explorerShowBox.Content = ResourceHandler.GuiShowFiles;
-            this.outPath.Text = ResourceHandler.GuiOutPath;
-            this.termsBtn.Content = ResourceHandler.GuiAcceptButton;
-            this.run.Content = ResourceHandler.GuiRunButton;
-            this.importButton.Content = ResourceHandler.GuiImportButton;
+            this.OptHdr.Text = VbrLocalizationHelper.GuiOptionsHeader;
+            this.htmlCheckBox.Content = VbrLocalizationHelper.GuiShowHtml;
+            this.scrubBox.Content = VbrLocalizationHelper.GuiSensData;
+            this.explorerShowBox.Content = VbrLocalizationHelper.GuiShowFiles;
+            this.outPath.Text = VbrLocalizationHelper.GuiOutPath;
+            this.termsBtn.Content = VbrLocalizationHelper.GuiAcceptButton;
+            this.run.Content = VbrLocalizationHelper.GuiRunButton;
+            this.importButton.Content = VbrLocalizationHelper.GuiImportButton;
 
             SetPathBoxText(CVariables.outDir);
             CGlobals._desiredPath = CVariables.outDir;

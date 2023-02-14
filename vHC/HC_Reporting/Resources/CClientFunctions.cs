@@ -14,6 +14,7 @@ using VeeamHealthCheck.Collection;
 using VeeamHealthCheck.Security;
 using VeeamHealthCheck.Shared;
 using VeeamHealthCheck.Shared.Logging;
+using VeeamHealthCheck.Resources.Localization;
 
 namespace VeeamHealthCheck.Resources
 {
@@ -60,7 +61,7 @@ namespace VeeamHealthCheck.Resources
         public  string ModeCheck()
         {
             CGlobals.Logger.Info("Checking processes to determine execution mode..", false);
-            string title = ResourceHandler.GuiTitle;
+            string title = VbrLocalizationHelper.GuiTitle;
             var processes = Process.GetProcesses();
             foreach (var process in processes)
             {
@@ -79,20 +80,20 @@ namespace VeeamHealthCheck.Resources
 
             }
             if (CGlobals.IsVbr)
-                return title + " - " + ResourceHandler.GuiTitleBnR;
+                return title + " - " + VbrLocalizationHelper.GuiTitleBnR;
             if (CGlobals.IsVb365)
-                return title + " - " + ResourceHandler.GuiTitleVB365;
+                return title + " - " + VbrLocalizationHelper.GuiTitleVB365;
             if (CGlobals.IsVbr && CGlobals.IsVb365)
-                return title + " - " + ResourceHandler.GuiTitleBnR + " & " + ResourceHandler.GuiTitleVB365;
+                return title + " - " + VbrLocalizationHelper.GuiTitleBnR + " & " + VbrLocalizationHelper.GuiTitleVB365;
             if (!CGlobals.IsVb365 && !CGlobals.IsVbr)
-                return title + " - " + ResourceHandler.GuiImportModeOnly;
+                return title + " - " + VbrLocalizationHelper.GuiImportModeOnly;
             else
                 return title;
         }
 
         public  bool AcceptTerms()
         {
-            string message = ResourceHandler.GuiAcceptText;
+            string message = VbrLocalizationHelper.GuiAcceptText;
 
             var res = MessageBox.Show(message, "Terms", MessageBoxButton.YesNo);
             if (res.ToString() == "Yes")

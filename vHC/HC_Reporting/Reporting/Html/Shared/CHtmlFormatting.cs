@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using VeeamHealthCheck.CsvHandlers;
 using VeeamHealthCheck.Resources.Localization.VB365;
 using VeeamHealthCheck.Shared;
+using VeeamHealthCheck.Resources.Localization;
 
 namespace VeeamHealthCheck.Reporting.Html.Shared
 {
@@ -176,29 +177,29 @@ namespace VeeamHealthCheck.Reporting.Html.Shared
         private string SetVbrSecurityReportTitle()
         {
             return "<h2 style=\"color: green; font-style: italic; background: lightgray; text-align:center\">" +
-                ResourceHandler.HtmlSecurityHeader +
+                VbrLocalizationHelper.HtmlSecurityHeader +
                 "</h2>";
         }
         private string SetVbrHcReportTitle()
         {
             return "<h2 style=\"color: green; font-style: italic; background: lightgray; text-align:center\">" +
-                ResourceHandler.HtmlHeader +
+                VbrLocalizationHelper.HtmlHeader +
                 "</h2>";
         }
         private string SetVbrHcIntro(bool scrub)
         {
-            string s = "<div class=\"i2\">" + ResourceHandler.HtmlIntroLine1 + "</a>\n";
+            string s = "<div class=\"i2\">" + VbrLocalizationHelper.HtmlIntroLine1 + "</a>\n";
             s += LineBreak();
-            s += "<a class=\"\">" + ResourceHandler.HtmlIntroLine2 + "</a>\n";
+            s += "<a class=\"\">"  + VbrLocalizationHelper.HtmlIntroLine2 + "</a>\n";
             s += LineBreak();
             if (scrub)
-                s += "<a class=\"\">" + ResourceHandler.HtmlIntroLine3Anon + "</a>\n";
+                s += "<a class=\"\">" + VbrLocalizationHelper.HtmlIntroLine3Anon + "</a>\n";
             else
-                s += "<a class=\"\">" + ResourceHandler.HtmlIntroLine3Original + "</a>\n";
+                s += "<a class=\"\">" + VbrLocalizationHelper.HtmlIntroLine3Original + "</a>\n";
             s += LineBreak();
-            s += "<a class=\"i2\">" + ResourceHandler.HtmlIntroLine4 + "</a>\n";
+            s += "<a class=\"i2\">" + VbrLocalizationHelper.HtmlIntroLine4 + "</a>\n";
             s += LineBreak();
-            s += "<a class=\"i2\">" + ResourceHandler.HtmlIntroLine5 + "</a>\n";
+            s += "<a class=\"i2\">" + VbrLocalizationHelper.HtmlIntroLine5 + "</a>\n";
             s += "</div>";
             s += LineBreak();
 
@@ -206,7 +207,7 @@ namespace VeeamHealthCheck.Reporting.Html.Shared
         }
         public string SetBannerAndIntroVb365()
         {
-            string s = "<h2 style=\"color: green; font-style: italic; background: lightgray; text-align:center\">" + ResourceHandler.Vb365Banner + "</h2>";
+            string s = "<h2 style=\"color: green; font-style: italic; background: lightgray; text-align:center\">" + VbrLocalizationHelper.Vb365Banner + "</h2>";
 
 
             s += "<div class=\"i2\">" + Vb365ResourceHandler.HtmlIntroLine1 + "</a>\n";

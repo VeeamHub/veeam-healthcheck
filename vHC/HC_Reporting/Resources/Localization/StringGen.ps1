@@ -12,11 +12,11 @@ foreach($f in $files){
 
 $content = Get-Content -LiteralPath "vhcres.txt"
 
-$outFile = $loc + "ResourceHandler.cs"
+$outFile = $loc + "VbrLocalizationHelper.cs"
 echo $null | out-file $outFile
 echo $null | out-file pubstrings.txt
 
-"using System.Resources;`nnamespace VeeamHealthCheck`n{`n`nclass ResourceHandler`n{private static ResourceManager m4 = new(`"VeeamHealthCheck.Resources.Localization.vhcres`", typeof(ResourceHandler).Assembly);`n" | out-file $outFile
+"using System.Resources;`nnamespace VeeamHealthCheck.Resources.Localization`n{`n`nclass VbrLocalizationHelper`n{private static ResourceManager m4 = new(`"VeeamHealthCheck.Resources.Localization.vhcres`", typeof(VbrLocalizationHelper).Assembly);`n" | out-file $outFile
 
 foreach($line in $content){
     if(!$line.StartsWith("#")){
@@ -29,7 +29,7 @@ foreach($line in $content){
                 
                 #Write-Host($string)
                 $string | Out-File -Append pubstrings.txt
-                $string | out-file -Append .\ResourceHandler.cs
+                $string | out-file -Append $outFile
             }
         }
     }

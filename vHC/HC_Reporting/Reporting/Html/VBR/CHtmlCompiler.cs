@@ -12,6 +12,8 @@ using VeeamHealthCheck.Reporting.Html.Shared;
 using VeeamHealthCheck.Reporting.Html.VBR;
 using VeeamHealthCheck.Shared;
 using VeeamHealthCheck.Shared.Logging;
+using VeeamHealthCheck.Resources.Localization;
+using VeeamHealthCheck.Resources;
 
 namespace VeeamHealthCheck.Html
 {
@@ -107,8 +109,8 @@ namespace VeeamHealthCheck.Html
         {
             log.Info("[HTML] setting HTML navigation");
             AddToHtml(DivId("navigation"));
-            AddToHtml(String.Format("<h4>{0}</h4>", ResourceHandler.NavHeader));
-            AddToHtml(String.Format("<button type=\"button\" class=\"btn\" onclick=\"test()\">{0}</button>", ResourceHandler.NavColapse));
+            AddToHtml(String.Format("<h4>{0}</h4>", VbrLocalizationHelper.NavHeader));
+            AddToHtml(String.Format("<button type=\"button\" class=\"btn\" onclick=\"test()\">{0}</button>", VbrLocalizationHelper.NavColapse));
         }
         private void SetUniversalNavEnd()
         {

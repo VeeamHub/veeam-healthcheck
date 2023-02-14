@@ -10,6 +10,7 @@ using VeeamHealthCheck.Reporting.Html.VBR;
 using VeeamHealthCheck.Shared.Logging;
 using VeeamHealthCheck.Shared;
 using VeeamHealthCheck.Reporting.TableDatas;
+using VeeamHealthCheck.Resources.Localization;
 
 namespace VeeamHealthCheck.Html.VBR
 {
@@ -31,66 +32,66 @@ namespace VeeamHealthCheck.Html.VBR
         }
         public string MakeNavTable()
         {
-            return _form.FormNavRows(ResourceHandler.NavLicInfoLink, "license", ResourceHandler.NavLicInfoDetail) +
-                _form.FormNavRows(ResourceHandler.NavBkpSrvLink, "vbrserver", ResourceHandler.NavBkpSrvDeet) +
-                _form.FormNavRows(ResourceHandler.NavSecSumLink, "secsummary", ResourceHandler.NavSecSumDeet) +
-                _form.FormNavRows(ResourceHandler.NavSrvSumLink, "serversummary", ResourceHandler.NavSrvSumDeet) +
-                _form.FormNavRows(ResourceHandler.NavJobSumLink, "jobsummary", ResourceHandler.NavJobSumDeet) +
-                _form.FormNavRows(ResourceHandler.NavMissingJobLink, "missingjobs", ResourceHandler.NavMissingDeet) +
-                _form.FormNavRows(ResourceHandler.NavProtWrkld, "protectedworkloads", ResourceHandler.NavProtWkldDeet) +
-                _form.FormNavRows(ResourceHandler.NavSrvInfoLink, "managedServerInfo", ResourceHandler.NavSrvInfoDeet) +
-                _form.FormNavRows(ResourceHandler.NavRegKeyLink, "regkeys", ResourceHandler.NavRegKeyDeet) +
-                _form.FormNavRows(ResourceHandler.NavProxyInfoLink, "proxies", ResourceHandler.NavProxyDeet) +
-                _form.FormNavRows(ResourceHandler.NavSobrInfoLink, "sobr", ResourceHandler.NavSobrDeet) +
-                _form.FormNavRows(ResourceHandler.NavSobrExtLink, "extents", ResourceHandler.NavSobrExtDeet) +
-                _form.FormNavRows(ResourceHandler.NavRepoInfoLink, "repos", ResourceHandler.NavRepoDeet) +
-                _form.FormNavRows(ResourceHandler.NavJobConLink, "jobcon", ResourceHandler.NavJobConDeet) +
-                _form.FormNavRows(ResourceHandler.NavTaskConLink, "taskcon", ResourceHandler.NavTaskConDeet) +
-                _form.FormNavRows(ResourceHandler.NavJobSessSumLink, "jobsesssum", ResourceHandler.NavJobSessSumDeet) +
-                _form.FormNavRows(ResourceHandler.NavJobInfoLink, "jobs", ResourceHandler.NavJobInfoDeet);
+            return _form.FormNavRows(VbrLocalizationHelper.NavLicInfoLink, "license", VbrLocalizationHelper.NavLicInfoDetail) +
+                _form.FormNavRows(VbrLocalizationHelper.NavBkpSrvLink, "vbrserver", VbrLocalizationHelper.NavBkpSrvDeet) +
+                _form.FormNavRows(VbrLocalizationHelper.NavSecSumLink, "secsummary", VbrLocalizationHelper.NavSecSumDeet) +
+                _form.FormNavRows(VbrLocalizationHelper.NavSrvSumLink, "serversummary", VbrLocalizationHelper.NavSrvSumDeet) +
+                _form.FormNavRows(VbrLocalizationHelper.NavJobSumLink, "jobsummary", VbrLocalizationHelper.NavJobSumDeet) +
+                _form.FormNavRows(VbrLocalizationHelper.NavMissingJobLink, "missingjobs", VbrLocalizationHelper.NavMissingDeet) +
+                _form.FormNavRows(VbrLocalizationHelper.NavProtWrkld, "protectedworkloads", VbrLocalizationHelper.NavProtWkldDeet) +
+                _form.FormNavRows(VbrLocalizationHelper.NavSrvInfoLink, "managedServerInfo", VbrLocalizationHelper.NavSrvInfoDeet) +
+                _form.FormNavRows(VbrLocalizationHelper.NavRegKeyLink, "regkeys", VbrLocalizationHelper.NavRegKeyDeet) +
+                _form.FormNavRows(VbrLocalizationHelper.NavProxyInfoLink, "proxies", VbrLocalizationHelper.NavProxyDeet) +
+                _form.FormNavRows(VbrLocalizationHelper.NavSobrInfoLink, "sobr", VbrLocalizationHelper.NavSobrDeet) +
+                _form.FormNavRows(VbrLocalizationHelper.NavSobrExtLink, "extents", VbrLocalizationHelper.NavSobrExtDeet) +
+                _form.FormNavRows(VbrLocalizationHelper.NavRepoInfoLink, "repos", VbrLocalizationHelper.NavRepoDeet) +
+                _form.FormNavRows(VbrLocalizationHelper.NavJobConLink, "jobcon", VbrLocalizationHelper.NavJobConDeet) +
+                _form.FormNavRows(VbrLocalizationHelper.NavTaskConLink, "taskcon", VbrLocalizationHelper.NavTaskConDeet) +
+                _form.FormNavRows(VbrLocalizationHelper.NavJobSessSumLink, "jobsesssum", VbrLocalizationHelper.NavJobSessSumDeet) +
+                _form.FormNavRows(VbrLocalizationHelper.NavJobInfoLink, "jobs", VbrLocalizationHelper.NavJobInfoDeet);
         }
         public string MakeSecurityNavTable()
         {
             return //_form.FormNavRows(ResourceHandler.NavLicInfoLink, "license", ResourceHandler.NavLicInfoDetail) +
-                _form.FormNavRows(ResourceHandler.NavBkpSrvLink, "vbrserver", ResourceHandler.NavBkpSrvDeet) +
-                _form.FormNavRows(ResourceHandler.NavSecSumLink, "secsummary", ResourceHandler.NavSecSumDeet) +
+                _form.FormNavRows(VbrLocalizationHelper.NavBkpSrvLink, "vbrserver", VbrLocalizationHelper.NavBkpSrvDeet) +
+                _form.FormNavRows(VbrLocalizationHelper.NavSecSumLink, "secsummary", VbrLocalizationHelper.NavSecSumDeet) +
                 //_form.FormNavRows(ResourceHandler.NavSrvSumLink, "serversummary", ResourceHandler.NavSrvSumDeet) +
-                _form.FormNavRows(ResourceHandler.NavJobSumLink, "jobsummary", ResourceHandler.NavJobSumDeet) +
+                _form.FormNavRows(VbrLocalizationHelper.NavJobSumLink, "jobsummary", VbrLocalizationHelper.NavJobSumDeet) +
                 //_form.FormNavRows(ResourceHandler.NavMissingJobLink, "missingjobs", ResourceHandler.NavMissingDeet) +
                 //_form.FormNavRows(ResourceHandler.NavProtWrkld, "protectedworkloads", ResourceHandler.NavProtWkldDeet) +
-                _form.FormNavRows(ResourceHandler.NavSrvInfoLink, "managedServerInfo", ResourceHandler.NavSrvInfoDeet) +
-                _form.FormNavRows(ResourceHandler.NavRegKeyLink, "regkeys", ResourceHandler.NavRegKeyDeet) +
-                _form.FormNavRows(ResourceHandler.NavProxyInfoLink, "proxies", ResourceHandler.NavProxyDeet) +
-                _form.FormNavRows(ResourceHandler.NavSobrInfoLink, "sobr", ResourceHandler.NavSobrDeet) +
-                _form.FormNavRows(ResourceHandler.NavSobrExtLink, "extents", ResourceHandler.NavSobrExtDeet) +
-                _form.FormNavRows(ResourceHandler.NavRepoInfoLink, "repos", ResourceHandler.NavRepoDeet) +
+                _form.FormNavRows(VbrLocalizationHelper.NavSrvInfoLink, "managedServerInfo", VbrLocalizationHelper.NavSrvInfoDeet) +
+                _form.FormNavRows(VbrLocalizationHelper.NavRegKeyLink, "regkeys", VbrLocalizationHelper.NavRegKeyDeet) +
+                _form.FormNavRows(VbrLocalizationHelper.NavProxyInfoLink, "proxies", VbrLocalizationHelper.NavProxyDeet) +
+                _form.FormNavRows(VbrLocalizationHelper.NavSobrInfoLink, "sobr", VbrLocalizationHelper.NavSobrDeet) +
+                _form.FormNavRows(VbrLocalizationHelper.NavSobrExtLink, "extents", VbrLocalizationHelper.NavSobrExtDeet) +
+                _form.FormNavRows(VbrLocalizationHelper.NavRepoInfoLink, "repos", VbrLocalizationHelper.NavRepoDeet) +
                 //_form.FormNavRows(ResourceHandler.NavJobConLink, "jobcon", ResourceHandler.NavJobConDeet) +
                 //_form.FormNavRows(ResourceHandler.NavTaskConLink, "taskcon", ResourceHandler.NavTaskConDeet) +
                 //_form.FormNavRows(ResourceHandler.NavJobSessSumLink, "jobsesssum", ResourceHandler.NavJobSessSumDeet) +
-                _form.FormNavRows(ResourceHandler.NavJobInfoLink, "jobs", ResourceHandler.NavJobInfoDeet);
+                _form.FormNavRows(VbrLocalizationHelper.NavJobInfoLink, "jobs", VbrLocalizationHelper.NavJobInfoDeet);
         }
 
 
         public string LicTable(bool scrub)
         {
-            string s = _form.SectionStart("license", ResourceHandler.LicTableHeader);
+            string s = _form.SectionStart("license", VbrLocalizationHelper.LicTableHeader);
             string summary = _sum.LicSum();
 
-            s += _form.TableHeader(ResourceHandler.LicTblLicTo, "") +
-            _form.TableHeader(ResourceHandler.LicTblEdition, ResourceHandler.LtEdTT) +
-                _form.TableHeader(ResourceHandler.LicTblStatus, ResourceHandler.LtStatusTT) +
-                _form.TableHeader(ResourceHandler.LicTblType, ResourceHandler.LtTypeTT) +
-                _form.TableHeader(ResourceHandler.LicTblLicInst, ResourceHandler.LtInstLicTT) +
-                _form.TableHeader(ResourceHandler.LicTblUsedInst, ResourceHandler.LtInstUsedTT) +
-                _form.TableHeader(ResourceHandler.LicTblNewInst, ResourceHandler.LtInstNewTT) +
-                _form.TableHeader(ResourceHandler.LicTblRentInst, ResourceHandler.LtInstRentalTT) +
-                _form.TableHeader(ResourceHandler.LicTblLicSock, ResourceHandler.LtSocLicTT) +
-                _form.TableHeader(ResourceHandler.LicTblUsedSock, ResourceHandler.LtSocUsedTT) +
-                _form.TableHeader(ResourceHandler.LicTblLicNas, ResourceHandler.LtNasLicTT) +
-                _form.TableHeader(ResourceHandler.LicTblUsedNas, ResourceHandler.LtNasUsedTT) +
-                _form.TableHeader(ResourceHandler.LicTblExpDate, ResourceHandler.LicExpTT) +
-                _form.TableHeader(ResourceHandler.LicTblSupExpDate, ResourceHandler.LicSupExpTT) +
-                _form.TableHeader(ResourceHandler.LicTblCc, ResourceHandler.LicCcTT) +
+            s += _form.TableHeader(VbrLocalizationHelper.LicTblLicTo, "") +
+            _form.TableHeader(VbrLocalizationHelper.LicTblEdition, VbrLocalizationHelper.LtEdTT) +
+                _form.TableHeader(VbrLocalizationHelper.LicTblStatus, VbrLocalizationHelper.LtStatusTT) +
+                _form.TableHeader(VbrLocalizationHelper.LicTblType, VbrLocalizationHelper.LtTypeTT) +
+                _form.TableHeader(VbrLocalizationHelper.LicTblLicInst, VbrLocalizationHelper.LtInstLicTT) +
+                _form.TableHeader(VbrLocalizationHelper.LicTblUsedInst, VbrLocalizationHelper.LtInstUsedTT) +
+                _form.TableHeader(VbrLocalizationHelper.LicTblNewInst, VbrLocalizationHelper.LtInstNewTT) +
+                _form.TableHeader(VbrLocalizationHelper.LicTblRentInst, VbrLocalizationHelper.LtInstRentalTT) +
+                _form.TableHeader(VbrLocalizationHelper.LicTblLicSock, VbrLocalizationHelper.LtSocLicTT) +
+                _form.TableHeader(VbrLocalizationHelper.LicTblUsedSock, VbrLocalizationHelper.LtSocUsedTT) +
+                _form.TableHeader(VbrLocalizationHelper.LicTblLicNas, VbrLocalizationHelper.LtNasLicTT) +
+                _form.TableHeader(VbrLocalizationHelper.LicTblUsedNas, VbrLocalizationHelper.LtNasUsedTT) +
+                _form.TableHeader(VbrLocalizationHelper.LicTblExpDate, VbrLocalizationHelper.LicExpTT) +
+                _form.TableHeader(VbrLocalizationHelper.LicTblSupExpDate, VbrLocalizationHelper.LicSupExpTT) +
+                _form.TableHeader(VbrLocalizationHelper.LicTblCc, VbrLocalizationHelper.LicCcTT) +
                 "</tr>";
 
             try
@@ -135,23 +136,23 @@ namespace VeeamHealthCheck.Html.VBR
         }
         public string AddBkpSrvTable(bool scrub)
         {
-            string s = _form.SectionStart("vbrserver", ResourceHandler.BkpSrvTblHead);
+            string s = _form.SectionStart("vbrserver", VbrLocalizationHelper.BkpSrvTblHead);
             string summary = _sum.SetVbrSummary();
             CDataFormer cd = new(true);
             BackupServer b = cd.BackupServerInfoToXml(scrub);
 
             // Backup Server table
-            s += _form.TableHeader(ResourceHandler.BkpSrvTblName, ResourceHandler.BstNameTT);
-            s += _form.TableHeader(ResourceHandler.BkpSrvTblVersion, ResourceHandler.BstVerTT);
-            s += _form.TableHeader(ResourceHandler.BkpSrvTblCore, ResourceHandler.BstCpuTT);
-            s += _form.TableHeader(ResourceHandler.BkpSrvTblRam, ResourceHandler.BstRamTT);
+            s += _form.TableHeader(VbrLocalizationHelper.BkpSrvTblName, VbrLocalizationHelper.BstNameTT);
+            s += _form.TableHeader(VbrLocalizationHelper.BkpSrvTblVersion, VbrLocalizationHelper.BstVerTT);
+            s += _form.TableHeader(VbrLocalizationHelper.BkpSrvTblCore, VbrLocalizationHelper.BstCpuTT);
+            s += _form.TableHeader(VbrLocalizationHelper.BkpSrvTblRam, VbrLocalizationHelper.BstRamTT);
             
-            s += _form.TableHeader(ResourceHandler.BkpSrvTblProxyRole, ResourceHandler.BstPrxTT);
-            s += _form.TableHeader(ResourceHandler.BkpSrvTblRepoRole, ResourceHandler.BstRepTT);
-            s += _form.TableHeader(ResourceHandler.BkpSrvTblWanRole, ResourceHandler.BstWaTT);
-            s += _form.TableHeader("Console Installed", "");
-            s += _form.TableHeader("RDP Enabled", "");
-            s += _form.TableHeader("Domain Joined", "");
+            s += _form.TableHeader(VbrLocalizationHelper.BkpSrvTblProxyRole, VbrLocalizationHelper.BstPrxTT);
+            s += _form.TableHeader(VbrLocalizationHelper.BkpSrvTblRepoRole, VbrLocalizationHelper.BstRepTT);
+            s += _form.TableHeader(VbrLocalizationHelper.BkpSrvTblWanRole, VbrLocalizationHelper.BstWaTT);
+            s += _form.TableHeader(VbrLocalizationHelper.BackupServerConsoleInstalled, "");
+            s += _form.TableHeader(VbrLocalizationHelper.BackupServerRdpEnabled, "");
+            s += _form.TableHeader(VbrLocalizationHelper.BackupServerDomainJoined, "");
             s += "</tr><<tr>";
             s += _form.TableData(b.Name, "");
             s += _form.TableData(b.Version, "");
@@ -167,10 +168,10 @@ namespace VeeamHealthCheck.Html.VBR
             
             s += "<h3>Config Backup Info</h3>";
             s += "<table border=\"1\">";
-            s += _form.TableHeader(ResourceHandler.BkpSrvTblCfgEnabled, ResourceHandler.BstCfgEnabledTT);
-            s += _form.TableHeader(ResourceHandler.BkpSrvTblCfgLastRes, ResourceHandler.BstCfgLastResTT);
-            s += _form.TableHeader(ResourceHandler.BkpSrvTblCfgEncrypt, ResourceHandler.BstCfgEncTT);
-            s += _form.TableHeader(ResourceHandler.BkpSrvTblTarget, ResourceHandler.BstCfgTarTT);
+            s += _form.TableHeader(VbrLocalizationHelper.BkpSrvTblCfgEnabled, VbrLocalizationHelper.BstCfgEnabledTT);
+            s += _form.TableHeader(VbrLocalizationHelper.BkpSrvTblCfgLastRes, VbrLocalizationHelper.BstCfgLastResTT);
+            s += _form.TableHeader(VbrLocalizationHelper.BkpSrvTblCfgEncrypt, VbrLocalizationHelper.BstCfgEncTT);
+            s += _form.TableHeader(VbrLocalizationHelper.BkpSrvTblTarget, VbrLocalizationHelper.BstCfgTarTT);
             s += "<tr></tr>";
             s += _form.TableData(b.ConfigBackupEnabled.ToString(), "");
             s += _form.TableData(b.ConfigBackupLastResult, "");
@@ -183,12 +184,12 @@ namespace VeeamHealthCheck.Html.VBR
             s += _form.LineBreak();
             // config DB Table
             s += _form.TableHeader("DataBase Type", "MS SQL or PostgreSQL");
-            s += _form.TableHeader(ResourceHandler.BkpSrvTblSqlLocal, ResourceHandler.BstSqlLocTT);
-            s += _form.TableHeader(ResourceHandler.BkpSrvTblSqlName, ResourceHandler.BstSqlNameTT);
-            s += _form.TableHeader(ResourceHandler.BkpSrvTblSqlVersion, ResourceHandler.BstSqlVerTT);
-            s += _form.TableHeader(ResourceHandler.BkpSrvTblSqlEdition, ResourceHandler.BstSqlEdTT);
-            s += _form.TableHeader(ResourceHandler.BkpSrvTblSqlCores, ResourceHandler.BstSqlCpuTT);
-            s += _form.TableHeader(ResourceHandler.BkpSrvTblSqlRam, ResourceHandler.BstSqlRamTT);
+            s += _form.TableHeader(VbrLocalizationHelper.BkpSrvTblSqlLocal, VbrLocalizationHelper.BstSqlLocTT);
+            s += _form.TableHeader(VbrLocalizationHelper.BkpSrvTblSqlName, VbrLocalizationHelper.BstSqlNameTT);
+            s += _form.TableHeader(VbrLocalizationHelper.BkpSrvTblSqlVersion, VbrLocalizationHelper.BstSqlVerTT);
+            s += _form.TableHeader(VbrLocalizationHelper.BkpSrvTblSqlEdition, VbrLocalizationHelper.BstSqlEdTT);
+            s += _form.TableHeader(VbrLocalizationHelper.BkpSrvTblSqlCores, VbrLocalizationHelper.BstSqlCpuTT);
+            s += _form.TableHeader(VbrLocalizationHelper.BkpSrvTblSqlRam, VbrLocalizationHelper.BstSqlRamTT);
 
             s += "</tr>";
             //CDataFormer cd = new(true);
@@ -220,13 +221,13 @@ namespace VeeamHealthCheck.Html.VBR
         public string AddSecSummaryTable(bool scrub)
         {
 
-            string s = _form.SectionStart("secsummary", ResourceHandler.SSTitle);
+            string s = _form.SectionStart("secsummary", VbrLocalizationHelper.SSTitle);
             string summary = _sum.SecSum();
 
-            s += _form.TableHeader(ResourceHandler.SSHdr0, ResourceHandler.SSHdrTT0) +
-                _form.TableHeader(ResourceHandler.SSHdr1, ResourceHandler.SSHdrTT1) +
-                _form.TableHeader(ResourceHandler.SSHdr2, ResourceHandler.SSHdrTT2) +
-                _form.TableHeader(ResourceHandler.SSHdr3, ResourceHandler.SSHdrTT3) +
+            s += _form.TableHeader(VbrLocalizationHelper.SSHdr0, VbrLocalizationHelper.SSHdrTT0) +
+                _form.TableHeader(VbrLocalizationHelper.SSHdr1, VbrLocalizationHelper.SSHdrTT1) +
+                _form.TableHeader(VbrLocalizationHelper.SSHdr2, VbrLocalizationHelper.SSHdrTT2) +
+                _form.TableHeader(VbrLocalizationHelper.SSHdr3, VbrLocalizationHelper.SSHdrTT3) +
                 "</tr>" +
                 "<tr>";
 
@@ -257,10 +258,10 @@ namespace VeeamHealthCheck.Html.VBR
         {
             string summary = _sum.SrvSum();
 
-            string s = _form.SectionStart("serversummary", ResourceHandler.MssTitle);
+            string s = _form.SectionStart("serversummary", VbrLocalizationHelper.MssTitle);
 
-            s += _form.TableHeader(ResourceHandler.MssHdr1, ResourceHandler.MssHdr1TT) +
-                            _form.TableHeader(ResourceHandler.MssHdr2, ResourceHandler.MssHdr2TT) +
+            s += _form.TableHeader(VbrLocalizationHelper.MssHdr1, VbrLocalizationHelper.MssHdr1TT) +
+                            _form.TableHeader(VbrLocalizationHelper.MssHdr2, VbrLocalizationHelper.MssHdr2TT) +
                             "</tr>";
             try
             {
@@ -286,10 +287,10 @@ namespace VeeamHealthCheck.Html.VBR
         public string AddJobSummaryTable(bool scrub)
         {
             string summary = _sum.JobSummary();
-            string s = _form.SectionStart("jobsummary", ResourceHandler.JobSumTitle);
+            string s = _form.SectionStart("jobsummary", VbrLocalizationHelper.JobSumTitle);
 
-            s += _form.TableHeader(ResourceHandler.JobSum0, ResourceHandler.JobSum0TT) +
-                _form.TableHeader(ResourceHandler.JobSum1, ResourceHandler.JobSum1TT) +
+            s += _form.TableHeader(VbrLocalizationHelper.JobSum0, VbrLocalizationHelper.JobSum0TT) +
+                _form.TableHeader(VbrLocalizationHelper.JobSum1, VbrLocalizationHelper.JobSum1TT) +
                 "</tr>";
 
             try
@@ -328,12 +329,12 @@ namespace VeeamHealthCheck.Html.VBR
 
         public string AddMissingJobsTable(bool scrub)
         {
-            string s = _form.SectionStartWithButton("missingjobs", ResourceHandler.NpTitle, ResourceHandler.NpButton);
+            string s = _form.SectionStartWithButton("missingjobs", VbrLocalizationHelper.NpTitle, VbrLocalizationHelper.NpButton);
 
 
             string summary = _sum.MissingJobsSUmmary();
 
-            s += _form.TableHeader(ResourceHandler.JobSum0, "") +
+            s += _form.TableHeader(VbrLocalizationHelper.JobSum0, "") +
                 //_form.TableHeader("Count", "Total detected of this type") +
                 "</tr>";
             //CDataFormer cd = new(true);
@@ -361,7 +362,7 @@ namespace VeeamHealthCheck.Html.VBR
         }
         public string AddProtectedWorkLoadsTable(bool scrub)
         {
-            string s = _form.SectionStartWithButton("protectedworkloads", ResourceHandler.PlTitle, ResourceHandler.PlButton);
+            string s = _form.SectionStartWithButton("protectedworkloads", VbrLocalizationHelper.PlTitle, VbrLocalizationHelper.PlButton);
             string summary = _sum.ProtectedWorkloads();
             try
             {
@@ -372,10 +373,10 @@ namespace VeeamHealthCheck.Html.VBR
                 s += "<h3>VMware Backups</h3>";
                 s += _form.Table();
                 s += "<tr>" +
-                _form.TableHeader(ResourceHandler.PlHdr0, ResourceHandler.PlHdrTT0) +
-                _form.TableHeader(ResourceHandler.PlHdr1, ResourceHandler.PlHdrTT1) +
-                _form.TableHeader(ResourceHandler.PlHdr2, ResourceHandler.PlHdrTT2) +
-                _form.TableHeader(ResourceHandler.PlHdr3, ResourceHandler.PlHdrTT3) +
+                _form.TableHeader(VbrLocalizationHelper.PlHdr0, VbrLocalizationHelper.PlHdrTT0) +
+                _form.TableHeader(VbrLocalizationHelper.PlHdr1, VbrLocalizationHelper.PlHdrTT1) +
+                _form.TableHeader(VbrLocalizationHelper.PlHdr2, VbrLocalizationHelper.PlHdrTT2) +
+                _form.TableHeader(VbrLocalizationHelper.PlHdr3, VbrLocalizationHelper.PlHdrTT3) +
                 "</tr><tr>";
                 s += _form.TableData((_df._viProtectedNames.Distinct().Count() + _df._viNotProtectedNames.Distinct().Count()).ToString(), "");
                 s += _form.TableData(_df._viProtectedNames.Distinct().Count().ToString(), "");
@@ -407,10 +408,10 @@ namespace VeeamHealthCheck.Html.VBR
                 s += "<h3>Physical Backups</h3>";
                 s += _form.Table();
                 s += "<tr>";
-                s += _form.TableHeader(ResourceHandler.PlHdr4, ResourceHandler.PlHdrTT4);
-                s += _form.TableHeader(ResourceHandler.PlHdr5, ResourceHandler.PlHdrTT5);
-                s += _form.TableHeader(ResourceHandler.PlHdr6, ResourceHandler.PlHdrTT6);
-                s += _form.TableHeader(ResourceHandler.PlHdr7, ResourceHandler.PlHdrTT7);
+                s += _form.TableHeader(VbrLocalizationHelper.PlHdr4, VbrLocalizationHelper.PlHdrTT4);
+                s += _form.TableHeader(VbrLocalizationHelper.PlHdr5, VbrLocalizationHelper.PlHdrTT5);
+                s += _form.TableHeader(VbrLocalizationHelper.PlHdr6, VbrLocalizationHelper.PlHdrTT6);
+                s += _form.TableHeader(VbrLocalizationHelper.PlHdr7, VbrLocalizationHelper.PlHdrTT7);
 
                 s += "</tr>";
                 //CDataFormer cd = new(true);
@@ -432,22 +433,22 @@ namespace VeeamHealthCheck.Html.VBR
         }
         public string AddManagedServersTable(bool scrub)
         {
-            string s = _form.SectionStartWithButton("managedServerInfo", ResourceHandler.ManSrvTitle, ResourceHandler.ManSrvBtn);
+            string s = _form.SectionStartWithButton("managedServerInfo", VbrLocalizationHelper.ManSrvTitle, VbrLocalizationHelper.ManSrvBtn);
             string summary = _sum.ManagedServers();
             s += "<tr>" +
-           _form.TableHeader(ResourceHandler.ManSrv0, ResourceHandler.ManSrv0TT) +
-           _form.TableHeader(ResourceHandler.ManSrv1, ResourceHandler.ManSrv1TT) +
-           _form.TableHeader(ResourceHandler.ManSrv2, ResourceHandler.ManSrv2TT) +
-           _form.TableHeader(ResourceHandler.ManSrv3, ResourceHandler.ManSrv3TT) +
-           _form.TableHeader("OS Info", ResourceHandler.ManSrv3TT) +
-           _form.TableHeader(ResourceHandler.ManSrv4, ResourceHandler.ManSrv4TT) +
-           _form.TableHeader(ResourceHandler.ManSrv5, ResourceHandler.ManSrv5TT) +
-           _form.TableHeader(ResourceHandler.ManSrv6, ResourceHandler.ManSrv6TT) +
-           _form.TableHeader(ResourceHandler.ManSrv7, ResourceHandler.ManSrv7TT) +
-           _form.TableHeader(ResourceHandler.ManSrv8, ResourceHandler.ManSrv8TT) +
-           _form.TableHeader(ResourceHandler.ManSrv9, ResourceHandler.ManSrv9TT) +
-           _form.TableHeader(ResourceHandler.ManSrv10, ResourceHandler.ManSrv10TT) +
-           _form.TableHeader(ResourceHandler.ManSrv11, ResourceHandler.ManSrv11TT) +
+           _form.TableHeader(VbrLocalizationHelper.ManSrv0, VbrLocalizationHelper.ManSrv0TT) +
+           _form.TableHeader(VbrLocalizationHelper.ManSrv1, VbrLocalizationHelper.ManSrv1TT) +
+           _form.TableHeader(VbrLocalizationHelper.ManSrv2, VbrLocalizationHelper.ManSrv2TT) +
+           _form.TableHeader(VbrLocalizationHelper.ManSrv3, VbrLocalizationHelper.ManSrv3TT) +
+           _form.TableHeader("OS Info", VbrLocalizationHelper.ManSrv3TT) +
+           _form.TableHeader(VbrLocalizationHelper.ManSrv4, VbrLocalizationHelper.ManSrv4TT) +
+           _form.TableHeader(VbrLocalizationHelper.ManSrv5, VbrLocalizationHelper.ManSrv5TT) +
+           _form.TableHeader(VbrLocalizationHelper.ManSrv6, VbrLocalizationHelper.ManSrv6TT) +
+           _form.TableHeader(VbrLocalizationHelper.ManSrv7, VbrLocalizationHelper.ManSrv7TT) +
+           _form.TableHeader(VbrLocalizationHelper.ManSrv8, VbrLocalizationHelper.ManSrv8TT) +
+           _form.TableHeader(VbrLocalizationHelper.ManSrv9, VbrLocalizationHelper.ManSrv9TT) +
+           _form.TableHeader(VbrLocalizationHelper.ManSrv10, VbrLocalizationHelper.ManSrv10TT) +
+           _form.TableHeader(VbrLocalizationHelper.ManSrv11, VbrLocalizationHelper.ManSrv11TT) +
            "</tr>";
             //CDataFormer cd = new(true);
             try
@@ -486,11 +487,11 @@ namespace VeeamHealthCheck.Html.VBR
         }
         public string AddRegKeysTable(bool scrub)
         {
-            string s = _form.SectionStartWithButton("regkeys", ResourceHandler.RegTitle, ResourceHandler.RegBtn);
+            string s = _form.SectionStartWithButton("regkeys", VbrLocalizationHelper.RegTitle, VbrLocalizationHelper.RegBtn);
             string summary = _sum.RegKeys();
             s += "<tr>" +
-                _form.TableHeader(ResourceHandler.Reg0, ResourceHandler.Reg0TT) +
-                _form.TableHeader(ResourceHandler.Reg1, ResourceHandler.Reg1TT) +
+                _form.TableHeader(VbrLocalizationHelper.Reg0, VbrLocalizationHelper.Reg0TT) +
+                _form.TableHeader(VbrLocalizationHelper.Reg1, VbrLocalizationHelper.Reg1TT) +
                 "</tr>";
             //CDataFormer cd = new(true);
             try
@@ -515,21 +516,21 @@ namespace VeeamHealthCheck.Html.VBR
         }
         public string AddProxyTable(bool scrub)
         {
-            string s = _form.SectionStartWithButton("proxies", ResourceHandler.PrxTitle, ResourceHandler.PrxBtn);
+            string s = _form.SectionStartWithButton("proxies", VbrLocalizationHelper.PrxTitle, VbrLocalizationHelper.PrxBtn);
             string summary = _sum.Proxies();
             s += "<tr>" +
-           _form.TableHeader(ResourceHandler.Prx0, ResourceHandler.Prx0TT) +
-           _form.TableHeader(ResourceHandler.Prx1, ResourceHandler.Prx1TT) +
-           _form.TableHeader(ResourceHandler.Prx2, ResourceHandler.Prx2TT) +
-           _form.TableHeader(ResourceHandler.Prx3, ResourceHandler.Prx3TT) +
-           _form.TableHeader(ResourceHandler.Prx4, ResourceHandler.Prx4TT) +
-           _form.TableHeader(ResourceHandler.Prx5, ResourceHandler.Prx5TT) +
-           _form.TableHeader(ResourceHandler.Prx6, ResourceHandler.Prx6TT) +
-           _form.TableHeader(ResourceHandler.Prx7, ResourceHandler.Prx7TT) +
-           _form.TableHeader(ResourceHandler.Prx8, ResourceHandler.Prx8TT) +
-           _form.TableHeader(ResourceHandler.Prx9, ResourceHandler.Prx9TT) +
-           _form.TableHeader(ResourceHandler.Prx10, ResourceHandler.Prx10TT) +
-           _form.TableHeader(ResourceHandler.Prx11, ResourceHandler.Prx11TT) +
+           _form.TableHeader(VbrLocalizationHelper.Prx0, VbrLocalizationHelper.Prx0TT) +
+           _form.TableHeader(VbrLocalizationHelper.Prx1, VbrLocalizationHelper.Prx1TT) +
+           _form.TableHeader(VbrLocalizationHelper.Prx2, VbrLocalizationHelper.Prx2TT) +
+           _form.TableHeader(VbrLocalizationHelper.Prx3, VbrLocalizationHelper.Prx3TT) +
+           _form.TableHeader(VbrLocalizationHelper.Prx4, VbrLocalizationHelper.Prx4TT) +
+           _form.TableHeader(VbrLocalizationHelper.Prx5, VbrLocalizationHelper.Prx5TT) +
+           _form.TableHeader(VbrLocalizationHelper.Prx6, VbrLocalizationHelper.Prx6TT) +
+           _form.TableHeader(VbrLocalizationHelper.Prx7, VbrLocalizationHelper.Prx7TT) +
+           _form.TableHeader(VbrLocalizationHelper.Prx8, VbrLocalizationHelper.Prx8TT) +
+           _form.TableHeader(VbrLocalizationHelper.Prx9, VbrLocalizationHelper.Prx9TT) +
+           _form.TableHeader(VbrLocalizationHelper.Prx10, VbrLocalizationHelper.Prx10TT) +
+           _form.TableHeader(VbrLocalizationHelper.Prx11, VbrLocalizationHelper.Prx11TT) +
    "</tr>";
             //CDataFormer cd = new(true);
             try
@@ -570,21 +571,21 @@ namespace VeeamHealthCheck.Html.VBR
         }
         public string AddMultiRoleTable(bool scrub)
         {
-            string s = _form.SectionStartWithButton("proxies", ResourceHandler.PrxTitle, ResourceHandler.PrxBtn);
+            string s = _form.SectionStartWithButton("proxies", VbrLocalizationHelper.PrxTitle, VbrLocalizationHelper.PrxBtn);
             string summary = _sum.Proxies();
             s += "<tr>" +
-           _form.TableHeader(ResourceHandler.Prx0, ResourceHandler.Prx0TT) +
-           _form.TableHeader(ResourceHandler.Prx1, ResourceHandler.Prx1TT) +
-           _form.TableHeader(ResourceHandler.Prx2, ResourceHandler.Prx2TT) +
-           _form.TableHeader(ResourceHandler.Prx3, ResourceHandler.Prx3TT) +
-           _form.TableHeader(ResourceHandler.Prx4, ResourceHandler.Prx4TT) +
-           _form.TableHeader(ResourceHandler.Prx5, ResourceHandler.Prx5TT) +
-           _form.TableHeader(ResourceHandler.Prx6, ResourceHandler.Prx6TT) +
-           _form.TableHeader(ResourceHandler.Prx7, ResourceHandler.Prx7TT) +
-           _form.TableHeader(ResourceHandler.Prx8, ResourceHandler.Prx8TT) +
-           _form.TableHeader(ResourceHandler.Prx9, ResourceHandler.Prx9TT) +
-           _form.TableHeader(ResourceHandler.Prx10, ResourceHandler.Prx10TT) +
-           _form.TableHeader(ResourceHandler.Prx11, ResourceHandler.Prx11TT) +
+           _form.TableHeader(VbrLocalizationHelper.Prx0, VbrLocalizationHelper.Prx0TT) +
+           _form.TableHeader(VbrLocalizationHelper.Prx1, VbrLocalizationHelper.Prx1TT) +
+           _form.TableHeader(VbrLocalizationHelper.Prx2, VbrLocalizationHelper.Prx2TT) +
+           _form.TableHeader(VbrLocalizationHelper.Prx3, VbrLocalizationHelper.Prx3TT) +
+           _form.TableHeader(VbrLocalizationHelper.Prx4, VbrLocalizationHelper.Prx4TT) +
+           _form.TableHeader(VbrLocalizationHelper.Prx5, VbrLocalizationHelper.Prx5TT) +
+           _form.TableHeader(VbrLocalizationHelper.Prx6, VbrLocalizationHelper.Prx6TT) +
+           _form.TableHeader(VbrLocalizationHelper.Prx7, VbrLocalizationHelper.Prx7TT) +
+           _form.TableHeader(VbrLocalizationHelper.Prx8, VbrLocalizationHelper.Prx8TT) +
+           _form.TableHeader(VbrLocalizationHelper.Prx9, VbrLocalizationHelper.Prx9TT) +
+           _form.TableHeader(VbrLocalizationHelper.Prx10, VbrLocalizationHelper.Prx10TT) +
+           _form.TableHeader(VbrLocalizationHelper.Prx11, VbrLocalizationHelper.Prx11TT) +
    "</tr>";
             try
             {
@@ -624,23 +625,23 @@ namespace VeeamHealthCheck.Html.VBR
         }
         public string AddSobrTable(bool scrub)
         {
-            string s = _form.SectionStartWithButton("sobr", ResourceHandler.SbrTitle, ResourceHandler.SbrBtn);
+            string s = _form.SectionStartWithButton("sobr", VbrLocalizationHelper.SbrTitle, VbrLocalizationHelper.SbrBtn);
             string summary = _sum.Sobr();
             s += "<tr>" +
-           _form.TableHeader(ResourceHandler.Sbr0, ResourceHandler.Sbr0TT) +
-           _form.TableHeader(ResourceHandler.Sbr1, ResourceHandler.Sbr1TT) +
-           _form.TableHeader(ResourceHandler.Repo0, ResourceHandler.Repo1TT) +
-           _form.TableHeader(ResourceHandler.Sbr2, ResourceHandler.Sbr2TT) +
-           _form.TableHeader(ResourceHandler.Sbr3, ResourceHandler.Sbr3TT) +
-           _form.TableHeader(ResourceHandler.Sbr4, ResourceHandler.Sbr4TT) +
-           _form.TableHeader(ResourceHandler.Sbr5, ResourceHandler.Sbr5TT) +
-           _form.TableHeader(ResourceHandler.Sbr6, ResourceHandler.Sbr6TT) +
-           _form.TableHeader(ResourceHandler.Sbr7, ResourceHandler.Sbr7TT) +
-           _form.TableHeader(ResourceHandler.Sbr8, ResourceHandler.Sbr8TT) +
-           _form.TableHeader(ResourceHandler.Sbr9, ResourceHandler.Sbr9TT) +
-           _form.TableHeader(ResourceHandler.Sbr10, ResourceHandler.Sbr10TT) +
-           _form.TableHeader(ResourceHandler.Sbr11, ResourceHandler.Sbr11TT) +
-           _form.TableHeader(ResourceHandler.Sbr12, ResourceHandler.Sbr12TT) +
+           _form.TableHeader(VbrLocalizationHelper.Sbr0, VbrLocalizationHelper.Sbr0TT) +
+           _form.TableHeader(VbrLocalizationHelper.Sbr1, VbrLocalizationHelper.Sbr1TT) +
+           _form.TableHeader(VbrLocalizationHelper.Repo0, VbrLocalizationHelper.Repo1TT) +
+           _form.TableHeader(VbrLocalizationHelper.Sbr2, VbrLocalizationHelper.Sbr2TT) +
+           _form.TableHeader(VbrLocalizationHelper.Sbr3, VbrLocalizationHelper.Sbr3TT) +
+           _form.TableHeader(VbrLocalizationHelper.Sbr4, VbrLocalizationHelper.Sbr4TT) +
+           _form.TableHeader(VbrLocalizationHelper.Sbr5, VbrLocalizationHelper.Sbr5TT) +
+           _form.TableHeader(VbrLocalizationHelper.Sbr6, VbrLocalizationHelper.Sbr6TT) +
+           _form.TableHeader(VbrLocalizationHelper.Sbr7, VbrLocalizationHelper.Sbr7TT) +
+           _form.TableHeader(VbrLocalizationHelper.Sbr8, VbrLocalizationHelper.Sbr8TT) +
+           _form.TableHeader(VbrLocalizationHelper.Sbr9, VbrLocalizationHelper.Sbr9TT) +
+           _form.TableHeader(VbrLocalizationHelper.Sbr10, VbrLocalizationHelper.Sbr10TT) +
+           _form.TableHeader(VbrLocalizationHelper.Sbr11, VbrLocalizationHelper.Sbr11TT) +
+           _form.TableHeader(VbrLocalizationHelper.Sbr12, VbrLocalizationHelper.Sbr12TT) +
            "</tr>";
             //CDataFormer cd = new(true);
 
@@ -683,25 +684,25 @@ namespace VeeamHealthCheck.Html.VBR
         }
         public string AddSobrExtTable(bool scrub)
         {
-            string s = _form.SectionStartWithButton("extents", ResourceHandler.SbrExtTitle, ResourceHandler.SbrExtBtn);
+            string s = _form.SectionStartWithButton("extents", VbrLocalizationHelper.SbrExtTitle, VbrLocalizationHelper.SbrExtBtn);
             string summary = _sum.Extents();
             s += "<tr>" +
-_form.TableHeader(ResourceHandler.SbrExt0, ResourceHandler.SbrExt0TT) +
-_form.TableHeader(ResourceHandler.SbrExt1, ResourceHandler.SbrExt1TT) +
-_form.TableHeader(ResourceHandler.SbrExt2, ResourceHandler.SbrExt2TT) +
-_form.TableHeader(ResourceHandler.SbrExt3, ResourceHandler.SbrExt3TT) +
-_form.TableHeader(ResourceHandler.SbrExt4, ResourceHandler.SbrExt4TT) +
-_form.TableHeader(ResourceHandler.SbrExt5, ResourceHandler.SbrExt5TT) +
-_form.TableHeader(ResourceHandler.SbrExt6, ResourceHandler.SbrExt6TT) +
-_form.TableHeader(ResourceHandler.SbrExt7, ResourceHandler.SbrExt7TT) +
-_form.TableHeader(ResourceHandler.SbrExt8, ResourceHandler.SbrExt8TT) +
-_form.TableHeader(ResourceHandler.SbrExt9, ResourceHandler.SbrExt9TT) +
-_form.TableHeader(ResourceHandler.SbrExt10, ResourceHandler.SbrExt10TT) +
-_form.TableHeader(ResourceHandler.SbrExt11, ResourceHandler.SbrExt11TT) +
-_form.TableHeader(ResourceHandler.SbrExt12, ResourceHandler.SbrExt12TT) +
-_form.TableHeader(ResourceHandler.SbrExt13, ResourceHandler.SbrExt13TT) +
-_form.TableHeader(ResourceHandler.SbrExt14, ResourceHandler.SbrExt14TT) +
-_form.TableHeader(ResourceHandler.SbrExt15, ResourceHandler.SbrExt15TT) +
+_form.TableHeader(VbrLocalizationHelper.SbrExt0, VbrLocalizationHelper.SbrExt0TT) +
+_form.TableHeader(VbrLocalizationHelper.SbrExt1, VbrLocalizationHelper.SbrExt1TT) +
+_form.TableHeader(VbrLocalizationHelper.SbrExt2, VbrLocalizationHelper.SbrExt2TT) +
+_form.TableHeader(VbrLocalizationHelper.SbrExt3, VbrLocalizationHelper.SbrExt3TT) +
+_form.TableHeader(VbrLocalizationHelper.SbrExt4, VbrLocalizationHelper.SbrExt4TT) +
+_form.TableHeader(VbrLocalizationHelper.SbrExt5, VbrLocalizationHelper.SbrExt5TT) +
+_form.TableHeader(VbrLocalizationHelper.SbrExt6, VbrLocalizationHelper.SbrExt6TT) +
+_form.TableHeader(VbrLocalizationHelper.SbrExt7, VbrLocalizationHelper.SbrExt7TT) +
+_form.TableHeader(VbrLocalizationHelper.SbrExt8, VbrLocalizationHelper.SbrExt8TT) +
+_form.TableHeader(VbrLocalizationHelper.SbrExt9, VbrLocalizationHelper.SbrExt9TT) +
+_form.TableHeader(VbrLocalizationHelper.SbrExt10, VbrLocalizationHelper.SbrExt10TT) +
+_form.TableHeader(VbrLocalizationHelper.SbrExt11, VbrLocalizationHelper.SbrExt11TT) +
+_form.TableHeader(VbrLocalizationHelper.SbrExt12, VbrLocalizationHelper.SbrExt12TT) +
+_form.TableHeader(VbrLocalizationHelper.SbrExt13, VbrLocalizationHelper.SbrExt13TT) +
+_form.TableHeader(VbrLocalizationHelper.SbrExt14, VbrLocalizationHelper.SbrExt14TT) +
+_form.TableHeader(VbrLocalizationHelper.SbrExt15, VbrLocalizationHelper.SbrExt15TT) +
 "</tr>";
             try
             {
@@ -754,26 +755,26 @@ _form.TableHeader(ResourceHandler.SbrExt15, ResourceHandler.SbrExt15TT) +
         }
         public string AddRepoTable(bool scrub)
         {
-            string s = _form.SectionStartWithButton("repos", ResourceHandler.RepoTitle, ResourceHandler.RepoBtn);
+            string s = _form.SectionStartWithButton("repos", VbrLocalizationHelper.RepoTitle, VbrLocalizationHelper.RepoBtn);
             string summary = _sum.Repos();
             s += "<tr>" +
-_form.TableHeader(ResourceHandler.SbrExt0, ResourceHandler.SbrExt0TT) +
-_form.TableHeader(ResourceHandler.Repo0, ResourceHandler.Repo0TT) +
-_form.TableHeader(ResourceHandler.SbrExt2, ResourceHandler.SbrExt2TT) +
-_form.TableHeader(ResourceHandler.SbrExt3, ResourceHandler.SbrExt3TT) +
-_form.TableHeader(ResourceHandler.SbrExt4, ResourceHandler.SbrExt4TT) +
-_form.TableHeader(ResourceHandler.SbrExt5, ResourceHandler.SbrExt5TT) +
-_form.TableHeader(ResourceHandler.SbrExt6, ResourceHandler.SbrExt6TT) +
-_form.TableHeader(ResourceHandler.SbrExt7, ResourceHandler.SbrExt7TT) +
-_form.TableHeader(ResourceHandler.SbrExt8, ResourceHandler.SbrExt8TT) +
-_form.TableHeader(ResourceHandler.SbrExt9, ResourceHandler.SbrExt9TT) +
-_form.TableHeader(ResourceHandler.SbrExt10, ResourceHandler.SbrExt10TT) +
-_form.TableHeader(ResourceHandler.Repo1, ResourceHandler.Repo1TT) +
-_form.TableHeader(ResourceHandler.SbrExt11, ResourceHandler.SbrExt11TT) +
-_form.TableHeader(ResourceHandler.SbrExt12, ResourceHandler.SbrExt12TT) +
-_form.TableHeader(ResourceHandler.SbrExt13, ResourceHandler.SbrExt13TT) +
-_form.TableHeader(ResourceHandler.SbrExt14, ResourceHandler.SbrExt14TT) +
-_form.TableHeader(ResourceHandler.SbrExt15, ResourceHandler.SbrExt15TT) +
+_form.TableHeader(VbrLocalizationHelper.SbrExt0, VbrLocalizationHelper.SbrExt0TT) +
+_form.TableHeader(VbrLocalizationHelper.Repo0, VbrLocalizationHelper.Repo0TT) +
+_form.TableHeader(VbrLocalizationHelper.SbrExt2, VbrLocalizationHelper.SbrExt2TT) +
+_form.TableHeader(VbrLocalizationHelper.SbrExt3, VbrLocalizationHelper.SbrExt3TT) +
+_form.TableHeader(VbrLocalizationHelper.SbrExt4, VbrLocalizationHelper.SbrExt4TT) +
+_form.TableHeader(VbrLocalizationHelper.SbrExt5, VbrLocalizationHelper.SbrExt5TT) +
+_form.TableHeader(VbrLocalizationHelper.SbrExt6, VbrLocalizationHelper.SbrExt6TT) +
+_form.TableHeader(VbrLocalizationHelper.SbrExt7, VbrLocalizationHelper.SbrExt7TT) +
+_form.TableHeader(VbrLocalizationHelper.SbrExt8, VbrLocalizationHelper.SbrExt8TT) +
+_form.TableHeader(VbrLocalizationHelper.SbrExt9, VbrLocalizationHelper.SbrExt9TT) +
+_form.TableHeader(VbrLocalizationHelper.SbrExt10, VbrLocalizationHelper.SbrExt10TT) +
+_form.TableHeader(VbrLocalizationHelper.Repo1, VbrLocalizationHelper.Repo1TT) +
+_form.TableHeader(VbrLocalizationHelper.SbrExt11, VbrLocalizationHelper.SbrExt11TT) +
+_form.TableHeader(VbrLocalizationHelper.SbrExt12, VbrLocalizationHelper.SbrExt12TT) +
+_form.TableHeader(VbrLocalizationHelper.SbrExt13, VbrLocalizationHelper.SbrExt13TT) +
+_form.TableHeader(VbrLocalizationHelper.SbrExt14, VbrLocalizationHelper.SbrExt14TT) +
+_form.TableHeader(VbrLocalizationHelper.SbrExt15, VbrLocalizationHelper.SbrExt15TT) +
 "</tr>";
             try
             {
@@ -826,16 +827,16 @@ _form.TableHeader(ResourceHandler.SbrExt15, ResourceHandler.SbrExt15TT) +
         }
         public string AddJobConTable(bool scrub)
         {
-            string s = _form.SectionStartWithButton("jobcon", ResourceHandler.JobConTitle, ResourceHandler.JobConBtn, CGlobals.ReportDays);
+            string s = _form.SectionStartWithButton("jobcon", VbrLocalizationHelper.JobConTitle, VbrLocalizationHelper.JobConBtn, CGlobals.ReportDays);
             string summary = _sum.JobCon();
-            s += _form.TableHeader(ResourceHandler.JobCon0, "");
-            s += _form.TableHeader(ResourceHandler.JobCon1, "");
-            s += _form.TableHeader(ResourceHandler.JobCon2, "");
-            s += _form.TableHeader(ResourceHandler.JobCon3, "");
-            s += _form.TableHeader(ResourceHandler.JobCon4, "");
-            s += _form.TableHeader(ResourceHandler.JobCon5, "");
-            s += _form.TableHeader(ResourceHandler.JobCon6, "");
-            s += _form.TableHeader(ResourceHandler.JobCon7, "");
+            s += _form.TableHeader(VbrLocalizationHelper.JobCon0, "");
+            s += _form.TableHeader(VbrLocalizationHelper.JobCon1, "");
+            s += _form.TableHeader(VbrLocalizationHelper.JobCon2, "");
+            s += _form.TableHeader(VbrLocalizationHelper.JobCon3, "");
+            s += _form.TableHeader(VbrLocalizationHelper.JobCon4, "");
+            s += _form.TableHeader(VbrLocalizationHelper.JobCon5, "");
+            s += _form.TableHeader(VbrLocalizationHelper.JobCon6, "");
+            s += _form.TableHeader(VbrLocalizationHelper.JobCon7, "");
             s += "</tr>";
 
             try
@@ -868,17 +869,17 @@ _form.TableHeader(ResourceHandler.SbrExt15, ResourceHandler.SbrExt15TT) +
         }
         public string AddTaskConTable(bool scrub)
         {
-            string s = _form.SectionStartWithButton("taskcon", ResourceHandler.TaskConTitle, ResourceHandler.TaskConBtn, CGlobals.ReportDays);
+            string s = _form.SectionStartWithButton("taskcon", VbrLocalizationHelper.TaskConTitle, VbrLocalizationHelper.TaskConBtn, CGlobals.ReportDays);
             string summary = _sum.TaskCon();
 
-            s += _form.TableHeader(ResourceHandler.TaskCon0, "");
-            s += _form.TableHeader(ResourceHandler.TaskCon1, "");
-            s += _form.TableHeader(ResourceHandler.TaskCon2, "");
-            s += _form.TableHeader(ResourceHandler.TaskCon3, "");
-            s += _form.TableHeader(ResourceHandler.TaskCon4, "");
-            s += _form.TableHeader(ResourceHandler.TaskCon5, "");
-            s += _form.TableHeader(ResourceHandler.TaskCon6, "");
-            s += _form.TableHeader(ResourceHandler.TaskCon7, "");
+            s += _form.TableHeader(VbrLocalizationHelper.TaskCon0, "");
+            s += _form.TableHeader(VbrLocalizationHelper.TaskCon1, "");
+            s += _form.TableHeader(VbrLocalizationHelper.TaskCon2, "");
+            s += _form.TableHeader(VbrLocalizationHelper.TaskCon3, "");
+            s += _form.TableHeader(VbrLocalizationHelper.TaskCon4, "");
+            s += _form.TableHeader(VbrLocalizationHelper.TaskCon5, "");
+            s += _form.TableHeader(VbrLocalizationHelper.TaskCon6, "");
+            s += _form.TableHeader(VbrLocalizationHelper.TaskCon7, "");
             s += "</tr>";
 
             try
@@ -909,25 +910,25 @@ _form.TableHeader(ResourceHandler.SbrExt15, ResourceHandler.SbrExt15TT) +
         }
         public string AddJobSessSummTable(bool scrub)
         {
-            string s = _form.SectionStartWithButton("jobsesssum", ResourceHandler.JssTitle, ResourceHandler.JssBtn, CGlobals.ReportDays);
+            string s = _form.SectionStartWithButton("jobsesssum", VbrLocalizationHelper.JssTitle, VbrLocalizationHelper.JssBtn, CGlobals.ReportDays);
             string summary = _sum.JobSessSummary();
 
-            s += _form.TableHeader(ResourceHandler.Jss0, ResourceHandler.Jss0TT);
-            s += _form.TableHeader(ResourceHandler.Jss1, ResourceHandler.Jss1TT);
-            s += _form.TableHeader(ResourceHandler.Jss2, ResourceHandler.Jss2TT);
-            s += _form.TableHeader(ResourceHandler.Jss3, ResourceHandler.Jss3TT);
-            s += _form.TableHeader(ResourceHandler.Jss4, ResourceHandler.Jss4TT);
-            s += _form.TableHeader(ResourceHandler.Jss5, ResourceHandler.Jss5TT);
-            s += _form.TableHeader(ResourceHandler.Jss6, ResourceHandler.Jss6TT);
-            s += _form.TableHeader(ResourceHandler.Jss7, ResourceHandler.Jss7TT);
-            s += _form.TableHeader(ResourceHandler.Jss8, ResourceHandler.Jss8TT);
-            s += _form.TableHeader(ResourceHandler.Jss9, ResourceHandler.Jss9TT);
-            s += _form.TableHeader(ResourceHandler.Jss10, ResourceHandler.Jss10TT);
-            s += _form.TableHeader(ResourceHandler.Jss11, ResourceHandler.Jss11TT);
-            s += _form.TableHeader(ResourceHandler.Jss12, ResourceHandler.Jss12TT);
-            s += _form.TableHeader(ResourceHandler.Jss13, ResourceHandler.Jss13TT);
-            s += _form.TableHeader(ResourceHandler.Jss14, ResourceHandler.Jss14TT);
-            s += _form.TableHeader(ResourceHandler.Jss15, ResourceHandler.Jss15TT);
+            s += _form.TableHeader(VbrLocalizationHelper.Jss0, VbrLocalizationHelper.Jss0TT);
+            s += _form.TableHeader(VbrLocalizationHelper.Jss1, VbrLocalizationHelper.Jss1TT);
+            s += _form.TableHeader(VbrLocalizationHelper.Jss2, VbrLocalizationHelper.Jss2TT);
+            s += _form.TableHeader(VbrLocalizationHelper.Jss3, VbrLocalizationHelper.Jss3TT);
+            s += _form.TableHeader(VbrLocalizationHelper.Jss4, VbrLocalizationHelper.Jss4TT);
+            s += _form.TableHeader(VbrLocalizationHelper.Jss5, VbrLocalizationHelper.Jss5TT);
+            s += _form.TableHeader(VbrLocalizationHelper.Jss6, VbrLocalizationHelper.Jss6TT);
+            s += _form.TableHeader(VbrLocalizationHelper.Jss7, VbrLocalizationHelper.Jss7TT);
+            s += _form.TableHeader(VbrLocalizationHelper.Jss8, VbrLocalizationHelper.Jss8TT);
+            s += _form.TableHeader(VbrLocalizationHelper.Jss9, VbrLocalizationHelper.Jss9TT);
+            s += _form.TableHeader(VbrLocalizationHelper.Jss10, VbrLocalizationHelper.Jss10TT);
+            s += _form.TableHeader(VbrLocalizationHelper.Jss11, VbrLocalizationHelper.Jss11TT);
+            s += _form.TableHeader(VbrLocalizationHelper.Jss12, VbrLocalizationHelper.Jss12TT);
+            s += _form.TableHeader(VbrLocalizationHelper.Jss13, VbrLocalizationHelper.Jss13TT);
+            s += _form.TableHeader(VbrLocalizationHelper.Jss14, VbrLocalizationHelper.Jss14TT);
+            s += _form.TableHeader(VbrLocalizationHelper.Jss15, VbrLocalizationHelper.Jss15TT);
 
             try
             {
@@ -954,23 +955,23 @@ _form.TableHeader(ResourceHandler.SbrExt15, ResourceHandler.SbrExt15TT) +
         }
         public string AddJobInfoTable(bool scrub)
         {
-            string s = _form.SectionStartWithButton("jobs", ResourceHandler.JobInfoTitle, ResourceHandler.JobInfoBtn);
+            string s = _form.SectionStartWithButton("jobs", VbrLocalizationHelper.JobInfoTitle, VbrLocalizationHelper.JobInfoBtn);
             string summary = _sum.JobInfo();
 
-            s += _form.TableHeader(ResourceHandler.JobInfo0, ResourceHandler.JobInfo0TT);
-            s += _form.TableHeader(ResourceHandler.JobInfo1, ResourceHandler.JobInfo1TT);
-            s += _form.TableHeader(ResourceHandler.JobInfo2, ResourceHandler.JobInfo2TT);
-            s += _form.TableHeader(ResourceHandler.JobInfo3, ResourceHandler.JobInfo3TT);
-            s += _form.TableHeader(ResourceHandler.JobInfo4, ResourceHandler.JobInfo4TT);
-            s += _form.TableHeader(ResourceHandler.JobInfo5, ResourceHandler.JobInfo5TT);
-            s += _form.TableHeader(ResourceHandler.JobInfo6, ResourceHandler.JobInfo6TT);
-            s += _form.TableHeader(ResourceHandler.JobInfo7, ResourceHandler.JobInfo7TT);
-            s += _form.TableHeader(ResourceHandler.JobInfo8, ResourceHandler.JobInfo8TT);
-            s += _form.TableHeader(ResourceHandler.JobInfo9, ResourceHandler.JobInfo9TT);
+            s += _form.TableHeader(VbrLocalizationHelper.JobInfo0, VbrLocalizationHelper.JobInfo0TT);
+            s += _form.TableHeader(VbrLocalizationHelper.JobInfo1, VbrLocalizationHelper.JobInfo1TT);
+            s += _form.TableHeader(VbrLocalizationHelper.JobInfo2, VbrLocalizationHelper.JobInfo2TT);
+            s += _form.TableHeader(VbrLocalizationHelper.JobInfo3, VbrLocalizationHelper.JobInfo3TT);
+            s += _form.TableHeader(VbrLocalizationHelper.JobInfo4, VbrLocalizationHelper.JobInfo4TT);
+            s += _form.TableHeader(VbrLocalizationHelper.JobInfo5, VbrLocalizationHelper.JobInfo5TT);
+            s += _form.TableHeader(VbrLocalizationHelper.JobInfo6, VbrLocalizationHelper.JobInfo6TT);
+            s += _form.TableHeader(VbrLocalizationHelper.JobInfo7, VbrLocalizationHelper.JobInfo7TT);
+            s += _form.TableHeader(VbrLocalizationHelper.JobInfo8, VbrLocalizationHelper.JobInfo8TT);
+            s += _form.TableHeader(VbrLocalizationHelper.JobInfo9, VbrLocalizationHelper.JobInfo9TT);
             //s += _form.TableHeader(ResourceHandler.JobInfo10, ResourceHandler.JobInfo10TT);
-            s += _form.TableHeader(ResourceHandler.JobInfo11, ResourceHandler.JobInfo11TT);
-            s += _form.TableHeader(ResourceHandler.JobInfo12, ResourceHandler.JobInfo12TT);
-            s += _form.TableHeader(ResourceHandler.JobInfo13, ResourceHandler.JobInfo13TT);
+            s += _form.TableHeader(VbrLocalizationHelper.JobInfo11, VbrLocalizationHelper.JobInfo11TT);
+            s += _form.TableHeader(VbrLocalizationHelper.JobInfo12, VbrLocalizationHelper.JobInfo12TT);
+            s += _form.TableHeader(VbrLocalizationHelper.JobInfo13, VbrLocalizationHelper.JobInfo13TT);
 
             try
             {
