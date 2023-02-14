@@ -10,11 +10,11 @@
     <Company>Veeam</Company>
     <Authors>AdamC</Authors>
     <ApplicationIcon>Veeam_HealthCheck_228x228.ico</ApplicationIcon>
-    <AssemblyVersion>1.0.2.1066</AssemblyVersion>
+    <AssemblyVersion>1.0.2.1086</AssemblyVersion>
     <SignAssembly>true</SignAssembly>
     <AssemblyOriginatorKeyFile>vhc_keyfile2.pfx</AssemblyOriginatorKeyFile>
     <DelaySign>false</DelaySign>
-    <FileVersion>1.0.2.1066</FileVersion>
+    <FileVersion>1.0.2.1088</FileVersion>
     <DebugType>full</DebugType>
 	  <SelfContained>true</SelfContained>
 	  <!--These 2 lines are what produce the single file utility. Possibly doesn't work...-->
@@ -69,6 +69,7 @@
     <None Remove="Resources\Localization\VB365\vb365_vhcres.resources" />
     <None Remove="Resources\Localization\vhcres.fr-FR.resources" />
     <None Remove="Resources\Localization\vhcres.ja.resources" />
+    <None Remove="Resources\Localization\vhcres.resources" />
     <None Remove="Resources\Localization\vhcres.zh-cn.resources" />
     <None Remove="Resources\Localization\vhcres.zh-tw.resources" />
     <None Remove="Resources\vhcres.resources" />
@@ -128,8 +129,16 @@
     </None>
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="Resources\Localization\VBR\" />
+  </ItemGroup>
+
   <Target Name="PostBuild" AfterTargets="PostBuildEvent">
     <Exec Command="call C:\code\VeeamHub\veeam-healthcheck\vHC\HC_Reporting\Tools\build\test.bat" />
+  </Target>
+
+  <Target Name="PreBuild" BeforeTargets="PreBuildEvent">
+    <Exec Command="call C:\code\VeeamHub\veeam-healthcheck\vHC\HC_Reporting\Tools\build\BuildVbrLocalization.bat" />
   </Target>
 
 </Project>

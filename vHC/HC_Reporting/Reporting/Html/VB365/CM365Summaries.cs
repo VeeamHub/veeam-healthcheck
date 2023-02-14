@@ -5,6 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 using VeeamHealthCheck.Reporting.Html.Shared;
 using VeeamHealthCheck.Resources.Localization.VB365;
+using VeeamHealthCheck.Resources.Localization;
 
 namespace VeeamHealthCheck.Reporting.Html.VB365
 {

@@ -6,7 +6,6 @@ using System.Diagnostics;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Documents;
-using VeeamHealthCheck;
 using VeeamHealthCheck.DB;
 using VeeamHealthCheck.Shared.Logging;
 using System.Threading;
