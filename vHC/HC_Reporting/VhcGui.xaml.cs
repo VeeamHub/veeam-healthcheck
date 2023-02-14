@@ -148,7 +148,7 @@ namespace VeeamHealthCheck
                 if(import)
                     _functions.Import();
                 else
-                    _functions.RunClickAction();
+                    _functions.StartPrimaryFunctions();
                 Environment.Exit(0);
 
             }).ContinueWith(t =>

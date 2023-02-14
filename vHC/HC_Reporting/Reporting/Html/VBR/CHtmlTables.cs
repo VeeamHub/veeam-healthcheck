@@ -49,6 +49,26 @@ namespace VeeamHealthCheck.Html.VBR
                 _form.FormNavRows(ResourceHandler.NavJobSessSumLink, "jobsesssum", ResourceHandler.NavJobSessSumDeet) +
                 _form.FormNavRows(ResourceHandler.NavJobInfoLink, "jobs", ResourceHandler.NavJobInfoDeet);
         }
+        public string MakeSecurityNavTable()
+        {
+            return //_form.FormNavRows(ResourceHandler.NavLicInfoLink, "license", ResourceHandler.NavLicInfoDetail) +
+                _form.FormNavRows(ResourceHandler.NavBkpSrvLink, "vbrserver", ResourceHandler.NavBkpSrvDeet) +
+                _form.FormNavRows(ResourceHandler.NavSecSumLink, "secsummary", ResourceHandler.NavSecSumDeet) +
+                //_form.FormNavRows(ResourceHandler.NavSrvSumLink, "serversummary", ResourceHandler.NavSrvSumDeet) +
+                _form.FormNavRows(ResourceHandler.NavJobSumLink, "jobsummary", ResourceHandler.NavJobSumDeet) +
+                //_form.FormNavRows(ResourceHandler.NavMissingJobLink, "missingjobs", ResourceHandler.NavMissingDeet) +
+                //_form.FormNavRows(ResourceHandler.NavProtWrkld, "protectedworkloads", ResourceHandler.NavProtWkldDeet) +
+                _form.FormNavRows(ResourceHandler.NavSrvInfoLink, "managedServerInfo", ResourceHandler.NavSrvInfoDeet) +
+                _form.FormNavRows(ResourceHandler.NavRegKeyLink, "regkeys", ResourceHandler.NavRegKeyDeet) +
+                _form.FormNavRows(ResourceHandler.NavProxyInfoLink, "proxies", ResourceHandler.NavProxyDeet) +
+                _form.FormNavRows(ResourceHandler.NavSobrInfoLink, "sobr", ResourceHandler.NavSobrDeet) +
+                _form.FormNavRows(ResourceHandler.NavSobrExtLink, "extents", ResourceHandler.NavSobrExtDeet) +
+                _form.FormNavRows(ResourceHandler.NavRepoInfoLink, "repos", ResourceHandler.NavRepoDeet) +
+                //_form.FormNavRows(ResourceHandler.NavJobConLink, "jobcon", ResourceHandler.NavJobConDeet) +
+                //_form.FormNavRows(ResourceHandler.NavTaskConLink, "taskcon", ResourceHandler.NavTaskConDeet) +
+                //_form.FormNavRows(ResourceHandler.NavJobSessSumLink, "jobsesssum", ResourceHandler.NavJobSessSumDeet) +
+                _form.FormNavRows(ResourceHandler.NavJobInfoLink, "jobs", ResourceHandler.NavJobInfoDeet);
+        }
 
 
         public string LicTable(bool scrub)
@@ -131,6 +151,7 @@ namespace VeeamHealthCheck.Html.VBR
             s += _form.TableHeader(ResourceHandler.BkpSrvTblWanRole, ResourceHandler.BstWaTT);
             s += _form.TableHeader("Console Installed", "");
             s += _form.TableHeader("RDP Enabled", "");
+            s += _form.TableHeader("Domain Joined", "");
             s += "</tr><<tr>";
             s += _form.TableData(b.Name, "");
             s += _form.TableData(b.Version, "");
@@ -141,6 +162,7 @@ namespace VeeamHealthCheck.Html.VBR
             s += _form.TableData(b.HasWanAccRole.ToString(), "");
             s += _form.TableData(CGlobals.isConsoleLocal.ToString(), "");
             s += _form.TableData(CGlobals._isRdpEnabled.ToString(), "");
+            s += _form.TableData(CGlobals._isDomainJoined.ToString(), "");
             s += "</table><br>";
             
             s += "<h3>Config Backup Info</h3>";

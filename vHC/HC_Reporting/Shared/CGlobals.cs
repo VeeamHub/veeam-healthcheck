@@ -21,7 +21,7 @@ namespace VeeamHealthCheck.Shared
         public static DateTime TOOLSTART;
 
         // GUI & CLI Options:
-        private static int _reportDays;
+        private static int _reportDays = 7;
         public static string _desiredPath = CVariables.unsafeDir;
         private static bool _openHtml;
         private static bool _openExplorer;
@@ -31,7 +31,7 @@ namespace VeeamHealthCheck.Shared
         private static bool _runSecReport;
 
         // B&R Server global values
-        public static bool isConsoleLocal = false;
+        public static string isConsoleLocal = "Undetermined";
         public static string _isRdpEnabled = "Undetermined";
         public static string _isDomainJoined = "";
 

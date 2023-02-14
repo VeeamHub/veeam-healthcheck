@@ -9,6 +9,7 @@ using System.Xml.Linq;
 using VeeamHealthCheck.CsvHandlers;
 using VeeamHealthCheck.Html.VBR;
 using VeeamHealthCheck.Reporting.Html.Shared;
+using VeeamHealthCheck.Reporting.Html.VBR;
 using VeeamHealthCheck.Shared;
 using VeeamHealthCheck.Shared.Logging;
 
@@ -29,17 +30,31 @@ namespace VeeamHealthCheck.Html
         CHtmlFormatting _form = new();
         CHtmlTables _tables = new();
 
+        private string logStart = "[VbrHtmlCompiler]\t";
+
         // section links
 
 
 
         public CHtmlCompiler()
         {
-            log.Info("Init VBR Compiler");
+
+        }
+        public void RunFullVbrReport()
+        {
+            log.Info(logStart + "Init full report");
             FormHeader();
-            FormBody();
+            FormVbrFullBody();
             ExportHtml();
-            log.Info("Init VBR Compiler...done!");
+            log.Info(logStart + "Init full report...done!");
+        }
+        public void RunSecurityReport()
+        {
+            log.Info(logStart + "Init Security Report");
+            FormHeader();
+            FormSecurityBody();
+            ExportSecurityHtml();
+            log.Info(logStart + "Init Security Report");
         }
         private void ExportHtml()
         {
@@ -49,11 +64,18 @@ namespace VeeamHealthCheck.Html
             if (CGlobals.OpenExplorer)
                 exporter.OpenExplorer();
         }
+        private void ExportSecurityHtml()
+        {
+            CHtmlExporter exporter = new("", GetServerName(), "", CGlobals.Scrub);
+            exporter.ExportVbrSecurityHtml(_htmldocOriginal, false);
+            //exporter.ExportVbrHtml(_htmldocScrubbed, true);
+            if (CGlobals.OpenExplorer)
+                exporter.OpenExplorer();
+        }
         private string GetServerName()
         {
             log.Info("Checking for server name...");
             return Dns.GetHostName();
-            log.Info("Checking for server name...done!");
         }
         public void Dispose()
         {
@@ -81,18 +103,31 @@ namespace VeeamHealthCheck.Html
         #region HtmlHeaders
 
 
-
-        private void SetNavigation()
+        private void SetUniversalNavStart()
         {
             log.Info("[HTML] setting HTML navigation");
             AddToHtml(DivId("navigation"));
             AddToHtml(String.Format("<h4>{0}</h4>", ResourceHandler.NavHeader));
             AddToHtml(String.Format("<button type=\"button\" class=\"btn\" onclick=\"test()\">{0}</button>", ResourceHandler.NavColapse));
-            NavTable();
-
-
+        }
+        private void SetUniversalNavEnd()
+        {
             AddToHtml(_form._endDiv);
             log.Info("[HTML] setting HTML navigation...done!");
+        }
+        private void SetNavigation()
+        {
+            SetUniversalNavStart();
+            NavTable();
+            SetUniversalNavEnd  ();
+
+            
+        }
+        private void SetSecurityNavigations()
+        {
+            SetUniversalNavStart();
+            SecurityNavTable();
+            SetUniversalNavEnd();
         }
 
 
@@ -109,100 +144,63 @@ namespace VeeamHealthCheck.Html
         }
 
         #endregion
-        private void FormBody()
+        private string FormBodyStart(string htmlString, bool scrub)
+        {
+            htmlString += _form.body;
+            if (scrub)
+            {
+                htmlString += _form.SetHeaderAndLogo(" ");
+                htmlString += _form.SetBannerAndIntro(true);
+            }
+            else
+            {
+                htmlString += _form.SetHeaderAndLogo(SetLicHolder());
+                htmlString += _form.SetBannerAndIntro(false);
+            }
+            
+            return htmlString;
+        }
+        private void FormSecurityBody()
+        {
+
+            log.Info("[HTML] forming HTML body");
+            _htmldocOriginal += FormBodyStart(_htmldocOriginal, false);
+
+            //nav
+            SetSecurityNavigations(); // change for security
+
+
+            //tables
+            CHtmlBodyHelper helper = new();
+            _htmldocOriginal = helper.FormSecurityReport(_htmldocOriginal);
+
+            _htmldocOriginal += FormFooter();
+
+
+            log.Info("[HTML] forming HTML body...done!");
+        }
+        private void FormVbrFullBody()
         {
             log.Info("[HTML] forming HTML body");
-            _htmldocOriginal += _form.body;
-            _htmldocScrubbed += _form.body;
-
-            // set correct logo for ORIGINAL and set blank logo for Scrubbed
-            _htmldocOriginal += _form.SetHeaderAndLogo(SetLicHolder());
-            _htmldocScrubbed += _form.SetHeaderAndLogo(" ");
-
-            _htmldocOriginal += _form.SetBannerAndIntro(false);
-            _htmldocScrubbed += _form.SetBannerAndIntro(true);
+            _htmldocOriginal += FormBodyStart(_htmldocOriginal, false);
+            _htmldocScrubbed += FormBodyStart(_htmldocScrubbed, true);
 
             //nav
             SetNavigation();
 
+            CHtmlBodyHelper helper =  new();
+            _htmldocScrubbed = helper.FormVbrFullReport(_htmldocScrubbed, true);
+            _htmldocOriginal = helper.FormVbrFullReport(_htmldocOriginal, false);
 
-            //tables
-            if (CGlobals.RunFullReport)
-            {
-                _htmldocOriginal += _tables.LicTable(false);
-                _htmldocOriginal += _tables.AddBkpSrvTable(false);
-            }
-            
-            if(CGlobals.RunSecReport || CGlobals.RunFullReport)
-                _htmldocOriginal += _tables.AddSecSummaryTable(false);
-
-            if (CGlobals.RunFullReport)
-            {
-                _htmldocOriginal += _tables.AddSrvSummaryTable(false);
-                _htmldocOriginal += _tables.AddJobSummaryTable(false);
-                _htmldocOriginal += _tables.AddMissingJobsTable(false);
-                _htmldocOriginal += _tables.AddProtectedWorkLoadsTable(false);
-                _htmldocOriginal += _tables.AddManagedServersTable(false);
-                _htmldocOriginal += _tables.AddRegKeysTable(false);
-                _htmldocOriginal += _tables.AddProxyTable(false);
-                _htmldocOriginal += _tables.AddSobrTable(false);
-                _htmldocOriginal += _tables.AddSobrExtTable(false);
-                _htmldocOriginal += _tables.AddRepoTable(false);
-                _htmldocOriginal += _tables.AddJobConTable(false);
-                _htmldocOriginal += _tables.AddTaskConTable(false);
-                _htmldocOriginal += _tables.AddJobSessSummTable(false);
-                _htmldocOriginal += _tables.AddJobInfoTable(false);
-            }
-
-
-
-            // anon report
-            if (CGlobals.RunFullReport)
-            {
-                _htmldocScrubbed += _tables.LicTable(true);
-                _htmldocScrubbed += _tables.AddBkpSrvTable(true);
-            }
-            
-            
-            // anon sec report
-            if (CGlobals.RunSecReport || CGlobals.RunFullReport)
-                _htmldocScrubbed += _tables.AddSecSummaryTable(true);
-
-            if (CGlobals.RunFullReport)
-            {
-
-
-                _htmldocScrubbed += _tables.AddSrvSummaryTable(true);
-                _htmldocScrubbed += _tables.AddJobSummaryTable(true);
-                _htmldocScrubbed += _tables.AddMissingJobsTable(true);
-                _htmldocScrubbed += _tables.AddProtectedWorkLoadsTable(true);
-                _htmldocScrubbed += _tables.AddManagedServersTable(true);
-                _htmldocScrubbed += _tables.AddRegKeysTable(true);
-                _htmldocScrubbed += _tables.AddProxyTable(true);
-                _htmldocScrubbed += _tables.AddSobrTable(true);
-                _htmldocScrubbed += _tables.AddSobrExtTable(true);
-                _htmldocScrubbed += _tables.AddRepoTable(true);
-                _htmldocScrubbed += _tables.AddJobConTable(true);
-                _htmldocScrubbed += _tables.AddTaskConTable(true);
-                _htmldocScrubbed += _tables.AddJobSessSummTable(true);
-                _htmldocScrubbed += _tables.AddJobInfoTable(true);
-            }
-            //_tables.AddSessionsFiles();
-
-            _htmldocOriginal += "<a>vHC Version: " + CVersionSetter.GetFileVersion() + "</a>";
-            _htmldocOriginal += "<script type=\"text/javascript\">";
-            _htmldocOriginal += CssStyler.JavaScriptBlock();
-            _htmldocOriginal += "</script>";
-
-            _htmldocScrubbed += "<a>vHC Version: " + CVersionSetter.GetFileVersion() + "</a>";
-            _htmldocScrubbed += "<script type=\"text/javascript\">";
-            _htmldocScrubbed += CssStyler.JavaScriptBlock();
-            _htmldocScrubbed += "</script>";
+           
+            _htmldocOriginal += FormFooter();
+            _htmldocScrubbed += FormFooter();
 
             log.Info("[HTML] forming HTML body...done!");
         }
 
         #region TableFormation
+        
 
         private void NavTable()
         {
@@ -221,7 +219,33 @@ namespace VeeamHealthCheck.Html
                 "</div>";
             AddToHtml(tableString);
         }
+        private void SecurityNavTable()
+        {
+            string tableString =
+    "<table border=\"0\" style=\"background: \">" +
+    "<tbody>";
+            tableString += _tables.MakeSecurityNavTable();
 
+
+
+
+            tableString +=
+                "</tbody>" +
+                "</table>" +
+                //BackToTop() +
+                "</div>";
+            AddToHtml(tableString);
+        }
+
+        private string FormFooter()
+        {
+            string s = ""; 
+            s += "<a>vHC Version: " + CVersionSetter.GetFileVersion() + "</a>";
+            s += "<script type=\"text/javascript\">";
+            s += CssStyler.JavaScriptBlock();
+            s += "</script>";
+            return s;
+        }
 
 
         #endregion
@@ -243,7 +267,7 @@ namespace VeeamHealthCheck.Html
         }
         private void AddToHtml(string infoString, bool scrub)
         {
-            
+
         }
 
         #endregion

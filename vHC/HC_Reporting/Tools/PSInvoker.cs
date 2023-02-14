@@ -40,33 +40,33 @@ namespace VeeamHealthCheck
         private void RunVbrConfigCollect()
         {
             var res1 = Process.Start(VbrConfigStartInfo());
-            log.Info(CMessages.PsVbrConfigProcId + res1.Id.ToString());
+            log.Info(CMessages.PsVbrConfigProcId + res1.Id.ToString(), false);
             
             res1.WaitForExit();
             
-            log.Info(CMessages.PsVbrConfigProcIdDone);
+            log.Info(CMessages.PsVbrConfigProcIdDone, false);
         }
         private ProcessStartInfo VbrConfigStartInfo()
         {
-            log.Info(CMessages.PsVbrConfigStart);
+            log.Info(CMessages.PsVbrConfigStart, false);
             return ConfigStartInfo(_vbrConfigScript, 0);
         }
         private void RunVbrSessionCollection()
         {
-            log.Info("[PS][VBR Sessions] Enter Session Collection Invoker...");
+            log.Info("[PS][VBR Sessions] Enter Session Collection Invoker...", false);
 
 
             var startInfo2 = ConfigStartInfo(_vbrSessionScript, CGlobals.ReportDays);
                 
                 
-            log.Info("[PS][VBR Sessions] Starting Session Collection PowerShell Process...");
+            log.Info("[PS][VBR Sessions] Starting Session Collection PowerShell Process...", false);
 
             var result = Process.Start(startInfo2);
             
-            log.Info("[PS][VBR Sessions] Process started with ID: " + result.Id.ToString());
+            log.Info("[PS][VBR Sessions] Process started with ID: " + result.Id.ToString(), false);
             result.WaitForExit();
             
-            log.Info("[PS][VBR Sessions] Session collection complete!");
+            log.Info("[PS][VBR Sessions] Session collection complete!", false);
         }
         private ProcessStartInfo ConfigStartInfo(string scriptLocation, int days)
         {
@@ -85,7 +85,7 @@ namespace VeeamHealthCheck
         }
         public void InvokeVb365Collect()
         {
-            log.Info("[PS] Enter VB365 collection invoker...");
+            log.Info("[PS] Enter VB365 collection invoker...", false);
             var scriptFile = _vb365Script;
             UnblockFile(scriptFile);
 
@@ -96,12 +96,12 @@ namespace VeeamHealthCheck
                 UseShellExecute = false,
                 CreateNoWindow = true
             };
-            log.Info("[PS] Starting VB365 Collection Powershell process");
-            log.Info("[PS] [ARGS]: " + startInfo.Arguments);
+            log.Info("[PS] Starting VB365 Collection Powershell process", false);
+            log.Info("[PS] [ARGS]: " + startInfo.Arguments, false);
             var result = Process.Start(startInfo);
-            log.Info("[PS] Process started with ID: " + result.Id.ToString());
+            log.Info("[PS] Process started with ID: " + result.Id.ToString(), false);
             result.WaitForExit();
-            log.Info("[PS] VB365 collection complete!");
+            log.Info("[PS] VB365 collection complete!", false);
 
         }
         private ProcessStartInfo psInfo(string scriptFile)

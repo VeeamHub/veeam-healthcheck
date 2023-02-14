@@ -13,13 +13,15 @@ using System.Windows.Documents;
 using VeeamHealthCheck.Collection;
 using VeeamHealthCheck.Security;
 using VeeamHealthCheck.Shared;
+using VeeamHealthCheck.Shared.Logging;
 
 namespace VeeamHealthCheck.Resources
 {
     internal class CClientFunctions : IDisposable
     {
 
-
+        private CLogger LOG = CGlobals.Logger;
+        private string logStart = "[Functions]\t";
         public CClientFunctions()
         {
 
@@ -43,13 +45,13 @@ namespace VeeamHealthCheck.Resources
         }
         public  void PreRunCheck()
         {
-            CGlobals.Logger.Info("Starting Admin Check");
+            CGlobals.Logger.Info("Starting Admin Check", false);
             CAdminCheck priv = new();
             if (!priv.IsAdmin())
             {
                 string message = "Please run program as Administrator";
                 MessageBox.Show(message);
-                CGlobals.Logger.Error(message);
+                CGlobals.Logger.Error(message, false);
                 Environment.Exit(0);
             }
 
@@ -57,21 +59,22 @@ namespace VeeamHealthCheck.Resources
         }
         public  string ModeCheck()
         {
-            CGlobals.Logger.Info("Checking processes to determine execution mode..");
+            CGlobals.Logger.Info("Checking processes to determine execution mode..", false);
             string title = ResourceHandler.GuiTitle;
             var processes = Process.GetProcesses();
             foreach (var process in processes)
             {
+                //LOG.Warning(logStart + "process name: " + process.ProcessName);
                 if (process.ProcessName == "Veeam.Archiver.Service")
                 {
 
                     CGlobals.IsVb365 = true;
-                    CGlobals.Logger.Info("VB365 software detected");
+                    LOG.Info("VB365 software detected", false);
                 }
                 if (process.ProcessName == "Veeam.Backup.Service")
                 {
                     CGlobals.IsVbr = true;
-                    CGlobals.Logger.Info("VBR software detected");
+                    LOG.Info("VBR software detected", false);
                 }
 
             }
@@ -96,24 +99,34 @@ namespace VeeamHealthCheck.Resources
                 return true;
             else return false;
         }
-        public  void RunClickAction()
+
+        public  void StartPrimaryFunctions()
         {
-            CGlobals.Logger.Info("Starting Run");
+            LogUserSettings();
+            StartCollections();
+            StartAnalysis();
+        }
+        private void LogUserSettings()
+        {
+            LOG.Info(ClientSettingsString(), false);
+
+        }
+        private void StartCollections()
+        {
             if (!CGlobals.IMPORT)
             {
+                LOG.Info(logStart + "Init Collections", false);
                 CCollections collect = new();
                 collect.Run();
+                LOG.Info(logStart + "Init Collections...done!", false);
             }
-
-            CGlobals.Logger.Info(ClientSettingsString());
+        }
+        private void StartAnalysis()
+        {
+            LOG.Info(logStart + "Init Data analysis & report creations", false);
             Import();
 
-            CGlobals.Logger.Info("Creating Report done!");
-
-
-
-
-            CGlobals.Logger.Info("Starting Run..done!");
+            LOG.Info(logStart + "Init Data analysis & report creations...done!", false);
         }
         public  void CliRun(string targetForOutput)
         {
@@ -121,7 +134,7 @@ namespace VeeamHealthCheck.Resources
             CGlobals.OpenExplorer = false;
             CGlobals.OpenHtml = false;
             CGlobals._desiredPath = targetForOutput;
-            RunClickAction();
+            StartPrimaryFunctions();
         }
         public bool VerifyPath()
         {

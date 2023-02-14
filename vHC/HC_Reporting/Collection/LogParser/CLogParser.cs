@@ -83,7 +83,7 @@ namespace VeeamHealthCheck.FilesParser
         }
         public Dictionary<string, List<TimeSpan>> GetWaitsFromFiles()
         {
-            log.Info("Checking Log files for waits..");
+            log.Info("Checking Log files for waits..", false);
             Dictionary<string, List<TimeSpan>> jobsAndWaits = new();
             string[] dirList = Directory.GetDirectories(LogLocation);
 
@@ -92,7 +92,7 @@ namespace VeeamHealthCheck.FilesParser
             {
                 counter++;
                 string info = String.Format("[LogParser] Parsing log {0} of {1}", counter, dirList.Count());
-                log.Info(info);
+                log.Info(info, false);
                 string jobname = Path.GetFileName(d);
 
                 List<TimeSpan> waits = new();

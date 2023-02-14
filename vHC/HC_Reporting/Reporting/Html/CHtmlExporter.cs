@@ -112,52 +112,47 @@ namespace VeeamHealthCheck.Html
             if (CGlobals.OpenHtml)
                 OpenHtml();
         }
-        public void ExportHtml(string xmlFile)
+        public void ExportVbrSecurityHtml(string htmlString, bool scrub)
         {
             log.Info("exporting xml to html");
-            string s = TransformXMLToHTML(xmlFile, _styleSheet);
-            string reportsFolder = "\\JobSessionReports\\";
 
-            string jname = Path.GetFileNameWithoutExtension(xmlFile);
-            if (_scrub)
-                jname = _scrubber.ScrubItem(jname, "job");
             DateTime dateTime = DateTime.Now;
-
             string n = CGlobals._desiredPath;
-            string outFolder = _outPath + reportsFolder;
-            outFolder = n + reportsFolder;
-            //if (_scrub)
-            //    outFolder = CVariables.safeDir + reportsFolder;
-            if (!Directory.Exists(outFolder))
-                Directory.CreateDirectory(outFolder);
-            string name = outFolder + jname + dateTime.ToString("_yyyy.MM.dd_HHmmss") + ".html";
+            string installID = "";
+            try
+            {
+                if (!String.IsNullOrEmpty(Collection.LogParser.CLogOptions.INSTALLID))
+                    installID = Collection.LogParser.CLogOptions.INSTALLID.Substring(0, 7);
+            }
+            catch (Exception e) { installID = "anon"; }
+            if (!Directory.Exists(n))
+                Directory.CreateDirectory(n);
+            if (!Directory.Exists(n + "\\Anon"))
+                Directory.CreateDirectory(n + "\\Anon");
+            if (!Directory.Exists(n + "\\Original"))
+                Directory.CreateDirectory(n + "\\Original");
+            string htmlCore = "";
+            if (scrub)
+                htmlCore = "\\Anon\\" + _htmlName + "_VBR_Security" + "_" + installID + dateTime.ToString("_yyyy.MM.dd.HHmmss") + ".html";
+            else if (!scrub)
+            {
+                htmlCore = "\\Original\\" + _htmlName + "_VBR_Security" + "_" + _backupServerName + dateTime.ToString("_yyyy.MM.dd.HHmmss") + ".html";
+
+            }
+            string name = n + htmlCore;
             _latestReport = name;
+
             using (StreamWriter sw = new StreamWriter(name))
             {
-                sw.Write(s);
+                sw.Write(htmlString);
             }
             log.Info("exporting xml to html..done!");
-            //OpenHtml();
+            //if (CGlobals.OpenExplorer)
+            //    OpenExplorer();
+            if (CGlobals.OpenHtml)
+                OpenHtml();
         }
-        public static string TransformXMLToHTML(string xmlFile, string xsltFile)
-        {
-            //log.Info("transforming XML to HTML");
-            var transform = new XslCompiledTransform();
-            XsltSettings settings = new XsltSettings(true, true);
-            XsltArgumentList xList = new();
-            using (var reader = XmlReader.Create(File.OpenRead(xsltFile)))
-            {
-                transform.Load(reader, settings, new XmlUrlResolver());
-            }
 
-            var results = new StringWriter();
-            using (var reader = XmlReader.Create(File.OpenRead(xmlFile)))
-            {
-                transform.Transform(reader, null, results);
-            }
-            //log.Info("transforming XML to HTML..done!");
-            return results.ToString();
-        }
         public void OpenExplorer()
         {
             Process.Start("explorer.exe", CVariables.desiredDir);

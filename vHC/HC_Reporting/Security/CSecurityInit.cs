@@ -63,10 +63,12 @@ namespace VeeamHealthCheck.Security
                         {
                             //var n  = subkey.TryGetPropertyValue<string>("DisplayName");
                             string name = subkey.GetValue("DisplayName").ToString();
-                            if (!CGlobals.isConsoleLocal)
+                            if (CGlobals.isConsoleLocal == "Undetermined" || CGlobals.isConsoleLocal == "False")
                             {
                                 if (name == "Veeam Backup & Replication Console")
-                                    CGlobals.isConsoleLocal = true;
+                                    CGlobals.isConsoleLocal = "True";
+                                else
+                                    CGlobals.isConsoleLocal = "False";
                             }
                             AppLOG.Info("\t" + subkey.GetValue("DisplayName").ToString(), true);
 

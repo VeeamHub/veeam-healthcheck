@@ -23,6 +23,7 @@ namespace VeeamHealthCheck.Resources
         const int SW_SHOW = 5;
 
         private readonly string[] _args;
+        private CClientFunctions functions = new();
         public CArgsParser(string[] args)
         {
             _args = args;
@@ -30,7 +31,7 @@ namespace VeeamHealthCheck.Resources
         }
         public void ParseArgs()
         {
-            CGlobals.RunFullReport = true;
+            //CGlobals.RunFullReport = true;
             LogInitialInfo();
 
             if (_args.Length == 0)
@@ -48,7 +49,7 @@ namespace VeeamHealthCheck.Resources
         }
         private void LaunchUi(IntPtr handle, bool hide)
         {
-            CGlobals.Logger.Info("Executing GUI");
+            CGlobals.Logger.Info("Executing GUI", false);
             if (hide)
                 ShowWindow(handle, SW_HIDE);
             var app = new System.Windows.Application();
@@ -83,11 +84,12 @@ namespace VeeamHealthCheck.Resources
                 switch (a)
                 {
                     case "/help":
-                        CGlobals.Logger.Info("entering help menu");
+                        CGlobals.Logger.Info("entering help menu", false);
                         Console.WriteLine(CMessages.helpMenu);
                         break;
                     case "/run":
                         run = true;
+                        CGlobals.RunFullReport = true;
                         CGlobals.Logger.Info("Run = true");
                         break;
                     case "/show:files":
@@ -113,40 +115,44 @@ namespace VeeamHealthCheck.Resources
                         CGlobals.ReportDays = 12;
                         break;
                     case "/gui":
+                        CGlobals.RunFullReport = true;
                         ui = true;
                         break;
                     case "/import":
                         CGlobals.IMPORT = true;
                         break;
-                    case var match when new Regex("outdir:.*").IsMatch(a):
-                        string[] outputDir = a.Split(":");
-                        targetDir = outputDir[1];
-                        CGlobals.Logger.Info("Output directory: " + targetDir);
+                    case "/security":
+                        CGlobals.RunSecReport= true;
                         break;
-                    //case "security":
-                    //    Class1 c = new Class1();
-                    //    c.init();
+                    //case var match when new Regex("outdir:.*").IsMatch(a):
+                    //    string[] outputDir = a.Split(":");
+                    //    targetDir = outputDir[1];
+                    //    CGlobals.Logger.Info("Output directory: " + targetDir);
                     //    break;
                 }
             }
 
-            if (args.Any(x => x == "/security"))
-            {
-                Console.WriteLine(true);
-                CGlobals.RunSecReport = true;
-                CGlobals.RunFullReport = false;
-            }
+            //if (CGlobals.RunSecReport)
+            //{
+            //    functions.RunSecurityReport();
+            //}
 
             if (ui)
                 LaunchUi(Handle(), false);
-            else if (run)
+            else
             {
+                functions.ModeCheck();
                 FullRun(targetDir);
+
             }
-            else if (CGlobals.IMPORT)
-            {
-                ImportRun(targetDir);
-            }
+            // if (CGlobals.RunFullReport)
+            //{
+            //    FullRun(targetDir);
+            //}
+            //else if (CGlobals.IMPORT)
+            //{
+            //    ImportRun(targetDir);
+            //}
         }
         private void Run(string targetDir)
         {
