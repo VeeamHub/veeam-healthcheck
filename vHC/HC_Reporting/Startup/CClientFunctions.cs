@@ -16,7 +16,7 @@ using VeeamHealthCheck.Shared;
 using VeeamHealthCheck.Shared.Logging;
 using VeeamHealthCheck.Resources.Localization;
 
-namespace VeeamHealthCheck.Resources
+namespace VeeamHealthCheck.Startup
 {
     internal class CClientFunctions : IDisposable
     {
@@ -31,7 +31,7 @@ namespace VeeamHealthCheck.Resources
         public void KbLinkAction(System.Windows.Navigation.RequestNavigateEventArgs args)
         {
             CGlobals.Logger.Info("[GUI]\tOpening KB Link");
-            Application.Current.Dispatcher.Invoke((Action)delegate
+            Application.Current.Dispatcher.Invoke(delegate
             {
                 WebBrowser w1 = new();
 
@@ -44,7 +44,7 @@ namespace VeeamHealthCheck.Resources
             });
             CGlobals.Logger.Info("[GUI]\tOpening KB Link...done!");
         }
-        public  void PreRunCheck()
+        public void PreRunCheck()
         {
             CGlobals.Logger.Info("Starting Admin Check", false);
             CAdminCheck priv = new();
@@ -58,7 +58,7 @@ namespace VeeamHealthCheck.Resources
 
             CGlobals.Logger.Info("Starting Admin Check...done!");
         }
-        public  string ModeCheck()
+        public string ModeCheck()
         {
             CGlobals.Logger.Info("Checking processes to determine execution mode..", false);
             string title = VbrLocalizationHelper.GuiTitle;
@@ -91,7 +91,7 @@ namespace VeeamHealthCheck.Resources
                 return title;
         }
 
-        public  bool AcceptTerms()
+        public bool AcceptTerms()
         {
             string message = VbrLocalizationHelper.GuiAcceptText;
 
@@ -101,7 +101,7 @@ namespace VeeamHealthCheck.Resources
             else return false;
         }
 
-        public  void StartPrimaryFunctions()
+        public void StartPrimaryFunctions()
         {
             LogUserSettings();
             StartCollections();
@@ -129,7 +129,7 @@ namespace VeeamHealthCheck.Resources
 
             LOG.Info(logStart + "Init Data analysis & report creations...done!", false);
         }
-        public  void CliRun(string targetForOutput)
+        public void CliRun(string targetForOutput)
         {
             CGlobals.Logger.Info("Setting openexplorer & openhtml to false for CLI execution", false);
             CGlobals.OpenExplorer = false;
@@ -153,15 +153,15 @@ namespace VeeamHealthCheck.Resources
             }
         }
 
-        public  void Import()
+        public void Import()
         {
             CReportModeSelector cMode = new();
             cMode.Run();
             cMode.Dispose();
         }
-        private  string ClientSettingsString()
+        private string ClientSettingsString()
         {
-            return String.Format(
+            return string.Format(
                 "User Settings:\n" +
                 "\t\t\t\t\tScrub = {0}\n" +
                 "\t\t\t\t\tOpen HTML = {1}\n" +

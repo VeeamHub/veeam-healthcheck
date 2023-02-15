@@ -14,8 +14,8 @@ using VeeamHealthCheck.Scrubber;
 //using System.ComponentModel.Composition.Primitives;
 using System.IO;
 using VeeamHealthCheck.Shared;
-using VeeamHealthCheck.Resources;
 using VeeamHealthCheck.Resources.Localization;
+using VeeamHealthCheck.Startup;
 
 namespace VeeamHealthCheck
 {

@@ -9,7 +9,7 @@ using System.Threading.Tasks;
 //using VeeamHealthCheck.Reporting.vsac;
 using VeeamHealthCheck.Shared;
 
-namespace VeeamHealthCheck.Resources
+namespace VeeamHealthCheck.Startup
 {
     internal class CArgsParser
     {
@@ -137,7 +137,7 @@ namespace VeeamHealthCheck.Resources
                         break;
                     case "/scrub:false":
                         CGlobals.Logger.Info("Setting SCRUB = false", false);
-                        CGlobals.Scrub = false; 
+                        CGlobals.Scrub = false;
                         break;
                         //case var match when new Regex("outdir:.*").IsMatch(a):
                         //    string[] outputDir = a.Split(":");
