@@ -150,6 +150,10 @@ namespace VeeamHealthCheck.Reporting.Html.Shared
         {
             return String.Format("<h2><u>{0}:</u></h2>", text);
         }
+        public string header3(string text)
+        {
+            return String.Format("<h3><u>{0}:</u></h3>", text);
+        }
         public string FormHeader()
         {
             string s = "<html>";

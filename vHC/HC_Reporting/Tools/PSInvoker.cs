@@ -20,6 +20,7 @@ namespace VeeamHealthCheck
         private readonly string _vb365Script = Environment.CurrentDirectory + @"\Tools\Scripts\Collect-VB365Data.ps1";
         private readonly string _vbrConfigScript = Environment.CurrentDirectory + @"\Tools\Scripts\Get-VBRConfig.ps1";
         private readonly string _vbrSessionScript = Environment.CurrentDirectory + @"\Tools\Scripts\Get-VeeamSessionReport.ps1";
+        private readonly string _vbrFunctionScript = Environment.CurrentDirectory + @"\Tools\Scripts\Set-VhcFunctions.ps1";
 
         private CLogger log = CGlobals.Logger;
         public PSInvoker()
@@ -28,7 +29,8 @@ namespace VeeamHealthCheck
         public void Invoke()
         {
             TryUnblockFiles();
-            
+
+            //RunVbrVhcFunctionSetter();
             RunVbrConfigCollect();
             RunVbrSessionCollection();
         }
@@ -50,6 +52,19 @@ namespace VeeamHealthCheck
         {
             log.Info(CMessages.PsVbrConfigStart, false);
             return ConfigStartInfo(_vbrConfigScript, 0);
+        }
+        private ProcessStartInfo VbrFunctionStartInfo()
+        {
+            return ConfigStartInfo(_vbrFunctionScript, 0);
+        }
+        private void RunVbrVhcFunctionSetter()
+        {
+            var res1 = Process.Start(VbrFunctionStartInfo());
+            log.Info(CMessages.PsVbrConfigProcId + res1.Id.ToString(), false);
+
+            res1.WaitForExit();
+
+            log.Info(CMessages.PsVbrConfigProcIdDone, false);
         }
         private void RunVbrSessionCollection()
         {

@@ -37,6 +37,9 @@ namespace VeeamHealthCheck.Shared
         public static string PsVbrConfigStart = "[PS] Enter Config Collection Invoker...";
         public static string PsVbrConfigDone = PsVbrConfigStart + ProcEnd;
 
+        public static string PsVbrFunctionStart = "[PS] Enter Function Setter...";
+        public static string PsVbrFunctionDone = PsVbrConfigStart + ProcEnd;
+
         public static string PsVbrConfigStartProc = "[PS][VBR Config] Starting PowerShell Process...";
         public static string PsVbrConfigStartProcDone = PsVbrConfigStartProc+ ProcEnd;
 

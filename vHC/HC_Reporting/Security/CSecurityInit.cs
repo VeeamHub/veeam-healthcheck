@@ -12,14 +12,14 @@ namespace VeeamHealthCheck.Security
 {
     internal class CSecurityInit
     {
-        private readonly string _appLogName = "Veeam.ServerApplications.log";
+        private readonly string _appLogName = "Veeam.HealthCheck.ServerApplications.log";
 
         private readonly CLogger LOG;
         private readonly CLogger AppLOG;
         private readonly string logStart = "[Security]\t";
         public CSecurityInit()
         {
-            LOG = new CLogger("Veeam.Security.log");
+            LOG = new CLogger("Veeam.HealthCheck.Security.log");
             AppLOG = new CLogger(_appLogName);
         }
 

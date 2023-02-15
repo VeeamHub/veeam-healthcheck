@@ -39,6 +39,7 @@ namespace VeeamHealthCheck.Html
 
         public CHtmlExporter(string xmlFileName, string serverName, string styleSheet, bool scrub)
         {
+            CheckOutputDirsExist();
             _testFile = xmlFileName;
             _backupServerName = serverName;
             _styleSheet = styleSheet;

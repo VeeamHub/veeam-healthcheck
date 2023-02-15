@@ -31,11 +31,21 @@ enum LogLevel {
   ERROR
   FATAL
 }
-#Clear-Host
-
+function Export-VhcCsv{
+    [CmdletBinding()] param (
+    [Parameter()] [string] $FileName,
+    [Parameter(ValueFromPipeline)] $input
+      
+  )
+      $file = $("$ReportPath\$VBRServer" + $FileName)
+      Write-LogFile("Exporting data to file: " + $file)
+      $input | Export-Csv -Path $file -NoTypeInformation
+  
+}
+#end functions region
 Write-host("Executing VBR Config Collection...")
 
-$global:SETTINGS = '{"LogLevel":"INFO","OutputPath":"C:\\temp\\vHC\\Original\\VBR","ReportingIntervalDays":7,"VBOServerFqdnOrIp":"localhost"}'<#,"SkipCollect":false,"ExportJson":false,"ExportXml":false,"DebugInConsole":false,"Watch":false}#> | ConvertFrom-Json
+$global:SETTINGS = '{"LogLevel":"INFO","OutputPath":"C:\\temp\\vHC\\Original\\Log","ReportingIntervalDays":7,"VBOServerFqdnOrIp":"localhost"}'<#,"SkipCollect":false,"ExportJson":false,"ExportXml":false,"DebugInConsole":false,"Watch":false}#> | ConvertFrom-Json
 if (Test-Path ($global:SETTINGS.OutputPath + "\CollectorConfig.json")) {
   [pscustomobject]$json = Get-Content -Path ($global:SETTINGS.OutputPath + "\CollectorConfig.json") | ConvertFrom-Json
   foreach ($property in $json.PSObject.Properties) {
@@ -96,102 +106,105 @@ if (!(Test-Path $ReportPath)) {
 
 Push-Location -Path $ReportPath
 Write-Verbose ("Changing directory to '$ReportPath'")
+# COLLECTION Starting
+## User Role Collection:
+Get-VBRUserRoleAssignment | Export-VhcCsv -FileName "_UserRoles.csv"
 
 # general collection:
-try{
-$Servers = Get-VBRServer
-$Jobs = Get-VBRJob -WarningAction SilentlyContinue #| Where-Object { $_.JobType -eq 'Backup' -OR $_.JobType -eq 'BackupSync' }
-# Agent Jobs
-$AgentJobs = Get-VBRComputerBackupJob -WarningAction SilentlyContinue
-# Replica Jobs
-# CDP Job
-# SureBackup?
-$Proxies = Get-VBRViProxy
-$cdpProxy = Get-VBRCDPProxy                
-$fileProxy = Get-VBRComputerFileProxyServer 
-$hvProxy = Get-VBRHvProxy                 
-$nasProxy = Get-VBRNASProxyServer          
+try {
+  $Servers = Get-VBRServer
+  $Jobs = Get-VBRJob -WarningAction SilentlyContinue #| Where-Object { $_.JobType -eq 'Backup' -OR $_.JobType -eq 'BackupSync' }
+  # Agent Jobs
+  $AgentJobs = Get-VBRComputerBackupJob -WarningAction SilentlyContinue
+  # Replica Jobs
+  # CDP Job
+  # SureBackup?
+  $Proxies = Get-VBRViProxy
+  $cdpProxy = Get-VBRCDPProxy                
+  $fileProxy = Get-VBRComputerFileProxyServer 
+  $hvProxy = Get-VBRHvProxy                 
+  $nasProxy = Get-VBRNASProxyServer          
     
-#Agents
-$pg = Get-VBRProtectionGroup
-$pc = Get-VBRDiscoveredComputer
+  #Agents
+  $pg = Get-VBRProtectionGroup
+  $pc = Get-VBRDiscoveredComputer
 
-#Capacity extent grab:
-$cap = get-vbrbackuprepository -ScaleOut | Get-VBRCapacityExtent
-$capOut = $cap | Select-Object Status, @{n = 'Type'; e = { $_.Repository.Type } }, @{n = 'Immute'; e = { $_.Repository.BackupImmutabilityEnabled } }, @{n = 'immutabilityperiod'; e = { $_.Repository.ImmutabilityPeriod } }, @{n = 'SizeLimitEnabled'; e = { $_.Repository.SizeLimitEnabled } }, @{n = 'SizeLimit'; e = { $_.Repository.SizeLimit } }, @{n = 'RepoId'; e = { $_.Repository.Id } }, parentid
+  #Capacity extent grab:
+  $cap = get-vbrbackuprepository -ScaleOut | Get-VBRCapacityExtent
+  $capOut = $cap | Select-Object Status, @{n = 'Type'; e = { $_.Repository.Type } }, @{n = 'Immute'; e = { $_.Repository.BackupImmutabilityEnabled } }, @{n = 'immutabilityperiod'; e = { $_.Repository.ImmutabilityPeriod } }, @{n = 'SizeLimitEnabled'; e = { $_.Repository.SizeLimitEnabled } }, @{n = 'SizeLimit'; e = { $_.Repository.SizeLimit } }, @{n = 'RepoId'; e = { $_.Repository.Id } }, parentid
 
-#Traffic Rules
-$trafficRules = Get-VBRNetworkTrafficRule  
+  #Traffic Rules
+  $trafficRules = Get-VBRNetworkTrafficRule  
 }
-catch{
-    Write-LogFile("Error on general info collection. ")
+catch {
+  Write-LogFile("Error on general info collection. ")
 }
 
 
 Write-LogFile("Starting Registry query...")
 #regSettings
-try{
-$reg = get-item "HKLM:\SOFTWARE\Veeam\Veeam Backup and Replication"
+try {
+  $reg = get-item "HKLM:\SOFTWARE\Veeam\Veeam Backup and Replication"
 
 
-[System.Collections.ArrayList]$output = @()
-foreach ($r in $reg.Property) {
+  [System.Collections.ArrayList]$output = @()
+  foreach ($r in $reg.Property) {
 
-  $regout2 = [PSCustomObject][ordered] @{
-    'KeyName' = $r
-    'Value'   = $reg.GetValue($r)
+    $regout2 = [PSCustomObject][ordered] @{
+      'KeyName' = $r
+      'Value'   = $reg.GetValue($r)
 
+    }
+    $null = $output.Add($regout2)
+    # $regout2 += $reg | Select-Object @{n="KeyName";e={$r}}, @{n='value';e={$_.GetValue($r)}}
   }
-  $null = $output.Add($regout2)
-  # $regout2 += $reg | Select-Object @{n="KeyName";e={$r}}, @{n='value';e={$_.GetValue($r)}}
 }
-}
-catch{
-    Write-LogFile("Error on registry collection.")
+catch {
+  Write-LogFile("Error on registry collection.")
 }
 
 Write-LogFile("Collecting Job Types...")
-try{
-#JobTypes & conversion
-$catCopy = Get-VBRCatalystCopyJob
-$vaBcj = Get-VBRComputerBackupCopyJob
-$vaBJob = Get-VBRComputerBackupJob
-$configBackup = Get-VBRConfigurationBackupJob
-$epJob = Get-VBREPJob 
-$sbJob = Get-VSBJob
-$tapeJob = Get-VBRTapeJob
-$nasBackup = Get-VBRNASBackupJob 
-$nasBCJ = Get-VBRNASBackupCopyJob 
-$cdpJob = Get-VBRCDPPolicy
+try {
+  #JobTypes & conversion
+  $catCopy = Get-VBRCatalystCopyJob
+  $vaBcj = Get-VBRComputerBackupCopyJob
+  $vaBJob = Get-VBRComputerBackupJob
+  $configBackup = Get-VBRConfigurationBackupJob
+  $epJob = Get-VBREPJob 
+  $sbJob = Get-VSBJob
+  $tapeJob = Get-VBRTapeJob
+  $nasBackup = Get-VBRNASBackupJob 
+  $nasBCJ = Get-VBRNASBackupCopyJob 
+  $cdpJob = Get-VBRCDPPolicy
     
-$piJob = Get-VBRPluginJob
-$piJob | Add-Member -MemberType NoteProperty -Name JobType -Value "Plugin Backup"
-#$Jobs += $piJob
+  $piJob = Get-VBRPluginJob
+  $piJob | Add-Member -MemberType NoteProperty -Name JobType -Value "Plugin Backup"
+  #$Jobs += $piJob
 
-$vcdJob = Get-VBRvCDReplicaJob
-$vcdJob | Add-Member -MemberType NoteProperty -Name JobType -Value "VCD Replica"
-$Jobs += $vcdJob
+  $vcdJob = Get-VBRvCDReplicaJob
+  $vcdJob | Add-Member -MemberType NoteProperty -Name JobType -Value "VCD Replica"
+  $Jobs += $vcdJob
 
-#$Jobs += $nasBCJ
+  #$Jobs += $nasBCJ
 
-$cdpJob | Add-Member -MemberType NoteProperty -Name JobType -Value "CDP Policy"
-$Jobs += $cdpJob
+  $cdpJob | Add-Member -MemberType NoteProperty -Name JobType -Value "CDP Policy"
+  $Jobs += $cdpJob
 
-$nasBackup | Add-Member -MemberType NoteProperty -Name JobType -Value "NAS Backup"
-# $Jobs += $nasBackup
+  $nasBackup | Add-Member -MemberType NoteProperty -Name JobType -Value "NAS Backup"
+  # $Jobs += $nasBackup
 
-$tapeJob | Add-Member -MemberType NoteProperty -Name JobType -Value "Tape Backup"
-$Jobs += $tapeJob
+  $tapeJob | Add-Member -MemberType NoteProperty -Name JobType -Value "Tape Backup"
+  $Jobs += $tapeJob
 
-$catCopy | Add-Member -MemberType NoteProperty -Name JobType -Value "Catalyst Copy"# -InformationVariable "catCopy"
-$Jobs += $catCopy
+  $catCopy | Add-Member -MemberType NoteProperty -Name JobType -Value "Catalyst Copy"# -InformationVariable "catCopy"
+  $Jobs += $catCopy
 
     
-$vaBcj | Add-Member -MemberType NoteProperty -Name JobType -Value "Physical Backup Copy"
-#$Jobs += $vaBcj //pulled in jobs for now
+  $vaBcj | Add-Member -MemberType NoteProperty -Name JobType -Value "Physical Backup Copy"
+  #$Jobs += $vaBcj //pulled in jobs for now
 }
-catch{
-    Write-Log("Failed to collect job types")
+catch {
+  Write-Log("Failed to collect job types")
 }
 try {
   $vaBJob += $epJob 
@@ -291,7 +304,7 @@ $repoInfo = $Repositories | Select-Object "Id", "Name", "HostId", "Description",
 
 $SOBROutput = $SOBRs | Select-Object -Property "PolicyType", @{n = "Extents"; e = { $SOBRs.extent.name -as [String] } } , "UsePerVMBackupFiles", "PerformFullWhenExtentOffline", "EnableCapacityTier", "OperationalRestorePeriod", "OverridePolicyEnabled", "OverrideSpaceThreshold", "OffloadWindowOptions", "CapacityExtent", "EncryptionEnabled", "EncryptionKey", "CapacityTierCopyPolicyEnabled", "CapacityTierMovePolicyEnabled", "ArchiveTierEnabled", "ArchiveExtent", "ArchivePeriod", "CostOptimizedArchiveEnabled", "ArchiveFullBackupModeEnabled", "PluginBackupsOffloadEnabled", "CopyAllPluginBackupsEnabled", "CopyAllMachineBackupsEnabled", "Id", "Name", "Description"
 $AllSOBRExtentsOutput = $AllSOBRExtents | Select-Object -property @{name = 'Host'; expression = { $_.host.name } } , "Id", "Name", "HostId", "MountHostId", "Description", "CreationTime", "Path", "FullPath", "FriendlyPath", "ShareCredsId", "Type", "Status", "IsUnavailable", "Group", "UseNfsOnMountHost", "VersionOfCreation", "Tag", "IsTemporary", "TypeDisplay", "IsRotatedDriveRepository", "EndPointCryptoKeyId", "HasBackupChainLengthLimitation", "IsSanSnapshotOnly", "IsDedupStorage", "SplitStoragesPerVm", "IsImmutabilitySupported", "SOBR_Name", @{name = 'Options(maxtasks)'; expression = { $_.Options.MaxTaskCount } }, @{name = 'Options(Unlimited Tasks)'; expression = { $_.Options.IsTaskCountUnlim } }, @{name = 'Options(MaxArchiveTaskCount)'; expression = { $_.Options.MaxArchiveTaskCount } }, @{name = 'Options(CombinedDataRateLimit)'; expression = { $_.Options.CombinedDataRateLimit } }, @{name = 'Options(Uncompress)'; expression = { $_.Options.Uncompress } }, @{name = 'Options(OptimizeBlockAlign)'; expression = { $_.Options.OptimizeBlockAlign } }, @{name = 'Options(RemoteAccessLimitation)'; expression = { $_.Options.RemoteAccessLimitation } }, @{name = 'Options(EpEncryptionEnabled)'; expression = { $_.Options.EpEncryptionEnabled } }, @{name = 'Options(OneBackupFilePerVm)'; expression = { $_.Options.OneBackupFilePerVm } }, @{name = 'Options(IsAutoDetectAffinityProxies)'; expression = { $_.Options.IsAutoDetectAffinityProxies } }, @{name = 'Options(NfsRepositoryEncoding)'; expression = { $_.Options.NfsRepositoryEncoding } }, "CachedFreeSpace", "CachedTotalSpace"
-$Servers = $Servers | Select-Object -Property "Info", "ParentId", "Id", "Uid", "Name", "Reference", "Description", "IsUnavailable", "Type", "ApiVersion", "PhysHostId", "ProxyServicesCreds", @{name = 'Cores'; expression = { $_.GetPhysicalHost().hardwareinfo.CoresCount } }, @{name = 'CPUCount'; expression = { $_.GetPhysicalHost().hardwareinfo.CPUCount } }, @{name = 'RAM'; expression = { $_.GetPhysicalHost().hardwareinfo.PhysicalRamTotal } }, @{name='OSInfo'; expression = {$_.Info.Info}}
+$Servers = $Servers | Select-Object -Property "Info", "ParentId", "Id", "Uid", "Name", "Reference", "Description", "IsUnavailable", "Type", "ApiVersion", "PhysHostId", "ProxyServicesCreds", @{name = 'Cores'; expression = { $_.GetPhysicalHost().hardwareinfo.CoresCount } }, @{name = 'CPUCount'; expression = { $_.GetPhysicalHost().hardwareinfo.CPUCount } }, @{name = 'RAM'; expression = { $_.GetPhysicalHost().hardwareinfo.PhysicalRamTotal } }, @{name = 'OSInfo'; expression = { $_.Info.Info } }
 $nasProxyOut = $nasProxy | Select-Object -Property "ConcurrentTaskNumber", @{n = "Host"; e = { $_.Server.Name } }, @{n = "HostId"; e = { $_.Server.Id } }
 #$hvProxyOut = $hvProxy | Select-Object -Property "Name", "HostId", @{n=Host}
 
@@ -352,14 +365,18 @@ $VbrOutput = [pscustomobject][ordered] @{
   'SqlServer' = $dbServerPath.SqlServerName
   'Instance'  = $instancePath.SqlInstanceName
   'PgHost'    = $pgDbHost.SqlHostName
-  'PgDb'        = $pgDbDbName.SqlDatabaseName
-  'MsHost' = $msDbHost.SqlServerName
-  'MsDb'        = $msDbName.SqlDatabaseName
-  'DbType'  = $dbType.SqlActiveConfiguration
+  'PgDb'      = $pgDbDbName.SqlDatabaseName
+  'MsHost'    = $msDbHost.SqlServerName
+  'MsDb'      = $msDbName.SqlDatabaseName
+  'DbType'    = $dbType.SqlActiveConfiguration
 
 }
 $VbrOutput | Export-Csv -Path $("$ReportPath\$VBRServer" + '_vbrinfo.csv') -NoTypeInformation
 
+# outputting variables from new functions
+
+
+#
 
 $Servers | Export-Csv -Path $("$ReportPath\$VBRServer" + '_Servers.csv') -NoTypeInformation
 $AllJobs | Export-Csv -Path $("$ReportPath\$VBRServer" + '_Jobs.csv') -NoTypeInformation

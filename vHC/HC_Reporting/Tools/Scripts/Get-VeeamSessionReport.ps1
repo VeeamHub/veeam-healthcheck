@@ -30,7 +30,51 @@ param(
 )
 
 
-Write-host("Executing VBR Session Collection...")
+#Functions:
+$global:SETTINGS = '{"LogLevel":"INFO","OutputPath":"C:\\temp\\vHC\\Original\\Log","ReportingIntervalDays":7,"VBOServerFqdnOrIp":"localhost"}'<#,"SkipCollect":false,"ExportJson":false,"ExportXml":false,"DebugInConsole":false,"Watch":false}#> | ConvertFrom-Json
+if (Test-Path ($global:SETTINGS.OutputPath + "\CollectorConfig.json")) {
+  [pscustomobject]$json = Get-Content -Path ($global:SETTINGS.OutputPath + "\CollectorConfig.json") | ConvertFrom-Json
+  foreach ($property in $json.PSObject.Properties) {
+    if ($null -eq $global:SETTINGS.($property.Name)) {
+      $global:SETTINGS | Add-Member -MemberType NoteProperty -Name ($property.Name) -Value $json.($property.Name)
+    }
+    else {
+      $global:SETTINGS.($property.Name) = $json.($property.Name)
+    }   
+  }
+}
+function Write-LogFile {
+  [CmdletBinding()]
+  param (
+    [string]$Message,
+    [ValidateSet("Main", "Errors", "NoResult")][string]$LogName = "Main",
+    [ValidateSet("TRACE", "PROFILE", "DEBUG", "INFO", "WARNING", "ERROR", "FATAL")][String]$LogLevel = [LogLevel]::INFO
+  )
+  begin {
+  }
+  process {
+    # if message log level is higher/equal to config log level, post it.
+    if ([LogLevel]$LogLevel -ge [LogLevel]$global:SETTINGS.loglevel) {
+            (get-date).ToString("yyyy-MM-dd hh:mm:ss") + "`t" + $LogLevel + "`t`t" + $Message | Out-File -FilePath ($global:SETTINGS.OutputPath.Trim('\') + "\Collector" + $LogName + ".log") -Append
+            
+      #write it to console if enabled.
+      if ($global:SETTINGS.DebugInConsole) {
+        switch ([LogLevel]$LogLevel) {
+          [LogLevel]::WARNING { Write-Warning -Message $message; break; }
+          [LogLevel]::ERROR { Write-Error -Message $message; break; }
+          [LogLevel]::INFO { Write-Information -Message $message; break; }
+          [LogLevel]::DEBUG { Write-Debug -Message $message; break; }
+          [LogLevel]::PROFILE { Write-Debug -Message $message; break; }
+          [LogLevel]::TRACE { Write-Verbose -Message $message; break; }
+        }
+      }
+    }
+  }
+  end { }
+}
+
+# end functions
+
 #[CmdletBinding()]
 
 

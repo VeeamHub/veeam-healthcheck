@@ -11,6 +11,8 @@ using VeeamHealthCheck.Shared.Logging;
 using VeeamHealthCheck.Shared;
 using VeeamHealthCheck.Reporting.TableDatas;
 using VeeamHealthCheck.Resources.Localization;
+using VeeamHealthCheck.Reporting.Html.VBR.VBR_Tables;
+using System.Reflection.PortableExecutable;
 
 namespace VeeamHealthCheck.Html.VBR
 {
@@ -134,54 +136,39 @@ namespace VeeamHealthCheck.Html.VBR
             s += _form.SectionEnd(summary);
             return s;
         }
-        public string AddBkpSrvTable(bool scrub)
+        private string WriteTupleListToHtml(List<Tuple<string, string>> list)
         {
-            string s = _form.SectionStart("vbrserver", VbrLocalizationHelper.BkpSrvTblHead);
-            string summary = _sum.SetVbrSummary();
-            //CDataFormer cd = new(true);
-            BackupServer b = _df.BackupServerInfoToXml(scrub);
-
-            // Backup Server table
-            s += _form.TableHeader(VbrLocalizationHelper.BkpSrvTblName, VbrLocalizationHelper.BstNameTT);
-            s += _form.TableHeader(VbrLocalizationHelper.BkpSrvTblVersion, VbrLocalizationHelper.BstVerTT);
-            s += _form.TableHeader(VbrLocalizationHelper.BkpSrvTblCore, VbrLocalizationHelper.BstCpuTT);
-            s += _form.TableHeader(VbrLocalizationHelper.BkpSrvTblRam, VbrLocalizationHelper.BstRamTT);
-            
-            s += _form.TableHeader(VbrLocalizationHelper.BkpSrvTblProxyRole, VbrLocalizationHelper.BstPrxTT);
-            s += _form.TableHeader(VbrLocalizationHelper.BkpSrvTblRepoRole, VbrLocalizationHelper.BstRepTT);
-            s += _form.TableHeader(VbrLocalizationHelper.BkpSrvTblWanRole, VbrLocalizationHelper.BstWaTT);
-            s += _form.TableHeader(VbrLocalizationHelper.BackupServerConsoleInstalled, "");
-            s += _form.TableHeader(VbrLocalizationHelper.BackupServerRdpEnabled, "");
-            s += _form.TableHeader(VbrLocalizationHelper.BackupServerDomainJoined, "");
-            s += "</tr><<tr>";
-            s += _form.TableData(b.Name, "");
-            s += _form.TableData(b.Version, "");
-            s += _form.TableData(b.Cores.ToString(), "");
-            s += _form.TableData(b.RAM.ToString(), "");
-            s += _form.TableData(b.HasProxyRole.ToString(), "");
-            s += _form.TableData(b.HasRepoRole.ToString(), "");
-            s += _form.TableData(b.HasWanAccRole.ToString(), "");
-            s += _form.TableData(CGlobals.isConsoleLocal.ToString(), "");
-            s += _form.TableData(CGlobals._isRdpEnabled.ToString(), "");
-            s += _form.TableData(CGlobals._isDomainJoined.ToString(), "");
+            string headers = "";
+            string data = "";
+            string s = "";
+            foreach (var table in list)
+            {
+                headers += table.Item1;
+                data += table.Item2;
+            }
+            s += headers;
+            s += "</tr><tr>";
+            s += data;
             s += "</table><br>";
-            
-            s += "<h3>Config Backup Info</h3>";
-            s += "<table border=\"1\">";
-            s += _form.TableHeader(VbrLocalizationHelper.BkpSrvTblCfgEnabled, VbrLocalizationHelper.BstCfgEnabledTT);
-            s += _form.TableHeader(VbrLocalizationHelper.BkpSrvTblCfgLastRes, VbrLocalizationHelper.BstCfgLastResTT);
-            s += _form.TableHeader(VbrLocalizationHelper.BkpSrvTblCfgEncrypt, VbrLocalizationHelper.BstCfgEncTT);
-            s += _form.TableHeader(VbrLocalizationHelper.BkpSrvTblTarget, VbrLocalizationHelper.BstCfgTarTT);
-            s += "<tr></tr>";
-            s += _form.TableData(b.ConfigBackupEnabled.ToString(), "");
-            s += _form.TableData(b.ConfigBackupLastResult, "");
-            s += _form.TableData(b.ConfigBackupEncryption.ToString(), "");
-            s += _form.TableData(b.ConfigBackupTarget, "");
-            s += "</table>";
 
-            s += "<h3>Config DB Info</h3>";
-            s += "<table border=\"1\">";
-            s += _form.LineBreak();
+            return s;
+        }
+        
+        private string AddBackupServerDetails(BackupServer b)
+        {
+            CVbrServerTable t = new(b);
+            List<Tuple<string, string>> vbrServerData = new(); //t.VbrFullTables();
+
+            if (!CGlobals.RunSecReport)
+                vbrServerData = t.VbrFullTables();
+            else
+                vbrServerData = t.VbrSecurityTables();
+
+            return WriteTupleListToHtml(vbrServerData);
+        }
+        private string ConfigDbTable(BackupServer b)
+        {
+            string s = "";
             // config DB Table
             s += _form.TableHeader("DataBase Type", "MS SQL or PostgreSQL");
             s += _form.TableHeader(VbrLocalizationHelper.BkpSrvTblSqlLocal, VbrLocalizationHelper.BstSqlLocTT);
@@ -206,16 +193,69 @@ namespace VeeamHealthCheck.Html.VBR
                 s += _form.TableData(b.Edition, "");
                 s += _form.TableData(b.DbCores.ToString(), "CPU Cores detected on SQL. 0 indicates SQL is local to VBR or there was an error in collection.");
                 s += _form.TableData(b.DbRAM.ToString(), "RAM detected on SQL. 0 indicates SQL is local to VBR or there was an error in collection.");
-
-                s += _form.SectionEnd(summary);
-                return s;
+                s += "</table>";
             }
-            catch(Exception e)
+            catch (Exception e)
             {
                 log.Error("Failed to add backup server table. Error:");
                 log.Error("\t" + e.Message);
-                return "";
+                //return "";
             }
+            return s;
+        }
+        public string AddBkpSrvTable(bool scrub)
+        {
+            string s = _form.SectionStart("vbrserver", VbrLocalizationHelper.BkpSrvTblHead);
+            string summary = _sum.SetVbrSummary();
+            //CDataFormer cd = new(true);
+            BackupServer b = _df.BackupServerInfoToXml(scrub);
+
+            // test area
+
+            s += AddBackupServerDetails(b);
+
+
+            
+            s += _form.header3("Config Backup Info");
+            s += "<table border=\"1\">";
+            s += _form.TableHeader(VbrLocalizationHelper.BkpSrvTblCfgEnabled, VbrLocalizationHelper.BstCfgEnabledTT);
+            s += _form.TableHeader(VbrLocalizationHelper.BkpSrvTblCfgLastRes, VbrLocalizationHelper.BstCfgLastResTT);
+            s += _form.TableHeader(VbrLocalizationHelper.BkpSrvTblCfgEncrypt, VbrLocalizationHelper.BstCfgEncTT);
+            s += _form.TableHeader(VbrLocalizationHelper.BkpSrvTblTarget, VbrLocalizationHelper.BstCfgTarTT);
+            s += "<tr></tr>";
+            s += _form.TableData(b.ConfigBackupEnabled.ToString(), "");
+            s += _form.TableData(b.ConfigBackupLastResult, "");
+            s += _form.TableData(b.ConfigBackupEncryption.ToString(), "");
+            s += _form.TableData(b.ConfigBackupTarget, "");
+            s += "</table>";
+
+            s += _form.header3("Config DB Info");
+            s += "<table border=\"1\">";
+            //s += _form.LineBreak();
+
+            s += ConfigDbTable(b);
+
+            if(CGlobals.RunSecReport)
+                s += InstalledAppsTable();
+            s += _form.SectionEnd(summary);
+            return s;
+
+        }
+        private string InstalledAppsTable()
+        {
+            string s = "";
+
+            // Table & Header
+            s += _form.header3("Installed Applications");
+            s += _form.Table();
+            s += "<tr>";
+
+            // header
+            s += _form.TableHeader("Installed Apps", "");
+            s += "</tr><tr>";
+            s += _form.TableData("See <a href=\"C:\\\\temp\\\\vHC\\\\Original\\\\Log\\\\\">Veeam.HealthCheck.ServerApplications log file</a> at C:\\temp\\vHC\\Log\\", "");
+            s += "</tr></table>";
+            return s;
         }
 
         public string AddSecSummaryTable(bool scrub)
