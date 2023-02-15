@@ -125,17 +125,25 @@ namespace VeeamHealthCheck.Resources
                         break;
                     case "/import":
                         CGlobals.IMPORT = true;
-                        CGlobals.EXPORTINDIVIDUALJOBHTMLS = false;
+                        CGlobals.RunFullReport = true;
                         break;
                     case "/security":
                         CGlobals.EXPORTINDIVIDUALJOBHTMLS = false;
-                        CGlobals.RunSecReport= true;
+                        CGlobals.RunSecReport = true;
                         break;
-                    //case var match when new Regex("outdir:.*").IsMatch(a):
-                    //    string[] outputDir = a.Split(":");
-                    //    targetDir = outputDir[1];
-                    //    CGlobals.Logger.Info("Output directory: " + targetDir);
-                    //    break;
+                    case "/scrub:true":
+                        CGlobals.Logger.Info("Setting SCRUB = true", false);
+                        CGlobals.Scrub = true;
+                        break;
+                    case "/scrub:false":
+                        CGlobals.Logger.Info("Setting SCRUB = false", false);
+                        CGlobals.Scrub = false; 
+                        break;
+                        //case var match when new Regex("outdir:.*").IsMatch(a):
+                        //    string[] outputDir = a.Split(":");
+                        //    targetDir = outputDir[1];
+                        //    CGlobals.Logger.Info("Output directory: " + targetDir);
+                        //    break;
                 }
             }
 
@@ -173,7 +181,7 @@ namespace VeeamHealthCheck.Resources
 
 
             CGlobals.Logger.Info("Starting RUN...complete!", false);
-            CGlobals.Logger.Info("Output is stored in " + targetDir);
+            CGlobals.Logger.Info("Output is stored in " + targetDir, false);
 
         }
         private void ImportRun(string targetDir)
@@ -183,7 +191,7 @@ namespace VeeamHealthCheck.Resources
 
 
             CGlobals.Logger.Info("Starting IMPORT...complete!", false);
-            CGlobals.Logger.Info("Output is stored in " + targetDir);
+            CGlobals.Logger.Info("Output is stored in " + targetDir, false);
         }
     }
 }

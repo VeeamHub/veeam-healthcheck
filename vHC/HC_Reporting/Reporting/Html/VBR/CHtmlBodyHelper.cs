@@ -39,8 +39,12 @@ namespace VeeamHealthCheck.Reporting.Html.VBR
             JobSessionSummaryTable();
             JobInfoTable();
 
-            if(CGlobals.EXPORTINDIVIDUALJOBHTMLS)
+            if (CGlobals.EXPORTINDIVIDUALJOBHTMLS)
+            {
+
                 IndividualJobHtmlBuilder();
+
+            }
 
             return HTMLSTRING;
         }

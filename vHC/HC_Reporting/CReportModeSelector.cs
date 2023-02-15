@@ -13,7 +13,7 @@ namespace VeeamHealthCheck
         private readonly bool _scrub;
         private readonly bool _openHtml;
         private readonly bool _import;
-        private CLogger _log = CGlobals.Logger;
+        private CLogger LOG = CGlobals.Logger;
         public CReportModeSelector()
         {
         }
@@ -27,17 +27,21 @@ namespace VeeamHealthCheck
         }
         private void FileChecker()
         {
-            _log.Info("Checking output directories..");
+            LOG.Info("Checking output directories..", false);
             if (CGlobals.RunSecReport)
                 StartSecurityReport();
+            if (!CGlobals.RunSecReport)
+            {
+
             if (Directory.Exists(CVariables.vb365dir) && CGlobals.RunFullReport)
                 StartM365Report();
             if (Directory.Exists(CVariables.vbrDir) && CGlobals.RunFullReport)
                 StartVbrReport();
+            }
         }
         private void StartVbrReport()
         {
-            _log.Info("Starting B&R report generation");
+            LOG.Info("Starting B&R report generation", false);
             CHtmlCompiler html = new();
             html.RunFullVbrReport();
             html.Dispose();
@@ -45,12 +49,13 @@ namespace VeeamHealthCheck
 
         private void StartM365Report()
         {
-            _log.Info("Starting VB365 Report genration");
+            LOG.Info("Starting VB365 Report genration", false);
             CVb365HtmlCompiler compiler = new();
             compiler.Dispose();
         }
         private void StartSecurityReport()
         {
+            LOG.Info("Starting Security Report generation", false);
             CHtmlCompiler html = new();
             html.RunSecurityReport();
         }

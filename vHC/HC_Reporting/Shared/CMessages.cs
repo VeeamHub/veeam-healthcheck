@@ -22,6 +22,8 @@ namespace VeeamHealthCheck.Shared
             "\t/security\tRuns a modified Health Check reporting only security-related items" +
             "\n"+
             "\t/lite\t\t" + "Skips output of individual jobs to HTML files. Default is ON and adds extra processing time." +
+            "\n"+
+            "\t/scrub:\t\t" + "/scrub:true | /scrub:false; determines if sensitive data is removed. Default option creates both options"+
             "\n\n" +
             "EXAMPLES:\n" +
             "1. Run to default location:\t .\\VeeamHealthCheck.exe /run\n" +
@@ -29,6 +31,7 @@ namespace VeeamHealthCheck.Shared
             "3. Run with 30 day report:\t .\\VeeamHealthCheck.exe /run days:30\n" +
             "4. Run GUI from CLI:\t .\\VeeamHealthCheck.exe /gui" +
             "5. Run without extra job details:\t .\\VeeamHealthCheck.exe /run /lite"+
+            "6. Run report on existing data without starting new collection:\t VeeamHealthCheck.exe /import /run (also works with /security)"+
             "\n";
 
         public static string PsVbrConfigStart = "[PS] Enter Config Collection Invoker...";

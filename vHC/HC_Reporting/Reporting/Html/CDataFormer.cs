@@ -26,6 +26,7 @@ namespace VeeamHealthCheck.Reporting.Html
     class CDataFormer
     {
         private readonly string _testFile = "xml\\vbr.xml";
+        private string logStart = "[DataFormer]\t";
 
         private string _backupServerName;
         private bool _isBackupServerProxy;
@@ -378,8 +379,8 @@ namespace VeeamHealthCheck.Reporting.Html
             CBackupServerTableHelper bt = new(scrub);
             BackupServer b = bt.SetBackupServerData();
 
-            
-            
+
+
             CheckServerRoles(CGlobals._backupServerId);
 
             b.HasProxyRole = _isBackupServerProxy;
@@ -1130,57 +1131,67 @@ namespace VeeamHealthCheck.Reporting.Html
             return jss.JobSessionSummaryToXml(scrub);
 
         }
-        public void JobSessionInfoToXml(bool scrub)
+        private List<CJobSessionInfo> ReturnJobSessionsList()
         {
-            log.Info("converting job session info to xml");
-            CHtmlFormatting _form = new();
-
-            List<CJobSessionInfo> csv = new();
-
             var targetDate = CGlobals.TOOLSTART.AddDays(-CGlobals.ReportDays);
-            //List<CJobSessionInfo> trimmedSessionInfo = new();
+
             using (CDataTypesParser dt = new())
             {
-                csv = dt.JobSessions.Where(c => c.CreationTime >= targetDate).ToList();
+                List<CJobSessionInfo> csv = dt.JobSessions.Where(c => c.CreationTime >= targetDate).ToList();
+                csv = csv.OrderBy(x => x.Name).ToList();
+
+                csv = csv.OrderBy(y => y.CreationTime).ToList();
+                csv.Reverse();
+                return csv;
             }
+        }
+        private void LogJobSessionParseProgress(double counter, int total)
+        {
+            double percentComplete = counter / total * 100;
+            string msg = String.Format(logStart + "{0}%...", Math.Round(percentComplete, 2));
+            log.Info(msg, false);
+        }
+        private void SetOutDir(bool scrub)
+        {
 
-            csv = csv.OrderBy(x => x.Name).ToList();
+        }
+        public void JobSessionInfoToXml(bool scrub)
+        {
+            string logStart = "[JobSessions]\t";
+            log.Info(logStart + "converting job session info to xml");
+            CHtmlFormatting _form = new();
 
-            csv = csv.OrderBy(y => y.CreationTime).ToList();
-            csv.Reverse();
-            //csv = csv.OrderBy(x => x.CreationTime).ToList();
+            List<CJobSessionInfo> csv = ReturnJobSessionsList();
 
-            //XDocument doc = XDocument.Load(_testFile);
-
-            //doc.Root.Add(extElement);
-            //doc.AddFirst(new XProcessingInstruction("xml-stylesheet", "type=\"text/xsl\" href=\"SessionReport.xsl\""));
             List<string> processedJobs = new();
             double percentCounter = 0;
             foreach (var cs in csv)
             {
-                double percentComplete = percentCounter / csv.Count * 100;
-                string msg = String.Format("[JobSess]\t {0}%...", percentComplete);
-                log.Info(msg);
+                LogJobSessionParseProgress(percentCounter, csv.Count);
+
                 if (!processedJobs.Contains(cs.JobName))
                 {
                     processedJobs.Add(cs.JobName);
-                    //XDocument newDoc = new XDocument(new XElement("root"));
-                    //XElement extElement = new XElement("jobSessions");
 
-                    //newDoc.Root.Add(extElement);
-                    string outDir = CVariables.desiredDir + "\\JobSessionReports";
-                    if (!Directory.Exists(outDir))
-                        Directory.CreateDirectory(outDir);
+                    string outDir = "";// CVariables.desiredDir + "\\Original";
+                    string folderName = "\\JobSessionReports";
 
-                    string docName = outDir + "\\";
+
                     if (scrub)
                     {
+                        outDir = CGlobals._desiredPath + CVariables._safeSuffix + folderName;
+                        //log.Warning("SAFE outdir = " + outDir, false);
+                        CheckFolderExists(outDir);
                         outDir += "\\" + _scrubber.ScrubItem(cs.JobName) + ".html";
                     }
                     else
                     {
+                        outDir = CGlobals._desiredPath + CVariables._unsafeSuffix +  folderName;
+                        CheckFolderExists(outDir);
                         outDir += "\\" + cs.JobName + ".html";
                     }
+                    string docName = outDir + "\\";
+
 
                     string s = _form.FormHeader();
                     s += "<h2>" + cs.JobName + "</h2>";
@@ -1205,11 +1216,13 @@ namespace VeeamHealthCheck.Reporting.Html
                     s += _form.TableHeader("Status", "Final status of the job");
                     s += _form.TableHeader("Task Duration", "Duration of the VM/server within the job in minutes");
                     s += "</tr>";
-                    //docName = VerifyDocName(docName);
-                    //newDoc.AddFirst(new XProcessingInstruction("xml-stylesheet", "type=\"text/xsl\" href=\"SessionReport.xsl\""));
-                    //XElement xml = null;
+
+                    int counter = 1;
                     foreach (var c in csv)
                     {
+                        string info = String.Format("Parsing {0} of {1} Job Sessions to HTML", counter, csv.Count);
+                        counter++;
+                        //log.Info(logStart + info, false);
                         try
                         {
                             if (cs.JobName == c.JobName)
@@ -1258,13 +1271,10 @@ namespace VeeamHealthCheck.Reporting.Html
                     }
                     try
                     {
-                        string dir = Path.GetDirectoryName(docName);
-                        if (!Directory.Exists(dir))
-                            Directory.CreateDirectory(dir);
+                        //string dir = Path.GetDirectoryName(docName);
+                        //if (!Directory.Exists(dir))
+                        //    Directory.CreateDirectory(dir);
                         File.WriteAllText(outDir, s);
-                        // newDoc.Save(docName);
-                        //string xmlString = newDoc.ToString();
-                        //exporter.ExportHtml(docName);
                     }
                     catch (Exception e)
                     {
@@ -1279,6 +1289,11 @@ namespace VeeamHealthCheck.Reporting.Html
             }
             //doc.Save(_testFile);
             log.Info("converting job session info to xml..done!");
+        }
+        private void CheckFolderExists(string folder)
+        {
+            if (!Directory.Exists(folder))
+                Directory.CreateDirectory(folder);
         }
         public string TableData(string data, string toolTip)
         {
