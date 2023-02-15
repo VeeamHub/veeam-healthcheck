@@ -50,6 +50,7 @@ namespace VeeamHealthCheck.Startup
         private void LaunchUi(IntPtr handle, bool hide)
         {
             CGlobals.Logger.Info("Executing GUI", false);
+            CGlobals.RunFullReport = true;
             if (hide)
                 ShowWindow(handle, SW_HIDE);
             var app = new System.Windows.Application();
@@ -63,12 +64,13 @@ namespace VeeamHealthCheck.Startup
         private void ParseZeroArgs()
         {
             var pos = Console.GetCursorPosition();
-            if (pos == (0, 0))
+            CGlobals.Logger.Warning("pos = " + pos.ToString(), false);
+            if (pos == (0, 1))
             {
                 CGlobals.Logger.Info("0s");
                 LaunchUi(Handle(), true);
             }
-            if (pos != (0, 0))
+            else
             {
                 CGlobals.Logger.Info("not 0");
                 Console.WriteLine(CMessages.helpMenu);

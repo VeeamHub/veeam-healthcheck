@@ -135,6 +135,7 @@ namespace VeeamHealthCheck.Startup
             CGlobals.OpenExplorer = false;
             //CGlobals.OpenHtml = false;
             CGlobals._desiredPath = targetForOutput;
+            PreRunCheck();
             StartPrimaryFunctions();
         }
         public bool VerifyPath()
