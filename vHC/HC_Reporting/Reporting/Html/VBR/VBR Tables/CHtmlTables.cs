@@ -169,6 +169,8 @@ namespace VeeamHealthCheck.Html.VBR
         private string ConfigDbTable(BackupServer b)
         {
             string s = "";
+            s += _form.header3("Config DB Info");
+            s += "<table border=\"1\">";
             // config DB Table
             s += _form.TableHeader("DataBase Type", "MS SQL or PostgreSQL");
             s += _form.TableHeader(VbrLocalizationHelper.BkpSrvTblSqlLocal, VbrLocalizationHelper.BstSqlLocTT);
@@ -191,8 +193,7 @@ namespace VeeamHealthCheck.Html.VBR
                 s += _form.TableData(b.DbHostName, "");
                 s += _form.TableData(b.DbVersion, "");
                 s += _form.TableData(b.Edition, "");
-                s += _form.TableData(b.DbCores.ToString(), "CPU Cores detected on SQL. 0 indicates SQL is local to VBR or there was an error in collection.");
-                s += _form.TableData(b.DbRAM.ToString(), "RAM detected on SQL. 0 indicates SQL is local to VBR or there was an error in collection.");
+                s += AddDbCoresRam(b);
                 s += "</table>";
             }
             catch (Exception e)
@@ -201,6 +202,22 @@ namespace VeeamHealthCheck.Html.VBR
                 log.Error("\t" + e.Message);
                 //return "";
             }
+            return s;
+        }
+        private string AddDbCoresRam(BackupServer b)
+        {
+            string s = "";
+            string dbCoresToolTip = "CPU Cores detected on SQL. 0 indicates SQL is local to VBR or there was an error in collection.";
+            string dbRamToolTip = "RAM detected on SQL. 0 indicates SQL is local to VBR or there was an error in collection.";
+            if (b.DbCores == 0)
+                s += _form.TableData("", dbCoresToolTip);
+            else
+                s += _form.TableData(b.DbCores.ToString(), dbCoresToolTip);
+            if (b.DbRAM == 0)
+                s += _form.TableData("", dbRamToolTip);
+            else
+                s += _form.TableData(b.DbRAM.ToString(), dbRamToolTip);
+
             return s;
         }
         public string AddBkpSrvTable(bool scrub)
@@ -229,8 +246,7 @@ namespace VeeamHealthCheck.Html.VBR
             s += _form.TableData(b.ConfigBackupTarget, "");
             s += "</table>";
 
-            s += _form.header3("Config DB Info");
-            s += "<table border=\"1\">";
+
             //s += _form.LineBreak();
 
             s += ConfigDbTable(b);

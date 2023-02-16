@@ -26,10 +26,10 @@ namespace VeeamHealthCheck.Reporting.Html
 
         public CBackupServerTableHelper(bool scrub)
         {
-            if (CGlobals.BACKUPSERVER == null)
+            //if (CGlobals.BACKUPSERVER == null)
                 _backupServer = new();
-            else
-                _backupServer = CGlobals.BACKUPSERVER;
+            //else
+            //    _backupServer = CGlobals.BACKUPSERVER;
             _scrub = scrub;
         }
         public BackupServer SetBackupServerData()
@@ -111,7 +111,7 @@ namespace VeeamHealthCheck.Reporting.Html
                         _backupServer.IsLocal = false;
 
                     }
-                    else if (backupServer.Name.Contains(_backupServer.DbHostName, StringComparison.OrdinalIgnoreCase))
+                    else if (backupServer.Name.Contains(_backupServer.DbHostName, StringComparison.OrdinalIgnoreCase) || _backupServer.DbHostName == "localhost")
                     {
                         _backupServer.IsLocal = true;
                         _backupServer.DbHostName = "LocalHost";
