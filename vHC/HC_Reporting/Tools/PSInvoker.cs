@@ -100,7 +100,7 @@ namespace VeeamHealthCheck
             {
                 argString = $"-NoProfile -ExecutionPolicy unrestricted -file \"{scriptLocation}\" -ReportPath \"{path}\"";
             }
-            log.Debug(logStart + "PS ArgString = " + argString, false);
+            //log.Debug(logStart + "PS ArgString = " + argString, false);
             return new ProcessStartInfo()
             {
                 FileName = "powershell.exe",
