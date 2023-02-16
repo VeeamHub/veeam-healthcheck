@@ -28,6 +28,11 @@ namespace VeeamHealthCheck.Collection
             ExecSecurityCollection();
             // do sql collections
         }
+        public void RunVbrConfigOnly()
+        {
+            PSInvoker p = new();
+            p.RunVbrConfigCollect();
+        }
         private void ExecSecurityCollection()
         {
             CSecurityInit securityInit = new CSecurityInit();

@@ -23,7 +23,7 @@ using static VeeamHealthCheck.DB.CModel;
 
 namespace VeeamHealthCheck.Reporting.Html
 {
-    class CDataFormer
+    class CDataFormer 
     {
         private readonly string _testFile = "xml\\vbr.xml";
         private string logStart = "[DataFormer]\t";
@@ -71,7 +71,7 @@ namespace VeeamHealthCheck.Reporting.Html
             if (!File.Exists(_testFile))
                 File.Create(_testFile).Dispose();
         }
-
+        public void Dispose() { }
 
 
         #region XML Conversions
@@ -1375,10 +1375,7 @@ namespace VeeamHealthCheck.Reporting.Html
             return ct;
         }
 
-        public void Dispose()
-        {
-
-        }
+   
         private void PreCalculations()
         {
             // calc all the things prior to adding XML entries... such as job count per repo....

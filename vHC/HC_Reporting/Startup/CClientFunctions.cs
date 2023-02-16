@@ -107,6 +107,15 @@ namespace VeeamHealthCheck.Startup
             StartCollections();
             StartAnalysis();
         }
+        public void RunHotfixDetector()
+        {
+            LOG.Info(logStart + "Starting Hotfix Detector", false);
+            LOG.Warning(logStart + "This option will collect support logs to some local directory and then check for hotfixes", false);
+            LOG.Warning(logStart + "Please enter local path with adequate space for log files:", false);
+            var path = Console.ReadLine();
+            CHotfixDetector hfd = new(path);
+            hfd.Run();
+        }
         private void LogUserSettings()
         {
             LOG.Info(ClientSettingsString(), false);

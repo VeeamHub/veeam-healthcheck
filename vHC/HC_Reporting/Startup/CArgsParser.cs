@@ -141,6 +141,10 @@ namespace VeeamHealthCheck.Startup
                         CGlobals.Logger.Info("Setting SCRUB = false", false);
                         CGlobals.Scrub = false;
                         break;
+                    case "/hotfix":
+                        functions.RunHotfixDetector();
+                        Environment.Exit(0);
+                        break;
                         //case var match when new Regex("outdir:.*").IsMatch(a):
                         //    string[] outputDir = a.Split(":");
                         //    targetDir = outputDir[1];

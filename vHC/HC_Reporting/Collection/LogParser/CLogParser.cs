@@ -19,11 +19,13 @@ namespace VeeamHealthCheck.FilesParser
         private Dictionary<string, List<TimeSpan>> _waits = new();
         private string _pathToCsv = CVariables.vbrDir + @"\waits.csv";
 
+        private List<string> _fixList = new();
+
         private string logStart = "[LogParser] ";
 
         public CLogParser()
         {
-            InitLogDir();
+            LogLocation = InitLogDir();
             InitWaitCsv();
             /*check each job for long wait times
              * need:
@@ -37,20 +39,26 @@ namespace VeeamHealthCheck.FilesParser
              */
 
         }
+        public CLogParser(string path)
+        {
 
-        private void InitLogDir()
+        }
+
+        public string InitLogDir()
         {
             log.Info(logStart + "Checking registry for default log location...");
+            string logs = "";
             try
             {
                 DB.CRegReader reg = new();
-                LogLocation = reg.DefaultLogDir();
-                log.Info(logStart + "Log Location: " + LogLocation);
+                logs = reg.DefaultLogDir();
+                log.Info(logStart + "Log Location: " + logs);
             }
-            catch(Exception e)
+            catch (Exception e)
             {
                 log.Error(logStart + "Failed to return log location.");
             }
+            return logs;
         }
         private void InitWaitCsv()
         {
@@ -62,7 +70,7 @@ namespace VeeamHealthCheck.FilesParser
                     sw.WriteLine("JobName,StartTime,EndTime,Duration");
                 }
             }
-            catch(Exception)
+            catch (Exception)
             {
                 log.Error(logStart + "Failed to init waits.csv");
             }
@@ -97,7 +105,7 @@ namespace VeeamHealthCheck.FilesParser
 
                 List<TimeSpan> waits = new();
 
-                string[] fileList = Directory.GetFiles(d, "Job.*.log", SearchOption.AllDirectories);
+                string[] fileList = Directory.GetFiles(d, "*.log", SearchOption.AllDirectories);
 
                 foreach (var f in fileList)
                 {
@@ -108,6 +116,24 @@ namespace VeeamHealthCheck.FilesParser
             _waits = jobsAndWaits;
             log.Info("Checking Log files for waits..Done!", false);
             return jobsAndWaits;
+        }
+        private void ParseFixLines(string line)
+        {
+            try
+            {
+
+                //log.Debug(line, false);
+                string fixLine = line.Remove(0, line.IndexOf("Private Fix"));
+                if (fixLine.EndsWith(']'))
+                    fixLine = fixLine.Replace("]", "");
+                if (!_fixList.Contains(fixLine))
+                {
+                    _fixList.Add(fixLine);
+                    log.Debug(fixLine, false);
+
+                }
+            }
+            catch (Exception e) { log.Debug(e.Message); }
         }
         private List<TimeSpan> CheckFileWait(string file, string jobName)
         {
@@ -125,6 +151,8 @@ namespace VeeamHealthCheck.FilesParser
                 {
                     if (!String.IsNullOrEmpty(line))
                     {
+                        if (line.Contains("Private Fix"))
+                            ParseFixLines(line);
                         try
                         {
                             if (countNextLine)

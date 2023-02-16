@@ -71,7 +71,15 @@ namespace VeeamHealthCheck.Shared.Logging
             message = FormLogLine(message, "WARN");
             LogLine(message, silent, 2);
         }
-
+        public void Debug(string message)
+        {
+            Debug(message, true);
+        }
+        public void Debug(string message, bool silent)
+        {
+            message = FormLogLine(message, "DEBUG");
+            LogLine(message, silent, 2);
+        }
         public  void Error(string message)
         {
             Error(message, true);

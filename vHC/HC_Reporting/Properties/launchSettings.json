@@ -2,9 +2,10 @@
   "profiles": {
     "VeeamHealthCheck": {
       "commandName": "Project",
+      "commandLineArgs": "/hotfix",
       "remoteDebugEnabled": true,
       "authenticationMode": "Windows",
-      "remoteDebugMachine": "WIN-PDH5Q0UO9TK:4026"
+      "remoteDebugMachine": "VBR-11-Latest:4026"
     }
   }
 }
