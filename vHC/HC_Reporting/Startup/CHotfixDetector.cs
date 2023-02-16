@@ -92,12 +92,14 @@ namespace VeeamHealthCheck.Startup
         private void EnumerateFiles(string path)
         {
             string[] files = Directory.GetFiles(path, "*.log", searchOption: SearchOption.AllDirectories);
+            int counter = 1;
             foreach (string file in files)
             {
                 try
                 {
+                    LOG.Info(logStart + "Checking file " + counter + " of " + files.Count());
                     Parse(file);
-
+                    counter++;
                 }
                 catch (Exception e)
                 {
