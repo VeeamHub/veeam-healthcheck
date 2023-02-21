@@ -5,7 +5,7 @@
       "commandLineArgs": "/hotfix",
       "remoteDebugEnabled": true,
       "authenticationMode": "Windows",
-      "remoteDebugMachine": "VBR-11-Latest:4026"
+      "remoteDebugMachine": "vbr-11-latest:4026"
     }
   }
 }

@@ -1,11 +1,15 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Management.Automation;
 using System.Text;
 using System.Threading.Tasks;
+using System.Windows.Controls;
+using System.Windows;
 using VeeamHealthCheck.Collection.DB;
 using VeeamHealthCheck.Security;
 using VeeamHealthCheck.Shared;
+using Microsoft.Management.Infrastructure;
 
 namespace VeeamHealthCheck.Collection
 {
@@ -22,17 +26,15 @@ namespace VeeamHealthCheck.Collection
         public void Run()
         {
             ExecPSScripts();
-            PopulateWaits();
+            if (!CGlobals.RunSecReport)
+                PopulateWaits();
+
             ExecVmcReader();
             ExecSqlQueries();
             ExecSecurityCollection();
             // do sql collections
         }
-        public void RunVbrConfigOnly()
-        {
-            PSInvoker p = new();
-            p.RunVbrConfigCollect();
-        }
+
         private void ExecSecurityCollection()
         {
             CSecurityInit securityInit = new CSecurityInit();
@@ -60,25 +62,38 @@ namespace VeeamHealthCheck.Collection
             CGlobals.Logger.Info("Starting PS Invoke", false);
             PSInvoker p = new PSInvoker();
 
-            try
+            if (!CGlobals.RunSecReport)
             {
-                ExecVbrScripts(p);
-                ExecVb365Scripts(p);
+                try
+                {
+                    ExecVbrScripts(p);
+                    ExecVb365Scripts(p);
+                }
+                catch (Exception ex)
+                {
+                    CGlobals.Logger.Error(ex.Message);
+                }
             }
-            catch (Exception ex)
+            else if (CGlobals.RunSecReport)
             {
-                CGlobals.Logger.Error(ex.Message);
+                ExecVbrConfigOnly(p);
             }
+
 
             CGlobals.Logger.Info("Starting PS Invoke...done!", false);
         }
         private void ExecVbrScripts(PSInvoker p)
         {
-            if(CGlobals.IsVbr)
+            if (CGlobals.IsVbr)
             {
                 CGlobals.Logger.Info("Entering vbr ps invoker", false);
                 p.Invoke();
             }
+        }
+        private void ExecVbrConfigOnly(PSInvoker p)
+        {
+            CGlobals.Logger.Info("Entering vbr config collection");
+            p.RunVbrConfigCollect();
         }
         private void ExecVb365Scripts(PSInvoker p)
         {

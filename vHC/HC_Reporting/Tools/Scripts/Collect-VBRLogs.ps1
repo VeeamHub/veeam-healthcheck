@@ -17,27 +17,28 @@ param(
   #[Parameter(Mandatory)]
   #[string]$VBRServer
    [Parameter(Mandatory)]
-  [string]$ReportPath
+  [string]$ReportPath,
+  [Parameter()]
+  [DateTime]$To,
+  [Parameter()]
+  [DateTime]$From,
+  [Parameter()]
+  [int]$LastDays
   # [int]$ReportingIntervalDays = -1
 )
 
+# version get
+$corePath = Get-ItemProperty -Path "HKLM:\Software\Veeam\Veeam Backup and Replication\" -Name "CorePath"
+$depDLLPath = Join-Path -Path $corePath.CorePath -ChildPath "Packages\VeeamDeploymentDll.dll" -Resolve
+$file = Get-Item -Path $depDLLPath
+$version = $file.VersionInfo.ProductVersion
 
-# Load the Veeam PSSnapin
-#if (!(Get-PSSnapin -Name VeeamPSSnapIn -ErrorAction SilentlyContinue)) {
-#  Add-PSSnapin -Name VeeamPSSnapIn
-#  Connect-VBRServer -Server $VBRServer
-#}
-#
-#else {
-#  Disconnect-VBRServer
-#  Connect-VBRServer -Server $VBRServer
-#}
-#
-#if (!(Test-Path $ReportPath)) {
-#  New-Item -Path $ReportPath -ItemType Directory | Out-Null
-#}
 
-Push-Location -Path $ReportPath
-# COLLECTION Starting
- $servers = Get-VBRServer | Where-Object {$_.Info -notmatch "^This server.*" }
-Export-VBRLogs -Server $servers -FolderPath $ReportPath -From (Get-Date).AddDays(-1) -to (get-date)
+$servers = Get-VBRServer | Where-Object {$_.Info -notmatch "^This server.*" }
+
+if($version.StartsWith("12")){
+    Export-VBRLogs -Server $servers -FolderPath $ReportPath -LastDays 1
+}
+else{
+    Export-VBRLogs -Server $servers -FolderPath $ReportPath -From (Get-Date).AddDays(-1) -to (get-date)
+}

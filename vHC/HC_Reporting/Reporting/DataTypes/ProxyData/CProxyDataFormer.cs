@@ -26,11 +26,11 @@ namespace VeeamHealthCheck.Reporting.DataTypes.ProxyData
             if (cores == 0 && ram == 0)
                 return "NA";
 
-            if (CGlobals.vbrVersion == 11)
+            if (CGlobals.VBRMAJORVERSION == 11)
             {
                 coreTasks = cores; //TODO need to imrprove this to cover 11a change
             }
-            else if (CGlobals.vbrVersion == 12)
+            else if (CGlobals.VBRMAJORVERSION == 12)
             {
                 coreTasks = cores * 2;
             }

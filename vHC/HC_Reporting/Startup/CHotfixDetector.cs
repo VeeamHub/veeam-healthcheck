@@ -25,7 +25,6 @@ namespace VeeamHealthCheck.Startup
         private string _path;
         private List<string> _fixList;
 
-        private string _vbrVersion;
 
         public CHotfixDetector(string path)
         {
@@ -39,25 +38,16 @@ namespace VeeamHealthCheck.Startup
         public void Run()
         {
             CCollections col = new();
-            col.RunVbrConfigOnly();
             LOG.Info(logStart + "Checking Path...", false);
             ExecLogCollection();
             ParseLogs();
-            GetVbrServerVersion();
-            EchoResults(_vbrVersion);
+            EchoResults();
         }
-        private void GetVbrServerVersion()
-        {
-            CDataFormer df = new(false);
-            BackupServer b = df.BackupServerInfoToXml(false);
-            _vbrVersion = b.Version;
-
-        }
-        private void EchoResults(string vbrVersion)
+        private void EchoResults()
         {
             if (_fixList.Count > 0)
             {
-                LOG.Warning(logStart + CMessages.FoundHotfixesMessage(_fixList, _vbrVersion), false);
+                LOG.Warning(logStart + CMessages.FoundHotfixesMessage(_fixList), false);
             }
             else
                 LOG.Warning(logStart + "No hotfixes found.", false);
@@ -97,7 +87,7 @@ namespace VeeamHealthCheck.Startup
             {
                 try
                 {
-                    LOG.Info(logStart + "Checking file " + counter + " of " + files.Count());
+                    LOG.Info(logStart + "Checking file " + counter + " of " + files.Count(), false);
                     Parse(file);
                     counter++;
                 }
@@ -127,8 +117,12 @@ namespace VeeamHealthCheck.Startup
             {
                 using (ZipArchive zip = ZipFile.OpenRead(file))
                 {
-                    zip.ExtractToDirectory(target);
+                    try
+                    {
+                        zip.ExtractToDirectory(target);
 
+                    }
+                    catch (Exception e) { }
                 }
                 File.Delete(file);
             }

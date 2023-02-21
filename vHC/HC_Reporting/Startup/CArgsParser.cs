@@ -6,6 +6,7 @@ using System.Runtime.InteropServices;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
+using VeeamHealthCheck.DB;
 //using VeeamHealthCheck.Reporting.vsac;
 using VeeamHealthCheck.Shared;
 
@@ -33,7 +34,7 @@ namespace VeeamHealthCheck.Startup
         {
             //CGlobals.RunFullReport = true;
             LogInitialInfo();
-
+            GetVbrVersion();
             if (_args.Length == 0)
                 ParseZeroArgs();
             else if (_args != null && _args.Length > 0)
@@ -46,6 +47,11 @@ namespace VeeamHealthCheck.Startup
             CClientFunctions f = new CClientFunctions();
             f.LogVersionAndArgs(_args);
             f.Dispose();
+        }
+        private void GetVbrVersion()
+        {
+            CRegReader reg = new();
+            reg.GetVbrVersionFilePath();
         }
         private void LaunchUi(IntPtr handle, bool hide)
         {

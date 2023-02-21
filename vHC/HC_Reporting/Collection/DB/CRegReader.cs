@@ -6,6 +6,9 @@ using System.Windows;
 using VeeamHealthCheck.Shared;
 using VeeamHealthCheck.Shared.Logging;
 using System.Windows.Input;
+using Namotion.Reflection;
+using System.IO;
+using System.Diagnostics;
 
 namespace VeeamHealthCheck.DB
 {
@@ -68,6 +71,18 @@ namespace VeeamHealthCheck.DB
                 }
             }
 
+        }
+        public void GetVbrVersionFilePath()
+        {
+            using (RegistryKey key =
+                Registry.LocalMachine.OpenSubKey("Software\\Veeam\\Veeam Backup and Replication"))
+            {
+                string path = key.GetValue("CorePath").ToString();
+                //FileInfo dllInfo = new FileInfo(path + "\\Packages\\VeeamDeploymentDll.dll");
+                var version = FileVersionInfo.GetVersionInfo(path + "\\Packages\\VeeamDeploymentDll.dll");
+                CGlobals.VBRFULLVERSION = version.FileVersion;
+                
+            }
         }
         private void GetVbrElevenDbInfo()
         {

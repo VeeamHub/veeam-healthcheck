@@ -2,9 +2,11 @@
 // MIT License
 using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Management.Automation;
 //using System.Management.Automation;
 using System.Runtime.InteropServices;
 using System.Text;
@@ -12,6 +14,7 @@ using System.Threading.Tasks;
 using System.Windows.Shapes;
 using VeeamHealthCheck.Shared;
 using VeeamHealthCheck.Shared.Logging;
+using System.Text;
 
 namespace VeeamHealthCheck
 {
@@ -62,14 +65,33 @@ namespace VeeamHealthCheck
             log.Info(CMessages.PsVbrConfigStart, false);
             return LogCollectionInfo(_exportLogsScript, path);
         }
+
         public void RunVbrLogCollect(string path)
         {
-            var res1 = Process.Start(ExportLogsStartInfo(path));
+            ProcessStartInfo p = ExportLogsStartInfo(path);
+            //log.Debug(p., false);
+            var res1 = Process.Start(p);
             log.Info(CMessages.PsVbrConfigProcId + res1.Id.ToString(), false);
+
 
             res1.WaitForExit();
 
             log.Info(CMessages.PsVbrConfigProcIdDone, false);
+        }
+        private ProcessStartInfo LogCollectionInfo(string scriptLocation, string path)
+        {
+            string argString;
+            argString = $"-NoProfile -ExecutionPolicy unrestricted -file \"{scriptLocation}\" -ReportPath \"{path}\"";
+
+            //string argString = $"-NoProfile -ExecutionPolicy unrestricted -file \"{scriptLocation}\" -ReportPath \"{path}\"";
+            log.Debug(logStart + "PS ArgString = " + argString, false);
+            return new ProcessStartInfo()
+            {
+                FileName = "powershell.exe",
+                Arguments = argString,
+                UseShellExecute = true,
+                CreateNoWindow = false
+            };
         }
 
         private void RunVbrSessionCollection()
@@ -109,18 +131,7 @@ namespace VeeamHealthCheck
                 CreateNoWindow = true
             };
         }
-        private ProcessStartInfo LogCollectionInfo(string scriptLocation, string path)
-        {
-            string argString = $"-NoProfile -ExecutionPolicy unrestricted -file \"{scriptLocation}\" -ReportPath \"{path}\"";
-            //log.Debug(logStart + "PS ArgString = " + argString, false);
-            return new ProcessStartInfo()
-            {
-                FileName = "powershell.exe",
-                Arguments = argString,
-                UseShellExecute = true,
-                CreateNoWindow = false
-            };
-        }
+
         public void InvokeVb365Collect()
         {
             log.Info("[PS] Enter VB365 collection invoker...", false);
