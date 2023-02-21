@@ -35,9 +35,7 @@ namespace VeeamHealthCheck.Reporting.Html
         //private CQueries _cq = new();
         private Dictionary<string, int> _repoJobCount;
         private CScrubHandler _scrubber = CGlobals.Scrubber;
-        private bool _scrub;
-        private bool _checkLogs;
-        private bool _isImport;
+        //private bool _scrub;
 
         //Security Summary parts
         private bool _backupsEncrypted = false;
@@ -45,9 +43,9 @@ namespace VeeamHealthCheck.Reporting.Html
         private bool _trafficEncrypted = false;
         private bool _configBackupEncrypted = false;
 
-        private bool _isSqlLocal;
-        private int _cores;
-        private int _ram;
+        //private bool _isSqlLocal;
+        //private int _cores;
+        //private int _ram;
         private CDataTypesParser _dTypeParser;
         private List<CServerTypeInfos> _csv;
         private readonly CCsvParser _csvParser = new();
@@ -61,9 +59,7 @@ namespace VeeamHealthCheck.Reporting.Html
         {
             _dTypeParser = new();
             _csv = _dTypeParser.ServerInfo();
-            _isImport = isImport;
-            if (!isImport)
-                _checkLogs = true;
+
             CheckXmlFile();
         }
         private void CheckXmlFile()
@@ -1127,7 +1123,7 @@ namespace VeeamHealthCheck.Reporting.Html
         }
         public List<List<string>> ConvertJobSessSummaryToXml(bool scrub)
         {
-            CJobSessSummary jss = new(_testFile, log, scrub, _scrubber, _dTypeParser);
+            CJobSessSummary jss = new(log, scrub, _scrubber, _dTypeParser);
             return jss.JobSessionSummaryToXml(scrub);
 
         }

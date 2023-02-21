@@ -1,20 +1,12 @@
 ﻿// Copyright (c) 2021, Adam Congdon <adam.congdon2@gmail.com>
 // MIT License
 using System;
-using System.Collections.Generic;
-using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.IO;
-using System.Linq;
-using System.Management.Automation;
 //using System.Management.Automation;
 using System.Runtime.InteropServices;
-using System.Text;
-using System.Threading.Tasks;
-using System.Windows.Shapes;
 using VeeamHealthCheck.Shared;
 using VeeamHealthCheck.Shared.Logging;
-using System.Text;
 
 namespace VeeamHealthCheck
 {

@@ -81,8 +81,40 @@ namespace VeeamHealthCheck.DB
                 //FileInfo dllInfo = new FileInfo(path + "\\Packages\\VeeamDeploymentDll.dll");
                 var version = FileVersionInfo.GetVersionInfo(path + "\\Packages\\VeeamDeploymentDll.dll");
                 CGlobals.VBRFULLVERSION = version.FileVersion;
+                ParseVbrMajorVersion(CGlobals.VBRFULLVERSION);
                 
             }
+        }
+        private void ParseVbrMajorVersion(string fullVersion)
+        {
+            try
+            {
+                string[] segments = fullVersion.Split(".");
+                int.TryParse(segments[0], out int mVersion);
+
+                switch (mVersion)
+                {
+                    case 10:
+                        SetMajorVersion(10);
+                        break;
+                    case 11:
+                        SetMajorVersion(11);
+                        break;
+                    case 12:
+                        SetMajorVersion(12);
+                        break;
+                }
+            }
+            catch(Exception e)
+            {
+                log.Error(logStart + "Failed to parse VBR Major Version:\n\t" + e.Message);
+            }
+            
+
+        }
+        private void SetMajorVersion(int version)
+        {
+            CGlobals.VBRMAJORVERSION = version;
         }
         private void GetVbrElevenDbInfo()
         {

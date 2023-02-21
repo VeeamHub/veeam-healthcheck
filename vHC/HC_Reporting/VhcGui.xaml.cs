@@ -121,7 +121,7 @@ namespace VeeamHealthCheck
             Run(true);
         }
 
-        
+
 
         private void run_Click(object sender, RoutedEventArgs e)
         {
@@ -141,14 +141,8 @@ namespace VeeamHealthCheck
         {
             System.Threading.Tasks.Task.Factory.StartNew(() =>
             {
-                // need a better start point but.... sec check here:
 
-
-
-                if(import)
-                    _functions.Import();
-                else
-                    _functions.StartPrimaryFunctions();
+                _functions.StartPrimaryFunctions();
                 Environment.Exit(0);
 
             }).ContinueWith(t =>
@@ -186,7 +180,7 @@ namespace VeeamHealthCheck
         private void HandleCheck(object sender, RoutedEventArgs e)
         {
             _functions.LogUIAction("Scrub = true");
-            CGlobals.Scrub= true;
+            CGlobals.Scrub = true;
         }
         private void htmlChecked(object sender, RoutedEventArgs e)
         {

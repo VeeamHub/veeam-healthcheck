@@ -476,11 +476,14 @@ namespace VeeamHealthCheck.DataTypes
             // 1 core + 4 GB RAM per 3 task
 
             // cores * 1.5 = Tasks
-
             int availableMem = ram - 4;
             int memTasks = (int)Math.Round((decimal)(ram / 4) * 3, 0, MidpointRounding.ToPositiveInfinity);
             int coreTasks = cores * 3;
 
+            if(CGlobals.VBRMAJORVERSION == 12)
+            {
+                // user v12 sizing math here.
+            }
 
 
             if (coreTasks == memTasks)

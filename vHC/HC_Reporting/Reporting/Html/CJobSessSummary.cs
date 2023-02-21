@@ -25,9 +25,9 @@ namespace VeeamHealthCheck.Html
 
         private string logStart = "[JssBuilder] ";
 
-        public CJobSessSummary(string xmlFile, CLogger log, bool scrub,   Scrubber.CScrubHandler scrubber, CDataTypesParser dp)
+        public CJobSessSummary(CLogger log, bool scrub,   Scrubber.CScrubHandler scrubber, CDataTypesParser dp)
         {
-            _xmlFile = xmlFile;
+            //_xmlFile = xmlFile;
             _log = log;
             _scrubber = scrubber;
             _parsers = dp;
@@ -36,9 +36,9 @@ namespace VeeamHealthCheck.Html
 
         public List<List<string>> JobSessionSummaryToXml(bool scrub)
         {
-            return JobSessionSummaryToXml(_xmlFile, _log, scrub, _scrubber, _parsers);
+            return JobSessionSummaryToXml(_log, scrub, _scrubber, _parsers);
         }
-        public List<List<string>> JobSessionSummaryToXml(string xmlFile, CLogger log, bool scrub, Scrubber.CScrubHandler scrubber, CDataTypesParser d)
+        public List<List<string>> JobSessionSummaryToXml(CLogger log, bool scrub, Scrubber.CScrubHandler scrubber, CDataTypesParser d)
         {
             List<List<string>> sendBack = new();
             log.Info("converting job session summary to xml");

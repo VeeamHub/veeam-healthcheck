@@ -159,10 +159,7 @@ namespace VeeamHealthCheck.Startup
                 }
             }
 
-            //if (CGlobals.RunSecReport)
-            //{
-            //    functions.RunSecurityReport();
-            //}
+
 
             if (ui)
                 LaunchUi(Handle(), false);
@@ -172,14 +169,7 @@ namespace VeeamHealthCheck.Startup
                 FullRun(targetDir);
 
             }
-            // if (CGlobals.RunFullReport)
-            //{
-            //    FullRun(targetDir);
-            //}
-            //else if (CGlobals.IMPORT)
-            //{
-            //    ImportRun(targetDir);
-            //}
+
         }
         private void Run(string targetDir)
         {
@@ -196,14 +186,6 @@ namespace VeeamHealthCheck.Startup
             CGlobals.Logger.Info("Output is stored in " + targetDir, false);
 
         }
-        private void ImportRun(string targetDir)
-        {
-            CGlobals.Logger.Info("Starting IMPORT...", false);
-            Run(targetDir);
 
-
-            CGlobals.Logger.Info("Starting IMPORT...complete!", false);
-            CGlobals.Logger.Info("Output is stored in " + targetDir, false);
-        }
     }
 }
