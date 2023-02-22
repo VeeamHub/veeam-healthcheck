@@ -28,7 +28,7 @@ namespace VeeamHealthCheck.Reporting.Html
         private readonly string _testFile = "xml\\vbr.xml";
         private string logStart = "[DataFormer]\t";
 
-        private string _backupServerName;
+        //private string _backupServerName;
         private bool _isBackupServerProxy;
         private bool _isBackupServerRepo;
         private bool _isBackupServerWan;
@@ -38,10 +38,10 @@ namespace VeeamHealthCheck.Reporting.Html
         //private bool _scrub;
 
         //Security Summary parts
-        private bool _backupsEncrypted = false;
-        private bool _immuteFound = false;
-        private bool _trafficEncrypted = false;
-        private bool _configBackupEncrypted = false;
+        //private bool _backupsEncrypted = false;
+        //private bool _immuteFound = false;
+        //private bool _trafficEncrypted = false;
+        //private bool _configBackupEncrypted = false;
 
         //private bool _isSqlLocal;
         //private int _cores;
@@ -51,7 +51,6 @@ namespace VeeamHealthCheck.Reporting.Html
         private readonly CCsvParser _csvParser = new();
         private readonly CLogger log = CGlobals.Logger;
         private CHtmlExporter exporter;
-        private readonly CXmlFunctions XML = new("vbr");
 
 
 
@@ -327,7 +326,7 @@ namespace VeeamHealthCheck.Reporting.Html
         public int _viDupes;
         public List<string> _vmProtectedByPhys;
         public List<string> _viProtectedNames;
-        public List<string> _vmNotProtectedNames;
+        //public List<string> _vmNotProtectedNames;
 
         public int _hvDupes;
         public List<string> _hvProtectedNames;
@@ -353,17 +352,6 @@ namespace VeeamHealthCheck.Reporting.Html
             {
                 // set items to scrub
             }
-
-            //set items to XML + save
-            //var xml = new XElement("serverInfo",
-            //    new XElement("name", backupServer.Name),
-            //    new XElement("cores", backupServer.Cores),
-            //    new XElement("ram", backupServer.Ram),
-            //    new XElement("wanacc", _isBackupServerWan)
-            //    );
-
-            //extElement.Add(xml);
-            //doc.Save(_testFile);
 
             log.Info("xml template..done!");
         }
@@ -1091,8 +1079,8 @@ namespace VeeamHealthCheck.Reporting.Html
                 List<string> job = new();
                 string jname = c.Name;
                 string repo = c.RepoName;
-                if (c.EncryptionEnabled == "True")
-                    _backupsEncrypted = true;
+                //if (c.EncryptionEnabled == "True")
+                    //_backupsEncrypted = true;
                 if (scrub)
                 {
                     jname = _scrubber.ScrubItem(c.Name, "job");

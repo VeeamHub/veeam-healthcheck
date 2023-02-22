@@ -19,13 +19,9 @@ namespace VeeamHealthCheck.Html
 {
     internal class CHtmlCompiler
     {
-        private string xslFileName = "StyleSheets\\myHtml.xsl"; // maybe just do memory instead of disk??
         private string _htmldocOriginal = String.Empty;
         private string _htmldocScrubbed = String.Empty;
-        private bool _vbrmode = false;
-        private bool _vb365mode = false;
 
-        private bool _scrub = false;
 
         private CLogger log = CGlobals.Logger;
 

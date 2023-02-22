@@ -9,10 +9,6 @@ namespace VeeamHealthCheck
 {
     internal class CReportModeSelector
     {
-        private readonly string _path;
-        private readonly bool _scrub;
-        private readonly bool _openHtml;
-        private readonly bool _import;
         private CLogger LOG = CGlobals.Logger;
         public CReportModeSelector()
         {

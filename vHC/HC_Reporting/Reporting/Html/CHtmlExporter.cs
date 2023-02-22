@@ -1,15 +1,8 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
-using System.Linq;
-using System.Text;
-using System.Text.Encodings.Web;
-using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
-using System.Xml;
-using System.Xml.Xsl;
 using VeeamHealthCheck.Scrubber;
 using VeeamHealthCheck.Shared;
 using VeeamHealthCheck.Shared.Logging;
@@ -19,7 +12,7 @@ namespace VeeamHealthCheck.Html
     internal class CHtmlExporter
     {
         private CLogger log = CGlobals.Logger;
-        private readonly string _testFile;
+        //private readonly string _testFile;
         private readonly string _htmlName = "Veeam Health Check Report";
         //private readonly string _htmlSecurityReportName = "Veeam Healch Check Security Report";
 
@@ -40,7 +33,7 @@ namespace VeeamHealthCheck.Html
         public CHtmlExporter(string xmlFileName, string serverName, string styleSheet, bool scrub)
         {
             CheckOutputDirsExist();
-            _testFile = xmlFileName;
+            //_testFile = xmlFileName;
             _backupServerName = serverName;
             _styleSheet = styleSheet;
             _scrub = scrub;
@@ -66,8 +59,8 @@ namespace VeeamHealthCheck.Html
             string installID = "";
             try
             {
-                if (!String.IsNullOrEmpty(Collection.LogParser.CLogOptions.INSTALLID)) ;
-                installID = Collection.LogParser.CLogOptions.INSTALLID.Substring(0, 7);
+                if (!String.IsNullOrEmpty(Collection.LogParser.CLogOptions.INSTALLID))
+                    installID = Collection.LogParser.CLogOptions.INSTALLID.Substring(0, 7);
             }
             catch (Exception e) { installID = "anon"; }
             if (!Directory.Exists(n))
@@ -119,7 +112,7 @@ namespace VeeamHealthCheck.Html
                 sw.Write(htmlString);
             }
         }
-        
+
         private string SetReportNameAndPath(bool scrub, string vbrOrVb365)
         {
             DateTime dateTime = DateTime.Now;
@@ -127,7 +120,7 @@ namespace VeeamHealthCheck.Html
 
             string htmlCore = "";
             if (scrub)
-                htmlCore = _anonPath + "\\"+ _htmlName + "_" + vbrOrVb365 + "_" + installID + dateTime.ToString("_yyyy.MM.dd.HHmmss") + ".html";
+                htmlCore = _anonPath + "\\" + _htmlName + "_" + vbrOrVb365 + "_" + installID + dateTime.ToString("_yyyy.MM.dd.HHmmss") + ".html";
             else if (!scrub)
             {
                 htmlCore = _origPath + "\\" + _htmlName + "_" + vbrOrVb365 + "_" + _backupServerName + dateTime.ToString("_yyyy.MM.dd.HHmmss") + ".html";

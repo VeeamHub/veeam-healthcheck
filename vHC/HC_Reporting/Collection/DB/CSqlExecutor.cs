@@ -22,9 +22,10 @@ namespace VeeamHealthCheck.Collection.DB
         }
         public void Run()
         {
-            CGlobals.BACKUPSERVER = TrySetSqlInfo();
+            //CGlobals.BACKUPSERVER = 
+            TrySetSqlInfo();
         }
-        private BackupServer TrySetSqlInfo()
+        private void TrySetSqlInfo()
         {
             BackupServer b = new();
             try
@@ -33,11 +34,15 @@ namespace VeeamHealthCheck.Collection.DB
                 DataTable dbServerInfo = new DataTable();
                 CQueries cq = new();
                 dbServerInfo = cq.SqlServerInfo;
-                b.Edition = cq.SqlEdition;
-                b.DbVersion = cq.SqlVerion;
-                b = TryParseSqlResources(dbServerInfo, b);
-                b.DbType = "MS SQL";
+                //b.Edition = cq.SqlEdition;
+                //b.DbVersion = cq.SqlVerion;
+                //b = TryParseSqlResources(dbServerInfo, b);
+                //b.DbType = CGlobals.SqlTypeName;
 
+                CGlobals.DBEdition = cq.SqlEdition;
+                CGlobals.DBVERSION = cq.SqlVerion;
+                CGlobals.DBTYPE = CGlobals.SqlTypeName;
+                TryParseSqlResources(dbServerInfo);
                 LOG.Info("starting sql queries..done!");
             }
             catch (Exception e)
@@ -45,9 +50,9 @@ namespace VeeamHealthCheck.Collection.DB
                 LOG.Error(e.Message);
 
             }
-            return b;
+            //return b;
         }
-        private static BackupServer TryParseSqlResources(DataTable table, BackupServer b)
+        private static void TryParseSqlResources(DataTable table)
         {
             foreach (DataRow row in table.Rows)
             {
@@ -58,12 +63,15 @@ namespace VeeamHealthCheck.Collection.DB
                 int.TryParse(hyperthread, out int h);
                 int.TryParse(memory, out int mem);
 
-                b.DbCores = c;//(c * h).ToString();
-                b.DbRAM = ((mem / 1024 / 1024) + 1);
+                //b.DbCores = c;//(c * h).ToString();
+                //b.DbRAM = ((mem / 1024 / 1024) + 1);
+
+                CGlobals.DBCORES = c;
+                CGlobals.DBRAM = ((mem / 1024 / 1024) + 1);
 
             }
 
-            return b;
+            //return b;
         }
 
     }

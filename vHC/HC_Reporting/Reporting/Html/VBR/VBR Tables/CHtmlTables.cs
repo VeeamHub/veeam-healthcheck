@@ -175,10 +175,18 @@ namespace VeeamHealthCheck.Html.VBR
             s += _form.TableHeader("DataBase Type", "MS SQL or PostgreSQL");
             s += _form.TableHeader(VbrLocalizationHelper.BkpSrvTblSqlLocal, VbrLocalizationHelper.BstSqlLocTT);
             s += _form.TableHeader(VbrLocalizationHelper.BkpSrvTblSqlName, VbrLocalizationHelper.BstSqlNameTT);
-            s += _form.TableHeader(VbrLocalizationHelper.BkpSrvTblSqlVersion, VbrLocalizationHelper.BstSqlVerTT);
-            s += _form.TableHeader(VbrLocalizationHelper.BkpSrvTblSqlEdition, VbrLocalizationHelper.BstSqlEdTT);
-            s += _form.TableHeader(VbrLocalizationHelper.BkpSrvTblSqlCores, VbrLocalizationHelper.BstSqlCpuTT);
-            s += _form.TableHeader(VbrLocalizationHelper.BkpSrvTblSqlRam, VbrLocalizationHelper.BstSqlRamTT);
+            if(b.DbType == CGlobals.SqlTypeName)
+            {
+                s += _form.TableHeader(VbrLocalizationHelper.BkpSrvTblSqlVersion, VbrLocalizationHelper.BstSqlVerTT);
+                s += _form.TableHeader(VbrLocalizationHelper.BkpSrvTblSqlEdition, VbrLocalizationHelper.BstSqlEdTT);
+            }
+
+            if (b.DbType == CGlobals.SqlTypeName && b.IsLocal == false)
+            {
+                s += _form.TableHeader(VbrLocalizationHelper.BkpSrvTblSqlCores, VbrLocalizationHelper.BstSqlCpuTT);
+                s += _form.TableHeader(VbrLocalizationHelper.BkpSrvTblSqlRam, VbrLocalizationHelper.BstSqlRamTT);
+            }
+                
 
             s += "</tr>";
             //CDataFormer cd = new(true);
@@ -191,9 +199,14 @@ namespace VeeamHealthCheck.Html.VBR
                 s += _form.TableData(b.DbType, "");
                 s += _form.TableData(b.IsLocal.ToString(), "");
                 s += _form.TableData(b.DbHostName, "");
-                s += _form.TableData(b.DbVersion, "");
-                s += _form.TableData(b.Edition, "");
-                s += AddDbCoresRam(b);
+                if(b.DbType == CGlobals.SqlTypeName)
+                {
+                    s += _form.TableData(b.DbVersion, "");
+                    s += _form.TableData(b.Edition, "");
+                }
+                
+                if(b.DbType == CGlobals.SqlTypeName && b.IsLocal == false)
+                    s += AddDbCoresRam(b);
                 s += "</table>";
             }
             catch (Exception e)

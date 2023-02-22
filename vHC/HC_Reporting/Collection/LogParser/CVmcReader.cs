@@ -40,30 +40,30 @@ namespace VeeamHealthCheck.Collection.LogParser
 
         private void GetLogDir()
         {
-            if(_mode == "vbr")
+            if (_mode == "vbr")
             {
                 CRegReader reg = new();
                 string regDir = reg.DefaultLogDir();
                 LOGLOCATION = Path.Combine(regDir + CLogOptions.VMCLOG);
             }
-            else if(_mode == "vb365")
+            else if (_mode == "vb365")
             {
                 string[] filesList = Directory.GetFiles(_vb365Logs);
                 List<FileInfo> fileInfoList = new();
-                foreach(var f in filesList)
+                foreach (var f in filesList)
                 {
                     if (f.Contains("VMC.log"))
                     {
                         FileInfo fileInfo = new FileInfo(f);
                         fileInfoList.Add(fileInfo);
-                        
+
                     }
                 }
                 fileInfoList.OrderBy(x => x.Name);
                 string fileName = fileInfoList.FirstOrDefault().Name;
                 LOGLOCATION = Path.Combine(_vb365Logs + fileName);
             }
-            
+
         }
         private void ReadVmc()
         {
@@ -86,8 +86,8 @@ namespace VeeamHealthCheck.Collection.LogParser
         private void ParseConfigDbInfo(string line)
         {
             DateTime dbLineDate = ParseLineDate(line);
-            if(_DbLineDate == null ||dbLineDate.Ticks - _DbLineDate.Ticks == 0 )
-            _DbLineDate = ParseLineDate(line);
+            if (_DbLineDate == null || dbLineDate.Ticks - _DbLineDate.Ticks == 0)
+                _DbLineDate = ParseLineDate(line);
 
         }
         private DateTime ParseLineDate(string line)

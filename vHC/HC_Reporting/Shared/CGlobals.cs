@@ -41,14 +41,15 @@ namespace VeeamHealthCheck.Shared
         public static BackupServer BACKUPSERVER;
         public static string ISDBLOCAL;
         public static string DBTYPE;
+        public static readonly string SqlTypeName = "MS SQL";
+        public static readonly string PgTypeName = "PG SQL";
         public static string DBNAME;
         public static string DBVERSION;
         public static string DBHOSTNAME;
-        public static string DBVersion;
         public static string DBEdition;
         public static string DBINSTANCE;
-        public static string DBCORES;
-        public static string DBRAM;
+        public static int DBCORES;
+        public static int DBRAM;
 
         public CGlobals()
         {

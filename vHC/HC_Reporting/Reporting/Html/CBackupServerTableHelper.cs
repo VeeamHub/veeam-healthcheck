@@ -26,10 +26,8 @@ namespace VeeamHealthCheck.Reporting.Html
 
         public CBackupServerTableHelper(bool scrub)
         {
-            //if (CGlobals.BACKUPSERVER == null)
-                _backupServer = new();
-            //else
-            //    _backupServer = CGlobals.BACKUPSERVER;
+            _backupServer = new();
+            SetBackupServerWithDbInfo();
             _scrub = scrub;
         }
         public BackupServer SetBackupServerData()
@@ -44,6 +42,15 @@ namespace VeeamHealthCheck.Reporting.Html
             SetConfigBackupSettings();
             SetDbHostNameOption2();
 
+        }
+        private void SetBackupServerWithDbInfo()
+        {
+            _backupServer.DbType = CGlobals.DBTYPE;
+            _backupServer.Edition = CGlobals.DBEdition;
+            _backupServer.DbVersion = CGlobals.DBVERSION;
+            _backupServer.DbCores = CGlobals.DBCORES;
+            _backupServer.DbRAM = CGlobals.DBRAM;
+            _backupServer.DbHostName = CGlobals.DBHOSTNAME;
         }
         private void ScrubElements()
         {
@@ -87,14 +94,18 @@ namespace VeeamHealthCheck.Reporting.Html
                     {
                         var records = config.BnrCsvParser().ToList();
                         _backupServer.Version = records[0].Version;
-                        _backupServer.DbHostName = records[0].SqlServer;
+                        if(!String.IsNullOrEmpty(_backupServer.DbHostName))
+                        {
+                            _backupServer.DbHostName = records[0].SqlServer;
+
+                        }
                         _backupServer.FixIds = CheckFixes(records[0].Fixes);
                         _backupServer.HasFixes = _hasFixes;
-                        _backupServer.DbType = records[0].DbType;
-                        if (_backupServer.DbType == "PostgreSql")
+
+
+                        if (_backupServer.DbType == CGlobals.PgTypeName)
                             _backupServer.DbHostName = records[0].PgHost;
-                        else if (_backupServer.DbType == "MsSql")
-                            _backupServer.DbHostName = records[0].MsHost;
+                        
 
                     }
                     catch (Exception f)

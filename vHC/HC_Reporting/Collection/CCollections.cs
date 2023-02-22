@@ -10,6 +10,7 @@ using VeeamHealthCheck.Collection.DB;
 using VeeamHealthCheck.Security;
 using VeeamHealthCheck.Shared;
 using Microsoft.Management.Infrastructure;
+using VeeamHealthCheck.DB;
 
 namespace VeeamHealthCheck.Collection
 {
@@ -30,8 +31,11 @@ namespace VeeamHealthCheck.Collection
                 PopulateWaits();
 
             ExecVmcReader();
-            ExecSqlQueries();
-            ExecSecurityCollection();
+            GetRegistryDbInfo();
+            if(CGlobals.DBTYPE != CGlobals.PgTypeName)
+                ExecSqlQueries();
+            if(CGlobals.RunSecReport)
+                ExecSecurityCollection();
             // do sql collections
         }
 
@@ -51,6 +55,11 @@ namespace VeeamHealthCheck.Collection
             {
                 Collection.LogParser.CLogOptions logOptions = new("vb365");
             }
+        }
+        private void GetRegistryDbInfo()
+        {
+            CRegReader reg = new CRegReader();
+            reg.GetDbInfo();
         }
         private void ExecSqlQueries()
         {

@@ -12,15 +12,14 @@ namespace VeeamHealthCheck
 {
     class PSInvoker
     {
-        private readonly string _sessionReport = "Get-VBRConfig.ps1";
         private readonly string _vb365Script = Environment.CurrentDirectory + @"\Tools\Scripts\Collect-VB365Data.ps1";
         private readonly string _vbrConfigScript = Environment.CurrentDirectory + @"\Tools\Scripts\Get-VBRConfig.ps1";
         private readonly string _vbrSessionScript = Environment.CurrentDirectory + @"\Tools\Scripts\Get-VeeamSessionReport.ps1";
         private readonly string _exportLogsScript = Environment.CurrentDirectory + @"\Tools\Scripts\Collect-VBRLogs.ps1";
 
 
-        private CLogger log = CGlobals.Logger;
-        private string logStart = "[PsInvoker]\t";
+        private readonly CLogger log = CGlobals.Logger;
+        private readonly string logStart = "[PsInvoker]\t";
         public PSInvoker()
         {
         }

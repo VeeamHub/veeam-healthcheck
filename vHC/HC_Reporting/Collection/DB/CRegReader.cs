@@ -1,14 +1,10 @@
 ﻿// Copyright (c) 2021, Adam Congdon <adam.congdon2@gmail.com>
 // MIT License
-using System;
 using Microsoft.Win32;
-using System.Windows;
+using System;
+using System.Diagnostics;
 using VeeamHealthCheck.Shared;
 using VeeamHealthCheck.Shared.Logging;
-using System.Windows.Input;
-using Namotion.Reflection;
-using System.IO;
-using System.Diagnostics;
 
 namespace VeeamHealthCheck.DB
 {
@@ -19,8 +15,6 @@ namespace VeeamHealthCheck.DB
         private static string _host;
         private static string _user;
         private static string _passString;
-        private static string _dbType;
-        private static string _dbLocal;
 
         private string logStart = "[RegistryReader]\t";
 
@@ -184,7 +178,7 @@ namespace VeeamHealthCheck.DB
                     var dbType = key.GetValue("SqlActiveConfiguration").ToString();
                     if (dbType == "MsSql")
                     {
-                        _dbType = "MS SQL";
+                        CGlobals.DBTYPE = CGlobals.SqlTypeName;
 
                         using (RegistryKey sqlKey = Registry.LocalMachine.OpenSubKey("Software\\Veeam\\Veeam Backup and Replication\\DatabaseConfigurations\\MsSql"))
                         {
@@ -202,8 +196,7 @@ namespace VeeamHealthCheck.DB
                     }
                     else if (dbType == "PostgreSql")
                     {
-                        _dbType = "PostgreSQL";
-                        CGlobals.DBTYPE = "PostgreSQL";
+                        CGlobals.DBTYPE = CGlobals.PgTypeName;
                         using (RegistryKey pgKey = Registry.LocalMachine.OpenSubKey("Software\\Veeam\\Veeam Backup and Replication\\DatabaseConfigurations\\PostgreSql"))
                         {
                             host = pgKey.GetValue("SqlHostName").ToString();

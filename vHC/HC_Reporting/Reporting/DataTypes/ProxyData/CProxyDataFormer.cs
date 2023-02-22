@@ -35,7 +35,7 @@ namespace VeeamHealthCheck.Reporting.DataTypes.ProxyData
                 coreTasks = cores * 2;
             }
 
-            return SetProvisionStatus(assignedTasks, cores, ram);
+            return SetProvisionStatus(assignedTasks, coreTasks, ram);
 
 
         }
