@@ -13,6 +13,7 @@ using VeeamHealthCheck.Reporting.TableDatas;
 using VeeamHealthCheck.Resources.Localization;
 using VeeamHealthCheck.Reporting.Html.VBR.VBR_Tables;
 using System.Reflection.PortableExecutable;
+using VeeamHealthCheck.Reporting.Html.VBR.VBR_Tables.Security;
 
 namespace VeeamHealthCheck.Html.VBR
 {
@@ -20,8 +21,9 @@ namespace VeeamHealthCheck.Html.VBR
     {
         private CCsvParser _csv = new(CVariables.vb365dir);
         private readonly CLogger log = CGlobals.Logger;
+        private CHtmlTablesHelper _helper = new();
 
-        CDataFormer _df = new(true);
+        CDataFormer _df = new();
         Scrubber.CScrubHandler _scrub = CGlobals.Scrubber;
 
         private CHtmlFormatting _form = new();
@@ -323,6 +325,41 @@ namespace VeeamHealthCheck.Html.VBR
 
             return s;
         }
+        public string AddSecurityReportSecuritySummaryTable()
+        {
+            string s = _form.SectionStart("secsummary", VbrLocalizationHelper.SSTitle);
+            string summary = _sum.SecSum();
+
+            //s += AddSecuritySummaryDetails();
+
+            // Tables!
+
+            /* 1. components
+             * 2. repositories
+             * 3. accounts & perms
+             * 4. encryption
+             * 5. other
+             * 6. NAS Specific
+             * 7. Orchestrated recovery
+             */
+
+            //1. Components
+            s += _helper.AddSecurityServerInfo();
+            s += _form.EndTable();
+            s += _form.Table();
+            s += _helper.AddSecuritySummaryDetails();
+            s += _form.EndTable();
+            s += _form.Table();
+            s += _helper.AddConfigBackupDetails();
+            s += _form.EndTable();
+
+            s += _form.SectionEnd(summary);
+            
+
+
+            return s;
+        }
+
         public string AddSrvSummaryTable(bool scrub)
         {
             string summary = _sum.SrvSum();

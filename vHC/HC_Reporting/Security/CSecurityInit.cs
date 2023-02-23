@@ -1,10 +1,5 @@
 ﻿using Microsoft.Win32;
-using Namotion.Reflection;
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using VeeamHealthCheck.Shared;
 using VeeamHealthCheck.Shared.Logging;
 
@@ -35,17 +30,17 @@ namespace VeeamHealthCheck.Security
             if(String.IsNullOrEmpty(domain) )
             {
                 LOG.Info(logStart + "host is not domain joined.");
-                CGlobals._isDomainJoined = "False";
+                CSecurityGlobalValues.IsDomainJoined = "False";
             } 
             else if (domain.Length> 0)
             {
                 LOG.Info(logStart + "host is domain joined.");
-                CGlobals._isDomainJoined = "True";
+                CSecurityGlobalValues .IsDomainJoined = "True";
             }
             else
             {
                 LOG.Warning(logStart + "unable to determine host domain status");
-                CGlobals._isDomainJoined = "Undetermined.";
+                CSecurityGlobalValues.IsDomainJoined = "Undetermined.";
             }
         }
         private void GetInstalledApps()
@@ -63,12 +58,12 @@ namespace VeeamHealthCheck.Security
                         {
                             //var n  = subkey.TryGetPropertyValue<string>("DisplayName");
                             string name = subkey.GetValue("DisplayName").ToString();
-                            if (CGlobals.isConsoleLocal == "Undetermined" || CGlobals.isConsoleLocal == "False")
+                            if (CSecurityGlobalValues.IsConsoleInstalled == "Undetermined" || CSecurityGlobalValues.IsConsoleInstalled == "False")
                             {
                                 if (name == "Veeam Backup & Replication Console")
-                                    CGlobals.isConsoleLocal = "True";
+                                    CSecurityGlobalValues.IsConsoleInstalled = "True";
                                 else
-                                    CGlobals.isConsoleLocal = "False";
+                                    CSecurityGlobalValues.IsConsoleInstalled = "False";
                             }
                             AppLOG.Info("\t" + subkey.GetValue("DisplayName").ToString(), true);
 
@@ -96,15 +91,15 @@ namespace VeeamHealthCheck.Security
                 {
                     case "0":
                         LOG.Info("\tRDP enabled.");
-                        CGlobals._isRdpEnabled = "True";
+                        CSecurityGlobalValues.IsRdpEnabled = "True";
                         break;
                     case "1":
                         LOG.Info("\tRDP disabled.");
-                        CGlobals._isRdpEnabled = "False";
+                        CSecurityGlobalValues.IsRdpEnabled = "False";
                         break;
                     default:
                         LOG.Info("\tRDP undetermined");
-                        CGlobals._isRdpEnabled = "Undetermined";
+                        CSecurityGlobalValues.IsRdpEnabled = "Undetermined";
                         break;
                 }
 

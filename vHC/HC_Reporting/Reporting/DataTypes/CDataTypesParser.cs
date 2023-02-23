@@ -18,11 +18,11 @@ namespace VeeamHealthCheck.DataTypes
 
         private List<CServerTypeInfos> _serverInfo;
         private Dictionary<string, int> _serverSummaryInfo;
-        private List<CSobrTypeInfos> _sobrInfo;
-        private List<CRepoTypeInfos> _extentInfo;
-        private List<CProxyTypeInfos> _proxyInfo;
-        private List<CJobTypeInfos> _jobInfo;
-        private List<CJobSessionInfo> _jobSession;
+        //private List<CSobrTypeInfos> _sobrInfo;
+        //private List<CRepoTypeInfos> _extentInfo;
+        //private List<CProxyTypeInfos> _proxyInfo;
+        //private List<CJobTypeInfos> _jobInfo;
+        //private List<CJobSessionInfo> _jobSession;
         private List<int> _protectedJobIds = new();
         private List<string> _typeList = new();
         //private List<CServerTypeInfos> _serverInfo;

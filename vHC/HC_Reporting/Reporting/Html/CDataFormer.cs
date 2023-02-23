@@ -54,7 +54,7 @@ namespace VeeamHealthCheck.Reporting.Html
 
 
 
-        public CDataFormer(bool isImport) // add string mode input
+        public CDataFormer( ) // add string mode input
         {
             _dTypeParser = new();
             _csv = _dTypeParser.ServerInfo();
@@ -114,9 +114,9 @@ namespace VeeamHealthCheck.Reporting.Html
             var csv = new CCsvParser();
             try
             {
-                var sobrRepo = csv.GetDynamicCapTier();
-                var extRepo = csv.GetDynamicSobrExt();
-                var onPremRepo = csv.GetDynamicRepo();
+                var sobrRepo = csv.GetDynamicCapTier().ToList();
+                var extRepo = csv.GetDynamicSobrExt().ToList();
+                var onPremRepo = csv.GetDynamicRepo().ToList();
                 if (onPremRepo.Any(x => x.isimmutabilitysupported == "True"))
                 {
                     secSummary.Add(1);

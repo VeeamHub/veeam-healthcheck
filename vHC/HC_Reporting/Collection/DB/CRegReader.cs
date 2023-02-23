@@ -141,6 +141,7 @@ namespace VeeamHealthCheck.DB
         {
             if (key != null)
             {
+                
                 var instance = key.GetValue("SqlInstanceName").ToString();
                 var host = key.GetValue("SqlServerName").ToString();
                 var database =

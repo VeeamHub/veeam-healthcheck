@@ -33,9 +33,9 @@ namespace VeeamHealthCheck.Shared
         public static bool EXPORTINDIVIDUALJOBHTMLS = true;
 
         // B&R Server global values
-        public static string isConsoleLocal = "Undetermined";
-        public static string _isRdpEnabled = "Undetermined";
-        public static string _isDomainJoined = "";
+        //public static string isConsoleLocal = "Undetermined";
+        //public static string _isRdpEnabled = "Undetermined";
+        //public static string _isDomainJoined = "";
 
         // config db values
         public static BackupServer BACKUPSERVER;

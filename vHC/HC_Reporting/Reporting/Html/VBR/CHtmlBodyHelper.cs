@@ -51,8 +51,9 @@ namespace VeeamHealthCheck.Reporting.Html.VBR
         public string FormSecurityReport(string htmlString)
         {
             HTMLSTRING = htmlString;
+            //SecuritySummaryTable();
+            FullSecurityTable();
             BackupServerTable();
-            SecuritySummaryTable();
             JobSummaryTable();
             ManagedServersTable();
             RegistryKeyTable();
@@ -75,6 +76,10 @@ namespace VeeamHealthCheck.Reporting.Html.VBR
         private void SecuritySummaryTable()
         {
             HTMLSTRING += _tables.AddSecSummaryTable(SCRUB);
+        }
+        private void FullSecurityTable()
+        {
+            HTMLSTRING += _tables.AddSecurityReportSecuritySummaryTable();
         }
         private void ServerSummaryTable()
         {

@@ -138,6 +138,10 @@ namespace VeeamHealthCheck.Reporting.Html.Shared
         {
             return "<table border=\"1\">";
         }
+        public string EndTable()
+        {
+            return "</table>";
+        }
         public string TableCollapsible()
         {
             return "<table border =\"1\" style=\"display: none;\">";
