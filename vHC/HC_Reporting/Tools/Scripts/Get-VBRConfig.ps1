@@ -287,7 +287,7 @@ $licInfo = $lic | Select-Object "LicensedTo", "Edition", "ExpirationDate", "Type
 $repoInfo = $Repositories | Select-Object "Id", "Name", "HostId", "Description", "CreationTime", "Path",
 "FullPath", "FriendlyPath", "ShareCredsId", "Type", "Status", "IsUnavailable", "Group", "UseNfsOnMountHost",
 "VersionOfCreation", "Tag", "IsTemporary", "TypeDisplay", "IsRotatedDriveRepository", "EndPointCryptoKeyId",
-"Options", "HasBackupChainLengthLimitation", "IsSanSnapshotOnly", "IsDedupStorage", "SplitStoragesPerVm", "IsImmutabilitySupported",
+"Options", "HasBackupChainLengthLimitation", "IsSanSnapshotOnly", "IsDedupStorage", "SplitStoragesPerVm", @{n = "IsImmutabilitySupported"; e ={$_.GetImmutabilitySettings().IsEnabled} },
 @{name = 'Options(maxtasks)'; expression = { $_.Options.MaxTaskCount } },
 @{name = 'Options(Unlimited Tasks)'; expression = { $_.Options.IsTaskCountUnlim } },
 @{name = 'Options(MaxArchiveTaskCount)'; expression = { $_.Options.MaxArchiveTaskCount } },
