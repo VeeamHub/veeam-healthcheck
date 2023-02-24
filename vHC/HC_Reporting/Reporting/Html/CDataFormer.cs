@@ -13,6 +13,7 @@ using VeeamHealthCheck.DB;
 using VeeamHealthCheck.Html;
 using VeeamHealthCheck.RegSettings;
 using VeeamHealthCheck.Reporting.Html.Shared;
+using VeeamHealthCheck.Reporting.Html.VBR.Managed_Server_Table;
 using VeeamHealthCheck.Reporting.TableDatas;
 using VeeamHealthCheck.Scrubber;
 using VeeamHealthCheck.Shared;
@@ -23,7 +24,7 @@ using static VeeamHealthCheck.DB.CModel;
 
 namespace VeeamHealthCheck.Reporting.Html
 {
-    class CDataFormer 
+    class CDataFormer
     {
         private readonly string _testFile = "xml\\vbr.xml";
         private string logStart = "[DataFormer]\t";
@@ -54,7 +55,7 @@ namespace VeeamHealthCheck.Reporting.Html
 
 
 
-        public CDataFormer( ) // add string mode input
+        public CDataFormer() // add string mode input
         {
             _dTypeParser = new();
             _csv = _dTypeParser.ServerInfo();
@@ -568,6 +569,7 @@ namespace VeeamHealthCheck.Reporting.Html
         {
             log.Info("converting proxy info to xml");
             List<string[]> list = new();
+
             List<CProxyTypeInfos> csv = _dTypeParser.ProxyInfo();
 
             csv = csv.OrderBy(x => x.Name).ToList();
@@ -576,7 +578,7 @@ namespace VeeamHealthCheck.Reporting.Html
 
             foreach (var c in csv)
             {
-                string[] s = new string[12];
+                string[] s = new string[13];
                 if (scrub)
                 {
                     c.Name = Scrub(c.Name);
@@ -594,6 +596,7 @@ namespace VeeamHealthCheck.Reporting.Html
                 s[9] += c.CacheSize;
                 s[10] += c.Host;
                 s[11] += c.IsDisabled;
+                s[12] += c.Provisioning;
 
                 list.Add(s);
             }
@@ -602,10 +605,10 @@ namespace VeeamHealthCheck.Reporting.Html
             return list;
         }
 
-        public List<string[]> ServerXmlFromCsv(bool scrub)
+        public List<CManagedServer> ServerXmlFromCsv(bool scrub)
         {
             log.Info("converting server info to xml");
-            List<string[]> list = new List<string[]>();
+            List<CManagedServer> list = new();
             List<CServerTypeInfos> csv = _csv;
 
             csv = csv.OrderBy(x => x.Name).ToList();
@@ -625,7 +628,8 @@ namespace VeeamHealthCheck.Reporting.Html
 
             foreach (var c in csv)
             {
-                string[] s = new string[13];
+                //string[] s = new string[13];
+                CManagedServer server = new();
 
                 //match server and VM count
                 int vmCount = 0;
@@ -659,53 +663,67 @@ namespace VeeamHealthCheck.Reporting.Html
 
                 }
 
-                string pVmStr = "";
-                if (protectedCount != 0)
-                    pVmStr = protectedCount.ToString();
+                //string pVmStr = "";
+                //if (protectedCount != 0)
+                //    pVmStr = protectedCount.ToString();
 
-                string upVmStr = "";
-                if (unProtectedCount != 0)
-                    upVmStr = unProtectedCount.ToString();
-                string tVmStr = "";
-                if (vmCount != 0)
-                    tVmStr = vmCount.ToString();
+                //string upVmStr = "";
+                //if (unProtectedCount != 0)
+                //    upVmStr = unProtectedCount.ToString();
+                //string tVmStr = "";
+                //if (vmCount != 0)
+                //    tVmStr = vmCount.ToString();
 
 
 
                 //check for VBR Roles
                 CheckServerRoles(c.Id);
-                string repoRole = "";
-                string proxyRole = "";
-                string wanRole = "";
-                if (_isBackupServerProxy)
-                    proxyRole = "True";
-                if (_isBackupServerRepo)
-                    repoRole = "True";
-                if (_isBackupServerWan)
-                    wanRole = "True";
+                //string repoRole = "";
+                //string proxyRole = "";
+                //string wanRole = "";
+                //if (_isBackupServerProxy)
+                //    proxyRole = "True";
+                //if (_isBackupServerRepo)
+                //    repoRole = "True";
+                //if (_isBackupServerWan)
+                //    wanRole = "True";
 
                 //scrub name if selected
                 string newName = c.Name;
                 if (scrub)
                     newName = Scrub(newName);
-                s[0] = newName;
-                s[1] += c.Cores;
-                s[2] += c.Ram;
-                s[3] += c.Type;
-                s[4] += c.ApiVersion;
-                s[5] += pVmStr;// proxyRole;
-                s[6] += upVmStr;// repoRole;
-                s[7] += tVmStr;// wanRole;
-                s[8] += proxyRole;// c.IsUnavailable;
-                s[9] += repoRole;// pVmStr;
-                s[10] += wanRole;// upVmStr;
-                s[11] += c.IsUnavailable;// tVmStr;
-                s[12] += ParseString(c.OSInfo);
+                //s[0] = newName;
+                server.Name = newName;
+                server.Cores = c.Cores;
+                server.Ram = c.Ram;
+                server.Type = c.Type;
+                server.ApiVersion = c.ApiVersion;
+                server.ProtectedVms = protectedCount;
+                server.NotProtectedVms = unProtectedCount;
+                server.TotalVms = vmCount;
+                server.IsProxy = _isBackupServerProxy;
+                server.IsRepo = _isBackupServerRepo;
+                server.IsWan = _isBackupServerWan;
+                server.OsInfo = c.OSInfo;
+                server.IsUnavailable = c.IsUnavailable;
+
+                //s[1] += c.Cores;
+                //s[2] += c.Ram;
+                //s[3] += c.Type;
+                //s[4] += c.ApiVersion;
+                //s[5] += pVmStr;// proxyRole;
+                //s[6] += upVmStr;// repoRole;
+                //s[7] += tVmStr;// wanRole;
+                //s[8] += proxyRole;// c.IsUnavailable;
+                //s[9] += repoRole;// pVmStr;
+                //s[10] += wanRole;// upVmStr;
+                //s[11] += c.IsUnavailable;// tVmStr;
+                //s[12] += ParseString(c.OSInfo);
 
 
                 //doc.Add(xml);
 
-                list.Add(s);
+                list.Add(server);
             }
             log.Info("converting server info to xml..done!");
             return list;
@@ -1080,7 +1098,7 @@ namespace VeeamHealthCheck.Reporting.Html
                 string jname = c.Name;
                 string repo = c.RepoName;
                 //if (c.EncryptionEnabled == "True")
-                    //_backupsEncrypted = true;
+                //_backupsEncrypted = true;
                 if (scrub)
                 {
                     jname = _scrubber.ScrubItem(c.Name, "job");
@@ -1170,7 +1188,7 @@ namespace VeeamHealthCheck.Reporting.Html
                     }
                     else
                     {
-                        outDir = CGlobals._desiredPath + CVariables._unsafeSuffix +  folderName;
+                        outDir = CGlobals._desiredPath + CVariables._unsafeSuffix + folderName;
                         CheckFolderExists(outDir);
                         outDir += "\\" + cs.JobName + ".html";
                     }
@@ -1359,7 +1377,7 @@ namespace VeeamHealthCheck.Reporting.Html
             return ct;
         }
 
-   
+
         private void PreCalculations()
         {
             // calc all the things prior to adding XML entries... such as job count per repo....

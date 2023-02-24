@@ -14,6 +14,7 @@ using VeeamHealthCheck.Resources.Localization;
 using VeeamHealthCheck.Reporting.Html.VBR.VBR_Tables;
 using System.Reflection.PortableExecutable;
 using VeeamHealthCheck.Reporting.Html.VBR.VBR_Tables.Security;
+using VeeamHealthCheck.Reporting.Html.VBR.Managed_Server_Table;
 
 namespace VeeamHealthCheck.Html.VBR
 {
@@ -130,7 +131,7 @@ namespace VeeamHealthCheck.Html.VBR
                     s += "</tr>";
                 }
             }
-            catch(Exception e)
+            catch (Exception e)
             {
                 log.Error("License Data import failed. ERROR:");
                 log.Error("\t" + e.Message);
@@ -155,7 +156,7 @@ namespace VeeamHealthCheck.Html.VBR
 
             return s;
         }
-        
+
         private string AddBackupServerDetails(BackupServer b)
         {
             CVbrServerTable t = new(b);
@@ -177,7 +178,7 @@ namespace VeeamHealthCheck.Html.VBR
             s += _form.TableHeader("DataBase Type", "MS SQL or PostgreSQL");
             s += _form.TableHeader(VbrLocalizationHelper.BkpSrvTblSqlLocal, VbrLocalizationHelper.BstSqlLocTT);
             s += _form.TableHeader(VbrLocalizationHelper.BkpSrvTblSqlName, VbrLocalizationHelper.BstSqlNameTT);
-            if(b.DbType == CGlobals.SqlTypeName)
+            if (b.DbType == CGlobals.SqlTypeName)
             {
                 s += _form.TableHeader(VbrLocalizationHelper.BkpSrvTblSqlVersion, VbrLocalizationHelper.BstSqlVerTT);
                 s += _form.TableHeader(VbrLocalizationHelper.BkpSrvTblSqlEdition, VbrLocalizationHelper.BstSqlEdTT);
@@ -188,7 +189,7 @@ namespace VeeamHealthCheck.Html.VBR
                 s += _form.TableHeader(VbrLocalizationHelper.BkpSrvTblSqlCores, VbrLocalizationHelper.BstSqlCpuTT);
                 s += _form.TableHeader(VbrLocalizationHelper.BkpSrvTblSqlRam, VbrLocalizationHelper.BstSqlRamTT);
             }
-                
+
 
             s += "</tr>";
             //CDataFormer cd = new(true);
@@ -201,13 +202,13 @@ namespace VeeamHealthCheck.Html.VBR
                 s += _form.TableData(b.DbType, "");
                 s += _form.TableData(b.IsLocal.ToString(), "");
                 s += _form.TableData(b.DbHostName, "");
-                if(b.DbType == CGlobals.SqlTypeName)
+                if (b.DbType == CGlobals.SqlTypeName)
                 {
                     s += _form.TableData(b.DbVersion, "");
                     s += _form.TableData(b.Edition, "");
                 }
-                
-                if(b.DbType == CGlobals.SqlTypeName && b.IsLocal == false)
+
+                if (b.DbType == CGlobals.SqlTypeName && b.IsLocal == false)
                     s += AddDbCoresRam(b);
                 s += "</table>";
             }
@@ -247,7 +248,7 @@ namespace VeeamHealthCheck.Html.VBR
             s += AddBackupServerDetails(b);
 
 
-            
+
             s += _form.header3("Config Backup Info");
             s += "<table border=\"1\">";
             s += _form.TableHeader(VbrLocalizationHelper.BkpSrvTblCfgEnabled, VbrLocalizationHelper.BstCfgEnabledTT);
@@ -266,8 +267,8 @@ namespace VeeamHealthCheck.Html.VBR
 
             s += ConfigDbTable(b);
 
-            if(CGlobals.RunSecReport)
-                s += InstalledAppsTable();
+            //if (CGlobals.RunSecReport)
+            //    s += InstalledAppsTable();
             s += _form.SectionEnd(summary);
             return s;
 
@@ -277,7 +278,7 @@ namespace VeeamHealthCheck.Html.VBR
             string s = "";
 
             // Table & Header
-            s += _form.header3("Installed Applications");
+            //s += _form.header3("Installed Applications");
             s += _form.Table();
             s += "<tr>";
 
@@ -316,7 +317,7 @@ namespace VeeamHealthCheck.Html.VBR
                 }
                 s += "</tr>";
             }
-            catch(Exception e)
+            catch (Exception e)
             {
                 log.Error("Security Summary Data import failed. ERROR:");
                 log.Error("\t" + e.Message);
@@ -344,22 +345,58 @@ namespace VeeamHealthCheck.Html.VBR
              */
 
             //1. Components
-            s += _helper.AddSecurityServerInfo();
-            s += _form.EndTable();
-            s += _form.Table();
-            s += _helper.AddSecuritySummaryDetails();
-            s += _form.EndTable();
-            s += _form.Table();
-            s += _helper.AddConfigBackupDetails();
-            s += _form.EndTable();
+            s += AddTable("Backup Server",_helper.AddSecurityServerInfo());
+            s += AddTable("Immutability & Encryption",_helper.AddSecuritySummaryDetails());
+            s += AddTable("Config Backup",_helper.AddConfigBackupDetails());
 
+            s += AddTable("Detected OS", _helper.CollectedOsInfo());
+            s += AddTable("Installed Applications", InstalledAppsTable());
+            //s += _form.Table();
+            //s += _form.TableHeader("Found Operating Systems", "");
+            //s += "</tr><tr>";
+            //foreach(var v in _helper.CollectedOsInfo())
+            //{
+            //    s += "<tr>" + v + "</tr>";
+            //}
+            //s += _form.EndTable();
             s += _form.SectionEnd(summary);
-            
+
 
 
             return s;
         }
+        private string AddTable(string title, string data)
+        {
+            string s = "";
+            s += _form.header3(title);
+            s += _form.Table();
+            s += data;
+            s += _form.EndTable();
 
+            return s;
+        }
+        private string AddTable(string title, List<string> data)
+        {
+            string s = "<tr>";
+            s += _form.header3(title);
+            s += _form.Table();
+            s += _form.TableHeader("Detected Operating Systems", "");
+            s += "</tr>";
+            foreach(var d in data)
+            {
+                if (!String.IsNullOrEmpty(d))
+                {
+                    s += "<tr>";
+                    s += _form.TableData(d, "");
+                    s += "</tr>";
+                }
+
+            }
+
+            s += _form.EndTable();
+
+            return s;
+        }
         public string AddSrvSummaryTable(bool scrub)
         {
             string summary = _sum.SrvSum();
@@ -381,7 +418,7 @@ namespace VeeamHealthCheck.Html.VBR
                     s += "</tr>";
                 }
             }
-            catch(Exception e)
+            catch (Exception e)
             {
                 log.Error("Server Summary Data import failed. ERROR:");
                 log.Error("\t" + e.Message);
@@ -424,7 +461,7 @@ namespace VeeamHealthCheck.Html.VBR
                 s += _form.TableData(totalJobs.ToString() + "</b>", "");
                 s += "</tr>";
             }
-            catch(Exception e)
+            catch (Exception e)
             {
                 log.Error("Job Summary Data import failed. ERROR:");
                 log.Error("\t" + e.Message);
@@ -457,7 +494,7 @@ namespace VeeamHealthCheck.Html.VBR
 
                 }
             }
-            catch(Exception e)
+            catch (Exception e)
             {
                 log.Error("Missing Jobs Data import failed. ERROR:");
                 log.Error("\t" + e.Message);
@@ -529,7 +566,7 @@ namespace VeeamHealthCheck.Html.VBR
 
                 s += "</tr>";
             }
-            catch(Exception e)
+            catch (Exception e)
             {
                 log.Error("Protected Servers Data import failed. ERROR:");
                 log.Error("\t" + e.Message);
@@ -559,31 +596,31 @@ namespace VeeamHealthCheck.Html.VBR
             //CDataFormer cd = new(true);
             try
             {
-                List<string[]> list = _df.ServerXmlFromCsv(scrub);
+                List<CManagedServer> list = _df.ServerXmlFromCsv(scrub);
+
 
                 foreach (var d in list)
                 {
+
                     s += "<tr>";
-                    //if (scrub)
-                    //    s += _form.TableData(_scrub.ScrubItem(d[0]), "");
-                    //else
-                        s += _form.TableData(d[0], "");
-                    s += _form.TableData(d[1], ""); // name
-                    s += _form.TableData(d[2], ""); // cores
-                    s += _form.TableData(d[3], ""); // ram
-                    s += _form.TableData(d[12], ""); // OS Info
-                    s += _form.TableData(d[4], ""); // api version
-                    s += _form.TableData(d[5], ""); // protected vms
-                    s += _form.TableData(d[6], ""); // not protected vms
-                    s += _form.TableData(d[7], ""); // total vms
-                    s += _form.TableData(d[8], ""); // is proxy
-                    s += _form.TableData(d[9], ""); // is repo
-                    s += _form.TableData(d[10], ""); // is wan
-                    s += _form.TableData(d[11], ""); // is unavailable
+
+                    s += _form.TableData(d.Name, "");
+                    s += _form.TableData(d.Cores.ToString(), ""); 
+                    s += _form.TableData(d.Ram.ToString(), ""); 
+                    s += _form.TableData(d.Type, ""); 
+                    s += _form.TableData(d.OsInfo, ""); 
+                    s += _form.TableData(d.ApiVersion, ""); 
+                    s += _form.TableData(d.ProtectedVms.ToString(), ""); 
+                    s += _form.TableData(d.NotProtectedVms.ToString(), ""); 
+                    s += _form.TableData(d.TotalVms.ToString(), "");
+                    s += _form.TableData(d.IsProxy.ToString(), "");
+                    s += _form.TableData(d.IsRepo.ToString(), "");
+                    s += _form.TableData(d.IsWan.ToString(), ""); 
+                    s += _form.TableData(d.IsUnavailable.ToString(), ""); 
                     s += "</tr>";
                 }
             }
-            catch(Exception e)
+            catch (Exception e)
             {
                 log.Error("Managed Server Data import failed. ERROR:");
                 log.Error("\t" + e.Message);
@@ -612,7 +649,7 @@ namespace VeeamHealthCheck.Html.VBR
                     s += "</tr>";
                 }
             }
-            catch(Exception e)
+            catch (Exception e)
             {
                 log.Error("Registry Data import failed. ERROR:");
                 log.Error("\t" + e.Message);
@@ -645,13 +682,21 @@ namespace VeeamHealthCheck.Html.VBR
 
                 foreach (var d in list)
                 {
+
+                    var prov = d[12];
+                    int shade = 0;
+                    if (prov == "under")
+                        shade = 2;
+                    if (prov == "over")
+                        shade = 1;
+
                     s += "<tr>";
                     if (scrub)
                         s += _form.TableData(_scrub.ScrubItem(d[0]), "");
                     else
                         s += _form.TableData(d[0], "");
                     s += _form.TableData(d[1], "");
-                    s += _form.TableData(d[2], "");
+                    s += _form.TableData(d[2], "", shade);
                     s += _form.TableData(d[3], "");
                     s += _form.TableData(d[4], "");
                     s += _form.TableData(d[5], "");
@@ -667,7 +712,7 @@ namespace VeeamHealthCheck.Html.VBR
                     s += "</tr>";
                 }
             }
-            catch(Exception e)
+            catch (Exception e)
             {
                 log.Error("PROXY Data import failed. ERROR:");
                 log.Error("\t" + e.Message);
@@ -754,33 +799,33 @@ namespace VeeamHealthCheck.Html.VBR
             try
             {
 
-            List<string[]> list = _df.SobrInfoToXml(scrub);
+                List<string[]> list = _df.SobrInfoToXml(scrub);
 
-            foreach (var d in list)
-            {
-                int perVmShade = 0;
-                if (d[8] == "False")
-                    perVmShade = 3;
+                foreach (var d in list)
+                {
+                    int perVmShade = 0;
+                    if (d[8] == "False")
+                        perVmShade = 3;
 
-                s += "<tr>";
-                s += _form.TableData(d[0], "");
-                s += _form.TableData(d[1], "");
-                s += _form.TableData(d[2], "");
-                s += _form.TableData(d[3], "");
-                s += _form.TableData(d[4], "");
-                s += _form.TableData(d[6], "");
-                s += _form.TableData(d[6], "");
-                s += _form.TableData(d[7], "");
-                s += _form.TableData(d[8], "", perVmShade);
-                s += _form.TableData(d[9], "");
-                s += _form.TableData(d[10], "");
-                s += _form.TableData(d[11], "");
-                s += _form.TableData(d[12], "");
-                s += _form.TableData(d[13], "");
-                s += "</tr>";
+                    s += "<tr>";
+                    s += _form.TableData(d[0], "");
+                    s += _form.TableData(d[1], "");
+                    s += _form.TableData(d[2], "");
+                    s += _form.TableData(d[3], "");
+                    s += _form.TableData(d[4], "");
+                    s += _form.TableData(d[6], "");
+                    s += _form.TableData(d[6], "");
+                    s += _form.TableData(d[7], "");
+                    s += _form.TableData(d[8], "", perVmShade);
+                    s += _form.TableData(d[9], "");
+                    s += _form.TableData(d[10], "");
+                    s += _form.TableData(d[11], "");
+                    s += _form.TableData(d[12], "");
+                    s += _form.TableData(d[13], "");
+                    s += "</tr>";
+                }
             }
-            }
-            catch(Exception e)
+            catch (Exception e)
             {
                 log.Error("SOBR Data import failed. ERROR:");
                 log.Error("\t" + e.Message);
@@ -813,45 +858,45 @@ _form.TableHeader(VbrLocalizationHelper.SbrExt15, VbrLocalizationHelper.SbrExt15
             try
             {
 
-            List<string[]> list = _df.ExtentXmlFromCsv(scrub);
+                List<string[]> list = _df.ExtentXmlFromCsv(scrub);
 
-            foreach (var d in list)
-            {
-                var prov = d[16];
-                int shade = 0;
-                if (prov == "under")
-                    shade = 2;
-                if (prov == "over")
-                    shade = 1;
+                foreach (var d in list)
+                {
+                    var prov = d[16];
+                    int shade = 0;
+                    if (prov == "under")
+                        shade = 2;
+                    if (prov == "over")
+                        shade = 1;
 
-                int freeSpaceShade = 0;
-                decimal.TryParse(d[10], out decimal i);
-                if (i < 20) { freeSpaceShade = 1; }
+                    int freeSpaceShade = 0;
+                    decimal.TryParse(d[10], out decimal i);
+                    if (i < 20) { freeSpaceShade = 1; }
 
 
 
-                s += "<tr>";
-                s += _form.TableData(d[0], "");
-                s += _form.TableData(d[1], "");
-                s += _form.TableData(d[2], "", shade);
-                s += _form.TableData(d[3], "");
-                s += _form.TableData(d[4], "");
-                s += _form.TableData(d[5], "");
-                s += _form.TableData(d[6], "");
-                s += _form.TableData(d[7], "");
-                s += _form.TableData(d[8], "");
-                s += _form.TableData(d[9], "");
-                s += _form.TableData(d[10], "", freeSpaceShade);
-                s += _form.TableData(d[11], "");
-                s += _form.TableData(d[12], "");
-                s += _form.TableData(d[13], "");
-                s += _form.TableData(d[14], "");
-                s += _form.TableData(d[15], "");
-                //s += _form.TableData(d[16], "");
-                s += "</tr>";
+                    s += "<tr>";
+                    s += _form.TableData(d[0], "");
+                    s += _form.TableData(d[1], "");
+                    s += _form.TableData(d[2], "", shade);
+                    s += _form.TableData(d[3], "");
+                    s += _form.TableData(d[4], "");
+                    s += _form.TableData(d[5], "");
+                    s += _form.TableData(d[6], "");
+                    s += _form.TableData(d[7], "");
+                    s += _form.TableData(d[8], "");
+                    s += _form.TableData(d[9], "");
+                    s += _form.TableData(d[10], "", freeSpaceShade);
+                    s += _form.TableData(d[11], "");
+                    s += _form.TableData(d[12], "");
+                    s += _form.TableData(d[13], "");
+                    s += _form.TableData(d[14], "");
+                    s += _form.TableData(d[15], "");
+                    //s += _form.TableData(d[16], "");
+                    s += "</tr>";
+                }
             }
-            }
-            catch(Exception e)
+            catch (Exception e)
             {
                 log.Error("Extents Data import failed. ERROR:");
                 log.Error("\t" + e.Message);
@@ -923,7 +968,7 @@ _form.TableHeader(VbrLocalizationHelper.SbrExt15, VbrLocalizationHelper.SbrExt15
                     s += "</tr>";
                 }
             }
-            catch(Exception e)
+            catch (Exception e)
             {
                 log.Error("REPO Data import failed. ERROR:");
                 log.Error("\t" + e.Message);
@@ -964,7 +1009,7 @@ _form.TableHeader(VbrLocalizationHelper.SbrExt15, VbrLocalizationHelper.SbrExt15
                 }
 
             }
-            catch(Exception e)
+            catch (Exception e)
             {
                 log.Error("JOB CONCURRENCY Data import failed. ERROR:");
                 log.Error("\t" + e.Message);
@@ -1004,7 +1049,7 @@ _form.TableHeader(VbrLocalizationHelper.SbrExt15, VbrLocalizationHelper.SbrExt15
                     s += "</tr>";
                 }
             }
-            catch(Exception e)
+            catch (Exception e)
             {
                 log.Error("Task Concurrency Data import failed. ERROR:");
                 log.Error("\t" + e.Message);
@@ -1093,7 +1138,7 @@ _form.TableHeader(VbrLocalizationHelper.SbrExt15, VbrLocalizationHelper.SbrExt15
                     }
                 }
             }
-            catch(Exception e)
+            catch (Exception e)
             {
                 log.Error("SOBR Data import failed. ERROR:");
                 log.Error("\t" + e.Message);
