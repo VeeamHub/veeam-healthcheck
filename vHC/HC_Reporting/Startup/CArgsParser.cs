@@ -136,8 +136,8 @@ namespace VeeamHealthCheck.Startup
                         CGlobals.RunFullReport = true;
                         break;
                     case "/security":
-                        CGlobals.EXPORTINDIVIDUALJOBHTMLS = false;
-                        CGlobals.RunSecReport = true;
+                        //CGlobals.EXPORTINDIVIDUALJOBHTMLS = false;
+                        //CGlobals.RunSecReport = true;
                         break;
                     case "/scrub:true":
                         CGlobals.Logger.Info("Setting SCRUB = true", false);

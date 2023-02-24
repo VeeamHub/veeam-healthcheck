@@ -19,8 +19,8 @@ namespace VeeamHealthCheck.Shared
             "\t/days:\t\tSpecifies reporting interval. Choose 7 or 30. 7 is default. USAGE: 'days:30'\n" +
             "\t/gui\t\tStarts GUI. GUI overrides other commands." +
             "\n"+
-            "\t/security\tRuns a modified Health Check reporting only security-related items" +
-            "\n"+
+            //"\t/security\tRuns a modified Health Check reporting only security-related items" +
+            //"\n"+
             "\t/lite\t\t" + "Skips output of individual jobs to HTML files. Default is ON and adds extra processing time." +
             "\n"+
             "\t/scrub:\t\t" + "/scrub:true | /scrub:false; determines if sensitive data is removed. Default option creates both options"+
