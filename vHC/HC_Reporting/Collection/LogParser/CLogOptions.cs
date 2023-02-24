@@ -8,7 +8,6 @@ namespace VeeamHealthCheck.Collection.LogParser
 {
     class CLogOptions
     {
-        public static string LOGLOCATION;
         public static readonly string VMCLOG = "\\Utils\\VMC.log";
         public static readonly string installIdLine = "InstallationId:";
 

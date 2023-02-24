@@ -1,14 +1,8 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
-using System.Xml;
-using System.Xml.Xsl;
 using VeeamHealthCheck.Scrubber;
 using VeeamHealthCheck.Shared;
 using VeeamHealthCheck.Shared.Logging;
@@ -18,8 +12,16 @@ namespace VeeamHealthCheck.Html
     internal class CHtmlExporter
     {
         private CLogger log = CGlobals.Logger;
-        private readonly string _testFile;
+        //private readonly string _testFile;
         private readonly string _htmlName = "Veeam Health Check Report";
+        //private readonly string _htmlSecurityReportName = "Veeam Healch Check Security Report";
+
+
+        // path settings
+        private string _basePath = CGlobals._desiredPath;
+        private string _anonPath = CGlobals._desiredPath + CVariables._safeSuffix;
+        private string _origPath = CGlobals._desiredPath + CVariables._unsafeSuffix;
+
 
         private string _backupServerName;
         private string _latestReport;
@@ -30,12 +32,22 @@ namespace VeeamHealthCheck.Html
 
         public CHtmlExporter(string xmlFileName, string serverName, string styleSheet, bool scrub)
         {
-            _testFile = xmlFileName;
+            CheckOutputDirsExist();
+            //_testFile = xmlFileName;
             _backupServerName = serverName;
             _styleSheet = styleSheet;
             _scrub = scrub;
             if (scrub)
                 _scrubber = CGlobals.Scrubber;
+        }
+        private void CheckOutputDirsExist()
+        {
+            if (!Directory.Exists(_basePath))
+                Directory.CreateDirectory(_basePath);
+            if (!Directory.Exists(_anonPath))
+                Directory.CreateDirectory(_anonPath);
+            if (!Directory.Exists(_origPath))
+                Directory.CreateDirectory(_origPath);
         }
 
         public void ExportVb365Html(string htmlString)
@@ -47,8 +59,8 @@ namespace VeeamHealthCheck.Html
             string installID = "";
             try
             {
-                if (!String.IsNullOrEmpty(Collection.LogParser.CLogOptions.INSTALLID)) ;
-                installID = Collection.LogParser.CLogOptions.INSTALLID.Substring(0, 7);
+                if (!String.IsNullOrEmpty(Collection.LogParser.CLogOptions.INSTALLID))
+                    installID = Collection.LogParser.CLogOptions.INSTALLID.Substring(0, 7);
             }
             catch (Exception e) { installID = "anon"; }
             if (!Directory.Exists(n))
@@ -56,135 +68,108 @@ namespace VeeamHealthCheck.Html
             string htmlCore = "";
             if (CGlobals.Scrub)
                 htmlCore = "\\" + _htmlName + "_VB365" + "_" + installID + dateTime.ToString("_yyyy.MM.dd.HHmmss") + ".html";
-            else if(!CGlobals.Scrub)
+            else if (!CGlobals.Scrub)
                 htmlCore = "\\" + _htmlName + "_VB365" + "_" + _backupServerName + dateTime.ToString("_yyyy.MM.dd.HHmmss") + ".html";
             string name = n + htmlCore;
-            _latestReport = name;
+            _latestReport = name;//SetReportNameAndPath(CGlobals.Scrub, "VB365");
 
-            using (StreamWriter sw = new StreamWriter(name))
-            {
-                sw.Write(htmlString);
-            }
+            WriteHtmlToFile(htmlString);
             log.Info("writing HTML to file..done!");
             //OpenHtml();
             if (CGlobals.OpenExplorer)
                 OpenExplorer();
-            if(CGlobals.OpenHtml)
-                OpenHtml();
+            OpenHtmlIfEnabled();
         }
         public void ExportVbrHtml(string htmlString, bool scrub)
         {
             log.Info("exporting xml to html");
 
-            DateTime dateTime = DateTime.Now;
-            string n = CGlobals._desiredPath;
-            string installID = "";
-            try
-            {
-                if (!String.IsNullOrEmpty(Collection.LogParser.CLogOptions.INSTALLID)) 
-                    installID = Collection.LogParser.CLogOptions.INSTALLID.Substring(0, 7);
-            }
-            catch(Exception e) { installID = "anon"; }
-            if (!Directory.Exists(n))
-                Directory.CreateDirectory(n);
-            if (!Directory.Exists(n + "\\Anon"))
-                Directory.CreateDirectory(n + "\\Anon");
-            if (!Directory.Exists(n + "\\Original"))
-                Directory.CreateDirectory(n + "\\Original");
-            string htmlCore = "";
-            if (scrub)
-                htmlCore = "\\Anon\\" + _htmlName + "_VBR" + "_" + installID + dateTime.ToString("_yyyy.MM.dd.HHmmss") + ".html";
-            else if (!scrub)
-            {
-                htmlCore = "\\Original\\" + _htmlName + "_VBR" + "_" + _backupServerName + dateTime.ToString("_yyyy.MM.dd.HHmmss") + ".html";
+            _latestReport = SetReportNameAndPath(scrub, "VBR");
 
-            }
-            string name = n + htmlCore;
-            _latestReport = name;
+            WriteHtmlToFile(htmlString);
+            log.Info("exporting xml to html..done!");
 
-            using (StreamWriter sw = new StreamWriter(name))
+            OpenHtmlIfEnabled();
+        }
+
+        public void ExportVbrSecurityHtml(string htmlString, bool scrub)
+        {
+            log.Info("exporting xml to html");
+
+
+            _latestReport = SetReportNameAndPath(scrub, "VBR_Security");
+
+            WriteHtmlToFile(htmlString);
+            log.Info("exporting xml to html..done!");
+
+            if (CGlobals.OpenHtml)
+                OpenHtmlIfEnabled();
+        }
+        private void WriteHtmlToFile(string htmlString)
+        {
+            using (StreamWriter sw = new StreamWriter(_latestReport))
             {
                 sw.Write(htmlString);
             }
-            log.Info("exporting xml to html..done!");
-            //if (CGlobals.OpenExplorer)
-            //    OpenExplorer();
-            if (CGlobals.OpenHtml)
-                OpenHtml();
         }
-        public void ExportHtml(string xmlFile)
-        {
-            log.Info("exporting xml to html");
-            string s = TransformXMLToHTML(xmlFile, _styleSheet);
-            string reportsFolder = "\\JobSessionReports\\";
 
-            string jname = Path.GetFileNameWithoutExtension(xmlFile);
-            if (_scrub)
-                jname = _scrubber.ScrubItem(jname, "job");
+        private string SetReportNameAndPath(bool scrub, string vbrOrVb365)
+        {
             DateTime dateTime = DateTime.Now;
+            string installID = TrySetInstallId();
 
-            string n = CGlobals._desiredPath;
-            string outFolder = _outPath + reportsFolder;
-            outFolder = n + reportsFolder;
-            //if (_scrub)
-            //    outFolder = CVariables.safeDir + reportsFolder;
-            if (!Directory.Exists(outFolder))
-                Directory.CreateDirectory(outFolder);
-            string name = outFolder + jname + dateTime.ToString("_yyyy.MM.dd_HHmmss") + ".html";
-            _latestReport = name;
-            using (StreamWriter sw = new StreamWriter(name))
+            string htmlCore = "";
+            if (scrub)
+                htmlCore = _anonPath + "\\" + _htmlName + "_" + vbrOrVb365 + "_" + installID + dateTime.ToString("_yyyy.MM.dd.HHmmss") + ".html";
+            else if (!scrub)
             {
-                sw.Write(s);
+                htmlCore = _origPath + "\\" + _htmlName + "_" + vbrOrVb365 + "_" + _backupServerName + dateTime.ToString("_yyyy.MM.dd.HHmmss") + ".html";
+                //log.Warning("htmlcore = " + htmlCore, false);
             }
-            log.Info("exporting xml to html..done!");
-            //OpenHtml();
+            return htmlCore;
         }
-        public static string TransformXMLToHTML(string xmlFile, string xsltFile)
+        private string TrySetInstallId()
         {
-            //log.Info("transforming XML to HTML");
-            var transform = new XslCompiledTransform();
-            XsltSettings settings = new XsltSettings(true, true);
-            XsltArgumentList xList = new();
-            using (var reader = XmlReader.Create(File.OpenRead(xsltFile)))
+            string id = "";
+            try
             {
-                transform.Load(reader, settings, new XmlUrlResolver());
+                if (!String.IsNullOrEmpty(Collection.LogParser.CLogOptions.INSTALLID))
+                {
+                    id = Collection.LogParser.CLogOptions.INSTALLID.Substring(0, 7);
+
+                }
+            }
+            catch (Exception e)
+            {
+                id = "anon";
             }
 
-            var results = new StringWriter();
-            using (var reader = XmlReader.Create(File.OpenRead(xmlFile)))
-            {
-                transform.Transform(reader, null, results);
-            }
-            //log.Info("transforming XML to HTML..done!");
-            return results.ToString();
+            return id;
         }
         public void OpenExplorer()
         {
             Process.Start("explorer.exe", CVariables.desiredDir);
         }
-        public void OpenHtml()
+        public void OpenHtmlIfEnabled()
         {
-            log.Info("opening html");
-            Application.Current.Dispatcher.Invoke((Action)delegate
+            if (CGlobals.OpenHtml)
             {
-                WebBrowser w1 = new();
-                //w1.Navigate(("C:\\temp\\HC_Report.html", null,null,null));
-                //string report = SaveSessionReportToTemp(_htmlOut);
-                //string s = String.Format("cmd", $"/c start {0}", report);
-                //Process.Start(new ProcessStartInfo(s));
-
-                var p = new Process();
-                p.StartInfo = new ProcessStartInfo(_latestReport)
+                log.Info("opening html");
+                Application.Current.Dispatcher.Invoke((Action)delegate
                 {
-                    UseShellExecute = true
-                };
-                p.Start();
-            });
+                    WebBrowser w1 = new();
 
-            log.Info("opening html..done!");
+                    var p = new Process();
+                    p.StartInfo = new ProcessStartInfo(_latestReport)
+                    {
+                        UseShellExecute = true
+                    };
+                    p.Start();
+                });
 
-            //CDataExport ex = new();
-            //ex.OpenFolder();
+                log.Info("opening html..done!");
+            }
+
         }
     }
 }

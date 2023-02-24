@@ -5,6 +5,8 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using VeeamHealthCheck.Shared;
+using VeeamHealthCheck.Collection.DB;
+using VeeamHealthCheck.DB;
 
 namespace VeeamHealthCheck.Collection.LogParser
 {
@@ -15,6 +17,8 @@ namespace VeeamHealthCheck.Collection.LogParser
 
         private string _mode;
         private string _vb365Logs = @"C:\ProgramData\Veeam\Backup365\Logs\";
+
+        private DateTime _DbLineDate;
 
         public CVmcReader(string mode)
         {
@@ -36,30 +40,30 @@ namespace VeeamHealthCheck.Collection.LogParser
 
         private void GetLogDir()
         {
-            if(_mode == "vbr")
+            if (_mode == "vbr")
             {
-                DB.CRegReader reg = new();
+                CRegReader reg = new();
                 string regDir = reg.DefaultLogDir();
                 LOGLOCATION = Path.Combine(regDir + CLogOptions.VMCLOG);
             }
-            else if(_mode == "vb365")
+            else if (_mode == "vb365")
             {
                 string[] filesList = Directory.GetFiles(_vb365Logs);
                 List<FileInfo> fileInfoList = new();
-                foreach(var f in filesList)
+                foreach (var f in filesList)
                 {
                     if (f.Contains("VMC.log"))
                     {
                         FileInfo fileInfo = new FileInfo(f);
                         fileInfoList.Add(fileInfo);
-                        
+
                     }
                 }
                 fileInfoList.OrderBy(x => x.Name);
                 string fileName = fileInfoList.FirstOrDefault().Name;
                 LOGLOCATION = Path.Combine(_vb365Logs + fileName);
             }
-            
+
         }
         private void ReadVmc()
         {
@@ -72,8 +76,26 @@ namespace VeeamHealthCheck.Collection.LogParser
                     {
                         ParseInstallId(line);
                     }
+                    else if (line.Contains("[SQL Server version]"))
+                    {
+                        ParseConfigDbInfo(line);
+                    }
                 }
             }
+        }
+        private void ParseConfigDbInfo(string line)
+        {
+            DateTime dbLineDate = ParseLineDate(line);
+            if (_DbLineDate == null || dbLineDate.Ticks - _DbLineDate.Ticks == 0)
+                _DbLineDate = ParseLineDate(line);
+
+        }
+        private DateTime ParseLineDate(string line)
+        {
+            string newLine = line.Substring(1, 25);
+            DateTime.TryParse(newLine, out DateTime dt);
+            return dt;
+
         }
         private void ParseInstallId(string line)
         {

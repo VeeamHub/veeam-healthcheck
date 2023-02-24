@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using VeeamHealthCheck.Reporting.TableDatas;
 using VeeamHealthCheck.Scrubber;
 using VeeamHealthCheck.Shared.Logging;
 
@@ -15,10 +16,13 @@ namespace VeeamHealthCheck.Shared
         private static bool _scrub;
         private static CScrubHandler _scrubberMain = new();
         public static  readonly string _backupServerId = "6745a759-2205-4cd2-b172-8ec8f7e60ef8";
-        public static int vbrVersion;
+        public static bool IMPORT = false;
+        public static int VBRMAJORVERSION;
+        public static string VBRFULLVERSION;
+        public static DateTime TOOLSTART;
 
         // GUI & CLI Options:
-        private static int _reportDays;
+        private static int _reportDays = 7;
         public static string _desiredPath = CVariables.unsafeDir;
         private static bool _openHtml;
         private static bool _openExplorer;
@@ -26,7 +30,26 @@ namespace VeeamHealthCheck.Shared
         private static bool _isVb365;
         private static bool _runFullReport;
         private static bool _runSecReport;
+        public static bool EXPORTINDIVIDUALJOBHTMLS = true;
 
+        // B&R Server global values
+        //public static string isConsoleLocal = "Undetermined";
+        //public static string _isRdpEnabled = "Undetermined";
+        //public static string _isDomainJoined = "";
+
+        // config db values
+        public static BackupServer BACKUPSERVER;
+        public static string ISDBLOCAL;
+        public static string DBTYPE;
+        public static readonly string SqlTypeName = "MS SQL";
+        public static readonly string PgTypeName = "PG SQL";
+        public static string DBNAME;
+        public static string DBVERSION;
+        public static string DBHOSTNAME;
+        public static string DBEdition;
+        public static string DBINSTANCE;
+        public static int DBCORES;
+        public static int DBRAM;
 
         public CGlobals()
         {

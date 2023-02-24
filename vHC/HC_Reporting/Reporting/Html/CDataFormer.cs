@@ -1,5 +1,6 @@
 ﻿// Copyright (c) 2021, Adam Congdon <adam.congdon2@gmail.com>
 // MIT License
+using CsvHelper;
 using System;
 using System.Collections.Generic;
 using System.Data;
@@ -12,6 +13,7 @@ using VeeamHealthCheck.DB;
 using VeeamHealthCheck.Html;
 using VeeamHealthCheck.RegSettings;
 using VeeamHealthCheck.Reporting.Html.Shared;
+using VeeamHealthCheck.Reporting.Html.VBR.Managed_Server_Table;
 using VeeamHealthCheck.Reporting.TableDatas;
 using VeeamHealthCheck.Scrubber;
 using VeeamHealthCheck.Shared;
@@ -25,51 +27,47 @@ namespace VeeamHealthCheck.Reporting.Html
     class CDataFormer
     {
         private readonly string _testFile = "xml\\vbr.xml";
+        private string logStart = "[DataFormer]\t";
 
-        private string _backupServerName;
+        //private string _backupServerName;
         private bool _isBackupServerProxy;
         private bool _isBackupServerRepo;
         private bool _isBackupServerWan;
         //private CQueries _cq = new();
         private Dictionary<string, int> _repoJobCount;
         private CScrubHandler _scrubber = CGlobals.Scrubber;
-        private bool _scrub;
-        private bool _checkLogs;
-        private bool _isImport;
+        //private bool _scrub;
 
         //Security Summary parts
-        private bool _backupsEncrypted = false;
-        private bool _immuteFound = false;
-        private bool _trafficEncrypted = false;
-        private bool _configBackupEncrypted = false;
+        //private bool _backupsEncrypted = false;
+        //private bool _immuteFound = false;
+        //private bool _trafficEncrypted = false;
+        //private bool _configBackupEncrypted = false;
 
-        private bool _isSqlLocal;
-        private int _cores;
-        private int _ram;
+        //private bool _isSqlLocal;
+        //private int _cores;
+        //private int _ram;
         private CDataTypesParser _dTypeParser;
         private List<CServerTypeInfos> _csv;
         private readonly CCsvParser _csvParser = new();
         private readonly CLogger log = CGlobals.Logger;
         private CHtmlExporter exporter;
-        private readonly CXmlFunctions XML = new("vbr");
 
 
 
-        public CDataFormer(bool isImport) // add string mode input
+        public CDataFormer() // add string mode input
         {
             _dTypeParser = new();
             _csv = _dTypeParser.ServerInfo();
-            _isImport = isImport;
-            if (!isImport)
-                _checkLogs = true;
-            CheckXmlFile();
+
+            //CheckXmlFile();
         }
         private void CheckXmlFile()
         {
             if (!File.Exists(_testFile))
                 File.Create(_testFile).Dispose();
         }
-
+        public void Dispose() { }
 
 
         #region XML Conversions
@@ -117,9 +115,9 @@ namespace VeeamHealthCheck.Reporting.Html
             var csv = new CCsvParser();
             try
             {
-                var sobrRepo = csv.GetDynamicCapTier();
-                var extRepo = csv.GetDynamicSobrExt();
-                var onPremRepo = csv.GetDynamicRepo();
+                var sobrRepo = csv.GetDynamicCapTier().ToList();
+                var extRepo = csv.GetDynamicSobrExt().ToList();
+                var onPremRepo = csv.GetDynamicRepo().ToList();
                 if (onPremRepo.Any(x => x.isimmutabilitysupported == "True"))
                 {
                     secSummary.Add(1);
@@ -329,7 +327,7 @@ namespace VeeamHealthCheck.Reporting.Html
         public int _viDupes;
         public List<string> _vmProtectedByPhys;
         public List<string> _viProtectedNames;
-        public List<string> _vmNotProtectedNames;
+        //public List<string> _vmNotProtectedNames;
 
         public int _hvDupes;
         public List<string> _hvProtectedNames;
@@ -356,17 +354,6 @@ namespace VeeamHealthCheck.Reporting.Html
                 // set items to scrub
             }
 
-            //set items to XML + save
-            //var xml = new XElement("serverInfo",
-            //    new XElement("name", backupServer.Name),
-            //    new XElement("cores", backupServer.Cores),
-            //    new XElement("ram", backupServer.Ram),
-            //    new XElement("wanacc", _isBackupServerWan)
-            //    );
-
-            //extElement.Add(xml);
-            //doc.Save(_testFile);
-
             log.Info("xml template..done!");
         }
         public BackupServer BackupServerInfoToXml(bool scrub)
@@ -377,8 +364,8 @@ namespace VeeamHealthCheck.Reporting.Html
             CBackupServerTableHelper bt = new(scrub);
             BackupServer b = bt.SetBackupServerData();
 
-            
-            
+
+
             CheckServerRoles(CGlobals._backupServerId);
 
             b.HasProxyRole = _isBackupServerProxy;
@@ -582,6 +569,7 @@ namespace VeeamHealthCheck.Reporting.Html
         {
             log.Info("converting proxy info to xml");
             List<string[]> list = new();
+
             List<CProxyTypeInfos> csv = _dTypeParser.ProxyInfo();
 
             csv = csv.OrderBy(x => x.Name).ToList();
@@ -590,7 +578,7 @@ namespace VeeamHealthCheck.Reporting.Html
 
             foreach (var c in csv)
             {
-                string[] s = new string[12];
+                string[] s = new string[13];
                 if (scrub)
                 {
                     c.Name = Scrub(c.Name);
@@ -608,6 +596,7 @@ namespace VeeamHealthCheck.Reporting.Html
                 s[9] += c.CacheSize;
                 s[10] += c.Host;
                 s[11] += c.IsDisabled;
+                s[12] += c.Provisioning;
 
                 list.Add(s);
             }
@@ -616,10 +605,10 @@ namespace VeeamHealthCheck.Reporting.Html
             return list;
         }
 
-        public List<string[]> ServerXmlFromCsv(bool scrub)
+        public List<CManagedServer> ServerXmlFromCsv(bool scrub)
         {
             log.Info("converting server info to xml");
-            List<string[]> list = new List<string[]>();
+            List<CManagedServer> list = new();
             List<CServerTypeInfos> csv = _csv;
 
             csv = csv.OrderBy(x => x.Name).ToList();
@@ -639,7 +628,8 @@ namespace VeeamHealthCheck.Reporting.Html
 
             foreach (var c in csv)
             {
-                string[] s = new string[12];
+                //string[] s = new string[13];
+                CManagedServer server = new();
 
                 //match server and VM count
                 int vmCount = 0;
@@ -673,52 +663,67 @@ namespace VeeamHealthCheck.Reporting.Html
 
                 }
 
-                string pVmStr = "";
-                if (protectedCount != 0)
-                    pVmStr = protectedCount.ToString();
+                //string pVmStr = "";
+                //if (protectedCount != 0)
+                //    pVmStr = protectedCount.ToString();
 
-                string upVmStr = "";
-                if (unProtectedCount != 0)
-                    upVmStr = unProtectedCount.ToString();
-                string tVmStr = "";
-                if (vmCount != 0)
-                    tVmStr = vmCount.ToString();
+                //string upVmStr = "";
+                //if (unProtectedCount != 0)
+                //    upVmStr = unProtectedCount.ToString();
+                //string tVmStr = "";
+                //if (vmCount != 0)
+                //    tVmStr = vmCount.ToString();
 
 
 
                 //check for VBR Roles
                 CheckServerRoles(c.Id);
-                string repoRole = "";
-                string proxyRole = "";
-                string wanRole = "";
-                if (_isBackupServerProxy)
-                    proxyRole = "True";
-                if (_isBackupServerRepo)
-                    repoRole = "True";
-                if (_isBackupServerWan)
-                    wanRole = "True";
+                //string repoRole = "";
+                //string proxyRole = "";
+                //string wanRole = "";
+                //if (_isBackupServerProxy)
+                //    proxyRole = "True";
+                //if (_isBackupServerRepo)
+                //    repoRole = "True";
+                //if (_isBackupServerWan)
+                //    wanRole = "True";
 
                 //scrub name if selected
                 string newName = c.Name;
                 if (scrub)
                     newName = Scrub(newName);
-                s[0] = newName;
-                s[1] += c.Cores;
-                s[2] += c.Ram;
-                s[3] += c.Type;
-                s[4] += c.ApiVersion;
-                s[5] += pVmStr;// proxyRole;
-                s[6] += upVmStr;// repoRole;
-                s[7] += tVmStr;// wanRole;
-                s[8] += proxyRole;// c.IsUnavailable;
-                s[9] += repoRole;// pVmStr;
-                s[10] += wanRole;// upVmStr;
-                s[11] += c.IsUnavailable;// tVmStr;
+                //s[0] = newName;
+                server.Name = newName;
+                server.Cores = c.Cores;
+                server.Ram = c.Ram;
+                server.Type = c.Type;
+                server.ApiVersion = c.ApiVersion;
+                server.ProtectedVms = protectedCount;
+                server.NotProtectedVms = unProtectedCount;
+                server.TotalVms = vmCount;
+                server.IsProxy = _isBackupServerProxy;
+                server.IsRepo = _isBackupServerRepo;
+                server.IsWan = _isBackupServerWan;
+                server.OsInfo = c.OSInfo;
+                server.IsUnavailable = c.IsUnavailable;
+
+                //s[1] += c.Cores;
+                //s[2] += c.Ram;
+                //s[3] += c.Type;
+                //s[4] += c.ApiVersion;
+                //s[5] += pVmStr;// proxyRole;
+                //s[6] += upVmStr;// repoRole;
+                //s[7] += tVmStr;// wanRole;
+                //s[8] += proxyRole;// c.IsUnavailable;
+                //s[9] += repoRole;// pVmStr;
+                //s[10] += wanRole;// upVmStr;
+                //s[11] += c.IsUnavailable;// tVmStr;
+                //s[12] += ParseString(c.OSInfo);
 
 
                 //doc.Add(xml);
 
-                list.Add(s);
+                list.Add(server);
             }
             log.Info("converting server info to xml..done!");
             return list;
@@ -795,7 +800,7 @@ namespace VeeamHealthCheck.Reporting.Html
             //string htmlString = String.Empty;
             //List<CJobSessionInfo> sessionInfo = _dTypeParser.JobSessions;
             // try to trim it up...
-            var targetDate = DateTime.Now.AddDays(-CGlobals.ReportDays);
+            var targetDate = CGlobals.TOOLSTART.AddDays(-CGlobals.ReportDays);
             List<CJobSessionInfo> trimmedSessionInfo = new();
             using (CDataTypesParser dt = new())
             {
@@ -1079,6 +1084,8 @@ namespace VeeamHealthCheck.Reporting.Html
             csv = csv.OrderBy(y => y.JobType).ToList();
             csv = csv.OrderBy(x => x.Name).ToList();
 
+            var cp = new CCsvParser();
+            var csv2 = cp.ServerCsvParser().ToList();
             //XDocument doc = XDocument.Load(_testFile);
 
             XElement extElement = new XElement("jobs");
@@ -1090,8 +1097,8 @@ namespace VeeamHealthCheck.Reporting.Html
                 List<string> job = new();
                 string jname = c.Name;
                 string repo = c.RepoName;
-                if (c.EncryptionEnabled == "True")
-                    _backupsEncrypted = true;
+                //if (c.EncryptionEnabled == "True")
+                //_backupsEncrypted = true;
                 if (scrub)
                 {
                     jname = _scrubber.ScrubItem(c.Name, "job");
@@ -1122,61 +1129,71 @@ namespace VeeamHealthCheck.Reporting.Html
         }
         public List<List<string>> ConvertJobSessSummaryToXml(bool scrub)
         {
-            CJobSessSummary jss = new(_testFile, log, scrub, _scrubber, _dTypeParser);
+            CJobSessSummary jss = new(log, scrub, _scrubber, _dTypeParser);
             return jss.JobSessionSummaryToXml(scrub);
+
+        }
+        private List<CJobSessionInfo> ReturnJobSessionsList()
+        {
+            var targetDate = CGlobals.TOOLSTART.AddDays(-CGlobals.ReportDays);
+
+            using (CDataTypesParser dt = new())
+            {
+                List<CJobSessionInfo> csv = dt.JobSessions.Where(c => c.CreationTime >= targetDate).ToList();
+                csv = csv.OrderBy(x => x.Name).ToList();
+
+                csv = csv.OrderBy(y => y.CreationTime).ToList();
+                csv.Reverse();
+                return csv;
+            }
+        }
+        private void LogJobSessionParseProgress(double counter, int total)
+        {
+            double percentComplete = counter / total * 100;
+            string msg = String.Format(logStart + "{0}%...", Math.Round(percentComplete, 2));
+            log.Info(msg, false);
+        }
+        private void SetOutDir(bool scrub)
+        {
 
         }
         public void JobSessionInfoToXml(bool scrub)
         {
-            log.Info("converting job session info to xml");
+            string logStart = "[JobSessions]\t";
+            log.Info(logStart + "converting job session info to xml");
             CHtmlFormatting _form = new();
 
-            List<CJobSessionInfo> csv = new();
+            List<CJobSessionInfo> csv = ReturnJobSessionsList();
 
-            var targetDate = DateTime.Now.AddDays(-CGlobals.ReportDays);
-            //List<CJobSessionInfo> trimmedSessionInfo = new();
-            using (CDataTypesParser dt = new())
-            {
-                csv = dt.JobSessions.Where(c => c.CreationTime >= targetDate).ToList();
-            }
-
-            csv = csv.OrderBy(x => x.Name).ToList();
-
-            csv = csv.OrderBy(y => y.CreationTime).ToList();
-            csv.Reverse();
-            //csv = csv.OrderBy(x => x.CreationTime).ToList();
-
-            //XDocument doc = XDocument.Load(_testFile);
-
-            //doc.Root.Add(extElement);
-            //doc.AddFirst(new XProcessingInstruction("xml-stylesheet", "type=\"text/xsl\" href=\"SessionReport.xsl\""));
             List<string> processedJobs = new();
             double percentCounter = 0;
             foreach (var cs in csv)
             {
-                double percentComplete = percentCounter / csv.Count * 100;
-                string msg = String.Format("[JobSess]\t {0}%...", percentComplete);
-                log.Info(msg);
+                LogJobSessionParseProgress(percentCounter, csv.Count);
+
                 if (!processedJobs.Contains(cs.JobName))
                 {
                     processedJobs.Add(cs.JobName);
-                    //XDocument newDoc = new XDocument(new XElement("root"));
-                    //XElement extElement = new XElement("jobSessions");
 
-                    //newDoc.Root.Add(extElement);
-                    string outDir = CVariables.desiredDir + "\\JobSessionReports";
-                    if (!Directory.Exists(outDir))
-                        Directory.CreateDirectory(outDir);
+                    string outDir = "";// CVariables.desiredDir + "\\Original";
+                    string folderName = "\\JobSessionReports";
 
-                    string docName = outDir + "\\";
+
                     if (scrub)
                     {
+                        outDir = CGlobals._desiredPath + CVariables._safeSuffix + folderName;
+                        //log.Warning("SAFE outdir = " + outDir, false);
+                        CheckFolderExists(outDir);
                         outDir += "\\" + _scrubber.ScrubItem(cs.JobName) + ".html";
                     }
                     else
                     {
+                        outDir = CGlobals._desiredPath + CVariables._unsafeSuffix + folderName;
+                        CheckFolderExists(outDir);
                         outDir += "\\" + cs.JobName + ".html";
                     }
+                    string docName = outDir + "\\";
+
 
                     string s = _form.FormHeader();
                     s += "<h2>" + cs.JobName + "</h2>";
@@ -1201,11 +1218,13 @@ namespace VeeamHealthCheck.Reporting.Html
                     s += _form.TableHeader("Status", "Final status of the job");
                     s += _form.TableHeader("Task Duration", "Duration of the VM/server within the job in minutes");
                     s += "</tr>";
-                    //docName = VerifyDocName(docName);
-                    //newDoc.AddFirst(new XProcessingInstruction("xml-stylesheet", "type=\"text/xsl\" href=\"SessionReport.xsl\""));
-                    //XElement xml = null;
+
+                    int counter = 1;
                     foreach (var c in csv)
                     {
+                        string info = String.Format("Parsing {0} of {1} Job Sessions to HTML", counter, csv.Count);
+                        counter++;
+                        //log.Info(logStart + info, false);
                         try
                         {
                             if (cs.JobName == c.JobName)
@@ -1254,13 +1273,10 @@ namespace VeeamHealthCheck.Reporting.Html
                     }
                     try
                     {
-                        string dir = Path.GetDirectoryName(docName);
-                        if (!Directory.Exists(dir))
-                            Directory.CreateDirectory(dir);
+                        //string dir = Path.GetDirectoryName(docName);
+                        //if (!Directory.Exists(dir))
+                        //    Directory.CreateDirectory(dir);
                         File.WriteAllText(outDir, s);
-                        // newDoc.Save(docName);
-                        //string xmlString = newDoc.ToString();
-                        //exporter.ExportHtml(docName);
                     }
                     catch (Exception e)
                     {
@@ -1275,6 +1291,11 @@ namespace VeeamHealthCheck.Reporting.Html
             }
             //doc.Save(_testFile);
             log.Info("converting job session info to xml..done!");
+        }
+        private void CheckFolderExists(string folder)
+        {
+            if (!Directory.Exists(folder))
+                Directory.CreateDirectory(folder);
         }
         public string TableData(string data, string toolTip)
         {
@@ -1356,10 +1377,7 @@ namespace VeeamHealthCheck.Reporting.Html
             return ct;
         }
 
-        public void Dispose()
-        {
 
-        }
         private void PreCalculations()
         {
             // calc all the things prior to adding XML entries... such as job count per repo....

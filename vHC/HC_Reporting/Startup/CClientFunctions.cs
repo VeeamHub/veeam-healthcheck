@@ -10,14 +10,20 @@ using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Documents;
+using VeeamHealthCheck.Collection;
+using VeeamHealthCheck.Security;
 using VeeamHealthCheck.Shared;
+using VeeamHealthCheck.Shared.Logging;
+using VeeamHealthCheck.Resources.Localization;
+using VeeamHealthCheck.DB;
 
-namespace VeeamHealthCheck.Resources
+namespace VeeamHealthCheck.Startup
 {
     internal class CClientFunctions : IDisposable
     {
 
-
+        private CLogger LOG = CGlobals.Logger;
+        private string logStart = "[Functions]\t";
         public CClientFunctions()
         {
 
@@ -26,7 +32,7 @@ namespace VeeamHealthCheck.Resources
         public void KbLinkAction(System.Windows.Navigation.RequestNavigateEventArgs args)
         {
             CGlobals.Logger.Info("[GUI]\tOpening KB Link");
-            Application.Current.Dispatcher.Invoke((Action)delegate
+            Application.Current.Dispatcher.Invoke(delegate
             {
                 WebBrowser w1 = new();
 
@@ -39,125 +45,114 @@ namespace VeeamHealthCheck.Resources
             });
             CGlobals.Logger.Info("[GUI]\tOpening KB Link...done!");
         }
-        public  void PreRunCheck()
+        public void PreRunCheck()
         {
-            CGlobals.Logger.Info("Starting Admin Check");
+            CGlobals.Logger.Info("Starting Admin Check", false);
             CAdminCheck priv = new();
             if (!priv.IsAdmin())
             {
                 string message = "Please run program as Administrator";
                 MessageBox.Show(message);
-                CGlobals.Logger.Error(message);
+                CGlobals.Logger.Error(message, false);
                 Environment.Exit(0);
             }
 
             CGlobals.Logger.Info("Starting Admin Check...done!");
         }
-        public  string ModeCheck()
+        public string ModeCheck()
         {
-            CGlobals.Logger.Info("Checking processes to determine execution mode..");
-            string title = ResourceHandler.GuiTitle;
+            CGlobals.Logger.Info("Checking processes to determine execution mode..", false);
+            string title = VbrLocalizationHelper.GuiTitle;
             var processes = Process.GetProcesses();
             foreach (var process in processes)
             {
+                //LOG.Warning(logStart + "process name: " + process.ProcessName);
                 if (process.ProcessName == "Veeam.Archiver.Service")
                 {
 
                     CGlobals.IsVb365 = true;
-                    CGlobals.Logger.Info("VB365 software detected");
+                    LOG.Info("VB365 software detected", false);
                 }
                 if (process.ProcessName == "Veeam.Backup.Service")
                 {
                     CGlobals.IsVbr = true;
-                    CGlobals.Logger.Info("VBR software detected");
+                    LOG.Info("VBR software detected", false);
                 }
 
             }
             if (CGlobals.IsVbr)
-                return title + " - " + ResourceHandler.GuiTitleBnR;
+                return title + " - " + VbrLocalizationHelper.GuiTitleBnR;
             if (CGlobals.IsVb365)
-                return title + " - " + ResourceHandler.GuiTitleVB365;
+                return title + " - " + VbrLocalizationHelper.GuiTitleVB365;
             if (CGlobals.IsVbr && CGlobals.IsVb365)
-                return title + " - " + ResourceHandler.GuiTitleBnR + " & " + ResourceHandler.GuiTitleVB365;
+                return title + " - " + VbrLocalizationHelper.GuiTitleBnR + " & " + VbrLocalizationHelper.GuiTitleVB365;
             if (!CGlobals.IsVb365 && !CGlobals.IsVbr)
-                return title + " - " + ResourceHandler.GuiImportModeOnly;
+                return title + " - " + VbrLocalizationHelper.GuiImportModeOnly;
             else
                 return title;
         }
-        public  void ExecPSScripts()
-        {
-            CGlobals.Logger.Info("Starting PS Invoke", false);
-            PSInvoker p = new PSInvoker();
 
-            if (CGlobals.IsVbr)
-            {
-                try
-                {
-                    CGlobals.Logger.Info("Entering vbr ps invoker", false);
-                    p.Invoke();
-                }
-                catch (Exception ex)
-                {
-                    CGlobals.Logger.Error(ex.Message);
-                }
-            }
-            if (CGlobals.IsVb365)
-            {
-                try
-                {
-                    CGlobals.Logger.Info("Entering vb365 ps invoker", false);
-                    p.InvokeVb365Collect();
-                }
-                catch (Exception ex) { CGlobals.Logger.Error(ex.Message); }
-            }
-
-            CGlobals.Logger.Info("Starting PS Invoke...done!", false);
-        }
-        public  bool AcceptTerms()
+        public bool AcceptTerms()
         {
-            string message = ResourceHandler.GuiAcceptText;
+            string message = VbrLocalizationHelper.GuiAcceptText;
 
             var res = MessageBox.Show(message, "Terms", MessageBoxButton.YesNo);
             if (res.ToString() == "Yes")
                 return true;
             else return false;
         }
-        public  void RunClickAction()
+
+        public void StartPrimaryFunctions()
         {
-            CGlobals.Logger.Info("Starting Run");
-            ExecPSScripts();
-            PopulateWaits();
-            if (CGlobals.IsVbr)
+            LogUserSettings();
+            StartCollections();
+            StartAnalysis();
+        }
+        public void RunHotfixDetector()
+        {
+            LOG.Info(logStart + "Starting Hotfix Detector", false);
+            LOG.Warning(logStart + "This option will collect support logs to some local directory and then check for hotfixes", false);
+            LOG.Warning(logStart + "Please enter local path with adequate space for log files:", false);
+            var path = Console.ReadLine();
+            CHotfixDetector hfd = new(path);
+            hfd.Run();
+        }
+        private void LogUserSettings()
+        {
+            LOG.Info(ClientSettingsString(), false);
+
+        }
+        private void StartCollections()
+        {
+            if (!CGlobals.IMPORT)
             {
-                Collection.LogParser.CLogOptions logOptions = new("vbr");
+                LOG.Info(logStart + "Init Collections", false);
+                CCollections collect = new();
+                collect.Run();
+                LOG.Info(logStart + "Init Collections...done!", false);
             }
-            if (CGlobals.IsVb365)
-            {
-                Collection.LogParser.CLogOptions logOptions = new("vb365");
-            }
-
-
-
-
-
-            CGlobals.Logger.Info(ClientSettingsString());
+        }
+        private void StartAnalysis()
+        {
+            LOG.Info(logStart + "Init Data analysis & report creations", false);
             Import();
 
-
-            CGlobals.Logger.Info("Creating Report done!");
-
-
-
-
-            CGlobals.Logger.Info("Starting Run..done!");
+            LOG.Info(logStart + "Init Data analysis & report creations...done!", false);
         }
-        public  void CliRun(string targetForOutput)
+        public void CliRun(string targetForOutput)
         {
             CGlobals.Logger.Info("Setting openexplorer & openhtml to false for CLI execution", false);
             CGlobals.OpenExplorer = false;
-            CGlobals.OpenHtml = false;
+            //CGlobals.OpenHtml = false;
             CGlobals._desiredPath = targetForOutput;
-            RunClickAction();
+            PreRunCheck();
+            GetVbrVersion();
+            StartPrimaryFunctions();
+        }
+        private void GetVbrVersion()
+        {
+            CRegReader reg = new();
+            reg.GetVbrVersionFilePath();
         }
         public bool VerifyPath()
         {
@@ -174,35 +169,22 @@ namespace VeeamHealthCheck.Resources
                 return false;
             }
         }
-        private  void PopulateWaits()
-        {
-            try
-            {
-                FilesParser.CLogParser lp = new();
-                lp.GetWaitsFromFiles();
-            }
-            catch (Exception e)
-            {
-                CGlobals.Logger.Error("Error checking log files:");
-                CGlobals.Logger.Error(e.Message);
-            }
 
-        }
-        public  void Import()
+        public void Import()
         {
             CReportModeSelector cMode = new();
             cMode.Run();
             cMode.Dispose();
         }
-        private  string ClientSettingsString()
+        private string ClientSettingsString()
         {
-            return String.Format(
+            return string.Format(
                 "User Settings:\n" +
-                "\t\t\t\t\t\t\t\t\tScrub = {0}\n" +
-                "\t\t\t\t\t\t\t\t\tOpen HTML = {1}\n" +
-                "\t\t\t\t\t\t\t\t\tOpen Explorer = {2}\n" +
-                "\t\t\t\t\t\t\t\t\tPath = {3}\n" +
-                "\t\t\t\t\t\t\t\t\tInterval = {4}",
+                "\t\t\t\t\tScrub = {0}\n" +
+                "\t\t\t\t\tOpen HTML = {1}\n" +
+                "\t\t\t\t\tOpen Explorer = {2}\n" +
+                "\t\t\t\t\tPath = {3}\n" +
+                "\t\t\t\t\tInterval = {4}",
                 CGlobals.Scrub, CGlobals.OpenHtml, CGlobals.OpenExplorer, CGlobals._desiredPath, CGlobals.ReportDays.ToString()
                 );
         }
@@ -213,7 +195,7 @@ namespace VeeamHealthCheck.Resources
         }
         private void WriteVhcVersion()
         {
-            CGlobals.Logger.Info("vHC Version: " + CVersionSetter.GetFileVersion());
+            CGlobals.Logger.Info("vHC Version: " + CVersionSetter.GetFileVersion(), false);
         }
         private void WriteCliArgs(string[] args)
         {

@@ -25,40 +25,25 @@ namespace VeeamHealthCheck.Html
 
         private string logStart = "[JssBuilder] ";
 
-        public CJobSessSummary(string xmlFile, CLogger log, bool scrub,   Scrubber.CScrubHandler scrubber, CDataTypesParser dp)
+        public CJobSessSummary(CLogger log, bool scrub,   Scrubber.CScrubHandler scrubber, CDataTypesParser dp)
         {
-            _xmlFile = xmlFile;
+            //_xmlFile = xmlFile;
             _log = log;
             _scrubber = scrubber;
             _parsers = dp;
 
         }
 
-        private void PopulateWaits()
-        {
-            try
-            {
-                FilesParser.CLogParser lp = new();
-                _waits = lp.GetWaitsFromFiles();
-            }
-            catch (Exception e)
-            {
-                log.Error("Error checking log files:");
-                log.Error(e.Message);
-            }
-
-        }
-
         public List<List<string>> JobSessionSummaryToXml(bool scrub)
         {
-            return JobSessionSummaryToXml(_xmlFile, _log, scrub, _scrubber, _parsers);
+            return JobSessionSummaryToXml(_log, scrub, _scrubber, _parsers);
         }
-        public List<List<string>> JobSessionSummaryToXml(string xmlFile, CLogger log, bool scrub, Scrubber.CScrubHandler scrubber, CDataTypesParser d)
+        public List<List<string>> JobSessionSummaryToXml(CLogger log, bool scrub, Scrubber.CScrubHandler scrubber, CDataTypesParser d)
         {
             List<List<string>> sendBack = new();
             log.Info("converting job session summary to xml");
 
-            var targetDate = DateTime.Now.AddDays(-CGlobals.ReportDays);
+            var targetDate = CGlobals.TOOLSTART.AddDays(-CGlobals.ReportDays);
             List<CJobSessionInfo> trimmedSessionInfo = new();
             using (CDataTypesParser dt = new())
             {
@@ -211,6 +196,20 @@ namespace VeeamHealthCheck.Html
                     {
                         double percent = ((sessionCount - fails + retries) / sessionCount) * 100;
                         info.SuccessRate = (int)Math.Round(percent, 0, MidpointRounding.ToEven);
+                        string sessionInfoString = String.Format("" +
+                            "Total Sessions: {0} " +
+                            "Failed: {1} " +
+                            "Retries: {2} " +
+                            "PercentSuccess: {3}", 
+                            sessionCount.ToString(),
+                            fails,
+                            retries,
+                            info.SuccessRate);
+                        log.Info(logStart + "Session Calcuations:\t" + sessionInfoString);
+                        if(percent > 100)
+                        {// TODO
+
+                        }
                     }
 
                     successRates.Add(info.SuccessRate);

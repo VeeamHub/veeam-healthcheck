@@ -6,9 +6,11 @@ using System.Runtime.InteropServices;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
+using VeeamHealthCheck.DB;
+//using VeeamHealthCheck.Reporting.vsac;
 using VeeamHealthCheck.Shared;
 
-namespace VeeamHealthCheck.Resources
+namespace VeeamHealthCheck.Startup
 {
     internal class CArgsParser
     {
@@ -22,13 +24,15 @@ namespace VeeamHealthCheck.Resources
         const int SW_SHOW = 5;
 
         private readonly string[] _args;
+        private CClientFunctions functions = new();
         public CArgsParser(string[] args)
         {
             _args = args;
+            CGlobals.TOOLSTART = DateTime.Now;
         }
         public void ParseArgs()
         {
-            CGlobals.RunFullReport = true;
+            //CGlobals.RunFullReport = true;
             LogInitialInfo();
 
             if (_args.Length == 0)
@@ -37,6 +41,10 @@ namespace VeeamHealthCheck.Resources
                 ParseAllArgs(_args);
             else
                 LaunchUi(Handle(), true);
+
+
+
+
         }
         private void LogInitialInfo()
         {
@@ -44,9 +52,11 @@ namespace VeeamHealthCheck.Resources
             f.LogVersionAndArgs(_args);
             f.Dispose();
         }
+
         private void LaunchUi(IntPtr handle, bool hide)
         {
-            CGlobals.Logger.Info("Executing GUI");
+            CGlobals.Logger.Info("Executing GUI", false);
+            CGlobals.RunFullReport = true;
             if (hide)
                 ShowWindow(handle, SW_HIDE);
             var app = new System.Windows.Application();
@@ -60,12 +70,13 @@ namespace VeeamHealthCheck.Resources
         private void ParseZeroArgs()
         {
             var pos = Console.GetCursorPosition();
-            if (pos == (0, 0))
+            CGlobals.Logger.Warning("pos = " + pos.ToString(), false);
+            if (pos == (0, 1))
             {
                 CGlobals.Logger.Info("0s");
                 LaunchUi(Handle(), true);
             }
-            if (pos != (0, 0))
+            else
             {
                 CGlobals.Logger.Info("not 0");
                 Console.WriteLine(CMessages.helpMenu);
@@ -80,69 +91,101 @@ namespace VeeamHealthCheck.Resources
             {
                 switch (a)
                 {
-                    case "help":
-                        CGlobals.Logger.Info("entering help menu");
+                    case "/help":
+                        CGlobals.Logger.Info("entering help menu", false);
                         Console.WriteLine(CMessages.helpMenu);
                         break;
-                    case "run":
+                    case "/run":
                         run = true;
+                        CGlobals.RunFullReport = true;
                         CGlobals.Logger.Info("Run = true");
                         break;
-                    case "show:files":
+                    case "/show:files":
+                        CGlobals.OpenExplorer = true;
                         break;
-                    case "show:report":
+                    case "/show:report":
+                        CGlobals.OpenHtml = true;
                         break;
-                    case "show:all":
+                    case "/show:all":
                         break;
-                    case "days:7":
+                    case "/days:7":
                         CGlobals.Logger.Info("Days set to 7");
                         CGlobals.ReportDays = 7;
                         break;
-                    case "days:30":
+                    case "/days:30":
                         CGlobals.Logger.Info("Days set to 30");
                         CGlobals.ReportDays = 30;
                         break;
-                    case "days:90":
+                    case "/days:90":
                         CGlobals.Logger.Info("Days set to 90");
                         CGlobals.ReportDays = 90;
                         break;
-                    case "days:12":
+                    case "/days:12":
                         CGlobals.Logger.Info("Days set to 12");
                         CGlobals.ReportDays = 12;
                         break;
-                    case "gui":
+                    case "/gui":
+                        CGlobals.RunFullReport = true;
                         ui = true;
                         break;
-                    case var match when new Regex("outdir:.*").IsMatch(a):
-                        string[] outputDir = a.Split(":");
-                        targetDir = outputDir[1];
-                        CGlobals.Logger.Info("Output directory: " + targetDir);
+                    case "/lite":
+                        CGlobals.EXPORTINDIVIDUALJOBHTMLS = false;
                         break;
-                    case "security":
-                        // do sec report
+                    case "/import":
+                        CGlobals.IMPORT = true;
+                        CGlobals.RunFullReport = true;
                         break;
+                    case "/security":
+                        //CGlobals.EXPORTINDIVIDUALJOBHTMLS = false;
+                        //CGlobals.RunSecReport = true;
+                        break;
+                    case "/scrub:true":
+                        CGlobals.Logger.Info("Setting SCRUB = true", false);
+                        CGlobals.Scrub = true;
+                        break;
+                    case "/scrub:false":
+                        CGlobals.Logger.Info("Setting SCRUB = false", false);
+                        CGlobals.Scrub = false;
+                        break;
+                    case "/hotfix":
+                        functions.RunHotfixDetector();
+                        Environment.Exit(0);
+                        break;
+                        //case var match when new Regex("outdir:.*").IsMatch(a):
+                        //    string[] outputDir = a.Split(":");
+                        //    targetDir = outputDir[1];
+                        //    CGlobals.Logger.Info("Output directory: " + targetDir);
+                        //    break;
                 }
             }
 
-            if (args.Any(x => x == "security"))
-            {
-                Console.WriteLine(true);
-                CGlobals.RunSecReport = true;
-                CGlobals.RunFullReport = false;
-            }
+
 
             if (ui)
                 LaunchUi(Handle(), false);
-            else if (run)
+            else
             {
-                CGlobals.Logger.Info("Starting RUN...", false);
+                functions.ModeCheck();
+                FullRun(targetDir);
 
-                CClientFunctions functions = new();
-                functions.CliRun(targetDir);
-
-                CGlobals.Logger.Info("Starting RUN...complete!", false);
-                CGlobals.Logger.Info("Output is stored in " + targetDir);
             }
+
         }
+        private void Run(string targetDir)
+        {
+            CClientFunctions functions = new();
+            functions.CliRun(targetDir);
+        }
+        private void FullRun(string targetDir)
+        {
+            CGlobals.Logger.Info("Starting RUN...", false);
+            Run(targetDir);
+
+
+            CGlobals.Logger.Info("Starting RUN...complete!", false);
+            CGlobals.Logger.Info("Output is stored in " + targetDir, false);
+
+        }
+
     }
 }

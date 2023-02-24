@@ -1,5 +1,5 @@
 #cd C:\Users\cac89\Source\Repos\VeeamHub\veeam-healthcheck\vHC\HC_Reporting\Resources\Localization
-$loc = Get-Location
+$loc = "C:\code\VeeamHub\veeam-healthcheck\vHC\HC_Reporting\Resources\Localization\"
 
 & 'C:\Program Files\Microsoft Visual Studio\2022\Professional\Common7\Tools\Launch-VsDevShell.ps1'
 start-sleep -Seconds 2
@@ -12,11 +12,11 @@ foreach($f in $files){
 
 $content = Get-Content -LiteralPath "vhcres.txt"
 
-
-echo $null | out-file .\ResourceHandler.cs
+$outFile = $loc + "VbrLocalizationHelper.cs"
+echo $null | out-file $outFile
 echo $null | out-file pubstrings.txt
 
-"using System.Resources;`nnamespace VeeamHealthCheck`n{`n`nclass ResourceHandler`n{private static ResourceManager m4 = new(`"VeeamHealthCheck.Resources.Localization.vhcres`", typeof(ResourceHandler).Assembly);`n" | out-file .\ResourceHandler.cs
+"using System.Resources;`nnamespace VeeamHealthCheck.Resources.Localization`n{`n`nclass VbrLocalizationHelper`n{private static ResourceManager m4 = new(`"VeeamHealthCheck.Resources.Localization.vhcres`", typeof(VbrLocalizationHelper).Assembly);`n" | out-file $outFile
 
 foreach($line in $content){
     if(!$line.StartsWith("#")){
@@ -29,9 +29,9 @@ foreach($line in $content){
                 
                 #Write-Host($string)
                 $string | Out-File -Append pubstrings.txt
-                $string | out-file -Append .\ResourceHandler.cs
+                $string | out-file -Append $outFile
             }
         }
     }
 }
-"}}" | out-file -Append .\ResourceHandler.cs
+"}}" | out-file -Append $outFile

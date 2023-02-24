@@ -2,9 +2,9 @@
 using System.Linq;
 using System.Runtime.InteropServices;
 using System.Text.RegularExpressions;
-using VeeamHealthCheck.Resources;
 using VeeamHealthCheck.Shared;
 using VeeamHealthCheck.Shared.Logging;
+using VeeamHealthCheck.Startup;
 
 namespace VeeamHealthCheck
 {
@@ -16,7 +16,6 @@ namespace VeeamHealthCheck
         {
             CArgsParser ap = new(args);
             ap.ParseArgs();
-            _functions.LogVersionAndArgs(args);
         }
 
     }

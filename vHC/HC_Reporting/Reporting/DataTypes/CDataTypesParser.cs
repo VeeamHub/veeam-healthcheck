@@ -3,6 +3,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.Intrinsics.Arm;
 using VeeamHealthCheck.CsvHandlers;
 using VeeamHealthCheck.Reporting.DataTypes.ProxyData;
 using VeeamHealthCheck.Shared;
@@ -17,11 +18,11 @@ namespace VeeamHealthCheck.DataTypes
 
         private List<CServerTypeInfos> _serverInfo;
         private Dictionary<string, int> _serverSummaryInfo;
-        private List<CSobrTypeInfos> _sobrInfo;
-        private List<CRepoTypeInfos> _extentInfo;
-        private List<CProxyTypeInfos> _proxyInfo;
-        private List<CJobTypeInfos> _jobInfo;
-        private List<CJobSessionInfo> _jobSession;
+        //private List<CSobrTypeInfos> _sobrInfo;
+        //private List<CRepoTypeInfos> _extentInfo;
+        //private List<CProxyTypeInfos> _proxyInfo;
+        //private List<CJobTypeInfos> _jobInfo;
+        //private List<CJobSessionInfo> _jobSession;
         private List<int> _protectedJobIds = new();
         private List<string> _typeList = new();
         //private List<CServerTypeInfos> _serverInfo;
@@ -463,7 +464,10 @@ namespace VeeamHealthCheck.DataTypes
             return d;
         }
 
-
+        private int MemoryTasksCount(int ram, int ramPerCore)
+        {
+            return (int)Math.Round((decimal)(ram / ramPerCore) * 3, 0, MidpointRounding.ToPositiveInfinity);
+        }
         private string CalcRepoOptimalTasks(int assignedTasks, int cores, int ram)
         {
             if (cores == 0 && ram == 0)
@@ -476,11 +480,16 @@ namespace VeeamHealthCheck.DataTypes
             // 1 core + 4 GB RAM per 3 task
 
             // cores * 1.5 = Tasks
-
             int availableMem = ram - 4;
-            int memTasks = (int)Math.Round((decimal)(ram / 4) * 3, 0, MidpointRounding.ToPositiveInfinity);
+            int memTasks = MemoryTasksCount(ram, 4);
             int coreTasks = cores * 3;
 
+            if(CGlobals.VBRMAJORVERSION == 12)
+            {
+                // user v12 sizing math here.
+                memTasks = MemoryTasksCount(ram, 2);
+                coreTasks = cores * 2;
+            }
 
 
             if (coreTasks == memTasks)
@@ -577,6 +586,7 @@ namespace VeeamHealthCheck.DataTypes
                 ti.Id = (s.Id);
                 ti.PhysHostId = s.PhysHostId;
                 ti.Info = s.Info;
+                ti.OSInfo = s.OSInfo;
                 ti.IsUnavailable = s.IsUnavailable;
                 if (ti.IsUnavailable == "False")
                     ti.IsUnavailable = "";

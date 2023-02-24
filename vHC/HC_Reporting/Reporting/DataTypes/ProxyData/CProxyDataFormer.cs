@@ -20,24 +20,30 @@ namespace VeeamHealthCheck.Reporting.DataTypes.ProxyData
         public string CalcProxyTasks(int assignedTasks, int cores, int ram)
         {
             int availableMem = ram - 2; //TODO double-check OS mem requirements
-            int memTasks = (int)Math.Round((decimal)(availableMem / 2), 0, MidpointRounding.ToPositiveInfinity);
+            int memTasks = (int)Math.Round((decimal)(availableMem / .5), 0, MidpointRounding.ToPositiveInfinity);
             int coreTasks = 0;
             
             if (cores == 0 && ram == 0)
                 return "NA";
 
-            if (CGlobals.vbrVersion == 11)
+            if (CGlobals.VBRMAJORVERSION == 11)
             {
-                coreTasks = cores; //TODO need to imrprove this to cover 11a change
+                coreTasks = cores -2; //TODO need to imrprove this to cover 11a change
+                memTasks = MemoryTasks(availableMem, 2);
             }
-            else if (CGlobals.vbrVersion == 12)
+            else if (CGlobals.VBRMAJORVERSION == 12)
             {
-                coreTasks = cores * 2;
+                coreTasks = (cores -2)* 2;
+                memTasks = MemoryTasks(availableMem, .5);
             }
 
-            return SetProvisionStatus(assignedTasks, cores, ram);
+            return SetProvisionStatus(assignedTasks, coreTasks, memTasks);
 
 
+        }
+        private int MemoryTasks(int availableMem,double memoryPerTask)
+        {
+            return (int)Math.Round((decimal)(availableMem / memoryPerTask), 0, MidpointRounding.ToPositiveInfinity);
         }
         private string SetProvisionStatus(int assignedTasks, int coreTasks, int memTasks)
         {

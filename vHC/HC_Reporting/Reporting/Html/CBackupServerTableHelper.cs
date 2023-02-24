@@ -27,6 +27,7 @@ namespace VeeamHealthCheck.Reporting.Html
         public CBackupServerTableHelper(bool scrub)
         {
             _backupServer = new();
+            SetBackupServerWithDbInfo();
             _scrub = scrub;
         }
         public BackupServer SetBackupServerData()
@@ -39,8 +40,17 @@ namespace VeeamHealthCheck.Reporting.Html
         private void SetElements()
         {
             SetConfigBackupSettings();
-            TrySetSqlInfo();
             SetDbHostNameOption2();
+
+        }
+        private void SetBackupServerWithDbInfo()
+        {
+            _backupServer.DbType = CGlobals.DBTYPE;
+            _backupServer.Edition = CGlobals.DBEdition;
+            _backupServer.DbVersion = CGlobals.DBVERSION;
+            _backupServer.DbCores = CGlobals.DBCORES;
+            _backupServer.DbRAM = CGlobals.DBRAM;
+            _backupServer.DbHostName = CGlobals.DBHOSTNAME;
         }
         private void ScrubElements()
         {
@@ -59,14 +69,14 @@ namespace VeeamHealthCheck.Reporting.Html
                 _backupServer.ConfigBackupTarget = cv[0].Target;
                 _backupServer.ConfigBackupEncryption = CObjectHelpers.ParseBool(cv[0].EncryptionOptions);
                 _backupServer.ConfigBackupLastResult = cv[0].LastResult;
-                _backupServer.ConfigBackupRetentionPoints =  CObjectHelpers.ParseInt(cv[0].RestorePointsToKeep);
+                _backupServer.ConfigBackupRetentionPoints = CObjectHelpers.ParseInt(cv[0].RestorePointsToKeep);
             }
 
         }
 
-        private string  CheckFixes(string fixes)
+        private string CheckFixes(string fixes)
         {
-
+            //TODO
             return "";
         }
         private void SetDbHostNameOption2()
@@ -84,9 +94,18 @@ namespace VeeamHealthCheck.Reporting.Html
                     {
                         var records = config.BnrCsvParser().ToList();
                         _backupServer.Version = records[0].Version;
-                        _backupServer.DbHostName = records[0].SqlServer;
-                        _backupServer.FixIds =  CheckFixes(records[0].Fixes);
+                        if(String.IsNullOrEmpty(_backupServer.DbHostName))
+                        {
+                            _backupServer.DbHostName = records[0].SqlServer;
+
+                        }
+                        _backupServer.FixIds = CheckFixes(records[0].Fixes);
                         _backupServer.HasFixes = _hasFixes;
+
+
+                        if (_backupServer.DbType == CGlobals.PgTypeName)
+                            _backupServer.DbHostName = records[0].PgHost;
+                        
 
                     }
                     catch (Exception f)
@@ -103,7 +122,7 @@ namespace VeeamHealthCheck.Reporting.Html
                         _backupServer.IsLocal = false;
 
                     }
-                    else if (backupServer.Name.Contains(_backupServer.DbHostName, StringComparison.OrdinalIgnoreCase))
+                    else if (backupServer.Name.Contains(_backupServer.DbHostName, StringComparison.OrdinalIgnoreCase) || _backupServer.DbHostName == "localhost")
                     {
                         _backupServer.IsLocal = true;
                         _backupServer.DbHostName = "LocalHost";
@@ -142,45 +161,8 @@ namespace VeeamHealthCheck.Reporting.Html
         {
 
         }
-        private void TrySetSqlInfo()
-        {
-            try
-            {
-                log.Info("starting sql queries");
-                DataTable dbServerInfo = new DataTable();
-                CQueries cq = new();
-                dbServerInfo = cq.SqlServerInfo;
-                _backupServer.Edition = cq.SqlEdition;
-                _backupServer.DbVersion = cq.SqlVerion;
-                _backupServer = TryParseSqlResources(dbServerInfo, _backupServer);
-                _backupServer.DbType = "MS SQL";
 
-                log.Info("starting sql queries..done!");
-            }
-            catch (Exception e)
-            {
-                log.Error(e.Message);
 
-            }
-        }
-        private static BackupServer TryParseSqlResources(DataTable table, BackupServer b)
-        {
-            foreach (DataRow row in table.Rows)
-            {
-                string cpu = row["cpu_count"].ToString();
-                string hyperthread = row["hyperthread_ratio"].ToString();
-                string memory = row["physical_memory_kb"].ToString();
-                int.TryParse(cpu, out int c);
-                int.TryParse(hyperthread, out int h);
-                int.TryParse(memory, out int mem);
-
-                b.DbCores = c;//(c * h).ToString();
-                b.DbRAM = ((mem / 1024 / 1024) + 1);
-
-            }
-
-            return b;
-        }
         private string Scrub(string item)
         {
             CScrubHandler scrubber = CGlobals.Scrubber;

@@ -1,11 +1,10 @@
 ﻿// Copyright (c) 2021, Adam Congdon <adam.congdon2@gmail.com>
 // MIT License
-using System;
 using Microsoft.Win32;
-using System.Windows;
+using System;
+using System.Diagnostics;
 using VeeamHealthCheck.Shared;
 using VeeamHealthCheck.Shared.Logging;
-using System.Windows.Input;
 
 namespace VeeamHealthCheck.DB
 {
@@ -16,6 +15,8 @@ namespace VeeamHealthCheck.DB
         private static string _host;
         private static string _user;
         private static string _passString;
+
+        private string logStart = "[RegistryReader]\t";
 
         private CLogger log = CGlobals.Logger;
 
@@ -53,37 +54,108 @@ namespace VeeamHealthCheck.DB
             }
             catch (Exception e2)
             {
-                log.Error("");
+                log.Error(logStart + "Failed to get v11 DB info from Registry. Trying v12 registry hives");
             }
             if (String.IsNullOrEmpty(_databaseName))
             {
                 try { GetVbrTwelveDbInfo(); }
-                catch { Exception e3; }
+                catch (Exception e3)
+                {
+                    log.Error(logStart + "Failed to get v12 DB info from Registry.");
+                }
             }
 
+        }
+        public void GetVbrVersionFilePath()
+        {
+            using (RegistryKey key =
+                Registry.LocalMachine.OpenSubKey("Software\\Veeam\\Veeam Backup and Replication"))
+            {
+                string path = key.GetValue("CorePath").ToString();
+                //FileInfo dllInfo = new FileInfo(path + "\\Packages\\VeeamDeploymentDll.dll");
+                var version = FileVersionInfo.GetVersionInfo(path + "\\Packages\\VeeamDeploymentDll.dll");
+                CGlobals.VBRFULLVERSION = version.FileVersion;
+                ParseVbrMajorVersion(CGlobals.VBRFULLVERSION);
+                
+            }
+        }
+        private void ParseVbrMajorVersion(string fullVersion)
+        {
+            try
+            {
+                string[] segments = fullVersion.Split(".");
+                int.TryParse(segments[0], out int mVersion);
+
+                switch (mVersion)
+                {
+                    case 10:
+                        SetMajorVersion(10);
+                        break;
+                    case 11:
+                        SetMajorVersion(11);
+                        break;
+                    case 12:
+                        SetMajorVersion(12);
+                        break;
+                }
+            }
+            catch(Exception e)
+            {
+                log.Error(logStart + "Failed to parse VBR Major Version:\n\t" + e.Message);
+            }
+            
+
+        }
+        private void SetMajorVersion(int version)
+        {
+            CGlobals.VBRMAJORVERSION = version;
         }
         private void GetVbrElevenDbInfo()
         {
             using (RegistryKey key =
                 Registry.LocalMachine.OpenSubKey("Software\\Veeam\\Veeam Backup and Replication"))
             {
-                if (key != null)
+                SetSqlInfo(key);
+                //if (key != null)
+                //{
+                //    var instance = key.GetValue("SqlInstanceName").ToString();
+                //    var host = key.GetValue("SqlServerName").ToString();
+                //    var database =
+                //        key.GetValue("SqlDatabaseName")
+                //            .ToString();
+                //    _user = key.GetValue("SqlLogin").ToString();
+                //    _passString = key.GetValue("SqlSecuredPassword").ToString();
+                //    if (!string.IsNullOrEmpty(host))
+                //    {
+                //        if (!string.IsNullOrEmpty(database))
+                //        {
+                //            _databaseName = database;
+                //            _host = host;
+                //            _hostInstanceString = host + "\\" + instance;
+                //        }
+                //    }
+                //}
+            }
+        }
+        private void SetSqlInfo(RegistryKey key)
+        {
+            if (key != null)
+            {
+                
+                var instance = key.GetValue("SqlInstanceName").ToString();
+                var host = key.GetValue("SqlServerName").ToString();
+                var database =
+                    key.GetValue("SqlDatabaseName")
+                        .ToString();
+                _user = key.GetValue("SqlLogin").ToString();
+                _passString = key.GetValue("SqlSecuredPassword").ToString();
+                if (!string.IsNullOrEmpty(host))
                 {
-                    var instance = key.GetValue("SqlInstanceName").ToString();
-                    var host = key.GetValue("SqlServerName").ToString();
-                    var database =
-                        key.GetValue("SqlDatabaseName")
-                            .ToString();
-                    _user = key.GetValue("SqlLogin").ToString();
-                    _passString = key.GetValue("SqlSecuredPassword").ToString();
-                    if (!string.IsNullOrEmpty(host))
+                    if (!string.IsNullOrEmpty(database))
                     {
-                        if (!string.IsNullOrEmpty(database))
-                        {
-                            _databaseName = database;
-                            _host = host;
-                            _hostInstanceString = host + "\\" + instance;
-                        }
+                        _databaseName = database;
+                        _host = host;
+                        _hostInstanceString = host + "\\" + instance;
                     }
                 }
             }
@@ -107,38 +179,49 @@ namespace VeeamHealthCheck.DB
                     var dbType = key.GetValue("SqlActiveConfiguration").ToString();
                     if (dbType == "MsSql")
                     {
+                        CGlobals.DBTYPE = CGlobals.SqlTypeName;
+
                         using (RegistryKey sqlKey = Registry.LocalMachine.OpenSubKey("Software\\Veeam\\Veeam Backup and Replication\\DatabaseConfigurations\\MsSql"))
                         {
+                            SetSqlInfo(sqlKey);
+
                             host = sqlKey.GetValue("SqlServerName").ToString();
-                            string inst = sqlKey.GetValue("").ToString();
-                            string db = sqlKey.GetValue("").ToString();
+                            if (host == "localhost")
+                                CGlobals.ISDBLOCAL = "True";
+                            CGlobals.DBHOSTNAME = host;
+                            //CGlobals.DBINSTANCE = key.GetValue("SqlInstanceName").ToString();
+
                             // SqlInstanceName
                             // SqlDatabaseName
                         }
                     }
                     else if (dbType == "PostgreSql")
                     {
+                        CGlobals.DBTYPE = CGlobals.PgTypeName;
                         using (RegistryKey pgKey = Registry.LocalMachine.OpenSubKey("Software\\Veeam\\Veeam Backup and Replication\\DatabaseConfigurations\\PostgreSql"))
                         {
                             host = pgKey.GetValue("SqlHostName").ToString();
+                            if (host == "localhost")
+                                CGlobals.ISDBLOCAL = "True";
+                            CGlobals.DBHOSTNAME = host;
+
                         }
                     }
-                    var instance = key.GetValue("SqlInstanceName").ToString();
-                    
-                    var database =
-                        key.GetValue("SqlDatabaseName")
-                            .ToString();
-                    _user = key.GetValue("SqlLogin").ToString();
-                    _passString = key.GetValue("SqlSecuredPassword").ToString();
-                    if (!string.IsNullOrEmpty(host))
-                    {
-                        if (!string.IsNullOrEmpty(database))
-                        {
-                            _databaseName = database;
-                            _host = host;
-                            _hostInstanceString = host + "\\" + instance;
-                        }
-                    }
+
+                    //var database =
+                    //    key.GetValue("SqlDatabaseName")
+                    //        .ToString();
+                    //_user = key.GetValue("SqlLogin").ToString();
+                    //_passString = key.GetValue("SqlSecuredPassword").ToString();
+                    //if (!string.IsNullOrEmpty(host))
+                    //{
+                    //    if (!string.IsNullOrEmpty(database))
+                    //    {
+                    //        _databaseName = database;
+                    //        _host = host;
+                    //        _hostInstanceString = host + "\\" + instance;
+                    //    }
+                    //}
                 }
             }
         }

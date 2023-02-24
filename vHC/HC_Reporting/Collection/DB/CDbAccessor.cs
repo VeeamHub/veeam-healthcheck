@@ -7,6 +7,7 @@ using System.Security.Cryptography;
 using System.Security.Principal;
 using System.Text;
 using System.Windows;
+using VeeamHealthCheck.Shared;
 
 namespace VeeamHealthCheck.DB
 {
@@ -36,12 +37,16 @@ namespace VeeamHealthCheck.DB
             string db = reg.DbString;
             if (host == null || db == null)
             {
-                Console.WriteLine("Please enter SQL Host Name & Instance (i.e. vbr-server\\sqlserver2016):");
-                host = Console.ReadLine();
-                Console.WriteLine("Please enter DB name:");
-                db = Console.ReadLine();
+
+                // why am i asking for interaction?
+
+                //Console.WriteLine("Please enter SQL Host Name & Instance (i.e. vbr-server\\sqlserver2016):");
+                //host = Console.ReadLine();
+                //Console.WriteLine("Please enter DB name:");
+                //db = Console.ReadLine();
             }
             builder["Server"] = host;
+            //CGlobals.DBHOSTNAME = host;
             builder["Database"] = db;
 
             if(TestConnection())
@@ -65,18 +70,13 @@ namespace VeeamHealthCheck.DB
                 connection.Open();
                 return true;
             }
-            catch(Exception s)
+            catch(Exception e)
             {
                 return false;
             }
 
         }
-        private static string DecryptPass(string passString)
-        {
-            byte[] b = Convert.FromBase64String(passString);
-            byte[] p = ProtectedData.Unprotect(b, null, DataProtectionScope.LocalMachine);
-            return new string (Encoding.Unicode.GetChars(p));
-        }
+
 
         private static string GetConnectionString()
         {

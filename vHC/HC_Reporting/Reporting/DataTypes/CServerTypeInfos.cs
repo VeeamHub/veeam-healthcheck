@@ -27,6 +27,7 @@ namespace VeeamHealthCheck.DataTypes
         public int Ram { get; set; }
         public int RepoTasks { get; set; }
         public int ProxyTasks { get; set; }
+        public string OSInfo { get; set; }
 
         public CServerTypeInfos()
         {

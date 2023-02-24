@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using VeeamHealthCheck.Reporting.Html.Shared;
+using VeeamHealthCheck.Resources.Localization;
 
 namespace VeeamHealthCheck.Reporting.Html.VBR
 {
@@ -20,13 +21,13 @@ namespace VeeamHealthCheck.Reporting.Html.VBR
             string s = _form.CollapsibleButton("Show Summary");
 
             s += "<div class=\"content\" style=\"display: none\">";
-            s += _form.AddA("hdr", ResourceHandler.GeneralSummaryHeader) + _form.LineBreak() +
+            s += _form.AddA("hdr", VbrLocalizationHelper.GeneralSummaryHeader) + _form.LineBreak() +
                 _form.AddA("i2", "") +
                 _form.AddA("i3", "") +
                 _form.AddA("i3", "") +
                 _form.AddA("i3", "") +
                 _form.DoubleLineBreak() +
-                _form.AddA("hdr", ResourceHandler.GeneralNotesHeader) + _form.LineBreak() +
+                _form.AddA("hdr", VbrLocalizationHelper.GeneralNotesHeader) + _form.LineBreak() +
                 _form.AddA("i2", "") +
                 _form.AddA("i2", "") +
                 _form.AddA("i2", "") +
@@ -41,13 +42,13 @@ namespace VeeamHealthCheck.Reporting.Html.VBR
         }
         public string LicSum()
         {
-            string s =  _form.AddA("hdr", ResourceHandler.GeneralSummaryHeader) +// _form.LineBreak() +
+            string s =  _form.AddA("hdr", VbrLocalizationHelper.GeneralSummaryHeader) +// _form.LineBreak() +
                 _form.AddA("i2", "") +
                 _form.AddA("i3", "") +
                 _form.AddA("i3", "") +
                 _form.AddA("i3", "") +
                 //   _form.DoubleLineBreak() +
-                _form.AddA("hdr", ResourceHandler.GeneralNotesHeader) +// _form.LineBreak() +
+                _form.AddA("hdr", VbrLocalizationHelper.GeneralNotesHeader) +// _form.LineBreak() +
                 _form.AddA("i2", "") +
                 _form.AddA("i2", "") +
                 _form.AddA("i2", "") +
@@ -62,22 +63,22 @@ namespace VeeamHealthCheck.Reporting.Html.VBR
         }
         public string SetVbrSummary()
         {
-            string s = _form.CollapsibleButton(ResourceHandler.BkpSrvButton);
+            string s = _form.CollapsibleButton(VbrLocalizationHelper.BkpSrvButton);
 
             s += "<div class=\"content\" style=\"display: none\">";
-            s += _form.AddA("hdr", ResourceHandler.GeneralSummaryHeader) + _form.LineBreak() +
-                _form.AddA("i2", ResourceHandler.BkpSrvSummary1) +
-                _form.AddA("i3", ResourceHandler.BkpSrvSummary2) +
-                _form.AddA("i3", ResourceHandler.BkpSrvSummary3) +
-                _form.AddA("i3", ResourceHandler.BkpSrvSummary4) + _form.LineBreak() +
+            s += _form.AddA("hdr", VbrLocalizationHelper.GeneralSummaryHeader) + _form.LineBreak() +
+                _form.AddA("i2", VbrLocalizationHelper.BkpSrvSummary1) +
+                _form.AddA("i3", VbrLocalizationHelper.BkpSrvSummary2) +
+                _form.AddA("i3", VbrLocalizationHelper.BkpSrvSummary3) +
+                _form.AddA("i3", VbrLocalizationHelper.BkpSrvSummary4) + _form.LineBreak() +
                 // _form.DoubleLineBreak() +
-                _form.AddA("hdr", ResourceHandler.GeneralNotesHeader) + _form.LineBreak() +
-                _form.AddA("i2", ResourceHandler.BkpSrvNotes1) +
-                _form.AddA("i2", ResourceHandler.BkpSrvNotes2) +
-                _form.AddA("i2", ResourceHandler.BkpSrvNotes3) +
-                _form.AddA("i2", ResourceHandler.BkpSrvNotes4) +
-                _form.AddA("i2", ResourceHandler.BkpSrvNotes5) +
-                _form.AddA("i2", ResourceHandler.BkpSrvNotes6)
+                _form.AddA("hdr", VbrLocalizationHelper.GeneralNotesHeader) + _form.LineBreak() +
+                _form.AddA("i2", VbrLocalizationHelper.BkpSrvNotes1) +
+                _form.AddA("i2", VbrLocalizationHelper.BkpSrvNotes2) +
+                _form.AddA("i2", VbrLocalizationHelper.BkpSrvNotes3) +
+                _form.AddA("i2", VbrLocalizationHelper.BkpSrvNotes4) +
+                _form.AddA("i2", VbrLocalizationHelper.BkpSrvNotes5) +
+                _form.AddA("i2", VbrLocalizationHelper.BkpSrvNotes6)
                 ;
             s += _form.LineBreak() +
                _form.BackToTop();
@@ -88,25 +89,25 @@ namespace VeeamHealthCheck.Reporting.Html.VBR
         }
         public string SecSum()
         {
-            string s = _form.CollapsibleButton(ResourceHandler.SSButton);
+            string s = _form.CollapsibleButton(VbrLocalizationHelper.SSButton);
 
             s += "<div class=\"content\" style=\"display: none\">";
-            s += _form.AddA("hdr", ResourceHandler.GeneralSummaryHeader) +
+            s += _form.AddA("hdr", VbrLocalizationHelper.GeneralSummaryHeader) +
                 _form.LineBreak() +
-                _form.AddA("i2", ResourceHandler.SSSum1) +
+                _form.AddA("i2", VbrLocalizationHelper.SSSum1) +
                 //  _form.LineBreak() +
-                _form.AddA("hdr", ResourceHandler.GeneralNotesHeader) + _form.LineBreak() +
-                _form.AddA("subhdr", ResourceHandler.SSSubHdr1) + _form.LineBreak() +
-                _form.AddA("i2", ResourceHandler.SSNote1) + _form.LineBreak() +
+                _form.AddA("hdr", VbrLocalizationHelper.GeneralNotesHeader) + _form.LineBreak() +
+                _form.AddA("subhdr", VbrLocalizationHelper.SSSubHdr1) + _form.LineBreak() +
+                _form.AddA("i2", VbrLocalizationHelper.SSNote1) + _form.LineBreak() +
                 //  _form.LineBreak() +
-                _form.AddA("subhdr", ResourceHandler.SSSubHdr2) + _form.LineBreak() +
-                _form.AddA("i2", ResourceHandler.SSNote2) + _form.LineBreak() +
+                _form.AddA("subhdr", VbrLocalizationHelper.SSSubHdr2) + _form.LineBreak() +
+                _form.AddA("i2", VbrLocalizationHelper.SSNote2) + _form.LineBreak() +
                 //   _form.LineBreak() +
-                _form.AddA("subhdr", ResourceHandler.SSSubHdr3) + _form.LineBreak() +
-                _form.AddA("i2", ResourceHandler.SSNote3) + _form.LineBreak() +
+                _form.AddA("subhdr", VbrLocalizationHelper.SSSubHdr3) + _form.LineBreak() +
+                _form.AddA("i2", VbrLocalizationHelper.SSNote3) + _form.LineBreak() +
                 //  _form.LineBreak() +
-                _form.AddA("subhdr", ResourceHandler.SSSubHdr4) + _form.LineBreak() +
-                _form.AddA("i2", ResourceHandler.SSNote4) + 
+                _form.AddA("subhdr", VbrLocalizationHelper.SSSubHdr4) + _form.LineBreak() +
+                _form.AddA("i2", VbrLocalizationHelper.SSNote4) + 
                _form.LineBreak();
             ;
             s += _form.BackToTop();
@@ -117,11 +118,11 @@ namespace VeeamHealthCheck.Reporting.Html.VBR
         }
         public string SrvSum()
         {
-            string s = _form.CollapsibleButton(ResourceHandler.MssButton);
+            string s = _form.CollapsibleButton(VbrLocalizationHelper.MssButton);
 
             s += "<div class=\"content\" style=\"display: none\">";
-            s += _form.AddA("hdr", ResourceHandler.GeneralSummaryHeader) + _form.LineBreak() +
-                _form.AddA("i2", ResourceHandler.MssSum1) +
+            s += _form.AddA("hdr", VbrLocalizationHelper.GeneralSummaryHeader) + _form.LineBreak() +
+                _form.AddA("i2", VbrLocalizationHelper.MssSum1) +
                 _form.LineBreak() +
                 _form.BackToTop();
 
@@ -132,15 +133,15 @@ namespace VeeamHealthCheck.Reporting.Html.VBR
         }
         public string JobSummary()
         {
-            string s = _form.CollapsibleButton(ResourceHandler.JobSumBtn);
+            string s = _form.CollapsibleButton(VbrLocalizationHelper.JobSumBtn);
 
             s += "<div class=\"content\" style=\"display: none\">";
-            s += _form.AddA("hdr", ResourceHandler.GeneralSummaryHeader) + _form.LineBreak() +
-                _form.AddA("i2", ResourceHandler.JobSumSum0) + _form.LineBreak() +
+            s += _form.AddA("hdr", VbrLocalizationHelper.GeneralSummaryHeader) + _form.LineBreak() +
+                _form.AddA("i2", VbrLocalizationHelper.JobSumSum0) + _form.LineBreak() +
                 //_form.LineBreak() +
-                _form.AddA("hdr", ResourceHandler.GeneralNotesHeader) + _form.LineBreak() +
-                _form.AddA("i2", ResourceHandler.JobSumNote0) +
-                _form.AddA("i2", ResourceHandler.JobSumNote1) +
+                _form.AddA("hdr", VbrLocalizationHelper.GeneralNotesHeader) + _form.LineBreak() +
+                _form.AddA("i2", VbrLocalizationHelper.JobSumNote0) +
+                _form.AddA("i2", VbrLocalizationHelper.JobSumNote1) +
                 _form.LineBreak() +
                 _form.BackToTop()
                 ;
@@ -151,8 +152,8 @@ namespace VeeamHealthCheck.Reporting.Html.VBR
         }
         public string MissingJobsSUmmary()
         {
-            string s = _form.AddA("hdr", ResourceHandler.GeneralSummaryHeader) + _form.LineBreak() +
-                _form.AddA("i2", ResourceHandler.NpSum1) +
+            string s = _form.AddA("hdr", VbrLocalizationHelper.GeneralSummaryHeader) + _form.LineBreak() +
+                _form.AddA("i2", VbrLocalizationHelper.NpSum1) +
                   _form.LineBreak() +
                 _form.BackToTop();
             ;
@@ -164,11 +165,11 @@ namespace VeeamHealthCheck.Reporting.Html.VBR
         public string ProtectedWorkloads()
         {
 
-            string s = _form.AddA("hdr", ResourceHandler.GeneralSummaryHeader) + _form.LineBreak() +
-                _form.AddA("i2", ResourceHandler.PlSum1) + _form.LineBreak() +
+            string s = _form.AddA("hdr", VbrLocalizationHelper.GeneralSummaryHeader) + _form.LineBreak() +
+                _form.AddA("i2", VbrLocalizationHelper.PlSum1) + _form.LineBreak() +
                 //  _form.DoubleLineBreak() +
-                _form.AddA("hdr", ResourceHandler.GeneralNotesHeader) + _form.LineBreak() +
-                _form.AddA("i2", ResourceHandler.PlNote1) +
+                _form.AddA("hdr", VbrLocalizationHelper.GeneralNotesHeader) + _form.LineBreak() +
+                _form.AddA("i2", VbrLocalizationHelper.PlNote1) +
                      _form.LineBreak();
                 _form.BackToTop();
             ;
@@ -179,12 +180,12 @@ namespace VeeamHealthCheck.Reporting.Html.VBR
         }
         public string ManagedServers()
         {
-            string s =  _form.AddA("hdr", ResourceHandler.GeneralSummaryHeader) + _form.LineBreak() +
-                _form.AddA("i2", ResourceHandler.ManSrvSum0) + _form.LineBreak() +
+            string s =  _form.AddA("hdr", VbrLocalizationHelper.GeneralSummaryHeader) + _form.LineBreak() +
+                _form.AddA("i2", VbrLocalizationHelper.ManSrvSum0) + _form.LineBreak() +
                 //     _form.DoubleLineBreak() +
-                _form.AddA("hdr", ResourceHandler.GeneralNotesHeader) + _form.LineBreak() +
-                _form.AddA("i2", ResourceHandler.ManSrvNote0) +
-                _form.AddA("i2", ResourceHandler.ManSrvNote1) +
+                _form.AddA("hdr", VbrLocalizationHelper.GeneralNotesHeader) + _form.LineBreak() +
+                _form.AddA("i2", VbrLocalizationHelper.ManSrvNote0) +
+                _form.AddA("i2", VbrLocalizationHelper.ManSrvNote1) +
                   _form.LineBreak() +
                 _form.BackToTop()
                 ;
@@ -195,12 +196,12 @@ namespace VeeamHealthCheck.Reporting.Html.VBR
         }
         public string RegKeys()
         {
-            string s =_form.AddA("hdr", ResourceHandler.GeneralSummaryHeader) + _form.LineBreak() +
-                _form.AddA("i2", ResourceHandler.RegSum0) + _form.LineBreak() +
+            string s =_form.AddA("hdr", VbrLocalizationHelper.GeneralSummaryHeader) + _form.LineBreak() +
+                _form.AddA("i2", VbrLocalizationHelper.RegSum0) + _form.LineBreak() +
                 //  _form.DoubleLineBreak() +
-                _form.AddA("hdr", ResourceHandler.GeneralNotesHeader) + _form.LineBreak() +
-                _form.AddA("i2", ResourceHandler.RegNote0) +
-                _form.AddA("i2", ResourceHandler.RegNote1) +
+                _form.AddA("hdr", VbrLocalizationHelper.GeneralNotesHeader) + _form.LineBreak() +
+                _form.AddA("i2", VbrLocalizationHelper.RegNote0) +
+                _form.AddA("i2", VbrLocalizationHelper.RegNote1) +
                     _form.LineBreak() +
                 _form.BackToTop()
                 ;
@@ -211,29 +212,29 @@ namespace VeeamHealthCheck.Reporting.Html.VBR
         }
         public string Proxies()
         {
-            string s =  _form.AddA("hdr", ResourceHandler.GeneralSummaryHeader) + _form.LineBreak() +
-                _form.AddA("i2", ResourceHandler.PrxSum0) +
-                _form.AddA("i3", ResourceHandler.PrxSum1) +
-                _form.AddA("i4", ResourceHandler.PrxSum2) +
-                _form.AddA("i4", ResourceHandler.PrxSum3) +
-                _form.AddA("i4", ResourceHandler.PrxSum4) +
-                _form.AddA("i3", ResourceHandler.PrxSum5) +
-                _form.AddA("i4", ResourceHandler.PrxSum6) + _form.LineBreak() +
+            string s =  _form.AddA("hdr", VbrLocalizationHelper.GeneralSummaryHeader) + _form.LineBreak() +
+                _form.AddA("i2", VbrLocalizationHelper.PrxSum0) +
+                _form.AddA("i3", VbrLocalizationHelper.PrxSum1) +
+                _form.AddA("i4", VbrLocalizationHelper.PrxSum2) +
+                _form.AddA("i4", VbrLocalizationHelper.PrxSum3) +
+                _form.AddA("i4", VbrLocalizationHelper.PrxSum4) +
+                _form.AddA("i3", VbrLocalizationHelper.PrxSum5) +
+                _form.AddA("i4", VbrLocalizationHelper.PrxSum6) + _form.LineBreak() +
                 //   _form.DoubleLineBreak() +
-                _form.AddA("hdr", ResourceHandler.GeneralNotesHeader) + _form.LineBreak() +
-                _form.AddA("i2", ResourceHandler.PrxNote0) +
-                _form.AddA("i3", ResourceHandler.PrxNote1) +
-                _form.AddA("i4", ResourceHandler.PrxNote2) +
-                _form.AddA("i4", ResourceHandler.PrxNote3) +
-                _form.AddA("i4", ResourceHandler.PrxNote4) +
-                _form.AddA("i2", ResourceHandler.PrxNote5) +
-                _form.AddA("i3", ResourceHandler.PrxNote6) +
-                _form.AddA("i3", ResourceHandler.PrxNote7) +
-                _form.AddA("i2", ResourceHandler.PrxNote8) +
-                _form.AddA("i2", ResourceHandler.PrxNote9) +
-                _form.AddA("i2", ResourceHandler.PrxNote10) +
-                _form.AddA("i2", ResourceHandler.PrxNote11) +
-                _form.AddA("i2", ResourceHandler.PrxNote12) +
+                _form.AddA("hdr", VbrLocalizationHelper.GeneralNotesHeader) + _form.LineBreak() +
+                _form.AddA("i2", VbrLocalizationHelper.PrxNote0) +
+                _form.AddA("i3", VbrLocalizationHelper.PrxNote1) +
+                _form.AddA("i4", VbrLocalizationHelper.PrxNote2) +
+                _form.AddA("i4", VbrLocalizationHelper.PrxNote3) +
+                _form.AddA("i4", VbrLocalizationHelper.PrxNote4) +
+                _form.AddA("i2", VbrLocalizationHelper.PrxNote5) +
+                _form.AddA("i3", VbrLocalizationHelper.PrxNote6) +
+                _form.AddA("i3", VbrLocalizationHelper.PrxNote7) +
+                _form.AddA("i2", VbrLocalizationHelper.PrxNote8) +
+                _form.AddA("i2", VbrLocalizationHelper.PrxNote9) +
+                _form.AddA("i2", VbrLocalizationHelper.PrxNote10) +
+                _form.AddA("i2", VbrLocalizationHelper.PrxNote11) +
+                _form.AddA("i2", VbrLocalizationHelper.PrxNote12) +
                 _form.LineBreak() +
                 _form.BackToTop()
                 ;
@@ -244,18 +245,18 @@ namespace VeeamHealthCheck.Reporting.Html.VBR
         }
         public string Sobr()
         {
-            string s =  _form.AddA("hdr", ResourceHandler.GeneralSummaryHeader) + _form.LineBreak() +
-                _form.AddA("i2", ResourceHandler.SbrSum0) +
-                _form.AddA("i3", ResourceHandler.SbrSum0) + _form.LineBreak() +
+            string s =  _form.AddA("hdr", VbrLocalizationHelper.GeneralSummaryHeader) + _form.LineBreak() +
+                _form.AddA("i2", VbrLocalizationHelper.SbrSum0) +
+                _form.AddA("i3", VbrLocalizationHelper.SbrSum0) + _form.LineBreak() +
                 //   _form.DoubleLineBreak() +
-                _form.AddA("hdr", ResourceHandler.GeneralNotesHeader) + _form.LineBreak() +
-                _form.AddA("i2", ResourceHandler.SbrNote0) +
-                _form.AddA("i2", ResourceHandler.SbrNote1) +
-                _form.AddA("i2", ResourceHandler.SbrNote2) +
-                _form.AddA("i2", ResourceHandler.SbrNote3) +
-                _form.AddA("i2", ResourceHandler.SbrNote4) +
-                _form.AddA("i2", ResourceHandler.SbrNote5) +
-                _form.AddA("i2", ResourceHandler.SbrNote6) +
+                _form.AddA("hdr", VbrLocalizationHelper.GeneralNotesHeader) + _form.LineBreak() +
+                _form.AddA("i2", VbrLocalizationHelper.SbrNote0) +
+                _form.AddA("i2", VbrLocalizationHelper.SbrNote1) +
+                _form.AddA("i2", VbrLocalizationHelper.SbrNote2) +
+                _form.AddA("i2", VbrLocalizationHelper.SbrNote3) +
+                _form.AddA("i2", VbrLocalizationHelper.SbrNote4) +
+                _form.AddA("i2", VbrLocalizationHelper.SbrNote5) +
+                _form.AddA("i2", VbrLocalizationHelper.SbrNote6) +
                   _form.LineBreak()+
                 _form.BackToTop()
                 ;
@@ -266,28 +267,28 @@ namespace VeeamHealthCheck.Reporting.Html.VBR
         }
         public string Extents()
         {
-            string s =  _form.AddA("hdr", ResourceHandler.GeneralSummaryHeader) + _form.LineBreak() +
-                _form.AddA("i2", ResourceHandler.SbrExtSum0) +
-                _form.AddA("i3", ResourceHandler.SbrExtSum1) + _form.LineBreak() +
+            string s =  _form.AddA("hdr", VbrLocalizationHelper.GeneralSummaryHeader) + _form.LineBreak() +
+                _form.AddA("i2", VbrLocalizationHelper.SbrExtSum0) +
+                _form.AddA("i3", VbrLocalizationHelper.SbrExtSum1) + _form.LineBreak() +
                 //   _form.DoubleLineBreak() +
-                _form.AddA("hdr", ResourceHandler.GeneralNotesHeader) + _form.LineBreak() +
-                _form.AddA("subhdr", ResourceHandler.SbrExtNote0subhdr) + _form.LineBreak() +
-                _form.AddA("i2", ResourceHandler.SbrExtNote1) +
-                _form.AddA("i2", ResourceHandler.SbrExtNote2) +
-                _form.AddA("i3", ResourceHandler.SbrExtNote3) +
-                _form.AddA("i2", ResourceHandler.SbrExtNote4) + _form.LineBreak() +
-                _form.AddA("subhdr", ResourceHandler.SbrExtNote5subhdr) + _form.LineBreak() +
-                _form.AddA("i2", ResourceHandler.SbrExtNote6) +
-                _form.AddA("i2", ResourceHandler.SbrExtNote7) +
-                _form.AddA("i2", ResourceHandler.SbrExtNote8) +
-                _form.AddA("i2", ResourceHandler.SbrExtNote9) + _form.LineBreak() +
-                _form.AddA("subhdr", ResourceHandler.SbrExtNote10subhdr) + _form.LineBreak() +
-                _form.AddA("i2", ResourceHandler.SbrExtNote11) +
-                _form.AddA("i2", ResourceHandler.SbrExtNote12) + _form.LineBreak() +
-                _form.AddA("subhdr", ResourceHandler.SbrExtNote13subhdr) + _form.LineBreak() +
-                _form.AddA("i2", ResourceHandler.SbrExtNote14) +
-                _form.AddA("i2", ResourceHandler.SbrExtNote15) +
-                _form.AddA("i2", ResourceHandler.SbrExtNote16) +
+                _form.AddA("hdr", VbrLocalizationHelper.GeneralNotesHeader) + _form.LineBreak() +
+                _form.AddA("subhdr", VbrLocalizationHelper.SbrExtNote0subhdr) + _form.LineBreak() +
+                _form.AddA("i2", VbrLocalizationHelper.SbrExtNote1) +
+                _form.AddA("i2", VbrLocalizationHelper.SbrExtNote2) +
+                _form.AddA("i3", VbrLocalizationHelper.SbrExtNote3) +
+                _form.AddA("i2", VbrLocalizationHelper.SbrExtNote4) + _form.LineBreak() +
+                _form.AddA("subhdr", VbrLocalizationHelper.SbrExtNote5subhdr) + _form.LineBreak() +
+                _form.AddA("i2", VbrLocalizationHelper.SbrExtNote6) +
+                _form.AddA("i2", VbrLocalizationHelper.SbrExtNote7) +
+                _form.AddA("i2", VbrLocalizationHelper.SbrExtNote8) +
+                _form.AddA("i2", VbrLocalizationHelper.SbrExtNote9) + _form.LineBreak() +
+                _form.AddA("subhdr", VbrLocalizationHelper.SbrExtNote10subhdr) + _form.LineBreak() +
+                _form.AddA("i2", VbrLocalizationHelper.SbrExtNote11) +
+                _form.AddA("i2", VbrLocalizationHelper.SbrExtNote12) + _form.LineBreak() +
+                _form.AddA("subhdr", VbrLocalizationHelper.SbrExtNote13subhdr) + _form.LineBreak() +
+                _form.AddA("i2", VbrLocalizationHelper.SbrExtNote14) +
+                _form.AddA("i2", VbrLocalizationHelper.SbrExtNote15) +
+                _form.AddA("i2", VbrLocalizationHelper.SbrExtNote16) +
                   _form.LineBreak() +
                 _form.BackToTop()
                 ;
@@ -298,28 +299,28 @@ namespace VeeamHealthCheck.Reporting.Html.VBR
         }
         public string Repos()
         {
-            string s =  _form.AddA("hdr", ResourceHandler.GeneralSummaryHeader) + _form.LineBreak() +
-                _form.AddA("i2", ResourceHandler.RepoSum0) +
-                _form.AddA("i2", ResourceHandler.RepoSum1) + _form.LineBreak() +
+            string s =  _form.AddA("hdr", VbrLocalizationHelper.GeneralSummaryHeader) + _form.LineBreak() +
+                _form.AddA("i2", VbrLocalizationHelper.RepoSum0) +
+                _form.AddA("i2", VbrLocalizationHelper.RepoSum1) + _form.LineBreak() +
             //    _form.DoubleLineBreak() +
-                _form.AddA("hdr", ResourceHandler.GeneralNotesHeader) + _form.LineBreak() +
-                _form.AddA("subhdr", ResourceHandler.SbrExtNote0subhdr) + _form.LineBreak() +
-                _form.AddA("i2", ResourceHandler.SbrExtNote1) +
-                _form.AddA("i2", ResourceHandler.SbrExtNote2) +
-                _form.AddA("i3", ResourceHandler.SbrExtNote3) +
-                _form.AddA("i2", ResourceHandler.SbrExtNote4) + _form.LineBreak() +
-                _form.AddA("subhdr", ResourceHandler.SbrExtNote5subhdr) + _form.LineBreak() +
-                _form.AddA("i2", ResourceHandler.SbrExtNote6) +
-                _form.AddA("i2", ResourceHandler.SbrExtNote7) +
-                _form.AddA("i2", ResourceHandler.SbrExtNote8) +
-                _form.AddA("i2", ResourceHandler.SbrExtNote9) + _form.LineBreak() +
-                _form.AddA("subhdr", ResourceHandler.SbrExtNote10subhdr) + _form.LineBreak() +
-                _form.AddA("i2", ResourceHandler.SbrExtNote11) +
-                _form.AddA("i2", ResourceHandler.SbrExtNote12) + _form.LineBreak() +
-                _form.AddA("subhdr", ResourceHandler.SbrExtNote13subhdr) + _form.LineBreak() +
-                _form.AddA("i2", ResourceHandler.SbrExtNote14) +
-                _form.AddA("i2", ResourceHandler.SbrExtNote15) +
-                _form.AddA("i2", ResourceHandler.SbrExtNote16) +
+                _form.AddA("hdr", VbrLocalizationHelper.GeneralNotesHeader) + _form.LineBreak() +
+                _form.AddA("subhdr", VbrLocalizationHelper.SbrExtNote0subhdr) + _form.LineBreak() +
+                _form.AddA("i2", VbrLocalizationHelper.SbrExtNote1) +
+                _form.AddA("i2", VbrLocalizationHelper.SbrExtNote2) +
+                _form.AddA("i3", VbrLocalizationHelper.SbrExtNote3) +
+                _form.AddA("i2", VbrLocalizationHelper.SbrExtNote4) + _form.LineBreak() +
+                _form.AddA("subhdr", VbrLocalizationHelper.SbrExtNote5subhdr) + _form.LineBreak() +
+                _form.AddA("i2", VbrLocalizationHelper.SbrExtNote6) +
+                _form.AddA("i2", VbrLocalizationHelper.SbrExtNote7) +
+                _form.AddA("i2", VbrLocalizationHelper.SbrExtNote8) +
+                _form.AddA("i2", VbrLocalizationHelper.SbrExtNote9) + _form.LineBreak() +
+                _form.AddA("subhdr", VbrLocalizationHelper.SbrExtNote10subhdr) + _form.LineBreak() +
+                _form.AddA("i2", VbrLocalizationHelper.SbrExtNote11) +
+                _form.AddA("i2", VbrLocalizationHelper.SbrExtNote12) + _form.LineBreak() +
+                _form.AddA("subhdr", VbrLocalizationHelper.SbrExtNote13subhdr) + _form.LineBreak() +
+                _form.AddA("i2", VbrLocalizationHelper.SbrExtNote14) +
+                _form.AddA("i2", VbrLocalizationHelper.SbrExtNote15) +
+                _form.AddA("i2", VbrLocalizationHelper.SbrExtNote16) +
                 _form.LineBreak() +
                 _form.BackToTop()
                 ;
@@ -330,40 +331,40 @@ namespace VeeamHealthCheck.Reporting.Html.VBR
         }
         public string JobCon()
         {
-            string s = _form.AddA("hdr", ResourceHandler.GeneralSummaryHeader) +// _form.LineBreak() +
-                _form.AddA("i2", ResourceHandler.JobConSum0) + _form.LineBreak() +
+            string s = _form.AddA("hdr", VbrLocalizationHelper.GeneralSummaryHeader) +// _form.LineBreak() +
+                _form.AddA("i2", VbrLocalizationHelper.JobConSum0) + _form.LineBreak() +
             //    _form.DoubleLineBreak() +
-                _form.AddA("hdr", ResourceHandler.GeneralNotesHeader) + _form.LineBreak() +
-                _form.AddA("subhdr", ResourceHandler.JobConNote0subhdr) + _form.LineBreak()+
-                _form.AddA("i2", ResourceHandler.JobConNote1) + _form.LineBreak() +
-                _form.AddA("i2", ResourceHandler.JobConNote2) + _form.LineBreak() +
-                _form.AddA("i2", ResourceHandler.JobConNote3) + _form.LineBreak() +
-                _form.AddA("subhdr", ResourceHandler.JobConNote4subhdr) + _form.LineBreak() +
-                _form.AddA("i2", _form.AddA("bld", ResourceHandler.JobConNote5bold)) + _form.LineBreak() +
+                _form.AddA("hdr", VbrLocalizationHelper.GeneralNotesHeader) + _form.LineBreak() +
+                _form.AddA("subhdr", VbrLocalizationHelper.JobConNote0subhdr) + _form.LineBreak()+
+                _form.AddA("i2", VbrLocalizationHelper.JobConNote1) + _form.LineBreak() +
+                _form.AddA("i2", VbrLocalizationHelper.JobConNote2) + _form.LineBreak() +
+                _form.AddA("i2", VbrLocalizationHelper.JobConNote3) + _form.LineBreak() +
+                _form.AddA("subhdr", VbrLocalizationHelper.JobConNote4subhdr) + _form.LineBreak() +
+                _form.AddA("i2", _form.AddA("bld", VbrLocalizationHelper.JobConNote5bold)) + _form.LineBreak() +
                 "<table border=\"1\"><tr>" +
-                "<th>" + _form.AddA("i2", ResourceHandler.JobConNoteSqlTableRow1Col1) + "</th>" +
-                "<th>" + _form.AddA("i2", ResourceHandler.JobConNoteSqlTableRow1Col2) + "</th>" +
-                "<th>" + _form.AddA("i2", ResourceHandler.JobConNoteSqlTableRow1Col3) + "</th>" +
+                "<th>" + _form.AddA("i2", VbrLocalizationHelper.JobConNoteSqlTableRow1Col1) + "</th>" +
+                "<th>" + _form.AddA("i2", VbrLocalizationHelper.JobConNoteSqlTableRow1Col2) + "</th>" +
+                "<th>" + _form.AddA("i2", VbrLocalizationHelper.JobConNoteSqlTableRow1Col3) + "</th>" +
                 "</tr><tr>" +
-                "<td>" + _form.AddA("i2", ResourceHandler.JobConNoteSqlTableRow2Col1) + "</td>" +
-                "<td>" + _form.AddA("i2", ResourceHandler.JobConNoteSqlTableRow2Col2) + "</td>" +
-                "<td>" + _form.AddA("i2", ResourceHandler.JobConNoteSqlTableRow2Col3) + "</td>" +
+                "<td>" + _form.AddA("i2", VbrLocalizationHelper.JobConNoteSqlTableRow2Col1) + "</td>" +
+                "<td>" + _form.AddA("i2", VbrLocalizationHelper.JobConNoteSqlTableRow2Col2) + "</td>" +
+                "<td>" + _form.AddA("i2", VbrLocalizationHelper.JobConNoteSqlTableRow2Col3) + "</td>" +
                 "</tr><tr>" +
-                "<td>" + _form.AddA("i2", ResourceHandler.JobConNoteSqlTableRowRow3Col1) + "</td>" +
-                "<td>" + _form.AddA("i2", ResourceHandler.JobConNoteSqlTableRow3Col2) + "</td>" +
-                "<td>" + _form.AddA("i2", ResourceHandler.JobConNoteSqlTableRow3Col3) + "</td>" +
+                "<td>" + _form.AddA("i2", VbrLocalizationHelper.JobConNoteSqlTableRowRow3Col1) + "</td>" +
+                "<td>" + _form.AddA("i2", VbrLocalizationHelper.JobConNoteSqlTableRow3Col2) + "</td>" +
+                "<td>" + _form.AddA("i2", VbrLocalizationHelper.JobConNoteSqlTableRow3Col3) + "</td>" +
                 "</tr><tr>" +
-                "<td>" + _form.AddA("i2", ResourceHandler.JobConNoteSqlTableRow4Col1) + "</td>" +
-                "<td>" + _form.AddA("i2", ResourceHandler.JobConNoteSqlTableRow4Col2) + "</td>" +
-                "<td>" + _form.AddA("i2", ResourceHandler.JobConNoteSqlTableRow4Col3) + "</td>" +
+                "<td>" + _form.AddA("i2", VbrLocalizationHelper.JobConNoteSqlTableRow4Col1) + "</td>" +
+                "<td>" + _form.AddA("i2", VbrLocalizationHelper.JobConNoteSqlTableRow4Col2) + "</td>" +
+                "<td>" + _form.AddA("i2", VbrLocalizationHelper.JobConNoteSqlTableRow4Col3) + "</td>" +
                 "</tr>" +
                 "</table>" +
                      _form.LineBreak()+
-                _form.AddA("i2", ResourceHandler.JobConNoteSqlTableNote0) + _form.LineBreak() +
-                _form.AddA("i3", ResourceHandler.JobConNoteSqlTableNote1) +
-                _form.AddA("i3", ResourceHandler.JobConNoteSqlTableNote2) +
-                _form.AddA("i3", ResourceHandler.JobConNoteSqlTableNote3) +
-                _form.AddA("i3", ResourceHandler.JobConNoteSqlTableNote4) +
+                _form.AddA("i2", VbrLocalizationHelper.JobConNoteSqlTableNote0) + _form.LineBreak() +
+                _form.AddA("i3", VbrLocalizationHelper.JobConNoteSqlTableNote1) +
+                _form.AddA("i3", VbrLocalizationHelper.JobConNoteSqlTableNote2) +
+                _form.AddA("i3", VbrLocalizationHelper.JobConNoteSqlTableNote3) +
+                _form.AddA("i3", VbrLocalizationHelper.JobConNoteSqlTableNote4) +
                   _form.LineBreak() + 
                 _form.BackToTop()
                 ;
@@ -374,11 +375,11 @@ namespace VeeamHealthCheck.Reporting.Html.VBR
         }
         public string TaskCon()
         {
-            string s =  _form.AddA("hdr", ResourceHandler.GeneralSummaryHeader) + _form.LineBreak() +
-                _form.AddA("i2", ResourceHandler.TaskConSum0) + _form.LineBreak() +
+            string s =  _form.AddA("hdr", VbrLocalizationHelper.GeneralSummaryHeader) + _form.LineBreak() +
+                _form.AddA("i2", VbrLocalizationHelper.TaskConSum0) + _form.LineBreak() +
                 //  _form.DoubleLineBreak() +
-                _form.AddA("hdr", ResourceHandler.GeneralNotesHeader) + _form.LineBreak() +
-                _form.AddA("i2", ResourceHandler.TaskConNote0) +
+                _form.AddA("hdr", VbrLocalizationHelper.GeneralNotesHeader) + _form.LineBreak() +
+                _form.AddA("i2", VbrLocalizationHelper.TaskConNote0) +
                 _form.LineBreak() +
               _form.BackToTop()
                 ;
@@ -389,21 +390,21 @@ namespace VeeamHealthCheck.Reporting.Html.VBR
         }
         public string JobSessSummary()
         {
-            string s = _form.AddA("hdr", ResourceHandler.GeneralSummaryHeader) + _form.LineBreak() +
-                _form.AddA("i2", ResourceHandler.JssSum0) + _form.LineBreak() +
+            string s = _form.AddA("hdr", VbrLocalizationHelper.GeneralSummaryHeader) + _form.LineBreak() +
+                _form.AddA("i2", VbrLocalizationHelper.JssSum0) + _form.LineBreak() +
                 // _form.DoubleLineBreak() +
-                _form.AddA("hdr", ResourceHandler.GeneralNotesHeader) + _form.LineBreak() +
-                _form.AddA("subhdr", ResourceHandler.JssNote0subhdr) + _form.LineBreak() +
-                _form.AddA("i2", ResourceHandler.JssNote1) +
-                _form.AddA("i2", ResourceHandler.JssNote2) +
-                _form.AddA("i3", ResourceHandler.JssNote3) +
-                _form.AddA("i3", ResourceHandler.JssNote4) +
-                _form.AddA("i2", ResourceHandler.JssNote5) +
-                _form.AddA("i2", ResourceHandler.JssNote6) +
-                _form.AddA("i3", ResourceHandler.JssNote7) +
-                _form.AddA("i2", ResourceHandler.JssNote8) +
-                _form.AddA("i2", ResourceHandler.JssNote9) +
-                _form.AddA("i2", ResourceHandler.JssNote10) +
+                _form.AddA("hdr", VbrLocalizationHelper.GeneralNotesHeader) + _form.LineBreak() +
+                _form.AddA("subhdr", VbrLocalizationHelper.JssNote0subhdr) + _form.LineBreak() +
+                _form.AddA("i2", VbrLocalizationHelper.JssNote1) +
+                _form.AddA("i2", VbrLocalizationHelper.JssNote2) +
+                _form.AddA("i3", VbrLocalizationHelper.JssNote3) +
+                _form.AddA("i3", VbrLocalizationHelper.JssNote4) +
+                _form.AddA("i2", VbrLocalizationHelper.JssNote5) +
+                _form.AddA("i2", VbrLocalizationHelper.JssNote6) +
+                _form.AddA("i3", VbrLocalizationHelper.JssNote7) +
+                _form.AddA("i2", VbrLocalizationHelper.JssNote8) +
+                _form.AddA("i2", VbrLocalizationHelper.JssNote9) +
+                _form.AddA("i2", VbrLocalizationHelper.JssNote10) +
                 _form.LineBreak() +
                 _form.BackToTop()
                 ;
@@ -414,11 +415,11 @@ namespace VeeamHealthCheck.Reporting.Html.VBR
         }
         public string JobInfo()
         {
-            string s =  _form.AddA("hdr", ResourceHandler.GeneralSummaryHeader) + _form.LineBreak() +
-                _form.AddA("i2", ResourceHandler.JobInfoSum0) + _form.LineBreak() +
+            string s =  _form.AddA("hdr", VbrLocalizationHelper.GeneralSummaryHeader) + _form.LineBreak() +
+                _form.AddA("i2", VbrLocalizationHelper.JobInfoSum0) + _form.LineBreak() +
                 //  _form.DoubleLineBreak() +
-                _form.AddA("hdr", ResourceHandler.GeneralNotesHeader) + _form.LineBreak() +
-                _form.AddA("i2", ResourceHandler.JobInfoNote0) +
+                _form.AddA("hdr", VbrLocalizationHelper.GeneralNotesHeader) + _form.LineBreak() +
+                _form.AddA("i2", VbrLocalizationHelper.JobInfoNote0) +
                 _form.LineBreak() + 
                 _form.BackToTop()
                 ;

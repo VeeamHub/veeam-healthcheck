@@ -6,13 +6,10 @@ using System.Data;
 using System.Data.SqlClient;
 using System.IO;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using VeeamHealthCheck.Shared.Logging;
-using VeeamHealthCheck;
-using System.Windows;
 using System.Security.Principal;
+using System.Text;
 using VeeamHealthCheck.Shared;
+using VeeamHealthCheck.Shared.Logging;
 
 namespace VeeamHealthCheck.DB
 {
@@ -60,22 +57,9 @@ namespace VeeamHealthCheck.DB
                 var creds = WindowsIdentity.GetCurrent();
                 return null;
             }
-            return null;
         }
 
-        //public ClientFormsAuthenticationCredentials GetCredentials()
-        //{
-        //    if (this.ShowDialog() == DialogResult.OK)
-        //    {
-        //        return new ClientFormsAuthenticationCredentials(
-        //            usernameTextBox.Text, passwordTextBox.Text,
-        //            rememberMeCheckBox.Checked);
-        //    }
-        //    else
-        //    {
-        //        return null;
-        //    }
-        //}
+
         public string ExecSimpleQuery(string query)
         {
             log.Info("executing simple query: " + query);
