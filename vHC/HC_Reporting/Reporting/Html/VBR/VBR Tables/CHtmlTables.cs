@@ -351,6 +351,8 @@ namespace VeeamHealthCheck.Html.VBR
 
             s += AddTable("Detected OS", _helper.CollectedOsInfo());
             s += AddTable("Installed Applications", InstalledAppsTable());
+
+
             //s += _form.Table();
             //s += _form.TableHeader("Found Operating Systems", "");
             //s += "</tr><tr>";
