@@ -15,6 +15,7 @@ using VeeamHealthCheck.Security;
 using VeeamHealthCheck.Shared;
 using VeeamHealthCheck.Shared.Logging;
 using VeeamHealthCheck.Resources.Localization;
+using VeeamHealthCheck.DB;
 
 namespace VeeamHealthCheck.Startup
 {
@@ -145,7 +146,13 @@ namespace VeeamHealthCheck.Startup
             //CGlobals.OpenHtml = false;
             CGlobals._desiredPath = targetForOutput;
             PreRunCheck();
+            GetVbrVersion();
             StartPrimaryFunctions();
+        }
+        private void GetVbrVersion()
+        {
+            CRegReader reg = new();
+            reg.GetVbrVersionFilePath();
         }
         public bool VerifyPath()
         {

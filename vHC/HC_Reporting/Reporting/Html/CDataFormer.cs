@@ -60,7 +60,7 @@ namespace VeeamHealthCheck.Reporting.Html
             _dTypeParser = new();
             _csv = _dTypeParser.ServerInfo();
 
-            CheckXmlFile();
+            //CheckXmlFile();
         }
         private void CheckXmlFile()
         {

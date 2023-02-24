@@ -94,7 +94,7 @@ namespace VeeamHealthCheck.Reporting.Html
                     {
                         var records = config.BnrCsvParser().ToList();
                         _backupServer.Version = records[0].Version;
-                        if(!String.IsNullOrEmpty(_backupServer.DbHostName))
+                        if(String.IsNullOrEmpty(_backupServer.DbHostName))
                         {
                             _backupServer.DbHostName = records[0].SqlServer;
 

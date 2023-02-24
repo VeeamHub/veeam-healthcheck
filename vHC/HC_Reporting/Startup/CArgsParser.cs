@@ -34,13 +34,17 @@ namespace VeeamHealthCheck.Startup
         {
             //CGlobals.RunFullReport = true;
             LogInitialInfo();
-            GetVbrVersion();
+
             if (_args.Length == 0)
                 ParseZeroArgs();
             else if (_args != null && _args.Length > 0)
                 ParseAllArgs(_args);
             else
                 LaunchUi(Handle(), true);
+
+
+
+
         }
         private void LogInitialInfo()
         {
@@ -48,11 +52,7 @@ namespace VeeamHealthCheck.Startup
             f.LogVersionAndArgs(_args);
             f.Dispose();
         }
-        private void GetVbrVersion()
-        {
-            CRegReader reg = new();
-            reg.GetVbrVersionFilePath();
-        }
+
         private void LaunchUi(IntPtr handle, bool hide)
         {
             CGlobals.Logger.Info("Executing GUI", false);
