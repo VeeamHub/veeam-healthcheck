@@ -18,12 +18,16 @@ namespace VeeamHealthCheck.Shared
             "\n" +
             "\t/days:\t\tSpecifies reporting interval. Choose 7 or 30. 7 is default. USAGE: 'days:30'\n" +
             "\t/gui\t\tStarts GUI. GUI overrides other commands." +
-            "\n"+
-            //"\t/security\tRuns a modified Health Check reporting only security-related items" +
-            //"\n"+
+            "\n" +
+            "\t/security\tRuns a modified Health Check reporting only security-related items" +
+            "\n" +
             "\t/lite\t\t" + "Skips output of individual jobs to HTML files. Default is ON and adds extra processing time." +
-            "\n"+
-            "\t/scrub:\t\t" + "/scrub:true | /scrub:false; determines if sensitive data is removed. Default option creates both options"+
+            "\n" +
+            "\t/scrub:\t\t" + "/scrub:true | /scrub:false; determines if sensitive data is removed. Default option creates both options" +
+            "\n\n" +
+            "Most Common Uses:\n" +
+            "1. Regular Health Check:\t .\\VeeamHealthChecck.exe /run\n" +
+            "2. Security Assessment:\t .\\VeeamHealthCheck.exe /security\n"+
             "\n\n" +
             "EXAMPLES:\n" +
             "1. Run to default location:\t .\\VeeamHealthCheck.exe /run\n" +
