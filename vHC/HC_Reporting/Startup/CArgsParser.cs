@@ -1,12 +1,7 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Reflection.Metadata;
+﻿// Copyright (c) 2021, Adam Congdon <adam.congdon2@gmail.com>
+// MIT License
+using System;
 using System.Runtime.InteropServices;
-using System.Text;
-using System.Text.RegularExpressions;
-using System.Threading.Tasks;
-using VeeamHealthCheck.DB;
 //using VeeamHealthCheck.Reporting.vsac;
 using VeeamHealthCheck.Shared;
 

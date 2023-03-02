@@ -1,21 +1,16 @@
-﻿using System;
-using System.Collections.Generic;
+﻿// Copyright (c) 2021, Adam Congdon <adam.congdon2@gmail.com>
+// MIT License
+using System;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
-using System.Reflection.Metadata;
-using System.Runtime.InteropServices;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Documents;
-using VeeamHealthCheck.Collection;
-using VeeamHealthCheck.Security;
+using VeeamHealthCheck.Functions.Collection;
+using VeeamHealthCheck.Functions.Collection.DB;
+using VeeamHealthCheck.Resources.Localization;
 using VeeamHealthCheck.Shared;
 using VeeamHealthCheck.Shared.Logging;
-using VeeamHealthCheck.Resources.Localization;
-using VeeamHealthCheck.DB;
 
 namespace VeeamHealthCheck.Startup
 {

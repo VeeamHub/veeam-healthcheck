@@ -1,20 +1,10 @@
 ﻿// Copyright (c) 2021, Adam Congdon <adam.congdon2@gmail.com>
 // MIT License
-using VeeamHealthCheck.Html;
 using System;
-using System.Diagnostics;
 using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Documents;
-using VeeamHealthCheck.DB;
-using VeeamHealthCheck.Shared.Logging;
-using System.Threading;
-using System.Globalization;
-using VeeamHealthCheck.Scrubber;
-//using System.ComponentModel.Composition.Primitives;
-using System.IO;
-using VeeamHealthCheck.Shared;
 using VeeamHealthCheck.Resources.Localization;
+using VeeamHealthCheck.Shared;
 using VeeamHealthCheck.Startup;
 
 namespace VeeamHealthCheck

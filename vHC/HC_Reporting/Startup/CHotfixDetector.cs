@@ -1,10 +1,12 @@
-﻿using System;
+﻿// Copyright (c) 2021, Adam Congdon <adam.congdon2@gmail.com>
+// MIT License
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.IO.Compression;
 using System.Linq;
-using VeeamHealthCheck.Collection;
-using VeeamHealthCheck.FilesParser;
+using VeeamHealthCheck.Functions.Collection;
+using VeeamHealthCheck.Functions.Collection.LogParser;
 using VeeamHealthCheck.Shared;
 using VeeamHealthCheck.Shared.Logging;
 
