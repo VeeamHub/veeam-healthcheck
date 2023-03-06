@@ -131,8 +131,10 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Folder Include="Functions\Reporting\CsvHandlers\VBR\" />
     <Folder Include="Functions\Reporting\DataTypes\NewFolder\" />
     <Folder Include="Functions\Reporting\Html\VBR\VBR Table Helpers\" />
+    <Folder Include="Functions\Reporting\TableDatas\" />
     <Folder Include="Resources\Localization\VBR\" />
   </ItemGroup>
 

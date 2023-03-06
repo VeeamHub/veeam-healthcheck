@@ -3,11 +3,11 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using VeeamHealthCheck.Functions.Analysis.DataModels;
 using VeeamHealthCheck.Functions.Reporting.CsvHandlers;
 using VeeamHealthCheck.Functions.Reporting.Html;
 using VeeamHealthCheck.Functions.Reporting.Html.Shared;
 using VeeamHealthCheck.Functions.Reporting.Html.VBR;
-using VeeamHealthCheck.Functions.Reporting.TableDatas;
 using VeeamHealthCheck.Reporting.Html.VBR.Managed_Server_Table;
 using VeeamHealthCheck.Reporting.Html.VBR.VBR_Tables;
 using VeeamHealthCheck.Resources.Localization;
@@ -345,10 +345,13 @@ namespace VeeamHealthCheck.Html.VBR
             //1. Components
             s += AddTable("Backup Server", _helper.AddSecurityServerInfo());
             s += AddTable("Immutability & Encryption", _helper.AddSecuritySummaryDetails());
+
+            s += AddTable("Immutability", "");
             s += AddTable("Config Backup", _helper.AddConfigBackupDetails());
 
             s += AddTable("Detected OS", _helper.CollectedOsInfo());
             s += AddTable("Installed Applications", InstalledAppsTable());
+
 
 
             //s += _form.Table();

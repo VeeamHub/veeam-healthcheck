@@ -1,7 +1,7 @@
 ﻿// Copyright (c) 2021, Adam Congdon <adam.congdon2@gmail.com>
 // MIT License
 using System;
-using VeeamHealthCheck.Functions.Reporting.TableDatas;
+using VeeamHealthCheck.Functions.Analysis.DataModels;
 using VeeamHealthCheck.Scrubber;
 using VeeamHealthCheck.Shared.Logging;
 

@@ -281,9 +281,9 @@ namespace VeeamHealthCheck.Functions.Reporting.Html
 
                     row.Add(jname);
                     row.Add(o.ItemCount.ToString());
-                    row.Add(o.AvgJobTime);
-                    row.Add(o.MaxJobTime);
                     row.Add(o.MinJobTime);
+                    row.Add(o.MaxJobTime);
+                    row.Add(o.AvgJobTime);
                     row.Add(o.sessionCount.ToString());
                     row.Add(o.SuccessRate.ToString());
                     row.Add(Math.Round(o.AvgBackupSize, 2).ToString());
@@ -292,8 +292,8 @@ namespace VeeamHealthCheck.Functions.Reporting.Html
                     row.Add(Math.Round(o.AvgChangeRate, 2).ToString());
                     row.Add(Math.Round(o.MaxDataSize, 2).ToString());
                     row.Add(wait);
-                    row.Add(o.avgwait);
                     row.Add(o.maxWait);
+                    row.Add(o.avgwait);
                     row.Add(o.JobType);
 
                     sendBack.Add(row);

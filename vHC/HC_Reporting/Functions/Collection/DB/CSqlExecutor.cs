@@ -2,7 +2,7 @@
 // MIT License
 using System;
 using System.Data;
-using VeeamHealthCheck.Functions.Reporting.TableDatas;
+using VeeamHealthCheck.Functions.Analysis.DataModels;
 using VeeamHealthCheck.Shared;
 using VeeamHealthCheck.Shared.Logging;
 

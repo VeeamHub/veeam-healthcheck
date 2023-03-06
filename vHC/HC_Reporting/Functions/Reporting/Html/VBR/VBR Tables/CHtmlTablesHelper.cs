@@ -4,6 +4,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using VeeamHealthCheck.Functions.Reporting.Html;
+using VeeamHealthCheck.Functions.Reporting.Html.VBR.VBR_Tables.Security;
 using VeeamHealthCheck.Reporting.Html.VBR.Managed_Server_Table;
 using VeeamHealthCheck.Reporting.Html.VBR.VBR_Tables.Security;
 
@@ -29,6 +30,12 @@ namespace VeeamHealthCheck.Reporting.Html.VBR.VBR_Tables
         {
             CVbrSecurityTables t = new();
             return WriteTupleListToHtml(t.ConfigBackupInfo());
+        }
+        public string AddImmutabilityTables()
+        {
+            CImmutabilityTable ct = new();
+
+            return WriteTupleListToHtml(new List<Tuple<string,string>>());
         }
         public List<string> CollectedOsInfo()
         {
