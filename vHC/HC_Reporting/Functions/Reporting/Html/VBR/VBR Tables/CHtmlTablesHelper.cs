@@ -46,6 +46,7 @@ namespace VeeamHealthCheck.Reporting.Html.VBR.VBR_Tables
             {
                 operatingSystems.Add(server.OsInfo);
             }
+            operatingSystems.Sort();
             return operatingSystems.Distinct().ToList();
         }
         private string WriteTupleListToHtml(List<Tuple<string, string>> list)
