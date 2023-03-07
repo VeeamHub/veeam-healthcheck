@@ -5,7 +5,7 @@
       "commandLineArgs": "/security",
       "remoteDebugEnabled": true,
       "authenticationMode": "Windows",
-      "remoteDebugMachine": "WIN-3ESVKA0G3IG:4026"
+      "remoteDebugMachine": "vbr-12-beta3:4026"
     }
   }
 }

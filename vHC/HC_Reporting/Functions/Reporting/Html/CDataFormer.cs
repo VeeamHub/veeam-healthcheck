@@ -1089,6 +1089,7 @@ namespace VeeamHealthCheck.Functions.Reporting.Html
             XElement extElement = new XElement("jobs");
             //doc.Root.Add(extElement);
             //doc.AddFirst(new XProcessingInstruction("xml-stylesheet", "type=\"text/xsl\" href=\"SessionReport.xsl\""));
+            decimal totalsize = 0;
 
             foreach (var c in csv)
             {
@@ -1121,6 +1122,19 @@ namespace VeeamHealthCheck.Functions.Reporting.Html
 
                 sendBack.Add(job);
             }
+
+            // add summary line;
+            List<string> summaryline = new() {
+            "",
+            "",
+            totalsize.ToString(),
+            "",
+            "", 
+            "",
+
+            };
+            
+
             //doc.Save(_testFile);
             log.Info("converting job info to xml..done!");
             return sendBack;
