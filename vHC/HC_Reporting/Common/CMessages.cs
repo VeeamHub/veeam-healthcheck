@@ -12,8 +12,8 @@ namespace VeeamHealthCheck.Shared
         public static string helpMenu = "\nHELP MENU:\n" +
             "\t/run\t\tExecutes the program via CLI" +
             "\n" +
-            "\t/outdir:\tSpecifies desired location for HTML reports. Usage: \"outdir:D:\\example\". Default = C:\\temp\\vHC" +
-            "\n" +
+            //"\t/outdir=\tSpecifies desired location for HTML reports. Usage: \"outdir:D:\\example\". Default = C:\\temp\\vHC" +
+            //"\n" +
             "\t/days:\t\tSpecifies reporting interval. Choose 7 or 30. 7 is default. USAGE: 'days:30'\n" +
             "\t/gui\t\tStarts GUI. GUI overrides other commands." +
             "\n" +
@@ -23,6 +23,9 @@ namespace VeeamHealthCheck.Shared
             "\n" +
             "\t/scrub:\t\t" + "/scrub:true | /scrub:false; determines if sensitive data is removed. Default option creates both options" +
             "\n\n" +
+            "HotFix Detection:\n"+
+            "Use the following syntax:\t\t.\\VeeamHealthCheck.exe /hotfix /path=D:\\ExamplePath"+
+            "\n\n"+
             "Most Common Uses:\n" +
             "1. Regular Health Check:\t .\\VeeamHealthChecck.exe /run\n" +
             "2. Security Assessment:\t .\\VeeamHealthCheck.exe /security\n" +

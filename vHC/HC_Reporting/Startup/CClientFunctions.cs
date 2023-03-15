@@ -103,14 +103,54 @@ namespace VeeamHealthCheck.Startup
             StartCollections();
             StartAnalysis();
         }
-        public void RunHotfixDetector()
+        public void RunHotfixDetector(string path)
         {
             LOG.Info(logStart + "Starting Hotfix Detector", false);
-            LOG.Warning(logStart + "This option will collect support logs to some local directory and then check for hotfixes", false);
-            LOG.Warning(logStart + "Please enter local path with adequate space for log files:", false);
-            var path = Console.ReadLine();
+
+            if (!String.IsNullOrEmpty(path))
+            {
+                if (!VerifyPath(path))
+                {
+                    string error = String.Format("Entered path \"{0}\" is invalid or doesn't exist. Try a different path", path);
+                    LOG.Error(logStart + error, false);
+                    return;
+                    //LOG.Warning(logStart + "This option will collect support logs to some local directory and then check for hotfixes", false);
+                    //LOG.Warning(logStart + "Please enter local path with adequate space for log files:", false);
+                    //path = Console.ReadLine();
+                }
+
+            }
+            else
+            {
+                //LOG.Warning(logStart + "/path: variable is empty or missing." +
+                //    "\nPlease retry with syntax:" +
+                //    "\nVeeamHealthCheck.exe /hotfix /path:C:\\examplepath", false);
+                LOG.Warning(logStart + "This option will collect support logs to some local directory and then check for hotfixes", false);
+                LOG.Warning(logStart + "Please enter local path with adequate space for log files:", false);
+                path = Console.ReadLine();
+            }
+
             CHotfixDetector hfd = new(path);
             hfd.Run();
+        }
+        private bool VerifyPath(string path)
+        {
+            if (String.IsNullOrEmpty(path)) return false;
+            if (Directory.Exists(path)) return true;
+            if(TryCreateDir(path)) return true;
+            else return false;
+        }
+        private bool TryCreateDir(string path)
+        {
+            try
+            {
+                Directory.CreateDirectory(path);
+                return true;
+            }
+            catch {
+                LOG.Error("Failed to create directory.", false);
+                return false; }
+
         }
         private void LogUserSettings()
         {

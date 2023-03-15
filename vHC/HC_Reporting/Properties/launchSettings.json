@@ -2,7 +2,7 @@
   "profiles": {
     "VeeamHealthCheck": {
       "commandName": "Project",
-      "commandLineArgs": "/run",
+      "commandLineArgs": "/hotfix /path=C:\\timp",
       "remoteDebugEnabled": true,
       "authenticationMode": "Windows",
       "remoteDebugMachine": "vbr-12-beta3:4026"

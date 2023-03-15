@@ -2,6 +2,7 @@
 // MIT License
 using System;
 using System.Runtime.InteropServices;
+using System.Text.RegularExpressions;
 //using VeeamHealthCheck.Reporting.vsac;
 using VeeamHealthCheck.Shared;
 
@@ -20,6 +21,8 @@ namespace VeeamHealthCheck.Startup
 
         private readonly string[] _args;
         private CClientFunctions functions = new();
+
+
         public CArgsParser(string[] args)
         {
             _args = args;
@@ -81,6 +84,10 @@ namespace VeeamHealthCheck.Startup
         {
             bool run = false;
             bool ui = false;
+            bool runHfd = false;
+            string _hfdPath = "";
+
+
             string targetDir = @"C:\temp\vHC";
             foreach (var a in args)
             {
@@ -124,13 +131,16 @@ namespace VeeamHealthCheck.Startup
                         ui = true;
                         break;
                     case "/lite":
+                        run = true;
                         CGlobals.EXPORTINDIVIDUALJOBHTMLS = false;
                         break;
                     case "/import":
+                        run = true;
                         CGlobals.IMPORT = true;
                         CGlobals.RunFullReport = true;
                         break;
                     case "/security":
+                        run = true;
                         CGlobals.EXPORTINDIVIDUALJOBHTMLS = false;
                         CGlobals.RunSecReport = true;
                         break;
@@ -143,8 +153,13 @@ namespace VeeamHealthCheck.Startup
                         CGlobals.Scrub = false;
                         break;
                     case "/hotfix":
-                        functions.RunHotfixDetector();
-                        Environment.Exit(0);
+                        //functions.RunHotfixDetector();
+                        runHfd = true;
+                        //Environment.Exit(0);
+                        break;
+                    case var match when new Regex("/path=.*").IsMatch(a):
+                        _hfdPath = ParsePath(a);
+                        CGlobals.Logger.Info("HFD path: " + targetDir);
                         break;
                         //case var match when new Regex("outdir:.*").IsMatch(a):
                         //    string[] outputDir = a.Split(":");
@@ -154,17 +169,32 @@ namespace VeeamHealthCheck.Startup
                 }
             }
 
+            if(runHfd)
+            {
+                functions.RunHotfixDetector(_hfdPath);
+            }
 
-
-            if (ui)
+            else if (ui)
                 LaunchUi(Handle(), false);
-            else
+            else if(run)
             {
                 functions.ModeCheck();
                 FullRun(targetDir);
 
             }
 
+        }
+        private string ParsePath(string input)
+        {
+            try { 
+            string[] outputDir = input.Split("=");
+            return outputDir[1];
+            }
+            catch (Exception e)
+            {
+                CGlobals.Logger.Error("Input path is invalide. Try again.");
+                return null;
+            }
         }
         private void Run(string targetDir)
         {
