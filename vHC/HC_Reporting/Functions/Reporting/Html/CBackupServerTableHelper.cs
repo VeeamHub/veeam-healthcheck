@@ -59,14 +59,18 @@ namespace VeeamHealthCheck.Functions.Reporting.Html
         {
             CCsvParser config = new();
             List<CConfigBackupCsv> cv = config.ConfigBackupCsvParser().ToList();
-            _backupServer.ConfigBackupEnabled = CObjectHelpers.ParseBool(cv[0].Enabled);
-            if (_backupServer.ConfigBackupEnabled == true)
+            if (cv.Count > 0)
             {
 
-                _backupServer.ConfigBackupTarget = cv[0].Target;
-                _backupServer.ConfigBackupEncryption = CObjectHelpers.ParseBool(cv[0].EncryptionOptions);
-                _backupServer.ConfigBackupLastResult = cv[0].LastResult;
-                _backupServer.ConfigBackupRetentionPoints = CObjectHelpers.ParseInt(cv[0].RestorePointsToKeep);
+                _backupServer.ConfigBackupEnabled = CObjectHelpers.ParseBool(cv[0].Enabled);
+                if (_backupServer.ConfigBackupEnabled == true)
+                {
+
+                    _backupServer.ConfigBackupTarget = cv[0].Target;
+                    _backupServer.ConfigBackupEncryption = CObjectHelpers.ParseBool(cv[0].EncryptionOptions);
+                    _backupServer.ConfigBackupLastResult = cv[0].LastResult;
+                    _backupServer.ConfigBackupRetentionPoints = CObjectHelpers.ParseInt(cv[0].RestorePointsToKeep);
+                }
             }
 
         }
