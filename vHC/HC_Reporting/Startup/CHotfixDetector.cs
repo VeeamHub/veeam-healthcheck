@@ -24,7 +24,8 @@ namespace VeeamHealthCheck.Startup
         public CHotfixDetector(string path)
         {
             _fixList = new List<string>();
-            if (VerifyPath(path))
+            CClientFunctions funk = new();
+            if (funk.VerifyPath(path))
             {
                 _originalPath = path;
                 SetPath();
@@ -99,10 +100,25 @@ namespace VeeamHealthCheck.Startup
         private bool VerifyPath(string path)
         {
             if (String.IsNullOrEmpty(path)) return false;
+            if (path.StartsWith("\\\\")) return false;
             if (Directory.Exists(path)) return true;
+            if (TryCreateDir(path)) return true;
             else return false;
         }
-        
+        private bool TryCreateDir(string path)
+        {
+            try
+            {
+                Directory.CreateDirectory(path);
+                return true;
+            }
+            catch
+            {
+                LOG.Error("Failed to create directory.", false);
+                return false;
+            }
+
+        }
         private void ExecLogCollection()
         {
             PSInvoker ps = new();
@@ -158,13 +174,20 @@ namespace VeeamHealthCheck.Startup
             {
                 string[] files = Directory.GetFiles(path);
                 foreach (string file in files)
-                    File.Delete(file);
+                    try
+                    {
+                        File.Delete(file);
+                    }
+                    catch (Exception e) { }
                 string[] dirs = Directory.GetDirectories(path);
                 foreach (string dir in dirs)
                 {
                     ClearTargetPath(dir);
-                    Directory.Delete(path, true);
-
+                    try
+                    {
+                        Directory.Delete(path, true);
+                    }
+                    catch (Exception e) { } 
                 }
 
 

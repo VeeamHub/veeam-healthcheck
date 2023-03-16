@@ -79,7 +79,7 @@ namespace VeeamHealthCheck
             //log.Debug(p., false);
             var res1 = Process.Start(p);
             log.Info(CMessages.PsVbrConfigProcId + res1.Id.ToString(), false);
-            log.Info("PS Window is minimized by default. Progress indicators can be found there.", false);
+            log.Info("\tPS Window is minimized by default. Progress indicators can be found there.", false);
 
 
             res1.WaitForExit();

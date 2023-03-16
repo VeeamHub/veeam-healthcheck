@@ -133,7 +133,7 @@ namespace VeeamHealthCheck.Startup
             CHotfixDetector hfd = new(path);
             hfd.Run();
         }
-        private bool VerifyPath(string path)
+        public bool VerifyPath(string path)
         {
             if (String.IsNullOrEmpty(path)) return false;
             if (path.StartsWith("\\\\")) return false;
