@@ -33,6 +33,9 @@ namespace VeeamHealthCheck.Startup
             //CGlobals.RunFullReport = true;
             LogInitialInfo();
 
+            PSInvoker p = new();
+            p.TryUnblockFiles();
+
             if (_args.Length == 0)
                 ParseZeroArgs();
             else if (_args != null && _args.Length > 0)
@@ -87,6 +90,7 @@ namespace VeeamHealthCheck.Startup
             bool runHfd = false;
             string _hfdPath = "";
 
+            
 
             string targetDir = @"C:\temp\vHC";
             foreach (var a in args)
@@ -158,6 +162,10 @@ namespace VeeamHealthCheck.Startup
                         //Environment.Exit(0);
                         break;
                     case var match when new Regex("/path=.*").IsMatch(a):
+                        _hfdPath = ParsePath(a);
+                        CGlobals.Logger.Info("HFD path: " + targetDir);
+                        break;
+                    case var match when new Regex("/PATH=.*").IsMatch(a):
                         _hfdPath = ParsePath(a);
                         CGlobals.Logger.Info("HFD path: " + targetDir);
                         break;

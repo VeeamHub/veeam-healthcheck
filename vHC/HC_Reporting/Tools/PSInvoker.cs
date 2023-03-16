@@ -16,7 +16,8 @@ namespace VeeamHealthCheck
         private readonly string _vbrConfigScript = Environment.CurrentDirectory + @"\Tools\Scripts\Get-VBRConfig.ps1";
         private readonly string _vbrSessionScript = Environment.CurrentDirectory + @"\Tools\Scripts\Get-VeeamSessionReport.ps1";
         private readonly string _exportLogsScript = Environment.CurrentDirectory + @"\Tools\Scripts\Collect-VBRLogs.ps1";
-
+        private readonly string _dumpServers= Environment.CurrentDirectory + @"\Tools\Scripts\DumpManagedServerToText.ps1";
+        public static readonly string SERVERLISTFILE = "serverlist.txt";
 
         private readonly CLogger log = CGlobals.Logger;
         private readonly string logStart = "[PsInvoker]\t";
@@ -31,10 +32,13 @@ namespace VeeamHealthCheck
             RunVbrConfigCollect();
             RunVbrSessionCollection();
         }
-        private void TryUnblockFiles()
+        public void TryUnblockFiles()
         {
             UnblockFile(_vbrConfigScript);
             UnblockFile(_vbrSessionScript);
+            UnblockFile(_exportLogsScript);
+            UnblockFile(_dumpServers);
+            UnblockFile(_vb365Script);
         }
         public void RunVbrConfigCollect()
         {
@@ -51,28 +55,41 @@ namespace VeeamHealthCheck
             return ConfigStartInfo(_vbrConfigScript, 0, "");
         }
 
-        private ProcessStartInfo ExportLogsStartInfo(string path)
+        private ProcessStartInfo ExportLogsStartInfo(string path, string server)
         {
             log.Info(CMessages.PsVbrConfigStart, false);
-            return LogCollectionInfo(_exportLogsScript, path);
+            return LogCollectionInfo(_exportLogsScript, path, server);
         }
-
-        public void RunVbrLogCollect(string path)
+        private ProcessStartInfo DumpServersStartInfo()
         {
-            ProcessStartInfo p = ExportLogsStartInfo(path);
+            log.Info("Starting dump servers script", false);
+            return ServerDumpInfo(_dumpServers);
+        }
+        public void RunServerDump()
+        {
+            ProcessStartInfo p = DumpServersStartInfo();
+            var result = Process.Start(p);
+            log.Info("Starting PowerShell Server Dump. Process ID: " + result.Id.ToString(), false);
+            result.WaitForExit();
+            log.Info("Powershell server dump complete.", false);
+        }
+        public void RunVbrLogCollect(string path, string server)
+        {
+            ProcessStartInfo p = ExportLogsStartInfo(path, server);
             //log.Debug(p., false);
             var res1 = Process.Start(p);
             log.Info(CMessages.PsVbrConfigProcId + res1.Id.ToString(), false);
+            log.Info("PS Window is minimized by default. Progress indicators can be found there.", false);
 
 
             res1.WaitForExit();
 
             log.Info(CMessages.PsVbrConfigProcIdDone, false);
         }
-        private ProcessStartInfo LogCollectionInfo(string scriptLocation, string path)
+        private ProcessStartInfo LogCollectionInfo(string scriptLocation, string path, string server)
         {
             string argString;
-            argString = $"-NoProfile -ExecutionPolicy unrestricted -file \"{scriptLocation}\" -ReportPath \"{path}\"";
+            argString = $"-NoProfile -ExecutionPolicy unrestricted -file {scriptLocation} -Server {server} -ReportPath {path}";
 
             //string argString = $"-NoProfile -ExecutionPolicy unrestricted -file \"{scriptLocation}\" -ReportPath \"{path}\"";
             log.Debug(logStart + "PS ArgString = " + argString, false);
@@ -81,7 +98,24 @@ namespace VeeamHealthCheck
                 FileName = "powershell.exe",
                 Arguments = argString,
                 UseShellExecute = true,
-                CreateNoWindow = false
+                CreateNoWindow = false,
+                WindowStyle = ProcessWindowStyle.Minimized
+            };
+        }
+        private ProcessStartInfo ServerDumpInfo(string scriptLocation)
+        {
+            string argString;
+            argString = $"-NoProfile -ExecutionPolicy unrestricted -file \"{scriptLocation}\"";
+
+            //string argString = $"-NoProfile -ExecutionPolicy unrestricted -file \"{scriptLocation}\" -ReportPath \"{path}\"";
+            log.Debug(logStart + "PS ArgString = " + argString, false);
+            return new ProcessStartInfo()
+            {
+                FileName = "powershell.exe",
+                Arguments = argString,
+                UseShellExecute = true,
+                CreateNoWindow = false,
+                WindowStyle = ProcessWindowStyle.Minimized
             };
         }
 

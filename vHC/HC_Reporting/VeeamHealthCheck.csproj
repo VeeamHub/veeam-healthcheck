@@ -10,11 +10,11 @@
     <Company>Veeam</Company>
     <Authors>AdamC</Authors>
     <ApplicationIcon>Veeam_HealthCheck_228x228.ico</ApplicationIcon>
-    <AssemblyVersion>1.0.3.370</AssemblyVersion>
+    <AssemblyVersion>1.0.3.385</AssemblyVersion>
     <SignAssembly>true</SignAssembly>
     <AssemblyOriginatorKeyFile>vhc_keyfile2.pfx</AssemblyOriginatorKeyFile>
     <DelaySign>false</DelaySign>
-    <FileVersion>1.0.3.370</FileVersion>
+    <FileVersion>1.0.3.385</FileVersion>
     <DebugType>full</DebugType>
 	  <SelfContained>true</SelfContained>
 	  <!--These 2 lines are what produce the single file utility. Possibly doesn't work...-->
@@ -81,6 +81,7 @@
     <None Remove="Tools\Get-VBRConfig - Copy.ps1" />
     <None Remove="Tools\Scripts\Collect-VB365Data.ps1" />
     <None Remove="Tools\Scripts\Collect-VBRLogs.ps1" />
+    <None Remove="Tools\Scripts\DumpManagedServerToText.ps1" />
     <None Remove="Tools\Scripts\Get-VBRConfig.ps1" />
     <None Remove="Tools\Scripts\Get-VeeamSessionReport.ps1" />
     <None Remove="Tools\Veeam.Hotfix.Detector.zip" />
@@ -88,6 +89,9 @@
 
   <ItemGroup>
     <Content Include="Tools\Scripts\Collect-VBRLogs.ps1">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Tools\Scripts\DumpManagedServerToText.ps1">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
   </ItemGroup>

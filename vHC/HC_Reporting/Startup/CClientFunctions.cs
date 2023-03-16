@@ -122,7 +122,7 @@ namespace VeeamHealthCheck.Startup
             }
             else
             {
-                //LOG.Warning(logStart + "/path: variable is empty or missing." +
+                LOG.Warning(logStart + "/path= variable is empty or missing.");
                 //    "\nPlease retry with syntax:" +
                 //    "\nVeeamHealthCheck.exe /hotfix /path:C:\\examplepath", false);
                 LOG.Warning(logStart + "This option will collect support logs to some local directory and then check for hotfixes", false);
@@ -136,6 +136,7 @@ namespace VeeamHealthCheck.Startup
         private bool VerifyPath(string path)
         {
             if (String.IsNullOrEmpty(path)) return false;
+            if (path.StartsWith("\\\\")) return false;
             if (Directory.Exists(path)) return true;
             if(TryCreateDir(path)) return true;
             else return false;

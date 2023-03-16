@@ -16,16 +16,14 @@ param(
 # VBRServer
   #[Parameter(Mandatory)]
   #[string]$VBRServer
-  [Parameter(Mandatory)]
-  [string]$Server,
-  [Parameter(Mandatory)]
-  [string]$ReportPath,
-  [Parameter()]
-  [DateTime]$To,
-  [Parameter()]
-  [DateTime]$From,
-  [Parameter()]
-  [int]$LastDays
+#    [Parameter(Mandatory)]
+#   [string]$ReportPath,
+#   [Parameter()]
+#   [DateTime]$To,
+#   [Parameter()]
+#   [DateTime]$From,
+#   [Parameter()]
+#   [int]$LastDays
   # [int]$ReportingIntervalDays = -1
 )
 
@@ -35,12 +33,6 @@ $depDLLPath = Join-Path -Path $corePath.CorePath -ChildPath "Packages\VeeamDeplo
 $file = Get-Item -Path $depDLLPath
 $version = $file.VersionInfo.ProductVersion
 
-
-$s = Get-VBRServer -name $Server
-
-if($version.StartsWith("12")){
-    Export-VBRLogs -Server $s -FolderPath $ReportPath -LastDays 1
-}
-else{
-    Export-VBRLogs -Server $s -FolderPath $ReportPath -From (Get-Date).AddDays(-1) -to (get-date)
-}
+$output = "serverlist.txt"
+$servers = Get-VBRServer | Where-Object {($_.type -ne 'CifsShare') -and ($_.type -ne 'VC') -and ($_.type -ne "ESXi") -and ($_.type -ne "Local") }
+$servers.Name | Add-Content -Path $output
