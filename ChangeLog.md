@@ -1,4 +1,15 @@
-﻿1.2.2.934
+1.0.3.390
+- various bug fixes, rafctors and logging changes
+
+
+1.0.3.340
+ v12 updates
+- Proxy & Repository Sizing adjust to new v12 recommendations
+- Postgres compatibility
+- /lite CLI function: Skips output of individual job reports which can slow down overall report. Default is to collect the reports
+- Assorted bug fixes
+
+ 1.2.2.934
 - Disabled ability to change output. Will enable when breaking issues are resolved.
 
 1.0.2.867
