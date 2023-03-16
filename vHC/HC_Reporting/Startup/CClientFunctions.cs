@@ -108,7 +108,7 @@ namespace VeeamHealthCheck.Startup
         public void RunHotfixDetector(string path)
         {
             LOG.Info(logStart + "Starting Hotfix Detector", false);
-
+            GetVbrVersion();
             if (!String.IsNullOrEmpty(path))
             {
                 if (!VerifyPath(path))
