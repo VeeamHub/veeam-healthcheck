@@ -10,11 +10,11 @@
     <Company>Veeam</Company>
     <Authors>AdamC</Authors>
     <ApplicationIcon>Veeam_HealthCheck_228x228.ico</ApplicationIcon>
-    <AssemblyVersion>1.0.3.340</AssemblyVersion>
+    <AssemblyVersion>1.0.3.389</AssemblyVersion>
     <SignAssembly>true</SignAssembly>
     <AssemblyOriginatorKeyFile>vhc_keyfile2.pfx</AssemblyOriginatorKeyFile>
     <DelaySign>false</DelaySign>
-    <FileVersion>1.0.3.340</FileVersion>
+    <FileVersion>1.0.3.389</FileVersion>
     <DebugType>full</DebugType>
 	  <SelfContained>true</SelfContained>
 	  <!--These 2 lines are what produce the single file utility. Possibly doesn't work...-->
@@ -66,6 +66,10 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Compile Remove="Functions\Reporting\Html\VBR\VBR Tables\Job Session Summary\JobSessionSummaryRow.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
     <None Remove="Resources\Localization\VB365\vb365_vhcres.resources" />
     <None Remove="Resources\Localization\vhcres.fr-FR.resources" />
     <None Remove="Resources\Localization\vhcres.ja.resources" />
@@ -77,6 +81,7 @@
     <None Remove="Tools\Get-VBRConfig - Copy.ps1" />
     <None Remove="Tools\Scripts\Collect-VB365Data.ps1" />
     <None Remove="Tools\Scripts\Collect-VBRLogs.ps1" />
+    <None Remove="Tools\Scripts\DumpManagedServerToText.ps1" />
     <None Remove="Tools\Scripts\Get-VBRConfig.ps1" />
     <None Remove="Tools\Scripts\Get-VeeamSessionReport.ps1" />
     <None Remove="Tools\Veeam.Hotfix.Detector.zip" />
@@ -84,6 +89,9 @@
 
   <ItemGroup>
     <Content Include="Tools\Scripts\Collect-VBRLogs.ps1">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Tools\Scripts\DumpManagedServerToText.ps1">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
   </ItemGroup>
@@ -131,13 +139,24 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="Reporting\DataTypes\NewFolder\" />
-    <Folder Include="Reporting\Html\VBR\VBR Table Helpers\" />
+    <Folder Include="Functions\Reporting\CsvHandlers\VBR\" />
+    <Folder Include="Functions\Reporting\DataTypes\NewFolder\" />
+    <Folder Include="Functions\Reporting\Html\VBR\VBR Table Helpers\" />
+    <Folder Include="Functions\Reporting\TableDatas\" />
     <Folder Include="Resources\Localization\VBR\" />
   </ItemGroup>
 
   <Target Name="PostBuild" AfterTargets="PostBuildEvent">
     <Exec Command="call C:\code\VeeamHub\veeam-healthcheck\vHC\HC_Reporting\Tools\build\test.bat" />
   </Target>
+
+  <ItemGroup>
+    <EditorConfigFiles Remove="C:\code\VeeamHub\veeam-healthcheck\vHC\HC_Reporting\.editorconfig" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="C:\code\VeeamHub\veeam-healthcheck\vHC\HC_Reporting\.editorconfig" />
+    <None Include="Functions\Reporting\Html\VBR\VBR Tables\Job Session Summary\JobSessionSummaryRow.cs" />
+  </ItemGroup>
 
 </Project>

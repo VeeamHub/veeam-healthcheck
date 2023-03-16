@@ -1,10 +1,12 @@
-﻿using System;
+﻿// Copyright (c) 2021, Adam Congdon <adam.congdon2@gmail.com>
+// MIT License
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.IO.Compression;
 using System.Linq;
-using VeeamHealthCheck.Collection;
-using VeeamHealthCheck.FilesParser;
+using VeeamHealthCheck.Functions.Collection;
+using VeeamHealthCheck.Functions.Collection.LogParser;
 using VeeamHealthCheck.Shared;
 using VeeamHealthCheck.Shared.Logging;
 
@@ -22,7 +24,8 @@ namespace VeeamHealthCheck.Startup
         public CHotfixDetector(string path)
         {
             _fixList = new List<string>();
-            if (VerifyPath(path))
+            CClientFunctions funk = new();
+            if (funk.VerifyPath(path))
             {
                 _originalPath = path;
                 SetPath();
@@ -33,7 +36,7 @@ namespace VeeamHealthCheck.Startup
             CCollections col = new();
             LOG.Info(logStart + "Checking Path...", false);
             ExecLogCollection();
-            ParseLogs();
+            TryParseRegLogs();
             EchoResults();
         }
         private void EchoResults()
@@ -53,7 +56,7 @@ namespace VeeamHealthCheck.Startup
                 Directory.CreateDirectory(_path);
             }
         }
-        private void ParseLogs()
+        private void TryParseLogs()
         {
             try
             {
@@ -63,6 +66,10 @@ namespace VeeamHealthCheck.Startup
             }
             catch (Exception ex) { LOG.Error(logStart + ex.Message, false); }
 
+
+        }
+        private void TryParseRegLogs()
+        {
             try
             {
                 ParseRegularLogs();
@@ -93,13 +100,53 @@ namespace VeeamHealthCheck.Startup
         private bool VerifyPath(string path)
         {
             if (String.IsNullOrEmpty(path)) return false;
+            if (path.StartsWith("\\\\")) return false;
             if (Directory.Exists(path)) return true;
+            if (TryCreateDir(path)) return true;
             else return false;
+        }
+        private bool TryCreateDir(string path)
+        {
+            try
+            {
+                Directory.CreateDirectory(path);
+                return true;
+            }
+            catch
+            {
+                LOG.Error("Failed to create directory.", false);
+                return false;
+            }
+
         }
         private void ExecLogCollection()
         {
             PSInvoker ps = new();
-            ps.RunVbrLogCollect(_path);
+            ps.RunServerDump();
+
+            // get file + results
+            foreach(string server in ServerList())
+            {
+                LOG.Info("Checking logs for: " + server, false);
+                ps.RunVbrLogCollect(_path, server);
+                TryParseLogs();
+            }
+        }
+        private List<string> ServerList()
+        {
+            List<string> newList = new();
+            string dir = Directory.GetCurrentDirectory();
+            string path = /*dir +*/ PSInvoker.SERVERLISTFILE;
+            using(StreamReader sr = new(path)) //need to get the source directory
+            {
+                string line;
+                while((line = sr.ReadLine()) != null)
+                {
+                    newList.Add(line);
+                }
+
+            }
+            return newList.Distinct().ToList();
         }
         private string ExtractLogs()
         {
@@ -127,13 +174,20 @@ namespace VeeamHealthCheck.Startup
             {
                 string[] files = Directory.GetFiles(path);
                 foreach (string file in files)
-                    File.Delete(file);
+                    try
+                    {
+                        File.Delete(file);
+                    }
+                    catch (Exception e) { }
                 string[] dirs = Directory.GetDirectories(path);
                 foreach (string dir in dirs)
                 {
                     ClearTargetPath(dir);
-                    Directory.Delete(path, true);
-
+                    try
+                    {
+                        Directory.Delete(path, true);
+                    }
+                    catch (Exception e) { } 
                 }
 
 

@@ -251,7 +251,39 @@ foreach ($Repo in $SOBRs) {
 [System.Collections.ArrayList]$AllJobs = @()
 
 foreach ($Job in $Jobs) {
-  $JobDetails = $Job | Select-Object -Property 'Name', 'JobType', 'SheduleEnabledTime', 'ScheduleOptions', @{n = 'RestorePoints'; e = { $Job.Options.BackupStorageOptions.RetainCycles } }, @{n = 'RepoName'; e = { $RepositoryDetails | Where-Object { $_.Id -eq $job.Info.TargetRepositoryId.Guid } | Select-Object -ExpandProperty Name } }, @{n = 'Algorithm'; e = { $Job.Options.BackupTargetOptions.Algorithm } }, @{n = 'FullBackupScheduleKind'; e = { $Job.Options.BackupTargetOptions.FullBackupScheduleKind } }, @{n = 'FullBackupDays'; e = { $Job.Options.BackupTargetOptions.FullBackupDays } }, @{n = 'TransformFullToSyntethic'; e = { $Job.Options.BackupTargetOptions.TransformFullToSyntethic } }, @{n = 'TransformIncrementsToSyntethic'; e = { $Job.Options.BackupTargetOptions.TransformIncrementsToSyntethic } }, @{n = 'TransformToSyntethicDays'; e = { $Job.Options.BackupTargetOptions.TransformToSyntethicDays } }, @{n = 'PwdKeyId'; e = { $_.Info.PwdKeyId } }, @{n = 'OriginalSize'; e = { $_.Info.IncludedSize } }
+  $JobDetails = $Job | Select-Object -Property 'Name', 'JobType',
+  'SheduleEnabledTime', 'ScheduleOptions',
+  @{n = 'RestorePoints'; e = { $Job.Options.BackupStorageOptions.RetainCycles } }, 
+  @{n = 'RepoName'; e = { $RepositoryDetails | Where-Object { $_.Id -eq $job.Info.TargetRepositoryId.Guid } | Select-Object -ExpandProperty Name } },
+  @{n = 'Algorithm'; e = { $Job.Options.BackupTargetOptions.Algorithm } }, 
+  @{n = 'FullBackupScheduleKind'; e = { $Job.Options.BackupTargetOptions.FullBackupScheduleKind } }, 
+  @{n = 'FullBackupDays'; e = { $Job.Options.BackupTargetOptions.FullBackupDays } }, 
+  @{n = 'TransformFullToSyntethic'; e = { $Job.Options.BackupTargetOptions.TransformFullToSyntethic } }, 
+  @{n = 'TransformIncrementsToSyntethic'; e = { $Job.Options.BackupTargetOptions.TransformIncrementsToSyntethic } }, 
+  @{n = 'TransformToSyntethicDays'; e = { $Job.Options.BackupTargetOptions.TransformToSyntethicDays } }, 
+  @{n = 'PwdKeyId'; e = { $_.Info.PwdKeyId } }, 
+  @{n = 'OriginalSize'; e = { $_.Info.IncludedSize } },
+  @{n = 'RetentionType'; e = {$Job.BackupStorageOptions.RetentionType}},
+  @{n = 'RetentionCount'; e = {$Job.BackupStorageOptions.RetainCycles}},
+  @{n = 'RetainDaysToKeep'; e = {$Job.BackupStorageOptions.RetainDaysToKeep}},
+  @{n = 'RetainDays'; e = {$Job.BackupStorageOptions.RetainDays}},
+  @{n = 'DeletedVmRetention'; e = {$Job.BackupStorageOptions.EnableDeletedVmDataRetention}},
+  @{n = 'CompressionLevel'; e = {$Job.BackupStorageOptions.CompressionLevel}},
+  @{n = 'Deduplication'; e = {$Job.BackupStorageOptions.EnableDeduplication}},
+  @{n = 'BlockSize'; e = {$Job.BackupStorageOptions.StgBlockSize}},
+  @{n = 'IntegrityChecks'; e = {$Job.BackupStorageOptions.EnableIntegrityChecks}},
+  @{n = 'SpecificStorageEncryption'; e = {$Job.BackupStorageOptions.UseSpecificStorageEncryption}},
+  @{n = 'StgEncryptionEnabled'; e = {$Job.BackupStorageOptions.StorageEncryptionEnabled}},
+  @{n = 'KeepFirstFullBackup'; e = {$Job.BackupStorageOptions.KeepFirstFullBackup}},
+  @{n = 'EnableFullBackup'; e = {$Job.BackupStorageOptions.EnableFullBackup}},
+  @{n = 'BackupIsAttached'; e = {$Job.BackupStorageOptions.BackupIsAttached}},
+  @{n = 'GfsWeeklyIsEnabled'; e = {$Job.options.gfspolicy.weekly.IsEnabled}},
+  @{n = 'GfsWeeklyCount'; e = {$Job.options.gfspolicy.weekly.KeepBackupsForNumberOfWeeks}},
+  @{n = 'GfsMonthlyEnabled'; e = {$Job.options.gfspolicy.Monthly.IsEnabled}},
+  @{n = 'GfsMonthlyCount'; e = {$Job.options.gfspolicy.Monthly.KeepBackupsForNumberOfMonths}},
+  @{n = 'GfsYearlyEnabled'; e = {$Job.options.gfspolicy.yearly.IsEnabled}},
+  @{n = 'GfsYearlyCount'; e = {$Job.options.gfspolicy.yearly.KeepBackupsForNumberOfYears}}
+
   $AllJobs.Add($JobDetails) | Out-Null
 }
 #add other job types...

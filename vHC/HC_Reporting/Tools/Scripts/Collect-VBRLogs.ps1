@@ -16,7 +16,9 @@ param(
 # VBRServer
   #[Parameter(Mandatory)]
   #[string]$VBRServer
-   [Parameter(Mandatory)]
+  [Parameter(Mandatory)]
+  [string]$Server,
+  [Parameter(Mandatory)]
   [string]$ReportPath,
   [Parameter()]
   [DateTime]$To,
@@ -34,11 +36,11 @@ $file = Get-Item -Path $depDLLPath
 $version = $file.VersionInfo.ProductVersion
 
 
-$servers = Get-VBRServer | Where-Object {$_.Info -notmatch "^This server.*" }
+$s = Get-VBRServer -name $Server
 
 if($version.StartsWith("12")){
-    Export-VBRLogs -Server $servers -FolderPath $ReportPath -LastDays 1
+    Export-VBRLogs -Server $s -FolderPath $ReportPath -LastDays 1
 }
 else{
-    Export-VBRLogs -Server $servers -FolderPath $ReportPath -From (Get-Date).AddDays(-1) -to (get-date)
+    Export-VBRLogs -Server $s -FolderPath $ReportPath -From (Get-Date).AddDays(-1) -to (get-date)
 }

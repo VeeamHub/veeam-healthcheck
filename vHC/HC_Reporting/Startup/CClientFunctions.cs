@@ -1,21 +1,16 @@
-﻿using System;
-using System.Collections.Generic;
+﻿// Copyright (c) 2021, Adam Congdon <adam.congdon2@gmail.com>
+// MIT License
+using System;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
-using System.Reflection.Metadata;
-using System.Runtime.InteropServices;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Documents;
-using VeeamHealthCheck.Collection;
-using VeeamHealthCheck.Security;
+using VeeamHealthCheck.Functions.Collection;
+using VeeamHealthCheck.Functions.Collection.DB;
+using VeeamHealthCheck.Resources.Localization;
 using VeeamHealthCheck.Shared;
 using VeeamHealthCheck.Shared.Logging;
-using VeeamHealthCheck.Resources.Localization;
-using VeeamHealthCheck.DB;
 
 namespace VeeamHealthCheck.Startup
 {
@@ -80,6 +75,8 @@ namespace VeeamHealthCheck.Startup
                 }
 
             }
+            if (!CGlobals.IsVb365 && !CGlobals.IsVbr)
+                CGlobals.Logger.Error("No Veeam Software detected. Is this server the VBR or VB365 management server?",false);
             if (CGlobals.IsVbr)
                 return title + " - " + VbrLocalizationHelper.GuiTitleBnR;
             if (CGlobals.IsVb365)
@@ -108,14 +105,55 @@ namespace VeeamHealthCheck.Startup
             StartCollections();
             StartAnalysis();
         }
-        public void RunHotfixDetector()
+        public void RunHotfixDetector(string path)
         {
             LOG.Info(logStart + "Starting Hotfix Detector", false);
-            LOG.Warning(logStart + "This option will collect support logs to some local directory and then check for hotfixes", false);
-            LOG.Warning(logStart + "Please enter local path with adequate space for log files:", false);
-            var path = Console.ReadLine();
+
+            if (!String.IsNullOrEmpty(path))
+            {
+                if (!VerifyPath(path))
+                {
+                    string error = String.Format("Entered path \"{0}\" is invalid or doesn't exist. Try a different path", path);
+                    LOG.Error(logStart + error, false);
+                    return;
+                    //LOG.Warning(logStart + "This option will collect support logs to some local directory and then check for hotfixes", false);
+                    //LOG.Warning(logStart + "Please enter local path with adequate space for log files:", false);
+                    //path = Console.ReadLine();
+                }
+
+            }
+            else
+            {
+                LOG.Warning(logStart + "/path= variable is empty or missing.");
+                //    "\nPlease retry with syntax:" +
+                //    "\nVeeamHealthCheck.exe /hotfix /path:C:\\examplepath", false);
+                LOG.Warning(logStart + "This option will collect support logs to some local directory and then check for hotfixes", false);
+                LOG.Warning(logStart + "Please enter local path with adequate space for log files:", false);
+                path = Console.ReadLine();
+            }
+
             CHotfixDetector hfd = new(path);
             hfd.Run();
+        }
+        public bool VerifyPath(string path)
+        {
+            if (String.IsNullOrEmpty(path)) return false;
+            if (path.StartsWith("\\\\")) return false;
+            if (Directory.Exists(path)) return true;
+            if(TryCreateDir(path)) return true;
+            else return false;
+        }
+        private bool TryCreateDir(string path)
+        {
+            try
+            {
+                Directory.CreateDirectory(path);
+                return true;
+            }
+            catch {
+                LOG.Error("Failed to create directory.", false);
+                return false; }
+
         }
         private void LogUserSettings()
         {
