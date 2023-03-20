@@ -36,7 +36,7 @@ namespace VeeamHealthCheck.Startup
             CCollections col = new();
             LOG.Info(logStart + "Checking Path...", false);
             ExecLogCollection();
-            TryParseRegLogs();
+            //TryParseRegLogs();
             EchoResults();
         }
         private void EchoResults()
@@ -220,7 +220,7 @@ namespace VeeamHealthCheck.Startup
         {
             try
             {
-
+                string fileVersion = line.Remove(0, line.IndexOf("File Version"));
                 //log.Debug(line, false);
                 string fixLine = line.Remove(0, line.IndexOf("Private Fix"));
                 if (fixLine.EndsWith(']'))
