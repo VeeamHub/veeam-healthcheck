@@ -867,7 +867,7 @@ namespace VeeamHealthCheck.Functions.Reporting.Html
                             {
                                 nameDatesList.Add(bcjName);
 
-                                ctList.AddRange(ParseBcjConcurrency(s));
+                                ctList.Add(ParseConcurrency(s, 7));
                                 break;
                             }
                         }
