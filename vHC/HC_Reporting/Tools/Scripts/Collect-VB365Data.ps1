@@ -305,8 +305,14 @@ function Expand-Expression {
                 $results.ForEach({ $self.($_.ColumnName) = $_.Value }) #create the $self object from current results
             }
 
+            if ($result.ColumnName.StartsWith("*")) { # set to debug on this column
+                Set-PSBreakpoint -Command "Invoke-Expression"
+            }
+
+
             try {
                 $result.Value = Invoke-Expression $expandedExpression
+                Get-PSBreakpoint -Command "Invoke-Expression" | Remove-PSBreakpoint # remove debug breakpoint if it was previously set by asterisk in column name (see a few lines above)
 
                 if ($null -eq $result.value -and $null -ne $BaseObject) {
                     
@@ -357,7 +363,7 @@ function New-DataTableEntry {
 
         if ($null -ne $Object -or $Empty.IsPresent) { 
             foreach ($result in $parsedResults) {
-                
+
                 if (!$result.ColumnName.StartsWith("!")) {
                     if ($null -eq $Object) {
                         $OutputObject | Add-Member -MemberType NoteProperty -Name $result.ColumnName -Value $null #if the source object is empty, then assume the values returned, including defaults, should be null.
@@ -383,7 +389,7 @@ function Import-VMCFile {
         $LogPath = Get-Item -Path ($env:ProgramData+'\Veeam\Backup365\Logs')
     }
     process {
-        $VmcFiles = $LogPath.GetFiles('*VB*_VMC*')
+        $VmcFiles = $LogPath.GetFiles('*VB*_VMC*.log')
         $LatestVmcFile = $VmcFiles | Sort-Object LastWriteTime -Descending | Select-Object -First 1
         $VmcContents = (Get-Content $LatestVmcFile.FullName -Raw)
 
@@ -646,7 +652,7 @@ function Get-VBOEnvironment {
 
         Write-Progress @progressSplat -PercentComplete ($progress++) -Status "Collecting entity details..."
         foreach ($repo in ($e.VBORepository | Where-Object {!($_.IsOutOfOrder -and $null -ne $_.ObjectStorageRepository)})) {
-            if (CheckVersion 7.) {
+            if (CheckVersion -UseInternalVersion 12.) {
                 $e.VBOEntityData = $repo | Get-VBOEntityData -Type User -WarningAction SilentlyContinue | Select-Object *,@{n="Repository";e={@{Id=$repo.Id;Name=$repo.Name}}},@{n="Proxy";e={$proxy=$repo.Proxy; @{Id=$proxy.Id;Name=$proxy.Hostname}}} #Fixed 1/13/2023
             } else {
                 $e.VBOEntityData = $repo | Get-VBOEntityData -Type User -WarningAction SilentlyContinue | Select-Object *,@{n="Repository";e={@{Id=$repo.Id;Name=$repo.Name}}},@{n="Proxy";e={$proxy=($e.VBOProxy | Where-Object { $_.id -eq $repo.ProxyId}); @{Id=$proxy.Id;Name=$proxy.Hostname}}} #Fixed 1/13/2023
@@ -1035,6 +1041,7 @@ function GetEndTime {
     # These expressions can be as advanced as you like, as long as they evaluate back to a single result
 # NOTE: You can use $self.columnName to refer to a previously created column (must be above where $self is used)
 # NOTE: You can add a "!" sign before a column name to have it not include in the returned object. Useful for defining variables or doing something before/after other entries are invoked.
+# NOTE: You can use "*" as the first character of a column name in order to trigger debugging of the expanded expression.
 
 Write-LogFile "Mapping CSV Structures..." -LogLevel INFO
 Write-ElapsedAndMemUsage -Message "Start Mapping"
@@ -1170,8 +1177,8 @@ $map.Proxies = $Global:VBOEnvironment.VBOProxy | mde @(
     'Internet Proxy=>InternetProxy.UseInternetProxy'
     #replaced Aug 11/22 with below, more efficient & accurate # 'Objects Managed_Old=>(($Global:VBOEnvironment.VBOJobSession | ? { $_.JobId -in ($Global:VBOEnvironment.VBOJob | ? { $.Id -eq $_.Repository.ProxyId }).Id} | group JobId | % { $_.Group | Measure-Object -Property Progress -Average} ).Average | measure-object -Sum ).Sum.ToString("0")'
     $(
-        if (CheckVersion 7.) {
-            'Objects Managed=>(($Global:VBOEnvironment.VBOJob | ? { $.Id -eq $_.Repository.Proxy }).Id.Guid | % {$Global:VBOEnvironment.JobSessionIndex[$_].LatestComplete.Progress} | Measure-Object -Sum).Sum'
+        if (CheckVersion -UseInternalVersion 12.) {
+            'Objects Managed=>(($Global:VBOEnvironment.VBOJob | ? { $.Id -eq $_.Repository.Proxy.Id }).Id.Guid | % {$Global:VBOEnvironment.JobSessionIndex[$_].LatestComplete.Progress} | Measure-Object -Sum).Sum'
         } else {
             'Objects Managed=>(($Global:VBOEnvironment.VBOJob | ? { $.Id -eq $_.Repository.ProxyId }).Id.Guid | % {$Global:VBOEnvironment.JobSessionIndex[$_].LatestComplete.Progress} | Measure-Object -Sum).Sum'
         }
@@ -1187,7 +1194,7 @@ Write-LogFile -Message "Mapping Repositories..." -LogLevel DEBUG
 Write-Progress @progressSplat -PercentComplete ($progress++) -Status "Repositories...";
 $map.LocalRepositories = $Global:VBOEnvironment.VBORepository | mde @(
     $(
-        if (CheckVersion 7.) {
+        if (CheckVersion -UseInternalVersion 12.) {
             'Bound Proxy=>$.Proxy.Hostname'
         } else {
             'Bound Proxy=>($Global:VBOEnvironment.VBOProxy | ? { $_.id -eq $.ProxyId }).Hostname'
@@ -1299,7 +1306,7 @@ $map.Jobs = @($Global:VBOEnvironment.VBOJob) + @($Global:VBOEnvironment.VBOCopyJ
     #replaced aug 11/22 with above # #<#Fixed jul 21#>'Excluded Objects=>$objectCountStr = ($Global:VBOEnvironment.VBOJobSession | Where-Object { $_.JobId -eq $.Id } | Sort-Object CreationTime -Descending | Select-Object -First 1); [Regex]::Match($objectCountStr.Log.Title,"(?<=Found )(\d+)(?= excluded objects)").Value' #OLD: used to look at defined things selected. now looks at actual resolved. #$.ExcludedItems.Count'
     'Repository'
     $(
-        if (CheckVersion 7.) {
+        if (CheckVersion -UseInternalVersion 12.) {
             'Bound Proxy=>$.Repository.Proxy.Hostname'
         } else {
             'Bound Proxy=>($Global:VBOEnvironment.VBOProxy | ? { $_.id -eq $.Repository.ProxyId }).Hostname'
