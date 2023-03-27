@@ -798,7 +798,7 @@ namespace VeeamHealthCheck.Functions.Reporting.Html
             //string htmlString = String.Empty;
             //List<CJobSessionInfo> sessionInfo = _dTypeParser.JobSessions;
             // try to trim it up...
-            var targetDate = CGlobals.TOOLSTART.AddDays(-CGlobals.ReportDays);
+            var targetDate = CGlobals.TOOLSTART.AddDays(-7); // should be 7, not CGlobals.ReportDays?
             List<CJobSessionInfo> trimmedSessionInfo = new();
             using (CDataTypesParser dt = new())
             {
@@ -1331,8 +1331,8 @@ namespace VeeamHealthCheck.Functions.Reporting.Html
         private List<ConcurentTracker> ParseBcjConcurrency(CJobSessionInfo session)
         {
             List<ConcurentTracker> ctL = new();
-            int allMinutesOfDay = 7 * 24 * 60;
-            TimeSpan sevenDayMinutes = TimeSpan.FromSeconds(allMinutesOfDay);
+            int allMinutesOfWeek = 7 * 24 * 60;
+            TimeSpan sevenDayMinutes = TimeSpan.FromSeconds(allMinutesOfWeek);
 
 
             foreach (DayOfWeek d in Enum.GetValues(typeof(DayOfWeek)))
