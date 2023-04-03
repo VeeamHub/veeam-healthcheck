@@ -1,71 +1,62 @@
-﻿vNext:
-- Updated VB365 collection script
-- Fixed issue with Job Concurrency table
-- Updated VBR collection script for v12 compatibility
-	- Method change broke collection of protected workloads
-- Fixed discrepency between Protected Workloads table + Managed Server table
-
-1.0.3.392
-- Fixed issue with HotFix Detector
-
 1.0.3.390
+- various bug fixes, rafctors and logging changes
 
-various bug fixes, refactors and logging changes
-1.0.3.340 v12 updates
 
-Proxy & Repository Sizing adjust to new v12 recommendations
-Postgres compatibility
-/lite CLI function: Skips output of individual job reports which can slow down overall report. Default is to collect the reports
-Assorted bug fixes
-1.2.2.934
+1.0.3.340
+ v12 updates
+- Proxy & Repository Sizing adjust to new v12 recommendations
+- Postgres compatibility
+- /lite CLI function: Skips output of individual job reports which can slow down overall report. Default is to collect the reports
+- Assorted bug fixes
 
-Disabled ability to change output. Will enable when breaking issues are resolved.
+ 1.2.2.934
+- Disabled ability to change output. Will enable when breaking issues are resolved.
+
 1.0.2.867
+- Updaded collection script for VB365
 
-Updaded collection script for VB365
 1.0.2.866
+- fixed issue where anonymized report contained inconsidtent item replacement
 
-fixed issue where anonymized report contained inconsidtent item replacement
 1.0.2.863
+- Updated dependency to resolve vulnerability: Microsoft Security Advisory CVE 2022-41064
 
-Updated dependency to resolve vulnerability: Microsoft Security Advisory CVE 2022-41064
 1.0.2.862
+- Added Error handling to prevent crashes in the event some CSV files are not generated
 
-Added Error handling to prevent crashes in the event some CSV files are not generated
 1.0.2.859
+- Modified GUI text
+- Modified ReadME
 
-Modified GUI text
-Modified ReadME
 1.0.2.847
+- Security:
+	- Removed deprecated/unused dependencies
+- Updated Hotfix Detector (/Tools/Hotfixdetector.zip)
 
-Security:
-Removed deprecated/unused dependencies
-Updated Hotfix Detector (/Tools/Hotfixdetector.zip)
 1.0.2.833
+- Fixed broken Job Wait calculation. This could cause the program to hang or crash
+- Fixed issue where custom path would cause program to hang
+- Added error handling + logging
 
-Fixed broken Job Wait calculation. This could cause the program to hang or crash
-Fixed issue where custom path would cause program to hang
-Added error handling + logging
 1.0.2.811
+- Fixed performance issue with data collection
+- Added Hyper-V to protected workloads counter
 
-Fixed performance issue with data collection
-Added Hyper-V to protected workloads counter
 1.0.2.793
+- Performance tweaks
+- multiple reports of "hangs" should be addressed.
+- Fixed "Waits" columns to populate correctly again.
 
-Performance tweaks
-multiple reports of "hangs" should be addressed.
-Fixed "Waits" columns to populate correctly again.
 1.0.2.748
+- CLI enhancement
+- variable date ranges (7/30/90)
+- improved anonymizations
+- various issue/bug fixes
 
-CLI enhancement
-variable date ranges (7/30/90)
-improved anonymizations
-various issue/bug fixes
 1.0.2.676
+- Fixed minor bug with column alignment
 
-Fixed minor bug with column alignment
-
-1.0.2.675
+ 1.0.2.675
 - VB365 HealthCheck
 	- Scripts added to create Health Check Report for VB365.
 - Software detection
@@ -78,9 +69,9 @@ Fixed minor bug with column alignment
 
 1.0.1.1273
 - Fixed Issues:
- 	- #3
+	- #3
 	- #4
- 	- #5
+	- #5
 - Fixed math where Job Sessions' success rate could be greater than 100%.
 
 1.0.1.1272
