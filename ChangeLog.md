@@ -1,4 +1,4 @@
-vNext:
+1.0.3.406:
 - Updated VB365 collection script
 - Fixed issue with Job Concurrency table
 - Updated VBR collection script for v12 compatibility
