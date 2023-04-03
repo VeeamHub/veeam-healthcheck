@@ -604,7 +604,7 @@ namespace VeeamHealthCheck.Functions.Reporting.Html
             return list;
         }
 
-        public List<CManagedServer> ServerXmlFromCsv(bool scrub)
+        public List<CManagedServer> ServerXmlFromCsv(bool scrub)    // managed servers protect vm count
         {
             log.Info("converting server info to xml");
             List<CManagedServer> list = new();
@@ -650,16 +650,18 @@ namespace VeeamHealthCheck.Functions.Reporting.Html
                 }
                 foreach (var u in unProtectedVms)
                 {
-                    if (!countedVMs.Contains(u.Name))
+                    if (u.Type == "Vm")
                     {
-                        if (u.Path.StartsWith(c.Name))
+                        if (!countedVMs.Contains(u.Name))
                         {
-                            vmCount++;
-                            unProtectedCount++;
-                            countedVMs.Add(u.Name);
+                            if (u.Path.StartsWith(c.Name))
+                            {
+                                vmCount++;
+                                unProtectedCount++;
+                                countedVMs.Add(u.Name);
+                            }
                         }
                     }
-
                 }
 
                 //string pVmStr = "";
@@ -823,7 +825,7 @@ namespace VeeamHealthCheck.Functions.Reporting.Html
             }
 
 
-           
+
 
 
             log.Info("calculating concurrency...done!");
@@ -920,11 +922,11 @@ namespace VeeamHealthCheck.Functions.Reporting.Html
             "",
             totalsize.ToString(),
             "",
-            "", 
+            "",
             "",
 
             };
-            
+
 
             //doc.Save(_testFile);
             log.Info("converting job info to xml..done!");
