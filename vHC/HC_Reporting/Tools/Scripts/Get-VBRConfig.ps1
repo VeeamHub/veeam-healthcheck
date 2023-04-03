@@ -110,6 +110,20 @@ Write-Verbose ("Changing directory to '$ReportPath'")
 ## User Role Collection:
 Get-VBRUserRoleAssignment | Export-VhcCsv -FileName "_UserRoles.csv"
 
+#version detection:
+try{
+    $corePath = Get-ItemProperty -Path "HKLM:\Software\Veeam\Veeam Backup and Replication\" -Name "CorePath"
+    $depDLLPath = Join-Path -Path $corePath.CorePath -ChildPath "Packages\VeeamDeploymentDll.dll" -Resolve
+    $file = Get-Item -Path $depDLLPath
+    $version = $file.VersionInfo.ProductVersion
+
+    Write-LogFile("Detected Version: " + $version)
+}
+catch{
+    Write-LogFile("Error on version detection. ")
+}
+
+
 # general collection:
 try {
   $Servers = Get-VBRServer
@@ -342,7 +356,12 @@ $nasProxyOut = $nasProxy | Select-Object -Property "ConcurrentTaskNumber", @{n =
 
 ##Protected Workloads Area
 $vmbackups = Get-VBRBackup | ? { $_.TypeToString -eq "VMware Backup" }
-$vmNames = $vmbackups.GetLastOibs()
+if($version.StartsWith(12)){
+    $vmNames = $vmbackups.GetLastOibs($true)
+}
+else{
+    $vmNames = $vmbackups.GetLastOibs()
+}
 $unprotectedEntityInfo = Find-VBRViEntity | ? { $_.Name -notin $vmNames.Name }
 $protectedEntityInfo = Find-VBRViEntity -Name $vmNames.Name
 $protectedEntityInfo | select Name, PowerState, ProvisionedSize, UsedSize, Path | sort PoweredOn, Path, Name | Export-Csv -Path $("$ReportPath\$VBRServer" + '_ViProtected.csv') -NoTypeInformation
@@ -350,7 +369,12 @@ $unprotectedEntityInfo | select Name, PowerState, ProvisionedSize, UsedSize, Pat
 
 # protected HV Workloads
 $hvvmbackups = Get-VBRBackup | ? { $_.TypeToString -eq "Hyper-v Backup" }
-$hvvmNames = $hvvmbackups.GetLastOibs()
+if($version.StartsWith(12)){
+    $vmNames = $vmbackups.GetLastOibs($true)
+}
+else{
+    $vmNames = $vmbackups.GetLastOibs()
+}
 $unprotectedHvEntityInfo = Find-VBRHvEntity | ? { $_.Name -notin $hvvmNames.Name }
 $protectedHvEntityInfo = Find-VBRHvEntity -Name $hvvmNames.Name
 $protectedHvEntityInfo | select Name, PowerState, ProvisionedSize, UsedSize, Path | sort PoweredOn, Path, Name | Export-Csv -Path $("$ReportPath\$VBRServer" + '_HvProtected.csv') -NoTypeInformation

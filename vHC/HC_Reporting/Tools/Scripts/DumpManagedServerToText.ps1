@@ -34,5 +34,5 @@ $file = Get-Item -Path $depDLLPath
 $version = $file.VersionInfo.ProductVersion
 
 $output = "serverlist.txt"
-$servers = Get-VBRServer | Where-Object {($_.type -ne 'CifsShare') -and ($_.type -ne 'VC') -and ($_.type -ne "ESXi") -and ($_.type -ne "Local") }
+$servers = Get-VBRServer | Where-Object {($_.type -ne 'CifsShare') -and ($_.type -ne 'VC') -and ($_.type -ne "ESXi")  }
 $servers.Name | Add-Content -Path $output

@@ -29,7 +29,7 @@ namespace VeeamHealthCheck.Functions.Reporting.DataTypes.ProxyData
             else if (CGlobals.VBRMAJORVERSION == 12)
             {
                 coreTasks = (cores - 2) * 2;
-                memTasks = MemoryTasks(availableMem, .5);
+                memTasks = MemoryTasks(availableMem, 2);
             }
 
             return SetProvisionStatus(assignedTasks, coreTasks, memTasks);

@@ -11,6 +11,7 @@ using VeeamHealthCheck.Functions.Collection.DB;
 using VeeamHealthCheck.Functions.Reporting.CsvHandlers;
 using VeeamHealthCheck.Functions.Reporting.DataTypes;
 using VeeamHealthCheck.Functions.Reporting.Html.Shared;
+using VeeamHealthCheck.Functions.Reporting.Html.VBR.VBR_Tables.Concurrency_Tables;
 using VeeamHealthCheck.Functions.Reporting.RegSettings;
 using VeeamHealthCheck.Reporting.Html.VBR.Managed_Server_Table;
 using VeeamHealthCheck.Scrubber;
@@ -603,7 +604,7 @@ namespace VeeamHealthCheck.Functions.Reporting.Html
             return list;
         }
 
-        public List<CManagedServer> ServerXmlFromCsv(bool scrub)
+        public List<CManagedServer> ServerXmlFromCsv(bool scrub)    // managed servers protect vm count
         {
             log.Info("converting server info to xml");
             List<CManagedServer> list = new();
@@ -649,16 +650,18 @@ namespace VeeamHealthCheck.Functions.Reporting.Html
                 }
                 foreach (var u in unProtectedVms)
                 {
-                    if (!countedVMs.Contains(u.Name))
+                    if (u.Type == "Vm")
                     {
-                        if (u.Path.StartsWith(c.Name))
+                        if (!countedVMs.Contains(u.Name))
                         {
-                            vmCount++;
-                            unProtectedCount++;
-                            countedVMs.Add(u.Name);
+                            if (u.Path.StartsWith(c.Name))
+                            {
+                                vmCount++;
+                                unProtectedCount++;
+                                countedVMs.Add(u.Name);
+                            }
                         }
                     }
-
                 }
 
                 //string pVmStr = "";
@@ -793,21 +796,17 @@ namespace VeeamHealthCheck.Functions.Reporting.Html
         public Dictionary<int, string[]> JobConcurrency(bool isJob, int days)
         {
             log.Info("calculating concurrency");
-            Dictionary<int, string[]> sendBack = new();
+            CConcurrencyHelper helper = new();
 
-            //string htmlString = String.Empty;
-            //List<CJobSessionInfo> sessionInfo = _dTypeParser.JobSessions;
-            // try to trim it up...
-            var targetDate = CGlobals.TOOLSTART.AddDays(-CGlobals.ReportDays);
+
             List<CJobSessionInfo> trimmedSessionInfo = new();
             using (CDataTypesParser dt = new())
             {
-                trimmedSessionInfo = dt.JobSessions.Where(c => c.CreationTime >= targetDate).ToList();
+                trimmedSessionInfo = dt.JobSessions.Where(c => c.CreationTime >= CGlobals.TOOLSTART.AddDays(-7)).ToList();
             }
             List<CJobTypeInfos> jobInfo = _dTypeParser.JobInfos;
 
             List<ConcurentTracker> ctList = new();
-            //Dictionary<DateTime, string> jobStartDict = new();
             List<string> jobNameList = new();
             jobNameList.AddRange(trimmedSessionInfo.Select(y => y.JobName).Distinct());
 
@@ -815,229 +814,23 @@ namespace VeeamHealthCheck.Functions.Reporting.Html
             List<string> nameDatesList = new();
             if (isJob)
             {
-                List<string> mirrorJobBjobList = new();
-                List<string> backupSyncNameList = new();
-                List<string> epAgentBackupList = new();
-                foreach (var backup in jobInfo)
-                {
-                    if (backup.JobType == "SimpleBackupCopyPolicy")
-                        mirrorJobBjobList.Add(backup.Name);
-                    if (backup.JobType == "BackupSync")
-                        backupSyncNameList.Add(backup.Name);
-                    if (backup.JobType == "EpAgentBackup")
-                        epAgentBackupList.Add(backup.Name);
-                }
-
-
-                foreach (var m in mirrorJobBjobList)
-                {
-                    var mirrorSessions = trimmedSessionInfo.Where(y => y.JobName.StartsWith(m));
-
-                    foreach (var sess in mirrorSessions)
-                    {
-                        //int i = mirrorSessions.Count();
-                        DateTime now = DateTime.Now;
-                        double diff = (now - sess.CreationTime).TotalDays;
-                        if (diff < CGlobals.ReportDays)
-                        {
-                            mirrorJobNamesList.Add(sess.JobName);
-                            string nameDate = sess.JobName + sess.CreationTime.ToString();
-                            if (!nameDatesList.Contains(nameDate))
-                            {
-                                nameDatesList.Add(nameDate);
-                                ctList.Add(ParseConcurrency(sess, days));
-                            }
-                        }
-
-                    }
-                }
-
-                var backupSyncJobs = jobInfo.Where(x => x.JobType == "BackupSync");
-                foreach (var b in backupSyncJobs)
-                {
-                    var v = trimmedSessionInfo.Where(x => x.JobName == b.Name);
-
-                    foreach (var s in v)
-                    {
-                        try
-                        {
-                            string[] n = s.JobName.Split("\\");
-                            string bcjName = b.Name;
-                            if (!nameDatesList.Contains(bcjName))
-                            {
-                                nameDatesList.Add(bcjName);
-
-                                ctList.AddRange(ParseBcjConcurrency(s));
-                                break;
-                            }
-                        }
-                        catch (Exception e)
-                        {
-                            log.Error("Failed to parse BackupSync job. Error:");
-                            log.Error(e.Message);
-                        }
-                    }
-                }
-
-                var epAgentBackupJobs = jobInfo.Where(x => x.JobType == "EpAgentBackup");
-                foreach (var e in epAgentBackupJobs)
-                {
-                    var epBcj = trimmedSessionInfo.Where(x => x.JobType == "EEndPoint");
-
-                    foreach (var epB in epBcj)
-                    {
-                        if (!mirrorJobNamesList.Contains(epB.JobName))
-                        {
-                            string[] n = epB.JobName.Split(" - ");
-                            string n1 = n[0] + epB.CreationTime.ToString();
-                            if (!nameDatesList.Contains(n1))
-                            {
-                                nameDatesList.Add(n1);
-                                ctList.Add(ParseConcurrency(epB, CGlobals.ReportDays));
-                            }
-                        }
-
-                    }
-                }
-                foreach (var b in jobInfo)
-                {
-
-                    var remainingSessions = trimmedSessionInfo.Where(x => x.JobName.Equals(b.Name));
-                    foreach (var sess in remainingSessions)
-                    {
-                        string nameDate = sess.JobName + sess.CreationTime.ToString();
-                        if (!nameDatesList.Contains(nameDate))
-                        {
-                            nameDatesList.Add(nameDate);
-                            ctList.Add(ParseConcurrency(sess, days));
-                        }
-                    }
-
-                }
+                ctList = helper.JobCounter(trimmedSessionInfo);
             }
 
 
             else if (!isJob)
             {
-                foreach (var session in trimmedSessionInfo)
-                {
-                    DateTime now = DateTime.Now;
-                    double diff = (now - session.CreationTime).TotalDays;
-                    if (diff < CGlobals.ReportDays)
-                    {
-                        ctList.Add(ParseConcurrency(session, days));
-
-                    }
-
-                }
+                ctList = helper.TaskCounter(trimmedSessionInfo);
 
             }
 
 
-            Dictionary<DayOfWeek, Dictionary<int, int>> dict1 = new();
-            foreach (var c in ctList)
-            {
-
-                if (!dict1.ContainsKey(c.DayofTheWeeek))
-                {
-                    Dictionary<int, int> minuteMapper = new();
-                    foreach (var c2 in ctList)
-                    {
-
-                        if (c2.Date.DayOfWeek == c.Date.DayOfWeek)
-                        {
-                            var ticks = c2.Duration.TotalMinutes;
-                            int hMinute = c2.hourMinute;
-
-                            for (int i = 0; i < ticks; i++)
-                            {
-                                int current2;
-
-                                minuteMapper.TryGetValue(hMinute, out current2);
-                                minuteMapper[hMinute] = current2 + 1;
-                                hMinute++;
-                            }
-                        }
-                    }
-                    Dictionary<int, int> hoursAndCount = new();
-
-                    for (int hour = 0; hour < 24; hour++)
-                    {
-                        int highestCount = 0;
-                        foreach (var h in minuteMapper.Keys)
-                        {
-                            var p = Math.Round((decimal)h / 60, 0, MidpointRounding.ToZero);
-                            if (hour == p)
-                            {
-                                int minutesSubtract = hour * 60;
-                                int minutes = h - minutesSubtract;
-
-                                minuteMapper.TryGetValue(h, out int counter);
-                                if (counter > highestCount || highestCount == 0)
-                                {
-                                    highestCount = counter;
-
-                                }
-                            }
-                        }
-                        hoursAndCount.Add(hour, highestCount);
-                    }
-
-                    dict1.Add(c.DayofTheWeeek, hoursAndCount);
-
-                }
-
-            }
-
-            List<int> orderedNumList = new();
-            for (int i = 0; i < 24; i++)
-            {
-                orderedNumList.Add(i);
-            }
-
-            foreach (var o in orderedNumList.Distinct()) // o is every hour starting with 0
-            {
-                string[] weekdays = new string[7];
-                string[] rows = new string[7];
-                foreach (var c in dict1)
-                {
-                    foreach (var d in c.Value)
-                    {
-                        if (d.Key == o)
-                        {
-                            string count;
-                            if (d.Value == 0)
-                                count = "";
-                            else
-                                count = d.Value.ToString();
-                            //string count = d.Value.ToString();
-
-                            if (c.Key == DayOfWeek.Sunday)
-                                rows[0] = count;
-                            if (c.Key == DayOfWeek.Monday)
-                                rows[1] = count;
-                            if (c.Key == DayOfWeek.Tuesday)
-                                rows[2] = count;
-                            if (c.Key == DayOfWeek.Wednesday)
-                                rows[3] = count;
-                            if (c.Key == DayOfWeek.Thursday)
-                                rows[4] = count;
-                            if (c.Key == DayOfWeek.Friday)
-                                rows[5] = count;
-                            if (c.Key == DayOfWeek.Saturday)
-                                rows[6] = count;
 
 
-                        }
-                    }
 
-                }
-                sendBack.Add(o, rows);
-
-            }
             log.Info("calculating concurrency...done!");
 
-            return sendBack;
+            return helper.FinalConcurrency((ctList));
         }
 
         public Dictionary<string, string> RegOptions()
@@ -1129,11 +922,11 @@ namespace VeeamHealthCheck.Functions.Reporting.Html
             "",
             totalsize.ToString(),
             "",
-            "", 
+            "",
             "",
 
             };
-            
+
 
             //doc.Save(_testFile);
             log.Info("converting job info to xml..done!");
@@ -1331,8 +1124,8 @@ namespace VeeamHealthCheck.Functions.Reporting.Html
         private List<ConcurentTracker> ParseBcjConcurrency(CJobSessionInfo session)
         {
             List<ConcurentTracker> ctL = new();
-            int allMinutesOfDay = 7 * 24 * 60;
-            TimeSpan sevenDayMinutes = TimeSpan.FromSeconds(allMinutesOfDay);
+            int allMinutesOfWeek = 7 * 24 * 60;
+            TimeSpan sevenDayMinutes = TimeSpan.FromSeconds(allMinutesOfWeek);
 
 
             foreach (DayOfWeek d in Enum.GetValues(typeof(DayOfWeek)))
@@ -1353,41 +1146,7 @@ namespace VeeamHealthCheck.Functions.Reporting.Html
 
             return ctL;
         }
-        private ConcurentTracker ParseConcurrency(CJobSessionInfo session, int days)
-        {
-            ConcurentTracker ct = new();
 
-            DateTime now = DateTime.Now;
-            double diff = (now - session.CreationTime).TotalDays;
-            //if (session.CreationTime.Day == now.Day)
-            //{
-
-            //}
-            if (diff < days)
-            {
-                DayOfWeek dayOfWeek = session.CreationTime.DayOfWeek;
-                var startTime = session.CreationTime;
-
-                TimeSpan.TryParse(session.JobDuration, out TimeSpan duration);
-                DateTime endTime = startTime.AddMinutes(duration.Minutes);
-
-                var startDay = session.CreationTime.Date;
-                int startHour = startTime.Hour;
-                int startMinute = startTime.Minute;
-                int endHour = endTime.Hour;
-                int endMinute = endTime.Minute;
-
-                ct.Date = startTime.Date;
-                ct.DayofTheWeeek = dayOfWeek;
-                ct.Hour = startHour;
-                ct.hourMinute = startHour * 60 + startMinute;
-                ct.Minutes = startMinute;
-                ct.Duration = duration;
-
-                return ct;
-            }
-            return ct;
-        }
 
 
         private void PreCalculations()
