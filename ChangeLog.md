@@ -1,5 +1,15 @@
+1.0.3.406:
+- Updated VB365 collection script
+- Fixed issue with Job Concurrency table
+- Updated VBR collection script for v12 compatibility
+	- Method change broke collection of protected workloads
+- Fixed discrepency between Protected Workloads table + Managed Server table
+
+1.0.3.392
+- Fixed issue with HotFix Detector
+
 1.0.3.390
-- various bug fixes, rafctors and logging changes
+- various bug fixes, refactors and logging changes
 
 
 1.0.3.340
