@@ -128,7 +128,7 @@ namespace VeeamHealthCheck.Functions.Collection.LogParser
                 if (!_fixList.Contains(fixLine))
                 {
                     _fixList.Add(fixLine);
-                    log.Debug(fixLine, false);
+                    //log.Debug(fixLine, false);
 
                 }
             }
