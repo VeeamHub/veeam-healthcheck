@@ -1,3 +1,12 @@
+1.0.3.434
+- Fixed typo in nav table
+- Fixed issue where autogate would show TRUE and gateway will still be shown
+- Added logic to support gateway pools
+- Added logic to prevent crash on log parser
+- Added logic to fix success rate going above 100%
+- Updated proxy sizing calculations to match BP
+- various refactors
+
 1.0.3.406:
 - Updated VB365 collection script
 - Fixed issue with Job Concurrency table

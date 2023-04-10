@@ -163,7 +163,7 @@ namespace VeeamHealthCheck.Functions.Reporting.DataTypes
                 eInfo.IsDecompress = ParseBool(s.Uncompress);
                 eInfo.MaxTasks = ParseToInt(s.MaxTasks);
                 eInfo.AlignBlocks = s.AlignBlock;
-
+                eInfo.GateHosts = s.GateHosts;
 
                 eInfo.HostId = s.HostId;
                 if (eInfo.HostId == "00000000-0000-0000-0000-000000000000")
@@ -222,7 +222,7 @@ namespace VeeamHealthCheck.Functions.Reporting.DataTypes
                 CRepoTypeInfos eInfo = new CRepoTypeInfos();
 
 
-                eInfo.Host = s.HostName;
+                //eInfo.Host = s.HostName;
                 eInfo.RepoName = s.Name;
                 eInfo.Path = s.FriendlyPath;
                 eInfo.IsUnavailable = ParseBool(s.IsUnavailable);
@@ -242,12 +242,18 @@ namespace VeeamHealthCheck.Functions.Reporting.DataTypes
                 if (eInfo.HostId == "00000000-0000-0000-0000-000000000000")
                     eInfo.IsAutoGateway = "True";
 
+                if (eInfo.HostId != "00000000-0000-0000-0000-000000000000")
+                {
+                    eInfo.Host = FilterHostIdToName(eInfo.HostId);
+                }
+
                 eInfo.Ram = MatchHostIdtoRam(eInfo.HostId);
                 eInfo.Cores = MatchHostIdToCPU(eInfo.HostId);
                 eInfo.Povisioning = CalcRepoOptimalTasks(eInfo.MaxTasks, eInfo.Cores, eInfo.Ram);
 
                 eInfo.FreeSPace = ParseToInt(s.FreeSpace);
                 eInfo.TotalSpace = ParseToInt(s.TotalSpace);
+                eInfo.GateHosts = s.GateHosts;
 
                 eInfoList.Add(eInfo);
 

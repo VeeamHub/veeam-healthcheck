@@ -108,7 +108,12 @@ namespace VeeamHealthCheck.Functions.Collection.LogParser
 
                 foreach (var f in fileList)
                 {
-                    waits.AddRange(CheckFileWait(f, jobname));
+                    try
+                    {
+                        waits.AddRange(CheckFileWait(f, jobname));
+
+                    }
+                    catch(Exception e) { }
                 }
                 jobsAndWaits.Add(jobname, waits);
             }
@@ -128,7 +133,7 @@ namespace VeeamHealthCheck.Functions.Collection.LogParser
                 if (!_fixList.Contains(fixLine))
                 {
                     _fixList.Add(fixLine);
-                    log.Debug(fixLine, false);
+                    //log.Debug(fixLine, false);
 
                 }
             }

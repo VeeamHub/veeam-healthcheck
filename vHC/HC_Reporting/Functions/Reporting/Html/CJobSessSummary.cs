@@ -207,8 +207,8 @@ namespace VeeamHealthCheck.Functions.Reporting.Html
                             info.SuccessRate);
                         log.Info(logStart + "Session Calcuations:\t" + sessionInfoString);
                         if (percent > 100)
-                        {// TODO
-
+                        {// TODO: if percent greater than 100, set to 100
+                            percent = 100;
                         }
                     }
 
