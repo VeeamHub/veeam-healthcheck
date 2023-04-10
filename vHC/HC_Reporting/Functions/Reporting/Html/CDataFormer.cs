@@ -12,6 +12,7 @@ using VeeamHealthCheck.Functions.Reporting.CsvHandlers;
 using VeeamHealthCheck.Functions.Reporting.DataTypes;
 using VeeamHealthCheck.Functions.Reporting.Html.Shared;
 using VeeamHealthCheck.Functions.Reporting.Html.VBR.VBR_Tables.Concurrency_Tables;
+using VeeamHealthCheck.Functions.Reporting.Html.VBR.VBR_Tables.Repositories;
 using VeeamHealthCheck.Functions.Reporting.RegSettings;
 using VeeamHealthCheck.Reporting.Html.VBR.Managed_Server_Table;
 using VeeamHealthCheck.Scrubber;
@@ -439,6 +440,19 @@ namespace VeeamHealthCheck.Functions.Reporting.Html
             log.Info("Starting SOBR conversion to xml..done!");
             return list;
         }
+        private string SetGateHosts(string original, bool scrub)
+        {
+            string[] hosts = original.Split(' ');
+            string r = "";
+            foreach (string host in hosts)
+            {
+                string newhost = host;
+                if (scrub)
+                    newhost = Scrub(host);
+                r += newhost + "<br>";
+            }
+            return r;
+        }
         public List<string[]> ExtentXmlFromCsv(bool scrub)
         {
             log.Info("converting extent info to xml");
@@ -450,11 +464,12 @@ namespace VeeamHealthCheck.Functions.Reporting.Html
 
             foreach (var c in csv)
             {
-                string[] s = new string[17];
+                string[] s = new string[18];
                 string newName = c.RepoName;
                 string sobrName = c.SobrName;
                 string hostName = c.Host;
                 string path = c.Path;
+                string gates = SetGateHosts(c.GateHosts, scrub);
 
                 if (scrub)
                 {
@@ -470,6 +485,8 @@ namespace VeeamHealthCheck.Functions.Reporting.Html
                     type = c.TypeDisplay;
 
                 var freePercent = FreePercent(c.FreeSPace, c.TotalSpace);
+                CRepository repo = new();
+                repo.Name = newName;
 
                 s[0] += newName;
                 s[1] += sobrName;
@@ -477,7 +494,19 @@ namespace VeeamHealthCheck.Functions.Reporting.Html
                 s[3] += c.Cores;
                 s[4] += c.Ram;
                 s[5] += c.IsAutoGateway;
-                s[6] += hostName;
+                if (c.IsAutoGateway == "True")
+                {
+                    s[6] += "";
+                }
+                else
+                {
+                    if (String.IsNullOrEmpty(c.GateHosts))
+                        s[6] += hostName;
+                    else
+                    {
+                        s[6] += gates;
+                    }
+                }
                 s[7] += path;
                 s[8] += Math.Round((decimal)c.FreeSPace / 1024, 2);
                 s[9] += Math.Round((decimal)c.TotalSpace / 1024, 2);
@@ -488,7 +517,7 @@ namespace VeeamHealthCheck.Functions.Reporting.Html
                 s[14] += c.IsImmutabilitySupported;
                 s[15] += c.Type;
                 s[16] += c.Povisioning;
-
+                //s[17] += c.GateHosts;
 
                 list.Add(s);
             }
@@ -510,7 +539,7 @@ namespace VeeamHealthCheck.Functions.Reporting.Html
                 string name = c.Name;
                 string host = c.Host;
                 string path = c.Path;
-
+                string gates = SetGateHosts(c.GateHosts, scrub);
                 if (scrub)
                 {
                     name = _scrubber.ScrubItem(c.Name, "repo");
@@ -539,7 +568,20 @@ namespace VeeamHealthCheck.Functions.Reporting.Html
                 s[3] += c.Cores;
                 s[4] += c.Ram;
                 s[5] += c.IsAutoGateway;
-                s[6] += host;
+                if (c.IsAutoGateway == "True")
+                {
+                    s[6] += "";
+                }
+                else
+                {
+                    if (String.IsNullOrEmpty(c.GateHosts))
+                        s[6] += host;
+                    else
+                    {
+                        s[6] += gates;
+                    }
+                }
+
                 s[7] += path;
                 s[8] += Math.Round((decimal)c.FreeSPace / 1024, 2);
                 s[9] += Math.Round((decimal)c.TotalSpace / 1024, 2);

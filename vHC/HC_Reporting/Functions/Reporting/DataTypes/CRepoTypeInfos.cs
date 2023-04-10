@@ -49,6 +49,7 @@ namespace VeeamHealthCheck.Functions.Reporting.DataTypes
         public int MaxTasks { get; set; }
         public string IsDecompress { get; set; }
         public string AlignBlocks { get; set; }
+        public string GateHosts { get; set; }
         public CRepoTypeInfos()
         {
 
