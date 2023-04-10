@@ -503,13 +503,6 @@ namespace VeeamHealthCheck.Functions.Reporting.Html
 
             List<CRepoTypeInfos> csv = _dTypeParser.RepoInfos;
             csv = csv.OrderBy(x => x.Name).ToList();
-            //csv = csv.OrderBy(y => y.sobrName).ToList();
-
-            //XDocument doc = XDocument.Load(_testFile);
-
-            XElement extElement = new XElement("repositories");
-            //doc.Root.Add(extElement);
-            //doc.AddFirst(new XProcessingInstruction("xml-stylesheet", "type=\"text/xsl\" href=\"SessionReport.xsl\""));
 
             foreach (var c in csv)
             {
