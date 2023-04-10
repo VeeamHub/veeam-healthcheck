@@ -108,7 +108,12 @@ namespace VeeamHealthCheck.Functions.Collection.LogParser
 
                 foreach (var f in fileList)
                 {
-                    waits.AddRange(CheckFileWait(f, jobname));
+                    try
+                    {
+                        waits.AddRange(CheckFileWait(f, jobname));
+
+                    }
+                    catch(Exception e) { }
                 }
                 jobsAndWaits.Add(jobname, waits);
             }

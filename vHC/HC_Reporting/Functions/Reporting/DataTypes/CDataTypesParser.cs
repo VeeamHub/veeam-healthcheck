@@ -222,7 +222,7 @@ namespace VeeamHealthCheck.Functions.Reporting.DataTypes
                 CRepoTypeInfos eInfo = new CRepoTypeInfos();
 
 
-                eInfo.Host = s.HostName;
+                //eInfo.Host = s.HostName;
                 eInfo.RepoName = s.Name;
                 eInfo.Path = s.FriendlyPath;
                 eInfo.IsUnavailable = ParseBool(s.IsUnavailable);
@@ -241,6 +241,11 @@ namespace VeeamHealthCheck.Functions.Reporting.DataTypes
                 eInfo.HostId = s.HostId;
                 if (eInfo.HostId == "00000000-0000-0000-0000-000000000000")
                     eInfo.IsAutoGateway = "True";
+
+                if (eInfo.HostId != "00000000-0000-0000-0000-000000000000")
+                {
+                    eInfo.Host = FilterHostIdToName(eInfo.HostId);
+                }
 
                 eInfo.Ram = MatchHostIdtoRam(eInfo.HostId);
                 eInfo.Cores = MatchHostIdToCPU(eInfo.HostId);
