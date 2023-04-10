@@ -610,11 +610,6 @@ namespace VeeamHealthCheck.Functions.Reporting.Html
             var protectedVms = csvp.ViProtectedReader().ToList();
             var unProtectedVms = csvp.ViUnProtectedReader().ToList();
 
-            //XDocument doc = XDocument.Load(_testFile);
-            //XElement serverRoot = new XElement("servers");
-            //doc.Root.Add(serverRoot);
-            //doc.AddFirst(new XProcessingInstruction("xml-stylesheet", "type=\"text/xsl\" href=\"SessionReport.xsl\""));
-
             //list to ensure we only count unique VMs
             List<string> countedVMs = new();
 
@@ -657,30 +652,9 @@ namespace VeeamHealthCheck.Functions.Reporting.Html
                     }
                 }
 
-                //string pVmStr = "";
-                //if (protectedCount != 0)
-                //    pVmStr = protectedCount.ToString();
-
-                //string upVmStr = "";
-                //if (unProtectedCount != 0)
-                //    upVmStr = unProtectedCount.ToString();
-                //string tVmStr = "";
-                //if (vmCount != 0)
-                //    tVmStr = vmCount.ToString();
-
-
-
                 //check for VBR Roles
                 CheckServerRoles(c.Id);
-                //string repoRole = "";
-                //string proxyRole = "";
-                //string wanRole = "";
-                //if (_isBackupServerProxy)
-                //    proxyRole = "True";
-                //if (_isBackupServerRepo)
-                //    repoRole = "True";
-                //if (_isBackupServerWan)
-                //    wanRole = "True";
+
 
                 //scrub name if selected
                 string newName = c.Name;
@@ -700,22 +674,6 @@ namespace VeeamHealthCheck.Functions.Reporting.Html
                 server.IsWan = _isBackupServerWan;
                 server.OsInfo = c.OSInfo;
                 server.IsUnavailable = c.IsUnavailable;
-
-                //s[1] += c.Cores;
-                //s[2] += c.Ram;
-                //s[3] += c.Type;
-                //s[4] += c.ApiVersion;
-                //s[5] += pVmStr;// proxyRole;
-                //s[6] += upVmStr;// repoRole;
-                //s[7] += tVmStr;// wanRole;
-                //s[8] += proxyRole;// c.IsUnavailable;
-                //s[9] += repoRole;// pVmStr;
-                //s[10] += wanRole;// upVmStr;
-                //s[11] += c.IsUnavailable;// tVmStr;
-                //s[12] += ParseString(c.OSInfo);
-
-
-                //doc.Add(xml);
 
                 list.Add(server);
             }
@@ -759,27 +717,6 @@ namespace VeeamHealthCheck.Functions.Reporting.Html
             {
                 totalJobs += c.Value;
             }
-
-            //ParseNonProtectedTypes(notProtectedTypes);
-
-            //XDocument doc = XDocument.Load(_testFile);
-
-            //XElement extElement = new XElement("jobSummary");
-            //doc.Root.Add(extElement);
-            //foreach (var d in typeSummary)
-            //{
-            //    var xml = new XElement("summary",
-            //        new XElement("type", d.Key),
-            //        new XElement("typeCount", d.Value));
-
-            //    extElement.Add(xml);
-
-            //}
-            //var totalElement = new XElement("summary",
-            //    new XElement("type", "TotalJobs"),
-            //    new XElement("typeCount", totalJobs));
-            //extElement.Add(totalElement);
-
 
             log.Info("converting job summary info to xml..done!");
             return typeSummary;
@@ -834,9 +771,7 @@ namespace VeeamHealthCheck.Functions.Reporting.Html
             var RegOptions = reg.RegOptionsCsvParser();
             CDefaultRegOptions defaults = new();
 
-            //XDocument doc = XDocument.Load(_testFile);
-            //XElement extElement = new XElement("regOptions");
-            //doc.Root.Add(extElement);
+
 
             foreach (var r in RegOptions)
             {
