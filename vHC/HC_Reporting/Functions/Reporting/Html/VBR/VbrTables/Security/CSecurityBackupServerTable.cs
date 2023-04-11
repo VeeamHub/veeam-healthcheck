@@ -2,7 +2,7 @@
 // MIT License
 using System;
 using System.Collections.Generic;
-using VeeamHealthCheck.Reporting.Html.VBR.VbrTables;
+using VeeamHealthCheck.Reporting.Html.VBR;
 
 namespace VeeamHealthCheck.Reporting.Html.VBR
 {

@@ -3,7 +3,7 @@
 using System.Net;
 using VeeamHealthCheck.Functions.Reporting.CsvHandlers;
 using VeeamHealthCheck.Functions.Reporting.Html.Shared;
-using VeeamHealthCheck.Html.VBR.VbrTables;
+using VeeamHealthCheck.Html.VBR;
 using VeeamHealthCheck.Resources.Localization;
 using VeeamHealthCheck.Shared;
 using VeeamHealthCheck.Shared.Logging;

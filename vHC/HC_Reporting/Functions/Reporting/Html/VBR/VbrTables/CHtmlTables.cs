@@ -9,12 +9,11 @@ using VeeamHealthCheck.Functions.Reporting.Html;
 using VeeamHealthCheck.Functions.Reporting.Html.Shared;
 using VeeamHealthCheck.Functions.Reporting.Html.VBR;
 using VeeamHealthCheck.Reporting.Html.VBR;
-using VeeamHealthCheck.Reporting.Html.VBR.VbrTables;
 using VeeamHealthCheck.Resources.Localization;
 using VeeamHealthCheck.Shared;
 using VeeamHealthCheck.Shared.Logging;
 
-namespace VeeamHealthCheck.Html.VBR.VbrTables
+namespace VeeamHealthCheck.Html.VBR
 {
     internal class CHtmlTables
     {

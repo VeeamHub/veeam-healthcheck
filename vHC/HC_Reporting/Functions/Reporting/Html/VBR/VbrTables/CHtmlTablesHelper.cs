@@ -4,11 +4,11 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using VeeamHealthCheck.Functions.Reporting.Html;
-using VeeamHealthCheck.Functions.Reporting.Html.VBR.VBR_Tables.Security;
+using VeeamHealthCheck.Functions.Reporting.Html.VBR;
 using VeeamHealthCheck.Reporting.Html.VBR;
 //using VeeamHealthCheck.Reporting.Html.VBR.VbrTables.Security;
 
-namespace VeeamHealthCheck.Reporting.Html.VBR.VbrTables
+namespace VeeamHealthCheck.Reporting.Html.VBR
 {
     internal class CHtmlTablesHelper
     {

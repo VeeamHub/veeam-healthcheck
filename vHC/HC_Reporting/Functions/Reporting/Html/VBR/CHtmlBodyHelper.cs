@@ -1,6 +1,6 @@
 ﻿// Copyright (c) 2021, Adam Congdon <adam.congdon2@gmail.com>
 // MIT License
-using VeeamHealthCheck.Html.VBR.VbrTables;
+using VeeamHealthCheck.Html.VBR;
 using VeeamHealthCheck.Shared;
 
 namespace VeeamHealthCheck.Functions.Reporting.Html.VBR

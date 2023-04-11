@@ -2,14 +2,15 @@
 // MIT License
 using System;
 using System.Collections.Generic;
-using VeeamHealthCheck.Reporting.Html.VBR.VbrTables;
+using VeeamHealthCheck.Reporting.Html.VBR;
+//using VeeamHealthCheck.Reporting.Html.VBR.VbrTables;
 
 namespace VeeamHealthCheck.Reporting.Html.VBR
 {
     internal class CVbrSecurityTables
     {
         private CVbrSecurityTableHelper _tables;
-        private CConfigBackupTable _cfgTable = new();
+        private readonly CConfigBackupTable _cfgTable = new();
         public CVbrSecurityTables()
         {
             _tables = new();
