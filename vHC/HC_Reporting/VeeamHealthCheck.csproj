@@ -10,11 +10,11 @@
     <Company>Veeam</Company>
     <Authors>AdamC</Authors>
     <ApplicationIcon>Veeam_HealthCheck_228x228.ico</ApplicationIcon>
-    <AssemblyVersion>1.0.3.434</AssemblyVersion>
+    <AssemblyVersion>1.0.3.436</AssemblyVersion>
     <SignAssembly>true</SignAssembly>
     <AssemblyOriginatorKeyFile>vhc_keyfile2.pfx</AssemblyOriginatorKeyFile>
     <DelaySign>false</DelaySign>
-    <FileVersion>1.0.3.434</FileVersion>
+    <FileVersion>1.0.3.436</FileVersion>
     <DebugType>full</DebugType>
 	  <SelfContained>true</SelfContained>
 	  <!--These 2 lines are what produce the single file utility. Possibly doesn't work...-->
@@ -97,10 +97,10 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="CsvHelper" Version="27.2.1" />
-    <PackageReference Include="Microsoft.PowerShell.SDK" Version="7.3.2" />
+    <PackageReference Include="CsvHelper" Version="30.0.1" />
+    <PackageReference Include="Microsoft.PowerShell.SDK" Version="7.3.3" />
     <PackageReference Include="System.Data.SqlClient" Version="4.8.5" />
-    <PackageReference Include="System.Management.Automation" Version="7.3.2" />
+    <PackageReference Include="System.Management.Automation" Version="7.3.3" />
   </ItemGroup>
 
   <ItemGroup>
