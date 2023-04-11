@@ -2,9 +2,9 @@
 // MIT License
 using System;
 using System.Collections.Generic;
-using VeeamHealthCheck.Reporting.Html.VBR.VBR_Tables.Backup_Server;
+using VeeamHealthCheck.Reporting.Html.VBR.VbrTables.BackupServer;
 
-namespace VeeamHealthCheck.Reporting.Html.VBR.VBR_Tables.Security
+namespace VeeamHealthCheck.Reporting.Html.VBR.VbrTables.Security
 {
     internal class CSecurityBackupServerTable
     {

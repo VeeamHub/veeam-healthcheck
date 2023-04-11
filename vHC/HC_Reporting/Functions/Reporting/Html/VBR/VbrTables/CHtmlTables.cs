@@ -9,7 +9,7 @@ using VeeamHealthCheck.Functions.Reporting.Html;
 using VeeamHealthCheck.Functions.Reporting.Html.Shared;
 using VeeamHealthCheck.Functions.Reporting.Html.VBR;
 using VeeamHealthCheck.Reporting.Html.VBR.Managed_Server_Table;
-using VeeamHealthCheck.Reporting.Html.VBR.VBR_Tables;
+using VeeamHealthCheck.Reporting.Html.VBR.VbrTables;
 using VeeamHealthCheck.Resources.Localization;
 using VeeamHealthCheck.Shared;
 using VeeamHealthCheck.Shared.Logging;

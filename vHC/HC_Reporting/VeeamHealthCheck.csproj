@@ -11,11 +11,11 @@
     <Company>Veeam</Company>
     <Authors>AdamC</Authors>
     <ApplicationIcon>Veeam_HealthCheck_228x228.ico</ApplicationIcon>
-    <AssemblyVersion>1.0.3.441</AssemblyVersion>
+    <AssemblyVersion>1.0.3.442</AssemblyVersion>
     <SignAssembly>False</SignAssembly>
     <AssemblyOriginatorKeyFile>vhc_keyfile2.pfx</AssemblyOriginatorKeyFile>
     <DelaySign>false</DelaySign>
-    <FileVersion>1.0.3.441</FileVersion>
+    <FileVersion>1.0.3.442</FileVersion>
     <DebugType>full</DebugType>
 	  <SelfContained>true</SelfContained>
 	  <!--These 2 lines are what produce the single file utility. Possibly doesn't work...-->
@@ -67,7 +67,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Compile Remove="Functions\Reporting\Html\VBR\VBR Tables\Job Session Summary\JobSessionSummaryRow.cs" />
+    <Compile Remove="Functions\Reporting\Html\VBR\VbrTables\Job Session Summary\JobSessionSummaryRow.cs" />
   </ItemGroup>
 
   <ItemGroup>
@@ -142,7 +142,6 @@
   <ItemGroup>
     <Folder Include="Functions\Reporting\CsvHandlers\VBR\" />
     <Folder Include="Functions\Reporting\DataTypes\NewFolder\" />
-    <Folder Include="Functions\Reporting\Html\VBR\VBR Table Helpers\" />
     <Folder Include="Functions\Reporting\TableDatas\" />
     <Folder Include="Resources\Localization\VBR\" />
   </ItemGroup>
@@ -157,7 +156,7 @@
 
   <ItemGroup>
     <None Include="C:\code\VeeamHub\veeam-healthcheck\vHC\HC_Reporting\.editorconfig" />
-    <None Include="Functions\Reporting\Html\VBR\VBR Tables\Job Session Summary\JobSessionSummaryRow.cs" />
+    <None Include="Functions\Reporting\Html\VBR\VbrTables\Job Session Summary\JobSessionSummaryRow.cs" />
   </ItemGroup>
 
 </Project>

@@ -6,9 +6,9 @@ using System.Linq;
 using VeeamHealthCheck.Functions.Reporting.Html;
 using VeeamHealthCheck.Functions.Reporting.Html.VBR.VBR_Tables.Security;
 using VeeamHealthCheck.Reporting.Html.VBR.Managed_Server_Table;
-using VeeamHealthCheck.Reporting.Html.VBR.VBR_Tables.Security;
+using VeeamHealthCheck.Reporting.Html.VBR.VbrTables.Security;
 
-namespace VeeamHealthCheck.Reporting.Html.VBR.VBR_Tables
+namespace VeeamHealthCheck.Reporting.Html.VBR.VbrTables
 {
     internal class CHtmlTablesHelper
     {
