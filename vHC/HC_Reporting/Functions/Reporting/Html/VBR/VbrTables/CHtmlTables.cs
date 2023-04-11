@@ -15,7 +15,7 @@ using VeeamHealthCheck.Resources.Localization;
 using VeeamHealthCheck.Shared;
 using VeeamHealthCheck.Shared.Logging;
 
-namespace VeeamHealthCheck.Html.VBR
+namespace VeeamHealthCheck.Html.VBR.VbrTables
 {
     internal class CHtmlTables
     {
