@@ -1,6 +1,6 @@
 ﻿// Copyright (c) 2021, Adam Congdon <adam.congdon2@gmail.com>
 // MIT License
-namespace VeeamHealthCheck.Reporting.Html.VBR.Managed_Server_Table
+namespace VeeamHealthCheck.Reporting.Html.VBR
 {
     internal class CManagedServer
     {

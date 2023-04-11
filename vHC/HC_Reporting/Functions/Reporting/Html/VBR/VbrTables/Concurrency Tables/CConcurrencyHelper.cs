@@ -10,7 +10,7 @@ using VeeamHealthCheck.Functions.Reporting.DataTypes;
 using VeeamHealthCheck.Shared;
 using VeeamHealthCheck.Shared.Logging;
 
-namespace VeeamHealthCheck.Functions.Reporting.Html.VBR.VBR_Tables.Concurrency_Tables
+namespace VeeamHealthCheck.Functions.Reporting.Html.VBR
 {
     internal class CConcurrencyHelper
     {

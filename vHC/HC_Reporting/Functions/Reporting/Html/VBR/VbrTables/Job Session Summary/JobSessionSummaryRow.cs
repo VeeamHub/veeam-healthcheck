@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace VeeamHealthCheck.Functions.Reporting.Html.VBR.VBR_Tables.Job_Session_Summary
+namespace VeeamHealthCheck.Functions.Reporting.Html.VBR
 {
     class JobSessionSummaryRow
     {

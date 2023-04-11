@@ -2,9 +2,9 @@
 // MIT License
 using System;
 using System.Collections.Generic;
-using VeeamHealthCheck.Reporting.Html.VBR;
+using VeeamHealthCheck.Reporting.Html.VBR.VbrTables;
 
-namespace VeeamHealthCheck.Reporting.Html.VBR.VbrTables.Security
+namespace VeeamHealthCheck.Reporting.Html.VBR
 {
     internal class CVbrSecurityTables
     {

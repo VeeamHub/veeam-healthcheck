@@ -7,7 +7,7 @@ using VeeamHealthCheck.Functions.Reporting.Html;
 using VeeamHealthCheck.Functions.Reporting.Html.Shared;
 using VeeamHealthCheck.Resources.Localization;
 
-namespace VeeamHealthCheck.Reporting.Html.VBR.VbrTables.Security
+namespace VeeamHealthCheck.Reporting.Html.VBR
 {
     internal class CVbrSecurityTableHelper
     {
