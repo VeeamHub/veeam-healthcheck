@@ -1,3 +1,6 @@
+1.0.3.459
+- added error handling to fix a bug/crash
+
 1.0.3.434
 - Fixed typo in nav table
 - Fixed issue where autogate would show TRUE and gateway will still be shown
