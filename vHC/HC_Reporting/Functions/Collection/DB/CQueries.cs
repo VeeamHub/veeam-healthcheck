@@ -158,7 +158,8 @@ namespace VeeamHealthCheck.Functions.Collection.DB
             string query = "select type,name,repository_id, included_size  from [Bjobs]";
             _jobInfo = Fetch(query);
 
-            DumpDataToCsv(_jobInfo);
+            try { DumpDataToCsv(_jobInfo); }
+            catch(Exception e){ log.Error("Failed to dump bjobs to csv.."); log.Error(e.Message); }
         }
         private void GetJobSummary()
         {
