@@ -187,10 +187,10 @@ namespace VeeamHealthCheck.Startup
             GetVbrVersion();
             StartPrimaryFunctions();
         }
-        private void GetVbrVersion()
+        public void GetVbrVersion()
         {
             CRegReader reg = new();
-            reg.GetVbrVersionFilePath();
+            LOG.Info(logStart + "VBR Version: " + reg.GetVbrVersionFilePath());
         }
         public bool VerifyPath()
         {

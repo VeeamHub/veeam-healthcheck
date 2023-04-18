@@ -51,6 +51,7 @@ namespace VeeamHealthCheck.Startup
         {
             CClientFunctions f = new CClientFunctions();
             f.LogVersionAndArgs(_args);
+            f.GetVbrVersion();
             f.Dispose();
         }
 

@@ -3,6 +3,7 @@
 using Microsoft.Win32;
 using System;
 using System.Diagnostics;
+using System.Net.Http.Headers;
 using VeeamHealthCheck.Shared;
 using VeeamHealthCheck.Shared.Logging;
 
@@ -66,7 +67,7 @@ namespace VeeamHealthCheck.Functions.Collection.DB
             }
 
         }
-        public void GetVbrVersionFilePath()
+        public string GetVbrVersionFilePath()
         {
             using (RegistryKey key =
                 Registry.LocalMachine.OpenSubKey("Software\\Veeam\\Veeam Backup and Replication"))
@@ -76,6 +77,7 @@ namespace VeeamHealthCheck.Functions.Collection.DB
                 var version = FileVersionInfo.GetVersionInfo(path + "\\Packages\\VeeamDeploymentDll.dll");
                 CGlobals.VBRFULLVERSION = version.FileVersion;
                 ParseVbrMajorVersion(CGlobals.VBRFULLVERSION);
+                return CGlobals.VBRFULLVERSION;
 
             }
         }
@@ -177,8 +179,10 @@ namespace VeeamHealthCheck.Functions.Collection.DB
                 if (key != null)
                 {
                     var dbType = key.GetValue("SqlActiveConfiguration").ToString();
+                    log.Info(logStart + "DB Type = " + dbType);
                     if (dbType == "MsSql")
                     {
+                        
                         CGlobals.DBTYPE = CGlobals.SqlTypeName;
 
                         using (RegistryKey sqlKey = Registry.LocalMachine.OpenSubKey("Software\\Veeam\\Veeam Backup and Replication\\DatabaseConfigurations\\MsSql"))
