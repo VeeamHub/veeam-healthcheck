@@ -651,11 +651,12 @@ function Get-VBOEnvironment {
         Write-ResourceUsageToLog -Message "Jobs collected"
 
         Write-Progress @progressSplat -PercentComplete ($progress++) -Status "Collecting entity details..."
+        $e.VBOEntityData = @()
         foreach ($repo in ($e.VBORepository | Where-Object {!($_.IsOutOfOrder -and $null -ne $_.ObjectStorageRepository)})) {
             if (CheckVersion -UseInternalVersion 12.) {
-                $e.VBOEntityData = $repo | Get-VBOEntityData -Type User -WarningAction SilentlyContinue | Select-Object *,@{n="Repository";e={@{Id=$repo.Id;Name=$repo.Name}}},@{n="Proxy";e={$proxy=$repo.Proxy; @{Id=$proxy.Id;Name=$proxy.Hostname}}} #Fixed 1/13/2023
+                $e.VBOEntityData += $repo | Get-VBOEntityData -Type User -WarningAction SilentlyContinue | Select-Object *,@{n="Repository";e={@{Id=$repo.Id;Name=$repo.Name}}},@{n="Proxy";e={$proxy=$repo.Proxy; @{Id=$proxy.Id;Name=$proxy.Hostname}}} #Fixed 1/13/2023
             } else {
-                $e.VBOEntityData = $repo | Get-VBOEntityData -Type User -WarningAction SilentlyContinue | Select-Object *,@{n="Repository";e={@{Id=$repo.Id;Name=$repo.Name}}},@{n="Proxy";e={$proxy=($e.VBOProxy | Where-Object { $_.id -eq $repo.ProxyId}); @{Id=$proxy.Id;Name=$proxy.Hostname}}} #Fixed 1/13/2023
+                $e.VBOEntityData += $repo | Get-VBOEntityData -Type User -WarningAction SilentlyContinue | Select-Object *,@{n="Repository";e={@{Id=$repo.Id;Name=$repo.Name}}},@{n="Proxy";e={$proxy=($e.VBOProxy | Where-Object { $_.id -eq $repo.ProxyId}); @{Id=$proxy.Id;Name=$proxy.Hostname}}} #Fixed 1/13/2023
             }
         }
         # Build an index (hashtable keyed to email) so that the search in the next function is orders of magnitude faster.
@@ -1056,8 +1057,8 @@ Write-Progress @progressSplat -PercentComplete ($progress++) -Status "Management
 $map.Controller = $Global:VBOEnvironment.VMCLog.HostDetails | mde @(
     'VB365 Version=>$Global:VBOEnvironment.VMCLog.ProductDetails.Version | Append-VB365ProductVersion'
     'OS Version=>OSVersion'
-    'RAM=>($.RAMTotalSize/1GB).ToString("#,##0 GB")'
-    'CPUs=>CPUCount'
+    'CPUs=>CPUCount' #updated 3/23/23 per feature request
+    'RAM=>($.RAMTotalSize/1GB).ToString("#,##0 GB")' #updated 3/23/23 per feature request
     'Proxies Managed=>$VBOEnvironment.VMCLog.InfraCounts.BackupProxiesCount'
     'Repos Managed=>[int]$VBOEnvironment.VMCLog.InfraCounts.BackupRepositoriesCount ' #just count true repo definitions -- old: + [int]$VBOEnvironment.VMCLog.InfraCounts.ObjStgCount'
     'Orgs Managed=>$VBOEnvironment.VMCLog.InfraCounts.OrganizationsCount'
@@ -1184,8 +1185,8 @@ $map.Proxies = $Global:VBOEnvironment.VBOProxy | mde @(
         }
     )
     'OS Version=>($Global:VBOEnvironment.VMCLog.ProxyDetails | ? { $.Id -eq $_.ProxyID }).OSVersion'
-    'RAM=>(($Global:VBOEnvironment.VMCLog.ProxyDetails | ? { $.Id -eq $_.ProxyID }).RAMTotalSize/1GB).ToString("###0 GB")'
-    'CPUs=>($Global:VBOEnvironment.VMCLog.ProxyDetails | ? { $.Id -eq $_.ProxyID }).CPUCount'
+    'CPUs=>($Global:VBOEnvironment.VMCLog.ProxyDetails | ? { $.Id -eq $_.ProxyID }).CPUCount' #updated 3/23/23 per feature request
+    'RAM=>(($Global:VBOEnvironment.VMCLog.ProxyDetails | ? { $.Id -eq $_.ProxyID }).RAMTotalSize/1GB).ToString("###0 GB")' #updated 3/23/23 per feature request
     'Extended Logging?=>($VBOEnvironment.VBOServerComponents | ? { $.Id -eq $_.Id -and $_.Name -eq "Proxy" }).ExtendedLoggingEnabled'
 )
 Write-ElapsedAndMemUsage -Message "Mapped Proxies" -LogLevel PROFILE
@@ -1210,7 +1211,7 @@ $map.LocalRepositories = $Global:VBOEnvironment.VBORepository | mde @(
     #Dropped Jun 17 #'Outdated?=>IsOutdated'
     'State=>$states = Join($(if ($.IsOutOfSync) { "Out of Sync" }),$(if ($.IsOutdated) { "Out of Date" }),$(if ($.IsOutOfOrder) { "Invalid: " + $.OutOfOrderReason })); if ($states -eq "") {"Healthy"} else { $states }'
     'Capacity=>($.Capacity/1TB).ToString("#,##0.000 TB")'
-    'Free=>($.FreeSpace/1TB).ToString("#,##0.000 TB")'
+    'Free=>($.FreeSpace/1TB).ToString("#,##0.000 TB") +" ("+ (($.FreeSpace/$.Capacity)/1TB).ToString("#,##0.00 %") + ")"' #updated 3/23/23 per feature request
     'Data Stored=>$repoUsage = ($Global:VBOEnvironment.VBOUsageData | ? { $_.RepositoryId -eq $.Id}); $SpaceUsed = if (($repoUsage.ObjectStorageUsedSpace | measure -Sum).Sum/1TB -gt 0) {($repoUsage.ObjectStorageUsedSpace | measure -Sum).Sum/1TB} else {($repoUsage.UsedSpace | measure -Sum).Sum/1TB}; $SpaceUsed.ToString("#,##0.000 TB")'
     'Cache Space Used=>((($Global:VBOEnvironment.VBOUsageData | ? { $_.RepositoryId -eq $.Id}).LocalCacheUsedSpace | measure -Sum).Sum/1TB).ToString("#,##0.000 TB")'
     #Dropped Jun 17 #'Local Space Used=>((($Global:VBOEnvironment.VBOUsageData | ? { $_.RepositoryId -eq $.Id}).UsedSpace | measure -Sum).Sum/1TB).ToString("#,##0.000 TB")'
