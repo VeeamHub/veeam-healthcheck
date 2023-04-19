@@ -5,6 +5,7 @@ using System.Runtime.InteropServices;
 using System.Text.RegularExpressions;
 //using VeeamHealthCheck.Reporting.vsac;
 using VeeamHealthCheck.Shared;
+using VeeamHealthCheck.Shared.Logging;
 
 namespace VeeamHealthCheck.Startup
 {
@@ -51,7 +52,8 @@ namespace VeeamHealthCheck.Startup
         {
             CClientFunctions f = new CClientFunctions();
             f.LogVersionAndArgs(_args);
-            f.GetVbrVersion();
+            try { f.GetVbrVersion(); }
+            catch(Exception ex) { }
             f.Dispose();
         }
 
@@ -72,8 +74,8 @@ namespace VeeamHealthCheck.Startup
         private void ParseZeroArgs()
         {
             var pos = Console.GetCursorPosition();
-            CGlobals.Logger.Warning("pos = " + pos.ToString(), false);
-            if (pos == (0, 1))
+            //CGlobals.Logger.Warning("pos = " + pos.ToString(), false);
+            if (pos == (0, 1) || pos == (0,2))
             {
                 CGlobals.Logger.Info("0s");
                 LaunchUi(Handle(), true);
