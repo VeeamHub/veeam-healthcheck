@@ -8,6 +8,7 @@ using System.Windows;
 using System.Windows.Controls;
 using VeeamHealthCheck.Functions.Collection;
 using VeeamHealthCheck.Functions.Collection.DB;
+using VeeamHealthCheck.Functions.Collection.REST;
 using VeeamHealthCheck.Resources.Localization;
 using VeeamHealthCheck.Shared;
 using VeeamHealthCheck.Shared.Logging;
@@ -184,7 +185,19 @@ namespace VeeamHealthCheck.Startup
             //CGlobals.OpenHtml = false;
             CGlobals._desiredPath = targetForOutput;
             PreRunCheck();
-            GetVbrVersion();
+            //GetVbrVersion();
+            
+            
+            try // REST TEST AREA
+            {
+                //RestInvoker restInvoker = new RestInvoker();
+                //restInvoker.Run();
+            }
+            catch(Exception ex)
+            {
+
+            }
+            
             StartPrimaryFunctions();
         }
         public void GetVbrVersion()

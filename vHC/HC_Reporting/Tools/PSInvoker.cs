@@ -138,11 +138,13 @@ namespace VeeamHealthCheck
         }
         private ProcessStartInfo ConfigStartInfo(string scriptLocation, int days, string path)
         {
+            if (CGlobals.REMOTEHOST == "")
+                CGlobals.REMOTEHOST = "localhost";
             string argString;
             if (days != 0)
-                argString = $"-NoProfile -ExecutionPolicy unrestricted -file \"{scriptLocation}\" -VBRServer localhost -ReportInterval {CGlobals.ReportDays} ";
+                argString = $"-NoProfile -ExecutionPolicy unrestricted -file \"{scriptLocation}\" -VBRServer \"{CGlobals.REMOTEHOST}\" -ReportInterval {CGlobals.ReportDays} ";
             else
-                argString = $"-NoProfile -ExecutionPolicy unrestricted -file \"{scriptLocation}\" -VBRServer localhost ";
+                argString = $"-NoProfile -ExecutionPolicy unrestricted -file \"{scriptLocation}\" -VBRServer \"{CGlobals.REMOTEHOST}\" ";
             if (!String.IsNullOrEmpty(path))
             {
                 argString = $"-NoProfile -ExecutionPolicy unrestricted -file \"{scriptLocation}\" -ReportPath \"{path}\"";

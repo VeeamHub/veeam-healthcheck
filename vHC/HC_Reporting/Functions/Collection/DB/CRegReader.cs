@@ -70,7 +70,7 @@ namespace VeeamHealthCheck.Functions.Collection.DB
         public string GetVbrVersionFilePath()
         {
             using (RegistryKey key =
-                Registry.LocalMachine.OpenSubKey("Software\\Veeam\\Veeam Backup and Replication"))
+                RegistryKey.OpenRemoteBaseKey(RegistryHive.LocalMachine, CGlobals.REMOTEHOST).OpenSubKey("Software\\Veeam\\Veeam Backup and Replication"))
             {
                 string path = key.GetValue("CorePath").ToString();
                 //FileInfo dllInfo = new FileInfo(path + "\\Packages\\VeeamDeploymentDll.dll");
@@ -140,7 +140,7 @@ namespace VeeamHealthCheck.Functions.Collection.DB
             }
         }
         private void SetSqlInfo(RegistryKey key)
-        {
+       {
             if (key != null)
             {
 

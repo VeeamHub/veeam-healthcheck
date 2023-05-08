@@ -20,6 +20,9 @@ namespace VeeamHealthCheck.Functions.Collection
          */
         public void Run()
         {
+            if (CGlobals.RunSecReport)
+                ExecSecurityCollection();
+
             ExecPSScripts();
             if (!CGlobals.RunSecReport)
                 PopulateWaits();
@@ -28,8 +31,8 @@ namespace VeeamHealthCheck.Functions.Collection
             GetRegistryDbInfo();
             if (CGlobals.DBTYPE != CGlobals.PgTypeName)
                 ExecSqlQueries();
-            if (CGlobals.RunSecReport)
-                ExecSecurityCollection();
+            //if (CGlobals.RunSecReport)
+            //    ExecSecurityCollection();
             // do sql collections
         }
 

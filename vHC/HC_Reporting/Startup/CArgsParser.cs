@@ -151,6 +151,9 @@ namespace VeeamHealthCheck.Startup
                         CGlobals.EXPORTINDIVIDUALJOBHTMLS = false;
                         CGlobals.RunSecReport = true;
                         break;
+                    case "/remote":
+                        CGlobals.REMOTEEXEC = true;
+                        break;
                     case "/scrub:true":
                         CGlobals.Logger.Info("Setting SCRUB = true", false);
                         CGlobals.Scrub = true;
@@ -172,6 +175,14 @@ namespace VeeamHealthCheck.Startup
                         _hfdPath = ParsePath(a);
                         CGlobals.Logger.Info("HFD path: " + targetDir);
                         break;
+                    case var match when new Regex("/HOST=.*").IsMatch(a):
+                        CGlobals.REMOTEHOST = ParsePath(a);
+                        //CGlobals.Logger.Info("HFD path: " + targetDir);
+                        break;
+                    case var match when new Regex("/host=.*").IsMatch(a):
+                        CGlobals.REMOTEHOST = ParsePath(a);
+                        //CGlobals.Logger.Info("HFD path: " + targetDir);
+                        break;
                         //case var match when new Regex("outdir:.*").IsMatch(a):
                         //    string[] outputDir = a.Split(":");
                         //    targetDir = outputDir[1];
@@ -189,8 +200,14 @@ namespace VeeamHealthCheck.Startup
                 LaunchUi(Handle(), false);
             else if(run)
             {
-                functions.ModeCheck();
-                FullRun(targetDir);
+                if (CGlobals.REMOTEHOST != "" && CGlobals.RunSecReport)
+                    FullRun(targetDir);
+                else
+                {
+                    functions.ModeCheck();
+                    FullRun(targetDir);
+                }
+                
 
             }
 

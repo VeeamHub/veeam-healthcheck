@@ -1,18 +1,29 @@
 ﻿// Copyright (c) 2021, Adam Congdon <adam.congdon2@gmail.com>
 // MIT License
 using Microsoft.Win32;
+using Microsoft.Win32.SafeHandles;
 using System;
+using System.Runtime.InteropServices;
+using System.Security.Principal;
+using VeeamHealthCheck.Shared;
 using VeeamHealthCheck.Shared.Logging;
 
 namespace VeeamHealthCheck.Functions.Collection.Security
 {
     internal class CSecurityInit
     {
+        [DllImport("advapi32.dll", SetLastError = true, CharSet = CharSet.Unicode)]
+        static extern bool LogonUser(String lpszUsername, String lpszDomain, String lpszPassword,
+        int dwLogonType, int dwLogonProvider, out SafeAccessTokenHandle phToken);
+
         private readonly string _appLogName = "Veeam.HealthCheck.ServerApplications.log";
 
         private readonly CLogger LOG;
         private readonly CLogger AppLOG;
         private readonly string logStart = "[Security]\t";
+
+        private string VBRSERVER = "localhost";
+        
         public CSecurityInit()
         {
             LOG = new CLogger("Veeam.HealthCheck.Security.log");
@@ -21,9 +32,88 @@ namespace VeeamHealthCheck.Functions.Collection.Security
 
         public void Run()
         {
-            GetInstalledApps(); //TODO: uncomment before publish
-            IsRdpEnabled();
-            IsDomainJoined();
+            if (CGlobals.REMOTEEXEC)
+            {
+            }
+            RunImpersonated();
+
+            //GetInstalledApps(); 
+            //IsRdpEnabled();
+            //IsDomainJoined();
+        }
+        private void RunImpersonated()
+        {
+            // Get the user token for the specified user, domain, and password using the   
+            // unmanaged LogonUser method.   
+            // The local machine name can be used for the domain name to impersonate a user on this machine.  
+            //Console.Write("Enter the name of the VBR Server on which to log on: ");
+            //string domainName = Console.ReadLine();
+
+            
+
+            Console.WriteLine("Logging into: " + CGlobals.REMOTEHOST);
+            string domainName = CGlobals.REMOTEHOST;
+
+
+            VBRSERVER = domainName;
+            Console.Write("Enter the login of a user on {0} that you wish to impersonate: ", domainName);
+            string userName = Console.ReadLine();
+
+            Console.Write("Enter the password for {0}: ", userName);
+
+            const int LOGON32_PROVIDER_DEFAULT = 0;
+            //This parameter causes LogonUser to create a primary token.   
+            //const int LOGON32_LOGON_INTERACTIVE = 2;
+            const int LOGON32_LOGON_INTERACTIVE = 9;
+
+            string password = null;
+            while (true)
+            {
+                var key = System.Console.ReadKey(true);
+                if (key.Key == ConsoleKey.Enter)
+                    break;
+                password += key.KeyChar;
+            }
+            Console.WriteLine("Executing...");
+
+            // Call LogonUser to obtain a handle to an access token.   
+            SafeAccessTokenHandle safeAccessTokenHandle;
+            //bool returnValue = LogonUser(userName, domainName, Console.ReadLine(),
+            //    LOGON32_LOGON_INTERACTIVE, LOGON32_PROVIDER_DEFAULT,
+            //    out safeAccessTokenHandle);
+
+            bool returnValue = LogonUser(userName, domainName, password,
+            LOGON32_LOGON_INTERACTIVE, LOGON32_PROVIDER_DEFAULT,
+            out safeAccessTokenHandle);
+
+            if (false == returnValue)
+            {
+                int ret = Marshal.GetLastWin32Error();
+                Console.WriteLine("LogonUser failed with error code : {0}", ret);
+                throw new System.ComponentModel.Win32Exception(ret);
+            }
+
+            //Console.WriteLine("Did LogonUser Succeed? " + (returnValue ? "Yes" : "No"));
+            // Check the identity.  
+            //Console.WriteLine("Before impersonation: " + WindowsIdentity.GetCurrent().Name);
+
+            // Note: if you want to run as unimpersonated, pass  
+            //       'SafeAccessTokenHandle.InvalidHandle' instead of variable 'safeAccessTokenHandle'  
+            WindowsIdentity.RunImpersonated(
+                safeAccessTokenHandle,
+                // User action  
+                () =>
+                {
+                    // Check the identity.  
+                //    Console.WriteLine("During impersonation: " + WindowsIdentity.GetCurrent().Name);
+                    IsRdpEnabled();
+                    GetInstalledApps();
+                    //IsDomainJoined(); // This may not work....
+                }
+                );
+
+            // Check the identity again.  
+            Console.WriteLine("After impersonation: " + WindowsIdentity.GetCurrent().Name);
         }
         private void IsDomainJoined()
         {
@@ -48,7 +138,7 @@ namespace VeeamHealthCheck.Functions.Collection.Security
         {
             LOG.Info(logStart + "Getting list of apps. Output to be shown in " + _appLogName);
             string registry_key = @"SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall";
-            using (RegistryKey key = Registry.LocalMachine.OpenSubKey(registry_key))
+            using (RegistryKey key = RegistryKey.OpenRemoteBaseKey(RegistryHive.LocalMachine, VBRSERVER).OpenSubKey(registry_key))
             {
                 AppLOG.Info("Installed apps: ", false);
                 foreach (string subkey_name in key.GetSubKeyNames())
@@ -57,16 +147,22 @@ namespace VeeamHealthCheck.Functions.Collection.Security
                     {
                         try
                         {
-                            //var n  = subkey.TryGetPropertyValue<string>("DisplayName");
-                            string name = subkey.GetValue("DisplayName").ToString();
-                            if (CSecurityGlobalValues.IsConsoleInstalled == "Undetermined" || CSecurityGlobalValues.IsConsoleInstalled == "False")
+                            var res = subkey.GetValue("DisplayName");
+                            if(res != null)
                             {
-                                if (name == "Veeam Backup & Replication Console")
-                                    CSecurityGlobalValues.IsConsoleInstalled = "True";
-                                else
-                                    CSecurityGlobalValues.IsConsoleInstalled = "False";
+                                res.ToString();
+                                //var n  = subkey.TryGetPropertyValue<string>("DisplayName");
+                                string name = res.ToString();//subkey.GetValue("DisplayName").ToString();
+                                if (CSecurityGlobalValues.IsConsoleInstalled == "Undetermined" || CSecurityGlobalValues.IsConsoleInstalled == "False")
+                                {
+                                    if (name == "Veeam Backup & Replication Console")
+                                        CSecurityGlobalValues.IsConsoleInstalled = "True";
+                                    else
+                                        CSecurityGlobalValues.IsConsoleInstalled = "False";
+                                }
+                                AppLOG.Info("\t" + name, true);
                             }
-                            AppLOG.Info("\t" + subkey.GetValue("DisplayName").ToString(), true);
+                            
 
                         }
                         catch (Exception e)
@@ -81,7 +177,7 @@ namespace VeeamHealthCheck.Functions.Collection.Security
         {
             string registryKey = @"SYSTEM\CurrentControlSet\Control\Terminal Server";
             string keyName = "fDenyTSConnections";
-            using (RegistryKey key = Registry.LocalMachine.OpenSubKey(registryKey))
+            using (RegistryKey key = RegistryKey.OpenRemoteBaseKey(RegistryHive.LocalMachine, VBRSERVER).OpenSubKey(registryKey))//.LocalMachine.OpenSubKey(registryKey))
             {
                 LOG.Info("RDP Status:");
 
