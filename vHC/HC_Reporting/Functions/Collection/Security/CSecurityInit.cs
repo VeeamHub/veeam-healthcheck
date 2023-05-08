@@ -22,7 +22,7 @@ namespace VeeamHealthCheck.Functions.Collection.Security
         private readonly CLogger AppLOG;
         private readonly string logStart = "[Security]\t";
 
-        private string VBRSERVER = "localhost";
+        private string VBRSERVER = CGlobals.REMOTEHOST;
         
         public CSecurityInit()
         {
@@ -35,11 +35,11 @@ namespace VeeamHealthCheck.Functions.Collection.Security
             if (CGlobals.REMOTEEXEC)
             {
             }
-            RunImpersonated();
+            //RunImpersonated();
 
-            //GetInstalledApps(); 
-            //IsRdpEnabled();
-            //IsDomainJoined();
+            GetInstalledApps(); 
+            IsRdpEnabled();
+            IsDomainJoined();
         }
         private void RunImpersonated()
         {

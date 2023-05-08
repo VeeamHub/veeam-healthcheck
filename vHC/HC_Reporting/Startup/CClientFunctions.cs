@@ -165,9 +165,11 @@ namespace VeeamHealthCheck.Startup
         {
             if (!CGlobals.IMPORT)
             {
+                CImpersonation cImpersonation = new CImpersonation();
                 LOG.Info(logStart + "Init Collections", false);
-                CCollections collect = new();
-                collect.Run();
+                //CCollections collect = new();
+                //collect.Run();
+                cImpersonation.RunCollection();
                 LOG.Info(logStart + "Init Collections...done!", false);
             }
         }
@@ -202,8 +204,13 @@ namespace VeeamHealthCheck.Startup
         }
         public void GetVbrVersion()
         {
+            try
+            {
+
             CRegReader reg = new();
             LOG.Info(logStart + "VBR Version: " + reg.GetVbrVersionFilePath(),  false);
+            }
+            catch(Exception e) { }
         }
         public bool VerifyPath()
         {
