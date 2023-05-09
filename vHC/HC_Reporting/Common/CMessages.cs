@@ -35,8 +35,8 @@ namespace VeeamHealthCheck.Shared
             "2. Run to custom location:\t .\\VeeamHealthCheck.exe /run outdir:\\\\myshare\\folder\n" +
             "3. Run with 30 day report:\t .\\VeeamHealthCheck.exe /run days:30\n" +
             "4. Run GUI from CLI:\t .\\VeeamHealthCheck.exe /gui" +
-            "5. Run without extra job details:\t .\\VeeamHealthCheck.exe /run /lite" +
-            "6. Run report on existing data without starting new collection:\t VeeamHealthCheck.exe /import /run (also works with /security)" +
+            "\n5. Run without extra job details:\t .\\VeeamHealthCheck.exe /run /lite" +
+            "\n6. Run report on existing data without starting new collection:\t VeeamHealthCheck.exe /import /run (also works with /security)" +
             "\n";
 
         public static string PsVbrConfigStart = "[PS] Enter Config Collection Invoker...";

@@ -53,7 +53,7 @@ namespace VeeamHealthCheck.Startup
             CClientFunctions f = new CClientFunctions();
             f.LogVersionAndArgs(_args);
             try { f.GetVbrVersion(); }
-            catch(Exception ex) { }
+            catch (Exception ex) { }
             f.Dispose();
         }
 
@@ -75,7 +75,7 @@ namespace VeeamHealthCheck.Startup
         {
             var pos = Console.GetCursorPosition();
             //CGlobals.Logger.Warning("pos = " + pos.ToString(), false);
-            if (pos == (0, 1) || pos == (0,2))
+            if (pos == (0, 1) || pos == (0, 2))
             {
                 CGlobals.Logger.Info("0s");
                 LaunchUi(Handle(), true);
@@ -93,7 +93,7 @@ namespace VeeamHealthCheck.Startup
             bool runHfd = false;
             string _hfdPath = "";
 
-            
+
 
             string targetDir = @"C:\temp\vHC";
             foreach (var a in args)
@@ -191,20 +191,32 @@ namespace VeeamHealthCheck.Startup
                 }
             }
 
-            if(runHfd)
+            if (runHfd)
             {
                 functions.RunHotfixDetector(_hfdPath);
             }
 
             else if (ui)
                 LaunchUi(Handle(), false);
-            else if(run)
+            else if (run)
             {
-                if (CGlobals.REMOTEHOST != "" && CGlobals.RunSecReport)
+                if (CGlobals.REMOTEEXEC && CGlobals.REMOTEHOST == "")
+                {
+                    CGlobals.Logger.Warning("Remote execution selected but no host defined. Please define host: " +
+                        "/host=HOSTNAME", false);
+                    Environment.Exit(0);
+                }
+                else if(CGlobals.REMOTEEXEC && !CGlobals.RunSecReport)
+                {
+                    CGlobals.Logger.Warning("Remote execution not available for general Health Check. Please run the tool from a server hosting Veeam Backup & Replication", false);
+                    Environment.Exit(0);
+                }
+
+                else if (CGlobals.REMOTEHOST != "" && CGlobals.RunSecReport)
                     FullRun(targetDir);
                 else
                 {
-                    if(functions.ModeCheck() == "fail")
+                    if (functions.ModeCheck() == "fail")
                     {
                         CGlobals.Logger.Error("No compatible software detected or remote host specified. Exiting.", false);
                         Environment.Exit(0);
@@ -219,9 +231,10 @@ namespace VeeamHealthCheck.Startup
         }
         private string ParsePath(string input)
         {
-            try { 
-            string[] outputDir = input.Split("=");
-            return outputDir[1];
+            try
+            {
+                string[] outputDir = input.Split("=");
+                return outputDir[1];
             }
             catch (Exception e)
             {
