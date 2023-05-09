@@ -33,8 +33,8 @@ namespace VeeamHealthCheck.Functions.Collection
                     // User action  
                     () =>
                     {
-                        CClientFunctions cf = new();
-                        cf.GetVbrVersion();
+                        //CClientFunctions cf = new();
+                        //cf.GetVbrVersion();
 
                         CCollections collect = new();
                         collect.Run();

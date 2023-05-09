@@ -69,12 +69,41 @@ namespace VeeamHealthCheck.Functions.Collection.DB
             }
 
         }
+        //public string GetVbrVersionFilePath()
+        //{
+        //    using (RegistryKey key =
+        //        RegistryKey.OpenRemoteBaseKey(RegistryHive.LocalMachine, CGlobals.REMOTEHOST).OpenSubKey("Software\\Veeam\\Veeam Backup and Replication"))
+        //    {
+        //        var keyValue = key.GetValue("CorePath");
+        //        string path = "";
+        //        if (keyValue != null)
+        //        {
+        //            path = keyValue.ToString();
+        //        }
+        //        //string path = key.GetValue("CorePath").ToString();
+        //        //FileInfo dllInfo = new FileInfo(path + "\\Packages\\VeeamDeploymentDll.dll");
+        //        var version = FileVersionInfo.GetVersionInfo(path + "\\Packages\\VeeamDeploymentDll.dll");
+        //        CGlobals.VBRFULLVERSION = version.FileVersion;
+        //        ParseVbrMajorVersion(CGlobals.VBRFULLVERSION);
+        //        return CGlobals.VBRFULLVERSION;
+
+        //    }
+        //}
         public string GetVbrVersionFilePath()
         {
-            using (RegistryKey key =
-                RegistryKey.OpenRemoteBaseKey(RegistryHive.LocalMachine, CGlobals.REMOTEHOST).OpenSubKey("Software\\Veeam\\Veeam Backup and Replication"))
+            string consoleInstallPath = @"C:\Program Files\Veeam\Backup and Replication\Console\Veeam.Backup.Core.dll";
+            var coreVersion = FileVersionInfo.GetVersionInfo (consoleInstallPath).FileVersion;
+            if (!string.IsNullOrEmpty(coreVersion))
             {
-                var keyValue = key.GetValue("CorePath");
+                CGlobals.VBRFULLVERSION = coreVersion;
+                ParseVbrMajorVersion(CGlobals.VBRFULLVERSION);
+                return coreVersion;
+            }
+            
+            using (RegistryKey key =
+                Registry.LocalMachine.OpenSubKey("Software\\Veeam\\Veeam Mount Service"))
+            {
+                var keyValue = key.GetValue("InstallationPath");
                 string path = "";
                 if (keyValue != null)
                 {
@@ -82,7 +111,7 @@ namespace VeeamHealthCheck.Functions.Collection.DB
                 }
                 //string path = key.GetValue("CorePath").ToString();
                 //FileInfo dllInfo = new FileInfo(path + "\\Packages\\VeeamDeploymentDll.dll");
-                var version = FileVersionInfo.GetVersionInfo(path + "\\Packages\\VeeamDeploymentDll.dll");
+                var version = FileVersionInfo.GetVersionInfo(path + "\\Veeam.Backup.Core.dll");
                 CGlobals.VBRFULLVERSION = version.FileVersion;
                 ParseVbrMajorVersion(CGlobals.VBRFULLVERSION);
                 return CGlobals.VBRFULLVERSION;

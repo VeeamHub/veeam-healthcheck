@@ -1,6 +1,7 @@
 ﻿// Copyright (c) 2021, Adam Congdon <adam.congdon2@gmail.com>
 // MIT License
 using System;
+using System.IO;
 using VeeamHealthCheck.Functions.Collection.DB;
 using VeeamHealthCheck.Functions.Collection.LogParser;
 using VeeamHealthCheck.Functions.Collection.Security;
@@ -31,9 +32,7 @@ namespace VeeamHealthCheck.Functions.Collection
             GetRegistryDbInfo();
             if (CGlobals.DBTYPE != CGlobals.PgTypeName)
                 ExecSqlQueries();
-            //if (CGlobals.RunSecReport)
-            //    ExecSecurityCollection();
-            // do sql collections
+
         }
 
         private void ExecSecurityCollection()

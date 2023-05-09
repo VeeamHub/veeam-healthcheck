@@ -239,7 +239,7 @@ namespace VeeamHealthCheck.Html.VBR
             string summary = _sum.SetVbrSummary();
             //CDataFormer cd = new(true);
             BackupServer b = _df.BackupServerInfoToXml(scrub);
-
+            b.Version = CGlobals.VBRFULLVERSION;
             // test area
 
             s += AddBackupServerDetails(b);
