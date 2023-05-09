@@ -7,12 +7,14 @@ using System.Security.Principal;
 using System.Text;
 using System.Threading.Tasks;
 using VeeamHealthCheck.Shared;
+using VeeamHealthCheck.Shared.Logging;
 using VeeamHealthCheck.Startup;
 
 namespace VeeamHealthCheck.Functions.Collection
 {
     internal class CImpersonation
     {
+        private CLogger _logger = CGlobals.Logger;
         [DllImport("advapi32.dll", SetLastError = true, CharSet = CharSet.Unicode)]
         static extern bool LogonUser(String lpszUsername, String lpszDomain, String lpszPassword,
                                         int dwLogonType, int dwLogonProvider, out SafeAccessTokenHandle phToken);
@@ -45,14 +47,14 @@ namespace VeeamHealthCheck.Functions.Collection
 
         private SafeAccessTokenHandle SafeAccessTokenHandle()
         {
-            Console.WriteLine("Logging into: " + CGlobals.REMOTEHOST);
+            _logger.Info("Logging into: " + CGlobals.REMOTEHOST, false);
             string domainName = CGlobals.REMOTEHOST;
 
             VBRSERVER = domainName;
-            Console.Write("Enter the login of a user on {0} that you wish to impersonate: ", domainName);
+            _logger.Info(String.Format("Enter the login of a user on {0} that you wish to impersonate: ", domainName),false);
             string userName = Console.ReadLine();
 
-            Console.Write("Enter the password for {0}: ", userName);
+            _logger.Info(String.Format("Enter the password for {0}: ", userName), false);
 
             const int LOGON32_PROVIDER_DEFAULT = 0;
             //This parameter causes LogonUser to create a primary token.   

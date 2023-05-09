@@ -641,6 +641,16 @@ namespace VeeamHealthCheck.Html.VBR
             //CDataFormer cd = new(true);
             try
             {
+                //Dictionary<string, Object> keys = CGlobals.DEFAULTREGISTRYKEYS;
+                //foreach(var  key in keys)
+                //{
+                //    s += "<tr>";
+                //    s += _form.TableData(key.Key, "");
+                //    s += _form.TableData(key.Value.ToString(), "");
+
+                //    s += "</tr>";
+                //}
+                // old stuff below
                 Dictionary<string, string> list = _df.RegOptions();
 
                 foreach (var d in list)

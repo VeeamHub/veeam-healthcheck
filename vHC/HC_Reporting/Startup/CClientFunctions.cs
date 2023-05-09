@@ -165,11 +165,20 @@ namespace VeeamHealthCheck.Startup
         {
             if (!CGlobals.IMPORT)
             {
-                CImpersonation cImpersonation = new CImpersonation();
                 LOG.Info(logStart + "Init Collections", false);
-                //CCollections collect = new();
-                //collect.Run();
-                cImpersonation.RunCollection();
+
+                if (CGlobals.REMOTEEXEC)
+                {
+                    CImpersonation cImpersonation = new CImpersonation();
+                    cImpersonation.RunCollection();
+
+                }
+                else
+                {
+                    CCollections collect = new();
+                    collect.Run();
+                }
+
                 LOG.Info(logStart + "Init Collections...done!", false);
             }
         }

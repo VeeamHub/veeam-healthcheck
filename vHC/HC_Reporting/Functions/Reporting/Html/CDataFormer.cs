@@ -1,6 +1,7 @@
 ﻿// Copyright (c) 2021, Adam Congdon <adam.congdon2@gmail.com>
 // MIT License
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Data;
 using System.IO;
@@ -811,30 +812,48 @@ namespace VeeamHealthCheck.Functions.Reporting.Html
             Dictionary<string, string> returnDict = new();
 
             var reg = new CCsvParser();
-            var RegOptions = reg.RegOptionsCsvParser();
+            //var RegOptions = reg.RegOptionsCsvParser();
             CDefaultRegOptions defaults = new();
 
+            var RegOptions2 = CGlobals.DEFAULTREGISTRYKEYS;
 
-
-            foreach (var r in RegOptions)
+            foreach (var r in RegOptions2)
             {
-                if (defaults._defaultKeys.ContainsKey(r.KeyName))
+                string workingValue = "";
+                if (r.Value.GetType() == typeof(string[]))
+                {
+                    var values = r.Value as IEnumerable;
+                    List<string> valueArray = new();
+                    foreach(var v in values)
+                    {
+                        valueArray.Add(v.ToString());
+                    }
+
+                    workingValue = string.Join("<br>", valueArray);
+                }
+                else
+                    workingValue = r.Value.ToString();
+
+
+                if (defaults._defaultKeys.ContainsKey(r.Key))
                 {
                     string[] skipKeys = new string[] { "SqlSecuredPassword", "SqlLogin", "SqlServerName", "SqlInstanceName", "SqlDatabaseName", "SqlLockInfo" };
-                    if (skipKeys.Contains(r.KeyName))
+                    if (skipKeys.Contains(r.Key))
                         continue;
-                    defaults._defaultKeys.TryGetValue(r.KeyName, out string setValue);
-                    if (setValue != r.Value)
+                    defaults._defaultKeys.TryGetValue(r.Key, out string setValue);
+                    if (setValue != workingValue)
                     {
-                        returnDict.Add(r.KeyName, r.Value);
+                        returnDict.Add(r.Key, workingValue);
                     }
                 }
-                if (!defaults._defaultKeys.ContainsKey(r.KeyName))
+                if (!defaults._defaultKeys.ContainsKey(r.Key))
                 {
-                    defaults._defaultKeys.TryGetValue(r.KeyName, out string setValue);
-                    returnDict.Add(r.KeyName, r.Value);
+                    defaults._defaultKeys.TryGetValue(r.Key, out string setValue);
+                    returnDict.Add(r.Key, workingValue);
                 }
             }
+
+
             return returnDict;
         }
         public List<List<string>> JobInfoToXml(bool scrub)

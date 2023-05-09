@@ -1,6 +1,7 @@
 ﻿// Copyright (c) 2021, Adam Congdon <adam.congdon2@gmail.com>
 // MIT License
 using System;
+using System.Collections.Generic;
 using VeeamHealthCheck.Functions.Analysis.DataModels;
 using VeeamHealthCheck.Scrubber;
 using VeeamHealthCheck.Shared.Logging;
@@ -50,6 +51,9 @@ namespace VeeamHealthCheck.Shared
         public static string DBINSTANCE;
         public static int DBCORES;
         public static int DBRAM;
+
+        // collections
+        public static Dictionary<string, Object> DEFAULTREGISTRYKEYS = new Dictionary<string, Object>();
 
         public CGlobals()
         {

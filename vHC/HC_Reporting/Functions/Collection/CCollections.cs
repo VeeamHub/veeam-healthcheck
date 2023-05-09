@@ -57,6 +57,8 @@ namespace VeeamHealthCheck.Functions.Collection
         {
             CRegReader reg = new CRegReader();
             reg.GetDbInfo();
+
+            CGlobals.DEFAULTREGISTRYKEYS =  reg.DefaultVbrKeys();
         }
         private void ExecSqlQueries()
         {
