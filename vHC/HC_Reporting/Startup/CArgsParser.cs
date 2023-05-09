@@ -204,10 +204,15 @@ namespace VeeamHealthCheck.Startup
                     FullRun(targetDir);
                 else
                 {
-                    functions.ModeCheck();
-                    FullRun(targetDir);
+                    if(functions.ModeCheck() == "fail")
+                    {
+                        CGlobals.Logger.Error("No compatible software detected or remote host specified. Exiting.", false);
+                        Environment.Exit(0);
+                    }
+                    else
+                        FullRun(targetDir);
                 }
-                
+
 
             }
 

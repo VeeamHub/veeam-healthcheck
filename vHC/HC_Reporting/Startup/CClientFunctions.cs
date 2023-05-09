@@ -77,7 +77,10 @@ namespace VeeamHealthCheck.Startup
 
             }
             if (!CGlobals.IsVb365 && !CGlobals.IsVbr)
-                CGlobals.Logger.Error("No Veeam Software detected. Is this server the VBR or VB365 management server?",false);
+            {
+                CGlobals.Logger.Error("No Veeam Software detected. Is this server the VBR or VB365 management server?", false);
+                return "fail";
+            }
             if (CGlobals.IsVbr)
                 return title + " - " + VbrLocalizationHelper.GuiTitleBnR;
             if (CGlobals.IsVb365)
