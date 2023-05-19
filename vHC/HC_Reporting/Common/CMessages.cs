@@ -29,6 +29,7 @@ namespace VeeamHealthCheck.Shared
             "Most Common Uses:\n" +
             "1. Regular Health Check:\t .\\VeeamHealthChecck.exe /run\n" +
             "2. Security Assessment:\t .\\VeeamHealthCheck.exe /security\n" +
+            "3. Remote Security Assessment:\t .\\VeeamHealthCheck.exe /security /remote /host=REMOTEHOST" + 
             "\n\n" +
             "EXAMPLES:\n" +
             "1. Run to default location:\t .\\VeeamHealthCheck.exe /run\n" +
