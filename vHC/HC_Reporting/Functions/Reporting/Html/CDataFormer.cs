@@ -215,8 +215,8 @@ namespace VeeamHealthCheck.Functions.Reporting.Html
             var protectedVms = csvp.ViProtectedReader().ToList();
             var unProtectedVms = csvp.ViUnProtectedReader().ToList();
 
-            var HvProtectedVms = csvp.HvProtectedReader().ToList();
-            var HvUnProtectedVms = csvp.HvUnProtectedReader().ToList();
+            var HvProtectedVms = csvp.HvProtectedReader();
+            var HvUnProtectedVms = csvp.HvUnProtectedReader(); // test
             #endregion
 
             #region hv logic
@@ -225,27 +225,38 @@ namespace VeeamHealthCheck.Functions.Reporting.Html
             List<string> hvNotProtectedNames = new();
             int hvDupes = 0;
 
-
-            foreach (var p in HvProtectedVms)
+            if(HvProtectedVms != null || HvUnProtectedVms != null)
             {
-
-                hvNames.Add(p.Name);
-                hvProtectedNames.Add(p.Name);
-
-
-            }
-            foreach (var un in HvUnProtectedVms)
-            {
-                if (un.Type == "Vm")
+                HvProtectedVms = HvProtectedVms.ToList();
+                HvUnProtectedVms = HvUnProtectedVms.ToList();
+                foreach (var p in HvProtectedVms)
                 {
-                    hvNotProtectedNames.Add(un.Name);
-                    hvNames.Add(un.Name);
+
+                    hvNames.Add(p.Name);
+                    hvProtectedNames.Add(p.Name);
+
+
+                }
+                foreach (var un in HvUnProtectedVms)
+                {
+                    if (un.Type == "Vm")
+                    {
+                        hvNotProtectedNames.Add(un.Name);
+                        hvNames.Add(un.Name);
+
+                    }
 
                 }
 
+                hvDupes = hvNames.Count - (hvProtectedNames.Distinct().Count() + hvNotProtectedNames.Distinct().Count());
             }
-
-            hvDupes = hvNames.Count - (hvProtectedNames.Distinct().Count() + hvNotProtectedNames.Distinct().Count());
+            else
+            {
+                //_hvDupes = 0;
+                //_hvNotProtectedNames = 0;
+                //_hvProtectedNames = List<string>;
+            }
+            
 
             #endregion
 

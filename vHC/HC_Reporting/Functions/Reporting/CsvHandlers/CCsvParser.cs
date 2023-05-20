@@ -283,11 +283,21 @@ namespace VeeamHealthCheck.Functions.Reporting.CsvHandlers
         }
         public IEnumerable<CViProtected> HvProtectedReader()
         {
-            return FileFinder(_HvProtected).GetRecords<CViProtected>();
+            try
+            {
+                return FileFinder(_HvProtected).GetRecords<CViProtected>();
+
+            }
+            catch(Exception e) { return null; }
         }
         public IEnumerable<CViProtected> HvUnProtectedReader()
         {
-            return FileFinder(_HvUnprotected).GetRecords<CViProtected>();
+            try
+            {
+                return FileFinder(_HvUnprotected).GetRecords<CViProtected>();
+
+            }
+            catch(Exception e) { return null; }
         }
         public IEnumerable<CRegOptionsCsv> RegOptionsCsvParser()
         {
