@@ -348,7 +348,16 @@ namespace VeeamHealthCheck.Html.VBR
             s += AddTable("Immutability", "");
             s += AddTable("Config Backup", _helper.AddConfigBackupDetails());
 
-            s += AddTable("Detected OS", _helper.CollectedOsInfo());
+            try
+            {
+                s += AddTable("Detected OS", _helper.CollectedOsInfo());
+
+            }
+            catch(Exception e)
+            {
+                log.Error("Failed to add OS info to HTML report", false);
+                log.Error(e.Message, false);
+            }
             s += AddTable("Installed Applications", InstalledAppsTable());
 
 

@@ -15,12 +15,17 @@
 param(
     # VBRServer
     [Parameter(Mandatory)]
-    [string]$VBRServer
+    [string]$VBRServer,
+    [Parameter(Mandatory)]
+    [int]$VBRVersion
     # [Parameter(Mandatory)]
     # [string]$ReportPath,
     # [int]$ReportingIntervalDays = -1
 )
 $ReportPath = 'C:\temp\vHC\Original\VBR'
+$logDir = "C:\temp\vHC\Original\Log\"
+$logFile = $logDir + "CollectorMain.log"
+if(!(Test-Path $logfile)){New-Item -type Directory $logDir; new-item -type -file $logfile}
 #functions
 enum LogLevel {
     TRACE
@@ -111,18 +116,18 @@ Write-Verbose ("Changing directory to '$ReportPath'")
 Get-VBRUserRoleAssignment | Export-VhcCsv -FileName "_UserRoles.csv"
 
 #version detection:
-try {
-    $corePath = Get-ItemProperty -Path "HKLM:\Software\Veeam\Veeam Backup and Replication\" -Name "CorePath"
-    $depDLLPath = Join-Path -Path $corePath.CorePath -ChildPath "Packages\VeeamDeploymentDll.dll" -Resolve
-    $file = Get-Item -Path $depDLLPath
-    $version = $file.VersionInfo.ProductVersion
-
-    Write-LogFile("Detected Version: " + $version)
-}
-catch {
-    Write-LogFile("Error on version detection. ")
-}
-
+#try {
+#    $corePath = Get-ItemProperty -Path "HKLM:\Software\Veeam\Veeam Backup and Replication\" -Name "CorePath"
+#    $depDLLPath = Join-Path -Path $corePath.CorePath -ChildPath "Packages\VeeamDeploymentDll.dll" -Resolve
+#    $file = Get-Item -Path $depDLLPath
+#    $version = $file.VersionInfo.ProductVersion
+#
+#    Write-LogFile("Detected Version: " + $version)
+#}
+#catch {
+#    Write-LogFile("Error on version detection. ")
+#}
+$version = $VBRVersion
 
 # general collection:
 try {
@@ -168,7 +173,6 @@ try {
 
     $Servers = Get-VBRServer
     $Servers = $Servers | Select-Object -Property "Info", "ParentId", "Id", "Uid", "Name", "Reference", "Description", "IsUnavailable", "Type", "ApiVersion", "PhysHostId", "ProxyServicesCreds", @{name = 'Cores'; expression = { $_.GetPhysicalHost().hardwareinfo.CoresCount } }, @{name = 'CPUCount'; expression = { $_.GetPhysicalHost().hardwareinfo.CPUCount } }, @{name = 'RAM'; expression = { $_.GetPhysicalHost().hardwareinfo.PhysicalRamTotal } }, @{name = 'OSInfo'; expression = { $_.Info.Info } }
-    $Servers | Export-Csv -Path $("$ReportPath\$VBRServer" + '_Servers.csv') -NoTypeInformation
     Write-LogFile($message + "DONE")
   
 }
@@ -177,6 +181,7 @@ catch {
     $err = $Error[0].Exception
     Write-LogFile($err.message)
 }
+$Servers | Export-Csv -Path $("$ReportPath\$VBRServer" + '_Servers.csv') -NoTypeInformation
 
 
 
@@ -195,11 +200,6 @@ try {
     $nasProxyOut = $nasProxy | Select-Object -Property "ConcurrentTaskNumber", @{n = "Host"; e = { $_.Server.Name } }, @{n = "HostId"; e = { $_.Server.Id } }
     #$hvProxyOut = $hvProxy | Select-Object -Property "Name", "HostId", @{n=Host}
 
-    $Proxies | Export-Csv -Path $("$ReportPath\$VBRServer" + '_Proxies.csv') -NoTypeInformation
-    $cdpProxy | Export-csv -Path $("$ReportPath\$VBRServer" + '_CdpProxy.csv') -NoTypeInformation
-    #$fileProxy| Export-csv -Path $("$ReportPath\$VBRServer" + '_FileProxy.csv') -NoTypeInformation
-    $hvProxy | Export-csv -Path $("$ReportPath\$VBRServer" + '_HvProxy.csv') -NoTypeInformation
-    $nasProxyOut | Export-csv -Path $("$ReportPath\$VBRServer" + '_NasProxy.csv') -NoTypeInformation
 
 
     Write-LogFile($message + "DONE")
@@ -211,6 +211,11 @@ catch {
     Write-LogFile($err.message)
 }
 
+$Proxies | Export-Csv -Path $("$ReportPath\$VBRServer" + '_Proxies.csv') -NoTypeInformation
+$cdpProxy | Export-csv -Path $("$ReportPath\$VBRServer" + '_CdpProxy.csv') -NoTypeInformation
+#$fileProxy| Export-csv -Path $("$ReportPath\$VBRServer" + '_FileProxy.csv') -NoTypeInformation
+$hvProxy | Export-csv -Path $("$ReportPath\$VBRServer" + '_HvProxy.csv') -NoTypeInformation
+$nasProxyOut | Export-csv -Path $("$ReportPath\$VBRServer" + '_NasProxy.csv') -NoTypeInformation
 # cap extent grab
 try {
     $message = "Collecting capcity tier info..."
@@ -220,7 +225,6 @@ try {
     $cap = get-vbrbackuprepository -ScaleOut | Get-VBRCapacityExtent
     $capOut = $cap | Select-Object Status, @{n = 'Type'; e = { $_.Repository.Type } }, @{n = 'Immute'; e = { $_.Repository.BackupImmutabilityEnabled } }, @{n = 'immutabilityperiod'; e = { $_.Repository.ImmutabilityPeriod } }, @{n = 'SizeLimitEnabled'; e = { $_.Repository.SizeLimitEnabled } }, @{n = 'SizeLimit'; e = { $_.Repository.SizeLimit } }, @{n = 'RepoId'; e = { $_.Repository.Id } }, parentid
 
-    $capOut    | Export-csv -Path $("$ReportPath\$VBRServer" + '_capTier.csv') -NoTypeInformation
 
     Write-LogFile($message + "DONE")
   
@@ -230,6 +234,7 @@ catch {
     $err = $Error[0].Exception
     Write-LogFile($err.message)
 }
+$capOut    | Export-csv -Path $("$ReportPath\$VBRServer" + '_capTier.csv') -NoTypeInformation
 
 # traffic config
 try {
@@ -238,7 +243,6 @@ try {
 
     # work here
     $trafficRules = Get-VBRNetworkTrafficRule  
-    $trafficRules | Export-csv -Path $("$ReportPath\$VBRServer" + '_trafficRules.csv') -NoTypeInformation
 
 
     Write-LogFile($message + "DONE")
@@ -249,6 +253,7 @@ catch {
     $err = $Error[0].Exception
     Write-LogFile($err.message)
 }
+$trafficRules | Export-csv -Path $("$ReportPath\$VBRServer" + '_trafficRules.csv') -NoTypeInformation
 
 # registry settings
 try {
@@ -270,7 +275,6 @@ try {
         $null = $output.Add($regout2)
         # $regout2 += $reg | Select-Object @{n="KeyName";e={$r}}, @{n='value';e={$_.GetValue($r)}}
     }
-    $output | Export-csv -Path $("$ReportPath\$VBRServer" + '_regkeys.csv') -NoTypeInformation
 
     Write-LogFile($message + "DONE")
   
@@ -280,6 +284,7 @@ catch {
     $err = $Error[0].Exception
     Write-LogFile($err.message)
 }
+$output | Export-csv -Path $("$ReportPath\$VBRServer" + '_regkeys.csv') -NoTypeInformation
 
 # Repos
 try {
@@ -317,9 +322,15 @@ try {
         $Extents = Get-VBRRepositoryExtent -Repository $SOBR
 
         foreach ($Extent in $Extents) {
-            write-host("DEBUG: GATES:")  
-            $Extent.Repository.GetActualGateways().Name
-            $ExtentDetails = $Extent.Repository | Select-Object *, @{n = 'SOBR_Name'; e = { $SOBR.Name } }, @{name = 'CachedFreeSpace'; expression = { $_.GetContainer().cachedfreespace.InGigabytes } }, @{name = 'CachedTotalSpace'; expression = { $_.GetContainer().cachedtotalspace.InGigabytes } }, @{name = 'gatewayHosts'; expression = { $_.GetActualGateways().Name } }
+            if($VBRVersion -eq 12){
+                #write-host("DEBUG: GATES:")  
+                $Extent.Repository.GetActualGateways().Name
+                $ExtentDetails = $Extent.Repository | Select-Object *, @{n = 'SOBR_Name'; e = { $SOBR.Name } }, @{name = 'CachedFreeSpace'; expression = { $_.GetContainer().cachedfreespace.InGigabytes } }, @{name = 'CachedTotalSpace'; expression = { $_.GetContainer().cachedtotalspace.InGigabytes } }, @{name = 'gatewayHosts'; expression = { $_.GetActualGateways().Name } }
+            }
+            else{
+                $ExtentDetails = $Extent.Repository | Select-Object *, @{n = 'SOBR_Name'; e = { $SOBR.Name } }, @{name = 'CachedFreeSpace'; expression = { $_.GetContainer().cachedfreespace.InGigabytes } }, @{name = 'CachedTotalSpace'; expression = { $_.GetContainer().cachedtotalspace.InGigabytes } }
+            }
+            
             $AllSOBRExtents.Add($ExtentDetails) | Out-Null
         }
     }
@@ -347,9 +358,7 @@ try {
     @{name = 'gatewayHosts'; expression = { $_.GetActualGateways().Name } }
 
 
-    $repoInfo | Export-Csv -Path $("$ReportPath\$VBRServer" + '_Repositories.csv') -NoTypeInformation
-    $SOBROutput | Export-Csv -Path $("$ReportPath\$VBRServer" + '_SOBRs.csv') -NoTypeInformation
-    $AllSOBRExtentsOutput | Export-Csv -Path $("$ReportPath\$VBRServer" + '_SOBRExtents.csv') -NoTypeInformation
+
 
     Write-LogFile($message + "DONE")
   
@@ -359,7 +368,9 @@ catch {
     $err = $Error[0].Exception
     Write-LogFile($err.message)
 }
-
+$repoInfo | Export-Csv -Path $("$ReportPath\$VBRServer" + '_Repositories.csv') -NoTypeInformation
+$SOBROutput | Export-Csv -Path $("$ReportPath\$VBRServer" + '_SOBRs.csv') -NoTypeInformation
+$AllSOBRExtentsOutput | Export-Csv -Path $("$ReportPath\$VBRServer" + '_SOBRExtents.csv') -NoTypeInformation
 # jobs collection
 try {
     $message = "Collecting jobs info..."
@@ -458,9 +469,7 @@ try {
         $AllJobs.Add($JobDetails) | Out-Null
     }
   
-    $AllJobs | Export-Csv -Path $("$ReportPath\$VBRServer" + '_Jobs.csv') -NoTypeInformation
-    $piJob | Export-csv -Path $("$ReportPath\$VBRServer" + '_pluginjobs.csv') -NoTypeInformation
-    $configBackup | Export-Csv -Path $("$ReportPath\$VBRServer" + '_configBackup.csv') -NoTypeInformation
+
 
 
 }
@@ -469,7 +478,9 @@ catch {
     $err = $Error[0].Exception
     Write-LogFile($err.message)
 }
-
+$AllJobs | Export-Csv -Path $("$ReportPath\$VBRServer" + '_Jobs.csv') -NoTypeInformation
+$piJob | Export-csv -Path $("$ReportPath\$VBRServer" + '_pluginjobs.csv') -NoTypeInformation
+$configBackup | Export-Csv -Path $("$ReportPath\$VBRServer" + '_configBackup.csv') -NoTypeInformation
 #SOBRS
 # try {
 #   $message = "Collecting SOBRs info..."
@@ -493,7 +504,6 @@ try {
 
     # work here
     $wan = Get-VBRWANAccelerator
-    $wan | Export-csv -Path $("$ReportPath\$VBRServer" + '_WanAcc.csv') -NoTypeInformation
 
 
     Write-LogFile($message + "DONE")
@@ -504,6 +514,7 @@ catch {
     $err = $Error[0].Exception
     Write-LogFile($err.message)
 }
+$wan | Export-csv -Path $("$ReportPath\$VBRServer" + '_WanAcc.csv') -NoTypeInformation
 
 #license
 try {
@@ -525,7 +536,6 @@ try {
     @{n = "UsedCapacityTb"; e = { $_.CapacityLicenseSummary.UsedCapacityTb } }, "Status"
 
 
-    $licInfo | Export-csv -Path $("$ReportPath\$VBRServer" + '_LicInfo.csv') -NoTypeInformation
     Write-LogFile($message + "DONE")
   
 }
@@ -534,6 +544,7 @@ catch {
     $err = $Error[0].Exception
     Write-LogFile($err.message)
 }
+$licInfo | Export-csv -Path $("$ReportPath\$VBRServer" + '_LicInfo.csv') -NoTypeInformation
 
     
 # protected workloads
@@ -544,7 +555,7 @@ try {
     # work here
     ##Protected Workloads Area
     $vmbackups = Get-VBRBackup | ? { $_.TypeToString -eq "VMware Backup" }
-    if ($version.StartsWith(12)) {
+    if ($version -eq 12) {
         $vmNames = $vmbackups.GetLastOibs($true)
     }
     else {
@@ -552,13 +563,11 @@ try {
     }
     $unprotectedEntityInfo = Find-VBRViEntity | ? { $_.Name -notin $vmNames.Name }
     $protectedEntityInfo = Find-VBRViEntity -Name $vmNames.Name
-    $protectedEntityInfo | select Name, PowerState, ProvisionedSize, UsedSize, Path | sort PoweredOn, Path, Name | Export-Csv -Path $("$ReportPath\$VBRServer" + '_ViProtected.csv') -NoTypeInformation
-    $unprotectedEntityInfo | select Name, PowerState, ProvisionedSize, UsedSize, Path, Type | sort Type, PoweredOn, Path, Name | Export-Csv -Path $("$ReportPath\$VBRServer" + '_ViUnprotected.csv') -NoTypeInformation
-
+  
     # protected HV Workloads
     try {
         $hvvmbackups = Get-VBRBackup | ? { $_.TypeToString -eq "Hyper-v Backup" }
-        if ($version.StartsWith(12)) {
+        if ($version -eq 12) {
             $hvvmNames = $hvvmbackups.GetLastOibs($true)
         }
         else {
@@ -572,8 +581,6 @@ try {
             $protectedHvEntityInfo = Find-VBRHvEntity -Name $hvvmNames.Name
 
         }
-        $protectedHvEntityInfo | select Name, PowerState, ProvisionedSize, UsedSize, Path | sort PoweredOn, Path, Name | Export-Csv -Path $("$ReportPath\$VBRServer" + '_HvProtected.csv') -NoTypeInformation
-        $unprotectedHvEntityInfo | select Name, PowerState, ProvisionedSize, UsedSize, Path, Type | sort Type, PoweredOn, Path, Name | Export-Csv -Path $("$ReportPath\$VBRServer" + '_HvUnprotected.csv') -NoTypeInformation
         
 
     }
@@ -586,7 +593,7 @@ try {
     $phys = Get-VBRDiscoveredComputer
 
     $physbackups = Get-VBRBackup | ? { $_.TypeToString -like "*Agent*" }
-    if ($version.StartsWith(12)) {
+    if ($version -eq 12) {
         $pvmNames = $physbackups.GetLastOibs($true)
 
     }
@@ -598,9 +605,7 @@ try {
     $notprotected = $phys | ? { $_.Name -notin $pvmNames.Name }
     $protected = $phys | ? { $_.Name -in $pvmNames.Name }
 
-    $protected | Export-Csv -Path $("$ReportPath\$VBRServer" + '_PhysProtected.csv') -NoTypeInformation
-    $notprotected | Export-Csv -Path $("$ReportPath\$VBRServer" + '_PhysNotProtected.csv') -NoTypeInformation
-
+   
     ##end protected workloads Area
 
     Write-LogFile($message + "DONE")
@@ -611,6 +616,12 @@ catch {
     $err = $Error[0].Exception
     Write-LogFile($err.message)
 }
+$protected | Export-Csv -Path $("$ReportPath\$VBRServer" + '_PhysProtected.csv') -NoTypeInformation
+$notprotected | Export-Csv -Path $("$ReportPath\$VBRServer" + '_PhysNotProtected.csv') -NoTypeInformation
+$protectedHvEntityInfo | select Name, PowerState, ProvisionedSize, UsedSize, Path | sort PoweredOn, Path, Name | Export-Csv -Path $("$ReportPath\$VBRServer" + '_HvProtected.csv') -NoTypeInformation
+$unprotectedHvEntityInfo | select Name, PowerState, ProvisionedSize, UsedSize, Path, Type | sort Type, PoweredOn, Path, Name | Export-Csv -Path $("$ReportPath\$VBRServer" + '_HvUnprotected.csv') -NoTypeInformation
+$protectedEntityInfo | select Name, PowerState, ProvisionedSize, UsedSize, Path | sort PoweredOn, Path, Name | Export-Csv -Path $("$ReportPath\$VBRServer" + '_ViProtected.csv') -NoTypeInformation
+$unprotectedEntityInfo | select Name, PowerState, ProvisionedSize, UsedSize, Path, Type | sort Type, PoweredOn, Path, Name | Export-Csv -Path $("$ReportPath\$VBRServer" + '_ViUnprotected.csv') -NoTypeInformation
 
 try {
     $message = "Collecting VBR Version info..."
@@ -646,7 +657,6 @@ try {
         'DbType'    = $dbType.SqlActiveConfiguration
 
     }
-    $VbrOutput | Export-Csv -Path $("$ReportPath\$VBRServer" + '_vbrinfo.csv') -NoTypeInformation
 
     #endGetVbrVersion
 
@@ -658,6 +668,7 @@ catch {
     $err = $Error[0].Exception
     Write-LogFile($err.message)
 }
+$VbrOutput | Export-Csv -Path $("$ReportPath\$VBRServer" + '_vbrinfo.csv') -NoTypeInformation
 
 
 

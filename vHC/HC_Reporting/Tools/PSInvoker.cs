@@ -144,7 +144,7 @@ namespace VeeamHealthCheck
             if (days != 0)
                 argString = $"-NoProfile -ExecutionPolicy unrestricted -file \"{scriptLocation}\" -VBRServer \"{CGlobals.REMOTEHOST}\" -ReportInterval {CGlobals.ReportDays} ";
             else
-                argString = $"-NoProfile -ExecutionPolicy unrestricted -file \"{scriptLocation}\" -VBRServer \"{CGlobals.REMOTEHOST}\" ";
+                argString = $"-NoProfile -ExecutionPolicy unrestricted -file \"{scriptLocation}\" -VBRServer \"{CGlobals.REMOTEHOST}\" -VBRVersion \"{CGlobals.VBRMAJORVERSION}\" ";
             if (!String.IsNullOrEmpty(path))
             {
                 argString = $"-NoProfile -ExecutionPolicy unrestricted -file \"{scriptLocation}\" -ReportPath \"{path}\"";
@@ -155,7 +155,7 @@ namespace VeeamHealthCheck
                 FileName = "powershell.exe",
                 Arguments = argString,
                 UseShellExecute = false,
-                CreateNoWindow = true
+                CreateNoWindow = true  //true for prod
             };
         }
 

@@ -270,6 +270,7 @@ namespace VeeamHealthCheck.Functions.Reporting.CsvHandlers
         }
         public IEnumerable<CWaitsCsv> WaitsCsvReader()
         {
+
             return FileFinder(_waits).GetRecords<CWaitsCsv>();
         }
 

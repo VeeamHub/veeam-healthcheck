@@ -225,7 +225,7 @@ namespace VeeamHealthCheck.Functions.Reporting.Html
             List<string> hvNotProtectedNames = new();
             int hvDupes = 0;
 
-            if(HvProtectedVms != null || HvUnProtectedVms != null)
+            if (HvProtectedVms != null || HvUnProtectedVms != null)
             {
                 HvProtectedVms = HvProtectedVms.ToList();
                 HvUnProtectedVms = HvUnProtectedVms.ToList();
@@ -256,7 +256,7 @@ namespace VeeamHealthCheck.Functions.Reporting.Html
                 //_hvNotProtectedNames = 0;
                 //_hvProtectedNames = List<string>;
             }
-            
+
 
             #endregion
 
@@ -662,8 +662,18 @@ namespace VeeamHealthCheck.Functions.Reporting.Html
             csv = csv.OrderBy(x => x.Type).ToList();
 
             CCsvParser csvp = new();
-            var protectedVms = csvp.ViProtectedReader().ToList();
-            var unProtectedVms = csvp.ViUnProtectedReader().ToList();
+            List<CViProtected> protectedVms = new();
+            List<CViProtected> unProtectedVms = new();
+            try
+            {
+                protectedVms = csvp.ViProtectedReader().ToList();
+                unProtectedVms = csvp.ViUnProtectedReader().ToList();
+            }
+            catch (Exception ex)
+            {
+                log.Error("Failed to populate VI Protected objects..");
+                log.Error(ex.Message);
+            }
 
             //list to ensure we only count unique VMs
             List<string> countedVMs = new();
@@ -835,7 +845,7 @@ namespace VeeamHealthCheck.Functions.Reporting.Html
                 {
                     var values = r.Value as IEnumerable;
                     List<string> valueArray = new();
-                    foreach(var v in values)
+                    foreach (var v in values)
                     {
                         valueArray.Add(v.ToString());
                     }
