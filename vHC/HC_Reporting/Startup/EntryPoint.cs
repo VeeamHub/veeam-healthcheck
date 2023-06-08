@@ -8,10 +8,16 @@ namespace VeeamHealthCheck.Startup
     {
         private static CClientFunctions _functions = new();
         [STAThread]
-        public static void Main(string[] args)
+        public static int Main(string[] args)
         {
-            CArgsParser ap = new(args);
-            ap.ParseArgs();
+            try
+            {
+                CArgsParser ap = new(args);
+                ap.ParseArgs();
+                return 1;
+            }
+            catch (Exception ex) { return 0; }
+            
         }
 
     }

@@ -2,7 +2,7 @@
 // MIT License
 namespace VeeamHealthCheck.Functions.Reporting.Html.Shared
 {
-    class CObjectHelpers
+    public class CObjectHelpers
     {
         public static bool ParseBool(string value)
         {

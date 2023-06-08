@@ -4,7 +4,7 @@ using System.Security.Principal;
 
 namespace VeeamHealthCheck
 {
-    class CAdminCheck
+    public class CAdminCheck
     {
         public bool IsAdmin()
         {
