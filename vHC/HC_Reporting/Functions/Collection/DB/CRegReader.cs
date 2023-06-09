@@ -23,8 +23,6 @@ namespace VeeamHealthCheck.Functions.Collection.DB
 
         private CLogger log = CGlobals.Logger;
 
-        public string User { get { return _user; } }
-        public string PassString { get { return _passString; } }
         public string DbString
         {
             get { return _databaseName; }
@@ -35,18 +33,10 @@ namespace VeeamHealthCheck.Functions.Collection.DB
             get { return _hostInstanceString; }
         }
 
-        public string Host { get { return _host; } }
 
         public CRegReader()
         {
 
-
-            //catch (Exception ex)
-            //{
-            //    //Logger.Log.Warning("Something went awry with reading registry. Let's try manual DB connection:", false);
-            //    string msg = "Registry parsing failed. DB collections will not be possible. Does this server have Veeam Backup & Replication installed?";
-            //    MessageBox.Show(msg + "\n" + ex.Message);
-            //}
         }
         public void GetDbInfo()
         {
@@ -67,28 +57,8 @@ namespace VeeamHealthCheck.Functions.Collection.DB
                     log.Error(logStart + "Failed to get v12 DB info from Registry.");
                 }
             }
-
         }
-        //public string GetVbrVersionFilePath()
-        //{
-        //    using (RegistryKey key =
-        //        RegistryKey.OpenRemoteBaseKey(RegistryHive.LocalMachine, CGlobals.REMOTEHOST).OpenSubKey("Software\\Veeam\\Veeam Backup and Replication"))
-        //    {
-        //        var keyValue = key.GetValue("CorePath");
-        //        string path = "";
-        //        if (keyValue != null)
-        //        {
-        //            path = keyValue.ToString();
-        //        }
-        //        //string path = key.GetValue("CorePath").ToString();
-        //        //FileInfo dllInfo = new FileInfo(path + "\\Packages\\VeeamDeploymentDll.dll");
-        //        var version = FileVersionInfo.GetVersionInfo(path + "\\Packages\\VeeamDeploymentDll.dll");
-        //        CGlobals.VBRFULLVERSION = version.FileVersion;
-        //        ParseVbrMajorVersion(CGlobals.VBRFULLVERSION);
-        //        return CGlobals.VBRFULLVERSION;
 
-        //    }
-        //}
         public string GetVbrVersionFilePath()
         {
             string consoleInstallPath = @"C:\Program Files\Veeam\Backup and Replication\Console\Veeam.Backup.Core.dll";
