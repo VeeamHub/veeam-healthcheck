@@ -56,7 +56,6 @@ namespace VhcXTests.Html.Shared
 
             Assert.Equal(null, result);
         }
-        [Fact]
 
     }
 }
