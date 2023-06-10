@@ -5,7 +5,7 @@ using System;
 
 namespace VeeamHealthCheck.Functions.Reporting.CsvHandlers
 {
-    class CPluginCsvInfo
+    public class CPluginCsvInfo
     {
         //"PluginType","Id","Name","Type","LastRun","LastResult","LastState","NextRun","TargetRepositoryId","Description","IsEnabled"
         [Index(0)]

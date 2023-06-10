@@ -6,7 +6,7 @@ using System;
 
 namespace VeeamHealthCheck.Functions.Reporting.CsvHandlers
 {
-    class CJobSessionCsvInfos
+    public class CJobSessionCsvInfos
     {
         [Index(0)]
         public string JobName { get; set; }

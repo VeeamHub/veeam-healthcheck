@@ -5,7 +5,7 @@ using System;
 
 namespace VeeamHealthCheck.Functions.Reporting.CsvHandlers
 {
-    class CHvProxyCsvInfo
+    public class CHvProxyCsvInfo
     {
         //"Id","Name","Description","HostId","Host","Type","IsDisabled","Options","MaxTasksCount","Info"
         [Index(0)]

@@ -5,7 +5,7 @@ using System;
 
 namespace VeeamHealthCheck.Functions.Reporting.CsvHandlers
 {
-    class CBnRCsvInfo
+    public class CBnRCsvInfo
     {
         [Index(0)]
         public string Version { get; set; }

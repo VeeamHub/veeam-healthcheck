@@ -5,7 +5,7 @@ using System;
 
 namespace VeeamHealthCheck.Functions.Reporting.CsvHandlers
 {
-    class CRegOptionsCsv
+    public class CRegOptionsCsv
     {
         [Index(0)]
         public string KeyName { get; set; }

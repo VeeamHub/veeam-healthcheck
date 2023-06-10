@@ -5,7 +5,7 @@ using System;
 
 namespace VeeamHealthCheck.Functions.Reporting.CsvHandlers
 {
-    class CRepoCsvInfos
+    public class CRepoCsvInfos
     {
         [Index(0)]
         public string Id { get; set; }

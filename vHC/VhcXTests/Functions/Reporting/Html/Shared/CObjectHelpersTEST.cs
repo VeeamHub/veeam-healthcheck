@@ -3,7 +3,7 @@ using VeeamHealthCheck.Functions.Reporting.Html.Shared;
 using VeeamHealthCheck.Functions.Reporting.CsvHandlers;
 using VeeamHealthCheck.Functions.Collection.DB;
 
-namespace VhcXTests.Html.Shared
+namespace VhcXTests.Functions.Reporting.Html.Shared
 {
     public class CObjectHelpersTEST
     {

@@ -4,7 +4,7 @@ using CsvHelper.Configuration.Attributes;
 
 namespace VeeamHealthCheck.Functions.Reporting.CsvHandlers
 {
-    class CFileProxyCsvInfo
+    public class CFileProxyCsvInfo
     {
         //"Id","Description","Server","ConcurrentTaskNumber"
         [Index(0)]

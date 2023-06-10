@@ -14,7 +14,7 @@ using VeeamHealthCheck.Shared.Logging;
 
 namespace VeeamHealthCheck.Functions.Reporting.CsvHandlers
 {
-    class CCsvParser
+    public class CCsvParser
     {
         private readonly CsvConfiguration _csvConfig;
         private CLogger log = CGlobals.Logger;
@@ -201,7 +201,12 @@ namespace VeeamHealthCheck.Functions.Reporting.CsvHandlers
         }
         public IEnumerable<dynamic> GetDynamicBjobs()
         {
-            return GetDynamicCsvRecs(_bjobs);
+            try
+            {
+                return GetDynamicCsvRecs(_bjobs);
+
+            }
+            catch(Exception ex) { return null; }
         }
         public IEnumerable<dynamic> GetDynamincConfigBackup()
         {

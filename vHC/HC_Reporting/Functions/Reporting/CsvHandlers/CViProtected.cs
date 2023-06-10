@@ -5,7 +5,7 @@ using System;
 
 namespace VeeamHealthCheck.Functions.Reporting.CsvHandlers
 {
-    class CViProtected
+    public class CViProtected
     {
         //Name,PowerState,ProvisionedSize,UsedSize,Path,Type
         [Index(0)]

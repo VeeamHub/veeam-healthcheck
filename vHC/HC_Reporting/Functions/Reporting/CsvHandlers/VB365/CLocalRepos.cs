@@ -5,7 +5,7 @@ using System;
 
 namespace VeeamHealthCheck.Functions.Reporting.CsvHandlers.VB365
 {
-    internal class CLocalRepos
+    public class CLocalRepos
     {
         [Index(0)]
         public string BoundProxy { get; set; }

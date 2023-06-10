@@ -5,7 +5,7 @@ using System;
 
 namespace VeeamHealthCheck.Functions.Reporting.CsvHandlers
 {
-    class CNetTrafficRulesCsv
+    public class CNetTrafficRulesCsv
     {
         //		TargetIPStart	TargetIPEnd	EncryptionEnabled	ThrottlingEnabled	ThrottlingUnit	ThrottlingValue	ThrottlingWindowEnabled	ThrottlingWindowOptions	Name	Id
 

@@ -5,7 +5,7 @@ using System;
 
 namespace VeeamHealthCheck.Functions.Reporting.CsvHandlers
 {
-    class CProxyCsvInfos
+    public class CProxyCsvInfos
     {
         [Index(0)]
         //[ColumnDetails()]

@@ -5,7 +5,7 @@ using System;
 
 namespace VeeamHealthCheck.Functions.Reporting.CsvHandlers
 {
-    class CSobrExtentCsvInfos
+    public class CSobrExtentCsvInfos
     {
         //"Host","Id","Name","HostId","MountHostId","Description","CreationTime","Path","FullPath","FriendlyPath","ShareCredsId","Type","Status","IsUnavailable","Group","UseNfsOnMountHost","VersionOfCreation","Tag","IsTemporary","TypeDisplay","IsRotatedDriveRepository","EndPointCryptoKeyId","HasBackupChainLengthLimitation","IsSanSnapshotOnly","IsDedupStorage","SplitStoragesPerVm","IsImmutabilitySupported","SOBR_Name","Options(maxtasks)","Options(Unlimited Tasks)","Options(MaxArchiveTaskCount)","Options(CombinedDataRateLimit)","Options(Uncompress)","Options(OptimizeBlockAlign)","Options(RemoteAccessLimitation)","Options(EpEncryptionEnabled)","Options(OneBackupFilePerVm)","Options(IsAutoDetectAffinityProxies)","Options(NfsRepositoryEncoding)"
         [Index(0)]

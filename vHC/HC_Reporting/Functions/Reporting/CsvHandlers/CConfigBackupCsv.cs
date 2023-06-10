@@ -5,7 +5,7 @@ using System;
 
 namespace VeeamHealthCheck.Functions.Reporting.CsvHandlers
 {
-    class CConfigBackupCsv
+    public class CConfigBackupCsv
     {
         [Index(0)]
         public string Enabled { get; set; }

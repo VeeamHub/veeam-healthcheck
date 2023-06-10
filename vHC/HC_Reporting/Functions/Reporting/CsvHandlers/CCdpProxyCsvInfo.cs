@@ -5,7 +5,7 @@ using System;
 
 namespace VeeamHealthCheck.Functions.Reporting.CsvHandlers
 {
-    class CCdpProxyCsvInfo
+    public class CCdpProxyCsvInfo
     {
         //"ServerId","CacheSize","CachePath","IsEnabled","SourceProxyTrafficPort","TargetProxyTrafficPort","Id","Name",
         //"Description"

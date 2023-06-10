@@ -5,7 +5,7 @@ using System;
 
 namespace VeeamHealthCheck.Functions.Reporting.CsvHandlers.VB365
 {
-    internal class CSecurityCsv
+    public class CSecurityCsv
     {
         [Index(0)]
         public string WinFirewallEnabled { get; set; }

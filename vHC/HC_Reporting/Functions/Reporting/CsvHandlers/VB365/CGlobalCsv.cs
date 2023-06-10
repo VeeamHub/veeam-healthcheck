@@ -5,7 +5,7 @@ using System;
 
 namespace VeeamHealthCheck.Functions.Reporting.CsvHandlers.VB365
 {
-    internal class CGlobalCsv
+    public class CGlobalCsv
     {
         [Index(0)]
         public string LicenseStatus { get; set; }

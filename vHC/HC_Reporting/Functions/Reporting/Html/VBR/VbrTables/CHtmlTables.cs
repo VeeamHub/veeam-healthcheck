@@ -1161,7 +1161,7 @@ _form.TableHeader(VbrLocalizationHelper.SbrExt15, VbrLocalizationHelper.SbrExt15
             }
             catch (Exception e)
             {
-                log.Error("SOBR Data import failed. ERROR:");
+                log.Error("Jobs Data import failed. ERROR:");
                 log.Error("\t" + e.Message);
             }
 

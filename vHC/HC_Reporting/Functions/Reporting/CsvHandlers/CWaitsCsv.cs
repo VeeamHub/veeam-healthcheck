@@ -5,7 +5,7 @@ using System;
 
 namespace VeeamHealthCheck.Functions.Reporting.CsvHandlers
 {
-    class CWaitsCsv
+    public class CWaitsCsv
     {
         //JobName	StartTime	EndTime	Duration
 

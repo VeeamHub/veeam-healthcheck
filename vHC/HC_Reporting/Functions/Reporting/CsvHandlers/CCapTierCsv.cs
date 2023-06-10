@@ -5,7 +5,7 @@ using System;
 
 namespace VeeamHealthCheck.Functions.Reporting.CsvHandlers
 {
-    class CCapTierCsv
+    public class CCapTierCsv
     {
         //Status	Type	Immute	immutabilityperiod	SizeLimitEnabled	SizeLimit	RepoId
 

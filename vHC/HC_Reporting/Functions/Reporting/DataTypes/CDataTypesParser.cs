@@ -315,27 +315,27 @@ namespace VeeamHealthCheck.Functions.Reporting.DataTypes
                 {
                     CJobTypeInfos jInfo = new CJobTypeInfos();
 
-                    foreach (var b in bjobCsv)
-                    {
-                        int.TryParse(b.type, out int typeId);
-                        if (!_protectedJobIds.Contains(typeId))
+                        foreach (var b in bjobCsv)
                         {
-                            _protectedJobIds.Add(typeId);
-
-                        }
-                        if (b.name == s.Name)
-                        {
-                            jInfo.Name = b.name;
-                            jInfo.ActualSize = b.included_size;
-                            jInfo.RepoName = MatchRepoIdToRepo(b.repository_id);
-                            jInfo.JobId = b.type;
-                            if (b.type == "63")
+                            int.TryParse(b.type, out int typeId);
+                            if (!_protectedJobIds.Contains(typeId))
                             {
+                                _protectedJobIds.Add(typeId);
 
                             }
-                        }
+                            if (b.name == s.Name)
+                            {
+                                jInfo.Name = b.name;
+                                jInfo.ActualSize = b.included_size;
+                                jInfo.RepoName = MatchRepoIdToRepo(b.repository_id);
+                                jInfo.JobId = b.type;
+                                if (b.type == "63")
+                                {
 
-                    }
+                                }
+                            }
+
+                        }
                     if (string.IsNullOrEmpty(jInfo.RepoName))
                         jInfo.RepoName = s.RepoName;
 
