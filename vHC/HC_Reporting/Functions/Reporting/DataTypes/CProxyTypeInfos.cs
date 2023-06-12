@@ -3,7 +3,7 @@
 
 namespace VeeamHealthCheck.Functions.Reporting.DataTypes
 {
-    class CProxyTypeInfos
+    public class CProxyTypeInfos
     {
         public string Id { get; set; }
         public string Name { get; set; }

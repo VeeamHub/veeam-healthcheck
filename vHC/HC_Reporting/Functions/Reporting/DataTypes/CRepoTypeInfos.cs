@@ -3,7 +3,7 @@
 
 namespace VeeamHealthCheck.Functions.Reporting.DataTypes
 {
-    class CRepoTypeInfos
+    public class CRepoTypeInfos
     {
         public string RepoName { get; set; }
         public int maxArchiveTasks { get; set; }

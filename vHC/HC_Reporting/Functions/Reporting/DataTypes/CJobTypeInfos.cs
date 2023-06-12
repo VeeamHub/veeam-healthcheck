@@ -3,7 +3,7 @@
 
 namespace VeeamHealthCheck.Functions.Reporting.DataTypes
 {
-    class CJobTypeInfos
+    public class CJobTypeInfos
     {
         public string Name { get; set; }
         public string JobType { get; set; }

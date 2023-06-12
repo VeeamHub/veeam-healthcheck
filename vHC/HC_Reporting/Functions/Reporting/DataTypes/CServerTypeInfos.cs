@@ -4,7 +4,7 @@ using System;
 
 namespace VeeamHealthCheck.Functions.Reporting.DataTypes
 {
-    class CServerTypeInfos
+   public class CServerTypeInfos
     {
         public string Info { get; set; }
         public Guid ParentId { get; set; }

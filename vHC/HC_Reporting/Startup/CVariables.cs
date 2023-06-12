@@ -9,7 +9,7 @@ namespace VeeamHealthCheck
         public static readonly string outDir = @"C:\temp\vHC";
         public static string safeDir = @"C:\temp\vHC\Anonymous";
         public static string unsafeDir = @"C:\temp\vHC\Original";
-        private static string vb365Dir = "\\VB365";
+        private static string _vb365Dir = "\\VB365";
         private static string _vbrDir = "\\VBR";
         public static string _safeSuffix = @"\vHC-AnonymousReport";
         public static string _unsafeSuffix = @"\vHC-Report";
@@ -22,7 +22,7 @@ namespace VeeamHealthCheck
         {
             get
             {
-                return unsafeDir + vb365Dir;
+                return unsafeDir + _vb365Dir;
             }
         }
         public static string vbrDir

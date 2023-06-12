@@ -4,7 +4,7 @@ using System;
 
 namespace VeeamHealthCheck.Functions.Reporting.DataTypes
 {
-    class CJobSessionInfo
+    public class CJobSessionInfo
     {
         public string Name { get; set; }
         public int minTime { get; set; }

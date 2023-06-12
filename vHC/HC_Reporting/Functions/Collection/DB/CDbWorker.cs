@@ -87,7 +87,7 @@ namespace VeeamHealthCheck.Functions.Collection.DB
                     connection.Open();
 
                     DataTable t = new DataTable();
-                    //SqlDataReader reader = command.ExecuteReader();
+                    //SqlDataReader _reader = command.ExecuteReader();
 
                     t.Load(command.ExecuteReader());
 

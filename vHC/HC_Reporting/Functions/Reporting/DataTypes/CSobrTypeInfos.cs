@@ -3,7 +3,7 @@
 
 namespace VeeamHealthCheck.Functions.Reporting.DataTypes
 {
-    class CSobrTypeInfos
+    public class CSobrTypeInfos
     {
         public string PolicyType { get; set; }
         public string Extents { get; set; }

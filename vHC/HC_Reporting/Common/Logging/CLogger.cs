@@ -27,20 +27,7 @@ namespace VeeamHealthCheck.Shared.Logging
             //File.Create(logName).Close();
             _logFile = logDir + "\\" + logName;
         }
-        private void VerifyPath()
-        {
-            if (!Directory.Exists(_logFile))
-            {
-                Directory.CreateDirectory(_logFile);
-            }
-        }
-        public void LogProgress(string message)
-        {
-            message = FormLogLine(message, "INFO");
 
-            Console.Write(message);
-            LogLine(message, true, 3);
-        }
         public void Info(string message)
         {
             Info(message, true);

@@ -7,6 +7,9 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
 using System.Linq;
+using System.Reflection.PortableExecutable;
+using VeeamHealthCheck.Functions.Reporting.CsvHandlers.Proxies;
+using VeeamHealthCheck.Functions.Reporting.CsvHandlers.Repositories;
 using VeeamHealthCheck.Functions.Reporting.CsvHandlers.VB365;
 using VeeamHealthCheck.Shared;
 using VeeamHealthCheck.Shared.Logging;
@@ -20,33 +23,33 @@ namespace VeeamHealthCheck.Functions.Reporting.CsvHandlers
         private CLogger log = CGlobals.Logger;
 
         //CSV Paths.
-        private readonly string _sessionPath = CVariables.vbrDir + @"\VeeamSessionReport.csv";
-        private string _outPath;// = CVariables.vbrDir;
-        private readonly string _sobrExtReportName = "SOBRExtents";
-        private readonly string _jobReportName = "Jobs";
-        private readonly string _proxyReportName = "Proxies";
-        private readonly string _repoReportName = "Repositories";
-        private readonly string _serverReportName = "Servers";
-        private readonly string _sobrReportName = "SOBRs";
-        private readonly string _licReportName = "LicInfo";
-        private readonly string _wanReportName = "WanAcc";
-        private readonly string _cdpProxReportName = "CdpProxy";
-        private readonly string _hvProxReportName = "HvProxy";
-        private readonly string _nasProxReportName = "NasProxy";
-        private readonly string _bnrInfoName = "vbrinfo";
-        private readonly string _piReportName = "pluginjobs";
-        private readonly string _bjobs = "bjobs";
-        private readonly string _capTier = "capTier";
-        private readonly string _trafficRules = "trafficRules";
-        private readonly string _configBackup = "configBackup";
-        private readonly string _regOptions = "regkeys";
-        private readonly string _waits = "waits";
-        private readonly string _ViProtected = "ViProtected";
-        private readonly string _viUnprotected = "ViUnprotected";
-        private readonly string _physProtected = "PhysProtected";
-        private readonly string _physNotProtected = "PhysNotProtected";
-        private readonly string _HvProtected = "HvProtected";
-        private readonly string _HvUnprotected = "HvUnprotected";
+        public readonly string _sessionPath = "VeeamSessionReport.csv";
+        public string _outPath;// = CVariables.vbrDir;
+        public readonly string _sobrExtReportName = "SOBRExtents";
+        public readonly string _jobReportName = "Jobs"; 
+        public readonly string _sobrReportName = "SOBRs";
+        public readonly string _proxyReportName = "Proxies";
+        public readonly string _repoReportName = "Repositories";
+        public readonly string _serverReportName = "Servers";
+        public readonly string _licReportName = "LicInfo";
+        public readonly string _wanReportName = "WanAcc";
+        public readonly string _cdpProxReportName = "CdpProxy";
+        public readonly string _hvProxReportName = "HvProxy";
+        public readonly string _nasProxReportName = "NasProxy";
+        public readonly string _bnrInfoName = "vbrinfo";
+        public readonly string _piReportName = "pluginjobs";
+        public readonly string _bjobs = "bjobs";
+        public readonly string _capTier = "capTier";
+        public readonly string _trafficRules = "trafficRules";
+        public readonly string _configBackup = "configBackup";
+        public readonly string _regOptions = "regkeys";
+        public readonly string _waits = "waits";
+        public readonly string _ViProtected = "ViProtected";
+        public readonly string _viUnprotected = "ViUnprotected";
+        public readonly string _physProtected = "PhysProtected";
+        public readonly string _physNotProtected = "PhysNotProtected";
+        public readonly string _HvProtected = "HvProtected";
+        public readonly string _HvUnprotected = "HvUnprotected";
 
         //VBO Files
         private readonly string _vboGlobalCsv = "Global";
@@ -89,310 +92,571 @@ namespace VeeamHealthCheck.Functions.Reporting.CsvHandlers
         #region m365CsvParser
         public IEnumerable<CGlobalCsv> GetDynamicVboGlobal()
         {
-            return FileFinder(_vboGlobalCsv).GetRecords<CGlobalCsv>();
+            return GetDynamicVboGlobal(null);
+        }
+        public IEnumerable<CGlobalCsv> GetDynamicVboGlobal(string reportName)
+        {
+            if (String.IsNullOrEmpty(reportName))
+            {
+                return FileFinder(_vboGlobalCsv, CVariables.vb365dir).GetRecords<CGlobalCsv>();
+            }
+            else
+            {
+                var reader = FileFinder(reportName, CVariables.vb365dir);
+                if (reader != null)
+                    return reader.GetRecords<CGlobalCsv>();
+                else
+                {
+                    throw new FileNotFoundException("File not found: " + reportName);
+                }
+            }
         }
         public IEnumerable<dynamic> GetDynamicVboProxies()
         {
-            return GetDynamicCsvRecs(_vboProxies);
+            return GetDynamicCsvRecs(_vboProxies, CVariables.vb365dir);
         }
         public IEnumerable<dynamic> GetDynamicVboRbac()
         {
-            return GetDynamicCsvRecs(_vboRBAC);
+            return GetDynamicCsvRecs(_vboRBAC, CVariables.vb365dir);
         }
         public IEnumerable<dynamic> GetDynamicVboJobs()
         {
-            return GetDynamicCsvRecs(_vboJobs);
+            return GetDynamicCsvRecs(_vboJobs, CVariables.vb365dir);
         }
         public IEnumerable<dynamic> GetDynamicVboProcStat()
         {
-            return GetDynamicCsvRecs(_vboProcStat);
+            return GetDynamicCsvRecs(_vboProcStat, CVariables.vb365dir);
         }
         public IEnumerable<CLocalRepos> GetDynamicVboRepo()
         {
-            return FileFinder(_vboRepositories).GetRecords<CLocalRepos>();
+            return FileFinder(_vboRepositories, CVariables.vb365dir).GetRecords<CLocalRepos>();
         }
         public IEnumerable<CSecurityCsv> GetDynamicVboSec()
         {
-            return FileFinder(_vboSecurity).GetRecords<CSecurityCsv>();
+            return FileFinder(_vboSecurity, CVariables.vb365dir).GetRecords<CSecurityCsv>();
         }
         public IEnumerable<dynamic> GetDynVboController()
         {
-            return GetDynamicCsvRecs(_vboController);
+            return GetDynamicCsvRecs(_vboController , CVariables.vb365dir);
         }
         public IEnumerable<dynamic> GetDynVboControllerDriver()
         {
-            return GetDynamicCsvRecs(_vboControllerDriver);
+            return GetDynamicCsvRecs(_vboControllerDriver, CVariables.vb365dir);
         }
         public IEnumerable<dynamic> GetDynVboJobSess()
         {
-            return GetDynamicCsvRecs(_vboJobSessions);
+            return GetDynamicCsvRecs(_vboJobSessions, CVariables.vb365dir);
         }
         public IEnumerable<dynamic> GetDynVboJobStats()
         {
-            return GetDynamicCsvRecs(_vboJobStats);
+            return GetDynamicCsvRecs(_vboJobStats, CVariables.vb365dir);
         }
         public IEnumerable<dynamic> GetDynVboObjRepo()
         {
-            return GetDynamicCsvRecs(_vboObjectRepos);
+            return GetDynamicCsvRecs(_vboObjectRepos    , CVariables.vb365dir);
         }
         public IEnumerable<dynamic> GetDynVboOrg()
         {
-            return GetDynamicCsvRecs(_vboOrganizations);
+            return GetDynamicCsvRecs(_vboOrganizations, CVariables.vb365dir);
         }
         public IEnumerable<dynamic> GetDynVboPerms()
         {
-            return GetDynamicCsvRecs(_vboPermissions);
+            return GetDynamicCsvRecs(_vboPermissions, CVariables.vb365dir);
         }
         public IEnumerable<dynamic> GetDynVboProtStat()
         {
-            return GetDynamicCsvRecs(_vboProtectionStatus);
+            return GetDynamicCsvRecs(_vboProtectionStatus, CVariables.vb365dir);
         }
         public IEnumerable<dynamic> GetDynVboLicOver()
         {
-            return GetDynamicCsvRecs(_vboLiceOverView);
+            return GetDynamicCsvRecs(_vboLiceOverView, CVariables.vb365dir);
         }
         public IEnumerable<dynamic> GetDynVboMbProtRep()
         {
-            return GetDynamicCsvRecs(_vboMailboxProtection);
+            return GetDynamicCsvRecs(_vboMailboxProtection, CVariables.vb365dir);
         }
         public IEnumerable<dynamic> GetDynVboMbStgConsumption()
         {
-            return GetDynamicCsvRecs(_StorageConsumption);
+            return GetDynamicCsvRecs(_StorageConsumption, CVariables.vb365dir);
         }
 
         #endregion
 
         #region DynamicCsvParsers-VBR
 
-        private IEnumerable<dynamic> GetDynamicCsvRecs(string file)
+        private IEnumerable<dynamic> GetDynamicCsvRecs(string file, string vbrOrVboPath)
         {
-            var r = FileFinder(file);
+            var r = FileFinder(file, vbrOrVboPath);
             if (r == null) { return Enumerable.Empty<dynamic>(); }
             else
             {
-                return FileFinder(file).GetRecords<dynamic>();
+                return FileFinder(file, vbrOrVboPath).GetRecords<dynamic>();
 
             }
         }
         public IEnumerable<dynamic> GetDynamicLicenseCsv()
         {
-            return GetDynamicCsvRecs(_licReportName);
+            return GetDynamicCsvRecs(_licReportName, CVariables.vbrDir);
             //return FileFinder(_licReportName).GetRecords<dynamic>();
         }
         public IEnumerable<dynamic> GetDynamicVbrInfo()
         {
-            return GetDynamicCsvRecs(_bnrInfoName);
+            return GetDynamicCsvRecs(_bnrInfoName, CVariables.vbrDir);
         }
         public IEnumerable<dynamic> GetDynamicConfigBackup()
         {
-            return GetDynamicCsvRecs(_configBackup);
+            return GetDynamicCsvRecs(_configBackup, CVariables.vbrDir);
         }
         public IEnumerable<dynamic> GetPhysProtected()
         {
-            return GetDynamicCsvRecs(_physProtected);
+            return GetDynamicCsvRecs(_physProtected, CVariables.vbrDir);
         }
         public IEnumerable<dynamic> GetPhysNotProtected()
         {
-            return GetDynamicCsvRecs(_physNotProtected);
+            return GetDynamicCsvRecs(_physNotProtected, CVariables.vbrDir);
         }
         public IEnumerable<dynamic> GetDynamicJobInfo()
         {
-            return GetDynamicCsvRecs(_jobReportName);
+            return GetDynamicCsvRecs(_jobReportName, CVariables.vbrDir);
         }
         public IEnumerable<dynamic> GetDynamicBjobs()
         {
             try
             {
-                return GetDynamicCsvRecs(_bjobs);
+                return GetDynamicCsvRecs(_bjobs, CVariables.vbrDir);
 
             }
             catch(Exception ex) { return null; }
         }
         public IEnumerable<dynamic> GetDynamincConfigBackup()
         {
-            return GetDynamicCsvRecs(_configBackup);
+            return GetDynamicCsvRecs(_configBackup, CVariables.vbrDir);
         }
         public IEnumerable<dynamic> GetDynamincNetRules()
         {
-            return GetDynamicCsvRecs(_trafficRules);
+            return GetDynamicCsvRecs(_trafficRules, CVariables.vbrDir);
         }
         public IEnumerable<dynamic> GetDynamicRepo()
         {
-            return GetDynamicCsvRecs(_repoReportName);
+            return GetDynamicCsvRecs(_repoReportName, CVariables.vbrDir);
         }
         public IEnumerable<dynamic> GetDynamicSobrExt()
         {
-            return GetDynamicCsvRecs(_sobrExtReportName);
+            return GetDynamicCsvRecs(_sobrExtReportName, CVariables.vbrDir);
         }
         public IEnumerable<dynamic> GetDynamicSobr()
         {
-            return GetDynamicCsvRecs(_sobrReportName);
+            return GetDynamicCsvRecs(_sobrReportName, CVariables.vbrDir);
         }
         public IEnumerable<dynamic> GetDynamicCapTier()
         {
-            return GetDynamicCsvRecs(_capTier);
+            return GetDynamicCsvRecs(_capTier, CVariables.vbrDir);
         }
 
         public IEnumerable<dynamic> GetDynViProxy()
         {
-            return GetDynamicCsvRecs(_proxyReportName);
+            return GetDynamicCsvRecs(_proxyReportName, CVariables.vbrDir);
         }
         public IEnumerable<dynamic> GetDynHvProxy()
         {
-            return GetDynamicCsvRecs(_hvProxReportName);
+            return GetDynamicCsvRecs(_hvProxReportName, CVariables.vbrDir);
         }
         public IEnumerable<dynamic> GetDynNasProxy()
         {
-            return GetDynamicCsvRecs(_nasProxReportName);
+            return GetDynamicCsvRecs(_nasProxReportName, CVariables.vbrDir);
         }
         public IEnumerable<dynamic> GetDynCdpProxy()
         {
-            return GetDynamicCsvRecs(_cdpProxReportName);
+            return GetDynamicCsvRecs(_cdpProxReportName, CVariables.vbrDir);
         }
         #endregion
 
         #region oldCsvParsers
         public IEnumerable<CJobSessionCsvInfos> SessionCsvParser()
         {
-            try
+            return SessionCsvParser(null);
+        }
+        public IEnumerable<CJobSessionCsvInfos> SessionCsvParser(string reportName)
+        {
+            if (String.IsNullOrEmpty(reportName))
             {
-                var records = CReader(_sessionPath).GetRecords<CJobSessionCsvInfos>();
-                return records;
+                return FileFinder(_sessionPath, CVariables.vbrDir).GetRecords<CJobSessionCsvInfos>();
             }
-            catch (Exception e) { return null; }
+            else
+            {
+                var reader = FileFinder(reportName, CVariables.vbrDir);
+                if (reader != null)
+                    return reader.GetRecords<CJobSessionCsvInfos>();
+                else
+                {
+                    throw new FileNotFoundException("File not found: " + reportName);
+                }
+            }
         }
         public IEnumerable<CBnRCsvInfo> BnrCsvParser()
         {
             //ExportAllCsv();
-            var records = FileFinder(_bnrInfoName).GetRecords<CBnRCsvInfo>();
+            var records = FileFinder(_bnrInfoName, CVariables.vbrDir).GetRecords<CBnRCsvInfo>();
             return records;
         }
         public IEnumerable<CSobrExtentCsvInfos> SobrExtParser()
         {
             //ExportAllCsv();
-            var records = FileFinder(_sobrExtReportName).GetRecords<CSobrExtentCsvInfos>();
+            var records = FileFinder(_sobrExtReportName, CVariables.vbrDir).GetRecords<CSobrExtentCsvInfos>();
             return records;
         }
         public IEnumerable<CWaitsCsv> WaitsCsvReader()
         {
 
-            return FileFinder(_waits).GetRecords<CWaitsCsv>();
+            return FileFinder(_waits, CVariables.vbrDir).GetRecords<CWaitsCsv>();
         }
 
         public IEnumerable<CViProtected> ViProtectedReader()
         {
-            return FileFinder(_ViProtected).GetRecords<CViProtected>();
+            return FileFinder(_ViProtected, CVariables.vbrDir).GetRecords<CViProtected>();
         }
         public IEnumerable<CViProtected> ViUnProtectedReader()
         {
-            return FileFinder(_viUnprotected).GetRecords<CViProtected>();
+            return FileFinder(_viUnprotected, CVariables.vbrDir).GetRecords<CViProtected>();
         }
         public IEnumerable<CViProtected> HvProtectedReader()
         {
             try
             {
-                return FileFinder(_HvProtected).GetRecords<CViProtected>();
+                return FileFinder(_HvProtected, CVariables.vbrDir).GetRecords<CViProtected>();
 
             }
             catch(Exception e) { return null; }
         }
         public IEnumerable<CViProtected> HvUnProtectedReader()
         {
-            try
+            return HvUnProtectedReader(null);
+        }
+        public IEnumerable<CViProtected> HvUnProtectedReader(string reportName)
+        {
+            if (String.IsNullOrEmpty(reportName))
             {
-                return FileFinder(_HvUnprotected).GetRecords<CViProtected>();
-
+                return FileFinder(_HvUnprotected, CVariables.vbrDir).GetRecords<CViProtected>();
             }
-            catch(Exception e) { return null; }
+            else
+            {
+                var reader = FileFinder(reportName, CVariables.vbrDir);
+                if (reader != null)
+                    return reader.GetRecords<CViProtected>();
+                else
+                {
+                    throw new FileNotFoundException("File not found: " + reportName);
+                }
+            }
         }
         public IEnumerable<CRegOptionsCsv> RegOptionsCsvParser()
         {
-            return FileFinder(_regOptions).GetRecords<CRegOptionsCsv>();
+            return FileFinder(_regOptions, CVariables.vbrDir).GetRecords<CRegOptionsCsv>();
 
         }
         public IEnumerable<CConfigBackupCsv> ConfigBackupCsvParser()
         {
-            return FileFinder(_configBackup).GetRecords<CConfigBackupCsv>();
+            return FileFinder(_configBackup, CVariables.vbrDir).GetRecords<CConfigBackupCsv>();
             //return records;
+        }
+        public IEnumerable<CConfigBackupCsv> ConfigBackupCsvParser(string reportName)
+        {
+            if (String.IsNullOrEmpty(reportName))
+            {
+                return FileFinder(_configBackup, CVariables.vbrDir).GetRecords<CConfigBackupCsv>();
+            }
+            else
+            {
+                var reader = FileFinder(reportName, CVariables.vbrDir);
+                if (reader != null)
+                    return reader.GetRecords<CConfigBackupCsv>();
+                else
+                {
+                    throw new FileNotFoundException("File not found: " + reportName);
+                }
+            }
         }
         public IEnumerable<CNetTrafficRulesCsv> NetTrafficCsvParser()
         {
-            return FileFinder(_trafficRules).GetRecords<CNetTrafficRulesCsv>();
+            return FileFinder(_trafficRules, CVariables.vbrDir).GetRecords<CNetTrafficRulesCsv>();
         }
         public IEnumerable<CCapTierCsv> CapTierCsvParser()
         {
-            var records = FileFinder(_capTier).GetRecords<CCapTierCsv>();
+            var records = FileFinder(_capTier, CVariables.vbrDir).GetRecords<CCapTierCsv>();
             return records;
+        }
+        public IEnumerable<CCapTierCsv> CapTierCsvParser(string reportName)
+        {
+            if (String.IsNullOrEmpty(reportName))
+            {
+                return FileFinder(_capTier, CVariables.vbrDir).GetRecords<CCapTierCsv>();
+            }
+            else
+            {
+                var reader = FileFinder(reportName, CVariables.vbrDir);
+                if (reader != null)
+                    return reader.GetRecords<CCapTierCsv>();
+                else
+                {
+                    throw new FileNotFoundException("File not found: " + reportName);
+                }
+            }
         }
         public IEnumerable<CPluginCsvInfo> PluginCsvParser()
         {
             //ExportAllCsv();
-            var records = FileFinder(_piReportName).GetRecords<CPluginCsvInfo>();
+            var records = FileFinder(_piReportName, CVariables.vbrDir).GetRecords<CPluginCsvInfo>();
             return records;
+        }
+        public IEnumerable<CPluginCsvInfo> PluginCsvParser(string reportName)
+        {
+            if (String.IsNullOrEmpty(reportName))
+            {
+                return FileFinder(_piReportName, CVariables.vbrDir).GetRecords<CPluginCsvInfo>();
+            }
+            else
+            {
+                var reader = FileFinder(reportName, CVariables.vbrDir);
+                if (reader != null)
+                    return reader.GetRecords<CPluginCsvInfo>();
+                else
+                {
+                    throw new FileNotFoundException("File not found: " + reportName);
+                }
+            }
         }
         public IEnumerable<CWanCsvInfos> WanParser()
         {
             //ExportAllCsv();
-            var records = FileFinder(_wanReportName).GetRecords<CWanCsvInfos>();
+            var records = FileFinder(_wanReportName, CVariables.vbrDir).GetRecords<CWanCsvInfos>();
             return records;
+        }
+        public IEnumerable<CWanCsvInfos> WanParser(string reportName)
+        {
+            if (String.IsNullOrEmpty(reportName))
+            {
+                return FileFinder(_wanReportName, CVariables.vbrDir).GetRecords<CWanCsvInfos>();
+            }
+            else
+            {
+                var reader = FileFinder(reportName, CVariables.vbrDir);
+                if (reader != null)
+                    return reader.GetRecords<CWanCsvInfos>();
+                else
+                {
+                    throw new FileNotFoundException("File not found: " + reportName);
+                }
+            }
         }
         public IEnumerable<CJobCsvInfos> JobCsvParser()
         {
-            var r = FileFinder(_jobReportName).GetRecords<CJobCsvInfos>();
-            return r;
+            return JobCsvParser(null);
+        }
+        public IEnumerable<CJobCsvInfos> JobCsvParser(string reportName)
+        {
+            if (String.IsNullOrEmpty(reportName))
+            {
+                return FileFinder(_jobReportName, CVariables.vbrDir).GetRecords<CJobCsvInfos>();
+            }
+            else
+            {
+                var reader = FileFinder(reportName, CVariables.vbrDir);
+                if (reader != null)
+                    return reader.GetRecords<CJobCsvInfos>();
+                else
+                {
+                    throw new FileNotFoundException("File not found: " + reportName);
+                }
+            }
         }
         public IEnumerable<CBjobCsv> BJobCsvParser()
         {
-            var r = FileFinder(_bjobs).GetRecords<CBjobCsv>();
+            var r = FileFinder(_bjobs, CVariables.vbrDir).GetRecords<CBjobCsv>();
             return r;
+        }
+        public IEnumerable<CBjobCsv> BJobCsvParser(string reportName)
+        {
+            if (String.IsNullOrEmpty(reportName))
+            {
+                return FileFinder(_bjobs, CVariables.vbrDir).GetRecords<CBjobCsv>();
+            }
+            else
+            {
+                var reader = FileFinder(reportName, CVariables.vbrDir);
+                if (reader != null)
+                    return reader.GetRecords<CBjobCsv>();
+                else
+                {
+                    throw new FileNotFoundException("File not found: " + reportName);
+                }
+            }
         }
         public IEnumerable<CServerCsvInfos> ServerCsvParser()
         {
-            var r = FileFinder(_serverReportName).GetRecords<CServerCsvInfos>();
-            return r;
+            return ServerCsvParser(null);
+        }
+        public IEnumerable<CServerCsvInfos> ServerCsvParser(string reportName)
+        {
+            if (String.IsNullOrEmpty(reportName))
+            {
+                return FileFinder(_serverReportName, CVariables.vbrDir).GetRecords<CServerCsvInfos>();
+            }
+            else
+            {
+                var reader = FileFinder(reportName, CVariables.vbrDir);
+                if (reader != null)
+                    return reader.GetRecords<CServerCsvInfos>();
+                else
+                {
+                    throw new FileNotFoundException("File not found: " + reportName);
+                }
+            }
         }
         public IEnumerable<CProxyCsvInfos> ProxyCsvParser()
         {
-            var r = FileFinder(_proxyReportName).GetRecords<CProxyCsvInfos>();
-            return r;
+            return ProxyCsvParser(null);
+        }
+        public IEnumerable<CProxyCsvInfos> ProxyCsvParser(string reportName)
+        {
+            CProxyCsvReader p = new();
+
+            if (String.IsNullOrEmpty(reportName))
+            {
+                return p.ProxyCsvParser();
+            }
+            else
+            {
+                return p.ProxyCsvParser(reportName);
+            }
         }
         public IEnumerable<CSobrCsvInfo> SobrCsvParser()
         {
-            var r = FileFinder(_sobrReportName).GetRecords<CSobrCsvInfo>();
-            return r;
+            return SobrCsvParser(null);
+        }
+        public IEnumerable<CSobrCsvInfo> SobrCsvParser(string reportName)
+        {
+            CSobrCsvReader p = new(reportName);
+            if (String.IsNullOrEmpty(reportName))
+            {
+                return p.SobrCsvParser();
+            }
+            else
+            {
+                return p.SobrCsvParser(reportName);
+            }
         }
 
         public IEnumerable<CRepoCsvInfos> RepoCsvParser()
         {
-            var r = FileFinder(_repoReportName).GetRecords<CRepoCsvInfos>();
-            return r;
+            return RepoCsvParser(null);
+        }
+        public IEnumerable<CRepoCsvInfos> RepoCsvParser(string reportName)
+        {
+            if (String.IsNullOrEmpty(reportName)){
+                var r = FileFinder(_repoReportName, CVariables.vbrDir).GetRecords<CRepoCsvInfos>();
+                return r;
+            }
+            else
+            {
+                var reader = FileFinder(reportName, CVariables.vbrDir);
+                if (reader != null)
+                    return reader.GetRecords<CRepoCsvInfos>().ToList();
+                else throw new FileNotFoundException("Repo Csv Missing");
+            }
+        }
+        public IEnumerable<dynamic> Test2()
+        {
+            return Test2(null);
+        }
+        public IEnumerable<dynamic> Test2(string reportName)
+        {
+            if (String.IsNullOrEmpty(reportName))
+            {
+                return FileFinder(_proxyReportName, CVariables.vbrDir).GetRecords<dynamic>();
+            }
+            else
+            {
+                var reader = FileFinder(reportName, CVariables.vbrDir);
+                if (reader != null)
+                    return reader.GetRecords<dynamic>();
+                else
+                {
+                    throw new FileNotFoundException("File not found: " + reportName);
+                }
+            }
         }
 
         public IEnumerable<CCdpProxyCsvInfo> CdpProxCsvParser()
         {
-            var r = FileFinder(_cdpProxReportName).GetRecords<CCdpProxyCsvInfo>();
+            var r = FileFinder(_cdpProxReportName, CVariables.vbrDir).GetRecords<CCdpProxyCsvInfo>();
             return r;
+        }
+        public IEnumerable<CCdpProxyCsvInfo> CdpProxCsvParser(string reportName)
+        {
+            if (String.IsNullOrEmpty(reportName))
+            {
+                var r = FileFinder(_cdpProxReportName, CVariables.vbrDir).GetRecords<CCdpProxyCsvInfo>();
+                return r;
+            }
+            else
+            {
+                var reader = FileFinder(reportName, CVariables.vbrDir);
+                if (reader != null)
+                    return reader.GetRecords<CCdpProxyCsvInfo>().ToList();
+                else throw new FileNotFoundException("CDP Csv Missing");
+            }
         }
         public IEnumerable<CHvProxyCsvInfo> HvProxCsvParser()
         {
-            var r = FileFinder(_hvProxReportName).GetRecords<CHvProxyCsvInfo>();
+            var r = FileFinder(_hvProxReportName, CVariables.vbrDir).GetRecords<CHvProxyCsvInfo>();
             return r;
+        }
+        public IEnumerable<CHvProxyCsvInfo> HvProxCsvParser(string reportName)
+        {
+            if (String.IsNullOrEmpty(reportName))
+            {
+                var r = FileFinder(_hvProxReportName, CVariables.vbrDir).GetRecords<CHvProxyCsvInfo>();
+                return r;
+            }
+            else
+            {
+                var reader = FileFinder(reportName, CVariables.vbrDir);
+                if (reader != null)
+                    return reader.GetRecords<CHvProxyCsvInfo>().ToList();
+                else throw new FileNotFoundException("HV Proxy Csv Missing");
+            }
         }
         public IEnumerable<CFileProxyCsvInfo> NasProxCsvParser()
         {
-            var r = FileFinder(_nasProxReportName).GetRecords<CFileProxyCsvInfo>();
-            return r;
+            return NasProxCsvParser(null);
+        }
+        public IEnumerable<CFileProxyCsvInfo> NasProxCsvParser(string reportName)
+        {
+            if (String.IsNullOrEmpty(reportName))
+            {
+                return FileFinder(_nasProxReportName, CVariables.vbrDir).GetRecords<CFileProxyCsvInfo>();
+            }
+            else
+            {
+                var reader = FileFinder(reportName, CVariables.vbrDir);
+                if (reader != null)
+                    return reader.GetRecords<CFileProxyCsvInfo>();
+                else
+                {
+                    throw new FileNotFoundException("File not found: " + reportName);
+                }
+            }
         }
         #endregion
 
         #region localFunctions
         public void Dispose() { }
 
-        private CsvReader FileFinder(string file)
+        private CsvReader FileFinder(string file, string vbrOrVboPath)
         {
             try
             {
-                string[] files = Directory.GetFiles(_outPath);
+                string[] files = Directory.GetFiles(vbrOrVboPath);
                 foreach (var f in files)
                 {
                     FileInfo fi = new(f);
@@ -402,16 +666,13 @@ namespace VeeamHealthCheck.Functions.Reporting.CsvHandlers
                         return cr;
                     }
                 }
-                //HardExit();
             }
             catch (Exception e)
             {
                 string s = string.Format("File or Directory {0} not found!", _outPath + "\n" + e.Message);
                 log.Error(s);
-                //MessageBox.Show(s);
-                // HardExit();
+                return null;
             }
-            //return HardExit();
             return null;
         }
 
