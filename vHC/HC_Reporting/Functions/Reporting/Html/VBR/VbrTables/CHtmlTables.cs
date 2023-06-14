@@ -1106,6 +1106,7 @@ _form.TableHeader(VbrLocalizationHelper.SbrExt15, VbrLocalizationHelper.SbrExt15
             {
                 var stuff = _df.ConvertJobSessSummaryToXml(scrub);
 
+
                 foreach (var stu in stuff)
                 {
                     s += "<tr>";

@@ -86,14 +86,18 @@ namespace VeeamHealthCheck.Functions.Reporting.Html
 
             List<int> pTypes = new();
 
-            foreach (var bjob in bjobInfos)
+            if(null != bjobInfos)
             {
-                int.TryParse(bjob.type, out int typeId);
-                if (!pTypes.Contains(typeId))
+                foreach (var bjob in bjobInfos)
                 {
-                    pTypes.Add(typeId);
+                    int.TryParse(bjob.type, out int typeId);
+                    if (!pTypes.Contains(typeId))
+                    {
+                        pTypes.Add(typeId);
 
+                    }
                 }
+
             }
 
 

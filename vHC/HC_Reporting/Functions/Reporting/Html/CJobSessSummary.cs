@@ -243,7 +243,11 @@ namespace VeeamHealthCheck.Functions.Reporting.Html
                     info.JobType = type;
 
                     //TODO: adjust this to pull VM Original Size, calculate compress & dedupe as well..
-                    var originalSize = bjobsCsvInfo.Where(x => x.name == j).Select(x => x.originalsize);
+                    if(bjobsCsvInfo != null)
+                    {
+                        var originalSize = bjobsCsvInfo.Where(x => x.name == j).Select(x => x.originalsize);
+
+                    }
 
                     if (info.AvgBackupSize != 0 && info.AvgDataSize != 0)
                     {
@@ -289,8 +293,8 @@ namespace VeeamHealthCheck.Functions.Reporting.Html
                     row.Add(Math.Round(o.AvgBackupSize, 2).ToString());
                     row.Add(Math.Round(o.MaxBackupSize, 2).ToString());
                     row.Add(Math.Round(o.AvgDataSize, 2).ToString());
-                    row.Add(Math.Round(o.AvgChangeRate, 2).ToString());
                     row.Add(Math.Round(o.MaxDataSize, 2).ToString());
+                    row.Add(Math.Round(o.AvgChangeRate, 2).ToString());
                     row.Add(wait);
                     row.Add(o.maxWait);
                     row.Add(o.avgwait);
