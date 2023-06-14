@@ -13,22 +13,31 @@ using VeeamHealthCheck.Shared.Logging;
 
 namespace VeeamHealthCheck.Functions.Reporting.CsvHandlers
 {
-    internal class CCsvReader
+    public class CCsvReader
     {
         private CLogger log = CGlobals.Logger;
         private readonly CsvConfiguration _csvConfig;
-        private string _outPath;// = CVariables.vbrDir;
+        //private string _outPath;// = CVariables.vbrDir;
 
-        public CCsvReader(string vbrOrVboPath)
+        public CCsvReader()
         {
             _csvConfig = GetCsvConfig();
-            _outPath = vbrOrVboPath;
+            //_outPath = vbrOrVboPath;
         }
-        public CsvReader FileFinder(string file)
+
+        public CsvReader VbrCsvReader(string file)
+        {
+            return FileFinder(file, CVariables.vbrDir);
+        }
+        public CsvReader VboCsvReader(string file)
+        {
+            return FileFinder(file, CVariables.vb365dir);
+        }
+        public CsvReader FileFinder(string file, string outpath)
         {
             try
             {
-                string[] files = Directory.GetFiles(_outPath);
+                string[] files = Directory.GetFiles(outpath);
                 foreach (var f in files)
                 {
                     FileInfo fi = new(f);
@@ -41,7 +50,8 @@ namespace VeeamHealthCheck.Functions.Reporting.CsvHandlers
             }
             catch (Exception e)
             {
-                string s = string.Format("File or Directory {0} not found!", _outPath + "\n" + e.Message);
+
+                string s = string.Format("File or Directory {0} not found!", outpath + "\n" + e.Message);
                 log.Error(s);
                 return null;
             }

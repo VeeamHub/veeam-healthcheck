@@ -65,7 +65,7 @@ namespace VeeamHealthCheck.Functions.Reporting.DataTypes
         
         private List<CSobrTypeInfos> SobrInfos()
         {
-            var sobrCsv = _csvParser.SobrCsvParser(_csvParser._sobrReportName).ToList();
+            var sobrCsv = _csvParser.SobrCsvParser().ToList();
             var capTierCsv = _csvParser.CapTierCsvParser().ToList();
 
             List<CSobrTypeInfos> eInfoList = new List<CSobrTypeInfos>();
@@ -157,7 +157,7 @@ namespace VeeamHealthCheck.Functions.Reporting.DataTypes
         private List<CRepoTypeInfos> RepoInfo()
         {
 
-            var records = _csvParser.RepoCsvParser();
+            var records = _csvParser.RepoCsvParser().ToList();
             List<CRepoTypeInfos> eInfoList = new List<CRepoTypeInfos>();
             foreach (CRepoCsvInfos s in records)
             {
@@ -686,7 +686,7 @@ namespace VeeamHealthCheck.Functions.Reporting.DataTypes
         public List<CProxyTypeInfos> ProxyInfo()
         {
 
-            var proxyCsv = _csvParser.ProxyCsvParser(_csvParser._proxyReportName);
+            var proxyCsv = _csvParser.ProxyCsvParser();
             var cdpCsv = _csvParser.CdpProxCsvParser();
             var fileCsv = _csvParser.NasProxCsvParser();
             var hvCsv = _csvParser.HvProxCsvParser();
