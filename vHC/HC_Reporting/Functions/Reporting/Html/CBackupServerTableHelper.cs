@@ -58,7 +58,10 @@ namespace VeeamHealthCheck.Functions.Reporting.Html
         private void SetConfigBackupSettings()
         {
             CCsvParser config = new();
-            List<CConfigBackupCsv> cv = config.ConfigBackupCsvParser().ToList();
+            List<CConfigBackupCsv> cv = new();
+            var configBackupCsv = config.ConfigBackupCsvParser();
+            if(configBackupCsv != null)
+                 cv = configBackupCsv.ToList();
             if (cv.Count > 0)
             {
 
@@ -93,19 +96,24 @@ namespace VeeamHealthCheck.Functions.Reporting.Html
                 {
                     try
                     {
-                        var records = config.BnrCsvParser().ToList();
-                        _backupServer.Version = records[0].Version;
-                        if (string.IsNullOrEmpty(_backupServer.DbHostName))
+                        var records = config.BnrCsvParser();//.ToList();
+                        if(records != null)
                         {
-                            _backupServer.DbHostName = records[0].SqlServer;
+                            var r2 = records.ToList();
+                            _backupServer.Version = r2[0].Version;
+                            if (string.IsNullOrEmpty(_backupServer.DbHostName))
+                            {
+                                _backupServer.DbHostName = r2[0].SqlServer;
 
+                            }
+                            _backupServer.FixIds = CheckFixes(r2[0].Fixes);
+                            _backupServer.HasFixes = _hasFixes;
+
+
+                            if (_backupServer.DbType == CGlobals.PgTypeName)
+                                _backupServer.DbHostName = r2[0].PgHost;
                         }
-                        _backupServer.FixIds = CheckFixes(records[0].Fixes);
-                        _backupServer.HasFixes = _hasFixes;
-
-
-                        if (_backupServer.DbType == CGlobals.PgTypeName)
-                            _backupServer.DbHostName = records[0].PgHost;
+                        
 
 
                     }

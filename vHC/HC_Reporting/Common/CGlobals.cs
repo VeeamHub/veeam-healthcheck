@@ -69,6 +69,14 @@ namespace VeeamHealthCheck.Shared
             get { return _scrub; }
             set { _scrub = value; }
         }
+        public static DateTime GetToolStart
+        {
+            get { if(TOOLSTART == DateTime.MinValue)
+                    TOOLSTART = DateTime.Now;
+                return TOOLSTART;
+            }
+            set { TOOLSTART = value; }
+        }
         public static CLogger Logger { get { return _mainlog; } }
         public static CScrubHandler Scrubber { get { return _scrubberMain; } }
 

@@ -202,7 +202,7 @@ namespace VeeamHealthCheck.Startup
             {
                 if (CGlobals.IMPORT)
                     FullRun(targetDir);
-                if (CGlobals.REMOTEEXEC && CGlobals.REMOTEHOST == "")
+                else if (CGlobals.REMOTEEXEC && CGlobals.REMOTEHOST == "")
                 {
                     CGlobals.Logger.Warning("Remote execution selected but no host defined. Please define host: " +
                         "/host=HOSTNAME", false);

@@ -13,6 +13,7 @@ using VeeamHealthCheck.Functions.Reporting.CsvHandlers;
 using VeeamHealthCheck.Functions.Reporting.DataTypes;
 using VeeamHealthCheck.Functions.Reporting.Html.Shared;
 using VeeamHealthCheck.Functions.Reporting.Html.VBR;
+using VeeamHealthCheck.Functions.Reporting.Html.VBR.VbrTables.Job_Session_Summary;
 //using VeeamHealthCheck.Functions.Reporting.Html.VBR.VBR_Tables.Repositories;
 using VeeamHealthCheck.Functions.Reporting.RegSettings;
 using VeeamHealthCheck.Reporting.Html.VBR;
@@ -26,29 +27,17 @@ using static VeeamHealthCheck.Functions.Collection.DB.CModel;
 
 namespace VeeamHealthCheck.Functions.Reporting.Html
 {
-    class CDataFormer
+    public class CDataFormer
     {
         private readonly string _testFile = "xml\\vbr.xml";
         private string logStart = "[DataFormer]\t";
 
-        //private string _backupServerName;
         private bool _isBackupServerProxy;
         private bool _isBackupServerRepo;
         private bool _isBackupServerWan;
-        //private CQueries _cq = new();
         private Dictionary<string, int> _repoJobCount;
         private CScrubHandler _scrubber = CGlobals.Scrubber;
-        //private bool _scrub;
 
-        //Security Summary parts
-        //private bool _backupsEncrypted = false;
-        //private bool _immuteFound = false;
-        //private bool _trafficEncrypted = false;
-        //private bool _configBackupEncrypted = false;
-
-        //private bool _isSqlLocal;
-        //private int _cores;
-        //private int _ram;
         private CDataTypesParser _dTypeParser;
         private List<CServerTypeInfos> _csv;
         private readonly CCsvParser _csvParser = new();
@@ -60,15 +49,11 @@ namespace VeeamHealthCheck.Functions.Reporting.Html
         public CDataFormer() // add string mode input
         {
             _dTypeParser = new();
-            _csv = _dTypeParser.ServerInfo();
+            //_csv = _dTypeParser.ServerInfo();
 
             //CheckXmlFile();
         }
-        private void CheckXmlFile()
-        {
-            if (!File.Exists(_testFile))
-                File.Create(_testFile).Dispose();
-        }
+
         public void Dispose() { }
 
 
@@ -86,7 +71,7 @@ namespace VeeamHealthCheck.Functions.Reporting.Html
 
             List<int> pTypes = new();
 
-            if(null != bjobInfos)
+            if (null != bjobInfos)
             {
                 foreach (var bjob in bjobInfos)
                 {
@@ -201,145 +186,156 @@ namespace VeeamHealthCheck.Functions.Reporting.Html
         public Dictionary<string, int> ServerSummaryToXml()
         {
             log.Info("converting server summary to xml");
-            Dictionary<string, int> di = _dTypeParser.ServerSummaryInfo;
-
-            log.Info("converting server summary to xml.done!");
-            return di;
-        }
-        public void ProtectedWorkloadsToXml()
-        {
-            //customize the log line:
-            log.Info("Converting protected workloads data to xml...");
-
-
-            // gather data needed for input
-            CCsvParser csvp = new();
-
-            #region viProtected
-            var protectedVms = csvp.ViProtectedReader().ToList();
-            var unProtectedVms = csvp.ViUnProtectedReader().ToList();
-
-            var HvProtectedVms = csvp.HvProtectedReader();
-            var HvUnProtectedVms = csvp.HvUnProtectedReader(); // test
-            #endregion
-
-            #region hv logic
-            List<string> hvNames = new();
-            List<string> hvProtectedNames = new();
-            List<string> hvNotProtectedNames = new();
-            int hvDupes = 0;
-
-            if (HvProtectedVms != null || HvUnProtectedVms != null)
+            //Dictionary<string, int> di = _dTypeParser.ServerSummaryInfo;
+            using (CDataTypesParser dt = new())
             {
-                HvProtectedVms = HvProtectedVms.ToList();
-                HvUnProtectedVms = HvUnProtectedVms.ToList();
-                foreach (var p in HvProtectedVms)
+                return dt.ServerSummaryInfo;
+            }
+            log.Info("converting server summary to xml.done!");
+        }
+        public int ProtectedWorkloadsToXml()
+        {
+            try
+            {
+
+                //customize the log line:
+                log.Info("Converting protected workloads data to xml...");
+
+
+                // gather data needed for input
+                CCsvParser csvp = new();
+
+                #region viProtected
+                var protectedVms = csvp.ViProtectedReader().ToList();
+                var unProtectedVms = csvp.ViUnProtectedReader().ToList();
+
+                var HvProtectedVms = csvp.HvProtectedReader();
+                var HvUnProtectedVms = csvp.HvUnProtectedReader(); // test
+                #endregion
+
+                #region hv logic
+                List<string> hvNames = new();
+                List<string> hvProtectedNames = new();
+                List<string> hvNotProtectedNames = new();
+                int hvDupes = 0;
+
+                if (HvProtectedVms != null || HvUnProtectedVms != null)
+                {
+                    HvProtectedVms = HvProtectedVms.ToList();
+                    HvUnProtectedVms = HvUnProtectedVms.ToList();
+                    foreach (var p in HvProtectedVms)
+                    {
+
+                        hvNames.Add(p.Name);
+                        hvProtectedNames.Add(p.Name);
+
+
+                    }
+                    foreach (var un in HvUnProtectedVms)
+                    {
+                        if (un.Type == "Vm")
+                        {
+                            hvNotProtectedNames.Add(un.Name);
+                            hvNames.Add(un.Name);
+
+                        }
+
+                    }
+
+                    hvDupes = hvNames.Count - (hvProtectedNames.Distinct().Count() + hvNotProtectedNames.Distinct().Count());
+                }
+                else
+                {
+                    //_hvDupes = 0;
+                    //_hvNotProtectedNames = 0;
+                    //_hvProtectedNames = List<string>;
+                }
+
+
+                #endregion
+
+                #region physProtected
+                //var physProtected = csvp.PhysProtectedReader().ToList();
+                //var physNotProtected = csvp.PhysNotProtectedReader().ToList();
+                var physProtected = csvp.GetPhysProtected().ToList();
+                var physNotProtected = csvp.GetPhysNotProtected().ToList();
+
+                #endregion
+
+                List<string> vmNames = new();
+                List<string> viProtectedNames = new();
+                List<string> viNotProtectedNames = new();
+                int viDupes = 0;
+
+
+                foreach (var p in protectedVms)
                 {
 
-                    hvNames.Add(p.Name);
-                    hvProtectedNames.Add(p.Name);
+                    vmNames.Add(p.Name);
+                    viProtectedNames.Add(p.Name);
 
 
                 }
-                foreach (var un in HvUnProtectedVms)
+                foreach (var un in unProtectedVms)
                 {
                     if (un.Type == "Vm")
                     {
-                        hvNotProtectedNames.Add(un.Name);
-                        hvNames.Add(un.Name);
+                        viNotProtectedNames.Add(un.Name);
+                        vmNames.Add(un.Name);
 
                     }
 
                 }
 
-                hvDupes = hvNames.Count - (hvProtectedNames.Distinct().Count() + hvNotProtectedNames.Distinct().Count());
-            }
-            else
-            {
-                //_hvDupes = 0;
-                //_hvNotProtectedNames = 0;
-                //_hvProtectedNames = List<string>;
-            }
+                viDupes = vmNames.Count - (viProtectedNames.Distinct().Count() + viNotProtectedNames.Distinct().Count());
 
+                List<string> physNames = new();
+                List<string> physProtNames = new();
+                List<string> physNotProtNames = new();
 
-            #endregion
-
-            #region physProtected
-            //var physProtected = csvp.PhysProtectedReader().ToList();
-            //var physNotProtected = csvp.PhysNotProtectedReader().ToList();
-            var physProtected = csvp.GetPhysProtected().ToList();
-            var physNotProtected = csvp.GetPhysNotProtected().ToList();
-
-            #endregion
-
-            List<string> vmNames = new();
-            List<string> viProtectedNames = new();
-            List<string> viNotProtectedNames = new();
-            int viDupes = 0;
-
-
-            foreach (var p in protectedVms)
-            {
-
-                vmNames.Add(p.Name);
-                viProtectedNames.Add(p.Name);
-
-
-            }
-            foreach (var un in unProtectedVms)
-            {
-                if (un.Type == "Vm")
+                foreach (var u in physNotProtected)
                 {
-                    viNotProtectedNames.Add(un.Name);
-                    vmNames.Add(un.Name);
+                    if (u.type == "Computer")
+                    {
+                        physNames.Add(u.name);
+                        physNotProtNames.Add(u.name);
+                    }
 
                 }
-
-            }
-
-            viDupes = vmNames.Count - (viProtectedNames.Distinct().Count() + viNotProtectedNames.Distinct().Count());
-
-            List<string> physNames = new();
-            List<string> physProtNames = new();
-            List<string> physNotProtNames = new();
-
-            foreach (var u in physNotProtected)
-            {
-                if (u.type == "Computer")
+                List<string> vmProtectedByPhys = new();
+                foreach (var p in physProtected)
                 {
-                    physNames.Add(u.name);
-                    physNotProtNames.Add(u.name);
+                    foreach (var v in protectedVms)
+                        if (p.name.Contains(v.Name))
+                            vmProtectedByPhys.Add(v.Name);
+                    foreach (var w in unProtectedVms)
+                    {
+                        if (p.name.Contains(w.Name))
+                            vmProtectedByPhys.Add(w.Name);
+                    }
                 }
 
+                //var xml2 = XML.AddXelement(protectedVms.Count.ToString(), "ViProtected");
+
+                _viProtectedNames = viProtectedNames;
+                _viNotProtectedNames = viNotProtectedNames;
+                _viDupes = viDupes;
+                _vmProtectedByPhys = vmProtectedByPhys;
+                _physNotProtNames = physNotProtNames;
+                _physProtNames = physProtNames;
+
+                _hvProtectedNames = hvProtectedNames;
+                _hvNotProtectedNames = hvNotProtectedNames;
+                _hvDupes = hvDupes;
+
+
+                log.Info("Converting protected workloads data to xml..done!");
+                return 0;
             }
-            List<string> vmProtectedByPhys = new();
-            foreach (var p in physProtected)
+            catch (Exception ex)
             {
-                foreach (var v in protectedVms)
-                    if (p.name.Contains(v.Name))
-                        vmProtectedByPhys.Add(v.Name);
-                foreach (var w in unProtectedVms)
-                {
-                    if (p.name.Contains(w.Name))
-                        vmProtectedByPhys.Add(w.Name);
-                }
+                return 1;
             }
-
-            //var xml2 = XML.AddXelement(protectedVms.Count.ToString(), "ViProtected");
-
-            _viProtectedNames = viProtectedNames;
-            _viNotProtectedNames = viNotProtectedNames;
-            _viDupes = viDupes;
-            _vmProtectedByPhys = vmProtectedByPhys;
-            _physNotProtNames = physNotProtNames;
-            _physProtNames = physProtNames;
-
-            _hvProtectedNames = hvProtectedNames;
-            _hvNotProtectedNames = hvNotProtectedNames;
-            _hvDupes = hvDupes;
-
-
-            log.Info("Converting protected workloads data to xml..done!");
         }
         public int _viDupes;
         public List<string> _vmProtectedByPhys;
@@ -478,66 +474,66 @@ namespace VeeamHealthCheck.Functions.Reporting.Html
             csv = csv.OrderBy(x => x.RepoName).ToList();
             csv = csv.OrderBy(y => y.SobrName).ToList();
 
-
-            foreach (var c in csv)
-            {
-                string[] s = new string[18];
-                string newName = c.RepoName;
-                string sobrName = c.SobrName;
-                string hostName = c.Host;
-                string path = c.Path;
-                string gates = SetGateHosts(c.GateHosts, scrub);
-
-                if (scrub)
+            if (csv != null)
+                foreach (var c in csv)
                 {
-                    newName = Scrub(newName);
-                    sobrName = Scrub(sobrName);
-                    hostName = Scrub(hostName);
-                    path = Scrub(path);
-                }
-                string type;
-                if (c.TypeDisplay == null)
-                    type = c.Type;
-                else
-                    type = c.TypeDisplay;
+                    string[] s = new string[18];
+                    string newName = c.RepoName;
+                    string sobrName = c.SobrName;
+                    string hostName = c.Host;
+                    string path = c.Path;
+                    string gates = SetGateHosts(c.GateHosts, scrub);
 
-                var freePercent = FreePercent(c.FreeSPace, c.TotalSpace);
-                CRepository repo = new();
-                repo.Name = newName;
+                    if (scrub)
+                    {
+                        newName = Scrub(newName);
+                        sobrName = Scrub(sobrName);
+                        hostName = Scrub(hostName);
+                        path = Scrub(path);
+                    }
+                    string type;
+                    if (c.TypeDisplay == null)
+                        type = c.Type;
+                    else
+                        type = c.TypeDisplay;
 
-                s[0] += newName;
-                s[1] += sobrName;
-                s[2] += c.MaxTasks;
-                s[3] += c.Cores;
-                s[4] += c.Ram;
-                s[5] += c.IsAutoGateway;
-                if (c.IsAutoGateway == "True")
-                {
-                    s[6] += "";
-                }
-                else
-                {
-                    if (String.IsNullOrEmpty(c.GateHosts))
-                        s[6] += hostName;
+                    var freePercent = FreePercent(c.FreeSPace, c.TotalSpace);
+                    CRepository repo = new();
+                    repo.Name = newName;
+
+                    s[0] += newName;
+                    s[1] += sobrName;
+                    s[2] += c.MaxTasks;
+                    s[3] += c.Cores;
+                    s[4] += c.Ram;
+                    s[5] += c.IsAutoGateway;
+                    if (c.IsAutoGateway == "True")
+                    {
+                        s[6] += "";
+                    }
                     else
                     {
-                        s[6] += gates;
+                        if (String.IsNullOrEmpty(c.GateHosts))
+                            s[6] += hostName;
+                        else
+                        {
+                            s[6] += gates;
+                        }
                     }
-                }
-                s[7] += path;
-                s[8] += Math.Round((decimal)c.FreeSPace / 1024, 2);
-                s[9] += Math.Round((decimal)c.TotalSpace / 1024, 2);
-                s[10] += freePercent;
-                s[11] += c.IsDecompress;
-                s[12] += c.AlignBlocks;
-                s[13] += c.IsRotatedDriveRepository;
-                s[14] += c.IsImmutabilitySupported;
-                s[15] += c.Type;
-                s[16] += c.Povisioning;
-                //s[17] += c.GateHosts;
+                    s[7] += path;
+                    s[8] += Math.Round((decimal)c.FreeSPace / 1024, 2);
+                    s[9] += Math.Round((decimal)c.TotalSpace / 1024, 2);
+                    s[10] += freePercent;
+                    s[11] += c.IsDecompress;
+                    s[12] += c.AlignBlocks;
+                    s[13] += c.IsRotatedDriveRepository;
+                    s[14] += c.IsImmutabilitySupported;
+                    s[15] += c.Type;
+                    s[16] += c.Povisioning;
+                    //s[17] += c.GateHosts;
 
-                list.Add(s);
-            }
+                    list.Add(s);
+                }
             log.Info("converting extent info to xml..done!");
             return list;
         }
@@ -549,70 +545,70 @@ namespace VeeamHealthCheck.Functions.Reporting.Html
 
             List<CRepoTypeInfos> csv = _dTypeParser.RepoInfos;
             csv = csv.OrderBy(x => x.Name).ToList();
-
-            foreach (var c in csv)
-            {
-                string[] s = new string[18];
-                string name = c.Name;
-                string host = c.Host;
-                string path = c.Path;
-                string gates = SetGateHosts(c.GateHosts, scrub);
-                if (scrub)
+            if (csv != null)
+                foreach (var c in csv)
                 {
-                    name = _scrubber.ScrubItem(c.Name, "repo");
-                    host = _scrubber.ScrubItem(c.Host, "server");
-                    path = _scrubber.ScrubItem(c.Path, "repoPath");
-                }
+                    string[] s = new string[18];
+                    string name = c.Name;
+                    string host = c.Host;
+                    string path = c.Path;
+                    string gates = SetGateHosts(c.GateHosts, scrub);
+                    if (scrub)
+                    {
+                        name = _scrubber.ScrubItem(c.Name, "repo");
+                        host = _scrubber.ScrubItem(c.Host, "server");
+                        path = _scrubber.ScrubItem(c.Path, "repoPath");
+                    }
 
-                decimal free = Math.Round((decimal)c.FreeSPace / 1024, 2);
-                decimal total = Math.Round((decimal)c.TotalSpace / 1024, 2);
-                decimal freePercent = FreePercent(c.FreeSPace, c.TotalSpace);
-                string freeSpace = free.ToString();
-                string totalSpace = total.ToString();
-                string percentFree = freePercent.ToString();
-                if (c.TotalSpace == 0)
-                {
-                    freeSpace = FilterZeros(free);
-                    totalSpace = FilterZeros(total);
-                    percentFree = "";
-                }
+                    decimal free = Math.Round((decimal)c.FreeSPace / 1024, 2);
+                    decimal total = Math.Round((decimal)c.TotalSpace / 1024, 2);
+                    decimal freePercent = FreePercent(c.FreeSPace, c.TotalSpace);
+                    string freeSpace = free.ToString();
+                    string totalSpace = total.ToString();
+                    string percentFree = freePercent.ToString();
+                    if (c.TotalSpace == 0)
+                    {
+                        freeSpace = FilterZeros(free);
+                        totalSpace = FilterZeros(total);
+                        percentFree = "";
+                    }
 
 
-                _repoJobCount.TryGetValue(c.Name, out int jobCount);
-                s[0] += name;
-                s[1] += c.MaxTasks;
-                s[2] += jobCount;
-                s[3] += c.Cores;
-                s[4] += c.Ram;
-                s[5] += c.IsAutoGateway;
-                if (c.IsAutoGateway == "True")
-                {
-                    s[6] += "";
-                }
-                else
-                {
-                    if (String.IsNullOrEmpty(c.GateHosts))
-                        s[6] += host;
+                    _repoJobCount.TryGetValue(c.Name, out int jobCount);
+                    s[0] += name;
+                    s[1] += c.MaxTasks;
+                    s[2] += jobCount;
+                    s[3] += c.Cores;
+                    s[4] += c.Ram;
+                    s[5] += c.IsAutoGateway;
+                    if (c.IsAutoGateway == "True")
+                    {
+                        s[6] += "";
+                    }
                     else
                     {
-                        s[6] += gates;
+                        if (String.IsNullOrEmpty(c.GateHosts))
+                            s[6] += host;
+                        else
+                        {
+                            s[6] += gates;
+                        }
                     }
+
+                    s[7] += path;
+                    s[8] += Math.Round((decimal)c.FreeSPace / 1024, 2);
+                    s[9] += Math.Round((decimal)c.TotalSpace / 1024, 2);
+                    s[10] += freePercent;
+                    s[11] += c.SplitStoragesPerVm;
+                    s[12] += c.IsDecompress;
+                    s[13] += c.AlignBlocks;
+                    s[14] += c.IsRotatedDriveRepository;
+                    s[15] += c.IsImmutabilitySupported;
+                    s[16] += c.Type;
+                    s[17] += c.Povisioning;
+
+                    list.Add(s);
                 }
-
-                s[7] += path;
-                s[8] += Math.Round((decimal)c.FreeSPace / 1024, 2);
-                s[9] += Math.Round((decimal)c.TotalSpace / 1024, 2);
-                s[10] += freePercent;
-                s[11] += c.SplitStoragesPerVm;
-                s[12] += c.IsDecompress;
-                s[13] += c.AlignBlocks;
-                s[14] += c.IsRotatedDriveRepository;
-                s[15] += c.IsImmutabilitySupported;
-                s[16] += c.Type;
-                s[17] += c.Povisioning;
-
-                list.Add(s);
-            }
             log.Info("converting repository info to xml..done!");
             return list;
         }
@@ -626,31 +622,31 @@ namespace VeeamHealthCheck.Functions.Reporting.Html
             csv = csv.OrderBy(x => x.Name).ToList();
             csv = csv.OrderBy(y => y.Type).ToList();
 
-
-            foreach (var c in csv)
-            {
-                string[] s = new string[13];
-                if (scrub)
+            if (csv != null)
+                foreach (var c in csv)
                 {
-                    c.Name = Scrub(c.Name);
-                    c.Host = Scrub(c.Host);
-                }
-                s[0] += c.Name;
-                s[1] += c.MaxTasksCount;
-                s[2] += c.Cores.ToString();
-                s[3] += c.Ram.ToString();
-                s[4] += c.Type;
-                s[5] += c.TransportMode;
-                s[6] += c.FailoverToNetwork;
-                s[7] += c.ChassisType;
-                s[8] += c.CachePath;
-                s[9] += c.CacheSize;
-                s[10] += c.Host;
-                s[11] += c.IsDisabled;
-                s[12] += c.Provisioning;
+                    string[] s = new string[13];
+                    if (scrub)
+                    {
+                        c.Name = Scrub(c.Name);
+                        c.Host = Scrub(c.Host);
+                    }
+                    s[0] += c.Name;
+                    s[1] += c.MaxTasksCount;
+                    s[2] += c.Cores.ToString();
+                    s[3] += c.Ram.ToString();
+                    s[4] += c.Type;
+                    s[5] += c.TransportMode;
+                    s[6] += c.FailoverToNetwork;
+                    s[7] += c.ChassisType;
+                    s[8] += c.CachePath;
+                    s[9] += c.CacheSize;
+                    s[10] += c.Host;
+                    s[11] += c.IsDisabled;
+                    s[12] += c.Provisioning;
 
-                list.Add(s);
-            }
+                    list.Add(s);
+                }
             log.Info("converting proxy info to xml..done!");
 
             return list;
@@ -660,7 +656,7 @@ namespace VeeamHealthCheck.Functions.Reporting.Html
         {
             log.Info("converting server info to xml");
             List<CManagedServer> list = new();
-            List<CServerTypeInfos> csv = _csv;
+            List<CServerTypeInfos> csv = _dTypeParser.ServerInfo();
 
             csv = csv.OrderBy(x => x.Name).ToList();
             csv = csv.OrderBy(x => x.Type).ToList();
@@ -682,70 +678,71 @@ namespace VeeamHealthCheck.Functions.Reporting.Html
             //list to ensure we only count unique VMs
             List<string> countedVMs = new();
 
-            foreach (var c in csv)
-            {
-                //string[] s = new string[13];
-                CManagedServer server = new();
-
-                //match server and VM count
-                int vmCount = 0;
-                int protectedCount = 0;
-                int unProtectedCount = 0;
-
-                foreach (var p in protectedVms)
+            if (csv != null)
+                foreach (var c in csv)
                 {
-                    if (!countedVMs.Contains(p.Name))
-                    {
-                        if (p.Path.StartsWith(c.Name))
-                        {
-                            vmCount++;
-                            protectedCount++;
-                            countedVMs.Add(p.Name);
-                        }
-                    }
+                    //string[] s = new string[13];
+                    CManagedServer server = new();
 
-                }
-                foreach (var u in unProtectedVms)
-                {
-                    if (u.Type == "Vm")
+                    //match server and VM count
+                    int vmCount = 0;
+                    int protectedCount = 0;
+                    int unProtectedCount = 0;
+
+                    foreach (var p in protectedVms)
                     {
-                        if (!countedVMs.Contains(u.Name))
+                        if (!countedVMs.Contains(p.Name))
                         {
-                            if (u.Path.StartsWith(c.Name))
+                            if (p.Path.StartsWith(c.Name))
                             {
                                 vmCount++;
-                                unProtectedCount++;
-                                countedVMs.Add(u.Name);
+                                protectedCount++;
+                                countedVMs.Add(p.Name);
+                            }
+                        }
+
+                    }
+                    foreach (var u in unProtectedVms)
+                    {
+                        if (u.Type == "Vm")
+                        {
+                            if (!countedVMs.Contains(u.Name))
+                            {
+                                if (u.Path.StartsWith(c.Name))
+                                {
+                                    vmCount++;
+                                    unProtectedCount++;
+                                    countedVMs.Add(u.Name);
+                                }
                             }
                         }
                     }
+
+                    //check for VBR Roles
+                    CheckServerRoles(c.Id);
+
+
+                    //scrub name if selected
+                    string newName = c.Name;
+                    if (scrub)
+                        newName = Scrub(newName);
+                    //s[0] = newName;
+                    server.Name = newName;
+                    server.Cores = c.Cores;
+                    server.Ram = c.Ram;
+                    server.Type = c.Type;
+                    server.ApiVersion = c.ApiVersion;
+                    server.ProtectedVms = protectedCount;
+                    server.NotProtectedVms = unProtectedCount;
+                    server.TotalVms = vmCount;
+                    server.IsProxy = _isBackupServerProxy;
+                    server.IsRepo = _isBackupServerRepo;
+                    server.IsWan = _isBackupServerWan;
+                    server.OsInfo = c.OSInfo;
+                    server.IsUnavailable = c.IsUnavailable;
+
+                    list.Add(server);
                 }
-
-                //check for VBR Roles
-                CheckServerRoles(c.Id);
-
-
-                //scrub name if selected
-                string newName = c.Name;
-                if (scrub)
-                    newName = Scrub(newName);
-                //s[0] = newName;
-                server.Name = newName;
-                server.Cores = c.Cores;
-                server.Ram = c.Ram;
-                server.Type = c.Type;
-                server.ApiVersion = c.ApiVersion;
-                server.ProtectedVms = protectedCount;
-                server.NotProtectedVms = unProtectedCount;
-                server.TotalVms = vmCount;
-                server.IsProxy = _isBackupServerProxy;
-                server.IsRepo = _isBackupServerRepo;
-                server.IsWan = _isBackupServerWan;
-                server.OsInfo = c.OSInfo;
-                server.IsUnavailable = c.IsUnavailable;
-
-                list.Add(server);
-            }
             log.Info("converting server info to xml..done!");
             return list;
         }
@@ -792,7 +789,7 @@ namespace VeeamHealthCheck.Functions.Reporting.Html
         }
 
 
-        public Dictionary<int, string[]> JobConcurrency(bool isJob, int days)
+        public Dictionary<int, string[]> JobConcurrency(bool isJob)
         {
             log.Info("calculating concurrency");
             CConcurrencyHelper helper = new();
@@ -801,7 +798,7 @@ namespace VeeamHealthCheck.Functions.Reporting.Html
             List<CJobSessionInfo> trimmedSessionInfo = new();
             using (CDataTypesParser dt = new())
             {
-                trimmedSessionInfo = dt.JobSessions.Where(c => c.CreationTime >= CGlobals.TOOLSTART.AddDays(-7)).ToList();
+                trimmedSessionInfo = dt.JobSessions.Where(c => c.CreationTime >= CGlobals.GetToolStart.AddDays(-7)).ToList();
             }
             List<CJobTypeInfos> jobInfo = _dTypeParser.JobInfos;
 
@@ -890,46 +887,48 @@ namespace VeeamHealthCheck.Functions.Reporting.Html
             csv = csv.OrderBy(y => y.JobType).ToList();
             csv = csv.OrderBy(x => x.Name).ToList();
 
-            var cp = new CCsvParser();
-            var csv2 = cp.ServerCsvParser().ToList();
+            //var cp = new CCsvParser();
+            //List<CServerCsvInfos> csv2 = new();
+            //if (cp != null)
+            //    csv2 = cp.ServerCsvParser().ToList();
             //XDocument doc = XDocument.Load(_testFile);
 
-            XElement extElement = new XElement("jobs");
+            //XElement extElement = new XElement("jobs");
             //doc.Root.Add(extElement);
             //doc.AddFirst(new XProcessingInstruction("xml-stylesheet", "type=\"text/xsl\" href=\"SessionReport.xsl\""));
             decimal totalsize = 0;
-
-            foreach (var c in csv)
-            {
-                List<string> job = new();
-                string jname = c.Name;
-                string repo = c.RepoName;
-                //if (c.EncryptionEnabled == "True")
-                //_backupsEncrypted = true;
-                if (scrub)
+            if (csv != null)
+                foreach (var c in csv)
                 {
-                    jname = _scrubber.ScrubItem(c.Name, "job");
-                    repo = _scrubber.ScrubItem(c.RepoName, "repo");
+                    List<string> job = new();
+                    string jname = c.Name;
+                    string repo = c.RepoName;
+                    //if (c.EncryptionEnabled == "True")
+                    //_backupsEncrypted = true;
+                    if (scrub)
+                    {
+                        jname = _scrubber.ScrubItem(c.Name, "job");
+                        repo = _scrubber.ScrubItem(c.RepoName, "repo");
+                    }
+                    decimal.TryParse(c.ActualSize, out decimal actualSize);
+
+                    job.Add(jname);
+                    job.Add(repo);
+                    job.Add(Math.Round(actualSize / 1024 / 1024 / 1024, 2).ToString());
+                    job.Add(c.RestorePoints.ToString());
+                    job.Add(c.EncryptionEnabled);
+                    job.Add(c.JobType);
+                    job.Add(c.Algorithm);
+                    job.Add(c.SheduleEnabledTime);
+                    job.Add(c.FullBackupDays);
+                    //job.Add(c.ScheduleOptions);
+                    job.Add(c.FullBackupScheduleKind);
+                    job.Add(c.TransformFullToSyntethic);
+                    job.Add(c.TransformIncrementsToSyntethic);
+                    job.Add(c.TransformToSyntethicDays);
+
+                    sendBack.Add(job);
                 }
-                decimal.TryParse(c.ActualSize, out decimal actualSize);
-
-                job.Add(jname);
-                job.Add(repo);
-                job.Add(Math.Round(actualSize / 1024 / 1024 / 1024, 2).ToString());
-                job.Add(c.RestorePoints.ToString());
-                job.Add(c.EncryptionEnabled);
-                job.Add(c.JobType);
-                job.Add(c.Algorithm);
-                job.Add(c.SheduleEnabledTime);
-                job.Add(c.FullBackupDays);
-                //job.Add(c.ScheduleOptions);
-                job.Add(c.FullBackupScheduleKind);
-                job.Add(c.TransformFullToSyntethic);
-                job.Add(c.TransformIncrementsToSyntethic);
-                job.Add(c.TransformToSyntethicDays);
-
-                sendBack.Add(job);
-            }
 
             // add summary line;
             List<string> summaryline = new() {
@@ -953,174 +952,32 @@ namespace VeeamHealthCheck.Functions.Reporting.Html
             return jss.JobSessionSummaryToXml(scrub);
 
         }
-        private List<CJobSessionInfo> ReturnJobSessionsList()
-        {
-            var targetDate = CGlobals.TOOLSTART.AddDays(-CGlobals.ReportDays);
 
-            using (CDataTypesParser dt = new())
+
+
+        public int JobSessionInfoToXml(bool scrub)
+        {
+            try
             {
-                List<CJobSessionInfo> csv = dt.JobSessions.Where(c => c.CreationTime >= targetDate).ToList();
-                csv = csv.OrderBy(x => x.Name).ToList();
+                string logStart = "[JobSessions]\t";
+                IndividualJobSessionsHelper helper = new();
 
-                csv = csv.OrderBy(y => y.CreationTime).ToList();
-                csv.Reverse();
-                return csv;
+                log.Info(logStart + "converting job session info to xml");
+
+                helper.ParseIndividualSessions(scrub);
+
+
+                log.Info("converting job session info to xml..done!");
+                return 0;
             }
-        }
-        private void LogJobSessionParseProgress(double counter, int total)
-        {
-            double percentComplete = counter / total * 100;
-            string msg = string.Format(logStart + "{0}%...", Math.Round(percentComplete, 2));
-            log.Info(msg, false);
-        }
-        private void SetOutDir(bool scrub)
-        {
-
-        }
-        public void JobSessionInfoToXml(bool scrub)
-        {
-            string logStart = "[JobSessions]\t";
-            log.Info(logStart + "converting job session info to xml");
-            CHtmlFormatting _form = new();
-
-            List<CJobSessionInfo> csv = ReturnJobSessionsList();
-
-            List<string> processedJobs = new();
-            double percentCounter = 0;
-            foreach (var cs in csv)
+            catch (Exception ex)
             {
-                LogJobSessionParseProgress(percentCounter, csv.Count);
-
-                if (!processedJobs.Contains(cs.JobName))
-                {
-                    processedJobs.Add(cs.JobName);
-
-                    string outDir = "";// CVariables.desiredDir + "\\Original";
-                    string folderName = "\\JobSessionReports";
-
-
-                    if (scrub)
-                    {
-                        outDir = CGlobals._desiredPath + CVariables._safeSuffix + folderName;
-                        //log.Warning("SAFE outdir = " + outDir, false);
-                        CheckFolderExists(outDir);
-                        outDir += "\\" + _scrubber.ScrubItem(cs.JobName) + ".html";
-                    }
-                    else
-                    {
-                        outDir = CGlobals._desiredPath + CVariables._unsafeSuffix + folderName;
-                        CheckFolderExists(outDir);
-                        outDir += "\\" + cs.JobName + ".html";
-                    }
-                    string docName = outDir + "\\";
-
-
-                    string s = _form.FormHeader();
-                    s += "<h2>" + cs.JobName + "</h2>";
-
-                    s += "<table border=\"1\"><tr>";
-                    s += _form.TableHeader("Job Name", "Name of job");
-                    s += _form.TableHeader("VM Name", "Name of VM/Server within the job");
-                    s += _form.TableHeader("Alg", "Job Algorithm");
-                    s += _form.TableHeader("Primary Bottleneck", "Primary detected bottleneck");
-                    s += _form.TableHeader("BottleNeck", "Detected bottleneck breakdown");
-                    s += _form.TableHeader("CompressionRatio", "Calculated compression ratio");
-                    s += _form.TableHeader("Start Time", "Start time of the backup job");
-                    s += _form.TableHeader("BackupSize", "Detected size of backup file");
-                    s += _form.TableHeader("DataSize", "Detected size of original VM/server (provisioned, not actual)");
-                    s += _form.TableHeader("DedupRatio", "Calculated deduplication ratio");
-                    s += _form.TableHeader("Is Retry", "Is this a retry run?");
-                    s += _form.TableHeader("Job Duration", "Duration of job in minutes");
-                    s += _form.TableHeader("Min Time", "Shorted detected job duration in minutes");
-                    s += _form.TableHeader("Max Time", "Longest detected job duration in minutes");
-                    s += _form.TableHeader("Avg Time", "Average job duration in minutes");
-                    s += _form.TableHeader("Processing Mode", "Processing mode used in the job (blank = SAN)");
-                    s += _form.TableHeader("Status", "Final status of the job");
-                    s += _form.TableHeader("Task Duration", "Duration of the VM/server within the job in minutes");
-                    s += "</tr>";
-
-                    int counter = 1;
-                    foreach (var c in csv)
-                    {
-                        string info = string.Format("Parsing {0} of {1} Job Sessions to HTML", counter, csv.Count);
-                        counter++;
-                        //log.Info(logStart + info, false);
-                        try
-                        {
-                            if (cs.JobName == c.JobName)
-                            {
-                                string jname = c.JobName;
-                                if (jname.Contains("\\"))
-                                {
-                                    jname = jname.Replace("\\", "--");
-                                }
-                                string vmName = c.VmName;
-                                //string repo = _scrubber.ScrubItem(c.)
-                                if (scrub)
-                                {
-                                    jname = _scrubber.ScrubItem(c.JobName, "job");
-                                    vmName = _scrubber.ScrubItem(c.VmName, "vm");
-                                }
-
-                                s += "<tr>";
-                                s += TableData(jname, "jobName");
-                                s += TableData(vmName, "vmName");
-                                s += TableData(c.Alg, "alg");
-                                s += TableData(c.PrimaryBottleneck, "primBottleneck");
-                                s += TableData(c.Bottleneck, "bottleneck");
-                                s += TableData(c.CompressionRatio, "compression");
-                                s += TableData(c.CreationTime.ToString(), "creationtime");
-                                s += TableData(c.BackupSize.ToString(), "backupsize");
-                                s += TableData(c.DataSize.ToString(), "datasize");
-                                s += TableData(c.DedupRatio, "dedupratio");
-                                s += TableData(c.IsRetry, "isretry");
-                                s += TableData(c.JobDuration, "jobDuration");
-                                s += TableData(c.minTime.ToString(), "minTime");
-                                s += TableData(c.maxTime.ToString(), "maxtime");
-                                s += TableData(c.avgTime.ToString(), "avgTime");
-                                s += TableData(c.ProcessingMode, "processingmode");
-                                s += TableData(c.Status, "status");
-                                s += TableData(c.TaskDuration, "taskDuration");
-                                s += "</tr>";
-
-                            }
-                        }
-                        catch (Exception e) { log.Error(e.Message); }
-
-
-                        //write HTML
-
-                    }
-                    try
-                    {
-                        //string dir = Path.GetDirectoryName(docName);
-                        //if (!Directory.Exists(dir))
-                        //    Directory.CreateDirectory(dir);
-                        File.WriteAllText(outDir, s);
-                    }
-                    catch (Exception e)
-                    {
-                        log.Error(e.Message);
-                    }
-
-                }
-
-
-
-                percentCounter++;
+                return 1;
             }
-            //doc.Save(_testFile);
-            log.Info("converting job session info to xml..done!");
+
         }
-        private void CheckFolderExists(string folder)
-        {
-            if (!Directory.Exists(folder))
-                Directory.CreateDirectory(folder);
-        }
-        public string TableData(string data, string toolTip)
-        {
-            return string.Format("<td title=\"{0}\">{1}</td>", toolTip, data);
-        }
+
+
 
 
         #endregion
@@ -1135,33 +992,6 @@ namespace VeeamHealthCheck.Functions.Reporting.Html
 
             return s;
         }
-
-        private List<ConcurentTracker> ParseBcjConcurrency(CJobSessionInfo session)
-        {
-            List<ConcurentTracker> ctL = new();
-            int allMinutesOfWeek = 7 * 24 * 60;
-            TimeSpan sevenDayMinutes = TimeSpan.FromSeconds(allMinutesOfWeek);
-
-
-            foreach (DayOfWeek d in Enum.GetValues(typeof(DayOfWeek)))
-            {
-                ConcurentTracker ct = new();
-                ct.Date = session.CreationTime.Date;
-                ct.DayofTheWeeek = d;
-                ct.Hour = 0;
-                ct.hourMinute = 0;
-                ct.Minutes = 0;
-                ct.Duration = sevenDayMinutes;
-
-                ctL.Add(ct);
-            }
-
-
-
-
-            return ctL;
-        }
-
 
 
         private void PreCalculations()
@@ -1229,27 +1059,30 @@ namespace VeeamHealthCheck.Functions.Reporting.Html
             var hvProxy = _csvParser.GetDynHvProxy();
             var nasProxy = _csvParser.GetDynNasProxy();
             var cdpProxy = _csvParser.GetDynCdpProxy();
-            foreach (var v in viProxy.ToList())
-            {
-                if (v.hostid == serverId)
-                    return true;
-            }
-            foreach (var h in hvProxy)
-            {
-                if (h.id == serverId)
-                    return true;
-            }
-            foreach (var n in nasProxy)
-            {
-                if (n.hostid == serverId)
-                    return true;
-            }
-
-            foreach (var c in cdpProxy)
-            {
-                if (c.serverid == serverId)
-                    return true;
-            }
+            if (viProxy != null)
+                foreach (var v in viProxy.ToList())
+                {
+                    if (v.hostid == serverId)
+                        return true;
+                }
+            if (hvProxy != null)
+                foreach (var h in hvProxy)
+                {
+                    if (h.id == serverId)
+                        return true;
+                }
+            if (nasProxy != null)
+                foreach (var n in nasProxy)
+                {
+                    if (n.hostid == serverId)
+                        return true;
+                }
+            if (cdpProxy != null)
+                foreach (var c in cdpProxy)
+                {
+                    if (c.serverid == serverId)
+                        return true;
+                }
             return false;
         }
         private string Scrub(string item)

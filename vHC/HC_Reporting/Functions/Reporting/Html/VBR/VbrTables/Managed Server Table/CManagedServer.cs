@@ -2,7 +2,7 @@
 // MIT License
 namespace VeeamHealthCheck.Reporting.Html.VBR
 {
-    internal class CManagedServer
+    public class CManagedServer
     {
         public string Name { get; set; }
         public int Cores { get; set; }

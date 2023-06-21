@@ -3,7 +3,7 @@
 
 namespace VeeamHealthCheck.Functions.Analysis.DataModels
 {
-    class BackupServer
+    public class BackupServer
     {
         public string Name { get; set; }
         public string Version { get; set; }

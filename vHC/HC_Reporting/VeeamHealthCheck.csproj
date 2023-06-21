@@ -11,11 +11,11 @@
     <Company>Veeam</Company>
     <Authors>AdamC</Authors>
     <ApplicationIcon>Veeam_HealthCheck_228x228.ico</ApplicationIcon>
-    <AssemblyVersion>1.0.3.615</AssemblyVersion>
+    <AssemblyVersion>1.0.3.676</AssemblyVersion>
     <SignAssembly>False</SignAssembly>
     <AssemblyOriginatorKeyFile>vhc_keyfile2.pfx</AssemblyOriginatorKeyFile>
     <DelaySign>false</DelaySign>
-    <FileVersion>1.0.3.615</FileVersion>
+    <FileVersion>1.0.3.676</FileVersion>
     <DebugType>full</DebugType>
 	  <SelfContained>true</SelfContained>
 	  <!--These 2 lines are what produce the single file utility. Possibly doesn't work...-->
@@ -145,6 +145,7 @@
     <Folder Include="Functions\Reporting\CsvHandlers\Repositories\" />
     <Folder Include="Functions\Reporting\CsvHandlers\VBR\" />
     <Folder Include="Functions\Reporting\DataTypes\NewFolder\" />
+    <Folder Include="Functions\Reporting\Html\VBR\VbrTables\NewFolder\" />
     <Folder Include="Functions\Reporting\TableDatas\" />
     <Folder Include="Resources\Localization\VBR\" />
   </ItemGroup>

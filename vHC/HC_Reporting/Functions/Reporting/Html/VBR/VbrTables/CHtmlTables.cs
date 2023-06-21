@@ -1015,7 +1015,7 @@ _form.TableHeader(VbrLocalizationHelper.SbrExt15, VbrLocalizationHelper.SbrExt15
             {
 
 
-                var stuff = _df.JobConcurrency(true, CGlobals.ReportDays);
+                var stuff = _df.JobConcurrency(true);
 
                 foreach (var stu in stuff)
                 {
@@ -1056,7 +1056,7 @@ _form.TableHeader(VbrLocalizationHelper.SbrExt15, VbrLocalizationHelper.SbrExt15
 
             try
             {
-                var stuff = _df.JobConcurrency(false, CGlobals.ReportDays);
+                var stuff = _df.JobConcurrency(false);
 
                 foreach (var stu in stuff)
                 {

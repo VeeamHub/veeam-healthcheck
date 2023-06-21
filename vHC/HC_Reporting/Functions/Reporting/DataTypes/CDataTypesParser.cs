@@ -26,7 +26,7 @@ namespace VeeamHealthCheck.Functions.Reporting.DataTypes
         private List<string> _typeList = new();
         //private List<CServerTypeInfos> _serverInfo;
 
-        public  List<CJobTypeInfos> JobInfos { get { return JobInfo(); } }
+        public List<CJobTypeInfos> JobInfos { get { return JobInfo(); } }
         public List<CJobSessionInfo> JobSessions { get { return JobSessionInfo(); } }
         public List<CServerTypeInfos> ServerInfos { get { return ServerInfo(); } }
         public List<CRepoTypeInfos> ExtentInfo { get { return SobrExtInfo(); } }
@@ -53,7 +53,7 @@ namespace VeeamHealthCheck.Functions.Reporting.DataTypes
 
                 FilterAndCountTypes();
             }
-            catch(Exception ex)
+            catch (Exception ex)
             {
 
             }
@@ -62,23 +62,25 @@ namespace VeeamHealthCheck.Functions.Reporting.DataTypes
         public void Dispose() { }
 
 
-        
+
         private List<CSobrTypeInfos> SobrInfos()
         {
-            var sobrCsv = _csvParser.SobrCsvParser().ToList();
-            var capTierCsv = _csvParser.CapTierCsvParser().ToList();
+            var sobrCsv = _csvParser.SobrCsvParser();//.ToList();
+            var capTierCsv = _csvParser.CapTierCsvParser();// ToList();
 
             List<CSobrTypeInfos> eInfoList = new List<CSobrTypeInfos>();
 
-            if(sobrCsv != null)
+            if (sobrCsv != null)
             {
-                foreach (CSobrCsvInfo s in sobrCsv)
+                var s2 = sobrCsv.ToList();
+                foreach (CSobrCsvInfo s in s2)
                 {
                     CSobrTypeInfos eInfo = new();
 
-                    if(capTierCsv != null)
+                    if (capTierCsv != null)
                     {
-                        foreach (var cap in capTierCsv)
+                        var c2 = capTierCsv.ToList();
+                        foreach (var cap in c2)
                         {
                             if (cap.ParentId == s.Id)
                             {
@@ -156,69 +158,73 @@ namespace VeeamHealthCheck.Functions.Reporting.DataTypes
         }
         private List<CRepoTypeInfos> RepoInfo()
         {
-
-            var records = _csvParser.RepoCsvParser().ToList();
             List<CRepoTypeInfos> eInfoList = new List<CRepoTypeInfos>();
-            foreach (CRepoCsvInfos s in records)
+
+            var records = _csvParser.RepoCsvParser();//.ToList();
+            if (records != null)
             {
-                CRepoTypeInfos eInfo = new CRepoTypeInfos();
-
-                eInfo.CreationTime = s.CreationTime;
-                eInfo.Description = s.Description;
-                eInfo.EndPointCryptoKeyId = s.EndPointCryptoKeyId;
-                eInfo.FriendlyPath = s.FriendlyPath;
-                eInfo.FullPath = s.FullPath;
-                eInfo.Group = s.Group;
-                eInfo.HasBackupChainLengthLimitation = ParseBool(s.HasBackupChainLengthLimitation);
-                eInfo.Id = s.Id;
-                eInfo.IsDedupStorage = ParseBool(s.IsDedupStorage);
-                eInfo.IsImmutabilitySupported = ParseBool(s.IsImmutabilitySupported);
-                eInfo.IsRotatedDriveRepository = ParseBool(s.IsRotatedDriveRepository);
-                eInfo.IsSanSnapshotOnly = ParseBool(s.IsSanSnapshotOnly);
-                eInfo.IsTemporary = ParseBool(s.IsTemporary);
-                eInfo.IsUnavailable = ParseBool(s.IsUnavailable);
-                eInfo.Name = s.Name;
-                eInfo.Path = s.Path;
-                eInfo.SplitStoragesPerVm = ParseBool(s.SplitStoragesPerVm);
-                eInfo.Status = s.Status;
-                eInfo.Type = s.Type;
-                eInfo.TypeDisplay = s.TypeDisplay;
-                eInfo.VersionOfCreation = s.VersionOfCreation;
-                eInfo.IsDecompress = ParseBool(s.Uncompress);
-                eInfo.MaxTasks = ParseToInt(s.MaxTasks);
-                eInfo.AlignBlocks = s.AlignBlock;
-                eInfo.GateHosts = s.GateHosts;
-
-                eInfo.HostId = s.HostId;
-                if (eInfo.HostId == "00000000-0000-0000-0000-000000000000")
-                    eInfo.IsAutoGateway = "True";
-
-                if (eInfo.HostId != "00000000-0000-0000-0000-000000000000")
+                foreach (CRepoCsvInfos s in records)
                 {
-                    eInfo.Host = FilterHostIdToName(eInfo.HostId);
+                    CRepoTypeInfos eInfo = new CRepoTypeInfos();
+
+                    eInfo.CreationTime = s.CreationTime;
+                    eInfo.Description = s.Description;
+                    eInfo.EndPointCryptoKeyId = s.EndPointCryptoKeyId;
+                    eInfo.FriendlyPath = s.FriendlyPath;
+                    eInfo.FullPath = s.FullPath;
+                    eInfo.Group = s.Group;
+                    eInfo.HasBackupChainLengthLimitation = ParseBool(s.HasBackupChainLengthLimitation);
+                    eInfo.Id = s.Id;
+                    eInfo.IsDedupStorage = ParseBool(s.IsDedupStorage);
+                    eInfo.IsImmutabilitySupported = ParseBool(s.IsImmutabilitySupported);
+                    eInfo.IsRotatedDriveRepository = ParseBool(s.IsRotatedDriveRepository);
+                    eInfo.IsSanSnapshotOnly = ParseBool(s.IsSanSnapshotOnly);
+                    eInfo.IsTemporary = ParseBool(s.IsTemporary);
+                    eInfo.IsUnavailable = ParseBool(s.IsUnavailable);
+                    eInfo.Name = s.Name;
+                    eInfo.Path = s.Path;
+                    eInfo.SplitStoragesPerVm = ParseBool(s.SplitStoragesPerVm);
+                    eInfo.Status = s.Status;
+                    eInfo.Type = s.Type;
+                    eInfo.TypeDisplay = s.TypeDisplay;
+                    eInfo.VersionOfCreation = s.VersionOfCreation;
+                    eInfo.IsDecompress = ParseBool(s.Uncompress);
+                    eInfo.MaxTasks = ParseToInt(s.MaxTasks);
+                    eInfo.AlignBlocks = s.AlignBlock;
+                    eInfo.GateHosts = s.GateHosts;
+
+                    eInfo.HostId = s.HostId;
+                    if (eInfo.HostId == "00000000-0000-0000-0000-000000000000")
+                        eInfo.IsAutoGateway = "True";
+
+                    if (eInfo.HostId != "00000000-0000-0000-0000-000000000000")
+                    {
+                        eInfo.Host = FilterHostIdToName(eInfo.HostId);
+                    }
+
+                    if (!StoragesToSkip().Contains(s.Type))
+                    {
+                        eInfo.Ram = MatchHostIdtoRam(eInfo.HostId);
+                        eInfo.Cores = MatchHostIdToCPU(eInfo.HostId);
+                        eInfo.Povisioning = CalcRepoOptimalTasks(eInfo.MaxTasks, eInfo.Cores, eInfo.Ram);
+
+                        eInfo.FreeSPace = ParseToInt(s.FreeSpace);
+                        eInfo.TotalSpace = ParseToInt(s.TotalSpace);
+                    }
+                    else
+                    {
+                        eInfo.Ram = 0;
+                        eInfo.Cores = 0;
+                        eInfo.Povisioning = "NA";
+
+                        eInfo.TotalSpace = 0;
+                        eInfo.FreeSPace = 0;
+                    }
+
+
+                    eInfoList.Add(eInfo);
+
                 }
-
-                if (!StoragesToSkip().Contains(s.Type))
-                {
-                    eInfo.Ram = MatchHostIdtoRam(eInfo.HostId);
-                    eInfo.Cores = MatchHostIdToCPU(eInfo.HostId);
-                    eInfo.Povisioning = CalcRepoOptimalTasks(eInfo.MaxTasks, eInfo.Cores, eInfo.Ram);
-
-                    eInfo.FreeSPace = ParseToInt(s.FreeSpace);
-                    eInfo.TotalSpace = ParseToInt(s.TotalSpace);
-                }
-                else
-                {
-                    eInfo.Ram = 0;
-                    eInfo.Cores = 0;
-                    eInfo.Povisioning = "NA";
-
-                    eInfo.TotalSpace = 0;
-                    eInfo.FreeSPace = 0;
-                }
-
-
-                eInfoList.Add(eInfo);
 
             }
             return eInfoList;
@@ -241,45 +247,49 @@ namespace VeeamHealthCheck.Functions.Reporting.DataTypes
         {
             var records = _csvParser.SobrExtParser();
             List<CRepoTypeInfos> eInfoList = new List<CRepoTypeInfos>();
-            foreach (CSobrExtentCsvInfos s in records)
+            if (records != null)
             {
-                CRepoTypeInfos eInfo = new CRepoTypeInfos();
-
-
-                //eInfo.Host = s.HostName;
-                eInfo.RepoName = s.Name;
-                eInfo.Path = s.FriendlyPath;
-                eInfo.IsUnavailable = ParseBool(s.IsUnavailable);
-                eInfo.Type = s.TypeDisplay;
-                eInfo.IsRotatedDriveRepository = ParseBool(s.IsRotatedDriveRepository);
-                eInfo.IsDedupStorage = ParseBool(s.IsDedupStorage);
-                eInfo.IsImmutabilitySupported = ParseBool(s.IsImmutabilitySupported);
-                eInfo.SobrName = s.SOBR_Name;
-                eInfo.MaxTasks = ParseToInt(s.MaxTasks);
-                eInfo.maxArchiveTasks = ParseToInt(s.MaxArchiveTaskCount);
-                eInfo.isUnlimitedTaks = ParseBool(s.UnlimitedTasks);
-                eInfo.dataRateLimit = ParseToInt(s.CombinedDataRateLimit);
-                eInfo.IsDecompress = ParseBool(s.UnCompress);
-                eInfo.SplitStoragesPerVm = ParseBool(s.OneBackupFilePerVm);
-                eInfo.autoDetectAffinity = ParseBool(s.IsAutoDetectAffinityProxies);
-                eInfo.HostId = s.HostId;
-                if (eInfo.HostId == "00000000-0000-0000-0000-000000000000")
-                    eInfo.IsAutoGateway = "True";
-
-                if (eInfo.HostId != "00000000-0000-0000-0000-000000000000")
+                foreach (CSobrExtentCsvInfos s in records)
                 {
-                    eInfo.Host = FilterHostIdToName(eInfo.HostId);
+                    CRepoTypeInfos eInfo = new CRepoTypeInfos();
+
+
+                    //eInfo.Host = s.HostName;
+                    eInfo.RepoName = s.Name;
+                    eInfo.Path = s.FriendlyPath;
+                    eInfo.IsUnavailable = ParseBool(s.IsUnavailable);
+                    eInfo.Type = s.TypeDisplay;
+                    eInfo.IsRotatedDriveRepository = ParseBool(s.IsRotatedDriveRepository);
+                    eInfo.IsDedupStorage = ParseBool(s.IsDedupStorage);
+                    eInfo.IsImmutabilitySupported = ParseBool(s.IsImmutabilitySupported);
+                    eInfo.SobrName = s.SOBR_Name;
+                    eInfo.MaxTasks = ParseToInt(s.MaxTasks);
+                    eInfo.maxArchiveTasks = ParseToInt(s.MaxArchiveTaskCount);
+                    eInfo.isUnlimitedTaks = ParseBool(s.UnlimitedTasks);
+                    eInfo.dataRateLimit = ParseToInt(s.CombinedDataRateLimit);
+                    eInfo.IsDecompress = ParseBool(s.UnCompress);
+                    eInfo.SplitStoragesPerVm = ParseBool(s.OneBackupFilePerVm);
+                    eInfo.autoDetectAffinity = ParseBool(s.IsAutoDetectAffinityProxies);
+                    eInfo.HostId = s.HostId;
+                    if (eInfo.HostId == "00000000-0000-0000-0000-000000000000")
+                        eInfo.IsAutoGateway = "True";
+
+                    if (eInfo.HostId != "00000000-0000-0000-0000-000000000000")
+                    {
+                        eInfo.Host = FilterHostIdToName(eInfo.HostId);
+                    }
+
+                    eInfo.Ram = MatchHostIdtoRam(eInfo.HostId);
+                    eInfo.Cores = MatchHostIdToCPU(eInfo.HostId);
+                    eInfo.Povisioning = CalcRepoOptimalTasks(eInfo.MaxTasks, eInfo.Cores, eInfo.Ram);
+
+                    eInfo.FreeSPace = ParseToInt(s.FreeSpace);
+                    eInfo.TotalSpace = ParseToInt(s.TotalSpace);
+                    eInfo.GateHosts = s.GateHosts;
+
+                    eInfoList.Add(eInfo);
+
                 }
-
-                eInfo.Ram = MatchHostIdtoRam(eInfo.HostId);
-                eInfo.Cores = MatchHostIdToCPU(eInfo.HostId);
-                eInfo.Povisioning = CalcRepoOptimalTasks(eInfo.MaxTasks, eInfo.Cores, eInfo.Ram);
-
-                eInfo.FreeSPace = ParseToInt(s.FreeSpace);
-                eInfo.TotalSpace = ParseToInt(s.TotalSpace);
-                eInfo.GateHosts = s.GateHosts;
-
-                eInfoList.Add(eInfo);
 
             }
             return eInfoList;
@@ -288,44 +298,45 @@ namespace VeeamHealthCheck.Functions.Reporting.DataTypes
         {
             var nt = _csvParser.NetTrafficCsvParser();
             List<CNetTrafficRulesCsv> ntList = new();
+            if (nt != null)
+                foreach (var c in nt)
+                {
+                    CNetTrafficRulesCsv cv = new();
+                    cv.EncryptionEnabled = c.EncryptionEnabled;
+                    //cv.
 
-            foreach (var c in nt)
-            {
-                CNetTrafficRulesCsv cv = new();
-                cv.EncryptionEnabled = c.EncryptionEnabled;
-                //cv.
-
-                ntList.Add(cv);
-            }
+                    ntList.Add(cv);
+                }
             return ntList;
         }
         private CConfigBackupCsv ConfigBackupInfo()
         {
             var configB = _csvParser.ConfigBackupCsvParser();
-            foreach (var c in configB)
-            {
-                CConfigBackupCsv cv = new();
-                cv.Enabled = c.Enabled;
-                cv.EncryptionOptions = c.EncryptionOptions;
-                cv.Description = c.Description;
-                cv.Id = c.Id;
-                cv.LastResult = c.LastResult;
-                cv.LastState = c.LastState;
-                cv.Name = c.Name;
-                cv.NextRun = c.NextRun;
-                cv.NotificationOptions = c.NotificationOptions;
-                cv.Repository = c.Repository;
-                cv.RestorePointsToKeep = c.RestorePointsToKeep;
-                cv.ScheduleOptions = c.ScheduleOptions;
-                cv.Target = c.Target;
-                cv.Type = c.Type;
+            if (configB != null)
+                foreach (var c in configB)
+                {
+                    CConfigBackupCsv cv = new();
+                    cv.Enabled = c.Enabled;
+                    cv.EncryptionOptions = c.EncryptionOptions;
+                    cv.Description = c.Description;
+                    cv.Id = c.Id;
+                    cv.LastResult = c.LastResult;
+                    cv.LastState = c.LastState;
+                    cv.Name = c.Name;
+                    cv.NextRun = c.NextRun;
+                    cv.NotificationOptions = c.NotificationOptions;
+                    cv.Repository = c.Repository;
+                    cv.RestorePointsToKeep = c.RestorePointsToKeep;
+                    cv.ScheduleOptions = c.ScheduleOptions;
+                    cv.Target = c.Target;
+                    cv.Type = c.Type;
 
-                return cv;
-            }
+                    return cv;
+                }
             return null;
 
         }
-        private  List<CJobTypeInfos> JobInfo()
+        private List<CJobTypeInfos> JobInfo()
         {
             log.Info("Starting Job Csv Parse..");
 
@@ -335,75 +346,77 @@ namespace VeeamHealthCheck.Functions.Reporting.DataTypes
             List<CJobTypeInfos> eInfoList = new();
             try
             {
-                foreach (var s in jobCsv)
-                {
-                    CJobTypeInfos jInfo = new CJobTypeInfos();
-
-                    if(bjobCsv != null)
+                if (jobCsv != null)
+                    foreach (var s in jobCsv)
                     {
-                        foreach (var b in bjobCsv)
-                        {
-                            int.TryParse(b.type, out int typeId);
-                            if (!_protectedJobIds.Contains(typeId))
-                            {
-                                _protectedJobIds.Add(typeId);
+                        CJobTypeInfos jInfo = new CJobTypeInfos();
 
-                            }
-                            if (b.name == s.Name)
+                        if (bjobCsv != null)
+                        {
+                            foreach (var b in bjobCsv)
                             {
-                                jInfo.Name = b.name;
-                                jInfo.ActualSize = b.included_size;
-                                jInfo.RepoName = MatchRepoIdToRepo(b.repository_id);
-                                jInfo.JobId = b.type;
-                                if (b.type == "63")
+                                int.TryParse(b.type, out int typeId);
+                                if (!_protectedJobIds.Contains(typeId))
                                 {
+                                    _protectedJobIds.Add(typeId);
 
                                 }
+                                if (b.name == s.Name)
+                                {
+                                    jInfo.Name = b.name;
+                                    jInfo.ActualSize = b.included_size;
+                                    jInfo.RepoName = MatchRepoIdToRepo(b.repository_id);
+                                    jInfo.JobId = b.type;
+                                    if (b.type == "63")
+                                    {
+
+                                    }
+                                }
+
                             }
 
                         }
+                        if (string.IsNullOrEmpty(jInfo.RepoName))
+                            jInfo.RepoName = s.RepoName;
+
+                        jInfo.Algorithm = s.Algorithm;
+                        jInfo.FullBackupDays = s.FullBackupDays;
+                        jInfo.FullBackupScheduleKind = s.FullBackupScheduleKind;
+                        jInfo.JobType = s.JobType;
+
+                        if (s.JobType == "DRV")
+                            jInfo.JobType = "SureBackup";
+                        jInfo.Name = s.Name;
+                        //jInfo.RepoName = MatchRepoIdToRepo(bjobCsv.Where(x => x.Name == s.Name).SingleOrDefault().RepositoryId);
+                        jInfo.RestorePoints = ParseToInt(s.RestorePoints);
+                        jInfo.ScheduleOptions = s.ScheduleOptions;
+                        jInfo.SheduleEnabledTime = s.SheduleEnabledTime;
+                        jInfo.TransformFullToSyntethic = s.TransformFullToSyntethic;
+                        jInfo.TransformIncrementsToSyntethic = s.TransformIncrementsToSyntethic;
+                        jInfo.TransformToSyntethicDays = s.TransformToSyntethicDays;
+
+                        if (s.PwdKeyId != "00000000-0000-0000-0000-000000000000" && !string.IsNullOrEmpty(s.PwdKeyId))
+                            jInfo.EncryptionEnabled = "True";
+
+                        jInfo.ActualSize = s.OriginalSize;
+                        eInfoList.Add(jInfo);
+
 
                     }
-                    if (string.IsNullOrEmpty(jInfo.RepoName))
-                        jInfo.RepoName = s.RepoName;
-
-                    jInfo.Algorithm = s.Algorithm;
-                    jInfo.FullBackupDays = s.FullBackupDays;
-                    jInfo.FullBackupScheduleKind = s.FullBackupScheduleKind;
-                    jInfo.JobType = s.JobType;
-
-                    if (s.JobType == "DRV")
-                        jInfo.JobType = "SureBackup";
-                    jInfo.Name = s.Name;
-                    //jInfo.RepoName = MatchRepoIdToRepo(bjobCsv.Where(x => x.Name == s.Name).SingleOrDefault().RepositoryId);
-                    jInfo.RestorePoints = ParseToInt(s.RestorePoints);
-                    jInfo.ScheduleOptions = s.ScheduleOptions;
-                    jInfo.SheduleEnabledTime = s.SheduleEnabledTime;
-                    jInfo.TransformFullToSyntethic = s.TransformFullToSyntethic;
-                    jInfo.TransformIncrementsToSyntethic = s.TransformIncrementsToSyntethic;
-                    jInfo.TransformToSyntethicDays = s.TransformToSyntethicDays;
-
-                    if (s.PwdKeyId != "00000000-0000-0000-0000-000000000000" && !string.IsNullOrEmpty(s.PwdKeyId))
-                        jInfo.EncryptionEnabled = "True";
-
-                    jInfo.ActualSize = s.OriginalSize;
-                    eInfoList.Add(jInfo);
-
-
-                }
 
             }
             catch (Exception e) { }
 
             var rec = _csvParser.PluginCsvParser();
-            foreach (var r in rec)
-            {
-                CJobTypeInfos j = new();
-                j.Name = r.Name;
-                j.JobType = r.PluginType;
-                j.RepoName = MatchRepoIdToRepo(r.TargetRepositoryId);
-                eInfoList.Add(j);
-            }
+            if (rec != null)
+                foreach (var r in rec)
+                {
+                    CJobTypeInfos j = new();
+                    j.Name = r.Name;
+                    j.JobType = r.PluginType;
+                    j.RepoName = MatchRepoIdToRepo(r.TargetRepositoryId);
+                    eInfoList.Add(j);
+                }
 
             log.Info("Starting Job Csv Parse..ok!");
 
@@ -430,18 +443,22 @@ namespace VeeamHealthCheck.Functions.Reporting.DataTypes
 
             var records = _csvParser.WanParser();
             List<CWanTypeInfo> eInfoList = new();
-            foreach (CWanCsvInfos s in records)
+            if (records != null)
             {
-                CWanTypeInfo jInfo = new();
+                foreach (CWanCsvInfos s in records)
+                {
+                    CWanTypeInfo jInfo = new();
 
-                jInfo.HostId = s.HostId;
-                jInfo.Id = s.Id;
-                jInfo.Name = s.Name;
-                jInfo.Options = s.Options;
+                    jInfo.HostId = s.HostId;
+                    jInfo.Id = s.Id;
+                    jInfo.Name = s.Name;
+                    jInfo.Options = s.Options;
 
-                eInfoList.Add(jInfo);
+                    eInfoList.Add(jInfo);
 
+                }
             }
+
 
             return eInfoList;
         }
@@ -451,37 +468,38 @@ namespace VeeamHealthCheck.Functions.Reporting.DataTypes
             {
                 var records = _csvParser.SessionCsvParser();
                 List<CJobSessionInfo> eInfoList = new();
-                foreach (CJobSessionCsvInfos s in records)
-                {
-                    CJobSessionInfo jInfo = new();
+                if (records != null)
+                    foreach (CJobSessionCsvInfos s in records)
+                    {
+                        CJobSessionInfo jInfo = new();
 
-                    jInfo.avgTime = 0;
-                    jInfo.avgTimeHr = 0;
-                    jInfo.maxTime = 0;
-                    jInfo.maxTimeHr = 0;
-                    jInfo.minTime = 0;
-                    jInfo.minTimeHr = 0;
+                        jInfo.avgTime = 0;
+                        jInfo.avgTimeHr = 0;
+                        jInfo.maxTime = 0;
+                        jInfo.maxTimeHr = 0;
+                        jInfo.minTime = 0;
+                        jInfo.minTimeHr = 0;
 
-                    jInfo.Name = s.JobName;
-                    jInfo.Alg = s.Alg;
-                    jInfo.BackupSize = ParseToDouble(s.BackupSize);
-                    jInfo.Bottleneck = s.BottleneckDetails;
-                    jInfo.CompressionRatio = s.CompressionRation;
-                    jInfo.CreationTime = TryParseDateTime(s.CreationTime);
-                    jInfo.DataSize = ParseToDouble(s.DataSize);
-                    jInfo.DedupRatio = s.DedupRatio;
-                    jInfo.IsRetry = s.IsRetry;
-                    jInfo.JobDuration = s.JobDuration;
-                    jInfo.PrimaryBottleneck = s.PrimaryBottleneck;
-                    jInfo.ProcessingMode = s.ProcessingMode;
-                    jInfo.Status = s.Status;
-                    jInfo.TaskDuration = s.TaskDuration;
-                    jInfo.VmName = s.VmName;
-                    jInfo.JobName = s.JobName;
-                    jInfo.JobType = s.JobType;
-                    eInfoList.Add(jInfo);
+                        jInfo.Name = s.JobName;
+                        jInfo.Alg = s.Alg;
+                        jInfo.BackupSize = ParseToDouble(s.BackupSize);
+                        jInfo.Bottleneck = s.BottleneckDetails;
+                        jInfo.CompressionRatio = s.CompressionRation;
+                        jInfo.CreationTime = TryParseDateTime(s.CreationTime);
+                        jInfo.DataSize = ParseToDouble(s.DataSize);
+                        jInfo.DedupRatio = s.DedupRatio;
+                        jInfo.IsRetry = s.IsRetry;
+                        jInfo.JobDuration = s.JobDuration;
+                        jInfo.PrimaryBottleneck = s.PrimaryBottleneck;
+                        jInfo.ProcessingMode = s.ProcessingMode;
+                        jInfo.Status = s.Status;
+                        jInfo.TaskDuration = s.TaskDuration;
+                        jInfo.VmName = s.VmName;
+                        jInfo.JobName = s.JobName;
+                        jInfo.JobType = s.JobType;
+                        eInfoList.Add(jInfo);
 
-                }
+                    }
 
                 return eInfoList;
             }
@@ -601,10 +619,12 @@ namespace VeeamHealthCheck.Functions.Reporting.DataTypes
         public List<CServerTypeInfos> ServerInfo()
         {
             log.Info("parsing server csv data");
-
-            var records = _csvParser.ServerCsvParser().ToList();
             List<CServerTypeInfos> l = new();
-            foreach (CServerCsvInfos s in records)
+
+            var records = _csvParser.ServerCsvParser();//.ToList();
+            if (records == null)
+                return l;
+            foreach (CServerCsvInfos s in records.ToList())
             {
                 CServerTypeInfos ti = new();
                 if (s.ApiVersion == "Unknown")
@@ -696,92 +716,110 @@ namespace VeeamHealthCheck.Functions.Reporting.DataTypes
             var hvCsv = _csvParser.HvProxCsvParser();
 
             List<CProxyTypeInfos> proxyList = new();
-            foreach (CProxyCsvInfos s in proxyCsv)
+            if (proxyCsv != null)
             {
-                CProxyTypeInfos ti = new();
-                ti.ChassisType = s.ChassisType;
-                ti.MaxTasksCount = ParseToInt(s.MaxTasksCount);
-                ti.Description = s.Description;
-                ti.Id = s.Id;
-                ti.Info = s.Info;
-                ti.Name = s.Name;
-                ti.Host = MatchHostIdToName(s.HostId);
-                ti.HostId = s.HostId;
-                ti.Type = s.Type;
-                ti.FailoverToNetwork = s.FailoverToNetwork;
-                ti.ChosenVm = s.ChosenVm;
-                ti.IsDisabled = ParseBool(s.IsDisabled);
-                ti.Options = s.Options;
-                ti.UseSsl = ParseBool(s.UseSsl);
-                ti.TransportMode = s.TransportMode;
-                ti.Cores = MatchHostIdToCPU(ti.HostId);
-                ti.Ram = MatchHostIdtoRam(ti.HostId);
-                ti.Provisioning = CalcProxyOptimalTasks(ti.MaxTasksCount, ti.Cores, ti.Ram);
+                foreach (CProxyCsvInfos s in proxyCsv)
+                {
+                    CProxyTypeInfos ti = new();
+                    ti.ChassisType = s.ChassisType;
+                    ti.MaxTasksCount = ParseToInt(s.MaxTasksCount);
+                    ti.Description = s.Description;
+                    ti.Id = s.Id;
+                    ti.Info = s.Info;
+                    ti.Name = s.Name;
+                    ti.Host = MatchHostIdToName(s.HostId);
+                    ti.HostId = s.HostId;
+                    ti.Type = s.Type;
+                    ti.FailoverToNetwork = s.FailoverToNetwork;
+                    ti.ChosenVm = s.ChosenVm;
+                    ti.IsDisabled = ParseBool(s.IsDisabled);
+                    ti.Options = s.Options;
+                    ti.UseSsl = ParseBool(s.UseSsl);
+                    ti.TransportMode = s.TransportMode;
+                    ti.Cores = MatchHostIdToCPU(ti.HostId);
+                    ti.Ram = MatchHostIdtoRam(ti.HostId);
+                    ti.Provisioning = CalcProxyOptimalTasks(ti.MaxTasksCount, ti.Cores, ti.Ram);
 
-                proxyList.Add(ti);
+                    proxyList.Add(ti);
+                }
+
             }
 
-            foreach (CCdpProxyCsvInfo cdp in cdpCsv)
+            if (cdpCsv != null)
             {
-                CProxyTypeInfos p = new();
-                p.Name = cdp.Name;
-                //p.IsDisabled = ParseBool(cdp.IsEnabled);
-                p.Host = MatchHostIdToName(cdp.ServerId);
-                p.CachePath = cdp.CachePath;
-                p.CacheSize = cdp.CacheSize;
-                p.Type = "CDP";
-                p.Cores = MatchHostIdToCPU(cdp.ServerId);
-                p.Ram = MatchHostIdtoRam(cdp.ServerId);
-                p.ChassisType = "";
-                p.TransportMode = "";
-                p.UseSsl = "";
-                p.Provisioning = "";
-                p.FailoverToNetwork = "";
+                foreach (CCdpProxyCsvInfo cdp in cdpCsv)
+                {
+                    CProxyTypeInfos p = new();
+                    p.Name = cdp.Name;
+                    //p.IsDisabled = ParseBool(cdp.IsEnabled);
+                    p.Host = MatchHostIdToName(cdp.ServerId);
+                    p.CachePath = cdp.CachePath;
+                    p.CacheSize = cdp.CacheSize;
+                    p.Type = "CDP";
+                    p.Cores = MatchHostIdToCPU(cdp.ServerId);
+                    p.Ram = MatchHostIdtoRam(cdp.ServerId);
+                    p.ChassisType = "";
+                    p.TransportMode = "";
+                    p.UseSsl = "";
+                    p.Provisioning = "";
+                    p.FailoverToNetwork = "";
 
-                if (cdp.IsEnabled == "False")
-                    p.IsDisabled = "True";
+                    if (cdp.IsEnabled == "False")
+                        p.IsDisabled = "True";
 
-                proxyList.Add(p);
+                    proxyList.Add(p);
+                }
+
             }
-            foreach (CFileProxyCsvInfo fp in fileCsv)
-            {
-                CProxyTypeInfos p = new();
-                //p.Name = fp.Server;
-                p.Name = fp.Host;
-                p.Host = MatchHostIdToName(fp.HostId);
-                p.MaxTasksCount = ParseToInt(fp.ConcurrentTaskNumber);
-                p.Type = "File";
-                p.Cores = MatchHostIdToCPU(fp.HostId);
-                p.Ram = MatchHostIdtoRam(fp.HostId);
-                p.CachePath = "";
-                p.CacheSize = "";
-                p.ChassisType = "";
-                p.TransportMode = "";
-                p.UseSsl = "";
-                p.Provisioning = "";
-                p.FailoverToNetwork = "";
 
-                proxyList.Add(p);
+            if (fileCsv != null)
+            {
+                foreach (CFileProxyCsvInfo fp in fileCsv)
+                {
+                    CProxyTypeInfos p = new();
+                    //p.Name = fp.Server;
+                    p.Name = fp.Host;
+                    p.Host = MatchHostIdToName(fp.HostId);
+                    p.MaxTasksCount = ParseToInt(fp.ConcurrentTaskNumber);
+                    p.Type = "File";
+                    p.Cores = MatchHostIdToCPU(fp.HostId);
+                    p.Ram = MatchHostIdtoRam(fp.HostId);
+                    p.CachePath = "";
+                    p.CacheSize = "";
+                    p.ChassisType = "";
+                    p.TransportMode = "";
+                    p.UseSsl = "";
+                    p.Provisioning = "";
+                    p.FailoverToNetwork = "";
+
+                    proxyList.Add(p);
+                }
+
             }
-            foreach (CHvProxyCsvInfo hp in hvCsv)
-            {
-                CProxyTypeInfos p = new();
-                p.Type = hp.Type;
-                p.Name = hp.Name;
-                p.Host = MatchHostIdToName(hp.HostId);
-                p.MaxTasksCount = ParseToInt(hp.MaxTasksCount);
-                p.IsDisabled = ParseBool(hp.IsDisabled);
-                p.Cores = MatchHostIdToCPU(hp.HostId);
-                p.Ram = MatchHostIdtoRam(hp.HostId);
-                p.CachePath = "";
-                p.CacheSize = "";
-                p.ChassisType = "";
-                p.TransportMode = "";
-                p.UseSsl = "";
-                p.Provisioning = CalcProxyOptimalTasks(p.MaxTasksCount, p.Cores, p.Ram);
-                p.FailoverToNetwork = "";
 
-                proxyList.Add(p);
+            if (hvCsv != null)
+            {
+                foreach (CHvProxyCsvInfo hp in hvCsv)
+                {
+                    CProxyTypeInfos p = new();
+                    p.Type = hp.Type;
+                    p.Name = hp.Name;
+                    p.Host = MatchHostIdToName(hp.HostId);
+                    p.MaxTasksCount = ParseToInt(hp.MaxTasksCount);
+                    p.IsDisabled = ParseBool(hp.IsDisabled);
+                    p.Cores = MatchHostIdToCPU(hp.HostId);
+                    p.Ram = MatchHostIdtoRam(hp.HostId);
+                    p.CachePath = "";
+                    p.CacheSize = "";
+                    p.ChassisType = "";
+                    p.TransportMode = "";
+                    p.UseSsl = "";
+                    p.Provisioning = CalcProxyOptimalTasks(p.MaxTasksCount, p.Cores, p.Ram);
+                    p.FailoverToNetwork = "";
+
+                    proxyList.Add(p);
+                }
+
             }
 
             return proxyList;

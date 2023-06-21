@@ -12,7 +12,7 @@ using VeeamHealthCheck.Shared.Logging;
 
 namespace VeeamHealthCheck.Functions.Reporting.Html
 {
-    internal class CHtmlExporter
+    public class CHtmlExporter
     {
         private CLogger log = CGlobals.Logger;
         //private readonly string _testFile;
@@ -28,19 +28,15 @@ namespace VeeamHealthCheck.Functions.Reporting.Html
 
         private string _backupServerName;
         private string _latestReport;
-        private bool _scrub;
         private CScrubHandler _scrubber;
         private string _outPath = CVariables.unsafeDir;
-        private string _styleSheet;
 
-        public CHtmlExporter(string xmlFileName, string serverName, string styleSheet, bool scrub)
+        public CHtmlExporter(string serverName)
         {
             CheckOutputDirsExist();
             //_testFile = xmlFileName;
             _backupServerName = serverName;
-            _styleSheet = styleSheet;
-            _scrub = scrub;
-            if (scrub)
+            if (CGlobals.Scrub)
                 _scrubber = CGlobals.Scrubber;
         }
         private void CheckOutputDirsExist()
@@ -53,9 +49,10 @@ namespace VeeamHealthCheck.Functions.Reporting.Html
                 Directory.CreateDirectory(_origPath);
         }
 
-        public void ExportVb365Html(string htmlString)
+        public int ExportVb365Html(string htmlString)
         {
             log.Info("writing HTML to file...");
+
 
             DateTime dateTime = DateTime.Now;
             string n = CGlobals._desiredPath;
@@ -79,34 +76,40 @@ namespace VeeamHealthCheck.Functions.Reporting.Html
             WriteHtmlToFile(htmlString);
             log.Info("writing HTML to file..done!");
             //OpenHtml();
-            if (CGlobals.OpenExplorer)
-                OpenExplorer();
-            OpenHtmlIfEnabled();
+            OpenExplorer();
+            OpenHtmlIfEnabled(CGlobals.OpenHtml);
+            return 0;
+
+
+
+
         }
-        public void ExportVbrHtml(string htmlString, bool scrub)
+        public int ExportVbrHtml(string htmlString, bool scrub)
         {
             log.Info("exporting xml to html");
-
             _latestReport = SetReportNameAndPath(scrub, "VBR");
 
             WriteHtmlToFile(htmlString);
             log.Info("exporting xml to html..done!");
 
-            OpenHtmlIfEnabled();
+            OpenHtmlIfEnabled(CGlobals.OpenHtml);
+            return 0;
+
         }
 
-        public void ExportVbrSecurityHtml(string htmlString, bool scrub)
+        public int ExportVbrSecurityHtml(string htmlString, bool scrub)
         {
             log.Info("exporting xml to html");
-
-
             _latestReport = SetReportNameAndPath(scrub, "VBR_Security");
 
             WriteHtmlToFile(htmlString);
             log.Info("exporting xml to html..done!");
 
-            if (CGlobals.OpenHtml)
-                OpenHtmlIfEnabled();
+            OpenHtmlIfEnabled(CGlobals.OpenHtml);
+
+            return 0;
+
+
         }
         private void WriteHtmlToFile(string htmlString)
         {
@@ -119,7 +122,7 @@ namespace VeeamHealthCheck.Functions.Reporting.Html
         private string SetReportNameAndPath(bool scrub, string vbrOrVb365)
         {
             DateTime dateTime = DateTime.Now;
-            string installID = TrySetInstallId();
+            string installID = TrySetInstallId(CLogOptions.INSTALLID);
 
             string htmlCore = "";
             if (scrub)
@@ -131,48 +134,53 @@ namespace VeeamHealthCheck.Functions.Reporting.Html
             }
             return htmlCore;
         }
-        private string TrySetInstallId()
+        private string TrySetInstallId(string id)
         {
-            string id = "";
-            try
+            if (!string.IsNullOrEmpty(id))
             {
-                if (!string.IsNullOrEmpty(CLogOptions.INSTALLID))
-                {
-                    id = CLogOptions.INSTALLID.Substring(0, 7);
-
-                }
+                return id.Substring(0, 7);
             }
-            catch (Exception e)
+            else
             {
-                id = "anon";
+                return "anon";
             }
 
-            return id;
         }
         public void OpenExplorer()
         {
-            Process.Start("explorer.exe", CVariables.desiredDir);
+            if (CGlobals.OpenExplorer)
+                Process.Start("explorer.exe", CVariables.desiredDir);
         }
-        public void OpenHtmlIfEnabled()
+        public int OpenHtmlIfEnabled(bool open)
         {
-            if (CGlobals.OpenHtml)
+            if (open)
             {
                 log.Info("opening html");
-                Application.Current.Dispatcher.Invoke(delegate
-                {
-                    WebBrowser w1 = new();
-
-                    var p = new Process();
-                    p.StartInfo = new ProcessStartInfo(_latestReport)
-                    {
-                        UseShellExecute = true
-                    };
-                    p.Start();
-                });
+                ExecBrowser();
 
                 log.Info("opening html..done!");
+                return 0;
             }
+            else
+            {
+                log.Warning("HTML not opened. Option not enabled");
+                return 1;
 
+            }
+        }
+        private void ExecBrowser()
+        {
+            Application.Current.Dispatcher.Invoke(delegate
+            {
+                WebBrowser w1 = new();
+
+                var p = new Process();
+                p.StartInfo = new ProcessStartInfo(_latestReport)
+                {
+                    UseShellExecute = true
+                };
+                p.Start();
+            });
         }
     }
 }

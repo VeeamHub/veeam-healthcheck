@@ -117,7 +117,7 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VB365
         private void ExportHtml()
         {
             log.Info("[VB365][HTML] exporting HTML file...");
-            CHtmlExporter exporter = new("", GetServerName(), "", CGlobals.Scrub);
+            CHtmlExporter exporter = new(GetServerName());
             exporter.ExportVb365Html(_htmldoc);
             log.Info("[VB365][HTML] exporting HTML...done!");
         }

@@ -49,7 +49,7 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR
         }
         private void ExportHtml()
         {
-            CHtmlExporter exporter = new("", GetServerName(), "", CGlobals.Scrub);
+            CHtmlExporter exporter = new(GetServerName());
             exporter.ExportVbrHtml(_htmldocOriginal, false);
             exporter.ExportVbrHtml(_htmldocScrubbed, true);
             if (CGlobals.OpenExplorer)
@@ -57,7 +57,7 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR
         }
         private void ExportSecurityHtml()
         {
-            CHtmlExporter exporter = new("", GetServerName(), "", CGlobals.Scrub);
+            CHtmlExporter exporter = new(GetServerName());
             exporter.ExportVbrSecurityHtml(_htmldocOriginal, false);
             //exporter.ExportVbrHtml(_htmldocScrubbed, true);
             if (CGlobals.OpenExplorer)

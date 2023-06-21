@@ -24,7 +24,7 @@ namespace VeeamHealthCheck.Functions.Reporting.CsvHandlers
         private readonly CCsvReader _vboReader = new();
 
         //CSV Paths.
-        public readonly string _sessionPath = "VeeamSessionReport.csv";
+        public  string _sessionPath = "VeeamSessionReport.csv";
         public string _outPath;// = CVariables.vbrDir;
         public readonly string _sobrExtReportName = "SOBRExtents";
         public readonly string _jobReportName = "Jobs";
