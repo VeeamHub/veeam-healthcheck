@@ -69,10 +69,10 @@ namespace VeeamHealthCheck.Functions.Reporting.Html
             var jobInfos = csv.GetDynamicJobInfo();
             var bjobInfos = csv.GetDynamicBjobs();
 
-            List<int> pTypes = new();
 
             if (null != bjobInfos)
             {
+                List<int> pTypes = new();
                 foreach (var bjob in bjobInfos)
                 {
                     int.TryParse(bjob.type, out int typeId);
@@ -82,17 +82,33 @@ namespace VeeamHealthCheck.Functions.Reporting.Html
 
                     }
                 }
-
-            }
-
-
-            foreach (EDbJobType jt2 in Enum.GetValues(typeof(EDbJobType)))
-            {
-                if (!pTypes.Contains((int)jt2))
+                foreach (EDbJobType jt2 in Enum.GetValues(typeof(EDbJobType)))
                 {
-                    notProtectedTypes.Add(jt2.ToString());
+                    if (!pTypes.Contains((int)jt2))
+                    {
+                        notProtectedTypes.Add(jt2.ToString());
+                    }
                 }
             }
+            else
+            {
+                List<string> pTypes = new();
+                foreach (var job in jobInfos)
+                {
+                    var t = job.jobtype;
+                    pTypes.Add(job.jobtype);
+                }
+
+                foreach (string jt2 in Enum.GetNames(typeof(EDbJobType)))
+                {
+                    if (!pTypes.Contains(jt2))
+                    {
+                        notProtectedTypes.Add(jt2.ToString());
+                    }
+                }
+            }
+
+
 
             notProtectedTypes.Add("Kubernetes");
             notProtectedTypes.Add("Microsoft 365");
