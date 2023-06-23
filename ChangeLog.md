@@ -1,3 +1,20 @@
+1.0.3.681
+- Fixed issue where some columns were swapped
+- Fixed issue where unused jobs were incorrectly reported
+- Updated VB365 collection script
+- Added Various bug fixes, refactors, and unit testing
+
+1.0.3.520
+- Fixed major crash issues with v11 & v12 both.
+
+1.0.3.512
+- Fixed issue where Registry Keys were not visible if they were type multi-string.
+- Fixed issue where program would produce mostly empty report on v12
+		- Added extra logging to PS Scripts for future cases
+
+1.0.3.462
+- Updated VB365 Script
+	- Fixed issue with data collection
 1.0.3.459
 - added error handling to fix a bug/crash
 
