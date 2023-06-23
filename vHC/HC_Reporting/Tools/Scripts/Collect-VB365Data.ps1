@@ -735,10 +735,13 @@ function Get-VBOEnvironment {
                 $e.JobSessionIndex[$jobId].LastXSessionsComplete = $null
             }
 
-            $addResult = $e.JobSessionIndex[$jobId].All.Add($session) #add to "All" index
+            if ($session.MainSessionId -eq [guid]::Parse("00000000-0000-0000-0000-000000000000")) { # is the main session and not a retry
 
-            if ($session.EndTime -gt [DateTime]::Now.AddDays(-$global:SETTINGS.ReportingIntervalDays)) { #add if < X days
-                $addResult = $e.JobSessionIndex[$jobId].LastXDays.Add($session)
+                $addResult = $e.JobSessionIndex[$jobId].All.Add($session) #add to "All" index
+
+                if ($session.EndTime -gt [DateTime]::Now.AddDays(-$global:SETTINGS.ReportingIntervalDays)) { #add if < X days
+                    $addResult = $e.JobSessionIndex[$jobId].LastXDays.Add($session)
+                }
             }
         }
         foreach ($key in $e.JobSessionIndex.Keys) {
