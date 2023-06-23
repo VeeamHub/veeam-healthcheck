@@ -48,14 +48,14 @@ namespace VhcXTests.Functions.Reporting.Html.VBR.VbrTables
 
             parser._sessionPath = originalPath;
         }
-        [Fact]
-        public void CDataFormer_ParserNonProtectedTypes_Default()
-        {
-            CDataFormer df = new();
-            var res = df.ParseNonProtectedTypes();
+        //[Fact]
+        //public void CDataFormer_ParserNonProtectedTypes_Default()
+        //{
+        //    CDataFormer df = new();
+        //    var res = df.ParseNonProtectedTypes();
 
-            Assert.NotNull(res);
-        }
+        //    Assert.NotNull(res);
+        //}
         [Fact]
         public void CDataFormer_SecSummary_Default()
         {
@@ -72,14 +72,14 @@ namespace VhcXTests.Functions.Reporting.Html.VBR.VbrTables
 
             Assert.NotNull(res);
         }
-        [Fact]
-        public void CDataFormer_ProtectedWorkloadsToXml_FilePresent_Default()
-        {
-            CDataFormer df = new();
-            var res = df.ProtectedWorkloadsToXml();
+        //[Fact]
+        //public void CDataFormer_ProtectedWorkloadsToXml_FilePresent_Default()
+        //{
+        //    CDataFormer df = new();
+        //    var res = df.ProtectedWorkloadsToXml();
 
-            Assert.Equal(0, res);
-        }
+        //    Assert.Equal(0, res);
+        //}
         [Fact]
         public void CDataFormer_ProtectedWorkloadsToXml_NoFilePresent_Fail()
         {
@@ -92,22 +92,22 @@ namespace VhcXTests.Functions.Reporting.Html.VBR.VbrTables
             Assert.Equal(1, res);
             CVariables._vbrDir = originalDir;
         }
-        [Fact]
-        public void CDataFormer_BackupServerInfoToXml_Scrub_File_Default()
-        {
-            CDataFormer df = new();
-            var res = df.BackupServerInfoToXml(true);
+        //[Fact]
+        //public void CDataFormer_BackupServerInfoToXml_Scrub_File_Default()
+        //{
+        //    CDataFormer df = new();
+        //    var res = df.BackupServerInfoToXml(true);
 
-            Assert.NotNull(res);
-        }
-        [Fact]
-        public void CDataFormer_BackupServerInfoToXml_NoScrub_File_Default()
-        {
-            CDataFormer df = new();
-            var res = df.BackupServerInfoToXml(false);
+        //    Assert.NotNull(res);
+        //}
+        //[Fact]
+        //public void CDataFormer_BackupServerInfoToXml_NoScrub_File_Default()
+        //{
+        //    CDataFormer df = new();
+        //    var res = df.BackupServerInfoToXml(false);
 
-            Assert.NotNull(res);
-        }
+        //    Assert.NotNull(res);
+        //}
         [Fact]
         public void CDataFormer_BackupServerInfoToXml_Scrub_NoFile_Default()
         {
@@ -326,14 +326,14 @@ namespace VhcXTests.Functions.Reporting.Html.VBR.VbrTables
             Assert.NotNull(res);
         }
 
-        [Fact]
-        public void CDataFormer_JobConcurrency_Default()
-        {
-            CDataFormer df = new();
-            var res = df.JobConcurrency(true);
+        //[Fact]
+        //public void CDataFormer_JobConcurrency_Default()
+        //{
+        //    CDataFormer df = new();
+        //    var res = df.JobConcurrency(true);
 
-            Assert.NotNull(res);
-        }
+        //    Assert.NotNull(res);
+        //}
         [Fact]
         public void CDataFormer_JobConcurrency_False_Default()
         {

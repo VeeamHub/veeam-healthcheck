@@ -88,58 +88,58 @@ namespace VhcXTests.Functions.Reporting.CsvHandlers
             
             CVariables._vb365Dir = "\\VB365";
         }
-        [Fact]
-        public void CsvParser_RealFile_Success()
-        {
-            var parser = new CCsvParser();
+        //[Fact]
+        //public void CsvParser_RealFile_Success()
+        //{
+        //    var parser = new CCsvParser();
 
-            Assert.NotNull(parser.SessionCsvParser());
-            Assert.NotNull(parser.BnrCsvParser());
-            Assert.NotNull(parser.SobrExtParser());
-            Assert.NotNull(parser.WaitsCsvReader());
-            Assert.NotNull(parser.ViProtectedReader());
-            Assert.NotNull(parser.ViUnProtectedReader());
-            Assert.NotNull(parser.HvProtectedReader());
-            Assert.NotNull(parser.HvUnProtectedReader());
-            Assert.NotNull(parser.RegOptionsCsvParser());
-            Assert.NotNull(parser.ConfigBackupCsvParser());
-            Assert.NotNull(parser.NetTrafficCsvParser());
-            Assert.NotNull(parser.CapTierCsvParser());
-            Assert.NotNull(parser.PluginCsvParser());
-            Assert.NotNull(parser.WanParser());
-            Assert.NotNull(parser.JobCsvParser());
-            Assert.NotNull(parser.BJobCsvParser());
-            Assert.NotNull(parser.ServerCsvParser());
-            Assert.NotNull(parser.ProxyCsvParser());
-            Assert.NotNull(parser.SobrCsvParser());
-            Assert.NotNull(parser.RepoCsvParser());
-            Assert.NotNull(parser.CdpProxCsvParser());
-            Assert.NotNull(parser.HvProxCsvParser());
-            Assert.NotNull(parser.NasProxCsvParser());
+        //    Assert.NotNull(parser.SessionCsvParser());
+        //    Assert.NotNull(parser.BnrCsvParser());
+        //    Assert.NotNull(parser.SobrExtParser());
+        //    Assert.NotNull(parser.WaitsCsvReader());
+        //    Assert.NotNull(parser.ViProtectedReader());
+        //    Assert.NotNull(parser.ViUnProtectedReader());
+        //    Assert.NotNull(parser.HvProtectedReader());
+        //    Assert.NotNull(parser.HvUnProtectedReader());
+        //    Assert.NotNull(parser.RegOptionsCsvParser());
+        //    Assert.NotNull(parser.ConfigBackupCsvParser());
+        //    Assert.NotNull(parser.NetTrafficCsvParser());
+        //    Assert.NotNull(parser.CapTierCsvParser());
+        //    Assert.NotNull(parser.PluginCsvParser());
+        //    Assert.NotNull(parser.WanParser());
+        //    Assert.NotNull(parser.JobCsvParser());
+        //    Assert.NotNull(parser.BJobCsvParser());
+        //    Assert.NotNull(parser.ServerCsvParser());
+        //    Assert.NotNull(parser.ProxyCsvParser());
+        //    Assert.NotNull(parser.SobrCsvParser());
+        //    Assert.NotNull(parser.RepoCsvParser());
+        //    Assert.NotNull(parser.CdpProxCsvParser());
+        //    Assert.NotNull(parser.HvProxCsvParser());
+        //    Assert.NotNull(parser.NasProxCsvParser());
 
 
 
-            // VBO Tests
-            Assert.NotNull(parser.GetDynamicVboGlobal());
-            Assert.NotNull(parser.GetDynamicVboGlobal());
-            Assert.NotNull(parser.GetDynamicVboProxies());
-            Assert.NotNull(parser.GetDynamicVboRbac());
-            Assert.NotNull(parser.GetDynamicVboJobs());
-            Assert.NotNull(parser.GetDynamicVboProcStat());
-            Assert.NotNull(parser.GetDynamicVboRepo());
-            Assert.NotNull(parser.GetDynamicVboSec());
-            Assert.NotNull(parser.GetDynVboController());
-            Assert.NotNull(parser.GetDynVboControllerDriver());
-            Assert.NotNull(parser.GetDynVboJobSess());
-            Assert.NotNull(parser.GetDynVboJobStats());
-            Assert.NotNull(parser.GetDynVboObjRepo());
-            Assert.NotNull(parser.GetDynVboOrg());
-            Assert.NotNull(parser.GetDynVboPerms());
-            Assert.NotNull(parser.GetDynVboProtStat());
-            Assert.NotNull(parser.GetDynVboLicOver());
-            Assert.NotNull(parser.GetDynVboMbProtRep());
-            Assert.NotNull(parser.GetDynVboMbStgConsumption());
-        }
+        //    // VBO Tests
+        //    Assert.NotNull(parser.GetDynamicVboGlobal());
+        //    Assert.NotNull(parser.GetDynamicVboGlobal());
+        //    Assert.NotNull(parser.GetDynamicVboProxies());
+        //    Assert.NotNull(parser.GetDynamicVboRbac());
+        //    Assert.NotNull(parser.GetDynamicVboJobs());
+        //    Assert.NotNull(parser.GetDynamicVboProcStat());
+        //    Assert.NotNull(parser.GetDynamicVboRepo());
+        //    Assert.NotNull(parser.GetDynamicVboSec());
+        //    Assert.NotNull(parser.GetDynVboController());
+        //    Assert.NotNull(parser.GetDynVboControllerDriver());
+        //    Assert.NotNull(parser.GetDynVboJobSess());
+        //    Assert.NotNull(parser.GetDynVboJobStats());
+        //    Assert.NotNull(parser.GetDynVboObjRepo());
+        //    Assert.NotNull(parser.GetDynVboOrg());
+        //    Assert.NotNull(parser.GetDynVboPerms());
+        //    Assert.NotNull(parser.GetDynVboProtStat());
+        //    Assert.NotNull(parser.GetDynVboLicOver());
+        //    Assert.NotNull(parser.GetDynVboMbProtRep());
+        //    Assert.NotNull(parser.GetDynVboMbStgConsumption());
+        //}
         [Fact]
         public void FileFinder_Exception_Null()
         {

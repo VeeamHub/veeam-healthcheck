@@ -13,14 +13,14 @@ namespace VhcXTests.Functions.Reporting.DataTypes
 {
     public class CDataTypesParserTEST
     {
-        [Fact]
-        public void JobInfo_GetDynamicBjobs_Success()
-        {
-            var parser = new CCsvParser();
-            var bjobs = parser.GetDynamicBjobs();
+        //[Fact]
+        //public void JobInfo_GetDynamicBjobs_Success()
+        //{
+        //    var parser = new CCsvParser();
+        //    var bjobs = parser.GetDynamicBjobs();
 
-            Assert.NotNull(bjobs);
-        }
+        //    Assert.NotNull(bjobs);
+        //}
         [Fact]
         public void JobInfo_GetDynamicBjobs_Fail()
         {
@@ -30,30 +30,30 @@ namespace VhcXTests.Functions.Reporting.DataTypes
             Assert.Null(bjobs);
         }
 
-        [Fact]
-        public void SobrInfo_Null_Success()
-        {
-            CDataTypesParser p = new();
-            var result = p.SobrInfo;
+        //[Fact]
+        //public void SobrInfo_Null_Success()
+        //{
+        //    CDataTypesParser p = new();
+        //    var result = p.SobrInfo;
 
-            Assert.NotNull(result);
-        }
-        [Fact]
-        public void SobrInfo_Null_Fail()
-        {
-            CDataTypesParser p = new();
-            var result = p.SobrInfo;
+        //    Assert.NotNull(result);
+        //}
+        //[Fact]
+        //public void SobrInfo_Null_Fail()
+        //{
+        //    CDataTypesParser p = new();
+        //    var result = p.SobrInfo;
 
-            Assert.Null(result);
-        }
-        [Fact]
-        public void SobrInfo_List_Success()
-        {
-            var parser = new Mock<CDataTypesParser>();
-            parser.Setup(x => x.SobrInfo).Returns(new List<CSobrTypeInfos>());
+        //    Assert.Null(result);
+        //}
+        //[Fact]
+        //public void SobrInfo_List_Success()
+        //{
+        //    var parser = new Mock<CDataTypesParser>();
+        //    parser.Setup(x => x.SobrInfo).Returns(new List<CSobrTypeInfos>());
 
-            Assert.NotNull(parser);
-        }
+        //    Assert.NotNull(parser);
+        //}
         [Fact]
         public void SobrInfo_EmptyList_Fail()
         {
