@@ -1,3 +1,6 @@
+1.0.3.683
+- Fixed issue with PS Collection script.
+
 1.0.3.681
 - Fixed issue where some columns were swapped
 - Fixed issue where unused jobs were incorrectly reported

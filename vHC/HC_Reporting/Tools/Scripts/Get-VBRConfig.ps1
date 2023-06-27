@@ -552,7 +552,8 @@ try {
     $message = "Collecting protected workloads info..."
     Write-LogFile($message)
 
-    # work here
+    try{
+        # work here
     ##Protected Workloads Area
     $vmbackups = Get-VBRBackup | ? { $_.TypeToString -eq "VMware Backup" }
     if ($version -eq 12) {
@@ -563,7 +564,11 @@ try {
     }
     $unprotectedEntityInfo = Find-VBRViEntity | ? { $_.Name -notin $vmNames.Name }
     $protectedEntityInfo = Find-VBRViEntity -Name $vmNames.Name
-  
+    }
+
+   catch {
+        write-host($error[0])
+    }
     # protected HV Workloads
     try {
         $hvvmbackups = Get-VBRBackup | ? { $_.TypeToString -eq "Hyper-v Backup" }
