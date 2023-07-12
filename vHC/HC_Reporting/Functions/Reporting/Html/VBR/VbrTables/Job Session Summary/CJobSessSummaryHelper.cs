@@ -128,12 +128,16 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR.VbrTables.Job_Session_Su
         {
             return CGlobals.GetToolStart.AddDays(-CGlobals.ReportDays);
         }
-        public SessionStats SessionStats()
+        public SessionStats SessionStats(string jobName)
         {
             SessionStats stats = new SessionStats();
-
+            
             foreach (var session in JobSessionInfoList())
             {
+                double diff = (DateTime.Now - session.CreationTime).TotalDays;
+                if (jobName == session.Name && diff < CGlobals.ReportDays)
+                {
+
                 stats.SessionCount++;
                 if (session.Status == "Failed")
                     stats.FailCounts++;
@@ -147,6 +151,8 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR.VbrTables.Job_Session_Su
 
                 stats.DataSize.Add(session.DataSize);
                 stats.BackupSize.Add(session.BackupSize);
+                }
+
             }
 
 

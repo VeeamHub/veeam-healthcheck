@@ -74,7 +74,7 @@ namespace VeeamHealthCheck.Functions.Reporting.Html
                 List<double> dataSize = new();
                 List<double> backupSize = new();
 
-                SessionStats thisSession = helper.SessionStats();
+                SessionStats thisSession = helper.SessionStats(j);
                 durations = thisSession.JobDuration;
                 vmNames = thisSession.VmNames;
                 dataSize = thisSession.DataSize;
