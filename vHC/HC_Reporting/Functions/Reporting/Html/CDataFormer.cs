@@ -927,10 +927,11 @@ namespace VeeamHealthCheck.Functions.Reporting.Html
                         repo = _scrubber.ScrubItem(c.RepoName, "repo");
                     }
                     decimal.TryParse(c.ActualSize, out decimal actualSize);
-
+                    var trueSize = Math.Round(actualSize / 1024 / 1024 / 1024, 2);
+                    totalsize += trueSize;
                     job.Add(jname);
                     job.Add(repo);
-                    job.Add(Math.Round(actualSize / 1024 / 1024 / 1024, 2).ToString());
+                    job.Add(trueSize.ToString());
                     job.Add(c.RestorePoints.ToString());
                     job.Add(c.EncryptionEnabled);
                     job.Add(c.JobType);
@@ -948,7 +949,7 @@ namespace VeeamHealthCheck.Functions.Reporting.Html
 
             // add summary line;
             List<string> summaryline = new() {
-            "",
+            "TOTALS",
             "",
             totalsize.ToString(),
             "",
@@ -956,6 +957,7 @@ namespace VeeamHealthCheck.Functions.Reporting.Html
             "",
 
             };
+            sendBack.Add(summaryline);
 
 
             //doc.Save(_testFile);
