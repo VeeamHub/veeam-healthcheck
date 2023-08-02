@@ -127,7 +127,7 @@ Get-VBRUserRoleAssignment | Export-VhcCsv -FileName "_UserRoles.csv"
 #catch {
 #    Write-LogFile("Error on version detection. ")
 #}
-$version = $VBRVersion
+#$version = $VBRVersion
 
 # general collection:
 try {
@@ -556,7 +556,7 @@ try {
         # work here
     ##Protected Workloads Area
     $vmbackups = Get-VBRBackup | ? { $_.TypeToString -eq "VMware Backup" }
-    if ($version -eq 12) {
+    if ($VBRversion -eq 12) {
         $vmNames = $vmbackups.GetLastOibs($true)
     }
     else {
@@ -567,12 +567,13 @@ try {
     }
 
    catch {
-        write-host($error[0])
+    write-logfile("Failed on vmware workloads")
+    Write-LogFile($error[0])
     }
     # protected HV Workloads
     try {
         $hvvmbackups = Get-VBRBackup | ? { $_.TypeToString -eq "Hyper-v Backup" }
-        if ($version -eq 12) {
+        if ($VBRVersion -eq 12) {
             $hvvmNames = $hvvmbackups.GetLastOibs($true)
         }
         else {
@@ -590,25 +591,32 @@ try {
 
     }
     catch {
-        write-host($error[0])
+        write-logfile("Failed on hyper-V workloads")
+        Write-LogFile($error[0])
     }
 
 
     #protected physical Loads
-    $phys = Get-VBRDiscoveredComputer
+    try{
+        $phys = Get-VBRDiscoveredComputer
 
-    $physbackups = Get-VBRBackup | ? { $_.TypeToString -like "*Agent*" }
-    if ($version -eq 12) {
-        $pvmNames = $physbackups.GetLastOibs($true)
-
+        $physbackups = Get-VBRBackup | ? { $_.TypeToString -like "*Agent*" }
+        if ($VBRVersion -eq 12) {
+            $pvmNames = $physbackups.GetLastOibs($true)
+    
+        }
+        else {
+            $pvmNames = $physbackups.GetLastOibs()
+    
+        }
+    
+        $notprotected = $phys | ? { $_.Name -notin $pvmNames.Name }
+        $protected = $phys | ? { $_.Name -in $pvmNames.Name }
     }
-    else {
-        $pvmNames = $physbackups.GetLastOibs()
-
+    catch{
+        write-logfile("Failed on physical workloads")
+        Write-LogFile($error[0])
     }
-
-    $notprotected = $phys | ? { $_.Name -notin $pvmNames.Name }
-    $protected = $phys | ? { $_.Name -in $pvmNames.Name }
 
    
     ##end protected workloads Area
