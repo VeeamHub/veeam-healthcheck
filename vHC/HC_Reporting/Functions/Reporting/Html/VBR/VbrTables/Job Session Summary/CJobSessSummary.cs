@@ -80,6 +80,7 @@ namespace VeeamHealthCheck.Functions.Reporting.Html
                 dataSize = thisSession.DataSize;
                 backupSize = thisSession.BackupSize;
                 totalSessions += thisSession.SessionCount;
+                sessionCount = thisSession.SessionCount;
                 totalFailedSessions += thisSession.FailCounts;
                 totalRetries += thisSession.RetryCounts;
 
@@ -88,7 +89,7 @@ namespace VeeamHealthCheck.Functions.Reporting.Html
                 
                 try
                 {
-                    info.sessionCount = (int)sessionCount;
+                    info.sessionCount = (int)thisSession.SessionCount;
                     if (sessionCount != 0)
                     {
                         double percent = (sessionCount - fails + retries) / sessionCount * 100;
