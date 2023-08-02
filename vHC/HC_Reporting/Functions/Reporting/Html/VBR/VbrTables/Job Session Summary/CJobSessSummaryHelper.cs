@@ -222,7 +222,7 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR.VbrTables.Job_Session_Su
                 "",
                 "",
                 "",
-                "",
+                totalSessions.ToString() , //total sessions
                 Math.Round(totalSessionSuccessPercent, 2).ToString() //TODO: Make this total sessions - total failed sessions / total session;
             };
             if (avgBackupSizes.Count > 0)
@@ -231,8 +231,16 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR.VbrTables.Job_Session_Su
                 summary.Add("0");
             summary.Add(Math.Round(maxBackupSize.Sum(), 0).ToString());
 
+            if(maxBackupSize.Count > 0)
+                summary.Add(Math.Round(maxBackupSize.Max(), 0).ToString());
+            else summary.Add("0");
+
             if (avgDataSizes.Count > 0)
                 summary.Add(Math.Round(avgDataSizes.Average(), 0).ToString());
+            else
+                summary.Add("0");
+            if (maxDataSizes.Count > 0)
+                summary.Add(Math.Round(maxDataSizes.Sum(), 2).ToString());
             else
                 summary.Add("0");
 
@@ -241,10 +249,7 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR.VbrTables.Job_Session_Su
             else
                 summary.Add("0");
 
-            if (maxDataSizes.Count > 0)
-                summary.Add(Math.Round(maxDataSizes.Sum(), 2).ToString());
-            else
-                summary.Add("0");
+
 
             return summary;
         }
