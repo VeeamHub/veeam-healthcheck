@@ -26,7 +26,9 @@ namespace VeeamHealthCheck.Functions.Collection
 
             ExecPSScripts();
             if (!CGlobals.RunSecReport)
+            {
                 PopulateWaits();
+            }
 
             ExecVmcReader();
             GetRegistryDbInfo();
@@ -57,7 +59,10 @@ namespace VeeamHealthCheck.Functions.Collection
             CRegReader reg = new CRegReader();
             reg.GetDbInfo();
 
-            CGlobals.DEFAULTREGISTRYKEYS =  reg.DefaultVbrKeys();
+            if (CGlobals.REMOTEEXEC)
+                CGlobals.DEFAULTREGISTRYKEYS = reg.DefaultVbrKeysRemote();
+            else
+                CGlobals.DEFAULTREGISTRYKEYS = reg.DefaultVbrKeys();
         }
         private void ExecSqlQueries()
         {

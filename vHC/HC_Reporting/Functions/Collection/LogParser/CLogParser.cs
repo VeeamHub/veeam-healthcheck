@@ -93,6 +93,7 @@ namespace VeeamHealthCheck.Functions.Collection.LogParser
             log.Info("Checking Log files for waits..", false);
             Dictionary<string, List<TimeSpan>> jobsAndWaits = new();
             string[] dirList = Directory.GetDirectories(LogLocation);
+            int logCount = Directory.GetFiles(LogLocation, "*.log", SearchOption.AllDirectories).Count();
 
             int counter = 0;
             int fileCounter = 0;
@@ -109,7 +110,7 @@ namespace VeeamHealthCheck.Functions.Collection.LogParser
 
                 foreach (var f in fileList)
                 {
-                    string fileInfoLog = string.Format("[LogParser] Parsing Log {0} of {1}", fileCounter, fileList.Count());
+                    string fileInfoLog = string.Format("[LogParser] Parsing Log {0} of {1}", fileCounter, logCount);
                     log.Info(fileInfoLog, false);
                     try
                     {
