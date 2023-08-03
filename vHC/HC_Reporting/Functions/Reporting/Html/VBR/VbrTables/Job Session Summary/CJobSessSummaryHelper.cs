@@ -216,6 +216,7 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR.VbrTables.Job_Session_Su
             List<double> maxBackupSize, List<double> avgRates, List<double> maxDataSizes)
         {
             double totalSessionSuccessPercent = (totalSessions - totalFailedSessions + totalRetries) / totalSessions * 100;
+            string successPercent = Math.Round(totalSessionSuccessPercent, 2).ToString() + "%";
             List<string> summary = new()
             {
                 "Total",
@@ -224,16 +225,17 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR.VbrTables.Job_Session_Su
                 "",
                 "",
                 totalSessions.ToString() , //total sessions
-                Math.Round(totalSessionSuccessPercent, 2).ToString() //TODO: Make this total sessions - total failed sessions / total session;
+                successPercent//TODO: Make this total sessions - total failed sessions / total session;
             };
             if (avgBackupSizes.Count > 0)
                 summary.Add(Math.Round(avgBackupSizes.Average(), 0).ToString());
             else
                 summary.Add("0");
-            summary.Add(Math.Round(maxBackupSize.Sum(), 0).ToString());
+            
+            //summary.Add(Math.Round(maxBackupSize.Sum(), 0).ToString());
 
             if (maxBackupSize.Count > 0)
-                summary.Add(Math.Round(maxBackupSize.Max(), 0).ToString());
+                summary.Add(Math.Round(maxBackupSize.Sum(), 0).ToString());
             else summary.Add("0");
 
             if (avgDataSizes.Count > 0)
@@ -246,9 +248,13 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR.VbrTables.Job_Session_Su
                 summary.Add("0");
 
             if (avgRates.Count > 0)
-                summary.Add(Math.Round(avgRates.Average(), 2).ToString());
+                summary.Add(Math.Round(avgRates.Average(), 2).ToString() + "%");
             else
                 summary.Add("0");
+            summary.Add("");
+            summary.Add("");
+            summary.Add("");
+            summary.Add("");
 
 
 
