@@ -131,26 +131,27 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR.VbrTables.Job_Session_Su
         public SessionStats SessionStats(string jobName)
         {
             SessionStats stats = new SessionStats();
-            
+
             foreach (var session in JobSessionInfoList())
             {
                 double diff = (DateTime.Now - session.CreationTime).TotalDays;
                 if (jobName == session.Name && diff < CGlobals.ReportDays)
                 {
 
-                stats.SessionCount++;
-                if (session.Status == "Failed")
-                    stats.FailCounts++;
-                if (session.IsRetry == "True")
-                    stats.RetryCounts++;
+                    stats.SessionCount++;
+                    if (session.Status == "Failed")
+                        stats.FailCounts++;
+                    if (session.IsRetry == "True")
+                        stats.RetryCounts++;
 
-                TimeSpan.TryParse(session.JobDuration, out TimeSpan jDur);
+                    stats.JobType = session.JobType;
+                    TimeSpan.TryParse(session.JobDuration, out TimeSpan jDur);
 
-                stats.JobDuration.Add(jDur); //need to parse this to TimeSpan
-                stats.VmNames.Add(session.VmName);
+                    stats.JobDuration.Add(jDur); //need to parse this to TimeSpan
+                    stats.VmNames.Add(session.VmName);
 
-                stats.DataSize.Add(session.DataSize);
-                stats.BackupSize.Add(session.BackupSize);
+                    stats.DataSize.Add(session.DataSize);
+                    stats.BackupSize.Add(session.BackupSize);
                 }
 
             }
@@ -231,7 +232,7 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR.VbrTables.Job_Session_Su
                 summary.Add("0");
             summary.Add(Math.Round(maxBackupSize.Sum(), 0).ToString());
 
-            if(maxBackupSize.Count > 0)
+            if (maxBackupSize.Count > 0)
                 summary.Add(Math.Round(maxBackupSize.Max(), 0).ToString());
             else summary.Add("0");
 

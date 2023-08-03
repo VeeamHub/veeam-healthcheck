@@ -5,7 +5,7 @@
       "commandLineArgs": "/run",
       "remoteDebugEnabled": true,
       "authenticationMode": "Windows",
-      "remoteDebugMachine": "vbr-12-beta3:4026"
+      "remoteDebugMachine": "adam-laptop:4026"
     }
   }
 }

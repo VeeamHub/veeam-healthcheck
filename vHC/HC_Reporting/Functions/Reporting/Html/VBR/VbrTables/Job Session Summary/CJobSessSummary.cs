@@ -83,7 +83,7 @@ namespace VeeamHealthCheck.Functions.Reporting.Html
                 sessionCount = thisSession.SessionCount;
                 totalFailedSessions += thisSession.FailCounts;
                 totalRetries += thisSession.RetryCounts;
-                
+                info.JobType = CJobTypeConversion.ReturnJobType(thisSession.JobType);
 
                 List<TimeSpan> nonZeros = helper.AddNonZeros(durations);
                 
