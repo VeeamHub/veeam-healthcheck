@@ -95,10 +95,11 @@ namespace VeeamHealthCheck.Functions.Collection.LogParser
             string[] dirList = Directory.GetDirectories(LogLocation);
 
             int counter = 0;
+            int fileCounter = 0;
             foreach (var d in dirList)
             {
                 counter++;
-                string info = string.Format("[LogParser] Parsing log {0} of {1}", counter, dirList.Count());
+                string info = string.Format("[LogParser] Parsing Directory {0} of {1}", counter, dirList.Count());
                 log.Info(info, false);
                 string jobname = Path.GetFileName(d);
 
@@ -108,12 +109,15 @@ namespace VeeamHealthCheck.Functions.Collection.LogParser
 
                 foreach (var f in fileList)
                 {
+                    string fileInfoLog = string.Format("[LogParser] Parsing Log {0} of {1}", fileCounter, fileList.Count());
+                    log.Info(fileInfoLog, false);
                     try
                     {
                         waits.AddRange(CheckFileWait(f, jobname));
 
                     }
                     catch(Exception e) { }
+                    fileCounter++;
                 }
                 jobsAndWaits.Add(jobname, waits);
             }
@@ -180,6 +184,7 @@ namespace VeeamHealthCheck.Functions.Collection.LogParser
                                 startTime = "";
                             }
                         }
+                        catch(System.ArgumentOutOfRangeException e1) { }
                         catch (Exception e) { }
                     }
 

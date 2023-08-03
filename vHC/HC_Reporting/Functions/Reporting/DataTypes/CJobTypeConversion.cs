@@ -14,7 +14,7 @@ namespace VeeamHealthCheck.Functions.Reporting.DataTypes
             switch(jobType)
             {
                 case "EVmware":
-                    return "VMware VM";
+                    return "VMware Backup";
                 default:
                     return jobType;
             }
