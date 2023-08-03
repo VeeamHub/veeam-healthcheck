@@ -1,3 +1,14 @@
+1.0.3.718
+- Fixed issue where program would crash and not create report
+- Job Session Summary Table:
+	- Added Fails & Retries to Job Session Summary Table
+	- Fixed TOTALS line of Jobs
+	- Fixed layout
+	- Fixed values out of alignment
+- Job Info Table:
+	- Added TOTAL line & summed up job sizes
+	- Fixed layout
+
 1.0.3.683
 - Fixed issue with PS Collection script.
 
