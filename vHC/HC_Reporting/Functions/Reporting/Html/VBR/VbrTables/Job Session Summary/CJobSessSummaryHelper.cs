@@ -194,6 +194,8 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR.VbrTables.Job_Session_Su
                     row.Add(o.MaxJobTime);
                     row.Add(o.AvgJobTime);
                     row.Add(o.sessionCount.ToString());
+                    row.Add(o.Fails.ToString());
+                    row.Add(o.Retries.ToString());
                     row.Add(o.SuccessRate.ToString());
                     row.Add(Math.Round(o.AvgBackupSize, 2).ToString());
                     row.Add(Math.Round(o.MaxBackupSize, 2).ToString());
@@ -224,7 +226,9 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR.VbrTables.Job_Session_Su
                 "",
                 "",
                 "",
-                totalSessions.ToString() , //total sessions
+                totalSessions.ToString() , //total sessions,
+                "-",
+                "-",
                 successPercent//TODO: Make this total sessions - total failed sessions / total session;
             };
             if (avgBackupSizes.Count > 0)

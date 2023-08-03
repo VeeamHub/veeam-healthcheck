@@ -81,6 +81,8 @@ namespace VeeamHealthCheck.Functions.Reporting.Html
                 backupSize = thisSession.BackupSize;
                 totalSessions += thisSession.SessionCount;
                 sessionCount = thisSession.SessionCount;
+                fails = thisSession.FailCounts;
+                retries = thisSession.RetryCounts;
                 totalFailedSessions += thisSession.FailCounts;
                 totalRetries += thisSession.RetryCounts;
                 info.JobType = CJobTypeConversion.ReturnJobType(thisSession.JobType);
@@ -108,6 +110,12 @@ namespace VeeamHealthCheck.Functions.Reporting.Html
                         {// TODO: if percent greater than 100, set to 100
                             percent = 100;
                         }
+                        if(fails != 0 || retries != 0)
+                        {
+
+                        }
+                        info.Fails = (int)fails;
+                        info.Retries = (int)retries;
                     }
 
                     successRates.Add(info.SuccessRate);
