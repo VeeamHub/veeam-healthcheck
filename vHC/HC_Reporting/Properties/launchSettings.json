@@ -2,7 +2,7 @@
   "profiles": {
     "VeeamHealthCheck": {
       "commandName": "Project",
-      "commandLineArgs": "/run",
+      "commandLineArgs": "/import /lite",
       "remoteDebugEnabled": true,
       "authenticationMode": "Windows",
       "remoteDebugMachine": "adam-laptop:4026"
