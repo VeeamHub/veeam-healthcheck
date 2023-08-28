@@ -188,8 +188,10 @@ namespace VeeamHealthCheck.Functions.Reporting.Html
             if (backupSize.Count != 0)
             {
                 info.MinBackupSize = backupSize.Min() / 1024;
-                info.MaxBackupSize = backupSize.Max() / 1024;
-                info.AvgBackupSize = Math.Round(backupSize.Average() / 1024, 2);
+                info.MaxBackupSize = Math.Round(backupSize.Max() / 1024, 4);
+                //var avg = backupSize.Average();
+                //var avg2 = backupSize.Average() / 1024;
+                info.AvgBackupSize = Math.Round(backupSize.Average() / 1024, 4);
             }
             else
             {
@@ -201,8 +203,8 @@ namespace VeeamHealthCheck.Functions.Reporting.Html
             if (dataSize.Count != 0)
             {
                 info.MinDataSize = dataSize.Min() / 1024;
-                info.MaxDataSize = dataSize.Max() / 1024;
-                info.AvgDataSize = Math.Round(dataSize.Average() / 1024, 2);
+                info.MaxDataSize = Math.Round(dataSize.Max() / 1024, 4);
+                info.AvgDataSize = Math.Round(dataSize.Average() / 1024, 4);
             }
             else
             {
