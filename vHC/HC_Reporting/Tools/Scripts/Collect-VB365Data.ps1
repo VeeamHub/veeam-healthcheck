@@ -37,7 +37,9 @@ Clear-Host
 <# ### CUSTOM SETTINGS CAN BE APPLIED IN "CollectorConfig.json" ###
     [Bool]SkipCollect if $VBOEnvironment already loaded;
     [bool]ExportJson to export entire raw $VBOEnvironment capture as json;
+    [bool]ExportPartialJson to export only sections of $VBOEnvironment that produce errors as json;
     [bool]ExportXml to export entire raw $VBOEnvironment capture as xml;
+    [bool]ExportPartialXml to export only sections of $VBOEnvironment that produce errors as xml;
     [bool]DebugInConsole to get output to PS host/console;
     [Bool]Watch to launch logwatcher & resmon
     [string]VBOServerFqdnOrIp -- dont use/change this unless you're writing this code remote, away from VB365 server.
@@ -45,7 +47,7 @@ Clear-Host
 #>  
 
 # Default config settings
-$global:SETTINGS = '{"LogLevel":"INFO","OutputPath":"C:\\temp\\vHC\\Original\\VB365","ReportingIntervalDays":7,"VBOServerFqdnOrIp":"localhost"}'<#,"SkipCollect":false,"ExportJson":false,"ExportXml":false,"DebugInConsole":false,"Watch":false}#> | ConvertFrom-Json
+$global:SETTINGS = '{"LogLevel":"INFO","OutputPath":"C:\\temp\\vHC\\Original\\VB365","ReportingIntervalDays":7,"VBOServerFqdnOrIp":"localhost"}'<#,"SkipCollect":false,"ExportPartialJson":false,"ExportJson":false,"ExportPartialXml":false,"ExportXml":false,"DebugInConsole":false,"Watch":false}#> | ConvertFrom-Json
 
 # if path passed in via argument/param, override to that path for the run.
 if ($OutputPath -ne "") { $global:SETTINGS.OutputPath = $OutputPath }
@@ -137,6 +139,7 @@ function Write-LogFile {
     [CmdletBinding()]
     param (
         [string]$Message,
+        [string]$CorrelationId="",
         [ValidateSet("Main","Errors","NoResult")][string]$LogName="Main",
         [ValidateSet("TRACE", "PROFILE", "DEBUG", "INFO", "WARNING", "ERROR", "FATAL")][String]$LogLevel=[LogLevel]::INFO
         )
@@ -145,7 +148,7 @@ function Write-LogFile {
     process {
         # if message log level is higher/equal to config log level, post it.
         if ([LogLevel]$LogLevel -ge [LogLevel]$global:SETTINGS.loglevel) {
-            (get-date).ToString("yyyy-MM-dd hh:mm:ss") + "`t"+$LogLevel+"`t`t" + $Message | Out-File -FilePath ($global:SETTINGS.OutputPath.Trim('\') + "\Collector" + $LogName + ".log") -Append
+            (get-date).ToString("yyyy-MM-dd hh:mm:ss") + "`t"+$LogLevel.PadRight(10," ")+""+$CorrelationId+"`t" + $Message | Out-File -FilePath ($global:SETTINGS.OutputPath.Trim('\') + "\Collector" + $LogName + ".log") -Append
             
             #write it to console if enabled.
             if ($global:SETTINGS.DebugInConsole) {
@@ -252,6 +255,29 @@ function Join([string[]]$array, $Delimiter=", ", [switch]$KeepNulls) {
         return $array.Where({ $null -ne $_ }) -join $Delimiter
     }
 }
+function ExportEnviroKey([ValidateSet("JSON","XML")][string]$Format="XML",[string]$KeyName,[string[]]$ExcludeProperty) {
+    if ($ExcludeProperty.Count -gt 0) {
+        $exportObj = $VBOEnvironment.$KeyName | Select-Object * -ExcludeProperty $ExcludeProperty
+    } else {
+        $exportObj = $VBOEnvironment.$KeyName
+    }
+    
+    $item = Get-Item -Path ($global:SETTINGS.OutputPath.Trim('\')+"\VBOEnvironment.$KeyName.$Format")
+    $fileExists = $item -and ($item.LastWriteTime -gt (Get-Date).AddMinutes(-60))
+    if (!$fileExists) {
+        if ($Format -eq "XML") {
+            $exportObj | Export-Clixml -Depth 100 -Path ($global:SETTINGS.OutputPath.Trim('\')+"\VBOEnvironment.$KeyName.xml") -Force
+        }
+        if ($Format -eq "JSON") {
+            $exportObj | ConvertTo-Json -Depth 100 | Out-File ($global:SETTINGS.OutputPath.Trim('\')+"\VBOEnvironment.$KeyName.json") -Force
+        }
+    } else {
+        Write-Debug -Message File already exported in last hour.
+    }
+
+    $exportObj | Remove-Variable -Force
+    [GC]::Collect()
+}
 
 
 function Expand-Expression {
@@ -326,15 +352,32 @@ function Expand-Expression {
                 }
             } catch {
 
+                $correlationId = [guid]::NewGuid().Guid
                 $message = "$expression not valid."
                 if ($global:SETTINGS.DebugInConsole) {
                     Write-Warning "$expression not valid."
                     ($Error | Select-Object -Last 1).ToString()
                 }
 
-                Write-LogFile -Message $message -LogName Errors -LogLevel ERROR
-                Write-LogFile -Message "`tExpanded Expression: $expandedExpression" -LogName Errors -LogLevel ERROR
-                Write-LogFile -Message ($Error | Select-Object -Last 1).ToString() -LogName Errors -LogLevel DEBUG
+                Write-LogFile -Message $message -LogName Errors -LogLevel ERROR -CorrelationId $correlationId
+                Write-LogFile -Message "`tExpanded Expression: $expandedExpression" -LogName Errors -LogLevel ERROR -CorrelationId $correlationId
+                Write-LogFile -Message ($Error | Select-Object -Last 1).ToString() -LogName Errors -LogLevel DEBUG -CorrelationId $correlationId
+
+                $match = [regex]::Match($Expression,'[\:\$]VBOEnvironment\.(?<key>\w+)')
+                $relatedObjects = $match.Groups["key"].Value | Where-Object { $_ -ne "" }
+                
+                $BaseObject.GetType().Name
+                
+                if ($global:SETTINGS.ExportPartialXml) {
+                    Write-LogFile -Message "`tObject(s) Exported." -LogName Errors -LogLevel ERROR -CorrelationId $correlationId
+                    $relatedObjects | ForEach-Object { ExportEnviroKey -Format XML -KeyName $_ }
+                    ExportEnviroKey -Format XML -KeyName $(($VBOEnvironment.GetEnumerator() | ? { $_.Value[0].GetType().Name -eq $BaseObject.GetType().Name }).Name)
+                }
+                if ($global:SETTINGS.ExportPartialJson) {
+                    Write-LogFile -Message "`tObject(s) Exported." -LogName Errors -LogLevel ERROR -CorrelationId $correlationId
+                    $relatedObjects | ForEach-Object { ExportEnviroKey -Format JSON -KeyName $_ }
+                    ExportEnviroKey -Format JSON -KeyName $(($VBOEnvironment.GetEnumerator() | ? { $_.Value[0].GetType().Name -eq $BaseObject.GetType().Name }).Name)
+                }
 
                 $result.Value = $null;
 
@@ -735,14 +778,14 @@ function Get-VBOEnvironment {
                 $e.JobSessionIndex[$jobId].LastXSessionsComplete = $null
             }
 
-            if ($session.MainSessionId -eq [guid]::Parse("00000000-0000-0000-0000-000000000000")) { # is the main session and not a retry
+            #Removed condition to exclude anything other than MainSessionId==0, as it broke v6: $session.MainSessionId -eq [guid]::Parse("00000000-0000-0000-0000-000000000000")
 
-                $addResult = $e.JobSessionIndex[$jobId].All.Add($session) #add to "All" index
+            $addResult = $e.JobSessionIndex[$jobId].All.Add($session) #add to "All" index
 
-                if ($session.EndTime -gt [DateTime]::Now.AddDays(-$global:SETTINGS.ReportingIntervalDays)) { #add if < X days
-                    $addResult = $e.JobSessionIndex[$jobId].LastXDays.Add($session)
-                }
+            if ($session.EndTime -gt [DateTime]::Now.AddDays(-$global:SETTINGS.ReportingIntervalDays)) { #add if < X days
+                $addResult = $e.JobSessionIndex[$jobId].LastXDays.Add($session)
             }
+            
         }
         foreach ($key in $e.JobSessionIndex.Keys) {
             $e.JobSessionIndex[$key].All.Sort($CreationTimeComparer)
@@ -839,13 +882,17 @@ if (!$global:SETTINGS.SkipCollect) {
     if ($global:SETTINGS.DebugInConsole) { $v = $Global:VBOEnvironment; $v.Keys; }
 
     Write-ResourceUsageToLog -Message "Done collecting"
+    Write-LogFile "Collection Stats:" -LogLevel INFO
+    $VBOEnvironment.GetEnumerator() | % { Write-LogFile $("`t"+$_.Name.PadRight(40," ") + $_.Value.Count ) }
+
+
     if ($global:SETTINGS.ExportJson) {
-        $VBOEnvironment | ConvertTo-Json -Depth 100 | Out-File ($global:SETTINGS.OutputPath.Trim('\')+"\VBOEnvironment.json") -Force
+        $VBOEnvironment.GetEnumerator() | Where-Object { $_.Name -match "^VBO|^VMC" }  | ConvertTo-Json -Depth 100 | Out-File ($global:SETTINGS.OutputPath.Trim('\')+"\VBOEnvironment.json") -Force
         [GC]::Collect()
         Write-ElapsedAndMemUsage -Message "JSON Exported"
     }
     if ($global:SETTINGS.ExportXml) {
-        $VBOEnvironment | Export-Clixml -Depth 100 -Path ($global:SETTINGS.OutputPath.Trim('\')+"\VBOEnvironment.xml") -Force
+        $VBOEnvironment.GetEnumerator() | Where-Object { $_.Name -match "^VBO|^VMC" } | Export-Clixml -Depth 100 -Path ($global:SETTINGS.OutputPath.Trim('\')+"\VBOEnvironment.xml") -Force
         [GC]::Collect()
         Write-ElapsedAndMemUsage -Message "XML Exported"
     }
@@ -1182,9 +1229,11 @@ $map.Proxies = $Global:VBOEnvironment.VBOProxy | mde @(
     #replaced Aug 11/22 with below, more efficient & accurate # 'Objects Managed_Old=>(($Global:VBOEnvironment.VBOJobSession | ? { $_.JobId -in ($Global:VBOEnvironment.VBOJob | ? { $.Id -eq $_.Repository.ProxyId }).Id} | group JobId | % { $_.Group | Measure-Object -Property Progress -Average} ).Average | measure-object -Sum ).Sum.ToString("0")'
     $(
         if (CheckVersion -UseInternalVersion 12.) {
-            'Objects Managed=>(($Global:VBOEnvironment.VBOJob | ? { $.Id -eq $_.Repository.Proxy.Id }).Id.Guid | % {$Global:VBOEnvironment.JobSessionIndex[$_].LatestComplete.Progress} | Measure-Object -Sum).Sum'
+            #replace Aug 8/23# '*Objects Managed=>(($Global:VBOEnvironment.VBOJob | ? { $.Id -eq $_.Repository.Proxy.Id }).Id.Guid | % {$Global:VBOEnvironment.JobSessionIndex[$_].LatestComplete.Progress} | Measure-Object -Sum).Sum'
+            'Objects Managed=>(($Global:VBOEnvironment.VBOJob | ? { $.Id -eq $_.Repository.Proxy.Id }).Id.Guid | % {($Global:VBOEnvironment.JobSessionIndex[$_].LastXDays.Progress | Measure-Object -Maximum).Maximum} | Measure-Object -Sum).Sum'
         } else {
-            'Objects Managed=>(($Global:VBOEnvironment.VBOJob | ? { $.Id -eq $_.Repository.ProxyId }).Id.Guid | % {$Global:VBOEnvironment.JobSessionIndex[$_].LatestComplete.Progress} | Measure-Object -Sum).Sum'
+            #replace Aug 8/23#'*Objects Managed=>(($Global:VBOEnvironment.VBOJob | ? { $.Id -eq $_.Repository.ProxyId }).Id.Guid | % {$Global:VBOEnvironment.JobSessionIndex[$_].LatestComplete.Progress} | Measure-Object -Sum).Sum'
+            'Objects Managed=>(($Global:VBOEnvironment.VBOJob | ? { $.Id -eq $_.Repository.ProxyId }).Id.Guid | % {($Global:VBOEnvironment.JobSessionIndex[$_].LastXDays.Progress | Measure-Object -Maximum).Maximum} | Measure-Object -Sum).Sum'
         }
     )
     'OS Version=>($Global:VBOEnvironment.VMCLog.ProxyDetails | ? { $.Id -eq $_.ProxyID }).OSVersion'
