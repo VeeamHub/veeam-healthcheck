@@ -971,7 +971,7 @@ namespace VeeamHealthCheck.Functions.Reporting.Html
             log.Info("converting job info to xml..done!");
             return sendBack;
         }
-        public List<List<string>> ConvertJobSessSummaryToXml(bool scrub)
+        public List<CJobSummaryTypes> ConvertJobSessSummaryToXml(bool scrub)
         {
             CJobSessSummary jss = new(log, scrub, _scrubber, _dTypeParser);
             return jss.JobSessionSummaryToXml(scrub);

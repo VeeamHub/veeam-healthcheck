@@ -1092,8 +1092,8 @@ _form.TableHeader(VbrLocalizationHelper.SbrExt15, VbrLocalizationHelper.SbrExt15
             s += _form.TableHeader(VbrLocalizationHelper.Jss3, VbrLocalizationHelper.Jss3TT);
             s += _form.TableHeader(VbrLocalizationHelper.Jss4, VbrLocalizationHelper.Jss4TT);
             s += _form.TableHeader(VbrLocalizationHelper.Jss5, VbrLocalizationHelper.Jss5TT);
-            s += _form.TableHeader("Fails", VbrLocalizationHelper.Jss5TT);
-            s += _form.TableHeader("Retries", VbrLocalizationHelper.Jss5TT);
+            s += _form.TableHeader("Fails", "Total times job failed");
+            s += _form.TableHeader("Retries", "Total times job retried");
             s += _form.TableHeader(VbrLocalizationHelper.Jss6, VbrLocalizationHelper.Jss6TT);
             s += _form.TableHeader(VbrLocalizationHelper.Jss7, VbrLocalizationHelper.Jss7TT);
             s += _form.TableHeader(VbrLocalizationHelper.Jss8, VbrLocalizationHelper.Jss8TT);
@@ -1114,10 +1114,30 @@ _form.TableHeader(VbrLocalizationHelper.SbrExt15, VbrLocalizationHelper.SbrExt15
                 {
                     s += "<tr>";
 
-                    foreach (var st in stu)
-                    {
-                        s += _form.TableData(st, "");
-                    }
+                    s += _form.TableData(stu.JobName, VbrLocalizationHelper.Jss0);
+                    s += _form.TableData(stu.ItemCount.ToString(), VbrLocalizationHelper.Jss1);
+                    s += _form.TableData(stu.MinJobTime, VbrLocalizationHelper.Jss2);
+                    s += _form.TableData(stu.MaxJobTime, VbrLocalizationHelper.Jss3);
+                    s += _form.TableData(stu.AvgJobTime, VbrLocalizationHelper.Jss4);
+                    s += _form.TableData(stu.sessionCount.ToString(), VbrLocalizationHelper.Jss5);
+                    s += _form.TableData(stu.Fails.ToString(), "Fails");
+                    s += _form.TableData(stu.Retries.ToString(), "Retries");
+                    s += _form.TableData(stu.SuccessRate.ToString(), VbrLocalizationHelper.Jss6);
+                    s += _form.TableData(stu.AvgBackupSize.ToString(), VbrLocalizationHelper.Jss7);
+                    s += _form.TableData(stu.MaxBackupSize.ToString(), VbrLocalizationHelper.Jss8);
+                    s += _form.TableData(stu.AvgDataSize.ToString(), VbrLocalizationHelper.Jss9);
+                    s += _form.TableData(stu.MaxDataSize.ToString(), VbrLocalizationHelper.Jss10);
+                    s += _form.TableData(stu.AvgChangeRate.ToString(), VbrLocalizationHelper.Jss11);
+                    s += _form.TableData(stu.waitCount.ToString(), VbrLocalizationHelper.Jss12);
+                    s += _form.TableData(stu.maxWait, VbrLocalizationHelper.Jss13);
+                    s += _form.TableData(stu.avgwait, VbrLocalizationHelper.Jss14);
+                    s += _form.TableData(stu.JobType, VbrLocalizationHelper.Jss15);
+
+                    s += "</tr>";
+                    //foreach (var st in stu)
+                    //{
+                    //    s += _form.TableData(st, "");
+                    //}
                 }
             }
             catch (Exception e)

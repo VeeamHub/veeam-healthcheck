@@ -3,12 +3,12 @@
 
 namespace VeeamHealthCheck.Functions.Reporting.DataTypes
 {
-    class CJobSummaryTypes
+    public class CJobSummaryTypes
     {
         public int sessionCount { get; set; }
         public int Fails { get; set; }
         public int Retries { get; set; }
-        public int SuccessRate { get; set; }
+        public double SuccessRate { get; set; }
         public string MinJobTime { get; set; }
         public string MaxJobTime { get; set; }
         public string AvgJobTime { get; set; }

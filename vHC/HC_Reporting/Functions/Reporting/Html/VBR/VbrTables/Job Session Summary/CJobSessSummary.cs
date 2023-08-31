@@ -35,11 +35,11 @@ namespace VeeamHealthCheck.Functions.Reporting.Html
 
         }
 
-        public List<List<string>> JobSessionSummaryToXml(bool scrub)
+        public List<CJobSummaryTypes> JobSessionSummaryToXml(bool scrub)
         {
             return JobSessionSummaryToXml(new CJobSessSummaryHelper(), _log, scrub, _scrubber, _parsers);
         }
-        private List<List<string>> JobSessionSummaryToXml(CJobSessSummaryHelper helper, CLogger log, bool scrub, Scrubber.CScrubHandler scrubber, CDataTypesParser d)
+        private List<CJobSummaryTypes> JobSessionSummaryToXml(CJobSessSummaryHelper helper, CLogger log, bool scrub, Scrubber.CScrubHandler scrubber, CDataTypesParser d)
         {
             List<List<string>> sendBack = new();
             log.Info("converting job session summary to xml");
@@ -118,8 +118,11 @@ namespace VeeamHealthCheck.Functions.Reporting.Html
                         info.Retries = (int)retries;
                     }
 
-                    successRates.Add(info.SuccessRate);
-                    info.JobName = j;
+                    successRates.Add((int)info.SuccessRate);
+                    if (scrub)
+                        info.JobName = scrubber.ScrubItem(j);
+                    else
+                        info.JobName = j;
 
                     if (nonZeros.Count != 0)
                     {
@@ -171,16 +174,20 @@ namespace VeeamHealthCheck.Functions.Reporting.Html
                 }
             }
 
+            
+
             sendBack =  helper.ReturnList(outList, scrub, scrubber);
 
-
-            sendBack.Add(helper.SessionSummaryStats(totalSessions, totalFailedSessions, totalRetries, totalProtectedInstances, 
+            outList.Add(helper.SessionSummaryStats(totalSessions, totalFailedSessions, totalRetries, totalProtectedInstances,
                 avgBackupSizes, avgDataSizes, maxBackupSize, avgRates, maxDataSizes));
+            
+            //sendBack.Add(helper.SessionSummaryStats(totalSessions, totalFailedSessions, totalRetries, totalProtectedInstances, 
+            //    avgBackupSizes, avgDataSizes, maxBackupSize, avgRates, maxDataSizes));
 
 
 
             log.Info("converting job session summary to xml..done!");
-            return sendBack;
+            return outlist;
         }
 
         private static CJobSummaryTypes SetBackupDataSizes(CJobSummaryTypes info, List<double> dataSize, List<double> backupSize)

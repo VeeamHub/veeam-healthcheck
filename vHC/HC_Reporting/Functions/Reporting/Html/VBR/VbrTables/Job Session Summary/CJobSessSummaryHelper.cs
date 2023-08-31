@@ -213,56 +213,69 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR.VbrTables.Job_Session_Su
             }
             return sendBack;
         }
-        public List<string> SessionSummaryStats(double totalSessions, double totalFailedSessions,
+        public CJobSummaryTypes SessionSummaryStats(double totalSessions, double totalFailedSessions,
             double totalRetries, int totalProtectedInstances, List<double> avgBackupSizes, List<double> avgDataSizes,
             List<double> maxBackupSize, List<double> avgRates, List<double> maxDataSizes)
         {
+            CJobSummaryTypes jobSummaryTypes = new CJobSummaryTypes();
+
             double totalSessionSuccessPercent = (totalSessions - totalFailedSessions + totalRetries) / totalSessions * 100;
-            string successPercent = Math.Round(totalSessionSuccessPercent, 2).ToString() + "%";
-            List<string> summary = new()
-            {
-                "Total",
-                totalProtectedInstances.ToString(),
-                "",
-                "",
-                "",
-                totalSessions.ToString() , //total sessions,
-                "-",
-                "-",
-                successPercent//TODO: Make this total sessions - total failed sessions / total session;
-            };
-            if (avgBackupSizes.Count > 0)
-                summary.Add(Math.Round(avgBackupSizes.Average(), 0).ToString());
-            else
-                summary.Add("0");
+            double successPercent = Math.Round(totalSessionSuccessPercent, 2);
+
+            jobSummaryTypes.JobName = "Total";
+            jobSummaryTypes.ItemCount = totalProtectedInstances;
+            jobSummaryTypes.sessionCount = (int)totalSessions;
+            jobSummaryTypes.SuccessRate = successPercent;
+            jobSummaryTypes.AvgBackupSize = Math.Round(avgBackupSizes.Average(), 2);
+            jobSummaryTypes.MaxBackupSize = Math.Round(maxBackupSize.Sum(), 2);
+            jobSummaryTypes.AvgDataSize = Math.Round(avgDataSizes.Average(), 2);
+            jobSummaryTypes.MaxDataSize = Math.Round(maxDataSizes.Sum(), 2);
+            jobSummaryTypes.AvgChangeRate = Math.Round(avgRates.Average(), 2);
+
+            //List<string> summary = new()
+            //{
+            //    "Total",
+            //    totalProtectedInstances.ToString(),
+            //    "",
+            //    "",
+            //    "",
+            //    totalSessions.ToString() , //total sessions,
+            //    "-",
+            //    "-",
+            //    //successPercent//TODO: Make this total sessions - total failed sessions / total session;
+            //};
+            //if (avgBackupSizes.Count > 0)
+            //    summary.Add(Math.Round(avgBackupSizes.Average(), 0).ToString());
+            //else
+            //    summary.Add("0");
             
-            //summary.Add(Math.Round(maxBackupSize.Sum(), 0).ToString());
+            ////summary.Add(Math.Round(maxBackupSize.Sum(), 0).ToString());
 
-            if (maxBackupSize.Count > 0)
-                summary.Add(Math.Round(maxBackupSize.Sum(), 0).ToString());
-            else summary.Add("0");
+            //if (maxBackupSize.Count > 0)
+            //    summary.Add(Math.Round(maxBackupSize.Sum(), 0).ToString());
+            //else summary.Add("0");
 
-            if (avgDataSizes.Count > 0)
-                summary.Add(Math.Round(avgDataSizes.Average(), 0).ToString());
-            else
-                summary.Add("0");
-            if (maxDataSizes.Count > 0)
-                summary.Add(Math.Round(maxDataSizes.Sum(), 2).ToString());
-            else
-                summary.Add("0");
+            //if (avgDataSizes.Count > 0)
+            //    summary.Add(Math.Round(avgDataSizes.Average(), 0).ToString());
+            //else
+            //    summary.Add("0");
+            //if (maxDataSizes.Count > 0)
+            //    summary.Add(Math.Round(maxDataSizes.Sum(), 2).ToString());
+            //else
+            //    summary.Add("0");
 
-            if (avgRates.Count > 0)
-                summary.Add(Math.Round(avgRates.Average(), 2).ToString() + "%");
-            else
-                summary.Add("0");
-            summary.Add("");
-            summary.Add("");
-            summary.Add("");
-            summary.Add("");
+            //if (avgRates.Count > 0)
+            //    summary.Add(Math.Round(avgRates.Average(), 2).ToString() + "%");
+            //else
+            //    summary.Add("0");
+            //summary.Add("");
+            //summary.Add("");
+            //summary.Add("");
+            //summary.Add("");
 
 
 
-            return summary;
+            return jobSummaryTypes;
         }
     }
 }
