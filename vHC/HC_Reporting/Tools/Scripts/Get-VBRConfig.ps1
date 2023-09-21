@@ -553,76 +553,86 @@ try {
     Write-LogFile($message)
 
     try{
-        # work here
-    ##Protected Workloads Area
-    $vmbackups = Get-VBRBackup | ? { $_.TypeToString -eq "VMware Backup" }
-    if ($VBRversion -eq 12) {
-        $vmNames = $vmbackups.GetLastOibs($true)
-    }
-    else {
-        $vmNames = $vmbackups.GetLastOibs()
-    }
-    $unprotectedEntityInfo = Find-VBRViEntity | ? { $_.Name -notin $vmNames.Name }
-    $protectedEntityInfo = Find-VBRViEntity -Name $vmNames.Name
-    }
+            # work here
+        ##Protected Workloads Area
+        $vmbackups = Get-VBRBackup | ? { $_.TypeToString -eq "VMware Backup" }
+        
+        try{
+            $vmNames = $vmbackups.GetLastOibs($true)
+        }
+        catch{
+            try{
+                $vmNames = $vmbackups.GetLastOibs()
+            }
+            catch{}
+        }
+        $unprotectedEntityInfo = Find-VBRViEntity | ? { $_.Name -notin $vmNames.Name }
+        $protectedEntityInfo = Find-VBRViEntity -Name $vmNames.Name
+        }
 
    catch {
-    write-logfile("Failed on vmware workloads")
-    Write-LogFile($error[0])
-    }
+        Write-LogFile("Failed on vmware workloads")
+        Write-LogFile($error[0])
+        }
     # protected HV Workloads
     try {
-        $hvvmbackups = Get-VBRBackup | ? { $_.TypeToString -eq "Hyper-v Backup" }
-        if ($VBRVersion -eq 12) {
-            $hvvmNames = $hvvmbackups.GetLastOibs($true)
-        }
-        else {
-            $hvvmNames = $hvvmbackups.GetLastOibs()
-        }
-        $unprotectedHvEntityInfo = Find-VBRHvEntity | ? { $_.Name -notin $hvvmNames.Name }
-        if($hvvmNames.Name -eq $Null){
-            $protectedHvEntityInfo = Find-VBRHvEntity -Name " "    
-        }
-        else{
-            $protectedHvEntityInfo = Find-VBRHvEntity -Name $hvvmNames.Name
+            $hvvmbackups = Get-VBRBackup | ? { $_.TypeToString -eq "Hyper-v Backup" }
+            
+            
+            try{
+                $hvvmNames = $hvvmbackups.GetLastOibs($true)
+            }
+            catch{
+                try{
+                    $hvvmNames = $hvvmbackups.GetLastOibs()
+                }
+                catch{}
+            }
+            
+            $unprotectedHvEntityInfo = Find-VBRHvEntity | ? { $_.Name -notin $hvvmNames.Name }
+            if($hvvmNames.Name -eq $Null){
+                $protectedHvEntityInfo = Find-VBRHvEntity -Name " "    
+            }
+            else{
+                $protectedHvEntityInfo = Find-VBRHvEntity -Name $hvvmNames.Name
 
-        }
+            }
         
 
-    }
+        }
     catch {
-        write-logfile("Failed on hyper-V workloads")
-        Write-LogFile($error[0])
-    }
+            Write-LogFile("Failed on hyper-V workloads")
+            Write-LogFile($error[0])
+        }
 
 
     #protected physical Loads
     try{
-        $phys = Get-VBRDiscoveredComputer
+            $phys = Get-VBRDiscoveredComputer
 
-        $physbackups = Get-VBRBackup | ? { $_.TypeToString -like "*Agent*" }
-        if ($VBRVersion -eq 12) {
-            $pvmNames = $physbackups.GetLastOibs($true)
+            $physbackups = Get-VBRBackup | ? { $_.TypeToString -like "*Agent*" }
+            
+            try{
+                $pvmNames = $physbackups.GetLastOibs($true)
     
-        }
-        else {
-            $pvmNames = $physbackups.GetLastOibs()
+            }
+            catch {
+                try{
+                    $pvmNames = $physbackups.GetLastOibs()
+                }
+                catch{}
     
-        }
+            }
     
-        $notprotected = $phys | ? { $_.Name -notin $pvmNames.Name }
-        $protected = $phys | ? { $_.Name -in $pvmNames.Name }
+            $notprotected = $phys | ? { $_.Name -notin $pvmNames.Name }
+            $protected = $phys | ? { $_.Name -in $pvmNames.Name }
     }
     catch{
-        write-logfile("Failed on physical workloads")
-        Write-LogFile($error[0])
-    }
+            Write-LogFile("Failed on physical workloads")
+            Write-LogFile($error[0])
+        }
 
-   
-    ##end protected workloads Area
 
-    Write-LogFile($message + "DONE")
-  
 }
 catch {
     Write-LogFile($message + "FAILED!")

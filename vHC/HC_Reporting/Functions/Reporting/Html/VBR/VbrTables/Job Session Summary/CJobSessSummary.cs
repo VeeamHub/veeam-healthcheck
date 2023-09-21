@@ -187,7 +187,7 @@ namespace VeeamHealthCheck.Functions.Reporting.Html
 
 
             log.Info("converting job session summary to xml..done!");
-            return outlist;
+            return outList;
         }
 
         private static CJobSummaryTypes SetBackupDataSizes(CJobSummaryTypes info, List<double> dataSize, List<double> backupSize)
