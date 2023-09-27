@@ -86,14 +86,24 @@ namespace VeeamHealthCheck.Functions.Reporting.Html
         }
         public int ExportVbrHtml(string htmlString, bool scrub)
         {
-            log.Info("exporting xml to html");
-            _latestReport = SetReportNameAndPath(scrub, "VBR");
+            
 
-            WriteHtmlToFile(htmlString);
-            log.Info("exporting xml to html..done!");
+            try
+            {
+                log.Info("exporting xml to html");
+                _latestReport = SetReportNameAndPath(scrub, "VBR");
+                WriteHtmlToFile(htmlString);
+                log.Info("exporting xml to html..done!");
 
-            OpenHtmlIfEnabled(CGlobals.OpenHtml);
-            return 0;
+                OpenHtmlIfEnabled(CGlobals.OpenHtml);
+                return 0;
+            }
+            catch(Exception e)
+            {
+                log.Error("Failed at HTML Export:");
+                log.Error("\t" +e.Message); return 1;
+            }
+            
 
         }
 
@@ -121,21 +131,53 @@ namespace VeeamHealthCheck.Functions.Reporting.Html
 
         private string SetReportNameAndPath(bool scrub, string vbrOrVb365)
         {
-            DateTime dateTime = DateTime.Now;
-            string installID = TrySetInstallId(CLogOptions.INSTALLID);
-
+            string installID = null;
             string htmlCore = "";
-            if (scrub)
-                htmlCore = _anonPath + "\\" + _htmlName + "_" + vbrOrVb365 + "_" + installID + dateTime.ToString("_yyyy.MM.dd.HHmmss") + ".html";
-            else if (!scrub)
+
+            try
             {
-                htmlCore = _origPath + "\\" + _htmlName + "_" + vbrOrVb365 + "_" + _backupServerName + dateTime.ToString("_yyyy.MM.dd.HHmmss") + ".html";
-                //log.Warning("htmlcore = " + htmlCore, false);
+                DateTime dateTime = DateTime.Now;
+
+                if (scrub)
+                {
+                    installID = TrySetInstallId(CLogOptions.INSTALLID);
+
+                    htmlCore = _anonPath + "\\" + _htmlName + "_" + vbrOrVb365 + "_" + installID + dateTime.ToString("_yyyy.MM.dd.HHmmss") + ".html";
+
+                }
+                else if (!scrub)
+                {
+                    htmlCore = _origPath + "\\" + _htmlName + "_" + vbrOrVb365 + "_" + _backupServerName + dateTime.ToString("_yyyy.MM.dd.HHmmss") + ".html";
+                    //log.Warning("htmlcore = " + htmlCore, false);
+                }
+                return htmlCore;
             }
-            return htmlCore;
+            catch(Exception ex)
+            {
+                //log.Debug("Failed to set report name & path");
+                //log.Debug(ex.Message);
+                //log.Debug("variables below:");
+                //log.Debug("\t" + scrub.ToString());
+                //log.Debug("\t" + vbrOrVb365);
+                //log.Debug("\t" + htmlCore);
+                //log.Debug("\t" + installID);
+                //log.Debug("\t" + _anonPath);
+                //log.Debug("\t" + _htmlName);
+                //log.Debug("\t" + _origPath);
+                //log.Debug("\t" + _backupServerName);
+                //log.Debug("\t" + _anonPath);
+                //log.Debug("\t" + _anonPath);
+                //log.Debug("\t" + );
+                return null;
+            }
+            
         }
         private string TrySetInstallId(string id)
         {
+            log.Debug("InstallID String = " + id);
+            try
+            {
+
             if (!string.IsNullOrEmpty(id))
             {
                 return id.Substring(0, 7);
@@ -144,7 +186,13 @@ namespace VeeamHealthCheck.Functions.Reporting.Html
             {
                 return "anon";
             }
-
+            }
+            catch(Exception ex)
+            {
+                log.Error("Failed to get install ID.");
+                log.Error(ex.Message);
+                return "anon";
+            }
         }
         public void OpenExplorer()
         {

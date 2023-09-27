@@ -63,7 +63,13 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR.VbrTables.Job_Session_Su
                     string outDir = "";// CVariables.desiredDir + "\\Original";
                     string folderName = "\\JobSessionReports";
 
-
+                    if (cs.JobName.Contains("/"))
+                    {
+                        log.Debug("Caught invalid char: \"/\", replacing with \"-\": " + cs.JobName);
+                        cs.JobName = cs.JobName.Replace("/", "-");
+                        log.Debug("New Name = " + cs.JobName);
+                    }
+                    
                     if (scrub)
                     {
                         outDir = CGlobals._desiredPath + CVariables._safeSuffix + folderName;
