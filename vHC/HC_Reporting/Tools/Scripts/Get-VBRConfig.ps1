@@ -25,7 +25,7 @@ param(
 $ReportPath = 'C:\temp\vHC\Original\VBR'
 $logDir = "C:\temp\vHC\Original\Log\"
 $logFile = $logDir + "CollectorMain.log"
-if(!(Test-Path $logfile)){New-Item -type Directory $logDir; new-item -type -file $logfile}
+if(!(Test-Path $logfile)){New-Item -type Directory $logDir -ErrorAction SilentlyContinue; new-item -type -file $logfile}
 #functions
 enum LogLevel {
     TRACE

@@ -114,8 +114,15 @@ namespace VeeamHealthCheck.Functions.Collection.LogParser
                     log.Info(fileInfoLog, false);
                     try
                     {
-                        waits.AddRange(CheckFileWait(f, jobname));
+                        DateTime lastWriteTime = File.GetLastWriteTime(f);
+                        DateTime currentTime = DateTime.Now;
+                        TimeSpan diff = currentTime - lastWriteTime;
+                        if (diff.Days <= CGlobals.ReportDays)
+                        {
+                            waits.AddRange(CheckFileWait(f, jobname));
 
+                        }
+                        //waits.AddRange(CheckFileWait(f, jobname));
                     }
                     catch(Exception e) { }
                     fileCounter++;
