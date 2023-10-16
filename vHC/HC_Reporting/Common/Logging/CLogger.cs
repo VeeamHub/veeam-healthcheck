@@ -65,6 +65,7 @@ namespace VeeamHealthCheck.Shared.Logging
         }
         public void Error(string message)
         {
+
             Error(message, true);
         }
         public void Error(string message, bool silent)

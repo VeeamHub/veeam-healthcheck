@@ -3,6 +3,7 @@
 using System;
 using System.Runtime.InteropServices;
 using System.Text.RegularExpressions;
+using VeeamHealthCheck.Functions.Collection.PowerShell;
 //using VeeamHealthCheck.Reporting.vsac;
 using VeeamHealthCheck.Shared;
 using VeeamHealthCheck.Shared.Logging;

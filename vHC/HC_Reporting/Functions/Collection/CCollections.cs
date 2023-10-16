@@ -6,11 +6,14 @@ using VeeamHealthCheck.Functions.Collection.DB;
 using VeeamHealthCheck.Functions.Collection.LogParser;
 using VeeamHealthCheck.Functions.Collection.Security;
 using VeeamHealthCheck.Shared;
+using Microsoft.Management.Infrastructure;
+using VeeamHealthCheck.Functions.Collection.PowerShell;
 
 namespace VeeamHealthCheck.Functions.Collection
 {
     internal class CCollections
     {
+        public bool SCRIPTSUCCESS;
         public CCollections() { }
         /* All collection utilities should run through here:
          * - powershell
@@ -91,21 +94,30 @@ namespace VeeamHealthCheck.Functions.Collection
                 ExecVbrConfigOnly(p);
             }
 
+            WeighSuccessContinuation();
 
             CGlobals.Logger.Info("Starting PS Invoke...done!", false);
+        }
+        private void WeighSuccessContinuation()
+        {
+            if (!SCRIPTSUCCESS)
+            {
+                CGlobals.Logger.Error("Script execution has failed. Exiting program. See log for details.", false);
+                Environment.Exit(1);
+            }
         }
         private void ExecVbrScripts(PSInvoker p)
         {
             if (CGlobals.IsVbr)
             {
                 CGlobals.Logger.Info("Entering vbr ps invoker", false);
-                p.Invoke();
+                SCRIPTSUCCESS =  p.Invoke();
             }
         }
         private void ExecVbrConfigOnly(PSInvoker p)
         {
             CGlobals.Logger.Info("Entering vbr config collection");
-            p.RunVbrConfigCollect();
+            SCRIPTSUCCESS =  p.RunVbrConfigCollect();
         }
         private void ExecVb365Scripts(PSInvoker p)
         {

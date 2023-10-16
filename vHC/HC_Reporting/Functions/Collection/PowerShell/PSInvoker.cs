@@ -1,14 +1,16 @@
 ﻿// Copyright (c) 2021, Adam Congdon <adam.congdon2@gmail.com>
 // MIT License
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
+using System.Management.Automation;
 //using System.Management.Automation;
 using System.Runtime.InteropServices;
 using VeeamHealthCheck.Shared;
 using VeeamHealthCheck.Shared.Logging;
 
-namespace VeeamHealthCheck
+namespace VeeamHealthCheck.Functions.Collection.PowerShell
 {
     class PSInvoker
     {
@@ -16,7 +18,7 @@ namespace VeeamHealthCheck
         private readonly string _vbrConfigScript = Environment.CurrentDirectory + @"\Tools\Scripts\Get-VBRConfig.ps1";
         private readonly string _vbrSessionScript = Environment.CurrentDirectory + @"\Tools\Scripts\Get-VeeamSessionReport.ps1";
         private readonly string _exportLogsScript = Environment.CurrentDirectory + @"\Tools\Scripts\Collect-VBRLogs.ps1";
-        private readonly string _dumpServers= Environment.CurrentDirectory + @"\Tools\Scripts\DumpManagedServerToText.ps1";
+        private readonly string _dumpServers = Environment.CurrentDirectory + @"\Tools\Scripts\DumpManagedServerToText.ps1";
         public static readonly string SERVERLISTFILE = "serverlist.txt";
 
         private readonly CLogger log = CGlobals.Logger;
@@ -24,13 +26,17 @@ namespace VeeamHealthCheck
         public PSInvoker()
         {
         }
-        public void Invoke()
+        public bool Invoke()
         {
+            bool res = true;
             TryUnblockFiles();
 
             //RunVbrVhcFunctionSetter();
-            RunVbrConfigCollect();
+            res = RunVbrConfigCollect();
+            if (!res)
+                return false;
             RunVbrSessionCollection();
+            return res;
         }
         public void TryUnblockFiles()
         {
@@ -40,14 +46,53 @@ namespace VeeamHealthCheck
             UnblockFile(_dumpServers);
             UnblockFile(_vb365Script);
         }
-        public void RunVbrConfigCollect()
+        public bool RunVbrConfigCollect()
         {
             var res1 = Process.Start(VbrConfigStartInfo());
+
             log.Info(CMessages.PsVbrConfigProcId + res1.Id.ToString(), false);
 
             res1.WaitForExit();
+            List<string> errorarray = new();
+
+            string errString = "";
+            while ((errString = res1.StandardError.ReadLine()) != null)
+            {
+                var errResults = ParseErrors(errString);
+                if (!errResults.Success)
+                {
+                    log.Error(errString, false);
+                    log.Error(errResults.Message);
+                    return false;
+
+                }
+                errorarray.Add(errString);
+            }
+            PushPsErrorsToMainLog(errorarray);
 
             log.Info(CMessages.PsVbrConfigProcIdDone, false);
+            return true;
+        }
+        private void PushPsErrorsToMainLog(List<string> errors)
+        {
+            log.Error("PowerShell Errors: ");
+            foreach(var e in errors)
+            {
+                log.Error("\t" + e);
+            }
+        }
+        private PsErrorTypes ParseErrors(string errorLine)
+        {
+            if (errorLine.Contains("Unable to connect to the server with MFA-enabled user account"))
+            {
+                return new PsErrorTypes
+                {
+                    Success =  false,
+                    Message = "MFA Enabled, please execute the utility from a CMD or PS using a non-MFA enabled account."
+                };
+            }
+
+            else return new PsErrorTypes { Success =  true, Message = "Success" };
         }
         private ProcessStartInfo VbrConfigStartInfo()
         {
@@ -145,7 +190,7 @@ namespace VeeamHealthCheck
                 argString = $"-NoProfile -ExecutionPolicy unrestricted -file \"{scriptLocation}\" -VBRServer \"{CGlobals.REMOTEHOST}\" -ReportInterval {CGlobals.ReportDays} ";
             else
                 argString = $"-NoProfile -ExecutionPolicy unrestricted -file \"{scriptLocation}\" -VBRServer \"{CGlobals.REMOTEHOST}\" -VBRVersion \"{CGlobals.VBRMAJORVERSION}\" ";
-            if (!String.IsNullOrEmpty(path))
+            if (!string.IsNullOrEmpty(path))
             {
                 argString = $"-NoProfile -ExecutionPolicy unrestricted -file \"{scriptLocation}\" -ReportPath \"{path}\"";
             }
@@ -155,7 +200,8 @@ namespace VeeamHealthCheck
                 FileName = "powershell.exe",
                 Arguments = argString,
                 UseShellExecute = false,
-                CreateNoWindow = true  //true for prod
+                CreateNoWindow = true,  //true for prod
+                RedirectStandardError = true
             };
         }
 
