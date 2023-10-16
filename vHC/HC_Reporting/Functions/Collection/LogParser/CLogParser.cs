@@ -93,7 +93,11 @@ namespace VeeamHealthCheck.Functions.Collection.LogParser
             log.Info("Checking Log files for waits..", false);
             Dictionary<string, List<TimeSpan>> jobsAndWaits = new();
             string[] dirList = Directory.GetDirectories(LogLocation);
-            int logCount = Directory.GetFiles(LogLocation, "*.log", SearchOption.AllDirectories).Count();
+            //int logCount = Directory.GetFiles(LogLocation, "*.log", SearchOption.AllDirectories).Count();
+            int jobFilesCount = Directory.GetFiles(LogLocation, "Job*.log", SearchOption.AllDirectories).Count();
+            int taskFilesCount = Directory.GetFiles(LogLocation, "Task*.log", SearchOption.AllDirectories).Count();
+
+            int logCount = jobFilesCount + taskFilesCount;
 
             int counter = 0;
             int fileCounter = 0;
@@ -103,10 +107,19 @@ namespace VeeamHealthCheck.Functions.Collection.LogParser
                 string info = string.Format("[LogParser] Parsing Directory {0} of {1}", counter, dirList.Count());
                 log.Info(info, false);
                 string jobname = Path.GetFileName(d);
+                if(jobname == "Prod_VMs_Backup")
+                {
+
+                }
 
                 List<TimeSpan> waits = new();
 
-                string[] fileList = Directory.GetFiles(d, "*.log", SearchOption.AllDirectories);
+                string[] jobList = Directory.GetFiles(d, "Job*.log", SearchOption.AllDirectories);
+                string[] taskList = Directory.GetFiles(d, "Task*.log", SearchOption.AllDirectories);
+                List<string> fileList = new();
+                fileList.AddRange(jobList);
+                fileList.AddRange(taskList); 
+
 
                 foreach (var f in fileList)
                 {
@@ -165,6 +178,10 @@ namespace VeeamHealthCheck.Functions.Collection.LogParser
                 bool countNextLine = false;
                 while ((line = sr.ReadLine()) != null)
                 {
+                    if (line.Contains(waitLine))
+                    {
+                        
+                    }
                     if (!string.IsNullOrEmpty(line))
                     {
                         if (line.Contains("Private Fix"))
@@ -179,7 +196,7 @@ namespace VeeamHealthCheck.Functions.Collection.LogParser
 
                             }
 
-                            string trimline = line.Substring(40);
+                            string trimline = line.Substring(40).Trim();
                             if (trimline == waitLine)
                             {
                                 startTime = line.Remove(21);
@@ -206,8 +223,10 @@ namespace VeeamHealthCheck.Functions.Collection.LogParser
         {
             start = start.Trim('[');
             start = start.Trim(']');
+            start = start.Trim('.');
             end = end.Trim('[');
             end = end.Trim(']');
+            end = end.Trim('.');
 
 
             //DateTime.TryParse(start, out DateTime tStart);
