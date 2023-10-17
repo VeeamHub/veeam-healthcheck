@@ -156,14 +156,37 @@ namespace VeeamHealthCheck.Functions.Collection.DB
         {
             if (key != null)
             {
+                var value = key.GetValue("SqlInstanceName");
+                string instance = "";
+                if (value != null)
+                {
+                    instance = value.ToString();
+                }
+                //var instance = key.GetValue("SqlInstanceName").ToString();
+                var hostValue = key.GetValue("SqlServerName");
+                string host = "";
+                if(hostValue != null)
+                {
+                    host = hostValue.ToString();
+                }
 
-                var instance = key.GetValue("SqlInstanceName").ToString();
-                var host = key.GetValue("SqlServerName").ToString();
-                var database =
-                    key.GetValue("SqlDatabaseName")
-                        .ToString();
-                _user = key.GetValue("SqlLogin").ToString();
-                _passString = key.GetValue("SqlSecuredPassword").ToString();
+                //var host = key.GetValue("SqlServerName").ToString();
+                var db = key.GetValue("SqlDatabaseName");
+                string database = "";
+                if (db != null)
+                    database = db.ToString();
+                //var database =key.GetValue("SqlDatabaseName").ToString();
+
+                var userName = key.GetValue("SqlLogin");
+                if (userName != null)
+                    _user = userName.ToString();
+                //_user = key.GetValue("SqlLogin").ToString();
+
+                var password = key.GetValue("SqlSecuredPassword");
+                if (password != null)
+                    _passString = password.ToString();
+                //_passString = key.GetValue("SqlSecuredPassword").ToString();
+
                 if (!string.IsNullOrEmpty(host))
                 {
                     if (!string.IsNullOrEmpty(database))

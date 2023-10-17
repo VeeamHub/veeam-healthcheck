@@ -106,7 +106,9 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR.VbrTables.Job_Session_Su
                         //if (!Directory.Exists(dir))
                         //    Directory.CreateDirectory(dir);
                         File.WriteAllText(mainDir, mainString);
+                        mainString = "";
                         File.WriteAllText(scrubDir, scrubString);
+                        scrubString = "";
                     }
                     catch (Exception e)
                     {
@@ -174,7 +176,7 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR.VbrTables.Job_Session_Su
             //string repo = _scrubber.ScrubItem(c.)
             if (scrub)
             {
-                jname = _scrubber.ScrubItem(c.JobName, "job");
+                jname = _scrubber.ScrubItem(jname, "job");
                 vmName = _scrubber.ScrubItem(c.VmName, "vm");
             }
 
