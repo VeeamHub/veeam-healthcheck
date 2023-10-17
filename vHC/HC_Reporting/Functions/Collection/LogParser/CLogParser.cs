@@ -195,8 +195,9 @@ namespace VeeamHealthCheck.Functions.Collection.LogParser
                                 countNextLine = false;
 
                             }
-
-                            string trimline = line.Substring(40).Trim();
+                            string trimline = "";
+                            if (line.Length > 40)
+                                trimline = trimline = line.Substring(40).Trim();
                             if (trimline == waitLine)
                             {
                                 startTime = line.Remove(21);
