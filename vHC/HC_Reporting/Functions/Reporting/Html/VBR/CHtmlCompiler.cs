@@ -194,6 +194,14 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR
             _htmldocScrubbed = helper.FormVbrFullReport(_htmldocScrubbed, true);
             _htmldocOriginal = helper.FormVbrFullReport(_htmldocOriginal, false);
 
+            if (CGlobals.EXPORTINDIVIDUALJOBHTMLS)
+            {
+                helper.IndividualJobHtmlBuilder();
+
+                //IndividualJobHtmlBuilder();
+
+            }
+
 
             _htmldocOriginal += FormFooter();
             _htmldocScrubbed += FormFooter();

@@ -39,7 +39,7 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR
             if (CGlobals.EXPORTINDIVIDUALJOBHTMLS)
             {
 
-                IndividualJobHtmlBuilder();
+                //IndividualJobHtmlBuilder();
 
             }
 
@@ -145,7 +145,7 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR
             HTMLSTRING += _tables.AddJobInfoTable(SCRUB);
 
         }
-        private void IndividualJobHtmlBuilder()
+        public void IndividualJobHtmlBuilder()
         {
             _tables.AddSessionsFiles(SCRUB);
         }
