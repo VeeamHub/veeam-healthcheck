@@ -44,7 +44,7 @@ namespace VeeamHealthCheck.Functions.Reporting.Html
         private readonly CLogger log = CGlobals.Logger;
         private CHtmlExporter exporter;
 
-
+        private Dictionary<string, string> _repoPaths = new();
 
         public CDataFormer() // add string mode input
         {
@@ -552,6 +552,17 @@ namespace VeeamHealthCheck.Functions.Reporting.Html
                 }
             log.Info("converting extent info to xml..done!");
             return list;
+        }
+        private bool AddRepoPathToDict(string host, string path)
+        {
+            _repoPaths.TryGetValue(host, out var list);
+            if (list == null)
+            {
+                _repoPaths.Add(host, path);
+                return true;
+            }
+            else
+                return false;
         }
         public List<string[]> RepoInfoToXml(bool scrub)
         {
