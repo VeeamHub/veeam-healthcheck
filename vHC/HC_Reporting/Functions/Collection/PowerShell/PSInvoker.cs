@@ -46,15 +46,59 @@ namespace VeeamHealthCheck.Functions.Collection.PowerShell
             UnblockFile(_dumpServers);
             UnblockFile(_vb365Script);
         }
+        public bool TestMfa()
+        {
+            var res = new Process();
+            if (CGlobals.REMOTEHOST == "")
+                CGlobals.REMOTEHOST = "localhost";
+            string argString = $"Connect-VBRServer -Server \"{CGlobals.REMOTEHOST}\"";
+            var startInfo = new ProcessStartInfo()
+            {
+                FileName = "powershell.exe",
+                Arguments = argString,
+                UseShellExecute = false,
+                CreateNoWindow = false,  //true for prod,
+                RedirectStandardError = true
+            };
+            res.StartInfo = startInfo;
+            res.Start();
+
+            res.WaitForExit();
+
+            List<string> errorarray = new();
+
+            bool failed = false;
+            string errString = "";
+            while ((errString = res.StandardError.ReadLine()) != null)
+            {
+                var errResults = ParseErrors(errString);
+                if (!errResults.Success)
+                {
+                    log.Error(errString, false);
+                    log.Error(errResults.Message);
+                    failed = true;
+                    return failed;
+
+                }
+                errorarray.Add(errString);
+            }
+            PushPsErrorsToMainLog(errorarray);
+
+            return failed;
+        }
         public bool RunVbrConfigCollect()
         {
-            var res1 = Process.Start(VbrConfigStartInfo());
+            var res1 = new Process();
+            res1.StartInfo = VbrConfigStartInfo();
+            res1.Start();
 
             log.Info(CMessages.PsVbrConfigProcId + res1.Id.ToString(), false);
 
-            res1.WaitForExit();
+            if(res1 != null && !res1.HasExited)
+                res1.WaitForExit();
             List<string> errorarray = new();
 
+            bool failed = false;
             string errString = "";
             while ((errString = res1.StandardError.ReadLine()) != null)
             {
@@ -63,7 +107,8 @@ namespace VeeamHealthCheck.Functions.Collection.PowerShell
                 {
                     log.Error(errString, false);
                     log.Error(errResults.Message);
-                    return false;
+                    failed = true;
+                    //return false;
 
                 }
                 errorarray.Add(errString);
@@ -71,12 +116,15 @@ namespace VeeamHealthCheck.Functions.Collection.PowerShell
             PushPsErrorsToMainLog(errorarray);
 
             log.Info(CMessages.PsVbrConfigProcIdDone, false);
-            return true;
+            if (failed)
+                return false;
+            else
+                return true;
         }
         private void PushPsErrorsToMainLog(List<string> errors)
         {
             log.Error("PowerShell Errors: ");
-            foreach(var e in errors)
+            foreach (var e in errors)
             {
                 log.Error("\t" + e);
             }
@@ -87,12 +135,12 @@ namespace VeeamHealthCheck.Functions.Collection.PowerShell
             {
                 return new PsErrorTypes
                 {
-                    Success =  false,
+                    Success = false,
                     Message = "MFA Enabled, please execute the utility from a CMD or PS using a non-MFA enabled account."
                 };
             }
 
-            else return new PsErrorTypes { Success =  true, Message = "Success" };
+            else return new PsErrorTypes { Success = true, Message = "Success" };
         }
         private ProcessStartInfo VbrConfigStartInfo()
         {
@@ -200,7 +248,7 @@ namespace VeeamHealthCheck.Functions.Collection.PowerShell
                 FileName = "powershell.exe",
                 Arguments = argString,
                 UseShellExecute = false,
-                CreateNoWindow = true,  //true for prod
+                CreateNoWindow = false,  //true for prod,
                 RedirectStandardError = true
             };
         }

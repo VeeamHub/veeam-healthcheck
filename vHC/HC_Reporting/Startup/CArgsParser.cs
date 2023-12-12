@@ -62,6 +62,7 @@ namespace VeeamHealthCheck.Startup
         {
             CGlobals.Logger.Info("Executing GUI", false);
             CGlobals.RunFullReport = true;
+            CGlobals.GUIEXEC = true;
             if (hide)
                 ShowWindow(handle, SW_HIDE);
             var app = new System.Windows.Application();

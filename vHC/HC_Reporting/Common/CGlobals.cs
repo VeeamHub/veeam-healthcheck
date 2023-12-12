@@ -21,6 +21,7 @@ namespace VeeamHealthCheck.Shared
         public static DateTime TOOLSTART;
         public static bool REMOTEEXEC = false;
         public static string REMOTEHOST = "";
+        public static bool GUIEXEC = false;
 
         // GUI & CLI Options:
         private static int _reportDays = 7;

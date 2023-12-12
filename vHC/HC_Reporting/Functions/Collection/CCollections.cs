@@ -8,6 +8,8 @@ using VeeamHealthCheck.Functions.Collection.Security;
 using VeeamHealthCheck.Shared;
 using Microsoft.Management.Infrastructure;
 using VeeamHealthCheck.Functions.Collection.PowerShell;
+using System.Web.Services.Description;
+using System.Windows;
 
 namespace VeeamHealthCheck.Functions.Collection
 {
@@ -81,8 +83,16 @@ namespace VeeamHealthCheck.Functions.Collection
             {
                 try
                 {
-                    ExecVbrScripts(p);
-                    ExecVb365Scripts(p);
+                    if (!TestPsMFA(p))
+                    {
+                        ExecVbrScripts(p);
+                        ExecVb365Scripts(p);
+                    }
+                    else
+                    {
+                        WeighSuccessContinuation();
+                    }
+                    
                 }
                 catch (Exception ex)
                 {
@@ -100,11 +110,26 @@ namespace VeeamHealthCheck.Functions.Collection
         }
         private void WeighSuccessContinuation()
         {
-            if (!SCRIPTSUCCESS)
+            string error = "Script execution has failed. Exiting program. See log for details:\n\t " + CGlobals.Logger._logFile;
+            
+
+            if (CGlobals.GUIEXEC && !SCRIPTSUCCESS)
             {
-                CGlobals.Logger.Error("Script execution has failed. Exiting program. See log for details.", false);
+                CGlobals.Logger.Error(error, false);
+                
+                MessageBox.Show(error,"Error", button:MessageBoxButton.OK, icon:MessageBoxImage.Error, MessageBoxResult.Yes);
+                
                 Environment.Exit(1);
             }
+            else if (!SCRIPTSUCCESS)
+            {
+                CGlobals.Logger.Error(error, false);
+                Environment.Exit(1);
+            }
+        }
+        private bool TestPsMFA(PSInvoker p)
+        {
+            return p.TestMfa();
         }
         private void ExecVbrScripts(PSInvoker p)
         {

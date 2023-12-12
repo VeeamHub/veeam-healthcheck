@@ -7,12 +7,12 @@ namespace VeeamHealthCheck.Shared.Logging
 {
     public class CLogger
     {
-        private string _logFile;
+        public readonly string _logFile;
         public CLogger(string jobName)
         {
-            CreateLogFile(jobName);
+            _logFile = CreateLogFile(jobName);
         }
-        public void CreateLogFile(string jobName)
+        public string CreateLogFile(string jobName)
         {
             DateTime dt = DateTime.Now;
             //string currentDir = Environment.CurrentDirectory;
@@ -25,7 +25,7 @@ namespace VeeamHealthCheck.Shared.Logging
             string logName = String.Format("Job.{1}_{0}_.log", dt.ToString("yyyy.MM.dd_HHmmss"), jobName);
 
             //File.Create(logName).Close();
-            _logFile = logDir + "\\" + logName;
+            return logDir + "\\" + logName;
         }
 
         public void Info(string message)

@@ -97,7 +97,7 @@ namespace VeeamHealthCheck.Startup
         {
             string message = VbrLocalizationHelper.GuiAcceptText;
 
-            var res = MessageBox.Show(message, "Terms", MessageBoxButton.YesNo);
+            var res = MessageBox.Show(message, "Terms", MessageBoxButton.YesNo,MessageBoxImage.Question);
             if (res.ToString() == "Yes")
                 return true;
             else return false;
