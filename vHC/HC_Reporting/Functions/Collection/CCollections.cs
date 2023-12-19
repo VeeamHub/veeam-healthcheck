@@ -85,8 +85,10 @@ namespace VeeamHealthCheck.Functions.Collection
                 {
                     if (!TestPsMFA(p))
                     {
-                        ExecVbrScripts(p);
-                        ExecVb365Scripts(p);
+                        if(CGlobals.IsVbr)
+                            ExecVbrScripts(p);
+                        if(CGlobals.IsVb365)
+                            ExecVb365Scripts(p);
                     }
                     else
                     {
