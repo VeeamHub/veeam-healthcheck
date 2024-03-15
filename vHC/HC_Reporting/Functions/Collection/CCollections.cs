@@ -30,15 +30,19 @@ namespace VeeamHealthCheck.Functions.Collection
                 ExecSecurityCollection();
 
             ExecPSScripts();
-            if (!CGlobals.RunSecReport)
+            if (!CGlobals.RunSecReport && CGlobals.IsVbr)
             {
                 PopulateWaits();
             }
 
-            ExecVmcReader();
-            GetRegistryDbInfo();
-            if (CGlobals.DBTYPE != CGlobals.PgTypeName)
-                ExecSqlQueries();
+            if (CGlobals.IsVbr)
+            {
+                ExecVmcReader();
+                GetRegistryDbInfo();
+                if (CGlobals.DBTYPE != CGlobals.PgTypeName)
+                    ExecSqlQueries();
+            }
+            
 
         }
 
@@ -106,7 +110,7 @@ namespace VeeamHealthCheck.Functions.Collection
                 ExecVbrConfigOnly(p);
             }
 
-            WeighSuccessContinuation();
+            //WeighSuccessContinuation();
 
             CGlobals.Logger.Info("Starting PS Invoke...done!", false);
         }
