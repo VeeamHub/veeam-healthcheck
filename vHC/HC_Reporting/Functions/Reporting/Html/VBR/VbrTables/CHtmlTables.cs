@@ -95,7 +95,7 @@ namespace VeeamHealthCheck.Html.VBR
                 _form.TableHeader(VbrLocalizationHelper.LicTblSupExpDate, VbrLocalizationHelper.LicSupExpTT) +
                 _form.TableHeader(VbrLocalizationHelper.LicTblCc, VbrLocalizationHelper.LicCcTT) +
                 "</tr>";
-
+            s += "</thead><tbody>";
             try
             {
                 CCsvParser csv = new();
@@ -147,7 +147,7 @@ namespace VeeamHealthCheck.Html.VBR
                 data += table.Item2;
             }
             s += headers;
-            s += "</tr><tr>";
+            s += "</tr></thead><tr>";
             s += data;
             s += "</table><br>";
 
@@ -170,7 +170,7 @@ namespace VeeamHealthCheck.Html.VBR
         {
             string s = "";
             s += _form.header3("Config DB Info");
-            s += "<table border=\"1\">";
+            s += _form.Table();
             // config DB Table
             s += _form.TableHeader("DataBase Type", "MS SQL or PostgreSQL");
             s += _form.TableHeader(VbrLocalizationHelper.BkpSrvTblSqlLocal, VbrLocalizationHelper.BstSqlLocTT);
@@ -188,13 +188,13 @@ namespace VeeamHealthCheck.Html.VBR
             }
 
 
-            s += "</tr>";
+            s += _form.TableHeaderEnd();
             //CDataFormer cd = new(true);
             try
             {
 
 
-                s += "<tr>";
+                s += _form.TableBodyStart();
 
                 s += _form.TableData(b.DbType, "");
                 s += _form.TableData(b.IsLocal.ToString(), "");
@@ -207,7 +207,7 @@ namespace VeeamHealthCheck.Html.VBR
 
                 if (b.DbType == CGlobals.SqlTypeName && b.IsLocal == false)
                     s += AddDbCoresRam(b);
-                s += "</table>";
+                s += _form.EndTable();
             }
             catch (Exception e)
             {
@@ -244,21 +244,22 @@ namespace VeeamHealthCheck.Html.VBR
             // test area
 
             s += AddBackupServerDetails(b);
+            s += _form.EndTable();
 
 
 
             s += _form.header3("Config Backup Info");
-            s += "<table border=\"1\">";
+            s += "<table border=\"1\" class=\"content-table\">";
             s += _form.TableHeader(VbrLocalizationHelper.BkpSrvTblCfgEnabled, VbrLocalizationHelper.BstCfgEnabledTT);
             s += _form.TableHeader(VbrLocalizationHelper.BkpSrvTblCfgLastRes, VbrLocalizationHelper.BstCfgLastResTT);
             s += _form.TableHeader(VbrLocalizationHelper.BkpSrvTblCfgEncrypt, VbrLocalizationHelper.BstCfgEncTT);
             s += _form.TableHeader(VbrLocalizationHelper.BkpSrvTblTarget, VbrLocalizationHelper.BstCfgTarTT);
-            s += "<tr></tr>";
+            s += _form.TableBodyStart();
             s += _form.TableData(b.ConfigBackupEnabled.ToString(), "");
             s += _form.TableData(b.ConfigBackupLastResult, "");
             s += _form.TableData(b.ConfigBackupEncryption.ToString(), "");
             s += _form.TableData(b.ConfigBackupTarget, "");
-            s += "</table>";
+            s += _form.EndTable();
 
 
             //s += _form.LineBreak();
@@ -282,9 +283,9 @@ namespace VeeamHealthCheck.Html.VBR
 
             // header
             s += _form.TableHeader("Installed Apps", "");
-            s += "</tr><tr>";
+            s += _form.TableHeaderEnd();
             s += _form.TableData("See <a href=\"C:\\\\temp\\\\vHC\\\\Original\\\\Log\\\\\">Veeam.HealthCheck.ServerApplications log file</a> at C:\\temp\\vHC\\Log\\", "");
-            s += "</tr></table>";
+            s += _form.EndTable();
             return s;
         }
 
@@ -297,9 +298,9 @@ namespace VeeamHealthCheck.Html.VBR
             s += _form.TableHeader(VbrLocalizationHelper.SSHdr0, VbrLocalizationHelper.SSHdrTT0) +
                 _form.TableHeader(VbrLocalizationHelper.SSHdr1, VbrLocalizationHelper.SSHdrTT1) +
                 _form.TableHeader(VbrLocalizationHelper.SSHdr2, VbrLocalizationHelper.SSHdrTT2) +
-                _form.TableHeader(VbrLocalizationHelper.SSHdr3, VbrLocalizationHelper.SSHdrTT3) +
-                "</tr>" +
-                "<tr>";
+                _form.TableHeader(VbrLocalizationHelper.SSHdr3, VbrLocalizationHelper.SSHdrTT3);
+            s += _form.TableHeaderEnd();
+            s += _form.TableBodyStart();
 
             try
             {
@@ -313,7 +314,7 @@ namespace VeeamHealthCheck.Html.VBR
                     else if (list[i] == 1)
                         s += _form.TableData("True", "");
                 }
-                s += "</tr>";
+                s += _form.EndTable();
             }
             catch (Exception e)
             {
@@ -394,6 +395,7 @@ namespace VeeamHealthCheck.Html.VBR
             s += _form.Table();
             s += _form.TableHeader("Detected Operating Systems", "");
             s += "</tr>";
+            s += _form.TableBodyStart();
             foreach (var d in data)
             {
                 if (!String.IsNullOrEmpty(d))
@@ -418,6 +420,9 @@ namespace VeeamHealthCheck.Html.VBR
             s += _form.TableHeader(VbrLocalizationHelper.MssHdr1, VbrLocalizationHelper.MssHdr1TT) +
                             _form.TableHeader(VbrLocalizationHelper.MssHdr2, VbrLocalizationHelper.MssHdr2TT) +
                             "</tr>";
+            s += _form.TableHeaderEnd();
+            s += _form.TableBodyStart();
+
             try
             {
                 Dictionary<string, int> list = _df.ServerSummaryToXml();
@@ -444,10 +449,11 @@ namespace VeeamHealthCheck.Html.VBR
             string summary = _sum.JobSummary();
             string s = _form.SectionStart("jobsummary", VbrLocalizationHelper.JobSumTitle);
 
-            s += _form.TableHeader(VbrLocalizationHelper.JobSum0, VbrLocalizationHelper.JobSum0TT) +
-                _form.TableHeader(VbrLocalizationHelper.JobSum1, VbrLocalizationHelper.JobSum1TT) +
+            s += _form.TableHeader(VbrLocalizationHelper.JobSum0, VbrLocalizationHelper.JobSum0TT, 0) +
+                _form.TableHeader(VbrLocalizationHelper.JobSum1, VbrLocalizationHelper.JobSum1TT, 1) +
                 "</tr>";
-
+            s += _form.TableHeaderEnd();
+            s += _form.TableBodyStart();
             try
             {
                 Dictionary<string, int> list = _df.JobSummaryInfoToXml();
@@ -492,6 +498,8 @@ namespace VeeamHealthCheck.Html.VBR
             s += _form.TableHeader(VbrLocalizationHelper.JobSum0, "") +
                 //_form.TableHeader("Count", "Total detected of this type") +
                 "</tr>";
+            s += _form.TableHeaderEnd();
+            s += _form.TableBodyStart();
             //CDataFormer cd = new(true);
             try
             {
@@ -531,8 +539,10 @@ namespace VeeamHealthCheck.Html.VBR
                 _form.TableHeader(VbrLocalizationHelper.PlHdr0, VbrLocalizationHelper.PlHdrTT0) +
                 _form.TableHeader(VbrLocalizationHelper.PlHdr1, VbrLocalizationHelper.PlHdrTT1) +
                 _form.TableHeader(VbrLocalizationHelper.PlHdr2, VbrLocalizationHelper.PlHdrTT2) +
-                _form.TableHeader(VbrLocalizationHelper.PlHdr3, VbrLocalizationHelper.PlHdrTT3) +
-                "</tr><tr>";
+                _form.TableHeader(VbrLocalizationHelper.PlHdr3, VbrLocalizationHelper.PlHdrTT3);
+                s += _form.TableHeaderEnd();
+                s += _form.TableBodyStart();
+                
                 s += _form.TableData((_df._viProtectedNames.Distinct().Count() + _df._viNotProtectedNames.Distinct().Count()).ToString(), "");
                 s += _form.TableData(_df._viProtectedNames.Distinct().Count().ToString(), "");
                 s += _form.TableData(_df._viNotProtectedNames.Distinct().Count().ToString(), "");
@@ -550,8 +560,8 @@ namespace VeeamHealthCheck.Html.VBR
                 s += _form.TableHeader("HV Protected", "Total HV VMs found with existing backup");
                 s += _form.TableHeader("HV Unprotected", "Total HV VMs found without backup");
                 s += _form.TableHeader("HV Duplicates", "Total HV VMs potentially found in multiple backups");
-                s += "</tr>";
-                s += "<tr>";
+                s += _form.TableHeaderEnd();
+                s += _form.TableBodyStart();
                 s += _form.TableData((_df._hvProtectedNames.Distinct().Count() + _df._hvNotProtectedNames.Distinct().Count()).ToString(), "");
                 s += _form.TableData(_df._hvProtectedNames.Distinct().Count().ToString(), "");
                 s += _form.TableData(_df._hvNotProtectedNames.Distinct().Count().ToString(), "");
@@ -568,7 +578,8 @@ namespace VeeamHealthCheck.Html.VBR
                 s += _form.TableHeader(VbrLocalizationHelper.PlHdr6, VbrLocalizationHelper.PlHdrTT6);
                 s += _form.TableHeader(VbrLocalizationHelper.PlHdr7, VbrLocalizationHelper.PlHdrTT7);
 
-                s += "</tr>";
+                s += _form.TableHeaderEnd();
+                s += _form.TableBodyStart();
                 //CDataFormer cd = new(true);
                 s += "<tr>";
                 s += _form.TableData(_df._vmProtectedByPhys.Distinct().Count().ToString(), "");
@@ -590,21 +601,22 @@ namespace VeeamHealthCheck.Html.VBR
         {
             string s = _form.SectionStartWithButton("managedServerInfo", VbrLocalizationHelper.ManSrvTitle, VbrLocalizationHelper.ManSrvBtn);
             string summary = _sum.ManagedServers();
-            s += "<tr>" +
-           _form.TableHeader(VbrLocalizationHelper.ManSrv0, VbrLocalizationHelper.ManSrv0TT) +
-           _form.TableHeader(VbrLocalizationHelper.ManSrv1, VbrLocalizationHelper.ManSrv1TT) +
-           _form.TableHeader(VbrLocalizationHelper.ManSrv2, VbrLocalizationHelper.ManSrv2TT) +
-           _form.TableHeader(VbrLocalizationHelper.ManSrv3, VbrLocalizationHelper.ManSrv3TT) +
-           _form.TableHeader("OS Info", VbrLocalizationHelper.ManSrv3TT) +
-           _form.TableHeader(VbrLocalizationHelper.ManSrv4, VbrLocalizationHelper.ManSrv4TT) +
-           _form.TableHeader(VbrLocalizationHelper.ManSrv5, VbrLocalizationHelper.ManSrv5TT) +
-           _form.TableHeader(VbrLocalizationHelper.ManSrv6, VbrLocalizationHelper.ManSrv6TT) +
-           _form.TableHeader(VbrLocalizationHelper.ManSrv7, VbrLocalizationHelper.ManSrv7TT) +
-           _form.TableHeader(VbrLocalizationHelper.ManSrv8, VbrLocalizationHelper.ManSrv8TT) +
-           _form.TableHeader(VbrLocalizationHelper.ManSrv9, VbrLocalizationHelper.ManSrv9TT) +
-           _form.TableHeader(VbrLocalizationHelper.ManSrv10, VbrLocalizationHelper.ManSrv10TT) +
-           _form.TableHeader(VbrLocalizationHelper.ManSrv11, VbrLocalizationHelper.ManSrv11TT) +
-           "</tr>";
+            s +=
+           _form.TableHeader(VbrLocalizationHelper.ManSrv0, VbrLocalizationHelper.ManSrv0TT, 0) +
+           _form.TableHeader(VbrLocalizationHelper.ManSrv1, VbrLocalizationHelper.ManSrv1TT, 1) +
+           _form.TableHeader(VbrLocalizationHelper.ManSrv2, VbrLocalizationHelper.ManSrv2TT, 2) +
+           _form.TableHeader(VbrLocalizationHelper.ManSrv3, VbrLocalizationHelper.ManSrv3TT, 3) +
+           _form.TableHeader("OS Info", VbrLocalizationHelper.ManSrv3TT, 4) +
+           _form.TableHeader(VbrLocalizationHelper.ManSrv4, VbrLocalizationHelper.ManSrv4TT, 5) +
+           _form.TableHeader(VbrLocalizationHelper.ManSrv5, VbrLocalizationHelper.ManSrv5TT, 6) +
+           _form.TableHeader(VbrLocalizationHelper.ManSrv6, VbrLocalizationHelper.ManSrv6TT, 7) +
+           _form.TableHeader(VbrLocalizationHelper.ManSrv7, VbrLocalizationHelper.ManSrv7TT, 8) +
+           _form.TableHeader(VbrLocalizationHelper.ManSrv8, VbrLocalizationHelper.ManSrv8TT, 9) +
+           _form.TableHeader(VbrLocalizationHelper.ManSrv9, VbrLocalizationHelper.ManSrv9TT, 10) +
+           _form.TableHeader(VbrLocalizationHelper.ManSrv10, VbrLocalizationHelper.ManSrv10TT, 11) +
+           _form.TableHeader(VbrLocalizationHelper.ManSrv11, VbrLocalizationHelper.ManSrv11TT, 12);
+            s += _form.TableHeaderEnd();
+            s += _form.TableBodyStart();
             //CDataFormer cd = new(true);
             try
             {
@@ -648,6 +660,8 @@ namespace VeeamHealthCheck.Html.VBR
                 _form.TableHeader(VbrLocalizationHelper.Reg0, VbrLocalizationHelper.Reg0TT) +
                 _form.TableHeader(VbrLocalizationHelper.Reg1, VbrLocalizationHelper.Reg1TT) +
                 "</tr>";
+            s += _form.TableHeaderEnd();
+            s += _form.TableBodyStart();
             //CDataFormer cd = new(true);
             try
             {
@@ -697,6 +711,8 @@ namespace VeeamHealthCheck.Html.VBR
            _form.TableHeader(VbrLocalizationHelper.Prx10, VbrLocalizationHelper.Prx10TT) +
            _form.TableHeader(VbrLocalizationHelper.Prx11, VbrLocalizationHelper.Prx11TT) +
    "</tr>";
+            s += _form.TableHeaderEnd();
+            s += _form.TableBodyStart();
             //CDataFormer cd = new(true);
             try
             {
@@ -760,6 +776,8 @@ namespace VeeamHealthCheck.Html.VBR
            _form.TableHeader(VbrLocalizationHelper.Prx10, VbrLocalizationHelper.Prx10TT) +
            _form.TableHeader(VbrLocalizationHelper.Prx11, VbrLocalizationHelper.Prx11TT) +
    "</tr>";
+            s += _form.TableHeaderEnd();
+            s += _form.TableBodyStart();
             try
             {
                 List<string[]> list = _df.ProxyXmlFromCsv(scrub);
@@ -816,6 +834,8 @@ namespace VeeamHealthCheck.Html.VBR
            _form.TableHeader(VbrLocalizationHelper.Sbr11, VbrLocalizationHelper.Sbr11TT) +
            _form.TableHeader(VbrLocalizationHelper.Sbr12, VbrLocalizationHelper.Sbr12TT) +
            "</tr>";
+            s += _form.TableHeaderEnd();
+            s += _form.TableBodyStart();
             //CDataFormer cd = new(true);
 
             try
@@ -877,6 +897,8 @@ _form.TableHeader(VbrLocalizationHelper.SbrExt13, VbrLocalizationHelper.SbrExt13
 _form.TableHeader(VbrLocalizationHelper.SbrExt14, VbrLocalizationHelper.SbrExt14TT) +
 _form.TableHeader(VbrLocalizationHelper.SbrExt15, VbrLocalizationHelper.SbrExt15TT) +
 "</tr>";
+            s += _form.TableHeaderEnd();
+            s += _form.TableBodyStart();
             try
             {
 
@@ -930,25 +952,27 @@ _form.TableHeader(VbrLocalizationHelper.SbrExt15, VbrLocalizationHelper.SbrExt15
         {
             string s = _form.SectionStartWithButton("repos", VbrLocalizationHelper.RepoTitle, VbrLocalizationHelper.RepoBtn);
             string summary = _sum.Repos();
-            s += "<tr>" +
-_form.TableHeader(VbrLocalizationHelper.SbrExt0, VbrLocalizationHelper.SbrExt0TT) +
-_form.TableHeader(VbrLocalizationHelper.Repo0, VbrLocalizationHelper.Repo0TT) +
-_form.TableHeader(VbrLocalizationHelper.SbrExt2, VbrLocalizationHelper.SbrExt2TT) +
-_form.TableHeader(VbrLocalizationHelper.SbrExt3, VbrLocalizationHelper.SbrExt3TT) +
-_form.TableHeader(VbrLocalizationHelper.SbrExt4, VbrLocalizationHelper.SbrExt4TT) +
-_form.TableHeader(VbrLocalizationHelper.SbrExt5, VbrLocalizationHelper.SbrExt5TT) +
-_form.TableHeader(VbrLocalizationHelper.SbrExt6, VbrLocalizationHelper.SbrExt6TT) +
-_form.TableHeader(VbrLocalizationHelper.SbrExt7, VbrLocalizationHelper.SbrExt7TT) +
-_form.TableHeader(VbrLocalizationHelper.SbrExt8, VbrLocalizationHelper.SbrExt8TT) +
-_form.TableHeader(VbrLocalizationHelper.SbrExt9, VbrLocalizationHelper.SbrExt9TT) +
-_form.TableHeader(VbrLocalizationHelper.SbrExt10, VbrLocalizationHelper.SbrExt10TT) +
-_form.TableHeader(VbrLocalizationHelper.Repo1, VbrLocalizationHelper.Repo1TT) +
-_form.TableHeader(VbrLocalizationHelper.SbrExt11, VbrLocalizationHelper.SbrExt11TT) +
-_form.TableHeader(VbrLocalizationHelper.SbrExt12, VbrLocalizationHelper.SbrExt12TT) +
-_form.TableHeader(VbrLocalizationHelper.SbrExt13, VbrLocalizationHelper.SbrExt13TT) +
-_form.TableHeader(VbrLocalizationHelper.SbrExt14, VbrLocalizationHelper.SbrExt14TT) +
-_form.TableHeader(VbrLocalizationHelper.SbrExt15, VbrLocalizationHelper.SbrExt15TT) +
-"</tr>";
+            s +=
+_form.TableHeader(VbrLocalizationHelper.SbrExt0, VbrLocalizationHelper.SbrExt0TT, 0) +
+_form.TableHeader(VbrLocalizationHelper.Repo0, VbrLocalizationHelper.Repo0TT, 1) +
+_form.TableHeader(VbrLocalizationHelper.SbrExt2, VbrLocalizationHelper.SbrExt2TT, 2) +
+_form.TableHeader(VbrLocalizationHelper.SbrExt3, VbrLocalizationHelper.SbrExt3TT, 3) +
+_form.TableHeader(VbrLocalizationHelper.SbrExt4, VbrLocalizationHelper.SbrExt4TT, 4) +
+_form.TableHeader(VbrLocalizationHelper.SbrExt5, VbrLocalizationHelper.SbrExt5TT, 5) +
+_form.TableHeader(VbrLocalizationHelper.SbrExt6, VbrLocalizationHelper.SbrExt6TT, 6) +
+_form.TableHeader(VbrLocalizationHelper.SbrExt7, VbrLocalizationHelper.SbrExt7TT, 7) +
+_form.TableHeader(VbrLocalizationHelper.SbrExt8, VbrLocalizationHelper.SbrExt8TT, 8) +
+_form.TableHeader(VbrLocalizationHelper.SbrExt9, VbrLocalizationHelper.SbrExt9TT, 9) +
+_form.TableHeader(VbrLocalizationHelper.SbrExt10, VbrLocalizationHelper.SbrExt10TT, 10) +
+_form.TableHeader(VbrLocalizationHelper.Repo1, VbrLocalizationHelper.Repo1TT, 11) +
+_form.TableHeader(VbrLocalizationHelper.SbrExt11, VbrLocalizationHelper.SbrExt11TT, 12) +
+_form.TableHeader(VbrLocalizationHelper.SbrExt12, VbrLocalizationHelper.SbrExt12TT, 13) +
+_form.TableHeader(VbrLocalizationHelper.SbrExt13, VbrLocalizationHelper.SbrExt13TT, 14) +
+_form.TableHeader(VbrLocalizationHelper.SbrExt14, VbrLocalizationHelper.SbrExt14TT, 15) +
+_form.TableHeader(VbrLocalizationHelper.SbrExt15, VbrLocalizationHelper.SbrExt15TT, 16);
+
+            s += _form.TableHeaderEnd();
+            s += _form.TableBodyStart();
             try
             {
                 List<string[]> list = _df.RepoInfoToXml(scrub);
@@ -1011,7 +1035,8 @@ _form.TableHeader(VbrLocalizationHelper.SbrExt15, VbrLocalizationHelper.SbrExt15
             s += _form.TableHeader(VbrLocalizationHelper.JobCon6, "");
             s += _form.TableHeader(VbrLocalizationHelper.JobCon7, "");
             s += "</tr>";
-
+            s += _form.TableHeaderEnd();
+            s += _form.TableBodyStart();
             try
             {
 
@@ -1054,7 +1079,8 @@ _form.TableHeader(VbrLocalizationHelper.SbrExt15, VbrLocalizationHelper.SbrExt15
             s += _form.TableHeader(VbrLocalizationHelper.TaskCon6, "");
             s += _form.TableHeader(VbrLocalizationHelper.TaskCon7, "");
             s += "</tr>";
-
+            s += _form.TableHeaderEnd();
+            s += _form.TableBodyStart();
             try
             {
                 var stuff = _df.JobConcurrency(false);
@@ -1104,7 +1130,8 @@ _form.TableHeader(VbrLocalizationHelper.SbrExt15, VbrLocalizationHelper.SbrExt15
             s += _form.TableHeader(VbrLocalizationHelper.Jss13, VbrLocalizationHelper.Jss13TT);
             s += _form.TableHeader(VbrLocalizationHelper.Jss14, VbrLocalizationHelper.Jss14TT);
             s += _form.TableHeader(VbrLocalizationHelper.Jss15, VbrLocalizationHelper.Jss15TT);
-
+            s += _form.TableHeaderEnd();
+            s += _form.TableBodyStart();
             try
             {
                 var stuff = _df.ConvertJobSessSummaryToXml(scrub);
@@ -1168,7 +1195,8 @@ _form.TableHeader(VbrLocalizationHelper.SbrExt15, VbrLocalizationHelper.SbrExt15
             s += _form.TableHeader(VbrLocalizationHelper.JobInfo11, VbrLocalizationHelper.JobInfo11TT);
             s += _form.TableHeader(VbrLocalizationHelper.JobInfo12, VbrLocalizationHelper.JobInfo12TT);
             s += _form.TableHeader(VbrLocalizationHelper.JobInfo13, VbrLocalizationHelper.JobInfo13TT);
-
+            s += _form.TableHeaderEnd();
+            s += _form.TableBodyStart();
             try
             {
                 var stuff = _df.JobInfoToXml(scrub);

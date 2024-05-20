@@ -1,6 +1,9 @@
 ﻿// Copyright (c) 2021, Adam Congdon <adam.congdon2@gmail.com>
 // MIT License
+using Microsoft.CodeAnalysis;
+using System.IO;
 using System.Net;
+using System.Reflection;
 using VeeamHealthCheck.Functions.Reporting.CsvHandlers;
 using VeeamHealthCheck.Functions.Reporting.Html.Shared;
 using VeeamHealthCheck.Html.VBR;
@@ -76,19 +79,51 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR
         private void FormHeader()
         {
             log.Info("[HTML] Forming Header...");
-            _htmldocOriginal = "<html>";
-            _htmldocOriginal += "<head>";
-            _htmldocOriginal += "<style>";
-            _htmldocOriginal += CssStyler.StyleString();
-            _htmldocOriginal += "</style></head>";
+            string docType = "<!DOCTYPE html>";
+            string htmlOpen = "<html>";
+            string styleOpen = "<style>";
+            string viewPort = "<meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">";
+            string title = "<title>Veeam HealthCheck Report</title>";
+            string charSet = "<meta charset=\"UTF-8\">";
+            string headOpen = "<head>";
+            string headClose = "</head>";
+            string styleClose = "</style>";
 
-            _htmldocScrubbed = "<html>";
-            _htmldocScrubbed += "<head>";
-            _htmldocScrubbed += "<style>";
-            _htmldocScrubbed += CssStyler.StyleString();
-            _htmldocScrubbed += "</style></head>";
+            string css  = GetEmbeddedCssContent("css.css");
+            string header = docType + htmlOpen + headOpen + charSet + viewPort + title
+                + styleOpen + css
+                + styleClose
+                + headClose;
+
+            _htmldocOriginal = header;
+            _htmldocScrubbed += header;
+
             log.Info("[HTML] Forming Header...done!");
             //FormBody();
+        }
+        // method to read the text from a resource called css.css
+        private string ReadCssResource()
+        {
+            string css = string.Empty;
+            using (Stream stream = Assembly.GetExecutingAssembly().GetManifestResourceStream("VeeamHealthCheck.Resources.css.css"))
+            {
+                using (StreamReader reader = new StreamReader(stream))
+                {
+                    css = reader.ReadToEnd();
+                }
+            }
+            return css;
+        }
+        public static string GetEmbeddedCssContent(string embeddedFileName)
+        {
+            var assembly = Assembly.GetExecutingAssembly();
+            var resourceName = $"{assembly.GetName().Name}.{embeddedFileName}";
+
+            using (var stream = assembly.GetManifestResourceStream(resourceName))
+            using (var reader = new StreamReader(stream))
+            {
+                return reader.ReadToEnd();
+            }
         }
 
         #region HtmlHeaders
@@ -137,19 +172,24 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR
         #endregion
         private string FormBodyStart(string htmlString, bool scrub)
         {
-            htmlString += _form.body;
+            string h  = _form.body;
+             h += FormHtmlButtonGoToTop();
             if (scrub)
             {
-                htmlString += _form.SetHeaderAndLogo(" ");
-                htmlString += _form.SetBannerAndIntro(true);
+                h += _form.SetHeaderAndLogo(" ");
+                h += _form.SetBannerAndIntro(true);
             }
             else
             {
-                htmlString += _form.SetHeaderAndLogo(SetLicHolder());
-                htmlString += _form.SetBannerAndIntro(false);
+                h += _form.SetHeaderAndLogo(SetLicHolder());
+                h += _form.SetBannerAndIntro(false);
             }
 
-            return htmlString;
+            return h;
+        }
+        private string FormHtmlButtonGoToTop()
+        {
+            return "<button onclick=\"topFunction()\" id=\"myBtn\" title=\"Go to top\">Go To Top</button>";
         }
         private string SetVbrSecurityHeader()
         {
@@ -213,7 +253,7 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR
 
         private string NavTableStarter()
         {
-            return "<table border=\"0\" style=\"background: \"><tbody>";
+            return "<table border=\"1\" style=\"background:#efefef \"><tbody>";
         }
         private string NavtableEnd()
         {
@@ -225,7 +265,7 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR
         private void NavTable()
         {
             string tableString = NavTableStarter();
-            tableString += _tables.MakeNavTable();
+             tableString += _tables.MakeNavTable();
             tableString += NavtableEnd();
             AddToHtml(tableString);
         }
@@ -239,11 +279,12 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR
 
         private string FormFooter()
         {
-            string s = "";
+            string jsScript = GetEmbeddedCssContent("ReportScript.js");
+            string s = "</body><footer>";
             s += "<a>vHC Version: " + CVersionSetter.GetFileVersion() + "</a>";
             s += "<script type=\"text/javascript\">";
-            s += CssStyler.JavaScriptBlock();
-            s += "</script>";
+            s += jsScript;
+            s += "</script></footer></html>";
             return s;
         }
 

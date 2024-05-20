@@ -198,7 +198,8 @@ namespace VeeamHealthCheck.Startup
             CGlobals.OpenExplorer = false;
             //CGlobals.OpenHtml = false;
             CGlobals._desiredPath = targetForOutput;
-            PreRunCheck();
+            if(!CGlobals.IMPORT)
+                PreRunCheck();
             //GetVbrVersion();
             
             

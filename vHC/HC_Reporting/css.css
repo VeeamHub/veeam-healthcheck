@@ -1,0 +1,377 @@
+﻿html * {
+    font-family: Tahoma !important;
+}
+
+.rhtitle {
+    color: #00d15f;
+    font-weight: bold;
+    font-size: 25px;
+}
+
+.card {
+    /* Add shadows to create the "card" effect */
+    box-shadow: 0 4px 8px 0 #adacaf;
+    transition: 0.3s;
+    border-radius: 5px;
+    background-color: #efefef;
+}
+
+    /* On mouse-over, add a deeper shadow */
+    .card:hover {
+        box-shadow: 0 8px 16px 0 #adacaf;
+    }
+
+/* Add some padding inside the card container */
+.container {
+    padding: 2px 16px;
+}
+
+.i2 {
+    padding-left: 20px;
+}
+
+div.bulletlist {
+    text-indent: 20px
+}
+
+.i3 {
+    padding-left: 40px;
+}
+
+.i4 {
+    padding-left: 60px;
+}
+
+.hdr {
+    color: green;
+    font-style: italic;
+    font-weight: bold;
+    font-size: 20px;
+}
+
+.subhdr {
+    padding-left: 10px;
+    color: green;
+    font-weight: bold;
+    font-size: 15px;
+}
+
+.bld {
+    font-weight: bold;
+}
+
+.logo {
+    background-attachment: fixed;
+    background-position: center;
+    background-size: 20%;
+    display: block;
+}
+
+.subtext {
+    font-size: 15px;
+}
+
+.collapsible {
+    background-color: #eee;
+    color: #444;
+    cursor: pointer;
+    padding: 18px;
+    width: 100%;
+    border: none;
+    text-align: left;
+    outline: none;
+    font-size: 15px;
+}
+
+    .active,
+    .collapsible:hover {
+        background-color: #ccc;
+    }
+
+.content {
+    padding: 0 18px;
+    display: none;
+    overflow: scroll;
+    background-color: #f1f1f1;
+    transition: max-height 0.2s ease-out;
+}
+
+.th {
+    color: white;
+}
+
+th {
+    color: #505861;
+    background-color: #00d15f;
+    cursor: pointer;
+}
+
+.collapsible:after {
+    content: '\02795';
+    /* Unicode character for "plus" sign (+) */
+    font-size: 13px;
+    color: white;
+    float: right;
+    margin-left: 5px;
+}
+
+.active:after {
+    content: "\2796";
+    /* Unicode character for "minus" sign (-) */
+}
+
+
+
+div:not(#procstats, #navigation) table tr:nth-child(2n+1) {
+    background-color: #ffffff;
+}
+
+#procstats tr:nth-child(12n+8),
+#procstats tr:nth-child(12n+9),
+#procstats tr:nth-child(12n+10),
+#procstats tr:nth-child(12n+11),
+#procstats tr:nth-child(12n+12),
+#procstats tr:nth-child(12n+13) {
+    background-color: #efefef;
+}
+
+dt {
+    font-weight: bold;
+    font-size: small;
+}
+
+dd {
+    font-size: smaller;
+}
+
+.content-table {
+    border-collapse: collapse;
+    margin: 25px 0;
+    font-size: .9em;
+    min-width: 400px;
+    border-radius: 5px 5px 0 0;
+    overflow: hidden;
+    box-shadow: 0 0 20px rgba(0, 0, 0, .15)
+}
+
+    .content-table thead tr {
+        background-color: #00d15f;
+        color: white;
+        text-align: left;
+        font-weight: bold
+    }
+
+    .content-table th,
+    .content-table td {
+        padding: 12px 15px
+    }
+
+    .content-table tbody tr {
+        border-bottom: 1px solid #ddd
+    }
+
+        .content-table tbody tr:nth-last-of-type(even) {
+            background-color: #efefef
+        }
+
+        .content-table tbody tr:last-of-type {
+            border-bottom: 2px solid #005f4b
+        }
+
+th.active {
+    background-color: #adacaf;
+}
+
+.th-sort-asc {
+    background-color: #adacaf;
+}
+
+.table-sortable th {
+    cursor: pointer;
+}
+
+.table-sortable .th-sort-asc::after {
+    content: "\25b4";
+}
+
+.table-sortable .th-sort-desc::after {
+    content: "\25be";
+}
+
+/* .table-sortable .th-sort-asc::after,
+.table-sortable .th-sort-desc::after {
+	margin-left: 0px;
+} */
+
+.table-sortable .th-sort-asc,
+.table-sortable .th-sort-desc {
+    background: #ffd839;
+}
+
+.flip-card2 {
+    background-color: transparent;
+    width: 100%;
+    height: 100%;
+    border: 1px solid #f1f1f1;
+    perspective: 1000px;
+    justify-content: center;
+    align-items: center;
+}
+
+.flip-card-inner2 {
+    position: relative;
+    width: auto;
+    height: auto;
+    text-align: center;
+    transition: transform 0.8s;
+    transform-style: preserve-3d;
+}
+
+/* Do an horizontal flip when you move the mouse over the flip box container */
+.flip-card2:hover .flip-card-inner {
+    transform: rotateY(180deg);
+}
+
+/* Position the front and back side */
+.flip-card-front2,
+.flip-card-back2 {
+    position: absolute;
+    width: auto;
+    height: auto;
+    -webkit-backface-visibility: hidden;
+    /* Safari */
+    backface-visibility: hidden;
+}
+
+/* Style the front side (fallback if image is missing) */
+.flip-card-front2 {
+    background-color: #505861;
+    color: #ffffff;
+    font-size: large;
+    font-display: 8vw;
+    overflow: auto;
+    align-items: center;
+    display: flex;
+    justify-content: center;
+    width: 100%;
+    height: 150px;
+}
+
+/* Style the back side */
+.flip-card-back2 {
+    background-color: #adacaf;
+    color: #000000;
+    transform: rotateY(180deg);
+    font-display: auto;
+    width: 100%;
+    justify-content: center;
+}
+
+.flip-card {
+    background-color: transparent;
+    width: 150px;
+    height: 100px;
+    border: 1px solid #f1f1f1;
+    perspective: 1000px;
+    /* Remove this if you don't want the 3D effect */
+}
+
+/* This container is needed to position the front and back side */
+.flip-card-inner {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    text-align: center;
+    transition: transform 0.8s;
+    transform-style: preserve-3d;
+}
+
+/* Do an horizontal flip when you move the mouse over the flip box container */
+.flip-card:hover .flip-card-inner {
+    transform: rotateY(180deg);
+}
+
+/* Position the front and back side */
+.flip-card-front,
+.flip-card-back {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    -webkit-backface-visibility: hidden;
+    /* Safari */
+    backface-visibility: hidden;
+}
+
+/* Style the front side (fallback if image is missing) */
+.flip-card-front {
+    background-color: #505861;
+    color: #ffffff;
+    font-size: large;
+    font-display: 8vw;
+    overflow: auto;
+    align-items: center;
+    display: flex;
+    justify-content: center;
+}
+
+/* Style the back side */
+.flip-card-back {
+    background-color: #fe8a25;
+    color: #000000;
+    transform: rotateY(180deg);
+    font-display: 8vw;
+}
+
+.column {
+    flex: 50%;
+    padding: 5px;
+}
+
+/* Clear floats after image containers */
+.row {
+    display: flex;
+}
+
+#myBtn {
+    display: block;
+    /* Hidden by default */
+    position: fixed;
+    /* Fixed/sticky position */
+    bottom: 20px;
+    /* Place the button at the bottom of the page */
+    right: 30px;
+    /* Place the button 30px from the right */
+    z-index: 99;
+    /* Make sure it does not overlap */
+    border: none;
+    /* Remove borders */
+    outline: none;
+    /* Remove outline */
+    background-color: #8e71f4;
+    /* Set a background color */
+    color: white;
+    /* Text color */
+    cursor: pointer;
+    /* Add a mouse pointer on hover */
+    padding: 15px;
+    /* Some padding */
+    border-radius: 10px;
+    /* Rounded corners */
+    font-size: 18px;
+    /* Increase font size */
+}
+
+    #myBtn:hover {
+        background-color: #555;
+        /* Add a dark-grey background on hover */
+    }
+.btn {
+    color: white;
+    background-color: #8e71f4;
+    padding: 15px;
+    font-size: 18px;
+}
+
+    .btn:hover {
+        background-color: #555
+    }

@@ -4,6 +4,7 @@ using System.Linq;
 using System.Net;
 using VeeamHealthCheck.Functions.Reporting.CsvHandlers;
 using VeeamHealthCheck.Functions.Reporting.Html.Shared;
+using VeeamHealthCheck.Functions.Reporting.Html.VBR;
 using VeeamHealthCheck.Resources.Localization;
 using VeeamHealthCheck.Shared;
 using VeeamHealthCheck.Shared.Logging;
@@ -75,8 +76,10 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VB365
             _htmldoc += _form.LineBreak();
             _htmldoc += "<a align=\"center\">vHC Version: " + CVersionSetter.GetFileVersion() + "</a>";
 
+            
+
             _htmldoc += "<script type=\"text/javascript\">";
-            _htmldoc += CssStyler.JavaScriptBlock();
+            _htmldoc += CHtmlCompiler.GetEmbeddedCssContent("ReportScript.js");
             _htmldoc += "</script>";
 
             ExportHtml();

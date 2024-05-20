@@ -4,6 +4,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using VeeamHealthCheck.Functions.Reporting.Html;
+using VeeamHealthCheck.Functions.Reporting.Html.Shared;
 using VeeamHealthCheck.Functions.Reporting.Html.VBR;
 using VeeamHealthCheck.Reporting.Html.VBR;
 //using VeeamHealthCheck.Reporting.Html.VBR.VbrTables.Security;
@@ -12,6 +13,7 @@ namespace VeeamHealthCheck.Reporting.Html.VBR
 {
     internal class CHtmlTablesHelper
     {
+        CHtmlFormatting _form = new();
         public CHtmlTablesHelper()
         {
 
@@ -59,10 +61,12 @@ namespace VeeamHealthCheck.Reporting.Html.VBR
                 headers += table.Item1;
                 data += table.Item2;
             }
+            s += _form.TableHeader("header", "tooltip");
             s += headers;
-            s += "</tr><tr>";
+            s += _form.TableHeaderEnd();
+            s += _form.TableBodyStart();
             s += data;
-            s += "</table><br>";
+            s += _form.EndTable();
 
             return s;
         }
