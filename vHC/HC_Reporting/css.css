@@ -20,6 +20,30 @@
     .card:hover {
         box-shadow: 0 8px 16px 0 #adacaf;
     }
+.card-container {
+    display: flex;
+    justify-content: center;
+    padding: 20px;
+    /* This will equally space out the cards */
+}
+.card2 {
+    /* Add shadows to create the "card" effect */
+    box-shadow: 0 4px 8px 0 #adacaf;
+    transition: 0.3s;
+    border-radius: 5px;
+    background-color: #efefef;
+    position: center;
+    /* center the item on the page*/
+/*    margin-right: auto;
+    margin-left: auto;*/
+    width: calc(50% - 40px);
+    margin: 0 20px;
+}
+
+    /* On mouse-over, add a deeper shadow */
+    .card2:hover {
+        box-shadow: 0 8px 16px 0 #adacaf;
+    }
 
 /* Add some padding inside the card container */
 .container {
