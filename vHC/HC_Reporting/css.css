@@ -20,24 +20,31 @@
     .card:hover {
         box-shadow: 0 8px 16px 0 #adacaf;
     }
+
 .card-container {
     display: flex;
     justify-content: center;
     padding: 20px;
     /* This will equally space out the cards */
 }
+
 .card2 {
     /* Add shadows to create the "card" effect */
     box-shadow: 0 4px 8px 0 #adacaf;
     transition: 0.3s;
     border-radius: 5px;
-    background-color: #efefef;
+    /*background-color: #efefef;*/
+    background-color: white;
     position: center;
     /* center the item on the page*/
-/*    margin-right: auto;
+    /*    margin-right: auto;
     margin-left: auto;*/
     width: calc(50% - 40px);
     margin: 0 20px;
+    padding-left: 20px;
+    padding-top: 20px;
+    padding-right: 20px;
+    padding-bottom: 20px;
 }
 
     /* On mouse-over, add a deeper shadow */
@@ -125,7 +132,7 @@ div.bulletlist {
 }
 
 th {
-    color: #505861;
+    color: white;
     background-color: #00d15f;
     cursor: pointer;
 }
@@ -230,6 +237,7 @@ th.active {
 .table-sortable .th-sort-asc,
 .table-sortable .th-sort-desc {
     background: #ffd839;
+    color: black;
 }
 
 .flip-card2 {
@@ -357,13 +365,13 @@ th.active {
 }
 
 #myBtn {
-    display: block;
+    display: none;
     /* Hidden by default */
     position: fixed;
     /* Fixed/sticky position */
     bottom: 20px;
     /* Place the button at the bottom of the page */
-    right: 30px;
+    right: 50px;
     /* Place the button 30px from the right */
     z-index: 99;
     /* Make sure it does not overlap */
@@ -389,6 +397,7 @@ th.active {
         background-color: #555;
         /* Add a dark-grey background on hover */
     }
+
 .btn {
     color: white;
     background-color: #8e71f4;
@@ -399,3 +408,15 @@ th.active {
     .btn:hover {
         background-color: #555
     }
+
+.classBtn {
+    font-size: 1.5em;
+    font-weight: bold;
+    margin-top: 0.83em;
+    margin-bottom: 0.83em;
+    text-decoration: underline;
+}
+
+.smoothscroll {
+    color: #00d15f;
+}

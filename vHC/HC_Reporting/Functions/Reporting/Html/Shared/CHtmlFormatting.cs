@@ -52,7 +52,7 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.Shared
         }
         public string SectionButton(string classType, string displayText)
         {
-            return string.Format("<button type=\"button\" class=\"{0}\">{1}</button>", classType, displayText);
+            return string.Format("<button type=\"button\" class=\"{0} classBtn\">{1}</button>", classType, displayText);
         }
         public string AddA(string classInfo, string displaytext)
         {
@@ -104,8 +104,9 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.Shared
         public string SectionStartWithButton(string id, string header, string buttonName)
         {
             string s = SectionId(id);
-            s += header2(header);
-            s += CollapsibleButton(buttonName);
+            //s += header2(header);
+            //s += CollapsibleButton(buttonName);
+            s += CollapsibleButton(header);
             s += "<div class=\"content\" style=\"display: none\">";
             s += Table();
             s += "<thead><tr>";
@@ -115,8 +116,9 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.Shared
         public string SectionStartWithButton(string id, string header, string buttonName, int reportInterval)
         {
             string s = SectionId(id);
-            s += header2(header + " (" + reportInterval + " Days)");
-            s += CollapsibleButton(buttonName);
+            //s += header2(header + " (" + reportInterval + " Days)");
+           // s += CollapsibleButton(buttonName);
+            s += CollapsibleButton(String.Format(header + " (" + reportInterval + " Days)"));
             s += "<div class=\"content\" style=\"display: none\">";
             s += Table();
             s += "<thead><tr>";

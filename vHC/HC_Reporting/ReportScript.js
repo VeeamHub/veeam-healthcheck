@@ -1,6 +1,7 @@
 ﻿var coll = document.getElementsByClassName("collapsible");
 var navLink = document.getElementsByClassName("smoothscroll");
 var i;
+let expanded = false;
 
 for (i = 0; i < coll.length; i++) {
 	coll[i].addEventListener("click", function () {
@@ -32,10 +33,15 @@ for (i = 0; i < navLink.length; i++) {
 	});
 }
 
-
+let isExpanded = false;
 function test() {
 	var co = document.getElementsByClassName("collapsible");
 	var divs = document.querySelectorAll(".collapsible");
+
+	isExpanded = !isExpanded;
+
+	const btnText = isExpanded ? "Collapse All Sections" : "Expand All Sections";
+	document.getElementById("expandBtn").textContent = btnText;
 
 	divs.forEach(d => {
 		d.classList.toggle("active");
@@ -90,7 +96,7 @@ let mybutton = document.getElementById("myBtn");
 window.onscroll = function () { scrollFunction() };
 
 function scrollFunction() {
-	if (document.body.scrollTop > 50 || document.documentElement.scrollTop > 50) {
+	if (document.body.scrollTop > 500 || document.documentElement.scrollTop > 500) {
 		mybutton.style.display = "block";
 	} else {
 		mybutton.style.display = "none";

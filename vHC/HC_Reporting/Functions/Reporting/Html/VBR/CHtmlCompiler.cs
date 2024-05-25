@@ -150,6 +150,13 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR
 
             AddToHtml( SetVbrHcIntro(false));
 
+            //add end div for card holding nav & summary
+            AddToHtml("</div>");
+            //add end div for end of section
+            AddToHtml("</div>");
+            // add line break for spacing
+            AddToHtml("<br>");
+
         }
         private string SetVbrHcIntro(bool scrub)
         {
@@ -158,7 +165,9 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR
             {
                 if (scrub)
                 {
-                    s += "<div class=\"card2\">" + VbrLocalizationHelper.HtmlIntroLine1 + "</a>\n";
+                    s += "<div class=\"card2\">" + 
+                        "<h2>About</h2>"
+                        + VbrLocalizationHelper.HtmlIntroLine1 + "</a>\n";
                     //s += LineBreak();
                     s += String.Format(@"<dl>
                 <dt>CSV Raw Data Output</dt>
@@ -180,7 +189,9 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR
                 }
                 else
                 {
-                    s += "<div class=\"card2\">" + VbrLocalizationHelper.HtmlIntroLine1 + "</a>\n";
+                    s += "<div class=\"card2\">" +
+                         "<h2>About</h2>" +
+                        VbrLocalizationHelper.HtmlIntroLine1 + "</a>\n";
                     //s += LineBreak();
                     s += String.Format(@"<dl>
                 <dt>CSV Raw Data Output</dt>
@@ -307,10 +318,9 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR
 
             //nav
             SetNavigation();
-            AddToHtml("</div>");
 
             // add button
-            AddToHtml(string.Format("<button type=\"button\" class=\"btn\" onclick=\"test()\">{0}</button>", VbrLocalizationHelper.NavColapse));
+            AddToHtml(string.Format("<button id='expandBtn' type=\"button\" class=\"btn\" onclick=\"test()\">{0}</button>", "Expand All Sections"));
 
             CHtmlBodyHelper helper = new();
             _htmldocScrubbed = helper.FormVbrFullReport(_htmldocScrubbed, true);
@@ -349,7 +359,7 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR
             log.Info("[HTML] setting HTML navigation");
 
             // string tableString = NavTableStarter();
-            string tableString = @"<div class='card-container'><div class=card2 id=navigation>";
+            string tableString = @"<div class='card'><div class='card-container'><div class=card2 id=navigation>";
             tableString += string.Format("<h2>{0}</h2>", VbrLocalizationHelper.NavHeader);
               tableString += _tables.MakeNavTable();
             tableString += _form._endDiv;
