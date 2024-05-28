@@ -1,11 +1,7 @@
-﻿using Markdig.Extensions.SmartyPants;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Net.Http.Headers;
-using System.Text;
-using System.Threading.Tasks;
 using VeeamHealthCheck.Functions.Reporting.DataTypes;
 using VeeamHealthCheck.Functions.Reporting.Html.Shared;
 using VeeamHealthCheck.Scrubber;
@@ -199,7 +195,7 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR.VbrTables.Job_Session_Su
                 //    catch (Exception e) { log.Error(e.Message); }
 
 
-                //    percentCounter++;
+                    percentCounter++;
                 //}
                 //try
                 //{
