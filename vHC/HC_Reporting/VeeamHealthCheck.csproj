@@ -88,6 +88,7 @@
     <None Remove="Tools\Scripts\DumpManagedServerToText.ps1" />
     <None Remove="Tools\Scripts\Get-VBRConfig.ps1" />
     <None Remove="Tools\Scripts\Get-VeeamSessionReport.ps1" />
+    <None Remove="Tools\Scripts\test.ps1" />
     <None Remove="Tools\Veeam.Hotfix.Detector.zip" />
   </ItemGroup>
 
@@ -98,11 +99,15 @@
     <Content Include="Tools\Scripts\DumpManagedServerToText.ps1">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
+    <Content Include="Tools\Scripts\test.ps1">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
   </ItemGroup>
 
   <ItemGroup>
     <PackageReference Include="CsvHelper" Version="30.0.1" />
     <PackageReference Include="Microsoft.Extensions.Http" Version="7.0.0" />
+    <PackageReference Include="Microsoft.Management.Infrastructure" Version="3.0.0" />
     <PackageReference Include="Microsoft.PowerShell.SDK" Version="7.3.3" />
     <PackageReference Include="Node.js" Version="5.3.0" />
     <PackageReference Include="Npm" Version="3.5.2" />

@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace VeeamHealthCheck.Functions.Collection.PowerShell
+namespace VeeamHealthCheck.Functions.Collection.PSCollections
 {
     public  class PsErrorTypes
     {

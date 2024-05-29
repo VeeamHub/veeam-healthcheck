@@ -109,7 +109,7 @@ namespace VeeamHealthCheck.Startup
             StartCollections();
             StartAnalysis();
         }
-        public void RunHotfixDetector(string path)
+        public void RunHotfixDetector(string path, string remoteServer)
         {
             LOG.Info(logStart + "Starting Hotfix Detector", false);
             GetVbrVersion();

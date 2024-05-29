@@ -3,7 +3,7 @@
 using System;
 using System.Runtime.InteropServices;
 using System.Text.RegularExpressions;
-using VeeamHealthCheck.Functions.Collection.PowerShell;
+using VeeamHealthCheck.Functions.Collection.PSCollections;
 //using VeeamHealthCheck.Reporting.vsac;
 using VeeamHealthCheck.Shared;
 using VeeamHealthCheck.Shared.Logging;
@@ -178,10 +178,12 @@ namespace VeeamHealthCheck.Startup
                         CGlobals.Logger.Info("HFD path: " + targetDir);
                         break;
                     case var match when new Regex("/HOST=.*").IsMatch(a):
+                        CGlobals.REMOTEEXEC = true;
                         CGlobals.REMOTEHOST = ParsePath(a);
                         //CGlobals.Logger.Info("HFD path: " + targetDir);
                         break;
                     case var match when new Regex("/host=.*").IsMatch(a):
+                        CGlobals.REMOTEEXEC = true;
                         CGlobals.REMOTEHOST = ParsePath(a);
                         //CGlobals.Logger.Info("HFD path: " + targetDir);
                         break;
@@ -195,7 +197,11 @@ namespace VeeamHealthCheck.Startup
 
             if (runHfd)
             {
-                functions.RunHotfixDetector(_hfdPath);
+                if(CGlobals.REMOTEEXEC)
+                {
+                    functions.RunHotfixDetector(_hfdPath, CGlobals.REMOTEHOST);
+                }
+                functions.RunHotfixDetector(_hfdPath, "");
             }
 
             else if (ui)

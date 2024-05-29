@@ -7,7 +7,7 @@ using System.IO.Compression;
 using System.Linq;
 using VeeamHealthCheck.Functions.Collection;
 using VeeamHealthCheck.Functions.Collection.LogParser;
-using VeeamHealthCheck.Functions.Collection.PowerShell;
+using VeeamHealthCheck.Functions.Collection.PSCollections;
 using VeeamHealthCheck.Shared;
 using VeeamHealthCheck.Shared.Logging;
 

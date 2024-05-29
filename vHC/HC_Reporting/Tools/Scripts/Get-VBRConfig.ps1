@@ -448,7 +448,7 @@ try {
         @{n = 'RetentionType'; e = { $Job.BackupStorageOptions.RetentionType } },
         @{n = 'RetentionCount'; e = { $Job.BackupStorageOptions.RetainCycles } },
         @{n = 'RetainDaysToKeep'; e = { $Job.BackupStorageOptions.RetainDaysToKeep } },
-        @{n = 'RetainDays'; e = { $Job.BackupStorageOptions.RetainDays } },
+        @{n = 'DeletedVmRetentionDays'; e = { $Job.BackupStorageOptions.RetainDays } },
         @{n = 'DeletedVmRetention'; e = { $Job.BackupStorageOptions.EnableDeletedVmDataRetention } },
         @{n = 'CompressionLevel'; e = { $Job.BackupStorageOptions.CompressionLevel } },
         @{n = 'Deduplication'; e = { $Job.BackupStorageOptions.EnableDeduplication } },

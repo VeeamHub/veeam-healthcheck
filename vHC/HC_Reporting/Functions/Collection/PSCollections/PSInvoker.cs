@@ -10,7 +10,7 @@ using System.Runtime.InteropServices;
 using VeeamHealthCheck.Shared;
 using VeeamHealthCheck.Shared.Logging;
 
-namespace VeeamHealthCheck.Functions.Collection.PowerShell
+namespace VeeamHealthCheck.Functions.Collection.PSCollections
 {
     class PSInvoker
     {
@@ -198,7 +198,14 @@ namespace VeeamHealthCheck.Functions.Collection.PowerShell
         private ProcessStartInfo ServerDumpInfo(string scriptLocation)
         {
             string argString;
-            argString = $"-NoProfile -ExecutionPolicy unrestricted -file \"{scriptLocation}\"";
+            string server = "localhost";
+            if (CGlobals.REMOTEHOST == "")
+                server = "localhost";
+            else
+            {
+                server = CGlobals.REMOTEHOST;
+            }
+            argString = $"-NoProfile -ExecutionPolicy unrestricted -file \"{scriptLocation}\" -Server {server}";
 
             //string argString = $"-NoProfile -ExecutionPolicy unrestricted -file \"{scriptLocation}\" -ReportPath \"{path}\"";
             log.Debug(logStart + "PS ArgString = " + argString, false);
