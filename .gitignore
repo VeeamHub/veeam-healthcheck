@@ -363,3 +363,4 @@ MigrationBackup/
 FodyWeavers.xsd
 /vHC/HC_Reporting/Tools/build/test.bat
 /vHC/HC_Reporting/Tools/build/clearPath.ps1
+/vHC/HC_Reporting/Tools/build/BuildCopy.bat
