@@ -1,5 +1,6 @@
 // Copyright (c) 2021, Adam Congdon <adam.congdon2@gmail.com>
 // MIT License
+using System.Reflection;
 using System.Windows;
 
 [assembly: ThemeInfo(
@@ -10,3 +11,6 @@ using System.Windows;
                                               //(used if a resource is not found in the page,
                                               // app, or any theme specific resource dictionaries)
 )]
+
+[assembly: AssemblyFileVersion("2.0.0.50")]
+[assembly: AssemblyVersion("2.0.0.50")]

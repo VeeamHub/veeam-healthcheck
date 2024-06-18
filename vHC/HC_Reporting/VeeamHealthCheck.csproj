@@ -164,7 +164,7 @@
   </ItemGroup>
 
   <Target Name="PostBuild" AfterTargets="PostBuildEvent">
-    <Exec Command="call A:\source\VeeamHub\veeam-healthcheck\vHC\HC_Reporting\Tools\build\BuildCopy.bat" />
+    <Exec Command="call A:\source\VeeamHub\veeam-healthcheck\vHC\HC_Reporting\Tools\build\BuildCopy.bat&#xD;&#xA;&#xA;" />
   </Target>
 
   <ItemGroup>
@@ -175,5 +175,9 @@
     <None Include="C:\code\VeeamHub\veeam-healthcheck\vHC\HC_Reporting\.editorconfig" />
     <None Include="Functions\Reporting\Html\VBR\VbrTables\Job Session Summary\JobSessionSummaryRow.cs" />
   </ItemGroup>
+
+  <Target Name="PreBuild" BeforeTargets="PreBuildEvent">
+    <Exec Command="powershell -ExecutionPolicy Bypass -File &quot;A:\source\VeeamHub\veeam-healthcheck\vHC\HC_Reporting\Tools\build\VersionIncrement.ps1&quot; -assemblyInfoPath &quot;$(ProjectDir)\AssemblyInfo.cs&quot;" />
+  </Target>
 
 </Project>

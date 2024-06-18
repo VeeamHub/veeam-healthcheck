@@ -8,6 +8,7 @@ using VeeamHealthCheck.Functions.Reporting.CsvHandlers;
 using VeeamHealthCheck.Functions.Reporting.Html;
 using VeeamHealthCheck.Functions.Reporting.Html.Shared;
 using VeeamHealthCheck.Functions.Reporting.Html.VBR;
+using VeeamHealthCheck.Functions.Reporting.Html.VBR.VbrTables.Security;
 using VeeamHealthCheck.Reporting.Html.VBR;
 using VeeamHealthCheck.Resources.Localization;
 using VeeamHealthCheck.Shared;
@@ -316,11 +317,16 @@ namespace VeeamHealthCheck.Html.VBR
                 }
                 s += _form.EndTable();
             }
+
             catch (Exception e)
             {
                 log.Error("Security Summary Data import failed. ERROR:");
                 log.Error("\t" + e.Message);
             }
+
+            // add malware table
+            s += CMalwareTable.MalwareTable();
+
             s += _form.SectionEnd(summary);
 
             return s;
