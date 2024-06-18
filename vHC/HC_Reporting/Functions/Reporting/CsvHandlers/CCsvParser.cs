@@ -51,6 +51,7 @@ namespace VeeamHealthCheck.Functions.Reporting.CsvHandlers
         public readonly string _physNotProtected = "PhysNotProtected";
         public readonly string _HvProtected = "HvProtected";
         public readonly string _HvUnprotected = "HvUnprotected";
+        public readonly string _malware = "malware";
 
         //VBO Files
         private readonly string _vboGlobalCsv = "Global";
@@ -325,6 +326,13 @@ namespace VeeamHealthCheck.Functions.Reporting.CsvHandlers
             var res = VbrFileReader(_HvUnprotected);
             if (res != null)
                 return res.GetRecords<CViProtected>();
+            return null;
+        }
+        public IEnumerable<CMalwareObject> MalwareInfo()
+        {
+            var res = VbrFileReader(_malware);
+            if (res != null)
+                return res.GetRecords<CMalwareObject>();
             return null;
         }
         public IEnumerable<CRegOptionsCsv> RegOptionsCsvParser()

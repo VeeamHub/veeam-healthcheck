@@ -17,6 +17,9 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.Shared
         public string _endDiv = "</div>";
         public string _collapsible = "collapsible";
 
+        public string checkMark = "&#9989";
+        public string x = "&#10060";
+
         public CHtmlFormatting()
         {
 

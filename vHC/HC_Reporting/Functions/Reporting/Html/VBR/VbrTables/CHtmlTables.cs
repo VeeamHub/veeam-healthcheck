@@ -325,7 +325,8 @@ namespace VeeamHealthCheck.Html.VBR
             }
 
             // add malware table
-            s += CMalwareTable.MalwareTable();
+            var malware = new CMalwareTable();
+            s += malware.MalwareTable();
 
             s += _form.SectionEnd(summary);
 
