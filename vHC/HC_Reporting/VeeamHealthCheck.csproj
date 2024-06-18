@@ -164,7 +164,7 @@
   </ItemGroup>
 
   <Target Name="PostBuild" AfterTargets="PostBuildEvent">
-    <Exec Command="call C:\code\VeeamHub\veeam-healthcheck\vHC\HC_Reporting\Tools\build\test.bat" />
+    <Exec Command="call A:\source\VeeamHub\veeam-healthcheck\vHC\HC_Reporting\Tools\build\BuildCopy.bat" />
   </Target>
 
   <ItemGroup>

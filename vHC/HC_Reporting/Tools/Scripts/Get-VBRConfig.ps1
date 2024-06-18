@@ -515,8 +515,10 @@ catch {
     Write-LogFile($err.message)
 }
 $wan | Export-csv -Path $("$ReportPath\$VBRServer" + '_WanAcc.csv') -NoTypeInformation
-
-#license
+#########################################################################################################
+#########################################################################################################
+#########################################################################################################
+# LICENSE SECTION
 try {
     $message = "Collecting License info..."
     Write-LogFile($message)
@@ -545,8 +547,21 @@ catch {
     Write-LogFile($err.message)
 }
 $licInfo | Export-csv -Path $("$ReportPath\$VBRServer" + '_LicInfo.csv') -NoTypeInformation
+<# END LICENSE SECTION
+#>
+#########################################################################################################
+#########################################################################################################
+#########################################################################################################
 
-    
+<# Malware Detection Section #>
+Get-VBRMalwareDetectionOptions | Export-Csv malware.csv -NoTypeInformation
+
+<#
+SECTION: Protected Workloads Collection
+
+This section is where Protected Workload Information is collected and dumped to CSV.
+
+#>
 # protected workloads
 try {
     $message = "Collecting protected workloads info..."
@@ -646,6 +661,15 @@ $unprotectedHvEntityInfo | select Name, PowerState, ProvisionedSize, UsedSize, P
 $protectedEntityInfo | select Name, PowerState, ProvisionedSize, UsedSize, Path | sort PoweredOn, Path, Name | Export-Csv -Path $("$ReportPath\$VBRServer" + '_ViProtected.csv') -NoTypeInformation
 $unprotectedEntityInfo | select Name, PowerState, ProvisionedSize, UsedSize, Path, Type | sort Type, PoweredOn, Path, Name | Export-Csv -Path $("$ReportPath\$VBRServer" + '_ViUnprotected.csv') -NoTypeInformation
 
+<#
+END SECTION
+#>
+#########################################################################################################
+#########################################################################################################
+#########################################################################################################
+<#
+VBR VERSION INFO COLLECTION
+#>
 try {
     $message = "Collecting VBR Version info..."
     Write-LogFile($message)
