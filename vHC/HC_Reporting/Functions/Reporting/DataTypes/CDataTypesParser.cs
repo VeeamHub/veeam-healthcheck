@@ -398,7 +398,7 @@ namespace VeeamHealthCheck.Functions.Reporting.DataTypes
                         if (s.PwdKeyId != "00000000-0000-0000-0000-000000000000" && !string.IsNullOrEmpty(s.PwdKeyId))
                             jInfo.EncryptionEnabled = "True";
 
-                        jInfo.ActualSize = s.OriginalSize;
+                        jInfo.ActualSize = s.OriginalSize.ToString();
                         eInfoList.Add(jInfo);
 
 

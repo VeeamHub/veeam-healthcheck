@@ -914,15 +914,7 @@ namespace VeeamHealthCheck.Functions.Reporting.Html
             csv = csv.OrderBy(y => y.JobType).ToList();
             csv = csv.OrderBy(x => x.Name).ToList();
 
-            //var cp = new CCsvParser();
-            //List<CServerCsvInfos> csv2 = new();
-            //if (cp != null)
-            //    csv2 = cp.ServerCsvParser().ToList();
-            //XDocument doc = XDocument.Load(_testFile);
 
-            //XElement extElement = new XElement("jobs");
-            //doc.Root.Add(extElement);
-            //doc.AddFirst(new XProcessingInstruction("xml-stylesheet", "type=\"text/xsl\" href=\"SessionReport.xsl\""));
             decimal totalsize = 0;
             if (csv != null)
                 foreach (var c in csv)

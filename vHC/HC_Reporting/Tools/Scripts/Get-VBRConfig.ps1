@@ -464,7 +464,8 @@ try {
         @{n = 'GfsMonthlyEnabled'; e = { $Job.options.gfspolicy.Monthly.IsEnabled } },
         @{n = 'GfsMonthlyCount'; e = { $Job.options.gfspolicy.Monthly.KeepBackupsForNumberOfMonths } },
         @{n = 'GfsYearlyEnabled'; e = { $Job.options.gfspolicy.yearly.IsEnabled } },
-        @{n = 'GfsYearlyCount'; e = { $Job.options.gfspolicy.yearly.KeepBackupsForNumberOfYears } }
+        @{n = 'GfsYearlyCount'; e = { $Job.options.gfspolicy.yearly.KeepBackupsForNumberOfYears } },
+        @{n = 'IndexingType'; e = { $Job.VssOptions.GuestFSIndexingType } }
   
         $AllJobs.Add($JobDetails) | Out-Null
     }

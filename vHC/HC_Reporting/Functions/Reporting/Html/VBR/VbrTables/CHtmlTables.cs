@@ -311,9 +311,9 @@ namespace VeeamHealthCheck.Html.VBR
                 for (int i = 0; i < list.Count(); i++)
                 {
                     if (list[i] == 0)
-                        s += _form.TableData("False", "", 1);
+                        s += _form.TableData(_form.x, "");
                     else if (list[i] == 1)
-                        s += _form.TableData("True", "");
+                        s += _form.TableData(_form.checkMark, "");
                 }
                 s += _form.EndTable();
             }
@@ -1188,35 +1188,118 @@ _form.TableHeader(VbrLocalizationHelper.SbrExt15, VbrLocalizationHelper.SbrExt15
             string s = _form.SectionStartWithButton("jobs", VbrLocalizationHelper.JobInfoTitle, VbrLocalizationHelper.JobInfoBtn);
             string summary = _sum.JobInfo();
 
-            s += _form.TableHeader(VbrLocalizationHelper.JobInfo0, VbrLocalizationHelper.JobInfo0TT);
-            s += _form.TableHeader(VbrLocalizationHelper.JobInfo1, VbrLocalizationHelper.JobInfo1TT);
-            s += _form.TableHeader(VbrLocalizationHelper.JobInfo2, VbrLocalizationHelper.JobInfo2TT);
-            s += _form.TableHeader(VbrLocalizationHelper.JobInfo3, VbrLocalizationHelper.JobInfo3TT);
-            s += _form.TableHeader(VbrLocalizationHelper.JobInfo4, VbrLocalizationHelper.JobInfo4TT);
-            s += _form.TableHeader(VbrLocalizationHelper.JobInfo5, VbrLocalizationHelper.JobInfo5TT);
-            s += _form.TableHeader(VbrLocalizationHelper.JobInfo6, VbrLocalizationHelper.JobInfo6TT);
-            s += _form.TableHeader(VbrLocalizationHelper.JobInfo7, VbrLocalizationHelper.JobInfo7TT);
-            s += _form.TableHeader(VbrLocalizationHelper.JobInfo8, VbrLocalizationHelper.JobInfo8TT);
-            s += _form.TableHeader(VbrLocalizationHelper.JobInfo9, VbrLocalizationHelper.JobInfo9TT);
-            //s += _form.TableHeader(ResourceHandler.JobInfo10, ResourceHandler.JobInfo10TT);
-            s += _form.TableHeader(VbrLocalizationHelper.JobInfo11, VbrLocalizationHelper.JobInfo11TT);
-            s += _form.TableHeader(VbrLocalizationHelper.JobInfo12, VbrLocalizationHelper.JobInfo12TT);
-            s += _form.TableHeader(VbrLocalizationHelper.JobInfo13, VbrLocalizationHelper.JobInfo13TT);
+            s += _form.TableHeader(VbrLocalizationHelper.JobInfo0, VbrLocalizationHelper.JobInfo0TT); // Name
+            s += _form.TableHeader(VbrLocalizationHelper.JobInfo1, VbrLocalizationHelper.JobInfo1TT); // Repo
+            s += _form.TableHeader(VbrLocalizationHelper.JobInfo2, VbrLocalizationHelper.JobInfo2TT); // Source Size (GB)
+            s += _form.TableHeader("Retention Scheme", "Is the job set to keep backups for X number of Days or Points");
+            s += _form.TableHeader(VbrLocalizationHelper.JobInfo3, VbrLocalizationHelper.JobInfo3TT); // Restore Point Target
+            s += _form.TableHeader(VbrLocalizationHelper.JobInfo4, VbrLocalizationHelper.JobInfo4TT); // Encrypted
+            s += _form.TableHeader(VbrLocalizationHelper.JobInfo5, VbrLocalizationHelper.JobInfo5TT); // Job Type
+            //s += _form.TableHeader(VbrLocalizationHelper.JobInfo6, VbrLocalizationHelper.JobInfo6TT); // Algorithm
+            //s += _form.TableHeader(VbrLocalizationHelper.JobInfo7, VbrLocalizationHelper.JobInfo7TT); // Scheudle Enabled Time
+            //s += _form.TableHeader(VbrLocalizationHelper.JobInfo8, VbrLocalizationHelper.JobInfo8TT); // Full Backup Days
+            //s += _form.TableHeader(VbrLocalizationHelper.JobInfo9, VbrLocalizationHelper.JobInfo9TT); // Full Backup Schedule
+            ////s += _form.TableHeader(ResourceHandler.JobInfo10, ResourceHandler.JobInfo10TT);
+            //s += _form.TableHeader(VbrLocalizationHelper.JobInfo11, VbrLocalizationHelper.JobInfo11TT); // transform full to synth
+            //s += _form.TableHeader(VbrLocalizationHelper.JobInfo12, VbrLocalizationHelper.JobInfo12TT); // thransform inc to synth
+            //s += _form.TableHeader(VbrLocalizationHelper.JobInfo13, VbrLocalizationHelper.JobInfo13TT); // transform days
+
+            // New Table Area:
+            //s += _form.TableHeader("", "");
+            s += _form.TableHeader("Compression Level", "Level of compression used in the job");
+            s += _form.TableHeader("Block Size", "Block Size set for the job");
+            s += _form.TableHeader("GFS Enabled", "True if any GFS Periods are enabled");
+            s += _form.TableHeader("GFS Retention", "Details about the GFS Retention period");
+            s += _form.TableHeader("Active Full Enabled", "");
+            s += _form.TableHeader("Indexing Enabled", "");
+            //s += _form.TableHeader("", "");
+            //s += _form.TableHeader("", "");
+            //s += _form.TableHeader("", "");
+            //s += _form.TableHeader("", "");
+            //s += _form.TableHeader("", "");
+            //s += _form.TableHeader("", "");
             s += _form.TableHeaderEnd();
             s += _form.TableBodyStart();
             try
             {
-                var stuff = _df.JobInfoToXml(scrub);
+                CCsvParser csvparser = new();
+                var res = csvparser.JobCsvParser();
+                res.OrderBy(x => x.Name);
 
-                foreach (var stu in stuff)
+                foreach(var job in res)
                 {
-                    s += "<tr>";
+                    s +="<tr>";
+                    s += _form.TableData(job.Name, "");
+                    s += _form.TableData(job.RepoName, "");
 
-                    foreach (var st in stu)
+                    double trueSize = Math.Round(job.OriginalSize / 1024 / 1024 / 1024, 2);
+                    s += _form.TableData(trueSize.ToString() + " GB", "");
+                    //s += _form.TableData(job.RetentionType, "");
+                    s += job.RetentionType == "Cycles" ? _form.TableData("Points", "") : _form.TableData(job.RetentionType, "");
+                    s += _form.TableData(job.RestorePoints, "");
+                    //s += _form.TableData(job.StgEncryptionEnabled, "");
+                    s += job.StgEncryptionEnabled == "True" ? _form.TableData(_form.checkMark, "") : _form.TableData(_form.x, "");
+                    s += _form.TableData(job.JobType, "");
+                    //s += _form.TableData("", "");
+
+
+                    
+                    string compressionLevel = "";
+                    if (job.CompressionLevel == "9")
+                        compressionLevel = "Extreme";
+                    else if (job.CompressionLevel == "6")
+                        compressionLevel = "High";
+                    else if (job.CompressionLevel == "5")
+                        compressionLevel = "Optimal";
+                    
+                    else if (job.CompressionLevel == "4")
+                        compressionLevel = "Dedupe-Friendly";
+                    else if (job.CompressionLevel == "0")
+                        compressionLevel = "None";
+                    s += _form.TableData(compressionLevel, "");
+
+                    string blockSize = "";
+                    if (job.BlockSize == "KbBlockSize1024")
+                        blockSize = "1 MB";
+                    else if (job.BlockSize == "KbBlockSize512")
+                        blockSize = "512 KB";
+                    else if (job.BlockSize == "KbBlockSize256")
+                        blockSize = "256 KB";
+                    else if (job.BlockSize == "KbBlockSize4096")
+                        blockSize = "4 MB";
+                    else if (job.BlockSize == "KbBlockSize8192")
+                        blockSize = "8 MB";
+
+
+                    s += _form.TableData(blockSize, "");
+                    if(job.GfsMonthlyEnabled || job.GfsWeeklyIsEnabled || job.GfsYearlyEnabled)
                     {
-                        s += _form.TableData(st, "");
+                        s += _form.TableData(_form.checkMark, "");
+                        string GfsString = "Weekly: " + job.GfsWeeklyCount + "<br> Monthly: " + job.GfsMonthlyCount + "<br> Yearly: " + job.GfsYearlyCount;
+                        s += _form.TableData(GfsString, "");
                     }
+                    else
+                    {
+                        s += _form.TableData(_form.x, "");
+                        s += _form.TableData("", "");
+                    }
+                    s += job.EnableFullBackup ? _form.TableData(_form.checkMark, "") : _form.TableData(_form.x, "");
+                    s += job.IndexingType != "None" ? _form.TableData(_form.checkMark, "") : _form.TableData(_form.x, "");
+
                 }
+
+
+                //var stuff = _df.JobInfoToXml(scrub);
+
+                //foreach (var stu in stuff)
+                //{
+                //    s += "<tr>";
+
+                //    foreach (var st in stu)
+                //    {
+                //        s += _form.TableData(st, "");
+                //    }
+                //}
             }
             catch (Exception e)
             {

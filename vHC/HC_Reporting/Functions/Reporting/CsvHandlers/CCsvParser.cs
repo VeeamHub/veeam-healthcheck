@@ -27,7 +27,7 @@ namespace VeeamHealthCheck.Functions.Reporting.CsvHandlers
         public  string _sessionPath = "VeeamSessionReport.csv";
         public string _outPath;// = CVariables.vbrDir;
         public readonly string _sobrExtReportName = "SOBRExtents";
-        public readonly string _jobReportName = "Jobs";
+        public readonly string _jobReportName = "_Jobs";
         public readonly string _sobrReportName = "SOBRs";
         public readonly string _proxyReportName = "Proxies";
         public readonly string _repoReportName = "Repositories";
