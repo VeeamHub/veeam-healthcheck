@@ -1211,7 +1211,10 @@ _form.TableHeader(VbrLocalizationHelper.SbrExt15, VbrLocalizationHelper.SbrExt15
             s += _form.TableHeader("GFS Enabled", "True if any GFS Periods are enabled");
             s += _form.TableHeader("GFS Retention", "Details about the GFS Retention period");
             s += _form.TableHeader("Active Full Enabled", "");
+            s += _form.TableHeader("Synthetic Full Enabled", "");
+            s += _form.TableHeader("Backup Chain Type", "Type of backup chain used in the job");
             s += _form.TableHeader("Indexing Enabled", "");
+            //s += _form.TableData("Totals", "");
             //s += _form.TableHeader("", "");
             //s += _form.TableHeader("", "");
             //s += _form.TableHeader("", "");
@@ -1226,14 +1229,30 @@ _form.TableHeader(VbrLocalizationHelper.SbrExt15, VbrLocalizationHelper.SbrExt15
                 var res = csvparser.JobCsvParser();
                 res.OrderBy(x => x.Name);
 
+                double tSizeGB = 0;
+
                 foreach(var job in res)
                 {
                     s +="<tr>";
                     s += _form.TableData(job.Name, "");
                     s += _form.TableData(job.RepoName, "");
 
-                    double trueSize = Math.Round(job.OriginalSize / 1024 / 1024 / 1024, 2);
-                    s += _form.TableData(trueSize.ToString() + " GB", "");
+                    double trueSizeGB = Math.Round(job.OriginalSize / 1024 / 1024 / 1024, 2);
+                    double trueSizeTB = Math.Round(job.OriginalSize / 1024 / 1024 / 1024 / 1024, 2);
+                    double trueSizeMB = Math.Round(job.OriginalSize / 1024 / 1024, 2);                    
+                    tSizeGB += trueSizeGB;
+                    if(trueSizeGB > 999) {
+                        s += _form.TableData(trueSizeTB.ToString() + " TB", "");
+                    }
+                    else if(trueSizeGB < 1)
+                    {
+                        s += _form.TableData(trueSizeMB.ToString() + " MB", "");
+                    }
+                    else
+                    {
+                        s += _form.TableData(trueSizeGB.ToString() + " GB", "");
+                    }
+                    //s += _form.TableData(trueSizeGB.ToString() + " GB", "");
                     //s += _form.TableData(job.RetentionType, "");
                     s += job.RetentionType == "Cycles" ? _form.TableData("Points", "") : _form.TableData(job.RetentionType, "");
                     s += _form.TableData(job.RestorePoints, "");
@@ -1284,11 +1303,39 @@ _form.TableHeader(VbrLocalizationHelper.SbrExt15, VbrLocalizationHelper.SbrExt15
                         s += _form.TableData("", "");
                     }
                     s += job.EnableFullBackup ? _form.TableData(_form.checkMark, "") : _form.TableData(_form.x, "");
+                    if(job.Algorithm == "Increment" && job.TransformFullToSyntethic == true)
+                    {
+                        s += _form.TableData(_form.checkMark, "");
+                    }
+                    else
+                    {
+                        s += _form.TableData(_form.x, "");
+                    }
+                    s += job.Algorithm == "Syntethic" ? _form.TableData("Reverse Incremental", "") : _form.TableData("Forward Incremental", "");
+
+
                     s += job.IndexingType != "None" ? _form.TableData(_form.checkMark, "") : _form.TableData(_form.x, "");
 
                 }
 
-
+                s += "<tr>";
+                s += _form.TableData("Totals", "");
+                s += _form.TableData("", "");
+                //double totalSizeGB = Math.Round(tSizeGB / 1024 / 1024 / 1024, 2);
+                double totalSizeTB = Math.Round(tSizeGB / 1024 , 2);
+                double totalSizeMB = Math.Round(tSizeGB * 1024, 2);
+                if (tSizeGB > 999)
+                {
+                    s += _form.TableData(totalSizeTB.ToString() + " TB", "");
+                }
+                else if (tSizeGB < 1)
+                {
+                    s += _form.TableData(totalSizeMB.ToString() + " MB", "");
+                }
+                else
+                {
+                    s += _form.TableData(tSizeGB.ToString() + " GB", "");
+                }
                 //var stuff = _df.JobInfoToXml(scrub);
 
                 //foreach (var stu in stuff)

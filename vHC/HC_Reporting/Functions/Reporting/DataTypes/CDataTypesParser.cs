@@ -391,7 +391,7 @@ namespace VeeamHealthCheck.Functions.Reporting.DataTypes
                         jInfo.RestorePoints = ParseToInt(s.RestorePoints);
                         jInfo.ScheduleOptions = s.ScheduleOptions;
                         jInfo.SheduleEnabledTime = s.SheduleEnabledTime;
-                        jInfo.TransformFullToSyntethic = s.TransformFullToSyntethic;
+                        jInfo.TransformFullToSyntethic = s.TransformFullToSyntethic.ToString();
                         jInfo.TransformIncrementsToSyntethic = s.TransformIncrementsToSyntethic;
                         jInfo.TransformToSyntethicDays = s.TransformToSyntethicDays;
 

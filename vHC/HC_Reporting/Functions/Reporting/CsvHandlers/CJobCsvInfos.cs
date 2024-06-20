@@ -28,7 +28,7 @@ namespace VeeamHealthCheck.Functions.Reporting.CsvHandlers
         [Index(8)]
         public string FullBackupDays { get; set; }
         [Index(9)]
-        public string TransformFullToSyntethic { get; set; }
+        public bool TransformFullToSyntethic { get; set; }
         [Index(10)]
         public string TransformIncrementsToSyntethic { get; set; }
         [Index(11)]
