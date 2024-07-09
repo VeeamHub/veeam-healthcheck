@@ -299,22 +299,41 @@ namespace VeeamHealthCheck.Html.VBR
             s += _form.TableHeader(VbrLocalizationHelper.SSHdr0, VbrLocalizationHelper.SSHdrTT0) +
                 _form.TableHeader(VbrLocalizationHelper.SSHdr1, VbrLocalizationHelper.SSHdrTT1) +
                 _form.TableHeader(VbrLocalizationHelper.SSHdr2, VbrLocalizationHelper.SSHdrTT2) +
-                _form.TableHeader(VbrLocalizationHelper.SSHdr3, VbrLocalizationHelper.SSHdrTT3);
+                _form.TableHeader(VbrLocalizationHelper.SSHdr3, VbrLocalizationHelper.SSHdrTT3) +
+                _form.TableHeader("MFA Enababled", "Is MFA enabled on VBR");
             s += _form.TableHeaderEnd();
             s += _form.TableBodyStart();
 
             try
             {
                 //table data
-                List<int> list = _df.SecSummary();
+                CSecuritySummaryTable t = _df.SecSummary();
 
-                for (int i = 0; i < list.Count(); i++)
-                {
-                    if (list[i] == 0)
-                        s += _form.TableData(_form.x, "");
-                    else if (list[i] == 1)
-                        s += _form.TableData(_form.checkMark, "");
-                }
+                if (t.ImmutabilityEnabled)
+                    s += _form.TableData(_form.True, "");
+                else
+                    s += _form.TableData(_form.False, "");
+
+                if(t.TrafficEncrptionEnabled)
+                    s += _form.TableData(_form.True, "");
+                else
+                    s += _form.TableData(_form.False, "");  
+                if(t.BackupFileEncrptionEnabled)
+                    s += _form.TableData(_form.True, "");
+                else
+                    s += _form.TableData(_form.False, "");
+
+                if(t.ConfigBackupEncrptionEnabled)
+                    s += _form.TableData(_form.True, "");
+                else
+                    s += _form.TableData(_form.False, "");
+
+                if(t.MFAEnabled)
+                    s += _form.TableData(_form.True, "");
+                else
+                    s += _form.TableData(_form.False, "");
+
+                //s += _form.TableData((t.ImmutabilityEnabled : _form.True ? _form.False), "");
                 s += _form.EndTable();
             }
 
@@ -1257,7 +1276,7 @@ _form.TableHeader(VbrLocalizationHelper.SbrExt15, VbrLocalizationHelper.SbrExt15
                     s += job.RetentionType == "Cycles" ? _form.TableData("Points", "") : _form.TableData(job.RetentionType, "");
                     s += _form.TableData(job.RestorePoints, "");
                     //s += _form.TableData(job.StgEncryptionEnabled, "");
-                    s += job.StgEncryptionEnabled == "True" ? _form.TableData(_form.checkMark, "") : _form.TableData(_form.x, "");
+                    s += job.StgEncryptionEnabled == "True" ? _form.TableData(_form.True, "") : _form.TableData(_form.False, "");
                     s += _form.TableData(job.JobType, "");
                     //s += _form.TableData("", "");
 
@@ -1293,28 +1312,28 @@ _form.TableHeader(VbrLocalizationHelper.SbrExt15, VbrLocalizationHelper.SbrExt15
                     s += _form.TableData(blockSize, "");
                     if(job.GfsMonthlyEnabled || job.GfsWeeklyIsEnabled || job.GfsYearlyEnabled)
                     {
-                        s += _form.TableData(_form.checkMark, "");
+                        s += _form.TableData(_form.True, "");
                         string GfsString = "Weekly: " + job.GfsWeeklyCount + "<br> Monthly: " + job.GfsMonthlyCount + "<br> Yearly: " + job.GfsYearlyCount;
                         s += _form.TableData(GfsString, "");
                     }
                     else
                     {
-                        s += _form.TableData(_form.x, "");
+                        s += _form.TableData(_form.False, "");
                         s += _form.TableData("", "");
                     }
-                    s += job.EnableFullBackup ? _form.TableData(_form.checkMark, "") : _form.TableData(_form.x, "");
+                    s += job.EnableFullBackup ? _form.TableData(_form.True, "") : _form.TableData(_form.False, "");
                     if(job.Algorithm == "Increment" && job.TransformFullToSyntethic == true)
                     {
-                        s += _form.TableData(_form.checkMark, "");
+                        s += _form.TableData(_form.True, "");
                     }
                     else
                     {
-                        s += _form.TableData(_form.x, "");
+                        s += _form.TableData(_form.False, "");
                     }
                     s += job.Algorithm == "Syntethic" ? _form.TableData("Reverse Incremental", "") : _form.TableData("Forward Incremental", "");
 
 
-                    s += job.IndexingType != "None" ? _form.TableData(_form.checkMark, "") : _form.TableData(_form.x, "");
+                    s += job.IndexingType != "None" ? _form.TableData(_form.True, "") : _form.TableData(_form.False, "");
 
                 }
 

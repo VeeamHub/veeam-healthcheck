@@ -14,6 +14,8 @@ using VeeamHealthCheck.Functions.Reporting.DataTypes;
 using VeeamHealthCheck.Functions.Reporting.Html.Shared;
 using VeeamHealthCheck.Functions.Reporting.Html.VBR;
 using VeeamHealthCheck.Functions.Reporting.Html.VBR.VbrTables.Job_Session_Summary;
+using VeeamHealthCheck.Functions.Reporting.Html.VBR.VbrTables.Security;
+
 //using VeeamHealthCheck.Functions.Reporting.Html.VBR.VBR_Tables.Repositories;
 using VeeamHealthCheck.Functions.Reporting.RegSettings;
 using VeeamHealthCheck.Reporting.Html.VBR;
@@ -116,10 +118,21 @@ namespace VeeamHealthCheck.Functions.Reporting.Html
             return notProtectedTypes;
 
         }
-        public List<int> SecSummary()
+        public CSecuritySummaryTable SecSummary()
         {
+            CSecuritySummaryTable t = new();
             List<int> secSummary = new List<int>();
             var csv = new CCsvParser();
+            try
+            {
+                var vbrInfo = csv.GetDynamicVbrInfo();
+                if (vbrInfo.Any(x => x.mfa == "True"))
+                    t.MFAEnabled = true;
+                else t.MFAEnabled = false;
+            }
+            catch (Exception ex) {
+                
+            }
             try
             {
                 var sobrRepo = csv.GetDynamicCapTier().ToList();
@@ -127,13 +140,13 @@ namespace VeeamHealthCheck.Functions.Reporting.Html
                 var onPremRepo = csv.GetDynamicRepo().ToList();
                 if (onPremRepo.Any(x => x.isimmutabilitysupported == "True"))
                 {
-                    secSummary.Add(1);
+                    t.ImmutabilityEnabled = true;
                     //return secSummary;
                 }
 
                 else if (sobrRepo.Any(x => x.immute == "True"))
                 {
-                    secSummary.Add(1);
+                    t.ImmutabilityEnabled = true;
 
                     //return secSummary;
                 }
@@ -141,60 +154,60 @@ namespace VeeamHealthCheck.Functions.Reporting.Html
 
                 else if (extRepo.Any(x => x.isimmutabilitysupported == "True"))
                 {
-                    secSummary.Add(1);
+                    t.ImmutabilityEnabled = true;
                     //return secSummary;
                 }
                 else
                 {
-                    secSummary.Add(0);
+                    t.ImmutabilityEnabled = false;
                 }
 
             }
             catch (Exception)
             {
                 log.Error("Unable to find immutability. Marking false");
-                secSummary.Add(0);
+                t.ImmutabilityEnabled = false;
             }
             try
             {
                 var netTraffic = csv.GetDynamincNetRules();
                 if (netTraffic.Any(x => x.encryptionenabled == "True"))
-                    secSummary.Add(1);
-                else secSummary.Add(0);
+                    t.TrafficEncrptionEnabled = true;
+                else t.TrafficEncrptionEnabled = false;
             }
             catch (Exception)
             {
                 log.Info("Traffic encryption not detected. Marking false");
-                secSummary.Add(0);
+                t.TrafficEncrptionEnabled = false;
             }
             try
             {
                 var backupEnc = csv.GetDynamicJobInfo();
                 if (backupEnc.Any(x => x.pwdkeyid != "00000000-0000-0000-0000-000000000000" && !string.IsNullOrEmpty(x.pwdkeyid)))
-                    secSummary.Add(1);
-                else secSummary.Add(0);
+                    t.BackupFileEncrptionEnabled = true;
+                else t.BackupFileEncrptionEnabled = false;
             }
             catch (Exception)
             {
                 log.Error("Unable to detect backup encryption. Marking false");
-                secSummary.Add(0);
+                t.BackupFileEncrptionEnabled = false;
             }
 
             try
             {
                 var cBackup = csv.GetDynamincConfigBackup();
                 if (cBackup.Any(x => x.encryptionoptions == "True"))
-                    secSummary.Add(1);
-                else secSummary.Add(0);
+                    t.ConfigBackupEncrptionEnabled = true;
+                else t.ConfigBackupEncrptionEnabled = false;
             }
             catch (Exception)
             {
                 log.Error("Config backup not detected. Marking false");
                 //log.Info(e.Message);
-                secSummary.Add(0);
+                t.ConfigBackupEncrptionEnabled = false;
             }
 
-            return secSummary;
+            return t;
 
 
         }

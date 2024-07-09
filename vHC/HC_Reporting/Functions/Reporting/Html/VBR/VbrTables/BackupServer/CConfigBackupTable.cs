@@ -41,8 +41,17 @@ namespace VeeamHealthCheck.Reporting.Html.VBR
             CDataFormer df = new();
             Functions.Analysis.DataModels.BackupServer b = df.BackupServerInfoToXml(false);
             CSecurityGlobalValues.ConfigBackupEnabled = b.ConfigBackupEnabled;
-            CSecurityGlobalValues.ConfigBackupEncrypted = b.ConfigBackupEncryption;
-            CSecurityGlobalValues.ConfigBackupSuccess = b.ConfigBackupLastResult;
+            if(b.ConfigBackupEnabled)
+                {
+                CSecurityGlobalValues.ConfigBackupEncrypted = b.ConfigBackupEncryption;
+                CSecurityGlobalValues.ConfigBackupSuccess = b.ConfigBackupLastResult;
+            }
+            else
+            {
+                   CSecurityGlobalValues.ConfigBackupEncrypted = false;
+                CSecurityGlobalValues.ConfigBackupSuccess = "N/A";
+            }
+
 
         }
     }

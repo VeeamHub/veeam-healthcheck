@@ -697,6 +697,8 @@ try {
     $file = Get-Item -Path $depDLLPath
     $version = $file.VersionInfo.ProductVersion
     $fixes = $file.VersionInfo.Comments
+    try { $MFAGlobalSetting = [Veeam.Backup.Core.SBackupOptions]::get_GlobalMFA() } catch { Out-Null }
+
 
     #output VBR Versioning
     $VbrOutput = [pscustomobject][ordered] @{
@@ -709,6 +711,7 @@ try {
         'MsHost'    = $msDbHost.SqlServerName
         'MsDb'      = $msDbName.SqlDatabaseName
         'DbType'    = $dbType.SqlActiveConfiguration
+        'MFA'       = $MFAGlobalSetting
 
     }
 
