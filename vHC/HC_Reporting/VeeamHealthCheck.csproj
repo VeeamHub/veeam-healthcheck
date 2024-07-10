@@ -11,11 +11,11 @@
     <Company>Veeam</Company>
     <Authors>AdamC</Authors>
     <ApplicationIcon>Veeam_HealthCheck_228x228.ico</ApplicationIcon>
-    <AssemblyVersion>1.0.3.986</AssemblyVersion>
+    <AssemblyVersion>1.0.3.995</AssemblyVersion>
     <SignAssembly>False</SignAssembly>
     <AssemblyOriginatorKeyFile>vhc_keyfile2.pfx</AssemblyOriginatorKeyFile>
     <DelaySign>false</DelaySign>
-    <FileVersion>1.0.3.986</FileVersion>
+    <FileVersion>1.0.3.995</FileVersion>
     <DebugType>full</DebugType>
 	  <SelfContained>true</SelfContained>
 	  <!--These 2 lines are what produce the single file utility. Possibly doesn't work...-->
@@ -175,9 +175,5 @@
     <None Include="C:\code\VeeamHub\veeam-healthcheck\vHC\HC_Reporting\.editorconfig" />
     <None Include="Functions\Reporting\Html\VBR\VbrTables\Job Session Summary\JobSessionSummaryRow.cs" />
   </ItemGroup>
-
-  <Target Name="PreBuild" BeforeTargets="PreBuildEvent">
-    <Exec Command="powershell -ExecutionPolicy Bypass -File &quot;A:\source\VeeamHub\veeam-healthcheck\vHC\HC_Reporting\Tools\build\VersionIncrement.ps1&quot; -assemblyInfoPath &quot;$(ProjectDir)\AssemblyInfo.cs&quot;" />
-  </Target>
 
 </Project>
