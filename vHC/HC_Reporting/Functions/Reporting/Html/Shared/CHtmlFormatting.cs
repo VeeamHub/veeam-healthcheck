@@ -18,7 +18,7 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.Shared
         public string _collapsible = "collapsible";
 
         public string True = "&#9989";
-        public string False = "&#10060";
+        public string False = "&#9744;"; // red x = &#10060
 
         public CHtmlFormatting()
         {
@@ -32,7 +32,7 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.Shared
         {
             return string.Format("<h2><u>{0}</u></h2>", text);
         }
-
+        
         public string Button(string displayText)
         {
             return string.Format("<button type=\"button\" class=\"collapsible\">{0}</button>", displayText);

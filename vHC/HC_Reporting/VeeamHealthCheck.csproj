@@ -11,11 +11,11 @@
     <Company>Veeam</Company>
     <Authors>AdamC</Authors>
     <ApplicationIcon>Veeam_HealthCheck_228x228.ico</ApplicationIcon>
-    <AssemblyVersion>1.0.3.996</AssemblyVersion>
+    <AssemblyVersion>2.0.0.118</AssemblyVersion>
     <SignAssembly>False</SignAssembly>
     <AssemblyOriginatorKeyFile>vhc_keyfile2.pfx</AssemblyOriginatorKeyFile>
     <DelaySign>false</DelaySign>
-    <FileVersion>1.0.3.996</FileVersion>
+    <FileVersion>2.0.0.118</FileVersion>
     <DebugType>full</DebugType>
 	  <SelfContained>true</SelfContained>
 	  <!--These 2 lines are what produce the single file utility. Possibly doesn't work...-->
@@ -28,21 +28,19 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
     <ShouldCreateLogs>True</ShouldCreateLogs>
     <AdvancedSettingsExpanded>False</AdvancedSettingsExpanded>
-    <UpdateAssemblyVersion>True</UpdateAssemblyVersion>
-    <UpdateAssemblyFileVersion>True</UpdateAssemblyFileVersion>
+    <UpdateAssemblyVersion>False</UpdateAssemblyVersion>
+    <UpdateAssemblyFileVersion>False</UpdateAssemblyFileVersion>
     <UpdateAssemblyInfoVersion>False</UpdateAssemblyInfoVersion>
-    <AssemblyVersionSettings>None.None.None.Increment</AssemblyVersionSettings>
     <UpdatePackageVersion>False</UpdatePackageVersion>
     <AssemblyInfoVersionType>SettingsVersion</AssemblyInfoVersionType>
     <InheritWinAppVersionFrom>None</InheritWinAppVersionFrom>
-    <AssemblyFileVersionSettings>None.None.None.Increment</AssemblyFileVersionSettings>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
     <ShouldCreateLogs>True</ShouldCreateLogs>
-    <AdvancedSettingsExpanded>True</AdvancedSettingsExpanded>
-    <UpdateAssemblyVersion>True</UpdateAssemblyVersion>
-    <UpdateAssemblyFileVersion>True</UpdateAssemblyFileVersion>
+    <AdvancedSettingsExpanded>False</AdvancedSettingsExpanded>
+    <UpdateAssemblyVersion>False</UpdateAssemblyVersion>
+    <UpdateAssemblyFileVersion>False</UpdateAssemblyFileVersion>
     <UpdateAssemblyInfoVersion>False</UpdateAssemblyInfoVersion>
     <AssemblyVersionSettings>None.None.None.Increment</AssemblyVersionSettings>
     <UpdatePackageVersion>False</UpdatePackageVersion>
@@ -93,10 +91,10 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Content Include="Tools\Scripts\Collect-VBRLogs.ps1">
+    <Content Include="Tools\Scripts\HotfixDetection\Collect-VBRLogs.ps1">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
-    <Content Include="Tools\Scripts\DumpManagedServerToText.ps1">
+    <Content Include="Tools\Scripts\HotfixDetection\DumpManagedServerToText.ps1">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
     <Content Include="Tools\Scripts\test.ps1">
@@ -117,10 +115,10 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Content Include="Tools\Scripts\Get-VBRConfig.ps1">
+    <Content Include="Tools\Scripts\HealthCheck\VBR\Get-VBRConfig.ps1">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
-    <Content Include="Tools\Scripts\Get-VeeamSessionReport.ps1">
+    <Content Include="Tools\Scripts\HealthCheck\VBR\Get-VeeamSessionReport.ps1">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
     <Content Include="Tools\Veeam.Hotfix.Detector.zip">
@@ -139,7 +137,7 @@
     </EmbeddedResource>
     <EmbeddedResource Include="Resources\Localization\vhcres.zh-cn.resources" />
     <EmbeddedResource Include="Resources\Localization\vhcres.zh-tw.resources" />
-    <Content Include="Tools\Scripts\Collect-VB365Data.ps1">
+    <Content Include="Tools\Scripts\HealthCheck\VB365\Collect-VB365Data.ps1">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
   </ItemGroup>
@@ -164,7 +162,7 @@
   </ItemGroup>
 
   <Target Name="PostBuild" AfterTargets="PostBuildEvent">
-    <Exec Command="call A:\source\VeeamHub\veeam-healthcheck\vHC\HC_Reporting\Tools\build\BuildCopy.bat&#xD;&#xA;&#xA;" />
+    <Exec Command="call A:\source\veeam-healthcheck\vHC\HC_Reporting\Tools\build\BuildCopy.bat&#xD;&#xA;&#xA;" />
   </Target>
 
   <ItemGroup>

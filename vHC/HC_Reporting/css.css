@@ -136,6 +136,9 @@ th {
     background-color: #00d15f;
     cursor: pointer;
 }
+td{
+    vertical-align: middle;
+}
 
 .collapsible:after {
     content: '\02795';
@@ -194,7 +197,9 @@ dd {
 
     .content-table th,
     .content-table td {
-        padding: 12px 15px
+        padding: 12px 15px;
+        vertical-align: middle;
+        text-align:center
     }
 
     .content-table tbody tr {
