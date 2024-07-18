@@ -1277,7 +1277,8 @@ _form.TableHeader(VbrLocalizationHelper.SbrExt15, VbrLocalizationHelper.SbrExt15
                     s += _form.TableData(job.RestorePoints, "");
                     //s += _form.TableData(job.StgEncryptionEnabled, "");
                     s += job.StgEncryptionEnabled == "True" ? _form.TableData(_form.True, "") : _form.TableData(_form.False, "");
-                    s += _form.TableData(job.JobType, "");
+                    var jobType = GetJobType(job.JobType);
+                    s += _form.TableData(jobType, "");
                     //s += _form.TableData("", "");
 
 
@@ -1336,6 +1337,9 @@ _form.TableHeader(VbrLocalizationHelper.SbrExt15, VbrLocalizationHelper.SbrExt15
                     s += job.IndexingType != "None" ? _form.TableData(_form.True, "") : _form.TableData(_form.False, "");
 
                 }
+                // code something here:
+
+
 
                 s += "<tr>";
                 s += _form.TableData("Totals", "");
@@ -1376,6 +1380,23 @@ _form.TableHeader(VbrLocalizationHelper.SbrExt15, VbrLocalizationHelper.SbrExt15
             s += _form.SectionEnd(summary);
             return s;
         }
+
+        private string GetJobType(string jobType)
+        {
+            switch (jobType)
+            {
+                case "Copy":
+                    return "File Copy";
+                case "SimpleBackupCopyPolicy":
+                    return "Backup Copy";
+                case "NasBackup":
+                    return "File Backup";
+                default:
+                    return jobType;
+            }
+            throw new NotImplementedException();
+        }
+
         public void AddSessionsFiles(bool scrub)
         {
             _df.JobSessionInfoToXml(scrub);
