@@ -59,6 +59,21 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR
             if (CGlobals.OpenExplorer)
                 exporter.OpenExplorer();
         }
+        // write a method to export _htmldocOriginal as a PDF
+
+        private void ExportToPdf()
+        {
+            //HtmlToPdfConverter converter = new();
+            //var htmlContent = _htmldocOriginal;
+            //var outputPath = "output.pdf";
+
+            //var pdfBytes = converter.ConvertHtmlToPdf(htmlContent, outputPath);
+
+            //// If you need to save the PDF to a file
+            //File.WriteAllBytes(outputPath, pdfBytes);
+        }
+
+
         private void ExportSecurityHtml()
         {
             CHtmlExporter exporter = new(GetServerName());

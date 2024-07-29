@@ -143,150 +143,50 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR.VbrTables.Job_Session_Su
                             //mainString += FormHtmlString(cs, mainString, false);
 
                             File.AppendAllText(mainDir, FormHtmlString(cs, mainString, false));
-                        }
-                    }
-                    catch (Exception e) { log.Error(e.Message); }
-                }
-                counter = 1;
-                //File.AppendAllText(mainDir, mainString);
-                mainString = null;
-
-
-                foreach (var cs in jobSessions)
-                {
-                    //string info = string.Format("Parsing {0} of {1} Job Sessions to HTML", counter, totalSessions);
-                    counter++;
-                    //log.Info(logStart + info, false);
-                    try
-                    {
-                        //int matches = 0;
-                        if (name == cs.JobName)
-                        {
-                           // matches++;
-                            //mainString += FormHtmlString(cs, mainString, false);
                             File.AppendAllText(scrubDir, FormHtmlString(cs, scrubString, true));
 
                         }
                     }
                     catch (Exception e) { log.Error(e.Message); }
+
+                    percentCounter++;
                 }
+                //counter = 1;
+                ////File.AppendAllText(mainDir, mainString);
+                //mainString = null;
 
 
-                scrubString = null;
-                //original
                 //foreach (var cs in jobSessions)
                 //{
-
-
-                //    string info = string.Format("Parsing {0} of {1} Job Sessions to HTML", counter, totalSessions);
+                //    //string info = string.Format("Parsing {0} of {1} Job Sessions to HTML", counter, totalSessions);
                 //    counter++;
                 //    //log.Info(logStart + info, false);
                 //    try
                 //    {
-                //        int matches = 0;
+                //        //int matches = 0;
                 //        if (name == cs.JobName)
                 //        {
-                //            matches++;
-                //            mainString += FormHtmlString(cs, mainString, false);
-                //            scrubString += FormHtmlString(cs, scrubString, true);
+                //           // matches++;
+                //            //mainString += FormHtmlString(cs, mainString, false);
 
                 //        }
                 //    }
                 //    catch (Exception e) { log.Error(e.Message); }
 
+                //    percentCounter++;
+                //}
 
-                    percentCounter++;
-                //}
-                //try
-                //{
-                //    //string dir = Path.GetDirectoryName(docName);
-                //    //if (!Directory.Exists(dir))
-                //    //    Directory.CreateDirectory(dir);
-                //    File.WriteAllText(mainDir, mainString);
-                //    mainString = "";
 
-                //    File.WriteAllText(scrubDir, scrubString);
-                //    scrubString = "";
-                //}
-                //catch (Exception e)
-                //{
-                //    log.Error(e.Message);
-                //}
+                scrubString = null;
+                
+
+                   // percentCounter++;
+                
             }
 
 
 
-            //original loop
-            //foreach (var cs in csv)
-            //{
-            //    LogJobSessionParseProgress(percentCounter, csv.Count);
-
-            //    if (!processedJobs.Contains(cs.JobName))
-            //    {
-            //        processedJobs.Add(cs.JobName);
-
-            //        // string outDir = "";// CVariables.desiredDir + "\\Original";
-            //        string folderName = "\\JobSessionReports";
-
-            //        string mainDir = SetMainDir(folderName, cs);
-            //        string scrubDir = SetScrubDir(folderName, cs);
-
-            //        if (cs.JobName.Contains("/"))
-            //        {
-            //            cs.JobName = FixInvalidJobName(cs.JobName);
-            //        }
-
-            //        //                    string docName = outDir + "\\";
-
-
-            //        string mainString = ReturnTableHeaderString(cs);
-            //        string scrubString = ReturnTableHeaderString(cs);
-
-            //        int counter = 1;
-            //        foreach (var c in csv)
-            //        {
-            //            string info = string.Format("Parsing {0} of {1} Job Sessions to HTML", counter, csv.Count);
-            //            counter++;
-            //            //log.Info(logStart + info, false);
-            //            try
-            //            {
-            //                int matches = 0;
-            //                if (cs.JobName == c.JobName)
-            //                {
-            //                    matches++;
-            //                    mainString += FormHtmlString(c, mainString, false);
-            //                    scrubString += FormHtmlString(c, scrubString, true);
-
-            //                }
-            //            }
-            //            catch (Exception e) { log.Error(e.Message); }
-
-
-            //            //write HTML
-
-            //        }
-            //        try
-            //        {
-            //            //string dir = Path.GetDirectoryName(docName);
-            //            //if (!Directory.Exists(dir))
-            //            //    Directory.CreateDirectory(dir);
-            //            File.WriteAllText(mainDir, mainString);
-            //            mainString = "";
-
-            //            File.WriteAllText(scrubDir, scrubString);
-            //            scrubString = "";
-            //        }
-            //        catch (Exception e)
-            //        {
-            //            log.Error(e.Message);
-            //        }
-
-            //    }
-
-
-
-            //    percentCounter++;
-            ////}
+            
         }
         private string SetMainDir(string folderName, CJobSessionInfo cs)
         {
