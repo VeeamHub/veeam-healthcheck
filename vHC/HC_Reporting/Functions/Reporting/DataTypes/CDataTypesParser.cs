@@ -535,12 +535,12 @@ namespace VeeamHealthCheck.Functions.Reporting.DataTypes
             int memTasks = MemoryTasksCount(ram, 4);
             int coreTasks = cores * 3;
 
-            if (CGlobals.VBRMAJORVERSION == 12)
-            {
-                // user v12 sizing math here.
-                memTasks = MemoryTasksCount(ram, 2);
-                coreTasks = cores * 2;
-            }
+            //if (CGlobals.VBRMAJORVERSION == 12)
+            //{
+            //    // user v12 sizing math here.
+            //    memTasks = MemoryTasksCount(ram, 2);
+            //    coreTasks = cores * 2;
+            //}
 
 
             if (coreTasks == memTasks)
