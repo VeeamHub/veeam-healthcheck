@@ -162,7 +162,13 @@
   </ItemGroup>
 
   <Target Name="PostBuild" AfterTargets="PostBuildEvent">
-    <Exec Command="call A:\source\veeam-healthcheck\vHC\HC_Reporting\Tools\build\BuildCopy.bat&#xD;&#xA;&#xA;" />
+	  <Message Text="Checking if test.bat exists: $(ProjectDir)Tools\build\test.bat" Importance="High" />
+	  <ItemGroup>
+		  <!-- Sets a local MSBuild variable (maybe wrong word for it) if test.bat exists -->
+		  <LocalPostBuildBat Include="$(ProjectDir)Tools\build\test.bat" Condition="Exists('$(ProjectDir)Tools\build\test.bat')" />
+	  </ItemGroup>
+	  <!-- Calls the bat file, if the variable exists, if not this does nothing and silently continues -->
+	  <Exec Command="call @(LocalPostBuildBat)" />
   </Target>
 
   <ItemGroup>
