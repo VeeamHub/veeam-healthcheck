@@ -11,11 +11,11 @@
     <Company>Veeam</Company>
     <Authors>AdamC</Authors>
     <ApplicationIcon>Veeam_HealthCheck_228x228.ico</ApplicationIcon>
-    <AssemblyVersion>2.0.0.127</AssemblyVersion>
+    <AssemblyVersion>2.0.0.131</AssemblyVersion>
     <SignAssembly>False</SignAssembly>
     <AssemblyOriginatorKeyFile>vhc_keyfile2.pfx</AssemblyOriginatorKeyFile>
     <DelaySign>false</DelaySign>
-    <FileVersion>2.0.0.127</FileVersion>
+    <FileVersion>2.0.0.131</FileVersion>
     <DebugType>full</DebugType>
 	  <SelfContained>true</SelfContained>
 	  <!--These 2 lines are what produce the single file utility. Possibly doesn't work...-->
@@ -162,10 +162,10 @@
   </ItemGroup>
 
   <Target Name="PostBuild" AfterTargets="PostBuildEvent">
-	  <Message Text="Checking if test.bat exists: $(ProjectDir)Tools\build\test.bat" Importance="High" />
+	  <Message Text="Checking if BuildCopy.bat exists: $(ProjectDir)Tools\build\BuildCopy.bat" Importance="High" />
 	  <ItemGroup>
-		  <!-- Sets a local MSBuild variable (maybe wrong word for it) if test.bat exists -->
-		  <LocalPostBuildBat Include="$(ProjectDir)Tools\build\test.bat" Condition="Exists('$(ProjectDir)Tools\build\test.bat')" />
+		  <!-- Sets a local MSBuild variable (maybe wrong word for it) if BuildCopy.bat exists -->
+		  <LocalPostBuildBat Include="$(ProjectDir)Tools\build\BuildCopy.bat" Condition="Exists('$(ProjectDir)Tools\build\BuildCopy.bat')" />
 	  </ItemGroup>
 	  <!-- Calls the bat file, if the variable exists, if not this does nothing and silently continues -->
 	  <Exec Command="call @(LocalPostBuildBat)" />

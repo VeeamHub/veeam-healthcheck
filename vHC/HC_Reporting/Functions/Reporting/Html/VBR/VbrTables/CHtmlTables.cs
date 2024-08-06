@@ -196,7 +196,7 @@ namespace VeeamHealthCheck.Html.VBR
 
 
                 s += _form.TableBodyStart();
-
+                s += "<tr>";
                 s += _form.TableData(b.DbType, "");
                 s += _form.TableData(b.IsLocal.ToString(), "");
                 s += _form.TableData(b.DbHostName, "");
@@ -240,7 +240,7 @@ namespace VeeamHealthCheck.Html.VBR
             string summary = _sum.SetVbrSummary();
             //CDataFormer cd = new(true);
             BackupServer b = _df.BackupServerInfoToXml(scrub);
-            if(String.IsNullOrEmpty(b.Version))
+            if (String.IsNullOrEmpty(b.Version))
                 b.Version = CGlobals.VBRFULLVERSION;
             // test area
 
@@ -251,15 +251,19 @@ namespace VeeamHealthCheck.Html.VBR
 
             s += _form.header3("Config Backup Info");
             s += "<table border=\"1\" class=\"content-table\">";
+            s += "<tr>";
             s += _form.TableHeader(VbrLocalizationHelper.BkpSrvTblCfgEnabled, VbrLocalizationHelper.BstCfgEnabledTT);
             s += _form.TableHeader(VbrLocalizationHelper.BkpSrvTblCfgLastRes, VbrLocalizationHelper.BstCfgLastResTT);
             s += _form.TableHeader(VbrLocalizationHelper.BkpSrvTblCfgEncrypt, VbrLocalizationHelper.BstCfgEncTT);
             s += _form.TableHeader(VbrLocalizationHelper.BkpSrvTblTarget, VbrLocalizationHelper.BstCfgTarTT);
+            s += "</tr>";
             s += _form.TableBodyStart();
+            s += "<tr>";
             s += _form.TableData(b.ConfigBackupEnabled.ToString(), "");
             s += _form.TableData(b.ConfigBackupLastResult, "");
             s += _form.TableData(b.ConfigBackupEncryption.ToString(), "");
             s += _form.TableData(b.ConfigBackupTarget, "");
+            s += "</tr>";
             s += _form.EndTable();
 
 
@@ -303,6 +307,7 @@ namespace VeeamHealthCheck.Html.VBR
                 _form.TableHeader("MFA Enababled", "Is MFA enabled on VBR");
             s += _form.TableHeaderEnd();
             s += _form.TableBodyStart();
+            s += "<tr>";
 
             try
             {
@@ -314,25 +319,25 @@ namespace VeeamHealthCheck.Html.VBR
                 else
                     s += _form.TableData(_form.False, "");
 
-                if(t.TrafficEncrptionEnabled)
+                if (t.TrafficEncrptionEnabled)
                     s += _form.TableData(_form.True, "");
                 else
-                    s += _form.TableData(_form.False, "");  
-                if(t.BackupFileEncrptionEnabled)
+                    s += _form.TableData(_form.False, "");
+                if (t.BackupFileEncrptionEnabled)
                     s += _form.TableData(_form.True, "");
                 else
                     s += _form.TableData(_form.False, "");
 
-                if(t.ConfigBackupEncrptionEnabled)
+                if (t.ConfigBackupEncrptionEnabled)
                     s += _form.TableData(_form.True, "");
                 else
                     s += _form.TableData(_form.False, "");
 
-                if(t.MFAEnabled)
+                if (t.MFAEnabled)
                     s += _form.TableData(_form.True, "");
                 else
                     s += _form.TableData(_form.False, "");
-
+                s += "</tr>";
                 //s += _form.TableData((t.ImmutabilityEnabled : _form.True ? _form.False), "");
                 s += _form.EndTable();
             }
@@ -381,7 +386,7 @@ namespace VeeamHealthCheck.Html.VBR
                 s += AddTable("Detected OS", _helper.CollectedOsInfo());
 
             }
-            catch(Exception e)
+            catch (Exception e)
             {
                 log.Error("Failed to add OS info to HTML report", false);
                 log.Error(e.Message, false);
@@ -568,7 +573,7 @@ namespace VeeamHealthCheck.Html.VBR
                 _form.TableHeader(VbrLocalizationHelper.PlHdr3, VbrLocalizationHelper.PlHdrTT3);
                 s += _form.TableHeaderEnd();
                 s += _form.TableBodyStart();
-                
+                s += "<tr>";
                 s += _form.TableData((_df._viProtectedNames.Distinct().Count() + _df._viNotProtectedNames.Distinct().Count()).ToString(), "");
                 s += _form.TableData(_df._viProtectedNames.Distinct().Count().ToString(), "");
                 s += _form.TableData(_df._viNotProtectedNames.Distinct().Count().ToString(), "");
@@ -588,6 +593,7 @@ namespace VeeamHealthCheck.Html.VBR
                 s += _form.TableHeader("HV Duplicates", "Total HV VMs potentially found in multiple backups");
                 s += _form.TableHeaderEnd();
                 s += _form.TableBodyStart();
+                s += "<tr>";
                 s += _form.TableData((_df._hvProtectedNames.Distinct().Count() + _df._hvNotProtectedNames.Distinct().Count()).ToString(), "");
                 s += _form.TableData(_df._hvProtectedNames.Distinct().Count().ToString(), "");
                 s += _form.TableData(_df._hvNotProtectedNames.Distinct().Count().ToString(), "");
@@ -682,33 +688,31 @@ namespace VeeamHealthCheck.Html.VBR
         {
             string s = _form.SectionStartWithButton("regkeys", VbrLocalizationHelper.RegTitle, VbrLocalizationHelper.RegBtn);
             string summary = _sum.RegKeys();
-            s += "<tr>" +
-                _form.TableHeader(VbrLocalizationHelper.Reg0, VbrLocalizationHelper.Reg0TT) +
-                _form.TableHeader(VbrLocalizationHelper.Reg1, VbrLocalizationHelper.Reg1TT) +
-                "</tr>";
-            s += _form.TableHeaderEnd();
-            s += _form.TableBodyStart();
-            //CDataFormer cd = new(true);
+
             try
             {
-                //Dictionary<string, Object> keys = CGlobals.DEFAULTREGISTRYKEYS;
-                //foreach(var  key in keys)
-                //{
-                //    s += "<tr>";
-                //    s += _form.TableData(key.Key, "");
-                //    s += _form.TableData(key.Value.ToString(), "");
 
-                //    s += "</tr>";
-                //}
-                // old stuff below
                 Dictionary<string, string> list = _df.RegOptions();
-
-                foreach (var d in list)
+                if (list.Count == 0)
                 {
+                    s += "<p>No modified registry keys found</p>";
+                }
+                else
+                {
+                    s += "<tr>" +
+                    _form.TableHeader(VbrLocalizationHelper.Reg0, VbrLocalizationHelper.Reg0TT) +
+                    _form.TableHeader(VbrLocalizationHelper.Reg1, VbrLocalizationHelper.Reg1TT) +
+                    "</tr>";
+                    s += _form.TableHeaderEnd();
+                    s += _form.TableBodyStart();
                     s += "<tr>";
-                    s += _form.TableData(d.Key, "");
-                    s += _form.TableData(d.Value.ToString(), "");
-                    s += "</tr>";
+                    foreach (var d in list)
+                    {
+                        s += "<tr>";
+                        s += _form.TableData(d.Key, "");
+                        s += _form.TableData(d.Value.ToString(), "");
+                        s += "</tr>";
+                    }
                 }
             }
             catch (Exception e)
@@ -1250,20 +1254,21 @@ _form.TableHeader(VbrLocalizationHelper.SbrExt15, VbrLocalizationHelper.SbrExt15
 
                 double tSizeGB = 0;
 
-                foreach(var job in res)
+                foreach (var job in res)
                 {
-                    s +="<tr>";
+                    s += "<tr>";
                     s += _form.TableData(job.Name, "");
                     s += _form.TableData(job.RepoName, "");
 
                     double trueSizeGB = Math.Round(job.OriginalSize / 1024 / 1024 / 1024, 2);
                     double trueSizeTB = Math.Round(job.OriginalSize / 1024 / 1024 / 1024 / 1024, 2);
-                    double trueSizeMB = Math.Round(job.OriginalSize / 1024 / 1024, 2);                    
+                    double trueSizeMB = Math.Round(job.OriginalSize / 1024 / 1024, 2);
                     tSizeGB += trueSizeGB;
-                    if(trueSizeGB > 999) {
+                    if (trueSizeGB > 999)
+                    {
                         s += _form.TableData(trueSizeTB.ToString() + " TB", "");
                     }
-                    else if(trueSizeGB < 1)
+                    else if (trueSizeGB < 1)
                     {
                         s += _form.TableData(trueSizeMB.ToString() + " MB", "");
                     }
@@ -1282,7 +1287,7 @@ _form.TableHeader(VbrLocalizationHelper.SbrExt15, VbrLocalizationHelper.SbrExt15
                     //s += _form.TableData("", "");
 
 
-                    
+
                     string compressionLevel = "";
                     if (job.CompressionLevel == "9")
                         compressionLevel = "Extreme";
@@ -1290,7 +1295,7 @@ _form.TableHeader(VbrLocalizationHelper.SbrExt15, VbrLocalizationHelper.SbrExt15
                         compressionLevel = "High";
                     else if (job.CompressionLevel == "5")
                         compressionLevel = "Optimal";
-                    
+
                     else if (job.CompressionLevel == "4")
                         compressionLevel = "Dedupe-Friendly";
                     else if (job.CompressionLevel == "0")
@@ -1311,7 +1316,7 @@ _form.TableHeader(VbrLocalizationHelper.SbrExt15, VbrLocalizationHelper.SbrExt15
 
 
                     s += _form.TableData(blockSize, "");
-                    if(job.GfsMonthlyEnabled || job.GfsWeeklyIsEnabled || job.GfsYearlyEnabled)
+                    if (job.GfsMonthlyEnabled || job.GfsWeeklyIsEnabled || job.GfsYearlyEnabled)
                     {
                         s += _form.TableData(_form.True, "");
                         string GfsString = "Weekly: " + job.GfsWeeklyCount + "<br> Monthly: " + job.GfsMonthlyCount + "<br> Yearly: " + job.GfsYearlyCount;
@@ -1323,7 +1328,7 @@ _form.TableHeader(VbrLocalizationHelper.SbrExt15, VbrLocalizationHelper.SbrExt15
                         s += _form.TableData("", "");
                     }
                     s += job.EnableFullBackup ? _form.TableData(_form.True, "") : _form.TableData(_form.False, "");
-                    if(job.Algorithm == "Increment" && job.TransformFullToSyntethic == true)
+                    if (job.Algorithm == "Increment" && job.TransformFullToSyntethic == true)
                     {
                         s += _form.TableData(_form.True, "");
                     }
@@ -1345,7 +1350,7 @@ _form.TableHeader(VbrLocalizationHelper.SbrExt15, VbrLocalizationHelper.SbrExt15
                 s += _form.TableData("Totals", "");
                 s += _form.TableData("", "");
                 //double totalSizeGB = Math.Round(tSizeGB / 1024 / 1024 / 1024, 2);
-                double totalSizeTB = Math.Round(tSizeGB / 1024 , 2);
+                double totalSizeTB = Math.Round(tSizeGB / 1024, 2);
                 double totalSizeMB = Math.Round(tSizeGB * 1024, 2);
                 if (tSizeGB > 999)
                 {
