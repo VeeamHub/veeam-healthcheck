@@ -15,10 +15,14 @@ namespace VeeamHealthCheck.Functions.Collection.PSCollections
     class PSInvoker
     {
         private readonly string _vb365Script = Environment.CurrentDirectory + @"\Tools\Scripts\HealthCheck\VB365\Collect-VB365Data.ps1";
+
         private readonly string _vbrConfigScript = Environment.CurrentDirectory + @"\Tools\Scripts\HealthCheck\VBR\Get-VBRConfig.ps1";
         private readonly string _vbrSessionScript = Environment.CurrentDirectory + @"\Tools\Scripts\HealthCheck\VBR\Get-VeeamSessionReport.ps1";
+        private readonly string _nasScript = Environment.CurrentDirectory + @"\Tools\Scripts\HealthCheck\VBR\Get-NasInfo.ps1";
+
         private readonly string _exportLogsScript = Environment.CurrentDirectory + @"\Tools\Scripts\HotfixDetection\Collect-VBRLogs.ps1";
         private readonly string _dumpServers = Environment.CurrentDirectory + @"\Tools\Scripts\HotfixDetection\DumpManagedServerToText.ps1";
+
         public static readonly string SERVERLISTFILE = "serverlist.txt";
 
         private readonly CLogger log = CGlobals.Logger;
@@ -42,6 +46,7 @@ namespace VeeamHealthCheck.Functions.Collection.PSCollections
         {
             UnblockFile(_vbrConfigScript);
             UnblockFile(_vbrSessionScript);
+            UnblockFile(_nasScript);
             UnblockFile(_exportLogsScript);
             UnblockFile(_dumpServers);
             UnblockFile(_vb365Script);
@@ -88,13 +93,23 @@ namespace VeeamHealthCheck.Functions.Collection.PSCollections
         }
         public bool RunVbrConfigCollect()
         {
+            bool success = true;
+            success = ExecutePsScript(VbrConfigStartInfo());
+            if (success)
+                success = ExecutePsScript(VbrNasStartInfo());
+            if (success)
+                success = ExecutePsScript(VbrSessionStartInfo());
+            return success;
+        }
+        public bool ExecutePsScript(ProcessStartInfo startInfo)
+        {
             var res1 = new Process();
-            res1.StartInfo = VbrConfigStartInfo();
+            res1.StartInfo = startInfo;
             res1.Start();
 
-            log.Info(CMessages.PsVbrConfigProcId + res1.Id.ToString(), false);
+            log.Info("[PS] Script execution started. PID: " + res1.Id.ToString(), false);
 
-            if(res1 != null && !res1.HasExited)
+            if (res1 != null && !res1.HasExited)
                 res1.WaitForExit();
             List<string> errorarray = new();
 
@@ -113,7 +128,8 @@ namespace VeeamHealthCheck.Functions.Collection.PSCollections
                 }
                 errorarray.Add(errString);
             }
-            PushPsErrorsToMainLog(errorarray);
+            if(errorarray.Count > 0)
+                PushPsErrorsToMainLog(errorarray);
 
             log.Info(CMessages.PsVbrConfigProcIdDone, false);
             if (failed)
@@ -146,6 +162,15 @@ namespace VeeamHealthCheck.Functions.Collection.PSCollections
         {
             log.Info(CMessages.PsVbrConfigStart, false);
             return ConfigStartInfo(_vbrConfigScript, 0, "");
+        }
+        private ProcessStartInfo VbrNasStartInfo()
+        {
+            log.Info("");
+            return ConfigStartInfo(_nasScript, 0, "");
+        }
+        private ProcessStartInfo VbrSessionStartInfo()
+        {
+            return ConfigStartInfo(_vbrSessionScript, CGlobals.ReportDays, "");
         }
 
         private ProcessStartInfo ExportLogsStartInfo(string path, string server)

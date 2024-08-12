@@ -11,11 +11,11 @@
     <Company>Veeam</Company>
     <Authors>AdamC</Authors>
     <ApplicationIcon>Veeam_HealthCheck_228x228.ico</ApplicationIcon>
-    <AssemblyVersion>2.0.0.131</AssemblyVersion>
+    <AssemblyVersion>2.0.0.136</AssemblyVersion>
     <SignAssembly>False</SignAssembly>
     <AssemblyOriginatorKeyFile>vhc_keyfile2.pfx</AssemblyOriginatorKeyFile>
     <DelaySign>false</DelaySign>
-    <FileVersion>2.0.0.131</FileVersion>
+    <FileVersion>2.0.0.136</FileVersion>
     <DebugType>full</DebugType>
 	  <SelfContained>true</SelfContained>
 	  <!--These 2 lines are what produce the single file utility. Possibly doesn't work...-->
@@ -65,6 +65,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Compile Remove="Functions\Reporting\DataTypes\NAS\CNasFileDataVmc.cs" />
     <Compile Remove="Functions\Reporting\Html\VBR\VbrTables\Job Session Summary\JobSessionSummaryRow.cs" />
   </ItemGroup>
 
@@ -86,11 +87,15 @@
     <None Remove="Tools\Scripts\DumpManagedServerToText.ps1" />
     <None Remove="Tools\Scripts\Get-VBRConfig.ps1" />
     <None Remove="Tools\Scripts\Get-VeeamSessionReport.ps1" />
+    <None Remove="Tools\Scripts\HealthCheck\VBR\Get-NasInfo.ps1" />
     <None Remove="Tools\Scripts\test.ps1" />
     <None Remove="Tools\Veeam.Hotfix.Detector.zip" />
   </ItemGroup>
 
   <ItemGroup>
+    <Content Include="Tools\Scripts\HealthCheck\VBR\Get-NasInfo.ps1">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
     <Content Include="Tools\Scripts\HotfixDetection\Collect-VBRLogs.ps1">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
@@ -177,6 +182,7 @@
 
   <ItemGroup>
     <None Include="C:\code\VeeamHub\veeam-healthcheck\vHC\HC_Reporting\.editorconfig" />
+    <None Include="Functions\Reporting\DataTypes\NAS\CNasFileDataVmc.cs" />
     <None Include="Functions\Reporting\Html\VBR\VbrTables\Job Session Summary\JobSessionSummaryRow.cs" />
   </ItemGroup>
 
