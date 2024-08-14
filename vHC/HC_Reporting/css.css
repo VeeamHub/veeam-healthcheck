@@ -2,11 +2,74 @@
     font-family: Tahoma !important;
 }
 
+/*body {
+    display: flex;
+}*/
+
 .rhtitle {
     color: #00d15f;
     font-weight: bold;
     font-size: 25px;
 }
+
+h1 {
+    color: white;
+    font-weight: bold;
+    font-size: 25px;
+    background: #00d15f;
+    text-align: center;
+}
+
+h2 {
+    /*    color: #00d15f;
+    font-style: italic;
+    background: lightgray;
+    text-align: center;*/
+    font-size: 1.5em;
+    font-weight: bold;
+    margin-top: 0.83em;
+    margin-bottom: 0.83em;
+    text-decoration: underline;
+}
+
+.image-container {
+    position: relative;
+    text-align: center;
+}
+
+.image-container img {
+    max-width: 100%;
+    height: auto;
+    border: 2px solid #ccc;
+    border-radius: 10px;
+}
+
+    .image-container h1,
+    .image-container h2,
+    .image-container .report-info {
+        position: absolute;
+        left: 0;
+        color: white;
+        background-color: rgba(0, 0, 0, 0.5);
+        padding: 10px;
+        border-radius: 5px;
+    }
+
+    .image-container h1 {
+        top: 30%;
+        transform: translate(0, -50%);
+    }
+
+    .image-container h2 {
+        top: 40%;
+        transform: translate(0, -50%);
+    }
+
+    .image-container .report-info {
+        top: 50%;
+        transform: translate(0, -50%);
+        font-size: 16pt;
+    }
 
 .card {
     /* Add shadows to create the "card" effect */
@@ -136,7 +199,8 @@ th {
     background-color: #00d15f;
     cursor: pointer;
 }
-td{
+
+td {
     vertical-align: middle;
 }
 
@@ -199,7 +263,7 @@ dd {
     .content-table td {
         padding: 12px 15px;
         vertical-align: middle;
-        text-align:center
+        text-align: center
     }
 
     .content-table tbody tr {

@@ -11,11 +11,11 @@
     <Company>Veeam</Company>
     <Authors>AdamC</Authors>
     <ApplicationIcon>output.ico</ApplicationIcon>
-    <AssemblyVersion>2.0.0.144</AssemblyVersion>
+    <AssemblyVersion>2.0.0.212</AssemblyVersion>
     <SignAssembly>False</SignAssembly>
     <AssemblyOriginatorKeyFile>vhc_keyfile2.pfx</AssemblyOriginatorKeyFile>
     <DelaySign>false</DelaySign>
-    <FileVersion>2.0.0.144</FileVersion>
+    <FileVersion>2.0.0.212</FileVersion>
     <DebugType>full</DebugType>
 	  <SelfContained>true</SelfContained>
 	  <!--These 2 lines are what produce the single file utility. Possibly doesn't work...-->
@@ -70,6 +70,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <None Remove="banner_string.txt" />
     <None Remove="css.css" />
     <None Remove="Functions\Reporting\Html\Shared\JavaScript1.js" />
     <None Remove="ReportScript.js" />
@@ -133,6 +134,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <EmbeddedResource Include="banner_string.txt" />
     <EmbeddedResource Include="css.css" />
     <EmbeddedResource Include="ReportScript.js" />
     <EmbeddedResource Include="Resources\Localization\VB365\vb365_vhcres.resources" />
