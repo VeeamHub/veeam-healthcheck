@@ -263,12 +263,12 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR
             if (scrub)
             {
                 h += _form.SetHeaderAndLogo(" ");
-                h += _form.SetBannerAndIntro(true);
+                //h += _form.SetBannerAndIntro(true);
             }
             else
             {
                 h += _form.SetHeaderAndLogo(SetLicHolder());
-                h += _form.SetBannerAndIntro(false);
+                //h += _form.SetBannerAndIntro(false);
             }
 
             return h;
@@ -280,13 +280,12 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR
             if (scrub)
             {
                 h += _form.SetHeaderAndLogo(" ");
-                h += 
-                h += _form.SetBannerAndIntro(true);
+                //h += _form.SetBannerAndIntro(true);
             }
             else
             {
                 h += _form.SetHeaderAndLogo(SetLicHolder());
-                h += _form.SetBannerAndIntro(false);
+                //h += _form.SetBannerAndIntro(false);
             }
 
             return h;

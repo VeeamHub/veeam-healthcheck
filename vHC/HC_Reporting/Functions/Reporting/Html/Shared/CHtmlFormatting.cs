@@ -270,19 +270,15 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.Shared
 
             s += String.Format(@"
 <div class=""image-container"">
-        <h1>
-            Veeam Backup & Recovery Health Check Report
-            </br>{0}
-            </br>{1}</a> <a style='font-size:18px'>|</a> <a style='font-size:16px'>{2}{3}</a>
-        </h1>
-
-        <h2>
+        <div class=""text-overlay"">
+        <h1 >
                 {0}
-        </h2>
-            <p class='report-info'>
-                {1}</a> <a style='font-size:18px'>|</a> <a style='font-size:16px'>{2}{3}</a>
-             </p>
-
+        </h1>
+        <h3>
+            Veeam Backup & Recovery Health Check Report
+        </h3>
+        <p>{1}|{2}{3}</p>
+        </div>
         <img src=""data:image/png;base64,{4}"">
 </div>
         

@@ -12,7 +12,7 @@
     font-size: 25px;
 }
 
-h1 {
+/*h1 {
     color: white;
     font-weight: bold;
     font-size: 25px;
@@ -20,17 +20,17 @@ h1 {
     text-align: center;
 }
 
-h2 {
+h2 {*/
     /*    color: #00d15f;
     font-style: italic;
     background: lightgray;
     text-align: center;*/
-    font-size: 1.5em;
+    /*font-size: 1.5em;
     font-weight: bold;
     margin-top: 0.83em;
     margin-bottom: 0.83em;
     text-decoration: underline;
-}
+}*/
 
 .image-container {
     position: relative;
@@ -43,32 +43,34 @@ h2 {
     border: 2px solid #ccc;
     border-radius: 10px;
 }
+.image-container h1{
+    background-color: none;
+}
 
-    .image-container h1,
-    .image-container h2,
-    .image-container .report-info {
-        position: absolute;
-        left: 0;
-        color: white;
-        background-color: rgba(0, 0, 0, 0.5);
-        padding: 10px;
-        border-radius: 5px;
+.text-overlay {
+    position: absolute;
+    top: 30%;
+    left: 1%;
+    color: white;
+    background-color: rgba(0, 0, 0, 0.5);
+    padding: 10px;
+    border-radius: 5px;
+    width: 30%;
+}
+
+    .text-overlay h1 {
+        font-size: 2vw; /* Scale with viewport width */
+        margin: 0;
     }
 
-    .image-container h1 {
-        top: 30%;
-        transform: translate(0, -50%);
+    .text-overlay h3 {
+        font-size: 1.5vw; /* Scale with viewport width */
+        margin: 0;
     }
 
-    .image-container h2 {
-        top: 40%;
-        transform: translate(0, -50%);
-    }
-
-    .image-container .report-info {
-        top: 50%;
-        transform: translate(0, -50%);
-        font-size: 16pt;
+    .text-overlay p {
+        font-size: 1vw; /* Scale with viewport width */
+        margin: 0;
     }
 
 .card {
