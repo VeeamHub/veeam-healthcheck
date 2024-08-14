@@ -10,12 +10,12 @@
     <PackageIconUrl />
     <Company>Veeam</Company>
     <Authors>AdamC</Authors>
-    <ApplicationIcon>Veeam_HealthCheck_228x228.ico</ApplicationIcon>
-    <AssemblyVersion>2.0.0.136</AssemblyVersion>
+    <ApplicationIcon>output.ico</ApplicationIcon>
+    <AssemblyVersion>2.0.0.144</AssemblyVersion>
     <SignAssembly>False</SignAssembly>
     <AssemblyOriginatorKeyFile>vhc_keyfile2.pfx</AssemblyOriginatorKeyFile>
     <DelaySign>false</DelaySign>
-    <FileVersion>2.0.0.136</FileVersion>
+    <FileVersion>2.0.0.144</FileVersion>
     <DebugType>full</DebugType>
 	  <SelfContained>true</SelfContained>
 	  <!--These 2 lines are what produce the single file utility. Possibly doesn't work...-->
@@ -93,6 +93,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Content Include="output.ico" />
     <Content Include="Tools\Scripts\HealthCheck\VBR\Get-NasInfo.ps1">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
