@@ -15,6 +15,7 @@ using VeeamHealthCheck.Shared;
 using VeeamHealthCheck.Shared.Logging;
 using VeeamHealthCheck.Functions.Reporting.DataTypes;
 using VeeamHealthCheck.Functions.Reporting.DataTypes.NAS;
+using VeeamHealthCheck.Functions.Reporting.DataTypes.Tape;
 
 namespace VeeamHealthCheck.Functions.Reporting.CsvHandlers
 {
@@ -56,6 +57,7 @@ namespace VeeamHealthCheck.Functions.Reporting.CsvHandlers
         public readonly string _nasFileData = "NasFileData";
         public readonly string _nasShareSize = "NasSharesize";
         public readonly string _nasObjectSize = "NasObjectSourceStorageSize";
+        public readonly string _tapeJobInfo = "TapeJobs";
 
         //VBO Files
         private readonly string _vboGlobalCsv = "Global";
@@ -360,6 +362,13 @@ namespace VeeamHealthCheck.Functions.Reporting.CsvHandlers
             var res = VbrFileReader(_nasObjectSize);
             if (res != null)
                 return res.GetRecords<CObjectShareVmcInfo>();
+            return null;
+        }
+        public IEnumerable<CTapeJobInfo> GetTapeJobInfoFromCsv()
+        {
+            var res = VbrFileReader(_tapeJobInfo);
+            if (res != null)
+                return res.GetRecords<CTapeJobInfo>().ToList();
             return null;
         }
         public IEnumerable<CRegOptionsCsv> RegOptionsCsvParser()
