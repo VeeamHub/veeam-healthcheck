@@ -97,7 +97,7 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR
             log.Info("[HTML] Forming Header...");
             string docType = "<!DOCTYPE html>";
             string htmlOpen = "<html>";
-            string styleOpen = "<style>";
+            string styleOpen = "<style type=\"text/css\">";
             string viewPort = "<meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">";
             string title = "<title>Veeam HealthCheck Report</title>";
             string charSet = "<meta charset=\"UTF-8\">";

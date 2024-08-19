@@ -120,6 +120,10 @@ namespace VeeamHealthCheck.Functions.Reporting.Html
             // find all instances of class="collapsible classBtn" and replace with class="collapsible classBtn active"
             htmlShowAll = htmlShowAll.Replace("collapsible classBtn", "collapsible classBtn active");
 
+            // find all instance of overflow: scroll; and replace with overflow: visible;
+            htmlShowAll = htmlShowAll.Replace("overflow: scroll;", "overflow: visible;");
+
+            htmlShowAll = htmlShowAll.Replace("overflow: hidden;", "overflow: visible;");
 
             pdf.ConvertHtmlToPdf(htmlShowAll, _latestReport.Replace(".html", ".pdf"));
             pdf.Dispose();

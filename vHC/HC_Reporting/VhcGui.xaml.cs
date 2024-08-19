@@ -69,6 +69,7 @@ namespace VeeamHealthCheck
             this.htmlCheckBox.Content = VbrLocalizationHelper.GuiShowHtml;
             this.scrubBox.Content = VbrLocalizationHelper.GuiSensData;
             this.explorerShowBox.Content = VbrLocalizationHelper.GuiShowFiles;
+            this.pdfCheckBox.Content = "Export PDF";
             this.outPath.Text = VbrLocalizationHelper.GuiOutPath;
             this.termsBtn.Content = VbrLocalizationHelper.GuiAcceptButton;
             this.run.Content = VbrLocalizationHelper.GuiRunButton;
@@ -149,6 +150,7 @@ namespace VeeamHealthCheck
         {
             explorerShowBox.IsEnabled = false;
             htmlCheckBox.IsEnabled = false;
+            pdfCheckBox.IsEnabled = false;
             scrubBox.IsEnabled = false;
             termsBtn.IsEnabled = false;
             importButton.IsEnabled = false;
@@ -201,6 +203,16 @@ namespace VeeamHealthCheck
         {
             _functions.LogUIAction("Show Explorer = false");
             CGlobals.OpenExplorer = false;
+        }
+        private void pdfCheckBox_Checked(object sender, RoutedEventArgs e)
+        {
+            _functions.LogUIAction("Export PDF = true");
+            CGlobals.EXPORTPDF = true;
+        }
+        private void pdfCheckBox_Unchecked(object sender, RoutedEventArgs e)
+        {
+            _functions.LogUIAction("Export PDF = false");
+            CGlobals.EXPORTPDF = false;
         }
 
         #endregion

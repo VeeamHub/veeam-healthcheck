@@ -243,7 +243,28 @@ dt {
 dd {
     font-size: smaller;
 }
+table {
+    page-break-inside: auto;
+    page-break-after: auto;
+}
 
+tr {
+    page-break-inside: avoid;
+    page-break-after: auto;
+}
+tbody{
+        page-break-inside: always;
+    page-break-after: auto;
+
+}
+
+thead {
+    display: table-header-group
+}
+
+tfoot {
+    display: table-footer-group
+}
 .content-table {
     border-collapse: collapse;
     margin: 25px 0;

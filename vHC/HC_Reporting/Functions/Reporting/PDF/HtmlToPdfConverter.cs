@@ -24,8 +24,9 @@ public class HtmlToPdfConverter
         {
             GlobalSettings = {
             ColorMode = DinkToPdf.ColorMode.Color,
-            Orientation = DinkToPdf.Orientation.Portrait,
-            PaperSize = DinkToPdf.PaperKind.A4Plus,
+            Orientation = DinkToPdf.Orientation.Landscape,
+            PaperSize = DinkToPdf.PaperKind.A3,
+            Margins = new MarginSettings { Top = 10 },
     },
             Objects = {
         new ObjectSettings()
