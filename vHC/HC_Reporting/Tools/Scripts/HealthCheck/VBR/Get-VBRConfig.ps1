@@ -384,7 +384,12 @@ try {
     $configBackup = Get-VBRConfigurationBackupJob
     $epJob = Get-VBREPJob 
     #$sbJob = Get-VSBJob
+    
+    #tape jobs
     $tapeJob = Get-VBRTapeJob
+    #export tape jobs to csv
+    $tapeJob | Export-Csv -Path $("$ReportPath\$VBRServer" + '_TapeJobs.csv') -NoTypeInformation
+    #end tape jobs
     $nasBackup = Get-VBRNASBackupJob 
     $nasBCJ = Get-VBRNASBackupCopyJob 
     $cdpJob = Get-VBRCDPPolicy
@@ -405,8 +410,9 @@ try {
     $nasBackup | Add-Member -MemberType NoteProperty -Name JobType -Value "NAS Backup"
     # $Jobs += $nasBackup
   
-    $tapeJob | Add-Member -MemberType NoteProperty -Name JobType -Value "Tape Backup"
-    $Jobs += $tapeJob
+    # removing tape jobs from here, exporting independently
+    # $tapeJob | Add-Member -MemberType NoteProperty -Name JobType -Value "Tape Backup"
+    # $Jobs += $tapeJob
   
     $catCopy | Add-Member -MemberType NoteProperty -Name JobType -Value "Catalyst Copy"# -InformationVariable "catCopy"
     $Jobs += $catCopy

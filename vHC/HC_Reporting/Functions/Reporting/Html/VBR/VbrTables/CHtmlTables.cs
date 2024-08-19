@@ -1291,92 +1291,121 @@ _form.TableHeader(VbrLocalizationHelper.SbrExt15, VbrLocalizationHelper.SbrExt15
 
                 foreach (var job in res)
                 {
-                    s += "<tr>";
-                    s += _form.TableData(job.Name, "");
-                    s += _form.TableData(job.RepoName, "");
-
-                    double trueSizeGB = Math.Round(job.OriginalSize / 1024 / 1024 / 1024, 2);
-                    double trueSizeTB = Math.Round(job.OriginalSize / 1024 / 1024 / 1024 / 1024, 2);
-                    double trueSizeMB = Math.Round(job.OriginalSize / 1024 / 1024, 2);
-                    tSizeGB += trueSizeGB;
-                    if (trueSizeGB > 999)
+                    if(job.JobType != "Backup")
                     {
-                        s += _form.TableData(trueSizeTB.ToString() + " TB", "");
+
                     }
-                    else if (trueSizeGB < 1)
+
+                    string row = "";
+                    try
                     {
-                        s += _form.TableData(trueSizeMB.ToString() + " MB", "");
+
+
+                        row += "<tr>";
+                        row += _form.TableData(job.Name, "");
+                        row += _form.TableData(job.RepoName, "");
+
+                        double trueSizeGB = Math.Round(job.OriginalSize / 1024 / 1024 / 1024, 2);
+                        double trueSizeTB = Math.Round(job.OriginalSize / 1024 / 1024 / 1024 / 1024, 2);
+                        double trueSizeMB = Math.Round(job.OriginalSize / 1024 / 1024, 2);
+                        tSizeGB += trueSizeGB;
+                        if (trueSizeGB > 999)
+                        {
+                            row+= _form.TableData(trueSizeTB.ToString() + " TB", "");
+                        }
+                        else if (trueSizeGB < 1)
+                        {
+                            row+= _form.TableData(trueSizeMB.ToString() + " MB", "");
+                        }
+                        else
+                        {
+                            row+= _form.TableData(trueSizeGB.ToString() + " GB", "");
+                        }
+                        //row+= _form.TableData(trueSizeGB.ToString() + " GB", "");
+                        //row+= _form.TableData(job.RetentionType, "");
+                        row+= job.RetentionType == "Cycles" ? _form.TableData("Points", "") : _form.TableData(job.RetentionType, "");
+                        row += _form.TableData(job.RestorePoints, "");
+                        //row += _form.TableData(job.StgEncryptionEnabled, "");
+                        row += job.StgEncryptionEnabled == "True" ? _form.TableData(_form.True, "") : _form.TableData(_form.False, "");
+                        var jobType = GetJobType(job.JobType);
+                        row += _form.TableData(jobType, "");
+                        //row += _form.TableData("", "");
+
+
+
+                        string compressionLevel = "";
+                        if (job.CompressionLevel == "9")
+                            compressionLevel = "Extreme";
+                        else if (job.CompressionLevel == "6")
+                            compressionLevel = "High";
+                        else if (job.CompressionLevel == "5")
+                            compressionLevel = "Optimal";
+
+                        else if (job.CompressionLevel == "4")
+                            compressionLevel = "Dedupe-Friendly";
+                        else if (job.CompressionLevel == "0")
+                            compressionLevel = "None";
+                        row += _form.TableData(compressionLevel, "");
+
+                        string blockSize = "";
+                        if (job.BlockSize == "KbBlockSize1024")
+                            blockSize = "1 MB";
+                        else if (job.BlockSize == "KbBlockSize512")
+                            blockSize = "512 KB";
+                        else if (job.BlockSize == "KbBlockSize256")
+                            blockSize = "256 KB";
+                        else if (job.BlockSize == "KbBlockSize4096")
+                            blockSize = "4 MB";
+                        else if (job.BlockSize == "KbBlockSize8192")
+                            blockSize = "8 MB";
+
+
+                        row += _form.TableData(blockSize, "");
+                        if (job.GfsMonthlyEnabled || job.GfsWeeklyIsEnabled || job.GfsYearlyEnabled)
+                        {
+                            row += _form.TableData(_form.True, "");
+                            string GfsString = "Weekly: " + job.GfsWeeklyCount + "<br> Monthly: " + job.GfsMonthlyCount + "<br> Yearly: " + job.GfsYearlyCount;
+                            row += _form.TableData(GfsString, "");
+                        }
+                        else
+                        {
+                            row += _form.TableData(_form.False, "");
+                            row += _form.TableData("", "");
+                        }
+                        row += job.EnableFullBackup ? _form.TableData(_form.True, "") : _form.TableData(_form.False, "");
+                        try
+                        {
+                            if (job.Algorithm == "Increment" && job.TransformFullToSyntethic == true)
+                            {
+                                row += _form.TableData(_form.True, "");
+                            }
+                            else
+                            {
+                                row += _form.TableData(_form.False, "");
+                            }
+                        }
+                        catch
+                        {
+                            row += _form.TableData(_form.False, "");
+                        }
+
+                        row += job.Algorithm == "Syntethic" ? _form.TableData("Reverse Incremental", "") : _form.TableData("Forward Incremental", "");
+
+
+                        row += job.IndexingType != "None" ? _form.TableData(_form.True, "") : _form.TableData(_form.False, "");
+
+                        row += "</tr>";
+
+                        s += row;
                     }
-                    else
+                    catch (Exception e)
                     {
-                        s += _form.TableData(trueSizeGB.ToString() + " GB", "");
+                        log.Error("Job Info Data import failed. ERROR:");
+                        log.Error("\t" + e.Message);
                     }
-                    //s += _form.TableData(trueSizeGB.ToString() + " GB", "");
-                    //s += _form.TableData(job.RetentionType, "");
-                    s += job.RetentionType == "Cycles" ? _form.TableData("Points", "") : _form.TableData(job.RetentionType, "");
-                    s += _form.TableData(job.RestorePoints, "");
-                    //s += _form.TableData(job.StgEncryptionEnabled, "");
-                    s += job.StgEncryptionEnabled == "True" ? _form.TableData(_form.True, "") : _form.TableData(_form.False, "");
-                    var jobType = GetJobType(job.JobType);
-                    s += _form.TableData(jobType, "");
-                    //s += _form.TableData("", "");
-
-
-
-                    string compressionLevel = "";
-                    if (job.CompressionLevel == "9")
-                        compressionLevel = "Extreme";
-                    else if (job.CompressionLevel == "6")
-                        compressionLevel = "High";
-                    else if (job.CompressionLevel == "5")
-                        compressionLevel = "Optimal";
-
-                    else if (job.CompressionLevel == "4")
-                        compressionLevel = "Dedupe-Friendly";
-                    else if (job.CompressionLevel == "0")
-                        compressionLevel = "None";
-                    s += _form.TableData(compressionLevel, "");
-
-                    string blockSize = "";
-                    if (job.BlockSize == "KbBlockSize1024")
-                        blockSize = "1 MB";
-                    else if (job.BlockSize == "KbBlockSize512")
-                        blockSize = "512 KB";
-                    else if (job.BlockSize == "KbBlockSize256")
-                        blockSize = "256 KB";
-                    else if (job.BlockSize == "KbBlockSize4096")
-                        blockSize = "4 MB";
-                    else if (job.BlockSize == "KbBlockSize8192")
-                        blockSize = "8 MB";
-
-
-                    s += _form.TableData(blockSize, "");
-                    if (job.GfsMonthlyEnabled || job.GfsWeeklyIsEnabled || job.GfsYearlyEnabled)
-                    {
-                        s += _form.TableData(_form.True, "");
-                        string GfsString = "Weekly: " + job.GfsWeeklyCount + "<br> Monthly: " + job.GfsMonthlyCount + "<br> Yearly: " + job.GfsYearlyCount;
-                        s += _form.TableData(GfsString, "");
-                    }
-                    else
-                    {
-                        s += _form.TableData(_form.False, "");
-                        s += _form.TableData("", "");
-                    }
-                    s += job.EnableFullBackup ? _form.TableData(_form.True, "") : _form.TableData(_form.False, "");
-                    if (job.Algorithm == "Increment" && job.TransformFullToSyntethic == true)
-                    {
-                        s += _form.TableData(_form.True, "");
-                    }
-                    else
-                    {
-                        s += _form.TableData(_form.False, "");
-                    }
-                    s += job.Algorithm == "Syntethic" ? _form.TableData("Reverse Incremental", "") : _form.TableData("Forward Incremental", "");
-
-
-                    s += job.IndexingType != "None" ? _form.TableData(_form.True, "") : _form.TableData(_form.False, "");
-
                 }
+
+                //end of FE up one line...
                 // code something here:
 
 
