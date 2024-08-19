@@ -95,6 +95,12 @@ namespace VeeamHealthCheck.Functions.Reporting.Html
                 WriteHtmlToFile(htmlString);
                 log.Info("exporting xml to html..done!");
 
+                //test export to PDF:
+                if (!scrub && CGlobals.EXPORTPDF)
+                {
+                    ExportHtmlStringToPDF(htmlString);
+                }
+
                 OpenHtmlIfEnabled(CGlobals.OpenHtml);
                 return 0;
             }
@@ -105,6 +111,18 @@ namespace VeeamHealthCheck.Functions.Reporting.Html
             }
             
 
+        }
+        private void ExportHtmlStringToPDF(string htmlString)
+        {
+            HtmlToPdfConverter pdf = new HtmlToPdfConverter();
+            // find all instances of "display: none;" and replace with "display: block;" in the htmlString
+            string htmlShowAll = htmlString.Replace("style=\"display: none\">", "style=\"display: block\">");
+            // find all instances of class="collapsible classBtn" and replace with class="collapsible classBtn active"
+            htmlShowAll = htmlShowAll.Replace("collapsible classBtn", "collapsible classBtn active");
+
+
+            pdf.ConvertHtmlToPdf(htmlShowAll, _latestReport.Replace(".html", ".pdf"));
+            pdf.Dispose();
         }
 
         public int ExportVbrSecurityHtml(string htmlString, bool scrub)

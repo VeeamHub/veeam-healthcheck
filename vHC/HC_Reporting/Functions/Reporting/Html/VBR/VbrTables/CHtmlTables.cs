@@ -627,6 +627,7 @@ namespace VeeamHealthCheck.Html.VBR
                 s += "</table>";
                 s += "<h3>NAS Backups</h3>";
                 s += "<div id=\"nasTable\" border=\"1\" class=\"content-table\"></div>";
+                s += _form._endDiv;
             }
             catch (Exception e)
             {

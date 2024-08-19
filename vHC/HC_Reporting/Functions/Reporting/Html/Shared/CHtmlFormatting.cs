@@ -94,6 +94,7 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.Shared
             s += LineBreak();
             //s += summary;
             s += _endDiv;
+            s += _endDiv;
 
             return s;
         }

@@ -169,6 +169,9 @@ namespace VeeamHealthCheck.Startup
                         runHfd = true;
                         //Environment.Exit(0);
                         break;
+                    case "/pdf":
+                        CGlobals.EXPORTPDF = true;
+                        break;
                     case var match when new Regex("/path=.*").IsMatch(a):
                         _hfdPath = ParsePath(a);
                         CGlobals.Logger.Info("HFD path: " + targetDir);

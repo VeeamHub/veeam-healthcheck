@@ -1,43 +1,49 @@
-//using DinkToPdf;
-//using DinkToPdf.Contracts;
-//using System.IO;
+using DinkToPdf;
+using DinkToPdf.Contracts;
+using System;
+using System.Drawing.Imaging;
+using System.Drawing.Printing;
+using System.IO;
+using System.Windows.Controls;
 
-//public class HtmlToPdfConverter
-//{
-//    private IConverter _converter;
+public class HtmlToPdfConverter
+{
+    private IConverter _converter;
 
-//    public HtmlToPdfConverter()
-//    {
-//        _converter = new SynchronizedConverter(new PdfTools());
-//    }
+    public HtmlToPdfConverter()
+    {
+        _converter = new SynchronizedConverter(new PdfTools());
+    }
 
-//    public byte[] ConvertHtmlToPdf(string htmlContent, string outputPath)
-//    {
-//        var globalSettings = new GlobalSettings
-//        {
-//            ColorMode = ColorMode.Color,
-//            Orientation = Orientation.Portrait,
-//            PaperSize = PaperKind.A4,
-//            Margins = new MarginSettings { Top = 10 },
-//            DocumentTitle = "PDF Report",
-//            Out = outputPath
-//        };
+    [STAThread]
+    public void ConvertHtmlToPdf(string htmlContent, string outputPath)
+    {
+        var converter = new SynchronizedConverter(new PdfTools());
+        var html = htmlContent; //"<h1>Hello, World!</h1>"; // replace with your HTML string
+        var doc = new HtmlToPdfDocument()
+        {
+            GlobalSettings = {
+            ColorMode = DinkToPdf.ColorMode.Color,
+            Orientation = DinkToPdf.Orientation.Portrait,
+            PaperSize = DinkToPdf.PaperKind.A4Plus,
+    },
+            Objects = {
+        new ObjectSettings()
+        {
+            HtmlContent = html,
+            WebSettings = { DefaultEncoding = "utf-8" },
+        }
+    }
+        };
 
-//        var objectSettings = new ObjectSettings
-//        {
-//            PagesCount = true,
-//            HtmlContent = htmlContent,
-//            WebSettings = { DefaultEncoding = "utf-8" },
-//            HeaderSettings = { FontName = "Arial", FontSize = 9, Right = "Page [page] of [toPage]", Line = true },
-//            FooterSettings = { FontName = "Arial", FontSize = 9, Line = true, Center = "Report Footer" }
-//        };
+        byte[] pdf = converter.Convert(doc);
+        File.WriteAllBytes(outputPath, pdf);
+        
+    }
+    // dispose method
+    public void Dispose()
+    {
+        _converter = null;
+    }
+}
 
-//        var pdfDoc = new HtmlToPdfDocument()
-//        {
-//            GlobalSettings = globalSettings,
-//            Objects = { objectSettings }
-//        };
-
-//        return _converter.Convert(pdfDoc);
-//    }
-//}
