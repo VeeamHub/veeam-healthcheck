@@ -92,7 +92,7 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.Shared
             s += "</tbody>";
             s += "</table>";
             s += LineBreak();
-            s += summary;
+            //s += summary;
             s += _endDiv;
 
             return s;

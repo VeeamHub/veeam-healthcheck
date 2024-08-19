@@ -108,3 +108,38 @@ function topFunction() {
 	document.body.scrollTop = 0; // For Safari
 	document.documentElement.scrollTop = 0; // For Chrome, Firefox, IE and Opera
 }
+
+// nas Table Script
+const jsonData = JSON.parse(document.getElementById('NasTable').textContent);
+
+// Function to create an HTML table from JSON data
+function createTable(data) {
+	const table = document.createElement('table');
+	table.border = 1;
+
+	// Create table header
+	const header = table.createTHead();
+	const headerRow = header.insertRow(0);
+	const headers = ['FileShareType', 'TotalShareSize', 'TotalFilesCount', 'TotalFoldersCount'];
+	headers.forEach((headerText, index) => {
+		const cell = headerRow.insertCell(index);
+		cell.outerHTML = `<th>${headerText}</th>`;
+	});
+
+	// Create table body
+	const tbody = table.createTBody();
+	data.nasWorkloads.forEach((workload, rowIndex) => {
+		const row = tbody.insertRow(rowIndex);
+		headers.forEach((headerText, cellIndex) => {
+			const cell = row.insertCell(cellIndex);
+			cell.textContent = workload[headerText];
+		});
+	});
+
+	return table;
+}
+
+// Get the table container and append the created table
+const tableContainer = document.getElementById('nasTable');
+const table = createTable(jsonData);
+tableContainer.appendChild(table);

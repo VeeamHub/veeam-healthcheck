@@ -5,14 +5,18 @@ using System.Collections.Generic;
 using System.Linq;
 using VeeamHealthCheck.Functions.Analysis.DataModels;
 using VeeamHealthCheck.Functions.Reporting.CsvHandlers;
+using VeeamHealthCheck.Functions.Reporting.DataTypes;
 using VeeamHealthCheck.Functions.Reporting.Html;
 using VeeamHealthCheck.Functions.Reporting.Html.Shared;
 using VeeamHealthCheck.Functions.Reporting.Html.VBR;
+using VeeamHealthCheck.Functions.Reporting.Html.VBR.VbrTables.ProtectedWorkloads;
 using VeeamHealthCheck.Functions.Reporting.Html.VBR.VbrTables.Security;
 using VeeamHealthCheck.Reporting.Html.VBR;
 using VeeamHealthCheck.Resources.Localization;
 using VeeamHealthCheck.Shared;
 using VeeamHealthCheck.Shared.Logging;
+using System.Text.Json;
+
 
 namespace VeeamHealthCheck.Html.VBR
 {
@@ -620,6 +624,9 @@ namespace VeeamHealthCheck.Html.VBR
                 s += _form.TableData(_df._physNotProtNames.Distinct().Count().ToString(), "");
 
                 s += "</tr>";
+                s += "</table>";
+                s += "<h3>NAS Backups</h3>";
+                s += "<div id=\"nasTable\" border=\"1\" class=\"content-table\"></div>";
             }
             catch (Exception e)
             {
@@ -627,6 +634,11 @@ namespace VeeamHealthCheck.Html.VBR
                 log.Error("\t" + e.Message);
             }
             s += _form.SectionEnd(summary);
+            CProtectedWorkloads cProtectedWorkloads = new();
+            NasSourceInfo n = new();
+
+            cProtectedWorkloads.nasWorkloads = n.NasTable().nasWorkloads;
+            s += DumpJsonToScript(cProtectedWorkloads, "NasTable");
             return s;
         }
         public string AddManagedServersTable(bool scrub)
@@ -681,8 +693,30 @@ namespace VeeamHealthCheck.Html.VBR
                 log.Error("Managed Server Data import failed. ERROR:");
                 log.Error("\t" + e.Message);
             }
+
             s += _form.SectionEnd(summary);
             return s;
+        }
+        private string DumpJsonToScript(CProtectedWorkloads workloads, string section)
+        {
+            //CProtectedWorkloads protectedWorkloads = new CProtectedWorkloads();
+
+            string json = SerializeToJson(workloads);
+
+            string script = $@"
+                <script id=""{section}"" type=""application/json"">
+                {json}
+                </script>";
+
+            // Write the script to the HTML text file
+            // Replace "path/to/html/file.html" with the actual file path
+            //System.IO.File.WriteAllText("path/to/html/file.html", script);
+
+            return script;
+        }
+        public string SerializeToJson(object obj)
+        {
+            return JsonSerializer.Serialize(obj);
         }
         public string AddRegKeysTable(bool scrub)
         {

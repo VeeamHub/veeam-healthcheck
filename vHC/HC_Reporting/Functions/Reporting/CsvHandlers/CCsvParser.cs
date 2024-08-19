@@ -13,7 +13,8 @@ using System.Reflection.PortableExecutable;
 using VeeamHealthCheck.Functions.Reporting.CsvHandlers.VB365;
 using VeeamHealthCheck.Shared;
 using VeeamHealthCheck.Shared.Logging;
-
+using VeeamHealthCheck.Functions.Reporting.DataTypes;
+using VeeamHealthCheck.Functions.Reporting.DataTypes.NAS;
 
 namespace VeeamHealthCheck.Functions.Reporting.CsvHandlers
 {
@@ -52,6 +53,9 @@ namespace VeeamHealthCheck.Functions.Reporting.CsvHandlers
         public readonly string _HvProtected = "HvProtected";
         public readonly string _HvUnprotected = "HvUnprotected";
         public readonly string _malware = "malware";
+        public readonly string _nasFileData = "NasFileData";
+        public readonly string _nasShareSize = "NasSharesize";
+        public readonly string _nasObjectSize = "NasObjectSourceStorageSize";
 
         //VBO Files
         private readonly string _vboGlobalCsv = "Global";
@@ -333,6 +337,29 @@ namespace VeeamHealthCheck.Functions.Reporting.CsvHandlers
             var res = VbrFileReader(_malware);
             if (res != null)
                 return res.GetRecords<CMalwareObject>();
+            return null;
+        }
+        //public IEnumerable<CNasFileDataVmc> GetDynamicNasFileData()
+        //{
+        //    var res = VbrFileReader(_nasFileData);
+        //    if (res != null)
+        //        return res.GetRecords<CNasFileDataVmc>();
+        //    return null;
+        //}
+
+        public IEnumerable<CNasVmcInfo> GetDynamicNasShareSize()
+        {
+            var res = VbrFileReader(_nasShareSize);
+            if (res != null)
+                return res.GetRecords<CNasVmcInfo>().ToList();
+            return null;
+        }
+
+        public IEnumerable<CObjectShareVmcInfo> GetDynamicNasObjectSize()
+        {
+            var res = VbrFileReader(_nasObjectSize);
+            if (res != null)
+                return res.GetRecords<CObjectShareVmcInfo>();
             return null;
         }
         public IEnumerable<CRegOptionsCsv> RegOptionsCsvParser()

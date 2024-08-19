@@ -1,4 +1,5 @@
-﻿using System;
+﻿using CsvHelper.Configuration.Attributes;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -6,16 +7,24 @@ using System.Threading.Tasks;
 
 namespace VeeamHealthCheck.Functions.Reporting.DataTypes.NAS
 {
-    internal class CObjectShareVmcInfo
+    public class CObjectShareVmcInfo
     {
-        // Make members for each of these properties: ParentObjectStorageID	AvgObjectsCountPerInc	ObjectStorageBucketID	TotalObjectStorageSize	TotalObjectsCount	AvgIncrementSize
-
+        [Index(0)]
         public string ParentObjectStorageID { get; set; }
-        public string AvgObjectsCountPerInc { get; set; }
-        public string ObjectStorageBucketID { get; set; }
-        public string TotalObjectStorageSize { get; set; }
-        public string TotalObjectsCount { get; set; }
-        public string AvgIncrementSize { get; set; }
 
+        [Index(1)]
+        public string AvgObjectsCountPerInc { get; set; }
+
+        [Index(2)]
+        public string ObjectStorageBucketID { get; set; }
+
+        [Index(3)]
+        public string TotalObjectStorageSize { get; set; }
+
+        [Index(4)]
+        public string TotalObjectsCount { get; set; }
+
+        [Index(5)]
+        public string AvgIncrementSize { get; set; }
     }
 }
