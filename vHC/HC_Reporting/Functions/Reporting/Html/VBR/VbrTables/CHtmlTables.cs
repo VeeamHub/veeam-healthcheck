@@ -1288,17 +1288,12 @@ _form.TableHeader(VbrLocalizationHelper.SbrExt15, VbrLocalizationHelper.SbrExt15
                 res.OrderBy(x => x.Name);
 
                 double tSizeGB = 0;
-
-                foreach (var job in res)
+                try
                 {
-                    if(job.JobType != "Backup")
+                    foreach (var job in res)
                     {
+                        string row = "";
 
-                    }
-
-                    string row = "";
-                    try
-                    {
 
 
                         row += "<tr>";
@@ -1311,19 +1306,19 @@ _form.TableHeader(VbrLocalizationHelper.SbrExt15, VbrLocalizationHelper.SbrExt15
                         tSizeGB += trueSizeGB;
                         if (trueSizeGB > 999)
                         {
-                            row+= _form.TableData(trueSizeTB.ToString() + " TB", "");
+                            row += _form.TableData(trueSizeTB.ToString() + " TB", "");
                         }
                         else if (trueSizeGB < 1)
                         {
-                            row+= _form.TableData(trueSizeMB.ToString() + " MB", "");
+                            row += _form.TableData(trueSizeMB.ToString() + " MB", "");
                         }
                         else
                         {
-                            row+= _form.TableData(trueSizeGB.ToString() + " GB", "");
+                            row += _form.TableData(trueSizeGB.ToString() + " GB", "");
                         }
                         //row+= _form.TableData(trueSizeGB.ToString() + " GB", "");
                         //row+= _form.TableData(job.RetentionType, "");
-                        row+= job.RetentionType == "Cycles" ? _form.TableData("Points", "") : _form.TableData(job.RetentionType, "");
+                        row += job.RetentionType == "Cycles" ? _form.TableData("Points", "") : _form.TableData(job.RetentionType, "");
                         row += _form.TableData(job.RestorePoints, "");
                         //row += _form.TableData(job.StgEncryptionEnabled, "");
                         row += job.StgEncryptionEnabled == "True" ? _form.TableData(_form.True, "") : _form.TableData(_form.False, "");
@@ -1397,14 +1392,15 @@ _form.TableHeader(VbrLocalizationHelper.SbrExt15, VbrLocalizationHelper.SbrExt15
                         row += "</tr>";
 
                         s += row;
-                    }
-                    catch (Exception e)
-                    {
-                        log.Error("Job Info Data import failed. ERROR:");
-                        log.Error("\t" + e.Message);
+
+
                     }
                 }
-
+                catch (Exception e)
+                {
+                    log.Error("Job Info Data import failed. ERROR:");
+                    log.Error("\t" + e.Message);
+                }
                 //end of FE up one line...
                 // code something here:
 
