@@ -636,11 +636,19 @@ namespace VeeamHealthCheck.Html.VBR
                 log.Error("\t" + e.Message);
             }
             s += _form.SectionEnd(summary);
-            CProtectedWorkloads cProtectedWorkloads = new();
-            NasSourceInfo n = new();
+            try
+            {
+                CProtectedWorkloads cProtectedWorkloads = new();
+                NasSourceInfo n = new();
 
-            cProtectedWorkloads.nasWorkloads = n.NasTable().nasWorkloads;
-            s += DumpJsonToScript(cProtectedWorkloads, "NasTable");
+                cProtectedWorkloads.nasWorkloads = n.NasTable().nasWorkloads;
+                s += DumpJsonToScript(cProtectedWorkloads, "NasTable");
+            }
+            catch (Exception e)
+            {
+                log.Error("Failed to add NAS table to HTML report", false);
+                log.Error(e.Message, false);
+            }
             return s;
         }
         public string AddManagedServersTable(bool scrub)
