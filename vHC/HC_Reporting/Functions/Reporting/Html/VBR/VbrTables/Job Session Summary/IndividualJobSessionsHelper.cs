@@ -225,7 +225,7 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR.VbrTables.Job_Session_Su
         }
         private string ReturnTableHeaderString(CJobSessionInfo cs)
         {
-            string s = _form.FormHeader();
+            string s = _form.Header();
             s += "<h2>" + cs.JobName + "</h2>";
 
             s += "<table border=\"1\"><tr>";
@@ -252,7 +252,7 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR.VbrTables.Job_Session_Su
         }
         private string ReturnTableHeaderString(string jobname)
         {
-            string s = _form.FormHeader();
+            string s = _form.Header();
             s += "<h2>" + jobname + "</h2>";
 
             s += "<table border=\"1\"><tr>";

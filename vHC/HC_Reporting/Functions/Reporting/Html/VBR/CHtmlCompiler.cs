@@ -95,41 +95,14 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR
         private void FormHeader()
         {
             log.Info("[HTML] Forming Header...");
-            string docType = "<!DOCTYPE html>";
-            string htmlOpen = "<html>";
-            string styleOpen = "<style type=\"text/css\">";
-            string viewPort = "<meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">";
-            string title = "<title>Veeam HealthCheck Report</title>";
-            string charSet = "<meta charset=\"UTF-8\">";
-            string headOpen = "<head>";
-            string headClose = "</head>";
-            string styleClose = "</style>";
+            string h = _form.Header();
 
-            string css  = GetEmbeddedCssContent("css.css");
-            string header = docType + htmlOpen + headOpen + charSet + viewPort + title
-                + styleOpen + css
-                + styleClose
-                + headClose;
-
-            _htmldocOriginal = header;
-            _htmldocScrubbed += header;
+            _htmldocOriginal = h;
+            _htmldocScrubbed += h;
 
             log.Info("[HTML] Forming Header...done!");
-            //FormBody();
         }
-        // method to read the text from a resource called css.css
-        private string ReadCssResource()
-        {
-            string css = string.Empty;
-            using (Stream stream = Assembly.GetExecutingAssembly().GetManifestResourceStream("VeeamHealthCheck.Resources.css.css"))
-            {
-                using (StreamReader reader = new StreamReader(stream))
-                {
-                    css = reader.ReadToEnd();
-                }
-            }
-            return css;
-        }
+
         public static string GetEmbeddedCssContent(string embeddedFileName)
         {
             var assembly = Assembly.GetExecutingAssembly();
@@ -152,16 +125,11 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR
             AddToHtml(string.Format("<h2>{0}</h2>", VbrLocalizationHelper.NavHeader));
            // AddToHtml(string.Format("<button type=\"button\" class=\"btn\" onclick=\"test()\">{0}</button>", VbrLocalizationHelper.NavColapse));
         }
-        private void SetUniversalNavEnd()
-        {
-           // AddToHtml(_form._endDiv);
-            log.Info("[HTML] setting HTML navigation...done!");
-        }
+
         private void SetNavigation()
         {
             //SetUniversalNavStart();
             NavTable();
-            SetUniversalNavEnd();
 
             AddToHtml( SetVbrHcIntro(false));
 
@@ -239,7 +207,7 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR
         {
             //SetUniversalNavStart();
             SecurityNavTable();
-            SetUniversalNavEnd();
+            //SetUniversalNavEnd();
         }
 
 
@@ -256,27 +224,11 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR
         }
 
         #endregion
-        private string FormHeaderAndLogo(bool scrub)
-        {
-            string h = _form.body;
-            h += FormHtmlButtonGoToTop();
-            if (scrub)
-            {
-                h += _form.SetHeaderAndLogo(" ");
-                //h += _form.SetBannerAndIntro(true);
-            }
-            else
-            {
-                h += _form.SetHeaderAndLogo(SetLicHolder());
-                //h += _form.SetBannerAndIntro(false);
-            }
 
-            return h;
-        }
         private string FormBodyStart(string htmlString, bool scrub)
         {
             string h  = _form.body;
-             h += FormHtmlButtonGoToTop();
+             h += _form.FormHtmlButtonGoToTop();
             if (scrub)
             {
                 h += _form.SetHeaderAndLogo(" ");
@@ -290,10 +242,7 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR
 
             return h;
         }
-        private string FormHtmlButtonGoToTop()
-        {
-            return "<button onclick=\"topFunction()\" id=\"myBtn\" title=\"Go to top\">Go To Top</button>";
-        }
+       
         private string SetVbrSecurityHeader()
         {
             return _form.SetHeaderAndLogo(SetLicHolder());
@@ -373,11 +322,7 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR
             log.Info("[HTML] setting HTML navigation");
 
             // string tableString = NavTableStarter();
-            string tableString = @"<div class='card'><div class='card-container'><div class=card2 id=navigation>";
-            tableString += string.Format("<h2>{0}</h2>", VbrLocalizationHelper.NavHeader);
-              tableString += _tables.MakeNavTable();
-            tableString += _form._endDiv;
-            //tableString += NavtableEnd();
+            string tableString = _form.SetNavTables("vbr");
             AddToHtml(tableString);
         }
         private void SecurityNavTable()

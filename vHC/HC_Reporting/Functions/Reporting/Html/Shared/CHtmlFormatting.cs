@@ -1,7 +1,11 @@
 ﻿// Copyright (c) 2021, Adam Congdon <adam.congdon2@gmail.com>
 // MIT License
 using System;
+using System.IO;
+using System.Reflection;
+using VeeamHealthCheck.Functions.Reporting.Html.VB365;
 using VeeamHealthCheck.Functions.Reporting.Html.VBR;
+using VeeamHealthCheck.Html.VBR;
 using VeeamHealthCheck.Resources.Localization;
 using VeeamHealthCheck.Resources.Localization.VB365;
 using VeeamHealthCheck.Shared;
@@ -182,12 +186,12 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.Shared
         {
             return string.Format("<h3><u>{0}:</u></h3>", text);
         }
-        public string FormHeader()
+        public string Header()
         {
-            // log.Info("[HTML] Forming Header...");
+            //log.Info("[HTML] Forming Header...");
             string docType = "<!DOCTYPE html>";
             string htmlOpen = "<html>";
-            string styleOpen = "<style>";
+            string styleOpen = "<style type=\"text/css\">";
             string viewPort = "<meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">";
             string title = "<title>Veeam HealthCheck Report</title>";
             string charSet = "<meta charset=\"UTF-8\">";
@@ -195,24 +199,56 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.Shared
             string headClose = "</head>";
             string styleClose = "</style>";
 
-            string css = CHtmlCompiler.GetEmbeddedCssContent("css.css");
-
-
+            string css = GetEmbeddedCssContent("css.css");
             string header = docType + htmlOpen + headOpen + charSet + viewPort + title
                 + styleOpen + css
                 + styleClose
                 + headClose;
+
             return header;
         }
-        public string SetBannerAndIntro(bool scrub)
+        #region Buttons
+        public string FormHtmlButtonGoToTop()
         {
-            string s = SetVbrHcReportTitle();
-            // s += SetVbrHcIntro(scrub);
-
-            return s;
-
+            return "<button onclick=\"topFunction()\" id=\"myBtn\" title=\"Go to top\">Go To Top</button>";
         }
 
+        #endregion
+
+        #region helper functions
+        public static string GetEmbeddedCssContent(string embeddedFileName)
+        {
+            var assembly = Assembly.GetExecutingAssembly();
+            var resourceName = $"{assembly.GetName().Name}.{embeddedFileName}";
+
+            using (var stream = assembly.GetManifestResourceStream(resourceName))
+            using (var reader = new StreamReader(stream))
+            {
+                return reader.ReadToEnd();
+            }
+        }
+        public string SetNavTables(string reportKind)
+        {
+
+            // string tableString = NavTableStarter();
+            string tableString = @"<div class='card'><div class='card-container'><div class=card2 id=navigation>";
+            tableString += string.Format("<h2>{0}</h2>", VbrLocalizationHelper.NavHeader);
+            if(reportKind == "vbr")
+            {
+                CHtmlTables t = new();
+                tableString += t.MakeNavTable();
+            }
+            else if(reportKind == "vb365")
+            {
+                CM365Tables t = new();
+                tableString += t.MakeVb365NavTable();
+            }
+            tableString += _endDiv;
+            //tableString += NavtableEnd();
+             return tableString;
+        }
+
+        #endregion
 
         public string SetSecurityBannerAndIntro(bool scrub)
         {
@@ -226,13 +262,7 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.Shared
                 VbrLocalizationHelper.HtmlSecurityHeader +
                 "</h2>";
         }
-        private string SetVbrHcReportTitle()
-        {
-            //return "<h2 style=\"color: #00d15f; font-style: italic; background: lightgray; text-align:center\">" +
-            return "<h2 style=\"text-align:center\" >" +
-            VbrLocalizationHelper.HtmlHeader +
-            "</h2>";
-        }
+
 
         public string SetBannerAndIntroVb365()
         {
@@ -254,6 +284,35 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.Shared
 
             return s;
 
+        }
+        public string SetVb365Intro()
+        {
+            string s = "";
+            s += "<div class=\"card2\">" +
+                        "<h2>About</h2>" +
+                       Vb365ResourceHandler.HtmlIntroLine1 + "</a>\n";
+            //s += LineBreak();
+            s += String.Format(@"<dl>
+                <dt>CSV Raw Data Output</dt>
+                <dd>{0}</dd>
+                </br>
+                <dt>Individual Job Session Reports</dt>
+                <dd>{1}</dd>
+                </br>
+                <dt>PDF Report Output</dt>
+                <dd>{2}</dd>
+                </br>
+                <dt>Excel Report Output</dt>
+                <dd>{3}</dd>
+
+
+</dl>",
+Vb365ResourceHandler.HtmlIntroLine2,
+Vb365ResourceHandler.HtmlIntroLine4,
+Vb365ResourceHandler.HtmlIntroLine5vb365
+);
+            s += "</div>";
+            return s;
         }
         public string SetHeaderAndLogo(string licenseHolder)
         {

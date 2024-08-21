@@ -28,7 +28,7 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VB365
         private void RunCompiler()
         {
             log.Info("[VB365][HTML] forming header...");
-            _htmldoc += _form.FormHeader();
+            _htmldoc += _form.Header();
             log.Info("[VB365][HTML] forming header...done!");
 
             log.Info("[VB365][HTML] forming body...");
@@ -37,86 +37,72 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VB365
         }
         private void FormVb365Body()
         {
-            _htmldoc += _form.body;
+            try
+            {
+                _htmldoc += _form.body;
 
-            //_htmldoc += _form.SetHeaderAndLogo(SetLicHolder());
-            if (!CGlobals.Scrub)
-                _htmldoc += _form.SetHeaderAndLogo(SetLicHolder());
-            if (CGlobals.Scrub)
-                _htmldoc += _form.SetHeaderAndLogo(" ");
-            _htmldoc += _form.SetBannerAndIntroVb365();
-            // add sections here
-            _htmldoc += SetNavigation();
-            // Navigation!
 
-            CM365Tables tables = new();
-            _htmldoc += _form.header1("Overview");
-            _htmldoc += tables.Globals();
-            _htmldoc += tables.Vb365ProtStat();
-            // other workloads prompt??
-            _htmldoc += _form.header1("Backup Infrastructure");
-            _htmldoc += tables.Vb365Controllers();
-            _htmldoc += tables.Vb365ControllerDrives();
-            _htmldoc += tables.Vb365Proxies();
-            _htmldoc += tables.Vb365Repos();
-            _htmldoc += tables.Vb365ObjectRepos();
+                //_htmldoc += _form.SetHeaderAndLogo(SetLicHolder());
+                if (!CGlobals.Scrub)
+                    _htmldoc += _form.SetHeaderAndLogo(SetLicHolder());
+                if (CGlobals.Scrub)
+                    _htmldoc += _form.SetHeaderAndLogo(" ");
 
-            _htmldoc += _form.header1("Security");
-            _htmldoc += tables.Vb365Security();
-            //_htmldoc += tables.Vb365Rbac();
-            //_htmldoc += tables.Vb365Permissions();
+                // add sections here
+                _htmldoc += SetNavigation();
+                _htmldoc += _form.SetVb365Intro();
+                // Navigation!
 
-            _htmldoc += _form.header1("M365 Backups");
-            _htmldoc += tables.Vb365Orgs();
-            _htmldoc += tables.Jobs();
+                CM365Tables tables = new();
+                _htmldoc += _form.header1("Overview");
+                _htmldoc += tables.Globals();
+                _htmldoc += tables.Vb365ProtStat();
+                // other workloads prompt??
+                _htmldoc += _form.header1("Backup Infrastructure");
+                _htmldoc += tables.Vb365Controllers();
+                _htmldoc += tables.Vb365ControllerDrives();
+                _htmldoc += tables.Vb365Proxies();
+                _htmldoc += tables.Vb365Repos();
+                _htmldoc += tables.Vb365ObjectRepos();
 
-            _htmldoc += tables.Vb365JobStats();
-            _htmldoc += tables.Vb365ProcStats();
-            _htmldoc += tables.Vb365JobSessions();
-            _htmldoc += _form.LineBreak();
-            _htmldoc += "<a align=\"center\">vHC Version: " + CVersionSetter.GetFileVersion() + "</a>";
+                _htmldoc += _form.header1("Security");
+                _htmldoc += tables.Vb365Security();
+                //_htmldoc += tables.Vb365Rbac();
+                //_htmldoc += tables.Vb365Permissions();
 
-            
+                _htmldoc += _form.header1("M365 Backups");
+                _htmldoc += tables.Vb365Orgs();
+                _htmldoc += tables.Jobs();
 
-            _htmldoc += "<script type=\"text/javascript\">";
-            _htmldoc += CHtmlCompiler.GetEmbeddedCssContent("ReportScript.js");
-            _htmldoc += "</script>";
+                _htmldoc += tables.Vb365JobStats();
+                _htmldoc += tables.Vb365ProcStats();
+                _htmldoc += tables.Vb365JobSessions();
+                _htmldoc += _form.LineBreak();
+                _htmldoc += "<a align=\"center\">vHC Version: " + CVersionSetter.GetFileVersion() + "</a>";
 
-            ExportHtml();
+
+
+                _htmldoc += "<script type=\"text/javascript\">";
+                _htmldoc += CHtmlCompiler.GetEmbeddedCssContent("ReportScript.js");
+                _htmldoc += "</script>";
+
+                ExportHtml();
+            }
+            catch (System.Exception e)
+            {
+                log.Error("[VB365][HTML] Error: " + e.Message);
+            }
+
         }
         private string SetNavigation()
         {
             log.Info("[VB365][HTML] forming navigation...");
             string s = string.Empty;
-            s += _form.DivId("navigation");
-
-            s += string.Format("<h4>{0}</h4>", VbrLocalizationHelper.NavHeader);
-            s += string.Format("<button type=\"button\" class=\"btn\" onclick=\"test()\">{0}</button>", VbrLocalizationHelper.NavColapse);
-            s += NavTable();
-
-
-            s += _form._endDiv;
+            s += _form.SetNavTables("vb365");
             log.Info("[VB365][HTML] forming navigation...done!");
             return s;
         }
-        private string NavTable()
-        {
-            CM365Tables tables = new();
-            string tableString =
-    "<table border=\"0\" style=\"background: \">" +
-    "<tbody>";
-            tableString += tables.MakeVb365NavTable();
 
-
-
-
-            tableString +=
-                "</tbody>" +
-                "</table>" +
-                //_form.BackToTop() +
-                "</div>";
-            return tableString;
-        }
         private void ExportHtml()
         {
             log.Info("[VB365][HTML] exporting HTML file...");
