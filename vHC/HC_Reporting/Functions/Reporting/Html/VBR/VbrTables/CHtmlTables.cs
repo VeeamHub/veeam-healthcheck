@@ -914,7 +914,6 @@ namespace VeeamHealthCheck.Html.VBR
 
             try
             {
-
                 List<CSobrTypeInfos> list = _df.SobrInfoToXml(scrub);
 
                 foreach (var d in list)

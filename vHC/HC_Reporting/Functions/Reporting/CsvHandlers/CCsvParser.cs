@@ -53,7 +53,10 @@ namespace VeeamHealthCheck.Functions.Reporting.CsvHandlers
         public readonly string _physNotProtected = "PhysNotProtected";
         public readonly string _HvProtected = "HvProtected";
         public readonly string _HvUnprotected = "HvUnprotected";
-        public readonly string _malware = "malware";
+        public readonly string _malware = "malware_settings";
+        public readonly string _malwareObjects = "malware_infectedobject";
+        public readonly string _malwareEvents = "malware_events";
+        public readonly string _malwareExclusions = "malware_exclusions";
         public readonly string _nasFileData = "NasFileData";
         public readonly string _nasShareSize = "NasSharesize";
         public readonly string _nasObjectSize = "NasObjectSourceStorageSize";
@@ -334,9 +337,30 @@ namespace VeeamHealthCheck.Functions.Reporting.CsvHandlers
                 return res.GetRecords<CViProtected>();
             return null;
         }
-        public IEnumerable<CMalwareObject> MalwareInfo()
+        public IEnumerable<CMalwareObject> MalwareSettings()
         {
             var res = VbrFileReader(_malware);
+            if (res != null)
+                return res.GetRecords<CMalwareObject>();
+            return null;
+        }
+        public IEnumerable<CMalwareObject> MalwareObjects()
+        {
+            var res = VbrFileReader(_malwareObjects);
+            if (res != null)
+                return res.GetRecords<CMalwareObject>();
+            return null;
+        }
+        public IEnumerable<CMalwareObject> MalwareEvents()
+        {
+            var res = VbrFileReader(_malwareEvents);
+            if (res != null)
+                return res.GetRecords<CMalwareObject>();
+            return null;
+        }
+        public IEnumerable<CMalwareObject> MalwareExclusions()
+        {
+            var res = VbrFileReader(_malwareExclusions);
             if (res != null)
                 return res.GetRecords<CMalwareObject>();
             return null;

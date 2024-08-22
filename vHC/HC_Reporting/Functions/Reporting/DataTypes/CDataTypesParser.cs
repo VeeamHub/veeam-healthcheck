@@ -66,7 +66,7 @@ namespace VeeamHealthCheck.Functions.Reporting.DataTypes
         private List<CSobrTypeInfos> SobrInfos()
         {
             var sobrCsv = _csvParser.SobrCsvParser();//.ToList();
-            var capTierCsv = _csvParser.CapTierCsvParser();// ToList();
+            var capTierCsv = _csvParser.CapTierCsvParser().ToList();// ToList();
 
             List<CSobrTypeInfos> eInfoList = new List<CSobrTypeInfos>();
 
@@ -79,7 +79,7 @@ namespace VeeamHealthCheck.Functions.Reporting.DataTypes
 
                     if (capTierCsv != null)
                     {
-                        var c2 = capTierCsv.ToList();
+                        var c2 = capTierCsv;
                         foreach (var cap in c2)
                         {
                             if (cap.ParentId == s.Id)
