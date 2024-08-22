@@ -915,29 +915,56 @@ namespace VeeamHealthCheck.Html.VBR
             try
             {
 
-                List<string[]> list = _df.SobrInfoToXml(scrub);
+                List<CSobrTypeInfos> list = _df.SobrInfoToXml(scrub);
 
                 foreach (var d in list)
                 {
-                    int perVmShade = 0;
-                    if (d[8] == "False")
-                        perVmShade = 3;
+
 
                     s += "<tr>";
-                    s += _form.TableData(d[0], "");
-                    s += _form.TableData(d[1], "");
-                    s += _form.TableData(d[2], "");
-                    s += _form.TableData(d[3], "");
-                    s += _form.TableData(d[4], "");
-                    s += _form.TableData(d[6], "");
-                    s += _form.TableData(d[6], "");
-                    s += _form.TableData(d[7], "");
-                    s += _form.TableData(d[8], "", perVmShade);
-                    s += _form.TableData(d[9], "");
-                    s += _form.TableData(d[10], "");
-                    s += _form.TableData(d[11], "");
-                    s += _form.TableData(d[12], "");
-                    s += _form.TableData(d[13], "");
+                    s += _form.TableData(d.Name, "");
+                    s += _form.TableData(d.Extents, "");
+                    s += _form.TableData(d.JobCount.ToString(), "");
+                    s += _form.TableData(d.PolicyType, "");
+                    if (d.EnableCapacityTier)
+                        s += _form.TableData(_form.True, "");
+                    else
+                        s += _form.TableData(_form.False, "");
+
+
+                    if (d.CapacityTierCopyPolicyEnabled)
+                        s += _form.TableData(_form.True, "");
+                    else
+                        s += _form.TableData(_form.False, "");
+                    if (d.CapacityTierMovePolicyEnabled)
+                        s += _form.TableData(_form.True, "");
+                    else
+                        s += _form.TableData(_form.False, "");
+                    if (d.ArchiveTierEnabled)
+                        s += _form.TableData(_form.True, "");
+
+                    else
+                        s += _form.TableData(_form.False, "");
+                    if (d.UsePerVMBackupFiles)
+                        s += _form.TableData(_form.True, "");
+                    else
+                        s += _form.TableData(_form.False, "");
+
+
+
+
+                    s += _form.TableData(d.CapTierType, "");
+                    if (d.ImmuteEnabled)
+                        s += _form.TableData(_form.True, "");
+                    else
+                        s += _form.TableData(_form.False, "");
+                    s += _form.TableData(d.ImmutePeriod, "");
+                    if (d.SizeLimitEnabled)
+                        s += _form.TableData(_form.True, "");
+                    else
+                        s += _form.TableData(_form.False, "");
+
+                    s += _form.TableData(d.SizeLimit, "");
                     s += "</tr>";
                 }
             }
@@ -976,11 +1003,11 @@ _form.TableHeader(VbrLocalizationHelper.SbrExt15, VbrLocalizationHelper.SbrExt15
             try
             {
 
-                List<string[]> list = _df.ExtentXmlFromCsv(scrub);
+                List<CRepository> list = _df.ExtentXmlFromCsv(scrub);
 
                 foreach (var d in list)
                 {
-                    var prov = d[16];
+                    var prov = d.Provisioning;
                     int shade = 0;
                     if (prov == "under")
                         shade = 2;
@@ -988,28 +1015,51 @@ _form.TableHeader(VbrLocalizationHelper.SbrExt15, VbrLocalizationHelper.SbrExt15
                         shade = 1;
 
                     int freeSpaceShade = 0;
-                    decimal.TryParse(d[10], out decimal i);
-                    if (i < 20) { freeSpaceShade = 1; }
+                    //decimal.TryParse(d.FreeSpacePercent, out decimal i);
+                    if (d.FreeSpacePercent < 20) { freeSpaceShade = 1; }
 
 
 
                     s += "<tr>";
-                    s += _form.TableData(d[0], "");
-                    s += _form.TableData(d[1], "");
-                    s += _form.TableData(d[2], "", shade);
-                    s += _form.TableData(d[3], "");
-                    s += _form.TableData(d[4], "");
-                    s += _form.TableData(d[5], "");
-                    s += _form.TableData(d[6], "");
-                    s += _form.TableData(d[7], "");
-                    s += _form.TableData(d[8], "");
-                    s += _form.TableData(d[9], "");
-                    s += _form.TableData(d[10], "", freeSpaceShade);
-                    s += _form.TableData(d[11], "");
-                    s += _form.TableData(d[12], "");
-                    s += _form.TableData(d[13], "");
-                    s += _form.TableData(d[14], "");
-                    s += _form.TableData(d[15], "");
+                    s += _form.TableData(d.Name, "");
+                    s += _form.TableData(d.SobrName, "");
+                    s += _form.TableData(d.MaxTasks.ToString(), "", shade);
+                    s += _form.TableData(d.Cores.ToString(), "");
+                    s += _form.TableData(d.Ram.ToString(), "");
+
+                    if(d.IsAutoGate)
+                        s += _form.TableData(_form.True, "");
+                    else
+                        s += _form.TableData(_form.False, "");
+                    s += _form.TableData(d.Host, "");
+                    s += _form.TableData(d.Path, "");
+                    s += _form.TableData(d.FreeSpace.ToString(), "");
+                    s += _form.TableData(d.TotalSpace.ToString(), "");
+                    s += _form.TableData(d.FreeSpacePercent.ToString(), "", freeSpaceShade);
+                    
+                   
+                    
+                    if (d.IsDecompress)
+                        s += _form.TableData(_form.True, "");
+                    else
+                        s += _form.TableData(_form.False, "");
+                    
+                    if (d.AlignBlocks)
+                        s += _form.TableData(_form.True, "");
+                    else
+                        s += _form.TableData(_form.False, "");
+
+                    if (d.IsRotatedDrives)
+                        s += _form.TableData(_form.True, "");
+                    else
+                        s += _form.TableData(_form.False, "");
+
+                    if (d.IsImmutabilitySupported)
+                        s += _form.TableData(_form.True, "");
+                    else
+                        s += _form.TableData(_form.False, "");
+
+                    s += _form.TableData(d.Type, "");
                     //s += _form.TableData(d[16], "");
                     s += "</tr>";
                 }
@@ -1049,42 +1099,65 @@ _form.TableHeader(VbrLocalizationHelper.SbrExt15, VbrLocalizationHelper.SbrExt15
             s += _form.TableBodyStart();
             try
             {
-                List<string[]> list = _df.RepoInfoToXml(scrub);
+                List<CRepository> list = _df.RepoInfoToXml(scrub);
 
                 foreach (var d in list)
                 {
-                    var prov = d[17];
+                    var prov = d.Provisioning;
                     int shade = 0;
                     if (prov == "under")
                         shade = 2;
                     if (prov == "over")
                         shade = 1;
                     int freeSpaceShade = 0;
-                    decimal.TryParse(d[10], out decimal i);
+                    //decimal.TryParse(d.FreeSpacePercent, out decimal i);
 
-                    int perVmShade = 0;
-                    if (d[11] == "False")
-                        perVmShade = 3;
+                    //int perVmShade = 0;
+                    //if (d[11] == "False")
+                    //    perVmShade = 3;
 
-                    if (i < 20) { freeSpaceShade = 1; }
+                    if (d.FreeSpacePercent < 20) { freeSpaceShade = 1; }
                     s += "<tr>";
-                    s += _form.TableData(d[0], "");
-                    s += _form.TableData(d[2], "");
-                    s += _form.TableData(d[1], "", shade);
-                    s += _form.TableData(d[3], "");
-                    s += _form.TableData(d[4], "");
-                    s += _form.TableData(d[5], "");
-                    s += _form.TableData(d[6], "");
-                    s += _form.TableData(d[7], "");
-                    s += _form.TableData(d[8], "");
-                    s += _form.TableData(d[9], "");
-                    s += _form.TableData(d[10], "", freeSpaceShade);
-                    s += _form.TableData(d[11], "", perVmShade);
-                    s += _form.TableData(d[12], "");
-                    s += _form.TableData(d[13], "");
-                    s += _form.TableData(d[14], "");
-                    s += _form.TableData(d[15], "");
-                    s += _form.TableData(d[16], "");
+                    s += _form.TableData(d.Name, "");
+                    s += _form.TableData(d.JobCount.ToString(), "");
+                    s += _form.TableData(d.MaxTasks.ToString(), "", shade);
+                    s += _form.TableData(d.Cores.ToString(), "");
+                    s += _form.TableData(d.Ram.ToString(), "");
+                    if(d.IsAutoGate)
+                        s += _form.TableData(_form.True, "");
+                    else
+                        s += _form.TableData(_form.False, "");
+                    s += _form.TableData(d.Host, "");
+                    s += _form.TableData(d.Path, "");
+                    s += _form.TableData(d.FreeSpace.ToString(), "");
+                    s += _form.TableData(d.TotalSpace.ToString(), "");
+                    s += _form.TableData(d.FreeSpacePercent.ToString(), "", freeSpaceShade);
+                    if(d.IsPerVmBackupFiles)
+                        s += _form.TableData(_form.True, "");
+                    else
+                        s += _form.TableData(_form.Warn, "");
+                    if(d.IsDecompress)
+                        s += _form.TableData(_form.True, "");
+                    else
+                        s += _form.TableData(_form.False, "");
+                    if(d.AlignBlocks)
+                        s += _form.TableData(_form.True, "");
+                    else
+                        s += _form.TableData(_form.False, "");
+                    if(d.IsRotatedDrives)
+                        s += _form.TableData(_form.True, "");
+                    else
+                        s += _form.TableData(_form.False, "");
+                    if(d.IsImmutabilitySupported)
+                        s += _form.TableData(_form.True, "");
+                    else
+                        s += _form.TableData(_form.False, "");
+                    s += _form.TableData(d.Type, "");
+
+
+
+
+
                     s += "</tr>";
                 }
             }

@@ -84,10 +84,10 @@ namespace VeeamHealthCheck.Functions.Reporting.DataTypes
                         {
                             if (cap.ParentId == s.Id)
                             {
-                                eInfo.ImmuteEnabled = cap.Immute;
+                                eInfo.ImmuteEnabled =  cap.Immute;
                                 eInfo.ImmutePeriod = cap.ImmutePeriod;
                                 eInfo.SizeLimitEnabled = cap.SizeLimitEnabled;
-                                if (cap.SizeLimitEnabled == "True")
+                                if (cap.SizeLimitEnabled == true)
                                     eInfo.SizeLimit = cap.SizeLimit;
 
                                 eInfo.CapTierType = cap.Type;
@@ -97,35 +97,35 @@ namespace VeeamHealthCheck.Functions.Reporting.DataTypes
                     }
 
                     eInfo.ArchiveExtent = s.ArchiveExtent;
-                    eInfo.ArchiveFullBackupModeEnabled = bool.Parse(s.ArchiveFullBackupModeEnabled);
+                    eInfo.ArchiveFullBackupModeEnabled = s.ArchiveFullBackupModeEnabled;
                     eInfo.ArchivePeriod = s.ArchivePeriod;
-                    eInfo.ArchiveTierEnabled = bool.Parse(s.ArchiveTierEnabled);
+                    eInfo.ArchiveTierEnabled = s.ArchiveTierEnabled;
                     eInfo.CapacityExtent = s.CapacityExtent;
                     eInfo.CapacityTierCopyPolicyEnabled = s.CapacityTierCopyPolicyEnabled;
                     eInfo.CapacityTierMovePolicyEnabled = s.CapacityTierMovePolicyEnabled;
-                    eInfo.CopyAllMachineBackupsEnabled = bool.Parse(s.CopyAllMachineBackupsEnabled);
-                    eInfo.CopyAllPluginBackupsEnabled = bool.Parse(s.CopyAllPluginBackupsEnabled);
-                    eInfo.CostOptimizedArchiveEnabled = bool.Parse(s.CostOptimizedArchiveEnabled);
+                    eInfo.CopyAllMachineBackupsEnabled = s.CopyAllMachineBackupsEnabled;
+                    eInfo.CopyAllPluginBackupsEnabled = s.CopyAllPluginBackupsEnabled;
+                    eInfo.CostOptimizedArchiveEnabled = s.CostOptimizedArchiveEnabled;
                     eInfo.Description = s.Description;
-                    eInfo.EnableCapacityTier = bool.Parse(s.EnableCapacityTier);
+                    eInfo.EnableCapacityTier = s.EnableCapacityTier;
                     if (!eInfo.EnableCapacityTier)
                     {
-                        eInfo.CapacityTierCopyPolicyEnabled = "";
-                        eInfo.CapacityTierMovePolicyEnabled = "";
+                        eInfo.CapacityTierCopyPolicyEnabled = false;
+                        eInfo.CapacityTierMovePolicyEnabled = false;
                     }
-                    eInfo.EncryptionEnabled = bool.Parse(s.EncryptionEnabled);
+                    eInfo.EncryptionEnabled = s.EncryptionEnabled;
                     eInfo.EncryptionKey = s.EncryptionKey;
                     eInfo.Extents = s.Extents;
                     eInfo.Id = s.Id;
                     eInfo.Name = s.Name;
                     eInfo.OffloadWindowOptions = s.OffloadWindowOptions;
                     eInfo.OperationalRestorePeriod = ParseToInt(s.OperationalRestorePeriod);
-                    eInfo.OverridePolicyEnabled = bool.Parse(s.OverridePolicyEnabled);
+                    eInfo.OverridePolicyEnabled = s.OverridePolicyEnabled;
                     eInfo.OverrideSpaceThreshold = ParseToInt(s.OverrideSpaceThreshold);
-                    eInfo.PerformFullWhenExtentOffline = bool.Parse(s.PerformFullWhenExtentOffline);
-                    eInfo.PluginBackupsOffloadEnabled = bool.Parse(s.PluginBackupsOffloadEnabled);
+                    eInfo.PerformFullWhenExtentOffline =(s.PerformFullWhenExtentOffline);
+                    eInfo.PluginBackupsOffloadEnabled = s.PluginBackupsOffloadEnabled;
                     eInfo.PolicyType = s.PolicyType;
-                    eInfo.UsePerVMBackupFiles = bool.Parse(s.UsePerVMBackupFiles);
+                    eInfo.UsePerVMBackupFiles = s.UsePerVMBackupFiles;
 
                     //int c = eInfo.Extents.Count();
 
@@ -173,29 +173,29 @@ namespace VeeamHealthCheck.Functions.Reporting.DataTypes
                     eInfo.FriendlyPath = s.FriendlyPath;
                     eInfo.FullPath = s.FullPath;
                     eInfo.Group = s.Group;
-                    eInfo.HasBackupChainLengthLimitation = ParseBool(s.HasBackupChainLengthLimitation);
+                    eInfo.HasBackupChainLengthLimitation =  (s.HasBackupChainLengthLimitation);
                     eInfo.Id = s.Id;
-                    eInfo.IsDedupStorage = ParseBool(s.IsDedupStorage);
-                    eInfo.IsImmutabilitySupported = ParseBool(s.IsImmutabilitySupported);
-                    eInfo.IsRotatedDriveRepository = ParseBool(s.IsRotatedDriveRepository);
-                    eInfo.IsSanSnapshotOnly = ParseBool(s.IsSanSnapshotOnly);
-                    eInfo.IsTemporary = ParseBool(s.IsTemporary);
-                    eInfo.IsUnavailable = ParseBool(s.IsUnavailable);
+                    eInfo.IsDedupStorage =  (s.IsDedupStorage);
+                    eInfo.IsImmutabilitySupported =  (s.IsImmutabilitySupported);
+                    eInfo.IsRotatedDriveRepository =  (s.IsRotatedDriveRepository);
+                    eInfo.IsSanSnapshotOnly =  (s.IsSanSnapshotOnly);
+                    eInfo.IsTemporary =  (s.IsTemporary);
+                    eInfo.IsUnavailable =  (s.IsUnavailable);
                     eInfo.Name = s.Name;
                     eInfo.Path = s.Path;
-                    eInfo.SplitStoragesPerVm = ParseBool(s.SplitStoragesPerVm);
+                    eInfo.SplitStoragesPerVm =  (s.SplitStoragesPerVm);
                     eInfo.Status = s.Status;
                     eInfo.Type = s.Type;
                     eInfo.TypeDisplay = s.TypeDisplay;
                     eInfo.VersionOfCreation = s.VersionOfCreation;
-                    eInfo.IsDecompress = ParseBool(s.Uncompress);
+                    eInfo.IsDecompress = bool.TryParse(s.Uncompress, out bool b);
                     eInfo.MaxTasks = ParseToInt(s.MaxTasks);
-                    eInfo.AlignBlocks = s.AlignBlock;
+                    eInfo.AlignBlocks = bool.TryParse(s.AlignBlock, out bool c);
                     eInfo.GateHosts = s.GateHosts;
 
                     eInfo.HostId = s.HostId;
                     if (eInfo.HostId == "00000000-0000-0000-0000-000000000000")
-                        eInfo.IsAutoGateway = "True";
+                        eInfo.IsAutoGateway = true;
 
                     if (eInfo.HostId != "00000000-0000-0000-0000-000000000000")
                     {
@@ -257,22 +257,22 @@ namespace VeeamHealthCheck.Functions.Reporting.DataTypes
                     //eInfo.Host = s.HostName;
                     eInfo.RepoName = s.Name;
                     eInfo.Path = s.FriendlyPath;
-                    eInfo.IsUnavailable = ParseBool(s.IsUnavailable);
+                    eInfo.IsUnavailable =  (s.IsUnavailable);
                     eInfo.Type = s.TypeDisplay;
-                    eInfo.IsRotatedDriveRepository = ParseBool(s.IsRotatedDriveRepository);
-                    eInfo.IsDedupStorage = ParseBool(s.IsDedupStorage);
-                    eInfo.IsImmutabilitySupported = ParseBool(s.IsImmutabilitySupported);
+                    eInfo.IsRotatedDriveRepository =  (s.IsRotatedDriveRepository);
+                    eInfo.IsDedupStorage =  (s.IsDedupStorage);
+                    eInfo.IsImmutabilitySupported =  (s.IsImmutabilitySupported);
                     eInfo.SobrName = s.SOBR_Name;
                     eInfo.MaxTasks = ParseToInt(s.MaxTasks);
                     eInfo.maxArchiveTasks = ParseToInt(s.MaxArchiveTaskCount);
-                    eInfo.isUnlimitedTaks = ParseBool(s.UnlimitedTasks);
+                    eInfo.isUnlimitedTaks =  (s.UnlimitedTasks);
                     eInfo.dataRateLimit = ParseToInt(s.CombinedDataRateLimit);
-                    eInfo.IsDecompress = ParseBool(s.UnCompress);
-                    eInfo.SplitStoragesPerVm = ParseBool(s.OneBackupFilePerVm);
-                    eInfo.autoDetectAffinity = ParseBool(s.IsAutoDetectAffinityProxies);
+                    eInfo.IsDecompress =  (s.UnCompress);
+                    eInfo.SplitStoragesPerVm =  (s.OneBackupFilePerVm);
+                    eInfo.autoDetectAffinity =  (s.IsAutoDetectAffinityProxies);
                     eInfo.HostId = s.HostId;
                     if (eInfo.HostId == "00000000-0000-0000-0000-000000000000")
-                        eInfo.IsAutoGateway = "True";
+                        eInfo.IsAutoGateway = true;
 
                     if (eInfo.HostId != "00000000-0000-0000-0000-000000000000")
                     {

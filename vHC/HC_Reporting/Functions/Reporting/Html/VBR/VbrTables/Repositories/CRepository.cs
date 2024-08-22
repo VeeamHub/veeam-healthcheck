@@ -7,11 +7,12 @@ using System.Threading.Tasks;
 
 namespace VeeamHealthCheck.Functions.Reporting.Html.VBR
 {
-    internal class CRepository
+    public class CRepository
     {
         public string Name { get; set; }
         public string SobrName { get; set; }
         public int MaxTasks { get; set; }
+        public int JobCount { get; set; }
         public int Cores { get; set; }
         public int Ram { get; set; }
         public bool IsAutoGate { get; set; }
@@ -20,6 +21,7 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR
         public decimal FreeSpace { get; set; }
         public decimal TotalSpace { get; set; }
         public decimal FreeSpacePercent { get; set; }
+        public bool IsPerVmBackupFiles {  get; set; }
         public bool IsDecompress { get; set; }
         public bool AlignBlocks { get; set; }
         public bool IsRotatedDrives { get; set; }

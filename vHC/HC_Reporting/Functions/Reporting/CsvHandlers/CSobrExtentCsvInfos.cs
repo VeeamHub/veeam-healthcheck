@@ -35,11 +35,11 @@ namespace VeeamHealthCheck.Functions.Reporting.CsvHandlers
         [Index(12)]
         public string Status { get; set; }
         [Index(13)]
-        public string IsUnavailable { get; set; }
+        public bool IsUnavailable { get; set; }
         [Index(14)]
         public string Group { get; set; }
         [Index(15)]
-        public string UseNfsOnMountHost { get; set; }
+        public bool UseNfsOnMountHost { get; set; }
         [Index(16)]
         public string VersionOfCreation { get; set; }
         [Index(17)]
@@ -50,20 +50,20 @@ namespace VeeamHealthCheck.Functions.Reporting.CsvHandlers
 
         public string TypeDisplay { get; set; }
         [Index(20)]
-        public string IsRotatedDriveRepository { get; set; }
+        public bool IsRotatedDriveRepository { get; set; }
         [Index(21)]
         public string EndPointCryptoKeyId { get; set; }
         [Index(22)]
-        public string HasBackupChainLengthLimitation { get; set; }
+        public bool HasBackupChainLengthLimitation { get; set; }
         [Index(23)]
 
-        public string IsSanSnapshotOnly { get; set; }
+        public bool IsSanSnapshotOnly { get; set; }
         [Index(24)]
-        public string IsDedupStorage { get; set; }
+        public bool IsDedupStorage { get; set; }
         [Index(25)]
-        public string SplitStoragesPerVm { get; set; }
+        public bool SplitStoragesPerVm { get; set; }
         [Index(26)]
-        public string IsImmutabilitySupported { get; set; }
+        public bool IsImmutabilitySupported { get; set; }
         [Index(27)]
 
         public string SOBR_Name { get; set; }
@@ -78,17 +78,17 @@ namespace VeeamHealthCheck.Functions.Reporting.CsvHandlers
         [Index(31)]
         public string CombinedDataRateLimit { get; set; }
         [Index(32)]
-        public string UnCompress { get; set; }
+        public bool UnCompress { get; set; }
         [Index(33)]
-        public string OptimizeBlockAlign { get; set; }
+        public bool OptimizeBlockAlign { get; set; }
         [Index(34)]
         public string RemoteAccessLimitation { get; set; }
         [Index(35)]
-        public string EpEncryptionEnabled { get; set; }
+        public bool EpEncryptionEnabled { get; set; }
         [Index(36)]
-        public string OneBackupFilePerVm { get; set; }
+        public bool OneBackupFilePerVm { get; set; }
         [Index(37)]
-        public string IsAutoDetectAffinityProxies { get; set; }
+        public bool IsAutoDetectAffinityProxies { get; set; }
         [Index(38)]
         public string NfsRepositoryEncoding { get; set; }
         [Index(39)]
