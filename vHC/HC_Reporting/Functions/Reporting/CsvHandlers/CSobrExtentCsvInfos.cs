@@ -78,17 +78,17 @@ namespace VeeamHealthCheck.Functions.Reporting.CsvHandlers
         [Index(31)]
         public string CombinedDataRateLimit { get; set; }
         [Index(32)]
-        public bool UnCompress { get; set; }
+        public string UnCompress { get; set; }
         [Index(33)]
-        public bool OptimizeBlockAlign { get; set; }
+        public string OptimizeBlockAlign { get; set; }
         [Index(34)]
         public string RemoteAccessLimitation { get; set; }
         [Index(35)]
-        public bool EpEncryptionEnabled { get; set; }
+        public string EpEncryptionEnabled { get; set; }
         [Index(36)]
-        public bool OneBackupFilePerVm { get; set; }
+        public string OneBackupFilePerVm { get; set; }
         [Index(37)]
-        public bool IsAutoDetectAffinityProxies { get; set; }
+        public string IsAutoDetectAffinityProxies { get; set; }
         [Index(38)]
         public string NfsRepositoryEncoding { get; set; }
         [Index(39)]

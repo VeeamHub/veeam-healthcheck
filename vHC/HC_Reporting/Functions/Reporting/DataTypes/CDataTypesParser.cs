@@ -29,7 +29,7 @@ namespace VeeamHealthCheck.Functions.Reporting.DataTypes
         public List<CJobTypeInfos> JobInfos { get { return JobInfo(); } }
         public List<CJobSessionInfo> JobSessions { get { return JobSessionInfo(); } }
         public List<CServerTypeInfos> ServerInfos { get { return ServerInfo(); } }
-        public List<CRepoTypeInfos> ExtentInfo { get { return SobrExtInfo(); } }
+        public List<CRepoTypeInfos> ExtentInfo { get { try { return SobrExtInfo(); } catch (Exception e) { throw; } } }
         public List<CProxyTypeInfos> ProxyInfos { get { return ProxyInfo(); } }
         public Dictionary<string, int> ServerSummaryInfo { get { return _serverSummaryInfo; } }
         public List<CSobrTypeInfos> SobrInfo { get { return SobrInfos(); } }
@@ -267,9 +267,9 @@ namespace VeeamHealthCheck.Functions.Reporting.DataTypes
                     eInfo.maxArchiveTasks = ParseToInt(s.MaxArchiveTaskCount);
                     eInfo.isUnlimitedTaks =  (s.UnlimitedTasks);
                     eInfo.dataRateLimit = ParseToInt(s.CombinedDataRateLimit);
-                    eInfo.IsDecompress =  (s.UnCompress);
-                    eInfo.SplitStoragesPerVm =  (s.OneBackupFilePerVm);
-                    eInfo.autoDetectAffinity =  (s.IsAutoDetectAffinityProxies);
+                    eInfo.IsDecompress =  bool.TryParse(s.UnCompress, out bool b);
+                    eInfo.SplitStoragesPerVm =  bool.TryParse(s.OneBackupFilePerVm, out bool b2);
+                    eInfo.autoDetectAffinity =  bool.TryParse(s.IsAutoDetectAffinityProxies, out bool b3);
                     eInfo.HostId = s.HostId;
                     if (eInfo.HostId == "00000000-0000-0000-0000-000000000000")
                         eInfo.IsAutoGateway = true;

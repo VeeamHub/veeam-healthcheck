@@ -379,11 +379,17 @@ try {
     $Jobs = Get-VBRJob -WarningAction SilentlyContinue #| Where-Object { $_.JobType -eq 'Backup' -OR $_.JobType -eq 'BackupSync' }
     #JobTypes & conversion
     $catCopy = Get-VBRCatalystCopyJob
+    $catCopy | Export-Csv -Path $("$ReportPath\$VBRServer" + '_catCopy.csv') -NoTypeInformation
     $vaBcj = Get-VBRComputerBackupCopyJob
+    $vsBcj | Export-Csv -Path $("$ReportPath\$VBRServer" + '_vsBcj.csv') -NoTypeInformation
     $vaBJob = Get-VBRComputerBackupJob
+    $vaBJob | Export-Csv -Path $("$ReportPath\$VBRServer" + '_vaBJob.csv') -NoTypeInformation
     $configBackup = Get-VBRConfigurationBackupJob
     $epJob = Get-VBREPJob 
-    #$sbJob = Get-VSBJob
+    $epJob | Export-Csv -Path $("$ReportPath\$VBRServer" + '_epJob.csv') -NoTypeInformation
+    
+    $sbJob = Get-VSBJob
+    $sbJob | Export-Csv -Path $("$ReportPath\$VBRServer" + '_sbJob.csv') -NoTypeInformation
     
     #tape jobs
     $tapeJob = Get-VBRTapeJob
@@ -396,26 +402,24 @@ try {
       
     $piJob = Get-VBRPluginJob
     $piJob | Add-Member -MemberType NoteProperty -Name JobType -Value "Plugin Backup"
-    #$Jobs += $piJob
+    $piJob | Export-csv -Path $("$ReportPath\$VBRServer" + '_pluginjobs.csv') -NoTypeInformation
+
   
     $vcdJob = Get-VBRvCDReplicaJob
     $vcdJob | Add-Member -MemberType NoteProperty -Name JobType -Value "VCD Replica"
-    $Jobs += $vcdJob
-  
-    #$Jobs += $nasBCJ
+    $vcdJob | Export-csv -Path $("$ReportPath\$VBRServer" + '_vcdjobs.csv') -NoTypeInformation
   
     $cdpJob | Add-Member -MemberType NoteProperty -Name JobType -Value "CDP Policy"
-    $Jobs += $cdpJob
+    $cdpJob | Export-csv -Path $("$ReportPath\$VBRServer" + '_cdpjobs.csv') -NoTypeInformation
   
     $nasBackup | Add-Member -MemberType NoteProperty -Name JobType -Value "NAS Backup"
-    # $Jobs += $nasBackup
+    $nasBackup | Export-csv -Path $("$ReportPath\$VBRServer" + '_nasBackup.csv') -NoTypeInformation
+    $nasBCJ | export-csv -Path $("$ReportPath\$VBRServer" + '_nasBCJ.csv') -NoTypeInformation
   
     # removing tape jobs from here, exporting independently
     # $tapeJob | Add-Member -MemberType NoteProperty -Name JobType -Value "Tape Backup"
     # $Jobs += $tapeJob
   
-    $catCopy | Add-Member -MemberType NoteProperty -Name JobType -Value "Catalyst Copy"# -InformationVariable "catCopy"
-    $Jobs += $catCopy
   
       
     $vaBcj | Add-Member -MemberType NoteProperty -Name JobType -Value "Physical Backup Copy"
@@ -486,7 +490,6 @@ catch {
     Write-LogFile($err.message)
 }
 $AllJobs | Export-Csv -Path $("$ReportPath\$VBRServer" + '_Jobs.csv') -NoTypeInformation -ErrorAction SilentlyContinue
-$piJob | Export-csv -Path $("$ReportPath\$VBRServer" + '_pluginjobs.csv') -NoTypeInformation
 $configBackup | Export-Csv -Path $("$ReportPath\$VBRServer" + '_configBackup.csv') -NoTypeInformation
 #SOBRS
 # try {
