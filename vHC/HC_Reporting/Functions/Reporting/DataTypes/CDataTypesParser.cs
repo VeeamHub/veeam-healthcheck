@@ -286,6 +286,7 @@ namespace VeeamHealthCheck.Functions.Reporting.DataTypes
                     eInfo.FreeSPace = ParseToInt(s.FreeSpace);
                     eInfo.TotalSpace = ParseToInt(s.TotalSpace);
                     eInfo.GateHosts = s.GateHosts;
+                    eInfo.ObjectLockEnabled = bool.TryParse(s.ObjectLockEnabled, out bool b4);
 
                     eInfoList.Add(eInfo);
 

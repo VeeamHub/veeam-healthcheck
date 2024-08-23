@@ -50,6 +50,7 @@ namespace VeeamHealthCheck.Functions.Reporting.DataTypes
         public bool IsDecompress { get; set; }
         public bool AlignBlocks { get; set; }
         public string GateHosts { get; set; }
+        public bool ObjectLockEnabled { get; set; }
         public CRepoTypeInfos()
         {
 

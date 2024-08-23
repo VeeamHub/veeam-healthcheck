@@ -97,6 +97,8 @@ namespace VeeamHealthCheck.Functions.Reporting.CsvHandlers
         public string TotalSpace { get; set; }
         [Index(41)]
         public string GateHosts { get; set; }
+        [Index(42)]
+        public string ObjectLockEnabled { get; set; }
 
     }
 }

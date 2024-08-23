@@ -572,7 +572,7 @@ namespace VeeamHealthCheck.Functions.Reporting.Html
                         IsDecompress = c.IsDecompress,
                         AlignBlocks = c.AlignBlocks,
                         IsRotatedDrives = c.IsRotatedDriveRepository,
-                        IsImmutabilitySupported = c.IsImmutabilitySupported,
+                        IsImmutabilitySupported = c.ObjectLockEnabled,
                         Type = type,
                         Provisioning = c.Povisioning
                         

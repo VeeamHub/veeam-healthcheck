@@ -17,6 +17,7 @@ using VeeamHealthCheck.Shared;
 using VeeamHealthCheck.Shared.Logging;
 using System.Text.Json;
 using VeeamHealthCheck.Functions.Reporting.Html.VBR.VbrTables.Jobs_Info;
+using System.Management.Automation;
 
 
 namespace VeeamHealthCheck.Html.VBR
@@ -1026,7 +1027,7 @@ _form.TableHeader(VbrLocalizationHelper.SbrExt15, VbrLocalizationHelper.SbrExt15
                     s += _form.TableData(d.Cores.ToString(), "");
                     s += _form.TableData(d.Ram.ToString(), "");
 
-                    if(d.IsAutoGate)
+                    if (d.IsAutoGate)
                         s += _form.TableData(_form.True, "");
                     else
                         s += _form.TableData(_form.False, "");
@@ -1035,14 +1036,14 @@ _form.TableHeader(VbrLocalizationHelper.SbrExt15, VbrLocalizationHelper.SbrExt15
                     s += _form.TableData(d.FreeSpace.ToString(), "");
                     s += _form.TableData(d.TotalSpace.ToString(), "");
                     s += _form.TableData(d.FreeSpacePercent.ToString(), "", freeSpaceShade);
-                    
-                   
-                    
+
+
+
                     if (d.IsDecompress)
                         s += _form.TableData(_form.True, "");
                     else
                         s += _form.TableData(_form.False, "");
-                    
+
                     if (d.AlignBlocks)
                         s += _form.TableData(_form.True, "");
                     else
@@ -1122,7 +1123,7 @@ _form.TableHeader(VbrLocalizationHelper.SbrExt15, VbrLocalizationHelper.SbrExt15
                     s += _form.TableData(d.MaxTasks.ToString(), "", shade);
                     s += _form.TableData(d.Cores.ToString(), "");
                     s += _form.TableData(d.Ram.ToString(), "");
-                    if(d.IsAutoGate)
+                    if (d.IsAutoGate)
                         s += _form.TableData(_form.True, "");
                     else
                         s += _form.TableData(_form.False, "");
@@ -1131,23 +1132,23 @@ _form.TableHeader(VbrLocalizationHelper.SbrExt15, VbrLocalizationHelper.SbrExt15
                     s += _form.TableData(d.FreeSpace.ToString(), "");
                     s += _form.TableData(d.TotalSpace.ToString(), "");
                     s += _form.TableData(d.FreeSpacePercent.ToString(), "", freeSpaceShade);
-                    if(d.IsPerVmBackupFiles)
+                    if (d.IsPerVmBackupFiles)
                         s += _form.TableData(_form.True, "");
                     else
                         s += _form.TableData(_form.Warn, "");
-                    if(d.IsDecompress)
+                    if (d.IsDecompress)
                         s += _form.TableData(_form.True, "");
                     else
                         s += _form.TableData(_form.False, "");
-                    if(d.AlignBlocks)
+                    if (d.AlignBlocks)
                         s += _form.TableData(_form.True, "");
                     else
                         s += _form.TableData(_form.False, "");
-                    if(d.IsRotatedDrives)
+                    if (d.IsRotatedDrives)
                         s += _form.TableData(_form.True, "");
                     else
                         s += _form.TableData(_form.False, "");
-                    if(d.IsImmutabilitySupported)
+                    if (d.IsImmutabilitySupported)
                         s += _form.TableData(_form.True, "");
                     else
                         s += _form.TableData(_form.False, "");
@@ -1337,19 +1338,25 @@ _form.TableHeader(VbrLocalizationHelper.SbrExt15, VbrLocalizationHelper.SbrExt15
                 source.OrderBy(x => x.Name);
                 var jobTypes = source.Select(x => x.JobType).Distinct().ToList();
 
-                double tSizeGB = 0;
                 try
                 {
-                    foreach(var jType in jobTypes)
+                    foreach (var jType in jobTypes)
                     {
+                        double tSizeGB = 0;
+
+                        var useSourceSize = true;
+                        if (jType == "NasBackup" || jType == "NasBackupCopy" || jType == "Copy")
+                        {
+                            useSourceSize = false;
+                        }
                         var realType = GetJobType(jType);
                         string jobTable = _form.SectionStartWithButton("jobTable", realType, "");
                         s += jobTable;
-                        s += SetGenericJobTablHeader();
+                        s += SetGenericJobTablHeader(useSourceSize);
                         var res = source.Where(x => x.JobType == jType).ToList();
                         foreach (var job in res)
                         {
-                            if(job.JobType != jType)
+                            if (job.JobType != jType)
                             {
                                 continue;
                             }
@@ -1361,22 +1368,29 @@ _form.TableHeader(VbrLocalizationHelper.SbrExt15, VbrLocalizationHelper.SbrExt15
                             row += _form.TableData(job.Name, "");
                             row += _form.TableData(job.RepoName, "");
 
-                            double trueSizeGB = Math.Round(job.OriginalSize / 1024 / 1024 / 1024, 2);
-                            double trueSizeTB = Math.Round(job.OriginalSize / 1024 / 1024 / 1024 / 1024, 2);
-                            double trueSizeMB = Math.Round(job.OriginalSize / 1024 / 1024, 2);
-                            tSizeGB += trueSizeGB;
-                            if (trueSizeGB > 999)
+                            if (useSourceSize)
                             {
-                                row += _form.TableData(trueSizeTB.ToString() + " TB", "");
-                            }
-                            else if (trueSizeGB < 1)
-                            {
-                                row += _form.TableData(trueSizeMB.ToString() + " MB", "");
+                                double trueSizeGB = Math.Round(job.OriginalSize / 1024 / 1024 / 1024, 2);
+                                double trueSizeTB = Math.Round(job.OriginalSize / 1024 / 1024 / 1024 / 1024, 2);
+                                double trueSizeMB = Math.Round(job.OriginalSize / 1024 / 1024, 2);
+                                tSizeGB += trueSizeGB;
+                                if (trueSizeGB > 999)
+                                {
+                                    row += _form.TableData(trueSizeTB.ToString() + " TB", "");
+                                }
+                                else if (trueSizeGB < 1)
+                                {
+                                    row += _form.TableData(trueSizeMB.ToString() + " MB", "");
+                                }
+                                else
+                                {
+                                    row += _form.TableData(trueSizeGB.ToString() + " GB", "");
+                                }
                             }
                             else
                             {
-                                row += _form.TableData(trueSizeGB.ToString() + " GB", "");
                             }
+
                             //row+= _form.TableData(trueSizeGB.ToString() + " GB", "");
                             //row+= _form.TableData(job.RetentionType, "");
                             row += job.RetentionType == "Cycles" ? _form.TableData("Points", "") : _form.TableData(job.RetentionType, "");
@@ -1455,7 +1469,30 @@ _form.TableHeader(VbrLocalizationHelper.SbrExt15, VbrLocalizationHelper.SbrExt15
                             s += row;
 
                         }
+                        //table summary/totals
+                        if (useSourceSize)
+                        {
+                            s += "<tr>";
+                            s += _form.TableData("Totals", "");
+                            s += _form.TableData("", "");
+                            //double totalSizeGB = Math.Round(tSizeGB / 1024 / 1024 / 1024, 2);
+                            double totalSizeTB = Math.Round(tSizeGB / 1024, 2);
+                            double totalSizeMB = Math.Round(tSizeGB * 1024, 2);
+                            if (tSizeGB > 999)
+                            {
+                                s += _form.TableData(totalSizeTB.ToString() + " TB", "");
+                            }
+                            else if (tSizeGB < 1)
+                            {
+                                s += _form.TableData(totalSizeMB.ToString() + " MB", "");
+                            }
+                            else
+                            {
+                                s += _form.TableData(tSizeGB.ToString() + " GB", "");
+                            }
+                        }
                         
+
                         // end each table/section
                         s += _form.SectionEnd(summary);
 
@@ -1474,39 +1511,7 @@ _form.TableHeader(VbrLocalizationHelper.SbrExt15, VbrLocalizationHelper.SbrExt15
                     log.Error("\t" + e.Message);
                 }
                 //end of FE up one line...
-                // code something here:
 
-
-
-                s += "<tr>";
-                s += _form.TableData("Totals", "");
-                s += _form.TableData("", "");
-                //double totalSizeGB = Math.Round(tSizeGB / 1024 / 1024 / 1024, 2);
-                double totalSizeTB = Math.Round(tSizeGB / 1024, 2);
-                double totalSizeMB = Math.Round(tSizeGB * 1024, 2);
-                if (tSizeGB > 999)
-                {
-                    s += _form.TableData(totalSizeTB.ToString() + " TB", "");
-                }
-                else if (tSizeGB < 1)
-                {
-                    s += _form.TableData(totalSizeMB.ToString() + " MB", "");
-                }
-                else
-                {
-                    s += _form.TableData(tSizeGB.ToString() + " GB", "");
-                }
-                //var stuff = _df.JobInfoToXml(scrub);
-
-                //foreach (var stu in stuff)
-                //{
-                //    s += "<tr>";
-
-                //    foreach (var st in stu)
-                //    {
-                //        s += _form.TableData(st, "");
-                //    }
-                //}
             }
             catch (Exception e)
             {
@@ -1518,12 +1523,13 @@ _form.TableHeader(VbrLocalizationHelper.SbrExt15, VbrLocalizationHelper.SbrExt15
             s += _form.SectionEnd(summary);
             return s;
         }
-        private string SetGenericJobTablHeader()
+        private string SetGenericJobTablHeader(bool useSourceSize)
         {
             string s = "";
             s += _form.TableHeader(VbrLocalizationHelper.JobInfo0, VbrLocalizationHelper.JobInfo0TT); // Name
             s += _form.TableHeader(VbrLocalizationHelper.JobInfo1, VbrLocalizationHelper.JobInfo1TT); // Repo
-            s += _form.TableHeader(VbrLocalizationHelper.JobInfo2, VbrLocalizationHelper.JobInfo2TT); // Source Size (GB)
+            if (useSourceSize)
+                s += _form.TableHeader(VbrLocalizationHelper.JobInfo2, VbrLocalizationHelper.JobInfo2TT); // Source Size (GB)
             s += _form.TableHeader("Retention Scheme", "Is the job set to keep backups for X number of Days or Points");
             s += _form.TableHeader(VbrLocalizationHelper.JobInfo3, VbrLocalizationHelper.JobInfo3TT); // Restore Point Target
             s += _form.TableHeader(VbrLocalizationHelper.JobInfo4, VbrLocalizationHelper.JobInfo4TT); // Encrypted

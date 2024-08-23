@@ -1,5 +1,6 @@
 ﻿#Requires -Version 4
 #Requires -RunAsAdministrator
+
 <#
 .Synopsis
     Simple Veeam report to dump server & job configurations
@@ -324,8 +325,8 @@ try {
         foreach ($Extent in $Extents) {
             if($VBRVersion -eq 12){
                 #write-host("DEBUG: GATES:")  
-                $Extent.Repository.GetActualGateways().Name
-                $ExtentDetails = $Extent.Repository | Select-Object *, @{n = 'SOBR_Name'; e = { $SOBR.Name } }, @{name = 'CachedFreeSpace'; expression = { $_.GetContainer().cachedfreespace.InGigabytes } }, @{name = 'CachedTotalSpace'; expression = { $_.GetContainer().cachedtotalspace.InGigabytes } }, @{name = 'gatewayHosts'; expression = { $_.GetActualGateways().Name } }
+                #$Extent.Repository.GetActualGateways().Name
+                $ExtentDetails = $Extent.Repository | Select-Object *, @{n = 'SOBR_Name'; e = { $SOBR.Name } }, @{name = 'CachedFreeSpace'; expression = { $_.GetContainer().cachedfreespace.InGigabytes } }, @{name = 'CachedTotalSpace'; expression = { $_.GetContainer().cachedtotalspace.InGigabytes } }, @{name = 'gatewayHosts'; expression = { $_.GetActualGateways().Name } }, @{n = 'ObjectLockEnabled'; e = { $_.ObjectLockEnabled } }
             }
             else{
                 $ExtentDetails = $Extent.Repository | Select-Object *, @{n = 'SOBR_Name'; e = { $SOBR.Name } }, @{name = 'CachedFreeSpace'; expression = { $_.GetContainer().cachedfreespace.InGigabytes } }, @{name = 'CachedTotalSpace'; expression = { $_.GetContainer().cachedtotalspace.InGigabytes } }
@@ -335,7 +336,7 @@ try {
         }
     }
     $SOBROutput = $SOBRs | Select-Object -Property "PolicyType", @{n = "Extents"; e = { $SOBRs.extent.name -as [String] } } , "UsePerVMBackupFiles", "PerformFullWhenExtentOffline", "EnableCapacityTier", "OperationalRestorePeriod", "OverridePolicyEnabled", "OverrideSpaceThreshold", "OffloadWindowOptions", "CapacityExtent", "EncryptionEnabled", "EncryptionKey", "CapacityTierCopyPolicyEnabled", "CapacityTierMovePolicyEnabled", "ArchiveTierEnabled", "ArchiveExtent", "ArchivePeriod", "CostOptimizedArchiveEnabled", "ArchiveFullBackupModeEnabled", "PluginBackupsOffloadEnabled", "CopyAllPluginBackupsEnabled", "CopyAllMachineBackupsEnabled", "Id", "Name", "Description"
-    $AllSOBRExtentsOutput = $AllSOBRExtents | Select-Object -property @{name = 'Host'; expression = { $_.host.name } } , "Id", "Name", "HostId", "MountHostId", "Description", "CreationTime", "Path", "FullPath", "FriendlyPath", "ShareCredsId", "Type", "Status", "IsUnavailable", "Group", "UseNfsOnMountHost", "VersionOfCreation", "Tag", "IsTemporary", "TypeDisplay", "IsRotatedDriveRepository", "EndPointCryptoKeyId", "HasBackupChainLengthLimitation", "IsSanSnapshotOnly", "IsDedupStorage", "SplitStoragesPerVm", "IsImmutabilitySupported", "SOBR_Name", @{name = 'Options(maxtasks)'; expression = { $_.Options.MaxTaskCount } }, @{name = 'Options(Unlimited Tasks)'; expression = { $_.Options.IsTaskCountUnlim } }, @{name = 'Options(MaxArchiveTaskCount)'; expression = { $_.Options.MaxArchiveTaskCount } }, @{name = 'Options(CombinedDataRateLimit)'; expression = { $_.Options.CombinedDataRateLimit } }, @{name = 'Options(Uncompress)'; expression = { $_.Options.Uncompress } }, @{name = 'Options(OptimizeBlockAlign)'; expression = { $_.Options.OptimizeBlockAlign } }, @{name = 'Options(RemoteAccessLimitation)'; expression = { $_.Options.RemoteAccessLimitation } }, @{name = 'Options(EpEncryptionEnabled)'; expression = { $_.Options.EpEncryptionEnabled } }, @{name = 'Options(OneBackupFilePerVm)'; expression = { $_.Options.OneBackupFilePerVm } }, @{name = 'Options(IsAutoDetectAffinityProxies)'; expression = { $_.Options.IsAutoDetectAffinityProxies } }, @{name = 'Options(NfsRepositoryEncoding)'; expression = { $_.Options.NfsRepositoryEncoding } }, "CachedFreeSpace", "CachedTotalSpace", "gatewayHosts"
+    $AllSOBRExtentsOutput = $AllSOBRExtents | Select-Object -property @{name = 'Host'; expression = { $_.host.name } } , "Id", "Name", "HostId", "MountHostId", "Description", "CreationTime", "Path", "FullPath", "FriendlyPath", "ShareCredsId", "Type", "Status", "IsUnavailable", "Group", "UseNfsOnMountHost", "VersionOfCreation", "Tag", "IsTemporary", "TypeDisplay", "IsRotatedDriveRepository", "EndPointCryptoKeyId", "HasBackupChainLengthLimitation", "IsSanSnapshotOnly", "IsDedupStorage", "SplitStoragesPerVm", "IsImmutabilitySupported", "SOBR_Name", @{name = 'Options(maxtasks)'; expression = { $_.Options.MaxTaskCount } }, @{name = 'Options(Unlimited Tasks)'; expression = { $_.Options.IsTaskCountUnlim } }, @{name = 'Options(MaxArchiveTaskCount)'; expression = { $_.Options.MaxArchiveTaskCount } }, @{name = 'Options(CombinedDataRateLimit)'; expression = { $_.Options.CombinedDataRateLimit } }, @{name = 'Options(Uncompress)'; expression = { $_.Options.Uncompress } }, @{name = 'Options(OptimizeBlockAlign)'; expression = { $_.Options.OptimizeBlockAlign } }, @{name = 'Options(RemoteAccessLimitation)'; expression = { $_.Options.RemoteAccessLimitation } }, @{name = 'Options(EpEncryptionEnabled)'; expression = { $_.Options.EpEncryptionEnabled } }, @{name = 'Options(OneBackupFilePerVm)'; expression = { $_.Options.OneBackupFilePerVm } }, @{name = 'Options(IsAutoDetectAffinityProxies)'; expression = { $_.Options.IsAutoDetectAffinityProxies } }, @{name = 'Options(NfsRepositoryEncoding)'; expression = { $_.Options.NfsRepositoryEncoding } }, "CachedFreeSpace", "CachedTotalSpace", "gatewayHosts", "ObjectLockEnabled"
 
 
     $repoInfo = $Repositories | Select-Object "Id", "Name", "HostId", "Description", "CreationTime", "Path",
@@ -376,36 +377,116 @@ try {
     $message = "Collecting jobs info..."
     Write-LogFile($message)
 
-    $Jobs = Get-VBRJob -WarningAction SilentlyContinue #| Where-Object { $_.JobType -eq 'Backup' -OR $_.JobType -eq 'BackupSync' }
+    try{
+        $Jobs = Get-VBRJob -WarningAction SilentlyContinue 
+    }
+    catch{
+        $Jobs = $null
+    }
     #JobTypes & conversion
+try{
     $catCopy = Get-VBRCatalystCopyJob
+
+}
+catch{
+    $catCopy = $null
+}
     $catCopy | Export-Csv -Path $("$ReportPath\$VBRServer" + '_catCopy.csv') -NoTypeInformation
-    $vaBcj = Get-VBRComputerBackupCopyJob
+    try{
+        $catJob = Get-VBRCatalystJob
+    }
+    catch{
+        $catJob = $null
+    }
+    try{
+        $vaBcj = Get-VBRComputerBackupCopyJob
+    }
+    catch{
+        $vaBcj = $null
+    }
     $vsBcj | Export-Csv -Path $("$ReportPath\$VBRServer" + '_vsBcj.csv') -NoTypeInformation
-    $vaBJob = Get-VBRComputerBackupJob
+    $catJob | Export-Csv -Path $("$ReportPath\$VBRServer" + '_catJob.csv') -NoTypeInformation
+
+    try{
+        $vaBJob = Get-VBRComputerBackupJob
+    }
+    catch{
+        $vaBJob = $null
+    }
     $vaBJob | Export-Csv -Path $("$ReportPath\$VBRServer" + '_vaBJob.csv') -NoTypeInformation
-    $configBackup = Get-VBRConfigurationBackupJob
-    $epJob = Get-VBREPJob 
+    try{
+        $configBackup = Get-VBRConfigurationBackupJob
+
+    }
+    catch{
+        $configBackup = $null
+    }
+    try{
+        $epJob = Get-VBREPJob 
+
+    }
+    catch{
+        $epJob = $null
+    }
     $epJob | Export-Csv -Path $("$ReportPath\$VBRServer" + '_epJob.csv') -NoTypeInformation
     
-    $sbJob = Get-VSBJob
+    try{
+        $sbJob = Get-VBRSureBackupJob
+    }
+    catch{
+        $sbJob = $null
+    }
     $sbJob | Export-Csv -Path $("$ReportPath\$VBRServer" + '_sbJob.csv') -NoTypeInformation
     
     #tape jobs
-    $tapeJob = Get-VBRTapeJob
+    try{
+        $tapeJob = Get-VBRTapeJob
+    }
+    catch{
+        $tapeJob = $null
+    }
     #export tape jobs to csv
     $tapeJob | Export-Csv -Path $("$ReportPath\$VBRServer" + '_TapeJobs.csv') -NoTypeInformation
     #end tape jobs
-    $nasBackup = Get-VBRNASBackupJob 
-    $nasBCJ = Get-VBRNASBackupCopyJob 
-    $cdpJob = Get-VBRCDPPolicy
-      
-    $piJob = Get-VBRPluginJob
-    $piJob | Add-Member -MemberType NoteProperty -Name JobType -Value "Plugin Backup"
+    try{
+        $nasBackup = Get-VBRNASBackupJob 
+
+    }
+    catch{
+       $nasBackup = $null
+    }
+    try{
+        $nasBCJ = Get-VBRNASBackupCopyJob 
+
+    }
+    catch{
+       $nasBCJ = $null
+    }
+    try{
+        $piJob = Get-VBRPluginJob
+
+    }
+    catch{
+       $piJob = $null
+    }
+    try{
+        $cdpJob = Get-VBRCDPPolicy
+
+    }
+    catch{
+       $cdpJob = $null
+    }
+    try{
+        $vcdJob = Get-VBRvCDReplicaJob
+
+    }
+    catch{
+        $vcdJob = $null
+    }
+
     $piJob | Export-csv -Path $("$ReportPath\$VBRServer" + '_pluginjobs.csv') -NoTypeInformation
 
   
-    $vcdJob = Get-VBRvCDReplicaJob
     $vcdJob | Add-Member -MemberType NoteProperty -Name JobType -Value "VCD Replica"
     $vcdJob | Export-csv -Path $("$ReportPath\$VBRServer" + '_vcdjobs.csv') -NoTypeInformation
   
