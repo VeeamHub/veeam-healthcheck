@@ -391,7 +391,7 @@ try{
 catch{
     $catCopy = $null
 }
-    $catCopy | Export-Csv -Path $("$ReportPath\$VBRServer" + '_catCopy.csv') -NoTypeInformation
+    $catCopy | Export-Csv -Path $("$ReportPath\$VBRServer" + '_catCopyjob.csv') -NoTypeInformation
     try{
         $catJob = Get-VBRCatalystJob
     }
@@ -404,8 +404,7 @@ catch{
     catch{
         $vaBcj = $null
     }
-    $vsBcj | Export-Csv -Path $("$ReportPath\$VBRServer" + '_vsBcj.csv') -NoTypeInformation
-    $catJob | Export-Csv -Path $("$ReportPath\$VBRServer" + '_catJob.csv') -NoTypeInformation
+    $catJob | Export-Csv -Path $("$ReportPath\$VBRServer" + '_catalystJob.csv') -NoTypeInformation
 
     try{
         $vaBJob = Get-VBRComputerBackupJob
@@ -413,7 +412,7 @@ catch{
     catch{
         $vaBJob = $null
     }
-    $vaBJob | Export-Csv -Path $("$ReportPath\$VBRServer" + '_vaBJob.csv') -NoTypeInformation
+    $vaBJob | Export-Csv -Path $("$ReportPath\$VBRServer" + '_AgentBackupJob.csv') -NoTypeInformation
     try{
         $configBackup = Get-VBRConfigurationBackupJob
 
@@ -428,7 +427,7 @@ catch{
     catch{
         $epJob = $null
     }
-    $epJob | Export-Csv -Path $("$ReportPath\$VBRServer" + '_epJob.csv') -NoTypeInformation
+    $epJob | Export-Csv -Path $("$ReportPath\$VBRServer" + '_EndpointJob.csv') -NoTypeInformation
     
     try{
         $sbJob = Get-VBRSureBackupJob
@@ -436,7 +435,7 @@ catch{
     catch{
         $sbJob = $null
     }
-    $sbJob | Export-Csv -Path $("$ReportPath\$VBRServer" + '_sbJob.csv') -NoTypeInformation
+    $sbJob | Export-Csv -Path $("$ReportPath\$VBRServer" + '_SureBackupJob.csv') -NoTypeInformation
     
     #tape jobs
     try{
@@ -520,7 +519,7 @@ catch{
     #$configBackup #| Add-Member -MemberType NoteProperty -Name JobType -Value "Config Backup"
     #$Jobs += $configBackup
   
-    $Jobs += $sbJob
+    #$Jobs += $sbJob
     [System.Collections.ArrayList]$AllJobs = @()
 
     foreach ($Job in $Jobs) {
@@ -645,17 +644,10 @@ $licInfo | Export-csv -Path $("$ReportPath\$VBRServer" + '_LicInfo.csv') -NoType
 #########################################################################################################
 
 <# Malware Detection Section #>
-try{
-    Get-VBRMalwareDetectionOptions | Export-Csv malware_settings.csv -NoTypeInformation
+Get-VBRMalwareDetectionOptions | Export-Csv malware_settings.csv -NoTypeInformation
 Get-VBRMalwareDetectionObject | Export-Csv malware_infectedobject.csv -NoTypeInformation
 Get-VBRMalwareDetectionEvent | Export-Csv malware_events.csv -NoTypeInformation
 Get-VBRMalwareDetectionExclusion | Export-Csv malware_exclusions.csv -NoTypeInformation
-}
-catch(){
-	Write-LogFile("Failed on Malware Detection Section")
-	Write-LogFile($Error[0].Exception.Message)
-})
-
 <# END Malware Detection Section #>
 
 <#

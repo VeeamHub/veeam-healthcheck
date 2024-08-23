@@ -90,12 +90,12 @@ namespace VeeamHealthCheck.Functions.Collection.DB
             //ViLabDeploy = 207,
             //ViLabDelete = 208,
             //ViLabStart = 209,
-            Cloud = 300,
+            //Cloud = 300,
             //CloudApplDeploy = 301,
             //HardwareQuotasProcessing = 302,
             //ReconnectVpn = 303,
             //DisconnectVpn = 304,
-            OrchestratedTask = 305,
+            //OrchestratedTask = 305,
             //ViReplicaRescan = 306,
             //ExternalRepositoryMaintenance = 307,
             //DeleteBackup = 308,
@@ -106,14 +106,14 @@ namespace VeeamHealthCheck.Functions.Collection.DB
             //BackupCacheSync = 4010,
             //EndpointSqlLogBackup = 4020,
             //EndpointOracleLogBackup = 4021,
-            OracleRMANBackup = 4030,
-            SapBackintBackup = 4031,
+            //OracleRMANBackup = 4030,
+            //SapBackintBackup = 4031,
             //OracleRMANRestore = 4032,
             //SapBackintRestore = 4033,
             //OracleRMANBackupCopyWorker = 4035,
             //SapBackintBackupCopyWorker = 4037,
             //PluginBackupCopyPolicy = 4038,
-            CloudBackup = 5000,
+            //CloudBackup = 5000,
             //RestoreVirtualDisks = 6000,
             //RestoreAgentVolumes = 6001,
             //InfraItemSave = 7000,
@@ -126,10 +126,10 @@ namespace VeeamHealthCheck.Functions.Collection.DB
             //InfraStatistic = 10001,
             //AzureVmRestore = 11000,
 
-            EpAgentManagement = 12000,
+            //EpAgentManagement = 12000,
             //EpAgentDiscoveryObsolete = 12001,   // Use EpAgentDiscovery
-            EpAgentPolicy = 12002,              // Managed by agent (parent job type)
-            EpAgentBackup = 12003,              // Managed by VBR (parent job type)
+            //EpAgentPolicy = 12002,              // Managed by agent (parent job type)
+            //EpAgentBackup = 12003,              // Managed by VBR (parent job type)
             //EpAgentTestCreds = 12004,
             //EpAgentDiscovery = 12005,
             //EpAgentDeletedRetention = 12006,
@@ -153,7 +153,7 @@ namespace VeeamHealthCheck.Functions.Collection.DB
             //AmazonRestore = 16000,
             //StagedRestore = 17000,
 
-            ArchiveBackup = 18000,
+            //ArchiveBackup = 18000,
             //ArchiveRehydration = 18001,
             //ArchiveDownload = 18002,
             //ArchiveSync = 18003,

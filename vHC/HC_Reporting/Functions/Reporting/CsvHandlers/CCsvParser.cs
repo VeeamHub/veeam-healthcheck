@@ -29,7 +29,6 @@ namespace VeeamHealthCheck.Functions.Reporting.CsvHandlers
         public  string _sessionPath = "VeeamSessionReport.csv";
         public string _outPath;// = CVariables.vbrDir;
         public readonly string _sobrExtReportName = "SOBRExtents";
-        public readonly string _jobReportName = "_Jobs";
         public readonly string _sobrReportName = "SOBRs";
         public readonly string _proxyReportName = "Proxies";
         public readonly string _repoReportName = "Repositories";
@@ -40,7 +39,6 @@ namespace VeeamHealthCheck.Functions.Reporting.CsvHandlers
         public readonly string _hvProxReportName = "HvProxy";
         public readonly string _nasProxReportName = "NasProxy";
         public readonly string _bnrInfoName = "vbrinfo";
-        public readonly string _piReportName = "pluginjobs";
         public readonly string _bjobs = "bjobs";
         public readonly string _capTier = "capTier";
         public readonly string _trafficRules = "trafficRules";
@@ -60,6 +58,20 @@ namespace VeeamHealthCheck.Functions.Reporting.CsvHandlers
         public readonly string _nasFileData = "NasFileData";
         public readonly string _nasShareSize = "NasSharesize";
         public readonly string _nasObjectSize = "NasObjectSourceStorageSize";
+
+        // Job files
+        public readonly string _piReportName = "pluginjobs";
+        public readonly string _jobReportName = "_Jobs";
+        // make string for these job types: "AgentBackupJob.csv", "catalystJob", "cdpjobs", EndpointJob, nasBackup, nasBCJ, SureBackupJob 
+        public readonly string _agentBackupJob = "AgentBackupJob";
+        public readonly string _catalystJob = "catalystJob";
+        public readonly string _cdpjobs = "cdpjobs";
+        public readonly string _EndpointJob = "EndpointJob";
+        public readonly string _nasBackup = "nasBackup";
+        public readonly string _nasBCJ = "nasBCJ";
+        public readonly string _SureBackupJob = "SureBackupJob";
+
+
         public readonly string _tapeJobInfo = "TapeJobs";
 
         //VBO Files
@@ -229,6 +241,40 @@ namespace VeeamHealthCheck.Functions.Reporting.CsvHandlers
         {
             return VbrGetDynamicCsvRecs(_jobReportName, CVariables.vbrDir);
         }
+        public IEnumerable<dynamic> GetDynamicPluginJobs()
+        {
+            return VbrGetDynamicCsvRecs(_piReportName, CVariables.vbrDir);
+        }
+        // make similar method as line 244 for the newly added file names
+        public IEnumerable<dynamic> GetDynamicAgentBackupJob()
+        {
+            return VbrGetDynamicCsvRecs(_agentBackupJob, CVariables.vbrDir);
+        }
+        public IEnumerable<dynamic> GetDynamicCatalystJob()
+        {
+            return VbrGetDynamicCsvRecs(_catalystJob, CVariables.vbrDir);
+        }
+        public IEnumerable<dynamic> GetDynamicCdpJobs()
+        {
+            return VbrGetDynamicCsvRecs(_cdpjobs, CVariables.vbrDir);
+        }
+        public IEnumerable<dynamic> GetDynamicEndpointJob()
+        {
+            return VbrGetDynamicCsvRecs(_EndpointJob, CVariables.vbrDir);
+        }
+        public IEnumerable<dynamic> GetDynamicNasBackup()
+        {
+            return VbrGetDynamicCsvRecs(_nasBackup, CVariables.vbrDir);
+        }
+        public IEnumerable<dynamic> GetDynamicNasBCJ()
+        {
+            return VbrGetDynamicCsvRecs(_nasBCJ, CVariables.vbrDir);
+        }
+        public IEnumerable<dynamic> GetDynamicSureBackupJob()
+        {
+            return VbrGetDynamicCsvRecs(_SureBackupJob, CVariables.vbrDir);
+        }
+
         public IEnumerable<dynamic> GetDynamicBjobs()
         {
             return VbrGetDynamicCsvRecs(_bjobs, CVariables.vbrDir);

@@ -846,34 +846,35 @@ namespace VeeamHealthCheck.Functions.Reporting.Html
 
             List<CModel.EDbJobType> types = new();
 
-            List<string> types2 = new();
-            foreach (var c in csv)
-            {
-                types2.Add(c.JobType);
-            }
+            List<string> types2 = csv.Select(x => x.JobType).ToList();
+            //foreach (var c in csv)
+            //{
+            //    types2.Add(c.JobType);
+            //}
 
 
             Dictionary<string, int> typeSummary = new();
-            foreach (var t in types2)
+
+            foreach(var type in types2.Distinct())
             {
-                int typeCount = 0;
-                foreach (var t2 in types2)
-                {
-                    if (t == t2)
-                    {
-                        typeCount++;
-                    }
-                }
-                if (!typeSummary.ContainsKey(t))
-                    typeSummary.Add(t, typeCount);
+                typeSummary.Add(type, types2.Count(x=> x == type)); 
             }
+            //foreach (var t in types2)
+            //{
+            //    int typeCount = 0;
+            //    foreach (var t2 in types2)
+            //    {
+            //        if (t == t2)
+            //        {
+            //            typeCount++;
+            //        }
+            //    }
+            //    if (!typeSummary.ContainsKey(t))
+            //        typeSummary.Add(t, typeCount);
+            //}
 
             //sum of all jobs:
-            int totalJobs = 0;
-            foreach (var c in typeSummary)
-            {
-                totalJobs += c.Value;
-            }
+
 
             log.Info("converting job summary info to xml..done!");
             return typeSummary;

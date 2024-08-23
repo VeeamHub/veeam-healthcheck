@@ -18,6 +18,8 @@ using VeeamHealthCheck.Shared.Logging;
 using System.Text.Json;
 using VeeamHealthCheck.Functions.Reporting.Html.VBR.VbrTables.Jobs_Info;
 using System.Management.Automation;
+using VeeamHealthCheck.Functions.Reporting.Html.DataFormers;
+using VeeamHealthCheck.Functions.Reporting.Html.VBR.VbrTables;
 
 
 namespace VeeamHealthCheck.Html.VBR
@@ -508,13 +510,15 @@ namespace VeeamHealthCheck.Html.VBR
             s += _form.TableBodyStart();
             try
             {
-                Dictionary<string, int> list = _df.JobSummaryInfoToXml();
+                CJobSummaryTable st = new();
 
-                int totalJobs = 0;
-                foreach (var c in list)
-                {
-                    totalJobs += c.Value;
-                }
+                Dictionary<string, int> list = st.JobSummaryTable();
+
+                int totalJobs = list.Sum(x => x.Value);
+                //foreach (var c in list)
+                //{
+                //    totalJobs += c.Value;
+                //}
 
 
 
@@ -540,41 +544,41 @@ namespace VeeamHealthCheck.Html.VBR
             return s;
         }
 
-        public string AddMissingJobsTable(bool scrub)
-        {
-            string s = _form.SectionStartWithButton("missingjobs", VbrLocalizationHelper.NpTitle, VbrLocalizationHelper.NpButton);
+        //public string AddMissingJobsTable(bool scrub)
+        //{
+        //    string s = _form.SectionStartWithButton("missingjobs", VbrLocalizationHelper.NpTitle, VbrLocalizationHelper.NpButton);
 
 
-            string summary = _sum.MissingJobsSUmmary();
+        //    string summary = _sum.MissingJobsSUmmary();
 
-            s += _form.TableHeader(VbrLocalizationHelper.JobSum0, "") +
-                //_form.TableHeader("Count", "Total detected of this type") +
-                "</tr>";
-            s += _form.TableHeaderEnd();
-            s += _form.TableBodyStart();
-            //CDataFormer cd = new(true);
-            try
-            {
-                List<string> list = _df.ParseNonProtectedTypes();
+        //    s += _form.TableHeader(VbrLocalizationHelper.JobSum0, "") +
+        //        //_form.TableHeader("Count", "Total detected of this type") +
+        //        "</tr>";
+        //    s += _form.TableHeaderEnd();
+        //    s += _form.TableBodyStart();
+        //    //CDataFormer cd = new(true);
+        //    try
+        //    {
+        //        List<string> list = _df.ParseNonProtectedTypes();
 
-                for (int i = 0; i < list.Count(); i++)
-                {
-                    s += "<tr>";
+        //        for (int i = 0; i < list.Count(); i++)
+        //        {
+        //            s += "<tr>";
 
-                    s += _form.TableData(list[i], "");
-                    s += "</tr>";
+        //            s += _form.TableData(list[i], "");
+        //            s += "</tr>";
 
-                }
-            }
-            catch (Exception e)
-            {
-                log.Error("Missing Jobs Data import failed. ERROR:");
-                log.Error("\t" + e.Message);
-            }
+        //        }
+        //    }
+        //    catch (Exception e)
+        //    {
+        //        log.Error("Missing Jobs Data import failed. ERROR:");
+        //        log.Error("\t" + e.Message);
+        //    }
 
-            s += _form.SectionEnd(summary);
-            return s;
-        }
+        //    s += _form.SectionEnd(summary);
+        //    return s;
+        //}
         public string AddProtectedWorkLoadsTable(bool scrub)
         {
             string s = _form.SectionStartWithButton("protectedworkloads", VbrLocalizationHelper.PlTitle, VbrLocalizationHelper.PlButton);
@@ -1364,7 +1368,7 @@ _form.TableHeader(VbrLocalizationHelper.SbrExt15, VbrLocalizationHelper.SbrExt15
                         {
                             useSourceSize = false;
                         }
-                        var realType = GetJobType(jType);
+                        var realType = CJobTypesParser.GetJobType(jType);
                         string jobTable = _form.SectionStartWithButton("jobTable", realType, "");
                         s += jobTable;
                         s += SetGenericJobTablHeader(useSourceSize);
@@ -1412,7 +1416,7 @@ _form.TableHeader(VbrLocalizationHelper.SbrExt15, VbrLocalizationHelper.SbrExt15
                             row += _form.TableData(job.RestorePoints, "");
                             //row += _form.TableData(job.StgEncryptionEnabled, "");
                             row += job.StgEncryptionEnabled == "True" ? _form.TableData(_form.True, "") : _form.TableData(_form.False, "");
-                            var jobType = GetJobType(job.JobType);
+                            var jobType = CJobTypesParser.GetJobType(job.JobType);
                             row += _form.TableData(jobType, "");
                             //row += _form.TableData("", "");
 
@@ -1513,11 +1517,19 @@ _form.TableHeader(VbrLocalizationHelper.SbrExt15, VbrLocalizationHelper.SbrExt15
 
                     }
                     // add tape table
+                    try
+                    {
+                        string tableButton = _form.SectionStartWithButton("jobTable", "Tape Jobs", "");
+                        s += tableButton;
+                        CTapeJobInfoTable tapeTable = new();
+                        s += tapeTable.TapeJobTable();
+                    }
+                    catch (Exception e)
+                    {
+                        log.Error("Tape Job Data import failed. ERROR:");
+                        log.Error("\t" + e.Message);
+                    }
 
-                    string tableButton = _form.SectionStartWithButton("jobTable", "Tape Jobs", "");
-                    s += tableButton;
-                    CTapeJobInfoTable tapeTable = new();
-                    s += tapeTable.TapeJobTable();
                     s += _form.SectionEnd(summary);
                 }
                 catch (Exception e)
@@ -1581,21 +1593,7 @@ _form.TableHeader(VbrLocalizationHelper.SbrExt15, VbrLocalizationHelper.SbrExt15
             return s;
         }
 
-        private string GetJobType(string jobType)
-        {
-            switch (jobType)
-            {
-                case "Copy":
-                    return "File Copy";
-                case "SimpleBackupCopyPolicy":
-                    return "Backup Copy";
-                case "NasBackup":
-                    return "File Backup";
-                default:
-                    return jobType;
-            }
-            throw new NotImplementedException();
-        }
+
 
         public void AddSessionsFiles(bool scrub)
         {

@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using System.Linq;
 using VeeamHealthCheck.Functions.Reporting.CsvHandlers;
 using VeeamHealthCheck.Functions.Reporting.DataTypes.ProxyData;
+using VeeamHealthCheck.Functions.Reporting.Html.DataFormers;
 using VeeamHealthCheck.Shared;
 using VeeamHealthCheck.Shared.Logging;
 
@@ -343,7 +344,7 @@ namespace VeeamHealthCheck.Functions.Reporting.DataTypes
 
             //var bjobCsv = _csvParser.BJobCsvParser();
             var bjobCsv = _csvParser.GetDynamicBjobs();
-            var jobCsv = _csvParser.JobCsvParser();
+            var jobCsv = _csvParser.JobCsvParser().ToList();
             List<CJobTypeInfos> eInfoList = new();
             try
             {
@@ -385,8 +386,11 @@ namespace VeeamHealthCheck.Functions.Reporting.DataTypes
                         jInfo.FullBackupScheduleKind = s.FullBackupScheduleKind;
                         jInfo.JobType = s.JobType;
 
-                        if (s.JobType == "DRV")
-                            jInfo.JobType = "SureBackup";
+
+
+
+                        jInfo.JobType = CJobTypesParser.GetJobType(s.JobType);
+
                         jInfo.Name = s.Name;
                         //jInfo.RepoName = MatchRepoIdToRepo(bjobCsv.Where(x => x.Name == s.Name).SingleOrDefault().RepositoryId);
                         jInfo.RestorePoints = ParseToInt(s.RestorePoints);
@@ -408,13 +412,13 @@ namespace VeeamHealthCheck.Functions.Reporting.DataTypes
             }
             catch (Exception e) { }
 
-            var rec = _csvParser.PluginCsvParser();
+            var rec = _csvParser.PluginCsvParser().ToList();
             if (rec != null)
                 foreach (var r in rec)
                 {
                     CJobTypeInfos j = new();
                     j.Name = r.Name;
-                    j.JobType = r.PluginType;
+                    j.JobType = CJobTypesParser.GetJobType(r.JobType);
                     j.RepoName = MatchRepoIdToRepo(r.TargetRepositoryId);
                     eInfoList.Add(j);
                 }
