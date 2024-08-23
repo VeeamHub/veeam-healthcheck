@@ -52,16 +52,16 @@ namespace VeeamHealthCheck.Functions.Reporting.DataTypes.ProxyData
                     return pt.WellProvisioned;
                 if (assignedTasks > memTasks)
                     return pt.OverProvisioned;
-                if (assignedTasks < memTasks)
-                    return pt.UnderProvisioned;
+                //if (assignedTasks < memTasks)
+                //    return pt.UnderProvisioned;
             }
 
             if (coreTasks < memTasks)
             {
                 if (assignedTasks == coreTasks)
                     return pt.WellProvisioned;
-                if (assignedTasks <= coreTasks)
-                    return pt.UnderProvisioned;
+                //if (assignedTasks <= coreTasks)
+                //    return pt.UnderProvisioned;
                 if (assignedTasks > coreTasks)
                     return pt.OverProvisioned;
             }
@@ -69,8 +69,8 @@ namespace VeeamHealthCheck.Functions.Reporting.DataTypes.ProxyData
             {
                 if (assignedTasks == memTasks)
                     return pt.WellProvisioned;
-                if (assignedTasks <= memTasks)
-                    return pt.UnderProvisioned;
+                //if (assignedTasks <= memTasks)
+                //    return pt.UnderProvisioned;
                 if (assignedTasks > memTasks)
                     return pt.OverProvisioned;
             }

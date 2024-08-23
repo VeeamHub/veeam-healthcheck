@@ -18,7 +18,15 @@ namespace VeeamHealthCheck.Reporting.Html.VBR
         public Tuple<string, string> ConfigBackupEnabled()
         {
             string header = _form.TableHeader("Config Backup Enabled", "");
-            string data = _form.TableData(CSecurityGlobalValues.ConfigBackupEnabled.ToString(), "");
+            string data = "";
+            if(CSecurityGlobalValues.ConfigBackupEnabled)
+            {
+                data = _form.TableData(_form.True, "");
+            }
+            else
+            {
+                data = _form.TableData(_form.False, "");
+            }
 
             return Tuple.Create(header, data);
         }
@@ -32,7 +40,15 @@ namespace VeeamHealthCheck.Reporting.Html.VBR
         public Tuple<string, string> ConfigBackupEncrypted()
         {
             string header = _form.TableHeader("Config Backup Encrypted", "");
-            string data = _form.TableData(CSecurityGlobalValues.ConfigBackupEncrypted.ToString(), "");
+            string data = "";
+            if(CSecurityGlobalValues.ConfigBackupEncrypted)
+            {
+                data = _form.TableData(_form.True, "");
+            }
+            else
+            {
+                data = _form.TableData(_form.False, "");
+            }
 
             return Tuple.Create(header, data);
         }

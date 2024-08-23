@@ -53,20 +53,45 @@ namespace VeeamHealthCheck.Reporting.Html.VBR
         public Tuple<string, string> ProxyRole()
         {
             string header = _form.TableHeader(VbrLocalizationHelper.BkpSrvTblProxyRole, VbrLocalizationHelper.BstPrxTT);
-            string data = _form.TableData(b.HasProxyRole.ToString(), "");
+            string data = "";
+            if (b.HasProxyRole)
+            {
+                data = _form.TableData(_form.True, "");
+            }
+            else
+            {
+                data = _form.TableData(_form.False, "");
+            }
             return Tuple.Create(header, data);
         }
         public Tuple<string, string> RepoGatewayRole()
         {
             string header = _form.TableHeader(VbrLocalizationHelper.BkpSrvTblRepoRole, VbrLocalizationHelper.BstRepTT);
-            string data = _form.TableData(b.HasRepoRole.ToString(), "");
+            string data = "";
+            if(b.HasRepoRole)
+            {
+                data = _form.TableData(_form.True, "");
+            }
+            else
+            {
+                data = _form.TableData(_form.False, "");
+            }
+            
             return Tuple.Create(header, data);
 
         }
         public Tuple<string, string> WanRole()
         {
             string header = _form.TableHeader(VbrLocalizationHelper.BkpSrvTblWanRole, VbrLocalizationHelper.BstWaTT);
-            string data = _form.TableData(b.HasWanAccRole.ToString(), "");
+            string data = "";
+            if(b.HasWanAccRole)
+                {
+                data = _form.TableData(_form.True, "");
+            }
+            else
+            {
+                data = _form.TableData(_form.False, "");
+            }
             return Tuple.Create(header, data);
 
         }

@@ -206,7 +206,15 @@ namespace VeeamHealthCheck.Html.VBR
                 s += _form.TableBodyStart();
                 s += "<tr>";
                 s += _form.TableData(b.DbType, "");
-                s += _form.TableData(b.IsLocal.ToString(), "");
+                if (b.IsLocal)
+                {
+                    s += _form.TableData(_form.True, "");
+                }
+                else
+                {
+                    s += _form.TableData(_form.False, "");
+                }
+
                 s += _form.TableData(b.DbHostName, "");
                 if (b.DbType == CGlobals.SqlTypeName)
                 {
@@ -267,9 +275,24 @@ namespace VeeamHealthCheck.Html.VBR
             s += "</tr>";
             s += _form.TableBodyStart();
             s += "<tr>";
-            s += _form.TableData(b.ConfigBackupEnabled.ToString(), "");
+            if (b.ConfigBackupEnabled)
+            {
+                s += _form.TableData(_form.True, "");
+            }
+            else
+            {
+                s += _form.TableData(_form.False, "");
+            }
+
             s += _form.TableData(b.ConfigBackupLastResult, "");
-            s += _form.TableData(b.ConfigBackupEncryption.ToString(), "");
+            if(b.ConfigBackupEncryption)
+                {
+                s += _form.TableData(_form.True, "");
+            }
+            else
+            {
+                s += _form.TableData(_form.False, "");
+            }
             s += _form.TableData(b.ConfigBackupTarget, "");
             s += "</tr>";
             s += _form.EndTable();
@@ -668,10 +691,10 @@ namespace VeeamHealthCheck.Html.VBR
                     s += "<div id=\"nasTable\" border=\"1\" class=\"content-table\"></div>";
                     s += _form.Table();
                     s += "<tr>";
-                    s += _form.TableHeader("File Share Types &#9432;", "Total File Share Types found in environment");
-                    s += _form.TableHeader("Total Share Size &#9432;", "Total size of all shares found in environment");
-                    s += _form.TableHeader("Total Files Count &#9432;", "Total files found in all shares");
-                    s += _form.TableHeader("Total Folders Count &#9432;", "Total folders found in all shares");
+                    s += _form.TableHeader("File Share Types", "Total File Share Types found in environment");
+                    s += _form.TableHeader("Total Share Size", "Total size of all shares found in environment");
+                    s += _form.TableHeader("Total Files Count", "Total files found in all shares");
+                    s += _form.TableHeader("Total Folders Count", "Total folders found in all shares");
                     s += _form.TableHeaderEnd();
                     s += _form.TableBodyStart();
                     
@@ -757,9 +780,22 @@ namespace VeeamHealthCheck.Html.VBR
                     s += _form.TableData(d.ProtectedVms.ToString(), "");
                     s += _form.TableData(d.NotProtectedVms.ToString(), "");
                     s += _form.TableData(d.TotalVms.ToString(), "");
-                    s += _form.TableData(d.IsProxy.ToString(), "");
-                    s += _form.TableData(d.IsRepo.ToString(), "");
-                    s += _form.TableData(d.IsWan.ToString(), "");
+                    if (d.IsProxy)
+                        s += _form.TableData(_form.True, "");
+                    else
+                        s += _form.TableData(_form.False, "");
+                    if(d.IsRepo)
+                        s += _form.TableData(_form.True, "");
+                    else
+                        s += _form.TableData(_form.False, "");
+                    if(d.IsWan)
+                        s += _form.TableData(_form.True, "");
+                    else
+                        s += _form.TableData(_form.False, "");
+
+
+
+
                     s += _form.TableData(d.IsUnavailable.ToString(), "");
                     s += "</tr>";
                 }
@@ -861,7 +897,11 @@ namespace VeeamHealthCheck.Html.VBR
                     s += _form.TableData(d[3], "");
                     s += _form.TableData(d[4], "");
                     s += _form.TableData(d[5], "");
-                    s += _form.TableData(d[6], "");
+                    //s += _form.TableData(d[6], "");
+                    if (d[6] == "True")
+                        s += _form.TableData(_form.True, "");
+                    else
+                        s += _form.TableData(_form.False, "");
                     s += _form.TableData(d[7], "");
                     s += _form.TableData(d[8], "");
                     s += _form.TableData(d[9], "");
@@ -869,7 +909,11 @@ namespace VeeamHealthCheck.Html.VBR
                         s += _form.TableData(_scrub.ScrubItem(d[10]), "");
                     else
                         s += _form.TableData(d[10], "");
-                    s += _form.TableData(d[11], "");
+
+                    if (d[11] == "True")
+                        s += _form.TableData(_form.True, "");
+                    else
+                        s += _form.TableData(_form.False, "");
                     s += "</tr>";
                 }
             }

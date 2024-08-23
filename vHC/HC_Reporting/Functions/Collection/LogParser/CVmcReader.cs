@@ -85,7 +85,7 @@ namespace VeeamHealthCheck.Functions.Collection.LogParser
         private void ParseConfigDbInfo(string line)
         {
             DateTime dbLineDate = ParseLineDate(line);
-            if (_DbLineDate == null || dbLineDate.Ticks - _DbLineDate.Ticks == 0)
+            if ( dbLineDate.Ticks - _DbLineDate.Ticks == 0)
                 _DbLineDate = ParseLineDate(line);
 
         }

@@ -25,6 +25,7 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.Shared
         public string True = "&#9989";
         public string False = "&#9744;"; // red x = &#10060
         public string Warn = "&#9888;"; // yellow warning = &#9888
+        public string info = "&#9432;"; // circle i for info
         public CHtmlFormatting()
         {
 
