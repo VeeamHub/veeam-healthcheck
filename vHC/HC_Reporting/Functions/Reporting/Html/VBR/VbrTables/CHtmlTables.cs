@@ -355,8 +355,23 @@ namespace VeeamHealthCheck.Html.VBR
             }
 
             // add malware table
-            var malware = new CMalwareTable();
-            s += malware.MalwareSettingsTable();
+            try
+            {
+                var malware = new CMalwareTable();
+                s += malware.MalwareSettingsTable();
+
+                s += malware.MalwareExclusionsTable();
+                s += malware.MalwareEventsTable();
+                s += malware.MalwareInfectedObjectsTable();
+
+            }
+            catch (Exception e)
+            {
+                log.Error("Malware Settings Data import failed. ERROR:");
+                log.Error("\t" + e.Message);
+            }
+            
+
 
             s += _form.SectionEnd(summary);
 

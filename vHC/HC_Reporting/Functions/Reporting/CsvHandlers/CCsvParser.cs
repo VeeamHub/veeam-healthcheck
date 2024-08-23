@@ -344,25 +344,25 @@ namespace VeeamHealthCheck.Functions.Reporting.CsvHandlers
                 return res.GetRecords<CMalwareObject>();
             return null;
         }
-        public IEnumerable<CMalwareObject> MalwareObjects()
+        public IEnumerable<CMalwareInfectedObjects> MalwareInfectedObjects()
         {
             var res = VbrFileReader(_malwareObjects);
             if (res != null)
-                return res.GetRecords<CMalwareObject>();
+                return res.GetRecords<CMalwareInfectedObjects>();
             return null;
         }
-        public IEnumerable<CMalwareObject> MalwareEvents()
+        public IEnumerable<CMalwareEvents> MalwareEvents()
         {
             var res = VbrFileReader(_malwareEvents);
             if (res != null)
-                return res.GetRecords<CMalwareObject>();
+                return res.GetRecords<CMalwareEvents>();
             return null;
         }
-        public IEnumerable<CMalwareObject> MalwareExclusions()
+        public IEnumerable<CMalwareExcludedItem> MalwareExclusions()
         {
             var res = VbrFileReader(_malwareExclusions);
             if (res != null)
-                return res.GetRecords<CMalwareObject>();
+                return res.GetRecords<CMalwareExcludedItem>();
             return null;
         }
         //public IEnumerable<CNasFileDataVmc> GetDynamicNasFileData()
