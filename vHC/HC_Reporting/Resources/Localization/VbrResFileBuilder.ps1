@@ -1,5 +1,5 @@
 #cd C:\Users\cac89\Source\Repos\VeeamHub\veeam-healthcheck\vHC\HC_Reporting\Resources\Localization
-$loc = "A:\Source\VeeamHub\veeam-healthcheck\vHC\HC_Reporting\Resources\Localization\"
+$loc = "A:\source\veeam-healthcheck\vHC\HC_Reporting\Resources\Localization\"
 
 & 'C:\Program Files\Microsoft Visual Studio\2022\Professional\Common7\Tools\Launch-VsDevShell.ps1'
 start-sleep -Seconds 2

@@ -183,10 +183,10 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR
                 <dt>Individual Job Session Reports</dt>
                 <dd>{1}</dd>
                 </br>
-                <dt>PDF Report Output</dt>
+                <dt>NOTE</dt>
                 <dd>{2}</dd>
                 </br>
-                <dt>Excel Report Output</dt>
+                <dt>NOTE</dt>
                 <dd>{3}</dd>
 
 
