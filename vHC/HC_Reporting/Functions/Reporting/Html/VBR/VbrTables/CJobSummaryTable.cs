@@ -20,7 +20,7 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR.VbrTables
             try
             {
                 CCsvParser csv = new();
-                var backupJobs = csv.JobCsvParser();
+                var backupJobs = csv.JobCsvParser().ToList();
                 var pluginJobs = csv.GetDynamicPluginJobs();
                 var agentBackups = csv.GetDynamicAgentBackupJob();
                 var catalystJobs = csv.GetDynamicCatalystJob();
@@ -30,28 +30,44 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR.VbrTables
                 var nasBcj = csv.GetDynamicNasBCJ();
                 var sureBackup = csv.GetDynamicSureBackupJob();
                 var tapeJobs = csv.GetTapeJobInfoFromCsv();
+                var types = backupJobs.Select(x => x.JobType).Distinct().ToList();
 
-                foreach(var bType in backupJobs.Select(x => x.JobType).Distinct())
-                {
-
-                   typeAndCount.Add(bType, backupJobs.Count(x => x.JobType == bType));
-                }
                 typeAndCount.Add("Plugin", pluginJobs.Count());
                 typeAndCount.Add("Agent Backup", agentBackups.Count());
                 typeAndCount.Add("Catalyst Copy", catalystJobs.Count());
                 typeAndCount.Add("CDP", cdpJobs.Count());
                 typeAndCount.Add("Unmanaged Agent", endpointJobs.Count());
-                typeAndCount.Add("NasBackup", nasBackupJobs.Count());
-                typeAndCount.Add("NasBCJ", nasBcj.Count());
+                typeAndCount.Add("File Backup", nasBackupJobs.Count());
+                typeAndCount.Add("File Backup - Copy", nasBcj.Count());
                 typeAndCount.Add("SureBackup", sureBackup.Count());
                 typeAndCount.Add("Tape", tapeJobs.Count());
+                try
+                {
+                    foreach (var bType in types)
+                    {
+                        if (bType == "NasBackup" || bType == "NasBackupCopy")
+                            continue;
+                        var realType = CJobTypesParser.GetJobType(bType);
+                        if (!typeAndCount.ContainsKey(realType))
+                        {
+                            try
+                            {
+                                typeAndCount.Add(realType, backupJobs.Count(x => x.JobType == bType));
 
-                foreach(string dbType in Enum.GetNames(typeof(EDbJobType)))
+                            }
+                            catch (Exception ex) { CGlobals.Logger.Error(ex.Message); }
+                        }
+                    }
+                }
+                catch (Exception ex) { CGlobals.Logger.Error(ex.Message); }
+
+
+                foreach (string dbType in Enum.GetNames(typeof(EDbJobType)))
                 {
                     string humanReadable = CJobTypesParser.GetJobType(dbType);
-                    if(!typeAndCount.ContainsKey(dbType))
+                    if(!typeAndCount.ContainsKey(humanReadable))
                     {
-                        typeAndCount.Add(dbType, 0);
+                        typeAndCount.Add(humanReadable, 0);
                     }
                 }
 

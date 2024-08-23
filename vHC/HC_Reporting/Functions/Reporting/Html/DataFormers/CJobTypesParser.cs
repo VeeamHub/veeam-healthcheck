@@ -23,7 +23,7 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.DataFormers
                     case "Replica":
                         return "Replica";
                 case "NasBackupCopy":
-                        return "File Backup Copy";
+                        return "File Backup - Copy";
                 case "MSSQLPlugin":
                     return "MS SQL Plugin";
                 case "SureBackup":

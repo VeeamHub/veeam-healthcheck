@@ -52,9 +52,9 @@ namespace VeeamHealthCheck.Functions.Collection.DB
             //ApplicationLevelRestore = 48,
             //RemoteReplica = 50,
             BackupSync = 51,
-            SqlLogBackup = 52,
+            //SqlLogBackup = 52,
             //LicenseAutoUpdate = 53,
-            OracleLogBackup = 54,
+            //OracleLogBackup = 54,
             //TapeMarkAsFree = 55,
             //TapeDeleteFromLibrary = 56,
             //TapeMoveToMediaPool = 57,
@@ -69,7 +69,7 @@ namespace VeeamHealthCheck.Functions.Collection.DB
             //SimpleOracleBackupCopyWorker = 69,
             //SimpleBackupCopyParentWorker = 70,
             //RepoCopyPolicy = 73,
-            ConfBackup = 100,
+            //ConfBackup = 100,
             //ConfRestore = 101,
             //ConfResynchronize = 102,
             //WaGlobalDedupFill = 103,
@@ -170,6 +170,8 @@ namespace VeeamHealthCheck.Functions.Collection.DB
             //AuditZip = 23000,
 
             //CustomPlatformRestoreVm = 24000,
+            Kasten = 25000,
+            VB365 = 26000,
         }
     }
 }

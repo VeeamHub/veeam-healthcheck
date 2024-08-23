@@ -544,41 +544,53 @@ namespace VeeamHealthCheck.Html.VBR
             return s;
         }
 
-        //public string AddMissingJobsTable(bool scrub)
-        //{
-        //    string s = _form.SectionStartWithButton("missingjobs", VbrLocalizationHelper.NpTitle, VbrLocalizationHelper.NpButton);
+        public string AddMissingJobsTable(bool scrub)
+        {
+            string s = _form.SectionStartWithButton("missingjobs", VbrLocalizationHelper.NpTitle, VbrLocalizationHelper.NpButton);
 
 
-        //    string summary = _sum.MissingJobsSUmmary();
+            string summary = _sum.MissingJobsSUmmary();
 
-        //    s += _form.TableHeader(VbrLocalizationHelper.JobSum0, "") +
-        //        //_form.TableHeader("Count", "Total detected of this type") +
-        //        "</tr>";
-        //    s += _form.TableHeaderEnd();
-        //    s += _form.TableBodyStart();
-        //    //CDataFormer cd = new(true);
-        //    try
-        //    {
-        //        List<string> list = _df.ParseNonProtectedTypes();
+            s += _form.TableHeader(VbrLocalizationHelper.JobSum0, "") +
+                //_form.TableHeader("Count", "Total detected of this type") +
+                "</tr>";
+            s += _form.TableHeaderEnd();
+            s += _form.TableBodyStart();
+            //CDataFormer cd = new(true);
+            try
+            {
+                //List<string> list = _df.ParseNonProtectedTypes();
+                CJobSummaryTable st = new();
+                Dictionary<string, int> types = st.JobSummaryTable();
 
-        //        for (int i = 0; i < list.Count(); i++)
-        //        {
-        //            s += "<tr>";
+                foreach(var t in types)
+                {
+                    if(t.Value == 0)
+                    {
+                        s += "<tr>";
+                        s += _form.TableData(t.Key, "");
+                        s += "</tr>";
+                    }
+                }
 
-        //            s += _form.TableData(list[i], "");
-        //            s += "</tr>";
+                //for (int i = 0; i < list.Count(); i++)
+                //{
+                //    s += "<tr>";
 
-        //        }
-        //    }
-        //    catch (Exception e)
-        //    {
-        //        log.Error("Missing Jobs Data import failed. ERROR:");
-        //        log.Error("\t" + e.Message);
-        //    }
+                //    s += _form.TableData(list[i], "");
+                //    s += "</tr>";
 
-        //    s += _form.SectionEnd(summary);
-        //    return s;
-        //}
+                //}
+            }
+            catch (Exception e)
+            {
+                log.Error("Missing Jobs Data import failed. ERROR:");
+                log.Error("\t" + e.Message);
+            }
+
+            s += _form.SectionEnd(summary);
+            return s;
+        }
         public string AddProtectedWorkLoadsTable(bool scrub)
         {
             string s = _form.SectionStartWithButton("protectedworkloads", VbrLocalizationHelper.PlTitle, VbrLocalizationHelper.PlButton);
@@ -644,10 +656,44 @@ namespace VeeamHealthCheck.Html.VBR
                 s += _form.TableData(_df._physProtNames.Distinct().Count().ToString(), "");
                 s += _form.TableData(_df._physNotProtNames.Distinct().Count().ToString(), "");
 
-                s += "</tr>";
-                s += "</table>";
-                s += "<h3>NAS Backups</h3>";
-                s += "<div id=\"nasTable\" border=\"1\" class=\"content-table\"></div>";
+                try
+                {
+                    CProtectedWorkloads cProtectedWorkloads = new();
+                    NasSourceInfo n = new();
+
+                    cProtectedWorkloads.nasWorkloads = n.NasTable().nasWorkloads;
+                    s += "</tr>";
+                    s += "</table>";
+                    s += "<h3>NAS Backups</h3>";
+                    s += "<div id=\"nasTable\" border=\"1\" class=\"content-table\"></div>";
+                    s += _form.Table();
+                    s += "<tr>";
+                    s += _form.TableHeader("File Share Types &#9432;", "Total File Share Types found in environment");
+                    s += _form.TableHeader("Total Share Size &#9432;", "Total size of all shares found in environment");
+                    s += _form.TableHeader("Total Files Count &#9432;", "Total files found in all shares");
+                    s += _form.TableHeader("Total Folders Count &#9432;", "Total folders found in all shares");
+                    s += _form.TableHeaderEnd();
+                    s += _form.TableBodyStart();
+                    
+                    foreach(var load in cProtectedWorkloads.nasWorkloads)
+                    {
+                        s += "<tr>";
+                        s += _form.TableData(load.FileShareType, "");
+                        s += _form.TableData(load.TotalShareSize, "");
+                        s += _form.TableData(load.TotalFilesCount.ToString(), "");
+                        s += _form.TableData(load.TotalFoldersCount.ToString(), "");
+                        s += "</tr>";
+                    }
+                    s += _form.EndTable();
+
+                }
+                catch (Exception e)
+                {
+                    log.Error("Failed to add NAS table to HTML report", false);
+                    log.Error(e.Message, false);
+                }
+
+
                 s += _form._endDiv;
             }
             catch (Exception e)
@@ -656,19 +702,19 @@ namespace VeeamHealthCheck.Html.VBR
                 log.Error("\t" + e.Message);
             }
             s += _form.SectionEnd(summary);
-            try
-            {
-                CProtectedWorkloads cProtectedWorkloads = new();
-                NasSourceInfo n = new();
+            //try
+            //{
+            //    CProtectedWorkloads cProtectedWorkloads = new();
+            //    NasSourceInfo n = new();
 
-                cProtectedWorkloads.nasWorkloads = n.NasTable().nasWorkloads;
-                s += DumpJsonToScript(cProtectedWorkloads, "NasTable");
-            }
-            catch (Exception e)
-            {
-                log.Error("Failed to add NAS table to HTML report", false);
-                log.Error(e.Message, false);
-            }
+            //    cProtectedWorkloads.nasWorkloads = n.NasTable().nasWorkloads;
+            //    s += DumpJsonToScript(cProtectedWorkloads, "NasTable");
+            //}
+            //catch (Exception e)
+            //{
+            //    log.Error("Failed to add NAS table to HTML report", false);
+            //    log.Error(e.Message, false);
+            //}
             return s;
         }
         public string AddManagedServersTable(bool scrub)
@@ -726,23 +772,6 @@ namespace VeeamHealthCheck.Html.VBR
 
             s += _form.SectionEnd(summary);
             return s;
-        }
-        private string DumpJsonToScript(CProtectedWorkloads workloads, string section)
-        {
-            //CProtectedWorkloads protectedWorkloads = new CProtectedWorkloads();
-
-            string json = SerializeToJson(workloads);
-
-            string script = $@"
-                <script id=""{section}"" type=""application/json"">
-                {json}
-                </script>";
-
-            // Write the script to the HTML text file
-            // Replace "path/to/html/file.html" with the actual file path
-            //System.IO.File.WriteAllText("path/to/html/file.html", script);
-
-            return script;
         }
         public string SerializeToJson(object obj)
         {
@@ -1369,7 +1398,7 @@ _form.TableHeader(VbrLocalizationHelper.SbrExt15, VbrLocalizationHelper.SbrExt15
                             useSourceSize = false;
                         }
                         var realType = CJobTypesParser.GetJobType(jType);
-                        string jobTable = _form.SectionStartWithButton("jobTable", realType, "");
+                        string jobTable = _form.SectionStartWithButton("jobTable", realType + " Jobs", "");
                         s += jobTable;
                         s += SetGenericJobTablHeader(useSourceSize);
                         var res = source.Where(x => x.JobType == jType).ToList();

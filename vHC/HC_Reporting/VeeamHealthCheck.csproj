@@ -11,11 +11,11 @@
     <Company>Veeam</Company>
     <Authors>AdamC</Authors>
     <ApplicationIcon>output.ico</ApplicationIcon>
-    <AssemblyVersion>2.0.0.375</AssemblyVersion>
+    <AssemblyVersion>2.0.0.393</AssemblyVersion>
     <SignAssembly>False</SignAssembly>
     <AssemblyOriginatorKeyFile>vhc_keyfile2.pfx</AssemblyOriginatorKeyFile>
     <DelaySign>false</DelaySign>
-    <FileVersion>2.0.0.375</FileVersion>
+    <FileVersion>2.0.0.393</FileVersion>
     <DebugType>full</DebugType>
 	  <SelfContained>true</SelfContained>
 	  <!--These 2 lines are what produce the single file utility. Possibly doesn't work...-->
