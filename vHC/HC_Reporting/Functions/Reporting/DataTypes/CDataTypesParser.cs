@@ -195,7 +195,7 @@ namespace VeeamHealthCheck.Functions.Reporting.DataTypes
                     eInfo.GateHosts = s.GateHosts;
 
                     eInfo.HostId = s.HostId;
-                    if (eInfo.HostId == "00000000-0000-0000-0000-000000000000")
+                    if (eInfo.HostId == "00000000-0000-0000-0000-000000000000" && s.Group != "ArchiveRepository")
                         eInfo.IsAutoGateway = true;
 
                     if (eInfo.HostId != "00000000-0000-0000-0000-000000000000")
@@ -272,7 +272,7 @@ namespace VeeamHealthCheck.Functions.Reporting.DataTypes
                     eInfo.SplitStoragesPerVm =  bool.TryParse(s.OneBackupFilePerVm, out bool b2);
                     eInfo.autoDetectAffinity =  bool.TryParse(s.IsAutoDetectAffinityProxies, out bool b3);
                     eInfo.HostId = s.HostId;
-                    if (eInfo.HostId == "00000000-0000-0000-0000-000000000000")
+                    if (eInfo.HostId == "00000000-0000-0000-0000-000000000000" && s.Group != "ArchiveRepository")
                         eInfo.IsAutoGateway = true;
 
                     if (eInfo.HostId != "00000000-0000-0000-0000-000000000000")

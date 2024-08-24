@@ -547,6 +547,8 @@ namespace VeeamHealthCheck.Html.VBR
 
                 foreach (var d in list)
                 {
+                    if(d.Value == 0)
+                        continue;
                     s += "<tr>";
                     s += _form.TableData(d.Key, "");
                     s += _form.TableData(d.Value.ToString(), "");
@@ -1219,6 +1221,7 @@ _form.TableHeader(VbrLocalizationHelper.SbrExt15, VbrLocalizationHelper.SbrExt15
                         s += _form.TableData(_form.True, "");
                     else
                         s += _form.TableData(_form.False, "");
+                    
                     s += _form.TableData(d.Host, "");
                     s += _form.TableData(d.Path, "");
                     s += _form.TableData(d.FreeSpace.ToString(), "");
@@ -1592,10 +1595,16 @@ _form.TableHeader(VbrLocalizationHelper.SbrExt15, VbrLocalizationHelper.SbrExt15
                     // add tape table
                     try
                     {
-                        string tableButton = _form.SectionStartWithButton("jobTable", "Tape Jobs", "");
-                        s += tableButton;
                         CTapeJobInfoTable tapeTable = new();
-                        s += tapeTable.TapeJobTable();
+                        string tt = tapeTable.TapeJobTable();
+                        if(tt != "")
+                        {
+                            string tableButton = _form.SectionStartWithButton("jobTable", "Tape Jobs", "");
+                            s += tableButton;
+                            s += tt;
+                        }
+
+                        
                     }
                     catch (Exception e)
                     {

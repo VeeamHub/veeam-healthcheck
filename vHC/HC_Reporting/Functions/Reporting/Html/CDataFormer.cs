@@ -513,7 +513,6 @@ namespace VeeamHealthCheck.Functions.Reporting.Html
                 foreach (var c in csv)
                 {
 
-                    string[] s = new string[18];
                     string newName = c.RepoName;
                     string sobrName = c.SobrName;
                     string hostName = c.Host;
@@ -536,23 +535,19 @@ namespace VeeamHealthCheck.Functions.Reporting.Html
                     var freePercent = FreePercent(c.FreeSPace, c.TotalSpace);
 
 
-                    s[0] += newName;
-                    s[1] += sobrName;
-                    s[2] += c.MaxTasks;
-                    s[3] += c.Cores;
-                    s[4] += c.Ram;
-                    s[5] += c.IsAutoGateway;
+
+                    string gateHosts = "";
                     if (c.IsAutoGateway)
                     {
-                        s[6] += "";
+                        gateHosts = "";
                     }
                     else
                     {
                         if (String.IsNullOrEmpty(c.GateHosts))
-                            s[6] += hostName;
+                            gateHosts = hostName;
                         else
                         {
-                            s[6] += gates;
+                            gateHosts = gates;
                         }
                     }
 
@@ -564,7 +559,7 @@ namespace VeeamHealthCheck.Functions.Reporting.Html
                         Cores = c.Cores,
                         Ram = c.Ram,
                         IsAutoGate = c.IsAutoGateway,
-                        Host = hostName,
+                        Host = gateHosts,
                         Path = path,
                         FreeSpace = Math.Round((decimal)c.FreeSPace / 1024, 2),
                         TotalSpace = Math.Round((decimal)c.TotalSpace / 1024, 2),
@@ -575,20 +570,10 @@ namespace VeeamHealthCheck.Functions.Reporting.Html
                         IsImmutabilitySupported = c.ObjectLockEnabled,
                         Type = type,
                         Provisioning = c.Povisioning
-                        
+
                     };
 
-                    s[7] += path;
-                    s[8] += Math.Round((decimal)c.FreeSPace / 1024, 2);
-                    s[9] += Math.Round((decimal)c.TotalSpace / 1024, 2);
-                    s[10] += freePercent;
-                    s[11] += c.IsDecompress;
-                    s[12] += c.AlignBlocks;
-                    s[13] += c.IsRotatedDriveRepository;
-                    s[14] += c.IsImmutabilitySupported;
-                    s[15] += c.Type;
-                    s[16] += c.Povisioning;
-                    //s[17] += c.GateHosts;
+
 
                     repoList.Add(repo);
                 }
@@ -618,7 +603,7 @@ namespace VeeamHealthCheck.Functions.Reporting.Html
             if (csv != null)
                 foreach (var c in csv)
                 {
-                    
+
                     string[] s = new string[18];
                     string name = c.Name;
                     string host = c.Host;
@@ -656,13 +641,10 @@ namespace VeeamHealthCheck.Functions.Reporting.Html
                     s[5] += c.IsAutoGateway;
                     if (c.IsAutoGateway)
                         hosts = "";
+                    if (String.IsNullOrEmpty(c.GateHosts))
+                        hosts = host;
                     else
-                    {
-                        if (String.IsNullOrEmpty(c.GateHosts))
-                            hosts = host;
-                        else
-                            hosts = gates;
-                    }
+                        hosts = gates;
                     CRepository repo = new()
                     {
                         Name = name,
@@ -671,7 +653,7 @@ namespace VeeamHealthCheck.Functions.Reporting.Html
                         Cores = c.Cores,
                         Ram = c.Ram,
                         IsAutoGate = c.IsAutoGateway,
-                        Host = host,
+                        Host = hosts,
                         Path = path,
                         FreeSpace = Math.Round((decimal)c.FreeSPace / 1024, 2),
                         TotalSpace = Math.Round((decimal)c.TotalSpace / 1024, 2),
@@ -686,17 +668,7 @@ namespace VeeamHealthCheck.Functions.Reporting.Html
 
 
                     };
-                    s[7] += path;
-                    s[8] += Math.Round((decimal)c.FreeSPace / 1024, 2);
-                    s[9] += Math.Round((decimal)c.TotalSpace / 1024, 2);
-                    s[10] += freePercent;
-                    s[11] += c.SplitStoragesPerVm;
-                    s[12] += c.IsDecompress;
-                    s[13] += c.AlignBlocks;
-                    s[14] += c.IsRotatedDriveRepository;
-                    s[15] += c.IsImmutabilitySupported;
-                    s[16] += c.Type;
-                    s[17] += c.Povisioning;
+
 
                     list.Add(repo);
                 }
@@ -855,9 +827,9 @@ namespace VeeamHealthCheck.Functions.Reporting.Html
 
             Dictionary<string, int> typeSummary = new();
 
-            foreach(var type in types2.Distinct())
+            foreach (var type in types2.Distinct())
             {
-                typeSummary.Add(type, types2.Count(x=> x == type)); 
+                typeSummary.Add(type, types2.Count(x => x == type));
             }
             //foreach (var t in types2)
             //{

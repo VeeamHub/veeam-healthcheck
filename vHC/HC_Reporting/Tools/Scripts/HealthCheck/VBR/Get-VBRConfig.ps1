@@ -644,10 +644,17 @@ $licInfo | Export-csv -Path $("$ReportPath\$VBRServer" + '_LicInfo.csv') -NoType
 #########################################################################################################
 
 <# Malware Detection Section #>
-Get-VBRMalwareDetectionOptions | Export-Csv malware_settings.csv -NoTypeInformation
-Get-VBRMalwareDetectionObject | Export-Csv malware_infectedobject.csv -NoTypeInformation
-Get-VBRMalwareDetectionEvent | Export-Csv malware_events.csv -NoTypeInformation
-Get-VBRMalwareDetectionExclusion | Export-Csv malware_exclusions.csv -NoTypeInformation
+try{
+    Get-VBRMalwareDetectionOptions | Export-Csv malware_settings.csv -NoTypeInformation
+    Get-VBRMalwareDetectionObject | Export-Csv malware_infectedobject.csv -NoTypeInformation
+    Get-VBRMalwareDetectionEvent | Export-Csv malware_events.csv -NoTypeInformation
+    Get-VBRMalwareDetectionExclusion | Export-Csv malware_exclusions.csv -NoTypeInformation
+}
+catch{
+    Write-LogFile("Failed on Malware Detection")
+    Write-LogFile($error[0])
+}
+
 <# END Malware Detection Section #>
 
 <#
