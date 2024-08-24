@@ -13,7 +13,9 @@ using System.Reflection.PortableExecutable;
 using VeeamHealthCheck.Functions.Reporting.CsvHandlers.VB365;
 using VeeamHealthCheck.Shared;
 using VeeamHealthCheck.Shared.Logging;
-
+using VeeamHealthCheck.Functions.Reporting.DataTypes;
+using VeeamHealthCheck.Functions.Reporting.DataTypes.NAS;
+using VeeamHealthCheck.Functions.Reporting.DataTypes.Tape;
 
 namespace VeeamHealthCheck.Functions.Reporting.CsvHandlers
 {
@@ -27,7 +29,6 @@ namespace VeeamHealthCheck.Functions.Reporting.CsvHandlers
         public  string _sessionPath = "VeeamSessionReport.csv";
         public string _outPath;// = CVariables.vbrDir;
         public readonly string _sobrExtReportName = "SOBRExtents";
-        public readonly string _jobReportName = "Jobs";
         public readonly string _sobrReportName = "SOBRs";
         public readonly string _proxyReportName = "Proxies";
         public readonly string _repoReportName = "Repositories";
@@ -38,7 +39,6 @@ namespace VeeamHealthCheck.Functions.Reporting.CsvHandlers
         public readonly string _hvProxReportName = "HvProxy";
         public readonly string _nasProxReportName = "NasProxy";
         public readonly string _bnrInfoName = "vbrinfo";
-        public readonly string _piReportName = "pluginjobs";
         public readonly string _bjobs = "bjobs";
         public readonly string _capTier = "capTier";
         public readonly string _trafficRules = "trafficRules";
@@ -51,6 +51,28 @@ namespace VeeamHealthCheck.Functions.Reporting.CsvHandlers
         public readonly string _physNotProtected = "PhysNotProtected";
         public readonly string _HvProtected = "HvProtected";
         public readonly string _HvUnprotected = "HvUnprotected";
+        public readonly string _malware = "malware_settings";
+        public readonly string _malwareObjects = "malware_infectedobject";
+        public readonly string _malwareEvents = "malware_events";
+        public readonly string _malwareExclusions = "malware_exclusions";
+        public readonly string _nasFileData = "NasFileData";
+        public readonly string _nasShareSize = "NasSharesize";
+        public readonly string _nasObjectSize = "NasObjectSourceStorageSize";
+
+        // Job files
+        public readonly string _piReportName = "pluginjobs";
+        public readonly string _jobReportName = "_Jobs";
+        // make string for these job types: "AgentBackupJob.csv", "catalystJob", "cdpjobs", EndpointJob, nasBackup, nasBCJ, SureBackupJob 
+        public readonly string _agentBackupJob = "AgentBackupJob";
+        public readonly string _catalystJob = "catalystJob";
+        public readonly string _cdpjobs = "cdpjobs";
+        public readonly string _EndpointJob = "EndpointJob";
+        public readonly string _nasBackup = "nasBackup";
+        public readonly string _nasBCJ = "nasBCJ";
+        public readonly string _SureBackupJob = "SureBackupJob";
+
+
+        public readonly string _tapeJobInfo = "TapeJobs";
 
         //VBO Files
         private readonly string _vboGlobalCsv = "Global";
@@ -219,6 +241,40 @@ namespace VeeamHealthCheck.Functions.Reporting.CsvHandlers
         {
             return VbrGetDynamicCsvRecs(_jobReportName, CVariables.vbrDir);
         }
+        public IEnumerable<dynamic> GetDynamicPluginJobs()
+        {
+            return VbrGetDynamicCsvRecs(_piReportName, CVariables.vbrDir);
+        }
+        // make similar method as line 244 for the newly added file names
+        public IEnumerable<dynamic> GetDynamicAgentBackupJob()
+        {
+            return VbrGetDynamicCsvRecs(_agentBackupJob, CVariables.vbrDir);
+        }
+        public IEnumerable<dynamic> GetDynamicCatalystJob()
+        {
+            return VbrGetDynamicCsvRecs(_catalystJob, CVariables.vbrDir);
+        }
+        public IEnumerable<dynamic> GetDynamicCdpJobs()
+        {
+            return VbrGetDynamicCsvRecs(_cdpjobs, CVariables.vbrDir);
+        }
+        public IEnumerable<dynamic> GetDynamicEndpointJob()
+        {
+            return VbrGetDynamicCsvRecs(_EndpointJob, CVariables.vbrDir);
+        }
+        public IEnumerable<dynamic> GetDynamicNasBackup()
+        {
+            return VbrGetDynamicCsvRecs(_nasBackup, CVariables.vbrDir);
+        }
+        public IEnumerable<dynamic> GetDynamicNasBCJ()
+        {
+            return VbrGetDynamicCsvRecs(_nasBCJ, CVariables.vbrDir);
+        }
+        public IEnumerable<dynamic> GetDynamicSureBackupJob()
+        {
+            return VbrGetDynamicCsvRecs(_SureBackupJob, CVariables.vbrDir);
+        }
+
         public IEnumerable<dynamic> GetDynamicBjobs()
         {
             return VbrGetDynamicCsvRecs(_bjobs, CVariables.vbrDir);
@@ -325,6 +381,64 @@ namespace VeeamHealthCheck.Functions.Reporting.CsvHandlers
             var res = VbrFileReader(_HvUnprotected);
             if (res != null)
                 return res.GetRecords<CViProtected>();
+            return null;
+        }
+        public IEnumerable<CMalwareObject> MalwareSettings()
+        {
+            var res = VbrFileReader(_malware);
+            if (res != null)
+                return res.GetRecords<CMalwareObject>();
+            return null;
+        }
+        public IEnumerable<CMalwareInfectedObjects> MalwareInfectedObjects()
+        {
+            var res = VbrFileReader(_malwareObjects);
+            if (res != null)
+                return res.GetRecords<CMalwareInfectedObjects>();
+            return null;
+        }
+        public IEnumerable<CMalwareEvents> MalwareEvents()
+        {
+            var res = VbrFileReader(_malwareEvents);
+            if (res != null)
+                return res.GetRecords<CMalwareEvents>();
+            return null;
+        }
+        public IEnumerable<CMalwareExcludedItem> MalwareExclusions()
+        {
+            var res = VbrFileReader(_malwareExclusions);
+            if (res != null)
+                return res.GetRecords<CMalwareExcludedItem>();
+            return null;
+        }
+        //public IEnumerable<CNasFileDataVmc> GetDynamicNasFileData()
+        //{
+        //    var res = VbrFileReader(_nasFileData);
+        //    if (res != null)
+        //        return res.GetRecords<CNasFileDataVmc>();
+        //    return null;
+        //}
+
+        public IEnumerable<CNasVmcInfo> GetDynamicNasShareSize()
+        {
+            var res = VbrFileReader(_nasShareSize);
+            if (res != null)
+                return res.GetRecords<CNasVmcInfo>().ToList();
+            return null;
+        }
+
+        public IEnumerable<CObjectShareVmcInfo> GetDynamicNasObjectSize()
+        {
+            var res = VbrFileReader(_nasObjectSize);
+            if (res != null)
+                return res.GetRecords<CObjectShareVmcInfo>();
+            return null;
+        }
+        public IEnumerable<CTapeJobInfo> GetTapeJobInfoFromCsv()
+        {
+            var res = VbrFileReader(_tapeJobInfo);
+            if (res != null)
+                return res.GetRecords<CTapeJobInfo>().ToList();
             return null;
         }
         public IEnumerable<CRegOptionsCsv> RegOptionsCsvParser()

@@ -8,7 +8,7 @@ MIT License
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         mc:Ignorable="d"
-        Title="" Height="628" Width="370"
+        Title="" Height="650" Width="370"
         WindowStartupLocation="CenterScreen"
         ResizeMode="NoResize"
         >
@@ -52,8 +52,7 @@ MIT License
         <Button x:Name="run" Content="" HorizontalAlignment="Left" Margin="180,345,0,0" VerticalAlignment="Top" Click="run_Click" Height="25" Width="160"/>
         <Button Name="termsBtn" Content="" HorizontalAlignment="Left" Margin="8,345,0,0" VerticalAlignment="Top" Height="25" Width="160" Click="AcceptButton_click"/>
         <Button x:Name="importButton" Content="" HorizontalAlignment="Right" Margin="0,261,8,0" VerticalAlignment="Top" Height="38" Width="100" Click="Import_click" ToolTip="Creates a report based on previously collected data."/>
-
-        <TextBlock Margin="0,-147,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Height="392" Width="Auto">
+        <TextBlock Margin="0,-180,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Height="392" Width="Auto">
             <Run FontWeight="Bold" TextDecorations="Underline" Name="InsHeader" /><LineBreak/><Run/>
             <LineBreak/>
             <Run Name="line1"/><LineBreak/>
@@ -86,6 +85,11 @@ MIT License
                   Margin="0,250,0,0" VerticalAlignment="Top" IsThreeState="False"
                   Checked="explorerShowBox_Checked" Unchecked="explorerShowBox_Unchecked"
                   IsChecked="True"
+                  ></CheckBox>
+        <CheckBox x:Name="pdfCheckBox"  HorizontalAlignment="Left"
+                  Margin="0,230,0,0" VerticalAlignment="Top" IsThreeState="False"
+                  Checked="pdfCheckBox_Checked" Unchecked="pdfCheckBox_Unchecked"
+                  IsChecked="False"
                   ></CheckBox>
         <TextBlock Name="outPath" Height="15" Width="75" HorizontalAlignment="Left" Margin="0,324,0,86"></TextBlock>
         <TextBox x:Name="pathBox" Height="20" Width="260"  TextChanged="pathBox_TextChanged" Margin="77,320,3,85"></TextBox>

@@ -338,11 +338,12 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR
                 _form.AddA("i2", VbrLocalizationHelper.JobConNote3) + _form.LineBreak() +
                 _form.AddA("subhdr", VbrLocalizationHelper.JobConNote4subhdr) + _form.LineBreak() +
                 _form.AddA("i2", _form.AddA("bld", VbrLocalizationHelper.JobConNote5bold)) + _form.LineBreak() +
-                "<table border=\"1\"><tr>" +
+                _form.Table() +
+                "<thead>" +
                 "<th>" + _form.AddA("i2", VbrLocalizationHelper.JobConNoteSqlTableRow1Col1) + "</th>" +
                 "<th>" + _form.AddA("i2", VbrLocalizationHelper.JobConNoteSqlTableRow1Col2) + "</th>" +
                 "<th>" + _form.AddA("i2", VbrLocalizationHelper.JobConNoteSqlTableRow1Col3) + "</th>" +
-                "</tr><tr>" +
+                "</tr></thead><tbody><tr>" +
                 "<td>" + _form.AddA("i2", VbrLocalizationHelper.JobConNoteSqlTableRow2Col1) + "</td>" +
                 "<td>" + _form.AddA("i2", VbrLocalizationHelper.JobConNoteSqlTableRow2Col2) + "</td>" +
                 "<td>" + _form.AddA("i2", VbrLocalizationHelper.JobConNoteSqlTableRow2Col3) + "</td>" +
@@ -354,7 +355,7 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR
                 "<td>" + _form.AddA("i2", VbrLocalizationHelper.JobConNoteSqlTableRow4Col1) + "</td>" +
                 "<td>" + _form.AddA("i2", VbrLocalizationHelper.JobConNoteSqlTableRow4Col2) + "</td>" +
                 "<td>" + _form.AddA("i2", VbrLocalizationHelper.JobConNoteSqlTableRow4Col3) + "</td>" +
-                "</tr>" +
+                "</tr></tbody>" +
                 "</table>" +
                      _form.LineBreak() +
                 _form.AddA("i2", VbrLocalizationHelper.JobConNoteSqlTableNote0) + _form.LineBreak() +

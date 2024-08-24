@@ -22,7 +22,7 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VB365
         public string Globals()
         {
             string s = "<div class=\"global\" id=\"global\">";
-            s += _form.header2("Global Configuration");
+            s += _form.CollapsibleButton("Global Configuration");
             s += "<br>";
             s += "<table border=\"1\"><tr>";
             s += _form.TableHeader(Vb365ResourceHandler.GlobalColHeadLicStatus, "License Status");

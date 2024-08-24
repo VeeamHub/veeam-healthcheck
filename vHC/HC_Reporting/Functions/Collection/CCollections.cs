@@ -7,7 +7,7 @@ using VeeamHealthCheck.Functions.Collection.LogParser;
 using VeeamHealthCheck.Functions.Collection.Security;
 using VeeamHealthCheck.Shared;
 using Microsoft.Management.Infrastructure;
-using VeeamHealthCheck.Functions.Collection.PowerShell;
+using VeeamHealthCheck.Functions.Collection.PSCollections;
 using System.Web.Services.Description;
 using System.Windows;
 
@@ -135,6 +135,8 @@ namespace VeeamHealthCheck.Functions.Collection
         }
         private bool TestPsMFA(PSInvoker p)
         {
+            CScripts scripts = new();
+
             return p.TestMfa();
         }
         private void ExecVbrScripts(PSInvoker p)

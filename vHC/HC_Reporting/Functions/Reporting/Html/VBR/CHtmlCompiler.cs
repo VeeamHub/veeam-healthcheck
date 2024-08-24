@@ -1,6 +1,10 @@
 ﻿// Copyright (c) 2021, Adam Congdon <adam.congdon2@gmail.com>
 // MIT License
+using Microsoft.CodeAnalysis;
+using System;
+using System.IO;
 using System.Net;
+using System.Reflection;
 using VeeamHealthCheck.Functions.Reporting.CsvHandlers;
 using VeeamHealthCheck.Functions.Reporting.Html.Shared;
 using VeeamHealthCheck.Html.VBR;
@@ -55,6 +59,21 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR
             if (CGlobals.OpenExplorer)
                 exporter.OpenExplorer();
         }
+        // write a method to export _htmldocOriginal as a PDF
+
+        private void ExportToPdf()
+        {
+            //HtmlToPdfConverter converter = new();
+            //var htmlContent = _htmldocOriginal;
+            //var outputPath = "output.pdf";
+
+            //var pdfBytes = converter.ConvertHtmlToPdf(htmlContent, outputPath);
+
+            //// If you need to save the PDF to a file
+            //File.WriteAllBytes(outputPath, pdfBytes);
+        }
+
+
         private void ExportSecurityHtml()
         {
             CHtmlExporter exporter = new(GetServerName());
@@ -76,19 +95,24 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR
         private void FormHeader()
         {
             log.Info("[HTML] Forming Header...");
-            _htmldocOriginal = "<html>";
-            _htmldocOriginal += "<head>";
-            _htmldocOriginal += "<style>";
-            _htmldocOriginal += CssStyler.StyleString();
-            _htmldocOriginal += "</style></head>";
+            string h = _form.Header();
 
-            _htmldocScrubbed = "<html>";
-            _htmldocScrubbed += "<head>";
-            _htmldocScrubbed += "<style>";
-            _htmldocScrubbed += CssStyler.StyleString();
-            _htmldocScrubbed += "</style></head>";
+            _htmldocOriginal = h;
+            _htmldocScrubbed += h;
+
             log.Info("[HTML] Forming Header...done!");
-            //FormBody();
+        }
+
+        public static string GetEmbeddedCssContent(string embeddedFileName)
+        {
+            var assembly = Assembly.GetExecutingAssembly();
+            var resourceName = $"{assembly.GetName().Name}.{embeddedFileName}";
+
+            using (var stream = assembly.GetManifestResourceStream(resourceName))
+            using (var reader = new StreamReader(stream))
+            {
+                return reader.ReadToEnd();
+            }
         }
 
         #region HtmlHeaders
@@ -98,27 +122,92 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR
         {
             log.Info("[HTML] setting HTML navigation");
             AddToHtml(DivId("navigation"));
-            AddToHtml(string.Format("<h4>{0}</h4>", VbrLocalizationHelper.NavHeader));
-            AddToHtml(string.Format("<button type=\"button\" class=\"btn\" onclick=\"test()\">{0}</button>", VbrLocalizationHelper.NavColapse));
+            AddToHtml(string.Format("<h2>{0}</h2>", VbrLocalizationHelper.NavHeader));
+           // AddToHtml(string.Format("<button type=\"button\" class=\"btn\" onclick=\"test()\">{0}</button>", VbrLocalizationHelper.NavColapse));
         }
-        private void SetUniversalNavEnd()
-        {
-            AddToHtml(_form._endDiv);
-            log.Info("[HTML] setting HTML navigation...done!");
-        }
+
         private void SetNavigation()
         {
-            SetUniversalNavStart();
+            //SetUniversalNavStart();
             NavTable();
-            SetUniversalNavEnd();
+
+            AddToHtml( SetVbrHcIntro(false));
+
+            //add end div for card holding nav & summary
+            AddToHtml("</div>");
+            //add end div for end of section
+            AddToHtml("</div>");
+            // add line break for spacing
+            AddToHtml("<br>");
+
+        }
+        private string SetVbrHcIntro(bool scrub)
+        {
+            string s = "";
+            if (!CGlobals.RunSecReport)
+            {
+                if (scrub)
+                {
+                    s += "<div class=\"card2\">" + 
+                        "<h2>About</h2>"
+                        + VbrLocalizationHelper.HtmlIntroLine1 + "</a>\n";
+                    //s += LineBreak();
+                    s += String.Format(@"<dl>
+                <dt>CSV Raw Data Output</dt>
+                <dd>{0}</dd>
+                <dt>Individual Job Session Reports</dt>
+                <dd>{1}</dd>
+                <dt>NOTE:</dt>
+                <dd>{2}</dd>
+                <dt>NOTE:</dt>
+                <dd>{3}</dd>
 
 
+</dl>",
+        VbrLocalizationHelper.HtmlIntroLine2,
+        VbrLocalizationHelper.HtmlIntroLine3Anon,
+        VbrLocalizationHelper.HtmlIntroLine4,
+        VbrLocalizationHelper.HtmlIntroLine5
+        );
+                }
+                else
+                {
+                    s += "<div class=\"card2\">" +
+                         "<h2>About</h2>" +
+                        VbrLocalizationHelper.HtmlIntroLine1 + "</a>\n";
+                    //s += LineBreak();
+                    s += String.Format(@"<dl>
+                <dt>CSV Raw Data Output</dt>
+                <dd>{0}</dd>
+                </br>
+                <dt>Individual Job Session Reports</dt>
+                <dd>{1}</dd>
+                </br>
+                <dt>NOTE</dt>
+                <dd>{2}</dd>
+                </br>
+                <dt>NOTE</dt>
+                <dd>{3}</dd>
+
+
+</dl>",
+        VbrLocalizationHelper.HtmlIntroLine2,
+        VbrLocalizationHelper.HtmlIntroLine3Original,
+        VbrLocalizationHelper.HtmlIntroLine4,
+        VbrLocalizationHelper.HtmlIntroLine5
+        );
+                }
+            }
+
+            s += "</div>";
+
+            return s;
         }
         private void SetSecurityNavigations()
         {
-            SetUniversalNavStart();
+            //SetUniversalNavStart();
             SecurityNavTable();
-            SetUniversalNavEnd();
+            //SetUniversalNavEnd();
         }
 
 
@@ -135,22 +224,25 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR
         }
 
         #endregion
+
         private string FormBodyStart(string htmlString, bool scrub)
         {
-            htmlString += _form.body;
+            string h  = _form.body;
+             h += _form.FormHtmlButtonGoToTop();
             if (scrub)
             {
-                htmlString += _form.SetHeaderAndLogo(" ");
-                htmlString += _form.SetBannerAndIntro(true);
+                h += _form.SetHeaderAndLogo(" ");
+                //h += _form.SetBannerAndIntro(true);
             }
             else
             {
-                htmlString += _form.SetHeaderAndLogo(SetLicHolder());
-                htmlString += _form.SetBannerAndIntro(false);
+                h += _form.SetHeaderAndLogo(SetLicHolder());
+                //h += _form.SetBannerAndIntro(false);
             }
 
-            return htmlString;
+            return h;
         }
+       
         private string SetVbrSecurityHeader()
         {
             return _form.SetHeaderAndLogo(SetLicHolder());
@@ -190,6 +282,9 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR
             //nav
             SetNavigation();
 
+            // add button
+            AddToHtml(string.Format("<button id='expandBtn' type=\"button\" class=\"btn\" onclick=\"test()\">{0}</button>", "Expand All Sections"));
+
             CHtmlBodyHelper helper = new();
             _htmldocScrubbed = helper.FormVbrFullReport(_htmldocScrubbed, true);
             _htmldocOriginal = helper.FormVbrFullReport(_htmldocOriginal, false);
@@ -213,7 +308,7 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR
 
         private string NavTableStarter()
         {
-            return "<table border=\"0\" style=\"background: \"><tbody>";
+            return "<table border=\"1\" style=\"background:#efefef \"><tbody>";
         }
         private string NavtableEnd()
         {
@@ -224,9 +319,10 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR
         }
         private void NavTable()
         {
-            string tableString = NavTableStarter();
-            tableString += _tables.MakeNavTable();
-            tableString += NavtableEnd();
+            log.Info("[HTML] setting HTML navigation");
+
+            // string tableString = NavTableStarter();
+            string tableString = _form.SetNavTables("vbr");
             AddToHtml(tableString);
         }
         private void SecurityNavTable()
@@ -239,11 +335,12 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR
 
         private string FormFooter()
         {
-            string s = "";
+            string jsScript = GetEmbeddedCssContent("ReportScript.js");
+            string s = "</body><footer>";
             s += "<a>vHC Version: " + CVersionSetter.GetFileVersion() + "</a>";
             s += "<script type=\"text/javascript\">";
-            s += CssStyler.JavaScriptBlock();
-            s += "</script>";
+            s += jsScript;
+            s += "</script></footer></html>";
             return s;
         }
 
@@ -254,6 +351,10 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR
         private string DivId(string id)
         {
             return string.Format("<div id={0}>", id);
+        }
+        private string DivIdClass()
+        {
+            return string.Format("<div id={0} class={1}");
         }
         private string h2UnderLine(string text)
         {

@@ -17,8 +17,8 @@ namespace VeeamHealthCheck.Functions.Reporting.DataTypes
         public string CapacityExtent { get; set; }
         public bool EncryptionEnabled { get; set; }
         public string EncryptionKey { get; set; }
-        public string CapacityTierCopyPolicyEnabled { get; set; }
-        public string CapacityTierMovePolicyEnabled { get; set; }
+        public bool CapacityTierCopyPolicyEnabled { get; set; }
+        public bool CapacityTierMovePolicyEnabled { get; set; }
         public bool ArchiveTierEnabled { get; set; }
         public string ArchiveExtent { get; set; }
         public string ArchivePeriod { get; set; }
@@ -33,12 +33,13 @@ namespace VeeamHealthCheck.Functions.Reporting.DataTypes
 
         public string CapTierName { get; set; }
         public string CapTierType { get; set; }
-        public string ImmuteEnabled { get; set; }
+        public bool ImmuteEnabled { get; set; }
         public string ImmutePeriod { get; set; }
-        public string SizeLimitEnabled { get; set; }
+        public bool SizeLimitEnabled { get; set; }
         public string SizeLimit { get; set; }
 
         public int ExtentCount { get; set; }
+        public int JobCount { get; set; }
 
         public CSobrTypeInfos()
         {

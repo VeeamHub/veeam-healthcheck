@@ -34,6 +34,11 @@ namespace VeeamHealthCheck.Shared
         private static bool _runSecReport;
         public static bool EXPORTINDIVIDUALJOBHTMLS = true;
         public static bool CHECKFIXES = false;
+        public static bool EXPORTPDF = false;
+
+
+        // Security Values
+        public static bool IsMfaEnabled = false;
 
         // B&R Server global values
         //public static string isConsoleLocal = "Undetermined";

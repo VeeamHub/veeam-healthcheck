@@ -36,7 +36,8 @@ namespace VeeamHealthCheck.Reporting.Html.VBR
                 _tables.IsImmutabilityEnabledOnce(),
                 _tables.GeneralTrafficEncryptionEnabled(),
                 _tables.IsBackupFileEncryptionInUse(),
-                _tables.IsConfigBackupEncrypted()
+                _tables.IsConfigBackupEncrypted(),
+                _tables.IsMFAEnabled(),
         };
             return headers;
         }

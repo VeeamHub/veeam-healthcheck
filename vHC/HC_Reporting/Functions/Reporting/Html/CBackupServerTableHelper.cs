@@ -57,24 +57,32 @@ namespace VeeamHealthCheck.Functions.Reporting.Html
         }
         private void SetConfigBackupSettings()
         {
-            CCsvParser config = new();
-            List<CConfigBackupCsv> cv = new();
-            var configBackupCsv = config.ConfigBackupCsvParser();
-            if(configBackupCsv != null)
-                 cv = configBackupCsv.ToList();
-            if (cv.Count > 0)
+            try
             {
+                CCsvParser config = new();
+                CConfigBackupCsv cv = new();
+                var configBackupCsv = config.ConfigBackupCsvParser();
+                cv = configBackupCsv.FirstOrDefault();
 
-                _backupServer.ConfigBackupEnabled = CObjectHelpers.ParseBool(cv[0].Enabled);
+
+
+                _backupServer.ConfigBackupEnabled = CObjectHelpers.ParseBool(cv.Enabled);
                 if (_backupServer.ConfigBackupEnabled == true)
                 {
 
-                    _backupServer.ConfigBackupTarget = cv[0].Target;
-                    _backupServer.ConfigBackupEncryption = CObjectHelpers.ParseBool(cv[0].EncryptionOptions);
-                    _backupServer.ConfigBackupLastResult = cv[0].LastResult;
-                    _backupServer.ConfigBackupRetentionPoints = CObjectHelpers.ParseInt(cv[0].RestorePointsToKeep);
+                    _backupServer.ConfigBackupTarget = cv.Target;
+                    _backupServer.ConfigBackupEncryption = CObjectHelpers.ParseBool(cv.EncryptionOptions);
+                    _backupServer.ConfigBackupLastResult = cv.LastResult;
+                    _backupServer.ConfigBackupRetentionPoints = CObjectHelpers.ParseInt(cv.RestorePointsToKeep);
                 }
             }
+            catch (Exception e)
+            {
+                log.Error("Error processing config backup data");
+                log.Error("\t" + e.Message);
+            }
+
+            
 
         }
 
@@ -97,7 +105,7 @@ namespace VeeamHealthCheck.Functions.Reporting.Html
                     try
                     {
                         var records = config.BnrCsvParser();//.ToList();
-                        if(records != null)
+                        if (records != null)
                         {
                             var r2 = records.ToList();
                             _backupServer.Version = r2[0].Version;
@@ -113,7 +121,7 @@ namespace VeeamHealthCheck.Functions.Reporting.Html
                             if (_backupServer.DbType == CGlobals.PgTypeName)
                                 _backupServer.DbHostName = r2[0].PgHost;
                         }
-                        
+
 
 
                     }

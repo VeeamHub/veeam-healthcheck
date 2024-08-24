@@ -22,6 +22,8 @@ namespace VeeamHealthCheck.Shared
             "\t/lite\t\t" + "Skips output of individual jobs to HTML files. Default is ON and adds extra processing time." +
             "\n" +
             "\t/scrub:\t\t" + "/scrub:true | /scrub:false; determines if sensitive data is removed. Default option creates both options" +
+            "\n"+
+            "\t/pdf\t\t" + "Exports the report as PDF in addition to HTML report."+
             "\n\n" +
             "HotFix Detection:\n"+
             "Use the following syntax:\t\t.\\VeeamHealthCheck.exe /hotfix /path=D:\\ExamplePath"+

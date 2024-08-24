@@ -14,6 +14,8 @@ using VeeamHealthCheck.Functions.Reporting.DataTypes;
 using VeeamHealthCheck.Functions.Reporting.Html.Shared;
 using VeeamHealthCheck.Functions.Reporting.Html.VBR;
 using VeeamHealthCheck.Functions.Reporting.Html.VBR.VbrTables.Job_Session_Summary;
+using VeeamHealthCheck.Functions.Reporting.Html.VBR.VbrTables.Security;
+
 //using VeeamHealthCheck.Functions.Reporting.Html.VBR.VBR_Tables.Repositories;
 using VeeamHealthCheck.Functions.Reporting.RegSettings;
 using VeeamHealthCheck.Reporting.Html.VBR;
@@ -116,10 +118,22 @@ namespace VeeamHealthCheck.Functions.Reporting.Html
             return notProtectedTypes;
 
         }
-        public List<int> SecSummary()
+        public CSecuritySummaryTable SecSummary()
         {
+            CSecuritySummaryTable t = new();
             List<int> secSummary = new List<int>();
             var csv = new CCsvParser();
+            try
+            {
+                var vbrInfo = csv.GetDynamicVbrInfo();
+                if (vbrInfo.Any(x => x.mfa == "True"))
+                    t.MFAEnabled = true;
+                else t.MFAEnabled = false;
+            }
+            catch (Exception ex)
+            {
+
+            }
             try
             {
                 var sobrRepo = csv.GetDynamicCapTier().ToList();
@@ -127,13 +141,13 @@ namespace VeeamHealthCheck.Functions.Reporting.Html
                 var onPremRepo = csv.GetDynamicRepo().ToList();
                 if (onPremRepo.Any(x => x.isimmutabilitysupported == "True"))
                 {
-                    secSummary.Add(1);
+                    t.ImmutabilityEnabled = true;
                     //return secSummary;
                 }
 
                 else if (sobrRepo.Any(x => x.immute == "True"))
                 {
-                    secSummary.Add(1);
+                    t.ImmutabilityEnabled = true;
 
                     //return secSummary;
                 }
@@ -141,60 +155,60 @@ namespace VeeamHealthCheck.Functions.Reporting.Html
 
                 else if (extRepo.Any(x => x.isimmutabilitysupported == "True"))
                 {
-                    secSummary.Add(1);
+                    t.ImmutabilityEnabled = true;
                     //return secSummary;
                 }
                 else
                 {
-                    secSummary.Add(0);
+                    t.ImmutabilityEnabled = false;
                 }
 
             }
             catch (Exception)
             {
                 log.Error("Unable to find immutability. Marking false");
-                secSummary.Add(0);
+                t.ImmutabilityEnabled = false;
             }
             try
             {
                 var netTraffic = csv.GetDynamincNetRules();
                 if (netTraffic.Any(x => x.encryptionenabled == "True"))
-                    secSummary.Add(1);
-                else secSummary.Add(0);
+                    t.TrafficEncrptionEnabled = true;
+                else t.TrafficEncrptionEnabled = false;
             }
             catch (Exception)
             {
                 log.Info("Traffic encryption not detected. Marking false");
-                secSummary.Add(0);
+                t.TrafficEncrptionEnabled = false;
             }
             try
             {
                 var backupEnc = csv.GetDynamicJobInfo();
                 if (backupEnc.Any(x => x.pwdkeyid != "00000000-0000-0000-0000-000000000000" && !string.IsNullOrEmpty(x.pwdkeyid)))
-                    secSummary.Add(1);
-                else secSummary.Add(0);
+                    t.BackupFileEncrptionEnabled = true;
+                else t.BackupFileEncrptionEnabled = false;
             }
             catch (Exception)
             {
                 log.Error("Unable to detect backup encryption. Marking false");
-                secSummary.Add(0);
+                t.BackupFileEncrptionEnabled = false;
             }
 
             try
             {
                 var cBackup = csv.GetDynamincConfigBackup();
                 if (cBackup.Any(x => x.encryptionoptions == "True"))
-                    secSummary.Add(1);
-                else secSummary.Add(0);
+                    t.ConfigBackupEncrptionEnabled = true;
+                else t.ConfigBackupEncrptionEnabled = false;
             }
             catch (Exception)
             {
                 log.Error("Config backup not detected. Marking false");
                 //log.Info(e.Message);
-                secSummary.Add(0);
+                t.ConfigBackupEncrptionEnabled = false;
             }
 
-            return secSummary;
+            return t;
 
 
         }
@@ -411,7 +425,7 @@ namespace VeeamHealthCheck.Functions.Reporting.Html
             if (string.IsNullOrEmpty(input)) return "";
             else return input;
         }
-        public List<string[]> SobrInfoToXml(bool scrub)
+        public List<CSobrTypeInfos> SobrInfoToXml(bool scrub)
         {
             PreCalculations();
             log.Info("Starting SOBR conversion to xml..");
@@ -421,7 +435,7 @@ namespace VeeamHealthCheck.Functions.Reporting.Html
             List<CRepoTypeInfos> repos = _dTypeParser.ExtentInfo;
             csv = csv.OrderBy(x => x.Name).ToList();
 
-
+            List<CSobrTypeInfos> outList = new();
             foreach (var c in csv)
             {
                 string[] s = new string[30];
@@ -432,42 +446,46 @@ namespace VeeamHealthCheck.Functions.Reporting.Html
                     newName = _scrubber.ScrubItem(c.Name, "sobr");
                 _repoJobCount.TryGetValue(c.Name, out int jobCount);
 
-                s[0] += newName;
-                s[1] += repoCount;
-                s[2] += jobCount;
-                s[3] += c.PolicyType;
-                s[4] += c.EnableCapacityTier;
-                s[5] += c.CapacityTierCopyPolicyEnabled;
-                s[6] += c.CapacityTierMovePolicyEnabled;
-                s[7] += c.ArchiveTierEnabled;
-                s[8] += c.UsePerVMBackupFiles;
-                s[9] += c.CapTierType;
-                s[10] += c.ImmuteEnabled;
-                s[11] += c.ImmutePeriod;
-                s[12] += c.SizeLimitEnabled;
-                s[13] += c.SizeLimit;
-                //s[14] += c.
-                //s[15] += c.ArchiveExtent;
-                //s[16] += c.CostOptimizedArchiveEnabled;
-                //s[17] += c.ArchiveFullBackupModeEnabled;
-                //s[18] += c.PluginBackupsOffloadEnabled;
-                //s[19] += c.CopyAllMachineBackupsEnabled;
-                //s[20] += c.CopyAllPluginBackupsEnabled;
-                //s[21] += c.Id;
-                //s[22] += c.Description;
-                //s[23] += c.OverridePolicyEnabled;
-                //s[24] += c.CapTierType;
-                //s[25] += c.CapTierName;
-                //s[26] += c.ImmuteEnabled;
-                //s[27] += c.ImmutePeriod;
-                //s[28] += c.SizeLimit;
-                //s[29] += c.SizeLimitEnabled;
-                //s[30] += 
+                //s[0] += newName;
+                //s[1] += repoCount;
+                //s[2] += jobCount;
+                //s[3] += c.PolicyType;
+                //s[4] += c.EnableCapacityTier;
+                //s[5] += c.CapacityTierCopyPolicyEnabled;
+                //s[6] += c.CapacityTierMovePolicyEnabled;
+                //s[7] += c.ArchiveTierEnabled;
+                //s[8] += c.UsePerVMBackupFiles;
+                //s[9] += c.CapTierType;
+                //s[10] += c.ImmuteEnabled;
+                //s[11] += c.ImmutePeriod;
+                //s[12] += c.SizeLimitEnabled;
+                //s[13] += c.SizeLimit;
 
-                list.Add(s);
+
+                CSobrTypeInfos sobr = new()
+                {
+                    Name = newName,
+                    ExtentCount = repoCount,
+                    JobCount = jobCount,
+                    PolicyType = c.PolicyType,
+                    EnableCapacityTier = c.EnableCapacityTier,
+                    CapacityTierCopyPolicyEnabled = c.CapacityTierCopyPolicyEnabled,
+                    CapacityTierMovePolicyEnabled = c.CapacityTierMovePolicyEnabled,
+                    ArchiveTierEnabled = c.ArchiveTierEnabled,
+                    UsePerVMBackupFiles = c.UsePerVMBackupFiles,
+                    CapTierType = c.CapTierType,
+                    ImmuteEnabled = c.ImmuteEnabled,
+                    ImmutePeriod = c.ImmutePeriod,
+                    SizeLimitEnabled = c.SizeLimitEnabled,
+                    SizeLimit = c.SizeLimit
+
+                };
+
+
+                outList.Add(sobr);
             }
             log.Info("Starting SOBR conversion to xml..done!");
-            return list;
+            return outList;
         }
         private string SetGateHosts(string original, bool scrub)
         {
@@ -482,18 +500,19 @@ namespace VeeamHealthCheck.Functions.Reporting.Html
             }
             return r;
         }
-        public List<string[]> ExtentXmlFromCsv(bool scrub)
+        public List<CRepository> ExtentXmlFromCsv(bool scrub)
         {
             log.Info("converting extent info to xml");
             List<string[]> list = new List<string[]>();
             List<CRepoTypeInfos> csv = _dTypeParser.ExtentInfo;
             csv = csv.OrderBy(x => x.RepoName).ToList();
             csv = csv.OrderBy(y => y.SobrName).ToList();
+            List<CRepository> repoList = new();
 
             if (csv != null)
                 foreach (var c in csv)
                 {
-                    string[] s = new string[18];
+
                     string newName = c.RepoName;
                     string sobrName = c.SobrName;
                     string hostName = c.Host;
@@ -514,44 +533,52 @@ namespace VeeamHealthCheck.Functions.Reporting.Html
                         type = c.TypeDisplay;
 
                     var freePercent = FreePercent(c.FreeSPace, c.TotalSpace);
-                    CRepository repo = new();
-                    repo.Name = newName;
 
-                    s[0] += newName;
-                    s[1] += sobrName;
-                    s[2] += c.MaxTasks;
-                    s[3] += c.Cores;
-                    s[4] += c.Ram;
-                    s[5] += c.IsAutoGateway;
-                    if (c.IsAutoGateway == "True")
+
+
+                    string gateHosts = "";
+                    if (c.IsAutoGateway)
                     {
-                        s[6] += "";
+                        gateHosts = "";
                     }
                     else
                     {
                         if (String.IsNullOrEmpty(c.GateHosts))
-                            s[6] += hostName;
+                            gateHosts = hostName;
                         else
                         {
-                            s[6] += gates;
+                            gateHosts = gates;
                         }
                     }
-                    s[7] += path;
-                    s[8] += Math.Round((decimal)c.FreeSPace / 1024, 2);
-                    s[9] += Math.Round((decimal)c.TotalSpace / 1024, 2);
-                    s[10] += freePercent;
-                    s[11] += c.IsDecompress;
-                    s[12] += c.AlignBlocks;
-                    s[13] += c.IsRotatedDriveRepository;
-                    s[14] += c.IsImmutabilitySupported;
-                    s[15] += c.Type;
-                    s[16] += c.Povisioning;
-                    //s[17] += c.GateHosts;
 
-                    list.Add(s);
+                    CRepository repo = new()
+                    {
+                        Name = newName,
+                        SobrName = sobrName,
+                        MaxTasks = c.MaxTasks,
+                        Cores = c.Cores,
+                        Ram = c.Ram,
+                        IsAutoGate = c.IsAutoGateway,
+                        Host = gateHosts,
+                        Path = path,
+                        FreeSpace = Math.Round((decimal)c.FreeSPace / 1024, 2),
+                        TotalSpace = Math.Round((decimal)c.TotalSpace / 1024, 2),
+                        FreeSpacePercent = freePercent,
+                        IsDecompress = c.IsDecompress,
+                        AlignBlocks = c.AlignBlocks,
+                        IsRotatedDrives = c.IsRotatedDriveRepository,
+                        IsImmutabilitySupported = c.ObjectLockEnabled,
+                        Type = type,
+                        Provisioning = c.Povisioning
+
+                    };
+
+
+
+                    repoList.Add(repo);
                 }
             log.Info("converting extent info to xml..done!");
-            return list;
+            return repoList;
         }
         private bool AddRepoPathToDict(string host, string path)
         {
@@ -564,17 +591,19 @@ namespace VeeamHealthCheck.Functions.Reporting.Html
             else
                 return false;
         }
-        public List<string[]> RepoInfoToXml(bool scrub)
+        public List<CRepository> RepoInfoToXml(bool scrub)
         {
             PreCalculations();
             log.Info("converting repository info to xml");
-            List<string[]> list = new();
+            List<CRepository> list = new();
+
 
             List<CRepoTypeInfos> csv = _dTypeParser.RepoInfos;
             csv = csv.OrderBy(x => x.Name).ToList();
             if (csv != null)
                 foreach (var c in csv)
                 {
+
                     string[] s = new string[18];
                     string name = c.Name;
                     string host = c.Host;
@@ -602,39 +631,46 @@ namespace VeeamHealthCheck.Functions.Reporting.Html
 
 
                     _repoJobCount.TryGetValue(c.Name, out int jobCount);
+
+                    string hosts = "";
                     s[0] += name;
                     s[1] += c.MaxTasks;
                     s[2] += jobCount;
                     s[3] += c.Cores;
                     s[4] += c.Ram;
                     s[5] += c.IsAutoGateway;
-                    if (c.IsAutoGateway == "True")
-                    {
-                        s[6] += "";
-                    }
+                    if (c.IsAutoGateway)
+                        hosts = "";
+                    if (String.IsNullOrEmpty(c.GateHosts))
+                        hosts = host;
                     else
+                        hosts = gates;
+                    CRepository repo = new()
                     {
-                        if (String.IsNullOrEmpty(c.GateHosts))
-                            s[6] += host;
-                        else
-                        {
-                            s[6] += gates;
-                        }
-                    }
+                        Name = name,
+                        MaxTasks = c.MaxTasks,
+                        JobCount = jobCount,
+                        Cores = c.Cores,
+                        Ram = c.Ram,
+                        IsAutoGate = c.IsAutoGateway,
+                        Host = hosts,
+                        Path = path,
+                        FreeSpace = Math.Round((decimal)c.FreeSPace / 1024, 2),
+                        TotalSpace = Math.Round((decimal)c.TotalSpace / 1024, 2),
+                        FreeSpacePercent = freePercent,
+                        IsDecompress = c.IsDecompress,
+                        AlignBlocks = c.AlignBlocks,
+                        IsRotatedDrives = c.IsRotatedDriveRepository,
+                        IsImmutabilitySupported = c.IsImmutabilitySupported,
+                        Type = c.Type,
+                        Provisioning = c.Povisioning,
+                        IsPerVmBackupFiles = c.SplitStoragesPerVm
 
-                    s[7] += path;
-                    s[8] += Math.Round((decimal)c.FreeSPace / 1024, 2);
-                    s[9] += Math.Round((decimal)c.TotalSpace / 1024, 2);
-                    s[10] += freePercent;
-                    s[11] += c.SplitStoragesPerVm;
-                    s[12] += c.IsDecompress;
-                    s[13] += c.AlignBlocks;
-                    s[14] += c.IsRotatedDriveRepository;
-                    s[15] += c.IsImmutabilitySupported;
-                    s[16] += c.Type;
-                    s[17] += c.Povisioning;
 
-                    list.Add(s);
+                    };
+
+
+                    list.Add(repo);
                 }
             log.Info("converting repository info to xml..done!");
             return list;
@@ -782,34 +818,35 @@ namespace VeeamHealthCheck.Functions.Reporting.Html
 
             List<CModel.EDbJobType> types = new();
 
-            List<string> types2 = new();
-            foreach (var c in csv)
-            {
-                types2.Add(c.JobType);
-            }
+            List<string> types2 = csv.Select(x => x.JobType).ToList();
+            //foreach (var c in csv)
+            //{
+            //    types2.Add(c.JobType);
+            //}
 
 
             Dictionary<string, int> typeSummary = new();
-            foreach (var t in types2)
+
+            foreach (var type in types2.Distinct())
             {
-                int typeCount = 0;
-                foreach (var t2 in types2)
-                {
-                    if (t == t2)
-                    {
-                        typeCount++;
-                    }
-                }
-                if (!typeSummary.ContainsKey(t))
-                    typeSummary.Add(t, typeCount);
+                typeSummary.Add(type, types2.Count(x => x == type));
             }
+            //foreach (var t in types2)
+            //{
+            //    int typeCount = 0;
+            //    foreach (var t2 in types2)
+            //    {
+            //        if (t == t2)
+            //        {
+            //            typeCount++;
+            //        }
+            //    }
+            //    if (!typeSummary.ContainsKey(t))
+            //        typeSummary.Add(t, typeCount);
+            //}
 
             //sum of all jobs:
-            int totalJobs = 0;
-            foreach (var c in typeSummary)
-            {
-                totalJobs += c.Value;
-            }
+
 
             log.Info("converting job summary info to xml..done!");
             return typeSummary;
@@ -914,15 +951,7 @@ namespace VeeamHealthCheck.Functions.Reporting.Html
             csv = csv.OrderBy(y => y.JobType).ToList();
             csv = csv.OrderBy(x => x.Name).ToList();
 
-            //var cp = new CCsvParser();
-            //List<CServerCsvInfos> csv2 = new();
-            //if (cp != null)
-            //    csv2 = cp.ServerCsvParser().ToList();
-            //XDocument doc = XDocument.Load(_testFile);
 
-            //XElement extElement = new XElement("jobs");
-            //doc.Root.Add(extElement);
-            //doc.AddFirst(new XProcessingInstruction("xml-stylesheet", "type=\"text/xsl\" href=\"SessionReport.xsl\""));
             decimal totalsize = 0;
             if (csv != null)
                 foreach (var c in csv)

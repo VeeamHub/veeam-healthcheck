@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using VeeamHealthCheck.Functions.Collection.Security;
 using VeeamHealthCheck.Functions.Reporting.Html;
 using VeeamHealthCheck.Functions.Reporting.Html.Shared;
+using VeeamHealthCheck.Functions.Reporting.Html.VBR.VbrTables.Security;
 using VeeamHealthCheck.Resources.Localization;
 
 namespace VeeamHealthCheck.Reporting.Html.VBR
@@ -13,7 +14,7 @@ namespace VeeamHealthCheck.Reporting.Html.VBR
     {
         private CHtmlFormatting _form = new();
         private CDataFormer _df = new();
-        private List<int> _secSummaryParts;
+        private CSecuritySummaryTable _secSummaryParts;
         public CVbrSecurityTableHelper()
         {
             _secSummaryParts = _df.SecSummary();
@@ -55,8 +56,10 @@ namespace VeeamHealthCheck.Reporting.Html.VBR
         {
             string header = _form.TableHeader(VbrLocalizationHelper.SSHdr0, VbrLocalizationHelper.SSHdrTT0);
             string data = _form.TableData("False", "", 1);
-            if (_secSummaryParts[0] == 1)
-                data = _form.TableData("True", "");
+            if (_secSummaryParts.ImmutabilityEnabled == true)
+                data = _form.TableData(_form.True, "");
+            else
+                data = _form.TableData(_form.False, "");
 
             return Tuple.Create(header, data);
         }
@@ -64,8 +67,10 @@ namespace VeeamHealthCheck.Reporting.Html.VBR
         {
             string header = _form.TableHeader("General Traffic Encryption", "");
             string data = _form.TableData("False", "", 1);
-            if (_secSummaryParts[1] == 1)
-                data = _form.TableData("True", "");
+            if (_secSummaryParts.TrafficEncrptionEnabled == true)
+                data = _form.TableData(_form.True, "");
+            else
+                data = _form.TableData(_form.False, "");
 
             return Tuple.Create(header, data);
         }
@@ -73,8 +78,10 @@ namespace VeeamHealthCheck.Reporting.Html.VBR
         {
             string header = _form.TableHeader("Backup File Encryption", "");
             string data = _form.TableData("False", "", 1);
-            if (_secSummaryParts[2] == 1)
-                data = _form.TableData("True", "");
+            if (_secSummaryParts.BackupFileEncrptionEnabled == true)
+                data = _form.TableData(_form.True, "");
+            else
+                data = _form.TableData(_form.False, "");
 
 
             return Tuple.Create(header, data);
@@ -82,10 +89,23 @@ namespace VeeamHealthCheck.Reporting.Html.VBR
         public Tuple<string, string> IsConfigBackupEncrypted()
         {
             string header = _form.TableHeader("Config Backup Encryption", "");
-            string data = _form.TableData("False", "", 1);
-            if (_secSummaryParts[3] == 1)
-                data = _form.TableData("True", "");
+            string data = _form.TableData(_form.False, "", 1);
+            if (_secSummaryParts.ConfigBackupEncrptionEnabled == true)
+                data = _form.TableData(_form.True, ""); 
+            else
+                data = _form.TableData(_form.False, "");
 
+
+            return Tuple.Create(header, data);
+        }
+        public Tuple<string, string> IsMFAEnabled()
+        {
+            string header = _form.TableHeader("MFA Enabled", "");
+            string data = _form.TableData(_form.False, "", 1);
+            if (_secSummaryParts.MFAEnabled == true)
+                data = _form.TableData(_form.True, "");
+            else
+                data = _form.TableData(_form.False, "");
 
             return Tuple.Create(header, data);
         }
