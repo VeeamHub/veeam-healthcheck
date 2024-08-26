@@ -14,6 +14,7 @@ using VeeamHealthCheck.Functions.Reporting.DataTypes;
 using VeeamHealthCheck.Functions.Reporting.Html.Shared;
 using VeeamHealthCheck.Functions.Reporting.Html.VBR;
 using VeeamHealthCheck.Functions.Reporting.Html.VBR.VbrTables.Job_Session_Summary;
+using VeeamHealthCheck.Functions.Reporting.Html.VBR.VbrTables.Registry;
 using VeeamHealthCheck.Functions.Reporting.Html.VBR.VbrTables.Security;
 
 //using VeeamHealthCheck.Functions.Reporting.Html.VBR.VBR_Tables.Repositories;
@@ -933,7 +934,7 @@ namespace VeeamHealthCheck.Functions.Reporting.Html
 
                 if (defaults._defaultKeys.ContainsKey(r.Key))
                 {
-                    string[] skipKeys = new string[] { "SqlSecuredPassword", "SqlLogin", "SqlServerName", "SqlInstanceName", "SqlDatabaseName", "SqlLockInfo" };
+                    string[] skipKeys = CRegistrySkipKeys.SkipKeys;
                     if (skipKeys.Contains(r.Key))
                         continue;
                     defaults._defaultKeys.TryGetValue(r.Key, out string setValue);
