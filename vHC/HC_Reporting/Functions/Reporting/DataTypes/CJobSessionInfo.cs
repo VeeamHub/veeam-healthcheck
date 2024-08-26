@@ -24,6 +24,7 @@ namespace VeeamHealthCheck.Functions.Reporting.DataTypes
         public DateTime CreationTime { get; set; }
         public double BackupSize { get; set; }
         public double DataSize { get; set; }
+        public double UsedVmSize { get; set; }
         public string DedupRatio { get; set; }
         public string CompressionRatio { get; set; }
         public string Bottleneck { get; set; }

@@ -327,6 +327,7 @@ namespace VeeamHealthCheck.Html.VBR
 
         public string AddSecSummaryTable(bool scrub)
         {
+            CGlobals.Scrub = scrub;
 
             string s = _form.SectionStart("secsummary", VbrLocalizationHelper.SSTitle);
             string summary = _sum.SecSum();

@@ -227,6 +227,7 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR
 
         private string FormBodyStart(string htmlString, bool scrub)
         {
+            CGlobals.Scrub = scrub;
             string h  = _form.body;
              h += _form.FormHtmlButtonGoToTop();
             if (scrub)

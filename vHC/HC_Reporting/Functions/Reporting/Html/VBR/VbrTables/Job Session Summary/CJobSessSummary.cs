@@ -86,6 +86,16 @@ namespace VeeamHealthCheck.Functions.Reporting.Html
                 totalFailedSessions += thisSession.FailCounts;
                 totalRetries += thisSession.RetryCounts;
                 info.JobType = CJobTypeConversion.ReturnJobType(thisSession.JobType);
+                try
+                {
+                    CCsvParser csv = new();
+                    var jobInfo = csv.JobCsvParser().Where(x => x.Name == j).FirstOrDefault();
+                    info.UsedVmSize = jobInfo.OriginalSize /1024 /1024 /1024;
+                }
+                catch (Exception e)
+                {
+                    info.UsedVmSize = 0;
+                }
 
                 List<TimeSpan> nonZeros = helper.AddNonZeros(durations);
                 
@@ -142,7 +152,7 @@ namespace VeeamHealthCheck.Functions.Reporting.Html
                     info.ItemCount = vmNames.Distinct().Count();
                     totalProtectedInstances = totalProtectedInstances + vmNames.Distinct().Count();
 
-                    info = SetBackupDataSizes(info, dataSize, backupSize);
+                    info = SetBackupDataSizes(info, dataSize, backupSize, info.UsedVmSize);
 
                     avgDataSizes.Add(info.AvgDataSize);
                     avgBackupSizes.Add(info.AvgBackupSize);
@@ -190,7 +200,7 @@ namespace VeeamHealthCheck.Functions.Reporting.Html
             return outList;
         }
 
-        private static CJobSummaryTypes SetBackupDataSizes(CJobSummaryTypes info, List<double> dataSize, List<double> backupSize)
+        private static CJobSummaryTypes SetBackupDataSizes(CJobSummaryTypes info, List<double> dataSize, List<double> backupSize, double MaxDataSizeGB)
         {
             if (backupSize.Count != 0)
             {
@@ -210,7 +220,7 @@ namespace VeeamHealthCheck.Functions.Reporting.Html
             if (dataSize.Count != 0)
             {
                 info.MinDataSize = dataSize.Min() / 1024;
-                info.MaxDataSize = Math.Round(dataSize.Max() / 1024, 4);
+                info.MaxDataSize = Math.Round(MaxDataSizeGB / 1024, 2);
                 info.AvgDataSize = Math.Round(dataSize.Average() / 1024, 4);
             }
             else

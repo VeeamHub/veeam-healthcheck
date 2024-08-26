@@ -19,6 +19,7 @@ namespace VeeamHealthCheck.Functions.Reporting.DataTypes
         public double AvgBackupSize { get; set; }
         public double MinDataSize { get; set; }
         public double MaxDataSize { get; set; }
+        public double UsedVmSize { get; set; }
         public double AvgDataSize { get; set; }
         public double AvgChangeRate { get; set; }
         public string JobType { get; set; }
