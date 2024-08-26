@@ -189,9 +189,12 @@ namespace VeeamHealthCheck.Functions.Reporting.DataTypes
                     eInfo.Type = s.Type;
                     eInfo.TypeDisplay = s.TypeDisplay;
                     eInfo.VersionOfCreation = s.VersionOfCreation;
-                    eInfo.IsDecompress = bool.TryParse(s.Uncompress, out bool b);
+                    
+                    bool.TryParse(s.Uncompress, out bool b);
+                    eInfo.IsDecompress = b;
                     eInfo.MaxTasks = ParseToInt(s.MaxTasks);
-                    eInfo.AlignBlocks = bool.TryParse(s.AlignBlock, out bool c);
+                     bool.TryParse(s.AlignBlock, out bool c);
+                    eInfo.AlignBlocks = c;
                     eInfo.GateHosts = s.GateHosts;
 
                     eInfo.HostId = s.HostId;
@@ -268,9 +271,14 @@ namespace VeeamHealthCheck.Functions.Reporting.DataTypes
                     eInfo.maxArchiveTasks = ParseToInt(s.MaxArchiveTaskCount);
                     eInfo.isUnlimitedTaks =  (s.UnlimitedTasks);
                     eInfo.dataRateLimit = ParseToInt(s.CombinedDataRateLimit);
-                    eInfo.IsDecompress =  bool.TryParse(s.UnCompress, out bool b);
-                    eInfo.SplitStoragesPerVm =  bool.TryParse(s.OneBackupFilePerVm, out bool b2);
-                    eInfo.autoDetectAffinity =  bool.TryParse(s.IsAutoDetectAffinityProxies, out bool b3);
+                    bool.TryParse(s.UnCompress, out bool b);
+                    eInfo.IsDecompress = b;
+                    bool.TryParse(s.OneBackupFilePerVm, out bool b2);
+                    eInfo.SplitStoragesPerVm = b2;
+
+                    bool.TryParse(s.IsAutoDetectAffinityProxies, out bool b3);
+                    eInfo.autoDetectAffinity = b3;
+
                     eInfo.HostId = s.HostId;
                     if (eInfo.HostId == "00000000-0000-0000-0000-000000000000" && s.Group != "ArchiveRepository")
                         eInfo.IsAutoGateway = true;
@@ -287,7 +295,8 @@ namespace VeeamHealthCheck.Functions.Reporting.DataTypes
                     eInfo.FreeSPace = ParseToInt(s.FreeSpace);
                     eInfo.TotalSpace = ParseToInt(s.TotalSpace);
                     eInfo.GateHosts = s.GateHosts;
-                    eInfo.ObjectLockEnabled = bool.TryParse(s.ObjectLockEnabled, out bool b4);
+                    bool.TryParse(s.ObjectLockEnabled, out bool b4);
+                    eInfo.ObjectLockEnabled = b4;
 
                     eInfoList.Add(eInfo);
 

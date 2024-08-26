@@ -496,7 +496,7 @@ namespace VeeamHealthCheck.Functions.Reporting.Html
                 string newhost = host;
                 if (scrub)
                     newhost = Scrub(host);
-                r += newhost + "<br>";
+                r += newhost + ",<br>";
             }
             return r;
         }
@@ -598,7 +598,7 @@ namespace VeeamHealthCheck.Functions.Reporting.Html
             List<CRepository> list = new();
 
 
-            List<CRepoTypeInfos> csv = _dTypeParser.RepoInfos;
+            List<CRepoTypeInfos> csv = _dTypeParser.RepoInfos.ToList();
             csv = csv.OrderBy(x => x.Name).ToList();
             if (csv != null)
                 foreach (var c in csv)
