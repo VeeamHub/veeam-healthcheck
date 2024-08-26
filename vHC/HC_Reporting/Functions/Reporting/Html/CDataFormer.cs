@@ -490,13 +490,23 @@ namespace VeeamHealthCheck.Functions.Reporting.Html
         private string SetGateHosts(string original, bool scrub)
         {
             string[] hosts = original.Split(' ');
+            if(hosts.Count() == 1 && String.IsNullOrEmpty(hosts[0]))
+            {
+                return hosts[0];
+            }
             string r = "";
+            int counter = 1;
+            int end = hosts.Length;
             foreach (string host in hosts)
             {
                 string newhost = host;
                 if (scrub)
                     newhost = Scrub(host);
-                r += newhost + ",<br>";
+                if(counter == end)
+                    r += newhost + "<br>";
+                else
+                    r += newhost + ",<br>";
+                counter++;
             }
             return r;
         }
