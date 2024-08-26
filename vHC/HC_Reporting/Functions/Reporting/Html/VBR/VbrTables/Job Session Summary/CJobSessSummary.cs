@@ -90,11 +90,12 @@ namespace VeeamHealthCheck.Functions.Reporting.Html
                 {
                     CCsvParser csv = new();
                     var jobInfo = csv.JobCsvParser().Where(x => x.Name == j).FirstOrDefault();
-                    info.UsedVmSize = jobInfo.OriginalSize /1024 /1024 /1024;
+                    if(jobInfo != null)
+                        info.UsedVmSizeTB = jobInfo.OriginalSize /1024 /1024 /1024 / 1024;
                 }
                 catch (Exception e)
                 {
-                    info.UsedVmSize = 0;
+                    info.UsedVmSizeTB = 0;
                 }
 
                 List<TimeSpan> nonZeros = helper.AddNonZeros(durations);
@@ -152,7 +153,7 @@ namespace VeeamHealthCheck.Functions.Reporting.Html
                     info.ItemCount = vmNames.Distinct().Count();
                     totalProtectedInstances = totalProtectedInstances + vmNames.Distinct().Count();
 
-                    info = SetBackupDataSizes(info, dataSize, backupSize, info.UsedVmSize);
+                    info = SetBackupDataSizes(info, dataSize, backupSize, info.UsedVmSizeTB);
 
                     avgDataSizes.Add(info.AvgDataSize);
                     avgBackupSizes.Add(info.AvgBackupSize);
@@ -160,13 +161,26 @@ namespace VeeamHealthCheck.Functions.Reporting.Html
                     maxBackupSize.Add(info.MaxBackupSize);
 
 
+#if DEBUG
+                    if(info.JobName == "win10trash")
+                    {
 
+                    }
 
-
+#endif
                     if (info.AvgBackupSize != 0 && info.AvgDataSize != 0)
                     {
-                        info.AvgChangeRate = Math.Round(info.AvgBackupSize * 2 / info.MaxDataSize * 100, 0);
-                        avgRates.Add(info.AvgChangeRate);
+                        if(info.AvgDataSize > info.UsedVmSizeTB)
+                        {
+                            info.AvgChangeRate = Math.Round(info.AvgDataSize / info.MaxDataSize * 100, 2);
+                            avgRates.Add(info.AvgChangeRate);
+                        }
+                        else
+                        {
+                            info.AvgChangeRate = Math.Round(info.AvgDataSize / info.UsedVmSizeTB * 100, 2);
+                            avgRates.Add(info.AvgChangeRate);
+                        }
+                        
                     }
                     else
                     {
@@ -220,8 +234,9 @@ namespace VeeamHealthCheck.Functions.Reporting.Html
             if (dataSize.Count != 0)
             {
                 info.MinDataSize = dataSize.Min() / 1024;
-                info.MaxDataSize = Math.Round(MaxDataSizeGB / 1024, 2);
+                info.MaxDataSize = Math.Round(dataSize.Max() / 1024, 4);
                 info.AvgDataSize = Math.Round(dataSize.Average() / 1024, 4);
+                info.UsedVmSizeTB = Math.Round(MaxDataSizeGB, 4);
             }
             else
             {
