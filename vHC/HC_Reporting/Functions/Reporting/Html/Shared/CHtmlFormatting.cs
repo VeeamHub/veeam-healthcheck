@@ -139,6 +139,14 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.Shared
 
             return s;
         }
+        public string TableHeaderLeftAligned(string header, string tooltip)
+        {
+            return string.Format("<th title=\"{0}\" style=\"text-align:left\">{1}</th>", tooltip, header);
+        }
+        public string TableHeaderLeftAligned(string header, string tooltip, int index)
+        {
+            return string.Format("<th onclick=\"sortTable({2})\" title=\"{0}\" style=\"text-align:left\">{1}</th>", tooltip, header, index);
+        }
         public string TableHeader(string header, string tooltip)
         {
             return string.Format("<th title=\"{0}\">{1}</th>", tooltip, header);
@@ -162,6 +170,10 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.Shared
         public string TableRowEnd()
         {
             return "</tr>";
+        }
+        public string TableDataLeftAligned(string data, string toolTip)
+        {
+            return string.Format("<td title=\"{0}\" style=\"text-align:left\">{1}</td>", toolTip, data);
         }
         public string TableData(string data, string toolTip)
         {

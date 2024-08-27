@@ -28,7 +28,7 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR.VbrTables.Jobs_Info
                     return "";  
 
                 t += _form.Table();
-                t += _form.TableHeader("Job Name", "");
+                t += _form.TableHeaderLeftAligned("Job Name", "");
                 t += _form.TableHeader("Media Pool - Full", "");
                 t += _form.TableHeader("Incremental Enabled", "");
                 t += _form.TableHeader("Media Pool - Incremental", "");
@@ -53,7 +53,7 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR.VbrTables.Jobs_Info
                     }
 
                     t += "<tr>";
-                    t += _form.TableData(jobName, "");
+                    t += _form.TableDataLeftAligned(jobName, "");
                     t += _form.TableData(fullMediaPool, "");
                     t += _form.TableData(tj.ProcessIncrementalBackup, "");
                     t += _form.TableData(incMediaPool, "");
