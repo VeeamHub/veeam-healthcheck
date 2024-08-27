@@ -645,10 +645,10 @@ $licInfo | Export-csv -Path $("$ReportPath\$VBRServer" + '_LicInfo.csv') -NoType
 
 <# Malware Detection Section #>
 try{
-    Get-VBRMalwareDetectionOptions | Export-Csv malware_settings.csv -NoTypeInformation
-    Get-VBRMalwareDetectionObject | Export-Csv malware_infectedobject.csv -NoTypeInformation
-    Get-VBRMalwareDetectionEvent | Export-Csv malware_events.csv -NoTypeInformation
-    Get-VBRMalwareDetectionExclusion | Export-Csv malware_exclusions.csv -NoTypeInformation
+    Get-VBRMalwareDetectionOptions | Export-Csv -Path $("$ReportPath\$VBRServer" + 'malware_settings.csv') -NoTypeInformation
+    Get-VBRMalwareDetectionObject | Export-Csv -Path $("$ReportPath\$VBRServer" + 'malware_infectedobject.csv') -NoTypeInformation
+    Get-VBRMalwareDetectionEvent | Export-Csv -Path $("$ReportPath\$VBRServer" + 'malware_events.csv') -NoTypeInformation
+    Get-VBRMalwareDetectionExclusion | Export-Csv -Path $("$ReportPath\$VBRServer" + 'malware_exclusions.csv') -NoTypeInformation
 }
 catch{
     Write-LogFile("Failed on Malware Detection")
@@ -657,6 +657,83 @@ catch{
 
 <# END Malware Detection Section #>
 
+<# Security Section #>
+try {
+    try {
+        # Force new scan
+        Start-VBRSecurityComplianceAnalyzer -ErrorAction SilentlyContinue -WarningAction SilentlyContinue -InformationAction SilentlyContinue
+        Start-Sleep -Seconds 15
+        # Capture scanner results
+        $SecurityCompliances = [Veeam.Backup.DBManager.CDBManager]::Instance.BestPractices.GetAll()
+    }
+    Catch {
+        Write-Host "Security & Compliance summary command: $($_.Exception.Message)"
+    }
+    $RuleTypes = @{
+        'WindowsScriptHostDisabled'               = 'Windows Script Host is disabled'
+        'BackupServicesUnderLocalSystem'          = 'Backup services run under the LocalSystem account'
+        'OutdatedSslAndTlsDisabled'               = 'Outdated SSL And TLS are Disabled'
+        'ManualLinuxHostAuthentication'           = 'Unknown Linux servers are not trusted automatically'
+        'CSmbSigningAndEncryptionEnabled'         = 'SMB v3 signing is enabled'
+        'ViProxyTrafficEncrypted'                 = 'Host to proxy traffic encryption should be enabled for the Network transport mode'
+        'JobsTargetingCloudRepositoriesEncrypted' = 'Backup jobs to cloud repositories is encrypted'
+        'LLMNRDisabled'                           = 'Link-Local Multicast Name Resolution (LLMNR) is disabled'
+        'ImmutableOrOfflineMediaPresence'         = 'Immutable or offline media is used'
+        'OsBucketsInComplianceMode'               = 'Os Buckets In Compliance Mode'
+        'BackupServerUpToDate'                    = 'Backup Server is Up To Date'
+        'BackupServerInProductionDomain'          = 'Computer is Workgroup member'
+        'ReverseIncrementalInUse'                 = 'Reverse incremental backup mode is not used'
+        'ConfigurationBackupEncryptionEnabled'    = 'Configuration backup encryption is enabled'
+        'WDigestNotStorePasswordsInMemory'        = 'WDigest credentials caching is disabled'
+        'WebProxyAutoDiscoveryDisabled'           = 'Web Proxy Auto-Discovery service (WinHttpAutoProxySvc) is disabled'
+        'ContainBackupCopies'                     = 'All backups have at least one copy (the 3-2-1 backup rule)'
+        'SMB1ProtocolDisabled'                    = 'SMB 1.0 is disabled'
+        'EmailNotificationsEnabled'               = 'Email notifications are enabled'
+        'RemoteRegistryDisabled'                  = 'Remote registry service is disabled'
+        'PasswordsRotation'                       = 'Credentials and encryption passwords rotates annually'
+        'WinRmServiceDisabled'                    = 'Remote powershell is disabled (WinRM service)'
+        'MfaEnabledInBackupConsole'               = 'MFA is enabled'
+        'HardenedRepositorySshDisabled'           = 'Hardened repositories have SSH disabled'
+        'LinuxServersUsingSSHKeys'                = 'Linux servers have password-based authentication disabled'
+        'RemoteDesktopServiceDisabled'            = 'Remote desktop protocol is disabled'
+        'ConfigurationBackupEnabled'              = 'Configuration backup is enabled'
+        'WindowsFirewallEnabled'                  = 'Windows firewall is enabled'
+        'ConfigurationBackupEnabledAndEncrypted'  = 'Configuration backup is enabled and use encryption'
+        'HardenedRepositoryNotVirtual'            = 'Hardened repositories are not hosted in virtual machines'
+        'ConfigurationBackupRepositoryNotLocal'   = 'The configuration backup is not stored on the backup server'
+        'PostgreSqlUseRecommendedSettings'        = 'PostgreSQL server uses recommended settings'
+        'LossProtectionEnabled'                   = 'Password loss protection is enabled'
+        'TrafficEncryptionEnabled'                = 'Encryption network rules added for LAN traffic'
+    }
+    $StatusObj = @{
+        'Ok'            = "Passed"
+        'Violation'     = "Not Implemented"
+        'UnableToCheck' = "Unable to detect"
+        'Suppressed'    = "Suppressed"
+    }
+    $OutObj = @()
+    foreach ($SecurityCompliance in $SecurityCompliances) {
+        try {
+            # Write-PscriboMessage -IsWarning "$($SecurityCompliance.Type) = $($RuleTypes[$SecurityCompliance.Type.ToString()])"
+            $inObj = [ordered] @{
+                'Best Practice' = $RuleTypes[$SecurityCompliance.Type.ToString()]
+                'Status'        = $StatusObj[$SecurityCompliance.Status.ToString()]
+            }
+            $OutObj += [pscustomobject]$inobj
+        }
+        catch {
+            Write-Host "Security & Compliance summary table: $($_.Exception.Message)"
+        }
+    }
+    #dump to csv file
+    $OutObj | Export-Csv -Path $("$ReportPath\$VBRServer" + '_SecurityCompliance.csv') -NoTypeInformation
+
+}
+catch {
+    Write-Host "Security & Compliance summary section: $($_.Exception.Message)"
+}
+
+<# END Security Section #>
 <#
 SECTION: Protected Workloads Collection
 
