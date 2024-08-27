@@ -6,12 +6,15 @@ using System.Threading.Tasks;
 using VeeamHealthCheck.Functions.Reporting.CsvHandlers;
 using VeeamHealthCheck.Functions.Reporting.DataTypes.Tape;
 using VeeamHealthCheck.Functions.Reporting.Html.Shared;
+using VeeamHealthCheck.Scrubber;
+using VeeamHealthCheck.Shared;
 
 namespace VeeamHealthCheck.Functions.Reporting.Html.VBR.VbrTables.Jobs_Info
 {
     internal class CTapeJobInfoTable
     {
         private readonly CHtmlFormatting _form = new();
+        private readonly CScrubHandler _scrubber = new();
         public CTapeJobInfoTable() { }
 
         public string TapeJobTable()
@@ -39,11 +42,21 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR.VbrTables.Jobs_Info
                 t += _form.TableBodyStart();
                 foreach (var tj in tapeJobInfo)
                 {
+                    string jobName = tj.Name;
+                    string fullMediaPool = tj.FullBackupMediaPool;
+                    string incMediaPool = tj.IncrementalBackupMediaPool;
+                    if (CGlobals.Scrub)
+                    {
+                        jobName = CGlobals.Scrubber.ScrubItem(jobName, ScrubItemType.Job);
+                        fullMediaPool = CGlobals.Scrubber.ScrubItem(fullMediaPool, ScrubItemType.MediaPool);
+                        incMediaPool = CGlobals.Scrubber.ScrubItem(incMediaPool, ScrubItemType.MediaPool);
+                    }
+
                     t += "<tr>";
-                    t += _form.TableData(tj.Name, "");
-                    t += _form.TableData(tj.FullBackupMediaPool, "");
+                    t += _form.TableData(jobName, "");
+                    t += _form.TableData(fullMediaPool, "");
                     t += _form.TableData(tj.ProcessIncrementalBackup, "");
-                    t += _form.TableData(tj.IncrementalBackupMediaPool, "");
+                    t += _form.TableData(incMediaPool, "");
                     t += _form.TableData(tj.UseHardwareCompression, "");
                     t += _form.TableData(tj.EjectCurrentMedium, "");
                     t += _form.TableData(tj.ExportCurrentMediaSet, "");

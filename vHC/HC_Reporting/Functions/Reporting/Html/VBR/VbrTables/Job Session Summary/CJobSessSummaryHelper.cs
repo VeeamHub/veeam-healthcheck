@@ -182,7 +182,7 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR.VbrTables.Job_Session_Su
                 {
                     string jname = o.JobName;
                     if (scrub)
-                        jname = scrubber.ScrubItem(o.JobName, "job");
+                        jname = scrubber.ScrubItem(o.JobName, ScrubItemType.Job);
 
                     string wait = o.waitCount.ToString();
                     if (o.waitCount == 0)

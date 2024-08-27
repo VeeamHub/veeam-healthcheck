@@ -193,8 +193,8 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VB365
                         string output = g.Value;
                         if (CGlobals.Scrub)
                         {
-                            proxyname = _scrubber.ScrubItem(proxyname);
-                            description = _scrubber.ScrubItem(description);
+                            proxyname = _scrubber.ScrubItem(proxyname, Scrubber.ScrubItemType.Server);
+                            description = _scrubber.ScrubItem(description, Scrubber.ScrubItemType.Item);
                         }
 
 
@@ -348,11 +348,11 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VB365
 
                     if (CGlobals.Scrub)
                     {
-                        boundProxy = _scrubber.ScrubItem(g.BoundProxy);
-                        name = _scrubber.ScrubItem(g.Name);
-                        desc = _scrubber.ScrubItem(g.Description);
-                        path = _scrubber.ScrubItem(g.Path);
-                        objRepo = _scrubber.ScrubItem(g.ObjectRepo);
+                        boundProxy = _scrubber.ScrubItem(g.BoundProxy, Scrubber.ScrubItemType.Server);
+                        name = _scrubber.ScrubItem(g.Name, Scrubber.ScrubItemType.Repository);
+                        desc = _scrubber.ScrubItem(g.Description, Scrubber.ScrubItemType.Item);
+                        path = _scrubber.ScrubItem(g.Path, Scrubber.ScrubItemType.Path);
+                        objRepo = _scrubber.ScrubItem(g.ObjectRepo, Scrubber.ScrubItemType.Repository);
 
                     }
                     s += _form.TableData(boundProxy, "");
@@ -413,7 +413,7 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VB365
                         string output = g.Value;
                         if (CGlobals.Scrub)
                         {
-                            output = _scrubber.ScrubItem(output);
+                            output = _scrubber.ScrubItem(output, Scrubber.ScrubItemType.Item);
                         }
                         s += _form.TableData(output, "");
                         counter++;
@@ -521,11 +521,11 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VB365
 
                     if (CGlobals.Scrub)
                     {
-                        apiCert = _scrubber.ScrubItem(apiCert);
-                        serverCert = _scrubber.ScrubItem(serverCert);
-                        tenantCert = _scrubber.ScrubItem(tenantCert);
-                        portalCert = _scrubber.ScrubItem(portalCert);
-                        operatorCert = _scrubber.ScrubItem(operatorCert);
+                        apiCert = _scrubber.ScrubItem(apiCert, Scrubber.ScrubItemType.Item);
+                        serverCert = _scrubber.ScrubItem(serverCert, Scrubber.ScrubItemType.Item);
+                        tenantCert = _scrubber.ScrubItem(tenantCert, Scrubber.ScrubItemType.Item);
+                        portalCert = _scrubber.ScrubItem(portalCert, Scrubber.ScrubItemType.Item);
+                        operatorCert = _scrubber.ScrubItem(operatorCert, Scrubber.ScrubItemType.Item);
                     }
 
 
@@ -705,7 +705,7 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VB365
                         string output = g.Value;
                         if (CGlobals.Scrub)
                         {
-                            vmName = _scrubber.ScrubItem(vmName);
+                            vmName = _scrubber.ScrubItem(vmName, Scrubber.ScrubItemType.VM);
                         }
 
 
@@ -912,7 +912,7 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VB365
                         if (CGlobals.Scrub)
                         {
                             if (counter == 0 || counter == 5)
-                                output = _scrubber.ScrubItem(output);
+                                output = _scrubber.ScrubItem(output, Scrubber.ScrubItemType.Job);
                         }
                         s += _form.TableData(output, "");
                         counter++;
@@ -971,7 +971,7 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VB365
                         string output = g.Value;
 
                         if (counter == 0 && CGlobals.Scrub)
-                            output = _scrubber.ScrubItem(output);
+                            output = _scrubber.ScrubItem(output, Scrubber.ScrubItemType.Item);
                         s += _form.TableData(output, "");
                         counter++;
                     }
@@ -1025,7 +1025,7 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VB365
                         if (CGlobals.Scrub)
                         {
                             if (counter == 0)
-                                output = _scrubber.ScrubItem(output);
+                                output = _scrubber.ScrubItem(output, Scrubber.ScrubItemType.Job);
                         }
                         s += _form.TableData(output, "");
                         counter++;
@@ -1121,11 +1121,11 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VB365
                         string output = g.Value;
                         if (CGlobals.Scrub)
                         {
-                            name = _scrubber.ScrubItem(name);
-                            description = _scrubber.ScrubItem(description);
-                            path = _scrubber.ScrubItem(path);
-                            boundrepo = _scrubber.ScrubItem(boundrepo);
-                            bucketcontainer = _scrubber.ScrubItem(bucketcontainer);
+                            name = _scrubber.ScrubItem(name, Scrubber.ScrubItemType.Repository);
+                            description = _scrubber.ScrubItem(description, Scrubber.ScrubItemType.Item);
+                            path = _scrubber.ScrubItem(path, Scrubber.ScrubItemType.Path);
+                            boundrepo = _scrubber.ScrubItem(boundrepo, Scrubber.ScrubItemType.Repository);
+                            bucketcontainer = _scrubber.ScrubItem(bucketcontainer, Scrubber.ScrubItemType.Item);
                         }
 
                     }
@@ -1210,7 +1210,7 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VB365
                                 counter == 6 ||
                                 counter == 8 ||
                                 counter == 9)
-                                output = _scrubber.ScrubItem(output);
+                                output = _scrubber.ScrubItem(output, Scrubber.ScrubItemType.Item);
                         }
                         s += _form.TableData(output, "");
                         counter++;
@@ -1256,7 +1256,7 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VB365
                         if (CGlobals.Scrub)
                         {
                             if (counter == 1)
-                                output = _scrubber.ScrubItem(output);
+                                output = _scrubber.ScrubItem(output, Scrubber.ScrubItemType.Item);
                         }
                         s += _form.TableData(output, "");
                         counter++;
@@ -1459,12 +1459,12 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VB365
                         string output = g.Value;
                         if (CGlobals.Scrub)
                         {
-                            org = _scrubber.ScrubItem(org);
-                            name = _scrubber.ScrubItem(name);
-                            desc = _scrubber.ScrubItem(desc);
-                            repo = _scrubber.ScrubItem(repo);
-                            boundProxy = _scrubber.ScrubItem(boundProxy);
-                            relJob = _scrubber.ScrubItem(relJob);
+                            org = _scrubber.ScrubItem(org, Scrubber.ScrubItemType.Item);
+                            name = _scrubber.ScrubItem(name, Scrubber.ScrubItemType.Job);
+                            desc = _scrubber.ScrubItem(desc, Scrubber.ScrubItemType.Item);
+                            repo = _scrubber.ScrubItem(repo, Scrubber.ScrubItemType.Repository);
+                            boundProxy = _scrubber.ScrubItem(boundProxy, Scrubber.ScrubItemType.Server);
+                            relJob = _scrubber.ScrubItem(relJob, Scrubber.ScrubItemType.Job);
                         }
                     }
                     if (string.IsNullOrEmpty(org))

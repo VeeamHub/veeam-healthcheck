@@ -205,7 +205,7 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR.VbrTables.Job_Session_Su
             var scrubDir = CGlobals._desiredPath + CVariables._safeSuffix + folderName;
             //log.Warning("SAFE outdir = " + outDir, false);
             CheckFolderExists(scrubDir);
-            scrubDir += "\\" + _scrubber.ScrubItem(cs.JobName) + ".html";
+            scrubDir += "\\" + _scrubber.ScrubItem(cs.JobName, ScrubItemType.Job) + ".html";
             return scrubDir;
         }
         private string SetMainDir(string folderName, string JobName)
@@ -220,7 +220,7 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR.VbrTables.Job_Session_Su
             var scrubDir = CGlobals._desiredPath + CVariables._safeSuffix + folderName;
             //log.Warning("SAFE outdir = " + outDir, false);
             CheckFolderExists(scrubDir);
-            scrubDir += "\\" + _scrubber.ScrubItem(JobName) + ".html";
+            scrubDir += "\\" + _scrubber.ScrubItem(JobName, ScrubItemType.Job) + ".html";
             return scrubDir;
         }
         private string ReturnTableHeaderString(CJobSessionInfo cs)
@@ -289,8 +289,8 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR.VbrTables.Job_Session_Su
             //string repo = _scrubber.ScrubItem(c.)
             if (scrub)
             {
-                jname = _scrubber.ScrubItem(jname, "job");
-                vmName = _scrubber.ScrubItem(c.VmName, "vm");
+                jname = _scrubber.ScrubItem(jname, ScrubItemType.Job);
+                vmName = _scrubber.ScrubItem(c.VmName, ScrubItemType.VM);
             }
 
             s += "<tr>";

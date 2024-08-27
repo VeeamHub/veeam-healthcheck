@@ -26,21 +26,17 @@ namespace VeeamHealthCheck.Scrubber
             _doc.Save(_matchListPath);
         }
 
-        public string ScrubItem(string item)
-        {
-            return ScrubItem(item, "");
-        }
         public string ScrubItem(string item, string type)
         {
             if (String.IsNullOrEmpty(item))
                 return "";
-            if (item.StartsWith("Item_"))
+            if (item.StartsWith(type + "_"))
                 return item;
             //item = RemoveLeadingSlashes(item);
             if (!_matchDictionary.ContainsKey(item))
             {
                 int counter = _matchDictionary.Count;
-                string newName = "Item_" + counter.ToString();
+                string newName = type + "_" + counter.ToString();
                 _matchDictionary.Add(item, newName);
                 AddItemToList(type, item, newName);
                 return newName;
@@ -51,6 +47,24 @@ namespace VeeamHealthCheck.Scrubber
                 return newName;
             }
         }
+        public string ScrubItem(string item, ScrubItemType type)
+        {
+            return ScrubItem(item, type.ToString());
+        }
 
+
+    }
+    public enum ScrubItemType
+    {
+        Job = 0,
+        MediaPool = 1,
+        Repository = 2,
+        Server = 3,
+        Path = 4,
+        VM = 5,
+        SOBR = 6,
+
+
+        Item = 99
     }
 }

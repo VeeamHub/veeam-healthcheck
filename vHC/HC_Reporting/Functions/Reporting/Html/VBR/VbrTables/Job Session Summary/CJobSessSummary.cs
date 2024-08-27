@@ -63,7 +63,7 @@ namespace VeeamHealthCheck.Functions.Reporting.Html
 
             int totalProtectedInstances = 0;
             foreach (var j in helper.JobNameList().Distinct())
-            {
+           {
                 CJobSummaryTypes info = helper.SetWaitInfo(j);
 
                 double sessionCount = 0;
@@ -131,7 +131,7 @@ namespace VeeamHealthCheck.Functions.Reporting.Html
 
                     successRates.Add((int)info.SuccessRate);
                     if (scrub)
-                        info.JobName = scrubber.ScrubItem(j);
+                        info.JobName = scrubber.ScrubItem(j, Scrubber.ScrubItemType.Job);
                     else
                         info.JobName = j;
 

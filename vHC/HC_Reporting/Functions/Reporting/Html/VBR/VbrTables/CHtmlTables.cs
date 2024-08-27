@@ -20,6 +20,7 @@ using VeeamHealthCheck.Functions.Reporting.Html.VBR.VbrTables.Jobs_Info;
 using System.Management.Automation;
 using VeeamHealthCheck.Functions.Reporting.Html.DataFormers;
 using VeeamHealthCheck.Functions.Reporting.Html.VBR.VbrTables;
+using VeeamHealthCheck.Scrubber;
 
 
 namespace VeeamHealthCheck.Html.VBR
@@ -117,7 +118,7 @@ namespace VeeamHealthCheck.Html.VBR
 
                     s += "<tr>";
                     if (scrub)
-                        s += _form.TableData(_scrub.ScrubItem(l.licensedto), "");
+                        s += _form.TableData(_scrub.ScrubItem(l.licensedto, ScrubItemType.Item), "");
                     if (!scrub)
                         s += _form.TableData(l.licensedto, "");
                     s += _form.TableData(l.edition, "");
@@ -336,7 +337,7 @@ namespace VeeamHealthCheck.Html.VBR
                 _form.TableHeader(VbrLocalizationHelper.SSHdr1, VbrLocalizationHelper.SSHdrTT1) +
                 _form.TableHeader(VbrLocalizationHelper.SSHdr2, VbrLocalizationHelper.SSHdrTT2) +
                 _form.TableHeader(VbrLocalizationHelper.SSHdr3, VbrLocalizationHelper.SSHdrTT3) +
-                _form.TableHeader("MFA Enababled", "Is MFA enabled on VBR");
+                _form.TableHeader("MFA Enabled", "Is MFA enabled on VBR");
             s += _form.TableHeaderEnd();
             s += _form.TableBodyStart();
             s += "<tr>";
@@ -892,7 +893,7 @@ namespace VeeamHealthCheck.Html.VBR
 
                     s += "<tr>";
                     if (scrub)
-                        s += _form.TableData(_scrub.ScrubItem(d[0]), "");
+                        s += _form.TableData(_scrub.ScrubItem(d[0], ScrubItemType.Server), ""); // server name
                     else
                         s += _form.TableData(d[0], "");
                     s += _form.TableData(d[1], "");
@@ -909,7 +910,7 @@ namespace VeeamHealthCheck.Html.VBR
                     s += _form.TableData(d[8], "");
                     s += _form.TableData(d[9], "");
                     if (scrub)
-                        s += _form.TableData(_scrub.ScrubItem(d[10]), "");
+                        s += _form.TableData(_scrub.ScrubItem(d[10], ScrubItemType.Server), ""); // host
                     else
                         s += _form.TableData(d[10], "");
 
@@ -956,7 +957,7 @@ namespace VeeamHealthCheck.Html.VBR
                 {
                     s += "<tr>";
                     if (scrub)
-                        s += _form.TableData(_scrub.ScrubItem(d[0]), "");
+                        s += _form.TableData(_scrub.ScrubItem(d[0], ScrubItemType.Server), "");
                     else
                         s += _form.TableData(d[0], "");
                     s += _form.TableData(d[1], "");
@@ -969,7 +970,7 @@ namespace VeeamHealthCheck.Html.VBR
                     s += _form.TableData(d[8], "");
                     s += _form.TableData(d[9], "");
                     if (scrub)
-                        s += _form.TableData(_scrub.ScrubItem(d[10]), "");
+                        s += _form.TableData(_scrub.ScrubItem(d[10], ScrubItemType.Server), "");
                     else
                         s += _form.TableData(d[10], "");
                     s += _form.TableData(d[11], "");
@@ -1458,11 +1459,17 @@ _form.TableHeader(VbrLocalizationHelper.SbrExt15, VbrLocalizationHelper.SbrExt15
                             }
                             string row = "";
 
-
+                            string jobName = job.Name;
+                            string repoName = job.RepoName;
+                            if (scrub)
+                            {
+                                jobName = CGlobals.Scrubber.ScrubItem(jobName, ScrubItemType.Job);
+                                repoName = CGlobals.Scrubber.ScrubItem(repoName, ScrubItemType.Repository);
+                            }
 
                             row += "<tr>";
-                            row += _form.TableData(job.Name, "");
-                            row += _form.TableData(job.RepoName, "");
+                            row += _form.TableData(jobName, "");
+                            row += _form.TableData(repoName, "");
 
                             if (useSourceSize)
                             {
@@ -1675,7 +1682,32 @@ _form.TableHeader(VbrLocalizationHelper.SbrExt15, VbrLocalizationHelper.SbrExt15
 
             return s;
         }
+        private string SetGenericJobSessionSummaryTableHeader()
+        {
+            string s = "";
+            s += _form.TableHeader(VbrLocalizationHelper.Jss0, VbrLocalizationHelper.Jss0TT); // job name
+            s += _form.TableHeader(VbrLocalizationHelper.Jss1, VbrLocalizationHelper.Jss1TT);// items
+            s += _form.TableHeader(VbrLocalizationHelper.Jss2, VbrLocalizationHelper.Jss2TT); // min time
+            s += _form.TableHeader(VbrLocalizationHelper.Jss3, VbrLocalizationHelper.Jss3TT);// max time
+            s += _form.TableHeader(VbrLocalizationHelper.Jss4, VbrLocalizationHelper.Jss4TT);// avg time
+            s += _form.TableHeader(VbrLocalizationHelper.Jss5, VbrLocalizationHelper.Jss5TT); // total sessions
+            s += _form.TableHeader("Fails", "Total times job failed"); // fails
+            s += _form.TableHeader("Retries", "Total times job retried");// retries
+            s += _form.TableHeader(VbrLocalizationHelper.Jss6, VbrLocalizationHelper.Jss6TT);// success rate
+            s += _form.TableHeader(VbrLocalizationHelper.Jss7, VbrLocalizationHelper.Jss7TT); // avg backup size
+            s += _form.TableHeader(VbrLocalizationHelper.Jss8, VbrLocalizationHelper.Jss8TT);// max backup size
+            s += _form.TableHeader(VbrLocalizationHelper.Jss9, VbrLocalizationHelper.Jss9TT); // avg data size
+            s += _form.TableHeader(VbrLocalizationHelper.Jss10, "Used size of all objects in job."); // max data size
+            s += _form.TableHeader(VbrLocalizationHelper.Jss11, "Avg Data Size divided by Max Data Size (average processed data divided by total consumed size of all VMs in the job)"); // avg change rate
+            s += _form.TableHeader(VbrLocalizationHelper.Jss12, VbrLocalizationHelper.Jss12TT); // wait for res count
+            s += _form.TableHeader(VbrLocalizationHelper.Jss13, VbrLocalizationHelper.Jss13TT); // max wait
+            s += _form.TableHeader(VbrLocalizationHelper.Jss14, VbrLocalizationHelper.Jss14TT);// avg wait 
+            //s += _form.TableHeader(VbrLocalizationHelper.Jss15, VbrLocalizationHelper.Jss15TT); // job types
+            s += _form.TableHeaderEnd();
+            s += _form.TableBodyStart();
 
+            return s;
+        }
 
 
         public void AddSessionsFiles(bool scrub)

@@ -444,7 +444,7 @@ namespace VeeamHealthCheck.Functions.Reporting.Html
 
                 string newName = c.Name;
                 if (scrub)
-                    newName = _scrubber.ScrubItem(c.Name, "sobr");
+                    newName = _scrubber.ScrubItem(c.Name, ScrubItemType.SOBR);
                 _repoJobCount.TryGetValue(c.Name, out int jobCount);
 
                 //s[0] += newName;
@@ -502,7 +502,7 @@ namespace VeeamHealthCheck.Functions.Reporting.Html
             {
                 string newhost = host;
                 if (scrub)
-                    newhost = Scrub(host);
+                    newhost = CGlobals.Scrubber.ScrubItem(host, ScrubItemType.Server); 
                 if(counter == end)
                     r += newhost + "<br>";
                 else
@@ -532,10 +532,10 @@ namespace VeeamHealthCheck.Functions.Reporting.Html
 
                     if (scrub)
                     {
-                        newName = Scrub(newName);
-                        sobrName = Scrub(sobrName);
-                        hostName = Scrub(hostName);
-                        path = Scrub(path);
+                        newName = CGlobals.Scrubber.ScrubItem(newName, ScrubItemType.Repository);
+                        sobrName = CGlobals.Scrubber.ScrubItem(sobrName, ScrubItemType.SOBR);
+                        hostName = CGlobals.Scrubber.ScrubItem(hostName, ScrubItemType.Server);
+                        path = CGlobals.Scrubber.ScrubItem(path, ScrubItemType.Path);
                     }
                     string type;
                     if (c.TypeDisplay == null)
@@ -622,9 +622,9 @@ namespace VeeamHealthCheck.Functions.Reporting.Html
                     string gates = SetGateHosts(c.GateHosts, scrub);
                     if (scrub)
                     {
-                        name = _scrubber.ScrubItem(c.Name, "repo");
-                        host = _scrubber.ScrubItem(c.Host, "server");
-                        path = _scrubber.ScrubItem(c.Path, "repoPath");
+                        name = _scrubber.ScrubItem(c.Name, ScrubItemType.Repository);
+                        host = _scrubber.ScrubItem(c.Host, ScrubItemType.Server);
+                        path = _scrubber.ScrubItem(c.Path, ScrubItemType.Path);
                     }
 
                     decimal free = Math.Round((decimal)c.FreeSPace / 1024, 2);
@@ -702,8 +702,8 @@ namespace VeeamHealthCheck.Functions.Reporting.Html
                     string[] s = new string[13];
                     if (scrub)
                     {
-                        c.Name = Scrub(c.Name);
-                        c.Host = Scrub(c.Host);
+                        c.Name = CGlobals.Scrubber.ScrubItem(c.Name, ScrubItemType.Server);
+                        c.Host = CGlobals.Scrubber.ScrubItem(c.Host, ScrubItemType.Server);
                     }
                     s[0] += c.Name;
                     s[1] += c.MaxTasksCount;
@@ -799,7 +799,7 @@ namespace VeeamHealthCheck.Functions.Reporting.Html
                     //scrub name if selected
                     string newName = c.Name;
                     if (scrub)
-                        newName = Scrub(newName);
+                        newName = CGlobals.Scrubber.ScrubItem(newName, ScrubItemType.Server);
                     //s[0] = newName;
                     server.Name = newName;
                     server.Cores = c.Cores;
@@ -974,8 +974,8 @@ namespace VeeamHealthCheck.Functions.Reporting.Html
                     //_backupsEncrypted = true;
                     if (scrub)
                     {
-                        jname = _scrubber.ScrubItem(c.Name, "job");
-                        repo = _scrubber.ScrubItem(c.RepoName, "repo");
+                        jname = _scrubber.ScrubItem(c.Name, ScrubItemType.Job);
+                        repo = _scrubber.ScrubItem(c.RepoName, ScrubItemType.Repository);
                     }
                     decimal.TryParse(c.ActualSize, out decimal actualSize);
                     var trueSize = Math.Round(actualSize / 1024 / 1024 / 1024, 2);
@@ -1161,10 +1161,7 @@ namespace VeeamHealthCheck.Functions.Reporting.Html
                 }
             return false;
         }
-        private string Scrub(string item)
-        {
-            return _scrubber.ScrubItem(item);
-        }
+
         private decimal FreePercent(int freespace, int totalspace)
         {
             if (totalspace != 0)

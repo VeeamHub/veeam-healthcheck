@@ -51,9 +51,9 @@ namespace VeeamHealthCheck.Functions.Reporting.Html
         }
         private void ScrubElements()
         {
-            _backupServer.Name = Scrub(_backupServer.Name);
-            _backupServer.ConfigBackupTarget = Scrub(_backupServer.ConfigBackupTarget);
-            _backupServer.DbHostName = Scrub(_backupServer.DbHostName);
+            _backupServer.Name = CGlobals.Scrubber.ScrubItem(_backupServer.Name, ScrubItemType.Server);
+            _backupServer.ConfigBackupTarget = CGlobals.Scrubber.ScrubItem(_backupServer.Name, ScrubItemType.Repository);
+            _backupServer.DbHostName = CGlobals.Scrubber.ScrubItem(_backupServer.Name, ScrubItemType.Server);
         }
         private void SetConfigBackupSettings()
         {
@@ -167,23 +167,6 @@ namespace VeeamHealthCheck.Functions.Reporting.Html
             }
 
         }
-        private void SetVBRVersion()
-        {
-            if (_backupServer.Version == "")
-            {
 
-            }
-        }
-        private void SetProxyRoles()
-        {
-
-        }
-
-
-        private string Scrub(string item)
-        {
-            CScrubHandler scrubber = CGlobals.Scrubber;
-            return scrubber.ScrubItem(item);
-        }
     }
 }

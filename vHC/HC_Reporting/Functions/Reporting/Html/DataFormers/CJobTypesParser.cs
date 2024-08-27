@@ -52,6 +52,10 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.DataFormers
                     return "Enterprise Database Plugin";
                 case "EpAgentManagement":
                     return "Agent Backup";
+                case "EEndPoint":
+                    return "Endpoint Backup";
+                case "":
+                    return "Other";
                 default:
                     return jobType;
             }
