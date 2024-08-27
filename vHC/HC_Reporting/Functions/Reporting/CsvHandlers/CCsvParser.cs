@@ -58,6 +58,7 @@ namespace VeeamHealthCheck.Functions.Reporting.CsvHandlers
         public readonly string _nasFileData = "NasFileData";
         public readonly string _nasShareSize = "NasSharesize";
         public readonly string _nasObjectSize = "NasObjectSourceStorageSize";
+        public readonly string _compliance = "SecurityCompliance";
 
         // Job files
         public readonly string _piReportName = "pluginjobs";
@@ -402,6 +403,13 @@ namespace VeeamHealthCheck.Functions.Reporting.CsvHandlers
             var res = VbrFileReader(_malwareEvents);
             if (res != null)
                 return res.GetRecords<CMalwareEvents>();
+            return null;
+        }
+        public IEnumerable<CComplianceCsv> ComplianceCsv()
+        {
+            var res = VbrFileReader(_compliance);
+            if (res != null)
+                return res.GetRecords<CComplianceCsv>().ToList();
             return null;
         }
         public IEnumerable<CMalwareExcludedItem> MalwareExclusions()

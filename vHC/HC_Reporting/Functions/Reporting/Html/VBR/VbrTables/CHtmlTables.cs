@@ -397,6 +397,18 @@ namespace VeeamHealthCheck.Html.VBR
                 log.Error("Malware Settings Data import failed. ERROR:");
                 log.Error("\t" + e.Message);
             }
+            try
+            {
+                // compliance table
+                CComplianceTable c = new();
+                s += c.ComplianceSummaryTable();
+                s += c.ComplianceTable();
+            }
+            catch (Exception e)
+            {
+                log.Error("Security Compliance Data import failed. ERROR:");
+                log.Error("\t" + e.Message);
+            }
             
 
 

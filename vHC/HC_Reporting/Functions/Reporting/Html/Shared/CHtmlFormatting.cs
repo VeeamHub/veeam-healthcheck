@@ -103,6 +103,10 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.Shared
 
             return s;
         }
+        public string SectionEnd()
+        {
+             return SectionEnd("");
+        }
         public string SectionStart(string id, string header)
         {
             string s = SectionId(id);
@@ -150,6 +154,14 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.Shared
         public string TableBodyStart()
         {
             return string.Format("<tbody>");
+        }
+        public string TableRowStart()
+        {
+            return "<tr>";
+        }
+        public string TableRowEnd()
+        {
+            return "</tr>";
         }
         public string TableData(string data, string toolTip)
         {
