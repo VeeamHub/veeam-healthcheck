@@ -26,7 +26,7 @@ param(
 $ReportPath = 'C:\temp\vHC\Original\VBR'
 $logDir = "C:\temp\vHC\Original\Log\"
 $logFile = $logDir + "CollectorMain.log"
-if(!(Test-Path $logfile)){New-Item -type Directory $logDir -ErrorAction SilentlyContinue; new-item -type file $logfile}
+if (!(Test-Path $logfile)) { New-Item -type Directory $logDir -ErrorAction SilentlyContinue; new-item -type file $logfile }
 #functions
 enum LogLevel {
     TRACE
@@ -323,12 +323,12 @@ try {
         $Extents = Get-VBRRepositoryExtent -Repository $SOBR
 
         foreach ($Extent in $Extents) {
-            if($VBRVersion -eq 12){
+            if ($VBRVersion -eq 12) {
                 #write-host("DEBUG: GATES:")  
                 #$Extent.Repository.GetActualGateways().Name
                 $ExtentDetails = $Extent.Repository | Select-Object *, @{n = 'SOBR_Name'; e = { $SOBR.Name } }, @{name = 'CachedFreeSpace'; expression = { $_.GetContainer().cachedfreespace.InGigabytes } }, @{name = 'CachedTotalSpace'; expression = { $_.GetContainer().cachedtotalspace.InGigabytes } }, @{name = 'gatewayHosts'; expression = { $_.GetActualGateways().Name } }, @{n = 'ObjectLockEnabled'; e = { $_.ObjectLockEnabled } }
             }
-            else{
+            else {
                 $ExtentDetails = $Extent.Repository | Select-Object *, @{n = 'SOBR_Name'; e = { $SOBR.Name } }, @{name = 'CachedFreeSpace'; expression = { $_.GetContainer().cachedfreespace.InGigabytes } }, @{name = 'CachedTotalSpace'; expression = { $_.GetContainer().cachedtotalspace.InGigabytes } }
             }
             
@@ -377,109 +377,109 @@ try {
     $message = "Collecting jobs info..."
     Write-LogFile($message)
 
-    try{
+    try {
         $Jobs = Get-VBRJob -WarningAction SilentlyContinue 
     }
-    catch{
+    catch {
         $Jobs = $null
     }
     #JobTypes & conversion
-try{
-    $catCopy = Get-VBRCatalystCopyJob
+    try {
+        $catCopy = Get-VBRCatalystCopyJob
 
-}
-catch{
-    $catCopy = $null
-}
+    }
+    catch {
+        $catCopy = $null
+    }
     $catCopy | Export-Csv -Path $("$ReportPath\$VBRServer" + '_catCopyjob.csv') -NoTypeInformation
-    try{
+    try {
         $catJob = Get-VBRCatalystJob
     }
-    catch{
+    catch {
         $catJob = $null
     }
-    try{
+    try {
         $vaBcj = Get-VBRComputerBackupCopyJob
     }
-    catch{
+    catch {
         $vaBcj = $null
     }
     $catJob | Export-Csv -Path $("$ReportPath\$VBRServer" + '_catalystJob.csv') -NoTypeInformation
 
-    try{
+    try {
         $vaBJob = Get-VBRComputerBackupJob
     }
-    catch{
+    catch {
         $vaBJob = $null
     }
     $vaBJob | Export-Csv -Path $("$ReportPath\$VBRServer" + '_AgentBackupJob.csv') -NoTypeInformation
-    try{
+    try {
         $configBackup = Get-VBRConfigurationBackupJob
 
     }
-    catch{
+    catch {
         $configBackup = $null
     }
-    try{
+    try {
         $epJob = Get-VBREPJob 
 
     }
-    catch{
+    catch {
         $epJob = $null
     }
     $epJob | Export-Csv -Path $("$ReportPath\$VBRServer" + '_EndpointJob.csv') -NoTypeInformation
     
-    try{
+    try {
         $sbJob = Get-VBRSureBackupJob
     }
-    catch{
+    catch {
         $sbJob = $null
     }
     $sbJob | Export-Csv -Path $("$ReportPath\$VBRServer" + '_SureBackupJob.csv') -NoTypeInformation
     
     #tape jobs
-    try{
+    try {
         $tapeJob = Get-VBRTapeJob
     }
-    catch{
+    catch {
         $tapeJob = $null
     }
     #export tape jobs to csv
     $tapeJob | Export-Csv -Path $("$ReportPath\$VBRServer" + '_TapeJobs.csv') -NoTypeInformation
     #end tape jobs
-    try{
+    try {
         $nasBackup = Get-VBRNASBackupJob 
 
     }
-    catch{
-       $nasBackup = $null
+    catch {
+        $nasBackup = $null
     }
-    try{
+    try {
         $nasBCJ = Get-VBRNASBackupCopyJob 
 
     }
-    catch{
-       $nasBCJ = $null
+    catch {
+        $nasBCJ = $null
     }
-    try{
+    try {
         $piJob = Get-VBRPluginJob
 
     }
-    catch{
-       $piJob = $null
+    catch {
+        $piJob = $null
     }
-    try{
+    try {
         $cdpJob = Get-VBRCDPPolicy
 
     }
-    catch{
-       $cdpJob = $null
+    catch {
+        $cdpJob = $null
     }
-    try{
+    try {
         $vcdJob = Get-VBRvCDReplicaJob
 
     }
-    catch{
+    catch {
         $vcdJob = $null
     }
 
@@ -644,13 +644,13 @@ $licInfo | Export-csv -Path $("$ReportPath\$VBRServer" + '_LicInfo.csv') -NoType
 #########################################################################################################
 
 <# Malware Detection Section #>
-try{
+try {
     Get-VBRMalwareDetectionOptions | Export-Csv -Path $("$ReportPath\$VBRServer" + 'malware_settings.csv') -NoTypeInformation
     Get-VBRMalwareDetectionObject | Export-Csv -Path $("$ReportPath\$VBRServer" + 'malware_infectedobject.csv') -NoTypeInformation
     Get-VBRMalwareDetectionEvent | Export-Csv -Path $("$ReportPath\$VBRServer" + 'malware_events.csv') -NoTypeInformation
     Get-VBRMalwareDetectionExclusion | Export-Csv -Path $("$ReportPath\$VBRServer" + 'malware_exclusions.csv') -NoTypeInformation
 }
-catch{
+catch {
     Write-LogFile("Failed on Malware Detection")
     Write-LogFile($error[0])
 }
@@ -704,6 +704,9 @@ try {
         'PostgreSqlUseRecommendedSettings'        = 'PostgreSQL server uses recommended settings'
         'LossProtectionEnabled'                   = 'Password loss protection is enabled'
         'TrafficEncryptionEnabled'                = 'Encryption network rules added for LAN traffic'
+        'NetBiosDisabled'                         = 'NetBIOS protocol should be disabled on all network interfaces'
+        'HardenedRepositoryNotContainsNBDProxies' = 'Hardened repository should not be used as proxy'
+        'LsassProtectedProcess'                   = 'Local Security Authority Server Service (LSASS) running as protected process'
     }
     $StatusObj = @{
         'Ok'            = "Passed"
@@ -714,10 +717,16 @@ try {
     $OutObj = @()
     foreach ($SecurityCompliance in $SecurityCompliances) {
         try {
+            # if (($RuleTypes[$SecurityCompliance.Type.ToString()] -eq "") -or $RuleTypes[$SecurityCompliance.Type.ToString()] -eq $null) {
+
+            #     write-host("missing compliance= " + $SecurityCompliance.Type.ToString())
+            # }
             # Write-PscriboMessage -IsWarning "$($SecurityCompliance.Type) = $($RuleTypes[$SecurityCompliance.Type.ToString()])"
             $inObj = [ordered] @{
                 'Best Practice' = $RuleTypes[$SecurityCompliance.Type.ToString()]
                 'Status'        = $StatusObj[$SecurityCompliance.Status.ToString()]
+
+
             }
             $OutObj += [pscustomobject]$inobj
         }
@@ -745,85 +754,85 @@ try {
     $message = "Collecting protected workloads info..."
     Write-LogFile($message)
 
-    try{
-            # work here
+    try {
+        # work here
         ##Protected Workloads Area
         $vmbackups = Get-VBRBackup | ? { $_.TypeToString -eq "VMware Backup" }
         
-        try{
+        try {
             $vmNames = $vmbackups.GetLastOibs($true)
         }
-        catch{
-            try{
+        catch {
+            try {
                 $vmNames = $vmbackups.GetLastOibs()
             }
-            catch{}
+            catch {}
         }
         $unprotectedEntityInfo = Find-VBRViEntity | ? { $_.Name -notin $vmNames.Name }
         $protectedEntityInfo = Find-VBRViEntity -Name $vmNames.Name
-        }
+    }
 
-   catch {
+    catch {
         Write-LogFile("Failed on vmware workloads")
         Write-LogFile($error[0])
-        }
+    }
     # protected HV Workloads
     try {
-            $hvvmbackups = Get-VBRBackup | ? { $_.TypeToString -eq "Hyper-v Backup" }
+        $hvvmbackups = Get-VBRBackup | ? { $_.TypeToString -eq "Hyper-v Backup" }
             
             
-            try{
-                $hvvmNames = $hvvmbackups.GetLastOibs($true)
+        try {
+            $hvvmNames = $hvvmbackups.GetLastOibs($true)
+        }
+        catch {
+            try {
+                $hvvmNames = $hvvmbackups.GetLastOibs()
             }
-            catch{
-                try{
-                    $hvvmNames = $hvvmbackups.GetLastOibs()
-                }
-                catch{}
-            }
+            catch {}
+        }
             
-            $unprotectedHvEntityInfo = Find-VBRHvEntity | ? { $_.Name -notin $hvvmNames.Name }
-            if($hvvmNames.Name -eq $Null){
-                $protectedHvEntityInfo = Find-VBRHvEntity -Name " "    
-            }
-            else{
-                $protectedHvEntityInfo = Find-VBRHvEntity -Name $hvvmNames.Name
+        $unprotectedHvEntityInfo = Find-VBRHvEntity | ? { $_.Name -notin $hvvmNames.Name }
+        if ($hvvmNames.Name -eq $Null) {
+            $protectedHvEntityInfo = Find-VBRHvEntity -Name " "    
+        }
+        else {
+            $protectedHvEntityInfo = Find-VBRHvEntity -Name $hvvmNames.Name
 
-            }
+        }
         
 
-        }
+    }
     catch {
-            Write-LogFile("Failed on hyper-V workloads")
-            Write-LogFile($error[0])
-        }
+        Write-LogFile("Failed on hyper-V workloads")
+        Write-LogFile($error[0])
+    }
 
 
     #protected physical Loads
-    try{
-            $phys = Get-VBRDiscoveredComputer
+    try {
+        $phys = Get-VBRDiscoveredComputer
 
-            $physbackups = Get-VBRBackup | ? { $_.TypeToString -like "*Agent*" }
+        $physbackups = Get-VBRBackup | ? { $_.TypeToString -like "*Agent*" }
             
-            try{
-                $pvmNames = $physbackups.GetLastOibs($true)
+        try {
+            $pvmNames = $physbackups.GetLastOibs($true)
     
-            }
-            catch {
-                try{
-                    $pvmNames = $physbackups.GetLastOibs()
-                }
-                catch{}
-    
-            }
-    
-            $notprotected = $phys | ? { $_.Name -notin $pvmNames.Name }
-            $protected = $phys | ? { $_.Name -in $pvmNames.Name }
-    }
-    catch{
-            Write-LogFile("Failed on physical workloads")
-            Write-LogFile($error[0])
         }
+        catch {
+            try {
+                $pvmNames = $physbackups.GetLastOibs()
+            }
+            catch {}
+    
+        }
+    
+        $notprotected = $phys | ? { $_.Name -notin $pvmNames.Name }
+        $protected = $phys | ? { $_.Name -in $pvmNames.Name }
+    }
+    catch {
+        Write-LogFile("Failed on physical workloads")
+        Write-LogFile($error[0])
+    }
 
 
 }
@@ -863,8 +872,8 @@ try {
     $pgDbDbName = Get-ItemProperty -Path "HKLM:\Software\Veeam\Veeam Backup and Replication\DatabaseConfigurations\PostgreSql" -Name "SqlDatabaseName"
     $msDbHost = Get-ItemProperty -Path "HKLM:\Software\Veeam\Veeam Backup and Replication\DatabaseConfigurations\MsSql" -Name "SqlServerName"
     $msDbName = Get-ItemProperty -Path "HKLM:\Software\Veeam\Veeam Backup and Replication\DatabaseConfigurations\MsSql" -Name "SqlDatabaseName"
-    if($dbType.SqlActiveConfiguration -ne "PostgreSql"){
-        if($instancePath -eq ""){
+    if ($dbType.SqlActiveConfiguration -ne "PostgreSql") {
+        if ($instancePath -eq "") {
             $instancePath = Get-ItemProperty -Path "HKLM:\Software\Veeam\Veeam Backup and Replication\DatabaseConfigurations\MsSql" -Name "SqlInstanceName"
         }
         
