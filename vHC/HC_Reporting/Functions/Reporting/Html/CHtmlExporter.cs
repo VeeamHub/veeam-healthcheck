@@ -9,6 +9,7 @@ using VeeamHealthCheck.Functions.Collection.LogParser;
 using VeeamHealthCheck.Scrubber;
 using VeeamHealthCheck.Shared;
 using VeeamHealthCheck.Shared.Logging;
+using VeeamHealthCheck.Functions.Reporting.Pdf;
 
 namespace VeeamHealthCheck.Functions.Reporting.Html
 {
