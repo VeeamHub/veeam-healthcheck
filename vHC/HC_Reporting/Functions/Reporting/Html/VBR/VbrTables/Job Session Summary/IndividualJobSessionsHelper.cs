@@ -90,7 +90,7 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR.VbrTables.Job_Session_Su
         public void ParseIndividualSessions(bool scrub)
         {
             //if (scrub) { _scrubber = new(); }
-            _scrubber = new();
+            _scrubber = CGlobals.Scrubber;
 
             List<string> processedJobs = new();
             double percentCounter = 0;

@@ -1,7 +1,11 @@
 ﻿// Copyright (c) 2021, Adam Congdon <adam.congdon2@gmail.com>
 // MIT License
 using System;
+using System.Collections;
 using System.Collections.Generic;
+using System.IO;
+using System.Linq;
+using System.Text.Json;
 using System.Xml.Linq;
 
 namespace VeeamHealthCheck.Scrubber
@@ -24,6 +28,35 @@ namespace VeeamHealthCheck.Scrubber
                 new XElement("originalname", original));
             _doc.Root.Add(xml);
             _doc.Save(_matchListPath);
+
+            WriteToText();
+        }
+        private void WriteToText()
+        {
+            // sort _matchDictionary alphabetically
+            _matchDictionary = new Dictionary<string, string>(_matchDictionary);
+
+            var newDict = _matchDictionary.OrderBy(kvp => kvp.Value)
+                  .ToDictionary(kvp => kvp.Value, kvp => kvp.Key);
+
+
+
+            WriteDictionaryToJsonFile(newDict, CVariables.unsafeDir + @"\vHC_KeyFile.json");
+        }
+        private void WriteDictionaryToJsonFile(Dictionary<string, string> dictionary, string filePath)
+        {
+            try
+            {
+                // Serialize the dictionary to a JSON string
+                string jsonString = JsonSerializer.Serialize(dictionary, new JsonSerializerOptions { WriteIndented = true });
+
+                // Write the JSON string to a file
+                File.WriteAllText(filePath, jsonString);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"An error occurred while writing to the JSON file: {ex.Message}");
+            }
         }
 
         public string ScrubItem(string item, string type)

@@ -14,7 +14,7 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR.VbrTables.Jobs_Info
     internal class CTapeJobInfoTable
     {
         private readonly CHtmlFormatting _form = new();
-        private readonly CScrubHandler _scrubber = new();
+        private readonly CScrubHandler _scrubber = CGlobals.Scrubber;
         public CTapeJobInfoTable() { }
 
         public string TapeJobTable()
