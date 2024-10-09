@@ -223,33 +223,7 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR.VbrTables.Job_Session_Su
             scrubDir += "\\" + _scrubber.ScrubItem(JobName, ScrubItemType.Job) + ".html";
             return scrubDir;
         }
-        private string ReturnTableHeaderString(CJobSessionInfo cs)
-        {
-            string s = _form.Header();
-            s += "<h2>" + cs.JobName + "</h2>";
 
-            s += "<table border=\"1\"><tr>";
-            s += _form.TableHeader("Job Name", "Name of job");
-            s += _form.TableHeader("VM Name", "Name of VM/Server within the job");
-            s += _form.TableHeader("Alg", "Job Algorithm");
-            s += _form.TableHeader("Primary Bottleneck", "Primary detected bottleneck");
-            s += _form.TableHeader("BottleNeck", "Detected bottleneck breakdown");
-            s += _form.TableHeader("CompressionRatio", "Calculated compression ratio");
-            s += _form.TableHeader("Start Time", "Start time of the backup job");
-            s += _form.TableHeader("BackupSize", "Detected size of backup file");
-            s += _form.TableHeader("DataSize", "Detected size of original VM/server (provisioned, not actual)");
-            s += _form.TableHeader("DedupRatio", "Calculated deduplication ratio");
-            s += _form.TableHeader("Is Retry", "Is this a retry run?");
-            s += _form.TableHeader("Job Duration", "Duration of job in minutes");
-            s += _form.TableHeader("Min Time", "Shorted detected job duration in minutes");
-            s += _form.TableHeader("Max Time", "Longest detected job duration in minutes");
-            s += _form.TableHeader("Avg Time", "Average job duration in minutes");
-            s += _form.TableHeader("Processing Mode", "Processing mode used in the job (blank = SAN)");
-            s += _form.TableHeader("Status", "Final status of the job");
-            s += _form.TableHeader("Task Duration", "Duration of the VM/server within the job in minutes");
-            s += "</tr>";
-            return s;
-        }
         private string ReturnTableHeaderString(string jobname)
         {
             string s = _form.Header();
@@ -263,8 +237,8 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR.VbrTables.Job_Session_Su
             s += _form.TableHeader("BottleNeck", "Detected bottleneck breakdown");
             s += _form.TableHeader("CompressionRatio", "Calculated compression ratio");
             s += _form.TableHeader("Start Time", "Start time of the backup job");
-            s += _form.TableHeader("BackupSize", "Detected size of backup file");
-            s += _form.TableHeader("DataSize", "Detected size of original VM/server (provisioned, not actual)");
+            s += _form.TableHeader("BackupSizeGB", "Detected size of backup file");
+            s += _form.TableHeader("DataSizeGB", "Detected size of original VM/server (provisioned, not actual)");
             s += _form.TableHeader("DedupRatio", "Calculated deduplication ratio");
             s += _form.TableHeader("Is Retry", "Is this a retry run?");
             s += _form.TableHeader("Job Duration", "Duration of job in minutes");
