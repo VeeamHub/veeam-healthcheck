@@ -15,18 +15,23 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v2
+      - name: Checkout code
+        uses: actions/checkout@v2
 
-    - name: Install ClamAV
-      run: sudo apt-get update && sudo apt-get install -y clamav clamav-daemon
+      - name: Install ClamAV
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y clamav clamav-daemon
 
-    - name: Configure ClamAV
-      run: echo "LogFile /dev/null" | sudo tee /etc/clamav/freshclam.conf
+      - name: Configure ClamAV
+        run: |
+          # Comment out the existing UpdateLogFile option
+          sudo sed -i 's/^UpdateLogFile/#UpdateLogFile/' /etc/clamav/freshclam.conf
+          # Redirect the log output to /dev/null
+          echo "UpdateLogFile /dev/null" | sudo tee -a /etc/clamav/freshclam.conf
 
+      - name: Update ClamAV database
+        run: sudo freshclam
 
-    - name: Update ClamAV database
-      run: sudo freshclam
-
-    - name: Scan repository for viruses
-      run: sudo clamscan -r --bell -i .
+      - name: Scan repository for viruses
+        run: sudo clamscan -r --bell -i .
