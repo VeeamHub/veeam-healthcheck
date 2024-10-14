@@ -161,13 +161,6 @@ namespace VeeamHealthCheck.Functions.Reporting.Html
                     maxBackupSize.Add(info.MaxBackupSize);
 
 
-#if DEBUG
-                    if(info.JobName == "win10trash")
-                    {
-
-                    }
-
-#endif
                     if (info.AvgBackupSize != 0 && info.AvgDataSize != 0)
                     {
                         if(info.AvgDataSize > info.UsedVmSizeTB)
