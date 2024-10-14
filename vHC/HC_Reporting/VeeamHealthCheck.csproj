@@ -11,10 +11,10 @@
     <Company>Veeam</Company>
     <Authors>AdamC</Authors>
     <ApplicationIcon>output.ico</ApplicationIcon>
-    <AssemblyVersion>2.0.0.491</AssemblyVersion>
+    <AssemblyVersion>2.0.0.492</AssemblyVersion>
     <SignAssembly>False</SignAssembly>
     <DelaySign>false</DelaySign>
-    <FileVersion>2.0.0.491</FileVersion>
+    <FileVersion>2.0.0.492</FileVersion>
     <DebugType>full</DebugType>
 	  <SelfContained>true</SelfContained>
 	  <!--These 2 lines are what produce the single file utility. Possibly doesn't work...-->
@@ -178,7 +178,7 @@
 		  <LocalPostBuildBat Include="$(ProjectDir)Tools\build\BuildCopy.bat" Condition="Exists('$(ProjectDir)Tools\build\BuildCopy.bat')" />
 	  </ItemGroup>
 	  <!-- Calls the bat file, if the variable exists, if not this does nothing and silently continues -->
-	  <Exec Command="call @(LocalPostBuildBat)&#xD;&#xA; signtool.exe sign /f .\HC_Reporting\vhc_keyfile2.pfx /p e7bff55159289c0b9361aaa0a289726be3677b9060408e4429d20334c98df160 /tr &quot;http://timestamp.digicert.com&quot; /td SHA256 /fd SHA256 &quot;$(TargetDir)$(TargetFileName)&quot;" />
+	  <Exec Command="call @(LocalPostBuildBat)&#xD;&#xA;" />
   </Target>
 
   <ItemGroup>
