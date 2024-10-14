@@ -19,6 +19,10 @@ jobs:
     - name: Install ClamAV
       run: sudo apt-get update && sudo apt-get install -y clamav clamav-daemon
 
+    - name: Configure ClamAV
+      run: echo "LogFile /dev/null" | sudo tee /etc/clamav/freshclam.conf
+
+
     - name: Update ClamAV database
       run: sudo freshclam
 
