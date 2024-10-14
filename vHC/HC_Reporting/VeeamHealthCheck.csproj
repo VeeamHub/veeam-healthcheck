@@ -10,11 +10,11 @@
     <PackageIconUrl />
     <Company>Veeam</Company>
     <Authors>AdamC</Authors>
-    <ApplicationIcon>output.ico</ApplicationIcon>
-    <AssemblyVersion>2.0.0.496</AssemblyVersion>
+    <ApplicationIcon>Health_Check_Icon.ico</ApplicationIcon>
+    <AssemblyVersion>2.0.0.499</AssemblyVersion>
     <SignAssembly>False</SignAssembly>
     <DelaySign>false</DelaySign>
-    <FileVersion>2.0.0.496</FileVersion>
+    <FileVersion>2.0.0.499</FileVersion>
     <DebugType>full</DebugType>
 	  <SelfContained>true</SelfContained>
 	  <!--These 2 lines are what produce the single file utility. Possibly doesn't work...-->
@@ -95,7 +95,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Content Include="output.ico" />
+    <Content Include="Health_Check_Icon.ico" />
     <Content Include="Tools\Scripts\HealthCheck\VBR\Get-NasInfo.ps1">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
