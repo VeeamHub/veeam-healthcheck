@@ -4,23 +4,37 @@ on:
   push:
     branches:
       - master
+      - dev
   pull_request:
     branches:
       - master
+      - dev
 
 jobs:
   virus-scan:
     runs-on: ubuntu-latest
 
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v2
+      - name: Checkout code
+        uses: actions/checkout@v2
 
-    - name: Install ClamAV
-      run: sudo apt-get update && sudo apt-get install -y clamav clamav-daemon
+      - name: Install ClamAV
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y clamav clamav-daemon
 
-    - name: Update ClamAV database
-      run: sudo freshclam
+      - name: Disable freshclam logging
+        run: |
+          sudo cp /etc/clamav/freshclam.conf /etc/clamav/freshclam.conf.bak
+          sudo sed -i 's/^UpdateLogFile/#UpdateLogFile/' /etc/clamav/freshclam.conf
+          # Ensure there is no logging defined
+          grep -q "^LogFile" /etc/clamav/freshclam.conf || echo "LogFile /dev/null" | sudo tee -a /etc/clamav/freshclam.conf
 
-    - name: Scan repository for viruses
-      run: sudo clamscan -r --bell -i .
+      - name: Update ClamAV database
+        run: sudo freshclam
+
+      - name: Restore freshclam logging (if needed)
+        run: sudo mv /etc/clamav/freshclam.conf.bak /etc/clamav/freshclam.conf
+
+      - name: Scan repository for viruses
+        run: sudo clamscan -r --bell -i .

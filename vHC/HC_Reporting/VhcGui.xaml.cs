@@ -28,9 +28,7 @@ namespace VeeamHealthCheck
         {
             SetImportRelease();
 
-#if DEBUG
-            SetImportDebug();
-#endif
+
             this.Title = _functions.ModeCheck();
             _functions.PreRunCheck();
 
