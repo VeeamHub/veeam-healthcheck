@@ -59,13 +59,34 @@ namespace VeeamHealthCheck.Scrubber
             }
         }
 
-        public string ScrubItem(string item, string type)
+        public string ScrubItem(string item, string type, ScrubItemType itemType)
         {
             if (String.IsNullOrEmpty(item))
                 return "";
             if (item.StartsWith(type + "_"))
                 return item;
             //item = RemoveLeadingSlashes(item);
+            switch (itemType)
+            {
+                case ScrubItemType.Item:
+                    break;
+                // case for all ScrubItemType objects:
+                case ScrubItemType.Job:
+                    break;
+                case ScrubItemType.MediaPool:
+                    break;
+                case ScrubItemType.Repository:
+                    break;
+                case ScrubItemType.Server:
+                    break;
+                case ScrubItemType.Path:
+                    break;
+                case ScrubItemType.VM:
+                    break;
+                case ScrubItemType.SOBR:
+                    break;
+
+            }
             if (!_matchDictionary.ContainsKey(item))
             {
                 int counter = _matchDictionary.Count;
@@ -82,7 +103,7 @@ namespace VeeamHealthCheck.Scrubber
         }
         public string ScrubItem(string item, ScrubItemType type)
         {
-            return ScrubItem(item, type.ToString());
+            return ScrubItem(item, type.ToString(), type);
         }
 
 

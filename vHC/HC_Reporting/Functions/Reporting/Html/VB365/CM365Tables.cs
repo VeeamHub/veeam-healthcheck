@@ -66,7 +66,17 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VB365
 
                     s += _form.TableData(gl.SupportExpiry, "");
                     s += _form.TableData(gl.LicenseType, "");
-                    s += _form.TableData(gl.LicensedTo, "");
+                    if (CGlobals.Scrub)
+                    {
+                        var licName = CGlobals.Scrubber.ScrubItem(gl.LicensedTo, Scrubber.ScrubItemType.Item);
+                        s += _form.TableData(licName, "");
+
+                    }
+                    else
+                    {
+                        s += _form.TableData(gl.LicensedTo, "");
+
+                    }
                     s += _form.TableData(gl.LicenseContact, "");
                     s += _form.TableData(gl.LicensedFor, "");
 
@@ -100,7 +110,7 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VB365
             s += "</tr></table>";
 
             // summary
-            s += _summary.GlobalSummary();
+            //s += _summary.GlobalSummary();
 
             s += "</div>";
             return s;
@@ -280,7 +290,7 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VB365
 
             }
             s += "</table>";
-            s += _summary.ProxySummary();
+            //s += _summary.ProxySummary();
 
             s += "</div>";
             return s;
@@ -380,7 +390,7 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VB365
 
             s += "</table>";
 
-            s += _summary.RepoSummary();
+           // s += _summary.RepoSummary();
             s += "</div>";
             return s;
         }
@@ -429,7 +439,7 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VB365
 
             s += "</table>";
 
-            s += _summary.RbacSummary();
+            //s += _summary.RbacSummary();
             s += "</div>";
             return s;
         }
@@ -591,7 +601,7 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VB365
 
 
             s += "</table>";
-            s += _summary.SecSummary();
+            //s += _summary.SecSummary();
 
             s += "</div>";
             return s;
@@ -759,7 +769,7 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VB365
 
             }
             s += "</table>";
-            s += _summary.ControllerSummary();
+            //s += _summary.ControllerSummary();
 
             s += "</div>";
             return s;
@@ -877,7 +887,7 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VB365
             }
             s += "</table>";
 
-            s += _summary.ControllerDrivesSummary();
+            //s += _summary.ControllerDrivesSummary();
             s += "</div>";
             return s;
         }
@@ -927,7 +937,7 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VB365
             }
             s += "</table>";
 
-            s += _summary.JobSessSummary();
+            //s += _summary.JobSessSummary();
 
             s += "</div>";
             return s;
@@ -1040,7 +1050,7 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VB365
             }
             s += "</table>";
 
-            s += _summary.JobStatSummary();
+            //s += _summary.JobStatSummary();
             s += "</div>";
             return s;
         }
@@ -1163,7 +1173,7 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VB365
             }
             s += "</table>";
 
-            s += _summary.ObjRepoSummary();
+            //s += _summary.ObjRepoSummary();
 
             s += "</div>";
             return s;
@@ -1225,7 +1235,7 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VB365
             }
             s += "</table>";
 
-            s += _summary.OrgSummary();
+            //s += _summary.OrgSummary();
             s += "</div>";
             return s;
         }
@@ -1270,7 +1280,7 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VB365
 
             }
             s += "</table>";
-            s += _summary.PermissionSummary();
+            //s += _summary.PermissionSummary();
 
             s += "</div>";
             return s;
@@ -1350,7 +1360,7 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VB365
 
             s += "</table>";
 
-            s += _summary.ProtStatSummary();
+            //s += _summary.ProtStatSummary();
 
             s += "</div>";
             return s;
@@ -1512,7 +1522,7 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VB365
 
             s += "</table>";
 
-            s += _summary.JobsSummary();
+            //s += _summary.JobsSummary();
 
             s += "</div>";
             return s;

@@ -9,6 +9,7 @@ using VeeamHealthCheck.Shared;
 using Microsoft.Management.Infrastructure;
 using VeeamHealthCheck.Functions.Collection.PSCollections;
 using System.Windows;
+using VeeamHealthCheck.Shared.Logging;
 
 namespace VeeamHealthCheck.Functions.Collection
 {
@@ -86,17 +87,34 @@ namespace VeeamHealthCheck.Functions.Collection
             {
                 try
                 {
-                    if (!TestPsMFA(p))
+
+                    if (CGlobals.IsVbr)
                     {
-                        if(CGlobals.IsVbr)
-                            ExecVbrScripts(p);
-                        if(CGlobals.IsVb365)
-                            ExecVb365Scripts(p);
+                        CGlobals.Logger.Info("Checking VBR MFA Access...", false);
+                        if (!TestPsMFA(p))
+                        {
+                            if (CGlobals.IsVbr)
+                                ExecVbrScripts(p);
+                        }
+                        else
+                        {
+                            WeighSuccessContinuation();
+                        }
                     }
-                    else
+                    if (CGlobals.IsVb365)
                     {
-                        WeighSuccessContinuation();
+                        CGlobals.Logger.Info("Checking VB365 MFA Access...", false);
+                        if (!TestPsMFAVb365(p))
+                        {
+                            if (CGlobals.IsVb365)
+                                ExecVb365Scripts(p);
+                        }
+                        else
+                        {
+                            WeighSuccessContinuation();
+                        }
                     }
+
                     
                 }
                 catch (Exception ex)
@@ -137,6 +155,12 @@ namespace VeeamHealthCheck.Functions.Collection
             CScripts scripts = new();
 
             return p.TestMfa();
+        }
+        private bool TestPsMFAVb365(PSInvoker p)
+        {
+            CScripts scripts = new();
+
+            return p.TestMfaVB365();
         }
         private void ExecVbrScripts(PSInvoker p)
         {

@@ -50,7 +50,7 @@ namespace VeeamHealthCheck.Functions.Reporting.Html
                 Directory.CreateDirectory(_origPath);
         }
 
-        public int ExportVb365Html(string htmlString)
+        public int ExportVb365Html(string htmlString, bool scrub)
         {
             log.Info("writing HTML to file...");
 
@@ -67,12 +67,12 @@ namespace VeeamHealthCheck.Functions.Reporting.Html
             if (!Directory.Exists(n))
                 Directory.CreateDirectory(n);
             string htmlCore = "";
-            if (CGlobals.Scrub)
+            if (scrub)
                 htmlCore = "\\" + _htmlName + "_VB365" + "_" + installID + dateTime.ToString("_yyyy.MM.dd.HHmmss") + ".html";
-            else if (!CGlobals.Scrub)
+            else if (scrub)
                 htmlCore = "\\" + _htmlName + "_VB365" + "_" + _backupServerName + dateTime.ToString("_yyyy.MM.dd.HHmmss") + ".html";
             string name = n + htmlCore;
-            _latestReport = name;//SetReportNameAndPath(CGlobals.Scrub, "VB365");
+            _latestReport = SetReportNameAndPath(scrub, "VB365");
 
             WriteHtmlToFile(htmlString);
             log.Info("writing HTML to file..done!");
@@ -82,6 +82,34 @@ namespace VeeamHealthCheck.Functions.Reporting.Html
             return 0;
 
 
+
+
+        }
+        public int ExportHtmlVb365(string htmlString, bool scrub)
+        {
+
+
+            try
+            {
+                log.Info("exporting xml to html");
+                _latestReport = SetReportNameAndPath(scrub, "VB365");
+                WriteHtmlToFile(htmlString);
+                log.Info("exporting xml to html..done!");
+
+                //test export to PDF:
+                if (!scrub && CGlobals.EXPORTPDF)
+                {
+                    ExportHtmlStringToPDF(htmlString);
+                }
+
+                OpenHtmlIfEnabled(CGlobals.OpenHtml);
+                return 0;
+            }
+            catch (Exception e)
+            {
+                log.Error("Failed at HTML Export:");
+                log.Error("\t" + e.Message); return 1;
+            }
 
 
         }
@@ -125,6 +153,18 @@ namespace VeeamHealthCheck.Functions.Reporting.Html
             htmlShowAll = htmlShowAll.Replace("overflow: scroll;", "overflow: visible;");
 
             htmlShowAll = htmlShowAll.Replace("overflow: hidden;", "overflow: visible;");
+
+
+            //replace font-family: Tahoma with font-family: noto sans symbols
+            //htmlShowAll = htmlShowAll.Replace("font-family: Tahoma !important;", "font-family: 'NotoSansSymbols';\r\n            src: url('https://fonts.googleapis.com/css2?family=Noto+Sans+Symbols&display=swap');");
+
+            //replace green checkmark with checkmark:
+            htmlShowAll = htmlShowAll.Replace("&#9989;", "✓");
+            htmlShowAll = htmlShowAll.Replace("&#9744;", "");
+            htmlShowAll = htmlShowAll.Replace("⚠️", "(!)");
+            htmlShowAll = htmlShowAll.Replace("&#9432;", "ℹ️");
+
+
 
             pdf.ConvertHtmlToPdf(htmlShowAll, _latestReport.Replace(".html", ".pdf"));
             pdf.Dispose();

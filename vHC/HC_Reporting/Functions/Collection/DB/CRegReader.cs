@@ -50,7 +50,7 @@ namespace VeeamHealthCheck.Functions.Collection.DB
             }
             catch (Exception e2)
             {
-                log.Error(logStart + "Failed to get v11 DB info from Registry. Trying v12 registry hives");
+                log.Error(logStart + "Failed to get v11 DB info from Registry. Trying v12 registry hives:\t" + e2.Message);
             }
             if (string.IsNullOrEmpty(_databaseName))
             {
@@ -67,7 +67,7 @@ namespace VeeamHealthCheck.Functions.Collection.DB
                 }
                 catch (Exception e3)
                 {
-                    log.Error(logStart + "Failed to get v12 DB info from Registry.");
+                    log.Error(logStart + "Failed to get v12 DB info from Registry:\t" + e3.Message);
                 }
 
 
