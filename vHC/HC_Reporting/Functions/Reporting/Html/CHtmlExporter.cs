@@ -154,6 +154,18 @@ namespace VeeamHealthCheck.Functions.Reporting.Html
 
             htmlShowAll = htmlShowAll.Replace("overflow: hidden;", "overflow: visible;");
 
+
+            //replace font-family: Tahoma with font-family: noto sans symbols
+            //htmlShowAll = htmlShowAll.Replace("font-family: Tahoma !important;", "font-family: 'NotoSansSymbols';\r\n            src: url('https://fonts.googleapis.com/css2?family=Noto+Sans+Symbols&display=swap');");
+
+            //replace green checkmark with checkmark:
+            htmlShowAll = htmlShowAll.Replace("&#9989;", "✓");
+            htmlShowAll = htmlShowAll.Replace("&#9744;", "");
+            htmlShowAll = htmlShowAll.Replace("⚠️", "(!)");
+            htmlShowAll = htmlShowAll.Replace("&#9432;", "ℹ️");
+
+
+
             pdf.ConvertHtmlToPdf(htmlShowAll, _latestReport.Replace(".html", ".pdf"));
             pdf.Dispose();
         }
