@@ -3,6 +3,7 @@
 using System;
 using System.Data.SqlClient;
 using System.Security.Principal;
+using VeeamHealthCheck.Shared;
 
 namespace VeeamHealthCheck.Functions.Collection.DB
 {
@@ -67,6 +68,7 @@ namespace VeeamHealthCheck.Functions.Collection.DB
             }
             catch (Exception e)
             {
+                CGlobals.Logger.Warning("Sql Test Connection Failed: " + e.Message);
                 return false;
             }
 

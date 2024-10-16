@@ -91,6 +91,46 @@ namespace VeeamHealthCheck.Functions.Collection.PSCollections
 
             return failed;
         }
+        public bool TestMfaVB365()
+        {
+            var res = new Process();
+            if (CGlobals.REMOTEHOST == "")
+                CGlobals.REMOTEHOST = "localhost";
+            string argString = $"Connect-VBOServer -Server \"{CGlobals.REMOTEHOST}\"";
+            var startInfo = new ProcessStartInfo()
+            {
+                FileName = "powershell.exe",
+                Arguments = argString,
+                UseShellExecute = false,
+                CreateNoWindow = false,  //true for prod,
+                RedirectStandardError = true
+            };
+            res.StartInfo = startInfo;
+            res.Start();
+
+            res.WaitForExit();
+
+            List<string> errorarray = new();
+
+            bool failed = false;
+            string errString = "";
+            while ((errString = res.StandardError.ReadLine()) != null)
+            {
+                var errResults = ParseErrors(errString);
+                if (!errResults.Success)
+                {
+                    log.Error(errString, false);
+                    log.Error(errResults.Message);
+                    failed = true;
+                    return failed;
+
+                }
+                errorarray.Add(errString);
+            }
+            PushPsErrorsToMainLog(errorarray);
+
+            return failed;
+        }
         public bool RunVbrConfigCollect()
         {
             bool success = true;

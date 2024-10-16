@@ -55,7 +55,7 @@ namespace VeeamHealthCheck.Functions.Collection.LogParser
             }
             catch (Exception e)
             {
-                log.Error(logStart + "Failed to return log location.");
+                log.Error(logStart + "Failed to return log location. Error:\t" + e.Message);
             }
             return logs;
         }
@@ -69,9 +69,9 @@ namespace VeeamHealthCheck.Functions.Collection.LogParser
                     sw.WriteLine("JobName,StartTime,EndTime,Duration");
                 }
             }
-            catch (Exception)
+            catch (Exception e )
             {
-                log.Error(logStart + "Failed to init waits.csv");
+                log.Error(logStart + "Failed to init waits.csv. Error:\t" + e.Message);
             }
         }
         private void DumpWaitsToFile(string JobName, DateTime start, DateTime end, TimeSpan diff)

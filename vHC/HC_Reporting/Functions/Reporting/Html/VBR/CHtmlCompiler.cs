@@ -243,7 +243,8 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR
 
             return h;
         }
-       
+
+
         private string SetVbrSecurityHeader()
         {
             return _form.SetHeaderAndLogo(SetLicHolder());
