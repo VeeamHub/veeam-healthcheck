@@ -16,11 +16,8 @@ namespace VeeamHealthCheck.Functions.Reporting.Html
     {
         private Dictionary<string, List<TimeSpan>> _waits = new();
         private CLogger log = CGlobals.Logger;
-        private bool _checkLogs;
 
-        private string _xmlFile;
         private CLogger _log;
-        private bool _scrub;
         private Scrubber.CScrubHandler _scrubber;
         private CDataTypesParser _parsers;
 

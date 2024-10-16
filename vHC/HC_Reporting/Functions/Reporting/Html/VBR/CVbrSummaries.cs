@@ -77,8 +77,7 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR
                 _form.AddA("i2", VbrLocalizationHelper.BkpSrvNotes5) +
                 _form.AddA("i2", VbrLocalizationHelper.BkpSrvNotes6)
                 ;
-            s += _form.LineBreak() +
-               _form.BackToTop();
+            s += _form.LineBreak();
             s += "</div>";
             s += "</div>";
 
@@ -107,7 +106,6 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR
                 _form.AddA("i2", VbrLocalizationHelper.SSNote4) +
                _form.LineBreak();
             ;
-            s += _form.BackToTop();
             s += "</div>";
             s += "</div>";
 
@@ -120,9 +118,7 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR
             s += "<div class=\"content\" style=\"display: none\">";
             s += _form.AddA("hdr", VbrLocalizationHelper.GeneralSummaryHeader) + _form.LineBreak() +
                 _form.AddA("i2", VbrLocalizationHelper.MssSum1) +
-                _form.LineBreak() +
-                _form.BackToTop();
-
+                _form.LineBreak();
             s += "</div>";
             s += "</div>";
 
@@ -139,9 +135,7 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR
                 _form.AddA("hdr", VbrLocalizationHelper.GeneralNotesHeader) + _form.LineBreak() +
                 _form.AddA("i2", VbrLocalizationHelper.JobSumNote0) +
                 _form.AddA("i2", VbrLocalizationHelper.JobSumNote1) +
-                _form.LineBreak() +
-                _form.BackToTop()
-                ;
+                _form.LineBreak();
             s += "</div>";
             s += "</div>";
 
@@ -151,8 +145,7 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR
         {
             string s = _form.AddA("hdr", VbrLocalizationHelper.GeneralSummaryHeader) + _form.LineBreak() +
                 _form.AddA("i2", VbrLocalizationHelper.NpSum1) +
-                  _form.LineBreak() +
-                _form.BackToTop();
+                  _form.LineBreak() 
             ;
             s += "</div>";
             s += "</div>";
@@ -168,8 +161,7 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR
                 _form.AddA("hdr", VbrLocalizationHelper.GeneralNotesHeader) + _form.LineBreak() +
                 _form.AddA("i2", VbrLocalizationHelper.PlNote1) +
                      _form.LineBreak();
-            _form.BackToTop();
-            ;
+            
             s += "</div>";
             s += "</div>";
 
@@ -183,8 +175,7 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR
                 _form.AddA("hdr", VbrLocalizationHelper.GeneralNotesHeader) + _form.LineBreak() +
                 _form.AddA("i2", VbrLocalizationHelper.ManSrvNote0) +
                 _form.AddA("i2", VbrLocalizationHelper.ManSrvNote1) +
-                  _form.LineBreak() +
-                _form.BackToTop()
+                  _form.LineBreak() 
                 ;
             s += "</div>";
             s += "</div>";
@@ -199,8 +190,7 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR
                 _form.AddA("hdr", VbrLocalizationHelper.GeneralNotesHeader) + _form.LineBreak() +
                 _form.AddA("i2", VbrLocalizationHelper.RegNote0) +
                 _form.AddA("i2", VbrLocalizationHelper.RegNote1) +
-                    _form.LineBreak() +
-                _form.BackToTop()
+                    _form.LineBreak()
                 ;
             s += "</div>";
             s += "</div>";
@@ -232,8 +222,7 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR
                 _form.AddA("i2", VbrLocalizationHelper.PrxNote10) +
                 _form.AddA("i2", VbrLocalizationHelper.PrxNote11) +
                 _form.AddA("i2", VbrLocalizationHelper.PrxNote12) +
-                _form.LineBreak() +
-                _form.BackToTop()
+                _form.LineBreak()
                 ;
             s += "</div>";
             s += "</div>";
@@ -254,8 +243,7 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR
                 _form.AddA("i2", VbrLocalizationHelper.SbrNote4) +
                 _form.AddA("i2", VbrLocalizationHelper.SbrNote5) +
                 _form.AddA("i2", VbrLocalizationHelper.SbrNote6) +
-                  _form.LineBreak() +
-                _form.BackToTop()
+                  _form.LineBreak() 
                 ;
             s += "</div>";
             s += "</div>";
@@ -286,8 +274,7 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR
                 _form.AddA("i2", VbrLocalizationHelper.SbrExtNote14) +
                 _form.AddA("i2", VbrLocalizationHelper.SbrExtNote15) +
                 _form.AddA("i2", VbrLocalizationHelper.SbrExtNote16) +
-                  _form.LineBreak() +
-                _form.BackToTop()
+                  _form.LineBreak() 
                 ;
             s += "</div>";
             s += "</div>";
@@ -318,8 +305,7 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR
                 _form.AddA("i2", VbrLocalizationHelper.SbrExtNote14) +
                 _form.AddA("i2", VbrLocalizationHelper.SbrExtNote15) +
                 _form.AddA("i2", VbrLocalizationHelper.SbrExtNote16) +
-                _form.LineBreak() +
-                _form.BackToTop()
+                _form.LineBreak()
                 ;
             s += "</div>";
             s += "</div>";
@@ -363,8 +349,7 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR
                 _form.AddA("i3", VbrLocalizationHelper.JobConNoteSqlTableNote2) +
                 _form.AddA("i3", VbrLocalizationHelper.JobConNoteSqlTableNote3) +
                 _form.AddA("i3", VbrLocalizationHelper.JobConNoteSqlTableNote4) +
-                  _form.LineBreak() +
-                _form.BackToTop()
+                  _form.LineBreak()
                 ;
             s += "</div>";
             s += "</div>";
@@ -378,8 +363,7 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR
                 //  _form.DoubleLineBreak() +
                 _form.AddA("hdr", VbrLocalizationHelper.GeneralNotesHeader) + _form.LineBreak() +
                 _form.AddA("i2", VbrLocalizationHelper.TaskConNote0) +
-                _form.LineBreak() +
-              _form.BackToTop()
+                _form.LineBreak() 
                 ;
             s += "</div>";
             s += "</div>";
@@ -403,8 +387,7 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR
                 _form.AddA("i2", VbrLocalizationHelper.JssNote8) +
                 _form.AddA("i2", VbrLocalizationHelper.JssNote9) +
                 _form.AddA("i2", VbrLocalizationHelper.JssNote10) +
-                _form.LineBreak() +
-                _form.BackToTop()
+                _form.LineBreak() 
                 ;
             s += "</div>";
             s += "</div>";
@@ -418,8 +401,7 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR
                 //  _form.DoubleLineBreak() +
                 _form.AddA("hdr", VbrLocalizationHelper.GeneralNotesHeader) + _form.LineBreak() +
                 _form.AddA("i2", VbrLocalizationHelper.JobInfoNote0) +
-                _form.LineBreak() +
-                _form.BackToTop()
+                _form.LineBreak()
                 ;
             s += "</div>";
             s += "</div>";

@@ -30,26 +30,6 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.Shared
         {
 
         }
-        public string DivId(string id)
-        {
-            return string.Format("<div id={0}>", id);
-        }
-        public string h2UnderLine(string text)
-        {
-            return string.Format("<h2><u>{0}</u></h2>", text);
-        }
-
-        public string Button(string displayText)
-        {
-            return string.Format("<button type=\"button\" class=\"collapsible\">{0}</button>", displayText);
-        }
-
-
-        public string HyperLink(string link, string displayText)
-        {
-            string s = string.Format("<a href=\"{0}\" target=\"_blank\">{1}</a>", link, displayText);
-            return s;
-        }
 
         public string LineBreak()
         {
@@ -68,12 +48,7 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.Shared
             return string.Format("<div class=\"{0}\">{1}</div>", classInfo, displaytext);
         }
 
-        public string BackToTop()
-        {
-            //return string.Format("<button onclick=\"topFunction()\" id=\"myBtn\" title=\"Go to top\">Top</button>");
-            //return string.Format("<a href=\"#top\">Back To Top</a>");
-            return "";
-        }
+
         public string CollapsibleButton(string buttonText)
         {
             return SectionButton(_collapsible, buttonText);
