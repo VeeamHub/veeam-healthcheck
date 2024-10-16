@@ -52,8 +52,8 @@ namespace VeeamHealthCheck.Functions.Reporting.Html
         private void ScrubElements()
         {
             _backupServer.Name = CGlobals.Scrubber.ScrubItem(_backupServer.Name, ScrubItemType.Server);
-            _backupServer.ConfigBackupTarget = CGlobals.Scrubber.ScrubItem(_backupServer.Name, ScrubItemType.Repository);
-            _backupServer.DbHostName = CGlobals.Scrubber.ScrubItem(_backupServer.Name, ScrubItemType.Server);
+            _backupServer.ConfigBackupTarget = CGlobals.Scrubber.ScrubItem(_backupServer.ConfigBackupTarget, ScrubItemType.Repository);
+            _backupServer.DbHostName = CGlobals.Scrubber.ScrubItem(_backupServer.DbHostName, ScrubItemType.Server);
         }
         private void SetConfigBackupSettings()
         {
