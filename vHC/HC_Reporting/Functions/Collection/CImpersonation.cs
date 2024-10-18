@@ -51,10 +51,10 @@ namespace VeeamHealthCheck.Functions.Collection
             string domainName = CGlobals.REMOTEHOST;
 
             VBRSERVER = domainName;
-            _logger.Info(String.Format("Enter the login of a user on {0} that you wish to impersonate: ", domainName),false);
+            Console.WriteLine(String.Format("Enter the login of a user on {0} that you wish to impersonate: ", domainName),false);
             string userName = Console.ReadLine();
 
-            _logger.Info(String.Format("Enter the password for {0}: ", userName), false);
+            Console.WriteLine(String.Format("Enter the password for {0}: ", userName), false);
 
             const int LOGON32_PROVIDER_DEFAULT = 0;
             //This parameter causes LogonUser to create a primary token.   
