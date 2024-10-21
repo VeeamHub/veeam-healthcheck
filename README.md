@@ -16,7 +16,14 @@ This Windows utility is a lightweight executable that will generate an advanced 
 **System Requirements:**
 - Must be run as elevated user
 	- User must have Backup Administrator role in B&R
-- Veeam Backup & Replication v11, v12 OR Veeam Backup for Microsoft 365 v6, v7
+- Supported Platforms:
+    - Veeam Backup & Replication:
+      - v11
+      - v12
+    - Veeam Backup for Microsoft 365
+      - v6
+      - v7
+      - v8
 - Must be executed on system where Veeam Backup & Replication or Veeam Backup for Microsoft 365 is installed (no remote execution)
 - C:\ must have at least 500MB free space: Output is sent to C:\temp\vHC
 - Veeam Cloud Service Provider Servers are not supported.
