@@ -11,10 +11,10 @@
     <Company>Veeam</Company>
     <Authors>AdamC</Authors>
     <ApplicationIcon>Health_Check_Icon.ico</ApplicationIcon>
-    <AssemblyVersion>2.0.0.528</AssemblyVersion>
+    <AssemblyVersion>2.0.0.541</AssemblyVersion>
     <SignAssembly>False</SignAssembly>
     <DelaySign>false</DelaySign>
-    <FileVersion>2.0.0.528</FileVersion>
+    <FileVersion>2.0.0.541</FileVersion>
     <DebugType>full</DebugType>
 	  <SelfContained>true</SelfContained>
 	  <!--These 2 lines are what produce the single file utility. Possibly doesn't work...-->
@@ -51,15 +51,19 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Remove="Functions\Reporting\Html\VBR\VbrTables\NewFolder\**" />
     <Compile Remove="Softwares\**" />
     <Compile Remove="Startup\GUI\**" />
     <Compile Remove="VBO\**" />
+    <EmbeddedResource Remove="Functions\Reporting\Html\VBR\VbrTables\NewFolder\**" />
     <EmbeddedResource Remove="Softwares\**" />
     <EmbeddedResource Remove="Startup\GUI\**" />
     <EmbeddedResource Remove="VBO\**" />
+    <None Remove="Functions\Reporting\Html\VBR\VbrTables\NewFolder\**" />
     <None Remove="Softwares\**" />
     <None Remove="Startup\GUI\**" />
     <None Remove="VBO\**" />
+    <Page Remove="Functions\Reporting\Html\VBR\VbrTables\NewFolder\**" />
     <Page Remove="Softwares\**" />
     <Page Remove="Startup\GUI\**" />
     <Page Remove="VBO\**" />
@@ -73,6 +77,7 @@
   <ItemGroup>
     <None Remove="banner_string.txt" />
     <None Remove="css.css" />
+    <None Remove="Functions\Collection\PSCollections\Collect-VB365Data.ps1" />
     <None Remove="Functions\Reporting\Html\Shared\JavaScript1.js" />
     <None Remove="ReportScript.js" />
     <None Remove="Resources\Localization\VB365\vb365_vhcres.resources" />
@@ -90,11 +95,12 @@
     <None Remove="Tools\Scripts\Get-VBRConfig.ps1" />
     <None Remove="Tools\Scripts\Get-VeeamSessionReport.ps1" />
     <None Remove="Tools\Scripts\HealthCheck\VBR\Get-NasInfo.ps1" />
-    <None Remove="Tools\Scripts\test.ps1" />
-    <None Remove="Tools\Veeam.Hotfix.Detector.zip" />
   </ItemGroup>
 
   <ItemGroup>
+    <EmbeddedResource Include="Functions\Collection\PSCollections\Scripts\Collect-VB365Data.ps1">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </EmbeddedResource>
     <Content Include="Health_Check_Icon.ico" />
     <Content Include="Tools\Scripts\HealthCheck\VBR\Get-NasInfo.ps1">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
@@ -105,19 +111,17 @@
     <Content Include="Tools\Scripts\HotfixDetection\DumpManagedServerToText.ps1">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
-    <Content Include="Tools\Scripts\test.ps1">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
   </ItemGroup>
 
   <ItemGroup>
     <PackageReference Include="CsvHelper" Version="33.0.1" />
     <PackageReference Include="DinkToPdf.Standard" Version="1.1.0" />
     <PackageReference Include="Microsoft.Management.Infrastructure" Version="3.0.0" />
+    <PackageReference Include="Microsoft.PowerShell.SDK" Version="7.4.6" />
     <PackageReference Include="Node.js" Version="5.3.0" />
     <PackageReference Include="Npm" Version="3.5.2" />
     <PackageReference Include="System.Data.SqlClient" Version="4.8.6" />
-    <PackageReference Include="System.Management.Automation" Version="7.4.5" />
+    <PackageReference Include="System.Management.Automation" Version="7.4.6" />
     <PackageReference Include="Tailwind.Extensions.AspNetCore" Version="1.0.0" />
   </ItemGroup>
 
@@ -126,9 +130,6 @@
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
     <Content Include="Tools\Scripts\HealthCheck\VBR\Get-VeeamSessionReport.ps1">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
-    <Content Include="Tools\Veeam.Hotfix.Detector.zip">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
   </ItemGroup>
@@ -145,14 +146,14 @@
     </EmbeddedResource>
     <EmbeddedResource Include="Resources\Localization\vhcres.zh-cn.resources" />
     <EmbeddedResource Include="Resources\Localization\vhcres.zh-tw.resources" />
-    <Content Include="Tools\Scripts\HealthCheck\VB365\Collect-VB365Data.ps1">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
   </ItemGroup>
 
   <ItemGroup>
     <None Update="Resources\Localization\vhcres.txt">
       <Generator></Generator>
+    </None>
+    <None Update="Tools\Veeam.Hotfix.Detector.zip">
+      <CopyToOutputDirectory>Never</CopyToOutputDirectory>
     </None>
     <None Update="Veeam_HealthCheck_228x228.ico">
       <CopyToOutputDirectory>Never</CopyToOutputDirectory>
@@ -164,7 +165,6 @@
     <Folder Include="Functions\Reporting\CsvHandlers\Repositories\" />
     <Folder Include="Functions\Reporting\CsvHandlers\VBR\" />
     <Folder Include="Functions\Reporting\DataTypes\NewFolder\" />
-    <Folder Include="Functions\Reporting\Html\VBR\VbrTables\NewFolder\" />
     <Folder Include="Functions\Reporting\TableDatas\" />
     <Folder Include="Resources\Localization\VBR\" />
   </ItemGroup>

@@ -101,30 +101,9 @@ if ($global:SETTINGS.DebugInConsole) {
     }
 }
 
-if ($global:SETTINGS.Watch) {
-    $logWatcher = Start-Process powershell.exe -ArgumentList '-NoExit -Command "& { start-sleep -seconds 5; while ($true) { clear-host; cat C:\temp\vHC\Original\VB365\CollectorMain.log |select -last 40; sleep -seconds 3} }"' -PassThru
-    $taskmgr = Start-Process taskmgr.exe -PassThru
 
-    #Start-Process perfmon.exe -ArgumentList "/res"
-}
 
-$process = Get-Process -Id $pid
-$process.PriorityClass = 'BelowNormal'
 
-<#
-function Function-Template {
-    [CmdletBinding()]
-    param (
-        [Parameter(ValueFromPipeline)]$Object,
-        [string]$Prop
-        )
-    begin { }
-    process {
-        
-    }
-    end { }
-}
-#>
 class EndTimeComparer:System.Collections.IComparer {
     [int]Compare($x,$y) {
         return $y.EndTime.CompareTo($x.EndTime)
@@ -167,48 +146,6 @@ function Write-LogFile {
 }
 
 
-function Write-ResourceUsageToLog {
-    [CmdletBinding()]
-    param (
-        [string]$Message,
-        [ValidateSet("Main","Errors")][string]$LogName="Main",
-        [ValidateSet("TRACE", "PROFILE", "DEBUG", "INFO", "WARNING", "ERROR", "FATAL")][String]$LogLevel=[LogLevel]::DEBUG
-        )
-    begin { }
-    process {
-        if ([LogLevel]$LogLevel -ge [LogLevel]$global:SETTINGS.loglevel) {
-            $resourceUsageAfter = (Get-Process -id $pid) | Select-Object WS,CPU
-            $timeAfter = $global:collectorTimer.Elapsed.TotalSeconds
-            
-            #$previousTotalCpuUsage = ($global:ResourceUsageBefore | Measure-Object CPU -Sum).Sum
-            #$currentTotalCpuUsage = ($resourceUsageAfter | Measure-Object CPU -Sum).Sum - $previousTotalCpuUsage
-
-            #$previousPidCpuUsage =($global:ResourceUsageBefore | Where-Object {$_.Id -eq $pid}).CPU
-            $currentPidCpuUsage =$resourceUsageAfter.CPU - $global:ResourceUsageBefore.CPU
-            $currentTimeUsed = $timeAfter - $global:TimeBefore
-
-            $pctCpuUsage = $currentPidCpuUsage / $currentTimeUsed / ($processor | Measure-Object -Sum NumberOfLogicalProcessors).Sum
-
-            $memUsage = $resourceUsageAfter.WS - $global:ResourceUsageBefore.WS
-
-            $memMessage = ("New memory allocated since last message ($message): " + ($memUsage/1MB).ToString("0.00 MB"))
-            $cpuMessage = ("% CPU used since last message ($message): " + ($pctCpuUsage).ToString("0.00 %"))
-            
-            
-            if ($global:SETTINGS.DebugInConsole) {
-                Write-Debug "MEM: $memMessage"
-                Write-Debug "CPU: $cpuMessage"
-            }
-
-            Write-LogFile -Message "MEM: $memMessage" -LogName $LogName -LogLevel $LogLevel
-            Write-LogFile -Message "CPU: $cpuMessage" -LogName $LogName -LogLevel $LogLevel
-
-            $global:ResourceUsageBefore = $resourceUsageAfter
-            $global:TimeBefore = $timeAfter
-        }
-    }
-    end { }
-}
 
 function Lap {
     [CmdletBinding()]
@@ -233,20 +170,7 @@ function Lap {
     end { }
 }
 
-function Write-ElapsedAndMemUsage {
-    [CmdletBinding()]
-    param (
-        [string]$Message,
-        [ValidateSet("Main","Errors")][string]$LogName="Main",
-        [ValidateSet("TRACE", "PROFILE", "DEBUG", "INFO", "WARNING", "ERROR", "FATAL")][String]$LogLevel=[LogLevel]::DEBUG
-        )
-    begin { }
-    process {
-        Lap -Note $Message -LogLevel $LogLevel
-        Write-ResourceUsageToLog -Message $Message -LogName $LogName -LogLevel $LogLevel
-    }
-    end { }
-}
+
 
 function Join([string[]]$array, $Delimiter=", ", [switch]$KeepNulls) {
     if ($KeepNulls) {
@@ -368,15 +292,23 @@ function Expand-Expression {
                 
                 $BaseObject.GetType().Name
                 
+
                 if ($global:SETTINGS.ExportPartialXml) {
                     Write-LogFile -Message "`tObject(s) Exported." -LogName Errors -LogLevel ERROR -CorrelationId $correlationId
-                    $relatedObjects | ForEach-Object { ExportEnviroKey -Format XML -KeyName $_ }
-                    ExportEnviroKey -Format XML -KeyName $(($VBOEnvironment.GetEnumerator() | ? { $_.Value[0].GetType().Name -eq $BaseObject.GetType().Name }).Name)
+                    foreach ($relatedObject in $relatedObjects) {
+                        ExportEnviroKey -Format XML -KeyName $relatedObject
+                    }
+                    $baseObjectName = ($VBOEnvironment.GetEnumerator() | Where-Object { $_.Value[0].GetType().Name -eq $BaseObject.GetType().Name }).Name
+                    ExportEnviroKey -Format XML -KeyName $baseObjectName
                 }
+
                 if ($global:SETTINGS.ExportPartialJson) {
                     Write-LogFile -Message "`tObject(s) Exported." -LogName Errors -LogLevel ERROR -CorrelationId $correlationId
-                    $relatedObjects | ForEach-Object { ExportEnviroKey -Format JSON -KeyName $_ }
-                    ExportEnviroKey -Format JSON -KeyName $(($VBOEnvironment.GetEnumerator() | ? { $_.Value[0].GetType().Name -eq $BaseObject.GetType().Name }).Name)
+                    foreach ($relatedObject in $relatedObjects) {
+                        ExportEnviroKey -Format JSON -KeyName $relatedObject
+                    }
+                    $baseObjectName = ($VBOEnvironment.GetEnumerator() | Where-Object { $_.Value[0].GetType().Name -eq $BaseObject.GetType().Name }).Name
+                    ExportEnviroKey -Format JSON -KeyName $baseObjectName
                 }
 
                 $result.Value = $null;
@@ -632,66 +564,27 @@ function Get-VBOEnvironment {
         #Org settings:
         Write-Progress @progressSplat -PercentComplete ($progress++) -Status "Collecting organization..."
         $e.VBOOrganization = Get-VBOOrganization
-        Write-ElapsedAndMemUsage -Message "Collected: VBOOrganization" -LogLevel PROFILE
         $e.VBOOrganizationUsers = $e.VBOOrganization | ForEach-Object { Get-VBOOrganizationUser -Organization $_ }
-        Write-ElapsedAndMemUsage -Message "Collected: VBOOrganizationUsers" -LogLevel PROFILE
         $e.VBOApplication = $e.VBOOrganization | Get-VBOApplication
-        Write-ElapsedAndMemUsage -Message "Collected: VBOApplication" -LogLevel PROFILE
-            #Diabled Jun1/22 - Not used #$e.VBOBackupApplication = $e.VBOOrganization `
-                #Diabled Jun1/22 - Not used #| Where-Object {$_.Office365ExchangeConnectionSettings.AuthenticationType -ne [Veeam.Archiver.PowerShell.Model.Enums.VBOOffice365AuthenticationType]::Basic} `
-                #Diabled Jun1/22 - Not used #| Get-VBOBackupApplication
-        Write-ResourceUsageToLog -Message "Org collected"
+
 
         #infra settings:
         Write-Progress @progressSplat -PercentComplete ($progress++) -Status "Collecting backup infrastructure..."
         $e.VBOServerComponents = Get-VBOServerComponents
-        Write-ElapsedAndMemUsage -Message "Collected: VBOServerComponents" -LogLevel PROFILE
         $e.VBORepository = Get-VBORepository
-        Write-ElapsedAndMemUsage -Message "Collected: VBORepository" -LogLevel PROFILE
         $e.VBOObjectStorageRepository = Get-VBOObjectStorageRepository
-        Write-ElapsedAndMemUsage -Message "Collected: VBOObjectStorageRepository" -LogLevel PROFILE
         $e.VBOProxy = Get-VBOProxy
-        Write-ElapsedAndMemUsage -Message "Collected: VBOProxy" -LogLevel PROFILE
         $e.AzureInstance = Invoke-RestMethod -Headers @{"Metadata"="true"} -Method GET -Uri "http://169.254.169.254/metadata/instance?api-version=2021-02-01" -TimeoutSec 5
-        Write-ElapsedAndMemUsage -Message "Collected: AzureInstance" -LogLevel PROFILE
-        Write-ResourceUsageToLog -Message "Infra collected"
 
         #Archiver applainces
-        #Write-Progress @progressSplat -PercentComplete ($progress++) -Status "Collecting object storage & cloud settings..."
-        #$e.VBOAmazonInstanceType = Get-VBOAmazonInstanceType # these archiver settings need more work to collect https://helpcenter.veeam.com/docs/vbo365/powershell/get-vboamazoninstancetype.html?ver=60
-        #$e.VBOAmazonSecurityGroup = Get-VBOAmazonSecurityGroup
-        #$e.VBOAmazonSubnet = Get-VBOAmazonSubnet
-        #$e.VBOAmazonVPC = Get-VBOAmazonVPC
-        #$e.VBOAzureLocation = Get-VBOAzureLocation
-        #$e.VBOAzureResourceGroup = Get-VBOAzureResourceGroup
-        #$e.VBOAzureSubNet = Get-VBOAzureSubNet
-        #$e.VBOAzureVirtualMachineSize = Get-VBOAzureVirtualMachineSize
-        #$e.VBOAzureVirtualNetwork = Get-VBOAzureVirtualNetwork
-        #Object details
-        #Diabled Jun1/22 - Not used #$e.VBOAzureBlobAccount = Get-VBOAzureBlobAccount
-        #Diabled Jun1/22 - Not used #$e.VBOAzureServiceAccount = Get-VBOAzureServiceAccount
-        #$e.VBOAzureSubscription = Get-VBOAzureSubscription
-        #$e.VBOAzureBlobFolder = Get-VBOAzureBlobFolder
-        #Diabled Jun1/22 - Not used #$e.VBOAmazonS3Account = Get-VBOAmazonS3Account
-        #Diabled Jun1/22 - Not used #$e.VBOAmazonS3CompatibleAccount = Get-VBOAmazonS3CompatibleAccount
-        #$e.VBOAmazonS3Bucket = Get-VBOAmazonS3Bucket
-        #$e.VBOAmazonS3Folder = Get-VBOAmazonS3Folder
-        #Diabled Jun1/22 - Not used #$e.VBOEncryptionKey = Get-VBOEncryptionKey
-        #Write-ResourceUsageToLog -Message "Object & cloud collected"
+
 
         #jobs
         Lap "Collection: Job settings..."
         Write-Progress @progressSplat -PercentComplete ($progress++) -Status "Collecting Job settings..."
         $e.VBOJob = Get-VBOJob
-        Write-ElapsedAndMemUsage -Message "Collected: VBOJob " -LogLevel PROFILE
-        #Diabled Jun21/22 - Not used#$e.VBOBackupItem = $e.VBOJob | ForEach-Object { Get-VBOBackupItem -Job $_ | Select-Object @{n="Job";e={$_.Name}},*}
-            #Write-ElapsedAndMemUsage -Message "Collected: VBOBackupItem" -LogLevel PROFILE
-        #Diabled Jun21/22 - Not used#$e.VBOExcludedBackupItem = $e.VBOJob | ForEach-Object { Get-VBOExcludedBackupItem -Job $_ | Select-Object @{n="Job";e={$_.Name}},*}
-            #Write-ElapsedAndMemUsage -Message "Collected: VBOExcludedBackupItem" -LogLevel PROFILE
-        #Diabled Jun1/22 - Not used #$e.VBOOrganizationRetentionExclusion = $e.VBOOrganization | ForEach-Object { Get-VBOOrganizationRetentionExclusion -Organization $_ | Select-Object @{n="Job";e={$_}},*}
+        
         $e.VBOCopyJob = Get-VBOCopyJob
-        Write-ElapsedAndMemUsage -Message "Collected: VBOCopyJob " -LogLevel PROFILE
-        Write-ResourceUsageToLog -Message "Jobs collected"
 
         Write-Progress @progressSplat -PercentComplete ($progress++) -Status "Collecting entity details..."
         $e.VBOEntityData = @()
@@ -717,46 +610,27 @@ function Get-VBOEnvironment {
                 }
             }
         }
-        Write-ElapsedAndMemUsage -Message "Collected: VBOEntityData" -LogLevel PROFILE
-        Write-ResourceUsageToLog -Message "Entities collected"
 
         #backups
         Write-Progress @progressSplat -PercentComplete ($progress++) -Status "Collecting restore points..."
-        #Diabled Jun1/22 - Not used #$e.VBORestorePoint = Get-VBORestorePoint
-        Write-ResourceUsageToLog -Message "RPs collected"
         #Global
         Lap "Collection: Global settings..."
         Write-Progress @progressSplat -PercentComplete ($progress++) -Status "Collecting global settings..."
         $e.VBOLicense = Get-VBOLicense
-        Write-ElapsedAndMemUsage -Message "Collected: VBOLicense" -LogLevel PROFILE
-        #Diabled Jun1/22 - Not used #$e.VBOLicensedUser = Get-VBOLicensedUser
         $e.VBOFolderExclusions = Get-VBOFolderExclusions
-        Write-ElapsedAndMemUsage -Message "Collected: VBOFolderExclusions" -LogLevel PROFILE
         $e.VBOGlobalRetentionExclusion = Get-VBOGlobalRetentionExclusion
-        Write-ElapsedAndMemUsage -Message "Collected: VBOEmailSettings" -LogLevel PROFILE
         $e.VBOEmailSettings = Get-VBOEmailSettings
-        Write-ElapsedAndMemUsage -Message "Collected: VBOEmailSettings" -LogLevel PROFILE
         $e.VBOHistorySettings = Get-VBOHistorySettings
-        Write-ElapsedAndMemUsage -Message "Collected: VBOHistorySettings" -LogLevel PROFILE
         $e.VBOInternetProxySettings = Get-VBOInternetProxySettings
-        Write-ElapsedAndMemUsage -Message "Collected: VBOInternetProxySettings" -LogLevel PROFILE
-        Write-ResourceUsageToLog -Message "Global collected"
         #security
         Lap "Collection: Security settings..."
         Write-Progress @progressSplat -PercentComplete ($progress++) -Status "Collecting security settings..."
         $e.VBOTenantAuthenticationSettings = Get-VBOTenantAuthenticationSettings
-        Write-ElapsedAndMemUsage -Message "Collected: VBOTenantAuthenticationSettings" -LogLevel PROFILE
         $e.VBORestorePortalSettings = Get-VBORestorePortalSettings
-        Write-ElapsedAndMemUsage -Message "Collected: VBORestorePortalSettings" -LogLevel PROFILE
         $e.VBOOperatorAuthenticationSettings = Get-VBOOperatorAuthenticationSettings
-        Write-ElapsedAndMemUsage -Message "Collected: VBOOperatorAuthenticationSettings" -LogLevel PROFILE
         $e.VBORbacRole = Get-VBORbacRole
-        Write-ElapsedAndMemUsage -Message "Collected: VBORbacRole" -LogLevel PROFILE
         $e.VBORestAPISettings = Get-VBORestAPISettings
-        Write-ElapsedAndMemUsage -Message "Collected: VBORestAPISettings" -LogLevel PROFILE
         $e.VBOSecuritySettings = Get-VBOSecuritySettings
-        Write-ElapsedAndMemUsage -Message "Collected: VBOSecuritySettings" -LogLevel PROFILE
-        Write-ResourceUsageToLog -Message "Security collected"
         
         #stats
         Lap "Collection: Job & session stats..."
@@ -796,32 +670,16 @@ function Get-VBOEnvironment {
             $e.JobSessionIndex[$key].Latest = $e.JobSessionIndex[$key].All[0]
             $e.JobSessionIndex[$key].LatestComplete = foreach($session in $e.JobSessionIndex[$key].All) { if ($session.Status -in @("Success","Warning")) { $session;break } }
         }
-        Write-ElapsedAndMemUsage -Message "Collected: VBOJobSession" -LogLevel PROFILE
-        #Diabled Jun1/22 - Not used #$e.VBORestoreSession = Get-VBORestoreSession
         $e.VBOUsageData = $e.VBORepository | Where-Object {!($_.IsOutOfOrder -and $null -ne $_.ObjectStorageRepository)} | ForEach-Object { Get-VBOUsageData -Repository $_ } # added OutOfOrder exclusion for broken repos.
-        Write-ElapsedAndMemUsage -Message "Collected: VBOUsageData" -LogLevel PROFILE
-        #Diabled Jun1/22 - Not used #$e.VBODataRetrievalSession = Get-VBODataRetrievalSession
-        Write-ResourceUsageToLog -Message "Sessions & stats collected"
 
         #reports
-        #Lap "Collection: Generating Reports..."
-        #Write-Progress @progressSplat -PercentComplete ($progress++) -Status "Generating reports..."
-        #Diabled Jun1/22 - No longer used #Get-ChildItem -Path ($global:SETTINGS.OutputPath + "\Veeam_*Report*.csv") | Remove-Item -Force
-        #Diabled Jun1/22 - No longer used #$e.VBOOrganization | ForEach-Object { Get-VBOMailboxProtectionReport -Organization $_ -Path $global:SETTINGS.OutputPath -Format CSV; Start-Sleep -Seconds 1.1 }
-        #Diabled Jun1/22 - No longer used #$e.VBOOrganization | ForEach-Object { Get-VBOStorageConsumptionReport -StartTime (Get-Date).AddDays(-$global:SETTINGS.ReportingIntervalDays) -EndTime (Get-Date) -Path $global:SETTINGS.OutputPath -Format CSV; Start-Sleep -Seconds 1.1 }
-        #Diabled Jun1/22 - No longer used #$e.VBOOrganization | ForEach-Object { Get-VBOLicenseOverviewReport -StartTime (Get-Date).AddDays(-$global:SETTINGS.ReportingIntervalDays) -EndTime (Get-Date) -Path $global:SETTINGS.OutputPath -Format CSV; Start-Sleep -Seconds 1.1 }
-        #Write-ResourceUsageToLog -Message "Reports generated"
 
         Lap "Collection: Parsing VMC Log..."
         Write-Progress @progressSplat -PercentComplete ($progress++) -Status "Parsing VMC Log..."
         $e.VMCLog = Import-VMCFile
-        Write-ElapsedAndMemUsage -Message "Collected: VMCLog" -LogLevel PROFILE
-        Write-ResourceUsageToLog -Message "VMC Log Parsed"
 
         #Lap "Collection: Parse Job Logs..."
-        #Write-Progress @progressSplat -PercentComplete ($progress++) -Status "Parsing Job Log..."
-        #Diabled Jun1/22 - Needs improvement #$e.PermissionsCheck = Import-PermissionsFromLogs -Jobs $e.VBOJob
-        #Write-ResourceUsageToLog -Message "Job Logs Parsed"
+
 
         Write-Progress @progressSplat -PercentComplete 100 -Status "Done"
         Start-Sleep -Seconds 1
@@ -850,7 +708,6 @@ Set-Alias -Name MDE -Value New-DataTableEntry -Force -Option Private -ErrorActio
 $global:CollectorTimer = [System.Diagnostics.Stopwatch]::StartNew()
 $global:stopwatch = [System.Diagnostics.Stopwatch]::StartNew()
 $Error.Clear()
-$global:ResourceUsageBefore = (Get-Process -Id $pid) | Select-Object WS,CPU
 $global:TimeBefore = $global:CollectorTimer.Elapsed.TotalSeconds
 
 $processor = (Get-ComputerInfo -Property CsProcessors).CsProcessors
@@ -870,18 +727,15 @@ if ($global:SETTINGS.VBOServerFqdnOrIp -ne "localhost") {
 }
 
 Lap "Ready to collect"
-Write-ResourceUsageToLog -Message "Start"
 
 if (!$global:SETTINGS.SkipCollect) { 
     $WarningPreference = "SilentlyContinue"
     # Start the data collection
-    #Write-Host "Collecting VBO Environment`'s stats..."
     Write-LogFile "Collecting VBO Environment`'s stats..." -LogLevel INFO
 
     $Global:VBOEnvironment = Get-VBOEnvironment 
     if ($global:SETTINGS.DebugInConsole) { $v = $Global:VBOEnvironment; $v.Keys; }
 
-    Write-ResourceUsageToLog -Message "Done collecting"
     Write-LogFile "Collection Stats:" -LogLevel INFO
     $VBOEnvironment.GetEnumerator() | % { Write-LogFile $("`t"+$_.Name.PadRight(40," ") + $_.Value.Count ) }
 
@@ -889,12 +743,10 @@ if (!$global:SETTINGS.SkipCollect) {
     if ($global:SETTINGS.ExportJson) {
         $VBOEnvironment.GetEnumerator() | Where-Object { $_.Name -match "^VBO|^VMC" }  | ConvertTo-Json -Depth 100 | Out-File ($global:SETTINGS.OutputPath.Trim('\')+"\VBOEnvironment.json") -Force
         [GC]::Collect()
-        Write-ElapsedAndMemUsage -Message "JSON Exported"
     }
     if ($global:SETTINGS.ExportXml) {
         $VBOEnvironment.GetEnumerator() | Where-Object { $_.Name -match "^VBO|^VMC" } | Export-Clixml -Depth 100 -Path ($global:SETTINGS.OutputPath.Trim('\')+"\VBOEnvironment.xml") -Force
         [GC]::Collect()
-        Write-ElapsedAndMemUsage -Message "XML Exported"
     }
 
     $WarningPreference = "continue"
@@ -1095,7 +947,6 @@ function GetEndTime {
 # NOTE: You can use "*" as the first character of a column name in order to trigger debugging of the expanded expression.
 
 Write-LogFile "Mapping CSV Structures..." -LogLevel INFO
-Write-ElapsedAndMemUsage -Message "Start Mapping"
 $progress=0
 $progressSplat = @{Id=2; Activity="Building maps..."}
 Write-Progress @progressSplat -PercentComplete ($progress++) -Status "Starting...";
@@ -1122,7 +973,6 @@ $map.Controller = $Global:VBOEnvironment.VMCLog.HostDetails | mde @(
     'VM SKU=>$Global:VBOEnvironment.AzureInstance.compute.sku'
     'VM Size=>$Global:VBOEnvironment.AzureInstance.compute.vmSize'
 )
-Write-ElapsedAndMemUsage -Message "Mapped Controller" -LogLevel PROFILE
 
 Write-LogFile -Message "Mapping Controller Drives..." -LogLevel DEBUG
 $map.ControllerDrives = Get-PhysicalDisk | mde @(
@@ -1138,7 +988,6 @@ $map.ControllerDrives = Get-PhysicalDisk | mde @(
     'Health Status=>HealthStatus'
     'Boot Drive=>(get-disk -Number $.DeviceId).IsBoot'
 )
-Write-ElapsedAndMemUsage -Message "Mapped Controller drives" -LogLevel PROFILE
 
 Write-LogFile -Message "Mapping Global..." -LogLevel DEBUG
 Write-Progress @progressSplat -PercentComplete ($progress++) -Status "Global...";
@@ -1159,7 +1008,6 @@ $map.Global = $Global:VBOEnvironment.VBOLicense | mde @(
     <#fixed Jul 21#>'Notify On=>Join((($Global:VBOEnvironment.VBOEmailSettings | select NotifyOn*,Supress*).psobject.Properties | ? { $_.Value -eq $true}).Name.Replace("NotifyOn",""))'
     'Automatic Updates?=>$Global:VBOEnvironment.VMCLog.SettingsDetails.UpdatesAutoCheckEnabled'
 )
-Write-ElapsedAndMemUsage -Message "Mapped Global" -LogLevel PROFILE
 
 Write-LogFile -Message "Mapping Security..." -LogLevel DEBUG
 Write-Progress @progressSplat -PercentComplete ($progress++) -Status "Security...";
@@ -1192,7 +1040,6 @@ $map.Security = 1 | mde @(
     'Operator Auth Cert Expires=>$expiryDate = $Global:VBOEnvironment.VBOOperatorAuthenticationSettings.CertificateExpirationDate; if ($expiryDate -ne [datetime]::MinValue) { $expiryDate.ToShortDateString() }'
     'Operator Auth Cert Self-Signed?=>$Global:VBOEnvironment.VBOOperatorAuthenticationSettings.CertificateIssuedTo -eq $global:VBOEnvironment.VBOOperatorAuthenticationSettings.CertificateIssuedBy'
 )
-Write-ElapsedAndMemUsage -Message "Mapped Security" -LogLevel PROFILE
 
 Write-LogFile -Message "Mapping RBAC Usage..." -LogLevel DEBUG
 Write-Progress @progressSplat -PercentComplete ($progress++) -Status "RBACRoles...";
@@ -1204,17 +1051,8 @@ $map.RBACRoles = $Global:VBOEnvironment.VBORbacRole | mde @(
     'Selected Items=>Join($.SelectedItems.DisplayName)'
     'Excluded Items=>Join($.ExcludedItems.DisplayName)'
 )
-Write-ElapsedAndMemUsage -Message "Mapped RBAC" -LogLevel PROFILE
 
-<#
-Write-LogFile -Message "Mapping Permissions Check..." -LogLevel DEBUG
-Write-Progress @progressSplat -PercentComplete ($progress++) -Status "Permissions Check...";
-$map.Permissions = $Global:VBOEnvironment.PermissionsCheck.Values | mde @(
-    'Type'
-    'Organization'
-    'API'
-    'Permission'
-)#>
+
 Write-LogFile -Message "Mapping Proxies..." -LogLevel DEBUG
 Write-Progress @progressSplat -PercentComplete ($progress++) -Status "Proxies...";
 $map.Proxies = $Global:VBOEnvironment.VBOProxy | mde @(
@@ -1241,7 +1079,6 @@ $map.Proxies = $Global:VBOEnvironment.VBOProxy | mde @(
     'RAM=>(($Global:VBOEnvironment.VMCLog.ProxyDetails | ? { $.Id -eq $_.ProxyID }).RAMTotalSize/1GB).ToString("###0 GB")' #updated 3/23/23 per feature request
     'Extended Logging?=>($VBOEnvironment.VBOServerComponents | ? { $.Id -eq $_.Id -and $_.Name -eq "Proxy" }).ExtendedLoggingEnabled'
 )
-Write-ElapsedAndMemUsage -Message "Mapped Proxies" -LogLevel PROFILE
 
 Write-LogFile -Message "Mapping Repositories..." -LogLevel DEBUG
 Write-Progress @progressSplat -PercentComplete ($progress++) -Status "Repositories...";
@@ -1266,9 +1103,6 @@ $map.LocalRepositories = $Global:VBOEnvironment.VBORepository | mde @(
     'Free=>($.FreeSpace/1TB).ToString("#,##0.000 TB") +" ("+ (($.FreeSpace/$.Capacity)/1TB).ToString("#,##0.00 %") + ")"' #updated 3/23/23 per feature request
     'Data Stored=>$repoUsage = ($Global:VBOEnvironment.VBOUsageData | ? { $_.RepositoryId -eq $.Id}); $SpaceUsed = if (($repoUsage.ObjectStorageUsedSpace | measure -Sum).Sum/1TB -gt 0) {($repoUsage.ObjectStorageUsedSpace | measure -Sum).Sum/1TB} else {($repoUsage.UsedSpace | measure -Sum).Sum/1TB}; $SpaceUsed.ToString("#,##0.000 TB")'
     'Cache Space Used=>((($Global:VBOEnvironment.VBOUsageData | ? { $_.RepositoryId -eq $.Id}).LocalCacheUsedSpace | measure -Sum).Sum/1TB).ToString("#,##0.000 TB")'
-    #Dropped Jun 17 #'Local Space Used=>((($Global:VBOEnvironment.VBOUsageData | ? { $_.RepositoryId -eq $.Id}).UsedSpace | measure -Sum).Sum/1TB).ToString("#,##0.000 TB")'
-    #Dropped Jun 17 #'Object Space Used=>((($Global:VBOEnvironment.VBOUsageData | ? { $_.RepositoryId -eq $.Id}).ObjectStorageUsedSpace | measure -Sum).Sum/1TB).ToString("#,##0.000 TB")'
-    #the below isnt perfect, as its based on creationtime not a true per day amount; its also based on repo change not dataset change....
     #replaced below with change to a GB rate rather than %. Then it reflects just the change in the data transferred and not against the repo storage.
     '!Calcs=>$changesByDay = (((@($Global:VBOEnvironment.VBOJob) + @($Global:VBOEnvironment.VBOCopyJob) | ? { $.Id -eq $_.Repository.Id }).Id.Guid | % {$Global:VBOEnvironment.JobSessionIndex[$_].LastXSessionsComplete})| select @{n="CreationDate"; e={$_.CreationTime.Date}},* | sort CreationDate -Descending | group CreationDate | % { $_.Group.Statistics.TransferredData | ConvertData -To "GB" -Format "0.000000" | measure -Sum }).Sum;
         $weeklyChange = ($changesByDay | select -first 7 | measure -Sum).Sum;
@@ -1277,22 +1111,7 @@ $map.LocalRepositories = $Global:VBOEnvironment.VBORepository | mde @(
         $dailyChange90p = $changesByDay | 95P -Percentile 90;'
         'Daily Change Rate=>$dailyChangeAvg.ToString("#,##0.000 GB") + " (avg);<br/>" + $dailyChangeMed.ToString("#,##0.000 GB") + " (med.);<br/>" + $dailyChange90p.ToString("#,##0.000 GB") + " (90th)"' #uses $weeklyChange from object above.
     <#replaced aug 11/22. See above #
-    '!OLD Daily Change Rate=>$changesByDay = (($VBOEnvironment.VBOJobSession | ? {($VBOEnvironment.VBOJob | ? { $_.Repository.Id -eq $.Id }).Id -eq $_.JobId })| select @{n="CreationDate"; e={$_.CreationTime.Date}},* | sort CreationDate -Descending | group CreationDate | % { $_.Group.Statistics.TransferredData | ConvertData -To "GB" -Format "0.000000" | measure -Sum }).Sum;
-        $weeklyChange = ($changesByDay | select -first 7 | measure -Sum).Sum;
-        $dailyChangeAvg = ($changesByDay | measure -Average).Average
-        #$dailyChange95p = $changesByDay | 95P
-        
-        $repoUsage = ($Global:VBOEnvironment.VBOUsageData | ? { $_.RepositoryId -eq $.Id})
-        $isObject = $null -ne $.ObjectStorageRepository #($repoUsage.ObjectStorageUsedSpace | measure -Sum).Sum/1GB -gt 0
-        $GBUsed = if ($isObject) {($repoUsage.ObjectStorageUsedSpace | measure -Sum).Sum/1GB} else {($repoUsage.UsedSpace | measure -Sum).Sum/1GB}
 
-        if ($GBUsed -gt 0) {
-            $DCR = $dailyChangeAvg/$GBUsed * $(if ($isObject) {0.5} else {0.9}) ################## HARD CODED COMPRESSION RATES ARE AN APPROXIMATION ##############
-            $DCR.ToString("~##0.000%")
-        }'
-    'Daily Change Rate=>($weeklyChange/7).ToString("#,##0.000 GB")' #uses $weeklyChange from object above.
-    #>
-    #'!OLD_Retention=>($.RetentionPeriod.ToString() -replace "(Years?)(.+)","`$2 `$1" )+", "+$.RetentionType+", Applied "+$.RetentionFrequencyType'
     <#fixed Jul 21#>'Retention=>if ($.CustomRetentionPeriodType -eq "Months") {
         $period = ($.RetentionPeriod.value__/12);
         if ($period -le 25) {
@@ -1305,7 +1124,6 @@ $map.LocalRepositories = $Global:VBOEnvironment.VBORepository | mde @(
     };
     return $retPeriod + ", " + $.RetentionType + ", Applied " + $.RetentionFrequencyType'
 )
-Write-ElapsedAndMemUsage -Message "Mapped Local Repos" -LogLevel PROFILE
 
 Write-LogFile -Message "Mapping Object Repositories..." -LogLevel DEBUG
 Write-Progress @progressSplat -PercentComplete ($progress++) -Status "ObjectRepositories...";
@@ -1322,7 +1140,6 @@ $map.ObjectRepositories = $Global:VBOEnvironment.VBOObjectStorageRepository | md
     'Bound Repo=>($Global:VBOEnvironment.VBORepository | Where-Object {$.id -in $_.ObjectStorageRepository.Id }).Name'
 )
 
-Write-ElapsedAndMemUsage -Message "Mapped Object Storage" -LogLevel PROFILE
 
 Write-LogFile -Message "Mapping Organizations..." -LogLevel DEBUG
 Write-Progress @progressSplat -PercentComplete ($progress++) -Status "Organizations...";
@@ -1341,7 +1158,6 @@ $map.Organizations = $Global:VBOEnvironment.VBOOrganization | mde @(
     'Grant SC Admin=>GrantAccessToSiteCollections'
     'Aux Accounts/Apps=>[math]::Max($.BackupAccounts.Count,$.BackupApplications.Count)'
 )
-Write-ElapsedAndMemUsage -Message "Mapped Orgs" -LogLevel PROFILE
 
 Write-LogFile -Message "Mapping Jobs..." -LogLevel DEBUG
 Write-Progress @progressSplat -PercentComplete ($progress++) -Status "Jobs...";
@@ -1355,8 +1171,6 @@ $map.Jobs = @($Global:VBOEnvironment.VBOJob) + @($Global:VBOEnvironment.VBOCopyJ
     #'Processing Options=>@(if ($.SelectedItems.Mailbox.Count -gt 0) {"Mailbox"}; if ($.SelectedItems.ArchiveMailbox.Count -gt 0) {"Archive"}; if ($.SelectedItems.OneDrive.Count -gt 0) {"OneDrive"}; if ($.SelectedItems.Sites.Count -gt 0 -or "Site" -in $.SelectedItems.Type) {"Site"}; if ($.SelectedItems.Teams.Count -gt 0 -or "Team" -in $.SelectedItems.Type) {"Teams"}; if ($.SelectedItems.GroupMailbox.Count -gt 0) {"Group Mailbox"}; if ($.SelectedItems.GroupSite.Count -gt 0) {"Group Site"}) -join ", "'
     'Selected Objects=>$objectCountStr = $Global:VBOEnvironment.JobSessionIndex[$($.Id.Guid)].LatestComplete; [Regex]::Match($objectCountStr.Log.Title,"(?<=Found )(\d+)(?= objects)").Value'
     'Excluded Objects=>$objectCountStr = $Global:VBOEnvironment.JobSessionIndex[$($.Id.Guid)].LatestComplete; [Regex]::Match($objectCountStr.Log.Title,"(?<=Found )(\d+)(?= excluded objects)").Value'
-    #replaced aug 11/22 with above # <#Fixed jul 21#>'Selected Objects=>$objectCountStr = ($Global:VBOEnvironment.VBOJobSession | Where-Object { $_.JobId -eq $.Id } | Sort-Object CreationTime -Descending | Select-Object -First 1); [Regex]::Match($objectCountStr.Log.Title,"(?<=Found )(\d+)(?= objects)").Value' #OLD: used to look at defined things selected. now looks at actual resolved. #$.SelectedItems.Count
-    #replaced aug 11/22 with above # #<#Fixed jul 21#>'Excluded Objects=>$objectCountStr = ($Global:VBOEnvironment.VBOJobSession | Where-Object { $_.JobId -eq $.Id } | Sort-Object CreationTime -Descending | Select-Object -First 1); [Regex]::Match($objectCountStr.Log.Title,"(?<=Found )(\d+)(?= excluded objects)").Value' #OLD: used to look at defined things selected. now looks at actual resolved. #$.ExcludedItems.Count'
     'Repository'
     $(
         if (CheckVersion -UseInternalVersion 12.) {
@@ -1377,7 +1191,6 @@ $map.Jobs = @($Global:VBOEnvironment.VBOJob) + @($Global:VBOEnvironment.VBOCopyJ
     } else { "Not scheduled" }'
     'Related Job=>if ($null -eq  $.BackupJob) { $Global:VBOEnvironment.VBOCopyJob.Name | ? { $.Name -in $Global:VBOEnvironment.VBOCopyJob.BackupJob.Name} } else { $.BackupJob.Name }'
 )
-Write-ElapsedAndMemUsage -Message "Mapped Jobs" -LogLevel PROFILE
 
 Write-LogFile -Message "Mapping Job Stats..." -LogLevel DEBUG
 Write-Progress @progressSplat -PercentComplete ($progress++) -Status "JobStats...";
@@ -1406,7 +1219,6 @@ $map.JobStats = (@($Global:VBOEnvironment.VBOJob) + @($Global:VBOEnvironment.VBO
     'Job Avg Throughput=>(($.Group.Statistics.TransferredData | ConvertData -To "MB" -Format "0.0000" | measure -Sum).Sum / ($.Group | select @{n="Duration";e={ $(if ($_.Status -eq "Running") { (get-date)-$_.CreationTime } else { $_.EndTime-$_.CreationTime } ).TotalSeconds}} | ? { $_.Duration -gt 0 } | measure Duration -Sum).Sum).ToString("#,##0.000 MB/s")'
     'Job Avg Processing Rate=>(($.Group.Statistics | measure ProcessedObjects -Sum).Sum / ($.Group | select @{n="Duration";e={ $(if ($_.Status -eq "Running") { (get-date)-$_.CreationTime } else { $_.EndTime-$_.CreationTime } ).TotalSeconds}} | ? { $_.Duration -gt 0 } | measure Duration -Sum).Sum).ToString("#,##0.000 items/s")'
 )
-Write-ElapsedAndMemUsage -Message "Mapped Job Stats" -LogLevel PROFILE
 
 Write-LogFile -Message "Mapping Processing/Task Stats..." -LogLevel DEBUG
 Write-Progress @progressSplat -PercentComplete ($progress++) -Status "ProcessingStats...";
@@ -1522,7 +1334,6 @@ $map.ProcessingStats = $sessionCollection | Group-Object JobName | mde @(
 )
 #transform the output for CSV
 $map.ProcessingStats = ($map.ProcessingStats | ForEach-Object { foreach ($op in @("Startup","Exclude","Found","Processing per Object","Processing per Session","Wrapup")) { $_ | Select-Object Name,@{n="Operation";e={$op}},*$op* }} | ConvertTo-Json) -replace "Startup\s|Exclude\s|Found\s|Processing per Object\s|Processing per Session\s|Wrapup\s","" | convertfrom-json
-Write-ElapsedAndMemUsage -Message "Mapped Processing/Task Stats" -LogLevel PROFILE
     
 Write-LogFile -Message "Mapping Job Sessions..." -LogLevel DEBUG
 Write-Progress @progressSplat -PercentComplete ($progress++) -Status "JobSessions...";
@@ -1536,17 +1347,10 @@ $map.JobSessions = (@($Global:VBOEnvironment.VBOJob) + @($Global:VBOEnvironment.
     'Avg. Throughput=>(($.Statistics.TransferredData | ConvertData -To "MB" -Format "0.0000")/$sessWithDuration.Duration.TotalSeconds).ToString("#,##0.000 MB/s")'
     'Log=>Join -Array $($.Log.Title | ? { !$_.Contains("[Success]") }) -Delimiter "`r`n<br />"'
 )
-Write-ElapsedAndMemUsage -Message "Mapped Sessions" -LogLevel PROFILE
 
 Write-LogFile -Message "Mapping Protection Status..." -LogLevel DEBUG
 Write-Progress @progressSplat -PercentComplete ($progress++) -Status "Protection Status...";
-<#$map.ProtectionStatus = (Get-Item -Path ($global:SETTINGS.OutputPath + "\Veeam_MailboxProtectionReport*.csv")).FullName | Import-Csv | Where-Object { $_."Protection Status" -eq "Unprotected" -or $_."Last Backup Date" -lt (Get-date).AddDays(-$global:SETTINGS.ReportingIntervalDays)} | Sort-Object "Protection Status",User -Descending | mde @(
-    'User=>Mailbox'
-    'E-mail=>$."E-mail"'
-    'Organization'
-    'Protection Status=> if ($."Protection Status" -eq "Protected") { "Stale Backup" } else { "Unprotected" }'
-    'Last Backup Date=>$."Last Backup Date"'
-)#>
+
 
 $global:CollectorCurrentProcessItems = $Global:VBOEnvironment.VBOOrganizationUsers.Count
 $map.ProtectionStatus = $Global:VBOEnvironment.VBOOrganizationUsers | Select-Object -ExcludeProperty "IsBackedup" | mde @(
@@ -1569,14 +1373,12 @@ $map.ProtectionStatus = $Global:VBOEnvironment.VBOOrganizationUsers | Select-Obj
     'Has Backup=>!!(($PRIVATE:Entity.MailboxBackedUpTime, $PRIVATE:Entity.ArchiveBackedUpTime, $PRIVATE:Entity.OneDriveBackedUpTime, $PRIVATE:Entity.PersonalSiteBackedUpTime) | measure-Object -Maximum).Maximum'
     'Is Stale=> if ($self."Has Backup") { (($PRIVATE:Entity.MailboxBackedUpTime, $PRIVATE:Entity.ArchiveBackedUpTime, $PRIVATE:Entity.OneDriveBackedUpTime, $PRIVATE:Entity.PersonalSiteBackedUpTime) | measure-Object -Maximum).Maximum -lt (Get-date).AddDays(-$global:SETTINGS.ReportingIntervalDays) }'
 )
-Write-ElapsedAndMemUsage -Message "Mapped Protection Status" -LogLevel PROFILE
 Write-Progress @progressSplat -PercentComplete ($progress++) -Status "Done." -Completed
 
 
 ######### END MAPS ############
 
 
-Write-ElapsedAndMemUsage -Message "Done Mapping. Aggregating next." -LogLevel DEBUG
 Write-LogFile -Message "Done mapping CSV structures." -LogLevel INFO
 Write-LogFile -Message "Aggregating results..." -LogLevel INFO
 
@@ -1604,13 +1406,11 @@ foreach ($sectionName in $map.Keys) {
 }
 
 
-Write-ElapsedAndMemUsage -Message "Done Aggregating. Exporting Next." -LogLevel DEBUG
 Write-LogFile -Message "Done Aggregating." -LogLevel INFO
 Write-LogFile -Message "Exporting to CSVs..." -LogLevel INFO
 
 $Global:HealthCheckResult.psobject.Properties.Name | ForEach-Object { $Global:HealthCheckResult.$_ | ConvertTo-Csv -NoTypeInformation | Out-File $($global:SETTINGS.OutputPath.Trim('\') + "\" +$_+".csv") -Force }
 
-Write-ElapsedAndMemUsage -Message "Done export" -LogLevel DEBUG
 Write-LogFile -Message "Done Exporting to CSVs." -LogLevel INFO
 
 if ($Error.Count -gt 0) {
@@ -1619,11 +1419,9 @@ if ($Error.Count -gt 0) {
     $Error | ForEach-Object {Write-LogFile -Message ($_.ToString() + "`r`n" + $_.InvocationInfo.Line.ToString() + "`r`n" + $_.ScriptStackTrace.ToString()+ "`r`n" +$_.Exception.StackTrace.ToString()) -LogName Errors -LogLevel DEBUG }
 }
 
-Write-ResourceUsageToLog -Message "All done"
 Write-LogFile -Message "Finished." -LogLevel INFO
 Write-LogFile -Message "Time Elapsed: $($CollectorTimer.Elapsed.TotalSeconds | ToLongHHmmss)" -LogLevel INFO
 Write-LogFile -Message "Environment: Proxies=$(@($HealthCheckResult.Proxies).Count); Repos=$(@($HealthCheckResult.LocalRepositories).Count); ObjRepos=$(@($HealthCheckResult.ObjectRepositories).Count); Jobs=$(@($HealthCheckResult.Jobs).Count); Sessions=$(@($VBOEnvironment.VBOJobSession).Count); Objects=$(($HealthCheckResult.Proxies | Measure-Object 'Objects Managed' -Sum).Sum); Users=$(@($HealthCheckResult.ProtectionStatus).Count); Entities=$(@($VBOEnvironment.VBOEntityData).Count)" -LogLevel INFO
-Write-LogFile -Message $($proc = (get-process -Id $PID); "CPU (s): " + $proc.CPU.ToString() + " / Private Mem (MB): " +$proc.PM/1MB + " / Working Set (MB): " + $proc.WorkingSet/1MB) -LogLevel INFO
 Write-LogFile -Message ("CPU Average: " + ($proc.CPU / $CollectorTimer.Elapsed.TotalSeconds / ($processor | Measure-Object -Sum NumberOfLogicalProcessors).Sum).ToString("0.00 %")) -LogLevel INFO
 $memory2 =  (Get-ComputerInfo -Property *Memory*)
 Write-LogFile -LogLevel INFO -Message ("System Memory: " + [Math]::Round($memory2.OsFreePhysicalMemory/1MB,2) + " GB free of " + $memory2.CsPhyicallyInstalledMemory/1MB + " GB; Delta=" + [math]::Round(($memory2.OsFreePhysicalMemory-$memory.OsFreePhysicalMemory)/1MB,2) + "GB")
@@ -1637,10 +1435,3 @@ if ([LogLevel]$global:SETTINGS.LogLevel -le [LogLevel]::DEBUG ) {
     Compress-Archive -Path ($Global:SETTINGS.OutputPath+"\..\..\") -DestinationPath ($Global:SETTINGS.OutputPath+"\..\..\DebugCollection.zip") -CompressionLevel Optimal -Force
 }
 
-Start-Sleep -Seconds 10
-if ($null -ne $logWatcher -and !$logWatcher.HasExited) {
-    $logWatcher.Kill()
-}
-if ($null -ne $taskmgr -and !$taskmgr.HasExited) {
-    $taskmgr.Kill()
-}

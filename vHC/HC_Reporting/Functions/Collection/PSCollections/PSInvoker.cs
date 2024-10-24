@@ -5,6 +5,8 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Management.Automation;
+using System.Reflection;
+
 //using System.Management.Automation;
 using System.Runtime.InteropServices;
 using VeeamHealthCheck.Shared;
@@ -325,42 +327,61 @@ namespace VeeamHealthCheck.Functions.Collection.PSCollections
             };
         }
 
-        public void InvokeVb365Collect()
+        public void InvokeVb365CollectEmbedded()
         {
             log.Info("[PS] Enter VB365 collection invoker...", false);
-            var scriptFile = _vb365Script;
-            UnblockFile(scriptFile);
 
-            var startInfo = new ProcessStartInfo()
-            {
-                FileName = "powershell.exe",
-                Arguments = $"-NoProfile -ExecutionPolicy unrestricted -file \"{scriptFile}\" -ReportingIntervalDays \"{CGlobals.ReportDays}\"",
-                UseShellExecute = false,
-                CreateNoWindow = true
-            };
-            log.Info("[PS] Starting VB365 Collection Powershell process", false);
-            log.Info("[PS] [ARGS]: " + startInfo.Arguments, false);
-            var result = Process.Start(startInfo);
-            log.Info("[PS] Process started with ID: " + result.Id.ToString(), false);
-            result.WaitForExit();
-            log.Info("[PS] VB365 collection complete!", false);
+            string scriptContent = GetEmbeddedScript("VeeamHealthCheck.Functions.Collection.PSCollections.Scripts.Collect-VB365Data.ps1");
 
-        }
-        private ProcessStartInfo psInfo(string scriptFile)
-        {
-            return new ProcessStartInfo()
+            if (string.IsNullOrEmpty(scriptContent))
             {
-                FileName = "powershell.exe",
-                Arguments = $"",
-                UseShellExecute = false,
-                CreateNoWindow = true
-            };
+                log.Error("[PS] Failed to load embedded script.", false);
+                return;
+            }
+
+            ExecuteEmbeddedScript(scriptContent);
         }
-        private string Vb365ScriptFile()
+        private void ExecuteEmbeddedScript(string scriptContent)
         {
-            string[] script = Directory.GetFiles(_vb365Script);
-            return script[0];
+            using (PowerShell ps = PowerShell.Create())
+            {
+                ps.AddScript(scriptContent);
+
+                log.Info("[PS] Starting VB365 Collection PowerShell process", false);
+                var results = ps.Invoke();
+
+                if (ps.HadErrors)
+                {
+                    foreach (var error in ps.Streams.Error)
+                    {
+                        log.Error($"[PS] {error}", false);
+                    }
+                }
+                else
+                {
+                    log.Info("[PS] VB365 collection complete!", false);
+                }
+            }
         }
+        private string GetEmbeddedScript(string resourceName)
+        {
+            var assembly = Assembly.GetExecutingAssembly();
+            using (var stream = assembly.GetManifestResourceStream(resourceName))
+            {
+                if (stream == null)
+                {
+                    log.Error($"[PS] Resource '{resourceName}' not found.", false);
+                    return null;
+                }
+
+                using (var reader = new StreamReader(stream))
+                {
+                    return reader.ReadToEnd();
+                }
+            }
+        }
+
+
         private void UnblockFile(string file)
         {
             try
