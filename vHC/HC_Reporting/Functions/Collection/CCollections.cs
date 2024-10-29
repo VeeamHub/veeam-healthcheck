@@ -6,7 +6,6 @@ using VeeamHealthCheck.Functions.Collection.DB;
 using VeeamHealthCheck.Functions.Collection.LogParser;
 using VeeamHealthCheck.Functions.Collection.Security;
 using VeeamHealthCheck.Shared;
-using Microsoft.Management.Infrastructure;
 using VeeamHealthCheck.Functions.Collection.PSCollections;
 using System.Windows;
 using VeeamHealthCheck.Shared.Logging;
@@ -152,13 +151,11 @@ namespace VeeamHealthCheck.Functions.Collection
         }
         private bool TestPsMFA(PSInvoker p)
         {
-            CScripts scripts = new();
 
             return p.TestMfa();
         }
         private bool TestPsMFAVb365(PSInvoker p)
         {
-            CScripts scripts = new();
 
             return p.TestMfaVB365();
         }

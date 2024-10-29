@@ -17,7 +17,6 @@ using VeeamHealthCheck.Shared;
 using VeeamHealthCheck.Shared.Logging;
 using System.Text.Json;
 using VeeamHealthCheck.Functions.Reporting.Html.VBR.VbrTables.Jobs_Info;
-using System.Management.Automation;
 using VeeamHealthCheck.Functions.Reporting.Html.DataFormers;
 using VeeamHealthCheck.Functions.Reporting.Html.VBR.VbrTables;
 using VeeamHealthCheck.Scrubber;

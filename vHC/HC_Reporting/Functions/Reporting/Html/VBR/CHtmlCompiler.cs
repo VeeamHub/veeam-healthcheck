@@ -1,6 +1,5 @@
 ﻿// Copyright (c) 2021, Adam Congdon <adam.congdon2@gmail.com>
 // MIT License
-using Microsoft.CodeAnalysis;
 using System;
 using System.IO;
 using System.Net;
