@@ -345,11 +345,20 @@ namespace VeeamHealthCheck.Functions.Collection.PSCollections
         {
             using (PowerShell ps = PowerShell.Create())
             {
-                ps.AddScript(scriptContent);
+                ps.AddScript(scriptContent)
+                    .AddParameter("ReportingIntervalDays", CGlobals.ReportDays);
+
 
                 log.Info("[PS] Starting VB365 Collection PowerShell process", false);
-                var results = ps.Invoke();
-
+                try
+                {
+                    var results = ps.Invoke();
+                }
+                catch(Exception ex)
+                {
+                    log.Error("[PS] VB365 collection failed.", false);
+                    log.Error(ex.Message, false);
+                }
                 if (ps.HadErrors)
                 {
                     foreach (var error in ps.Streams.Error)
@@ -380,7 +389,27 @@ namespace VeeamHealthCheck.Functions.Collection.PSCollections
                 }
             }
         }
+        public void InvokeVb365Collect()
+        {
+            log.Info("[PS] Enter VB365 collection invoker...", false);
+            var scriptFile = _vb365Script;
+            UnblockFile(scriptFile);
 
+            var startInfo = new ProcessStartInfo()
+            {
+                FileName = "powershell.exe",
+                Arguments = $"-NoProfile -ExecutionPolicy unrestricted -file \"{scriptFile}\" -ReportingIntervalDays \"{CGlobals.ReportDays}\"",
+                UseShellExecute = false,
+                CreateNoWindow = true
+            };
+            log.Info("[PS] Starting VB365 Collection Powershell process", false);
+            log.Info("[PS] [ARGS]: " + startInfo.Arguments, false);
+            var result = Process.Start(startInfo);
+            log.Info("[PS] Process started with ID: " + result.Id.ToString(), false);
+            result.WaitForExit();
+            log.Info("[PS] VB365 collection complete!", false);
+
+        }
 
         private void UnblockFile(string file)
         {

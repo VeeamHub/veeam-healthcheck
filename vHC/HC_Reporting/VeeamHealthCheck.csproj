@@ -11,10 +11,10 @@
     <Company>Veeam</Company>
     <Authors>AdamC</Authors>
     <ApplicationIcon>Health_Check_Icon.ico</ApplicationIcon>
-    <AssemblyVersion>2.0.0.541</AssemblyVersion>
+    <AssemblyVersion>2.0.0.546</AssemblyVersion>
     <SignAssembly>False</SignAssembly>
     <DelaySign>false</DelaySign>
-    <FileVersion>2.0.0.541</FileVersion>
+    <FileVersion>2.0.0.546</FileVersion>
     <DebugType>full</DebugType>
 	  <SelfContained>true</SelfContained>
 	  <!--These 2 lines are what produce the single file utility. Possibly doesn't work...-->
@@ -94,12 +94,13 @@
     <None Remove="Tools\Scripts\DumpManagedServerToText.ps1" />
     <None Remove="Tools\Scripts\Get-VBRConfig.ps1" />
     <None Remove="Tools\Scripts\Get-VeeamSessionReport.ps1" />
+    <None Remove="Tools\Scripts\HealthCheck\VB365\Collect-VB365Data.ps1" />
     <None Remove="Tools\Scripts\HealthCheck\VBR\Get-NasInfo.ps1" />
   </ItemGroup>
 
   <ItemGroup>
     <EmbeddedResource Include="Functions\Collection\PSCollections\Scripts\Collect-VB365Data.ps1">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      <CopyToOutputDirectory>Never</CopyToOutputDirectory>
     </EmbeddedResource>
     <Content Include="Health_Check_Icon.ico" />
     <Content Include="Tools\Scripts\HealthCheck\VBR\Get-NasInfo.ps1">
@@ -146,6 +147,9 @@
     </EmbeddedResource>
     <EmbeddedResource Include="Resources\Localization\vhcres.zh-cn.resources" />
     <EmbeddedResource Include="Resources\Localization\vhcres.zh-tw.resources" />
+    <Content Include="Tools\Scripts\HealthCheck\VB365\Collect-VB365Data.ps1">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
   </ItemGroup>
 
   <ItemGroup>
