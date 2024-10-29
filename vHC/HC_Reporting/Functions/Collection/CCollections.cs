@@ -180,6 +180,7 @@ namespace VeeamHealthCheck.Functions.Collection
             if (CGlobals.IsVb365)
             {
                 CGlobals.Logger.Info("Entering vb365 ps invoker", false);
+                //p.InvokeVb365CollectEmbedded();
                 p.InvokeVb365Collect();
             }
         }

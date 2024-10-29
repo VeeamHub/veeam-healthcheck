@@ -5,6 +5,8 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Management.Automation;
+using System.Reflection;
+
 //using System.Management.Automation;
 using System.Runtime.InteropServices;
 using VeeamHealthCheck.Shared;
@@ -325,6 +327,68 @@ namespace VeeamHealthCheck.Functions.Collection.PSCollections
             };
         }
 
+        public void InvokeVb365CollectEmbedded()
+        {
+            log.Info("[PS] Enter VB365 collection invoker...", false);
+
+            string scriptContent = GetEmbeddedScript("VeeamHealthCheck.Functions.Collection.PSCollections.Scripts.Collect-VB365Data.ps1");
+
+            if (string.IsNullOrEmpty(scriptContent))
+            {
+                log.Error("[PS] Failed to load embedded script.", false);
+                return;
+            }
+
+            ExecuteEmbeddedScript(scriptContent);
+        }
+        private void ExecuteEmbeddedScript(string scriptContent)
+        {
+            using (PowerShell ps = PowerShell.Create())
+            {
+                ps.AddScript(scriptContent)
+                    .AddParameter("ReportingIntervalDays", CGlobals.ReportDays);
+
+
+                log.Info("[PS] Starting VB365 Collection PowerShell process", false);
+                try
+                {
+                    var results = ps.Invoke();
+                }
+                catch(Exception ex)
+                {
+                    log.Error("[PS] VB365 collection failed.", false);
+                    log.Error(ex.Message, false);
+                }
+                if (ps.HadErrors)
+                {
+                    foreach (var error in ps.Streams.Error)
+                    {
+                        log.Error($"[PS] {error}", false);
+                    }
+                }
+                else
+                {
+                    log.Info("[PS] VB365 collection complete!", false);
+                }
+            }
+        }
+        private string GetEmbeddedScript(string resourceName)
+        {
+            var assembly = Assembly.GetExecutingAssembly();
+            using (var stream = assembly.GetManifestResourceStream(resourceName))
+            {
+                if (stream == null)
+                {
+                    log.Error($"[PS] Resource '{resourceName}' not found.", false);
+                    return null;
+                }
+
+                using (var reader = new StreamReader(stream))
+                {
+                    return reader.ReadToEnd();
+                }
+            }
+        }
         public void InvokeVb365Collect()
         {
             log.Info("[PS] Enter VB365 collection invoker...", false);
@@ -346,21 +410,7 @@ namespace VeeamHealthCheck.Functions.Collection.PSCollections
             log.Info("[PS] VB365 collection complete!", false);
 
         }
-        private ProcessStartInfo psInfo(string scriptFile)
-        {
-            return new ProcessStartInfo()
-            {
-                FileName = "powershell.exe",
-                Arguments = $"",
-                UseShellExecute = false,
-                CreateNoWindow = true
-            };
-        }
-        private string Vb365ScriptFile()
-        {
-            string[] script = Directory.GetFiles(_vb365Script);
-            return script[0];
-        }
+
         private void UnblockFile(string file)
         {
             try
