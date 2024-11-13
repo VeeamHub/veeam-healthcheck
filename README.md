@@ -7,7 +7,7 @@ This Windows utility is a lightweight executable that will generate an advanced 
 1. This tool is community supported and not an officially supported Veeam product.
 2. The tool does not automatically phone home, or reach out to any network infrastructure beyond the Veeam Backup and Replication components or the Veeam Backup for 365 components if appropriate.
 
-**[Sample Report](https://htmlpreview.github.io/?https://github.com/VeeamHub/veeam-healthcheck/blob/master/SAMPLE/Veeam_HealthCheck_Report_live-backup_2022.01.10_102711.html)**
+**[Sample Report](https://htmlpreview.github.io/?https://github.com/VeeamHub/veeam-healthcheck/blob/master/SAMPLE/Veeam%20Health%20Check%20Report_VBR_anon_2024.11.01.101304.html)**
 
 ## 📗 Documentation
 
