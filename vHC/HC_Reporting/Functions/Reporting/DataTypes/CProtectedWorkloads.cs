@@ -8,11 +8,15 @@ namespace VeeamHealthCheck.Functions.Reporting.DataTypes
         public VirtualWorkloads hyperVWorkloads { get; set; }
         public List<NasWorkloads> nasWorkloads { get; set; }
         public PhysicalWorkloads physicalWorkloads { get; set; }
-        public CProtectedWorkloads() {
+        public List<EntraWorkloads> entraWorkloads { get; set; }
+
+        public CProtectedWorkloads()
+        {
             vmWareWorkloads = new VirtualWorkloads();
             hyperVWorkloads = new VirtualWorkloads();
             nasWorkloads = new List<NasWorkloads>();
             physicalWorkloads = new PhysicalWorkloads();
+            entraWorkloads = new List<EntraWorkloads>();
         }
 
     }
@@ -39,5 +43,10 @@ namespace VeeamHealthCheck.Functions.Reporting.DataTypes
         public int NotProtected { get; set; }
         public int Protected { get; set; }
     }
+    public class EntraWorkloads
+    {
+        public string TenantName { get; set; }
+        public string CacheRepoName { get; set; }
 
+    }
 }
