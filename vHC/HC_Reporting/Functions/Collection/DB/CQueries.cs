@@ -2,15 +2,19 @@
 // MIT License
 using System;
 using System.Data;
+using System.Data.SqlClient;
 using System.IO;
+using System.Security.Principal;
 using VeeamHealthCheck.Shared;
 using VeeamHealthCheck.Shared.Logging;
+using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace VeeamHealthCheck.Functions.Collection.DB
 {
     class CQueries
     {
         private CLogger log = CGlobals.Logger;
+        private readonly string _cString;
 
         private DataTable _sqlInfo;
         private string _sqlEdition;
@@ -24,9 +28,10 @@ namespace VeeamHealthCheck.Functions.Collection.DB
         public DataTable JobTypes { get { return _jobTypes; } }
 
 
-        public CDbWorker dbWorker = new();
         public CQueries()
         {
+            CDbAccessor dbs = new CDbAccessor();
+            _cString = dbs.DbAccessorString();
             try
             {
                 GetSqlServerInfo();
@@ -111,7 +116,7 @@ namespace VeeamHealthCheck.Functions.Collection.DB
             string query = "Select @@version";
 
             //CDbWorker d = new();
-            DataTable dt = Fetch(query);
+            DataTable dt = FetchSqlServerVersion();
 
             if (dt == null)
             {
@@ -145,41 +150,22 @@ namespace VeeamHealthCheck.Functions.Collection.DB
             log.Info("getting sql server version..done!");
 
         }
-
-        private void GetSqlServerInfo()
-        {
-            log.Info("getting sql server info");
-            string query = "select cpu_count, hyperthread_ratio, physical_memory_kb from sys.dm_os_sys_info";
-            _sqlInfo = Fetch(query);
-            log.Info("getting sql server info..done!");
-        }
-
-        private void GetBjobInfo()
-        {
-            string query = "select type,name,repository_id, included_size  from [Bjobs]";
-            _jobInfo = Fetch(query);
-
-            try { DumpDataToCsv(_jobInfo); }
-            catch(Exception e){ log.Error("Failed to dump bjobs to csv.."); log.Error(e.Message); }
-        }
-        private void GetJobSummary()
-        {
-            log.Info("getting job summary info");
-            string query = "select type from [Bjobs]";
-            _jobTypes = Fetch(query);
-            log.Info("getting job summary info..ok!");
-        }
-
-        private DataTable Fetch(string query)
+        private DataTable FetchSqlServerVersion()
         {
             try
             {
-                log.Info("fetching sql data..");
-                //CDbWorker d = new();
-                DataTable dt = dbWorker.ExecQuery(query, new System.Collections.Generic.Dictionary<string, object>());
+                using var connection = new SqlConnection(_cString); ;
+                using SqlCommand command = new SqlCommand("Select @@version", connection);
 
-                log.Info("fetching sql data..ok!");
-                return dt;
+
+                connection.Open();
+                DataTable t = new();
+
+                t.Load(command.ExecuteReader());
+
+                connection.Close();
+                log.Info("executing sql query..done!");
+                return t;
             }
             catch (Exception e)
             {
@@ -187,6 +173,105 @@ namespace VeeamHealthCheck.Functions.Collection.DB
                 return null;
             }
         }
+
+        private void GetSqlServerInfo()
+        {
+            log.Info("getting sql server info");
+            _sqlInfo = FetchSqlServerInfo();
+            log.Info("getting sql server info..done!");
+        }
+        private DataTable FetchSqlServerInfo()
+        {
+            try
+            {
+                using var connection = new SqlConnection(_cString);
+                string query = "select cpu_count, hyperthread_ratio, physical_memory_kb from sys.dm_os_sys_info";
+
+                using SqlCommand command = new SqlCommand(query, connection);
+
+
+                connection.Open();
+                DataTable t = new();
+
+                t.Load(command.ExecuteReader());
+
+                connection.Close();
+                log.Info("executing sql query..done!");
+                return t;
+            }
+            catch (Exception e)
+            {
+                log.Error(e.Message);
+                return null;
+            }
+        }
+
+        private void GetBjobInfo()
+        {
+            _jobInfo = FetchBJobInfo();
+
+            try { DumpDataToCsv(_jobInfo); }
+            catch(Exception e){ log.Error("Failed to dump bjobs to csv.."); log.Error(e.Message); }
+        }
+        private DataTable FetchBJobInfo()
+        {
+            try
+            {
+                using var connection = new SqlConnection(_cString);
+                string query = "select type,name,repository_id, included_size  from [Bjobs]";
+
+                using SqlCommand command = new SqlCommand(query, connection);
+
+
+                connection.Open();
+                DataTable t = new();
+
+                t.Load(command.ExecuteReader());
+
+                connection.Close();
+                log.Info("executing sql query..done!");
+                return t;
+            }
+            catch (Exception e)
+            {
+                log.Error(e.Message);
+                return null;
+            }
+        }
+
+        private void GetJobSummary()
+        {
+            log.Info("getting job summary info");
+            _jobTypes = FetchJobSummaryInfo();
+            log.Info("getting job summary info..ok!");
+        }
+        private DataTable FetchJobSummaryInfo()
+        {
+            try
+            {
+                using var connection = new SqlConnection(_cString);
+                string query = "select type from [Bjobs]";
+
+                using SqlCommand command = new SqlCommand(query, connection);
+
+
+                connection.Open();
+                DataTable t = new();
+
+                t.Load(command.ExecuteReader());
+
+                connection.Close();
+                log.Info("executing sql query..done!");
+                return t;
+            }
+            catch (Exception e)
+            {
+                log.Error(e.Message);
+                return null;
+            }
+        }
+
+
     }
 
 }
