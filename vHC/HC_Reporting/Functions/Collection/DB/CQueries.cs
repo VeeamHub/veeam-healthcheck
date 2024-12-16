@@ -109,6 +109,7 @@ namespace VeeamHealthCheck.Functions.Collection.DB
         {
             log.Info("getting sql server version");
             string query = "Select @@version";
+
             //CDbWorker d = new();
             DataTable dt = Fetch(query);
 
@@ -175,7 +176,7 @@ namespace VeeamHealthCheck.Functions.Collection.DB
             {
                 log.Info("fetching sql data..");
                 //CDbWorker d = new();
-                DataTable dt = dbWorker.ExecQuery(query);
+                DataTable dt = dbWorker.ExecQuery(query, new System.Collections.Generic.Dictionary<string, object>());
 
                 log.Info("fetching sql data..ok!");
                 return dt;

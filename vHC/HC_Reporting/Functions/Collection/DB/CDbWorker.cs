@@ -26,13 +26,18 @@ namespace VeeamHealthCheck.Functions.Collection.DB
 
 
 
-        public DataTable ExecQuery(string query)
+        public DataTable ExecQuery(string query, Dictionary<string, object> parameters)
         {
             log.Info("executing sql query: " + query);
             try
             {
                 using var connection = new SqlConnection(_cString); ;
                 using SqlCommand command = new SqlCommand(query, connection);
+                foreach (var param in parameters)
+                {
+                    command.Parameters.AddWithValue(param.Key, param.Value);
+                }
+
                 connection.Open();
                 DataTable t = new();
 
