@@ -63,8 +63,9 @@ function sortTableByColumn(table, column, asc = true) {
         const aColText = a.querySelector(`td:nth-child(${column + 1})`).textContent.trim();
         const bColText = b.querySelector(`td:nth-child(${column + 1})`).textContent.trim();
 
-        const aStartsWithNumber = /^\d/.test(aColText);
-        const bStartsWithNumber = /^\d/.test(bColText);
+		const aStartsWithNumber = /^\d/.test(aColText); // Safe regex pattern
+		const bStartsWithNumber = /^\d/.test(bColText); // Safe regex pattern
+
 
         if (aStartsWithNumber && bStartsWithNumber) {
             const aColNumber = parseFloat(aColText);
