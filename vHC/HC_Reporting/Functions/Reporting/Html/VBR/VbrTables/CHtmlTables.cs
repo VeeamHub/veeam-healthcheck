@@ -694,6 +694,8 @@ namespace VeeamHealthCheck.Html.VBR
                 s += _form.TableData((_df._physNotProtNames.Distinct().Count() + _df._physProtNames.Distinct().Count()).ToString(), "");
                 s += _form.TableData(_df._physProtNames.Distinct().Count().ToString(), "");
                 s += _form.TableData(_df._physNotProtNames.Distinct().Count().ToString(), "");
+                s += "</tr>";
+                s += "</table>";
 
                 try
                 {
@@ -701,29 +703,38 @@ namespace VeeamHealthCheck.Html.VBR
                     NasSourceInfo n = new();
 
                     cProtectedWorkloads.nasWorkloads = n.NasTable().nasWorkloads;
-                    s += "</tr>";
-                    s += "</table>";
-                    s += "<h3>NAS Backups</h3>";
-                    s += "<div id=\"nasTable\" border=\"1\" class=\"content-table\"></div>";
-                    s += _form.Table();
-                    s += "<tr>";
-                    s += _form.TableHeader("File Share Types", "Total File Share Types found in environment");
-                    s += _form.TableHeader("Total Share Size", "Total size of all shares found in environment");
-                    s += _form.TableHeader("Total Files Count", "Total files found in all shares");
-                    s += _form.TableHeader("Total Folders Count", "Total folders found in all shares");
-                    s += _form.TableHeaderEnd();
-                    s += _form.TableBodyStart();
 
-                    foreach (var load in cProtectedWorkloads.nasWorkloads)
+
+                    s += "<h3>NAS Backups</h3>";
+                    if (cProtectedWorkloads.nasWorkloads.Count() == 0)
                     {
-                        s += "<tr>";
-                        s += _form.TableData(load.FileShareType, "");
-                        s += _form.TableData(load.TotalShareSize, "");
-                        s += _form.TableData(load.TotalFilesCount.ToString(), "");
-                        s += _form.TableData(load.TotalFoldersCount.ToString(), "");
-                        s += "</tr>";
+                        s += "<p>No NAS Workloads detected</p>";
                     }
-                    s += _form.EndTable();
+                    else
+                    {
+                        s += "<div id=\"nasTable\" border=\"1\" class=\"content-table\"></div>";
+                        s += _form.Table();
+                        s += "<tr>";
+                        s += _form.TableHeader("File Share Types", "Total File Share Types found in environment");
+                        s += _form.TableHeader("Total Share Size", "Total size of all shares found in environment");
+                        s += _form.TableHeader("Total Files Count", "Total files found in all shares");
+                        s += _form.TableHeader("Total Folders Count", "Total folders found in all shares");
+                        s += _form.TableHeaderEnd();
+                        s += _form.TableBodyStart();
+
+
+                        foreach (var load in cProtectedWorkloads.nasWorkloads)
+                        {
+                            s += "<tr>";
+                            s += _form.TableData(load.FileShareType, "");
+                            s += _form.TableData(load.TotalShareSize, "");
+                            s += _form.TableData(load.TotalFilesCount.ToString(), "");
+                            s += _form.TableData(load.TotalFoldersCount.ToString(), "");
+                            s += "</tr>";
+                        }
+                        s += _form.EndTable();
+                    }
+
 
                 }
                 catch (Exception e)
