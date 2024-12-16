@@ -434,6 +434,28 @@ namespace VeeamHealthCheck.Functions.Reporting.CsvHandlers
                 return res.GetRecords<CNasVmcInfo>().ToList();
             return null;
         }
+        public IEnumerable<CEntraTenant> GetDynamicEntraTenants()
+        {
+            var res = VbrFileReader("entraTenants");
+            if (res != null)
+                return res.GetRecords<CEntraTenant>();
+            return null;
+        }
+        public IEnumerable<CEntraLogJobs> GetDynamicEntraLogJobs()
+        {
+            var res = VbrFileReader("entraLogJob");
+            if (res != null)
+                return res.GetRecords<CEntraLogJobs>();
+            return null;
+        }
+        public IEnumerable<CEntraTenantJobs> GetDynamicEntraTenantJobs()
+        {
+            var res = VbrFileReader("entraTenantJob");
+            if (res != null)
+                return res.GetRecords<CEntraTenantJobs>();
+            return null;
+        }
+
 
         public IEnumerable<CObjectShareVmcInfo> GetDynamicNasObjectSize()
         {

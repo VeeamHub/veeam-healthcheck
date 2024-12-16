@@ -17,6 +17,7 @@ using VeeamHealthCheck.Shared;
 using VeeamHealthCheck.Shared.Logging;
 using System.Text.Json;
 using VeeamHealthCheck.Functions.Reporting.Html.VBR.VbrTables.Jobs_Info;
+using System.Management.Automation;
 using VeeamHealthCheck.Functions.Reporting.Html.DataFormers;
 using VeeamHealthCheck.Functions.Reporting.Html.VBR.VbrTables;
 using VeeamHealthCheck.Scrubber;
@@ -285,8 +286,8 @@ namespace VeeamHealthCheck.Html.VBR
             }
 
             s += _form.TableData(b.ConfigBackupLastResult, "");
-            if(b.ConfigBackupEncryption)
-                {
+            if (b.ConfigBackupEncryption)
+            {
                 s += _form.TableData(_form.True, "");
             }
             else
@@ -408,7 +409,7 @@ namespace VeeamHealthCheck.Html.VBR
                 log.Error("Security Compliance Data import failed. ERROR:");
                 log.Error("\t" + e.Message);
             }
-            
+
 
 
             s += _form.SectionEnd(summary);
@@ -560,7 +561,7 @@ namespace VeeamHealthCheck.Html.VBR
 
                 foreach (var d in list)
                 {
-                    if(d.Value == 0)
+                    if (d.Value == 0)
                         continue;
                     s += "<tr>";
                     s += _form.TableDataLeftAligned(d.Key, "");
@@ -601,9 +602,9 @@ namespace VeeamHealthCheck.Html.VBR
                 CJobSummaryTable st = new();
                 Dictionary<string, int> types = st.JobSummaryTable();
 
-                foreach(var t in types)
+                foreach (var t in types)
                 {
-                    if(t.Value == 0)
+                    if (t.Value == 0)
                     {
                         s += "<tr>";
                         s += _form.TableDataLeftAligned(t.Key, "");
@@ -712,8 +713,8 @@ namespace VeeamHealthCheck.Html.VBR
                     s += _form.TableHeader("Total Folders Count", "Total folders found in all shares");
                     s += _form.TableHeaderEnd();
                     s += _form.TableBodyStart();
-                    
-                    foreach(var load in cProtectedWorkloads.nasWorkloads)
+
+                    foreach (var load in cProtectedWorkloads.nasWorkloads)
                     {
                         s += "<tr>";
                         s += _form.TableData(load.FileShareType, "");
@@ -729,6 +730,52 @@ namespace VeeamHealthCheck.Html.VBR
                 {
                     log.Error("Failed to add NAS table to HTML report", false);
                     log.Error(e.Message, false);
+                }
+
+                // add in Entra ID Tenants Protected
+                try
+                {
+                    CProtectedWorkloads cProtectedWorkloads = new();
+                    CEntraTenants n = new();
+
+                    cProtectedWorkloads.entraWorkloads = n.EntraTable().entraWorkloads;
+                    s += "</tr>";
+                    s += "</table>";
+                    s += "<h3>Entra Backups</h3>";
+                    // Small table for Entra Tenant Count:
+                    s += "<div id=\"entraTenantCount\" border=\"1\" class=\"content-table\"></div>";
+                    s += _form.Table();
+                    s += "<tr>";
+                    s += _form.TableHeader("Tenant Count:", "Number of tenants backed up by this backup server");
+                    s += _form.TableHeaderEnd();
+                    s += _form.TableBodyStart();
+
+                    s += "<tr>";
+                    s += _form.TableData(cProtectedWorkloads.entraWorkloads.Count.ToString(), "");
+                    s += "</tr>";
+                    s += _form.EndTable();
+
+                    // Table for Entra Tenants
+                    s += "<div id=\"entraTable\" border=\"1\" class=\"content-table\"></div>";
+                    s += _form.Table();
+                    s += "<tr>";
+                    s += _form.TableHeader("Tenant Name", "Name of the Entra ID Tenant being backed up.");
+                    s += _form.TableHeader("Cache Repo", "Cache Repo selected for the tentant");
+                    s += _form.TableHeaderEnd();
+                    s += _form.TableBodyStart();
+
+                    foreach (var load in cProtectedWorkloads.entraWorkloads)
+                    {
+                        s += "<tr>";
+                        s += _form.TableData(load.TenantName, "");
+                        s += _form.TableData(load.CacheRepoName, "");
+                        s += "</tr>";
+                    }
+                    s += _form.EndTable();
+                }
+                catch (Exception ex)
+                {
+
                 }
 
 
@@ -799,11 +846,11 @@ namespace VeeamHealthCheck.Html.VBR
                         s += _form.TableData(_form.True, "");
                     else
                         s += _form.TableData(_form.False, "");
-                    if(d.IsRepo)
+                    if (d.IsRepo)
                         s += _form.TableData(_form.True, "");
                     else
                         s += _form.TableData(_form.False, "");
-                    if(d.IsWan)
+                    if (d.IsWan)
                         s += _form.TableData(_form.True, "");
                     else
                         s += _form.TableData(_form.False, "");
@@ -1234,7 +1281,7 @@ _form.TableHeader(VbrLocalizationHelper.SbrExt15, VbrLocalizationHelper.SbrExt15
                         s += _form.TableData(_form.True, "");
                     else
                         s += _form.TableData(_form.False, "");
-                    
+
                     s += _form.TableData(d.Host, "");
                     s += _form.TableData(d.Path, "");
                     s += _form.TableData(d.FreeSpace.ToString(), "");
@@ -1605,7 +1652,7 @@ _form.TableHeader(VbrLocalizationHelper.SbrExt15, VbrLocalizationHelper.SbrExt15
                                 s += _form.TableData(tSizeGB.ToString() + " GB", "");
                             }
                         }
-                        
+
 
                         // end each table/section
                         s += _form.SectionEnd(summary);
@@ -1616,21 +1663,37 @@ _form.TableHeader(VbrLocalizationHelper.SbrExt15, VbrLocalizationHelper.SbrExt15
                     {
                         CTapeJobInfoTable tapeTable = new();
                         string tt = tapeTable.TapeJobTable();
-                        if(tt != "")
+                        if (tt != "")
                         {
                             string tableButton = _form.SectionStartWithButton("jobTable", "Tape Jobs", "");
                             s += tableButton;
                             s += tt;
                         }
 
-                        
+
                     }
                     catch (Exception e)
                     {
                         log.Error("Tape Job Data import failed. ERROR:");
                         log.Error("\t" + e.Message);
                     }
-
+                    // Add Entra Table
+                    try
+                    {
+                        CEntraJobsTable entraTable = new();
+                        string et = entraTable.Table();
+                        if (et != "")
+                        {
+                            string tableButton = _form.SectionStartWithButton("jobTable", "Entra Jobs", "");
+                            s += tableButton;
+                            s += et;
+                        }
+                    }
+                    catch (Exception e)
+                    {
+                        log.Error("Entra Job Data import failed. ERROR:");
+                        log.Error("\t" + e.Message);
+                    }
                     s += _form.SectionEnd(summary);
                 }
                 catch (Exception e)
@@ -1651,6 +1714,7 @@ _form.TableHeader(VbrLocalizationHelper.SbrExt15, VbrLocalizationHelper.SbrExt15
             s += _form.SectionEnd(summary);
             return s;
         }
+
         private string SetGenericJobTablHeader(bool useSourceSize)
         {
             string s = "";
@@ -1702,4 +1766,5 @@ _form.TableHeader(VbrLocalizationHelper.SbrExt15, VbrLocalizationHelper.SbrExt15
         }
 
     }
+
 }

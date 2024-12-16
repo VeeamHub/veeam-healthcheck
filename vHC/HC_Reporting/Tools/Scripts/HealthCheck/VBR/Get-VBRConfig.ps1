@@ -217,6 +217,51 @@ $cdpProxy | Export-csv -Path $("$ReportPath\$VBRServer" + '_CdpProxy.csv') -NoTy
 #$fileProxy| Export-csv -Path $("$ReportPath\$VBRServer" + '_FileProxy.csv') -NoTypeInformation
 $hvProxy | Export-csv -Path $("$ReportPath\$VBRServer" + '_HvProxy.csv') -NoTypeInformation
 $nasProxyOut | Export-csv -Path $("$ReportPath\$VBRServer" + '_NasProxy.csv') -NoTypeInformation
+
+## ENtra ID
+try{
+    $entraTenant = Get-VBREntraIDTenant
+
+
+
+    # Define the custom object with properties tenantName and CacheRepoName
+    $entraIDTenant = [PSCustomObject]@{
+        tenantName = $entraTenant.Name
+        CacheRepoName = $entraTenant.cacherepository.name
+    }
+    #$entraIDTenant
+    
+    
+    $eIdLogJobs = Get-VBREntraIDLogsBackupJob
+    $entraIdLogJobs = [PSCustomObject]@{
+        Name = $eIdLogJobs.Name
+        Tenant = $eIdLogJobs.BackupObject.Tenant.Name
+        shortTermRetType = $eIdLogJobs.Name
+        ShortTermRepo = $eIdLogJobs.ShortTermBackupRepository.Name
+        ShortTermRepoRetention = $eIdLogJobs.ShortTermRetentionPeriod
+    
+        CopyModeEnabled = $eIdLogJobs.EnableCopyMode
+        SecondaryTarget = $eIdLogJobs.SecondaryTarget
+    }
+    #$entraIdLogJobs
+    
+    $eIdTenantBackup = Get-VBREntraIDTenantBackupJob
+    
+    $entraIdTenantJobs = [PSCustomObject]@{
+        Name = $eIdTenantBackup.Tenant.Name
+        RetentionPolicy = $eIdTenantBackup.RetentionPolicy
+    
+    }
+   # $entraIdTenantJobs
+    
+}
+catch{
+    Write-LogFile("Error on Entra ID collection. ")
+}
+$entraIdLogJobs | Export-Csv -Path $("$ReportPath\$VBRServer" + '_entraLogJob.csv') -NoTypeInformation
+$entraIDTenant | Export-Csv -Path $("$ReportPath\$VBRServer" + '_entraTenants.csv') -NoTypeInformation
+$entraIdTenantJobs | Export-Csv -Path $("$ReportPath\$VBRServer" + '_entraTenantJob.csv') -NoTypeInformation
+
 # cap extent grab
 try {
     $message = "Collecting capcity tier info..."

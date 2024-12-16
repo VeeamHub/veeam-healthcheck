@@ -11,10 +11,10 @@
     <Company>Veeam</Company>
     <Authors>AdamC</Authors>
     <ApplicationIcon>Health_Check_Icon.ico</ApplicationIcon>
-    <AssemblyVersion>2.0.0.554</AssemblyVersion>
+    <AssemblyVersion>2.0.0.558</AssemblyVersion>
     <SignAssembly>False</SignAssembly>
     <DelaySign>false</DelaySign>
-    <FileVersion>2.0.0.554</FileVersion>
+    <FileVersion>2.0.0.558</FileVersion>
     <DebugType>full</DebugType>
 	  <SelfContained>true</SelfContained>
 	  <!--These 2 lines are what produce the single file utility. Possibly doesn't work...-->
@@ -99,6 +99,9 @@
   </ItemGroup>
 
   <ItemGroup>
+    <EmbeddedResource Include="Functions\Collection\PSCollections\Scripts\Collect-VB365Data.ps1">
+      <CopyToOutputDirectory>Never</CopyToOutputDirectory>
+    </EmbeddedResource>
     <Content Include="Health_Check_Icon.ico" />
     <Content Include="Tools\Scripts\HealthCheck\VBR\Get-NasInfo.ps1">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
@@ -114,7 +117,13 @@
   <ItemGroup>
     <PackageReference Include="CsvHelper" Version="33.0.1" />
     <PackageReference Include="DinkToPdf.Standard" Version="1.1.0" />
+    <PackageReference Include="Microsoft.Management.Infrastructure" Version="3.0.0" />
+    <PackageReference Include="Microsoft.PowerShell.SDK" Version="7.4.6" />
+    <PackageReference Include="Node.js" Version="5.3.0" />
+    <PackageReference Include="Npm" Version="3.5.2" />
     <PackageReference Include="System.Data.SqlClient" Version="4.8.6" />
+    <PackageReference Include="System.Management.Automation" Version="7.4.6" />
+    <PackageReference Include="Tailwind.Extensions.AspNetCore" Version="1.0.0" />
   </ItemGroup>
 
   <ItemGroup>
@@ -146,6 +155,9 @@
   <ItemGroup>
     <None Update="Resources\Localization\vhcres.txt">
       <Generator></Generator>
+    </None>
+    <None Update="Tools\Veeam.Hotfix.Detector.zip">
+      <CopyToOutputDirectory>Never</CopyToOutputDirectory>
     </None>
     <None Update="Veeam_HealthCheck_228x228.ico">
       <CopyToOutputDirectory>Never</CopyToOutputDirectory>
