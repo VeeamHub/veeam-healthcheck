@@ -775,6 +775,13 @@ namespace VeeamHealthCheck.Html.VBR
                     s += _form.TableHeaderEnd();
                     s += _form.TableBodyStart();
 
+                    if (cProtectedWorkloads.entraWorkloads.Count == 0)
+                    {
+                        s += "<tr>";
+                        s += _form.TableData("", "");
+                        s += _form.TableData("", "");
+                        s += "</tr>";
+                    }
                     foreach (var load in cProtectedWorkloads.entraWorkloads)
                     {
                         s += "<tr>";

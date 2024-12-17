@@ -17,13 +17,14 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR.VbrTables.ProtectedWorkl
             try
             {
                 CCsvParser c = new();
-                var n = c.GetDynamicEntraTenants();
+                var n = c.GetDynamicEntraTenants().ToList();
                 foreach (var rec in n)
                 {
                     EntraWorkloads entra = new();
                     entra.TenantName = rec.TenantName;
                     entra.CacheRepoName = rec.CacheRepoName;
-                    p.entraWorkloads.Add(entra);
+                    if(!String.IsNullOrEmpty(entra.TenantName) && !String.IsNullOrEmpty(entra.CacheRepoName))
+                        p.entraWorkloads.Add(entra);
                 }
             }
             catch (Exception e)

@@ -145,6 +145,10 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR.VbrTables.Job_Session_Su
                         stats.RetryCounts++;
 
                     stats.JobType = session.JobType;
+                    if (session.JobDuration.StartsWith("1"))
+                    {
+
+                    }
                     TimeSpan.TryParse(session.JobDuration, out TimeSpan jDur);
 
                     stats.JobDuration.Add(jDur); //need to parse this to TimeSpan
