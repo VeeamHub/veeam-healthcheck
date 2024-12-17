@@ -9,7 +9,7 @@ using VeeamHealthCheck.Functions.Collection.LogParser;
 using VeeamHealthCheck.Scrubber;
 using VeeamHealthCheck.Shared;
 using VeeamHealthCheck.Shared.Logging;
-using VeeamHealthCheck.Functions.Reporting.Pdf;
+using VeeamHealthCheck.Functions.Reporting.Html.Exportables;
 
 namespace VeeamHealthCheck.Functions.Reporting.Html
 {
@@ -100,6 +100,7 @@ namespace VeeamHealthCheck.Functions.Reporting.Html
                 if (!scrub && CGlobals.EXPORTPDF)
                 {
                     ExportHtmlStringToPDF(htmlString);
+
                 }
 
                 OpenHtmlIfEnabled(CGlobals.OpenHtml);
@@ -127,7 +128,7 @@ namespace VeeamHealthCheck.Functions.Reporting.Html
                 //test export to PDF:
                 if (!scrub && CGlobals.EXPORTPDF)
                 {
-                    ExportHtmlStringToPDF(htmlString);
+                   ExportHtmlStringToPDF(htmlString);
                 }
 
                 OpenHtmlIfEnabled(CGlobals.OpenHtml);
@@ -168,6 +169,9 @@ namespace VeeamHealthCheck.Functions.Reporting.Html
 
             pdf.ConvertHtmlToPdf(htmlShowAll, _latestReport.Replace(".html", ".pdf"));
             pdf.Dispose();
+
+            //var htmlToDocx = new CHtmlToDocx();
+            //htmlToDocx.ExportHtmlToDocx(htmlShowAll, _latestReport.Replace(".html", ".docx"));
         }
 
         public int ExportVbrSecurityHtml(string htmlString, bool scrub)

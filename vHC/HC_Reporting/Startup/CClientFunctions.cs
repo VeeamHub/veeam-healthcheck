@@ -80,14 +80,15 @@ namespace VeeamHealthCheck.Startup
                 CGlobals.Logger.Error("No Veeam Software detected. Is this server the VBR or VB365 management server?", false);
                 return "fail";
             }
-            if (CGlobals.IsVbr)
-                return title + " - " + VbrLocalizationHelper.GuiTitleBnR;
-            if (CGlobals.IsVb365)
-                return title + " - " + VbrLocalizationHelper.GuiTitleVB365;
+
             if (CGlobals.IsVbr && CGlobals.IsVb365)
                 return title + " - " + VbrLocalizationHelper.GuiTitleBnR + " & " + VbrLocalizationHelper.GuiTitleVB365;
             if (!CGlobals.IsVb365 && !CGlobals.IsVbr)
                 return title + " - " + VbrLocalizationHelper.GuiImportModeOnly;
+            if (CGlobals.IsVbr)
+                return title + " - " + VbrLocalizationHelper.GuiTitleBnR;
+            if (CGlobals.IsVb365)
+                return title + " - " + VbrLocalizationHelper.GuiTitleVB365;
             else
                 return title;
         }

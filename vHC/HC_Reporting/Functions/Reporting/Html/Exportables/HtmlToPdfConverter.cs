@@ -6,8 +6,8 @@ using System.Drawing.Printing;
 using System.IO;
 using System.Windows.Controls;
 
-namespace VeeamHealthCheck.Functions.Reporting.Pdf
-{ 
+namespace VeeamHealthCheck.Functions.Reporting.Html.Exportables
+{
     public class HtmlToPdfConverter
     {
         private IConverter _converter;
