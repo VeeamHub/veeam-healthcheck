@@ -466,6 +466,7 @@ namespace VeeamHealthCheck.Functions.Reporting.Html
                 CSobrTypeInfos sobr = new()
                 {
                     Name = newName,
+                    Extents = c.Extents,
                     ExtentCount = repoCount,
                     JobCount = jobCount,
                     PolicyType = c.PolicyType,
@@ -652,7 +653,7 @@ namespace VeeamHealthCheck.Functions.Reporting.Html
                     s[5] += c.IsAutoGateway;
                     if (c.IsAutoGateway)
                         hosts = "";
-                    if (String.IsNullOrEmpty(c.GateHosts))
+                    else if (String.IsNullOrEmpty(c.GateHosts))
                         hosts = host;
                     else
                         hosts = gates;

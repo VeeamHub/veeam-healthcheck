@@ -1095,7 +1095,7 @@ namespace VeeamHealthCheck.Html.VBR
 
                     s += "<tr>";
                     s += _form.TableData(d.Name, "");
-                    s += _form.TableData(d.Extents, "");
+                    s += _form.TableData(d.ExtentCount.ToString(), "");
                     s += _form.TableData(d.JobCount.ToString(), "");
                     s += _form.TableData(d.PolicyType, "");
                     if (d.EnableCapacityTier)
@@ -1158,8 +1158,8 @@ _form.TableHeader(VbrLocalizationHelper.SbrExt1, VbrLocalizationHelper.SbrExt1TT
 _form.TableHeader(VbrLocalizationHelper.SbrExt2, VbrLocalizationHelper.SbrExt2TT) +
 _form.TableHeader(VbrLocalizationHelper.SbrExt3, VbrLocalizationHelper.SbrExt3TT) +
 _form.TableHeader(VbrLocalizationHelper.SbrExt4, VbrLocalizationHelper.SbrExt4TT) +
-_form.TableHeader(VbrLocalizationHelper.SbrExt5, VbrLocalizationHelper.SbrExt5TT) +
-_form.TableHeader(VbrLocalizationHelper.SbrExt6, VbrLocalizationHelper.SbrExt6TT) +
+_form.TableHeader("Auto Gateway / Direct Connection", VbrLocalizationHelper.SbrExt5TT) +
+_form.TableHeader("Specified Gateway(s)", VbrLocalizationHelper.SbrExt6TT) +
 _form.TableHeader(VbrLocalizationHelper.SbrExt7, VbrLocalizationHelper.SbrExt7TT) +
 _form.TableHeader(VbrLocalizationHelper.SbrExt8, VbrLocalizationHelper.SbrExt8TT) +
 _form.TableHeader(VbrLocalizationHelper.SbrExt9, VbrLocalizationHelper.SbrExt9TT) +
@@ -1254,8 +1254,8 @@ _form.TableHeader(VbrLocalizationHelper.Repo0, VbrLocalizationHelper.Repo0TT, 1)
 _form.TableHeader(VbrLocalizationHelper.SbrExt2, VbrLocalizationHelper.SbrExt2TT, 2) +
 _form.TableHeader(VbrLocalizationHelper.SbrExt3, VbrLocalizationHelper.SbrExt3TT, 3) +
 _form.TableHeader(VbrLocalizationHelper.SbrExt4, VbrLocalizationHelper.SbrExt4TT, 4) +
-_form.TableHeader(VbrLocalizationHelper.SbrExt5, VbrLocalizationHelper.SbrExt5TT, 5) +
-_form.TableHeader(VbrLocalizationHelper.SbrExt6, VbrLocalizationHelper.SbrExt6TT, 6) +
+_form.TableHeader("Auto Gateway / Direct Connection", VbrLocalizationHelper.SbrExt5TT) +
+_form.TableHeader("Specified Gateway(s)", VbrLocalizationHelper.SbrExt6TT) +
 _form.TableHeader(VbrLocalizationHelper.SbrExt7, VbrLocalizationHelper.SbrExt7TT, 7) +
 _form.TableHeader(VbrLocalizationHelper.SbrExt8, VbrLocalizationHelper.SbrExt8TT, 8) +
 _form.TableHeader(VbrLocalizationHelper.SbrExt9, VbrLocalizationHelper.SbrExt9TT, 9) +

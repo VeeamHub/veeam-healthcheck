@@ -29,7 +29,7 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR.VbrTables.Jobs_Info
 
                 // Tenant Job Table
                 t += _form.Table();
-                t += _form.TableHeaderLeftAligned("Job Name", "");
+                t += _form.TableHeaderLeftAligned("Job Name (Tenant)", "");
                 t += _form.TableHeader("Retention Policy", "");
                 t += _form.TableBodyStart();
                 foreach (var tenantJob in entraTenantJobs) {
@@ -44,7 +44,7 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR.VbrTables.Jobs_Info
                 // Tenant log table
 
                 t += _form.Table();
-                t += _form.TableHeaderLeftAligned("Job Name", "");
+                t += _form.TableHeaderLeftAligned("Job Name (Logs)", "");
                 t += _form.TableHeader("Tenant", "");
                 t += _form.TableHeader("Short Term Retention", "");
                 t += _form.TableHeader("Short Term Repo", "");

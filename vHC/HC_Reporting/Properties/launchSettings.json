@@ -2,7 +2,7 @@
   "profiles": {
     "VeeamHealthCheck": {
       "commandName": "Project",
-      "commandLineArgs": "/import /pdf",
+      "commandLineArgs": "/import",
       "remoteDebugEnabled": true,
       "authenticationMode": "Windows",
       "remoteDebugMachine": "192.168.20.152:4026"
