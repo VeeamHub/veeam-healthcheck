@@ -125,7 +125,6 @@
     <PackageReference Include="Npm" Version="3.5.2" />
     <PackageReference Include="System.Data.SqlClient" Version="4.8.6" />
     <PackageReference Include="System.Management.Automation" Version="7.4.6" />
-    <PackageReference Include="Tailwind.Extensions.AspNetCore" Version="1.0.0" />
   </ItemGroup>
 
   <ItemGroup>
