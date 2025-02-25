@@ -493,7 +493,27 @@ try {
     $tapeJob | Export-Csv -Path $("$ReportPath\$VBRServer" + '_TapeJobs.csv') -NoTypeInformation
     #end tape jobs
     try {
-        $nasBackup = Get-VBRNASBackupJob 
+        #$nasBackup = Get-VBRNASBackupJob 
+        # get all NAS jobs
+        $nasBackup = Get-VBRUnstructuredBackupJob
+        foreach($job in $nasBackup) {
+            #$job.Name
+            $onDiskGB = 0
+            $sourceGb = 0
+            $sessions = Get-VBRBackupSession -Name $job.Name
+            #sort sessions by latest first selecting only the latest session
+            $sessions = $sessions | Sort-Object CreationTime -Descending | Select-Object -First 1
+            foreach($session in $sessions) {
+                #$session.sessioninfo.BackupTotalSize
+                $onDiskGB = $session.sessioninfo.BackupTotalSize / 1024 / 1024 / 1024
+                $sourceGb = $session.SessionInfo.Progress.TotalSize / 1024 / 1024 / 1024
+            }
+            $job | Add-Member -MemberType NoteProperty -Name JobType -Value "NAS Backup"
+            $job | Add-Member -MemberType NoteProperty -Name OnDiskGB -Value $onDiskGB
+            $job | Add-Member -MemberType NoteProperty -Name SourceGB -Value $sourceGb
+        }
+        #$jobs
+
 
     }
     catch {
@@ -706,14 +726,13 @@ catch {
 try {
     try {
         # Force new scan
+        write-LogFile("Starting Security & Compliance scan...")
         Start-VBRSecurityComplianceAnalyzer -ErrorAction SilentlyContinue -WarningAction SilentlyContinue -InformationAction SilentlyContinue
         Start-Sleep -Seconds 15
         # Capture scanner results
         $SecurityCompliances = [Veeam.Backup.DBManager.CDBManager]::Instance.BestPractices.GetAll()
-    }
-    Catch {
-        Write-Host "Security & Compliance summary command: $($_.Exception.Message)"
-    }
+        write-LogFile("Security & Compliance scan completed.")
+
     $RuleTypes = @{
         'WindowsScriptHostDisabled'               = 'Windows Script Host is disabled'
         'BackupServicesUnderLocalSystem'          = 'Backup services run under the LocalSystem account'
@@ -781,7 +800,10 @@ try {
     }
     #dump to csv file
     $OutObj | Export-Csv -Path $("$ReportPath\$VBRServer" + '_SecurityCompliance.csv') -NoTypeInformation
-
+        }
+    Catch {
+        Write-Host "Security & Compliance summary command: $($_.Exception.Message)"
+    }
 }
 catch {
     Write-Host "Security & Compliance summary section: $($_.Exception.Message)"
@@ -886,13 +908,14 @@ catch {
     $err = $Error[0].Exception
     Write-LogFile($err.message)
 }
+Write-LogFile("Exporting Protected Workloads Files...")
 $protected | Export-Csv -Path $("$ReportPath\$VBRServer" + '_PhysProtected.csv') -NoTypeInformation
 $notprotected | Export-Csv -Path $("$ReportPath\$VBRServer" + '_PhysNotProtected.csv') -NoTypeInformation
 $protectedHvEntityInfo | select Name, PowerState, ProvisionedSize, UsedSize, Path | sort PoweredOn, Path, Name | Export-Csv -Path $("$ReportPath\$VBRServer" + '_HvProtected.csv') -NoTypeInformation
 $unprotectedHvEntityInfo | select Name, PowerState, ProvisionedSize, UsedSize, Path, Type | sort Type, PoweredOn, Path, Name | Export-Csv -Path $("$ReportPath\$VBRServer" + '_HvUnprotected.csv') -NoTypeInformation
 $protectedEntityInfo | select Name, PowerState, ProvisionedSize, UsedSize, Path | sort PoweredOn, Path, Name | Export-Csv -Path $("$ReportPath\$VBRServer" + '_ViProtected.csv') -NoTypeInformation
 $unprotectedEntityInfo | select Name, PowerState, ProvisionedSize, UsedSize, Path, Type | sort Type, PoweredOn, Path, Name | Export-Csv -Path $("$ReportPath\$VBRServer" + '_ViUnprotected.csv') -NoTypeInformation
-
+Write-LogFile("Exporting Protected Workloads Files...OK")
 <#
 END SECTION
 #>
@@ -928,7 +951,11 @@ try {
     $file = Get-Item -Path $depDLLPath
     $version = $file.VersionInfo.ProductVersion
     $fixes = $file.VersionInfo.Comments
-    try { $MFAGlobalSetting = [Veeam.Backup.Core.SBackupOptions]::get_GlobalMFA() } catch { Out-Null }
+    try {
+        # log debug line 
+        Write-LogFile("Getting MFA Global Setting")
+        $MFAGlobalSetting = [Veeam.Backup.Core.SBackupOptions]::get_GlobalMFA()
+    } catch { Out-Null }
 
 
     #output VBR Versioning

@@ -699,6 +699,7 @@ namespace VeeamHealthCheck.Html.VBR
 
                 try
                 {
+                    log.Info("Adding NAS table to HTML report", false);
                     CProtectedWorkloads cProtectedWorkloads = new();
                     NasSourceInfo n = new();
 
@@ -1516,9 +1517,10 @@ _form.TableHeader(VbrLocalizationHelper.SbrExt15, VbrLocalizationHelper.SbrExt15
                     foreach (var jType in jobTypes)
                     {
                         double tSizeGB = 0;
+                        double onDiskTotalGB = 0;
 
                         var useSourceSize = true;
-                        if (jType == "NasBackup" || jType == "NasBackupCopy" || jType == "Copy")
+                        if (jType == "NasBackupCopy" || jType == "Copy")
                         {
                             useSourceSize = false;
                         }
@@ -1529,11 +1531,34 @@ _form.TableHeader(VbrLocalizationHelper.SbrExt15, VbrLocalizationHelper.SbrExt15
                         var res = source.Where(x => x.JobType == jType).ToList();
                         foreach (var job in res)
                         {
+                            //object x = null;
+                            double onDiskGB = 0;
+                            double sourceSizeGB = 0;
+
                             if (job.JobType != jType)
                             {
                                 continue;
                             }
                             string row = "";
+                            if(jType == "NasBackup")
+                            {
+                                var x = csvparser.GetDynamicNasBackup().ToList();
+
+                                    var diskGb = x.Where(x => x.name == job.Name)
+                                        .Select(x => x.ondiskgb)
+                                        .FirstOrDefault();
+                                    double.TryParse(diskGb, out onDiskGB);
+                                onDiskGB = Math.Round(onDiskGB, 2);
+                                onDiskTotalGB += onDiskGB;
+
+                                var sourceGb = x.Where(x => x.name == job.Name)
+                                    .Select(x => x.sourcegb)
+                                    .FirstOrDefault();
+                                double.TryParse(sourceGb, out sourceSizeGB);
+                                sourceSizeGB = Math.Round(sourceSizeGB, 2);
+
+
+                            }
 
                             string jobName = job.Name;
                             string repoName = job.RepoName;
@@ -1549,27 +1574,37 @@ _form.TableHeader(VbrLocalizationHelper.SbrExt15, VbrLocalizationHelper.SbrExt15
 
                             if (useSourceSize)
                             {
-                                double trueSizeGB = Math.Round(job.OriginalSize / 1024 / 1024 / 1024, 2);
-                                double trueSizeTB = Math.Round(job.OriginalSize / 1024 / 1024 / 1024 / 1024, 2);
-                                double trueSizeMB = Math.Round(job.OriginalSize / 1024 / 1024, 2);
-                                tSizeGB += trueSizeGB;
-                                if (trueSizeGB > 999)
+                                if (jType == "NasBackup")
                                 {
-                                    row += _form.TableData(trueSizeTB.ToString() + " TB", "");
-                                }
-                                else if (trueSizeGB < 1)
-                                {
-                                    row += _form.TableData(trueSizeMB.ToString() + " MB", "");
+                                    row += _form.TableData(sourceSizeGB.ToString(), "");
+                                    tSizeGB += sourceSizeGB;
                                 }
                                 else
                                 {
-                                    row += _form.TableData(trueSizeGB.ToString() + " GB", "");
+
+                                    double trueSizeGB = Math.Round(job.OriginalSize / 1024 / 1024 / 1024, 2);
+                                    double trueSizeTB = Math.Round(job.OriginalSize / 1024 / 1024 / 1024 / 1024, 2);
+                                    double trueSizeMB = Math.Round(job.OriginalSize / 1024 / 1024, 2);
+                                    tSizeGB += trueSizeGB;
+                                    if (trueSizeGB > 999)
+                                    {
+                                        row += _form.TableData(trueSizeTB.ToString() + " TB", "");
+                                    }
+                                    else if (trueSizeGB < 1)
+                                    {
+                                        row += _form.TableData(trueSizeMB.ToString() + " MB", "");
+                                    }
+                                    else
+                                    {
+                                        row += _form.TableData(trueSizeGB.ToString() + " GB", "");
+                                    }
                                 }
                             }
                             else
                             {
                             }
 
+                            row += _form.TableData(onDiskGB.ToString(), "");
                             //row+= _form.TableData(trueSizeGB.ToString() + " GB", "");
                             //row+= _form.TableData(job.RetentionType, "");
                             row += job.RetentionType == "Cycles" ? _form.TableData("Points", "") : _form.TableData(job.RetentionType, "");
@@ -1657,6 +1692,9 @@ _form.TableHeader(VbrLocalizationHelper.SbrExt15, VbrLocalizationHelper.SbrExt15
                             //double totalSizeGB = Math.Round(tSizeGB / 1024 / 1024 / 1024, 2);
                             double totalSizeTB = Math.Round(tSizeGB / 1024, 2);
                             double totalSizeMB = Math.Round(tSizeGB * 1024, 2);
+
+                            double diskTotalTB = Math.Round(onDiskTotalGB / 1024, 2);
+                            double diskTotalMB = Math.Round(onDiskTotalGB * 1024, 2);
                             if (tSizeGB > 999)
                             {
                                 s += _form.TableData(totalSizeTB.ToString() + " TB", "");
@@ -1669,8 +1707,20 @@ _form.TableHeader(VbrLocalizationHelper.SbrExt15, VbrLocalizationHelper.SbrExt15
                             {
                                 s += _form.TableData(tSizeGB.ToString() + " GB", "");
                             }
-                        }
 
+                            if (diskTotalTB > 1)
+                            {
+                                s += _form.TableData(onDiskTotalGB.ToString(), "TB");
+                            }
+                            else if (onDiskTotalGB > 1)
+                            {
+                                s += _form.TableData(onDiskTotalGB.ToString(), "GB");
+                            }
+                            else
+                            {
+                                s += _form.TableData(onDiskTotalGB.ToString(), "MB");
+                            }
+                        }
 
                         // end each table/section
                         s += _form.SectionEnd(summary);
@@ -1740,6 +1790,7 @@ _form.TableHeader(VbrLocalizationHelper.SbrExt15, VbrLocalizationHelper.SbrExt15
             s += _form.TableHeader(VbrLocalizationHelper.JobInfo1, VbrLocalizationHelper.JobInfo1TT); // Repo
             if (useSourceSize)
                 s += _form.TableHeader(VbrLocalizationHelper.JobInfo2, VbrLocalizationHelper.JobInfo2TT); // Source Size (GB)
+            s += _form.TableHeader("Est. On Disk GB", "Estimated size of the backup data on-disk.");
             s += _form.TableHeader("Retention Scheme", "Is the job set to keep backups for X number of Days or Points");
             s += _form.TableHeader(VbrLocalizationHelper.JobInfo3, VbrLocalizationHelper.JobInfo3TT); // Restore Point Target
             s += _form.TableHeader(VbrLocalizationHelper.JobInfo4, VbrLocalizationHelper.JobInfo4TT); // Encrypted
