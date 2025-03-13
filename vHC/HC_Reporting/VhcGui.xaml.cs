@@ -22,6 +22,7 @@ namespace VeeamHealthCheck
 
             SetUi();
             pathBox.IsEnabled = false;
+            //pdfCheckBox.IsEnabled = false;
 
         }
         private void SetUi()
@@ -30,6 +31,11 @@ namespace VeeamHealthCheck
 
 
             this.Title = _functions.ModeCheck();
+            if(CGlobals.IsVb365 && CGlobals.IsVbr)
+            {
+                pdfCheckBox.IsEnabled = false;
+                pdfCheckBox.ToolTip = "PDF Export not available when both VB365 & VBR are detected on the same machine.";
+            }
             _functions.PreRunCheck();
 
             SetUiText();

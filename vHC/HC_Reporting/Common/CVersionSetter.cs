@@ -13,6 +13,7 @@ namespace VeeamHealthCheck.Shared
         public static string GetFileVersion()
         {
             FileVersionInfo fvi = FileVersionInfo.GetVersionInfo("VeeamHealthCheck.exe");
+            CGlobals.VHCVERSION = fvi.FileVersion;
             return fvi.FileVersion;
 
         }

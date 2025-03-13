@@ -381,34 +381,38 @@ namespace VeeamHealthCheck.Html.VBR
                 log.Error("\t" + e.Message);
             }
 
-            // add malware table
-            try
+            if(CGlobals.VBRMAJORVERSION > 11)
             {
-                var malware = new CMalwareTable();
-                s += malware.MalwareSettingsTable();
+                // add malware table
+                try
+                {
+                    var malware = new CMalwareTable();
+                    s += malware.MalwareSettingsTable();
 
-                s += malware.MalwareExclusionsTable();
-                s += malware.MalwareEventsTable();
-                s += malware.MalwareInfectedObjectsTable();
+                    s += malware.MalwareExclusionsTable();
+                    s += malware.MalwareEventsTable();
+                    s += malware.MalwareInfectedObjectsTable();
 
+                }
+                catch (Exception e)
+                {
+                    log.Error("Malware Settings Data import failed. ERROR:");
+                    log.Error("\t" + e.Message);
+                }
+                try
+                {
+                    // compliance table
+                    CComplianceTable c = new();
+                    s += c.ComplianceSummaryTable();
+                    s += c.ComplianceTable();
+                }
+                catch (Exception e)
+                {
+                    log.Error("Security Compliance Data import failed. ERROR:");
+                    log.Error("\t" + e.Message);
+                }
             }
-            catch (Exception e)
-            {
-                log.Error("Malware Settings Data import failed. ERROR:");
-                log.Error("\t" + e.Message);
-            }
-            try
-            {
-                // compliance table
-                CComplianceTable c = new();
-                s += c.ComplianceSummaryTable();
-                s += c.ComplianceTable();
-            }
-            catch (Exception e)
-            {
-                log.Error("Security Compliance Data import failed. ERROR:");
-                log.Error("\t" + e.Message);
-            }
+            
 
 
 
@@ -699,6 +703,7 @@ namespace VeeamHealthCheck.Html.VBR
 
                 try
                 {
+                    log.Info("Adding NAS table to HTML report", false);
                     CProtectedWorkloads cProtectedWorkloads = new();
                     NasSourceInfo n = new();
 
@@ -775,6 +780,13 @@ namespace VeeamHealthCheck.Html.VBR
                     s += _form.TableHeaderEnd();
                     s += _form.TableBodyStart();
 
+                    if (cProtectedWorkloads.entraWorkloads.Count == 0)
+                    {
+                        s += "<tr>";
+                        s += _form.TableData("", "");
+                        s += _form.TableData("", "");
+                        s += "</tr>";
+                    }
                     foreach (var load in cProtectedWorkloads.entraWorkloads)
                     {
                         s += "<tr>";
@@ -1088,7 +1100,7 @@ namespace VeeamHealthCheck.Html.VBR
 
                     s += "<tr>";
                     s += _form.TableData(d.Name, "");
-                    s += _form.TableData(d.Extents, "");
+                    s += _form.TableData(d.ExtentCount.ToString(), "");
                     s += _form.TableData(d.JobCount.ToString(), "");
                     s += _form.TableData(d.PolicyType, "");
                     if (d.EnableCapacityTier)
@@ -1151,8 +1163,8 @@ _form.TableHeader(VbrLocalizationHelper.SbrExt1, VbrLocalizationHelper.SbrExt1TT
 _form.TableHeader(VbrLocalizationHelper.SbrExt2, VbrLocalizationHelper.SbrExt2TT) +
 _form.TableHeader(VbrLocalizationHelper.SbrExt3, VbrLocalizationHelper.SbrExt3TT) +
 _form.TableHeader(VbrLocalizationHelper.SbrExt4, VbrLocalizationHelper.SbrExt4TT) +
-_form.TableHeader(VbrLocalizationHelper.SbrExt5, VbrLocalizationHelper.SbrExt5TT) +
-_form.TableHeader(VbrLocalizationHelper.SbrExt6, VbrLocalizationHelper.SbrExt6TT) +
+_form.TableHeader("Auto Gateway / Direct Connection", VbrLocalizationHelper.SbrExt5TT) +
+_form.TableHeader("Specified Gateway(s)", VbrLocalizationHelper.SbrExt6TT) +
 _form.TableHeader(VbrLocalizationHelper.SbrExt7, VbrLocalizationHelper.SbrExt7TT) +
 _form.TableHeader(VbrLocalizationHelper.SbrExt8, VbrLocalizationHelper.SbrExt8TT) +
 _form.TableHeader(VbrLocalizationHelper.SbrExt9, VbrLocalizationHelper.SbrExt9TT) +
@@ -1247,8 +1259,8 @@ _form.TableHeader(VbrLocalizationHelper.Repo0, VbrLocalizationHelper.Repo0TT, 1)
 _form.TableHeader(VbrLocalizationHelper.SbrExt2, VbrLocalizationHelper.SbrExt2TT, 2) +
 _form.TableHeader(VbrLocalizationHelper.SbrExt3, VbrLocalizationHelper.SbrExt3TT, 3) +
 _form.TableHeader(VbrLocalizationHelper.SbrExt4, VbrLocalizationHelper.SbrExt4TT, 4) +
-_form.TableHeader(VbrLocalizationHelper.SbrExt5, VbrLocalizationHelper.SbrExt5TT, 5) +
-_form.TableHeader(VbrLocalizationHelper.SbrExt6, VbrLocalizationHelper.SbrExt6TT, 6) +
+_form.TableHeader("Auto Gateway / Direct Connection", VbrLocalizationHelper.SbrExt5TT) +
+_form.TableHeader("Specified Gateway(s)", VbrLocalizationHelper.SbrExt6TT) +
 _form.TableHeader(VbrLocalizationHelper.SbrExt7, VbrLocalizationHelper.SbrExt7TT, 7) +
 _form.TableHeader(VbrLocalizationHelper.SbrExt8, VbrLocalizationHelper.SbrExt8TT, 8) +
 _form.TableHeader(VbrLocalizationHelper.SbrExt9, VbrLocalizationHelper.SbrExt9TT, 9) +
@@ -1509,9 +1521,10 @@ _form.TableHeader(VbrLocalizationHelper.SbrExt15, VbrLocalizationHelper.SbrExt15
                     foreach (var jType in jobTypes)
                     {
                         double tSizeGB = 0;
+                        double onDiskTotalGB = 0;
 
                         var useSourceSize = true;
-                        if (jType == "NasBackup" || jType == "NasBackupCopy" || jType == "Copy")
+                        if (jType == "NasBackupCopy" || jType == "Copy")
                         {
                             useSourceSize = false;
                         }
@@ -1522,11 +1535,34 @@ _form.TableHeader(VbrLocalizationHelper.SbrExt15, VbrLocalizationHelper.SbrExt15
                         var res = source.Where(x => x.JobType == jType).ToList();
                         foreach (var job in res)
                         {
+                            //object x = null;
+                            double onDiskGB = 0;
+                            double sourceSizeGB = 0;
+
                             if (job.JobType != jType)
                             {
                                 continue;
                             }
                             string row = "";
+                            if(jType == "NasBackup")
+                            {
+                                var x = csvparser.GetDynamicNasBackup().ToList();
+
+                                    var diskGb = x.Where(x => x.name == job.Name)
+                                        .Select(x => x.ondiskgb)
+                                        .FirstOrDefault();
+                                    double.TryParse(diskGb, out onDiskGB);
+                                onDiskGB = Math.Round(onDiskGB, 2);
+                                onDiskTotalGB += onDiskGB;
+
+                                var sourceGb = x.Where(x => x.name == job.Name)
+                                    .Select(x => x.sourcegb)
+                                    .FirstOrDefault();
+                                double.TryParse(sourceGb, out sourceSizeGB);
+                                sourceSizeGB = Math.Round(sourceSizeGB, 2);
+
+
+                            }
 
                             string jobName = job.Name;
                             string repoName = job.RepoName;
@@ -1542,27 +1578,37 @@ _form.TableHeader(VbrLocalizationHelper.SbrExt15, VbrLocalizationHelper.SbrExt15
 
                             if (useSourceSize)
                             {
-                                double trueSizeGB = Math.Round(job.OriginalSize / 1024 / 1024 / 1024, 2);
-                                double trueSizeTB = Math.Round(job.OriginalSize / 1024 / 1024 / 1024 / 1024, 2);
-                                double trueSizeMB = Math.Round(job.OriginalSize / 1024 / 1024, 2);
-                                tSizeGB += trueSizeGB;
-                                if (trueSizeGB > 999)
+                                if (jType == "NasBackup")
                                 {
-                                    row += _form.TableData(trueSizeTB.ToString() + " TB", "");
-                                }
-                                else if (trueSizeGB < 1)
-                                {
-                                    row += _form.TableData(trueSizeMB.ToString() + " MB", "");
+                                    row += _form.TableData(sourceSizeGB.ToString(), "");
+                                    tSizeGB += sourceSizeGB;
                                 }
                                 else
                                 {
-                                    row += _form.TableData(trueSizeGB.ToString() + " GB", "");
+
+                                    double trueSizeGB = Math.Round(job.OriginalSize / 1024 / 1024 / 1024, 2);
+                                    double trueSizeTB = Math.Round(job.OriginalSize / 1024 / 1024 / 1024 / 1024, 2);
+                                    double trueSizeMB = Math.Round(job.OriginalSize / 1024 / 1024, 2);
+                                    tSizeGB += trueSizeGB;
+                                    if (trueSizeGB > 999)
+                                    {
+                                        row += _form.TableData(trueSizeTB.ToString() + " TB", "");
+                                    }
+                                    else if (trueSizeGB < 1)
+                                    {
+                                        row += _form.TableData(trueSizeMB.ToString() + " MB", "");
+                                    }
+                                    else
+                                    {
+                                        row += _form.TableData(trueSizeGB.ToString() + " GB", "");
+                                    }
                                 }
                             }
                             else
                             {
                             }
 
+                            row += _form.TableData(onDiskGB.ToString(), "");
                             //row+= _form.TableData(trueSizeGB.ToString() + " GB", "");
                             //row+= _form.TableData(job.RetentionType, "");
                             row += job.RetentionType == "Cycles" ? _form.TableData("Points", "") : _form.TableData(job.RetentionType, "");
@@ -1650,6 +1696,9 @@ _form.TableHeader(VbrLocalizationHelper.SbrExt15, VbrLocalizationHelper.SbrExt15
                             //double totalSizeGB = Math.Round(tSizeGB / 1024 / 1024 / 1024, 2);
                             double totalSizeTB = Math.Round(tSizeGB / 1024, 2);
                             double totalSizeMB = Math.Round(tSizeGB * 1024, 2);
+
+                            double diskTotalTB = Math.Round(onDiskTotalGB / 1024, 2);
+                            double diskTotalMB = Math.Round(onDiskTotalGB * 1024, 2);
                             if (tSizeGB > 999)
                             {
                                 s += _form.TableData(totalSizeTB.ToString() + " TB", "");
@@ -1662,8 +1711,20 @@ _form.TableHeader(VbrLocalizationHelper.SbrExt15, VbrLocalizationHelper.SbrExt15
                             {
                                 s += _form.TableData(tSizeGB.ToString() + " GB", "");
                             }
-                        }
 
+                            if (diskTotalTB > 1)
+                            {
+                                s += _form.TableData(onDiskTotalGB.ToString(), "TB");
+                            }
+                            else if (onDiskTotalGB > 1)
+                            {
+                                s += _form.TableData(onDiskTotalGB.ToString(), "GB");
+                            }
+                            else
+                            {
+                                s += _form.TableData(onDiskTotalGB.ToString(), "MB");
+                            }
+                        }
 
                         // end each table/section
                         s += _form.SectionEnd(summary);
@@ -1733,6 +1794,7 @@ _form.TableHeader(VbrLocalizationHelper.SbrExt15, VbrLocalizationHelper.SbrExt15
             s += _form.TableHeader(VbrLocalizationHelper.JobInfo1, VbrLocalizationHelper.JobInfo1TT); // Repo
             if (useSourceSize)
                 s += _form.TableHeader(VbrLocalizationHelper.JobInfo2, VbrLocalizationHelper.JobInfo2TT); // Source Size (GB)
+            s += _form.TableHeader("Est. On Disk GB", "Estimated size of the backup data on-disk.");
             s += _form.TableHeader("Retention Scheme", "Is the job set to keep backups for X number of Days or Points");
             s += _form.TableHeader(VbrLocalizationHelper.JobInfo3, VbrLocalizationHelper.JobInfo3TT); // Restore Point Target
             s += _form.TableHeader(VbrLocalizationHelper.JobInfo4, VbrLocalizationHelper.JobInfo4TT); // Encrypted

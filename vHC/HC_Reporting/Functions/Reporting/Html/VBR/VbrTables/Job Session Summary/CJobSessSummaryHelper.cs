@@ -145,6 +145,10 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR.VbrTables.Job_Session_Su
                         stats.RetryCounts++;
 
                     stats.JobType = session.JobType;
+                    if (session.JobDuration.StartsWith("1"))
+                    {
+
+                    }
                     TimeSpan.TryParse(session.JobDuration, out TimeSpan jDur);
 
                     stats.JobDuration.Add(jDur); //need to parse this to TimeSpan
@@ -222,56 +226,20 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR.VbrTables.Job_Session_Su
             double totalSessionSuccessPercent = (totalSessions - totalFailedSessions + totalRetries) / totalSessions * 100;
             double successPercent = Math.Round(totalSessionSuccessPercent, 2);
 
+            avgRates.RemoveAll(x => x == 0);
+
             jobSummaryTypes.JobName = "Total";
             jobSummaryTypes.ItemCount = totalProtectedInstances;
             jobSummaryTypes.sessionCount = (int)totalSessions;
             jobSummaryTypes.SuccessRate = successPercent;
-            jobSummaryTypes.AvgBackupSize = Math.Round(avgBackupSizes.Average(), 2);
+            jobSummaryTypes.Fails = (int)totalFailedSessions;
+            jobSummaryTypes.Retries = (int)totalRetries;
+            jobSummaryTypes.AvgBackupSize = Math.Round(avgBackupSizes.Sum(), 2);
             jobSummaryTypes.MaxBackupSize = Math.Round(maxBackupSize.Sum(), 2);
-            jobSummaryTypes.AvgDataSize = Math.Round(avgDataSizes.Average(), 2);
+            jobSummaryTypes.AvgDataSize = Math.Round(avgDataSizes.Sum(), 2);
             jobSummaryTypes.MaxDataSize = Math.Round(maxDataSizes.Sum(), 2);
             jobSummaryTypes.AvgChangeRate = Math.Round(avgRates.Average(), 2);
 
-            //List<string> summary = new()
-            //{
-            //    "Total",
-            //    totalProtectedInstances.ToString(),
-            //    "",
-            //    "",
-            //    "",
-            //    totalSessions.ToString() , //total sessions,
-            //    "-",
-            //    "-",
-            //    //successPercent//TODO: Make this total sessions - total failed sessions / total session;
-            //};
-            //if (avgBackupSizes.Count > 0)
-            //    summary.Add(Math.Round(avgBackupSizes.Average(), 0).ToString());
-            //else
-            //    summary.Add("0");
-            
-            ////summary.Add(Math.Round(maxBackupSize.Sum(), 0).ToString());
-
-            //if (maxBackupSize.Count > 0)
-            //    summary.Add(Math.Round(maxBackupSize.Sum(), 0).ToString());
-            //else summary.Add("0");
-
-            //if (avgDataSizes.Count > 0)
-            //    summary.Add(Math.Round(avgDataSizes.Average(), 0).ToString());
-            //else
-            //    summary.Add("0");
-            //if (maxDataSizes.Count > 0)
-            //    summary.Add(Math.Round(maxDataSizes.Sum(), 2).ToString());
-            //else
-            //    summary.Add("0");
-
-            //if (avgRates.Count > 0)
-            //    summary.Add(Math.Round(avgRates.Average(), 2).ToString() + "%");
-            //else
-            //    summary.Add("0");
-            //summary.Add("");
-            //summary.Add("");
-            //summary.Add("");
-            //summary.Add("");
 
 
 

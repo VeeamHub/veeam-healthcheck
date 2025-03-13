@@ -322,7 +322,7 @@ namespace VeeamHealthCheck.Functions.Collection.PSCollections
                 FileName = "powershell.exe",
                 Arguments = argString,
                 UseShellExecute = false,
-                CreateNoWindow = false,  //true for prod,
+                CreateNoWindow = true,  //true for prod,
                 RedirectStandardError = true
             };
         }

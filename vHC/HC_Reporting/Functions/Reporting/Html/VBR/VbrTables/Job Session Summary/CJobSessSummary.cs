@@ -134,10 +134,10 @@ namespace VeeamHealthCheck.Functions.Reporting.Html
 
                     if (nonZeros.Count != 0)
                     {
-                        info.MinJobTime = nonZeros.Min().ToString(@"hh\:mm\:ss");
-                        info.MaxJobTime = nonZeros.Max().ToString(@"hh\:mm\:ss");
+                        info.MinJobTime = nonZeros.Min().ToString(@"dd\.hh\:mm\:ss");
+                        info.MaxJobTime = nonZeros.Max().ToString(@"dd\.hh\:mm\:ss");
                         var s = new TimeSpan(Convert.ToInt64(nonZeros.Average(ts => ts.Ticks)));
-                        info.AvgJobTime = s.ToString(@"hh\:mm\:ss");
+                        info.AvgJobTime = s.ToString(@"dd\.hh\:mm\:ss");
                     }
                     else
                     {

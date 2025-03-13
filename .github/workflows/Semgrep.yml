@@ -25,3 +25,6 @@ jobs:
 
     - name: Run Semgrep
       run: semgrep --config auto --error
+
+    - name: SemGrep SupplyChain
+      run: semgrep --config "p/supply-chain"

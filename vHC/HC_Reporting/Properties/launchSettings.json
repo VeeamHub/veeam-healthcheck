@@ -5,7 +5,7 @@
       "commandLineArgs": "/run",
       "remoteDebugEnabled": true,
       "authenticationMode": "Windows",
-      "remoteDebugMachine": "192.168.20.152:4026"
+      "remoteDebugMachine": "t470p:4026"
     }
   }
 }

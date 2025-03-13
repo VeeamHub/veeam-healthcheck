@@ -14,17 +14,18 @@ namespace VeeamHealthCheck.Startup
         public CReportModeSelector()
         {
         }
-        public void Run()
+        public int Run()
         {
-            FileChecker();
+            return FileChecker();
         }
         public void Dispose()
         {
 
         }
-        private void FileChecker()
+        private int FileChecker()
         {
             LOG.Info("Checking output directories..", false);
+            int res = 0;
             if (CGlobals.RunSecReport)
                 StartSecurityReport();
             if (!CGlobals.RunSecReport)
@@ -33,15 +34,17 @@ namespace VeeamHealthCheck.Startup
                 if (Directory.Exists(CVariables.vb365dir) && CGlobals.RunFullReport)
                     StartM365Report();
                 if (Directory.Exists(CVariables.vbrDir) && CGlobals.RunFullReport)
-                    StartVbrReport();
+                    res = StartVbrReport();
             }
+            return res;
         }
-        private void StartVbrReport()
+        private int StartVbrReport()
         {
             LOG.Info("Starting B&R report generation", false);
             CHtmlCompiler html = new();
-            html.RunFullVbrReport();
+            var res = html.RunFullVbrReport();
             html.Dispose();
+            return res;
         }
 
         private void StartM365Report()

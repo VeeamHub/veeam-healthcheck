@@ -35,13 +35,19 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR
         {
 
         }
-        public void RunFullVbrReport()
+        public int RunFullVbrReport()
         {
             log.Info(logStart + "Init full report");
             FormHeader();
             FormVbrFullBody();
-            ExportHtml();
-            log.Info(logStart + "Init full report...done!");
+            int res = ExportHtml();
+            if (res == 0)
+                log.Info(logStart + "Init full report...success!");
+            if(res != 0)
+                log.Error(logStart + "Init full report...failed!");
+
+            return res;
+            //log.Info(logStart + "Init full report...done!");
         }
         public void RunSecurityReport()
         {
@@ -51,13 +57,19 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR
             ExportSecurityHtml();
             log.Info(logStart + "Init Security Report");
         }
-        private void ExportHtml()
+        private int ExportHtml()
         {
             CHtmlExporter exporter = new(GetServerName());
-            exporter.ExportVbrHtml(_htmldocOriginal, false);
-            exporter.ExportVbrHtml(_htmldocScrubbed, true);
+            var res1 = exporter.ExportVbrHtml(_htmldocOriginal, false);
+            var res2 = exporter.ExportVbrHtml(_htmldocScrubbed, true);
             if (CGlobals.OpenExplorer)
                 exporter.OpenExplorer();
+
+            if (res1 == 0 && res2 == 0)
+            {
+                return 0;
+            }
+            else return 1;
         }
         // write a method to export _htmldocOriginal as a PDF
 
