@@ -49,7 +49,7 @@ function Export-VhcCsv {
   
 }
 #end functions region
-Write-host("Executing VBR Config Collection...")
+
 
 $global:SETTINGS = '{"LogLevel":"INFO","OutputPath":"C:\\temp\\vHC\\Original\\Log","ReportingIntervalDays":7,"VBOServerFqdnOrIp":"localhost"}'<#,"SkipCollect":false,"ExportJson":false,"ExportXml":false,"DebugInConsole":false,"Watch":false}#> | ConvertFrom-Json
 if (Test-Path ($global:SETTINGS.OutputPath + "\CollectorConfig.json")) {
@@ -150,7 +150,8 @@ try {
 catch {
     Write-LogFile("Error on general info collection. ")
 }
-
+Write-LogFile("Executing VBR Config Collection...")
+Write-LogFile("VBR Version " + $VBRVersion)
 # collection template
 try {
     $message = "Collecting ____ info..."
@@ -723,7 +724,8 @@ catch {
 <# END Malware Detection Section #>
 
 <# Security Section #>
-try {
+if($VBRVersion -eq 12){
+    try {
     try {
         # Force new scan
         write-LogFile("Starting Security & Compliance scan...")
@@ -808,6 +810,8 @@ try {
 catch {
     Write-Host "Security & Compliance summary section: $($_.Exception.Message)"
 }
+}
+
 
 <# END Security Section #>
 <#

@@ -54,6 +54,34 @@ namespace VeeamHealthCheck.Startup
 
             CGlobals.Logger.Info("Starting Admin Check...done!");
         }
+        private void VbrVersionSupportCheck()
+        {
+            GetVbrVersion();
+
+            // get the version of the current vhc software:
+            if(CGlobals.VBRMAJORVERSION < 12)
+            {
+                string[] vhcVersionSections = CGlobals.VHCVERSION.Split('.'); 
+                int.TryParse(vhcVersionSections[0], out int vhcMajorVersion);
+                int.TryParse(vhcVersionSections[3], out int vhcBuildVersion);
+
+                if(vhcMajorVersion >= 2 && vhcBuildVersion > 546)
+                {
+                    string msg = "Veeam Health Check does not support Veeam Backup & Replication Versions prior to v12. Please download 2.0.0.546: https://github.com/VeeamHub/veeam-healthcheck/releases/tag/2.0.0.546";
+
+                    LOG.Error(msg, false);
+
+                    if (CGlobals.GUIEXEC)
+                    {
+                        MessageBox.Show(msg, "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+
+                    }
+                    Environment.Exit(0);
+
+                }
+            }
+
+        }
         public string ModeCheck()
         {
             CGlobals.Logger.Info("Checking processes to determine execution mode..", false);
@@ -72,6 +100,9 @@ namespace VeeamHealthCheck.Startup
                 {
                     CGlobals.IsVbr = true;
                     LOG.Info("VBR software detected", false);
+
+                    // now get the VBR Version and store as global variable to help direct which script(s) to use
+                    VbrVersionSupportCheck();
                 }
 
             }
