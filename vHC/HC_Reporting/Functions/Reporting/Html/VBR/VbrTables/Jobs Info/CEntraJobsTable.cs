@@ -81,7 +81,7 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR.VbrTables.Jobs_Info
             }
             catch (Exception e)
             {
-                Console.WriteLine(e);
+                CGlobals.Logger.Warning(e.Message);
                 throw;
             }
             return t;

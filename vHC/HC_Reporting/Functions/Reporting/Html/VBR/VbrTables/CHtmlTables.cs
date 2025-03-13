@@ -381,34 +381,38 @@ namespace VeeamHealthCheck.Html.VBR
                 log.Error("\t" + e.Message);
             }
 
-            // add malware table
-            try
+            if(CGlobals.VBRMAJORVERSION > 11)
             {
-                var malware = new CMalwareTable();
-                s += malware.MalwareSettingsTable();
+                // add malware table
+                try
+                {
+                    var malware = new CMalwareTable();
+                    s += malware.MalwareSettingsTable();
 
-                s += malware.MalwareExclusionsTable();
-                s += malware.MalwareEventsTable();
-                s += malware.MalwareInfectedObjectsTable();
+                    s += malware.MalwareExclusionsTable();
+                    s += malware.MalwareEventsTable();
+                    s += malware.MalwareInfectedObjectsTable();
 
+                }
+                catch (Exception e)
+                {
+                    log.Error("Malware Settings Data import failed. ERROR:");
+                    log.Error("\t" + e.Message);
+                }
+                try
+                {
+                    // compliance table
+                    CComplianceTable c = new();
+                    s += c.ComplianceSummaryTable();
+                    s += c.ComplianceTable();
+                }
+                catch (Exception e)
+                {
+                    log.Error("Security Compliance Data import failed. ERROR:");
+                    log.Error("\t" + e.Message);
+                }
             }
-            catch (Exception e)
-            {
-                log.Error("Malware Settings Data import failed. ERROR:");
-                log.Error("\t" + e.Message);
-            }
-            try
-            {
-                // compliance table
-                CComplianceTable c = new();
-                s += c.ComplianceSummaryTable();
-                s += c.ComplianceTable();
-            }
-            catch (Exception e)
-            {
-                log.Error("Security Compliance Data import failed. ERROR:");
-                log.Error("\t" + e.Message);
-            }
+            
 
 
 

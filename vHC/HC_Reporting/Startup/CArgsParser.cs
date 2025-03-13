@@ -30,7 +30,7 @@ namespace VeeamHealthCheck.Startup
             _args = args;
             CGlobals.TOOLSTART = DateTime.Now;
         }
-        public void ParseArgs()
+        public int ParseArgs()
         {
             //CGlobals.RunFullReport = true;
             LogInitialInfo();
@@ -39,11 +39,11 @@ namespace VeeamHealthCheck.Startup
             p.TryUnblockFiles();
 
             if (_args.Length == 0)
-                ParseZeroArgs();
+                return ParseZeroArgs();
             else if (_args != null && _args.Length > 0)
-                ParseAllArgs(_args);
+                return ParseAllArgs(_args);
             else
-                LaunchUi(Handle(), true);
+                return LaunchUi(Handle(), true);
 
 
 
@@ -58,7 +58,7 @@ namespace VeeamHealthCheck.Startup
             f.Dispose();
         }
 
-        private void LaunchUi(IntPtr handle, bool hide)
+        private int LaunchUi(IntPtr handle, bool hide)
         {
             CGlobals.Logger.Info("Executing GUI", false);
             CGlobals.RunFullReport = true;
@@ -66,29 +66,30 @@ namespace VeeamHealthCheck.Startup
             if (hide)
                 ShowWindow(handle, SW_HIDE);
             var app = new System.Windows.Application();
-            app.Run(new VhcGui());
+            return app.Run(new VhcGui());
         }
         private IntPtr Handle()
         {
             return GetConsoleWindow();
         }
 
-        private void ParseZeroArgs()
+        private int ParseZeroArgs()
         {
             var pos = Console.GetCursorPosition();
             //CGlobals.Logger.Warning("pos = " + pos.ToString(), false);
             if (pos == (0, 1) || pos == (0, 2))
             {
                 CGlobals.Logger.Info("0s");
-                LaunchUi(Handle(), true);
+                 return LaunchUi(Handle(), true);
             }
             else
             {
                 CGlobals.Logger.Info("not 0");
                 Console.WriteLine(CMessages.helpMenu);
+                return 0;
             }
         }
-        private void ParseAllArgs(string[] args)
+        private int ParseAllArgs(string[] args)
         {
             bool run = false;
             bool ui = false;
@@ -197,6 +198,7 @@ namespace VeeamHealthCheck.Startup
                         //    break;
                 }
             }
+            int result = 0;
 
             if (runHfd)
             {
@@ -206,13 +208,12 @@ namespace VeeamHealthCheck.Startup
                 }
                 functions.RunHotfixDetector(_hfdPath, "");
             }
-
             else if (ui)
                 LaunchUi(Handle(), false);
             else if (run)
             {
                 if (CGlobals.IMPORT)
-                    FullRun(targetDir);
+                     result = FullRun(targetDir);
                 else if (CGlobals.REMOTEEXEC && CGlobals.REMOTEHOST == "")
                 {
                     CGlobals.Logger.Warning("Remote execution selected but no host defined. Please define host: " +
@@ -226,7 +227,7 @@ namespace VeeamHealthCheck.Startup
                 }
 
                 else if (CGlobals.REMOTEHOST != "" && CGlobals.RunSecReport)
-                    FullRun(targetDir);
+                    result = FullRun(targetDir);
                 else
                 {
                     if (functions.ModeCheck() == "fail")
@@ -235,12 +236,12 @@ namespace VeeamHealthCheck.Startup
                         Environment.Exit(0);
                     }
                     else
-                        FullRun(targetDir);
+                        result = FullRun(targetDir);
                 }
 
 
             }
-
+            return result;
         }
         private string ParsePath(string input)
         {
@@ -255,19 +256,21 @@ namespace VeeamHealthCheck.Startup
                 return null;
             }
         }
-        private void Run(string targetDir)
+        private int Run(string targetDir)
         {
             CClientFunctions functions = new();
-            functions.CliRun(targetDir);
+            return functions.CliRun(targetDir);
         }
-        private void FullRun(string targetDir)
+        private int FullRun(string targetDir)
         {
             CGlobals.Logger.Info("Starting RUN...", false);
-            Run(targetDir);
+            var res = Run(targetDir);
 
 
             CGlobals.Logger.Info("Starting RUN...complete!", false);
             CGlobals.Logger.Info("Output is stored in " + targetDir, false);
+
+            return res;
 
         }
 

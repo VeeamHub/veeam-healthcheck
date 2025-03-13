@@ -56,7 +56,7 @@ namespace VeeamHealthCheck.Startup
         }
         private void VbrVersionSupportCheck()
         {
-            GetVbrVersion();
+            //GetVbrVersion();
 
             // get the version of the current vhc software:
             if(CGlobals.VBRMAJORVERSION < 12)
@@ -67,7 +67,7 @@ namespace VeeamHealthCheck.Startup
 
                 if(vhcMajorVersion >= 2 && vhcBuildVersion > 546)
                 {
-                    string msg = "Veeam Health Check does not support Veeam Backup & Replication Versions prior to v12. Please download 2.0.0.546: https://github.com/VeeamHub/veeam-healthcheck/releases/tag/2.0.0.546";
+                    string msg = String.Format("Veeam Health Check version {0} does not support Veeam Backup & Replication Versions prior to v12. To check systems prior to v12, Please download 2.0.0.546: https://github.com/VeeamHub/veeam-healthcheck/releases/tag/2.0.0.546", CGlobals.VHCVERSION);
 
                     LOG.Error(msg, false);
 
@@ -102,7 +102,7 @@ namespace VeeamHealthCheck.Startup
                     LOG.Info("VBR software detected", false);
 
                     // now get the VBR Version and store as global variable to help direct which script(s) to use
-                    VbrVersionSupportCheck();
+                    //VbrVersionSupportCheck();
                 }
 
             }
@@ -134,11 +134,11 @@ namespace VeeamHealthCheck.Startup
             else return false;
         }
 
-        public void StartPrimaryFunctions()
+        public int StartPrimaryFunctions()
         {
             LogUserSettings();
             StartCollections();
-            StartAnalysis();
+            return StartAnalysis();
         }
         public void RunHotfixDetector(string path, string remoteServer)
         {
@@ -216,14 +216,15 @@ namespace VeeamHealthCheck.Startup
                 LOG.Info(logStart + "Init Collections...done!", false);
             }
         }
-        private void StartAnalysis()
+        private int StartAnalysis()
         {
             LOG.Info(logStart + "Init Data analysis & report creations", false);
-            Import();
+            int res = Import();
 
             LOG.Info(logStart + "Init Data analysis & report creations...done!", false);
+            return res;
         }
-        public void CliRun(string targetForOutput)
+        public int CliRun(string targetForOutput)
         {
             CGlobals.Logger.Info("Setting openexplorer & openhtml to false for CLI execution", false);
             CGlobals.OpenExplorer = false;
@@ -244,7 +245,7 @@ namespace VeeamHealthCheck.Startup
 
             }
             
-            StartPrimaryFunctions();
+            return StartPrimaryFunctions();
         }
         public void GetVbrVersion()
         {
@@ -272,11 +273,12 @@ namespace VeeamHealthCheck.Startup
             }
         }
 
-        public void Import()
+        public int Import()
         {
             CReportModeSelector cMode = new();
-            cMode.Run();
+            int res = cMode.Run();
             cMode.Dispose();
+            return res;
         }
         private string ClientSettingsString()
         {
