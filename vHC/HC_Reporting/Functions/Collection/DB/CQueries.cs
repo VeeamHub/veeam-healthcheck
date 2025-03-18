@@ -113,7 +113,6 @@ namespace VeeamHealthCheck.Functions.Collection.DB
         private void GetSqlServerVersion()
         {
             log.Info("getting sql server version");
-            string query = "Select @@version";
 
             //CDbWorker d = new();
             DataTable dt = FetchSqlServerVersion();

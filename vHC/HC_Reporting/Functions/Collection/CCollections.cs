@@ -30,6 +30,11 @@ namespace VeeamHealthCheck.Functions.Collection
                 ExecSecurityCollection();
 
             ExecPSScripts();
+            // run diagnostic of CSV output and sizes, dump to logs:
+            GetCsvFileSizesToLog();
+
+
+
             if (!CGlobals.RunSecReport && CGlobals.IsVbr)
             {
                 PopulateWaits();
@@ -43,6 +48,15 @@ namespace VeeamHealthCheck.Functions.Collection
                     ExecSqlQueries();
             }
             
+
+        }
+        private void GetCsvFileSizesToLog(){
+            var files = Directory.GetFiles(CVariables.vbrDir, "*.csv", SearchOption.AllDirectories);
+            foreach (var file in files){
+                var fileSize = file.Length;
+                CGlobals.Logger.Info($"File: {file} Size: {fileSize}");
+
+            }
 
         }
 

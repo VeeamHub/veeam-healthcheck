@@ -174,18 +174,30 @@
     <Folder Include="Resources\Localization\VBR\" />
   </ItemGroup>
 
-  <Target Name="PostBuild" AfterTargets="PostBuildEvent">
-	  <Message Text="Checking if BuildCopy.bat exists: $(ProjectDir)Tools\build\BuildCopy.bat" Importance="High" />
-	  <ItemGroup>
-		  <!-- Sets a local MSBuild variable (maybe wrong word for it) if BuildCopy.bat exists -->
-		  <LocalPostBuildBat Include="$(ProjectDir)Tools\build\BuildCopy.bat" Condition="Exists('$(ProjectDir)Tools\build\BuildCopy.bat')" />
-	  </ItemGroup>
-	  <!-- Calls the bat file, if the variable exists, if not this does nothing and silently continues -->
-	  <Exec Command="call @(LocalPostBuildBat)&#xD;&#xA;" />
-  </Target>
+<Target Name="PostBuild" AfterTargets="PostBuildEvent">
+  <!-- Log the check for BuildCopy.bat and BuildCopy.sh -->
+  <Message Text="Checking if BuildCopy.bat exists: $(ProjectDir)Tools\build\BuildCopy.bat" Importance="High" Condition="'$(OS)' == 'Windows_NT'" />
+  <Message Text="Checking if BuildCopy.sh exists: $(ProjectDir)Tools\build\BuildCopy.sh" Importance="High" Condition="'$(OS)' != 'Windows_NT'" />
+
+  <!-- Define items for the batch and shell scripts based on OS -->
+  <ItemGroup>
+    <!-- Windows: Check for BuildCopy.bat -->
+    <LocalPostBuildBat Include="$(ProjectDir)Tools\build\BuildCopy.bat" Condition="'$(OS)' == 'Windows_NT' AND Exists('$(ProjectDir)Tools\build\BuildCopy.bat')" />
+    <!-- macOS/Linux: Check for BuildCopy.sh -->
+    <LocalPostBuildSh Include="$(ProjectDir)Tools\build\BuildCopy.sh" Condition="'$(OS)' != 'Windows_NT' AND Exists('$(ProjectDir)Tools\build\BuildCopy.sh')" />
+  </ItemGroup>
+
+  <!-- Execute the appropriate script based on OS -->
+  <Exec Command="call @(LocalPostBuildBat)" Condition="'$(OS)' == 'Windows_NT' AND '@(LocalPostBuildBat)' != ''" />
+  <Exec Command="bash @(LocalPostBuildSh)" Condition="'$(OS)' != 'Windows_NT' AND '@(LocalPostBuildSh)' != ''" />
+</Target>
 
   <ItemGroup>
     <EditorConfigFiles Remove="C:\code\VeeamHub\veeam-healthcheck\vHC\HC_Reporting\.editorconfig" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="Tools/build/BuildCopy.sh" />
   </ItemGroup>
 
   <ItemGroup>
