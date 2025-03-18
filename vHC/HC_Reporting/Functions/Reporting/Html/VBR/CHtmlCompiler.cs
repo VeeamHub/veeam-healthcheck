@@ -43,7 +43,7 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR
             int res = ExportHtml();
             if (res == 0)
                 log.Info(logStart + "Init full report...success!");
-            if(res != 0)
+            if (res != 0)
                 log.Error(logStart + "Init full report...failed!");
 
             return res;
@@ -59,13 +59,22 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR
         }
         private int ExportHtml()
         {
+            int res = 0;
             CHtmlExporter exporter = new(GetServerName());
-            var res1 = exporter.ExportVbrHtml(_htmldocOriginal, false);
-            var res2 = exporter.ExportVbrHtml(_htmldocScrubbed, true);
+            if (CGlobals.Scrub)
+            {
+                res = exporter.ExportVbrHtml(_htmldocScrubbed, true);
+
+            }
+            else
+            {
+                res = exporter.ExportVbrHtml(_htmldocOriginal, false);
+
+            }
             if (CGlobals.OpenExplorer)
                 exporter.OpenExplorer();
 
-            if (res1 == 0 && res2 == 0)
+            if (res == 0)
             {
                 return 0;
             }
@@ -135,7 +144,7 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR
             log.Info("[HTML] setting HTML navigation");
             AddToHtml(DivId("navigation"));
             AddToHtml(string.Format("<h2>{0}</h2>", VbrLocalizationHelper.NavHeader));
-           // AddToHtml(string.Format("<button type=\"button\" class=\"btn\" onclick=\"test()\">{0}</button>", VbrLocalizationHelper.NavColapse));
+            // AddToHtml(string.Format("<button type=\"button\" class=\"btn\" onclick=\"test()\">{0}</button>", VbrLocalizationHelper.NavColapse));
         }
 
         private void SetNavigation()
@@ -143,7 +152,7 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR
             //SetUniversalNavStart();
             NavTable();
 
-            AddToHtml( SetVbrHcIntro(false));
+            AddToHtml(SetVbrHcIntro(false));
 
             //add end div for card holding nav & summary
             AddToHtml("</div>");
@@ -160,7 +169,7 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR
             {
                 if (scrub)
                 {
-                    s += "<div class=\"card2\">" + 
+                    s += "<div class=\"card2\">" +
                         "<h2>About</h2>"
                         + VbrLocalizationHelper.HtmlIntroLine1 + "</a>\n";
                     //s += LineBreak();
@@ -240,8 +249,8 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR
         private string FormBodyStart(string htmlString, bool scrub)
         {
             CGlobals.Scrub = scrub;
-            string h  = _form.body;
-             h += _form.FormHtmlButtonGoToTop();
+            string h = _form.body;
+            h += _form.FormHtmlButtonGoToTop();
             if (scrub)
             {
                 h += _form.SetHeaderAndLogo(" ");
@@ -290,18 +299,34 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR
         private void FormVbrFullBody()
         {
             log.Info("[HTML] forming HTML body");
-            _htmldocOriginal += FormBodyStart(_htmldocOriginal, false);
-            _htmldocScrubbed += FormBodyStart(_htmldocScrubbed, true);
 
             //nav
-            SetNavigation();
 
             // add button
-            AddToHtml(string.Format("<button id='expandBtn' type=\"button\" class=\"btn\" onclick=\"test()\">{0}</button>", "Expand All Sections"));
 
             CHtmlBodyHelper helper = new();
-            _htmldocScrubbed = helper.FormVbrFullReport(_htmldocScrubbed, true);
-            _htmldocOriginal = helper.FormVbrFullReport(_htmldocOriginal, false);
+            if (CGlobals.Scrub)
+            {
+                _htmldocScrubbed += FormBodyStart(_htmldocScrubbed, true);
+                SetNavigation();
+
+                AddToHtml(string.Format("<button id='expandBtn' type=\"button\" class=\"btn\" onclick=\"test()\">{0}</button>", "Expand All Sections"));
+
+                _htmldocScrubbed = helper.FormVbrFullReport(_htmldocScrubbed, true);
+                _htmldocScrubbed += FormFooter();
+
+            }
+            else
+            {
+                _htmldocOriginal += FormBodyStart(_htmldocOriginal, false);
+                SetNavigation();
+
+                AddToHtml(string.Format("<button id='expandBtn' type=\"button\" class=\"btn\" onclick=\"test()\">{0}</button>", "Expand All Sections"));
+
+                _htmldocOriginal = helper.FormVbrFullReport(_htmldocOriginal, false);
+                _htmldocOriginal += FormFooter();
+
+            }
 
             if (CGlobals.EXPORTINDIVIDUALJOBHTMLS)
             {
@@ -312,8 +337,6 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR
             }
 
 
-            _htmldocOriginal += FormFooter();
-            _htmldocScrubbed += FormFooter();
 
             log.Info("[HTML] forming HTML body...done!");
         }

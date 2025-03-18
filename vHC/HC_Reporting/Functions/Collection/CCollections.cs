@@ -51,10 +51,18 @@ namespace VeeamHealthCheck.Functions.Collection
 
         }
         private void GetCsvFileSizesToLog(){
+            CGlobals.Logger.Debug("Logging CSV File Sizes:");
             var files = Directory.GetFiles(CVariables.vbrDir, "*.csv", SearchOption.AllDirectories);
             foreach (var file in files){
-                var fileSize = file.Length;
-                CGlobals.Logger.Info($"File: {file} Size: {fileSize}");
+                var fileInfo = new FileInfo(file);
+                var fileSize = fileInfo.Length;
+                if(fileSize > 0){
+                CGlobals.Logger.Info($"\tFile: {fileInfo.Name} Size: {fileSize}");
+
+                }
+                else{
+                    CGlobals.Logger.Warning($"\tFile: {fileInfo.Name} Size: {fileSize}");
+                }
 
             }
 

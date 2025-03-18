@@ -42,10 +42,8 @@ namespace VeeamHealthCheck.Functions.Reporting.Html
         private CScrubHandler _scrubber = CGlobals.Scrubber;
 
         private CDataTypesParser _dTypeParser;
-        private List<CServerTypeInfos> _csv;
         private readonly CCsvParser _csvParser = new();
         private readonly CLogger log = CGlobals.Logger;
-        private CHtmlExporter exporter;
 
         private Dictionary<string, string> _repoPaths = new();
 
@@ -167,7 +165,7 @@ namespace VeeamHealthCheck.Functions.Reporting.Html
             }
             catch (Exception)
             {
-                log.Error("Unable to find immutability. Marking false");
+                log.Error(logStart + "Unable to find immutability. Marking false");
                 t.ImmutabilityEnabled = false;
             }
             try
@@ -179,7 +177,7 @@ namespace VeeamHealthCheck.Functions.Reporting.Html
             }
             catch (Exception)
             {
-                log.Info("Traffic encryption not detected. Marking false");
+                log.Info(logStart + "Traffic encryption not detected. Marking false");
                 t.TrafficEncrptionEnabled = false;
             }
             try
@@ -191,7 +189,7 @@ namespace VeeamHealthCheck.Functions.Reporting.Html
             }
             catch (Exception)
             {
-                log.Error("Unable to detect backup encryption. Marking false");
+                log.Error(logStart + "Unable to detect backup encryption. Marking false");
                 t.BackupFileEncrptionEnabled = false;
             }
 
@@ -204,7 +202,7 @@ namespace VeeamHealthCheck.Functions.Reporting.Html
             }
             catch (Exception)
             {
-                log.Error("Config backup not detected. Marking false");
+                log.Error(logStart + "Config backup not detected. Marking false");
                 //log.Info(e.Message);
                 t.ConfigBackupEncrptionEnabled = false;
             }
@@ -216,13 +214,12 @@ namespace VeeamHealthCheck.Functions.Reporting.Html
 
         public Dictionary<string, int> ServerSummaryToXml()
         {
-            log.Info("converting server summary to xml");
+            log.Info(logStart + "converting server summary to xml");
             //Dictionary<string, int> di = _dTypeParser.ServerSummaryInfo;
             using (CDataTypesParser dt = new())
             {
                 return dt.ServerSummaryInfo;
             }
-            log.Info("converting server summary to xml.done!");
         }
         public int ProtectedWorkloadsToXml()
         {
@@ -230,7 +227,7 @@ namespace VeeamHealthCheck.Functions.Reporting.Html
             {
 
                 //customize the log line:
-                log.Info("Converting protected workloads data to xml...");
+                log.Info(logStart + "Converting protected workloads data to xml...");
 
 
                 // gather data needed for input
@@ -360,7 +357,7 @@ namespace VeeamHealthCheck.Functions.Reporting.Html
                 _hvDupes = hvDupes;
 
 
-                log.Info("Converting protected workloads data to xml..done!");
+                log.Info(logStart + "Converting protected workloads data to xml..done!");
                 return 0;
             }
             catch (Exception ex)
@@ -383,7 +380,7 @@ namespace VeeamHealthCheck.Functions.Reporting.Html
         private void NewXmlNodeTemplate(bool scrub)
         {
             //customize the log line:
-            log.Info("xml node template start...");
+            log.Info(logStart + "xml node template start...");
 
 
             // gather data needed for input
@@ -398,12 +395,12 @@ namespace VeeamHealthCheck.Functions.Reporting.Html
                 // set items to scrub
             }
 
-            log.Info("xml template..done!");
+            log.Info(logStart + "xml template..done!");
         }
         public BackupServer BackupServerInfoToXml(bool scrub)
         {
 
-            log.Info("converting backup server info to xml");
+            log.Info(logStart + "converting backup server info to xml");
             List<string> list = new List<string>();
             CBackupServerTableHelper bt = new(scrub);
             BackupServer b = bt.SetBackupServerData();
@@ -418,7 +415,7 @@ namespace VeeamHealthCheck.Functions.Reporting.Html
 
 
 
-            log.Info("converting backup server info to xml..done!");
+            log.Info(logStart + "converting backup server info to xml..done!");
             return b;
         }
         private string ParseString(string input)
@@ -429,7 +426,7 @@ namespace VeeamHealthCheck.Functions.Reporting.Html
         public List<CSobrTypeInfos> SobrInfoToXml(bool scrub)
         {
             PreCalculations();
-            log.Info("Starting SOBR conversion to xml..");
+            log.Info(logStart + "Starting SOBR conversion to xml..");
             List<string[]> list = new();
 
             List<CSobrTypeInfos> csv = _dTypeParser.SobrInfo;
@@ -486,7 +483,7 @@ namespace VeeamHealthCheck.Functions.Reporting.Html
 
                 outList.Add(sobr);
             }
-            log.Info("Starting SOBR conversion to xml..done!");
+            log.Info(logStart + "Starting SOBR conversion to xml..done!");
             return outList;
         }
         private string SetGateHosts(string original, bool scrub)
@@ -514,7 +511,7 @@ namespace VeeamHealthCheck.Functions.Reporting.Html
         }
         public List<CRepository> ExtentXmlFromCsv(bool scrub)
         {
-            log.Info("converting extent info to xml");
+            log.Info(logStart + "converting extent info to xml");
             List<string[]> list = new List<string[]>();
             List<CRepoTypeInfos> csv = _dTypeParser.ExtentInfo;
             csv = csv.OrderBy(x => x.RepoName).ToList();
@@ -589,7 +586,7 @@ namespace VeeamHealthCheck.Functions.Reporting.Html
 
                     repoList.Add(repo);
                 }
-            log.Info("converting extent info to xml..done!");
+            log.Info(logStart + "converting extent info to xml..done!");
             return repoList;
         }
         private bool AddRepoPathToDict(string host, string path)
@@ -606,7 +603,7 @@ namespace VeeamHealthCheck.Functions.Reporting.Html
         public List<CRepository> RepoInfoToXml(bool scrub)
         {
             PreCalculations();
-            log.Info("converting repository info to xml");
+            log.Info(logStart + "converting repository info to xml");
             List<CRepository> list = new();
 
 
@@ -684,7 +681,7 @@ namespace VeeamHealthCheck.Functions.Reporting.Html
 
                     list.Add(repo);
                 }
-            log.Info("converting repository info to xml..done!");
+            log.Info(logStart + "converting repository info to xml..done!");
             return list;
         }
         public List<string[]> ProxyXmlFromCsv(bool scrub)
@@ -722,14 +719,14 @@ namespace VeeamHealthCheck.Functions.Reporting.Html
 
                     list.Add(s);
                 }
-            log.Info("converting proxy info to xml..done!");
+            log.Info(logStart + "converting proxy info to xml..done!");
 
             return list;
         }
 
         public List<CManagedServer> ServerXmlFromCsv(bool scrub)    // managed servers protect vm count
         {
-            log.Info("converting server info to xml");
+            log.Info(logStart + "converting server info to xml");
             List<CManagedServer> list = new();
             List<CServerTypeInfos> csv = _dTypeParser.ServerInfo();
 
@@ -746,8 +743,8 @@ namespace VeeamHealthCheck.Functions.Reporting.Html
             }
             catch (Exception ex)
             {
-                log.Error("Failed to populate VI Protected objects..");
-                log.Error(ex.Message);
+                log.Error(logStart + "Failed to populate VI Protected objects..");
+                log.Error(logStart + ex.Message);
             }
 
             //list to ensure we only count unique VMs
@@ -818,12 +815,12 @@ namespace VeeamHealthCheck.Functions.Reporting.Html
 
                     list.Add(server);
                 }
-            log.Info("converting server info to xml..done!");
+            log.Info(logStart + "converting server info to xml..done!");
             return list;
         }
         public Dictionary<string, int> JobSummaryInfoToXml()
         {
-            log.Info("converting job summary info to xml");
+            log.Info(logStart + "converting job summary info to xml");
             List<CJobTypeInfos> csv = _dTypeParser.JobInfos;
 
             //CQueries cq = _cq;
@@ -860,39 +857,38 @@ namespace VeeamHealthCheck.Functions.Reporting.Html
             //sum of all jobs:
 
 
-            log.Info("converting job summary info to xml..done!");
+            log.Info(logStart + "converting job summary info to xml..done!");
             return typeSummary;
         }
 
 
         public Dictionary<int, string[]> JobConcurrency(bool isJob)
         {
-            log.Info("calculating concurrency");
+            log.Info(logStart + "calculating concurrency");
             CConcurrencyHelper helper = new();
 
 
             List<CJobSessionInfo> trimmedSessionInfo = new();
             using (CDataTypesParser dt = new())
             {
+                CGlobals.Logger.Info(logStart + "Loading Job Sessions for Concurrency...");
                 trimmedSessionInfo = dt.JobSessions.Where(c => c.CreationTime >= CGlobals.GetToolStart.AddDays(-7)).ToList();
+                CGlobals.Logger.Info(logStart + $"Loaded {trimmedSessionInfo.Count} Job Sessions for Concurrency...");
             }
-            List<CJobTypeInfos> jobInfo = _dTypeParser.JobInfos;
 
             List<ConcurentTracker> ctList = new();
-            List<string> jobNameList = new();
-            jobNameList.AddRange(trimmedSessionInfo.Select(y => y.JobName).Distinct());
-
-            List<string> mirrorJobNamesList = new();
-            List<string> nameDatesList = new();
+       
             if (isJob)
             {
                 ctList = helper.JobCounter(trimmedSessionInfo);
+                log.Info(logStart + "Jobs to be counted: " + ctList.Count);
             }
 
 
             else if (!isJob)
             {
                 ctList = helper.TaskCounter(trimmedSessionInfo);
+                log.Info(logStart + "Tasks to be counted: " + ctList.Count);
 
             }
 
@@ -900,9 +896,9 @@ namespace VeeamHealthCheck.Functions.Reporting.Html
 
 
 
-            log.Info("calculating concurrency...done!");
+            log.Info(logStart + "calculating concurrency...done!");
 
-            return helper.FinalConcurrency((ctList));
+            return helper.FinalConcurrency(ctList);
         }
 
         public Dictionary<string, string> RegOptions()
@@ -957,7 +953,7 @@ namespace VeeamHealthCheck.Functions.Reporting.Html
         public List<List<string>> JobInfoToXml(bool scrub)
         {
             List<List<string>> sendBack = new();
-            log.Info("converting job info to xml");
+            log.Info(logStart + "converting job info to xml");
             List<CJobTypeInfos> csv = _dTypeParser.JobInfos;
             csv = csv.OrderBy(x => x.RepoName).ToList();
             csv = csv.OrderBy(y => y.JobType).ToList();
@@ -1020,7 +1016,7 @@ namespace VeeamHealthCheck.Functions.Reporting.Html
 
 
             //doc.Save(_testFile);
-            log.Info("converting job info to xml..done!");
+            log.Info(logStart + "converting job info to xml..done!");
             return sendBack;
         }
         public List<CJobSummaryTypes> ConvertJobSessSummaryToXml(bool scrub)
@@ -1044,7 +1040,7 @@ namespace VeeamHealthCheck.Functions.Reporting.Html
                 helper.ParseIndividualSessions(scrub);
 
 
-                log.Info("converting job session info to xml..done!");
+                log.Info(logStart + "converting job session info to xml..done!");
                 return 0;
             }
             catch (Exception ex)

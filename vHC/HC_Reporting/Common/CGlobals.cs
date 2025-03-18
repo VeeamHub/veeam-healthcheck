@@ -23,7 +23,9 @@ namespace VeeamHealthCheck.Shared
         public static string REMOTEHOST = "";
         public static bool GUIEXEC = false;
         public static string VHCVERSION = "";
-
+        
+        public static string RawReport = "";
+        public static string ScrubbedReport = "";
         // GUI & CLI Options:
         private static int _reportDays = 7;
         public static string _desiredPath = CVariables.unsafeDir;
