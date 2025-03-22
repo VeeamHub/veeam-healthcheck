@@ -30,7 +30,7 @@ namespace VeeamHealthCheck.Shared.Logging
 
         public void Info(string message)
         {
-            Info(message, true);
+            Info(message, false);
         }
         public void Info(string message, bool silent)
         {
@@ -47,7 +47,7 @@ namespace VeeamHealthCheck.Shared.Logging
 
         public void Warning(string message)
         {
-            Warning(message, true);
+            Warning(message, false);
         }
         public void Warning(string message, bool silent)
         {
@@ -56,7 +56,7 @@ namespace VeeamHealthCheck.Shared.Logging
         }
         public void Debug(string message)
         {
-            Debug(message, true);
+            Debug(message, false);
         }
         public void Debug(string message, bool silent)
         {
@@ -66,7 +66,7 @@ namespace VeeamHealthCheck.Shared.Logging
         public void Error(string message)
         {
 
-            Error(message, true);
+            Error(message, false);
         }
         public void Error(string message, bool silent)
         {

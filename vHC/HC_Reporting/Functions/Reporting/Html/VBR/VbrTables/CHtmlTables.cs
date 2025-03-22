@@ -381,7 +381,7 @@ namespace VeeamHealthCheck.Html.VBR
                 log.Error("\t" + e.Message);
             }
 
-            if(CGlobals.VBRMAJORVERSION > 11)
+            if (CGlobals.VBRMAJORVERSION > 11)
             {
                 // add malware table
                 try
@@ -412,7 +412,7 @@ namespace VeeamHealthCheck.Html.VBR
                     log.Error("\t" + e.Message);
                 }
             }
-            
+
 
 
 
@@ -1434,6 +1434,7 @@ _form.TableHeader(VbrLocalizationHelper.SbrExt15, VbrLocalizationHelper.SbrExt15
         }
         public string AddJobSessSummTable(bool scrub)
         {
+            log.Info("Adding Job Session Summary Table");
             string s = _form.SectionStartWithButton("jobsesssum", VbrLocalizationHelper.JssTitle, VbrLocalizationHelper.JssBtn, CGlobals.ReportDays);
             string summary = _sum.JobSessSummary();
 
@@ -1464,32 +1465,43 @@ _form.TableHeader(VbrLocalizationHelper.SbrExt15, VbrLocalizationHelper.SbrExt15
 
                 foreach (var stu in stuff)
                 {
-                    s += "<tr>";
+                    try
+                    {
+                        string t = "";
+                        t += "<tr>";
 
-                    s += _form.TableDataLeftAligned(stu.JobName, VbrLocalizationHelper.Jss0);
-                    s += _form.TableData(stu.ItemCount.ToString(), VbrLocalizationHelper.Jss1);
-                    s += _form.TableData(stu.MinJobTime, VbrLocalizationHelper.Jss2);
-                    s += _form.TableData(stu.MaxJobTime, VbrLocalizationHelper.Jss3);
-                    s += _form.TableData(stu.AvgJobTime, VbrLocalizationHelper.Jss4);
-                    s += _form.TableData(stu.sessionCount.ToString(), VbrLocalizationHelper.Jss5);
-                    s += _form.TableData(stu.Fails.ToString(), "Fails");
-                    s += _form.TableData(stu.Retries.ToString(), "Retries");
-                    s += _form.TableData(stu.SuccessRate.ToString(), VbrLocalizationHelper.Jss6);
-                    s += _form.TableData(stu.AvgBackupSize.ToString(), VbrLocalizationHelper.Jss7);
-                    s += _form.TableData(stu.MaxBackupSize.ToString(), VbrLocalizationHelper.Jss8);
-                    s += _form.TableData(stu.AvgDataSize.ToString(), VbrLocalizationHelper.Jss9);
-                    s += _form.TableData(stu.MaxDataSize.ToString(), VbrLocalizationHelper.Jss10);
-                    s += _form.TableData(stu.AvgChangeRate.ToString(), VbrLocalizationHelper.Jss11);
-                    s += _form.TableData(stu.waitCount.ToString(), VbrLocalizationHelper.Jss12);
-                    s += _form.TableData(stu.maxWait, VbrLocalizationHelper.Jss13);
-                    s += _form.TableData(stu.avgwait, VbrLocalizationHelper.Jss14);
-                    s += _form.TableData(stu.JobType, VbrLocalizationHelper.Jss15);
+                        t += _form.TableDataLeftAligned(stu.JobName, VbrLocalizationHelper.Jss0);
+                        t += _form.TableData(stu.ItemCount.ToString(), VbrLocalizationHelper.Jss1);
+                        t += _form.TableData(stu.MinJobTime, VbrLocalizationHelper.Jss2);
+                        t += _form.TableData(stu.MaxJobTime, VbrLocalizationHelper.Jss3);
+                        t += _form.TableData(stu.AvgJobTime, VbrLocalizationHelper.Jss4);
+                        t += _form.TableData(stu.sessionCount.ToString(), VbrLocalizationHelper.Jss5);
+                        t += _form.TableData(stu.Fails.ToString(), "Fails");
+                        t += _form.TableData(stu.Retries.ToString(), "Retries");
+                        t += _form.TableData(stu.SuccessRate.ToString(), VbrLocalizationHelper.Jss6);
+                        t += _form.TableData(stu.AvgBackupSize.ToString(), VbrLocalizationHelper.Jss7);
+                        t += _form.TableData(stu.MaxBackupSize.ToString(), VbrLocalizationHelper.Jss8);
+                        t += _form.TableData(stu.AvgDataSize.ToString(), VbrLocalizationHelper.Jss9);
+                        t += _form.TableData(stu.MaxDataSize.ToString(), VbrLocalizationHelper.Jss10);
+                        t += _form.TableData(stu.AvgChangeRate.ToString(), VbrLocalizationHelper.Jss11);
+                        t += _form.TableData(stu.waitCount.ToString(), VbrLocalizationHelper.Jss12);
+                        t += _form.TableData(stu.maxWait, VbrLocalizationHelper.Jss13);
+                        t += _form.TableData(stu.avgwait, VbrLocalizationHelper.Jss14);
+                        t += _form.TableData(stu.JobType, VbrLocalizationHelper.Jss15);
 
-                    s += "</tr>";
-                    //foreach (var st in stu)
-                    //{
-                    //    s += _form.TableData(st, "");
-                    //}
+                        t += "</tr>";
+
+                        s += t;
+                    }
+                    catch (Exception ex)
+                    {
+                        log.Error("Job Session Summary Table failed to add row for job: " + stu.JobName);
+                        log.Error("\t" + ex.Message);
+
+
+                    }
+
+
                 }
             }
             catch (Exception e)
@@ -1499,6 +1511,7 @@ _form.TableHeader(VbrLocalizationHelper.SbrExt15, VbrLocalizationHelper.SbrExt15
             }
 
             s += _form.SectionEnd(summary);
+            log.Info("Job Session Summary Table added");
             return s;
         }
         public string AddJobInfoTable(bool scrub)
@@ -1544,14 +1557,14 @@ _form.TableHeader(VbrLocalizationHelper.SbrExt15, VbrLocalizationHelper.SbrExt15
                                 continue;
                             }
                             string row = "";
-                            if(jType == "NasBackup")
+                            if (jType == "NasBackup")
                             {
                                 var x = csvparser.GetDynamicNasBackup().ToList();
 
-                                    var diskGb = x.Where(x => x.name == job.Name)
-                                        .Select(x => x.ondiskgb)
-                                        .FirstOrDefault();
-                                    double.TryParse(diskGb, out onDiskGB);
+                                var diskGb = x.Where(x => x.name == job.Name)
+                                    .Select(x => x.ondiskgb)
+                                    .FirstOrDefault();
+                                double.TryParse(diskGb, out onDiskGB);
                                 onDiskGB = Math.Round(onDiskGB, 2);
                                 onDiskTotalGB += onDiskGB;
 
@@ -1754,7 +1767,7 @@ _form.TableHeader(VbrLocalizationHelper.SbrExt15, VbrLocalizationHelper.SbrExt15
                     {
                         CEntraJobsTable entraTable = new();
                         string et = entraTable.Table();
-                        if (et != "")
+                        if (et != null)
                         {
                             string tableButton = _form.SectionStartWithButton("jobTable", "Entra Jobs", "");
                             s += tableButton;

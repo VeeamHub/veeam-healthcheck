@@ -14,11 +14,10 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR
 {
     internal class CConcurrencyHelper
     {
-        private CDataTypesParser _dTypeParser;
+        private CDataTypesParser _dTypeParser = CGlobals.DtParser;
         private readonly CLogger log = CGlobals.Logger;
         public CConcurrencyHelper()
         {
-            _dTypeParser= new CDataTypesParser();
         }
 
         public List<ConcurentTracker> TaskCounter(List<CJobSessionInfo> trimmedSessionInfo)

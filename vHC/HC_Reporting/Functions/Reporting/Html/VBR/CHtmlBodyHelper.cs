@@ -1,7 +1,9 @@
 ﻿// Copyright (c) 2021, Adam Congdon <adam.congdon2@gmail.com>
 // MIT License
+using VeeamHealthCheck.Functions.Reporting.DataTypes;
 using VeeamHealthCheck.Html.VBR;
 using VeeamHealthCheck.Shared;
+
 
 namespace VeeamHealthCheck.Functions.Reporting.Html.VBR
 {
@@ -13,9 +15,12 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR
         public CHtmlBodyHelper()
         {
             _tables = new CHtmlTables();
+            PopulateCsvToMemory();
         }
         public string FormVbrFullReport(string htmlString, bool scrub)
         {
+
+
             SCRUB = scrub;
             HTMLSTRING = htmlString;
             LicenseTable();
@@ -44,6 +49,10 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR
             }
 
             return HTMLSTRING;
+        }
+        private void PopulateCsvToMemory(){
+            CGlobals.DtParser = new();
+            CGlobals.ServerInfo = CGlobals.DtParser.ServerInfos;
         }
         public string FormSecurityReport(string htmlString)
         {

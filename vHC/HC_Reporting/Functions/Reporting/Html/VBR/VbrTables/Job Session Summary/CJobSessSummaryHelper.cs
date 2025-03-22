@@ -106,12 +106,14 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR.VbrTables.Job_Session_Su
         }
         public List<CJobSessionInfo> JobSessionInfoList()
         {
-            using (CDataTypesParser dt = new())
-            {
                 List<CJobSessionInfo> csv = new();
-                var res = dt.JobSessions; //.Where(c => c.CreationTime >= targetDate).ToList();
+                var res = CGlobals.DtParser.JobSessions; //.Where(c => c.CreationTime >= targetDate).ToList();
                 if (res == null)
+                {
+                    CGlobals.Logger.Debug("! No Job Sessions Found !");
                     return csv;
+                }
+
                 else
                 {
                     csv = res.Where(c => c.CreationTime >= TargetDate()).ToList();
@@ -122,7 +124,6 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR.VbrTables.Job_Session_Su
                     csv.Reverse();
                     return csv;
                 }
-            }
         }
         private DateTime TargetDate()
         {
@@ -238,7 +239,8 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR.VbrTables.Job_Session_Su
             jobSummaryTypes.MaxBackupSize = Math.Round(maxBackupSize.Sum(), 2);
             jobSummaryTypes.AvgDataSize = Math.Round(avgDataSizes.Sum(), 2);
             jobSummaryTypes.MaxDataSize = Math.Round(maxDataSizes.Sum(), 2);
-            jobSummaryTypes.AvgChangeRate = Math.Round(avgRates.Average(), 2);
+            var avgChangedData = avgDataSizes.Sum() / maxDataSizes.Sum() * 100;
+            jobSummaryTypes.AvgChangeRate = Math.Round(avgChangedData, 2);
 
 
 

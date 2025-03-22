@@ -24,10 +24,8 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR.VbrTables.Job_Session_Su
         {
             var targetDate = CGlobals.GetToolStart.AddDays(-CGlobals.ReportDays);
 
-            using (CDataTypesParser dt = new())
-            {
                 List<CJobSessionInfo> csv = new();
-                var res = dt.JobSessions; //.Where(c => c.CreationTime >= targetDate).ToList();
+                var res = CGlobals.DtParser.JobSessions; //.Where(c => c.CreationTime >= targetDate).ToList();
                 if (res == null)
                     return csv;
                 else
@@ -40,16 +38,13 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR.VbrTables.Job_Session_Su
                     csv.Reverse();
                     return csv;
                 }
-            }
         }
         private List<CJobSessionInfo> ReturnJobSessionsList(string jobName)
         {
             var targetDate = CGlobals.GetToolStart.AddDays(-CGlobals.ReportDays);
 
-            using (CDataTypesParser dt = new())
-            {
                 List<CJobSessionInfo> csv = new();
-                var res = dt.JobSessions; //.Where(c => c.CreationTime >= targetDate).ToList();
+                var res = CGlobals.DtParser.JobSessions; //.Where(c => c.CreationTime >= targetDate).ToList();
                 if (res == null)
                     return csv;
                 else
@@ -62,16 +57,13 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR.VbrTables.Job_Session_Su
                     csv.Reverse();
                     return csv;
                 }
-            }
         }
         private List<string> ReturnJobSessionsNamesList()
         {
             var targetDate = CGlobals.GetToolStart.AddDays(-CGlobals.ReportDays);
 
-            using (CDataTypesParser dt = new())
-            {
                 List<string> csv = new();
-                var res = dt.JobSessions; //.Where(c => c.CreationTime >= targetDate).ToList();
+                var res = CGlobals.DtParser.JobSessions; //.Where(c => c.CreationTime >= targetDate).ToList();
                 if (res == null)
                     return null;
                 else
@@ -84,7 +76,6 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR.VbrTables.Job_Session_Su
                     csv.Reverse();
                     return p.Distinct().ToList();
                 }
-            }
         }
 
         public void ParseIndividualSessions(bool scrub)

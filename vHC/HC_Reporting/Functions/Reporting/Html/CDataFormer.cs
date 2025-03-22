@@ -7,6 +7,7 @@ using System.Data;
 using System.IO;
 using System.Linq;
 using System.Xml.Linq;
+using CsvHelper;
 using VeeamHealthCheck.Functions.Analysis.DataModels;
 using VeeamHealthCheck.Functions.Collection.DB;
 using VeeamHealthCheck.Functions.Reporting.CsvHandlers;
@@ -32,7 +33,6 @@ namespace VeeamHealthCheck.Functions.Reporting.Html
 {
     public class CDataFormer
     {
-        private readonly string _testFile = "xml\\vbr.xml";
         private string logStart = "[DataFormer]\t";
 
         private bool _isBackupServerProxy;
@@ -41,18 +41,22 @@ namespace VeeamHealthCheck.Functions.Reporting.Html
         private Dictionary<string, int> _repoJobCount;
         private CScrubHandler _scrubber = CGlobals.Scrubber;
 
-        private CDataTypesParser _dTypeParser;
         private readonly CCsvParser _csvParser = new();
         private readonly CLogger log = CGlobals.Logger;
 
         private Dictionary<string, string> _repoPaths = new();
 
+        private IEnumerable<dynamic> _viProxy = CCsvParser.GetDynViProxy().ToList();
+         private IEnumerable<dynamic> _hvProxy = CCsvParser.GetDynHvProxy().ToList();
+         private IEnumerable<dynamic> _nasProxy = CCsvParser.GetDynNasProxy().ToList();
+         private IEnumerable<dynamic> _cdpProxy = CCsvParser.GetDynCdpProxy().ToList();
+
         public CDataFormer() // add string mode input
         {
-            _dTypeParser = new();
             //_csv = _dTypeParser.ServerInfo();
 
             //CheckXmlFile();
+
         }
 
         public void Dispose() { }
@@ -216,10 +220,11 @@ namespace VeeamHealthCheck.Functions.Reporting.Html
         {
             log.Info(logStart + "converting server summary to xml");
             //Dictionary<string, int> di = _dTypeParser.ServerSummaryInfo;
-            using (CDataTypesParser dt = new())
-            {
-                return dt.ServerSummaryInfo;
-            }
+            // using (CDataTypesParser dt = new())
+            // {
+            //     return dt.ServerSummaryInfo;
+            // }
+            return CGlobals.DtParser.ServerSummaryInfo;
         }
         public int ProtectedWorkloadsToXml()
         {
@@ -429,8 +434,8 @@ namespace VeeamHealthCheck.Functions.Reporting.Html
             log.Info(logStart + "Starting SOBR conversion to xml..");
             List<string[]> list = new();
 
-            List<CSobrTypeInfos> csv = _dTypeParser.SobrInfo;
-            List<CRepoTypeInfos> repos = _dTypeParser.ExtentInfo;
+            List<CSobrTypeInfos> csv = CGlobals.DtParser.SobrInfo;
+            List<CRepoTypeInfos> repos = CGlobals.DtParser.ExtentInfo;
             csv = csv.OrderBy(x => x.Name).ToList();
 
             List<CSobrTypeInfos> outList = new();
@@ -513,7 +518,7 @@ namespace VeeamHealthCheck.Functions.Reporting.Html
         {
             log.Info(logStart + "converting extent info to xml");
             List<string[]> list = new List<string[]>();
-            List<CRepoTypeInfos> csv = _dTypeParser.ExtentInfo;
+            List<CRepoTypeInfos> csv = CGlobals.DtParser.ExtentInfo;
             csv = csv.OrderBy(x => x.RepoName).ToList();
             csv = csv.OrderBy(y => y.SobrName).ToList();
             List<CRepository> repoList = new();
@@ -607,7 +612,7 @@ namespace VeeamHealthCheck.Functions.Reporting.Html
             List<CRepository> list = new();
 
 
-            List<CRepoTypeInfos> csv = _dTypeParser.RepoInfos.ToList();
+            List<CRepoTypeInfos> csv = CGlobals.DtParser.RepoInfos.ToList();
             csv = csv.OrderBy(x => x.Name).ToList();
             if (csv != null)
                 foreach (var c in csv)
@@ -689,7 +694,7 @@ namespace VeeamHealthCheck.Functions.Reporting.Html
             log.Info("converting proxy info to xml");
             List<string[]> list = new();
 
-            List<CProxyTypeInfos> csv = _dTypeParser.ProxyInfo();
+            List<CProxyTypeInfos> csv = CGlobals.DtParser.ProxyInfos;
 
             csv = csv.OrderBy(x => x.Name).ToList();
             csv = csv.OrderBy(y => y.Type).ToList();
@@ -728,7 +733,7 @@ namespace VeeamHealthCheck.Functions.Reporting.Html
         {
             log.Info(logStart + "converting server info to xml");
             List<CManagedServer> list = new();
-            List<CServerTypeInfos> csv = _dTypeParser.ServerInfo();
+            List<CServerTypeInfos> csv = CGlobals.ServerInfo;
 
             csv = csv.OrderBy(x => x.Name).ToList();
             csv = csv.OrderBy(x => x.Type).ToList();
@@ -821,7 +826,7 @@ namespace VeeamHealthCheck.Functions.Reporting.Html
         public Dictionary<string, int> JobSummaryInfoToXml()
         {
             log.Info(logStart + "converting job summary info to xml");
-            List<CJobTypeInfos> csv = _dTypeParser.JobInfos;
+            List<CJobTypeInfos> csv = CGlobals.DtParser.JobInfos;
 
             //CQueries cq = _cq;
 
@@ -869,12 +874,9 @@ namespace VeeamHealthCheck.Functions.Reporting.Html
 
 
             List<CJobSessionInfo> trimmedSessionInfo = new();
-            using (CDataTypesParser dt = new())
-            {
                 CGlobals.Logger.Info(logStart + "Loading Job Sessions for Concurrency...");
-                trimmedSessionInfo = dt.JobSessions.Where(c => c.CreationTime >= CGlobals.GetToolStart.AddDays(-7)).ToList();
+                trimmedSessionInfo = CGlobals.DtParser.JobSessions.Where(c => c.CreationTime >= CGlobals.GetToolStart.AddDays(CGlobals.ReportDays)).ToList();
                 CGlobals.Logger.Info(logStart + $"Loaded {trimmedSessionInfo.Count} Job Sessions for Concurrency...");
-            }
 
             List<ConcurentTracker> ctList = new();
        
@@ -954,7 +956,7 @@ namespace VeeamHealthCheck.Functions.Reporting.Html
         {
             List<List<string>> sendBack = new();
             log.Info(logStart + "converting job info to xml");
-            List<CJobTypeInfos> csv = _dTypeParser.JobInfos;
+            List<CJobTypeInfos> csv = CGlobals.DtParser.JobInfos;
             csv = csv.OrderBy(x => x.RepoName).ToList();
             csv = csv.OrderBy(y => y.JobType).ToList();
             csv = csv.OrderBy(x => x.Name).ToList();
@@ -1021,7 +1023,7 @@ namespace VeeamHealthCheck.Functions.Reporting.Html
         }
         public List<CJobSummaryTypes> ConvertJobSessSummaryToXml(bool scrub)
         {
-            CJobSessSummary jss = new(log, scrub, _scrubber, _dTypeParser);
+            CJobSessSummary jss = new(log, scrub, _scrubber, CGlobals.DtParser);
             return jss.JobSessionSummaryToXml(scrub);
 
         }
@@ -1070,7 +1072,7 @@ namespace VeeamHealthCheck.Functions.Reporting.Html
         private void PreCalculations()
         {
             // calc all the things prior to adding XML entries... such as job count per repo....
-            List<CJobTypeInfos> jobs = _dTypeParser.JobInfos;
+            List<CJobTypeInfos> jobs = CGlobals.DtParser.JobInfos;
             Dictionary<string, int> repoJobCount = new();
             _repoJobCount = new();
             foreach (var j in jobs)
@@ -1097,16 +1099,28 @@ namespace VeeamHealthCheck.Functions.Reporting.Html
         }
         private void CheckServerRoles(string serverId)
         {
-            //log.Info("Checking server roles..");
+            log.Info("Checking server roles.. for server: " + serverId);
             ResetRoles();
 
-            List<CProxyTypeInfos> proxy = _dTypeParser.ProxyInfo();
-            List<CRepoTypeInfos> extents = _dTypeParser.ExtentInfo;
-            List<CRepoTypeInfos> repos = _dTypeParser.RepoInfos;
-            List<CWanTypeInfo> wans = _dTypeParser.WanInfos;
+            List<CProxyTypeInfos> proxy = CGlobals.DtParser.ProxyInfos;
+            List<CRepoTypeInfos> extents = CGlobals.DtParser.ExtentInfo;
+            List<CRepoTypeInfos> repos = CGlobals.DtParser.RepoInfos;
+            List<CWanTypeInfo> wans = CGlobals.DtParser.WanInfos;
 
             _isBackupServerProxy = CheckProxyRole(serverId);
 
+            // if(proxy != null){
+            //     log.Debug("Proxy count: " + proxy.Count);
+            // }
+            // if(extents != null){
+            //     log.Debug("Extent count: " + extents.Count);
+            // }
+            // if(repos != null){
+            //     log.Debug("Repo count: " + repos.Count);
+            // }
+            // if(wans != null){
+            //     log.Debug("Wan count: " + wans.Count);
+            // }
 
 
             foreach (var e in extents)
@@ -1124,34 +1138,34 @@ namespace VeeamHealthCheck.Functions.Reporting.Html
                 if (w.HostId == serverId)
                     _isBackupServerWan = true;
             }
-            //log.Info("Checking server roles..done!");
+            log.Info("Checking server roles..done!");
         }
         private bool CheckProxyRole(string serverId)
         {
-            var viProxy = _csvParser.GetDynViProxy();
-            var hvProxy = _csvParser.GetDynHvProxy();
-            var nasProxy = _csvParser.GetDynNasProxy();
-            var cdpProxy = _csvParser.GetDynCdpProxy();
-            if (viProxy != null)
-                foreach (var v in viProxy.ToList())
+            // var viProxy = _csvParser.GetDynViProxy();
+            // var hvProxy = _csvParser.GetDynHvProxy();
+            // var nasProxy = _csvParser.GetDynNasProxy();
+            // var cdpProxy = _csvParser.GetDynCdpProxy();
+            if (_viProxy != null)
+                foreach (var v in _viProxy.ToList())
                 {
                     if (v.hostid == serverId)
                         return true;
                 }
-            if (hvProxy != null)
-                foreach (var h in hvProxy)
+            if (_hvProxy != null)
+                foreach (var h in _hvProxy)
                 {
                     if (h.id == serverId)
                         return true;
                 }
-            if (nasProxy != null)
-                foreach (var n in nasProxy)
+            if (_nasProxy != null)
+                foreach (var n in _nasProxy)
                 {
                     if (n.hostid == serverId)
                         return true;
                 }
-            if (cdpProxy != null)
-                foreach (var c in cdpProxy)
+            if (_cdpProxy != null)
+                foreach (var c in _cdpProxy)
                 {
                     if (c.serverid == serverId)
                         return true;
