@@ -146,7 +146,8 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR
         }
         private void JobSessionSummaryTable()
         {
-            HTMLSTRING += _tables.AddJobSessSummTable(SCRUB);
+            //HTMLSTRING += _tables.AddJobSessSummTable(SCRUB);
+            HTMLSTRING += _tables.AddJobSessSummTableByJob(SCRUB);
 
         }
         private void JobInfoTable()

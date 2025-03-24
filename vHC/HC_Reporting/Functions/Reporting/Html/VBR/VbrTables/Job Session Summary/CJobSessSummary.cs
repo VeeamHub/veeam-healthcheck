@@ -6,6 +6,7 @@ using System.Linq;
 using System.Xml.Linq;
 using VeeamHealthCheck.Functions.Reporting.CsvHandlers;
 using VeeamHealthCheck.Functions.Reporting.DataTypes;
+using VeeamHealthCheck.Functions.Reporting.Html.DataFormers;
 using VeeamHealthCheck.Functions.Reporting.Html.VBR.VbrTables.Job_Session_Summary;
 using VeeamHealthCheck.Shared;
 using VeeamHealthCheck.Shared.Logging;
@@ -61,7 +62,7 @@ namespace VeeamHealthCheck.Functions.Reporting.Html
             int totalProtectedInstances = 0;
             foreach (var j in helper.JobNameList().Distinct())
             {
-                log.Debug( logStart + "Parsing Sessions for job: " + j);
+                //log.Debug( logStart + "Parsing Sessions for job: " + j);
                 try
                 {
                     CJobSummaryTypes info = helper.SetWaitInfo(j);
@@ -85,7 +86,8 @@ namespace VeeamHealthCheck.Functions.Reporting.Html
                     retries = thisSession.RetryCounts;
                     totalFailedSessions += thisSession.FailCounts;
                     totalRetries += thisSession.RetryCounts;
-                    info.JobType = CJobTypeConversion.ReturnJobType(thisSession.JobType);
+                    info.JobType = CJobTypesParser.GetJobType(thisSession.JobType);
+                    //log.Debug(logStart + "Job Type: " + thisSession.JobType + " parsed to: " + info.JobType);
                     try
                     {
                         CCsvParser csv = new();

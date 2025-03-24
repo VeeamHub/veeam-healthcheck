@@ -170,7 +170,7 @@ namespace VeeamHealthCheck.Functions.Collection.PSCollections
                 }
                 errorarray.Add(errString);
             }
-            if(errorarray.Count > 0)
+            if (errorarray.Count > 0)
                 PushPsErrorsToMainLog(errorarray);
 
             log.Info(CMessages.PsVbrConfigProcIdDone, false);
@@ -181,11 +181,15 @@ namespace VeeamHealthCheck.Functions.Collection.PSCollections
         }
         private void PushPsErrorsToMainLog(List<string> errors)
         {
-            log.Error("PowerShell Errors: ");
-            foreach (var e in errors)
+            if (errors.Count > 0)
             {
-                log.Error("\t" + e);
+                log.Error("PowerShell Errors: ");
+                foreach (var e in errors)
+                {
+                    log.Error("\t" + e);
+                }
             }
+
         }
         private PsErrorTypes ParseErrors(string errorLine)
         {
@@ -354,7 +358,7 @@ namespace VeeamHealthCheck.Functions.Collection.PSCollections
                 {
                     var results = ps.Invoke();
                 }
-                catch(Exception ex)
+                catch (Exception ex)
                 {
                     log.Error("[PS] VB365 collection failed.", false);
                     log.Error(ex.Message, false);

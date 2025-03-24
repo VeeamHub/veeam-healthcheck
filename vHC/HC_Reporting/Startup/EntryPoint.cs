@@ -16,12 +16,12 @@ namespace VeeamHealthCheck.Startup
             {
                 CArgsParser ap = new(args);
                 var res =  ap.ParseArgs();
-                CGlobals.Logger.Info("The result is: " + res);
+                CGlobals.Logger.Info("The result is: " + res, true);
                 //return 1;
             }
             catch (Exception ex) {
                 CGlobals.Logger.Error(ex.Message);
-                CGlobals.Logger.Error("The result is: " + 1);
+                CGlobals.Logger.Error("The result is: " + 1, true);
             }
             
         }
