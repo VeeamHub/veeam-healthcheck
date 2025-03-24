@@ -327,7 +327,7 @@ namespace VeeamHealthCheck.Functions.Collection.PSCollections
                 Arguments = argString,
                 UseShellExecute = false,
                 CreateNoWindow = true,  //true for prod,
-                RedirectStandardError = true
+                RedirectStandardError = false
             };
         }
 
