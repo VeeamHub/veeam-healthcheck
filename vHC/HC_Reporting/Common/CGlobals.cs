@@ -24,6 +24,7 @@ namespace VeeamHealthCheck.Shared
         public static string REMOTEHOST = "";
         public static bool GUIEXEC = false;
         public static string VHCVERSION = "";
+        public static bool DEBUG = false;
         
         public static string RawReport = "";
         public static string ScrubbedReport = "";

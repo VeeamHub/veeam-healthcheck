@@ -54,7 +54,7 @@ namespace VeeamHealthCheck.Functions.Reporting.DataTypes
             {
                 _serverSummaryInfo = new Dictionary<string, int>();
                 JobInfos = JobInfo();
-                JobSessions = JobSessionInfo();
+                JobSessions = JobSessionInfo().ToList();
                 _serverInfo = ServerInfo();
                 ServerInfos = _serverInfo;
                 ProxyInfos = ProxyInfo();
@@ -498,7 +498,8 @@ namespace VeeamHealthCheck.Functions.Reporting.DataTypes
             try
             {
                 var records = _csvParser.SessionCsvParser().ToList();
-                log.Debug(String.Format("! Sessions loaded from csv parser: " + records.Count().ToString()), false);
+                if(CGlobals.DEBUG)
+                    log.Debug(String.Format("! Sessions loaded from csv parser: " + records.Count().ToString()), false);
                 var jobRecords = _csvParser.JobCsvParser().ToList();
                 List<CJobSessionInfo> eInfoList = new();
                 if (records != null)
@@ -671,7 +672,8 @@ namespace VeeamHealthCheck.Functions.Reporting.DataTypes
         public List<CServerTypeInfos> ServerInfo()
         {
             string message = "ServerInfo: Parsing Server CSV Data";
-            log.Debug(message);
+            if(CGlobals.DEBUG)
+                log.Debug(message);
             List<CServerTypeInfos> l = new();
 
             var records = _csvParser.ServerCsvParser();//.ToList();

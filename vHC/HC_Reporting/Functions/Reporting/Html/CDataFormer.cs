@@ -47,9 +47,9 @@ namespace VeeamHealthCheck.Functions.Reporting.Html
         private Dictionary<string, string> _repoPaths = new();
 
         private IEnumerable<dynamic> _viProxy = CCsvParser.GetDynViProxy().ToList();
-         private IEnumerable<dynamic> _hvProxy = CCsvParser.GetDynHvProxy().ToList();
-         private IEnumerable<dynamic> _nasProxy = CCsvParser.GetDynNasProxy().ToList();
-         private IEnumerable<dynamic> _cdpProxy = CCsvParser.GetDynCdpProxy().ToList();
+        private IEnumerable<dynamic> _hvProxy = CCsvParser.GetDynHvProxy().ToList();
+        private IEnumerable<dynamic> _nasProxy = CCsvParser.GetDynNasProxy().ToList();
+        private IEnumerable<dynamic> _cdpProxy = CCsvParser.GetDynCdpProxy().ToList();
 
         public CDataFormer() // add string mode input
         {
@@ -494,7 +494,7 @@ namespace VeeamHealthCheck.Functions.Reporting.Html
         private string SetGateHosts(string original, bool scrub)
         {
             string[] hosts = original.Split(' ');
-            if(hosts.Count() == 1 && String.IsNullOrEmpty(hosts[0]))
+            if (hosts.Count() == 1 && String.IsNullOrEmpty(hosts[0]))
             {
                 return hosts[0];
             }
@@ -505,8 +505,8 @@ namespace VeeamHealthCheck.Functions.Reporting.Html
             {
                 string newhost = host;
                 if (scrub)
-                    newhost = CGlobals.Scrubber.ScrubItem(host, ScrubItemType.Server); 
-                if(counter == end)
+                    newhost = CGlobals.Scrubber.ScrubItem(host, ScrubItemType.Server);
+                if (counter == end)
                     r += newhost + "<br>";
                 else
                     r += newhost + ",<br>";
@@ -874,12 +874,23 @@ namespace VeeamHealthCheck.Functions.Reporting.Html
 
 
             List<CJobSessionInfo> trimmedSessionInfo = new();
-                CGlobals.Logger.Info(logStart + "Loading Job Sessions for Concurrency...");
-                trimmedSessionInfo = CGlobals.DtParser.JobSessions.Where(c => c.CreationTime >= CGlobals.GetToolStart.AddDays(CGlobals.ReportDays)).ToList();
-                CGlobals.Logger.Info(logStart + $"Loaded {trimmedSessionInfo.Count} Job Sessions for Concurrency...");
+            CGlobals.Logger.Info(logStart + "Loading Job Sessions for Concurrency...");
+            if (CGlobals.DEBUG)
+            {
+                log.Debug("DEBUG MODE: Loading all Job Sessions for Concurrency...");
+                log.Debug("Job Sessions TOTAL = " + CGlobals.DtParser.JobSessions.Count);
+                log.Debug("Report interval: " + CGlobals.ReportDays);
+            }
+            var v = CGlobals.DtParser.JobSessions.Where(c => c.CreationTime >= CGlobals.GetToolStart.AddDays(CGlobals.ReportDays));
+            if (CGlobals.DEBUG)
+            {
+                log.Debug("Job Sessions after filter: " + v.Count());
+            }
+            trimmedSessionInfo = CGlobals.DtParser.JobSessions.Where(c => c.CreationTime >= CGlobals.GetToolStart.AddDays(-CGlobals.ReportDays)).ToList();
+            CGlobals.Logger.Info(logStart + $"Loaded {trimmedSessionInfo.Count} Job Sessions for Concurrency...");
 
             List<ConcurentTracker> ctList = new();
-       
+
             if (isJob)
             {
                 ctList = helper.JobCounter(trimmedSessionInfo);

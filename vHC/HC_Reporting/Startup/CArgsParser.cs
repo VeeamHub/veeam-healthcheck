@@ -38,8 +38,10 @@ namespace VeeamHealthCheck.Startup
             PSInvoker p = new();
             p.TryUnblockFiles();
 
-            if (_args.Length == 0)
-                return ParseZeroArgs();
+            if (_args.Length == 0){
+                CGlobals.Logger.Debug("No arguments provided. Launching GUI", false);
+                return LaunchUi(Handle(), true);
+            }
             else if (_args != null && _args.Length > 0)
                 return ParseAllArgs(_args);
             else
@@ -73,22 +75,22 @@ namespace VeeamHealthCheck.Startup
             return GetConsoleWindow();
         }
 
-        private int ParseZeroArgs()
-        {
-            var pos = Console.GetCursorPosition();
-            //CGlobals.Logger.Warning("pos = " + pos.ToString(), false);
-            if (pos == (0, 1) || pos == (0, 2))
-            {
-                CGlobals.Logger.Info("0s");
-                 return LaunchUi(Handle(), true);
-            }
-            else
-            {
-                CGlobals.Logger.Info("not 0");
-                Console.WriteLine(CMessages.helpMenu);
-                return 0;
-            }
-        }
+        //private int ParseZeroArgs()
+        //{
+        //    var pos = Console.GetCursorPosition();
+        //    CGlobals.Logger.Debug("pos = " + pos.ToString(), false);
+        //    if (pos == (0, 1) || pos == (0, 2))
+        //    {
+        //        CGlobals.Logger.Info("0s");
+        //         return LaunchUi(Handle(), true);
+        //    }
+        //    else
+        //    {
+        //        CGlobals.Logger.Info("not 0");
+        //        Console.WriteLine(CMessages.helpMenu);
+        //        return 0;
+        //    }
+        //}
         private int ParseAllArgs(string[] args)
         {
             bool run = false;
@@ -172,6 +174,9 @@ namespace VeeamHealthCheck.Startup
                         break;
                     case "/pdf":
                         CGlobals.EXPORTPDF = true;
+                        break;
+                    case "/debug":
+                        CGlobals.DEBUG = true;
                         break;
                     case var match when new Regex("/path=.*").IsMatch(a):
                         _hfdPath = ParsePath(a);
