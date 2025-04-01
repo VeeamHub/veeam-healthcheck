@@ -10,18 +10,22 @@ namespace VeeamHealthCheck.Startup
     {
         private static CClientFunctions _functions = new();
         [STAThread]
-        public static void Main(string[] args)
+        public static int Main(string[] args)
         {
+            CGlobals.Logger.Debug("Starting the application");
+            CGlobals.Logger.Debug("The arguments are: " + string.Join(" ", args));
+
             try
             {
                 CArgsParser ap = new(args);
                 var res =  ap.ParseArgs();
-                CGlobals.Logger.Info("The result is: " + res);
-                //return 1;
+                CGlobals.Logger.Info("The result is: " + res, true);
+                return 0;
             }
             catch (Exception ex) {
                 CGlobals.Logger.Error(ex.Message);
-                CGlobals.Logger.Error("The result is: " + 1);
+                CGlobals.Logger.Error("The result is: " + 1, true);
+                return 1;
             }
             
         }

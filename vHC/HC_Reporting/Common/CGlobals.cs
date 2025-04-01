@@ -3,12 +3,13 @@
 using System;
 using System.Collections.Generic;
 using VeeamHealthCheck.Functions.Analysis.DataModels;
+using VeeamHealthCheck.Functions.Reporting.DataTypes;
 using VeeamHealthCheck.Scrubber;
 using VeeamHealthCheck.Shared.Logging;
 
 namespace VeeamHealthCheck.Shared
 {
-    internal class CGlobals
+    public class CGlobals
     {
         // static globals:
         public static CLogger _mainlog = new("HealthCheck");
@@ -23,7 +24,10 @@ namespace VeeamHealthCheck.Shared
         public static string REMOTEHOST = "";
         public static bool GUIEXEC = false;
         public static string VHCVERSION = "";
-
+        public static bool DEBUG = false;
+        
+        public static string RawReport = "";
+        public static string ScrubbedReport = "";
         // GUI & CLI Options:
         private static int _reportDays = 7;
         public static string _desiredPath = CVariables.unsafeDir;
@@ -62,6 +66,8 @@ namespace VeeamHealthCheck.Shared
 
         // collections
         public static Dictionary<string, Object> DEFAULTREGISTRYKEYS = new Dictionary<string, Object>();
+        public static List<CServerTypeInfos> ServerInfo = new();
+        public static CDataTypesParser DtParser;
 
         public CGlobals()
         {

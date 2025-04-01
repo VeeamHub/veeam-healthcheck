@@ -23,21 +23,22 @@ namespace VeeamHealthCheck.Functions.Reporting.CsvHandlers
     {
         private CLogger log = CGlobals.Logger;
         private readonly CCsvReader _vbrReader = new();
+        private static readonly CCsvReader _vbrReaderStatic = new();
         private readonly CCsvReader _vboReader = new();
 
         //CSV Paths.
-        public  string _sessionPath = "VeeamSessionReport.csv";
+        public string _sessionPath = "VeeamSessionReport.csv";
         public string _outPath;// = CVariables.vbrDir;
         public readonly string _sobrExtReportName = "SOBRExtents";
         public readonly string _sobrReportName = "SOBRs";
-        public readonly string _proxyReportName = "Proxies";
+        public static readonly string _proxyReportName = "Proxies";
         public readonly string _repoReportName = "Repositories";
         public readonly string _serverReportName = "Servers";
         public readonly string _licReportName = "LicInfo";
         public readonly string _wanReportName = "WanAcc";
-        public readonly string _cdpProxReportName = "CdpProxy";
-        public readonly string _hvProxReportName = "HvProxy";
-        public readonly string _nasProxReportName = "NasProxy";
+        public static readonly string _cdpProxReportName = "CdpProxy";
+        public static readonly string _hvProxReportName = "HvProxy";
+        public static readonly string _nasProxReportName = "NasProxy";
         public readonly string _bnrInfoName = "vbrinfo";
         public readonly string _bjobs = "bjobs";
         public readonly string _capTier = "capTier";
@@ -113,6 +114,13 @@ namespace VeeamHealthCheck.Functions.Reporting.CsvHandlers
         private IEnumerable<dynamic> VbrGetDynamicCsvRecs(string file, string vbrOrVboPath)
         {
             var res = VbrFileReader(file);
+            if (res != null)
+                return res.GetRecords<dynamic>();
+            return null;
+        }
+        private static IEnumerable<dynamic> VbrGetDynamicCsvRecsStatic(string file, string vbrOrVboPath)
+        {
+            var res = VbrFileReaderStatic(file);
             if (res != null)
                 return res.GetRecords<dynamic>();
             return null;
@@ -305,21 +313,21 @@ namespace VeeamHealthCheck.Functions.Reporting.CsvHandlers
             return VbrGetDynamicCsvRecs(_capTier, CVariables.vbrDir);
         }
 
-        public IEnumerable<dynamic> GetDynViProxy()
+        public static IEnumerable<dynamic> GetDynViProxy()
         {
-            return VbrGetDynamicCsvRecs(_proxyReportName, CVariables.vbrDir);
+            return VbrGetDynamicCsvRecsStatic(_proxyReportName, CVariables.vbrDir);
         }
-        public IEnumerable<dynamic> GetDynHvProxy()
+        public static IEnumerable<dynamic> GetDynHvProxy()
         {
-            return VbrGetDynamicCsvRecs(_hvProxReportName, CVariables.vbrDir);
+            return VbrGetDynamicCsvRecsStatic(_hvProxReportName, CVariables.vbrDir);
         }
-        public IEnumerable<dynamic> GetDynNasProxy()
+        public static IEnumerable<dynamic> GetDynNasProxy()
         {
-            return VbrGetDynamicCsvRecs(_nasProxReportName, CVariables.vbrDir);
+            return VbrGetDynamicCsvRecsStatic(_nasProxReportName, CVariables.vbrDir);
         }
-        public IEnumerable<dynamic> GetDynCdpProxy()
+        public static IEnumerable<dynamic> GetDynCdpProxy()
         {
-            return VbrGetDynamicCsvRecs(_cdpProxReportName, CVariables.vbrDir);
+            return VbrGetDynamicCsvRecsStatic(_cdpProxReportName, CVariables.vbrDir);
         }
         #endregion
 
@@ -622,7 +630,13 @@ namespace VeeamHealthCheck.Functions.Reporting.CsvHandlers
                 return fileResult;
             else return null;
         }
-
+        private static CsvReader VbrFileReaderStatic(string file)
+        {
+            var fileResult = _vbrReaderStatic.VbrCsvReader(file);
+            if (fileResult != null)
+                return fileResult;
+            else return null;
+        }
         private CsvReader VboFileReader(string file)
         {
             var fileResult = _vbrReader.VboCsvReader(file);

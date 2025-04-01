@@ -365,3 +365,4 @@ FodyWeavers.xsd
 /vHC/HC_Reporting/Tools/build/clearPath.ps1
 /vHC/HC_Reporting/Tools/build/BuildCopy.bat
 /VeeamHealthCheck.cer
+vHC/HC_Reporting/Tools/build/BuildCopy.sh

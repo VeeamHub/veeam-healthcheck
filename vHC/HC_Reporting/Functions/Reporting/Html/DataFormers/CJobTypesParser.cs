@@ -18,12 +18,14 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.DataFormers
                     return "Backup Copy";
                 case "NasBackup":
                     return "File Backup";
+                case "ENasBackup":
+                    return "File Backup";
                 case "Backup":
                     return "Backup";
-                    case "Replica":
-                        return "Replica";
+                case "Replica":
+                    return "Replica";
                 case "NasBackupCopy":
-                        return "File Backup - Copy";
+                    return "File Backup - Copy";
                 case "MSSQLPlugin":
                     return "MS SQL Plugin";
                 case "SureBackup":
@@ -34,26 +36,32 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.DataFormers
                     return "Tape";
                 case "BackupSync":
                     return "Backup Copy";
-                    case "SqlLogBackup":
-                        return "SQL Log Backup";
+                case "SqlLogBackup":
+                    return "SQL Log Backup";
                 case "OracleLogBackup":
                     return "Oracle Log Backup";
-                    case "SimpleBackupCopyWorker":
-                        return "Backup Copy";
+                case "SimpleBackupCopyWorker":
+                    return "Backup Copy";
                 case "ConfBackup":
                     return "Configuration Backup";
                 case "Cloud":
-                        return "Cloud Backup";
+                    return "Cloud Backup";
                 case "OrchestratedTask":
-                        return "Orchestrated Task";
+                    return "Orchestrated Task";
                 case "OracleRMANBackup":
                     return "Enterprise Database Plugin";
                 case "SapBackintBackup":
                     return "Enterprise Database Plugin";
                 case "EpAgentManagement":
                     return "Agent Backup";
+                case "ELinuxPhysical":
+                    return "Agent Backup";
                 case "EEndPoint":
                     return "Endpoint Backup";
+                case "EHyperV":
+                    return "Hyper-V Backup";
+                case "EVmware":
+                    return "VMware Backup";
                 case "":
                     return "Other";
                 default:

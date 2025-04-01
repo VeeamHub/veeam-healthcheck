@@ -20,8 +20,18 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR.VbrTables.Jobs_Info
             try
             {
                 CCsvParser c = new();
-                var entraTenantJobs = c.GetDynamicEntraTenantJobs().ToList();
-                var entraLogJobs = c.GetDynamicEntraLogJobs().ToList();
+                List<CEntraTenantJobs> entraTenantJobs = new();//
+                List<CEntraLogJobs> entraLogJobs = new();//
+
+                try{
+                    entraLogJobs = c.GetDynamicEntraLogJobs().ToList();
+                    entraTenantJobs = c.GetDynamicEntraTenantJobs().ToList();
+                }
+                catch
+                {
+                    CGlobals.Logger.Warning("Error in parsing Entra Jobs ");
+                    return null;
+                }
                 if (entraTenantJobs.Count() == 0 && entraLogJobs.Count() == 0)
                     return "";
                 CGlobals.Logger.Debug("Tenant Job count = "+ entraTenantJobs.Count());

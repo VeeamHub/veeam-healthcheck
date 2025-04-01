@@ -69,7 +69,7 @@ namespace VeeamHealthCheck.Functions.Collection.LogParser
                     sw.WriteLine("JobName,StartTime,EndTime,Duration");
                 }
             }
-            catch (Exception e )
+            catch (Exception e)
             {
                 log.Error(logStart + "Failed to init waits.csv. Error:\t" + e.Message);
             }
@@ -107,7 +107,7 @@ namespace VeeamHealthCheck.Functions.Collection.LogParser
                 string info = string.Format("[LogParser] Parsing Directory {0} of {1}", counter, dirList.Count());
                 log.Info(info, false);
                 string jobname = Path.GetFileName(d);
-                if(jobname == "Prod_VMs_Backup")
+                if (jobname == "Prod_VMs_Backup")
                 {
 
                 }
@@ -118,7 +118,7 @@ namespace VeeamHealthCheck.Functions.Collection.LogParser
                 string[] taskList = Directory.GetFiles(d, "Task*.log", SearchOption.AllDirectories);
                 List<string> fileList = new();
                 fileList.AddRange(jobList);
-                fileList.AddRange(taskList); 
+                fileList.AddRange(taskList);
 
 
                 foreach (var f in fileList)
@@ -137,7 +137,7 @@ namespace VeeamHealthCheck.Functions.Collection.LogParser
                         }
                         //waits.AddRange(CheckFileWait(f, jobname));
                     }
-                    catch(Exception e) { }
+                    catch (Exception e) { }
                     fileCounter++;
                 }
                 jobsAndWaits.Add(jobname, waits);
@@ -162,7 +162,11 @@ namespace VeeamHealthCheck.Functions.Collection.LogParser
 
                 }
             }
-            catch (Exception e) { log.Debug(e.Message); }
+            catch (Exception e)
+            {
+                if (CGlobals.DEBUG)
+                    log.Debug(e.Message);
+            }
         }
         private List<TimeSpan> CheckFileWait(string file, string jobName)
         {
@@ -180,7 +184,7 @@ namespace VeeamHealthCheck.Functions.Collection.LogParser
                 {
                     if (line.Contains(waitLine))
                     {
-                        
+
                     }
                     if (!string.IsNullOrEmpty(line))
                     {
@@ -210,7 +214,7 @@ namespace VeeamHealthCheck.Functions.Collection.LogParser
                                 startTime = "";
                             }
                         }
-                        catch(System.ArgumentOutOfRangeException e1) { }
+                        catch (System.ArgumentOutOfRangeException e1) { }
                         catch (Exception e) { }
                     }
 

@@ -2,6 +2,7 @@
 // MIT License
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using VeeamHealthCheck.Functions.Reporting.CsvHandlers;
 using VeeamHealthCheck.Functions.Reporting.DataTypes.ProxyData;
@@ -16,7 +17,8 @@ namespace VeeamHealthCheck.Functions.Reporting.DataTypes
         private CLogger log = CGlobals.Logger;
         private CCsvParser _csvParser = new();
 
-        private List<CServerTypeInfos> _serverInfo;
+        private List<CServerTypeInfos> _serverInfo = new();
+
         private Dictionary<string, int> _serverSummaryInfo;
         //private List<CSobrTypeInfos> _sobrInfo;
         //private List<CRepoTypeInfos> _extentInfo;
@@ -27,18 +29,18 @@ namespace VeeamHealthCheck.Functions.Reporting.DataTypes
         private List<string> _typeList = new();
         //private List<CServerTypeInfos> _serverInfo;
 
-        public List<CJobTypeInfos> JobInfos { get { return JobInfo(); } }
-        public List<CJobSessionInfo> JobSessions { get { return JobSessionInfo(); } }
-        public List<CServerTypeInfos> ServerInfos { get { return ServerInfo(); } }
-        public List<CRepoTypeInfos> ExtentInfo { get { try { return SobrExtInfo(); } catch (Exception e) { throw; } } }
-        public List<CProxyTypeInfos> ProxyInfos { get { return ProxyInfo(); } }
+        public List<CJobTypeInfos> JobInfos = new();
+        public List<CJobSessionInfo> JobSessions =new();
+        public List<CServerTypeInfos> ServerInfos = new();
+        public List<CRepoTypeInfos> ExtentInfo = new();
+        public List<CProxyTypeInfos> ProxyInfos = new();
         public Dictionary<string, int> ServerSummaryInfo { get { return _serverSummaryInfo; } }
-        public List<CSobrTypeInfos> SobrInfo { get { return SobrInfos(); } }
+        public List<CSobrTypeInfos> SobrInfo = new();
         //public List<CLicTypeInfo> LicInfo { get { return LicInfos(); } }
-        public List<CRepoTypeInfos> RepoInfos { get { return RepoInfo(); } }
-        public List<CWanTypeInfo> WanInfos { get { return WanInfo(); } }
-        public CConfigBackupCsv ConfigBackup { get { return ConfigBackupInfo(); } }
-        public List<CNetTrafficRulesCsv> NetTraffRules { get { return NetTrafficRulesParser(); } }
+        public List<CRepoTypeInfos> RepoInfos = new();
+        public List<CWanTypeInfo> WanInfos = new();
+        public CConfigBackupCsv ConfigBackup = new();
+        public List<CNetTrafficRulesCsv> NetTrafficRules = new();
         public List<int> ProtectedJobIds { get { return _protectedJobIds; } }
 
         public CDataTypesParser()
@@ -51,6 +53,19 @@ namespace VeeamHealthCheck.Functions.Reporting.DataTypes
             try
             {
                 _serverSummaryInfo = new Dictionary<string, int>();
+                JobInfos = JobInfo();
+                JobSessions = JobSessionInfo().ToList();
+                _serverInfo = ServerInfo();
+                ServerInfos = _serverInfo;
+                ProxyInfos = ProxyInfo();
+                ExtentInfo = SobrExtInfo();
+                SobrInfo = SobrInfos();
+                RepoInfos = RepoInfo();
+                WanInfos = WanInfo();
+                ConfigBackup = ConfigBackupInfo();
+                NetTrafficRules = NetTrafficRulesParser();
+
+
 
                 FilterAndCountTypes();
             }
@@ -483,6 +498,8 @@ namespace VeeamHealthCheck.Functions.Reporting.DataTypes
             try
             {
                 var records = _csvParser.SessionCsvParser().ToList();
+                if(CGlobals.DEBUG)
+                    log.Debug(String.Format("! Sessions loaded from csv parser: " + records.Count().ToString()), false);
                 var jobRecords = _csvParser.JobCsvParser().ToList();
                 List<CJobSessionInfo> eInfoList = new();
                 if (records != null)
@@ -515,6 +532,7 @@ namespace VeeamHealthCheck.Functions.Reporting.DataTypes
                         catch (Exception e)
                         {
                             log.Error("Failed to parse job original size");
+                            log.Error("\t" + e.ToString());
 
                         }
 
@@ -539,6 +557,7 @@ namespace VeeamHealthCheck.Functions.Reporting.DataTypes
             }
             catch (Exception e)
             {
+                log.Error("JobSessionInfo Error: "); log.Error("\t" + e.Message);
                 return null;
             }
 
@@ -652,7 +671,9 @@ namespace VeeamHealthCheck.Functions.Reporting.DataTypes
         }
         public List<CServerTypeInfos> ServerInfo()
         {
-            log.Info("parsing server csv data");
+            string message = "ServerInfo: Parsing Server CSV Data";
+            if(CGlobals.DEBUG)
+                log.Debug(message);
             List<CServerTypeInfos> l = new();
 
             var records = _csvParser.ServerCsvParser();//.ToList();
@@ -671,6 +692,7 @@ namespace VeeamHealthCheck.Functions.Reporting.DataTypes
                 ti.CpuCount = ParseToInt(s.CPU);
                 ti.Description = s.Description;
                 ti.Id = s.Id;
+
                 ti.PhysHostId = s.PhysHostId;
                 ti.Info = s.Info;
                 ti.OSInfo = s.OSInfo;
@@ -678,6 +700,7 @@ namespace VeeamHealthCheck.Functions.Reporting.DataTypes
                 if (ti.IsUnavailable == "False")
                     ti.IsUnavailable = "";
                 ti.Name = s.Name;
+
                 //ti.ParentId = Guid.TryParse(s.ParentId);
                 //ti.PhysHostId = Guid.TryParse(s.PhysHostId);
                 ti.ProxyServicesCreds = s.ProxyServicesCreds;
@@ -697,8 +720,9 @@ namespace VeeamHealthCheck.Functions.Reporting.DataTypes
                 AddServerTypeToDict(ti.Type);
                 l.Add(ti);
             }
-            log.Info("parsing server csv data..ok!");
+            log.Info(message + "..ok!");
             _serverInfo = l;
+            
             return l;
         }
         private int CalculateServerTasks(string type, string serverId)
@@ -714,7 +738,7 @@ namespace VeeamHealthCheck.Functions.Reporting.DataTypes
         }
         private void FilterAndCountTypes()
         {
-            ServerInfo();
+            //ServerInfo();
             List<string> types = _typeList;
             types.Sort();
             foreach (var type in types)
@@ -741,9 +765,9 @@ namespace VeeamHealthCheck.Functions.Reporting.DataTypes
             return df.CalcProxyTasks(assignedTasks, cores, ram);
 
         }
-        public List<CProxyTypeInfos> ProxyInfo()
+        private List<CProxyTypeInfos> ProxyInfo()
         {
-
+log.Info("Processing Proxy info..");
             var proxyCsv = _csvParser.ProxyCsvParser();
             var cdpCsv = _csvParser.CdpProxCsvParser();
             var fileCsv = _csvParser.NasProxCsvParser();
@@ -752,6 +776,7 @@ namespace VeeamHealthCheck.Functions.Reporting.DataTypes
             List<CProxyTypeInfos> proxyList = new();
             if (proxyCsv != null)
             {
+                log.Info("Checking Vi Proxies...");
                 foreach (CProxyCsvInfos s in proxyCsv)
                 {
                     CProxyTypeInfos ti = new();
@@ -776,11 +801,13 @@ namespace VeeamHealthCheck.Functions.Reporting.DataTypes
 
                     proxyList.Add(ti);
                 }
+                log.Info("Checking Vi Proxies...ok!");
 
             }
 
             if (cdpCsv != null)
             {
+                log.Info("Checking CDP Procies...");
                 foreach (CCdpProxyCsvInfo cdp in cdpCsv)
                 {
                     CProxyTypeInfos p = new();
@@ -803,11 +830,12 @@ namespace VeeamHealthCheck.Functions.Reporting.DataTypes
 
                     proxyList.Add(p);
                 }
-
+                log.Info("Checking CDP Procies...ok!");
             }
 
             if (fileCsv != null)
             {
+                log.Info("Checking File Procies...");
                 foreach (CFileProxyCsvInfo fp in fileCsv)
                 {
                     CProxyTypeInfos p = new();
@@ -828,11 +856,13 @@ namespace VeeamHealthCheck.Functions.Reporting.DataTypes
 
                     proxyList.Add(p);
                 }
+                log.Info("Checking File Procies...ok!");
 
             }
 
             if (hvCsv != null)
             {
+                log.Info("Processing Hyper-V Proxies..");
                 foreach (CHvProxyCsvInfo hp in hvCsv)
                 {
                     CProxyTypeInfos p = new();
@@ -853,9 +883,10 @@ namespace VeeamHealthCheck.Functions.Reporting.DataTypes
 
                     proxyList.Add(p);
                 }
+                log.Info("Processing Hyper-V Proxies..ok!");
 
             }
-
+            log.Info("Processing Proxy info..ok!");
             return proxyList;
         }
         private int ParseToInt(string input)

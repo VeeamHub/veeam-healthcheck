@@ -156,22 +156,22 @@ namespace VeeamHealthCheck.Functions.Collection.PSCollections
             List<string> errorarray = new();
 
             bool failed = false;
-            string errString = "";
-            while ((errString = res1.StandardError.ReadLine()) != null)
-            {
-                var errResults = ParseErrors(errString);
-                if (!errResults.Success)
-                {
-                    log.Error(errString, false);
-                    log.Error(errResults.Message);
-                    failed = true;
-                    //return false;
+            //string errString = "";
+            //while ((errString = res1.StandardError.ReadLine()) != null)
+            //{
+            //    var errResults = ParseErrors(errString);
+            //    if (!errResults.Success)
+            //    {
+            //        log.Error(errString, false);
+            //        log.Error(errResults.Message);
+            //        failed = true;
+            //        //return false;
 
-                }
-                errorarray.Add(errString);
-            }
-            if(errorarray.Count > 0)
-                PushPsErrorsToMainLog(errorarray);
+            //    }
+            //    errorarray.Add(errString);
+            //}
+            //if (errorarray.Count > 0)
+            //    PushPsErrorsToMainLog(errorarray);
 
             log.Info(CMessages.PsVbrConfigProcIdDone, false);
             if (failed)
@@ -181,11 +181,15 @@ namespace VeeamHealthCheck.Functions.Collection.PSCollections
         }
         private void PushPsErrorsToMainLog(List<string> errors)
         {
-            log.Error("PowerShell Errors: ");
-            foreach (var e in errors)
+            if (errors.Count > 0)
             {
-                log.Error("\t" + e);
+                log.Error("PowerShell Errors: ");
+                foreach (var e in errors)
+                {
+                    log.Error("\t" + e);
+                }
             }
+
         }
         private PsErrorTypes ParseErrors(string errorLine)
         {
@@ -252,7 +256,8 @@ namespace VeeamHealthCheck.Functions.Collection.PSCollections
             argString = $"-NoProfile -ExecutionPolicy unrestricted -file {scriptLocation} -Server {server} -ReportPath {path}";
 
             //string argString = $"-NoProfile -ExecutionPolicy unrestricted -file \"{scriptLocation}\" -ReportPath \"{path}\"";
-            log.Debug(logStart + "PS ArgString = " + argString, false);
+            if(CGlobals.DEBUG)
+                log.Debug(logStart + "PS ArgString = " + argString, false);
             return new ProcessStartInfo()
             {
                 FileName = "powershell.exe",
@@ -275,7 +280,8 @@ namespace VeeamHealthCheck.Functions.Collection.PSCollections
             argString = $"-NoProfile -ExecutionPolicy unrestricted -file \"{scriptLocation}\" -Server {server}";
 
             //string argString = $"-NoProfile -ExecutionPolicy unrestricted -file \"{scriptLocation}\" -ReportPath \"{path}\"";
-            log.Debug(logStart + "PS ArgString = " + argString, false);
+            if(CGlobals.DEBUG)
+                log.Debug(logStart + "PS ArgString = " + argString, false);
             return new ProcessStartInfo()
             {
                 FileName = "powershell.exe",
@@ -323,7 +329,7 @@ namespace VeeamHealthCheck.Functions.Collection.PSCollections
                 Arguments = argString,
                 UseShellExecute = false,
                 CreateNoWindow = true,  //true for prod,
-                RedirectStandardError = true
+                RedirectStandardError = false
             };
         }
 
@@ -354,7 +360,7 @@ namespace VeeamHealthCheck.Functions.Collection.PSCollections
                 {
                     var results = ps.Invoke();
                 }
-                catch(Exception ex)
+                catch (Exception ex)
                 {
                     log.Error("[PS] VB365 collection failed.", false);
                     log.Error(ex.Message, false);

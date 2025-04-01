@@ -6,6 +6,7 @@ using System.Linq;
 using System.Xml.Linq;
 using VeeamHealthCheck.Functions.Reporting.CsvHandlers;
 using VeeamHealthCheck.Functions.Reporting.DataTypes;
+using VeeamHealthCheck.Functions.Reporting.Html.DataFormers;
 using VeeamHealthCheck.Functions.Reporting.Html.VBR.VbrTables.Job_Session_Summary;
 using VeeamHealthCheck.Shared;
 using VeeamHealthCheck.Shared.Logging;
@@ -60,141 +61,156 @@ namespace VeeamHealthCheck.Functions.Reporting.Html
 
             int totalProtectedInstances = 0;
             foreach (var j in helper.JobNameList().Distinct())
-           {
-                CJobSummaryTypes info = helper.SetWaitInfo(j);
-
-                double sessionCount = 0;
-                double fails = 0;
-                double retries = 0;
-                List<TimeSpan> durations = new();
-                List<string> vmNames = new();
-                List<double> dataSize = new();
-                List<double> backupSize = new();
-
-                SessionStats thisSession = helper.SessionStats(j);
-                durations = thisSession.JobDuration;
-                vmNames = thisSession.VmNames;
-                dataSize = thisSession.DataSize;
-                backupSize = thisSession.BackupSize;
-                totalSessions += thisSession.SessionCount;
-                sessionCount = thisSession.SessionCount;
-                fails = thisSession.FailCounts;
-                retries = thisSession.RetryCounts;
-                totalFailedSessions += thisSession.FailCounts;
-                totalRetries += thisSession.RetryCounts;
-                info.JobType = CJobTypeConversion.ReturnJobType(thisSession.JobType);
+            {
+                //log.Debug( logStart + "Parsing Sessions for job: " + j);
                 try
                 {
-                    CCsvParser csv = new();
-                    var jobInfo = csv.JobCsvParser().Where(x => x.Name == j).FirstOrDefault();
-                    if(jobInfo != null)
-                        info.UsedVmSizeTB = jobInfo.OriginalSize /1024 /1024 /1024 / 1024;
-                }
-                catch (Exception e)
-                {
-                    info.UsedVmSizeTB = 0;
-                }
+                    CJobSummaryTypes info = helper.SetWaitInfo(j);
 
-                List<TimeSpan> nonZeros = helper.AddNonZeros(durations);
-                
-                try
-                {
-                    info.sessionCount = (int)thisSession.SessionCount;
-                    if (sessionCount != 0)
+                    double sessionCount = 0;
+                    double fails = 0;
+                    double retries = 0;
+                    List<TimeSpan> durations = new();
+                    List<string> vmNames = new();
+                    List<double> dataSize = new();
+                    List<double> backupSize = new();
+
+                    SessionStats thisSession = helper.SessionStats(j);
+                    durations = thisSession.JobDuration;
+                    vmNames = thisSession.VmNames;
+                    dataSize = thisSession.DataSize;
+                    backupSize = thisSession.BackupSize;
+                    totalSessions += thisSession.SessionCount;
+                    sessionCount = thisSession.SessionCount;
+                    fails = thisSession.FailCounts;
+                    retries = thisSession.RetryCounts;
+                    totalFailedSessions += thisSession.FailCounts;
+                    totalRetries += thisSession.RetryCounts;
+                    info.JobType = CJobTypesParser.GetJobType(thisSession.JobType);
+                    //log.Debug(logStart + "Job Type: " + thisSession.JobType + " parsed to: " + info.JobType);
+                    try
                     {
-                        double percent = (sessionCount - fails + retries) / sessionCount * 100;
-                        info.SuccessRate = (int)Math.Round(percent, 0, MidpointRounding.ToEven);
-                        string sessionInfoString = string.Format("" +
-                            "Total Sessions: {0} " +
-                            "Failed: {1} " +
-                            "Retries: {2} " +
-                            "PercentSuccess: {3}",
-                            sessionCount.ToString(),
-                            fails,
-                            retries,
-                            info.SuccessRate);
-                        log.Info(logStart + "Session Calcuations:\t" + sessionInfoString);
-                        if (percent > 100)
-                        {// TODO: if percent greater than 100, set to 100
-                            percent = 100;
-                        }
-                        if(fails != 0 || retries != 0)
+                        CCsvParser csv = new();
+                        var jobInfo = csv.JobCsvParser().Where(x => x.Name == j).FirstOrDefault();
+                        if (jobInfo != null)
+                            info.UsedVmSizeTB = jobInfo.OriginalSize / 1024 / 1024 / 1024 / 1024;
+                    }
+                    catch (Exception e)
+                    {
+                        log.Error(logStart + "Error: ");
+                        log.Error(e.ToString());
+                        info.UsedVmSizeTB = 0;
+                    }
+
+                    List<TimeSpan> nonZeros = helper.AddNonZeros(durations);
+
+                    try
+                    {
+                        info.sessionCount = (int)thisSession.SessionCount;
+                        if (sessionCount != 0)
                         {
+                            double percent = (sessionCount - fails + retries) / sessionCount * 100;
+                            info.SuccessRate = (int)Math.Round(percent, 0, MidpointRounding.ToEven);
+                            string sessionInfoString = string.Format("" +
+                                "Total Sessions: {0}, " +
+                                "Failed: {1}, " +
+                                "Retries: {2}, " +
+                                "PercentSuccess: {3}",
+                                sessionCount.ToString(),
+                                fails,
+                                retries,
+                                info.SuccessRate);
+                            log.Info(logStart + "Session Calcuations:\t" + sessionInfoString);
+                            if (percent > 100)
+                            {// TODO: if percent greater than 100, set to 100
+                                percent = 100;
+                            }
+                            if (fails != 0 || retries != 0)
+                            {
 
+                            }
+                            info.Fails = (int)fails;
+                            info.Retries = (int)retries;
                         }
-                        info.Fails = (int)fails;
-                        info.Retries = (int)retries;
-                    }
 
-                    successRates.Add((int)info.SuccessRate);
-                    if (scrub)
-                        info.JobName = scrubber.ScrubItem(j, Scrubber.ScrubItemType.Job);
-                    else
-                        info.JobName = j;
+                        successRates.Add((int)info.SuccessRate);
+                        if (scrub)
+                            info.JobName = scrubber.ScrubItem(j, Scrubber.ScrubItemType.Job);
+                        else
+                            info.JobName = j;
 
-                    if (nonZeros.Count != 0)
-                    {
-                        info.MinJobTime = nonZeros.Min().ToString(@"dd\.hh\:mm\:ss");
-                        info.MaxJobTime = nonZeros.Max().ToString(@"dd\.hh\:mm\:ss");
-                        var s = new TimeSpan(Convert.ToInt64(nonZeros.Average(ts => ts.Ticks)));
-                        info.AvgJobTime = s.ToString(@"dd\.hh\:mm\:ss");
-                    }
-                    else
-                    {
-                        info.MinJobTime = "";
-                        info.MaxJobTime = "";
-                        info.AvgJobTime = "";
-                    }
-
-
-                    info.ItemCount = vmNames.Distinct().Count();
-                    totalProtectedInstances = totalProtectedInstances + vmNames.Distinct().Count();
-
-                    info = SetBackupDataSizes(info, dataSize, backupSize, info.UsedVmSizeTB);
-
-                    avgDataSizes.Add(info.AvgDataSize);
-                    avgBackupSizes.Add(info.AvgBackupSize);
-                    maxDataSizes.Add(info.MaxDataSize);
-                    maxBackupSize.Add(info.MaxBackupSize);
-
-
-                    if (info.AvgBackupSize != 0 && info.AvgDataSize != 0)
-                    {
-                        if(info.AvgDataSize > info.UsedVmSizeTB)
+                        if (nonZeros.Count != 0)
                         {
-                            info.AvgChangeRate = Math.Round(info.AvgDataSize / info.MaxDataSize * 100, 2);
-                            avgRates.Add(info.AvgChangeRate);
+                            info.MinJobTime = nonZeros.Min().ToString(@"dd\.hh\:mm\:ss");
+                            info.MaxJobTime = nonZeros.Max().ToString(@"dd\.hh\:mm\:ss");
+                            var s = new TimeSpan(Convert.ToInt64(nonZeros.Average(ts => ts.Ticks)));
+                            info.AvgJobTime = s.ToString(@"dd\.hh\:mm\:ss");
                         }
                         else
                         {
-                            info.AvgChangeRate = Math.Round(info.AvgDataSize / info.UsedVmSizeTB * 100, 2);
-                            avgRates.Add(info.AvgChangeRate);
+                            info.MinJobTime = "";
+                            info.MaxJobTime = "";
+                            info.AvgJobTime = "";
                         }
-                        
+
+
+                        info.ItemCount = vmNames.Distinct().Count();
+                        totalProtectedInstances = totalProtectedInstances + vmNames.Distinct().Count();
+
+                        info = SetBackupDataSizes(info, dataSize, backupSize, info.UsedVmSizeTB);
+
+                        avgDataSizes.Add(info.AvgDataSize);
+                        avgBackupSizes.Add(info.AvgBackupSize);
+                        maxDataSizes.Add(info.MaxDataSize);
+                        maxBackupSize.Add(info.MaxBackupSize);
+
+
+                        if (info.AvgBackupSize != 0 && info.AvgDataSize != 0)
+                        {
+                            if (info.AvgDataSize > info.UsedVmSizeTB)
+                            {
+                                info.AvgChangeRate = Math.Round(info.AvgDataSize / info.MaxDataSize * 100, 2);
+                                avgRates.Add(info.AvgChangeRate);
+                            }
+                            else
+                            {
+                                info.AvgChangeRate = Math.Round(info.AvgDataSize / info.UsedVmSizeTB * 100, 2);
+                                avgRates.Add(info.AvgChangeRate);
+                            }
+
+                        }
+                        else
+                        {
+                            info.AvgBackupSize = 0;
+                            avgRates.Add(0);
+
+                        }
+
+
+                        outList.Add(info);
                     }
-                    else
+                    catch (Exception e)
                     {
-                        info.AvgBackupSize = 0;
-                        avgRates.Add(0);
+                        log.Error(logStart + "Error: Session parsing failure");
+                        log.Error(e.ToString());
 
                     }
-
-
-                    outList.Add(info);
                 }
                 catch (Exception e)
                 {
-
+                    log.Error(logStart + "Error: Failed to parse job sessions for job: " + j);
+                    log.Error(e.ToString());
                 }
+
             }
 
-            
 
-            sendBack =  helper.ReturnList(outList, scrub, scrubber);
+
+            sendBack = helper.ReturnList(outList, scrub, scrubber);
 
             outList.Add(helper.SessionSummaryStats(totalSessions, totalFailedSessions, totalRetries, totalProtectedInstances,
                 avgBackupSizes, avgDataSizes, maxBackupSize, avgRates, maxDataSizes));
-            
+
             //sendBack.Add(helper.SessionSummaryStats(totalSessions, totalFailedSessions, totalRetries, totalProtectedInstances, 
             //    avgBackupSizes, avgDataSizes, maxBackupSize, avgRates, maxDataSizes));
 
@@ -237,34 +253,6 @@ namespace VeeamHealthCheck.Functions.Reporting.Html
             return info;
         }
 
-        private int SplitDurationToMinutes(string duration)
-        {
-            try
-            {
-                //log.Info("splitting duration..");
-                int i = 0;
-                //00:01:59.4060000
-                string[] split = duration.Split(':');
-                int hours = 0;
-                int minutes = 0;
-                int seconds = 0;
 
-                if (split[0] != "00")
-                {
-                    int.TryParse(split[0], out int h);
-                    hours = h;
-                }
-                if (split[1] != "00")
-                {
-                    int.TryParse(split[1], out int m);
-                    minutes = m;
-                }
-                minutes = minutes + hours * 60;
-
-                //log.Info("splitting duration..done!");
-                return minutes;
-            }
-            catch (Exception e) { return 0; }
-        }
     }
 }

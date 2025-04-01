@@ -23,21 +23,28 @@ namespace VeeamHealthCheck.Functions.Reporting.Html
 
         public CBackupServerTableHelper(bool scrub)
         {
+            log.Debug("! Init BackupServerTableHelper");
             _backupServer = new();
             SetBackupServerWithDbInfo();
             _scrub = scrub;
+            log.Debug("! Init BackupServerTableHelper...Done!");
         }
         public BackupServer SetBackupServerData()
         {
+            //log.Debug("Setting Backup Server Data");
             SetElements();
             if (_scrub)
                 ScrubElements();
+
+            //log.Debug("Setting Backup Server Data...Done!");
             return _backupServer;
         }
         private void SetElements()
         {
+            //log.Debug("Setting Backup Server Elements");
             SetConfigBackupSettings();
             SetDbHostNameOption2();
+            //log.Debug("Setting Backup Server Elements...Done!");
 
         }
         private void SetBackupServerWithDbInfo()
@@ -82,7 +89,7 @@ namespace VeeamHealthCheck.Functions.Reporting.Html
                 log.Error("\t" + e.Message);
             }
 
-            
+
 
         }
 
@@ -95,8 +102,11 @@ namespace VeeamHealthCheck.Functions.Reporting.Html
         {
             using (CDataTypesParser parser = new())
             {
-                List<CServerTypeInfos> csv = parser.ServerInfo().ToList();
-                CServerTypeInfos backupServer = csv.Find(x => x.Id == CGlobals._backupServerId);
+                List<CServerTypeInfos> csv = CGlobals.DtParser.ServerInfos;
+                CServerTypeInfos bs = csv.Where(x => x.Id == CGlobals._backupServerId).FirstOrDefault();
+                //var test = csv.Where(x => x.Id == CGlobals._backupServerId).FirstOrDefault();
+
+                //log.Debug("backup server ID = " +CGlobals._backupServerId);
                 CCsvParser config = new();
 
 
@@ -127,19 +137,20 @@ namespace VeeamHealthCheck.Functions.Reporting.Html
                     }
                     catch (Exception f)
                     {
-                        log.Error(f.Message);
+                        log.Error("VBR Server Version parsing error:");
+                        log.Error("\t" + f.Message);
                     }
                 }
                 try
                 {
-                    _backupServer.Name = backupServer.Name;
-                    if (!backupServer.Name.Contains(_backupServer.DbHostName, StringComparison.OrdinalIgnoreCase)
+                    _backupServer.Name = bs.Name;
+                    if (!bs.Name.Contains(_backupServer.DbHostName, StringComparison.OrdinalIgnoreCase)
                         && _backupServer.DbHostName != "localhost" && _backupServer.DbHostName != "LOCALHOST")
                     {
                         _backupServer.IsLocal = false;
 
                     }
-                    else if (backupServer.Name.Contains(_backupServer.DbHostName, StringComparison.OrdinalIgnoreCase) || _backupServer.DbHostName == "localhost")
+                    else if (bs.Name.Contains(_backupServer.DbHostName, StringComparison.OrdinalIgnoreCase) || _backupServer.DbHostName == "localhost")
                     {
                         _backupServer.IsLocal = true;
                         _backupServer.DbHostName = "LocalHost";
@@ -152,16 +163,18 @@ namespace VeeamHealthCheck.Functions.Reporting.Html
                 {
                     log.Error("Error processing SQL resource data");
                     log.Error("\t" + g.Message);
+                    log.Debug("_backupServer = " + _backupServer.Version);
+                    log.Debug("backupServer = " + bs.ApiVersion);
                 }
                 //try { _backupServer.Name = backupServer.Name; }
                 //catch (NullReferenceException e)
                 //{ log.Error("[VBR Config] failed to add backup server Name:\n\t" + e.Message); }
 
                 //b.Version = veeamVersion;
-                try { _backupServer.Cores = backupServer.Cores; }
+                try { _backupServer.Cores = bs.Cores; }
                 catch (NullReferenceException e)
                 { log.Error("[VBR Config] failed to add backup server cores:\n\t" + e.Message); }
-                try { _backupServer.RAM = backupServer.Ram; }
+                try { _backupServer.RAM = bs.Ram; }
                 catch (NullReferenceException e)
                 { log.Error("[VBR Config] failed to add backup server RAM:\n\t" + e.Message); }
             }
