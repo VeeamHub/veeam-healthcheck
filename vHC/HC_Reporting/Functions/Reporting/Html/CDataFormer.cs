@@ -564,6 +564,10 @@ namespace VeeamHealthCheck.Functions.Reporting.Html
                             gateHosts = gates;
                         }
                     }
+                    bool immutability = false;
+                    if(c.ObjectLockEnabled || c.IsImmutabilitySupported){
+                        immutability = true;
+                    }
 
                     CRepository repo = new()
                     {
@@ -581,7 +585,8 @@ namespace VeeamHealthCheck.Functions.Reporting.Html
                         IsDecompress = c.IsDecompress,
                         AlignBlocks = c.AlignBlocks,
                         IsRotatedDrives = c.IsRotatedDriveRepository,
-                        IsImmutabilitySupported = c.ObjectLockEnabled,
+                        
+                        IsImmutabilitySupported = immutability,
                         Type = type,
                         Provisioning = c.Povisioning
 

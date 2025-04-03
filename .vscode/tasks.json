@@ -1,0 +1,22 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+      {
+        "label": "Increment Version",
+        "type": "shell",
+        "command": "/Users/adam.congdon/code/veeam-healthcheck/vHC/HC_Reporting/increment_version.sh",
+        "problemMatcher": []
+      },
+      {
+        "label": "Build",
+        "type": "shell",
+        "command": "dotnet build /Users/adam.congdon/code/veeam-healthcheck/vHC/HC_Reporting/VeeamHealthCheck.csproj",
+        "dependsOn": ["Increment Version"],
+        "group": {
+          "kind": "build",
+          "isDefault": true
+        },
+        "problemMatcher": ["$msCompile"]
+      }
+    ]
+  }
