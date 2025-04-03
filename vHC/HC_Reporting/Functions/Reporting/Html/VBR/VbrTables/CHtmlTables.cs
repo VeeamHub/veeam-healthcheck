@@ -1081,7 +1081,7 @@ namespace VeeamHealthCheck.Html.VBR
            _form.TableHeader(VbrLocalizationHelper.Sbr6, VbrLocalizationHelper.Sbr6TT) +
            _form.TableHeader(VbrLocalizationHelper.Sbr7, VbrLocalizationHelper.Sbr7TT) +
            _form.TableHeader(VbrLocalizationHelper.Sbr8, VbrLocalizationHelper.Sbr8TT) +
-           _form.TableHeader(VbrLocalizationHelper.Sbr9, VbrLocalizationHelper.Sbr9TT) +
+           _form.TableHeader("CapTier Immutable", VbrLocalizationHelper.Sbr9TT) +
            _form.TableHeader(VbrLocalizationHelper.Sbr10, VbrLocalizationHelper.Sbr10TT) +
            _form.TableHeader(VbrLocalizationHelper.Sbr11, VbrLocalizationHelper.Sbr11TT) +
            _form.TableHeader(VbrLocalizationHelper.Sbr12, VbrLocalizationHelper.Sbr12TT) +
