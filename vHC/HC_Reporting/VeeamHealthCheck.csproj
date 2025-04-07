@@ -11,7 +11,7 @@
     <Company>Veeam</Company>
     <Authors>AdamC</Authors>
     <ApplicationIcon>Health_Check_Icon.ico</ApplicationIcon>
-    <AssemblyVersion>2.0.660</AssemblyVersion>
+    <AssemblyVersion>2.0.668</AssemblyVersion>
     <SignAssembly>False</SignAssembly>
     <DelaySign>false</DelaySign>
     <!-- <FileVersion>2.0.0.655</FileVersion> -->
@@ -125,6 +125,7 @@
     <PackageReference Include="Npm" Version="3.5.2" />
     <PackageReference Include="System.Data.SqlClient" Version="4.8.6" />
     <PackageReference Include="System.Management.Automation" Version="7.4.6" />
+    <PackageReference Include="TaskScheduler" Version="2.12.1" />
   </ItemGroup>
 
   <ItemGroup>

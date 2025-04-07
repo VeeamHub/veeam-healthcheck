@@ -8,7 +8,7 @@ DEST="$HOME/vhc_mount/veeam-healthcheck/vHC/HC_Reporting/bin/"
 SMB_SERVER="192.168.20.114"
 SMB_SHARE="vhc"
 SMB_USER="administrator"
-SMB_PASS="Lanc3r4th3w!n"  # Escaped exclamation point
+SMB_PASS="${SMB_PASS:-}"  # Use an environment variable for the password
 
 # Mount point
 MOUNT_POINT="$HOME/vhc_mount"

@@ -384,6 +384,7 @@ namespace VeeamHealthCheck.Html.VBR
             if (CGlobals.VBRMAJORVERSION > 11)
             {
                 // add malware table
+
                 try
                 {
                     var malware = new CMalwareTable();
@@ -420,6 +421,7 @@ namespace VeeamHealthCheck.Html.VBR
 
             return s;
         }
+
         public string AddSecurityReportSecuritySummaryTable()
         {
             string s = _form.SectionStart("secsummary", VbrLocalizationHelper.SSTitle);
@@ -1487,6 +1489,10 @@ _form.TableHeader(VbrLocalizationHelper.SbrExt15, VbrLocalizationHelper.SbrExt15
                         t += _form.TableData(stu.waitCount.ToString(), VbrLocalizationHelper.Jss12);
                         t += _form.TableData(stu.maxWait, VbrLocalizationHelper.Jss13);
                         t += _form.TableData(stu.avgwait, VbrLocalizationHelper.Jss14);
+                        if(CGlobals.DEBUG){
+                            log.Debug("Job Name = " + stu.JobName);
+                            log.Debug("Job Type = " + stu.JobType);
+                        }
                         string jobType = CJobTypesParser.GetJobType(stu.JobType);
                         t += _form.TableData(jobType, VbrLocalizationHelper.Jss15);
 
@@ -1537,6 +1543,8 @@ _form.TableHeader(VbrLocalizationHelper.SbrExt15, VbrLocalizationHelper.SbrExt15
                 {
                     foreach (var jType in jobTypes)
                     {
+                        if(CGlobals.DEBUG)
+                            log.Debug("Job Type = " + jType);
                         bool skipTotals = false;
                         var jobType = jType;
                         // change job type for "Totals" line of all jobs:
