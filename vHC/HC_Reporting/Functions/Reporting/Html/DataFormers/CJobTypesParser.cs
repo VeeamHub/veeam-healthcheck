@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using VeeamHealthCheck.Functions.Reporting.CsvHandlers.VB365;
+using VeeamHealthCheck.Shared;
 
 namespace VeeamHealthCheck.Functions.Reporting.Html.DataFormers
 {
@@ -10,6 +12,9 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.DataFormers
     {
         public static string GetJobType(string jobType)
         {
+            if(CGlobals.DEBUG){
+                CGlobals.Logger.Debug("JobType = " + jobType);
+            }
             switch (jobType)
             {
                 case "Copy":

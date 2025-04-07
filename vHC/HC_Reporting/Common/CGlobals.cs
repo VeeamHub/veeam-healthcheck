@@ -69,6 +69,9 @@ namespace VeeamHealthCheck.Shared
         public static List<CServerTypeInfos> ServerInfo = new();
         public static CDataTypesParser DtParser;
 
+        public static bool IsReconDetected = false;
+        public static DateTime LastReconRun = DateTime.MinValue;
+
         public CGlobals()
         {
 

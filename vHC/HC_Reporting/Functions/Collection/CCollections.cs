@@ -10,6 +10,7 @@ using Microsoft.Management.Infrastructure;
 using VeeamHealthCheck.Functions.Collection.PSCollections;
 using System.Windows;
 using VeeamHealthCheck.Shared.Logging;
+using VeeamHealthCheck.Functions.Reporting.Html.VBR.VbrTables.Security;
 
 namespace VeeamHealthCheck.Functions.Collection
 {
@@ -32,6 +33,7 @@ namespace VeeamHealthCheck.Functions.Collection
             ExecPSScripts();
             // run diagnostic of CSV output and sizes, dump to logs:
             GetCsvFileSizesToLog();
+            CheckRecon();
 
 
 
@@ -49,6 +51,16 @@ namespace VeeamHealthCheck.Functions.Collection
             }
             
 
+        }
+                        private void CheckRecon()
+        {
+            if (CGlobals.DEBUG)
+            {
+                CGlobals.Logger.Debug("Checking for Coveware Recon Task");
+
+            }
+            CReconChecker rc = new();
+            rc.Check();
         }
         private void GetCsvFileSizesToLog(){
             if(CGlobals.DEBUG)

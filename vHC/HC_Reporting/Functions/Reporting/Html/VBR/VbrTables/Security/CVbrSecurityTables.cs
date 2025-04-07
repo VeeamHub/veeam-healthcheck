@@ -2,6 +2,8 @@
 // MIT License
 using System;
 using System.Collections.Generic;
+using VeeamHealthCheck.Functions.Reporting.Html.VBR.VbrTables.Security;
+using VeeamHealthCheck.Shared;
 //using VeeamHealthCheck.Reporting.Html.VBR;
 //using VeeamHealthCheck.Reporting.Html.VBR.VbrTables;
 
@@ -14,6 +16,12 @@ namespace VeeamHealthCheck.Reporting.Html.VBR
         public CVbrSecurityTables()
         {
             _tables = new();
+            if (CGlobals.DEBUG)
+            {
+                CGlobals.Logger.Debug("VbrSecurityTables Constructor");
+            }
+
+            //CheckRecon();
         }
 
         public List<Tuple<string, string>> ConfigBackupInfo()
