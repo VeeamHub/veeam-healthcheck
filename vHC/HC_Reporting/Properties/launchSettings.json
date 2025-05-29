@@ -2,10 +2,10 @@
   "profiles": {
     "VeeamHealthCheck": {
       "commandName": "Project",
-      "commandLineArgs": "/import",
-      "remoteDebugEnabled": false,
+      "commandLineArgs": "/run",
+      "remoteDebugEnabled": true,
       "authenticationMode": "Windows",
-      "remoteDebugMachine": "t470p:4026"
+      "remoteDebugMachine": "vbr-11-latest:4026"
     }
   }
 }

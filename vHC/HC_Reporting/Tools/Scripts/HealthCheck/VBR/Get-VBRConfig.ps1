@@ -144,7 +144,7 @@ if($VBRVersion -eq 0) {
         Write-LogFile("Unknown VBR Version: " + $majorVersion)
         $VBRVersion = 0
     }
-})
+}
 
 # general collection:
 try {
