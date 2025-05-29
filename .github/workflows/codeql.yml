@@ -69,8 +69,13 @@ jobs:
     # - run: |
     #   echo "Run, Build Application using script"
     #   ./location_of_script_within_repo/buildscript.sh
+    - name: Normalize file paths for CodeQL
+      run: |
+        # Replace backslashes with forward slashes in generated files
+        find D:/a/_temp/pr-diff-range -type f -name "*.yml" -exec sed -i 's|\\|/|g' {} +
+      shell: bash
 
     - name: Perform CodeQL Analysis
-      uses: github/codeql-action/analyze@v2
+      uses: github/codeql-action/analyze@v3
       with:
         category: "/language:${{matrix.language}}"
