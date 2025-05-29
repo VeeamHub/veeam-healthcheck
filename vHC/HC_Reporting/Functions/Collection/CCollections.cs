@@ -31,7 +31,8 @@ namespace VeeamHealthCheck.Functions.Collection
 
             ExecPSScripts();
             // run diagnostic of CSV output and sizes, dump to logs:
-            GetCsvFileSizesToLog();
+            if(CGlobals.IsVbr)
+                GetCsvFileSizesToLog();
 
 
 

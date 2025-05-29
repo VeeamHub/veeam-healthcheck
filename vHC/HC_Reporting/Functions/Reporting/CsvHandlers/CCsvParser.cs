@@ -396,7 +396,12 @@ namespace VeeamHealthCheck.Functions.Reporting.CsvHandlers
         {
             var res = VbrFileReader(_malware);
             if (res != null)
-                return res.GetRecords<CMalwareObject>();
+            {
+                
+                res.Context.RegisterClassMap<CMalwareObjectMap>();
+                return res.GetRecords<CMalwareObject>().ToList();
+
+            }
             return null;
         }
         public IEnumerable<CMalwareInfectedObjects> MalwareInfectedObjects()
