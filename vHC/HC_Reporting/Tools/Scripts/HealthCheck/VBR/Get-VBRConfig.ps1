@@ -117,19 +117,34 @@ Write-Verbose ("Changing directory to '$ReportPath'")
 Get-VBRUserRoleAssignment | Export-VhcCsv -FileName "_UserRoles.csv"
 
 #version detection:
-#try {
-#    $corePath = Get-ItemProperty -Path "HKLM:\Software\Veeam\Veeam Backup and Replication\" -Name "CorePath"
-#    $depDLLPath = Join-Path -Path $corePath.CorePath -ChildPath "Packages\VeeamDeploymentDll.dll" -Resolve
-#    $file = Get-Item -Path $depDLLPath
-#    $version = $file.VersionInfo.ProductVersion
-#
-#    Write-LogFile("Detected Version: " + $version)
-#}
-#catch {
-#    Write-LogFile("Error on version detection. ")
-#}
-#$version = $VBRVersion
-write-LogFile($VBRVersion)
+try {
+    $corePath = Get-ItemProperty -Path "HKLM:\Software\Veeam\Veeam Backup and Replication\" -Name "CorePath"
+    $depDLLPath = Join-Path -Path $corePath.CorePath -ChildPath "Packages\VeeamDeploymentDll.dll" -Resolve
+    $file = Get-Item -Path $depDLLPath
+    $version = $file.VersionInfo.ProductVersion
+    Write-LogFile("Detected Version: " + $version)
+    $majorVersion = $version.Split('.')[0]
+    Write-LogFile("Major Version: " + $majorVersion)
+
+}
+catch {
+    Write-LogFile("Error on version detection. ")
+}
+if($VBRVersion -eq 0) {
+    if ($majorVersion -eq 12) {
+        $VBRVersion = 12
+    }
+    elseif ($majorVersion -eq 11) {
+        $VBRVersion = 11
+    }
+    elseif ($majorVersion -eq 10) {
+        $VBRVersion = 10
+    }
+    else {
+        Write-LogFile("Unknown VBR Version: " + $majorVersion)
+        $VBRVersion = 0
+    }
+}
 
 # general collection:
 try {

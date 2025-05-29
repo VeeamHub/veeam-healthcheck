@@ -77,7 +77,9 @@ namespace VeeamHealthCheck.Functions.Collection.DB
         public string GetVbrVersionFilePath()
         {
             string consoleInstallPath = @"C:\Program Files\Veeam\Backup and Replication\Console\Veeam.Backup.Core.dll";
+
             var coreVersion = FileVersionInfo.GetVersionInfo (consoleInstallPath).FileVersion;
+            log.Debug(logStart + "VBR Core Version: " + coreVersion);
             if (!string.IsNullOrEmpty(coreVersion))
             {
                 CGlobals.VBRFULLVERSION = coreVersion;
@@ -85,6 +87,7 @@ namespace VeeamHealthCheck.Functions.Collection.DB
                 return coreVersion;
             }
             
+             log.Info(logStart + "VBR Core Version not found in Console path, trying Mount Service path..."); 
             using (RegistryKey key =
                 Registry.LocalMachine.OpenSubKey("Software\\Veeam\\Veeam Mount Service"))
             {
@@ -93,6 +96,11 @@ namespace VeeamHealthCheck.Functions.Collection.DB
                 if (keyValue != null)
                 {
                     path = keyValue.ToString();
+                }
+                else
+                {
+                    log.Error(logStart + "Failed to get VBR Core path from Mount Service registry key.");
+                    return null;
                 }
                 //string path = key.GetValue("CorePath").ToString();
                 //FileInfo dllInfo = new FileInfo(path + "\\Packages\\VeeamDeploymentDll.dll");
@@ -132,6 +140,7 @@ namespace VeeamHealthCheck.Functions.Collection.DB
         }
         private void SetMajorVersion(int version)
         {
+            log.Info(logStart + "Setting VBR Major Version to: " + version);
             CGlobals.VBRMAJORVERSION = version;
         }
         private void GetVbrElevenDbInfoRemote()

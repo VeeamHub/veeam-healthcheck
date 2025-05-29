@@ -3,6 +3,7 @@
 using Microsoft.CodeAnalysis;
 using System;
 using System.IO;
+using System.Linq;
 using System.Net;
 using System.Reflection;
 using VeeamHealthCheck.Functions.Reporting.CsvHandlers;
@@ -296,13 +297,71 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR
 
             log.Info("[HTML] forming HTML body...done!");
         }
+        private void LoadCsvToMemory()
+        {
+            string file = Path.Combine(CVariables.vbrDir, "localhost_vbrinfo.csv");
+            log.Info("looking for VBR CSV at: " + file);
+            var res = CCsvsInMemory.GetCsvData(file);
+            if (res != null && res.Count > 0)
+            {
+                log.Info("VBR CSV data loaded successfully. Number of rows: " + res.Count);
+                for (int i = 0; i < Math.Min(5, res.Count); i++)
+                {
+                    log.Debug($"Row {i + 1}: {string.Join(", ", res[i].Select(kv => $"{kv.Key}: {kv.Value}"))}");
+                }
+
+                // Try to find the Version key, with or without quotes
+                var dict = res[0];
+                string versionStr = null;
+                if (dict.TryGetValue("Version", out versionStr) && !string.IsNullOrWhiteSpace(versionStr))
+                {
+                    // found as Version
+                }
+                else if (dict.TryGetValue("\"Version\"", out versionStr) && !string.IsNullOrWhiteSpace(versionStr))
+                {
+                    // found as "Version"
+                }
+                else
+                {
+                    // Try to find any key that matches Version ignoring quotes and case
+                    var versionKey = dict.Keys.FirstOrDefault(k => k.Trim('\"').Equals("Version", StringComparison.OrdinalIgnoreCase));
+                    if (versionKey != null)
+                        versionStr = dict[versionKey];
+                }
+
+                if (!string.IsNullOrWhiteSpace(versionStr))
+                {
+                    // Remove any leading/trailing quotes
+                    versionStr = versionStr.Trim('\"');
+                    CGlobals.VBRFULLVERSION = versionStr;
+                    var majorVersionPart = versionStr.Split('.')[0];
+                    if (int.TryParse(majorVersionPart, out int majorVersion))
+                    {
+                        CGlobals.VBRMAJORVERSION = majorVersion;
+                        log.Info($"Set VBRMAJORVERSION to {majorVersion} from Version '{versionStr}'");
+                    }
+                    else
+                    {
+                        log.Error($"Failed to parse major version from Version '{versionStr}'");
+                    }
+                }
+                else
+                {
+                    log.Error("Version field not found in CSV data.");
+                }
+            }
+            else
+            {
+                log.Error("Failed to load VBR CSV data or no data found.");
+            }
+        }
         private void FormVbrFullBody()
         {
             log.Info("[HTML] forming HTML body");
 
-            //nav
-
-            // add button
+            // maybe load all CSV to memory here?
+            LoadCsvToMemory();
+           // LoadCsvToMemory();
 
             CHtmlBodyHelper helper = new();
             if (CGlobals.Scrub)

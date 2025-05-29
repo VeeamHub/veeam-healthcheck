@@ -32,7 +32,9 @@ namespace VeeamHealthCheck.Functions.Collection
 
             ExecPSScripts();
             // run diagnostic of CSV output and sizes, dump to logs:
-            GetCsvFileSizesToLog();
+            if (CGlobals.IsVbr)
+                GetCsvFileSizesToLog();
+            // GetCsvFileSizesToLog();
             CheckRecon();
 
 
@@ -49,10 +51,10 @@ namespace VeeamHealthCheck.Functions.Collection
                 if (CGlobals.DBTYPE != CGlobals.PgTypeName)
                     ExecSqlQueries();
             }
-            
+
 
         }
-                        private void CheckRecon()
+        private void CheckRecon()
         {
             if (CGlobals.DEBUG)
             {
@@ -62,18 +64,22 @@ namespace VeeamHealthCheck.Functions.Collection
             CReconChecker rc = new();
             rc.Check();
         }
-        private void GetCsvFileSizesToLog(){
-            if(CGlobals.DEBUG)
+        private void GetCsvFileSizesToLog()
+        {
+            if (CGlobals.DEBUG)
                 CGlobals.Logger.Debug("Logging CSV File Sizes:");
             var files = Directory.GetFiles(CVariables.vbrDir, "*.csv", SearchOption.AllDirectories);
-            foreach (var file in files){
+            foreach (var file in files)
+            {
                 var fileInfo = new FileInfo(file);
                 var fileSize = fileInfo.Length;
-                if(fileSize > 0){
-                CGlobals.Logger.Info($"\tFile: {fileInfo.Name} Size: {fileSize}");
+                if (fileSize > 0)
+                {
+                    CGlobals.Logger.Info($"\tFile: {fileInfo.Name} Size: {fileSize}");
 
                 }
-                else{
+                else
+                {
                     CGlobals.Logger.Warning($"\tFile: {fileInfo.Name} Size: {fileSize}");
                 }
 
@@ -150,7 +156,7 @@ namespace VeeamHealthCheck.Functions.Collection
                         }
                     }
 
-                    
+
                 }
                 catch (Exception ex)
                 {
@@ -169,14 +175,14 @@ namespace VeeamHealthCheck.Functions.Collection
         private void WeighSuccessContinuation()
         {
             string error = "Script execution has failed. Exiting program. See log for details:\n\t " + CGlobals.Logger._logFile;
-            
+
 
             if (CGlobals.GUIEXEC && !SCRIPTSUCCESS)
             {
                 CGlobals.Logger.Error(error, false);
-                
-                MessageBox.Show(error,"Error", button:MessageBoxButton.OK, icon:MessageBoxImage.Error, MessageBoxResult.Yes);
-                
+
+                MessageBox.Show(error, "Error", button: MessageBoxButton.OK, icon: MessageBoxImage.Error, MessageBoxResult.Yes);
+
                 Environment.Exit(1);
             }
             else if (!SCRIPTSUCCESS)
@@ -202,13 +208,13 @@ namespace VeeamHealthCheck.Functions.Collection
             if (CGlobals.IsVbr)
             {
                 CGlobals.Logger.Info("Entering vbr ps invoker", false);
-                SCRIPTSUCCESS =  p.Invoke();
+                SCRIPTSUCCESS = p.Invoke();
             }
         }
         private void ExecVbrConfigOnly(PSInvoker p)
         {
             CGlobals.Logger.Info("Entering vbr config collection");
-            SCRIPTSUCCESS =  p.RunVbrConfigCollect();
+            SCRIPTSUCCESS = p.RunVbrConfigCollect();
         }
         private void ExecVb365Scripts(PSInvoker p)
         {
