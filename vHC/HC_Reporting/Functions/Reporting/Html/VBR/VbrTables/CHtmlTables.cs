@@ -2005,7 +2005,7 @@ _form.TableHeader(VbrLocalizationHelper.SbrExt15, VbrLocalizationHelper.SbrExt15
                             //row+= _form.TableData(trueSizeGB.ToString() + " GB", "");
                             //row+= _form.TableData(job.RetentionType, "");
                             row += job.RetentionType == "Cycles" ? _form.TableData("Points", "") : _form.TableData(job.RetentionType, "");
-                            row += _form.TableData(job.RestorePoints, "");
+                            row += _form.TableData(job.RetainDaysToKeep, "");
                             //row += _form.TableData(job.StgEncryptionEnabled, "");
                             row += job.StgEncryptionEnabled == "True" ? _form.TableData(_form.True, "") : _form.TableData(_form.False, "");
                             var jobType = CJobTypesParser.GetJobType(job.JobType);
