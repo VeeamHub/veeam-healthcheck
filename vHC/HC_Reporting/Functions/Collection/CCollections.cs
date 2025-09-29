@@ -1,16 +1,20 @@
 ﻿// Copyright (c) 2021, Adam Congdon <adam.congdon2@gmail.com>
 // MIT License
+//using DocumentFormat.OpenXml.Drawing;
+using Microsoft.Management.Infrastructure;
 using System;
+using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
+using System.Windows;
 using VeeamHealthCheck.Functions.Collection.DB;
 using VeeamHealthCheck.Functions.Collection.LogParser;
-using VeeamHealthCheck.Functions.Collection.Security;
-using VeeamHealthCheck.Shared;
-using Microsoft.Management.Infrastructure;
 using VeeamHealthCheck.Functions.Collection.PSCollections;
-using System.Windows;
-using VeeamHealthCheck.Shared.Logging;
+using VeeamHealthCheck.Functions.Collection.Security;
+using VeeamHealthCheck.Functions.CredsWindow;
 using VeeamHealthCheck.Functions.Reporting.Html.VBR.VbrTables.Security;
+using VeeamHealthCheck.Shared;
+using VeeamHealthCheck.Shared.Logging;
 
 namespace VeeamHealthCheck.Functions.Collection
 {
@@ -129,12 +133,14 @@ namespace VeeamHealthCheck.Functions.Collection
                 try
                 {
 
-                    if (CGlobals.IsVbr)
+                    if (CGlobals.IsVbr || CGlobals.REMOTEEXEC)
                     {
                         CGlobals.Logger.Info("Checking VBR MFA Access...", false);
-                        if (!TestPsMFA(p))
+                        if (MfaTestPassed(p))
                         {
-                            if (CGlobals.IsVbr)
+                            // add debug logging to help troubleshoot MFA issues
+                            CGlobals.Logger.Debug("MFA Not detected, continuing...");
+                            //if (CGlobals.IsVbr || CGlobals.REMOTEEXEC)
                                 ExecVbrScripts(p);
                         }
                         else
@@ -145,7 +151,7 @@ namespace VeeamHealthCheck.Functions.Collection
                     if (CGlobals.IsVb365)
                     {
                         CGlobals.Logger.Info("Checking VB365 MFA Access...", false);
-                        if (!TestPsMFAVb365(p))
+                        if (!TestPsMfaVb365(p))
                         {
                             if (CGlobals.IsVb365)
                                 ExecVb365Scripts(p);
@@ -191,21 +197,108 @@ namespace VeeamHealthCheck.Functions.Collection
                 Environment.Exit(1);
             }
         }
-        private bool TestPsMFA(PSInvoker p)
-        {
-            CScripts scripts = new();
 
-            return p.TestMfa();
-        }
-        private bool TestPsMFAVb365(PSInvoker p)
+        private bool MfaTestPassed(PSInvoker p)
         {
-            CScripts scripts = new();
+            if ((CGlobals.IsVbr))
+            {
+                return RunLocalMfaCheck(p);
+            }
+            else
+            {
+                CredsHandler ch = new();
+                var creds = ch.GetCreds();
+                string scriptPath = Path.Combine(Environment.CurrentDirectory,
+                    @"Functions\Collection\PSCollections\Scripts\TestMfa.ps1");
+                bool result = false;
+                string error = "";
+                List<string> output = new();
+
+                string pwshPath = @"C:\Program Files\PowerShell\7\pwsh.exe";
+                if (!File.Exists(pwshPath))
+                {
+                    CGlobals.Logger.Debug("PowerShell 7 not found at: " + pwshPath, false);
+
+                }
+
+                try
+                {
+                    // Build PowerShell arguments to call the script with parameters
+                    string args =
+                        $"-NoProfile -ExecutionPolicy Bypass -File \"{scriptPath}\" -Server '{CGlobals.REMOTEHOST}' -Username '{creds.Value.Username}' -Password '{creds.Value.Password}'";
+                    //Ps7Executor ps7 = new();
+                    //ps7.LogPowerShellVersion();
+                    var processInfo = new ProcessStartInfo
+                    {
+                        FileName = pwshPath, // Use Windows PowerShell for Veeam module
+                        Arguments = args,
+                        RedirectStandardOutput = true,
+                        RedirectStandardError = true,
+                        UseShellExecute = false,
+                        CreateNoWindow = true
+                    };
+                    using var process = System.Diagnostics.Process.Start(processInfo);
+                    string stdOut = process.StandardOutput.ReadToEnd();
+                    string stdErr = process.StandardError.ReadToEnd();
+                    process.WaitForExit();
+                    error = stdErr;
+                    if (!string.IsNullOrWhiteSpace(stdOut))
+                        output.Add(stdOut);
+                    if (!string.IsNullOrWhiteSpace(stdErr))
+                        output.Add(stdErr);
+                    result = process.ExitCode == 0;
+                    // Log output for debugging
+                    CGlobals.Logger.Debug($"MFA Test Output (ExitCode={process.ExitCode}):");
+                    foreach (var line in output)
+                    {
+                        CGlobals.Logger.Debug(line);
+                    }
+                }
+                catch (Exception ex)
+                {
+                    CGlobals.Logger.Error("Error during MFA test:");
+                    CGlobals.Logger.Error(ex.Message);
+                    result = false;
+                }
+
+                if (!result)
+                {
+                    RunLocalMfaCheck(p);
+
+                }
+            return result;
+
+            }
+        }
+        private bool RunLocalMfaCheck(PSInvoker p)
+        {
+            CGlobals.Logger.Warning("Failing over to PowerShell 5", false);
+            try
+            {
+                return  p.TestMfa();
+            }
+            catch (Exception ex)
+            {
+                CGlobals.Logger.Error("Error during MFA test:");
+                CGlobals.Logger.Error(ex.Message);
+                return false;
+            }
+        }
+        private bool TestPsMfaVb365(PSInvoker p)
+        {
+            //CScripts scripts = new();
 
             return p.TestMfaVB365();
         }
         private void ExecVbrScripts(PSInvoker p)
         {
-            if (CGlobals.IsVbr)
+            //debug log evaluation of what to run
+            CGlobals.Logger.Debug("DEBUG: Evaluating PS Script Execution Conditions:");
+            CGlobals.Logger.Debug("IsVbr: " + CGlobals.IsVbr.ToString());
+            CGlobals.Logger.Debug("REMOTEEXEC: " + CGlobals.REMOTEEXEC.ToString());
+
+
+            if (CGlobals.IsVbr || CGlobals.REMOTEEXEC)
             {
                 CGlobals.Logger.Info("Entering vbr ps invoker", false);
                 SCRIPTSUCCESS = p.Invoke();

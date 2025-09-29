@@ -129,6 +129,9 @@ namespace VeeamHealthCheck.Functions.Collection.DB
                     case 12:
                         SetMajorVersion(12);
                         break;
+                    default:
+                        SetMajorVersion(13);
+                        break;
                 }
             }
             catch (Exception e)

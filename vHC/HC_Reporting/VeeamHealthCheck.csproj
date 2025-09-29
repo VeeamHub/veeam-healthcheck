@@ -11,10 +11,10 @@
     <Company>Veeam</Company>
     <Authors>AdamC</Authors>
     <ApplicationIcon>Health_Check_Icon.ico</ApplicationIcon>
-    <AssemblyVersion>2.0.0.682</AssemblyVersion>
+    <AssemblyVersion>3.0.0.50</AssemblyVersion>
     <SignAssembly>False</SignAssembly>
     <DelaySign>false</DelaySign>
-    <FileVersion>2.0.0.682</FileVersion>
+    <FileVersion>3.0.0.50</FileVersion>
     <DebugType>full</DebugType>
 	  <SelfContained>true</SelfContained>
 	  <!--These 2 lines are what produce the single file utility. Possibly doesn't work...-->
@@ -78,6 +78,7 @@
     <None Remove="banner_string.txt" />
     <None Remove="css.css" />
     <None Remove="Functions\Collection\PSCollections\Collect-VB365Data.ps1" />
+    <None Remove="Functions\Collection\PSCollections\Scripts\TestMfa.ps1" />
     <None Remove="Functions\Reporting\Html\Shared\JavaScript1.js" />
     <None Remove="ReportScript.js" />
     <None Remove="Resources\Localization\VB365\vb365_vhcres.resources" />
@@ -96,14 +97,21 @@
     <None Remove="Tools\Scripts\Get-VeeamSessionReport.ps1" />
     <None Remove="Tools\Scripts\HealthCheck\VB365\Collect-VB365Data.ps1" />
     <None Remove="Tools\Scripts\HealthCheck\VBR\Get-NasInfo.ps1" />
+    <None Remove="Tools\Scripts\HealthCheck\VBR\Get-VeeamSessionReportVersion13.ps1" />
   </ItemGroup>
 
   <ItemGroup>
     <EmbeddedResource Include="Functions\Collection\PSCollections\Scripts\Collect-VB365Data.ps1">
       <CopyToOutputDirectory>Never</CopyToOutputDirectory>
     </EmbeddedResource>
+    <Content Include="Functions\Collection\PSCollections\Scripts\TestMfa.ps1">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
     <Content Include="Health_Check_Icon.ico" />
     <Content Include="Tools\Scripts\HealthCheck\VBR\Get-NasInfo.ps1">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Tools\Scripts\HealthCheck\VBR\Get-VeeamSessionReportVersion13.ps1">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
     <Content Include="Tools\Scripts\HotfixDetection\Collect-VBRLogs.ps1">
@@ -117,7 +125,6 @@
   <ItemGroup>
     <PackageReference Include="CsvHelper" Version="33.0.1" />
     <PackageReference Include="DinkToPdf.Standard" Version="1.1.0" />
-    <PackageReference Include="DocX" Version="3.0.1" />
     <PackageReference Include="HtmlToOpenXml.dll" Version="3.2.2" />
     <PackageReference Include="Microsoft.Management.Infrastructure" Version="3.0.0" />
     <PackageReference Include="Microsoft.PowerShell.SDK" Version="7.4.6" />

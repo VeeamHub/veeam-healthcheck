@@ -109,6 +109,7 @@ namespace VeeamHealthCheck.Startup
             if (!CGlobals.IsVb365 && !CGlobals.IsVbr)
             {
                 CGlobals.Logger.Error("No Veeam Software detected. Is this server the VBR or VB365 management server?", false);
+                
                 return "fail";
             }
 
@@ -201,11 +202,16 @@ namespace VeeamHealthCheck.Startup
             {
                 LOG.Info(logStart + "Init Collections", false);
 
-                if (CGlobals.REMOTEEXEC)
+                if (CGlobals.REMOTEEXEC && CGlobals.RunSecReport)
                 {
                     CImpersonation cImpersonation = new CImpersonation();
                     cImpersonation.RunCollection();
 
+                }
+                else if (CGlobals.REMOTEEXEC)
+                {
+                    CCollections collect = new();
+                    collect.Run();
                 }
                 else
                 {
@@ -305,7 +311,7 @@ namespace VeeamHealthCheck.Startup
         {
             CGlobals.Logger.Info("Args count = " + args.Count().ToString());
             foreach (var arg in args)
-                CGlobals.Logger.Info("Input: " + arg);
+                CGlobals.Logger.Info("\tInput: " + arg);
         }
         public void LogVersionAndArgs(string[] args)
         {

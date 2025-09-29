@@ -117,7 +117,11 @@ namespace VeeamHealthCheck.Functions.Reporting.Html
                     try
                     {
                         var records = config.BnrCsvParser();//.ToList();
-                        if (records != null)
+                        if(records != null && records.Count() < 1)
+                        {
+                            log.Warning("No records found in BNR CSV parser. Skipping version and host name setting.");
+                        }
+                        else if (records != null)
                         {
                             var r2 = records.ToList();
                             _backupServer.Version = r2[0].Version;

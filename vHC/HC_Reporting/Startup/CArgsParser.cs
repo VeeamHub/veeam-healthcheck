@@ -225,14 +225,23 @@ namespace VeeamHealthCheck.Startup
                         "/host=HOSTNAME", false);
                     Environment.Exit(0);
                 }
-                else if(CGlobals.REMOTEEXEC && !CGlobals.RunSecReport)
-                {
-                    CGlobals.Logger.Warning("Remote execution not available for general Health Check. Please run the tool from a server hosting Veeam Backup & Replication", false);
-                    Environment.Exit(0);
-                }
+                //else if(CGlobals.REMOTEEXEC && !CGlobals.RunSecReport)
+                //{
+                //    CGlobals.Logger.Warning("Remote execution not available for general Health Check. Please run the tool from a server hosting Veeam Backup & Replication", false);
+                //    Environment.Exit(0);
+                //}
 
                 else if (CGlobals.REMOTEHOST != "" && CGlobals.RunSecReport)
+                {
+                    CGlobals.Logger.Debug("Remote execution selected with host: " + CGlobals.REMOTEHOST, false);
                     result = FullRun(targetDir);
+
+                }
+                else if(CGlobals.REMOTEHOST != "")
+                {
+                    CGlobals.Logger.Debug("Remote execution selected with host: " + CGlobals.REMOTEHOST, false);
+                    result = FullRun(targetDir);
+                }
                 else
                 {
                     if (functions.ModeCheck() == "fail")

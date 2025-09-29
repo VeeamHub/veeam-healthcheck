@@ -63,8 +63,12 @@ namespace VeeamHealthCheck.Shared.Logging
             message = FormLogLine(message, "DEBUG");
             if (CGlobals.DEBUG)
             {
-                LogLine(message, silent, 2);
+                LogLine(message, false, 2);
 
+            }
+            else
+            {
+                LogLine(message, true, 2);
             }
         }
         public void Error(string message)
