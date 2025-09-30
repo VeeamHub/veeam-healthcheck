@@ -225,7 +225,7 @@ namespace VeeamHealthCheck.Functions.Collection
                 {
                     // Build PowerShell arguments to call the script with parameters
                     string args =
-                        $"-NoProfile -ExecutionPolicy Bypass -File \"{scriptPath}\" -Server '{CGlobals.REMOTEHOST}' -Username '{creds.Value.Username}' -Password '{creds.Value.Password}'";
+                        $"-NoProfile -ExecutionPolicy Bypass -File \"{scriptPath}\" -Server {CGlobals.REMOTEHOST} -Username {creds.Value.Username} -Password {creds.Value.Password}";
                     //Ps7Executor ps7 = new();
                     //ps7.LogPowerShellVersion();
                     var processInfo = new ProcessStartInfo
@@ -237,6 +237,8 @@ namespace VeeamHealthCheck.Functions.Collection
                         UseShellExecute = false,
                         CreateNoWindow = true
                     };
+                    // Log processInfo settings
+                    CGlobals.Logger.Debug($"ProcessStartInfo Settings:\n  FileName: {processInfo.FileName}\n  Arguments: {processInfo.Arguments}\n  RedirectStandardOutput: {processInfo.RedirectStandardOutput}\n  RedirectStandardError: {processInfo.RedirectStandardError}\n  UseShellExecute: {processInfo.UseShellExecute}\n  CreateNoWindow: {processInfo.CreateNoWindow}");
                     using var process = System.Diagnostics.Process.Start(processInfo);
                     string stdOut = process.StandardOutput.ReadToEnd();
                     string stdErr = process.StandardError.ReadToEnd();
@@ -275,7 +277,9 @@ namespace VeeamHealthCheck.Functions.Collection
             CGlobals.Logger.Warning("Failing over to PowerShell 5", false);
             try
             {
-                return  p.TestMfa();
+                var result = p.TestMfa();
+                CGlobals.Logger.Info("[MFA Test] Result: " + result.ToString(), false);
+                return result;
             }
             catch (Exception ex)
             {

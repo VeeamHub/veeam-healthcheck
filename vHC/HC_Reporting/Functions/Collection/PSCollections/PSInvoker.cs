@@ -185,19 +185,68 @@ namespace VeeamHealthCheck.Functions.Collection.PSCollections
         }
         public bool TestMfa()
         {
-            CredsHandler ch = new();
+            var res = new Process();
             if (CGlobals.REMOTEHOST == "")
                 CGlobals.REMOTEHOST = "localhost";
+            string argString = $"Connect-VBRServer -Server \"{CGlobals.REMOTEHOST}\"";
+            var startInfo = new ProcessStartInfo()
+            {
+                FileName = "powershell.exe",
+                Arguments = argString,
+                RedirectStandardOutput = true,
+                RedirectStandardError = true,
+                UseShellExecute = false,
+                CreateNoWindow = true
+            };
+            log.Info($"[TestMfa] Creating ProcessStartInfo for MFA test:");
+            log.Info($"[TestMfa] FileName: {startInfo.FileName}");
+            log.Info($"[TestMfa] Arguments: {startInfo.Arguments}");
+            log.Info($"[TestMfa] RedirectStandardOutput: {startInfo.RedirectStandardOutput}");
+            log.Info($"[TestMfa] RedirectStandardError: {startInfo.RedirectStandardError}");
+            log.Info($"[TestMfa] UseShellExecute: {startInfo.UseShellExecute}");
+            log.Info($"[TestMfa] CreateNoWindow: {startInfo.CreateNoWindow}");
+            log.Info("[TestMfa] Starting PowerShell process for MFA test...");
+            try
+            {
+                res.StartInfo = startInfo;
+                res.Start();
+                log.Info($"[TestMfa] PowerShell process started. PID: {res.Id}");
 
-            var creds = ch.GetCreds();
+                res.WaitForExit();
+                log.Info($"[TestMfa] PowerShell process exited with code: {res.ExitCode}");
 
-            string script = $@"
-Import-Module Veeam.Backup.PowerShell -Force 
-Connect-VBRServer -Server '{CGlobals.REMOTEHOST}' -User '{creds.Value.Username}' -Password '{creds.Value.Password}'
-";
-            string argString = $"-NoProfile -ExecutionPolicy unrestricted -Command \"{script}\"";
-            //CGlobals.Logger.Debug("[MFA Check] args:\t" + argString, false);
-            return ExecutePsScriptWithFailover(argString, useShellExecute: false, createNoWindow: false, redirectStdErr: true);
+                string stdOut = res.StandardOutput.ReadToEnd();
+                string stdErr = res.StandardError.ReadToEnd();
+
+                log.Info($"[TestMfa] STDOUT: {stdOut}");
+                log.Info($"[TestMfa] STDERR: {stdErr}");
+
+                List<string> errorarray = new();
+
+                bool mfaFound = true;
+                string errString = "";
+                while ((errString = res.StandardError.ReadLine()) != null)
+                {
+                    var errResults = ParseErrors(errString);
+                    if (!errResults.Success)
+                    {
+                        log.Error(errString, false);
+                        log.Error(errResults.Message);
+                        mfaFound = true;
+                        return mfaFound;
+
+                    }
+                    errorarray.Add(errString);
+                }
+                PushPsErrorsToMainLog(errorarray);
+
+                return mfaFound;
+            }
+            catch (Exception ex)
+            {
+                log.Error($"[TestMfa] Exception during PowerShell execution: {ex.Message}");
+            }
+            return true;
         }
 
 
@@ -395,10 +444,10 @@ Connect-VBRServer -Server '{CGlobals.REMOTEHOST}' -User '{creds.Value.Username}'
         }
         private ProcessStartInfo ConfigStartInfo(string scriptLocation, int days, string path)
         {
-            CredsHandler ch = new();
-            var creds = ch.GetCreds();
-            if (CGlobals.REMOTEHOST == "")
+            
+            if (CGlobals.REMOTEHOST == ""){
                 CGlobals.REMOTEHOST = "localhost";
+            }
             string argString;
             if (days != 0)
             {
@@ -406,13 +455,20 @@ Connect-VBRServer -Server '{CGlobals.REMOTEHOST}' -User '{creds.Value.Username}'
                     $"-NoProfile -ExecutionPolicy unrestricted -file \"{scriptLocation}\" -VBRServer \"{CGlobals.REMOTEHOST}\" -ReportInterval {CGlobals.ReportDays} ";
                 if (CGlobals.REMOTEEXEC)
                 {
+                    CredsHandler ch = new();
+                    var creds = ch.GetCreds();
                     argString += $"-User {creds.Value.Username} -Password {creds.Value.Password} ";
                 }
             }
             else
             {
                 argString =
-                    $"-NoProfile -ExecutionPolicy unrestricted -file \"{scriptLocation}\" -VBRServer \"{CGlobals.REMOTEHOST}\" -VBRVersion \"{CGlobals.VBRMAJORVERSION}\" -User {creds.Value.Username} -Password {creds.Value.Password} ";
+                    $"-NoProfile -ExecutionPolicy unrestricted -file \"{scriptLocation}\" -VBRServer \"{CGlobals.REMOTEHOST}\" -VBRVersion \"{CGlobals.VBRMAJORVERSION}\" ";
+                    if(CGlobals.REMOTEEXEC ){
+                        CredsHandler ch = new();
+                    var creds = ch.GetCreds();
+                    argString += $"-User {creds.Value.Username} -Password {creds.Value.Password} ";
+                    }
             }
             if (!string.IsNullOrEmpty(path))
             {
