@@ -114,6 +114,10 @@ Write-LogFile("[Script Start]`tStarting VBR Config Collection...")
 if (!(Get-PSSnapin -Name VeeamPSSnapIn -ErrorAction SilentlyContinue)) {
     Add-PSSnapin -Name VeeamPSSnapIn -ErrorAction Stop
 }
+# else ensure Veeam.Backup.Powershell Module is loaded
+elseif (!(Get-Module -Name Veeam.Backup.PowerShell -ErrorAction SilentlyContinue)) {
+    Import-Module -Name Veeam.Backup.Powershell -ErrorAction Stop
+}
 
 # Always disconnect first (ignore errors)
 try { Disconnect-VBRServer -ErrorAction SilentlyContinue } catch {}
@@ -123,18 +127,21 @@ $useCreds = ($User -and $Password -and -not [string]::IsNullOrWhiteSpace($User) 
 
 if ($useCreds) {
     Write-LogFile("Attempting connection to VBR Server $VBRServer with credentials for user '$User' ...")
-} else {
+}
+else {
     Write-LogFile("Attempting connection to VBR Server $VBRServer without credentials ...")
 }
 
 try {
     if ($useCreds) {
         Connect-VBRServer -Server $VBRServer -User $User -Password $Password -ErrorAction Continue
-    } else {
+    }
+    else {
         Connect-VBRServer -Server $VBRServer -ErrorAction Stop
     }
     Write-LogFile("Connected to VBR Server: $VBRServer")
-} catch {
+}
+catch {
     Write-LogFile("Failed to connect to VBR Server: $VBRServer. Error: $($_.Exception.Message)", "Errors", "ERROR")
     exit 1
 }
@@ -234,7 +241,7 @@ catch {
     $err = $Error[0].Exception
     Write-LogFile($err.message)
 }
-$Servers | Export-Csv -Path $("$ReportPath\$VBRServer" + '_Servers.csv') -NoTypeInformation  -ErrorAction SilentlyContinue
+$Servers | Export-VhcCsv -FileName '_Servers.csv'
 
 
 
@@ -264,11 +271,11 @@ catch {
     Write-LogFile($err.message)
 }
 
-$Proxies | Export-Csv -Path $("$ReportPath\$VBRServer" + '_Proxies.csv') -NoTypeInformation  -ErrorAction SilentlyContinue
-$cdpProxy | Export-csv -Path $("$ReportPath\$VBRServer" + '_CdpProxy.csv') -NoTypeInformation  -ErrorAction SilentlyContinue
+$Proxies | Export-VhcCsv -FileName '_Proxies.csv'
+$cdpProxy | Export-VhcCsv -FileName '_CdpProxy.csv'
 #$fileProxy| Export-csv -Path $("$ReportPath\$VBRServer" + '_FileProxy.csv') -NoTypeInformation  -ErrorAction SilentlyContinue
-$hvProxy | Export-csv -Path $("$ReportPath\$VBRServer" + '_HvProxy.csv') -NoTypeInformation  -ErrorAction SilentlyContinue
-$nasProxyOut | Export-csv -Path $("$ReportPath\$VBRServer" + '_NasProxy.csv') -NoTypeInformation  -ErrorAction SilentlyContinue
+$hvProxy | Export-VhcCsv -FileName '_HvProxy.csv'
+$nasProxyOut | Export-VhcCsv -FileName '_NasProxy.csv'
 
 ## ENtra ID
 try {
@@ -310,9 +317,9 @@ try {
 catch {
     Write-LogFile("Error on Entra ID collection. ")
 }
-$entraIdLogJobs | Export-Csv -Path $("$ReportPath\$VBRServer" + '_entraLogJob.csv') -NoTypeInformation  -ErrorAction SilentlyContinue
-$entraIDTenant | Export-Csv -Path $("$ReportPath\$VBRServer" + '_entraTenants.csv') -NoTypeInformation  -ErrorAction SilentlyContinue
-$entraIdTenantJobs | Export-Csv -Path $("$ReportPath\$VBRServer" + '_entraTenantJob.csv') -NoTypeInformation  -ErrorAction SilentlyContinue
+$entraIdLogJobs | Export-VhcCsv -FileName '_entraLogJob.csv'
+$entraIDTenant | Export-VhcCsv -FileName '_entraTenants.csv'
+$entraIdTenantJobs | Export-VhcCsv -FileName '_entraTenantJob.csv'
 
 # cap extent grab
 try {
@@ -332,7 +339,7 @@ catch {
     $err = $Error[0].Exception
     Write-LogFile($err.message)
 }
-$capOut    | Export-csv -Path $("$ReportPath\$VBRServer" + '_capTier.csv') -NoTypeInformation  -ErrorAction SilentlyContinue
+$capOut | Export-VhcCsv -FileName '_capTier.csv'
 
 # traffic config
 try {
@@ -351,7 +358,7 @@ catch {
     $err = $Error[0].Exception
     Write-LogFile($err.message)
 }
-$trafficRules | Export-csv -Path $("$ReportPath\$VBRServer" + '_trafficRules.csv') -NoTypeInformation  -ErrorAction SilentlyContinue
+$trafficRules | Export-VhcCsv -FileName '_trafficRules.csv'
 
 # registry settings
 if ($RemoteExecution -eq $false) {
@@ -384,7 +391,7 @@ if ($RemoteExecution -eq $false) {
         Write-LogFile($err.message)
     }
 }
-$output | Export-csv -Path $("$ReportPath\$VBRServer" + '_regkeys.csv') -NoTypeInformation  -ErrorAction SilentlyContinue
+$output | Export-VhcCsv -FileName '_regkeys.csv'
 
 # Repos
 try {
@@ -468,9 +475,9 @@ catch {
     $err = $Error[0].Exception
     Write-LogFile($err.message)
 }
-$repoInfo | Export-Csv -Path $("$ReportPath\$VBRServer" + '_Repositories.csv') -NoTypeInformation  -ErrorAction SilentlyContinue
-$SOBROutput | Export-Csv -Path $("$ReportPath\$VBRServer" + '_SOBRs.csv') -NoTypeInformation  -ErrorAction SilentlyContinue
-$AllSOBRExtentsOutput | Export-Csv -Path $("$ReportPath\$VBRServer" + '_SOBRExtents.csv') -NoTypeInformation  -ErrorAction SilentlyContinue
+$repoInfo | Export-VhcCsv -FileName '_Repositories.csv'
+$SOBROutput | Export-VhcCsv -FileName '_SOBRs.csv'
+$AllSOBRExtentsOutput | Export-VhcCsv -FileName '_SOBRExtents.csv'
 # jobs collection
 try {
     $message = "Collecting jobs info..."
@@ -490,7 +497,7 @@ try {
     catch {
         $catCopy = $null
     }
-    $catCopy | Export-Csv -Path $("$ReportPath\$VBRServer" + '_catCopyjob.csv') -NoTypeInformation  -ErrorAction SilentlyContinue
+    $catCopy | Export-VhcCsv -FileName '_catCopyjob.csv'
     try {
         $catJob = Get-VBRCatalystJob
     }
@@ -503,7 +510,7 @@ try {
     catch {
         $vaBcj = $null
     }
-    $catJob | Export-Csv -Path $("$ReportPath\$VBRServer" + '_catalystJob.csv') -NoTypeInformation  -ErrorAction SilentlyContinue
+    $catJob | Export-VhcCsv -FileName '_catalystJob.csv'
 
     try {
         $vaBJob = Get-VBRComputerBackupJob
@@ -511,7 +518,7 @@ try {
     catch {
         $vaBJob = $null
     }
-    $vaBJob | Export-Csv -Path $("$ReportPath\$VBRServer" + '_AgentBackupJob.csv') -NoTypeInformation  -ErrorAction SilentlyContinue
+    $vaBJob | Export-VhcCsv -FileName '_AgentBackupJob.csv'
     try {
         $configBackup = Get-VBRConfigurationBackupJob
 
@@ -526,7 +533,7 @@ try {
     catch {
         $epJob = $null
     }
-    $epJob | Export-Csv -Path $("$ReportPath\$VBRServer" + '_EndpointJob.csv') -NoTypeInformation  -ErrorAction SilentlyContinue
+    $epJob | Export-VhcCsv -FileName '_EndpointJob.csv'
     
     try {
         $sbJob = Get-VBRSureBackupJob
@@ -534,7 +541,7 @@ try {
     catch {
         $sbJob = $null
     }
-    $sbJob | Export-Csv -Path $("$ReportPath\$VBRServer" + '_SureBackupJob.csv') -NoTypeInformation  -ErrorAction SilentlyContinue
+    $sbJob | Export-VhcCsv -FileName '_SureBackupJob.csv'
     
     #tape jobs
     try {
@@ -544,8 +551,10 @@ try {
         $tapeJob = $null
     }
     #export tape jobs to csv
-    $tapeJob | Export-Csv -Path $("$ReportPath\$VBRServer" + '_TapeJobs.csv') -NoTypeInformation  -ErrorAction SilentlyContinue
+    $tapeJob | Export-VhcCsv -FileName '_TapeJobs.csv'
     #end tape jobs
+
+    # NAS Jobs
     try {
         #$nasBackup = Get-VBRNASBackupJob 
         # get all NAS jobs
@@ -602,18 +611,18 @@ try {
         $vcdJob = $null
     }
 
-    $piJob | Export-csv -Path $("$ReportPath\$VBRServer" + '_pluginjobs.csv') -NoTypeInformation  -ErrorAction SilentlyContinue
+    $piJob | Export-VhcCsv -FileName '_pluginjobs.csv'
 
   
     $vcdJob | Add-Member -MemberType NoteProperty -Name JobType -Value "VCD Replica"
-    $vcdJob | Export-csv -Path $("$ReportPath\$VBRServer" + '_vcdjobs.csv') -NoTypeInformation  -ErrorAction SilentlyContinue
+    $vcdJob | Export-VhcCsv -FileName '_vcdjobs.csv'
   
     $cdpJob | Add-Member -MemberType NoteProperty -Name JobType -Value "CDP Policy"
-    $cdpJob | Export-csv -Path $("$ReportPath\$VBRServer" + '_cdpjobs.csv') -NoTypeInformation  -ErrorAction SilentlyContinue
+    $cdpJob | Export-VhcCsv -FileName '_cdpjobs.csv'
   
     $nasBackup | Add-Member -MemberType NoteProperty -Name JobType -Value "NAS Backup" -ErrorAction SilentlyContinue
-    $nasBackup | Export-csv -Path $("$ReportPath\$VBRServer" + '_nasBackup.csv') -NoTypeInformation  -ErrorAction SilentlyContinue
-    $nasBCJ | export-csv -Path $("$ReportPath\$VBRServer" + '_nasBCJ.csv') -NoTypeInformation  -ErrorAction SilentlyContinue
+    $nasBackup | Export-VhcCsv -FileName '_nasBackup.csv'
+    $nasBCJ | Export-VhcCsv -FileName '_nasBCJ.csv'
   
     # removing tape jobs from here, exporting independently
     # $tapeJob | Add-Member -MemberType NoteProperty -Name JobType -Value "Tape Backup"
@@ -688,8 +697,8 @@ catch {
     $err = $Error[0].Exception
     Write-LogFile($err.message)
 }
-$AllJobs | Export-Csv -Path $("$ReportPath\$VBRServer" + '_Jobs.csv') -NoTypeInformation -ErrorAction SilentlyContinue
-$configBackup | Export-Csv -Path $("$ReportPath\$VBRServer" + '_configBackup.csv') -NoTypeInformation  -ErrorAction SilentlyContinue
+$AllJobs | Export-VhcCsv -FileName '_Jobs.csv'
+$configBackup | Export-VhcCsv -FileName '_configBackup.csv'
 #SOBRS
 # try {
 #   $message = "Collecting SOBRs info..."
@@ -723,7 +732,7 @@ catch {
     $err = $Error[0].Exception
     Write-LogFile($err.message)
 }
-$wan | Export-csv -Path $("$ReportPath\$VBRServer" + '_WanAcc.csv') -NoTypeInformation  -ErrorAction SilentlyContinue
+$wan | Export-VhcCsv -FileName '_WanAcc.csv'
 #########################################################################################################
 #########################################################################################################
 #########################################################################################################
@@ -755,7 +764,7 @@ catch {
     $err = $Error[0].Exception
     Write-LogFile($err.message)
 }
-$licInfo | Export-csv -Path $("$ReportPath\$VBRServer" + '_LicInfo.csv') -NoTypeInformation  -ErrorAction SilentlyContinue
+$licInfo | Export-VhcCsv -FileName '_LicInfo.csv'
 <# END LICENSE SECTION
 #>
 #########################################################################################################
@@ -765,10 +774,10 @@ $licInfo | Export-csv -Path $("$ReportPath\$VBRServer" + '_LicInfo.csv') -NoType
 <# Malware Detection Section #>
 if ($VBRVersion -ge 12) {
     try {
-        Get-VBRMalwareDetectionOptions | Export-Csv -Path $("$ReportPath\$VBRServer" + 'malware_settings.csv') -NoTypeInformation  -ErrorAction SilentlyContinue
-        Get-VBRMalwareDetectionObject | Export-Csv -Path $("$ReportPath\$VBRServer" + 'malware_infectedobject.csv') -NoTypeInformation  -ErrorAction SilentlyContinue
-        Get-VBRMalwareDetectionEvent | Export-Csv -Path $("$ReportPath\$VBRServer" + 'malware_events.csv') -NoTypeInformation  -ErrorAction SilentlyContinue
-        Get-VBRMalwareDetectionExclusion | Export-Csv -Path $("$ReportPath\$VBRServer" + 'malware_exclusions.csv') -NoTypeInformation  -ErrorAction SilentlyContinue
+        Get-VBRMalwareDetectionOptions | Export-VhcCsv -FileName 'malware_settings.csv'
+        Get-VBRMalwareDetectionObject | Export-VhcCsv -FileName 'malware_infectedobject.csv'
+        Get-VBRMalwareDetectionEvent | Export-VhcCsv -FileName 'malware_events.csv'
+        Get-VBRMalwareDetectionExclusion | Export-VhcCsv -FileName 'malware_exclusions.csv'
     }
     catch {
         Write-LogFile("Failed on Malware Detection")
@@ -778,7 +787,7 @@ if ($VBRVersion -ge 12) {
     <# END Malware Detection Section #>
 
     <# Security Section #>
-    if ($VBRVersion -eq 12) {
+    if ($VBRVersion -gt 11) {
         try {
             try {
                 # Force new scan
@@ -827,6 +836,8 @@ if ($VBRVersion -ge 12) {
                     'NetBiosDisabled'                         = 'NetBIOS protocol should be disabled on all network interfaces'
                     'HardenedRepositoryNotContainsNBDProxies' = 'Hardened repository should not be used as proxy'
                     'LsassProtectedProcess'                   = 'Local Security Authority Server Service (LSASS) running as protected process'
+                    'PasswordsComplexityRules'                = 'Backup encryption password length and complexity recommendations should be followed'
+
                 }
                 $StatusObj = @{
                     'Ok'            = "Passed"
@@ -855,7 +866,7 @@ if ($VBRVersion -ge 12) {
                     }
                 }
                 #dump to csv file
-                $OutObj | Export-Csv -Path $("$ReportPath\$VBRServer" + '_SecurityCompliance.csv') -NoTypeInformation  -ErrorAction SilentlyContinue
+                $OutObj | Export-VhcCsv -FileName '_SecurityCompliance.csv'
             }
             Catch {
                 Write-Host "Security & Compliance summary command: $($_.Exception.Message)"
@@ -969,12 +980,12 @@ catch {
     Write-LogFile($err.message)
 }
 Write-LogFile("Exporting Protected Workloads Files...")
-$protected | Export-Csv -Path $("$ReportPath\$VBRServer" + '_PhysProtected.csv') -NoTypeInformation  -ErrorAction SilentlyContinue
-$notprotected | Export-Csv -Path $("$ReportPath\$VBRServer" + '_PhysNotProtected.csv') -NoTypeInformation  -ErrorAction SilentlyContinue
-$protectedHvEntityInfo | select Name, PowerState, ProvisionedSize, UsedSize, Path | sort PoweredOn, Path, Name | Export-Csv -Path $("$ReportPath\$VBRServer" + '_HvProtected.csv') -NoTypeInformation  -ErrorAction SilentlyContinue
-$unprotectedHvEntityInfo | select Name, PowerState, ProvisionedSize, UsedSize, Path, Type | sort Type, PoweredOn, Path, Name | Export-Csv -Path $("$ReportPath\$VBRServer" + '_HvUnprotected.csv') -NoTypeInformation  -ErrorAction SilentlyContinue
-$protectedEntityInfo | select Name, PowerState, ProvisionedSize, UsedSize, Path | sort PoweredOn, Path, Name | Export-Csv -Path $("$ReportPath\$VBRServer" + '_ViProtected.csv') -NoTypeInformation  -ErrorAction SilentlyContinue
-$unprotectedEntityInfo | select Name, PowerState, ProvisionedSize, UsedSize, Path, Type | sort Type, PoweredOn, Path, Name | Export-Csv -Path $("$ReportPath\$VBRServer" + '_ViUnprotected.csv') -NoTypeInformation  -ErrorAction SilentlyContinue
+$protected | Export-VhcCsv -FileName '_PhysProtected.csv'
+$notprotected | Export-VhcCsv -FileName '_PhysNotProtected.csv'
+$protectedHvEntityInfo | select Name, PowerState, ProvisionedSize, UsedSize, Path | sort PoweredOn, Path, Name | Export-VhcCsv -FileName '_HvProtected.csv'
+$unprotectedHvEntityInfo | select Name, PowerState, ProvisionedSize, UsedSize, Path, Type | sort Type, PoweredOn, Path, Name | Export-VhcCsv -FileName '_HvUnprotected.csv'
+$protectedEntityInfo | select Name, PowerState, ProvisionedSize, UsedSize, Path | sort PoweredOn, Path, Name | Export-VhcCsv -FileName '_ViProtected.csv'
+$unprotectedEntityInfo | select Name, PowerState, ProvisionedSize, UsedSize, Path, Type | sort Type, PoweredOn, Path, Name | Export-VhcCsv -FileName '_ViUnprotected.csv'
 Write-LogFile("Exporting Protected Workloads Files...OK")
 <#
 END SECTION
@@ -991,32 +1002,40 @@ try {
 
     # work here
     #GetVbrVersion:
-    $corePath = Get-ItemProperty -Path "HKLM:\Software\Veeam\Veeam Backup and Replication\" -Name "CorePath"  -ErrorAction SilentlyContinue
-    $dbPath = Get-ItemProperty -Path "HKLM:\Software\Veeam\Veeam Backup and Replication\" -Name "SqlDataBaseName" -ErrorAction SilentlyContinue
-    $instancePath = Get-ItemProperty -Path "HKLM:\Software\Veeam\Veeam Backup and Replication\" -Name "SqlInstanceName" -ErrorAction SilentlyContinue
-    $dbServerPath = Get-ItemProperty -Path "HKLM:\Software\Veeam\Veeam Backup and Replication\" -Name "SqlServerName" -ErrorAction SilentlyContinue
-    $dbType = Get-ItemProperty -Path "HKLM:\Software\Veeam\Veeam Backup and Replication\DatabaseConfigurations" -Name "SqlActiveConfiguration"  -ErrorAction SilentlyContinue
-    $pgDbHost = Get-ItemProperty -Path "HKLM:\Software\Veeam\Veeam Backup and Replication\DatabaseConfigurations\PostgreSql" -Name "SqlHostName"  -ErrorAction SilentlyContinue
-    $pgDbDbName = Get-ItemProperty -Path "HKLM:\Software\Veeam\Veeam Backup and Replication\DatabaseConfigurations\PostgreSql" -Name "SqlDatabaseName"  -ErrorAction SilentlyContinue
-    $msDbHost = Get-ItemProperty -Path "HKLM:\Software\Veeam\Veeam Backup and Replication\DatabaseConfigurations\MsSql" -Name "SqlServerName"  -ErrorAction SilentlyContinue
-    $msDbName = Get-ItemProperty -Path "HKLM:\Software\Veeam\Veeam Backup and Replication\DatabaseConfigurations\MsSql" -Name "SqlDatabaseName"  -ErrorAction SilentlyContinue
-    if ($dbType.SqlActiveConfiguration -ne "PostgreSql") {
-        if ($instancePath -eq "") {
-            $instancePath = Get-ItemProperty -Path "HKLM:\Software\Veeam\Veeam Backup and Replication\DatabaseConfigurations\MsSql" -Name "SqlInstanceName"  -ErrorAction SilentlyContinue
-        }
+    try {
+        $corePath = Get-ItemProperty -Path "HKLM:\Software\Veeam\Veeam Backup and Replication\" -Name "CorePath"  -ErrorAction SilentlyContinue
+        $dbPath = Get-ItemProperty -Path "HKLM:\Software\Veeam\Veeam Backup and Replication\" -Name "SqlDataBaseName" -ErrorAction SilentlyContinue
+        $instancePath = Get-ItemProperty -Path "HKLM:\Software\Veeam\Veeam Backup and Replication\" -Name "SqlInstanceName" -ErrorAction SilentlyContinue
+        $dbServerPath = Get-ItemProperty -Path "HKLM:\Software\Veeam\Veeam Backup and Replication\" -Name "SqlServerName" -ErrorAction SilentlyContinue
+        $dbType = Get-ItemProperty -Path "HKLM:\Software\Veeam\Veeam Backup and Replication\DatabaseConfigurations" -Name "SqlActiveConfiguration"  -ErrorAction SilentlyContinue
+        $pgDbHost = Get-ItemProperty -Path "HKLM:\Software\Veeam\Veeam Backup and Replication\DatabaseConfigurations\PostgreSql" -Name "SqlHostName"  -ErrorAction SilentlyContinue
+        $pgDbDbName = Get-ItemProperty -Path "HKLM:\Software\Veeam\Veeam Backup and Replication\DatabaseConfigurations\PostgreSql" -Name "SqlDatabaseName"  -ErrorAction SilentlyContinue
+        $msDbHost = Get-ItemProperty -Path "HKLM:\Software\Veeam\Veeam Backup and Replication\DatabaseConfigurations\MsSql" -Name "SqlServerName"  -ErrorAction SilentlyContinue
+        $msDbName = Get-ItemProperty -Path "HKLM:\Software\Veeam\Veeam Backup and Replication\DatabaseConfigurations\MsSql" -Name "SqlDatabaseName"  -ErrorAction SilentlyContinue
+        if ($dbType.SqlActiveConfiguration -ne "PostgreSql") {
+            if ($instancePath -eq "") {
+                $instancePath = Get-ItemProperty -Path "HKLM:\Software\Veeam\Veeam Backup and Replication\DatabaseConfigurations\MsSql" -Name "SqlInstanceName"  -ErrorAction SilentlyContinue
+            }
         
-    }
+        }
 
-    $depDLLPath = Join-Path -Path $corePath.CorePath -ChildPath "Packages\VeeamDeploymentDll.dll" -Resolve  -ErrorAction SilentlyContinue
-    $file = Get-Item -Path $depDLLPath
-    $version = $file.VersionInfo.ProductVersion
-    $fixes = $file.VersionInfo.Comments
+        $depDLLPath = Join-Path -Path $corePath.CorePath -ChildPath "Packages\VeeamDeploymentDll.dll" -Resolve  -ErrorAction SilentlyContinue
+        $file = Get-Item -Path $depDLLPath
+        $version = $file.VersionInfo.ProductVersion
+        $fixes = $file.VersionInfo.Comments
+    }
+    Catch {
+        Write-LogFile("Failed to get VBR Version info. Possibly due to remote execution.")
+    }
     try {
         # log debug line 
         Write-LogFile("Getting MFA Global Setting")
         $MFAGlobalSetting = [Veeam.Backup.Core.SBackupOptions]::get_GlobalMFA()
     }
-    catch { Out-Null }
+    catch {
+        Write-LogFile("Failed to get MFA Global Setting, likely pre-VBR 12") 
+        $MFAGlobalSetting = "N/A - Pre VBR 12"
+    }
 
 
     #output VBR Versioning
@@ -1044,7 +1063,7 @@ catch {
     $err = $Error[0].Exception
     Write-LogFile($err.message)
 }
-$VbrOutput | Export-Csv -Path $("$ReportPath\$VBRServer" + '_vbrinfo.csv') -NoTypeInformation  -ErrorAction SilentlyContinue
+$VbrOutput | Export-VhcCsv -FileName '_vbrinfo.csv'
 
 
 

@@ -109,7 +109,7 @@ namespace VeeamHealthCheck.Startup
             if (!CGlobals.IsVb365 && !CGlobals.IsVbr)
             {
                 CGlobals.Logger.Error("No Veeam Software detected. Is this server the VBR or VB365 management server?", false);
-                
+                CGlobals.Logger.Warning("\tTry connecting to a remote server with /remote /host=hostname");
                 return "fail";
             }
 

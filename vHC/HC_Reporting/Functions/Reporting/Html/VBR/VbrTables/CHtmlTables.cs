@@ -337,7 +337,7 @@ namespace VeeamHealthCheck.Html.VBR
                 _form.TableHeader(VbrLocalizationHelper.SSHdr1, VbrLocalizationHelper.SSHdrTT1) +
                 _form.TableHeader(VbrLocalizationHelper.SSHdr2, VbrLocalizationHelper.SSHdrTT2) +
                 _form.TableHeader(VbrLocalizationHelper.SSHdr3, VbrLocalizationHelper.SSHdrTT3) +
-                _form.TableHeader("MFA Enabled", "Is MFA enabled on VBR");
+                _form.TableHeader("MFA Enabled", "Is MFA enabled for console access to VBR");
             s += _form.TableHeaderEnd();
             s += _form.TableBodyStart();
             s += "<tr>";
@@ -1916,11 +1916,8 @@ _form.TableHeader(VbrLocalizationHelper.SbrExt15, VbrLocalizationHelper.SbrExt15
                         double tSizeGB = 0;
                         double onDiskTotalGB = 0;
 
-                        var useSourceSize = true;
-                        if (jType == "NasBackupCopy" || jType == "Copy")
-                        {
-                            useSourceSize = false;
-                        }
+                        bool useSourceSize = !(jType == "NasBackupCopy" || jType == "Copy");
+                        
                         var realType = CJobTypesParser.GetJobType(jType);
                         string jobTable = _form.SectionStartWithButton("jobTable", realType + " Jobs", "");
                         s += jobTable;

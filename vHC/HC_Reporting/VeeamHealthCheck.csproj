@@ -11,10 +11,10 @@
     <Company>Veeam</Company>
     <Authors>AdamC</Authors>
     <ApplicationIcon>Health_Check_Icon.ico</ApplicationIcon>
-    <AssemblyVersion>3.0.0.64</AssemblyVersion>
+    <AssemblyVersion>3.0.0.70</AssemblyVersion>
     <SignAssembly>False</SignAssembly>
     <DelaySign>false</DelaySign>
-    <FileVersion>3.0.0.64</FileVersion>
+    <FileVersion>3.0.0.70</FileVersion>
     <DebugType>full</DebugType>
 	  <SelfContained>true</SelfContained>
 	  <!--These 2 lines are what produce the single file utility. Possibly doesn't work...-->
@@ -176,7 +176,6 @@
   <ItemGroup>
     <Folder Include="Functions\Reporting\CsvHandlers\Proxies\" />
     <Folder Include="Functions\Reporting\CsvHandlers\Repositories\" />
-    <Folder Include="Functions\Reporting\CsvHandlers\VBR\" />
     <Folder Include="Functions\Reporting\DataTypes\NewFolder\" />
     <Folder Include="Functions\Reporting\TableDatas\" />
     <Folder Include="Resources\Localization\VBR\" />
