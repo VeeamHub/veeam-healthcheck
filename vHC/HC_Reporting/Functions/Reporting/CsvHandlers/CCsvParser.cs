@@ -630,7 +630,7 @@ namespace VeeamHealthCheck.Functions.Reporting.CsvHandlers
         public void Dispose() { }
         private CsvReader VbrFileReader(string file)
         {
-            var fileResult = _vbrReader.VbrCsvReader(file);
+            var fileResult = _vbrReader.FileFinder(file, _outPath);
             if (fileResult != null)
                 return fileResult;
             else return null;
