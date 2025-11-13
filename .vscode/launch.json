@@ -1,0 +1,20 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Debug VeeamHealthCheck",
+      "type": "coreclr",
+      "request": "launch",
+      "preLaunchTask": "build",
+      "program": "${workspaceFolder}/vHC/HC_Reporting/bin/Debug/net8.0-windows7.0/win-x64/VeeamHealthCheck.exe",
+      "args": [
+        "/run",
+        "/remote",
+        "/host=vbr-v13-primary.home.lab"
+      ],
+      "cwd": "${workspaceFolder}/vHC/HC_Reporting",
+      "console": "internalConsole",
+      "stopAtEntry": false
+    }
+  ]
+}

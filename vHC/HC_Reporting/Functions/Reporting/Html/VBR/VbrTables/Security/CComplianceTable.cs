@@ -17,13 +17,20 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR.VbrTables.Security
 
         public CComplianceTable()
         {
-            _csvResults = _csv.ComplianceCsv();
+            _csvResults = _csv.ComplianceCsv() ?? new List<CComplianceCsv>();
         }
         public string ComplianceSummaryTable()
         {
             string t = "";
             try
             {
+                // Return early if no data
+                if (_csvResults == null || !_csvResults.Any())
+                {
+                    CGlobals.Logger.Warning("No compliance data available - CSV file may not have been generated");
+                    return t;
+                }
+                
                 var passedCount = 0;
                 var notImplementedCount = 0;
                 var unableToDetectCount = 0;
@@ -89,6 +96,13 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR.VbrTables.Security
             string t = "";
             try
             {
+                // Return early if no data
+                if (_csvResults == null || !_csvResults.Any())
+                {
+                    CGlobals.Logger.Warning("No compliance data available - CSV file may not have been generated");
+                    return t;
+                }
+                
                 //var csvResults = _csv.ComplianceCsv();
                 t += _form.SectionStartWithButton("ComplianceTable", "Compliance Table", "complianceButton");
                 t += _form.TableHeaderLeftAligned("Best Practice", "Name of the excluded sytem.");

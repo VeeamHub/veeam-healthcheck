@@ -110,13 +110,25 @@ function Write-LogFile {
 #log start of script
 Write-LogFile("[Script Start]`tStarting VBR Config Collection...")
 
-# Ensure Veeam snap-in is loaded
-if (!(Get-PSSnapin -Name VeeamPSSnapIn -ErrorAction SilentlyContinue)) {
-    Add-PSSnapin -Name VeeamPSSnapIn -ErrorAction Stop
-}
-# else ensure Veeam.Backup.Powershell Module is loaded
-elseif (!(Get-Module -Name Veeam.Backup.PowerShell -ErrorAction SilentlyContinue)) {
-    Import-Module -Name Veeam.Backup.Powershell -ErrorAction Stop
+# Ensure Veeam module or snap-in is loaded
+# PowerShell 7+ only supports modules, not PSSnapins
+if ($PSVersionTable.PSVersion.Major -ge 6) {
+    # PowerShell 6+ (Core/7+) - use module only
+    if (!(Get-Module -Name Veeam.Backup.PowerShell -ErrorAction SilentlyContinue)) {
+        Import-Module -Name Veeam.Backup.Powershell -ErrorAction Stop
+    }
+} else {
+    # Windows PowerShell 5.1 - try PSSnapin first, then module
+    if (!(Get-PSSnapin -Name VeeamPSSnapIn -ErrorAction SilentlyContinue)) {
+        try {
+            Add-PSSnapin -Name VeeamPSSnapIn -ErrorAction Stop
+        } catch {
+            # If PSSnapin fails, try module
+            if (!(Get-Module -Name Veeam.Backup.PowerShell -ErrorAction SilentlyContinue)) {
+                Import-Module -Name Veeam.Backup.Powershell -ErrorAction Stop
+            }
+        }
+    }
 }
 
 # Always disconnect first (ignore errors)
@@ -788,15 +800,44 @@ if ($VBRVersion -ge 12) {
 
     <# Security Section #>
     if ($VBRVersion -gt 11) {
+        Write-LogFile("VBR Version ($VBRVersion) supports Security & Compliance - starting collection...")
         try {
             try {
                 # Force new scan
-                write-LogFile("Starting Security & Compliance scan...")
-                Start-VBRSecurityComplianceAnalyzer -ErrorAction SilentlyContinue -WarningAction SilentlyContinue -InformationAction SilentlyContinue
+                Write-LogFile("Starting Security & Compliance scan...")
+                Write-LogFile("Calling Start-VBRSecurityComplianceAnalyzer...")
+                
+                try {
+                    Start-VBRSecurityComplianceAnalyzer -ErrorAction Stop -WarningAction SilentlyContinue -InformationAction SilentlyContinue
+                    Write-LogFile("Start-VBRSecurityComplianceAnalyzer completed successfully")
+                } catch {
+                    Write-LogFile("Start-VBRSecurityComplianceAnalyzer failed: $($_.Exception.Message)", "Errors", "ERROR")
+                    Write-LogFile("Exception Type: $($_.Exception.GetType().FullName)", "Errors", "ERROR")
+                    throw
+                }
+                
+                Write-LogFile("Waiting 15 seconds for scan to complete...")
                 Start-Sleep -Seconds 15
+                
                 # Capture scanner results
-                $SecurityCompliances = [Veeam.Backup.DBManager.CDBManager]::Instance.BestPractices.GetAll()
-                write-LogFile("Security & Compliance scan completed.")
+                Write-LogFile("Attempting to retrieve scan results...")
+                try {
+                    # VBR 13+ uses Get-VBRSecurityComplianceAnalyzerResults cmdlet
+                    # VBR 12 uses [Veeam.Backup.DBManager.CDBManager]::Instance.BestPractices.GetAll()
+                    if ($VBRVersion -ge 13) {
+                        Write-LogFile("Using Get-VBRSecurityComplianceAnalyzerResults for VBR v13+")
+                        $SecurityCompliances = Get-VBRSecurityComplianceAnalyzerResults
+                    } else {
+                        Write-LogFile("Using database method for VBR v12")
+                        $SecurityCompliances = [Veeam.Backup.DBManager.CDBManager]::Instance.BestPractices.GetAll()
+                    }
+                    Write-LogFile("Retrieved $($SecurityCompliances.Count) compliance items")
+                } catch {
+                    Write-LogFile("Failed to retrieve compliance data: $($_.Exception.Message)", "Errors", "ERROR")
+                    throw
+                }
+                
+                Write-LogFile("Security & Compliance scan completed.")
 
                 $RuleTypes = @{
                     'WindowsScriptHostDisabled'               = 'Windows Script Host is disabled'
@@ -827,6 +868,7 @@ if ($VBRVersion -ge 12) {
                     'RemoteDesktopServiceDisabled'            = 'Remote desktop protocol is disabled'
                     'ConfigurationBackupEnabled'              = 'Configuration backup is enabled'
                     'WindowsFirewallEnabled'                  = 'Windows firewall is enabled'
+                    'FirewallEnabled'                         = 'Windows firewall is enabled'
                     'ConfigurationBackupEnabledAndEncrypted'  = 'Configuration backup is enabled and use encryption'
                     'HardenedRepositoryNotVirtual'            = 'Hardened repositories are not hosted in virtual machines'
                     'ConfigurationBackupRepositoryNotLocal'   = 'The configuration backup is not stored on the backup server'
@@ -837,6 +879,19 @@ if ($VBRVersion -ge 12) {
                     'HardenedRepositoryNotContainsNBDProxies' = 'Hardened repository should not be used as proxy'
                     'LsassProtectedProcess'                   = 'Local Security Authority Server Service (LSASS) running as protected process'
                     'PasswordsComplexityRules'                = 'Backup encryption password length and complexity recommendations should be followed'
+                    'EncryptionPasswordsComplexityRules'      = 'Backup encryption password length and complexity recommendations should be followed'
+                    'CredentialsPasswordsComplexityRules'     = 'Credentials password length and complexity recommendations should be followed'
+                    'LinuxAuditBinariesOwnerIsRoot'           = 'Linux audit binaries owner is root'
+                    'LinuxAuditdConfigured'                   = 'Linux auditd is configured'
+                    'LinuxDisableProblematicServices'         = 'Linux problematic services are disabled'
+                    'LinuxOsHasVaRandomization'               = 'Linux OS has VA randomization enabled'
+                    'LinuxOsIsFipsEnabled'                    = 'Linux OS has FIPS enabled'
+                    'LinuxOsUsesTcpSyncookies'                = 'Linux OS uses TCP syncookies'
+                    'LinuxUsePasswordPolicy'                  = 'Linux uses password policy'
+                    'SecureBootEnable'                        = 'Secure Boot is enabled'
+                    'LinuxUseSecurityModule'                  = 'Linux uses security module (SELinux/AppArmor)'
+                    'LinuxWorldDirectoriesPermissions'        = 'Linux world-writable directories have proper permissions'
+
 
                 }
                 $StatusObj = @{
@@ -846,35 +901,70 @@ if ($VBRVersion -ge 12) {
                     'Suppressed'    = "Suppressed"
                 }
                 $OutObj = @()
+                Write-LogFile("Processing $($SecurityCompliances.Count) compliance rules...")
+                Write-LogFile("RuleTypes hashtable has $($RuleTypes.Count) entries")
+                Write-LogFile("StatusObj hashtable has $($StatusObj.Count) entries")
+                
+                $processedCount = 0
+                $skippedCount = 0
+                
                 foreach ($SecurityCompliance in $SecurityCompliances) {
                     try {
-                        # if (($RuleTypes[$SecurityCompliance.Type.ToString()] -eq "") -or $RuleTypes[$SecurityCompliance.Type.ToString()] -eq $null) {
-
-                        #     write-host("missing compliance= " + $SecurityCompliance.Type.ToString())
-                        # }
-                        # Write-PscriboMessage -IsWarning "$($SecurityCompliance.Type) = $($RuleTypes[$SecurityCompliance.Type.ToString()])"
+                        $complianceType = $SecurityCompliance.Type.ToString()
+                        $complianceStatus = $SecurityCompliance.Status.ToString()
+                        
+                        # Check if rule type exists in mapping
+                        if (-not $RuleTypes.ContainsKey($complianceType)) {
+                            Write-LogFile("Warning: Unknown compliance type '$complianceType' - skipping", "Main", "WARNING")
+                            $skippedCount++
+                            continue
+                        }
+                        
+                        # Check if status exists in mapping
+                        if (-not $StatusObj.ContainsKey($complianceStatus)) {
+                            Write-LogFile("Warning: Unknown compliance status '$complianceStatus' for type '$complianceType' - skipping", "Main", "WARNING")
+                            $skippedCount++
+                            continue
+                        }
+                        
                         $inObj = [ordered] @{
-                            'Best Practice' = $RuleTypes[$SecurityCompliance.Type.ToString()]
-                            'Status'        = $StatusObj[$SecurityCompliance.Status.ToString()]
-
-
+                            'Best Practice' = $RuleTypes[$complianceType]
+                            'Status'        = $StatusObj[$complianceStatus]
                         }
                         $OutObj += [pscustomobject]$inobj
+                        $processedCount++
                     }
                     catch {
-                        Write-Host "Security & Compliance summary table: $($_.Exception.Message)"
+                        Write-LogFile("Error processing compliance rule: $($_.Exception.Message)", "Errors", "ERROR")
+                        Write-LogFile("Rule Type: $complianceType, Status: $complianceStatus", "Errors", "ERROR")
                     }
                 }
+                
+                Write-LogFile("Foreach loop completed")
+                Write-LogFile("Processed $processedCount compliance rules, skipped $skippedCount")
+                Write-LogFile("OutObj count: $($OutObj.Count)")
+                
                 #dump to csv file
-                $OutObj | Export-VhcCsv -FileName '_SecurityCompliance.csv'
+                if ($OutObj.Count -gt 0) {
+                    Write-LogFile("Exporting $($OutObj.Count) compliance items to CSV...")
+                    $OutObj | Export-VhcCsv -FileName '_SecurityCompliance.csv'
+                    Write-LogFile("Security Compliance CSV export completed successfully")
+                } else {
+                    Write-LogFile("No compliance data to export - OutObj is empty", "Main", "WARNING")
+                }
             }
             Catch {
-                Write-Host "Security & Compliance summary command: $($_.Exception.Message)"
+                Write-LogFile("Security & Compliance summary command failed: $($_.Exception.Message)", "Errors", "ERROR")
+                Write-LogFile("Stack Trace: $($_.ScriptStackTrace)", "Errors", "ERROR")
             }
         }
         catch {
-            Write-Host "Security & Compliance summary section: $($_.Exception.Message)"
+            Write-LogFile("Security & Compliance summary section failed: $($_.Exception.Message)", "Errors", "ERROR")
+            Write-LogFile("Stack Trace: $($_.ScriptStackTrace)", "Errors", "ERROR")
         }
+    }
+    else {
+        Write-LogFile("VBR Version ($VBRVersion) does not support Security & Compliance - skipping")
     }
 
 
