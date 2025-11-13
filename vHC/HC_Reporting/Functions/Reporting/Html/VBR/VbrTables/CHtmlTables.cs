@@ -715,7 +715,16 @@ namespace VeeamHealthCheck.Html.VBR
                     s += "<h3>NAS Backups</h3>";
                     if (cProtectedWorkloads.nasWorkloads.Count() == 0)
                     {
-                        s += "<p>No NAS Workloads detected</p>";
+                        if(CGlobals.REMOTEEXEC)
+                        {
+                            log.Info("No NAS Workloads detected. This may be due to remote execution mode limitations.", false);
+                            s += "<p>No NAS Workloads detected. This may be due to remote execution mode limitations.</p>";
+                        }
+                        else
+                        {
+                            log.Info("No NAS Workloads detected.", false);
+                            s += "<p>No NAS Workloads detected</p>";
+                        }
                     }
                     else
                     {
@@ -911,6 +920,9 @@ namespace VeeamHealthCheck.Html.VBR
                 Dictionary<string, string> list = _df.RegOptions();
                 if (list.Count == 0)
                 {
+                    if(CGlobals.REMOTEEXEC) // remote exec does not support registry and VBR could be linux based without regsitry
+                        s += "<p>Registry key collection not supported in remote execution mode</p>";
+                    else
                     s += "<p>No modified registry keys found</p>";
                 }
                 else
@@ -2144,11 +2156,18 @@ _form.TableHeader(VbrLocalizationHelper.SbrExt15, VbrLocalizationHelper.SbrExt15
                     {
                         CEntraJobsTable entraTable = new();
                         string et = entraTable.Table();
-                        if (et != null)
+                        if (et != null && et.Length > 0)
                         {
+                            //debug 
+                            log.Debug("Entra jobs table length: " + et.Length);
                             string tableButton = _form.SectionStartWithButton("jobTable", "Entra Jobs", "");
                             s += tableButton;
                             s += et;
+                            s += _form.SectionEnd(summary);
+                        }
+                        else
+                        {
+                            log.Info("No Entra backup jobs detected - skipping Entra jobs table", false);
                         }
                     }
                     catch (Exception e)
