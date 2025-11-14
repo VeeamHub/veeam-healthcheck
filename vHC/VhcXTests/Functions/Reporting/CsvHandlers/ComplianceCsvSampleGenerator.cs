@@ -169,12 +169,26 @@ namespace VhcXTests.Functions.Reporting.CsvHandlers
         /// </summary>
         public static void SaveSampleToFile(string directoryPath, string fileName, string content)
         {
-            if (!Directory.Exists(directoryPath))
+            // Sanitize inputs to prevent path traversal attacks
+            string safeDirectory = Path.GetFullPath(directoryPath);
+            string safeFileName = Path.GetFileName(fileName);
+            
+            // Create directory if it doesn't exist
+            if (!Directory.Exists(safeDirectory))
             {
-                Directory.CreateDirectory(directoryPath);
+                Directory.CreateDirectory(safeDirectory);
             }
 
-            var filePath = Path.Combine(directoryPath, fileName);
+            var filePath = Path.Combine(safeDirectory, safeFileName);
+            
+            // Additional safety check: ensure the final path is within the intended directory
+            string fullPath = Path.GetFullPath(filePath);
+            if (!fullPath.StartsWith(safeDirectory + Path.DirectorySeparatorChar, System.StringComparison.OrdinalIgnoreCase) &&
+                !fullPath.Equals(safeDirectory, System.StringComparison.OrdinalIgnoreCase))
+            {
+                throw new System.UnauthorizedAccessException("Path traversal attempt detected");
+            }
+            
             File.WriteAllText(filePath, content);
         }
 
