@@ -117,25 +117,32 @@ namespace VeeamHealthCheck.Functions.Reporting.Html
                     try
                     {
                         var records = config.BnrCsvParser();//.ToList();
-                        if(records != null && records.Count() < 1)
+                        if(records == null)
                         {
-                            log.Warning("No records found in BNR CSV parser. Skipping version and host name setting.");
+                            log.Warning("BNR CSV parser returned null. Skipping version and host name setting.");
                         }
-                        else if (records != null)
+                        else
                         {
                             var r2 = records.ToList();
-                            _backupServer.Version = r2[0].Version;
-                            if (string.IsNullOrEmpty(_backupServer.DbHostName))
+                            if (r2.Count < 1)
                             {
-                                _backupServer.DbHostName = r2[0].SqlServer;
-
+                                log.Warning("No records found in BNR CSV parser. Skipping version and host name setting.");
                             }
-                            _backupServer.FixIds = CheckFixes(r2[0].Fixes);
-                            _backupServer.HasFixes = _hasFixes;
+                            else
+                            {
+                                _backupServer.Version = r2[0].Version;
+                                if (string.IsNullOrEmpty(_backupServer.DbHostName))
+                                {
+                                    _backupServer.DbHostName = r2[0].SqlServer;
+
+                                }
+                                _backupServer.FixIds = CheckFixes(r2[0].Fixes);
+                                _backupServer.HasFixes = _hasFixes;
 
 
-                            if (_backupServer.DbType == CGlobals.PgTypeName)
-                                _backupServer.DbHostName = r2[0].PgHost;
+                                if (_backupServer.DbType == CGlobals.PgTypeName)
+                                    _backupServer.DbHostName = r2[0].PgHost;
+                            }
                         }
 
 
@@ -150,7 +157,15 @@ namespace VeeamHealthCheck.Functions.Reporting.Html
                 try
                 {
                     _backupServer.Name = bs.Name;
-                    if (!bs.Name.Contains(_backupServer.DbHostName, StringComparison.OrdinalIgnoreCase)
+                    if (string.IsNullOrEmpty(_backupServer.DbHostName))
+                    {
+                        // DbHostName is null or empty, assume local
+                        _backupServer.IsLocal = true;
+                        _backupServer.DbHostName = "LocalHost";
+                        _backupServer.DbCores = 0;
+                        _backupServer.DbRAM = 0;
+                    }
+                    else if (!bs.Name.Contains(_backupServer.DbHostName, StringComparison.OrdinalIgnoreCase)
                         && _backupServer.DbHostName != "localhost" && _backupServer.DbHostName != "LOCALHOST")
                     {
                         _backupServer.IsLocal = false;

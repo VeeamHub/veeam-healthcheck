@@ -27,8 +27,15 @@ function Write-LogFile {
 
 try {
 	Disconnect-VBRServer -ErrorAction SilentlyContinue
-	Connect-VBRServer -Server $VBRServer -User $User -Password $Password
-	Write-LogFile "Connected to VBR Server: $VBRServer"
+	if ([string]::IsNullOrEmpty($User) -or [string]::IsNullOrEmpty($Password)) {
+		# Connect without credentials (local/Windows authentication)
+		Connect-VBRServer -Server $VBRServer
+		Write-LogFile "Connected to VBR Server: $VBRServer (Windows Authentication)"
+	} else {
+		# Connect with provided credentials (remote)
+		Connect-VBRServer -Server $VBRServer -User $User -Password $Password
+		Write-LogFile "Connected to VBR Server: $VBRServer (Credential Authentication)"
+	}
 } catch {
 	Write-LogFile "Failed to connect to VBR Server: $VBRServer. Error: $($_.Exception.Message)" "Errors" "ERROR"
 	exit

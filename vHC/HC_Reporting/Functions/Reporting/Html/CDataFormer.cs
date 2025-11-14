@@ -519,6 +519,14 @@ namespace VeeamHealthCheck.Functions.Reporting.Html
             log.Info(logStart + "converting extent info to xml");
             List<string[]> list = new List<string[]>();
             List<CRepoTypeInfos> csv = CGlobals.DtParser.ExtentInfo;
+            
+            if (csv == null || csv.Count == 0)
+            {
+                log.Warning(logStart + "ExtentInfo is null or empty. No SOBR extent data available.");
+                return new List<CRepository>();
+            }
+            
+            log.Info(logStart + $"Found {csv.Count} extent records to process");
             csv = csv.OrderBy(x => x.RepoName).ToList();
             csv = csv.OrderBy(y => y.SobrName).ToList();
             List<CRepository> repoList = new();

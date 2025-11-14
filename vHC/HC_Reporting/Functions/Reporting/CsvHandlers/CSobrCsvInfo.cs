@@ -14,15 +14,15 @@ namespace VeeamHealthCheck.Functions.Reporting.CsvHandlers
         [Index(1)]
         public string Extents { get; set; }
         [Index(2)]
-        public bool UsePerVMBackupFiles { get; set; }
+        public string UsePerVMBackupFiles { get; set; }
         [Index(3)]
-        public bool PerformFullWhenExtentOffline { get; set; }
+        public string PerformFullWhenExtentOffline { get; set; }
         [Index(4)]
-        public bool EnableCapacityTier { get; set; }
+        public string EnableCapacityTier { get; set; }
         [Index(5)]
         public string OperationalRestorePeriod { get; set; }
         [Index(6)]
-        public bool OverridePolicyEnabled { get; set; }
+        public string OverridePolicyEnabled { get; set; }
         [Index(7)]
         public string OverrideSpaceThreshold { get; set; }
         [Index(8)]
@@ -30,29 +30,29 @@ namespace VeeamHealthCheck.Functions.Reporting.CsvHandlers
         [Index(9)]
         public string CapacityExtent { get; set; }
         [Index(10)]
-        public bool EncryptionEnabled { get; set; }
+        public string EncryptionEnabled { get; set; }
         [Index(11)]
         public string EncryptionKey { get; set; }
         [Index(12)]
-        public bool CapacityTierCopyPolicyEnabled { get; set; }
+        public string CapacityTierCopyPolicyEnabled { get; set; }
         [Index(13)]
-        public bool CapacityTierMovePolicyEnabled { get; set; }
+        public string CapacityTierMovePolicyEnabled { get; set; }
         [Index(14)]
-        public bool ArchiveTierEnabled { get; set; }
+        public string ArchiveTierEnabled { get; set; }
         [Index(15)]
         public string ArchiveExtent { get; set; }
         [Index(16)]
         public string ArchivePeriod { get; set; }
         [Index(17)]
-        public bool CostOptimizedArchiveEnabled { get; set; }
+        public string CostOptimizedArchiveEnabled { get; set; }
         [Index(18)]
-        public bool ArchiveFullBackupModeEnabled { get; set; }
+        public string ArchiveFullBackupModeEnabled { get; set; }
         [Index(19)]
-        public bool PluginBackupsOffloadEnabled { get; set; }
+        public string PluginBackupsOffloadEnabled { get; set; }
         [Index(20)]
-        public bool CopyAllPluginBackupsEnabled { get; set; }
+        public string CopyAllPluginBackupsEnabled { get; set; }
         [Index(21)]
-        public bool CopyAllMachineBackupsEnabled { get; set; }
+        public string CopyAllMachineBackupsEnabled { get; set; }
         [Index(22)]
         public string Id { get; set; }
         [Index(23)]

@@ -154,7 +154,13 @@ try {
     Write-LogFile("Connected to VBR Server: $VBRServer")
 }
 catch {
-    Write-LogFile("Failed to connect to VBR Server: $VBRServer. Error: $($_.Exception.Message)", "Errors", "ERROR")
+    $errMsg = ""
+    try {
+        $errMsg = if ($_.Exception.Message) { $_.Exception.Message.ToString() } else { "No error message" }
+    } catch {
+        $errMsg = "Unable to get error details"
+    }
+    Write-LogFile("Failed to connect to VBR Server: " + $VBRServer + ". Error: " + $errMsg, "Errors", "ERROR")
     exit 1
 }
 
@@ -811,13 +817,22 @@ if ($VBRVersion -ge 12) {
                     Start-VBRSecurityComplianceAnalyzer -ErrorAction Stop -WarningAction SilentlyContinue -InformationAction SilentlyContinue
                     Write-LogFile("Start-VBRSecurityComplianceAnalyzer completed successfully")
                 } catch {
-                    Write-LogFile("Start-VBRSecurityComplianceAnalyzer failed: $($_.Exception.Message)", "Errors", "ERROR")
-                    Write-LogFile("Exception Type: $($_.Exception.GetType().FullName)", "Errors", "ERROR")
+                    $errMsg = ""
+                    $errType = ""
+                    try {
+                        $errMsg = if ($_.Exception.Message) { $_.Exception.Message.ToString() } else { "No error message" }
+                        $errType = if ($_.Exception) { $_.Exception.GetType().FullName } else { "Unknown" }
+                    } catch {
+                        $errMsg = "Unable to get error details"
+                        $errType = "Unknown"
+                    }
+                    Write-LogFile("Start-VBRSecurityComplianceAnalyzer failed: " + $errMsg, "Errors", "ERROR")
+                    Write-LogFile("Exception Type: " + $errType, "Errors", "ERROR")
                     throw
                 }
                 
-                Write-LogFile("Waiting 15 seconds for scan to complete...")
-                Start-Sleep -Seconds 15
+                Write-LogFile("Waiting 45 seconds for scan to complete...")
+                Start-Sleep -Seconds 45
                 
                 # Capture scanner results
                 Write-LogFile("Attempting to retrieve scan results...")
@@ -831,9 +846,15 @@ if ($VBRVersion -ge 12) {
                         Write-LogFile("Using database method for VBR v12")
                         $SecurityCompliances = [Veeam.Backup.DBManager.CDBManager]::Instance.BestPractices.GetAll()
                     }
-                    Write-LogFile("Retrieved $($SecurityCompliances.Count) compliance items")
+                    Write-LogFile("Retrieved " + $SecurityCompliances.Count + " compliance items")
                 } catch {
-                    Write-LogFile("Failed to retrieve compliance data: $($_.Exception.Message)", "Errors", "ERROR")
+                    $errMsg = ""
+                    try {
+                        $errMsg = if ($_.Exception.Message) { $_.Exception.Message.ToString() } else { "No error message" }
+                    } catch {
+                        $errMsg = "Unable to get error details"
+                    }
+                    Write-LogFile("Failed to retrieve compliance data: " + $errMsg, "Errors", "ERROR")
                     throw
                 }
                 
@@ -881,6 +902,7 @@ if ($VBRVersion -ge 12) {
                     'PasswordsComplexityRules'                = 'Backup encryption password length and complexity recommendations should be followed'
                     'EncryptionPasswordsComplexityRules'      = 'Backup encryption password length and complexity recommendations should be followed'
                     'CredentialsPasswordsComplexityRules'     = 'Credentials password length and complexity recommendations should be followed'
+                    'CredentialsGuardConfigured'              = 'Credential Guard is configured'
                     'LinuxAuditBinariesOwnerIsRoot'           = 'Linux audit binaries owner is root'
                     'LinuxAuditdConfigured'                   = 'Linux auditd is configured'
                     'LinuxDisableProblematicServices'         = 'Linux problematic services are disabled'
@@ -900,29 +922,48 @@ if ($VBRVersion -ge 12) {
                     'UnableToCheck' = "Unable to detect"
                     'Suppressed'    = "Suppressed"
                 }
-                $OutObj = @()
-                Write-LogFile("Processing $($SecurityCompliances.Count) compliance rules...")
-                Write-LogFile("RuleTypes hashtable has $($RuleTypes.Count) entries")
-                Write-LogFile("StatusObj hashtable has $($StatusObj.Count) entries")
+                $OutObj = New-Object System.Collections.ArrayList
+                Write-LogFile("Processing " + $SecurityCompliances.Count + " compliance rules...")
+                Write-LogFile("RuleTypes hashtable has " + $RuleTypes.Count + " entries")
+                Write-LogFile("StatusObj hashtable has " + $StatusObj.Count + " entries")
                 
                 $processedCount = 0
                 $skippedCount = 0
+                $errorCount = 0
                 
                 foreach ($SecurityCompliance in $SecurityCompliances) {
                     try {
-                        $complianceType = $SecurityCompliance.Type.ToString()
-                        $complianceStatus = $SecurityCompliance.Status.ToString()
+                        $complianceType = $null
+                        $complianceStatus = $null
+                        
+                        # Safely get Type property
+                        if ($SecurityCompliance.Type) {
+                            $complianceType = $SecurityCompliance.Type.ToString()
+                        } else {
+                            Write-LogFile("Warning: Compliance item has null Type - skipping", "Main", "WARNING")
+                            $skippedCount++
+                            continue
+                        }
+                        
+                        # Safely get Status property
+                        if ($SecurityCompliance.Status) {
+                            $complianceStatus = $SecurityCompliance.Status.ToString()
+                        } else {
+                            Write-LogFile("Warning: Compliance item '" + $complianceType + "' has null Status - skipping", "Main", "WARNING")
+                            $skippedCount++
+                            continue
+                        }
                         
                         # Check if rule type exists in mapping
                         if (-not $RuleTypes.ContainsKey($complianceType)) {
-                            Write-LogFile("Warning: Unknown compliance type '$complianceType' - skipping", "Main", "WARNING")
+                            Write-LogFile("Warning: Unknown compliance type '" + $complianceType + "' - skipping", "Main", "WARNING")
                             $skippedCount++
                             continue
                         }
                         
                         # Check if status exists in mapping
                         if (-not $StatusObj.ContainsKey($complianceStatus)) {
-                            Write-LogFile("Warning: Unknown compliance status '$complianceStatus' for type '$complianceType' - skipping", "Main", "WARNING")
+                            Write-LogFile("Warning: Unknown compliance status '" + $complianceStatus + "' for type '" + $complianceType + "' - skipping", "Main", "WARNING")
                             $skippedCount++
                             continue
                         }
@@ -931,36 +972,113 @@ if ($VBRVersion -ge 12) {
                             'Best Practice' = $RuleTypes[$complianceType]
                             'Status'        = $StatusObj[$complianceStatus]
                         }
-                        $OutObj += [pscustomobject]$inobj
+                        [void]$OutObj.Add([pscustomobject]$inobj)
                         $processedCount++
                     }
                     catch {
-                        Write-LogFile("Error processing compliance rule: $($_.Exception.Message)", "Errors", "ERROR")
-                        Write-LogFile("Rule Type: $complianceType, Status: $complianceStatus", "Errors", "ERROR")
+                        $errorCount++
+                        $errMsg = ""
+                        $errType = ""
+                        try {
+                            if ($_.Exception.Message) {
+                                $errMsg = $_.Exception.Message.ToString()
+                            } else {
+                                $errMsg = "No error message available"
+                            }
+                            if ($_.Exception) {
+                                $errType = $_.Exception.GetType().FullName
+                            } else {
+                                $errType = "Unknown exception type"
+                            }
+                        } catch {
+                            $errMsg = "Unable to retrieve error message"
+                            $errType = "Unable to retrieve exception type"
+                        }
+                        Write-LogFile("Error processing compliance rule (" + $errorCount + "): " + $errMsg, "Errors", "ERROR")
+                        Write-LogFile("Exception Type: " + $errType, "Errors", "ERROR")
+                        if ($complianceType) {
+                            Write-LogFile("Rule Type: " + $complianceType, "Errors", "ERROR")
+                        }
+                        if ($complianceStatus) {
+                            Write-LogFile("Rule Status: " + $complianceStatus, "Errors", "ERROR")
+                        }
                     }
                 }
                 
                 Write-LogFile("Foreach loop completed")
-                Write-LogFile("Processed $processedCount compliance rules, skipped $skippedCount")
-                Write-LogFile("OutObj count: $($OutObj.Count)")
+                Write-LogFile("Processed " + $processedCount + " compliance rules, skipped " + $skippedCount + ", errors " + $errorCount)
+                Write-LogFile("OutObj count: " + $OutObj.Count)
                 
                 #dump to csv file
                 if ($OutObj.Count -gt 0) {
-                    Write-LogFile("Exporting $($OutObj.Count) compliance items to CSV...")
-                    $OutObj | Export-VhcCsv -FileName '_SecurityCompliance.csv'
-                    Write-LogFile("Security Compliance CSV export completed successfully")
+                    try {
+                        Write-LogFile("Exporting " + $OutObj.Count + " compliance items to CSV...")
+                        $OutObj | Export-VhcCsv -FileName '_SecurityCompliance.csv'
+                        Write-LogFile("Security Compliance CSV export completed successfully")
+                    }
+                    catch {
+                        $errMsg = ""
+                        $errType = ""
+                        $stackTrace = ""
+                        try {
+                            $errMsg = if ($_.Exception.Message) { $_.Exception.Message.ToString() } else { "No error message" }
+                            $errType = if ($_.Exception) { $_.Exception.GetType().FullName } else { "Unknown" }
+                            $stackTrace = if ($_.ScriptStackTrace) { $_.ScriptStackTrace.ToString() } else { "No stack trace" }
+                        } catch {
+                            $errMsg = "Unable to get error details"
+                            $errType = "Unknown"
+                            $stackTrace = "Unable to get stack trace"
+                        }
+                        Write-LogFile("Failed to export Security Compliance CSV: " + $errMsg, "Errors", "ERROR")
+                        Write-LogFile("Exception Type: " + $errType, "Errors", "ERROR")
+                        Write-LogFile("Stack Trace: " + $stackTrace, "Errors", "ERROR")
+                    }
                 } else {
                     Write-LogFile("No compliance data to export - OutObj is empty", "Main", "WARNING")
                 }
             }
             Catch {
-                Write-LogFile("Security & Compliance summary command failed: $($_.Exception.Message)", "Errors", "ERROR")
-                Write-LogFile("Stack Trace: $($_.ScriptStackTrace)", "Errors", "ERROR")
+                $errMsg = ""
+                try {
+                    if ($_.Exception.Message) { 
+                        $errMsg = $_.Exception.Message.ToString() 
+                    } else { 
+                        $errMsg = $_.ToString() 
+                    }
+                } catch {
+                    $errMsg = "Unable to get error message"
+                }
+                $errType = if ($_.Exception) { $_.Exception.GetType().FullName } else { "Unknown" }
+                $stackTrace = ""
+                try {
+                    $stackTrace = if ($_.ScriptStackTrace) { $_.ScriptStackTrace.ToString() } else { "No stack trace available" }
+                } catch {
+                    $stackTrace = "Unable to get stack trace"
+                }
+                Write-LogFile("Security & Compliance summary command failed: " + $errMsg, "Errors", "ERROR")
+                Write-LogFile("Exception Type: " + $errType, "Errors", "ERROR")
+                Write-LogFile("Stack Trace: " + $stackTrace, "Errors", "ERROR")
             }
         }
         catch {
-            Write-LogFile("Security & Compliance summary section failed: $($_.Exception.Message)", "Errors", "ERROR")
-            Write-LogFile("Stack Trace: $($_.ScriptStackTrace)", "Errors", "ERROR")
+            $errMsg = ""
+            try {
+                if ($_.Exception.Message) { 
+                    $errMsg = $_.Exception.Message.ToString() 
+                } else { 
+                    $errMsg = $_.ToString() 
+                }
+            } catch {
+                $errMsg = "Unable to get error message"
+            }
+            $stackTrace = ""
+            try {
+                $stackTrace = if ($_.ScriptStackTrace) { $_.ScriptStackTrace.ToString() } else { "No stack trace available" }
+            } catch {
+                $stackTrace = "Unable to get stack trace"
+            }
+            Write-LogFile("Security & Compliance summary section failed: " + $errMsg, "Errors", "ERROR")
+            Write-LogFile("Stack Trace: " + $stackTrace, "Errors", "ERROR")
         }
     }
     else {

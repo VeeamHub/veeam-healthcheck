@@ -1106,7 +1106,14 @@ namespace VeeamHealthCheck.Html.VBR
 
             try
             {
+                log.Info("Attempting to load SOBR data...");
                 List<CSobrTypeInfos> list = _df.SobrInfoToXml(scrub);
+                
+                if (list == null || list.Count == 0)
+                {
+                    log.Warning("No SOBR data found. The SOBRs CSV file may be missing or empty.");
+                    log.Info("This could indicate: 1) No SOBRs configured, 2) Collection script failed, or 3) CSV file not found");
+                }
 
                 foreach (var d in list)
                 {
@@ -1193,8 +1200,14 @@ _form.TableHeader(VbrLocalizationHelper.SbrExt15, VbrLocalizationHelper.SbrExt15
             s += _form.TableBodyStart();
             try
             {
-
+                log.Info("Attempting to load SOBR Extent data...");
                 List<CRepository> list = _df.ExtentXmlFromCsv(scrub);
+                
+                if (list == null || list.Count == 0)
+                {
+                    log.Warning("No SOBR Extent data found. The SOBRExtents CSV file may be missing or empty.");
+                    log.Info("This could indicate: 1) No SOBRs configured, 2) Collection script failed, or 3) CSV file not found");
+                }
 
                 foreach (var d in list)
                 {

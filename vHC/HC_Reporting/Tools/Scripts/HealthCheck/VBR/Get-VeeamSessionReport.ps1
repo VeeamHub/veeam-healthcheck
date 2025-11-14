@@ -90,10 +90,19 @@ if (!(Get-PSSnapin -Name VeeamPSSnapIn -ErrorAction SilentlyContinue)) {
 
 Disconnect-VBRServer
 try {
-  Connect-VBRServer -Server $VBRServer -User $User -Password $Password
+  if ([string]::IsNullOrEmpty($User) -or [string]::IsNullOrEmpty($Password)) {
+    # Connect without credentials (local/Windows authentication)
+    Write-LogFile("Connecting to VBR Server without credentials (Windows auth): " + $VBRServer, "Main", "INFO")
+    Connect-VBRServer
+  } else {
+    # Connect with provided credentials (remote)
+    Write-LogFile("Connecting to VBR Server with credentials: " + $VBRServer, "Main", "INFO")
+    Connect-VBRServer -Server $VBRServer -User $User -Password $Password
+  }
+  Write-LogFile("Successfully connected to VBR Server: " + $VBRServer, "Main", "INFO")
 }
 catch {
-  Write-LogFile("Failed to connect to VBR Server: " + $VBRServer, "Errors", "ERROR")
+  Write-LogFile("Failed to connect to VBR Server: " + $VBRServer + ". Error: " + $_.Exception.Message, "Errors", "ERROR")
   exit
 }
 
@@ -119,7 +128,6 @@ $SelectTaskSessions = $SelectTaskSessions #| Select-Object -First 500
 [System.Collections.ArrayList]$AllTasksOutput = @()
 
 foreach ($TaskSession in $SelectTaskSessions) {
-.WorkDetails.WorkDuration.ToString()
   $LogRegex = [regex]'\bUsing \b.+\s(\[[^\]]*\])'
   $BottleneckRegex = [regex]'^Busy: (\S+ \d+% > \S+ \d+% > \S+ \d+% > \S+ \d+%)'
   $PrimaryBottleneckRegex = [regex]'^Primary bottleneck: (\S+)'
