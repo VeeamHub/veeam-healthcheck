@@ -30,7 +30,25 @@ namespace VeeamHealthCheck
             SetImportRelease();
 
 
-            this.Title = _functions.ModeCheck();
+            string modeCheckResult = _functions.ModeCheck();
+            
+            if (modeCheckResult == "fail")
+            {
+                string errorMessage = "No Veeam Software detected on this machine.\n\n" +
+                                     "This tool requires Veeam Backup & Replication (VBR) or Veeam Backup for Microsoft 365 (VB365) to be installed.\n\n" +
+                                     "To connect to a remote Veeam server:\n" +
+                                     "1. Close this window\n" +
+                                     "2. Run from command line with: VeeamHealthCheck.exe /remote /host=your-vbr-server\n\n" +
+                                     "For more information, see the documentation.";
+                
+                MessageBox.Show(errorMessage, "Veeam Software Not Detected", MessageBoxButton.OK, MessageBoxImage.Error);
+                
+                // Close the application
+                Application.Current.Shutdown();
+                return;
+            }
+            
+            this.Title = modeCheckResult;
             if(CGlobals.IsVb365 && CGlobals.IsVbr)
             {
                 pdfCheckBox.IsEnabled = false;

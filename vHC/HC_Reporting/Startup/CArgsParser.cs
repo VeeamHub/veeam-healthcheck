@@ -45,7 +45,7 @@ namespace VeeamHealthCheck.Startup
             else if (_args != null && _args.Length > 0)
                 return ParseAllArgs(_args);
             else
-                return LaunchUi(Handle(), true);
+                return LaunchUi(Handle(), false);
 
 
 
@@ -65,8 +65,8 @@ namespace VeeamHealthCheck.Startup
             CGlobals.Logger.Info("Executing GUI", false);
             CGlobals.RunFullReport = true;
             CGlobals.GUIEXEC = true;
-            if (hide)
-                ShowWindow(handle, SW_HIDE);
+            // if (hide)
+            //     ShowWindow(handle, SW_HIDE);
             var app = new System.Windows.Application();
             return app.Run(new VhcGui());
         }

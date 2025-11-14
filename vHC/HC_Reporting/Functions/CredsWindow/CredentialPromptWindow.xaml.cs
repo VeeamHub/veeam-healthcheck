@@ -10,7 +10,8 @@ namespace VeeamHealthCheck.Functions.CredsWindow
         public CredentialPromptWindow(string host)
         {
             InitializeComponent();
-            Title = $"Enter credentials for {host}";
+            Title = $"Authentication Required - {host}";
+            ServerText.Text = $"Please enter credentials to connect to {host}";
             UsernameBox.Focus();
         }
 
