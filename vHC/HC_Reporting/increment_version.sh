@@ -1,6 +1,8 @@
 #!/bin/bash
 
-CSPROJ_FILE="/Users/adam.congdon/code/veeam-healthcheck/vHC/HC_Reporting/VeeamHealthCheck.csproj"
+# Get the directory of the script
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+CSPROJ_FILE="$SCRIPT_DIR/VeeamHealthCheck.csproj"
 
 # Get current AssemblyVersion and FileVersion
 CURRENT_ASSEMBLY_VERSION=$(sed -n 's/.*<AssemblyVersion>\(.*\)<\/AssemblyVersion>.*/\1/p' "$CSPROJ_FILE")
