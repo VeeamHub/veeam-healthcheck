@@ -16,6 +16,28 @@
           "isDefault": true
         },
         "problemMatcher": ["$msCompile"]
+      },
+      {
+        "label": "test",
+        "type": "shell",
+        "command": "dotnet",
+        "args": [
+          "test",
+          "${workspaceFolder}\\vHC\\HC.sln",
+          "--verbosity",
+          "normal"
+        ],
+        "group": {
+          "kind": "test",
+          "isDefault": true
+        },
+        "problemMatcher": ["$msCompile"],
+        "dependsOn": ["build"]
+      },
+      {
+        "label": "build-and-test",
+        "dependsOn": ["build", "test"],
+        "problemMatcher": []
       }
     ]
   }
