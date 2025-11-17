@@ -1,0 +1,19 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Debug VeeamHealthCheck - Import Mode",
+      "type": "coreclr",
+      "request": "launch",
+      "preLaunchTask": "build",
+      "program": "${workspaceFolder}/vHC/HC_Reporting/bin/Debug/net8.0-windows7.0/win-x64/VeeamHealthCheck.exe",
+      "args": [
+        "/import"
+      ],
+      "cwd": "${workspaceFolder}/vHC/HC_Reporting",
+      "console": "integratedTerminal",
+      "stopAtEntry": false,
+      "justMyCode": false
+    }
+  ]
+}

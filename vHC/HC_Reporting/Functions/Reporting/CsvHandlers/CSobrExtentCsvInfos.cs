@@ -35,11 +35,11 @@ namespace VeeamHealthCheck.Functions.Reporting.CsvHandlers
         [Index(12)]
         public string Status { get; set; }
         [Index(13)]
-        public bool IsUnavailable { get; set; }
+        public string IsUnavailable { get; set; }
         [Index(14)]
         public string Group { get; set; }
         [Index(15)]
-        public bool UseNfsOnMountHost { get; set; }
+        public string UseNfsOnMountHost { get; set; }
         [Index(16)]
         public string VersionOfCreation { get; set; }
         [Index(17)]
@@ -50,20 +50,20 @@ namespace VeeamHealthCheck.Functions.Reporting.CsvHandlers
 
         public string TypeDisplay { get; set; }
         [Index(20)]
-        public bool IsRotatedDriveRepository { get; set; }
+        public string IsRotatedDriveRepository { get; set; }
         [Index(21)]
         public string EndPointCryptoKeyId { get; set; }
         [Index(22)]
-        public bool HasBackupChainLengthLimitation { get; set; }
+        public string HasBackupChainLengthLimitation { get; set; }
         [Index(23)]
 
-        public bool IsSanSnapshotOnly { get; set; }
+        public string IsSanSnapshotOnly { get; set; }
         [Index(24)]
-        public bool IsDedupStorage { get; set; }
+        public string IsDedupStorage { get; set; }
         [Index(25)]
-        public bool SplitStoragesPerVm { get; set; }
+        public string SplitStoragesPerVm { get; set; }
         [Index(26)]
-        public bool IsImmutabilitySupported { get; set; }
+        public string IsImmutabilitySupported { get; set; }
         [Index(27)]
 
         public string SOBR_Name { get; set; }

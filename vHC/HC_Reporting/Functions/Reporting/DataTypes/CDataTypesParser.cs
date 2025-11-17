@@ -71,7 +71,8 @@ namespace VeeamHealthCheck.Functions.Reporting.DataTypes
             }
             catch (Exception ex)
             {
-
+                log.Error($"[CDataTypesParser] Failed to initialize data parser: {ex.Message}");
+                log.Debug($"[CDataTypesParser] Stack trace: {ex.StackTrace}");
             }
         }
 
@@ -82,13 +83,34 @@ namespace VeeamHealthCheck.Functions.Reporting.DataTypes
         private List<CSobrTypeInfos> SobrInfos()
         {
             var sobrCsv = _csvParser.SobrCsvParser();//.ToList();
-            var capTierCsv = _csvParser.CapTierCsvParser().ToList();// ToList();
+            List<CCapTierCsv> capTierCsv;
+            try
+            {
+                capTierCsv = _csvParser.CapTierCsvParser()?.ToList() ?? new List<CCapTierCsv>();
+            }
+            catch (Exception ex)
+            {
+                log.Error($"[CDataTypesParser] Failed to parse CapTier CSV: {ex.Message}");
+                log.Debug($"[CDataTypesParser] Stack trace: {ex.StackTrace}");
+                capTierCsv = new List<CCapTierCsv>();
+            }
 
             List<CSobrTypeInfos> eInfoList = new List<CSobrTypeInfos>();
 
             if (sobrCsv != null)
             {
-                var s2 = sobrCsv.ToList();
+                List<CSobrCsvInfo> s2;
+                try
+                {
+                    s2 = sobrCsv.ToList();
+                    log.Info($"[CDataTypesParser] Processing {s2.Count} SOBR records from CSV");
+                }
+                catch (Exception ex)
+                {
+                    log.Error($"[CDataTypesParser] Failed to parse SOBR CSV: {ex.Message}");
+                    log.Debug($"[CDataTypesParser] Stack trace: {ex.StackTrace}");
+                    return eInfoList;
+                }
                 foreach (CSobrCsvInfo s in s2)
                 {
                     CSobrTypeInfos eInfo = new();
@@ -100,10 +122,12 @@ namespace VeeamHealthCheck.Functions.Reporting.DataTypes
                         {
                             if (cap.ParentId == s.Id)
                             {
-                                eInfo.ImmuteEnabled = cap.Immute;
+                                bool.TryParse(cap.Immute, out bool immute);
+                                eInfo.ImmuteEnabled = immute;
                                 eInfo.ImmutePeriod = cap.ImmutePeriod;
-                                eInfo.SizeLimitEnabled = cap.SizeLimitEnabled;
-                                if (cap.SizeLimitEnabled == true)
+                                bool.TryParse(cap.SizeLimitEnabled, out bool sizeLimitEnabled);
+                                eInfo.SizeLimitEnabled = sizeLimitEnabled;
+                                if (eInfo.SizeLimitEnabled == true)
                                     eInfo.SizeLimit = cap.SizeLimit;
 
                                 eInfo.CapTierType = cap.Type;
@@ -113,35 +137,48 @@ namespace VeeamHealthCheck.Functions.Reporting.DataTypes
                     }
 
                     eInfo.ArchiveExtent = s.ArchiveExtent;
-                    eInfo.ArchiveFullBackupModeEnabled = s.ArchiveFullBackupModeEnabled;
+                    bool.TryParse(s.ArchiveFullBackupModeEnabled, out bool archiveFullBackup);
+                    eInfo.ArchiveFullBackupModeEnabled = archiveFullBackup;
                     eInfo.ArchivePeriod = s.ArchivePeriod;
-                    eInfo.ArchiveTierEnabled = s.ArchiveTierEnabled;
+                    bool.TryParse(s.ArchiveTierEnabled, out bool archiveTier);
+                    eInfo.ArchiveTierEnabled = archiveTier;
                     eInfo.CapacityExtent = s.CapacityExtent;
-                    eInfo.CapacityTierCopyPolicyEnabled = s.CapacityTierCopyPolicyEnabled;
-                    eInfo.CapacityTierMovePolicyEnabled = s.CapacityTierMovePolicyEnabled;
-                    eInfo.CopyAllMachineBackupsEnabled = s.CopyAllMachineBackupsEnabled;
-                    eInfo.CopyAllPluginBackupsEnabled = s.CopyAllPluginBackupsEnabled;
-                    eInfo.CostOptimizedArchiveEnabled = s.CostOptimizedArchiveEnabled;
+                    bool.TryParse(s.CapacityTierCopyPolicyEnabled, out bool capTierCopy);
+                    eInfo.CapacityTierCopyPolicyEnabled = capTierCopy;
+                    bool.TryParse(s.CapacityTierMovePolicyEnabled, out bool capTierMove);
+                    eInfo.CapacityTierMovePolicyEnabled = capTierMove;
+                    bool.TryParse(s.CopyAllMachineBackupsEnabled, out bool copyAllMachine);
+                    eInfo.CopyAllMachineBackupsEnabled = copyAllMachine;
+                    bool.TryParse(s.CopyAllPluginBackupsEnabled, out bool copyAllPlugin);
+                    eInfo.CopyAllPluginBackupsEnabled = copyAllPlugin;
+                    bool.TryParse(s.CostOptimizedArchiveEnabled, out bool costOptimized);
+                    eInfo.CostOptimizedArchiveEnabled = costOptimized;
                     eInfo.Description = s.Description;
-                    eInfo.EnableCapacityTier = s.EnableCapacityTier;
+                    bool.TryParse(s.EnableCapacityTier, out bool enableCapTier);
+                    eInfo.EnableCapacityTier = enableCapTier;
                     if (!eInfo.EnableCapacityTier)
                     {
                         eInfo.CapacityTierCopyPolicyEnabled = false;
                         eInfo.CapacityTierMovePolicyEnabled = false;
                     }
-                    eInfo.EncryptionEnabled = s.EncryptionEnabled;
+                    bool.TryParse(s.EncryptionEnabled, out bool encryptionEnabled);
+                    eInfo.EncryptionEnabled = encryptionEnabled;
                     eInfo.EncryptionKey = s.EncryptionKey;
                     eInfo.Extents = s.Extents;
                     eInfo.Id = s.Id;
                     eInfo.Name = s.Name;
                     eInfo.OffloadWindowOptions = s.OffloadWindowOptions;
                     eInfo.OperationalRestorePeriod = ParseToInt(s.OperationalRestorePeriod);
-                    eInfo.OverridePolicyEnabled = s.OverridePolicyEnabled;
+                    bool.TryParse(s.OverridePolicyEnabled, out bool overridePolicy);
+                    eInfo.OverridePolicyEnabled = overridePolicy;
                     eInfo.OverrideSpaceThreshold = ParseToInt(s.OverrideSpaceThreshold);
-                    eInfo.PerformFullWhenExtentOffline = (s.PerformFullWhenExtentOffline);
-                    eInfo.PluginBackupsOffloadEnabled = s.PluginBackupsOffloadEnabled;
+                    bool.TryParse(s.PerformFullWhenExtentOffline, out bool performFull);
+                    eInfo.PerformFullWhenExtentOffline = performFull;
+                    bool.TryParse(s.PluginBackupsOffloadEnabled, out bool pluginOffload);
+                    eInfo.PluginBackupsOffloadEnabled = pluginOffload;
                     eInfo.PolicyType = s.PolicyType;
-                    eInfo.UsePerVMBackupFiles = s.UsePerVMBackupFiles;
+                    bool.TryParse(s.UsePerVMBackupFiles, out bool usePerVM);
+                    eInfo.UsePerVMBackupFiles = usePerVM;
 
                     //int c = eInfo.Extents.Count();
 
@@ -268,9 +305,35 @@ namespace VeeamHealthCheck.Functions.Reporting.DataTypes
         {
             var records = _csvParser.SobrExtParser();
             List<CRepoTypeInfos> eInfoList = new List<CRepoTypeInfos>();
+            
+            if (records == null)
+            {
+                log.Warning("[CDataTypesParser] SobrExtParser returned null. CSV file may be missing or unreadable.");
+                return eInfoList;
+            }
+            
+            List<CSobrExtentCsvInfos> recordsList;
+            try
+            {
+                recordsList = records.ToList();
+                log.Info($"[CDataTypesParser] Processing {recordsList.Count} SOBR extent records from CSV");
+            }
+            catch (Exception ex)
+            {
+                log.Error($"[CDataTypesParser] Failed to parse SOBR extent CSV: {ex.Message}");
+                log.Debug($"[CDataTypesParser] Stack trace: {ex.StackTrace}");
+                return eInfoList;
+            }
+            
+            if (recordsList.Count == 0)
+            {
+                log.Warning("[CDataTypesParser] No SOBR extent records found in CSV file.");
+                return eInfoList;
+            }
+            
             if (records != null)
             {
-                foreach (CSobrExtentCsvInfos s in records)
+                foreach (CSobrExtentCsvInfos s in recordsList)
                 {
                     CRepoTypeInfos eInfo = new CRepoTypeInfos();
 
@@ -278,11 +341,15 @@ namespace VeeamHealthCheck.Functions.Reporting.DataTypes
                     //eInfo.Host = s.HostName;
                     eInfo.RepoName = s.Name;
                     eInfo.Path = s.FriendlyPath;
-                    eInfo.IsUnavailable = (s.IsUnavailable);
+                    bool.TryParse(s.IsUnavailable, out bool isUnavail);
+                    eInfo.IsUnavailable = isUnavail;
                     eInfo.Type = s.TypeDisplay;
-                    eInfo.IsRotatedDriveRepository = (s.IsRotatedDriveRepository);
-                    eInfo.IsDedupStorage = (s.IsDedupStorage);
-                    eInfo.IsImmutabilitySupported = (s.IsImmutabilitySupported);
+                    bool.TryParse(s.IsRotatedDriveRepository, out bool isRotated);
+                    eInfo.IsRotatedDriveRepository = isRotated;
+                    bool.TryParse(s.IsDedupStorage, out bool isDedup);
+                    eInfo.IsDedupStorage = isDedup;
+                    bool.TryParse(s.IsImmutabilitySupported, out bool isImmutable);
+                    eInfo.IsImmutabilitySupported = isImmutable;
                     eInfo.SobrName = s.SOBR_Name;
                     eInfo.MaxTasks = ParseToInt(s.MaxTasks);
                     eInfo.maxArchiveTasks = ParseToInt(s.MaxArchiveTaskCount);
@@ -497,10 +564,17 @@ namespace VeeamHealthCheck.Functions.Reporting.DataTypes
         {
             try
             {
-                var records = _csvParser.SessionCsvParser().ToList();
+                var sessionCsv = _csvParser.SessionCsvParser();
+                if (sessionCsv == null)
+                {
+                    log.Warning("SessionCsvParser returned null - no session data available");
+                    return new List<CJobSessionInfo>();
+                }
+                var records = sessionCsv.ToList();
                 if(CGlobals.DEBUG)
                     log.Debug(String.Format("! Sessions loaded from csv parser: " + records.Count().ToString()), false);
-                var jobRecords = _csvParser.JobCsvParser().ToList();
+                var jobCsv = _csvParser.JobCsvParser();
+                var jobRecords = jobCsv != null ? jobCsv.ToList() : new List<CJobCsvInfos>();
                 List<CJobSessionInfo> eInfoList = new();
                 if (records != null)
                     foreach (CJobSessionCsvInfos s in records)

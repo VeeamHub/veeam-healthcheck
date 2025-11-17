@@ -2,10 +2,10 @@
   "profiles": {
     "VeeamHealthCheck": {
       "commandName": "Project",
-      "commandLineArgs": "/run",
-      "remoteDebugEnabled": true,
+      "commandLineArgs": "/run /remote /host=vbr-v13-primary.home.lab /debug",
+      "remoteDebugEnabled": false,
       "authenticationMode": "Windows",
-      "remoteDebugMachine": "vbr-11-latest:4026"
+      "remoteDebugMachine": "192.168.20.27:4026"
     }
   }
 }

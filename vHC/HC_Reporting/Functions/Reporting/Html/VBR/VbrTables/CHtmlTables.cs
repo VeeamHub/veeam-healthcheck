@@ -337,7 +337,7 @@ namespace VeeamHealthCheck.Html.VBR
                 _form.TableHeader(VbrLocalizationHelper.SSHdr1, VbrLocalizationHelper.SSHdrTT1) +
                 _form.TableHeader(VbrLocalizationHelper.SSHdr2, VbrLocalizationHelper.SSHdrTT2) +
                 _form.TableHeader(VbrLocalizationHelper.SSHdr3, VbrLocalizationHelper.SSHdrTT3) +
-                _form.TableHeader("MFA Enabled", "Is MFA enabled on VBR");
+                _form.TableHeader("MFA Enabled", "Is MFA enabled for console access to VBR");
             s += _form.TableHeaderEnd();
             s += _form.TableBodyStart();
             s += "<tr>";
@@ -715,7 +715,16 @@ namespace VeeamHealthCheck.Html.VBR
                     s += "<h3>NAS Backups</h3>";
                     if (cProtectedWorkloads.nasWorkloads.Count() == 0)
                     {
-                        s += "<p>No NAS Workloads detected</p>";
+                        if(CGlobals.REMOTEEXEC)
+                        {
+                            log.Info("No NAS Workloads detected. This may be due to remote execution mode limitations.", false);
+                            s += "<p>No NAS Workloads detected. This may be due to remote execution mode limitations.</p>";
+                        }
+                        else
+                        {
+                            log.Info("No NAS Workloads detected.", false);
+                            s += "<p>No NAS Workloads detected</p>";
+                        }
                     }
                     else
                     {
@@ -911,6 +920,9 @@ namespace VeeamHealthCheck.Html.VBR
                 Dictionary<string, string> list = _df.RegOptions();
                 if (list.Count == 0)
                 {
+                    if(CGlobals.REMOTEEXEC) // remote exec does not support registry and VBR could be linux based without regsitry
+                        s += "<p>Registry key collection not supported in remote execution mode</p>";
+                    else
                     s += "<p>No modified registry keys found</p>";
                 }
                 else
@@ -1094,7 +1106,14 @@ namespace VeeamHealthCheck.Html.VBR
 
             try
             {
+                log.Info("Attempting to load SOBR data...");
                 List<CSobrTypeInfos> list = _df.SobrInfoToXml(scrub);
+                
+                if (list == null || list.Count == 0)
+                {
+                    log.Warning("No SOBR data found. The SOBRs CSV file may be missing or empty.");
+                    log.Info("This could indicate: 1) No SOBRs configured, 2) Collection script failed, or 3) CSV file not found");
+                }
 
                 foreach (var d in list)
                 {
@@ -1181,8 +1200,14 @@ _form.TableHeader(VbrLocalizationHelper.SbrExt15, VbrLocalizationHelper.SbrExt15
             s += _form.TableBodyStart();
             try
             {
-
+                log.Info("Attempting to load SOBR Extent data...");
                 List<CRepository> list = _df.ExtentXmlFromCsv(scrub);
+                
+                if (list == null || list.Count == 0)
+                {
+                    log.Warning("No SOBR Extent data found. The SOBRExtents CSV file may be missing or empty.");
+                    log.Info("This could indicate: 1) No SOBRs configured, 2) Collection script failed, or 3) CSV file not found");
+                }
 
                 foreach (var d in list)
                 {
@@ -1916,11 +1941,8 @@ _form.TableHeader(VbrLocalizationHelper.SbrExt15, VbrLocalizationHelper.SbrExt15
                         double tSizeGB = 0;
                         double onDiskTotalGB = 0;
 
-                        var useSourceSize = true;
-                        if (jType == "NasBackupCopy" || jType == "Copy")
-                        {
-                            useSourceSize = false;
-                        }
+                        bool useSourceSize = !(jType == "NasBackupCopy" || jType == "Copy");
+                        
                         var realType = CJobTypesParser.GetJobType(jType);
                         string jobTable = _form.SectionStartWithButton("jobTable", realType + " Jobs", "");
                         s += jobTable;
@@ -2005,7 +2027,7 @@ _form.TableHeader(VbrLocalizationHelper.SbrExt15, VbrLocalizationHelper.SbrExt15
                             //row+= _form.TableData(trueSizeGB.ToString() + " GB", "");
                             //row+= _form.TableData(job.RetentionType, "");
                             row += job.RetentionType == "Cycles" ? _form.TableData("Points", "") : _form.TableData(job.RetentionType, "");
-                            row += _form.TableData(job.RestorePoints, "");
+                            row += _form.TableData(job.RetainDaysToKeep, "");
                             //row += _form.TableData(job.StgEncryptionEnabled, "");
                             row += job.StgEncryptionEnabled == "True" ? _form.TableData(_form.True, "") : _form.TableData(_form.False, "");
                             var jobType = CJobTypesParser.GetJobType(job.JobType);
@@ -2147,11 +2169,18 @@ _form.TableHeader(VbrLocalizationHelper.SbrExt15, VbrLocalizationHelper.SbrExt15
                     {
                         CEntraJobsTable entraTable = new();
                         string et = entraTable.Table();
-                        if (et != null)
+                        if (et != null && et.Length > 0)
                         {
+                            //debug 
+                            log.Debug("Entra jobs table length: " + et.Length);
                             string tableButton = _form.SectionStartWithButton("jobTable", "Entra Jobs", "");
                             s += tableButton;
                             s += et;
+                            s += _form.SectionEnd(summary);
+                        }
+                        else
+                        {
+                            log.Info("No Entra backup jobs detected - skipping Entra jobs table", false);
                         }
                     }
                     catch (Exception e)

@@ -349,9 +349,14 @@ namespace VeeamHealthCheck.Functions.Reporting.CsvHandlers
         }
         public IEnumerable<CSobrExtentCsvInfos> SobrExtParser()
         {
+            log.Info($"[CCsvParser] Looking for SOBR Extent CSV file: {_sobrExtReportName}");
             var res = VbrFileReader(_sobrExtReportName);
             if (res != null)
+            {
+                log.Info($"[CCsvParser] SOBR Extent CSV file found and opened successfully");
                 return res.GetRecords<CSobrExtentCsvInfos>();
+            }
+            log.Warning($"[CCsvParser] SOBR Extent CSV file not found: {_sobrExtReportName}");
             return null;
         }
         public IEnumerable<CWaitsCsv> WaitsCsvReader()
@@ -564,9 +569,14 @@ namespace VeeamHealthCheck.Functions.Reporting.CsvHandlers
 
         public IEnumerable<CSobrCsvInfo> SobrCsvParser()
         {
+            log.Info($"[CCsvParser] Looking for SOBR CSV file: {_sobrReportName}");
             var res = VbrFileReader(_sobrReportName);
             if (res != null)
+            {
+                log.Info($"[CCsvParser] SOBR CSV file found and opened successfully");
                 return res.GetRecords<CSobrCsvInfo>();
+            }
+            log.Warning($"[CCsvParser] SOBR CSV file not found: {_sobrReportName}");
             return null;
         }
 
@@ -630,7 +640,7 @@ namespace VeeamHealthCheck.Functions.Reporting.CsvHandlers
         public void Dispose() { }
         private CsvReader VbrFileReader(string file)
         {
-            var fileResult = _vbrReader.VbrCsvReader(file);
+            var fileResult = _vbrReader.FileFinder(file, _outPath);
             if (fileResult != null)
                 return fileResult;
             else return null;

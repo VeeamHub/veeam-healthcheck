@@ -45,7 +45,7 @@ namespace VeeamHealthCheck.Startup
             else if (_args != null && _args.Length > 0)
                 return ParseAllArgs(_args);
             else
-                return LaunchUi(Handle(), true);
+                return LaunchUi(Handle(), false);
 
 
 
@@ -65,8 +65,8 @@ namespace VeeamHealthCheck.Startup
             CGlobals.Logger.Info("Executing GUI", false);
             CGlobals.RunFullReport = true;
             CGlobals.GUIEXEC = true;
-            if (hide)
-                ShowWindow(handle, SW_HIDE);
+            // if (hide)
+            //     ShowWindow(handle, SW_HIDE);
             var app = new System.Windows.Application();
             return app.Run(new VhcGui());
         }
@@ -225,14 +225,23 @@ namespace VeeamHealthCheck.Startup
                         "/host=HOSTNAME", false);
                     Environment.Exit(0);
                 }
-                else if(CGlobals.REMOTEEXEC && !CGlobals.RunSecReport)
-                {
-                    CGlobals.Logger.Warning("Remote execution not available for general Health Check. Please run the tool from a server hosting Veeam Backup & Replication", false);
-                    Environment.Exit(0);
-                }
+                //else if(CGlobals.REMOTEEXEC && !CGlobals.RunSecReport)
+                //{
+                //    CGlobals.Logger.Warning("Remote execution not available for general Health Check. Please run the tool from a server hosting Veeam Backup & Replication", false);
+                //    Environment.Exit(0);
+                //}
 
                 else if (CGlobals.REMOTEHOST != "" && CGlobals.RunSecReport)
+                {
+                    CGlobals.Logger.Debug("Remote execution selected with host: " + CGlobals.REMOTEHOST, false);
                     result = FullRun(targetDir);
+
+                }
+                else if(CGlobals.REMOTEHOST != "")
+                {
+                    CGlobals.Logger.Debug("Remote execution selected with host: " + CGlobals.REMOTEHOST, false);
+                    result = FullRun(targetDir);
+                }
                 else
                 {
                     if (functions.ModeCheck() == "fail")

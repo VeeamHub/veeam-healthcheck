@@ -9,17 +9,27 @@ using System.Reflection;
 
 //using System.Management.Automation;
 using System.Runtime.InteropServices;
+using VeeamHealthCheck.Functions.CredsWindow;
 using VeeamHealthCheck.Shared;
 using VeeamHealthCheck.Shared.Logging;
+using VeeamHealthCheck.Startup;
 
 namespace VeeamHealthCheck.Functions.Collection.PSCollections
 {
+    enum PowerShellVersion
+    {
+        PowerShell5,
+        PowerShell7
+    }
+
     class PSInvoker
     {
         private readonly string _vb365Script = Environment.CurrentDirectory + @"\Tools\Scripts\HealthCheck\VB365\Collect-VB365Data.ps1";
 
         private readonly string _vbrConfigScript = Environment.CurrentDirectory + @"\Tools\Scripts\HealthCheck\VBR\Get-VBRConfig.ps1";
         private readonly string _vbrSessionScript = Environment.CurrentDirectory + @"\Tools\Scripts\HealthCheck\VBR\Get-VeeamSessionReport.ps1";
+        private readonly string _vbrSessionScriptVersion13 = Environment.CurrentDirectory + @"\Tools\Scripts\HealthCheck\VBR\Get-VeeamSessionReportVersion13.ps1";
+
         private readonly string _nasScript = Environment.CurrentDirectory + @"\Tools\Scripts\HealthCheck\VBR\Get-NasInfo.ps1";
 
         private readonly string _exportLogsScript = Environment.CurrentDirectory + @"\Tools\Scripts\HotfixDetection\Collect-VBRLogs.ps1";
@@ -29,9 +39,129 @@ namespace VeeamHealthCheck.Functions.Collection.PSCollections
 
         private readonly CLogger log = CGlobals.Logger;
         private readonly string logStart = "[PsInvoker]\t";
+        private PowerShellVersion? _preferredVersion = null;
+        private string _pwshPath = null;
+        private string _powershellPath = null;
+
+        // Remove duplicate constructor, keep only one with detection logic
         public PSInvoker()
         {
+            DetectPowerShellVersions();
         }
+
+        private void DetectPowerShellVersions()
+        {
+            // Try to find pwsh.exe (PowerShell 7)
+            _pwshPath = FindExecutableInPath("pwsh.exe");
+            // Try to find powershell.exe (PowerShell 5)
+            _powershellPath = FindExecutableInPath("powershell.exe");
+
+            if (!string.IsNullOrEmpty(_pwshPath))
+                _preferredVersion = PowerShellVersion.PowerShell7;
+            else if (!string.IsNullOrEmpty(_powershellPath))
+                _preferredVersion = PowerShellVersion.PowerShell5;
+            else
+                _preferredVersion = null;
+        }
+
+        private string FindExecutableInPath(string exeName)
+        {
+            var paths = Environment.GetEnvironmentVariable("PATH").Split(Path.PathSeparator);
+            foreach (var path in paths)
+            {
+                try
+                {
+                    var exePath = Path.Combine(path.Trim(), exeName);
+                    if (File.Exists(exePath))
+                        return exePath;
+                }
+                catch { }
+            }
+            // Return default path if not found in PATH
+            if (exeName.Equals("pwsh.exe", StringComparison.OrdinalIgnoreCase))
+                return @"C:\Program Files\PowerShell\7\pwsh.exe";
+            return null;
+        }
+
+        private string GetPowerShellExecutable(PowerShellVersion version)
+        {
+            return version == PowerShellVersion.PowerShell7 ? _pwshPath : _powershellPath;
+        }
+
+        private ProcessStartInfo CreatePsStartInfo(string arguments, bool useShellExecute, bool createNoWindow, bool redirectStdErr, PowerShellVersion version)
+        {
+            var exePath = GetPowerShellExecutable(version);
+            if (string.IsNullOrEmpty(exePath))
+                throw new InvalidOperationException($"PowerShell executable for version {version} not found.");
+            return new ProcessStartInfo()
+            {
+                FileName = exePath,
+                Arguments = arguments,
+                UseShellExecute = false, // Must be false to redirect output
+                CreateNoWindow = createNoWindow,
+                RedirectStandardOutput = true,
+                RedirectStandardError = true // Always redirect stderr for logging
+            };
+        }
+
+        // Refactor script invocation to use failover
+        public bool ExecutePsScriptWithFailover(string arguments, bool useShellExecute = false, bool createNoWindow = true, bool redirectStdErr = false)
+        {
+            if (_preferredVersion == null)
+            {
+                log.Error("No PowerShell executable found on system.", false);
+                return false;
+            }
+            // Try PowerShell 7 first, then 5
+            foreach (var version in new[] { PowerShellVersion.PowerShell7, PowerShellVersion.PowerShell5 })
+            {
+                var exePath = GetPowerShellExecutable(version);
+                if (string.IsNullOrEmpty(exePath))
+                {
+                    // add debug log to say which powershell version was not found
+                    log.Debug($"[PS] {version} not found on system, skipping...", false);
+
+                    continue;
+                }
+                try
+                {
+                    var startInfo = CreatePsStartInfo(arguments, useShellExecute, createNoWindow, redirectStdErr, version);
+                    //log.Debug($"[PS] StartInfo: {startInfo.FileName} {startInfo.Arguments}");
+                    var process = new Process { StartInfo = startInfo };
+                    process.Start();
+                    log.Info($"[PS] Script execution started with {version}. PID: {process.Id}", false);
+                    process.WaitForExit();
+
+                    string stdOut = process.StandardOutput.ReadToEnd();
+                    string stdErr = process.StandardError.ReadToEnd();
+                    if (!string.IsNullOrWhiteSpace(stdOut))
+                        log.Debug($"[PS][STDOUT] {stdOut}", false);
+                    if (!string.IsNullOrWhiteSpace(stdErr))
+                        log.Debug($"[PS][STDERR] {stdErr}", false);
+                    log.Debug("Exit Code: " + process.ExitCode);
+
+                    // Optionally check exit code or errors here
+                    if (process.ExitCode == 0)
+                    {
+                        return true;
+                    }
+                    else
+                    {
+                        log.Warning($"[PS] Script failed with {version}. Exit code: {process.ExitCode}", false);
+                        return false;
+                    }
+                }
+                catch (Exception ex)
+                {
+                    log.Error($"[PS] Exception running script with {version}: {ex.Message}", false);
+                }
+                return false;
+            }
+            log.Error("[PS] Script failed with all available PowerShell versions. Exiting program", false);
+            Environment.Exit(1);
+            return false;
+        }
+
         public bool Invoke()
         {
             bool res = true;
@@ -41,7 +171,7 @@ namespace VeeamHealthCheck.Functions.Collection.PSCollections
             res = RunVbrConfigCollect();
             if (!res)
                 return false;
-            RunVbrSessionCollection();
+            //RunVbrSessionCollection();
             return res;
         }
         public void TryUnblockFiles()
@@ -63,75 +193,71 @@ namespace VeeamHealthCheck.Functions.Collection.PSCollections
             {
                 FileName = "powershell.exe",
                 Arguments = argString,
+                RedirectStandardOutput = true,
+                RedirectStandardError = true,
                 UseShellExecute = false,
-                CreateNoWindow = false,  //true for prod,
-                RedirectStandardError = true
+                CreateNoWindow = true
             };
-            res.StartInfo = startInfo;
-            res.Start();
-
-            res.WaitForExit();
-
-            List<string> errorarray = new();
-
-            bool failed = false;
-            string errString = "";
-            while ((errString = res.StandardError.ReadLine()) != null)
+            log.Info($"[TestMfa] Creating ProcessStartInfo for MFA test:");
+            log.Info($"[TestMfa] FileName: {startInfo.FileName}");
+            log.Info($"[TestMfa] Arguments: {startInfo.Arguments}");
+            log.Info($"[TestMfa] RedirectStandardOutput: {startInfo.RedirectStandardOutput}");
+            log.Info($"[TestMfa] RedirectStandardError: {startInfo.RedirectStandardError}");
+            log.Info($"[TestMfa] UseShellExecute: {startInfo.UseShellExecute}");
+            log.Info($"[TestMfa] CreateNoWindow: {startInfo.CreateNoWindow}");
+            log.Info("[TestMfa] Starting PowerShell process for MFA test...");
+            try
             {
-                var errResults = ParseErrors(errString);
-                if (!errResults.Success)
+                res.StartInfo = startInfo;
+                res.Start();
+                log.Info($"[TestMfa] PowerShell process started. PID: {res.Id}");
+
+                res.WaitForExit();
+                log.Info($"[TestMfa] PowerShell process exited with code: {res.ExitCode}");
+
+                string stdOut = res.StandardOutput.ReadToEnd();
+                string stdErr = res.StandardError.ReadToEnd();
+
+                log.Info($"[TestMfa] STDOUT: {stdOut}");
+                log.Info($"[TestMfa] STDERR: {stdErr}");
+
+                List<string> errorarray = new();
+
+                bool mfaFound = true;
+                string errString = "";
+                while ((errString = res.StandardError.ReadLine()) != null)
                 {
-                    log.Error(errString, false);
-                    log.Error(errResults.Message);
-                    failed = true;
-                    return failed;
+                    var errResults = ParseErrors(errString);
+                    if (!errResults.Success)
+                    {
+                        log.Error(errString, false);
+                        log.Error(errResults.Message);
+                        mfaFound = true;
+                        return mfaFound;
 
+                    }
+                    errorarray.Add(errString);
                 }
-                errorarray.Add(errString);
-            }
-            PushPsErrorsToMainLog(errorarray);
+                PushPsErrorsToMainLog(errorarray);
 
-            return failed;
+                return mfaFound;
+            }
+            catch (Exception ex)
+            {
+                log.Error($"[TestMfa] Exception during PowerShell execution: {ex.Message}");
+            }
+            return true;
         }
+
+
+
         public bool TestMfaVB365()
         {
-            var res = new Process();
             if (CGlobals.REMOTEHOST == "")
                 CGlobals.REMOTEHOST = "localhost";
             string argString = $"Connect-VBOServer -Server \"{CGlobals.REMOTEHOST}\"";
-            var startInfo = new ProcessStartInfo()
-            {
-                FileName = "powershell.exe",
-                Arguments = argString,
-                UseShellExecute = false,
-                CreateNoWindow = false,  //true for prod,
-                RedirectStandardError = true
-            };
-            res.StartInfo = startInfo;
-            res.Start();
-
-            res.WaitForExit();
-
-            List<string> errorarray = new();
-
-            bool failed = false;
-            string errString = "";
-            while ((errString = res.StandardError.ReadLine()) != null)
-            {
-                var errResults = ParseErrors(errString);
-                if (!errResults.Success)
-                {
-                    log.Error(errString, false);
-                    log.Error(errResults.Message);
-                    failed = true;
-                    return failed;
-
-                }
-                errorarray.Add(errString);
-            }
-            PushPsErrorsToMainLog(errorarray);
-
-            return failed;
+            CGlobals.Logger.Info("[MFA Check] args:\t" + argString, false);
+            return ExecutePsScriptWithFailover(argString, useShellExecute: false, createNoWindow: false, redirectStdErr: true);
         }
         public bool RunVbrConfigCollect()
         {
@@ -156,22 +282,22 @@ namespace VeeamHealthCheck.Functions.Collection.PSCollections
             List<string> errorarray = new();
 
             bool failed = false;
-            //string errString = "";
-            //while ((errString = res1.StandardError.ReadLine()) != null)
-            //{
-            //    var errResults = ParseErrors(errString);
-            //    if (!errResults.Success)
-            //    {
-            //        log.Error(errString, false);
-            //        log.Error(errResults.Message);
-            //        failed = true;
-            //        //return false;
+            string errString = "";
+            while ((errString = res1.StandardError.ReadLine()) != null)
+            {
+                var errResults = ParseErrors(errString);
+                if (!errResults.Success)
+                {
+                    log.Error(errString, false);
+                    log.Error(errResults.Message);
+                    failed = true;
+                    //return false;
 
-            //    }
-            //    errorarray.Add(errString);
-            //}
-            //if (errorarray.Count > 0)
-            //    PushPsErrorsToMainLog(errorarray);
+                }
+                errorarray.Add(errString);
+            }
+            if (errorarray.Count > 0)
+                PushPsErrorsToMainLog(errorarray);
 
             log.Info(CMessages.PsVbrConfigProcIdDone, false);
             if (failed)
@@ -216,7 +342,14 @@ namespace VeeamHealthCheck.Functions.Collection.PSCollections
         }
         private ProcessStartInfo VbrSessionStartInfo()
         {
-            return ConfigStartInfo(_vbrSessionScript, CGlobals.ReportDays, "");
+            if (CGlobals.VBRMAJORVERSION == 13)
+            {
+                return ConfigStartInfo(_vbrSessionScriptVersion13, CGlobals.ReportDays, "");
+            }
+            else
+            {
+                return ConfigStartInfo(_vbrSessionScript, CGlobals.ReportDays, "");
+            }
         }
 
         private ProcessStartInfo ExportLogsStartInfo(string path, string server)
@@ -256,7 +389,7 @@ namespace VeeamHealthCheck.Functions.Collection.PSCollections
             argString = $"-NoProfile -ExecutionPolicy unrestricted -file {scriptLocation} -Server {server} -ReportPath {path}";
 
             //string argString = $"-NoProfile -ExecutionPolicy unrestricted -file \"{scriptLocation}\" -ReportPath \"{path}\"";
-            if(CGlobals.DEBUG)
+            if (CGlobals.DEBUG)
                 log.Debug(logStart + "PS ArgString = " + argString, false);
             return new ProcessStartInfo()
             {
@@ -280,7 +413,7 @@ namespace VeeamHealthCheck.Functions.Collection.PSCollections
             argString = $"-NoProfile -ExecutionPolicy unrestricted -file \"{scriptLocation}\" -Server {server}";
 
             //string argString = $"-NoProfile -ExecutionPolicy unrestricted -file \"{scriptLocation}\" -ReportPath \"{path}\"";
-            if(CGlobals.DEBUG)
+            if (CGlobals.DEBUG)
                 log.Debug(logStart + "PS ArgString = " + argString, false);
             return new ProcessStartInfo()
             {
@@ -311,25 +444,56 @@ namespace VeeamHealthCheck.Functions.Collection.PSCollections
         }
         private ProcessStartInfo ConfigStartInfo(string scriptLocation, int days, string path)
         {
-            if (CGlobals.REMOTEHOST == "")
+            
+            if (CGlobals.REMOTEHOST == ""){
                 CGlobals.REMOTEHOST = "localhost";
+            }
             string argString;
             if (days != 0)
-                argString = $"-NoProfile -ExecutionPolicy unrestricted -file \"{scriptLocation}\" -VBRServer \"{CGlobals.REMOTEHOST}\" -ReportInterval {CGlobals.ReportDays} ";
+            {
+                argString =
+                    $"-NoProfile -ExecutionPolicy unrestricted -file \"{scriptLocation}\" -VBRServer \"{CGlobals.REMOTEHOST}\" -ReportInterval {CGlobals.ReportDays} ";
+                if (CGlobals.REMOTEEXEC)
+                {
+                    CredsHandler ch = new();
+                    var creds = ch.GetCreds();
+                    argString += $"-User {creds.Value.Username} -Password {creds.Value.Password} ";
+                }
+            }
             else
-                argString = $"-NoProfile -ExecutionPolicy unrestricted -file \"{scriptLocation}\" -VBRServer \"{CGlobals.REMOTEHOST}\" -VBRVersion \"{CGlobals.VBRMAJORVERSION}\" ";
+            {
+                argString =
+                    $"-NoProfile -ExecutionPolicy unrestricted -file \"{scriptLocation}\" -VBRServer \"{CGlobals.REMOTEHOST}\" -VBRVersion \"{CGlobals.VBRMAJORVERSION}\" ";
+                    if(CGlobals.REMOTEEXEC ){
+                        CredsHandler ch = new();
+                    var creds = ch.GetCreds();
+                    argString += $"-User {creds.Value.Username} -Password {creds.Value.Password} ";
+                    }
+            }
             if (!string.IsNullOrEmpty(path))
             {
                 argString = $"-NoProfile -ExecutionPolicy unrestricted -file \"{scriptLocation}\" -ReportPath \"{path}\"";
             }
-            //log.Debug(logStart + "PS ArgString = " + argString, false);
+            log.Debug(logStart + "PS ArgString = " + argString, false);
+
+            // Use the same PowerShell version failover logic as ExecutePsScriptWithFailover
+            // Prefer PowerShell 7, then 5, else throw
+            string exePath = null;
+            if (!string.IsNullOrEmpty(_pwshPath))
+                exePath = _pwshPath;
+            else if (!string.IsNullOrEmpty(_powershellPath))
+                exePath = _powershellPath;
+            else
+                throw new InvalidOperationException("No PowerShell executable found on system.");
+            // log which powershell we're using as debug logging
+            log.Debug(logStart + $"Using PowerShell executable: {exePath}", false);
             return new ProcessStartInfo()
             {
-                FileName = "powershell.exe",
+                FileName = exePath,
                 Arguments = argString,
                 UseShellExecute = false,
-                CreateNoWindow = true,  //true for prod,
-                RedirectStandardError = false
+                CreateNoWindow = true,
+                RedirectStandardError = true
             };
         }
 
@@ -431,16 +595,18 @@ namespace VeeamHealthCheck.Functions.Collection.PSCollections
             }
 
         }
-    }
-    public class FileUnblocker
-    {
-        [DllImport("kernel32", CharSet = CharSet.Unicode, SetLastError = true)]
-        [return: MarshalAs(UnmanagedType.Bool)]
-        private static extern bool DeleteFile(string name);
 
-        public bool Unblock(string fileName)
+
+        public class FileUnblocker
         {
-            return DeleteFile(fileName + ":Zone.Identifier");
+            [DllImport("kernel32", CharSet = CharSet.Unicode, SetLastError = true)]
+            [return: MarshalAs(UnmanagedType.Bool)]
+            private static extern bool DeleteFile(string name);
+
+            public bool Unblock(string fileName)
+            {
+                return DeleteFile(fileName + ":Zone.Identifier");
+            }
         }
     }
 }

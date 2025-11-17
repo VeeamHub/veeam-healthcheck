@@ -5,9 +5,9 @@ SOURCE="/Users/adam.congdon/code/veeam-healthcheck/vHC/HC_Reporting/bin/Debug/ne
 # Destination (mounted SMB share)
 DEST="$HOME/vhc_mount/veeam-healthcheck/vHC/HC_Reporting/bin/"
 # SMB details
-SMB_SERVER="192.168.20.114"
+SMB_SERVER="192.168.20.22"
 SMB_SHARE="vhc"
-SMB_USER="administrator"
+SMB_USER="vhc"
 SMB_PASS="${SMB_PASS:-}"  # Use an environment variable for the password
 
 # Mount point

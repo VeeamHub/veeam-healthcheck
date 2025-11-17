@@ -14,11 +14,11 @@ namespace VeeamHealthCheck.Functions.Reporting.CsvHandlers
         [Index(1)]
         public string Type { get; set; }
         [Index(2)]
-        public bool Immute { get; set; }
+        public string Immute { get; set; }
         [Index(3)]
         public string ImmutePeriod { get; set; }
         [Index(4)]
-        public bool SizeLimitEnabled { get; set; }
+        public string SizeLimitEnabled { get; set; }
         [Index(5)]
         public string SizeLimit { get; set; }
         [Index(6)]

@@ -1,5 +1,5 @@
 #Requires -Version 4
-#Requires -RunAsAdministrator
+##Requires -RunAsAdministrator
 <#
 .Synopsis
   Simple Veeam report to give details of task sessions for VMware backup jobs
@@ -26,7 +26,11 @@ param(
   [ValidateSet("Backup", "BackupCopy", "VBRServerInstall", "VBRConsoleInstall", "VBRExplorersInstall", "VEMPrereqCheck", "VEMPrereqInstall", "VEMServerInstall", "VCCPortal", "All")]
   [string]$JobType,
   [Parameter ()]
-  [switch]$RemoveDuplicates
+  [switch]$RemoveDuplicates,
+  [Parameter ()]
+  [string]$User,
+  [Parameter ()]
+  [string]$Password
 )
 
 
@@ -55,7 +59,7 @@ function Write-LogFile {
   process {
     # if message log level is higher/equal to config log level, post it.
     if ([LogLevel]$LogLevel -ge [LogLevel]$global:SETTINGS.loglevel) {
-            (get-date).ToString("yyyy-MM-dd hh:mm:ss") + "`t" + $LogLevel + "`t`t" + $Message | Out-File -FilePath ($global:SETTINGS.OutputPath.Trim('\') + "\Collector" + $LogName + ".log") -Append
+            (get-date).ToString("yyyy-MM-dd hh:mm:ss") + "`t" + $LogLevel + "`t`t" + $Message | Out-File -FilePath ($global:SETTINGS.OutputPath.Trim('\') + "\VeeamSessionReport" + $LogName + ".log") -Append
             
       #write it to console if enabled.
       if ($global:SETTINGS.DebugInConsole) {
@@ -85,9 +89,22 @@ if (!(Get-PSSnapin -Name VeeamPSSnapIn -ErrorAction SilentlyContinue)) {
 }
 
 Disconnect-VBRServer
-Connect-VBRServer -Server $VBRServer
-
-
+try {
+  if ([string]::IsNullOrEmpty($User) -or [string]::IsNullOrEmpty($Password)) {
+    # Connect without credentials (local/Windows authentication)
+    Write-LogFile("Connecting to VBR Server without credentials (Windows auth): " + $VBRServer, "Main", "INFO")
+    Connect-VBRServer
+  } else {
+    # Connect with provided credentials (remote)
+    Write-LogFile("Connecting to VBR Server with credentials: " + $VBRServer, "Main", "INFO")
+    Connect-VBRServer -Server $VBRServer -User $User -Password $Password
+  }
+  Write-LogFile("Successfully connected to VBR Server: " + $VBRServer, "Main", "INFO")
+}
+catch {
+  Write-LogFile("Failed to connect to VBR Server: " + $VBRServer + ". Error: " + $_.Exception.Message, "Errors", "ERROR")
+  exit
+}
 
 $AllJobs = Get-VBRJob -WarningAction SilentlyContinue
 
@@ -111,7 +128,6 @@ $SelectTaskSessions = $SelectTaskSessions #| Select-Object -First 500
 [System.Collections.ArrayList]$AllTasksOutput = @()
 
 foreach ($TaskSession in $SelectTaskSessions) {
-
   $LogRegex = [regex]'\bUsing \b.+\s(\[[^\]]*\])'
   $BottleneckRegex = [regex]'^Busy: (\S+ \d+% > \S+ \d+% > \S+ \d+% > \S+ \d+%)'
   $PrimaryBottleneckRegex = [regex]'^Primary bottleneck: (\S+)'

@@ -25,7 +25,10 @@ namespace VeeamHealthCheck.Shared
         public static bool GUIEXEC = false;
         public static string VHCVERSION = "";
         public static bool DEBUG = false;
-        
+
+        // Remote Exec variables
+        public static string VBRServerName = "localhost";
+
         public static string RawReport = "";
         public static string ScrubbedReport = "";
         // GUI & CLI Options:

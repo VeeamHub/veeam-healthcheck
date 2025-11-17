@@ -1,210 +1,206 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
-
-  <PropertyGroup>
-    <OutputType>Exe</OutputType>
-    <TargetFramework>net8.0-windows7.0</TargetFramework>
-	  <EnableWindowsTargeting>true</EnableWindowsTargeting>
-    <UseWPF>true</UseWPF>
-    <Platforms>AnyCPU;x64</Platforms>
-    <PackageIcon></PackageIcon>
-    <PackageIconUrl />
-    <Company>Veeam</Company>
-    <Authors>AdamC</Authors>
-    <ApplicationIcon>Health_Check_Icon.ico</ApplicationIcon>
-    <AssemblyVersion>2.0.0.681</AssemblyVersion>
-    <SignAssembly>False</SignAssembly>
-    <DelaySign>false</DelaySign>
-    <FileVersion>2.0.0.681</FileVersion>
-    <DebugType>full</DebugType>
-	  <SelfContained>true</SelfContained>
-	  <!--These 2 lines are what produce the single file utility. Possibly doesn't work...-->
-	  <!--<PublishSingleFile>true</PublishSingleFile>-->
-	  <!--<IncludeAllContentForSelfExtract>true</IncludeAllContentForSelfExtract>-->
-	  <RuntimeIdentifier>win-x64</RuntimeIdentifier>
-	  <NeutralLanguage>en-US</NeutralLanguage>
-	  <AnalysisLevel>none</AnalysisLevel>
-	  <AssemblyOriginatorKeyFile>vhc_keyfile2.pfx</AssemblyOriginatorKeyFile>
-  </PropertyGroup>
-
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
-    <ShouldCreateLogs>True</ShouldCreateLogs>
-    <AdvancedSettingsExpanded>False</AdvancedSettingsExpanded>
-    <UpdateAssemblyVersion>False</UpdateAssemblyVersion>
-    <UpdateAssemblyFileVersion>False</UpdateAssemblyFileVersion>
-    <UpdateAssemblyInfoVersion>False</UpdateAssemblyInfoVersion>
-    <UpdatePackageVersion>False</UpdatePackageVersion>
-    <AssemblyInfoVersionType>SettingsVersion</AssemblyInfoVersionType>
-    <InheritWinAppVersionFrom>None</InheritWinAppVersionFrom>
-  </PropertyGroup>
-
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
-    <ShouldCreateLogs>True</ShouldCreateLogs>
-    <AdvancedSettingsExpanded>False</AdvancedSettingsExpanded>
-    <UpdateAssemblyVersion>False</UpdateAssemblyVersion>
-    <UpdateAssemblyFileVersion>False</UpdateAssemblyFileVersion>
-    <UpdateAssemblyInfoVersion>False</UpdateAssemblyInfoVersion>
-    <AssemblyVersionSettings>None.None.None.Increment</AssemblyVersionSettings>
-    <UpdatePackageVersion>False</UpdatePackageVersion>
-    <AssemblyInfoVersionType>SettingsVersion</AssemblyInfoVersionType>
-    <InheritWinAppVersionFrom>None</InheritWinAppVersionFrom>
-    <AssemblyFileVersionSettings>None.None.None.Increment</AssemblyFileVersionSettings>
-  </PropertyGroup>
-
-  <ItemGroup>
-    <Compile Remove="Functions\Reporting\Html\VBR\VbrTables\NewFolder\**" />
-    <Compile Remove="Softwares\**" />
-    <Compile Remove="Startup\GUI\**" />
-    <Compile Remove="VBO\**" />
-    <EmbeddedResource Remove="Functions\Reporting\Html\VBR\VbrTables\NewFolder\**" />
-    <EmbeddedResource Remove="Softwares\**" />
-    <EmbeddedResource Remove="Startup\GUI\**" />
-    <EmbeddedResource Remove="VBO\**" />
-    <None Remove="Functions\Reporting\Html\VBR\VbrTables\NewFolder\**" />
-    <None Remove="Softwares\**" />
-    <None Remove="Startup\GUI\**" />
-    <None Remove="VBO\**" />
-    <Page Remove="Functions\Reporting\Html\VBR\VbrTables\NewFolder\**" />
-    <Page Remove="Softwares\**" />
-    <Page Remove="Startup\GUI\**" />
-    <Page Remove="VBO\**" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <Compile Remove="Functions\Reporting\DataTypes\NAS\CNasFileDataVmc.cs" />
-    <Compile Remove="Functions\Reporting\Html\VBR\VbrTables\Job Session Summary\JobSessionSummaryRow.cs" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <None Remove="banner_string.txt" />
-    <None Remove="css.css" />
-    <None Remove="Functions\Collection\PSCollections\Collect-VB365Data.ps1" />
-    <None Remove="Functions\Reporting\Html\Shared\JavaScript1.js" />
-    <None Remove="ReportScript.js" />
-    <None Remove="Resources\Localization\VB365\vb365_vhcres.resources" />
-    <None Remove="Resources\Localization\vhcres.fr-FR.resources" />
-    <None Remove="Resources\Localization\vhcres.ja.resources" />
-    <None Remove="Resources\Localization\vhcres.resources" />
-    <None Remove="Resources\Localization\vhcres.zh-cn.resources" />
-    <None Remove="Resources\Localization\vhcres.zh-tw.resources" />
-    <None Remove="Resources\vhcres.resources" />
-    <None Remove="RVTools4.1.4.msi" />
-    <None Remove="Tools\Get-VBRConfig - Copy.ps1" />
-    <None Remove="Tools\Scripts\Collect-VB365Data.ps1" />
-    <None Remove="Tools\Scripts\Collect-VBRLogs.ps1" />
-    <None Remove="Tools\Scripts\DumpManagedServerToText.ps1" />
-    <None Remove="Tools\Scripts\Get-VBRConfig.ps1" />
-    <None Remove="Tools\Scripts\Get-VeeamSessionReport.ps1" />
-    <None Remove="Tools\Scripts\HealthCheck\VB365\Collect-VB365Data.ps1" />
-    <None Remove="Tools\Scripts\HealthCheck\VBR\Get-NasInfo.ps1" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <EmbeddedResource Include="Functions\Collection\PSCollections\Scripts\Collect-VB365Data.ps1">
-      <CopyToOutputDirectory>Never</CopyToOutputDirectory>
-    </EmbeddedResource>
-    <Content Include="Health_Check_Icon.ico" />
-    <Content Include="Tools\Scripts\HealthCheck\VBR\Get-NasInfo.ps1">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
-    <Content Include="Tools\Scripts\HotfixDetection\Collect-VBRLogs.ps1">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
-    <Content Include="Tools\Scripts\HotfixDetection\DumpManagedServerToText.ps1">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
-  </ItemGroup>
-
-  <ItemGroup>
-    <PackageReference Include="CsvHelper" Version="33.0.1" />
-    <PackageReference Include="DinkToPdf.Standard" Version="1.1.0" />
-    <PackageReference Include="DocX" Version="3.0.1" />
-    <PackageReference Include="HtmlToOpenXml.dll" Version="3.2.2" />
-    <PackageReference Include="Microsoft.Management.Infrastructure" Version="3.0.0" />
-    <PackageReference Include="Microsoft.PowerShell.SDK" Version="7.4.6" />
-    <PackageReference Include="Node.js" Version="5.3.0" />
-    <PackageReference Include="Npm" Version="3.5.2" />
-    <PackageReference Include="System.Data.SqlClient" Version="4.8.6" />
-    <PackageReference Include="System.Management.Automation" Version="7.4.6" />
-    <PackageReference Include="TaskScheduler" Version="2.12.1" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <Content Include="Tools\Scripts\HealthCheck\VBR\Get-VBRConfig.ps1">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </Content>
-    <Content Include="Tools\Scripts\HealthCheck\VBR\Get-VeeamSessionReport.ps1">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
-  </ItemGroup>
-
-  <ItemGroup>
-    <EmbeddedResource Include="banner_string.txt" />
-    <EmbeddedResource Include="css.css" />
-    <EmbeddedResource Include="ReportScript.js" />
-    <EmbeddedResource Include="Resources\Localization\VB365\vb365_vhcres.resources" />
-    <EmbeddedResource Include="Resources\Localization\vhcres.fr-FR.resources" />
-    <EmbeddedResource Include="Resources\Localization\vhcres.ja.resources" />
-    <EmbeddedResource Include="Resources\Localization\vhcres.resources">
-      <Generator></Generator>
-    </EmbeddedResource>
-    <EmbeddedResource Include="Resources\Localization\vhcres.zh-cn.resources" />
-    <EmbeddedResource Include="Resources\Localization\vhcres.zh-tw.resources" />
-    <Content Include="Tools\Scripts\HealthCheck\VB365\Collect-VB365Data.ps1">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
-  </ItemGroup>
-
-  <ItemGroup>
-    <None Update="Resources\Localization\vhcres.txt">
-      <Generator></Generator>
-    </None>
-    <None Update="Tools\Veeam.Hotfix.Detector.zip">
-      <CopyToOutputDirectory>Never</CopyToOutputDirectory>
-    </None>
-    <None Update="Veeam_HealthCheck_228x228.ico">
-      <CopyToOutputDirectory>Never</CopyToOutputDirectory>
-    </None>
-  </ItemGroup>
-
-  <ItemGroup>
-    <Folder Include="Functions\Reporting\CsvHandlers\Proxies\" />
-    <Folder Include="Functions\Reporting\CsvHandlers\Repositories\" />
-    <Folder Include="Functions\Reporting\CsvHandlers\VBR\" />
-    <Folder Include="Functions\Reporting\DataTypes\NewFolder\" />
-    <Folder Include="Functions\Reporting\TableDatas\" />
-    <Folder Include="Resources\Localization\VBR\" />
-  </ItemGroup>
-
-<Target Name="PostBuild" AfterTargets="PostBuildEvent">
-  <!-- Log the check for BuildCopy.bat and BuildCopy.sh -->
-  <Message Text="Checking if BuildCopy.bat exists: $(ProjectDir)Tools\build\BuildCopy.bat" Importance="High" Condition="'$(OS)' == 'Windows_NT'" />
-  <Message Text="Checking if BuildCopy.sh exists: $(ProjectDir)Tools\build\BuildCopy.sh" Importance="High" Condition="'$(OS)' != 'Windows_NT'" />
-
-  <!-- Define items for the batch and shell scripts based on OS -->
-  <ItemGroup>
-    <!-- Windows: Check for BuildCopy.bat -->
-    <LocalPostBuildBat Include="$(ProjectDir)Tools\build\BuildCopy.bat" Condition="'$(OS)' == 'Windows_NT' AND Exists('$(ProjectDir)Tools\build\BuildCopy.bat')" />
-    <!-- macOS/Linux: Check for BuildCopy.sh -->
-    <LocalPostBuildSh Include="$(ProjectDir)Tools\build\BuildCopy.sh" Condition="'$(OS)' != 'Windows_NT' AND Exists('$(ProjectDir)Tools\build\BuildCopy.sh')" />
-  </ItemGroup>
-
-  <!-- Execute the appropriate script based on OS -->
-  <Exec Command="call @(LocalPostBuildBat)" Condition="'$(OS)' == 'Windows_NT' AND '@(LocalPostBuildBat)' != ''" />
-  <Exec Command="bash @(LocalPostBuildSh)" Condition="'$(OS)' != 'Windows_NT' AND '@(LocalPostBuildSh)' != ''" />
-</Target>
-
-  <ItemGroup>
-    <EditorConfigFiles Remove="C:\code\VeeamHub\veeam-healthcheck\vHC\HC_Reporting\.editorconfig" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <None Include="Tools/build/BuildCopy.sh" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <None Include="C:\code\VeeamHub\veeam-healthcheck\vHC\HC_Reporting\.editorconfig" />
-    <None Include="Functions\Reporting\DataTypes\NAS\CNasFileDataVmc.cs" />
-    <None Include="Functions\Reporting\Html\VBR\VbrTables\Job Session Summary\JobSessionSummaryRow.cs" />
-  </ItemGroup>
-
+<?xml version="1.0" encoding="utf-8"?>
+<Project Sdk="Microsoft.NET.Sdk">
+	<PropertyGroup>
+		<OutputType>Exe</OutputType>
+		<TargetFramework>net8.0-windows7.0</TargetFramework>
+		<EnableWindowsTargeting>true</EnableWindowsTargeting>
+		<UseWPF>true</UseWPF>
+		<Platforms>AnyCPU;x64</Platforms>
+		<PackageIcon></PackageIcon>
+		<PackageIconUrl />
+		<Company>Veeam</Company>
+		<Authors>AdamC</Authors>
+		<ApplicationIcon>Health_Check_Icon.ico</ApplicationIcon>
+		<AssemblyVersion>3.0.0.72</AssemblyVersion>
+		<SignAssembly>False</SignAssembly>
+		<DelaySign>false</DelaySign>
+		<FileVersion>3.0.0.72</FileVersion>
+		<DebugType>full</DebugType>
+		<SelfContained>true</SelfContained>
+		<!--These 2 lines are what produce the single file utility. Possibly doesn't work...-->
+		<!--<PublishSingleFile>true</PublishSingleFile>-->
+		<!--<IncludeAllContentForSelfExtract>true</IncludeAllContentForSelfExtract>-->
+		<RuntimeIdentifier>win-x64</RuntimeIdentifier>
+		<NeutralLanguage>en-US</NeutralLanguage>
+		<AnalysisLevel>none</AnalysisLevel>
+		<AssemblyOriginatorKeyFile>vhc_keyfile2.pfx</AssemblyOriginatorKeyFile>
+	</PropertyGroup>
+	<PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
+		<ShouldCreateLogs>True</ShouldCreateLogs>
+		<AdvancedSettingsExpanded>False</AdvancedSettingsExpanded>
+		<UpdateAssemblyVersion>False</UpdateAssemblyVersion>
+		<UpdateAssemblyFileVersion>False</UpdateAssemblyFileVersion>
+		<UpdateAssemblyInfoVersion>False</UpdateAssemblyInfoVersion>
+		<UpdatePackageVersion>False</UpdatePackageVersion>
+		<AssemblyInfoVersionType>SettingsVersion</AssemblyInfoVersionType>
+		<InheritWinAppVersionFrom>None</InheritWinAppVersionFrom>
+	</PropertyGroup>
+	<PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
+		<ShouldCreateLogs>True</ShouldCreateLogs>
+		<AdvancedSettingsExpanded>False</AdvancedSettingsExpanded>
+		<UpdateAssemblyVersion>False</UpdateAssemblyVersion>
+		<UpdateAssemblyFileVersion>False</UpdateAssemblyFileVersion>
+		<UpdateAssemblyInfoVersion>False</UpdateAssemblyInfoVersion>
+		<AssemblyVersionSettings>None.None.None.Increment</AssemblyVersionSettings>
+		<UpdatePackageVersion>False</UpdatePackageVersion>
+		<AssemblyInfoVersionType>SettingsVersion</AssemblyInfoVersionType>
+		<InheritWinAppVersionFrom>None</InheritWinAppVersionFrom>
+		<AssemblyFileVersionSettings>None.None.None.Increment</AssemblyFileVersionSettings>
+	</PropertyGroup>
+	<ItemGroup>
+		<Compile Remove="Functions\Reporting\Html\VBR\VbrTables\NewFolder\**" />
+		<Compile Remove="Softwares\**" />
+		<Compile Remove="Startup\GUI\**" />
+		<Compile Remove="VBO\**" />
+		<EmbeddedResource Remove="Functions\Reporting\Html\VBR\VbrTables\NewFolder\**" />
+		<EmbeddedResource Remove="Softwares\**" />
+		<EmbeddedResource Remove="Startup\GUI\**" />
+		<EmbeddedResource Remove="VBO\**" />
+		<None Remove="Functions\Reporting\Html\VBR\VbrTables\NewFolder\**" />
+		<None Remove="Softwares\**" />
+		<None Remove="Startup\GUI\**" />
+		<None Remove="VBO\**" />
+		<Page Remove="Functions\Reporting\Html\VBR\VbrTables\NewFolder\**" />
+		<Page Remove="Softwares\**" />
+		<Page Remove="Startup\GUI\**" />
+		<Page Remove="VBO\**" />
+	</ItemGroup>
+	<ItemGroup>
+		<Compile Remove="Functions\Reporting\DataTypes\NAS\CNasFileDataVmc.cs" />
+		<Compile Remove="Functions\Reporting\Html\VBR\VbrTables\Job Session Summary\JobSessionSummaryRow.cs" />
+	</ItemGroup>
+	<ItemGroup>
+		<None Remove="banner_string.txt" />
+		<None Remove="css.css" />
+		<None Remove="Functions\Collection\PSCollections\Collect-VB365Data.ps1" />
+		<None Remove="Functions\Collection\PSCollections\Scripts\TestMfa.ps1" />
+		<None Remove="Functions\Reporting\Html\Shared\JavaScript1.js" />
+		<None Remove="ReportScript.js" />
+		<None Remove="Resources\Localization\VB365\vb365_vhcres.resources" />
+		<None Remove="Resources\Localization\vhcres.fr-FR.resources" />
+		<None Remove="Resources\Localization\vhcres.ja.resources" />
+		<None Remove="Resources\Localization\vhcres.resources" />
+		<None Remove="Resources\Localization\vhcres.zh-cn.resources" />
+		<None Remove="Resources\Localization\vhcres.zh-tw.resources" />
+		<None Remove="Resources\vhcres.resources" />
+		<None Remove="RVTools4.1.4.msi" />
+		<None Remove="Tools\Get-VBRConfig - Copy.ps1" />
+		<None Remove="Tools\Scripts\Collect-VB365Data.ps1" />
+		<None Remove="Tools\Scripts\Collect-VBRLogs.ps1" />
+		<None Remove="Tools\Scripts\DumpManagedServerToText.ps1" />
+		<None Remove="Tools\Scripts\Get-VBRConfig.ps1" />
+		<None Remove="Tools\Scripts\Get-VeeamSessionReport.ps1" />
+		<None Remove="Tools\Scripts\HealthCheck\VB365\Collect-VB365Data.ps1" />
+		<None Remove="Tools\Scripts\HealthCheck\VBR\Get-NasInfo.ps1" />
+		<None Remove="Tools\Scripts\HealthCheck\VBR\Get-VeeamSessionReportVersion13.ps1" />
+	</ItemGroup>
+	<ItemGroup>
+		<EmbeddedResource Include="Functions\Collection\PSCollections\Scripts\Collect-VB365Data.ps1">
+			<CopyToOutputDirectory>Never</CopyToOutputDirectory>
+		</EmbeddedResource>
+		<Content Include="Functions\Collection\PSCollections\Scripts\TestMfa.ps1">
+			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+		</Content>
+		<Content Include="Health_Check_Icon.ico" />
+		<Content Include="Tools\Scripts\HealthCheck\VBR\Get-NasInfo.ps1">
+			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+		</Content>
+		<Content Include="Tools\Scripts\HealthCheck\VBR\Get-VeeamSessionReportVersion13.ps1">
+			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+		</Content>
+		<Content Include="Tools\Scripts\HotfixDetection\Collect-VBRLogs.ps1">
+			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+		</Content>
+		<Content Include="Tools\Scripts\HotfixDetection\DumpManagedServerToText.ps1">
+			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+		</Content>
+	</ItemGroup>
+	<ItemGroup>
+		<PackageReference Include="CsvHelper" Version="33.0.1" />
+		<PackageReference Include="DinkToPdf.Standard" Version="1.1.0" />
+		<PackageReference Include="HtmlToOpenXml.dll" Version="3.2.2" />
+		<PackageReference Include="Microsoft.Management.Infrastructure" Version="3.0.0" />
+		<PackageReference Include="Microsoft.PowerShell.SDK" Version="7.4.6" />
+		<PackageReference Include="Node.js" Version="5.3.0" />
+		<PackageReference Include="Npm" Version="3.5.2" />
+		<PackageReference Include="System.Data.SqlClient" Version="4.8.6" />
+		<PackageReference Include="System.Management.Automation" Version="7.4.6" />
+		<PackageReference Include="TaskScheduler" Version="2.12.1" />
+	</ItemGroup>
+	<ItemGroup>
+		<Content Include="Tools\Scripts\HealthCheck\VBR\Get-VBRConfig.ps1">
+			<CopyToOutputDirectory>Always</CopyToOutputDirectory>
+		</Content>
+		<Content Include="Tools\Scripts\HealthCheck\VBR\Get-VeeamSessionReport.ps1">
+			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+		</Content>
+	</ItemGroup>
+	<ItemGroup>
+		<EmbeddedResource Include="banner_string.txt" />
+		<EmbeddedResource Include="css.css" />
+		<EmbeddedResource Include="ReportScript.js" />
+		<EmbeddedResource Include="Resources\Localization\VB365\vb365_vhcres.resources" />
+		<EmbeddedResource Include="Resources\Localization\vhcres.fr-FR.resources" />
+		<EmbeddedResource Include="Resources\Localization\vhcres.ja.resources" />
+		<EmbeddedResource Include="Resources\Localization\vhcres.resources">
+			<Generator></Generator>
+		</EmbeddedResource>
+		<EmbeddedResource Include="Resources\Localization\vhcres.zh-cn.resources" />
+		<EmbeddedResource Include="Resources\Localization\vhcres.zh-tw.resources" />
+		<Content Include="Tools\Scripts\HealthCheck\VB365\Collect-VB365Data.ps1">
+			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+		</Content>
+	</ItemGroup>
+	<ItemGroup>
+		<None Update="Resources\Localization\vhcres.txt">
+			<Generator></Generator>
+		</None>
+		<None Update="Tools\Veeam.Hotfix.Detector.zip">
+			<CopyToOutputDirectory>Never</CopyToOutputDirectory>
+		</None>
+		<None Update="Veeam_HealthCheck_228x228.ico">
+			<CopyToOutputDirectory>Never</CopyToOutputDirectory>
+		</None>
+	</ItemGroup>
+	<ItemGroup>
+		<Folder Include="Functions\Reporting\CsvHandlers\Proxies\" />
+		<Folder Include="Functions\Reporting\CsvHandlers\Repositories\" />
+		<Folder Include="Functions\Reporting\DataTypes\NewFolder\" />
+		<Folder Include="Functions\Reporting\TableDatas\" />
+		<Folder Include="Resources\Localization\VBR\" />
+	</ItemGroup>
+	<Target Name="IncrementVersion" BeforeTargets="BeforeBuild">
+		<Message Text="Incrementing version..." Importance="High" />
+		<!-- Windows: Use PowerShell -->
+		<Exec Command="pwsh -NoProfile -ExecutionPolicy Bypass -File &quot;$(ProjectDir)increment_version.ps1&quot;" Condition="'$(OS)' == 'Windows_NT'" />
+		<!-- macOS/Linux: Try pwsh first, fallback to bash script -->
+		<Exec Command="pwsh -NoProfile -ExecutionPolicy Bypass -File &quot;$(ProjectDir)increment_version.ps1&quot;" Condition="'$(OS)' != 'Windows_NT'" ContinueOnError="true" IgnoreExitCode="true" />
+		<Exec Command="bash &quot;$(ProjectDir)increment_version.sh&quot;" Condition="'$(OS)' != 'Windows_NT'" />
+	</Target>
+	<Target Name="PostBuild" AfterTargets="PostBuildEvent">
+		<!-- Log the check for BuildCopy.bat and BuildCopy.sh -->
+		<Message Text="Checking if BuildCopy.bat exists: $(ProjectDir)Tools\build\BuildCopy.bat" Importance="High" Condition="'$(OS)' == 'Windows_NT'" />
+		<Message Text="Checking if BuildCopy.sh exists: $(ProjectDir)Tools\build\BuildCopy.sh" Importance="High" Condition="'$(OS)' != 'Windows_NT'" />
+		<!-- Define items for the batch and shell scripts based on OS -->
+		<ItemGroup>
+			<!-- Windows: Check for BuildCopy.bat -->
+			<LocalPostBuildBat Include="$(ProjectDir)Tools\build\BuildCopy.bat" Condition="'$(OS)' == 'Windows_NT' AND Exists('$(ProjectDir)Tools\build\BuildCopy.bat')" />
+			<!-- macOS/Linux: Check for BuildCopy.sh -->
+			<LocalPostBuildSh Include="$(ProjectDir)Tools\build\BuildCopy.sh" Condition="'$(OS)' != 'Windows_NT' AND Exists('$(ProjectDir)Tools\build\BuildCopy.sh')" />
+		</ItemGroup>
+		<!-- Execute the appropriate script based on OS -->
+		<Exec Command="call @(LocalPostBuildBat)" Condition="'$(OS)' == 'Windows_NT' AND '@(LocalPostBuildBat)' != ''" />
+		<Exec Command="bash @(LocalPostBuildSh)" Condition="'$(OS)' != 'Windows_NT' AND '@(LocalPostBuildSh)' != ''" />
+	</Target>
+	<ItemGroup>
+		<EditorConfigFiles Remove="C:\code\VeeamHub\veeam-healthcheck\vHC\HC_Reporting\.editorconfig" />
+	</ItemGroup>
+	<ItemGroup>
+		<None Include="Tools/build/BuildCopy.sh" />
+	</ItemGroup>
+	<ItemGroup>
+		<None Include="C:\code\VeeamHub\veeam-healthcheck\vHC\HC_Reporting\.editorconfig" />
+		<None Include="Functions\Reporting\DataTypes\NAS\CNasFileDataVmc.cs" />
+		<None Include="Functions\Reporting\Html\VBR\VbrTables\Job Session Summary\JobSessionSummaryRow.cs" />
+	</ItemGroup>
 </Project>

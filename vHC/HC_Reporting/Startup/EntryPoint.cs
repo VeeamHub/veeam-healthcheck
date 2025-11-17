@@ -23,7 +23,13 @@ namespace VeeamHealthCheck.Startup
                 return 0;
             }
             catch (Exception ex) {
-                CGlobals.Logger.Error(ex.Message);
+                CGlobals.Logger.Error("Exception occurred: " + ex.Message);
+                CGlobals.Logger.Error("Stack trace: " + ex.StackTrace);
+                if (ex.InnerException != null)
+                {
+                    CGlobals.Logger.Error("Inner exception: " + ex.InnerException.Message);
+                    CGlobals.Logger.Error("Inner stack trace: " + ex.InnerException.StackTrace);
+                }
                 CGlobals.Logger.Error("The result is: " + 1, true);
                 return 1;
             }
