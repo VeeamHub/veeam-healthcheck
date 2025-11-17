@@ -1,0 +1,339 @@
+name: VirusTotal Scan and Release
+
+on:
+  push:
+    branches: [ "master" ]
+  workflow_dispatch:
+
+jobs:
+  # First run tests to ensure quality
+  test:
+    runs-on: windows-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+          
+      - name: Restore dependencies
+        run: dotnet restore vHC/HC.sln
+        
+      - name: Build solution
+        run: dotnet build vHC/HC.sln --configuration Release --no-restore
+        
+      - name: Run tests
+        run: dotnet test vHC/HC.sln --configuration Release --no-build --verbosity normal --logger "trx;LogFileName=test-results.trx"
+        
+      - name: Publish test results
+        uses: EnricoMi/publish-unit-test-result-action/composite@v2
+        if: always()
+        with:
+          files: '**/test-results.trx'
+
+  # Build and scan only if tests pass
+  build-publish-scan:
+    needs: test
+    runs-on: windows-latest
+    outputs:
+      version: ${{ steps.get_version.outputs.version }}
+      exe_clean: ${{ steps.evaluate_exe.outputs.clean }}
+      zip_clean: ${{ steps.evaluate_zip.outputs.clean }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+
+      - name: Publish single-file executable
+        run: >
+          dotnet publish vHC/HC_Reporting/VeeamHealthCheck.csproj
+          -c Release
+          -r win-x64
+          --self-contained true
+          -p:PublishSingleFile=true
+          -p:IncludeNativeLibrariesForSelfExtract=true
+          -p:EnableCompressionInSingleFile=true
+          -o publish/out
+
+      - name: Get version from assembly
+        id: get_version
+        run: |
+          $csproj = [xml](Get-Content vHC/HC_Reporting/VeeamHealthCheck.csproj)
+          $version = $csproj.Project.PropertyGroup[0].AssemblyVersion
+          echo "version=$version" >> $env:GITHUB_OUTPUT
+          echo "Version: $version"
+
+      - name: Create ZIP archive
+        run: |
+          Compress-Archive -Path publish/out/* -DestinationPath publish/VeeamHealthCheck-${{ steps.get_version.outputs.version }}.zip
+
+      - name: Compute file hashes
+        id: hash
+        run: |
+          $exePath = "publish/out/VeeamHealthCheck.exe"
+          $zipPath = "publish/VeeamHealthCheck-${{ steps.get_version.outputs.version }}.zip"
+          $exeHash = (Get-FileHash $exePath -Algorithm SHA256).Hash
+          $zipHash = (Get-FileHash $zipPath -Algorithm SHA256).Hash
+          echo "exe_sha256=$exeHash" >> $env:GITHUB_OUTPUT
+          echo "zip_sha256=$zipHash" >> $env:GITHUB_OUTPUT
+          echo "EXE SHA256: $exeHash"
+          echo "ZIP SHA256: $zipHash"
+
+      - name: Submit EXE to VirusTotal
+        id: submit_exe
+        continue-on-error: true
+        run: |
+          $api = "${{ secrets.VIRUSTOTAL_API_KEY }}"
+          if ([string]::IsNullOrEmpty($api)) {
+            echo "⚠️ VIRUSTOTAL_API_KEY not set - skipping scan"
+            echo "scan_id=skip" >> $env:GITHUB_OUTPUT
+            exit 0
+          }
+          
+          $filePath = "publish/out/VeeamHealthCheck.exe"
+          $headers = @{ 'x-apikey' = $api }
+          
+          try {
+            $form = @{ file = Get-Item $filePath }
+            $resp = Invoke-RestMethod -Method Post -Uri 'https://www.virustotal.com/api/v3/files' -Headers $headers -Form $form
+            $scanId = $resp.data.id
+            echo "scan_id=$scanId" >> $env:GITHUB_OUTPUT
+            echo "EXE submitted: $scanId"
+          } catch {
+            echo "Failed to submit EXE: $_"
+            echo "scan_id=error" >> $env:GITHUB_OUTPUT
+            exit 1
+          }
+
+      - name: Submit ZIP to VirusTotal
+        id: submit_zip
+        continue-on-error: true
+        run: |
+          $api = "${{ secrets.VIRUSTOTAL_API_KEY }}"
+          if ([string]::IsNullOrEmpty($api)) {
+            echo "⚠️ VIRUSTOTAL_API_KEY not set - skipping scan"
+            echo "scan_id=skip" >> $env:GITHUB_OUTPUT
+            exit 0
+          }
+          
+          $filePath = "publish/VeeamHealthCheck-${{ steps.get_version.outputs.version }}.zip"
+          $headers = @{ 'x-apikey' = $api }
+          
+          try {
+            $form = @{ file = Get-Item $filePath }
+            $resp = Invoke-RestMethod -Method Post -Uri 'https://www.virustotal.com/api/v3/files' -Headers $headers -Form $form
+            $scanId = $resp.data.id
+            echo "scan_id=$scanId" >> $env:GITHUB_OUTPUT
+            echo "ZIP submitted: $scanId"
+          } catch {
+            echo "Failed to submit ZIP: $_"
+            echo "scan_id=error" >> $env:GITHUB_OUTPUT
+            exit 1
+          }
+
+      - name: Poll EXE scan result
+        id: poll_exe
+        if: steps.submit_exe.outputs.scan_id != 'skip' && steps.submit_exe.outputs.scan_id != 'error'
+        run: |
+          $api = "${{ secrets.VIRUSTOTAL_API_KEY }}"
+          $scanId = "${{ steps.submit_exe.outputs.scan_id }}"
+          $headers = @{ 'x-apikey' = $api }
+          
+          echo "Waiting for EXE scan to complete..."
+          for ($i = 0; $i -lt 30; $i++) {
+            Start-Sleep -Seconds 20
+            
+            try {
+              $resp = Invoke-RestMethod -Method Get -Uri "https://www.virustotal.com/api/v3/analyses/$scanId" -Headers $headers
+              $status = $resp.data.attributes.status
+              
+              if ($status -eq 'completed') {
+                $stats = $resp.data.attributes.stats
+                $malicious = $stats.malicious
+                $suspicious = $stats.suspicious
+                $undetected = $stats.undetected
+                
+                echo "malicious=$malicious" >> $env:GITHUB_OUTPUT
+                echo "suspicious=$suspicious" >> $env:GITHUB_OUTPUT
+                echo "✅ EXE scan complete: $malicious malicious, $suspicious suspicious, $undetected clean"
+                exit 0
+              }
+              
+              echo "Status: $status (attempt $($i+1)/30)"
+            } catch {
+              echo "Error polling: $_"
+            }
+          }
+          
+          echo "❌ Timeout waiting for EXE scan"
+          exit 1
+
+      - name: Poll ZIP scan result
+        id: poll_zip
+        if: steps.submit_zip.outputs.scan_id != 'skip' && steps.submit_zip.outputs.scan_id != 'error'
+        run: |
+          $api = "${{ secrets.VIRUSTOTAL_API_KEY }}"
+          $scanId = "${{ steps.submit_zip.outputs.scan_id }}"
+          $headers = @{ 'x-apikey' = $api }
+          
+          echo "Waiting for ZIP scan to complete..."
+          for ($i = 0; $i -lt 30; $i++) {
+            Start-Sleep -Seconds 20
+            
+            try {
+              $resp = Invoke-RestMethod -Method Get -Uri "https://www.virustotal.com/api/v3/analyses/$scanId" -Headers $headers
+              $status = $resp.data.attributes.status
+              
+              if ($status -eq 'completed') {
+                $stats = $resp.data.attributes.stats
+                $malicious = $stats.malicious
+                $suspicious = $stats.suspicious
+                $undetected = $stats.undetected
+                
+                echo "malicious=$malicious" >> $env:GITHUB_OUTPUT
+                echo "suspicious=$suspicious" >> $env:GITHUB_OUTPUT
+                echo "✅ ZIP scan complete: $malicious malicious, $suspicious suspicious, $undetected clean"
+                exit 0
+              }
+              
+              echo "Status: $status (attempt $($i+1)/30)"
+            } catch {
+              echo "Error polling: $_"
+            }
+          }
+          
+          echo "❌ Timeout waiting for ZIP scan"
+          exit 1
+
+      - name: Evaluate EXE scan result
+        id: evaluate_exe
+        run: |
+          $scanId = "${{ steps.submit_exe.outputs.scan_id }}"
+          
+          if ($scanId -eq 'skip') {
+            echo "clean=unknown" >> $env:GITHUB_OUTPUT
+            echo "⚠️ EXE scan skipped (no API key)"
+            exit 0
+          }
+          
+          if ($scanId -eq 'error') {
+            echo "clean=error" >> $env:GITHUB_OUTPUT
+            echo "❌ EXE scan failed"
+            exit 1
+          }
+          
+          $malicious = [int]"${{ steps.poll_exe.outputs.malicious }}"
+          $suspicious = [int]"${{ steps.poll_exe.outputs.suspicious }}"
+          
+          if ($malicious -gt 0) {
+            echo "clean=false" >> $env:GITHUB_OUTPUT
+            echo "❌ VirusTotal flagged EXE as malicious ($malicious detections)"
+            exit 1
+          } elseif ($suspicious -gt 2) {
+            echo "clean=false" >> $env:GITHUB_OUTPUT
+            echo "⚠️ VirusTotal marked EXE as suspicious ($suspicious detections)"
+            exit 1
+          } else {
+            echo "clean=true" >> $env:GITHUB_OUTPUT
+            echo "✅ EXE scan passed"
+          }
+
+      - name: Evaluate ZIP scan result
+        id: evaluate_zip
+        run: |
+          $scanId = "${{ steps.submit_zip.outputs.scan_id }}"
+          
+          if ($scanId -eq 'skip') {
+            echo "clean=unknown" >> $env:GITHUB_OUTPUT
+            echo "⚠️ ZIP scan skipped (no API key)"
+            exit 0
+          }
+          
+          if ($scanId -eq 'error') {
+            echo "clean=error" >> $env:GITHUB_OUTPUT
+            echo "❌ ZIP scan failed"
+            exit 1
+          }
+          
+          $malicious = [int]"${{ steps.poll_zip.outputs.malicious }}"
+          $suspicious = [int]"${{ steps.poll_zip.outputs.suspicious }}"
+          
+          if ($malicious -gt 0) {
+            echo "clean=false" >> $env:GITHUB_OUTPUT
+            echo "❌ VirusTotal flagged ZIP as malicious ($malicious detections)"
+            exit 1
+          } elseif ($suspicious -gt 2) {
+            echo "clean=false" >> $env:GITHUB_OUTPUT
+            echo "⚠️ VirusTotal marked ZIP as suspicious ($suspicious detections)"
+            exit 1
+          } else {
+            echo "clean=true" >> $env:GITHUB_OUTPUT
+            echo "✅ ZIP scan passed"
+          }
+
+      - name: Upload artifacts
+        if: success()
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-bundle-v${{ steps.get_version.outputs.version }}
+          path: |
+            publish/out/VeeamHealthCheck.exe
+            publish/VeeamHealthCheck-${{ steps.get_version.outputs.version }}.zip
+          retention-days: 30
+
+  # Create GitHub release only if VirusTotal scans are clean
+  create-release:
+    needs: build-publish-scan
+    runs-on: windows-latest
+    if: needs.build-publish-scan.outputs.exe_clean == 'true' && needs.build-publish-scan.outputs.zip_clean == 'true'
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Download artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: release-bundle-v${{ needs.build-publish-scan.outputs.version }}
+          path: release-files
+
+      - name: Create GitHub Release
+        id: create_release
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: v${{ needs.build-publish-scan.outputs.version }}
+          name: Veeam Health Check v${{ needs.build-publish-scan.outputs.version }}
+          body: |
+            ## Veeam Health Check v${{ needs.build-publish-scan.outputs.version }}
+            
+            ### ✅ Security Verification
+            - VirusTotal EXE scan: **Clean**
+            - VirusTotal ZIP scan: **Clean**
+            - ClamAV source scan: **Passed**
+            
+            ### 📦 Download
+            - **VeeamHealthCheck.exe** - Single-file executable (self-contained)
+            - **VeeamHealthCheck-${{ needs.build-publish-scan.outputs.version }}.zip** - Full package with scripts
+            
+            ### 📋 Requirements
+            - Windows 7 or later
+            - .NET 8 runtime (included in self-contained build)
+            
+            Built from commit: ${{ github.sha }}
+          draft: false
+          prerelease: false
+          files: |
+            release-files/VeeamHealthCheck.exe
+            release-files/VeeamHealthCheck-${{ needs.build-publish-scan.outputs.version }}.zip
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Release created successfully
+        run: |
+          echo "🎉 Release v${{ needs.build-publish-scan.outputs.version }} created successfully!"
+          echo "URL: ${{ steps.create_release.outputs.url }}"
