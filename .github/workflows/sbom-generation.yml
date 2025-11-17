@@ -1,0 +1,87 @@
+name: Generate SBOM
+
+on:
+  release:
+    types: [published, created]
+  push:
+    branches: [ "master" ]
+  workflow_dispatch:
+
+jobs:
+  sbom:
+    runs-on: windows-latest
+    permissions:
+      contents: write
+      
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+
+      - name: Restore dependencies
+        run: dotnet restore vHC/HC.sln
+
+      - name: Install CycloneDX tool
+        run: dotnet tool install --global CycloneDX
+
+      - name: Generate SBOM (CycloneDX JSON)
+        run: |
+          New-Item -ItemType Directory -Force -Path sbom
+          dotnet CycloneDX vHC/HC.sln -o sbom/ -f VeeamHealthCheck-SBOM.json -t
+
+      - name: Generate SBOM (CycloneDX XML)
+        run: |
+          dotnet CycloneDX vHC/HC.sln -o sbom/ -f VeeamHealthCheck-SBOM.xml -t
+
+      - name: Get version
+        id: get_version
+        run: |
+          $csproj = [xml](Get-Content vHC/HC_Reporting/VeeamHealthCheck.csproj)
+          $version = $csproj.Project.PropertyGroup[0].AssemblyVersion
+          echo "version=$version" >> $env:GITHUB_OUTPUT
+          echo "Version: $version"
+
+      - name: Create SBOM summary
+        run: |
+          echo "## 📋 Software Bill of Materials (SBOM)" >> $env:GITHUB_STEP_SUMMARY
+          echo "" >> $env:GITHUB_STEP_SUMMARY
+          echo "**Version:** ${{ steps.get_version.outputs.version }}" >> $env:GITHUB_STEP_SUMMARY
+          echo "**Format:** CycloneDX 1.4" >> $env:GITHUB_STEP_SUMMARY
+          echo "**Generated:** $(Get-Date -Format 'yyyy-MM-dd HH:mm:ss UTC')" >> $env:GITHUB_STEP_SUMMARY
+          echo "" >> $env:GITHUB_STEP_SUMMARY
+          
+          if (Test-Path sbom/VeeamHealthCheck-SBOM.json) {
+            $sbom = Get-Content sbom/VeeamHealthCheck-SBOM.json | ConvertFrom-Json
+            $componentCount = $sbom.components.Count
+            echo "**Total Components:** $componentCount" >> $env:GITHUB_STEP_SUMMARY
+            echo "" >> $env:GITHUB_STEP_SUMMARY
+            echo "### Direct Dependencies" >> $env:GITHUB_STEP_SUMMARY
+            echo "" >> $env:GITHUB_STEP_SUMMARY
+            
+            $sbom.components | Where-Object { $_.scope -eq 'required' } | Select-Object -First 10 | ForEach-Object {
+              echo "- $($_.name) $($_.version)" >> $env:GITHUB_STEP_SUMMARY
+            }
+          }
+
+      - name: Upload SBOM artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: sbom-v${{ steps.get_version.outputs.version }}
+          path: |
+            sbom/VeeamHealthCheck-SBOM.json
+            sbom/VeeamHealthCheck-SBOM.xml
+          retention-days: 90
+
+      - name: Attach SBOM to release
+        if: github.event_name == 'release'
+        uses: softprops/action-gh-release@v1
+        with:
+          files: |
+            sbom/VeeamHealthCheck-SBOM.json
+            sbom/VeeamHealthCheck-SBOM.xml
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
