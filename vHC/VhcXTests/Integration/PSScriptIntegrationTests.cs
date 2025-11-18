@@ -25,6 +25,27 @@ namespace VhcXTests.Integration
             _scriptsPath = Path.Combine(_projectRoot, "Tools", "Scripts");
         }
 
+        private static int RunPwshAndLog(ProcessStartInfo psi, string logName)
+        {
+            Directory.CreateDirectory("TestResults\\pwsh-logs");
+
+            using var process = Process.Start(psi);
+            if (process == null)
+            {
+                File.WriteAllText(Path.Combine("TestResults", "pwsh-logs", $"{logName}-start-failed.txt"), "Failed to start process");
+                return -1;
+            }
+
+            string output = process.StandardOutput.ReadToEnd();
+            string error = process.StandardError.ReadToEnd();
+            process.WaitForExit();
+
+            var logPath = Path.Combine("TestResults", "pwsh-logs", $"{logName}.txt");
+            File.WriteAllText(logPath, $"ExitCode: {process.ExitCode}\r\n---STDOUT---\r\n{output}\r\n---STDERR---\r\n{error}");
+
+            return process.ExitCode;
+        }
+
         [Fact]
         public void GetVBRConfig_ScriptExists()
         {
@@ -53,17 +74,8 @@ namespace VhcXTests.Integration
                 CreateNoWindow = true
             };
 
-            using var process = Process.Start(psi);
-            if (process == null)
-            {
-                Assert.Fail("Failed to start PowerShell process");
-            }
-
-            string output = process.StandardOutput.ReadToEnd();
-            string error = process.StandardError.ReadToEnd();
-            process.WaitForExit();
-
-            Assert.True(process.ExitCode == 0, $"PowerShell syntax validation failed:\n{error}\n{output}");
+            var rc = RunPwshAndLog(psi, "GetVBRConfig_ValidPowerShellSyntax");
+            Assert.True(rc == 0, $"PowerShell syntax validation failed. See TestResults/pwsh-logs/GetVBRConfig_ValidPowerShellSyntax.txt (exit {rc})");
         }
 
         [Fact]
@@ -86,10 +98,8 @@ namespace VhcXTests.Integration
                 CreateNoWindow = true
             };
 
-            using var process = Process.Start(psi);
-            process?.WaitForExit();
-
-            Assert.True(process?.ExitCode == 0, "Get-VeeamSessionReport.ps1 has syntax errors");
+            var rc = RunPwshAndLog(psi, "GetVeeamSessionReport_ValidPowerShellSyntax");
+            Assert.True(rc == 0, "Get-VeeamSessionReport.ps1 has syntax errors");
         }
 
         [Fact]
@@ -112,10 +122,8 @@ namespace VhcXTests.Integration
                 CreateNoWindow = true
             };
 
-            using var process = Process.Start(psi);
-            process?.WaitForExit();
-
-            Assert.True(process?.ExitCode == 0, "Collect-VB365Data.ps1 has syntax errors");
+            var rc = RunPwshAndLog(psi, "CollectVB365Data_ValidPowerShellSyntax");
+            Assert.True(rc == 0, "Collect-VB365Data.ps1 has syntax errors");
         }
 
         [Fact]
@@ -143,10 +151,9 @@ namespace VhcXTests.Integration
                     CreateNoWindow = true
                 };
 
-                using var process = Process.Start(psi);
-                process?.WaitForExit();
-
-                Assert.True(process?.ExitCode == 0, $"Script has syntax errors: {Path.GetFileName(scriptPath)}");
+                var logName = $"AllHotfixScripts-{Path.GetFileName(scriptPath)}";
+                var rc = RunPwshAndLog(psi, logName);
+                Assert.True(rc == 0, $"Script has syntax errors: {Path.GetFileName(scriptPath)} (see TestResults/pwsh-logs/{logName}.txt)");
             }
         }
 
@@ -172,10 +179,8 @@ namespace VhcXTests.Integration
                 CreateNoWindow = true
             };
 
-            using var process = Process.Start(psi);
-            process?.WaitForExit();
-
-            Assert.True(process?.ExitCode == 0, "increment_version.ps1 has syntax errors");
+            var rc = RunPwshAndLog(psi, "IncrementVersionScript_ExecutesSuccessfully");
+            Assert.True(rc == 0, "increment_version.ps1 has syntax errors");
         }
     }
 }
