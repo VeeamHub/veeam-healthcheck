@@ -217,8 +217,8 @@ string argString = $"Import-Module Veeam.Backup.PowerShell; Connect-VBRServer -S
                 string stdOut = res.StandardOutput.ReadToEnd();
                 string stdErr = res.StandardError.ReadToEnd();
 
-                log.Info($"[TestMfa] STDOUT: {stdOut}");
-                log.Info($"[TestMfa] STDERR: {stdErr}");
+                log.Debug($"[TestMfa] STDOUT: {stdOut}");
+                log.Debug($"[TestMfa] STDERR: {stdErr}");
 
                 List<string> errorarray = new();
 
