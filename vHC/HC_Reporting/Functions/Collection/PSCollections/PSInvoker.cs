@@ -188,8 +188,7 @@ namespace VeeamHealthCheck.Functions.Collection.PSCollections
             var res = new Process();
             if (CGlobals.REMOTEHOST == "")
                 CGlobals.REMOTEHOST = "localhost";
-            string argString = $"Connect-VBRServer -Server \"{CGlobals.REMOTEHOST}\"";
-            var startInfo = new ProcessStartInfo()
+string argString = $"Import-Module Veeam.Backup.PowerShell; Connect-VBRServer -Server \"{CGlobals.REMOTEHOST}\"";            var startInfo = new ProcessStartInfo()
             {
                 FileName = "powershell.exe",
                 Arguments = argString,
