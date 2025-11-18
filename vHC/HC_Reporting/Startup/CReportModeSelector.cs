@@ -41,7 +41,9 @@ namespace VeeamHealthCheck.Startup
         private int StartVbrReport()
         {
             LOG.Info("Starting B&R report generation", false);
+            LOG.Info("About to instantiate CHtmlCompiler...", false);
             CHtmlCompiler html = new();
+            LOG.Info("CHtmlCompiler instantiated successfully", false);
             var res = html.RunFullVbrReport();
             html.Dispose();
             return res;

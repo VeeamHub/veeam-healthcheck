@@ -33,22 +33,44 @@ jobs:
 
       - name: Run tests with coverage
         run: |
-          dotnet test vHC/HC.sln --no-build --verbosity normal `
-            --collect:"XPlat Code Coverage" `
-            --results-directory ./coverage `
-            --logger "trx;LogFileName=test-results.trx" `
-            -- DataCollectionRunSettings.DataCollectors.DataCollector.Configuration.Format=opencover
+          dotnet test vHC/HC.sln --no-build --verbosity normal --collect:"XPlat Code Coverage" --results-directory ./TestResults --logger "trx;LogFileName=test-results.trx"
+
+      - name: Debug: list TestResults and coverage folders
+        run: |
+          echo "== TestResults contents =="
+          Get-ChildItem -Path .\TestResults -Recurse -Force -ErrorAction SilentlyContinue | Select-Object FullName, Length | Format-Table -AutoSize
+          echo "== coverage folder contents =="
+          Get-ChildItem -Path .\coverage -Recurse -Force -ErrorAction SilentlyContinue | Select-Object FullName, Length | Format-Table -AutoSize
 
       - name: Install ReportGenerator
         run: dotnet tool install -g dotnet-reportgenerator-globaltool
 
+      - name: Gather coverage files
+        id: gather_cov
+        run: |
+          # Find common coverage files produced by dotnet test / coverlet
+          $found = Get-ChildItem -Path . -Recurse -Include "coverage.opencover.xml","coverage.cobertura.xml","coverage.cobertura.*.xml","coverage*.xml","*.coverage.xml" -ErrorAction SilentlyContinue | Select-Object -ExpandProperty FullName
+          if (-not $found) {
+            # Also look under TestResults folders for coverage files
+            $found = Get-ChildItem -Path ./TestResults -Recurse -Include "*coverage*.xml","*coverage*.opencover.xml","*coverage*.cobertura.xml" -ErrorAction SilentlyContinue | Select-Object -ExpandProperty FullName
+          }
+          if ($found) {
+            Write-Host "Found coverage files:`n$($found -join "`n")"
+            # Expose as output joined by semicolon
+            $out = $found -join ";"
+            echo "coverage_files=$out" >> $env:GITHUB_OUTPUT
+          } else {
+            echo "coverage_files=" >> $env:GITHUB_OUTPUT
+          }
+
       - name: Generate coverage report
         run: |
-          reportgenerator `
-            -reports:./coverage/**/coverage.opencover.xml `
-            -targetdir:./coverage-report `
-            -reporttypes:"Html;MarkdownSummaryGithub;Cobertura" `
-            -historydir:./coverage-history
+          $reports = "${{ steps.gather_cov.outputs.coverage_files }}" -split ";" | Where-Object { $_ -ne '' }
+          if ($reports.Count -eq 0) {
+            Write-Host "No coverage files found to generate report."; exit 0
+          }
+          $reportsArg = $reports -join ";"
+          reportgenerator -reports:$reportsArg -targetdir:./coverage-report -reporttypes:Html;MarkdownSummaryGithub;Cobertura -historydir:./coverage-history
 
       - name: Add coverage to PR comment
         if: github.event_name == 'pull_request'
@@ -61,7 +83,7 @@ jobs:
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v4
         with:
-          files: ./coverage/**/coverage.opencover.xml
+          files: ${{ steps.gather_cov.outputs.coverage_files }}
           flags: unittests
           name: codecov-veeam-healthcheck
           fail_ci_if_error: false
@@ -71,8 +93,13 @@ jobs:
 
       - name: Generate coverage badge
         run: |
-          if (Test-Path "./coverage/**/coverage.opencover.xml") {
-            [xml]$coverage = Get-Content (Get-ChildItem "./coverage/**/coverage.opencover.xml" | Select-Object -First 1)
+          $files = "${{ steps.gather_cov.outputs.coverage_files }}" -split ";" | Where-Object { $_ -ne '' }
+          if ($files.Count -eq 0) {
+            Write-Host "No coverage files found to summarize."; exit 0
+          }
+          $first = $files[0]
+          try {
+            [xml]$coverage = Get-Content $first
             $summary = $coverage.CoverageSession.Summary
             $lineRate = [math]::Round([double]$summary.sequenceCoverage, 2)
             $branchRate = [math]::Round([double]$summary.branchCoverage, 2)
@@ -83,6 +110,8 @@ jobs:
             echo "- **Branch Coverage:** $branchRate%" >> $env:GITHUB_STEP_SUMMARY
             echo "- **Total Lines:** $($summary.numSequencePoints)" >> $env:GITHUB_STEP_SUMMARY
             echo "- **Covered Lines:** $($summary.visitedSequencePoints)" >> $env:GITHUB_STEP_SUMMARY
+          } catch {
+            Write-Host "Failed to parse coverage XML: $_"
           }
 
       - name: Upload coverage report artifact
@@ -96,16 +125,18 @@ jobs:
 
       - name: Check coverage threshold
         run: |
-          if (Test-Path "./coverage/**/coverage.opencover.xml") {
-            [xml]$coverage = Get-Content (Get-ChildItem "./coverage/**/coverage.opencover.xml" | Select-Object -First 1)
+          $files = "${{ steps.gather_cov.outputs.coverage_files }}" -split ";" | Where-Object { $_ -ne '' }
+          if ($files.Count -eq 0) { Write-Host "No coverage files found to evaluate."; exit 0 }
+          try {
+            [xml]$coverage = Get-Content $files[0]
             $lineRate = [double]$coverage.CoverageSession.Summary.sequenceCoverage
-            
-            $threshold = 30.0  # Minimum acceptable coverage
-            
+            $threshold = 30.0
             if ($lineRate -lt $threshold) {
               Write-Warning "Coverage $lineRate% is below threshold $threshold%"
               echo "::warning::Code coverage ($lineRate%) is below the minimum threshold ($threshold%)"
             } else {
               Write-Host "✅ Coverage $lineRate% meets threshold $threshold%"
             }
+          } catch {
+            Write-Host "Failed to evaluate coverage: $_"
           }

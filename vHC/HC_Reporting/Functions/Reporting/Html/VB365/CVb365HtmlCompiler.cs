@@ -142,7 +142,10 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VB365
         }
         private string GetServerName()
         {
-            return Dns.GetHostName();
+            if(CGlobals.REMOTEEXEC)
+                return CGlobals.REMOTEHOST;
+            else
+                return Dns.GetHostName();
         }
         private string SetLicHolder()
         {

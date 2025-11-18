@@ -27,20 +27,41 @@ namespace VeeamHealthCheck.Html.VBR
 {
     internal class CHtmlTables
     {
-        private CCsvParser _csv = new(CVariables.vb365dir);
+        private CCsvParser _csv;
         private readonly CLogger log = CGlobals.Logger;
-        private CHtmlTablesHelper _helper = new();
+        private CHtmlTablesHelper _helper;
 
-        CDataFormer _df = new();
-        Scrubber.CScrubHandler _scrub = CGlobals.Scrubber;
+        CDataFormer _df;
+        Scrubber.CScrubHandler _scrub;
 
-        private CHtmlFormatting _form = new();
-        private CVbrSummaries _sum = new();
+        private CHtmlFormatting _form;
+        private CVbrSummaries _sum;
 
 
         public CHtmlTables()
         {
-
+            log.Info("[CHtmlTables] Constructor started");
+            try
+            {
+                _csv = new(CVariables.vb365dir);
+                log.Info("[CHtmlTables] CCsvParser initialized");
+                _helper = new();
+                log.Info("[CHtmlTables] CHtmlTablesHelper initialized");
+                _df = new();
+                log.Info("[CHtmlTables] CDataFormer initialized");
+                _scrub = CGlobals.Scrubber;
+                log.Info("[CHtmlTables] Scrubber initialized");
+                _form = new();
+                log.Info("[CHtmlTables] CHtmlFormatting initialized");
+                _sum = new();
+                log.Info("[CHtmlTables] CVbrSummaries initialized");
+                log.Info("[CHtmlTables] Constructor completed successfully");
+            }
+            catch (Exception ex)
+            {
+                log.Error("[CHtmlTables] Constructor failed: " + ex.Message);
+                throw;
+            }
         }
         public string MakeNavTable()
         {

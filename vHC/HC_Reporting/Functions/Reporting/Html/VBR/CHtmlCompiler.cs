@@ -34,10 +34,12 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR
 
         public CHtmlCompiler()
         {
-
+            log.Info(logStart + "CHtmlCompiler constructor entered");
+            log.Info(logStart + "CHtmlCompiler constructor completed");
         }
         public int RunFullVbrReport()
         {
+            log.Info(logStart + ">>> ENTERING RunFullVbrReport() method <<<");
             log.Info(logStart + "Init full report");
             FormHeader();
             FormVbrFullBody();
@@ -106,8 +108,12 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR
         }
         private string GetServerName()
         {
+            log.Info(logStart + ">>> ENTERING GetServerName() method <<<");
             log.Info("Checking for server name...");
-            return Dns.GetHostName();
+            log.Info(logStart + "About to call Dns.GetHostName()...");
+            string hostname = Dns.GetHostName();
+            log.Info(logStart + "Dns.GetHostName() completed successfully. Hostname: " + hostname);
+            return hostname;
         }
         public void Dispose()
         {
@@ -116,8 +122,11 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR
 
         private void FormHeader()
         {
+            log.Info(logStart + ">>> ENTERING FormHeader() method <<<");
             log.Info("[HTML] Forming Header...");
+            log.Info(logStart + "About to call _form.Header()...");
             string h = _form.Header();
+            log.Info(logStart + "_form.Header() completed successfully");
 
             _htmldocOriginal = h;
             _htmldocScrubbed += h;
@@ -299,9 +308,13 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR
         }
         private void LoadCsvToMemory()
         {
+            log.Info(logStart + ">>> ENTERING LoadCsvToMemory() method <<<");
+            log.Info(logStart + "Building CSV file path...");
             string file = Path.Combine(CVariables.vbrDir, "localhost_vbrinfo.csv");
             log.Info("looking for VBR CSV at: " + file);
+            log.Info(logStart + "About to call CCsvsInMemory.GetCsvData()...");
             var res = CCsvsInMemory.GetCsvData(file);
+            log.Info(logStart + "CCsvsInMemory.GetCsvData() completed. Result is " + (res == null ? "null" : "not null"));
             if (res != null && res.Count > 0)
             {
                 log.Info("VBR CSV data loaded successfully. Number of rows: " + res.Count);
@@ -357,32 +370,43 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR
         }
         private void FormVbrFullBody()
         {
+            log.Info(logStart + ">>> ENTERING FormVbrFullBody() method <<<");
             log.Info("[HTML] forming HTML body");
 
             // maybe load all CSV to memory here?
+            log.Info(logStart + "About to call LoadCsvToMemory()...");
             LoadCsvToMemory();
+            log.Info(logStart + "LoadCsvToMemory() completed.");
            // LoadCsvToMemory();
 
+            log.Info(logStart + "Creating CHtmlBodyHelper instance...");
             CHtmlBodyHelper helper = new();
+            log.Info(logStart + "CHtmlBodyHelper instance created.");
             if (CGlobals.Scrub)
             {
+                log.Info(logStart + "Scrub mode enabled. Starting scrubbed report generation...");
                 _htmldocScrubbed += FormBodyStart(_htmldocScrubbed, true);
                 SetNavigation();
 
                 AddToHtml(string.Format("<button id='expandBtn' type=\"button\" class=\"btn\" onclick=\"test()\">{0}</button>", "Expand All Sections"));
 
+                log.Info(logStart + "About to call helper.FormVbrFullReport() [SCRUBBED]...");
                 _htmldocScrubbed = helper.FormVbrFullReport(_htmldocScrubbed, true);
+                log.Info(logStart + "helper.FormVbrFullReport() [SCRUBBED] completed.");
                 _htmldocScrubbed += FormFooter();
 
             }
             else
             {
+                log.Info(logStart + "Scrub mode disabled. Starting original report generation...");
                 _htmldocOriginal += FormBodyStart(_htmldocOriginal, false);
                 SetNavigation();
 
                 AddToHtml(string.Format("<button id='expandBtn' type=\"button\" class=\"btn\" onclick=\"test()\">{0}</button>", "Expand All Sections"));
 
+                log.Info(logStart + "About to call helper.FormVbrFullReport() [ORIGINAL]...");
                 _htmldocOriginal = helper.FormVbrFullReport(_htmldocOriginal, false);
+                log.Info(logStart + "helper.FormVbrFullReport() [ORIGINAL] completed.");
                 _htmldocOriginal += FormFooter();
 
             }
