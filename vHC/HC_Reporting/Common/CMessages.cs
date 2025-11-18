@@ -22,16 +22,18 @@ namespace VeeamHealthCheck.Shared
             "\t/lite\t\t" + "Skips output of individual jobs to HTML files. Default is ON and adds extra processing time." +
             "\n" +
             "\t/scrub:\t\t" + "/scrub:true | /scrub:false; determines if sensitive data is removed. Default option creates both options" +
-            "\n"+
-            "\t/pdf\t\t" + "Exports the report as PDF in addition to HTML report."+
+            "\n" +
+            "\t/creds=\t\t" + "Provides credentials for remote connection. Usage: /creds=username:password or /creds to use stored credentials" +
+            "\n" +
+            "\t/pdf\t\t" + "Exports the report as PDF in addition to HTML report." +
             "\n\n" +
-            "HotFix Detection:\n"+
-            "Use the following syntax:\t\t.\\VeeamHealthCheck.exe /hotfix /path=D:\\ExamplePath"+
-            "\n\n"+
+            "HotFix Detection:\n" +
+            "Use the following syntax:\t\t.\\VeeamHealthCheck.exe /hotfix /path=D:\\ExamplePath" +
+            "\n\n" +
             "Most Common Uses:\n" +
             "1. Regular Health Check:\t .\\VeeamHealthChecck.exe /run\n" +
             "2. Security Assessment:\t .\\VeeamHealthCheck.exe /security\n" +
-            "3. Remote Security Assessment:\t .\\VeeamHealthCheck.exe /security /remote /host=REMOTEHOST" + 
+            "3. Remote Security Assessment:\t .\\VeeamHealthCheck.exe /security /remote /host=REMOTEHOST" +
             "\n\n" +
             "EXAMPLES:\n" +
             "1. Run to default location:\t .\\VeeamHealthCheck.exe /run\n" +
