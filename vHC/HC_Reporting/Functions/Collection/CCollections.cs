@@ -208,8 +208,7 @@ namespace VeeamHealthCheck.Functions.Collection
             {
                 CredsHandler ch = new();
                 var creds = ch.GetCreds();
-                string scriptPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory,
-                    @"Functions\Collection\PSCollections\Scripts\TestMfa.ps1");
+                string scriptPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, @"Functions\Collection\PSCollections\Scripts\TestMfa.ps1");
                 bool result = false;
                 string error = "";
                 List<string> output = new();

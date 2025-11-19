@@ -43,6 +43,9 @@ namespace VeeamHealthCheck.Shared
         public static bool EXPORTINDIVIDUALJOBHTMLS = true;
         public static bool CHECKFIXES = false;
         public static bool EXPORTPDF = false;
+        public static bool UseStoredCreds = false;
+        public static string CredsUsername = "";
+        public static string CredsPassword = "";
 
 
         // Security Values
