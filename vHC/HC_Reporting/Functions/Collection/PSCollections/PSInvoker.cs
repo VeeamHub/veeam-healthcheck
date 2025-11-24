@@ -24,16 +24,16 @@ namespace VeeamHealthCheck.Functions.Collection.PSCollections
 
     class PSInvoker
     {
-        private readonly string _vb365Script = Environment.CurrentDirectory + @"\Tools\Scripts\HealthCheck\VB365\Collect-VB365Data.ps1";
+        private readonly string _vb365Script = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, @"Tools\Scripts\HealthCheck\VB365\Collect-VB365Data.ps1");
 
-        private readonly string _vbrConfigScript = Environment.CurrentDirectory + @"\Tools\Scripts\HealthCheck\VBR\Get-VBRConfig.ps1";
-        private readonly string _vbrSessionScript = Environment.CurrentDirectory + @"\Tools\Scripts\HealthCheck\VBR\Get-VeeamSessionReport.ps1";
-        private readonly string _vbrSessionScriptVersion13 = Environment.CurrentDirectory + @"\Tools\Scripts\HealthCheck\VBR\Get-VeeamSessionReportVersion13.ps1";
+        private readonly string _vbrConfigScript = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, @"Tools\Scripts\HealthCheck\VBR\Get-VBRConfig.ps1");
+        private readonly string _vbrSessionScript = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, @"Tools\Scripts\HealthCheck\VBR\Get-VeeamSessionReport.ps1");
+        private readonly string _vbrSessionScriptVersion13 = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, @"Tools\Scripts\HealthCheck\VBR\Get-VeeamSessionReportVersion13.ps1");
 
-        private readonly string _nasScript = Environment.CurrentDirectory + @"\Tools\Scripts\HealthCheck\VBR\Get-NasInfo.ps1";
+        private readonly string _nasScript = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, @"Tools\Scripts\HealthCheck\VBR\Get-NasInfo.ps1");
 
-        private readonly string _exportLogsScript = Environment.CurrentDirectory + @"\Tools\Scripts\HotfixDetection\Collect-VBRLogs.ps1";
-        private readonly string _dumpServers = Environment.CurrentDirectory + @"\Tools\Scripts\HotfixDetection\DumpManagedServerToText.ps1";
+        private readonly string _exportLogsScript = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, @"Tools\Scripts\HotfixDetection\Collect-VBRLogs.ps1");
+        private readonly string _dumpServers = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, @"Tools\Scripts\HotfixDetection\DumpManagedServerToText.ps1");
 
         public static readonly string SERVERLISTFILE = "serverlist.txt";
 
