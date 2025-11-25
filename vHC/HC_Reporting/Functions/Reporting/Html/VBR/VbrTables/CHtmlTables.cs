@@ -21,6 +21,7 @@ using System.Management.Automation;
 using VeeamHealthCheck.Functions.Reporting.Html.DataFormers;
 using VeeamHealthCheck.Functions.Reporting.Html.VBR.VbrTables;
 using VeeamHealthCheck.Scrubber;
+using System.IO;
 
 
 namespace VeeamHealthCheck.Html.VBR
@@ -132,6 +133,11 @@ namespace VeeamHealthCheck.Html.VBR
                 CCsvParser csv = new();
                 var lic = csv.GetDynamicLicenseCsv();
 
+                // init / clear json license collection
+                if (CGlobals.FullReportJson == null)
+                    CGlobals.FullReportJson = new();
+                CGlobals.FullReportJson.Licenses.Clear();
+
 
                 foreach (var l in lic)
                 {
@@ -157,6 +163,33 @@ namespace VeeamHealthCheck.Html.VBR
                     s += _form.TableData(l.supportexpirationdate, "");
                     s += _form.TableData(l.cloudconnect, "");
                     s += "</tr>";
+
+                    // add to json
+                    try
+                    {
+                        CGlobals.FullReportJson.Licenses.Add(new License
+                        {
+                            LicensedTo = scrub ? _scrub.ScrubItem(l.licensedto, ScrubItemType.Item) : l.licensedto,
+                            Edition = l.edition,
+                            Status = l.status,
+                            Type = l.type,
+                            LicensedInstances = l.licensedinstances,
+                            UsedInstances = l.usedinstances,
+                            NewInstances = l.newinstances,
+                            RentalInstances = l.rentalinstances,
+                            LicensedSockets = l.licensedsockets,
+                            UsedSockets = l.usedsockets,
+                            LicensedNas = l.licensedcapacitytb,
+                            UsedNas = l.usedcapacitytb,
+                            ExpirationDate = l.expirationdate,
+                            SupportExpirationDate = l.supportexpirationdate,
+                            CloudConnect = l.cloudconnect
+                        });
+                    }
+                    catch (Exception exRow)
+                    {
+                        log.Error("Failed to add license JSON row: " + exRow.Message);
+                    }
                 }
             }
             catch (Exception e)
@@ -164,9 +197,24 @@ namespace VeeamHealthCheck.Html.VBR
                 log.Error("License Data import failed. ERROR:");
                 log.Error("\t" + e.Message);
             }
+            CGlobals.FullReportJson.LicenseSummary = summary;
             s += _form.SectionEnd(summary);
             return s;
         }
+        // helper to set a generic section in JSON aggregation
+        private void SetSection(string key, List<string> headers, List<List<string>> rows, string summary)
+        {
+            if (CGlobals.FullReportJson == null)
+                CGlobals.FullReportJson = new();
+            CGlobals.FullReportJson.Sections[key] = new HtmlSection
+            {
+                SectionName = key,
+                Headers = headers,
+                Rows = rows,
+                Summary = summary
+            };
+        }
+
         private string WriteTupleListToHtml(List<Tuple<string, string>> list)
         {
             string headers = "";
@@ -327,6 +375,30 @@ namespace VeeamHealthCheck.Html.VBR
             //if (CGlobals.RunSecReport)
             //    s += InstalledAppsTable();
             s += _form.SectionEnd(summary);
+
+            // JSON section capture (backup server core info)
+            try
+            {
+                List<string> headers = new() { "Version", "DbType", "DbHost", "ConfigBackupEnabled", "ConfigBackupLastResult", "ConfigBackupEncryption", "ConfigBackupTarget" };
+                List<List<string>> rows = new()
+                {
+                    new List<string>
+                    {
+                        b.Version,
+                        b.DbType,
+                        b.DbHostName,
+                        b.ConfigBackupEnabled ? "True" : "False",
+                        b.ConfigBackupLastResult,
+                        b.ConfigBackupEncryption ? "True" : "False",
+                        b.ConfigBackupTarget
+                    }
+                };
+                SetSection("backupServer", headers, rows, summary);
+            }
+            catch (Exception ex)
+            {
+                log.Error("Failed to capture backupServer JSON section: " + ex.Message);
+            }
             return s;
 
         }
@@ -439,6 +511,29 @@ namespace VeeamHealthCheck.Html.VBR
 
 
             s += _form.SectionEnd(summary);
+
+            // JSON section capture security summary
+            try
+            {
+                var t = _df.SecSummary();
+                List<string> headers = new() { "ImmutabilityEnabled", "TrafficEncryptionEnabled", "BackupFileEncryptionEnabled", "ConfigBackupEncryptionEnabled", "MFAEnabled" };
+                List<List<string>> rows = new()
+                {
+                    new List<string>
+                    {
+                        t.ImmutabilityEnabled ? "True" : "False",
+                        t.TrafficEncrptionEnabled ? "True" : "False",
+                        t.BackupFileEncrptionEnabled ? "True" : "False",
+                        t.ConfigBackupEncrptionEnabled ? "True" : "False",
+                        t.MFAEnabled ? "True" : "False"
+                    }
+                };
+                SetSection("securitySummary", headers, rows, summary);
+            }
+            catch (Exception ex)
+            {
+                log.Error("Failed to capture securitySummary JSON section: " + ex.Message);
+            }
 
             return s;
         }
@@ -560,6 +655,19 @@ namespace VeeamHealthCheck.Html.VBR
             }
 
             s += _form.SectionEnd(summary);
+
+            // JSON capture server summary
+            try
+            {
+                var list = _df.ServerSummaryToXml();
+                List<string> headers = new() { "ServerType", "Count" };
+                List<List<string>> rows = list.Select(d => new List<string> { d.Key, d.Value.ToString() }).ToList();
+                SetSection("serverSummary", headers, rows, summary);
+            }
+            catch (Exception ex)
+            {
+                log.Error("Failed to capture serverSummary JSON section: " + ex.Message);
+            }
             return s;
         }
         public string AddJobSummaryTable(bool scrub)
@@ -607,6 +715,22 @@ namespace VeeamHealthCheck.Html.VBR
                 log.Error("\t" + e.Message);
             }
             s += _form.SectionEnd(summary);
+
+            // JSON job summary
+            try
+            {
+                CJobSummaryTable st = new();
+                var list = st.JobSummaryTable();
+                int totalJobs = list.Sum(x => x.Value);
+                List<string> headers = new() { "JobType", "Count" };
+                List<List<string>> rows = list.Where(d => d.Value > 0).Select(d => new List<string> { d.Key, d.Value.ToString() }).ToList();
+                rows.Add(new List<string> { "Total Jobs", totalJobs.ToString() });
+                SetSection("jobSummary", headers, rows, summary);
+            }
+            catch (Exception ex)
+            {
+                log.Error("Failed to capture jobSummary JSON section: " + ex.Message);
+            }
             return s;
         }
 
@@ -655,6 +779,20 @@ namespace VeeamHealthCheck.Html.VBR
             }
 
             s += _form.SectionEnd(summary);
+
+            // JSON missing jobs
+            try
+            {
+                CJobSummaryTable st = new();
+                Dictionary<string, int> types = st.JobSummaryTable();
+                List<string> headers = new() { "MissingJobType" };
+                List<List<string>> rows = types.Where(t => t.Value == 0).Select(t => new List<string> { t.Key }).ToList();
+                SetSection("missingJobs", headers, rows, summary);
+            }
+            catch (Exception ex)
+            {
+                log.Error("Failed to capture missingJobs JSON section: " + ex.Message);
+            }
             return s;
         }
         public string AddProtectedWorkLoadsTable(bool scrub)
@@ -842,19 +980,70 @@ namespace VeeamHealthCheck.Html.VBR
                 log.Error("\t" + e.Message);
             }
             s += _form.SectionEnd(summary);
-            //try
-            //{
-            //    CProtectedWorkloads cProtectedWorkloads = new();
-            //    NasSourceInfo n = new();
 
-            //    cProtectedWorkloads.nasWorkloads = n.NasTable().nasWorkloads;
-            //    s += DumpJsonToScript(cProtectedWorkloads, "NasTable");
-            //}
-            //catch (Exception e)
-            //{
-            //    log.Error("Failed to add NAS table to HTML report", false);
-            //    log.Error(e.Message, false);
-            //}
+            // JSON protected workloads
+            try
+            {
+                // VMware stats
+                int viTotal = _df._viProtectedNames.Distinct().Count() + _df._viNotProtectedNames.Distinct().Count();
+                int viProtected = _df._viProtectedNames.Distinct().Count();
+                int viUnprotected = _df._viNotProtectedNames.Distinct().Count();
+                int viDupes = _df._viDupes;
+
+                // HV stats
+                int hvTotal = _df._hvProtectedNames.Distinct().Count() + _df._hvNotProtectedNames.Distinct().Count();
+                int hvProtected = _df._hvProtectedNames.Distinct().Count();
+                int hvUnprotected = _df._hvNotProtectedNames.Distinct().Count();
+                int hvDupes = _df._hvDupes;
+
+                // Physical stats
+                int physVmProtectedByPhys = _df._vmProtectedByPhys.Distinct().Count();
+                int physTotal = _df._physNotProtNames.Distinct().Count() + _df._physProtNames.Distinct().Count();
+                int physProtected = _df._physProtNames.Distinct().Count();
+                int physUnprotected = _df._physNotProtNames.Distinct().Count();
+
+                List<string> headers = new() { "WorkloadType", "Total", "Protected", "Unprotected", "Duplicates" };
+                List<List<string>> rows = new()
+                {
+                    new List<string> { "VMware", viTotal.ToString(), viProtected.ToString(), viUnprotected.ToString(), viDupes.ToString() },
+                    new List<string> { "Hyper-V", hvTotal.ToString(), hvProtected.ToString(), hvUnprotected.ToString(), hvDupes.ToString() },
+                    new List<string> { "Physical", physTotal.ToString(), physProtected.ToString(), physUnprotected.ToString(), "N/A" },
+                    new List<string> { "PhysicalVMsProtected", physVmProtectedByPhys.ToString(), "N/A", "N/A", "N/A" }
+                };
+
+                // Add NAS & Entra if available
+                try
+                {
+                    CProtectedWorkloads cProtectedWorkloads = new();
+                    NasSourceInfo n = new();
+                    cProtectedWorkloads.nasWorkloads = n.NasTable().nasWorkloads;
+                    
+                    foreach (var load in cProtectedWorkloads.nasWorkloads)
+                    {
+                        rows.Add(new List<string> { $"NAS-{load.FileShareType}", load.TotalShareSize, load.TotalFilesCount.ToString(), load.TotalFoldersCount.ToString(), "N/A" });
+                    }
+                }
+                catch { }
+
+                try
+                {
+                    CProtectedWorkloads cProtectedWorkloads = new();
+                    CEntraTenants n = new();
+                    cProtectedWorkloads.entraWorkloads = n.EntraTable().entraWorkloads;
+                    
+                    foreach (var load in cProtectedWorkloads.entraWorkloads)
+                    {
+                        rows.Add(new List<string> { $"Entra-{load.TenantName}", load.CacheRepoName, "N/A", "N/A", "N/A" });
+                    }
+                }
+                catch { }
+
+                SetSection("protectedWorkloads", headers, rows, summary);
+            }
+            catch (Exception ex)
+            {
+                log.Error("Failed to capture protectedWorkloads JSON section: " + ex.Message);
+            }
             return s;
         }
         public string AddManagedServersTable(bool scrub)
@@ -924,6 +1113,34 @@ namespace VeeamHealthCheck.Html.VBR
             }
 
             s += _form.SectionEnd(summary);
+
+            // JSON managed servers
+            try
+            {
+                var list = _df.ServerXmlFromCsv(scrub);
+                List<string> headers = new() { "Name", "Cores", "Ram", "Type", "OsInfo", "ApiVersion", "ProtectedVms", "NotProtectedVms", "TotalVms", "IsProxy", "IsRepo", "IsWan", "IsUnavailable" };
+                List<List<string>> rows = list.Select(d => new List<string>
+                {
+                    d.Name,
+                    d.Cores.ToString(),
+                    d.Ram.ToString(),
+                    d.Type,
+                    d.OsInfo,
+                    d.ApiVersion,
+                    d.ProtectedVms.ToString(),
+                    d.NotProtectedVms.ToString(),
+                    d.TotalVms.ToString(),
+                    d.IsProxy ? "True" : "False",
+                    d.IsRepo ? "True" : "False",
+                    d.IsWan ? "True" : "False",
+                    d.IsUnavailable.ToString()
+                }).ToList();
+                SetSection("managedServers", headers, rows, summary);
+            }
+            catch (Exception ex)
+            {
+                log.Error("Failed to capture managedServers JSON section: " + ex.Message);
+            }
             return s;
         }
         public string SerializeToJson(object obj)
@@ -970,6 +1187,19 @@ namespace VeeamHealthCheck.Html.VBR
                 log.Error("\t" + e.Message);
             }
             s += _form.SectionEnd(summary);
+
+            // JSON reg keys
+            try
+            {
+                var list = _df.RegOptions();
+                List<string> headers = new() { "Key", "Value" };
+                List<List<string>> rows = list.Select(kv => new List<string> { kv.Key, kv.Value }).ToList();
+                SetSection("regKeys", headers, rows, summary);
+            }
+            catch (Exception ex)
+            {
+                log.Error("Failed to capture regKeys JSON section: " + ex.Message);
+            }
             return s;
         }
         public string AddProxyTable(bool scrub)
@@ -1043,6 +1273,23 @@ namespace VeeamHealthCheck.Html.VBR
                 log.Error("\t" + e.Message);
             }
             s += _form.SectionEnd(summary);
+
+            // JSON proxies
+            try
+            {
+                var list = _df.ProxyXmlFromCsv(scrub);
+                List<string> headers = new() { "Name", "Type", "Tasks", "Cores", "Ram", "IsOnHost", "TransportMode", "NetBufferSize", "MaxConcurrentJobs", "Host", "IsHvOffload" };
+                // mapping indices from original array
+                List<List<string>> rows = list.Select(d => new List<string>
+                {
+                    d[0], d[1], d[2], d[3], d[4], d[6], d[7], d[8], d[9], d[10], d[11]
+                }).ToList();
+                SetSection("proxies", headers, rows, summary);
+            }
+            catch (Exception ex)
+            {
+                log.Error("Failed to capture proxies JSON section: " + ex.Message);
+            }
             return s;
         }
         public string AddMultiRoleTable(bool scrub)
@@ -1193,6 +1440,35 @@ namespace VeeamHealthCheck.Html.VBR
                 log.Error("\t" + e.Message);
             }
             s += _form.SectionEnd(summary);
+
+            // JSON SOBR
+            try
+            {
+                var list = _df.SobrInfoToXml(scrub) ?? new List<CSobrTypeInfos>();
+                List<string> headers = new() { "Name", "ExtentCount", "JobCount", "PolicyType", "EnableCapacityTier", "CapacityTierCopy", "CapacityTierMove", "ArchiveTierEnabled", "UsePerVMFiles", "CapTierType", "ImmutableEnabled", "ImmutablePeriod", "SizeLimitEnabled", "SizeLimit" };
+                List<List<string>> rows = list.Select(d => new List<string>
+                {
+                    d.Name,
+                    d.ExtentCount.ToString(),
+                    d.JobCount.ToString(),
+                    d.PolicyType,
+                    d.EnableCapacityTier ? "True" : "False",
+                    d.CapacityTierCopyPolicyEnabled ? "True" : "False",
+                    d.CapacityTierMovePolicyEnabled ? "True" : "False",
+                    d.ArchiveTierEnabled ? "True" : "False",
+                    d.UsePerVMBackupFiles ? "True" : "False",
+                    d.CapTierType,
+                    d.ImmuteEnabled ? "True" : "False",
+                    d.ImmutePeriod,
+                    d.SizeLimitEnabled ? "True" : "False",
+                    d.SizeLimit
+                }).ToList();
+                SetSection("sobr", headers, rows, summary);
+            }
+            catch (Exception ex)
+            {
+                log.Error("Failed to capture sobr JSON section: " + ex.Message);
+            }
             return s;
         }
         public string AddSobrExtTable(bool scrub)
@@ -1295,6 +1571,37 @@ _form.TableHeader(VbrLocalizationHelper.SbrExt15, VbrLocalizationHelper.SbrExt15
                 log.Error("\t" + e.Message);
             }
             s += _form.SectionEnd(summary);
+
+            // JSON extents
+            try
+            {
+                var list = _df.ExtentXmlFromCsv(scrub) ?? new List<CRepository>();
+                List<string> headers = new() { "Name", "SobrName", "MaxTasks", "Cores", "Ram", "IsAutoGate", "Host", "Path", "FreeSpace", "TotalSpace", "FreeSpacePercent", "IsDecompress", "AlignBlocks", "IsRotatedDrives", "IsImmutabilitySupported", "Type" };
+                List<List<string>> rows = list.Select(d => new List<string>
+                {
+                    d.Name,
+                    d.SobrName,
+                    d.MaxTasks.ToString(),
+                    d.Cores.ToString(),
+                    d.Ram.ToString(),
+                    d.IsAutoGate ? "True" : "False",
+                    d.Host,
+                    d.Path,
+                    d.FreeSpace.ToString(),
+                    d.TotalSpace.ToString(),
+                    d.FreeSpacePercent.ToString(),
+                    d.IsDecompress ? "True" : "False",
+                    d.AlignBlocks ? "True" : "False",
+                    d.IsRotatedDrives ? "True" : "False",
+                    d.IsImmutabilitySupported ? "True" : "False",
+                    d.Type
+                }).ToList();
+                SetSection("extents", headers, rows, summary);
+            }
+            catch (Exception ex)
+            {
+                log.Error("Failed to capture extents JSON section: " + ex.Message);
+            }
             return s;
         }
         public string AddRepoTable(bool scrub)
@@ -1393,6 +1700,38 @@ _form.TableHeader(VbrLocalizationHelper.SbrExt15, VbrLocalizationHelper.SbrExt15
                 log.Error("\t" + e.Message);
             }
             s += _form.SectionEnd(summary);
+
+            // JSON repos
+            try
+            {
+                var list = _df.RepoInfoToXml(scrub) ?? new List<CRepository>();
+                List<string> headers = new() { "Name", "JobCount", "MaxTasks", "Cores", "Ram", "IsAutoGate", "Host", "Path", "FreeSpace", "TotalSpace", "FreeSpacePercent", "IsPerVmBackupFiles", "IsDecompress", "AlignBlocks", "IsRotatedDrives", "IsImmutabilitySupported", "Type" };
+                List<List<string>> rows = list.Select(d => new List<string>
+                {
+                    d.Name,
+                    d.JobCount.ToString(),
+                    d.MaxTasks.ToString(),
+                    d.Cores.ToString(),
+                    d.Ram.ToString(),
+                    d.IsAutoGate ? "True" : "False",
+                    d.Host,
+                    d.Path,
+                    d.FreeSpace.ToString(),
+                    d.TotalSpace.ToString(),
+                    d.FreeSpacePercent.ToString(),
+                    d.IsPerVmBackupFiles ? "True" : "False",
+                    d.IsDecompress ? "True" : "False",
+                    d.AlignBlocks ? "True" : "False",
+                    d.IsRotatedDrives ? "True" : "False",
+                    d.IsImmutabilitySupported ? "True" : "False",
+                    d.Type
+                }).ToList();
+                SetSection("repos", headers, rows, summary);
+            }
+            catch (Exception ex)
+            {
+                log.Error("Failed to capture repos JSON section: " + ex.Message);
+            }
             return s;
         }
         public string AddJobConTable(bool scrub)
@@ -1436,6 +1775,19 @@ _form.TableHeader(VbrLocalizationHelper.SbrExt15, VbrLocalizationHelper.SbrExt15
             }
 
             s += _form.SectionEnd(summary);
+
+            // JSON job concurrency
+            try
+            {
+                var stuff = _df.JobConcurrency(true);
+                List<string> headers = new() { "TimeWindow", "Values" };
+                List<List<string>> rows = stuff.Select(stu => new List<string> { stu.Key.ToString(), string.Join(",", stu.Value) }).ToList();
+                SetSection("jobConcurrency", headers, rows, summary);
+            }
+            catch (Exception ex)
+            {
+                log.Error("Failed to capture jobConcurrency JSON section: " + ex.Message);
+            }
             return s;
         }
         public string AddTaskConTable(bool scrub)
@@ -1478,6 +1830,19 @@ _form.TableHeader(VbrLocalizationHelper.SbrExt15, VbrLocalizationHelper.SbrExt15
 
 
             s += _form.SectionEnd(summary);
+
+            // JSON task concurrency
+            try
+            {
+                var stuff = _df.JobConcurrency(false);
+                List<string> headers = new() { "TimeWindow", "Values" };
+                List<List<string>> rows = stuff.Select(stu => new List<string> { stu.Key.ToString(), string.Join(",", stu.Value) }).ToList();
+                SetSection("taskConcurrency", headers, rows, summary);
+            }
+            catch (Exception ex)
+            {
+                log.Error("Failed to capture taskConcurrency JSON section: " + ex.Message);
+            }
             return s;
         }
         public string AddJobSessSummTable(bool scrub)
@@ -1565,7 +1930,62 @@ _form.TableHeader(VbrLocalizationHelper.SbrExt15, VbrLocalizationHelper.SbrExt15
 
             s += _form.SectionEnd(summary);
             log.Info("Job Session Summary Table added");
+
+            // JSON job session summary
+            try
+            {
+                var stuff = _df.ConvertJobSessSummaryToXml(scrub);
+                List<string> headers = new() { "JobName", "ItemCount", "MinJobTime", "MaxJobTime", "AvgJobTime", "SessionCount", "Fails", "Retries", "SuccessRate", "AvgBackupSize", "MaxBackupSize", "AvgDataSize", "MaxDataSize", "AvgChangeRate", "WaitCount", "MaxWait", "AvgWait", "JobTypes" };
+                List<List<string>> rows = stuff.Select(stu => new List<string>
+                {
+                    stu.JobName,
+                    stu.ItemCount.ToString(),
+                    stu.MinJobTime,
+                    stu.MaxJobTime,
+                    stu.AvgJobTime,
+                    stu.sessionCount.ToString(),
+                    stu.Fails.ToString(),
+                    stu.Retries.ToString(),
+                    stu.SuccessRate.ToString(),
+                    stu.AvgBackupSize.ToString(),
+                    stu.MaxBackupSize.ToString(),
+                    stu.AvgDataSize.ToString(),
+                    stu.MaxDataSize.ToString(),
+                    stu.AvgChangeRate.ToString(),
+                    stu.waitCount.ToString(),
+                    stu.maxWait,
+                    stu.avgwait,
+                    CJobTypesParser.GetJobType(stu.JobType)
+                }).ToList();
+                SetSection("jobSessionSummary", headers, rows, summary);
+            }
+            catch (Exception ex)
+            {
+                log.Error("Failed to capture jobSessionSummary JSON section: " + ex.Message);
+            }
             return s;
+        }
+
+        // Export the aggregated JSON report to a file
+        public string ExportJson(string outputPath, bool indented = true)
+        {
+            try
+            {
+                if (string.IsNullOrWhiteSpace(outputPath))
+                {
+                    outputPath = Path.Combine(CVariables.vb365dir, "FullReport.json");
+                }
+                var options = new JsonSerializerOptions { WriteIndented = indented };
+                string json = JsonSerializer.Serialize(CGlobals.FullReportJson, options);
+                File.WriteAllText(outputPath, json);
+                log.Info("JSON report exported to: " + outputPath);
+                return outputPath;
+            }
+            catch (Exception ex)
+            {
+                log.Error("Failed to export JSON report: " + ex.Message);
+                return string.Empty;
+            }
         }
         public string AddJobSessSummTableByJob(bool scrub)
         {
@@ -2227,6 +2647,74 @@ _form.TableHeader(VbrLocalizationHelper.SbrExt15, VbrLocalizationHelper.SbrExt15
 
 
             s += _form.SectionEnd(summary);
+
+            // JSON job info capture
+            try
+            {
+                CCsvParser csvparser = new();
+                var source = csvparser.JobCsvParser().ToList();
+                List<string> headers = new() { "JobName", "RepoName", "SourceSizeGB", "OnDiskGB", "RetentionScheme", "RetainDays", "Encrypted", "JobType", "CompressionLevel", "BlockSize", "GfsEnabled", "GfsDetails", "ActiveFullEnabled", "SyntheticFullEnabled", "BackupChainType", "IndexingEnabled" };
+                List<List<string>> rows = new();
+
+                foreach (var job in source)
+                {
+                    string jobName = scrub ? CGlobals.Scrubber.ScrubItem(job.Name, ScrubItemType.Job) : job.Name;
+                    string repoName = scrub ? CGlobals.Scrubber.ScrubItem(job.RepoName, ScrubItemType.Repository) : job.RepoName;
+                    
+                    double sourceSizeGB = Math.Round(job.OriginalSize / 1024.0 / 1024.0 / 1024.0, 2);
+                    string compressionLevel = job.CompressionLevel switch
+                    {
+                        "9" => "Extreme",
+                        "6" => "High",
+                        "5" => "Optimal",
+                        "4" => "Dedupe-Friendly",
+                        "0" => "None",
+                        _ => job.CompressionLevel
+                    };
+                    
+                    string blockSize = job.BlockSize switch
+                    {
+                        "KbBlockSize1024" => "1 MB",
+                        "KbBlockSize512" => "512 KB",
+                        "KbBlockSize256" => "256 KB",
+                        "KbBlockSize4096" => "4 MB",
+                        "KbBlockSize8192" => "8 MB",
+                        _ => job.BlockSize
+                    };
+
+                    bool gfsEnabled = job.GfsMonthlyEnabled || job.GfsWeeklyIsEnabled || job.GfsYearlyEnabled;
+                    string gfsDetails = gfsEnabled ? $"Weekly:{job.GfsWeeklyCount},Monthly:{job.GfsMonthlyCount},Yearly:{job.GfsYearlyCount}" : "";
+                    bool syntheticFull = job.Algorithm == "Increment" && job.TransformFullToSyntethic;
+                    string backupChainType = job.Algorithm == "Syntethic" ? "Reverse Incremental" : "Forward Incremental";
+                    bool indexingEnabled = job.IndexingType != "None";
+
+                    rows.Add(new List<string>
+                    {
+                        jobName,
+                        repoName,
+                        sourceSizeGB.ToString(),
+                        "0", // OnDisk calculated separately for NAS
+                        job.RetentionType == "Cycles" ? "Points" : job.RetentionType,
+                        job.RetainDaysToKeep,
+                        job.StgEncryptionEnabled,
+                        CJobTypesParser.GetJobType(job.JobType),
+                        compressionLevel,
+                        blockSize,
+                        gfsEnabled.ToString(),
+                        gfsDetails,
+                        job.EnableFullBackup.ToString(),
+                        syntheticFull.ToString(),
+                        backupChainType,
+                        indexingEnabled.ToString()
+                    });
+                }
+
+                SetSection("jobInfo", headers, rows, summary);
+            }
+            catch (Exception ex)
+            {
+                log.Error("Failed to capture jobInfo JSON section: " + ex.Message);
+            }
             return s;
         }
         private string SetJobSessionsHeaders()

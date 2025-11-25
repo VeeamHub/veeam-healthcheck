@@ -78,6 +78,9 @@ namespace VeeamHealthCheck.Shared
         public static bool IsReconDetected = false;
         public static DateTime LastReconRun = DateTime.MinValue;
 
+        // JSON aggregation object for full report output
+        internal static CFullReportJson FullReportJson = new();
+
         public CGlobals()
         {
 

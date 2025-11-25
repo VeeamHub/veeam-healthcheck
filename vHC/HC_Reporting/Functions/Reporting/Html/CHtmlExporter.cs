@@ -1,152 +1,128 @@
-﻿// Copyright (c) 2021, Adam Congdon <adam.congdon2@gmail.com>
-// MIT License
+﻿// <copyright file="CHtmlExporter.cs" company="adamcongdon.net">
+// Copyright (c) 2024 adamcongdon.net. All rights reserved.
+// </copyright>
+
 using System;
 using System.Diagnostics;
 using System.IO;
+using System.Text.Json;
 using System.Windows;
 using System.Windows.Controls;
 using VeeamHealthCheck.Functions.Collection.LogParser;
+using VeeamHealthCheck.Functions.Reporting.Html.Exportables;
 using VeeamHealthCheck.Scrubber;
 using VeeamHealthCheck.Shared;
 using VeeamHealthCheck.Shared.Logging;
-using VeeamHealthCheck.Functions.Reporting.Html.Exportables;
 
 namespace VeeamHealthCheck.Functions.Reporting.Html
 {
-    public class CHtmlExporter
-    {
+    /// <summary>
+    /// Provides methods for exporting Veeam Health Check reports in HTML, PDF, and JSON formats.
+    /// </summary>
+        public class CHtmlExporter
+        {
+        private readonly string htmlName = "Veeam Health Check Report";
         private CLogger log = CGlobals.Logger;
-        //private readonly string _testFile;
-        private readonly string _htmlName = "Veeam Health Check Report";
-        //private readonly string _htmlSecurityReportName = "Veeam Healch Check Security Report";
-
 
         // path settings
-        private string _basePath = CGlobals._desiredPath;
-        private string _anonPath = CGlobals._desiredPath + CVariables._safeSuffix;
-        private string _origPath = CGlobals._desiredPath + CVariables._unsafeSuffix;
+        private string basePath = CGlobals._desiredPath;
+        private string anonPath = CGlobals._desiredPath + CVariables._safeSuffix;
+        private string origPath = CGlobals._desiredPath + CVariables._unsafeSuffix;
 
-
-        private string _backupServerName;
-        private string _latestReport;
-        private CScrubHandler _scrubber;
-        private string _outPath = CVariables.unsafeDir;
+        private string backupServerName;
+        private string latestReport;
 
         public CHtmlExporter(string serverName)
         {
-            CheckOutputDirsExist();
-            //_testFile = xmlFileName;
-            _backupServerName = serverName;
-            if (CGlobals.Scrub)
-                _scrubber = CGlobals.Scrubber;
+            this.CheckOutputDirsExist();
+
+            // _testFile = xmlFileName;
+            this.backupServerName = serverName;
+
         }
+
         private void CheckOutputDirsExist()
         {
-            if (!Directory.Exists(_basePath))
-                Directory.CreateDirectory(_basePath);
-            if (!Directory.Exists(_anonPath))
-                Directory.CreateDirectory(_anonPath);
-            if (!Directory.Exists(_origPath))
-                Directory.CreateDirectory(_origPath);
-        }
-
-        public int ExportVb365Html(string htmlString, bool scrub)
-        {
-            log.Info("writing HTML to file...");
-
-
-            DateTime dateTime = DateTime.Now;
-            string n = CGlobals._desiredPath;
-            string installID = "";
-            try
+            if (!Directory.Exists(this.basePath))
             {
-                if (!string.IsNullOrEmpty(CLogOptions.INSTALLID))
-                    installID = CLogOptions.INSTALLID.Substring(0, 7);
+                Directory.CreateDirectory(this.basePath);
             }
-            catch (Exception e) { installID = "anon"; }
-            if (!Directory.Exists(n))
-                Directory.CreateDirectory(n);
-            string htmlCore = "";
-            if (scrub)
-                htmlCore = "\\" + _htmlName + "_VB365" + "_" + installID + dateTime.ToString("_yyyy.MM.dd.HHmmss") + ".html";
-            else if (scrub)
-                htmlCore = "\\" + _htmlName + "_VB365" + "_" + _backupServerName + dateTime.ToString("_yyyy.MM.dd.HHmmss") + ".html";
-            string name = n + htmlCore;
-            _latestReport = SetReportNameAndPath(scrub, "VB365");
 
-            WriteHtmlToFile(htmlString);
-            log.Info("writing HTML to file..done!");
-            //OpenHtml();
-            OpenExplorer();
-            OpenHtmlIfEnabled(CGlobals.OpenHtml);
-            return 0;
+            if (!Directory.Exists(this.anonPath))
+            {
+                Directory.CreateDirectory(this.anonPath);
+            }
 
-
-
-
+            if (!Directory.Exists(this.origPath))
+            {
+                Directory.CreateDirectory(this.origPath);
+            }
         }
+
         public int ExportHtmlVb365(string htmlString, bool scrub)
         {
 
-
             try
             {
-                log.Info("exporting xml to html");
-                _latestReport = SetReportNameAndPath(scrub, "VB365");
-                WriteHtmlToFile(htmlString);
-                log.Info("exporting xml to html..done!");
+                this.log.Info("exporting xml to html");
+                this.latestReport = this.SetReportNameAndPath(scrub, "VB365");
+                this.WriteHtmlToFile(htmlString);
+                this.log.Info("exporting xml to html..done!");
 
-                //test export to PDF:
+                // test export to PDF:
                 if (!scrub && CGlobals.EXPORTPDF)
                 {
-                    ExportHtmlStringToPDF(htmlString);
+                    this.ExportHtmlStringToPDF(htmlString);
 
                 }
 
-                OpenHtmlIfEnabled(CGlobals.OpenHtml);
+                this.OpenHtmlIfEnabled(CGlobals.OpenHtml);
                 return 0;
             }
             catch (Exception e)
             {
-                log.Error("Failed at HTML Export:");
-                log.Error("\t" + e.Message); return 1;
+                this.log.Error("Failed at HTML Export:");
+                this.log.Error("\t" + e.Message); return 1;
             }
 
-
         }
+
         public int ExportVbrHtml(string htmlString, bool scrub)
         {
-            
-
             try
             {
-                log.Info("exporting xml to html");
-                _latestReport = SetReportNameAndPath(scrub, "VBR");
-                WriteHtmlToFile(htmlString);
-                log.Info("exporting xml to html..done!");
+                this.log.Info("exporting xml to html");
+                this.latestReport = this.SetReportNameAndPath(scrub, "VBR");
+                this.WriteHtmlToFile(htmlString);
+                this.log.Info("exporting xml to html..done!");
 
-                //test export to PDF:
+                // Export JSON report alongside HTML
+                this.ExportJsonReport(scrub);
+
+                // test export to PDF:
                 if (!scrub && CGlobals.EXPORTPDF)
                 {
-                   ExportHtmlStringToPDF(htmlString);
+                    this.ExportHtmlStringToPDF(htmlString);
                 }
 
-                OpenHtmlIfEnabled(CGlobals.OpenHtml);
+                this.OpenHtmlIfEnabled(CGlobals.OpenHtml);
                 return 0;
             }
-            catch(Exception e)
+            catch (Exception e)
             {
-                log.Error("Failed at HTML Export:");
-                log.Error("\t" +e.Message); return 1;
+                this.log.Error("Failed at HTML Export:");
+                this.log.Error("\t" + e.Message); return 1;
             }
-            
 
         }
+
         private void ExportHtmlStringToPDF(string htmlString)
         {
             HtmlToPdfConverter pdf = new HtmlToPdfConverter();
+
             // find all instances of "display: none;" and replace with "display: block;" in the htmlString
             string htmlShowAll = htmlString.Replace("style=\"display: none\">", "style=\"display: block\">");
+
             // find all instances of class="collapsible classBtn" and replace with class="collapsible classBtn active"
             htmlShowAll = htmlShowAll.Replace("collapsible classBtn", "collapsible classBtn active");
 
@@ -155,34 +131,31 @@ namespace VeeamHealthCheck.Functions.Reporting.Html
 
             htmlShowAll = htmlShowAll.Replace("overflow: hidden;", "overflow: visible;");
 
+            // replace font-family: Tahoma with font-family: noto sans symbols
+            // htmlShowAll = htmlShowAll.Replace("font-family: Tahoma !important;", "font-family: 'NotoSansSymbols';\r\n            src: url('https://fonts.googleapis.com/css2?family=Noto+Sans+Symbols&display=swap');");
 
-            //replace font-family: Tahoma with font-family: noto sans symbols
-            //htmlShowAll = htmlShowAll.Replace("font-family: Tahoma !important;", "font-family: 'NotoSansSymbols';\r\n            src: url('https://fonts.googleapis.com/css2?family=Noto+Sans+Symbols&display=swap');");
-
-            //replace green checkmark with checkmark:
+            // replace green checkmark with checkmark:
             htmlShowAll = htmlShowAll.Replace("&#9989;", "✓");
             htmlShowAll = htmlShowAll.Replace("&#9744;", "");
             htmlShowAll = htmlShowAll.Replace("⚠️", "(!)");
             htmlShowAll = htmlShowAll.Replace("&#9432;", "ℹ️");
 
-
-
-            pdf.ConvertHtmlToPdf(htmlShowAll, _latestReport.Replace(".html", ".pdf"));
+            pdf.ConvertHtmlToPdf(htmlShowAll, this.latestReport.Replace(".html", ".pdf"));
             pdf.Dispose();
 
-            //var htmlToDocx = new CHtmlToDocx();
-            //htmlToDocx.ExportHtmlToDocx(htmlShowAll, _latestReport.Replace(".html", ".docx"));
+            // var htmlToDocx = new CHtmlToDocx();
+            // htmlToDocx.ExportHtmlToDocx(htmlShowAll, _latestReport.Replace(".html", ".docx"));
         }
 
         public int ExportVbrSecurityHtml(string htmlString, bool scrub)
         {
-            log.Info("exporting xml to html");
-            _latestReport = SetReportNameAndPath(scrub, "VBR_Security");
+            this.log.Info("exporting xml to html");
+            this.latestReport = this.SetReportNameAndPath(scrub, "VBR_Security");
 
-            WriteHtmlToFile(htmlString);
-            log.Info("exporting xml to html..done!");
+            this.WriteHtmlToFile(htmlString);
+            this.log.Info("exporting xml to html..done!");
 
-            OpenHtmlIfEnabled(CGlobals.OpenHtml);
+            this.OpenHtmlIfEnabled(CGlobals.OpenHtml);
 
             return 0;
 
@@ -190,9 +163,34 @@ namespace VeeamHealthCheck.Functions.Reporting.Html
         }
         private void WriteHtmlToFile(string htmlString)
         {
-            using (StreamWriter sw = new StreamWriter(_latestReport))
+            using (StreamWriter sw = new StreamWriter(this.latestReport))
             {
                 sw.Write(htmlString);
+            }
+        }
+
+        private void ExportJsonReport(bool scrub)
+        {
+            try
+            {
+                if (CGlobals.FullReportJson == null)
+                {
+                    this.log.Warning("JSON report data not available, skipping JSON export");
+                    return;
+                }
+
+                string jsonPath = this.latestReport.Replace(".html", ".json");
+                this.log.Info("Exporting JSON report to: " + jsonPath);
+
+                var options = new JsonSerializerOptions { WriteIndented = true };
+                string json = JsonSerializer.Serialize(CGlobals.FullReportJson, options);
+                File.WriteAllText(jsonPath, json);
+
+                this.log.Info("JSON report exported successfully");
+            }
+            catch (Exception ex)
+            {
+                this.log.Error("Failed to export JSON report: " + ex.Message);
             }
         }
 
@@ -207,19 +205,19 @@ namespace VeeamHealthCheck.Functions.Reporting.Html
 
                 if (scrub)
                 {
-                    installID = TrySetInstallId(CLogOptions.INSTALLID);
+                    installID = this.TrySetInstallId(CLogOptions.INSTALLID);
 
-                    htmlCore = _anonPath + "\\" + _htmlName + "_" + vbrOrVb365 + "_" + installID + dateTime.ToString("_yyyy.MM.dd.HHmmss") + ".html";
+                    htmlCore = this.anonPath + "\\" + this.htmlName + "_" + vbrOrVb365 + "_" + installID + dateTime.ToString("_yyyy.MM.dd.HHmmss") + ".html";
 
                 }
                 else if (!scrub)
                 {
-                    htmlCore = _origPath + "\\" + _htmlName + "_" + vbrOrVb365 + "_" + _backupServerName + dateTime.ToString("_yyyy.MM.dd.HHmmss") + ".html";
+                    htmlCore = this.origPath + "\\" + this.htmlName + "_" + vbrOrVb365 + "_" + this.backupServerName + dateTime.ToString("_yyyy.MM.dd.HHmmss") + ".html";
                     //log.Warning("htmlcore = " + htmlCore, false);
                 }
                 return htmlCore;
             }
-            catch(Exception ex)
+            catch (Exception ex)
             {
                 //log.Debug("Failed to set report name & path");
                 //log.Debug(ex.Message);
@@ -237,48 +235,50 @@ namespace VeeamHealthCheck.Functions.Reporting.Html
                 //log.Debug("\t" + );
                 return null;
             }
-            
+
         }
         private string TrySetInstallId(string id)
         {
-            log.Debug("InstallID String = " + id);
+            this.log.Debug("InstallID String = " + id);
             try
             {
 
-            if (!string.IsNullOrEmpty(id))
-            {
-                return id.Substring(0, 7);
+                if (!string.IsNullOrEmpty(id))
+                {
+                    return id.Substring(0, 7);
+                }
+                else
+                {
+                    return "anon";
+                }
             }
-            else
+            catch (Exception ex)
             {
-                return "anon";
-            }
-            }
-            catch(Exception ex)
-            {
-                log.Error("Failed to get install ID.");
-                log.Error(ex.Message);
+                this.log.Error("Failed to get install ID.");
+                this.log.Error(ex.Message);
                 return "anon";
             }
         }
         public void OpenExplorer()
         {
             if (CGlobals.OpenExplorer)
+            {
                 Process.Start("explorer.exe", CVariables.desiredDir);
+            }
         }
         public int OpenHtmlIfEnabled(bool open)
         {
             if (open)
             {
-                log.Info("opening html");
-                ExecBrowser();
+                this.log.Info("opening html");
+                this.ExecBrowser();
 
-                log.Info("opening html..done!");
+                this.log.Info("opening html..done!");
                 return 0;
             }
             else
             {
-                log.Warning("HTML not opened. Option not enabled");
+                this.log.Warning("HTML not opened. Option not enabled");
                 return 1;
 
             }
@@ -290,7 +290,7 @@ namespace VeeamHealthCheck.Functions.Reporting.Html
                 WebBrowser w1 = new();
 
                 var p = new Process();
-                p.StartInfo = new ProcessStartInfo(_latestReport)
+                p.StartInfo = new ProcessStartInfo(this.latestReport)
                 {
                     UseShellExecute = true
                 };
