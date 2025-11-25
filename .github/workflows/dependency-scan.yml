@@ -1,0 +1,78 @@
+name: Dependency Vulnerability Scan
+
+on:
+  push:
+    branches: [ "master", "dev" ]
+  pull_request:
+    branches: [ "master", "dev" ]
+  schedule:
+    - cron: '0 8 * * 1'  # Weekly Monday 8 AM UTC
+  workflow_dispatch:
+
+jobs:
+  dependency-review:
+    runs-on: windows-latest
+    permissions:
+      contents: read
+      pull-requests: write
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+      
+      - name: Restore dependencies
+        run: dotnet restore vHC/HC.sln
+      
+      - name: Check for vulnerable packages
+        id: vuln_check
+        continue-on-error: true
+        run: |
+          echo "## 🔒 Vulnerable Package Report" >> $env:GITHUB_STEP_SUMMARY
+          echo "" >> $env:GITHUB_STEP_SUMMARY
+          
+          $output = dotnet list vHC/HC.sln package --vulnerable --include-transitive 2>&1
+          
+          if ($output -match "no vulnerable packages") {
+            echo "✅ No vulnerable packages found" >> $env:GITHUB_STEP_SUMMARY
+            echo "vulnerable=false" >> $env:GITHUB_OUTPUT
+          } else {
+            echo "⚠️ Vulnerable packages detected:" >> $env:GITHUB_STEP_SUMMARY
+            echo '```' >> $env:GITHUB_STEP_SUMMARY
+            echo $output >> $env:GITHUB_STEP_SUMMARY
+            echo '```' >> $env:GITHUB_STEP_SUMMARY
+            echo "vulnerable=true" >> $env:GITHUB_OUTPUT
+          }
+      
+      - name: Check for outdated packages
+        run: |
+          echo "" >> $env:GITHUB_STEP_SUMMARY
+          echo "## 📦 Outdated Packages" >> $env:GITHUB_STEP_SUMMARY
+          echo "" >> $env:GITHUB_STEP_SUMMARY
+          
+          $output = dotnet list vHC/HC.sln package --outdated 2>&1
+          
+          if ($output -match "no updates") {
+            echo "✅ All packages are up to date" >> $env:GITHUB_STEP_SUMMARY
+          } else {
+            echo '```' >> $env:GITHUB_STEP_SUMMARY
+            echo $output >> $env:GITHUB_STEP_SUMMARY
+            echo '```' >> $env:GITHUB_STEP_SUMMARY
+          }
+      
+      - name: Dependency Review (PRs only)
+        if: github.event_name == 'pull_request'
+        uses: actions/dependency-review-action@v4
+        with:
+          fail-on-severity: moderate
+          comment-summary-in-pr: always
+      
+      - name: Fail if vulnerabilities found
+        if: steps.vuln_check.outputs.vulnerable == 'true'
+        run: |
+          Write-Error "Vulnerable packages detected! Please update dependencies."
+          exit 1

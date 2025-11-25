@@ -12,6 +12,11 @@ namespace VeeamHealthCheck.Functions.CredsWindow
     {
         public (string Username, string Password)? GetCreds()
         {
+            if (!string.IsNullOrEmpty(CGlobals.CredsUsername) && !string.IsNullOrEmpty(CGlobals.CredsPassword))
+            {
+                return (CGlobals.CredsUsername, CGlobals.CredsPassword);
+            }
+
             var creds = PromptForCredentials(CGlobals.REMOTEHOST);
             if (creds == null)
             {
@@ -23,22 +28,31 @@ namespace VeeamHealthCheck.Functions.CredsWindow
         }
         private (string Username, string Password)? PromptForCredentials(string host)
         {
-            var cached = CredentialStore.Get(host);
-            if (cached != null)
-                return cached;
+            if (CGlobals.UseStoredCreds)
+            {
+                var cached = CredentialStore.Get(host);
+                if (cached != null)
+                {
+                    return cached;
+                }
+            }
 
             // Show your WPF dialog here (or use your existing method)
             var dialog = new CredentialPromptWindow(host)
             {
-                Owner = System.Windows.Application.Current?.MainWindow
+                Owner = System.Windows.Application.Current?.MainWindow,
             };
             if (dialog.ShowDialog() == true)
             {
-                CredentialStore.Set(host, dialog.Username, dialog.Password);
+                if (CGlobals.UseStoredCreds)
+                {
+                    CredentialStore.Set(host, dialog.Username, dialog.Password);
+                }
+
                 return (dialog.Username, dialog.Password);
             }
+
             return null;
         }
     }
 }
-

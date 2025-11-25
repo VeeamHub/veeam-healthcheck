@@ -117,7 +117,7 @@ namespace VeeamHealthCheck.Functions.Reporting.Html
                     try
                     {
                         var records = config.BnrCsvParser();//.ToList();
-                        if(records == null)
+                        if (records == null)
                         {
                             log.Warning("BNR CSV parser returned null. Skipping version and host name setting.");
                         }
@@ -130,7 +130,14 @@ namespace VeeamHealthCheck.Functions.Reporting.Html
                             }
                             else
                             {
-                                _backupServer.Version = r2[0].Version;
+                                if (CGlobals.VBRFULLVERSION == null || CGlobals.VBRFULLVERSION == "")
+                                {
+                                    _backupServer.Version = r2[0].Version;
+                                }
+                                else
+                                {
+                                    _backupServer.Version = CGlobals.VBRFULLVERSION;
+                                }
                                 if (string.IsNullOrEmpty(_backupServer.DbHostName))
                                 {
                                     _backupServer.DbHostName = r2[0].SqlServer;
@@ -154,6 +161,7 @@ namespace VeeamHealthCheck.Functions.Reporting.Html
                         log.Error("\t" + f.Message);
                     }
                 }
+
                 try
                 {
                     _backupServer.Name = bs.Name;

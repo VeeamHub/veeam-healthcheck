@@ -24,16 +24,16 @@ namespace VeeamHealthCheck.Functions.Collection.PSCollections
 
     class PSInvoker
     {
-        private readonly string _vb365Script = Environment.CurrentDirectory + @"\Tools\Scripts\HealthCheck\VB365\Collect-VB365Data.ps1";
+        private readonly string _vb365Script = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, @"Tools\Scripts\HealthCheck\VB365\Collect-VB365Data.ps1");
 
-        private readonly string _vbrConfigScript = Environment.CurrentDirectory + @"\Tools\Scripts\HealthCheck\VBR\Get-VBRConfig.ps1";
-        private readonly string _vbrSessionScript = Environment.CurrentDirectory + @"\Tools\Scripts\HealthCheck\VBR\Get-VeeamSessionReport.ps1";
-        private readonly string _vbrSessionScriptVersion13 = Environment.CurrentDirectory + @"\Tools\Scripts\HealthCheck\VBR\Get-VeeamSessionReportVersion13.ps1";
+        private readonly string _vbrConfigScript = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, @"Tools\Scripts\HealthCheck\VBR\Get-VBRConfig.ps1");
+        private readonly string _vbrSessionScript = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, @"Tools\Scripts\HealthCheck\VBR\Get-VeeamSessionReport.ps1");
+        private readonly string _vbrSessionScriptVersion13 = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, @"Tools\Scripts\HealthCheck\VBR\Get-VeeamSessionReportVersion13.ps1");
 
-        private readonly string _nasScript = Environment.CurrentDirectory + @"\Tools\Scripts\HealthCheck\VBR\Get-NasInfo.ps1";
+        private readonly string _nasScript = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, @"Tools\Scripts\HealthCheck\VBR\Get-NasInfo.ps1");
 
-        private readonly string _exportLogsScript = Environment.CurrentDirectory + @"\Tools\Scripts\HotfixDetection\Collect-VBRLogs.ps1";
-        private readonly string _dumpServers = Environment.CurrentDirectory + @"\Tools\Scripts\HotfixDetection\DumpManagedServerToText.ps1";
+        private readonly string _exportLogsScript = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, @"Tools\Scripts\HotfixDetection\Collect-VBRLogs.ps1");
+        private readonly string _dumpServers = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, @"Tools\Scripts\HotfixDetection\DumpManagedServerToText.ps1");
 
         public static readonly string SERVERLISTFILE = "serverlist.txt";
 
@@ -188,8 +188,11 @@ namespace VeeamHealthCheck.Functions.Collection.PSCollections
             var res = new Process();
             if (CGlobals.REMOTEHOST == "")
                 CGlobals.REMOTEHOST = "localhost";
-            string argString = $"Connect-VBRServer -Server \"{CGlobals.REMOTEHOST}\"";
-            var startInfo = new ProcessStartInfo()
+            string argString = $"Import-Module Veeam.Backup.PowerShell; Connect-VBRServer -Server \"{CGlobals.REMOTEHOST}\"";
+            if (!string.IsNullOrEmpty(CGlobals.CredsUsername) && !string.IsNullOrEmpty(CGlobals.CredsPassword))
+            {
+                argString += $" -User \"{CGlobals.CredsUsername}\" -Password \"{CGlobals.CredsPassword}\"";
+            }            var startInfo = new ProcessStartInfo()
             {
                 FileName = "powershell.exe",
                 Arguments = argString,
@@ -238,7 +241,7 @@ namespace VeeamHealthCheck.Functions.Collection.PSCollections
                     }
                     errorarray.Add(errString);
                 }
-                PushPsErrorsToMainLog(errorarray);
+                this.PushPsErrorsToMainLog(errorarray);
 
                 return mfaFound;
             }
@@ -297,7 +300,7 @@ namespace VeeamHealthCheck.Functions.Collection.PSCollections
                 errorarray.Add(errString);
             }
             if (errorarray.Count > 0)
-                PushPsErrorsToMainLog(errorarray);
+                this.PushPsErrorsToMainLog(errorarray);
 
             log.Info(CMessages.PsVbrConfigProcIdDone, false);
             if (failed)
@@ -464,12 +467,13 @@ namespace VeeamHealthCheck.Functions.Collection.PSCollections
             {
                 argString =
                     $"-NoProfile -ExecutionPolicy unrestricted -file \"{scriptLocation}\" -VBRServer \"{CGlobals.REMOTEHOST}\" -VBRVersion \"{CGlobals.VBRMAJORVERSION}\" ";
-                    if(CGlobals.REMOTEEXEC ){
+                    if (CGlobals.REMOTEEXEC ){
                         CredsHandler ch = new();
                     var creds = ch.GetCreds();
                     argString += $"-User {creds.Value.Username} -Password {creds.Value.Password} ";
                     }
             }
+
             if (!string.IsNullOrEmpty(path))
             {
                 argString = $"-NoProfile -ExecutionPolicy unrestricted -file \"{scriptLocation}\" -ReportPath \"{path}\"";
@@ -479,7 +483,8 @@ namespace VeeamHealthCheck.Functions.Collection.PSCollections
             // Use the same PowerShell version failover logic as ExecutePsScriptWithFailover
             // Prefer PowerShell 7, then 5, else throw
             string exePath = null;
-            if (!string.IsNullOrEmpty(_pwshPath))
+            // if vbr version is v13 and pwsh exists, use pwsh, else use powershell
+            if (!string.IsNullOrEmpty(_pwshPath) && !(CGlobals.VBRMAJORVERSION < 13))
                 exePath = _pwshPath;
             else if (!string.IsNullOrEmpty(_powershellPath))
                 exePath = _powershellPath;

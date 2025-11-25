@@ -1,0 +1,98 @@
+name: Changelog Check
+
+on:
+  pull_request:
+    branches: [ "master" ]
+    types: [opened, synchronize, reopened]
+
+jobs:
+  changelog:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
+      
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Need full history to compare
+
+      - name: Check if ChangeLog.md was updated
+        id: changelog_check
+        run: |
+          # Get list of changed files
+          git diff --name-only origin/master...HEAD > changed_files.txt
+          
+          echo "Changed files:"
+          cat changed_files.txt
+          
+          # Check if ChangeLog.md is in the list
+          if grep -q "ChangeLog.md" changed_files.txt; then
+            echo "changelog_updated=true" >> $GITHUB_OUTPUT
+            echo "✅ ChangeLog.md was updated"
+          else
+            echo "changelog_updated=false" >> $GITHUB_OUTPUT
+            echo "⚠️ ChangeLog.md was NOT updated"
+          fi
+
+      - name: Check if code changes exist
+        id: code_check
+        run: |
+          # Check if any .cs, .csproj, or .ps1 files changed
+          if grep -E '\.(cs|csproj|ps1)$' changed_files.txt; then
+            echo "code_changed=true" >> $GITHUB_OUTPUT
+            echo "Code files were modified"
+          else
+            echo "code_changed=false" >> $GITHUB_OUTPUT
+            echo "No code files were modified"
+          fi
+
+      - name: Validate ChangeLog.md format
+        if: steps.changelog_check.outputs.changelog_updated == 'true'
+        run: |
+          echo "## 📝 ChangeLog Validation" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          
+          # Check for version header format
+          if grep -E "^## \[?[0-9]+\.[0-9]+\.[0-9]+" ChangeLog.md; then
+            echo "✅ Version header format is correct" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "⚠️ Consider adding a version header (e.g., ## [3.0.0.72])" >> $GITHUB_STEP_SUMMARY
+          fi
+          
+          # Check for date in entries
+          if grep -E "[0-9]{4}-[0-9]{2}-[0-9]{2}" ChangeLog.md; then
+            echo "✅ Date entries found" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "ℹ️ Consider adding dates to changelog entries" >> $GITHUB_STEP_SUMMARY
+          fi
+
+      - name: Post PR comment if ChangeLog not updated
+        if: steps.changelog_check.outputs.changelog_updated == 'false' && steps.code_check.outputs.code_changed == 'true'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: '## ⚠️ ChangeLog Not Updated\n\nThis PR includes code changes but `ChangeLog.md` was not updated.\n\nPlease consider adding an entry to document your changes:\n\n```markdown\n## [Version] - YYYY-MM-DD\n### Added\n- New feature description\n\n### Changed\n- Modified functionality description\n\n### Fixed\n- Bug fix description\n```\n\nIf this is a minor change that doesn\'t require changelog documentation, you can ignore this message.'
+            })
+
+      - name: Warn if ChangeLog not updated
+        if: steps.changelog_check.outputs.changelog_updated == 'false' && steps.code_check.outputs.code_changed == 'true'
+        run: |
+          echo "::warning::ChangeLog.md was not updated. Consider documenting your changes."
+          echo "## ⚠️ ChangeLog Not Updated" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "This PR modifies code but does not update ChangeLog.md" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "Consider adding an entry to document your changes." >> $GITHUB_STEP_SUMMARY
+
+      - name: Success message
+        if: steps.changelog_check.outputs.changelog_updated == 'true'
+        run: |
+          echo "## ✅ ChangeLog Updated" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "Thank you for documenting your changes!" >> $GITHUB_STEP_SUMMARY

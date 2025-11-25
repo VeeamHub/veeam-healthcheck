@@ -3,11 +3,15 @@
 param(
     [string]$Configuration = "Release",
     [string]$Runtime = "win-x64",
-    [string]$OutputPath = "..\..\..\..\publish"
+    [string]$OutputPath = $null
 )
 
-$ProjectPath = "..\..\VeeamHealthCheck.csproj"
 $SolutionDir = Split-Path -Parent (Split-Path -Parent (Split-Path -Parent $PSScriptRoot))
+if (-not $OutputPath) {
+    $OutputPath = Join-Path $SolutionDir "publish"
+}
+
+$ProjectPath = Join-Path (Split-Path -Parent (Split-Path -Parent $PSScriptRoot)) "VeeamHealthCheck.csproj"
 
 Write-Host "Publishing VeeamHealthCheck..." -ForegroundColor Cyan
 Write-Host "Configuration: $Configuration" -ForegroundColor Yellow

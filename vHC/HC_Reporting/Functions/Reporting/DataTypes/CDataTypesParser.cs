@@ -50,24 +50,36 @@ namespace VeeamHealthCheck.Functions.Reporting.DataTypes
 
         public void Init()
         {
+            log.Info("[CDataTypesParser] Init() started");
             try
             {
+                log.Info("[CDataTypesParser] Creating server summary dictionary...");
                 _serverSummaryInfo = new Dictionary<string, int>();
+                log.Info("[CDataTypesParser] Parsing JobInfo...");
                 JobInfos = JobInfo();
+                log.Info("[CDataTypesParser] Parsing JobSessionInfo...");
                 JobSessions = JobSessionInfo().ToList();
+                log.Info("[CDataTypesParser] Parsing ServerInfo...");
                 _serverInfo = ServerInfo();
                 ServerInfos = _serverInfo;
+                log.Info("[CDataTypesParser] Parsing ProxyInfo...");
                 ProxyInfos = ProxyInfo();
+                log.Info("[CDataTypesParser] Parsing SobrExtInfo...");
                 ExtentInfo = SobrExtInfo();
+                log.Info("[CDataTypesParser] Parsing SobrInfos...");
                 SobrInfo = SobrInfos();
+                log.Info("[CDataTypesParser] Parsing RepoInfo...");
                 RepoInfos = RepoInfo();
+                log.Info("[CDataTypesParser] Parsing WanInfo...");
                 WanInfos = WanInfo();
+                log.Info("[CDataTypesParser] Parsing ConfigBackupInfo...");
                 ConfigBackup = ConfigBackupInfo();
+                log.Info("[CDataTypesParser] Parsing NetTrafficRules...");
                 NetTrafficRules = NetTrafficRulesParser();
 
-
-
+                log.Info("[CDataTypesParser] Filtering and counting types...");
                 FilterAndCountTypes();
+                log.Info("[CDataTypesParser] Init() completed successfully");
             }
             catch (Exception ex)
             {
