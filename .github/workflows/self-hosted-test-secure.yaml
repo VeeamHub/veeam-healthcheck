@@ -1,0 +1,134 @@
+name: Self-Hosted VBR Test (Secure)
+
+on:
+  push:
+    branches: [ "master", "dev" ]
+  pull_request:
+    branches: [ "master", "dev" ]
+  workflow_dispatch:
+
+jobs:
+  build-and-test:
+    runs-on: windows-latest
+    
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+      
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: '8.0.x'
+        
+    - name: Restore dependencies
+      run: dotnet restore vHC/HC.sln
+      
+    - name: Build solution
+      run: dotnet build vHC/HC.sln --configuration Release --no-restore
+      
+    - name: Run tests
+      run: dotnet test vHC/HC.sln --configuration Release --no-build --verbosity normal --logger "trx;LogFileName=test-results.trx"
+      
+    - name: Publish test results
+      uses: EnricoMi/publish-unit-test-result-action/composite@v2
+      if: always()
+      with:
+        files: '**/test-results.trx'
+    
+    - name: Publish single-file executable
+      run: |
+        dotnet publish vHC/HC_Reporting/VeeamHealthCheck.csproj `
+          -c Release `
+          -r win-x64 `
+          --self-contained true `
+          -p:PublishSingleFile=true `
+          -p:IncludeNativeLibrariesForSelfExtract=true `
+          -p:EnableCompressionInSingleFile=true `
+          -o publish/out
+    
+    - name: Upload build artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: veeam-healthcheck-exe
+        path: publish/out/VeeamHealthCheck.exe
+        retention-days: 7
+
+  test-on-vbr:
+    needs: build-and-test
+    runs-on: self-hosted
+    
+    steps:
+    - name: Download executable
+      uses: actions/download-artifact@v4
+      with:
+        name: veeam-healthcheck-exe
+        path: ${{ github.workspace }}/test-run
+    
+    - name: Run VeeamHealthCheck on VBR
+      id: run_healthcheck
+      env:
+        VBR_HOST: ${{ secrets.VBR_HOST }}
+        VBR_USERNAME: ${{ secrets.VBR_USERNAME }}
+        VBR_PASSWORD: ${{ secrets.VBR_PASSWORD }}
+      run: |
+        $exePath = "${{ github.workspace }}\test-run\VeeamHealthCheck.exe"
+        
+        Write-Host "Starting VeeamHealthCheck..." -ForegroundColor Cyan
+        Write-Host "Target VBR: $env:VBR_HOST" -ForegroundColor Yellow
+        
+        $creds = "$env:VBR_USERNAME`:$env:VBR_PASSWORD"
+        
+        $process = Start-Process -FilePath $exePath `
+          -ArgumentList "/run", "/remote", "/host=$env:VBR_HOST", "/creds=$creds" `
+          -NoNewWindow -PassThru -Wait
+        
+        $exitCode = $process.ExitCode
+        
+        if ($exitCode -eq 0) {
+          Write-Host "Health check completed successfully!" -ForegroundColor Green
+          echo "success=true" >> $env:GITHUB_OUTPUT
+        } else {
+          Write-Host "Health check failed with exit code: $exitCode" -ForegroundColor Red
+          echo "success=false" >> $env:GITHUB_OUTPUT
+          exit $exitCode
+        }
+    
+    - name: Find generated report
+      id: find_report
+      if: always()
+      run: |
+        $reportDir = "C:\temp\vHC"
+        if (Test-Path $reportDir) {
+          $latestReport = Get-ChildItem -Path $reportDir -Filter "*.html" | 
+            Sort-Object LastWriteTime -Descending | 
+            Select-Object -First 1
+          
+          if ($latestReport) {
+            echo "report_path=$($latestReport.FullName)" >> $env:GITHUB_OUTPUT
+            echo "report_name=$($latestReport.Name)" >> $env:GITHUB_OUTPUT
+          }
+        }
+    
+    - name: Upload health check report
+      if: always() && steps.find_report.outputs.report_path
+      uses: actions/upload-artifact@v4
+      with:
+        name: health-check-report-${{ github.run_number }}
+        path: ${{ steps.find_report.outputs.report_path }}
+        retention-days: 30
+    
+    - name: Upload health check logs
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: health-check-logs-${{ github.run_number }}
+        path: C:\temp\vHC\*.log
+        if-no-files-found: warn
+        retention-days: 7
+    
+    - name: Cleanup
+      if: always()
+      run: |
+        if (Test-Path "${{ github.workspace }}\test-run") {
+          Remove-Item -Path "${{ github.workspace }}\test-run" -Recurse -Force
+        }
