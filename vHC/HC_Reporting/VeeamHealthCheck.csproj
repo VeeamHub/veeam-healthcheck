@@ -11,10 +11,10 @@
 		<Company>Veeam</Company>
 		<Authors>AdamC</Authors>
 		<ApplicationIcon>Health_Check_Icon.ico</ApplicationIcon>
-		<AssemblyVersion>3.0.0.107</AssemblyVersion>
+		<AssemblyVersion>3.0.0.119</AssemblyVersion>
 		<SignAssembly>False</SignAssembly>
 		<DelaySign>false</DelaySign>
-		<FileVersion>3.0.0.107</FileVersion>
+		<FileVersion>3.0.0.119</FileVersion>
 		<DebugType>full</DebugType>
 		<SelfContained>true</SelfContained>
 		<!--These 2 lines are what produce the single file utility. Possibly doesn't work...-->
@@ -204,8 +204,8 @@
 			<LocalPostBuildSh Include="$(ProjectDir)Tools\build\BuildCopy.sh" Condition="'$(OS)' != 'Windows_NT' AND Exists('$(ProjectDir)Tools\build\BuildCopy.sh')" />
 		</ItemGroup>
 		<!-- Execute the appropriate script based on OS -->
-		<Exec Command="call @(LocalPostBuildBat)" Condition="'$(OS)' == 'Windows_NT' AND '@(LocalPostBuildBat)' != ''" />
-		<Exec Command="bash @(LocalPostBuildSh)" Condition="'$(OS)' != 'Windows_NT' AND '@(LocalPostBuildSh)' != ''" />
+		<Exec Command="call @(LocalPostBuildBat)" Condition="'$(OS)' == 'Windows_NT' AND '@(LocalPostBuildBat)' != ''" ContinueOnError="true" />
+		<Exec Command="bash @(LocalPostBuildSh)" Condition="'$(OS)' != 'Windows_NT' AND '@(LocalPostBuildSh)' != ''" ContinueOnError="true" />
 	</Target>
 	<ItemGroup>
 		<EditorConfigFiles Remove="C:\code\VeeamHub\veeam-healthcheck\vHC\HC_Reporting\.editorconfig" />
