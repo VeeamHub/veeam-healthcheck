@@ -55,7 +55,7 @@ jobs:
 
   test-on-vbr:
     needs: build-and-test
-    runs-on: self-hosted
+    runs-on: [self-hosted, VB-CON-V13-0-0]
     
     steps:
     - name: Download executable
