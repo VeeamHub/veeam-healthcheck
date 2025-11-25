@@ -11,10 +11,10 @@
 		<Company>Veeam</Company>
 		<Authors>AdamC</Authors>
 		<ApplicationIcon>Health_Check_Icon.ico</ApplicationIcon>
-		<AssemblyVersion>3.0.0.119</AssemblyVersion>
+		<AssemblyVersion>3.0.0.124</AssemblyVersion>
 		<SignAssembly>False</SignAssembly>
 		<DelaySign>false</DelaySign>
-		<FileVersion>3.0.0.119</FileVersion>
+		<FileVersion>3.0.0.124</FileVersion>
 		<DebugType>full</DebugType>
 		<SelfContained>true</SelfContained>
 		<!--These 2 lines are what produce the single file utility. Possibly doesn't work...-->
@@ -187,7 +187,7 @@
 	<Target Name="IncrementVersion" BeforeTargets="BeforeBuild">
 		<Message Text="Incrementing version..." Importance="High" />
 		<!-- Windows: Use PowerShell -->
-		<Exec Command="pwsh -NoProfile -ExecutionPolicy Bypass -File &quot;$(ProjectDir)increment_version.ps1&quot;" Condition="'$(OS)' == 'Windows_NT'" />
+		<Exec Command="powershell -NoProfile -ExecutionPolicy Bypass -File &quot;$(ProjectDir)increment_version.ps1&quot;" Condition="'$(OS)' == 'Windows_NT'" />
 		<!-- macOS/Linux: Try pwsh first, fallback to bash script -->
 		<Exec Command="pwsh -NoProfile -ExecutionPolicy Bypass -File &quot;$(ProjectDir)increment_version.ps1&quot;" Condition="'$(OS)' != 'Windows_NT'" ContinueOnError="true" IgnoreExitCode="true" />
 		<Exec Command="bash &quot;$(ProjectDir)increment_version.sh&quot;" Condition="'$(OS)' != 'Windows_NT'" />

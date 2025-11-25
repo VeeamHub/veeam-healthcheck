@@ -21,6 +21,7 @@ namespace VeeamHealthCheck.Functions.Collection
     internal class CCollections
     {
         public bool SCRIPTSUCCESS;
+        private CLogger log = CGlobals.Logger;
         public CCollections() { }
         /* All collection utilities should run through here:
          * - powershell
@@ -202,6 +203,7 @@ namespace VeeamHealthCheck.Functions.Collection
         {
             if ((CGlobals.IsVbr))
             {
+                log.Info("Local VBR Detected, running local MFA test...");
                 return RunLocalMfaCheck(p);
             }
             else
@@ -264,6 +266,8 @@ namespace VeeamHealthCheck.Functions.Collection
 
                 if (!result)
                 {
+            CGlobals.Logger.Warning("Failing over to PowerShell 5", false);
+
                     RunLocalMfaCheck(p);
 
                 }
@@ -273,7 +277,6 @@ namespace VeeamHealthCheck.Functions.Collection
         }
         private bool RunLocalMfaCheck(PSInvoker p)
         {
-            CGlobals.Logger.Warning("Failing over to PowerShell 5", false);
             try
             {
                 var result = p.TestMfa();

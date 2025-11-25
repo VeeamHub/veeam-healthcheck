@@ -241,7 +241,7 @@ namespace VeeamHealthCheck.Functions.Collection.PSCollections
                     }
                     errorarray.Add(errString);
                 }
-                PushPsErrorsToMainLog(errorarray);
+                this.PushPsErrorsToMainLog(errorarray);
 
                 return mfaFound;
             }
@@ -300,7 +300,7 @@ namespace VeeamHealthCheck.Functions.Collection.PSCollections
                 errorarray.Add(errString);
             }
             if (errorarray.Count > 0)
-                PushPsErrorsToMainLog(errorarray);
+                this.PushPsErrorsToMainLog(errorarray);
 
             log.Info(CMessages.PsVbrConfigProcIdDone, false);
             if (failed)
@@ -467,12 +467,13 @@ namespace VeeamHealthCheck.Functions.Collection.PSCollections
             {
                 argString =
                     $"-NoProfile -ExecutionPolicy unrestricted -file \"{scriptLocation}\" -VBRServer \"{CGlobals.REMOTEHOST}\" -VBRVersion \"{CGlobals.VBRMAJORVERSION}\" ";
-                    if(CGlobals.REMOTEEXEC ){
+                    if (CGlobals.REMOTEEXEC ){
                         CredsHandler ch = new();
                     var creds = ch.GetCreds();
                     argString += $"-User {creds.Value.Username} -Password {creds.Value.Password} ";
                     }
             }
+
             if (!string.IsNullOrEmpty(path))
             {
                 argString = $"-NoProfile -ExecutionPolicy unrestricted -file \"{scriptLocation}\" -ReportPath \"{path}\"";
@@ -482,7 +483,8 @@ namespace VeeamHealthCheck.Functions.Collection.PSCollections
             // Use the same PowerShell version failover logic as ExecutePsScriptWithFailover
             // Prefer PowerShell 7, then 5, else throw
             string exePath = null;
-            if (!string.IsNullOrEmpty(_pwshPath))
+            // if vbr version is v13 and pwsh exists, use pwsh, else use powershell
+            if (!string.IsNullOrEmpty(_pwshPath) && !(CGlobals.VBRMAJORVERSION < 13))
                 exePath = _pwshPath;
             else if (!string.IsNullOrEmpty(_powershellPath))
                 exePath = _powershellPath;
