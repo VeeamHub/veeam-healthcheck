@@ -197,7 +197,7 @@ namespace VeeamHealthCheck.Functions.Reporting.Html
         private string SetReportNameAndPath(bool scrub, string vbrOrVb365)
         {
             string installID = null;
-            string htmlCore = "";
+            string htmlCore = string.Empty;
 
             try
             {
@@ -213,26 +213,28 @@ namespace VeeamHealthCheck.Functions.Reporting.Html
                 else if (!scrub)
                 {
                     htmlCore = this.origPath + "\\" + this.htmlName + "_" + vbrOrVb365 + "_" + this.backupServerName + dateTime.ToString("_yyyy.MM.dd.HHmmss") + ".html";
-                    //log.Warning("htmlcore = " + htmlCore, false);
+
+                    // log.Warning("htmlcore = " + htmlCore, false);
                 }
+
                 return htmlCore;
             }
             catch (Exception ex)
             {
-                //log.Debug("Failed to set report name & path");
-                //log.Debug(ex.Message);
-                //log.Debug("variables below:");
-                //log.Debug("\t" + scrub.ToString());
-                //log.Debug("\t" + vbrOrVb365);
-                //log.Debug("\t" + htmlCore);
-                //log.Debug("\t" + installID);
-                //log.Debug("\t" + _anonPath);
-                //log.Debug("\t" + _htmlName);
-                //log.Debug("\t" + _origPath);
-                //log.Debug("\t" + _backupServerName);
-                //log.Debug("\t" + _anonPath);
-                //log.Debug("\t" + _anonPath);
-                //log.Debug("\t" + );
+                // log.Debug("Failed to set report name & path");
+                // log.Debug(ex.Message);
+                // log.Debug("variables below:");
+                // log.Debug("\t" + scrub.ToString());
+                // log.Debug("\t" + vbrOrVb365);
+                // log.Debug("\t" + htmlCore);
+                // log.Debug("\t" + installID);
+                // log.Debug("\t" + _anonPath);
+                // log.Debug("\t" + _htmlName);
+                // log.Debug("\t" + _origPath);
+                // log.Debug("\t" + _backupServerName);
+                // log.Debug("\t" + _anonPath);
+                // log.Debug("\t" + _anonPath);
+                // log.Debug("\t" + );
                 return null;
             }
 
