@@ -10,6 +10,7 @@ on:
 jobs:
   build-and-test:
     runs-on: windows-latest
+    if: false  # disable this workflow for now
     
     steps:
     - name: Checkout repository

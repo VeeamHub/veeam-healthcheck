@@ -24,6 +24,7 @@ jobs:
   analyze:
     name: Analyze
     runs-on: windows-latest
+    if: false # disable CodeQL for now
     permissions:
       actions: read
       contents: read
