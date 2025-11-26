@@ -167,7 +167,7 @@ jobs:
         retention-days: 7
     
     - name: Cleanup
-      if: always()
+      if: success()
       run: |
         if (Test-Path "${{ github.workspace }}\test-run") {
           Remove-Item -Path "${{ github.workspace }}\test-run" -Recurse -Force
@@ -402,7 +402,7 @@ jobs:
 
   # Create GitHub release - only on master after scans pass
   create-release:
-    needs: [build-and-test, virustotal-scan]
+    needs: [build-and-test, virustotal-scan, integration-test-vbr]
     runs-on: windows-latest
     if: |
       github.ref == 'refs/heads/master' && 
