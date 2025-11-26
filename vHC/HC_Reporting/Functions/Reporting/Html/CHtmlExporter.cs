@@ -136,7 +136,7 @@ namespace VeeamHealthCheck.Functions.Reporting.Html
 
             // replace green checkmark with checkmark:
             htmlShowAll = htmlShowAll.Replace("&#9989;", "✓");
-            htmlShowAll = htmlShowAll.Replace("&#9744;", "");
+            htmlShowAll = htmlShowAll.Replace("&#9744;", string.Empty);
             htmlShowAll = htmlShowAll.Replace("⚠️", "(!)");
             htmlShowAll = htmlShowAll.Replace("&#9432;", "ℹ️");
 
@@ -161,6 +161,7 @@ namespace VeeamHealthCheck.Functions.Reporting.Html
 
 
         }
+
         private void WriteHtmlToFile(string htmlString)
         {
             using (StreamWriter sw = new StreamWriter(this.latestReport))
@@ -239,6 +240,7 @@ namespace VeeamHealthCheck.Functions.Reporting.Html
             }
 
         }
+
         private string TrySetInstallId(string id)
         {
             this.log.Debug("InstallID String = " + id);
@@ -261,6 +263,7 @@ namespace VeeamHealthCheck.Functions.Reporting.Html
                 return "anon";
             }
         }
+
         public void OpenExplorer()
         {
             if (CGlobals.OpenExplorer)
@@ -268,6 +271,7 @@ namespace VeeamHealthCheck.Functions.Reporting.Html
                 Process.Start("explorer.exe", CVariables.desiredDir);
             }
         }
+
         public int OpenHtmlIfEnabled(bool open)
         {
             if (open)
@@ -285,6 +289,7 @@ namespace VeeamHealthCheck.Functions.Reporting.Html
 
             }
         }
+
         private void ExecBrowser()
         {
             Application.Current.Dispatcher.Invoke(delegate

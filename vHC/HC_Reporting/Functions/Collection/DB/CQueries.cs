@@ -21,10 +21,15 @@ namespace VeeamHealthCheck.Functions.Collection.DB
         private string _sqlVersion;
         private DataTable _jobInfo;
         private DataTable _jobTypes;
+
         public DataTable SqlServerInfo { get { return _sqlInfo; } }
+
         public string SqlEdition { get { return _sqlEdition; } }
+
         public string SqlVerion { get { return _sqlVersion; } }
+
         public DataTable JobInfo { get { return _jobInfo; } }
+
         public DataTable JobTypes { get { return _jobTypes; } }
 
 
@@ -49,10 +54,12 @@ namespace VeeamHealthCheck.Functions.Collection.DB
             }
 
         }
+
         public CQueries(bool testconnection)
         {
             GetSqlServerVersion();
         }
+
         private void DumpDataToCsv(DataTable data)
         {
             using (StreamWriter sw = new StreamWriter(CVariables.vbrDir + @"\localhost_bjobs.csv", false))
@@ -110,6 +117,7 @@ namespace VeeamHealthCheck.Functions.Collection.DB
 
             //File.WriteAllText("test.csv", sb.ToString());
         }
+
         private void GetSqlServerVersion()
         {
             log.Info("getting sql server version");
@@ -149,6 +157,7 @@ namespace VeeamHealthCheck.Functions.Collection.DB
             log.Info("getting sql server version..done!");
 
         }
+
         private DataTable FetchSqlServerVersion()
         {
             try
@@ -179,6 +188,7 @@ namespace VeeamHealthCheck.Functions.Collection.DB
             _sqlInfo = FetchSqlServerInfo();
             log.Info("getting sql server info..done!");
         }
+
         private DataTable FetchSqlServerInfo()
         {
             try
@@ -212,6 +222,7 @@ namespace VeeamHealthCheck.Functions.Collection.DB
             try { DumpDataToCsv(_jobInfo); }
             catch(Exception e){ log.Error("Failed to dump bjobs to csv.."); log.Error(e.Message); }
         }
+
         private DataTable FetchBJobInfo()
         {
             try
@@ -244,6 +255,7 @@ namespace VeeamHealthCheck.Functions.Collection.DB
             _jobTypes = FetchJobSummaryInfo();
             log.Info("getting job summary info..ok!");
         }
+
         private DataTable FetchJobSummaryInfo()
         {
             try

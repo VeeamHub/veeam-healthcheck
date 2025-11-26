@@ -15,11 +15,13 @@ namespace VeeamHealthCheck.Functions.Collection
     internal class CImpersonation
     {
         private CLogger _logger = CGlobals.Logger;
+
         [DllImport("advapi32.dll", SetLastError = true, CharSet = CharSet.Unicode)]
         static extern bool LogonUser(String lpszUsername, String lpszDomain, String lpszPassword,
                                         int dwLogonType, int dwLogonProvider, out SafeAccessTokenHandle phToken);
 
         private string VBRSERVER = "localhost";
+
         public CImpersonation()
         {
 

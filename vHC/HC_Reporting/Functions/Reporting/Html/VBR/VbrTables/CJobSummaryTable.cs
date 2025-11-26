@@ -13,6 +13,7 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR.VbrTables
     internal class CJobSummaryTable
     {
         public CJobSummaryTable() { }
+
         public Dictionary<string,int> JobSummaryTable()
         {
             Dictionary<string, int> typeAndCount = new();

@@ -18,13 +18,16 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VB365
 
         private string _htmldoc = string.Empty;
         private CLogger log = CGlobals.Logger;
+
         public CVb365HtmlCompiler()
         {
             log.Info("[VB365] HTML complier init...");
             RunCompiler();
             log.Info("[VB365] HTML complier complete!");
         }
+
         public void Dispose() { }
+
         private void RunCompiler()
         {
             log.Info("[VB365][HTML] forming header...");
@@ -35,6 +38,7 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VB365
             FormVb365Body();
             log.Info("[VB365][HTML] forming body...done!");
         }
+
         private void FormVb365Body()
         {
             try
@@ -97,6 +101,7 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VB365
             }
 
         }
+
         private string FormBodyStartVb365(string htmlString)
         {
             string h = _form.body;
@@ -114,6 +119,7 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VB365
 
             return h;
         }
+
         private string SetNavigation()
         {
             log.Info("[VB365][HTML] forming navigation...");
@@ -140,6 +146,7 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VB365
                 exporter.ExportHtmlVb365(_htmldoc, false);
             log.Info("[VB365][HTML] exporting HTML...done!");
         }
+
         private string GetServerName()
         {
             if(CGlobals.REMOTEEXEC)
@@ -147,13 +154,14 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VB365
             else
                 return Dns.GetHostName();
         }
+
         private string SetLicHolder()
         {
             CCsvParser csv = new(CVariables.vb365dir);
             var lic = csv.GetDynamicVboGlobal().ToList();
             foreach (var l in lic)
                 return l.LicensedTo;
-            return "";
+            return string.Empty;
         }
 
     }

@@ -43,7 +43,8 @@ EXAMPLES:
   VeeamHealthCheck.exe /hotfix /path=C:\VeeamUpdates
 
 For more information, visit: https://github.com/VeeamHub/veeam-healthcheck
-";        public static string PsVbrConfigStart = "[PS] Enter Config Collection Invoker...";
+";        
+public static string PsVbrConfigStart = "[PS] Enter Config Collection Invoker...";
         public static string PsVbrConfigDone = PsVbrConfigStart + ProcEnd;
 
         public static string PsVbrFunctionStart = "[PS] Enter Function Setter...";

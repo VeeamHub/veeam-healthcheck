@@ -14,31 +14,37 @@ namespace VeeamHealthCheck.Reporting.Html.VBR
     internal class CHtmlTablesHelper
     {
         CHtmlFormatting _form = new();
+
         public CHtmlTablesHelper()
         {
 
         }
+
         public string AddSecurityServerInfo()
         {
             CSecurityBackupServerTable t = new();
             return WriteTupleListToHtml(t.ServerSpecificInfo());
         }
+
         public string AddSecuritySummaryDetails()
         {
             CVbrSecurityTables t = new();
             return WriteTupleListToHtml(t.SecuritySummaryTables());
         }
+
         public string AddConfigBackupDetails()
         {
             CVbrSecurityTables t = new();
             return WriteTupleListToHtml(t.ConfigBackupInfo());
         }
+
         public string AddImmutabilityTables()
         {
             CImmutabilityTable ct = new();
 
             return WriteTupleListToHtml(new List<Tuple<string,string>>());
         }
+
         public List<string> CollectedOsInfo()
         {
             CDataFormer df = new();
@@ -51,11 +57,12 @@ namespace VeeamHealthCheck.Reporting.Html.VBR
             operatingSystems.Sort();
             return operatingSystems.Distinct().ToList();
         }
+
         private string WriteTupleListToHtml(List<Tuple<string, string>> list)
         {
-            string headers = "";
-            string data = "";
-            string s = "";
+            string headers = string.Empty;
+            string data = string.Empty;
+            string s = string.Empty;
             foreach (var table in list)
             {
                 headers += table.Item1;

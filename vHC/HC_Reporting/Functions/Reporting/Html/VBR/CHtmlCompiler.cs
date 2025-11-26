@@ -37,6 +37,7 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR
             log.Info(logStart + "CHtmlCompiler constructor entered");
             log.Info(logStart + "CHtmlCompiler constructor completed");
         }
+
         public int RunFullVbrReport()
         {
             log.Info(logStart + ">>> ENTERING RunFullVbrReport() method <<<");
@@ -52,6 +53,7 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR
             return res;
             //log.Info(logStart + "Init full report...done!");
         }
+
         public void RunSecurityReport()
         {
             log.Info(logStart + "Init Security Report");
@@ -60,6 +62,7 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR
             ExportSecurityHtml();
             log.Info(logStart + "Init Security Report");
         }
+
         private int ExportHtml()
         {
             int res = 0;
@@ -106,6 +109,7 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR
             if (CGlobals.OpenExplorer)
                 exporter.OpenExplorer();
         }
+
         private string GetServerName()
         {
             log.Info(logStart + ">>> ENTERING GetServerName() method <<<");
@@ -115,6 +119,7 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR
             log.Info(logStart + "Dns.GetHostName() completed successfully. Hostname: " + hostname);
             return hostname;
         }
+
         public void Dispose()
         {
 
@@ -172,9 +177,10 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR
             AddToHtml("<br>");
 
         }
+
         private string SetVbrHcIntro(bool scrub)
         {
-            string s = "";
+            string s = string.Empty;
             if (!CGlobals.RunSecReport)
             {
                 if (scrub)
@@ -234,6 +240,7 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR
 
             return s;
         }
+
         private void SetSecurityNavigations()
         {
             //SetUniversalNavStart();
@@ -251,7 +258,7 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR
             log.Info("Setting license holder name...done!");
             foreach (var l in lic)
                 return l.licensedto;
-            return "";
+            return string.Empty;
         }
 
         #endregion
@@ -280,6 +287,7 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR
         {
             return _form.SetHeaderAndLogo(SetLicHolder());
         }
+
         private string FormSecurityBodyStart(string htmlString, bool scrub)
         {
             htmlString += _form.body;
@@ -287,6 +295,7 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR
             htmlString += _form.SetSecurityBannerAndIntro(scrub);
             return htmlString;
         }
+
         private void FormSecurityBody()
         {
 
@@ -306,6 +315,7 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR
 
             log.Info("[HTML] forming HTML body...done!");
         }
+
         private void LoadCsvToMemory()
         {
             log.Info(logStart + ">>> ENTERING LoadCsvToMemory() method <<<");
@@ -368,6 +378,7 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR
                 log.Error("Failed to load VBR CSV data or no data found.");
             }
         }
+
         private void FormVbrFullBody()
         {
             log.Info(logStart + ">>> ENTERING FormVbrFullBody() method <<<");
@@ -430,6 +441,7 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR
         {
             return "<table border=\"1\" style=\"background:#efefef \"><tbody>";
         }
+
         private string NavtableEnd()
         {
             return "</tbody>" +
@@ -437,6 +449,7 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR
                 //BackToTop() +
                 "</div>";
         }
+
         private void NavTable()
         {
             log.Info("[HTML] setting HTML navigation");
@@ -445,6 +458,7 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR
             string tableString = _form.SetNavTables("vbr");
             AddToHtml(tableString);
         }
+
         private void SecurityNavTable()
         {
             string tableString = NavTableStarter();
@@ -472,10 +486,12 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR
         {
             return string.Format("<div id={0}>", id);
         }
+
         private string DivIdClass()
         {
             return string.Format("<div id={0} class={1}");
         }
+
         private string h2UnderLine(string text)
         {
             return string.Format("<h2><u>{0}</u></h2>", text);
@@ -486,6 +502,7 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR
             _htmldocOriginal += infoString;
             _htmldocScrubbed += infoString;
         }
+
         private void AddToHtml(string infoString, bool scrub)
         {
 

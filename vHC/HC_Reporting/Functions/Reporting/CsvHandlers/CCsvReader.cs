@@ -29,10 +29,12 @@ namespace VeeamHealthCheck.Functions.Reporting.CsvHandlers
         {
             return FileFinder(file, CVariables.vbrDir);
         }
+
         public CsvReader VboCsvReader(string file)
         {
             return FileFinder(file, CVariables.vb365dir);
         }
+
         public CsvReader FileFinder(string file, string outpath)
         {
             try
@@ -57,12 +59,14 @@ namespace VeeamHealthCheck.Functions.Reporting.CsvHandlers
             }
             return null;
         }
+
         private CsvReader CReader(string csvToRead)
         {
             TextReader reader = new StreamReader(csvToRead);
             var csvReader = new CsvReader(reader, _csvConfig);
             return csvReader;
         }
+
         private CsvConfiguration GetCsvConfig()
         {
             var config = new CsvConfiguration(CultureInfo.InvariantCulture)

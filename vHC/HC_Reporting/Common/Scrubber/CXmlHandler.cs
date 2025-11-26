@@ -21,6 +21,7 @@ namespace VeeamHealthCheck.Scrubber
             _matchDictionary = new();
             _doc = new XDocument(new XElement("root"));
         }
+
         private void AddItemToList(string type, string original, string obfuscated)
         {
 
@@ -31,6 +32,7 @@ namespace VeeamHealthCheck.Scrubber
 
             WriteToText();
         }
+
         private void WriteToText()
         {
             // sort _matchDictionary alphabetically
@@ -43,6 +45,7 @@ namespace VeeamHealthCheck.Scrubber
 
             WriteDictionaryToJsonFile(newDict, CVariables.unsafeDir + @"\vHC_KeyFile.json");
         }
+
         private void WriteDictionaryToJsonFile(Dictionary<string, string> dictionary, string filePath)
         {
             try
@@ -62,7 +65,7 @@ namespace VeeamHealthCheck.Scrubber
         public string ScrubItem(string item, string type, ScrubItemType itemType)
         {
             if (String.IsNullOrEmpty(item))
-                return "";
+                return string.Empty;
             if (item.StartsWith(type + "_"))
                 return item;
             //item = RemoveLeadingSlashes(item);
@@ -101,6 +104,7 @@ namespace VeeamHealthCheck.Scrubber
                 return newName;
             }
         }
+
         public string ScrubItem(string item, ScrubItemType type)
         {
             return ScrubItem(item, type.ToString(), type);
@@ -108,6 +112,7 @@ namespace VeeamHealthCheck.Scrubber
 
 
     }
+
     public enum ScrubItemType
     {
         Job = 0,

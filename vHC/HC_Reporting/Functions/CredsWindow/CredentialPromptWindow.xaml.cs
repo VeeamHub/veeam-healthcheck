@@ -5,6 +5,7 @@ namespace VeeamHealthCheck.Functions.CredsWindow
     public partial class CredentialPromptWindow : Window
     {
         public string Username => UsernameBox.Text;
+
         public string Password => PasswordBox.Password;
 
         public CredentialPromptWindow(string host)

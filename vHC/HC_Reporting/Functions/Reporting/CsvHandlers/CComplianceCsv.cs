@@ -11,12 +11,14 @@ namespace VeeamHealthCheck.Functions.Reporting.CsvHandlers
     {
         [Index(0)]
         public string BestPractice { get; set; }
+
         [Index(1)]
         public String Status { get; set; }
 
     }
 
 }
+
 public enum ComplianceStatus
 {
     Passed,

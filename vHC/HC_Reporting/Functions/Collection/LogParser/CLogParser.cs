@@ -38,6 +38,7 @@ namespace VeeamHealthCheck.Functions.Collection.LogParser
              */
 
         }
+
         public CLogParser(string path)
         {
 
@@ -46,7 +47,7 @@ namespace VeeamHealthCheck.Functions.Collection.LogParser
         public string InitLogDir()
         {
             log.Info(logStart + "Checking registry for default log location...");
-            string logs = "";
+            string logs = string.Empty;
             try
             {
                 CRegReader reg = new();
@@ -59,6 +60,7 @@ namespace VeeamHealthCheck.Functions.Collection.LogParser
             }
             return logs;
         }
+
         private void InitWaitCsv()
         {
             log.Info(logStart + "Init waits.csv");
@@ -74,6 +76,7 @@ namespace VeeamHealthCheck.Functions.Collection.LogParser
                 log.Error(logStart + "Failed to init waits.csv. Error:\t" + e.Message);
             }
         }
+
         private void DumpWaitsToFile(string JobName, DateTime start, DateTime end, TimeSpan diff)
         {
 
@@ -88,6 +91,7 @@ namespace VeeamHealthCheck.Functions.Collection.LogParser
             //        );
             //System.IO.File.WriteAllText(pathToCsv, csv);
         }
+
         public Dictionary<string, List<TimeSpan>> GetWaitsFromFiles()
         {
             log.Info("Checking Log files for waits..", false);
@@ -146,6 +150,7 @@ namespace VeeamHealthCheck.Functions.Collection.LogParser
             log.Info("Checking Log files for waits..Done!", false);
             return jobsAndWaits;
         }
+
         private void ParseFixLines(string line)
         {
             try
@@ -154,7 +159,7 @@ namespace VeeamHealthCheck.Functions.Collection.LogParser
                 //log.Debug(line, false);
                 string fixLine = line.Remove(0, line.IndexOf("Private Fix"));
                 if (fixLine.EndsWith(']'))
-                    fixLine = fixLine.Replace("]", "");
+                    fixLine = fixLine.Replace("]", string.Empty);
                 if (!_fixList.Contains(fixLine))
                 {
                     _fixList.Add(fixLine);
@@ -168,6 +173,7 @@ namespace VeeamHealthCheck.Functions.Collection.LogParser
                     log.Debug(e.Message);
             }
         }
+
         private List<TimeSpan> CheckFileWait(string file, string jobName)
         {
             List<TimeSpan> diffListMin = new();
@@ -199,7 +205,7 @@ namespace VeeamHealthCheck.Functions.Collection.LogParser
                                 countNextLine = false;
 
                             }
-                            string trimline = "";
+                            string trimline = string.Empty;
                             if (line.Length > 40)
                                 trimline = trimline = line.Substring(40).Trim();
                             if (trimline == waitLine || trimline.Contains(waitLine))
@@ -210,8 +216,8 @@ namespace VeeamHealthCheck.Functions.Collection.LogParser
                             if (!string.IsNullOrEmpty(startTime) && !string.IsNullOrEmpty(endTime))
                             {
                                 diffListMin.Add(CalcTime(jobName, startTime, endTime));
-                                endTime = "";
-                                startTime = "";
+                                endTime = string.Empty;
+                                startTime = string.Empty;
                             }
                         }
                         catch (System.ArgumentOutOfRangeException e1) { }

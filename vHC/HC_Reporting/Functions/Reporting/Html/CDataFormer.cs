@@ -121,6 +121,7 @@ namespace VeeamHealthCheck.Functions.Reporting.Html
             return notProtectedTypes;
 
         }
+
         public CSecuritySummaryTable SecSummary()
         {
             CSecuritySummaryTable t = new();
@@ -226,6 +227,7 @@ namespace VeeamHealthCheck.Functions.Reporting.Html
             // }
             return CGlobals.DtParser.ServerSummaryInfo;
         }
+
         public int ProtectedWorkloadsToXml()
         {
             try
@@ -370,6 +372,7 @@ namespace VeeamHealthCheck.Functions.Reporting.Html
                 return 1;
             }
         }
+
         public int _viDupes;
         public List<string> _vmProtectedByPhys;
         public List<string> _viProtectedNames;
@@ -382,6 +385,7 @@ namespace VeeamHealthCheck.Functions.Reporting.Html
         public List<string> _viNotProtectedNames;
         public List<string> _physNotProtNames;
         public List<string> _physProtNames;
+
         private void NewXmlNodeTemplate(bool scrub)
         {
             //customize the log line:
@@ -402,6 +406,7 @@ namespace VeeamHealthCheck.Functions.Reporting.Html
 
             log.Info(logStart + "xml template..done!");
         }
+
         public BackupServer BackupServerInfoToXml(bool scrub)
         {
 
@@ -423,11 +428,13 @@ namespace VeeamHealthCheck.Functions.Reporting.Html
             log.Info(logStart + "converting backup server info to xml..done!");
             return b;
         }
+
         private string ParseString(string input)
         {
-            if (string.IsNullOrEmpty(input)) return "";
+            if (string.IsNullOrEmpty(input)) return string.Empty;
             else return input;
         }
+
         public List<CSobrTypeInfos> SobrInfoToXml(bool scrub)
         {
             PreCalculations();
@@ -491,6 +498,7 @@ namespace VeeamHealthCheck.Functions.Reporting.Html
             log.Info(logStart + "Starting SOBR conversion to xml..done!");
             return outList;
         }
+
         private string SetGateHosts(string original, bool scrub)
         {
             string[] hosts = original.Split(' ');
@@ -498,7 +506,7 @@ namespace VeeamHealthCheck.Functions.Reporting.Html
             {
                 return hosts[0];
             }
-            string r = "";
+            string r = string.Empty;
             int counter = 1;
             int end = hosts.Length;
             foreach (string host in hosts)
@@ -514,6 +522,7 @@ namespace VeeamHealthCheck.Functions.Reporting.Html
             }
             return r;
         }
+
         public List<CRepository> ExtentXmlFromCsv(bool scrub)
         {
             log.Info(logStart + "converting extent info to xml");
@@ -558,10 +567,10 @@ namespace VeeamHealthCheck.Functions.Reporting.Html
 
 
 
-                    string gateHosts = "";
+                    string gateHosts = string.Empty;
                     if (c.IsAutoGateway)
                     {
-                        gateHosts = "";
+                        gateHosts = string.Empty;
                     }
                     else
                     {
@@ -607,6 +616,7 @@ namespace VeeamHealthCheck.Functions.Reporting.Html
             log.Info(logStart + "converting extent info to xml..done!");
             return repoList;
         }
+
         private bool AddRepoPathToDict(string host, string path)
         {
             _repoPaths.TryGetValue(host, out var list);
@@ -618,6 +628,7 @@ namespace VeeamHealthCheck.Functions.Reporting.Html
             else
                 return false;
         }
+
         public List<CRepository> RepoInfoToXml(bool scrub)
         {
             PreCalculations();
@@ -653,13 +664,13 @@ namespace VeeamHealthCheck.Functions.Reporting.Html
                     {
                         freeSpace = FilterZeros(free);
                         totalSpace = FilterZeros(total);
-                        percentFree = "";
+                        percentFree = string.Empty;
                     }
 
 
                     _repoJobCount.TryGetValue(c.Name, out int jobCount);
 
-                    string hosts = "";
+                    string hosts = string.Empty;
                     s[0] += name;
                     s[1] += c.MaxTasks;
                     s[2] += jobCount;
@@ -667,7 +678,7 @@ namespace VeeamHealthCheck.Functions.Reporting.Html
                     s[4] += c.Ram;
                     s[5] += c.IsAutoGateway;
                     if (c.IsAutoGateway)
-                        hosts = "";
+                        hosts = string.Empty;
                     else if (String.IsNullOrEmpty(c.GateHosts))
                         hosts = host;
                     else
@@ -702,6 +713,7 @@ namespace VeeamHealthCheck.Functions.Reporting.Html
             log.Info(logStart + "converting repository info to xml..done!");
             return list;
         }
+
         public List<string[]> ProxyXmlFromCsv(bool scrub)
         {
             log.Info("converting proxy info to xml");
@@ -836,6 +848,7 @@ namespace VeeamHealthCheck.Functions.Reporting.Html
             log.Info(logStart + "converting server info to xml..done!");
             return list;
         }
+
         public Dictionary<string, int> JobSummaryInfoToXml()
         {
             log.Info(logStart + "converting job summary info to xml");
@@ -939,7 +952,7 @@ namespace VeeamHealthCheck.Functions.Reporting.Html
 
             foreach (var r in RegOptions2)
             {
-                string workingValue = "";
+                string workingValue = string.Empty;
                 if (r.Value.GetType() == typeof(string[]))
                 {
                     var values = r.Value as IEnumerable;
@@ -976,6 +989,7 @@ namespace VeeamHealthCheck.Functions.Reporting.Html
 
             return returnDict;
         }
+
         public List<List<string>> JobInfoToXml(bool scrub)
         {
             List<List<string>> sendBack = new();
@@ -1024,18 +1038,18 @@ namespace VeeamHealthCheck.Functions.Reporting.Html
             // add summary line;
             List<string> summaryline = new() {
             "TOTALS",
-            "",
+            string.Empty,
             totalsize.ToString() + " GB",
-            "",
-            "",
-            "",
-            "",
-            "",
-            "",
-            "",
-            "",
-            "",
-            "",
+            string.Empty,
+            string.Empty,
+            string.Empty,
+            string.Empty,
+            string.Empty,
+            string.Empty,
+            string.Empty,
+            string.Empty,
+            string.Empty,
+            string.Empty,
 
             };
             sendBack.Add(summaryline);
@@ -1045,6 +1059,7 @@ namespace VeeamHealthCheck.Functions.Reporting.Html
             log.Info(logStart + "converting job info to xml..done!");
             return sendBack;
         }
+
         public List<CJobSummaryTypes> ConvertJobSessSummaryToXml(bool scrub)
         {
             CJobSessSummary jss = new(log, scrub, _scrubber, CGlobals.DtParser);
@@ -1084,7 +1099,7 @@ namespace VeeamHealthCheck.Functions.Reporting.Html
         #region localFunctions
         private string FilterZeros(decimal value)
         {
-            string s = "";
+            string s = string.Empty;
 
             if (value != 0)
                 s = value.ToString();
@@ -1121,6 +1136,7 @@ namespace VeeamHealthCheck.Functions.Reporting.Html
             _isBackupServerProxy = false;
             //_isBackupServerProxyDisabled = false;
         }
+
         private void CheckServerRoles(string serverId)
         {
             log.Info("Checking server roles.. for server: " + serverId);
@@ -1164,6 +1180,7 @@ namespace VeeamHealthCheck.Functions.Reporting.Html
             }
             log.Info("Checking server roles..done!");
         }
+
         private bool CheckProxyRole(string serverId)
         {
             // var viProxy = _csvParser.GetDynViProxy();

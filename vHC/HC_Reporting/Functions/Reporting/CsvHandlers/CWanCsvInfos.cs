@@ -10,12 +10,16 @@ namespace VeeamHealthCheck.Functions.Reporting.CsvHandlers
         //"Id","Name","Description","HostId","Options"
         [Index(0)]
         public string Id { get; set; }
+
         [Index(1)]
         public string Name { get; set; }
+
         [Index(2)]
         public string Description { get; set; }
+
         [Index(3)]
         public string HostId { get; set; }
+
         [Index(4)]
         public string Options { get; set; }
     }

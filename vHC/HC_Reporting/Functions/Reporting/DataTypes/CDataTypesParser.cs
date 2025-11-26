@@ -34,13 +34,16 @@ namespace VeeamHealthCheck.Functions.Reporting.DataTypes
         public List<CServerTypeInfos> ServerInfos = new();
         public List<CRepoTypeInfos> ExtentInfo = new();
         public List<CProxyTypeInfos> ProxyInfos = new();
+
         public Dictionary<string, int> ServerSummaryInfo { get { return _serverSummaryInfo; } }
+
         public List<CSobrTypeInfos> SobrInfo = new();
         //public List<CLicTypeInfo> LicInfo { get { return LicInfos(); } }
         public List<CRepoTypeInfos> RepoInfos = new();
         public List<CWanTypeInfo> WanInfos = new();
         public CConfigBackupCsv ConfigBackup = new();
         public List<CNetTrafficRulesCsv> NetTrafficRules = new();
+
         public List<int> ProtectedJobIds { get { return _protectedJobIds; } }
 
         public CDataTypesParser()
@@ -219,8 +222,9 @@ namespace VeeamHealthCheck.Functions.Reporting.DataTypes
                 else
                     return "False";
             }
-            catch (Exception e) { return ""; }
+            catch (Exception e) { return string.Empty; }
         }
+
         private List<CRepoTypeInfos> RepoInfo()
         {
             List<CRepoTypeInfos> eInfoList = new List<CRepoTypeInfos>();
@@ -304,6 +308,7 @@ namespace VeeamHealthCheck.Functions.Reporting.DataTypes
         {
             return new string[] { "SanSnapshotOnly" };
         }
+
         private string FilterHostIdToName(string hostId)
         {
             foreach (var s in _serverInfo)
@@ -311,8 +316,9 @@ namespace VeeamHealthCheck.Functions.Reporting.DataTypes
                 if (hostId == s.Id)
                     return s.Name;
             }
-            return "";
+            return string.Empty;
         }
+
         private List<CRepoTypeInfos> SobrExtInfo()
         {
             var records = _csvParser.SobrExtParser();
@@ -401,6 +407,7 @@ namespace VeeamHealthCheck.Functions.Reporting.DataTypes
             }
             return eInfoList;
         }
+
         private List<CNetTrafficRulesCsv> NetTrafficRulesParser()
         {
             var nt = _csvParser.NetTrafficCsvParser();
@@ -416,6 +423,7 @@ namespace VeeamHealthCheck.Functions.Reporting.DataTypes
                 }
             return ntList;
         }
+
         private CConfigBackupCsv ConfigBackupInfo()
         {
             var configB = _csvParser.ConfigBackupCsvParser();
@@ -443,6 +451,7 @@ namespace VeeamHealthCheck.Functions.Reporting.DataTypes
             return null;
 
         }
+
         private List<CJobTypeInfos> JobInfo()
         {
             log.Info("Starting Job Csv Parse..");
@@ -546,8 +555,9 @@ namespace VeeamHealthCheck.Functions.Reporting.DataTypes
                 if (repoId == r.Id)
                     return r.Name;
             }
-            return "";
+            return string.Empty;
         }
+
         private List<CWanTypeInfo> WanInfo()
         {
 
@@ -572,6 +582,7 @@ namespace VeeamHealthCheck.Functions.Reporting.DataTypes
 
             return eInfoList;
         }
+
         private List<CJobSessionInfo> JobSessionInfo()
         {
             try
@@ -648,6 +659,7 @@ namespace VeeamHealthCheck.Functions.Reporting.DataTypes
             }
 
         }
+
         private DateTime TryParseDateTime(string dateTime)
         {
             DateTime.TryParse(dateTime, out var d);
@@ -658,6 +670,7 @@ namespace VeeamHealthCheck.Functions.Reporting.DataTypes
         {
             return (int)Math.Round((decimal)(ram / ramPerCore) * 3, 0, MidpointRounding.ToPositiveInfinity);
         }
+
         private string CalcRepoOptimalTasks(int assignedTasks, int cores, int ram)
         {
             if (cores == 0 && ram == 0)
@@ -731,6 +744,7 @@ namespace VeeamHealthCheck.Functions.Reporting.DataTypes
 
             return i;
         }
+
         private string MatchHostIdToName(string hostId)
         {
             foreach (var h in _serverInfo)
@@ -739,8 +753,9 @@ namespace VeeamHealthCheck.Functions.Reporting.DataTypes
                     return h.Name;
 
             }
-            return "";
+            return string.Empty;
         }
+
         private int MatchHostIdToCPU(string hostId)
         {
             int i = 0;
@@ -755,6 +770,7 @@ namespace VeeamHealthCheck.Functions.Reporting.DataTypes
 
             return i;
         }
+
         public List<CServerTypeInfos> ServerInfo()
         {
             string message = "ServerInfo: Parsing Server CSV Data";
@@ -769,7 +785,7 @@ namespace VeeamHealthCheck.Functions.Reporting.DataTypes
             {
                 CServerTypeInfos ti = new();
                 if (s.ApiVersion == "Unknown")
-                    ti.ApiVersion = "";
+                    ti.ApiVersion = string.Empty;
                 else
                 {
                     ti.ApiVersion = s.ApiVersion;
@@ -784,7 +800,7 @@ namespace VeeamHealthCheck.Functions.Reporting.DataTypes
                 ti.OSInfo = s.OSInfo;
                 ti.IsUnavailable = s.IsUnavailable;
                 if (ti.IsUnavailable == "False")
-                    ti.IsUnavailable = "";
+                    ti.IsUnavailable = string.Empty;
                 ti.Name = s.Name;
 
                 //ti.ParentId = Guid.TryParse(s.ParentId);
@@ -811,6 +827,7 @@ namespace VeeamHealthCheck.Functions.Reporting.DataTypes
             
             return l;
         }
+
         private int CalculateServerTasks(string type, string serverId)
         {
 
@@ -822,6 +839,7 @@ namespace VeeamHealthCheck.Functions.Reporting.DataTypes
         {
             _typeList.Add(entry);
         }
+
         private void FilterAndCountTypes()
         {
             //ServerInfo();
@@ -851,6 +869,7 @@ namespace VeeamHealthCheck.Functions.Reporting.DataTypes
             return df.CalcProxyTasks(assignedTasks, cores, ram);
 
         }
+
         private List<CProxyTypeInfos> ProxyInfo()
         {
 log.Info("Processing Proxy info..");
@@ -905,11 +924,11 @@ log.Info("Processing Proxy info..");
                     p.Type = "CDP";
                     p.Cores = MatchHostIdToCPU(cdp.ServerId);
                     p.Ram = MatchHostIdtoRam(cdp.ServerId);
-                    p.ChassisType = "";
-                    p.TransportMode = "";
-                    p.UseSsl = "";
-                    p.Provisioning = "";
-                    p.FailoverToNetwork = "";
+                    p.ChassisType = string.Empty;
+                    p.TransportMode = string.Empty;
+                    p.UseSsl = string.Empty;
+                    p.Provisioning = string.Empty;
+                    p.FailoverToNetwork = string.Empty;
 
                     if (cdp.IsEnabled == "False")
                         p.IsDisabled = "True";
@@ -932,13 +951,13 @@ log.Info("Processing Proxy info..");
                     p.Type = "File";
                     p.Cores = MatchHostIdToCPU(fp.HostId);
                     p.Ram = MatchHostIdtoRam(fp.HostId);
-                    p.CachePath = "";
-                    p.CacheSize = "";
-                    p.ChassisType = "";
-                    p.TransportMode = "";
-                    p.UseSsl = "";
-                    p.Provisioning = "";
-                    p.FailoverToNetwork = "";
+                    p.CachePath = string.Empty;
+                    p.CacheSize = string.Empty;
+                    p.ChassisType = string.Empty;
+                    p.TransportMode = string.Empty;
+                    p.UseSsl = string.Empty;
+                    p.Provisioning = string.Empty;
+                    p.FailoverToNetwork = string.Empty;
 
                     proxyList.Add(p);
                 }
@@ -959,13 +978,13 @@ log.Info("Processing Proxy info..");
                     p.IsDisabled = ParseBool(hp.IsDisabled);
                     p.Cores = MatchHostIdToCPU(hp.HostId);
                     p.Ram = MatchHostIdtoRam(hp.HostId);
-                    p.CachePath = "";
-                    p.CacheSize = "";
-                    p.ChassisType = "";
-                    p.TransportMode = "";
-                    p.UseSsl = "";
+                    p.CachePath = string.Empty;
+                    p.CacheSize = string.Empty;
+                    p.ChassisType = string.Empty;
+                    p.TransportMode = string.Empty;
+                    p.UseSsl = string.Empty;
                     p.Provisioning = CalcProxyOptimalTasks(p.MaxTasksCount, p.Cores, p.Ram);
-                    p.FailoverToNetwork = "";
+                    p.FailoverToNetwork = string.Empty;
 
                     proxyList.Add(p);
                 }
@@ -975,6 +994,7 @@ log.Info("Processing Proxy info..");
             log.Info("Processing Proxy info..ok!");
             return proxyList;
         }
+
         private int ParseToInt(string input)
         {
             try
@@ -984,6 +1004,7 @@ log.Info("Processing Proxy info..");
             }
             catch (Exception e) { return 0; };
         }
+
         private double ParseToDouble(string input)
         {
             try

@@ -19,9 +19,10 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR.VbrTables.Security
         {
             _csvResults = _csv.ComplianceCsv() ?? new List<CComplianceCsv>();
         }
+
         public string ComplianceSummaryTable()
         {
-            string t = "";
+            string t = string.Empty;
             try
             {
                 // Return early if no data
@@ -62,20 +63,20 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR.VbrTables.Security
 
 
                 t += _form.TableRowStart();
-                t += _form.TableDataLeftAligned("Passed", "");
-                t += _form.TableData(passedCount.ToString(), "");
+                t += _form.TableDataLeftAligned("Passed", string.Empty);
+                t += _form.TableData(passedCount.ToString(), string.Empty);
                 t += _form.TableRowEnd();
                 t += _form.TableRowStart();
-                t += _form.TableDataLeftAligned("Not Implemented", "");
-                t += _form.TableData(notImplementedCount.ToString(), "");
+                t += _form.TableDataLeftAligned("Not Implemented", string.Empty);
+                t += _form.TableData(notImplementedCount.ToString(), string.Empty);
                 t += _form.TableRowEnd();
                 t += _form.TableRowStart();
-                t += _form.TableDataLeftAligned("Unable to Detect", "");
-                t += _form.TableData(unableToDetectCount.ToString(), "");
+                t += _form.TableDataLeftAligned("Unable to Detect", string.Empty);
+                t += _form.TableData(unableToDetectCount.ToString(), string.Empty);
                 t += _form.TableRowEnd();
                 t += _form.TableRowStart();
-                t += _form.TableDataLeftAligned("Suppressed", "");
-                t += _form.TableData(suppressedCount.ToString(), "");
+                t += _form.TableDataLeftAligned("Suppressed", string.Empty);
+                t += _form.TableData(suppressedCount.ToString(), string.Empty);
                 t += _form.TableRowEnd();
 
 
@@ -91,9 +92,10 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR.VbrTables.Security
 
             return t;
         }
+
         public string ComplianceTable()
         {
-            string t = "";
+            string t = string.Empty;
             try
             {
                 // Return early if no data
@@ -113,8 +115,8 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR.VbrTables.Security
                 foreach (var res in _csvResults)
                 {
                     t += _form.TableRowStart();
-                    t += _form.TableDataLeftAligned(res.BestPractice, "");
-                    t += _form.TableData(res.Status.ToString(), "");
+                    t += _form.TableDataLeftAligned(res.BestPractice, string.Empty);
+                    t += _form.TableData(res.Status.ToString(), string.Empty);
                     t += _form.TableRowEnd();
                 }
                 t += _form.SectionEnd();

@@ -11,20 +11,28 @@ namespace VeeamHealthCheck.Functions.Reporting.CsvHandlers
         //"Description"
         [Index(0)]
         public string ServerId { get; set; }
+
         [Index(1)]
         public string CacheSize { get; set; }
+
         [Index(2)]
         public string CachePath { get; set; }
+
         [Index(3)]
         public string IsEnabled { get; set; }
+
         [Index(4)]
         public string SourceProxyTrafficPort { get; set; }
+
         [Index(5)]
         public string TargetProxyTrafficPort { get; set; }
+
         [Index(6)]
         public string Id { get; set; }
+
         [Index(7)]
         public string Name { get; set; }
+
         [Index(8)]
         public string description { get; set; }
 

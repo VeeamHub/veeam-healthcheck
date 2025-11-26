@@ -17,6 +17,7 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR.VbrTables.Job_Session_Su
         {
 
         }
+
         public void ReturnOriginalSize(string jobName)
         {
             var bjobsCsvInfo = new CCsvParser().GetDynamicBjobs();
@@ -29,6 +30,7 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR.VbrTables.Job_Session_Su
 
             }
         }
+
         public CJobSummaryTypes SetWaitInfo(string jobName)
         {
             List<TimeSpan> tList = GetWaitTimes(jobName);
@@ -44,6 +46,7 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR.VbrTables.Job_Session_Su
 
             return summary;
         }
+
         private List<TimeSpan> GetWaitTimes(string jobName)
         {
             try
@@ -82,10 +85,12 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR.VbrTables.Job_Session_Su
                 return new List<TimeSpan>();
             }
         }
+
         private string GetMaxWaitAsString(TimeSpan maxTime)
         {
             return maxTime.ToString(@"dd\.hh\:mm\:ss");
         }
+
         private string GetAverageWaitAsString(List<TimeSpan> timeList)
         {
             if (timeList.Count == 0)
@@ -100,10 +105,12 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR.VbrTables.Job_Session_Su
                 return t.ToString(@"dd\.hh\:mm\:ss");
             }
         }
+
         public List<string> JobNameList()
         {
             return JobSessionInfoList().Select(x => x.Name).ToList();
         }
+
         public List<CJobSessionInfo> JobSessionInfoList()
         {
                 List<CJobSessionInfo> csv = new();
@@ -125,10 +132,12 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR.VbrTables.Job_Session_Su
                     return csv;
                 }
         }
+
         private DateTime TargetDate()
         {
             return CGlobals.GetToolStart.AddDays(-CGlobals.ReportDays);
         }
+
         public SessionStats SessionStats(string jobName)
         {
             SessionStats stats = new SessionStats();
@@ -165,6 +174,7 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR.VbrTables.Job_Session_Su
 
             return stats;
         }
+
         public List<TimeSpan> AddNonZeros(List<TimeSpan> jobDurationList)
         {
             List<TimeSpan> nonZeros = new();
@@ -177,6 +187,7 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR.VbrTables.Job_Session_Su
             }
             return nonZeros;
         }
+
         public List<List<string>> ReturnList(List<CJobSummaryTypes> list, bool scrub, CScrubHandler scrubber)
         {
             List<List<string>> sendBack = new();
@@ -191,7 +202,7 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR.VbrTables.Job_Session_Su
 
                     string wait = o.waitCount.ToString();
                     if (o.waitCount == 0)
-                        wait = "";
+                        wait = string.Empty;
 
                     row.Add(jname);
                     row.Add(o.ItemCount.ToString());
@@ -218,6 +229,7 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR.VbrTables.Job_Session_Su
             }
             return sendBack;
         }
+
         public CJobSummaryTypes SessionSummaryStats(double totalSessions, double totalFailedSessions,
             double totalRetries, int totalProtectedInstances, List<double> avgBackupSizes, List<double> avgDataSizes,
             List<double> maxBackupSize, List<double> avgRates, List<double> maxDataSizes)

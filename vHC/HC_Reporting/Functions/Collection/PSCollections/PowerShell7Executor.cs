@@ -20,6 +20,7 @@ param([string]$VeeamServer)
 Write-Output ""Checking Veeam on $VeeamServer""
 # Your actual PS code here, e.g., Import-Module VeeamPSSnapin; Get-VBRServer
 ";
+
         private readonly string _vbrConfigScript = Environment.CurrentDirectory + @"\Tools\Scripts\HealthCheck\VBR\Get-VBRConfig.ps1";
         private readonly string _vbrSessionScript = Environment.CurrentDirectory + @"\Tools\Scripts\HealthCheck\VBR\Get-VeeamSessionReport.ps1";
         private readonly string _vbrSessionScriptVersion13 = Environment.CurrentDirectory + @"\Tools\Scripts\HealthCheck\VBR\Get-VeeamSessionReportVersion13.ps1";
@@ -48,6 +49,7 @@ Write-Output ""Checking Veeam on $VeeamServer""
             process.WaitForExit();
             return process.ExitCode == 0;
         }
+
         public  int RunScript(string scriptPath, string arguments = "")
         {
             // Find pwsh.exe (PowerShell 7)

@@ -26,6 +26,7 @@ namespace VeeamHealthCheck.Functions.CredsWindow
 
             return creds;
         }
+
         private (string Username, string Password)? PromptForCredentials(string host)
         {
             if (CGlobals.UseStoredCreds)

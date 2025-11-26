@@ -22,7 +22,9 @@ namespace VeeamHealthCheck.Functions.Collection
     {
         public bool SCRIPTSUCCESS;
         private CLogger log = CGlobals.Logger;
+
         public CCollections() { }
+
         /* All collection utilities should run through here:
          * - powershell
          * - SQL
@@ -59,6 +61,7 @@ namespace VeeamHealthCheck.Functions.Collection
 
 
         }
+
         private void CheckRecon()
         {
             if (CGlobals.DEBUG)
@@ -69,6 +72,7 @@ namespace VeeamHealthCheck.Functions.Collection
             CReconChecker rc = new();
             rc.Check();
         }
+
         private void GetCsvFileSizesToLog()
         {
             if (CGlobals.DEBUG)
@@ -97,6 +101,7 @@ namespace VeeamHealthCheck.Functions.Collection
             CSecurityInit securityInit = new CSecurityInit();
             securityInit.Run();
         }
+
         private void ExecVmcReader()
         {
             if (CGlobals.IsVbr)
@@ -109,6 +114,7 @@ namespace VeeamHealthCheck.Functions.Collection
                 CLogOptions logOptions = new("vb365");
             }
         }
+
         private void GetRegistryDbInfo()
         {
             CRegReader reg = new CRegReader();
@@ -119,11 +125,13 @@ namespace VeeamHealthCheck.Functions.Collection
             else
                 CGlobals.DEFAULTREGISTRYKEYS = reg.DefaultVbrKeys();
         }
+
         private void ExecSqlQueries()
         {
             CSqlExecutor sql = new();
             sql.Run();
         }
+
         private void ExecPSScripts()
         {
             CGlobals.Logger.Info("Starting PS Invoke", false);
@@ -179,6 +187,7 @@ namespace VeeamHealthCheck.Functions.Collection
 
             CGlobals.Logger.Info("Starting PS Invoke...done!", false);
         }
+
         private void WeighSuccessContinuation()
         {
             string error = "Script execution has failed. Exiting program. See log for details:\n\t " + CGlobals.Logger._logFile;
@@ -212,7 +221,7 @@ namespace VeeamHealthCheck.Functions.Collection
                 var creds = ch.GetCreds();
                 string scriptPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, @"Functions\Collection\PSCollections\Scripts\TestMfa.ps1");
                 bool result = false;
-                string error = "";
+                string error = string.Empty;
                 List<string> output = new();
 
                 string pwshPath = @"C:\Program Files\PowerShell\7\pwsh.exe";
@@ -275,6 +284,7 @@ namespace VeeamHealthCheck.Functions.Collection
 
             }
         }
+
         private bool RunLocalMfaCheck(PSInvoker p)
         {
             try
@@ -290,12 +300,14 @@ namespace VeeamHealthCheck.Functions.Collection
                 return false;
             }
         }
+
         private bool TestPsMfaVb365(PSInvoker p)
         {
             //CScripts scripts = new();
 
             return p.TestMfaVB365();
         }
+
         private void ExecVbrScripts(PSInvoker p)
         {
             //debug log evaluation of what to run
@@ -310,11 +322,13 @@ namespace VeeamHealthCheck.Functions.Collection
                 SCRIPTSUCCESS = p.Invoke();
             }
         }
+
         private void ExecVbrConfigOnly(PSInvoker p)
         {
             CGlobals.Logger.Info("Entering vbr config collection");
             SCRIPTSUCCESS = p.RunVbrConfigCollect();
         }
+
         private void ExecVb365Scripts(PSInvoker p)
         {
             if (CGlobals.IsVb365)
@@ -324,6 +338,7 @@ namespace VeeamHealthCheck.Functions.Collection
                 p.InvokeVb365Collect();
             }
         }
+
         private void PopulateWaits()
         {
             try

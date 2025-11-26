@@ -19,11 +19,14 @@ namespace VeeamHealthCheck.Startup
 
         private CLogger LOG = CGlobals.Logger;
         private string logStart = "[Functions]\t";
+
         public CClientFunctions()
         {
 
         }
+
         public void Dispose() { }
+
         public void KbLinkAction(System.Windows.Navigation.RequestNavigateEventArgs args)
         {
             CGlobals.Logger.Info("[GUI]\tOpening KB Link");
@@ -40,6 +43,7 @@ namespace VeeamHealthCheck.Startup
             });
             CGlobals.Logger.Info("[GUI]\tOpening KB Link...done!");
         }
+
         public void PreRunCheck()
         {
             CGlobals.Logger.Info("Starting Admin Check", false);
@@ -54,6 +58,7 @@ namespace VeeamHealthCheck.Startup
 
             CGlobals.Logger.Info("Starting Admin Check...done!");
         }
+
         private void VbrVersionSupportCheck()
         {
             //GetVbrVersion();
@@ -82,6 +87,7 @@ namespace VeeamHealthCheck.Startup
             }
 
         }
+
         public string ModeCheck()
         {
             CGlobals.Logger.Info("Checking processes to determine execution mode..", false);
@@ -141,6 +147,7 @@ namespace VeeamHealthCheck.Startup
             StartCollections();
             return StartAnalysis();
         }
+
         public void RunHotfixDetector(string path, string remoteServer)
         {
             LOG.Info(logStart + "Starting Hotfix Detector", false);
@@ -171,6 +178,7 @@ namespace VeeamHealthCheck.Startup
             CHotfixDetector hfd = new(path);
             hfd.Run();
         }
+
         public bool VerifyPath(string path)
         {
             if (String.IsNullOrEmpty(path)) return false;
@@ -179,6 +187,7 @@ namespace VeeamHealthCheck.Startup
             if(TryCreateDir(path)) return true;
             else return false;
         }
+
         private bool TryCreateDir(string path)
         {
             try
@@ -191,11 +200,13 @@ namespace VeeamHealthCheck.Startup
                 return false; }
 
         }
+
         private void LogUserSettings()
         {
             LOG.Info(ClientSettingsString(), false);
 
         }
+
         private void StartCollections()
         {
             if (!CGlobals.IMPORT)
@@ -222,6 +233,7 @@ namespace VeeamHealthCheck.Startup
                 LOG.Info(logStart + "Init Collections...done!", false);
             }
         }
+
         private int StartAnalysis()
         {
             LOG.Info(logStart + "Init Data analysis & report creations", false);
@@ -230,6 +242,7 @@ namespace VeeamHealthCheck.Startup
             LOG.Info(logStart + "Init Data analysis & report creations...done!", false);
             return res;
         }
+
         public int CliRun(string targetForOutput)
         {
             CGlobals.Logger.Info("Setting openexplorer & openhtml to false for CLI execution", false);
@@ -253,6 +266,7 @@ namespace VeeamHealthCheck.Startup
             
             return StartPrimaryFunctions();
         }
+
         public void GetVbrVersion()
         {
             try
@@ -263,6 +277,7 @@ namespace VeeamHealthCheck.Startup
             }
             catch(Exception e) { }
         }
+
         public bool VerifyPath()
         {
             try
@@ -286,6 +301,7 @@ namespace VeeamHealthCheck.Startup
             cMode.Dispose();
             return res;
         }
+
         private string ClientSettingsString()
         {
             return string.Format(
@@ -298,21 +314,25 @@ namespace VeeamHealthCheck.Startup
                 CGlobals.Scrub, CGlobals.OpenHtml, CGlobals.OpenExplorer, CGlobals._desiredPath, CGlobals.ReportDays.ToString()
                 );
         }
+
         public void LogUIAction(string message)
         {
             string s = string.Format("[Veeam.HC.UI]\tSelected:" + message);
             CGlobals.Logger.Info(s);
         }
+
         private void WriteVhcVersion()
         {
             CGlobals.Logger.Info("vHC Version: " + CVersionSetter.GetFileVersion(), false);
         }
+
         private void WriteCliArgs(string[] args)
         {
             CGlobals.Logger.Info("Args count = " + args.Count().ToString());
             foreach (var arg in args)
                 CGlobals.Logger.Info("\tInput: " + arg);
         }
+
         public void LogVersionAndArgs(string[] args)
         {
             WriteVhcVersion();

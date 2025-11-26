@@ -25,6 +25,7 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR
             PopulateCsvToMemory();
             log.Info(logStart + "CHtmlBodyHelper constructor completed.");
         }
+
         public string FormVbrFullReport(string htmlString, bool scrub)
         {
             log.Info(logStart + ">>> ENTERING FormVbrFullReport() method <<<");
@@ -111,6 +112,7 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR
             log.Info(logStart + "FormVbrFullReport() completed successfully.");
             return HTMLSTRING;
         }
+
         private void PopulateCsvToMemory(){
             log.Info(logStart + "Creating CDataTypesParser instance...");
             CGlobals.DtParser = new();
@@ -119,6 +121,7 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR
             CGlobals.ServerInfo = CGlobals.DtParser.ServerInfos;
             log.Info(logStart + "PopulateCsvToMemory completed.");
         }
+
         public string FormSecurityReport(string htmlString)
         {
             HTMLSTRING = htmlString;
@@ -136,90 +139,109 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR
 
             return HTMLSTRING;
         }
+
         private void LicenseTable()
         {
             HTMLSTRING += _tables.LicTable(SCRUB);
         }
+
         private void BackupServerTable()
         {
             HTMLSTRING += _tables.AddBkpSrvTable(SCRUB);
         }
+
         private void SecuritySummaryTable()
         {
             HTMLSTRING += _tables.AddSecSummaryTable(SCRUB);
         }
+
         private void FullSecurityTable()
         {
             HTMLSTRING += _tables.AddSecurityReportSecuritySummaryTable();
         }
+
         private void ServerSummaryTable()
         {
             HTMLSTRING += _tables.AddSrvSummaryTable(SCRUB);
         }
+
         private void JobSummaryTable()
         {
             HTMLSTRING += _tables.AddJobSummaryTable(SCRUB);
         }
+
         private void MissingJobsTable()
         {
             HTMLSTRING += _tables.AddMissingJobsTable(SCRUB);
         }
+
         private void ProtectedWorkloadsTable()
         {
             HTMLSTRING += _tables.AddProtectedWorkLoadsTable(SCRUB);
 
         }
+
         private void ManagedServersTable()
         {
             HTMLSTRING += _tables.AddManagedServersTable(SCRUB);
 
         }
+
         private void RegistryKeyTable()
         {
             HTMLSTRING += _tables.AddRegKeysTable(SCRUB);
 
         }
+
         private void ProxyTable()
         {
             HTMLSTRING += _tables.AddProxyTable(SCRUB);
 
         }
+
         private void SobrTable()
         {
             HTMLSTRING += _tables.AddSobrTable(SCRUB);
 
         }
+
         private void ExtentTable()
         {
             HTMLSTRING += _tables.AddSobrExtTable(SCRUB);
 
         }
+
         private void RepoTable()
         {
             HTMLSTRING += _tables.AddRepoTable(SCRUB);
 
         }
+
         private void JobConcurrencyTable()
         {
             HTMLSTRING += _tables.AddJobConTable(SCRUB);
 
         }
+
         private void TaskConcurrencyTable()
         {
             HTMLSTRING += _tables.AddTaskConTable(SCRUB);
 
         }
+
         private void JobSessionSummaryTable()
         {
             //HTMLSTRING += _tables.AddJobSessSummTable(SCRUB);
             HTMLSTRING += _tables.AddJobSessSummTableByJob(SCRUB);
 
         }
+
         private void JobInfoTable()
         {
             HTMLSTRING += _tables.AddJobInfoTable(SCRUB);
 
         }
+
         public void IndividualJobHtmlBuilder()
         {
             _tables.AddSessionsFiles(SCRUB);

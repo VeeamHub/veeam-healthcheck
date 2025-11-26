@@ -15,10 +15,12 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VB365
         private CCsvParser _csv = new(CVariables.vb365dir);
         private CM365Summaries _summary = new CM365Summaries();
         private Scrubber.CScrubHandler _scrubber = CGlobals.Scrubber;
+
         public CM365Tables()
         {
 
         }
+
         public string Globals()
         {
             string s = "<div class=\"global\" id=\"global\">";
@@ -55,52 +57,52 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VB365
                     DateTime.TryParse(gl.LicenseExpiry, out DateTime expireDate);
 
 
-                    s += _form.TableData(gl.LicenseStatus, "");
+                    s += _form.TableData(gl.LicenseStatus, string.Empty);
 
                     if (expireDate < DateTime.Now)
-                        s += _form.TableData(gl.LicenseExpiry, "", 1);
+                        s += _form.TableData(gl.LicenseExpiry, string.Empty, 1);
                     else if (expireDate < DateTime.Now.AddDays(60))
-                        s += _form.TableData(gl.LicenseExpiry, "", 3);
+                        s += _form.TableData(gl.LicenseExpiry, string.Empty, 3);
                     else
-                        s += _form.TableData(gl.LicenseExpiry, "");
+                        s += _form.TableData(gl.LicenseExpiry, string.Empty);
 
-                    s += _form.TableData(gl.SupportExpiry, "");
-                    s += _form.TableData(gl.LicenseType, "");
+                    s += _form.TableData(gl.SupportExpiry, string.Empty);
+                    s += _form.TableData(gl.LicenseType, string.Empty);
                     if (CGlobals.Scrub)
                     {
                         var licName = CGlobals.Scrubber.ScrubItem(gl.LicensedTo, Scrubber.ScrubItemType.Item);
-                        s += _form.TableData(licName, "");
+                        s += _form.TableData(licName, string.Empty);
 
                     }
                     else
                     {
-                        s += _form.TableData(gl.LicensedTo, "");
+                        s += _form.TableData(gl.LicensedTo, string.Empty);
 
                     }
-                    s += _form.TableData(gl.LicenseContact, "");
-                    s += _form.TableData(gl.LicensedFor, "");
+                    s += _form.TableData(gl.LicenseContact, string.Empty);
+                    s += _form.TableData(gl.LicensedFor, string.Empty);
 
                     if (percentUsed > 95)
-                        s += _form.TableData(gl.LicensesUsed, "", 1);
+                        s += _form.TableData(gl.LicensesUsed, string.Empty, 1);
                     else if (percentUsed > 90)
-                        s += _form.TableData(gl.LicensesUsed, "", 3);
+                        s += _form.TableData(gl.LicensesUsed, string.Empty, 3);
                     else
-                        s += _form.TableData(gl.LicensesUsed, "");
+                        s += _form.TableData(gl.LicensesUsed, string.Empty);
 
-                    s += _form.TableData(gl.GlobalFolderExclusions, "");
-                    s += _form.TableData(gl.GlobalRetExclusions, "");
-                    s += _form.TableData(gl.LogRetention, "");
+                    s += _form.TableData(gl.GlobalFolderExclusions, string.Empty);
+                    s += _form.TableData(gl.GlobalRetExclusions, string.Empty);
+                    s += _form.TableData(gl.LogRetention, string.Empty);
                     if (gl.NotificationEnabled == "False")
-                        s += _form.TableData(gl.NotificationEnabled, "", 3);
+                        s += _form.TableData(gl.NotificationEnabled, string.Empty, 3);
                     else
-                        s += _form.TableData(gl.NotificationEnabled, "");
+                        s += _form.TableData(gl.NotificationEnabled, string.Empty);
 
-                    s += _form.TableData(gl.NotifyOn, "");
+                    s += _form.TableData(gl.NotifyOn, string.Empty);
 
                     if (gl.AutomaticUpdates == "False")
-                        s += _form.TableData(gl.AutomaticUpdates, "", 3);
+                        s += _form.TableData(gl.AutomaticUpdates, string.Empty, 3);
                     else
-                        s += _form.TableData(gl.AutomaticUpdates, "");
+                        s += _form.TableData(gl.AutomaticUpdates, string.Empty);
                 }
             }
             catch (Exception e)
@@ -115,25 +117,26 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VB365
             s += "</div>";
             return s;
         }
+
         public string Vb365Proxies()
         {
             string s = "<div class=\"proxies\" id=\"proxies\">";
             s += _form.header2("Proxies");
             s += "<br>";
             s += "<table border=\"1\"><tr>";
-            s += _form.TableHeader("Proxy Name", "");
-            s += _form.TableHeader("Description", "");
-            s += _form.TableHeader("Threads", "");
+            s += _form.TableHeader("Proxy Name", string.Empty);
+            s += _form.TableHeader("Description", string.Empty);
+            s += _form.TableHeader("Threads", string.Empty);
             s += _form.TableHeader("Throttling", Vb365ResourceHandler.proxyTTThrottling);
             s += _form.TableHeader("State", Vb365ResourceHandler.proxyTTState);
             //s += _form.TableHeader("Type", "");
             s += _form.TableHeader("Outdated", Vb365ResourceHandler.proxyTTOutdated);
             s += _form.TableHeader("Internet Proxy", Vb365ResourceHandler.proxyTTInternet);
             s += _form.TableHeader("Objects Managed", Vb365ResourceHandler.proxyTTObjects);
-            s += _form.TableHeader("OS Version", "");
-            s += _form.TableHeader("RAM", "");
+            s += _form.TableHeader("OS Version", string.Empty);
+            s += _form.TableHeader("RAM", string.Empty);
             s += _form.TableHeader("CPUs", Vb365ResourceHandler.proxyTTCPUs);
-            s += _form.TableHeader("Extended Logging?", "");
+            s += _form.TableHeader("Extended Logging?", string.Empty);
 
             s += "</tr>";
             try
@@ -143,18 +146,18 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VB365
                 foreach (var gl in global)
                 {
 
-                    string proxyname = "";
-                    string description = "";
-                    string threads = "";
-                    string throttling = "";
-                    string state = "";
-                    string outdated = "";
-                    string internetproxy = "";
-                    string objectsmanaged = "";
-                    string osversion = "";
-                    string ram = "";
-                    string cpus = "";
-                    string extendedlogging = "";
+                    string proxyname = string.Empty;
+                    string description = string.Empty;
+                    string threads = string.Empty;
+                    string throttling = string.Empty;
+                    string state = string.Empty;
+                    string outdated = string.Empty;
+                    string internetproxy = string.Empty;
+                    string objectsmanaged = string.Empty;
+                    string osversion = string.Empty;
+                    string ram = string.Empty;
+                    string cpus = string.Empty;
+                    string extendedlogging = string.Empty;
 
                     s += "<tr>";
 
@@ -269,18 +272,18 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VB365
                     // objectsmanaged RAM scales at 1GB X 250 X 2.5 = max objects managed.
                     // cores scale at 1 * 500 * 5 = max objects managed
 
-                    s += _form.TableData(proxyname, "");
-                    s += _form.TableData(description, "");
-                    s += _form.TableData(threads, "", threadShade);
-                    s += _form.TableData(throttling, "", throttleShade);
-                    s += _form.TableData(state, "", stateShade);
-                    s += _form.TableData(outdated, "", outdatedShade);
-                    s += _form.TableData(internetproxy, "", proxyShade);
-                    s += _form.TableData(objectsmanaged, "", objManagedShade);
-                    s += _form.TableData(osversion, "", osVersionShade);
-                    s += _form.TableData(ram, "", ramShade);
-                    s += _form.TableData(cpus, "", cpuShade);
-                    s += _form.TableData(extendedlogging, "");
+                    s += _form.TableData(proxyname, string.Empty);
+                    s += _form.TableData(description, string.Empty);
+                    s += _form.TableData(threads, string.Empty, threadShade);
+                    s += _form.TableData(throttling, string.Empty, throttleShade);
+                    s += _form.TableData(state, string.Empty, stateShade);
+                    s += _form.TableData(outdated, string.Empty, outdatedShade);
+                    s += _form.TableData(internetproxy, string.Empty, proxyShade);
+                    s += _form.TableData(objectsmanaged, string.Empty, objManagedShade);
+                    s += _form.TableData(osversion, string.Empty, osVersionShade);
+                    s += _form.TableData(ram, string.Empty, ramShade);
+                    s += _form.TableData(cpus, string.Empty, cpuShade);
+                    s += _form.TableData(extendedlogging, string.Empty);
 
                     s += "</tr>";
                 }
@@ -295,6 +298,7 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VB365
             s += "</div>";
             return s;
         }
+
         public string Vb365Repos()
         {
             string s = "<div class=\"repos\" id=\"repos\">";
@@ -365,20 +369,20 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VB365
                         objRepo = _scrubber.ScrubItem(g.ObjectRepo, Scrubber.ScrubItemType.Repository);
 
                     }
-                    s += _form.TableData(boundProxy, "");
-                    s += _form.TableData(name, "");
-                    s += _form.TableData(desc, "");
-                    s += _form.TableData(g.Type, "");
-                    s += _form.TableData(path, "", pathShade);
-                    s += _form.TableData(objRepo, "", objencshade);
-                    s += _form.TableData(g.Encryption, "", objencshade);
-                    s += _form.TableData(g.State, "", stateShade);
-                    s += _form.TableData(g.Capacity, "");
-                    s += _form.TableData(g.Free, "", freeShade);
-                    s += _form.TableData(g.DataStored, "");
-                    s += _form.TableData(g.CacheSpaceUsed, "");
-                    s += _form.TableData(g.DailyChangeRate, "");
-                    s += _form.TableData(g.Retention, "");
+                    s += _form.TableData(boundProxy, string.Empty);
+                    s += _form.TableData(name, string.Empty);
+                    s += _form.TableData(desc, string.Empty);
+                    s += _form.TableData(g.Type, string.Empty);
+                    s += _form.TableData(path, string.Empty, pathShade);
+                    s += _form.TableData(objRepo, string.Empty, objencshade);
+                    s += _form.TableData(g.Encryption, string.Empty, objencshade);
+                    s += _form.TableData(g.State, string.Empty, stateShade);
+                    s += _form.TableData(g.Capacity, string.Empty);
+                    s += _form.TableData(g.Free, string.Empty, freeShade);
+                    s += _form.TableData(g.DataStored, string.Empty);
+                    s += _form.TableData(g.CacheSpaceUsed, string.Empty);
+                    s += _form.TableData(g.DailyChangeRate, string.Empty);
+                    s += _form.TableData(g.Retention, string.Empty);
                     s += "</tr>";
 
                 }
@@ -394,18 +398,19 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VB365
             s += "</div>";
             return s;
         }
+
         public string Vb365Rbac()
         {
             string s = "<div class=\"rbac\" id=\"rbac\">";
             s += _form.header2("RBAC Roles Info");
             s += "<br>";
             s += "<table border=\"1\"><tr>";
-            s += _form.TableHeader("Name", "");
-            s += _form.TableHeader("Description", "");
-            s += _form.TableHeader("Role Type", "");
-            s += _form.TableHeader("Operators", "");
-            s += _form.TableHeader("Selected Items", "");
-            s += _form.TableHeader("Excluded Items", "");
+            s += _form.TableHeader("Name", string.Empty);
+            s += _form.TableHeader("Description", string.Empty);
+            s += _form.TableHeader("Role Type", string.Empty);
+            s += _form.TableHeader("Operators", string.Empty);
+            s += _form.TableHeader("Selected Items", string.Empty);
+            s += _form.TableHeader("Excluded Items", string.Empty);
 
             s += "</tr>";
 
@@ -425,7 +430,7 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VB365
                         {
                             output = _scrubber.ScrubItem(output, Scrubber.ScrubItemType.Item);
                         }
-                        s += _form.TableData(output, "");
+                        s += _form.TableData(output, string.Empty);
                         counter++;
                     }
 
@@ -443,6 +448,7 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VB365
             s += "</div>";
             return s;
         }
+
         public string Vb365Security()
         {
             string s = "<div class=\"sec\" id=\"sec\">";
@@ -451,7 +457,7 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VB365
             s += "<table border=\"1\"><tr>";
             s += _form.TableHeader(Vb365ResourceHandler.SecurityTableColumn1, "Win. Firewall Enabled?");
             s += _form.TableHeader(Vb365ResourceHandler.SecurityTableColumn2, "Internet proxy?");
-            s += _form.TableHeader("RBAC Roles Defined", "");
+            s += _form.TableHeader("RBAC Roles Defined", string.Empty);
             s += "</tr>";
 
 
@@ -540,55 +546,55 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VB365
 
 
                     s += "<tr>";
-                    s += _form.TableData(g.WinFirewallEnabled, "");
-                    s += _form.TableData(g.Internetproxy, "");
-                    s += _form.TableData(rbacRowsCount.ToString(), "");
+                    s += _form.TableData(g.WinFirewallEnabled, string.Empty);
+                    s += _form.TableData(g.Internetproxy, string.Empty);
+                    s += _form.TableData(rbacRowsCount.ToString(), string.Empty);
                     s += "</tr>";
 
                     s += "</table><table border =\"1\"><tr><br/>";
                     s += _form.TableHeader(Vb365ResourceHandler.SecurityTable2Column1, Vb365ResourceHandler.securityTTServices);
-                    s += _form.TableHeader(Vb365ResourceHandler.SecurityTable2Column2, "");
+                    s += _form.TableHeader(Vb365ResourceHandler.SecurityTable2Column2, string.Empty);
                     s += _form.TableHeader(Vb365ResourceHandler.SecurityTable2Column3, Vb365ResourceHandler.securityTTPort);
                     s += _form.TableHeader(Vb365ResourceHandler.SecurityTable2Column4, Vb365ResourceHandler.securityTTCert);
-                    s += _form.TableHeader(Vb365ResourceHandler.SecurityTable2Column5, "");
-                    s += _form.TableHeader(Vb365ResourceHandler.SecurityTable2Column6, "");
+                    s += _form.TableHeader(Vb365ResourceHandler.SecurityTable2Column5, string.Empty);
+                    s += _form.TableHeader(Vb365ResourceHandler.SecurityTable2Column6, string.Empty);
                     s += "</tr><tr>";
-                    s += _form.TableData("Server", "");
-                    s += _form.TableData("", "");// enabled
-                    s += _form.TableData("", "");// port
-                    s += _form.TableData(serverCert, "");// cert
-                    s += _form.TableData(g.ServerCertExpires, "");// expires
-                    s += _form.TableData(g.ServerCertSelfSigned, "", serverCertSignShade);// self signed
+                    s += _form.TableData("Server", string.Empty);
+                    s += _form.TableData(string.Empty, string.Empty);// enabled
+                    s += _form.TableData(string.Empty, string.Empty);// port
+                    s += _form.TableData(serverCert, string.Empty);// cert
+                    s += _form.TableData(g.ServerCertExpires, string.Empty);// expires
+                    s += _form.TableData(g.ServerCertSelfSigned, string.Empty, serverCertSignShade);// self signed
                     s += "</tr><tr>";
 
-                    s += _form.TableData("API", "");
-                    s += _form.TableData(g.APIEnabled, "");
-                    s += _form.TableData(g.APIPort, "");
-                    s += _form.TableData(apiCert, "");
-                    s += _form.TableData(g.APICertExpires, "");
-                    s += _form.TableData(g.APICertSelfSigned, "", apiCertSignShade);
+                    s += _form.TableData("API", string.Empty);
+                    s += _form.TableData(g.APIEnabled, string.Empty);
+                    s += _form.TableData(g.APIPort, string.Empty);
+                    s += _form.TableData(apiCert, string.Empty);
+                    s += _form.TableData(g.APICertExpires, string.Empty);
+                    s += _form.TableData(g.APICertSelfSigned, string.Empty, apiCertSignShade);
                     s += "</tr><tr>";
-                    s += _form.TableData("Tenant Auth", "");
-                    s += _form.TableData(g.TenantAuthEnabled, "");
-                    s += _form.TableData("", "");
-                    s += _form.TableData(tenantCert, "");
-                    s += _form.TableData(g.TenantAuthCertExpires, "");
-                    s += _form.TableData(g.TenantAuthCertSelfSigned, "", tenantCertSignShade);
+                    s += _form.TableData("Tenant Auth", string.Empty);
+                    s += _form.TableData(g.TenantAuthEnabled, string.Empty);
+                    s += _form.TableData(string.Empty, string.Empty);
+                    s += _form.TableData(tenantCert, string.Empty);
+                    s += _form.TableData(g.TenantAuthCertExpires, string.Empty);
+                    s += _form.TableData(g.TenantAuthCertSelfSigned, string.Empty, tenantCertSignShade);
                     s += "</tr><tr>";
-                    s += _form.TableData("Restore Portal", "");
-                    s += _form.TableData(g.RestorePortalEnabled, "");
-                    s += _form.TableData("", "");
-                    s += _form.TableData(portalCert, "");
-                    s += _form.TableData(g.RestorePortalCertExpires, "");
-                    s += _form.TableData(g.RestorePortalCertSelfSigned, "", portalCertSignShade);
+                    s += _form.TableData("Restore Portal", string.Empty);
+                    s += _form.TableData(g.RestorePortalEnabled, string.Empty);
+                    s += _form.TableData(string.Empty, string.Empty);
+                    s += _form.TableData(portalCert, string.Empty);
+                    s += _form.TableData(g.RestorePortalCertExpires, string.Empty);
+                    s += _form.TableData(g.RestorePortalCertSelfSigned, string.Empty, portalCertSignShade);
                     s += "</tr>";
                     s += "</tr><tr>";
-                    s += _form.TableData("Operator Auth", "");
-                    s += _form.TableData(g.OperatorAuthEnabled, "");
-                    s += _form.TableData("", "");
-                    s += _form.TableData(operatorCert, "");
-                    s += _form.TableData(g.OperatorAuthCertExpires, "");
-                    s += _form.TableData(g.OperatorAuthCertSelfSigned, "", operatorCertSignShade);
+                    s += _form.TableData("Operator Auth", string.Empty);
+                    s += _form.TableData(g.OperatorAuthEnabled, string.Empty);
+                    s += _form.TableData(string.Empty, string.Empty);
+                    s += _form.TableData(operatorCert, string.Empty);
+                    s += _form.TableData(g.OperatorAuthCertExpires, string.Empty);
+                    s += _form.TableData(g.OperatorAuthCertSelfSigned, string.Empty, operatorCertSignShade);
                     s += "</tr>";
 
 
@@ -606,6 +612,7 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VB365
             s += "</div>";
             return s;
         }
+
         public string Vb365Controllers()
         {
             string s = "<div class=\"controller\" id=\"controller\">";
@@ -639,22 +646,22 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VB365
                 foreach (var gl in global)
                 {
                     s += "<tr>";
-                    string vbVersion = "";// g.Select(x => x.Key).Where(y=>y == "vb365version");
-                    string osVersion = "";
-                    string ram = "";
-                    string cpu = "";
-                    string proxies = "";
-                    string repos = "";
-                    string orgs = "";
-                    string jobs = "";
-                    string psEnabled = "";
-                    string proxyInstalled = "";
-                    string restEnabled = "";
-                    string consoleInstalled = "";
-                    string vmName = "";
-                    string vmLoc = "";
-                    string vmSku = "";
-                    string vmSize = "";
+                    string vbVersion = string.Empty;// g.Select(x => x.Key).Where(y=>y == "vb365version");
+                    string osVersion = string.Empty;
+                    string ram = string.Empty;
+                    string cpu = string.Empty;
+                    string proxies = string.Empty;
+                    string repos = string.Empty;
+                    string orgs = string.Empty;
+                    string jobs = string.Empty;
+                    string psEnabled = string.Empty;
+                    string proxyInstalled = string.Empty;
+                    string restEnabled = string.Empty;
+                    string consoleInstalled = string.Empty;
+                    string vmName = string.Empty;
+                    string vmLoc = string.Empty;
+                    string vmSku = string.Empty;
+                    string vmSize = string.Empty;
                     int counter = 0;
                     foreach (var g in gl)
                     {
@@ -745,22 +752,22 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VB365
                             ramShade = 3;
                     }
 
-                    s += _form.TableData(vbVersion, "");
-                    s += _form.TableData(osVersion, "", osShade);
-                    s += _form.TableData(ram, "", ramShade);
-                    s += _form.TableData(cpu, "", cpuShade);
-                    s += _form.TableData(proxies, "");
-                    s += _form.TableData(repos, "");
-                    s += _form.TableData(orgs, "");
-                    s += _form.TableData(jobs, "");
-                    s += _form.TableData(psEnabled, "");
-                    s += _form.TableData(proxyInstalled, "");
-                    s += _form.TableData(restEnabled, "");
-                    s += _form.TableData(consoleInstalled, "");
-                    s += _form.TableData(vmName, "");
-                    s += _form.TableData(vmLoc, "");
-                    s += _form.TableData(vmSku, "");
-                    s += _form.TableData(vmSize, "");
+                    s += _form.TableData(vbVersion, string.Empty);
+                    s += _form.TableData(osVersion, string.Empty, osShade);
+                    s += _form.TableData(ram, string.Empty, ramShade);
+                    s += _form.TableData(cpu, string.Empty, cpuShade);
+                    s += _form.TableData(proxies, string.Empty);
+                    s += _form.TableData(repos, string.Empty);
+                    s += _form.TableData(orgs, string.Empty);
+                    s += _form.TableData(jobs, string.Empty);
+                    s += _form.TableData(psEnabled, string.Empty);
+                    s += _form.TableData(proxyInstalled, string.Empty);
+                    s += _form.TableData(restEnabled, string.Empty);
+                    s += _form.TableData(consoleInstalled, string.Empty);
+                    s += _form.TableData(vmName, string.Empty);
+                    s += _form.TableData(vmLoc, string.Empty);
+                    s += _form.TableData(vmSku, string.Empty);
+                    s += _form.TableData(vmSize, string.Empty);
                     s += "</tr>";
                 }
             }
@@ -774,6 +781,7 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VB365
             s += "</div>";
             return s;
         }
+
         public string Vb365ControllerDrives()
         {
             string s = "<div class=\"controllerdrives\" id=\"controllerdrives\">";
@@ -800,17 +808,17 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VB365
                 foreach (var gl in global)
                 {
                     s += "<tr>";
-                    string friendlyname = "";
-                    string deviceid = "";
-                    string bustype = "";
-                    string mediatype = "";
-                    string manufacturer = "";
-                    string model = "";
-                    string size = "";
-                    string allocatedsize = "";
-                    string operationalstatus = "";
-                    string healthstatus = "";
-                    string bootdrive = "";
+                    string friendlyname = string.Empty;
+                    string deviceid = string.Empty;
+                    string bustype = string.Empty;
+                    string mediatype = string.Empty;
+                    string manufacturer = string.Empty;
+                    string model = string.Empty;
+                    string size = string.Empty;
+                    string allocatedsize = string.Empty;
+                    string operationalstatus = string.Empty;
+                    string healthstatus = string.Empty;
+                    string bootdrive = string.Empty;
 
                     foreach (var g in gl)
                     {
@@ -866,17 +874,17 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VB365
                         healthStatShade = 3;
 
 
-                    s += _form.TableData(friendlyname, "");
-                    s += _form.TableData(deviceid, "");
-                    s += _form.TableData(bustype, "");
-                    s += _form.TableData(mediatype, "", mediaTypeShade);
-                    s += _form.TableData(manufacturer, "");
-                    s += _form.TableData(model, "");
-                    s += _form.TableData(size, "");
-                    s += _form.TableData(allocatedsize, "");
-                    s += _form.TableData(operationalstatus, "", opStatShade);
-                    s += _form.TableData(healthstatus, "", healthStatShade);
-                    s += _form.TableData(bootdrive, "");
+                    s += _form.TableData(friendlyname, string.Empty);
+                    s += _form.TableData(deviceid, string.Empty);
+                    s += _form.TableData(bustype, string.Empty);
+                    s += _form.TableData(mediatype, string.Empty, mediaTypeShade);
+                    s += _form.TableData(manufacturer, string.Empty);
+                    s += _form.TableData(model, string.Empty);
+                    s += _form.TableData(size, string.Empty);
+                    s += _form.TableData(allocatedsize, string.Empty);
+                    s += _form.TableData(operationalstatus, string.Empty, opStatShade);
+                    s += _form.TableData(healthstatus, string.Empty, healthStatShade);
+                    s += _form.TableData(bootdrive, string.Empty);
 
                     s += "</tr>";
                 }
@@ -891,6 +899,7 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VB365
             s += "</div>";
             return s;
         }
+
         public string Vb365JobSessions()
         {
             string s = "<div class=\"jobsessions\" id=\"jobsessions\">";
@@ -924,7 +933,7 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VB365
                             if (counter == 0 || counter == 5)
                                 output = _scrubber.ScrubItem(output, Scrubber.ScrubItemType.Job);
                         }
-                        s += _form.TableData(output, "");
+                        s += _form.TableData(output, string.Empty);
                         counter++;
                     }
 
@@ -942,6 +951,7 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VB365
             s += "</div>";
             return s;
         }
+
         public string Vb365ProcStats()
         {
             string s = "<div class=\"procstats\" id=\"procstats\">";
@@ -949,14 +959,14 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VB365
             //s += "<br>";
             s += _form.CollapsibleButton("Show Processing Stats");
             s += "<table border=\"1\" style=\"display: none;\"><tr>";
-            s += _form.TableHeader("Name", "");
-            s += _form.TableHeader("Operation", "");
-            s += _form.TableHeader("Time (latest)", "");
-            s += _form.TableHeader("Time (Median)", "");
-            s += _form.TableHeader("Time (Min)", "");
-            s += _form.TableHeader("Time (Avg)", "");
-            s += _form.TableHeader("Time (Max)", "");
-            s += _form.TableHeader("Time (90%)", "");
+            s += _form.TableHeader("Name", string.Empty);
+            s += _form.TableHeader("Operation", string.Empty);
+            s += _form.TableHeader("Time (latest)", string.Empty);
+            s += _form.TableHeader("Time (Median)", string.Empty);
+            s += _form.TableHeader("Time (Min)", string.Empty);
+            s += _form.TableHeader("Time (Avg)", string.Empty);
+            s += _form.TableHeader("Time (Max)", string.Empty);
+            s += _form.TableHeader("Time (90%)", string.Empty);
 
             s += "</tr>";
             try
@@ -982,7 +992,7 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VB365
 
                         if (counter == 0 && CGlobals.Scrub)
                             output = _scrubber.ScrubItem(output, Scrubber.ScrubItemType.Item);
-                        s += _form.TableData(output, "");
+                        s += _form.TableData(output, string.Empty);
                         counter++;
                     }
 
@@ -999,6 +1009,7 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VB365
             s += "</div>";
             return s;
         }
+
         public string Vb365JobStats()
         {
             string s = "<div class=\"jobstats\" id=\"jobstats\">";
@@ -1037,7 +1048,7 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VB365
                             if (counter == 0)
                                 output = _scrubber.ScrubItem(output, Scrubber.ScrubItemType.Job);
                         }
-                        s += _form.TableData(output, "");
+                        s += _form.TableData(output, string.Empty);
                         counter++;
                     }
 
@@ -1054,6 +1065,7 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VB365
             s += "</div>";
             return s;
         }
+
         public string Vb365ObjectRepos()
         {
             string s = "<div class=\"objrepo\" id=\"objrepo\">";
@@ -1080,16 +1092,16 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VB365
                 {
                     s += "<tr>";
 
-                    string name = "";
-                    string description = "";
-                    string cloud = "";
-                    string type = "";
-                    string bucketcontainer = "";
-                    string path = "";
-                    string sizelimit = "";
-                    string usedspace = "";
-                    string freespace = "";
-                    string boundrepo = "";
+                    string name = string.Empty;
+                    string description = string.Empty;
+                    string cloud = string.Empty;
+                    string type = string.Empty;
+                    string bucketcontainer = string.Empty;
+                    string path = string.Empty;
+                    string sizelimit = string.Empty;
+                    string usedspace = string.Empty;
+                    string freespace = string.Empty;
+                    string boundrepo = string.Empty;
 
 
                     int counter = 0;
@@ -1154,16 +1166,16 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VB365
                     if (freeSpaceNumber / sizeLimitNumber * 100 < 5)
                         freeSpaceShade = 1;
 
-                    s += _form.TableData(name, "");
-                    s += _form.TableData(description, "");
-                    s += _form.TableData(cloud, "");
-                    s += _form.TableData(type, "");
-                    s += _form.TableData(bucketcontainer, "");
-                    s += _form.TableData(path, "");
-                    s += _form.TableData(sizelimit, "");
-                    s += _form.TableData(usedspace, "");
-                    s += _form.TableData(freespace, "");
-                    s += _form.TableData(boundrepo, "", boundRepoShade);
+                    s += _form.TableData(name, string.Empty);
+                    s += _form.TableData(description, string.Empty);
+                    s += _form.TableData(cloud, string.Empty);
+                    s += _form.TableData(type, string.Empty);
+                    s += _form.TableData(bucketcontainer, string.Empty);
+                    s += _form.TableData(path, string.Empty);
+                    s += _form.TableData(sizelimit, string.Empty);
+                    s += _form.TableData(usedspace, string.Empty);
+                    s += _form.TableData(freespace, string.Empty);
+                    s += _form.TableData(boundrepo, string.Empty, boundRepoShade);
                     s += "</tr>";
                 }
             }
@@ -1178,6 +1190,7 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VB365
             s += "</div>";
             return s;
         }
+
         public string Vb365Orgs()
         {
             string s = "<div class=\"orgs\" id=\"orgs\">";
@@ -1222,7 +1235,7 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VB365
                                 counter == 9)
                                 output = _scrubber.ScrubItem(output, Scrubber.ScrubItemType.Item);
                         }
-                        s += _form.TableData(output, "");
+                        s += _form.TableData(output, string.Empty);
                         counter++;
                     }
 
@@ -1239,6 +1252,7 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VB365
             s += "</div>";
             return s;
         }
+
         public string Vb365Permissions()
         {
             string s = "<div class=\"perms\" id=\"perms\">";
@@ -1268,7 +1282,7 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VB365
                             if (counter == 1)
                                 output = _scrubber.ScrubItem(output, Scrubber.ScrubItemType.Item);
                         }
-                        s += _form.TableData(output, "");
+                        s += _form.TableData(output, string.Empty);
                         counter++;
                     }
 
@@ -1285,6 +1299,7 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VB365
             s += "</div>";
             return s;
         }
+
         public string Vb365ProtStat()
         {
             string s = "<div class=\"protstat\" id=\"protstat\">";
@@ -1301,10 +1316,10 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VB365
             //s += "</tr>";
 
             s += "<tr>";
-            s += _form.TableHeader("Total Users", "");
-            s += _form.TableHeader("Protected Users", "");
-            s += _form.TableHeader("Unprotected Users", "");
-            s += _form.TableHeader("Stale Backups", "");
+            s += _form.TableHeader("Total Users", string.Empty);
+            s += _form.TableHeader("Protected Users", string.Empty);
+            s += _form.TableHeader("Unprotected Users", string.Empty);
+            s += _form.TableHeader("Stale Backups", string.Empty);
             s += "</tr>";
             double protectedUsers = 0;
             double notProtectedUsers = 0;
@@ -1346,10 +1361,10 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VB365
                 }
 
                 s += "<tr>";
-                s += _form.TableData((protectedUsers + notProtectedUsers + stale).ToString(), "");
-                s += _form.TableData(protectedUsers.ToString(), "");
-                s += _form.TableData(notProtectedUsers.ToString(), "", shade);
-                s += _form.TableData(stale.ToString(), "");
+                s += _form.TableData((protectedUsers + notProtectedUsers + stale).ToString(), string.Empty);
+                s += _form.TableData(protectedUsers.ToString(), string.Empty);
+                s += _form.TableData(notProtectedUsers.ToString(), string.Empty, shade);
+                s += _form.TableData(stale.ToString(), string.Empty);
                 s += "</tr>";
             }
             catch (Exception e)
@@ -1365,6 +1380,7 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VB365
             s += "</div>";
             return s;
         }
+
         public string Jobs()
         {
             string s = "<div class=\"jobs\" id=\"jobs\">";
@@ -1377,13 +1393,13 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VB365
             s += _form.TableHeader("Description", Vb365ResourceHandler.jobsTTDescription);
             s += _form.TableHeader("Job Type", Vb365ResourceHandler.jobsTTJobType);
             s += _form.TableHeader("Scope Type", Vb365ResourceHandler.jobsTTScopeType);
-            s += _form.TableHeader("Processing Options", "");
+            s += _form.TableHeader("Processing Options", string.Empty);
             s += _form.TableHeader("Selected Objects", Vb365ResourceHandler.jobsTTSelectedItems);
             s += _form.TableHeader("Excluded Objects", Vb365ResourceHandler.jobsTTExcludedItems);
             s += _form.TableHeader("Repository", Vb365ResourceHandler.jobsTTRepository);
             s += _form.TableHeader("Bound Proxy", Vb365ResourceHandler.jobsTTBoundProxy);
-            s += _form.TableHeader("Enabled?", "");
-            s += _form.TableHeader("Schedule", "");
+            s += _form.TableHeader("Enabled?", string.Empty);
+            s += _form.TableHeader("Schedule", string.Empty);
             s += _form.TableHeader("Related Job", Vb365ResourceHandler.jobsTTRelatedJob);
 
             s += "</tr>";
@@ -1395,19 +1411,19 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VB365
 
                 foreach (var gl in global)
                 {
-                    var org = "";
-                    var name = "";
-                    var desc = "";
-                    var jobType = "";
-                    var scopeType = "";
-                    var procOpt = "";
-                    var selItems = "";
-                    var exclItem = "";
-                    var repo = "";
-                    var boundProxy = "";
-                    var enabled = "";
-                    var schedul = "";
-                    var relJob = "";
+                    var org = string.Empty;
+                    var name = string.Empty;
+                    var desc = string.Empty;
+                    var jobType = string.Empty;
+                    var scopeType = string.Empty;
+                    var procOpt = string.Empty;
+                    var selItems = string.Empty;
+                    var exclItem = string.Empty;
+                    var repo = string.Empty;
+                    var boundProxy = string.Empty;
+                    var enabled = string.Empty;
+                    var schedul = string.Empty;
+                    var relJob = string.Empty;
 
                     s += "<tr>";
 
@@ -1493,19 +1509,19 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VB365
                     if (schedul == "Not Scheduled")
                         scheduleShade = 3;
 
-                    s += _form.TableData(org, "");
-                    s += _form.TableData(name, "");
-                    s += _form.TableData(desc, "");
-                    s += _form.TableData(jobType, "");
-                    s += _form.TableData(scopeType, "");
-                    s += _form.TableData(procOpt, "");
-                    s += _form.TableData(selItems, "", selectedItemsShade);
-                    s += _form.TableData(exclItem, "", excludedItemsShade);
-                    s += _form.TableData(repo, "");
-                    s += _form.TableData(boundProxy, "");
-                    s += _form.TableData(enabled, "", enabledShade);
-                    s += _form.TableData(schedul, "", scheduleShade);
-                    s += _form.TableData(relJob, "");
+                    s += _form.TableData(org, string.Empty);
+                    s += _form.TableData(name, string.Empty);
+                    s += _form.TableData(desc, string.Empty);
+                    s += _form.TableData(jobType, string.Empty);
+                    s += _form.TableData(scopeType, string.Empty);
+                    s += _form.TableData(procOpt, string.Empty);
+                    s += _form.TableData(selItems, string.Empty, selectedItemsShade);
+                    s += _form.TableData(exclItem, string.Empty, excludedItemsShade);
+                    s += _form.TableData(repo, string.Empty);
+                    s += _form.TableData(boundProxy, string.Empty);
+                    s += _form.TableData(enabled, string.Empty, enabledShade);
+                    s += _form.TableData(schedul, string.Empty, scheduleShade);
+                    s += _form.TableData(relJob, string.Empty);
 
                     s += "</tr>";
                 }
@@ -1527,6 +1543,7 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VB365
             s += "</div>";
             return s;
         }
+
         public string MakeVb365NavTable()
         {
             return _form.FormNavRows(Vb365ResourceHandler.v365NavTitle0, "global", Vb365ResourceHandler.v365NavValue1) +

@@ -9,10 +9,12 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VB365
     internal class CM365Summaries
     {
         private CHtmlFormatting _form = new();
+
         public CM365Summaries()
         {
 
         }
+
         public string GlobalSummary()
         {
             string s = _form.CollapsibleButton("Show Summary");
@@ -34,6 +36,7 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VB365
 
             return s;
         }
+
         public string ProxySummary()
         {
             string s = _form.CollapsibleButton("Show Summary");
@@ -52,6 +55,7 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VB365
 
             return s;
         }
+
         public string RepoSummary()
         {
             string s = _form.CollapsibleButton("Show Summary");
@@ -72,30 +76,32 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VB365
 
             return s;
         }
+
         public string RbacSummary()
         {
             string s = _form.CollapsibleButton("Show Summary");
 
             s += "<div class=\"content\">";
             s += _form.AddA("hdr", VbrLocalizationHelper.GeneralSummaryHeader) +// _form.LineBreak() +
-                _form.AddA("i2", "") +
-                _form.AddA("i3", "") +
-                _form.AddA("i3", "") +
-                _form.AddA("i3", "") +
+                _form.AddA("i2", string.Empty) +
+                _form.AddA("i3", string.Empty) +
+                _form.AddA("i3", string.Empty) +
+                _form.AddA("i3", string.Empty) +
                 _form.DoubleLineBreak() +
                 _form.AddA("hdr", VbrLocalizationHelper.GeneralNotesHeader) + //_form.LineBreak() +
-                _form.AddA("i2", "") +
-                _form.AddA("i2", "") +
-                _form.AddA("i2", "") +
-                _form.AddA("i2", "") +
-                _form.AddA("i2", "") +
-                _form.AddA("i2", "")
+                _form.AddA("i2", string.Empty) +
+                _form.AddA("i2", string.Empty) +
+                _form.AddA("i2", string.Empty) +
+                _form.AddA("i2", string.Empty) +
+                _form.AddA("i2", string.Empty) +
+                _form.AddA("i2", string.Empty)
                 ;
             s += "</div>";
             s += "</div>";
 
             return s;
         }
+
         public string SecSummary()
         {
             string s = _form.CollapsibleButton("Show Summary");
@@ -114,6 +120,7 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VB365
 
             return s;
         }
+
         public string ControllerSummary()
         {
             string s = _form.CollapsibleButton("Show Summary");
@@ -134,6 +141,7 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VB365
 
             return s;
         }
+
         public string ControllerDrivesSummary()
         {
             string s = _form.CollapsibleButton("Show Summary");
@@ -152,6 +160,7 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VB365
 
             return s;
         }
+
         public string JobSessSummary()
         {
             string s = _form.CollapsibleButton("Show Summary");
@@ -168,6 +177,7 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VB365
 
             return s;
         }
+
         public string JobStatSummary()
         {
             string s = _form.CollapsibleButton("Show Summary");
@@ -197,6 +207,7 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VB365
 
             return s;
         }
+
         public string JobsSummary()
         {
             string s = _form.CollapsibleButton("Show Summary");
@@ -216,6 +227,7 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VB365
 
             return s;
         }
+
         public string ObjRepoSummary()
         {
             string s = _form.CollapsibleButton("Show Summary");
@@ -237,6 +249,7 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VB365
 
             return s;
         }
+
         public string OrgSummary()
         {
             string s = _form.CollapsibleButton("Show Summary");
@@ -255,30 +268,32 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VB365
 
             return s;
         }
+
         public string PermissionSummary()
         {
             string s = _form.CollapsibleButton("Show Summary");
 
             s += "<div class=\"content\">";
             s += _form.AddA("hdr", VbrLocalizationHelper.GeneralSummaryHeader) + //_form.LineBreak() +
-                _form.AddA("i2", "") +
-                _form.AddA("i3", "") +
-                _form.AddA("i3", "") +
-                _form.AddA("i3", "") +
+                _form.AddA("i2", string.Empty) +
+                _form.AddA("i3", string.Empty) +
+                _form.AddA("i3", string.Empty) +
+                _form.AddA("i3", string.Empty) +
                 _form.DoubleLineBreak() +
                 _form.AddA("hdr", VbrLocalizationHelper.GeneralNotesHeader) + //_form.LineBreak() +
-                _form.AddA("i2", "") +
-                _form.AddA("i2", "") +
-                _form.AddA("i2", "") +
-                _form.AddA("i2", "") +
-                _form.AddA("i2", "") +
-                _form.AddA("i2", "")
+                _form.AddA("i2", string.Empty) +
+                _form.AddA("i2", string.Empty) +
+                _form.AddA("i2", string.Empty) +
+                _form.AddA("i2", string.Empty) +
+                _form.AddA("i2", string.Empty) +
+                _form.AddA("i2", string.Empty)
                 ;
             s += "</div>";
             s += "</div>";
 
             return s;
         }
+
         public string ProtStatSummary()
         {
             string s = _form.CollapsibleButton("Show Summary");

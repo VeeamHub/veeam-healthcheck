@@ -37,6 +37,7 @@ namespace VeeamHealthCheck.Functions.Reporting.Html
         {
             return JobSessionSummaryToXml(new CJobSessSummaryHelper(), _log, scrub, _scrubber, _parsers);
         }
+
         private List<CJobSummaryTypes> JobSessionSummaryToXml(CJobSessSummaryHelper helper, CLogger log, bool scrub, Scrubber.CScrubHandler scrubber, CDataTypesParser d)
         {
             List<List<string>> sendBack = new();
@@ -111,7 +112,7 @@ namespace VeeamHealthCheck.Functions.Reporting.Html
                         {
                             double percent = (sessionCount - fails + retries) / sessionCount * 100;
                             info.SuccessRate = (int)Math.Round(percent, 0, MidpointRounding.ToEven);
-                            string sessionInfoString = string.Format("" +
+                            string sessionInfoString = string.Format(string.Empty +
                                 "Total Sessions: {0}, " +
                                 "Failed: {1}, " +
                                 "Retries: {2}, " +
@@ -148,9 +149,9 @@ namespace VeeamHealthCheck.Functions.Reporting.Html
                         }
                         else
                         {
-                            info.MinJobTime = "";
-                            info.MaxJobTime = "";
-                            info.AvgJobTime = "";
+                            info.MinJobTime = string.Empty;
+                            info.MaxJobTime = string.Empty;
+                            info.AvgJobTime = string.Empty;
                         }
 
 

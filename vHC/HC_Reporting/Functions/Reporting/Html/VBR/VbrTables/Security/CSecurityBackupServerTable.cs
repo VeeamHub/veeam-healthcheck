@@ -9,6 +9,7 @@ namespace VeeamHealthCheck.Reporting.Html.VBR
     internal class CSecurityBackupServerTable
     {
         CVbrSecurityTableHelper _tables = new();
+
         public CSecurityBackupServerTable() { }
 
         public List<Tuple<string, string>> ServerSpecificInfo()

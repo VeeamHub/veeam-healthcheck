@@ -13,6 +13,7 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.Shared
             else if (value == "false" || value == "False" || value == "FALSE") return false;
             else return false;
         }
+
         public static int ParseInt(string value)
         {
             if (value == null) return 0;

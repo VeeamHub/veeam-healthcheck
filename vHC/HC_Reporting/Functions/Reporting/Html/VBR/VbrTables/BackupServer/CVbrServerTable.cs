@@ -21,8 +21,8 @@ namespace VeeamHealthCheck.Reporting.Html.VBR
 
         public void DebugLogTuple()
         {
-            string headers = "";
-            string data = "";
+            string headers = string.Empty;
+            string data = string.Empty;
             foreach (var h in VbrFullTables())
             {
                 headers += h.Item1;
@@ -32,6 +32,7 @@ namespace VeeamHealthCheck.Reporting.Html.VBR
             CGlobals.Logger.Warning("\nLINE BREAK\n", false);
             CGlobals.Logger.Warning(data, false);
         }
+
         public List<Tuple<string, string>> VbrFullTables()
         {
             List<Tuple<string, string>> headers = new List<Tuple<string, string>>
@@ -50,6 +51,7 @@ namespace VeeamHealthCheck.Reporting.Html.VBR
 
             return headers;
         }
+
         public List<Tuple<string, string>> VbrSecurityTables()
         {
             List<Tuple<string, string>> headers = new List<Tuple<string, string>>

@@ -8,6 +8,7 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR
     internal class CVbrSummaries
     {
         private CHtmlFormatting _form = new();
+
         public CVbrSummaries()
         {
 
@@ -19,45 +20,47 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR
 
             s += "<div class=\"content\" style=\"display: none\">";
             s += _form.AddA("hdr", VbrLocalizationHelper.GeneralSummaryHeader) + _form.LineBreak() +
-                _form.AddA("i2", "") +
-                _form.AddA("i3", "") +
-                _form.AddA("i3", "") +
-                _form.AddA("i3", "") +
+                _form.AddA("i2", string.Empty) +
+                _form.AddA("i3", string.Empty) +
+                _form.AddA("i3", string.Empty) +
+                _form.AddA("i3", string.Empty) +
                 _form.DoubleLineBreak() +
                 _form.AddA("hdr", VbrLocalizationHelper.GeneralNotesHeader) + _form.LineBreak() +
-                _form.AddA("i2", "") +
-                _form.AddA("i2", "") +
-                _form.AddA("i2", "") +
-                _form.AddA("i2", "") +
-                _form.AddA("i2", "") +
-                _form.AddA("i2", "")
+                _form.AddA("i2", string.Empty) +
+                _form.AddA("i2", string.Empty) +
+                _form.AddA("i2", string.Empty) +
+                _form.AddA("i2", string.Empty) +
+                _form.AddA("i2", string.Empty) +
+                _form.AddA("i2", string.Empty)
                 ;
             s += "</div>";
             s += "</div>";
 
             return s;
         }
+
         public string LicSum()
         {
             string s = _form.AddA("hdr", VbrLocalizationHelper.GeneralSummaryHeader) +// _form.LineBreak() +
-                _form.AddA("i2", "") +
-                _form.AddA("i3", "") +
-                _form.AddA("i3", "") +
-                _form.AddA("i3", "") +
+                _form.AddA("i2", string.Empty) +
+                _form.AddA("i3", string.Empty) +
+                _form.AddA("i3", string.Empty) +
+                _form.AddA("i3", string.Empty) +
                 //   _form.DoubleLineBreak() +
                 _form.AddA("hdr", VbrLocalizationHelper.GeneralNotesHeader) +// _form.LineBreak() +
-                _form.AddA("i2", "") +
-                _form.AddA("i2", "") +
-                _form.AddA("i2", "") +
-                _form.AddA("i2", "") +
-                _form.AddA("i2", "") +
-                _form.AddA("i2", "")
+                _form.AddA("i2", string.Empty) +
+                _form.AddA("i2", string.Empty) +
+                _form.AddA("i2", string.Empty) +
+                _form.AddA("i2", string.Empty) +
+                _form.AddA("i2", string.Empty) +
+                _form.AddA("i2", string.Empty)
                 ;
             s += "</div>";
             s += "</div>";
 
             return null;
         }
+
         public string SetVbrSummary()
         {
             string s = _form.CollapsibleButton(VbrLocalizationHelper.BkpSrvButton);
@@ -83,6 +86,7 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR
 
             return s;
         }
+
         public string SecSum()
         {
             string s = _form.CollapsibleButton(VbrLocalizationHelper.SSButton);
@@ -111,6 +115,7 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR
 
             return s;
         }
+
         public string SrvSum()
         {
             string s = _form.CollapsibleButton(VbrLocalizationHelper.MssButton);
@@ -124,6 +129,7 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR
 
             return s;
         }
+
         public string JobSummary()
         {
             string s = _form.CollapsibleButton(VbrLocalizationHelper.JobSumBtn);
@@ -141,6 +147,7 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR
 
             return s;
         }
+
         public string MissingJobsSUmmary()
         {
             string s = _form.AddA("hdr", VbrLocalizationHelper.GeneralSummaryHeader) + _form.LineBreak() +
@@ -152,6 +159,7 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR
 
             return s;
         }
+
         public string ProtectedWorkloads()
         {
 
@@ -167,6 +175,7 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR
 
             return s;
         }
+
         public string ManagedServers()
         {
             string s = _form.AddA("hdr", VbrLocalizationHelper.GeneralSummaryHeader) + _form.LineBreak() +
@@ -182,6 +191,7 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR
 
             return s;
         }
+
         public string RegKeys()
         {
             string s = _form.AddA("hdr", VbrLocalizationHelper.GeneralSummaryHeader) + _form.LineBreak() +
@@ -197,6 +207,7 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR
 
             return s;
         }
+
         public string Proxies()
         {
             string s = _form.AddA("hdr", VbrLocalizationHelper.GeneralSummaryHeader) + _form.LineBreak() +
@@ -229,6 +240,7 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR
 
             return s;
         }
+
         public string Sobr()
         {
             string s = _form.AddA("hdr", VbrLocalizationHelper.GeneralSummaryHeader) + _form.LineBreak() +
@@ -250,6 +262,7 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR
 
             return s;
         }
+
         public string Extents()
         {
             string s = _form.AddA("hdr", VbrLocalizationHelper.GeneralSummaryHeader) + _form.LineBreak() +
@@ -281,6 +294,7 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR
 
             return s;
         }
+
         public string Repos()
         {
             string s = _form.AddA("hdr", VbrLocalizationHelper.GeneralSummaryHeader) + _form.LineBreak() +
@@ -312,6 +326,7 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR
 
             return s;
         }
+
         public string JobCon()
         {
             string s = _form.AddA("hdr", VbrLocalizationHelper.GeneralSummaryHeader) +// _form.LineBreak() +
@@ -356,6 +371,7 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR
 
             return s;
         }
+
         public string TaskCon()
         {
             string s = _form.AddA("hdr", VbrLocalizationHelper.GeneralSummaryHeader) + _form.LineBreak() +
@@ -370,6 +386,7 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR
 
             return s;
         }
+
         public string JobSessSummary()
         {
             string s = _form.AddA("hdr", VbrLocalizationHelper.GeneralSummaryHeader) + _form.LineBreak() +
@@ -394,6 +411,7 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR
 
             return s;
         }
+
         public string JobInfo()
         {
             string s = _form.AddA("hdr", VbrLocalizationHelper.GeneralSummaryHeader) + _form.LineBreak() +

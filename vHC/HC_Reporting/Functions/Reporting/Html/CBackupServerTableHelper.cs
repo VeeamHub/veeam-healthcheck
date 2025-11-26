@@ -30,6 +30,7 @@ namespace VeeamHealthCheck.Functions.Reporting.Html
             _scrub = scrub;
             log.Debug("! Init BackupServerTableHelper...Done!");
         }
+
         public BackupServer SetBackupServerData()
         {
             //log.Debug("Setting Backup Server Data");
@@ -40,6 +41,7 @@ namespace VeeamHealthCheck.Functions.Reporting.Html
             //log.Debug("Setting Backup Server Data...Done!");
             return _backupServer;
         }
+
         private void SetElements()
         {
             //log.Debug("Setting Backup Server Elements");
@@ -48,6 +50,7 @@ namespace VeeamHealthCheck.Functions.Reporting.Html
             //log.Debug("Setting Backup Server Elements...Done!");
 
         }
+
         private void SetBackupServerWithDbInfo()
         {
             _backupServer.DbType = CGlobals.DBTYPE;
@@ -57,12 +60,14 @@ namespace VeeamHealthCheck.Functions.Reporting.Html
             _backupServer.DbRAM = CGlobals.DBRAM;
             _backupServer.DbHostName = CGlobals.DBHOSTNAME;
         }
+
         private void ScrubElements()
         {
             _backupServer.Name = CGlobals.Scrubber.ScrubItem(_backupServer.Name, ScrubItemType.Server);
             _backupServer.ConfigBackupTarget = CGlobals.Scrubber.ScrubItem(_backupServer.ConfigBackupTarget, ScrubItemType.Repository);
             _backupServer.DbHostName = CGlobals.Scrubber.ScrubItem(_backupServer.DbHostName, ScrubItemType.Server);
         }
+
         private void SetConfigBackupSettings()
         {
             try
@@ -97,8 +102,9 @@ namespace VeeamHealthCheck.Functions.Reporting.Html
         private string CheckFixes(string fixes)
         {
             //TODO
-            return "";
+            return string.Empty;
         }
+
         private void SetDbHostNameOption2()
         {
             //LoadCsvToMemory();
@@ -112,7 +118,7 @@ namespace VeeamHealthCheck.Functions.Reporting.Html
                 CCsvParser config = new();
 
 
-                if (_backupServer.Version == "" || _backupServer.Version == null || _backupServer.DbHostName == null || _backupServer.DbHostName == "")
+                if (_backupServer.Version == string.Empty || _backupServer.Version == null || _backupServer.DbHostName == null || _backupServer.DbHostName == string.Empty)
                 {
                     try
                     {
@@ -130,7 +136,7 @@ namespace VeeamHealthCheck.Functions.Reporting.Html
                             }
                             else
                             {
-                                if (CGlobals.VBRFULLVERSION == null || CGlobals.VBRFULLVERSION == "")
+                                if (CGlobals.VBRFULLVERSION == null || CGlobals.VBRFULLVERSION == string.Empty)
                                 {
                                     _backupServer.Version = r2[0].Version;
                                 }
@@ -209,6 +215,7 @@ namespace VeeamHealthCheck.Functions.Reporting.Html
             }
 
         }
+
         private void LoadCsvToMemory()
         {
             string file = Path.Combine(CVariables.vbrDir, "localhost_vbrinfo.csv");

@@ -21,16 +21,16 @@ namespace VeeamHealthCheck.Shared
         public static string VBRFULLVERSION;
         public static DateTime TOOLSTART;
         public static bool REMOTEEXEC = false;
-        public static string REMOTEHOST = "";
+        public static string REMOTEHOST = string.Empty;
         public static bool GUIEXEC = false;
-        public static string VHCVERSION = "";
+        public static string VHCVERSION = string.Empty;
         public static bool DEBUG = false;
 
         // Remote Exec variables
         public static string VBRServerName = "localhost";
 
-        public static string RawReport = "";
-        public static string ScrubbedReport = "";
+        public static string RawReport = string.Empty;
+        public static string ScrubbedReport = string.Empty;
         // GUI & CLI Options:
         private static int _reportDays = 7;
         public static string _desiredPath = CVariables.unsafeDir;
@@ -44,8 +44,8 @@ namespace VeeamHealthCheck.Shared
         public static bool CHECKFIXES = false;
         public static bool EXPORTPDF = false;
         public static bool UseStoredCreds = false;
-        public static string CredsUsername = "";
-        public static string CredsPassword = "";
+        public static string CredsUsername = string.Empty;
+        public static string CredsPassword = string.Empty;
 
 
         // Security Values
@@ -85,25 +85,31 @@ namespace VeeamHealthCheck.Shared
         {
 
         }
+
         public static int ReportDays
         {
             get { return _reportDays; }
             set { _reportDays = value; }
         }
+
         public static bool Scrub
         {
             get { return _scrub; }
             set { _scrub = value; }
         }
+
         public static DateTime GetToolStart
         {
             get { if(TOOLSTART == DateTime.MinValue)
                     TOOLSTART = DateTime.Now;
                 return TOOLSTART;
             }
+
             set { TOOLSTART = value; }
         }
+
         public static CLogger Logger { get { return _mainlog; } }
+
         public static CScrubHandler Scrubber { get { return _scrubberMain; } }
 
         public static bool OpenHtml { get { return _openHtml; } set { _openHtml = value; } }
@@ -112,8 +118,11 @@ namespace VeeamHealthCheck.Shared
         //public bool Import { get { return _import; } set { _import = value; } }
 
         public static bool IsVbr { get { return _isVbr; } set { _isVbr = value; } }
+
         public static bool IsVb365 { get { return _isVb365; } set { _isVb365 = value; } }
+
         public static bool RunFullReport { get { return _runFullReport; } set { _runFullReport = value; } }
+
         public static bool RunSecReport { get { return _runSecReport; } set { _runSecReport = value; } }
     }
 }

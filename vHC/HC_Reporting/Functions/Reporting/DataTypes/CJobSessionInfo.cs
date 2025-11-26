@@ -7,29 +7,53 @@ namespace VeeamHealthCheck.Functions.Reporting.DataTypes
     public class CJobSessionInfo
     {
         public string Name { get; set; }
+
         public int minTime { get; set; }
+
         public int maxTime { get; set; }
+
         public int avgTime { get; set; }
+
         public double minTimeHr { get; set; }
+
         public double maxTimeHr { get; set; }
+
         public double avgTimeHr { get; set; }
+
         public string JobName { get; set; }
+
         public string VmName { get; set; }
+
         public string Status { get; set; }
+
         public string IsRetry { get; set; }
+
         public string ProcessingMode { get; set; }
+
         public string JobDuration { get; set; }
+
         public string TaskDuration { get; set; }
+
         public string Alg { get; set; }
+
         public DateTime CreationTime { get; set; }
+
         public double BackupSize { get; set; }
+
         public double DataSize { get; set; }
+
         public double UsedVmSize { get; set; }
+
         public string DedupRatio { get; set; }
+
         public string CompressionRatio { get; set; }
+
         public string Bottleneck { get; set; }
+
         public string PrimaryBottleneck { get; set; }
+
         public string JobType { get; set; }
+
         public CJobSessionInfo(string name, int min, int max, int avg)
         {
             //Name = name;
@@ -37,10 +61,12 @@ namespace VeeamHealthCheck.Functions.Reporting.DataTypes
             //maxTime = max;
             //avgTime = avg;
         }
+
         public CJobSessionInfo()
         {
 
         }
+
         public void Dispose() { }
 
     }

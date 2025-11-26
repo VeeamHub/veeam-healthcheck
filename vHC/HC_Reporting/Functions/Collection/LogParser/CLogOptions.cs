@@ -23,7 +23,7 @@ namespace VeeamHealthCheck.Functions.Collection.LogParser
                 if (!string.IsNullOrEmpty(_installId))
                     return _installId;
                 else
-                    return "";
+                    return string.Empty;
             }
         }
 

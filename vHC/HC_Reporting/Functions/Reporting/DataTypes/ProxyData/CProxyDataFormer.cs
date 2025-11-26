@@ -8,10 +8,12 @@ namespace VeeamHealthCheck.Functions.Reporting.DataTypes.ProxyData
     internal class CProxyDataFormer
     {
         public CProxyDataFormer() { }
+
         public void FormData()
         {
 
         }
+
         public string CalcProxyTasks(int assignedTasks, int cores, int ram)
         {
             int availableMem = ram ; //TODO double-check OS mem requirements
@@ -36,10 +38,12 @@ namespace VeeamHealthCheck.Functions.Reporting.DataTypes.ProxyData
 
 
         }
+
         private int MemoryTasks(int availableMem, double memoryPerTask)
         {
             return (int)Math.Round((decimal)(availableMem / memoryPerTask), 0, MidpointRounding.ToPositiveInfinity);
         }
+
         private string SetProvisionStatus(int assignedTasks, int coreTasks, int memTasks)
         {
             CProvisionTypes pt = new();
