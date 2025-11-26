@@ -243,7 +243,7 @@ jobs:
         Push-Location (Split-Path $exePath)
         try {
           $process = Start-Process -FilePath $exePath `
-            -ArgumentList "/run", "/remote", "/host=$env:VBR_HOST", "/creds=$creds" `
+            -ArgumentList "/run", "/creds=$creds" `
             -NoNewWindow -PassThru -Wait
           
           $exitCode = $process.ExitCode
@@ -346,7 +346,6 @@ jobs:
         Write-Host "Target VBR: $env:VBR_HOST" -ForegroundColor Yellow
         Write-Host "Working directory: $(Split-Path $exePath)" -ForegroundColor Yellow
         
-        $creds = "$env:VBR_USERNAME`:$env:VBR_PASSWORD2"
         
         # Run from the extracted directory so it can find relative paths
         Push-Location (Split-Path $exePath)
