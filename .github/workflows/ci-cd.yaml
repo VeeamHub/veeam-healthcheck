@@ -72,16 +72,15 @@ jobs:
           -o publish/out
     
     - name: Create ZIP archive
-      if: github.ref == 'refs/heads/master'
       run: |
         Compress-Archive -Path publish/out/* -DestinationPath publish/VeeamHealthCheck-${{ steps.get_version.outputs.version }}.zip
     
-    - name: Upload build artifacts
-      uses: actions/upload-artifact@v4
-      with:
-        name: veeam-healthcheck-exe
-        path: publish/out/VeeamHealthCheck.exe
-        retention-days: 7
+    # - name: Upload build artifacts
+    #   uses: actions/upload-artifact@v4
+    #   with:
+    #     name: veeam-healthcheck-exe
+    #     path: publish/out/VeeamHealthCheck.exe
+    #     retention-days: 7
     
     - name: Upload ZIP artifact
       if: github.ref == 'refs/heads/master'
@@ -95,14 +94,33 @@ jobs:
   integration-test-vbr:
     needs: build-and-test
     runs-on: [self-hosted, VB-CON-V13-0-0]
-    if: github.event_name != 'pull_request' # Skip on PRs for security
+    if: github.event_name != 'pull_request'
     
     steps:
-    - name: Download executable
+    - name: Download ZIP artifact
       uses: actions/download-artifact@v4
       with:
-        name: veeam-healthcheck-exe
-        path: ${{ github.workspace }}/test-run
+        name: veeam-healthcheck-zip
+        path: ${{ github.workspace }}/test-download
+    
+    - name: Extract ZIP
+      run: |
+        $zipFile = Get-ChildItem "${{ github.workspace }}\test-download\*.zip" | Select-Object -First 1
+        $extractPath = "${{ github.workspace }}\test-run"
+        
+        Write-Host "Extracting: $($zipFile.FullName)" -ForegroundColor Cyan
+        Expand-Archive -Path $zipFile.FullName -DestinationPath $extractPath -Force
+        
+        # Verify extraction
+        $exePath = "$extractPath\VeeamHealthCheck.exe"
+        if (Test-Path $exePath) {
+          Write-Host "✅ Extracted successfully" -ForegroundColor Green
+          Write-Host "Contents:" -ForegroundColor Yellow
+          Get-ChildItem $extractPath -Recurse | Select-Object FullName
+        } else {
+          Write-Host "❌ Extraction failed - EXE not found" -ForegroundColor Red
+          exit 1
+        }
     
     - name: Run VeeamHealthCheck on VBR
       id: run_healthcheck
@@ -115,22 +133,29 @@ jobs:
         
         Write-Host "Starting VeeamHealthCheck..." -ForegroundColor Cyan
         Write-Host "Target VBR: $env:VBR_HOST" -ForegroundColor Yellow
+        Write-Host "Working directory: $(Split-Path $exePath)" -ForegroundColor Yellow
         
         $creds = "$env:VBR_USERNAME`:$env:VBR_PASSWORD"
         
-        $process = Start-Process -FilePath $exePath `
-          -ArgumentList "/run", "/remote", "/host=$env:VBR_HOST", "/creds=$creds" `
-          -NoNewWindow -PassThru -Wait
-        
-        $exitCode = $process.ExitCode
-        
-        if ($exitCode -eq 0) {
-          Write-Host "Health check completed successfully!" -ForegroundColor Green
-          echo "success=true" >> $env:GITHUB_OUTPUT
-        } else {
-          Write-Host "Health check failed with exit code: $exitCode" -ForegroundColor Red
-          echo "success=false" >> $env:GITHUB_OUTPUT
-          exit $exitCode
+        # Run from the extracted directory so it can find relative paths
+        Push-Location (Split-Path $exePath)
+        try {
+          $process = Start-Process -FilePath $exePath `
+            -ArgumentList "/run", "/remote", "/host=$env:VBR_HOST", "/creds=$creds" `
+            -NoNewWindow -PassThru -Wait
+          
+          $exitCode = $process.ExitCode
+          
+          if ($exitCode -eq 0) {
+            Write-Host "Health check completed successfully!" -ForegroundColor Green
+            echo "success=true" >> $env:GITHUB_OUTPUT
+          } else {
+            Write-Host "Health check failed with exit code: $exitCode" -ForegroundColor Red
+            echo "success=false" >> $env:GITHUB_OUTPUT
+            exit $exitCode
+          }
+        } finally {
+          Pop-Location
         }
     
     - name: Find generated report
@@ -171,6 +196,9 @@ jobs:
       run: |
         if (Test-Path "${{ github.workspace }}\test-run") {
           Remove-Item -Path "${{ github.workspace }}\test-run" -Recurse -Force
+        }
+        if (Test-Path "${{ github.workspace }}\test-download") {
+          Remove-Item -Path "${{ github.workspace }}\test-download" -Recurse -Force
         }
 
   # VirusTotal scan - only on master branch
