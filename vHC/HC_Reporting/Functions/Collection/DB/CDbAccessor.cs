@@ -17,11 +17,13 @@ namespace VeeamHealthCheck.Functions.Collection.DB
             _connectionString = b.ConnectionString;
             return b.ConnectionString;
         }
+
         private SqlConnectionStringBuilder StringBuilder()
         {
             SqlConnectionStringBuilder builder = SimpleConnectionBuilder();
             return builder;
         }
+
         private SqlConnectionStringBuilder SimpleConnectionBuilder()
         {
             SqlConnectionStringBuilder builder = new SqlConnectionStringBuilder(GetConnectionString());

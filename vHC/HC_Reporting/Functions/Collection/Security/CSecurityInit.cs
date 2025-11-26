@@ -41,6 +41,7 @@ namespace VeeamHealthCheck.Functions.Collection.Security
             IsRdpEnabled();
             IsDomainJoined();
         }
+
         private void RunImpersonated()
         {
             // Get the user token for the specified user, domain, and password using the   
@@ -115,6 +116,7 @@ namespace VeeamHealthCheck.Functions.Collection.Security
             // Check the identity again.  
             Console.WriteLine("After impersonation: " + WindowsIdentity.GetCurrent().Name);
         }
+
         private void IsDomainJoined()
         {
             string domain = System.Net.NetworkInformation.IPGlobalProperties.GetIPGlobalProperties().DomainName;
@@ -134,6 +136,7 @@ namespace VeeamHealthCheck.Functions.Collection.Security
                 CSecurityGlobalValues.IsDomainJoined = "Undetermined.";
             }
         }
+
         private void GetInstalledApps()
         {
             LOG.Info(logStart + "Getting list of apps. Output to be shown in " + _appLogName);
@@ -173,6 +176,7 @@ namespace VeeamHealthCheck.Functions.Collection.Security
                 }
             }
         }
+
         private void IsRdpEnabled()
         {
             string registryKey = @"SYSTEM\CurrentControlSet\Control\Terminal Server";

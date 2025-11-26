@@ -11,6 +11,7 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR.VbrTables.ProtectedWorkl
     internal class CEntraTenants
     {
         public CEntraTenants() { }
+
         public CProtectedWorkloads EntraTable()
         {
             CProtectedWorkloads p = new();

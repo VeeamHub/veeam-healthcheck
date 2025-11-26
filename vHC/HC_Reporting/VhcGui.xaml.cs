@@ -25,6 +25,7 @@ namespace VeeamHealthCheck
             //pdfCheckBox.IsEnabled = false;
 
         }
+
         private void SetUi()
         {
             SetImportRelease();
@@ -61,11 +62,13 @@ namespace VeeamHealthCheck
             hideProgressBar();
             run.IsEnabled = false;
         }
+
         private void SetImportRelease()
         {
             importButton.IsEnabled = false;
             importButton.Width = 0;
         }
+
         private void SetImportDebug()
         {
             importButton.IsEnabled = true;
@@ -114,6 +117,7 @@ namespace VeeamHealthCheck
                 pBar.Visibility = Visibility.Hidden;
             }));
         }
+
         private void showProgressBar()
         {
             this.Dispatcher.Invoke((Action)(() =>
@@ -150,6 +154,7 @@ namespace VeeamHealthCheck
                 Run(false);
             }
         }
+
         private void Run(bool import)
         {
             System.Threading.Tasks.Task.Factory.StartNew(() =>
@@ -163,11 +168,13 @@ namespace VeeamHealthCheck
                 hideProgressBar();
             });
         }
+
         private void DisableGuiAndStartProgressBar()
         {
             DisableButtons();
             showProgressBar();
         }
+
         private void DisableButtons()
         {
             explorerShowBox.IsEnabled = false;
@@ -196,41 +203,49 @@ namespace VeeamHealthCheck
             _functions.LogUIAction("Scrub = true");
             CGlobals.Scrub = true;
         }
+
         private void htmlChecked(object sender, RoutedEventArgs e)
         {
             _functions.LogUIAction("Open HTML = true");
             CGlobals.OpenHtml = true;
         }
+
         private void htmlUnchecked(object sender, RoutedEventArgs e)
         {
             _functions.LogUIAction("Open HTML = false");
             CGlobals.OpenHtml = false;
         }
+
         private void HandleUnchecked(object sender, RoutedEventArgs e)
         {
             _functions.LogUIAction("Scrub = false");
             CGlobals.Scrub = false;
         }
+
         private void HandleThirdState(object sender, RoutedEventArgs e)
         {
             _functions.LogUIAction("Scrub 3rd state = false");
             CGlobals.Scrub = false;
         }
+
         private void explorerShowBox_Checked(object sender, RoutedEventArgs e)
         {
             _functions.LogUIAction("Show Explorer = true");
             CGlobals.OpenExplorer = true;
         }
+
         private void explorerShowBox_Unchecked(object sender, RoutedEventArgs e)
         {
             _functions.LogUIAction("Show Explorer = false");
             CGlobals.OpenExplorer = false;
         }
+
         private void pdfCheckBox_Checked(object sender, RoutedEventArgs e)
         {
             _functions.LogUIAction("Export PDF = true");
             CGlobals.EXPORTPDF = true;
         }
+
         private void pdfCheckBox_Unchecked(object sender, RoutedEventArgs e)
         {
             _functions.LogUIAction("Export PDF = false");
@@ -244,6 +259,7 @@ namespace VeeamHealthCheck
             _functions.LogUIAction("KB Link");
             _functions.KbLinkAction(e);
         }
+
         private void pathBox_TextChanged(object sender, TextChangedEventArgs e)
         {
             CGlobals.Logger.Info("Changing path from " + CGlobals._desiredPath + " to " + pathBox.Text);
@@ -268,6 +284,7 @@ namespace VeeamHealthCheck
                     break;
             }
         }
+
         private void SetReportDays(int days)
         {
             CGlobals.ReportDays = days;

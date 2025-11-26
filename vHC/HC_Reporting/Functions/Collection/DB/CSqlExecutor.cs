@@ -11,15 +11,18 @@ namespace VeeamHealthCheck.Functions.Collection.DB
     internal class CSqlExecutor
     {
         private readonly CLogger LOG = CGlobals.Logger;
+
         public CSqlExecutor()
         {
 
         }
+
         public void Run()
         {
             //CGlobals.BACKUPSERVER = 
             TrySetSqlInfo();
         }
+
         private void TrySetSqlInfo()
         {
             BackupServer b = new();
@@ -47,6 +50,7 @@ namespace VeeamHealthCheck.Functions.Collection.DB
             }
             //return b;
         }
+
         private static void TryParseSqlResources(DataTable table)
         {
             foreach (DataRow row in table.Rows)

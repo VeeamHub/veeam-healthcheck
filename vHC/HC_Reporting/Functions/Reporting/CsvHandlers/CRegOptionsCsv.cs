@@ -9,6 +9,7 @@ namespace VeeamHealthCheck.Functions.Reporting.CsvHandlers
     {
         [Index(0)]
         public string KeyName { get; set; }
+
         [Index(1)]
         public string Value { get; set; }
     }

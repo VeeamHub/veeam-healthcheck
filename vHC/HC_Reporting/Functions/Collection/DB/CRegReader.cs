@@ -38,6 +38,7 @@ namespace VeeamHealthCheck.Functions.Collection.DB
         {
 
         }
+
         public void GetDbInfo()
         {
 
@@ -92,7 +93,7 @@ namespace VeeamHealthCheck.Functions.Collection.DB
                 Registry.LocalMachine.OpenSubKey("Software\\Veeam\\Veeam Mount Service"))
             {
                 var keyValue = key.GetValue("InstallationPath");
-                string path = "";
+                string path = string.Empty;
                 if (keyValue != null)
                 {
                     path = keyValue.ToString();
@@ -111,6 +112,7 @@ namespace VeeamHealthCheck.Functions.Collection.DB
 
             }
         }
+
         private void ParseVbrMajorVersion(string fullVersion)
         {
             try
@@ -141,11 +143,13 @@ namespace VeeamHealthCheck.Functions.Collection.DB
 
 
         }
+
         private void SetMajorVersion(int version)
         {
             log.Info(logStart + "Setting VBR Major Version to: " + version);
             CGlobals.VBRMAJORVERSION = version;
         }
+
         private void GetVbrElevenDbInfoRemote()
         {
             using (RegistryKey key =
@@ -155,6 +159,7 @@ namespace VeeamHealthCheck.Functions.Collection.DB
                
             }
         }
+
         private void GetVbrElevenDbInfo()
         {
             using (RegistryKey key =
@@ -164,19 +169,20 @@ namespace VeeamHealthCheck.Functions.Collection.DB
 
             }
         }
+
         private void SetSqlInfo(RegistryKey key)
         {
             if (key != null)
             {
                 var value = key.GetValue("SqlInstanceName");
-                string instance = "";
+                string instance = string.Empty;
                 if (value != null)
                 {
                     instance = value.ToString();
                 }
                 //var instance = key.GetValue("SqlInstanceName").ToString();
                 var hostValue = key.GetValue("SqlServerName");
-                string host = "";
+                string host = string.Empty;
                 if(hostValue != null)
                 {
                     host = hostValue.ToString();
@@ -184,7 +190,7 @@ namespace VeeamHealthCheck.Functions.Collection.DB
 
                 //var host = key.GetValue("SqlServerName").ToString();
                 var db = key.GetValue("SqlDatabaseName");
-                string database = "";
+                string database = string.Empty;
                 if (db != null)
                     database = db.ToString();
                 //var database =key.GetValue("SqlDatabaseName").ToString();
@@ -210,6 +216,7 @@ namespace VeeamHealthCheck.Functions.Collection.DB
                 }
             }
         }
+
         private string SetDbServerName(string input)
         {
             if (!string.IsNullOrEmpty(input))
@@ -218,11 +225,12 @@ namespace VeeamHealthCheck.Functions.Collection.DB
             }
             return null; //placeholder
         }
+
         private void GetRemoteVbrTwelveDbInfo()
         {
             using (RegistryKey key = RegistryKey.OpenRemoteBaseKey(RegistryHive.LocalMachine, CGlobals.REMOTEHOST).OpenSubKey("Software\\Veeam\\Veeam Backup and Replication\\DatabaseConfigurations"))
             {
-                string host = "";
+                string host = string.Empty;
 
                 if (key != null)
                 {
@@ -278,11 +286,12 @@ namespace VeeamHealthCheck.Functions.Collection.DB
                 }
             }
         }
+
         private void GetVbrTwelveDbInfo()
         {
             using (RegistryKey key = Registry.LocalMachine.OpenSubKey("Software\\Veeam\\Veeam Backup and Replication\\DatabaseConfigurations"))
             {
-                string host = "";
+                string host = string.Empty;
 
                 if (key != null)
                 {
@@ -360,6 +369,7 @@ namespace VeeamHealthCheck.Functions.Collection.DB
 
             return keys;
         }
+
         public Dictionary<string, Object> DefaultVbrKeys()
         {
             Dictionary<string, Object> keys = new();
@@ -381,6 +391,7 @@ namespace VeeamHealthCheck.Functions.Collection.DB
 
             return keys;
         }
+
         public string DefaultLogDir()
         {
             var logDir = "C:\\ProgramData\\Veeam\\Backup";

@@ -16,6 +16,7 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR
     {
         private CDataTypesParser _dTypeParser = CGlobals.DtParser;
         private readonly CLogger log = CGlobals.Logger;
+
         public CConcurrencyHelper()
         {
         }
@@ -37,6 +38,7 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR
 
             return ctList;
         }
+
         public List<ConcurentTracker> JobCounter(List<CJobSessionInfo> trimmedSessionInfo)
         {
             List<CJobTypeInfos> jobInfo = _dTypeParser.JobInfos;
@@ -143,6 +145,7 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR
             }
             return ctList;
         }
+
         private Dictionary<DayOfWeek, Dictionary<int,int>> ConcurrencyDictionary(List<ConcurentTracker> cTrackerList)
         {
             Dictionary<DayOfWeek, Dictionary<int, int>> concurrencyDictionary = new();
@@ -201,6 +204,7 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR
             }
             return concurrencyDictionary;
         }
+
         public Dictionary<int, string[]> FinalConcurrency(List<ConcurentTracker> cTrackerList)
         {
             var sendBack = new Dictionary<int, string[]>();
@@ -217,7 +221,7 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR
                         {
                             string count;
                             if (d.Value == 0)
-                                count = "";
+                                count = string.Empty;
                             else
                                 count = d.Value.ToString();
                             //string count = d.Value.ToString();
@@ -245,6 +249,7 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR
             }
             return sendBack;
         }
+
         private List<int> DailyHours()
         {
             List<int> dailyHours = new();
@@ -254,6 +259,7 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR
             }
             return dailyHours;
         }
+
         private ConcurentTracker ParseConcurrency(CJobSessionInfo session, int days)
         {
             ConcurentTracker ct = new();

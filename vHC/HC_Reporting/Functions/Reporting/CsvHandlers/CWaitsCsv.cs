@@ -11,10 +11,13 @@ namespace VeeamHealthCheck.Functions.Reporting.CsvHandlers
 
         [Index(0)]
         public string JobName { get; set; }
+
         [Index(1)]
         public string StartTime { get; set; }
+
         [Index(2)]
         public string EndTime { get; set; }
+
         [Index(3)]
         public string Duration { get; set; }
     }

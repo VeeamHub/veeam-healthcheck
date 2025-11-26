@@ -13,10 +13,10 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR.VbrTables.Jobs_Info
     internal class CEntraJobsTable
     {
         private readonly CHtmlFormatting _form = new();
-        private readonly CScrubHandler _scrubber = CGlobals.Scrubber;
+
         public string Table()
         {
-            string t = "";
+            string t = string.Empty;
             try
             {
                 CCsvParser c = new();
@@ -26,7 +26,7 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR.VbrTables.Jobs_Info
                 try
                 {
                     CGlobals.Logger.Info("Attempting to parse Entra job CSVs...", false);
-                    
+
                     var logJobsResult = c.GetDynamicEntraLogJobs();
                     if (logJobsResult != null)
                     {
@@ -37,7 +37,7 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR.VbrTables.Jobs_Info
                     {
                         CGlobals.Logger.Info("No Entra log job CSV found", false);
                     }
-                    
+
                     var tenantJobsResult = c.GetDynamicEntraTenantJobs();
                     if (tenantJobsResult != null)
                     {
@@ -51,34 +51,35 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR.VbrTables.Jobs_Info
                 }
                 catch (Exception ex)
                 {
-                    CGlobals.Logger.Warning("Error parsing Entra job CSVs: " + ex.Message);
+                    CGlobals.Logger.Warning("Error parsing Entra job CSVs. Use debug logging for more details: ");
+                    CGlobals.Logger.Debug("Error: " + ex.Message);
                     CGlobals.Logger.Debug("Stack trace: " + ex.StackTrace);
                     return null;
                 }
-                
+
                 // If no Entra jobs exist, return null to skip the table
                 if (entraTenantJobs.Count == 0 && entraLogJobs.Count == 0)
                 {
                     CGlobals.Logger.Info("No Entra backup jobs detected", false);
                     return null;
                 }
-                
+
                 CGlobals.Logger.Info($"Building Entra jobs table with {entraTenantJobs.Count} tenant jobs and {entraLogJobs.Count} log jobs", false);
 
                 // Tenant Job Table
                 if (entraTenantJobs.Count > 0)
                 {
                     t += _form.Table();
-                    t += _form.TableHeaderLeftAligned("Job Name (Tenant)", "");
-                    t += _form.TableHeader("Retention Policy", "");
+                    t += _form.TableHeaderLeftAligned("Job Name (Tenant)", string.Empty);
+                    t += _form.TableHeader("Retention Policy", string.Empty);
                     t += _form.TableBodyStart();
-                    
+
                     foreach (var tenantJob in entraTenantJobs)
                     {
                         CGlobals.Logger.Debug($"Processing tenant job: {tenantJob.Name}, Retention: {tenantJob.RetentionPolicy}");
                         t += "<tr>";
                         t += _form.TableDataLeftAligned(tenantJob.Name, "colspan='2'");
-                        t += _form.TableData(tenantJob.RetentionPolicy.ToString(), "");
+                        t += _form.TableData(tenantJob.RetentionPolicy.ToString(), string.Empty);
                         t += "</tr>";
                     }
                     t += "</tbody>";
@@ -89,17 +90,17 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR.VbrTables.Jobs_Info
                 if (entraLogJobs.Count > 0)
                 {
                     t += _form.Table();
-                    t += _form.TableHeaderLeftAligned("Job Name (Logs)", "");
-                    t += _form.TableHeader("Tenant", "");
-                    t += _form.TableHeader("Short Term Retention", "");
-                    t += _form.TableHeader("Short Term Repo", "");
-                    t += _form.TableHeader("Copy Enabled", "");
+                    t += _form.TableHeaderLeftAligned("Job Name (Logs)", string.Empty);
+                    t += _form.TableHeader("Tenant", string.Empty);
+                    t += _form.TableHeader("Short Term Retention", string.Empty);
+                    t += _form.TableHeader("Short Term Repo", string.Empty);
+                    t += _form.TableHeader("Copy Enabled", string.Empty);
                     t += _form.TableBodyStart();
-                    
+
                     foreach (var tj in entraLogJobs)
                     {
                         CGlobals.Logger.Debug($"Processing log job: {tj.Name}, Tenant: {tj.Tenant}");
-                        
+
                         string jobName = tj.Name;
                         string tenant = tj.Tenant;
                         string stRepo = tj.ShortTermRepo;
@@ -111,11 +112,11 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR.VbrTables.Jobs_Info
                         }
 
                         t += "<tr>";
-                        t += _form.TableDataLeftAligned(jobName, "");
-                        t += _form.TableData(tenant, "");
-                        t += _form.TableData(tj.ShortTermRepoRetention.ToString(), "");
-                        t += _form.TableData(stRepo, "");
-                        t += tj.CopyModeEnabled ? _form.TableData(_form.True, "") : _form.TableData(_form.False, "");
+                        t += _form.TableDataLeftAligned(jobName, string.Empty);
+                        t += _form.TableData(tenant, string.Empty);
+                        t += _form.TableData(tj.ShortTermRepoRetention.ToString(), string.Empty);
+                        t += _form.TableData(stRepo, string.Empty);
+                        t += tj.CopyModeEnabled ? _form.TableData(_form.True, string.Empty) : _form.TableData(_form.False, string.Empty);
                         t += "</tr>";
                     }
                     t += "</tbody>";

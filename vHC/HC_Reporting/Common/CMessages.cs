@@ -9,40 +9,42 @@ namespace VeeamHealthCheck.Shared
     {
         private static string ProcEnd = "DONE!";
 
-        public static string helpMenu = "\nHELP MENU:\n" +
-            "\t/run\t\tExecutes the program via CLI" +
-            "\n" +
-            //"\t/outdir=\tSpecifies desired location for HTML reports. Usage: \"outdir:D:\\example\". Default = C:\\temp\\vHC" +
-            //"\n" +
-            "\t/days:\t\tSpecifies reporting interval. Choose 7 or 30. 7 is default. USAGE: 'days:30'\n" +
-            "\t/gui\t\tStarts GUI. GUI overrides other commands." +
-            "\n" +
-            //"\t/security\tRuns a modified Health Check reporting only security-related items" +
-            //"\n" +
-            "\t/lite\t\t" + "Skips output of individual jobs to HTML files. Default is ON and adds extra processing time." +
-            "\n" +
-            "\t/scrub:\t\t" + "/scrub:true | /scrub:false; determines if sensitive data is removed. Default option creates both options" +
-            "\n"+
-            "\t/pdf\t\t" + "Exports the report as PDF in addition to HTML report."+
-            "\n\n" +
-            "HotFix Detection:\n"+
-            "Use the following syntax:\t\t.\\VeeamHealthCheck.exe /hotfix /path=D:\\ExamplePath"+
-            "\n\n"+
-            "Most Common Uses:\n" +
-            "1. Regular Health Check:\t .\\VeeamHealthChecck.exe /run\n" +
-            "2. Security Assessment:\t .\\VeeamHealthCheck.exe /security\n" +
-            "3. Remote Security Assessment:\t .\\VeeamHealthCheck.exe /security /remote /host=REMOTEHOST" + 
-            "\n\n" +
-            "EXAMPLES:\n" +
-            "1. Run to default location:\t .\\VeeamHealthCheck.exe /run\n" +
-            "2. Run to custom location:\t .\\VeeamHealthCheck.exe /run outdir:\\\\myshare\\folder\n" +
-            "3. Run with 30 day report:\t .\\VeeamHealthCheck.exe /run days:30\n" +
-            "4. Run GUI from CLI:\t .\\VeeamHealthCheck.exe /gui" +
-            "\n5. Run without extra job details:\t .\\VeeamHealthCheck.exe /run /lite" +
-            "\n6. Run report on existing data without starting new collection:\t VeeamHealthCheck.exe /import /run (also works with /security)" +
-            "\n";
+        public static string helpMenu = @"
+Veeam Health Check - Command Line Help
 
-        public static string PsVbrConfigStart = "[PS] Enter Config Collection Invoker...";
+USAGE: VeeamHealthCheck.exe [options]
+
+BASIC COMMANDS:
+  /run              Execute health check via CLI
+  /gui              Launch graphical user interface
+  /help             Show this help menu
+
+REPORTING OPTIONS:
+  /days:<N>         Set reporting interval (7, 30, 90, 12 days). Default: 7
+  /lite             Skip individual job HTML exports (faster)
+  /pdf              Export report as PDF in addition to HTML
+  /scrub:<true|false> Control sensitive data removal. Default: both versions
+
+REMOTE OPERATIONS:
+  /remote           Enable remote execution mode
+  /host=<hostname>  Specify remote Veeam server hostname
+  /creds=<user:pass> Provide credentials (or /creds to use stored)
+
+SPECIAL MODES:
+  /security         Run security-focused assessment only
+  /import           Generate report from existing data (no new collection)
+  /hotfix /path:<dir> Run hotfix detection on specified path
+
+EXAMPLES:
+  VeeamHealthCheck.exe /run
+  VeeamHealthCheck.exe /run /days:30 /lite
+  VeeamHealthCheck.exe /security /remote /host:vbr-server /creds=admin:password
+  VeeamHealthCheck.exe /import /run
+  VeeamHealthCheck.exe /hotfix /path=C:\VeeamUpdates
+
+For more information, visit: https://github.com/VeeamHub/veeam-healthcheck
+";        
+public static string PsVbrConfigStart = "[PS] Enter Config Collection Invoker...";
         public static string PsVbrConfigDone = PsVbrConfigStart + ProcEnd;
 
         public static string PsVbrFunctionStart = "[PS] Enter Function Setter...";

@@ -12,6 +12,7 @@ namespace VeeamHealthCheck.Functions.Collection.DB
             Nutanix,
 
         }
+
         public enum EDbJobType
         {
             //Unknown = 666,

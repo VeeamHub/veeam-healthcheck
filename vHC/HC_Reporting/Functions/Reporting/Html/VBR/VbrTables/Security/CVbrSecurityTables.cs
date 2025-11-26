@@ -13,6 +13,7 @@ namespace VeeamHealthCheck.Reporting.Html.VBR
     {
         private CVbrSecurityTableHelper _tables;
         private readonly VBR.CConfigBackupTable _cfgTable = new();
+
         public CVbrSecurityTables()
         {
             _tables = new();

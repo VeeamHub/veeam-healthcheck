@@ -15,10 +15,12 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR.VbrTables.ProtectedWorkl
     internal class NasSourceInfo
     {
         private CHtmlFormatting _form = new();
+
         public NasSourceInfo()
         {
 
         }
+
         public CProtectedWorkloads NasTable()
         {
             CProtectedWorkloads p = new();
@@ -30,7 +32,7 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR.VbrTables.ProtectedWorkl
                 var n = c.GetDynamicNasShareSize();
                 foreach (var rec in n)
                 {
-                    if(rec.BackupMode != "")
+                    if(rec.BackupMode != string.Empty)
                     {
                         NasWorkloads nas = new();
                         nas.FileShareType = rec.FileShareType;
@@ -67,6 +69,7 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR.VbrTables.ProtectedWorkl
 
             return p;
         }
+
         private string CalculateStorageString(string size)
         {
             try

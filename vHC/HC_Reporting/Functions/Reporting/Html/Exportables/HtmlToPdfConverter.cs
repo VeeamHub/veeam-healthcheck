@@ -42,6 +42,7 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.Exportables
             File.WriteAllBytes(outputPath, pdf);
 
         }
+
         // dispose method
         public void Dispose()
         {

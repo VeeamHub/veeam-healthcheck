@@ -32,6 +32,7 @@ namespace VeeamHealthCheck.Startup
                 SetPath();
             }
         }
+
         public void Run()
         {
             CCollections col = new();
@@ -40,6 +41,7 @@ namespace VeeamHealthCheck.Startup
             //TryParseRegLogs();
             EchoResults();
         }
+
         private void EchoResults()
         {
             if (_fixList.Count > 0)
@@ -49,6 +51,7 @@ namespace VeeamHealthCheck.Startup
             else
                 LOG.Warning(logStart + "No hotfixes found.", false);
         }
+
         private void SetPath()
         {
             _path = _originalPath + "\\vHC_HotFixDetectionLogs";
@@ -57,6 +60,7 @@ namespace VeeamHealthCheck.Startup
                 Directory.CreateDirectory(_path);
             }
         }
+
         private void TryParseLogs()
         {
             try
@@ -69,6 +73,7 @@ namespace VeeamHealthCheck.Startup
 
 
         }
+
         private void TryParseRegLogs()
         {
             try
@@ -80,6 +85,7 @@ namespace VeeamHealthCheck.Startup
                 LOG.Error(logStart + e2.Message, false);
             }
         }
+
         private void EnumerateFiles(string path)
         {
             string[] files = Directory.GetFiles(path, "*.log", searchOption: SearchOption.AllDirectories);
@@ -98,6 +104,7 @@ namespace VeeamHealthCheck.Startup
                 }
             }
         }
+
         private bool VerifyPath(string path)
         {
             if (String.IsNullOrEmpty(path)) return false;
@@ -106,6 +113,7 @@ namespace VeeamHealthCheck.Startup
             if (TryCreateDir(path)) return true;
             else return false;
         }
+
         private bool TryCreateDir(string path)
         {
             try
@@ -120,6 +128,7 @@ namespace VeeamHealthCheck.Startup
             }
 
         }
+
         private void ExecLogCollection()
         {
             PSInvoker ps = new();
@@ -133,6 +142,7 @@ namespace VeeamHealthCheck.Startup
                 TryParseLogs();
             }
         }
+
         private List<string> ServerList()
         {
             List<string> newList = new();
@@ -149,6 +159,7 @@ namespace VeeamHealthCheck.Startup
             }
             return newList.Distinct().ToList();
         }
+
         private string ExtractLogs()
         {
             string target = _path + "\\extracted";
@@ -169,6 +180,7 @@ namespace VeeamHealthCheck.Startup
             }
             return target;
         }
+
         private void ClearTargetPath(string path)
         {
             if (Directory.Exists(path))
@@ -194,12 +206,14 @@ namespace VeeamHealthCheck.Startup
 
             }
         }
+
         private void ParseRegularLogs()
         {
             CLogParser logParser = new CLogParser();
             string path = logParser.InitLogDir();
             EnumerateFiles(path);
         }
+
         private void Parse(string file)
         {
             using (StreamReader sr = new(file))
@@ -217,6 +231,7 @@ namespace VeeamHealthCheck.Startup
                 }
             }
         }
+
         private void ParseFixLines(string line)
         {
             try
@@ -225,7 +240,7 @@ namespace VeeamHealthCheck.Startup
                 //log.Debug(line, false);
                 string fixLine = line.Remove(0, line.IndexOf("Private Fix"));
                 if (fixLine.EndsWith(']'))
-                    fixLine = fixLine.Replace("]", "");
+                    fixLine = fixLine.Replace("]", string.Empty);
                 if (!_fixList.Contains(fixLine))
                 {
                     if (!fixLine.Contains("KB"))

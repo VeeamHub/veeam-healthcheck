@@ -16,10 +16,12 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR.VbrTables.Job_Session_Su
         private readonly CLogger log = CGlobals.Logger;
         private CScrubHandler _scrubber;
         private string logStart = "[DataFormer]\t";
+
         public IndividualJobSessionsHelper()
         {
 
         }
+
         private List<CJobSessionInfo> ReturnJobSessionsList()
         {
             var targetDate = CGlobals.GetToolStart.AddDays(-CGlobals.ReportDays);
@@ -39,6 +41,7 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR.VbrTables.Job_Session_Su
                     return csv;
                 }
         }
+
         private List<CJobSessionInfo> ReturnJobSessionsList(string jobName)
         {
             var targetDate = CGlobals.GetToolStart.AddDays(-CGlobals.ReportDays);
@@ -58,6 +61,7 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR.VbrTables.Job_Session_Su
                     return csv;
                 }
         }
+
         private List<string> ReturnJobSessionsNamesList()
         {
             var targetDate = CGlobals.GetToolStart.AddDays(-CGlobals.ReportDays);
@@ -184,6 +188,7 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR.VbrTables.Job_Session_Su
 
 
         }
+
         private string SetMainDir(string folderName, CJobSessionInfo cs)
         {
             var mainDir = CGlobals._desiredPath + CVariables._unsafeSuffix + folderName;
@@ -191,6 +196,7 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR.VbrTables.Job_Session_Su
             mainDir += "\\" + cs.JobName + ".html";
             return mainDir;
         }
+
         private string SetScrubDir(string folderName, CJobSessionInfo cs)
         {
             var scrubDir = CGlobals._desiredPath + CVariables._safeSuffix + folderName;
@@ -199,6 +205,7 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR.VbrTables.Job_Session_Su
             scrubDir += "\\" + _scrubber.ScrubItem(cs.JobName, ScrubItemType.Job) + ".html";
             return scrubDir;
         }
+
         private string SetMainDir(string folderName, string JobName)
         {
             var mainDir = CGlobals._desiredPath + CVariables._unsafeSuffix + folderName;
@@ -206,6 +213,7 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR.VbrTables.Job_Session_Su
             mainDir += "\\" + JobName + ".html";
             return mainDir;
         }
+
         private string SetScrubDir(string folderName, string JobName)
         {
             var scrubDir = CGlobals._desiredPath + CVariables._safeSuffix + folderName;
@@ -242,9 +250,10 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR.VbrTables.Job_Session_Su
             s += "</tr>";
             return s;
         }
+
         private string FormHtmlString(CJobSessionInfo c, string htmlString, bool scrub)
         {
-            string s = ""; // htmlString;
+            string s = string.Empty; // htmlString;
             string jname = c.JobName;
             if (jname.Contains("\\"))
             {
@@ -281,6 +290,7 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR.VbrTables.Job_Session_Su
 
             return s;
         }
+
         private string FixInvalidJobName(string jobName)
         {
             log.Debug("Caught invalid char: \"/\", replacing with \"-\": " + jobName);
@@ -288,16 +298,19 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR.VbrTables.Job_Session_Su
             log.Debug("New Name = " + name);
             return name;
         }
+
         private void LogJobSessionParseProgress(double counter, int total)
         {
             double percentComplete = counter / total * 100;
             string msg = string.Format(logStart + "{0}%...", Math.Round(percentComplete, 2));
             log.Info(msg, false);
         }
+
         private string TableData(string data, string toolTip)
         {
             return string.Format("<td title=\"{0}\">{1}</td>", toolTip, data);
         }
+
         private void CheckFolderExists(string folder)
         {
             if (!Directory.Exists(folder))

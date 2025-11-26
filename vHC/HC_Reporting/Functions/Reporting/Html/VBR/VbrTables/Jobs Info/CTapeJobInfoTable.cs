@@ -15,29 +15,30 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR.VbrTables.Jobs_Info
     {
         private readonly CHtmlFormatting _form = new();
         private readonly CScrubHandler _scrubber = CGlobals.Scrubber;
+
         public CTapeJobInfoTable() { }
 
         public string TapeJobTable()
         {
-            string t = "";
+            string t = string.Empty;
             try
             {
                 CCsvParser c = new();
                 var tapeJobInfo = c.GetTapeJobInfoFromCsv();
                 if (tapeJobInfo.Count() == 0)
-                    return "";  
+                    return string.Empty;  
 
                 t += _form.Table();
-                t += _form.TableHeaderLeftAligned("Job Name", "");
-                t += _form.TableHeader("Media Pool - Full", "");
-                t += _form.TableHeader("Incremental Enabled", "");
-                t += _form.TableHeader("Media Pool - Incremental", "");
-                t += _form.TableHeader("Hardware Compression", "");
-                t += _form.TableHeader("Eject Medium", "");
-                t += _form.TableHeader("Export Media Set", "");
-                t += _form.TableHeader("Job Is Enabled", "");
-                t += _form.TableHeader("Next Run", "");
-                t += _form.TableHeader("Last Result", "");
+                t += _form.TableHeaderLeftAligned("Job Name", string.Empty);
+                t += _form.TableHeader("Media Pool - Full", string.Empty);
+                t += _form.TableHeader("Incremental Enabled", string.Empty);
+                t += _form.TableHeader("Media Pool - Incremental", string.Empty);
+                t += _form.TableHeader("Hardware Compression", string.Empty);
+                t += _form.TableHeader("Eject Medium", string.Empty);
+                t += _form.TableHeader("Export Media Set", string.Empty);
+                t += _form.TableHeader("Job Is Enabled", string.Empty);
+                t += _form.TableHeader("Next Run", string.Empty);
+                t += _form.TableHeader("Last Result", string.Empty);
 
                 t += _form.TableBodyStart();
                 foreach (var tj in tapeJobInfo)
@@ -53,16 +54,16 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR.VbrTables.Jobs_Info
                     }
 
                     t += "<tr>";
-                    t += _form.TableDataLeftAligned(jobName, "");
-                    t += _form.TableData(fullMediaPool, "");
-                    t += _form.TableData(tj.ProcessIncrementalBackup, "");
-                    t += _form.TableData(incMediaPool, "");
-                    t += _form.TableData(tj.UseHardwareCompression, "");
-                    t += _form.TableData(tj.EjectCurrentMedium, "");
-                    t += _form.TableData(tj.ExportCurrentMediaSet, "");
-                    t += _form.TableData(tj.Enabled, "");
-                    t += _form.TableData(tj.NextRun, "");
-                    t += _form.TableData(tj.LastResult, "");
+                    t += _form.TableDataLeftAligned(jobName, string.Empty);
+                    t += _form.TableData(fullMediaPool, string.Empty);
+                    t += _form.TableData(tj.ProcessIncrementalBackup, string.Empty);
+                    t += _form.TableData(incMediaPool, string.Empty);
+                    t += _form.TableData(tj.UseHardwareCompression, string.Empty);
+                    t += _form.TableData(tj.EjectCurrentMedium, string.Empty);
+                    t += _form.TableData(tj.ExportCurrentMediaSet, string.Empty);
+                    t += _form.TableData(tj.Enabled, string.Empty);
+                    t += _form.TableData(tj.NextRun, string.Empty);
+                    t += _form.TableData(tj.LastResult, string.Empty);
                     t += "</tr>";
 
 

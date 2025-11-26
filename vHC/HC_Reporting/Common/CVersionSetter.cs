@@ -11,6 +11,7 @@ namespace VeeamHealthCheck.Shared
         {
 
         }
+
         public static string GetFileVersion()
         {
             string exePath = Assembly.GetExecutingAssembly().Location;

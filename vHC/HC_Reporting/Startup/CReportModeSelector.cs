@@ -11,17 +11,21 @@ namespace VeeamHealthCheck.Startup
     internal class CReportModeSelector
     {
         private CLogger LOG = CGlobals.Logger;
+
         public CReportModeSelector()
         {
         }
+
         public int Run()
         {
             return FileChecker();
         }
+
         public void Dispose()
         {
 
         }
+
         private int FileChecker()
         {
             LOG.Info("Checking output directories..", false);
@@ -38,10 +42,13 @@ namespace VeeamHealthCheck.Startup
             }
             return res;
         }
+
         private int StartVbrReport()
         {
             LOG.Info("Starting B&R report generation", false);
+            LOG.Info("About to instantiate CHtmlCompiler...", false);
             CHtmlCompiler html = new();
+            LOG.Info("CHtmlCompiler instantiated successfully", false);
             var res = html.RunFullVbrReport();
             html.Dispose();
             return res;
@@ -53,6 +60,7 @@ namespace VeeamHealthCheck.Startup
             CVb365HtmlCompiler compiler = new();
             compiler.Dispose();
         }
+
         private void StartSecurityReport()
         {
             LOG.Info("Starting Security Report generation", false);

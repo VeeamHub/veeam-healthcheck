@@ -9,6 +9,7 @@ namespace VeeamHealthCheck.Startup
     public class EntryPoint
     {
         private static CClientFunctions _functions = new();
+
         [STAThread]
         public static int Main(string[] args)
         {

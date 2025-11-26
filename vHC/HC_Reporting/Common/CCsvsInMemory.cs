@@ -9,6 +9,7 @@ namespace VeeamHealthCheck.Shared
     {
         private static readonly Dictionary<string, List<Dictionary<string, string>>> _csvData
             = new Dictionary<string, List<Dictionary<string, string>>>();
+
         private static readonly object _lock = new object();
 
         public static bool LoadCsv(string filePath)

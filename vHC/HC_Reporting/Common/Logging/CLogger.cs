@@ -8,10 +8,12 @@ namespace VeeamHealthCheck.Shared.Logging
     public class CLogger
     {
         public readonly string _logFile;
+
         public CLogger(string jobName)
         {
             _logFile = CreateLogFile(jobName);
         }
+
         public string CreateLogFile(string jobName)
         {
             DateTime dt = DateTime.Now;
@@ -32,6 +34,7 @@ namespace VeeamHealthCheck.Shared.Logging
         {
             Info(message, false);
         }
+
         public void Info(string message, bool silent)
         {
             message = FormLogLine(message, "INFO");
@@ -49,15 +52,18 @@ namespace VeeamHealthCheck.Shared.Logging
         {
             Warning(message, false);
         }
+
         public void Warning(string message, bool silent)
         {
             message = FormLogLine(message, "WARN");
             LogLine(message, silent, 2);
         }
+
         public void Debug(string message)
         {
             Debug(message, false);
         }
+
         public void Debug(string message, bool silent)
         {
             message = FormLogLine(message, "DEBUG");
@@ -71,17 +77,20 @@ namespace VeeamHealthCheck.Shared.Logging
                 LogLine(message, true, 2);
             }
         }
+
         public void Error(string message)
         {
 
             Error(message, false);
         }
+
         public void Error(string message, bool silent)
         {
             DateTime now = DateTime.Now;
             string logLine = String.Format("[{0}]\tERROR\t{1}", now.ToString("dd.MM.yyyy HH:mm:ss"), message);
             LogLine(logLine, silent, 1);
         }
+
         private void LogLine(string line, bool silent, int severity)
         {
             if (!silent)
@@ -116,6 +125,7 @@ namespace VeeamHealthCheck.Shared.Logging
                     break;
             }
         }
+
         private void ResetColor(ConsoleColor color)
         {
             Console.ForegroundColor = color;

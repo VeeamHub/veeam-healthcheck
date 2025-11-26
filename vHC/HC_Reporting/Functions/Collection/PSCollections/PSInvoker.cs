@@ -24,16 +24,16 @@ namespace VeeamHealthCheck.Functions.Collection.PSCollections
 
     class PSInvoker
     {
-        private readonly string _vb365Script = Environment.CurrentDirectory + @"\Tools\Scripts\HealthCheck\VB365\Collect-VB365Data.ps1";
+        private readonly string _vb365Script = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, @"Tools\Scripts\HealthCheck\VB365\Collect-VB365Data.ps1");
 
-        private readonly string _vbrConfigScript = Environment.CurrentDirectory + @"\Tools\Scripts\HealthCheck\VBR\Get-VBRConfig.ps1";
-        private readonly string _vbrSessionScript = Environment.CurrentDirectory + @"\Tools\Scripts\HealthCheck\VBR\Get-VeeamSessionReport.ps1";
-        private readonly string _vbrSessionScriptVersion13 = Environment.CurrentDirectory + @"\Tools\Scripts\HealthCheck\VBR\Get-VeeamSessionReportVersion13.ps1";
+        private readonly string _vbrConfigScript = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, @"Tools\Scripts\HealthCheck\VBR\Get-VBRConfig.ps1");
+        private readonly string _vbrSessionScript = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, @"Tools\Scripts\HealthCheck\VBR\Get-VeeamSessionReport.ps1");
+        private readonly string _vbrSessionScriptVersion13 = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, @"Tools\Scripts\HealthCheck\VBR\Get-VeeamSessionReportVersion13.ps1");
 
-        private readonly string _nasScript = Environment.CurrentDirectory + @"\Tools\Scripts\HealthCheck\VBR\Get-NasInfo.ps1";
+        private readonly string _nasScript = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, @"Tools\Scripts\HealthCheck\VBR\Get-NasInfo.ps1");
 
-        private readonly string _exportLogsScript = Environment.CurrentDirectory + @"\Tools\Scripts\HotfixDetection\Collect-VBRLogs.ps1";
-        private readonly string _dumpServers = Environment.CurrentDirectory + @"\Tools\Scripts\HotfixDetection\DumpManagedServerToText.ps1";
+        private readonly string _exportLogsScript = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, @"Tools\Scripts\HotfixDetection\Collect-VBRLogs.ps1");
+        private readonly string _dumpServers = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, @"Tools\Scripts\HotfixDetection\DumpManagedServerToText.ps1");
 
         public static readonly string SERVERLISTFILE = "serverlist.txt";
 
@@ -174,6 +174,7 @@ namespace VeeamHealthCheck.Functions.Collection.PSCollections
             //RunVbrSessionCollection();
             return res;
         }
+
         public void TryUnblockFiles()
         {
             UnblockFile(_vbrConfigScript);
@@ -183,13 +184,17 @@ namespace VeeamHealthCheck.Functions.Collection.PSCollections
             UnblockFile(_dumpServers);
             UnblockFile(_vb365Script);
         }
+
         public bool TestMfa()
         {
             var res = new Process();
-            if (CGlobals.REMOTEHOST == "")
+            if (CGlobals.REMOTEHOST == string.Empty)
                 CGlobals.REMOTEHOST = "localhost";
-            string argString = $"Connect-VBRServer -Server \"{CGlobals.REMOTEHOST}\"";
-            var startInfo = new ProcessStartInfo()
+            string argString = $"Import-Module Veeam.Backup.PowerShell; Connect-VBRServer -Server \"{CGlobals.REMOTEHOST}\"";
+            if (!string.IsNullOrEmpty(CGlobals.CredsUsername) && !string.IsNullOrEmpty(CGlobals.CredsPassword))
+            {
+                argString += $" -User \"{CGlobals.CredsUsername}\" -Password \"{CGlobals.CredsPassword}\"";
+            }            var startInfo = new ProcessStartInfo()
             {
                 FileName = "powershell.exe",
                 Arguments = argString,
@@ -224,7 +229,7 @@ namespace VeeamHealthCheck.Functions.Collection.PSCollections
                 List<string> errorarray = new();
 
                 bool mfaFound = true;
-                string errString = "";
+                string errString = string.Empty;
                 while ((errString = res.StandardError.ReadLine()) != null)
                 {
                     var errResults = ParseErrors(errString);
@@ -238,7 +243,7 @@ namespace VeeamHealthCheck.Functions.Collection.PSCollections
                     }
                     errorarray.Add(errString);
                 }
-                PushPsErrorsToMainLog(errorarray);
+                this.PushPsErrorsToMainLog(errorarray);
 
                 return mfaFound;
             }
@@ -253,12 +258,13 @@ namespace VeeamHealthCheck.Functions.Collection.PSCollections
 
         public bool TestMfaVB365()
         {
-            if (CGlobals.REMOTEHOST == "")
+            if (CGlobals.REMOTEHOST == string.Empty)
                 CGlobals.REMOTEHOST = "localhost";
             string argString = $"Connect-VBOServer -Server \"{CGlobals.REMOTEHOST}\"";
             CGlobals.Logger.Info("[MFA Check] args:\t" + argString, false);
             return ExecutePsScriptWithFailover(argString, useShellExecute: false, createNoWindow: false, redirectStdErr: true);
         }
+
         public bool RunVbrConfigCollect()
         {
             bool success = true;
@@ -269,6 +275,7 @@ namespace VeeamHealthCheck.Functions.Collection.PSCollections
                 success = ExecutePsScript(VbrSessionStartInfo());
             return success;
         }
+
         public bool ExecutePsScript(ProcessStartInfo startInfo)
         {
             var res1 = new Process();
@@ -282,7 +289,7 @@ namespace VeeamHealthCheck.Functions.Collection.PSCollections
             List<string> errorarray = new();
 
             bool failed = false;
-            string errString = "";
+            string errString = string.Empty;
             while ((errString = res1.StandardError.ReadLine()) != null)
             {
                 var errResults = ParseErrors(errString);
@@ -297,7 +304,7 @@ namespace VeeamHealthCheck.Functions.Collection.PSCollections
                 errorarray.Add(errString);
             }
             if (errorarray.Count > 0)
-                PushPsErrorsToMainLog(errorarray);
+                this.PushPsErrorsToMainLog(errorarray);
 
             log.Info(CMessages.PsVbrConfigProcIdDone, false);
             if (failed)
@@ -305,6 +312,7 @@ namespace VeeamHealthCheck.Functions.Collection.PSCollections
             else
                 return true;
         }
+
         private void PushPsErrorsToMainLog(List<string> errors)
         {
             if (errors.Count > 0)
@@ -317,6 +325,7 @@ namespace VeeamHealthCheck.Functions.Collection.PSCollections
             }
 
         }
+
         private PsErrorTypes ParseErrors(string errorLine)
         {
             if (errorLine.Contains("Unable to connect to the server with MFA-enabled user account"))
@@ -330,25 +339,28 @@ namespace VeeamHealthCheck.Functions.Collection.PSCollections
 
             else return new PsErrorTypes { Success = true, Message = "Success" };
         }
+
         private ProcessStartInfo VbrConfigStartInfo()
         {
             log.Info(CMessages.PsVbrConfigStart, false);
-            return ConfigStartInfo(_vbrConfigScript, 0, "");
+            return ConfigStartInfo(_vbrConfigScript, 0, string.Empty);
         }
+
         private ProcessStartInfo VbrNasStartInfo()
         {
-            log.Info("");
-            return ConfigStartInfo(_nasScript, 0, "");
+            log.Info(string.Empty);
+            return ConfigStartInfo(_nasScript, 0, string.Empty);
         }
+
         private ProcessStartInfo VbrSessionStartInfo()
         {
             if (CGlobals.VBRMAJORVERSION == 13)
             {
-                return ConfigStartInfo(_vbrSessionScriptVersion13, CGlobals.ReportDays, "");
+                return ConfigStartInfo(_vbrSessionScriptVersion13, CGlobals.ReportDays, string.Empty);
             }
             else
             {
-                return ConfigStartInfo(_vbrSessionScript, CGlobals.ReportDays, "");
+                return ConfigStartInfo(_vbrSessionScript, CGlobals.ReportDays, string.Empty);
             }
         }
 
@@ -357,11 +369,13 @@ namespace VeeamHealthCheck.Functions.Collection.PSCollections
             log.Info(CMessages.PsVbrConfigStart, false);
             return LogCollectionInfo(_exportLogsScript, path, server);
         }
+
         private ProcessStartInfo DumpServersStartInfo()
         {
             log.Info("Starting dump servers script", false);
             return ServerDumpInfo(_dumpServers);
         }
+
         public void RunServerDump()
         {
             ProcessStartInfo p = DumpServersStartInfo();
@@ -370,6 +384,7 @@ namespace VeeamHealthCheck.Functions.Collection.PSCollections
             result.WaitForExit();
             log.Info("Powershell server dump complete.", false);
         }
+
         public void RunVbrLogCollect(string path, string server)
         {
             ProcessStartInfo p = ExportLogsStartInfo(path, server);
@@ -383,6 +398,7 @@ namespace VeeamHealthCheck.Functions.Collection.PSCollections
 
             log.Info(CMessages.PsVbrConfigProcIdDone, false);
         }
+
         private ProcessStartInfo LogCollectionInfo(string scriptLocation, string path, string server)
         {
             string argString;
@@ -400,11 +416,12 @@ namespace VeeamHealthCheck.Functions.Collection.PSCollections
                 WindowStyle = ProcessWindowStyle.Minimized
             };
         }
+
         private ProcessStartInfo ServerDumpInfo(string scriptLocation)
         {
             string argString;
             string server = "localhost";
-            if (CGlobals.REMOTEHOST == "")
+            if (CGlobals.REMOTEHOST == string.Empty)
                 server = "localhost";
             else
             {
@@ -430,7 +447,7 @@ namespace VeeamHealthCheck.Functions.Collection.PSCollections
             log.Info("[PS][VBR Sessions] Enter Session Collection Invoker...", false);
 
 
-            var startInfo2 = ConfigStartInfo(_vbrSessionScript, CGlobals.ReportDays, "");
+            var startInfo2 = ConfigStartInfo(_vbrSessionScript, CGlobals.ReportDays, string.Empty);
 
 
             log.Info("[PS][VBR Sessions] Starting Session Collection PowerShell Process...", false);
@@ -442,10 +459,11 @@ namespace VeeamHealthCheck.Functions.Collection.PSCollections
 
             log.Info("[PS][VBR Sessions] Session collection complete!", false);
         }
+
         private ProcessStartInfo ConfigStartInfo(string scriptLocation, int days, string path)
         {
             
-            if (CGlobals.REMOTEHOST == ""){
+            if (CGlobals.REMOTEHOST == string.Empty){
                 CGlobals.REMOTEHOST = "localhost";
             }
             string argString;
@@ -464,12 +482,13 @@ namespace VeeamHealthCheck.Functions.Collection.PSCollections
             {
                 argString =
                     $"-NoProfile -ExecutionPolicy unrestricted -file \"{scriptLocation}\" -VBRServer \"{CGlobals.REMOTEHOST}\" -VBRVersion \"{CGlobals.VBRMAJORVERSION}\" ";
-                    if(CGlobals.REMOTEEXEC ){
+                    if (CGlobals.REMOTEEXEC ){
                         CredsHandler ch = new();
                     var creds = ch.GetCreds();
                     argString += $"-User {creds.Value.Username} -Password {creds.Value.Password} ";
                     }
             }
+
             if (!string.IsNullOrEmpty(path))
             {
                 argString = $"-NoProfile -ExecutionPolicy unrestricted -file \"{scriptLocation}\" -ReportPath \"{path}\"";
@@ -479,7 +498,8 @@ namespace VeeamHealthCheck.Functions.Collection.PSCollections
             // Use the same PowerShell version failover logic as ExecutePsScriptWithFailover
             // Prefer PowerShell 7, then 5, else throw
             string exePath = null;
-            if (!string.IsNullOrEmpty(_pwshPath))
+            // if vbr version is v13 and pwsh exists, use pwsh, else use powershell
+            if (!string.IsNullOrEmpty(_pwshPath) && !(CGlobals.VBRMAJORVERSION < 13))
                 exePath = _pwshPath;
             else if (!string.IsNullOrEmpty(_powershellPath))
                 exePath = _powershellPath;
@@ -511,6 +531,7 @@ namespace VeeamHealthCheck.Functions.Collection.PSCollections
 
             ExecuteEmbeddedScript(scriptContent);
         }
+
         private void ExecuteEmbeddedScript(string scriptContent)
         {
             using (PowerShell ps = PowerShell.Create())
@@ -542,6 +563,7 @@ namespace VeeamHealthCheck.Functions.Collection.PSCollections
                 }
             }
         }
+
         private string GetEmbeddedScript(string resourceName)
         {
             var assembly = Assembly.GetExecutingAssembly();
@@ -559,6 +581,7 @@ namespace VeeamHealthCheck.Functions.Collection.PSCollections
                 }
             }
         }
+
         public void InvokeVb365Collect()
         {
             log.Info("[PS] Enter VB365 collection invoker...", false);

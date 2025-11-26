@@ -30,6 +30,7 @@ namespace VeeamHealthCheck.Startup
             _args = args;
             CGlobals.TOOLSTART = DateTime.Now;
         }
+
         public int ParseArgs()
         {
             //CGlobals.RunFullReport = true;
@@ -51,6 +52,7 @@ namespace VeeamHealthCheck.Startup
 
 
         }
+
         private void LogInitialInfo()
         {
             CClientFunctions f = new CClientFunctions();
@@ -70,6 +72,7 @@ namespace VeeamHealthCheck.Startup
             var app = new System.Windows.Application();
             return app.Run(new VhcGui());
         }
+
         private IntPtr Handle()
         {
             return GetConsoleWindow();
@@ -96,7 +99,7 @@ namespace VeeamHealthCheck.Startup
             bool run = false;
             bool ui = false;
             bool runHfd = false;
-            string _hfdPath = "";
+            string _hfdPath = string.Empty;
 
 
 
@@ -172,6 +175,24 @@ namespace VeeamHealthCheck.Startup
                         runHfd = true;
                         //Environment.Exit(0);
                         break;
+                    case "/creds":
+                        CGlobals.UseStoredCreds = true;
+                        CGlobals.Logger.Info("Using stored credentials for remote connection", false);
+                        break;
+                    case var match when new Regex("/creds=.*").IsMatch(a):
+                        string credsStr = ParsePath(a);
+                        string[] parts = credsStr.Split(':');
+                        if (parts.Length == 2)
+                        {
+                            CGlobals.CredsUsername = parts[0];
+                            CGlobals.CredsPassword = parts[1];
+                            CGlobals.Logger.Info("Credentials provided via command line", false);
+                        }
+                        else
+                        {
+                            CGlobals.Logger.Error("Invalid /creds format. Use /creds=username:password", false);
+                        }
+                        break;
                     case "/pdf":
                         CGlobals.EXPORTPDF = true;
                         break;
@@ -211,7 +232,7 @@ namespace VeeamHealthCheck.Startup
                 {
                     functions.RunHotfixDetector(_hfdPath, CGlobals.REMOTEHOST);
                 }
-                functions.RunHotfixDetector(_hfdPath, "");
+                functions.RunHotfixDetector(_hfdPath, string.Empty);
             }
             else if (ui)
                 LaunchUi(Handle(), false);
@@ -219,7 +240,7 @@ namespace VeeamHealthCheck.Startup
             {
                 if (CGlobals.IMPORT)
                      result = FullRun(targetDir);
-                else if (CGlobals.REMOTEEXEC && CGlobals.REMOTEHOST == "")
+                else if (CGlobals.REMOTEEXEC && CGlobals.REMOTEHOST == string.Empty)
                 {
                     CGlobals.Logger.Warning("Remote execution selected but no host defined. Please define host: " +
                         "/host=HOSTNAME", false);
@@ -231,13 +252,13 @@ namespace VeeamHealthCheck.Startup
                 //    Environment.Exit(0);
                 //}
 
-                else if (CGlobals.REMOTEHOST != "" && CGlobals.RunSecReport)
+                else if (CGlobals.REMOTEHOST != string.Empty && CGlobals.RunSecReport)
                 {
                     CGlobals.Logger.Debug("Remote execution selected with host: " + CGlobals.REMOTEHOST, false);
                     result = FullRun(targetDir);
 
                 }
-                else if(CGlobals.REMOTEHOST != "")
+                else if(CGlobals.REMOTEHOST != string.Empty)
                 {
                     CGlobals.Logger.Debug("Remote execution selected with host: " + CGlobals.REMOTEHOST, false);
                     result = FullRun(targetDir);
@@ -257,6 +278,7 @@ namespace VeeamHealthCheck.Startup
             }
             return result;
         }
+
         private string ParsePath(string input)
         {
             try
@@ -270,11 +292,13 @@ namespace VeeamHealthCheck.Startup
                 return null;
             }
         }
+
         private int Run(string targetDir)
         {
             CClientFunctions functions = new();
             return functions.CliRun(targetDir);
         }
+
         private int FullRun(string targetDir)
         {
             CGlobals.Logger.Info("Starting RUN...", false);

@@ -12,7 +12,9 @@ namespace VeeamHealthCheck.Functions.Analysis.DataModels
         {
 
         }
+
         public string Name { get; set; }
+
         public string Sobr { get; set; }
         
     }

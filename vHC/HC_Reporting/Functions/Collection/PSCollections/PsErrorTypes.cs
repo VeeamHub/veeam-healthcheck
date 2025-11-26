@@ -9,6 +9,7 @@ namespace VeeamHealthCheck.Functions.Collection.PSCollections
     public  class PsErrorTypes
     {
         public bool Success { get; set; }
+
         public string Message { get; set; }
 
     }

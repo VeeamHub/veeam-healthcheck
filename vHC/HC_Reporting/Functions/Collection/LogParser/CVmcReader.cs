@@ -23,6 +23,7 @@ namespace VeeamHealthCheck.Functions.Collection.LogParser
         {
             _mode = mode;
         }
+
         public void PopulateVmc()
         {
             GetLogDir();
@@ -64,11 +65,12 @@ namespace VeeamHealthCheck.Functions.Collection.LogParser
             }
 
         }
+
         private void ReadVmc()
         {
             using (StreamReader sr = new StreamReader(LOGLOCATION))
             {
-                string line = "";
+                string line = string.Empty;
                 while ((line = sr.ReadLine()) != null)
                 {
                     if (line.Contains(CLogOptions.installIdLine))
@@ -82,6 +84,7 @@ namespace VeeamHealthCheck.Functions.Collection.LogParser
                 }
             }
         }
+
         private void ParseConfigDbInfo(string line)
         {
             DateTime dbLineDate = ParseLineDate(line);
@@ -89,6 +92,7 @@ namespace VeeamHealthCheck.Functions.Collection.LogParser
                 _DbLineDate = ParseLineDate(line);
 
         }
+
         private DateTime ParseLineDate(string line)
         {
             string newLine = line.Substring(1, 25);
@@ -96,11 +100,13 @@ namespace VeeamHealthCheck.Functions.Collection.LogParser
             return dt;
 
         }
+
         private void ParseInstallId(string line)
         {
             string[] id = line.Substring(40).Split();
             INSTALLID = id[1];
         }
+
         private void TrimLogLine(string line)
         {
             string newLine = line.Substring(40);
