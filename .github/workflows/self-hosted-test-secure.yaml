@@ -7,6 +7,12 @@ on:
     branches: [ "master", "dev" ]
   workflow_dispatch:
 
+# Add permissions for the test results action
+permissions:
+  contents: read
+  checks: write
+  pull-requests: write
+
 jobs:
   build-and-test:
     runs-on: windows-latest
@@ -27,13 +33,22 @@ jobs:
       run: dotnet build vHC/HC.sln --configuration Release --no-restore
       
     - name: Run tests
-      run: dotnet test vHC/HC.sln --configuration Release --no-build --verbosity normal --logger "trx;LogFileName=test-results.trx"
+      run: |
+        dotnet test vHC/HC.sln `
+          --configuration Release `
+          --no-build `
+          --verbosity normal `
+          --logger "trx;LogFileName=test-results.trx" `
+          --results-directory ${{ github.workspace }}/TestResults
+      continue-on-error: true
       
     - name: Publish test results
       uses: EnricoMi/publish-unit-test-result-action/composite@v2
       if: always()
       with:
-        files: '**/test-results.trx'
+        files: '${{ github.workspace }}/TestResults/**/*.trx'
+        check_name: 'Test Results'
+        comment_mode: 'off'
     
     - name: Publish single-file executable
       run: |
