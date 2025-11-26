@@ -1,4 +1,4 @@
-name: VirusTotal Scan and Release
+name: VirusTotal Scan and Release - DEPRECATED
 
 on:
   push:
@@ -9,6 +9,7 @@ jobs:
   # First run tests to ensure quality
   test:
     runs-on: windows-latest
+    if: false  # Deprecated - use ci-cd.yaml instead
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -37,6 +38,7 @@ jobs:
   build-publish-scan:
     needs: test
     runs-on: windows-latest
+    if: false  # Deprecated - use ci-cd.yaml instead
     outputs:
       version: ${{ steps.get_version.outputs.version }}
       exe_clean: ${{ steps.evaluate_exe.outputs.clean }}
@@ -291,7 +293,7 @@ jobs:
   create-release:
     needs: build-publish-scan
     runs-on: windows-latest
-    if: needs.build-publish-scan.outputs.exe_clean == 'true' && needs.build-publish-scan.outputs.zip_clean == 'true'
+    if: false  # Deprecated - use ci-cd.yaml instead
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4

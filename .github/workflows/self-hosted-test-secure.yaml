@@ -1,4 +1,4 @@
-name: Self-Hosted VBR Test (Secure)
+name: Self-Hosted VBR Test (Secure) - DEPRECATED
 
 on:
   push:
@@ -16,6 +16,7 @@ permissions:
 jobs:
   build-and-test:
     runs-on: windows-latest
+    if: false  # Deprecated - use ci-cd.yaml instead
     
     steps:
     - name: Checkout repository
@@ -71,6 +72,7 @@ jobs:
   test-on-vbr:
     needs: build-and-test
     runs-on: [self-hosted, VB-CON-V13-0-0]
+    if: false  # Deprecated - use ci-cd.yaml instead
     
     steps:
     - name: Download executable
