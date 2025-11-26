@@ -84,7 +84,7 @@ jobs:
   # Integration test on self-hosted VBR
   integration-test-vbr:
     needs: build-and-test
-    runs-on: [self-hosted, vbr-13]
+    runs-on: [self-hosted, vbr-13, remote]
     if: github.event_name != 'pull_request'
     
     steps:
