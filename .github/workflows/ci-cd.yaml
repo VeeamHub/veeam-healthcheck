@@ -481,6 +481,7 @@ jobs:
             $resp = $curlOutput | ConvertFrom-Json
             $scanId = $resp.data.id
             
+            
             if ([string]::IsNullOrEmpty($scanId)) {
               echo "Response: $curlOutput"
               throw "Failed to get scan ID from response"
