@@ -23,7 +23,6 @@ using VeeamHealthCheck.Functions.Reporting.Html.VBR.VbrTables;
 using VeeamHealthCheck.Scrubber;
 using System.IO;
 
-
 namespace VeeamHealthCheck.Html.VBR
 {
     internal class CHtmlTables
@@ -37,7 +36,6 @@ namespace VeeamHealthCheck.Html.VBR
 
         private CHtmlFormatting _form;
         private CVbrSummaries _sum;
-
 
         public CHtmlTables()
         {
@@ -64,6 +62,7 @@ namespace VeeamHealthCheck.Html.VBR
                 throw;
             }
         }
+
         public string MakeNavTable()
         {
             return _form.FormNavRows(VbrLocalizationHelper.NavLicInfoLink, "license", VbrLocalizationHelper.NavLicInfoDetail) +
@@ -84,27 +83,30 @@ namespace VeeamHealthCheck.Html.VBR
                 _form.FormNavRows(VbrLocalizationHelper.NavJobSessSumLink, "jobsesssum", VbrLocalizationHelper.NavJobSessSumDeet) +
                 _form.FormNavRows(VbrLocalizationHelper.NavJobInfoLink, "jobs", VbrLocalizationHelper.NavJobInfoDeet);
         }
+
         public string MakeSecurityNavTable()
         {
-            return //_form.FormNavRows(ResourceHandler.NavLicInfoLink, "license", ResourceHandler.NavLicInfoDetail) +
+            return // _form.FormNavRows(ResourceHandler.NavLicInfoLink, "license", ResourceHandler.NavLicInfoDetail) +
                 _form.FormNavRows(VbrLocalizationHelper.NavBkpSrvLink, "vbrserver", VbrLocalizationHelper.NavBkpSrvDeet) +
                 _form.FormNavRows(VbrLocalizationHelper.NavSecSumLink, "secsummary", VbrLocalizationHelper.NavSecSumDeet) +
-                //_form.FormNavRows(ResourceHandler.NavSrvSumLink, "serversummary", ResourceHandler.NavSrvSumDeet) +
+
+                // _form.FormNavRows(ResourceHandler.NavSrvSumLink, "serversummary", ResourceHandler.NavSrvSumDeet) +
                 _form.FormNavRows(VbrLocalizationHelper.NavJobSumLink, "jobsummary", VbrLocalizationHelper.NavJobSumDeet) +
-                //_form.FormNavRows(ResourceHandler.NavMissingJobLink, "missingjobs", ResourceHandler.NavMissingDeet) +
-                //_form.FormNavRows(ResourceHandler.NavProtWrkld, "protectedworkloads", ResourceHandler.NavProtWkldDeet) +
+
+                // _form.FormNavRows(ResourceHandler.NavMissingJobLink, "missingjobs", ResourceHandler.NavMissingDeet) +
+                // _form.FormNavRows(ResourceHandler.NavProtWrkld, "protectedworkloads", ResourceHandler.NavProtWkldDeet) +
                 _form.FormNavRows(VbrLocalizationHelper.NavSrvInfoLink, "managedServerInfo", VbrLocalizationHelper.NavSrvInfoDeet) +
                 _form.FormNavRows(VbrLocalizationHelper.NavRegKeyLink, "regkeys", VbrLocalizationHelper.NavRegKeyDeet) +
                 _form.FormNavRows(VbrLocalizationHelper.NavProxyInfoLink, "proxies", VbrLocalizationHelper.NavProxyDeet) +
                 _form.FormNavRows(VbrLocalizationHelper.NavSobrInfoLink, "sobr", VbrLocalizationHelper.NavSobrDeet) +
                 _form.FormNavRows(VbrLocalizationHelper.NavSobrExtLink, "extents", VbrLocalizationHelper.NavSobrExtDeet) +
                 _form.FormNavRows(VbrLocalizationHelper.NavRepoInfoLink, "repos", VbrLocalizationHelper.NavRepoDeet) +
-                //_form.FormNavRows(ResourceHandler.NavJobConLink, "jobcon", ResourceHandler.NavJobConDeet) +
-                //_form.FormNavRows(ResourceHandler.NavTaskConLink, "taskcon", ResourceHandler.NavTaskConDeet) +
-                //_form.FormNavRows(ResourceHandler.NavJobSessSumLink, "jobsesssum", ResourceHandler.NavJobSessSumDeet) +
+
+                // _form.FormNavRows(ResourceHandler.NavJobConLink, "jobcon", ResourceHandler.NavJobConDeet) +
+                // _form.FormNavRows(ResourceHandler.NavTaskConLink, "taskcon", ResourceHandler.NavTaskConDeet) +
+                // _form.FormNavRows(ResourceHandler.NavJobSessSumLink, "jobsesssum", ResourceHandler.NavJobSessSumDeet) +
                 _form.FormNavRows(VbrLocalizationHelper.NavJobInfoLink, "jobs", VbrLocalizationHelper.NavJobInfoDeet);
         }
-
 
         public string LicTable(bool scrub)
         {
@@ -135,19 +137,26 @@ namespace VeeamHealthCheck.Html.VBR
 
                 // init / clear json license collection
                 if (CGlobals.FullReportJson == null)
+                {
                     CGlobals.FullReportJson = new();
-                CGlobals.FullReportJson.Licenses.Clear();
+                }
 
+                CGlobals.FullReportJson.Licenses.Clear();
 
                 foreach (var l in lic)
                 {
 
-
                     s += "<tr>";
                     if (scrub)
+                    {
                         s += _form.TableData(_scrub.ScrubItem(l.licensedto, ScrubItemType.Item), "");
+                    }
+
                     if (!scrub)
+                    {
                         s += _form.TableData(l.licensedto, "");
+                    }
+
                     s += _form.TableData(l.edition, "");
                     s += _form.TableData(l.status, "");
                     s += _form.TableData(l.type, "");
@@ -183,7 +192,7 @@ namespace VeeamHealthCheck.Html.VBR
                             UsedNas = l.usedcapacitytb,
                             ExpirationDate = l.expirationdate,
                             SupportExpirationDate = l.supportexpirationdate,
-                            CloudConnect = l.cloudconnect
+                            CloudConnect = l.cloudconnect,
                         });
                     }
                     catch (Exception exRow)
@@ -197,25 +206,30 @@ namespace VeeamHealthCheck.Html.VBR
                 log.Error("License Data import failed. ERROR:");
                 log.Error("\t" + e.Message);
             }
-            CGlobals.FullReportJson.LicenseSummary = summary;
+
             s += _form.SectionEnd(summary);
             return s;
         }
+
         // helper to set a generic section in JSON aggregation
-        private void SetSection(string key, List<string> headers, List<List<string>> rows, string summary)
+        private static void SetSection(string key, List<string> headers, List<List<string>> rows, string summary)
         {
             if (CGlobals.FullReportJson == null)
+            {
                 CGlobals.FullReportJson = new();
+            }
+
             CGlobals.FullReportJson.Sections[key] = new HtmlSection
             {
                 SectionName = key,
                 Headers = headers,
                 Rows = rows,
-                Summary = summary
+
+                // Summary = summary,
             };
         }
 
-        private string WriteTupleListToHtml(List<Tuple<string, string>> list)
+        private static string WriteTupleListToHtml(List<Tuple<string, string>> list)
         {
             string headers = "";
             string data = "";
@@ -225,6 +239,7 @@ namespace VeeamHealthCheck.Html.VBR
                 headers += table.Item1;
                 data += table.Item2;
             }
+
             s += headers;
             s += "</tr></thead><tr>";
             s += data;
@@ -233,23 +248,29 @@ namespace VeeamHealthCheck.Html.VBR
             return s;
         }
 
-        private string AddBackupServerDetails(BackupServer b)
+        private static string AddBackupServerDetails(BackupServer b)
         {
             CVbrServerTable t = new(b);
-            List<Tuple<string, string>> vbrServerData = new(); //t.VbrFullTables();
+            List<Tuple<string, string>> vbrServerData = new(); // t.VbrFullTables();
 
             if (!CGlobals.RunSecReport)
+            {
                 vbrServerData = t.VbrFullTables();
+            }
             else
+            {
                 vbrServerData = t.VbrSecurityTables();
+            }
 
             return WriteTupleListToHtml(vbrServerData);
         }
+
         private string ConfigDbTable(BackupServer b)
         {
             string s = "";
             s += _form.header3("Config DB Info");
             s += _form.Table();
+
             // config DB Table
             s += _form.TableHeader("DataBase Type", "MS SQL or PostgreSQL");
             s += _form.TableHeader(VbrLocalizationHelper.BkpSrvTblSqlLocal, VbrLocalizationHelper.BstSqlLocTT);
@@ -266,12 +287,11 @@ namespace VeeamHealthCheck.Html.VBR
                 s += _form.TableHeader(VbrLocalizationHelper.BkpSrvTblSqlRam, VbrLocalizationHelper.BstSqlRamTT);
             }
 
-
             s += _form.TableHeaderEnd();
-            //CDataFormer cd = new(true);
+
+            // CDataFormer cd = new(true);
             try
             {
-
 
                 s += _form.TableBodyStart();
                 s += "<tr>";
@@ -293,47 +313,64 @@ namespace VeeamHealthCheck.Html.VBR
                 }
 
                 if (b.DbType == CGlobals.SqlTypeName && b.IsLocal == false)
+                {
                     s += AddDbCoresRam(b);
+                }
+
                 s += _form.EndTable();
             }
             catch (Exception e)
             {
                 log.Error("Failed to add backup server table. Error:");
                 log.Error("\t" + e.Message);
-                //return "";
+
+                // return "";
             }
+
             return s;
         }
+
         private string AddDbCoresRam(BackupServer b)
         {
             string s = "";
             string dbCoresToolTip = "CPU Cores detected on SQL. 0 indicates SQL is local to VBR or there was an error in collection.";
             string dbRamToolTip = "RAM detected on SQL. 0 indicates SQL is local to VBR or there was an error in collection.";
             if (b.DbCores == 0)
+            {
                 s += _form.TableData("", dbCoresToolTip);
+            }
             else
+            {
                 s += _form.TableData(b.DbCores.ToString(), dbCoresToolTip);
+            }
+
             if (b.DbRAM == 0)
+            {
                 s += _form.TableData("", dbRamToolTip);
+            }
             else
+            {
                 s += _form.TableData(b.DbRAM.ToString(), dbRamToolTip);
+            }
 
             return s;
         }
+
         public string AddBkpSrvTable(bool scrub)
         {
             string s = _form.SectionStart("vbrserver", VbrLocalizationHelper.BkpSrvTblHead);
             string summary = _sum.SetVbrSummary();
-            //CDataFormer cd = new(true);
+
+            // CDataFormer cd = new(true);
             BackupServer b = _df.BackupServerInfoToXml(scrub);
             if (String.IsNullOrEmpty(b.Version))
+            {
                 b.Version = CGlobals.VBRFULLVERSION;
-            // test area
+            }
 
+            // test area
             s += AddBackupServerDetails(b);
             s += _form.EndTable();
-
-
 
             s += _form.header3("Config Backup Info");
             s += "<table border=\"1\" class=\"content-table\">";
@@ -363,16 +400,15 @@ namespace VeeamHealthCheck.Html.VBR
             {
                 s += _form.TableData(_form.False, "");
             }
+
             s += _form.TableData(b.ConfigBackupTarget, "");
             s += "</tr>";
             s += _form.EndTable();
 
-
-            //s += _form.LineBreak();
-
+            // s += _form.LineBreak();
             s += ConfigDbTable(b);
 
-            //if (CGlobals.RunSecReport)
+            // if (CGlobals.RunSecReport)
             //    s += InstalledAppsTable();
             s += _form.SectionEnd(summary);
 
@@ -390,8 +426,8 @@ namespace VeeamHealthCheck.Html.VBR
                         b.ConfigBackupEnabled ? "True" : "False",
                         b.ConfigBackupLastResult,
                         b.ConfigBackupEncryption ? "True" : "False",
-                        b.ConfigBackupTarget
-                    }
+                        b.ConfigBackupTarget,
+                    },
                 };
                 SetSection("backupServer", headers, rows, summary);
             }
@@ -399,15 +435,17 @@ namespace VeeamHealthCheck.Html.VBR
             {
                 log.Error("Failed to capture backupServer JSON section: " + ex.Message);
             }
+
             return s;
 
         }
+
         private string InstalledAppsTable()
         {
             string s = "";
 
             // Table & Header
-            //s += _form.header3("Installed Applications");
+            // s += _form.header3("Installed Applications");
             s += _form.Table();
             s += "<tr>";
 
@@ -437,34 +475,57 @@ namespace VeeamHealthCheck.Html.VBR
 
             try
             {
-                //table data
+                // table data
                 CSecuritySummaryTable t = _df.SecSummary();
 
                 if (t.ImmutabilityEnabled)
+                {
                     s += _form.TableData(_form.True, "");
+                }
                 else
+                {
                     s += _form.TableData(_form.False, "");
+                }
 
                 if (t.TrafficEncrptionEnabled)
+                {
                     s += _form.TableData(_form.True, "");
+                }
                 else
+                {
                     s += _form.TableData(_form.False, "");
+                }
+
                 if (t.BackupFileEncrptionEnabled)
+                {
                     s += _form.TableData(_form.True, "");
+                }
                 else
+                {
                     s += _form.TableData(_form.False, "");
+                }
 
                 if (t.ConfigBackupEncrptionEnabled)
+                {
                     s += _form.TableData(_form.True, "");
+                }
                 else
+                {
                     s += _form.TableData(_form.False, "");
+                }
 
                 if (t.MFAEnabled)
+                {
                     s += _form.TableData(_form.True, "");
+                }
                 else
+                {
                     s += _form.TableData(_form.False, "");
+                }
+
                 s += "</tr>";
-                //s += _form.TableData((t.ImmutabilityEnabled : _form.True ? _form.False), "");
+
+                // s += _form.TableData((t.ImmutabilityEnabled : _form.True ? _form.False), "");
                 s += _form.EndTable();
             }
 
@@ -477,7 +538,6 @@ namespace VeeamHealthCheck.Html.VBR
             if (CGlobals.VBRMAJORVERSION > 11)
             {
                 // add malware table
-
                 try
                 {
                     var malware = new CMalwareTable();
@@ -493,6 +553,7 @@ namespace VeeamHealthCheck.Html.VBR
                     log.Error("Malware Settings Data import failed. ERROR:");
                     log.Error("\t" + e.Message);
                 }
+
                 try
                 {
                     // compliance table
@@ -506,9 +567,6 @@ namespace VeeamHealthCheck.Html.VBR
                     log.Error("\t" + e.Message);
                 }
             }
-
-
-
 
             s += _form.SectionEnd(summary);
 
@@ -526,7 +584,7 @@ namespace VeeamHealthCheck.Html.VBR
                         t.BackupFileEncrptionEnabled ? "True" : "False",
                         t.ConfigBackupEncrptionEnabled ? "True" : "False",
                         t.MFAEnabled ? "True" : "False"
-                    }
+                    },
                 };
                 SetSection("securitySummary", headers, rows, summary);
             }
@@ -543,7 +601,7 @@ namespace VeeamHealthCheck.Html.VBR
             string s = _form.SectionStart("secsummary", VbrLocalizationHelper.SSTitle);
             string summary = _sum.SecSum();
 
-            //s += AddSecuritySummaryDetails();
+            // s += AddSecuritySummaryDetails();
 
             // Tables!
 
@@ -556,7 +614,7 @@ namespace VeeamHealthCheck.Html.VBR
              * 7. Orchestrated recovery
              */
 
-            //1. Components
+            // 1. Components
             s += AddTable("Backup Server", _helper.AddSecurityServerInfo());
             s += AddTable("Immutability & Encryption", _helper.AddSecuritySummaryDetails());
 
@@ -573,24 +631,22 @@ namespace VeeamHealthCheck.Html.VBR
                 log.Error("Failed to add OS info to HTML report", false);
                 log.Error(e.Message, false);
             }
+
             s += AddTable("Installed Applications", InstalledAppsTable());
 
-
-
-            //s += _form.Table();
-            //s += _form.TableHeader("Found Operating Systems", "");
-            //s += "</tr><tr>";
-            //foreach(var v in _helper.CollectedOsInfo())
-            //{
+            // s += _form.Table();
+            // s += _form.TableHeader("Found Operating Systems", "");
+            // s += "</tr><tr>";
+            // foreach(var v in _helper.CollectedOsInfo())
+            // {
             //    s += "<tr>" + v + "</tr>";
-            //}
-            //s += _form.EndTable();
+            // }
+            // s += _form.EndTable();
             s += _form.SectionEnd(summary);
-
-
 
             return s;
         }
+
         private string AddTable(string title, string data)
         {
             string s = "";
@@ -601,6 +657,7 @@ namespace VeeamHealthCheck.Html.VBR
 
             return s;
         }
+
         private string AddTable(string title, List<string> data)
         {
             string s = "<tr>";
@@ -624,6 +681,7 @@ namespace VeeamHealthCheck.Html.VBR
 
             return s;
         }
+
         public string AddSrvSummaryTable(bool scrub)
         {
             string summary = _sum.SrvSum();
@@ -668,8 +726,10 @@ namespace VeeamHealthCheck.Html.VBR
             {
                 log.Error("Failed to capture serverSummary JSON section: " + ex.Message);
             }
+
             return s;
         }
+
         public string AddJobSummaryTable(bool scrub)
         {
             string summary = _sum.JobSummary();
@@ -687,17 +747,18 @@ namespace VeeamHealthCheck.Html.VBR
                 Dictionary<string, int> list = st.JobSummaryTable();
 
                 int totalJobs = list.Sum(x => x.Value);
-                //foreach (var c in list)
-                //{
+
+                // foreach (var c in list)
+                // {
                 //    totalJobs += c.Value;
-                //}
-
-
-
+                // }
                 foreach (var d in list)
                 {
                     if (d.Value == 0)
+                    {
                         continue;
+                    }
+
                     s += "<tr>";
                     s += _form.TableDataLeftAligned(d.Key, "");
                     s += _form.TableData(d.Value.ToString(), "");
@@ -714,6 +775,7 @@ namespace VeeamHealthCheck.Html.VBR
                 log.Error("Job Summary Data import failed. ERROR:");
                 log.Error("\t" + e.Message);
             }
+
             s += _form.SectionEnd(summary);
 
             // JSON job summary
@@ -731,6 +793,7 @@ namespace VeeamHealthCheck.Html.VBR
             {
                 log.Error("Failed to capture jobSummary JSON section: " + ex.Message);
             }
+
             return s;
         }
 
@@ -738,18 +801,19 @@ namespace VeeamHealthCheck.Html.VBR
         {
             string s = _form.SectionStartWithButton("missingjobs", VbrLocalizationHelper.NpTitle, VbrLocalizationHelper.NpButton);
 
-
             string summary = _sum.MissingJobsSUmmary();
 
             s += _form.TableHeaderLeftAligned(VbrLocalizationHelper.JobSum0, "") +
-                //_form.TableHeader("Count", "Total detected of this type") +
+
+                // _form.TableHeader("Count", "Total detected of this type") +
                 "</tr>";
             s += _form.TableHeaderEnd();
             s += _form.TableBodyStart();
-            //CDataFormer cd = new(true);
+
+            // CDataFormer cd = new(true);
             try
             {
-                //List<string> list = _df.ParseNonProtectedTypes();
+                // List<string> list = _df.ParseNonProtectedTypes();
                 CJobSummaryTable st = new();
                 Dictionary<string, int> types = st.JobSummaryTable();
 
@@ -763,14 +827,14 @@ namespace VeeamHealthCheck.Html.VBR
                     }
                 }
 
-                //for (int i = 0; i < list.Count(); i++)
-                //{
+                // for (int i = 0; i < list.Count(); i++)
+                // {
                 //    s += "<tr>";
 
-                //    s += _form.TableData(list[i], "");
+                // s += _form.TableData(list[i], "");
                 //    s += "</tr>";
 
-                //}
+                // }
             }
             catch (Exception e)
             {
@@ -793,8 +857,10 @@ namespace VeeamHealthCheck.Html.VBR
             {
                 log.Error("Failed to capture missingJobs JSON section: " + ex.Message);
             }
+
             return s;
         }
+
         public string AddProtectedWorkLoadsTable(bool scrub)
         {
             string s = _form.SectionStartWithButton("protectedworkloads", VbrLocalizationHelper.PlTitle, VbrLocalizationHelper.PlButton);
@@ -802,7 +868,6 @@ namespace VeeamHealthCheck.Html.VBR
             try
             {
                 _df.ProtectedWorkloadsToXml();
-
 
                 // vi table
                 s += "<h3>VMware Backups</h3>";
@@ -822,10 +887,10 @@ namespace VeeamHealthCheck.Html.VBR
                 s += "</tr>";
                 s += "</table>";
 
-
-                //hv 
+                // hv
                 s += "<h3>HV Backups</h3>";
                 s += _form.Table();
+
                 // hv table
                 s += "<tr>";
                 s += _form.TableHeader("HV Total", "Total HV VMs found in environment");
@@ -841,7 +906,6 @@ namespace VeeamHealthCheck.Html.VBR
                 s += _form.TableData(_df._hvDupes.ToString(), "");
                 s += "</tr></table>";
 
-
                 // phys
                 s += "<h3>Physical Backups</h3>";
                 s += _form.Table();
@@ -853,7 +917,8 @@ namespace VeeamHealthCheck.Html.VBR
 
                 s += _form.TableHeaderEnd();
                 s += _form.TableBodyStart();
-                //CDataFormer cd = new(true);
+
+                // CDataFormer cd = new(true);
                 s += "<tr>";
                 s += _form.TableData(_df._vmProtectedByPhys.Distinct().Count().ToString(), "");
                 s += _form.TableData((_df._physNotProtNames.Distinct().Count() + _df._physProtNames.Distinct().Count()).ToString(), "");
@@ -869,7 +934,6 @@ namespace VeeamHealthCheck.Html.VBR
                     NasSourceInfo n = new();
 
                     cProtectedWorkloads.nasWorkloads = n.NasTable().nasWorkloads;
-
 
                     s += "<h3>NAS Backups</h3>";
                     if (cProtectedWorkloads.nasWorkloads.Count() == 0)
@@ -897,7 +961,6 @@ namespace VeeamHealthCheck.Html.VBR
                         s += _form.TableHeaderEnd();
                         s += _form.TableBodyStart();
 
-
                         foreach (var load in cProtectedWorkloads.nasWorkloads)
                         {
                             s += "<tr>";
@@ -907,9 +970,9 @@ namespace VeeamHealthCheck.Html.VBR
                             s += _form.TableData(load.TotalFoldersCount.ToString(), "");
                             s += "</tr>";
                         }
+
                         s += _form.EndTable();
                     }
-
 
                 }
                 catch (Exception e)
@@ -928,6 +991,7 @@ namespace VeeamHealthCheck.Html.VBR
                     s += "</tr>";
                     s += "</table>";
                     s += "<h3>Entra Backups</h3>";
+
                     // Small table for Entra Tenant Count:
                     s += "<div id=\"entraTenantCount\" border=\"1\" class=\"content-table\"></div>";
                     s += _form.Table();
@@ -957,6 +1021,7 @@ namespace VeeamHealthCheck.Html.VBR
                         s += _form.TableData("", "");
                         s += "</tr>";
                     }
+
                     foreach (var load in cProtectedWorkloads.entraWorkloads)
                     {
                         s += "<tr>";
@@ -964,13 +1029,13 @@ namespace VeeamHealthCheck.Html.VBR
                         s += _form.TableData(load.CacheRepoName, "");
                         s += "</tr>";
                     }
+
                     s += _form.EndTable();
                 }
                 catch (Exception ex)
                 {
 
                 }
-
 
                 s += _form._endDiv;
             }
@@ -979,6 +1044,7 @@ namespace VeeamHealthCheck.Html.VBR
                 log.Error("Protected Servers Data import failed. ERROR:");
                 log.Error("\t" + e.Message);
             }
+
             s += _form.SectionEnd(summary);
 
             // JSON protected workloads
@@ -1008,7 +1074,7 @@ namespace VeeamHealthCheck.Html.VBR
                     new List<string> { "VMware", viTotal.ToString(), viProtected.ToString(), viUnprotected.ToString(), viDupes.ToString() },
                     new List<string> { "Hyper-V", hvTotal.ToString(), hvProtected.ToString(), hvUnprotected.ToString(), hvDupes.ToString() },
                     new List<string> { "Physical", physTotal.ToString(), physProtected.ToString(), physUnprotected.ToString(), "N/A" },
-                    new List<string> { "PhysicalVMsProtected", physVmProtectedByPhys.ToString(), "N/A", "N/A", "N/A" }
+                    new List<string> { "PhysicalVMsProtected", physVmProtectedByPhys.ToString(), "N/A", "N/A", "N/A" },
                 };
 
                 // Add NAS & Entra if available
@@ -1017,7 +1083,7 @@ namespace VeeamHealthCheck.Html.VBR
                     CProtectedWorkloads cProtectedWorkloads = new();
                     NasSourceInfo n = new();
                     cProtectedWorkloads.nasWorkloads = n.NasTable().nasWorkloads;
-                    
+
                     foreach (var load in cProtectedWorkloads.nasWorkloads)
                     {
                         rows.Add(new List<string> { $"NAS-{load.FileShareType}", load.TotalShareSize, load.TotalFilesCount.ToString(), load.TotalFoldersCount.ToString(), "N/A" });
@@ -1030,7 +1096,7 @@ namespace VeeamHealthCheck.Html.VBR
                     CProtectedWorkloads cProtectedWorkloads = new();
                     CEntraTenants n = new();
                     cProtectedWorkloads.entraWorkloads = n.EntraTable().entraWorkloads;
-                    
+
                     foreach (var load in cProtectedWorkloads.entraWorkloads)
                     {
                         rows.Add(new List<string> { $"Entra-{load.TenantName}", load.CacheRepoName, "N/A", "N/A", "N/A" });
@@ -1044,8 +1110,10 @@ namespace VeeamHealthCheck.Html.VBR
             {
                 log.Error("Failed to capture protectedWorkloads JSON section: " + ex.Message);
             }
+
             return s;
         }
+
         public string AddManagedServersTable(bool scrub)
         {
             string s = _form.SectionStartWithButton("managedServerInfo", VbrLocalizationHelper.ManSrvTitle, VbrLocalizationHelper.ManSrvBtn);
@@ -1066,11 +1134,11 @@ namespace VeeamHealthCheck.Html.VBR
            _form.TableHeader(VbrLocalizationHelper.ManSrv11, VbrLocalizationHelper.ManSrv11TT, 12);
             s += _form.TableHeaderEnd();
             s += _form.TableBodyStart();
-            //CDataFormer cd = new(true);
+
+            // CDataFormer cd = new(true);
             try
             {
                 List<CManagedServer> list = _df.ServerXmlFromCsv(scrub);
-
 
                 foreach (var d in list)
                 {
@@ -1087,20 +1155,31 @@ namespace VeeamHealthCheck.Html.VBR
                     s += _form.TableData(d.NotProtectedVms.ToString(), "");
                     s += _form.TableData(d.TotalVms.ToString(), "");
                     if (d.IsProxy)
+                    {
                         s += _form.TableData(_form.True, "");
+                    }
                     else
+                    {
                         s += _form.TableData(_form.False, "");
+                    }
+
                     if (d.IsRepo)
+                    {
                         s += _form.TableData(_form.True, "");
+                    }
                     else
+                    {
                         s += _form.TableData(_form.False, "");
+                    }
+
                     if (d.IsWan)
+                    {
                         s += _form.TableData(_form.True, "");
+                    }
                     else
+                    {
                         s += _form.TableData(_form.False, "");
-
-
-
+                    }
 
                     s += _form.TableData(d.IsUnavailable.ToString(), "");
                     s += "</tr>";
@@ -1133,7 +1212,7 @@ namespace VeeamHealthCheck.Html.VBR
                     d.IsProxy ? "True" : "False",
                     d.IsRepo ? "True" : "False",
                     d.IsWan ? "True" : "False",
-                    d.IsUnavailable.ToString()
+                    d.IsUnavailable.ToString(),
                 }).ToList();
                 SetSection("managedServers", headers, rows, summary);
             }
@@ -1141,12 +1220,15 @@ namespace VeeamHealthCheck.Html.VBR
             {
                 log.Error("Failed to capture managedServers JSON section: " + ex.Message);
             }
+
             return s;
         }
-        public string SerializeToJson(object obj)
+
+        public static string SerializeToJson(object obj)
         {
             return JsonSerializer.Serialize(obj);
         }
+
         public string AddRegKeysTable(bool scrub)
         {
             string s = _form.SectionStartWithButton("regkeys", VbrLocalizationHelper.RegTitle, VbrLocalizationHelper.RegBtn);
@@ -1159,9 +1241,13 @@ namespace VeeamHealthCheck.Html.VBR
                 if (list.Count == 0)
                 {
                     if(CGlobals.REMOTEEXEC) // remote exec does not support registry and VBR could be linux based without regsitry
+                    {
                         s += "<p>Registry key collection not supported in remote execution mode</p>";
+                    }
                     else
-                    s += "<p>No modified registry keys found</p>";
+                    {
+                        s += "<p>No modified registry keys found</p>";
+                    }
                 }
                 else
                 {
@@ -1186,6 +1272,7 @@ namespace VeeamHealthCheck.Html.VBR
                 log.Error("Registry Data import failed. ERROR:");
                 log.Error("\t" + e.Message);
             }
+
             s += _form.SectionEnd(summary);
 
             // JSON reg keys
@@ -1200,8 +1287,10 @@ namespace VeeamHealthCheck.Html.VBR
             {
                 log.Error("Failed to capture regKeys JSON section: " + ex.Message);
             }
+
             return s;
         }
+
         public string AddProxyTable(bool scrub)
         {
             string s = _form.SectionStartWithButton("proxies", VbrLocalizationHelper.PrxTitle, VbrLocalizationHelper.PrxBtn);
@@ -1222,7 +1311,8 @@ namespace VeeamHealthCheck.Html.VBR
    "</tr>";
             s += _form.TableHeaderEnd();
             s += _form.TableBodyStart();
-            //CDataFormer cd = new(true);
+
+            // CDataFormer cd = new(true);
             try
             {
                 List<string[]> list = _df.ProxyXmlFromCsv(scrub);
@@ -1233,37 +1323,62 @@ namespace VeeamHealthCheck.Html.VBR
                     var prov = d[12];
                     int shade = 0;
                     if (prov == "under")
+                    {
                         shade = 2;
+                    }
+
                     if (prov == "over")
+                    {
                         shade = 1;
+                    }
 
                     s += "<tr>";
                     if (scrub)
+                    {
                         s += _form.TableData(_scrub.ScrubItem(d[0], ScrubItemType.Server), ""); // server name
+                    }
                     else
+                    {
                         s += _form.TableData(d[0], "");
+                    }
+
                     s += _form.TableData(d[1], "");
                     s += _form.TableData(d[2], "", shade);
                     s += _form.TableData(d[3], "");
                     s += _form.TableData(d[4], "");
                     s += _form.TableData(d[5], "");
-                    //s += _form.TableData(d[6], "");
+
+                    // s += _form.TableData(d[6], "");
                     if (d[6] == "True")
+                    {
                         s += _form.TableData(_form.True, "");
+                    }
                     else
+                    {
                         s += _form.TableData(_form.False, "");
+                    }
+
                     s += _form.TableData(d[7], "");
                     s += _form.TableData(d[8], "");
                     s += _form.TableData(d[9], "");
                     if (scrub)
+                    {
                         s += _form.TableData(_scrub.ScrubItem(d[10], ScrubItemType.Server), ""); // host
+                    }
                     else
+                    {
                         s += _form.TableData(d[10], "");
+                    }
 
                     if (d[11] == "True")
+                    {
                         s += _form.TableData(_form.True, "");
+                    }
                     else
+                    {
                         s += _form.TableData(_form.False, "");
+                    }
+
                     s += "</tr>";
                 }
             }
@@ -1272,6 +1387,7 @@ namespace VeeamHealthCheck.Html.VBR
                 log.Error("PROXY Data import failed. ERROR:");
                 log.Error("\t" + e.Message);
             }
+
             s += _form.SectionEnd(summary);
 
             // JSON proxies
@@ -1279,10 +1395,11 @@ namespace VeeamHealthCheck.Html.VBR
             {
                 var list = _df.ProxyXmlFromCsv(scrub);
                 List<string> headers = new() { "Name", "Type", "Tasks", "Cores", "Ram", "IsOnHost", "TransportMode", "NetBufferSize", "MaxConcurrentJobs", "Host", "IsHvOffload" };
+
                 // mapping indices from original array
                 List<List<string>> rows = list.Select(d => new List<string>
                 {
-                    d[0], d[1], d[2], d[3], d[4], d[6], d[7], d[8], d[9], d[10], d[11]
+                    d[0], d[1], d[2], d[3], d[4], d[6], d[7], d[8], d[9], d[10], d[11],
                 }).ToList();
                 SetSection("proxies", headers, rows, summary);
             }
@@ -1290,8 +1407,10 @@ namespace VeeamHealthCheck.Html.VBR
             {
                 log.Error("Failed to capture proxies JSON section: " + ex.Message);
             }
+
             return s;
         }
+
         public string AddMultiRoleTable(bool scrub)
         {
             string s = _form.SectionStartWithButton("proxies", VbrLocalizationHelper.PrxTitle, VbrLocalizationHelper.PrxBtn);
@@ -1320,9 +1439,14 @@ namespace VeeamHealthCheck.Html.VBR
                 {
                     s += "<tr>";
                     if (scrub)
+                    {
                         s += _form.TableData(_scrub.ScrubItem(d[0], ScrubItemType.Server), "");
+                    }
                     else
+                    {
                         s += _form.TableData(d[0], "");
+                    }
+
                     s += _form.TableData(d[1], "");
                     s += _form.TableData(d[2], "");
                     s += _form.TableData(d[3], "");
@@ -1333,9 +1457,14 @@ namespace VeeamHealthCheck.Html.VBR
                     s += _form.TableData(d[8], "");
                     s += _form.TableData(d[9], "");
                     if (scrub)
+                    {
                         s += _form.TableData(_scrub.ScrubItem(d[10], ScrubItemType.Server), "");
+                    }
                     else
+                    {
                         s += _form.TableData(d[10], "");
+                    }
+
                     s += _form.TableData(d[11], "");
                     s += "</tr>";
                 }
@@ -1345,9 +1474,11 @@ namespace VeeamHealthCheck.Html.VBR
                 log.Error("PROXY Data import failed. ERROR:");
                 log.Error("\t" + e.Message);
             }
+
             s += _form.SectionEnd(summary);
             return s;
         }
+
         public string AddSobrTable(bool scrub)
         {
             string s = _form.SectionStartWithButton("sobr", VbrLocalizationHelper.SbrTitle, VbrLocalizationHelper.SbrBtn);
@@ -1370,13 +1501,13 @@ namespace VeeamHealthCheck.Html.VBR
            "</tr>";
             s += _form.TableHeaderEnd();
             s += _form.TableBodyStart();
-            //CDataFormer cd = new(true);
 
+            // CDataFormer cd = new(true);
             try
             {
                 log.Info("Attempting to load SOBR data...");
                 List<CSobrTypeInfos> list = _df.SobrInfoToXml(scrub);
-                
+
                 if (list == null || list.Count == 0)
                 {
                     log.Warning("No SOBR data found. The SOBRs CSV file may be missing or empty.");
@@ -1386,49 +1517,75 @@ namespace VeeamHealthCheck.Html.VBR
                 foreach (var d in list)
                 {
 
-
                     s += "<tr>";
                     s += _form.TableData(d.Name, "");
                     s += _form.TableData(d.ExtentCount.ToString(), "");
                     s += _form.TableData(d.JobCount.ToString(), "");
                     s += _form.TableData(d.PolicyType, "");
                     if (d.EnableCapacityTier)
+                    {
                         s += _form.TableData(_form.True, "");
+                    }
                     else
+                    {
                         s += _form.TableData(_form.False, "");
-
+                    }
 
                     if (d.CapacityTierCopyPolicyEnabled)
+                    {
                         s += _form.TableData(_form.True, "");
+                    }
                     else
+                    {
                         s += _form.TableData(_form.False, "");
+                    }
+
                     if (d.CapacityTierMovePolicyEnabled)
+                    {
                         s += _form.TableData(_form.True, "");
+                    }
                     else
+                    {
                         s += _form.TableData(_form.False, "");
+                    }
+
                     if (d.ArchiveTierEnabled)
+                    {
                         s += _form.TableData(_form.True, "");
-
+                    }
                     else
+                    {
                         s += _form.TableData(_form.False, "");
+                    }
+
                     if (d.UsePerVMBackupFiles)
+                    {
                         s += _form.TableData(_form.True, "");
+                    }
                     else
+                    {
                         s += _form.TableData(_form.False, "");
-
-
-
+                    }
 
                     s += _form.TableData(d.CapTierType, "");
                     if (d.ImmuteEnabled)
+                    {
                         s += _form.TableData(_form.True, "");
+                    }
                     else
+                    {
                         s += _form.TableData(_form.False, "");
+                    }
+
                     s += _form.TableData(d.ImmutePeriod, "");
                     if (d.SizeLimitEnabled)
+                    {
                         s += _form.TableData(_form.True, "");
+                    }
                     else
+                    {
                         s += _form.TableData(_form.False, "");
+                    }
 
                     s += _form.TableData(d.SizeLimit, "");
                     s += "</tr>";
@@ -1439,6 +1596,7 @@ namespace VeeamHealthCheck.Html.VBR
                 log.Error("SOBR Data import failed. ERROR:");
                 log.Error("\t" + e.Message);
             }
+
             s += _form.SectionEnd(summary);
 
             // JSON SOBR
@@ -1461,7 +1619,7 @@ namespace VeeamHealthCheck.Html.VBR
                     d.ImmuteEnabled ? "True" : "False",
                     d.ImmutePeriod,
                     d.SizeLimitEnabled ? "True" : "False",
-                    d.SizeLimit
+                    d.SizeLimit,
                 }).ToList();
                 SetSection("sobr", headers, rows, summary);
             }
@@ -1469,8 +1627,10 @@ namespace VeeamHealthCheck.Html.VBR
             {
                 log.Error("Failed to capture sobr JSON section: " + ex.Message);
             }
+
             return s;
         }
+
         public string AddSobrExtTable(bool scrub)
         {
             string s = _form.SectionStartWithButton("extents", VbrLocalizationHelper.SbrExtTitle, VbrLocalizationHelper.SbrExtBtn);
@@ -1499,7 +1659,7 @@ _form.TableHeader(VbrLocalizationHelper.SbrExt15, VbrLocalizationHelper.SbrExt15
             {
                 log.Info("Attempting to load SOBR Extent data...");
                 List<CRepository> list = _df.ExtentXmlFromCsv(scrub);
-                
+
                 if (list == null || list.Count == 0)
                 {
                     log.Warning("No SOBR Extent data found. The SOBRExtents CSV file may be missing or empty.");
@@ -1511,15 +1671,19 @@ _form.TableHeader(VbrLocalizationHelper.SbrExt15, VbrLocalizationHelper.SbrExt15
                     var prov = d.Provisioning;
                     int shade = 0;
                     if (prov == "under")
+                    {
                         shade = 2;
+                    }
+
                     if (prov == "over")
+                    {
                         shade = 1;
+                    }
 
                     int freeSpaceShade = 0;
-                    //decimal.TryParse(d.FreeSpacePercent, out decimal i);
+
+                    // decimal.TryParse(d.FreeSpacePercent, out decimal i);
                     if (d.FreeSpacePercent < 20) { freeSpaceShade = 1; }
-
-
 
                     s += "<tr>";
                     s += _form.TableData(d.Name, "");
@@ -1529,39 +1693,59 @@ _form.TableHeader(VbrLocalizationHelper.SbrExt15, VbrLocalizationHelper.SbrExt15
                     s += _form.TableData(d.Ram.ToString(), "");
 
                     if (d.IsAutoGate)
+                    {
                         s += _form.TableData(_form.True, "");
+                    }
                     else
+                    {
                         s += _form.TableData(_form.False, "");
+                    }
+
                     s += _form.TableData(d.Host, "");
                     s += _form.TableData(d.Path, "");
                     s += _form.TableData(d.FreeSpace.ToString(), "");
                     s += _form.TableData(d.TotalSpace.ToString(), "");
                     s += _form.TableData(d.FreeSpacePercent.ToString(), "", freeSpaceShade);
 
-
-
                     if (d.IsDecompress)
+                    {
                         s += _form.TableData(_form.True, "");
+                    }
                     else
+                    {
                         s += _form.TableData(_form.False, "");
+                    }
 
                     if (d.AlignBlocks)
+                    {
                         s += _form.TableData(_form.True, "");
+                    }
                     else
+                    {
                         s += _form.TableData(_form.False, "");
+                    }
 
                     if (d.IsRotatedDrives)
+                    {
                         s += _form.TableData(_form.True, "");
+                    }
                     else
+                    {
                         s += _form.TableData(_form.False, "");
+                    }
 
                     if (d.IsImmutabilitySupported)
+                    {
                         s += _form.TableData(_form.True, "");
+                    }
                     else
+                    {
                         s += _form.TableData(_form.False, "");
+                    }
 
                     s += _form.TableData(d.Type, "");
-                    //s += _form.TableData(d[16], "");
+
+                    // s += _form.TableData(d[16], "");
                     s += "</tr>";
                 }
             }
@@ -1570,6 +1754,7 @@ _form.TableHeader(VbrLocalizationHelper.SbrExt15, VbrLocalizationHelper.SbrExt15
                 log.Error("Extents Data import failed. ERROR:");
                 log.Error("\t" + e.Message);
             }
+
             s += _form.SectionEnd(summary);
 
             // JSON extents
@@ -1594,7 +1779,7 @@ _form.TableHeader(VbrLocalizationHelper.SbrExt15, VbrLocalizationHelper.SbrExt15
                     d.AlignBlocks ? "True" : "False",
                     d.IsRotatedDrives ? "True" : "False",
                     d.IsImmutabilitySupported ? "True" : "False",
-                    d.Type
+                    d.Type,
                 }).ToList();
                 SetSection("extents", headers, rows, summary);
             }
@@ -1602,8 +1787,10 @@ _form.TableHeader(VbrLocalizationHelper.SbrExt15, VbrLocalizationHelper.SbrExt15
             {
                 log.Error("Failed to capture extents JSON section: " + ex.Message);
             }
+
             return s;
         }
+
         public string AddRepoTable(bool scrub)
         {
             string s = _form.SectionStartWithButton("repos", VbrLocalizationHelper.RepoTitle, VbrLocalizationHelper.RepoBtn);
@@ -1638,16 +1825,22 @@ _form.TableHeader(VbrLocalizationHelper.SbrExt15, VbrLocalizationHelper.SbrExt15
                     var prov = d.Provisioning;
                     int shade = 0;
                     if (prov == "under")
+                    {
                         shade = 2;
+                    }
+
                     if (prov == "over")
+                    {
                         shade = 1;
+                    }
+
                     int freeSpaceShade = 0;
-                    //decimal.TryParse(d.FreeSpacePercent, out decimal i);
 
-                    //int perVmShade = 0;
-                    //if (d[11] == "False")
+                    // decimal.TryParse(d.FreeSpacePercent, out decimal i);
+
+                    // int perVmShade = 0;
+                    // if (d[11] == "False")
                     //    perVmShade = 3;
-
                     if (d.FreeSpacePercent < 20) { freeSpaceShade = 1; }
                     s += "<tr>";
                     s += _form.TableData(d.Name, "");
@@ -1656,9 +1849,13 @@ _form.TableHeader(VbrLocalizationHelper.SbrExt15, VbrLocalizationHelper.SbrExt15
                     s += _form.TableData(d.Cores.ToString(), "");
                     s += _form.TableData(d.Ram.ToString(), "");
                     if (d.IsAutoGate)
+                    {
                         s += _form.TableData(_form.True, "");
+                    }
                     else
+                    {
                         s += _form.TableData(_form.False, "");
+                    }
 
                     s += _form.TableData(d.Host, "");
                     s += _form.TableData(d.Path, "");
@@ -1666,30 +1863,51 @@ _form.TableHeader(VbrLocalizationHelper.SbrExt15, VbrLocalizationHelper.SbrExt15
                     s += _form.TableData(d.TotalSpace.ToString(), "");
                     s += _form.TableData(d.FreeSpacePercent.ToString(), "", freeSpaceShade);
                     if (d.IsPerVmBackupFiles)
+                    {
                         s += _form.TableData(_form.True, "");
+                    }
                     else
+                    {
                         s += _form.TableData(_form.Warn, "");
+                    }
+
                     if (d.IsDecompress)
+                    {
                         s += _form.TableData(_form.True, "");
+                    }
                     else
+                    {
                         s += _form.TableData(_form.False, "");
+                    }
+
                     if (d.AlignBlocks)
+                    {
                         s += _form.TableData(_form.True, "");
+                    }
                     else
+                    {
                         s += _form.TableData(_form.False, "");
+                    }
+
                     if (d.IsRotatedDrives)
+                    {
                         s += _form.TableData(_form.True, "");
+                    }
                     else
+                    {
                         s += _form.TableData(_form.False, "");
+                    }
+
                     if (d.IsImmutabilitySupported)
+                    {
                         s += _form.TableData(_form.True, "");
+                    }
                     else
+                    {
                         s += _form.TableData(_form.False, "");
+                    }
+
                     s += _form.TableData(d.Type, "");
-
-
-
-
 
                     s += "</tr>";
                 }
@@ -1699,6 +1917,7 @@ _form.TableHeader(VbrLocalizationHelper.SbrExt15, VbrLocalizationHelper.SbrExt15
                 log.Error("REPO Data import failed. ERROR:");
                 log.Error("\t" + e.Message);
             }
+
             s += _form.SectionEnd(summary);
 
             // JSON repos
@@ -1724,7 +1943,7 @@ _form.TableHeader(VbrLocalizationHelper.SbrExt15, VbrLocalizationHelper.SbrExt15
                     d.AlignBlocks ? "True" : "False",
                     d.IsRotatedDrives ? "True" : "False",
                     d.IsImmutabilitySupported ? "True" : "False",
-                    d.Type
+                    d.Type,
                 }).ToList();
                 SetSection("repos", headers, rows, summary);
             }
@@ -1732,8 +1951,10 @@ _form.TableHeader(VbrLocalizationHelper.SbrExt15, VbrLocalizationHelper.SbrExt15
             {
                 log.Error("Failed to capture repos JSON section: " + ex.Message);
             }
+
             return s;
         }
+
         public string AddJobConTable(bool scrub)
         {
             string s = _form.SectionStartWithButton("jobcon", VbrLocalizationHelper.JobConTitle, VbrLocalizationHelper.JobConBtn, CGlobals.ReportDays);
@@ -1752,7 +1973,6 @@ _form.TableHeader(VbrLocalizationHelper.SbrExt15, VbrLocalizationHelper.SbrExt15
             try
             {
 
-
                 var stuff = _df.JobConcurrency(true);
 
                 foreach (var stu in stuff)
@@ -1764,6 +1984,7 @@ _form.TableHeader(VbrLocalizationHelper.SbrExt15, VbrLocalizationHelper.SbrExt15
                     {
                         s += _form.TableData(st, "");
                     }
+
                     s += "</tr>";
                 }
 
@@ -1788,8 +2009,10 @@ _form.TableHeader(VbrLocalizationHelper.SbrExt15, VbrLocalizationHelper.SbrExt15
             {
                 log.Error("Failed to capture jobConcurrency JSON section: " + ex.Message);
             }
+
             return s;
         }
+
         public string AddTaskConTable(bool scrub)
         {
             string s = _form.SectionStartWithButton("taskcon", VbrLocalizationHelper.TaskConTitle, VbrLocalizationHelper.TaskConBtn, CGlobals.ReportDays);
@@ -1819,6 +2042,7 @@ _form.TableHeader(VbrLocalizationHelper.SbrExt15, VbrLocalizationHelper.SbrExt15
                     {
                         s += _form.TableData(st, "");
                     }
+
                     s += "</tr>";
                 }
             }
@@ -1827,7 +2051,6 @@ _form.TableHeader(VbrLocalizationHelper.SbrExt15, VbrLocalizationHelper.SbrExt15
                 log.Error("Task Concurrency Data import failed. ERROR:");
                 log.Error("\t" + e.Message);
             }
-
 
             s += _form.SectionEnd(summary);
 
@@ -1843,8 +2066,10 @@ _form.TableHeader(VbrLocalizationHelper.SbrExt15, VbrLocalizationHelper.SbrExt15
             {
                 log.Error("Failed to capture taskConcurrency JSON section: " + ex.Message);
             }
+
             return s;
         }
+
         public string AddJobSessSummTable(bool scrub)
         {
             log.Info("Adding Job Session Summary Table");
@@ -1867,14 +2092,13 @@ _form.TableHeader(VbrLocalizationHelper.SbrExt15, VbrLocalizationHelper.SbrExt15
             s += _form.TableHeader(VbrLocalizationHelper.Jss11, "Avg Data Size divided by Max Data Size (average processed data divided by total consumed size of all VMs in the job)"); // avg change rate
             s += _form.TableHeader(VbrLocalizationHelper.Jss12, VbrLocalizationHelper.Jss12TT); // wait for res count
             s += _form.TableHeader(VbrLocalizationHelper.Jss13, VbrLocalizationHelper.Jss13TT); // max wait
-            s += _form.TableHeader(VbrLocalizationHelper.Jss14, VbrLocalizationHelper.Jss14TT);// avg wait 
+            s += _form.TableHeader(VbrLocalizationHelper.Jss14, VbrLocalizationHelper.Jss14TT);// avg wait
             s += _form.TableHeader(VbrLocalizationHelper.Jss15, VbrLocalizationHelper.Jss15TT); // job types
             s += _form.TableHeaderEnd();
             s += _form.TableBodyStart();
             try
             {
                 var stuff = _df.ConvertJobSessSummaryToXml(scrub);
-
 
                 foreach (var stu in stuff)
                 {
@@ -1904,6 +2128,7 @@ _form.TableHeader(VbrLocalizationHelper.SbrExt15, VbrLocalizationHelper.SbrExt15
                             log.Debug("Job Name = " + stu.JobName);
                             log.Debug("Job Type = " + stu.JobType);
                         }
+
                         string jobType = CJobTypesParser.GetJobType(stu.JobType);
                         t += _form.TableData(jobType, VbrLocalizationHelper.Jss15);
 
@@ -1916,9 +2141,7 @@ _form.TableHeader(VbrLocalizationHelper.SbrExt15, VbrLocalizationHelper.SbrExt15
                         log.Error("Job Session Summary Table failed to add row for job: " + stu.JobName);
                         log.Error("\t" + ex.Message);
 
-
                     }
-
 
                 }
             }
@@ -1955,7 +2178,7 @@ _form.TableHeader(VbrLocalizationHelper.SbrExt15, VbrLocalizationHelper.SbrExt15
                     stu.waitCount.ToString(),
                     stu.maxWait,
                     stu.avgwait,
-                    CJobTypesParser.GetJobType(stu.JobType)
+                    CJobTypesParser.GetJobType(stu.JobType),
                 }).ToList();
                 SetSection("jobSessionSummary", headers, rows, summary);
             }
@@ -1963,6 +2186,7 @@ _form.TableHeader(VbrLocalizationHelper.SbrExt15, VbrLocalizationHelper.SbrExt15
             {
                 log.Error("Failed to capture jobSessionSummary JSON section: " + ex.Message);
             }
+
             return s;
         }
 
@@ -1975,6 +2199,7 @@ _form.TableHeader(VbrLocalizationHelper.SbrExt15, VbrLocalizationHelper.SbrExt15
                 {
                     outputPath = Path.Combine(CVariables.vb365dir, "FullReport.json");
                 }
+
                 var options = new JsonSerializerOptions { WriteIndented = indented };
                 string json = JsonSerializer.Serialize(CGlobals.FullReportJson, options);
                 File.WriteAllText(outputPath, json);
@@ -1987,13 +2212,13 @@ _form.TableHeader(VbrLocalizationHelper.SbrExt15, VbrLocalizationHelper.SbrExt15
                 return string.Empty;
             }
         }
+
         public string AddJobSessSummTableByJob(bool scrub)
         {
             string s = _form.SectionStartWithButton("jobsesssum", VbrLocalizationHelper.JssTitle, VbrLocalizationHelper.JssBtn, CGlobals.ReportDays);
             s += "</table>";
 
             string summary = _sum.JobInfo();
-
 
             try
             {
@@ -2004,41 +2229,42 @@ _form.TableHeader(VbrLocalizationHelper.SbrExt15, VbrLocalizationHelper.SbrExt15
                 var jobTypes = stuff.Select(x => x.JobType).Distinct().ToList();
 
                 List<CJobSummaryTypes> OffloadJobs = new();
-                //log.Debug("Sessions count = " + stuff.Count);
+
+                // log.Debug("Sessions count = " + stuff.Count);
                 try
                 {
                     foreach (var jType in jobTypes)
                     {
                         if(CGlobals.DEBUG)
-                            log.Debug("Job Type = " + jType);
-                        bool skipTotals = false;
-                        var jobType = jType;
-                        // change job type for "Totals" line of all jobs:
-
-                        if (jType == "" || jType == null)
                         {
-                            //log.Debug("Job Type is empty...");
-                            //jobType = "Summary of All";
-
+                            log.Debug("Job Type = " + jType);
                         }
 
+                        bool skipTotals = false;
+                        var jobType = jType;
 
-
+                        // change job type for "Totals" line of all jobs:
+                        if (jType == "" || jType == null)
+                        {
+                            // log.Debug("Job Type is empty...");
+                            // jobType = "Summary of All";
+                        }
 
                         var realType = CJobTypesParser.GetJobType(jobType);
-                        //log.Debug("Real Job Type = " + realType);
+
+                        // log.Debug("Real Job Type = " + realType);
                         string sectionHeader = realType;
                         if (jType == null)
                         {
                             sectionHeader = "Summary of All";
                         }
+
                         string jobTable = _form.SectionStartWithButton("jobTable", sectionHeader + " Jobs", "");
                         s += jobTable;
                         s += SetJobSessionsHeaders();
                         var res = stuff.Where(x => x.JobType == jobType).ToList();
-                        //log.Debug("Jobs of type " + jType + " found:" + res.Count);
 
-
+                        // log.Debug("Jobs of type " + jType + " found:" + res.Count);
 
                         // define variable to capture the TOTALS
                         int totalItemsCount = 0;
@@ -2053,9 +2279,6 @@ _form.TableHeader(VbrLocalizationHelper.SbrExt15, VbrLocalizationHelper.SbrExt15
                         double totalAvgChangeRate = 0;
                         int totalWaitCount = 0;
 
-
-
-
                         foreach (var stu in res)
                         {
                             // if the job name contains "Offload" then add it to the OffloadJobs list
@@ -2064,22 +2287,22 @@ _form.TableHeader(VbrLocalizationHelper.SbrExt15, VbrLocalizationHelper.SbrExt15
                                 OffloadJobs.Add(stu);
                                 continue;
                             }
+
                             if (stu.JobName == "Total")
                             {
                                 skipTotals = true;
                             }
 
-                            //log.Debug("job name = " + stu.JobName);
-
+                            // log.Debug("job name = " + stu.JobName);
                             if (stu.JobType != jobType && stu.JobName != "Totals")
                             {
-                                //log.Debug("Job Type: " + stu.JobType + " does not match " + jobType + "... skipping");
+                                // log.Debug("Job Type: " + stu.JobType + " does not match " + jobType + "... skipping");
                                 continue;
                             }
 
                             try
                             {
-                                //log.Debug("Adding row for job: " + stu.JobName);
+                                // log.Debug("Adding row for job: " + stu.JobName);
                                 string t = "";
                                 t += "<tr>";
 
@@ -2111,13 +2334,15 @@ _form.TableHeader(VbrLocalizationHelper.SbrExt15, VbrLocalizationHelper.SbrExt15
                                 totalSessionCount += stu.sessionCount;
                                 totalFails += stu.Fails;
                                 totalRetries += stu.Retries;
-                                //double successPercent = (totalSessionCount - (double)totalFails + totalRetries) / totalSessionCount * 100;
-                                //totalSuccessRate += (double)Math.Round(successPercent, 2);
+
+                                // double successPercent = (totalSessionCount - (double)totalFails + totalRetries) / totalSessionCount * 100;
+                                // totalSuccessRate += (double)Math.Round(successPercent, 2);
                                 totalAvgBackupSize += stu.AvgBackupSize;
                                 totalMaxBackupSize += stu.MaxBackupSize;
                                 totalAvgDataSize += stu.AvgDataSize;
                                 totalMaxDataSize += stu.MaxDataSize;
-                                //totalAvgChangeRate += Math.Round(totalAvgDataSize / totalMaxDataSize * stu.AvgChangeRate, 2);
+
+                                // totalAvgChangeRate += Math.Round(totalAvgDataSize / totalMaxDataSize * stu.AvgChangeRate, 2);
                                 totalWaitCount += stu.waitCount;
                             }
 
@@ -2126,15 +2351,11 @@ _form.TableHeader(VbrLocalizationHelper.SbrExt15, VbrLocalizationHelper.SbrExt15
                                 log.Error("Job Session Summary Table failed to add row for job: " + stu.JobName);
                                 log.Error("\t" + ex.Message);
 
-
                             }
 
-
-
-
                         }
-                        // clean up totals:
 
+                        // clean up totals:
                         double successPercent = (totalSessionCount - (double)totalFails + totalRetries) / totalSessionCount * 100;
                         totalSuccessRate = (double)Math.Round(successPercent, 2);
                         if (totalAvgDataSize == 0 && totalMaxDataSize == 0)
@@ -2146,9 +2367,8 @@ _form.TableHeader(VbrLocalizationHelper.SbrExt15, VbrLocalizationHelper.SbrExt15
                             totalAvgChangeRate = Math.Round(totalAvgDataSize / totalMaxDataSize * 100, 2);
                         }
 
-
-                        //log.Debug("Total avg change rate = " + totalAvgChangeRate);
-                        //add totals line:
+                        // log.Debug("Total avg change rate = " + totalAvgChangeRate);
+                        // add totals line:
                         if (!skipTotals)
                         {
                             string totalRow = "";
@@ -2170,6 +2390,7 @@ _form.TableHeader(VbrLocalizationHelper.SbrExt15, VbrLocalizationHelper.SbrExt15
                             {
                                 totalAvgChangeRate = 0;
                             }
+
                             totalRow += _form.TableData(totalAvgChangeRate.ToString(), "");
                             totalRow += _form.TableData(totalWaitCount.ToString(), "");
                             totalRow += _form.TableData("", "");
@@ -2178,9 +2399,7 @@ _form.TableHeader(VbrLocalizationHelper.SbrExt15, VbrLocalizationHelper.SbrExt15
                             s += totalRow;
                         }
 
-
-                        //table summary/totals
-
+                        // table summary/totals
 
                         // end each table/section
                         s += _form.SectionEnd(summary);
@@ -2194,8 +2413,8 @@ _form.TableHeader(VbrLocalizationHelper.SbrExt15, VbrLocalizationHelper.SbrExt15
                     log.Error("Job Info Data import failed. ERROR:");
                     log.Error("\t" + e.Message);
                 }
-                //end of FE up one line...
 
+                // end of FE up one line...
             }
             catch (Exception e)
             {
@@ -2203,33 +2422,30 @@ _form.TableHeader(VbrLocalizationHelper.SbrExt15, VbrLocalizationHelper.SbrExt15
                 log.Error("\t" + e.Message);
             }
 
-
             s += _form.SectionEnd(summary);
             return s;
         }
+
         private string AddOffloadsTable(List<CJobSummaryTypes> offloadJobs)
         {
             string s = "";
             try
             {
 
-
-                //log.Debug("Checking Job Type: " + jType);
-                //var translatedJobType = CJobTypesParser.GetJobType(jType);
-                //log.Debug("\tTranslated Job Type: " + translatedJobType);
-
-
+                // log.Debug("Checking Job Type: " + jType);
+                // var translatedJobType = CJobTypesParser.GetJobType(jType);
+                // log.Debug("\tTranslated Job Type: " + translatedJobType);
                 var realType = "Offload";
                 string jobTable = _form.SectionStartWithButton("jobTable", realType + " Jobs", "");
                 s += jobTable;
                 s += SetJobSessionsHeaders();
-                //var res = stuff.Where(x => x.JobType == jType).ToList();
+
+                // var res = stuff.Where(x => x.JobType == jType).ToList();
                 // log.Debug("Jobs of type " + jType + " found:" + res.Count);
 
+                // var res2 = stuff.Where(x => x.JobType == realType).ToList();
 
-                //var res2 = stuff.Where(x => x.JobType == realType).ToList();
-
-                //log.Debug("Jobs of type " + jType + " found:" + res2.Count);
+                // log.Debug("Jobs of type " + jType + " found:" + res2.Count);
                 // define variable to capture the TOTALS
                 int totalItemsCount = 0;
                 double totalSessionCount = 0;
@@ -2243,24 +2459,20 @@ _form.TableHeader(VbrLocalizationHelper.SbrExt15, VbrLocalizationHelper.SbrExt15
                 double totalAvgChangeRate = 0;
                 int totalWaitCount = 0;
 
-
-
-
                 foreach (var stu in offloadJobs)
                 {
                     // if the job name contains "Offload" then add it to the OffloadJobs list
 
-                    //log.Debug("job type of individual session = " + stu.JobType);
+                    // log.Debug("job type of individual session = " + stu.JobType);
 
                     // if (stu.JobType != jType)
                     // {
                     //     log.Debug("Job Type: " + stu.JobType + " does not match " + jType + "... skipping");
                     //     continue;
                     // }
-
                     try
                     {
-                        //log.Debug("Adding row for job: " + stu.JobName);
+                        // log.Debug("Adding row for job: " + stu.JobName);
                         string t = "";
                         t += "<tr>";
 
@@ -2292,13 +2504,15 @@ _form.TableHeader(VbrLocalizationHelper.SbrExt15, VbrLocalizationHelper.SbrExt15
                         totalSessionCount += stu.sessionCount;
                         totalFails += stu.Fails;
                         totalRetries += stu.Retries;
-                        //double successPercent = (totalSessionCount - (double)totalFails + totalRetries) / totalSessionCount * 100;
-                        //totalSuccessRate += (double)Math.Round(successPercent, 2);
+
+                        // double successPercent = (totalSessionCount - (double)totalFails + totalRetries) / totalSessionCount * 100;
+                        // totalSuccessRate += (double)Math.Round(successPercent, 2);
                         totalAvgBackupSize += stu.AvgBackupSize;
                         totalMaxBackupSize += stu.MaxBackupSize;
                         totalAvgDataSize += stu.AvgDataSize;
                         totalMaxDataSize += stu.MaxDataSize;
-                        //totalAvgChangeRate += Math.Round(totalAvgDataSize / totalMaxDataSize * stu.AvgChangeRate, 2);
+
+                        // totalAvgChangeRate += Math.Round(totalAvgDataSize / totalMaxDataSize * stu.AvgChangeRate, 2);
                         totalWaitCount += stu.waitCount;
                     }
 
@@ -2307,20 +2521,17 @@ _form.TableHeader(VbrLocalizationHelper.SbrExt15, VbrLocalizationHelper.SbrExt15
                         log.Error("Job Session Summary Table failed to add row for job: " + stu.JobName);
                         log.Error("\t" + ex.Message);
 
-
                     }
 
-
-
-
                 }
-                // clean up totals:
 
+                // clean up totals:
                 double successPercent = (totalSessionCount - (double)totalFails + totalRetries) / totalSessionCount * 100;
                 totalSuccessRate = (double)Math.Round(successPercent, 2);
 
                 totalAvgChangeRate = Math.Round(totalAvgDataSize / totalMaxDataSize * 100, 2);
-                //add totals line:
+
+                // add totals line:
                 string totalRow = "";
                 totalRow += "<tr>";
                 totalRow += _form.TableDataLeftAligned("TOTALS", "");
@@ -2343,13 +2554,10 @@ _form.TableHeader(VbrLocalizationHelper.SbrExt15, VbrLocalizationHelper.SbrExt15
                 totalRow += _form.TableData("", "");
                 s += totalRow;
 
-                //table summary/totals
-
+                // table summary/totals
 
                 // end each table/section
                 s += _form.SectionEnd("");
-
-
 
             }
             catch (Exception e)
@@ -2360,13 +2568,13 @@ _form.TableHeader(VbrLocalizationHelper.SbrExt15, VbrLocalizationHelper.SbrExt15
 
             return s;
         }
+
         public string AddJobInfoTable(bool scrub)
         {
             string s = _form.SectionStartWithButton("jobs", VbrLocalizationHelper.JobInfoTitle, VbrLocalizationHelper.JobInfoBtn);
             s += "</table>";
 
             string summary = _sum.JobInfo();
-
 
             try
             {
@@ -2383,7 +2591,7 @@ _form.TableHeader(VbrLocalizationHelper.SbrExt15, VbrLocalizationHelper.SbrExt15
                         double onDiskTotalGB = 0;
 
                         bool useSourceSize = !(jType == "NasBackupCopy" || jType == "Copy");
-                        
+
                         var realType = CJobTypesParser.GetJobType(jType);
                         string jobTable = _form.SectionStartWithButton("jobTable", realType + " Jobs", "");
                         s += jobTable;
@@ -2391,7 +2599,7 @@ _form.TableHeader(VbrLocalizationHelper.SbrExt15, VbrLocalizationHelper.SbrExt15
                         var res = source.Where(x => x.JobType == jType).ToList();
                         foreach (var job in res)
                         {
-                            //object x = null;
+                            // object x = null;
                             double onDiskGB = 0;
                             double sourceSizeGB = 0;
 
@@ -2399,6 +2607,7 @@ _form.TableHeader(VbrLocalizationHelper.SbrExt15, VbrLocalizationHelper.SbrExt15
                             {
                                 continue;
                             }
+
                             string row = "";
                             if (jType == "NasBackup")
                             {
@@ -2416,7 +2625,6 @@ _form.TableHeader(VbrLocalizationHelper.SbrExt15, VbrLocalizationHelper.SbrExt15
                                     .FirstOrDefault();
                                 double.TryParse(sourceGb, out sourceSizeGB);
                                 sourceSizeGB = Math.Round(sourceSizeGB, 2);
-
 
                             }
 
@@ -2465,44 +2673,63 @@ _form.TableHeader(VbrLocalizationHelper.SbrExt15, VbrLocalizationHelper.SbrExt15
                             }
 
                             row += _form.TableData(onDiskGB.ToString(), "");
-                            //row+= _form.TableData(trueSizeGB.ToString() + " GB", "");
-                            //row+= _form.TableData(job.RetentionType, "");
+
+                            // row+= _form.TableData(trueSizeGB.ToString() + " GB", "");
+                            // row+= _form.TableData(job.RetentionType, "");
                             row += job.RetentionType == "Cycles" ? _form.TableData("Points", "") : _form.TableData(job.RetentionType, "");
                             row += _form.TableData(job.RetainDaysToKeep, "");
-                            //row += _form.TableData(job.StgEncryptionEnabled, "");
+
+                            // row += _form.TableData(job.StgEncryptionEnabled, "");
                             row += job.StgEncryptionEnabled == "True" ? _form.TableData(_form.True, "") : _form.TableData(_form.False, "");
                             var jobType = CJobTypesParser.GetJobType(job.JobType);
                             row += _form.TableData(jobType, "");
-                            //row += _form.TableData("", "");
 
-
-
+                            // row += _form.TableData("", "");
                             string compressionLevel = "";
                             if (job.CompressionLevel == "9")
+                            {
                                 compressionLevel = "Extreme";
+                            }
                             else if (job.CompressionLevel == "6")
+                            {
                                 compressionLevel = "High";
+                            }
                             else if (job.CompressionLevel == "5")
+                            {
                                 compressionLevel = "Optimal";
-
+                            }
                             else if (job.CompressionLevel == "4")
+                            {
                                 compressionLevel = "Dedupe-Friendly";
+                            }
                             else if (job.CompressionLevel == "0")
+                            {
                                 compressionLevel = "None";
+                            }
+
                             row += _form.TableData(compressionLevel, "");
 
                             string blockSize = "";
                             if (job.BlockSize == "KbBlockSize1024")
+                            {
                                 blockSize = "1 MB";
+                            }
                             else if (job.BlockSize == "KbBlockSize512")
+                            {
                                 blockSize = "512 KB";
+                            }
                             else if (job.BlockSize == "KbBlockSize256")
+                            {
                                 blockSize = "256 KB";
+                            }
                             else if (job.BlockSize == "KbBlockSize4096")
+                            {
                                 blockSize = "4 MB";
+                            }
                             else if (job.BlockSize == "KbBlockSize8192")
+                            {
                                 blockSize = "8 MB";
-
+                            }
 
                             row += _form.TableData(blockSize, "");
                             if (job.GfsMonthlyEnabled || job.GfsWeeklyIsEnabled || job.GfsYearlyEnabled)
@@ -2516,6 +2743,7 @@ _form.TableHeader(VbrLocalizationHelper.SbrExt15, VbrLocalizationHelper.SbrExt15
                                 row += _form.TableData(_form.False, "");
                                 row += _form.TableData("", "");
                             }
+
                             row += job.EnableFullBackup ? _form.TableData(_form.True, "") : _form.TableData(_form.False, "");
                             try
                             {
@@ -2535,7 +2763,6 @@ _form.TableHeader(VbrLocalizationHelper.SbrExt15, VbrLocalizationHelper.SbrExt15
 
                             row += job.Algorithm == "Syntethic" ? _form.TableData("Reverse Incremental", "") : _form.TableData("Forward Incremental", "");
 
-
                             row += job.IndexingType != "None" ? _form.TableData(_form.True, "") : _form.TableData(_form.False, "");
 
                             row += "</tr>";
@@ -2543,13 +2770,15 @@ _form.TableHeader(VbrLocalizationHelper.SbrExt15, VbrLocalizationHelper.SbrExt15
                             s += row;
 
                         }
-                        //table summary/totals
+
+                        // table summary/totals
                         if (useSourceSize)
                         {
                             s += "<tr>";
                             s += _form.TableDataLeftAligned("Totals", "");
                             s += _form.TableData("", "");
-                            //double totalSizeGB = Math.Round(tSizeGB / 1024 / 1024 / 1024, 2);
+
+                            // double totalSizeGB = Math.Round(tSizeGB / 1024 / 1024 / 1024, 2);
                             double totalSizeTB = Math.Round(tSizeGB / 1024, 2);
                             double totalSizeMB = Math.Round(tSizeGB * 1024, 2);
 
@@ -2586,6 +2815,7 @@ _form.TableHeader(VbrLocalizationHelper.SbrExt15, VbrLocalizationHelper.SbrExt15
                         s += _form.SectionEnd(summary);
 
                     }
+
                     // add tape table
                     try
                     {
@@ -2598,13 +2828,13 @@ _form.TableHeader(VbrLocalizationHelper.SbrExt15, VbrLocalizationHelper.SbrExt15
                             s += tt;
                         }
 
-
                     }
                     catch (Exception e)
                     {
                         log.Error("Tape Job Data import failed. ERROR:");
                         log.Error("\t" + e.Message);
                     }
+
                     // Add Entra Table
                     try
                     {
@@ -2612,7 +2842,7 @@ _form.TableHeader(VbrLocalizationHelper.SbrExt15, VbrLocalizationHelper.SbrExt15
                         string et = entraTable.Table();
                         if (et != null && et.Length > 0)
                         {
-                            //debug 
+                            // debug
                             log.Debug("Entra jobs table length: " + et.Length);
                             string tableButton = _form.SectionStartWithButton("jobTable", "Entra Jobs", "");
                             s += tableButton;
@@ -2629,6 +2859,7 @@ _form.TableHeader(VbrLocalizationHelper.SbrExt15, VbrLocalizationHelper.SbrExt15
                         log.Error("Entra Job Data import failed. ERROR:");
                         log.Error("\t" + e.Message);
                     }
+
                     s += _form.SectionEnd(summary);
                 }
                 catch (Exception e)
@@ -2636,15 +2867,14 @@ _form.TableHeader(VbrLocalizationHelper.SbrExt15, VbrLocalizationHelper.SbrExt15
                     log.Error("Job Info Data import failed. ERROR:");
                     log.Error("\t" + e.Message);
                 }
-                //end of FE up one line...
 
+                // end of FE up one line...
             }
             catch (Exception e)
             {
                 log.Error("Jobs Data import failed. ERROR:");
                 log.Error("\t" + e.Message);
             }
-
 
             s += _form.SectionEnd(summary);
 
@@ -2660,7 +2890,7 @@ _form.TableHeader(VbrLocalizationHelper.SbrExt15, VbrLocalizationHelper.SbrExt15
                 {
                     string jobName = scrub ? CGlobals.Scrubber.ScrubItem(job.Name, ScrubItemType.Job) : job.Name;
                     string repoName = scrub ? CGlobals.Scrubber.ScrubItem(job.RepoName, ScrubItemType.Repository) : job.RepoName;
-                    
+
                     double sourceSizeGB = Math.Round(job.OriginalSize / 1024.0 / 1024.0 / 1024.0, 2);
                     string compressionLevel = job.CompressionLevel switch
                     {
@@ -2669,9 +2899,9 @@ _form.TableHeader(VbrLocalizationHelper.SbrExt15, VbrLocalizationHelper.SbrExt15
                         "5" => "Optimal",
                         "4" => "Dedupe-Friendly",
                         "0" => "None",
-                        _ => job.CompressionLevel
+                        _ => job.CompressionLevel,
                     };
-                    
+
                     string blockSize = job.BlockSize switch
                     {
                         "KbBlockSize1024" => "1 MB",
@@ -2679,7 +2909,7 @@ _form.TableHeader(VbrLocalizationHelper.SbrExt15, VbrLocalizationHelper.SbrExt15
                         "KbBlockSize256" => "256 KB",
                         "KbBlockSize4096" => "4 MB",
                         "KbBlockSize8192" => "8 MB",
-                        _ => job.BlockSize
+                        _ => job.BlockSize,
                     };
 
                     bool gfsEnabled = job.GfsMonthlyEnabled || job.GfsWeeklyIsEnabled || job.GfsYearlyEnabled;
@@ -2705,7 +2935,7 @@ _form.TableHeader(VbrLocalizationHelper.SbrExt15, VbrLocalizationHelper.SbrExt15
                         job.EnableFullBackup.ToString(),
                         syntheticFull.ToString(),
                         backupChainType,
-                        indexingEnabled.ToString()
+                        indexingEnabled.ToString(),
                     });
                 }
 
@@ -2715,8 +2945,10 @@ _form.TableHeader(VbrLocalizationHelper.SbrExt15, VbrLocalizationHelper.SbrExt15
             {
                 log.Error("Failed to capture jobInfo JSON section: " + ex.Message);
             }
+
             return s;
         }
+
         private string SetJobSessionsHeaders()
         {
             string s = "";
@@ -2736,7 +2968,7 @@ _form.TableHeader(VbrLocalizationHelper.SbrExt15, VbrLocalizationHelper.SbrExt15
             s += _form.TableHeader(VbrLocalizationHelper.Jss11, "Avg Data Size divided by Max Data Size (average processed data divided by total consumed size of all VMs in the job)"); // avg change rate
             s += _form.TableHeader(VbrLocalizationHelper.Jss12, VbrLocalizationHelper.Jss12TT); // wait for res count
             s += _form.TableHeader(VbrLocalizationHelper.Jss13, VbrLocalizationHelper.Jss13TT); // max wait
-            s += _form.TableHeader(VbrLocalizationHelper.Jss14, VbrLocalizationHelper.Jss14TT);// avg wait 
+            s += _form.TableHeader(VbrLocalizationHelper.Jss14, VbrLocalizationHelper.Jss14TT);// avg wait
             s += _form.TableHeader(VbrLocalizationHelper.Jss15, VbrLocalizationHelper.Jss15TT); // job types
             s += _form.TableHeaderEnd();
             s += _form.TableBodyStart();
@@ -2744,29 +2976,34 @@ _form.TableHeader(VbrLocalizationHelper.SbrExt15, VbrLocalizationHelper.SbrExt15
             return s;
 
         }
+
         private string SetGenericJobTablHeader(bool useSourceSize)
         {
             string s = "";
             s += _form.TableHeaderLeftAligned(VbrLocalizationHelper.JobInfo0, VbrLocalizationHelper.JobInfo0TT); // Name
             s += _form.TableHeader(VbrLocalizationHelper.JobInfo1, VbrLocalizationHelper.JobInfo1TT); // Repo
             if (useSourceSize)
+            {
                 s += _form.TableHeader(VbrLocalizationHelper.JobInfo2, VbrLocalizationHelper.JobInfo2TT); // Source Size (GB)
+            }
+
             s += _form.TableHeader("Est. On Disk GB", "Estimated size of the backup data on-disk.");
             s += _form.TableHeader("Retention Scheme", "Is the job set to keep backups for X number of Days or Points");
             s += _form.TableHeader(VbrLocalizationHelper.JobInfo3, VbrLocalizationHelper.JobInfo3TT); // Restore Point Target
             s += _form.TableHeader(VbrLocalizationHelper.JobInfo4, VbrLocalizationHelper.JobInfo4TT); // Encrypted
             s += _form.TableHeader(VbrLocalizationHelper.JobInfo5, VbrLocalizationHelper.JobInfo5TT); // Job Type
-            //s += _form.TableHeader(VbrLocalizationHelper.JobInfo6, VbrLocalizationHelper.JobInfo6TT); // Algorithm
-            //s += _form.TableHeader(VbrLocalizationHelper.JobInfo7, VbrLocalizationHelper.JobInfo7TT); // Scheudle Enabled Time
-            //s += _form.TableHeader(VbrLocalizationHelper.JobInfo8, VbrLocalizationHelper.JobInfo8TT); // Full Backup Days
-            //s += _form.TableHeader(VbrLocalizationHelper.JobInfo9, VbrLocalizationHelper.JobInfo9TT); // Full Backup Schedule
+
+            // s += _form.TableHeader(VbrLocalizationHelper.JobInfo6, VbrLocalizationHelper.JobInfo6TT); // Algorithm
+            // s += _form.TableHeader(VbrLocalizationHelper.JobInfo7, VbrLocalizationHelper.JobInfo7TT); // Scheudle Enabled Time
+            // s += _form.TableHeader(VbrLocalizationHelper.JobInfo8, VbrLocalizationHelper.JobInfo8TT); // Full Backup Days
+            // s += _form.TableHeader(VbrLocalizationHelper.JobInfo9, VbrLocalizationHelper.JobInfo9TT); // Full Backup Schedule
             ////s += _form.TableHeader(ResourceHandler.JobInfo10, ResourceHandler.JobInfo10TT);
-            //s += _form.TableHeader(VbrLocalizationHelper.JobInfo11, VbrLocalizationHelper.JobInfo11TT); // transform full to synth
-            //s += _form.TableHeader(VbrLocalizationHelper.JobInfo12, VbrLocalizationHelper.JobInfo12TT); // thransform inc to synth
-            //s += _form.TableHeader(VbrLocalizationHelper.JobInfo13, VbrLocalizationHelper.JobInfo13TT); // transform days
+            // s += _form.TableHeader(VbrLocalizationHelper.JobInfo11, VbrLocalizationHelper.JobInfo11TT); // transform full to synth
+            // s += _form.TableHeader(VbrLocalizationHelper.JobInfo12, VbrLocalizationHelper.JobInfo12TT); // thransform inc to synth
+            // s += _form.TableHeader(VbrLocalizationHelper.JobInfo13, VbrLocalizationHelper.JobInfo13TT); // transform days
 
             // New Table Area:
-            //s += _form.TableHeader("", "");
+            // s += _form.TableHeader("", "");
             s += _form.TableHeader("Compression Level", "Level of compression used in the job");
             s += _form.TableHeader("Block Size", "Block Size set for the job");
             s += _form.TableHeader("GFS Enabled", "True if any GFS Periods are enabled");
@@ -2775,20 +3012,19 @@ _form.TableHeader(VbrLocalizationHelper.SbrExt15, VbrLocalizationHelper.SbrExt15
             s += _form.TableHeader("Synthetic Full Enabled", "");
             s += _form.TableHeader("Backup Chain Type", "Type of backup chain used in the job");
             s += _form.TableHeader("Indexing Enabled", "");
-            //s += _form.TableData("Totals", "");
-            //s += _form.TableHeader("", "");
-            //s += _form.TableHeader("", "");
-            //s += _form.TableHeader("", "");
-            //s += _form.TableHeader("", "");
-            //s += _form.TableHeader("", "");
-            //s += _form.TableHeader("", "");
+
+            // s += _form.TableData("Totals", "");
+            // s += _form.TableHeader("", "");
+            // s += _form.TableHeader("", "");
+            // s += _form.TableHeader("", "");
+            // s += _form.TableHeader("", "");
+            // s += _form.TableHeader("", "");
+            // s += _form.TableHeader("", "");
             s += _form.TableHeaderEnd();
             s += _form.TableBodyStart();
 
             return s;
         }
-
-
 
         public void AddSessionsFiles(bool scrub)
         {

@@ -75,13 +75,6 @@ jobs:
       run: |
         Compress-Archive -Path publish/out/* -DestinationPath publish/VeeamHealthCheck-${{ steps.get_version.outputs.version }}.zip
     
-    # - name: Upload build artifacts
-    #   uses: actions/upload-artifact@v4
-    #   with:
-    #     name: veeam-healthcheck-exe
-    #     path: publish/out/VeeamHealthCheck.exe
-    #     retention-days: 7
-    
     - name: Upload ZIP artifact
       if: github.ref == 'refs/heads/master'
       uses: actions/upload-artifact@v4
@@ -207,16 +200,9 @@ jobs:
     runs-on: windows-latest
     if: github.ref == 'refs/heads/master'
     outputs:
-      exe_clean: ${{ steps.evaluate_exe.outputs.clean }}
       zip_clean: ${{ steps.evaluate_zip.outputs.clean }}
     
     steps:
-    - name: Download EXE artifact
-      uses: actions/download-artifact@v4
-      with:
-        name: veeam-healthcheck-exe
-        path: publish/out
-    
     - name: Download ZIP artifact
       uses: actions/download-artifact@v4
       with:
@@ -226,41 +212,11 @@ jobs:
     - name: Compute file hashes
       id: hash
       run: |
-        $exePath = "publish/out/VeeamHealthCheck.exe"
         $zipPath = Get-ChildItem "publish/*.zip" | Select-Object -First 1
-        $exeHash = (Get-FileHash $exePath -Algorithm SHA256).Hash
         $zipHash = (Get-FileHash $zipPath -Algorithm SHA256).Hash
-        echo "exe_sha256=$exeHash" >> $env:GITHUB_OUTPUT
         echo "zip_sha256=$zipHash" >> $env:GITHUB_OUTPUT
         echo "zip_path=$($zipPath.FullName)" >> $env:GITHUB_OUTPUT
-        echo "EXE SHA256: $exeHash"
         echo "ZIP SHA256: $zipHash"
-
-    - name: Submit EXE to VirusTotal
-      id: submit_exe
-      continue-on-error: true
-      run: |
-        $api = "${{ secrets.VIRUSTOTAL_API_KEY }}"
-        if ([string]::IsNullOrEmpty($api)) {
-          echo "⚠️ VIRUSTOTAL_API_KEY not set - skipping scan"
-          echo "scan_id=skip" >> $env:GITHUB_OUTPUT
-          exit 0
-        }
-        
-        $filePath = "publish/out/VeeamHealthCheck.exe"
-        $headers = @{ 'x-apikey' = $api }
-        
-        try {
-          $form = @{ file = Get-Item $filePath }
-          $resp = Invoke-RestMethod -Method Post -Uri 'https://www.virustotal.com/api/v3/files' -Headers $headers -Form $form
-          $scanId = $resp.data.id
-          echo "scan_id=$scanId" >> $env:GITHUB_OUTPUT
-          echo "EXE submitted: $scanId"
-        } catch {
-          echo "Failed to submit EXE: $_"
-          echo "scan_id=error" >> $env:GITHUB_OUTPUT
-          exit 1
-        }
 
     - name: Submit ZIP to VirusTotal
       id: submit_zip
@@ -287,43 +243,6 @@ jobs:
           echo "scan_id=error" >> $env:GITHUB_OUTPUT
           exit 1
         }
-
-    - name: Poll EXE scan result
-      id: poll_exe
-      if: steps.submit_exe.outputs.scan_id != 'skip' && steps.submit_exe.outputs.scan_id != 'error'
-      run: |
-        $api = "${{ secrets.VIRUSTOTAL_API_KEY }}"
-        $scanId = "${{ steps.submit_exe.outputs.scan_id }}"
-        $headers = @{ 'x-apikey' = $api }
-        
-        echo "Waiting for EXE scan to complete..."
-        for ($i = 0; $i -lt 30; $i++) {
-          Start-Sleep -Seconds 20
-          
-          try {
-            $resp = Invoke-RestMethod -Method Get -Uri "https://www.virustotal.com/api/v3/analyses/$scanId" -Headers $headers
-            $status = $resp.data.attributes.status
-            
-            if ($status -eq 'completed') {
-              $stats = $resp.data.attributes.stats
-              $malicious = $stats.malicious
-              $suspicious = $stats.suspicious
-              $undetected = $stats.undetected
-              
-              echo "malicious=$malicious" >> $env:GITHUB_OUTPUT
-              echo "suspicious=$suspicious" >> $env:GITHUB_OUTPUT
-              echo "✅ EXE scan complete: $malicious malicious, $suspicious suspicious, $undetected clean"
-              exit 0
-            }
-            
-            echo "Status: $status (attempt $($i+1)/30)"
-          } catch {
-            echo "Error polling: $_"
-          }
-        }
-        
-        echo "❌ Timeout waiting for EXE scan"
-        exit 1
 
     - name: Poll ZIP scan result
       id: poll_zip
@@ -361,39 +280,6 @@ jobs:
         
         echo "❌ Timeout waiting for ZIP scan"
         exit 1
-
-    - name: Evaluate EXE scan result
-      id: evaluate_exe
-      run: |
-        $scanId = "${{ steps.submit_exe.outputs.scan_id }}"
-        
-        if ($scanId -eq 'skip') {
-          echo "clean=unknown" >> $env:GITHUB_OUTPUT
-          echo "⚠️ EXE scan skipped (no API key)"
-          exit 0
-        }
-        
-        if ($scanId -eq 'error') {
-          echo "clean=error" >> $env:GITHUB_OUTPUT
-          echo "❌ EXE scan failed"
-          exit 1
-        }
-        
-        $malicious = [int]"${{ steps.poll_exe.outputs.malicious }}"
-        $suspicious = [int]"${{ steps.poll_exe.outputs.suspicious }}"
-        
-        if ($malicious -gt 0) {
-          echo "clean=false" >> $env:GITHUB_OUTPUT
-          echo "❌ VirusTotal flagged EXE as malicious ($malicious detections)"
-          exit 1
-        } elseif ($suspicious -gt 2) {
-          echo "clean=false" >> $env:GITHUB_OUTPUT
-          echo "⚠️ VirusTotal marked EXE as suspicious ($suspicious detections)"
-          exit 1
-        } else {
-          echo "clean=true" >> $env:GITHUB_OUTPUT
-          echo "✅ EXE scan passed"
-        }
 
     - name: Evaluate ZIP scan result
       id: evaluate_zip
@@ -434,18 +320,11 @@ jobs:
     runs-on: windows-latest
     if: |
       github.ref == 'refs/heads/master' && 
-      needs.virustotal-scan.outputs.exe_clean == 'true' && 
       needs.virustotal-scan.outputs.zip_clean == 'true'
     
     steps:
     - name: Checkout repository
       uses: actions/checkout@v4
-
-    - name: Download EXE artifact
-      uses: actions/download-artifact@v4
-      with:
-        name: veeam-healthcheck-exe
-        path: release-files
 
     - name: Download ZIP artifact
       uses: actions/download-artifact@v4
@@ -463,13 +342,11 @@ jobs:
           ## Veeam Health Check v${{ needs.build-and-test.outputs.version }}
           
           ### ✅ Security Verification
-          - VirusTotal EXE scan: **Clean**
           - VirusTotal ZIP scan: **Clean**
           - Integration tests: **Passed**
           
           ### 📦 Download
-          - **VeeamHealthCheck.exe** - Single-file executable (self-contained)
-          - **VeeamHealthCheck-${{ needs.build-and-test.outputs.version }}.zip** - Full package
+          - **VeeamHealthCheck-${{ needs.build-and-test.outputs.version }}.zip** - Full package with executable and tools
           
           ### 📋 Requirements
           - Windows 7 or later
