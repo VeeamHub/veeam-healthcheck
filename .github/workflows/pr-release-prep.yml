@@ -1,12 +1,14 @@
 name: PR Release Preparation
 
 on:
-  pull_request:
+  # Use pull_request_target to get write permissions on the base repo
+  pull_request_target:
     types: [opened, synchronize, reopened]
 
 permissions:
   contents: read
   pull-requests: write
+  issues: write
 
 jobs:
   build-for-pr:
@@ -14,8 +16,13 @@ jobs:
     if: github.event.pull_request.base.repo.full_name != github.event.pull_request.head.repo.full_name
     
     steps:
-    - name: Checkout repository
+    - name: Checkout fork head commit
       uses: actions/checkout@v4
+      with:
+        # With pull_request_target, default checkout is base repo; explicitly checkout the fork's HEAD
+        repository: ${{ github.event.pull_request.head.repo.full_name }}
+        ref: ${{ github.event.pull_request.head.sha }}
+        fetch-depth: 0
       
     - name: Setup .NET
       uses: actions/setup-dotnet@v4
