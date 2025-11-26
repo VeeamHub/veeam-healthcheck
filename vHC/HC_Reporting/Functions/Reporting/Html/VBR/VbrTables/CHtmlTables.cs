@@ -2434,6 +2434,41 @@ this.form.TableHeader(VbrLocalizationHelper.SbrExt15, VbrLocalizationHelper.SbrE
             }
 
             s += this.form.SectionEnd(summary);
+            
+            // JSON job session summary by job
+            try
+            {
+                var stuff = this.df.ConvertJobSessSummaryToXml(scrub);
+                var ordered = stuff.OrderBy(stu => stu.JobName).ToList();
+                List<string> headers = new() { "JobName", "ItemCount", "MinJobTime", "MaxJobTime", "AvgJobTime", "SessionCount", "Fails", "Retries", "SuccessRate", "AvgBackupSize", "MaxBackupSize", "AvgDataSize", "MaxDataSize", "AvgChangeRate", "WaitCount", "MaxWait", "AvgWait", "JobTypes" };
+                List<List<string>> rows = ordered.Select(stu => new List<string>
+                {
+                    stu.JobName,
+                    stu.ItemCount.ToString(),
+                    stu.MinJobTime,
+                    stu.MaxJobTime,
+                    stu.AvgJobTime,
+                    stu.sessionCount.ToString(),
+                    stu.Fails.ToString(),
+                    stu.Retries.ToString(),
+                    stu.SuccessRate.ToString(),
+                    stu.AvgBackupSize.ToString(),
+                    stu.MaxBackupSize.ToString(),
+                    stu.AvgDataSize.ToString(),
+                    stu.MaxDataSize.ToString(),
+                    stu.AvgChangeRate.ToString(),
+                    stu.waitCount.ToString(),
+                    stu.maxWait,
+                    stu.avgwait,
+                    CJobTypesParser.GetJobType(stu.JobType),
+                }).ToList();
+                SetSection("jobSessionSummaryByJob", headers, rows, summary);
+            }
+            catch (Exception ex)
+            {
+                this.log.Error("Failed to capture jobSessionSummaryByJob JSON section: " + ex.Message);
+            }
+
             return s;
         }
 
