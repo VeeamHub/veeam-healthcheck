@@ -466,11 +466,26 @@ jobs:
             $uploadUrl = $urlResp.data
             
             echo "✅ Upload URL received"
-            echo "Uploading $sizeMB MB ZIP to VirusTotal..."
+            echo "Uploading $sizeMB MB ZIP to VirusTotal (this may take a few minutes)..."
             
-            $form = @{ file = Get-Item $filePath }
-            $resp = Invoke-RestMethod -Method Post -Uri $uploadUrl -Headers $headers -Form $form
+            # Use curl for reliable large file uploads
+            $curlOutput = & curl.exe -X POST "$uploadUrl" `
+              -H "x-apikey: $api" `
+              -F "file=@$filePath" `
+              --silent --show-error
+            
+            if ($LASTEXITCODE -ne 0) {
+              throw "Curl upload failed with exit code $LASTEXITCODE"
+            }
+            
+            $resp = $curlOutput | ConvertFrom-Json
             $scanId = $resp.data.id
+            
+            if ([string]::IsNullOrEmpty($scanId)) {
+              echo "Response: $curlOutput"
+              throw "Failed to get scan ID from response"
+            }
+            
             echo "scan_id=$scanId" >> $env:GITHUB_OUTPUT
             echo "✅ Large file submitted: $scanId"
           } else {
