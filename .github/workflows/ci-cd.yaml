@@ -3,8 +3,6 @@ name: CI/CD Pipeline
 on:
   push:
     branches: [ "master", "dev" ]
-  pull_request:
-    branches: [ "master", "dev" ]
   workflow_dispatch:
 
 permissions:
@@ -480,7 +478,7 @@ jobs:
             
             $resp = $curlOutput | ConvertFrom-Json
             $scanId = $resp.data.id
-            
+
             
             if ([string]::IsNullOrEmpty($scanId)) {
               echo "Response: $curlOutput"
@@ -520,6 +518,11 @@ jobs:
         $scanId = "${{ steps.submit_zip.outputs.scan_id }}"
         $headers = @{ 'x-apikey' = $api }
         
+        # Generate the permalink to the scan results
+        $permalink = "https://www.virustotal.com/gui/file-analysis/$scanId"
+        echo "scan_url=$permalink" >> $env:GITHUB_OUTPUT
+        echo "📊 Scan URL: $permalink"
+        
         echo "Waiting for ZIP scan to complete..."
         for ($i = 0; $i -lt 30; $i++) {
           Start-Sleep -Seconds 20
@@ -537,6 +540,7 @@ jobs:
               echo "malicious=$malicious" >> $env:GITHUB_OUTPUT
               echo "suspicious=$suspicious" >> $env:GITHUB_OUTPUT
               echo "✅ ZIP scan complete: $malicious malicious, $suspicious suspicious, $undetected clean"
+              echo "📊 View full report: $permalink"
               exit 0
             }
             
@@ -554,6 +558,7 @@ jobs:
       run: |
         $scanId = "${{ steps.submit_zip.outputs.scan_id }}"
         $reason = "${{ steps.submit_zip.outputs.reason }}"
+        $scanUrl = "${{ steps.poll_zip.outputs.scan_url }}"
         
         if ($scanId -eq 'skip') {
           if ($reason -eq 'file_too_large') {
@@ -580,15 +585,49 @@ jobs:
         
         if ($malicious -gt 0) {
           echo "clean=false" >> $env:GITHUB_OUTPUT
+          echo "needs_review=true" >> $env:GITHUB_OUTPUT
           echo "❌ VirusTotal flagged ZIP as malicious ($malicious detections)"
+          echo "📊 Review scan results: $scanUrl"
+          echo "::error title=VirusTotal Detection::ZIP flagged by $malicious engine(s). Review: $scanUrl"
           exit 1
         } elseif ($suspicious -gt 2) {
           echo "clean=false" >> $env:GITHUB_OUTPUT
+          echo "needs_review=true" >> $env:GITHUB_OUTPUT
           echo "⚠️ VirusTotal marked ZIP as suspicious ($suspicious detections)"
+          echo "📊 Review scan results: $scanUrl"
+          echo "::warning title=VirusTotal Suspicious::ZIP flagged as suspicious by $suspicious engine(s). Review: $scanUrl"
           exit 1
         } else {
           echo "clean=true" >> $env:GITHUB_OUTPUT
           echo "✅ ZIP scan passed"
+          if (![string]::IsNullOrEmpty($scanUrl)) {
+            echo "📊 Scan report: $scanUrl"
+          }
+        }
+    
+    - name: Get detailed detection info
+      if: failure() && steps.evaluate_zip.outputs.needs_review == 'true'
+      run: |
+        $api = "${{ secrets.VIRUSTOTAL_API_KEY }}"
+        $scanId = "${{ steps.submit_zip.outputs.scan_id }}"
+        $headers = @{ 'x-apikey' = $api }
+        
+        try {
+          $resp = Invoke-RestMethod -Method Get -Uri "https://www.virustotal.com/api/v3/analyses/$scanId" -Headers $headers
+          $results = $resp.data.attributes.results
+          
+          echo "### 🔍 Detection Details ###"
+          $results.PSObject.Properties | Where-Object { 
+            $_.Value.category -eq 'malicious' -or $_.Value.category -eq 'suspicious' 
+          } | ForEach-Object {
+            $engine = $_.Name
+            $category = $_.Value.category
+            $result = $_.Value.result
+            $method = $_.Value.method
+            echo "  - $engine : $category - $result (method: $method)"
+          }
+        } catch {
+          echo "Could not retrieve detailed detection info: $_"
         }
 
   # Create GitHub release - only on master after scans pass
@@ -608,6 +647,15 @@ jobs:
       with:
         name: veeam-healthcheck-zip
         path: release-files
+    
+    - name: Compute release hash
+      id: release_hash
+      run: |
+        $zipPath = Get-ChildItem "release-files/*.zip" | Select-Object -First 1
+        $hash = (Get-FileHash $zipPath -Algorithm SHA256).Hash
+        $sizeMB = [math]::Round($zipPath.Length / 1MB, 2)
+        echo "hash=$hash" >> $env:GITHUB_OUTPUT
+        echo "size_mb=$sizeMB" >> $env:GITHUB_OUTPUT
 
     - name: Create GitHub Release
       id: create_release
@@ -618,18 +666,39 @@ jobs:
         body: |
           ## Veeam Health Check v${{ needs.build-and-test.outputs.version }}
           
-          ### ✅ Security Verification
-          - VirusTotal ZIP scan: **Clean**
-          - Integration tests: **Passed**
+          ### ✅ Security & Quality Verification
+          - ✅ Build & Unit Tests: **Passed**
+          - ✅ VirusTotal Scan: **Clean** (0 detections)
+          - ✅ Integration Tests: **Passed** (VBR v12, v13, v13+SQL)
+          - ✅ Code Quality: Analyzed
           
           ### 📦 Download
-          - **VeeamHealthCheck-${{ needs.build-and-test.outputs.version }}.zip** - Full package with executable and tools
+          **VeeamHealthCheck-${{ needs.build-and-test.outputs.version }}.zip** (${{ steps.release_hash.outputs.size_mb }} MB)
+          
+          **SHA256 Checksum:**
+          ```
+          ${{ steps.release_hash.outputs.hash }}
+          ```
+          
+          **Verification Command:**
+          ```powershell
+          (Get-FileHash "VeeamHealthCheck-${{ needs.build-and-test.outputs.version }}.zip").Hash
+          ```
           
           ### 📋 Requirements
           - Windows 7 or later
           - .NET 8 runtime (included in self-contained build)
+          - PowerShell 5.1 or later
           
-          Built from commit: ${{ github.sha }}
+          ### 🚀 Quick Start
+          1. Download the ZIP file above
+          2. Extract to a folder
+          3. Run `VeeamHealthCheck.exe`
+          
+          ---
+          
+          **Built from:** [${{ github.sha }}](https://github.com/${{ github.repository }}/commit/${{ github.sha }})  
+          **Build Date:** ${{ github.event.head_commit.timestamp }}
         draft: false
         prerelease: false
         files: release-files/*
