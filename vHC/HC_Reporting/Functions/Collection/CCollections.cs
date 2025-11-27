@@ -220,7 +220,7 @@ namespace VeeamHealthCheck.Functions.Collection
 
         private bool MfaTestPassed(PSInvoker p)
         {
-            if ((CGlobals.IsVbr))
+            if ((CGlobals.IsVbr) && (CGlobals.VBRMAJORVERSION < 13))
             {
                 this.log.Info("Local VBR Detected, running local MFA test...");
                 return this.RunLocalMfaCheck(p);
