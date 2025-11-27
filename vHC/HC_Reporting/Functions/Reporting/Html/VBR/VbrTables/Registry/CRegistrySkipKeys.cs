@@ -17,7 +17,6 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR.VbrTables.Registry
             "SqlInstanceName",
             "SqlDatabaseName",
             "SqlLockInfo"
-
         };
     }
 }

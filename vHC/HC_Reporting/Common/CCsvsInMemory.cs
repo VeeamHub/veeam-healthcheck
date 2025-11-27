@@ -7,16 +7,16 @@ namespace VeeamHealthCheck.Shared
 {
     public static class CCsvsInMemory
     {
-        private static readonly Dictionary<string, List<Dictionary<string, string>>> _csvData
+        private static readonly Dictionary<string, List<Dictionary<string, string>>> csvData
             = new Dictionary<string, List<Dictionary<string, string>>>();
 
-        private static readonly object _lock = new object();
+        private static readonly object @lock = new object();
 
         public static bool LoadCsv(string filePath)
         {
-            lock (_lock)
+            lock (@lock)
             {
-                if (_csvData.ContainsKey(filePath))
+                if (csvData.ContainsKey(filePath))
                 {
                     return true;
                 }
@@ -47,10 +47,11 @@ namespace VeeamHealthCheck.Shared
                         {
                             row[headers[j]] = values[j];
                         }
+
                         data.Add(row);
                     }
 
-                    _csvData[filePath] = data;
+                    csvData[filePath] = data;
                     Console.WriteLine($"Loaded CSV: {filePath} with {data.Count} rows.");
                     return true;
                 }
@@ -64,16 +65,16 @@ namespace VeeamHealthCheck.Shared
 
         public static List<Dictionary<string, string>> GetCsvData(string filePath)
         {
-            lock (_lock)
+            lock (@lock)
             {
-                if (_csvData.TryGetValue(filePath, out var data))
+                if (csvData.TryGetValue(filePath, out var data))
                 {
                     return data;
                 }
 
                 if (LoadCsv(filePath))
                 {
-                    return _csvData[filePath];
+                    return csvData[filePath];
                 }
 
                 return null;
@@ -82,9 +83,9 @@ namespace VeeamHealthCheck.Shared
 
         public static void Clear()
         {
-            lock (_lock)
+            lock (@lock)
             {
-                _csvData.Clear();
+                csvData.Clear();
             }
         }
     }

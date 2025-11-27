@@ -33,7 +33,6 @@ namespace VeeamHealthCheck.Functions.Analysis.DataModels
 
         public string FixIds { get; set; }
 
-
         // Config DB Info
         public string DbType { get; set; }
 
@@ -48,7 +47,5 @@ namespace VeeamHealthCheck.Functions.Analysis.DataModels
         public int DbRAM { get; set; }
 
         public bool IsLocal { get; set; }
-
     }
-
 }

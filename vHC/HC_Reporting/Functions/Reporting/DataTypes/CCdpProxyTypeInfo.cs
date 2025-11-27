@@ -25,7 +25,6 @@ namespace VeeamHealthCheck.Functions.Reporting.DataTypes
 
         public CCdpProxyTypeInfo()
         {
-
         }
     }
 }

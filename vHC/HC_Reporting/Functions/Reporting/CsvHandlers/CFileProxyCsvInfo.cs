@@ -6,7 +6,7 @@ namespace VeeamHealthCheck.Functions.Reporting.CsvHandlers
 {
     public class CFileProxyCsvInfo
     {
-        //"Id","Description","Server","ConcurrentTaskNumber"
+        // "Id","Description","Server","ConcurrentTaskNumber"
         [Index(0)]
         public string ConcurrentTaskNumber { get; set; }
 

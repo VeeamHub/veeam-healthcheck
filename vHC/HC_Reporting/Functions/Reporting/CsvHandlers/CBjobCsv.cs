@@ -7,7 +7,6 @@ namespace VeeamHealthCheck.Functions.Reporting.CsvHandlers
 {
     public class CBjobCsv
     {
-
         [Index(0)]
         public string JobType { get; set; }
 
@@ -19,6 +18,5 @@ namespace VeeamHealthCheck.Functions.Reporting.CsvHandlers
 
         [Index(3)]
         public string actualSize { get; set; }
-
     }
 }

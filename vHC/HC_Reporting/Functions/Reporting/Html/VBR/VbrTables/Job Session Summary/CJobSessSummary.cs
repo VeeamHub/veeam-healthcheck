@@ -1,5 +1,7 @@
-﻿// Copyright (c) 2021, Adam Congdon <adam.congdon2@gmail.com>
-// MIT License
+﻿// <copyright file="CJobSessSummary.cs" company="PlaceholderCompany">
+// Copyright (c) PlaceholderCompany. All rights reserved.
+// </copyright>
+
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -13,29 +15,37 @@ using VeeamHealthCheck.Shared.Logging;
 
 namespace VeeamHealthCheck.Functions.Reporting.Html
 {
-    class CJobSessSummary
+    /// <summary>
+    /// Handles the creation and processing of job session summaries for Veeam backup reports.
+    /// </summary>
+    internal class CJobSessSummary
     {
-        private Dictionary<string, List<TimeSpan>> _waits = new();
-        private CLogger log = CGlobals.Logger;
+        private readonly CLogger log = CGlobals.Logger;
 
-        private CLogger _log;
-        private Scrubber.CScrubHandler _scrubber;
-        private CDataTypesParser _parsers;
+        // private readonly CLogger log;
+        private readonly Scrubber.CScrubHandler scrubber;
+        private readonly CDataTypesParser parsers;
 
-        private string logStart = "[JssBuilder] ";
+        private readonly string logStart = "[JssBuilder] ";
 
+        /// <summary>
+        /// Initializes a new instance of the <see cref="CJobSessSummary"/> class.
+        /// </summary>
+        /// <param name="log">The logger instance for logging operations.</param>
+        /// <param name="scrub">Indicates whether data should be scrubbed.</param>
+        /// <param name="scrubber">The scrub handler for data sanitization.</param>
+        /// <param name="dp">The data types parser for processing data.</param>
         public CJobSessSummary(CLogger log, bool scrub, Scrubber.CScrubHandler scrubber, CDataTypesParser dp)
         {
-            //_xmlFile = xmlFile;
-            _log = log;
-            _scrubber = scrubber;
-            _parsers = dp;
-
+            // _xmlFile = xmlFile;
+            this.log = log;
+            this.scrubber = scrubber;
+            this.parsers = dp;
         }
 
         public List<CJobSummaryTypes> JobSessionSummaryToXml(bool scrub)
         {
-            return JobSessionSummaryToXml(new CJobSessSummaryHelper(), _log, scrub, _scrubber, _parsers);
+            return this.JobSessionSummaryToXml(new CJobSessSummaryHelper(), this.log, scrub, this.scrubber, this.parsers);
         }
 
         private List<CJobSummaryTypes> JobSessionSummaryToXml(CJobSessSummaryHelper helper, CLogger log, bool scrub, Scrubber.CScrubHandler scrubber, CDataTypesParser d)
@@ -44,9 +54,6 @@ namespace VeeamHealthCheck.Functions.Reporting.Html
             log.Info("converting job session summary to xml");
 
             List<CJobSummaryTypes> outList = new();
-
-
-
 
             List<double> avgRates = new();
             List<double> avgDataSizes = new();
@@ -59,11 +66,10 @@ namespace VeeamHealthCheck.Functions.Reporting.Html
             double totalRetries = 0;
             SessionStats totalStats = new();
 
-
             int totalProtectedInstances = 0;
             foreach (var j in helper.JobNameList().Distinct())
             {
-                //log.Debug( logStart + "Parsing Sessions for job: " + j);
+                // log.Debug( logStart + "Parsing Sessions for job: " + j);
                 try
                 {
                     CJobSummaryTypes info = helper.SetWaitInfo(j);
@@ -88,26 +94,29 @@ namespace VeeamHealthCheck.Functions.Reporting.Html
                     totalFailedSessions += thisSession.FailCounts;
                     totalRetries += thisSession.RetryCounts;
                     info.JobType = CJobTypesParser.GetJobType(thisSession.JobType);
-                    //log.Debug(logStart + "Job Type: " + thisSession.JobType + " parsed to: " + info.JobType);
+
+                    // log.Debug(logStart + "Job Type: " + thisSession.JobType + " parsed to: " + info.JobType);
                     try
                     {
                         CCsvParser csv = new();
                         var jobInfo = csv.JobCsvParser().Where(x => x.Name == j).FirstOrDefault();
                         if (jobInfo != null)
+                        {
                             info.UsedVmSizeTB = jobInfo.OriginalSize / 1024 / 1024 / 1024 / 1024;
+                        }
                     }
                     catch (Exception e)
                     {
-                        log.Error(logStart + "Error: ");
+                        log.Error(this.logStart + "Error: ");
                         log.Error(e.ToString());
                         info.UsedVmSizeTB = 0;
                     }
 
-                    List<TimeSpan> nonZeros = helper.AddNonZeros(durations);
+                    List<TimeSpan> nonZeros = CJobSessSummaryHelper.AddNonZeros(durations);
 
                     try
                     {
-                        info.sessionCount = (int)thisSession.SessionCount;
+                        info.SessionCount = (int)thisSession.SessionCount;
                         if (sessionCount != 0)
                         {
                             double percent = (sessionCount - fails + retries) / sessionCount * 100;
@@ -121,24 +130,30 @@ namespace VeeamHealthCheck.Functions.Reporting.Html
                                 fails,
                                 retries,
                                 info.SuccessRate);
-                            log.Info(logStart + "Session Calcuations:\t" + sessionInfoString);
+                            log.Info(this.logStart + "Session Calcuations:\t" + sessionInfoString);
                             if (percent > 100)
                             {// TODO: if percent greater than 100, set to 100
                                 percent = 100;
                             }
+
                             if (fails != 0 || retries != 0)
                             {
-
                             }
+
                             info.Fails = (int)fails;
                             info.Retries = (int)retries;
                         }
 
                         successRates.Add((int)info.SuccessRate);
                         if (scrub)
+                        {
                             info.JobName = scrubber.ScrubItem(j, Scrubber.ScrubItemType.Job);
+                        }
                         else
+                        {
                             info.JobName = j;
+                        }
+
 
                         if (nonZeros.Count != 0)
                         {
@@ -154,7 +169,6 @@ namespace VeeamHealthCheck.Functions.Reporting.Html
                             info.AvgJobTime = string.Empty;
                         }
 
-
                         info.ItemCount = vmNames.Distinct().Count();
                         totalProtectedInstances = totalProtectedInstances + vmNames.Distinct().Count();
 
@@ -164,7 +178,6 @@ namespace VeeamHealthCheck.Functions.Reporting.Html
                         avgBackupSizes.Add(info.AvgBackupSize);
                         maxDataSizes.Add(info.MaxDataSize);
                         maxBackupSize.Add(info.MaxBackupSize);
-
 
                         if (info.AvgBackupSize != 0 && info.AvgDataSize != 0)
                         {
@@ -178,44 +191,35 @@ namespace VeeamHealthCheck.Functions.Reporting.Html
                                 info.AvgChangeRate = Math.Round(info.AvgDataSize / info.UsedVmSizeTB * 100, 2);
                                 avgRates.Add(info.AvgChangeRate);
                             }
-
                         }
                         else
                         {
                             info.AvgBackupSize = 0;
                             avgRates.Add(0);
-
                         }
-
 
                         outList.Add(info);
                     }
                     catch (Exception e)
                     {
-                        log.Error(logStart + "Error: Session parsing failure");
+                        log.Error(this.logStart + "Error: Session parsing failure");
                         log.Error(e.ToString());
-
                     }
                 }
                 catch (Exception e)
                 {
-                    log.Error(logStart + "Error: Failed to parse job sessions for job: " + j);
+                    log.Error(this.logStart + "Error: Failed to parse job sessions for job: " + j);
                     log.Error(e.ToString());
                 }
-
             }
-
-
 
             sendBack = helper.ReturnList(outList, scrub, scrubber);
 
             outList.Add(helper.SessionSummaryStats(totalSessions, totalFailedSessions, totalRetries, totalProtectedInstances,
                 avgBackupSizes, avgDataSizes, maxBackupSize, avgRates, maxDataSizes));
 
-            //sendBack.Add(helper.SessionSummaryStats(totalSessions, totalFailedSessions, totalRetries, totalProtectedInstances, 
+            // sendBack.Add(helper.SessionSummaryStats(totalSessions, totalFailedSessions, totalRetries, totalProtectedInstances, 
             //    avgBackupSizes, avgDataSizes, maxBackupSize, avgRates, maxDataSizes));
-
-
 
             log.Info("converting job session summary to xml..done!");
             return outList;
@@ -227,8 +231,9 @@ namespace VeeamHealthCheck.Functions.Reporting.Html
             {
                 info.MinBackupSize = backupSize.Min() / 1024;
                 info.MaxBackupSize = Math.Round(backupSize.Max() / 1024, 4);
-                //var avg = backupSize.Average();
-                //var avg2 = backupSize.Average() / 1024;
+
+                // var avg = backupSize.Average();
+                // var avg2 = backupSize.Average() / 1024;
                 info.AvgBackupSize = Math.Round(backupSize.Average() / 1024, 4);
             }
             else
@@ -251,9 +256,8 @@ namespace VeeamHealthCheck.Functions.Reporting.Html
                 info.MaxDataSize = 0;
                 info.AvgDataSize = 0;
             }
+
             return info;
         }
-
-
     }
 }

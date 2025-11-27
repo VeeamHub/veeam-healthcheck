@@ -14,23 +14,22 @@ namespace VeeamHealthCheck.Functions.Collection.LogParser
         private string LOGLOCATION;
         public string INSTALLID;
 
-        private string _mode;
-        private string _vb365Logs = @"C:\ProgramData\Veeam\Backup365\Logs\";
+        private readonly string mode;
+        private readonly string vb365Logs = @"C:\ProgramData\Veeam\Backup365\Logs\";
 
-        private DateTime _DbLineDate;
+        private DateTime DbLineDate;
 
         public CVmcReader(string mode)
         {
-            _mode = mode;
+            this.mode = mode;
         }
 
         public void PopulateVmc()
         {
-            GetLogDir();
+            this.GetLogDir();
             try
             {
-                ReadVmc();
-
+                this.ReadVmc();
             }
             catch (Exception e)
             {
@@ -40,15 +39,15 @@ namespace VeeamHealthCheck.Functions.Collection.LogParser
 
         private void GetLogDir()
         {
-            if (_mode == "vbr")
+            if (this.mode == "vbr")
             {
                 CRegReader reg = new();
                 string regDir = reg.DefaultLogDir();
-                LOGLOCATION = Path.Combine(regDir + CLogOptions.VMCLOG);
+                this.LOGLOCATION = Path.Combine(regDir + CLogOptions.VMCLOG);
             }
-            else if (_mode == "vb365")
+            else if (this.mode == "vb365")
             {
-                string[] filesList = Directory.GetFiles(_vb365Logs);
+                string[] filesList = Directory.GetFiles(this.vb365Logs);
                 List<FileInfo> fileInfoList = new();
                 foreach (var f in filesList)
                 {
@@ -56,30 +55,29 @@ namespace VeeamHealthCheck.Functions.Collection.LogParser
                     {
                         FileInfo fileInfo = new FileInfo(f);
                         fileInfoList.Add(fileInfo);
-
                     }
                 }
+
                 fileInfoList.OrderBy(x => x.Name);
                 string fileName = fileInfoList.FirstOrDefault().Name;
-                LOGLOCATION = Path.Combine(_vb365Logs + fileName);
+                this.LOGLOCATION = Path.Combine(this.vb365Logs + fileName);
             }
-
         }
 
         private void ReadVmc()
         {
-            using (StreamReader sr = new StreamReader(LOGLOCATION))
+            using (StreamReader sr = new StreamReader(this.LOGLOCATION))
             {
                 string line = string.Empty;
                 while ((line = sr.ReadLine()) != null)
                 {
                     if (line.Contains(CLogOptions.installIdLine))
                     {
-                        ParseInstallId(line);
+                        this.ParseInstallId(line);
                     }
                     else if (line.Contains("[SQL Server version]"))
                     {
-                        ParseConfigDbInfo(line);
+                        this.ParseConfigDbInfo(line);
                     }
                 }
             }
@@ -87,10 +85,11 @@ namespace VeeamHealthCheck.Functions.Collection.LogParser
 
         private void ParseConfigDbInfo(string line)
         {
-            DateTime dbLineDate = ParseLineDate(line);
-            if ( dbLineDate.Ticks - _DbLineDate.Ticks == 0)
-                _DbLineDate = ParseLineDate(line);
-
+            DateTime dbLineDate = this.ParseLineDate(line);
+            if ( dbLineDate.Ticks - this.DbLineDate.Ticks == 0)
+            {
+                this.DbLineDate = this.ParseLineDate(line);
+            }
         }
 
         private DateTime ParseLineDate(string line)
@@ -98,13 +97,12 @@ namespace VeeamHealthCheck.Functions.Collection.LogParser
             string newLine = line.Substring(1, 25);
             DateTime.TryParse(newLine, out DateTime dt);
             return dt;
-
         }
 
         private void ParseInstallId(string line)
         {
             string[] id = line.Substring(40).Split();
-            INSTALLID = id[1];
+            this.INSTALLID = id[1];
         }
 
         private void TrimLogLine(string line)

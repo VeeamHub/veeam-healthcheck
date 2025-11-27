@@ -14,17 +14,15 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR.VbrTables.ProtectedWorkl
 {
     internal class NasSourceInfo
     {
-        private CHtmlFormatting _form = new();
+        private readonly CHtmlFormatting form = new();
 
         public NasSourceInfo()
         {
-
         }
 
         public CProtectedWorkloads NasTable()
         {
             CProtectedWorkloads p = new();
-
 
             try
             {
@@ -36,36 +34,35 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR.VbrTables.ProtectedWorkl
                     {
                         NasWorkloads nas = new();
                         nas.FileShareType = rec.FileShareType;
-                        nas.TotalShareSize = CalculateStorageString(rec.TotalShareSize);
+                        nas.TotalShareSize = this.CalculateStorageString(rec.TotalShareSize);
                         nas.TotalFilesCount = Convert.ToDouble(rec.TotalFilesCount);
                         nas.TotalFoldersCount = Convert.ToDouble(rec.TotalFoldersCount);
                         p.nasWorkloads.Add(nas);
                     }
 
-
-                    //if (nas.TotalFilesCount > 0 || nas.TotalFoldersCount > 0 || Convert.ToDouble(rec.TotalShareSize) > 0)
+                    // if (nas.TotalFilesCount > 0 || nas.TotalFoldersCount > 0 || Convert.ToDouble(rec.TotalShareSize) > 0)
                     //    p.nasWorkloads.Add(nas);
                 }
+
                 var objectShares = c.GetDynamicNasObjectSize();
                 foreach (var rec in objectShares)
                 {
                     NasWorkloads nas = new();
                     nas.FileShareType = "Object";
-                    nas.TotalShareSize = CalculateStorageString(rec.TotalObjectStorageSize);
+                    nas.TotalShareSize = this.CalculateStorageString(rec.TotalObjectStorageSize);
                     nas.TotalFilesCount = Convert.ToDouble(rec.TotalObjectsCount);
 
                     if (nas.TotalFilesCount > 0 || Convert.ToDouble(rec.TotalObjectStorageSize) > 0)
+                    {
                         p.nasWorkloads.Add(nas);
+                    }
                 }
-
-
             }
             catch (Exception e)
             {
                 Console.WriteLine(e);
                 throw;
             }
-
 
             return p;
         }
@@ -75,6 +72,7 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR.VbrTables.ProtectedWorkl
             try
             {
                 double sizeD = Convert.ToDouble(size);
+
                 // check if size is in TB
                 double sizeMB = sizeD / 1024 / 1024;
                 double sizeGB = sizeD / 1024 / 1024 / 1024;
@@ -108,8 +106,6 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR.VbrTables.ProtectedWorkl
                 CGlobals.Logger.Warning(ex.Message);
                 return "Undetermined";
             }
-            
-
         }
     }
 }

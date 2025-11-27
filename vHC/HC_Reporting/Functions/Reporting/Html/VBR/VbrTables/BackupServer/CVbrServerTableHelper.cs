@@ -10,148 +10,151 @@ namespace VeeamHealthCheck.Reporting.Html.VBR
 {
     internal class CVbrServerTableHelper
     {
-        private CHtmlFormatting _form = new();
+        private readonly CHtmlFormatting form = new();
         private readonly Functions.Analysis.DataModels.BackupServer b;
 
         public CVbrServerTableHelper(Functions.Analysis.DataModels.BackupServer backupServer)
         {
-            b = backupServer;
+            this.b = backupServer;
         }
 
         public CVbrServerTableHelper()
         {
-
         }
 
         public void Run()
         {
-
         }
 
         public Tuple<string, string> ServerName()
         {
-            string header = _form.TableHeader(VbrLocalizationHelper.BkpSrvTblName, VbrLocalizationHelper.BstNameTT);
-            string data = _form.TableData(b.Name, string.Empty);
+            string header = this.form.TableHeader(VbrLocalizationHelper.BkpSrvTblName, VbrLocalizationHelper.BstNameTT);
+            string data = this.form.TableData(this.b.Name, string.Empty);
 
-            return ReturnColumn(header, data);
+            return this.ReturnColumn(header, data);
         }
 
         public Tuple<string, string> ServerVersion()
         {
-            string header = _form.TableHeader(VbrLocalizationHelper.BkpSrvTblVersion, VbrLocalizationHelper.BstVerTT);
-            string data = _form.TableData(b.Version, string.Empty);
+            string header = this.form.TableHeader(VbrLocalizationHelper.BkpSrvTblVersion, VbrLocalizationHelper.BstVerTT);
+            string data = this.form.TableData(this.b.Version, string.Empty);
 
             return Tuple.Create(header, data);
         }
 
         public Tuple<string, string> Cores()
         {
-            string header = _form.TableHeader(VbrLocalizationHelper.BkpSrvTblCore, VbrLocalizationHelper.BstCpuTT);
-            string data = _form.TableData(b.Cores.ToString(), string.Empty);
+            string header = this.form.TableHeader(VbrLocalizationHelper.BkpSrvTblCore, VbrLocalizationHelper.BstCpuTT);
+            string data = this.form.TableData(this.b.Cores.ToString(), string.Empty);
             return Tuple.Create(header, data);
         }
 
         public Tuple<string, string> RAM()
         {
-            string header = _form.TableHeader(VbrLocalizationHelper.BkpSrvTblRam, VbrLocalizationHelper.BstRamTT);
-            string data = _form.TableData(b.RAM.ToString(), string.Empty);
+            string header = this.form.TableHeader(VbrLocalizationHelper.BkpSrvTblRam, VbrLocalizationHelper.BstRamTT);
+            string data = this.form.TableData(this.b.RAM.ToString(), string.Empty);
             return Tuple.Create(header, data);
         }
 
         public Tuple<string, string> ProxyRole()
         {
-            string header = _form.TableHeader(VbrLocalizationHelper.BkpSrvTblProxyRole, VbrLocalizationHelper.BstPrxTT);
+            string header = this.form.TableHeader(VbrLocalizationHelper.BkpSrvTblProxyRole, VbrLocalizationHelper.BstPrxTT);
             string data = string.Empty;
-            if (b.HasProxyRole)
+            if (this.b.HasProxyRole)
             {
-                data = _form.TableData(_form.True, string.Empty);
+                data = this.form.TableData(this.form.True, string.Empty);
             }
             else
             {
-                data = _form.TableData(_form.False, string.Empty);
+                data = this.form.TableData(this.form.False, string.Empty);
             }
+
             return Tuple.Create(header, data);
         }
 
         public Tuple<string, string> RepoGatewayRole()
         {
-            string header = _form.TableHeader(VbrLocalizationHelper.BkpSrvTblRepoRole, VbrLocalizationHelper.BstRepTT);
+            string header = this.form.TableHeader(VbrLocalizationHelper.BkpSrvTblRepoRole, VbrLocalizationHelper.BstRepTT);
             string data = string.Empty;
-            if(b.HasRepoRole)
+            if(this.b.HasRepoRole)
             {
-                data = _form.TableData(_form.True, string.Empty);
+                data = this.form.TableData(this.form.True, string.Empty);
             }
             else
             {
-                data = _form.TableData(_form.False, string.Empty);
+                data = this.form.TableData(this.form.False, string.Empty);
             }
             
             return Tuple.Create(header, data);
-
         }
 
         public Tuple<string, string> WanRole()
         {
-            string header = _form.TableHeader(VbrLocalizationHelper.BkpSrvTblWanRole, VbrLocalizationHelper.BstWaTT);
+            string header = this.form.TableHeader(VbrLocalizationHelper.BkpSrvTblWanRole, VbrLocalizationHelper.BstWaTT);
             string data = string.Empty;
-            if(b.HasWanAccRole)
+            if(this.b.HasWanAccRole)
                 {
-                data = _form.TableData(_form.True, string.Empty);
+                data = this.form.TableData(this.form.True, string.Empty);
             }
             else
             {
-                data = _form.TableData(_form.False, string.Empty);
+                data = this.form.TableData(this.form.False, string.Empty);
             }
-            return Tuple.Create(header, data);
 
+            return Tuple.Create(header, data);
         }
 
         public Tuple<string, string> ConsoleStatus()
         {
             string result = CSecurityGlobalValues.IsConsoleInstalled;
-            int shade = ParseTrueAsBadShade(result);
+            int shade = this.ParseTrueAsBadShade(result);
 
-            string header = _form.TableHeader(VbrLocalizationHelper.BackupServerConsoleInstalled, string.Empty);
-            string data = _form.TableData(result, string.Empty, shade);
+            string header = this.form.TableHeader(VbrLocalizationHelper.BackupServerConsoleInstalled, string.Empty);
+            string data = this.form.TableData(result, string.Empty, shade);
             return Tuple.Create(header, data);
-
         }
 
         public Tuple<string, string> RdpStatus()
         {
             string result = CSecurityGlobalValues.IsRdpEnabled;
-            int shade = ParseTrueAsBadShade(result);
+            int shade = this.ParseTrueAsBadShade(result);
 
-            string header = _form.TableHeader(VbrLocalizationHelper.BackupServerRdpEnabled, string.Empty);
-            string data = _form.TableData(result, string.Empty, shade);
+            string header = this.form.TableHeader(VbrLocalizationHelper.BackupServerRdpEnabled, string.Empty);
+            string data = this.form.TableData(result, string.Empty, shade);
             return Tuple.Create(header, data);
-
         }
 
         public Tuple<string, string> DomainStatus()
         {
             string result = CSecurityGlobalValues.IsDomainJoined;
-            int shade = ParseFalseAsBadShade(result);
+            int shade = this.ParseFalseAsBadShade(result);
 
-            string header = _form.TableHeader(VbrLocalizationHelper.BackupServerDomainJoined, string.Empty);
-            string data = _form.TableData(result, string.Empty);
+            string header = this.form.TableHeader(VbrLocalizationHelper.BackupServerDomainJoined, string.Empty);
+            string data = this.form.TableData(result, string.Empty);
             return Tuple.Create(header, data);
-
         }
 
         private int ParseFalseAsBadShade(string input)
         {
             if (input == "False")
+            {
                 return 1;
+            }
+
+
             return 0;
         }
 
         private int ParseTrueAsBadShade(string input)
         {
-            if (input == "True") return 1;
+            if (input == "True")
+            {
+                return 1;
+            }
+
+
             return 0;
         }
-
 
         private Tuple<string, string> ReturnColumn(string header, string data)
         {

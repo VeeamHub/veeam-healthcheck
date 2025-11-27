@@ -16,13 +16,12 @@ namespace VeeamHealthCheck.Functions.Reporting.DataTypes
 
         public CProtectedWorkloads()
         {
-            vmWareWorkloads = new VirtualWorkloads();
-            hyperVWorkloads = new VirtualWorkloads();
-            nasWorkloads = new List<NasWorkloads>();
-            physicalWorkloads = new PhysicalWorkloads();
-            entraWorkloads = new List<EntraWorkloads>();
+            this.vmWareWorkloads = new VirtualWorkloads();
+            this.hyperVWorkloads = new VirtualWorkloads();
+            this.nasWorkloads = new List<NasWorkloads>();
+            this.physicalWorkloads = new PhysicalWorkloads();
+            this.entraWorkloads = new List<EntraWorkloads>();
         }
-
     }
 
     public class VirtualWorkloads
@@ -45,7 +44,6 @@ namespace VeeamHealthCheck.Functions.Reporting.DataTypes
         public double TotalFilesCount { get; set; }
 
         public double TotalFoldersCount { get; set; }
-
     }
 
     public class PhysicalWorkloads
@@ -64,6 +62,5 @@ namespace VeeamHealthCheck.Functions.Reporting.DataTypes
         public string TenantName { get; set; }
 
         public string CacheRepoName { get; set; }
-
     }
 }

@@ -7,8 +7,7 @@ namespace VeeamHealthCheck.Functions.Reporting.CsvHandlers
 {
     public class CSobrCsvInfo
     {
-        //																								
-
+        // 
         [Index(0)]
         public string PolicyType { get; set; }
 

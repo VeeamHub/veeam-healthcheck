@@ -47,21 +47,23 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR.VbrTables
                     foreach (var bType in types)
                     {
                         if (bType == "NasBackup" || bType == "NasBackupCopy")
+                        {
                             continue;
+                        }
+
+
                         var realType = CJobTypesParser.GetJobType(bType);
                         if (!typeAndCount.ContainsKey(realType))
                         {
                             try
                             {
                                 typeAndCount.Add(realType, backupJobs.Count(x => x.JobType == bType));
-
                             }
                             catch (Exception ex) { CGlobals.Logger.Error(ex.Message); }
                         }
                     }
                 }
                 catch (Exception ex) { CGlobals.Logger.Error(ex.Message); }
-
 
                 foreach (string dbType in Enum.GetNames(typeof(EDbJobType)))
                 {
@@ -72,13 +74,11 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR.VbrTables
                     }
                 }
 
-                //sort the dictionary
+                // sort the dictionary
                 typeAndCount = typeAndCount.OrderBy(x => x.Key).ToDictionary(x => x.Key, x => x.Value);
-
             }
 
             catch (Exception ex) { CGlobals.Logger.Error(ex.Message); }
-
 
             return typeAndCount;
         }

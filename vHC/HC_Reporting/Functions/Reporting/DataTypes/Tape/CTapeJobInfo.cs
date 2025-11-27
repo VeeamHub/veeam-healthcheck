@@ -86,6 +86,5 @@ namespace VeeamHealthCheck.Functions.Reporting.DataTypes.Tape
 
         [Index(25)]
         public string Description { get; set; }
-
     }
 }

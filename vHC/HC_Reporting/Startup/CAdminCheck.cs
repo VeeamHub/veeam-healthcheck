@@ -8,12 +8,12 @@ namespace VeeamHealthCheck
     {
         public bool IsAdmin()
         {
-            //using (WindowsIdentity identity = WindowsIdentity.GetCurrent())
-            //{
+            // using (WindowsIdentity identity = WindowsIdentity.GetCurrent())
+            // {
             //    WindowsPrincipal principal = new WindowsPrincipal(identity);
             //    bool IsAdmin = principal.IsInRole(WindowsBuiltInRole.Administrator);
             //    return IsAdmin;
-            //}
+            // }
             return true; // temp for testing vbr 13
         }
     }

@@ -9,12 +9,12 @@ namespace VeeamHealthCheck
         public static readonly string outDir = @"C:\temp\vHC";
         public static string safeDir = @"C:\temp\vHC\Anonymous";
         public static string unsafeDir = @"C:\temp\vHC\Original";
-        public static string _vb365Dir = "\\VB365";
-        public static string _vbrDir = "\\VBR";
-        public static string _safeSuffix = @"\vHC-AnonymousReport";
-        public static string _unsafeSuffix = @"\vHC-Report";
+        public static string vb365Dir = "\\VB365";
+        public static string VbrDir = "\\VBR";
+        public static string safeSuffix = @"\vHC-AnonymousReport";
+        public static string unsafeSuffix = @"\vHC-Report";
 
-        public static string desiredDir { get { return CGlobals._desiredPath; } }
+        public static string desiredDir { get { return CGlobals.desiredPath; } }
 
         public string unSafeDir2()
         {
@@ -25,14 +25,13 @@ namespace VeeamHealthCheck
         {
             get
             {
-                return unsafeDir + _vb365Dir;
+                return unsafeDir + vb365Dir;
             }
         }
 
         public static string vbrDir
         {
-            get { return unsafeDir + _vbrDir; }
+            get { return unsafeDir + vbrDir; }
         }
-
     }
 }

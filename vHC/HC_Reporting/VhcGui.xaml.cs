@@ -14,24 +14,23 @@ namespace VeeamHealthCheck
     /// </summary>
     public partial class VhcGui : System.Windows.Window
     {
-        private CClientFunctions _functions = new();
+        private readonly CClientFunctions functions = new();
 
         public VhcGui()
         {
             InitializeComponent();
 
-            SetUi();
+            this.SetUi();
             pathBox.IsEnabled = false;
-            //pdfCheckBox.IsEnabled = false;
 
+            // pdfCheckBox.IsEnabled = false;
         }
 
         private void SetUi()
         {
-            SetImportRelease();
+            this.SetImportRelease();
 
-
-            string modeCheckResult = _functions.ModeCheck();
+            string modeCheckResult = this.functions.ModeCheck();
             
             if (modeCheckResult == "fail")
             {
@@ -55,11 +54,12 @@ namespace VeeamHealthCheck
                 pdfCheckBox.IsEnabled = false;
                 pdfCheckBox.ToolTip = "PDF Export not available when both VB365 & VBR are detected on the same machine.";
             }
-            _functions.PreRunCheck();
 
-            SetUiText();
+            this.functions.PreRunCheck();
+
+            this.SetUiText();
             scrubBox.IsChecked = true;
-            hideProgressBar();
+            this.hideProgressBar();
             run.IsEnabled = false;
         }
 
@@ -100,8 +100,8 @@ namespace VeeamHealthCheck
             this.run.Content = VbrLocalizationHelper.GuiRunButton;
             this.importButton.Content = VbrLocalizationHelper.GuiImportButton;
 
-            SetPathBoxText(CVariables.outDir);
-            CGlobals._desiredPath = CVariables.outDir;
+            this.SetPathBoxText(CVariables.outDir);
+            CGlobals.desiredPath = CVariables.outDir;
         }
 
         private void SetPathBoxText(string text)
@@ -113,7 +113,7 @@ namespace VeeamHealthCheck
         {
             this.Dispatcher.Invoke((Action)(() =>
             {
-                //run.IsEnabled = true;
+                // run.IsEnabled = true;
                 pBar.Visibility = Visibility.Hidden;
             }));
         }
@@ -132,26 +132,25 @@ namespace VeeamHealthCheck
 
         private void Import_click(object sender, RoutedEventArgs e)
         {
-            _functions.LogUIAction("Import");
+            this.functions.LogUIAction("Import");
             CGlobals.IMPORT = true;
-            DisableGuiAndStartProgressBar();
-            Run(true);
+            this.DisableGuiAndStartProgressBar();
+            this.Run(true);
         }
-
-
 
         private void run_Click(object sender, RoutedEventArgs e)
         {
-            _functions.LogUIAction("Run");
+            this.functions.LogUIAction("Run");
 
-            if (!_functions.VerifyPath())
+            if (!this.functions.VerifyPath())
             {
                 MessageBox.Show("Error: Failed to validate desired output path. Please try a different path.");
             }
-            if (_functions.VerifyPath())
+
+            if (this.functions.VerifyPath())
             {
-                DisableGuiAndStartProgressBar();
-                Run(false);
+                this.DisableGuiAndStartProgressBar();
+                this.Run(false);
             }
         }
 
@@ -159,20 +158,18 @@ namespace VeeamHealthCheck
         {
             System.Threading.Tasks.Task.Factory.StartNew(() =>
             {
-
-                _functions.StartPrimaryFunctions();
+                this.functions.StartPrimaryFunctions();
                 Environment.Exit(0);
-
             }).ContinueWith(t =>
             {
-                hideProgressBar();
+                this.hideProgressBar();
             });
         }
 
         private void DisableGuiAndStartProgressBar()
         {
-            DisableButtons();
-            showProgressBar();
+            this.DisableButtons();
+            this.showProgressBar();
         }
 
         private void DisableButtons()
@@ -188,67 +185,64 @@ namespace VeeamHealthCheck
 
         private void AcceptButton_click(object sender, RoutedEventArgs e)
         {
-            _functions.LogUIAction("Accept");
-            run.IsEnabled = _functions.AcceptTerms();
+            this.functions.LogUIAction("Accept");
+            run.IsEnabled = this.functions.AcceptTerms();
         }
 
         #endregion
 
-
-
-
         #region Check Boxes
         private void HandleCheck(object sender, RoutedEventArgs e)
         {
-            _functions.LogUIAction("Scrub = true");
+            this.functions.LogUIAction("Scrub = true");
             CGlobals.Scrub = true;
         }
 
         private void htmlChecked(object sender, RoutedEventArgs e)
         {
-            _functions.LogUIAction("Open HTML = true");
+            this.functions.LogUIAction("Open HTML = true");
             CGlobals.OpenHtml = true;
         }
 
         private void htmlUnchecked(object sender, RoutedEventArgs e)
         {
-            _functions.LogUIAction("Open HTML = false");
+            this.functions.LogUIAction("Open HTML = false");
             CGlobals.OpenHtml = false;
         }
 
         private void HandleUnchecked(object sender, RoutedEventArgs e)
         {
-            _functions.LogUIAction("Scrub = false");
+            this.functions.LogUIAction("Scrub = false");
             CGlobals.Scrub = false;
         }
 
         private void HandleThirdState(object sender, RoutedEventArgs e)
         {
-            _functions.LogUIAction("Scrub 3rd state = false");
+            this.functions.LogUIAction("Scrub 3rd state = false");
             CGlobals.Scrub = false;
         }
 
         private void explorerShowBox_Checked(object sender, RoutedEventArgs e)
         {
-            _functions.LogUIAction("Show Explorer = true");
+            this.functions.LogUIAction("Show Explorer = true");
             CGlobals.OpenExplorer = true;
         }
 
         private void explorerShowBox_Unchecked(object sender, RoutedEventArgs e)
         {
-            _functions.LogUIAction("Show Explorer = false");
+            this.functions.LogUIAction("Show Explorer = false");
             CGlobals.OpenExplorer = false;
         }
 
         private void pdfCheckBox_Checked(object sender, RoutedEventArgs e)
         {
-            _functions.LogUIAction("Export PDF = true");
+            this.functions.LogUIAction("Export PDF = true");
             CGlobals.EXPORTPDF = true;
         }
 
         private void pdfCheckBox_Unchecked(object sender, RoutedEventArgs e)
         {
-            _functions.LogUIAction("Export PDF = false");
+            this.functions.LogUIAction("Export PDF = false");
             CGlobals.EXPORTPDF = false;
         }
 
@@ -256,14 +250,14 @@ namespace VeeamHealthCheck
 
         private void kbLink_RequestNavigate(object sender, System.Windows.Navigation.RequestNavigateEventArgs e)
         {
-            _functions.LogUIAction("KB Link");
-            _functions.KbLinkAction(e);
+            this.functions.LogUIAction("KB Link");
+            this.functions.KbLinkAction(e);
         }
 
         private void pathBox_TextChanged(object sender, TextChangedEventArgs e)
         {
-            CGlobals.Logger.Info("Changing path from " + CGlobals._desiredPath + " to " + pathBox.Text);
-            CGlobals._desiredPath = pathBox.Text;
+            CGlobals.Logger.Info("Changing path from " + CGlobals.desiredPath + " to " + pathBox.Text);
+            CGlobals.desiredPath = pathBox.Text;
         }
 
         private void ComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
@@ -271,16 +265,16 @@ namespace VeeamHealthCheck
             switch (daysSelector.SelectedIndex)
             {
                 case 0:
-                    SetReportDays(7);
+                    this.SetReportDays(7);
                     break;
                 case 1:
-                    SetReportDays(30);
+                    this.SetReportDays(30);
                     break;
                 case 2:
-                    SetReportDays(90);
+                    this.SetReportDays(90);
                     break;
                 default:
-                    SetReportDays(7);
+                    this.SetReportDays(7);
                     break;
             }
         }
@@ -288,7 +282,7 @@ namespace VeeamHealthCheck
         private void SetReportDays(int days)
         {
             CGlobals.ReportDays = days;
-            _functions.LogUIAction("Interval set to " + CGlobals.ReportDays);
+            this.functions.LogUIAction("Interval set to " + CGlobals.ReportDays);
         }
     }
 }

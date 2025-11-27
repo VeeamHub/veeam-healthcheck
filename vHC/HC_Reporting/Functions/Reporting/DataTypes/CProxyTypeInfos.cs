@@ -45,11 +45,8 @@ namespace VeeamHealthCheck.Functions.Reporting.DataTypes
 
         public string Provisioning { get; set; }
 
-
         public CProxyTypeInfos()
         {
-
         }
-
     }
 }

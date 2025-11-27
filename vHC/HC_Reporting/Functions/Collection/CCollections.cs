@@ -1,12 +1,13 @@
-﻿// Copyright (c) 2021, Adam Congdon <adam.congdon2@gmail.com>
-// MIT License
-//using DocumentFormat.OpenXml.Drawing;
-using Microsoft.Management.Infrastructure;
+﻿// <copyright file="CCollections.cs" company="PlaceholderCompany">
+// Copyright (c) PlaceholderCompany. All rights reserved.
+// </copyright>
+
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Windows;
+using Microsoft.Management.Infrastructure;
 using VeeamHealthCheck.Functions.Collection.DB;
 using VeeamHealthCheck.Functions.Collection.LogParser;
 using VeeamHealthCheck.Functions.Collection.PSCollections;
@@ -21,7 +22,7 @@ namespace VeeamHealthCheck.Functions.Collection
     internal class CCollections
     {
         public bool SCRIPTSUCCESS;
-        private CLogger log = CGlobals.Logger;
+        private readonly CLogger log = CGlobals.Logger;
 
         public CCollections() { }
 
@@ -35,40 +36,45 @@ namespace VeeamHealthCheck.Functions.Collection
         public void Run()
         {
             if (CGlobals.RunSecReport)
-                ExecSecurityCollection();
+            {
+                this.ExecSecurityCollection();
+            }
 
-            ExecPSScripts();
+            this.ExecPSScripts();
+
             // run diagnostic of CSV output and sizes, dump to logs:
             if (CGlobals.IsVbr)
-                GetCsvFileSizesToLog();
+            {
+                this.GetCsvFileSizesToLog();
+            }
+
             // GetCsvFileSizesToLog();
+
             CheckRecon();
-
-
 
             if (!CGlobals.RunSecReport && CGlobals.IsVbr)
             {
-                PopulateWaits();
+                this.PopulateWaits();
             }
 
             if (CGlobals.IsVbr)
             {
-                ExecVmcReader();
-                GetRegistryDbInfo();
+                this.ExecVmcReader();
+                this.GetRegistryDbInfo();
                 if (CGlobals.DBTYPE != CGlobals.PgTypeName)
-                    ExecSqlQueries();
+                {
+                    this.ExecSqlQueries();
+                }
             }
-
-
         }
 
-        private void CheckRecon()
+        private static void CheckRecon()
         {
             if (CGlobals.DEBUG)
             {
                 CGlobals.Logger.Debug("Checking for Coveware Recon Task");
-
             }
+
             CReconChecker rc = new();
             rc.Check();
         }
@@ -76,7 +82,11 @@ namespace VeeamHealthCheck.Functions.Collection
         private void GetCsvFileSizesToLog()
         {
             if (CGlobals.DEBUG)
+            {
                 CGlobals.Logger.Debug("Logging CSV File Sizes:");
+            }
+
+
             var files = Directory.GetFiles(CVariables.vbrDir, "*.csv", SearchOption.AllDirectories);
             foreach (var file in files)
             {
@@ -85,15 +95,12 @@ namespace VeeamHealthCheck.Functions.Collection
                 if (fileSize > 0)
                 {
                     CGlobals.Logger.Info($"\tFile: {fileInfo.Name} Size: {fileSize}");
-
                 }
                 else
                 {
                     CGlobals.Logger.Warning($"\tFile: {fileInfo.Name} Size: {fileSize}");
                 }
-
             }
-
         }
 
         private void ExecSecurityCollection()
@@ -107,8 +114,8 @@ namespace VeeamHealthCheck.Functions.Collection
             if (CGlobals.IsVbr)
             {
                 CLogOptions logOptions = new("vbr");
-
             }
+
             if (CGlobals.IsVb365)
             {
                 CLogOptions logOptions = new("vb365");
@@ -121,9 +128,13 @@ namespace VeeamHealthCheck.Functions.Collection
             reg.GetDbInfo();
 
             if (CGlobals.REMOTEEXEC)
+            {
                 CGlobals.DEFAULTREGISTRYKEYS = reg.DefaultVbrKeysRemote();
+            }
             else
+            {
                 CGlobals.DEFAULTREGISTRYKEYS = reg.DefaultVbrKeys();
+            }
         }
 
         private void ExecSqlQueries()
@@ -141,37 +152,38 @@ namespace VeeamHealthCheck.Functions.Collection
             {
                 try
                 {
-
                     if (CGlobals.IsVbr || CGlobals.REMOTEEXEC)
                     {
                         CGlobals.Logger.Info("Checking VBR MFA Access...", false);
-                        if (MfaTestPassed(p))
+                        if (this.MfaTestPassed(p))
                         {
                             // add debug logging to help troubleshoot MFA issues
                             CGlobals.Logger.Debug("MFA Not detected, continuing...");
-                            //if (CGlobals.IsVbr || CGlobals.REMOTEEXEC)
-                                ExecVbrScripts(p);
+
+                            // if (CGlobals.IsVbr || CGlobals.REMOTEEXEC)
+                            this.ExecVbrScripts(p);
                         }
                         else
                         {
-                            WeighSuccessContinuation();
+                            this.WeighSuccessContinuation();
                         }
                     }
+
                     if (CGlobals.IsVb365)
                     {
                         CGlobals.Logger.Info("Checking VB365 MFA Access...", false);
-                        if (!TestPsMfaVb365(p))
+                        if (!this.TestPsMfaVb365(p))
                         {
                             if (CGlobals.IsVb365)
-                                ExecVb365Scripts(p);
+                            {
+                                this.ExecVb365Scripts(p);
+                            }
                         }
                         else
                         {
-                            WeighSuccessContinuation();
+                            this.WeighSuccessContinuation();
                         }
                     }
-
-
                 }
                 catch (Exception ex)
                 {
@@ -180,20 +192,18 @@ namespace VeeamHealthCheck.Functions.Collection
             }
             else if (CGlobals.RunSecReport)
             {
-                ExecVbrConfigOnly(p);
+                this.ExecVbrConfigOnly(p);
             }
 
-            //WeighSuccessContinuation();
-
+            // WeighSuccessContinuation();
             CGlobals.Logger.Info("Starting PS Invoke...done!", false);
         }
 
         private void WeighSuccessContinuation()
         {
-            string error = "Script execution has failed. Exiting program. See log for details:\n\t " + CGlobals.Logger._logFile;
+            string error = "Script execution has failed. Exiting program. See log for details:\n\t " + CGlobals.Logger.logFile;
 
-
-            if (CGlobals.GUIEXEC && !SCRIPTSUCCESS)
+            if (CGlobals.GUIEXEC && !this.SCRIPTSUCCESS)
             {
                 CGlobals.Logger.Error(error, false);
 
@@ -201,7 +211,7 @@ namespace VeeamHealthCheck.Functions.Collection
 
                 Environment.Exit(1);
             }
-            else if (!SCRIPTSUCCESS)
+            else if (!this.SCRIPTSUCCESS)
             {
                 CGlobals.Logger.Error(error, false);
                 Environment.Exit(1);
@@ -212,8 +222,8 @@ namespace VeeamHealthCheck.Functions.Collection
         {
             if ((CGlobals.IsVbr))
             {
-                log.Info("Local VBR Detected, running local MFA test...");
-                return RunLocalMfaCheck(p);
+                this.log.Info("Local VBR Detected, running local MFA test...");
+                return this.RunLocalMfaCheck(p);
             }
             else
             {
@@ -228,7 +238,6 @@ namespace VeeamHealthCheck.Functions.Collection
                 if (!File.Exists(pwshPath))
                 {
                     CGlobals.Logger.Debug("PowerShell 7 not found at: " + pwshPath, false);
-
                 }
 
                 try
@@ -236,8 +245,9 @@ namespace VeeamHealthCheck.Functions.Collection
                     // Build PowerShell arguments to call the script with parameters
                     string args =
                         $"-NoProfile -ExecutionPolicy Bypass -File \"{scriptPath}\" -Server {CGlobals.REMOTEHOST} -Username {creds.Value.Username} -Password {creds.Value.Password}";
-                    //Ps7Executor ps7 = new();
-                    //ps7.LogPowerShellVersion();
+
+                    // Ps7Executor ps7 = new();
+                    // ps7.LogPowerShellVersion();
                     var processInfo = new ProcessStartInfo
                     {
                         FileName = pwshPath, // Use Windows PowerShell for Veeam module
@@ -247,6 +257,7 @@ namespace VeeamHealthCheck.Functions.Collection
                         UseShellExecute = false,
                         CreateNoWindow = true
                     };
+
                     // Log processInfo settings
                     CGlobals.Logger.Debug($"ProcessStartInfo Settings:\n  FileName: {processInfo.FileName}\n  Arguments: {processInfo.Arguments}\n  RedirectStandardOutput: {processInfo.RedirectStandardOutput}\n  RedirectStandardError: {processInfo.RedirectStandardError}\n  UseShellExecute: {processInfo.UseShellExecute}\n  CreateNoWindow: {processInfo.CreateNoWindow}");
                     using var process = System.Diagnostics.Process.Start(processInfo);
@@ -255,10 +266,19 @@ namespace VeeamHealthCheck.Functions.Collection
                     process.WaitForExit();
                     error = stdErr;
                     if (!string.IsNullOrWhiteSpace(stdOut))
+                    {
                         output.Add(stdOut);
+                    }
+
+
                     if (!string.IsNullOrWhiteSpace(stdErr))
+                    {
                         output.Add(stdErr);
+                    }
+
+
                     result = process.ExitCode == 0;
+
                     // Log output for debugging
                     CGlobals.Logger.Debug($"MFA Test Output (ExitCode={process.ExitCode}):");
                     foreach (var line in output)
@@ -277,11 +297,10 @@ namespace VeeamHealthCheck.Functions.Collection
                 {
             CGlobals.Logger.Warning("Failing over to PowerShell 5", false);
 
-                    RunLocalMfaCheck(p);
-
+            this.RunLocalMfaCheck(p);
                 }
-            return result;
 
+                return result;
             }
         }
 
@@ -303,30 +322,28 @@ namespace VeeamHealthCheck.Functions.Collection
 
         private bool TestPsMfaVb365(PSInvoker p)
         {
-            //CScripts scripts = new();
-
+            // CScripts scripts = new();
             return p.TestMfaVB365();
         }
 
         private void ExecVbrScripts(PSInvoker p)
         {
-            //debug log evaluation of what to run
+            // debug log evaluation of what to run
             CGlobals.Logger.Debug("DEBUG: Evaluating PS Script Execution Conditions:");
             CGlobals.Logger.Debug("IsVbr: " + CGlobals.IsVbr.ToString());
             CGlobals.Logger.Debug("REMOTEEXEC: " + CGlobals.REMOTEEXEC.ToString());
 
-
             if (CGlobals.IsVbr || CGlobals.REMOTEEXEC)
             {
                 CGlobals.Logger.Info("Entering vbr ps invoker", false);
-                SCRIPTSUCCESS = p.Invoke();
+                this.SCRIPTSUCCESS = p.Invoke();
             }
         }
 
         private void ExecVbrConfigOnly(PSInvoker p)
         {
             CGlobals.Logger.Info("Entering vbr config collection");
-            SCRIPTSUCCESS = p.RunVbrConfigCollect();
+            this.SCRIPTSUCCESS = p.RunVbrConfigCollect();
         }
 
         private void ExecVb365Scripts(PSInvoker p)
@@ -334,7 +351,8 @@ namespace VeeamHealthCheck.Functions.Collection
             if (CGlobals.IsVb365)
             {
                 CGlobals.Logger.Info("Entering vb365 ps invoker", false);
-                //p.InvokeVb365CollectEmbedded();
+
+                // p.InvokeVb365CollectEmbedded();
                 p.InvokeVb365Collect();
             }
         }
@@ -351,7 +369,6 @@ namespace VeeamHealthCheck.Functions.Collection
                 CGlobals.Logger.Error("Error checking log files:");
                 CGlobals.Logger.Error(e.Message);
             }
-
         }
     }
 }

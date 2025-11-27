@@ -15,24 +15,25 @@ namespace VeeamHealthCheck.Functions.Reporting.CsvHandlers
 {
     public class CCsvReader
     {
-        private CLogger log = CGlobals.Logger;
-        private readonly CsvConfiguration _csvConfig;
-        //private string _outPath;// = CVariables.vbrDir;
+        private readonly CLogger log = CGlobals.Logger;
+        private readonly CsvConfiguration csvConfig;
 
+        // private string _outPath;// = CVariables.vbrDir;
         public CCsvReader()
         {
-            _csvConfig = GetCsvConfig();
-            //_outPath = vbrOrVboPath;
+            this.csvConfig = this.GetCsvConfig();
+
+            // _outPath = vbrOrVboPath;
         }
 
         public CsvReader VbrCsvReader(string file)
         {
-            return FileFinder(file, CVariables.vbrDir);
+            return this.FileFinder(file, CVariables.vbrDir);
         }
 
         public CsvReader VboCsvReader(string file)
         {
-            return FileFinder(file, CVariables.vb365dir);
+            return this.FileFinder(file, CVariables.vb365dir);
         }
 
         public CsvReader FileFinder(string file, string outpath)
@@ -45,25 +46,25 @@ namespace VeeamHealthCheck.Functions.Reporting.CsvHandlers
                     FileInfo fi = new(f);
                     if (fi.Name.Contains(file))
                     {
-                        var cr = CReader(f);
+                        var cr = this.CReader(f);
                         return cr;
                     }
                 }
             }
             catch (Exception e)
             {
-
                 string s = string.Format("File or Directory {0} not found!", outpath + "\n" + e.Message);
-                log.Error(s);
+                this.log.Error(s);
                 return null;
             }
+
             return null;
         }
 
         private CsvReader CReader(string csvToRead)
         {
             TextReader reader = new StreamReader(csvToRead);
-            var csvReader = new CsvReader(reader, _csvConfig);
+            var csvReader = new CsvReader(reader, this.csvConfig);
             return csvReader;
         }
 

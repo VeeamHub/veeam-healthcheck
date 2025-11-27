@@ -14,7 +14,7 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR
 {
     internal class CConcurrencyHelper
     {
-        private CDataTypesParser _dTypeParser = CGlobals.DtParser;
+        private readonly CDataTypesParser dTypeParser = CGlobals.DtParser;
         private readonly CLogger log = CGlobals.Logger;
 
         public CConcurrencyHelper()
@@ -30,10 +30,8 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR
                 double diff = (now - session.CreationTime).TotalDays;
                 if (diff < CGlobals.ReportDays)
                 {
-                    ctList.Add(ParseConcurrency(session, 7));
-
+                    ctList.Add(this.ParseConcurrency(session, 7));
                 }
-
             }
 
             return ctList;
@@ -41,7 +39,7 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR
 
         public List<ConcurentTracker> JobCounter(List<CJobSessionInfo> trimmedSessionInfo)
         {
-            List<CJobTypeInfos> jobInfo = _dTypeParser.JobInfos;
+            List<CJobTypeInfos> jobInfo = this.dTypeParser.JobInfos;
             List<ConcurentTracker> ctList = new();
             List<string> mirrorJobNamesList = new();
             List<string> nameDatesList = new();
@@ -51,13 +49,20 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR
             foreach (var backup in jobInfo)
             {
                 if (backup.JobType == "SimpleBackupCopyPolicy")
+                {
                     mirrorJobBjobList.Add(backup.Name);
-                if (backup.JobType == "BackupSync")
-                    backupSyncNameList.Add(backup.Name);
-                if (backup.JobType == "EpAgentBackup")
-                    epAgentBackupList.Add(backup.Name);
-            }
+                }
 
+                if (backup.JobType == "BackupSync")
+                {
+                    backupSyncNameList.Add(backup.Name);
+                }
+
+                if (backup.JobType == "EpAgentBackup")
+                {
+                    epAgentBackupList.Add(backup.Name);
+                }
+            }
 
             foreach (var m in mirrorJobBjobList)
             {
@@ -65,7 +70,7 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR
 
                 foreach (var sess in mirrorSessions)
                 {
-                    //int i = mirrorSessions.Count();
+                    // int i = mirrorSessions.Count();
                     DateTime now = DateTime.Now;
                     double diff = (now - sess.CreationTime).TotalDays;
                     if (diff < CGlobals.ReportDays)
@@ -75,7 +80,7 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR
                         if (!nameDatesList.Contains(nameDate))
                         {
                             nameDatesList.Add(nameDate);
-                            ctList.Add(ParseConcurrency(sess, 7));
+                            ctList.Add(this.ParseConcurrency(sess, 7));
                         }
                     }
                 }
@@ -96,14 +101,14 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR
                         {
                             nameDatesList.Add(bcjName);
 
-                            ctList.Add(ParseConcurrency(s, 7));
+                            ctList.Add(this.ParseConcurrency(s, 7));
                             break;
                         }
                     }
                     catch (Exception e)
                     {
-                        log.Error("Failed to parse BackupSync job. Error:");
-                        log.Error(e.Message);
+                        this.log.Error("Failed to parse BackupSync job. Error:");
+                        this.log.Error(e.Message);
                     }
                 }
             }
@@ -122,15 +127,14 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR
                         if (!nameDatesList.Contains(n1))
                         {
                             nameDatesList.Add(n1);
-                            ctList.Add(ParseConcurrency(epB, 7));
+                            ctList.Add(this.ParseConcurrency(epB, 7));
                         }
                     }
-
                 }
             }
+
             foreach (var b in jobInfo)
             {
-
                 var remainingSessions = trimmedSessionInfo.Where(x => x.JobName.Equals(b.Name));
                 foreach (var sess in remainingSessions)
                 {
@@ -138,11 +142,11 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR
                     if (!nameDatesList.Contains(nameDate))
                     {
                         nameDatesList.Add(nameDate);
-                        ctList.Add(ParseConcurrency(sess, 7));
+                        ctList.Add(this.ParseConcurrency(sess, 7));
                     }
                 }
-
             }
+
             return ctList;
         }
 
@@ -151,13 +155,11 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR
             Dictionary<DayOfWeek, Dictionary<int, int>> concurrencyDictionary = new();
             foreach (var c in cTrackerList)
             {
-
                 if (!concurrencyDictionary.ContainsKey(c.DayofTheWeeek))
                 {
                     Dictionary<int, int> minuteMapper = new();
                     foreach (var c2 in cTrackerList)
                     {
-
                         if (c2.Date.DayOfWeek == c.Date.DayOfWeek)
                         {
                             var ticks = c2.Duration.TotalMinutes;
@@ -173,6 +175,7 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR
                             }
                         }
                     }
+
                     Dictionary<int, int> hoursAndCount = new();
 
                     for (int hour = 0; hour < 24; hour++)
@@ -190,28 +193,27 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR
                                 if (counter > highestCount || highestCount == 0)
                                 {
                                     highestCount = counter;
-
                                 }
                             }
                         }
+
                         hoursAndCount.Add(hour, highestCount);
                     }
 
                     concurrencyDictionary.Add(c.DayofTheWeeek, hoursAndCount);
-
                 }
-
             }
+
             return concurrencyDictionary;
         }
 
         public Dictionary<int, string[]> FinalConcurrency(List<ConcurentTracker> cTrackerList)
         {
             var sendBack = new Dictionary<int, string[]>();
-            var concurrencyDictionary = ConcurrencyDictionary(cTrackerList);
-            foreach (var hour in DailyHours().Distinct()) // o is every hour starting with 0
+            var concurrencyDictionary = this.ConcurrencyDictionary(cTrackerList);
+            foreach (var hour in this.DailyHours().Distinct()) // o is every hour starting with 0
             {
-                //string[] weekdays = new string[7];
+                // string[] weekdays = new string[7];
                 string[] daysOfTheWeek = new string[7];
                 foreach (var c in concurrencyDictionary)
                 {
@@ -221,32 +223,58 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR
                         {
                             string count;
                             if (d.Value == 0)
+                            {
                                 count = string.Empty;
+                            }
                             else
+                            {
                                 count = d.Value.ToString();
-                            //string count = d.Value.ToString();
+                            }
+
+                            // string count = d.Value.ToString();
 
                             if (c.Key == DayOfWeek.Sunday)
+                            {
                                 daysOfTheWeek[0] = count;
+                            }
+
                             if (c.Key == DayOfWeek.Monday)
+                            {
                                 daysOfTheWeek[1] = count;
+                            }
+
                             if (c.Key == DayOfWeek.Tuesday)
+                            {
                                 daysOfTheWeek[2] = count;
+                            }
+
                             if (c.Key == DayOfWeek.Wednesday)
+                            {
                                 daysOfTheWeek[3] = count;
+                            }
+
                             if (c.Key == DayOfWeek.Thursday)
+                            {
                                 daysOfTheWeek[4] = count;
+                            }
+
                             if (c.Key == DayOfWeek.Friday)
+                            {
                                 daysOfTheWeek[5] = count;
+                            }
+
+
                             if (c.Key == DayOfWeek.Saturday)
+                            {
                                 daysOfTheWeek[6] = count;
+                            }
                         }
                     }
-
                 }
-                sendBack.Add(hour, daysOfTheWeek);
 
+                sendBack.Add(hour, daysOfTheWeek);
             }
+
             return sendBack;
         }
 
@@ -257,6 +285,7 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR
             {
                 dailyHours.Add(i);
             }
+
             return dailyHours;
         }
 
@@ -266,10 +295,11 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR
 
             DateTime now = DateTime.Now;
             double diff = (now - session.CreationTime).TotalDays;
-            //if (session.CreationTime.Day == now.Day)
-            //{
 
-            //}
+            // if (session.CreationTime.Day == now.Day)
+            // {
+
+            // }
             if (diff < days)
             {
                 DayOfWeek dayOfWeek = session.CreationTime.DayOfWeek;
@@ -293,6 +323,7 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR
 
                 return ct;
             }
+
             return ct;
         }
     }

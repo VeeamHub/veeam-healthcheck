@@ -10,17 +10,17 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.Exportables
 {
     public class HtmlToPdfConverter
     {
-        private IConverter _converter;
+        private IConverter converter;
 
         public HtmlToPdfConverter()
         {
-            _converter = new SynchronizedConverter(new PdfTools());
+            this.converter = new SynchronizedConverter(new PdfTools());
         }
 
         [STAThread]
         public void ConvertHtmlToPdf(string htmlContent, string outputPath)
         {
-            var html = htmlContent; //"<h1>Hello, World!</h1>"; // replace with your HTML string
+            var html = htmlContent; // "<h1>Hello, World!</h1>"; // replace with your HTML string
             var doc = new HtmlToPdfDocument()
             {
                 GlobalSettings = {
@@ -38,15 +38,14 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.Exportables
                 }
             };
 
-            byte[] pdf = _converter.Convert(doc);
+            byte[] pdf = this.converter.Convert(doc);
             File.WriteAllBytes(outputPath, pdf);
-
         }
 
         // dispose method
         public void Dispose()
         {
-            _converter = null;
+            this.converter = null;
         }
     }
 }

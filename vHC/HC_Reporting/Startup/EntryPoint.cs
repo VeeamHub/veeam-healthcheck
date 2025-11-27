@@ -8,7 +8,7 @@ namespace VeeamHealthCheck.Startup
 {
     public class EntryPoint
     {
-        private static CClientFunctions _functions = new();
+        private static readonly CClientFunctions functions = new();
 
         [STAThread]
         public static int Main(string[] args)
@@ -31,11 +31,10 @@ namespace VeeamHealthCheck.Startup
                     CGlobals.Logger.Error("Inner exception: " + ex.InnerException.Message);
                     CGlobals.Logger.Error("Inner stack trace: " + ex.InnerException.StackTrace);
                 }
+
                 CGlobals.Logger.Error("The result is: " + 1, true);
                 return 1;
             }
-            
         }
-
     }
 }

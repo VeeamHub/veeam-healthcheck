@@ -7,8 +7,8 @@ namespace VeeamHealthCheck.Functions.Reporting.CsvHandlers
 {
     public class CCdpProxyCsvInfo
     {
-        //"ServerId","CacheSize","CachePath","IsEnabled","SourceProxyTrafficPort","TargetProxyTrafficPort","Id","Name",
-        //"Description"
+        // "ServerId","CacheSize","CachePath","IsEnabled","SourceProxyTrafficPort","TargetProxyTrafficPort","Id","Name",
+        // "Description"
         [Index(0)]
         public string ServerId { get; set; }
 
@@ -35,7 +35,5 @@ namespace VeeamHealthCheck.Functions.Reporting.CsvHandlers
 
         [Index(8)]
         public string description { get; set; }
-
     }
-
 }

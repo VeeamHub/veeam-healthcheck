@@ -16,13 +16,11 @@ namespace VeeamHealthCheck.Startup
 {
     internal class CClientFunctions : IDisposable
     {
-
-        private CLogger LOG = CGlobals.Logger;
-        private string logStart = "[Functions]\t";
+        private readonly CLogger LOG = CGlobals.Logger;
+        private readonly string logStart = "[Functions]\t";
 
         public CClientFunctions()
         {
-
         }
 
         public void Dispose() { }
@@ -61,7 +59,7 @@ namespace VeeamHealthCheck.Startup
 
         private void VbrVersionSupportCheck()
         {
-            //GetVbrVersion();
+            // GetVbrVersion();
 
             // get the version of the current vhc software:
             if(CGlobals.VBRMAJORVERSION < 12)
@@ -74,18 +72,16 @@ namespace VeeamHealthCheck.Startup
                 {
                     string msg = String.Format("Veeam Health Check version {0} does not support Veeam Backup & Replication Versions prior to v12. To check systems prior to v12, Please download 2.0.0.546: https://github.com/VeeamHub/veeam-healthcheck/releases/tag/2.0.0.546", CGlobals.VHCVERSION);
 
-                    LOG.Error(msg, false);
+                    this.LOG.Error(msg, false);
 
                     if (CGlobals.GUIEXEC)
                     {
                         MessageBox.Show(msg, "Error", MessageBoxButton.OK, MessageBoxImage.Error);
-
                     }
-                    Environment.Exit(0);
 
+                    Environment.Exit(0);
                 }
             }
-
         }
 
         public string ModeCheck()
@@ -95,23 +91,23 @@ namespace VeeamHealthCheck.Startup
             var processes = Process.GetProcesses();
             foreach (var process in processes)
             {
-                //LOG.Warning(logStart + "process name: " + process.ProcessName);
+                // LOG.Warning(logStart + "process name: " + process.ProcessName);
                 if (process.ProcessName == "Veeam.Archiver.Service")
                 {
-
                     CGlobals.IsVb365 = true;
-                    LOG.Info("VB365 software detected", false);
+                    this.LOG.Info("VB365 software detected", false);
                 }
+
                 if (process.ProcessName == "Veeam.Backup.Service")
                 {
                     CGlobals.IsVbr = true;
-                    LOG.Info("VBR software detected", false);
+                    this.LOG.Info("VBR software detected", false);
 
                     // now get the VBR Version and store as global variable to help direct which script(s) to use
-                    //VbrVersionSupportCheck();
+                    // VbrVersionSupportCheck();
                 }
-
             }
+
             if (!CGlobals.IsVb365 && !CGlobals.IsVbr)
             {
                 CGlobals.Logger.Error("No Veeam Software detected. Is this server the VBR or VB365 management server?", false);
@@ -120,15 +116,34 @@ namespace VeeamHealthCheck.Startup
             }
 
             if (CGlobals.IsVbr && CGlobals.IsVb365)
+            {
+
                 return title + " - " + VbrLocalizationHelper.GuiTitleBnR + " & " + VbrLocalizationHelper.GuiTitleVB365;
+            }
+
+
             if (!CGlobals.IsVb365 && !CGlobals.IsVbr)
+            {
+
                 return title + " - " + VbrLocalizationHelper.GuiImportModeOnly;
+            }
+
             if (CGlobals.IsVbr)
+            {
                 return title + " - " + VbrLocalizationHelper.GuiTitleBnR;
+            }
+
+
             if (CGlobals.IsVb365)
+            {
+
                 return title + " - " + VbrLocalizationHelper.GuiTitleVB365;
+            }
             else
+            {
+
                 return title;
+            }
         }
 
         public bool AcceptTerms()
@@ -137,41 +152,48 @@ namespace VeeamHealthCheck.Startup
 
             var res = MessageBox.Show(message, "Terms", MessageBoxButton.YesNo,MessageBoxImage.Question);
             if (res.ToString() == "Yes")
+            {
+
                 return true;
-            else return false;
+            }
+            else
+            {
+                return false;
+            }
         }
 
         public int StartPrimaryFunctions()
         {
-            LogUserSettings();
-            StartCollections();
-            return StartAnalysis();
+            this.LogUserSettings();
+            this.StartCollections();
+            return this.StartAnalysis();
         }
 
         public void RunHotfixDetector(string path, string remoteServer)
         {
-            LOG.Info(logStart + "Starting Hotfix Detector", false);
-            GetVbrVersion();
+            this.LOG.Info(this.logStart + "Starting Hotfix Detector", false);
+            this.GetVbrVersion();
             if (!String.IsNullOrEmpty(path))
             {
-                if (!VerifyPath(path))
+                if (!this.VerifyPath(path))
                 {
                     string error = String.Format("Entered path \"{0}\" is invalid or doesn't exist. Try a different path", path);
-                    LOG.Error(logStart + error, false);
+                    this.LOG.Error(this.logStart + error, false);
                     return;
-                    //LOG.Warning(logStart + "This option will collect support logs to some local directory and then check for hotfixes", false);
-                    //LOG.Warning(logStart + "Please enter local path with adequate space for log files:", false);
-                    //path = Console.ReadLine();
-                }
 
+                    // LOG.Warning(logStart + "This option will collect support logs to some local directory and then check for hotfixes", false);
+                    // LOG.Warning(logStart + "Please enter local path with adequate space for log files:", false);
+                    // path = Console.ReadLine();
+                }
             }
             else
             {
-                LOG.Warning(logStart + "/path= variable is empty or missing.");
-                //    "\nPlease retry with syntax:" +
+                this.LOG.Warning(this.logStart + "/path= variable is empty or missing.");
+
+                // "\nPlease retry with syntax:" +
                 //    "\nVeeamHealthCheck.exe /hotfix /path:C:\\examplepath", false);
-                LOG.Warning(logStart + "This option will collect support logs to some local directory and then check for hotfixes", false);
-                LOG.Warning(logStart + "Please enter local path with adequate space for log files:", false);
+                this.LOG.Warning(this.logStart + "This option will collect support logs to some local directory and then check for hotfixes", false);
+                this.LOG.Warning(this.logStart + "Please enter local path with adequate space for log files:", false);
                 path = Console.ReadLine();
             }
 
@@ -181,11 +203,31 @@ namespace VeeamHealthCheck.Startup
 
         public bool VerifyPath(string path)
         {
-            if (String.IsNullOrEmpty(path)) return false;
-            if (path.StartsWith("\\\\")) return false;
-            if (Directory.Exists(path)) return true;
-            if(TryCreateDir(path)) return true;
-            else return false;
+            if (String.IsNullOrEmpty(path))
+            {
+                return false;
+            }
+
+
+            if (path.StartsWith("\\\\"))
+            {
+                return false;
+            }
+
+
+            if (Directory.Exists(path))
+            {
+                return true;
+            }
+
+            if (this.TryCreateDir(path))
+            {
+                return true;
+            }
+            else
+            {
+                return false;
+            }
         }
 
         private bool TryCreateDir(string path)
@@ -196,28 +238,25 @@ namespace VeeamHealthCheck.Startup
                 return true;
             }
             catch {
-                LOG.Error("Failed to create directory.", false);
+                this.LOG.Error("Failed to create directory.", false);
                 return false; }
-
         }
 
         private void LogUserSettings()
         {
-            LOG.Info(ClientSettingsString(), false);
-
+            this.LOG.Info(this.ClientSettingsString(), false);
         }
 
         private void StartCollections()
         {
             if (!CGlobals.IMPORT)
             {
-                LOG.Info(logStart + "Init Collections", false);
+                this.LOG.Info(this.logStart + "Init Collections", false);
 
                 if (CGlobals.REMOTEEXEC && CGlobals.RunSecReport)
                 {
                     CImpersonation cImpersonation = new CImpersonation();
                     cImpersonation.RunCollection();
-
                 }
                 else if (CGlobals.REMOTEEXEC)
                 {
@@ -230,16 +269,16 @@ namespace VeeamHealthCheck.Startup
                     collect.Run();
                 }
 
-                LOG.Info(logStart + "Init Collections...done!", false);
+                this.LOG.Info(this.logStart + "Init Collections...done!", false);
             }
         }
 
         private int StartAnalysis()
         {
-            LOG.Info(logStart + "Init Data analysis & report creations", false);
-            int res = Import();
+            this.LOG.Info(this.logStart + "Init Data analysis & report creations", false);
+            int res = this.Import();
 
-            LOG.Info(logStart + "Init Data analysis & report creations...done!", false);
+            this.LOG.Info(this.logStart + "Init Data analysis & report creations...done!", false);
             return res;
         }
 
@@ -247,33 +286,35 @@ namespace VeeamHealthCheck.Startup
         {
             CGlobals.Logger.Info("Setting openexplorer & openhtml to false for CLI execution", false);
             CGlobals.OpenExplorer = false;
-            //CGlobals.OpenHtml = false;
-            CGlobals._desiredPath = targetForOutput;
+
+            // CGlobals.OpenHtml = false;
+            CGlobals.desiredPath = targetForOutput;
             if(!CGlobals.IMPORT)
-                PreRunCheck();
-            //GetVbrVersion();
-            
-            
+            {
+                this.PreRunCheck();
+            }
+
+            // GetVbrVersion();
+
+
             try // REST TEST AREA
             {
-                //RestInvoker restInvoker = new RestInvoker();
-                //restInvoker.Run();
+                // RestInvoker restInvoker = new RestInvoker();
+                // restInvoker.Run();
             }
             catch(Exception ex)
             {
-
             }
             
-            return StartPrimaryFunctions();
+            return this.StartPrimaryFunctions();
         }
 
         public void GetVbrVersion()
         {
             try
             {
-
             CRegReader reg = new();
-            LOG.Info(logStart + "VBR Version: " + reg.GetVbrVersionFilePath(),  false);
+            this.LOG.Info(this.logStart + "VBR Version: " + reg.GetVbrVersionFilePath(),  false);
             }
             catch(Exception e) { }
         }
@@ -282,8 +323,12 @@ namespace VeeamHealthCheck.Startup
         {
             try
             {
-                if (!Directory.Exists(CGlobals._desiredPath))
-                    Directory.CreateDirectory(CGlobals._desiredPath);
+                if (!Directory.Exists(CGlobals.desiredPath))
+                {
+                    Directory.CreateDirectory(CGlobals.desiredPath);
+                }
+
+
                 return true;
             }
             catch (Exception e)
@@ -311,7 +356,7 @@ namespace VeeamHealthCheck.Startup
                 "\t\t\t\t\tOpen Explorer = {2}\n" +
                 "\t\t\t\t\tPath = {3}\n" +
                 "\t\t\t\t\tInterval = {4}",
-                CGlobals.Scrub, CGlobals.OpenHtml, CGlobals.OpenExplorer, CGlobals._desiredPath, CGlobals.ReportDays.ToString()
+                CGlobals.Scrub, CGlobals.OpenHtml, CGlobals.OpenExplorer, CGlobals.desiredPath, CGlobals.ReportDays.ToString()
                 );
         }
 
@@ -330,14 +375,15 @@ namespace VeeamHealthCheck.Startup
         {
             CGlobals.Logger.Info("Args count = " + args.Count().ToString());
             foreach (var arg in args)
+            {
                 CGlobals.Logger.Info("\tInput: " + arg);
+            }
         }
 
         public void LogVersionAndArgs(string[] args)
         {
-            WriteVhcVersion();
-            WriteCliArgs(args);
+            this.WriteVhcVersion();
+            this.WriteCliArgs(args);
         }
-
     }
 }

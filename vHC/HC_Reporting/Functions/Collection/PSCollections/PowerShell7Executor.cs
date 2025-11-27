@@ -21,9 +21,9 @@ Write-Output ""Checking Veeam on $VeeamServer""
 # Your actual PS code here, e.g., Import-Module VeeamPSSnapin; Get-VBRServer
 ";
 
-        private readonly string _vbrConfigScript = Environment.CurrentDirectory + @"\Tools\Scripts\HealthCheck\VBR\Get-VBRConfig.ps1";
-        private readonly string _vbrSessionScript = Environment.CurrentDirectory + @"\Tools\Scripts\HealthCheck\VBR\Get-VeeamSessionReport.ps1";
-        private readonly string _vbrSessionScriptVersion13 = Environment.CurrentDirectory + @"\Tools\Scripts\HealthCheck\VBR\Get-VeeamSessionReportVersion13.ps1";
+        private readonly string vbrConfigScript = Environment.CurrentDirectory + @"\Tools\Scripts\HealthCheck\VBR\Get-VBRConfig.ps1";
+        private readonly string vbrSessionScript = Environment.CurrentDirectory + @"\Tools\Scripts\HealthCheck\VBR\Get-VeeamSessionReport.ps1";
+        private readonly string vbrSessionScriptVersion13 = Environment.CurrentDirectory + @"\Tools\Scripts\HealthCheck\VBR\Get-VeeamSessionReportVersion13.ps1";
 
         /// Checks if the Veeam.Backup.PowerShell module is available in PS7.
 
@@ -31,7 +31,11 @@ Write-Output ""Checking Veeam on $VeeamServer""
         {
             string pwshPath = @"C:\Program Files\PowerShell\7\pwsh.exe";
             if (!File.Exists(pwshPath))
+            {
+
                 throw new FileNotFoundException("PowerShell 7 not found at: " + pwshPath);
+            }
+
 
             string args = $"-NoProfile -Command \"if (Get-Module -ListAvailable -Name '{moduleName}') {{ Write-Host '0' }} else {{ Write-Host '1' }}\"";
 
@@ -55,9 +59,13 @@ Write-Output ""Checking Veeam on $VeeamServer""
             // Find pwsh.exe (PowerShell 7)
             string pwshPath = @"C:\Program Files\PowerShell\7\pwsh.exe";
             if (!System.IO.File.Exists(pwshPath))
+            {
+
                 throw new FileNotFoundException("PowerShell 7 not found at: " + pwshPath);
+            }
 
             // Build the command line
+
             string args = $"-NoProfile -ExecutionPolicy Bypass -Command \"{scriptPath}\" ";
 
             var psi = new ProcessStartInfo
@@ -78,7 +86,10 @@ Write-Output ""Checking Veeam on $VeeamServer""
             // Optionally, handle output/error here
             System.Console.WriteLine(output);
             if (!string.IsNullOrWhiteSpace(error))
+            {
                 System.Console.Error.WriteLine(error);
+            }
+
 
             return process.ExitCode;
         }
@@ -91,12 +102,11 @@ Write-Output ""Checking Veeam on $VeeamServer""
 
             try
             {
-                //var (isAvailable, modulePath, moduleError) = CheckVeeamModule();
-                //if (!isAvailable)
-                //{
+                // var (isAvailable, modulePath, moduleError) = CheckVeeamModule();
+                // if (!isAvailable)
+                // {
                 //    return (false, output, $"Cannot execute script: {moduleError}");
-                //}
-
+                // }
                 using var runspace = RunspaceFactory.CreateRunspace();
                 runspace.Open();
                 using var ps = PowerShell.Create();
@@ -119,6 +129,7 @@ Write-Output ""Checking Veeam on $VeeamServer""
                 {
                     sb.AppendLine(result.ToString());
                 }
+
                 output.AddRange(sb.ToString().Split(Environment.NewLine, StringSplitOptions.RemoveEmptyEntries));
 
                 if (ps.HadErrors)
@@ -128,6 +139,7 @@ Write-Output ""Checking Veeam on $VeeamServer""
                     {
                         sb.AppendLine(error.ToString());
                     }
+
                     errorMsg = sb.ToString();
                 }
                 else
@@ -171,7 +183,10 @@ Write-Output ""Checking Veeam on $VeeamServer""
 
             CGlobals.Logger.Debug($"[PowerShell Version Log] Output: {output}", false);
             if (!string.IsNullOrWhiteSpace(error))
+            {
+
                 CGlobals.Logger.Debug($"[PowerShell Version Log] Error: {error}", false);
+            }
         }
     }
 }

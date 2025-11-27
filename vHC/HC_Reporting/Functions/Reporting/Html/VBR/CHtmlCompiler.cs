@@ -17,68 +17,74 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR
 {
     internal class CHtmlCompiler
     {
-        private string _htmldocOriginal = string.Empty;
-        private string _htmldocScrubbed = string.Empty;
+        private string htmldocOriginal = string.Empty;
+        private string htmldocScrubbed = string.Empty;
 
+        private readonly CLogger log = CGlobals.Logger;
 
-        private CLogger log = CGlobals.Logger;
+        readonly CHtmlFormatting form = new();
+        readonly CHtmlTables tables = new();
 
-        CHtmlFormatting _form = new();
-        CHtmlTables _tables = new();
-
-        private string logStart = "[VbrHtmlCompiler]\t";
+        private readonly string logStart = "[VbrHtmlCompiler]\t";
 
         // section links
 
-
-
         public CHtmlCompiler()
         {
-            log.Info(logStart + "CHtmlCompiler constructor entered");
-            log.Info(logStart + "CHtmlCompiler constructor completed");
+            this.log.Info(this.logStart + "CHtmlCompiler constructor entered");
+            this.log.Info(this.logStart + "CHtmlCompiler constructor completed");
         }
 
         public int RunFullVbrReport()
         {
-            log.Info(logStart + ">>> ENTERING RunFullVbrReport() method <<<");
-            log.Info(logStart + "Init full report");
-            FormHeader();
-            FormVbrFullBody();
-            int res = ExportHtml();
+            this.log.Info(this.logStart + ">>> ENTERING RunFullVbrReport() method <<<");
+            this.log.Info(this.logStart + "Init full report");
+            this.FormHeader();
+            this.FormVbrFullBody();
+            int res = this.ExportHtml();
             if (res == 0)
-                log.Info(logStart + "Init full report...success!");
+            {
+                this.log.Info(this.logStart + "Init full report...success!");
+            }
+
             if (res != 0)
-                log.Error(logStart + "Init full report...failed!");
+            {
+                this.log.Error(this.logStart + "Init full report...failed!");
+            }
+
 
             return res;
-            //log.Info(logStart + "Init full report...done!");
+
+            // log.Info(logStart + "Init full report...done!");
         }
 
         public void RunSecurityReport()
         {
-            log.Info(logStart + "Init Security Report");
-            FormHeader();
-            FormSecurityBody();
-            ExportSecurityHtml();
-            log.Info(logStart + "Init Security Report");
+            this.log.Info(this.logStart + "Init Security Report");
+            this.FormHeader();
+            this.FormSecurityBody();
+            this.ExportSecurityHtml();
+            this.log.Info(this.logStart + "Init Security Report");
         }
 
         private int ExportHtml()
         {
             int res = 0;
-            CHtmlExporter exporter = new(GetServerName());
+            CHtmlExporter exporter = new(this.GetServerName());
             if (CGlobals.Scrub)
             {
-                res = exporter.ExportVbrHtml(_htmldocScrubbed, true);
-
+                res = exporter.ExportVbrHtml(this.htmldocScrubbed, true);
             }
             else
             {
-                res = exporter.ExportVbrHtml(_htmldocOriginal, false);
-
+                res = exporter.ExportVbrHtml(this.htmldocOriginal, false);
             }
+
             if (CGlobals.OpenExplorer)
+            {
                 exporter.OpenExplorer();
+            }
+
 
             if (res == 0)
             {
@@ -86,57 +92,58 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR
             }
             else return 1;
         }
-        // write a method to export _htmldocOriginal as a PDF
 
+        // write a method to export _htmldocOriginal as a PDF
         private void ExportToPdf()
         {
-            //HtmlToPdfConverter converter = new();
-            //var htmlContent = _htmldocOriginal;
-            //var outputPath = "output.pdf";
+            // HtmlToPdfConverter converter = new();
+            // var htmlContent = _htmldocOriginal;
+            // var outputPath = "output.pdf";
 
-            //var pdfBytes = converter.ConvertHtmlToPdf(htmlContent, outputPath);
+            // var pdfBytes = converter.ConvertHtmlToPdf(htmlContent, outputPath);
 
             //// If you need to save the PDF to a file
-            //File.WriteAllBytes(outputPath, pdfBytes);
+            // File.WriteAllBytes(outputPath, pdfBytes);
         }
-
 
         private void ExportSecurityHtml()
         {
-            CHtmlExporter exporter = new(GetServerName());
-            exporter.ExportVbrSecurityHtml(_htmldocOriginal, false);
-            //exporter.ExportVbrHtml(_htmldocScrubbed, true);
+            CHtmlExporter exporter = new(this.GetServerName());
+            exporter.ExportVbrSecurityHtml(this.htmldocOriginal, false);
+
+            // exporter.ExportVbrHtml(_htmldocScrubbed, true);
             if (CGlobals.OpenExplorer)
+            {
                 exporter.OpenExplorer();
+            }
         }
 
         private string GetServerName()
         {
-            log.Info(logStart + ">>> ENTERING GetServerName() method <<<");
-            log.Info("Checking for server name...");
-            log.Info(logStart + "About to call Dns.GetHostName()...");
+            this.log.Info(this.logStart + ">>> ENTERING GetServerName() method <<<");
+            this.log.Info("Checking for server name...");
+            this.log.Info(this.logStart + "About to call Dns.GetHostName()...");
             string hostname = Dns.GetHostName();
-            log.Info(logStart + "Dns.GetHostName() completed successfully. Hostname: " + hostname);
+            this.log.Info(this.logStart + "Dns.GetHostName() completed successfully. Hostname: " + hostname);
             return hostname;
         }
 
         public void Dispose()
         {
-
         }
 
         private void FormHeader()
         {
-            log.Info(logStart + ">>> ENTERING FormHeader() method <<<");
-            log.Info("[HTML] Forming Header...");
-            log.Info(logStart + "About to call _form.Header()...");
-            string h = _form.Header();
-            log.Info(logStart + "_form.Header() completed successfully");
+            this.log.Info(this.logStart + ">>> ENTERING FormHeader() method <<<");
+            this.log.Info("[HTML] Forming Header...");
+            this.log.Info(this.logStart + "About to call _form.Header()...");
+            string h = this.form.Header();
+            this.log.Info(this.logStart + "_form.Header() completed successfully");
 
-            _htmldocOriginal = h;
-            _htmldocScrubbed += h;
+            this.htmldocOriginal = h;
+            this.htmldocScrubbed += h;
 
-            log.Info("[HTML] Forming Header...done!");
+            this.log.Info("[HTML] Forming Header...done!");
         }
 
         public static string GetEmbeddedCssContent(string embeddedFileName)
@@ -153,29 +160,30 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR
 
         #region HtmlHeaders
 
-
         private void SetUniversalNavStart()
         {
-            log.Info("[HTML] setting HTML navigation");
-            AddToHtml(DivId("navigation"));
-            AddToHtml(string.Format("<h2>{0}</h2>", VbrLocalizationHelper.NavHeader));
+            this.log.Info("[HTML] setting HTML navigation");
+            this.AddToHtml(this.DivId("navigation"));
+            this.AddToHtml(string.Format("<h2>{0}</h2>", VbrLocalizationHelper.NavHeader));
+
             // AddToHtml(string.Format("<button type=\"button\" class=\"btn\" onclick=\"test()\">{0}</button>", VbrLocalizationHelper.NavColapse));
         }
 
         private void SetNavigation()
         {
-            //SetUniversalNavStart();
-            NavTable();
+            // SetUniversalNavStart();
+            this.NavTable();
 
-            AddToHtml(SetVbrHcIntro(false));
+            this.AddToHtml(this.SetVbrHcIntro(false));
 
-            //add end div for card holding nav & summary
-            AddToHtml("</div>");
-            //add end div for end of section
-            AddToHtml("</div>");
+            // add end div for card holding nav & summary
+            this.AddToHtml("</div>");
+
+            // add end div for end of section
+            this.AddToHtml("</div>");
+
             // add line break for spacing
-            AddToHtml("<br>");
-
+            this.AddToHtml("<br>");
         }
 
         private string SetVbrHcIntro(bool scrub)
@@ -188,7 +196,8 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR
                     s += "<div class=\"card2\">" +
                         "<h2>About</h2>"
                         + VbrLocalizationHelper.HtmlIntroLine1 + "</a>\n";
-                    //s += LineBreak();
+
+                    // s += LineBreak();
                     s += String.Format(@"<dl>
                 <dt>CSV Raw Data Output</dt>
                 <dd>{0}</dd>
@@ -212,7 +221,8 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR
                     s += "<div class=\"card2\">" +
                          "<h2>About</h2>" +
                         VbrLocalizationHelper.HtmlIntroLine1 + "</a>\n";
-                    //s += LineBreak();
+
+                    // s += LineBreak();
                     s += String.Format(@"<dl>
                 <dt>CSV Raw Data Output</dt>
                 <dd>{0}</dd>
@@ -243,21 +253,25 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR
 
         private void SetSecurityNavigations()
         {
-            //SetUniversalNavStart();
-            SecurityNavTable();
-            //SetUniversalNavEnd();
+            // SetUniversalNavStart();
+            this.SecurityNavTable();
+
+            // SetUniversalNavEnd();
         }
-
-
 
         private string SetLicHolder()
         {
-            log.Info("Setting license holder name...");
+            this.log.Info("Setting license holder name...");
             CCsvParser csv = new();
             var lic = csv.GetDynamicLicenseCsv();
-            log.Info("Setting license holder name...done!");
+            this.log.Info("Setting license holder name...done!");
             foreach (var l in lic)
+            {
+
                 return l.licensedto;
+            }
+
+
             return string.Empty;
         }
 
@@ -266,71 +280,69 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR
         private string FormBodyStart(string htmlString, bool scrub)
         {
             CGlobals.Scrub = scrub;
-            string h = _form.body;
-            h += _form.FormHtmlButtonGoToTop();
+            string h = this.form.body;
+            h += this.form.FormHtmlButtonGoToTop();
             if (scrub)
             {
-                h += _form.SetHeaderAndLogo(" ");
-                //h += _form.SetBannerAndIntro(true);
+                h += this.form.SetHeaderAndLogo(" ");
+
+                // h += _form.SetBannerAndIntro(true);
             }
             else
             {
-                h += _form.SetHeaderAndLogo(SetLicHolder());
-                //h += _form.SetBannerAndIntro(false);
+                h += this.form.SetHeaderAndLogo(this.SetLicHolder());
+
+                // h += _form.SetBannerAndIntro(false);
             }
 
             return h;
         }
 
-
         private string SetVbrSecurityHeader()
         {
-            return _form.SetHeaderAndLogo(SetLicHolder());
+            return this.form.SetHeaderAndLogo(this.SetLicHolder());
         }
 
         private string FormSecurityBodyStart(string htmlString, bool scrub)
         {
-            htmlString += _form.body;
-            htmlString += SetVbrSecurityHeader();
-            htmlString += _form.SetSecurityBannerAndIntro(scrub);
+            htmlString += this.form.body;
+            htmlString += this.SetVbrSecurityHeader();
+            htmlString += this.form.SetSecurityBannerAndIntro(scrub);
             return htmlString;
         }
 
         private void FormSecurityBody()
         {
+            this.log.Info("[HTML] forming HTML body");
+            this.htmldocOriginal += this.FormSecurityBodyStart(this.htmldocOriginal, false);
 
-            log.Info("[HTML] forming HTML body");
-            _htmldocOriginal += FormSecurityBodyStart(_htmldocOriginal, false);
+            // nav
+            this.SetSecurityNavigations(); // change for security
 
-            //nav
-            SetSecurityNavigations(); // change for security
-
-
-            //tables
+            // tables
             CHtmlBodyHelper helper = new();
-            _htmldocOriginal = helper.FormSecurityReport(_htmldocOriginal);
+            this.htmldocOriginal = helper.FormSecurityReport(this.htmldocOriginal);
 
-            _htmldocOriginal += FormFooter();
+            this.htmldocOriginal += this.FormFooter();
 
-
-            log.Info("[HTML] forming HTML body...done!");
+            this.log.Info("[HTML] forming HTML body...done!");
         }
 
         private void LoadCsvToMemory()
         {
-            log.Info(logStart + ">>> ENTERING LoadCsvToMemory() method <<<");
-            log.Info(logStart + "Building CSV file path...");
+            this.log.Info(this.logStart + ">>> ENTERING LoadCsvToMemory() method <<<");
+            this.log.Info(this.logStart + "Building CSV file path...");
             string file = Path.Combine(CVariables.vbrDir, "localhost_vbrinfo.csv");
-            log.Info("looking for VBR CSV at: " + file);
-            log.Info(logStart + "About to call CCsvsInMemory.GetCsvData()...");
+            this.log.Info("looking for VBR CSV at: " + file);
+            this.log.Info(this.logStart + "About to call CCsvsInMemory.GetCsvData()...");
             var res = CCsvsInMemory.GetCsvData(file);
-            log.Info(logStart + "CCsvsInMemory.GetCsvData() completed. Result is " + (res == null ? "null" : "not null"));
+            this.log.Info(this.logStart + "CCsvsInMemory.GetCsvData() completed. Result is " + (res == null ? "null" : "not null"));
             if (res != null && res.Count > 0)
             {
-                log.Info("VBR CSV data loaded successfully. Number of rows: " + res.Count);
+                this.log.Info("VBR CSV data loaded successfully. Number of rows: " + res.Count);
                 for (int i = 0; i < Math.Min(5, res.Count); i++)
                 {
-                    log.Debug($"Row {i + 1}: {string.Join(", ", res[i].Select(kv => $"{kv.Key}: {kv.Value}"))}");
+                    this.log.Debug($"Row {i + 1}: {string.Join(", ", res[i].Select(kv => $"{kv.Key}: {kv.Value}"))}");
                 }
 
                 // Try to find the Version key, with or without quotes
@@ -349,7 +361,9 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR
                     // Try to find any key that matches Version ignoring quotes and case
                     var versionKey = dict.Keys.FirstOrDefault(k => k.Trim('\"').Equals("Version", StringComparison.OrdinalIgnoreCase));
                     if (versionKey != null)
+                    {
                         versionStr = dict[versionKey];
+                    }
                 }
 
                 if (!string.IsNullOrWhiteSpace(versionStr))
@@ -361,78 +375,73 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR
                     if (int.TryParse(majorVersionPart, out int majorVersion))
                     {
                         CGlobals.VBRMAJORVERSION = majorVersion;
-                        log.Info($"Set VBRMAJORVERSION to {majorVersion} from Version '{versionStr}'");
+                        this.log.Info($"Set VBRMAJORVERSION to {majorVersion} from Version '{versionStr}'");
                     }
                     else
                     {
-                        log.Error($"Failed to parse major version from Version '{versionStr}'");
+                        this.log.Error($"Failed to parse major version from Version '{versionStr}'");
                     }
                 }
                 else
                 {
-                    log.Error("Version field not found in CSV data.");
+                    this.log.Error("Version field not found in CSV data.");
                 }
             }
             else
             {
-                log.Error("Failed to load VBR CSV data or no data found.");
+                this.log.Error("Failed to load VBR CSV data or no data found.");
             }
         }
 
         private void FormVbrFullBody()
         {
-            log.Info(logStart + ">>> ENTERING FormVbrFullBody() method <<<");
-            log.Info("[HTML] forming HTML body");
+            this.log.Info(this.logStart + ">>> ENTERING FormVbrFullBody() method <<<");
+            this.log.Info("[HTML] forming HTML body");
 
             // maybe load all CSV to memory here?
-            log.Info(logStart + "About to call LoadCsvToMemory()...");
-            LoadCsvToMemory();
-            log.Info(logStart + "LoadCsvToMemory() completed.");
-           // LoadCsvToMemory();
+            this.log.Info(this.logStart + "About to call LoadCsvToMemory()...");
+            this.LoadCsvToMemory();
+            this.log.Info(this.logStart + "LoadCsvToMemory() completed.");
 
-            log.Info(logStart + "Creating CHtmlBodyHelper instance...");
+           // LoadCsvToMemory();
+            this.log.Info(this.logStart + "Creating CHtmlBodyHelper instance...");
             CHtmlBodyHelper helper = new();
-            log.Info(logStart + "CHtmlBodyHelper instance created.");
+            this.log.Info(this.logStart + "CHtmlBodyHelper instance created.");
             if (CGlobals.Scrub)
             {
-                log.Info(logStart + "Scrub mode enabled. Starting scrubbed report generation...");
-                _htmldocScrubbed += FormBodyStart(_htmldocScrubbed, true);
-                SetNavigation();
+                this.log.Info(this.logStart + "Scrub mode enabled. Starting scrubbed report generation...");
+                this.htmldocScrubbed += this.FormBodyStart(this.htmldocScrubbed, true);
+                this.SetNavigation();
 
-                AddToHtml(string.Format("<button id='expandBtn' type=\"button\" class=\"btn\" onclick=\"test()\">{0}</button>", "Expand All Sections"));
+                this.AddToHtml(string.Format("<button id='expandBtn' type=\"button\" class=\"btn\" onclick=\"test()\">{0}</button>", "Expand All Sections"));
 
-                log.Info(logStart + "About to call helper.FormVbrFullReport() [SCRUBBED]...");
-                _htmldocScrubbed = helper.FormVbrFullReport(_htmldocScrubbed, true);
-                log.Info(logStart + "helper.FormVbrFullReport() [SCRUBBED] completed.");
-                _htmldocScrubbed += FormFooter();
-
+                this.log.Info(this.logStart + "About to call helper.FormVbrFullReport() [SCRUBBED]...");
+                this.htmldocScrubbed = helper.FormVbrFullReport(this.htmldocScrubbed, true);
+                this.log.Info(this.logStart + "helper.FormVbrFullReport() [SCRUBBED] completed.");
+                this.htmldocScrubbed += this.FormFooter();
             }
             else
             {
-                log.Info(logStart + "Scrub mode disabled. Starting original report generation...");
-                _htmldocOriginal += FormBodyStart(_htmldocOriginal, false);
-                SetNavigation();
+                this.log.Info(this.logStart + "Scrub mode disabled. Starting original report generation...");
+                this.htmldocOriginal += this.FormBodyStart(this.htmldocOriginal, false);
+                this.SetNavigation();
 
-                AddToHtml(string.Format("<button id='expandBtn' type=\"button\" class=\"btn\" onclick=\"test()\">{0}</button>", "Expand All Sections"));
+                this.AddToHtml(string.Format("<button id='expandBtn' type=\"button\" class=\"btn\" onclick=\"test()\">{0}</button>", "Expand All Sections"));
 
-                log.Info(logStart + "About to call helper.FormVbrFullReport() [ORIGINAL]...");
-                _htmldocOriginal = helper.FormVbrFullReport(_htmldocOriginal, false);
-                log.Info(logStart + "helper.FormVbrFullReport() [ORIGINAL] completed.");
-                _htmldocOriginal += FormFooter();
-
+                this.log.Info(this.logStart + "About to call helper.FormVbrFullReport() [ORIGINAL]...");
+                this.htmldocOriginal = helper.FormVbrFullReport(this.htmldocOriginal, false);
+                this.log.Info(this.logStart + "helper.FormVbrFullReport() [ORIGINAL] completed.");
+                this.htmldocOriginal += this.FormFooter();
             }
 
             if (CGlobals.EXPORTINDIVIDUALJOBHTMLS)
             {
                 helper.IndividualJobHtmlBuilder();
 
-                //IndividualJobHtmlBuilder();
-
+                // IndividualJobHtmlBuilder();
             }
 
-
-
-            log.Info("[HTML] forming HTML body...done!");
+            this.log.Info("[HTML] forming HTML body...done!");
         }
 
         #region TableFormation
@@ -446,25 +455,26 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR
         {
             return "</tbody>" +
                 "</table>" +
-                //BackToTop() +
+
+                // BackToTop() +
                 "</div>";
         }
 
         private void NavTable()
         {
-            log.Info("[HTML] setting HTML navigation");
+            this.log.Info("[HTML] setting HTML navigation");
 
             // string tableString = NavTableStarter();
-            string tableString = _form.SetNavTables("vbr");
-            AddToHtml(tableString);
+            string tableString = this.form.SetNavTables("vbr");
+            this.AddToHtml(tableString);
         }
 
         private void SecurityNavTable()
         {
-            string tableString = NavTableStarter();
-            tableString += _tables.MakeSecurityNavTable();
-            tableString += NavtableEnd();
-            AddToHtml(tableString);
+            string tableString = this.NavTableStarter();
+            tableString += this.tables.MakeSecurityNavTable();
+            tableString += this.NavtableEnd();
+            this.AddToHtml(tableString);
         }
 
         private string FormFooter()
@@ -477,7 +487,6 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR
             s += "</script></footer></html>";
             return s;
         }
-
 
         #endregion
 
@@ -499,19 +508,15 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR
 
         private void AddToHtml(string infoString)
         {
-            _htmldocOriginal += infoString;
-            _htmldocScrubbed += infoString;
+            this.htmldocOriginal += infoString;
+            this.htmldocScrubbed += infoString;
         }
 
         private void AddToHtml(string infoString, bool scrub)
         {
-
         }
 
         #endregion
 
-
     }
-
-
 }

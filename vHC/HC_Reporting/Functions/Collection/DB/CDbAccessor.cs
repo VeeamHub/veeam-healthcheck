@@ -9,18 +9,18 @@ namespace VeeamHealthCheck.Functions.Collection.DB
 {
     class CDbAccessor
     {
-        private string _connectionString;
+        private string connectionString;
 
         public string DbAccessorString()
         {
-            var b = StringBuilder();
-            _connectionString = b.ConnectionString;
+            var b = this.StringBuilder();
+            this.connectionString = b.ConnectionString;
             return b.ConnectionString;
         }
 
         private SqlConnectionStringBuilder StringBuilder()
         {
-            SqlConnectionStringBuilder builder = SimpleConnectionBuilder();
+            SqlConnectionStringBuilder builder = this.SimpleConnectionBuilder();
             return builder;
         }
 
@@ -28,26 +28,28 @@ namespace VeeamHealthCheck.Functions.Collection.DB
         {
             SqlConnectionStringBuilder builder = new SqlConnectionStringBuilder(GetConnectionString());
             builder.Remove("Initial Catalog");
-            //builder["Server"] = server;
+
+            // builder["Server"] = server;
             CRegReader reg = new CRegReader();
             reg.GetDbInfo();
             string host = reg.HostString;
             string db = reg.DbString;
             if (host == null || db == null)
             {
-
                 // why am i asking for interaction?
 
-                //Console.WriteLine("Please enter SQL Host Name & Instance (i.e. vbr-server\\sqlserver2016):");
-                //host = Console.ReadLine();
-                //Console.WriteLine("Please enter DB name:");
-                //db = Console.ReadLine();
+                // Console.WriteLine("Please enter SQL Host Name & Instance (i.e. vbr-server\\sqlserver2016):");
+                // host = Console.ReadLine();
+                // Console.WriteLine("Please enter DB name:");
+                // db = Console.ReadLine();
             }
+
             builder["Server"] = host;
-            //CGlobals.DBHOSTNAME = host;
+
+            // CGlobals.DBHOSTNAME = host;
             builder["Database"] = db;
 
-            if (TestConnection())
+            if (this.TestConnection())
                 return builder;
             else
             {
@@ -62,7 +64,7 @@ namespace VeeamHealthCheck.Functions.Collection.DB
         {
             try
             {
-                SqlConnection sqlConnection = new SqlConnection(_connectionString);
+                SqlConnection sqlConnection = new SqlConnection(this.connectionString);
                 using var connection = sqlConnection;
                 using SqlCommand command = new SqlCommand("select @@version", connection);
                 connection.Open();
@@ -73,9 +75,7 @@ namespace VeeamHealthCheck.Functions.Collection.DB
                 CGlobals.Logger.Warning("Sql Test Connection Failed: " + e.Message);
                 return false;
             }
-
         }
-
 
         private static string GetConnectionString()
         {

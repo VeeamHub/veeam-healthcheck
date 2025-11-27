@@ -8,7 +8,8 @@ namespace VeeamHealthCheck.Functions.Reporting.CsvHandlers
     public class CProxyCsvInfos
     {
         [Index(0)]
-        //[ColumnDetails()]
+
+        // [ColumnDetails()]
         public string Id { get; set; }
 
         [Index(1)]

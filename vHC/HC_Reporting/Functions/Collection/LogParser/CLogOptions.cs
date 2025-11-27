@@ -7,25 +7,29 @@ namespace VeeamHealthCheck.Functions.Collection.LogParser
         public static readonly string VMCLOG = "\\Utils\\VMC.log";
         public static readonly string installIdLine = "InstallationId:";
 
-        private static string _installId;
+        private static string installId;
 
         public CLogOptions(string mode)
         {
             CVmcReader vReader = new(mode);
             vReader.PopulateVmc();
-            _installId = vReader.INSTALLID;
+            installId = vReader.INSTALLID;
         }
 
         public static string INSTALLID
         {
             get
             {
-                if (!string.IsNullOrEmpty(_installId))
-                    return _installId;
+                if (!string.IsNullOrEmpty(installId))
+                {
+                    return installId;
+                }
                 else
+                {
+
                     return string.Empty;
+                }
             }
         }
-
     }
 }

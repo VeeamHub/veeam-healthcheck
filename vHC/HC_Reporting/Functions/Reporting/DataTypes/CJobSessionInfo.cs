@@ -56,18 +56,16 @@ namespace VeeamHealthCheck.Functions.Reporting.DataTypes
 
         public CJobSessionInfo(string name, int min, int max, int avg)
         {
-            //Name = name;
-            //minTime = min;
-            //maxTime = max;
-            //avgTime = avg;
+            // Name = name;
+            // minTime = min;
+            // maxTime = max;
+            // avgTime = avg;
         }
 
         public CJobSessionInfo()
         {
-
         }
 
         public void Dispose() { }
-
     }
 }

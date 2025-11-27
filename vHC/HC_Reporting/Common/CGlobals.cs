@@ -12,10 +12,10 @@ namespace VeeamHealthCheck.Shared
     public class CGlobals
     {
         // static globals:
-        public static CLogger _mainlog = new("HealthCheck");
-        private static bool _scrub;
-        private static CScrubHandler _scrubberMain = new();
-        public static readonly string _backupServerId = "6745a759-2205-4cd2-b172-8ec8f7e60ef8";
+        public static CLogger mainlog = new("HealthCheck");
+        private static bool scrub;
+        private static readonly CScrubHandler scrubberMain = new();
+        public static readonly string backupServerId = "6745a759-2205-4cd2-b172-8ec8f7e60ef8";
         public static bool IMPORT = false;
         public static int VBRMAJORVERSION;
         public static string VBRFULLVERSION;
@@ -31,15 +31,16 @@ namespace VeeamHealthCheck.Shared
 
         public static string RawReport = string.Empty;
         public static string ScrubbedReport = string.Empty;
+
         // GUI & CLI Options:
-        private static int _reportDays = 7;
-        public static string _desiredPath = CVariables.unsafeDir;
-        private static bool _openHtml;
-        private static bool _openExplorer;
-        private static bool _isVbr;
-        private static bool _isVb365;
-        private static bool _runFullReport;
-        private static bool _runSecReport;
+        private static int reportDays = 7;
+        private static string _desiredPath = CVariables.unsafeDir;
+        private static bool openHtml;
+        private static bool openExplorer;
+        private static bool isVbr;
+        private static bool isVb365;
+        private static bool runFullReport;
+        private static bool runSecReport;
         public static bool EXPORTINDIVIDUALJOBHTMLS = true;
         public static bool CHECKFIXES = false;
         public static bool EXPORTPDF = false;
@@ -47,14 +48,13 @@ namespace VeeamHealthCheck.Shared
         public static string CredsUsername = string.Empty;
         public static string CredsPassword = string.Empty;
 
-
         // Security Values
         public static bool IsMfaEnabled = false;
 
         // B&R Server global values
-        //public static string isConsoleLocal = "Undetermined";
-        //public static string _isRdpEnabled = "Undetermined";
-        //public static string _isDomainJoined = "";
+        // public static string isConsoleLocal = "Undetermined";
+        // public static string _isRdpEnabled = "Undetermined";
+        // public static string _isDomainJoined = "";
 
         // config db values
         public static BackupServer BACKUPSERVER;
@@ -83,46 +83,56 @@ namespace VeeamHealthCheck.Shared
 
         public CGlobals()
         {
-
         }
 
         public static int ReportDays
         {
-            get { return _reportDays; }
-            set { _reportDays = value; }
+            get { return reportDays; }
+            set { reportDays = value; }
         }
 
         public static bool Scrub
         {
-            get { return _scrub; }
-            set { _scrub = value; }
+            get { return scrub; }
+            set { scrub = value; }
         }
 
         public static DateTime GetToolStart
         {
             get { if(TOOLSTART == DateTime.MinValue)
+                {
                     TOOLSTART = DateTime.Now;
+                }
+
+
                 return TOOLSTART;
             }
 
             set { TOOLSTART = value; }
         }
 
-        public static CLogger Logger { get { return _mainlog; } }
+        public static CLogger Logger { get { return mainlog; } }
 
-        public static CScrubHandler Scrubber { get { return _scrubberMain; } }
+        public static CScrubHandler Scrubber { get { return scrubberMain; } }
 
-        public static bool OpenHtml { get { return _openHtml; } set { _openHtml = value; } }
+        public static bool OpenHtml { get { return openHtml; } set { openHtml = value; } }
 
-        public static bool OpenExplorer { get { return _openExplorer; } set { _openExplorer = value; } }
-        //public bool Import { get { return _import; } set { _import = value; } }
+        public static bool OpenExplorer { get { return openExplorer; } set { openExplorer = value; } }
 
-        public static bool IsVbr { get { return _isVbr; } set { _isVbr = value; } }
+        // public bool Import { get { return _import; } set { _import = value; } }
+        public static bool IsVbr { get { return isVbr; } set { isVbr = value; } }
 
-        public static bool IsVb365 { get { return _isVb365; } set { _isVb365 = value; } }
+        public static bool IsVb365 { get { return isVb365; } set { isVb365 = value; } }
 
-        public static bool RunFullReport { get { return _runFullReport; } set { _runFullReport = value; } }
+        public static bool RunFullReport { get { return runFullReport; } set { runFullReport = value; } }
 
-        public static bool RunSecReport { get { return _runSecReport; } set { _runSecReport = value; } }
+        public static bool RunSecReport { get { return runSecReport; } set { runSecReport = value; } }
+
+        // Add a public property to match callers using 'desiredPath'
+        public static string desiredPath
+        {
+            get => _desiredPath;
+            set => _desiredPath = value;
+        }
     }
 }

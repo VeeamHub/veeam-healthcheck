@@ -16,56 +16,59 @@ namespace VeeamHealthCheck.Functions.Reporting.Html
 {
     internal class CBackupServerTableHelper
     {
-        private static CLogger log = CGlobals.Logger;
-        private BackupServer _backupServer;
-        private readonly bool _scrub;
+        private static readonly CLogger log = CGlobals.Logger;
+        private readonly BackupServer backupServer;
+        private readonly bool scrub;
 
-        private bool _hasFixes = false;
+        private readonly bool hasFixes = false;
 
         public CBackupServerTableHelper(bool scrub)
         {
             log.Debug("! Init BackupServerTableHelper");
-            _backupServer = new();
-            SetBackupServerWithDbInfo();
-            _scrub = scrub;
+            this.backupServer = new();
+            this.SetBackupServerWithDbInfo();
+            this.scrub = scrub;
             log.Debug("! Init BackupServerTableHelper...Done!");
         }
 
         public BackupServer SetBackupServerData()
         {
-            //log.Debug("Setting Backup Server Data");
-            SetElements();
-            if (_scrub)
-                ScrubElements();
+            // log.Debug("Setting Backup Server Data");
+            this.SetElements();
+            if (this.scrub)
+            {
+                this.ScrubElements();
+            }
 
-            //log.Debug("Setting Backup Server Data...Done!");
-            return _backupServer;
+            // log.Debug("Setting Backup Server Data...Done!");
+
+            return this.backupServer;
         }
 
         private void SetElements()
         {
-            //log.Debug("Setting Backup Server Elements");
-            SetConfigBackupSettings();
-            SetDbHostNameOption2();
-            //log.Debug("Setting Backup Server Elements...Done!");
+            // log.Debug("Setting Backup Server Elements");
+            this.SetConfigBackupSettings();
+            this.SetDbHostNameOption2();
 
+            // log.Debug("Setting Backup Server Elements...Done!");
         }
 
         private void SetBackupServerWithDbInfo()
         {
-            _backupServer.DbType = CGlobals.DBTYPE;
-            _backupServer.Edition = CGlobals.DBEdition;
-            _backupServer.DbVersion = CGlobals.DBVERSION;
-            _backupServer.DbCores = CGlobals.DBCORES;
-            _backupServer.DbRAM = CGlobals.DBRAM;
-            _backupServer.DbHostName = CGlobals.DBHOSTNAME;
+            this.backupServer.DbType = CGlobals.DBTYPE;
+            this.backupServer.Edition = CGlobals.DBEdition;
+            this.backupServer.DbVersion = CGlobals.DBVERSION;
+            this.backupServer.DbCores = CGlobals.DBCORES;
+            this.backupServer.DbRAM = CGlobals.DBRAM;
+            this.backupServer.DbHostName = CGlobals.DBHOSTNAME;
         }
 
         private void ScrubElements()
         {
-            _backupServer.Name = CGlobals.Scrubber.ScrubItem(_backupServer.Name, ScrubItemType.Server);
-            _backupServer.ConfigBackupTarget = CGlobals.Scrubber.ScrubItem(_backupServer.ConfigBackupTarget, ScrubItemType.Repository);
-            _backupServer.DbHostName = CGlobals.Scrubber.ScrubItem(_backupServer.DbHostName, ScrubItemType.Server);
+            this.backupServer.Name = CGlobals.Scrubber.ScrubItem(this.backupServer.Name, ScrubItemType.Server);
+            this.backupServer.ConfigBackupTarget = CGlobals.Scrubber.ScrubItem(this.backupServer.ConfigBackupTarget, ScrubItemType.Repository);
+            this.backupServer.DbHostName = CGlobals.Scrubber.ScrubItem(this.backupServer.DbHostName, ScrubItemType.Server);
         }
 
         private void SetConfigBackupSettings()
@@ -77,16 +80,13 @@ namespace VeeamHealthCheck.Functions.Reporting.Html
                 var configBackupCsv = config.ConfigBackupCsvParser();
                 cv = configBackupCsv.FirstOrDefault();
 
-
-
-                _backupServer.ConfigBackupEnabled = CObjectHelpers.ParseBool(cv.Enabled);
-                if (_backupServer.ConfigBackupEnabled == true)
+                this.backupServer.ConfigBackupEnabled = CObjectHelpers.ParseBool(cv.Enabled);
+                if (this.backupServer.ConfigBackupEnabled == true)
                 {
-
-                    _backupServer.ConfigBackupTarget = cv.Target;
-                    _backupServer.ConfigBackupEncryption = CObjectHelpers.ParseBool(cv.EncryptionOptions);
-                    _backupServer.ConfigBackupLastResult = cv.LastResult;
-                    _backupServer.ConfigBackupRetentionPoints = CObjectHelpers.ParseInt(cv.RestorePointsToKeep);
+                    this.backupServer.ConfigBackupTarget = cv.Target;
+                    this.backupServer.ConfigBackupEncryption = CObjectHelpers.ParseBool(cv.EncryptionOptions);
+                    this.backupServer.ConfigBackupLastResult = cv.LastResult;
+                    this.backupServer.ConfigBackupRetentionPoints = CObjectHelpers.ParseInt(cv.RestorePointsToKeep);
                 }
             }
             catch (Exception e)
@@ -94,35 +94,32 @@ namespace VeeamHealthCheck.Functions.Reporting.Html
                 log.Error("Error processing config backup data");
                 log.Error("\t" + e.Message);
             }
-
-
-
         }
 
         private string CheckFixes(string fixes)
         {
-            //TODO
+            // TODO
             return string.Empty;
         }
 
         private void SetDbHostNameOption2()
         {
-            //LoadCsvToMemory();
+            // LoadCsvToMemory();
             using (CDataTypesParser parser = new())
             {
                 List<CServerTypeInfos> csv = CGlobals.DtParser.ServerInfos;
-                CServerTypeInfos bs = csv.Where(x => x.Id == CGlobals._backupServerId).FirstOrDefault();
-                //var test = csv.Where(x => x.Id == CGlobals._backupServerId).FirstOrDefault();
+                CServerTypeInfos bs = csv.Where(x => x.Id == CGlobals.backupServerId).FirstOrDefault();
 
-                //log.Debug("backup server ID = " +CGlobals._backupServerId);
+                // var test = csv.Where(x => x.Id == CGlobals._backupServerId).FirstOrDefault();
+
+                // log.Debug("backup server ID = " +CGlobals._backupServerId);
                 CCsvParser config = new();
 
-
-                if (_backupServer.Version == string.Empty || _backupServer.Version == null || _backupServer.DbHostName == null || _backupServer.DbHostName == string.Empty)
+                if (this.backupServer.Version == string.Empty || this.backupServer.Version == null || this.backupServer.DbHostName == null || this.backupServer.DbHostName == string.Empty)
                 {
                     try
                     {
-                        var records = config.BnrCsvParser();//.ToList();
+                        var records = config.BnrCsvParser();// .ToList();
                         if (records == null)
                         {
                             log.Warning("BNR CSV parser returned null. Skipping version and host name setting.");
@@ -138,28 +135,27 @@ namespace VeeamHealthCheck.Functions.Reporting.Html
                             {
                                 if (CGlobals.VBRFULLVERSION == null || CGlobals.VBRFULLVERSION == string.Empty)
                                 {
-                                    _backupServer.Version = r2[0].Version;
+                                    this.backupServer.Version = r2[0].Version;
                                 }
                                 else
                                 {
-                                    _backupServer.Version = CGlobals.VBRFULLVERSION;
+                                    this.backupServer.Version = CGlobals.VBRFULLVERSION;
                                 }
-                                if (string.IsNullOrEmpty(_backupServer.DbHostName))
+
+                                if (string.IsNullOrEmpty(this.backupServer.DbHostName))
                                 {
-                                    _backupServer.DbHostName = r2[0].SqlServer;
-
+                                    this.backupServer.DbHostName = r2[0].SqlServer;
                                 }
-                                _backupServer.FixIds = CheckFixes(r2[0].Fixes);
-                                _backupServer.HasFixes = _hasFixes;
 
+                                this.backupServer.FixIds = this.CheckFixes(r2[0].Fixes);
+                                this.backupServer.HasFixes = this.hasFixes;
 
-                                if (_backupServer.DbType == CGlobals.PgTypeName)
-                                    _backupServer.DbHostName = r2[0].PgHost;
+                                if (this.backupServer.DbType == CGlobals.PgTypeName)
+                                {
+                                    this.backupServer.DbHostName = r2[0].PgHost;
+                                }
                             }
                         }
-
-
-
                     }
                     catch (Exception f)
                     {
@@ -170,50 +166,48 @@ namespace VeeamHealthCheck.Functions.Reporting.Html
 
                 try
                 {
-                    _backupServer.Name = bs.Name;
-                    if (string.IsNullOrEmpty(_backupServer.DbHostName))
+                    this.backupServer.Name = bs.Name;
+                    if (string.IsNullOrEmpty(this.backupServer.DbHostName))
                     {
                         // DbHostName is null or empty, assume local
-                        _backupServer.IsLocal = true;
-                        _backupServer.DbHostName = "LocalHost";
-                        _backupServer.DbCores = 0;
-                        _backupServer.DbRAM = 0;
+                        this.backupServer.IsLocal = true;
+                        this.backupServer.DbHostName = "LocalHost";
+                        this.backupServer.DbCores = 0;
+                        this.backupServer.DbRAM = 0;
                     }
-                    else if (!bs.Name.Contains(_backupServer.DbHostName, StringComparison.OrdinalIgnoreCase)
-                        && _backupServer.DbHostName != "localhost" && _backupServer.DbHostName != "LOCALHOST")
+                    else if (!bs.Name.Contains(this.backupServer.DbHostName, StringComparison.OrdinalIgnoreCase)
+                        && this.backupServer.DbHostName != "localhost" && this.backupServer.DbHostName != "LOCALHOST")
                     {
-                        _backupServer.IsLocal = false;
-
+                        this.backupServer.IsLocal = false;
                     }
-                    else if (bs.Name.Contains(_backupServer.DbHostName, StringComparison.OrdinalIgnoreCase) || _backupServer.DbHostName == "localhost")
+                    else if (bs.Name.Contains(this.backupServer.DbHostName, StringComparison.OrdinalIgnoreCase) || this.backupServer.DbHostName == "localhost")
                     {
-                        _backupServer.IsLocal = true;
-                        _backupServer.DbHostName = "LocalHost";
-                        _backupServer.DbCores = 0;
-                        _backupServer.DbRAM = 0;
+                        this.backupServer.IsLocal = true;
+                        this.backupServer.DbHostName = "LocalHost";
+                        this.backupServer.DbCores = 0;
+                        this.backupServer.DbRAM = 0;
                     }
-
                 }
                 catch (Exception g)
                 {
                     log.Error("Error processing SQL resource data");
                     log.Error("\t" + g.Message);
-                    log.Debug("_backupServer = " + _backupServer.Version);
+                    log.Debug("_backupServer = " + this.backupServer.Version);
                     log.Debug("backupServer = " + bs.ApiVersion);
                 }
-                //try { _backupServer.Name = backupServer.Name; }
-                //catch (NullReferenceException e)
-                //{ log.Error("[VBR Config] failed to add backup server Name:\n\t" + e.Message); }
 
-                //b.Version = veeamVersion;
-                try { _backupServer.Cores = bs.Cores; }
+                // try { _backupServer.Name = backupServer.Name; }
+                // catch (NullReferenceException e)
+                // { log.Error("[VBR Config] failed to add backup server Name:\n\t" + e.Message); }
+
+                // b.Version = veeamVersion;
+                try { this.backupServer.Cores = bs.Cores; }
                 catch (NullReferenceException e)
                 { log.Error("[VBR Config] failed to add backup server cores:\n\t" + e.Message); }
-                try { _backupServer.RAM = bs.Ram; }
+                try { this.backupServer.RAM = bs.Ram; }
                 catch (NullReferenceException e)
                 { log.Error("[VBR Config] failed to add backup server RAM:\n\t" + e.Message); }
             }
-
         }
 
         private void LoadCsvToMemory()
@@ -245,7 +239,9 @@ namespace VeeamHealthCheck.Functions.Reporting.Html
                     // Try to find any key that matches Version ignoring quotes and case
                     var versionKey = dict.Keys.FirstOrDefault(k => k.Trim('\"').Equals("Version", StringComparison.OrdinalIgnoreCase));
                     if (versionKey != null)
+                    {
                         versionStr = dict[versionKey];
+                    }
                 }
 
                 if (!string.IsNullOrWhiteSpace(versionStr))

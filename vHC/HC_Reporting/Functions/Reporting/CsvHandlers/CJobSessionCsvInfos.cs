@@ -3,7 +3,6 @@
 using CsvHelper.Configuration.Attributes;
 using System;
 
-
 namespace VeeamHealthCheck.Functions.Reporting.CsvHandlers
 {
     public class CJobSessionCsvInfos

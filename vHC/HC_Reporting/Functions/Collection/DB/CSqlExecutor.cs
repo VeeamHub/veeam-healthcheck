@@ -14,13 +14,12 @@ namespace VeeamHealthCheck.Functions.Collection.DB
 
         public CSqlExecutor()
         {
-
         }
 
         public void Run()
         {
-            //CGlobals.BACKUPSERVER = 
-            TrySetSqlInfo();
+            // CGlobals.BACKUPSERVER = 
+            this.TrySetSqlInfo();
         }
 
         private void TrySetSqlInfo()
@@ -28,27 +27,27 @@ namespace VeeamHealthCheck.Functions.Collection.DB
             BackupServer b = new();
             try
             {
-                LOG.Info("starting sql queries");
+                this.LOG.Info("starting sql queries");
                 DataTable dbServerInfo = new DataTable();
                 CQueries cq = new();
                 dbServerInfo = cq.SqlServerInfo;
-                //b.Edition = cq.SqlEdition;
-                //b.DbVersion = cq.SqlVerion;
-                //b = TryParseSqlResources(dbServerInfo, b);
-                //b.DbType = CGlobals.SqlTypeName;
 
+                // b.Edition = cq.SqlEdition;
+                // b.DbVersion = cq.SqlVerion;
+                // b = TryParseSqlResources(dbServerInfo, b);
+                // b.DbType = CGlobals.SqlTypeName;
                 CGlobals.DBEdition = cq.SqlEdition;
                 CGlobals.DBVERSION = cq.SqlVerion;
                 CGlobals.DBTYPE = CGlobals.SqlTypeName;
                 TryParseSqlResources(dbServerInfo);
-                LOG.Info("starting sql queries..done!");
+                this.LOG.Info("starting sql queries..done!");
             }
             catch (Exception e)
             {
-                LOG.Error(e.Message);
-
+                this.LOG.Error(e.Message);
             }
-            //return b;
+
+            // return b;
         }
 
         private static void TryParseSqlResources(DataTable table)
@@ -62,17 +61,13 @@ namespace VeeamHealthCheck.Functions.Collection.DB
                 int.TryParse(hyperthread, out int h);
                 int.TryParse(memory, out int mem);
 
-                //b.DbCores = c;//(c * h).ToString();
-                //b.DbRAM = ((mem / 1024 / 1024) + 1);
-
+                // b.DbCores = c;//(c * h).ToString();
+                // b.DbRAM = ((mem / 1024 / 1024) + 1);
                 CGlobals.DBCORES = c;
                 CGlobals.DBRAM = mem / 1024 / 1024 + 1;
-
             }
 
-            //return b;
+            // return b;
         }
-
     }
-
 }

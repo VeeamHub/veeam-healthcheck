@@ -73,7 +73,6 @@ namespace VeeamHealthCheck.Functions.Reporting.DataTypes
 
         public CSobrTypeInfos()
         {
-
         }
     }
 }

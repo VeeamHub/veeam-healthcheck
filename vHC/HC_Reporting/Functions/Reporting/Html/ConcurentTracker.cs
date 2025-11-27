@@ -20,8 +20,6 @@ namespace VeeamHealthCheck.Functions.Reporting.Html
 
         public ConcurentTracker()
         {
-
         }
     }
-
 }

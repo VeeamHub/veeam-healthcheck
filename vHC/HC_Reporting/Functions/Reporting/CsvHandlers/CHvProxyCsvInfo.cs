@@ -7,7 +7,7 @@ namespace VeeamHealthCheck.Functions.Reporting.CsvHandlers
 {
     public class CHvProxyCsvInfo
     {
-        //"Id","Name","Description","HostId","Host","Type","IsDisabled","Options","MaxTasksCount","Info"
+        // "Id","Name","Description","HostId","Host","Type","IsDisabled","Options","MaxTasksCount","Info"
         [Index(0)]
         public string Id { get; set; }
 

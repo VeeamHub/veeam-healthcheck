@@ -1,11 +1,22 @@
-﻿// Copyright (c) 2021, Adam Congdon <adam.congdon2@gmail.com>
-// MIT License
+﻿// <copyright file="CJobSummaryTypes.cs" company="PlaceholderCompany">
+// Copyright (c) PlaceholderCompany. All rights reserved.
+// </copyright>
 
 namespace VeeamHealthCheck.Functions.Reporting.DataTypes
 {
+    /// <summary>
+    /// Represents summary information for a Veeam job including statistics about sessions, performance, and data sizes.
+    /// </summary>
     public class CJobSummaryTypes
     {
-        public int sessionCount { get; set; }
+        /// <summary>
+        /// Initializes a new instance of the <see cref="CJobSummaryTypes"/> class.
+        /// </summary>
+        public CJobSummaryTypes()
+        {
+        }
+
+        public int SessionCount { get; set; }
 
         public int Fails { get; set; }
 
@@ -41,15 +52,10 @@ namespace VeeamHealthCheck.Functions.Reporting.DataTypes
 
         public string JobType { get; set; }
 
-        public int waitCount { get; set; }
+        public int WaitCount { get; set; }
 
-        public string maxWait { get; set; }
+        public string MaxWait { get; set; }
 
-        public string avgwait { get; set; }
-
-        public CJobSummaryTypes()
-        {
-
-        }
+        public string AvgWait { get; set; }
     }
 }

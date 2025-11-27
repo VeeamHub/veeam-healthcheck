@@ -7,8 +7,7 @@ namespace VeeamHealthCheck.Functions.Reporting.CsvHandlers
 {
     public class CCapTierCsv
     {
-        //Status	Type	Immute	immutabilityperiod	SizeLimitEnabled	SizeLimit	RepoId
-
+        // Status	Type	Immute	immutabilityperiod	SizeLimitEnabled	SizeLimit	RepoId
         [Index(0)]
         public string Status { get; set; }
 

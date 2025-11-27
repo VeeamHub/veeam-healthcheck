@@ -12,28 +12,28 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR.VbrTables.Job_Session_Su
 {
     internal class IndividualJobSessionsHelper
     {
-        private readonly CHtmlFormatting _form = new();
+        private readonly CHtmlFormatting form = new();
         private readonly CLogger log = CGlobals.Logger;
-        private CScrubHandler _scrubber;
-        private string logStart = "[DataFormer]\t";
+        private CScrubHandler scrubber;
+        private readonly string logStart = "[DataFormer]\t";
 
         public IndividualJobSessionsHelper()
         {
-
         }
 
         private List<CJobSessionInfo> ReturnJobSessionsList()
         {
             var targetDate = CGlobals.GetToolStart.AddDays(-CGlobals.ReportDays);
 
-                List<CJobSessionInfo> csv = new();
-                var res = CGlobals.DtParser.JobSessions; //.Where(c => c.CreationTime >= targetDate).ToList();
-                if (res == null)
+            List<CJobSessionInfo> csv = new();
+            var res = CGlobals.DtParser.JobSessions; // .Where(c => c.CreationTime >= targetDate).ToList();
+            if (res == null)
                     return csv;
                 else
                 {
                     csv = res.Where(c => c.CreationTime >= targetDate).ToList();
-                    //csv = csv.Where(c => c.CreationTime >= targetDate).ToList();
+
+                    // csv = csv.Where(c => c.CreationTime >= targetDate).ToList();
                     csv = csv.OrderBy(x => x.Name).ToList();
 
                     csv = csv.OrderBy(y => y.CreationTime).ToList();
@@ -46,14 +46,15 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR.VbrTables.Job_Session_Su
         {
             var targetDate = CGlobals.GetToolStart.AddDays(-CGlobals.ReportDays);
 
-                List<CJobSessionInfo> csv = new();
-                var res = CGlobals.DtParser.JobSessions; //.Where(c => c.CreationTime >= targetDate).ToList();
-                if (res == null)
+            List<CJobSessionInfo> csv = new();
+            var res = CGlobals.DtParser.JobSessions; // .Where(c => c.CreationTime >= targetDate).ToList();
+            if (res == null)
                     return csv;
                 else
                 {
                     csv = res.Where(c => c.CreationTime >= targetDate).ToList();
-                    //csv = csv.Where(c => c.CreationTime >= targetDate).ToList();
+
+                    // csv = csv.Where(c => c.CreationTime >= targetDate).ToList();
                     csv = csv.Where(x => x.Name == jobName).ToList();
 
                     csv = csv.OrderBy(y => y.CreationTime).ToList();
@@ -66,17 +67,18 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR.VbrTables.Job_Session_Su
         {
             var targetDate = CGlobals.GetToolStart.AddDays(-CGlobals.ReportDays);
 
-                List<string> csv = new();
-                var res = CGlobals.DtParser.JobSessions; //.Where(c => c.CreationTime >= targetDate).ToList();
-                if (res == null)
+            List<string> csv = new();
+            var res = CGlobals.DtParser.JobSessions; // .Where(c => c.CreationTime >= targetDate).ToList();
+            if (res == null)
                     return null;
                 else
                 {
                     var p = res.Select(c => c.Name).ToList();
-                    //csv = csv.Where(c => c.CreationTime >= targetDate).ToList();
-                    //csv = csv.Where(x => x.Name == jobName).ToList();
 
-                    //csv = csv.OrderBy(y => y.CreationTime).ToList();
+                    // csv = csv.Where(c => c.CreationTime >= targetDate).ToList();
+                    // csv = csv.Where(x => x.Name == jobName).ToList();
+
+                    // csv = csv.OrderBy(y => y.CreationTime).ToList();
                     csv.Reverse();
                     return p.Distinct().ToList();
                 }
@@ -84,79 +86,77 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR.VbrTables.Job_Session_Su
 
         public void ParseIndividualSessions(bool scrub)
         {
-            //if (scrub) { _scrubber = new(); }
-            _scrubber = CGlobals.Scrubber;
+            // if (scrub) { _scrubber = new(); }
+            this.scrubber = CGlobals.Scrubber;
 
             List<string> processedJobs = new();
             double percentCounter = 0;
-            //var csv = ReturnJobSessionsList();
 
-            var namesList = ReturnJobSessionsNamesList();
-            var totalSessions = ReturnJobSessionsList().Count();
-
+            // var csv = ReturnJobSessionsList();
+            var namesList = this.ReturnJobSessionsNamesList();
+            var totalSessions = this.ReturnJobSessionsList().Count();
 
             foreach (var name in namesList)
             {
                 var jName = name;
-                var jobSessions = ReturnJobSessionsList(name);
-                LogJobSessionParseProgress(percentCounter, totalSessions);
+                var jobSessions = this.ReturnJobSessionsList(name);
+                this.LogJobSessionParseProgress(percentCounter, totalSessions);
 
                 // string outDir = "";// CVariables.desiredDir + "\\Original";
                 string folderName = "\\JobSessionReports";
 
-                string mainDir = SetMainDir(folderName, name);
-                string scrubDir = SetScrubDir(folderName, name);
+                string mainDir = this.SetMainDir(folderName, name);
+                string scrubDir = this.SetScrubDir(folderName, name);
 
                 if (name.Contains("/"))
                 {
-                    jName = FixInvalidJobName(name);
+                    jName = this.FixInvalidJobName(name);
                 }
 
-                //                    string docName = outDir + "\\";
+                // string docName = outDir + "\\";
 
-
-                string mainString = ReturnTableHeaderString(jName);
+                string mainString = this.ReturnTableHeaderString(jName);
                 File.WriteAllText(mainDir, mainString);
 
-                string scrubString = ReturnTableHeaderString(jName);
+                string scrubString = this.ReturnTableHeaderString(jName);
                 File.WriteAllText(scrubDir, scrubString);
 
                 int counter = 1;
 
-                //test
+                // test
                 foreach (var cs in jobSessions)
                 {
                     string info = string.Format("Parsing {0} of {1} Job Sessions to HTML", counter, totalSessions);
                     counter++;
-                    //log.Info(logStart + info, false);
+
+                    // log.Info(logStart + info, false);
                     try
                     {
                         int matches = 0;
                         if (name == cs.JobName)
                         {
                             matches++;
-                            //mainString += FormHtmlString(cs, mainString, false);
 
-                            File.AppendAllText(mainDir, FormHtmlString(cs, mainString, false));
-                            File.AppendAllText(scrubDir, FormHtmlString(cs, scrubString, true));
-
+                            // mainString += FormHtmlString(cs, mainString, false);
+                            File.AppendAllText(mainDir, this.FormHtmlString(cs, mainString, false));
+                            File.AppendAllText(scrubDir, this.FormHtmlString(cs, scrubString, true));
                         }
                     }
                     catch (Exception e)
                     {
-                        log.Error("Exception at individual job session parse:");
-                        log.Error(e.Message);
+                        this.log.Error("Exception at individual job session parse:");
+                        this.log.Error(e.Message);
                     }
 
                     percentCounter++;
                 }
-                //counter = 1;
+
+                // counter = 1;
                 ////File.AppendAllText(mainDir, mainString);
-                //mainString = null;
+                // mainString = null;
 
-
-                //foreach (var cs in jobSessions)
-                //{
+                // foreach (var cs in jobSessions)
+                // {
                 //    //string info = string.Format("Parsing {0} of {1} Job Sessions to HTML", counter, totalSessions);
                 //    counter++;
                 //    //log.Info(logStart + info, false);
@@ -168,30 +168,24 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR.VbrTables.Job_Session_Su
                 //           // matches++;
                 //            //mainString += FormHtmlString(cs, mainString, false);
 
-                //        }
+                // }
                 //    }
                 //    catch (Exception e) { log.Error(e.Message); }
 
-                //    percentCounter++;
-                //}
-
+                // percentCounter++;
+                // }
 
                 scrubString = null;
 
-
                 // percentCounter++;
-
             }
 
-
-            LogJobSessionParseProgress(100, 100);
-
-
+            this.LogJobSessionParseProgress(100, 100);
         }
 
         private string SetMainDir(string folderName, CJobSessionInfo cs)
         {
-            var mainDir = CGlobals._desiredPath + CVariables._unsafeSuffix + folderName;
+            var mainDir = CGlobals.desiredPath + CVariables.unsafeSuffix + folderName;
             CheckFolderExists(mainDir);
             mainDir += "\\" + cs.JobName + ".html";
             return mainDir;
@@ -199,16 +193,17 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR.VbrTables.Job_Session_Su
 
         private string SetScrubDir(string folderName, CJobSessionInfo cs)
         {
-            var scrubDir = CGlobals._desiredPath + CVariables._safeSuffix + folderName;
-            //log.Warning("SAFE outdir = " + outDir, false);
+            var scrubDir = CGlobals.desiredPath + CVariables.safeSuffix + folderName;
+
+            // log.Warning("SAFE outdir = " + outDir, false);
             CheckFolderExists(scrubDir);
-            scrubDir += "\\" + _scrubber.ScrubItem(cs.JobName, ScrubItemType.Job) + ".html";
+            scrubDir += "\\" + this.scrubber.ScrubItem(cs.JobName, ScrubItemType.Job) + ".html";
             return scrubDir;
         }
 
         private string SetMainDir(string folderName, string JobName)
         {
-            var mainDir = CGlobals._desiredPath + CVariables._unsafeSuffix + folderName;
+            var mainDir = CGlobals.desiredPath + CVariables.unsafeSuffix + folderName;
             CheckFolderExists(mainDir);
             mainDir += "\\" + JobName + ".html";
             return mainDir;
@@ -216,37 +211,38 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR.VbrTables.Job_Session_Su
 
         private string SetScrubDir(string folderName, string JobName)
         {
-            var scrubDir = CGlobals._desiredPath + CVariables._safeSuffix + folderName;
-            //log.Warning("SAFE outdir = " + outDir, false);
+            var scrubDir = CGlobals.desiredPath + CVariables.safeSuffix + folderName;
+
+            // log.Warning("SAFE outdir = " + outDir, false);
             CheckFolderExists(scrubDir);
-            scrubDir += "\\" + _scrubber.ScrubItem(JobName, ScrubItemType.Job) + ".html";
+            scrubDir += "\\" + this.scrubber.ScrubItem(JobName, ScrubItemType.Job) + ".html";
             return scrubDir;
         }
 
         private string ReturnTableHeaderString(string jobname)
         {
-            string s = _form.Header();
+            string s = this.form.Header();
             s += "<h2>" + jobname + "</h2>";
 
             s += "<table border=\"1\"><tr>";
-            s += _form.TableHeader("Job Name", "Name of job");
-            s += _form.TableHeader("VM Name", "Name of VM/Server within the job");
-            s += _form.TableHeader("Alg", "Job Algorithm");
-            s += _form.TableHeader("Primary Bottleneck", "Primary detected bottleneck");
-            s += _form.TableHeader("BottleNeck", "Detected bottleneck breakdown");
-            s += _form.TableHeader("CompressionRatio", "Calculated compression ratio");
-            s += _form.TableHeader("Start Time", "Start time of the backup job");
-            s += _form.TableHeader("BackupSizeGB", "Detected size of backup file");
-            s += _form.TableHeader("DataSizeGB", "Detected size of original VM/server (provisioned, not actual)");
-            s += _form.TableHeader("DedupRatio", "Calculated deduplication ratio");
-            s += _form.TableHeader("Is Retry", "Is this a retry run?");
-            s += _form.TableHeader("Job Duration", "Duration of job in minutes");
-            s += _form.TableHeader("Min Time", "Shorted detected job duration in minutes");
-            s += _form.TableHeader("Max Time", "Longest detected job duration in minutes");
-            s += _form.TableHeader("Avg Time", "Average job duration in minutes");
-            s += _form.TableHeader("Processing Mode", "Processing mode used in the job (blank = SAN)");
-            s += _form.TableHeader("Status", "Final status of the job");
-            s += _form.TableHeader("Task Duration", "Duration of the VM/server within the job in minutes");
+            s += this.form.TableHeader("Job Name", "Name of job");
+            s += this.form.TableHeader("VM Name", "Name of VM/Server within the job");
+            s += this.form.TableHeader("Alg", "Job Algorithm");
+            s += this.form.TableHeader("Primary Bottleneck", "Primary detected bottleneck");
+            s += this.form.TableHeader("BottleNeck", "Detected bottleneck breakdown");
+            s += this.form.TableHeader("CompressionRatio", "Calculated compression ratio");
+            s += this.form.TableHeader("Start Time", "Start time of the backup job");
+            s += this.form.TableHeader("BackupSizeGB", "Detected size of backup file");
+            s += this.form.TableHeader("DataSizeGB", "Detected size of original VM/server (provisioned, not actual)");
+            s += this.form.TableHeader("DedupRatio", "Calculated deduplication ratio");
+            s += this.form.TableHeader("Is Retry", "Is this a retry run?");
+            s += this.form.TableHeader("Job Duration", "Duration of job in minutes");
+            s += this.form.TableHeader("Min Time", "Shorted detected job duration in minutes");
+            s += this.form.TableHeader("Max Time", "Longest detected job duration in minutes");
+            s += this.form.TableHeader("Avg Time", "Average job duration in minutes");
+            s += this.form.TableHeader("Processing Mode", "Processing mode used in the job (blank = SAN)");
+            s += this.form.TableHeader("Status", "Final status of the job");
+            s += this.form.TableHeader("Task Duration", "Duration of the VM/server within the job in minutes");
             s += "</tr>";
             return s;
         }
@@ -259,12 +255,14 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR.VbrTables.Job_Session_Su
             {
                 jname = jname.Replace("\\", "--");
             }
+
             string vmName = c.VmName;
-            //string repo = _scrubber.ScrubItem(c.)
+
+            // string repo = _scrubber.ScrubItem(c.)
             if (scrub)
             {
-                jname = _scrubber.ScrubItem(jname, ScrubItemType.Job);
-                vmName = _scrubber.ScrubItem(c.VmName, ScrubItemType.VM);
+                jname = this.scrubber.ScrubItem(jname, ScrubItemType.Job);
+                vmName = this.scrubber.ScrubItem(c.VmName, ScrubItemType.VM);
             }
 
             s += "<tr>";
@@ -293,28 +291,31 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR.VbrTables.Job_Session_Su
 
         private string FixInvalidJobName(string jobName)
         {
-            log.Debug("Caught invalid char: \"/\", replacing with \"-\": " + jobName);
+            this.log.Debug("Caught invalid char: \"/\", replacing with \"-\": " + jobName);
             var name = jobName.Replace("/", "-");
-            log.Debug("New Name = " + name);
+            this.log.Debug("New Name = " + name);
             return name;
         }
 
         private void LogJobSessionParseProgress(double counter, int total)
         {
             double percentComplete = counter / total * 100;
-            string msg = string.Format(logStart + "{0}%...", Math.Round(percentComplete, 2));
-            log.Info(msg, false);
+            string msg = string.Format(this.logStart + "{0}%...", Math.Round(percentComplete, 2));
+            this.log.Info(msg, false);
         }
 
-        private string TableData(string data, string toolTip)
+        private static string TableData(string data, string toolTip)
         {
             return string.Format("<td title=\"{0}\">{1}</td>", toolTip, data);
         }
 
-        private void CheckFolderExists(string folder)
+        private static void CheckFolderExists(string folder)
         {
             if (!Directory.Exists(folder))
+            {
+
                 Directory.CreateDirectory(folder);
+            }
         }
     }
 }

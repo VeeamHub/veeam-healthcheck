@@ -4,7 +4,8 @@ using System;
 using System.Runtime.InteropServices;
 using System.Text.RegularExpressions;
 using VeeamHealthCheck.Functions.Collection.PSCollections;
-//using VeeamHealthCheck.Reporting.vsac;
+
+// using VeeamHealthCheck.Reporting.vsac;
 using VeeamHealthCheck.Shared;
 using VeeamHealthCheck.Shared.Logging;
 
@@ -21,42 +22,37 @@ namespace VeeamHealthCheck.Startup
         const int SW_HIDE = 0;
         const int SW_SHOW = 5;
 
-        private readonly string[] _args;
-        private CClientFunctions functions = new();
-
+        private readonly string[] args;
+        private readonly CClientFunctions functions = new();
 
         public CArgsParser(string[] args)
         {
-            _args = args;
+            this.args = args;
             CGlobals.TOOLSTART = DateTime.Now;
         }
 
         public int ParseArgs()
         {
-            //CGlobals.RunFullReport = true;
-            LogInitialInfo();
+            // CGlobals.RunFullReport = true;
+            this.LogInitialInfo();
 
             PSInvoker p = new();
             p.TryUnblockFiles();
 
-            if (_args.Length == 0){
+            if (this.args.Length == 0){
                 CGlobals.Logger.Debug("No arguments provided. Launching GUI", false);
-                return LaunchUi(Handle(), true);
+                return this.LaunchUi(this.Handle(), true);
             }
-            else if (_args != null && _args.Length > 0)
-                return ParseAllArgs(_args);
+            else if (this.args != null && this.args.Length > 0)
+                return this.ParseAllArgs(this.args);
             else
-                return LaunchUi(Handle(), false);
-
-
-
-
+                return this.LaunchUi(this.Handle(), false);
         }
 
         private void LogInitialInfo()
         {
             CClientFunctions f = new CClientFunctions();
-            f.LogVersionAndArgs(_args);
+            f.LogVersionAndArgs(this.args);
             try { f.GetVbrVersion(); }
             catch (Exception ex) { }
             f.Dispose();
@@ -67,6 +63,7 @@ namespace VeeamHealthCheck.Startup
             CGlobals.Logger.Info("Executing GUI", false);
             CGlobals.RunFullReport = true;
             CGlobals.GUIEXEC = true;
+
             // if (hide)
             //     ShowWindow(handle, SW_HIDE);
             var app = new System.Windows.Application();
@@ -78,8 +75,8 @@ namespace VeeamHealthCheck.Startup
             return GetConsoleWindow();
         }
 
-        //private int ParseZeroArgs()
-        //{
+        // private int ParseZeroArgs()
+        // {
         //    var pos = Console.GetCursorPosition();
         //    CGlobals.Logger.Debug("pos = " + pos.ToString(), false);
         //    if (pos == (0, 1) || pos == (0, 2))
@@ -93,15 +90,13 @@ namespace VeeamHealthCheck.Startup
         //        Console.WriteLine(CMessages.helpMenu);
         //        return 0;
         //    }
-        //}
+        // }
         private int ParseAllArgs(string[] args)
         {
             bool run = false;
             bool ui = false;
             bool runHfd = false;
             string _hfdPath = string.Empty;
-
-
 
             string targetDir = @"C:\temp\vHC";
             foreach (var a in args)
@@ -171,16 +166,17 @@ namespace VeeamHealthCheck.Startup
                         CGlobals.Scrub = false;
                         break;
                     case "/hotfix":
-                        //functions.RunHotfixDetector();
+                        // functions.RunHotfixDetector();
                         runHfd = true;
-                        //Environment.Exit(0);
+
+                        // Environment.Exit(0);
                         break;
                     case "/creds":
                         CGlobals.UseStoredCreds = true;
                         CGlobals.Logger.Info("Using stored credentials for remote connection", false);
                         break;
                     case var match when new Regex("/creds=.*").IsMatch(a):
-                        string credsStr = ParsePath(a);
+                        string credsStr = this.ParsePath(a);
                         string[] parts = credsStr.Split(':');
                         if (parts.Length == 2)
                         {
@@ -192,6 +188,7 @@ namespace VeeamHealthCheck.Startup
                         {
                             CGlobals.Logger.Error("Invalid /creds format. Use /creds=username:password", false);
                         }
+
                         break;
                     case "/pdf":
                         CGlobals.EXPORTPDF = true;
@@ -200,82 +197,85 @@ namespace VeeamHealthCheck.Startup
                         CGlobals.DEBUG = true;
                         break;
                     case var match when new Regex("/path=.*").IsMatch(a):
-                        _hfdPath = ParsePath(a);
+                        _hfdPath = this.ParsePath(a);
                         CGlobals.Logger.Info("HFD path: " + targetDir);
                         break;
                     case var match when new Regex("/PATH=.*").IsMatch(a):
-                        _hfdPath = ParsePath(a);
+                        _hfdPath = this.ParsePath(a);
                         CGlobals.Logger.Info("HFD path: " + targetDir);
                         break;
                     case var match when new Regex("/HOST=.*").IsMatch(a):
                         CGlobals.REMOTEEXEC = true;
-                        CGlobals.REMOTEHOST = ParsePath(a);
-                        //CGlobals.Logger.Info("HFD path: " + targetDir);
+                        CGlobals.REMOTEHOST = this.ParsePath(a);
+
+                        // CGlobals.Logger.Info("HFD path: " + targetDir);
                         break;
                     case var match when new Regex("/host=.*").IsMatch(a):
                         CGlobals.REMOTEEXEC = true;
-                        CGlobals.REMOTEHOST = ParsePath(a);
-                        //CGlobals.Logger.Info("HFD path: " + targetDir);
+                        CGlobals.REMOTEHOST = this.ParsePath(a);
+
+                        // CGlobals.Logger.Info("HFD path: " + targetDir);
                         break;
-                        //case var match when new Regex("outdir:.*").IsMatch(a):
+
+                        // case var match when new Regex("outdir:.*").IsMatch(a):
                         //    string[] outputDir = a.Split(":");
                         //    targetDir = outputDir[1];
                         //    CGlobals.Logger.Info("Output directory: " + targetDir);
                         //    break;
                 }
             }
+
             int result = 0;
 
             if (runHfd)
             {
                 if(CGlobals.REMOTEEXEC)
                 {
-                    functions.RunHotfixDetector(_hfdPath, CGlobals.REMOTEHOST);
+                    this.functions.RunHotfixDetector(_hfdPath, CGlobals.REMOTEHOST);
                 }
-                functions.RunHotfixDetector(_hfdPath, string.Empty);
+
+                this.functions.RunHotfixDetector(_hfdPath, string.Empty);
             }
             else if (ui)
-                LaunchUi(Handle(), false);
+                this.LaunchUi(this.Handle(), false);
             else if (run)
             {
                 if (CGlobals.IMPORT)
-                     result = FullRun(targetDir);
+                     result = this.FullRun(targetDir);
                 else if (CGlobals.REMOTEEXEC && CGlobals.REMOTEHOST == string.Empty)
                 {
                     CGlobals.Logger.Warning("Remote execution selected but no host defined. Please define host: " +
                         "/host=HOSTNAME", false);
                     Environment.Exit(0);
                 }
-                //else if(CGlobals.REMOTEEXEC && !CGlobals.RunSecReport)
-                //{
+
+                // else if(CGlobals.REMOTEEXEC && !CGlobals.RunSecReport)
+                // {
                 //    CGlobals.Logger.Warning("Remote execution not available for general Health Check. Please run the tool from a server hosting Veeam Backup & Replication", false);
                 //    Environment.Exit(0);
-                //}
-
+                // }
                 else if (CGlobals.REMOTEHOST != string.Empty && CGlobals.RunSecReport)
                 {
                     CGlobals.Logger.Debug("Remote execution selected with host: " + CGlobals.REMOTEHOST, false);
-                    result = FullRun(targetDir);
-
+                    result = this.FullRun(targetDir);
                 }
                 else if(CGlobals.REMOTEHOST != string.Empty)
                 {
                     CGlobals.Logger.Debug("Remote execution selected with host: " + CGlobals.REMOTEHOST, false);
-                    result = FullRun(targetDir);
+                    result = this.FullRun(targetDir);
                 }
                 else
                 {
-                    if (functions.ModeCheck() == "fail")
+                    if (this.functions.ModeCheck() == "fail")
                     {
                         CGlobals.Logger.Error("No compatible software detected or remote host specified. Exiting.", false);
                         Environment.Exit(0);
                     }
                     else
-                        result = FullRun(targetDir);
+                        result = this.FullRun(targetDir);
                 }
-
-
             }
+
             return result;
         }
 
@@ -302,15 +302,12 @@ namespace VeeamHealthCheck.Startup
         private int FullRun(string targetDir)
         {
             CGlobals.Logger.Info("Starting RUN...", false);
-            var res = Run(targetDir);
-
+            var res = this.Run(targetDir);
 
             CGlobals.Logger.Info("Starting RUN...complete!", false);
             CGlobals.Logger.Info("Output is stored in " + targetDir, false);
 
             return res;
-
         }
-
     }
 }

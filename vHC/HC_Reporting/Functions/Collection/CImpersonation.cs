@@ -14,7 +14,7 @@ namespace VeeamHealthCheck.Functions.Collection
 {
     internal class CImpersonation
     {
-        private CLogger _logger = CGlobals.Logger;
+        private readonly CLogger logger = CGlobals.Logger;
 
         [DllImport("advapi32.dll", SetLastError = true, CharSet = CharSet.Unicode)]
         static extern bool LogonUser(String lpszUsername, String lpszDomain, String lpszPassword,
@@ -24,43 +24,44 @@ namespace VeeamHealthCheck.Functions.Collection
 
         public CImpersonation()
         {
-
         }
 
         public void RunCollection()
         {
-            SafeAccessTokenHandle phToken = SafeAccessTokenHandle();
+            SafeAccessTokenHandle phToken = this.SafeAccessTokenHandle();
             WindowsIdentity.RunImpersonated(
                     phToken,
+
                     // User action  
                     () =>
                     {
-                        //CClientFunctions cf = new();
-                        //cf.GetVbrVersion();
-
+                        // CClientFunctions cf = new();
+                        // cf.GetVbrVersion();
                         CCollections collect = new();
                         collect.Run();
+
                         // Check the identity.  
                         //    Console.WriteLine("During impersonation: " + WindowsIdentity.GetCurrent().Name);
-                        //IsDomainJoined(); // This may not work....
+                        // IsDomainJoined(); // This may not work....
                     }
                     );
         }
 
         private SafeAccessTokenHandle SafeAccessTokenHandle()
         {
-            _logger.Info("Logging into: " + CGlobals.REMOTEHOST, false);
+            this.logger.Info("Logging into: " + CGlobals.REMOTEHOST, false);
             string domainName = CGlobals.REMOTEHOST;
 
-            VBRSERVER = domainName;
+            this.VBRSERVER = domainName;
             Console.WriteLine(String.Format("Enter the login of a user on {0} that you wish to impersonate: ", domainName),false);
             string userName = Console.ReadLine();
 
             Console.WriteLine(String.Format("Enter the password for {0}: ", userName), false);
 
             const int LOGON32_PROVIDER_DEFAULT = 0;
-            //This parameter causes LogonUser to create a primary token.   
-            //const int LOGON32_LOGON_INTERACTIVE = 2;
+
+            // This parameter causes LogonUser to create a primary token.   
+            // const int LOGON32_LOGON_INTERACTIVE = 2;
             const int LOGON32_LOGON_INTERACTIVE = 9;
 
             string password = null;
@@ -68,17 +69,22 @@ namespace VeeamHealthCheck.Functions.Collection
             {
                 var key = System.Console.ReadKey(true);
                 if (key.Key == ConsoleKey.Enter)
+                {
                     break;
+                }
+
+
                 password += key.KeyChar;
             }
+
             Console.WriteLine("Executing...");
 
             // Call LogonUser to obtain a handle to an access token.   
             SafeAccessTokenHandle safeAccessTokenHandle;
-            //bool returnValue = LogonUser(userName, domainName, Console.ReadLine(),
+
+            // bool returnValue = LogonUser(userName, domainName, Console.ReadLine(),
             //    LOGON32_LOGON_INTERACTIVE, LOGON32_PROVIDER_DEFAULT,
             //    out safeAccessTokenHandle);
-
             bool returnValue = LogonUser(userName, domainName, password,
             LOGON32_LOGON_INTERACTIVE, LOGON32_PROVIDER_DEFAULT,
             out safeAccessTokenHandle);
@@ -89,9 +95,8 @@ namespace VeeamHealthCheck.Functions.Collection
                 Console.WriteLine("LogonUser failed with error code : {0}", ret);
                 throw new System.ComponentModel.Win32Exception(ret);
             }
+
             return safeAccessTokenHandle;
         }
-
-
     }
 }
