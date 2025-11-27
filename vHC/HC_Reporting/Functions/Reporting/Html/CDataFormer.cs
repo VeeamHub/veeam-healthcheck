@@ -133,6 +133,14 @@ namespace VeeamHealthCheck.Functions.Reporting.Html
                 if (vbrInfo.Any(x => x.mfa == "True"))
                     t.MFAEnabled = true;
                 else t.MFAEnabled = false;
+
+                // Four Eyes Authorization from vbrinfo.csv
+                if (vbrInfo.Any(x => x.foureyes == "True"))
+                    t.FourEyesEnabled = true;
+                else if (vbrInfo.Any(x => x.foureyes == "False"))
+                    t.FourEyesEnabled = false;
+                else
+                    t.FourEyesEnabled = false; // default when not present (older versions)
             }
             catch (Exception ex)
             {

@@ -117,12 +117,14 @@ if ($PSVersionTable.PSVersion.Major -ge 6) {
     if (!(Get-Module -Name Veeam.Backup.PowerShell -ErrorAction SilentlyContinue)) {
         Import-Module -Name Veeam.Backup.Powershell -ErrorAction Stop
     }
-} else {
+}
+else {
     # Windows PowerShell 5.1 - try PSSnapin first, then module
     if (!(Get-PSSnapin -Name VeeamPSSnapIn -ErrorAction SilentlyContinue)) {
         try {
             Add-PSSnapin -Name VeeamPSSnapIn -ErrorAction Stop
-        } catch {
+        }
+        catch {
             # If PSSnapin fails, try module
             if (!(Get-Module -Name Veeam.Backup.PowerShell -ErrorAction SilentlyContinue)) {
                 Import-Module -Name Veeam.Backup.Powershell -ErrorAction Stop
@@ -157,7 +159,8 @@ catch {
     $errMsg = ""
     try {
         $errMsg = if ($_.Exception.Message) { $_.Exception.Message.ToString() } else { "No error message" }
-    } catch {
+    }
+    catch {
         $errMsg = "Unable to get error details"
     }
     Write-LogFile("Failed to connect to VBR Server: " + $VBRServer + ". Error: " + $errMsg, "Errors", "ERROR")
@@ -816,13 +819,15 @@ if ($VBRVersion -ge 12) {
                 try {
                     Start-VBRSecurityComplianceAnalyzer -ErrorAction Stop -WarningAction SilentlyContinue -InformationAction SilentlyContinue
                     Write-LogFile("Start-VBRSecurityComplianceAnalyzer completed successfully")
-                } catch {
+                }
+                catch {
                     $errMsg = ""
                     $errType = ""
                     try {
                         $errMsg = if ($_.Exception.Message) { $_.Exception.Message.ToString() } else { "No error message" }
                         $errType = if ($_.Exception) { $_.Exception.GetType().FullName } else { "Unknown" }
-                    } catch {
+                    }
+                    catch {
                         $errMsg = "Unable to get error details"
                         $errType = "Unknown"
                     }
@@ -842,16 +847,19 @@ if ($VBRVersion -ge 12) {
                     if ($VBRVersion -ge 13) {
                         Write-LogFile("Using Get-VBRSecurityComplianceAnalyzerResults for VBR v13+")
                         $SecurityCompliances = Get-VBRSecurityComplianceAnalyzerResults
-                    } else {
+                    }
+                    else {
                         Write-LogFile("Using database method for VBR v12")
                         $SecurityCompliances = [Veeam.Backup.DBManager.CDBManager]::Instance.BestPractices.GetAll()
                     }
                     Write-LogFile("Retrieved " + $SecurityCompliances.Count + " compliance items")
-                } catch {
+                }
+                catch {
                     $errMsg = ""
                     try {
                         $errMsg = if ($_.Exception.Message) { $_.Exception.Message.ToString() } else { "No error message" }
-                    } catch {
+                    }
+                    catch {
                         $errMsg = "Unable to get error details"
                     }
                     Write-LogFile("Failed to retrieve compliance data: " + $errMsg, "Errors", "ERROR")
@@ -939,7 +947,8 @@ if ($VBRVersion -ge 12) {
                         # Safely get Type property
                         if ($SecurityCompliance.Type) {
                             $complianceType = $SecurityCompliance.Type.ToString()
-                        } else {
+                        }
+                        else {
                             Write-LogFile("Warning: Compliance item has null Type - skipping", "Main", "WARNING")
                             $skippedCount++
                             continue
@@ -948,7 +957,8 @@ if ($VBRVersion -ge 12) {
                         # Safely get Status property
                         if ($SecurityCompliance.Status) {
                             $complianceStatus = $SecurityCompliance.Status.ToString()
-                        } else {
+                        }
+                        else {
                             Write-LogFile("Warning: Compliance item '" + $complianceType + "' has null Status - skipping", "Main", "WARNING")
                             $skippedCount++
                             continue
@@ -982,15 +992,18 @@ if ($VBRVersion -ge 12) {
                         try {
                             if ($_.Exception.Message) {
                                 $errMsg = $_.Exception.Message.ToString()
-                            } else {
+                            }
+                            else {
                                 $errMsg = "No error message available"
                             }
                             if ($_.Exception) {
                                 $errType = $_.Exception.GetType().FullName
-                            } else {
+                            }
+                            else {
                                 $errType = "Unknown exception type"
                             }
-                        } catch {
+                        }
+                        catch {
                             $errMsg = "Unable to retrieve error message"
                             $errType = "Unable to retrieve exception type"
                         }
@@ -1024,7 +1037,8 @@ if ($VBRVersion -ge 12) {
                             $errMsg = if ($_.Exception.Message) { $_.Exception.Message.ToString() } else { "No error message" }
                             $errType = if ($_.Exception) { $_.Exception.GetType().FullName } else { "Unknown" }
                             $stackTrace = if ($_.ScriptStackTrace) { $_.ScriptStackTrace.ToString() } else { "No stack trace" }
-                        } catch {
+                        }
+                        catch {
                             $errMsg = "Unable to get error details"
                             $errType = "Unknown"
                             $stackTrace = "Unable to get stack trace"
@@ -1033,7 +1047,8 @@ if ($VBRVersion -ge 12) {
                         Write-LogFile("Exception Type: " + $errType, "Errors", "ERROR")
                         Write-LogFile("Stack Trace: " + $stackTrace, "Errors", "ERROR")
                     }
-                } else {
+                }
+                else {
                     Write-LogFile("No compliance data to export - OutObj is empty", "Main", "WARNING")
                 }
             }
@@ -1042,17 +1057,20 @@ if ($VBRVersion -ge 12) {
                 try {
                     if ($_.Exception.Message) { 
                         $errMsg = $_.Exception.Message.ToString() 
-                    } else { 
+                    }
+                    else { 
                         $errMsg = $_.ToString() 
                     }
-                } catch {
+                }
+                catch {
                     $errMsg = "Unable to get error message"
                 }
                 $errType = if ($_.Exception) { $_.Exception.GetType().FullName } else { "Unknown" }
                 $stackTrace = ""
                 try {
                     $stackTrace = if ($_.ScriptStackTrace) { $_.ScriptStackTrace.ToString() } else { "No stack trace available" }
-                } catch {
+                }
+                catch {
                     $stackTrace = "Unable to get stack trace"
                 }
                 Write-LogFile("Security & Compliance summary command failed: " + $errMsg, "Errors", "ERROR")
@@ -1065,16 +1083,19 @@ if ($VBRVersion -ge 12) {
             try {
                 if ($_.Exception.Message) { 
                     $errMsg = $_.Exception.Message.ToString() 
-                } else { 
+                }
+                else { 
                     $errMsg = $_.ToString() 
                 }
-            } catch {
+            }
+            catch {
                 $errMsg = "Unable to get error message"
             }
             $stackTrace = ""
             try {
                 $stackTrace = if ($_.ScriptStackTrace) { $_.ScriptStackTrace.ToString() } else { "No stack trace available" }
-            } catch {
+            }
+            catch {
                 $stackTrace = "Unable to get stack trace"
             }
             Write-LogFile("Security & Compliance summary section failed: " + $errMsg, "Errors", "ERROR")
@@ -1244,6 +1265,21 @@ try {
         Write-LogFile("Failed to get MFA Global Setting, likely pre-VBR 12") 
         $MFAGlobalSetting = "N/A - Pre VBR 12"
     }
+    try {
+        # Check if Four Eyes Authorization is enabled
+        $FourEyesEnabled = [Veeam.Backup.Core.SBackupOptions]::get_UserActionNotification()
+
+        if ($FourEyesEnabled) {
+            Write-LogFile("Four-eye Authorization is enabled")
+        }
+        else {
+            Write-LogFile("Four-eye Authorization is NOT enabled")
+        }
+    }
+    catch {
+        Write-LogFile("Failed to get Four Eyes Authorization Setting, likely pre-VBR 11 or non-local VBR install")
+        $FourEyesEnabled = "N/A - Pre VBR 11 or non-local"
+    }
 
 
     #output VBR Versioning
@@ -1258,6 +1294,7 @@ try {
         'MsDb'      = $msDbName.SqlDatabaseName
         'DbType'    = $dbType.SqlActiveConfiguration
         'MFA'       = $MFAGlobalSetting
+        'FourEyes'  = $FourEyesEnabled
 
     }
 

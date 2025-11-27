@@ -18,6 +18,8 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR.VbrTables.Security
 
         public bool MFAEnabled { get; set; }
 
+        public bool FourEyesEnabled { get; set; }
+
         public bool IsConsoleInstalled { get; set; }
 
         public CSecuritySummaryTable()
