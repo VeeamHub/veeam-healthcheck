@@ -25,7 +25,9 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR.VbrTables.ProtectedWorkl
                     entra.TenantName = rec.TenantName;
                     entra.CacheRepoName = rec.CacheRepoName;
                     if(!String.IsNullOrEmpty(entra.TenantName) && !String.IsNullOrEmpty(entra.CacheRepoName))
+                    {
                         p.entraWorkloads.Add(entra);
+                    }
                 }
             }
             catch (Exception e)
@@ -33,6 +35,7 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR.VbrTables.ProtectedWorkl
                 Console.WriteLine(e);
                 throw;
             }
+
             return p;
         }
     }

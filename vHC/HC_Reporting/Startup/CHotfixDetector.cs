@@ -15,49 +15,49 @@ namespace VeeamHealthCheck.Startup
 {
     internal class CHotfixDetector
     {
-        private CLogger LOG = CGlobals.Logger;
-        private string logStart = "[HotfixDetector]\t";
-        private readonly string _originalPath;
-        private string _path;
-        private List<string> _fixList;
-
+        private readonly CLogger LOG = CGlobals.Logger;
+        private readonly string logStart = "[HotfixDetector]\t";
+        private readonly string originalPath;
+        private string path;
+        private readonly List<string> fixList;
 
         public CHotfixDetector(string path)
         {
-            _fixList = new List<string>();
+            this.fixList = new List<string>();
             CClientFunctions funk = new();
             if (funk.VerifyPath(path))
             {
-                _originalPath = path;
-                SetPath();
+                this.originalPath = path;
+                this.SetPath();
             }
         }
 
         public void Run()
         {
             CCollections col = new();
-            LOG.Info(logStart + "Checking Path...", false);
-            ExecLogCollection();
-            //TryParseRegLogs();
-            EchoResults();
+            this.LOG.Info(this.logStart + "Checking Path...", false);
+            this.ExecLogCollection();
+
+            // TryParseRegLogs();
+            this.EchoResults();
         }
 
         private void EchoResults()
         {
-            if (_fixList.Count > 0)
+            if (this.fixList.Count > 0)
             {
-                LOG.Warning(logStart + CMessages.FoundHotfixesMessage(_fixList), false);
+                this.LOG.Warning(this.logStart + CMessages.FoundHotfixesMessage(this.fixList), false);
             }
             else
-                LOG.Warning(logStart + "No hotfixes found.", false);
+                this.LOG.Warning(this.logStart + "No hotfixes found.", false);
         }
 
         private void SetPath()
         {
-            _path = _originalPath + "\\vHC_HotFixDetectionLogs";
-            if (!Directory.Exists(_path))
+            this.path = this.originalPath + "\\vHC_HotFixDetectionLogs";
+            if (!Directory.Exists(this.path))
             {
-                Directory.CreateDirectory(_path);
+                Directory.CreateDirectory(this.path);
             }
         }
 
@@ -65,24 +65,22 @@ namespace VeeamHealthCheck.Startup
         {
             try
             {
-                string output = ExtractLogs();
-                EnumerateFiles(output);
-                ClearTargetPath(output);
+                string output = this.ExtractLogs();
+                this.EnumerateFiles(output);
+                this.ClearTargetPath(output);
             }
-            catch (Exception ex) { LOG.Error(logStart + ex.Message, false); }
-
-
+            catch (Exception ex) { this.LOG.Error(this.logStart + ex.Message, false); }
         }
 
         private void TryParseRegLogs()
         {
             try
             {
-                ParseRegularLogs();
+                this.ParseRegularLogs();
             }
             catch (Exception e2)
             {
-                LOG.Error(logStart + e2.Message, false);
+                this.LOG.Error(this.logStart + e2.Message, false);
             }
         }
 
@@ -94,24 +92,45 @@ namespace VeeamHealthCheck.Startup
             {
                 try
                 {
-                    LOG.Info(logStart + "Checking file " + counter + " of " + files.Count(), false);
-                    Parse(file);
+                    this.LOG.Info(this.logStart + "Checking file " + counter + " of " + files.Count(), false);
+                    this.Parse(file);
                     counter++;
                 }
                 catch (Exception e)
                 {
-                    //LOG.Error(logStart + e.Message, false);
+                    // LOG.Error(logStart + e.Message, false);
                 }
             }
         }
 
         private bool VerifyPath(string path)
         {
-            if (String.IsNullOrEmpty(path)) return false;
-            if (path.StartsWith("\\\\")) return false;
-            if (Directory.Exists(path)) return true;
-            if (TryCreateDir(path)) return true;
-            else return false;
+            if (String.IsNullOrEmpty(path))
+            {
+                return false;
+            }
+
+
+            if (path.StartsWith("\\\\"))
+            {
+                return false;
+            }
+
+
+            if (Directory.Exists(path))
+            {
+                return true;
+            }
+
+
+            if (this.TryCreateDir(path))
+            {
+                return true;
+            }
+            else
+            {
+                return false;
+            }
         }
 
         private bool TryCreateDir(string path)
@@ -123,10 +142,9 @@ namespace VeeamHealthCheck.Startup
             }
             catch
             {
-                LOG.Error("Failed to create directory.", false);
+                this.LOG.Error("Failed to create directory.", false);
                 return false;
             }
-
         }
 
         private void ExecLogCollection()
@@ -135,11 +153,11 @@ namespace VeeamHealthCheck.Startup
             ps.RunServerDump();
 
             // get file + results
-            foreach(string server in ServerList())
+            foreach(string server in this.ServerList())
             {
-                LOG.Info("Checking logs for: " + server, false);
-                ps.RunVbrLogCollect(_path, server);
-                TryParseLogs();
+                this.LOG.Info("Checking logs for: " + server, false);
+                ps.RunVbrLogCollect(this.path, server);
+                this.TryParseLogs();
             }
         }
 
@@ -148,23 +166,23 @@ namespace VeeamHealthCheck.Startup
             List<string> newList = new();
             string dir = Directory.GetCurrentDirectory();
             string path = /*dir +*/ PSInvoker.SERVERLISTFILE;
-            using(StreamReader sr = new(path)) //need to get the source directory
+            using(StreamReader sr = new(path)) // need to get the source directory
             {
                 string line;
                 while((line = sr.ReadLine()) != null)
                 {
                     newList.Add(line);
                 }
-
             }
+
             return newList.Distinct().ToList();
         }
 
         private string ExtractLogs()
         {
-            string target = _path + "\\extracted";
-            ClearTargetPath(target);
-            var files = Directory.GetFiles(_path + "\\VeeamSupportLogs");
+            string target = this.path + "\\extracted";
+            this.ClearTargetPath(target);
+            var files = Directory.GetFiles(this.path + "\\VeeamSupportLogs");
             foreach (string file in files)
             {
                 using (ZipArchive zip = ZipFile.OpenRead(file))
@@ -172,12 +190,13 @@ namespace VeeamHealthCheck.Startup
                     try
                     {
                         zip.ExtractToDirectory(target);
-
                     }
                     catch (Exception e) { }
                 }
+
                 File.Delete(file);
             }
+
             return target;
         }
 
@@ -195,15 +214,13 @@ namespace VeeamHealthCheck.Startup
                 string[] dirs = Directory.GetDirectories(path);
                 foreach (string dir in dirs)
                 {
-                    ClearTargetPath(dir);
+                    this.ClearTargetPath(dir);
                     try
                     {
                         Directory.Delete(path, true);
                     }
                     catch (Exception e) { } 
                 }
-
-
             }
         }
 
@@ -211,7 +228,7 @@ namespace VeeamHealthCheck.Startup
         {
             CLogParser logParser = new CLogParser();
             string path = logParser.InitLogDir();
-            EnumerateFiles(path);
+            this.EnumerateFiles(path);
         }
 
         private void Parse(string file)
@@ -225,9 +242,10 @@ namespace VeeamHealthCheck.Startup
                     if (!String.IsNullOrEmpty(line))
                     {
                         if (line.Contains("Private Fix"))
-                            ParseFixLines(line);
+                        {
+                            this.ParseFixLines(line);
+                        }
                     }
-
                 }
             }
         }
@@ -237,22 +255,25 @@ namespace VeeamHealthCheck.Startup
             try
             {
                 string fileVersion = line.Remove(0, line.IndexOf("File Version"));
-                //log.Debug(line, false);
+
+                // log.Debug(line, false);
                 string fixLine = line.Remove(0, line.IndexOf("Private Fix"));
                 if (fixLine.EndsWith(']'))
+                {
                     fixLine = fixLine.Replace("]", string.Empty);
-                if (!_fixList.Contains(fixLine))
+                }
+
+
+                if (!this.fixList.Contains(fixLine))
                 {
                     if (!fixLine.Contains("KB"))
                     {
-                        _fixList.Add(fixLine);
-                        LOG.Debug(fixLine, false);
+                        this.fixList.Add(fixLine);
+                        this.LOG.Debug(fixLine, false);
                     }
-
-
                 }
             }
-            catch (Exception e) { LOG.Debug(e.Message); }
+            catch (Exception e) { this.LOG.Debug(e.Message); }
         }
     }
 }

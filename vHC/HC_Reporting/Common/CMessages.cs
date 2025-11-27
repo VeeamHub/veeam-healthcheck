@@ -7,7 +7,7 @@ namespace VeeamHealthCheck.Shared
 {
     internal class CMessages
     {
-        private static string ProcEnd = "DONE!";
+        private static readonly string ProcEnd = "DONE!";
 
         public static string helpMenu = @"
 Veeam Health Check - Command Line Help
@@ -44,7 +44,7 @@ EXAMPLES:
 
 For more information, visit: https://github.com/VeeamHub/veeam-healthcheck
 ";        
-public static string PsVbrConfigStart = "[PS] Enter Config Collection Invoker...";
+        public static string PsVbrConfigStart = "[PS] Enter Config Collection Invoker...";
         public static string PsVbrConfigDone = PsVbrConfigStart + ProcEnd;
 
         public static string PsVbrFunctionStart = "[PS] Enter Function Setter...";
@@ -55,7 +55,6 @@ public static string PsVbrConfigStart = "[PS] Enter Config Collection Invoker...
 
         public static string PsVbrConfigProcId = "[PS][VBR Config] PowerShell Process started with ID: ";
         public static string PsVbrConfigProcIdDone = PsVbrConfigProcId + ProcEnd;
-
 
         public static string FoundHotfixesMessage(List<string> fixes)
         {
@@ -68,6 +67,7 @@ public static string PsVbrConfigStart = "[PS] Enter Config Collection Invoker...
             {
                 output += "\n - " + fix;
             }
+
             output += "\r\n \r\nPlease delay your upgrade until verification has been completed." +
                 " To verify your system, please do the following:" +
                 "\n\t1. Open a support case" +
@@ -83,12 +83,14 @@ public static string PsVbrConfigStart = "[PS] Enter Config Collection Invoker...
             {
                 output += "\n - " + fix;
             }
+
             output += String.Format("\r\n \r\nPlease check these fixes and let me know if I " +
                 "may safely upgrade my system." +
                 "\r\n \r\nInstalled B&R Version: {0}" +
                 "\r\nHotfix Detector Version: {1}" +
                 "\r\n \r\nThank you,", CGlobals.VBRFULLVERSION, CVersionSetter.GetFileVersion());
-            //"\r\n4.\tAllow the support representative to return an answer.\r\n"
+
+            // "\r\n4.\tAllow the support representative to return an answer.\r\n"
             return output;
         }
     }

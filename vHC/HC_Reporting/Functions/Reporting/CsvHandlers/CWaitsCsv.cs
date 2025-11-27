@@ -7,8 +7,7 @@ namespace VeeamHealthCheck.Functions.Reporting.CsvHandlers
 {
     public class CWaitsCsv
     {
-        //JobName	StartTime	EndTime	Duration
-
+        // JobName	StartTime	EndTime	Duration
         [Index(0)]
         public string JobName { get; set; }
 

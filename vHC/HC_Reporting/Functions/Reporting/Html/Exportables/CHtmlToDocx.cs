@@ -1,20 +1,20 @@
-﻿//using System;
-//using System.Collections.Generic;
-//using System.IO;
-//using System.Linq;
-//using System.Text;
-//using System.Threading.Tasks;
-//using System.Windows.Controls;
-//using System;
-//using System.IO;
-//using Xceed.Words.NET;
-//using HtmlToOpenXml;
-//using DocumentFormat.OpenXml.Packaging;
-//using DocumentFormat.OpenXml.Wordprocessing;
-//using DocumentFormat.OpenXml;
+﻿// using System;
+// using System.Collections.Generic;
+// using System.IO;
+// using System.Linq;
+// using System.Text;
+// using System.Threading.Tasks;
+// using System.Windows.Controls;
+// using System;
+// using System.IO;
+// using Xceed.Words.NET;
+// using HtmlToOpenXml;
+// using DocumentFormat.OpenXml.Packaging;
+// using DocumentFormat.OpenXml.Wordprocessing;
+// using DocumentFormat.OpenXml;
 
-//namespace VeeamHealthCheck.Functions.Reporting.Html.Exportables
-//{
+// namespace VeeamHealthCheck.Functions.Reporting.Html.Exportables
+// {
 //    internal class CHtmlToDocx
 //    {
 //        public void ExportHtmlToDocx(string htmlContent, string outputPath)
@@ -28,7 +28,7 @@
 //                var body = new Body();
 //                mainPart.Document.Append(body);
 
-//                // Set the document to landscape mode
+// // Set the document to landscape mode
 //                var sectionProperties = new SectionProperties();
 //                var pageSize = new PageSize
 //                {
@@ -47,15 +47,15 @@
 //                sectionProperties.Append(pageMargin);
 //                body.Append(sectionProperties);
 
-//                // Create a new HtmlConverter
+// // Create a new HtmlConverter
 //                var converter = new HtmlConverter(mainPart);
 
-//                // Convert the HTML content to DocX format
+// // Convert the HTML content to DocX format
 //                converter.ParseBody(htmlContent);
 
-//                // Save the document
+// // Save the document
 //                mainPart.Document.Save();
 //            }
 //        }
 //    }
-//}
+// }

@@ -17,7 +17,7 @@ namespace VeeamHealthCheck.Functions.CredsWindow
                 return (CGlobals.CredsUsername, CGlobals.CredsPassword);
             }
 
-            var creds = PromptForCredentials(CGlobals.REMOTEHOST);
+            var creds = this.PromptForCredentials(CGlobals.REMOTEHOST);
             if (creds == null)
             {
                 CGlobals.Logger.Error("Credentials not provided. Aborting MFA test.", false);

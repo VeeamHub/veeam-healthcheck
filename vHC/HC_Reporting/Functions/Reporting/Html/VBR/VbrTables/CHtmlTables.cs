@@ -96,6 +96,10 @@ namespace VeeamHealthCheck.Html.VBR
                 this.form.FormNavRows(VbrLocalizationHelper.NavJobInfoLink, "jobs", VbrLocalizationHelper.NavJobInfoDeet);
         }
 
+        /// <summary>
+        /// Generates the HTML navigation table for the Veeam HealthCheck security report.
+        /// </summary>
+        /// <returns>A string containing the HTML security navigation table.</returns>
         public string MakeSecurityNavTable()
         {
             return // _form.FormNavRows(ResourceHandler.NavLicInfoLink, "license", ResourceHandler.NavLicInfoDetail) +
@@ -120,6 +124,11 @@ namespace VeeamHealthCheck.Html.VBR
                 this.form.FormNavRows(VbrLocalizationHelper.NavJobInfoLink, "jobs", VbrLocalizationHelper.NavJobInfoDeet);
         }
 
+        /// <summary>
+        /// Generates the HTML table for license information.
+        /// </summary>
+        /// <param name="scrub">Indicates whether to scrub sensitive data from the output.</param>
+        /// <returns>A string containing the HTML license table.</returns>
         public string LicTable(bool scrub)
         {
             string s = this.form.SectionStart("license", VbrLocalizationHelper.LicTableHeader);
@@ -157,7 +166,6 @@ namespace VeeamHealthCheck.Html.VBR
 
                 foreach (var l in lic)
                 {
-
                     s += "<tr>";
                     if (scrub)
                     {
@@ -304,7 +312,6 @@ namespace VeeamHealthCheck.Html.VBR
             // CDataFormer cd = new(true);
             try
             {
-
                 s += this.form.TableBodyStart();
                 s += "<tr>";
                 s += this.form.TableData(b.DbType, string.Empty);
@@ -449,7 +456,6 @@ namespace VeeamHealthCheck.Html.VBR
             }
 
             return s;
-
         }
 
         private string InstalledAppsTable()
@@ -568,7 +574,6 @@ namespace VeeamHealthCheck.Html.VBR
                     s += malware.MalwareExclusionsTable();
                     s += malware.MalwareEventsTable();
                     s += malware.MalwareInfectedObjectsTable();
-
                 }
                 catch (Exception e)
                 {
@@ -647,7 +652,6 @@ namespace VeeamHealthCheck.Html.VBR
             try
             {
                 s += this.AddTable("Detected OS", this.helper.CollectedOsInfo());
-
             }
             catch (Exception e)
             {
@@ -697,7 +701,6 @@ namespace VeeamHealthCheck.Html.VBR
                     s += this.form.TableData(d, string.Empty);
                     s += "</tr>";
                 }
-
             }
 
             s += this.form.EndTable();
@@ -903,10 +906,10 @@ namespace VeeamHealthCheck.Html.VBR
                 s += this.form.TableHeaderEnd();
                 s += this.form.TableBodyStart();
                 s += "<tr>";
-                s += this.form.TableData((this.df._viProtectedNames.Distinct().Count() + this.df._viNotProtectedNames.Distinct().Count()).ToString(), string.Empty);
-                s += this.form.TableData(this.df._viProtectedNames.Distinct().Count().ToString(), string.Empty);
-                s += this.form.TableData(this.df._viNotProtectedNames.Distinct().Count().ToString(), string.Empty);
-                s += this.form.TableData(this.df._viDupes.ToString(), string.Empty);
+                s += this.form.TableData((this.df.viProtectedNames.Distinct().Count() + this.df.viNotProtectedNames.Distinct().Count()).ToString(), string.Empty);
+                s += this.form.TableData(this.df.viProtectedNames.Distinct().Count().ToString(), string.Empty);
+                s += this.form.TableData(this.df.viNotProtectedNames.Distinct().Count().ToString(), string.Empty);
+                s += this.form.TableData(this.df.viDupes.ToString(), string.Empty);
                 s += "</tr>";
                 s += "</table>";
 
@@ -923,10 +926,10 @@ namespace VeeamHealthCheck.Html.VBR
                 s += this.form.TableHeaderEnd();
                 s += this.form.TableBodyStart();
                 s += "<tr>";
-                s += this.form.TableData((this.df._hvProtectedNames.Distinct().Count() + this.df._hvNotProtectedNames.Distinct().Count()).ToString(), string.Empty);
-                s += this.form.TableData(this.df._hvProtectedNames.Distinct().Count().ToString(), string.Empty);
-                s += this.form.TableData(this.df._hvNotProtectedNames.Distinct().Count().ToString(), string.Empty);
-                s += this.form.TableData(this.df._hvDupes.ToString(), string.Empty);
+                s += this.form.TableData((this.df.hvProtectedNames.Distinct().Count() + this.df.hvNotProtectedNames.Distinct().Count()).ToString(), string.Empty);
+                s += this.form.TableData(this.df.hvProtectedNames.Distinct().Count().ToString(), string.Empty);
+                s += this.form.TableData(this.df.hvNotProtectedNames.Distinct().Count().ToString(), string.Empty);
+                s += this.form.TableData(this.df.hvDupes.ToString(), string.Empty);
                 s += "</tr></table>";
 
                 // phys
@@ -943,10 +946,10 @@ namespace VeeamHealthCheck.Html.VBR
 
                 // CDataFormer cd = new(true);
                 s += "<tr>";
-                s += this.form.TableData(this.df._vmProtectedByPhys.Distinct().Count().ToString(), string.Empty);
-                s += this.form.TableData((this.df._physNotProtNames.Distinct().Count() + this.df._physProtNames.Distinct().Count()).ToString(), string.Empty);
-                s += this.form.TableData(this.df._physProtNames.Distinct().Count().ToString(), string.Empty);
-                s += this.form.TableData(this.df._physNotProtNames.Distinct().Count().ToString(), string.Empty);
+                s += this.form.TableData(this.df.vmProtectedByPhys.Distinct().Count().ToString(), string.Empty);
+                s += this.form.TableData((this.df.physNotProtNames.Distinct().Count() + this.df.physProtNames.Distinct().Count()).ToString(), string.Empty);
+                s += this.form.TableData(this.df.physProtNames.Distinct().Count().ToString(), string.Empty);
+                s += this.form.TableData(this.df.physNotProtNames.Distinct().Count().ToString(), string.Empty);
                 s += "</tr>";
                 s += "</table>";
 
@@ -996,7 +999,6 @@ namespace VeeamHealthCheck.Html.VBR
 
                         s += this.form.EndTable();
                     }
-
                 }
                 catch (Exception e)
                 {
@@ -1057,10 +1059,9 @@ namespace VeeamHealthCheck.Html.VBR
                 }
                 catch (Exception ex)
                 {
-
                 }
 
-                s += this.form._endDiv;
+                s += this.form.endDiv;
             }
             catch (Exception e)
             {
@@ -1074,22 +1075,22 @@ namespace VeeamHealthCheck.Html.VBR
             try
             {
                 // VMware stats
-                int viTotal = this.df._viProtectedNames.Distinct().Count() + this.df._viNotProtectedNames.Distinct().Count();
-                int viProtected = this.df._viProtectedNames.Distinct().Count();
-                int viUnprotected = this.df._viNotProtectedNames.Distinct().Count();
-                int viDupes = this.df._viDupes;
+                int viTotal = this.df.viProtectedNames.Distinct().Count() + this.df.viNotProtectedNames.Distinct().Count();
+                int viProtected = this.df.viProtectedNames.Distinct().Count();
+                int viUnprotected = this.df.viNotProtectedNames.Distinct().Count();
+                int viDupes = this.df.viDupes;
 
                 // HV stats
-                int hvTotal = this.df._hvProtectedNames.Distinct().Count() + this.df._hvNotProtectedNames.Distinct().Count();
-                int hvProtected = this.df._hvProtectedNames.Distinct().Count();
-                int hvUnprotected = this.df._hvNotProtectedNames.Distinct().Count();
-                int hvDupes = this.df._hvDupes;
+                int hvTotal = this.df.hvProtectedNames.Distinct().Count() + this.df.hvNotProtectedNames.Distinct().Count();
+                int hvProtected = this.df.hvProtectedNames.Distinct().Count();
+                int hvUnprotected = this.df.hvNotProtectedNames.Distinct().Count();
+                int hvDupes = this.df.hvDupes;
 
                 // Physical stats
-                int physVmProtectedByPhys = this.df._vmProtectedByPhys.Distinct().Count();
-                int physTotal = this.df._physNotProtNames.Distinct().Count() + this.df._physProtNames.Distinct().Count();
-                int physProtected = this.df._physProtNames.Distinct().Count();
-                int physUnprotected = this.df._physNotProtNames.Distinct().Count();
+                int physVmProtectedByPhys = this.df.vmProtectedByPhys.Distinct().Count();
+                int physTotal = this.df.physNotProtNames.Distinct().Count() + this.df.physProtNames.Distinct().Count();
+                int physProtected = this.df.physProtNames.Distinct().Count();
+                int physUnprotected = this.df.physNotProtNames.Distinct().Count();
 
                 List<string> headers = new() { "WorkloadType", "Total", "Protected", "Unprotected", "Duplicates" };
                 List<List<string>> rows = new()
@@ -1165,7 +1166,6 @@ namespace VeeamHealthCheck.Html.VBR
 
                 foreach (var d in list)
                 {
-
                     s += "<tr>";
 
                     s += this.form.TableData(d.Name, string.Empty);
@@ -1259,7 +1259,6 @@ namespace VeeamHealthCheck.Html.VBR
 
             try
             {
-
                 Dictionary<string, string> list = this.df.RegOptions();
                 if (list.Count == 0)
                 {
@@ -1342,7 +1341,6 @@ namespace VeeamHealthCheck.Html.VBR
 
                 foreach (var d in list)
                 {
-
                     var prov = d[12];
                     int shade = 0;
                     if (prov == "under")
@@ -1539,7 +1537,6 @@ namespace VeeamHealthCheck.Html.VBR
 
                 foreach (var d in list)
                 {
-
                     s += "<tr>";
                     s += this.form.TableData(d.Name, string.Empty);
                     s += this.form.TableData(d.ExtentCount.ToString(), string.Empty);
@@ -1995,7 +1992,6 @@ this.form.TableHeader(VbrLocalizationHelper.SbrExt15, VbrLocalizationHelper.SbrE
             s += this.form.TableBodyStart();
             try
             {
-
                 var stuff = this.df.JobConcurrency(true);
 
                 foreach (var stu in stuff)
@@ -2010,7 +2006,6 @@ this.form.TableHeader(VbrLocalizationHelper.SbrExt15, VbrLocalizationHelper.SbrE
 
                     s += "</tr>";
                 }
-
             }
             catch (Exception e)
             {
@@ -2135,7 +2130,7 @@ this.form.TableHeader(VbrLocalizationHelper.SbrExt15, VbrLocalizationHelper.SbrE
                         t += this.form.TableData(stu.MinJobTime, VbrLocalizationHelper.Jss2);
                         t += this.form.TableData(stu.MaxJobTime, VbrLocalizationHelper.Jss3);
                         t += this.form.TableData(stu.AvgJobTime, VbrLocalizationHelper.Jss4);
-                        t += this.form.TableData(stu.sessionCount.ToString(), VbrLocalizationHelper.Jss5);
+                        t += this.form.TableData(stu.SessionCount.ToString(), VbrLocalizationHelper.Jss5);
                         t += this.form.TableData(stu.Fails.ToString(), "Fails");
                         t += this.form.TableData(stu.Retries.ToString(), "Retries");
                         t += this.form.TableData(stu.SuccessRate.ToString(), VbrLocalizationHelper.Jss6);
@@ -2144,9 +2139,9 @@ this.form.TableHeader(VbrLocalizationHelper.SbrExt15, VbrLocalizationHelper.SbrE
                         t += this.form.TableData(stu.AvgDataSize.ToString(), VbrLocalizationHelper.Jss9);
                         t += this.form.TableData(stu.MaxDataSize.ToString(), VbrLocalizationHelper.Jss10);
                         t += this.form.TableData(stu.AvgChangeRate.ToString(), VbrLocalizationHelper.Jss11);
-                        t += this.form.TableData(stu.waitCount.ToString(), VbrLocalizationHelper.Jss12);
-                        t += this.form.TableData(stu.maxWait, VbrLocalizationHelper.Jss13);
-                        t += this.form.TableData(stu.avgwait, VbrLocalizationHelper.Jss14);
+                        t += this.form.TableData(stu.WaitCount.ToString(), VbrLocalizationHelper.Jss12);
+                        t += this.form.TableData(stu.MaxWait, VbrLocalizationHelper.Jss13);
+                        t += this.form.TableData(stu.AvgWait, VbrLocalizationHelper.Jss14);
                         if (CGlobals.DEBUG)
                         {
                             this.log.Debug("Job Name = " + stu.JobName);
@@ -2164,9 +2159,7 @@ this.form.TableHeader(VbrLocalizationHelper.SbrExt15, VbrLocalizationHelper.SbrE
                     {
                         this.log.Error("Job Session Summary Table failed to add row for job: " + stu.JobName);
                         this.log.Error("\t" + ex.Message);
-
                     }
-
                 }
             }
             catch (Exception e)
@@ -2190,7 +2183,7 @@ this.form.TableHeader(VbrLocalizationHelper.SbrExt15, VbrLocalizationHelper.SbrE
                     stu.MinJobTime,
                     stu.MaxJobTime,
                     stu.AvgJobTime,
-                    stu.sessionCount.ToString(),
+                    stu.SessionCount.ToString(),
                     stu.Fails.ToString(),
                     stu.Retries.ToString(),
                     stu.SuccessRate.ToString(),
@@ -2199,9 +2192,9 @@ this.form.TableHeader(VbrLocalizationHelper.SbrExt15, VbrLocalizationHelper.SbrE
                     stu.AvgDataSize.ToString(),
                     stu.MaxDataSize.ToString(),
                     stu.AvgChangeRate.ToString(),
-                    stu.waitCount.ToString(),
-                    stu.maxWait,
-                    stu.avgwait,
+                    stu.WaitCount.ToString(),
+                    stu.MaxWait,
+                    stu.AvgWait,
                     CJobTypesParser.GetJobType(stu.JobType),
                 }).ToList();
                 SetSection("jobSessionSummary", headers, rows, summary);
@@ -2335,7 +2328,7 @@ this.form.TableHeader(VbrLocalizationHelper.SbrExt15, VbrLocalizationHelper.SbrE
                                 t += this.form.TableData(stu.MinJobTime, VbrLocalizationHelper.Jss2);
                                 t += this.form.TableData(stu.MaxJobTime, VbrLocalizationHelper.Jss3);
                                 t += this.form.TableData(stu.AvgJobTime, VbrLocalizationHelper.Jss4);
-                                t += this.form.TableData(stu.sessionCount.ToString(), VbrLocalizationHelper.Jss5);
+                                t += this.form.TableData(stu.SessionCount.ToString(), VbrLocalizationHelper.Jss5);
                                 t += this.form.TableData(stu.Fails.ToString(), "Fails");
                                 t += this.form.TableData(stu.Retries.ToString(), "Retries");
                                 t += this.form.TableData(stu.SuccessRate.ToString(), VbrLocalizationHelper.Jss6);
@@ -2344,9 +2337,9 @@ this.form.TableHeader(VbrLocalizationHelper.SbrExt15, VbrLocalizationHelper.SbrE
                                 t += this.form.TableData(stu.AvgDataSize.ToString(), VbrLocalizationHelper.Jss9);
                                 t += this.form.TableData(stu.MaxDataSize.ToString(), VbrLocalizationHelper.Jss10);
                                 t += this.form.TableData(stu.AvgChangeRate.ToString(), VbrLocalizationHelper.Jss11);
-                                t += this.form.TableData(stu.waitCount.ToString(), VbrLocalizationHelper.Jss12);
-                                t += this.form.TableData(stu.maxWait, VbrLocalizationHelper.Jss13);
-                                t += this.form.TableData(stu.avgwait, VbrLocalizationHelper.Jss14);
+                                t += this.form.TableData(stu.WaitCount.ToString(), VbrLocalizationHelper.Jss12);
+                                t += this.form.TableData(stu.MaxWait, VbrLocalizationHelper.Jss13);
+                                t += this.form.TableData(stu.AvgWait, VbrLocalizationHelper.Jss14);
                                 string jt = CJobTypesParser.GetJobType(stu.JobType);
                                 t += this.form.TableData(jt, VbrLocalizationHelper.Jss15);
 
@@ -2355,7 +2348,7 @@ this.form.TableHeader(VbrLocalizationHelper.SbrExt15, VbrLocalizationHelper.SbrE
                                 s += t;
 
                                 totalItemsCount += stu.ItemCount;
-                                totalSessionCount += stu.sessionCount;
+                                totalSessionCount += stu.SessionCount;
                                 totalFails += stu.Fails;
                                 totalRetries += stu.Retries;
 
@@ -2367,16 +2360,14 @@ this.form.TableHeader(VbrLocalizationHelper.SbrExt15, VbrLocalizationHelper.SbrE
                                 totalMaxDataSize += stu.MaxDataSize;
 
                                 // totalAvgChangeRate += Math.Round(totalAvgDataSize / totalMaxDataSize * stu.AvgChangeRate, 2);
-                                totalWaitCount += stu.waitCount;
+                                totalWaitCount += stu.WaitCount;
                             }
 
                             catch (Exception ex)
                             {
                                 this.log.Error("Job Session Summary Table failed to add row for job: " + stu.JobName);
                                 this.log.Error("\t" + ex.Message);
-
                             }
-
                         }
 
                         // clean up totals:
@@ -2427,7 +2418,6 @@ this.form.TableHeader(VbrLocalizationHelper.SbrExt15, VbrLocalizationHelper.SbrE
 
                         // end each table/section
                         s += this.form.SectionEnd(summary);
-
                     }
 
                     s += this.AddOffloadsTable(OffloadJobs);
@@ -2461,7 +2451,7 @@ this.form.TableHeader(VbrLocalizationHelper.SbrExt15, VbrLocalizationHelper.SbrE
                     stu.MinJobTime,
                     stu.MaxJobTime,
                     stu.AvgJobTime,
-                    stu.sessionCount.ToString(),
+                    stu.SessionCount.ToString(),
                     stu.Fails.ToString(),
                     stu.Retries.ToString(),
                     stu.SuccessRate.ToString(),
@@ -2470,9 +2460,9 @@ this.form.TableHeader(VbrLocalizationHelper.SbrExt15, VbrLocalizationHelper.SbrE
                     stu.AvgDataSize.ToString(),
                     stu.MaxDataSize.ToString(),
                     stu.AvgChangeRate.ToString(),
-                    stu.waitCount.ToString(),
-                    stu.maxWait,
-                    stu.avgwait,
+                    stu.WaitCount.ToString(),
+                    stu.MaxWait,
+                    stu.AvgWait,
                     CJobTypesParser.GetJobType(stu.JobType),
                 }).ToList();
                 SetSection("jobSessionSummaryByJob", headers, rows, summary);
@@ -2490,7 +2480,6 @@ this.form.TableHeader(VbrLocalizationHelper.SbrExt15, VbrLocalizationHelper.SbrE
             string s = string.Empty;
             try
             {
-
                 // log.Debug("Checking Job Type: " + jType);
                 // var translatedJobType = CJobTypesParser.GetJobType(jType);
                 // log.Debug("\tTranslated Job Type: " + translatedJobType);
@@ -2540,7 +2529,7 @@ this.form.TableHeader(VbrLocalizationHelper.SbrExt15, VbrLocalizationHelper.SbrE
                         t += this.form.TableData(stu.MinJobTime, VbrLocalizationHelper.Jss2);
                         t += this.form.TableData(stu.MaxJobTime, VbrLocalizationHelper.Jss3);
                         t += this.form.TableData(stu.AvgJobTime, VbrLocalizationHelper.Jss4);
-                        t += this.form.TableData(stu.sessionCount.ToString(), VbrLocalizationHelper.Jss5);
+                        t += this.form.TableData(stu.SessionCount.ToString(), VbrLocalizationHelper.Jss5);
                         t += this.form.TableData(stu.Fails.ToString(), "Fails");
                         t += this.form.TableData(stu.Retries.ToString(), "Retries");
                         t += this.form.TableData(stu.SuccessRate.ToString(), VbrLocalizationHelper.Jss6);
@@ -2549,9 +2538,9 @@ this.form.TableHeader(VbrLocalizationHelper.SbrExt15, VbrLocalizationHelper.SbrE
                         t += this.form.TableData(stu.AvgDataSize.ToString(), VbrLocalizationHelper.Jss9);
                         t += this.form.TableData(stu.MaxDataSize.ToString(), VbrLocalizationHelper.Jss10);
                         t += this.form.TableData(stu.AvgChangeRate.ToString(), VbrLocalizationHelper.Jss11);
-                        t += this.form.TableData(stu.waitCount.ToString(), VbrLocalizationHelper.Jss12);
-                        t += this.form.TableData(stu.maxWait, VbrLocalizationHelper.Jss13);
-                        t += this.form.TableData(stu.avgwait, VbrLocalizationHelper.Jss14);
+                        t += this.form.TableData(stu.WaitCount.ToString(), VbrLocalizationHelper.Jss12);
+                        t += this.form.TableData(stu.MaxWait, VbrLocalizationHelper.Jss13);
+                        t += this.form.TableData(stu.AvgWait, VbrLocalizationHelper.Jss14);
                         string jobType = CJobTypesParser.GetJobType(stu.JobType);
                         t += this.form.TableData(jobType, VbrLocalizationHelper.Jss15);
 
@@ -2560,7 +2549,7 @@ this.form.TableHeader(VbrLocalizationHelper.SbrExt15, VbrLocalizationHelper.SbrE
                         s += t;
 
                         totalItemsCount += stu.ItemCount;
-                        totalSessionCount += stu.sessionCount;
+                        totalSessionCount += stu.SessionCount;
                         totalFails += stu.Fails;
                         totalRetries += stu.Retries;
 
@@ -2572,16 +2561,14 @@ this.form.TableHeader(VbrLocalizationHelper.SbrExt15, VbrLocalizationHelper.SbrE
                         totalMaxDataSize += stu.MaxDataSize;
 
                         // totalAvgChangeRate += Math.Round(totalAvgDataSize / totalMaxDataSize * stu.AvgChangeRate, 2);
-                        totalWaitCount += stu.waitCount;
+                        totalWaitCount += stu.WaitCount;
                     }
 
                     catch (Exception ex)
                     {
                         this.log.Error("Job Session Summary Table failed to add row for job: " + stu.JobName);
                         this.log.Error("\t" + ex.Message);
-
                     }
-
                 }
 
                 // clean up totals:
@@ -2617,7 +2604,6 @@ this.form.TableHeader(VbrLocalizationHelper.SbrExt15, VbrLocalizationHelper.SbrE
 
                 // end each table/section
                 s += this.form.SectionEnd(string.Empty);
-
             }
             catch (Exception e)
             {
@@ -2684,7 +2670,6 @@ this.form.TableHeader(VbrLocalizationHelper.SbrExt15, VbrLocalizationHelper.SbrE
                                     .FirstOrDefault();
                                 double.TryParse(sourceGb, out sourceSizeGB);
                                 sourceSizeGB = Math.Round(sourceSizeGB, 2);
-
                             }
 
                             string jobName = job.Name;
@@ -2708,7 +2693,6 @@ this.form.TableHeader(VbrLocalizationHelper.SbrExt15, VbrLocalizationHelper.SbrE
                                 }
                                 else
                                 {
-
                                     double trueSizeGB = Math.Round(job.OriginalSize / 1024 / 1024 / 1024, 2);
                                     double trueSizeTB = Math.Round(job.OriginalSize / 1024 / 1024 / 1024 / 1024, 2);
                                     double trueSizeMB = Math.Round(job.OriginalSize / 1024 / 1024, 2);
@@ -2827,7 +2811,6 @@ this.form.TableHeader(VbrLocalizationHelper.SbrExt15, VbrLocalizationHelper.SbrE
                             row += "</tr>";
 
                             s += row;
-
                         }
 
                         // table summary/totals
@@ -2872,7 +2855,6 @@ this.form.TableHeader(VbrLocalizationHelper.SbrExt15, VbrLocalizationHelper.SbrE
 
                         // end each table/section
                         s += this.form.SectionEnd(summary);
-
                     }
 
                     // add tape table
@@ -2886,7 +2868,6 @@ this.form.TableHeader(VbrLocalizationHelper.SbrExt15, VbrLocalizationHelper.SbrE
                             s += tableButton;
                             s += tt;
                         }
-
                     }
                     catch (Exception e)
                     {
@@ -3033,7 +3014,6 @@ this.form.TableHeader(VbrLocalizationHelper.SbrExt15, VbrLocalizationHelper.SbrE
             s += this.form.TableBodyStart();
 
             return s;
-
         }
 
         private string SetGenericJobTablHeader(bool useSourceSize)
@@ -3089,7 +3069,5 @@ this.form.TableHeader(VbrLocalizationHelper.SbrExt15, VbrLocalizationHelper.SbrE
         {
             this.df.JobSessionInfoToXml(scrub);
         }
-
     }
-
 }

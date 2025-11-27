@@ -7,7 +7,7 @@ namespace VeeamHealthCheck.Functions.Reporting.CsvHandlers
 {
     public class CWanCsvInfos
     {
-        //"Id","Name","Description","HostId","Options"
+        // "Id","Name","Description","HostId","Options"
         [Index(0)]
         public string Id { get; set; }
 

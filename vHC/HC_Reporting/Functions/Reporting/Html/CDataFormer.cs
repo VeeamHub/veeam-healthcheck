@@ -1,5 +1,7 @@
-﻿// Copyright (c) 2021, Adam Congdon <adam.congdon2@gmail.com>
-// MIT License
+﻿// <copyright file="CDataFormer.cs" company="PlaceholderCompany">
+// Copyright (c) PlaceholderCompany. All rights reserved.
+// </copyright>
+
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -18,109 +20,52 @@ using VeeamHealthCheck.Functions.Reporting.Html.VBR.VbrTables.Job_Session_Summar
 using VeeamHealthCheck.Functions.Reporting.Html.VBR.VbrTables.Registry;
 using VeeamHealthCheck.Functions.Reporting.Html.VBR.VbrTables.Security;
 
-//using VeeamHealthCheck.Functions.Reporting.Html.VBR.VBR_Tables.Repositories;
+// using VeeamHealthCheck.Functions.Reporting.Html.VBR.VBR_Tables.Repositories;
 using VeeamHealthCheck.Functions.Reporting.RegSettings;
 using VeeamHealthCheck.Reporting.Html.VBR;
-//using VeeamHealthCheck.Reporting.Html.VBR.Managed_Server_Table;
+
+// using VeeamHealthCheck.Reporting.Html.VBR.Managed_Server_Table;
 using VeeamHealthCheck.Scrubber;
 using VeeamHealthCheck.Shared;
-//using VeeamHealthCheck.Common;
+
+// using VeeamHealthCheck.Common;
 using VeeamHealthCheck.Shared.Logging;
-//using static VeeamHealthCheck.Functions.Collection.DB.CModel;
+
+// using static VeeamHealthCheck.Functions.Collection.DB.CModel;
 using static VeeamHealthCheck.Functions.Collection.DB.CModel;
 
 namespace VeeamHealthCheck.Functions.Reporting.Html
 {
+    /// <summary>
+    /// Handles data formation and conversion for HTML reporting functionality.
+    /// </summary>
     public class CDataFormer
     {
-        private string logStart = "[DataFormer]\t";
+        private readonly string logStart = "[DataFormer]\t";
 
-        private bool _isBackupServerProxy;
-        private bool _isBackupServerRepo;
-        private bool _isBackupServerWan;
-        private Dictionary<string, int> _repoJobCount;
-        private CScrubHandler _scrubber = CGlobals.Scrubber;
+        private bool isBackupServerProxy;
+        private bool isBackupServerRepo;
+        private bool isBackupServerWan;
+        private Dictionary<string, int> repoJobCount;
+        private readonly CScrubHandler scrubber = CGlobals.Scrubber;
 
-        private readonly CCsvParser _csvParser = new();
         private readonly CLogger log = CGlobals.Logger;
 
-        private Dictionary<string, string> _repoPaths = new();
 
-        private IEnumerable<dynamic> _viProxy = CCsvParser.GetDynViProxy().ToList();
-        private IEnumerable<dynamic> _hvProxy = CCsvParser.GetDynHvProxy().ToList();
-        private IEnumerable<dynamic> _nasProxy = CCsvParser.GetDynNasProxy().ToList();
-        private IEnumerable<dynamic> _cdpProxy = CCsvParser.GetDynCdpProxy().ToList();
+        private readonly IEnumerable<dynamic> viProxy = CCsvParser.GetDynViProxy().ToList();
+        private readonly IEnumerable<dynamic> hvProxy = CCsvParser.GetDynHvProxy().ToList();
+        private readonly IEnumerable<dynamic> nasProxy = CCsvParser.GetDynNasProxy().ToList();
+        private readonly IEnumerable<dynamic> cdpProxy = CCsvParser.GetDynCdpProxy().ToList();
 
         public CDataFormer() // add string mode input
         {
-            //_csv = _dTypeParser.ServerInfo();
+            // _csv = _dTypeParser.ServerInfo();
 
-            //CheckXmlFile();
-
+            // CheckXmlFile();
         }
-
-        public void Dispose() { }
 
 
         #region XML Conversions
-
-
-        public List<string> ParseNonProtectedTypes()
-        {
-            List<string> notProtectedTypes = new();
-
-            //var bTypes = _dTypeParser.JobInfos;
-            var csv = new CCsvParser();
-            var jobInfos = csv.GetDynamicJobInfo();
-            var bjobInfos = csv.GetDynamicBjobs();
-
-
-            if (null != bjobInfos)
-            {
-                List<int> pTypes = new();
-                foreach (var bjob in bjobInfos)
-                {
-                    int.TryParse(bjob.type, out int typeId);
-                    if (!pTypes.Contains(typeId))
-                    {
-                        pTypes.Add(typeId);
-
-                    }
-                }
-                foreach (EDbJobType jt2 in Enum.GetValues(typeof(EDbJobType)))
-                {
-                    if (!pTypes.Contains((int)jt2))
-                    {
-                        notProtectedTypes.Add(jt2.ToString());
-                    }
-                }
-            }
-            else
-            {
-                List<string> pTypes = new();
-                foreach (var job in jobInfos)
-                {
-                    var t = job.jobtype;
-                    pTypes.Add(job.jobtype);
-                }
-
-                foreach (string jt2 in Enum.GetNames(typeof(EDbJobType)))
-                {
-                    if (!pTypes.Contains(jt2))
-                    {
-                        notProtectedTypes.Add(jt2.ToString());
-                    }
-                }
-            }
-
-
-
-            notProtectedTypes.Add("Kubernetes");
-            notProtectedTypes.Add("Microsoft 365");
-
-            return notProtectedTypes;
-
-        }
 
         public CSecuritySummaryTable SecSummary()
         {
@@ -131,21 +76,32 @@ namespace VeeamHealthCheck.Functions.Reporting.Html
             {
                 var vbrInfo = csv.GetDynamicVbrInfo();
                 if (vbrInfo.Any(x => x.mfa == "True"))
+                {
                     t.MFAEnabled = true;
-                else t.MFAEnabled = false;
+                }
+                else
+                {
+                    t.MFAEnabled = false;
+                }
 
                 // Four Eyes Authorization from vbrinfo.csv
                 if (vbrInfo.Any(x => x.foureyes == "True"))
+                {
                     t.FourEyesEnabled = true;
+                }
                 else if (vbrInfo.Any(x => x.foureyes == "False"))
+                {
                     t.FourEyesEnabled = false;
+                }
                 else
+                {
                     t.FourEyesEnabled = false; // default when not present (older versions)
+                }
             }
             catch (Exception ex)
             {
-
             }
+
             try
             {
                 var sobrRepo = csv.GetDynamicCapTier().ToList();
@@ -154,55 +110,67 @@ namespace VeeamHealthCheck.Functions.Reporting.Html
                 if (onPremRepo.Any(x => x.isimmutabilitysupported == "True"))
                 {
                     t.ImmutabilityEnabled = true;
-                    //return secSummary;
+
+                    // return secSummary;
                 }
 
                 else if (sobrRepo.Any(x => x.immute == "True"))
                 {
                     t.ImmutabilityEnabled = true;
 
-                    //return secSummary;
+                    // return secSummary;
                 }
-
 
                 else if (extRepo.Any(x => x.isimmutabilitysupported == "True"))
                 {
                     t.ImmutabilityEnabled = true;
-                    //return secSummary;
+
+                    // return secSummary;
                 }
                 else
                 {
                     t.ImmutabilityEnabled = false;
                 }
-
             }
             catch (Exception)
             {
-                log.Error(logStart + "Unable to find immutability. Marking false");
+                this.log.Error(this.logStart + "Unable to find immutability. Marking false");
                 t.ImmutabilityEnabled = false;
             }
+
             try
             {
                 var netTraffic = csv.GetDynamincNetRules();
                 if (netTraffic.Any(x => x.encryptionenabled == "True"))
+                {
                     t.TrafficEncrptionEnabled = true;
-                else t.TrafficEncrptionEnabled = false;
+                }
+                else
+                {
+                    t.TrafficEncrptionEnabled = false;
+                }
             }
             catch (Exception)
             {
-                log.Info(logStart + "Traffic encryption not detected. Marking false");
+                this.log.Info(this.logStart + "Traffic encryption not detected. Marking false");
                 t.TrafficEncrptionEnabled = false;
             }
+
             try
             {
                 var backupEnc = csv.GetDynamicJobInfo();
                 if (backupEnc.Any(x => x.pwdkeyid != "00000000-0000-0000-0000-000000000000" && !string.IsNullOrEmpty(x.pwdkeyid)))
+                {
                     t.BackupFileEncrptionEnabled = true;
-                else t.BackupFileEncrptionEnabled = false;
+                }
+                else
+                {
+                    t.BackupFileEncrptionEnabled = false;
+                }
             }
             catch (Exception)
             {
-                log.Error(logStart + "Unable to detect backup encryption. Marking false");
+                this.log.Error(this.logStart + "Unable to detect backup encryption. Marking false");
                 t.BackupFileEncrptionEnabled = false;
             }
 
@@ -210,25 +178,30 @@ namespace VeeamHealthCheck.Functions.Reporting.Html
             {
                 var cBackup = csv.GetDynamincConfigBackup();
                 if (cBackup.Any(x => x.encryptionoptions == "True"))
+                {
                     t.ConfigBackupEncrptionEnabled = true;
-                else t.ConfigBackupEncrptionEnabled = false;
+                }
+                else
+                {
+                    t.ConfigBackupEncrptionEnabled = false;
+                }
             }
             catch (Exception)
             {
-                log.Error(logStart + "Config backup not detected. Marking false");
-                //log.Info(e.Message);
+                this.log.Error(this.logStart + "Config backup not detected. Marking false");
+
+                // log.Info(e.Message);
                 t.ConfigBackupEncrptionEnabled = false;
             }
 
             return t;
-
-
         }
 
         public Dictionary<string, int> ServerSummaryToXml()
         {
-            log.Info(logStart + "converting server summary to xml");
-            //Dictionary<string, int> di = _dTypeParser.ServerSummaryInfo;
+            this.log.Info(this.logStart + "converting server summary to xml");
+
+            // Dictionary<string, int> di = _dTypeParser.ServerSummaryInfo;
             // using (CDataTypesParser dt = new())
             // {
             //     return dt.ServerSummaryInfo;
@@ -240,10 +213,8 @@ namespace VeeamHealthCheck.Functions.Reporting.Html
         {
             try
             {
-
-                //customize the log line:
-                log.Info(logStart + "Converting protected workloads data to xml...");
-
+                // customize the log line:
+                this.log.Info(this.logStart + "Converting protected workloads data to xml...");
 
                 // gather data needed for input
                 CCsvParser csvp = new();
@@ -268,38 +239,34 @@ namespace VeeamHealthCheck.Functions.Reporting.Html
                     HvUnProtectedVms = HvUnProtectedVms.ToList();
                     foreach (var p in HvProtectedVms)
                     {
-
                         hvNames.Add(p.Name);
                         hvProtectedNames.Add(p.Name);
-
-
                     }
+
                     foreach (var un in HvUnProtectedVms)
                     {
                         if (un.Type == "Vm")
                         {
                             hvNotProtectedNames.Add(un.Name);
                             hvNames.Add(un.Name);
-
                         }
-
                     }
 
                     hvDupes = hvNames.Count - (hvProtectedNames.Distinct().Count() + hvNotProtectedNames.Distinct().Count());
                 }
                 else
                 {
-                    //_hvDupes = 0;
-                    //_hvNotProtectedNames = 0;
-                    //_hvProtectedNames = List<string>;
+                    // _hvDupes = 0;
+                    // _hvNotProtectedNames = 0;
+                    // _hvProtectedNames = List<string>;
                 }
-
 
                 #endregion
 
                 #region physProtected
-                //var physProtected = csvp.PhysProtectedReader().ToList();
-                //var physNotProtected = csvp.PhysNotProtectedReader().ToList();
+
+                // var physProtected = csvp.PhysProtectedReader().ToList();
+                // var physNotProtected = csvp.PhysNotProtectedReader().ToList();
                 var physProtected = csvp.GetPhysProtected().ToList();
                 var physNotProtected = csvp.GetPhysNotProtected().ToList();
 
@@ -310,24 +277,19 @@ namespace VeeamHealthCheck.Functions.Reporting.Html
                 List<string> viNotProtectedNames = new();
                 int viDupes = 0;
 
-
                 foreach (var p in protectedVms)
                 {
-
                     vmNames.Add(p.Name);
                     viProtectedNames.Add(p.Name);
-
-
                 }
+
                 foreach (var un in unProtectedVms)
                 {
                     if (un.Type == "Vm")
                     {
                         viNotProtectedNames.Add(un.Name);
                         vmNames.Add(un.Name);
-
                     }
-
                 }
 
                 viDupes = vmNames.Count - (viProtectedNames.Distinct().Count() + viNotProtectedNames.Distinct().Count());
@@ -343,36 +305,42 @@ namespace VeeamHealthCheck.Functions.Reporting.Html
                         physNames.Add(u.name);
                         physNotProtNames.Add(u.name);
                     }
-
                 }
+
                 List<string> vmProtectedByPhys = new();
                 foreach (var p in physProtected)
                 {
                     foreach (var v in protectedVms)
+                    {
+
                         if (p.name.Contains(v.Name))
+                        {
                             vmProtectedByPhys.Add(v.Name);
+                        }
+                    }
+
                     foreach (var w in unProtectedVms)
                     {
                         if (p.name.Contains(w.Name))
+                        {
                             vmProtectedByPhys.Add(w.Name);
+                        }
                     }
                 }
 
-                //var xml2 = XML.AddXelement(protectedVms.Count.ToString(), "ViProtected");
+                // var xml2 = XML.AddXelement(protectedVms.Count.ToString(), "ViProtected");
+                this.viProtectedNames = viProtectedNames;
+                this.viNotProtectedNames = viNotProtectedNames;
+                this.viDupes = viDupes;
+                this.vmProtectedByPhys = vmProtectedByPhys;
+                this.physNotProtNames = physNotProtNames;
+                this.physProtNames = physProtNames;
 
-                _viProtectedNames = viProtectedNames;
-                _viNotProtectedNames = viNotProtectedNames;
-                _viDupes = viDupes;
-                _vmProtectedByPhys = vmProtectedByPhys;
-                _physNotProtNames = physNotProtNames;
-                _physProtNames = physProtNames;
+                this.hvProtectedNames = hvProtectedNames;
+                this.hvNotProtectedNames = hvNotProtectedNames;
+                this.hvDupes = hvDupes;
 
-                _hvProtectedNames = hvProtectedNames;
-                _hvNotProtectedNames = hvNotProtectedNames;
-                _hvDupes = hvDupes;
-
-
-                log.Info(logStart + "Converting protected workloads data to xml..done!");
+                this.log.Info(this.logStart + "Converting protected workloads data to xml..done!");
                 return 0;
             }
             catch (Exception ex)
@@ -381,72 +349,40 @@ namespace VeeamHealthCheck.Functions.Reporting.Html
             }
         }
 
-        public int _viDupes;
-        public List<string> _vmProtectedByPhys;
-        public List<string> _viProtectedNames;
-        //public List<string> _vmNotProtectedNames;
+        public int viDupes;
+        public List<string> vmProtectedByPhys;
+        public List<string> viProtectedNames;
 
-        public int _hvDupes;
-        public List<string> _hvProtectedNames;
-        public List<string> _hvNotProtectedNames;
+        // public List<string> _vmNotProtectedNames;
+        public int hvDupes;
+        public List<string> hvProtectedNames;
+        public List<string> hvNotProtectedNames;
 
-        public List<string> _viNotProtectedNames;
-        public List<string> _physNotProtNames;
-        public List<string> _physProtNames;
-
-        private void NewXmlNodeTemplate(bool scrub)
-        {
-            //customize the log line:
-            log.Info(logStart + "xml node template start...");
-
-
-            // gather data needed for input
-            //CServerTypeInfos backupServer = _csv.Find(x => (x.Id == _backupServerId));
-            CCsvParser config = new();
-
-
-
-            // Check for items needing scrubbed
-            if (scrub)
-            {
-                // set items to scrub
-            }
-
-            log.Info(logStart + "xml template..done!");
-        }
+        public List<string> viNotProtectedNames;
+        public List<string> physNotProtNames;
+        public List<string> physProtNames;
 
         public BackupServer BackupServerInfoToXml(bool scrub)
         {
-
-            log.Info(logStart + "converting backup server info to xml");
+            this.log.Info(this.logStart + "converting backup server info to xml");
             List<string> list = new List<string>();
             CBackupServerTableHelper bt = new(scrub);
             BackupServer b = bt.SetBackupServerData();
 
+            this.CheckServerRoles(CGlobals.backupServerId);
 
+            b.HasProxyRole = this.isBackupServerProxy;
+            b.HasRepoRole = this.isBackupServerRepo;
+            b.HasWanAccRole = this.isBackupServerWan;
 
-            CheckServerRoles(CGlobals._backupServerId);
-
-            b.HasProxyRole = _isBackupServerProxy;
-            b.HasRepoRole = _isBackupServerRepo;
-            b.HasWanAccRole = _isBackupServerWan;
-
-
-
-            log.Info(logStart + "converting backup server info to xml..done!");
+            this.log.Info(this.logStart + "converting backup server info to xml..done!");
             return b;
-        }
-
-        private string ParseString(string input)
-        {
-            if (string.IsNullOrEmpty(input)) return string.Empty;
-            else return input;
         }
 
         public List<CSobrTypeInfos> SobrInfoToXml(bool scrub)
         {
-            PreCalculations();
-            log.Info(logStart + "Starting SOBR conversion to xml..");
+            this.PreCalculations();
+            this.log.Info(this.logStart + "Starting SOBR conversion to xml..");
             List<string[]> list = new();
 
             List<CSobrTypeInfos> csv = CGlobals.DtParser.SobrInfo;
@@ -461,25 +397,27 @@ namespace VeeamHealthCheck.Functions.Reporting.Html
 
                 string newName = c.Name;
                 if (scrub)
-                    newName = _scrubber.ScrubItem(c.Name, ScrubItemType.SOBR);
-                _repoJobCount.TryGetValue(c.Name, out int jobCount);
-
-                //s[0] += newName;
-                //s[1] += repoCount;
-                //s[2] += jobCount;
-                //s[3] += c.PolicyType;
-                //s[4] += c.EnableCapacityTier;
-                //s[5] += c.CapacityTierCopyPolicyEnabled;
-                //s[6] += c.CapacityTierMovePolicyEnabled;
-                //s[7] += c.ArchiveTierEnabled;
-                //s[8] += c.UsePerVMBackupFiles;
-                //s[9] += c.CapTierType;
-                //s[10] += c.ImmuteEnabled;
-                //s[11] += c.ImmutePeriod;
-                //s[12] += c.SizeLimitEnabled;
-                //s[13] += c.SizeLimit;
+                {
+                    newName = this.scrubber.ScrubItem(c.Name, ScrubItemType.SOBR);
+                }
 
 
+                this.repoJobCount.TryGetValue(c.Name, out int jobCount);
+
+                // s[0] += newName;
+                // s[1] += repoCount;
+                // s[2] += jobCount;
+                // s[3] += c.PolicyType;
+                // s[4] += c.EnableCapacityTier;
+                // s[5] += c.CapacityTierCopyPolicyEnabled;
+                // s[6] += c.CapacityTierMovePolicyEnabled;
+                // s[7] += c.ArchiveTierEnabled;
+                // s[8] += c.UsePerVMBackupFiles;
+                // s[9] += c.CapTierType;
+                // s[10] += c.ImmuteEnabled;
+                // s[11] += c.ImmutePeriod;
+                // s[12] += c.SizeLimitEnabled;
+                // s[13] += c.SizeLimit;
                 CSobrTypeInfos sobr = new()
                 {
                     Name = newName,
@@ -496,14 +434,13 @@ namespace VeeamHealthCheck.Functions.Reporting.Html
                     ImmuteEnabled = c.ImmuteEnabled,
                     ImmutePeriod = c.ImmutePeriod,
                     SizeLimitEnabled = c.SizeLimitEnabled,
-                    SizeLimit = c.SizeLimit
-
+                    SizeLimit = c.SizeLimit,
                 };
-
 
                 outList.Add(sobr);
             }
-            log.Info(logStart + "Starting SOBR conversion to xml..done!");
+
+            this.log.Info(this.logStart + "Starting SOBR conversion to xml..done!");
             return outList;
         }
 
@@ -514,6 +451,7 @@ namespace VeeamHealthCheck.Functions.Reporting.Html
             {
                 return hosts[0];
             }
+
             string r = string.Empty;
             int counter = 1;
             int end = hosts.Length;
@@ -521,42 +459,54 @@ namespace VeeamHealthCheck.Functions.Reporting.Html
             {
                 string newhost = host;
                 if (scrub)
+                {
                     newhost = CGlobals.Scrubber.ScrubItem(host, ScrubItemType.Server);
+                }
+
+
                 if (counter == end)
+                {
                     r += newhost + "<br>";
+                }
                 else
+                {
                     r += newhost + ",<br>";
+                }
+
+
                 counter++;
             }
+
             return r;
         }
 
         public List<CRepository> ExtentXmlFromCsv(bool scrub)
         {
-            log.Info(logStart + "converting extent info to xml");
+            this.log.Info(this.logStart + "converting extent info to xml");
             List<string[]> list = new List<string[]>();
             List<CRepoTypeInfos> csv = CGlobals.DtParser.ExtentInfo;
             
             if (csv == null || csv.Count == 0)
             {
-                log.Warning(logStart + "ExtentInfo is null or empty. No SOBR extent data available.");
+                this.log.Warning(this.logStart + "ExtentInfo is null or empty. No SOBR extent data available.");
                 return new List<CRepository>();
             }
             
-            log.Info(logStart + $"Found {csv.Count} extent records to process");
+            this.log.Info(this.logStart + $"Found {csv.Count} extent records to process");
             csv = csv.OrderBy(x => x.RepoName).ToList();
             csv = csv.OrderBy(y => y.SobrName).ToList();
             List<CRepository> repoList = new();
 
             if (csv != null)
+            {
+
                 foreach (var c in csv)
                 {
-
                     string newName = c.RepoName;
                     string sobrName = c.SobrName;
                     string hostName = c.Host;
                     string path = c.Path;
-                    string gates = SetGateHosts(c.GateHosts, scrub);
+                    string gates = this.SetGateHosts(c.GateHosts, scrub);
 
                     if (scrub)
                     {
@@ -565,15 +515,19 @@ namespace VeeamHealthCheck.Functions.Reporting.Html
                         hostName = CGlobals.Scrubber.ScrubItem(hostName, ScrubItemType.Server);
                         path = CGlobals.Scrubber.ScrubItem(path, ScrubItemType.Path);
                     }
+
                     string type;
                     if (c.TypeDisplay == null)
+                    {
                         type = c.Type;
+                    }
                     else
+                    {
                         type = c.TypeDisplay;
+                    }
 
-                    var freePercent = FreePercent(c.FreeSPace, c.TotalSpace);
 
-
+                    var freePercent = this.FreePercent(c.FreeSPace, c.TotalSpace);
 
                     string gateHosts = string.Empty;
                     if (c.IsAutoGateway)
@@ -589,6 +543,7 @@ namespace VeeamHealthCheck.Functions.Reporting.Html
                             gateHosts = gates;
                         }
                     }
+
                     bool immutability = false;
                     if(c.ObjectLockEnabled || c.IsImmutabilitySupported){
                         immutability = true;
@@ -614,69 +569,57 @@ namespace VeeamHealthCheck.Functions.Reporting.Html
                         IsImmutabilitySupported = immutability,
                         Type = type,
                         Provisioning = c.Povisioning
-
                     };
-
-
 
                     repoList.Add(repo);
                 }
-            log.Info(logStart + "converting extent info to xml..done!");
+            }
+
+
+            this.log.Info(this.logStart + "converting extent info to xml..done!");
             return repoList;
         }
 
-        private bool AddRepoPathToDict(string host, string path)
-        {
-            _repoPaths.TryGetValue(host, out var list);
-            if (list == null)
-            {
-                _repoPaths.Add(host, path);
-                return true;
-            }
-            else
-                return false;
-        }
 
         public List<CRepository> RepoInfoToXml(bool scrub)
         {
-            PreCalculations();
-            log.Info(logStart + "converting repository info to xml");
+            this.PreCalculations();
+            this.log.Info(this.logStart + "converting repository info to xml");
             List<CRepository> list = new();
-
 
             List<CRepoTypeInfos> csv = CGlobals.DtParser.RepoInfos.ToList();
             csv = csv.OrderBy(x => x.Name).ToList();
             if (csv != null)
+            {
+
                 foreach (var c in csv)
                 {
-
                     string[] s = new string[18];
                     string name = c.Name;
                     string host = c.Host;
                     string path = c.Path;
-                    string gates = SetGateHosts(c.GateHosts, scrub);
+                    string gates = this.SetGateHosts(c.GateHosts, scrub);
                     if (scrub)
                     {
-                        name = _scrubber.ScrubItem(c.Name, ScrubItemType.Repository);
-                        host = _scrubber.ScrubItem(c.Host, ScrubItemType.Server);
-                        path = _scrubber.ScrubItem(c.Path, ScrubItemType.Path);
+                        name = this.scrubber.ScrubItem(c.Name, ScrubItemType.Repository);
+                        host = this.scrubber.ScrubItem(c.Host, ScrubItemType.Server);
+                        path = this.scrubber.ScrubItem(c.Path, ScrubItemType.Path);
                     }
 
                     decimal free = Math.Round((decimal)c.FreeSPace / 1024, 2);
                     decimal total = Math.Round((decimal)c.TotalSpace / 1024, 2);
-                    decimal freePercent = FreePercent(c.FreeSPace, c.TotalSpace);
+                    decimal freePercent = this.FreePercent(c.FreeSPace, c.TotalSpace);
                     string freeSpace = free.ToString();
                     string totalSpace = total.ToString();
                     string percentFree = freePercent.ToString();
                     if (c.TotalSpace == 0)
                     {
-                        freeSpace = FilterZeros(free);
-                        totalSpace = FilterZeros(total);
+                        freeSpace = this.FilterZeros(free);
+                        totalSpace = this.FilterZeros(total);
                         percentFree = string.Empty;
                     }
 
-
-                    _repoJobCount.TryGetValue(c.Name, out int jobCount);
+                    this.repoJobCount.TryGetValue(c.Name, out int jobCount);
 
                     string hosts = string.Empty;
                     s[0] += name;
@@ -686,11 +629,20 @@ namespace VeeamHealthCheck.Functions.Reporting.Html
                     s[4] += c.Ram;
                     s[5] += c.IsAutoGateway;
                     if (c.IsAutoGateway)
+                    {
                         hosts = string.Empty;
+                    }
+
                     else if (String.IsNullOrEmpty(c.GateHosts))
+                    {
                         hosts = host;
+                    }
                     else
+                    {
                         hosts = gates;
+                    }
+
+
                     CRepository repo = new()
                     {
                         Name = name,
@@ -711,20 +663,20 @@ namespace VeeamHealthCheck.Functions.Reporting.Html
                         Type = c.Type,
                         Provisioning = c.Povisioning,
                         IsPerVmBackupFiles = c.SplitStoragesPerVm
-
-
                     };
-
 
                     list.Add(repo);
                 }
-            log.Info(logStart + "converting repository info to xml..done!");
+            }
+
+
+            this.log.Info(this.logStart + "converting repository info to xml..done!");
             return list;
         }
 
         public List<string[]> ProxyXmlFromCsv(bool scrub)
         {
-            log.Info("converting proxy info to xml");
+            this.log.Info("converting proxy info to xml");
             List<string[]> list = new();
 
             List<CProxyTypeInfos> csv = CGlobals.DtParser.ProxyInfos;
@@ -733,6 +685,8 @@ namespace VeeamHealthCheck.Functions.Reporting.Html
             csv = csv.OrderBy(y => y.Type).ToList();
 
             if (csv != null)
+            {
+
                 foreach (var c in csv)
                 {
                     string[] s = new string[13];
@@ -741,6 +695,7 @@ namespace VeeamHealthCheck.Functions.Reporting.Html
                         c.Name = CGlobals.Scrubber.ScrubItem(c.Name, ScrubItemType.Server);
                         c.Host = CGlobals.Scrubber.ScrubItem(c.Host, ScrubItemType.Server);
                     }
+
                     s[0] += c.Name;
                     s[1] += c.MaxTasksCount;
                     s[2] += c.Cores.ToString();
@@ -757,14 +712,17 @@ namespace VeeamHealthCheck.Functions.Reporting.Html
 
                     list.Add(s);
                 }
-            log.Info(logStart + "converting proxy info to xml..done!");
+            }
+
+
+            this.log.Info(this.logStart + "converting proxy info to xml..done!");
 
             return list;
         }
 
         public List<CManagedServer> ServerXmlFromCsv(bool scrub)    // managed servers protect vm count
         {
-            log.Info(logStart + "converting server info to xml");
+            this.log.Info(this.logStart + "converting server info to xml");
             List<CManagedServer> list = new();
             List<CServerTypeInfos> csv = CGlobals.ServerInfo;
 
@@ -781,20 +739,22 @@ namespace VeeamHealthCheck.Functions.Reporting.Html
             }
             catch (Exception ex)
             {
-                log.Error(logStart + "Failed to populate VI Protected objects..");
-                log.Error(logStart + ex.Message);
+                this.log.Error(this.logStart + "Failed to populate VI Protected objects..");
+                this.log.Error(this.logStart + ex.Message);
             }
 
-            //list to ensure we only count unique VMs
+            // list to ensure we only count unique VMs
             List<string> countedVMs = new();
 
             if (csv != null)
+            {
+
                 foreach (var c in csv)
                 {
-                    //string[] s = new string[13];
+                    // string[] s = new string[13];
                     CManagedServer server = new();
 
-                    //match server and VM count
+                    // match server and VM count
                     int vmCount = 0;
                     int protectedCount = 0;
                     int unProtectedCount = 0;
@@ -810,8 +770,8 @@ namespace VeeamHealthCheck.Functions.Reporting.Html
                                 countedVMs.Add(p.Name);
                             }
                         }
-
                     }
+
                     foreach (var u in unProtectedVms)
                     {
                         if (u.Type == "Vm")
@@ -828,15 +788,17 @@ namespace VeeamHealthCheck.Functions.Reporting.Html
                         }
                     }
 
-                    //check for VBR Roles
-                    CheckServerRoles(c.Id);
+                    // check for VBR Roles
+                    this.CheckServerRoles(c.Id);
 
-
-                    //scrub name if selected
+                    // scrub name if selected
                     string newName = c.Name;
                     if (scrub)
+                    {
                         newName = CGlobals.Scrubber.ScrubItem(newName, ScrubItemType.Server);
-                    //s[0] = newName;
+                    }
+
+                    // s[0] = newName;
                     server.Name = newName;
                     server.Cores = c.Cores;
                     server.Ram = c.Ram;
@@ -845,42 +807,44 @@ namespace VeeamHealthCheck.Functions.Reporting.Html
                     server.ProtectedVms = protectedCount;
                     server.NotProtectedVms = unProtectedCount;
                     server.TotalVms = vmCount;
-                    server.IsProxy = _isBackupServerProxy;
-                    server.IsRepo = _isBackupServerRepo;
-                    server.IsWan = _isBackupServerWan;
+                    server.IsProxy = this.isBackupServerProxy;
+                    server.IsRepo = this.isBackupServerRepo;
+                    server.IsWan = this.isBackupServerWan;
                     server.OsInfo = c.OSInfo;
                     server.IsUnavailable = c.IsUnavailable;
 
                     list.Add(server);
                 }
-            log.Info(logStart + "converting server info to xml..done!");
+            }
+
+
+            this.log.Info(this.logStart + "converting server info to xml..done!");
             return list;
         }
 
         public Dictionary<string, int> JobSummaryInfoToXml()
         {
-            log.Info(logStart + "converting job summary info to xml");
+            this.log.Info(this.logStart + "converting job summary info to xml");
             List<CJobTypeInfos> csv = CGlobals.DtParser.JobInfos;
 
-            //CQueries cq = _cq;
-
+            // CQueries cq = _cq;
             List<CModel.EDbJobType> types = new();
 
             List<string> types2 = csv.Select(x => x.JobType).ToList();
-            //foreach (var c in csv)
-            //{
+
+            // foreach (var c in csv)
+            // {
             //    types2.Add(c.JobType);
-            //}
-
-
+            // }
             Dictionary<string, int> typeSummary = new();
 
             foreach (var type in types2.Distinct())
             {
                 typeSummary.Add(type, types2.Count(x => x == type));
             }
-            //foreach (var t in types2)
-            //{
+
+            // foreach (var t in types2)
+            // {
             //    int typeCount = 0;
             //    foreach (var t2 in types2)
             //    {
@@ -891,59 +855,51 @@ namespace VeeamHealthCheck.Functions.Reporting.Html
             //    }
             //    if (!typeSummary.ContainsKey(t))
             //        typeSummary.Add(t, typeCount);
-            //}
+            // }
 
-            //sum of all jobs:
-
-
-            log.Info(logStart + "converting job summary info to xml..done!");
+            // sum of all jobs:
+            this.log.Info(this.logStart + "converting job summary info to xml..done!");
             return typeSummary;
         }
 
-
         public Dictionary<int, string[]> JobConcurrency(bool isJob)
         {
-            log.Info(logStart + "calculating concurrency");
+            this.log.Info(this.logStart + "calculating concurrency");
             CConcurrencyHelper helper = new();
 
-
             List<CJobSessionInfo> trimmedSessionInfo = new();
-            CGlobals.Logger.Info(logStart + "Loading Job Sessions for Concurrency...");
+            CGlobals.Logger.Info(this.logStart + "Loading Job Sessions for Concurrency...");
             if (CGlobals.DEBUG)
             {
-                log.Debug("DEBUG MODE: Loading all Job Sessions for Concurrency...");
-                log.Debug("Job Sessions TOTAL = " + CGlobals.DtParser.JobSessions.Count);
-                log.Debug("Report interval: " + CGlobals.ReportDays);
+                this.log.Debug("DEBUG MODE: Loading all Job Sessions for Concurrency...");
+                this.log.Debug("Job Sessions TOTAL = " + CGlobals.DtParser.JobSessions.Count);
+                this.log.Debug("Report interval: " + CGlobals.ReportDays);
             }
+
             var v = CGlobals.DtParser.JobSessions.Where(c => c.CreationTime >= CGlobals.GetToolStart.AddDays(CGlobals.ReportDays));
             if (CGlobals.DEBUG)
             {
-                log.Debug("Job Sessions after filter: " + v.Count());
+                this.log.Debug("Job Sessions after filter: " + v.Count());
             }
+
             trimmedSessionInfo = CGlobals.DtParser.JobSessions.Where(c => c.CreationTime >= CGlobals.GetToolStart.AddDays(-CGlobals.ReportDays)).ToList();
-            CGlobals.Logger.Info(logStart + $"Loaded {trimmedSessionInfo.Count} Job Sessions for Concurrency...");
+            CGlobals.Logger.Info(this.logStart + $"Loaded {trimmedSessionInfo.Count} Job Sessions for Concurrency...");
 
             List<ConcurentTracker> ctList = new();
 
             if (isJob)
             {
                 ctList = helper.JobCounter(trimmedSessionInfo);
-                log.Info(logStart + "Jobs to be counted: " + ctList.Count);
+                this.log.Info(this.logStart + "Jobs to be counted: " + ctList.Count);
             }
-
 
             else if (!isJob)
             {
                 ctList = helper.TaskCounter(trimmedSessionInfo);
-                log.Info(logStart + "Tasks to be counted: " + ctList.Count);
-
+                this.log.Info(this.logStart + "Tasks to be counted: " + ctList.Count);
             }
 
-
-
-
-
-            log.Info(logStart + "calculating concurrency...done!");
+            this.log.Info(this.logStart + "calculating concurrency...done!");
 
             return helper.FinalConcurrency(ctList);
         }
@@ -953,7 +909,8 @@ namespace VeeamHealthCheck.Functions.Reporting.Html
             Dictionary<string, string> returnDict = new();
 
             var reg = new CCsvParser();
-            //var RegOptions = reg.RegOptionsCsvParser();
+
+            // var RegOptions = reg.RegOptionsCsvParser();
             CDefaultRegOptions defaults = new();
 
             var RegOptions2 = CGlobals.DEFAULTREGISTRYKEYS;
@@ -975,107 +932,38 @@ namespace VeeamHealthCheck.Functions.Reporting.Html
                 else
                     workingValue = r.Value.ToString();
 
-
-                if (defaults._defaultKeys.ContainsKey(r.Key))
+                if (defaults.defaultKeys.ContainsKey(r.Key))
                 {
                     string[] skipKeys = CRegistrySkipKeys.SkipKeys;
                     if (skipKeys.Contains(r.Key))
+                    {
                         continue;
-                    defaults._defaultKeys.TryGetValue(r.Key, out string setValue);
+                    }
+
+
+                    defaults.defaultKeys.TryGetValue(r.Key, out string setValue);
                     if (setValue != workingValue)
                     {
                         returnDict.Add(r.Key, workingValue);
                     }
                 }
-                if (!defaults._defaultKeys.ContainsKey(r.Key))
+
+                if (!defaults.defaultKeys.ContainsKey(r.Key))
                 {
-                    defaults._defaultKeys.TryGetValue(r.Key, out string setValue);
+                    defaults.defaultKeys.TryGetValue(r.Key, out string setValue);
                     returnDict.Add(r.Key, workingValue);
                 }
             }
 
-
             return returnDict;
         }
 
-        public List<List<string>> JobInfoToXml(bool scrub)
-        {
-            List<List<string>> sendBack = new();
-            log.Info(logStart + "converting job info to xml");
-            List<CJobTypeInfos> csv = CGlobals.DtParser.JobInfos;
-            csv = csv.OrderBy(x => x.RepoName).ToList();
-            csv = csv.OrderBy(y => y.JobType).ToList();
-            csv = csv.OrderBy(x => x.Name).ToList();
-
-
-            decimal totalsize = 0;
-            if (csv != null)
-                foreach (var c in csv)
-                {
-                    List<string> job = new();
-                    string jname = c.Name;
-                    string repo = c.RepoName;
-                    //if (c.EncryptionEnabled == "True")
-                    //_backupsEncrypted = true;
-                    if (scrub)
-                    {
-                        jname = _scrubber.ScrubItem(c.Name, ScrubItemType.Job);
-                        repo = _scrubber.ScrubItem(c.RepoName, ScrubItemType.Repository);
-                    }
-                    decimal.TryParse(c.ActualSize, out decimal actualSize);
-                    var trueSize = Math.Round(actualSize / 1024 / 1024 / 1024, 2);
-                    totalsize += trueSize;
-                    job.Add(jname);
-                    job.Add(repo);
-                    job.Add(trueSize.ToString());
-                    job.Add(c.RestorePoints.ToString());
-                    job.Add(c.EncryptionEnabled);
-                    job.Add(c.JobType);
-                    job.Add(c.Algorithm);
-                    job.Add(c.SheduleEnabledTime);
-                    job.Add(c.FullBackupDays);
-                    //job.Add(c.ScheduleOptions);
-                    job.Add(c.FullBackupScheduleKind);
-                    job.Add(c.TransformFullToSyntethic);
-                    job.Add(c.TransformIncrementsToSyntethic);
-                    job.Add(c.TransformToSyntethicDays);
-
-                    sendBack.Add(job);
-                }
-
-            // add summary line;
-            List<string> summaryline = new() {
-            "TOTALS",
-            string.Empty,
-            totalsize.ToString() + " GB",
-            string.Empty,
-            string.Empty,
-            string.Empty,
-            string.Empty,
-            string.Empty,
-            string.Empty,
-            string.Empty,
-            string.Empty,
-            string.Empty,
-            string.Empty,
-
-            };
-            sendBack.Add(summaryline);
-
-
-            //doc.Save(_testFile);
-            log.Info(logStart + "converting job info to xml..done!");
-            return sendBack;
-        }
 
         public List<CJobSummaryTypes> ConvertJobSessSummaryToXml(bool scrub)
         {
-            CJobSessSummary jss = new(log, scrub, _scrubber, CGlobals.DtParser);
+            CJobSessSummary jss = new(this.log, scrub, this.scrubber, CGlobals.DtParser);
             return jss.JobSessionSummaryToXml(scrub);
-
         }
-
-
 
         public int JobSessionInfoToXml(bool scrub)
         {
@@ -1084,23 +972,18 @@ namespace VeeamHealthCheck.Functions.Reporting.Html
                 string logStart = "[JobSessions]\t";
                 IndividualJobSessionsHelper helper = new();
 
-                log.Info(logStart + "converting job session info to xml");
+                this.log.Info(logStart + "converting job session info to xml");
 
                 helper.ParseIndividualSessions(scrub);
 
-
-                log.Info(logStart + "converting job session info to xml..done!");
+                this.log.Info(logStart + "converting job session info to xml..done!");
                 return 0;
             }
             catch (Exception ex)
             {
                 return 1;
             }
-
         }
-
-
-
 
         #endregion
 
@@ -1110,18 +993,20 @@ namespace VeeamHealthCheck.Functions.Reporting.Html
             string s = string.Empty;
 
             if (value != 0)
+            {
                 s = value.ToString();
+            }
+
 
             return s;
         }
-
 
         private void PreCalculations()
         {
             // calc all the things prior to adding XML entries... such as job count per repo....
             List<CJobTypeInfos> jobs = CGlobals.DtParser.JobInfos;
             Dictionary<string, int> repoJobCount = new();
-            _repoJobCount = new();
+            this.repoJobCount = new();
             foreach (var j in jobs)
             {
                 if (!repoJobCount.ContainsKey(j.RepoName))
@@ -1134,28 +1019,30 @@ namespace VeeamHealthCheck.Functions.Reporting.Html
                     repoJobCount[j.RepoName] = current + 1;
                 }
             }
-            _repoJobCount = repoJobCount;
+
+            this.repoJobCount = repoJobCount;
         }
 
         private void ResetRoles()
         {
-            _isBackupServerWan = false;
-            _isBackupServerRepo = false;
-            _isBackupServerProxy = false;
-            //_isBackupServerProxyDisabled = false;
+            this.isBackupServerWan = false;
+            this.isBackupServerRepo = false;
+            this.isBackupServerProxy = false;
+
+            // _isBackupServerProxyDisabled = false;
         }
 
         private void CheckServerRoles(string serverId)
         {
-            log.Info("Checking server roles.. for server: " + serverId);
-            ResetRoles();
+            this.log.Info("Checking server roles.. for server: " + serverId);
+            this.ResetRoles();
 
             List<CProxyTypeInfos> proxy = CGlobals.DtParser.ProxyInfos;
             List<CRepoTypeInfos> extents = CGlobals.DtParser.ExtentInfo;
             List<CRepoTypeInfos> repos = CGlobals.DtParser.RepoInfos;
             List<CWanTypeInfo> wans = CGlobals.DtParser.WanInfos;
 
-            _isBackupServerProxy = CheckProxyRole(serverId);
+            this.isBackupServerProxy = this.CheckProxyRole(serverId);
 
             // if(proxy != null){
             //     log.Debug("Proxy count: " + proxy.Count);
@@ -1169,24 +1056,31 @@ namespace VeeamHealthCheck.Functions.Reporting.Html
             // if(wans != null){
             //     log.Debug("Wan count: " + wans.Count);
             // }
-
-
             foreach (var e in extents)
             {
                 if (e.HostId == serverId)
-                    _isBackupServerRepo = true;
+                {
+                    this.isBackupServerRepo = true;
+                }
             }
+
             foreach (var r in repos)
             {
                 if (r.HostId == serverId)
-                    _isBackupServerRepo = true;
+                {
+                    this.isBackupServerRepo = true;
+                }
             }
+
             foreach (var w in wans)
             {
                 if (w.HostId == serverId)
-                    _isBackupServerWan = true;
+                {
+                    this.isBackupServerWan = true;
+                }
             }
-            log.Info("Checking server roles..done!");
+
+            this.log.Info("Checking server roles..done!");
         }
 
         private bool CheckProxyRole(string serverId)
@@ -1195,30 +1089,54 @@ namespace VeeamHealthCheck.Functions.Reporting.Html
             // var hvProxy = _csvParser.GetDynHvProxy();
             // var nasProxy = _csvParser.GetDynNasProxy();
             // var cdpProxy = _csvParser.GetDynCdpProxy();
-            if (_viProxy != null)
-                foreach (var v in _viProxy.ToList())
+            if (this.viProxy != null)
+            {
+
+                foreach (var v in this.viProxy.ToList())
                 {
                     if (v.hostid == serverId)
+                    {
+
                         return true;
+                    }
                 }
-            if (_hvProxy != null)
-                foreach (var h in _hvProxy)
+            }
+
+
+            if (this.hvProxy != null)
+            {
+
+                foreach (var h in this.hvProxy)
                 {
                     if (h.id == serverId)
+                    {
                         return true;
+                    }
                 }
-            if (_nasProxy != null)
-                foreach (var n in _nasProxy)
+            }
+
+            if (this.nasProxy != null)
+            {
+                foreach (var n in this.nasProxy)
                 {
                     if (n.hostid == serverId)
+                    {
                         return true;
+                    }
                 }
-            if (_cdpProxy != null)
-                foreach (var c in _cdpProxy)
+            }
+
+            if (this.cdpProxy != null)
+            {
+                foreach (var c in this.cdpProxy)
                 {
                     if (c.serverid == serverId)
+                    {
                         return true;
+                    }
                 }
+            }
+
             return false;
         }
 
@@ -1229,8 +1147,8 @@ namespace VeeamHealthCheck.Functions.Reporting.Html
                 double n = freespace / (double)totalspace * 100;
                 return Math.Round((decimal)n, 1);
             }
-            return 0;
 
+            return 0;
         }
         #endregion
 

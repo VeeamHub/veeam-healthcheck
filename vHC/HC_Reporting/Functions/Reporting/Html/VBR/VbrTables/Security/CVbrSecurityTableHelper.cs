@@ -12,81 +12,93 @@ namespace VeeamHealthCheck.Reporting.Html.VBR
 {
     internal class CVbrSecurityTableHelper
     {
-        private CHtmlFormatting _form = new();
-        private CDataFormer _df = new();
-        private CSecuritySummaryTable _secSummaryParts;
+        private readonly CHtmlFormatting form = new();
+        private readonly CDataFormer df = new();
+        private readonly CSecuritySummaryTable secSummaryParts;
 
         public CVbrSecurityTableHelper()
         {
-            _secSummaryParts = _df.SecSummary();
+            this.secSummaryParts = this.df.SecSummary();
         }
 
         public Tuple<string, string> ColumnExample()
         {
-            string header = _form.TableHeader(string.Empty, string.Empty);
-            string data = _form.TableData(string.Empty, string.Empty);
+            string header = this.form.TableHeader(string.Empty, string.Empty);
+            string data = this.form.TableData(string.Empty, string.Empty);
 
             return Tuple.Create(header, data);
         }
 
         public Tuple<string, string> ConsoleInstalled()
         {
-            string header = _form.TableHeader("Is VBR Console Installed", string.Empty);
-            string data = _form.TableData(CSecurityGlobalValues.IsConsoleInstalled, string.Empty);
+            string header = this.form.TableHeader("Is VBR Console Installed", string.Empty);
+            string data = this.form.TableData(CSecurityGlobalValues.IsConsoleInstalled, string.Empty);
 
             return Tuple.Create(header, data);
         }
 
         public Tuple<string, string> RdpEnabled()
         {
-            string header = _form.TableHeader("Is RDP Enabled", string.Empty);
-            string data = _form.TableData(CSecurityGlobalValues.IsRdpEnabled, string.Empty);
+            string header = this.form.TableHeader("Is RDP Enabled", string.Empty);
+            string data = this.form.TableData(CSecurityGlobalValues.IsRdpEnabled, string.Empty);
 
             return Tuple.Create(header, data);
         }
 
         public Tuple<string, string> DomainJoined()
         {
-            string header = _form.TableHeader("Is VBR Domain Joined", string.Empty);
-            string data = _form.TableData(CSecurityGlobalValues.IsDomainJoined, string.Empty);
+            string header = this.form.TableHeader("Is VBR Domain Joined", string.Empty);
+            string data = this.form.TableData(CSecurityGlobalValues.IsDomainJoined, string.Empty);
 
             return Tuple.Create(header, data);
         }
 
-
-
         public Tuple<string, string> IsImmutabilityEnabledOnce()
         {
-            string header = _form.TableHeader(VbrLocalizationHelper.SSHdr0, VbrLocalizationHelper.SSHdrTT0);
-            string data = _form.TableData("False", string.Empty, 1);
-            if (_secSummaryParts.ImmutabilityEnabled == true)
-                data = _form.TableData(_form.True, string.Empty);
+            string header = this.form.TableHeader(VbrLocalizationHelper.SSHdr0, VbrLocalizationHelper.SSHdrTT0);
+            string data = this.form.TableData("False", string.Empty, 1);
+            if (this.secSummaryParts.ImmutabilityEnabled == true)
+            {
+                data = this.form.TableData(this.form.True, string.Empty);
+            }
             else
-                data = _form.TableData(_form.False, string.Empty);
+            {
+                data = this.form.TableData(this.form.False, string.Empty);
+            }
+
 
             return Tuple.Create(header, data);
         }
 
         public Tuple<string, string> GeneralTrafficEncryptionEnabled()
         {
-            string header = _form.TableHeader("General Traffic Encryption", string.Empty);
-            string data = _form.TableData("False", string.Empty, 1);
-            if (_secSummaryParts.TrafficEncrptionEnabled == true)
-                data = _form.TableData(_form.True, string.Empty);
+            string header = this.form.TableHeader("General Traffic Encryption", string.Empty);
+            string data = this.form.TableData("False", string.Empty, 1);
+            if (this.secSummaryParts.TrafficEncrptionEnabled == true)
+            {
+                data = this.form.TableData(this.form.True, string.Empty);
+            }
             else
-                data = _form.TableData(_form.False, string.Empty);
+            {
+                data = this.form.TableData(this.form.False, string.Empty);
+            }
+
 
             return Tuple.Create(header, data);
         }
 
         public Tuple<string, string> IsBackupFileEncryptionInUse()
         {
-            string header = _form.TableHeader("Backup File Encryption", string.Empty);
-            string data = _form.TableData("False", string.Empty, 1);
-            if (_secSummaryParts.BackupFileEncrptionEnabled == true)
-                data = _form.TableData(_form.True, string.Empty);
+            string header = this.form.TableHeader("Backup File Encryption", string.Empty);
+            string data = this.form.TableData("False", string.Empty, 1);
+            if (this.secSummaryParts.BackupFileEncrptionEnabled == true)
+            {
+                data = this.form.TableData(this.form.True, string.Empty);
+            }
             else
-                data = _form.TableData(_form.False, string.Empty);
+            {
+                data = this.form.TableData(this.form.False, string.Empty);
+            }
 
 
             return Tuple.Create(header, data);
@@ -94,12 +106,16 @@ namespace VeeamHealthCheck.Reporting.Html.VBR
 
         public Tuple<string, string> IsConfigBackupEncrypted()
         {
-            string header = _form.TableHeader("Config Backup Encryption", string.Empty);
-            string data = _form.TableData(_form.False, string.Empty, 1);
-            if (_secSummaryParts.ConfigBackupEncrptionEnabled == true)
-                data = _form.TableData(_form.True, string.Empty); 
+            string header = this.form.TableHeader("Config Backup Encryption", string.Empty);
+            string data = this.form.TableData(this.form.False, string.Empty, 1);
+            if (this.secSummaryParts.ConfigBackupEncrptionEnabled == true)
+            {
+                data = this.form.TableData(this.form.True, string.Empty);
+            }
             else
-                data = _form.TableData(_form.False, string.Empty);
+            {
+                data = this.form.TableData(this.form.False, string.Empty);
+            }
 
 
             return Tuple.Create(header, data);
@@ -107,12 +123,18 @@ namespace VeeamHealthCheck.Reporting.Html.VBR
 
         public Tuple<string, string> IsMFAEnabled()
         {
-            string header = _form.TableHeader("MFA Enabled", string.Empty);
-            string data = _form.TableData(_form.False, string.Empty, 1);
-            if (_secSummaryParts.MFAEnabled == true)
-                data = _form.TableData(_form.True, string.Empty);
+            string header = this.form.TableHeader("MFA Enabled", string.Empty);
+            string data = this.form.TableData(this.form.False, string.Empty, 1);
+            if (this.secSummaryParts.MFAEnabled == true)
+            {
+                data = this.form.TableData(this.form.True, string.Empty);
+            }
             else
-                data = _form.TableData(_form.False, string.Empty);
+            {
+
+                data = this.form.TableData(this.form.False, string.Empty);
+            }
+
 
             return Tuple.Create(header, data);
         }

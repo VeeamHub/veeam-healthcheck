@@ -15,6 +15,7 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.DataFormers
             if(CGlobals.DEBUG){
                 CGlobals.Logger.Debug("JobType = " + jobType);
             }
+
             switch (jobType)
             {
                 case "Copy":
@@ -72,7 +73,6 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.DataFormers
                 default:
                     return jobType;
             }
-
         }
     }
 }

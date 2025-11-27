@@ -12,8 +12,8 @@ namespace VeeamHealthCheck.Functions.Reporting.DataTypes.NAS
         [Index(0)]
         public string FileProxy { get; set; }
 
-        //[Index(1)]
-        //public string NFSVersion { get; set; }
+        // [Index(1)]
+        // public string NFSVersion { get; set; }
         [Index(1)]
         public string FileShareID { get; set; }
 

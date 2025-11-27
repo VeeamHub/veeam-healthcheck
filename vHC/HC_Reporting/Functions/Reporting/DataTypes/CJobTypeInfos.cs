@@ -37,7 +37,6 @@ namespace VeeamHealthCheck.Functions.Reporting.DataTypes
 
         public CJobTypeInfos()
         {
-
         }
     }
 }

@@ -10,12 +10,10 @@ namespace VeeamHealthCheck.Functions.Analysis.DataModels
     {
         public Repository()
         {
-
         }
 
         public string Name { get; set; }
 
         public string Sobr { get; set; }
-        
     }
 }

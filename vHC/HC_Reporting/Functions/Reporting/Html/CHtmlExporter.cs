@@ -22,14 +22,14 @@ namespace VeeamHealthCheck.Functions.Reporting.Html
         public class CHtmlExporter
         {
         private readonly string htmlName = "Veeam Health Check Report";
-        private CLogger log = CGlobals.Logger;
+        private readonly CLogger log = CGlobals.Logger;
 
         // path settings
-        private string basePath = CGlobals._desiredPath;
-        private string anonPath = CGlobals._desiredPath + CVariables._safeSuffix;
-        private string origPath = CGlobals._desiredPath + CVariables._unsafeSuffix;
+        private readonly string basePath = CGlobals.desiredPath;
+        private readonly string anonPath = CGlobals.desiredPath + CVariables.safeSuffix;
+        private readonly string origPath = CGlobals.desiredPath + CVariables.unsafeSuffix;
 
-        private string backupServerName;
+        private readonly string backupServerName;
         private string latestReport;
 
         public CHtmlExporter(string serverName)
@@ -38,7 +38,6 @@ namespace VeeamHealthCheck.Functions.Reporting.Html
 
             // _testFile = xmlFileName;
             this.backupServerName = serverName;
-
         }
 
         private void CheckOutputDirsExist()
@@ -61,7 +60,6 @@ namespace VeeamHealthCheck.Functions.Reporting.Html
 
         public int ExportHtmlVb365(string htmlString, bool scrub)
         {
-
             try
             {
                 this.log.Info("exporting xml to html");
@@ -73,7 +71,6 @@ namespace VeeamHealthCheck.Functions.Reporting.Html
                 if (!scrub && CGlobals.EXPORTPDF)
                 {
                     this.ExportHtmlStringToPDF(htmlString);
-
                 }
 
                 this.OpenHtmlIfEnabled(CGlobals.OpenHtml);
@@ -84,7 +81,6 @@ namespace VeeamHealthCheck.Functions.Reporting.Html
                 this.log.Error("Failed at HTML Export:");
                 this.log.Error("\t" + e.Message); return 1;
             }
-
         }
 
         public int ExportVbrHtml(string htmlString, bool scrub)
@@ -113,7 +109,6 @@ namespace VeeamHealthCheck.Functions.Reporting.Html
                 this.log.Error("Failed at HTML Export:");
                 this.log.Error("\t" + e.Message); return 1;
             }
-
         }
 
         private void ExportHtmlStringToPDF(string htmlString)
@@ -158,8 +153,6 @@ namespace VeeamHealthCheck.Functions.Reporting.Html
             this.OpenHtmlIfEnabled(CGlobals.OpenHtml);
 
             return 0;
-
-
         }
 
         private void WriteHtmlToFile(string htmlString)
@@ -209,7 +202,6 @@ namespace VeeamHealthCheck.Functions.Reporting.Html
                     installID = this.TrySetInstallId(CLogOptions.INSTALLID);
 
                     htmlCore = this.anonPath + "\\" + this.htmlName + "_" + vbrOrVb365 + "_" + installID + dateTime.ToString("_yyyy.MM.dd.HHmmss") + ".html";
-
                 }
                 else if (!scrub)
                 {
@@ -238,7 +230,6 @@ namespace VeeamHealthCheck.Functions.Reporting.Html
                 // log.Debug("\t" + );
                 return null;
             }
-
         }
 
         private string TrySetInstallId(string id)
@@ -246,7 +237,6 @@ namespace VeeamHealthCheck.Functions.Reporting.Html
             this.log.Debug("InstallID String = " + id);
             try
             {
-
                 if (!string.IsNullOrEmpty(id))
                 {
                     return id.Substring(0, 7);
@@ -286,7 +276,6 @@ namespace VeeamHealthCheck.Functions.Reporting.Html
             {
                 this.log.Warning("HTML not opened. Option not enabled");
                 return 1;
-
             }
         }
 

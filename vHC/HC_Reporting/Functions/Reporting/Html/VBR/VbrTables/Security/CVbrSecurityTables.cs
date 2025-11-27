@@ -4,35 +4,34 @@ using System;
 using System.Collections.Generic;
 using VeeamHealthCheck.Functions.Reporting.Html.VBR.VbrTables.Security;
 using VeeamHealthCheck.Shared;
-//using VeeamHealthCheck.Reporting.Html.VBR;
-//using VeeamHealthCheck.Reporting.Html.VBR.VbrTables;
 
+// using VeeamHealthCheck.Reporting.Html.VBR;
+// using VeeamHealthCheck.Reporting.Html.VBR.VbrTables;
 namespace VeeamHealthCheck.Reporting.Html.VBR
 {
     internal class CVbrSecurityTables
     {
-        private CVbrSecurityTableHelper _tables;
-        private readonly VBR.CConfigBackupTable _cfgTable = new();
+        private readonly CVbrSecurityTableHelper tables;
+        private readonly VBR.CConfigBackupTable cfgTable = new();
 
         public CVbrSecurityTables()
         {
-            _tables = new();
+            this.tables = new();
             if (CGlobals.DEBUG)
             {
                 CGlobals.Logger.Debug("VbrSecurityTables Constructor");
             }
 
-            //CheckRecon();
+            // CheckRecon();
         }
 
         public List<Tuple<string, string>> ConfigBackupInfo()
         {
             List<Tuple<string, string>> tables = new()
             {
-                _cfgTable.ConfigBackupEnabled(),
-                _cfgTable.ConfigBackupSuccessful(),
-                _cfgTable.ConfigBackupEncrypted()
-
+                this.cfgTable.ConfigBackupEnabled(),
+                this.cfgTable.ConfigBackupSuccessful(),
+                this.cfgTable.ConfigBackupEncrypted()
             };
 
             return tables;
@@ -42,12 +41,12 @@ namespace VeeamHealthCheck.Reporting.Html.VBR
         {
             List<Tuple<string, string>> headers = new()
             {
-                _tables.IsImmutabilityEnabledOnce(),
-                _tables.GeneralTrafficEncryptionEnabled(),
-                _tables.IsBackupFileEncryptionInUse(),
-                _tables.IsConfigBackupEncrypted(),
-                _tables.IsMFAEnabled(),
-        };
+                this.tables.IsImmutabilityEnabledOnce(),
+                this.tables.GeneralTrafficEncryptionEnabled(),
+                this.tables.IsBackupFileEncryptionInUse(),
+                this.tables.IsConfigBackupEncrypted(),
+                this.tables.IsMFAEnabled(),
+            };
             return headers;
         }
     }

@@ -11,13 +11,13 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR.VbrTables.Security
 {
     internal class CComplianceTable
     {
-        private CHtmlFormatting _form = new();
-        CCsvParser _csv = new();
-        IEnumerable<CComplianceCsv> _csvResults;
+        private readonly CHtmlFormatting form = new();
+        readonly CCsvParser csv = new();
+        readonly IEnumerable<CComplianceCsv> csvResults;
 
         public CComplianceTable()
         {
-            _csvResults = _csv.ComplianceCsv() ?? new List<CComplianceCsv>();
+            this.csvResults = this.csv.ComplianceCsv() ?? new List<CComplianceCsv>();
         }
 
         public string ComplianceSummaryTable()
@@ -26,7 +26,7 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR.VbrTables.Security
             try
             {
                 // Return early if no data
-                if (_csvResults == null || !_csvResults.Any())
+                if (this.csvResults == null || !this.csvResults.Any())
                 {
                     CGlobals.Logger.Warning("No compliance data available - CSV file may not have been generated");
                     return t;
@@ -37,7 +37,7 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR.VbrTables.Security
                 var unableToDetectCount = 0;
                 var suppressedCount = 0;
 
-                foreach (var res in _csvResults)
+                foreach (var res in this.csvResults)
                 {
                     switch (res.Status)
                     {
@@ -55,40 +55,37 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR.VbrTables.Security
                             break;
                     }
                 }
-                t += _form.SectionStartWithButton("ComplianceSummary", "ComplianceSummary", "complianceSummaryButton");
-                t += _form.TableHeaderLeftAligned("Status", "Passed, Not Implemented, Unable to Detect, Suppressed");
-                t += _form.TableHeader("Count", "Number of items");
-                t += _form.TableHeaderEnd();
-                t += _form.TableBodyStart();
 
+                t += this.form.SectionStartWithButton("ComplianceSummary", "ComplianceSummary", "complianceSummaryButton");
+                t += this.form.TableHeaderLeftAligned("Status", "Passed, Not Implemented, Unable to Detect, Suppressed");
+                t += this.form.TableHeader("Count", "Number of items");
+                t += this.form.TableHeaderEnd();
+                t += this.form.TableBodyStart();
 
-                t += _form.TableRowStart();
-                t += _form.TableDataLeftAligned("Passed", string.Empty);
-                t += _form.TableData(passedCount.ToString(), string.Empty);
-                t += _form.TableRowEnd();
-                t += _form.TableRowStart();
-                t += _form.TableDataLeftAligned("Not Implemented", string.Empty);
-                t += _form.TableData(notImplementedCount.ToString(), string.Empty);
-                t += _form.TableRowEnd();
-                t += _form.TableRowStart();
-                t += _form.TableDataLeftAligned("Unable to Detect", string.Empty);
-                t += _form.TableData(unableToDetectCount.ToString(), string.Empty);
-                t += _form.TableRowEnd();
-                t += _form.TableRowStart();
-                t += _form.TableDataLeftAligned("Suppressed", string.Empty);
-                t += _form.TableData(suppressedCount.ToString(), string.Empty);
-                t += _form.TableRowEnd();
+                t += this.form.TableRowStart();
+                t += this.form.TableDataLeftAligned("Passed", string.Empty);
+                t += this.form.TableData(passedCount.ToString(), string.Empty);
+                t += this.form.TableRowEnd();
+                t += this.form.TableRowStart();
+                t += this.form.TableDataLeftAligned("Not Implemented", string.Empty);
+                t += this.form.TableData(notImplementedCount.ToString(), string.Empty);
+                t += this.form.TableRowEnd();
+                t += this.form.TableRowStart();
+                t += this.form.TableDataLeftAligned("Unable to Detect", string.Empty);
+                t += this.form.TableData(unableToDetectCount.ToString(), string.Empty);
+                t += this.form.TableRowEnd();
+                t += this.form.TableRowStart();
+                t += this.form.TableDataLeftAligned("Suppressed", string.Empty);
+                t += this.form.TableData(suppressedCount.ToString(), string.Empty);
+                t += this.form.TableRowEnd();
 
-
-                t += _form.SectionEnd();
+                t += this.form.SectionEnd();
             }
             catch (Exception e)
             {
                 CGlobals.Logger.Error("Failed to parse compliance status");
                 CGlobals.Logger.Error(e.Message);
             }
-
-
 
             return t;
         }
@@ -99,27 +96,28 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR.VbrTables.Security
             try
             {
                 // Return early if no data
-                if (_csvResults == null || !_csvResults.Any())
+                if (this.csvResults == null || !this.csvResults.Any())
                 {
                     CGlobals.Logger.Warning("No compliance data available - CSV file may not have been generated");
                     return t;
                 }
                 
-                //var csvResults = _csv.ComplianceCsv();
-                t += _form.SectionStartWithButton("ComplianceTable", "Compliance Table", "complianceButton");
-                t += _form.TableHeaderLeftAligned("Best Practice", "Name of the excluded sytem.");
-                t += _form.TableHeader("Status", "Platform of the excluded item.");
-                t += _form.TableHeaderEnd();
-                t += _form.TableBodyStart();
+                // var csvResults = _csv.ComplianceCsv();
+                t += this.form.SectionStartWithButton("ComplianceTable", "Compliance Table", "complianceButton");
+                t += this.form.TableHeaderLeftAligned("Best Practice", "Name of the excluded sytem.");
+                t += this.form.TableHeader("Status", "Platform of the excluded item.");
+                t += this.form.TableHeaderEnd();
+                t += this.form.TableBodyStart();
 
-                foreach (var res in _csvResults)
+                foreach (var res in this.csvResults)
                 {
-                    t += _form.TableRowStart();
-                    t += _form.TableDataLeftAligned(res.BestPractice, string.Empty);
-                    t += _form.TableData(res.Status.ToString(), string.Empty);
-                    t += _form.TableRowEnd();
+                    t += this.form.TableRowStart();
+                    t += this.form.TableDataLeftAligned(res.BestPractice, string.Empty);
+                    t += this.form.TableData(res.Status.ToString(), string.Empty);
+                    t += this.form.TableRowEnd();
                 }
-                t += _form.SectionEnd();
+
+                t += this.form.SectionEnd();
             }
             catch (Exception e)
             {
@@ -127,8 +125,8 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR.VbrTables.Security
                 CGlobals.Logger.Error(e.Message);
                 throw;
             }
-            return t;
 
+            return t;
         }
     }
 }

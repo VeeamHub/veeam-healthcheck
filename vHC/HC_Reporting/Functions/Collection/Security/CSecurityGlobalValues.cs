@@ -6,7 +6,6 @@ namespace VeeamHealthCheck.Functions.Collection.Security
 {
     internal class CSecurityGlobalValues
     {
-
         // backup server values
         public static string IsConsoleInstalled = "Undetermined";
         public static string IsRdpEnabled = "Undetermined";
@@ -20,8 +19,7 @@ namespace VeeamHealthCheck.Functions.Collection.Security
         // Server info
         public static List<string> OperatingSystemsInUse = new();
 
-
-        //SOBR INFO
+        // SOBR INFO
         public static bool CapacityTierUsed;
         public static bool ArchiveTierUsed;
         public static bool CapTierImmutable;
@@ -32,17 +30,15 @@ namespace VeeamHealthCheck.Functions.Collection.Security
         // extent info
         public static bool AreAllExtentsImmutable;
 
-
-
         // standardRepoInfo
         public static bool AreAllReposImmutable;
 
-        //job info
+        // job info
         public static bool AreAllJobsEncrypted;
 
-        //public CSecurityGlobalValues()
-        //{
+        // public CSecurityGlobalValues()
+        // {
         //    IsConsoleInstalled = CGlobals.isConsoleLocal;
-        //}
+        // }
     }
 }

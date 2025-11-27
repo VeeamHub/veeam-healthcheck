@@ -3,17 +3,18 @@
 
 namespace VeeamHealthCheck.Functions.Reporting.DataTypes
 {
-    class CProvisionTypes
+    internal class CProvisionTypes
     {
+        public CProvisionTypes()
+        {
+        }
+
         public string UnderProvisioned { get { return "under"; } }
 
         public string OverProvisioned { get { return "over"; } }
 
         public string WellProvisioned { get { return " "; } }
 
-        public CProvisionTypes()
-        {
 
-        }
     }
 }

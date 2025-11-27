@@ -8,7 +8,7 @@ namespace VeeamHealthCheck.Reporting.Html.VBR
 {
     internal class CSecurityBackupServerTable
     {
-        CVbrSecurityTableHelper _tables = new();
+        readonly CVbrSecurityTableHelper tables = new();
 
         public CSecurityBackupServerTable() { }
 
@@ -21,11 +21,10 @@ namespace VeeamHealthCheck.Reporting.Html.VBR
                 helper.ConsoleStatus(),
                 helper.RdpStatus(),
                 helper.DomainStatus()
-                //_tables.ConsoleInstalled(),
-                //_tables.RdpEnabled(),
-                //_tables.DomainJoined()
 
-
+                // _tables.ConsoleInstalled(),
+                // _tables.RdpEnabled(),
+                // _tables.DomainJoined()
             };
 
             return tables;

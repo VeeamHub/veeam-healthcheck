@@ -15,7 +15,6 @@ namespace VeeamHealthCheck.Functions.Reporting.CsvHandlers
 
         [Index(1)]
         public string CacheRepoName { get; set; }
-       
     }
 
     public class CEntraLogJobs
@@ -41,21 +40,15 @@ namespace VeeamHealthCheck.Functions.Reporting.CsvHandlers
 
         [Index(6)]
         public string SecondaryTarget { get; set; }
-
-
     }
 
     public class CEntraTenantJobs
     {
         // create a list of malware objects from this: ObjectId	ObjectName	DetectedDateTime	Severity	Types	Platform	ObjectHostName
-
         [Index(0)]
         public string Name { get; set; }
 
         [Index(1)]
         public int RetentionPolicy { get; set; }
-
-
     }
-   
 }

@@ -15,7 +15,6 @@ namespace VeeamHealthCheck.Functions.Reporting.DataTypes
 
         public CFileProxyTypeInfo()
         {
-
         }
     }
 }

@@ -14,9 +14,7 @@ namespace VeeamHealthCheck.Functions.Reporting.CsvHandlers
 
         [Index(1)]
         public String Status { get; set; }
-
     }
-
 }
 
 public enum ComplianceStatus

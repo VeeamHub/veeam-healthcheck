@@ -10,24 +10,24 @@ namespace VeeamHealthCheck.Reporting.Html.VBR
 {
     internal class CConfigBackupTable
     {
-        CHtmlFormatting _form = new();
+        readonly CHtmlFormatting form = new();
 
         public CConfigBackupTable()
         {
-            ParseBackupServer();
+            this.ParseBackupServer();
         }
 
         public Tuple<string, string> ConfigBackupEnabled()
         {
-            string header = _form.TableHeader("Config Backup Enabled", string.Empty);
+            string header = this.form.TableHeader("Config Backup Enabled", string.Empty);
             string data = string.Empty;
             if(CSecurityGlobalValues.ConfigBackupEnabled)
             {
-                data = _form.TableData(_form.True, string.Empty);
+                data = this.form.TableData(this.form.True, string.Empty);
             }
             else
             {
-                data = _form.TableData(_form.False, string.Empty);
+                data = this.form.TableData(this.form.False, string.Empty);
             }
 
             return Tuple.Create(header, data);
@@ -35,23 +35,23 @@ namespace VeeamHealthCheck.Reporting.Html.VBR
 
         public Tuple<string, string> ConfigBackupSuccessful()
         {
-            string header = _form.TableHeader("Config Backup Last Run Successful", string.Empty);
-            string data = _form.TableData(CSecurityGlobalValues.ConfigBackupSuccess.ToString(), string.Empty);
+            string header = this.form.TableHeader("Config Backup Last Run Successful", string.Empty);
+            string data = this.form.TableData(CSecurityGlobalValues.ConfigBackupSuccess.ToString(), string.Empty);
 
             return Tuple.Create(header, data);
         }
 
         public Tuple<string, string> ConfigBackupEncrypted()
         {
-            string header = _form.TableHeader("Config Backup Encrypted", string.Empty);
+            string header = this.form.TableHeader("Config Backup Encrypted", string.Empty);
             string data = string.Empty;
             if(CSecurityGlobalValues.ConfigBackupEncrypted)
             {
-                data = _form.TableData(_form.True, string.Empty);
+                data = this.form.TableData(this.form.True, string.Empty);
             }
             else
             {
-                data = _form.TableData(_form.False, string.Empty);
+                data = this.form.TableData(this.form.False, string.Empty);
             }
 
             return Tuple.Create(header, data);
@@ -70,10 +70,8 @@ namespace VeeamHealthCheck.Reporting.Html.VBR
             else
             {
                    CSecurityGlobalValues.ConfigBackupEncrypted = false;
-                CSecurityGlobalValues.ConfigBackupSuccess = "N/A";
+                   CSecurityGlobalValues.ConfigBackupSuccess = "N/A";
             }
-
-
         }
     }
 }

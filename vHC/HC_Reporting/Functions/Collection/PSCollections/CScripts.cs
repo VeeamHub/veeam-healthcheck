@@ -32,7 +32,7 @@ namespace VeeamHealthCheck.Functions.Collection.PSCollections
         //         $jobInfo += $job
         //     }
 
-        //     $jobInfo
+        // $jobInfo
         //     ";
         //     return script;
         // }

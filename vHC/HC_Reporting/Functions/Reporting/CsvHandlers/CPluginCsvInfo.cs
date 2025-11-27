@@ -7,7 +7,7 @@ namespace VeeamHealthCheck.Functions.Reporting.CsvHandlers
 {
     public class CPluginCsvInfo
     {
-        //"PluginType","Id","Name","Type","LastRun","LastResult","LastState","NextRun","TargetRepositoryId","Description","IsEnabled"
+        // "PluginType","Id","Name","Type","LastRun","LastResult","LastState","NextRun","TargetRepositoryId","Description","IsEnabled"
         [Index(0)]
         public string JobType { get; set; }
 

@@ -7,42 +7,41 @@ using VeeamHealthCheck.Functions.Reporting.Html;
 using VeeamHealthCheck.Functions.Reporting.Html.Shared;
 using VeeamHealthCheck.Functions.Reporting.Html.VBR;
 using VeeamHealthCheck.Reporting.Html.VBR;
-//using VeeamHealthCheck.Reporting.Html.VBR.VbrTables.Security;
 
+// using VeeamHealthCheck.Reporting.Html.VBR.VbrTables.Security;
 namespace VeeamHealthCheck.Reporting.Html.VBR
 {
     internal class CHtmlTablesHelper
     {
-        CHtmlFormatting _form = new();
+        readonly CHtmlFormatting form = new();
 
         public CHtmlTablesHelper()
         {
-
         }
 
         public string AddSecurityServerInfo()
         {
             CSecurityBackupServerTable t = new();
-            return WriteTupleListToHtml(t.ServerSpecificInfo());
+            return this.WriteTupleListToHtml(t.ServerSpecificInfo());
         }
 
         public string AddSecuritySummaryDetails()
         {
             CVbrSecurityTables t = new();
-            return WriteTupleListToHtml(t.SecuritySummaryTables());
+            return this.WriteTupleListToHtml(t.SecuritySummaryTables());
         }
 
         public string AddConfigBackupDetails()
         {
             CVbrSecurityTables t = new();
-            return WriteTupleListToHtml(t.ConfigBackupInfo());
+            return this.WriteTupleListToHtml(t.ConfigBackupInfo());
         }
 
         public string AddImmutabilityTables()
         {
             CImmutabilityTable ct = new();
 
-            return WriteTupleListToHtml(new List<Tuple<string,string>>());
+            return this.WriteTupleListToHtml(new List<Tuple<string,string>>());
         }
 
         public List<string> CollectedOsInfo()
@@ -54,6 +53,7 @@ namespace VeeamHealthCheck.Reporting.Html.VBR
             {
                 operatingSystems.Add(server.OsInfo);
             }
+
             operatingSystems.Sort();
             return operatingSystems.Distinct().ToList();
         }
@@ -68,12 +68,13 @@ namespace VeeamHealthCheck.Reporting.Html.VBR
                 headers += table.Item1;
                 data += table.Item2;
             }
-            s += _form.TableHeader("header", "tooltip");
+
+            s += this.form.TableHeader("header", "tooltip");
             s += headers;
-            s += _form.TableHeaderEnd();
-            s += _form.TableBodyStart();
+            s += this.form.TableHeaderEnd();
+            s += this.form.TableBodyStart();
             s += data;
-            s += _form.EndTable();
+            s += this.form.EndTable();
 
             return s;
         }

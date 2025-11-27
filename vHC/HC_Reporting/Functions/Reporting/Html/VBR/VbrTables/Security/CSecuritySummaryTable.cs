@@ -24,7 +24,6 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR.VbrTables.Security
 
         public CSecuritySummaryTable()
         {
-            
         }
     }
 }

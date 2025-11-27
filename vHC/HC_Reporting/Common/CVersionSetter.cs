@@ -9,7 +9,6 @@ namespace VeeamHealthCheck.Shared
     {
         public CVersionSetter()
         {
-
         }
 
         public static string GetFileVersion()
@@ -19,10 +18,10 @@ namespace VeeamHealthCheck.Shared
             {
                 exePath = Process.GetCurrentProcess().MainModule.FileName;
             }
+
             FileVersionInfo fvi = FileVersionInfo.GetVersionInfo(exePath);
             CGlobals.VHCVERSION = fvi.FileVersion;
             return fvi.FileVersion;
-
         }
     }
 }

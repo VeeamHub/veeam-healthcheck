@@ -27,7 +27,6 @@ namespace VeeamHealthCheck.Functions.Reporting.DataTypes
 
         public CHvProxyTypeInfo()
         {
-
         }
     }
 }

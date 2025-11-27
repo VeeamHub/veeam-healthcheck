@@ -14,99 +14,99 @@ namespace VeeamHealthCheck.Functions.Reporting.DataTypes
 {
     public class CDataTypesParser : IDisposable
     {
-        private CLogger log = CGlobals.Logger;
-        private CCsvParser _csvParser = new();
+        private readonly CLogger log = CGlobals.Logger;
+        private readonly CCsvParser csvParser = new();
 
-        private List<CServerTypeInfos> _serverInfo = new();
+        private List<CServerTypeInfos> serverInfo = new();
 
-        private Dictionary<string, int> _serverSummaryInfo;
-        //private List<CSobrTypeInfos> _sobrInfo;
-        //private List<CRepoTypeInfos> _extentInfo;
-        //private List<CProxyTypeInfos> _proxyInfo;
-        //private List<CJobTypeInfos> _jobInfo;
-        //private List<CJobSessionInfo> _jobSession;
-        private List<int> _protectedJobIds = new();
-        private List<string> _typeList = new();
-        //private List<CServerTypeInfos> _serverInfo;
+        private Dictionary<string, int> serverSummaryInfo;
 
+        // private List<CSobrTypeInfos> _sobrInfo;
+        // private List<CRepoTypeInfos> _extentInfo;
+        // private List<CProxyTypeInfos> _proxyInfo;
+        // private List<CJobTypeInfos> _jobInfo;
+        // private List<CJobSessionInfo> _jobSession;
+        private readonly List<int> protectedJobIds = new();
+        private readonly List<string> typeList = new();
+
+        // private List<CServerTypeInfos> _serverInfo;
         public List<CJobTypeInfos> JobInfos = new();
         public List<CJobSessionInfo> JobSessions =new();
         public List<CServerTypeInfos> ServerInfos = new();
         public List<CRepoTypeInfos> ExtentInfo = new();
         public List<CProxyTypeInfos> ProxyInfos = new();
 
-        public Dictionary<string, int> ServerSummaryInfo { get { return _serverSummaryInfo; } }
+        public Dictionary<string, int> ServerSummaryInfo { get { return this.serverSummaryInfo; } }
 
         public List<CSobrTypeInfos> SobrInfo = new();
-        //public List<CLicTypeInfo> LicInfo { get { return LicInfos(); } }
+
+        // public List<CLicTypeInfo> LicInfo { get { return LicInfos(); } }
         public List<CRepoTypeInfos> RepoInfos = new();
         public List<CWanTypeInfo> WanInfos = new();
         public CConfigBackupCsv ConfigBackup = new();
         public List<CNetTrafficRulesCsv> NetTrafficRules = new();
 
-        public List<int> ProtectedJobIds { get { return _protectedJobIds; } }
+        public List<int> ProtectedJobIds { get { return this.protectedJobIds; } }
 
         public CDataTypesParser()
         {
-            Init();
+            this.Init();
         }
 
         public void Init()
         {
-            log.Info("[CDataTypesParser] Init() started");
+            this.log.Info("[CDataTypesParser] Init() started");
             try
             {
-                log.Info("[CDataTypesParser] Creating server summary dictionary...");
-                _serverSummaryInfo = new Dictionary<string, int>();
-                log.Info("[CDataTypesParser] Parsing JobInfo...");
-                JobInfos = JobInfo();
-                log.Info("[CDataTypesParser] Parsing JobSessionInfo...");
-                JobSessions = JobSessionInfo().ToList();
-                log.Info("[CDataTypesParser] Parsing ServerInfo...");
-                _serverInfo = ServerInfo();
-                ServerInfos = _serverInfo;
-                log.Info("[CDataTypesParser] Parsing ProxyInfo...");
-                ProxyInfos = ProxyInfo();
-                log.Info("[CDataTypesParser] Parsing SobrExtInfo...");
-                ExtentInfo = SobrExtInfo();
-                log.Info("[CDataTypesParser] Parsing SobrInfos...");
-                SobrInfo = SobrInfos();
-                log.Info("[CDataTypesParser] Parsing RepoInfo...");
-                RepoInfos = RepoInfo();
-                log.Info("[CDataTypesParser] Parsing WanInfo...");
-                WanInfos = WanInfo();
-                log.Info("[CDataTypesParser] Parsing ConfigBackupInfo...");
-                ConfigBackup = ConfigBackupInfo();
-                log.Info("[CDataTypesParser] Parsing NetTrafficRules...");
-                NetTrafficRules = NetTrafficRulesParser();
+                this.log.Info("[CDataTypesParser] Creating server summary dictionary...");
+                this.serverSummaryInfo = new Dictionary<string, int>();
+                this.log.Info("[CDataTypesParser] Parsing JobInfo...");
+                this.JobInfos = this.JobInfo();
+                this.log.Info("[CDataTypesParser] Parsing JobSessionInfo...");
+                this.JobSessions = this.JobSessionInfo().ToList();
+                this.log.Info("[CDataTypesParser] Parsing ServerInfo...");
+                this.serverInfo = this.ServerInfo();
+                this.ServerInfos = this.serverInfo;
+                this.log.Info("[CDataTypesParser] Parsing ProxyInfo...");
+                this.ProxyInfos = this.ProxyInfo();
+                this.log.Info("[CDataTypesParser] Parsing SobrExtInfo...");
+                this.ExtentInfo = this.SobrExtInfo();
+                this.log.Info("[CDataTypesParser] Parsing SobrInfos...");
+                this.SobrInfo = this.SobrInfos();
+                this.log.Info("[CDataTypesParser] Parsing RepoInfo...");
+                this.RepoInfos = this.RepoInfo();
+                this.log.Info("[CDataTypesParser] Parsing WanInfo...");
+                this.WanInfos = this.WanInfo();
+                this.log.Info("[CDataTypesParser] Parsing ConfigBackupInfo...");
+                this.ConfigBackup = this.ConfigBackupInfo();
+                this.log.Info("[CDataTypesParser] Parsing NetTrafficRules...");
+                this.NetTrafficRules = this.NetTrafficRulesParser();
 
-                log.Info("[CDataTypesParser] Filtering and counting types...");
-                FilterAndCountTypes();
-                log.Info("[CDataTypesParser] Init() completed successfully");
+                this.log.Info("[CDataTypesParser] Filtering and counting types...");
+                this.FilterAndCountTypes();
+                this.log.Info("[CDataTypesParser] Init() completed successfully");
             }
             catch (Exception ex)
             {
-                log.Error($"[CDataTypesParser] Failed to initialize data parser: {ex.Message}");
-                log.Debug($"[CDataTypesParser] Stack trace: {ex.StackTrace}");
+                this.log.Error($"[CDataTypesParser] Failed to initialize data parser: {ex.Message}");
+                this.log.Debug($"[CDataTypesParser] Stack trace: {ex.StackTrace}");
             }
         }
 
         public void Dispose() { }
 
-
-
         private List<CSobrTypeInfos> SobrInfos()
         {
-            var sobrCsv = _csvParser.SobrCsvParser();//.ToList();
+            var sobrCsv = this.csvParser.SobrCsvParser();// .ToList();
             List<CCapTierCsv> capTierCsv;
             try
             {
-                capTierCsv = _csvParser.CapTierCsvParser()?.ToList() ?? new List<CCapTierCsv>();
+                capTierCsv = this.csvParser.CapTierCsvParser()?.ToList() ?? new List<CCapTierCsv>();
             }
             catch (Exception ex)
             {
-                log.Error($"[CDataTypesParser] Failed to parse CapTier CSV: {ex.Message}");
-                log.Debug($"[CDataTypesParser] Stack trace: {ex.StackTrace}");
+                this.log.Error($"[CDataTypesParser] Failed to parse CapTier CSV: {ex.Message}");
+                this.log.Debug($"[CDataTypesParser] Stack trace: {ex.StackTrace}");
                 capTierCsv = new List<CCapTierCsv>();
             }
 
@@ -118,14 +118,15 @@ namespace VeeamHealthCheck.Functions.Reporting.DataTypes
                 try
                 {
                     s2 = sobrCsv.ToList();
-                    log.Info($"[CDataTypesParser] Processing {s2.Count} SOBR records from CSV");
+                    this.log.Info($"[CDataTypesParser] Processing {s2.Count} SOBR records from CSV");
                 }
                 catch (Exception ex)
                 {
-                    log.Error($"[CDataTypesParser] Failed to parse SOBR CSV: {ex.Message}");
-                    log.Debug($"[CDataTypesParser] Stack trace: {ex.StackTrace}");
+                    this.log.Error($"[CDataTypesParser] Failed to parse SOBR CSV: {ex.Message}");
+                    this.log.Debug($"[CDataTypesParser] Stack trace: {ex.StackTrace}");
                     return eInfoList;
                 }
+
                 foreach (CSobrCsvInfo s in s2)
                 {
                     CSobrTypeInfos eInfo = new();
@@ -143,12 +144,14 @@ namespace VeeamHealthCheck.Functions.Reporting.DataTypes
                                 bool.TryParse(cap.SizeLimitEnabled, out bool sizeLimitEnabled);
                                 eInfo.SizeLimitEnabled = sizeLimitEnabled;
                                 if (eInfo.SizeLimitEnabled == true)
+                                {
                                     eInfo.SizeLimit = cap.SizeLimit;
+                                }
+
 
                                 eInfo.CapTierType = cap.Type;
                             }
                         }
-
                     }
 
                     eInfo.ArchiveExtent = s.ArchiveExtent;
@@ -176,6 +179,7 @@ namespace VeeamHealthCheck.Functions.Reporting.DataTypes
                         eInfo.CapacityTierCopyPolicyEnabled = false;
                         eInfo.CapacityTierMovePolicyEnabled = false;
                     }
+
                     bool.TryParse(s.EncryptionEnabled, out bool encryptionEnabled);
                     eInfo.EncryptionEnabled = encryptionEnabled;
                     eInfo.EncryptionKey = s.EncryptionKey;
@@ -183,10 +187,10 @@ namespace VeeamHealthCheck.Functions.Reporting.DataTypes
                     eInfo.Id = s.Id;
                     eInfo.Name = s.Name;
                     eInfo.OffloadWindowOptions = s.OffloadWindowOptions;
-                    eInfo.OperationalRestorePeriod = ParseToInt(s.OperationalRestorePeriod);
+                    eInfo.OperationalRestorePeriod = this.ParseToInt(s.OperationalRestorePeriod);
                     bool.TryParse(s.OverridePolicyEnabled, out bool overridePolicy);
                     eInfo.OverridePolicyEnabled = overridePolicy;
-                    eInfo.OverrideSpaceThreshold = ParseToInt(s.OverrideSpaceThreshold);
+                    eInfo.OverrideSpaceThreshold = this.ParseToInt(s.OverrideSpaceThreshold);
                     bool.TryParse(s.PerformFullWhenExtentOffline, out bool performFull);
                     eInfo.PerformFullWhenExtentOffline = performFull;
                     bool.TryParse(s.PluginBackupsOffloadEnabled, out bool pluginOffload);
@@ -195,18 +199,16 @@ namespace VeeamHealthCheck.Functions.Reporting.DataTypes
                     bool.TryParse(s.UsePerVMBackupFiles, out bool usePerVM);
                     eInfo.UsePerVMBackupFiles = usePerVM;
 
-                    //int c = eInfo.Extents.Count();
+                    // int c = eInfo.Extents.Count();
 
-                    //var v = ExtentInfo.Count();
-                    //string[] eCount = eInfo.Extents.Split();
-                    //eInfo.ExtentCount = eCount.Count();
-
+                    // var v = ExtentInfo.Count();
+                    // string[] eCount = eInfo.Extents.Split();
+                    // eInfo.ExtentCount = eCount.Count();
 
                     eInfoList.Add(eInfo);
-
                 }
-
             }
+
             return eInfoList;
         }
 
@@ -218,9 +220,15 @@ namespace VeeamHealthCheck.Functions.Reporting.DataTypes
                 res = bool.Parse(input);
 
                 if (res == true)
+                {
+
                     return "True";
+                }
                 else
+                {
+
                     return "False";
+                }
             }
             catch (Exception e) { return string.Empty; }
         }
@@ -229,7 +237,7 @@ namespace VeeamHealthCheck.Functions.Reporting.DataTypes
         {
             List<CRepoTypeInfos> eInfoList = new List<CRepoTypeInfos>();
 
-            var records = _csvParser.RepoCsvParser();//.ToList();
+            var records = this.csvParser.RepoCsvParser();// .ToList();
             if (records != null)
             {
                 foreach (CRepoCsvInfos s in records)
@@ -260,30 +268,33 @@ namespace VeeamHealthCheck.Functions.Reporting.DataTypes
 
                     bool.TryParse(s.Uncompress, out bool b);
                     eInfo.IsDecompress = b;
-                    eInfo.MaxTasks = ParseToInt(s.MaxTasks);
+                    eInfo.MaxTasks = this.ParseToInt(s.MaxTasks);
                     bool.TryParse(s.AlignBlock, out bool c);
                     eInfo.AlignBlocks = c;
                     eInfo.GateHosts = s.GateHosts;
 
                     eInfo.HostId = s.HostId;
-                    if (eInfo.HostId == "00000000-0000-0000-0000-000000000000" )//&& s.Group != "ArchiveRepository")
+                    if (eInfo.HostId == "00000000-0000-0000-0000-000000000000" )// && s.Group != "ArchiveRepository")
+                    {
                         eInfo.IsAutoGateway = true;
+                    }
+
 
                     if (eInfo.HostId != "00000000-0000-0000-0000-000000000000")
                     {
-                        eInfo.Host = FilterHostIdToName(eInfo.HostId);
+                        eInfo.Host = this.FilterHostIdToName(eInfo.HostId);
                     }
 
-                    if (!StoragesToSkip().Contains(s.Type))
+                    if (!this.StoragesToSkip().Contains(s.Type))
                     {
-                        eInfo.Ram = MatchHostIdtoRam(eInfo.HostId);
-                        eInfo.Cores = MatchHostIdToCPU(eInfo.HostId);
+                        eInfo.Ram = this.MatchHostIdtoRam(eInfo.HostId);
+                        eInfo.Cores = this.MatchHostIdToCPU(eInfo.HostId);
 
                         // todo : If cloud, skip provisioning
-                        eInfo.Povisioning = CalcRepoOptimalTasks(eInfo.MaxTasks, eInfo.Cores, eInfo.Ram);
+                        eInfo.Povisioning = this.CalcRepoOptimalTasks(eInfo.MaxTasks, eInfo.Cores, eInfo.Ram);
 
-                        eInfo.FreeSPace = ParseToInt(s.FreeSpace);
-                        eInfo.TotalSpace = ParseToInt(s.TotalSpace);
+                        eInfo.FreeSPace = this.ParseToInt(s.FreeSpace);
+                        eInfo.TotalSpace = this.ParseToInt(s.TotalSpace);
                     }
                     else
                     {
@@ -295,12 +306,10 @@ namespace VeeamHealthCheck.Functions.Reporting.DataTypes
                         eInfo.FreeSPace = 0;
                     }
 
-
                     eInfoList.Add(eInfo);
-
                 }
-
             }
+
             return eInfoList;
         }
 
@@ -311,22 +320,26 @@ namespace VeeamHealthCheck.Functions.Reporting.DataTypes
 
         private string FilterHostIdToName(string hostId)
         {
-            foreach (var s in _serverInfo)
+            foreach (var s in this.serverInfo)
             {
                 if (hostId == s.Id)
+                {
+
                     return s.Name;
+                }
             }
+
             return string.Empty;
         }
 
         private List<CRepoTypeInfos> SobrExtInfo()
         {
-            var records = _csvParser.SobrExtParser();
+            var records = this.csvParser.SobrExtParser();
             List<CRepoTypeInfos> eInfoList = new List<CRepoTypeInfos>();
             
             if (records == null)
             {
-                log.Warning("[CDataTypesParser] SobrExtParser returned null. CSV file may be missing or unreadable.");
+                this.log.Warning("[CDataTypesParser] SobrExtParser returned null. CSV file may be missing or unreadable.");
                 return eInfoList;
             }
             
@@ -334,18 +347,18 @@ namespace VeeamHealthCheck.Functions.Reporting.DataTypes
             try
             {
                 recordsList = records.ToList();
-                log.Info($"[CDataTypesParser] Processing {recordsList.Count} SOBR extent records from CSV");
+                this.log.Info($"[CDataTypesParser] Processing {recordsList.Count} SOBR extent records from CSV");
             }
             catch (Exception ex)
             {
-                log.Error($"[CDataTypesParser] Failed to parse SOBR extent CSV: {ex.Message}");
-                log.Debug($"[CDataTypesParser] Stack trace: {ex.StackTrace}");
+                this.log.Error($"[CDataTypesParser] Failed to parse SOBR extent CSV: {ex.Message}");
+                this.log.Debug($"[CDataTypesParser] Stack trace: {ex.StackTrace}");
                 return eInfoList;
             }
             
             if (recordsList.Count == 0)
             {
-                log.Warning("[CDataTypesParser] No SOBR extent records found in CSV file.");
+                this.log.Warning("[CDataTypesParser] No SOBR extent records found in CSV file.");
                 return eInfoList;
             }
             
@@ -355,8 +368,7 @@ namespace VeeamHealthCheck.Functions.Reporting.DataTypes
                 {
                     CRepoTypeInfos eInfo = new CRepoTypeInfos();
 
-
-                    //eInfo.Host = s.HostName;
+                    // eInfo.Host = s.HostName;
                     eInfo.RepoName = s.Name;
                     eInfo.Path = s.FriendlyPath;
                     bool.TryParse(s.IsUnavailable, out bool isUnavail);
@@ -369,10 +381,10 @@ namespace VeeamHealthCheck.Functions.Reporting.DataTypes
                     bool.TryParse(s.IsImmutabilitySupported, out bool isImmutable);
                     eInfo.IsImmutabilitySupported = isImmutable;
                     eInfo.SobrName = s.SOBR_Name;
-                    eInfo.MaxTasks = ParseToInt(s.MaxTasks);
-                    eInfo.maxArchiveTasks = ParseToInt(s.MaxArchiveTaskCount);
+                    eInfo.MaxTasks = this.ParseToInt(s.MaxTasks);
+                    eInfo.maxArchiveTasks = this.ParseToInt(s.MaxArchiveTaskCount);
                     eInfo.isUnlimitedTaks = (s.UnlimitedTasks);
-                    eInfo.dataRateLimit = ParseToInt(s.CombinedDataRateLimit);
+                    eInfo.dataRateLimit = this.ParseToInt(s.CombinedDataRateLimit);
                     bool.TryParse(s.UnCompress, out bool b);
                     eInfo.IsDecompress = b;
                     bool.TryParse(s.OneBackupFilePerVm, out bool b2);
@@ -383,50 +395,53 @@ namespace VeeamHealthCheck.Functions.Reporting.DataTypes
 
                     eInfo.HostId = s.HostId;
                     if (eInfo.HostId == "00000000-0000-0000-0000-000000000000" && s.Group != "ArchiveRepository")
+                    {
                         eInfo.IsAutoGateway = true;
+                    }
+
 
                     if (eInfo.HostId != "00000000-0000-0000-0000-000000000000")
                     {
-                        eInfo.Host = FilterHostIdToName(eInfo.HostId);
+                        eInfo.Host = this.FilterHostIdToName(eInfo.HostId);
                     }
 
-                    eInfo.Ram = MatchHostIdtoRam(eInfo.HostId);
-                    eInfo.Cores = MatchHostIdToCPU(eInfo.HostId);
-                    eInfo.Povisioning = CalcRepoOptimalTasks(eInfo.MaxTasks, eInfo.Cores, eInfo.Ram);
+                    eInfo.Ram = this.MatchHostIdtoRam(eInfo.HostId);
+                    eInfo.Cores = this.MatchHostIdToCPU(eInfo.HostId);
+                    eInfo.Povisioning = this.CalcRepoOptimalTasks(eInfo.MaxTasks, eInfo.Cores, eInfo.Ram);
 
-                    eInfo.FreeSPace = ParseToInt(s.FreeSpace);
-                    eInfo.TotalSpace = ParseToInt(s.TotalSpace);
+                    eInfo.FreeSPace = this.ParseToInt(s.FreeSpace);
+                    eInfo.TotalSpace = this.ParseToInt(s.TotalSpace);
                     eInfo.GateHosts = s.GateHosts;
                     bool.TryParse(s.ObjectLockEnabled, out bool b4);
                     eInfo.ObjectLockEnabled = b4;
 
                     eInfoList.Add(eInfo);
-
                 }
-
             }
+
             return eInfoList;
         }
 
         private List<CNetTrafficRulesCsv> NetTrafficRulesParser()
         {
-            var nt = _csvParser.NetTrafficCsvParser();
+            var nt = this.csvParser.NetTrafficCsvParser();
             List<CNetTrafficRulesCsv> ntList = new();
             if (nt != null)
                 foreach (var c in nt)
                 {
                     CNetTrafficRulesCsv cv = new();
                     cv.EncryptionEnabled = c.EncryptionEnabled;
-                    //cv.
 
+                    // cv.
                     ntList.Add(cv);
                 }
+
             return ntList;
         }
 
         private CConfigBackupCsv ConfigBackupInfo()
         {
-            var configB = _csvParser.ConfigBackupCsvParser();
+            var configB = this.csvParser.ConfigBackupCsvParser();
             if (configB != null)
                 foreach (var c in configB)
                 {
@@ -448,17 +463,17 @@ namespace VeeamHealthCheck.Functions.Reporting.DataTypes
 
                     return cv;
                 }
-            return null;
 
+            return null;
         }
 
         private List<CJobTypeInfos> JobInfo()
         {
-            log.Info("Starting Job Csv Parse..");
+            this.log.Info("Starting Job Csv Parse..");
 
-            //var bjobCsv = _csvParser.BJobCsvParser();
-            var bjobCsv = _csvParser.GetDynamicBjobs();
-            var jobCsv = _csvParser.JobCsvParser().ToList();
+            // var bjobCsv = _csvParser.BJobCsvParser();
+            var bjobCsv = this.csvParser.GetDynamicBjobs();
+            var jobCsv = this.csvParser.JobCsvParser().ToList();
             List<CJobTypeInfos> eInfoList = new();
             try
             {
@@ -472,42 +487,41 @@ namespace VeeamHealthCheck.Functions.Reporting.DataTypes
                             foreach (var b in bjobCsv)
                             {
                                 int.TryParse(b.type, out int typeId);
-                                if (!_protectedJobIds.Contains(typeId))
+                                if (!this.protectedJobIds.Contains(typeId))
                                 {
-                                    _protectedJobIds.Add(typeId);
-
+                                    this.protectedJobIds.Add(typeId);
                                 }
+
                                 if (b.name == s.Name)
                                 {
                                     jInfo.Name = b.name;
                                     jInfo.ActualSize = b.included_size;
-                                    jInfo.RepoName = MatchRepoIdToRepo(b.repository_id);
+                                    jInfo.RepoName = this.MatchRepoIdToRepo(b.repository_id);
                                     jInfo.JobId = b.type;
                                     if (b.type == "63")
                                     {
-
                                     }
                                 }
-
                             }
-
                         }
+
                         if (string.IsNullOrEmpty(jInfo.RepoName))
+                        {
                             jInfo.RepoName = s.RepoName;
+                        }
+
 
                         jInfo.Algorithm = s.Algorithm;
                         jInfo.FullBackupDays = s.FullBackupDays;
                         jInfo.FullBackupScheduleKind = s.FullBackupScheduleKind;
                         jInfo.JobType = s.JobType;
 
-
-
-
                         jInfo.JobType = CJobTypesParser.GetJobType(s.JobType);
 
                         jInfo.Name = s.Name;
-                        //jInfo.RepoName = MatchRepoIdToRepo(bjobCsv.Where(x => x.Name == s.Name).SingleOrDefault().RepositoryId);
-                        jInfo.RestorePoints = ParseToInt(s.RestorePoints);
+
+                        // jInfo.RepoName = MatchRepoIdToRepo(bjobCsv.Where(x => x.Name == s.Name).SingleOrDefault().RepositoryId);
+                        jInfo.RestorePoints = this.ParseToInt(s.RestorePoints);
                         jInfo.ScheduleOptions = s.ScheduleOptions;
                         jInfo.SheduleEnabledTime = s.SheduleEnabledTime;
                         jInfo.TransformFullToSyntethic = s.TransformFullToSyntethic.ToString();
@@ -515,53 +529,59 @@ namespace VeeamHealthCheck.Functions.Reporting.DataTypes
                         jInfo.TransformToSyntethicDays = s.TransformToSyntethicDays;
 
                         if (s.PwdKeyId != "00000000-0000-0000-0000-000000000000" && !string.IsNullOrEmpty(s.PwdKeyId))
+                        {
                             jInfo.EncryptionEnabled = "True";
+                        }
+
 
                         jInfo.ActualSize = s.OriginalSize.ToString();
                         eInfoList.Add(jInfo);
-
-
                     }
-
             }
             catch (Exception e) { }
 
-            var rec = _csvParser.PluginCsvParser().ToList();
+            var rec = this.csvParser.PluginCsvParser().ToList();
             if (rec != null)
                 foreach (var r in rec)
                 {
                     CJobTypeInfos j = new();
                     j.Name = r.Name;
                     j.JobType = CJobTypesParser.GetJobType(r.JobType);
-                    j.RepoName = MatchRepoIdToRepo(r.TargetRepositoryId);
+                    j.RepoName = this.MatchRepoIdToRepo(r.TargetRepositoryId);
                     eInfoList.Add(j);
                 }
 
-            log.Info("Starting Job Csv Parse..ok!");
+            this.log.Info("Starting Job Csv Parse..ok!");
 
             return eInfoList;
         }
 
         private string MatchRepoIdToRepo(string repoId)
         {
-            foreach (var e in SobrInfos())
+            foreach (var e in this.SobrInfos())
             {
                 if (repoId == e.Id)
+                {
+
                     return e.Name;
+                }
             }
 
-            foreach (var r in RepoInfo())
+            foreach (var r in this.RepoInfo())
             {
                 if (repoId == r.Id)
+                {
+
                     return r.Name;
+                }
             }
+
             return string.Empty;
         }
 
         private List<CWanTypeInfo> WanInfo()
         {
-
-            var records = _csvParser.WanParser();
+            var records = this.csvParser.WanParser();
             List<CWanTypeInfo> eInfoList = new();
             if (records != null)
             {
@@ -575,10 +595,8 @@ namespace VeeamHealthCheck.Functions.Reporting.DataTypes
                     jInfo.Options = s.Options;
 
                     eInfoList.Add(jInfo);
-
                 }
             }
-
 
             return eInfoList;
         }
@@ -587,16 +605,20 @@ namespace VeeamHealthCheck.Functions.Reporting.DataTypes
         {
             try
             {
-                var sessionCsv = _csvParser.SessionCsvParser();
+                var sessionCsv = this.csvParser.SessionCsvParser();
                 if (sessionCsv == null)
                 {
-                    log.Warning("SessionCsvParser returned null - no session data available");
+                    this.log.Warning("SessionCsvParser returned null - no session data available");
                     return new List<CJobSessionInfo>();
                 }
+
                 var records = sessionCsv.ToList();
                 if(CGlobals.DEBUG)
-                    log.Debug(String.Format("! Sessions loaded from csv parser: " + records.Count().ToString()), false);
-                var jobCsv = _csvParser.JobCsvParser();
+                {
+                    this.log.Debug(String.Format("! Sessions loaded from csv parser: " + records.Count().ToString()), false);
+                }
+
+                var jobCsv = this.csvParser.JobCsvParser();
                 var jobRecords = jobCsv != null ? jobCsv.ToList() : new List<CJobCsvInfos>();
                 List<CJobSessionInfo> eInfoList = new();
                 if (records != null)
@@ -613,28 +635,27 @@ namespace VeeamHealthCheck.Functions.Reporting.DataTypes
 
                         jInfo.Name = s.JobName;
                         jInfo.Alg = s.Alg;
-                        jInfo.BackupSize = ParseToDouble(s.BackupSize);
+                        jInfo.BackupSize = this.ParseToDouble(s.BackupSize);
                         jInfo.Bottleneck = s.BottleneckDetails;
                         jInfo.CompressionRatio = s.CompressionRation;
-                        jInfo.CreationTime = TryParseDateTime(s.CreationTime);
+                        jInfo.CreationTime = this.TryParseDateTime(s.CreationTime);
 
-                        //refactoring DataSize to use OriginalSize from Jobs CSV to match used instead of provisioned size
+                        // refactoring DataSize to use OriginalSize from Jobs CSV to match used instead of provisioned size
                         try
                         {
                             var jobFromCsv = jobRecords.Where(x => x.Name == s.JobName).SingleOrDefault();
                             if (jobFromCsv != null)
+                            {
                                 jInfo.UsedVmSize = jobFromCsv.OriginalSize /1024 /1024 /1024;
-
+                            }
                         }
                         catch (Exception e)
                         {
-                            log.Error("Failed to parse job original size");
-                            log.Error("\t" + e.ToString());
-
+                            this.log.Error("Failed to parse job original size");
+                            this.log.Error("\t" + e.ToString());
                         }
 
-                        jInfo.DataSize = ParseToDouble(s.DataSize);
-
+                        jInfo.DataSize = this.ParseToDouble(s.DataSize);
 
                         jInfo.DedupRatio = s.DedupRatio;
                         jInfo.IsRetry = s.IsRetry;
@@ -647,17 +668,15 @@ namespace VeeamHealthCheck.Functions.Reporting.DataTypes
                         jInfo.JobName = s.JobName;
                         jInfo.JobType = s.JobType;
                         eInfoList.Add(jInfo);
-
                     }
 
                 return eInfoList;
             }
             catch (Exception e)
             {
-                log.Error("JobSessionInfo Error: "); log.Error("\t" + e.Message);
+                this.log.Error("JobSessionInfo Error: "); this.log.Error("\t" + e.Message);
                 return null;
             }
-
         }
 
         private DateTime TryParseDateTime(string dateTime)
@@ -674,57 +693,86 @@ namespace VeeamHealthCheck.Functions.Reporting.DataTypes
         private string CalcRepoOptimalTasks(int assignedTasks, int cores, int ram)
         {
             if (cores == 0 && ram == 0)
+            {
+
                 return "NA";
+            }
+
 
             CProvisionTypes pt = new();
 
             if (assignedTasks == -1)
+            {
+
                 return pt.OverProvisioned;
+            }
+
             // 1 core + 4 GB RAM per 3 task
 
             // cores * 1.5 = Tasks
+
             int availableMem = ram - 4;
-            int memTasks = MemoryTasksCount(ram, 4);
+            int memTasks = this.MemoryTasksCount(ram, 4);
             int coreTasks = cores * 3;
 
-            //if (CGlobals.VBRMAJORVERSION == 12)
-            //{
+            // if (CGlobals.VBRMAJORVERSION == 12)
+            // {
             //    // user v12 sizing math here.
             //    memTasks = MemoryTasksCount(ram, 2);
             //    coreTasks = cores * 2;
-            //}
-
+            // }
 
             if (coreTasks == memTasks)
             {
                 if (assignedTasks == memTasks)
+                {
                     return pt.WellProvisioned;
+                }
+
+
                 if (assignedTasks > memTasks)
+                {
+
                     return pt.OverProvisioned;
-                //if (assignedTasks < memTasks)
+                }
+
+                // if (assignedTasks < memTasks)
                 //    return pt.UnderProvisioned;
             }
 
             if (coreTasks < memTasks)
             {
                 if (assignedTasks == coreTasks)
+                {
                     return pt.WellProvisioned;
-                //if (assignedTasks <= coreTasks)
+                }
+
+                // if (assignedTasks <= coreTasks)
                 //    return pt.UnderProvisioned;
+
                 if (assignedTasks > coreTasks)
+                {
+
                     return pt.OverProvisioned;
+                }
             }
+
             if (coreTasks > memTasks)
             {
                 if (assignedTasks == memTasks)
+                {
                     return pt.WellProvisioned;
-                //if (assignedTasks <= memTasks)
+                }
+
+                // if (assignedTasks <= memTasks)
                 //    return pt.UnderProvisioned;
+
                 if (assignedTasks > memTasks)
+                {
+
                     return pt.OverProvisioned;
+                }
             }
-
-
 
             // 1 = underprov, 2 = on point, 3 = overprov
             return "NA";
@@ -734,7 +782,7 @@ namespace VeeamHealthCheck.Functions.Reporting.DataTypes
         {
             int i = 0;
 
-            foreach (var h in _serverInfo)
+            foreach (var h in this.serverInfo)
             {
                 if (h.Id == hostId)
                 {
@@ -747,12 +795,15 @@ namespace VeeamHealthCheck.Functions.Reporting.DataTypes
 
         private string MatchHostIdToName(string hostId)
         {
-            foreach (var h in _serverInfo)
+            foreach (var h in this.serverInfo)
             {
                 if (h.Id == hostId)
-                    return h.Name;
+                {
 
+                    return h.Name;
+                }
             }
+
             return string.Empty;
         }
 
@@ -760,7 +811,7 @@ namespace VeeamHealthCheck.Functions.Reporting.DataTypes
         {
             int i = 0;
 
-            foreach (var h in _serverInfo)
+            foreach (var h in this.serverInfo)
             {
                 if (h.Id == hostId)
                 {
@@ -775,12 +826,20 @@ namespace VeeamHealthCheck.Functions.Reporting.DataTypes
         {
             string message = "ServerInfo: Parsing Server CSV Data";
             if(CGlobals.DEBUG)
-                log.Debug(message);
+            {
+                this.log.Debug(message);
+            }
+
+
             List<CServerTypeInfos> l = new();
 
-            var records = _csvParser.ServerCsvParser();//.ToList();
+            var records = this.csvParser.ServerCsvParser();// .ToList();
             if (records == null)
+            {
                 return l;
+            }
+
+
             foreach (CServerCsvInfos s in records.ToList())
             {
                 CServerTypeInfos ti = new();
@@ -790,8 +849,9 @@ namespace VeeamHealthCheck.Functions.Reporting.DataTypes
                 {
                     ti.ApiVersion = s.ApiVersion;
                 }
-                ti.Cores = ParseToInt(s.Cores);
-                ti.CpuCount = ParseToInt(s.CPU);
+
+                ti.Cores = this.ParseToInt(s.Cores);
+                ti.CpuCount = this.ParseToInt(s.CPU);
                 ti.Description = s.Description;
                 ti.Id = s.Id;
 
@@ -800,13 +860,17 @@ namespace VeeamHealthCheck.Functions.Reporting.DataTypes
                 ti.OSInfo = s.OSInfo;
                 ti.IsUnavailable = s.IsUnavailable;
                 if (ti.IsUnavailable == "False")
+                {
                     ti.IsUnavailable = string.Empty;
+                }
+
+
                 ti.Name = s.Name;
 
-                //ti.ParentId = Guid.TryParse(s.ParentId);
-                //ti.PhysHostId = Guid.TryParse(s.PhysHostId);
+                // ti.ParentId = Guid.TryParse(s.ParentId);
+                // ti.PhysHostId = Guid.TryParse(s.PhysHostId);
                 ti.ProxyServicesCreds = s.ProxyServicesCreds;
-                double i = ParseToDouble(s.Ram); //"410665353216"
+                double i = this.ParseToDouble(s.Ram); // "410665353216"
                 i = i / 1024 / 1024 / 1024;
                 int e = Convert.ToInt32(i);
                 ti.Ram = e;
@@ -818,37 +882,37 @@ namespace VeeamHealthCheck.Functions.Reporting.DataTypes
                 }
                 else
                     ti.Type = s.Type;
-                //ti.Uid = Guid.TryParse(s.Uid);
-                AddServerTypeToDict(ti.Type);
+
+                // ti.Uid = Guid.TryParse(s.Uid);
+                this.AddServerTypeToDict(ti.Type);
                 l.Add(ti);
             }
-            log.Info(message + "..ok!");
-            _serverInfo = l;
+
+            this.log.Info(message + "..ok!");
+            this.serverInfo = l;
             
             return l;
         }
 
         private int CalculateServerTasks(string type, string serverId)
         {
-
-
             return 0;
         }
 
         private void AddServerTypeToDict(string entry)
         {
-            _typeList.Add(entry);
+            this.typeList.Add(entry);
         }
 
         private void FilterAndCountTypes()
         {
-            //ServerInfo();
-            List<string> types = _typeList;
+            // ServerInfo();
+            List<string> types = this.typeList;
             types.Sort();
             foreach (var type in types)
             {
                 int i = 0;
-                if (!_serverSummaryInfo.ContainsKey(type))
+                if (!this.serverSummaryInfo.ContainsKey(type))
                 {
                     foreach (var t in types)
                     {
@@ -857,9 +921,9 @@ namespace VeeamHealthCheck.Functions.Reporting.DataTypes
                             i++;
                         }
                     }
-                    _serverSummaryInfo.Add(type, i);
-                }
 
+                    this.serverSummaryInfo.Add(type, i);
+                }
             }
         }
 
@@ -867,63 +931,63 @@ namespace VeeamHealthCheck.Functions.Reporting.DataTypes
         {
             CProxyDataFormer df = new();
             return df.CalcProxyTasks(assignedTasks, cores, ram);
-
         }
 
         private List<CProxyTypeInfos> ProxyInfo()
         {
-log.Info("Processing Proxy info..");
-            var proxyCsv = _csvParser.ProxyCsvParser();
-            var cdpCsv = _csvParser.CdpProxCsvParser();
-            var fileCsv = _csvParser.NasProxCsvParser();
-            var hvCsv = _csvParser.HvProxCsvParser();
+this.log.Info("Processing Proxy info..");
+var proxyCsv = this.csvParser.ProxyCsvParser();
+var cdpCsv = this.csvParser.CdpProxCsvParser();
+var fileCsv = this.csvParser.NasProxCsvParser();
+var hvCsv = this.csvParser.HvProxCsvParser();
 
-            List<CProxyTypeInfos> proxyList = new();
-            if (proxyCsv != null)
+List<CProxyTypeInfos> proxyList = new();
+if (proxyCsv != null)
             {
-                log.Info("Checking Vi Proxies...");
+                this.log.Info("Checking Vi Proxies...");
                 foreach (CProxyCsvInfos s in proxyCsv)
                 {
                     CProxyTypeInfos ti = new();
                     ti.ChassisType = s.ChassisType;
-                    ti.MaxTasksCount = ParseToInt(s.MaxTasksCount);
+                    ti.MaxTasksCount = this.ParseToInt(s.MaxTasksCount);
                     ti.Description = s.Description;
                     ti.Id = s.Id;
                     ti.Info = s.Info;
                     ti.Name = s.Name;
-                    ti.Host = MatchHostIdToName(s.HostId);
+                    ti.Host = this.MatchHostIdToName(s.HostId);
                     ti.HostId = s.HostId;
                     ti.Type = s.Type;
                     ti.FailoverToNetwork = s.FailoverToNetwork;
                     ti.ChosenVm = s.ChosenVm;
-                    ti.IsDisabled = ParseBool(s.IsDisabled);
+                    ti.IsDisabled = this.ParseBool(s.IsDisabled);
                     ti.Options = s.Options;
-                    ti.UseSsl = ParseBool(s.UseSsl);
+                    ti.UseSsl = this.ParseBool(s.UseSsl);
                     ti.TransportMode = s.TransportMode;
-                    ti.Cores = MatchHostIdToCPU(ti.HostId);
-                    ti.Ram = MatchHostIdtoRam(ti.HostId);
-                    ti.Provisioning = CalcProxyOptimalTasks(ti.MaxTasksCount, ti.Cores, ti.Ram);
+                    ti.Cores = this.MatchHostIdToCPU(ti.HostId);
+                    ti.Ram = this.MatchHostIdtoRam(ti.HostId);
+                    ti.Provisioning = this.CalcProxyOptimalTasks(ti.MaxTasksCount, ti.Cores, ti.Ram);
 
                     proxyList.Add(ti);
                 }
-                log.Info("Checking Vi Proxies...ok!");
 
+                this.log.Info("Checking Vi Proxies...ok!");
             }
 
-            if (cdpCsv != null)
+if (cdpCsv != null)
             {
-                log.Info("Checking CDP Procies...");
+                this.log.Info("Checking CDP Procies...");
                 foreach (CCdpProxyCsvInfo cdp in cdpCsv)
                 {
                     CProxyTypeInfos p = new();
                     p.Name = cdp.Name;
-                    //p.IsDisabled = ParseBool(cdp.IsEnabled);
-                    p.Host = MatchHostIdToName(cdp.ServerId);
+
+                    // p.IsDisabled = ParseBool(cdp.IsEnabled);
+                    p.Host = this.MatchHostIdToName(cdp.ServerId);
                     p.CachePath = cdp.CachePath;
                     p.CacheSize = cdp.CacheSize;
                     p.Type = "CDP";
-                    p.Cores = MatchHostIdToCPU(cdp.ServerId);
-                    p.Ram = MatchHostIdtoRam(cdp.ServerId);
+                    p.Cores = this.MatchHostIdToCPU(cdp.ServerId);
+                    p.Ram = this.MatchHostIdtoRam(cdp.ServerId);
                     p.ChassisType = string.Empty;
                     p.TransportMode = string.Empty;
                     p.UseSsl = string.Empty;
@@ -931,26 +995,31 @@ log.Info("Processing Proxy info..");
                     p.FailoverToNetwork = string.Empty;
 
                     if (cdp.IsEnabled == "False")
+                    {
                         p.IsDisabled = "True";
+                    }
+
 
                     proxyList.Add(p);
                 }
-                log.Info("Checking CDP Procies...ok!");
+
+                this.log.Info("Checking CDP Procies...ok!");
             }
 
-            if (fileCsv != null)
+if (fileCsv != null)
             {
-                log.Info("Checking File Procies...");
+                this.log.Info("Checking File Procies...");
                 foreach (CFileProxyCsvInfo fp in fileCsv)
                 {
                     CProxyTypeInfos p = new();
-                    //p.Name = fp.Server;
+
+                    // p.Name = fp.Server;
                     p.Name = fp.Host;
-                    p.Host = MatchHostIdToName(fp.HostId);
-                    p.MaxTasksCount = ParseToInt(fp.ConcurrentTaskNumber);
+                    p.Host = this.MatchHostIdToName(fp.HostId);
+                    p.MaxTasksCount = this.ParseToInt(fp.ConcurrentTaskNumber);
                     p.Type = "File";
-                    p.Cores = MatchHostIdToCPU(fp.HostId);
-                    p.Ram = MatchHostIdtoRam(fp.HostId);
+                    p.Cores = this.MatchHostIdToCPU(fp.HostId);
+                    p.Ram = this.MatchHostIdtoRam(fp.HostId);
                     p.CachePath = string.Empty;
                     p.CacheSize = string.Empty;
                     p.ChassisType = string.Empty;
@@ -961,38 +1030,39 @@ log.Info("Processing Proxy info..");
 
                     proxyList.Add(p);
                 }
-                log.Info("Checking File Procies...ok!");
 
+                this.log.Info("Checking File Procies...ok!");
             }
 
-            if (hvCsv != null)
+if (hvCsv != null)
             {
-                log.Info("Processing Hyper-V Proxies..");
+                this.log.Info("Processing Hyper-V Proxies..");
                 foreach (CHvProxyCsvInfo hp in hvCsv)
                 {
                     CProxyTypeInfos p = new();
                     p.Type = hp.Type;
                     p.Name = hp.Name;
-                    p.Host = MatchHostIdToName(hp.HostId);
-                    p.MaxTasksCount = ParseToInt(hp.MaxTasksCount);
-                    p.IsDisabled = ParseBool(hp.IsDisabled);
-                    p.Cores = MatchHostIdToCPU(hp.HostId);
-                    p.Ram = MatchHostIdtoRam(hp.HostId);
+                    p.Host = this.MatchHostIdToName(hp.HostId);
+                    p.MaxTasksCount = this.ParseToInt(hp.MaxTasksCount);
+                    p.IsDisabled = this.ParseBool(hp.IsDisabled);
+                    p.Cores = this.MatchHostIdToCPU(hp.HostId);
+                    p.Ram = this.MatchHostIdtoRam(hp.HostId);
                     p.CachePath = string.Empty;
                     p.CacheSize = string.Empty;
                     p.ChassisType = string.Empty;
                     p.TransportMode = string.Empty;
                     p.UseSsl = string.Empty;
-                    p.Provisioning = CalcProxyOptimalTasks(p.MaxTasksCount, p.Cores, p.Ram);
+                    p.Provisioning = this.CalcProxyOptimalTasks(p.MaxTasksCount, p.Cores, p.Ram);
                     p.FailoverToNetwork = string.Empty;
 
                     proxyList.Add(p);
                 }
-                log.Info("Processing Hyper-V Proxies..ok!");
 
+                this.log.Info("Processing Hyper-V Proxies..ok!");
             }
-            log.Info("Processing Proxy info..ok!");
-            return proxyList;
+
+this.log.Info("Processing Proxy info..ok!");
+return proxyList;
         }
 
         private int ParseToInt(string input)

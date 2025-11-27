@@ -9,7 +9,7 @@ namespace VeeamHealthCheck.Startup;
 /// </summary>
 public static class CredentialStore
 {
-    private static readonly Dictionary<string, (string Username, string Password)> _cache = new();
+    private static readonly Dictionary<string, (string Username, string Password)> cache = new();
 
     /// <summary>
     /// Retrieves cached credentials for the specified server.
@@ -18,10 +18,11 @@ public static class CredentialStore
     /// <returns>Username and password tuple if found, null otherwise</returns>
     public static (string Username, string Password)? Get(string server)
     {
-        if (_cache.TryGetValue(server, out var val))
+        if (cache.TryGetValue(server, out var val))
         {
             return val;
         }
+
         return null;
     }
 
@@ -33,7 +34,7 @@ public static class CredentialStore
     /// <param name="password">The password</param>
     public static void Set(string server, string username, string password)
     {
-        _cache[server] = (username, password);
+        cache[server] = (username, password);
     }
 
     /// <summary>
@@ -41,6 +42,6 @@ public static class CredentialStore
     /// </summary>
     public static void Clear()
     {
-        _cache.Clear();
+        cache.Clear();
     }
 }

@@ -9,7 +9,6 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR.VbrTables
     public class JobInfoTable
     {
         public List<JobInfo> Jobs { get; set; }
-
     }
 
     public class JobInfo

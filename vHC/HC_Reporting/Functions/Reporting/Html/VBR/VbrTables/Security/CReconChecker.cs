@@ -6,7 +6,7 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR.VbrTables.Security;
 
 public class CReconChecker
 {
-    //string taskName = "Coveware Recon Healthcheck";
+    // string taskName = "Coveware Recon Healthcheck";
     public void Check()
     {
         string taskName = "Coveware Recon Healthcheck"; // Replace with the name of the task you want to find
@@ -50,7 +50,5 @@ public class CReconChecker
         {
             CGlobals.Logger.Debug($"An error occurred: {ex.Message}");
         }
-
-
     }
 }

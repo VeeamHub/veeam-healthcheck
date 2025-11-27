@@ -12,38 +12,35 @@ namespace VeeamHealthCheck.Scrubber
 {
     public class CScrubHandler
     {
-        private readonly string _matchListPath = CVariables.unsafeDir + @"\vHC_KeyFile.xml";
-        private Dictionary<string, string> _matchDictionary;
-        private XDocument _doc;
+        private readonly string matchListPath = CVariables.unsafeDir + @"\vHC_KeyFile.xml";
+        private Dictionary<string, string> matchDictionary;
+        private readonly XDocument doc;
 
         public CScrubHandler()
         {
-            _matchDictionary = new();
-            _doc = new XDocument(new XElement("root"));
+            this.matchDictionary = new();
+            this.doc = new XDocument(new XElement("root"));
         }
 
         private void AddItemToList(string type, string original, string obfuscated)
         {
-
             XElement xml = new XElement("fauxname", obfuscated,
                 new XElement("originalname", original));
-            _doc.Root.Add(xml);
-            _doc.Save(_matchListPath);
+            this.doc.Root.Add(xml);
+            this.doc.Save(this.matchListPath);
 
-            WriteToText();
+            this.WriteToText();
         }
 
         private void WriteToText()
         {
             // sort _matchDictionary alphabetically
-            _matchDictionary = new Dictionary<string, string>(_matchDictionary);
+            this.matchDictionary = new Dictionary<string, string>(this.matchDictionary);
 
-            var newDict = _matchDictionary.OrderBy(kvp => kvp.Value)
+            var newDict = this.matchDictionary.OrderBy(kvp => kvp.Value)
                   .ToDictionary(kvp => kvp.Value, kvp => kvp.Key);
 
-
-
-            WriteDictionaryToJsonFile(newDict, CVariables.unsafeDir + @"\vHC_KeyFile.json");
+            this.WriteDictionaryToJsonFile(newDict, CVariables.unsafeDir + @"\vHC_KeyFile.json");
         }
 
         private void WriteDictionaryToJsonFile(Dictionary<string, string> dictionary, string filePath)
@@ -65,14 +62,23 @@ namespace VeeamHealthCheck.Scrubber
         public string ScrubItem(string item, string type, ScrubItemType itemType)
         {
             if (String.IsNullOrEmpty(item))
+            {
                 return string.Empty;
+            }
+
+
             if (item.StartsWith(type + "_"))
+            {
                 return item;
-            //item = RemoveLeadingSlashes(item);
+            }
+
+            // item = RemoveLeadingSlashes(item);
+
             switch (itemType)
             {
                 case ScrubItemType.Item:
                     break;
+
                 // case for all ScrubItemType objects:
                 case ScrubItemType.Job:
                     break;
@@ -88,29 +94,27 @@ namespace VeeamHealthCheck.Scrubber
                     break;
                 case ScrubItemType.SOBR:
                     break;
-
             }
-            if (!_matchDictionary.ContainsKey(item))
+
+            if (!this.matchDictionary.ContainsKey(item))
             {
-                int counter = _matchDictionary.Count;
+                int counter = this.matchDictionary.Count;
                 string newName = type + "_" + counter.ToString();
-                _matchDictionary.Add(item, newName);
-                AddItemToList(type, item, newName);
+                this.matchDictionary.Add(item, newName);
+                this.AddItemToList(type, item, newName);
                 return newName;
             }
             else
             {
-                _matchDictionary.TryGetValue(item, out string newName);
+                this.matchDictionary.TryGetValue(item, out string newName);
                 return newName;
             }
         }
 
         public string ScrubItem(string item, ScrubItemType type)
         {
-            return ScrubItem(item, type.ToString(), type);
+            return this.ScrubItem(item, type.ToString(), type);
         }
-
-
     }
 
     public enum ScrubItemType
@@ -122,7 +126,6 @@ namespace VeeamHealthCheck.Scrubber
         Path = 4,
         VM = 5,
         SOBR = 6,
-
 
         Item = 99
     }

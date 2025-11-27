@@ -5,246 +5,235 @@ using VeeamHealthCheck.Html.VBR;
 using VeeamHealthCheck.Shared;
 using VeeamHealthCheck.Shared.Logging;
 
-
 namespace VeeamHealthCheck.Functions.Reporting.Html.VBR
 {
     internal class CHtmlBodyHelper
     {
         private string HTMLSTRING;
-        private readonly CHtmlTables _tables;
+        private readonly CHtmlTables tables;
         private bool SCRUB;
-        private CLogger log = CGlobals.Logger;
-        private string logStart = "[VbrHtmlBodyHelper]\t";
+        private readonly CLogger log = CGlobals.Logger;
+        private readonly string logStart = "[VbrHtmlBodyHelper]\t";
 
         public CHtmlBodyHelper()
         {
-            log.Info(logStart + ">>> ENTERING CHtmlBodyHelper constructor <<<");
-            log.Info(logStart + "Creating CHtmlTables instance...");
-            _tables = new CHtmlTables();
-            log.Info(logStart + "About to call PopulateCsvToMemory()...");
-            PopulateCsvToMemory();
-            log.Info(logStart + "CHtmlBodyHelper constructor completed.");
+            this.log.Info(this.logStart + ">>> ENTERING CHtmlBodyHelper constructor <<<");
+            this.log.Info(this.logStart + "Creating CHtmlTables instance...");
+            this.tables = new CHtmlTables();
+            this.log.Info(this.logStart + "About to call PopulateCsvToMemory()...");
+            this.PopulateCsvToMemory();
+            this.log.Info(this.logStart + "CHtmlBodyHelper constructor completed.");
         }
 
         public string FormVbrFullReport(string htmlString, bool scrub)
         {
-            log.Info(logStart + ">>> ENTERING FormVbrFullReport() method <<<");
-            log.Info(logStart + "Scrub mode: " + scrub);
+            this.log.Info(this.logStart + ">>> ENTERING FormVbrFullReport() method <<<");
+            this.log.Info(this.logStart + "Scrub mode: " + scrub);
 
-            SCRUB = scrub;
-            HTMLSTRING = htmlString;
+            this.SCRUB = scrub;
+            this.HTMLSTRING = htmlString;
             
-            log.Info(logStart + "Generating LicenseTable...");
-            LicenseTable();
-            log.Info(logStart + "LicenseTable completed.");
+            this.log.Info(this.logStart + "Generating LicenseTable...");
+            this.LicenseTable();
+            this.log.Info(this.logStart + "LicenseTable completed.");
             
-            log.Info(logStart + "Generating BackupServerTable...");
-            BackupServerTable();
-            log.Info(logStart + "BackupServerTable completed.");
+            this.log.Info(this.logStart + "Generating BackupServerTable...");
+            this.BackupServerTable();
+            this.log.Info(this.logStart + "BackupServerTable completed.");
             
-            log.Info(logStart + "Generating SecuritySummaryTable...");
-            SecuritySummaryTable();
-            log.Info(logStart + "SecuritySummaryTable completed.");
+            this.log.Info(this.logStart + "Generating SecuritySummaryTable...");
+            this.SecuritySummaryTable();
+            this.log.Info(this.logStart + "SecuritySummaryTable completed.");
             
-            log.Info(logStart + "Generating ServerSummaryTable...");
-            ServerSummaryTable();
-            log.Info(logStart + "ServerSummaryTable completed.");
+            this.log.Info(this.logStart + "Generating ServerSummaryTable...");
+            this.ServerSummaryTable();
+            this.log.Info(this.logStart + "ServerSummaryTable completed.");
             
-            log.Info(logStart + "Generating JobSummaryTable...");
-            JobSummaryTable();
-            log.Info(logStart + "JobSummaryTable completed.");
+            this.log.Info(this.logStart + "Generating JobSummaryTable...");
+            this.JobSummaryTable();
+            this.log.Info(this.logStart + "JobSummaryTable completed.");
             
-            log.Info(logStart + "Generating MissingJobsTable...");
-            MissingJobsTable();
-            log.Info(logStart + "MissingJobsTable completed.");
+            this.log.Info(this.logStart + "Generating MissingJobsTable...");
+            this.MissingJobsTable();
+            this.log.Info(this.logStart + "MissingJobsTable completed.");
             
-            log.Info(logStart + "Generating ProtectedWorkloadsTable...");
-            ProtectedWorkloadsTable();
-            log.Info(logStart + "ProtectedWorkloadsTable completed.");
+            this.log.Info(this.logStart + "Generating ProtectedWorkloadsTable...");
+            this.ProtectedWorkloadsTable();
+            this.log.Info(this.logStart + "ProtectedWorkloadsTable completed.");
             
-            log.Info(logStart + "Generating ManagedServersTable...");
-            ManagedServersTable();
-            log.Info(logStart + "ManagedServersTable completed.");
+            this.log.Info(this.logStart + "Generating ManagedServersTable...");
+            this.ManagedServersTable();
+            this.log.Info(this.logStart + "ManagedServersTable completed.");
             
-            log.Info(logStart + "Generating RegistryKeyTable...");
-            RegistryKeyTable();
-            log.Info(logStart + "RegistryKeyTable completed.");
+            this.log.Info(this.logStart + "Generating RegistryKeyTable...");
+            this.RegistryKeyTable();
+            this.log.Info(this.logStart + "RegistryKeyTable completed.");
             
-            log.Info(logStart + "Generating ProxyTable...");
-            ProxyTable();
-            log.Info(logStart + "ProxyTable completed.");
+            this.log.Info(this.logStart + "Generating ProxyTable...");
+            this.ProxyTable();
+            this.log.Info(this.logStart + "ProxyTable completed.");
             
-            log.Info(logStart + "Generating SobrTable...");
-            SobrTable();
-            log.Info(logStart + "SobrTable completed.");
+            this.log.Info(this.logStart + "Generating SobrTable...");
+            this.SobrTable();
+            this.log.Info(this.logStart + "SobrTable completed.");
             
-            log.Info(logStart + "Generating ExtentTable...");
-            ExtentTable();
-            log.Info(logStart + "ExtentTable completed.");
+            this.log.Info(this.logStart + "Generating ExtentTable...");
+            this.ExtentTable();
+            this.log.Info(this.logStart + "ExtentTable completed.");
             
-            log.Info(logStart + "Generating RepoTable...");
-            RepoTable();
-            log.Info(logStart + "RepoTable completed.");
+            this.log.Info(this.logStart + "Generating RepoTable...");
+            this.RepoTable();
+            this.log.Info(this.logStart + "RepoTable completed.");
             
-            log.Info(logStart + "Generating JobConcurrencyTable...");
-            JobConcurrencyTable();
-            log.Info(logStart + "JobConcurrencyTable completed.");
+            this.log.Info(this.logStart + "Generating JobConcurrencyTable...");
+            this.JobConcurrencyTable();
+            this.log.Info(this.logStart + "JobConcurrencyTable completed.");
             
-            log.Info(logStart + "Generating TaskConcurrencyTable...");
-            TaskConcurrencyTable();
-            log.Info(logStart + "TaskConcurrencyTable completed.");
+            this.log.Info(this.logStart + "Generating TaskConcurrencyTable...");
+            this.TaskConcurrencyTable();
+            this.log.Info(this.logStart + "TaskConcurrencyTable completed.");
             
-            log.Info(logStart + "Generating JobSessionSummaryTable...");
-            JobSessionSummaryTable();
-            log.Info(logStart + "JobSessionSummaryTable completed.");
+            this.log.Info(this.logStart + "Generating JobSessionSummaryTable...");
+            this.JobSessionSummaryTable();
+            this.log.Info(this.logStart + "JobSessionSummaryTable completed.");
             
-            log.Info(logStart + "Generating JobInfoTable...");
-            JobInfoTable();
-            log.Info(logStart + "JobInfoTable completed.");
+            this.log.Info(this.logStart + "Generating JobInfoTable...");
+            this.JobInfoTable();
+            this.log.Info(this.logStart + "JobInfoTable completed.");
 
             if (CGlobals.EXPORTINDIVIDUALJOBHTMLS)
             {
-                log.Info(logStart + "EXPORTINDIVIDUALJOBHTMLS is enabled (skipping IndividualJobHtmlBuilder for now).");
-                //IndividualJobHtmlBuilder();
+                this.log.Info(this.logStart + "EXPORTINDIVIDUALJOBHTMLS is enabled (skipping IndividualJobHtmlBuilder for now).");
 
+                // IndividualJobHtmlBuilder();
             }
 
-            log.Info(logStart + "FormVbrFullReport() completed successfully.");
-            return HTMLSTRING;
+            this.log.Info(this.logStart + "FormVbrFullReport() completed successfully.");
+            return this.HTMLSTRING;
         }
 
         private void PopulateCsvToMemory(){
-            log.Info(logStart + "Creating CDataTypesParser instance...");
+            this.log.Info(this.logStart + "Creating CDataTypesParser instance...");
             CGlobals.DtParser = new();
-            log.Info(logStart + "CDataTypesParser instance created successfully.");
-            log.Info(logStart + "Accessing ServerInfos property...");
+            this.log.Info(this.logStart + "CDataTypesParser instance created successfully.");
+            this.log.Info(this.logStart + "Accessing ServerInfos property...");
             CGlobals.ServerInfo = CGlobals.DtParser.ServerInfos;
-            log.Info(logStart + "PopulateCsvToMemory completed.");
+            this.log.Info(this.logStart + "PopulateCsvToMemory completed.");
         }
 
         public string FormSecurityReport(string htmlString)
         {
-            HTMLSTRING = htmlString;
-            //SecuritySummaryTable();
-            FullSecurityTable();
-            BackupServerTable();
-            JobSummaryTable();
-            ManagedServersTable();
-            RegistryKeyTable();
-            ProxyTable();
-            SobrTable();
-            ExtentTable();
-            RepoTable();
-            JobInfoTable();
+            this.HTMLSTRING = htmlString;
 
-            return HTMLSTRING;
+            // SecuritySummaryTable();
+            this.FullSecurityTable();
+            this.BackupServerTable();
+            this.JobSummaryTable();
+            this.ManagedServersTable();
+            this.RegistryKeyTable();
+            this.ProxyTable();
+            this.SobrTable();
+            this.ExtentTable();
+            this.RepoTable();
+            this.JobInfoTable();
+
+            return this.HTMLSTRING;
         }
 
         private void LicenseTable()
         {
-            HTMLSTRING += _tables.LicTable(SCRUB);
+            this.HTMLSTRING += this.tables.LicTable(this.SCRUB);
         }
 
         private void BackupServerTable()
         {
-            HTMLSTRING += _tables.AddBkpSrvTable(SCRUB);
+            this.HTMLSTRING += this.tables.AddBkpSrvTable(this.SCRUB);
         }
 
         private void SecuritySummaryTable()
         {
-            HTMLSTRING += _tables.AddSecSummaryTable(SCRUB);
+            this.HTMLSTRING += this.tables.AddSecSummaryTable(this.SCRUB);
         }
 
         private void FullSecurityTable()
         {
-            HTMLSTRING += _tables.AddSecurityReportSecuritySummaryTable();
+            this.HTMLSTRING += this.tables.AddSecurityReportSecuritySummaryTable();
         }
 
         private void ServerSummaryTable()
         {
-            HTMLSTRING += _tables.AddSrvSummaryTable(SCRUB);
+            this.HTMLSTRING += this.tables.AddSrvSummaryTable(this.SCRUB);
         }
 
         private void JobSummaryTable()
         {
-            HTMLSTRING += _tables.AddJobSummaryTable(SCRUB);
+            this.HTMLSTRING += this.tables.AddJobSummaryTable(this.SCRUB);
         }
 
         private void MissingJobsTable()
         {
-            HTMLSTRING += _tables.AddMissingJobsTable(SCRUB);
+            this.HTMLSTRING += this.tables.AddMissingJobsTable(this.SCRUB);
         }
 
         private void ProtectedWorkloadsTable()
         {
-            HTMLSTRING += _tables.AddProtectedWorkLoadsTable(SCRUB);
-
+            this.HTMLSTRING += this.tables.AddProtectedWorkLoadsTable(this.SCRUB);
         }
 
         private void ManagedServersTable()
         {
-            HTMLSTRING += _tables.AddManagedServersTable(SCRUB);
-
+            this.HTMLSTRING += this.tables.AddManagedServersTable(this.SCRUB);
         }
 
         private void RegistryKeyTable()
         {
-            HTMLSTRING += _tables.AddRegKeysTable(SCRUB);
-
+            this.HTMLSTRING += this.tables.AddRegKeysTable(this.SCRUB);
         }
 
         private void ProxyTable()
         {
-            HTMLSTRING += _tables.AddProxyTable(SCRUB);
-
+            this.HTMLSTRING += this.tables.AddProxyTable(this.SCRUB);
         }
 
         private void SobrTable()
         {
-            HTMLSTRING += _tables.AddSobrTable(SCRUB);
-
+            this.HTMLSTRING += this.tables.AddSobrTable(this.SCRUB);
         }
 
         private void ExtentTable()
         {
-            HTMLSTRING += _tables.AddSobrExtTable(SCRUB);
-
+            this.HTMLSTRING += this.tables.AddSobrExtTable(this.SCRUB);
         }
 
         private void RepoTable()
         {
-            HTMLSTRING += _tables.AddRepoTable(SCRUB);
-
+            this.HTMLSTRING += this.tables.AddRepoTable(this.SCRUB);
         }
 
         private void JobConcurrencyTable()
         {
-            HTMLSTRING += _tables.AddJobConTable(SCRUB);
-
+            this.HTMLSTRING += this.tables.AddJobConTable(this.SCRUB);
         }
 
         private void TaskConcurrencyTable()
         {
-            HTMLSTRING += _tables.AddTaskConTable(SCRUB);
-
+            this.HTMLSTRING += this.tables.AddTaskConTable(this.SCRUB);
         }
 
         private void JobSessionSummaryTable()
         {
-            //HTMLSTRING += _tables.AddJobSessSummTable(SCRUB);
-            HTMLSTRING += _tables.AddJobSessSummTableByJob(SCRUB);
-
+            // HTMLSTRING += _tables.AddJobSessSummTable(SCRUB);
+            this.HTMLSTRING += this.tables.AddJobSessSummTableByJob(this.SCRUB);
         }
 
         private void JobInfoTable()
         {
-            HTMLSTRING += _tables.AddJobInfoTable(SCRUB);
-
+            this.HTMLSTRING += this.tables.AddJobInfoTable(this.SCRUB);
         }
 
         public void IndividualJobHtmlBuilder()
         {
-            _tables.AddSessionsFiles(SCRUB);
+            this.tables.AddSessionsFiles(this.SCRUB);
         }
     }
 }

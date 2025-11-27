@@ -10,7 +10,7 @@ namespace VeeamHealthCheck.Startup
 {
     internal class CReportModeSelector
     {
-        private CLogger LOG = CGlobals.Logger;
+        private readonly CLogger LOG = CGlobals.Logger;
 
         public CReportModeSelector()
         {
@@ -18,37 +18,45 @@ namespace VeeamHealthCheck.Startup
 
         public int Run()
         {
-            return FileChecker();
+            return this.FileChecker();
         }
 
         public void Dispose()
         {
-
         }
 
         private int FileChecker()
         {
-            LOG.Info("Checking output directories..", false);
+            this.LOG.Info("Checking output directories..", false);
             int res = 0;
             if (CGlobals.RunSecReport)
-                StartSecurityReport();
+            {
+                this.StartSecurityReport();
+            }
+
+
             if (!CGlobals.RunSecReport)
             {
-
                 if (Directory.Exists(CVariables.vb365dir) && CGlobals.RunFullReport)
-                    StartM365Report();
+                {
+                    this.StartM365Report();
+                }
+
                 if (Directory.Exists(CVariables.vbrDir) && CGlobals.RunFullReport)
-                    res = StartVbrReport();
+                {
+                    res = this.StartVbrReport();
+                }
             }
+
             return res;
         }
 
         private int StartVbrReport()
         {
-            LOG.Info("Starting B&R report generation", false);
-            LOG.Info("About to instantiate CHtmlCompiler...", false);
+            this.LOG.Info("Starting B&R report generation", false);
+            this.LOG.Info("About to instantiate CHtmlCompiler...", false);
             CHtmlCompiler html = new();
-            LOG.Info("CHtmlCompiler instantiated successfully", false);
+            this.LOG.Info("CHtmlCompiler instantiated successfully", false);
             var res = html.RunFullVbrReport();
             html.Dispose();
             return res;
@@ -56,14 +64,14 @@ namespace VeeamHealthCheck.Startup
 
         private void StartM365Report()
         {
-            LOG.Info("Starting VB365 Report genration", false);
+            this.LOG.Info("Starting VB365 Report genration", false);
             CVb365HtmlCompiler compiler = new();
             compiler.Dispose();
         }
 
         private void StartSecurityReport()
         {
-            LOG.Info("Starting Security Report generation", false);
+            this.LOG.Info("Starting Security Report generation", false);
             CHtmlCompiler html = new();
             html.RunSecurityReport();
         }

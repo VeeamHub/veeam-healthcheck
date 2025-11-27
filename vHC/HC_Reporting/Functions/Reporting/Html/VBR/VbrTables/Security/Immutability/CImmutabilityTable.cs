@@ -10,7 +10,6 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR
     {
         public CImmutabilityTable()
         {
-
         }
 
     // what should this table be?

@@ -16,7 +16,7 @@ namespace VeeamHealthCheck.Functions.Collection.Security
         static extern bool LogonUser(String lpszUsername, String lpszDomain, String lpszPassword,
         int dwLogonType, int dwLogonProvider, out SafeAccessTokenHandle phToken);
 
-        private readonly string _appLogName = "Veeam.HealthCheck.ServerApplications.log";
+        private readonly string appLogName = "Veeam.HealthCheck.ServerApplications.log";
 
         private readonly CLogger LOG;
         private readonly CLogger AppLOG;
@@ -26,8 +26,8 @@ namespace VeeamHealthCheck.Functions.Collection.Security
         
         public CSecurityInit()
         {
-            LOG = new CLogger("Veeam.HealthCheck.Security.log");
-            AppLOG = new CLogger(_appLogName);
+            this.LOG = new CLogger("Veeam.HealthCheck.Security.log");
+            this.AppLOG = new CLogger(this.appLogName);
         }
 
         public void Run()
@@ -35,11 +35,11 @@ namespace VeeamHealthCheck.Functions.Collection.Security
             if (CGlobals.REMOTEEXEC)
             {
             }
-            //RunImpersonated();
 
-            GetInstalledApps(); 
-            IsRdpEnabled();
-            IsDomainJoined();
+            // RunImpersonated();
+            this.GetInstalledApps(); 
+            this.IsRdpEnabled();
+            this.IsDomainJoined();
         }
 
         private void RunImpersonated()
@@ -47,24 +47,22 @@ namespace VeeamHealthCheck.Functions.Collection.Security
             // Get the user token for the specified user, domain, and password using the   
             // unmanaged LogonUser method.   
             // The local machine name can be used for the domain name to impersonate a user on this machine.  
-            //Console.Write("Enter the name of the VBR Server on which to log on: ");
-            //string domainName = Console.ReadLine();
-
-            
+            // Console.Write("Enter the name of the VBR Server on which to log on: ");
+            // string domainName = Console.ReadLine();
 
             Console.WriteLine("Logging into: " + CGlobals.REMOTEHOST);
             string domainName = CGlobals.REMOTEHOST;
 
-
-            VBRSERVER = domainName;
+            this.VBRSERVER = domainName;
             Console.Write("Enter the login of a user on {0} that you wish to impersonate: ", domainName);
             string userName = Console.ReadLine();
 
             Console.Write("Enter the password for {0}: ", userName);
 
             const int LOGON32_PROVIDER_DEFAULT = 0;
-            //This parameter causes LogonUser to create a primary token.   
-            //const int LOGON32_LOGON_INTERACTIVE = 2;
+
+            // This parameter causes LogonUser to create a primary token.   
+            // const int LOGON32_LOGON_INTERACTIVE = 2;
             const int LOGON32_LOGON_INTERACTIVE = 9;
 
             string password = null;
@@ -72,17 +70,22 @@ namespace VeeamHealthCheck.Functions.Collection.Security
             {
                 var key = System.Console.ReadKey(true);
                 if (key.Key == ConsoleKey.Enter)
+                {
                     break;
+                }
+
+
                 password += key.KeyChar;
             }
+
             Console.WriteLine("Executing...");
 
             // Call LogonUser to obtain a handle to an access token.   
             SafeAccessTokenHandle safeAccessTokenHandle;
-            //bool returnValue = LogonUser(userName, domainName, Console.ReadLine(),
+
+            // bool returnValue = LogonUser(userName, domainName, Console.ReadLine(),
             //    LOGON32_LOGON_INTERACTIVE, LOGON32_PROVIDER_DEFAULT,
             //    out safeAccessTokenHandle);
-
             bool returnValue = LogonUser(userName, domainName, password,
             LOGON32_LOGON_INTERACTIVE, LOGON32_PROVIDER_DEFAULT,
             out safeAccessTokenHandle);
@@ -94,22 +97,24 @@ namespace VeeamHealthCheck.Functions.Collection.Security
                 throw new System.ComponentModel.Win32Exception(ret);
             }
 
-            //Console.WriteLine("Did LogonUser Succeed? " + (returnValue ? "Yes" : "No"));
+            // Console.WriteLine("Did LogonUser Succeed? " + (returnValue ? "Yes" : "No"));
             // Check the identity.  
-            //Console.WriteLine("Before impersonation: " + WindowsIdentity.GetCurrent().Name);
+            // Console.WriteLine("Before impersonation: " + WindowsIdentity.GetCurrent().Name);
 
             // Note: if you want to run as unimpersonated, pass  
             //       'SafeAccessTokenHandle.InvalidHandle' instead of variable 'safeAccessTokenHandle'  
             WindowsIdentity.RunImpersonated(
                 safeAccessTokenHandle,
+
                 // User action  
                 () =>
                 {
                     // Check the identity.  
                 //    Console.WriteLine("During impersonation: " + WindowsIdentity.GetCurrent().Name);
-                    IsRdpEnabled();
-                    GetInstalledApps();
-                    //IsDomainJoined(); // This may not work....
+                    this.IsRdpEnabled();
+                    this.GetInstalledApps();
+
+                    // IsDomainJoined(); // This may not work....
                 }
                 );
 
@@ -122,28 +127,28 @@ namespace VeeamHealthCheck.Functions.Collection.Security
             string domain = System.Net.NetworkInformation.IPGlobalProperties.GetIPGlobalProperties().DomainName;
             if (string.IsNullOrEmpty(domain))
             {
-                LOG.Info(logStart + "host is not domain joined.");
+                this.LOG.Info(this.logStart + "host is not domain joined.");
                 CSecurityGlobalValues.IsDomainJoined = "False";
             }
             else if (domain.Length > 0)
             {
-                LOG.Info(logStart + "host is domain joined.");
+                this.LOG.Info(this.logStart + "host is domain joined.");
                 CSecurityGlobalValues.IsDomainJoined = "True";
             }
             else
             {
-                LOG.Warning(logStart + "unable to determine host domain status");
+                this.LOG.Warning(this.logStart + "unable to determine host domain status");
                 CSecurityGlobalValues.IsDomainJoined = "Undetermined.";
             }
         }
 
         private void GetInstalledApps()
         {
-            LOG.Info(logStart + "Getting list of apps. Output to be shown in " + _appLogName);
+            this.LOG.Info(this.logStart + "Getting list of apps. Output to be shown in " + this.appLogName);
             string registry_key = @"SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall";
-            using (RegistryKey key = RegistryKey.OpenRemoteBaseKey(RegistryHive.LocalMachine, VBRSERVER).OpenSubKey(registry_key))
+            using (RegistryKey key = RegistryKey.OpenRemoteBaseKey(RegistryHive.LocalMachine, this.VBRSERVER).OpenSubKey(registry_key))
             {
-                AppLOG.Info("Installed apps: ", false);
+                this.AppLOG.Info("Installed apps: ", false);
                 foreach (string subkey_name in key.GetSubKeyNames())
                 {
                     using (RegistryKey subkey = key.OpenSubKey(subkey_name))
@@ -154,23 +159,27 @@ namespace VeeamHealthCheck.Functions.Collection.Security
                             if(res != null)
                             {
                                 res.ToString();
-                                //var n  = subkey.TryGetPropertyValue<string>("DisplayName");
-                                string name = res.ToString();//subkey.GetValue("DisplayName").ToString();
+
+                                // var n  = subkey.TryGetPropertyValue<string>("DisplayName");
+                                string name = res.ToString();// subkey.GetValue("DisplayName").ToString();
                                 if (CSecurityGlobalValues.IsConsoleInstalled == "Undetermined" || CSecurityGlobalValues.IsConsoleInstalled == "False")
                                 {
                                     if (name == "Veeam Backup & Replication Console")
+                                    {
                                         CSecurityGlobalValues.IsConsoleInstalled = "True";
+                                    }
                                     else
+                                    {
                                         CSecurityGlobalValues.IsConsoleInstalled = "False";
+                                    }
                                 }
-                                AppLOG.Info("\t" + name, true);
-                            }
-                            
 
+                                this.AppLOG.Info("\t" + name, true);
+                            }
                         }
                         catch (Exception e)
                         {
-                            //LOG.Error(e.ToString(), true);
+                            // LOG.Error(e.ToString(), true);
                         }
                     }
                 }
@@ -181,30 +190,27 @@ namespace VeeamHealthCheck.Functions.Collection.Security
         {
             string registryKey = @"SYSTEM\CurrentControlSet\Control\Terminal Server";
             string keyName = "fDenyTSConnections";
-            using (RegistryKey key = RegistryKey.OpenRemoteBaseKey(RegistryHive.LocalMachine, VBRSERVER).OpenSubKey(registryKey))//.LocalMachine.OpenSubKey(registryKey))
+            using (RegistryKey key = RegistryKey.OpenRemoteBaseKey(RegistryHive.LocalMachine, this.VBRSERVER).OpenSubKey(registryKey))// .LocalMachine.OpenSubKey(registryKey))
             {
-                LOG.Info("RDP Status:");
+                this.LOG.Info("RDP Status:");
 
                 var v = key.GetValue(keyName).ToString();
-
 
                 switch (v)
                 {
                     case "0":
-                        LOG.Info("\tRDP enabled.");
+                        this.LOG.Info("\tRDP enabled.");
                         CSecurityGlobalValues.IsRdpEnabled = "True";
                         break;
                     case "1":
-                        LOG.Info("\tRDP disabled.");
+                        this.LOG.Info("\tRDP disabled.");
                         CSecurityGlobalValues.IsRdpEnabled = "False";
                         break;
                     default:
-                        LOG.Info("\tRDP undetermined");
+                        this.LOG.Info("\tRDP undetermined");
                         CSecurityGlobalValues.IsRdpEnabled = "Undetermined";
                         break;
                 }
-
-
             }
         }
     }

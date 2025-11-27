@@ -7,8 +7,7 @@ namespace VeeamHealthCheck.Functions.Reporting.CsvHandlers
 {
     public class CJobCsvInfos
     {
-        //											
-
+        // 
         [Index(0)]
         public string Name { get; set; }
 
@@ -50,8 +49,8 @@ namespace VeeamHealthCheck.Functions.Reporting.CsvHandlers
 
         [Index(13)]
         public double OriginalSize { get; set; }
-        // convert each of these to an object with indexing label: RetentionType	RetentionCount	RetainDaysToKeep	DeletedVmRetentionDays	DeletedVmRetention	CompressionLevel	Deduplication	BlockSize	IntegrityChecks	SpecificStorageEncryption	StgEncryptionEnabled	KeepFirstFullBackup	EnableFullBackup	BackupIsAttached	GfsWeeklyIsEnabled	GfsWeeklyCount	GfsMonthlyEnabled	GfsMonthlyCount	GfsYearlyEnabled	GfsYearlyCount	IndexingType
 
+        // convert each of these to an object with indexing label: RetentionType	RetentionCount	RetainDaysToKeep	DeletedVmRetentionDays	DeletedVmRetention	CompressionLevel	Deduplication	BlockSize	IntegrityChecks	SpecificStorageEncryption	StgEncryptionEnabled	KeepFirstFullBackup	EnableFullBackup	BackupIsAttached	GfsWeeklyIsEnabled	GfsWeeklyCount	GfsMonthlyEnabled	GfsMonthlyCount	GfsYearlyEnabled	GfsYearlyCount	IndexingType
         [Index(14)]
         public string RetentionType { get; set; }
 
@@ -114,6 +113,5 @@ namespace VeeamHealthCheck.Functions.Reporting.CsvHandlers
 
         [Index(34)]
         public string IndexingType { get; set; }
-
     }
 }

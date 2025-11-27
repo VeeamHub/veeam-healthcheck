@@ -7,7 +7,7 @@ namespace VeeamHealthCheck.Functions.Reporting.CsvHandlers
 {
     public class CViProtected
     {
-        //Name,PowerState,ProvisionedSize,UsedSize,Path,Type
+        // Name,PowerState,ProvisionedSize,UsedSize,Path,Type
         [Index(0)]
         public string Name { get; set; }
 
@@ -25,6 +25,5 @@ namespace VeeamHealthCheck.Functions.Reporting.CsvHandlers
 
         [Index(5)]
         public string Type { get; set; }
-
     }
 }

@@ -12,7 +12,7 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR.VbrTables.Jobs_Info
 {
     internal class CEntraJobsTable
     {
-        private readonly CHtmlFormatting _form = new();
+        private readonly CHtmlFormatting form = new();
 
         public string Table()
         {
@@ -69,19 +69,20 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR.VbrTables.Jobs_Info
                 // Tenant Job Table
                 if (entraTenantJobs.Count > 0)
                 {
-                    t += _form.Table();
-                    t += _form.TableHeaderLeftAligned("Job Name (Tenant)", string.Empty);
-                    t += _form.TableHeader("Retention Policy", string.Empty);
-                    t += _form.TableBodyStart();
+                    t += this.form.Table();
+                    t += this.form.TableHeaderLeftAligned("Job Name (Tenant)", string.Empty);
+                    t += this.form.TableHeader("Retention Policy", string.Empty);
+                    t += this.form.TableBodyStart();
 
                     foreach (var tenantJob in entraTenantJobs)
                     {
                         CGlobals.Logger.Debug($"Processing tenant job: {tenantJob.Name}, Retention: {tenantJob.RetentionPolicy}");
                         t += "<tr>";
-                        t += _form.TableDataLeftAligned(tenantJob.Name, "colspan='2'");
-                        t += _form.TableData(tenantJob.RetentionPolicy.ToString(), string.Empty);
+                        t += this.form.TableDataLeftAligned(tenantJob.Name, "colspan='2'");
+                        t += this.form.TableData(tenantJob.RetentionPolicy.ToString(), string.Empty);
                         t += "</tr>";
                     }
+
                     t += "</tbody>";
                     t += "</table>";
                 }
@@ -89,13 +90,13 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR.VbrTables.Jobs_Info
                 // Tenant log table
                 if (entraLogJobs.Count > 0)
                 {
-                    t += _form.Table();
-                    t += _form.TableHeaderLeftAligned("Job Name (Logs)", string.Empty);
-                    t += _form.TableHeader("Tenant", string.Empty);
-                    t += _form.TableHeader("Short Term Retention", string.Empty);
-                    t += _form.TableHeader("Short Term Repo", string.Empty);
-                    t += _form.TableHeader("Copy Enabled", string.Empty);
-                    t += _form.TableBodyStart();
+                    t += this.form.Table();
+                    t += this.form.TableHeaderLeftAligned("Job Name (Logs)", string.Empty);
+                    t += this.form.TableHeader("Tenant", string.Empty);
+                    t += this.form.TableHeader("Short Term Retention", string.Empty);
+                    t += this.form.TableHeader("Short Term Repo", string.Empty);
+                    t += this.form.TableHeader("Copy Enabled", string.Empty);
+                    t += this.form.TableBodyStart();
 
                     foreach (var tj in entraLogJobs)
                     {
@@ -112,13 +113,14 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR.VbrTables.Jobs_Info
                         }
 
                         t += "<tr>";
-                        t += _form.TableDataLeftAligned(jobName, string.Empty);
-                        t += _form.TableData(tenant, string.Empty);
-                        t += _form.TableData(tj.ShortTermRepoRetention.ToString(), string.Empty);
-                        t += _form.TableData(stRepo, string.Empty);
-                        t += tj.CopyModeEnabled ? _form.TableData(_form.True, string.Empty) : _form.TableData(_form.False, string.Empty);
+                        t += this.form.TableDataLeftAligned(jobName, string.Empty);
+                        t += this.form.TableData(tenant, string.Empty);
+                        t += this.form.TableData(tj.ShortTermRepoRetention.ToString(), string.Empty);
+                        t += this.form.TableData(stRepo, string.Empty);
+                        t += tj.CopyModeEnabled ? this.form.TableData(this.form.True, string.Empty) : this.form.TableData(this.form.False, string.Empty);
                         t += "</tr>";
                     }
+
                     t += "</tbody>";
                     t += "</table>";
                 }
@@ -129,6 +131,7 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR.VbrTables.Jobs_Info
                 CGlobals.Logger.Error("Stack trace: " + e.StackTrace);
                 return null;
             }
+
             return t;
         }
     }

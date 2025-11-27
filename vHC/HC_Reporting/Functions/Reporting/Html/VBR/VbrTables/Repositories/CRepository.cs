@@ -46,7 +46,7 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR
         public string Type { get; set; }
 
         public string Provisioning { get; set; }
-        //public string GateHosts { get; set; }
 
+        // public string GateHosts { get; set; }
     }
 }

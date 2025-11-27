@@ -13,108 +13,106 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VB365
 {
     internal class CVb365HtmlCompiler
     {
-        CHtmlFormatting _form = new();
-        CM365Tables _tables = new CM365Tables();
+        readonly CHtmlFormatting form = new();
+        readonly CM365Tables tables = new CM365Tables();
 
-        private string _htmldoc = string.Empty;
-        private CLogger log = CGlobals.Logger;
+        private string htmldoc = string.Empty;
+        private readonly CLogger log = CGlobals.Logger;
 
         public CVb365HtmlCompiler()
         {
-            log.Info("[VB365] HTML complier init...");
-            RunCompiler();
-            log.Info("[VB365] HTML complier complete!");
+            this.log.Info("[VB365] HTML complier init...");
+            this.RunCompiler();
+            this.log.Info("[VB365] HTML complier complete!");
         }
 
         public void Dispose() { }
 
         private void RunCompiler()
         {
-            log.Info("[VB365][HTML] forming header...");
-            _htmldoc += _form.Header();
-            log.Info("[VB365][HTML] forming header...done!");
+            this.log.Info("[VB365][HTML] forming header...");
+            this.htmldoc += this.form.Header();
+            this.log.Info("[VB365][HTML] forming header...done!");
 
-            log.Info("[VB365][HTML] forming body...");
-            FormVb365Body();
-            log.Info("[VB365][HTML] forming body...done!");
+            this.log.Info("[VB365][HTML] forming body...");
+            this.FormVb365Body();
+            this.log.Info("[VB365][HTML] forming body...done!");
         }
 
         private void FormVb365Body()
         {
             try
             {
-                _htmldoc += _form.body;
+                this.htmldoc += this.form.body;
 
-
-                _htmldoc += FormBodyStartVb365(_htmldoc);
-
+                this.htmldoc += this.FormBodyStartVb365(this.htmldoc);
 
                 // add sections here
-                _htmldoc += SetNavigation();
-                //_htmldoc += _form.SetVb365Intro();
+                this.htmldoc += this.SetNavigation();
+
+                // _htmldoc += _form.SetVb365Intro();
                 // Navigation!
 
-                //expand all button:
-                _htmldoc += (string.Format("<button id='expandBtn' type=\"button\" class=\"btn\" onclick=\"test()\">{0}</button>", "Expand All Sections"));
+                // expand all button:
+                this.htmldoc += (string.Format("<button id='expandBtn' type=\"button\" class=\"btn\" onclick=\"test()\">{0}</button>", "Expand All Sections"));
 
                 CM365Tables tables = new();
-                _htmldoc += _form.header1("Overview");
+                this.htmldoc += this.form.header1("Overview");
 
-                _htmldoc += tables.Globals();
+                this.htmldoc += tables.Globals();
 
-                _htmldoc += tables.Vb365ProtStat();
+                this.htmldoc += tables.Vb365ProtStat();
 
                 // other workloads prompt??
-                _htmldoc += _form.header1("Backup Infrastructure");
-                _htmldoc += tables.Vb365Controllers();
-                _htmldoc += tables.Vb365ControllerDrives();
-                _htmldoc += tables.Vb365Proxies();
-                _htmldoc += tables.Vb365Repos();
-                _htmldoc += tables.Vb365ObjectRepos();
+                this.htmldoc += this.form.header1("Backup Infrastructure");
+                this.htmldoc += tables.Vb365Controllers();
+                this.htmldoc += tables.Vb365ControllerDrives();
+                this.htmldoc += tables.Vb365Proxies();
+                this.htmldoc += tables.Vb365Repos();
+                this.htmldoc += tables.Vb365ObjectRepos();
 
-                _htmldoc += _form.header1("Security");
-                _htmldoc += tables.Vb365Security();
-                //_htmldoc += tables.Vb365Rbac();
-                //_htmldoc += tables.Vb365Permissions();
+                this.htmldoc += this.form.header1("Security");
+                this.htmldoc += tables.Vb365Security();
 
-                _htmldoc += _form.header1("M365 Backups");
-                _htmldoc += tables.Vb365Orgs();
-                _htmldoc += tables.Jobs();
+                // _htmldoc += tables.Vb365Rbac();
+                // _htmldoc += tables.Vb365Permissions();
+                this.htmldoc += this.form.header1("M365 Backups");
+                this.htmldoc += tables.Vb365Orgs();
+                this.htmldoc += tables.Jobs();
 
-                _htmldoc += tables.Vb365JobStats();
-                _htmldoc += tables.Vb365ProcStats();
-                _htmldoc += tables.Vb365JobSessions();
-                _htmldoc += _form.LineBreak();
-                _htmldoc += "<a align=\"center\">vHC Version: " + CVersionSetter.GetFileVersion() + "</a>";
+                this.htmldoc += tables.Vb365JobStats();
+                this.htmldoc += tables.Vb365ProcStats();
+                this.htmldoc += tables.Vb365JobSessions();
+                this.htmldoc += this.form.LineBreak();
+                this.htmldoc += "<a align=\"center\">vHC Version: " + CVersionSetter.GetFileVersion() + "</a>";
 
+                this.htmldoc += "<script type=\"text/javascript\">";
+                this.htmldoc += CHtmlCompiler.GetEmbeddedCssContent("ReportScript.js");
+                this.htmldoc += "</script>";
 
-
-                _htmldoc += "<script type=\"text/javascript\">";
-                _htmldoc += CHtmlCompiler.GetEmbeddedCssContent("ReportScript.js");
-                _htmldoc += "</script>";
-
-                ExportHtml();
+                this.ExportHtml();
             }
             catch (System.Exception e)
             {
-                log.Error("[VB365][HTML] Error: " + e.Message);
+                this.log.Error("[VB365][HTML] Error: " + e.Message);
             }
-
         }
 
         private string FormBodyStartVb365(string htmlString)
         {
-            string h = _form.body;
-            h += _form.FormHtmlButtonGoToTop();
+            string h = this.form.body;
+            h += this.form.FormHtmlButtonGoToTop();
             if (CGlobals.Scrub)
             {
-                h += _form.SetHeaderAndLogoVB365(" ");
-                //h += _form.SetBannerAndIntro(true);
+                h += this.form.SetHeaderAndLogoVB365(" ");
+
+                // h += _form.SetBannerAndIntro(true);
             }
             else
             {
-                h += _form.SetHeaderAndLogoVB365(SetLicHolder());
-                //h += _form.SetBannerAndIntro(false);
+                h += this.form.SetHeaderAndLogoVB365(this.SetLicHolder());
+
+                // h += _form.SetBannerAndIntro(false);
             }
 
             return h;
@@ -122,37 +120,49 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VB365
 
         private string SetNavigation()
         {
-            log.Info("[VB365][HTML] forming navigation...");
+            this.log.Info("[VB365][HTML] forming navigation...");
             string s = string.Empty;
-            s += _form.SetNavTables("vb365");
-            s += _form.SetVb365Intro();
+            s += this.form.SetNavTables("vb365");
+            s += this.form.SetVb365Intro();
             s += "</div>";
             s += "</div>";
             s += "<br>";
-            log.Info("[VB365][HTML] forming navigation...done!");
+            this.log.Info("[VB365][HTML] forming navigation...done!");
             return s;
         }
 
         private void ExportHtml()
         {
-            log.Info("[VB365][HTML] exporting HTML file...");
-            CHtmlExporter exporter = new(GetServerName());
-            //exporter.ExportVb365Html(_htmldoc);
-            //exporter.ExportVb365Html(_htmldocScrubbed);
+            this.log.Info("[VB365][HTML] exporting HTML file...");
+            CHtmlExporter exporter = new(this.GetServerName());
 
+            // exporter.ExportVb365Html(_htmldoc);
+            // exporter.ExportVb365Html(_htmldocScrubbed);
             if (CGlobals.Scrub)
-                exporter.ExportHtmlVb365(_htmldoc, true);
+            {
+                exporter.ExportHtmlVb365(this.htmldoc, true);
+            }
             else
-                exporter.ExportHtmlVb365(_htmldoc, false);
-            log.Info("[VB365][HTML] exporting HTML...done!");
+            {
+                exporter.ExportHtmlVb365(this.htmldoc, false);
+            }
+
+
+            this.log.Info("[VB365][HTML] exporting HTML...done!");
         }
 
         private string GetServerName()
         {
             if(CGlobals.REMOTEEXEC)
+            {
+
                 return CGlobals.REMOTEHOST;
+            }
             else
+            {
+
                 return Dns.GetHostName();
+            }
         }
 
         private string SetLicHolder()
@@ -160,9 +170,13 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VB365
             CCsvParser csv = new(CVariables.vb365dir);
             var lic = csv.GetDynamicVboGlobal().ToList();
             foreach (var l in lic)
+            {
+
                 return l.LicensedTo;
+            }
+
+
             return string.Empty;
         }
-
     }
 }

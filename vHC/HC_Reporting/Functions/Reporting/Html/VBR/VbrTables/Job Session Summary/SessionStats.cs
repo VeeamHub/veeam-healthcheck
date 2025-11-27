@@ -10,7 +10,6 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR.VbrTables.Job_Session_Su
     {
         public SessionStats()
         {
-            
         }
 
         public int SessionCount { get; set; }
@@ -28,6 +27,5 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR.VbrTables.Job_Session_Su
         public List<double> BackupSize { get; set; } = new List<double>();
 
         public string JobType { get; set; }
-
     }
 }
