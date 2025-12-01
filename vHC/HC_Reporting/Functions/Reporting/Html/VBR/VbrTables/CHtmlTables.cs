@@ -1,7 +1,5 @@
-﻿// <copyright file="CHtmlTables.cs" company="PlaceholderCompany">
-// Copyright (c) PlaceholderCompany. All rights reserved.
-// </copyright>
-
+﻿// Copyright (c) 2021, Adam Congdon <adam.congdon2@gmail.com>
+// MIT License
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -486,8 +484,7 @@ namespace VeeamHealthCheck.Html.VBR
                 this.form.TableHeader(VbrLocalizationHelper.SSHdr1, VbrLocalizationHelper.SSHdrTT1) +
                 this.form.TableHeader(VbrLocalizationHelper.SSHdr2, VbrLocalizationHelper.SSHdrTT2) +
                 this.form.TableHeader(VbrLocalizationHelper.SSHdr3, VbrLocalizationHelper.SSHdrTT3) +
-                this.form.TableHeader("MFA Enabled", "Is MFA enabled for console access to VBR") +
-                this.form.TableHeader("Four Eyes", "Is Four Eyes Authorization enabled for user actions");
+                this.form.TableHeader("MFA Enabled", "Is MFA enabled for console access to VBR");
             s += this.form.TableHeaderEnd();
             s += this.form.TableBodyStart();
             s += "<tr>";
@@ -534,15 +531,6 @@ namespace VeeamHealthCheck.Html.VBR
                 }
 
                 if (t.MFAEnabled)
-                {
-                    s += this.form.TableData(this.form.True, string.Empty);
-                }
-                else
-                {
-                    s += this.form.TableData(this.form.False, string.Empty);
-                }
-
-                if (t.FourEyesEnabled)
                 {
                     s += this.form.TableData(this.form.True, string.Empty);
                 }
@@ -601,7 +589,7 @@ namespace VeeamHealthCheck.Html.VBR
             try
             {
                 var t = this.df.SecSummary();
-                List<string> headers = new() { "ImmutabilityEnabled", "TrafficEncryptionEnabled", "BackupFileEncryptionEnabled", "ConfigBackupEncryptionEnabled", "MFAEnabled", "FourEyesEnabled" };
+                List<string> headers = new() { "ImmutabilityEnabled", "TrafficEncryptionEnabled", "BackupFileEncryptionEnabled", "ConfigBackupEncryptionEnabled", "MFAEnabled" };
                 List<List<string>> rows = new()
                 {
                     new List<string>
@@ -610,8 +598,7 @@ namespace VeeamHealthCheck.Html.VBR
                         t.TrafficEncrptionEnabled ? "True" : "False",
                         t.BackupFileEncrptionEnabled ? "True" : "False",
                         t.ConfigBackupEncrptionEnabled ? "True" : "False",
-                        t.MFAEnabled ? "True" : "False",
-                        t.FourEyesEnabled ? "True" : "False"
+                        t.MFAEnabled ? "True" : "False"
                     },
                 };
                 SetSection("securitySummary", headers, rows, summary);
