@@ -576,17 +576,30 @@ try {
     #end tape jobs
 
     # NAS Jobs
+    Write-LogFile("Starting NAS Jobs collection...")
     try {
         #$nasBackup = Get-VBRNASBackupJob 
         # get all NAS jobs
+        Write-LogFile("Calling Get-VBRUnstructuredBackupJob...")
         $nasBackup = Get-VBRUnstructuredBackupJob
+        Write-LogFile("Found " + $nasBackup.Count + " NAS backup jobs")
+        
+        $jobCounter = 0
         foreach ($job in $nasBackup) {
-            #$job.Name
+            $jobCounter++
+            Write-LogFile("Processing NAS job " + $jobCounter + "/" + $nasBackup.Count + ": " + $job.Name)
+            
             $onDiskGB = 0
             $sourceGb = 0
+            
+            Write-LogFile("  Getting backup sessions for job: " + $job.Name)
             $sessions = Get-VBRBackupSession -Name $job.Name
+            Write-LogFile("  Found " + $sessions.Count + " sessions for job: " + $job.Name)
+            
             #sort sessions by latest first selecting only the latest session
             $sessions = $sessions | Sort-Object CreationTime -Descending | Select-Object -First 1
+            Write-LogFile("  Processing latest session for job: " + $job.Name)
+            
             foreach ($session in $sessions) {
                 #$session.sessioninfo.BackupTotalSize
                 $onDiskGB = $session.sessioninfo.BackupTotalSize / 1024 / 1024 / 1024
@@ -595,40 +608,53 @@ try {
             $job | Add-Member -MemberType NoteProperty -Name JobType -Value "NAS Backup"
             $job | Add-Member -MemberType NoteProperty -Name OnDiskGB -Value $onDiskGB
             $job | Add-Member -MemberType NoteProperty -Name SourceGB -Value $sourceGb
+            Write-LogFile("  Completed processing job: " + $job.Name)
         }
-        #$jobs
-
+        Write-LogFile("NAS Jobs collection completed")
 
     }
     catch {
+        Write-LogFile("NAS Jobs collection failed: " + $Error[0].Exception.Message, "Errors", "ERROR")
         $nasBackup = $null
     }
+    
+    Write-LogFile("Starting NAS Backup Copy Jobs collection...")
     try {
         $nasBCJ = Get-VBRNASBackupCopyJob 
-
+        Write-LogFile("Found " + $nasBCJ.Count + " NAS backup copy jobs")
     }
     catch {
+        Write-LogFile("NAS Backup Copy Jobs collection failed: " + $Error[0].Exception.Message, "Errors", "ERROR")
         $nasBCJ = $null
     }
+    
+    Write-LogFile("Starting Plugin Jobs collection...")
     try {
         $piJob = Get-VBRPluginJob
-
+        Write-LogFile("Found " + $piJob.Count + " plugin jobs")
     }
     catch {
+        Write-LogFile("Plugin Jobs collection failed: " + $Error[0].Exception.Message, "Errors", "ERROR")
         $piJob = $null
     }
+    
+    Write-LogFile("Starting CDP Policy collection...")
     try {
         $cdpJob = Get-VBRCDPPolicy
-
+        Write-LogFile("Found " + $cdpJob.Count + " CDP policies")
     }
     catch {
+        Write-LogFile("CDP Policy collection failed: " + $Error[0].Exception.Message, "Errors", "ERROR")
         $cdpJob = $null
     }
+    
+    Write-LogFile("Starting VCD Replica Jobs collection...")
     try {
         $vcdJob = Get-VBRvCDReplicaJob
-
+        Write-LogFile("Found " + $vcdJob.Count + " VCD replica jobs")
     }
     catch {
+        Write-LogFile("VCD Replica Jobs collection failed: " + $Error[0].Exception.Message, "Errors", "ERROR")
         $vcdJob = $null
     }
 
