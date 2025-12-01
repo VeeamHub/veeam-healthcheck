@@ -191,6 +191,9 @@ jobs:
         if (Test-Path "${{ github.workspace }}\test-download") {
           Remove-Item -Path "${{ github.workspace }}\test-download" -Recurse -Force
         }
+        if (Test-Path "C:\temp\vHC") {
+          Remove-Item -Path "C:\temp\vHC" -Recurse -Force
+        }
   integration-test-vbr-13-sql:
     needs: build-and-test
     runs-on: [self-hosted, vbr-13-sql]
@@ -300,6 +303,9 @@ jobs:
         if (Test-Path "${{ github.workspace }}\test-download") {
           Remove-Item -Path "${{ github.workspace }}\test-download" -Recurse -Force
         }
+        if (Test-Path "C:\temp\vHC") {
+          Remove-Item -Path "C:\temp\vHC" -Recurse -Force
+        }
   integration-test-vbr-12:
     needs: build-and-test
     runs-on: [self-hosted, vbr-v12]
@@ -407,6 +413,9 @@ jobs:
         }
         if (Test-Path "${{ github.workspace }}\test-download") {
           Remove-Item -Path "${{ github.workspace }}\test-download" -Recurse -Force
+        }
+        if (Test-Path "C:\temp\vHC") {
+          Remove-Item -Path "C:\temp\vHC" -Recurse -Force
         }
 
   # VirusTotal scan - only on master branch
