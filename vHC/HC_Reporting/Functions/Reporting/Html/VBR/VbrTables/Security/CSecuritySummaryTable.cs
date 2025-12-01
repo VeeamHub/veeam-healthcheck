@@ -8,7 +8,7 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR.VbrTables.Security
 {
     public class CSecuritySummaryTable
     {
-        public bool ImmutabilityEnabled { get;set;}
+        public bool ImmutabilityEnabled { get; set; }
 
         public bool TrafficEncrptionEnabled { get; set; }
 
@@ -17,6 +17,8 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR.VbrTables.Security
         public bool ConfigBackupEncrptionEnabled { get; set; }
 
         public bool MFAEnabled { get; set; }
+        public bool FourEyesEnabled { get; set; }
+
 
         public bool IsConsoleInstalled { get; set; }
 
