@@ -226,6 +226,10 @@ namespace VeeamHealthCheck.Startup
             }
 
             int result = 0;
+            if (string.IsNullOrEmpty(CGlobals.REMOTEHOST))
+            {
+                //CGlobals.REMOTEHOST = "localhost";
+            }
 
             if (runHfd)
             {
