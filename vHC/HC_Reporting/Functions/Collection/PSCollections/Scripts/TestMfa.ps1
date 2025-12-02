@@ -9,6 +9,12 @@ param(
 
 try {
     Write-Host "[VERBOSE] PowerShell Version: $($PSVersionTable.PSVersion.ToString())"
+    # Compare PSModulePath in both contexts
+# In your manual session:
+$env:PSModulePath -split ';'
+
+# In the runner context, add this to your script:
+Write-Host "PSModulePath: $($env:PSModulePath)"
     Write-Host "[VERBOSE] Attempting to import Veeam.Backup.PowerShell module..."
     #Write-Host(Get-Module -ListAvailable )
     Import-Module Veeam.Backup.PowerShell  -Force -WarningAction Ignore
