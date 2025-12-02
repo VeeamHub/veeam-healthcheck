@@ -172,18 +172,18 @@ jobs:
       if: always() && steps.find_report.outputs.report_path
       uses: actions/upload-artifact@v4
       with:
-        name: health-check-report-${{ github.run_number }}
+        name: health-check-report-${{ github.run_number }}-v13-remote
         path: ${{ steps.find_report.outputs.report_path }}
         retention-days: 30
     
-    - name: Upload health check logs
-      if: always()
-      uses: actions/upload-artifact@v4
-      with:
-        name: health-check-logs-${{ github.run_number }}
-        path: C:\temp\vHC\Original\Log\*.log
-        if-no-files-found: warn
-        retention-days: 7
+    # - name: Upload health check logs
+    #   if: always()
+    #   uses: actions/upload-artifact@v4
+    #   with:
+    #     name: health-check-logs-${{ github.run_number }}
+    #     path: C:\temp\vHC\Original\Log\*.log
+    #     if-no-files-found: warn
+    #     retention-days: 7
     
     - name: Cleanup
       if: success()
@@ -194,9 +194,9 @@ jobs:
         if (Test-Path "${{ github.workspace }}\test-download") {
           Remove-Item -Path "${{ github.workspace }}\test-download" -Recurse -Force
         }
-        if (Test-Path "C:\temp\vHC") {
-          Remove-Item -Path "C:\temp\vHC" -Recurse -Force
-        }
+        # if (Test-Path "C:\temp\vHC") {
+        #   Remove-Item -Path "C:\temp\vHC" -Recurse -Force
+        # }
   integration-test-vbr-13-sql:
     needs: build-and-test
     runs-on: [self-hosted, vbr-13-sql]
@@ -244,7 +244,7 @@ jobs:
         Write-Host "Target VBR: $env:VBR_HOST" -ForegroundColor Yellow
         Write-Host "Working directory: $(Split-Path $exePath)" -ForegroundColor Yellow
         
-        $creds = "$env:VBR_USERNAME`:$env:VBR_PASSWORD2"
+        $creds = "$env:VBR_WIN_USER`:$env:VBR_WIN_PWD"
         
         # Run from the extracted directory so it can find relative paths
         Push-Location (Split-Path $exePath)
@@ -287,18 +287,18 @@ jobs:
       if: always() && steps.find_report.outputs.report_path
       uses: actions/upload-artifact@v4
       with:
-        name: health-check-report-${{ github.run_number }}
+        name: health-check-report-${{ github.run_number }}-v13-sql
         path: ${{ steps.find_report.outputs.report_path }}
         retention-days: 30
     
-    - name: Upload health check logs
-      if: always()
-      uses: actions/upload-artifact@v4
-      with:
-        name: health-check-logs-${{ github.run_number }}
-        path: C:\temp\vHC\Original\Log\*.log
-        if-no-files-found: warn
-        retention-days: 7
+    # - name: Upload health check logs
+    #   if: always()
+    #   uses: actions/upload-artifact@v4
+    #   with:
+    #     name: health-check-logs-${{ github.run_number }}
+    #     path: C:\temp\vHC\Original\Log\*.log
+    #     if-no-files-found: warn
+    #     retention-days: 7
     
     - name: Cleanup
       if: success()
@@ -309,9 +309,9 @@ jobs:
         if (Test-Path "${{ github.workspace }}\test-download") {
           Remove-Item -Path "${{ github.workspace }}\test-download" -Recurse -Force
         }
-        if (Test-Path "C:\temp\vHC") {
-          Remove-Item -Path "C:\temp\vHC" -Recurse -Force
-        }
+        # if (Test-Path "C:\temp\vHC") {
+        #   Remove-Item -Path "C:\temp\vHC" -Recurse -Force
+        # }
   integration-test-vbr-12:
     needs: build-and-test
     runs-on: [self-hosted, vbr-v12]
@@ -401,18 +401,18 @@ jobs:
       if: always() && steps.find_report.outputs.report_path
       uses: actions/upload-artifact@v4
       with:
-        name: health-check-report-${{ github.run_number }}
+        name: health-check-report-${{ github.run_number }}-v12
         path: ${{ steps.find_report.outputs.report_path }}
         retention-days: 30
     
-    - name: Upload health check logs
-      if: always()
-      uses: actions/upload-artifact@v4
-      with:
-        name: health-check-logs-${{ github.run_number }}
-        path: C:\temp\vHC\Original\Log\*.log
-        if-no-files-found: warn
-        retention-days: 7
+    # - name: Upload health check logs
+    #   if: always()
+    #   uses: actions/upload-artifact@v4
+    #   with:
+    #     name: health-check-logs-${{ github.run_number }}
+    #     path: C:\temp\vHC\Original\Log\*.log
+    #     if-no-files-found: warn
+    #     retention-days: 7
     
     - name: Cleanup
       if: success()
@@ -423,9 +423,9 @@ jobs:
         if (Test-Path "${{ github.workspace }}\test-download") {
           Remove-Item -Path "${{ github.workspace }}\test-download" -Recurse -Force
         }
-        if (Test-Path "C:\temp\vHC") {
-          Remove-Item -Path "C:\temp\vHC" -Recurse -Force
-        }
+        # if (Test-Path "C:\temp\vHC") {
+        #   Remove-Item -Path "C:\temp\vHC" -Recurse -Force
+        # }
 
   # VirusTotal scan - only on master branch
   virustotal-scan:
