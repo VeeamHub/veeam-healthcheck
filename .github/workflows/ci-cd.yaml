@@ -156,7 +156,7 @@ jobs:
       id: find_report
       if: always()
       run: |
-        $reportDir = "C:\temp\vHC"
+        $reportDir = "C:\temp\vHC\vHC-Report"
         if (Test-Path $reportDir) {
           $latestReport = Get-ChildItem -Path $reportDir -Filter "*.html" | 
             Sort-Object LastWriteTime -Descending | 
@@ -181,7 +181,7 @@ jobs:
       uses: actions/upload-artifact@v4
       with:
         name: health-check-logs-${{ github.run_number }}
-        path: C:\temp\vHC\*.log
+        path: C:\temp\vHC\Original\Log\*.log
         if-no-files-found: warn
         retention-days: 7
     
@@ -271,7 +271,7 @@ jobs:
       id: find_report
       if: always()
       run: |
-        $reportDir = "C:\temp\vHC"
+        $reportDir = "C:\temp\vHC\vHC-Report\vHC-Report"
         if (Test-Path $reportDir) {
           $latestReport = Get-ChildItem -Path $reportDir -Filter "*.html" | 
             Sort-Object LastWriteTime -Descending | 
@@ -296,7 +296,7 @@ jobs:
       uses: actions/upload-artifact@v4
       with:
         name: health-check-logs-${{ github.run_number }}
-        path: C:\temp\vHC\*.log
+        path: C:\temp\vHC\Original\Log\*.log
         if-no-files-found: warn
         retention-days: 7
     
@@ -385,7 +385,7 @@ jobs:
       id: find_report
       if: always()
       run: |
-        $reportDir = "C:\temp\vHC"
+        $reportDir = "C:\temp\vHC\vHC-Report"
         if (Test-Path $reportDir) {
           $latestReport = Get-ChildItem -Path $reportDir -Filter "*.html" | 
             Sort-Object LastWriteTime -Descending | 
@@ -410,7 +410,7 @@ jobs:
       uses: actions/upload-artifact@v4
       with:
         name: health-check-logs-${{ github.run_number }}
-        path: C:\temp\vHC\*.log
+        path: C:\temp\vHC\Original\Log\*.log
         if-no-files-found: warn
         retention-days: 7
     
