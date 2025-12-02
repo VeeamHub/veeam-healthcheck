@@ -10,11 +10,18 @@ param(
 try {
     Write-Host "[VERBOSE] PowerShell Version: $($PSVersionTable.PSVersion.ToString())"
     # Compare PSModulePath in both contexts
-# In your manual session:
-$env:PSModulePath -split ';'
+# Add the Veeam Console directory to PSModulePath
+$veeamConsolePath = "C:\Program Files\Veeam\Backup and Replication\Console"
+if (Test-Path $veeamConsolePath) {
+    Write-Verbose "Adding Veeam Console path to PSModulePath: $veeamConsolePath"
+    $env:PSModulePath = "$veeamConsolePath;$env:PSModulePath"
+} else {
+    Write-Error "Veeam Console path not found: $veeamConsolePath"
+    exit 1
+}
 
-# In the runner context, add this to your script:
-Write-Host "PSModulePath: $($env:PSModulePath)"
+Write-Verbose "Attempting to import Veeam.Backup.PowerShell module..."
+Import-Module Veeam.Backup.PowerShell -Force -WarningAction Ignore
     Write-Host "[VERBOSE] Attempting to import Veeam.Backup.PowerShell module..."
     #Write-Host(Get-Module -ListAvailable )
     Import-Module Veeam.Backup.PowerShell  -Force -WarningAction Ignore
