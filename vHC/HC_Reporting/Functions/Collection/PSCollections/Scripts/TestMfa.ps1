@@ -13,7 +13,7 @@ try {
     #Write-Host(Get-Module -ListAvailable )
     Import-Module Veeam.Backup.PowerShell  -Force -WarningAction Ignore
     Write-Host "[VERBOSE] Module imported. Attempting to connect to VBR Server: $Server with user $Username."
-    Connect-VBRServer -Server $Server -User $Username -Password $Password -ErrorAction Stop
+    Connect-VBRServer -Server $Server -User $Username -Password $Password -ForceAcceptTlsCertificate -ErrorAction Stop
     Write-Host "[VERBOSE] Successfully connected to VBR Server."
     exit 0
 } catch {
