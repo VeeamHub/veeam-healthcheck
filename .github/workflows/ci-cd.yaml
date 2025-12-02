@@ -235,8 +235,8 @@ jobs:
       id: run_healthcheck
       env:
         VBR_HOST: ${{ secrets.VBR_HOST }}
-        VBR_USERNAME: ${{ secrets.VBR_USERNAME }}
-        VBR_PASSWORD: ${{ secrets.VBR_PASSWORD }}
+        VBR_USERNAME: ${{ secrets.VBR_WIN_USER }}
+        VBR_PASSWORD: ${{ secrets.VBR_WIN_PWD }}
       run: |
         $exePath = "${{ github.workspace }}\test-run\VeeamHealthCheck.exe"
         
@@ -244,7 +244,7 @@ jobs:
         Write-Host "Target VBR: $env:VBR_HOST" -ForegroundColor Yellow
         Write-Host "Working directory: $(Split-Path $exePath)" -ForegroundColor Yellow
         
-        $creds = "$env:VBR_WIN_USER`:$env:VBR_WIN_PWD"
+        $creds = "$env:VBR_USERNAME`:$env:VBR_PASSWORD"
         
         # Run from the extracted directory so it can find relative paths
         Push-Location (Split-Path $exePath)
