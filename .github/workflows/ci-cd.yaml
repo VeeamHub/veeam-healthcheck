@@ -121,7 +121,7 @@ jobs:
       env:
         VBR_HOST: ${{ secrets.VBR_HOST }}
         VBR_USERNAME: ${{ secrets.VBR_USERNAME }}
-        VBR_PASSWORD: ${{ secrets.VBR_PASSWORD }}
+        VBR_PASSWORD: ${{ secrets.VBR_PASSWORD2 }}
       run: |
         $exePath = "${{ github.workspace }}\test-run\VeeamHealthCheck.exe"
         
