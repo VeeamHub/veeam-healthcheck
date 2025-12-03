@@ -258,7 +258,7 @@ namespace VeeamHealthCheck.Functions.Reporting.Html
         {
             if (CGlobals.OpenExplorer)
             {
-                Process.Start("explorer.exe", CVariables.desiredDir);
+                Process.Start("explorer.exe", CGlobals.desiredPath);
             }
         }
 

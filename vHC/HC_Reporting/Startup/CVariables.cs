@@ -14,8 +14,6 @@ namespace VeeamHealthCheck
         public static string safeSuffix = @"\vHC-AnonymousReport";
         public static string unsafeSuffix = @"\vHC-Report";
 
-        public static string desiredDir { get { return CGlobals.desiredPath; } }
-
         public string unSafeDir2()
         {
             return unsafeDir;
@@ -31,7 +29,7 @@ namespace VeeamHealthCheck
 
         public static string vbrDir
         {
-            get { return unsafeDir + vbrDir; }
+            get { return unsafeDir + VbrDir; }
         }
     }
 }

@@ -237,15 +237,15 @@ namespace VeeamHealthCheck.Functions.Collection.PSCollections
             if (!string.IsNullOrEmpty(CGlobals.CredsUsername) && !string.IsNullOrEmpty(CGlobals.CredsPassword))
             {
                 argString += $" -User \"{CGlobals.CredsUsername}\" -Password \"{CGlobals.CredsPassword}\"";
-            }            
-var startInfo = new ProcessStartInfo()
+            }
+            var startInfo = new ProcessStartInfo()
             {
                 FileName = "powershell.exe",
                 Arguments = argString,
                 RedirectStandardOutput = true,
                 RedirectStandardError = true,
                 UseShellExecute = false,
-                CreateNoWindow = true
+                CreateNoWindow = true,
             };
             this.log.Info($"[TestMfa] Creating ProcessStartInfo for MFA test:");
             this.log.Info($"[TestMfa] FileName: {startInfo.FileName}");

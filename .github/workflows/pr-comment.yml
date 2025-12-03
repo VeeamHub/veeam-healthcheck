@@ -30,6 +30,26 @@ jobs:
             const releaseUrl = `https://github.com/${forkRepo}/releases/tag/v${version}`;
             const downloadUrl = `https://github.com/${forkRepo}/releases/download/v${version}/VeeamHealthCheck-${version}.zip`;
 
+            // Find latest run of the PR build workflow matching this head SHA
+            const { data: workflowsData } = await github.rest.actions.listRepoWorkflows({
+              owner: repo.owner,
+              repo: repo.repo,
+            });
+            const prWorkflow = workflowsData.workflows.find(wf => wf.name === 'PR Release Preparation');
+            let runUrl = null;
+            if (prWorkflow) {
+              const { data: runsData } = await github.rest.actions.listWorkflowRuns({
+                owner: repo.owner,
+                repo: repo.repo,
+                workflow_id: prWorkflow.id,
+                per_page: 50,
+              });
+              const matchingRun = runsData.workflow_runs.find(r => r.head_sha === context.payload.pull_request.head.sha);
+              if (matchingRun) {
+                runUrl = matchingRun.html_url;
+              }
+            }
+
             const body = `##  Pre-Built Release Package Available
             
             **Version:** \`${version}\`
@@ -40,6 +60,8 @@ jobs:
             ${releaseUrl}
             
             Direct download: [VeeamHealthCheck-${version}.zip](${downloadUrl})
+            
+            ${runUrl ? `**From This PR Workflow**\n[Download artifact from this workflow run](${runUrl})` : ''}
             
             ---
             
@@ -59,28 +81,6 @@ jobs:
               issue_number: prNumber
             });
 
-              
-                          // Find latest run of the PR build workflow matching this head SHA
-                          // First, get workflows and find the one named 'PR Release Preparation'
-                          const { data: workflowsData } = await github.rest.actions.listRepoWorkflows({
-                            owner: repo.owner,
-                            repo: repo.repo,
-                          });
-                          const prWorkflow = workflowsData.workflows.find(wf => wf.name === 'PR Release Preparation');
-                          let runUrl = null;
-                          if (prWorkflow) {
-                            const { data: runsData } = await github.rest.actions.listWorkflowRuns({
-                              owner: repo.owner,
-                              repo: repo.repo,
-                              workflow_id: prWorkflow.id,
-                              per_page: 50,
-                            });
-                            const matchingRun = runsData.workflow_runs.find(r => r.head_sha === context.payload.pull_request.head.sha);
-                            if (matchingRun) {
-                              runUrl = matchingRun.html_url;
-                            }
-                          }
-              
             const botComment = comments.find(comment => 
               comment.user.type === 'Bot' && 
               comment.body.includes('Pre-Built Release Package Available')
@@ -91,8 +91,6 @@ jobs:
                 owner: repo.owner,
                 repo: repo.repo,
                 comment_id: botComment.id,
-              
-                          ${runUrl ? `**From This PR Workflow**  \n[Download artifact from this workflow run](${runUrl})` : ''}
                 body: body
               });
             } else {

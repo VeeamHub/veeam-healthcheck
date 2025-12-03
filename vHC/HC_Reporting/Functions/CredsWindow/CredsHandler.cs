@@ -39,21 +39,45 @@ namespace VeeamHealthCheck.Functions.CredsWindow
             }
 
             // Show your WPF dialog here (or use your existing method)
-            var dialog = new CredentialPromptWindow(host)
+            (string Username, string Password)? result = null;
+            
+            // If we're on the UI thread, show the dialog directly
+            if (System.Windows.Application.Current?.MainWindow?.Dispatcher.CheckAccess() == true)
             {
-                Owner = System.Windows.Application.Current?.MainWindow,
-            };
-            if (dialog.ShowDialog() == true)
-            {
-                if (CGlobals.UseStoredCreds)
+                var dialog = new CredentialPromptWindow(host)
                 {
-                    CredentialStore.Set(host, dialog.Username, dialog.Password);
+                    Owner = System.Windows.Application.Current?.MainWindow,
+                };
+                if (dialog.ShowDialog() == true)
+                {
+                    result = (dialog.Username, dialog.Password);
+                    if (CGlobals.UseStoredCreds)
+                    {
+                        CredentialStore.Set(host, dialog.Username, dialog.Password);
+                    }
                 }
-
-                return (dialog.Username, dialog.Password);
+            }
+            else
+            {
+                // If we're on a background thread, marshal to the UI thread
+                System.Windows.Application.Current?.MainWindow?.Dispatcher.Invoke(() =>
+                {
+                    var dialog = new CredentialPromptWindow(host)
+                    {
+                        Owner = System.Windows.Application.Current?.MainWindow,
+                    };
+                    if (dialog.ShowDialog() == true)
+                    {
+                        result = (dialog.Username, dialog.Password);
+                        if (CGlobals.UseStoredCreds)
+                        {
+                            CredentialStore.Set(host, dialog.Username, dialog.Password);
+                        }
+                    }
+                });
             }
 
-            return null;
+            return result;
         }
     }
 }

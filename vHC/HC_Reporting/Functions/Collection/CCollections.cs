@@ -86,6 +86,12 @@ namespace VeeamHealthCheck.Functions.Collection
                 CGlobals.Logger.Debug("Logging CSV File Sizes:");
             }
 
+            // Check if directory exists before attempting to access it
+            if (!Directory.Exists(CVariables.vbrDir))
+            {
+                CGlobals.Logger.Debug($"VBR directory does not exist: {CVariables.vbrDir}");
+                return;
+            }
 
             var files = Directory.GetFiles(CVariables.vbrDir, "*.csv", SearchOption.AllDirectories);
             foreach (var file in files)
@@ -220,7 +226,7 @@ namespace VeeamHealthCheck.Functions.Collection
 
         private bool MfaTestPassed(PSInvoker p)
         {
-            if ((CGlobals.IsVbr))
+            if (CGlobals.IsVbr && (CGlobals.VBRMAJORVERSION < 13))
             {
                 this.log.Info("Local VBR Detected, running local MFA test...");
                 return this.RunLocalMfaCheck(p);
@@ -242,6 +248,11 @@ namespace VeeamHealthCheck.Functions.Collection
 
                 try
                 {
+                    // If not here, CGlobals.RemoteHost may not be set correctly -> 
+                    if (string.IsNullOrEmpty(CGlobals.REMOTEHOST))
+            {
+                CGlobals.REMOTEHOST = "localhost";
+            }
                     // Build PowerShell arguments to call the script with parameters
                     string args =
                         $"-NoProfile -ExecutionPolicy Bypass -File \"{scriptPath}\" -Server {CGlobals.REMOTEHOST} -Username {creds.Value.Username} -Password {creds.Value.Password}";
