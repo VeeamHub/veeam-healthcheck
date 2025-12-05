@@ -4,7 +4,7 @@ param(
     [Parameter(Mandatory = $true)]
     [string]$Username,
     [Parameter(Mandatory = $true)]
-    [string]$Password
+    [string]$PasswordBase64
 )
 
 try {

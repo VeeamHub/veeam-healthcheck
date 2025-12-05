@@ -226,15 +226,25 @@ namespace VeeamHealthCheck.Functions.Collection
 
         private bool MfaTestPassed(PSInvoker p)
         {
-            if (CGlobals.PowerShellVersion == 5)
+            // For local VBR execution (PowerShell 5), use Windows authentication
+            if (CGlobals.PowerShellVersion == 5 && string.IsNullOrEmpty(CGlobals.REMOTEHOST))
             {
-                this.log.Info("Local VBR Detected, running local MFA test...");
+                this.log.Info("Local VBR Detected, running local MFA test with Windows authentication...");
                 return this.RunLocalMfaCheck(p);
             }
-            else
+            // For remote execution, credentials are required
+            else if (CGlobals.PowerShellVersion == 7 || !string.IsNullOrEmpty(CGlobals.REMOTEHOST))
             {
                 CredsHandler ch = new();
                 var creds = ch.GetCreds();
+                
+                // If credentials not provided for remote execution, cannot continue
+                if (creds == null)
+                {
+                    CGlobals.Logger.Error("Credentials required for remote VBR execution but not provided.");
+                    return false;
+                }
+                
                 string scriptPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, @"Functions\Collection\PSCollections\Scripts\TestMfa.ps1");
                 bool result = false;
                 string error = string.Empty;
@@ -316,10 +326,16 @@ namespace VeeamHealthCheck.Functions.Collection
 
                     CGlobals.Logger.Warning("Failing over to PowerShell 5", false);
 
-                    this.RunLocalMfaCheck(p);
+                    return this.RunLocalMfaCheck(p);
                 }
 
                 return result;
+            }
+            else
+            {
+                // Fallback to local check for any other case
+                this.log.Info("Fallback to local MFA test...");
+                return this.RunLocalMfaCheck(p);
             }
         }
 

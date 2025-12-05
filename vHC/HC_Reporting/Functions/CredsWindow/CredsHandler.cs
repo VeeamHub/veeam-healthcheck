@@ -38,6 +38,13 @@ namespace VeeamHealthCheck.Functions.CredsWindow
                 }
             }
 
+            // Check if GUI is available before attempting to show dialog
+            if (!CGlobals.GUIEXEC || System.Windows.Application.Current == null)
+            {
+                CGlobals.Logger.Warning("GUI not available. Cannot prompt for credentials in non-interactive environment.");
+                return null;
+            }
+
             // Show your WPF dialog here (or use your existing method)
             (string Username, string Password)? result = null;
             
