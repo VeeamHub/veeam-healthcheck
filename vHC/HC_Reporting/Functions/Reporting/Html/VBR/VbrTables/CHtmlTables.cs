@@ -2994,8 +2994,8 @@ this.form.TableHeader(VbrLocalizationHelper.SbrExt15, VbrLocalizationHelper.SbrE
             s += this.form.TableHeader(VbrLocalizationHelper.Jss10, "Used size of all objects in job."); // max data size
             s += this.form.TableHeader(VbrLocalizationHelper.Jss11, "Avg Data Size divided by Max Data Size (average processed data divided by total consumed size of all VMs in the job)"); // avg change rate
             s += this.form.TableHeader(VbrLocalizationHelper.Jss12, VbrLocalizationHelper.Jss12TT); // wait for res count
-            s += this.form.TableHeader(VbrLocalizationHelper.Jss13, VbrLocalizationHelper.Jss13TT); // max wait
-            s += this.form.TableHeader(VbrLocalizationHelper.Jss14, VbrLocalizationHelper.Jss14TT);// avg wait
+            s += this.form.TableHeader(VbrLocalizationHelper.Jss13, "Max Waits (dd:hh:mm:ss)"); // max wait
+            s += this.form.TableHeader(VbrLocalizationHelper.Jss14, "Avg Waits (dd:hh:mm:ss)");// avg wait
             s += this.form.TableHeader(VbrLocalizationHelper.Jss15, VbrLocalizationHelper.Jss15TT); // job types
             s += this.form.TableHeaderEnd();
             s += this.form.TableBodyStart();
