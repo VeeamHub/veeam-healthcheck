@@ -90,14 +90,20 @@ if (!(Get-PSSnapin -Name VeeamPSSnapIn -ErrorAction SilentlyContinue)) {
 
 Disconnect-VBRServer
 try {
-  if ([string]::IsNullOrEmpty($User) -or [string]::IsNullOrEmpty($Password)) {
+  if ([string]::IsNullOrEmpty($User) -or [string]::IsNullOrEmpty($PasswordBase64)) {
     # Connect without credentials (local/Windows authentication)
     Write-LogFile("Connecting to VBR Server without credentials (Windows auth): " + $VBRServer, "Main", "INFO")
-    Connect-VBRServer
+    Connect-VBRServer -Server $VBRServer
   } else {
     # Connect with provided credentials (remote)
     Write-LogFile("Connecting to VBR Server with credentials: " + $VBRServer, "Main", "INFO")
-    $securePassword = ConvertTo-SecureString -String $Password -AsPlainText -Force
+    
+    # Decode Base64 password
+    $passwordBytes = [System.Convert]::FromBase64String($PasswordBase64)
+    $password = [System.Text.Encoding]::UTF8.GetString($passwordBytes)
+    
+    # Convert to SecureString and create credential
+    $securePassword = ConvertTo-SecureString -String $password -AsPlainText -Force
     $credential = New-Object System.Management.Automation.PSCredential($User, $securePassword)
     Connect-VBRServer -Server $VBRServer -Credential $credential
   }

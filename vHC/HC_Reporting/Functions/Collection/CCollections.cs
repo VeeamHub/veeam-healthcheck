@@ -260,11 +260,11 @@ namespace VeeamHealthCheck.Functions.Collection
                         CGlobals.REMOTEHOST = "localhost";
                     }
 
-                    // Properly escape the password for PowerShell
-                    string escapedPassword = CredentialHelper.EscapePasswordForPowerShell(creds.Value.Password);
-
-                    // Build PowerShell arguments with properly escaped password using single quotes
-                    string args = $"-NoProfile -ExecutionPolicy Bypass -File \"{scriptPath}\" -Server {CGlobals.REMOTEHOST} -Username '{creds.Value.Username}' -Password '{escapedPassword}'";
+                    // Encode password as Base64 for safe transmission
+                    string base64Password = CredentialHelper.EncodePasswordToBase64(creds.Value.Password);
+                    
+                    // Build PowerShell arguments with Base64-encoded password
+                    string args = $"-NoProfile -ExecutionPolicy Bypass -File \"{scriptPath}\" -Server {CGlobals.REMOTEHOST} -Username '{creds.Value.Username}' -PasswordBase64 '{base64Password}'";
 
                     var processInfo = new ProcessStartInfo
                     {
@@ -276,9 +276,8 @@ namespace VeeamHealthCheck.Functions.Collection
                         CreateNoWindow = true
                     };
 
-                    // Log processInfo settings (but mask the password)
-                    string maskedArgs = args.Replace(escapedPassword, "****");
-                    CGlobals.Logger.Debug($"ProcessStartInfo Settings:\n  FileName: {processInfo.FileName}\n  Arguments: {maskedArgs}\n  RedirectStandardOutput: {processInfo.RedirectStandardOutput}\n  RedirectStandardError: {processInfo.RedirectStandardError}\n  UseShellExecute: {processInfo.UseShellExecute}\n  CreateNoWindow: {processInfo.CreateNoWindow}");
+                    // Log processInfo settings (password is already masked by Base64)
+                    CGlobals.Logger.Debug($"ProcessStartInfo Settings:\n  FileName: {processInfo.FileName}\n  Arguments: {args.Replace(base64Password, "****")}\n  RedirectStandardOutput: {processInfo.RedirectStandardOutput}\n  RedirectStandardError: {processInfo.RedirectStandardError}\n  UseShellExecute: {processInfo.UseShellExecute}\n  CreateNoWindow: {processInfo.CreateNoWindow}");
                     using var process = System.Diagnostics.Process.Start(processInfo);
                     string stdOut = process.StandardOutput.ReadToEnd();
                     string stdErr = process.StandardError.ReadToEnd();

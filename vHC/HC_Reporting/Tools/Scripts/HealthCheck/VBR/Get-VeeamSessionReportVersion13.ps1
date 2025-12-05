@@ -5,11 +5,11 @@
 param(
 	[Parameter(Mandatory)]
 	[string]$VBRServer,
-	[Parameter(Mandatory=$false)]
+	[Parameter(Mandatory = $false)]
 	[string]$User = "",
-	[Parameter(Mandatory=$false)]
+	[Parameter(Mandatory = $false)]
 	[string]$Password = "",
-	[Parameter(Mandatory=$false)]
+	[Parameter(Mandatory = $false)]
 	[int]$ReportInterval = 7
 )
 
@@ -20,11 +20,11 @@ function Write-LogFile {
 		[string]$LogLevel = "INFO"
 	)
 	$outPath = "C:\\temp\\vHC\\Original\\Log\\VeeamSessionReport.log"
-	    # Ensure directory exists
-    $logDir = Split-Path -Path $outPath -Parent
-    if (-not (Test-Path $logDir)) {
-        New-Item -Path $logDir -ItemType Directory -Force | Out-Null
-    }
+	# Ensure directory exists
+	$logDir = Split-Path -Path $outPath -Parent
+	if (-not (Test-Path $logDir)) {
+		New-Item -Path $logDir -ItemType Directory -Force | Out-Null
+	}
 	$line = (Get-Date).ToString("yyyy-MM-dd HH:mm:ss") + "`t" + $LogLevel + "`t`t" + $Message
 	Add-Content -Path $outPath -Value $line -Encoding UTF8
 }
@@ -32,18 +32,25 @@ function Write-LogFile {
 
 try {
 	Disconnect-VBRServer -ErrorAction SilentlyContinue
-	if ([string]::IsNullOrEmpty($User) -or [string]::IsNullOrEmpty($Password)) {
+	if ([string]::IsNullOrEmpty($User) -or [string]::IsNullOrEmpty($PasswordBase64)) {
 		# Connect without credentials (local/Windows authentication)
 		Connect-VBRServer -Server $VBRServer
 		Write-LogFile "Connected to VBR Server: $VBRServer (Windows Authentication)"
-	} else {
+	}
+ else {
 		# Connect with provided credentials (remote)
-		$securePassword = ConvertTo-SecureString -String $Password -AsPlainText -Force
+		# Decode Base64 password
+		$passwordBytes = [System.Convert]::FromBase64String($PasswordBase64)
+		$password = [System.Text.Encoding]::UTF8.GetString($passwordBytes)
+        
+		# Convert to SecureString and create credential
+		$securePassword = ConvertTo-SecureString -String $password -AsPlainText -Force
 		$credential = New-Object System.Management.Automation.PSCredential($User, $securePassword)
 		Connect-VBRServer -Server $VBRServer -Credential $credential
 		Write-LogFile "Connected to VBR Server: $VBRServer (Credential Authentication)"
 	}
-} catch {
+}
+catch {
 	Write-LogFile "Failed to connect to VBR Server: $VBRServer. Error: $($_.Exception.Message)" "Errors" "ERROR"
 	exit
 }
@@ -56,8 +63,8 @@ $sessions = Get-VBRBackupSession | Where-Object { $_.Info.CreationTime -ge $cuto
 $output = @()
 $i = 1
 foreach ($session in $sessions) {
-    Write-LogFile "Processing session $i of $($sessions.Count): Job '$($session.JobName)', VM '$($session.Name)'"
-    $i++
+	Write-LogFile "Processing session $i of $($sessions.Count): Job '$($session.JobName)', VM '$($session.Name)'"
+	$i++
 
 
 	$Bottleneck = $session.Logger.GetLog().UpdatedRecords | Where-Object Title -Match "Load"
@@ -67,22 +74,22 @@ foreach ($session in $sessions) {
 	$PrimaryBottleneck = if ($PrimaryBottleneckDetails) { $PrimaryBottleneckDetails.Title -replace 'Primary bottleneck: ', '' } else { '' }
 
 	$obj = [PSCustomObject]@{
-		JobName            = $session.JobName
-		VMName             = $session.Name
-		Status             = $session.Result
-		IsRetry            = $session.Info.IsRetryMode
-		ProcessingMode     = $session.ProcessingMode
-		JobDuration        = $session.Progress.Duration.ToString()
-		TaskDuration       = $session.WorkDetails.WorkDuration.ToString()
-		TaskAlgorithm      = $session.Info.SessionAlgorithm
-		CreationTime       = $session.Info.CreationTime
-		BackupSizeGB       = [math]::Round($session.BackupStats.BackupSize / 1GB, 2)
-		DataSizeGB         = [math]::Round($session.BackupStats.DataSize / 1GB, 2)
-		DedupRatio         = $session.BackupStats.DedupRatio
-		CompressRatio      = $session.BackupStats.CompressRatio
-		BottleneckDetails  = $BottleneckDetails
-		PrimaryBottleneck  = $PrimaryBottleneck
-		JobType            = $session.Platform.Platform
+		JobName           = $session.JobName
+		VMName            = $session.Name
+		Status            = $session.Result
+		IsRetry           = $session.Info.IsRetryMode
+		ProcessingMode    = $session.ProcessingMode
+		JobDuration       = $session.Progress.Duration.ToString()
+		TaskDuration      = $session.WorkDetails.WorkDuration.ToString()
+		TaskAlgorithm     = $session.Info.SessionAlgorithm
+		CreationTime      = $session.Info.CreationTime
+		BackupSizeGB      = [math]::Round($session.BackupStats.BackupSize / 1GB, 2)
+		DataSizeGB        = [math]::Round($session.BackupStats.DataSize / 1GB, 2)
+		DedupRatio        = $session.BackupStats.DedupRatio
+		CompressRatio     = $session.BackupStats.CompressRatio
+		BottleneckDetails = $BottleneckDetails
+		PrimaryBottleneck = $PrimaryBottleneck
+		JobType           = $session.Platform.Platform
 	}
 	$output += $obj
 }
@@ -90,7 +97,7 @@ foreach ($session in $sessions) {
 $csvPath = "C:\\temp\\vHC\\Original\\VBR\\VeeamSessionReport.csv"
 $csvDir = Split-Path -Path $csvPath -Parent
 if (-not (Test-Path $csvDir)) {
-    New-Item -Path $csvDir -ItemType Directory -Force | Out-Null
+	New-Item -Path $csvDir -ItemType Directory -Force | Out-Null
 }
 
 $output | Export-Csv -Path $csvPath -NoTypeInformation -Encoding UTF8
