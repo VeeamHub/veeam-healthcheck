@@ -12,12 +12,23 @@ namespace VeeamHealthCheck.Functions.CredsWindow
     {
         public (string Username, string Password)? GetCreds()
         {
+            // First, check if credentials were provided via command line
             if (!string.IsNullOrEmpty(CGlobals.CredsUsername) && !string.IsNullOrEmpty(CGlobals.CredsPassword))
             {
                 return (CGlobals.CredsUsername, CGlobals.CredsPassword);
             }
 
-            var creds = this.PromptForCredentials(CGlobals.REMOTEHOST);
+            // Second, check if we have stored credentials
+            string host = string.IsNullOrEmpty(CGlobals.REMOTEHOST) ? "localhost" : CGlobals.REMOTEHOST;
+            var stored = CredentialStore.Get(host);
+            if (stored != null)
+            {
+                CGlobals.Logger.Debug($"Using stored credentials for host: {host}");
+                return stored;
+            }
+
+            // Third, try to prompt for credentials (only if GUI available)
+            var creds = this.PromptForCredentials(host);
             if (creds == null)
             {
                 CGlobals.Logger.Error("Credentials not provided. Aborting MFA test.", false);
@@ -29,15 +40,6 @@ namespace VeeamHealthCheck.Functions.CredsWindow
 
         private (string Username, string Password)? PromptForCredentials(string host)
         {
-            if (CGlobals.UseStoredCreds)
-            {
-                var cached = CredentialStore.Get(host);
-                if (cached != null)
-                {
-                    return cached;
-                }
-            }
-
             // Check if GUI is available before attempting to show dialog
             if (!CGlobals.GUIEXEC || System.Windows.Application.Current == null)
             {
@@ -58,10 +60,9 @@ namespace VeeamHealthCheck.Functions.CredsWindow
                 if (dialog.ShowDialog() == true)
                 {
                     result = (dialog.Username, dialog.Password);
-                    if (CGlobals.UseStoredCreds)
-                    {
-                        CredentialStore.Set(host, dialog.Username, dialog.Password);
-                    }
+                    // Always store credentials for future use
+                    CredentialStore.Set(host, dialog.Username, dialog.Password);
+                    CGlobals.Logger.Debug($"Credentials stored for host: {host}");
                 }
             }
             else
@@ -76,10 +77,9 @@ namespace VeeamHealthCheck.Functions.CredsWindow
                     if (dialog.ShowDialog() == true)
                     {
                         result = (dialog.Username, dialog.Password);
-                        if (CGlobals.UseStoredCreds)
-                        {
-                            CredentialStore.Set(host, dialog.Username, dialog.Password);
-                        }
+                        // Always store credentials for future use
+                        CredentialStore.Set(host, dialog.Username, dialog.Password);
+                        CGlobals.Logger.Debug($"Credentials stored for host: {host}");
                     }
                 });
             }
