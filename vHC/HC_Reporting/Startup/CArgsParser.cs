@@ -31,7 +31,7 @@ namespace VeeamHealthCheck.Startup
             CGlobals.TOOLSTART = DateTime.Now;
         }
 
-        public int ParseArgs()
+        public int InitializeProgram()
         {
             // CGlobals.RunFullReport = true;
             this.LogInitialInfo();

@@ -40,6 +40,7 @@ namespace VeeamHealthCheck.Functions.Collection
                 this.ExecSecurityCollection();
             }
 
+            // main powershell execution point
             this.ExecPSScripts();
 
             // run diagnostic of CSV output and sizes, dump to logs:
@@ -207,21 +208,20 @@ namespace VeeamHealthCheck.Functions.Collection
 
         private void WeighSuccessContinuation()
         {
-            string error = "Script execution has failed. Exiting program. See log for details:\n\t " + CGlobals.Logger.logFile;
-
-            if (CGlobals.GUIEXEC && !this.SCRIPTSUCCESS)
+            if (this.SCRIPTSUCCESS)
             {
-                CGlobals.Logger.Error(error, false);
-
-                MessageBox.Show(error, "Error", button: MessageBoxButton.OK, icon: MessageBoxImage.Error, MessageBoxResult.Yes);
-
-                Environment.Exit(1);
+                return;
             }
-            else if (!this.SCRIPTSUCCESS)
+
+            string error = $"Script execution has failed. Exiting program. See log for details:\n\t {CGlobals.Logger.logFile}";
+            CGlobals.Logger.Error(error, false);
+
+            if (CGlobals.GUIEXEC)
             {
-                CGlobals.Logger.Error(error, false);
-                Environment.Exit(1);
+                MessageBox.Show(error, "Error", MessageBoxButton.OK, MessageBoxImage.Error);
             }
+
+            Environment.Exit(1);
         }
 
         private bool MfaTestPassed(PSInvoker p)
@@ -243,7 +243,14 @@ namespace VeeamHealthCheck.Functions.Collection
                 string pwshPath = @"C:\Program Files\PowerShell\7\pwsh.exe";
                 if (!File.Exists(pwshPath))
                 {
-                    CGlobals.Logger.Debug("PowerShell 7 not found at: " + pwshPath, false);
+                    // we have determined required PS Version in CGLobals earlier. If PowerShell 7 required and not found, log and return failure.
+                    if (CGlobals.PowerShellVersion == 7)
+                    {
+                        CGlobals.Logger.Debug("PowerShell 7 not found at: " + pwshPath, false);
+                        CGlobals.Logger.Error("PowerShell 7 is required but not found. MFA test cannot proceed.");
+
+                        return false;
+                    }
                 }
 
                 try
@@ -255,7 +262,7 @@ namespace VeeamHealthCheck.Functions.Collection
 
                     // Properly escape the password for PowerShell
                     string escapedPassword = CredentialHelper.EscapePasswordForPowerShell(creds.Value.Password);
-                    
+
                     // Build PowerShell arguments with properly escaped password using single quotes
                     string args = $"-NoProfile -ExecutionPolicy Bypass -File \"{scriptPath}\" -Server {CGlobals.REMOTEHOST} -Username '{creds.Value.Username}' -Password '{escapedPassword}'";
 
@@ -305,11 +312,12 @@ namespace VeeamHealthCheck.Functions.Collection
                     result = false;
                 }
 
-                if (!result)
+                if (!result && CGlobals.PowerShellVersion == 5)
                 {
-            CGlobals.Logger.Warning("Failing over to PowerShell 5", false);
 
-            this.RunLocalMfaCheck(p);
+                    CGlobals.Logger.Warning("Failing over to PowerShell 5", false);
+
+                    this.RunLocalMfaCheck(p);
                 }
 
                 return result;

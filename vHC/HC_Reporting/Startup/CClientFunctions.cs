@@ -258,11 +258,7 @@ namespace VeeamHealthCheck.Startup
                     CImpersonation cImpersonation = new CImpersonation();
                     cImpersonation.RunCollection();
                 }
-                else if (CGlobals.REMOTEEXEC)
-                {
-                    CCollections collect = new();
-                    collect.Run();
-                }
+
                 else
                 {
                     CCollections collect = new();
@@ -294,9 +290,6 @@ namespace VeeamHealthCheck.Startup
                 this.PreRunCheck();
             }
 
-            // GetVbrVersion();
-
-
             try // REST TEST AREA
             {
                 // RestInvoker restInvoker = new RestInvoker();
@@ -315,6 +308,8 @@ namespace VeeamHealthCheck.Startup
             {
             CRegReader reg = new();
             this.LOG.Info(this.logStart + "VBR Version: " + reg.GetVbrVersionFilePath(),  false);
+            CGlobals.PowerShellVersion = CGlobals.VBRMAJORVERSION >= 13 ? 7 : 5;
+            this.LOG.Info(this.logStart + "Using PowerShell version: " + CGlobals.PowerShellVersion.ToString(), false);
             }
             catch(Exception e) { }
         }

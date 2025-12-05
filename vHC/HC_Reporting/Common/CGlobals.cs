@@ -19,6 +19,7 @@ namespace VeeamHealthCheck.Shared
         public static bool IMPORT = false;
         public static int VBRMAJORVERSION;
         public static string VBRFULLVERSION;
+        public static int PowerShellVersion;
         public static DateTime TOOLSTART;
         public static bool REMOTEEXEC = false;
         public static string REMOTEHOST = string.Empty;

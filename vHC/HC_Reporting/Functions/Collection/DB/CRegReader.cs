@@ -80,15 +80,16 @@ namespace VeeamHealthCheck.Functions.Collection.DB
             string consoleInstallPath = @"C:\Program Files\Veeam\Backup and Replication\Console\Veeam.Backup.Core.dll";
 
             var coreVersion = FileVersionInfo.GetVersionInfo (consoleInstallPath).FileVersion;
-            this.log.Debug(this.logStart + "VBR Core Version: " + coreVersion);
+            this.log.Debug("[InstallDirectoryFileChecker]" + "VBR Core Version: " + coreVersion);
             if (!string.IsNullOrEmpty(coreVersion))
             {
                 CGlobals.VBRFULLVERSION = coreVersion;
                 this.ParseVbrMajorVersion(CGlobals.VBRFULLVERSION);
                 return coreVersion;
             }
-            
-            this.log.Info(this.logStart + "VBR Core Version not found in Console path, trying Mount Service path..."); 
+
+            log.Info("[InstallDirectoryFileChecker]" + "VBR Core Version not found in Console path, trying Mount Service path...");
+            log.Debug(this.logStart + "Checking Registry for VBR Core path via Mount Service key...");
             using (RegistryKey key =
                 Registry.LocalMachine.OpenSubKey("Software\\Veeam\\Veeam Mount Service"))
             {
