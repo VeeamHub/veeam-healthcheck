@@ -97,7 +97,9 @@ try {
   } else {
     # Connect with provided credentials (remote)
     Write-LogFile("Connecting to VBR Server with credentials: " + $VBRServer, "Main", "INFO")
-    Connect-VBRServer -Server $VBRServer -User $User -Password $Password
+    $securePassword = ConvertTo-SecureString -String $Password -AsPlainText -Force
+    $credential = New-Object System.Management.Automation.PSCredential($User, $securePassword)
+    Connect-VBRServer -Server $VBRServer -Credential $credential
   }
   Write-LogFile("Successfully connected to VBR Server: " + $VBRServer, "Main", "INFO")
 }

@@ -146,7 +146,10 @@ else {
 
 try {
     if ($useCreds) {
-        Connect-VBRServer -Server $VBRServer -User $User -Password $Password -ErrorAction Continue
+        # Convert password to SecureString and use PSCredential
+        $securePassword = ConvertTo-SecureString -String $Password -AsPlainText -Force
+        $credential = New-Object System.Management.Automation.PSCredential($User, $securePassword)
+        Connect-VBRServer -Server $VBRServer -Credential $credential -ErrorAction Continue
     }
     else {
         Connect-VBRServer -Server $VBRServer -ErrorAction Stop

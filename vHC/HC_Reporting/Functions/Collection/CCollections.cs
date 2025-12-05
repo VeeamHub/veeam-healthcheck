@@ -248,20 +248,20 @@ namespace VeeamHealthCheck.Functions.Collection
 
                 try
                 {
-                    // If not here, CGlobals.RemoteHost may not be set correctly -> 
                     if (string.IsNullOrEmpty(CGlobals.REMOTEHOST))
-            {
-                CGlobals.REMOTEHOST = "localhost";
-            }
-                    // Build PowerShell arguments to call the script with parameters
-                    string args =
-                        $"-NoProfile -ExecutionPolicy Bypass -File \"{scriptPath}\" -Server {CGlobals.REMOTEHOST} -Username {creds.Value.Username} -Password {creds.Value.Password}";
+                    {
+                        CGlobals.REMOTEHOST = "localhost";
+                    }
 
-                    // Ps7Executor ps7 = new();
-                    // ps7.LogPowerShellVersion();
+                    // Properly escape the password for PowerShell
+                    string escapedPassword = CredentialHelper.EscapePasswordForPowerShell(creds.Value.Password);
+                    
+                    // Build PowerShell arguments with properly escaped password using single quotes
+                    string args = $"-NoProfile -ExecutionPolicy Bypass -File \"{scriptPath}\" -Server {CGlobals.REMOTEHOST} -Username '{creds.Value.Username}' -Password '{escapedPassword}'";
+
                     var processInfo = new ProcessStartInfo
                     {
-                        FileName = pwshPath, // Use Windows PowerShell for Veeam module
+                        FileName = pwshPath,
                         Arguments = args,
                         RedirectStandardOutput = true,
                         RedirectStandardError = true,
@@ -269,8 +269,9 @@ namespace VeeamHealthCheck.Functions.Collection
                         CreateNoWindow = true
                     };
 
-                    // Log processInfo settings
-                    CGlobals.Logger.Debug($"ProcessStartInfo Settings:\n  FileName: {processInfo.FileName}\n  Arguments: {processInfo.Arguments}\n  RedirectStandardOutput: {processInfo.RedirectStandardOutput}\n  RedirectStandardError: {processInfo.RedirectStandardError}\n  UseShellExecute: {processInfo.UseShellExecute}\n  CreateNoWindow: {processInfo.CreateNoWindow}");
+                    // Log processInfo settings (but mask the password)
+                    string maskedArgs = args.Replace(escapedPassword, "****");
+                    CGlobals.Logger.Debug($"ProcessStartInfo Settings:\n  FileName: {processInfo.FileName}\n  Arguments: {maskedArgs}\n  RedirectStandardOutput: {processInfo.RedirectStandardOutput}\n  RedirectStandardError: {processInfo.RedirectStandardError}\n  UseShellExecute: {processInfo.UseShellExecute}\n  CreateNoWindow: {processInfo.CreateNoWindow}");
                     using var process = System.Diagnostics.Process.Start(processInfo);
                     string stdOut = process.StandardOutput.ReadToEnd();
                     string stdErr = process.StandardError.ReadToEnd();

@@ -23,10 +23,14 @@ if (Test-Path $veeamConsolePath) {
 Write-Verbose "Attempting to import Veeam.Backup.PowerShell module..."
 Import-Module Veeam.Backup.PowerShell -Force -WarningAction Ignore
     Write-Host "[VERBOSE] Attempting to import Veeam.Backup.PowerShell module..."
-    #Write-Host(Get-Module -ListAvailable )
     Import-Module Veeam.Backup.PowerShell  -Force -WarningAction Ignore
     Write-Host "[VERBOSE] Module imported. Attempting to connect to VBR Server: $Server with user $Username."
-    Connect-VBRServer -Server $Server -User $Username -Password $Password -ForceAcceptTlsCertificate -ErrorAction Stop
+
+    # Convert password to SecureString for better handling of special characters
+    $securePassword = ConvertTo-SecureString -String $Password -AsPlainText -Force
+    $credential = New-Object System.Management.Automation.PSCredential($Username, $securePassword)
+
+    Connect-VBRServer -Server $Server -Credential $credential -ForceAcceptTlsCertificate -ErrorAction Stop
     Write-Host "[VERBOSE] Successfully connected to VBR Server."
     exit 0
 } catch {

@@ -9,6 +9,7 @@ using System.Reflection;
 
 // using System.Management.Automation;
 using System.Runtime.InteropServices;
+using VeeamHealthCheck.Functions.Collection.Security;
 using VeeamHealthCheck.Functions.CredsWindow;
 using VeeamHealthCheck.Shared;
 using VeeamHealthCheck.Shared.Logging;
@@ -226,28 +227,36 @@ namespace VeeamHealthCheck.Functions.Collection.PSCollections
 
         public bool TestMfa()
         {
-            var res = new Process();
+                       var res = new Process();
             if (CGlobals.REMOTEHOST == string.Empty)
             {
                 CGlobals.REMOTEHOST = "localhost";
             }
 
+            try
+            {
+                CredsHandler ch = new();
+                var creds = ch.GetCreds();
+                
+                // Properly escape the password
+                string escapedPassword = CredentialHelper.EscapePasswordForPowerShell(creds.Value.Password);
+                
+                
+                ProcessStartInfo startInfo = new ProcessStartInfo
+                {
+                    FileName = "powershell.exe",
+                    // Use single quotes for the password to avoid interpretation of special characters
+                    Arguments = $"Import-Module Veeam.Backup.PowerShell; Connect-VBRServer -Server '{CGlobals.REMOTEHOST ?? "localhost"}' -User '{creds.Value.Username}' -Password '{escapedPassword}'",
+                    RedirectStandardOutput = true,
+                    RedirectStandardError = true,
+                    UseShellExecute = false,
+                    CreateNoWindow = true
+                };
 
-            string argString = $"Import-Module Veeam.Backup.PowerShell; Connect-VBRServer -Server \"{CGlobals.REMOTEHOST}\"";
-            if (!string.IsNullOrEmpty(CGlobals.CredsUsername) && !string.IsNullOrEmpty(CGlobals.CredsPassword))
-            {
-                argString += $" -User \"{CGlobals.CredsUsername}\" -Password \"{CGlobals.CredsPassword}\"";
-            }
-            var startInfo = new ProcessStartInfo()
-            {
-                FileName = "powershell.exe",
-                Arguments = argString,
-                RedirectStandardOutput = true,
-                RedirectStandardError = true,
-                UseShellExecute = false,
-                CreateNoWindow = true,
-            };
-            this.log.Info($"[TestMfa] Creating ProcessStartInfo for MFA test:");
+                // Log the command with masked password
+                CGlobals.Logger.Info("[TestMfa] Arguments: " + startInfo.Arguments.Replace(escapedPassword, "****"));
+                
+                            this.log.Info($"[TestMfa] Creating ProcessStartInfo for MFA test:");
             this.log.Info($"[TestMfa] FileName: {startInfo.FileName}");
             this.log.Info($"[TestMfa] Arguments: {startInfo.Arguments}");
             this.log.Info($"[TestMfa] RedirectStandardOutput: {startInfo.RedirectStandardOutput}");
@@ -294,12 +303,16 @@ namespace VeeamHealthCheck.Functions.Collection.PSCollections
             }
             catch (Exception ex)
             {
-                this.log.Error($"[TestMfa] Exception during PowerShell execution: {ex.Message}");
+                CGlobals.Logger.Error("Error in TestMfa: " + ex.Message);
+                return false;
             }
-
-            return true;
         }
-
+        catch (Exception ex)
+            {
+                CGlobals.Logger.Error("Error in TestMfa: " + ex.Message);
+                return false;
+            }
+        }
         public bool TestMfaVB365()
         {
             if (CGlobals.REMOTEHOST == string.Empty)

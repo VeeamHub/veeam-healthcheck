@@ -20,6 +20,11 @@ function Write-LogFile {
 		[string]$LogLevel = "INFO"
 	)
 	$outPath = "C:\\temp\\vHC\\Original\\Log\\VeeamSessionReport.log"
+	    # Ensure directory exists
+    $logDir = Split-Path -Path $outPath -Parent
+    if (-not (Test-Path $logDir)) {
+        New-Item -Path $logDir -ItemType Directory -Force | Out-Null
+    }
 	$line = (Get-Date).ToString("yyyy-MM-dd HH:mm:ss") + "`t" + $LogLevel + "`t`t" + $Message
 	Add-Content -Path $outPath -Value $line -Encoding UTF8
 }
@@ -33,7 +38,9 @@ try {
 		Write-LogFile "Connected to VBR Server: $VBRServer (Windows Authentication)"
 	} else {
 		# Connect with provided credentials (remote)
-		Connect-VBRServer -Server $VBRServer -User $User -Password $Password
+		$securePassword = ConvertTo-SecureString -String $Password -AsPlainText -Force
+		$credential = New-Object System.Management.Automation.PSCredential($User, $securePassword)
+		Connect-VBRServer -Server $VBRServer -Credential $credential
 		Write-LogFile "Connected to VBR Server: $VBRServer (Credential Authentication)"
 	}
 } catch {
@@ -80,5 +87,11 @@ foreach ($session in $sessions) {
 	$output += $obj
 }
 
-$output | Export-Csv -Path "C:\\temp\\vHC\\Original\\VBR\\VeeamSessionReport.csv" -NoTypeInformation -Encoding UTF8
+$csvPath = "C:\\temp\\vHC\\Original\\VBR\\VeeamSessionReport.csv"
+$csvDir = Split-Path -Path $csvPath -Parent
+if (-not (Test-Path $csvDir)) {
+    New-Item -Path $csvDir -ItemType Directory -Force | Out-Null
+}
 
+$output | Export-Csv -Path $csvPath -NoTypeInformation -Encoding UTF8
+Write-LogFile "Exported $($output.Count) sessions to $csvPath"
