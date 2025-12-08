@@ -46,6 +46,7 @@ namespace VeeamHealthCheck.Shared
         public static bool CHECKFIXES = false;
         public static bool EXPORTPDF = false;
         public static bool UseStoredCreds = false;
+        public static bool ClearStoredCreds = false;
         public static string CredsUsername = string.Empty;
         public static string CredsPassword = string.Empty;
 

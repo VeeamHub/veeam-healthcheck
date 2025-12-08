@@ -95,6 +95,7 @@ namespace VeeamHealthCheck
             this.scrubBox.Content = VbrLocalizationHelper.GuiSensData;
             this.explorerShowBox.Content = VbrLocalizationHelper.GuiShowFiles;
             this.pdfCheckBox.Content = "Export PDF";
+            this.clearCredsCheckBox.Content = "Clear Saved Credentials";
             this.outPath.Text = VbrLocalizationHelper.GuiOutPath;
             this.termsBtn.Content = VbrLocalizationHelper.GuiAcceptButton;
             this.run.Content = VbrLocalizationHelper.GuiRunButton;
@@ -181,6 +182,7 @@ namespace VeeamHealthCheck
             termsBtn.IsEnabled = false;
             importButton.IsEnabled = false;
             pathBox.IsEnabled = false;
+            clearCredsCheckBox.IsEnabled = false;
         }
 
         private void AcceptButton_click(object sender, RoutedEventArgs e)
@@ -244,6 +246,18 @@ namespace VeeamHealthCheck
         {
             this.functions.LogUIAction("Export PDF = false");
             CGlobals.EXPORTPDF = false;
+        }
+
+        private void clearCredsCheckBox_Checked(object sender, RoutedEventArgs e)
+        {
+            this.functions.LogUIAction("Clear Stored Creds = true");
+            CGlobals.ClearStoredCreds = true;
+        }
+
+        private void clearCredsCheckBox_Unchecked(object sender, RoutedEventArgs e)
+        {
+            this.functions.LogUIAction("Clear Stored Creds = false");
+            CGlobals.ClearStoredCreds = false;
         }
 
         #endregion

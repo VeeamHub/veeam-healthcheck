@@ -312,11 +312,16 @@ namespace VeeamHealthCheck.Startup
             CGlobals.PowerShellVersion = CGlobals.VBRMAJORVERSION >= 13 ? 7 : 5;
             this.LOG.Info(this.logStart + "Using PowerShell version: " + CGlobals.PowerShellVersion.ToString(), false);
             
-            // If PowerShell 7 is required, ensure we have credentials available
-            if (CGlobals.PowerShellVersion == 7)
+            // If PowerShell 7 is required AND we're doing remote execution, ensure we have credentials available
+            // For local VBR (IsVbr=true, REMOTEEXEC=false), credentials are NOT required - Windows auth is used
+            if (CGlobals.PowerShellVersion == 7 && CGlobals.REMOTEEXEC)
             {
-                this.LOG.Info(this.logStart + "PowerShell 7 requires credentials for VBR connection", false);
+                this.LOG.Info(this.logStart + "PowerShell 7 with remote execution requires credentials for VBR connection", false);
                 this.EnsureCredentialsAvailable();
+            }
+            else if (CGlobals.PowerShellVersion == 7)
+            {
+                this.LOG.Info(this.logStart + "PowerShell 7 detected, but local VBR will use Windows authentication (no credentials required)", false);
             }
             }
             catch(Exception) { }

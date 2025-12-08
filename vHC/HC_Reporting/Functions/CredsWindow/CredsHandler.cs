@@ -13,7 +13,16 @@ namespace VeeamHealthCheck.Functions.CredsWindow
         public (string Username, string Password)? GetCreds()
         {
             string host = string.IsNullOrEmpty(CGlobals.REMOTEHOST) ? "localhost" : CGlobals.REMOTEHOST;
-            
+
+            // Check if user requested to clear stored credentials
+            if (CGlobals.ClearStoredCreds)
+            {
+                CGlobals.Logger.Info("Clearing stored credentials as requested by user", false);
+                CredentialStore.Clear();
+                // Reset the flag so it doesn't clear again on subsequent calls
+                CGlobals.ClearStoredCreds = false;
+            }
+
             // First, check if credentials were provided via command line
             if (!string.IsNullOrEmpty(CGlobals.CredsUsername) && !string.IsNullOrEmpty(CGlobals.CredsPassword))
             {

@@ -555,27 +555,38 @@ namespace VeeamHealthCheck.Functions.Collection.PSCollections
                 CGlobals.REMOTEHOST = "localhost";
             }
 
+            // Determine if credentials are needed:
+            // - Only needed for remote execution (REMOTEEXEC flag is set)
+            // - Not needed for local VBR (IsVbr is true and REMOTEEXEC is false)
+            bool needsCredentials = CGlobals.REMOTEEXEC;
+
             string argString;
             if (days != 0)
             {
                 argString =
                     $"-NoProfile -ExecutionPolicy unrestricted -file \"{scriptLocation}\" -VBRServer \"{CGlobals.REMOTEHOST}\" -ReportInterval {CGlobals.ReportDays} ";
-                if (CGlobals.REMOTEEXEC)
+                if (needsCredentials)
                 {
                     CredsHandler ch = new();
                     var creds = ch.GetCreds();
-                    argString += $"-User {creds.Value.Username} -Password {creds.Value.Password} ";
+                    if (creds != null)
+                    {
+                        argString += $"-User {creds.Value.Username} -Password {creds.Value.Password} ";
+                    }
                 }
             }
             else
             {
                 argString =
                     $"-NoProfile -ExecutionPolicy unrestricted -file \"{scriptLocation}\" -VBRServer \"{CGlobals.REMOTEHOST}\" -VBRVersion \"{CGlobals.VBRMAJORVERSION}\" ";
-                if (CGlobals.REMOTEEXEC)
+                if (needsCredentials)
                 {
                     CredsHandler ch = new();
                     var creds = ch.GetCreds();
-                    argString += $"-User {creds.Value.Username} -Password {creds.Value.Password} ";
+                    if (creds != null)
+                    {
+                        argString += $"-User {creds.Value.Username} -Password {creds.Value.Password} ";
+                    }
                 }
             }
 

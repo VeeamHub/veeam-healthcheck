@@ -175,6 +175,10 @@ namespace VeeamHealthCheck.Startup
                         CGlobals.UseStoredCreds = true;
                         CGlobals.Logger.Info("Using stored credentials for remote connection", false);
                         break;
+                    case "/clearcreds":
+                        CGlobals.ClearStoredCreds = true;
+                        CGlobals.Logger.Info("Clear stored credentials flag set", false);
+                        break;
                     case var match when new Regex("/creds=.*").IsMatch(a):
                         string credsStr = this.ParsePath(a);
                         string[] parts = credsStr.Split(':');
