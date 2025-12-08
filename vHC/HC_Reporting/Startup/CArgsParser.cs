@@ -60,13 +60,6 @@ namespace VeeamHealthCheck.Startup
 
         private int LaunchUi(IntPtr handle, bool hide)
         {
-            if(CGlobals.VBRMAJORVERSION > 12)
-            {
-                // log message about GUI not supported for VBR 13+, re-run from CLI
-                CGlobals.Logger.Warning("GUI mode is not supported for Veeam Backup & Replication 13 and later. Please run from the command line interface.");
-                return 1;
-            }
-
             CGlobals.Logger.Info("Executing GUI", false);
             CGlobals.RunFullReport = true;
             CGlobals.GUIEXEC = true;

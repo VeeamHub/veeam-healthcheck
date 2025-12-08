@@ -52,44 +52,55 @@ namespace VeeamHealthCheck.Functions.CredsWindow
                 return null;
             }
 
-            // Show your WPF dialog here (or use your existing method)
-            (string Username, string Password)? result = null;
-            
-            // If we're on the UI thread, show the dialog directly
-            if (System.Windows.Application.Current?.MainWindow?.Dispatcher.CheckAccess() == true)
+            var app = System.Windows.Application.Current;
+            var dispatcher = app.Dispatcher;
+
+            if (dispatcher == null)
             {
-                var dialog = new CredentialPromptWindow(host)
-                {
-                    Owner = System.Windows.Application.Current?.MainWindow,
-                };
-                if (dialog.ShowDialog() == true)
-                {
-                    result = (dialog.Username, dialog.Password);
-                    // Always store credentials for future use
-                    CredentialStore.Set(host, dialog.Username, dialog.Password);
-                    CGlobals.Logger.Debug($"Credentials stored for host: {host}");
-                }
+                CGlobals.Logger.Warning("No dispatcher available for credential prompt.");
+                return null;
+            }
+
+            (string Username, string Password)? result = null;
+
+            // Always use the Application dispatcher to ensure we can show the dialog
+            // even if MainWindow is not yet set
+            if (dispatcher.CheckAccess())
+            {
+                // We're on the UI thread, show dialog directly
+                result = this.ShowCredentialDialog(host, app.MainWindow);
             }
             else
             {
-                // If we're on a background thread, marshal to the UI thread
-                System.Windows.Application.Current?.MainWindow?.Dispatcher.Invoke(() =>
+                // We're on a background thread, marshal to the UI thread
+                dispatcher.Invoke(() =>
                 {
-                    var dialog = new CredentialPromptWindow(host)
-                    {
-                        Owner = System.Windows.Application.Current?.MainWindow,
-                    };
-                    if (dialog.ShowDialog() == true)
-                    {
-                        result = (dialog.Username, dialog.Password);
-                        // Always store credentials for future use
-                        CredentialStore.Set(host, dialog.Username, dialog.Password);
-                        CGlobals.Logger.Debug($"Credentials stored for host: {host}");
-                    }
+                    result = this.ShowCredentialDialog(host, app.MainWindow);
                 });
             }
 
             return result;
+        }
+
+        private (string Username, string Password)? ShowCredentialDialog(string host, System.Windows.Window owner)
+        {
+            var dialog = new CredentialPromptWindow(host);
+
+            // Set owner if available (makes the dialog modal to the main window)
+            if (owner != null)
+            {
+                dialog.Owner = owner;
+            }
+
+            if (dialog.ShowDialog() == true)
+            {
+                // Store credentials for future use
+                CredentialStore.Set(host, dialog.Username, dialog.Password);
+                CGlobals.Logger.Debug($"Credentials stored for host: {host}");
+                return (dialog.Username, dialog.Password);
+            }
+
+            return null;
         }
     }
 }

@@ -325,36 +325,27 @@ namespace VeeamHealthCheck.Startup
         private void EnsureCredentialsAvailable()
         {
             string host = string.IsNullOrEmpty(CGlobals.REMOTEHOST) ? "localhost" : CGlobals.REMOTEHOST;
-            
+
             // Check if credentials are already stored for this host
             var storedCreds = CredentialStore.Get(host);
             if (storedCreds != null)
             {
-                this.LOG.Info(this.logStart + $"Using stored credentials for host: {host}", false);
+                this.LOG.Info(this.logStart + $"Stored credentials found for host: {host}", false);
                 return;
             }
 
-            // No stored credentials found
+            // No stored credentials found - log appropriate message based on mode
+            // Note: Don't try to prompt here during early initialization.
+            // The credential prompt will happen later when GetCreds() is called during collection,
+            // at which point the GUI will be fully initialized (if in GUI mode).
             if (!CGlobals.GUIEXEC)
             {
                 this.LOG.Warning(this.logStart + "No stored credentials found for PowerShell 7 connection.", false);
-                this.LOG.Warning(this.logStart + "Credentials will be required. Please run in GUI mode first to store credentials, or they will be prompted during MFA test.", false);
-                return;
-            }
-
-            // GUI is available, prompt for credentials now
-            this.LOG.Info(this.logStart + "No stored credentials found. Prompting for credentials...", false);
-            
-            CredsHandler credsHandler = new CredsHandler();
-            var creds = credsHandler.GetCreds();
-            
-            if (creds == null)
-            {
-                this.LOG.Warning(this.logStart + "No credentials provided. Credentials will be prompted during MFA test.", false);
+                this.LOG.Warning(this.logStart + "Credentials will be required. Please provide credentials via /creds=username:password parameter, or credentials will be prompted during collection.", false);
             }
             else
             {
-                this.LOG.Info(this.logStart + $"Credentials collected and stored for host: {host}", false);
+                this.LOG.Info(this.logStart + "No stored credentials found. Credentials will be prompted when collection starts.", false);
             }
         }
 
