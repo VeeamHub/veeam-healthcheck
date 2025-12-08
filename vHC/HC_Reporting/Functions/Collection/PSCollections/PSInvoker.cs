@@ -436,24 +436,27 @@ namespace VeeamHealthCheck.Functions.Collection.PSCollections
         private ProcessStartInfo VbrConfigStartInfo()
         {
             this.log.Info(CMessages.PsVbrConfigStart, false);
-            return this.ConfigStartInfo(this.vbrConfigScript, 0, string.Empty);
+            // Pass the VBR directory path which now includes server name and timestamp
+            return this.ConfigStartInfo(this.vbrConfigScript, 0, CVariables.vbrDir);
         }
 
         private ProcessStartInfo VbrNasStartInfo()
         {
             this.log.Info(string.Empty);
-            return this.ConfigStartInfo(this.nasScript, 0, string.Empty);
+            // Pass the VBR directory path which now includes server name and timestamp
+            return this.ConfigStartInfo(this.nasScript, 0, CVariables.vbrDir);
         }
 
         private ProcessStartInfo VbrSessionStartInfo()
         {
+            // Pass the VBR directory path which now includes server name and timestamp
             if (CGlobals.VBRMAJORVERSION == 13)
             {
-                return this.ConfigStartInfo(this.vbrSessionScriptVersion13, CGlobals.ReportDays, string.Empty);
+                return this.ConfigStartInfo(this.vbrSessionScriptVersion13, CGlobals.ReportDays, CVariables.vbrDir);
             }
             else
             {
-                return this.ConfigStartInfo(this.vbrSessionScript, CGlobals.ReportDays, string.Empty);
+                return this.ConfigStartInfo(this.vbrSessionScript, CGlobals.ReportDays, CVariables.vbrDir);
             }
         }
 
@@ -577,6 +580,11 @@ namespace VeeamHealthCheck.Functions.Collection.PSCollections
             {
                 argString =
                     $"-NoProfile -ExecutionPolicy unrestricted -file \"{scriptLocation}\" -VBRServer \"{CGlobals.REMOTEHOST}\" -ReportInterval {CGlobals.ReportDays} ";
+                // Add ReportPath parameter if provided
+                if (!string.IsNullOrEmpty(path))
+                {
+                    argString += $"-ReportPath \"{path}\" ";
+                }
                 if (needsCredentials)
                 {
                     CredsHandler ch = new();
@@ -594,6 +602,11 @@ namespace VeeamHealthCheck.Functions.Collection.PSCollections
             {
                 argString =
                     $"-NoProfile -ExecutionPolicy unrestricted -file \"{scriptLocation}\" -VBRServer \"{CGlobals.REMOTEHOST}\" -VBRVersion \"{CGlobals.VBRMAJORVERSION}\" ";
+                // Add ReportPath parameter if provided
+                if (!string.IsNullOrEmpty(path))
+                {
+                    argString += $"-ReportPath \"{path}\" ";
+                }
                 if (needsCredentials)
                 {
                     CredsHandler ch = new();
@@ -606,11 +619,6 @@ namespace VeeamHealthCheck.Functions.Collection.PSCollections
                         argString += $"-User \"{creds.Value.Username}\" -PasswordBase64 \"{passwordBase64}\" ";
                     }
                 }
-            }
-
-            if (!string.IsNullOrEmpty(path))
-            {
-                argString = $"-NoProfile -ExecutionPolicy unrestricted -file \"{scriptLocation}\" -ReportPath \"{path}\"";
             }
 
             this.log.Debug(this.logStart + "PS ArgString = " + argString, false);

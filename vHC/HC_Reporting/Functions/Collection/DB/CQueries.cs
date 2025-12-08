@@ -62,7 +62,8 @@ namespace VeeamHealthCheck.Functions.Collection.DB
 
         private void DumpDataToCsv(DataTable data)
         {
-            using (StreamWriter sw = new StreamWriter(CVariables.vbrDir + @"\localhost_bjobs.csv", false))
+            string serverName = string.IsNullOrEmpty(CGlobals.REMOTEHOST) ? "localhost" : CGlobals.REMOTEHOST;
+            using (StreamWriter sw = new StreamWriter(Path.Combine(CVariables.vbrDir, $"{serverName}_bjobs.csv"), false))
             {
                 // headers    
                 for (int i = 0; i < data.Columns.Count; i++)

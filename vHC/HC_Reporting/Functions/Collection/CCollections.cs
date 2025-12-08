@@ -161,6 +161,13 @@ namespace VeeamHealthCheck.Functions.Collection
                 {
                     if (CGlobals.IsVbr || CGlobals.REMOTEEXEC)
                     {
+                        // Ensure VBR output directory exists (with server name and timestamp)
+                        if (!Directory.Exists(CVariables.vbrDir))
+                        {
+                            Directory.CreateDirectory(CVariables.vbrDir);
+                            CGlobals.Logger.Debug($"Created VBR directory: {CVariables.vbrDir}");
+                        }
+
                         CGlobals.Logger.Info("Checking VBR MFA Access...", false);
                         if (this.MfaTestPassed(p))
                         {

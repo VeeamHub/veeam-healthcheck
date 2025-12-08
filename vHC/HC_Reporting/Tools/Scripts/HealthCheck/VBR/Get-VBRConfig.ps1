@@ -26,12 +26,15 @@ param(
     [Parameter(Mandatory = $false)]
     [string]$PasswordBase64 = "",
     [Parameter(Mandatory = $false)]
-    [bool]$RemoteExecution = $false
-    # [Parameter(Mandatory)]
-    # [string]$ReportPath,
-    # [int]$ReportingIntervalDays = -1
+    [bool]$RemoteExecution = $false,
+    [Parameter(Mandatory = $false)]
+    [string]$ReportPath = ""
 )
-$ReportPath = 'C:\temp\vHC\Original\VBR'
+# If ReportPath not provided, use default with server name and timestamp structure
+if ([string]::IsNullOrEmpty($ReportPath)) {
+    $timestamp = Get-Date -Format "yyyyMMdd_HHmmss"
+    $ReportPath = "C:\temp\vHC\Original\VBR\$VBRServer\$timestamp"
+}
 $logDir = "C:\temp\vHC\Original\Log\"
 $logFile = $logDir + "VBRConfigScript.log"
 if (!(Test-Path $logfile)) { New-Item -type Directory $logDir -ErrorAction SilentlyContinue; new-item -type file $logfile }
