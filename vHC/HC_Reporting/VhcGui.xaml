@@ -91,6 +91,12 @@ MIT License
                   Checked="pdfCheckBox_Checked" Unchecked="pdfCheckBox_Unchecked"
                   IsChecked="False"
                   ></CheckBox>
+        <CheckBox x:Name="clearCredsCheckBox"  HorizontalAlignment="Left"
+                  Margin="0,310,0,0" VerticalAlignment="Top" IsThreeState="False"
+                  Checked="clearCredsCheckBox_Checked" Unchecked="clearCredsCheckBox_Unchecked"
+                  IsChecked="False"
+                  ToolTip="Check this option to clear any previously saved credentials before running. Use this if you entered incorrect credentials previously."
+                  ></CheckBox>
         <TextBlock Name="outPath" Height="15" Width="75" HorizontalAlignment="Left" Margin="0,324,0,86"></TextBlock>
         <TextBox x:Name="pathBox" Height="20" Width="260"  TextChanged="pathBox_TextChanged" Margin="77,320,3,85"></TextBox>
         <ComboBox Name="daysSelector" HorizontalAlignment="Left" Margin="220,239,0,0" VerticalAlignment="Top" Width="120" SelectionChanged="ComboBox_SelectionChanged">

@@ -80,36 +80,64 @@ namespace VeeamHealthCheck.Functions.Collection.DB
             string consoleInstallPath = @"C:\Program Files\Veeam\Backup and Replication\Console\Veeam.Backup.Core.dll";
 
             var coreVersion = FileVersionInfo.GetVersionInfo (consoleInstallPath).FileVersion;
-            this.log.Debug(this.logStart + "VBR Core Version: " + coreVersion);
+            this.log.Debug("[InstallDirectoryFileChecker]" + "VBR Core Version: " + coreVersion);
             if (!string.IsNullOrEmpty(coreVersion))
             {
                 CGlobals.VBRFULLVERSION = coreVersion;
                 this.ParseVbrMajorVersion(CGlobals.VBRFULLVERSION);
                 return coreVersion;
             }
-            
-            this.log.Info(this.logStart + "VBR Core Version not found in Console path, trying Mount Service path..."); 
-            using (RegistryKey key =
-                Registry.LocalMachine.OpenSubKey("Software\\Veeam\\Veeam Mount Service"))
+
+            log.Info("[InstallDirectoryFileChecker]" + "VBR Core Version not found in Console path, trying Mount Service path...");
+            log.Debug(this.logStart + "Checking Registry for VBR Core path via Mount Service key...");
+            try
             {
-                var keyValue = key.GetValue("InstallationPath");
-                string path = string.Empty;
-                if (keyValue != null)
+                using (RegistryKey key =
+                    Registry.LocalMachine.OpenSubKey("Software\\Veeam\\Veeam Mount Service"))
                 {
-                    path = keyValue.ToString();
+                    var keyValue = key.GetValue("InstallationPath");
+                    string path = string.Empty;
+                    if (keyValue != null)
+                    {
+                        path = keyValue.ToString();
+                    }
+                    else
+                    {
+                        this.log.Error(this.logStart + "Failed to get VBR Core path from Mount Service registry key.");
+                        return null;
+                    }
+
+                    // string path = key.GetValue("CorePath").ToString();
+                    // FileInfo dllInfo = new FileInfo(path + "\\Packages\\VeeamDeploymentDll.dll");
+                    var version = FileVersionInfo.GetVersionInfo(path + "\\Veeam.Backup.Core.dll");
+                    CGlobals.VBRFULLVERSION = version.FileVersion;
+                    this.ParseVbrMajorVersion(CGlobals.VBRFULLVERSION);
+                    return CGlobals.VBRFULLVERSION;
+                }
+            }
+            catch (System.Security.SecurityException ex)
+            {
+                if (CGlobals.RunningWithoutAdmin)
+                {
+                    this.log.Warning(this.logStart + "Registry access denied (running without admin). Cannot determine VBR version from Mount Service registry.");
+                    return null;
                 }
                 else
                 {
-                    this.log.Error(this.logStart + "Failed to get VBR Core path from Mount Service registry key.");
+                    throw;
+                }
+            }
+            catch (UnauthorizedAccessException ex)
+            {
+                if (CGlobals.RunningWithoutAdmin)
+                {
+                    this.log.Warning(this.logStart + "Registry access denied (running without admin). Cannot determine VBR version from Mount Service registry.");
                     return null;
                 }
-
-                // string path = key.GetValue("CorePath").ToString();
-                // FileInfo dllInfo = new FileInfo(path + "\\Packages\\VeeamDeploymentDll.dll");
-                var version = FileVersionInfo.GetVersionInfo(path + "\\Veeam.Backup.Core.dll");
-                CGlobals.VBRFULLVERSION = version.FileVersion;
-                this.ParseVbrMajorVersion(CGlobals.VBRFULLVERSION);
-                return CGlobals.VBRFULLVERSION;
+                else
+                {
+                    throw;
+                }
             }
         }
 
@@ -159,10 +187,35 @@ namespace VeeamHealthCheck.Functions.Collection.DB
 
         private void GetVbrElevenDbInfo()
         {
-            using (RegistryKey key =
-                Registry.LocalMachine.OpenSubKey("Software\\Veeam\\Veeam Backup and Replication"))
+            try
             {
-                this.SetSqlInfo(key);
+                using (RegistryKey key =
+                    Registry.LocalMachine.OpenSubKey("Software\\Veeam\\Veeam Backup and Replication"))
+                {
+                    this.SetSqlInfo(key);
+                }
+            }
+            catch (System.Security.SecurityException ex)
+            {
+                if (CGlobals.RunningWithoutAdmin)
+                {
+                    this.log.Warning(this.logStart + "Registry access denied (running without admin). Skipping VBR v11 DB info collection.");
+                }
+                else
+                {
+                    throw;
+                }
+            }
+            catch (UnauthorizedAccessException ex)
+            {
+                if (CGlobals.RunningWithoutAdmin)
+                {
+                    this.log.Warning(this.logStart + "Registry access denied (running without admin). Skipping VBR v11 DB info collection.");
+                }
+                else
+                {
+                    throw;
+                }
             }
         }
 
@@ -301,54 +354,56 @@ namespace VeeamHealthCheck.Functions.Collection.DB
 
         private void GetVbrTwelveDbInfo()
         {
-            using (RegistryKey key = Registry.LocalMachine.OpenSubKey("Software\\Veeam\\Veeam Backup and Replication\\DatabaseConfigurations"))
+            try
             {
-                string host = string.Empty;
-
-                if (key != null)
+                using (RegistryKey key = Registry.LocalMachine.OpenSubKey("Software\\Veeam\\Veeam Backup and Replication\\DatabaseConfigurations"))
                 {
-                    var dbType = key.GetValue("SqlActiveConfiguration").ToString();
-                    this.log.Info(this.logStart + "DB Type = " + dbType);
-                    if (dbType == "MsSql")
+                    string host = string.Empty;
+
+                    if (key != null)
                     {
-                        CGlobals.DBTYPE = CGlobals.SqlTypeName;
-
-                        using (RegistryKey sqlKey = Registry.LocalMachine.OpenSubKey("Software\\Veeam\\Veeam Backup and Replication\\DatabaseConfigurations\\MsSql"))
-
-                        // using (RegistryKey sqlKey = RegistryKey.OpenRemoteBaseKey(RegistryHive.LocalMachine, CGlobals.REMOTEHOST).OpenSubKey("Software\\Veeam\\Veeam Backup and Replication\\DatabaseConfigurations\\MsSql"))
+                        var dbType = key.GetValue("SqlActiveConfiguration").ToString();
+                        this.log.Info(this.logStart + "DB Type = " + dbType);
+                        if (dbType == "MsSql")
                         {
-                            this.SetSqlInfo(sqlKey);
+                            CGlobals.DBTYPE = CGlobals.SqlTypeName;
 
-                            host = sqlKey.GetValue("SqlServerName").ToString();
-                            if (host == "localhost")
+                            using (RegistryKey sqlKey = Registry.LocalMachine.OpenSubKey("Software\\Veeam\\Veeam Backup and Replication\\DatabaseConfigurations\\MsSql"))
+
+                            // using (RegistryKey sqlKey = RegistryKey.OpenRemoteBaseKey(RegistryHive.LocalMachine, CGlobals.REMOTEHOST).OpenSubKey("Software\\Veeam\\Veeam Backup and Replication\\DatabaseConfigurations\\MsSql"))
                             {
-                                CGlobals.ISDBLOCAL = "True";
+                                this.SetSqlInfo(sqlKey);
+
+                                host = sqlKey.GetValue("SqlServerName").ToString();
+                                if (host == "localhost")
+                                {
+                                    CGlobals.ISDBLOCAL = "True";
+                                }
+
+
+                                CGlobals.DBHOSTNAME = host;
+
+                                // CGlobals.DBINSTANCE = key.GetValue("SqlInstanceName").ToString();
+
+                                // SqlInstanceName
+                                // SqlDatabaseName
                             }
-
-
-                            CGlobals.DBHOSTNAME = host;
-
-                            // CGlobals.DBINSTANCE = key.GetValue("SqlInstanceName").ToString();
-
-                            // SqlInstanceName
-                            // SqlDatabaseName
                         }
-                    }
-                    else if (dbType == "PostgreSql")
-                    {
-                        CGlobals.DBTYPE = CGlobals.PgTypeName;
-                        using (RegistryKey pgKey = Registry.LocalMachine.OpenSubKey("Software\\Veeam\\Veeam Backup and Replication\\DatabaseConfigurations\\PostgreSql"))
+                        else if (dbType == "PostgreSql")
                         {
-                            host = pgKey.GetValue("SqlHostName").ToString();
-                            if (host == "localhost")
+                            CGlobals.DBTYPE = CGlobals.PgTypeName;
+                            using (RegistryKey pgKey = Registry.LocalMachine.OpenSubKey("Software\\Veeam\\Veeam Backup and Replication\\DatabaseConfigurations\\PostgreSql"))
                             {
-                                CGlobals.ISDBLOCAL = "True";
+                                host = pgKey.GetValue("SqlHostName").ToString();
+                                if (host == "localhost")
+                                {
+                                    CGlobals.ISDBLOCAL = "True";
+                                }
+
+
+                                CGlobals.DBHOSTNAME = host;
                             }
-
-
-                            CGlobals.DBHOSTNAME = host;
                         }
-                    }
 
                     // var database =
                     //    key.GetValue("SqlDatabaseName")
@@ -364,6 +419,29 @@ namespace VeeamHealthCheck.Functions.Collection.DB
                     //        _hostInstanceString = host + "\\" + instance;
                     //    }
                     // }
+                    }
+                }
+            }
+            catch (System.Security.SecurityException ex)
+            {
+                if (CGlobals.RunningWithoutAdmin)
+                {
+                    this.log.Warning(this.logStart + "Registry access denied (running without admin). Skipping VBR v12 DB info collection.");
+                }
+                else
+                {
+                    throw;
+                }
+            }
+            catch (UnauthorizedAccessException ex)
+            {
+                if (CGlobals.RunningWithoutAdmin)
+                {
+                    this.log.Warning(this.logStart + "Registry access denied (running without admin). Skipping VBR v12 DB info collection.");
+                }
+                else
+                {
+                    throw;
                 }
             }
         }
@@ -392,18 +470,43 @@ namespace VeeamHealthCheck.Functions.Collection.DB
         public Dictionary<string, Object> DefaultVbrKeys()
         {
             Dictionary<string, Object> keys = new();
-            using (RegistryKey key =
-                Registry.LocalMachine.OpenSubKey("Software\\Veeam\\Veeam Backup and Replication"))
+            try
             {
-                if (key != null)
+                using (RegistryKey key =
+                    Registry.LocalMachine.OpenSubKey("Software\\Veeam\\Veeam Backup and Replication"))
                 {
-                    string[] values = key.GetValueNames();
-                    foreach (var name in values)
+                    if (key != null)
                     {
-                        keys.Add(name, key.GetValue(name));
+                        string[] values = key.GetValueNames();
+                        foreach (var name in values)
+                        {
+                            keys.Add(name, key.GetValue(name));
 
-                        // var vTest = key.GetValue(name);
+                            // var vTest = key.GetValue(name);
+                        }
                     }
+                }
+            }
+            catch (System.Security.SecurityException ex)
+            {
+                if (CGlobals.RunningWithoutAdmin)
+                {
+                    this.log.Warning(this.logStart + "Registry access denied (running without admin). Skipping default VBR keys collection.");
+                }
+                else
+                {
+                    throw;
+                }
+            }
+            catch (UnauthorizedAccessException ex)
+            {
+                if (CGlobals.RunningWithoutAdmin)
+                {
+                    this.log.Warning(this.logStart + "Registry access denied (running without admin). Skipping default VBR keys collection.");
+                }
+                else
+                {
+                    throw;
                 }
             }
 
@@ -413,34 +516,61 @@ namespace VeeamHealthCheck.Functions.Collection.DB
         public string DefaultLogDir()
         {
             var logDir = "C:\\ProgramData\\Veeam\\Backup";
-            using (RegistryKey key =
-                Registry.LocalMachine.OpenSubKey("Software\\Veeam\\Veeam Backup and Replication"))
+            try
             {
-                string dir = null;
-
-                if (key != null)
+                using (RegistryKey key =
+                    Registry.LocalMachine.OpenSubKey("Software\\Veeam\\Veeam Backup and Replication"))
                 {
-                    // dir = key.GetValue("LogDirectory").ToString();
-                    string[] v = key.GetValueNames();
-                    foreach (var x in v)
-                    {
-                        if (x == "LogDirectory")
-                        {
-                            dir = key.GetValue("LogDirectory").ToString();
-                            break;
-                        }
-                        else
-                        {
-                            dir = logDir;
-                        }
-                    }
+                    string dir = null;
 
-                    return dir;
+                    if (key != null)
+                    {
+                        // dir = key.GetValue("LogDirectory").ToString();
+                        string[] v = key.GetValueNames();
+                        foreach (var x in v)
+                        {
+                            if (x == "LogDirectory")
+                            {
+                                dir = key.GetValue("LogDirectory").ToString();
+                                break;
+                            }
+                            else
+                            {
+                                dir = logDir;
+                            }
+                        }
+
+                        return dir;
+                    }
+                    else
+                    {
+                        logDir = dir;
+                        return logDir;
+                    }
+                }
+            }
+            catch (System.Security.SecurityException ex)
+            {
+                if (CGlobals.RunningWithoutAdmin)
+                {
+                    this.log.Warning(this.logStart + "Registry access denied (running without admin). Using default log directory: " + logDir);
+                    return logDir;
                 }
                 else
                 {
-                    logDir = dir;
+                    throw;
+                }
+            }
+            catch (UnauthorizedAccessException ex)
+            {
+                if (CGlobals.RunningWithoutAdmin)
+                {
+                    this.log.Warning(this.logStart + "Registry access denied (running without admin). Using default log directory: " + logDir);
                     return logDir;
+                }
+                else
+                {
+                    throw;
                 }
             }
         }

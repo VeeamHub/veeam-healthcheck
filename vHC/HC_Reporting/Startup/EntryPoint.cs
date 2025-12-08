@@ -23,7 +23,7 @@ namespace VeeamHealthCheck.Startup
             try
             {
                 CArgsParser ap = new(args);
-                var res =  ap.ParseArgs();
+                var res =  ap.InitializeProgram();
                 CGlobals.Logger.Info("The result is: " + res, true);
                 return 0;
             }

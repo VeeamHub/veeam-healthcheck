@@ -332,7 +332,8 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR
         {
             this.log.Info(this.logStart + ">>> ENTERING LoadCsvToMemory() method <<<");
             this.log.Info(this.logStart + "Building CSV file path...");
-            string file = Path.Combine(CVariables.vbrDir, "localhost_vbrinfo.csv");
+            string serverName = string.IsNullOrEmpty(CGlobals.REMOTEHOST) ? "localhost" : CGlobals.REMOTEHOST;
+            string file = Path.Combine(CVariables.vbrDir, $"{serverName}_vbrinfo.csv");
             this.log.Info("looking for VBR CSV at: " + file);
             this.log.Info(this.logStart + "About to call CCsvsInMemory.GetCsvData()...");
             var res = CCsvsInMemory.GetCsvData(file);

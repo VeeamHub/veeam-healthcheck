@@ -9,6 +9,7 @@ using System.Reflection;
 
 // using System.Management.Automation;
 using System.Runtime.InteropServices;
+using VeeamHealthCheck.Functions.Collection.Security;
 using VeeamHealthCheck.Functions.CredsWindow;
 using VeeamHealthCheck.Shared;
 using VeeamHealthCheck.Shared.Logging;
@@ -232,74 +233,86 @@ namespace VeeamHealthCheck.Functions.Collection.PSCollections
                 CGlobals.REMOTEHOST = "localhost";
             }
 
-
-            string argString = $"Import-Module Veeam.Backup.PowerShell; Connect-VBRServer -Server \"{CGlobals.REMOTEHOST}\"";
-            if (!string.IsNullOrEmpty(CGlobals.CredsUsername) && !string.IsNullOrEmpty(CGlobals.CredsPassword))
-            {
-                argString += $" -User \"{CGlobals.CredsUsername}\" -Password \"{CGlobals.CredsPassword}\"";
-            }
-            var startInfo = new ProcessStartInfo()
-            {
-                FileName = "powershell.exe",
-                Arguments = argString,
-                RedirectStandardOutput = true,
-                RedirectStandardError = true,
-                UseShellExecute = false,
-                CreateNoWindow = true,
-            };
-            this.log.Info($"[TestMfa] Creating ProcessStartInfo for MFA test:");
-            this.log.Info($"[TestMfa] FileName: {startInfo.FileName}");
-            this.log.Info($"[TestMfa] Arguments: {startInfo.Arguments}");
-            this.log.Info($"[TestMfa] RedirectStandardOutput: {startInfo.RedirectStandardOutput}");
-            this.log.Info($"[TestMfa] RedirectStandardError: {startInfo.RedirectStandardError}");
-            this.log.Info($"[TestMfa] UseShellExecute: {startInfo.UseShellExecute}");
-            this.log.Info($"[TestMfa] CreateNoWindow: {startInfo.CreateNoWindow}");
-            this.log.Info("[TestMfa] Starting PowerShell process for MFA test...");
             try
             {
-                res.StartInfo = startInfo;
-                res.Start();
-                this.log.Info($"[TestMfa] PowerShell process started. PID: {res.Id}");
+                CredsHandler ch = new();
+                var creds = ch.GetCreds();
 
-                res.WaitForExit();
-                this.log.Info($"[TestMfa] PowerShell process exited with code: {res.ExitCode}");
+                // Properly escape the password
+                string escapedPassword = CredentialHelper.EscapePasswordForPowerShell(creds.Value.Password);
 
-                string stdOut = res.StandardOutput.ReadToEnd();
-                string stdErr = res.StandardError.ReadToEnd();
 
-                this.log.Debug($"[TestMfa] STDOUT: {stdOut}");
-                this.log.Debug($"[TestMfa] STDERR: {stdErr}");
-
-                List<string> errorarray = new();
-
-                bool mfaFound = true;
-                string errString = string.Empty;
-                while ((errString = res.StandardError.ReadLine()) != null)
+                ProcessStartInfo startInfo = new ProcessStartInfo
                 {
-                    var errResults = this.ParseErrors(errString);
-                    if (!errResults.Success)
+                    FileName = "powershell.exe",
+                    // Use single quotes for the password to avoid interpretation of special characters
+                    Arguments = $"Import-Module Veeam.Backup.PowerShell; Connect-VBRServer -Server '{CGlobals.REMOTEHOST ?? "localhost"}' -User '{creds.Value.Username}' -Password '{escapedPassword}'",
+                    RedirectStandardOutput = true,
+                    RedirectStandardError = true,
+                    UseShellExecute = false,
+                    CreateNoWindow = true
+                };
+
+                // Log the command with masked password
+                CGlobals.Logger.Info("[TestMfa] Arguments: " + startInfo.Arguments.Replace(escapedPassword, "****"));
+
+                this.log.Info($"[TestMfa] Creating ProcessStartInfo for MFA test:");
+                this.log.Info($"[TestMfa] FileName: {startInfo.FileName}");
+                this.log.Info($"[TestMfa] Arguments: {startInfo.Arguments}");
+                this.log.Info($"[TestMfa] RedirectStandardOutput: {startInfo.RedirectStandardOutput}");
+                this.log.Info($"[TestMfa] RedirectStandardError: {startInfo.RedirectStandardError}");
+                this.log.Info($"[TestMfa] UseShellExecute: {startInfo.UseShellExecute}");
+                this.log.Info($"[TestMfa] CreateNoWindow: {startInfo.CreateNoWindow}");
+                this.log.Info("[TestMfa] Starting PowerShell process for MFA test...");
+                try
+                {
+                    res.StartInfo = startInfo;
+                    res.Start();
+                    this.log.Info($"[TestMfa] PowerShell process started. PID: {res.Id}");
+
+                    res.WaitForExit();
+                    this.log.Info($"[TestMfa] PowerShell process exited with code: {res.ExitCode}");
+
+                    string stdOut = res.StandardOutput.ReadToEnd();
+                    string stdErr = res.StandardError.ReadToEnd();
+
+                    this.log.Debug($"[TestMfa] STDOUT: {stdOut}");
+                    this.log.Debug($"[TestMfa] STDERR: {stdErr}");
+
+                    List<string> errorarray = new();
+
+                    bool mfaFound = true;
+                    string errString = string.Empty;
+                    while ((errString = res.StandardError.ReadLine()) != null)
                     {
-                        this.log.Error(errString, false);
-                        this.log.Error(errResults.Message);
-                        mfaFound = true;
-                        return mfaFound;
+                        var errResults = this.ParseErrors(errString);
+                        if (!errResults.Success)
+                        {
+                            this.log.Error(errString, false);
+                            this.log.Error(errResults.Message);
+                            mfaFound = true;
+                            return mfaFound;
+                        }
+
+                        errorarray.Add(errString);
                     }
 
-                    errorarray.Add(errString);
+                    this.PushPsErrorsToMainLog(errorarray);
+
+                    return mfaFound;
                 }
-
-                this.PushPsErrorsToMainLog(errorarray);
-
-                return mfaFound;
+                catch (Exception ex)
+                {
+                    CGlobals.Logger.Error("Error in TestMfa: " + ex.Message);
+                    return false;
+                }
             }
             catch (Exception ex)
             {
-                this.log.Error($"[TestMfa] Exception during PowerShell execution: {ex.Message}");
+                CGlobals.Logger.Error("Error in TestMfa: " + ex.Message);
+                return false;
             }
-
-            return true;
         }
-
         public bool TestMfaVB365()
         {
             if (CGlobals.REMOTEHOST == string.Empty)
@@ -339,29 +352,43 @@ namespace VeeamHealthCheck.Functions.Collection.PSCollections
 
             this.log.Info("[PS] Script execution started. PID: " + res1.Id.ToString(), false);
 
-            if (res1 != null && !res1.HasExited)
+            // Read output streams asynchronously to prevent deadlocks
+            string stdOut = res1.StandardOutput.ReadToEnd();
+            string stdErr = res1.StandardError.ReadToEnd();
+
+            // Wait for process to complete (with timeout)
+            bool exited = res1.WaitForExit(300000); // 5 minute timeout
+            if (!exited)
             {
-                res1.WaitForExit();
+                this.log.Error("[PS] Script execution timeout after 5 minutes", false);
+                try { res1.Kill(); } catch { }
+                return false;
             }
 
-
-            List<string> errorarray = new();
-
-            bool failed = false;
-            string errString = string.Empty;
-            while ((errString = res1.StandardError.ReadLine()) != null)
+            // Log stdout if present
+            if (!string.IsNullOrWhiteSpace(stdOut))
             {
-                var errResults = this.ParseErrors(errString);
-                if (!errResults.Success)
+                this.log.Debug($"[PS][STDOUT] {stdOut}", false);
+            }
+
+            // Process stderr
+            List<string> errorarray = new();
+            bool failed = false;
+            
+            if (!string.IsNullOrWhiteSpace(stdErr))
+            {
+                string[] errLines = stdErr.Split(new[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries);
+                foreach (string errString in errLines)
                 {
-                    this.log.Error(errString, false);
-                    this.log.Error(errResults.Message);
-                    failed = true;
-
-                    // return false;
+                    var errResults = this.ParseErrors(errString);
+                    if (!errResults.Success)
+                    {
+                        this.log.Error(errString, false);
+                        this.log.Error(errResults.Message);
+                        failed = true;
+                    }
+                    errorarray.Add(errString);
                 }
-
-                errorarray.Add(errString);
             }
 
             if (errorarray.Count > 0)
@@ -369,17 +396,15 @@ namespace VeeamHealthCheck.Functions.Collection.PSCollections
                 this.PushPsErrorsToMainLog(errorarray);
             }
 
+            // Check exit code
+            if (res1.ExitCode != 0)
+            {
+                this.log.Error($"[PS] Script failed with exit code: {res1.ExitCode}", false);
+                failed = true;
+            }
 
             this.log.Info(CMessages.PsVbrConfigProcIdDone, false);
-            if (failed)
-            {
-                return false;
-            }
-            else
-            {
-
-                return true;
-            }
+            return !failed;
         }
 
         private void PushPsErrorsToMainLog(List<string> errors)
@@ -411,24 +436,27 @@ namespace VeeamHealthCheck.Functions.Collection.PSCollections
         private ProcessStartInfo VbrConfigStartInfo()
         {
             this.log.Info(CMessages.PsVbrConfigStart, false);
-            return this.ConfigStartInfo(this.vbrConfigScript, 0, string.Empty);
+            // Pass the VBR directory path which now includes server name and timestamp
+            return this.ConfigStartInfo(this.vbrConfigScript, 0, CVariables.vbrDir);
         }
 
         private ProcessStartInfo VbrNasStartInfo()
         {
             this.log.Info(string.Empty);
-            return this.ConfigStartInfo(this.nasScript, 0, string.Empty);
+            // Pass the VBR directory path which now includes server name and timestamp
+            return this.ConfigStartInfo(this.nasScript, 0, CVariables.vbrDir);
         }
 
         private ProcessStartInfo VbrSessionStartInfo()
         {
+            // Pass the VBR directory path which now includes server name and timestamp
             if (CGlobals.VBRMAJORVERSION == 13)
             {
-                return this.ConfigStartInfo(this.vbrSessionScriptVersion13, CGlobals.ReportDays, string.Empty);
+                return this.ConfigStartInfo(this.vbrSessionScriptVersion13, CGlobals.ReportDays, CVariables.vbrDir);
             }
             else
             {
-                return this.ConfigStartInfo(this.vbrSessionScript, CGlobals.ReportDays, string.Empty);
+                return this.ConfigStartInfo(this.vbrSessionScript, CGlobals.ReportDays, CVariables.vbrDir);
             }
         }
 
@@ -537,36 +565,60 @@ namespace VeeamHealthCheck.Functions.Collection.PSCollections
 
         private ProcessStartInfo ConfigStartInfo(string scriptLocation, int days, string path)
         {
-            if (CGlobals.REMOTEHOST == string.Empty){
+            if (CGlobals.REMOTEHOST == string.Empty)
+            {
                 CGlobals.REMOTEHOST = "localhost";
             }
+
+            // Determine if credentials are needed:
+            // - Only needed for remote execution (REMOTEEXEC flag is set)
+            // - Not needed for local VBR (IsVbr is true and REMOTEEXEC is false)
+            bool needsCredentials = CGlobals.REMOTEEXEC;
 
             string argString;
             if (days != 0)
             {
                 argString =
                     $"-NoProfile -ExecutionPolicy unrestricted -file \"{scriptLocation}\" -VBRServer \"{CGlobals.REMOTEHOST}\" -ReportInterval {CGlobals.ReportDays} ";
-                if (CGlobals.REMOTEEXEC)
+                // Add ReportPath parameter if provided
+                if (!string.IsNullOrEmpty(path))
+                {
+                    argString += $"-ReportPath \"{path}\" ";
+                }
+                if (needsCredentials)
                 {
                     CredsHandler ch = new();
                     var creds = ch.GetCreds();
-                    argString += $"-User {creds.Value.Username} -Password {creds.Value.Password} ";
+                    if (creds != null)
+                    {
+                        // Encode password in Base64 for secure transmission
+                        byte[] passwordBytes = System.Text.Encoding.UTF8.GetBytes(creds.Value.Password);
+                        string passwordBase64 = Convert.ToBase64String(passwordBytes);
+                        argString += $"-User \"{creds.Value.Username}\" -PasswordBase64 \"{passwordBase64}\" ";
+                    }
                 }
             }
             else
             {
                 argString =
                     $"-NoProfile -ExecutionPolicy unrestricted -file \"{scriptLocation}\" -VBRServer \"{CGlobals.REMOTEHOST}\" -VBRVersion \"{CGlobals.VBRMAJORVERSION}\" ";
-                if (CGlobals.REMOTEEXEC ){
-                        CredsHandler ch = new();
-                        var creds = ch.GetCreds();
-                        argString += $"-User {creds.Value.Username} -Password {creds.Value.Password} ";
+                // Add ReportPath parameter if provided
+                if (!string.IsNullOrEmpty(path))
+                {
+                    argString += $"-ReportPath \"{path}\" ";
+                }
+                if (needsCredentials)
+                {
+                    CredsHandler ch = new();
+                    var creds = ch.GetCreds();
+                    if (creds != null)
+                    {
+                        // Encode password in Base64 for secure transmission
+                        byte[] passwordBytes = System.Text.Encoding.UTF8.GetBytes(creds.Value.Password);
+                        string passwordBase64 = Convert.ToBase64String(passwordBytes);
+                        argString += $"-User \"{creds.Value.Username}\" -PasswordBase64 \"{passwordBase64}\" ";
                     }
-            }
-
-            if (!string.IsNullOrEmpty(path))
-            {
-                argString = $"-NoProfile -ExecutionPolicy unrestricted -file \"{scriptLocation}\" -ReportPath \"{path}\"";
+                }
             }
 
             this.log.Debug(this.logStart + "PS ArgString = " + argString, false);
@@ -600,6 +652,7 @@ namespace VeeamHealthCheck.Functions.Collection.PSCollections
                 Arguments = argString,
                 UseShellExecute = false,
                 CreateNoWindow = true,
+                RedirectStandardOutput = true,
                 RedirectStandardError = true
             };
         }

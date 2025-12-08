@@ -40,6 +40,7 @@ namespace VeeamHealthCheck.Functions.Collection
                 this.ExecSecurityCollection();
             }
 
+            // main powershell execution point
             this.ExecPSScripts();
 
             // run diagnostic of CSV output and sizes, dump to logs:
@@ -160,6 +161,13 @@ namespace VeeamHealthCheck.Functions.Collection
                 {
                     if (CGlobals.IsVbr || CGlobals.REMOTEEXEC)
                     {
+                        // Ensure VBR output directory exists (with server name and timestamp)
+                        if (!Directory.Exists(CVariables.vbrDir))
+                        {
+                            Directory.CreateDirectory(CVariables.vbrDir);
+                            CGlobals.Logger.Debug($"Created VBR directory: {CVariables.vbrDir}");
+                        }
+
                         CGlobals.Logger.Info("Checking VBR MFA Access...", false);
                         if (this.MfaTestPassed(p))
                         {
@@ -207,111 +215,207 @@ namespace VeeamHealthCheck.Functions.Collection
 
         private void WeighSuccessContinuation()
         {
-            string error = "Script execution has failed. Exiting program. See log for details:\n\t " + CGlobals.Logger.logFile;
-
-            if (CGlobals.GUIEXEC && !this.SCRIPTSUCCESS)
+            if (this.SCRIPTSUCCESS)
             {
-                CGlobals.Logger.Error(error, false);
-
-                MessageBox.Show(error, "Error", button: MessageBoxButton.OK, icon: MessageBoxImage.Error, MessageBoxResult.Yes);
-
-                Environment.Exit(1);
+                return;
             }
-            else if (!this.SCRIPTSUCCESS)
+
+            string error = $"Script execution has failed. Exiting program. See log for details:\n\t {CGlobals.Logger.logFile}";
+            CGlobals.Logger.Error(error, false);
+
+            if (CGlobals.GUIEXEC)
             {
-                CGlobals.Logger.Error(error, false);
-                Environment.Exit(1);
+                MessageBox.Show(error, "Error", MessageBoxButton.OK, MessageBoxImage.Error);
             }
+
+            Environment.Exit(1);
         }
 
         private bool MfaTestPassed(PSInvoker p)
         {
-            if (CGlobals.IsVbr && (CGlobals.VBRMAJORVERSION < 13))
-            {
-                this.log.Info("Local VBR Detected, running local MFA test...");
-                return this.RunLocalMfaCheck(p);
-            }
-            else
-            {
-                CredsHandler ch = new();
-                var creds = ch.GetCreds();
-                string scriptPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, @"Functions\Collection\PSCollections\Scripts\TestMfa.ps1");
-                bool result = false;
-                string error = string.Empty;
-                List<string> output = new();
+            // Determine if we need credentials:
+            // - If VBR is installed locally (CGlobals.IsVbr) AND we're not doing remote execution, use Windows auth
+            // - Otherwise, credentials are required
+            bool isLocalVbr = CGlobals.IsVbr && !CGlobals.REMOTEEXEC;
 
-                string pwshPath = @"C:\Program Files\PowerShell\7\pwsh.exe";
-                if (!File.Exists(pwshPath))
+            // For local VBR without remote flag, use Windows authentication (no credentials needed)
+            if (isLocalVbr)
+            {
+                this.log.Info("Local VBR detected, using Windows authentication (no credentials required)...", false);
+                return this.RunLocalMfaCheckNoCredentials(p);
+            }
+
+            // For remote execution, credentials are required (will prompt if not stored)
+            this.log.Info("Remote execution detected, credentials required...", false);
+
+            CredsHandler ch = new();
+            var creds = ch.GetCreds();
+
+            // If credentials not provided, cannot continue
+            if (creds == null)
+            {
+                CGlobals.Logger.Error("Credentials required for remote execution but not provided.");
+                return false;
+            }
+
+            string scriptPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, @"Functions\Collection\PSCollections\Scripts\TestMfa.ps1");
+            bool result = false;
+            string error = string.Empty;
+            List<string> output = new();
+
+            string pwshPath = @"C:\Program Files\PowerShell\7\pwsh.exe";
+            if (!File.Exists(pwshPath))
+            {
+                // we have determined required PS Version in CGLobals earlier. If PowerShell 7 required and not found, log and return failure.
+                if (CGlobals.PowerShellVersion == 7)
                 {
                     CGlobals.Logger.Debug("PowerShell 7 not found at: " + pwshPath, false);
-                }
+                    CGlobals.Logger.Error("PowerShell 7 is required but not found. MFA test cannot proceed.");
 
-                try
-                {
-                    // If not here, CGlobals.RemoteHost may not be set correctly -> 
-                    if (string.IsNullOrEmpty(CGlobals.REMOTEHOST))
-            {
-                CGlobals.REMOTEHOST = "localhost";
+                    return false;
+                }
             }
-                    // Build PowerShell arguments to call the script with parameters
-                    string args =
-                        $"-NoProfile -ExecutionPolicy Bypass -File \"{scriptPath}\" -Server {CGlobals.REMOTEHOST} -Username {creds.Value.Username} -Password {creds.Value.Password}";
 
-                    // Ps7Executor ps7 = new();
-                    // ps7.LogPowerShellVersion();
-                    var processInfo = new ProcessStartInfo
-                    {
-                        FileName = pwshPath, // Use Windows PowerShell for Veeam module
-                        Arguments = args,
-                        RedirectStandardOutput = true,
-                        RedirectStandardError = true,
-                        UseShellExecute = false,
-                        CreateNoWindow = true
-                    };
-
-                    // Log processInfo settings
-                    CGlobals.Logger.Debug($"ProcessStartInfo Settings:\n  FileName: {processInfo.FileName}\n  Arguments: {processInfo.Arguments}\n  RedirectStandardOutput: {processInfo.RedirectStandardOutput}\n  RedirectStandardError: {processInfo.RedirectStandardError}\n  UseShellExecute: {processInfo.UseShellExecute}\n  CreateNoWindow: {processInfo.CreateNoWindow}");
-                    using var process = System.Diagnostics.Process.Start(processInfo);
-                    string stdOut = process.StandardOutput.ReadToEnd();
-                    string stdErr = process.StandardError.ReadToEnd();
-                    process.WaitForExit();
-                    error = stdErr;
-                    if (!string.IsNullOrWhiteSpace(stdOut))
-                    {
-                        output.Add(stdOut);
-                    }
-
-
-                    if (!string.IsNullOrWhiteSpace(stdErr))
-                    {
-                        output.Add(stdErr);
-                    }
-
-
-                    result = process.ExitCode == 0;
-
-                    // Log output for debugging
-                    CGlobals.Logger.Debug($"MFA Test Output (ExitCode={process.ExitCode}):");
-                    foreach (var line in output)
-                    {
-                        CGlobals.Logger.Debug(line);
-                    }
-                }
-                catch (Exception ex)
+            try
+            {
+                if (string.IsNullOrEmpty(CGlobals.REMOTEHOST))
                 {
-                    CGlobals.Logger.Error("Error during MFA test:");
-                    CGlobals.Logger.Error(ex.Message);
-                    result = false;
+                    CGlobals.REMOTEHOST = "localhost";
                 }
 
-                if (!result)
+                // Encode password as Base64 for safe transmission
+                string base64Password = CredentialHelper.EncodePasswordToBase64(creds.Value.Password);
+
+                // Build PowerShell arguments with Base64-encoded password
+                // Use double quotes around Base64 string to avoid issues with special characters
+                string args = $"-NoProfile -ExecutionPolicy Bypass -File \"{scriptPath}\" -Server {CGlobals.REMOTEHOST} -Username \"{creds.Value.Username}\" -PasswordBase64 \"{base64Password}\"";
+
+                var processInfo = new ProcessStartInfo
                 {
-            CGlobals.Logger.Warning("Failing over to PowerShell 5", false);
+                    FileName = pwshPath,
+                    Arguments = args,
+                    RedirectStandardOutput = true,
+                    RedirectStandardError = true,
+                    UseShellExecute = false,
+                    CreateNoWindow = true
+                };
 
-            this.RunLocalMfaCheck(p);
+                // Log processInfo settings (password is already masked by Base64)
+                CGlobals.Logger.Debug($"ProcessStartInfo Settings:\n  FileName: {processInfo.FileName}\n  Arguments: {args.Replace(base64Password, "****")}\n  RedirectStandardOutput: {processInfo.RedirectStandardOutput}\n  RedirectStandardError: {processInfo.RedirectStandardError}\n  UseShellExecute: {processInfo.UseShellExecute}\n  CreateNoWindow: {processInfo.CreateNoWindow}");
+                using var process = System.Diagnostics.Process.Start(processInfo);
+                string stdOut = process.StandardOutput.ReadToEnd();
+                string stdErr = process.StandardError.ReadToEnd();
+                process.WaitForExit();
+                error = stdErr;
+                if (!string.IsNullOrWhiteSpace(stdOut))
+                {
+                    output.Add(stdOut);
                 }
+
+
+                if (!string.IsNullOrWhiteSpace(stdErr))
+                {
+                    output.Add(stdErr);
+                }
+
+
+                result = process.ExitCode == 0;
+
+                // Log output for debugging
+                CGlobals.Logger.Debug($"MFA Test Output (ExitCode={process.ExitCode}):");
+                foreach (var line in output)
+                {
+                    CGlobals.Logger.Debug(line);
+                }
+            }
+            catch (Exception ex)
+            {
+                CGlobals.Logger.Error("Error during MFA test:");
+                CGlobals.Logger.Error(ex.Message);
+                result = false;
+            }
+
+            if (!result && CGlobals.PowerShellVersion == 5)
+            {
+
+                CGlobals.Logger.Warning("Failing over to PowerShell 5", false);
+
+                return this.RunLocalMfaCheck(p);
+            }
+
+            return result;
+        }
+
+        /// <summary>
+        /// Runs MFA check for local VBR without credentials (Windows authentication).
+        /// Uses Connect-VBRServer -Server localhost without -Credential parameter.
+        /// </summary>
+        private bool RunLocalMfaCheckNoCredentials(PSInvoker p)
+        {
+            try
+            {
+                string server = "localhost";
+                string psExe;
+                
+                // Use the appropriate PowerShell version based on VBR version
+                if (CGlobals.PowerShellVersion == 7)
+                {
+                    string pwshPath = @"C:\Program Files\PowerShell\7\pwsh.exe";
+                    if (!File.Exists(pwshPath))
+                    {
+                        CGlobals.Logger.Debug("PowerShell 7 not found at: " + pwshPath, false);
+                        CGlobals.Logger.Error("PowerShell 7 is required but not found. MFA test cannot proceed.");
+                        return false;
+                    }
+                    psExe = pwshPath;
+                }
+                else
+                {
+                    // Use PowerShell 5 for VBR version 12 and below
+                    psExe = "powershell.exe";
+                }
+
+                // Simple Connect-VBRServer without credentials
+                string script = "Import-Module Veeam.Backup.PowerShell -WarningAction Ignore; Connect-VBRServer -Server localhost";
+                string args = $"-NoProfile -ExecutionPolicy Bypass -Command \"{script}\"";
+
+                CGlobals.Logger.Debug($"Running local MFA check with Windows auth: {psExe} {args}");
+
+                var processInfo = new ProcessStartInfo
+                {
+                    FileName = psExe,
+                    Arguments = args,
+                    RedirectStandardOutput = true,
+                    RedirectStandardError = true,
+                    UseShellExecute = false,
+                    CreateNoWindow = true
+                };
+
+                using var process = Process.Start(processInfo);
+                string stdOut = process.StandardOutput.ReadToEnd();
+                string stdErr = process.StandardError.ReadToEnd();
+                process.WaitForExit();
+
+                if (!string.IsNullOrWhiteSpace(stdOut))
+                {
+                    CGlobals.Logger.Debug($"[Local MFA Check] STDOUT: {stdOut}");
+                }
+
+                if (!string.IsNullOrWhiteSpace(stdErr))
+                {
+                    CGlobals.Logger.Debug($"[Local MFA Check] STDERR: {stdErr}");
+                }
+
+                bool result = process.ExitCode == 0;
+                CGlobals.Logger.Info($"[Local MFA Check] Result: {(result ? "Success" : "Failed")} (ExitCode={process.ExitCode})", false);
 
                 return result;
+            }
+            catch (Exception ex)
+            {
+                CGlobals.Logger.Error("Error during local MFA check:");
+                CGlobals.Logger.Error(ex.Message);
+                return false;
             }
         }
 

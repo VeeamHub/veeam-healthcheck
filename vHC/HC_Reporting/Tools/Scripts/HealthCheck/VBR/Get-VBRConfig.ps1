@@ -24,12 +24,17 @@ param(
     [Parameter(Mandatory = $false)]
     [string]$Password = "",
     [Parameter(Mandatory = $false)]
-    [bool]$RemoteExecution = $false
-    # [Parameter(Mandatory)]
-    # [string]$ReportPath,
-    # [int]$ReportingIntervalDays = -1
+    [string]$PasswordBase64 = "",
+    [Parameter(Mandatory = $false)]
+    [bool]$RemoteExecution = $false,
+    [Parameter(Mandatory = $false)]
+    [string]$ReportPath = ""
 )
-$ReportPath = 'C:\temp\vHC\Original\VBR'
+# If ReportPath not provided, use default with server name and timestamp structure
+if ([string]::IsNullOrEmpty($ReportPath)) {
+    $timestamp = Get-Date -Format "yyyyMMdd_HHmmss"
+    $ReportPath = "C:\temp\vHC\Original\VBR\$VBRServer\$timestamp"
+}
 $logDir = "C:\temp\vHC\Original\Log\"
 $logFile = $logDir + "VBRConfigScript.log"
 if (!(Test-Path $logfile)) { New-Item -type Directory $logDir -ErrorAction SilentlyContinue; new-item -type file $logfile }
@@ -135,7 +140,7 @@ if ($PSVersionTable.PSVersion.Major -ge 6) {
 try { Disconnect-VBRServer -ErrorAction SilentlyContinue } catch {}
 
 # Determine if credentials are valid (non-empty, non-whitespace)
-$useCreds = ($User -and $Password -and -not [string]::IsNullOrWhiteSpace($User) -and -not [string]::IsNullOrWhiteSpace($Password))
+$useCreds = ($User -and $PasswordBase64 -and -not [string]::IsNullOrWhiteSpace($User) -and -not [string]::IsNullOrWhiteSpace($PasswordBase64))
 
 if ($useCreds) {
     Write-LogFile("Attempting connection to VBR Server $VBRServer with credentials for user '$User' ...")
@@ -146,7 +151,14 @@ else {
 
 try {
     if ($useCreds) {
-        Connect-VBRServer -Server $VBRServer -User $User -Password $Password -ErrorAction Continue
+        # Decode Base64 password
+        $passwordBytes = [System.Convert]::FromBase64String($PasswordBase64)
+        $password = [System.Text.Encoding]::UTF8.GetString($passwordBytes)
+        
+        # Convert to SecureString and use PSCredential
+        $securePassword = ConvertTo-SecureString -String $password -AsPlainText -Force
+        $credential = New-Object System.Management.Automation.PSCredential($User, $securePassword)
+        Connect-VBRServer -Server $VBRServer -Credential $credential -ErrorAction Continue
     }
     else {
         Connect-VBRServer -Server $VBRServer -ErrorAction Stop

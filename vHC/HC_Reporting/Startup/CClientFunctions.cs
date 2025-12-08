@@ -8,6 +8,7 @@ using System.Windows;
 using System.Windows.Controls;
 using VeeamHealthCheck.Functions.Collection;
 using VeeamHealthCheck.Functions.Collection.DB;
+using VeeamHealthCheck.Functions.CredsWindow;
 using VeeamHealthCheck.Resources.Localization;
 using VeeamHealthCheck.Shared;
 using VeeamHealthCheck.Shared.Logging;
@@ -48,10 +49,57 @@ namespace VeeamHealthCheck.Startup
             CAdminCheck priv = new();
             if (!priv.IsAdmin())
             {
-                string message = "Please run program as Administrator";
-                MessageBox.Show(message);
-                CGlobals.Logger.Error(message, false);
-                Environment.Exit(0);
+                // Admin check is only required for local VBR execution (not remote)
+                // Remote execution does not require admin privileges
+                if (CGlobals.IsVbr && !CGlobals.REMOTEEXEC)
+                {
+                    // Local VBR execution without admin - offer to continue with limitations
+                    if (CGlobals.GUIEXEC)
+                    {
+                        // GUI execution - show dialog
+                        string message = "Administrator privileges are recommended when running locally against Veeam Backup & Replication.\n\n" +
+                                       "Running without administrator privileges will:\n" +
+                                       "• Skip some registry checks\n" +
+                                       "• Skip some security assessments\n" +
+                                       "• May result in incomplete data collection\n\n" +
+                                       "For best results, please:\n" +
+                                       "1. Close this window\n" +
+                                       "2. Right-click VeeamHealthCheck.exe\n" +
+                                       "3. Select 'Run as Administrator'\n\n" +
+                                       "Do you want to continue without administrator privileges?";
+                        
+                        var result = MessageBox.Show(message, "Administrator Privileges Recommended", 
+                                                    MessageBoxButton.YesNo, MessageBoxImage.Warning);
+                        
+                        if (result == MessageBoxResult.No)
+                        {
+                            CGlobals.Logger.Info("User declined to run without admin privileges", false);
+                            Environment.Exit(0);
+                        }
+                        
+                        // User chose to continue without admin
+                        CGlobals.RunningWithoutAdmin = true;
+                        CGlobals.Logger.Warning("Running without administrator privileges - some features will be limited", false);
+                    }
+                    else
+                    {
+                        // CLI execution - just warn and continue
+                        CGlobals.RunningWithoutAdmin = true;
+                        CGlobals.Logger.Warning("Running without administrator privileges - some registry checks and security assessments will be skipped", false);
+                    }
+                }
+                else if (CGlobals.IsVb365 && !CGlobals.REMOTEEXEC)
+                {
+                    // Local VB365 requires admin
+                    string message = "Please run program as Administrator";
+                    if (CGlobals.GUIEXEC)
+                    {
+                        MessageBox.Show(message);
+                    }
+                    CGlobals.Logger.Error(message, false);
+                    Environment.Exit(0);
+                }
+                // else: Remote execution - no admin required, continue normally
             }
 
             CGlobals.Logger.Info("Starting Admin Check...done!");
@@ -258,11 +306,7 @@ namespace VeeamHealthCheck.Startup
                     CImpersonation cImpersonation = new CImpersonation();
                     cImpersonation.RunCollection();
                 }
-                else if (CGlobals.REMOTEEXEC)
-                {
-                    CCollections collect = new();
-                    collect.Run();
-                }
+
                 else
                 {
                     CCollections collect = new();
@@ -294,9 +338,6 @@ namespace VeeamHealthCheck.Startup
                 this.PreRunCheck();
             }
 
-            // GetVbrVersion();
-
-
             try // REST TEST AREA
             {
                 // RestInvoker restInvoker = new RestInvoker();
@@ -315,8 +356,49 @@ namespace VeeamHealthCheck.Startup
             {
             CRegReader reg = new();
             this.LOG.Info(this.logStart + "VBR Version: " + reg.GetVbrVersionFilePath(),  false);
+            CGlobals.PowerShellVersion = CGlobals.VBRMAJORVERSION >= 13 ? 7 : 5;
+            this.LOG.Info(this.logStart + "Using PowerShell version: " + CGlobals.PowerShellVersion.ToString(), false);
+            
+            // If PowerShell 7 is required AND we're doing remote execution, ensure we have credentials available
+            // For local VBR (IsVbr=true, REMOTEEXEC=false), credentials are NOT required - Windows auth is used
+            if (CGlobals.PowerShellVersion == 7 && CGlobals.REMOTEEXEC)
+            {
+                this.LOG.Info(this.logStart + "PowerShell 7 with remote execution requires credentials for VBR connection", false);
+                this.EnsureCredentialsAvailable();
             }
-            catch(Exception e) { }
+            else if (CGlobals.PowerShellVersion == 7)
+            {
+                this.LOG.Info(this.logStart + "PowerShell 7 detected, but local VBR will use Windows authentication (no credentials required)", false);
+            }
+            }
+            catch(Exception) { }
+        }
+
+        private void EnsureCredentialsAvailable()
+        {
+            string host = string.IsNullOrEmpty(CGlobals.REMOTEHOST) ? "localhost" : CGlobals.REMOTEHOST;
+
+            // Check if credentials are already stored for this host
+            var storedCreds = CredentialStore.Get(host);
+            if (storedCreds != null)
+            {
+                this.LOG.Info(this.logStart + $"Stored credentials found for host: {host}", false);
+                return;
+            }
+
+            // No stored credentials found - log appropriate message based on mode
+            // Note: Don't try to prompt here during early initialization.
+            // The credential prompt will happen later when GetCreds() is called during collection,
+            // at which point the GUI will be fully initialized (if in GUI mode).
+            if (!CGlobals.GUIEXEC)
+            {
+                this.LOG.Warning(this.logStart + "No stored credentials found for PowerShell 7 connection.", false);
+                this.LOG.Warning(this.logStart + "Credentials will be required. Please provide credentials via /creds=username:password parameter, or credentials will be prompted during collection.", false);
+            }
+            else
+            {
+                this.LOG.Info(this.logStart + "No stored credentials found. Credentials will be prompted when collection starts.", false);
+            }
         }
 
         public bool VerifyPath()

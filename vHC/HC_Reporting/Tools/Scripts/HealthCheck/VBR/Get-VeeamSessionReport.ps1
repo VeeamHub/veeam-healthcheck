@@ -30,8 +30,16 @@ param(
   [Parameter ()]
   [string]$User,
   [Parameter ()]
-  [string]$Password
+  [string]$Password,
+  [Parameter (Mandatory = $false)]
+  [string]$ReportPath = ""
 )
+
+# If ReportPath not provided, use default with server name and timestamp structure
+if ([string]::IsNullOrEmpty($ReportPath)) {
+    $timestamp = Get-Date -Format "yyyyMMdd_HHmmss"
+    $ReportPath = "C:\temp\vHC\Original\VBR\$VBRServer\$timestamp"
+}
 
 
 #Functions:
@@ -90,14 +98,22 @@ if (!(Get-PSSnapin -Name VeeamPSSnapIn -ErrorAction SilentlyContinue)) {
 
 Disconnect-VBRServer
 try {
-  if ([string]::IsNullOrEmpty($User) -or [string]::IsNullOrEmpty($Password)) {
+  if ([string]::IsNullOrEmpty($User) -or [string]::IsNullOrEmpty($PasswordBase64)) {
     # Connect without credentials (local/Windows authentication)
     Write-LogFile("Connecting to VBR Server without credentials (Windows auth): " + $VBRServer, "Main", "INFO")
-    Connect-VBRServer
+    Connect-VBRServer -Server $VBRServer
   } else {
     # Connect with provided credentials (remote)
     Write-LogFile("Connecting to VBR Server with credentials: " + $VBRServer, "Main", "INFO")
-    Connect-VBRServer -Server $VBRServer -User $User -Password $Password
+    
+    # Decode Base64 password
+    $passwordBytes = [System.Convert]::FromBase64String($PasswordBase64)
+    $password = [System.Text.Encoding]::UTF8.GetString($passwordBytes)
+    
+    # Convert to SecureString and create credential
+    $securePassword = ConvertTo-SecureString -String $password -AsPlainText -Force
+    $credential = New-Object System.Management.Automation.PSCredential($User, $securePassword)
+    Connect-VBRServer -Server $VBRServer -Credential $credential
   }
   Write-LogFile("Successfully connected to VBR Server: " + $VBRServer, "Main", "INFO")
 }
@@ -186,16 +202,22 @@ foreach ($TaskSession in $SelectTaskSessions) {
 
 
 
+if (-not (Test-Path $ReportPath)) {
+  New-Item -Path $ReportPath -ItemType Directory -Force | Out-Null
+}
+
+$csvPath = Join-Path -Path $ReportPath -ChildPath "VeeamSessionReport.csv"
+
 if ($RemoveDuplicates) {
 
   $UniqueTaskOutput = $AllTasksOutput | Select-Object JobName, VMName, Status, IsRetry, ProcessingMode, WorkDuration, TaskAlgorithm, CreationTime, BackupSize, DataSize, DedupRatio, CompressRatio -Unique
   #Write-Output $UniqueTaskOutput
-  $UniqueTaskOutput | Export-Csv 'C:\Temp\vHC\Original\VBR\VeeamSessionReport.csv' -NoTypeInformation
+  $UniqueTaskOutput | Export-Csv $csvPath -NoTypeInformation
 }
 
 else {
   #Write-Output $AllTasksOutput
-  $AllTasksOutput | Export-Csv 'C:\Temp\vHC\Original\VBR\VeeamSessionReport.csv' -NoTypeInformation
+  $AllTasksOutput | Export-Csv $csvPath -NoTypeInformation
 }
 
 

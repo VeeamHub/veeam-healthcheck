@@ -9,9 +9,13 @@
     <IsTestProject>true</IsTestProject>
     <AssemblyVersion>1.0.0.338</AssemblyVersion>
     <FileVersion>1.0.0.338</FileVersion>
+    
+    <!-- Skip compilation on non-Windows platforms -->
+    <EnableDefaultCompileItems Condition="!$([MSBuild]::IsOSPlatform('Windows'))">false</EnableDefaultCompileItems>
   </PropertyGroup>
 
-  <ItemGroup>
+  <!-- Only include packages on Windows -->
+  <ItemGroup Condition="$([MSBuild]::IsOSPlatform('Windows'))">
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.11.1" />
     <PackageReference Include="Moq" Version="4.20.72" />
     <PackageReference Include="xunit" Version="2.9.2" />
@@ -22,8 +26,13 @@
     <PackageReference Include="coverlet.collector" Version="3.2.0" />
   </ItemGroup>
 
-  <ItemGroup>
+  <ItemGroup Condition="$([MSBuild]::IsOSPlatform('Windows'))">
     <ProjectReference Include="..\HC_Reporting\VeeamHealthCheck.csproj" />
   </ItemGroup>
+  
+  <!-- Display message when building on non-Windows -->
+  <Target Name="ShowNonWindowsMessage" BeforeTargets="CoreCompile" Condition="!$([MSBuild]::IsOSPlatform('Windows'))">
+    <Message Text="⚠️  Skipping VhcXTests compilation on non-Windows platform (tests require Windows/.NET WPF)" Importance="high" />
+  </Target>
 
 </Project>
