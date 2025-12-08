@@ -4,6 +4,7 @@ using System;
 using System.Runtime.InteropServices;
 using System.Text.RegularExpressions;
 using VeeamHealthCheck.Functions.Collection.PSCollections;
+using VeeamHealthCheck.Functions.CredsWindow;
 
 // using VeeamHealthCheck.Reporting.vsac;
 using VeeamHealthCheck.Shared;
@@ -62,8 +63,55 @@ namespace VeeamHealthCheck.Startup
         {
             if(CGlobals.VBRMAJORVERSION > 12)
             {
-                // log message about GUI not supported for VBR 13+, re-run from CLI
-                CGlobals.Logger.Warning("GUI mode is not supported for Veeam Backup & Replication 13 and later. Please run from the command line interface.");
+                // Check if we need credentials first
+                string host = string.IsNullOrEmpty(CGlobals.REMOTEHOST) ? "localhost" : CGlobals.REMOTEHOST;
+                var storedCreds = CredentialStore.Get(host);
+                
+                if (storedCreds == null && string.IsNullOrEmpty(CGlobals.CredsUsername))
+                {
+                    CGlobals.Logger.Info("VBR 13+ detected. Credentials are required for PowerShell 7 connections.", false);
+                    CGlobals.Logger.Info("Launching credential prompt...", false);
+                    
+                    // Create a minimal WPF application just for the credential dialog
+                    var app = new System.Windows.Application();
+                    app.ShutdownMode = System.Windows.ShutdownMode.OnExplicitShutdown;
+                    
+                    // Show the credential dialog
+                    var dialog = new CredentialPromptWindow(host);
+                    if (dialog.ShowDialog() == true)
+                    {
+                        string username = dialog.Username;
+                        string password = dialog.Password;
+                        
+                        if (!string.IsNullOrEmpty(username) && !string.IsNullOrEmpty(password))
+                        {
+                            CredentialStore.Set(host, username, password);
+                            CGlobals.Logger.Info("Credentials stored successfully!", false);
+                            CGlobals.Logger.Info("Please run the application again with command-line parameters.", false);
+                            CGlobals.Logger.Info("Example: VeeamHealthCheck.exe /run", false);
+                            CGlobals.Logger.Info("     or: VeeamHealthCheck.exe /run /report:all", false);
+                        }
+                        else
+                        {
+                            CGlobals.Logger.Error("Invalid credentials provided.", false);
+                        }
+                    }
+                    else
+                    {
+                        CGlobals.Logger.Error("Credential prompt was cancelled.", false);
+                        CGlobals.Logger.Error("Credentials are required for VBR 13+.", false);
+                        CGlobals.Logger.Info("You can also provide credentials via command line:", false);
+                        CGlobals.Logger.Info("Example: VeeamHealthCheck.exe /creds=username:password /run", false);
+                    }
+                    
+                    app.Shutdown();
+                    return 1;
+                }
+                
+                // We have credentials but still can't use full GUI mode
+                CGlobals.Logger.Warning("GUI mode is not supported for Veeam Backup & Replication 13 and later.", false);
+                CGlobals.Logger.Info("Credentials are already stored. Please run from the command line interface.", false);
+                CGlobals.Logger.Info("Example: VeeamHealthCheck.exe /run", false);
                 return 1;
             }
 

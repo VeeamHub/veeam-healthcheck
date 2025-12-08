@@ -91,5 +91,54 @@ namespace VeeamHealthCheck.Functions.CredsWindow
 
             return result;
         }
+        
+        /// <summary>
+        /// Prompts for credentials in a standalone WPF context (when main GUI is not available)
+        /// </summary>
+        public (string Username, string Password)? PromptForCredentialsStandalone(string host)
+        {
+            (string Username, string Password)? result = null;
+            
+            // Create a minimal WPF application context if needed
+            if (System.Windows.Application.Current == null)
+            {
+                var app = new System.Windows.Application();
+                app.ShutdownMode = System.Windows.ShutdownMode.OnExplicitShutdown;
+                
+                // Show the credential dialog
+                var dialog = new CredentialPromptWindow(host);
+                if (dialog.ShowDialog() == true)
+                {
+                    string username = dialog.Username;
+                    string password = dialog.Password;
+                    
+                    if (!string.IsNullOrEmpty(username) && !string.IsNullOrEmpty(password))
+                    {
+                        CredentialStore.Set(host, username, password);
+                        result = (username, password);
+                    }
+                }
+                
+                app.Shutdown();
+            }
+            else
+            {
+                // Use existing application context
+                var dialog = new CredentialPromptWindow(host);
+                if (dialog.ShowDialog() == true)
+                {
+                    string username = dialog.Username;
+                    string password = dialog.Password;
+                    
+                    if (!string.IsNullOrEmpty(username) && !string.IsNullOrEmpty(password))
+                    {
+                        CredentialStore.Set(host, username, password);
+                        result = (username, password);
+                    }
+                }
+            }
+            
+            return result;
+        }
     }
 }
