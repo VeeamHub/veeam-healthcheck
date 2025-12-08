@@ -12,14 +12,18 @@ namespace VeeamHealthCheck.Functions.CredsWindow
     {
         public (string Username, string Password)? GetCreds()
         {
+            string host = string.IsNullOrEmpty(CGlobals.REMOTEHOST) ? "localhost" : CGlobals.REMOTEHOST;
+            
             // First, check if credentials were provided via command line
             if (!string.IsNullOrEmpty(CGlobals.CredsUsername) && !string.IsNullOrEmpty(CGlobals.CredsPassword))
             {
+                CGlobals.Logger.Info($"Using command-line credentials for host: {host}", false);
+                // Store them for future use
+                CredentialStore.Set(host, CGlobals.CredsUsername, CGlobals.CredsPassword);
                 return (CGlobals.CredsUsername, CGlobals.CredsPassword);
             }
 
             // Second, check if we have stored credentials
-            string host = string.IsNullOrEmpty(CGlobals.REMOTEHOST) ? "localhost" : CGlobals.REMOTEHOST;
             var stored = CredentialStore.Get(host);
             if (stored != null)
             {
@@ -44,6 +48,7 @@ namespace VeeamHealthCheck.Functions.CredsWindow
             if (!CGlobals.GUIEXEC || System.Windows.Application.Current == null)
             {
                 CGlobals.Logger.Warning("GUI not available. Cannot prompt for credentials in non-interactive environment.");
+                CGlobals.Logger.Warning($"Please provide credentials for host '{host}' using the /creds parameter or run in GUI mode.");
                 return null;
             }
 

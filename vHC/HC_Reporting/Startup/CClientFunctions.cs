@@ -8,6 +8,7 @@ using System.Windows;
 using System.Windows.Controls;
 using VeeamHealthCheck.Functions.Collection;
 using VeeamHealthCheck.Functions.Collection.DB;
+using VeeamHealthCheck.Functions.CredsWindow;
 using VeeamHealthCheck.Resources.Localization;
 using VeeamHealthCheck.Shared;
 using VeeamHealthCheck.Shared.Logging;
@@ -310,8 +311,51 @@ namespace VeeamHealthCheck.Startup
             this.LOG.Info(this.logStart + "VBR Version: " + reg.GetVbrVersionFilePath(),  false);
             CGlobals.PowerShellVersion = CGlobals.VBRMAJORVERSION >= 13 ? 7 : 5;
             this.LOG.Info(this.logStart + "Using PowerShell version: " + CGlobals.PowerShellVersion.ToString(), false);
+            
+            // If PowerShell 7 is required, ensure we have credentials available
+            if (CGlobals.PowerShellVersion == 7)
+            {
+                this.LOG.Info(this.logStart + "PowerShell 7 requires credentials for VBR connection", false);
+                this.EnsureCredentialsAvailable();
             }
-            catch(Exception e) { }
+            }
+            catch(Exception) { }
+        }
+
+        private void EnsureCredentialsAvailable()
+        {
+            string host = string.IsNullOrEmpty(CGlobals.REMOTEHOST) ? "localhost" : CGlobals.REMOTEHOST;
+            
+            // Check if credentials are already stored for this host
+            var storedCreds = CredentialStore.Get(host);
+            if (storedCreds != null)
+            {
+                this.LOG.Info(this.logStart + $"Using stored credentials for host: {host}", false);
+                return;
+            }
+
+            // No stored credentials found
+            if (!CGlobals.GUIEXEC)
+            {
+                this.LOG.Warning(this.logStart + "No stored credentials found for PowerShell 7 connection.", false);
+                this.LOG.Warning(this.logStart + "Credentials will be required. Please run in GUI mode first to store credentials, or they will be prompted during MFA test.", false);
+                return;
+            }
+
+            // GUI is available, prompt for credentials now
+            this.LOG.Info(this.logStart + "No stored credentials found. Prompting for credentials...", false);
+            
+            CredsHandler credsHandler = new CredsHandler();
+            var creds = credsHandler.GetCreds();
+            
+            if (creds == null)
+            {
+                this.LOG.Warning(this.logStart + "No credentials provided. Credentials will be prompted during MFA test.", false);
+            }
+            else
+            {
+                this.LOG.Info(this.logStart + $"Credentials collected and stored for host: {host}", false);
+            }
         }
 
         public bool VerifyPath()
