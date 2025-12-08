@@ -352,29 +352,43 @@ namespace VeeamHealthCheck.Functions.Collection.PSCollections
 
             this.log.Info("[PS] Script execution started. PID: " + res1.Id.ToString(), false);
 
-            if (res1 != null && !res1.HasExited)
+            // Read output streams asynchronously to prevent deadlocks
+            string stdOut = res1.StandardOutput.ReadToEnd();
+            string stdErr = res1.StandardError.ReadToEnd();
+
+            // Wait for process to complete (with timeout)
+            bool exited = res1.WaitForExit(300000); // 5 minute timeout
+            if (!exited)
             {
-                res1.WaitForExit();
+                this.log.Error("[PS] Script execution timeout after 5 minutes", false);
+                try { res1.Kill(); } catch { }
+                return false;
             }
 
-
-            List<string> errorarray = new();
-
-            bool failed = false;
-            string errString = string.Empty;
-            while ((errString = res1.StandardError.ReadLine()) != null)
+            // Log stdout if present
+            if (!string.IsNullOrWhiteSpace(stdOut))
             {
-                var errResults = this.ParseErrors(errString);
-                if (!errResults.Success)
+                this.log.Debug($"[PS][STDOUT] {stdOut}", false);
+            }
+
+            // Process stderr
+            List<string> errorarray = new();
+            bool failed = false;
+            
+            if (!string.IsNullOrWhiteSpace(stdErr))
+            {
+                string[] errLines = stdErr.Split(new[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries);
+                foreach (string errString in errLines)
                 {
-                    this.log.Error(errString, false);
-                    this.log.Error(errResults.Message);
-                    failed = true;
-
-                    // return false;
+                    var errResults = this.ParseErrors(errString);
+                    if (!errResults.Success)
+                    {
+                        this.log.Error(errString, false);
+                        this.log.Error(errResults.Message);
+                        failed = true;
+                    }
+                    errorarray.Add(errString);
                 }
-
-                errorarray.Add(errString);
             }
 
             if (errorarray.Count > 0)
@@ -382,17 +396,15 @@ namespace VeeamHealthCheck.Functions.Collection.PSCollections
                 this.PushPsErrorsToMainLog(errorarray);
             }
 
+            // Check exit code
+            if (res1.ExitCode != 0)
+            {
+                this.log.Error($"[PS] Script failed with exit code: {res1.ExitCode}", false);
+                failed = true;
+            }
 
             this.log.Info(CMessages.PsVbrConfigProcIdDone, false);
-            if (failed)
-            {
-                return false;
-            }
-            else
-            {
-
-                return true;
-            }
+            return !failed;
         }
 
         private void PushPsErrorsToMainLog(List<string> errors)
@@ -571,7 +583,10 @@ namespace VeeamHealthCheck.Functions.Collection.PSCollections
                     var creds = ch.GetCreds();
                     if (creds != null)
                     {
-                        argString += $"-User {creds.Value.Username} -Password {creds.Value.Password} ";
+                        // Encode password in Base64 for secure transmission
+                        byte[] passwordBytes = System.Text.Encoding.UTF8.GetBytes(creds.Value.Password);
+                        string passwordBase64 = Convert.ToBase64String(passwordBytes);
+                        argString += $"-User \"{creds.Value.Username}\" -PasswordBase64 \"{passwordBase64}\" ";
                     }
                 }
             }
@@ -585,7 +600,10 @@ namespace VeeamHealthCheck.Functions.Collection.PSCollections
                     var creds = ch.GetCreds();
                     if (creds != null)
                     {
-                        argString += $"-User {creds.Value.Username} -Password {creds.Value.Password} ";
+                        // Encode password in Base64 for secure transmission
+                        byte[] passwordBytes = System.Text.Encoding.UTF8.GetBytes(creds.Value.Password);
+                        string passwordBase64 = Convert.ToBase64String(passwordBytes);
+                        argString += $"-User \"{creds.Value.Username}\" -PasswordBase64 \"{passwordBase64}\" ";
                     }
                 }
             }
@@ -626,6 +644,7 @@ namespace VeeamHealthCheck.Functions.Collection.PSCollections
                 Arguments = argString,
                 UseShellExecute = false,
                 CreateNoWindow = true,
+                RedirectStandardOutput = true,
                 RedirectStandardError = true
             };
         }

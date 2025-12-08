@@ -10,6 +10,8 @@ param(
 	[Parameter(Mandatory = $false)]
 	[string]$Password = "",
 	[Parameter(Mandatory = $false)]
+	[string]$PasswordBase64 = "",
+	[Parameter(Mandatory = $false)]
 	[int]$ReportInterval = 7
 )
 

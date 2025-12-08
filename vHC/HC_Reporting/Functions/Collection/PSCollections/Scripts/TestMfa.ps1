@@ -32,7 +32,11 @@ try {
     $password = [System.Text.Encoding]::UTF8.GetString($passwordBytes)
 
     Write-Host "[VERBOSE] Password decoded successfully (length: $($password.Length))"
-
+    Write-Host "[VERBOSE] Server: $Server"
+    Write-Host "[VERBOSE] Username: $Username"
+    Write-Host "[VERBOSE] Password first 5 chars: $($password.Substring(0, [Math]::Min(5, $password.Length)))"
+    Write-Host "[VERBOSE] Password last 5 chars: $($password.Substring([Math]::Max(0, $password.Length - 5)))"
+    
     # Use -User and -Password parameters directly (same as manual CLI usage)
     # This approach works better for local accounts vs -Credential
     Connect-VBRServer -Server $Server -User $Username -Password $password -ForceAcceptTlsCertificate -ErrorAction Stop

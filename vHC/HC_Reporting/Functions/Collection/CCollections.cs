@@ -281,7 +281,7 @@ namespace VeeamHealthCheck.Functions.Collection
 
                 // Build PowerShell arguments with Base64-encoded password
                 // Use double quotes around Base64 string to avoid issues with special characters
-                string args = $"-NoProfile -ExecutionPolicy Bypass -File \"{scriptPath}\" -Server {CGlobals.REMOTEHOST} -Username '{creds.Value.Username}' -PasswordBase64 \"{base64Password}\"";
+                string args = $"-NoProfile -ExecutionPolicy Bypass -File \"{scriptPath}\" -Server {CGlobals.REMOTEHOST} -Username \"{creds.Value.Username}\" -PasswordBase64 \"{base64Password}\"";
 
                 var processInfo = new ProcessStartInfo
                 {

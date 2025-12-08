@@ -24,6 +24,8 @@ param(
     [Parameter(Mandatory = $false)]
     [string]$Password = "",
     [Parameter(Mandatory = $false)]
+    [string]$PasswordBase64 = "",
+    [Parameter(Mandatory = $false)]
     [bool]$RemoteExecution = $false
     # [Parameter(Mandatory)]
     # [string]$ReportPath,
