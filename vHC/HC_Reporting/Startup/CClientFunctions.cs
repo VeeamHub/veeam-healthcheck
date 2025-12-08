@@ -49,10 +49,57 @@ namespace VeeamHealthCheck.Startup
             CAdminCheck priv = new();
             if (!priv.IsAdmin())
             {
-                string message = "Please run program as Administrator";
-                MessageBox.Show(message);
-                CGlobals.Logger.Error(message, false);
-                Environment.Exit(0);
+                // Admin check is only required for local VBR execution (not remote)
+                // Remote execution does not require admin privileges
+                if (CGlobals.IsVbr && !CGlobals.REMOTEEXEC)
+                {
+                    // Local VBR execution without admin - offer to continue with limitations
+                    if (CGlobals.GUIEXEC)
+                    {
+                        // GUI execution - show dialog
+                        string message = "Administrator privileges are recommended when running locally against Veeam Backup & Replication.\n\n" +
+                                       "Running without administrator privileges will:\n" +
+                                       "• Skip some registry checks\n" +
+                                       "• Skip some security assessments\n" +
+                                       "• May result in incomplete data collection\n\n" +
+                                       "For best results, please:\n" +
+                                       "1. Close this window\n" +
+                                       "2. Right-click VeeamHealthCheck.exe\n" +
+                                       "3. Select 'Run as Administrator'\n\n" +
+                                       "Do you want to continue without administrator privileges?";
+                        
+                        var result = MessageBox.Show(message, "Administrator Privileges Recommended", 
+                                                    MessageBoxButton.YesNo, MessageBoxImage.Warning);
+                        
+                        if (result == MessageBoxResult.No)
+                        {
+                            CGlobals.Logger.Info("User declined to run without admin privileges", false);
+                            Environment.Exit(0);
+                        }
+                        
+                        // User chose to continue without admin
+                        CGlobals.RunningWithoutAdmin = true;
+                        CGlobals.Logger.Warning("Running without administrator privileges - some features will be limited", false);
+                    }
+                    else
+                    {
+                        // CLI execution - just warn and continue
+                        CGlobals.RunningWithoutAdmin = true;
+                        CGlobals.Logger.Warning("Running without administrator privileges - some registry checks and security assessments will be skipped", false);
+                    }
+                }
+                else if (CGlobals.IsVb365 && !CGlobals.REMOTEEXEC)
+                {
+                    // Local VB365 requires admin
+                    string message = "Please run program as Administrator";
+                    if (CGlobals.GUIEXEC)
+                    {
+                        MessageBox.Show(message);
+                    }
+                    CGlobals.Logger.Error(message, false);
+                    Environment.Exit(0);
+                }
+                // else: Remote execution - no admin required, continue normally
             }
 
             CGlobals.Logger.Info("Starting Admin Check...done!");

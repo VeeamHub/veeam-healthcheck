@@ -24,18 +24,18 @@ try {
     Write-Verbose "Attempting to import Veeam.Backup.PowerShell module..."
     Import-Module Veeam.Backup.PowerShell -Force -WarningAction Ignore
     Write-Host "[VERBOSE] Attempting to import Veeam.Backup.PowerShell module..."
-    Import-Module Veeam.Backup.PowerShell  -Force -WarningAction Ignore
+    Import-Module Veeam.Backup.PowerShell -Force -WarningAction Ignore
     Write-Host "[VERBOSE] Module imported. Attempting to connect to VBR Server: $Server with user $Username."
 
     # Decode Base64 password
     $passwordBytes = [System.Convert]::FromBase64String($PasswordBase64)
     $password = [System.Text.Encoding]::UTF8.GetString($passwordBytes)
-    
-    # Convert to SecureString
-    $securePassword = ConvertTo-SecureString -String $password -AsPlainText -Force
-    $credential = New-Object System.Management.Automation.PSCredential($Username, $securePassword)
-    
-    Connect-VBRServer -Server $Server -Credential $credential -ForceAcceptTlsCertificate -ErrorAction Stop
+
+    Write-Host "[VERBOSE] Password decoded successfully (length: $($password.Length))"
+
+    # Use -User and -Password parameters directly (same as manual CLI usage)
+    # This approach works better for local accounts vs -Credential
+    Connect-VBRServer -Server $Server -User $Username -Password $password -ForceAcceptTlsCertificate -ErrorAction Stop
     Write-Host "[VERBOSE] Successfully connected to VBR Server."
     exit 0
 }

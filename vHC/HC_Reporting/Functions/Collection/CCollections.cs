@@ -230,17 +230,16 @@ namespace VeeamHealthCheck.Functions.Collection
             // - If VBR is installed locally (CGlobals.IsVbr) AND we're not doing remote execution, use Windows auth
             // - Otherwise, credentials are required
             bool isLocalVbr = CGlobals.IsVbr && !CGlobals.REMOTEEXEC;
-            bool hasCliCreds = !string.IsNullOrEmpty(CGlobals.CredsUsername) && !string.IsNullOrEmpty(CGlobals.CredsPassword);
 
             // For local VBR without remote flag, use Windows authentication (no credentials needed)
-            if (isLocalVbr && !hasCliCreds)
+            if (isLocalVbr)
             {
                 this.log.Info("Local VBR detected, using Windows authentication (no credentials required)...", false);
                 return this.RunLocalMfaCheckNoCredentials(p);
             }
 
-            // For remote execution or when CLI creds are explicitly provided, use credential-based authentication
-            this.log.Info("Remote execution or credentials provided, using credential-based authentication...", false);
+            // For remote execution, credentials are required (will prompt if not stored)
+            this.log.Info("Remote execution detected, credentials required...", false);
 
             CredsHandler ch = new();
             var creds = ch.GetCreds();

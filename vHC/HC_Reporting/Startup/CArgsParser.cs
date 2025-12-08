@@ -171,28 +171,9 @@ namespace VeeamHealthCheck.Startup
 
                         // Environment.Exit(0);
                         break;
-                    case "/creds":
-                        CGlobals.UseStoredCreds = true;
-                        CGlobals.Logger.Info("Using stored credentials for remote connection", false);
-                        break;
                     case "/clearcreds":
                         CGlobals.ClearStoredCreds = true;
                         CGlobals.Logger.Info("Clear stored credentials flag set", false);
-                        break;
-                    case var match when new Regex("/creds=.*").IsMatch(a):
-                        string credsStr = this.ParsePath(a);
-                        string[] parts = credsStr.Split(':');
-                        if (parts.Length == 2)
-                        {
-                            CGlobals.CredsUsername = parts[0];
-                            CGlobals.CredsPassword = parts[1];
-                            CGlobals.Logger.Info("Credentials provided via command line", false);
-                        }
-                        else
-                        {
-                            CGlobals.Logger.Error("Invalid /creds format. Use /creds=username:password", false);
-                        }
-
                         break;
                     case "/pdf":
                         CGlobals.EXPORTPDF = true;

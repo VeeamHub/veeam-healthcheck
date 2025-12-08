@@ -23,16 +23,7 @@ namespace VeeamHealthCheck.Functions.CredsWindow
                 CGlobals.ClearStoredCreds = false;
             }
 
-            // First, check if credentials were provided via command line
-            if (!string.IsNullOrEmpty(CGlobals.CredsUsername) && !string.IsNullOrEmpty(CGlobals.CredsPassword))
-            {
-                CGlobals.Logger.Info($"Using command-line credentials for host: {host}", false);
-                // Store them for future use
-                CredentialStore.Set(host, CGlobals.CredsUsername, CGlobals.CredsPassword);
-                return (CGlobals.CredsUsername, CGlobals.CredsPassword);
-            }
-
-            // Second, check if we have stored credentials
+            // First, check if we have stored credentials
             var stored = CredentialStore.Get(host);
             if (stored != null)
             {
@@ -40,11 +31,11 @@ namespace VeeamHealthCheck.Functions.CredsWindow
                 return stored;
             }
 
-            // Third, try to prompt for credentials (only if GUI available)
+            // Second, prompt for credentials (GUI or CLI)
             var creds = this.PromptForCredentials(host);
             if (creds == null)
             {
-                CGlobals.Logger.Error("Credentials not provided. Aborting MFA test.", false);
+                CGlobals.Logger.Error("Credentials not provided. Aborting.", false);
                 return creds;
             }
 
@@ -53,14 +44,91 @@ namespace VeeamHealthCheck.Functions.CredsWindow
 
         private (string Username, string Password)? PromptForCredentials(string host)
         {
-            // Check if GUI is available before attempting to show dialog
-            if (!CGlobals.GUIEXEC || System.Windows.Application.Current == null)
+            // If GUI is available, use the GUI prompt
+            if (CGlobals.GUIEXEC && System.Windows.Application.Current != null)
             {
-                CGlobals.Logger.Warning("GUI not available. Cannot prompt for credentials in non-interactive environment.");
-                CGlobals.Logger.Warning($"Please provide credentials for host '{host}' using the /creds parameter or run in GUI mode.");
-                return null;
+                return this.PromptForCredentialsGui(host);
             }
 
+            // Otherwise, use CLI prompt
+            return this.PromptForCredentialsCli(host);
+        }
+
+        private (string Username, string Password)? PromptForCredentialsCli(string host)
+        {
+            CGlobals.Logger.Info($"Credentials required for host: {host}", false);
+
+            try
+            {
+                Console.WriteLine();
+                Console.WriteLine($"=== Authentication Required for {host} ===");
+                Console.Write("Username: ");
+                string username = Console.ReadLine();
+
+                if (string.IsNullOrWhiteSpace(username))
+                {
+                    CGlobals.Logger.Warning("Username cannot be empty.");
+                    return null;
+                }
+
+                Console.Write("Password: ");
+                string password = ReadPasswordMasked();
+                Console.WriteLine(); // New line after password entry
+
+                if (string.IsNullOrEmpty(password))
+                {
+                    CGlobals.Logger.Warning("Password cannot be empty.");
+                    return null;
+                }
+
+                // Store credentials for future use
+                CredentialStore.Set(host, username, password);
+                CGlobals.Logger.Info($"Credentials stored for host: {host}", false);
+
+                return (username, password);
+            }
+            catch (Exception ex)
+            {
+                CGlobals.Logger.Error($"Error reading credentials: {ex.Message}");
+                return null;
+            }
+        }
+
+        /// <summary>
+        /// Reads a password from the console, masking input with asterisks.
+        /// </summary>
+        private string ReadPasswordMasked()
+        {
+            var password = new StringBuilder();
+
+            while (true)
+            {
+                var keyInfo = Console.ReadKey(intercept: true);
+
+                if (keyInfo.Key == ConsoleKey.Enter)
+                {
+                    break;
+                }
+                else if (keyInfo.Key == ConsoleKey.Backspace)
+                {
+                    if (password.Length > 0)
+                    {
+                        password.Remove(password.Length - 1, 1);
+                        Console.Write("\b \b"); // Erase the last asterisk
+                    }
+                }
+                else if (!char.IsControl(keyInfo.KeyChar))
+                {
+                    password.Append(keyInfo.KeyChar);
+                    Console.Write("*");
+                }
+            }
+
+            return password.ToString();
+        }
+
+        private (string Username, string Password)? PromptForCredentialsGui(string host)
+        {
             var app = System.Windows.Application.Current;
             var dispatcher = app.Dispatcher;
 
