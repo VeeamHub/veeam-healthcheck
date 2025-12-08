@@ -355,8 +355,25 @@ namespace VeeamHealthCheck.Functions.Collection
             try
             {
                 string server = "localhost";
-                string pwshPath = @"C:\Program Files\PowerShell\7\pwsh.exe";
-                string psExe = File.Exists(pwshPath) ? pwshPath : "powershell.exe";
+                string psExe;
+                
+                // Use the appropriate PowerShell version based on VBR version
+                if (CGlobals.PowerShellVersion == 7)
+                {
+                    string pwshPath = @"C:\Program Files\PowerShell\7\pwsh.exe";
+                    if (!File.Exists(pwshPath))
+                    {
+                        CGlobals.Logger.Debug("PowerShell 7 not found at: " + pwshPath, false);
+                        CGlobals.Logger.Error("PowerShell 7 is required but not found. MFA test cannot proceed.");
+                        return false;
+                    }
+                    psExe = pwshPath;
+                }
+                else
+                {
+                    // Use PowerShell 5 for VBR version 12 and below
+                    psExe = "powershell.exe";
+                }
 
                 // Simple Connect-VBRServer without credentials
                 string script = "Import-Module Veeam.Backup.PowerShell -WarningAction Ignore; Connect-VBRServer -Server localhost";
