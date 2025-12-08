@@ -40,12 +40,16 @@ namespace VeeamHealthCheck.Functions.Reporting.CsvHandlers
         {
             try
             {
-                string[] files = Directory.GetFiles(outpath);
+                // Search recursively to find CSV files in server/timestamp subdirectories
+                string[] files = Directory.GetFiles(outpath, "*.*", SearchOption.AllDirectories);
+                
+                // Try to find exact match first
                 foreach (var f in files)
                 {
                     FileInfo fi = new(f);
                     if (fi.Name.Contains(file))
                     {
+                        this.log.Info($"looking for VBR CSV at: {f}");
                         var cr = this.CReader(f);
                         return cr;
                     }

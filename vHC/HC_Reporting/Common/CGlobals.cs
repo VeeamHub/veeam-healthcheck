@@ -24,6 +24,7 @@ namespace VeeamHealthCheck.Shared
         public static bool REMOTEEXEC = false;
         public static string REMOTEHOST = string.Empty;
         public static bool GUIEXEC = false;
+        private static string _runTimestamp = null;
         public static string VHCVERSION = string.Empty;
         public static bool DEBUG = false;
 
@@ -45,9 +46,8 @@ namespace VeeamHealthCheck.Shared
         public static bool EXPORTINDIVIDUALJOBHTMLS = true;
         public static bool CHECKFIXES = false;
         public static bool EXPORTPDF = false;
-        public static bool UseStoredCreds = false;
-        public static string CredsUsername = string.Empty;
-        public static string CredsPassword = string.Empty;
+        public static bool ClearStoredCreds = false;
+        public static bool RunningWithoutAdmin = false;
 
         // Security Values
         public static bool IsMfaEnabled = false;
@@ -134,6 +134,19 @@ namespace VeeamHealthCheck.Shared
         {
             get => _desiredPath;
             set => _desiredPath = value;
+        }
+
+        /// <summary>
+        /// Gets the timestamp for the current tool run in yyyyMMdd_HHmmss format.
+        /// Timestamp is set once per run and reused throughout.
+        /// </summary>
+        public static string GetRunTimestamp()
+        {
+            if (_runTimestamp == null)
+            {
+                _runTimestamp = GetToolStart.ToString("yyyyMMdd_HHmmss");
+            }
+            return _runTimestamp;
         }
     }
 }

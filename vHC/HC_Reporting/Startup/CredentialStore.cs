@@ -25,29 +25,109 @@ public static class CredentialStore
 
     static CredentialStore()
     {
-        Directory.CreateDirectory(Path.GetDirectoryName(StorePath));
-        // log the path for debugging purposes
-        CGlobals.Logger.Debug($"Credential store path: {StorePath}");
-        if (File.Exists(StorePath))
+        InitializeCache();
+    }
+
+    private static void InitializeCache()
+    {
+        try
         {
-            var json = File.ReadAllText(StorePath);
-            var dict = JsonSerializer.Deserialize<Dictionary<string, CredentialRecord>>(json)
-                       ?? new Dictionary<string, CredentialRecord>();
-            _cache = dict.ToDictionary(
-                kvp => kvp.Key,
-                kvp => (kvp.Value.Username, Convert.FromBase64String(kvp.Value.PasswordEnc ?? "")));
-            // Remove any invalid entries
-            foreach (var key in _cache.Keys.ToList())
+            Directory.CreateDirectory(Path.GetDirectoryName(StorePath));
+            // log the path for debugging purposes
+            CGlobals.Logger.Debug($"Credential store path: {StorePath}");
+
+            if (File.Exists(StorePath))
             {
-                var entry = _cache[key];
-                if (entry.Username == null || entry.PasswordEnc == null || entry.PasswordEnc.Length == 0)
-                    _cache.Remove(key);
+                var json = File.ReadAllText(StorePath);
+
+                // Handle empty or whitespace-only files
+                if (string.IsNullOrWhiteSpace(json))
+                {
+                    CGlobals.Logger.Debug("Credential store file is empty, initializing fresh cache");
+                    _cache = new Dictionary<string, (string, byte[])>();
+                    return;
+                }
+
+                var dict = JsonSerializer.Deserialize<Dictionary<string, CredentialRecord>>(json);
+
+                if (dict == null)
+                {
+                    CGlobals.Logger.Debug("Credential store deserialized to null, initializing fresh cache");
+                    _cache = new Dictionary<string, (string, byte[])>();
+                    return;
+                }
+
+                _cache = new Dictionary<string, (string Username, byte[] PasswordEnc)>();
+
+                foreach (var kvp in dict)
+                {
+                    try
+                    {
+                        // Skip entries with null/empty password
+                        if (string.IsNullOrEmpty(kvp.Value?.PasswordEnc) || string.IsNullOrEmpty(kvp.Value?.Username))
+                            continue;
+
+                        var passwordBytes = Convert.FromBase64String(kvp.Value.PasswordEnc);
+                        if (passwordBytes.Length > 0)
+                        {
+                            _cache[kvp.Key] = (kvp.Value.Username, passwordBytes);
+                        }
+                    }
+                    catch (FormatException)
+                    {
+                        // Invalid Base64, skip this entry
+                        CGlobals.Logger.Debug($"Skipping credential entry with invalid Base64 encoding for key: {kvp.Key}");
+                    }
+                }
+            }
+            else
+            {
+                _cache = new Dictionary<string, (string, byte[])>();
             }
         }
-        else
+        catch (JsonException ex)
         {
+            CGlobals.Logger.Warning($"Credential store file is malformed, initializing fresh cache. Error: {ex.Message}");
             _cache = new Dictionary<string, (string, byte[])>();
         }
+        catch (Exception ex)
+        {
+            CGlobals.Logger.Error($"Failed to initialize credential store: {ex.Message}");
+            _cache = new Dictionary<string, (string, byte[])>();
+        }
+    }
+
+    /// <summary>
+    /// Clears all stored credentials from memory and disk.
+    /// </summary>
+    public static void Clear()
+    {
+        try
+        {
+            _cache = new Dictionary<string, (string, byte[])>();
+
+            if (File.Exists(StorePath))
+            {
+                File.Delete(StorePath);
+                CGlobals.Logger.Info("Stored credentials cleared successfully");
+            }
+            else
+            {
+                CGlobals.Logger.Debug("No credential store file to delete");
+            }
+        }
+        catch (Exception ex)
+        {
+            CGlobals.Logger.Error($"Failed to clear credential store: {ex.Message}");
+        }
+    }
+
+    /// <summary>
+    /// Checks if there are any stored credentials.
+    /// </summary>
+    public static bool HasStoredCredentials()
+    {
+        return _cache != null && _cache.Count > 0;
     }
 
     public static (string Username, string Password)? Get(string server)

@@ -30,8 +30,16 @@ param(
   [Parameter ()]
   [string]$User,
   [Parameter ()]
-  [string]$Password
+  [string]$Password,
+  [Parameter (Mandatory = $false)]
+  [string]$ReportPath = ""
 )
+
+# If ReportPath not provided, use default with server name and timestamp structure
+if ([string]::IsNullOrEmpty($ReportPath)) {
+    $timestamp = Get-Date -Format "yyyyMMdd_HHmmss"
+    $ReportPath = "C:\temp\vHC\Original\VBR\$VBRServer\$timestamp"
+}
 
 
 #Functions:
@@ -194,16 +202,22 @@ foreach ($TaskSession in $SelectTaskSessions) {
 
 
 
+if (-not (Test-Path $ReportPath)) {
+  New-Item -Path $ReportPath -ItemType Directory -Force | Out-Null
+}
+
+$csvPath = Join-Path -Path $ReportPath -ChildPath "VeeamSessionReport.csv"
+
 if ($RemoveDuplicates) {
 
   $UniqueTaskOutput = $AllTasksOutput | Select-Object JobName, VMName, Status, IsRetry, ProcessingMode, WorkDuration, TaskAlgorithm, CreationTime, BackupSize, DataSize, DedupRatio, CompressRatio -Unique
   #Write-Output $UniqueTaskOutput
-  $UniqueTaskOutput | Export-Csv 'C:\Temp\vHC\Original\VBR\VeeamSessionReport.csv' -NoTypeInformation
+  $UniqueTaskOutput | Export-Csv $csvPath -NoTypeInformation
 }
 
 else {
   #Write-Output $AllTasksOutput
-  $AllTasksOutput | Export-Csv 'C:\Temp\vHC\Original\VBR\VeeamSessionReport.csv' -NoTypeInformation
+  $AllTasksOutput | Export-Csv $csvPath -NoTypeInformation
 }
 
 

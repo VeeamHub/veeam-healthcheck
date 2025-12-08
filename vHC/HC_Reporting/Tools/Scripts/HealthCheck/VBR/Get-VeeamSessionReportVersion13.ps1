@@ -10,8 +10,18 @@ param(
 	[Parameter(Mandatory = $false)]
 	[string]$Password = "",
 	[Parameter(Mandatory = $false)]
-	[int]$ReportInterval = 7
+	[string]$PasswordBase64 = "",
+	[Parameter(Mandatory = $false)]
+	[int]$ReportInterval = 7,
+	[Parameter(Mandatory = $false)]
+	[string]$ReportPath = ""
 )
+
+# If ReportPath not provided, use default with server name and timestamp structure
+if ([string]::IsNullOrEmpty($ReportPath)) {
+    $timestamp = Get-Date -Format "yyyyMMdd_HHmmss"
+    $ReportPath = "C:\temp\vHC\Original\VBR\$VBRServer\$timestamp"
+}
 
 function Write-LogFile {
 	param(
@@ -94,11 +104,10 @@ foreach ($session in $sessions) {
 	$output += $obj
 }
 
-$csvPath = "C:\\temp\\vHC\\Original\\VBR\\VeeamSessionReport.csv"
-$csvDir = Split-Path -Path $csvPath -Parent
-if (-not (Test-Path $csvDir)) {
-	New-Item -Path $csvDir -ItemType Directory -Force | Out-Null
+if (-not (Test-Path $ReportPath)) {
+	New-Item -Path $ReportPath -ItemType Directory -Force | Out-Null
 }
 
+$csvPath = Join-Path -Path $ReportPath -ChildPath "VeeamSessionReport.csv"
 $output | Export-Csv -Path $csvPath -NoTypeInformation -Encoding UTF8
 Write-LogFile "Exported $($output.Count) sessions to $csvPath"

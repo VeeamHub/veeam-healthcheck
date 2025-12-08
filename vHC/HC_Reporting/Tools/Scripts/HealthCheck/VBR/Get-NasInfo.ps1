@@ -1,4 +1,19 @@
- # VMC log path is hardcoded for now. If logs are sent elsewhere, please adjust accordingly.
+param(
+    [Parameter(Mandatory)]
+    [string]$VBRServer,
+    [Parameter(Mandatory)]
+    [int]$VBRVersion,
+    [Parameter(Mandatory = $false)]
+    [string]$ReportPath = ""
+)
+
+# If ReportPath not provided, use default with server name and timestamp structure
+if ([string]::IsNullOrEmpty($ReportPath)) {
+    $timestamp = Get-Date -Format "yyyyMMdd_HHmmss"
+    $ReportPath = "C:\temp\vHC\Original\VBR\$VBRServer\$timestamp"
+}
+
+# VMC log path is hardcoded for now. If logs are sent elsewhere, please adjust accordingly.
  $logsPath = "C:\ProgramData\Veeam\Backup\Utils\VMC.log"
 
  # section identifiers
@@ -74,7 +89,8 @@
         [PSCustomObject]$properties
     }
 # export to csv
-$csvData | Export-Csv -Path "C:\Temp\vHC\Original\VBR\localhost_NasObjectSourceStorageSize.csv" -NoTypeInformation
+if (!(Test-Path $ReportPath)) { New-Item -Path $ReportPath -ItemType Directory -Force | Out-Null }
+$csvData | Export-Csv -Path "$ReportPath\${VBRServer}_NasObjectSourceStorageSize.csv" -NoTypeInformation
 
 #convert $nasBackupSourceShareStats to CSV and export to new csv file
 $csvData2 = $nasBackupSourceShareStats | ForEach-Object {
@@ -88,7 +104,7 @@ $csvData2 = $nasBackupSourceShareStats | ForEach-Object {
     [PSCustomObject]$properties
 }
 # export to csv
-$csvData2 | Export-Csv -Path "C:\Temp\vHC\Original\VBR\localhost_NasFileData.csv" -NoTypeInformation
+$csvData2 | Export-Csv -Path "$ReportPath\${VBRServer}_NasFileData.csv" -NoTypeInformation
 
 #convert $totalShareSize to CSV and export to new csv file
 $csvData3 = $totalShareSize | ForEach-Object {
@@ -102,4 +118,4 @@ $csvData3 = $totalShareSize | ForEach-Object {
     [PSCustomObject]$properties
 }
 # export to csv
-$csvData3 | Export-Csv -Path "C:\Temp\vHC\Original\VBR\localhost_NasSharesize.csv" -NoTypeInformation
+$csvData3 | Export-Csv -Path "$ReportPath\${VBRServer}_NasSharesize.csv" -NoTypeInformation

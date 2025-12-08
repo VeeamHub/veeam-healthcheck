@@ -1,0 +1,13 @@
+{
+  "permissions": {
+    "additionalDirectories": [
+      "C:\\temp\\vHC\\"
+    ],
+    "allow": [
+      "Bash(while read f)",
+      "Bash(do grep -l \"static.*Main\" \"$f\")",
+      "Bash(echo:*)",
+      "Bash(done)"
+    ]
+  }
+}
