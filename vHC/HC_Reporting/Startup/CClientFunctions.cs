@@ -149,6 +149,7 @@ namespace VeeamHealthCheck.Startup
                 if (process.ProcessName == "Veeam.Backup.Service")
                 {
                     CGlobals.IsVbr = true;
+                    CGlobals.IsVbrInstalled = true;
                     this.LOG.Info("VBR software detected", false);
 
                     // now get the VBR Version and store as global variable to help direct which script(s) to use
@@ -212,6 +213,7 @@ namespace VeeamHealthCheck.Startup
 
         public int StartPrimaryFunctions()
         {
+            // Single server execution - CGlobals.VBRServerName should already be set from the selected server in the UI
             this.LogUserSettings();
             this.StartCollections();
             return this.StartAnalysis();

@@ -30,6 +30,11 @@ namespace VeeamHealthCheck.Shared
 
         // Remote Exec variables
         public static string VBRServerName = "localhost";
+        
+        // Multi-server execution support
+        public static List<string> SelectedServers = new List<string> { "localhost" };
+        public static int MaxParallelServers = 3;
+        public static bool IsVbrInstalled = false;
 
         public static string RawReport = string.Empty;
         public static string ScrubbedReport = string.Empty;

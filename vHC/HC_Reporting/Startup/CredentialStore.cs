@@ -161,4 +161,62 @@ public static class CredentialStore
 
         File.WriteAllText(StorePath, JsonSerializer.Serialize(serializable, new JsonSerializerOptions { WriteIndented = true }));
     }
+
+    /// <summary>
+    /// Gets all server names that have stored credentials.
+    /// </summary>
+    public static List<string> GetAllServers()
+    {
+        return _cache?.Keys.ToList() ?? new List<string>();
+    }
+
+    /// <summary>
+    /// Removes credentials for a specific server from memory and disk.
+    /// </summary>
+    /// <param name="server">The server name to remove credentials for</param>
+    /// <returns>True if credentials were removed, false if no credentials existed for the server</returns>
+    public static bool Remove(string server)
+    {
+        try
+        {
+            if (_cache.Remove(server))
+            {
+                // Update the file with remaining credentials
+                var serializable = _cache.ToDictionary(
+                    kvp => kvp.Key,
+                    kvp => new CredentialRecord
+                    {
+                        Username = kvp.Value.Username,
+                        PasswordEnc = Convert.ToBase64String(kvp.Value.PasswordEnc)
+                    });
+
+                if (_cache.Count == 0)
+                {
+                    // If no credentials left, delete the file
+                    if (File.Exists(StorePath))
+                    {
+                        File.Delete(StorePath);
+                    }
+                }
+                else
+                {
+                    // Write remaining credentials back to file
+                    File.WriteAllText(StorePath, JsonSerializer.Serialize(serializable, new JsonSerializerOptions { WriteIndented = true }));
+                }
+
+                CGlobals.Logger.Info($"Removed credentials for server: {server}");
+                return true;
+            }
+            else
+            {
+                CGlobals.Logger.Debug($"No credentials found for server: {server}");
+                return false;
+            }
+        }
+        catch (Exception ex)
+        {
+            CGlobals.Logger.Error($"Failed to remove credentials for {server}: {ex.Message}");
+            return false;
+        }
+    }
 }
