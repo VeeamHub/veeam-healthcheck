@@ -746,7 +746,7 @@ namespace VeeamHealthCheck.Html.VBR
         public string AddJobSummaryTable(bool scrub)
         {
             string summary = this.sum.JobSummary();
-            string s = this.form.SectionStart("jobsummary", VbrLocalizationHelper.JobSumTitle);
+            string s = this.form.SectionStartWithButton("jobsummary", VbrLocalizationHelper.JobSumTitle, VbrLocalizationHelper.JobSumTitle);
 
             s += this.form.TableHeaderLeftAligned(VbrLocalizationHelper.JobSum0, VbrLocalizationHelper.JobSum0TT, 0) +
                 this.form.TableHeader(VbrLocalizationHelper.JobSum1, VbrLocalizationHelper.JobSum1TT, 1) +
@@ -1044,7 +1044,7 @@ namespace VeeamHealthCheck.Html.VBR
 
                     s += this.form.EndTable();
                 }
-                catch (Exception ex)
+                catch (Exception)
                 {
                 }
 
@@ -3055,6 +3055,16 @@ this.form.TableHeader(VbrLocalizationHelper.SbrExt15, VbrLocalizationHelper.SbrE
         public void AddSessionsFiles(bool scrub)
         {
             this.df.JobSessionInfoToXml(scrub);
+        }
+
+        public string AddConfigurationTablesHeader()
+        {
+            return this.form.header1("Configuration Tables");
+        }
+
+        public string AddConfigurationTablesFooter()
+        {
+            return string.Empty;
         }
     }
 }

@@ -54,7 +54,7 @@ namespace VeeamHealthCheck.Startup
             CClientFunctions f = new CClientFunctions();
             f.LogVersionAndArgs(this.args);
             try { f.GetVbrVersion(); }
-            catch (Exception ex) { }
+            catch (Exception) { }
             f.Dispose();
         }
 
@@ -178,6 +178,9 @@ namespace VeeamHealthCheck.Startup
                     case "/pdf":
                         CGlobals.EXPORTPDF = true;
                         break;
+                    case "/pptx":
+                        CGlobals.EXPORTPPTX = true;
+                        break;
                     case "/debug":
                         CGlobals.DEBUG = true;
                         break;
@@ -275,7 +278,7 @@ namespace VeeamHealthCheck.Startup
                 string[] outputDir = input.Split("=");
                 return outputDir[1];
             }
-            catch (Exception e)
+            catch (Exception)
             {
                 CGlobals.Logger.Error("Input path is invalide. Try again.");
                 return null;

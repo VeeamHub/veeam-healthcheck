@@ -124,7 +124,7 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VB365
                     }
                 }
             }
-            catch (Exception e)
+            catch (Exception)
             {
             }
 
@@ -284,7 +284,7 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VB365
                             osVersionShade = 1;
                         }
                     }
-                    catch (Exception e)
+                    catch (Exception)
                     {
                     }
 
@@ -332,7 +332,7 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VB365
                     s += "</tr>";
                 }
             }
-            catch (Exception e)
+            catch (Exception)
             {
             }
 
@@ -451,7 +451,7 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VB365
                     s += "</tr>";
                 }
             }
-            catch (Exception e)
+            catch (Exception)
             {
             }
 
@@ -500,7 +500,7 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VB365
                     s += "</tr>";
                 }
             }
-            catch (Exception e)
+            catch (Exception)
             {
             }
 
@@ -704,7 +704,7 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VB365
                     s += "</tr>";
                 }
             }
-            catch (Exception e)
+            catch (Exception)
             {
             }
 
@@ -884,7 +884,7 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VB365
                     s += "</tr>";
                 }
             }
-            catch (Exception e)
+            catch (Exception)
             {
             }
 
@@ -1011,7 +1011,7 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VB365
                     s += "</tr>";
                 }
             }
-            catch (Exception e)
+            catch (Exception)
             {
             }
 
@@ -1066,7 +1066,7 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VB365
                     s += "</tr>";
                 }
             }
-            catch (Exception e)
+            catch (Exception)
             {
             }
 
@@ -1101,14 +1101,6 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VB365
                 foreach (var gl in global)
                 {
                     s += "<tr>";
-                    string name;
-                    string operation;
-                    string tLatest;
-                    string tMed;
-                    string tMin;
-                    string tAvg;
-                    string tMax;
-                    string tNinety;
 
                     int counter = 0;
                     foreach (var g in gl)
@@ -1128,7 +1120,7 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VB365
                     s += "</tr>";
                 }
             }
-            catch (Exception e)
+            catch (Exception)
             {
             }
 
@@ -1187,7 +1179,7 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VB365
                     s += "</tr>";
                 }
             }
-            catch (Exception e)
+            catch (Exception)
             {
             }
 
@@ -1320,7 +1312,7 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VB365
                     s += "</tr>";
                 }
             }
-            catch (Exception e)
+            catch (Exception)
             {
             }
 
@@ -1384,7 +1376,7 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VB365
                     s += "</tr>";
                 }
             }
-            catch (Exception e)
+            catch (Exception)
             {
             }
 
@@ -1434,7 +1426,7 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VB365
                     s += "</tr>";
                 }
             }
-            catch (Exception e)
+            catch (Exception)
             {
             }
 
@@ -1524,7 +1516,7 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VB365
                 s += this.form.TableData(stale.ToString(), string.Empty);
                 s += "</tr>";
             }
-            catch (Exception e)
+            catch (Exception)
             {
             }
 
@@ -1692,7 +1684,7 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VB365
                     s += "</tr>";
                 }
             }
-            catch (Exception e)
+            catch (Exception)
             {
             }
 

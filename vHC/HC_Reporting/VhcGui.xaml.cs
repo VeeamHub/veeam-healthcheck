@@ -155,6 +155,7 @@ namespace VeeamHealthCheck
             this.scrubBox.Content = VbrLocalizationHelper.GuiSensData;
             this.explorerShowBox.Content = VbrLocalizationHelper.GuiShowFiles;
             this.pdfCheckBox.Content = "Export PDF";
+            this.pptxCheckBox.Content = "Export PowerPoint";
             this.clearCredsCheckBox.Content = "Clear Saved Credentials";
             this.outPath.Text = VbrLocalizationHelper.GuiOutPath;
             this.termsBtn.Content = VbrLocalizationHelper.GuiAcceptButton;
@@ -316,6 +317,18 @@ namespace VeeamHealthCheck
         {
             this.functions.LogUIAction("Export PDF = false");
             CGlobals.EXPORTPDF = false;
+        }
+
+        private void pptxCheckBox_Checked(object sender, RoutedEventArgs e)
+        {
+            this.functions.LogUIAction("Export PowerPoint = true");
+            CGlobals.EXPORTPPTX = true;
+        }
+
+        private void pptxCheckBox_Unchecked(object sender, RoutedEventArgs e)
+        {
+            this.functions.LogUIAction("Export PowerPoint = false");
+            CGlobals.EXPORTPPTX = false;
         }
 
         private void clearCredsCheckBox_Checked(object sender, RoutedEventArgs e)

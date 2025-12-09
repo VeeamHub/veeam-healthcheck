@@ -345,7 +345,7 @@ namespace VeeamHealthCheck.Startup
                 // RestInvoker restInvoker = new RestInvoker();
                 // restInvoker.Run();
             }
-            catch(Exception ex)
+            catch (Exception)
             {
             }
             

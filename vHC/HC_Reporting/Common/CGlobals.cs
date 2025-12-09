@@ -51,6 +51,7 @@ namespace VeeamHealthCheck.Shared
         public static bool EXPORTINDIVIDUALJOBHTMLS = true;
         public static bool CHECKFIXES = false;
         public static bool EXPORTPDF = false;
+        public static bool EXPORTPPTX = false;
         public static bool ClearStoredCreds = false;
         public static bool RunningWithoutAdmin = false;
 

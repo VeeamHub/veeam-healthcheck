@@ -49,21 +49,9 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR
             this.ServerSummaryTable();
             this.log.Info(this.logStart + "ServerSummaryTable completed.");
             
-            this.log.Info(this.logStart + "Generating JobSummaryTable...");
-            this.JobSummaryTable();
-            this.log.Info(this.logStart + "JobSummaryTable completed.");
-            
-            this.log.Info(this.logStart + "Generating MissingJobsTable...");
-            this.MissingJobsTable();
-            this.log.Info(this.logStart + "MissingJobsTable completed.");
-            
-            this.log.Info(this.logStart + "Generating ProtectedWorkloadsTable...");
-            this.ProtectedWorkloadsTable();
-            this.log.Info(this.logStart + "ProtectedWorkloadsTable completed.");
-            
-            this.log.Info(this.logStart + "Generating ManagedServersTable...");
-            this.ManagedServersTable();
-            this.log.Info(this.logStart + "ManagedServersTable completed.");
+            this.log.Info(this.logStart + "Generating Configuration Tables section...");
+            this.ConfigurationTablesSection();
+            this.log.Info(this.logStart + "Configuration Tables section completed.");
             
             this.log.Info(this.logStart + "Generating RegistryKeyTable...");
             this.RegistryKeyTable();
@@ -168,6 +156,21 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR
         private void JobSummaryTable()
         {
             this.HTMLSTRING += this.tables.AddJobSummaryTable(this.SCRUB);
+        }
+
+        private void ConfigurationTablesSection()
+        {
+            // Add parent header for Configuration Tables
+            this.HTMLSTRING += this.tables.AddConfigurationTablesHeader();
+            
+            // Add child configuration tables
+            this.JobSummaryTable();
+            this.MissingJobsTable();
+            this.ProtectedWorkloadsTable();
+            this.ManagedServersTable();
+            
+            // Close the parent section
+            this.HTMLSTRING += this.tables.AddConfigurationTablesFooter();
         }
 
         private void MissingJobsTable()

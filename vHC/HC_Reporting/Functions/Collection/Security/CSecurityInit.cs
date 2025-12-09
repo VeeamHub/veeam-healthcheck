@@ -177,7 +177,7 @@ namespace VeeamHealthCheck.Functions.Collection.Security
                                 this.AppLOG.Info("\t" + name, true);
                             }
                         }
-                        catch (Exception e)
+                        catch (Exception)
                         {
                             // LOG.Error(e.ToString(), true);
                         }

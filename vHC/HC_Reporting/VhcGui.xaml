@@ -165,6 +165,9 @@ MIT License
                         <CheckBox x:Name="pdfCheckBox" Style="{StaticResource ModernCheckBox}"
                                   Checked="pdfCheckBox_Checked" Unchecked="pdfCheckBox_Unchecked"
                                   IsChecked="False"/>
+                        <CheckBox x:Name="pptxCheckBox" Style="{StaticResource ModernCheckBox}"
+                                  Checked="pptxCheckBox_Checked" Unchecked="pptxCheckBox_Unchecked"
+                                  IsChecked="False"/>
                         <CheckBox x:Name="explorerShowBox" Style="{StaticResource ModernCheckBox}"
                                   Checked="explorerShowBox_Checked" Unchecked="explorerShowBox_Unchecked"
                                   IsChecked="True"/>
