@@ -11,10 +11,10 @@
 		<Company>Veeam</Company>
 		<Authors>AdamC</Authors>
 		<ApplicationIcon>Health_Check_Icon.ico</ApplicationIcon>
-		<AssemblyVersion>3.0.0.402</AssemblyVersion>
+		<AssemblyVersion>3.0.0.408</AssemblyVersion>
 		<SignAssembly>False</SignAssembly>
 		<DelaySign>false</DelaySign>
-		<FileVersion>3.0.0.402</FileVersion>
+		<FileVersion>3.0.0.408</FileVersion>
 		<DebugType>full</DebugType>
 		<SelfContained>true</SelfContained>
 		<!--These 2 lines are what produce the single file utility. Possibly doesn't work...-->

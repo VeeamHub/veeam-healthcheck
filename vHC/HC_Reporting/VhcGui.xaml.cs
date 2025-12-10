@@ -155,7 +155,7 @@ namespace VeeamHealthCheck
             this.scrubBox.Content = VbrLocalizationHelper.GuiSensData;
             this.explorerShowBox.Content = VbrLocalizationHelper.GuiShowFiles;
             this.pdfCheckBox.Content = "Export PDF";
-            this.pptxCheckBox.Content = "Export PowerPoint";
+            // this.pptxCheckBox.Content = "Export PowerPoint";
             this.clearCredsCheckBox.Content = "Clear Saved Credentials";
             this.outPath.Text = VbrLocalizationHelper.GuiOutPath;
             this.termsBtn.Content = VbrLocalizationHelper.GuiAcceptButton;
