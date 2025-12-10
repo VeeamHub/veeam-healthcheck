@@ -746,7 +746,7 @@ namespace VeeamHealthCheck.Html.VBR
         public string AddJobSummaryTable(bool scrub)
         {
             string summary = this.sum.JobSummary();
-            string s = this.form.SectionStart("jobsummary", VbrLocalizationHelper.JobSumTitle);
+            string s = this.form.SectionStartWithButton("jobsummary", VbrLocalizationHelper.JobSumTitle, VbrLocalizationHelper.JobSumTitle);
 
             s += this.form.TableHeaderLeftAligned(VbrLocalizationHelper.JobSum0, VbrLocalizationHelper.JobSum0TT, 0) +
                 this.form.TableHeader(VbrLocalizationHelper.JobSum1, VbrLocalizationHelper.JobSum1TT, 1) +
@@ -1044,7 +1044,7 @@ namespace VeeamHealthCheck.Html.VBR
 
                     s += this.form.EndTable();
                 }
-                catch (Exception ex)
+                catch (Exception)
                 {
                 }
 
@@ -2424,7 +2424,7 @@ this.form.TableHeader(VbrLocalizationHelper.SbrExt15, VbrLocalizationHelper.SbrE
             }
 
             s += this.form.SectionEnd(summary);
-            
+
             // JSON job session summary by job
             try
             {
@@ -2707,7 +2707,15 @@ this.form.TableHeader(VbrLocalizationHelper.SbrExt15, VbrLocalizationHelper.SbrE
                             // row+= _form.TableData(trueSizeGB.ToString() + " GB", "");
                             // row+= _form.TableData(job.RetentionType, "");
                             row += job.RetentionType == "Cycles" ? this.form.TableData("Points", string.Empty) : this.form.TableData(job.RetentionType, string.Empty);
-                            row += this.form.TableData(job.RetainDaysToKeep, string.Empty);
+                            if (CGlobals.VBRMAJORVERSION > 12)
+                            {
+                                row += form.TableData(job.RetainDaysToKeep, string.Empty);
+                            }
+                            else
+                            {
+                                row += this.form.TableData(job.RetentionCount, string.Empty);
+
+                            }
 
                             // row += _form.TableData(job.StgEncryptionEnabled, "");
                             row += job.StgEncryptionEnabled == "True" ? this.form.TableData(this.form.True, string.Empty) : this.form.TableData(this.form.False, string.Empty);
@@ -3055,6 +3063,16 @@ this.form.TableHeader(VbrLocalizationHelper.SbrExt15, VbrLocalizationHelper.SbrE
         public void AddSessionsFiles(bool scrub)
         {
             this.df.JobSessionInfoToXml(scrub);
+        }
+
+        public string AddConfigurationTablesHeader()
+        {
+            return this.form.header1("Configuration Tables");
+        }
+
+        public string AddConfigurationTablesFooter()
+        {
+            return string.Empty;
         }
     }
 }

@@ -98,7 +98,7 @@ namespace VeeamHealthCheck.Functions.Reporting.Html
                     t.FourEyesEnabled = false; // default when not present (older versions)
                 }
             }
-            catch (Exception ex)
+            catch (Exception)
             {
             }
 
@@ -343,7 +343,7 @@ namespace VeeamHealthCheck.Functions.Reporting.Html
                 this.log.Info(this.logStart + "Converting protected workloads data to xml..done!");
                 return 0;
             }
-            catch (Exception ex)
+            catch (Exception)
             {
                 return 1;
             }
@@ -979,7 +979,7 @@ namespace VeeamHealthCheck.Functions.Reporting.Html
                 this.log.Info(logStart + "converting job session info to xml..done!");
                 return 0;
             }
-            catch (Exception ex)
+            catch (Exception)
             {
                 return 1;
             }

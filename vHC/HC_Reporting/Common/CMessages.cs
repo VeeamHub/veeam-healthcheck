@@ -20,27 +20,45 @@ BASIC COMMANDS:
   /help             Show this help menu
 
 REPORTING OPTIONS:
-  /days:<N>         Set reporting interval (7, 30, 90, 12 days). Default: 7
-  /lite             Skip individual job HTML exports (faster)
+  /days:<N>         Set reporting interval (7, 12, 30, or 90 days). Default: 7
+  /lite             Skip individual job HTML exports (faster execution)
   /pdf              Export report as PDF in addition to HTML
-  /scrub:<true|false> Control sensitive data removal. Default: both versions
+  /pptx             Export report as PowerPoint presentation
+  /scrub:true       Enable sensitive data removal (anonymize output)
+  /scrub:false      Disable sensitive data removal (full detail)
+
+DISPLAY OPTIONS:
+  /show:files       Open file explorer after report generation
+  /show:report      Open HTML report in browser after generation
 
 REMOTE OPERATIONS:
   /remote           Enable remote execution mode
-  /host=<hostname>  Specify remote Veeam server hostname
-  /creds=<user:pass> Provide credentials (or /creds to use stored)
+  /host=<hostname>  Specify remote Veeam server hostname (required with /remote)
+                    Note: Credentials will be prompted if needed
 
 SPECIAL MODES:
   /security         Run security-focused assessment only
   /import           Generate report from existing data (no new collection)
-  /hotfix /path:<dir> Run hotfix detection on specified path
+  /hotfix           Run hotfix detection
+  /path=<dir>       Specify path for hotfix detection (used with /hotfix)
+
+UTILITY OPTIONS:
+  /clearcreds       Clear stored credentials from Windows Credential Manager
+  /debug            Enable debug logging for troubleshooting
 
 EXAMPLES:
   VeeamHealthCheck.exe /run
-  VeeamHealthCheck.exe /run /days:30 /lite
-  VeeamHealthCheck.exe /security /remote /host:vbr-server /creds=admin:password
+  VeeamHealthCheck.exe /run /days:30 /lite /pdf
+  VeeamHealthCheck.exe /security /remote /host=vbr-server.domain.local
   VeeamHealthCheck.exe /import /run
   VeeamHealthCheck.exe /hotfix /path=C:\VeeamUpdates
+  VeeamHealthCheck.exe /run /show:report /scrub:true
+
+NOTES:
+  - Run with no arguments to launch the GUI
+  - Credentials are managed via Windows Credential Manager
+  - Remote execution requires appropriate permissions on target server
+  - Default output directory: C:\temp\vHC
 
 For more information, visit: https://github.com/VeeamHub/veeam-healthcheck
 ";        

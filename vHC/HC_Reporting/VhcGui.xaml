@@ -8,112 +8,328 @@ MIT License
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         mc:Ignorable="d"
-        Title="" Height="650" Width="370"
+        Title="" 
+        MinHeight="700" MinWidth="950"
+        Height="Auto" Width="950"
+        SizeToContent="Height"
         WindowStartupLocation="CenterScreen"
-        ResizeMode="NoResize"
-        >
+        ResizeMode="CanResize"
+        Background="#F5F5F5">
 
+    <Window.Resources>
+        <!-- Modern Button Style -->
+        <Style x:Key="ModernButton" TargetType="Button">
+            <Setter Property="Background" Value="#00B233"/>
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="FontSize" Value="14"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="Padding" Value="20,10"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border Background="{TemplateBinding Background}" 
+                                CornerRadius="4" 
+                                Padding="{TemplateBinding Padding}">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+            <Style.Triggers>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter Property="Background" Value="#00A030"/>
+                </Trigger>
+                <Trigger Property="IsEnabled" Value="False">
+                    <Setter Property="Background" Value="#CCCCCC"/>
+                    <Setter Property="Cursor" Value="Arrow"/>
+                </Trigger>
+            </Style.Triggers>
+        </Style>
 
+        <!-- Secondary Button Style -->
+        <Style x:Key="SecondaryButton" TargetType="Button" BasedOn="{StaticResource ModernButton}">
+            <Setter Property="Background" Value="#555555"/>
+            <Style.Triggers>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter Property="Background" Value="#333333"/>
+                </Trigger>
+            </Style.Triggers>
+        </Style>
 
+        <!-- Modern CheckBox Style -->
+        <Style x:Key="ModernCheckBox" TargetType="CheckBox">
+            <Setter Property="FontSize" Value="13"/>
+            <Setter Property="Foreground" Value="#333333"/>
+            <Setter Property="Margin" Value="0,8,0,0"/>
+            <Setter Property="Cursor" Value="Hand"/>
+        </Style>
 
-    <Grid Margin="5,5,5,5" 
-          Height="425" 
-          Width="350" 
-          VerticalAlignment="Bottom">
+        <!-- GroupBox Style -->
+        <Style x:Key="ModernGroupBox" TargetType="GroupBox">
+            <Setter Property="BorderBrush" Value="#DDDDDD"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="Padding" Value="15"/>
+            <Setter Property="Margin" Value="0,0,0,15"/>
+            <Setter Property="Background" Value="White"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+        </Style>
+
+        <!-- TextBox Style -->
+        <Style x:Key="ModernTextBox" TargetType="TextBox">
+            <Setter Property="Padding" Value="8"/>
+            <Setter Property="BorderBrush" Value="#CCCCCC"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="FontSize" Value="13"/>
+        </Style>
+
+        <!-- ComboBox Style -->
+        <Style x:Key="ModernComboBox" TargetType="ComboBox">
+            <Setter Property="Padding" Value="8"/>
+            <Setter Property="BorderBrush" Value="#CCCCCC"/>
+            <Setter Property="FontSize" Value="13"/>
+        </Style>
+    </Window.Resources>
+
+    <Grid>
         <Grid.RowDefinitions>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
-        <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="*"/>
-        </Grid.ColumnDefinitions>
 
-        <ProgressBar Minimum="0" Maximum="100" Name="pBar" IsIndeterminate="True"  Height="50" VerticalAlignment="Bottom" />
-        <!--<DataGrid x:Name="dgrid1" Grid.Row="3" Grid.Column="0" Width="Auto" Grid.ColumnSpan="2" >
-            <DataGrid.Columns>
+        <Grid Grid.Row="0" Margin="25,25,25,15">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="380"/>
+                <ColumnDefinition Width="20"/>
+                <ColumnDefinition Width="*"/>
+            </Grid.ColumnDefinitions>
 
-            </DataGrid.Columns>
+            <!-- Left Panel - Instructions and Warnings -->
+            <StackPanel Grid.Column="0">
+                <!-- Header Section -->
+                <Border Background="White" Padding="20" Margin="0,0,0,15" CornerRadius="6">
+                <Border.Effect>
+                    <DropShadowEffect Color="#CCCCCC" BlurRadius="10" ShadowDepth="2" Opacity="0.3"/>
+                </Border.Effect>
+                <StackPanel>
+                    <TextBlock FontSize="18" FontWeight="Bold" Foreground="#00B233" Margin="0,0,0,10">
+                        <Run Name="InsHeader"/>
+                    </TextBlock>
+                    <TextBlock TextWrapping="Wrap" FontSize="12" Foreground="#555555" LineHeight="20">
+                        <Run Name="line1"/><LineBreak/>
+                        <Run Name="line2"/><LineBreak/>
+                        <Run Name="line3"/><LineBreak/>
+                        <Run Name="line4"/><LineBreak/>
+                        <Run Name="line5"/><LineBreak/>
+                        <Run Name="line6"/>
+                    </TextBlock>
+                </StackPanel>
+            </Border>
 
-        </DataGrid>
-
-
-        <ScrollViewer VerticalScrollBarVisibility="Auto" Grid.Row="3" Grid.Column="3" Margin="10,0,-5,0">
-            <StackPanel x:Name="sp1" Margin="10,0,-5,0">
-
+            <!-- Important Information Section -->
+            <Border Background="#FFF8E1" BorderBrush="#FFC107" BorderThickness="1" 
+                    Padding="15" CornerRadius="4">
+                <StackPanel>
+                    <TextBlock FontSize="12" TextWrapping="Wrap" Foreground="#333333" LineHeight="20">
+                        <Run Name="Cav1Part1"/><Run> </Run>
+                        <Hyperlink Name="kbLink" RequestNavigate="kbLink_RequestNavigate" 
+                                   NavigateUri="https://www.veeam.com/kb2462"
+                                   Foreground="#0066CC">KB 2462</Hyperlink>
+                        <Run Name="Cav1Part2"/><LineBreak/>
+                        <Run Name="Cav2"/>
+                    </TextBlock>
+                    <TextBlock TextWrapping="Wrap" FontSize="11" Foreground="#666666" 
+                               Margin="0,10,0,0" LineHeight="16">
+                        <Run Name="Cav3"/><LineBreak/>
+                        <Run Name="Cav4"/><LineBreak/><LineBreak/>
+                        <Run FontWeight="SemiBold" Foreground="#555555">Credential Storage:</Run><Run> Credentials are stored encrypted at </Run><Run FontFamily="Consolas" Foreground="#555555">%AppData%\VeeamHealthCheck\creds.json</Run><Run>. You can delete this file to remove saved credentials or use the "Clear Saved Credentials" option.</Run>
+                    </TextBlock>
+                    </StackPanel>
+                </Border>
             </StackPanel>
-        </ScrollViewer>
-        <DVC:Chart Grid.Column="0" Grid.Row="1" Canvas.Top="80" Canvas.Left="10" Name="mcChart" Height="400" Width="Auto" 
-           Background="#00B050" Grid.ColumnSpan="3" Margin="0,0,195,0">
-            <DVC:Chart.Series >
-                <DVC:BarSeries     
-            IndependentValueBinding="{Binding Path=Key}"
-            DependentValueBinding="{Binding Path=Value}" Margin="0,-3,0,3">
-                </DVC:BarSeries>
-            </DVC:Chart.Series>
-        </DVC:Chart>-->
-        <Button x:Name="run" Content="" HorizontalAlignment="Left" Margin="180,345,0,0" VerticalAlignment="Top" Click="run_Click" Height="25" Width="160"/>
-        <Button Name="termsBtn" Content="" HorizontalAlignment="Left" Margin="8,345,0,0" VerticalAlignment="Top" Height="25" Width="160" Click="AcceptButton_click"/>
-        <Button x:Name="importButton" Content="" HorizontalAlignment="Right" Margin="0,261,8,0" VerticalAlignment="Top" Height="38" Width="100" Click="Import_click" ToolTip="Creates a report based on previously collected data."/>
-        <TextBlock Margin="0,-180,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Height="392" Width="Auto">
-            <Run FontWeight="Bold" TextDecorations="Underline" Name="InsHeader" /><LineBreak/><Run/>
-            <LineBreak/>
-            <Run Name="line1"/><LineBreak/>
-            <Run Name="line2"/><LineBreak/>
-            <Run Name="line3" /><LineBreak/>
-            <Run Name="line4" /><LineBreak/>
-            <Run Name="line5" /><LineBreak/>
-            <Run Name="line6" /><LineBreak/>
-            <Run/><LineBreak/>
-            <Run Name="Cav1Part1"></Run>
-            <Hyperlink Name="kbLink" RequestNavigate="kbLink_RequestNavigate" 
-                       NavigateUri="https://www.veeam.com/kb2462">https://www.veeam.com/kb2462
-            </Hyperlink>    
-            <Run Name="Cav1Part2" Text=""></Run><LineBreak/>
-            <Run Name="Cav2" /><Run/><LineBreak/>
-            <Run Name="Cav3" /><Run/>
-            <Run Name="Cav4" /><LineBreak/><Run/><LineBreak/><LineBreak/>
-            <Run Name="OptHdr" FontWeight="Bold" TextDecorations="Underline" /></TextBlock>
-        <CheckBox Name="htmlCheckBox" HorizontalAlignment="Left" 
-                  Margin="0,270,0,0" VerticalAlignment="Top" IsThreeState="False"
-                  Checked="htmlChecked" 
-                  Unchecked="htmlUnchecked" 
-                  ToolTip="This option will anonymize the report to protect sensitive data types as found in Veeam KB 2462"
-             />
-        <CheckBox x:Name="scrubBox"  HorizontalAlignment="Left" Margin="0,290,0,0" VerticalAlignment="Top" IsThreeState="False"
-            Checked="HandleCheck" Unchecked="HandleUnchecked" 
-                  ToolTip="This option will anonymize the report to protect sensitive data types as found in Veeam KB 2462"
-             />
-        <CheckBox x:Name="explorerShowBox"  HorizontalAlignment="Left"
-                  Margin="0,250,0,0" VerticalAlignment="Top" IsThreeState="False"
-                  Checked="explorerShowBox_Checked" Unchecked="explorerShowBox_Unchecked"
-                  IsChecked="True"
-                  ></CheckBox>
-        <CheckBox x:Name="pdfCheckBox"  HorizontalAlignment="Left"
-                  Margin="0,230,0,0" VerticalAlignment="Top" IsThreeState="False"
-                  Checked="pdfCheckBox_Checked" Unchecked="pdfCheckBox_Unchecked"
-                  IsChecked="False"
-                  ></CheckBox>
-        <CheckBox x:Name="clearCredsCheckBox"  HorizontalAlignment="Left"
-                  Margin="0,310,0,0" VerticalAlignment="Top" IsThreeState="False"
-                  Checked="clearCredsCheckBox_Checked" Unchecked="clearCredsCheckBox_Unchecked"
-                  IsChecked="False"
-                  ToolTip="Check this option to clear any previously saved credentials before running. Use this if you entered incorrect credentials previously."
-                  ></CheckBox>
-        <TextBlock Name="outPath" Height="15" Width="75" HorizontalAlignment="Left" Margin="0,324,0,86"></TextBlock>
-        <TextBox x:Name="pathBox" Height="20" Width="260"  TextChanged="pathBox_TextChanged" Margin="77,320,3,85"></TextBox>
-        <ComboBox Name="daysSelector" HorizontalAlignment="Left" Margin="220,239,0,0" VerticalAlignment="Top" Width="120" SelectionChanged="ComboBox_SelectionChanged">
-            <ComboBoxItem Content="7 Days" IsSelected="True"/>
-            <ComboBoxItem Content="30 Days"/>
-            <ComboBoxItem Content="90 Days"/>
-        </ComboBox>
-        <!--<CheckBox Content="Collect Session Data" HorizontalAlignment="Left" Margin="1,252,0,0" 
-                  VerticalAlignment="Top" 
-                  Checked="SessionCollectChecked" 
-                  Unchecked="SessionCollectUnchecked" 
-                  IsChecked="true"
-                  ToolTip="Disabling session collection will speed up the tool significantly - however it will greatly reduce the data collection and effectiveness of the HealthCheck"
-                  />-->
-        <!--<Button x:Name="populate_existing" Content="Populate Existing" Grid.Row="1" Grid.Column="2" HorizontalAlignment="Right" Margin="138,81,0,0" VerticalAlignment="Top" Click="PopulateExisting_Click" Width="100"/>
-        <Button x:Name="exportData" Content="Export Data" Grid.Row="1" Grid.Column="2" HorizontalAlignment="Right" Margin="0,106,0,0" VerticalAlignment="Top" Click="ExportData_Click" Width="100"/>
-        <Button x:Name="rvTools" Content="RVTools" Grid.Row="1" Grid.Column="2" HorizontalAlignment="Right" Margin="0,131,0,0" VerticalAlignment="Top" Click="RvTools_Click" Width="100"/>
-        <Button x:Name="htmlButton" Content="HTML Report" Grid.Row="1" Grid.Column="2" HorizontalAlignment="Right" Margin="0,156,0,0" Click="Html2_Click"  VerticalAlignment="Top" Width="100"/>-->
+
+            <!-- Right Panel - Options and Controls -->
+            <StackPanel Grid.Column="2">
+                <!-- Options Section -->
+                <GroupBox Style="{StaticResource ModernGroupBox}" Margin="0,0,0,15">
+                    <GroupBox.Header>
+                        <TextBlock FontSize="16" Foreground="#333333">
+                            <Run Name="OptHdr"/>
+                        </TextBlock>
+                    </GroupBox.Header>
+                    <StackPanel Margin="5,10,5,0">
+                        <!-- Export Options -->
+                        <TextBlock Text="Export Options" FontSize="13" FontWeight="SemiBold" 
+                                   Foreground="#555555" Margin="0,0,0,8"/>
+                        <CheckBox x:Name="pdfCheckBox" Style="{StaticResource ModernCheckBox}"
+                                  Checked="pdfCheckBox_Checked" Unchecked="pdfCheckBox_Unchecked"
+                                  IsChecked="False"/>
+                        <!-- TODO: Re-enable PowerPoint export when ready for release -->
+                        <!--<CheckBox x:Name="pptxCheckBox" Style="{StaticResource ModernCheckBox}"
+                                  Checked="pptxCheckBox_Checked" Unchecked="pptxCheckBox_Unchecked"
+                                  IsChecked="False"/>-->
+                        <CheckBox x:Name="explorerShowBox" Style="{StaticResource ModernCheckBox}"
+                                  Checked="explorerShowBox_Checked" Unchecked="explorerShowBox_Unchecked"
+                                  IsChecked="True"/>
+                        <CheckBox Name="htmlCheckBox" Style="{StaticResource ModernCheckBox}"
+                                  Checked="htmlChecked" Unchecked="htmlUnchecked"
+                                  ToolTip="Display the HTML report in your default browser after generation"/>
+
+                        <Separator Margin="0,12,0,12" Background="#EEEEEE"/>
+
+                        <!-- Data Collection Options -->
+                        <TextBlock Text="Data Collection" FontSize="13" FontWeight="SemiBold" 
+                                   Foreground="#555555" Margin="0,0,0,8"/>
+                        <StackPanel Orientation="Horizontal" Margin="0,8,0,0">
+                            <TextBlock Text="Collection Period:" VerticalAlignment="Center" 
+                                       FontSize="13" Foreground="#333333" Margin="0,0,10,0"/>
+                            <ComboBox Name="daysSelector" Style="{StaticResource ModernComboBox}"
+                                      Width="120" SelectionChanged="ComboBox_SelectionChanged">
+                                <ComboBoxItem Content="7 Days" IsSelected="True"/>
+                                <ComboBoxItem Content="30 Days"/>
+                                <ComboBoxItem Content="90 Days"/>
+                            </ComboBox>
+                        </StackPanel>
+
+                        <Separator Margin="0,12,0,12" Background="#EEEEEE"/>
+
+                        <!-- Security Options -->
+                        <TextBlock Text="Security &amp; Privacy" FontSize="13" FontWeight="SemiBold" 
+                                   Foreground="#555555" Margin="0,0,0,8"/>
+                        <CheckBox x:Name="scrubBox" Style="{StaticResource ModernCheckBox}"
+                                  Checked="HandleCheck" Unchecked="HandleUnchecked"
+                                  ToolTip="Anonymize sensitive data according to Veeam KB 2462"/>
+                        <CheckBox x:Name="clearCredsCheckBox" Style="{StaticResource ModernCheckBox}"
+                                  Checked="clearCredsCheckBox_Checked" Unchecked="clearCredsCheckBox_Unchecked"
+                                  IsChecked="False"
+                                  ToolTip="Clear any previously saved credentials before running"/>
+                    </StackPanel>
+                </GroupBox>
+
+                <!-- Output Path Section -->
+                <GroupBox Style="{StaticResource ModernGroupBox}" Margin="0,0,0,15">
+                    <GroupBox.Header>
+                        <TextBlock Name="outPath" FontSize="16" Foreground="#333333"/>
+                    </GroupBox.Header>
+                    <TextBox x:Name="pathBox" Style="{StaticResource ModernTextBox}"
+                             TextChanged="pathBox_TextChanged" Height="32"/>
+                </GroupBox>
+
+                <!-- VBR Server Selection Section -->
+                <GroupBox Style="{StaticResource ModernGroupBox}" Margin="0,0,0,15">
+                    <GroupBox.Header>
+                        <TextBlock Text="VBR Server" FontSize="16" Foreground="#333333"/>
+                    </GroupBox.Header>
+                    <StackPanel Margin="5,10,5,0">
+                        <!-- Add Server Controls -->
+                        <Grid Margin="0,0,0,10">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="10"/>
+                                <ColumnDefinition Width="80"/>
+                            </Grid.ColumnDefinitions>
+                            <TextBox x:Name="serverTextBox" Grid.Column="0" 
+                                     Style="{StaticResource ModernTextBox}"
+                                     Height="32"
+                                     FontSize="12"
+                                     ToolTip="Enter VBR server hostname or IP address"/>
+                            <Button x:Name="addServerBtn" Grid.Column="2" 
+                                    Content="Add" 
+                                    Height="32"
+                                    FontSize="12"
+                                    Style="{StaticResource ModernButton}"
+                                    Click="addServerBtn_Click"/>
+                        </Grid>
+
+                        <!-- Server List -->
+                        <Border BorderBrush="#CCCCCC" BorderThickness="1" 
+                                Background="White" Height="120">
+                            <ListBox x:Name="serverListBox" 
+                                     BorderThickness="0"
+                                     SelectionMode="Single"
+                                     FontSize="13"
+                                     Padding="5"
+                                     SelectionChanged="serverListBox_SelectionChanged"/>
+                        </Border>
+
+                        <!-- Server Management Buttons -->
+                        <Grid Margin="0,10,0,0">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="10"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                            <Button x:Name="removeServerBtn" Grid.Column="0" 
+                                    Content="Remove Selected" 
+                                    Height="32"
+                                    FontSize="12"
+                                    Padding="10,5"
+                                    Style="{StaticResource SecondaryButton}"
+                                    Click="removeServerBtn_Click"/>
+                            <Button x:Name="clearServersBtn" Grid.Column="2" 
+                                    Content="Clear All" 
+                                    Height="32"
+                                    FontSize="12"
+                                    Padding="10,5"
+                                    Style="{StaticResource SecondaryButton}"
+                                    Click="clearServersBtn_Click"/>
+                        </Grid>
+                    </StackPanel>
+                </GroupBox>
+
+                <!-- Action Buttons -->
+                <Grid Margin="0,5,0,0">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="10"/>
+                        <ColumnDefinition Width="*"/>
+                    </Grid.ColumnDefinitions>
+
+                    <Button Name="termsBtn" Grid.Column="0" Style="{StaticResource SecondaryButton}"
+                            Height="45" Click="AcceptButton_click"/>
+                    <Button x:Name="run" Grid.Column="2" Style="{StaticResource ModernButton}"
+                            Height="45" Click="run_Click"/>
+                </Grid>
+
+                <!-- Import Button (Debug Only) -->
+                <Button x:Name="importButton" Style="{StaticResource SecondaryButton}"
+                        Height="40" Margin="0,10,0,0" Click="Import_click"
+                        ToolTip="Create a report from previously collected data"/>
+            </StackPanel>
+        </Grid>
+
+        <!-- Modern Progress Bar Section -->
+        <Border Grid.Row="1" Background="White" BorderBrush="#DDDDDD" BorderThickness="0,1,0,0">
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                </Grid.RowDefinitions>
+
+                <!-- Progress Bar Container -->
+                <StackPanel Grid.Row="0" Margin="25,15,25,15">
+                    <ProgressBar Name="pBar" 
+                                 Height="20" 
+                                 IsIndeterminate="True"
+                                 BorderThickness="0">
+                        <ProgressBar.Resources>
+                            <Style TargetType="ProgressBar">
+                                <Setter Property="Background" Value="#E8E8E8"/>
+                                <Setter Property="Foreground" Value="#00B233"/>
+                                <Setter Property="BorderBrush" Value="Transparent"/>
+                            </Style>
+                        </ProgressBar.Resources>
+                    </ProgressBar>
+                    <TextBlock Name="progressText" 
+                               Text="Processing health check..."
+                               FontSize="12" 
+                               Foreground="#666666" 
+                               Margin="0,8,0,0"
+                               HorizontalAlignment="Center"
+                               Visibility="Collapsed"/>
+                </StackPanel>
+            </Grid>
+        </Border>
     </Grid>
 </Window>

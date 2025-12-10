@@ -73,6 +73,12 @@ namespace VeeamHealthCheck.Functions.Reporting.Html
                     this.ExportHtmlStringToPDF(htmlString);
                 }
 
+                // Export to PowerPoint:
+                if (!scrub && CGlobals.EXPORTPPTX)
+                {
+                    this.ExportHtmlStringToPptx(htmlString);
+                }
+
                 this.OpenHtmlIfEnabled(CGlobals.OpenHtml);
                 return 0;
             }
@@ -99,6 +105,12 @@ namespace VeeamHealthCheck.Functions.Reporting.Html
                 if (!scrub && CGlobals.EXPORTPDF)
                 {
                     this.ExportHtmlStringToPDF(htmlString);
+                }
+
+                // Export to PowerPoint:
+                if (!scrub && CGlobals.EXPORTPPTX)
+                {
+                    this.ExportHtmlStringToPptx(htmlString);
                 }
 
                 this.OpenHtmlIfEnabled(CGlobals.OpenHtml);
@@ -140,6 +152,30 @@ namespace VeeamHealthCheck.Functions.Reporting.Html
 
             // var htmlToDocx = new CHtmlToDocx();
             // htmlToDocx.ExportHtmlToDocx(htmlShowAll, _latestReport.Replace(".html", ".docx"));
+        }
+
+        private void ExportHtmlStringToPptx(string htmlString)
+        {
+            try
+            {
+                this.log.Info("Exporting HTML to PowerPoint...");
+                HtmlToPptxConverter pptx = new HtmlToPptxConverter();
+
+                // Expand all collapsed sections for export
+                string htmlShowAll = htmlString.Replace("style=\"display: none\">", "style=\"display: block\">");
+                htmlShowAll = htmlShowAll.Replace("collapsible classBtn", "collapsible classBtn active");
+
+                string pptxPath = this.latestReport.Replace(".html", ".pptx");
+                pptx.ConvertHtmlToPptx(htmlShowAll, pptxPath);
+                pptx.Dispose();
+
+                this.log.Info("PowerPoint export completed: " + pptxPath);
+            }
+            catch (Exception ex)
+            {
+                this.log.Error("Failed to export PowerPoint: " + ex.Message);
+                this.log.Error(ex.StackTrace);
+            }
         }
 
         public int ExportVbrSecurityHtml(string htmlString, bool scrub)
@@ -212,7 +248,7 @@ namespace VeeamHealthCheck.Functions.Reporting.Html
 
                 return htmlCore;
             }
-            catch (Exception ex)
+            catch (Exception)
             {
                 // log.Debug("Failed to set report name & path");
                 // log.Debug(ex.Message);

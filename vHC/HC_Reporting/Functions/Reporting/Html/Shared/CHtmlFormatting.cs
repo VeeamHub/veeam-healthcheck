@@ -239,7 +239,7 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.Shared
         #region Buttons
         public string FormHtmlButtonGoToTop()
         {
-            return "<button onclick=\"topFunction()\" id=\"myBtn\" title=\"Go to top\">Go To Top</button>";
+            return "<button onclick=\"topFunction()\" id=\"myBtn\" title=\"Go to top\">Go To Top</button><button id=\"themeToggleBtn\" title=\"Toggle dark mode\">🌙 Dark Mode</button>";
         }
 
         #endregion

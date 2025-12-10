@@ -96,7 +96,7 @@ namespace VeeamHealthCheck.Startup
                     this.Parse(file);
                     counter++;
                 }
-                catch (Exception e)
+                catch (Exception)
                 {
                     // LOG.Error(logStart + e.Message, false);
                 }
@@ -191,7 +191,7 @@ namespace VeeamHealthCheck.Startup
                     {
                         zip.ExtractToDirectory(target);
                     }
-                    catch (Exception e) { }
+                    catch (Exception) { }
                 }
 
                 File.Delete(file);
@@ -210,7 +210,7 @@ namespace VeeamHealthCheck.Startup
                     {
                         File.Delete(file);
                     }
-                    catch (Exception e) { }
+                    catch (Exception) { }
                 string[] dirs = Directory.GetDirectories(path);
                 foreach (string dir in dirs)
                 {
@@ -219,7 +219,7 @@ namespace VeeamHealthCheck.Startup
                     {
                         Directory.Delete(path, true);
                     }
-                    catch (Exception e) { } 
+                    catch (Exception) { } 
                 }
             }
         }

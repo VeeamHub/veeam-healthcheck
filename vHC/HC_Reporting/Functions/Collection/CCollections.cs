@@ -376,7 +376,7 @@ namespace VeeamHealthCheck.Functions.Collection
                 }
 
                 // Simple Connect-VBRServer without credentials
-                string script = "Import-Module Veeam.Backup.PowerShell -WarningAction Ignore; Connect-VBRServer -Server localhost";
+                string script = "Import-Module Veeam.Backup.PowerShell -WarningAction Ignore; Connect-VBRServer -Server localhost ";
                 string args = $"-NoProfile -ExecutionPolicy Bypass -Command \"{script}\"";
 
                 CGlobals.Logger.Debug($"Running local MFA check with Windows auth: {psExe} {args}");

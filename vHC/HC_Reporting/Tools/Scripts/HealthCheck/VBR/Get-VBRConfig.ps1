@@ -587,39 +587,63 @@ try {
     # NAS Jobs
     Write-LogFile("Starting NAS Jobs collection...")
     try {
-        #$nasBackup = Get-VBRNASBackupJob 
-        # get all NAS jobs
+        # Get all NAS jobs
         Write-LogFile("Calling Get-VBRUnstructuredBackupJob...")
         $nasBackup = Get-VBRUnstructuredBackupJob
         Write-LogFile("Found " + $nasBackup.Count + " NAS backup jobs")
         
-        $jobCounter = 0
-        foreach ($job in $nasBackup) {
-            $jobCounter++
-            Write-LogFile("Processing NAS job " + $jobCounter + "/" + $nasBackup.Count + ": " + $job.Name)
+        # Optimization: Fetch all sessions once and filter by date, then build lookup hashtable
+        if ($nasBackup.Count -gt 0) {
+            Write-LogFile("Fetching all backup sessions for the last 14 days...")
+            $allSessions = Get-VBRBackupSession | Where-Object { $_.CreationTime -gt (Get-Date).AddDays(-14) }
+            Write-LogFile("Found " + $allSessions.Count + " total sessions in the last 14 days")
             
-            $onDiskGB = 0
-            $sourceGb = 0
-            
-            Write-LogFile("  Getting backup sessions for job: " + $job.Name)
-            $sessions = Get-VBRBackupSession -Name $job.Name
-            Write-LogFile("  Found " + $sessions.Count + " sessions for job: " + $job.Name)
-            
-            #sort sessions by latest first selecting only the latest session
-            $sessions = $sessions | Sort-Object CreationTime -Descending | Select-Object -First 1
-            Write-LogFile("  Processing latest session for job: " + $job.Name)
-            
-            foreach ($session in $sessions) {
-                #$session.sessioninfo.BackupTotalSize
-                $onDiskGB = $session.sessioninfo.BackupTotalSize / 1024 / 1024 / 1024
-                $sourceGb = $session.SessionInfo.Progress.TotalSize / 1024 / 1024 / 1024
+            # Build hashtable of latest session per job name for O(1) lookup
+            $sessionLookup = @{}
+            foreach ($session in $allSessions) {
+                $jobName = $session.Name
+                # Only keep the latest session per job name
+                if (-not $sessionLookup.ContainsKey($jobName) -or 
+                    $session.CreationTime -gt $sessionLookup[$jobName].CreationTime) {
+                    $sessionLookup[$jobName] = $session
+                }
             }
-            $job | Add-Member -MemberType NoteProperty -Name JobType -Value "NAS Backup"
-            $job | Add-Member -MemberType NoteProperty -Name OnDiskGB -Value $onDiskGB
-            $job | Add-Member -MemberType NoteProperty -Name SourceGB -Value $sourceGb
-            Write-LogFile("  Completed processing job: " + $job.Name)
+            Write-LogFile("Built session lookup hashtable with " + $sessionLookup.Count + " unique jobs")
+            
+            # Process each NAS job
+            $jobCounter = 0
+            foreach ($job in $nasBackup) {
+                $jobCounter++
+                Write-LogFile("Processing NAS job " + $jobCounter + "/" + $nasBackup.Count + ": " + $job.Name)
+                
+                # Initialize defaults
+                $onDiskGB = 0
+                $sourceGb = 0
+                
+                # Lookup session from hashtable (O(1) operation instead of API call)
+                if ($sessionLookup.ContainsKey($job.Name)) {
+                    $session = $sessionLookup[$job.Name]
+                    Write-LogFile("  Found session for job: " + $job.Name)
+                    
+                    # Extract metrics from session
+                    $onDiskGB = $session.SessionInfo.BackupTotalSize / 1024 / 1024 / 1024
+                    $sourceGb = $session.SessionInfo.Progress.TotalSize / 1024 / 1024 / 1024
+                }
+                else {
+                    Write-LogFile("  No session found in last 14 days for job: " + $job.Name)
+                }
+                
+                # Add member properties to job object
+                $job | Add-Member -MemberType NoteProperty -Name JobType -Value "NAS Backup"
+                $job | Add-Member -MemberType NoteProperty -Name OnDiskGB -Value $onDiskGB
+                $job | Add-Member -MemberType NoteProperty -Name SourceGB -Value $sourceGb
+                Write-LogFile("  Completed processing job: " + $job.Name)
+            }
+            Write-LogFile("NAS Jobs collection completed successfully")
         }
-        Write-LogFile("NAS Jobs collection completed")
+        else {
+            Write-LogFile("No NAS backup jobs found")
+        }
 
     }
     catch {
@@ -676,7 +700,6 @@ try {
     $cdpJob | Add-Member -MemberType NoteProperty -Name JobType -Value "CDP Policy"
     $cdpJob | Export-VhcCsv -FileName '_cdpjobs.csv'
   
-    $nasBackup | Add-Member -MemberType NoteProperty -Name JobType -Value "NAS Backup" -ErrorAction SilentlyContinue
     $nasBackup | Export-VhcCsv -FileName '_nasBackup.csv'
     $nasBCJ | Export-VhcCsv -FileName '_nasBCJ.csv'
   
