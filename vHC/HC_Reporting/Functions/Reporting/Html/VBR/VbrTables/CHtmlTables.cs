@@ -2424,7 +2424,7 @@ this.form.TableHeader(VbrLocalizationHelper.SbrExt15, VbrLocalizationHelper.SbrE
             }
 
             s += this.form.SectionEnd(summary);
-            
+
             // JSON job session summary by job
             try
             {
@@ -2707,7 +2707,15 @@ this.form.TableHeader(VbrLocalizationHelper.SbrExt15, VbrLocalizationHelper.SbrE
                             // row+= _form.TableData(trueSizeGB.ToString() + " GB", "");
                             // row+= _form.TableData(job.RetentionType, "");
                             row += job.RetentionType == "Cycles" ? this.form.TableData("Points", string.Empty) : this.form.TableData(job.RetentionType, string.Empty);
-                            row += this.form.TableData(job.RetainDaysToKeep, string.Empty);
+                            if (CGlobals.VBRMAJORVERSION > 12)
+                            {
+                                row += form.TableData(job.RetainDaysToKeep, string.Empty);
+                            }
+                            else
+                            {
+                                row += this.form.TableData(job.RetentionCount, string.Empty);
+
+                            }
 
                             // row += _form.TableData(job.StgEncryptionEnabled, "");
                             row += job.StgEncryptionEnabled == "True" ? this.form.TableData(this.form.True, string.Empty) : this.form.TableData(this.form.False, string.Empty);
