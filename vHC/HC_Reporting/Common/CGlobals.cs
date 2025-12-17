@@ -58,6 +58,9 @@ namespace VeeamHealthCheck.Shared
         // Security Values
         public static bool IsMfaEnabled = false;
 
+        // Last user-visible error collected during execution (shown in GUI if set)
+        public static string UserFacingError = null;
+
         // B&R Server global values
         // public static string isConsoleLocal = "Undetermined";
         // public static string _isRdpEnabled = "Undetermined";

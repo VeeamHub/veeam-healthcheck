@@ -220,12 +220,15 @@ namespace VeeamHealthCheck.Functions.Collection
                 return;
             }
 
-            string error = $"Script execution has failed. Exiting program. See log for details:\n\t {CGlobals.Logger.logFile}";
-            CGlobals.Logger.Error(error, false);
+            string defaultError = $"Script execution has failed. Exiting program. See log for details:\n\t {CGlobals.Logger.logFile}";
+            // Prefer a specific user-facing error if previously captured
+            string errorToShow = string.IsNullOrWhiteSpace(CGlobals.UserFacingError) ? defaultError : CGlobals.UserFacingError + "\n\nSee log for details:\n\t " + CGlobals.Logger.logFile;
+
+            CGlobals.Logger.Error(errorToShow, false);
 
             if (CGlobals.GUIEXEC)
             {
-                MessageBox.Show(error, "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                MessageBox.Show(errorToShow, "Error", MessageBoxButton.OK, MessageBoxImage.Error);
             }
 
             Environment.Exit(1);
@@ -354,7 +357,6 @@ namespace VeeamHealthCheck.Functions.Collection
         {
             try
             {
-                string server = "localhost";
                 string psExe;
                 
                 // Use the appropriate PowerShell version based on VBR version
@@ -404,6 +406,15 @@ namespace VeeamHealthCheck.Functions.Collection
                 if (!string.IsNullOrWhiteSpace(stdErr))
                 {
                     CGlobals.Logger.Debug($"[Local MFA Check] STDERR: {stdErr}");
+
+                    // Detect MFA-specific error and surface a clear, user-facing message
+                    if (stdErr.Contains("Unable to connect to the server with MFA-enabled user account", StringComparison.OrdinalIgnoreCase))
+                    {
+                        string userMsg = "Unable to connect to VBR because the current account is MFA-enabled. Please run Veeam Health Check from Command Prompt or PowerShell using a non-MFA-enabled account, or provide alternate credentials in the app.";
+                        CGlobals.Logger.Error(userMsg, false);
+                        // Store for later display in a single consolidated popup
+                        CGlobals.UserFacingError = userMsg;
+                    }
                 }
 
                 bool result = process.ExitCode == 0;

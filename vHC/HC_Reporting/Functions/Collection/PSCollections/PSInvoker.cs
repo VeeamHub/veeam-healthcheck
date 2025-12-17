@@ -420,10 +420,12 @@ namespace VeeamHealthCheck.Functions.Collection.PSCollections
         {
             if (errorLine.Contains("Unable to connect to the server with MFA-enabled user account"))
             {
+                var message = "Unable to connect to VBR because the current account is MFA-enabled. Please run Veeam Health Check from Command Prompt or PowerShell using a non-MFA-enabled account, or provide alternate credentials in the app.";
+                VeeamHealthCheck.Shared.CGlobals.UserFacingError = message;
                 return new PsErrorTypes
                 {
                     Success = false,
-                    Message = "MFA Enabled, please execute the utility from a CMD or PS using a non-MFA enabled account."
+                    Message = message
                 };
             }
 
