@@ -3,6 +3,48 @@ var navLink = document.getElementsByClassName("smoothscroll");
 var i;
 let expanded = false;
 
+// Initialize theme on page load
+function initializeTheme() {
+	const savedTheme = localStorage.getItem('vhc-theme') || 'light';
+	if (savedTheme === 'dark') {
+		document.documentElement.classList.add('dark-theme');
+		updateThemeButtonText('light');
+	} else {
+		document.documentElement.classList.remove('dark-theme');
+		updateThemeButtonText('dark');
+	}
+}
+
+// Toggle theme
+function toggleTheme() {
+	const isDarkMode = document.documentElement.classList.toggle('dark-theme');
+	localStorage.setItem('vhc-theme', isDarkMode ? 'dark' : 'light');
+	updateThemeButtonText(isDarkMode ? 'light' : 'dark');
+}
+
+// Update theme button text and icon
+function updateThemeButtonText(nextTheme) {
+	const btn = document.getElementById('themeToggleBtn');
+	if (btn) {
+		if (nextTheme === 'dark') {
+			btn.innerHTML = '🌙 Dark Mode';
+		} else {
+			btn.innerHTML = '☀️ Light Mode';
+		}
+	}
+}
+
+// Initialize theme when DOM is ready
+document.addEventListener('DOMContentLoaded', initializeTheme);
+
+// Add click handler to theme toggle button (will be created in HTML)
+document.addEventListener('DOMContentLoaded', function() {
+	const themeBtn = document.getElementById('themeToggleBtn');
+	if (themeBtn) {
+		themeBtn.addEventListener('click', toggleTheme);
+	}
+});
+
 for (i = 0; i < coll.length; i++) {
 	coll[i].addEventListener("click", function () {
 		this.classList.toggle("active");

@@ -9,8 +9,11 @@ namespace VeeamHealthCheck
     public class CVariables
     {
         public static readonly string outDir = @"C:\temp\vHC";
-        public static string safeDir = @"C:\temp\vHC\Anonymous";
-        public static string unsafeDir = @"C:\temp\vHC\Original";
+        
+        // Use CGlobals.desiredPath as the base, falling back to the default if not set
+        public static string safeDir => Path.Combine(CGlobals.desiredPath ?? outDir, "Anonymous");
+        public static string unsafeDir => Path.Combine(CGlobals.desiredPath ?? outDir, "Original");
+        
         public static string vb365Dir = "\\VB365";
         public static string VbrDir = "\\VBR";
         public static string safeSuffix = @"\vHC-AnonymousReport";
@@ -42,8 +45,8 @@ namespace VeeamHealthCheck
         {
             string basePath = unsafeDir + VbrDir;
             
-            // Get server name - use "localhost" if not set or empty
-            string serverName = string.IsNullOrEmpty(CGlobals.REMOTEHOST) ? "localhost" : CGlobals.REMOTEHOST;
+            // Get server name - use VBRServerName if set, otherwise default to "localhost"
+            string serverName = string.IsNullOrEmpty(CGlobals.VBRServerName) ? "localhost" : CGlobals.VBRServerName;
             
             // Get or create timestamp for this run
             string timestamp = CGlobals.GetRunTimestamp();

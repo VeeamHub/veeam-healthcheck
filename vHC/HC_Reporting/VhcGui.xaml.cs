@@ -1,6 +1,7 @@
 ﻿// Copyright (c) 2021, Adam Congdon <adam.congdon2@gmail.com>
 // MIT License
 using System;
+using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
 using VeeamHealthCheck.Resources.Localization;
@@ -21,9 +22,68 @@ namespace VeeamHealthCheck
             InitializeComponent();
 
             this.SetUi();
-            pathBox.IsEnabled = false;
+            pathBox.IsEnabled = true;
+            this.InitializeServerList();
 
             // pdfCheckBox.IsEnabled = false;
+        }
+
+        private void InitializeServerList()
+        {
+            // Load saved servers from credentials
+            var savedServers = CredentialStore.GetAllServers();
+            
+            // Add localhost if VBR is installed
+            if (CGlobals.IsVbrInstalled && !savedServers.Contains("localhost"))
+            {
+                savedServers.Insert(0, "localhost");
+            }
+            
+            // Populate dropdown with unique servers
+            foreach (var server in savedServers.Distinct())
+            {
+                if (!string.IsNullOrWhiteSpace(server))
+                {
+                    serverListBox.Items.Add(server);
+                }
+            }
+            
+            // Select localhost by default if it exists
+            if (serverListBox.Items.Contains("localhost"))
+            {
+                serverListBox.SelectedItem = "localhost";
+            }
+            else if (serverListBox.Items.Count > 0)
+            {
+                serverListBox.SelectedIndex = 0;
+            }
+            
+            UpdateSelectedServersGlobal();
+        }
+
+        private void UpdateSelectedServersGlobal()
+        {
+            // Set the VBR server name from the selected item
+            if (serverListBox.SelectedItem != null)
+            {
+                CGlobals.VBRServerName = serverListBox.SelectedItem.ToString();
+                CGlobals.REMOTEHOST = serverListBox.SelectedItem.ToString();
+            }
+            else if (serverListBox.Items.Count > 0)
+            {
+                // If nothing selected but items exist, use first item
+                CGlobals.VBRServerName = serverListBox.Items[0].ToString();
+                CGlobals.REMOTEHOST = serverListBox.Items[0].ToString();
+            }
+            else
+            {
+                // Fallback to localhost
+                CGlobals.VBRServerName = "localhost";
+                CGlobals.REMOTEHOST = "localhost";
+            }
+            
+            // Set REMOTEEXEC flag if not localhost
+            CGlobals.REMOTEEXEC = !CGlobals.VBRServerName.Equals("localhost", StringComparison.OrdinalIgnoreCase);
         }
 
         private void SetUi()
@@ -95,6 +155,7 @@ namespace VeeamHealthCheck
             this.scrubBox.Content = VbrLocalizationHelper.GuiSensData;
             this.explorerShowBox.Content = VbrLocalizationHelper.GuiShowFiles;
             this.pdfCheckBox.Content = "Export PDF";
+            // this.pptxCheckBox.Content = "Export PowerPoint";
             this.clearCredsCheckBox.Content = "Clear Saved Credentials";
             this.outPath.Text = VbrLocalizationHelper.GuiOutPath;
             this.termsBtn.Content = VbrLocalizationHelper.GuiAcceptButton;
@@ -116,6 +177,7 @@ namespace VeeamHealthCheck
             {
                 // run.IsEnabled = true;
                 pBar.Visibility = Visibility.Hidden;
+                progressText.Visibility = Visibility.Collapsed;
             }));
         }
 
@@ -125,6 +187,7 @@ namespace VeeamHealthCheck
             {
                 run.IsEnabled = false;
                 pBar.Visibility = Visibility.Visible;
+                progressText.Visibility = Visibility.Visible;
             }));
         }
         #endregion
@@ -142,6 +205,9 @@ namespace VeeamHealthCheck
         private void run_Click(object sender, RoutedEventArgs e)
         {
             this.functions.LogUIAction("Run");
+
+            // Ensure the selected server is set before running
+            UpdateSelectedServersGlobal();
 
             if (!this.functions.VerifyPath())
             {
@@ -183,6 +249,11 @@ namespace VeeamHealthCheck
             importButton.IsEnabled = false;
             pathBox.IsEnabled = false;
             clearCredsCheckBox.IsEnabled = false;
+            serverTextBox.IsEnabled = false;
+            addServerBtn.IsEnabled = false;
+            removeServerBtn.IsEnabled = false;
+            clearServersBtn.IsEnabled = false;
+            serverListBox.IsEnabled = false;
         }
 
         private void AcceptButton_click(object sender, RoutedEventArgs e)
@@ -248,6 +319,18 @@ namespace VeeamHealthCheck
             CGlobals.EXPORTPDF = false;
         }
 
+        private void pptxCheckBox_Checked(object sender, RoutedEventArgs e)
+        {
+            this.functions.LogUIAction("Export PowerPoint = true");
+            CGlobals.EXPORTPPTX = true;
+        }
+
+        private void pptxCheckBox_Unchecked(object sender, RoutedEventArgs e)
+        {
+            this.functions.LogUIAction("Export PowerPoint = false");
+            CGlobals.EXPORTPPTX = false;
+        }
+
         private void clearCredsCheckBox_Checked(object sender, RoutedEventArgs e)
         {
             this.functions.LogUIAction("Clear Stored Creds = true");
@@ -298,5 +381,124 @@ namespace VeeamHealthCheck
             CGlobals.ReportDays = days;
             this.functions.LogUIAction("Interval set to " + CGlobals.ReportDays);
         }
+
+        #region Server Management
+        
+        private void addServerBtn_Click(object sender, RoutedEventArgs e)
+        {
+            string serverName = serverTextBox.Text.Trim();
+            
+            if (string.IsNullOrWhiteSpace(serverName))
+            {
+                MessageBox.Show("Please enter a server name.", "Input Required", MessageBoxButton.OK, MessageBoxImage.Warning);
+                return;
+            }
+            
+            // Check if server already exists in list
+            foreach (var item in serverListBox.Items)
+            {
+                if (item.ToString().Equals(serverName, StringComparison.OrdinalIgnoreCase))
+                {
+                    MessageBox.Show($"Server '{serverName}' is already in the list.", "Duplicate Server", MessageBoxButton.OK, MessageBoxImage.Information);
+                    serverTextBox.Clear();
+                    return;
+                }
+            }
+            
+            // Add server to list
+            serverListBox.Items.Add(serverName);
+            serverTextBox.Clear();
+            UpdateSelectedServersGlobal();
+            
+            this.functions.LogUIAction($"Added server: {serverName}");
+        }
+
+        private void removeServerBtn_Click(object sender, RoutedEventArgs e)
+        {
+            if (serverListBox.SelectedItem == null)
+            {
+                MessageBox.Show("Please select a server to remove.", "No Selection", MessageBoxButton.OK, MessageBoxImage.Warning);
+                return;
+            }
+            
+            string selectedServer = serverListBox.SelectedItem.ToString();
+            
+            // Don't allow removing localhost if it's the only item
+            if (serverListBox.Items.Count == 1 && selectedServer.Equals("localhost", StringComparison.OrdinalIgnoreCase))
+            {
+                MessageBox.Show("Cannot remove the last server. At least one server must remain in the list.", "Cannot Remove", MessageBoxButton.OK, MessageBoxImage.Warning);
+                return;
+            }
+            
+            // Ask for confirmation if this server has stored credentials
+            bool hasCredentials = CredentialStore.Get(selectedServer) != null;
+            if (hasCredentials)
+            {
+                var result = MessageBox.Show(
+                    $"Remove '{selectedServer}' from the list?\n\nThis will also delete any stored credentials for this server.",
+                    "Confirm Remove",
+                    MessageBoxButton.YesNo,
+                    MessageBoxImage.Question);
+                
+                if (result == MessageBoxResult.No)
+                {
+                    return;
+                }
+            }
+            
+            // Remove from UI list
+            serverListBox.Items.Remove(serverListBox.SelectedItem);
+            
+            // Remove credentials if they exist
+            if (hasCredentials)
+            {
+                CredentialStore.Remove(selectedServer);
+            }
+            
+            UpdateSelectedServersGlobal();
+            
+            this.functions.LogUIAction($"Removed server: {selectedServer}");
+        }
+
+        private void clearServersBtn_Click(object sender, RoutedEventArgs e)
+        {
+            if (serverListBox.Items.Count == 0)
+            {
+                MessageBox.Show("Server list is already empty.", "Empty List", MessageBoxButton.OK, MessageBoxImage.Information);
+                return;
+            }
+            
+            var result = MessageBox.Show(
+                "Are you sure you want to clear all servers from the list?",
+                "Confirm Clear",
+                MessageBoxButton.YesNo,
+                MessageBoxImage.Question);
+            
+            if (result == MessageBoxResult.Yes)
+            {
+                serverListBox.Items.Clear();
+                
+                // Add localhost back if VBR is installed locally
+                if (CGlobals.IsVbrInstalled)
+                {
+                    serverListBox.Items.Add("localhost");
+                }
+                
+                UpdateSelectedServersGlobal();
+                this.functions.LogUIAction("Cleared all servers from list");
+            }
+        }
+
+        private void serverListBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            UpdateSelectedServersGlobal();
+            
+            if (serverListBox.SelectedItem != null)
+            {
+                this.functions.LogUIAction($"Selected server: {serverListBox.SelectedItem}");
+            }
+        }
+
+        #endregion
     }
 }

@@ -138,7 +138,7 @@ namespace VeeamHealthCheck.Functions.Collection.LogParser
 
                         // waits.AddRange(CheckFileWait(f, jobname));
                     }
-                    catch (Exception e) { }
+                    catch (Exception) { }
                     fileCounter++;
                 }
 
@@ -233,8 +233,8 @@ namespace VeeamHealthCheck.Functions.Collection.LogParser
                                 startTime = string.Empty;
                             }
                         }
-                        catch (System.ArgumentOutOfRangeException e1) { }
-                        catch (Exception e) { }
+                        catch (System.ArgumentOutOfRangeException) { }
+                        catch (Exception) { }
                     }
                 }
             }

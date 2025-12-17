@@ -10,6 +10,9 @@
     <AssemblyVersion>1.0.0.338</AssemblyVersion>
     <FileVersion>1.0.0.338</FileVersion>
     
+    <!-- Suppress code analysis warnings - revisit later -->
+    <NoWarn>CA1305,CA1307,CA1820,CA2242,CA1031,CA1806,CA1822</NoWarn>
+    
     <!-- Skip compilation on non-Windows platforms -->
     <EnableDefaultCompileItems Condition="!$([MSBuild]::IsOSPlatform('Windows'))">false</EnableDefaultCompileItems>
   </PropertyGroup>

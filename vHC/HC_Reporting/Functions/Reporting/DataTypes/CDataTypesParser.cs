@@ -230,7 +230,7 @@ namespace VeeamHealthCheck.Functions.Reporting.DataTypes
                     return "False";
                 }
             }
-            catch (Exception e) { return string.Empty; }
+            catch (Exception) { return string.Empty; }
         }
 
         private List<CRepoTypeInfos> RepoInfo()
@@ -538,7 +538,7 @@ namespace VeeamHealthCheck.Functions.Reporting.DataTypes
                         eInfoList.Add(jInfo);
                     }
             }
-            catch (Exception e) { }
+            catch (Exception) { }
 
             var rec = this.csvParser.PluginCsvParser().ToList();
             if (rec != null)
@@ -1072,7 +1072,7 @@ return proxyList;
                 int.TryParse(input, out int i);
                 return i;
             }
-            catch (Exception e) { return 0; };
+            catch (Exception) { return 0; };
         }
 
         private double ParseToDouble(string input)
@@ -1082,7 +1082,7 @@ return proxyList;
                 double.TryParse(input, out double i);
                 return i;
             }
-            catch (Exception e) { return 0; };
+            catch (Exception) { return 0; };
         }
     }
 }

@@ -115,7 +115,7 @@ namespace VeeamHealthCheck.Functions.Collection.DB
                     return CGlobals.VBRFULLVERSION;
                 }
             }
-            catch (System.Security.SecurityException ex)
+            catch (System.Security.SecurityException)
             {
                 if (CGlobals.RunningWithoutAdmin)
                 {
@@ -127,7 +127,7 @@ namespace VeeamHealthCheck.Functions.Collection.DB
                     throw;
                 }
             }
-            catch (UnauthorizedAccessException ex)
+            catch (UnauthorizedAccessException)
             {
                 if (CGlobals.RunningWithoutAdmin)
                 {
@@ -195,7 +195,7 @@ namespace VeeamHealthCheck.Functions.Collection.DB
                     this.SetSqlInfo(key);
                 }
             }
-            catch (System.Security.SecurityException ex)
+            catch (System.Security.SecurityException)
             {
                 if (CGlobals.RunningWithoutAdmin)
                 {
@@ -206,7 +206,7 @@ namespace VeeamHealthCheck.Functions.Collection.DB
                     throw;
                 }
             }
-            catch (UnauthorizedAccessException ex)
+            catch (UnauthorizedAccessException)
             {
                 if (CGlobals.RunningWithoutAdmin)
                 {
@@ -422,7 +422,7 @@ namespace VeeamHealthCheck.Functions.Collection.DB
                     }
                 }
             }
-            catch (System.Security.SecurityException ex)
+            catch (System.Security.SecurityException)
             {
                 if (CGlobals.RunningWithoutAdmin)
                 {
@@ -433,7 +433,7 @@ namespace VeeamHealthCheck.Functions.Collection.DB
                     throw;
                 }
             }
-            catch (UnauthorizedAccessException ex)
+            catch (UnauthorizedAccessException)
             {
                 if (CGlobals.RunningWithoutAdmin)
                 {
@@ -487,7 +487,7 @@ namespace VeeamHealthCheck.Functions.Collection.DB
                     }
                 }
             }
-            catch (System.Security.SecurityException ex)
+            catch (System.Security.SecurityException)
             {
                 if (CGlobals.RunningWithoutAdmin)
                 {
@@ -498,7 +498,7 @@ namespace VeeamHealthCheck.Functions.Collection.DB
                     throw;
                 }
             }
-            catch (UnauthorizedAccessException ex)
+            catch (UnauthorizedAccessException)
             {
                 if (CGlobals.RunningWithoutAdmin)
                 {
@@ -549,7 +549,7 @@ namespace VeeamHealthCheck.Functions.Collection.DB
                     }
                 }
             }
-            catch (System.Security.SecurityException ex)
+            catch (System.Security.SecurityException)
             {
                 if (CGlobals.RunningWithoutAdmin)
                 {
@@ -561,7 +561,7 @@ namespace VeeamHealthCheck.Functions.Collection.DB
                     throw;
                 }
             }
-            catch (UnauthorizedAccessException ex)
+            catch (UnauthorizedAccessException)
             {
                 if (CGlobals.RunningWithoutAdmin)
                 {

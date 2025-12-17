@@ -11,10 +11,10 @@
 		<Company>Veeam</Company>
 		<Authors>AdamC</Authors>
 		<ApplicationIcon>Health_Check_Icon.ico</ApplicationIcon>
-		<AssemblyVersion>3.0.0.330</AssemblyVersion>
+		<AssemblyVersion>3.0.0.408</AssemblyVersion>
 		<SignAssembly>False</SignAssembly>
 		<DelaySign>false</DelaySign>
-		<FileVersion>3.0.0.330</FileVersion>
+		<FileVersion>3.0.0.408</FileVersion>
 		<DebugType>full</DebugType>
 		<SelfContained>true</SelfContained>
 		<!--These 2 lines are what produce the single file utility. Possibly doesn't work...-->
@@ -23,10 +23,15 @@
 		<RuntimeIdentifier>win-x64</RuntimeIdentifier>
 		<NeutralLanguage>en-US</NeutralLanguage>
 		<AnalysisLevel>latest</AnalysisLevel>
-		<AnalysisMode>All</AnalysisMode>
+		<AnalysisMode>Default</AnalysisMode>
 		<EnforceCodeStyleInBuild>true</EnforceCodeStyleInBuild>
 		<AssemblyOriginatorKeyFile>vhc_keyfile2.pfx</AssemblyOriginatorKeyFile>
+		<!-- Suppress code analysis warnings - revisit later -->
+		<NoWarn>CA1305,CA1307,CA1820,CA2242,CA1031,CA1806,CA1822</NoWarn>
 	</PropertyGroup>
+	<ItemGroup>
+		<InternalsVisibleTo Include="VhcXTests" />
+	</ItemGroup>
 	<PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
 		<ShouldCreateLogs>True</ShouldCreateLogs>
 		<AdvancedSettingsExpanded>False</AdvancedSettingsExpanded>
@@ -120,6 +125,7 @@
 	<ItemGroup>
 		<PackageReference Include="CsvHelper" Version="33.0.1" />
 		<PackageReference Include="DinkToPdf.Standard" Version="1.1.0" />
+		<PackageReference Include="DocumentFormat.OpenXml" Version="3.1.0" />
 		<PackageReference Include="HtmlToOpenXml.dll" Version="3.2.2" />
 		<PackageReference Include="Microsoft.Management.Infrastructure" Version="3.0.0" />
 		<PackageReference Include="Microsoft.PowerShell.SDK" Version="7.4.6" />

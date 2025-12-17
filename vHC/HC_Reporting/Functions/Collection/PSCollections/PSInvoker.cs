@@ -335,10 +335,7 @@ namespace VeeamHealthCheck.Functions.Collection.PSCollections
                 success = this.ExecutePsScript(this.VbrNasStartInfo());
             }
 
-            if (success)
-            {
-                success = this.ExecutePsScript(this.VbrSessionStartInfo());
-            }
+            success = this.ExecutePsScript(this.VbrSessionStartInfo());
 
 
             return success;
@@ -374,7 +371,7 @@ namespace VeeamHealthCheck.Functions.Collection.PSCollections
             // Process stderr
             List<string> errorarray = new();
             bool failed = false;
-            
+
             if (!string.IsNullOrWhiteSpace(stdErr))
             {
                 string[] errLines = stdErr.Split(new[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries);

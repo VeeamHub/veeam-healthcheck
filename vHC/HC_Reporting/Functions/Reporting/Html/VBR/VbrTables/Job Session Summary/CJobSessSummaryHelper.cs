@@ -87,7 +87,7 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR.VbrTables.Job_Session_Su
 
                 return tList;
             }
-            catch (Exception ex)
+            catch (Exception)
             {
                 return new List<TimeSpan>();
             }
@@ -246,7 +246,7 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR.VbrTables.Job_Session_Su
 
                     sendBack.Add(row);
                 }
-                catch (Exception e) { }
+                catch (Exception) { }
             }
 
             return sendBack;
