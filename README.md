@@ -20,12 +20,13 @@ This Windows utility is a lightweight executable that will generate an advanced 
     - Veeam Backup & Replication:
       - v11
       - v12
+	  - v13
     - Veeam Backup for Microsoft 365
       - v6
       - v7
       - v8
-- Must be executed on system where Veeam Backup & Replication or Veeam Backup for Microsoft 365 is installed (no remote execution)
-- C:\ must have at least 500MB free space: Output is sent to C:\temp\vHC
+- Must be executed on system where Veeam Backup & Replication Console or Veeam Backup for Microsoft 365 is installed
+- C:\ must have at least 500MB free space: Output is sent to C:\temp\vHC by default.
 - Veeam Cloud Service Provider Servers are not supported.
 
 **Operation:** 
