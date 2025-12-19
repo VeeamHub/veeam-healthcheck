@@ -30,6 +30,7 @@ namespace VeeamHealthCheck.Functions.Collection.PSCollections
         private readonly string vbrConfigScript = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, @"Tools\Scripts\HealthCheck\VBR\Get-VBRConfig.ps1");
         private readonly string vbrSessionScript = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, @"Tools\Scripts\HealthCheck\VBR\Get-VeeamSessionReport.ps1");
         private readonly string vbrSessionScriptVersion13 = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, @"Tools\Scripts\HealthCheck\VBR\Get-VeeamSessionReportVersion13.ps1");
+        private readonly string mfaTestScript = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, @"Functions\Collection\PSCollections\Scripts\TestMfa.ps1");
 
         private readonly string nasScript = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, @"Tools\Scripts\HealthCheck\VBR\Get-NasInfo.ps1");
 
@@ -221,6 +222,7 @@ namespace VeeamHealthCheck.Functions.Collection.PSCollections
             this.UnblockFile(this.vbrSessionScript);
             this.UnblockFile(this.nasScript);
             UnblockFile(vbrSessionScriptVersion13);
+            UnblockFile(mfaTestScript);
             this.UnblockFile(this.exportLogsScript);
             this.UnblockFile(this.dumpServers);
             this.UnblockFile(this.vb365Script);
