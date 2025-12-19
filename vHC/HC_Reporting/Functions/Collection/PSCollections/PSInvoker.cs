@@ -220,6 +220,7 @@ namespace VeeamHealthCheck.Functions.Collection.PSCollections
             this.UnblockFile(this.vbrConfigScript);
             this.UnblockFile(this.vbrSessionScript);
             this.UnblockFile(this.nasScript);
+            UnblockFile(vbrSessionScriptVersion13);
             this.UnblockFile(this.exportLogsScript);
             this.UnblockFile(this.dumpServers);
             this.UnblockFile(this.vb365Script);
