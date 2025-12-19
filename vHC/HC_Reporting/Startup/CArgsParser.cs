@@ -4,6 +4,7 @@ using System;
 using System.Runtime.InteropServices;
 using System.Text.RegularExpressions;
 using VeeamHealthCheck.Functions.Collection.PSCollections;
+using VeeamHealthCheck.Functions.CredsWindow;
 
 // using VeeamHealthCheck.Reporting.vsac;
 using VeeamHealthCheck.Shared;
