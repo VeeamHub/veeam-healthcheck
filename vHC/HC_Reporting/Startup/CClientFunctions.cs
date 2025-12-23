@@ -322,6 +322,20 @@ namespace VeeamHealthCheck.Startup
         private int StartAnalysis()
         {
             this.LOG.Info(this.logStart + "Init Data analysis & report creations", false);
+            
+            // Validate CSV files before report generation
+            try
+            {
+                this.LOG.Info(this.logStart + "Validating collected CSV files...", false);
+                var validator = new CCsvValidator(CVariables.vbrDir);
+                CGlobals.CsvValidationResults = validator.ValidateVbrCsvFiles();
+                this.LOG.Info(this.logStart + "CSV validation complete.", false);
+            }
+            catch (Exception ex)
+            {
+                this.LOG.Warning(this.logStart + $"CSV validation encountered an error: {ex.Message}. Continuing with report generation.", false);
+            }
+            
             int res = this.Import();
 
             this.LOG.Info(this.logStart + "Init Data analysis & report creations...done!", false);

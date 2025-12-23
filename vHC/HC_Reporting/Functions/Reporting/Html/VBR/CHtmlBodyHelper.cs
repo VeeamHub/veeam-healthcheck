@@ -37,6 +37,10 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR
             this.LicenseTable();
             this.log.Info(this.logStart + "LicenseTable completed.");
             
+            this.log.Info(this.logStart + "Generating DataCollectionSummaryTable...");
+            this.DataCollectionSummaryTable();
+            this.log.Info(this.logStart + "DataCollectionSummaryTable completed.");
+            
             this.log.Info(this.logStart + "Generating BackupServerTable...");
             this.BackupServerTable();
             this.log.Info(this.logStart + "BackupServerTable completed.");
@@ -131,6 +135,11 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR
         private void LicenseTable()
         {
             this.HTMLSTRING += this.tables.LicTable(this.SCRUB);
+        }
+
+        private void DataCollectionSummaryTable()
+        {
+            this.HTMLSTRING += this.tables.DataCollectionSummaryTable();
         }
 
         private void BackupServerTable()

@@ -13,6 +13,12 @@ namespace VeeamHealthCheck.Shared
     {
         // static globals:
         public static CLogger mainlog = new("HealthCheck");
+        
+        /// <summary>
+        /// Stores validation results for CSV files collected during the data gathering phase.
+        /// Used to track which files are present/missing and generate data collection summaries.
+        /// </summary>
+        public static List<CsvValidationResult> CsvValidationResults { get; set; } = new();
         private static bool scrub;
         private static readonly CScrubHandler scrubberMain = new();
         public static readonly string backupServerId = "6745a759-2205-4cd2-b172-8ec8f7e60ef8";

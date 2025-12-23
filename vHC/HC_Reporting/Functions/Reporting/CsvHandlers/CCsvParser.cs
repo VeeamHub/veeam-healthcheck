@@ -129,7 +129,7 @@ namespace VeeamHealthCheck.Functions.Reporting.CsvHandlers
             }
 
 
-            return null;
+            return Enumerable.Empty<dynamic>();
         }
 
         private static IEnumerable<dynamic> VbrGetDynamicCsvRecsStatic(string file, string vbrOrVboPath)
@@ -142,7 +142,7 @@ namespace VeeamHealthCheck.Functions.Reporting.CsvHandlers
             }
 
 
-            return null;
+            return Enumerable.Empty<dynamic>();
         }
 
         private IEnumerable<dynamic> VboGetDynamicCsvRecs(string file, string vbrOrVboPath)
@@ -155,7 +155,7 @@ namespace VeeamHealthCheck.Functions.Reporting.CsvHandlers
             }
 
 
-            return null;
+            return Enumerable.Empty<dynamic>();
         }
         #region m365CsvParser
 
