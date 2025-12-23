@@ -37,9 +37,9 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR
             this.LicenseTable();
             this.log.Info(this.logStart + "LicenseTable completed.");
             
-            this.log.Info(this.logStart + "Generating DataCollectionSummaryTable...");
-            this.DataCollectionSummaryTable();
-            this.log.Info(this.logStart + "DataCollectionSummaryTable completed.");
+            // this.log.Info(this.logStart + "Generating DataCollectionSummaryTable...");
+            // this.DataCollectionSummaryTable();
+            // this.log.Info(this.logStart + "DataCollectionSummaryTable completed.");
             
             this.log.Info(this.logStart + "Generating BackupServerTable...");
             this.BackupServerTable();
