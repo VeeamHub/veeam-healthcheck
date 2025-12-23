@@ -58,7 +58,7 @@ namespace VeeamHealthCheck.Functions.Collection
                 this.PopulateWaits();
             }
 
-            if (CGlobals.IsVbr)
+            if (CGlobals.IsVbr && !CGlobals.REMOTEEXEC)
             {
                 this.ExecVmcReader();
                 this.GetRegistryDbInfo();

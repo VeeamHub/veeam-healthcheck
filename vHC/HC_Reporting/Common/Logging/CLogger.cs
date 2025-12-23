@@ -99,9 +99,31 @@ namespace VeeamHealthCheck.Shared.Logging
                 this.WriteToConsole(severity, line);
             }
 
-            using (StreamWriter sw = new StreamWriter(this.logFile, append: true))
+            // Use FileShare.Write to allow concurrent writes from tests
+            try
             {
-                sw.WriteLine(line);
+                using (var fs = new FileStream(this.logFile, FileMode.Append, FileAccess.Write, FileShare.Write, bufferSize: 4096, useAsync: false))
+                using (var sw = new StreamWriter(fs))
+                {
+                    sw.WriteLine(line);
+                }
+            }
+            catch (IOException)
+            {
+                // If the file is locked, wait and retry once
+                System.Threading.Thread.Sleep(10);
+                try
+                {
+                    using (var fs = new FileStream(this.logFile, FileMode.Append, FileAccess.Write, FileShare.Write, bufferSize: 4096, useAsync: false))
+                    using (var sw = new StreamWriter(fs))
+                    {
+                        sw.WriteLine(line);
+                    }
+                }
+                catch
+                {
+                    // Silent fail - don't crash if logging fails
+                }
             }
         }
 
