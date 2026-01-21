@@ -438,8 +438,67 @@ namespace VeeamHealthCheck.Functions.Collection.PSCollections
         private ProcessStartInfo VbrConfigStartInfo()
         {
             this.log.Info(CMessages.PsVbrConfigStart, false);
-            // Pass the VBR directory path which now includes server name and timestamp
-            return this.ConfigStartInfo(this.vbrConfigScript, 0, CVariables.vbrDir);
+
+            if (CGlobals.REMOTEHOST == string.Empty)
+            {
+                CGlobals.REMOTEHOST = "localhost";
+            }
+
+            bool needsCredentials = CGlobals.REMOTEEXEC;
+
+            // Build argument string with BOTH VBRVersion and ReportInterval
+            string argString = $"-NoProfile -ExecutionPolicy unrestricted -file \"{this.vbrConfigScript}\" " +
+                               $"-VBRServer \"{CGlobals.REMOTEHOST}\" " +
+                               $"-VBRVersion \"{CGlobals.VBRMAJORVERSION}\" " +
+                               $"-ReportInterval {CGlobals.ReportDays} ";
+
+            // Add ReportPath parameter
+            if (!string.IsNullOrEmpty(CVariables.vbrDir))
+            {
+                argString += $"-ReportPath \"{CVariables.vbrDir}\" ";
+            }
+
+            // Add credentials if needed for remote execution
+            if (needsCredentials)
+            {
+                CredsHandler ch = new();
+                var creds = ch.GetCreds();
+                if (creds != null)
+                {
+                    byte[] passwordBytes = System.Text.Encoding.UTF8.GetBytes(creds.Value.Password);
+                    string passwordBase64 = Convert.ToBase64String(passwordBytes);
+                    argString += $"-User \"{creds.Value.Username}\" -PasswordBase64 \"{passwordBase64}\" ";
+                }
+            }
+
+            this.log.Debug(this.logStart + "PS ArgString = " + argString, false);
+
+            // Use same PowerShell version logic as other methods
+            string exePath = null;
+            if (!string.IsNullOrEmpty(this.pwshPath) && !(CGlobals.VBRMAJORVERSION < 13))
+            {
+                exePath = this.pwshPath;
+            }
+            else if (!string.IsNullOrEmpty(this.powershellPath))
+            {
+                exePath = this.powershellPath;
+            }
+            else
+            {
+                throw new InvalidOperationException("No PowerShell executable found on system.");
+            }
+
+            this.log.Debug(this.logStart + $"Using PowerShell executable: {exePath}", false);
+
+            return new ProcessStartInfo()
+            {
+                FileName = exePath,
+                Arguments = argString,
+                UseShellExecute = false,
+                CreateNoWindow = true,
+                RedirectStandardOutput = true,
+                RedirectStandardError = true
+            };
         }
 
         private ProcessStartInfo VbrNasStartInfo()

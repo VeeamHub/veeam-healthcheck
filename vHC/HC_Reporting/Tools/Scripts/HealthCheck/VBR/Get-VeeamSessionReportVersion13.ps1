@@ -67,9 +67,36 @@ catch {
 #endregion
 
 
-# Calculate cutoff date (ReportInterval + 1 days ago)
-$cutoff = (Get-Date).AddDays(-1 * ($ReportInterval + 1))
-$sessions = Get-VBRBackupSession | Where-Object { $_.Info.CreationTime -ge $cutoff }
+# Try to use session cache from Get-VBRConfig.ps1 to avoid duplicate database queries
+$sessionCachePath = Join-Path -Path $ReportPath -ChildPath "SessionCache.xml"
+$sessions = $null
+
+if (Test-Path $sessionCachePath) {
+    try {
+        Write-LogFile("Found session cache at: " + $sessionCachePath)
+        $cachedSessions = Import-Clixml -Path $sessionCachePath
+
+        # Filter cached sessions down to report interval
+        $cutoff = (Get-Date).AddDays(-1 * ($ReportInterval + 1))
+        $sessions = $cachedSessions | Where-Object { $_.CreationTime -ge $cutoff }
+
+        Write-LogFile("Loaded " + $sessions.Count + " sessions from cache (filtered from " + $cachedSessions.Count + " total)")
+    }
+    catch {
+        Write-LogFile("Warning: Failed to load session cache: " + $_.Exception.Message, "Errors", "WARN")
+        Write-LogFile("Falling back to database query...", "Errors", "WARN")
+        $sessions = $null
+    }
+}
+
+# Fallback: If cache doesn't exist or failed to load, query database
+if ($null -eq $sessions) {
+    Write-LogFile("No session cache available - querying VBR database...")
+    $cutoff = (Get-Date).AddDays(-1 * ($ReportInterval + 1))
+    $sessions = Get-VBRBackupSession | Where-Object { $_.Info.CreationTime -ge $cutoff }
+    Write-LogFile("Fetched " + $sessions.Count + " sessions from database")
+}
+
 $output = @()
 $i = 1
 foreach ($session in $sessions) {
