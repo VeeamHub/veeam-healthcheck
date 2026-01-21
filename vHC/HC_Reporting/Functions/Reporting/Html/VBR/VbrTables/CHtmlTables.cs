@@ -2896,7 +2896,14 @@ this.form.TableHeader(VbrLocalizationHelper.SbrExt15, VbrLocalizationHelper.SbrE
                             if (job.GfsMonthlyEnabled || job.GfsWeeklyIsEnabled || job.GfsYearlyEnabled)
                             {
                                 row += this.form.TableData(this.form.True, string.Empty);
-                                string GfsString = "Weekly: " + job.GfsWeeklyCount + "<br> Monthly: " + job.GfsMonthlyCount + "<br> Yearly: " + job.GfsYearlyCount;
+                                var gfsParts = new List<string>();
+                                if (job.GfsWeeklyIsEnabled)
+                                    gfsParts.Add("Weekly: " + job.GfsWeeklyCount);
+                                if (job.GfsMonthlyEnabled)
+                                    gfsParts.Add("Monthly: " + job.GfsMonthlyCount);
+                                if (job.GfsYearlyEnabled)
+                                    gfsParts.Add("Yearly: " + job.GfsYearlyCount);
+                                string GfsString = string.Join("<br> ", gfsParts);
                                 row += this.form.TableData(GfsString, string.Empty);
                             }
                             else
@@ -3071,7 +3078,14 @@ this.form.TableHeader(VbrLocalizationHelper.SbrExt15, VbrLocalizationHelper.SbrE
                     };
 
                     bool gfsEnabled = job.GfsMonthlyEnabled || job.GfsWeeklyIsEnabled || job.GfsYearlyEnabled;
-                    string gfsDetails = gfsEnabled ? $"Weekly:{job.GfsWeeklyCount},Monthly:{job.GfsMonthlyCount},Yearly:{job.GfsYearlyCount}" : string.Empty;
+                    var gfsDetailParts = new List<string>();
+                    if (job.GfsWeeklyIsEnabled)
+                        gfsDetailParts.Add($"Weekly:{job.GfsWeeklyCount}");
+                    if (job.GfsMonthlyEnabled)
+                        gfsDetailParts.Add($"Monthly:{job.GfsMonthlyCount}");
+                    if (job.GfsYearlyEnabled)
+                        gfsDetailParts.Add($"Yearly:{job.GfsYearlyCount}");
+                    string gfsDetails = gfsEnabled ? string.Join(",", gfsDetailParts) : string.Empty;
                     bool syntheticFull = job.Algorithm == "Increment" && job.TransformFullToSyntethic;
                     string backupChainType = job.Algorithm == "Syntethic" ? "Reverse Incremental" : "Forward Incremental";
                     bool indexingEnabled = job.IndexingType != "None";
