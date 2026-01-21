@@ -44,6 +44,11 @@ try {
     exit 0
 }
 catch {
-    Write-Host "[VERBOSE] Exception occurred: $($_.Exception.Message)"
+    $errorMsg = $_.Exception.Message
+    Write-Host "[VERBOSE] Exception occurred: $errorMsg"
+
+    # Output the full error to STDERR so C# can parse it
+    Write-Error $errorMsg
+
     exit 1
 }

@@ -330,6 +330,58 @@ namespace VeeamHealthCheck.Functions.Collection
                 {
                     CGlobals.Logger.Debug(line);
                 }
+
+                // Detect specific error conditions and provide user-friendly messages
+                if (!result && !string.IsNullOrWhiteSpace(stdErr))
+                {
+                    // Version mismatch between local console and remote server
+                    if (stdErr.Contains("client update is required", StringComparison.OrdinalIgnoreCase) ||
+                        stdErr.Contains("linked to a local server installation version", StringComparison.OrdinalIgnoreCase))
+                    {
+                        string userMsg = $"VBR Console/Client version mismatch detected.\n\n" +
+                                       $"The local VBR console version does not match the remote server version.\n" +
+                                       $"Remote server: {CGlobals.REMOTEHOST}\n\n" +
+                                       $"To fix this:\n" +
+                                       $"1. Update the local VBR console to match the remote server version, OR\n" +
+                                       $"2. Install a standalone VBR console (not linked to a local server), OR\n" +
+                                       $"3. Run VeeamHealthCheck directly on the remote VBR server\n\n" +
+                                       $"Original error: {stdErr.Trim()}";
+                        CGlobals.Logger.Error(userMsg, false);
+                        CGlobals.UserFacingError = userMsg;
+                    }
+                    // Invalid credentials
+                    else if (stdErr.Contains("Access is denied", StringComparison.OrdinalIgnoreCase) ||
+                             stdErr.Contains("authentication failed", StringComparison.OrdinalIgnoreCase) ||
+                             stdErr.Contains("invalid credentials", StringComparison.OrdinalIgnoreCase))
+                    {
+                        string userMsg = $"Authentication failed for remote VBR server: {CGlobals.REMOTEHOST}\n\n" +
+                                       $"Please verify:\n" +
+                                       $"1. Username and password are correct\n" +
+                                       $"2. Account has permissions to connect to VBR\n" +
+                                       $"3. Account is not MFA-enabled (MFA not supported for remote connections)";
+                        CGlobals.Logger.Error(userMsg, false);
+                        CGlobals.UserFacingError = userMsg;
+                    }
+                    // Network connectivity issues
+                    else if (stdErr.Contains("unable to connect", StringComparison.OrdinalIgnoreCase) ||
+                             stdErr.Contains("cannot be resolved", StringComparison.OrdinalIgnoreCase) ||
+                             stdErr.Contains("network path", StringComparison.OrdinalIgnoreCase))
+                    {
+                        string userMsg = $"Unable to connect to remote VBR server: {CGlobals.REMOTEHOST}\n\n" +
+                                       $"Please verify:\n" +
+                                       $"1. Server name/IP is correct\n" +
+                                       $"2. Server is reachable on the network\n" +
+                                       $"3. Firewall allows VBR connections (port 9392)\n" +
+                                       $"4. VBR service is running on the remote server";
+                        CGlobals.Logger.Error(userMsg, false);
+                        CGlobals.UserFacingError = userMsg;
+                    }
+                    else
+                    {
+                        // Generic error - log the raw error
+                        CGlobals.Logger.Error($"MFA test failed with error: {stdErr.Trim()}", false);
+                    }
+                }
             }
             catch (Exception ex)
             {
@@ -407,12 +459,22 @@ namespace VeeamHealthCheck.Functions.Collection
                 {
                     CGlobals.Logger.Debug($"[Local MFA Check] STDERR: {stdErr}");
 
-                    // Detect MFA-specific error and surface a clear, user-facing message
+                    // Detect specific error conditions and surface clear, user-facing messages
                     if (stdErr.Contains("Unable to connect to the server with MFA-enabled user account", StringComparison.OrdinalIgnoreCase))
                     {
                         string userMsg = "Unable to connect to VBR because the current account is MFA-enabled. Please run Veeam Health Check from Command Prompt or PowerShell using a non-MFA-enabled account, or provide alternate credentials in the app.";
                         CGlobals.Logger.Error(userMsg, false);
-                        // Store for later display in a single consolidated popup
+                        CGlobals.UserFacingError = userMsg;
+                    }
+                    else if (stdErr.Contains("client update is required", StringComparison.OrdinalIgnoreCase) ||
+                             stdErr.Contains("linked to a local server installation version", StringComparison.OrdinalIgnoreCase))
+                    {
+                        string userMsg = "VBR Console/Client version mismatch detected.\n\n" +
+                                       "The VBR console version does not match the VBR server version.\n\n" +
+                                       "To fix this:\n" +
+                                       "1. Update both VBR console and server to the same version, OR\n" +
+                                       "2. Install a standalone VBR console (not linked to a local server)";
+                        CGlobals.Logger.Error(userMsg, false);
                         CGlobals.UserFacingError = userMsg;
                     }
                 }

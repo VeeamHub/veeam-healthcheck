@@ -84,7 +84,7 @@ jobs:
   # Integration test on self-hosted VBR
   integration-test-vbr:
     needs: build-and-test
-    runs-on: [self-hosted, vbr-13-sql]
+    runs-on: [self-hosted, CONSOLE_HOST]
     if: github.event_name != 'pull_request'
     
     steps:
@@ -119,7 +119,7 @@ jobs:
     - name: Run VeeamHealthCheck on VBR
       id: run_healthcheck
       env:
-        VBR_HOST: ${{ secrets.VBR_HOST }}
+        VBR_HOST: ${{ secrets.CONSOLE_HOST }}
         VBR_USERNAME: ${{ secrets.VBR_USERNAME }}
         VBR_PASSWORD: ${{ secrets.VBR_PASSWORD2 }}
       run: |
