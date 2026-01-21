@@ -119,7 +119,7 @@ jobs:
     - name: Run VeeamHealthCheck on VBR
       id: run_healthcheck
       env:
-        VBR_HOST: ${{ secrets.CONSOLE_HOST }}
+        VBR_HOST: ${{ secrets.VBR_HOST }}
         VBR_USERNAME: ${{ secrets.VBR_USERNAME }}
         VBR_PASSWORD: ${{ secrets.VBR_PASSWORD2 }}
       run: |
