@@ -107,7 +107,7 @@ jobs:
         Compress-Archive -Path publish/out/* -DestinationPath publish/VeeamHealthCheck-${{ steps.get_version.outputs.version }}.zip
     
     - name: Upload ZIP artifact
-      if: github.ref == 'refs/heads/master'
+      if: github.event_name != 'pull_request'
       uses: actions/upload-artifact@v4
       with:
         name: veeam-healthcheck-zip
