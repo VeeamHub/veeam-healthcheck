@@ -48,24 +48,25 @@ jobs:
       run: dotnet build vHC/HC.sln --configuration Release --no-restore
 
     - name: Run tests
-      run: |
-        dotnet test vHC/HC.sln --configuration Release --no-build --verbosity normal
+      run: dotnet test vHC/HC.sln --configuration Release --no-build --verbosity normal
       continue-on-error: true
 
     - name: Get version
       id: get_version
+      shell: pwsh
       run: |
         if ("${{ inputs.version_override }}" -ne "") {
           $version = "${{ inputs.version_override }}"
-          echo "Using override version: $version"
+          Write-Host "Using override version: $version"
         } else {
           $csproj = [xml](Get-Content vHC/HC_Reporting/VeeamHealthCheck.csproj)
           $version = $csproj.Project.PropertyGroup[0].AssemblyVersion
-          echo "Using AssemblyVersion from csproj: $version"
+          Write-Host "Using AssemblyVersion from csproj: $version"
         }
-        echo "version=$version" >> $env:GITHUB_OUTPUT
+        "version=$version" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
 
     - name: Publish single-file executable
+      shell: pwsh
       run: |
         dotnet publish vHC/HC_Reporting/VeeamHealthCheck.csproj `
           -c Release `
@@ -77,41 +78,41 @@ jobs:
           -o publish/out
 
     - name: Create ZIP archive
+      shell: pwsh
       run: |
         $version = "${{ steps.get_version.outputs.version }}"
         Compress-Archive -Path publish/out/* -DestinationPath "publish/VeeamHealthCheck-$version.zip"
-        echo "Created: VeeamHealthCheck-$version.zip"
+        Write-Host "Created: VeeamHealthCheck-$version.zip"
 
     - name: Compute file hash
       id: hash
+      shell: pwsh
       run: |
         $version = "${{ steps.get_version.outputs.version }}"
         $zipPath = "publish/VeeamHealthCheck-$version.zip"
         $hash = (Get-FileHash $zipPath -Algorithm SHA256).Hash
         $sizeMB = [math]::Round((Get-Item $zipPath).Length / 1MB, 2)
-        echo "hash=$hash" >> $env:GITHUB_OUTPUT
-        echo "size_mb=$sizeMB" >> $env:GITHUB_OUTPUT
-        echo "SHA256: $hash"
-        echo "Size: $sizeMB MB"
+        "hash=$hash" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
+        "size_mb=$sizeMB" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
+        Write-Host "SHA256: $hash"
+        Write-Host "Size: $sizeMB MB"
 
     - name: VirusTotal Scan
       id: virustotal
       if: ${{ !inputs.skip_virustotal && vars.VT_API_KEY != '' }}
+      shell: pwsh
       run: |
         $version = "${{ steps.get_version.outputs.version }}"
         $zipPath = "publish/VeeamHealthCheck-$version.zip"
         $apiKey = "${{ vars.VT_API_KEY }}"
-
-        # Upload file to VirusTotal
         $headers = @{ "x-apikey" = $apiKey }
         $form = @{ file = Get-Item $zipPath }
 
         try {
           $uploadResponse = Invoke-RestMethod -Uri "https://www.virustotal.com/api/v3/files" -Method Post -Headers $headers -Form $form
           $analysisId = $uploadResponse.data.id
-          echo "Uploaded to VirusTotal. Analysis ID: $analysisId"
+          Write-Host "Uploaded to VirusTotal. Analysis ID: $analysisId"
 
-          # Wait for analysis (poll every 30 seconds, max 10 minutes)
           $maxAttempts = 20
           $attempt = 0
           $analysisComplete = $false
@@ -119,7 +120,6 @@ jobs:
           while (-not $analysisComplete -and $attempt -lt $maxAttempts) {
             Start-Sleep -Seconds 30
             $attempt++
-
             $analysisResponse = Invoke-RestMethod -Uri "https://www.virustotal.com/api/v3/analyses/$analysisId" -Headers $headers
             $status = $analysisResponse.data.attributes.status
 
@@ -130,99 +130,74 @@ jobs:
               $suspicious = $stats.suspicious
 
               if ($malicious -eq 0 -and $suspicious -eq 0) {
-                echo "vt_result=Clean (0 detections)" >> $env:GITHUB_OUTPUT
-                echo "vt_clean=true" >> $env:GITHUB_OUTPUT
+                "vt_result=Clean (0 detections)" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
+                "vt_clean=true" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
               } else {
-                echo "vt_result=WARNING: $malicious malicious, $suspicious suspicious" >> $env:GITHUB_OUTPUT
-                echo "vt_clean=false" >> $env:GITHUB_OUTPUT
+                "vt_result=WARNING: $malicious malicious, $suspicious suspicious" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
+                "vt_clean=false" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
               }
-
-              # Get permalink
               $fileHash = "${{ steps.hash.outputs.hash }}".ToLower()
-              echo "vt_link=https://www.virustotal.com/gui/file/$fileHash" >> $env:GITHUB_OUTPUT
+              "vt_link=https://www.virustotal.com/gui/file/$fileHash" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
             }
-            echo "Attempt $attempt/$maxAttempts - Status: $status"
+            Write-Host "Attempt $attempt/$maxAttempts - Status: $status"
           }
 
           if (-not $analysisComplete) {
-            echo "vt_result=Scan timeout - check manually" >> $env:GITHUB_OUTPUT
-            echo "vt_clean=unknown" >> $env:GITHUB_OUTPUT
+            "vt_result=Scan timeout - check manually" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
+            "vt_clean=unknown" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
           }
         } catch {
-          echo "vt_result=Scan failed: $($_.Exception.Message)" >> $env:GITHUB_OUTPUT
-          echo "vt_clean=error" >> $env:GITHUB_OUTPUT
+          "vt_result=Scan failed" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
+          "vt_clean=error" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
         }
       continue-on-error: true
 
     - name: Set VirusTotal defaults
       id: vt_defaults
       if: ${{ inputs.skip_virustotal || vars.VT_API_KEY == '' }}
+      shell: pwsh
       run: |
         if ("${{ inputs.skip_virustotal }}" -eq "true") {
-          echo "vt_result=Skipped by user" >> $env:GITHUB_OUTPUT
+          "vt_result=Skipped by user" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
         } else {
-          echo "vt_result=No API key configured" >> $env:GITHUB_OUTPUT
+          "vt_result=No API key configured" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
         }
-        echo "vt_clean=skipped" >> $env:GITHUB_OUTPUT
+        "vt_clean=skipped" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
 
     - name: Get PR changelog
       id: changelog
       if: ${{ inputs.pr_number != '' }}
+      shell: pwsh
       env:
         GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       run: |
         $prNumber = "${{ inputs.pr_number }}"
-
         try {
-          $pr = gh pr view $prNumber --json title,body | ConvertFrom-Json
-
-          # Extract key sections from PR body
+          $prJson = gh pr view $prNumber --json title,body
+          $pr = $prJson | ConvertFrom-Json
           $body = $pr.body
 
-          # Try to extract summary section
-          $changelog = ""
-
-          if ($body -match "(?s)## Summary(.*?)(?=##|$)") {
-            $summary = $matches[1].Trim()
-            # Clean up the summary - remove PR boilerplate
-            $summary = $summary -replace "(?s)\[x\].*", ""
-            $summary = $summary -replace "(?s)## Test Plan.*", ""
-            $summary = $summary -replace "(?s)## Files Changed.*", ""
-            $summary = $summary -replace "(?s)## Breaking Changes.*", ""
-            $changelog = $summary.Trim()
-          }
-
-          if ($changelog -eq "") {
-            $changelog = "See PR #$prNumber for details."
-          }
-
-          # Escape for GitHub Actions output
-          $changelog = $changelog -replace "`r`n", "%0A"
-          $changelog = $changelog -replace "`n", "%0A"
-          $changelog = $changelog -replace "%", "%25"
-
-          echo "changelog<<CHANGELOG_EOF" >> $env:GITHUB_OUTPUT
-          echo "$($pr.body)" >> $env:GITHUB_OUTPUT
-          echo "CHANGELOG_EOF" >> $env:GITHUB_OUTPUT
-          echo "pr_title=$($pr.title)" >> $env:GITHUB_OUTPUT
+          # Write body to file for later use
+          $body | Out-File -FilePath "pr_body.txt" -Encoding UTF8
+          "pr_title=$($pr.title)" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
+          "has_changelog=true" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
         } catch {
-          echo "changelog=See recent commits for changes." >> $env:GITHUB_OUTPUT
-          echo "pr_title=" >> $env:GITHUB_OUTPUT
+          "has_changelog=false" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
         }
 
     - name: Generate release notes
       id: release_notes
+      shell: pwsh
       run: |
         $version = "${{ steps.get_version.outputs.version }}"
         $hash = "${{ steps.hash.outputs.hash }}"
         $sizeMB = "${{ steps.hash.outputs.size_mb }}"
-        $vtResult = if ("${{ steps.virustotal.outputs.vt_result }}" -ne "") { "${{ steps.virustotal.outputs.vt_result }}" } else { "${{ steps.vt_defaults.outputs.vt_result }}" }
-        $vtClean = if ("${{ steps.virustotal.outputs.vt_clean }}" -ne "") { "${{ steps.virustotal.outputs.vt_clean }}" } else { "${{ steps.vt_defaults.outputs.vt_clean }}" }
-        $prChangelog = @"
-${{ steps.changelog.outputs.changelog }}
-"@
+        $vtResult = if ("${{ steps.virustotal.outputs.vt_result }}") { "${{ steps.virustotal.outputs.vt_result }}" } else { "${{ steps.vt_defaults.outputs.vt_result }}" }
+        $vtClean = if ("${{ steps.virustotal.outputs.vt_clean }}") { "${{ steps.virustotal.outputs.vt_clean }}" } else { "${{ steps.vt_defaults.outputs.vt_clean }}" }
+        $commitSha = "${{ github.sha }}"
+        $repo = "${{ github.repository }}"
+        $buildDate = (Get-Date).ToString("yyyy-MM-ddTHH:mm:ssZ")
 
-        # Determine VT status emoji
         $vtEmoji = switch ($vtClean) {
           "true" { "✅" }
           "false" { "⚠️" }
@@ -230,61 +205,57 @@ ${{ steps.changelog.outputs.changelog }}
           default { "❓" }
         }
 
-        # Build changelog section
-        $changelogSection = ""
-        if ("${{ inputs.pr_number }}" -ne "" -and $prChangelog -ne "") {
-          # Extract just the key parts from PR body for the changelog
-          $changelogSection = @"
+        # Build release notes
+        $notes = @()
+        $notes += "## Veeam Health Check v$version"
+        $notes += ""
 
-### 🆕 What's New
-
-$prChangelog
-
----
-
-"@
+        # Add changelog if available
+        if (Test-Path "pr_body.txt") {
+          $prBody = Get-Content "pr_body.txt" -Raw
+          $notes += "### 🆕 What's New"
+          $notes += ""
+          $notes += $prBody
+          $notes += ""
+          $notes += "---"
+          $notes += ""
         }
 
-        $notes = @"
-## Veeam Health Check v$version
-$changelogSection
-### ✅ Security & Quality Verification
-- ✅ Build & Unit Tests: **Passed**
-- $vtEmoji VirusTotal Scan: **$vtResult**
-- ✅ Code Quality: Analyzed
+        $notes += "### ✅ Security & Quality Verification"
+        $notes += "- ✅ Build & Unit Tests: **Passed**"
+        $notes += "- $vtEmoji VirusTotal Scan: **$vtResult**"
+        $notes += "- ✅ Code Quality: Analyzed"
+        $notes += ""
+        $notes += "### 📦 Download"
+        $notes += "**VeeamHealthCheck-$version.zip** ($sizeMB MB)"
+        $notes += ""
+        $notes += "**SHA256 Checksum:**"
+        $notes += '```'
+        $notes += $hash
+        $notes += '```'
+        $notes += ""
+        $notes += "**Verification Command:**"
+        $notes += '```powershell'
+        $notes += "(Get-FileHash `"VeeamHealthCheck-$version.zip`").Hash"
+        $notes += '```'
+        $notes += ""
+        $notes += "### 📋 Requirements"
+        $notes += "- Windows 7 or later"
+        $notes += "- .NET 8 runtime (included in self-contained build)"
+        $notes += "- PowerShell 5.1 or later"
+        $notes += ""
+        $notes += "### 🚀 Quick Start"
+        $notes += "1. Download the ZIP file above"
+        $notes += "2. Extract to a folder"
+        $notes += "3. Run ``VeeamHealthCheck.exe``"
+        $notes += ""
+        $notes += "---"
+        $notes += ""
+        $notes += "**Built from:** [$commitSha](https://github.com/$repo/commit/$commitSha)"
+        $notes += "**Build Date:** $buildDate"
 
-### 📦 Download
-**VeeamHealthCheck-$version.zip** ($sizeMB MB)
-
-**SHA256 Checksum:**
-``````
-$hash
-``````
-
-**Verification Command:**
-``````powershell
-(Get-FileHash "VeeamHealthCheck-$version.zip").Hash
-``````
-
-### 📋 Requirements
-- Windows 7 or later
-- .NET 8 runtime (included in self-contained build)
-- PowerShell 5.1 or later
-
-### 🚀 Quick Start
-1. Download the ZIP file above
-2. Extract to a folder
-3. Run ``VeeamHealthCheck.exe``
-
----
-
-**Built from:** [${{ github.sha }}](https://github.com/${{ github.repository }}/commit/${{ github.sha }})
-**Build Date:** $((Get-Date).ToString("yyyy-MM-ddTHH:mm:ssZ"))
-"@
-
-        # Write to file for the release step
-        $notes | Out-File -FilePath release_notes.md -Encoding UTF8
-        echo "Generated release notes"
+        $notes -join "`n" | Out-File -FilePath "release_notes.md" -Encoding UTF8
+        Write-Host "Generated release notes"
 
     - name: Upload artifact
       uses: actions/upload-artifact@v4
@@ -295,41 +266,38 @@ $hash
 
     - name: Create GitHub Release
       if: ${{ !inputs.dry_run }}
+      shell: pwsh
       env:
         GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       run: |
         $version = "${{ steps.get_version.outputs.version }}"
         $zipPath = "publish/VeeamHealthCheck-$version.zip"
-        $notes = Get-Content release_notes.md -Raw
+        $notesFile = "release_notes.md"
 
-        # Check if release already exists
         $existingRelease = gh release view "v$version" 2>&1
         if ($LASTEXITCODE -eq 0) {
-          echo "Release v$version already exists. Updating..."
-          gh release edit "v$version" --notes "$notes"
+          Write-Host "Release v$version already exists. Updating..."
+          gh release edit "v$version" --notes-file $notesFile
           gh release upload "v$version" $zipPath --clobber
         } else {
-          echo "Creating new release v$version..."
-          gh release create "v$version" `
-            --title "Veeam Health Check v$version" `
-            --notes "$notes" `
-            $zipPath
+          Write-Host "Creating new release v$version..."
+          gh release create "v$version" --title "Veeam Health Check v$version" --notes-file $notesFile $zipPath
         }
-
-        echo "Release URL: https://github.com/${{ github.repository }}/releases/tag/v$version"
+        Write-Host "Release URL: https://github.com/${{ github.repository }}/releases/tag/v$version"
 
     - name: Dry run summary
       if: ${{ inputs.dry_run }}
+      shell: pwsh
       run: |
-        echo "=== DRY RUN SUMMARY ==="
-        echo ""
-        echo "Version: ${{ steps.get_version.outputs.version }}"
-        echo "SHA256: ${{ steps.hash.outputs.hash }}"
-        echo "Size: ${{ steps.hash.outputs.size_mb }} MB"
-        echo ""
-        echo "=== RELEASE NOTES ==="
+        Write-Host "=== DRY RUN SUMMARY ==="
+        Write-Host ""
+        Write-Host "Version: ${{ steps.get_version.outputs.version }}"
+        Write-Host "SHA256: ${{ steps.hash.outputs.hash }}"
+        Write-Host "Size: ${{ steps.hash.outputs.size_mb }} MB"
+        Write-Host ""
+        Write-Host "=== RELEASE NOTES ==="
         Get-Content release_notes.md
-        echo ""
-        echo "=== END DRY RUN ==="
-        echo ""
-        echo "To create the actual release, run this workflow again with 'Dry run' unchecked."
+        Write-Host ""
+        Write-Host "=== END DRY RUN ==="
+        Write-Host ""
+        Write-Host "To create the actual release, run this workflow again with 'Dry run' unchecked."
