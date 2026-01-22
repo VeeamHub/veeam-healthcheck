@@ -257,31 +257,53 @@ namespace VhcXTests.TestData
         #region Helper Methods
 
         /// <summary>
+        /// Safely write content to a file within a validated directory.
+        /// Uses Path.GetFullPath to normalize paths and prevent traversal attacks.
+        /// </summary>
+        private static void SafeWriteFile(string directory, string fileName, string content)
+        {
+            // Normalize the directory path to prevent traversal
+            var normalizedDir = Path.GetFullPath(directory);
+            // Use GetFileName to strip any path components from filename (defense in depth)
+            var safeFileName = Path.GetFileName(fileName);
+            var fullPath = Path.Combine(normalizedDir, safeFileName);
+
+            // Verify the resulting path is still within the intended directory
+            if (!fullPath.StartsWith(normalizedDir, StringComparison.OrdinalIgnoreCase))
+            {
+                throw new ArgumentException($"Invalid file path: {fileName}");
+            }
+
+            File.WriteAllText(fullPath, content);
+        }
+
+        /// <summary>
         /// Create a test data directory with all standard CSV files
         /// </summary>
         public static string CreateTestDataDirectory(string basePath = null)
         {
-            basePath ??= Path.Combine(Path.GetTempPath(), "VhcTests_" + Guid.NewGuid().ToString());
+            // Normalize base path to prevent path traversal
+            basePath = Path.GetFullPath(basePath ?? Path.Combine(Path.GetTempPath(), "VhcTests_" + Guid.NewGuid().ToString()));
             var vbrDir = Path.Combine(basePath, "VBR");
             Directory.CreateDirectory(vbrDir);
 
-            // Create all standard CSV files
-            File.WriteAllText(Path.Combine(vbrDir, "vbrinfo.csv"), GenerateVbrInfo());
-            File.WriteAllText(Path.Combine(vbrDir, "Servers.csv"), GenerateServers());
-            File.WriteAllText(Path.Combine(vbrDir, "Proxies.csv"), GenerateProxies());
-            File.WriteAllText(Path.Combine(vbrDir, "Repositories.csv"), GenerateRepositories());
-            File.WriteAllText(Path.Combine(vbrDir, "_Jobs.csv"), GenerateJobs());
-            File.WriteAllText(Path.Combine(vbrDir, "SOBRs.csv"), GenerateSobrs());
-            File.WriteAllText(Path.Combine(vbrDir, "SOBRExtents.csv"), GenerateSobrExtents());
-            File.WriteAllText(Path.Combine(vbrDir, "LicInfo.csv"), GenerateLicenseInfo());
-            File.WriteAllText(Path.Combine(vbrDir, "configBackup.csv"), GenerateConfigBackup());
-            File.WriteAllText(Path.Combine(vbrDir, "trafficRules.csv"), GenerateTrafficRules());
-            File.WriteAllText(Path.Combine(vbrDir, "regkeys.csv"), GenerateRegKeys());
-            File.WriteAllText(Path.Combine(vbrDir, "ViProtected.csv"), GenerateViProtected());
-            File.WriteAllText(Path.Combine(vbrDir, "ViUnprotected.csv"), GenerateViUnprotected());
-            File.WriteAllText(Path.Combine(vbrDir, "VeeamSessionReport.csv"), GenerateSessionReport());
-            File.WriteAllText(Path.Combine(vbrDir, "_UserRoles.csv"), GenerateUserRoles());
-            File.WriteAllText(Path.Combine(vbrDir, "capTier.csv"), GenerateCapTier());
+            // Create all standard CSV files using safe write method
+            SafeWriteFile(vbrDir, "vbrinfo.csv", GenerateVbrInfo());
+            SafeWriteFile(vbrDir, "Servers.csv", GenerateServers());
+            SafeWriteFile(vbrDir, "Proxies.csv", GenerateProxies());
+            SafeWriteFile(vbrDir, "Repositories.csv", GenerateRepositories());
+            SafeWriteFile(vbrDir, "_Jobs.csv", GenerateJobs());
+            SafeWriteFile(vbrDir, "SOBRs.csv", GenerateSobrs());
+            SafeWriteFile(vbrDir, "SOBRExtents.csv", GenerateSobrExtents());
+            SafeWriteFile(vbrDir, "LicInfo.csv", GenerateLicenseInfo());
+            SafeWriteFile(vbrDir, "configBackup.csv", GenerateConfigBackup());
+            SafeWriteFile(vbrDir, "trafficRules.csv", GenerateTrafficRules());
+            SafeWriteFile(vbrDir, "regkeys.csv", GenerateRegKeys());
+            SafeWriteFile(vbrDir, "ViProtected.csv", GenerateViProtected());
+            SafeWriteFile(vbrDir, "ViUnprotected.csv", GenerateViUnprotected());
+            SafeWriteFile(vbrDir, "VeeamSessionReport.csv", GenerateSessionReport());
+            SafeWriteFile(vbrDir, "_UserRoles.csv", GenerateUserRoles());
+            SafeWriteFile(vbrDir, "capTier.csv", GenerateCapTier());
 
             return vbrDir;
         }
@@ -291,16 +313,17 @@ namespace VhcXTests.TestData
         /// </summary>
         public static string CreateMinimalTestDataDirectory(string basePath = null)
         {
-            basePath ??= Path.Combine(Path.GetTempPath(), "VhcTests_" + Guid.NewGuid().ToString());
+            // Normalize base path to prevent path traversal
+            basePath = Path.GetFullPath(basePath ?? Path.Combine(Path.GetTempPath(), "VhcTests_" + Guid.NewGuid().ToString()));
             var vbrDir = Path.Combine(basePath, "VBR");
             Directory.CreateDirectory(vbrDir);
 
-            // Only critical files
-            File.WriteAllText(Path.Combine(vbrDir, "vbrinfo.csv"), GenerateVbrInfo());
-            File.WriteAllText(Path.Combine(vbrDir, "Servers.csv"), GenerateServers());
-            File.WriteAllText(Path.Combine(vbrDir, "Proxies.csv"), GenerateProxies());
-            File.WriteAllText(Path.Combine(vbrDir, "Repositories.csv"), GenerateRepositories());
-            File.WriteAllText(Path.Combine(vbrDir, "_Jobs.csv"), GenerateJobs());
+            // Only critical files - using safe write method
+            SafeWriteFile(vbrDir, "vbrinfo.csv", GenerateVbrInfo());
+            SafeWriteFile(vbrDir, "Servers.csv", GenerateServers());
+            SafeWriteFile(vbrDir, "Proxies.csv", GenerateProxies());
+            SafeWriteFile(vbrDir, "Repositories.csv", GenerateRepositories());
+            SafeWriteFile(vbrDir, "_Jobs.csv", GenerateJobs());
 
             return vbrDir;
         }
