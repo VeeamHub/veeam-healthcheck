@@ -765,7 +765,7 @@ jobs:
 
   # VirusTotal scan - only on master branch
   virustotal-scan:
-    needs: [integration-test-vbr, integration-test-vbr-13-sql, integration-test-vbr-12]
+    needs: [build-and-test]
     runs-on: windows-latest
     if: github.ref == 'refs/heads/master'
     outputs:
