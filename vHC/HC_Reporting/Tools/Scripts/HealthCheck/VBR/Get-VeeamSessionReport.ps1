@@ -126,15 +126,40 @@ $AllJobs = Get-VBRJob -WarningAction SilentlyContinue
 
 $VMwareBackupJobIDs = $AllJobs | <#Where-Object { ($_.JobType -eq 'Backup') -AND ($_.BackupPlatform.Platform -eq 'EVmware') } |#> Select-Object -ExpandProperty ID
 
-$jobs = $null
-$jobTypes = [Veeam.Backup.Model.EDbJobType].GetEnumNames()
-foreach ($jt in $jobTypes) {
-  $jobs += [Veeam.Backup.Core.CBackupSession]::GetByTypeAndTimeInterval($jt, [datetime]::Now.AddDays(-$ReportInterval), [datetime]::Now)# | select @{Name="JobName";Expression={$_.Name -replace "\((Incremental|[A-Za-z\s]*Full|Retry\s\d+)\)"}} #| group JobName
-}
-#$jobs.count
+# Try to use session cache from Get-VBRConfig.ps1 to avoid duplicate database queries
+$sessionCachePath = Join-Path -Path $ReportPath -ChildPath "SessionCache.xml"
+$AllBackupSessions = $null
 
-#$AllBackupSessions = [Veeam.Backup.Core.CBackupSession]::GetAll()
-$AllBackupSessions = $jobs
+if (Test-Path $sessionCachePath) {
+    try {
+        Write-LogFile("Found session cache at: " + $sessionCachePath)
+        $cachedSessions = Import-Clixml -Path $sessionCachePath
+
+        # Filter cached sessions down to report interval
+        $cutoff = [datetime]::Now.AddDays(-$ReportInterval)
+        $AllBackupSessions = $cachedSessions | Where-Object { $_.CreationTime -ge $cutoff }
+
+        Write-LogFile("Loaded " + $AllBackupSessions.Count + " sessions from cache (filtered from " + $cachedSessions.Count + " total)")
+    }
+    catch {
+        Write-LogFile("Warning: Failed to load session cache: " + $_.Exception.Message, "Warnings", "WARN")
+        Write-LogFile("Falling back to database query...", "Warnings", "WARN")
+        $AllBackupSessions = $null
+    }
+}
+
+# Fallback: If cache doesn't exist or failed to load, query database
+if ($null -eq $AllBackupSessions) {
+    Write-LogFile("No session cache available - querying VBR database...")
+    $jobs = $null
+    $jobTypes = [Veeam.Backup.Model.EDbJobType].GetEnumNames()
+    foreach ($jt in $jobTypes) {
+        $jobs += [Veeam.Backup.Core.CBackupSession]::GetByTypeAndTimeInterval($jt, [datetime]::Now.AddDays(-$ReportInterval), [datetime]::Now)
+    }
+    $AllBackupSessions = $jobs
+    Write-LogFile("Fetched " + $AllBackupSessions.Count + " sessions from database")
+}
+
 $SelectBackupSessions = $AllBackupSessions #| Where-Object { $_.JobId -in $VMwareBackupJobIDs }
 
 $SelectTaskSessions = $SelectBackupSessions.GetTaskSessions()

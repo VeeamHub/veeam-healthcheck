@@ -51,17 +51,25 @@ namespace VeeamHealthCheck.Functions.Reporting.Html
 
         private readonly CLogger log = CGlobals.Logger;
 
-
-        private readonly IEnumerable<dynamic> viProxy = CCsvParser.GetDynViProxy().ToList();
-        private readonly IEnumerable<dynamic> hvProxy = CCsvParser.GetDynHvProxy().ToList();
-        private readonly IEnumerable<dynamic> nasProxy = CCsvParser.GetDynNasProxy().ToList();
-        private readonly IEnumerable<dynamic> cdpProxy = CCsvParser.GetDynCdpProxy().ToList();
+        // Use null-coalescing to ensure we always have a valid list, even if CSV files are missing
+        private readonly IEnumerable<dynamic> viProxy;
+        private readonly IEnumerable<dynamic> hvProxy;
+        private readonly IEnumerable<dynamic> nasProxy;
+        private readonly IEnumerable<dynamic> cdpProxy;
 
         public CDataFormer() // add string mode input
         {
-            // _csv = _dTypeParser.ServerInfo();
-
-            // CheckXmlFile();
+            // Initialize proxy collections with null-safety
+            viProxy = (CCsvParser.GetDynViProxy() ?? Enumerable.Empty<dynamic>()).ToList();
+            hvProxy = (CCsvParser.GetDynHvProxy() ?? Enumerable.Empty<dynamic>()).ToList();
+            nasProxy = (CCsvParser.GetDynNasProxy() ?? Enumerable.Empty<dynamic>()).ToList();
+            cdpProxy = (CCsvParser.GetDynCdpProxy() ?? Enumerable.Empty<dynamic>()).ToList();
+            
+            // Log if any proxy data is missing
+            if (!viProxy.Any() && !hvProxy.Any() && !nasProxy.Any() && !cdpProxy.Any())
+            {
+                log.Warning($"{logStart}No proxy CSV data found. Proxy-related sections may be empty in the report.");
+            }
         }
 
 

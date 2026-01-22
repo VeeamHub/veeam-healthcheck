@@ -28,7 +28,9 @@ param(
     [Parameter(Mandatory = $false)]
     [bool]$RemoteExecution = $false,
     [Parameter(Mandatory = $false)]
-    [string]$ReportPath = ""
+    [string]$ReportPath = "",
+    [Parameter(Mandatory = $false)]
+    [int]$ReportInterval = 14
 )
 # If ReportPath not provided, use default with server name and timestamp structure
 if ([string]::IsNullOrEmpty($ReportPath)) {
@@ -594,9 +596,9 @@ try {
         
         # Optimization: Fetch all sessions once and filter by date, then build lookup hashtable
         if ($nasBackup.Count -gt 0) {
-            Write-LogFile("Fetching all backup sessions for the last 14 days...")
-            $allSessions = Get-VBRBackupSession | Where-Object { $_.CreationTime -gt (Get-Date).AddDays(-14) }
-            Write-LogFile("Found " + $allSessions.Count + " total sessions in the last 14 days")
+            Write-LogFile("Fetching all backup sessions for the last " + $ReportInterval + " days...")
+            $allSessions = Get-VBRBackupSession | Where-Object { $_.CreationTime -gt (Get-Date).AddDays(-$ReportInterval) }
+            Write-LogFile("Found " + $allSessions.Count + " total sessions in the last " + $ReportInterval + " days")
             
             # Build hashtable of latest session per job name for O(1) lookup
             $sessionLookup = @{}
@@ -609,7 +611,20 @@ try {
                 }
             }
             Write-LogFile("Built session lookup hashtable with " + $sessionLookup.Count + " unique jobs")
-            
+
+            # Export sessions to cache for reuse by session report scripts
+            Write-LogFile("Exporting sessions to cache for reuse by other collectors...")
+            $sessionCachePath = Join-Path -Path $ReportPath -ChildPath "SessionCache.xml"
+            try {
+                # Export using Export-Clixml for object fidelity
+                $allSessions | Export-Clixml -Path $sessionCachePath -Depth 3 -Force
+                Write-LogFile("Exported " + $allSessions.Count + " sessions to cache: " + $sessionCachePath)
+            }
+            catch {
+                Write-LogFile("Warning: Failed to export session cache: " + $_.Exception.Message, "Warnings", "WARN")
+                # Non-fatal - continue execution
+            }
+
             # Process each NAS job
             $jobCounter = 0
             foreach ($job in $nasBackup) {

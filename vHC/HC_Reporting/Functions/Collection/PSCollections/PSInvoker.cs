@@ -256,12 +256,13 @@ namespace VeeamHealthCheck.Functions.Collection.PSCollections
                     CreateNoWindow = true
                 };
 
-                // Log the command with masked password
-                CGlobals.Logger.Info("[TestMfa] Arguments: " + startInfo.Arguments.Replace(escapedPassword, "****"));
+                // Log the command with masked password - construct safe log message without ever including sensitive data
+                string safeLogArgs = $"Import-Module Veeam.Backup.PowerShell; Connect-VBRServer -Server '{CGlobals.REMOTEHOST ?? "localhost"}' -User '{creds.Value.Username}' -Password '****'";
+                CGlobals.Logger.Info("[TestMfa] Arguments: " + safeLogArgs);
 
                 this.log.Info($"[TestMfa] Creating ProcessStartInfo for MFA test:");
                 this.log.Info($"[TestMfa] FileName: {startInfo.FileName}");
-                this.log.Info($"[TestMfa] Arguments: {startInfo.Arguments}");
+                this.log.Info($"[TestMfa] Arguments: {safeLogArgs}");
                 this.log.Info($"[TestMfa] RedirectStandardOutput: {startInfo.RedirectStandardOutput}");
                 this.log.Info($"[TestMfa] RedirectStandardError: {startInfo.RedirectStandardError}");
                 this.log.Info($"[TestMfa] UseShellExecute: {startInfo.UseShellExecute}");
@@ -279,8 +280,9 @@ namespace VeeamHealthCheck.Functions.Collection.PSCollections
                     string stdOut = res.StandardOutput.ReadToEnd();
                     string stdErr = res.StandardError.ReadToEnd();
 
-                    this.log.Debug($"[TestMfa] STDOUT: {stdOut}");
-                    this.log.Debug($"[TestMfa] STDERR: {stdErr}");
+                    // Note: Not logging full stdout/stderr to avoid potential password leakage in error messages
+                    this.log.Debug($"[TestMfa] STDOUT length: {stdOut?.Length ?? 0} chars");
+                    this.log.Debug($"[TestMfa] STDERR length: {stdErr?.Length ?? 0} chars");
 
                     List<string> errorarray = new();
 
@@ -423,10 +425,12 @@ namespace VeeamHealthCheck.Functions.Collection.PSCollections
         {
             if (errorLine.Contains("Unable to connect to the server with MFA-enabled user account"))
             {
+                var message = "Unable to connect to VBR because the current account is MFA-enabled. Please run Veeam Health Check from Command Prompt or PowerShell using a non-MFA-enabled account, or provide alternate credentials in the app.";
+                VeeamHealthCheck.Shared.CGlobals.UserFacingError = message;
                 return new PsErrorTypes
                 {
                     Success = false,
-                    Message = "MFA Enabled, please execute the utility from a CMD or PS using a non-MFA enabled account."
+                    Message = message
                 };
             }
 
@@ -436,8 +440,69 @@ namespace VeeamHealthCheck.Functions.Collection.PSCollections
         private ProcessStartInfo VbrConfigStartInfo()
         {
             this.log.Info(CMessages.PsVbrConfigStart, false);
-            // Pass the VBR directory path which now includes server name and timestamp
-            return this.ConfigStartInfo(this.vbrConfigScript, 0, CVariables.vbrDir);
+
+            if (CGlobals.REMOTEHOST == string.Empty)
+            {
+                CGlobals.REMOTEHOST = "localhost";
+            }
+
+            bool needsCredentials = CGlobals.REMOTEEXEC;
+
+            // Build argument string with BOTH VBRVersion and ReportInterval
+            string argString = $"-NoProfile -ExecutionPolicy unrestricted -file \"{this.vbrConfigScript}\" " +
+                               $"-VBRServer \"{CGlobals.REMOTEHOST}\" " +
+                               $"-VBRVersion \"{CGlobals.VBRMAJORVERSION}\" " +
+                               $"-ReportInterval {CGlobals.ReportDays} ";
+
+            // Add ReportPath parameter
+            if (!string.IsNullOrEmpty(CVariables.vbrDir))
+            {
+                argString += $"-ReportPath \"{CVariables.vbrDir}\" ";
+            }
+
+            // Add credentials if needed for remote execution
+            string safeArgString = argString; // For logging without sensitive data
+            if (needsCredentials)
+            {
+                CredsHandler ch = new();
+                var creds = ch.GetCreds();
+                if (creds != null)
+                {
+                    byte[] passwordBytes = System.Text.Encoding.UTF8.GetBytes(creds.Value.Password);
+                    string passwordBase64 = Convert.ToBase64String(passwordBytes);
+                    argString += $"-User \"{creds.Value.Username}\" -PasswordBase64 \"{passwordBase64}\" ";
+                    safeArgString += $"-User \"{creds.Value.Username}\" -PasswordBase64 \"****\" ";
+                }
+            }
+
+            this.log.Debug(this.logStart + "PS ArgString = " + safeArgString, false);
+
+            // Use same PowerShell version logic as other methods
+            string exePath = null;
+            if (!string.IsNullOrEmpty(this.pwshPath) && !(CGlobals.VBRMAJORVERSION < 13))
+            {
+                exePath = this.pwshPath;
+            }
+            else if (!string.IsNullOrEmpty(this.powershellPath))
+            {
+                exePath = this.powershellPath;
+            }
+            else
+            {
+                throw new InvalidOperationException("No PowerShell executable found on system.");
+            }
+
+            this.log.Debug(this.logStart + $"Using PowerShell executable: {exePath}", false);
+
+            return new ProcessStartInfo()
+            {
+                FileName = exePath,
+                Arguments = argString,
+                UseShellExecute = false,
+                CreateNoWindow = true,
+                RedirectStandardOutput = true,
+                RedirectStandardError = true
+            };
         }
 
         private ProcessStartInfo VbrNasStartInfo()
@@ -576,14 +641,17 @@ namespace VeeamHealthCheck.Functions.Collection.PSCollections
             bool needsCredentials = CGlobals.REMOTEEXEC;
 
             string argString;
+            string safeArgString; // For logging without sensitive data
             if (days != 0)
             {
                 argString =
                     $"-NoProfile -ExecutionPolicy unrestricted -file \"{scriptLocation}\" -VBRServer \"{CGlobals.REMOTEHOST}\" -ReportInterval {CGlobals.ReportDays} ";
+                safeArgString = argString;
                 // Add ReportPath parameter if provided
                 if (!string.IsNullOrEmpty(path))
                 {
                     argString += $"-ReportPath \"{path}\" ";
+                    safeArgString += $"-ReportPath \"{path}\" ";
                 }
                 if (needsCredentials)
                 {
@@ -595,6 +663,7 @@ namespace VeeamHealthCheck.Functions.Collection.PSCollections
                         byte[] passwordBytes = System.Text.Encoding.UTF8.GetBytes(creds.Value.Password);
                         string passwordBase64 = Convert.ToBase64String(passwordBytes);
                         argString += $"-User \"{creds.Value.Username}\" -PasswordBase64 \"{passwordBase64}\" ";
+                        safeArgString += $"-User \"{creds.Value.Username}\" -PasswordBase64 \"****\" ";
                     }
                 }
             }
@@ -602,10 +671,12 @@ namespace VeeamHealthCheck.Functions.Collection.PSCollections
             {
                 argString =
                     $"-NoProfile -ExecutionPolicy unrestricted -file \"{scriptLocation}\" -VBRServer \"{CGlobals.REMOTEHOST}\" -VBRVersion \"{CGlobals.VBRMAJORVERSION}\" ";
+                safeArgString = argString;
                 // Add ReportPath parameter if provided
                 if (!string.IsNullOrEmpty(path))
                 {
                     argString += $"-ReportPath \"{path}\" ";
+                    safeArgString += $"-ReportPath \"{path}\" ";
                 }
                 if (needsCredentials)
                 {
@@ -617,11 +688,12 @@ namespace VeeamHealthCheck.Functions.Collection.PSCollections
                         byte[] passwordBytes = System.Text.Encoding.UTF8.GetBytes(creds.Value.Password);
                         string passwordBase64 = Convert.ToBase64String(passwordBytes);
                         argString += $"-User \"{creds.Value.Username}\" -PasswordBase64 \"{passwordBase64}\" ";
+                        safeArgString += $"-User \"{creds.Value.Username}\" -PasswordBase64 \"****\" ";
                     }
                 }
             }
 
-            this.log.Debug(this.logStart + "PS ArgString = " + argString, false);
+            this.log.Debug(this.logStart + "PS ArgString = " + safeArgString, false);
 
             // Use the same PowerShell version failover logic as ExecutePsScriptWithFailover
             // Prefer PowerShell 7, then 5, else throw

@@ -367,3 +367,12 @@ FodyWeavers.xsd
 /vHC/HC_Reporting/Tools/build/BuildCopy.bat
 /VeeamHealthCheck.cer
 vHC/HC_Reporting/Tools/build/BuildCopy.sh
+
+# Claude working folder
+.claude/
+
+# Test run log
+test_run_log.txt
+
+# VSCode working folder
+.vscode/

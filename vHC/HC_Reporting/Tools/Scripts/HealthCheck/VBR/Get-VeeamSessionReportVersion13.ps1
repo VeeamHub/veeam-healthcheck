@@ -39,6 +39,53 @@ function Write-LogFile {
 	Add-Content -Path $outPath -Value $line -Encoding UTF8
 }
 
+function Get-SessionLogWithTimeout {
+	param(
+		$Session,
+		[int]$TimeoutSeconds = 30
+	)
+
+	# Use a runspace for true timeout capability
+	$runspace = [runspacefactory]::CreateRunspace()
+	$runspace.Open()
+	$runspace.SessionStateProxy.SetVariable('session', $Session)
+
+	$powershell = [powershell]::Create()
+	$powershell.Runspace = $runspace
+	$powershell.AddScript({
+		try {
+			$session.Logger.GetLog().UpdatedRecords
+		} catch {
+			$null
+		}
+	}) | Out-Null
+
+	$handle = $powershell.BeginInvoke()
+
+	# Wait for completion with timeout
+	$completed = $handle.AsyncWaitHandle.WaitOne($TimeoutSeconds * 1000)
+
+	if ($completed) {
+		try {
+			$result = $powershell.EndInvoke($handle)
+			return $result
+		} catch {
+			return $null
+		} finally {
+			$powershell.Dispose()
+			$runspace.Close()
+			$runspace.Dispose()
+		}
+	} else {
+		# Timeout - force stop
+		$powershell.Stop()
+		$powershell.Dispose()
+		$runspace.Close()
+		$runspace.Dispose()
+		return $null
+	}
+}
+
 
 try {
 	Disconnect-VBRServer -ErrorAction SilentlyContinue
@@ -67,21 +114,57 @@ catch {
 #endregion
 
 
-# Calculate cutoff date (ReportInterval + 1 days ago)
-$cutoff = (Get-Date).AddDays(-1 * ($ReportInterval + 1))
-$sessions = Get-VBRBackupSession | Where-Object { $_.Info.CreationTime -ge $cutoff }
+# Try to use session cache from Get-VBRConfig.ps1 to avoid duplicate database queries
+$sessionCachePath = Join-Path -Path $ReportPath -ChildPath "SessionCache.xml"
+$sessions = $null
+
+if (Test-Path $sessionCachePath) {
+    try {
+        Write-LogFile("Found session cache at: " + $sessionCachePath)
+        $cachedSessions = Import-Clixml -Path $sessionCachePath
+
+        # Filter cached sessions down to report interval
+        $cutoff = (Get-Date).AddDays(-1 * ($ReportInterval + 1))
+        $sessions = $cachedSessions | Where-Object { $_.CreationTime -ge $cutoff }
+
+        Write-LogFile("Loaded " + $sessions.Count + " sessions from cache (filtered from " + $cachedSessions.Count + " total)")
+    }
+    catch {
+        Write-LogFile("Warning: Failed to load session cache: " + $_.Exception.Message, "Errors", "WARN")
+        Write-LogFile("Falling back to database query...", "Errors", "WARN")
+        $sessions = $null
+    }
+}
+
+# Fallback: If cache doesn't exist or failed to load, query database
+if ($null -eq $sessions) {
+    Write-LogFile("No session cache available - querying VBR database...")
+    $cutoff = (Get-Date).AddDays(-1 * ($ReportInterval + 1))
+    $sessions = Get-VBRBackupSession | Where-Object { $_.Info.CreationTime -ge $cutoff }
+    Write-LogFile("Fetched " + $sessions.Count + " sessions from database")
+}
+
 $output = @()
 $i = 1
 foreach ($session in $sessions) {
 	Write-LogFile "Processing session $i of $($sessions.Count): Job '$($session.JobName)', VM '$($session.Name)'"
 	$i++
 
+	# Get log records with timeout to prevent hanging on problematic sessions
+	$logRecords = Get-SessionLogWithTimeout -Session $session -TimeoutSeconds 30
 
-	$Bottleneck = $session.Logger.GetLog().UpdatedRecords | Where-Object Title -Match "Load"
-	$BottleneckDetails = if ($Bottleneck) { $Bottleneck.Title -replace 'Load: ', '' } else { '' }
+	$BottleneckDetails = ''
+	$PrimaryBottleneck = ''
 
-	$PrimaryBottleneckDetails = $session.Logger.GetLog().UpdatedRecords | Where-Object Title -Match "Primary Bottleneck"
-	$PrimaryBottleneck = if ($PrimaryBottleneckDetails) { $PrimaryBottleneckDetails.Title -replace 'Primary bottleneck: ', '' } else { '' }
+	if ($null -ne $logRecords) {
+		$Bottleneck = $logRecords | Where-Object Title -Match "Load"
+		$BottleneckDetails = if ($Bottleneck) { $Bottleneck.Title -replace 'Load: ', '' } else { '' }
+
+		$PrimaryBottleneckDetails = $logRecords | Where-Object Title -Match "Primary Bottleneck"
+		$PrimaryBottleneck = if ($PrimaryBottleneckDetails) { $PrimaryBottleneckDetails.Title -replace 'Primary bottleneck: ', '' } else { '' }
+	} else {
+		Write-LogFile "Warning: Timeout or error getting log for session '$($session.Name)' - skipping bottleneck details" "Errors" "WARN"
+	}
 
 	$obj = [PSCustomObject]@{
 		JobName           = $session.JobName

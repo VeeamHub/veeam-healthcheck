@@ -7,6 +7,7 @@ using System.Linq;
 using System.Management.Automation;
 using System.Text.Json;
 using VeeamHealthCheck.Functions.Analysis.DataModels;
+using VeeamHealthCheck.Functions.Collection;
 using VeeamHealthCheck.Functions.Reporting.CsvHandlers;
 using VeeamHealthCheck.Functions.Reporting.DataTypes;
 using VeeamHealthCheck.Functions.Reporting.Html;
@@ -227,6 +228,114 @@ namespace VeeamHealthCheck.Html.VBR
 
             s += this.form.SectionEnd(summary);
             return s;
+        }
+
+        /// <summary>
+        /// Generates an HTML section showing data collection status and any missing CSV files.
+        /// </summary>
+        /// <returns>A string containing the HTML data collection summary.</returns>
+        public string DataCollectionSummaryTable()
+        {
+            var results = CGlobals.CsvValidationResults;
+            if (results == null || results.Count == 0)
+            {
+                return string.Empty; // No validation data available
+            }
+
+            string s = this.form.SectionStart("datacollection", "Data Collection Summary");
+            
+            // Calculate summary statistics
+            int totalFiles = results.Count;
+            int presentCount = results.Count(r => r.IsPresent);
+            int missingCount = results.Count(r => !r.IsPresent);
+            int criticalMissing = results.Count(r => !r.IsPresent && r.Severity == CsvValidationSeverity.Critical);
+            int warningMissing = results.Count(r => !r.IsPresent && r.Severity == CsvValidationSeverity.Warning);
+            int totalRecords = results.Where(r => r.IsPresent).Sum(r => r.RecordCount);
+
+            // Create summary message
+            string summaryMessage;
+            if (criticalMissing > 0)
+            {
+                summaryMessage = $"<span style='color: #d9534f; font-weight: bold;'>⚠ {criticalMissing} critical file(s) missing.</span> Some report sections may be incomplete or missing.";
+            }
+            else if (missingCount > 0)
+            {
+                summaryMessage = $"<span style='color: #f0ad4e;'>ℹ {missingCount} optional file(s) not found.</span> Report generated with available data.";
+            }
+            else
+            {
+                summaryMessage = $"<span style='color: #5cb85c;'>✓ All data files loaded successfully.</span>";
+            }
+
+            // Overview section
+            s += $@"
+            <div style='margin-bottom: 15px; padding: 10px; background-color: #f9f9f9; border-radius: 5px;'>
+                <p><strong>Files Loaded:</strong> {presentCount} of {totalFiles}</p>
+                <p><strong>Total Records:</strong> {totalRecords:N0}</p>
+                <p><strong>Status:</strong> {summaryMessage}</p>
+            </div>";
+
+            // Only show missing files table if there are missing files
+            if (missingCount > 0)
+            {
+                s += "<h4>Missing Data Files</h4>";
+                s += "<p style='font-size: 0.9em; color: #666;'>The following data files were not found. Related report sections may show limited or no data.</p>";
+                s += "<table class='table table-striped'><thead><tr>";
+                s += this.form.TableHeader("File Name", "Name of the CSV data file");
+                s += this.form.TableHeader("Severity", "Impact level if this file is missing");
+                s += this.form.TableHeader("Impact", "Description of affected report sections");
+                s += "</tr></thead><tbody>";
+
+                foreach (var result in results.Where(r => !r.IsPresent).OrderByDescending(r => r.Severity))
+                {
+                    string severityColor = result.Severity switch
+                    {
+                        CsvValidationSeverity.Critical => "#d9534f",
+                        CsvValidationSeverity.Warning => "#f0ad4e",
+                        _ => "#5bc0de"
+                    };
+                    
+                    string impactDescription = GetMissingFileImpact(result.FileName);
+                    
+                    s += "<tr>";
+                    s += this.form.TableData(result.FileName, string.Empty);
+                    s += $"<td style='color: {severityColor}; font-weight: bold;'>{result.Severity}</td>";
+                    s += this.form.TableData(impactDescription, string.Empty);
+                    s += "</tr>";
+                }
+
+                s += "</tbody></table>";
+            }
+
+            string summary = Functions.Collection.CCsvValidator.GetReportSummary(results);
+            s += this.form.SectionEnd(summary);
+            return s;
+        }
+
+        /// <summary>
+        /// Gets a human-readable description of the impact of a missing file.
+        /// </summary>
+        private static string GetMissingFileImpact(string fileName)
+        {
+            return fileName switch
+            {
+                "Proxies" => "VMware proxy information will be missing from the report.",
+                "HvProxy" => "Hyper-V proxy information will not be displayed.",
+                "NasProxy" => "NAS/File proxy data will be unavailable.",
+                "CdpProxy" => "CDP proxy information will not be shown.",
+                "Repositories" => "Repository information will be missing.",
+                "SOBRs" => "Scale-Out Backup Repository information unavailable.",
+                "SOBRExtents" => "SOBR extent details will not be displayed.",
+                "Servers" => "Managed server information will be incomplete.",
+                "vbrinfo" => "Core VBR server information may be missing.",
+                "_Jobs" => "Job configuration details will be unavailable.",
+                "LicInfo" => "License information will not be shown.",
+                "configBackup" => "Configuration backup status unavailable.",
+                "regkeys" => "Registry key analysis will be skipped.",
+                "SecurityCompliance" => "Security compliance data unavailable.",
+                "WanAcc" => "WAN Accelerator information unavailable.",
+                _ => "Related data sections may be empty."
+            };
         }
 
         // helper to set a generic section in JSON aggregation
@@ -1326,74 +1435,88 @@ namespace VeeamHealthCheck.Html.VBR
             {
                 List<string[]> list = this.df.ProxyXmlFromCsv(scrub);
 
-                foreach (var d in list)
+                // Check if proxy data is available
+                if (list == null || list.Count == 0)
                 {
-                    var prov = d[12];
-                    int shade = 0;
-                    if (prov == "under")
+                    s += "<tr><td colspan='12' style='text-align: center; padding: 20px; color: #666;'>" +
+                         "<em>No proxy data available. The proxy CSV file may be missing or empty.</em>" +
+                         "</td></tr>";
+                    this.log.Warning("[CHtmlTables] No proxy data found - displaying placeholder message.");
+                }
+                else
+                {
+                    foreach (var d in list)
                     {
-                        shade = 2;
-                    }
+                        var prov = d[12];
+                        int shade = 0;
+                        if (prov == "under")
+                        {
+                            shade = 2;
+                        }
 
-                    if (prov == "over")
-                    {
-                        shade = 1;
-                    }
+                        if (prov == "over")
+                        {
+                            shade = 1;
+                        }
 
-                    s += "<tr>";
-                    if (scrub)
-                    {
-                        s += this.form.TableData(this.scrub.ScrubItem(d[0], ScrubItemType.Server), string.Empty); // server name
-                    }
-                    else
-                    {
-                        s += this.form.TableData(d[0], string.Empty);
-                    }
+                        s += "<tr>";
+                        if (scrub)
+                        {
+                            s += this.form.TableData(this.scrub.ScrubItem(d[0], ScrubItemType.Server), string.Empty); // server name
+                        }
+                        else
+                        {
+                            s += this.form.TableData(d[0], string.Empty);
+                        }
 
-                    s += this.form.TableData(d[1], string.Empty);
-                    s += this.form.TableData(d[2], string.Empty, shade);
-                    s += this.form.TableData(d[3], string.Empty);
-                    s += this.form.TableData(d[4], string.Empty);
-                    s += this.form.TableData(d[5], string.Empty);
+                        s += this.form.TableData(d[1], string.Empty);
+                        s += this.form.TableData(d[2], string.Empty, shade);
+                        s += this.form.TableData(d[3], string.Empty);
+                        s += this.form.TableData(d[4], string.Empty);
+                        s += this.form.TableData(d[5], string.Empty);
 
-                    // s += _form.TableData(d[6], "");
-                    if (d[6] == "True")
-                    {
-                        s += this.form.TableData(this.form.True, string.Empty);
-                    }
-                    else
-                    {
-                        s += this.form.TableData(this.form.False, string.Empty);
-                    }
+                        // s += _form.TableData(d[6], "");
+                        if (d[6] == "True")
+                        {
+                            s += this.form.TableData(this.form.True, string.Empty);
+                        }
+                        else
+                        {
+                            s += this.form.TableData(this.form.False, string.Empty);
+                        }
 
-                    s += this.form.TableData(d[7], string.Empty);
-                    s += this.form.TableData(d[8], string.Empty);
-                    s += this.form.TableData(d[9], string.Empty);
-                    if (scrub)
-                    {
-                        s += this.form.TableData(this.scrub.ScrubItem(d[10], ScrubItemType.Server), string.Empty); // host
-                    }
-                    else
-                    {
-                        s += this.form.TableData(d[10], string.Empty);
-                    }
+                        s += this.form.TableData(d[7], string.Empty);
+                        s += this.form.TableData(d[8], string.Empty);
+                        s += this.form.TableData(d[9], string.Empty);
+                        if (scrub)
+                        {
+                            s += this.form.TableData(this.scrub.ScrubItem(d[10], ScrubItemType.Server), string.Empty); // host
+                        }
+                        else
+                        {
+                            s += this.form.TableData(d[10], string.Empty);
+                        }
 
-                    if (d[11] == "True")
-                    {
-                        s += this.form.TableData(this.form.True, string.Empty);
-                    }
-                    else
-                    {
-                        s += this.form.TableData(this.form.False, string.Empty);
-                    }
+                        if (d[11] == "True")
+                        {
+                            s += this.form.TableData(this.form.True, string.Empty);
+                        }
+                        else
+                        {
+                            s += this.form.TableData(this.form.False, string.Empty);
+                        }
 
-                    s += "</tr>";
+                        s += "</tr>";
+                    }
                 }
             }
             catch (Exception e)
             {
                 this.log.Error("PROXY Data import failed. ERROR:");
                 this.log.Error("\t" + e.Message);
+                s += "<tr><td colspan='12' style='text-align: center; padding: 20px; color: #d9534f;'>" +
+                     "<em>Error loading proxy data. See logs for details.</em>" +
+                     "</td></tr>";
             }
 
             s += this.form.SectionEnd(summary);
@@ -2773,7 +2896,14 @@ this.form.TableHeader(VbrLocalizationHelper.SbrExt15, VbrLocalizationHelper.SbrE
                             if (job.GfsMonthlyEnabled || job.GfsWeeklyIsEnabled || job.GfsYearlyEnabled)
                             {
                                 row += this.form.TableData(this.form.True, string.Empty);
-                                string GfsString = "Weekly: " + job.GfsWeeklyCount + "<br> Monthly: " + job.GfsMonthlyCount + "<br> Yearly: " + job.GfsYearlyCount;
+                                var gfsParts = new List<string>();
+                                if (job.GfsWeeklyIsEnabled)
+                                    gfsParts.Add("Weekly: " + job.GfsWeeklyCount);
+                                if (job.GfsMonthlyEnabled)
+                                    gfsParts.Add("Monthly: " + job.GfsMonthlyCount);
+                                if (job.GfsYearlyEnabled)
+                                    gfsParts.Add("Yearly: " + job.GfsYearlyCount);
+                                string GfsString = string.Join("<br> ", gfsParts);
                                 row += this.form.TableData(GfsString, string.Empty);
                             }
                             else
@@ -2948,7 +3078,14 @@ this.form.TableHeader(VbrLocalizationHelper.SbrExt15, VbrLocalizationHelper.SbrE
                     };
 
                     bool gfsEnabled = job.GfsMonthlyEnabled || job.GfsWeeklyIsEnabled || job.GfsYearlyEnabled;
-                    string gfsDetails = gfsEnabled ? $"Weekly:{job.GfsWeeklyCount},Monthly:{job.GfsMonthlyCount},Yearly:{job.GfsYearlyCount}" : string.Empty;
+                    var gfsDetailParts = new List<string>();
+                    if (job.GfsWeeklyIsEnabled)
+                        gfsDetailParts.Add($"Weekly:{job.GfsWeeklyCount}");
+                    if (job.GfsMonthlyEnabled)
+                        gfsDetailParts.Add($"Monthly:{job.GfsMonthlyCount}");
+                    if (job.GfsYearlyEnabled)
+                        gfsDetailParts.Add($"Yearly:{job.GfsYearlyCount}");
+                    string gfsDetails = gfsEnabled ? string.Join(",", gfsDetailParts) : string.Empty;
                     bool syntheticFull = job.Algorithm == "Increment" && job.TransformFullToSyntethic;
                     string backupChainType = job.Algorithm == "Syntethic" ? "Reverse Incremental" : "Forward Incremental";
                     bool indexingEnabled = job.IndexingType != "None";
