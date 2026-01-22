@@ -54,9 +54,11 @@ jobs:
     - name: Get version
       id: get_version
       shell: pwsh
+      env:
+        VERSION_OVERRIDE: ${{ inputs.version_override }}
       run: |
-        if ("${{ inputs.version_override }}" -ne "") {
-          $version = "${{ inputs.version_override }}"
+        if ("$env:VERSION_OVERRIDE" -ne "") {
+          $version = "$env:VERSION_OVERRIDE"
           Write-Host "Using override version: $version"
         } else {
           $csproj = [xml](Get-Content vHC/HC_Reporting/VeeamHealthCheck.csproj)
@@ -156,8 +158,10 @@ jobs:
       id: vt_defaults
       if: ${{ inputs.skip_virustotal || vars.VT_API_KEY == '' }}
       shell: pwsh
+      env:
+        SKIP_VIRUSTOTAL: ${{ inputs.skip_virustotal }}
       run: |
-        if ("${{ inputs.skip_virustotal }}" -eq "true") {
+        if ("$env:SKIP_VIRUSTOTAL" -eq "true") {
           "vt_result=Skipped by user" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
         } else {
           "vt_result=No API key configured" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
@@ -170,8 +174,9 @@ jobs:
       shell: pwsh
       env:
         GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        PR_NUMBER: ${{ inputs.pr_number }}
       run: |
-        $prNumber = "${{ inputs.pr_number }}"
+        $prNumber = "$env:PR_NUMBER"
         try {
           $prJson = gh pr view $prNumber --json title,body
           $pr = $prJson | ConvertFrom-Json
