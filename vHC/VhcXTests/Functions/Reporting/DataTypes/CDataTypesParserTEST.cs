@@ -69,10 +69,10 @@ namespace VhcXTests.Functions.Reporting.DataTypes
             var parser = new CCsvParser(_vbrDir);
             var jobs = parser.GetDynamicJobInfo().ToList();
 
-            // Verify job names
-            Assert.Contains(jobs, j => j.Name == "Daily Backup");
-            Assert.Contains(jobs, j => j.Name == "Weekly Full");
-            Assert.Contains(jobs, j => j.Name == "Copy to Cloud");
+            // Verify job names (CsvHelper lowercases headers via PrepareHeaderForMatch)
+            Assert.Contains(jobs, j => j.name == "Daily Backup");
+            Assert.Contains(jobs, j => j.name == "Weekly Full");
+            Assert.Contains(jobs, j => j.name == "Copy to Cloud");
         }
 
         [Fact]
