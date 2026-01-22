@@ -461,6 +461,7 @@ namespace VeeamHealthCheck.Functions.Collection.PSCollections
             }
 
             // Add credentials if needed for remote execution
+            string safeArgString = argString; // For logging without sensitive data
             if (needsCredentials)
             {
                 CredsHandler ch = new();
@@ -470,10 +471,11 @@ namespace VeeamHealthCheck.Functions.Collection.PSCollections
                     byte[] passwordBytes = System.Text.Encoding.UTF8.GetBytes(creds.Value.Password);
                     string passwordBase64 = Convert.ToBase64String(passwordBytes);
                     argString += $"-User \"{creds.Value.Username}\" -PasswordBase64 \"{passwordBase64}\" ";
+                    safeArgString += $"-User \"{creds.Value.Username}\" -PasswordBase64 \"****\" ";
                 }
             }
 
-            this.log.Debug(this.logStart + "PS ArgString = " + argString, false);
+            this.log.Debug(this.logStart + "PS ArgString = " + safeArgString, false);
 
             // Use same PowerShell version logic as other methods
             string exePath = null;
@@ -639,14 +641,17 @@ namespace VeeamHealthCheck.Functions.Collection.PSCollections
             bool needsCredentials = CGlobals.REMOTEEXEC;
 
             string argString;
+            string safeArgString; // For logging without sensitive data
             if (days != 0)
             {
                 argString =
                     $"-NoProfile -ExecutionPolicy unrestricted -file \"{scriptLocation}\" -VBRServer \"{CGlobals.REMOTEHOST}\" -ReportInterval {CGlobals.ReportDays} ";
+                safeArgString = argString;
                 // Add ReportPath parameter if provided
                 if (!string.IsNullOrEmpty(path))
                 {
                     argString += $"-ReportPath \"{path}\" ";
+                    safeArgString += $"-ReportPath \"{path}\" ";
                 }
                 if (needsCredentials)
                 {
@@ -658,6 +663,7 @@ namespace VeeamHealthCheck.Functions.Collection.PSCollections
                         byte[] passwordBytes = System.Text.Encoding.UTF8.GetBytes(creds.Value.Password);
                         string passwordBase64 = Convert.ToBase64String(passwordBytes);
                         argString += $"-User \"{creds.Value.Username}\" -PasswordBase64 \"{passwordBase64}\" ";
+                        safeArgString += $"-User \"{creds.Value.Username}\" -PasswordBase64 \"****\" ";
                     }
                 }
             }
@@ -665,10 +671,12 @@ namespace VeeamHealthCheck.Functions.Collection.PSCollections
             {
                 argString =
                     $"-NoProfile -ExecutionPolicy unrestricted -file \"{scriptLocation}\" -VBRServer \"{CGlobals.REMOTEHOST}\" -VBRVersion \"{CGlobals.VBRMAJORVERSION}\" ";
+                safeArgString = argString;
                 // Add ReportPath parameter if provided
                 if (!string.IsNullOrEmpty(path))
                 {
                     argString += $"-ReportPath \"{path}\" ";
+                    safeArgString += $"-ReportPath \"{path}\" ";
                 }
                 if (needsCredentials)
                 {
@@ -680,11 +688,12 @@ namespace VeeamHealthCheck.Functions.Collection.PSCollections
                         byte[] passwordBytes = System.Text.Encoding.UTF8.GetBytes(creds.Value.Password);
                         string passwordBase64 = Convert.ToBase64String(passwordBytes);
                         argString += $"-User \"{creds.Value.Username}\" -PasswordBase64 \"{passwordBase64}\" ";
+                        safeArgString += $"-User \"{creds.Value.Username}\" -PasswordBase64 \"****\" ";
                     }
                 }
             }
 
-            this.log.Debug(this.logStart + "PS ArgString = " + argString, false);
+            this.log.Debug(this.logStart + "PS ArgString = " + safeArgString, false);
 
             // Use the same PowerShell version failover logic as ExecutePsScriptWithFailover
             // Prefer PowerShell 7, then 5, else throw
