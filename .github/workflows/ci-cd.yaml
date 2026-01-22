@@ -29,7 +29,7 @@ jobs:
     - name: Update version number
       run: |
         $csprojPath = "vHC/HC_Reporting/VeeamHealthCheck.csproj"
-        $newVersion = "3.0.0.${{ github.run_number }}"
+        $newVersion = "3.0.1.${{ github.run_number }}"
 
         [xml]$csproj = Get-Content $csprojPath
         $versionGroup = $csproj.Project.PropertyGroup | Where-Object { $_.AssemblyVersion } | Select-Object -First 1
