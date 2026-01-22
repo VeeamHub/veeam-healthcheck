@@ -25,7 +25,21 @@ jobs:
       uses: actions/setup-dotnet@v4
       with:
         dotnet-version: '8.0.x'
-        
+
+    - name: Update version number
+      run: |
+        $csprojPath = "vHC/HC_Reporting/VeeamHealthCheck.csproj"
+        $newVersion = "3.0.0.${{ github.run_number }}"
+
+        [xml]$csproj = Get-Content $csprojPath
+        $versionGroup = $csproj.Project.PropertyGroup | Where-Object { $_.AssemblyVersion } | Select-Object -First 1
+
+        $versionGroup.AssemblyVersion = $newVersion
+        $versionGroup.FileVersion = $newVersion
+
+        $csproj.Save($csprojPath)
+        Write-Host "Updated version to: $newVersion" -ForegroundColor Green
+
     - name: Restore dependencies
       run: dotnet restore vHC/HC.sln
       
