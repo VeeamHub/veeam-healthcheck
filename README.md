@@ -17,11 +17,11 @@ This Windows utility is a lightweight executable that will generate an advanced 
 - Must be run as elevated user
 	- User must have Backup Administrator role in B&R
 - Supported Platforms:
-    - Veeam Backup & Replication:
-      - v11
-      - v12
-	  - v13
-    - Veeam Backup for Microsoft 365
+    - **Veeam Backup & Replication (Version 3 - Current):**
+      - v12.3
+      - v13 (Windows & Linux)
+      - **Note:** For VBR v11 or v12 (earlier than 12.3), please use [Veeam Health Check v2](https://github.com/VeeamHub/veeam-healthcheck/releases/tag/v2.0.0.681)
+    - **Veeam Backup for Microsoft 365:**
       - v6
       - v7
       - v8
