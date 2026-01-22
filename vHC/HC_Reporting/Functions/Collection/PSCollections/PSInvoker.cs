@@ -256,12 +256,13 @@ namespace VeeamHealthCheck.Functions.Collection.PSCollections
                     CreateNoWindow = true
                 };
 
-                // Log the command with masked password
-                CGlobals.Logger.Info("[TestMfa] Arguments: " + startInfo.Arguments.Replace(escapedPassword, "****"));
+                // Log the command with masked password - construct safe log message without ever including sensitive data
+                string safeLogArgs = $"Import-Module Veeam.Backup.PowerShell; Connect-VBRServer -Server '{CGlobals.REMOTEHOST ?? "localhost"}' -User '{creds.Value.Username}' -Password '****'";
+                CGlobals.Logger.Info("[TestMfa] Arguments: " + safeLogArgs);
 
                 this.log.Info($"[TestMfa] Creating ProcessStartInfo for MFA test:");
                 this.log.Info($"[TestMfa] FileName: {startInfo.FileName}");
-                this.log.Info($"[TestMfa] Arguments: {startInfo.Arguments}");
+                this.log.Info($"[TestMfa] Arguments: {safeLogArgs}");
                 this.log.Info($"[TestMfa] RedirectStandardOutput: {startInfo.RedirectStandardOutput}");
                 this.log.Info($"[TestMfa] RedirectStandardError: {startInfo.RedirectStandardError}");
                 this.log.Info($"[TestMfa] UseShellExecute: {startInfo.UseShellExecute}");

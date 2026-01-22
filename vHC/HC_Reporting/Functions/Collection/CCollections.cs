@@ -303,8 +303,9 @@ namespace VeeamHealthCheck.Functions.Collection
                     CreateNoWindow = true
                 };
 
-                // Log processInfo settings (password is already masked by Base64)
-                CGlobals.Logger.Debug($"ProcessStartInfo Settings:\n  FileName: {processInfo.FileName}\n  Arguments: {args.Replace(base64Password, "****")}\n  RedirectStandardOutput: {processInfo.RedirectStandardOutput}\n  RedirectStandardError: {processInfo.RedirectStandardError}\n  UseShellExecute: {processInfo.UseShellExecute}\n  CreateNoWindow: {processInfo.CreateNoWindow}");
+                // Log processInfo settings - construct safe log message without ever including sensitive data
+                string safeArgs = $"-NoProfile -ExecutionPolicy Bypass -File \"{scriptPath}\" -Server {CGlobals.REMOTEHOST} -Username \"{creds.Value.Username}\" -PasswordBase64 \"****\"";
+                CGlobals.Logger.Debug($"ProcessStartInfo Settings:\n  FileName: {processInfo.FileName}\n  Arguments: {safeArgs}\n  RedirectStandardOutput: {processInfo.RedirectStandardOutput}\n  RedirectStandardError: {processInfo.RedirectStandardError}\n  UseShellExecute: {processInfo.UseShellExecute}\n  CreateNoWindow: {processInfo.CreateNoWindow}");
                 using var process = System.Diagnostics.Process.Start(processInfo);
                 string stdOut = process.StandardOutput.ReadToEnd();
                 string stdErr = process.StandardError.ReadToEnd();
