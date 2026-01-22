@@ -280,8 +280,9 @@ namespace VeeamHealthCheck.Functions.Collection.PSCollections
                     string stdOut = res.StandardOutput.ReadToEnd();
                     string stdErr = res.StandardError.ReadToEnd();
 
-                    this.log.Debug($"[TestMfa] STDOUT: {stdOut}");
-                    this.log.Debug($"[TestMfa] STDERR: {stdErr}");
+                    // Note: Not logging full stdout/stderr to avoid potential password leakage in error messages
+                    this.log.Debug($"[TestMfa] STDOUT length: {stdOut?.Length ?? 0} chars");
+                    this.log.Debug($"[TestMfa] STDERR length: {stdErr?.Length ?? 0} chars");
 
                     List<string> errorarray = new();
 

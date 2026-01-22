@@ -325,12 +325,8 @@ namespace VeeamHealthCheck.Functions.Collection
 
                 result = process.ExitCode == 0;
 
-                // Log output for debugging
-                CGlobals.Logger.Debug($"MFA Test Output (ExitCode={process.ExitCode}):");
-                foreach (var line in output)
-                {
-                    CGlobals.Logger.Debug(line);
-                }
+                // Log result summary only - avoid logging full output which could contain sensitive data in error messages
+                CGlobals.Logger.Debug($"MFA Test Result: ExitCode={process.ExitCode}, StdOutLength={stdOut?.Length ?? 0}, StdErrLength={stdErr?.Length ?? 0}");
 
                 // Detect specific error conditions and provide user-friendly messages
                 if (!result && !string.IsNullOrWhiteSpace(stdErr))
@@ -451,14 +447,11 @@ namespace VeeamHealthCheck.Functions.Collection
                 string stdErr = process.StandardError.ReadToEnd();
                 process.WaitForExit();
 
-                if (!string.IsNullOrWhiteSpace(stdOut))
-                {
-                    CGlobals.Logger.Debug($"[Local MFA Check] STDOUT: {stdOut}");
-                }
+                // Log summary only - avoid logging full output which could contain sensitive data
+                CGlobals.Logger.Debug($"[Local MFA Check] Output lengths - STDOUT: {stdOut?.Length ?? 0}, STDERR: {stdErr?.Length ?? 0}");
 
                 if (!string.IsNullOrWhiteSpace(stdErr))
                 {
-                    CGlobals.Logger.Debug($"[Local MFA Check] STDERR: {stdErr}");
 
                     // Detect specific error conditions and surface clear, user-facing messages
                     if (stdErr.Contains("Unable to connect to the server with MFA-enabled user account", StringComparison.OrdinalIgnoreCase))
