@@ -39,6 +39,53 @@ function Write-LogFile {
 	Add-Content -Path $outPath -Value $line -Encoding UTF8
 }
 
+function Get-SessionLogWithTimeout {
+	param(
+		$Session,
+		[int]$TimeoutSeconds = 30
+	)
+
+	# Use a runspace for true timeout capability
+	$runspace = [runspacefactory]::CreateRunspace()
+	$runspace.Open()
+	$runspace.SessionStateProxy.SetVariable('session', $Session)
+
+	$powershell = [powershell]::Create()
+	$powershell.Runspace = $runspace
+	$powershell.AddScript({
+		try {
+			$session.Logger.GetLog().UpdatedRecords
+		} catch {
+			$null
+		}
+	}) | Out-Null
+
+	$handle = $powershell.BeginInvoke()
+
+	# Wait for completion with timeout
+	$completed = $handle.AsyncWaitHandle.WaitOne($TimeoutSeconds * 1000)
+
+	if ($completed) {
+		try {
+			$result = $powershell.EndInvoke($handle)
+			return $result
+		} catch {
+			return $null
+		} finally {
+			$powershell.Dispose()
+			$runspace.Close()
+			$runspace.Dispose()
+		}
+	} else {
+		# Timeout - force stop
+		$powershell.Stop()
+		$powershell.Dispose()
+		$runspace.Close()
+		$runspace.Dispose()
+		return $null
+	}
+}
+
 
 try {
 	Disconnect-VBRServer -ErrorAction SilentlyContinue
@@ -103,12 +150,21 @@ foreach ($session in $sessions) {
 	Write-LogFile "Processing session $i of $($sessions.Count): Job '$($session.JobName)', VM '$($session.Name)'"
 	$i++
 
+	# Get log records with timeout to prevent hanging on problematic sessions
+	$logRecords = Get-SessionLogWithTimeout -Session $session -TimeoutSeconds 30
 
-	$Bottleneck = $session.Logger.GetLog().UpdatedRecords | Where-Object Title -Match "Load"
-	$BottleneckDetails = if ($Bottleneck) { $Bottleneck.Title -replace 'Load: ', '' } else { '' }
+	$BottleneckDetails = ''
+	$PrimaryBottleneck = ''
 
-	$PrimaryBottleneckDetails = $session.Logger.GetLog().UpdatedRecords | Where-Object Title -Match "Primary Bottleneck"
-	$PrimaryBottleneck = if ($PrimaryBottleneckDetails) { $PrimaryBottleneckDetails.Title -replace 'Primary bottleneck: ', '' } else { '' }
+	if ($null -ne $logRecords) {
+		$Bottleneck = $logRecords | Where-Object Title -Match "Load"
+		$BottleneckDetails = if ($Bottleneck) { $Bottleneck.Title -replace 'Load: ', '' } else { '' }
+
+		$PrimaryBottleneckDetails = $logRecords | Where-Object Title -Match "Primary Bottleneck"
+		$PrimaryBottleneck = if ($PrimaryBottleneckDetails) { $PrimaryBottleneckDetails.Title -replace 'Primary bottleneck: ', '' } else { '' }
+	} else {
+		Write-LogFile "Warning: Timeout or error getting log for session '$($session.Name)' - skipping bottleneck details" "Errors" "WARN"
+	}
 
 	$obj = [PSCustomObject]@{
 		JobName           = $session.JobName
