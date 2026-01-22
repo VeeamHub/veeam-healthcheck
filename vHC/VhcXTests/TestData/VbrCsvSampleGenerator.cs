@@ -99,9 +99,9 @@ namespace VhcXTests.TestData
         public static string GenerateJobs()
         {
             return @"""Name"",""JobType"",""RepositoryId"",""pwdkeyid"",""IsScheduleEnabled""
-""Daily Backup"",""Backup"",""repo-guid-1"",""00000000-0000-0000-0000-000000000000"",""True""
-""Weekly Full"",""Backup"",""repo-guid-1"",""enc-key-guid-1"",""True""
-""Copy to Cloud"",""BackupCopy"",""repo-guid-2"",""enc-key-guid-2"",""False""";
+""Daily Backup"",""Backup"",""aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa"",""00000000-0000-0000-0000-000000000000"",""True""
+""Weekly Full"",""Backup"",""aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa"",""11111111-1111-1111-1111-111111111111"",""True""
+""Copy to Cloud"",""BackupCopy"",""bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb"",""22222222-2222-2222-2222-222222222222"",""False""";
         }
 
         #endregion

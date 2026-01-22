@@ -259,8 +259,9 @@ namespace VhcXTests.ContentValidation
 
         [Theory]
         [InlineData("password123")]
-        [InlineData("P@ssw0rd!")]
+        [InlineData("MySecretValue")]
         [InlineData("secret_key")]
+        [InlineData("api_token_value")]
         public void SensitivePatterns_ShouldNotAppearInOutput(string sensitiveData)
         {
             // These patterns should never appear in scrubbed output
