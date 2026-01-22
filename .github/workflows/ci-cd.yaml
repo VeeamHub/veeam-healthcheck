@@ -107,7 +107,7 @@ jobs:
         Compress-Archive -Path publish/out/* -DestinationPath publish/VeeamHealthCheck-${{ steps.get_version.outputs.version }}.zip
     
     - name: Upload ZIP artifact
-      if: github.ref == 'refs/heads/master'
+      if: github.event_name != 'pull_request'
       uses: actions/upload-artifact@v4
       with:
         name: veeam-healthcheck-zip
@@ -118,7 +118,7 @@ jobs:
   integration-test-vbr:
     needs: build-and-test
     runs-on: [self-hosted, CONSOLE_HOST]
-    if: github.ref == 'refs/heads/master'
+    if: github.event_name != 'pull_request'
     
     steps:
     - name: Checkout repository
@@ -334,7 +334,7 @@ jobs:
   integration-test-vbr-13-sql:
     needs: build-and-test
     runs-on: [self-hosted, vbr-13-sql]
-    if: github.ref == 'refs/heads/master'
+    if: github.event_name != 'pull_request'
     
     steps:
     - name: Checkout repository
@@ -550,7 +550,7 @@ jobs:
   integration-test-vbr-12:
     needs: build-and-test
     runs-on: [self-hosted, vbr-v12]
-    if: github.ref == 'refs/heads/master'
+    if: github.event_name != 'pull_request'
     
     steps:
     - name: Checkout repository
