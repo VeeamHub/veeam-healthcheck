@@ -20,6 +20,7 @@ namespace VeeamHealthCheck.Functions.Reporting.CsvHandlers
     public class CEntraLogJobs
     {
         // Name	Tenant	shortTermRetType	ShortTermRepo	ShortTermRepoRetention	CopyModeEnabled	SecondaryTarget
+        // Issue #41: Made int and bool properties nullable to handle empty CSV values from Chinese systems
         [Index(0)]
         public string Name { get; set; }
 
@@ -33,10 +34,10 @@ namespace VeeamHealthCheck.Functions.Reporting.CsvHandlers
         public string ShortTermRepo { get; set; }
 
         [Index(4)]
-        public int ShortTermRepoRetention { get; set; }
+        public int? ShortTermRepoRetention { get; set; }
 
         [Index(5)]
-        public bool CopyModeEnabled { get; set; }
+        public bool? CopyModeEnabled { get; set; }
 
         [Index(6)]
         public string SecondaryTarget { get; set; }
@@ -45,10 +46,11 @@ namespace VeeamHealthCheck.Functions.Reporting.CsvHandlers
     public class CEntraTenantJobs
     {
         // create a list of malware objects from this: ObjectId	ObjectName	DetectedDateTime	Severity	Types	Platform	ObjectHostName
+        // Issue #41: Made int property nullable to handle empty CSV values from Chinese systems
         [Index(0)]
         public string Name { get; set; }
 
         [Index(1)]
-        public int RetentionPolicy { get; set; }
+        public int? RetentionPolicy { get; set; }
     }
 }
