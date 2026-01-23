@@ -26,19 +26,8 @@ jobs:
       with:
         dotnet-version: '8.0.x'
 
-    - name: Update version number
-      run: |
-        $csprojPath = "vHC/HC_Reporting/VeeamHealthCheck.csproj"
-        $newVersion = "3.0.1.${{ github.run_number }}"
-
-        [xml]$csproj = Get-Content $csprojPath
-        $versionGroup = $csproj.Project.PropertyGroup | Where-Object { $_.AssemblyVersion } | Select-Object -First 1
-
-        $versionGroup.AssemblyVersion = $newVersion
-        $versionGroup.FileVersion = $newVersion
-
-        $csproj.Save($csprojPath)
-        Write-Host "Updated version to: $newVersion" -ForegroundColor Green
+    # Version is managed in VeeamHealthCheck.csproj and incremented by increment_version script
+    # CI builds skip auto-increment via CI=true environment variable
 
     - name: Restore dependencies
       run: dotnet restore vHC/HC.sln
