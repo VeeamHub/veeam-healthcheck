@@ -186,7 +186,7 @@
 		<Folder Include="Functions\Reporting\TableDatas\" />
 		<Folder Include="Resources\Localization\VBR\" />
 	</ItemGroup>
-	<Target Name="IncrementVersion" BeforeTargets="BeforeBuild" Condition="'$(CI)' != 'true'">
+	<Target Name="IncrementVersion" BeforeTargets="BeforeBuild">
 		<Message Text="Incrementing version..." Importance="High" />
 		<!-- Windows: Use PowerShell -->
 		<Exec Command="powershell -NoProfile -ExecutionPolicy Bypass -File &quot;$(ProjectDir)increment_version.ps1&quot;" Condition="'$(OS)' == 'Windows_NT'" />

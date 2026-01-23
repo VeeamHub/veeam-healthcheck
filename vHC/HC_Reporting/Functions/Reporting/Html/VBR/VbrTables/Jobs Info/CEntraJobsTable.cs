@@ -76,10 +76,12 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR.VbrTables.Jobs_Info
 
                     foreach (var tenantJob in entraTenantJobs)
                     {
-                        CGlobals.Logger.Debug($"Processing tenant job: {tenantJob.Name}, Retention: {tenantJob.RetentionPolicy}");
+                        // Issue #41: Handle nullable RetentionPolicy for empty CSV values
+                        string retentionValue = tenantJob.RetentionPolicy?.ToString() ?? "N/A";
+                        CGlobals.Logger.Debug($"Processing tenant job: {tenantJob.Name}, Retention: {retentionValue}");
                         t += "<tr>";
                         t += this.form.TableDataLeftAligned(tenantJob.Name, "colspan='2'");
-                        t += this.form.TableData(tenantJob.RetentionPolicy.ToString(), string.Empty);
+                        t += this.form.TableData(retentionValue, string.Empty);
                         t += "</tr>";
                     }
 
@@ -112,12 +114,18 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR.VbrTables.Jobs_Info
                             stRepo = CGlobals.Scrubber.ScrubItem(stRepo, ScrubItemType.MediaPool);
                         }
 
+                        // Issue #41: Handle nullable properties for empty CSV values
+                        string retentionValue = tj.ShortTermRepoRetention?.ToString() ?? "N/A";
+                        string copyEnabledValue = tj.CopyModeEnabled.HasValue
+                            ? (tj.CopyModeEnabled.Value ? this.form.True : this.form.False)
+                            : "N/A";
+
                         t += "<tr>";
                         t += this.form.TableDataLeftAligned(jobName, string.Empty);
                         t += this.form.TableData(tenant, string.Empty);
-                        t += this.form.TableData(tj.ShortTermRepoRetention.ToString(), string.Empty);
+                        t += this.form.TableData(retentionValue, string.Empty);
                         t += this.form.TableData(stRepo, string.Empty);
-                        t += tj.CopyModeEnabled ? this.form.TableData(this.form.True, string.Empty) : this.form.TableData(this.form.False, string.Empty);
+                        t += this.form.TableData(copyEnabledValue, string.Empty);
                         t += "</tr>";
                     }
 

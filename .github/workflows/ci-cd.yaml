@@ -26,8 +26,8 @@ jobs:
       with:
         dotnet-version: '8.0.x'
 
-    # Version is managed in VeeamHealthCheck.csproj and incremented by increment_version script
-    # CI builds skip auto-increment via CI=true environment variable
+    # Version is managed in VeeamHealthCheck.csproj and auto-incremented on every build
+    # Version increments via increment_version script during build process
 
     - name: Restore dependencies
       run: dotnet restore vHC/HC.sln
@@ -1380,16 +1380,20 @@ jobs:
         
         if ($scanId -eq 'skip') {
           if ($reason -eq 'file_too_large') {
-            echo "clean=true" >> $env:GITHUB_OUTPUT
-            echo "⚠️ ZIP scan skipped (file too large for VirusTotal API) - allowing release"
+            echo "clean=false" >> $env:GITHUB_OUTPUT
+            echo "❌ ZIP scan skipped (file too large for VirusTotal API) - blocking release in strict mode"
+            echo "::error title=VirusTotal Scan Required::File too large to scan. Manual review required."
+            exit 1
           } elseif ($reason -eq 'no_api_key') {
-            echo "clean=unknown" >> $env:GITHUB_OUTPUT
-            echo "⚠️ ZIP scan skipped (no API key)"
+            echo "clean=false" >> $env:GITHUB_OUTPUT
+            echo "❌ ZIP scan skipped (no API key) - blocking release in strict mode"
+            echo "::error title=VirusTotal API Key Required::Configure VIRUSTOTAL_API_KEY secret for releases."
+            exit 1
           } else {
-            echo "clean=unknown" >> $env:GITHUB_OUTPUT
-            echo "⚠️ ZIP scan skipped"
+            echo "clean=false" >> $env:GITHUB_OUTPUT
+            echo "❌ ZIP scan skipped - blocking release in strict mode"
+            exit 1
           }
-          exit 0
         }
         
         if ($scanId -eq 'error') {
@@ -1401,25 +1405,20 @@ jobs:
         $malicious = [int]"${{ steps.poll_zip.outputs.malicious }}"
         $suspicious = [int]"${{ steps.poll_zip.outputs.suspicious }}"
         
-        # Allow up to 2 malicious detections (typical for false positives from obscure AVs)
-        if ($malicious -gt 2) {
+        # Strict mode: Block release on ANY detections (including likely false positives)
+        if ($malicious -gt 0) {
           echo "clean=false" >> $env:GITHUB_OUTPUT
           echo "needs_review=true" >> $env:GITHUB_OUTPUT
-          echo "❌ VirusTotal flagged ZIP as malicious ($malicious detections)"
+          echo "❌ VirusTotal flagged ZIP as malicious ($malicious detection(s))"
           echo "📊 Review scan results: $scanUrl"
-          echo "::error title=VirusTotal Detection::ZIP flagged by $malicious engine(s). Review: $scanUrl"
+          echo "::error title=VirusTotal Detection::ZIP flagged by $malicious engine(s). Manual review required: $scanUrl"
           exit 1
-        } elseif ($malicious -gt 0) {
-          echo "clean=warning" >> $env:GITHUB_OUTPUT
-          echo "⚠️ VirusTotal flagged ZIP with $malicious detection(s) - likely false positive"
-          echo "📊 Review scan results: $scanUrl"
-          echo "::warning title=VirusTotal Detection::ZIP flagged by $malicious engine(s). Review: $scanUrl"
-        } elseif ($suspicious -gt 2) {
+        } elseif ($suspicious -gt 0) {
           echo "clean=false" >> $env:GITHUB_OUTPUT
           echo "needs_review=true" >> $env:GITHUB_OUTPUT
-          echo "⚠️ VirusTotal marked ZIP as suspicious ($suspicious detections)"
+          echo "❌ VirusTotal marked ZIP as suspicious ($suspicious detection(s))"
           echo "📊 Review scan results: $scanUrl"
-          echo "::warning title=VirusTotal Suspicious::ZIP flagged as suspicious by $suspicious engine(s). Review: $scanUrl"
+          echo "::error title=VirusTotal Suspicious::ZIP flagged as suspicious by $suspicious engine(s). Manual review required: $scanUrl"
           exit 1
         } else {
           echo "clean=true" >> $env:GITHUB_OUTPUT
@@ -1458,9 +1457,10 @@ jobs:
   create-release:
     needs: [build-and-test, virustotal-scan]
     runs-on: windows-latest
+    # Strict security gate: only create release with zero VirusTotal detections
     if: |
-      github.ref == 'refs/heads/master' && 
-      (needs.virustotal-scan.outputs.zip_clean == 'true' || needs.virustotal-scan.outputs.zip_clean == 'warning' || needs.virustotal-scan.outputs.zip_clean == 'unknown')
+      github.ref == 'refs/heads/master' &&
+      needs.virustotal-scan.outputs.zip_clean == 'true'
     
     steps:
     - name: Checkout repository

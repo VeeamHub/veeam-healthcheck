@@ -681,8 +681,52 @@ namespace VeeamHealthCheck.Functions.Reporting.DataTypes
 
         private DateTime TryParseDateTime(string dateTime)
         {
-            DateTime.TryParse(dateTime, out var d);
-            return d;
+            // Issue #41: Enhanced DateTime parsing to handle Chinese locale formats and encoding issues
+            if (string.IsNullOrWhiteSpace(dateTime))
+            {
+                return DateTime.MinValue;
+            }
+
+            // Remove corrupted AM/PM indicators (Chinese systems may export "??" instead of 上午/下午)
+            string cleanedDateTime = dateTime.Replace("??", "").Replace("  ", " ").Trim();
+
+            // First attempt: Try InvariantCulture (works for most standard formats)
+            if (DateTime.TryParse(cleanedDateTime, System.Globalization.CultureInfo.InvariantCulture,
+                System.Globalization.DateTimeStyles.None, out DateTime result))
+            {
+                return result;
+            }
+
+            // Second attempt: Try current culture (respects system locale)
+            if (DateTime.TryParse(cleanedDateTime, out result))
+            {
+                return result;
+            }
+
+            // Third attempt: Try specific format patterns common in Chinese/Asian systems
+            string[] commonFormats = new[]
+            {
+                "yyyy/MM/dd HH:mm:ss",
+                "yyyy/MM/dd 上午 HH:mm:ss",  // Chinese AM
+                "yyyy/MM/dd 下午 HH:mm:ss",  // Chinese PM
+                "yyyy-MM-dd HH:mm:ss",
+                "dd.MM.yyyy HH:mm:ss",      // European format
+                "MM/dd/yyyy HH:mm:ss",      // US format
+                "yyyy/MM/dd h:mm:ss tt",    // 12-hour with AM/PM
+                "yyyy-MM-dd'T'HH:mm:ss",    // ISO 8601
+                "yyyy-MM-dd'T'HH:mm:ss'Z'"  // ISO 8601 UTC
+            };
+
+            if (DateTime.TryParseExact(cleanedDateTime, commonFormats,
+                System.Globalization.CultureInfo.InvariantCulture,
+                System.Globalization.DateTimeStyles.None, out result))
+            {
+                return result;
+            }
+
+            // If all attempts fail, log warning and return MinValue
+            CGlobals.Logger.Debug($"Failed to parse DateTime: '{dateTime}'. Returning DateTime.MinValue.");
+            return DateTime.MinValue;
         }
 
         private int MemoryTasksCount(int ram, int ramPerCore)
