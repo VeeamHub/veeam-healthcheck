@@ -26,8 +26,8 @@ jobs:
       with:
         dotnet-version: '8.0.x'
 
-    # Version is managed in VeeamHealthCheck.csproj and incremented by increment_version script
-    # CI builds skip auto-increment via CI=true environment variable
+    # Version is managed in VeeamHealthCheck.csproj and auto-incremented on every build
+    # Version increments via increment_version script during build process
 
     - name: Restore dependencies
       run: dotnet restore vHC/HC.sln
