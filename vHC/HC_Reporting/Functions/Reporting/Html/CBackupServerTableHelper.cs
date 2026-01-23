@@ -166,6 +166,19 @@ namespace VeeamHealthCheck.Functions.Reporting.Html
 
                 try
                 {
+                    // Issue #47: Check if backup server was found before accessing properties
+                    if (bs == null)
+                    {
+                        log.Warning("Backup server not found in server list. This may indicate PowerShell collection failure or empty CSV data.");
+                        log.Warning("Setting backup server to default values.");
+                        this.backupServer.Name = "Unknown";
+                        this.backupServer.IsLocal = true;
+                        this.backupServer.DbHostName = "LocalHost";
+                        this.backupServer.DbCores = 0;
+                        this.backupServer.DbRAM = 0;
+                        return; // Exit early to avoid further null reference issues
+                    }
+
                     this.backupServer.Name = bs.Name;
                     if (string.IsNullOrEmpty(this.backupServer.DbHostName))
                     {
@@ -193,7 +206,14 @@ namespace VeeamHealthCheck.Functions.Reporting.Html
                     log.Error("Error processing SQL resource data");
                     log.Error("\t" + g.Message);
                     log.Debug("_backupServer = " + this.backupServer.Version);
-                    log.Debug("backupServer = " + bs.ApiVersion);
+                    if (bs != null)
+                    {
+                        log.Debug("backupServer = " + bs.ApiVersion);
+                    }
+                    else
+                    {
+                        log.Debug("backupServer = NULL");
+                    }
                 }
 
                 // try { _backupServer.Name = backupServer.Name; }
@@ -201,12 +221,16 @@ namespace VeeamHealthCheck.Functions.Reporting.Html
                 // { log.Error("[VBR Config] failed to add backup server Name:\n\t" + e.Message); }
 
                 // b.Version = veeamVersion;
-                try { this.backupServer.Cores = bs.Cores; }
-                catch (NullReferenceException e)
-                { log.Error("[VBR Config] failed to add backup server cores:\n\t" + e.Message); }
-                try { this.backupServer.RAM = bs.Ram; }
-                catch (NullReferenceException e)
-                { log.Error("[VBR Config] failed to add backup server RAM:\n\t" + e.Message); }
+                // Issue #47: Only set cores/RAM if backup server was found
+                if (bs != null)
+                {
+                    try { this.backupServer.Cores = bs.Cores; }
+                    catch (NullReferenceException e)
+                    { log.Error("[VBR Config] failed to add backup server cores:\n\t" + e.Message); }
+                    try { this.backupServer.RAM = bs.Ram; }
+                    catch (NullReferenceException e)
+                    { log.Error("[VBR Config] failed to add backup server RAM:\n\t" + e.Message); }
+                }
             }
         }
 
