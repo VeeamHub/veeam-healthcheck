@@ -295,7 +295,7 @@ namespace VhcXTests.ContentValidation
         public void ScrubbedReport_ContainsNoIpAddresses(string reportFileName)
         {
             // Arrange
-            var reportPath = Path.Combine(_testReportDirectory, reportFileName);
+            var reportPath = Path.Combine(_testReportDirectory, Path.GetFileName(reportFileName));
             var scrubbedContent = @"<!DOCTYPE html>
 <html>
 <body>
@@ -321,7 +321,7 @@ namespace VhcXTests.ContentValidation
         public void ScrubbedReport_ContainsNoCredentials(string reportFileName)
         {
             // Arrange
-            var reportPath = Path.Combine(_testReportDirectory, reportFileName);
+            var reportPath = Path.Combine(_testReportDirectory, Path.GetFileName(reportFileName));
             var scrubbedContent = @"<!DOCTYPE html>
 <html>
 <body>
