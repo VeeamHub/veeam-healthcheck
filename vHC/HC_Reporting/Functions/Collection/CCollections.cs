@@ -471,6 +471,14 @@ namespace VeeamHealthCheck.Functions.Collection
                         CGlobals.Logger.Error(userMsg, false);
                         CGlobals.UserFacingError = userMsg;
                     }
+                    else
+                    {
+                        // Log unknown errors for diagnosis
+                        CGlobals.Logger.Error($"[Local MFA Check] PowerShell error output:\n{stdErr}");
+                        string userMsg = "Failed to connect to VBR server. Check the log file for details.";
+                        CGlobals.Logger.Error(userMsg, false);
+                        CGlobals.UserFacingError = userMsg;
+                    }
                 }
 
                 bool result = process.ExitCode == 0;
