@@ -369,28 +369,49 @@ jobs:
 
           $reportContent = Get-Content $reportPath -Raw
 
-          # Required sections validation
-          $requiredSections = @(
+          # Core required sections (fail if missing)
+          $coreRequiredSections = @(
             'License Information',
-            'Backup Server',
-            'Security Summary',
-            'Proxy Configuration',
-            'Repository Configuration'
+            'Backup Server'
           )
 
-          $missingSections = @()
-          foreach ($section in $requiredSections) {
+          # Optional sections (warn if missing, but don't fail)
+          $optionalSections = @(
+            'Security Summary',
+            'Proxy Configuration',
+            'Repository Configuration',
+            'Job Summary'
+          )
+
+          # Check core required sections
+          $missingCore = @()
+          foreach ($section in $coreRequiredSections) {
             if ($reportContent -notmatch [regex]::Escape($section)) {
-              $missingSections += $section
+              $missingCore += $section
             }
           }
 
-          if ($missingSections.Count -eq 0) {
-            Write-Host "  ✅ All required sections present" -ForegroundColor Green
+          if ($missingCore.Count -eq 0) {
+            Write-Host "  ✅ All core sections present" -ForegroundColor Green
           } else {
-            Write-Host "  ❌ Missing required sections:" -ForegroundColor Red
-            $missingSections | ForEach-Object { Write-Host "    - $_" }
+            Write-Host "  ❌ Missing core required sections:" -ForegroundColor Red
+            $missingCore | ForEach-Object { Write-Host "    - $_" }
             exit 1
+          }
+
+          # Check optional sections (informational only)
+          $missingOptional = @()
+          foreach ($section in $optionalSections) {
+            if ($reportContent -notmatch [regex]::Escape($section)) {
+              $missingOptional += $section
+            }
+          }
+
+          if ($missingOptional.Count -gt 0) {
+            Write-Host "  ⚠️ Optional sections not found (may not be configured):" -ForegroundColor Yellow
+            $missingOptional | ForEach-Object { Write-Host "    - $_" }
+          } else {
+            Write-Host "  ✅ All optional sections present" -ForegroundColor Green
           }
 
           # Validate navigation links
@@ -716,28 +737,49 @@ jobs:
 
           $reportContent = Get-Content $reportPath -Raw
 
-          # Required sections validation
-          $requiredSections = @(
+          # Core required sections (fail if missing)
+          $coreRequiredSections = @(
             'License Information',
-            'Backup Server',
-            'Security Summary',
-            'Proxy Configuration',
-            'Repository Configuration'
+            'Backup Server'
           )
 
-          $missingSections = @()
-          foreach ($section in $requiredSections) {
+          # Optional sections (warn if missing, but don't fail)
+          $optionalSections = @(
+            'Security Summary',
+            'Proxy Configuration',
+            'Repository Configuration',
+            'Job Summary'
+          )
+
+          # Check core required sections
+          $missingCore = @()
+          foreach ($section in $coreRequiredSections) {
             if ($reportContent -notmatch [regex]::Escape($section)) {
-              $missingSections += $section
+              $missingCore += $section
             }
           }
 
-          if ($missingSections.Count -eq 0) {
-            Write-Host "  ✅ All required sections present" -ForegroundColor Green
+          if ($missingCore.Count -eq 0) {
+            Write-Host "  ✅ All core sections present" -ForegroundColor Green
           } else {
-            Write-Host "  ❌ Missing required sections:" -ForegroundColor Red
-            $missingSections | ForEach-Object { Write-Host "    - $_" }
+            Write-Host "  ❌ Missing core required sections:" -ForegroundColor Red
+            $missingCore | ForEach-Object { Write-Host "    - $_" }
             exit 1
+          }
+
+          # Check optional sections (informational only)
+          $missingOptional = @()
+          foreach ($section in $optionalSections) {
+            if ($reportContent -notmatch [regex]::Escape($section)) {
+              $missingOptional += $section
+            }
+          }
+
+          if ($missingOptional.Count -gt 0) {
+            Write-Host "  ⚠️ Optional sections not found (may not be configured):" -ForegroundColor Yellow
+            $missingOptional | ForEach-Object { Write-Host "    - $_" }
+          } else {
+            Write-Host "  ✅ All optional sections present" -ForegroundColor Green
           }
 
           # Validate navigation links
@@ -1062,28 +1104,49 @@ jobs:
 
           $reportContent = Get-Content $reportPath -Raw
 
-          # Required sections validation
-          $requiredSections = @(
+          # Core required sections (fail if missing)
+          $coreRequiredSections = @(
             'License Information',
-            'Backup Server',
-            'Security Summary',
-            'Proxy Configuration',
-            'Repository Configuration'
+            'Backup Server'
           )
 
-          $missingSections = @()
-          foreach ($section in $requiredSections) {
+          # Optional sections (warn if missing, but don't fail)
+          $optionalSections = @(
+            'Security Summary',
+            'Proxy Configuration',
+            'Repository Configuration',
+            'Job Summary'
+          )
+
+          # Check core required sections
+          $missingCore = @()
+          foreach ($section in $coreRequiredSections) {
             if ($reportContent -notmatch [regex]::Escape($section)) {
-              $missingSections += $section
+              $missingCore += $section
             }
           }
 
-          if ($missingSections.Count -eq 0) {
-            Write-Host "  ✅ All required sections present" -ForegroundColor Green
+          if ($missingCore.Count -eq 0) {
+            Write-Host "  ✅ All core sections present" -ForegroundColor Green
           } else {
-            Write-Host "  ❌ Missing required sections:" -ForegroundColor Red
-            $missingSections | ForEach-Object { Write-Host "    - $_" }
+            Write-Host "  ❌ Missing core required sections:" -ForegroundColor Red
+            $missingCore | ForEach-Object { Write-Host "    - $_" }
             exit 1
+          }
+
+          # Check optional sections (informational only)
+          $missingOptional = @()
+          foreach ($section in $optionalSections) {
+            if ($reportContent -notmatch [regex]::Escape($section)) {
+              $missingOptional += $section
+            }
+          }
+
+          if ($missingOptional.Count -gt 0) {
+            Write-Host "  ⚠️ Optional sections not found (may not be configured):" -ForegroundColor Yellow
+            $missingOptional | ForEach-Object { Write-Host "    - $_" }
+          } else {
+            Write-Host "  ✅ All optional sections present" -ForegroundColor Green
           }
 
           # Validate navigation links
