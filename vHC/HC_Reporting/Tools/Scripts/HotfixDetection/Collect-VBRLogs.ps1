@@ -31,7 +31,7 @@ param(
 
 # version get
 $corePath = Get-ItemProperty -Path "HKLM:\Software\Veeam\Veeam Backup and Replication\" -Name "CorePath"
-$depDLLPath = Join-Path -Path $corePath.CorePath -ChildPath "Packages\VeeamDeploymentDll.dll" -Resolve
+$depDLLPath = Join-Path -Path $corePath.CorePath -ChildPath "Veeam.Backup.Core.dll" -Resolve
 $file = Get-Item -Path $depDLLPath
 $version = $file.VersionInfo.ProductVersion
 

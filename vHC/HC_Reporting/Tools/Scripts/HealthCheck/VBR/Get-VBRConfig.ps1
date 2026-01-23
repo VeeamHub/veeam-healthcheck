@@ -192,7 +192,7 @@ Get-VBRUserRoleAssignment | Export-VhcCsv -FileName "_UserRoles.csv"
 if ($VBRVersion -ne 13) {
     try {
         $corePath = Get-ItemProperty -Path "HKLM:\Software\Veeam\Veeam Backup and Replication\" -Name "CorePath"
-        $depDLLPath = Join-Path -Path $corePath.CorePath -ChildPath "Packages\VeeamDeploymentDll.dll" -Resolve
+        $depDLLPath = Join-Path -Path $corePath.CorePath -ChildPath "Veeam.Backup.Core.dll" -Resolve
         $file = Get-Item -Path $depDLLPath
         $version = $file.VersionInfo.ProductVersion
         Write-LogFile("Detected Version: " + $version)
@@ -1303,7 +1303,7 @@ try {
         
         }
 
-        $depDLLPath = Join-Path -Path $corePath.CorePath -ChildPath "Packages\VeeamDeploymentDll.dll" -Resolve  -ErrorAction SilentlyContinue
+        $depDLLPath = Join-Path -Path $corePath.CorePath -ChildPath "Veeam.Backup.Core.dll" -Resolve  -ErrorAction SilentlyContinue
         $file = Get-Item -Path $depDLLPath
         $version = $file.VersionInfo.ProductVersion
         $fixes = $file.VersionInfo.Comments
