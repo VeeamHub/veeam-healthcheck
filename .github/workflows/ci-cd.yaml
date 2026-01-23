@@ -57,6 +57,16 @@ jobs:
           --results-directory ${{ github.workspace }}/TestResults
       continue-on-error: true
 
+    - name: Run Content Validation tests
+      run: |
+        dotnet test vHC/VhcXTests/VhcXTests.csproj `
+          --configuration Release `
+          --no-build `
+          --filter "Category=ContentValidation" `
+          --logger "trx;LogFileName=content-validation-results.trx" `
+          --results-directory ${{ github.workspace }}/TestResults
+      continue-on-error: false
+
     - name: Publish test results
       uses: EnricoMi/publish-unit-test-result-action/composite@v2
       if: always()
@@ -301,6 +311,137 @@ jobs:
           Write-Host "❌ CSV output directory not found" -ForegroundColor Red
         }
 
+    - name: Validate CSV content quality
+      if: always()
+      run: |
+        $csvDir = Get-ChildItem "C:\temp\vHC\Original\VBR\*\*" -Directory -ErrorAction SilentlyContinue | Sort-Object LastWriteTime -Descending | Select-Object -First 1
+
+        if ($csvDir) {
+          Write-Host "🔍 Validating CSV Content Quality..." -ForegroundColor Cyan
+
+          # Validate _vbrinfo.csv version format
+          $vbrinfoPath = Join-Path $csvDir.FullName "_vbrinfo.csv"
+          if (Test-Path $vbrinfoPath) {
+            $vbrinfo = Import-Csv $vbrinfoPath
+            if ($vbrinfo.Version -match '^\d{1,2}\.\d{1,2}\.\d{1,2}\.\d{3,4}$') {
+              Write-Host "  ✅ VBR version format valid: $($vbrinfo.Version)" -ForegroundColor Green
+            } else {
+              Write-Host "  ⚠️ VBR version format unexpected: $($vbrinfo.Version)" -ForegroundColor Yellow
+            }
+          }
+
+          # Validate Repositories.csv data integrity
+          $reposPath = Join-Path $csvDir.FullName "_Repositories.csv"
+          if (Test-Path $reposPath) {
+            $repos = Import-Csv $reposPath
+            $invalidRepos = $repos | Where-Object {
+              [long]$_.FreeSpace -gt [long]$_.TotalSpace
+            }
+            if ($invalidRepos.Count -eq 0) {
+              Write-Host "  ✅ All repositories have valid FreeSpace <= TotalSpace" -ForegroundColor Green
+            } else {
+              Write-Host "  ❌ Found $($invalidRepos.Count) repositories with FreeSpace > TotalSpace" -ForegroundColor Red
+              $invalidRepos | ForEach-Object { Write-Host "    - $($_.Name): Free=$($_.FreeSpace) > Total=$($_.TotalSpace)" }
+              exit 1
+            }
+          }
+
+          # Validate Proxies reference valid Servers
+          $serversPath = Join-Path $csvDir.FullName "_Servers.csv"
+          $proxiesPath = Join-Path $csvDir.FullName "_Proxies.csv"
+          if ((Test-Path $serversPath) -and (Test-Path $proxiesPath)) {
+            $servers = Import-Csv $serversPath
+            $proxies = Import-Csv $proxiesPath
+            $serverNames = $servers.Name
+
+            $orphanProxies = $proxies | Where-Object {
+              $serverNames -notcontains $_.Host
+            }
+
+            if ($orphanProxies.Count -eq 0) {
+              Write-Host "  ✅ All proxy hosts have corresponding server entries" -ForegroundColor Green
+            } else {
+              Write-Host "  ⚠️ Found $($orphanProxies.Count) proxies with missing server entries" -ForegroundColor Yellow
+              $orphanProxies | ForEach-Object { Write-Host "    - Proxy '$($_.Name)' references unknown host '$($_.Host)'" }
+            }
+          }
+
+          Write-Host "✅ CSV content validation complete" -ForegroundColor Green
+        }
+
+    - name: Validate HTML report content
+      if: always()
+      run: |
+        $reportPath = "${{ steps.find_report.outputs.report_path }}"
+
+        if ($reportPath -and (Test-Path $reportPath)) {
+          Write-Host "🔍 Validating HTML Report Content..." -ForegroundColor Cyan
+
+          $reportContent = Get-Content $reportPath -Raw
+
+          # Required sections validation
+          $requiredSections = @(
+            'License Information',
+            'Backup Server',
+            'Security Summary',
+            'Proxy Configuration',
+            'Repository Configuration'
+          )
+
+          $missingSections = @()
+          foreach ($section in $requiredSections) {
+            if ($reportContent -notmatch [regex]::Escape($section)) {
+              $missingSections += $section
+            }
+          }
+
+          if ($missingSections.Count -eq 0) {
+            Write-Host "  ✅ All required sections present" -ForegroundColor Green
+          } else {
+            Write-Host "  ❌ Missing required sections:" -ForegroundColor Red
+            $missingSections | ForEach-Object { Write-Host "    - $_" }
+            exit 1
+          }
+
+          # Validate navigation links
+          $hrefMatches = [regex]::Matches($reportContent, 'href=[''"]#(\w+)[''"]')
+          $idMatches = [regex]::Matches($reportContent, 'id=[''"](\w+)[''"]')
+
+          $hrefs = $hrefMatches | ForEach-Object { $_.Groups[1].Value }
+          $ids = $idMatches | ForEach-Object { $_.Groups[1].Value }
+
+          $deadLinks = $hrefs | Where-Object { $ids -notcontains $_ }
+
+          if ($deadLinks.Count -eq 0) {
+            Write-Host "  ✅ All navigation links are valid" -ForegroundColor Green
+          } else {
+            Write-Host "  ⚠️ Found $($deadLinks.Count) dead navigation links" -ForegroundColor Yellow
+            $deadLinks | ForEach-Object { Write-Host "    - #$_" }
+          }
+
+          # Validate percentages are in valid range
+          $percentageMatches = [regex]::Matches($reportContent, '(\d+\.?\d*)\s*%')
+          $invalidPercentages = @()
+
+          foreach ($match in $percentageMatches) {
+            $value = [decimal]$match.Groups[1].Value
+            if ($value -lt 0 -or $value -gt 100) {
+              $invalidPercentages += $value
+            }
+          }
+
+          if ($invalidPercentages.Count -eq 0) {
+            Write-Host "  ✅ All percentages are within valid range (0-100%)" -ForegroundColor Green
+          } else {
+            Write-Host "  ⚠️ Found $($invalidPercentages.Count) percentages out of range" -ForegroundColor Yellow
+            $invalidPercentages | ForEach-Object { Write-Host "    - $_%" }
+          }
+
+          Write-Host "✅ HTML report content validation complete" -ForegroundColor Green
+        } else {
+          Write-Host "⚠️ Report file not found, skipping HTML validation" -ForegroundColor Yellow
+        }
+
     - name: Collect performance metrics
       if: always()
       run: |
@@ -517,6 +658,137 @@ jobs:
           Write-Host "❌ CSV output directory not found" -ForegroundColor Red
         }
 
+    - name: Validate CSV content quality
+      if: always()
+      run: |
+        $csvDir = Get-ChildItem "C:\temp\vHC\Original\VBR\*\*" -Directory -ErrorAction SilentlyContinue | Sort-Object LastWriteTime -Descending | Select-Object -First 1
+
+        if ($csvDir) {
+          Write-Host "🔍 Validating CSV Content Quality..." -ForegroundColor Cyan
+
+          # Validate _vbrinfo.csv version format
+          $vbrinfoPath = Join-Path $csvDir.FullName "_vbrinfo.csv"
+          if (Test-Path $vbrinfoPath) {
+            $vbrinfo = Import-Csv $vbrinfoPath
+            if ($vbrinfo.Version -match '^\d{1,2}\.\d{1,2}\.\d{1,2}\.\d{3,4}$') {
+              Write-Host "  ✅ VBR version format valid: $($vbrinfo.Version)" -ForegroundColor Green
+            } else {
+              Write-Host "  ⚠️ VBR version format unexpected: $($vbrinfo.Version)" -ForegroundColor Yellow
+            }
+          }
+
+          # Validate Repositories.csv data integrity
+          $reposPath = Join-Path $csvDir.FullName "_Repositories.csv"
+          if (Test-Path $reposPath) {
+            $repos = Import-Csv $reposPath
+            $invalidRepos = $repos | Where-Object {
+              [long]$_.FreeSpace -gt [long]$_.TotalSpace
+            }
+            if ($invalidRepos.Count -eq 0) {
+              Write-Host "  ✅ All repositories have valid FreeSpace <= TotalSpace" -ForegroundColor Green
+            } else {
+              Write-Host "  ❌ Found $($invalidRepos.Count) repositories with FreeSpace > TotalSpace" -ForegroundColor Red
+              $invalidRepos | ForEach-Object { Write-Host "    - $($_.Name): Free=$($_.FreeSpace) > Total=$($_.TotalSpace)" }
+              exit 1
+            }
+          }
+
+          # Validate Proxies reference valid Servers
+          $serversPath = Join-Path $csvDir.FullName "_Servers.csv"
+          $proxiesPath = Join-Path $csvDir.FullName "_Proxies.csv"
+          if ((Test-Path $serversPath) -and (Test-Path $proxiesPath)) {
+            $servers = Import-Csv $serversPath
+            $proxies = Import-Csv $proxiesPath
+            $serverNames = $servers.Name
+
+            $orphanProxies = $proxies | Where-Object {
+              $serverNames -notcontains $_.Host
+            }
+
+            if ($orphanProxies.Count -eq 0) {
+              Write-Host "  ✅ All proxy hosts have corresponding server entries" -ForegroundColor Green
+            } else {
+              Write-Host "  ⚠️ Found $($orphanProxies.Count) proxies with missing server entries" -ForegroundColor Yellow
+              $orphanProxies | ForEach-Object { Write-Host "    - Proxy '$($_.Name)' references unknown host '$($_.Host)'" }
+            }
+          }
+
+          Write-Host "✅ CSV content validation complete" -ForegroundColor Green
+        }
+
+    - name: Validate HTML report content
+      if: always()
+      run: |
+        $reportPath = "${{ steps.find_report.outputs.report_path }}"
+
+        if ($reportPath -and (Test-Path $reportPath)) {
+          Write-Host "🔍 Validating HTML Report Content..." -ForegroundColor Cyan
+
+          $reportContent = Get-Content $reportPath -Raw
+
+          # Required sections validation
+          $requiredSections = @(
+            'License Information',
+            'Backup Server',
+            'Security Summary',
+            'Proxy Configuration',
+            'Repository Configuration'
+          )
+
+          $missingSections = @()
+          foreach ($section in $requiredSections) {
+            if ($reportContent -notmatch [regex]::Escape($section)) {
+              $missingSections += $section
+            }
+          }
+
+          if ($missingSections.Count -eq 0) {
+            Write-Host "  ✅ All required sections present" -ForegroundColor Green
+          } else {
+            Write-Host "  ❌ Missing required sections:" -ForegroundColor Red
+            $missingSections | ForEach-Object { Write-Host "    - $_" }
+            exit 1
+          }
+
+          # Validate navigation links
+          $hrefMatches = [regex]::Matches($reportContent, 'href=[''"]#(\w+)[''"]')
+          $idMatches = [regex]::Matches($reportContent, 'id=[''"](\w+)[''"]')
+
+          $hrefs = $hrefMatches | ForEach-Object { $_.Groups[1].Value }
+          $ids = $idMatches | ForEach-Object { $_.Groups[1].Value }
+
+          $deadLinks = $hrefs | Where-Object { $ids -notcontains $_ }
+
+          if ($deadLinks.Count -eq 0) {
+            Write-Host "  ✅ All navigation links are valid" -ForegroundColor Green
+          } else {
+            Write-Host "  ⚠️ Found $($deadLinks.Count) dead navigation links" -ForegroundColor Yellow
+            $deadLinks | ForEach-Object { Write-Host "    - #$_" }
+          }
+
+          # Validate percentages are in valid range
+          $percentageMatches = [regex]::Matches($reportContent, '(\d+\.?\d*)\s*%')
+          $invalidPercentages = @()
+
+          foreach ($match in $percentageMatches) {
+            $value = [decimal]$match.Groups[1].Value
+            if ($value -lt 0 -or $value -gt 100) {
+              $invalidPercentages += $value
+            }
+          }
+
+          if ($invalidPercentages.Count -eq 0) {
+            Write-Host "  ✅ All percentages are within valid range (0-100%)" -ForegroundColor Green
+          } else {
+            Write-Host "  ⚠️ Found $($invalidPercentages.Count) percentages out of range" -ForegroundColor Yellow
+            $invalidPercentages | ForEach-Object { Write-Host "    - $_%" }
+          }
+
+          Write-Host "✅ HTML report content validation complete" -ForegroundColor Green
+        } else {
+          Write-Host "⚠️ Report file not found, skipping HTML validation" -ForegroundColor Yellow
+        }
+
     - name: Collect performance metrics
       if: always()
       run: |
@@ -730,6 +1002,137 @@ jobs:
           Write-Host "📊 CSV Summary: $foundCount found, $missingCount missing" -ForegroundColor Cyan
         } else {
           Write-Host "❌ CSV output directory not found" -ForegroundColor Red
+        }
+
+    - name: Validate CSV content quality
+      if: always()
+      run: |
+        $csvDir = Get-ChildItem "C:\temp\vHC\Original\VBR\*\*" -Directory -ErrorAction SilentlyContinue | Sort-Object LastWriteTime -Descending | Select-Object -First 1
+
+        if ($csvDir) {
+          Write-Host "🔍 Validating CSV Content Quality..." -ForegroundColor Cyan
+
+          # Validate _vbrinfo.csv version format
+          $vbrinfoPath = Join-Path $csvDir.FullName "_vbrinfo.csv"
+          if (Test-Path $vbrinfoPath) {
+            $vbrinfo = Import-Csv $vbrinfoPath
+            if ($vbrinfo.Version -match '^\d{1,2}\.\d{1,2}\.\d{1,2}\.\d{3,4}$') {
+              Write-Host "  ✅ VBR version format valid: $($vbrinfo.Version)" -ForegroundColor Green
+            } else {
+              Write-Host "  ⚠️ VBR version format unexpected: $($vbrinfo.Version)" -ForegroundColor Yellow
+            }
+          }
+
+          # Validate Repositories.csv data integrity
+          $reposPath = Join-Path $csvDir.FullName "_Repositories.csv"
+          if (Test-Path $reposPath) {
+            $repos = Import-Csv $reposPath
+            $invalidRepos = $repos | Where-Object {
+              [long]$_.FreeSpace -gt [long]$_.TotalSpace
+            }
+            if ($invalidRepos.Count -eq 0) {
+              Write-Host "  ✅ All repositories have valid FreeSpace <= TotalSpace" -ForegroundColor Green
+            } else {
+              Write-Host "  ❌ Found $($invalidRepos.Count) repositories with FreeSpace > TotalSpace" -ForegroundColor Red
+              $invalidRepos | ForEach-Object { Write-Host "    - $($_.Name): Free=$($_.FreeSpace) > Total=$($_.TotalSpace)" }
+              exit 1
+            }
+          }
+
+          # Validate Proxies reference valid Servers
+          $serversPath = Join-Path $csvDir.FullName "_Servers.csv"
+          $proxiesPath = Join-Path $csvDir.FullName "_Proxies.csv"
+          if ((Test-Path $serversPath) -and (Test-Path $proxiesPath)) {
+            $servers = Import-Csv $serversPath
+            $proxies = Import-Csv $proxiesPath
+            $serverNames = $servers.Name
+
+            $orphanProxies = $proxies | Where-Object {
+              $serverNames -notcontains $_.Host
+            }
+
+            if ($orphanProxies.Count -eq 0) {
+              Write-Host "  ✅ All proxy hosts have corresponding server entries" -ForegroundColor Green
+            } else {
+              Write-Host "  ⚠️ Found $($orphanProxies.Count) proxies with missing server entries" -ForegroundColor Yellow
+              $orphanProxies | ForEach-Object { Write-Host "    - Proxy '$($_.Name)' references unknown host '$($_.Host)'" }
+            }
+          }
+
+          Write-Host "✅ CSV content validation complete" -ForegroundColor Green
+        }
+
+    - name: Validate HTML report content
+      if: always()
+      run: |
+        $reportPath = "${{ steps.find_report.outputs.report_path }}"
+
+        if ($reportPath -and (Test-Path $reportPath)) {
+          Write-Host "🔍 Validating HTML Report Content..." -ForegroundColor Cyan
+
+          $reportContent = Get-Content $reportPath -Raw
+
+          # Required sections validation
+          $requiredSections = @(
+            'License Information',
+            'Backup Server',
+            'Security Summary',
+            'Proxy Configuration',
+            'Repository Configuration'
+          )
+
+          $missingSections = @()
+          foreach ($section in $requiredSections) {
+            if ($reportContent -notmatch [regex]::Escape($section)) {
+              $missingSections += $section
+            }
+          }
+
+          if ($missingSections.Count -eq 0) {
+            Write-Host "  ✅ All required sections present" -ForegroundColor Green
+          } else {
+            Write-Host "  ❌ Missing required sections:" -ForegroundColor Red
+            $missingSections | ForEach-Object { Write-Host "    - $_" }
+            exit 1
+          }
+
+          # Validate navigation links
+          $hrefMatches = [regex]::Matches($reportContent, 'href=[''"]#(\w+)[''"]')
+          $idMatches = [regex]::Matches($reportContent, 'id=[''"](\w+)[''"]')
+
+          $hrefs = $hrefMatches | ForEach-Object { $_.Groups[1].Value }
+          $ids = $idMatches | ForEach-Object { $_.Groups[1].Value }
+
+          $deadLinks = $hrefs | Where-Object { $ids -notcontains $_ }
+
+          if ($deadLinks.Count -eq 0) {
+            Write-Host "  ✅ All navigation links are valid" -ForegroundColor Green
+          } else {
+            Write-Host "  ⚠️ Found $($deadLinks.Count) dead navigation links" -ForegroundColor Yellow
+            $deadLinks | ForEach-Object { Write-Host "    - #$_" }
+          }
+
+          # Validate percentages are in valid range
+          $percentageMatches = [regex]::Matches($reportContent, '(\d+\.?\d*)\s*%')
+          $invalidPercentages = @()
+
+          foreach ($match in $percentageMatches) {
+            $value = [decimal]$match.Groups[1].Value
+            if ($value -lt 0 -or $value -gt 100) {
+              $invalidPercentages += $value
+            }
+          }
+
+          if ($invalidPercentages.Count -eq 0) {
+            Write-Host "  ✅ All percentages are within valid range (0-100%)" -ForegroundColor Green
+          } else {
+            Write-Host "  ⚠️ Found $($invalidPercentages.Count) percentages out of range" -ForegroundColor Yellow
+            $invalidPercentages | ForEach-Object { Write-Host "    - $_%" }
+          }
+
+          Write-Host "✅ HTML report content validation complete" -ForegroundColor Green
+        } else {
+          Write-Host "⚠️ Report file not found, skipping HTML validation" -ForegroundColor Yellow
         }
 
     - name: Collect performance metrics
