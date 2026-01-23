@@ -11,10 +11,10 @@
 		<Company>Veeam</Company>
 		<Authors>AdamC</Authors>
 		<ApplicationIcon>Health_Check_Icon.ico</ApplicationIcon>
-		<AssemblyVersion>3.0.1.0</AssemblyVersion>
+		<AssemblyVersion>3.0.0.501</AssemblyVersion>
 		<SignAssembly>False</SignAssembly>
 		<DelaySign>false</DelaySign>
-		<FileVersion>3.0.1.0</FileVersion>
+		<FileVersion>3.0.0.501</FileVersion>
 		<DebugType>full</DebugType>
 		<SelfContained>true</SelfContained>
 		<!--These 2 lines are what produce the single file utility. Possibly doesn't work...-->
@@ -190,9 +190,8 @@
 		<Message Text="Incrementing version..." Importance="High" />
 		<!-- Windows: Use PowerShell -->
 		<Exec Command="powershell -NoProfile -ExecutionPolicy Bypass -File &quot;$(ProjectDir)increment_version.ps1&quot;" Condition="'$(OS)' == 'Windows_NT'" />
-		<!-- macOS/Linux: Try pwsh first, fallback to bash script -->
-		<Exec Command="pwsh -NoProfile -ExecutionPolicy Bypass -File &quot;$(ProjectDir)increment_version.ps1&quot;" Condition="'$(OS)' != 'Windows_NT'" ContinueOnError="true" IgnoreExitCode="true" />
-		<Exec Command="bash &quot;$(ProjectDir)increment_version.sh&quot;" Condition="'$(OS)' != 'Windows_NT'" />
+		<!-- macOS/Linux: Use pwsh if available (check succeeds), otherwise use bash -->
+		<Exec Command="which pwsh &gt; /dev/null 2&gt;&amp;1 &amp;&amp; pwsh -NoProfile -ExecutionPolicy Bypass -File &quot;$(ProjectDir)increment_version.ps1&quot; || bash &quot;$(ProjectDir)increment_version.sh&quot;" Condition="'$(OS)' != 'Windows_NT'" />
 	</Target>
 	<Target Name="PostBuild" AfterTargets="PostBuildEvent">
 		<!-- Log the check for BuildCopy.bat and BuildCopy.sh -->
