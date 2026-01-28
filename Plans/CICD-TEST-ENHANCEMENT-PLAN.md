@@ -1,7 +1,41 @@
 # Veeam Health Check: CI/CD Pipeline & Test Enhancement Plan
 
 **Date**: 2026-01-21
+**Last Updated**: 2026-01-26
 **Goal**: 100% automated validation across all VBR versions with content verification
+
+---
+
+## Status Update (2026-01-26)
+
+### Overall Progress: ~60% Complete
+
+| Phase | Status | Completion | Notes |
+|-------|--------|------------|-------|
+| **Phase 1: Foundation** | ✅ Mostly Complete | 85% | 244 tests active, CodeQL enabled, coverage reporting works |
+| **Phase 2: Content Validation** | ⚠️ Partial | 60% | 20 tests exist, CI has inline PowerShell validation |
+| **Phase 3: Version Matrix** | ⚠️ Blocked | 30% | 3 of 6 runners exist; **no golden datasets** |
+| **Phase 4: Regression Detection** | ❌ Not Started | 0% | Blocked by Phase 3 golden datasets |
+| **Phase 5: Polish** | ⚠️ Partial | 25% | Performance metrics exist in CI |
+
+### Key Accomplishments Since Plan Creation
+- ✅ **244 active test methods** (was estimated at ~100)
+- ✅ **Only 3 commented tests** (was estimated at ~200)
+- ✅ CodeQL scanning re-enabled
+- ✅ Coverage reporting via ReportGenerator
+- ✅ Content validation tests created (CsvContentValidationTests, ReportContentValidationTests)
+- ✅ CI pipeline implements inline CSV/HTML validation in PowerShell
+- ✅ 3 integration test runners operational (v12, v13-sql, remote)
+
+### Critical Blockers
+1. **No `test-data/` directory** - Golden datasets don't exist, blocking regression detection
+2. **Missing runners** - v11, v12.1, v12.2, v12.3 runners not deployed
+
+### Recommended Next Actions
+1. **Priority 1**: Create `test-data/vbr-v12/` and `test-data/vbr-v13/` golden datasets
+2. **Priority 2**: Expand content validation tests from 20 to 50+
+3. **Priority 3**: Implement regression comparison tests
+4. **Deprioritized**: Legacy runners (v11, v12.x point releases) - focus on v12 and v13 first
 
 ---
 
@@ -11,14 +45,15 @@ Your current CI/CD pipeline validates **tool execution** but not **content corre
 
 ### Current State vs Target State
 
-| Aspect | Current | Target |
-|--------|---------|--------|
-| **VBR Versions Tested** | 3 (v12, v13-sql, remote) | 6 (v11, v12, v12.1, v12.2, v12.3, v13) |
-| **Validation Type** | File existence | Content validation |
-| **Test Coverage** | ~100 active / ~200 commented | 400+ active |
-| **Code Coverage** | Unknown (not tracked) | 80%+ with reports |
-| **Report Validation** | HTML file created | Data accuracy verified |
-| **Regression Detection** | None | Automated comparison |
+| Aspect | Original Baseline | Current (Jan 26) | Target |
+|--------|-------------------|------------------|--------|
+| **VBR Versions Tested** | 3 (v12, v13-sql, remote) | 3 (v12, v13-sql, remote) | 4 (v12, v13 primary; v11, v12.3 secondary) |
+| **Validation Type** | File existence | File + inline content | Full content + regression |
+| **Test Coverage** | ~100 active / ~200 commented | **244 active / 3 commented** | 300+ active |
+| **Code Coverage** | Unknown | **Tracked via ReportGenerator** | 80%+ with reports |
+| **Report Validation** | HTML file created | **Sections + data validated** | + Golden baseline comparison |
+| **Regression Detection** | None | None | Automated comparison |
+| **Content Validation Tests** | 0 | **20 (9 CSV + 11 HTML)** | 50+ |
 
 ---
 
@@ -30,46 +65,49 @@ Your current CI/CD pipeline validates **tool execution** but not **content corre
 - ✅ Build & test on GitHub-hosted Windows runner
 - ✅ 3 parallel integration tests on self-hosted runners
 - ✅ Semgrep SAST scanning
+- ✅ **CodeQL scanning (re-enabled)**
 - ✅ Dependency vulnerability scanning
 - ✅ VirusTotal malware scanning
 - ✅ SBOM generation
 - ✅ Automated release creation with checksums
+- ✅ **Coverage reporting via ReportGenerator**
+- ✅ **Inline CSV content validation in integration tests**
+- ✅ **Inline HTML section validation in integration tests**
 
-**Critical Gaps:**
+**Remaining Gaps:**
 
-| Gap | Impact | Priority |
-|-----|--------|----------|
-| No content validation | False positives (tool runs but produces garbage) | P0 |
-| CodeQL disabled | Missing security vulnerability detection | P1 |
-| No code coverage tracking | Unknown test quality | P1 |
-| ~200 commented tests | Lost coverage for CSV, HTML, data transformation | P0 |
-| No VBR v11, v12.1, v12.2, v12.3 runners | Incomplete version coverage | P1 |
-| No regression comparison | Can't detect output changes | P1 |
-| No performance baselines | Can't detect slowdowns | P2 |
+| Gap | Impact | Priority | Status |
+|-----|--------|----------|--------|
+| No golden datasets | Can't do regression comparison | P0 | ❌ Not started |
+| Content validation tests incomplete | Only 20 of 50+ target | P1 | ⚠️ In progress |
+| No VBR v11, v12.1, v12.2, v12.3 runners | Incomplete version coverage | P2 | ❌ Deprioritized |
+| No regression comparison | Can't detect output changes | P1 | ❌ Blocked |
+| No performance baselines | Can't detect slowdowns | P2 | ⚠️ Metrics exist, not enforced |
 
 ### 1.2 Test Infrastructure Assessment
 
-**Active Tests (~100-120):**
+**Active Tests (244 total):**
 - Credential security: 17 tests ✅
 - CLI argument parsing: 50+ tests ✅
 - Path validation: 15+ tests ✅
 - PowerShell script syntax: 8 tests ✅
 - CSV validation framework: 9 tests ✅
 - Static initialization: 3 tests ✅
+- **CSV content validation: 9 tests ✅** (NEW)
+- **HTML report validation: 11 tests ✅** (NEW)
+- Integration tests: 15+ tests ✅
+- Compliance CSV parsing: 10+ tests ✅
 
-**Commented/Disabled Tests (~200):**
-- CSV parsing pipeline: ~50 tests ❌
-- HTML export/generation: ~50 tests ❌
-- Data transformation: ~50 tests ❌
-- Job session summary: ~50 tests ❌
+**Commented/Disabled Tests (3 only):**
+- EntryPointTEST.cs: 2 tests
+- UnitTest1.cs: 1 test
 
-**ZERO Coverage Areas:**
+**Areas Still Needing Coverage:**
 - Data collection (PowerShell, SQL, Registry, WMI)
-- HTML report compilation
 - VB365 features
 - Export formats (PDF, PPTX)
-- Scrubbing/anonymization
-- Database interactions
+- Version-specific feature validation
+- Regression baseline comparison
 
 ### 1.3 Report Generation Pipeline
 
@@ -81,8 +119,9 @@ Collection          Processing           Report Generation
 │ 50+ CSV │  →   │ CCsvParser │  →   │ CHtmlCompiler    │
 │  files  │      │ CDataFormer│      │ CHtmlBodyHelper  │
 └─────────┘      │ transforms │      │ CHtmlTables      │
-    ❌              ❌                      ❌
- No tests        No tests              No tests
+    ⚠️              ⚠️                      ⚠️
+ Schema tests   Some coverage         Section tests
+ (9 tests)      exists                (11 tests)
 ```
 
 ---
@@ -123,77 +162,70 @@ Collection          Processing           Report Generation
 
 ### 2.2 Your Pipeline vs Best Practices
 
-| Stage | Best Practice | Your Current | Gap |
-|-------|--------------|--------------|-----|
-| **Build** | Artifact + checksums | ✅ Yes | None |
-| **Unit Tests** | 100% pass, tracked | ⚠️ Tests run, ~200 commented | Major |
-| **Code Coverage** | 80%+ with trending | ❌ Collected but not reported | Major |
-| **SAST** | Multiple tools, all code | ⚠️ Semgrep only, CodeQL disabled | Medium |
+| Stage | Best Practice | Current Status | Gap |
+|-------|--------------|----------------|-----|
+| **Build** | Artifact + checksums | ✅ Complete | None |
+| **Unit Tests** | 100% pass, tracked | ✅ 244 tests, 100% pass | None |
+| **Code Coverage** | 80%+ with trending | ✅ ReportGenerator | Need badge |
+| **SAST** | Multiple tools, all code | ✅ Semgrep + CodeQL | None |
 | **Dependency Scan** | Block on high/critical | ✅ Fails on moderate | None |
-| **Integration Tests** | Contract + behavior | ⚠️ File existence only | Major |
-| **E2E Tests** | Content validation | ❌ None | Critical |
-| **Regression** | Baseline comparison | ❌ None | Critical |
-| **Performance** | Baseline + trending | ⚠️ Metrics extracted, not enforced | Medium |
+| **Integration Tests** | Contract + behavior | ⚠️ Content validated inline | Needs more tests |
+| **E2E Tests** | Content validation | ⚠️ 20 tests exist | Need 50+ |
+| **Regression** | Baseline comparison | ❌ No golden data | Critical |
+| **Performance** | Baseline + trending | ⚠️ Metrics extracted | Not enforced |
 
 ---
 
 ## Part 3: Multi-Version VBR Testing Strategy
 
-### 3.1 Version Matrix Requirements
+### 3.1 Version Matrix Requirements (Revised)
 
+**Tier 1 - Active Development (must have):**
 | VBR Version | Status | Runner Label | Test Focus |
 |-------------|--------|--------------|------------|
-| v11 | Legacy | `vbr-v11` | Backward compatibility |
-| v12 | Current | `vbr-v12` | Core functionality |
-| v12.1 | Point release | `vbr-v12-1` | Feature additions |
-| v12.2 | Point release | `vbr-v12-2` | Feature additions |
-| v12.3 | Point release | `vbr-v12-3` | Feature additions |
+| v12 | Current LTS | `vbr-v12` | Core functionality |
 | v13 | Latest | `vbr-v13-sql` | New features |
+
+**Tier 2 - Opportunistic (nice to have):**
+| VBR Version | Status | Runner Label | Test Focus |
+|-------------|--------|--------------|------------|
+| v12.3 | Point release | `vbr-v12-3` | Entra ID features |
+| v11 | Legacy | `vbr-v11` | Backward compatibility |
+
+**Deprioritized (low value for effort):**
+- v12.1, v12.2 - minimal feature differences from v12
 
 ### 3.2 Version-Specific Test Data
 
 Each VBR version produces different CSV schemas and features. You need **golden datasets** per version:
 
 ```
-test-data/
-├── vbr-v11/
-│   ├── golden-csvs/           # Expected CSV output structure
-│   ├── golden-report.html     # Reference report
-│   └── expected-sections.json # Expected report sections
+test-data/                          # ❌ DOES NOT EXIST - CREATE THIS
 ├── vbr-v12/
-│   ├── golden-csvs/
-│   ├── golden-report.html
-│   └── expected-sections.json
-├── vbr-v12-1/
-│   └── ... (same structure)
-├── vbr-v12-2/
-│   └── ...
-├── vbr-v12-3/
-│   └── ...
+│   ├── golden-csvs/               # Expected CSV output structure
+│   │   ├── _vbrinfo.csv
+│   │   ├── _Servers.csv
+│   │   ├── _Proxies.csv
+│   │   └── ...
+│   ├── golden-report.html         # Reference report
+│   ├── expected-sections.json     # Expected report sections
+│   └── version-features.json      # Feature flags for this version
 └── vbr-v13/
-    └── ...
+    ├── golden-csvs/
+    ├── golden-report.html
+    ├── expected-sections.json
+    └── version-features.json
 ```
 
-### 3.3 Self-Hosted Runner Strategy
+### 3.3 Self-Hosted Runner Strategy (Revised)
 
-**Current**: 3 runners (CONSOLE_HOST, vbr-13-sql, vbr-v12)
-**Required**: 6 runners (one per version) OR matrix strategy
+**Current**: 3 runners (CONSOLE_HOST, vbr-13-sql, vbr-v12) ✅
+**Target**: 4 runners (add vbr-v12-3 for Entra testing)
 
-**Option A: Dedicated Runners (Recommended for Production)**
-- 6 Windows VMs, each with specific VBR version
-- Pros: Isolation, parallel execution, no version switching
-- Cons: Infrastructure cost
-
-**Option B: Dynamic Version Switching**
-- Fewer VMs with multiple VBR installations
-- Use environment variable to select active version
-- Pros: Lower cost
-- Cons: Slower (sequential), potential conflicts
-
-**Option C: Hybrid**
-- Dedicated runners for v12 (most common) and v13 (latest)
-- Single runner for legacy versions (v11, v12.1-v12.3) that switches
-- Balance of cost and coverage
+**Recommended Approach: Hybrid (Option C)**
+- ✅ Dedicated runners for v12 and v13 (existing)
+- ⏳ Add v12.3 runner when Entra features need testing
+- ❌ Deprioritize v11, v12.1, v12.2 runners
 
 ---
 
@@ -202,12 +234,12 @@ test-data/
 ### 4.1 Validation Layers
 
 ```
-Layer 1: CSV Validation (Data Collection)
+Layer 1: CSV Validation (Data Collection)     ← 9 tests exist
 ├── File presence (Critical/Warning/Info)
-├── Schema validation (expected columns)
-├── Record count thresholds
+├── Schema validation (expected columns)      ✅ CsvContentValidationTests
+├── Record count thresholds                   ✅ CsvContentValidationTests
 ├── Data type validation
-└── Cross-file consistency
+└── Cross-file consistency                    ✅ CsvContentValidationTests
 
 Layer 2: Transformation Validation (Processing)
 ├── Calculation accuracy (percentages, aggregations)
@@ -216,14 +248,14 @@ Layer 2: Transformation Validation (Processing)
 ├── Proxy type mapping
 └── Version detection
 
-Layer 3: Report Validation (Output)
-├── Section presence
-├── Navigation integrity
-├── Table structure
+Layer 3: Report Validation (Output)           ← 11 tests exist
+├── Section presence                          ✅ ReportContentValidationTests
+├── Navigation integrity                      ✅ ReportContentValidationTests
+├── Table structure                           ✅ ReportContentValidationTests
 ├── Data completeness
-├── Scrubbing effectiveness
+├── Scrubbing effectiveness                   ✅ ReportContentValidationTests
 
-Layer 4: Cross-Version Validation
+Layer 4: Cross-Version Validation             ← BLOCKED by golden data
 ├── Version-specific features present/absent
 ├── Schema compatibility
 ├── Output format consistency
@@ -232,113 +264,53 @@ Layer 4: Cross-Version Validation
 
 ### 4.2 CSV Content Validation Tests
 
-Create `vHC/VhcXTests/ContentValidation/CsvContentValidationTests.cs`:
+**Status**: ✅ Implemented at `vHC/VhcXTests/ContentValidation/CsvContentValidationTests.cs`
 
-```csharp
-[Trait("Category", "ContentValidation")]
-public class CsvContentValidationTests
-{
-    [Theory]
-    [InlineData("vbrinfo.csv", new[] { "Name", "Version", "SqlServer" })]
-    [InlineData("Servers.csv", new[] { "Name", "Type", "ApiVersion" })]
-    [InlineData("Proxies.csv", new[] { "Name", "Host", "MaxTasksCount" })]
-    public void CsvFile_HasExpectedColumns(string fileName, string[] expectedColumns)
-    {
-        // Validate CSV schema matches expectations
-    }
+Existing tests (9):
+- `CsvFile_HasExpectedColumns` - Schema validation
+- `CsvFile_HasRecordCountInRange` - Record count validation
+- `VbrInfo_VersionFieldMatchesExpectedFormat` - Version format
+- `Repositories_FreeSpaceDoesNotExceedTotalSpace` - Data integrity
+- `Repositories_FreeSpaceIsNonNegative` - Data integrity
+- `Jobs_AllJobsHaveValidType` - Enum validation
+- `Servers_AllProxiesHaveCorrespondingServerEntry` - Cross-file
+- `VbrInfo_ContainsExactlyOneRecord` - Cardinality
+- `ComplianceFiles_PresentBasedOnVbrVersion` - Version-specific (placeholder)
 
-    [Theory]
-    [InlineData("vbrinfo.csv", 1, 1)]      // Exactly 1 record
-    [InlineData("LicInfo.csv", 1, 10)]     // 1-10 records
-    [InlineData("Servers.csv", 1, 1000)]   // At least 1, up to 1000
-    public void CsvFile_HasRecordCountInRange(string fileName, int min, int max)
-    {
-        // Validate record counts are reasonable
-    }
-
-    [Fact]
-    public void VbrInfo_VersionFieldMatchesExpectedFormat()
-    {
-        // "12.0.0.1420" or "13.0.0.xxx" pattern
-    }
-
-    [Fact]
-    public void Repositories_FreeSpaceDoesNotExceedTotalSpace()
-    {
-        // Data integrity check
-    }
-
-    [Fact]
-    public void Servers_AllProxiesHaveCorrespondingServerEntry()
-    {
-        // Cross-file consistency
-    }
-}
-```
+**Needed additions** (to reach 25+ CSV tests):
+- VB365-specific CSV schema validation
+- SOBR extent validation
+- Tape library CSV validation
+- Cloud credential CSV validation
+- More cross-file consistency checks
 
 ### 4.3 Report Content Validation Tests
 
-Create `vHC/VhcXTests/ContentValidation/ReportContentValidationTests.cs`:
+**Status**: ✅ Implemented at `vHC/VhcXTests/ContentValidation/ReportContentValidationTests.cs`
 
-```csharp
-[Trait("Category", "ContentValidation")]
-public class ReportContentValidationTests
-{
-    [Fact]
-    public void HtmlReport_ContainsAllExpectedSections()
-    {
-        var expectedSections = new[] {
-            "License Information",
-            "Backup Server",
-            "Security Summary",
-            "Proxy Configuration",
-            "Repository Configuration",
-            "Job Summary"
-        };
-        // Parse HTML and verify sections exist
-    }
+Existing tests (11):
+- `HtmlReport_ContainsAllExpectedSections` - Section presence
+- `HtmlReport_ContainsVersionInfo` - Version presence
+- `HtmlReport_NavigationLinksAreValid` - Link integrity
+- `HtmlReport_NoDeadInternalLinks` - Dead link detection
+- `HtmlReport_TablesHaveMatchingHeadersAndRows` - Table structure
+- `HtmlReport_TablesAreNotEmpty` - Table content
+- `HtmlReport_PercentagesAreWithinValidRange` - Data validation
+- `HtmlReport_NoNegativeNumbers_InSizesAndCounts` - Data validation
+- `ScrubbedReport_ContainsNoIpAddresses` - Scrubbing
+- `ScrubbedReport_ContainsNoCredentials` - Scrubbing
+- `HtmlReport_ServerCountsAreConsistentAcrossSections` - Consistency
 
-    [Fact]
-    public void HtmlReport_NavigationLinksAreValid()
-    {
-        // All href="#section" have corresponding id="section"
-    }
-
-    [Fact]
-    public void HtmlReport_TablesHaveMatchingHeadersAndRows()
-    {
-        // Column count in header matches column count in body
-    }
-
-    [Fact]
-    public void HtmlReport_PercentagesAreWithinValidRange()
-    {
-        // All percentage values are 0-100
-    }
-
-    [Fact]
-    public void HtmlReport_ServerCountsAreConsistentAcrossSections()
-    {
-        // Server summary matches detailed server tables
-    }
-
-    [Theory]
-    [InlineData("ScrubbedReport.html")]
-    public void ScrubbedReport_ContainsNoIpAddresses(string reportFile)
-    {
-        // Regex scan for IP patterns
-    }
-
-    [Theory]
-    [InlineData("ScrubbedReport.html")]
-    public void ScrubbedReport_ContainsNoServerNames(string reportFile)
-    {
-        // Compare against original, verify anonymization
-    }
-}
-```
+**Needed additions** (to reach 25+ HTML tests):
+- VB365 report section validation
+- Export format validation (PDF, PPTX structure)
+- Chart/graph data validation
+- Compliance section validation
+- More consistency checks between summary and detail sections
 
 ### 4.4 Version-Specific Validation
+
+**Status**: ⚠️ Placeholder exists, needs golden data to implement properly
 
 Create `vHC/VhcXTests/ContentValidation/VersionSpecificValidationTests.cs`:
 
@@ -356,27 +328,21 @@ public class VersionSpecificValidationTests
     }
 
     [Theory]
-    [InlineData("11", "SecurityCompliance.csv", false)]
-    [InlineData("12", "SecurityCompliance.csv", true)]
-    [InlineData("13", "SecurityCompliance.csv", true)]
-    public void CsvFile_PresentBasedOnVersion(string version, string file, bool expected)
+    [InlineData("12.3", true)]  // v12.3+ has Entra ID
+    [InlineData("13", true)]
+    [InlineData("12", false)]
+    public void Report_EntraIdSection_PresentBasedOnVersion(string version, bool expected)
     {
-        // Version-specific CSV presence
-    }
-
-    [Theory]
-    [InlineData("12", 37)]   // v12 has 37 compliance checks
-    [InlineData("13", 47)]   // v13 has 47 compliance checks (added Linux security)
-    public void ComplianceReport_HasExpectedCheckCount(string version, int count)
-    {
-        // Version-specific feature counts
+        // Entra ID feature validation
     }
 }
 ```
 
 ### 4.5 Regression Detection
 
-Create golden baseline comparison:
+**Status**: ❌ Blocked - Requires golden datasets
+
+Once `test-data/` is created:
 
 ```csharp
 [Trait("Category", "Regression")]
@@ -387,23 +353,8 @@ public class RegressionValidationTests
     [InlineData("vbr-v13")]
     public void Report_StructureMatchesGoldenBaseline(string version)
     {
-        var golden = LoadGoldenReport(version);
-        var current = GenerateCurrentReport(version);
-
-        var diff = CompareReportStructure(golden, current);
-
-        Assert.Empty(diff.UnexpectedSections);
-        Assert.Empty(diff.MissingSections);
-        Assert.Empty(diff.ColumnChanges);
-    }
-
-    [Theory]
-    [InlineData("vbr-v12")]
-    [InlineData("vbr-v13")]
-    public void Report_DataNotSignificantlyDifferent(string version)
-    {
-        // Allow some variance (live systems change)
-        // But flag >20% change in key metrics as suspicious
+        var goldenPath = $"test-data/{version}/golden-report.html";
+        // Compare structure, not exact content
     }
 }
 ```
@@ -412,421 +363,147 @@ public class RegressionValidationTests
 
 ## Part 5: Enhanced CI/CD Pipeline Design
 
-### 5.1 Proposed Pipeline Architecture
+### 5.1 Current Pipeline Architecture
+
+The current `ci-cd.yaml` already implements much of the proposed design:
+
+**Implemented:**
+- ✅ Build & unit tests with coverage
+- ✅ Coverage reporting via ReportGenerator
+- ✅ 3 integration test jobs (v12, v13-sql, remote)
+- ✅ CSV collection validation (inline PowerShell)
+- ✅ CSV content quality validation (inline PowerShell)
+- ✅ HTML report content validation (inline PowerShell)
+- ✅ Session cache validation
+- ✅ Performance metrics collection
+- ✅ VirusTotal scanning
+- ✅ Automated release creation
+
+**Not Yet Implemented:**
+- ❌ Golden baseline comparison step
+- ❌ Regression detection step
+- ❌ Category-filtered xUnit test runs in CI
+- ❌ Version matrix for all VBR versions
+
+### 5.2 Proposed Additions
+
+Add these steps to integration test jobs:
 
 ```yaml
-# .github/workflows/ci-cd-enhanced.yaml
+- name: Compare Against Golden Baseline
+  if: hashFiles('test-data/${{ matrix.version }}/golden-report.html') != ''
+  shell: pwsh
+  run: |
+    $goldenPath = "./test-data/${{ matrix.version }}/golden-report.html"
+    $currentPath = "${{ steps.find_report.outputs.report_path }}"
 
-name: Enhanced CI/CD Pipeline
+    # Extract and compare section headers
+    $golden = Get-Content $goldenPath -Raw
+    $current = Get-Content $currentPath -Raw
 
-on:
-  push:
-    branches: [master, dev]
-  pull_request:
-    branches: [master]
-  workflow_dispatch:
-    inputs:
-      run_all_versions:
-        description: 'Run tests on all VBR versions'
-        required: false
-        default: 'false'
+    $goldenSections = [regex]::Matches($golden, '<h[1-6][^>]*>([^<]+)</h[1-6]>')
+    $currentSections = [regex]::Matches($current, '<h[1-6][^>]*>([^<]+)</h[1-6]>')
 
-jobs:
-  # ═══════════════════════════════════════════════════════════════════
-  # STAGE 1: BUILD & UNIT TESTS
-  # ═══════════════════════════════════════════════════════════════════
-  build-and-unit-tests:
-    runs-on: windows-latest
-    outputs:
-      version: ${{ steps.version.outputs.version }}
-      coverage: ${{ steps.coverage.outputs.coverage }}
-    steps:
-      - uses: actions/checkout@v4
+    $missing = $goldenSections | Where-Object {
+      $currentSections.Groups.Value -notcontains $_.Groups[1].Value
+    }
 
-      - name: Setup .NET
-        uses: actions/setup-dotnet@v4
-        with:
-          dotnet-version: '8.0.x'
+    if ($missing.Count -gt 0) {
+      Write-Error "Regression detected - missing sections: $($missing | ForEach-Object { $_.Groups[1].Value } | Join-String -Separator ', ')"
+      exit 1
+    }
 
-      - name: Restore dependencies
-        run: dotnet restore vHC/HC.sln
-
-      - name: Build
-        run: dotnet build vHC/HC.sln --configuration Release --no-restore
-
-      - name: Run Unit Tests with Coverage
-        run: |
-          dotnet test vHC/VhcXTests/VhcXTests.csproj \
-            --configuration Release \
-            --collect:"XPlat Code Coverage" \
-            --results-directory ./TestResults \
-            --logger "trx;LogFileName=unit-tests.trx"
-
-      - name: Generate Coverage Report
-        uses: danielpalme/ReportGenerator-GitHub-Action@5
-        with:
-          reports: './TestResults/**/coverage.cobertura.xml'
-          targetdir: './CoverageReport'
-          reporttypes: 'HtmlInline;Cobertura;Badges'
-
-      - name: Publish Coverage to PR
-        uses: 5monkeys/cobertura-action@v14
-        if: github.event_name == 'pull_request'
-        with:
-          path: ./TestResults/**/coverage.cobertura.xml
-          minimum_coverage: 75
-          fail_below_threshold: true
-
-      - name: Upload Coverage Artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: coverage-report
-          path: ./CoverageReport
-
-  # ═══════════════════════════════════════════════════════════════════
-  # STAGE 2: STATIC ANALYSIS
-  # ═══════════════════════════════════════════════════════════════════
-  static-analysis:
-    runs-on: ubuntu-latest
-    needs: build-and-unit-tests
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Semgrep SAST
-        uses: returntocorp/semgrep-action@v1
-        with:
-          config: auto
-
-      - name: Initialize CodeQL
-        uses: github/codeql-action/init@v3
-        with:
-          languages: csharp
-
-      - name: Build for CodeQL
-        run: dotnet build vHC/HC.sln
-
-      - name: Perform CodeQL Analysis
-        uses: github/codeql-action/analyze@v3
-
-  # ═══════════════════════════════════════════════════════════════════
-  # STAGE 3: INTEGRATION TESTS (Per VBR Version)
-  # ═══════════════════════════════════════════════════════════════════
-  integration-tests:
-    needs: build-and-unit-tests
-    if: github.event_name != 'pull_request'
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-          - version: v11
-            runner: vbr-v11
-            features: [base]
-          - version: v12
-            runner: vbr-v12
-            features: [base, malware]
-          - version: v12.1
-            runner: vbr-v12-1
-            features: [base, malware, immutability]
-          - version: v12.2
-            runner: vbr-v12-2
-            features: [base, malware, immutability]
-          - version: v12.3
-            runner: vbr-v12-3
-            features: [base, malware, immutability, entra]
-          - version: v13
-            runner: vbr-v13-sql
-            features: [base, malware, immutability, entra, linux-security]
-
-    runs-on: [self-hosted, '${{ matrix.runner }}']
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Download Build Artifact
-        uses: actions/download-artifact@v4
-        with:
-          name: vhc-release
-
-      - name: Run VHC Collection & Report
-        id: run-vhc
-        shell: pwsh
-        run: |
-          $result = ./VeeamHealthCheck.exe /mode=vbr /noopen /silent
-          $reportPath = Get-ChildItem -Path "C:\temp\vHC\Reports" -Filter "*.html" |
-                        Sort-Object LastWriteTime -Descending |
-                        Select-Object -First 1
-          echo "report_path=$($reportPath.FullName)" >> $env:GITHUB_OUTPUT
-
-      - name: Validate CSV Collection
-        shell: pwsh
-        run: |
-          $csvPath = "C:\temp\vHC\Original\VBR"
-          $criticalFiles = @('vbrinfo.csv', 'Servers.csv', 'Proxies.csv', 'Repositories.csv', '_Jobs.csv')
-
-          foreach ($file in $criticalFiles) {
-            $filePath = Get-ChildItem -Path $csvPath -Recurse -Filter $file
-            if (-not $filePath) {
-              throw "Critical CSV missing: $file"
-            }
-            $rowCount = (Import-Csv $filePath.FullName).Count
-            Write-Host "$file : $rowCount records"
-            if ($rowCount -eq 0) {
-              throw "Critical CSV is empty: $file"
-            }
-          }
-
-      - name: Validate Report Content
-        shell: pwsh
-        run: |
-          $report = Get-Content "${{ steps.run-vhc.outputs.report_path }}" -Raw
-
-          # Section validation
-          $requiredSections = @(
-            'License Information',
-            'Backup Server',
-            'Security Summary',
-            'Proxy Configuration',
-            'Repository Configuration'
-          )
-
-          foreach ($section in $requiredSections) {
-            if ($report -notmatch $section) {
-              throw "Missing required section: $section"
-            }
-          }
-
-          # Version-specific feature validation
-          $features = '${{ join(matrix.features, ',') }}'.Split(',')
-
-          if ($features -contains 'malware') {
-            if ($report -notmatch 'Malware Detection') {
-              throw "Version ${{ matrix.version }} should have Malware Detection section"
-            }
-          }
-
-          if ($features -contains 'entra') {
-            # Entra/Azure AD sections for v12.3+
-            Write-Host "Checking Entra features for ${{ matrix.version }}"
-          }
-
-          Write-Host "✓ All content validations passed for ${{ matrix.version }}"
-
-      - name: Validate Data Integrity
-        shell: pwsh
-        run: |
-          # Cross-reference validation
-          $csvPath = Get-ChildItem "C:\temp\vHC\Original\VBR" -Directory |
-                     Sort-Object LastWriteTime -Descending |
-                     Select-Object -First 1
-
-          $servers = Import-Csv "$($csvPath.FullName)\Servers.csv"
-          $proxies = Import-Csv "$($csvPath.FullName)\Proxies.csv"
-          $repos = Import-Csv "$($csvPath.FullName)\Repositories.csv"
-
-          # Validate proxy hosts exist in servers
-          foreach ($proxy in $proxies) {
-            $hostName = $proxy.Host
-            if ($servers.Name -notcontains $hostName) {
-              Write-Warning "Proxy host '$hostName' not found in Servers.csv"
-            }
-          }
-
-          # Validate repository free space doesn't exceed total
-          foreach ($repo in $repos) {
-            if ([long]$repo.FreeSpace -gt [long]$repo.TotalSpace) {
-              throw "Repository '$($repo.Name)' has FreeSpace > TotalSpace"
-            }
-          }
-
-      - name: Compare Against Golden Baseline
-        shell: pwsh
-        run: |
-          $goldenPath = "./test-data/${{ matrix.version }}/golden-report.html"
-          if (Test-Path $goldenPath) {
-            # Structure comparison (not exact match - data changes)
-            $golden = Get-Content $goldenPath -Raw
-            $current = Get-Content "${{ steps.run-vhc.outputs.report_path }}" -Raw
-
-            # Extract and compare section headers
-            $goldenSections = [regex]::Matches($golden, '<h[1-6][^>]*>([^<]+)</h[1-6]>')
-            $currentSections = [regex]::Matches($current, '<h[1-6][^>]*>([^<]+)</h[1-6]>')
-
-            $missing = $goldenSections.Groups | Where-Object {
-              $currentSections.Groups.Value -notcontains $_.Value
-            }
-
-            if ($missing.Count -gt 0) {
-              Write-Warning "Potential regression - missing sections: $($missing.Value -join ', ')"
-            }
-          }
-
-      - name: Upload Test Artifacts
-        uses: actions/upload-artifact@v4
-        with:
-          name: integration-${{ matrix.version }}
-          path: |
-            C:\temp\vHC\Reports\
-            C:\temp\vHC\Original\
-          retention-days: 14
-
-  # ═══════════════════════════════════════════════════════════════════
-  # STAGE 4: CONTENT VALIDATION TESTS
-  # ═══════════════════════════════════════════════════════════════════
-  content-validation:
-    needs: integration-tests
-    runs-on: windows-latest
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Download All Integration Artifacts
-        uses: actions/download-artifact@v4
-        with:
-          pattern: integration-*
-          path: ./test-artifacts
-
-      - name: Run Content Validation Test Suite
-        run: |
-          dotnet test vHC/VhcXTests/VhcXTests.csproj \
-            --configuration Release \
-            --filter "Category=ContentValidation" \
-            --logger "trx;LogFileName=content-validation.trx"
-        env:
-          TEST_ARTIFACTS_PATH: ./test-artifacts
-
-      - name: Run Regression Tests
-        run: |
-          dotnet test vHC/VhcXTests/VhcXTests.csproj \
-            --configuration Release \
-            --filter "Category=Regression" \
-            --logger "trx;LogFileName=regression.trx"
-        env:
-          GOLDEN_DATA_PATH: ./test-data
-
-  # ═══════════════════════════════════════════════════════════════════
-  # STAGE 5: SECURITY SCAN
-  # ═══════════════════════════════════════════════════════════════════
-  security-scan:
-    needs: [content-validation]
-    runs-on: windows-latest
-    if: github.ref == 'refs/heads/master'
-    steps:
-      - name: Download Build Artifact
-        uses: actions/download-artifact@v4
-        with:
-          name: vhc-release
-
-      - name: VirusTotal Scan
-        # ... existing VirusTotal logic ...
-
-  # ═══════════════════════════════════════════════════════════════════
-  # STAGE 6: RELEASE (only on master, all gates passed)
-  # ═══════════════════════════════════════════════════════════════════
-  release:
-    needs: [build-and-unit-tests, static-analysis, content-validation, security-scan]
-    if: github.ref == 'refs/heads/master'
-    runs-on: windows-latest
-    steps:
-      # ... existing release logic ...
+    Write-Host "✅ Report structure matches golden baseline"
 ```
 
-### 5.2 Quality Gates Summary
+### 5.3 Quality Gates Summary
 
-| Gate | Threshold | Blocks Release |
-|------|-----------|----------------|
-| Build | Must succeed | Yes |
-| Unit Tests | 100% pass | Yes |
-| Code Coverage | ≥75% (target 80%) | Yes |
-| CodeQL | No high/critical | Yes |
-| Semgrep | No high/critical | Yes |
-| Dependencies | No moderate+ vulnerabilities | Yes |
-| Integration Tests | 100% pass | Yes |
-| Content Validation | 100% pass | Yes |
-| Regression Tests | No unexpected changes | Yes (or warning) |
-| VirusTotal | <3 detections | Yes |
+| Gate | Threshold | Current Status | Blocks Release |
+|------|-----------|----------------|----------------|
+| Build | Must succeed | ✅ Implemented | Yes |
+| Unit Tests | 100% pass | ✅ Implemented | Yes |
+| Code Coverage | ≥75% (target 80%) | ✅ Reported | No (warning only) |
+| CodeQL | No high/critical | ✅ Implemented | Yes |
+| Semgrep | No high/critical | ✅ Implemented | Yes |
+| Dependencies | No moderate+ vulnerabilities | ✅ Implemented | Yes |
+| Integration Tests | 100% pass | ✅ Implemented | Yes |
+| CSV Validation | Content checks pass | ✅ Inline PowerShell | Yes |
+| HTML Validation | Section checks pass | ✅ Inline PowerShell | Yes |
+| Regression Tests | No unexpected changes | ❌ Not implemented | Planned |
+| VirusTotal | <3 detections | ✅ Implemented | Yes |
 
 ---
 
-## Part 6: Implementation Roadmap
+## Part 6: Implementation Roadmap (Revised)
 
-### Phase 1: Foundation (Week 1-2)
+### Phase 1: Foundation ✅ MOSTLY COMPLETE
 
 **Goal**: Restore and expand unit test coverage
 
-| Task | Priority | Effort | Impact |
-|------|----------|--------|--------|
-| Un-comment and fix CSV parsing tests | P0 | 2 days | High |
-| Un-comment and fix HTML export tests | P0 | 2 days | High |
-| Un-comment data transformation tests | P0 | 1 day | High |
-| Add code coverage reporting to CI | P1 | 0.5 days | Medium |
-| Re-enable CodeQL scanning | P1 | 0.5 days | Medium |
+| Task | Priority | Status | Notes |
+|------|----------|--------|-------|
+| Un-comment and fix tests | P0 | ✅ Done | Only 3 remain commented |
+| Add code coverage reporting to CI | P1 | ✅ Done | ReportGenerator |
+| Re-enable CodeQL scanning | P1 | ✅ Done | codeql.yml active |
+| Reach 300+ tests | P1 | ⚠️ 244/300 | 56 more needed |
 
 **Deliverables**:
-- ~300 active tests (vs current ~100)
-- Code coverage badge on README
-- CodeQL results in Security tab
+- ~~~300 active tests (vs current ~100)~~ → 244 active tests (81% of target)
+- ✅ Code coverage reporting
+- ✅ CodeQL results in Security tab
 
-### Phase 2: Content Validation (Week 2-3)
+### Phase 2: Content Validation ⚠️ IN PROGRESS
 
 **Goal**: Validate report content, not just existence
 
-| Task | Priority | Effort | Impact |
-|------|----------|--------|--------|
-| Create CSV schema validation tests | P0 | 2 days | High |
-| Create HTML section validation tests | P0 | 2 days | High |
-| Create data integrity tests | P0 | 1 day | High |
-| Create scrubbing validation tests | P1 | 1 day | Medium |
-| Update integration test jobs with validation | P0 | 1 day | High |
+| Task | Priority | Status | Notes |
+|------|----------|--------|-------|
+| Create CSV schema validation tests | P0 | ✅ Done | 9 tests |
+| Create HTML section validation tests | P0 | ✅ Done | 11 tests |
+| Update integration tests with validation | P0 | ✅ Done | Inline PowerShell |
+| Expand to 50+ content validation tests | P1 | ⚠️ 20/50 | 30 more needed |
+| Add VB365-specific validation | P2 | ❌ Not started | |
 
 **Deliverables**:
-- ContentValidation test category with 50+ tests
-- Integration tests validate content, not just file existence
+- ✅ ContentValidation test category exists
+- ✅ Integration tests validate content
+- ⚠️ Need 30 more tests to reach target
 
-### Phase 3: Version Matrix (Week 3-4)
+### Phase 3: Version Matrix & Golden Data 🚨 PRIORITY
 
-**Goal**: Cover all VBR versions systematically
+**Goal**: Create golden datasets and enable regression detection
 
-| Task | Priority | Effort | Impact |
-|------|----------|--------|--------|
-| Deploy missing self-hosted runners | P1 | 2 days | High |
-| Create golden datasets per version | P1 | 3 days | High |
-| Implement version-specific validation | P1 | 2 days | High |
-| Add matrix strategy to CI workflow | P1 | 1 day | High |
+| Task | Priority | Status | Notes |
+|------|----------|--------|-------|
+| Create `test-data/vbr-v12/` golden data | P0 | ❌ Not started | **BLOCKER** |
+| Create `test-data/vbr-v13/` golden data | P0 | ❌ Not started | **BLOCKER** |
+| Implement version-specific validation | P1 | ⚠️ Placeholder | Needs golden data |
+| Add golden baseline comparison to CI | P1 | ❌ Not started | Needs golden data |
 
-**Deliverables**:
-- 6 self-hosted runners (or hybrid approach)
-- Version-specific golden baselines
-- Matrix integration tests
+**Revised Deliverables**:
+- Focus on v12 and v13 golden data only
+- Deprioritize v11, v12.1-v12.3 runners
 
-### Phase 4: Regression Detection (Week 4-5)
+### Phase 4: Regression Detection ❌ BLOCKED
 
 **Goal**: Automatically detect unintended changes
 
-| Task | Priority | Effort | Impact |
-|------|----------|--------|--------|
-| Implement report structure comparison | P1 | 2 days | High |
-| Create baseline update process | P2 | 1 day | Medium |
-| Add regression alerts to CI | P1 | 1 day | High |
-| Document baseline maintenance | P2 | 0.5 days | Low |
+| Task | Priority | Status | Notes |
+|------|----------|--------|-------|
+| Implement report structure comparison | P1 | ❌ Blocked | Needs Phase 3 |
+| Create baseline update process | P2 | ❌ Blocked | Needs Phase 3 |
+| Add regression alerts to CI | P1 | ❌ Blocked | Needs Phase 3 |
 
-**Deliverables**:
-- Automated regression detection
-- Clear process for updating baselines
-- Alerting for unexpected changes
-
-### Phase 5: Polish & Documentation (Week 5-6)
+### Phase 5: Polish & Documentation ⚠️ PARTIAL
 
 **Goal**: Production-ready, maintainable system
 
-| Task | Priority | Effort | Impact |
-|------|----------|--------|--------|
-| Add performance baseline tracking | P2 | 1 day | Medium |
-| Document test architecture | P2 | 1 day | Medium |
-| Create runner maintenance guide | P2 | 1 day | Medium |
-| Add status badges to README | P3 | 0.5 days | Low |
-
-**Deliverables**:
-- Complete documentation
-- Performance tracking (optional)
-- Fully documented system
+| Task | Priority | Status | Notes |
+|------|----------|--------|-------|
+| Performance metrics in CI | P2 | ✅ Done | Exists in integration tests |
+| Performance baseline enforcement | P2 | ❌ Not started | |
+| Document test architecture | P2 | ❌ Not started | |
+| Add status badges to README | P3 | ❌ Not started | |
 
 ---
 
@@ -834,36 +511,66 @@ jobs:
 
 ### 7.1 Golden Dataset Strategy
 
+**Priority action**: Create the `test-data/` directory structure:
+
+```bash
+# Create directory structure
+mkdir -p test-data/vbr-v12/golden-csvs
+mkdir -p test-data/vbr-v13/golden-csvs
+```
+
 For each VBR version, maintain:
 
 ```
 test-data/
 ├── vbr-v12/
 │   ├── golden-csvs/
-│   │   ├── vbrinfo.csv          # Static reference data
-│   │   ├── Servers.csv          # Anonymized server list
-│   │   ├── Proxies.csv          # Proxy configuration
-│   │   └── ...
-│   ├── golden-report.html       # Reference HTML report
-│   ├── expected-sections.json   # List of required sections
-│   ├── expected-columns.json    # CSV schema definitions
-│   └── version-features.json    # Feature flags for this version
+│   │   ├── _vbrinfo.csv          # Static reference data
+│   │   ├── _Servers.csv          # Anonymized server list
+│   │   ├── _Proxies.csv          # Proxy configuration
+│   │   ├── _Repositories.csv     # Repository data
+│   │   ├── _Jobs.csv             # Job configuration
+│   │   └── _LicInfo.csv          # License info
+│   ├── golden-report.html        # Reference HTML report
+│   ├── expected-sections.json    # List of required sections
+│   ├── expected-columns.json     # CSV schema definitions
+│   └── version-features.json     # Feature flags for this version
+└── vbr-v13/
+    └── ... (same structure)
 ```
 
-### 7.2 Golden Data Maintenance
+### 7.2 Golden Data Generation Script
 
-**When to Update Golden Data**:
-1. After VBR service pack/update that changes CSV schema
-2. After intentional report structure changes
-3. After adding new report sections
+Create `scripts/generate-golden-data.ps1`:
 
-**Update Process**:
-```bash
-# Generate new golden data from trusted environment
-./VeeamHealthCheck.exe /mode=vbr /silent
+```powershell
+param(
+    [Parameter(Mandatory=$true)]
+    [string]$Version,  # "v12" or "v13"
 
-# Copy to test-data with anonymization
-./scripts/generate-golden-data.ps1 -Version v12 -SourcePath C:\temp\vHC
+    [Parameter(Mandatory=$true)]
+    [string]$SourcePath  # Path to C:\temp\vHC output
+)
+
+$targetDir = "test-data/vbr-$Version"
+
+# Copy and anonymize CSVs
+$csvSource = Get-ChildItem "$SourcePath\Original\VBR\*\*" -Directory |
+             Sort-Object LastWriteTime -Descending |
+             Select-Object -First 1
+
+Get-ChildItem "$($csvSource.FullName)\*.csv" | ForEach-Object {
+    $content = Import-Csv $_.FullName
+    # Anonymize sensitive data
+    # ... anonymization logic ...
+    $content | Export-Csv "$targetDir\golden-csvs\$($_.Name)" -NoTypeInformation
+}
+
+# Copy and anonymize report
+$report = Get-ChildItem "$SourcePath\vHC-Report\*.html" |
+          Sort-Object LastWriteTime -Descending |
+          Select-Object -First 1
+# ... anonymize and copy ...
 ```
 
 ### 7.3 Test Data Anonymization
@@ -873,21 +580,29 @@ Golden data should be anonymized for repository storage:
 - IP addresses → 10.0.0.x range
 - Paths → C:\Backup\Repository\
 - Credentials → removed entirely
+- Customer-specific data → redacted
 
 ---
 
 ## Part 8: Self-Hosted Runner Infrastructure
 
-### 8.1 Runner Requirements
+### 8.1 Runner Requirements (Revised)
 
-| Runner | OS | VBR Version | SQL | Memory | Storage |
-|--------|----|-----------  |-----|--------|---------|
-| vbr-v11 | Windows Server 2019 | 11.0 | Local | 8 GB | 100 GB |
-| vbr-v12 | Windows Server 2022 | 12.0 | Local | 8 GB | 100 GB |
-| vbr-v12-1 | Windows Server 2022 | 12.1 | Local | 8 GB | 100 GB |
-| vbr-v12-2 | Windows Server 2022 | 12.2 | Local | 8 GB | 100 GB |
-| vbr-v12-3 | Windows Server 2022 | 12.3 | Local | 8 GB | 100 GB |
-| vbr-v13-sql | Windows Server 2022 | 13.0 | Remote | 16 GB | 200 GB |
+**Active Runners:**
+| Runner | OS | VBR Version | SQL | Status |
+|--------|----|-----------  |-----|--------|
+| vbr-v12 | Windows Server 2022 | 12.0 | Local | ✅ Active |
+| vbr-v13-sql | Windows Server 2022 | 13.0 | Remote | ✅ Active |
+| CONSOLE_HOST | Windows Server 2022 | 13.0 | Remote | ✅ Active |
+
+**Planned Runners:**
+| Runner | OS | VBR Version | SQL | Status |
+|--------|----|-----------  |-----|--------|
+| vbr-v12-3 | Windows Server 2022 | 12.3 | Local | ⏳ When needed |
+
+**Deprioritized:**
+- vbr-v11 (legacy, low ROI)
+- vbr-v12-1, vbr-v12-2 (minimal differences from v12)
 
 ### 8.2 Runner Security
 
@@ -910,22 +625,22 @@ Monthly tasks:
 
 ### 9.1 Key Metrics to Track
 
-| Metric | Source | Alert Threshold |
-|--------|--------|-----------------|
-| Build success rate | GitHub Actions | <95% |
-| Test pass rate | Test reports | <100% |
-| Code coverage | Coverlet | <75% drop |
-| Integration test duration | Job logs | >2x baseline |
-| Report generation time | VHC logs | >2x baseline |
-| Security findings | CodeQL/Semgrep | Any high/critical |
+| Metric | Source | Current Status | Alert Threshold |
+|--------|--------|----------------|-----------------|
+| Build success rate | GitHub Actions | ✅ Tracked | <95% |
+| Test pass rate | Test reports | ✅ Tracked | <100% |
+| Code coverage | ReportGenerator | ✅ Reported | <75% drop |
+| Integration test duration | Job logs | ✅ Collected | >2x baseline |
+| Report generation time | VHC logs | ✅ Collected | >2x baseline |
+| Security findings | CodeQL/Semgrep | ✅ Tracked | Any high/critical |
 
 ### 9.2 Dashboard Integration
 
 Consider adding:
-- GitHub Actions workflow status badges
-- Code coverage trend graphs (Codecov or similar)
-- Test result history
-- Performance trend tracking
+- ✅ GitHub Actions workflow status (visible in repo)
+- ⏳ Code coverage badge on README
+- ⏳ Test result history trending
+- ⏳ Performance trend tracking
 
 ---
 
@@ -951,42 +666,48 @@ dotnet test --collect:"XPlat Code Coverage"
 
 | Event | What Runs |
 |-------|-----------|
-| Push to `dev` | Build + Unit Tests + Static Analysis |
+| Push to `dev` | Build + Unit Tests + Coverage |
 | Push to `master` | Full pipeline including release |
-| Pull Request | Build + Unit Tests + Coverage check |
-| Manual dispatch | Selectable: all versions or specific |
-| Weekly schedule | Dependency scan + full integration |
+| Pull Request | Build + Unit Tests (no integration) |
+| Manual dispatch | Full pipeline |
 
 ### Golden Data Paths
 
-| Version | Golden CSVs | Golden Report |
-|---------|-------------|---------------|
-| v11 | `test-data/vbr-v11/golden-csvs/` | `test-data/vbr-v11/golden-report.html` |
-| v12 | `test-data/vbr-v12/golden-csvs/` | `test-data/vbr-v12/golden-report.html` |
-| v13 | `test-data/vbr-v13/golden-csvs/` | `test-data/vbr-v13/golden-report.html` |
+| Version | Golden CSVs | Golden Report | Status |
+|---------|-------------|---------------|--------|
+| v12 | `test-data/vbr-v12/golden-csvs/` | `test-data/vbr-v12/golden-report.html` | ❌ Not created |
+| v13 | `test-data/vbr-v13/golden-csvs/` | `test-data/vbr-v13/golden-report.html` | ❌ Not created |
 
 ---
 
-## Appendix B: Cost-Benefit Analysis
+## Appendix B: Cost-Benefit Analysis (Revised)
 
-### Option 1: Full Implementation (Recommended)
-- **Cost**: 6 weeks, 6 VMs for runners
-- **Benefit**: 100% automated validation, all versions covered
-- **Risk**: Low (proven patterns)
+### Recommended Approach: Focused Implementation
 
-### Option 2: Minimal Implementation
-- **Cost**: 2 weeks, 3 VMs (existing)
-- **Benefit**: Content validation for 3 versions only
-- **Risk**: Medium (gaps in version coverage)
+Based on current progress, the recommended path forward:
 
-### Option 3: Phased Implementation
-- **Cost**: 6 weeks spread over quarters, add runners incrementally
-- **Benefit**: Lower upfront investment, learn and adjust
-- **Risk**: Low (iterative approach)
+1. **Immediate (This Week)**
+   - Create `test-data/` directory structure
+   - Generate golden datasets from existing runners (v12, v13)
+   - Add 15 more content validation tests
 
-**Recommendation**: Option 3 (Phased) - Start with Phases 1-2 immediately, add version matrix as runners become available.
+2. **Short Term (2 Weeks)**
+   - Implement regression comparison in CI
+   - Reach 50+ content validation tests
+   - Add coverage badge to README
+
+3. **Medium Term (1 Month)**
+   - Consider v12.3 runner for Entra testing
+   - Performance baseline enforcement
+   - Documentation updates
+
+4. **Deprioritized**
+   - v11 runner (legacy, low value)
+   - v12.1, v12.2 runners (minimal differences)
+   - Full 6-runner matrix (overkill for current needs)
 
 ---
 
-*Document generated: 2026-01-21*
-*Next review: After Phase 2 completion*
+*Document created: 2026-01-21*
+*Last updated: 2026-01-26*
+*Next review: After golden datasets created*
