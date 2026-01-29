@@ -90,12 +90,20 @@ jobs:
       id: get_version
       run: |
         $csproj = [xml](Get-Content vHC/HC_Reporting/VeeamHealthCheck.csproj)
-        $version = $csproj.Project.PropertyGroup[0].AssemblyVersion
+        $baseVersion = $csproj.Project.PropertyGroup[0].AssemblyVersion
+
+        # Parse base version (e.g., 3.0.0.501) and replace last segment with run number
+        $versionParts = $baseVersion.Split('.')
+        # Use format: Major.Minor.Patch.RunNumber (e.g., 3.0.1.45)
+        $version = "$($versionParts[0]).$($versionParts[1]).1.${{ github.run_number }}"
+
         echo "version=$version" >> $env:GITHUB_OUTPUT
-        echo "Version: $version"
+        echo "Base version: $baseVersion"
+        echo "Release version: $version (using run number ${{ github.run_number }})"
     
     - name: Publish single-file executable
       run: |
+        $version = "${{ steps.get_version.outputs.version }}"
         dotnet publish vHC/HC_Reporting/VeeamHealthCheck.csproj `
           -c Release `
           -r win-x64 `
@@ -103,7 +111,11 @@ jobs:
           -p:PublishSingleFile=true `
           -p:IncludeNativeLibrariesForSelfExtract=true `
           -p:EnableCompressionInSingleFile=true `
+          -p:Version=$version `
+          -p:AssemblyVersion=$version `
+          -p:FileVersion=$version `
           -o publish/out
+        Write-Host "Published with version: $version"
     
     - name: Create ZIP archive
       run: |
@@ -1553,9 +1565,10 @@ jobs:
         $changelog$issuesSection$prSection
         "@
 
-        # Output for use in next step (escape multiline content)
-        $releaseNotes = $releaseNotes -replace "`r`n", "%0A" -replace "`n", "%0A"
-        echo "changelog=$releaseNotes" >> $env:GITHUB_OUTPUT
+        # Output multiline content using heredoc syntax (no URL encoding needed)
+        echo "changelog<<EOF" >> $env:GITHUB_OUTPUT
+        echo $releaseNotes >> $env:GITHUB_OUTPUT
+        echo "EOF" >> $env:GITHUB_OUTPUT
 
     - name: Create GitHub Release
       id: create_release
