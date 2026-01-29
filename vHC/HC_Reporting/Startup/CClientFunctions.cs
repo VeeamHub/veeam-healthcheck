@@ -152,8 +152,8 @@ namespace VeeamHealthCheck.Startup
                     CGlobals.IsVbrInstalled = true;
                     this.LOG.Info("VBR software detected", false);
 
-                    // now get the VBR Version and store as global variable to help direct which script(s) to use
-                    // VbrVersionSupportCheck();
+                    // Get VBR version to determine correct PowerShell version (PS7 for VBR 13+, PS5 for VBR 12-)
+                    this.GetVbrVersion();
                 }
             }
 

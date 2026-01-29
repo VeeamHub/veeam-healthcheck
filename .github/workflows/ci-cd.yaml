@@ -1461,10 +1461,12 @@ jobs:
     if: |
       github.ref == 'refs/heads/master' &&
       needs.virustotal-scan.outputs.zip_clean == 'true'
-    
+
     steps:
     - name: Checkout repository
       uses: actions/checkout@v4
+      with:
+        fetch-depth: 0  # Fetch full history for release notes generation
 
     - name: Download ZIP artifact
       uses: actions/download-artifact@v4
@@ -1481,6 +1483,80 @@ jobs:
         echo "hash=$hash" >> $env:GITHUB_OUTPUT
         echo "size_mb=$sizeMB" >> $env:GITHUB_OUTPUT
 
+    - name: Generate Release Notes
+      id: release_notes
+      run: |
+        # Fetch the last release tag to compare changes
+        $lastTag = git describe --tags --abbrev=0 2>$null
+        if (-not $lastTag) {
+          $lastTag = (git rev-list --max-parents=0 HEAD)
+        }
+
+        # Get commit messages since last release
+        $commits = git log "$lastTag..HEAD" --pretty=format:"- %s (%h)" --no-merges
+
+        # Find merged PRs by searching commit messages
+        $prNumbers = git log "$lastTag..HEAD" --pretty=format:"%s" |
+          Select-String -Pattern "#(\d+)" -AllMatches |
+          ForEach-Object { $_.Matches } |
+          ForEach-Object { $_.Groups[1].Value } |
+          Sort-Object -Unique
+
+        # Extract issues fixed (Fixes #XX, Closes #XX, Resolves #XX)
+        $fixedIssues = git log "$lastTag..HEAD" --pretty=format:"%B" |
+          Select-String -Pattern "(?:Fixes|Closes|Resolves)\s+#(\d+)" -AllMatches |
+          ForEach-Object { $_.Matches } |
+          ForEach-Object { $_.Groups[1].Value } |
+          Sort-Object -Unique
+
+        # Get list of changed files
+        $changedFiles = git diff --name-only "$lastTag..HEAD" | Measure-Object | Select-Object -ExpandProperty Count
+
+        # Build changelog section
+        $changelog = ""
+        if ($commits) {
+          $changelog = @"
+        ### 📝 Changes in This Release
+
+        $commits
+
+        **Files Changed:** $changedFiles
+        "@
+        }
+
+        # Build issues section
+        $issuesSection = ""
+        if ($fixedIssues) {
+          $issuesList = $fixedIssues | ForEach-Object { "- Fixes #$_ - https://github.com/${{ github.repository }}/issues/$_" }
+          $issuesSection = @"
+
+        ### 🐛 Issues Resolved
+
+        $($issuesList -join "`n")
+        "@
+        }
+
+        # Build PR section
+        $prSection = ""
+        if ($prNumbers) {
+          $prList = $prNumbers | ForEach-Object { "- PR #$_ - https://github.com/${{ github.repository }}/pull/$_" }
+          $prSection = @"
+
+        ### 🔀 Pull Requests
+
+        $($prList -join "`n")
+        "@
+        }
+
+        # Combine all sections
+        $releaseNotes = @"
+        $changelog$issuesSection$prSection
+        "@
+
+        # Output for use in next step (escape multiline content)
+        $releaseNotes = $releaseNotes -replace "`r`n", "%0A" -replace "`n", "%0A"
+        echo "changelog=$releaseNotes" >> $env:GITHUB_OUTPUT
+
     - name: Create GitHub Release
       id: create_release
       uses: softprops/action-gh-release@v1
@@ -1489,39 +1565,41 @@ jobs:
         name: Veeam Health Check v${{ needs.build-and-test.outputs.version }}
         body: |
           ## Veeam Health Check v${{ needs.build-and-test.outputs.version }}
-          
+
+          ${{ steps.release_notes.outputs.changelog }}
+
           ### ✅ Security & Quality Verification
           - ✅ Build & Unit Tests: **Passed**
           - ✅ VirusTotal Scan: **Clean** (0 detections)
           - ✅ Integration Tests: **Passed** (VBR v12, v13, v13+SQL)
           - ✅ Code Quality: Analyzed
-          
+
           ### 📦 Download
           **VeeamHealthCheck-${{ needs.build-and-test.outputs.version }}.zip** (${{ steps.release_hash.outputs.size_mb }} MB)
-          
+
           **SHA256 Checksum:**
           ```
           ${{ steps.release_hash.outputs.hash }}
           ```
-          
+
           **Verification Command:**
           ```powershell
           (Get-FileHash "VeeamHealthCheck-${{ needs.build-and-test.outputs.version }}.zip").Hash
           ```
-          
+
           ### 📋 Requirements
           - Windows 7 or later
           - .NET 8 runtime (included in self-contained build)
           - PowerShell 5.1 or later
-          
+
           ### 🚀 Quick Start
           1. Download the ZIP file above
           2. Extract to a folder
           3. Run `VeeamHealthCheck.exe`
-          
+
           ---
-          
-          **Built from:** [${{ github.sha }}](https://github.com/${{ github.repository }}/commit/${{ github.sha }})  
+
+          **Built from:** [${{ github.sha }}](https://github.com/${{ github.repository }}/commit/${{ github.sha }})
           **Build Date:** ${{ github.event.head_commit.timestamp }}
         draft: false
         prerelease: false

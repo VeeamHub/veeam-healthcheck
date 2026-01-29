@@ -50,7 +50,12 @@ if ([string]::IsNullOrEmpty($ReportPath)) {
          }
          else{
              if( -not $line -match "[VmcStats]"){
-                 $currentSection += $line.Remove(0,49)
+                 # Only remove prefix if line is long enough, otherwise use the whole line
+                 if ($line.Length -ge 49) {
+                     $currentSection += $line.Remove(0,49)
+                 } else {
+                     $currentSection += $line
+                 }
              }
          }
      }

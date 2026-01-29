@@ -55,7 +55,10 @@ namespace VeeamHealthCheck.Startup
             CClientFunctions f = new CClientFunctions();
             f.LogVersionAndArgs(this.args);
             try { f.GetVbrVersion(); }
-            catch (Exception) { }
+            catch (Exception ex)
+            {
+                CGlobals.Logger.Debug($"VBR version detection deferred: {ex.Message}");
+            }
             f.Dispose();
         }
 
