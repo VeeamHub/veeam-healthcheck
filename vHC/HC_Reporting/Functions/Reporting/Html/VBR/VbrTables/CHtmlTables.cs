@@ -2784,7 +2784,7 @@ this.form.TableHeader(VbrLocalizationHelper.SbrExt15, VbrLocalizationHelper.SbrE
                             else
                             {
                                 //double.TryParse(job.OnDiskGB, out onDiskGB);
-                                onDiskGB = Math.Round(job.OnDiskGB, 2);
+                                onDiskGB = Math.Round(job.OnDiskGB ?? 0, 2);
 
                             }
 
@@ -3104,7 +3104,7 @@ this.form.TableHeader(VbrLocalizationHelper.SbrExt15, VbrLocalizationHelper.SbrE
                         jobName,
                         repoName,
                         sourceSizeGB.ToString(),
-                        job.OnDiskGB.ToString(), //"0", // OnDisk calculated separately for NAS
+                        (job.OnDiskGB ?? 0).ToString(), //"0", // OnDisk calculated separately for NAS
                         job.RetentionType == "Cycles" ? "Points" : job.RetentionType,
                         job.RetainDaysToKeep,
                         job.StgEncryptionEnabled,

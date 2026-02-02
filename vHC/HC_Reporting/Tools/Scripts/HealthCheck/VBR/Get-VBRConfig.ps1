@@ -605,7 +605,14 @@ try {
             # Build hashtable of latest NAS session per job ID for O(1) lookup
             $nasSessionLookup = @{}
             try {
-                $allNasSessions = Get-VBRBackupSession | Where-Object { $_.CreationTime -gt $cutoffDate }
+                # OPTIMIZED: Query sessions only for known NAS job names instead of all jobs
+                $allNasSessions = @()
+                foreach ($nasJob in $nasBackup) {
+                    $jobSessions = Get-VBRBackupSession -Name $nasJob.Name | Where-Object { $_.CreationTime -gt $cutoffDate }
+                    if ($jobSessions) {
+                        $allNasSessions += $jobSessions
+                    }
+                }
                 Write-LogFile("Found " + $allNasSessions.Count + " NAS sessions in the last " + $ReportInterval + " days")
 
                 foreach ($session in $allNasSessions) {

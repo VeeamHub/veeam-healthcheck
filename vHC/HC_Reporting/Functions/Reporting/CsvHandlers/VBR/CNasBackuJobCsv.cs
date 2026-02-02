@@ -78,7 +78,7 @@ namespace VeeamHealthCheck.Functions.Reporting.CsvHandlers.VBR
     {
         public string JobType { get; set; }
 
-        public double OnDiskGB { get; set; }
+        public double? OnDiskGB { get; set; }
 
         public double SourceGB { get; set; }
 
