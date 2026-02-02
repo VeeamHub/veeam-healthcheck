@@ -39,6 +39,11 @@ REMOTE OPERATIONS:
 SPECIAL MODES:
   /security         Run security-focused assessment only
   /import           Generate report from existing data (no new collection)
+                    Uses default path: C:\temp\vHC
+  /import:<path>    Generate report from CSV files at specified path
+                    Supports both flat and nested directory structures:
+                    - Direct: /import:C:\path\to\csvs
+                    - Nested: /import:C:\path\Original\VBR\server\timestamp
   /hotfix           Run hotfix detection
   /path=<dir>       Specify path for hotfix detection (used with /hotfix)
 
@@ -51,6 +56,8 @@ EXAMPLES:
   VeeamHealthCheck.exe /run /days:30 /lite /pdf
   VeeamHealthCheck.exe /security /remote /host=vbr-server.domain.local
   VeeamHealthCheck.exe /import /run
+  VeeamHealthCheck.exe /import:D:\Exports\VBR-data
+  VeeamHealthCheck.exe /import:""C:\My Path\CSV Files""
   VeeamHealthCheck.exe /hotfix /path=C:\VeeamUpdates
   VeeamHealthCheck.exe /run /show:report /scrub:true
 

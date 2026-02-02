@@ -23,6 +23,14 @@ namespace VeeamHealthCheck.Shared
         private static readonly CScrubHandler scrubberMain = new();
         public static readonly string backupServerId = "6745a759-2205-4cd2-b172-8ec8f7e60ef8";
         public static bool IMPORT = false;
+
+        /// <summary>
+        /// When IMPORT is true, this specifies the path to import CSV files from.
+        /// If null or empty, the default path (C:\temp\vHC) is used.
+        /// Supports both flat structure and nested servername/timestamp structure.
+        /// </summary>
+        public static string IMPORT_PATH = null;
+
         public static int VBRMAJORVERSION;
         public static string VBRFULLVERSION;
         public static int PowerShellVersion;

@@ -1,6 +1,7 @@
 ﻿// Copyright (c) 2021, Adam Congdon <adam.congdon2@gmail.com>
 // MIT License
 using System;
+using System.IO;
 using System.Runtime.InteropServices;
 using System.Text.RegularExpressions;
 using VeeamHealthCheck.Functions.Collection.PSCollections;
@@ -153,6 +154,16 @@ namespace VeeamHealthCheck.Startup
                         CGlobals.IMPORT = true;
                         CGlobals.RunFullReport = true;
                         break;
+                    case var importMatch when new Regex("^/import[:=](.+)$", RegexOptions.IgnoreCase).IsMatch(a):
+                        run = true;
+                        CGlobals.IMPORT = true;
+                        CGlobals.RunFullReport = true;
+                        CGlobals.IMPORT_PATH = this.ParseImportPath(a);
+                        if (!string.IsNullOrEmpty(CGlobals.IMPORT_PATH))
+                        {
+                            CGlobals.Logger.Info("Import path set to: " + CGlobals.IMPORT_PATH);
+                        }
+                        break;
                     case "/security":
                         run = true;
                         CGlobals.EXPORTINDIVIDUALJOBHTMLS = false;
@@ -285,6 +296,42 @@ namespace VeeamHealthCheck.Startup
             catch (Exception)
             {
                 CGlobals.Logger.Error("Input path is invalide. Try again.");
+                return null;
+            }
+        }
+
+        /// <summary>
+        /// Parse import path from /import:path or /import=path format.
+        /// </summary>
+        private string ParseImportPath(string input)
+        {
+            try
+            {
+                // Handle both /import:path and /import=path formats
+                char separator = input.Contains('=') ? '=' : ':';
+                int separatorIndex = input.IndexOf(separator);
+
+                if (separatorIndex < 0 || separatorIndex >= input.Length - 1)
+                {
+                    CGlobals.Logger.Error("Import path parameter is empty. Usage: /import:C:\\path\\to\\csvs");
+                    return null;
+                }
+
+                string path = input.Substring(separatorIndex + 1).Trim();
+
+                // Validate path exists
+                if (!Directory.Exists(path))
+                {
+                    CGlobals.Logger.Error($"Import path does not exist: {path}");
+                    CGlobals.Logger.Info("Please verify the path and try again.");
+                    return null;
+                }
+
+                return path;
+            }
+            catch (Exception ex)
+            {
+                CGlobals.Logger.Error($"Error parsing import path: {ex.Message}");
                 return null;
             }
         }
