@@ -113,5 +113,7 @@ namespace VeeamHealthCheck.Functions.Reporting.CsvHandlers
 
         [Index(34)]
         public string IndexingType { get; set; }
+        [Index(35)]
+        public double OnDiskGB { get; set; }
     }
 }
