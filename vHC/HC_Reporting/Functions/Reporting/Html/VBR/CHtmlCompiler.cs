@@ -122,9 +122,62 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR
         {
             this.log.Info(this.logStart + ">>> ENTERING GetServerName() method <<<");
             this.log.Info("Checking for server name...");
-            this.log.Info(this.logStart + "About to call Dns.GetHostName()...");
+
+            // Priority 1: Use remote host if executing remotely
+            if (CGlobals.REMOTEEXEC && !string.IsNullOrEmpty(CGlobals.REMOTEHOST))
+            {
+                this.log.Info(this.logStart + "Using REMOTEHOST: " + CGlobals.REMOTEHOST);
+                return CGlobals.REMOTEHOST;
+            }
+
+            // Priority 2: Extract VBR server name from vbrinfo CSV (works for import and local)
+            try
+            {
+                this.log.Info(this.logStart + "Attempting to read VBR server name from vbrinfo.csv...");
+                CCsvParser parser = new();
+                var vbrInfo = parser.BnrCsvParser()?.FirstOrDefault();
+
+                if (vbrInfo != null)
+                {
+                    // Determine server name based on database type
+                    string serverName = null;
+
+                    if (!string.IsNullOrEmpty(vbrInfo.DbType))
+                    {
+                        if (vbrInfo.DbType.Equals("PostgreSQL", StringComparison.OrdinalIgnoreCase) ||
+                            vbrInfo.DbType.Equals("PostgreSql", StringComparison.OrdinalIgnoreCase))
+                        {
+                            serverName = vbrInfo.PgHost;
+                            this.log.Info(this.logStart + "Using PostgreSQL host: " + serverName);
+                        }
+                        else if (vbrInfo.DbType.Contains("Sql", StringComparison.OrdinalIgnoreCase))
+                        {
+                            serverName = vbrInfo.MsHost;
+                            this.log.Info(this.logStart + "Using SQL Server host: " + serverName);
+                        }
+                    }
+
+                    // If we got a valid server name, use it
+                    if (!string.IsNullOrEmpty(serverName))
+                    {
+                        this.log.Info(this.logStart + "VBR server name from CSV: " + serverName);
+                        return serverName;
+                    }
+                }
+                else
+                {
+                    this.log.Warning(this.logStart + "vbrinfo.csv not found or empty");
+                }
+            }
+            catch (Exception ex)
+            {
+                this.log.Warning(this.logStart + "Failed to read VBR server name from CSV: " + ex.Message);
+            }
+
+            // Priority 3: Fallback to local hostname
+            this.log.Info(this.logStart + "Falling back to Dns.GetHostName()...");
             string hostname = Dns.GetHostName();
-            this.log.Info(this.logStart + "Dns.GetHostName() completed successfully. Hostname: " + hostname);
+            this.log.Info(this.logStart + "Using local hostname: " + hostname);
             return hostname;
         }
 
