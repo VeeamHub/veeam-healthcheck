@@ -594,35 +594,29 @@ try {
         $nasBackup = Get-VBRUnstructuredBackupJob
         Write-LogFile("Found " + $nasBackup.Count + " NAS backup jobs")
         
-        # Optimization: Fetch all sessions once and filter by date, then build lookup hashtable
+        # Process NAS jobs - use NAS-specific session cmdlet
         if ($nasBackup.Count -gt 0) {
-            Write-LogFile("Fetching all backup sessions for the last " + $ReportInterval + " days...")
-            $allSessions = Get-VBRBackupSession | Where-Object { $_.CreationTime -gt (Get-Date).AddDays(-$ReportInterval) }
-            Write-LogFile("Found " + $allSessions.Count + " total sessions in the last " + $ReportInterval + " days")
-            
-            # Build hashtable of latest session per job name for O(1) lookup
-            $sessionLookup = @{}
-            foreach ($session in $allSessions) {
-                $jobName = $session.Name
-                # Only keep the latest session per job name
-                if (-not $sessionLookup.ContainsKey($jobName) -or 
-                    $session.CreationTime -gt $sessionLookup[$jobName].CreationTime) {
-                    $sessionLookup[$jobName] = $session
-                }
-            }
-            Write-LogFile("Built session lookup hashtable with " + $sessionLookup.Count + " unique jobs")
+            Write-LogFile("Fetching NAS backup sessions for the last " + $ReportInterval + " days...")
+            $cutoffDate = (Get-Date).AddDays(-$ReportInterval)
 
-            # Export sessions to cache for reuse by session report scripts
-            Write-LogFile("Exporting sessions to cache for reuse by other collectors...")
-            $sessionCachePath = Join-Path -Path $ReportPath -ChildPath "SessionCache.xml"
+            # Build hashtable of latest NAS session per job ID for O(1) lookup
+            $nasSessionLookup = @{}
             try {
-                # Export using Export-Clixml for object fidelity
-                $allSessions | Export-Clixml -Path $sessionCachePath -Depth 3 -Force
-                Write-LogFile("Exported " + $allSessions.Count + " sessions to cache: " + $sessionCachePath)
+                $allNasSessions = Get-VBRBackupSession | Where-Object { $_.CreationTime -gt $cutoffDate }
+                Write-LogFile("Found " + $allNasSessions.Count + " NAS sessions in the last " + $ReportInterval + " days")
+
+                foreach ($session in $allNasSessions) {
+                    $jobId = $session.JobId.ToString()
+                    # Only keep the latest session per job ID
+                    if (-not $nasSessionLookup.ContainsKey($jobId) -or
+                        $session.CreationTime -gt $nasSessionLookup[$jobId].CreationTime) {
+                        $nasSessionLookup[$jobId] = $session
+                    }
+                }
+                Write-LogFile("Built NAS session lookup hashtable with " + $nasSessionLookup.Count + " unique jobs")
             }
             catch {
-                Write-LogFile("Warning: Failed to export session cache: " + $_.Exception.Message, "Warnings", "WARN")
-                # Non-fatal - continue execution
+                Write-LogFile("Warning: Failed to get NAS sessions: " + $_.Exception.Message, "Warnings", "WARN")
             }
 
             # Process each NAS job
@@ -630,24 +624,28 @@ try {
             foreach ($job in $nasBackup) {
                 $jobCounter++
                 Write-LogFile("Processing NAS job " + $jobCounter + "/" + $nasBackup.Count + ": " + $job.Name)
-                
+
                 # Initialize defaults
                 $onDiskGB = 0
                 $sourceGb = 0
-                
-                # Lookup session from hashtable (O(1) operation instead of API call)
-                if ($sessionLookup.ContainsKey($job.Name)) {
-                    $session = $sessionLookup[$job.Name]
-                    Write-LogFile("  Found session for job: " + $job.Name)
-                    
-                    # Extract metrics from session
-                    $onDiskGB = $session.SessionInfo.BackupTotalSize / 1024 / 1024 / 1024
-                    $sourceGb = $session.SessionInfo.Progress.TotalSize / 1024 / 1024 / 1024
+
+                # Lookup NAS session by job ID
+                $jobId = $job.Id.ToString()
+                if ($nasSessionLookup.ContainsKey($jobId)) {
+                    $session = $nasSessionLookup[$jobId]
+                    Write-LogFile("  Found NAS session for job: " + $job.Name)
+
+                    # Extract metrics from NAS session - use Progress properties
+                    if ($null -ne $session.Progress) {
+                        $onDiskGB = $session.Progress.ProcessedUsedSize / 1GB
+                        $sourceGb = $session.Progress.TotalSize / 1GB
+                        Write-LogFile("  OnDiskGB: " + $onDiskGB + ", SourceGB: " + $sourceGb)
+                    }
                 }
                 else {
-                    Write-LogFile("  No session found in last 14 days for job: " + $job.Name)
+                    Write-LogFile("  No NAS session found in last " + $ReportInterval + " days for job: " + $job.Name)
                 }
-                
+
                 # Add member properties to job object
                 $job | Add-Member -MemberType NoteProperty -Name JobType -Value "NAS Backup"
                 $job | Add-Member -MemberType NoteProperty -Name OnDiskGB -Value $onDiskGB
