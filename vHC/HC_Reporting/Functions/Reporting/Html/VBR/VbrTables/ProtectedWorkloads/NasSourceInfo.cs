@@ -28,34 +28,50 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR.VbrTables.ProtectedWorkl
             {
                 CCsvParser c = new();
                 var n = c.GetDynamicNasShareSize();
-                foreach (var rec in n)
+                
+                // Handle case where NAS data is not available (e.g., remote execution)
+                if (n != null)
                 {
-                    if(rec.BackupMode != string.Empty)
+                    foreach (var rec in n)
                     {
-                        NasWorkloads nas = new();
-                        nas.FileShareType = rec.FileShareType;
-                        nas.TotalShareSize = this.CalculateStorageString(rec.TotalShareSize);
-                        nas.TotalFilesCount = Convert.ToDouble(rec.TotalFilesCount);
-                        nas.TotalFoldersCount = Convert.ToDouble(rec.TotalFoldersCount);
-                        p.nasWorkloads.Add(nas);
-                    }
+                        if(rec.BackupMode != string.Empty)
+                        {
+                            NasWorkloads nas = new();
+                            nas.FileShareType = rec.FileShareType;
+                            nas.TotalShareSize = this.CalculateStorageString(rec.TotalShareSize);
+                            nas.TotalFilesCount = Convert.ToDouble(rec.TotalFilesCount);
+                            nas.TotalFoldersCount = Convert.ToDouble(rec.TotalFoldersCount);
+                            p.nasWorkloads.Add(nas);
+                        }
 
-                    // if (nas.TotalFilesCount > 0 || nas.TotalFoldersCount > 0 || Convert.ToDouble(rec.TotalShareSize) > 0)
-                    //    p.nasWorkloads.Add(nas);
+                        // if (nas.TotalFilesCount > 0 || nas.TotalFoldersCount > 0 || Convert.ToDouble(rec.TotalShareSize) > 0)
+                        //    p.nasWorkloads.Add(nas);
+                    }
+                }
+                else
+                {
+                    CGlobals.Logger.Info("NAS share size data not available - this is expected for remote execution", false);
                 }
 
                 var objectShares = c.GetDynamicNasObjectSize();
-                foreach (var rec in objectShares)
+                if (objectShares != null)
                 {
-                    NasWorkloads nas = new();
-                    nas.FileShareType = "Object";
-                    nas.TotalShareSize = this.CalculateStorageString(rec.TotalObjectStorageSize);
-                    nas.TotalFilesCount = Convert.ToDouble(rec.TotalObjectsCount);
-
-                    if (nas.TotalFilesCount > 0 || Convert.ToDouble(rec.TotalObjectStorageSize) > 0)
+                    foreach (var rec in objectShares)
                     {
-                        p.nasWorkloads.Add(nas);
+                        NasWorkloads nas = new();
+                        nas.FileShareType = "Object";
+                        nas.TotalShareSize = this.CalculateStorageString(rec.TotalObjectStorageSize);
+                        nas.TotalFilesCount = Convert.ToDouble(rec.TotalObjectsCount);
+
+                        if (nas.TotalFilesCount > 0 || Convert.ToDouble(rec.TotalObjectStorageSize) > 0)
+                        {
+                            p.nasWorkloads.Add(nas);
+                        }
                     }
+                }
+                else
+                {
+                    CGlobals.Logger.Info("NAS object size data not available - this is expected for remote execution", false);
                 }
             }
             catch (Exception e)
