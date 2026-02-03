@@ -495,7 +495,8 @@ namespace VeeamHealthCheck.Startup
             if (!CGlobals.GUIEXEC)
             {
                 this.LOG.Warning(this.logStart + "No stored credentials found for PowerShell 7 connection.", false);
-                this.LOG.Warning(this.logStart + "Credentials will be required. Please provide credentials via /creds=username:password parameter, or credentials will be prompted during collection.", false);
+                this.LOG.Warning(this.logStart + "Add the /run parameter to execute and be prompted for credentials.", false);
+                this.LOG.Warning(this.logStart + "Example: VeeamHealthCheck.exe /run /remote /host=" + host, false);
             }
             else
             {
