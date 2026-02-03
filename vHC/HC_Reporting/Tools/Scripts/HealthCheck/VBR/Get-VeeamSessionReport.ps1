@@ -90,12 +90,6 @@ function Write-LogFile {
 #[CmdletBinding()]
 
 
-#Load the Veeam PSSnapin
-if (!(Get-PSSnapin -Name VeeamPSSnapIn -ErrorAction SilentlyContinue)) {
-  Add-PSSnapin -Name VeeamPSSnapIn
-  Connect-VBRServer -Server $VBRServer
-}
-
 Disconnect-VBRServer
 try {
   if ([string]::IsNullOrEmpty($User) -or [string]::IsNullOrEmpty($PasswordBase64)) {

@@ -1,10 +1,13 @@
 ﻿// Copyright (c) 2021, Adam Congdon <adam.congdon2@gmail.com>
 // MIT License
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
 using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
 using VeeamHealthCheck.Functions.Collection.DB;
 using VeeamHealthCheck.Shared;
 using VeeamHealthCheck.Shared.Logging;
@@ -19,6 +22,7 @@ namespace VeeamHealthCheck.Functions.Collection.LogParser
         private readonly string pathToCsv = CVariables.vbrDir + @"\waits.csv";
 
         private readonly List<string> fixList = new();
+        private readonly object fileLock = new object(); // Thread-safe file writing
 
         private readonly string logStart = "[LogParser] ";
 
@@ -78,9 +82,13 @@ namespace VeeamHealthCheck.Functions.Collection.LogParser
 
         private void DumpWaitsToFile(string JobName, DateTime start, DateTime end, TimeSpan diff)
         {
-            using (StreamWriter sw = new StreamWriter(this.pathToCsv, append: true))
+            // Thread-safe file writing for parallel processing
+            lock (this.fileLock)
             {
-                sw.WriteLine(JobName + "," + start + "," + end + "," + diff);
+                using (StreamWriter sw = new StreamWriter(this.pathToCsv, append: true))
+                {
+                    sw.WriteLine(JobName + "," + start + "," + end + "," + diff);
+                }
             }
 
             // String csv = String.Join(
@@ -93,27 +101,42 @@ namespace VeeamHealthCheck.Functions.Collection.LogParser
         public Dictionary<string, List<TimeSpan>> GetWaitsFromFiles()
         {
             this.log.Info("Checking Log files for waits..", false);
-            Dictionary<string, List<TimeSpan>> jobsAndWaits = new();
-            string[] dirList = Directory.GetDirectories(this.LogLocation);
 
-            // int logCount = Directory.GetFiles(LogLocation, "*.log", SearchOption.AllDirectories).Count();
-            int jobFilesCount = Directory.GetFiles(this.LogLocation, "Job*.log", SearchOption.AllDirectories).Count();
-            int taskFilesCount = Directory.GetFiles(this.LogLocation, "Task*.log", SearchOption.AllDirectories).Count();
+            // OPTIMIZATION 1: Filter directories by last write time BEFORE scanning
+            var allDirs = Directory.GetDirectories(this.LogLocation);
+            var cutoffDate = DateTime.Now.AddDays(-CGlobals.ReportDays);
+            var recentDirs = allDirs
+                .Where(d => Directory.GetLastWriteTime(d) >= cutoffDate)
+                .ToArray();
 
+            this.log.Info(string.Format("[LogParser] Filtered to {0} of {1} directories within {2} days",
+                recentDirs.Length, allDirs.Length, CGlobals.ReportDays), false);
+
+            // Count files only in recent directories
+            int jobFilesCount = 0;
+            int taskFilesCount = 0;
+            foreach (var dir in recentDirs)
+            {
+                jobFilesCount += Directory.GetFiles(dir, "Job*.log", SearchOption.AllDirectories).Length;
+                taskFilesCount += Directory.GetFiles(dir, "Task*.log", SearchOption.AllDirectories).Length;
+            }
             int logCount = jobFilesCount + taskFilesCount;
 
+            this.log.Info(string.Format("[LogParser] Processing {0} Job logs + {1} Task logs = {2} total",
+                jobFilesCount, taskFilesCount, logCount), false);
+
+            // OPTIMIZATION 2: Parallel processing of directories
+            ConcurrentDictionary<string, List<TimeSpan>> jobsAndWaits = new();
             int counter = 0;
             int fileCounter = 0;
-            foreach (var d in dirList)
-            {
-                counter++;
-                string info = string.Format("[LogParser] Parsing Directory {0} of {1}", counter, dirList.Count());
-                this.log.Info(info, false);
-                string jobname = Path.GetFileName(d);
-                if (jobname == "Prod_VMs_Backup")
-                {
-                }
 
+            Parallel.ForEach(recentDirs, new ParallelOptions { MaxDegreeOfParallelism = Environment.ProcessorCount }, d =>
+            {
+                int currentCount = Interlocked.Increment(ref counter);
+                string info = string.Format("[LogParser] Parsing Directory {0} of {1}", currentCount, recentDirs.Length);
+                this.log.Info(info, false);
+
+                string jobname = Path.GetFileName(d);
                 List<TimeSpan> waits = new();
 
                 string[] jobList = Directory.GetFiles(d, "Job*.log", SearchOption.AllDirectories);
@@ -124,7 +147,8 @@ namespace VeeamHealthCheck.Functions.Collection.LogParser
 
                 foreach (var f in fileList)
                 {
-                    string fileInfoLog = string.Format("[LogParser] Parsing Log {0} of {1}", fileCounter, logCount);
+                    int currentFileCount = Interlocked.Increment(ref fileCounter);
+                    string fileInfoLog = string.Format("[LogParser] Parsing Log {0} of {1}", currentFileCount, logCount);
                     this.log.Info(fileInfoLog, false);
                     try
                     {
@@ -135,19 +159,16 @@ namespace VeeamHealthCheck.Functions.Collection.LogParser
                         {
                             waits.AddRange(this.CheckFileWait(f, jobname));
                         }
-
-                        // waits.AddRange(CheckFileWait(f, jobname));
                     }
                     catch (Exception) { }
-                    fileCounter++;
                 }
 
-                jobsAndWaits.Add(jobname, waits);
-            }
+                jobsAndWaits.TryAdd(jobname, waits);
+            });
 
-            this.waits = jobsAndWaits;
+            this.waits = jobsAndWaits.ToDictionary(kvp => kvp.Key, kvp => kvp.Value);
             this.log.Info("Checking Log files for waits..Done!", false);
-            return jobsAndWaits;
+            return this.waits;
         }
 
         private void ParseFixLines(string line)

@@ -2216,7 +2216,7 @@ this.form.TableHeader(VbrLocalizationHelper.SbrExt15, VbrLocalizationHelper.SbrE
             s += this.form.TableHeader(VbrLocalizationHelper.Jss7, VbrLocalizationHelper.Jss7TT); // avg backup size
             s += this.form.TableHeader(VbrLocalizationHelper.Jss8, VbrLocalizationHelper.Jss8TT);// max backup size
             s += this.form.TableHeader(VbrLocalizationHelper.Jss9, VbrLocalizationHelper.Jss9TT); // avg data size
-            s += this.form.TableHeader(VbrLocalizationHelper.Jss10, "Used size of all objects in job."); // max data size
+            s += this.form.TableHeader(VbrLocalizationHelper.Jss10, "Provisioned size of all objects in job."); // max data size
             s += this.form.TableHeader(VbrLocalizationHelper.Jss11, "Avg Data Size divided by Max Data Size (average processed data divided by total consumed size of all VMs in the job)"); // avg change rate
             s += this.form.TableHeader(VbrLocalizationHelper.Jss12, VbrLocalizationHelper.Jss12TT); // wait for res count
             s += this.form.TableHeader(VbrLocalizationHelper.Jss13, VbrLocalizationHelper.Jss13TT); // max wait
@@ -2781,6 +2781,12 @@ this.form.TableHeader(VbrLocalizationHelper.SbrExt15, VbrLocalizationHelper.SbrE
                                 double.TryParse(sourceGb, out sourceSizeGB);
                                 sourceSizeGB = Math.Round(sourceSizeGB, 2);
                             }
+                            else
+                            {
+                                //double.TryParse(job.OnDiskGB, out onDiskGB);
+                                onDiskGB = Math.Round(job.OnDiskGB ?? 0, 2);
+
+                            }
 
                             string jobName = job.Name;
                             string repoName = job.RepoName;
@@ -3090,12 +3096,15 @@ this.form.TableHeader(VbrLocalizationHelper.SbrExt15, VbrLocalizationHelper.SbrE
                     string backupChainType = job.Algorithm == "Syntethic" ? "Reverse Incremental" : "Forward Incremental";
                     bool indexingEnabled = job.IndexingType != "None";
 
+                    //debug log for ondiskgb
+                    this.log.Debug($"Job: {jobName}, OnDiskGB: {job.OnDiskGB}");
+
                     rows.Add(new List<string>
                     {
                         jobName,
                         repoName,
                         sourceSizeGB.ToString(),
-                        "0", // OnDisk calculated separately for NAS
+                        (job.OnDiskGB ?? 0).ToString(), //"0", // OnDisk calculated separately for NAS
                         job.RetentionType == "Cycles" ? "Points" : job.RetentionType,
                         job.RetainDaysToKeep,
                         job.StgEncryptionEnabled,

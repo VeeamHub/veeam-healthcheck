@@ -322,7 +322,17 @@ namespace VeeamHealthCheck.Startup
         private int StartAnalysis()
         {
             this.LOG.Info(this.logStart + "Init Data analysis & report creations", false);
-            
+
+            // Resolve import path if IMPORT mode is enabled
+            if (CGlobals.IMPORT)
+            {
+                if (!this.ResolveImportPath())
+                {
+                    this.LOG.Error(this.logStart + "Failed to resolve import path. Exiting.", false);
+                    return 1;
+                }
+            }
+
             // Validate CSV files before report generation
             try
             {
@@ -335,11 +345,87 @@ namespace VeeamHealthCheck.Startup
             {
                 this.LOG.Warning(this.logStart + $"CSV validation encountered an error: {ex.Message}. Continuing with report generation.", false);
             }
-            
+
             int res = this.Import();
 
             this.LOG.Info(this.logStart + "Init Data analysis & report creations...done!", false);
             return res;
+        }
+
+        /// <summary>
+        /// Resolves and validates the import path when IMPORT mode is enabled.
+        /// </summary>
+        /// <returns>True if import path was successfully resolved, false otherwise.</returns>
+        private bool ResolveImportPath()
+        {
+            this.LOG.Info(this.logStart + "Resolving import path...", false);
+
+            // Determine base path: use IMPORT_PATH if set, otherwise use default
+            string basePath = !string.IsNullOrEmpty(CGlobals.IMPORT_PATH)
+                ? CGlobals.IMPORT_PATH
+                : CGlobals.desiredPath ?? CVariables.outDir;
+
+            this.LOG.Info(this.logStart + $"Import base path: {basePath}", false);
+
+            // Find the actual CSV directory within the base path
+            string csvDirectory = CImportPathResolver.FindCsvDirectory(basePath);
+
+            if (string.IsNullOrEmpty(csvDirectory))
+            {
+                this.LOG.Error(this.logStart + $"No valid CSV directory found in: {basePath}", false);
+                this.LOG.Info(this.logStart + "Expected structure: path/VBR/servername/timestamp/ or path containing CSV files directly", false);
+
+                if (CGlobals.GUIEXEC)
+                {
+                    System.Windows.MessageBox.Show(
+                        $"No valid CSV files found in:\n{basePath}\n\nPlease verify the import path contains VBR or VB365 CSV export files.",
+                        "Import Error",
+                        System.Windows.MessageBoxButton.OK,
+                        System.Windows.MessageBoxImage.Error);
+                }
+
+                return false;
+            }
+
+            // Validate the CSV files in the discovered directory
+            var validationResult = CImportPathResolver.ValidateCsvFiles(csvDirectory);
+
+            if (!validationResult.IsValid && validationResult.MissingCriticalFiles.Count > 3)
+            {
+                this.LOG.Error(this.logStart + $"Import validation failed: {validationResult.ErrorMessage}", false);
+
+                if (CGlobals.GUIEXEC)
+                {
+                    System.Windows.MessageBox.Show(
+                        $"Import validation failed:\n{validationResult.ErrorMessage}\n\nMissing files: {string.Join(", ", validationResult.MissingCriticalFiles)}",
+                        "Import Validation Error",
+                        System.Windows.MessageBoxButton.OK,
+                        System.Windows.MessageBoxImage.Warning);
+                }
+
+                // Allow import to continue with partial data
+                this.LOG.Warning(this.logStart + "Continuing with partial data - some report sections may be incomplete.", false);
+            }
+
+            // Store the resolved path for use by CVariables
+            CVariables.ResolvedImportPath = csvDirectory;
+            this.LOG.Info(this.logStart + $"Resolved import CSV directory: {csvDirectory}", false);
+
+            // Set product type flags based on discovered files
+            if (validationResult.ProductType == "VBR")
+            {
+                CGlobals.IsVbr = true;
+            }
+            else if (validationResult.ProductType == "VB365")
+            {
+                CGlobals.IsVb365 = true;
+            }
+
+            // Extract timestamps for report interval
+            var (earliest, latest) = CImportPathResolver.ExtractTimestamps(csvDirectory);
+            this.LOG.Info(this.logStart + $"Data collection period: {earliest:yyyy-MM-dd} to {latest:yyyy-MM-dd}", false);
+
+            return true;
         }
 
         public int CliRun(string targetForOutput)
