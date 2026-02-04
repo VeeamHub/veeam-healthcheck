@@ -1,0 +1,147 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Servers CSV Schema",
+  "description": "Maps _Servers.csv to CServerCsvInfos C# class",
+  "csvFile": "_Servers.csv",
+  "csharpClass": "VeeamHealthCheck.Functions.Reporting.CsvHandlers.CServerCsvInfos",
+  "csharpFile": "Functions/Reporting/CsvHandlers/CServerCsvInfos.cs",
+  "version": "1.0.0",
+  "columns": [
+    {
+      "index": 0,
+      "csvName": "Info",
+      "csharpProperty": "Info",
+      "csharpType": "string",
+      "nullable": false,
+      "description": "Server information type identifier"
+    },
+    {
+      "index": 1,
+      "csvName": "ParentId",
+      "csharpProperty": "ParentId",
+      "csharpType": "string",
+      "nullable": false,
+      "description": "Parent server GUID"
+    },
+    {
+      "index": 2,
+      "csvName": "Id",
+      "csharpProperty": "Id",
+      "csharpType": "string",
+      "nullable": false,
+      "description": "Server GUID identifier"
+    },
+    {
+      "index": 3,
+      "csvName": "Uid",
+      "csharpProperty": "Uid",
+      "csharpType": "string",
+      "nullable": false,
+      "description": "Server URN identifier"
+    },
+    {
+      "index": 4,
+      "csvName": "Name",
+      "csharpProperty": "Name",
+      "csharpType": "string",
+      "nullable": false,
+      "description": "Server display name"
+    },
+    {
+      "index": 5,
+      "csvName": "Reference",
+      "csharpProperty": "Reference",
+      "csharpType": "string",
+      "nullable": true,
+      "description": "Server reference"
+    },
+    {
+      "index": 6,
+      "csvName": "Description",
+      "csharpProperty": "Description",
+      "csharpType": "string",
+      "nullable": true,
+      "description": "Server description"
+    },
+    {
+      "index": 7,
+      "csvName": "IsUnavailable",
+      "csharpProperty": "IsUnavailable",
+      "csharpType": "string",
+      "nullable": false,
+      "expectedValues": ["True", "False"],
+      "description": "Whether server is unavailable"
+    },
+    {
+      "index": 8,
+      "csvName": "Type",
+      "csharpProperty": "Type",
+      "csharpType": "string",
+      "nullable": false,
+      "description": "Server type (Local, VC, ESXi, Windows, etc.)"
+    },
+    {
+      "index": 9,
+      "csvName": "ApiVersion",
+      "csharpProperty": "ApiVersion",
+      "csharpType": "string",
+      "nullable": true,
+      "description": "API version for the server"
+    },
+    {
+      "index": 10,
+      "csvName": "PhysHostId",
+      "csharpProperty": "PhysHostId",
+      "csharpType": "string",
+      "nullable": true,
+      "description": "Physical host GUID"
+    },
+    {
+      "index": 11,
+      "csvName": "ProxyServicesCreds",
+      "csharpProperty": "ProxyServicesCreds",
+      "csharpType": "string",
+      "nullable": true,
+      "description": "Proxy services credentials"
+    },
+    {
+      "index": 12,
+      "csvName": "Cores",
+      "csharpProperty": "Cores",
+      "csharpType": "string",
+      "nullable": true,
+      "description": "Number of CPU cores"
+    },
+    {
+      "index": 13,
+      "csvName": "CPUCount",
+      "csharpProperty": "CPU",
+      "csharpType": "string",
+      "nullable": true,
+      "nameMapping": "CSV uses 'CPUCount', C# property is 'CPU'",
+      "description": "Number of CPUs"
+    },
+    {
+      "index": 14,
+      "csvName": "RAM",
+      "csharpProperty": "Ram",
+      "csharpType": "string",
+      "nullable": true,
+      "description": "RAM in bytes"
+    },
+    {
+      "index": 15,
+      "csvName": "OSInfo",
+      "csharpProperty": "OSInfo",
+      "csharpType": "string",
+      "nullable": true,
+      "description": "Operating system information"
+    }
+  ],
+  "validationRules": {
+    "requiredColumns": ["Info", "ParentId", "Id", "Uid", "Name", "Type"],
+    "guidColumns": ["ParentId", "Id", "PhysHostId"],
+    "booleanColumns": ["IsUnavailable"],
+    "numericColumns": ["Cores", "CPUCount", "RAM"]
+  }
+}

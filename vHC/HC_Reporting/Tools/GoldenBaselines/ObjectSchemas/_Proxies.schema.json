@@ -1,0 +1,140 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Proxies CSV Schema",
+  "description": "Maps _Proxies.csv to CProxyCsvInfos C# class",
+  "csvFile": "_Proxies.csv",
+  "csharpClass": "VeeamHealthCheck.Functions.Reporting.CsvHandlers.CProxyCsvInfos",
+  "csharpFile": "Functions/Reporting/CsvHandlers/CProxyCsvInfos.cs",
+  "version": "1.0.0",
+  "columns": [
+    {
+      "index": 0,
+      "csvName": "Id",
+      "csharpProperty": "Id",
+      "csharpType": "string",
+      "nullable": false,
+      "description": "Proxy GUID identifier"
+    },
+    {
+      "index": 1,
+      "csvName": "Name",
+      "csharpProperty": "Name",
+      "csharpType": "string",
+      "nullable": false,
+      "description": "Proxy display name"
+    },
+    {
+      "index": 2,
+      "csvName": "Description",
+      "csharpProperty": "Description",
+      "csharpType": "string",
+      "nullable": true,
+      "description": "Proxy description"
+    },
+    {
+      "index": 3,
+      "csvName": "Info",
+      "csharpProperty": "Info",
+      "csharpType": "string",
+      "nullable": true,
+      "description": "Additional proxy information"
+    },
+    {
+      "index": 4,
+      "csvName": "HostId",
+      "csharpProperty": "HostId",
+      "csharpType": "string",
+      "nullable": false,
+      "description": "Host GUID identifier"
+    },
+    {
+      "index": 5,
+      "csvName": "Host",
+      "csharpProperty": "Host",
+      "csharpType": "string",
+      "nullable": false,
+      "description": "Host name"
+    },
+    {
+      "index": 6,
+      "csvName": "Type",
+      "csharpProperty": "Type",
+      "csharpType": "string",
+      "nullable": false,
+      "description": "Proxy type"
+    },
+    {
+      "index": 7,
+      "csvName": "IsDisabled",
+      "csharpProperty": "IsDisabled",
+      "csharpType": "string",
+      "nullable": false,
+      "expectedValues": ["True", "False"],
+      "description": "Whether proxy is disabled"
+    },
+    {
+      "index": 8,
+      "csvName": "Options",
+      "csharpProperty": "Options",
+      "csharpType": "string",
+      "nullable": true,
+      "description": "Proxy options"
+    },
+    {
+      "index": 9,
+      "csvName": "MaxTasksCount",
+      "csharpProperty": "MaxTasksCount",
+      "csharpType": "string",
+      "nullable": false,
+      "description": "Maximum concurrent tasks"
+    },
+    {
+      "index": 10,
+      "csvName": "UseSsl",
+      "csharpProperty": "UseSsl",
+      "csharpType": "string",
+      "nullable": false,
+      "expectedValues": ["True", "False"],
+      "description": "Whether SSL is used"
+    },
+    {
+      "index": 11,
+      "csvName": "FailoverToNetwork",
+      "csharpProperty": "FailoverToNetwork",
+      "csharpType": "string",
+      "nullable": false,
+      "expectedValues": ["True", "False"],
+      "description": "Whether to failover to network mode"
+    },
+    {
+      "index": 12,
+      "csvName": "TransportMode",
+      "csharpProperty": "TransportMode",
+      "csharpType": "string",
+      "nullable": false,
+      "description": "Transport mode (Auto, DirectStorageAccess, Network, etc.)"
+    },
+    {
+      "index": 13,
+      "csvName": "ChosenVm",
+      "csharpProperty": "ChosenVm",
+      "csharpType": "string",
+      "nullable": true,
+      "description": "Chosen VM for virtual appliance mode"
+    },
+    {
+      "index": 14,
+      "csvName": "ChassisType",
+      "csharpProperty": "ChassisType",
+      "csharpType": "string",
+      "nullable": true,
+      "description": "Chassis type"
+    }
+  ],
+  "validationRules": {
+    "requiredColumns": ["Id", "Name", "HostId", "Host", "Type", "MaxTasksCount"],
+    "guidColumns": ["Id", "HostId"],
+    "booleanColumns": ["IsDisabled", "UseSsl", "FailoverToNetwork"],
+    "numericColumns": ["MaxTasksCount"]
+  }
+}

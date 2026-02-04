@@ -406,8 +406,16 @@ namespace VeeamHealthCheck.Functions.Collection
         {
             try
             {
+                // Validate that PowerShellVersion was actually set during version detection
+                if (CGlobals.PowerShellVersion == 0)
+                {
+                    CGlobals.Logger.Error("PowerShell version not determined. VBR version detection may have failed.", false);
+                    CGlobals.Logger.Error("This usually indicates VBR version could not be read from registry or file system.", false);
+                    return false;
+                }
+
                 string psExe;
-                
+
                 // Use the appropriate PowerShell version based on VBR version
                 if (CGlobals.PowerShellVersion == 7)
                 {

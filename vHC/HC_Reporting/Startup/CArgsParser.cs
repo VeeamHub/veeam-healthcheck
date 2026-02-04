@@ -55,11 +55,8 @@ namespace VeeamHealthCheck.Startup
         {
             CClientFunctions f = new CClientFunctions();
             f.LogVersionAndArgs(this.args);
-            try { f.GetVbrVersion(); }
-            catch (Exception ex)
-            {
-                CGlobals.Logger.Debug($"VBR version detection deferred: {ex.Message}");
-            }
+            // Note: VBR version detection is deferred until after argument parsing
+            // so that REMOTEEXEC flag can be properly set first
             f.Dispose();
         }
 
@@ -226,6 +223,14 @@ namespace VeeamHealthCheck.Startup
                         //    CGlobals.Logger.Info("Output directory: " + targetDir);
                         //    break;
                 }
+            }
+
+            // Now that arguments are parsed, detect VBR version
+            // This must happen after parsing so REMOTEEXEC flag is properly set
+            try { this.functions.GetVbrVersion(); }
+            catch (Exception ex)
+            {
+                CGlobals.Logger.Debug($"VBR version detection skipped: {ex.Message}");
             }
 
             int result = 0;

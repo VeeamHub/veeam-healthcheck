@@ -541,11 +541,12 @@ namespace VeeamHealthCheck.Html.VBR
             // JSON section capture (backup server core info)
             try
             {
-                List<string> headers = new() { "Version", "DbType", "DbHost", "ConfigBackupEnabled", "ConfigBackupLastResult", "ConfigBackupEncryption", "ConfigBackupTarget" };
+                List<string> headers = new() { "Name", "Version", "DbType", "DbHost", "ConfigBackupEnabled", "ConfigBackupLastResult", "ConfigBackupEncryption", "ConfigBackupTarget" };
                 List<List<string>> rows = new()
                 {
                     new List<string>
                     {
+                        b.Name,
                         b.Version,
                         b.DbType,
                         b.DbHostName,

@@ -1,0 +1,2 @@
+"LicensedTo","Edition","ExpirationDate","Type","SupportId","SupportExpirationDate","AutoUpdateEnabled","FreeAgentInstanceConsumptionEnabled","CloudConnect","LicensedSockets","UsedSockets","RemainingSockets","LicensedInstances","UsedInstances","NewInstances","RentalInstances","LicensedCapacityTB","UsedCapacityTb","Status"
+"Test Organization Inc.","Enterprise","2025-12-31T23:59:59.0000000","Perpetual","SUPP-1234567890","2025-12-31T23:59:59.0000000","True","True","Disabled","100","48","52","500","287","0","0","50","22.5","Valid"

@@ -1,0 +1,91 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "CDP Proxy CSV Schema",
+  "description": "Maps _CdpProxy.csv to CCdpProxyCsvInfo C# class",
+  "csvFile": "_CdpProxy.csv",
+  "csharpClass": "VeeamHealthCheck.Functions.Reporting.CsvHandlers.CCdpProxyCsvInfo",
+  "csharpFile": "Functions/Reporting/CsvHandlers/CCdpProxyCsvInfo.cs",
+  "version": "1.0.0",
+  "columns": [
+    {
+      "index": 0,
+      "csvName": "ServerId",
+      "csharpProperty": "ServerId",
+      "csharpType": "string",
+      "nullable": false,
+      "description": "Server GUID identifier"
+    },
+    {
+      "index": 1,
+      "csvName": "CacheSize",
+      "csharpProperty": "CacheSize",
+      "csharpType": "string",
+      "nullable": true,
+      "description": "Cache size in bytes"
+    },
+    {
+      "index": 2,
+      "csvName": "CachePath",
+      "csharpProperty": "CachePath",
+      "csharpType": "string",
+      "nullable": true,
+      "description": "Cache path"
+    },
+    {
+      "index": 3,
+      "csvName": "IsEnabled",
+      "csharpProperty": "IsEnabled",
+      "csharpType": "string",
+      "nullable": false,
+      "expectedValues": ["True", "False"],
+      "description": "Whether proxy is enabled"
+    },
+    {
+      "index": 4,
+      "csvName": "SourceProxyTrafficPort",
+      "csharpProperty": "SourceProxyTrafficPort",
+      "csharpType": "string",
+      "nullable": true,
+      "description": "Source proxy traffic port"
+    },
+    {
+      "index": 5,
+      "csvName": "TargetProxyTrafficPort",
+      "csharpProperty": "TargetProxyTrafficPort",
+      "csharpType": "string",
+      "nullable": true,
+      "description": "Target proxy traffic port"
+    },
+    {
+      "index": 6,
+      "csvName": "Id",
+      "csharpProperty": "Id",
+      "csharpType": "string",
+      "nullable": false,
+      "description": "Proxy GUID identifier"
+    },
+    {
+      "index": 7,
+      "csvName": "Name",
+      "csharpProperty": "Name",
+      "csharpType": "string",
+      "nullable": false,
+      "description": "Proxy display name"
+    },
+    {
+      "index": 8,
+      "csvName": "Description",
+      "csharpProperty": "description",
+      "csharpType": "string",
+      "nullable": true,
+      "nameMapping": "CSV uses 'Description', C# property is lowercase 'description'",
+      "description": "Proxy description"
+    }
+  ],
+  "validationRules": {
+    "requiredColumns": ["ServerId", "IsEnabled", "Id", "Name"],
+    "guidColumns": ["ServerId", "Id"],
+    "booleanColumns": ["IsEnabled"],
+    "numericColumns": ["CacheSize", "SourceProxyTrafficPort", "TargetProxyTrafficPort"]
+  }
+}

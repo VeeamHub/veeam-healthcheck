@@ -456,24 +456,41 @@ namespace VeeamHealthCheck.Startup
         {
             try
             {
-            CRegReader reg = new();
-            this.LOG.Info(this.logStart + "VBR Version: " + reg.GetVbrVersionFilePath(),  false);
-            CGlobals.PowerShellVersion = CGlobals.VBRMAJORVERSION >= 13 ? 7 : 5;
-            this.LOG.Info(this.logStart + "Using PowerShell version: " + CGlobals.PowerShellVersion.ToString(), false);
-            
-            // If PowerShell 7 is required AND we're doing remote execution, ensure we have credentials available
-            // For local VBR (IsVbr=true, REMOTEEXEC=false), credentials are NOT required - Windows auth is used
-            if (CGlobals.PowerShellVersion == 7 && CGlobals.REMOTEEXEC)
+                CRegReader reg = new();
+                string version = reg.GetVbrVersionFilePath();
+
+                // Validate that version detection succeeded
+                if (string.IsNullOrEmpty(version) || CGlobals.VBRMAJORVERSION == 0)
+                {
+                    this.LOG.Error(this.logStart + "Failed to detect VBR version. Cannot determine required PowerShell version.", false);
+                    this.LOG.Error(this.logStart + "Please verify VBR is installed and accessible.", false);
+                    this.LOG.Error(this.logStart + "If VBR is installed on a non-standard drive, ensure registry keys are readable.", false);
+                    throw new InvalidOperationException("VBR version detection failed");
+                }
+
+                this.LOG.Info(this.logStart + "VBR Version: " + version, false);
+                CGlobals.PowerShellVersion = CGlobals.VBRMAJORVERSION >= 13 ? 7 : 5;
+                this.LOG.Info(this.logStart + "Using PowerShell version: " + CGlobals.PowerShellVersion.ToString(), false);
+
+                // If PowerShell 7 is required AND we're doing remote execution, ensure we have credentials available
+                // For local VBR (IsVbr=true, REMOTEEXEC=false), credentials are NOT required - Windows auth is used
+                if (CGlobals.PowerShellVersion == 7 && CGlobals.REMOTEEXEC)
+                {
+                    this.LOG.Info(this.logStart + "PowerShell 7 with remote execution requires credentials for VBR connection", false);
+                    this.EnsureCredentialsAvailable();
+                }
+                else if (CGlobals.PowerShellVersion == 7)
+                {
+                    this.LOG.Info(this.logStart + "PowerShell 7 detected, but local VBR will use Windows authentication (no credentials required)", false);
+                }
+            }
+            catch(Exception ex)
             {
-                this.LOG.Info(this.logStart + "PowerShell 7 with remote execution requires credentials for VBR connection", false);
-                this.EnsureCredentialsAvailable();
+                // Log the actual error instead of swallowing it
+                this.LOG.Error(this.logStart + "Exception during VBR version detection: " + ex.Message, false);
+                this.LOG.Error(this.logStart + "Stack trace: " + ex.StackTrace, false);
+                throw; // Re-throw to fail fast rather than continue with wrong PowerShell version
             }
-            else if (CGlobals.PowerShellVersion == 7)
-            {
-                this.LOG.Info(this.logStart + "PowerShell 7 detected, but local VBR will use Windows authentication (no credentials required)", false);
-            }
-            }
-            catch(Exception) { }
         }
 
         private void EnsureCredentialsAvailable()
@@ -495,7 +512,8 @@ namespace VeeamHealthCheck.Startup
             if (!CGlobals.GUIEXEC)
             {
                 this.LOG.Warning(this.logStart + "No stored credentials found for PowerShell 7 connection.", false);
-                this.LOG.Warning(this.logStart + "Credentials will be required. Please provide credentials via /creds=username:password parameter, or credentials will be prompted during collection.", false);
+                this.LOG.Warning(this.logStart + "Add the /run parameter to execute and be prompted for credentials.", false);
+                this.LOG.Warning(this.logStart + "Example: VeeamHealthCheck.exe /run /remote /host=" + host, false);
             }
             else
             {

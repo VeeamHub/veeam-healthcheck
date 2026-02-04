@@ -376,3 +376,7 @@ test_run_log.txt
 
 # VSCode working folder
 .vscode/
+
+# Local dev tools
+TestImportResolver.csx
+CLEANUP_SUMMARY.md

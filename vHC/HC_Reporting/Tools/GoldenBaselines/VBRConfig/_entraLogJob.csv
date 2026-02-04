@@ -1,0 +1,2 @@
+"Name","Tenant","shortTermRetType","ShortTermRepo","ShortTermRepoRetention","CopyModeEnabled","SecondaryTarget"
+"Entra-ID-Logs-Backup","contoso.onmicrosoft.com","Entra-ID-Logs-Backup","Default Backup Repository","90","False",""
