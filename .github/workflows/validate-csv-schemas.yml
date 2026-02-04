@@ -71,12 +71,18 @@ jobs:
       - name: Validate CSV schemas against golden baselines
         id: validate
         shell: pwsh
+        env:
+          WORKSPACE: ${{ github.workspace }}
+          BASELINE_PATH: ${{ matrix.baseline-set.path }}
+          BASELINE_NAME: ${{ matrix.baseline-set.name }}
+          VALIDATE_OBJECT_MAPPING: ${{ inputs.validate_object_mapping }}
+          SHOW_DIFF: ${{ inputs.show_diff }}
         run: |
-          $baselinePath = "${{ github.workspace }}/${{ matrix.baseline-set.path }}"
-          $scriptPath = "${{ github.workspace }}/vHC/HC_Reporting/Tools/GoldenBaselines/Compare-GoldenBaseline.ps1"
-          $schemaPath = "${{ github.workspace }}/vHC/HC_Reporting/Tools/GoldenBaselines/ObjectSchemas"
+          $baselinePath = "$env:WORKSPACE/$env:BASELINE_PATH"
+          $scriptPath = "$env:WORKSPACE/vHC/HC_Reporting/Tools/GoldenBaselines/Compare-GoldenBaseline.ps1"
+          $schemaPath = "$env:WORKSPACE/vHC/HC_Reporting/Tools/GoldenBaselines/ObjectSchemas"
 
-          Write-Host "Baseline Set: ${{ matrix.baseline-set.name }}"
+          Write-Host "Baseline Set: $env:BASELINE_NAME"
           Write-Host "Baseline Path: $baselinePath"
           Write-Host "Schema Path: $schemaPath"
 
@@ -87,8 +93,8 @@ jobs:
           }
 
           # Run validation (baseline vs baseline for schema consistency)
-          $validateObjectMapping = '${{ inputs.validate_object_mapping }}' -ne 'false'
-          $showDiff = '${{ inputs.show_diff }}' -ne 'false'
+          $validateObjectMapping = $env:VALIDATE_OBJECT_MAPPING -ne 'false'
+          $showDiff = $env:SHOW_DIFF -ne 'false'
 
           $params = @{
             ActualPath = $baselinePath
@@ -111,23 +117,28 @@ jobs:
           echo "exit_code=$exitCode" >> $env:GITHUB_OUTPUT
 
           if ($exitCode -ne 0) {
-            Write-Host "::error::CSV schema validation failed for ${{ matrix.baseline-set.name }}"
+            Write-Host "::error::CSV schema validation failed for $env:BASELINE_NAME"
           }
 
       - name: Generate validation report
         if: always()
         shell: pwsh
+        env:
+          WORKSPACE: ${{ github.workspace }}
+          BASELINE_PATH: ${{ matrix.baseline-set.path }}
+          BASELINE_NAME: ${{ matrix.baseline-set.name }}
+          VALIDATE_OBJECT_MAPPING: ${{ inputs.validate_object_mapping }}
         run: |
-          $baselinePath = "${{ github.workspace }}/${{ matrix.baseline-set.path }}"
-          $scriptPath = "${{ github.workspace }}/vHC/HC_Reporting/Tools/GoldenBaselines/Compare-GoldenBaseline.ps1"
-          $schemaPath = "${{ github.workspace }}/vHC/HC_Reporting/Tools/GoldenBaselines/ObjectSchemas"
+          $baselinePath = "$env:WORKSPACE/$env:BASELINE_PATH"
+          $scriptPath = "$env:WORKSPACE/vHC/HC_Reporting/Tools/GoldenBaselines/Compare-GoldenBaseline.ps1"
+          $schemaPath = "$env:WORKSPACE/vHC/HC_Reporting/Tools/GoldenBaselines/ObjectSchemas"
 
           if (-not (Test-Path $baselinePath)) {
             Write-Host "Skipping report generation - baseline path does not exist"
             exit 0
           }
 
-          $validateObjectMapping = '${{ inputs.validate_object_mapping }}' -ne 'false'
+          $validateObjectMapping = $env:VALIDATE_OBJECT_MAPPING -ne 'false'
 
           $params = @{
             ActualPath = $baselinePath
@@ -146,7 +157,7 @@ jobs:
           $markdownStart = $output.IndexOf("# CSV Schema Validation Results")
           if ($markdownStart -ge 0) {
             $markdown = $output.Substring($markdownStart)
-            $markdown | Out-File -FilePath "${{ github.workspace }}/validation-report-${{ matrix.baseline-set.name }}.md" -Encoding utf8
+            $markdown | Out-File -FilePath "$env:WORKSPACE/validation-report-$env:BASELINE_NAME.md" -Encoding utf8
           }
 
       - name: Write job summary
