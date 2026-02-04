@@ -572,7 +572,7 @@ jobs:
       id: find_report
       if: always()
       run: |
-        $reportDir = "C:\temp\vHC\vHC-Report\vHC-Report"
+        $reportDir = "C:\temp\vHC\vHC-Report"
         if (Test-Path $reportDir) {
           $latestReport = Get-ChildItem -Path $reportDir -Filter "*.html" | 
             Sort-Object LastWriteTime -Descending | 
