@@ -559,5 +559,139 @@ namespace VhcXTests
         }
 
         #endregion
+
+        #region Local Host Detection Tests (Issue #82)
+
+        [Theory]
+        [InlineData("localhost")]
+        [InlineData("LOCALHOST")]
+        [InlineData("LocalHost")]
+        public void IsLocalHost_Localhost_ReturnsTrue(string hostname)
+        {
+            // Act
+            var result = CHostNameHelper.IsLocalHost(hostname);
+
+            // Assert
+            Assert.True(result, $"'{hostname}' should be detected as local host");
+        }
+
+        [Fact]
+        public void IsLocalHost_LoopbackIPv4_ReturnsTrue()
+        {
+            // Act
+            var result = CHostNameHelper.IsLocalHost("127.0.0.1");
+
+            // Assert
+            Assert.True(result, "127.0.0.1 should be detected as local host");
+        }
+
+        [Fact]
+        public void IsLocalHost_MatchesEnvironmentMachineName_ReturnsTrue()
+        {
+            // Arrange
+            string machineName = Environment.MachineName;
+
+            // Act
+            var result = CHostNameHelper.IsLocalHost(machineName);
+
+            // Assert
+            Assert.True(result, $"Machine name '{machineName}' should be detected as local host");
+        }
+
+        [Fact]
+        public void IsLocalHost_MatchesMachineNameCaseInsensitive_ReturnsTrue()
+        {
+            // Arrange
+            string machineName = Environment.MachineName.ToLowerInvariant();
+
+            // Act
+            var result = CHostNameHelper.IsLocalHost(machineName);
+
+            // Assert
+            Assert.True(result, $"Lowercase machine name '{machineName}' should be detected as local host");
+        }
+
+        [Fact]
+        public void IsLocalHost_MatchesDnsGetHostName_ReturnsTrue()
+        {
+            // Arrange
+            string dnsHostName = System.Net.Dns.GetHostName();
+
+            // Act
+            var result = CHostNameHelper.IsLocalHost(dnsHostName);
+
+            // Assert
+            Assert.True(result, $"DNS host name '{dnsHostName}' should be detected as local host");
+        }
+
+        [Fact]
+        public void IsLocalHost_FqdnStartingWithMachineName_ReturnsTrue()
+        {
+            // Arrange
+            string machineName = Environment.MachineName;
+            string fqdn = $"{machineName}.domain.local";
+
+            // Act
+            var result = CHostNameHelper.IsLocalHost(fqdn);
+
+            // Assert
+            Assert.True(result, $"FQDN '{fqdn}' starting with machine name should be detected as local host");
+        }
+
+        [Theory]
+        [InlineData("remote-server")]
+        [InlineData("vbr-prod")]
+        [InlineData("192.168.1.100")]
+        [InlineData("10.0.0.1")]
+        public void IsLocalHost_ActualRemoteHost_ReturnsFalse(string hostname)
+        {
+            // Act
+            var result = CHostNameHelper.IsLocalHost(hostname);
+
+            // Assert
+            Assert.False(result, $"'{hostname}' should NOT be detected as local host");
+        }
+
+        [Fact]
+        public void IsLocalHost_RemoteFqdn_ReturnsFalse()
+        {
+            // Arrange - ensure it doesn't start with local machine name
+            string remoteFqdn = "completely-different-server.domain.com";
+
+            // Act
+            var result = CHostNameHelper.IsLocalHost(remoteFqdn);
+
+            // Assert
+            Assert.False(result, $"Remote FQDN '{remoteFqdn}' should NOT be detected as local host");
+        }
+
+        [Theory]
+        [InlineData(null)]
+        [InlineData("")]
+        [InlineData("   ")]
+        public void IsLocalHost_NullOrEmpty_ReturnsFalse(string hostname)
+        {
+            // Act
+            var result = CHostNameHelper.IsLocalHost(hostname);
+
+            // Assert
+            Assert.False(result, "Null or empty hostname should return false");
+        }
+
+        [Fact]
+        public void IsLocalHost_PartialMachineNameMatch_ReturnsFalse()
+        {
+            // Arrange - hostname that contains but doesn't equal machine name
+            string machineName = Environment.MachineName;
+            string partialMatch = machineName + "-backup";
+
+            // Act
+            var result = CHostNameHelper.IsLocalHost(partialMatch);
+
+            // Assert
+            Assert.False(result, $"Partial match '{partialMatch}' should NOT be detected as local (no dot separator)");
+        }
+
+        #endregion
     }
 }
