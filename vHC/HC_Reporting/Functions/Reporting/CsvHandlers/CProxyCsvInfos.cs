@@ -49,9 +49,12 @@ namespace VeeamHealthCheck.Functions.Reporting.CsvHandlers
         public string TransportMode { get; set; }
 
         [Index(13)]
-        public string ChosenVm { get; set; }
+        public string IsVbrProxy{get;set;}
 
         [Index(14)]
+        public string ChosenVm { get; set; }
+
+        [Index(15)]
         public string ChassisType { get; set; }
 
         public string ProxyName()
