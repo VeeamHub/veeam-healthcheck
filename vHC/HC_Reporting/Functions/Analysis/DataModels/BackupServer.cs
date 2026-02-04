@@ -9,6 +9,8 @@ namespace VeeamHealthCheck.Functions.Analysis.DataModels
 
         public string Version { get; set; }
 
+        public string OSVersion { get; set; }
+
         public int Cores { get; set; }
 
         public int RAM { get; set; }

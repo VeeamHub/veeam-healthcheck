@@ -38,6 +38,7 @@ namespace VeeamHealthCheck.Reporting.Html.VBR
             {
                 this.tables.ServerName(),
                 this.tables.ServerVersion(),
+                this.tables.OSVersion(),
                 this.tables.Cores(),
                 this.tables.RAM(),
                 this.tables.ProxyRole(),
@@ -58,6 +59,7 @@ namespace VeeamHealthCheck.Reporting.Html.VBR
             {
                 this.tables.ServerName(),
                 this.tables.ServerVersion(),
+                this.tables.OSVersion(),
 
                 // _tables.Cores(),
                 // _tables.RAM(),
