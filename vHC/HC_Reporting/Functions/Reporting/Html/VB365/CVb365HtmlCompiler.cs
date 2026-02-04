@@ -1,5 +1,6 @@
 ﻿// Copyright (c) 2021, Adam Congdon <adam.congdon2@gmail.com>
 // MIT License
+using System;
 using System.Linq;
 using System.Net;
 using VeeamHealthCheck.Functions.Reporting.CsvHandlers;
@@ -153,16 +154,49 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VB365
 
         private string GetServerName()
         {
-            if(CGlobals.REMOTEEXEC)
-            {
+            this.log.Info("[VB365][HTML] >>> ENTERING GetServerName() method <<<");
+            this.log.Info("[VB365][HTML] Checking for server name...");
 
+            // Priority 1: Use remote host if executing remotely
+            if (CGlobals.REMOTEEXEC && !string.IsNullOrEmpty(CGlobals.REMOTEHOST))
+            {
+                this.log.Info("[VB365][HTML] Using REMOTEHOST: " + CGlobals.REMOTEHOST);
                 return CGlobals.REMOTEHOST;
             }
-            else
-            {
 
-                return Dns.GetHostName();
+            // Priority 2: Extract VB365 server name from Proxies CSV (works for import and local)
+            try
+            {
+                this.log.Info("[VB365][HTML] Attempting to read VB365 server name from Proxies.csv...");
+                CCsvParser parser = new(CVariables.vb365dir);
+                var proxies = parser.GetDynamicVboProxies()?.ToList();
+
+                if (proxies != null && proxies.Count > 0)
+                {
+                    // Get first proxy's hostname - typically the VB365 server itself or primary proxy
+                    string serverName = proxies[0].Name?.ToString();
+
+                    if (!string.IsNullOrEmpty(serverName))
+                    {
+                        this.log.Info("[VB365][HTML] VB365 server name from Proxies CSV: " + serverName);
+                        return serverName;
+                    }
+                }
+                else
+                {
+                    this.log.Warning("[VB365][HTML] Proxies.csv not found or empty");
+                }
             }
+            catch (Exception ex)
+            {
+                this.log.Warning("[VB365][HTML] Failed to read VB365 server name from CSV: " + ex.Message);
+            }
+
+            // Priority 3: Fallback to local hostname
+            this.log.Info("[VB365][HTML] Falling back to Dns.GetHostName()...");
+            string hostname = Dns.GetHostName();
+            this.log.Info("[VB365][HTML] Using local hostname: " + hostname);
+            return hostname;
         }
 
         private string SetLicHolder()
