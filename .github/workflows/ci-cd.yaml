@@ -488,12 +488,15 @@ jobs:
     
     - name: Cleanup
       if: success()
+      continue-on-error: true
       run: |
+        # Add delay to allow file handles to release
+        Start-Sleep -Seconds 2
         if (Test-Path "${{ github.workspace }}\test-run") {
-          Remove-Item -Path "${{ github.workspace }}\test-run" -Recurse -Force
+          Remove-Item -Path "${{ github.workspace }}\test-run" -Recurse -Force -ErrorAction SilentlyContinue
         }
         if (Test-Path "${{ github.workspace }}\test-download") {
-          Remove-Item -Path "${{ github.workspace }}\test-download" -Recurse -Force
+          Remove-Item -Path "${{ github.workspace }}\test-download" -Recurse -Force -ErrorAction SilentlyContinue
         }
         # if (Test-Path "C:\temp\vHC") {
         #   Remove-Item -Path "C:\temp\vHC" -Recurse -Force
@@ -856,12 +859,15 @@ jobs:
 
     - name: Cleanup
       if: success()
+      continue-on-error: true
       run: |
+        # Add delay to allow file handles to release
+        Start-Sleep -Seconds 2
         if (Test-Path "${{ github.workspace }}\test-run") {
-          Remove-Item -Path "${{ github.workspace }}\test-run" -Recurse -Force
+          Remove-Item -Path "${{ github.workspace }}\test-run" -Recurse -Force -ErrorAction SilentlyContinue
         }
         if (Test-Path "${{ github.workspace }}\test-download") {
-          Remove-Item -Path "${{ github.workspace }}\test-download" -Recurse -Force
+          Remove-Item -Path "${{ github.workspace }}\test-download" -Recurse -Force -ErrorAction SilentlyContinue
         }
         # if (Test-Path "C:\temp\vHC") {
         #   Remove-Item -Path "C:\temp\vHC" -Recurse -Force
@@ -1223,12 +1229,15 @@ jobs:
 
     - name: Cleanup
       if: success()
+      continue-on-error: true
       run: |
+        # Add delay to allow file handles to release
+        Start-Sleep -Seconds 2
         if (Test-Path "${{ github.workspace }}\test-run") {
-          Remove-Item -Path "${{ github.workspace }}\test-run" -Recurse -Force
+          Remove-Item -Path "${{ github.workspace }}\test-run" -Recurse -Force -ErrorAction SilentlyContinue
         }
         if (Test-Path "${{ github.workspace }}\test-download") {
-          Remove-Item -Path "${{ github.workspace }}\test-download" -Recurse -Force
+          Remove-Item -Path "${{ github.workspace }}\test-download" -Recurse -Force -ErrorAction SilentlyContinue
         }
         # if (Test-Path "C:\temp\vHC") {
         #   Remove-Item -Path "C:\temp\vHC" -Recurse -Force
