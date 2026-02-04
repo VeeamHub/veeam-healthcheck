@@ -1,0 +1,6 @@
+"KeyName","Value"
+"CorePath","C:\Program Files\Veeam\Backup and Replication\Backup"
+"SqlDataBaseName","VeeamBackup"
+"SqlInstanceName","VEEAMSQL2016"
+"SqlServerName","VEEAM-VBR01"
+"LogDirectory","C:\ProgramData\Veeam\Backup"

@@ -1,0 +1,358 @@
+# CSV Schema Validation Workflow
+# Validates that CSV schemas match C# object definitions and golden baselines
+#
+# Triggers on:
+# - Push to main/master branches
+# - Pull requests affecting CSV handling code or golden baselines
+# - Manual dispatch for ad-hoc validation
+
+name: CSV Schema Validation
+
+on:
+  push:
+    branches: [main, master]
+    paths:
+      - 'vHC/HC_Reporting/Functions/Reporting/CsvHandlers/**'
+      - 'vHC/HC_Reporting/Tools/GoldenBaselines/**'
+  pull_request:
+    branches: [main, master]
+    paths:
+      - 'vHC/HC_Reporting/Functions/Reporting/CsvHandlers/**'
+      - 'vHC/HC_Reporting/Tools/GoldenBaselines/**'
+  workflow_dispatch:
+    inputs:
+      validate_object_mapping:
+        description: 'Enable object mapping validation'
+        required: false
+        default: 'true'
+        type: boolean
+      show_diff:
+        description: 'Show detailed differences'
+        required: false
+        default: 'true'
+        type: boolean
+
+env:
+  DOTNET_NOLOGO: true
+  DOTNET_CLI_TELEMETRY_OPTOUT: true
+
+jobs:
+  validate-schemas:
+    name: Validate CSV Schemas
+    runs-on: ubuntu-latest
+
+    strategy:
+      fail-fast: false
+      matrix:
+        baseline-set:
+          - name: VBRConfig
+            path: vHC/HC_Reporting/Tools/GoldenBaselines/VBRConfig
+          - name: NasInfo
+            path: vHC/HC_Reporting/Tools/GoldenBaselines/NasInfo
+          - name: SessionReports
+            path: vHC/HC_Reporting/Tools/GoldenBaselines/SessionReports
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - name: Setup PowerShell
+        uses: actions/setup-powershell@v1
+        with:
+          powershell-version: '7.4'
+
+      - name: Validate CSV schemas against golden baselines
+        id: validate
+        shell: pwsh
+        run: |
+          $baselinePath = "${{ github.workspace }}/${{ matrix.baseline-set.path }}"
+          $scriptPath = "${{ github.workspace }}/vHC/HC_Reporting/Tools/GoldenBaselines/Compare-GoldenBaseline.ps1"
+          $schemaPath = "${{ github.workspace }}/vHC/HC_Reporting/Tools/GoldenBaselines/ObjectSchemas"
+
+          Write-Host "Baseline Set: ${{ matrix.baseline-set.name }}"
+          Write-Host "Baseline Path: $baselinePath"
+          Write-Host "Schema Path: $schemaPath"
+
+          # Check if baseline path exists
+          if (-not (Test-Path $baselinePath)) {
+            Write-Host "::warning::Baseline path does not exist: $baselinePath"
+            exit 0
+          }
+
+          # Run validation (baseline vs baseline for schema consistency)
+          $validateObjectMapping = '${{ inputs.validate_object_mapping }}' -ne 'false'
+          $showDiff = '${{ inputs.show_diff }}' -ne 'false'
+
+          $params = @{
+            ActualPath = $baselinePath
+            BaselinePath = $baselinePath
+            FailOnMismatch = $true
+          }
+
+          if ($validateObjectMapping) {
+            $params['ValidateObjectMapping'] = $true
+            $params['ObjectSchemaPath'] = $schemaPath
+          }
+
+          if ($showDiff) {
+            $params['ShowDiff'] = $true
+          }
+
+          & $scriptPath @params
+
+          $exitCode = $LASTEXITCODE
+          echo "exit_code=$exitCode" >> $env:GITHUB_OUTPUT
+
+          if ($exitCode -ne 0) {
+            Write-Host "::error::CSV schema validation failed for ${{ matrix.baseline-set.name }}"
+          }
+
+      - name: Generate validation report
+        if: always()
+        shell: pwsh
+        run: |
+          $baselinePath = "${{ github.workspace }}/${{ matrix.baseline-set.path }}"
+          $scriptPath = "${{ github.workspace }}/vHC/HC_Reporting/Tools/GoldenBaselines/Compare-GoldenBaseline.ps1"
+          $schemaPath = "${{ github.workspace }}/vHC/HC_Reporting/Tools/GoldenBaselines/ObjectSchemas"
+
+          if (-not (Test-Path $baselinePath)) {
+            Write-Host "Skipping report generation - baseline path does not exist"
+            exit 0
+          }
+
+          $validateObjectMapping = '${{ inputs.validate_object_mapping }}' -ne 'false'
+
+          $params = @{
+            ActualPath = $baselinePath
+            BaselinePath = $baselinePath
+            OutputMarkdown = $true
+          }
+
+          if ($validateObjectMapping) {
+            $params['ValidateObjectMapping'] = $true
+            $params['ObjectSchemaPath'] = $schemaPath
+          }
+
+          $output = & $scriptPath @params 2>&1 | Out-String
+
+          # Extract markdown portion
+          $markdownStart = $output.IndexOf("# CSV Schema Validation Results")
+          if ($markdownStart -ge 0) {
+            $markdown = $output.Substring($markdownStart)
+            $markdown | Out-File -FilePath "${{ github.workspace }}/validation-report-${{ matrix.baseline-set.name }}.md" -Encoding utf8
+          }
+
+      - name: Write job summary
+        if: always()
+        shell: pwsh
+        run: |
+          $reportFile = "${{ github.workspace }}/validation-report-${{ matrix.baseline-set.name }}.md"
+
+          $summary = @"
+          ## CSV Schema Validation: ${{ matrix.baseline-set.name }}
+
+          **Status:** ${{ steps.validate.outputs.exit_code == '0' && 'Passed' || 'Failed' }}
+          **Baseline Path:** ``${{ matrix.baseline-set.path }}``
+
+          "@
+
+          if (Test-Path $reportFile) {
+            $reportContent = Get-Content $reportFile -Raw
+            $summary += "`n---`n`n$reportContent"
+          }
+
+          $summary | Out-File -FilePath $env:GITHUB_STEP_SUMMARY -Append -Encoding utf8
+
+      - name: Upload validation report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: validation-report-${{ matrix.baseline-set.name }}
+          path: validation-report-${{ matrix.baseline-set.name }}.md
+          if-no-files-found: ignore
+
+  validate-object-mappings:
+    name: Validate C# Object Mappings
+    runs-on: ubuntu-latest
+    needs: validate-schemas
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - name: Setup PowerShell
+        uses: actions/setup-powershell@v1
+        with:
+          powershell-version: '7.4'
+
+      - name: Validate object schema files
+        shell: pwsh
+        run: |
+          $schemaPath = "${{ github.workspace }}/vHC/HC_Reporting/Tools/GoldenBaselines/ObjectSchemas"
+          $csvHandlersPath = "${{ github.workspace }}/vHC/HC_Reporting/Functions/Reporting/CsvHandlers"
+
+          Write-Host "Validating object schema files..."
+          Write-Host "Schema Path: $schemaPath"
+          Write-Host "CSV Handlers Path: $csvHandlersPath"
+
+          $schemaFiles = Get-ChildItem -Path $schemaPath -Filter "*.schema.json" -ErrorAction SilentlyContinue
+
+          if (-not $schemaFiles) {
+            Write-Host "::warning::No schema files found"
+            exit 0
+          }
+
+          $errors = @()
+          $warnings = @()
+
+          foreach ($schemaFile in $schemaFiles) {
+            Write-Host "`nValidating: $($schemaFile.Name)"
+
+            try {
+              $schema = Get-Content $schemaFile.FullName -Raw | ConvertFrom-Json
+
+              # Validate required fields
+              if (-not $schema.csvFile) {
+                $errors += "$($schemaFile.Name): Missing 'csvFile' field"
+              }
+
+              if (-not $schema.csharpClass) {
+                $errors += "$($schemaFile.Name): Missing 'csharpClass' field"
+              }
+
+              if (-not $schema.csharpFile) {
+                $errors += "$($schemaFile.Name): Missing 'csharpFile' field"
+              }
+
+              if (-not $schema.columns) {
+                $errors += "$($schemaFile.Name): Missing 'columns' field"
+              }
+
+              # Validate C# file exists
+              if ($schema.csharpFile) {
+                $csharpFullPath = Join-Path "${{ github.workspace }}/vHC/HC_Reporting" $schema.csharpFile
+                if (-not (Test-Path $csharpFullPath)) {
+                  $warnings += "$($schemaFile.Name): C# file not found: $($schema.csharpFile)"
+                } else {
+                  Write-Host "  C# file exists: $($schema.csharpFile)"
+                }
+              }
+
+              # Validate columns have required fields
+              if ($schema.columns) {
+                foreach ($col in $schema.columns) {
+                  if (-not $col.csvName) {
+                    $errors += "$($schemaFile.Name): Column at index $($col.index) missing 'csvName'"
+                  }
+                  if (-not $col.csharpProperty) {
+                    $errors += "$($schemaFile.Name): Column '$($col.csvName)' missing 'csharpProperty'"
+                  }
+                  if (-not $col.csharpType) {
+                    $errors += "$($schemaFile.Name): Column '$($col.csvName)' missing 'csharpType'"
+                  }
+                }
+                Write-Host "  Columns validated: $($schema.columns.Count)"
+              }
+
+              Write-Host "  CSV File: $($schema.csvFile)"
+              Write-Host "  C# Class: $($schema.csharpClass)"
+
+            } catch {
+              $errors += "$($schemaFile.Name): JSON parsing error - $_"
+            }
+          }
+
+          # Output warnings
+          foreach ($warning in $warnings) {
+            Write-Host "::warning::$warning"
+          }
+
+          # Output errors and fail if any
+          if ($errors.Count -gt 0) {
+            foreach ($error in $errors) {
+              Write-Host "::error::$error"
+            }
+            exit 1
+          }
+
+          Write-Host "`nAll object schema files validated successfully!"
+
+      - name: Write validation summary
+        if: always()
+        shell: pwsh
+        run: |
+          $schemaPath = "${{ github.workspace }}/vHC/HC_Reporting/Tools/GoldenBaselines/ObjectSchemas"
+          $schemaFiles = Get-ChildItem -Path $schemaPath -Filter "*.schema.json" -ErrorAction SilentlyContinue
+
+          $summary = @"
+          ## Object Schema Validation
+
+          | Schema File | CSV File | C# Class | Status |
+          |-------------|----------|----------|--------|
+          "@
+
+          foreach ($schemaFile in $schemaFiles) {
+            try {
+              $schema = Get-Content $schemaFile.FullName -Raw | ConvertFrom-Json
+              $csvFile = if ($schema.csvFile) { $schema.csvFile } else { "N/A" }
+              $csharpClass = if ($schema.csharpClass) { $schema.csharpClass.Split('.')[-1] } else { "N/A" }
+              $summary += "`n| $($schemaFile.Name) | $csvFile | $csharpClass | :white_check_mark: |"
+            } catch {
+              $summary += "`n| $($schemaFile.Name) | Error | Error | :x: |"
+            }
+          }
+
+          $summary | Out-File -FilePath $env:GITHUB_STEP_SUMMARY -Append -Encoding utf8
+
+  summary:
+    name: Validation Summary
+    runs-on: ubuntu-latest
+    needs: [validate-schemas, validate-object-mappings]
+    if: always()
+
+    steps:
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: reports
+          pattern: validation-report-*
+          merge-multiple: true
+
+      - name: Generate combined summary
+        shell: pwsh
+        run: |
+          $summary = @"
+          # CSV Schema Validation Summary
+
+          ## Overall Status
+
+          | Job | Status |
+          |-----|--------|
+          | VBRConfig Validation | ${{ needs.validate-schemas.result == 'success' && ':white_check_mark: Passed' || ':x: Failed' }} |
+          | Object Mapping Validation | ${{ needs.validate-object-mappings.result == 'success' && ':white_check_mark: Passed' || ':x: Failed' }} |
+
+          ## Reports
+
+          "@
+
+          $reportFiles = Get-ChildItem -Path "reports" -Filter "*.md" -Recurse -ErrorAction SilentlyContinue
+          if ($reportFiles) {
+            $summary += "The following validation reports are available as artifacts:`n`n"
+            foreach ($file in $reportFiles) {
+              $summary += "- $($file.Name)`n"
+            }
+          } else {
+            $summary += "_No report files found._`n"
+          }
+
+          $summary | Out-File -FilePath $env:GITHUB_STEP_SUMMARY -Encoding utf8
+
+      - name: Check overall status
+        if: needs.validate-schemas.result == 'failure' || needs.validate-object-mappings.result == 'failure'
+        run: |
+          echo "::error::One or more validation jobs failed"
+          exit 1

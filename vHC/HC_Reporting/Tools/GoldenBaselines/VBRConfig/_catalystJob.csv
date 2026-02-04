@@ -1,0 +1,2 @@
+"Id","Name","Description","TargetCatalystServer","TargetRepository","ScheduleEnabled","ScheduleOptions"
+"99990000-1111-2222-3333-444455556666","Catalyst-Primary","Primary Catalyst backup job","CATALYST01.lab.local","Catalyst-Repo-01","True","Daily at 23:00"

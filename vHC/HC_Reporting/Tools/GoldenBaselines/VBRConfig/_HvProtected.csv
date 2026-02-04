@@ -1,0 +1,4 @@
+"Name","PowerState","ProvisionedSize","UsedSize","Path"
+"HV-DC01","Running","107374182400","53687091200","HVCLUSTER01\Production\Domain Controllers"
+"HV-SQL01","Running","214748364800","128849018880","HVCLUSTER01\Production\Database Servers"
+"HV-WEB01","Running","85899345920","42949672960","HVCLUSTER01\Production\Web Servers"

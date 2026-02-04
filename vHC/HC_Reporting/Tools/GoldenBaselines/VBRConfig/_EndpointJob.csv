@@ -1,0 +1,2 @@
+"Id","Name","Description","Type","TargetRepositoryId","ScheduleEnabled","ScheduleOptions","RetentionType","RetentionCount"
+"aaaa1111-2222-3333-4444-555566667777","Endpoint-Workstations","Workstation endpoint backup","Endpoint","33333333-3333-3333-3333-333333333333","True","Daily at 12:00","RestorePoints","7"
