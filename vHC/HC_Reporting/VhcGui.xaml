@@ -192,6 +192,11 @@ MIT License
                             </ComboBox>
                         </StackPanel>
 
+                        <CheckBox x:Name="RescanBox" Style="{StaticResource ModernCheckBox}"                                
+                                Checked="RescanBox_Checked" Unchecked="RescanBox_Unchecked"
+                                Margin="0,8,0,0"
+                                ToolTip="Rescan for Hardware change"/>
+
                         <Separator Margin="0,12,0,12" Background="#EEEEEE"/>
 
                         <!-- Security Options -->

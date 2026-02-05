@@ -1,6 +1,0 @@
-"Name","PowerState","ProvisionedSize","UsedSize","Path"
-"DC01","PoweredOn","107374182400","42949672960","VCENTER01.lab.local\Datacenter1\Production\Domain Controllers"
-"SQL-PROD01","PoweredOn","214748364800","171798691840","VCENTER01.lab.local\Datacenter1\Production\Database Servers"
-"WEB-PROD01","PoweredOn","85899345920","34359738368","VCENTER01.lab.local\Datacenter1\Production\Web Servers"
-"WEB-PROD02","PoweredOn","85899345920","38654705664","VCENTER01.lab.local\Datacenter1\Production\Web Servers"
-"APP-PROD01","PoweredOn","171798691840","85899345920","VCENTER01.lab.local\Datacenter1\Production\Application Servers"

@@ -1,2 +1,0 @@
-"Id","Name","Description","SourceRepositoryId","TargetCatalystServer","TargetRepositoryId","ScheduleEnabled","ScheduleOptions"
-"77778888-9999-aaaa-bbbb-cccc00001111","Catalyst-Copy-DR","Veeam Data Mover copy to DR","22222222-2222-2222-2222-222222222222","CATALYST-DR01.lab.local","88889999-aaaa-bbbb-cccc-dddd00001111","True","Immediate"

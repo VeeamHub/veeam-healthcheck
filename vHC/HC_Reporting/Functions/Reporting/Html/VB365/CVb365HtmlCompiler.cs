@@ -1,6 +1,5 @@
 ﻿// Copyright (c) 2021, Adam Congdon <adam.congdon2@gmail.com>
 // MIT License
-using System;
 using System.Linq;
 using System.Net;
 using VeeamHealthCheck.Functions.Reporting.CsvHandlers;
@@ -181,9 +180,9 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VB365
                         this.log.Info("[VB365][HTML] VB365 server name from Proxies CSV: " + serverName);
                         return serverName;
                     }
-                }
-                else
-                {
+            }
+            else
+            {
                     this.log.Warning("[VB365][HTML] Proxies.csv not found or empty");
                 }
             }

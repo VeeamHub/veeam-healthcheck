@@ -30,7 +30,6 @@ namespace VeeamHealthCheck.Shared
         /// Supports both flat structure and nested servername/timestamp structure.
         /// </summary>
         public static string IMPORT_PATH = null;
-
         public static int VBRMAJORVERSION;
         public static string VBRFULLVERSION;
         public static int PowerShellVersion;
@@ -68,6 +67,7 @@ namespace VeeamHealthCheck.Shared
         public static bool EXPORTPPTX = false;
         public static bool ClearStoredCreds = false;
         public static bool RunningWithoutAdmin = false;
+        public static bool RescanHosts = false;
 
         // Security Values
         public static bool IsMfaEnabled = false;

@@ -1,2 +1,0 @@
-"Id","Name","Description","IsEnabled","VirtualLabId","ApplicationGroupId","LinkedJobIds","ScheduleOptions","KeepApplicationGroupRunning"
-"33334444-5555-6666-7777-888833334444","SureBackup-Production","Verify production backups","True","44445555-6666-7777-8888-999944445555","55556666-7777-8888-9999-aaaa55556666","eeee5555-ffff-0000-1111-222255555555;ffff6666-0000-1111-2222-333366666666","Weekly on Saturday","False"

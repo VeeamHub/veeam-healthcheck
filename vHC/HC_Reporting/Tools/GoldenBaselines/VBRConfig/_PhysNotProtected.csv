@@ -1,3 +1,0 @@
-"Id","Name","Description","HostName","OSType","IPAddress","ProtectionGroupId","DiscoveryTime"
-"cccc0000-1111-2222-3333-444400000000","WORKSTATION01","Developer workstation","WORKSTATION01.lab.local","Windows","192.168.1.100","66660000-1111-2222-3333-444466660000","2024-02-01T14:00:00.0000000"
-"dddd0000-1111-2222-3333-444400000000","PRINT-SERVER","Legacy print server","PRINT-SERVER.lab.local","Windows","192.168.1.25","","2024-01-15T09:00:00.0000000"
