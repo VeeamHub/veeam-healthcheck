@@ -1,4 +1,0 @@
-"NasBackupSourceShareStats","TotalFiles","TotalSize","ChangedFiles","ChangedSize","SharePath"
-"ShareStats","125000","536870912000","5000","21474836480","\\FILESERVER01\SharedDocs"
-"ShareStats","450000","1099511627776","12000","53687091200","\\NAS01\Archive"
-"ShareStats","75000","268435456000","2500","10737418240","\\NAS02\UserProfiles"

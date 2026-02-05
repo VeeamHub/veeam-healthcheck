@@ -119,6 +119,8 @@ namespace VeeamHealthCheck
 
             this.SetUiText();
             scrubBox.IsChecked = true;
+            RescanBox.IsChecked = false;
+            Console.WriteLine("Value: " + VbrLocalizationHelper.GuiRescanHosts);
             this.hideProgressBar();
             run.IsEnabled = false;
         }
@@ -157,10 +159,11 @@ namespace VeeamHealthCheck
             this.pdfCheckBox.Content = "Export PDF";
             // this.pptxCheckBox.Content = "Export PowerPoint";
             this.clearCredsCheckBox.Content = "Clear Saved Credentials";
-            this.outPath.Text = VbrLocalizationHelper.GuiOutPath;
+            this.outPath.Text = VbrLocalizationHelper.GuiOutPath; 
             this.termsBtn.Content = VbrLocalizationHelper.GuiAcceptButton;
             this.run.Content = VbrLocalizationHelper.GuiRunButton;
             this.importButton.Content = VbrLocalizationHelper.GuiImportButton;
+            this.RescanBox.Content = VbrLocalizationHelper.GuiRescanHosts;
 
             this.SetPathBoxText(CVariables.outDir);
             CGlobals.desiredPath = CVariables.outDir;
@@ -254,6 +257,7 @@ namespace VeeamHealthCheck
             removeServerBtn.IsEnabled = false;
             clearServersBtn.IsEnabled = false;
             serverListBox.IsEnabled = false;
+            RescanBox.IsEnabled = false;
         }
 
         private void AcceptButton_click(object sender, RoutedEventArgs e)
@@ -341,6 +345,18 @@ namespace VeeamHealthCheck
         {
             this.functions.LogUIAction("Clear Stored Creds = false");
             CGlobals.ClearStoredCreds = false;
+        }
+
+         private void RescanBox_Checked(object sender, RoutedEventArgs e)
+        {
+            CGlobals.RescanHosts = true;
+            this.functions.LogUIAction("Rescan Hosts = true");
+        }
+
+        private void RescanBox_Unchecked(object sender, RoutedEventArgs e)
+        {
+            CGlobals.RescanHosts = false;
+            this.functions.LogUIAction("Rescan Hosts = false");
         }
 
         #endregion

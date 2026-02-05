@@ -1,0 +1,1677 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <data name="GuiAcceptButton" xml:space="preserve">
+    <value>利用規約に同意する</value>
+  </data>
+  <data name="GuiAcceptText" xml:space="preserve">
+    <value>このツールは、Veeam構成を評価するための無料のユーティリティとして提供されています。 「自己責任で」提供されます。\n\nこのツールは、PowerShellとSQLを使用してデータを収集し、ファイルとフォルダーをローカルディスクに出力します。 \n\nファイルは、機密データを隠すために匿名化されている場合があります。本規約に同意することは、ユーザーが本プログラムをフルに実行することに同意することを意味します。</value>
+  </data>
+  <data name="GuiImportButton" xml:space="preserve">
+    <value>インポート</value>
+  </data>
+  <data name="GuiImportModeOnly" xml:space="preserve">
+    <value>インポートモード</value>
+  </data>
+  <data name="GuiInstCaveat1" xml:space="preserve">
+    <value>*機密データ型を削除することを選択した場合、HTMLレポートのみがクレンジングされます。見る：</value>
+  </data>
+  <data name="GuiInstCaveat2" xml:space="preserve">
+    <value>**大規模な環境では、このツールが完了するまでに最大3時間かかる場合があることに注意してください。</value>
+  </data>
+  <data name="GuiInstHeader" xml:space="preserve">
+    <value>指示：</value>
+  </data>
+  <data name="GuiInstLine1" xml:space="preserve">
+    <value>1. 利用規約に同意する</value>
+  </data>
+  <data name="GuiInstLine2" xml:space="preserve">
+    <value>2. [RUN]をクリックします</value>
+  </data>
+  <data name="GuiInstLine3" xml:space="preserve">
+    <value>3. 完了すると、Windowsエクスプローラーが出力ディレクトリを開きます。 （有効にすると、HTMLレポートが表示されます）</value>
+  </data>
+  <data name="GuiInstLine4" xml:space="preserve">
+    <value>4. 必要に応じてレポートを確認します</value>
+  </data>
+  <data name="GuiInstLine5" xml:space="preserve">
+    <value>5. C:\\temp\\vHC*または指定されたディレクトリからの出力をキャプチャします。</value>
+  </data>
+  <data name="GuiInstLine6" xml:space="preserve">
+    <value>6. Veeam SEに通知するか、レビューのために結果を送信します</value>
+  </data>
+  <data name="GuiOptionsHeader" xml:space="preserve">
+    <value>オプション：</value>
+  </data>
+  <data name="GuiOutPath" xml:space="preserve">
+    <value>出力パス</value>
+  </data>
+  <data name="GuiRunButton" xml:space="preserve">
+    <value>実行</value>
+  </data>
+  <data name="GuiSensData" xml:space="preserve">
+    <value>レポートから機密データタイプを削除する</value>
+  </data>
+  <data name="GuiShowFiles" xml:space="preserve">
+    <value>完了時にファイルを表示</value>
+  </data>
+  <data name="GuiShowHtml" xml:space="preserve">
+    <value>完了時にHTMLレポートを表示する</value>
+  </data>
+  <data name="GuiTitle" xml:space="preserve">
+    <value>Veeamヘルスチェック</value>
+  </data>
+  <data name="GuiTitleBnR" xml:space="preserve">
+    <value>B&amp;R</value>
+  </data>
+  <data name="GuiTitleVB365" xml:space="preserve">
+    <value>VB365</value>
+  </data>
+  <data name="GuiRescanHosts" xml:space="preserve">
+    <value>ホストを再スキャン</value>
+  </data>
+  <data name="PlHdr0" xml:space="preserve">
+    <value>Vi合計</value>
+  </data>
+  <data name="PlHdrTT0" xml:space="preserve">
+    <value>VMwareVMの総数。</value>
+  </data>
+  <data name="PlHdr1" xml:space="preserve">
+    <value>Viプロテクト</value>
+  </data>
+  <data name="PlHdrTT1" xml:space="preserve">
+    <value>バックアップ利用するVMwareVMの総数</value>
+  </data>
+  <data name="PlHdr2" xml:space="preserve">
+    <value>Vi Not Prot</value>
+  </data>
+  <data name="PlHdrTT2" xml:space="preserve">
+    <value>バックアップ利用しないVMwareVMの総数</value>
+  </data>
+  <data name="PlHdr3" xml:space="preserve">
+    <value>Vi潜在的な重複</value>
+  </data>
+  <data name="PlHdrTT3" xml:space="preserve">
+    <value>重複する可能性のあるワークロード</value>
+  </data>
+  <data name="PlHdr4" xml:space="preserve">
+    <value>Vi物理的な保護</value>
+  </data>
+  <data name="PlHdrTT4" xml:space="preserve">
+    <value>物理ワークロードとしてエージェントを介してバックアップされたVM</value>
+  </data>
+  <data name="PlHdr5" xml:space="preserve">
+    <value>物理合計</value>
+  </data>
+  <data name="PlHdrTT5" xml:space="preserve">
+    <value>保護グループに追加されたサーバーの総数</value>
+  </data>
+  <data name="PlHdr6" xml:space="preserve">
+    <value>Phy Protected</value>
+  </data>
+  <data name="PlHdrTT6" xml:space="preserve">
+    <value>バックアップ対象のサーバー総数</value>
+  </data>
+  <data name="PlHdr7" xml:space="preserve">
+    <value>Phys Not Prot</value>
+  </data>
+  <data name="PlHdrTT7" xml:space="preserve">
+    <value>保護グループ内のサーバーの総数ですが、現在のバックアップはありません</value>
+  </data>
+  <data name="PlSum1" xml:space="preserve">
+    <value>この表は、現在のバックアップサーバーで検出されたワークロードの量をまとめたものです。 VMware（Vi Total）カウントは、ローカルのVeeam Brokerサービスによって決定され、そのVMカウントを既存のバックアップと比較します。物理ワークロード（Phys Total）は、保護グループに追加されたVMの数によって決定され、バックアップジョブの数と比較されます。</value>
+  </data>
+  <data name="PlNote1" xml:space="preserve">
+    <value></value>
+  </data>
+  <data name="PlButton" xml:space="preserve">
+    <value>保護されたワークロードの数を表示</value>
+  </data>
+  <data name="PlTitle" xml:space="preserve">
+    <value>保護されたワークロード</value>
+  </data>
+  <data name="GeneralNotesHeader" xml:space="preserve">
+    <value>ノート：</value>
+  </data>
+  <data name="GeneralSummaryHeader" xml:space="preserve">
+    <value>概要：</value>
+  </data>
+  <data name="HtmlHeader" xml:space="preserve">
+    <value>VBRヘルスチェックレポート</value>
+  </data>
+  <data name="HtmlIntroLine1" xml:space="preserve">
+    <value>- このレポートは、Veeam Backup and Replication（VBR）の展開に関するデータと洞察を提供します。ここに記載されている情報は、Veeamの担当者と共同で使用することを目的としています。</value>
+  </data>
+  <data name="HtmlIntroLine2" xml:space="preserve">
+    <value>- 生データはCSV形式でキャプチャされ、エクスポートフォルダからローカルにアクセスできます。 CSVを使用すると、Excelなどのツールでデータを操作できます。</value>
+  </data>
+  <data name="HtmlIntroLine3" xml:space="preserve">
+    <value>- 個々のジョブセッションに関する追加情報は、&lt;a href="C:\\temp\\vHC\\JobSessionReports"&gt; 出力フォルダ C:\\temp\\vHC\\JobSessionReports</value>
+  </data>
+  <data name="HtmlIntroLine4" xml:space="preserve">
+    <value>- 注：マウスオーバー中に、テーブルヘッダーまたはデータ列の説明データを含むツールチップが表示される場合があります。</value>
+  </data>
+  <data name="HtmlIntroLine5" xml:space="preserve">
+    <value>- 注：このレポートを生成するために実行したツールは完全に自己完結型であり、「phone-home」ではなく、Veeam BackupandReplicationサーバーでのみ実行されました。 VBRデータベース、レジストリ、構成、およびログファイルを照会します。 vCenterやその他のインフラストラクチャにアクセスする必要はありません。</value>
+  </data>
+  <data name="HtmlIntroLine5vb365" xml:space="preserve">
+    <value>- 注：このレポートを生成するために実行したツールは完全に自己完結型であり、「phone-home」ではなく、Veeam Backup forMicrosoft365サーバーでのみ実行されました。 VB365データベース、レジストリ、構成、およびログファイルを照会します。 M365やその他のインフラストラクチャにアクセスする必要はありません。</value>
+  </data>
+  <data name="NavBkpSrvDeet" xml:space="preserve">
+    <value>バックアップサーバー、構成DB、役割、およびリソースに関する詳細情報。</value>
+  </data>
+  <data name="NavBkpSrvLink" xml:space="preserve">
+    <value>バックアップサーバー</value>
+  </data>
+  <data name="NavColapse" xml:space="preserve">
+    <value>すべて折りたたむ/展開する</value>
+  </data>
+  <data name="NavHeader" xml:space="preserve">
+    <value>ナビゲーション：</value>
+  </data>
+  <data name="NavJobConDeet" xml:space="preserve">
+    <value>1時間あたりに検出された最大ジョブ同時実行性を示すヒートマップ。</value>
+  </data>
+  <data name="NavJobConLink" xml:space="preserve">
+    <value>ジョブの同時実行性</value>
+  </data>
+  <data name="NavJobInfoDeet" xml:space="preserve">
+    <value>各ジョブの詳細な内訳。</value>
+  </data>
+  <data name="NavJobInfoLink" xml:space="preserve">
+    <value>ジョブ情報</value>
+  </data>
+  <data name="NavJobSessSumDeet" xml:space="preserve">
+    <value>ジョブ名によるジョブセッションの要約。</value>
+  </data>
+  <data name="NavJobSessSumLink" xml:space="preserve">
+    <value>ジョブセッションの概要</value>
+  </data>
+  <data name="NavJobSumDeet" xml:space="preserve">
+    <value>タイプおよびカウントごとの見つかったジョブの要約。</value>
+  </data>
+  <data name="NavJobSumLink" xml:space="preserve">
+    <value>ジョブの概要</value>
+  </data>
+  <data name="NavLicInfoDetail" xml:space="preserve">
+    <value>ライセンス情報を表示します。</value>
+  </data>
+  <data name="NavLicInfoLink" xml:space="preserve">
+    <value>ライセンス情報</value>
+  </data>
+  <data name="NavMissingDeet" xml:space="preserve">
+    <value>使用されていないワークロードとタイプを表示します。</value>
+  </data>
+  <data name="NavMissingJobLink" xml:space="preserve">
+    <value>不足しているジョブタイプ</value>
+  </data>
+  <data name="NavProtWkldDeet" xml:space="preserve">
+    <value>バックアップのあるオブジェクトと比較した、検出されたVMおよび物理オブジェクトの数を表示します。</value>
+  </data>
+  <data name="NavProtWrkld" xml:space="preserve">
+    <value>保護されたワークロード</value>
+  </data>
+  <data name="NavProxyDeet" xml:space="preserve">
+    <value>プロキシリソースと構成の詳細。</value>
+  </data>
+  <data name="NavProxyInfoLink" xml:space="preserve">
+    <value>プロキシ情報</value>
+  </data>
+  <data name="NavRegKeyDeet" xml:space="preserve">
+    <value>バニラインストールとは異なるレジストリ値を表示します。</value>
+  </data>
+  <data name="NavRegKeyLink" xml:space="preserve">
+    <value>デフォルト以外のレジストリキー</value>
+  </data>
+  <data name="NavRepoDeet" xml:space="preserve">
+    <value>非SOBRリポジトリー、リソース、および構成に関する詳細。</value>
+  </data>
+  <data name="NavRepoInfoLink" xml:space="preserve">
+    <value>リポジトリ情報</value>
+  </data>
+  <data name="NavSecSumDeet" xml:space="preserve">
+    <value>使用中のセキュリティ機能を示す簡単な表。</value>
+  </data>
+  <data name="NavSecSumLink" xml:space="preserve">
+    <value>セキュリティの概要</value>
+  </data>
+  <data name="NavSobrDeet" xml:space="preserve">
+    <value>SOBRと構成オプションの合計。</value>
+  </data>
+  <data name="NavSobrExtDeet" xml:space="preserve">
+    <value>SOBRエクステント、リソース、および構成の詳細。</value>
+  </data>
+  <data name="NavSobrExtLink" xml:space="preserve">
+    <value>SOBRエクステント情報</value>
+  </data>
+  <data name="NavSobrInfoLink" xml:space="preserve">
+    <value>SOBR情報</value>
+  </data>
+  <data name="NavSrvInfoDeet" xml:space="preserve">
+    <value>ユーザーによって構成に追加されたすべてのサーバーのリスト。</value>
+  </data>
+  <data name="NavSrvInfoLink" xml:space="preserve">
+    <value>サーバー情報</value>
+  </data>
+  <data name="NavSrvSumDeet" xml:space="preserve">
+    <value>検出されたインフラストラクチャの種類と数の概要。</value>
+  </data>
+  <data name="NavSrvSumLink" xml:space="preserve">
+    <value>サーバーの概要</value>
+  </data>
+  <data name="NavTaskConDeet" xml:space="preserve">
+    <value>1時間あたりに検出された最大VM同時実行性を示すヒートマップ。</value>
+  </data>
+  <data name="NavTaskConLink" xml:space="preserve">
+    <value>VMの同時実行性</value>
+  </data>
+  <data name="LicCcTT" xml:space="preserve">
+    <value>Cloud Connectは有効になっていますか？</value>
+  </data>
+  <data name="LicExpTT" xml:space="preserve">
+    <value>ライセンスの有効期限</value>
+  </data>
+  <data name="LicTblLicTo" xml:space="preserve">
+    <value>ライセンス供与先</value>
+  </data>
+  <data name="LicSupExpTT" xml:space="preserve">
+    <value>サポートの有効期限</value>
+  </data>
+  <data name="LicTableHeader" xml:space="preserve">
+    <value>ライセンスの概要</value>
+  </data>
+  <data name="LicTblCc" xml:space="preserve">
+    <value>クラウドコネクト対応</value>
+  </data>
+  <data name="LicTblEdition" xml:space="preserve">
+    <value>エディション</value>
+  </data>
+  <data name="LicTblExpDate" xml:space="preserve">
+    <value>有効期限</value>
+  </data>
+  <data name="LicTblLicInst" xml:space="preserve">
+    <value>ライセンス機関</value>
+  </data>
+  <data name="LicTblLicNas" xml:space="preserve">
+    <value>ライセンスされたNas</value>
+  </data>
+  <data name="LicTblLicSock" xml:space="preserve">
+    <value>ライセンスソケット</value>
+  </data>
+  <data name="LicTblNewInst" xml:space="preserve">
+    <value>新しいインスタンス</value>
+  </data>
+  <data name="LicTblRentInst" xml:space="preserve">
+    <value>レンタルインスタンス</value>
+  </data>
+  <data name="LicTblStatus" xml:space="preserve">
+    <value>状態</value>
+  </data>
+  <data name="LicTblSupExpDate" xml:space="preserve">
+    <value>サポート有効期限</value>
+  </data>
+  <data name="LicTblType" xml:space="preserve">
+    <value>種類</value>
+  </data>
+  <data name="LicTblUsedInst" xml:space="preserve">
+    <value>使用済みインスタンス</value>
+  </data>
+  <data name="LicTblUsedNas" xml:space="preserve">
+    <value>使用済みNAS</value>
+  </data>
+  <data name="LicTblUsedSock" xml:space="preserve">
+    <value>使用済みソケット</value>
+  </data>
+  <data name="LtEdTT" xml:space="preserve">
+    <value>Veeam License Edition</value>
+  </data>
+  <data name="LtInstLicTT" xml:space="preserve">
+    <value>ライセンスされたインスタンスの総数</value>
+  </data>
+  <data name="LtInstNewTT" xml:space="preserve">
+    <value>新しいインスタンスの総数</value>
+  </data>
+  <data name="LtInstRentalTT" xml:space="preserve">
+    <value>完全レンタルインスタンス</value>
+  </data>
+  <data name="LtInstUsedTT" xml:space="preserve">
+    <value>使用されたインスタンスの合計</value>
+  </data>
+  <data name="LtNasLicTT" xml:space="preserve">
+    <value>ライセンスされたNASの合計</value>
+  </data>
+  <data name="LtNasUsedTT" xml:space="preserve">
+    <value>使用されたNASライセンスの合計</value>
+  </data>
+  <data name="LtSocLicTT" xml:space="preserve">
+    <value>ライセンスされたソケットの総数</value>
+  </data>
+  <data name="LtSocUsedTT" xml:space="preserve">
+    <value>使用されたソケットの総数</value>
+  </data>
+  <data name="LtStatusTT" xml:space="preserve">
+    <value>Veeamライセンスステータス</value>
+  </data>
+  <data name="LtTypeTT" xml:space="preserve">
+    <value>Veeamライセンスタイプ</value>
+  </data>
+  <data name="NpButton" xml:space="preserve">
+    <value>不足しているジョブタイプの詳細を表示する</value>
+  </data>
+  <data name="NpSum1" xml:space="preserve">
+    <value>この表は、構成から欠落しているか、分析できなかったジョブタイプをまとめたものです。詳細については、Veeamエンジニアにご相談ください。</value>
+  </data>
+  <data name="NpTitle" xml:space="preserve">
+    <value>不足しているジョブタイプ</value>
+  </data>
+  <data name="SSHdr0" xml:space="preserve">
+    <value>Immutability</value>
+  </data>
+  <data name="SSHdrTT0" xml:space="preserve">
+    <value>このサーバーのどこかで不変性が使用されていますか？</value>
+  </data>
+  <data name="SSHdr1" xml:space="preserve">
+    <value>トラフィックの暗号化</value>
+  </data>
+  <data name="SSHdrTT1" xml:space="preserve">
+    <value>トラフィックの暗号化は有効になっていますか？</value>
+  </data>
+  <data name="SSHdr2" xml:space="preserve">
+    <value>バックアップファイルの暗号化</value>
+  </data>
+  <data name="SSHdrTT2" xml:space="preserve">
+    <value>バックアップファイルは暗号化されていますか？</value>
+  </data>
+  <data name="SSHdr3" xml:space="preserve">
+    <value>構成バックアップ暗号化</value>
+  </data>
+  <data name="SSHdrTT3" xml:space="preserve">
+    <value>構成のバックアップは暗号化されていますか？</value>
+  </data>
+  <data name="SSSum1" xml:space="preserve">
+    <value>セキュリティの概要表には、B&amp;amp;R内の1つ以上のコンポーネントで有効になっているセキュリティ機能が一目でわかります。の値</value>
+  </data>
+  <data name="SSSubHdr1" xml:space="preserve">
+    <value>Immutability</value>
+  </data>
+  <data name="SSSubHdr2" xml:space="preserve">
+    <value>トラフィックの暗号化</value>
+  </data>
+  <data name="SSSubHdr3" xml:space="preserve">
+    <value>バックアップファイルの暗号化</value>
+  </data>
+  <data name="SSSubHdr4" xml:space="preserve">
+    <value>構成バックアップ暗号化</value>
+  </data>
+  <data name="SSNote1" xml:space="preserve">
+    <value>不変のバックアップの場合は、&lt;a href="https://helpcenter.veeam.com/docs/backup/vsphere/hardened_repository.html?ver=110"&gt;Hardened Linux Repository&lt;/a&gt; またはを選択します&lt;a href="https://helpcenter.veeam.com/docs/backup/vsphere/object_storage_repository.html?ver=110"&gt;パブリッククラウドまたはS3互換&lt;/a&gt;不変性を提供するオプション。</value>
+  </data>
+  <data name="SSNote2" xml:space="preserve">
+    <value>&lt;a href="https://helpcenter.veeam.com/docs/backup/vsphere/security_considerations.html?zoom_highlight=traffic+encryption&amp;amp;ver=110#:~:text=Encrypt%20network%20traffic,Network%20Data%20Encryption."&gt;トラフィック暗号化&lt;/a&gt;は、デフォルトですべてのパブリックトラフィックに対して有効になっています。 この値がfalseと表示された場合は、インターネットまたはその他の機密性の高い転送の設定を再度有効にすることを検討してください。</value>
+  </data>
+  <data name="SSNote3" xml:space="preserve">
+    <value>バックアップファイルの暗号化は、部外者がバックアップをインポートしてコンテンツにアクセスするのを防ぎます。 バックアップがオフサイトに保存されている場合は、&lt;a href="https://helpcenter.veeam.com/docs/backup/vsphere/backup_job_advanced_storage_vm.html?ver=110#:~:text=To%20encrypt%20the%20content%20of%20backup%20files%2C%20select%20the%20Enable%20backup%20file%20encryption%20check%20box."&gt;バックアップファイルの暗号化を有効にして&lt;/a&gt;バックアップを不要なアクセスから保護します。</value>
+  </data>
+  <data name="SSNote4" xml:space="preserve">
+    <value>&lt;a href="https://helpcenter.veeam.com/docs/backup/vsphere/vbr_config.html?ver=110"&gt;構成のバックアップ&lt;/a&gt;によりB&amp;amp;R構成がバックアップされ、復元できるようになります。 停止または移行が発生した場合。 構成のバックアップを&lt;a href="https://helpcenter.veeam.com/docs/backup/vsphere/config_backup_encrypted.html?ver=110"&gt;暗号化&lt;/a&gt;することで、不要なアクセスからの保護と、 以前に構成内に保存されたパスワードを復元します。 &lt;a style="font-weight:bold"&gt; BackupEnterpriseManagerの使用を検討してください&lt;/a&gt; &lt;a href="https://helpcenter.veeam.com/docs/backup/em/em_manage_keys.html?ver=110"&gt;パスワード保護&lt;/a&gt; &lt;a style="font-weight:bold"&gt; 失われたパスワードを確実に回復できるようにし、壊滅的な停止が発生した場合にEnterpriseManagerとVBRを分離します。 キーセットを安全な場所にエクスポートすることも検討してください。 この保護がないと、パスワードを紛失時、バックアップファイルを使用できなくなる可能性があります。&lt;/a&gt;</value>
+  </data>
+  <data name="SSButton" xml:space="preserve">
+    <value>セキュリティの概要の詳細を表示します。</value>
+  </data>
+  <data name="SSTitle" xml:space="preserve">
+    <value>セキュリティの概要</value>
+  </data>
+  <data name="MssTitle" xml:space="preserve">
+    <value>検出されたインフラストラクチャの種類と数</value>
+  </data>
+  <data name="MssHdr1" xml:space="preserve">
+    <value>名前</value>
+  </data>
+  <data name="MssHdr2" xml:space="preserve">
+    <value>カウント</value>
+  </data>
+  <data name="MssHdr1TT" xml:space="preserve">
+    <value>サーバー/共有名</value>
+  </data>
+  <data name="MssHdr2TT" xml:space="preserve">
+    <value>検出された総数</value>
+  </data>
+  <data name="MssSum1" xml:space="preserve">
+    <value>この表は、ユーザーがVeeam構成に手動で追加したインフラストラクチャアイテムのさまざまなタイプと数をまとめたものです。</value>
+  </data>
+  <data name="MssButton" xml:space="preserve">
+    <value>検出されたインフラストラクチャの種類と数の詳細を表示する</value>
+  </data>
+  <data name="BkpSrvButton" xml:space="preserve">
+    <value>バックアップサーバーの概要とメモを表示します。</value>
+  </data>
+  <data name="BkpSrvNotes1" xml:space="preserve">
+    <value>•バックアップサーバーのリソース&lt;a href="https://bp.veeam.com/vbr/3_Build_structures/B_Veeam_Components/B_VBR_Server/Backup_Server.html#compute-requirements"&gt;サイジング&lt;/a&gt;が 管理するジョブを同時に実行します。 このレポートの&lt;a href="＃jobConcurrency7"&gt;同時実行テーブル&lt;/a&gt;を参照してください。 注：他の役割またはコンポーネントをバックアップサーバーホストに組み合わせる場合、リソースのサイズ設定は追加的です（たとえば、バックアップサーバー+ SQL +プロキシ+リポジトリなど）。</value>
+  </data>
+  <data name="BkpSrvNotes2" xml:space="preserve">
+    <value>•SQLサーバーのリソース&lt;a href="https://bp.veeam.com/vbr/2_Design_Structures/D_Veeam_Components/D_VBR_DB/database.html#sizing"&gt;サイジング&lt;/a&gt;が適切であることを確認します</value>
+  </data>
+  <data name="BkpSrvNotes3" xml:space="preserve">
+    <value>• SQLExpressを使用している場合は、SQL Express &lt;a href="https://bp.veeam.com/vbr/2_Design_Structures/D_Veeam_Components/D_VBR_DB/database.html#sql-server-edition"&gt;hard-に違反していないことを確認してください。 コード化された制限&lt;/a&gt;（CPU、コア、メモリ、データベース容量など）。 低速、応答しない、またはエラーの多いバックアップサーバーは、多くの場合、これらのSQL制限に達した結果である可能性があります。</value>
+  </data>
+  <data name="BkpSrvNotes4" xml:space="preserve">
+    <value>• デフォルトプロキシまたはデフォルトバックアップリポジトリコンポーネントを使用するようにデータ保護タスクを割り当てると、バックアップサーバーリソースまたはその他の意図しないトラフィックの競合が発生する可能性があります。大規模な展開または分散展開では、これらを無効化、削除、および/またはバックアップサーバーから離れた場所に再割り当てすることが望ましい場合があります。</value>
+  </data>
+  <data name="BkpSrvNotes5" xml:space="preserve">
+    <value>• &lt;a href="https://bp.veeam.com/vbr/3_Build_structures/B_Veeam_Components/B_VBR_Server/Backup_Server.html#log-files"&gt;ログの場所&lt;/a&gt;には、パフォーマンスの高いディスクをお勧めします。 デフォルトは「％ProgramData％\\ Veeam \\Backup」です</value>
+  </data>
+  <data name="BkpSrvNotes6" xml:space="preserve">
+    <value>• DNSは重要なコンポーネントです。 バックアップサーバーと他のシステムの両方からバックアップへの&lt;a href="https://bp.veeam.com/vbr/3_Build_structures/B_Other/dns_resolution.html#dns-resolution"&gt;DNS解決&lt;/a&gt;を確認します サーバーは正しく機能しています。 環境内の他のコンポーネントは、バックアップサーバーおよび他のVeeamインフラストラクチャコンポーネント（プロキシ、リポジトリなど）をFQDNで解決できる必要があります。 順方向クエリと逆方向クエリの両方が機能する必要があります。</value>
+  </data>
+  <data name="BkpSrvSummary1" xml:space="preserve">
+    <value>バックアップサーバー（別名VBSまたはVBRサーバー）は、「構成および制御センター」の役割を果たすバックアップインフラストラクチャのコアコンポーネントです。バックアップサーバーは、データ保護とリカバリタスクの調整、タスクのスケジューリングとリソース割り当て、その他のバックアップインフラストラクチャコンポーネントの管理など、あらゆる種類の管理アクティビティを実行します。</value>
+  </data>
+  <data name="BkpSrvSummary2" xml:space="preserve">
+    <value>•バックアップサーバーはMicrosoftWindowsで実行されます</value>
+  </data>
+  <data name="BkpSrvSummary3" xml:space="preserve">
+    <value>•バックアップインフラストラクチャ、ジョブ、セッション、およびその他の構成データに関するデータを、ローカルまたはリモートのSQLサーバーに格納します。デフォルトのインストールでは、SQLServerExpressがローカルにインストールされます。</value>
+  </data>
+  <data name="BkpSrvSummary4" xml:space="preserve">
+    <value>•デフォルトで追加のコンポーネントがデプロイされています：プロキシ、リポジトリ</value>
+  </data>
+  <data name="BkpSrvTblCfgEnabled" xml:space="preserve">
+    <value>構成バックアップ（CB）を有効にする</value>
+  </data>
+  <data name="BkpSrvTblCfgEncrypt" xml:space="preserve">
+    <value>CB暗号化</value>
+  </data>
+  <data name="BkpSrvTblCfgLastRes" xml:space="preserve">
+    <value>CB最終結果</value>
+  </data>
+  <data name="BkpSrvTblCore" xml:space="preserve">
+    <value>コア</value>
+  </data>
+  <data name="BkpSrvTblHead" xml:space="preserve">
+    <value>バックアップサーバーと構成DB情報</value>
+  </data>
+  <data name="BkpSrvTblName" xml:space="preserve">
+    <value>名前</value>
+  </data>
+  <data name="BkpSrvTblProxyRole" xml:space="preserve">
+    <value>プロキシの役割</value>
+  </data>
+  <data name="BkpSrvTblRam" xml:space="preserve">
+    <value>メモリー</value>
+  </data>
+  <data name="BkpSrvTblRepoRole" xml:space="preserve">
+    <value>レポ/ゲートウェイの役割</value>
+  </data>
+  <data name="BkpSrvTblSqlCores" xml:space="preserve">
+    <value>SQLコア</value>
+  </data>
+  <data name="BkpSrvTblSqlEdition" xml:space="preserve">
+    <value>SQLエディション</value>
+  </data>
+  <data name="BkpSrvTblSqlLocal" xml:space="preserve">
+    <value>ローカルSQL</value>
+  </data>
+  <data name="BkpSrvTblSqlName" xml:space="preserve">
+    <value>SQLServer名</value>
+  </data>
+  <data name="BkpSrvTblSqlRam" xml:space="preserve">
+    <value>SQL RAM</value>
+  </data>
+  <data name="BkpSrvTblSqlVersion" xml:space="preserve">
+    <value>SQLバージョン</value>
+  </data>
+  <data name="BkpSrvTblTarget" xml:space="preserve">
+    <value>CBターゲット</value>
+  </data>
+  <data name="BkpSrvTblVersion" xml:space="preserve">
+    <value>Veeamバージョン</value>
+  </data>
+  <data name="BkpSrvTblWanRole" xml:space="preserve">
+    <value>WAN Acc.</value>
+  </data>
+  <data name="BstCfgEnabledTT" xml:space="preserve">
+    <value>構成バックアップの有効化/無効化</value>
+  </data>
+  <data name="BstCfgEncTT" xml:space="preserve">
+    <value>構成バックアップの暗号化ステータス</value>
+  </data>
+  <data name="BstCfgLastResTT" xml:space="preserve">
+    <value>構成バックアップの最終結果</value>
+  </data>
+  <data name="BstCfgTarTT" xml:space="preserve">
+    <value>構成バックアップターゲットリポジトリ名</value>
+  </data>
+  <data name="BstCpuTT" xml:space="preserve">
+    <value>B＆Rサーバーで検出された物理コア</value>
+  </data>
+  <data name="BstNameTT" xml:space="preserve">
+    <value>B＆Rサーバーのホスト名</value>
+  </data>
+  <data name="BstPrxTT" xml:space="preserve">
+    <value>バックアップサーバーもプロキシですか？</value>
+  </data>
+  <data name="BstRamTT" xml:space="preserve">
+    <value>B＆Rサーバーで検出された合計RAM</value>
+  </data>
+  <data name="BstRepTT" xml:space="preserve">
+    <value>バックアップサーバーはリポジトリサーバーまたはゲートウェイサーバーでもありますか？</value>
+  </data>
+  <data name="BstSqlCpuTT" xml:space="preserve">
+    <value>SQL Server CPU（ローカルでない場合）</value>
+  </data>
+  <data name="BstSqlEdTT" xml:space="preserve">
+    <value>SQL Server Edition</value>
+  </data>
+  <data name="BstSqlLocTT" xml:space="preserve">
+    <value>SQLはB＆Rと同じサーバーにインストールされていますか？</value>
+  </data>
+  <data name="BstSqlNameTT" xml:space="preserve">
+    <value>SQL Serverのホスト名（ローカルでない場合）</value>
+  </data>
+  <data name="BstSqlRamTT" xml:space="preserve">
+    <value>SQL Server RAM（ローカルでない場合）</value>
+  </data>
+  <data name="BstSqlVerTT" xml:space="preserve">
+    <value>SQLServerバージョン</value>
+  </data>
+  <data name="BstVerTT" xml:space="preserve">
+    <value>B＆Rソフトウェアの検出されたバージョン</value>
+  </data>
+  <data name="BstWaTT" xml:space="preserve">
+    <value>バックアップサーバーもWANアクセラレータですか？</value>
+  </data>
+  <data name="SbrTitle" xml:space="preserve">
+    <value>SOBRの詳細</value>
+  </data>
+  <data name="SbrBtn" xml:space="preserve">
+    <value>SOBRの詳細を表示</value>
+  </data>
+  <data name="Sbr0" xml:space="preserve">
+    <value>名前</value>
+  </data>
+  <data name="Sbr0TT" xml:space="preserve">
+    <value>SOBR名</value>
+  </data>
+  <data name="Sbr1" xml:space="preserve">
+    <value>Extents</value>
+  </data>
+  <data name="Sbr1TT" xml:space="preserve">
+    <value>Extent count</value>
+  </data>
+  <data name="Sbr2" xml:space="preserve">
+    <value>ポリシー</value>
+  </data>
+  <data name="Sbr2TT" xml:space="preserve">
+    <value>データポリシー</value>
+  </data>
+  <data name="Sbr3" xml:space="preserve">
+    <value>キャパシティティア</value>
+  </data>
+  <data name="Sbr3TT" xml:space="preserve">
+    <value>キャパシティ層は有効になっていますか？</value>
+  </data>
+  <data name="Sbr4" xml:space="preserve">
+    <value>コピー</value>
+  </data>
+  <data name="Sbr4TT" xml:space="preserve">
+    <value>コピーモードを使用していますか？</value>
+  </data>
+  <data name="Sbr5" xml:space="preserve">
+    <value>動く</value>
+  </data>
+  <data name="Sbr5TT" xml:space="preserve">
+    <value>移動モードを使用していますか？</value>
+  </data>
+  <data name="Sbr6" xml:space="preserve">
+    <value>アーカイブ層</value>
+  </data>
+  <data name="Sbr6TT" xml:space="preserve">
+    <value>アーカイブ層は有効になっていますか？</value>
+  </data>
+  <data name="Sbr7" xml:space="preserve">
+    <value>マシンごと</value>
+  </data>
+  <data name="Sbr7TT" xml:space="preserve">
+    <value>SOBRはマシンごとのバックアップファイルを使用しますか？</value>
+  </data>
+  <data name="Sbr8" xml:space="preserve">
+    <value>CapTierタイプ</value>
+  </data>
+  <data name="Sbr8TT" xml:space="preserve">
+    <value>使用中の容量階層のタイプ</value>
+  </data>
+  <data name="Sbr9" xml:space="preserve">
+    <value>Immutable</value>
+  </data>
+  <data name="Sbr9TT" xml:space="preserve">
+    <value>CapTierは不変性を使用していますか</value>
+  </data>
+  <data name="Sbr10" xml:space="preserve">
+    <value>不変期間</value>
+  </data>
+  <data name="Sbr10TT" xml:space="preserve">
+    <value>不変性の期間</value>
+  </data>
+  <data name="Sbr11" xml:space="preserve">
+    <value>サイズ制限を有効にする</value>
+  </data>
+  <data name="Sbr11TT" xml:space="preserve">
+    <value>容量階層は総容量によって制限されますか？</value>
+  </data>
+  <data name="Sbr12" xml:space="preserve">
+    <value>サイズ制限</value>
+  </data>
+  <data name="Sbr12TT" xml:space="preserve">
+    <value>キャパシティティアは、ユーザーが設定した最大キャパシティ制限をアップロードします</value>
+  </data>
+  <data name="SbrSum0" xml:space="preserve">
+    <value>oスケールアウトバックアップリポジトリ（「SOBR」）は、1つ以上の基盤となるバックアップリポジトリまたは「エクステント」で構成される単一の論理リポジトリ名前空間であり、複数の層にわたる水平スケーリングを可能にします。 データはSOBRのローカルパフォーマンス層に到達します。パフォーマンス層は、長期およびアーカイブストレージ用のオブジェクトストレージ層（キャパシティ層とアーカイブ層）で拡張できます。</value>
+  </data>
+  <data name="SbrSum1" xml:space="preserve">
+    <value>•SOBRには、ウィンドウ、Linux、NFS、SMB、重複排除アプライアンス、オブジェクトストレージなど、複数の種類の基になるエクステントを含めることができます。</value>
+  </data>
+  <data name="SbrNote0" xml:space="preserve">
+    <value>•	いくつのエクステントが使用されていますか？基になるエクステントが多数あると、メタデータ管理の課題やパフォーマンスの低下につながる可能性があります。エクステントカウントが十分かどうかについて、Veeamエンジニアと話し合ってください。</value>
+  </data>
+  <data name="SbrNote1" xml:space="preserve">
+    <value>•	「パフォーマンス」&lt;a href="https://helpcenter.veeam.com/docs/backup/vsphere/backup_repository_sobr_placement.html?ver=110"&gt;Placement Policy&lt;/a&gt;は使用されていますか？ もしそうなら、特定の理由やユースケースがあったかどうかを検討しますか？ 「Data Locality」配置ポリシーは、ほとんどの場合、ほとんどの展開とユースケースにとって理想的なポリシーです。</value>
+  </data>
+  <data name="SbrNote2" xml:space="preserve">
+    <value>•	ReFSまたはXFS&lt;a href="https://helpcenter.veeam.com/docs/backup/vsphere/backup_repository_block_cloning.html?ver=110"&gt;ブロッククローン作成&lt;/a&gt;を使用している場合、「Data Locality」配置ポリシーは次のようになります。 ブロッククローン（「高速クローン」）機能を活用するために必要です。</value>
+  </data>
+  <data name="SbrNote3" xml:space="preserve">
+    <value>•	&lt;a href="https://helpcenter.veeam.com/docs/backup/hyperv/compatible_repository_account.html?ver=110"&gt;ゲートウェイサーバーがキャパシティ層のコピー/オフロードに使用されていますか&lt;/a&gt;？ ゲートウェイサーバーに、このオブジェクトストレージリポジトリに送信されるすべてのバックアップのファネルとして機能するのに十分なリソースがあることを確認してください。</value>
+  </data>
+  <data name="SbrNote4" xml:space="preserve">
+    <value>•	「&lt;a href="https://helpcenter.veeam.com/docs/backup/hyperv/sobr_add_extents.html?ver=110"&gt;Perform full backup when the required extent is offline&lt;/a&gt;」オプション（ VBRコンソール）は慎重に検討する必要があります。 これにより、予想されるエクステントがオフラインのときにバックアップが確実に実行されますが、追加のアクティブフルのために消費される追加のスペースと、ReFSやReFSなどのボリュームベースのブロック共有テクノロジーによるストレージ効率の低下の可能性が犠牲になります。 XFS。</value>
+  </data>
+  <data name="SbrNote5" xml:space="preserve">
+    <value>•	「&lt;a href="https://helpcenter.veeam.com/docs/backup/vsphere/per_vm_backup_files.html?ver=110"&gt;Per-Machine&lt;/a&gt;」は誤りですか？ もしそうなら、それを無効にする特定の理由またはユースケースがあったかどうかを検討しますか？ これを有効にすることは、ほとんどの展開とユースケースにとって理想的なポリシーです。 Veeamエンジニアに相談してください。</value>
+  </data>
+  <data name="SbrNote6" xml:space="preserve">
+    <value>•	Infrequent Accessストレージ階層は、Veeamコピーモードまたはオブジェクトストレージの不変性と組み合わせて使用されますか？ &lt;a href="https://forums.veeam.com/object-storage-f52/aws-s3-how-to-reduce-the-number-of-api-calls-t68858.html#p382566"&gt;があります これらのプロセスに関連する追加のAPI呼び出し&lt;/a&gt;は、アクセスコストの予算を立てるときに考慮する必要があります。</value>
+  </data>
+  <data name="SbrButton" xml:space="preserve">
+    <value>SOBRの詳細を表示</value>
+  </data>
+  <data name="SbrExtTitle" xml:space="preserve">
+    <value>SOBRエクステントの詳細</value>
+  </data>
+  <data name="SbrExtBtn" xml:space="preserve">
+    <value>SOBRエクステントの詳細を表示</value>
+  </data>
+  <data name="SbrExt0" xml:space="preserve">
+    <value>名前</value>
+  </data>
+  <data name="SbrExt0TT" xml:space="preserve">
+    <value>リポジトリ名</value>
+  </data>
+  <data name="SbrExt1" xml:space="preserve">
+    <value>SOBR</value>
+  </data>
+  <data name="SbrExt1TT" xml:space="preserve">
+    <value>エクステントが結合されているSOBR。</value>
+  </data>
+  <data name="SbrExt2" xml:space="preserve">
+    <value>タスクの設定</value>
+  </data>
+  <data name="SbrExt2TT" xml:space="preserve">
+    <value>指定されたタスク制限（-1は無制限を意味します）</value>
+  </data>
+  <data name="SbrExt3" xml:space="preserve">
+    <value>コア</value>
+  </data>
+  <data name="SbrExt3TT" xml:space="preserve">
+    <value>リポジトリサーバーで検出された物理CPUコア</value>
+  </data>
+  <data name="SbrExt4" xml:space="preserve">
+    <value>メモリー</value>
+  </data>
+  <data name="SbrExt4TT" xml:space="preserve">
+    <value>リポジトリサーバーで検出されたRAMの合計</value>
+  </data>
+  <data name="SbrExt5" xml:space="preserve">
+    <value>自動ゲートウェイ</value>
+  </data>
+  <data name="SbrExt5TT" xml:space="preserve">
+    <value>リポジトリはAutmaticaGatewayを使用していますか？</value>
+  </data>
+  <data name="SbrExt6" xml:space="preserve">
+    <value>ホスト</value>
+  </data>
+  <data name="SbrExt6TT" xml:space="preserve">
+    <value>自動ゲートウェイを使用するように設定されていない場合に割り当てられたホスト/ゲートウェイ</value>
+  </data>
+  <data name="SbrExt7" xml:space="preserve">
+    <value>パス</value>
+  </data>
+  <data name="SbrExt7TT" xml:space="preserve">
+    <value>リポジトリに指定されたファイルパス</value>
+  </data>
+  <data name="SbrExt8" xml:space="preserve">
+    <value>空き容量（TB）</value>
+  </data>
+  <data name="SbrExt8TT" xml:space="preserve">
+    <value>最後にキャッシュされたスキャンに基づいて検出された空き領域</value>
+  </data>
+  <data name="SbrExt9" xml:space="preserve">
+    <value>合計スペース（TB）</value>
+  </data>
+  <data name="SbrExt9TT" xml:space="preserve">
+    <value>リポジトリの検出された容量</value>
+  </data>
+  <data name="SbrExt10" xml:space="preserve">
+    <value>フリースペース ％</value>
+  </data>
+  <data name="SbrExt10TT" xml:space="preserve">
+    <value>計算された空き領域の割合（空き領域/合計領域）</value>
+  </data>
+  <data name="SbrExt11" xml:space="preserve">
+    <value>解凍</value>
+  </data>
+  <data name="SbrExt11TT" xml:space="preserve">
+    <value>リポジトリは、最終的なストレージの前にバックアップファイルを解凍しますか？</value>
+  </data>
+  <data name="SbrExt12" xml:space="preserve">
+    <value>ブロックを揃える</value>
+  </data>
+  <data name="SbrExt12TT" xml:space="preserve">
+    <value>リポジトリはデータブロックを調整しますか？</value>
+  </data>
+  <data name="SbrExt13" xml:space="preserve">
+    <value>ローテーションドライブ</value>
+  </data>
+  <data name="SbrExt13TT" xml:space="preserve">
+    <value>リポジトリはローテーションしたドライブによってバックアップされていますか？</value>
+  </data>
+  <data name="SbrExt14" xml:space="preserve">
+    <value>不変性を使用する</value>
+  </data>
+  <data name="SbrExt14TT" xml:space="preserve">
+    <value>リポジトリは不変性を使用していますか？</value>
+  </data>
+  <data name="SbrExt15" xml:space="preserve">
+    <value>タイプ</value>
+  </data>
+  <data name="SbrExt15TT" xml:space="preserve">
+    <value>リポジトリタイプ</value>
+  </data>
+  <data name="SbrExtSum0" xml:space="preserve">
+    <value>•SOBRは、1つまたは複数の個別のVeeamリポジトリ（基本または強化）を取得し、それらをSOBRコンストラクトに配置することによって作成されます。 SOBRを構成する個々のリポジトリは、「エクステント」と呼ばれます。</value>
+  </data>
+  <data name="SbrExtSum1" xml:space="preserve">
+    <value>•ヘルスチェックレポートのこのセクションでは、Veeam Backup andReplicationUIで構成されているリポジトリ設定について詳しく説明します。これらの設定は、バックアップジョブのパフォーマンスに影響を与えるか、パフォーマンスを向上させる可能性があります。</value>
+  </data>
+  <data name="SbrExtNote0subhdr" xml:space="preserve">
+    <value>タスクの設定：</value>
+  </data>
+  <data name="SbrExtNote1" xml:space="preserve">
+    <value>•この列は、リポジトリに許可されている最大同時タスク設定です。 バックアップリポジトリの同時タスクの最大許容数を指定します。 この値を超えると、Veeam Backup＆amp; 現在のタスクの1つが終了するまで、レプリケーションは新しいタスクを開始しません。 詳細については、&lt;a href="https://helpcenter.veeam.com/docs/backup/vsphere/limiting_tasks.html"&gt;同時タスク数の制限&lt;/a&gt;を参照してください。</value>
+  </data>
+  <data name="SbrExtNote2" xml:space="preserve">
+    <value>•バックアップリポジトリに必要なタスク/コアの数を決定するには、次の&lt;a href="https://bp.veeam.com/vbr/2_Design_Structures/D_Veeam_Components/D_backup_repositories/"&gt;式&lt;/a&gt;を使用します。</value>
+  </data>
+  <data name="SbrExtNote3" xml:space="preserve">
+    <value>oプロキシvCPU/コアの数÷3=必要なリポジトリタスクの数。</value>
+  </data>
+  <data name="SbrExtNote4" xml:space="preserve">
+    <value>•設定は、次の2つの列（&lt;a style="font-weight：bold"&gt;コア&lt;/a&gt;と&lt;a style="font-weight：bold"&gt; RAM（GB）&lt;/a&gt;）と一致している必要があります。</value>
+  </data>
+  <data name="SbrExtNote5subhdr" xml:space="preserve">
+    <value>コア：</value>
+  </data>
+  <data name="SbrExtNote6" xml:space="preserve">
+    <value>•この数は、リポジトリサーバー内のCPUコアの数と同じです。</value>
+  </data>
+  <data name="SbrExtNote7" xml:space="preserve">
+    <value>メモリー：</value>
+  </data>
+  <data name="SbrExtNote8" xml:space="preserve">
+    <value>•この数は、リポジトリサーバーのRAMの量と同じです。</value>
+  </data>
+  <data name="SbrExtNote9" xml:space="preserve">
+    <value>•RAMの容量は、コア数の4倍である必要があります。</value>
+  </data>
+  <data name="SbrExtNote10subhdr" xml:space="preserve">
+    <value>空き領域（TB）と空き領域％</value>
+  </data>
+  <data name="SbrExtNote11" xml:space="preserve">
+    <value>•ベストプラクティスは、リポジトリに20％の空き領域を維持することです。これは、SOBRエクステントがXFS / REFSファイルシステムでフォーマットされている場合に特に重要です。ブロッククローン作成とスペースレス合成バックアップでは、関連するすべてのVeeamバックアップファイルを同じディスクに配置する必要があるためです。 Veeamは合成フルバックアップを作成するための作業スペースを必要とするため、他のファイルシステムでも空き領域が重要です。</value>
+  </data>
+  <data name="SbrExtNote12" xml:space="preserve">
+    <value>•VBRコンソールの[一般オプション]セクションで、リポジトリの空きディスク容量の割合が少ないことを警告するようにアラームを設定できます。</value>
+  </data>
+  <data name="SbrExtNote13subhdr" xml:space="preserve">
+    <value>ブロックを揃える</value>
+  </data>
+  <data name="SbrExtNote14" xml:space="preserve">
+    <value>•固定ブロックサイズを使用するストレージシステムの場合は、[&lt;a style="font-weight:bold"&gt;バックアップファイルのデータブロックを整列する&lt;/a&gt;]チェックボックスをオンにします。 Veeam Backup＆amp; レプリケーションは、バックアップファイルに保存されたVMデータを4KBのブロック境界で整列させます。</value>
+  </data>
+  <data name="SbrExtNote15" xml:space="preserve">
+    <value>•この設定は、データ転送の高速化にも役立ち、ブロックベースのリポジトリにデータを転送するときに使用するRAMが少なくなります</value>
+  </data>
+  <data name="SbrExtNote16" xml:space="preserve">
+    <value>•Veeam Backup and Replication v11以降のブロックベースのリポジトリの場合、この設定は&lt;a style="font-weight：bold"&gt;true&lt;/a&gt;に設定する必要があります。</value>
+  </data>
+  <data name="RepoTitle" xml:space="preserve">
+    <value>スタンドアロンリポジトリの詳細</value>
+  </data>
+  <data name="RepoBtn" xml:space="preserve">
+    <value>リポジトリの詳細を表示</value>
+  </data>
+  <data name="Repo0" xml:space="preserve">
+    <value>ジョブカウント</value>
+  </data>
+  <data name="Repo0TT" xml:space="preserve">
+    <value>リポジトリに割り当てられたジョブの合計</value>
+  </data>
+  <data name="Repo1" xml:space="preserve">
+    <value>VMごと</value>
+  </data>
+  <data name="Repo1TT" xml:space="preserve">
+    <value>リポジトリはVM/マシンごとのバックアップファイルを使用しますか？</value>
+  </data>
+  <data name="RepoSum0" xml:space="preserve">
+    <value>•スタンドアロンリポジトリには、SOBRの一部として構成されていないリポジトリが含まれます</value>
+  </data>
+  <data name="RepoSum1" xml:space="preserve">
+    <value>•ヘルスチェックレポートのこのセクションでは、Veeam Backup andReplicationUIで構成されているリポジトリ設定について詳しく説明します。これらの設定は、バックアップジョブのパフォーマンスに影響を与えるか、パフォーマンスを向上させる可能性があります。</value>
+  </data>
+  <data name="PrxTitle" xml:space="preserve">
+    <value>プロキシ情報</value>
+  </data>
+  <data name="PrxBtn" xml:space="preserve">
+    <value>プロキシの概要を表示</value>
+  </data>
+  <data name="Prx0" xml:space="preserve">
+    <value>名前</value>
+  </data>
+  <data name="Prx0TT" xml:space="preserve">
+    <value>プロキシのホスト名</value>
+  </data>
+  <data name="Prx1" xml:space="preserve">
+    <value>タスク</value>
+  </data>
+  <data name="Prx1TT" xml:space="preserve">
+    <value>プロキシ構成で割り当てられたタスク制限。</value>
+  </data>
+  <data name="Prx2" xml:space="preserve">
+    <value>コア</value>
+  </data>
+  <data name="Prx2TT" xml:space="preserve">
+    <value>検出された物理CPUコア（ハイパースレッディングはカウントされません）</value>
+  </data>
+  <data name="Prx3" xml:space="preserve">
+    <value>メモリー</value>
+  </data>
+  <data name="Prx3TT" xml:space="preserve">
+    <value>プロキシホストで検出されたRAMの合計</value>
+  </data>
+  <data name="Prx4" xml:space="preserve">
+    <value>プロキシタイプ</value>
+  </data>
+  <data name="Prx4TT" xml:space="preserve">
+    <value>Vi（Vmware）、HV、CDP、ファイル</value>
+  </data>
+  <data name="Prx5" xml:space="preserve">
+    <value>転送モード</value>
+  </data>
+  <data name="Prx5TT" xml:space="preserve">
+    <value>プロキシ構成で指定されたトランスポートモード</value>
+  </data>
+  <data name="Prx6" xml:space="preserve">
+    <value>NBDへのフェイルオーバー</value>
+  </data>
+  <data name="Prx6TT" xml:space="preserve">
+    <value>プロキシはNBDへのフェイルオーバーを許可されていますか（ネットワークモード）</value>
+  </data>
+  <data name="Prx7" xml:space="preserve">
+    <value>シャーシ</value>
+  </data>
+  <data name="Prx7TT" xml:space="preserve">
+    <value>プロキシは物理ですか、それとも仮想ですか？</value>
+  </data>
+  <data name="Prx8" xml:space="preserve">
+    <value>キャッシュパス</value>
+  </data>
+  <data name="Prx8TT" xml:space="preserve">
+    <value>CDPプロキシキャッシュに指定されたパス</value>
+  </data>
+  <data name="Prx9" xml:space="preserve">
+    <value>キャッシュサイズ</value>
+  </data>
+  <data name="Prx9TT" xml:space="preserve">
+    <value>CDPプロキシに指定されたキャッシュサイズ</value>
+  </data>
+  <data name="Prx10" xml:space="preserve">
+    <value>ホスト</value>
+  </data>
+  <data name="Prx10TT" xml:space="preserve">
+    <value></value>
+  </data>
+  <data name="Prx11" xml:space="preserve">
+    <value>無効になっています</value>
+  </data>
+  <data name="Prx11TT" xml:space="preserve">
+    <value>プロキシはユーザーによって無効にされていますか？</value>
+  </data>
+  <data name="PrxSum0" xml:space="preserve">
+    <value>Veeamプロキシは論理的なデータムーバーコンポーネントです。 プロキシには2つのタイプがあります：（&lt;a href="https://helpcenter.veeam.com/docs/backup/vsphere/backup_proxy.html?zoom_highlight=proxy&amp;amp;ver=110"&gt;バックアッププロキシ&lt;/a&gt;、&lt;a href="https://helpcenter.veeam.com/docs/backup/vsphere/cdp_proxy.html?ver=110"&gt; CDPプロキシ&lt;/a&gt;）。 バックアッププロキシは、機能またはプラットフォームに基づいてさらに細分化されます。 NASベースのバックアップ用のファイルプロキシ、またはさまざまなソースハイパーバイザー。</value>
+  </data>
+  <data name="PrxSum1" xml:space="preserve">
+    <value>•バックアッププロキシは、ソースデータ（VMまたはファイル共有）とバックアップリポジトリの間に配置されます。彼らの役割は、バックアップジョブを処理し、バックアップトラフィックをリポジトリに配信することです。</value>
+  </data>
+  <data name="PrxSum2" xml:space="preserve">
+    <value>o	VMバックアッププロキシは、さまざまな&lt;a href="https://helpcenter.veeam.com/docs/backup/vsphere/transport_modes.html?ver=110"&gt;トランスポートモード&lt;/a&gt;を活用できます。</value>
+  </data>
+  <data name="PrxSum3" xml:space="preserve">
+    <value>o	ファイルバックアッププロキシは、&lt;a href="https://helpcenter.veeam.com/docs/backup/vsphere/file_share_backup_nfs_share_advanced_settings.html?ver=110"&gt;NFS&lt;/a&gt;の手動または自動スナップショットパスからソースデータをバックアップできます。 &lt;a href="https://helpcenter.veeam.com/docs/backup/vsphere/file_share_backup_smb_share_advanced_settings.html?ver=110"&gt; SMB &lt;/a&gt;、エンタープライズNASファイラー。 （注：管理対象サーバーはファイルバックアッププロキシを利用しません）</value>
+  </data>
+  <data name="PrxSum4" xml:space="preserve">
+    <value>o	バックアッププロキシは、データをローカルに保存またはキャッシュしません。</value>
+  </data>
+  <data name="PrxSum5" xml:space="preserve">
+    <value>•CDPプロキシはCDPポリシーを処理し、ソースとターゲットのVMwareホスト間のデータムーバーとして機能します。</value>
+  </data>
+  <data name="PrxSum6" xml:space="preserve">
+    <value>o	CDPプロキシには、&lt;a href="https://helpcenter.veeam.com/docs/backup/vsphere/system_requirements.html?ver=110#vmware-cdp-proxy-server"&gt;ローカルキャッシュ&lt;/a&gt;が必要です。</value>
+  </data>
+  <data name="PrxNote0" xml:space="preserve">
+    <value>•	「ホスト」列を確認し、 をサポートするホストを特定します。&lt;a href="https://helpcenter.veeam.com/docs/backup/vsphere/limiting_tasks.html?ver=110#task-limitation-for-components-with-several-roles"&gt;多数&lt;/a&gt; プロキシの役割：</value>
+  </data>
+  <data name="PrxNote1" xml:space="preserve">
+    <value>o	を割り当てることで、役割を組み合わせることができます。&lt;a href="https://helpcenter.veeam.com/docs/backup/vsphere/limiting_tasks.html?ver=110"&gt;十分なリソース&lt;/a&gt;</value>
+  </data>
+  <data name="PrxNote2" xml:space="preserve">
+    <value>	役割が非並行である場合は、サポートされているすべての役割にわたって計算された最大リソースを割り当てます。</value>
+  </data>
+  <data name="PrxNote3" xml:space="preserve">
+    <value>	ロールが並行している場合は、&lt;a href="https://helpcenter.veeam.com/docs/backup/vsphere/limiting_tasks.html?ver=110#task-limitation-for-components-with-several-roles"&gt;を割り当てます。 すべての役割に十分な&lt;/a&gt;リソース</value>
+  </data>
+  <data name="PrxNote4" xml:space="preserve">
+    <value>	CDPプロキシは常にアクティブでデータを転送しているため、その役割のために十分なリソースを「予約」し、結合された役割に必要なものを追加することが不可欠であることに注意してください。</value>
+  </data>
+  <data name="PrxNote5" xml:space="preserve">
+    <value>•	CDPプロキシ：</value>
+  </data>
+  <data name="PrxNote6" xml:space="preserve">
+    <value>o	&lt;a href="https://helpcenter.veeam.com/docs/backup/vsphere/cdp_proxy.html?zoom_highlight=CDP+cache&amp;amp;ver=110#vmware-cdp-proxy-cache"&gt;キャッシュ&lt;/a&gt;を確認します 適切なサイズです</value>
+  </data>
+  <data name="PrxNote7" xml:space="preserve">
+    <value>o	C：\\ドライブにあるキャッシュでCDPプロキシに潜在的なリスクとしてフラグを立てます。</value>
+  </data>
+  <data name="PrxNote8" xml:space="preserve">
+    <value>•	割り当てられた&lt;a href="https://helpcenter.veeam.com/docs/backup/vsphere/limiting_tasks.html?ver=110"&gt;タスク&lt;/a&gt;とコア数を比較し、&lt;a href="https://helpcenter.veeam.com/docs/backup/vsphere/limiting_tasks.html?ver=110#task-limitation-for-backup-proxies"&gt;オーバーサブスクリプション&lt;/a&gt;。</value>
+  </data>
+  <data name="PrxNote9" xml:space="preserve">
+    <value>•	RAMとコアの比率が&lt;a href="https://helpcenter.veeam.com/docs/backup/vsphere/system_requirements.html?ver=110#vmware-cdp-proxy-server"&gt;適切&lt;/a&gt;であることを確認します 。</value>
+  </data>
+  <data name="PrxNote10" xml:space="preserve">
+    <value>•	ベースOSに十分なリソースがあることを確認してください。 （&lt;a href="https://helpcenter.veeam.com/docs/backup/vsphere/system_requirements.html?ver=110#backup-proxy-server"&gt;バックアッププロキシ&lt;/a&gt;、&lt;a href="https ://helpcenter.veeam.com/docs/backup/vsphere/system_requirements.html?ver=110#vmware-cdp-proxy-server"&gt; CDPプロキシ&lt;/a&gt;）</value>
+  </data>
+  <data name="PrxNote11" xml:space="preserve">
+    <value>•	選択した&lt;a href="https://helpcenter.veeam.com/docs/backup/vsphere/transport_modes.html?zoom_highlight=transport+mode&amp;amp;ver=110"&gt;トランスポートモード&lt;/a&gt;を確認し、&lt;a href="https://helpcenter.veeam.com/docs/backup/vsphere/network_mode_failover.html?ver=110"&gt;ネットワークモードへのフェイルオーバー&lt;/a&gt;は、ジョブが失敗した場合、またはネットワークへのフェイルオーバーがジョブに対して有効になっている場合は無効になります 予想よりも低速で実行される（NBDトラフィックが&lt;a href="https://helpcenter.veeam.com/docs/backup/vsphere/select_backup_network.html?zoom_highlight=preferred+network&amp;amp;ver=110"&gt;間違ったネットワークを流れる可能性があります &lt;/a&gt;）。</value>
+  </data>
+  <data name="PrxNote12" xml:space="preserve">
+    <value>•	Hyper-V off host proxiesは、保護されたHyper-Vホストのバージョンと&lt;a href="https://helpcenter.veeam.com/docs/backup/hyperv/offhost_backup_proxy.html?ver=110"&gt;一致&lt;/a&gt;する必要があります。</value>
+  </data>
+  <data name="ManSrvTitle" xml:space="preserve">
+    <value>管理対象サーバー情報</value>
+  </data>
+  <data name="ManSrvBtn" xml:space="preserve">
+    <value>管理対象サーバーの詳細を表示する</value>
+  </data>
+  <data name="ManSrv0" xml:space="preserve">
+    <value>名前</value>
+  </data>
+  <data name="ManSrv0TT" xml:space="preserve">
+    <value>ホスト/ファイル共有名</value>
+  </data>
+  <data name="ManSrv1" xml:space="preserve">
+    <value>コア</value>
+  </data>
+  <data name="ManSrv1TT" xml:space="preserve">
+    <value>検出された物理CPUコア（該当する場合）</value>
+  </data>
+  <data name="ManSrv2" xml:space="preserve">
+    <value>メモリー</value>
+  </data>
+  <data name="ManSrv2TT" xml:space="preserve">
+    <value>検出された物理RAM（該当する場合）</value>
+  </data>
+  <data name="ManSrv3" xml:space="preserve">
+    <value>タイプ</value>
+  </data>
+  <data name="ManSrv3TT" xml:space="preserve">
+    <value>サーバーまたは共有タイプ</value>
+  </data>
+  <data name="ManSrv4" xml:space="preserve">
+    <value>APIバージョン</value>
+  </data>
+  <data name="ManSrv4TT" xml:space="preserve">
+    <value>VMwareAPIバージョン</value>
+  </data>
+  <data name="ManSrv5" xml:space="preserve">
+    <value>保護されたVM</value>
+  </data>
+  <data name="ManSrv5TT" xml:space="preserve">
+    <value>このホストで検出されたVMの総数と関連するバックアップ</value>
+  </data>
+  <data name="ManSrv6" xml:space="preserve">
+    <value>保護されていないVM</value>
+  </data>
+  <data name="ManSrv6TT" xml:space="preserve">
+    <value>関連するバックアップなしでこのホストで検出されたVMの総数</value>
+  </data>
+  <data name="ManSrv7" xml:space="preserve">
+    <value>合計VM</value>
+  </data>
+  <data name="ManSrv7TT" xml:space="preserve">
+    <value>このホストで検出されたVMの総数</value>
+  </data>
+  <data name="ManSrv8" xml:space="preserve">
+    <value>プロキシですか</value>
+  </data>
+  <data name="ManSrv8TT" xml:space="preserve">
+    <value>サーバーはVeeamプロキシとして機能していますか？</value>
+  </data>
+  <data name="ManSrv9" xml:space="preserve">
+    <value>レポです</value>
+  </data>
+  <data name="ManSrv9TT" xml:space="preserve">
+    <value>サーバーはVeeamリポジトリとして機能していますか？</value>
+  </data>
+  <data name="ManSrv10" xml:space="preserve">
+    <value>WANAccです。</value>
+  </data>
+  <data name="ManSrv10TT" xml:space="preserve">
+    <value>サーバーはVeeamWANアクセラレータとして機能していますか？</value>
+  </data>
+  <data name="ManSrv11" xml:space="preserve">
+    <value>利用できません</value>
+  </data>
+  <data name="ManSrv11TT" xml:space="preserve">
+    <value>サーバーは利用できませんか？</value>
+  </data>
+  <data name="ManSrvSum0" xml:space="preserve">
+    <value>これは、データソース（ハイパーバイザー）、バックアップを識別するVeeamによって&lt;a href="https://helpcenter.veeam.com/docs/backup/vsphere/setup_add_server.html?ver=110"&gt;管理されている&lt;/a&gt;すべてのサーバーを一覧表示します インフラストラクチャサーバー（Windows、Linux）およびVeeam Backup for AWS / Azure/GCPアプライアンス。</value>
+  </data>
+  <data name="ManSrvNote0" xml:space="preserve">
+    <value>•	APIバージョンの列を確認し、それらが&lt;a href="https://helpcenter.veeam.com/docs/backup/vsphere/platform_support.html?ver=110"&gt;サポート&lt;/a&gt;されており、最小値&lt;a href="https://helpcenter.veeam.com/docs/backup/vsphere/system_requirements.html?ver=110"&gt;要件&lt;/a&gt;。</value>
+  </data>
+  <data name="ManSrvNote1" xml:space="preserve">
+    <value>•	複数の役割をサポートするホストを強調表示し、それらをサポートするために&lt;a href=""&gt;十分なリソース&lt;/a&gt;が利用可能であることを確認します。</value>
+  </data>
+  <data name="JobSumTitle" xml:space="preserve">
+    <value>仕事の概要</value>
+  </data>
+  <data name="JobSumBtn" xml:space="preserve">
+    <value>ジョブサマリーノートを表示する</value>
+  </data>
+  <data name="JobSum0" xml:space="preserve">
+    <value>タイプ</value>
+  </data>
+  <data name="JobSum0TT" xml:space="preserve">
+    <value>仕事の種類</value>
+  </data>
+  <data name="JobSum1" xml:space="preserve">
+    <value>合計</value>
+  </data>
+  <data name="JobSum1TT" xml:space="preserve">
+    <value>このタイプで検出されたジョブの総数</value>
+  </data>
+  <data name="JobSumSum0" xml:space="preserve">
+    <value>Veeam Backup and Replicationサーバーで作成されたすべてのジョブタイプのカウント、およびすべてのジョブの合計。同時に実行されるジョブの数は、VBRサーバーのサイズ設定とパフォーマンスに直接影響します。</value>
+  </data>
+  <data name="JobSumNote0" xml:space="preserve">
+    <value>バックアップコピージョブなどの一部のジョブは、継続的に実行するように構成されている場合が多いことに注意してください。</value>
+  </data>
+  <data name="JobSumNote1" xml:space="preserve">
+    <value>&lt;a href="＃jobConcurrency7"&gt;同時実行テーブル&lt;/a&gt;を参照してください</value>
+  </data>
+  <data name="JobConTitle" xml:space="preserve">
+    <value>ジョブ同時実行テーブル（7日）</value>
+  </data>
+  <data name="JobConBtn" xml:space="preserve">
+    <value>同時実行テーブルを表示する</value>
+  </data>
+  <data name="JobCon0" xml:space="preserve">
+    <value>時間</value>
+  </data>
+  <data name="JobCon0TT" xml:space="preserve">
+    <value>1日の時間（24時間形式）</value>
+  </data>
+  <data name="JobCon1" xml:space="preserve">
+    <value>日曜日</value>
+  </data>
+  <data name="JobCon1TT" xml:space="preserve">
+    <value></value>
+  </data>
+  <data name="JobCon2" xml:space="preserve">
+    <value>月曜日</value>
+  </data>
+  <data name="JobCon2TT" xml:space="preserve">
+    <value></value>
+  </data>
+  <data name="JobCon3" xml:space="preserve">
+    <value>火曜日</value>
+  </data>
+  <data name="JobCon3TT" xml:space="preserve">
+    <value></value>
+  </data>
+  <data name="JobCon4" xml:space="preserve">
+    <value>水曜日</value>
+  </data>
+  <data name="JobCon4TT" xml:space="preserve">
+    <value></value>
+  </data>
+  <data name="JobCon5" xml:space="preserve">
+    <value>木曜日</value>
+  </data>
+  <data name="JobCon5TT" xml:space="preserve">
+    <value></value>
+  </data>
+  <data name="JobCon6" xml:space="preserve">
+    <value>金曜日</value>
+  </data>
+  <data name="JobCon6TT" xml:space="preserve">
+    <value></value>
+  </data>
+  <data name="JobCon7" xml:space="preserve">
+    <value>土曜日</value>
+  </data>
+  <data name="JobCon7TT" xml:space="preserve">
+    <value></value>
+  </data>
+  <data name="JobConSum0" xml:space="preserve">
+    <value>同時実行テーブルは、ヒートマップとして機能することを目的としています。毎日の各時間が表されます。各セルの数値は、特定の時間内に同時に実行されているジョブの合計の計算された最大数を表します。このデータは、より正確なVBRサーバーのサイズ設定を保証するために使用できます。</value>
+  </data>
+  <data name="JobConNote0subhdr" xml:space="preserve">
+    <value>計算</value>
+  </data>
+  <data name="JobConNote1" xml:space="preserve">
+    <value>推奨されるVeeamバックアップサーバーの構成は、同時に実行される10個のジョブごとに1つのCPUコア（物理または仮想）と4GBのRAMです。並行ジョブには、実行中のバックアップまたはレプリケーションジョブのほか、バックアップコピージョブやテープジョブなどの継続的なスケジュールを持つジョブが含まれます。</value>
+  </data>
+  <data name="JobConNote2" xml:space="preserve">
+    <value>&lt;a href="https://bp.veeam.com/vbr/3_Build_structures/B_Veeam_Components/B_VBR_Server/Backup_Server.html" target="_blank"&gt;推奨される最小値は、2つのCPUコアと8GBのRAMです。</value>
+  </data>
+  <data name="JobConNote3" xml:space="preserve">
+    <value>必要なリソースが現在のVBRCPUおよびRAMを超える場合は、ジョブスケジューリングを分析して、同時ジョブの数を最小限に抑える必要があります。ジョブスケジュールの変更が不可能な場合は、複数のVBRサーバーを展開し、ジョブを新しいサーバーに移行する必要があります。</value>
+  </data>
+  <data name="JobConNote4subhdr" xml:space="preserve">
+    <value>VeeamMicrosoftSQLデータベース</value>
+  </data>
+  <data name="JobConNote5bold" xml:space="preserve">
+    <value>次のガイドラインに従ってください。</value>
+  </data>
+  <data name="JobConNoteSqlTableRow1Col1" xml:space="preserve">
+    <value>同時に実行されているジョブの数</value>
+  </data>
+  <data name="JobConNoteSqlTableRow1Col2" xml:space="preserve">
+    <value>CPU</value>
+  </data>
+  <data name="JobConNoteSqlTableRow1Col3" xml:space="preserve">
+    <value>メモリ</value>
+  </data>
+  <data name="JobConNoteSqlTableRow2Col1" xml:space="preserve">
+    <value>25まで</value>
+  </data>
+  <data name="JobConNoteSqlTableRow2Col2" xml:space="preserve">
+    <value>2 CPU</value>
+  </data>
+  <data name="JobConNoteSqlTableRow2Col3" xml:space="preserve">
+    <value>4ギガバイト</value>
+  </data>
+  <data name="JobConNoteSqlTableRowRow3Col1" xml:space="preserve">
+    <value>50まで</value>
+  </data>
+  <data name="JobConNoteSqlTableRow3Col2" xml:space="preserve">
+    <value>4 CPU</value>
+  </data>
+  <data name="JobConNoteSqlTableRow3Col3" xml:space="preserve">
+    <value>8 GB</value>
+  </data>
+  <data name="JobConNoteSqlTableRow4Col1" xml:space="preserve">
+    <value>100まで</value>
+  </data>
+  <data name="JobConNoteSqlTableRow4Col2" xml:space="preserve">
+    <value>8 CPU</value>
+  </data>
+  <data name="JobConNoteSqlTableRow4Col3" xml:space="preserve">
+    <value>16ギガバイト</value>
+  </data>
+  <data name="JobConNoteSqlTableNote0" xml:space="preserve">
+    <value>次のいずれかに該当する場合は、SQLStandardまたはEnterpriseEditionをインストールすることをお勧めします。</value>
+  </data>
+  <data name="JobConNoteSqlTableNote1" xml:space="preserve">
+    <value>•500台を超えるサーバーを保護する場合。 Express Editionで許可されている最大データベースサイズは通常十分なので、これを制約とは見なさないでください。 Veeam Backup &amp;amp; Replicationただし、SQL Server ExpressインスタンスのCPUとRAMの制約の結果として、レプリケーションコンソールとジョブの処理が遅くなる場合があります。</value>
+  </data>
+  <data name="JobConNoteSqlTableNote2" xml:space="preserve">
+    <value>•FilestoTapeジョブを広範囲に使用すると、データベースが大幅に増大し、10GBの制限をすぐに超える可能性があります。</value>
+  </data>
+  <data name="JobConNoteSqlTableNote3" xml:space="preserve">
+    <value>•VeeamExplorerfor MicrosoftSQLServerまたはVeeamExplorerforMicrosoftSharePointで使用する外部ステージングサーバーを構成できない場合。 10 GBを超えるデータベースを操作する場合、SQLServerExpressはデータベースをマウントできません。</value>
+  </data>
+  <data name="JobConNoteSqlTableNote4" xml:space="preserve">
+    <value>•データベースがMicrosoftSQLServerの高度な機能を使用している場合。暗号化やテーブルのパーティション分割など、ステージングサーバーのライセンスレベル（ローカルまたはリモート）は、元のインスタンスのレベルと一致する必要があります。</value>
+  </data>
+  <data name="TaskConTitle" xml:space="preserve">
+    <value>VMタスクの同時実行（7日間）</value>
+  </data>
+  <data name="TaskConBtn" xml:space="preserve">
+    <value>同時実行テーブルを表示する</value>
+  </data>
+  <data name="TaskCon0" xml:space="preserve">
+    <value>時間</value>
+  </data>
+  <data name="TaskCon0TT" xml:space="preserve">
+    <value>1日の時間（24時間形式）</value>
+  </data>
+  <data name="TaskCon1" xml:space="preserve">
+    <value>日曜日</value>
+  </data>
+  <data name="TaskCon1TT" xml:space="preserve">
+    <value></value>
+  </data>
+  <data name="TaskCon2" xml:space="preserve">
+    <value>月曜日</value>
+  </data>
+  <data name="TaskCon2TT" xml:space="preserve">
+    <value></value>
+  </data>
+  <data name="TaskCon3" xml:space="preserve">
+    <value>火曜日</value>
+  </data>
+  <data name="TaskCon3TT" xml:space="preserve">
+    <value></value>
+  </data>
+  <data name="TaskCon4" xml:space="preserve">
+    <value>水曜日</value>
+  </data>
+  <data name="TaskCon4TT" xml:space="preserve">
+    <value></value>
+  </data>
+  <data name="TaskCon5" xml:space="preserve">
+    <value>木曜日</value>
+  </data>
+  <data name="TaskCon5TT" xml:space="preserve">
+    <value></value>
+  </data>
+  <data name="TaskCon6" xml:space="preserve">
+    <value>金曜日</value>
+  </data>
+  <data name="TaskCon6TT" xml:space="preserve">
+    <value></value>
+  </data>
+  <data name="TaskCon7" xml:space="preserve">
+    <value>土曜日</value>
+  </data>
+  <data name="TaskCon7TT" xml:space="preserve">
+    <value></value>
+  </data>
+  <data name="TaskConSum0" xml:space="preserve">
+    <value>同時実行テーブルは、ヒートマップとして機能することを目的としています。毎日の各時間が表されます。各セルの数値は、特定の時間内に同時に実行されているタスクの計算された最大数を表します。このデータは、ジョブのスケジューリングとプロキシ/リポジトリのタスクのサイズ設定に役立ちます。</value>
+  </data>
+  <data name="TaskConNote0" xml:space="preserve">
+    <value>このチャートを使用して、最大同時実行性を確認します。ここでの各タスクは、1つの対応するプロキシタスクと1/3の対応するリポジトリタスクによってサポートされる必要があります。</value>
+  </data>
+  <data name="RegTitle" xml:space="preserve">
+    <value>デフォルト以外のレジストリキー</value>
+  </data>
+  <data name="RegBtn" xml:space="preserve">
+    <value>RegKeyの詳細を表示</value>
+  </data>
+  <data name="Reg0" xml:space="preserve">
+    <value>鍵</value>
+  </data>
+  <data name="Reg0TT" xml:space="preserve">
+    <value></value>
+  </data>
+  <data name="Reg1" xml:space="preserve">
+    <value>価値</value>
+  </data>
+  <data name="Reg1TT" xml:space="preserve">
+    <value></value>
+  </data>
+  <data name="RegSum0" xml:space="preserve">
+    <value>この表は、Veeam Backup &amp;amp; Replicationの基本的なインストール中に設定されたデフォルトのキーとは異なるレジストリキーの詳細を示しています。具体的には、&lt;a class="bld"&gt; HKLM \\ SOFTWARE \\ Veeam \\ Veeam Backup andReplication&lt;/a&gt;です。</value>
+  </data>
+  <data name="RegNote0" xml:space="preserve">
+    <value>一部のレジストリキーは、さまざまな理由で推奨されるバグ修正やその他の調整に関連付けられているため、ここに表示されるキーに関する質問については、過去のサポートケースのメールやメモを参照するか、Veeamエンジニアに問い合わせることをお勧めします。</value>
+  </data>
+  <data name="RegNote1" xml:space="preserve">
+    <value>LoggingLevelやその他の「ログ」関連のキーなどの一部のキーは、必要に応じて、対応するものに従うときに調整できます。&lt;a href="https://www.veeam.com/kb1825"&gt;KB Article.&lt;/a&gt;</value>
+  </data>
+  <data name="JobInfoTitle" xml:space="preserve">
+    <value>ジョブ情報</value>
+  </data>
+  <data name="JobInfoBtn" xml:space="preserve">
+    <value>ジョブ情報の詳細を表示</value>
+  </data>
+  <data name="JobInfo0" xml:space="preserve">
+    <value>名前</value>
+  </data>
+  <data name="JobInfo0TT" xml:space="preserve">
+    <value>コンソールに表示されるジョブ名</value>
+  </data>
+  <data name="JobInfo1" xml:space="preserve">
+    <value>リポジトリ</value>
+  </data>
+  <data name="JobInfo1TT" xml:space="preserve">
+    <value>ジョブが対象としているリポジトリ</value>
+  </data>
+  <data name="JobInfo2" xml:space="preserve">
+    <value>ソースサイズ</value>
+  </data>
+  <data name="JobInfo2TT" xml:space="preserve">
+    <value>ジョブのソースデータの実際のサイズ</value>
+  </data>
+  <data name="JobInfo3" xml:space="preserve">
+    <value>復元ポイント</value>
+  </data>
+  <data name="JobInfo3TT" xml:space="preserve">
+    <value>ジョブ構成で設定された望ましい復元ポイント</value>
+  </data>
+  <data name="JobInfo4" xml:space="preserve">
+    <value>暗号化</value>
+  </data>
+  <data name="JobInfo4TT" xml:space="preserve">
+    <value>ジョブはバックアップを暗号化しますか？</value>
+  </data>
+  <data name="JobInfo5" xml:space="preserve">
+    <value>ジョブの種類</value>
+  </data>
+  <data name="JobInfo5TT" xml:space="preserve">
+    <value>ジョブの種類</value>
+  </data>
+  <data name="JobInfo6" xml:space="preserve">
+    <value>アルゴリズム</value>
+  </data>
+  <data name="JobInfo6TT" xml:space="preserve">
+    <value></value>
+  </data>
+  <data name="JobInfo7" xml:space="preserve">
+    <value>スケジュール有効時間</value>
+  </data>
+  <data name="JobInfo7TT" xml:space="preserve">
+    <value></value>
+  </data>
+  <data name="JobInfo8" xml:space="preserve">
+    <value>フルバックアップ日数</value>
+  </data>
+  <data name="JobInfo8TT" xml:space="preserve">
+    <value></value>
+  </data>
+  <data name="JobInfo9" xml:space="preserve">
+    <value>フルバックアップスケジュール</value>
+  </data>
+  <data name="JobInfo9TT" xml:space="preserve">
+    <value></value>
+  </data>
+  <data name="JobInfo10" xml:space="preserve">
+    <value>スケジュールオプション</value>
+  </data>
+  <data name="JobInfo10TT" xml:space="preserve">
+    <value></value>
+  </data>
+  <data name="JobInfo11" xml:space="preserve">
+    <value>フルから合成に変換</value>
+  </data>
+  <data name="JobInfo11TT" xml:space="preserve">
+    <value></value>
+  </data>
+  <data name="JobInfo12" xml:space="preserve">
+    <value>Incを合成に変換</value>
+  </data>
+  <data name="JobInfo12TT" xml:space="preserve">
+    <value></value>
+  </data>
+  <data name="JobInfo13" xml:space="preserve">
+    <value>変換日</value>
+  </data>
+  <data name="JobInfo13TT" xml:space="preserve">
+    <value></value>
+  </data>
+  <data name="JobInfoSum0" xml:space="preserve">
+    <value>•ジョブは、ソースデータ、宛先、スケジュール、およびそのソースデータの処理に関する詳細設定を定義します。 Veeam Backup &amp;amp; Replicationには複数のジョブタイプがあります。バックアップ、バックアップコピー、CDPポリシー、NASバックアップなどを含むレプリケーション。すべてのジョブタイプのすべての列にデータがあるわけではありません。</value>
+  </data>
+  <data name="JobInfoNote0" xml:space="preserve">
+    <value>•	ジョブにリストされている復元ポイントとスケジュールオプションが、ソースアプリケーションの必要なRPOと一致していることを確認します。 &lt;a href="https://helpcenter.veeam.com/docs/backup/vsphere/backup_job_schedule_vm.html?ver=110"&gt;ジョブスケジューリング&lt;/a&gt;を参照してください。</value>
+  </data>
+  <data name="JssTitle" xml:space="preserve">
+    <value>ジョブセッションの概要（7日間）</value>
+  </data>
+  <data name="JssBtn" xml:space="preserve">
+    <value>ジョブの詳細を表示</value>
+  </data>
+  <data name="Jss0" xml:space="preserve">
+    <value>職種名</value>
+  </data>
+  <data name="Jss0TT" xml:space="preserve">
+    <value>B＆Rコンソールに表示されるジョブの名前</value>
+  </data>
+  <data name="Jss1" xml:space="preserve">
+    <value>アイテム</value>
+  </data>
+  <data name="Jss1TT" xml:space="preserve">
+    <value>ジョブに含まれるアイテムの数</value>
+  </data>
+  <data name="Jss2" xml:space="preserve">
+    <value>最小時間（分）</value>
+  </data>
+  <data name="Jss2TT" xml:space="preserve">
+    <value>検出されたジョブ実行の短絡</value>
+  </data>
+  <data name="Jss3" xml:space="preserve">
+    <value>最大時間（分）</value>
+  </data>
+  <data name="Jss3TT" xml:space="preserve">
+    <value>検出された最長のジョブ実行</value>
+  </data>
+  <data name="Jss4" xml:space="preserve">
+    <value>平均時間（分）</value>
+  </data>
+  <data name="Jss4TT" xml:space="preserve">
+    <value>平均就業期間</value>
+  </data>
+  <data name="Jss5" xml:space="preserve">
+    <value>合計セッション</value>
+  </data>
+  <data name="Jss5TT" xml:space="preserve">
+    <value>検出されたジョブセッションの総数</value>
+  </data>
+  <data name="Jss6" xml:space="preserve">
+    <value>成功率 ％</value>
+  </data>
+  <data name="Jss6TT" xml:space="preserve">
+    <value>検出されたセッションの成功率</value>
+  </data>
+  <data name="Jss7" xml:space="preserve">
+    <value>平均バックアップサイズ（TB）</value>
+  </data>
+  <data name="Jss7TT" xml:space="preserve">
+    <value>TB単位のバックアップファイルの平均サイズ</value>
+  </data>
+  <data name="Jss8" xml:space="preserve">
+    <value>最大バックアップサイズ（TB）</value>
+  </data>
+  <data name="Jss8TT" xml:space="preserve">
+    <value>TBで最大のバックアップファイル</value>
+  </data>
+  <data name="Jss9" xml:space="preserve">
+    <value>平均データサイズ（TB）</value>
+  </data>
+  <data name="Jss9TT" xml:space="preserve">
+    <value>TB単位の平均ソースデータサイズ</value>
+  </data>
+  <data name="Jss10" xml:space="preserve">
+    <value>最大データサイズ（TB）</value>
+  </data>
+  <data name="Jss10TT" xml:space="preserve">
+    <value>TB単位の最大ソースデータサイズ</value>
+  </data>
+  <data name="Jss11" xml:space="preserve">
+    <value>平均変化率％</value>
+  </data>
+  <data name="Jss11TT" xml:space="preserve">
+    <value>ジョブの平均計算変更率</value>
+  </data>
+  <data name="Jss12" xml:space="preserve">
+    <value>Resを待ちます。カウント</value>
+  </data>
+  <data name="Jss12TT" xml:space="preserve">
+    <value>ジョブが使用可能なリソースを待機するように強制された合計回数</value>
+  </data>
+  <data name="Jss13" xml:space="preserve">
+    <value>最大待機（dd.hh：mm：ss）</value>
+  </data>
+  <data name="Jss13TT" xml:space="preserve">
+    <value>検出された最長のリソース待機</value>
+  </data>
+  <data name="Jss14" xml:space="preserve">
+    <value>平均待機（dd.hh：mm：ss）</value>
+  </data>
+  <data name="Jss14TT" xml:space="preserve">
+    <value>平均期間のジョブが利用可能なリソースを待機しています</value>
+  </data>
+  <data name="Jss15" xml:space="preserve">
+    <value>職種</value>
+  </data>
+  <data name="Jss15TT" xml:space="preserve">
+    <value>職種</value>
+  </data>
+  <data name="JssSum0" xml:space="preserve">
+    <value>この表は、過去7日間の個々の仕事の最近の履歴を詳しく説明することを目的としています。</value>
+  </data>
+  <data name="JssNote0subhdr" xml:space="preserve">
+    <value>リソース/ジョブセッションの長さの問題を待機しています：</value>
+  </data>
+  <data name="JssNote1" xml:space="preserve">
+    <value>•異なるタイムスロットで開始するようにジョブをスケジュールすると、リソースを分散し、使用可能なリソースを待機しているジョブであるボトルネックを防ぐのに役立ちます。 （例：すべてのジョブを午後8時に開始するようにスケジュールする代わりに、1つのジョブを8:00に開始し、別のジョブを8:30に開始し、別のジョブを9:00に開始します。）</value>
+  </data>
+  <data name="JssNote2" xml:space="preserve">
+    <value>•	リソースが許す場合は、プロキシで許可される同時タスクの数を増やします。 &lt;a href="https://helpcenter.veeam.com/docs/backup/vsphere/vmware_proxy_server.html?ver=110#:~:text=In%20the%20Max%20concurrent%20tasks%20field%2C%20specify%20the%20number%20of%20tasks%20that%20the%20backup%20proxy%20must%20handle%20in%20parallel.%20If%20this%20value%20is%20exceeded%2C%20the%20backup%20proxy%20will%20not%20start%20a%20new%20task%20until%20one%20of%20current%20tasks%20finishes."&gt;最大同時タスクを設定する方法を参照してください。&lt;/a&gt;</value>
+  </data>
+  <data name="JssNote3" xml:space="preserve">
+    <value>o	バックアッププロキシにタスクを増やすための十分なリソースがなく、仮想マシンである場合は、プロキシで使用できるCPUとRAMの量を増やすことを検討する必要があります。</value>
+  </data>
+  <data name="JssNote4" xml:space="preserve">
+    <value>o	既存のプロキシにリソースを追加するオプションがない場合は、「バックアップインフラストラクチャ- &gt;バックアッププロキシ」内から追加のバックアッププロキシを展開することを検討してください。</value>
+  </data>
+  <data name="JssNote5" xml:space="preserve">
+    <value>•	VBRコンソールでジョブセッション統計を表示して、バックアップジョブまたはレプリケーションジョブが正しいプロキシを選択していることを確認します。</value>
+  </data>
+  <data name="JssNote6" xml:space="preserve">
+    <value>•	バックアップジョブのパフォーマンスを調査します。特定のジョブの処理に通常よりも時間がかかる場合は、警告を確認し、ボトルネック統計を以前のジョブセッションと比較して、問題を特定のプロキシ、リポジトリ、ホスト、またはデータストアに切り分けてみてください。</value>
+  </data>
+  <data name="JssNote7" xml:space="preserve">
+    <value>o	より大きなVM/サーバーを独自のジョブに移動し、ジョブのバックアップウィンドウをより速く完了することで競合が発生しないようにスケジュールします（たとえば、これらのジョブを他のすべてのジョブの前または他のすべてのジョブの後にスケジュールします）</value>
+  </data>
+  <data name="JssNote8" xml:space="preserve">
+    <value>•	NASプロキシ、キャッシュリポジトリ、およびリポジトリをVMプロキシおよびVMとエージェントのリポジトリから分離します</value>
+  </data>
+  <data name="JssNote9" xml:space="preserve">
+    <value>•	&lt;a href="https://helpcenter.veeam.com/docs/backup/vsphere/gateway_server.html?ver=110#gateway-servers-deployment"&gt;静的ゲートウェイとマウントサーバーを使用する&lt;/a&gt;可能であれば、合成操作、SOBRオフロード処理、バックアップコピージョブ、およびその他のタスクに必要なリソース消費をオフロードします。</value>
+  </data>
+  <data name="JssNote10" xml:space="preserve">
+    <value>•	必要に応じて、 &lt;a href="https://www.veeam.com/kb2660"&gt;ストレージシステムの重複排除に関するアーキテクチャガイドラインを確認します。&lt;/a&gt;</value>
+  </data>
+  <data name="Vb365Banner" xml:space="preserve">
+    <value>VB365ヘルスチェックレポート</value>
+  </data>
+  <data name="v365NavTitle0" xml:space="preserve">
+    <value>グローバル構成</value>
+  </data>
+  <data name="v365NavValue0" xml:space="preserve">
+    <value>ライセンスとグローバル設定の概要。</value>
+  </data>
+  <data name="v365NavTitle1" xml:space="preserve">
+    <value>保護されたユーザー</value>
+  </data>
+  <data name="v365NavValue1" xml:space="preserve">
+    <value>保護されたユーザーと保護されていないユーザーの概要。</value>
+  </data>
+  <data name="v365NavTitle2" xml:space="preserve">
+    <value>バックアップサーバー</value>
+  </data>
+  <data name="v365NavValue2" xml:space="preserve">
+    <value>VB365サーバーの詳細。</value>
+  </data>
+  <data name="v365NavTitle3" xml:space="preserve">
+    <value>バックアップサーバーディスク</value>
+  </data>
+  <data name="v365NavValue3" xml:space="preserve">
+    <value>VB365サーバーに接続されているディスクの詳細。</value>
+  </data>
+  <data name="v365NavTitle4" xml:space="preserve">
+    <value>プロキシ</value>
+  </data>
+  <data name="v365NavValue4" xml:space="preserve">
+    <value>現在のVB365サーバーに追加されたプロキシの詳細。</value>
+  </data>
+  <data name="v365NavTitle5" xml:space="preserve">
+    <value>リポジトリ</value>
+  </data>
+  <data name="v365NavValue5" xml:space="preserve">
+    <value>現在のVB365に追加されたリポジトリの詳細。</value>
+  </data>
+  <data name="v365NavTitle6" xml:space="preserve">
+    <value>オブジェクトストレージ</value>
+  </data>
+  <data name="v365NavValue6" xml:space="preserve">
+    <value>使用されたオブジェクトストレージの詳細。</value>
+  </data>
+  <data name="v365NavTitle7" xml:space="preserve">
+    <value>セキュリティ情報</value>
+  </data>
+  <data name="v365NavValue7" xml:space="preserve">
+    <value>VB365に関連するセキュリティ設定の概要。</value>
+  </data>
+  <data name="v365NavTitle8" xml:space="preserve">
+    <value>RBACの役割情報</value>
+  </data>
+  <data name="v365NavValue8" xml:space="preserve">
+    <value>ロールベースのアクセス制御設定の概要。</value>
+  </data>
+  <data name="v365NavTitle9" xml:space="preserve">
+    <value>権限チェック</value>
+  </data>
+  <data name="v365NavValue9" xml:space="preserve">
+    <value>付与および使用される権限の概要。</value>
+  </data>
+  <data name="v365NavTitle10" xml:space="preserve">
+    <value>組織</value>
+  </data>
+  <data name="v365NavValue10" xml:space="preserve">
+    <value>VB365によって保護されている組織の詳細。</value>
+  </data>
+  <data name="v365NavTitle11" xml:space="preserve">
+    <value>バックアップジョブ</value>
+  </data>
+  <data name="v365NavValue11" xml:space="preserve">
+    <value>このVB365サーバーで構成されたジョブの詳細。</value>
+  </data>
+  <data name="v365NavTitle12" xml:space="preserve">
+    <value>仕事の統計</value>
+  </data>
+  <data name="v365NavValue12" xml:space="preserve">
+    <value>最近のジョブ実行の分析。</value>
+  </data>
+  <data name="v365NavTitle13" xml:space="preserve">
+    <value>ジョブセッション</value>
+  </data>
+  <data name="v365NavValue13" xml:space="preserve">
+    <value>最近のジョブ実行の詳細。</value>
+  </data>
+</root>

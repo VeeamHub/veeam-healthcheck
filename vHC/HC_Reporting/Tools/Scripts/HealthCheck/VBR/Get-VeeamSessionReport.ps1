@@ -90,6 +90,7 @@ function Write-LogFile {
 #[CmdletBinding()]
 
 
+
 Disconnect-VBRServer
 try {
   if ([string]::IsNullOrEmpty($User) -or [string]::IsNullOrEmpty($PasswordBase64)) {

@@ -28,6 +28,7 @@ GuiShowHtml = 完成後顯示 HTML 報告
 GuiTitle = Veeam 健康檢查
 GuiTitleBnR = B&R
 GuiTitleVB365 = VB365
+GuiRescanHosts = Rescan Hosts
 
 #protworkload
 PlHdr0 = Vi 總計

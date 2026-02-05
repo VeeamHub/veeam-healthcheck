@@ -1,8 +1,0 @@
-"JobName","VMName","Status","IsRetry","ProcessingMode","JobDuration","TaskDuration","TaskAlgorithm","CreationTime","BackupSize(GB)","DataSize(GB)","DedupRatio","CompressRatio","BottleneckDetails","PrimaryBottleneck","JobType"
-"Production-VM-Backup","DC01","Success","False","DirectStorageAccess","01:23:45","00:15:32","CBTIncremental","2024-03-01T22:00:00.0000000","12.5","45.2","1.8","2.1","Source 15% > Proxy 25% > Network 10% > Target 50%","Target","EVmware"
-"Production-VM-Backup","SQL-PROD01","Success","False","DirectStorageAccess","01:23:45","00:45:18","CBTIncremental","2024-03-01T22:00:00.0000000","85.3","165.7","1.6","1.9","Source 20% > Proxy 30% > Network 15% > Target 35%","Target","EVmware"
-"Production-VM-Backup","WEB-PROD01","Success","False","VirtualAppliance","01:23:45","00:08:45","CBTIncremental","2024-03-01T22:00:00.0000000","5.2","32.4","2.1","2.4","Source 30% > Proxy 40% > Network 20% > Target 10%","Proxy","EVmware"
-"Production-VM-Backup","WEB-PROD02","Warning","True","VirtualAppliance","01:23:45","00:12:33","CBTIncremental","2024-03-01T22:00:00.0000000","6.1","35.8","2.0","2.3","Source 25% > Proxy 35% > Network 25% > Target 15%","Proxy","EVmware"
-"Test-VM-Backup","TEST-VM01","Success","False","NetworkMode","00:45:22","00:22:15","CBTIncremental","2024-03-01T23:00:00.0000000","8.7","52.3","1.5","1.8","Source 40% > Proxy 20% > Network 30% > Target 10%","Source","EVmware"
-"Physical-Servers-Backup","PHYSICAL01","Success","False","","02:15:30","02:10:45","FullVSSBackup","2024-03-01T22:00:00.0000000","125.4","312.8","1.4","2.0","","","EWindowsPhysical"
-"Physical-Servers-Backup","PHYSICAL02","Failed","False","","02:15:30","00:00:00","","2024-03-01T22:00:00.0000000","0","0","0","0","","","EWindowsPhysical"

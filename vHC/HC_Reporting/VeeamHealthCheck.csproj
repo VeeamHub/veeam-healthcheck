@@ -11,10 +11,10 @@
 		<Company>Veeam</Company>
 		<Authors>AdamC</Authors>
 		<ApplicationIcon>Health_Check_Icon.ico</ApplicationIcon>
-		<AssemblyVersion>3.0.0.517</AssemblyVersion>
+		<AssemblyVersion>3.0.0.551</AssemblyVersion>
 		<SignAssembly>False</SignAssembly>
 		<DelaySign>false</DelaySign>
-		<FileVersion>3.0.0.517</FileVersion>
+		<FileVersion>3.0.0.551</FileVersion>
 		<DebugType>full</DebugType>
 		<SelfContained>true</SelfContained>
 		<!--These 2 lines are what produce the single file utility. Possibly doesn't work...-->
@@ -83,13 +83,6 @@
 		<None Remove="Functions\Collection\PSCollections\Scripts\TestMfa.ps1" />
 		<None Remove="Functions\Reporting\Html\Shared\JavaScript1.js" />
 		<None Remove="ReportScript.js" />
-		<None Remove="Resources\Localization\VB365\vb365_vhcres.resources" />
-		<None Remove="Resources\Localization\vhcres.fr-FR.resources" />
-		<None Remove="Resources\Localization\vhcres.ja.resources" />
-		<None Remove="Resources\Localization\vhcres.resources" />
-		<None Remove="Resources\Localization\vhcres.zh-cn.resources" />
-		<None Remove="Resources\Localization\vhcres.zh-tw.resources" />
-		<None Remove="Resources\vhcres.resources" />
 		<None Remove="RVTools4.1.4.msi" />
 		<None Remove="Tools\Get-VBRConfig - Copy.ps1" />
 		<None Remove="Tools\Scripts\Collect-VB365Data.ps1" />
@@ -146,7 +139,7 @@
 	</ItemGroup>
 	<ItemGroup>
 		<Content Include="Tools\Scripts\HealthCheck\VBR\Get-VBRConfig.ps1">
-			<CopyToOutputDirectory>Always</CopyToOutputDirectory>
+			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
 		</Content>
 		<Content Include="Tools\Scripts\HealthCheck\VBR\Get-VeeamSessionReport.ps1">
 			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
@@ -156,14 +149,6 @@
 		<EmbeddedResource Include="banner_string.txt" />
 		<EmbeddedResource Include="css.css" />
 		<EmbeddedResource Include="ReportScript.js" />
-		<EmbeddedResource Include="Resources\Localization\VB365\vb365_vhcres.resources" />
-		<EmbeddedResource Include="Resources\Localization\vhcres.fr-FR.resources" />
-		<EmbeddedResource Include="Resources\Localization\vhcres.ja.resources" />
-		<EmbeddedResource Include="Resources\Localization\vhcres.resources">
-			<Generator></Generator>
-		</EmbeddedResource>
-		<EmbeddedResource Include="Resources\Localization\vhcres.zh-cn.resources" />
-		<EmbeddedResource Include="Resources\Localization\vhcres.zh-tw.resources" />
 		<Content Include="Tools\Scripts\HealthCheck\VB365\Collect-VB365Data.ps1">
 			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
 		</Content>

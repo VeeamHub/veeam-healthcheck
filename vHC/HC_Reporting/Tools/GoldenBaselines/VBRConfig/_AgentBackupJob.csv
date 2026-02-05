@@ -1,3 +1,0 @@
-"Id","Name","Description","JobType","TargetRepositoryId","ScheduleEnabled","ScheduleOptions","RetentionType","RetentionCount"
-"11112222-3333-4444-5555-666611112222","Physical-Servers-Backup","Physical Windows server backup","PhysicalBackup","22222222-2222-2222-2222-222222222222","True","Daily at 22:00","RestorePoints","14"
-"22223333-4444-5555-6666-777722223333","Linux-Agents-Backup","Linux physical server backup","PhysicalBackup","33333333-3333-3333-3333-333333333333","True","Daily at 21:00","Days","21"

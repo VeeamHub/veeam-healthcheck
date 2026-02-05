@@ -28,6 +28,7 @@ GuiShowHtml = 完了時にHTMLレポートを表示する
 GuiTitle = Veeamヘルスチェック
 GuiTitleBnR = B&R
 GuiTitleVB365 = VB365
+GuiRescanHosts = Rescan Hosts
 
 #protworkload
 PlHdr0 = Vi合計

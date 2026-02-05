@@ -93,6 +93,12 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR
             this.JobInfoTable();
             this.log.Info(this.logStart + "JobInfoTable completed.");
 
+            this.log.Info(this.logStart + "Generating Requirements tables...");
+            this.ServersRequirementsTable();
+            this.OptimizedConfigurationTable();
+            this.SuboptimalConfigurationTable();
+            this.log.Info(this.logStart + "Requirements tables completed.");
+
             if (CGlobals.EXPORTINDIVIDUALJOBHTMLS)
             {
                 this.log.Info(this.logStart + "EXPORTINDIVIDUALJOBHTMLS is enabled (skipping IndividualJobHtmlBuilder for now).");
@@ -182,6 +188,21 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR
             this.HTMLSTRING += this.tables.AddConfigurationTablesFooter();
         }
 
+
+        private void ServersRequirementsTable()
+        {
+            this.HTMLSTRING += this.tables.AddServersRequirementsTable(this.SCRUB);
+        }
+
+        private void OptimizedConfigurationTable()
+        {
+            this.HTMLSTRING += this.tables.AddOptimizedConfigurationTable(this.SCRUB);
+        }
+
+        private void SuboptimalConfigurationTable()
+        {
+            this.HTMLSTRING += this.tables.AddSuboptimalConfigurationTable(this.SCRUB);
+        }
         private void MissingJobsTable()
         {
             this.HTMLSTRING += this.tables.AddMissingJobsTable(this.SCRUB);

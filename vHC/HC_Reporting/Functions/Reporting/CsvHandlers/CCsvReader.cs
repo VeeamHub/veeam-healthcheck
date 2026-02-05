@@ -36,33 +36,30 @@ namespace VeeamHealthCheck.Functions.Reporting.CsvHandlers
             return this.FileFinder(file, CVariables.vb365dir);
         }
 
-        public CsvReader FileFinder(string file, string outpath)
+        public CsvReader FileFinder(string token, string outpath)
         {
             try
             {
-                // Search recursively to find CSV files in server/timestamp subdirectories
-                string[] files = Directory.GetFiles(outpath, "*.*", SearchOption.AllDirectories);
-                
-                // Try to find exact match first
-                foreach (var f in files)
-                {
-                    FileInfo fi = new(f);
-                    if (fi.Name.Contains(file))
-                    {
-                        this.log.Info($"looking for VBR CSV at: {f}");
-                        var cr = this.CReader(f);
-                        return cr;
-                    }
-                }
+                var files = Directory.GetFiles(outpath, "*.csv", SearchOption.AllDirectories);
+
+                string wanted1 = "_" + token + ".csv";   // localhost_Servers.csv
+                string wanted2 = token + ".csv";         // Servers.csv (if ever)
+
+                var match = files.FirstOrDefault(p =>
+                    p.EndsWith(wanted1, StringComparison.OrdinalIgnoreCase) ||
+                    string.Equals(Path.GetFileName(p), wanted2, StringComparison.OrdinalIgnoreCase));
+
+                if (match == null)
+                    return null;
+
+                this.log.Info($"looking for VBR CSV at: {match}");
+                return this.CReader(match);
             }
             catch (Exception e)
             {
-                string s = string.Format("File or Directory {0} not found!", outpath + "\n" + e.Message);
-                this.log.Error(s);
+                this.log.Error($"File or Directory {outpath} not found!\n{e.Message}");
                 return null;
             }
-
-            return null;
         }
 
         private CsvReader CReader(string csvToRead)
