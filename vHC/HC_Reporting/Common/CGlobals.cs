@@ -60,6 +60,7 @@ namespace VeeamHealthCheck.Shared
         public static bool EXPORTPPTX = false;
         public static bool ClearStoredCreds = false;
         public static bool RunningWithoutAdmin = false;
+        public static bool RescanHosts = false;
 
         // Security Values
         public static bool IsMfaEnabled = false;

@@ -43,7 +43,10 @@ namespace VeeamHealthCheck.Functions.Collection
             { "configBackup", CsvValidationSeverity.Warning },
             { "regkeys", CsvValidationSeverity.Warning },
             { "SecurityCompliance", CsvValidationSeverity.Warning },
-            
+            { "AllServersRequirementsComparison", CsvValidationSeverity.Warning },
+            { "OptimizedConfiguration", CsvValidationSeverity.Warning },            
+            { "SuboptimalConfiguration", CsvValidationSeverity.Warning },
+
             // Info files - nice to have but not essential
             { "WanAcc", CsvValidationSeverity.Info },
             { "capTier", CsvValidationSeverity.Info },
@@ -121,38 +124,51 @@ namespace VeeamHealthCheck.Functions.Collection
         /// <param name="fileName">The file name without extension.</param>
         /// <param name="severity">The severity level for this file.</param>
         /// <returns>The validation result.</returns>
-        public CsvValidationResult ValidateSingleFile(string fileName, CsvValidationSeverity severity)
+       public CsvValidationResult ValidateSingleFile(string fileName, CsvValidationSeverity severity)
+{
+        try
         {
-            string filePath = Path.Combine(_csvDirectory, fileName + ".csv");
+        // Search recursively, allow host prefixes like localhost_*.csv
+        var matches = Directory.GetFiles(_csvDirectory, $"*{fileName}*.csv", SearchOption.AllDirectories);
 
-            if (!File.Exists(filePath))
-            {
-                return CsvValidationResult.Missing(fileName, filePath, severity);
-            }
-
-            try
-            {
-                // Count lines (subtract 1 for header)
-                int lineCount = File.ReadLines(filePath).Count();
-                int recordCount = Math.Max(0, lineCount - 1); // Subtract header row
-
-                return CsvValidationResult.Present(fileName, filePath, recordCount);
-            }
-            catch (Exception ex)
-            {
-                _log.Error($"{_logPrefix}Error reading file {filePath}: {ex.Message}");
-                return new CsvValidationResult
-                {
-                    FileName = fileName,
-                    FilePath = filePath,
-                    IsPresent = false,
-                    Severity = severity,
-                    RecordCount = 0,
-                    Message = $"Error reading '{fileName}': {ex.Message}",
-                    ValidationTime = DateTime.Now
-                };
-            }
+        // If you're validating "Jobs", also accept legacy "_Jobs"
+        if (matches.Length == 0 && fileName == "_Jobs")
+        {
+            matches = Directory.GetFiles(_csvDirectory, $"*Jobs*.csv", SearchOption.AllDirectories);
         }
+
+        if (matches.Length == 0)
+        {
+            // Keep expected path for message readability
+            string expectedPath = Path.Combine(_csvDirectory, fileName + ".csv");
+            return CsvValidationResult.Missing(fileName, expectedPath, severity);
+        }
+
+        // Prefer the most direct match if multiple exist
+        string filePath = matches
+            .OrderBy(p => Path.GetFileName(p).Length) // usually "localhost_X.csv" is shortest/best
+            .First();
+
+        int lineCount = File.ReadLines(filePath).Count();
+        int recordCount = Math.Max(0, lineCount - 1);
+
+        return CsvValidationResult.Present(fileName, filePath, recordCount);
+        }
+        catch (Exception ex)
+        {
+            _log.Error($"{_logPrefix}Error locating/reading file '{fileName}': {ex.Message}");
+            return new CsvValidationResult
+            {
+                FileName = fileName,
+                FilePath = Path.Combine(_csvDirectory, fileName + ".csv"),
+                IsPresent = false,
+                Severity = severity,
+                RecordCount = 0,
+                Message = $"Error reading '{fileName}': {ex.Message}",
+                ValidationTime = DateTime.Now
+            };
+        }
+}
 
         /// <summary>
         /// Logs a summary of all validation results.

@@ -61,10 +61,13 @@ namespace VeeamHealthCheck.Functions.Reporting.CsvHandlers
         public readonly string nasShareSize = "NasSharesize";
         public readonly string nasObjectSize = "NasObjectSourceStorageSize";
         public readonly string compliance = "SecurityCompliance";
+        public readonly string allServersRequirements = "AllServersRequirementsComparison";
+        public readonly string OptimizedConfiguration = "OptimizedConfiguration";
+        public readonly string SuboptimalConfiguration = "SuboptimalConfiguration";
 
         // Job files
         public readonly string piReportName = "pluginjobs";
-        public readonly string jobReportName = "_Jobs";
+        public readonly string jobReportName = "Jobs";
 
         // make string for these job types: "AgentBackupJob.csv", "catalystJob", "cdpjobs", EndpointJob, nasBackup, nasBCJ, SureBackupJob 
         public readonly string agentBackupJob = "AgentBackupJob";
@@ -794,6 +797,33 @@ namespace VeeamHealthCheck.Functions.Reporting.CsvHandlers
 
 
             return null;
+        }
+
+        // Requirements comparison CSVs 
+        private IEnumerable<CRequirementsCsvInfo> RequirementsCsvParserInternal(string reportName)
+        {
+            var res = this.VbrFileReader(reportName);
+            if (res != null)
+            {
+                return res.GetRecords<CRequirementsCsvInfo>();
+            }
+
+            return null; // keep consistent with existing parsers in this class
+        }
+
+        public IEnumerable<CRequirementsCsvInfo> ServersRequirementsCsvParser()
+        {
+            return this.RequirementsCsvParserInternal(this.allServersRequirements);
+        }
+
+        public IEnumerable<CRequirementsCsvInfo> OptimizedConfigurationCsvParser()
+        {
+            return this.RequirementsCsvParserInternal(this.OptimizedConfiguration);
+        }
+
+        public IEnumerable<CRequirementsCsvInfo> SuboptimalConfigurationCsvParser()
+        {
+            return this.RequirementsCsvParserInternal(this.SuboptimalConfiguration);
         }
 
         public IEnumerable<CSobrCsvInfo> SobrCsvParser()

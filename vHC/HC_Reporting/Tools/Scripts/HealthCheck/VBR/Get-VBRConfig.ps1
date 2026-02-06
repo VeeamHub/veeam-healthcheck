@@ -30,8 +30,11 @@ param(
     [Parameter(Mandatory = $false)]
     [string]$ReportPath = "",
     [Parameter(Mandatory = $false)]
-    [int]$ReportInterval = 14
+    [int]$ReportInterval = 14,
+    [Parameter(Mandatory = $false)]
+    [switch]$RescanHosts
 )
+
 # If ReportPath not provided, use default with server name and timestamp structure
 if ([string]::IsNullOrEmpty($ReportPath)) {
     $timestamp = Get-Date -Format "yyyyMMdd_HHmmss"
@@ -188,6 +191,9 @@ Write-Verbose ("Changing directory to '$ReportPath'")
 ## User Role Collection:
 Get-VBRUserRoleAssignment | Export-VhcCsv -FileName "_UserRoles.csv"
 
+$BackupServer = Get-VBRBackupServerInfo
+$VBRVersion = $BackupServer.Build.Major
+
 #version detection:
 if ($VBRVersion -ne 13) {
     try {
@@ -204,7 +210,13 @@ if ($VBRVersion -ne 13) {
         Write-LogFile("Error on version detection. ")
     }
 }
-if ($VBRVersion -eq 0) {
+else{
+$version = $BackupServer.Build
+Write-LogFile("Detected Version: " + $version)
+$majorVersion = $BackupServer.Build.Major
+Write-LogFile("Major Version: " + $majorVersion)
+}
+if ($VBRVersion -eq 0 -and $VBRVersion -ne 13) {
     if ($majorVersion -eq 12) {
         $VBRVersion = 12
     }
@@ -263,8 +275,8 @@ try {
     $message = "Collecting server info..."
     Write-LogFile($message)
 
-    $Servers = Get-VBRServer
-    $Servers = $Servers | Select-Object -Property "Info", "ParentId", "Id", "Uid", "Name", "Reference", "Description", "IsUnavailable", "Type", "ApiVersion", "PhysHostId", "ProxyServicesCreds", @{name = 'Cores'; expression = { $_.GetPhysicalHost().hardwareinfo.CoresCount } }, @{name = 'CPUCount'; expression = { $_.GetPhysicalHost().hardwareinfo.CPUCount } }, @{name = 'RAM'; expression = { $_.GetPhysicalHost().hardwareinfo.PhysicalRamTotal } }, @{name = 'OSInfo'; expression = { $_.Info.Info } }
+    $VServers = Get-VBRServer
+    $Servers = $VServers | Select-Object -Property "Info", "ParentId", "Id", "Uid", "Name", "Reference", "Description", "IsUnavailable", "Type", "ApiVersion", "PhysHostId", "ProxyServicesCreds", @{name = 'Cores'; expression = { $_.GetPhysicalHost().hardwareinfo.CoresCount } }, @{name = 'CPUCount'; expression = { $_.GetPhysicalHost().hardwareinfo.CPUCount } }, @{name = 'RAM'; expression = { $_.GetPhysicalHost().hardwareinfo.PhysicalRamTotal } }, @{name = 'OSInfo'; expression = { $_.Info.Info } }
     Write-LogFile($message + "DONE")
   
 }
@@ -277,25 +289,104 @@ $Servers | Export-VhcCsv -FileName '_Servers.csv'
 
 
 
-# proxy collection
+#Components collection - concurrency inspector
+
+Write-LogFile("Collecting component info for concurrency inspection...")
+
+#Requirements as per Veeam User Guide - Verify them and change if needed
+
+#VMware - Hyper-V Proxy Requirements:
+$VPProxyRAMReq = 1    #1 GB per task
+$VPProxyCPUReq = 0.5  #1 CPU core per 2 tasks
+
+#General Purprose Proxy
+$GPProxyRAMReq = 4  #4GB per task
+$GPProxyCPUReq = 2   #2 CPU core per task
+
+# Repository / Gateway Requirements:
+$RepoGWRAMReq = 1    #1 GB per task
+$RepoGWCPUReq = 0.5  #1 CPU core per 2 tasks
+
+# CDP Proxy Requirements:
+$CDPProxyRAMReq = 8    #8 GB
+$CDPProxyCPUReq = 4    #4 CPU core 
+
+#Backup Server
+if($VBRVersion -eq 13){
+    $BSCPUReq = 8
+    $BSRAMReq = 16
+    } else {
+    $BSCPUReq = 4
+    $BSRAMReq = 8
+    }
+
+#SQL Server Requirements, if it is on the same server with any backup component, otherwise, skipped - printed only
+$SQLRAMReq = 2    #2 GB, min.
+$SQLCPUReq = 1    #1 CPU core  min.
+
+#convert to GB from Bytes
+function ConverttoGB ($inBytes) {
+    $inGB = [math]::Floor($inBytes / 1GB)
+    return $inGB
+}
+
+#ensure values are non-negative
+function EnsureNonNegative {
+    param (
+        [int]$Value
+    )
+    
+    if ($Value -lt 0) {
+        return 0
+    } else {
+        return $Value
+    }
+}
+
+#avoid null values
+function SafeValue($value) {
+if ($null -eq $value) { 0 } else { $value }
+}
+
+# Check the user's response
+if ($RescanHosts) {
+try{
+    Write-LogFile("Rescanning all hosts... Please wait.")
+    Rescan-VBREntity -AllHosts -Wait
+    Write-LogFile("Rescan complete. Proceeding with data retrieval.")
+    }
+catch {
+    Write-LogFile("Rescan FAILED!")
+    $err = $Error[0].Exception
+    Write-LogFile($err.message)
+}
+} else {
+    Write-LogFile("Skipping rescan. Using existing data.")
+}
+
 try {
-    $message = "Collecting Proxy info..."
+    $message = "Collecting Proxy and Repository info..."
     Write-LogFile($message)
 
-    # work here
-    $Proxies = Get-VBRViProxy
-    $cdpProxy = Get-VBRCDPProxy                
-    # unused - $fileProxy = Get-VBRComputerFileProxyServer 
-    $hvProxy = Get-VBRHvProxy                 
-    $nasProxy = Get-VBRNASProxyServer    
+     #Get all VMware proxies - avoid null
+    $VMwareProxies = @(Get-VBRViProxy)
 
-    $nasProxyOut = $nasProxy | Select-Object -Property "ConcurrentTaskNumber", @{n = "Host"; e = { $_.Server.Name } }, @{n = "HostId"; e = { $_.Server.Id } }
-    #$hvProxyOut = $hvProxy | Select-Object -Property "Name", "HostId", @{n=Host}
+    #Get all Hyper-V Off-Host proxies
+    $HyperVProxies = @(Get-VBRHvProxy)
 
+    # Get all CDP proxies
+    $CDPProxies = @(Get-VBRCDPProxy)
 
+    $VPProxies = $VMwareProxies + $HyperVProxies 
+
+    # Get all VBR Repositories
+    $VBRRepositories = @(Get-VBRBackupRepository)
+
+    #Get All GP Proxies
+    $GPProxies = @(Get-VBRNASProxyServer)
 
     Write-LogFile($message + "DONE")
-  
+
 }
 catch {
     Write-LogFile($message + "FAILED!")
@@ -303,11 +394,466 @@ catch {
     Write-LogFile($err.message)
 }
 
-$Proxies | Export-VhcCsv -FileName '_Proxies.csv'
-$cdpProxy | Export-VhcCsv -FileName '_CdpProxy.csv'
-#$fileProxy| Export-csv -Path $("$ReportPath\$VBRServer" + '_FileProxy.csv') -NoTypeInformation  -ErrorAction SilentlyContinue
-$hvProxy | Export-VhcCsv -FileName '_HvProxy.csv'
-$nasProxyOut | Export-VhcCsv -FileName '_NasProxy.csv'
+$ProxyData = @()
+$CDPProxyData = @()
+$GWData = @()
+$RepoData = @()
+$GPProxyData = @()
+$RequirementsComparison = @()
+$hostRoles = @{}
+
+#Get SQL Server Host
+function Get-SqlSName {
+    # Define registry paths and keys
+    $basePath = "HKLM:\SOFTWARE\Veeam\Veeam Backup and Replication"
+    $databaseConfigurationPath = "$basePath\DatabaseConfigurations"
+    $sqlActiveConfigurationKey = "SqlActiveConfiguration"
+    $postgreSqlPath = "$databaseConfigurationPath\PostgreSql"
+    $msSqlPath = "$databaseConfigurationPath\MsSql"
+    $sqlServerNameKey = "SqlServerName"
+    $sqlHostNameKey = "SqlHostName"
+    $SQLSName = $null
+
+    try {
+        $SQLSName = (Get-ItemProperty -Path $basePath -Name $sqlServerNameKey -ErrorAction Stop).SqlServerName
+    } catch {
+        try {
+            $sqlActiveConfig = Get-ItemProperty -Path $databaseConfigurationPath -Name $sqlActiveConfigurationKey -ErrorAction Stop
+            $activeConfigValue = $sqlActiveConfig.$sqlActiveConfigurationKey
+
+            if ($activeConfigValue -eq "PostgreSql") {
+                $SQLSName = (Get-ItemProperty -Path $postgreSqlPath -Name $sqlHostNameKey -ErrorAction Stop).SqlHostName
+            } else {
+                $SQLSName = (Get-ItemProperty -Path $msSqlPath -Name $sqlServerNameKey -ErrorAction Stop).SqlServerName
+            }
+        } catch {
+            Write-Error "Unable to retrieve SQL Server name from registry."
+        }
+    }
+
+    If ($SQLSName -eq "localhost") {
+        $SQLSName = $VBRServer
+    }
+return $SQLSName
+}
+
+#Gather GP Proxy Data
+try{
+    $message = "Calculating GP Proxy Data..."
+    Write-LogFile($message)
+
+    foreach ($GPProxy in $GPProxies) {
+        $NrofGPProxyTasks = $GPProxy.ConcurrentTaskNumber
+        $Serv = $VServers | Where-Object {$_.Name -eq $GPProxy.Server.Name}
+        $GPProxyCores = $Serv.GetPhysicalHost().HardwareInfo.CoresCount
+        $GPProxyRAM = ConverttoGB($Serv.GetPhysicalHost().HardwareInfo.PhysicalRAMTotal)
+    
+        $GPProxyDetails = [PSCustomObject]@{
+            "GP Proxy Name"         = $GPProxy.Server.Name
+            "GP Proxy Server"       = $GPProxy.Server.Name
+            "GP Proxy Cores"        = $GPProxyCores
+            "GP Proxy RAM (GB)"     = $GPProxyRAM        
+            "GP Concurrent Tasks"   = $NrofGPProxyTasks
+        }                        
+
+        $GPProxyData += $GPProxyDetails
+
+        # Track host roles with Proxy.Name
+        if (-not $hostRoles.ContainsKey($GPProxy.Server.Name)) {
+            $hostRoles[$GPProxy.Server.Name] = [ordered]@{
+                "Roles" = @("GPProxy")
+                "Names" = @($GPProxy.Server.Name) 
+                "TotalTasks" = 0
+                "Cores" = $GPProxyCores
+                "RAM" = $GPProxyRAM
+                "Task" = $NrofGPProxyTasks
+                "TotalGPProxyTasks" = 0
+            }
+        } else {
+            $hostRoles[$GPProxy.Server.Name].Roles += "GPProxy"
+            $hostRoles[$GPProxy.Server.Name].Names += $GPProxy.Server.Name
+        }
+        $hostRoles[$GPProxy.Server.Name].TotalGPProxyTasks += $NrofGPProxyTasks
+        $hostRoles[$GPProxy.Server.Name].TotalTasks += $NrofGPProxyTasks
+    }
+        Write-LogFile($message + "DONE")
+}
+catch {
+    Write-LogFile($message + "FAILED!")
+    $err = $Error[0].Exception
+    Write-LogFile($err.message)
+}
+
+# Gather VMware and Hyper-V Proxy Data
+try{
+    $message = "Calculating Vi and HV Proxy Data..."
+    Write-LogFile($message)
+
+    foreach ($Proxy in $VPProxies) {
+        $NrofProxyTasks = $Proxy.MaxTasksCount
+       try { $ProxyCores = $Proxy.GetPhysicalHost().HardwareInfo.CoresCount
+        $ProxyRAM = ConverttoGB($Proxy.GetPhysicalHost().HardwareInfo.PhysicalRAMTotal) }
+        catch{
+         $Server = $VServers | Where-Object {$_.Name -eq $Proxy.Name}
+                $ProxyCores = $Server.GetPhysicalHost().HardwareInfo.CoresCount
+                $ProxyRAM = ConverttoGB($Server.GetPhysicalHost().HardwareInfo.PhysicalRAMTotal)
+        }
+    
+        if ($proxy.Type -eq "Vi") { $proxytype = "VMware" } else {$proxytype = $proxy.Type}
+
+        $ProxyDetails = [PSCustomObject]@{
+            "Proxy Name"         = $Proxy.Name
+            "Proxy Server"       = $Proxy.Host.Name
+            "Type"               = $proxytype
+            "Proxy Cores"        = $ProxyCores
+            "Proxy RAM (GB)"     = $ProxyRAM        
+            "Concurrent Tasks"   = $NrofProxyTasks
+        }                       
+
+        $ProxyData += $ProxyDetails
+
+        # Track host roles with Proxy.Name
+        if (-not $hostRoles.ContainsKey($Proxy.Host.Name)) {
+            $hostRoles[$Proxy.Host.Name] = [ordered]@{
+                "Roles" = @("Proxy")
+                "Names" = @($Proxy.Name) 
+                "TotalTasks" = 0
+                "Cores" = $ProxyCores
+                "RAM" = $ProxyRAM
+                "TotalVpProxyTasks" = 0
+            }
+        } else {
+            $hostRoles[$Proxy.Host.Name].Roles += "Proxy"
+            $hostRoles[$Proxy.Host.Name].Names += $Proxy.Name
+        }
+        $hostRoles[$Proxy.Host.Name].TotalVpProxyTasks += $NrofProxyTasks
+        $hostRoles[$Proxy.Host.Name].TotalTasks += $NrofProxyTasks
+    }
+        Write-LogFile($message + "DONE")
+}
+catch {
+    Write-LogFile($message + "FAILED!")
+    $err = $Error[0].Exception
+    Write-LogFile($err.message)
+}
+
+# Gather CDP Proxy Data
+try{
+    $message = "Calculating CDP Proxy Data..."
+    Write-LogFile($message)
+
+    foreach ($CDPProxy in $CDPProxies) {
+        $CDPServer = $VServers | Where-Object {$_.Id -eq $CDPProxy.ServerId}
+    
+        $CDPProxyCores = $CDPServer.GetPhysicalHost().HardwareInfo.CoresCount
+        $CDPProxyRAM = ConverttoGB($CDPServer.GetPhysicalHost().HardwareInfo.PhysicalRAMTotal)
+        
+        $CDPProxyDetails = [PSCustomObject]@{
+            "CDP Proxy Name"     = $CDPProxy.Name    
+            "CDP Proxy Server"   = $CDPServer.Name
+            "CDP Proxy Cores"    = $CDPProxyCores
+            "CDP Proxy RAM (GB)" = $CDPProxyRAM
+        }
+
+        $CDPProxyData += $CDPProxyDetails
+
+        # Track host roles with CDPProxy.Name
+        if (-not $hostRoles.ContainsKey($CDPServer.Name)) {
+            $hostRoles[$CDPServer.Name] = [ordered]@{
+                "Roles" = @("CDPProxy")
+                "Names" = @($CDPProxy.Name)  
+                "TotalTasks" = 0
+                "Cores" = $CDPProxyCores
+                "RAM" = $CDPProxyRAM
+                "TotalCDPProxyTasks" = 0
+            }
+        } else {
+            $hostRoles[$CDPServer.Name].Roles += "CDPProxy"
+            $hostRoles[$CDPServer.Name].Names += $CDPProxy.Name 
+        }
+        $hostRoles[$CDPServer.Name].TotalCDPProxyTasks += 1
+    }
+        Write-LogFile($message + "DONE")
+}
+catch {
+    Write-LogFile($message + "FAILED!" + $CDPServer +  $CDPProxyCores)
+    $err = $Error[0].Exception
+    Write-LogFile($err.message)
+}
+
+# Gather Repository and Gateway Data
+try{
+    $message = "Calculating Repository and GW Data..."
+    Write-LogFile($message)
+
+    foreach ($Repository in $VBRRepositories) {
+        $NrofRepositoryTasks = $Repository.Options.MaxTaskCount
+        $gatewayServers = $Repository.GetActualGateways()
+        $NrofgatewayServers = $gatewayServers.Count
+
+        if ($gatewayServers.Count -gt 0) {
+            foreach ($gatewayServer in $gatewayServers) {
+                $Server = $VServers | Where-Object {$_.Name -eq $gatewayServer.Name}
+                $GWCores = $Server.GetPhysicalHost().HardwareInfo.CoresCount
+                $GWRAM = ConverttoGB($Server.GetPhysicalHost().HardwareInfo.PhysicalRAMTotal)
+
+                $RepositoryDetails = [PSCustomObject]@{
+                    "Repository Name"   = $Repository.Name
+                    "Gateway Server"    = $gatewayServer.Name
+                    "Gateway Cores"     = $GWCores
+                    "Gateway RAM (GB)"  = $GWRAM        
+                    "Concurrent Tasks"  = $NrofRepositoryTasks / $NrofgatewayServers
+                }                        
+                $GWData += $RepositoryDetails
+
+                # Track host roles
+                if (-not $hostRoles.ContainsKey($gatewayServer.Name)) {
+                    $hostRoles[$gatewayServer.Name] = [ordered]@{
+                        "Roles" = @("Gateway")
+                        "Names" = @($gatewayServer.Name) 
+                        "TotalTasks" = 0
+                        "Cores" = $GWCores
+                        "RAM" = $GWRAM
+                        "TotalGWTasks" = 0
+                    }
+                } else {
+                    $hostRoles[$gatewayServer.Name].Roles += "Gateway"
+                    $hostRoles[$gatewayServer.Name].Names += $Repository.Name
+                }
+                    if ($NrofRepositoryTasks -ne -1) {
+
+                $hostRoles[$gatewayServer.Name].TotalGWTasks += $NrofRepositoryTasks
+                $hostRoles[$gatewayServer.Name].TotalTasks += $NrofRepositoryTasks
+                }else {
+                 $hostRoles[$gatewayServer.Name].TotalGWTasks += 128
+                $hostRoles[$gatewayServer.Name].TotalTasks += 128
+                }
+            }
+        } else {
+            # Handle the repository host
+            $Server = $VServers | Where-Object {$_.Name -eq $Repository.Host.Name}
+            $RepoCores = $Server.GetPhysicalHost().HardwareInfo.CoresCount
+            $RepoRAM = ConverttoGB($Server.GetPhysicalHost().HardwareInfo.PhysicalRAMTotal)
+            
+            $RepositoryDetails = [PSCustomObject]@{
+                "Repository Name"   = $Repository.Name
+                "Repository Server" = $Repository.Host.Name
+                "Repository Cores"  = $RepoCores
+                "Repository RAM (GB)" = $RepoRAM        
+                "Concurrent Tasks"   = $NrofRepositoryTasks
+            }            
+            $RepoData += $RepositoryDetails
+   
+            # Track host roles
+            if (-not $hostRoles.ContainsKey($Repository.Host.Name)) {
+                $hostRoles[$Repository.Host.Name] = [ordered]@{
+                    "Roles" = @("Repository")
+                    "Names" = @($Repository.Name)
+                    "TotalTasks" = 0
+                    "Cores" = $RepoCores
+                    "RAM" = $RepoRAM
+                    "TotalRepoTasks" = 0
+                }
+            } else {
+                $hostRoles[$Repository.Host.Name].Roles += "Repository"
+                $hostRoles[$Repository.Host.Name].Names += $Repository.Name
+            }
+             if ($NrofRepositoryTasks -ne -1) {
+            $hostRoles[$Repository.Host.Name].TotalRepoTasks += $NrofRepositoryTasks
+            $hostRoles[$Repository.Host.Name].TotalTasks += $NrofRepositoryTasks
+            } else {
+             $hostRoles[$Repository.Host.Name].TotalRepoTasks += 128
+            $hostRoles[$Repository.Host.Name].TotalTasks += 128
+            }
+        }
+    }
+        Write-LogFile($message + "DONE")
+}
+catch {
+    Write-LogFile($message + "FAILED!")
+    $err = $Error[0].Exception
+    Write-LogFile($err.message)
+}
+
+#Add Backup Server role to existing components
+ try{    
+    if($VBRServer -eq "localhost"){
+    $tempserv = [System.Net.Dns]::GetHostByName(($env:computerName)).HostName
+    $hostRoles[$tempserv].Roles += ("BackupServer" -join '/ ')
+    }
+    else {
+    $hostRoles[$VBRServer].Roles += ("BackupServer" -join '/ ')
+    }
+    Write-LogFile("Backup Server role is added for the host: "  + $VBRServer)
+} 
+catch{
+    Write-LogFile("Backup Server: " + $VBRServer + "is not used in another role.")
+}
+
+$BackupServerType = ($VServers | Where-Object {$_.Name -eq $BackupServer.Name}).Type
+
+if($BackupServerType -ne "Linux") {
+$SQLServer = Get-SqlSName
+
+try {
+    $hostRoles[$SQLServer].Roles += ("SQLServer" -join ', ')
+    Write-LogFile("SQL Server role is added for the host: "  + $SQLServer)
+} catch {
+    Write-LogFile("SQLServer is: "  + $SQLServer)
+    }   
+}
+
+#Calculate requirements based on aggregated resources for multi-role servers
+try{
+    $message = "Calculating Requirements based on aggregated resources for multi-role servers..."
+    Write-LogFile($message)
+
+    foreach ($server in $hostRoles.GetEnumerator()) {
+        $SuggestedTasksByCores = 0 
+        $SuggestedTasksByRAM = 0
+        $serverName = $server.Key
+
+        $RequiredCores = [Math]::Ceiling(
+            (SafeValue $server.Value.TotalRepoTasks)    * $RepoGWCPUReq +
+            (SafeValue $server.Value.TotalGWTasks)      * $RepoGWCPUReq +
+            (SafeValue $server.Value.TotalVpProxyTasks) * $VPProxyCPUReq +
+            (SafeValue $server.Value.TotalGPProxyTasks)* $GPProxyCPUReq +
+            (SafeValue $server.Value.TotalCDPProxyTasks)* $CDPProxyCPUReq
+        )
+
+        $RequiredRAM = [Math]::Ceiling(
+            (SafeValue $server.Value.TotalRepoTasks)    * $RepoGWRAMReq +
+            (SafeValue $server.Value.TotalGWTasks)      * $RepoGWRAMReq +
+            (SafeValue $server.Value.TotalVpProxyTasks) * $VPProxyRAMReq +
+            (SafeValue $server.Value.TotalGPProxyTasks)* $GPProxyRAMReq +
+            (SafeValue $server.Value.TotalCDPProxyTasks)* $CDPProxyRAMReq
+        )
+  
+        $coresAvailable = $server.Value.Cores
+        $ramAvailable = $server.Value.RAM
+        $totalTasks = $server.Value.TotalTasks
+    
+        #suggestion cores / RAM are only to calculate the suggested nr of tasks. 
+        $SuggestedTasksByCores = $coresAvailable
+        $SuggestedTasksByRAM = [Math]::Ceiling(
+         (SafeValue $ramAvailable) -
+         (SafeValue $server.Value.TotalGPProxyTasks) *  $GPProxyRAMReq -
+         (SafeValue $server.Value.TotalCDPProxyTasks) * $CDPProxyRAMReq
+        )
+   
+        if ($serverName -contains $BackupServerName) {
+            $RequiredCores += $BSCPUReq  #CPU core requirement for Backup Server added
+            $RequiredRAM += $BSRAMReq    #RAM requirement for Backup Server added
+            $SuggestedTasksByCores -= $BSCPUReq
+            $SuggestedTasksByRAM -= $BSRAMReq
+        }
+
+        $NonNegativeCores = EnsureNonNegative($SuggestedTasksByCores*2)
+        $NonNegativeRAM = EnsureNonNegative($SuggestedTasksByRAM)
+
+
+        # Calculate the max suggested tasks using non-negative values
+        $MaxSuggestedTasks = [Math]::Min($NonNegativeCores, $NonNegativeRAM)
+
+        $RequirementComparison = [PSCustomObject]@{
+            "Server"          = $serverName
+            "Type"            = ($server.Value.Roles -join '/ ')
+            "Required Cores"  = $RequiredCores
+            "Available Cores" = $coresAvailable
+            "Required RAM (GB)" = $RequiredRAM
+            "Available RAM (GB)" = $ramAvailable
+            "Concurrent Tasks" = $totalTasks
+            "Suggested Tasks"  = $MaxSuggestedTasks
+            "Names"           = ($server.Value.Names -join '/ ')
+        }
+        $RequirementsComparison += $RequirementComparison
+    }
+        Write-LogFile($message + "DONE")
+}
+catch {
+    Write-LogFile($message + "FAILED!")
+    $err = $Error[0].Exception
+    Write-LogFile($err.message)
+}
+
+# Output summary of Repositories, Proxies, and CDP Proxies found
+Write-LogFile("Found components:")
+Write-LogFile($RepoData.Count.ToString() + " Repositories")
+Write-LogFile($GWData.Count.ToString() + " Gateway Servers")
+Write-LogFile($ProxyData.Count.ToString() + " Vi and HV Proxy Servers")
+Write-LogFile($CDPProxyData.Count.ToString() + " CDP Proxies")
+Write-LogFile($GPProxyData.Count.ToString() + " GP Proxies")
+$ProxyData.Count
+
+# Detect and mention which hosts are used for multiple roles
+$multiRoleServers = $hostRoles.GetEnumerator() | Where-Object { $_.Value.Roles.Count -gt 1 }
+
+if ($multiRoleServers) {
+    $multiRoleServers | ForEach-Object {        
+        $message = "$($_.Key) has roles: $($_.Value.Roles -join '/ ') - Names: $($_.Value.Names -join '/ ')"
+        Write-LogFile($message)
+    }
+} else {
+    Write-LogFile("No servers are being used for multiple roles.")
+}
+
+# Output the requirements comparison
+Write-Host "Requirements Comparison:"
+
+# Separate the outputs into optimized, and suboptimal configurations based on the comparison
+
+try{
+    $message = "Calculating Requirements comparison..."
+    Write-LogFile($message)
+
+    $OptimizedConfiguration = @()
+    $SuboptimalConfiguration = @()
+
+    foreach ($req in $RequirementsComparison) {
+
+        if ($req."Concurrent Tasks" -le $req."Suggested Tasks" -or ($req.'Required RAM (GB)' -le $req.'Available RAM (GB)' -and $req.'Required Cores' -le $req.'Available Cores')) {
+            $OptimizedConfiguration += $req
+        } else {
+            $SuboptimalConfiguration += $req
+        }
+    }
+        Write-LogFile($message + "DONE")
+}
+catch {
+    Write-LogFile($message + "FAILED!")
+    $err = $Error[0].Exception
+    Write-LogFile($err.message)
+}
+
+# Display the Optimized Configuration
+if ($OptimizedConfiguration.Count -gt 0) {
+    Write-LogFile($OptimizedConfiguration.Count.ToString() + "Servers are found with optimized configuration")
+} else {
+    Write-LogFile("No servers found with optimized configuration.")
+}
+
+# Display the Suboptimal Configuration
+if ($SuboptimalConfiguration.Count -gt 0) {
+    Write-LogFile($SuboptimalConfiguration.Count.ToString() + "Servers are found with suboptimal configuration")
+} else {
+    Write-LogFile("No servers found with optimized configuration.")
+}
+
+# Exporting the data to CSV files
+$RepoData | Export-VhcCsv -FileName '_RepositoryServers.csv'
+$GWData | Export-VhcCsv -FileName '_Gateways.csv'
+$ProxyData | Export-VhcCsv -FileName '_Proxies.csv'
+$CDPProxyData | Export-VhcCsv -FileName '_CDPProxies.csv'
+$GPProxyData | Export-VhcCsv -FileName '_GPProxies.csv'
+$RequirementsComparison | Export-VhcCsv -FileName '_AllServersRequirementsComparison.csv'
+$OptimizedConfiguration | Export-VhcCsv -FileName '_OptimizedConfiguration.csv'
+$SuboptimalConfiguration | Export-VhcCsv -FileName '_SuboptimalConfiguration.csv'
+
+Write-LogFile("Concurrency inspection files are exported.")  
+
+
+
+
 
 ## ENtra ID
 try {

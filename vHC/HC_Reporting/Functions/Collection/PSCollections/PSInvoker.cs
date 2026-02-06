@@ -454,6 +454,11 @@ namespace VeeamHealthCheck.Functions.Collection.PSCollections
                                $"-VBRVersion \"{CGlobals.VBRMAJORVERSION}\" " +
                                $"-ReportInterval {CGlobals.ReportDays} ";
 
+            if (CGlobals.RescanHosts)
+            {
+                argString += "-RescanHosts ";
+            }
+            
             // Add ReportPath parameter
             if (!string.IsNullOrEmpty(CVariables.vbrDir))
             {
