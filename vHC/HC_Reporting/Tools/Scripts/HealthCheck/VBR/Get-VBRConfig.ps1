@@ -35,6 +35,7 @@ param(
     [switch]$RescanHosts
 )
 
+
 # If ReportPath not provided, use default with server name and timestamp structure
 if ([string]::IsNullOrEmpty($ReportPath)) {
     $timestamp = Get-Date -Format "yyyyMMdd_HHmmss"

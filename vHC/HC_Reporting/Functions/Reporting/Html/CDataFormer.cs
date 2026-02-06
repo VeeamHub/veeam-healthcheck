@@ -1167,6 +1167,7 @@ namespace VeeamHealthCheck.Functions.Reporting.Html
 
             if (!isBackupServerRepo)
             {
+                log.Info($"Roles: extents loop start (count={extents.Count})");
                 foreach (var e in extents)
                 {
                     if (e.HostId == serverId)
@@ -1175,20 +1176,26 @@ namespace VeeamHealthCheck.Functions.Reporting.Html
                         break;
                     }
                 }
-                
-                              foreach (var r in repos)
+                log.Info("Roles: extents loop done");
+
+                log.Info($"Roles: repos loop start (count={repos.Count})");
+                foreach (var r in repos)
                 {
                     if (r.HostId == serverId)
                     {
                         isBackupServerRepo = true;
                         break;
                     }
-                }                
+                }
+                log.Info("Roles: repos loop done");
             }
-           
+
+            log.Info($"Roles: wans loop start (count={wans.Count})");
             foreach (var w in wans)
                 if (w.HostId == serverId) isBackupServerWan = true;
-                  log.Info("Checking server roles..done!");
+            log.Info("Roles: wans loop done");
+
+            log.Info("Checking server roles..done!");
         }
 
 
