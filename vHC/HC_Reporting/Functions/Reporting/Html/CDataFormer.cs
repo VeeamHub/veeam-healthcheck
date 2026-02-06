@@ -1051,8 +1051,8 @@ namespace VeeamHealthCheck.Functions.Reporting.Html
         }
 
         /// <summary>
-        /// Summarizes repeated role types into a count format.
-        /// Example: "Gateway/ Gateway/ Gateway/ Repository/ Gateway" becomes "Gateway ×4<br>Repository ×1"
+        /// Summarizes repeated role types into a count format with friendly names.
+        /// Example: "Gateway/ Gateway/ Gateway/ Repository/ Gateway" becomes "Gateway Server ×4<br>Repository ×1"
         /// </summary>
         private string SummarizeRoleTypes(string typeString)
         {
@@ -1063,10 +1063,14 @@ namespace VeeamHealthCheck.Functions.Reporting.Html
             var types = typeString.Split(new[] { "/ ", "/" }, StringSplitOptions.RemoveEmptyEntries)
                                   .Select(t => t.Trim())
                                   .Where(t => !string.IsNullOrWhiteSpace(t))
+                                  .Select(t => GetFriendlyRoleName(t)) // Convert to friendly names
                                   .ToList();
 
-            if (types.Count <= 1)
+            if (types.Count == 0)
                 return typeString;
+
+            if (types.Count == 1)
+                return types[0];
 
             // Count occurrences of each type
             var typeCounts = types.GroupBy(t => t)
@@ -1076,6 +1080,30 @@ namespace VeeamHealthCheck.Functions.Reporting.Html
 
             // Join with HTML line breaks for vertical display
             return string.Join("<br>", typeCounts);
+        }
+
+        /// <summary>
+        /// Maps technical role type names to user-friendly display names.
+        /// </summary>
+        private static readonly Dictionary<string, string> RoleNameMappings = new(StringComparer.OrdinalIgnoreCase)
+        {
+            { "GPProxy", "File Proxy" },
+            { "Proxy", "VMware Proxy" },
+            { "CDPProxy", "CDP Proxy" },
+            { "Gateway", "Gateway Server" },
+            { "Repository", "Repository" },
+            { "BackupServer", "Backup Server" },
+            { "SQLServer", "SQL Server" }
+        };
+
+        private static string GetFriendlyRoleName(string technicalName)
+        {
+            if (string.IsNullOrWhiteSpace(technicalName))
+                return technicalName;
+
+            return RoleNameMappings.TryGetValue(technicalName.Trim(), out var friendlyName)
+                ? friendlyName
+                : technicalName; // Return original if no mapping found
         }
 
         #endregion
