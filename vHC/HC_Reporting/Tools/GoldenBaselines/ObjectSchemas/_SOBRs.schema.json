@@ -1,0 +1,230 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "SOBRs CSV Schema",
+  "description": "Maps _SOBRs.csv to CSobrCsvInfo C# class",
+  "csvFile": "_SOBRs.csv",
+  "csharpClass": "VeeamHealthCheck.Functions.Reporting.CsvHandlers.CSobrCsvInfo",
+  "csharpFile": "Functions/Reporting/CsvHandlers/CSobrCsvInfo.cs",
+  "version": "1.0.0",
+  "columns": [
+    {
+      "index": 0,
+      "csvName": "PolicyType",
+      "csharpProperty": "PolicyType",
+      "csharpType": "string",
+      "nullable": false,
+      "description": "SOBR placement policy type"
+    },
+    {
+      "index": 1,
+      "csvName": "Extents",
+      "csharpProperty": "Extents",
+      "csharpType": "string",
+      "nullable": true,
+      "description": "List of extent names"
+    },
+    {
+      "index": 2,
+      "csvName": "UsePerVMBackupFiles",
+      "csharpProperty": "UsePerVMBackupFiles",
+      "csharpType": "string",
+      "nullable": false,
+      "expectedValues": ["True", "False"],
+      "description": "Whether to use per-VM backup files"
+    },
+    {
+      "index": 3,
+      "csvName": "PerformFullWhenExtentOffline",
+      "csharpProperty": "PerformFullWhenExtentOffline",
+      "csharpType": "string",
+      "nullable": false,
+      "expectedValues": ["True", "False"],
+      "description": "Whether to perform full backup when extent is offline"
+    },
+    {
+      "index": 4,
+      "csvName": "EnableCapacityTier",
+      "csharpProperty": "EnableCapacityTier",
+      "csharpType": "string",
+      "nullable": false,
+      "expectedValues": ["True", "False"],
+      "description": "Whether capacity tier is enabled"
+    },
+    {
+      "index": 5,
+      "csvName": "OperationalRestorePeriod",
+      "csharpProperty": "OperationalRestorePeriod",
+      "csharpType": "string",
+      "nullable": true,
+      "description": "Operational restore period in days"
+    },
+    {
+      "index": 6,
+      "csvName": "OverridePolicyEnabled",
+      "csharpProperty": "OverridePolicyEnabled",
+      "csharpType": "string",
+      "nullable": false,
+      "expectedValues": ["True", "False"],
+      "description": "Whether override policy is enabled"
+    },
+    {
+      "index": 7,
+      "csvName": "OverrideSpaceThreshold",
+      "csharpProperty": "OverrideSpaceThreshold",
+      "csharpType": "string",
+      "nullable": true,
+      "description": "Override space threshold percentage"
+    },
+    {
+      "index": 8,
+      "csvName": "OffloadWindowOptions",
+      "csharpProperty": "OffloadWindowOptions",
+      "csharpType": "string",
+      "nullable": true,
+      "description": "Offload window configuration"
+    },
+    {
+      "index": 9,
+      "csvName": "CapacityExtent",
+      "csharpProperty": "CapacityExtent",
+      "csharpType": "string",
+      "nullable": true,
+      "description": "Capacity tier extent name"
+    },
+    {
+      "index": 10,
+      "csvName": "EncryptionEnabled",
+      "csharpProperty": "EncryptionEnabled",
+      "csharpType": "string",
+      "nullable": false,
+      "expectedValues": ["True", "False"],
+      "description": "Whether encryption is enabled"
+    },
+    {
+      "index": 11,
+      "csvName": "EncryptionKey",
+      "csharpProperty": "EncryptionKey",
+      "csharpType": "string",
+      "nullable": true,
+      "description": "Encryption key identifier"
+    },
+    {
+      "index": 12,
+      "csvName": "CapacityTierCopyPolicyEnabled",
+      "csharpProperty": "CapacityTierCopyPolicyEnabled",
+      "csharpType": "string",
+      "nullable": false,
+      "expectedValues": ["True", "False"],
+      "description": "Whether capacity tier copy policy is enabled"
+    },
+    {
+      "index": 13,
+      "csvName": "CapacityTierMovePolicyEnabled",
+      "csharpProperty": "CapacityTierMovePolicyEnabled",
+      "csharpType": "string",
+      "nullable": false,
+      "expectedValues": ["True", "False"],
+      "description": "Whether capacity tier move policy is enabled"
+    },
+    {
+      "index": 14,
+      "csvName": "ArchiveTierEnabled",
+      "csharpProperty": "ArchiveTierEnabled",
+      "csharpType": "string",
+      "nullable": false,
+      "expectedValues": ["True", "False"],
+      "description": "Whether archive tier is enabled"
+    },
+    {
+      "index": 15,
+      "csvName": "ArchiveExtent",
+      "csharpProperty": "ArchiveExtent",
+      "csharpType": "string",
+      "nullable": true,
+      "description": "Archive tier extent name"
+    },
+    {
+      "index": 16,
+      "csvName": "ArchivePeriod",
+      "csharpProperty": "ArchivePeriod",
+      "csharpType": "string",
+      "nullable": true,
+      "description": "Archive period in days"
+    },
+    {
+      "index": 17,
+      "csvName": "CostOptimizedArchiveEnabled",
+      "csharpProperty": "CostOptimizedArchiveEnabled",
+      "csharpType": "string",
+      "nullable": false,
+      "expectedValues": ["True", "False"],
+      "description": "Whether cost-optimized archive is enabled"
+    },
+    {
+      "index": 18,
+      "csvName": "ArchiveFullBackupModeEnabled",
+      "csharpProperty": "ArchiveFullBackupModeEnabled",
+      "csharpType": "string",
+      "nullable": false,
+      "expectedValues": ["True", "False"],
+      "description": "Whether archive full backup mode is enabled"
+    },
+    {
+      "index": 19,
+      "csvName": "PluginBackupsOffloadEnabled",
+      "csharpProperty": "PluginBackupsOffloadEnabled",
+      "csharpType": "string",
+      "nullable": false,
+      "expectedValues": ["True", "False"],
+      "description": "Whether plugin backups offload is enabled"
+    },
+    {
+      "index": 20,
+      "csvName": "CopyAllPluginBackupsEnabled",
+      "csharpProperty": "CopyAllPluginBackupsEnabled",
+      "csharpType": "string",
+      "nullable": false,
+      "expectedValues": ["True", "False"],
+      "description": "Whether copy all plugin backups is enabled"
+    },
+    {
+      "index": 21,
+      "csvName": "CopyAllMachineBackupsEnabled",
+      "csharpProperty": "CopyAllMachineBackupsEnabled",
+      "csharpType": "string",
+      "nullable": false,
+      "expectedValues": ["True", "False"],
+      "description": "Whether copy all machine backups is enabled"
+    },
+    {
+      "index": 22,
+      "csvName": "Id",
+      "csharpProperty": "Id",
+      "csharpType": "string",
+      "nullable": false,
+      "description": "SOBR GUID identifier"
+    },
+    {
+      "index": 23,
+      "csvName": "Name",
+      "csharpProperty": "Name",
+      "csharpType": "string",
+      "nullable": false,
+      "description": "SOBR display name"
+    },
+    {
+      "index": 24,
+      "csvName": "Description",
+      "csharpProperty": "Description",
+      "csharpType": "string",
+      "nullable": true,
+      "description": "SOBR description"
+    }
+  ],
+  "validationRules": {
+    "requiredColumns": ["PolicyType", "Id", "Name"],
+    "guidColumns": ["Id"],
+    "booleanColumns": ["UsePerVMBackupFiles", "PerformFullWhenExtentOffline", "EnableCapacityTier", "OverridePolicyEnabled", "EncryptionEnabled", "CapacityTierCopyPolicyEnabled", "CapacityTierMovePolicyEnabled", "ArchiveTierEnabled", "CostOptimizedArchiveEnabled", "ArchiveFullBackupModeEnabled", "PluginBackupsOffloadEnabled", "CopyAllPluginBackupsEnabled", "CopyAllMachineBackupsEnabled"],
+    "numericColumns": ["OperationalRestorePeriod", "OverrideSpaceThreshold", "ArchivePeriod"]
+  }
+}

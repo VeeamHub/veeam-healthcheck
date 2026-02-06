@@ -1,0 +1,2 @@
+"Version","Fixes","SqlServer","Instance","PgHost","PgDb","MsHost","MsDb","DbType","MFA"
+"12.1.2.172","P20231220;P20240115;P20240301","VEEAM-VBR01","VEEAMSQL2016","","","VEEAM-VBR01","VeeamBackup","MsSql","Enabled"

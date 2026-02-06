@@ -1,0 +1,2 @@
+"Id","Name","Enabled","ScheduleOptions","Target","LastResult","LastState","NextRun","EncryptionOptions","NotificationOptions","RetentionRestorePointsCount"
+"dddd4444-eeee-ffff-0000-111144444444","Configuration Backup Job","True","Daily at 02:00","\\BACKUP-NAS01\ConfigBackups","Success","Idle","2024-03-02T02:00:00.0000000","Enabled","EmailOnFailure","14"

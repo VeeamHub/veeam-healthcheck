@@ -1,0 +1,3 @@
+"Id","Name","Description","IsEnabled","JobType","OnDiskGB","SourceGB","ScheduleOptions","TargetRepositoryId","CreationTime"
+"eeee5555-ffff-0000-1111-222255555555","NAS-FileShare-Backup","File share backup job","True","NAS Backup","256.75","512.00","Daily at 23:00","22222222-2222-2222-2222-222222222222","2024-01-20T10:00:00.0000000"
+"ffff6666-0000-1111-2222-333366666666","NAS-Archive-Backup","Archive file server backup","True","NAS Backup","1024.50","2048.00","Weekly on Sunday","33333333-3333-3333-3333-333333333333","2024-01-25T14:00:00.0000000"

@@ -1,0 +1,317 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Jobs CSV Schema",
+  "description": "Maps _Jobs.csv to CJobCsvInfos C# class",
+  "csvFile": "_Jobs.csv",
+  "csharpClass": "VeeamHealthCheck.Functions.Reporting.CsvHandlers.CJobCsvInfos",
+  "csharpFile": "Functions/Reporting/CsvHandlers/CJobCsvInfos.cs",
+  "version": "1.0.0",
+  "columns": [
+    {
+      "index": 0,
+      "csvName": "Name",
+      "csharpProperty": "Name",
+      "csharpType": "string",
+      "nullable": false,
+      "description": "Job name"
+    },
+    {
+      "index": 1,
+      "csvName": "JobType",
+      "csharpProperty": "JobType",
+      "csharpType": "string",
+      "nullable": false,
+      "description": "Type of backup job"
+    },
+    {
+      "index": 2,
+      "csvName": "SheduleEnabledTime",
+      "csharpProperty": "SheduleEnabledTime",
+      "csharpType": "string",
+      "nullable": true,
+      "description": "Schedule enabled time"
+    },
+    {
+      "index": 3,
+      "csvName": "ScheduleOptions",
+      "csharpProperty": "ScheduleOptions",
+      "csharpType": "string",
+      "nullable": true,
+      "description": "Schedule configuration"
+    },
+    {
+      "index": 4,
+      "csvName": "RestorePoints",
+      "csharpProperty": "RestorePoints",
+      "csharpType": "string",
+      "nullable": true,
+      "description": "Number of restore points to keep"
+    },
+    {
+      "index": 5,
+      "csvName": "RepoName",
+      "csharpProperty": "RepoName",
+      "csharpType": "string",
+      "nullable": true,
+      "description": "Target repository name"
+    },
+    {
+      "index": 6,
+      "csvName": "Algorithm",
+      "csharpProperty": "Algorithm",
+      "csharpType": "string",
+      "nullable": true,
+      "description": "Backup algorithm (Incremental, ReverseIncremental)"
+    },
+    {
+      "index": 7,
+      "csvName": "FullBackupScheduleKind",
+      "csharpProperty": "FullBackupScheduleKind",
+      "csharpType": "string",
+      "nullable": true,
+      "description": "Full backup schedule type"
+    },
+    {
+      "index": 8,
+      "csvName": "FullBackupDays",
+      "csharpProperty": "FullBackupDays",
+      "csharpType": "string",
+      "nullable": true,
+      "description": "Days for full backup"
+    },
+    {
+      "index": 9,
+      "csvName": "TransformFullToSyntethic",
+      "csharpProperty": "TransformFullToSyntethic",
+      "csharpType": "bool",
+      "nullable": false,
+      "expectedValues": ["True", "False"],
+      "description": "Whether to transform full to synthetic"
+    },
+    {
+      "index": 10,
+      "csvName": "TransformIncrementsToSyntethic",
+      "csharpProperty": "TransformIncrementsToSyntethic",
+      "csharpType": "string",
+      "nullable": true,
+      "expectedValues": ["True", "False"],
+      "description": "Whether to transform increments to synthetic"
+    },
+    {
+      "index": 11,
+      "csvName": "TransformToSyntethicDays",
+      "csharpProperty": "TransformToSyntethicDays",
+      "csharpType": "string",
+      "nullable": true,
+      "description": "Days for synthetic transformation"
+    },
+    {
+      "index": 12,
+      "csvName": "PwdKeyId",
+      "csharpProperty": "PwdKeyId",
+      "csharpType": "string",
+      "nullable": true,
+      "description": "Password key GUID"
+    },
+    {
+      "index": 13,
+      "csvName": "OriginalSize",
+      "csharpProperty": "OriginalSize",
+      "csharpType": "double",
+      "nullable": false,
+      "description": "Original data size in bytes"
+    },
+    {
+      "index": 14,
+      "csvName": "RetentionType",
+      "csharpProperty": "RetentionType",
+      "csharpType": "string",
+      "nullable": true,
+      "description": "Retention policy type"
+    },
+    {
+      "index": 15,
+      "csvName": "RetentionCount",
+      "csharpProperty": "RetentionCount",
+      "csharpType": "string",
+      "nullable": true,
+      "description": "Retention count"
+    },
+    {
+      "index": 16,
+      "csvName": "RetainDaysToKeep",
+      "csharpProperty": "RetainDaysToKeep",
+      "csharpType": "string",
+      "nullable": true,
+      "description": "Days to retain backups"
+    },
+    {
+      "index": 17,
+      "csvName": "DeletedVmRetentionDays",
+      "csharpProperty": "DeletedVmRetentionDays",
+      "csharpType": "string",
+      "nullable": true,
+      "description": "Deleted VM retention in days"
+    },
+    {
+      "index": 18,
+      "csvName": "DeletedVmRetention",
+      "csharpProperty": "DeletedVmRetention",
+      "csharpType": "string",
+      "nullable": true,
+      "expectedValues": ["True", "False"],
+      "description": "Whether deleted VM retention is enabled"
+    },
+    {
+      "index": 19,
+      "csvName": "CompressionLevel",
+      "csharpProperty": "CompressionLevel",
+      "csharpType": "string",
+      "nullable": true,
+      "description": "Compression level (None, Low, Optimal, High, Extreme)"
+    },
+    {
+      "index": 20,
+      "csvName": "Deduplication",
+      "csharpProperty": "Deduplication",
+      "csharpType": "string",
+      "nullable": true,
+      "expectedValues": ["True", "False"],
+      "description": "Whether deduplication is enabled"
+    },
+    {
+      "index": 21,
+      "csvName": "BlockSize",
+      "csharpProperty": "BlockSize",
+      "csharpType": "string",
+      "nullable": true,
+      "description": "Block size for backup"
+    },
+    {
+      "index": 22,
+      "csvName": "IntegrityChecks",
+      "csharpProperty": "IntegrityChecks",
+      "csharpType": "string",
+      "nullable": true,
+      "expectedValues": ["True", "False"],
+      "description": "Whether integrity checks are enabled"
+    },
+    {
+      "index": 23,
+      "csvName": "SpecificStorageEncryption",
+      "csharpProperty": "SpecificStorageEncryption",
+      "csharpType": "string",
+      "nullable": true,
+      "description": "Specific storage encryption setting"
+    },
+    {
+      "index": 24,
+      "csvName": "StgEncryptionEnabled",
+      "csharpProperty": "StgEncryptionEnabled",
+      "csharpType": "string",
+      "nullable": true,
+      "expectedValues": ["True", "False"],
+      "description": "Whether storage encryption is enabled"
+    },
+    {
+      "index": 25,
+      "csvName": "KeepFirstFullBackup",
+      "csharpProperty": "KeepFirstFullBackup",
+      "csharpType": "string",
+      "nullable": true,
+      "expectedValues": ["True", "False"],
+      "description": "Whether to keep first full backup"
+    },
+    {
+      "index": 26,
+      "csvName": "EnableFullBackup",
+      "csharpProperty": "EnableFullBackup",
+      "csharpType": "bool",
+      "nullable": false,
+      "expectedValues": ["True", "False"],
+      "description": "Whether full backup is enabled"
+    },
+    {
+      "index": 27,
+      "csvName": "BackupIsAttached",
+      "csharpProperty": "BackupIsAttached",
+      "csharpType": "string",
+      "nullable": true,
+      "description": "Whether backup is attached"
+    },
+    {
+      "index": 28,
+      "csvName": "GfsWeeklyIsEnabled",
+      "csharpProperty": "GfsWeeklyIsEnabled",
+      "csharpType": "bool",
+      "nullable": false,
+      "expectedValues": ["True", "False"],
+      "description": "Whether GFS weekly is enabled"
+    },
+    {
+      "index": 29,
+      "csvName": "GfsWeeklyCount",
+      "csharpProperty": "GfsWeeklyCount",
+      "csharpType": "string",
+      "nullable": true,
+      "description": "GFS weekly retention count"
+    },
+    {
+      "index": 30,
+      "csvName": "GfsMonthlyEnabled",
+      "csharpProperty": "GfsMonthlyEnabled",
+      "csharpType": "bool",
+      "nullable": false,
+      "expectedValues": ["True", "False"],
+      "description": "Whether GFS monthly is enabled"
+    },
+    {
+      "index": 31,
+      "csvName": "GfsMonthlyCount",
+      "csharpProperty": "GfsMonthlyCount",
+      "csharpType": "string",
+      "nullable": true,
+      "description": "GFS monthly retention count"
+    },
+    {
+      "index": 32,
+      "csvName": "GfsYearlyEnabled",
+      "csharpProperty": "GfsYearlyEnabled",
+      "csharpType": "bool",
+      "nullable": false,
+      "expectedValues": ["True", "False"],
+      "description": "Whether GFS yearly is enabled"
+    },
+    {
+      "index": 33,
+      "csvName": "GfsYearlyCount",
+      "csharpProperty": "GfsYearlyCount",
+      "csharpType": "string",
+      "nullable": true,
+      "description": "GFS yearly retention count"
+    },
+    {
+      "index": 34,
+      "csvName": "IndexingType",
+      "csharpProperty": "IndexingType",
+      "csharpType": "string",
+      "nullable": true,
+      "description": "Guest file system indexing type"
+    },
+    {
+      "index": 35,
+      "csvName": "OnDiskGB",
+      "csharpProperty": "OnDiskGB",
+      "csharpType": "double?",
+      "nullable": true,
+      "optional": true,
+      "description": "On-disk size in GB"
+    }
+  ],
+  "validationRules": {
+    "requiredColumns": ["Name", "JobType"],
+    "guidColumns": ["PwdKeyId"],
+    "booleanColumns": ["TransformFullToSyntethic", "EnableFullBackup", "GfsWeeklyIsEnabled", "GfsMonthlyEnabled", "GfsYearlyEnabled"],
+    "numericColumns": ["OriginalSize", "RestorePoints", "RetentionCount", "RetainDaysToKeep", "DeletedVmRetentionDays", "GfsWeeklyCount", "GfsMonthlyCount", "GfsYearlyCount", "OnDiskGB"]
+  }
+}

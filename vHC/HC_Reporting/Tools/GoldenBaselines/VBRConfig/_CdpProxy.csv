@@ -1,0 +1,2 @@
+"Id","Name","HostId","CacheRepository","CachePath","CacheSizeGB","MaxTaskCount"
+"cccccccc-dddd-eeee-ffff-000000000000","CDP-PROXY01","33333333-4444-5555-6666-777777777777","Default Backup Repository","E:\CDPCache","100","4"
