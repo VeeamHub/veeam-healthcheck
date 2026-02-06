@@ -1016,36 +1016,67 @@ namespace VeeamHealthCheck.Functions.Reporting.Html
 
         private List<string[]> RequirementsToStringArray(IEnumerable<CRequirementsCsvInfo> rows, bool scrub)
         {
-        var list = new List<string[]>();
-        if (rows == null) return list;
+            var list = new List<string[]>();
+            if (rows == null) return list;
 
-        foreach (var r in rows)
-        {
-        var server = r.Server;
-        var names = r.Names;
+            foreach (var r in rows)
+            {
+                var server = r.Server;
+                var names = r.Names;
 
-        if (scrub)
-        {
-            server = CGlobals.Scrubber.ScrubItem(server, ScrubItemType.Server);
-            names = CGlobals.Scrubber.ScrubItem(names, ScrubItemType.Server); 
+                if (scrub)
+                {
+                    server = CGlobals.Scrubber.ScrubItem(server, ScrubItemType.Server);
+                    names = CGlobals.Scrubber.ScrubItem(names, ScrubItemType.Server);
+                }
+
+                // Summarize repeated role types (e.g., "Gateway/ Gateway/ Repository" -> "Gateway ×2<br>Repository ×1")
+                var summarizedType = SummarizeRoleTypes(r.Type);
+
+                list.Add(new[]
+                {
+                    server,
+                    summarizedType,
+                    r.RequiredCores,
+                    r.AvailableCores,
+                    r.RequiredRamGb,
+                    r.AvailableRamGb,
+                    r.ConcurrentTasks,
+                    r.SuggestedTasks,
+                    names
+                });
+            }
+
+            return list;
         }
 
-        list.Add(new[]
+        /// <summary>
+        /// Summarizes repeated role types into a count format.
+        /// Example: "Gateway/ Gateway/ Gateway/ Repository/ Gateway" becomes "Gateway ×4<br>Repository ×1"
+        /// </summary>
+        private string SummarizeRoleTypes(string typeString)
         {
-            server,
-            r.Type,
-            r.RequiredCores,
-            r.AvailableCores,
-            r.RequiredRamGb,
-            r.AvailableRamGb,
-            r.ConcurrentTasks,
-            r.SuggestedTasks,
-            names
-        });
-    }
+            if (string.IsNullOrWhiteSpace(typeString))
+                return typeString;
 
-    return list;
-    }
+            // Split by "/ " or "/" to get individual types
+            var types = typeString.Split(new[] { "/ ", "/" }, StringSplitOptions.RemoveEmptyEntries)
+                                  .Select(t => t.Trim())
+                                  .Where(t => !string.IsNullOrWhiteSpace(t))
+                                  .ToList();
+
+            if (types.Count <= 1)
+                return typeString;
+
+            // Count occurrences of each type
+            var typeCounts = types.GroupBy(t => t)
+                                  .OrderByDescending(g => g.Count())
+                                  .ThenBy(g => g.Key)
+                                  .Select(g => g.Count() > 1 ? $"{g.Key} ×{g.Count()}" : g.Key);
+
+            // Join with HTML line breaks for vertical display
+            return string.Join("<br>", typeCounts);
+        }
 
         #endregion
 
