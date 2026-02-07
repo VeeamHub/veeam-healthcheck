@@ -61,27 +61,13 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR
             this.RegistryKeyTable();
             this.log.Info(this.logStart + "RegistryKeyTable completed.");
             
-            this.log.Info(this.logStart + "Generating ProxyTable...");
-            this.ProxyTable();
-            this.log.Info(this.logStart + "ProxyTable completed.");
+            this.log.Info(this.logStart + "Generating Proxy Info section...");
+            this.ProxyInfoSection();
+            this.log.Info(this.logStart + "Proxy Info section completed.");
 
-            this.log.Info(this.logStart + "Generating Requirements tables...");
-            this.ServersRequirementsTable();
-            this.OptimizedConfigurationTable();
-            this.SuboptimalConfigurationTable();
-            this.log.Info(this.logStart + "Requirements tables completed.");
-
-            this.log.Info(this.logStart + "Generating SobrTable...");
-            this.SobrTable();
-            this.log.Info(this.logStart + "SobrTable completed.");
-            
-            this.log.Info(this.logStart + "Generating ExtentTable...");
-            this.ExtentTable();
-            this.log.Info(this.logStart + "ExtentTable completed.");
-            
-            this.log.Info(this.logStart + "Generating RepoTable...");
-            this.RepoTable();
-            this.log.Info(this.logStart + "RepoTable completed.");
+            this.log.Info(this.logStart + "Generating Repository Info section...");
+            this.RepositoryInfoSection();
+            this.log.Info(this.logStart + "Repository Info section completed.");
             
             this.log.Info(this.logStart + "Generating JobConcurrencyTable...");
             this.JobConcurrencyTable();
@@ -188,6 +174,29 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR
             this.HTMLSTRING += this.tables.AddConfigurationTablesFooter();
         }
 
+
+        private void ProxyInfoSection()
+        {
+            this.HTMLSTRING += this.tables.AddProxyInfoHeader();
+
+            this.ProxyTable();
+            this.ServersRequirementsTable();
+            this.OptimizedConfigurationTable();
+            this.SuboptimalConfigurationTable();
+
+            this.HTMLSTRING += this.tables.AddProxyInfoFooter();
+        }
+
+        private void RepositoryInfoSection()
+        {
+            this.HTMLSTRING += this.tables.AddRepositoryInfoHeader();
+
+            this.SobrTable();
+            this.ExtentTable();
+            this.RepoTable();
+
+            this.HTMLSTRING += this.tables.AddRepositoryInfoFooter();
+        }
 
         private void ServersRequirementsTable()
         {

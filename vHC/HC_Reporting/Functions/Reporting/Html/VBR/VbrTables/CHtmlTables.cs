@@ -3401,5 +3401,25 @@ this.form.TableHeader(VbrLocalizationHelper.SbrExt15, VbrLocalizationHelper.SbrE
         {
             return string.Empty;
         }
+
+        public string AddProxyInfoHeader()
+        {
+            return this.form.header1("Proxy Info");
+        }
+
+        public string AddProxyInfoFooter()
+        {
+            return string.Empty;
+        }
+
+        public string AddRepositoryInfoHeader()
+        {
+            return this.form.header1("Repository Info");
+        }
+
+        public string AddRepositoryInfoFooter()
+        {
+            return string.Empty;
+        }
     }
 }
