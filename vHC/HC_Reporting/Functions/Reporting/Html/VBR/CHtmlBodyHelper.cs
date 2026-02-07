@@ -64,7 +64,13 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR
             this.log.Info(this.logStart + "Generating ProxyTable...");
             this.ProxyTable();
             this.log.Info(this.logStart + "ProxyTable completed.");
-            
+
+            this.log.Info(this.logStart + "Generating Requirements tables...");
+            this.ServersRequirementsTable();
+            this.OptimizedConfigurationTable();
+            this.SuboptimalConfigurationTable();
+            this.log.Info(this.logStart + "Requirements tables completed.");
+
             this.log.Info(this.logStart + "Generating SobrTable...");
             this.SobrTable();
             this.log.Info(this.logStart + "SobrTable completed.");
@@ -92,12 +98,6 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR
             this.log.Info(this.logStart + "Generating JobInfoTable...");
             this.JobInfoTable();
             this.log.Info(this.logStart + "JobInfoTable completed.");
-
-            this.log.Info(this.logStart + "Generating Requirements tables...");
-            this.ServersRequirementsTable();
-            this.OptimizedConfigurationTable();
-            this.SuboptimalConfigurationTable();
-            this.log.Info(this.logStart + "Requirements tables completed.");
 
             if (CGlobals.EXPORTINDIVIDUALJOBHTMLS)
             {
