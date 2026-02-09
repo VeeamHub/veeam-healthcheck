@@ -1062,12 +1062,56 @@ namespace VeeamHealthCheck.Html.VBR
                     s += "<h3>NAS Backups</h3>";
                     if (cProtectedWorkloads.nasWorkloads.Count() == 0)
                     {
-                        if (CGlobals.REMOTEEXEC)
+                        // VMC log data not available - check if NAS backup jobs exist as fallback
+                        try
                         {
-                            this.log.Info("No NAS Workloads detected. This may be due to remote execution mode limitations.", false);
-                            s += "<p>No NAS Workloads detected. This may be due to remote execution mode limitations.</p>";
+                            CCsvParser nasJobParser = new();
+                            var nasJobs = nasJobParser.GetDynamicNasBackup()?.ToList();
+                            if (nasJobs != null && nasJobs.Count > 0)
+                            {
+                                this.log.Info($"VMC log data unavailable but {nasJobs.Count} NAS backup jobs found - showing job summary", false);
+                                double totalSourceGB = 0;
+                                foreach (var job in nasJobs)
+                                {
+                                    try
+                                    {
+                                        var dict = (IDictionary<string, object>)job;
+                                        object srcObj = null;
+                                        foreach (var key in dict.Keys)
+                                        {
+                                            if (key.Equals("SourceGB", StringComparison.OrdinalIgnoreCase))
+                                            { srcObj = dict[key]; break; }
+                                            if (key.Equals("OnDiskGB", StringComparison.OrdinalIgnoreCase))
+                                            { srcObj = dict[key]; break; }
+                                        }
+
+                                        if (srcObj != null && double.TryParse(srcObj.ToString(), System.Globalization.NumberStyles.Any, System.Globalization.CultureInfo.InvariantCulture, out double val))
+                                            totalSourceGB += val;
+                                    }
+                                    catch { }
+                                }
+
+                                s += "<div id=\"nasTable\" border=\"1\" class=\"content-table\"></div>";
+                                s += this.form.Table();
+                                s += "<tr>";
+                                s += this.form.TableHeader("NAS Backup Jobs", "Number of NAS backup jobs detected");
+                                s += this.form.TableHeader("Total Source Size", "Total source size across all NAS backup jobs");
+                                s += this.form.TableHeaderEnd();
+                                s += this.form.TableBodyStart();
+                                s += "<tr>";
+                                s += this.form.TableData(nasJobs.Count.ToString(), string.Empty);
+                                s += this.form.TableData($"{totalSourceGB:0.00} GB", string.Empty);
+                                s += "</tr>";
+                                s += this.form.EndTable();
+                                s += "<p class=\"subtext\">Detailed file share statistics require local execution (VMC log access)</p>";
+                            }
+                            else
+                            {
+                                this.log.Info("No NAS Workloads detected.", false);
+                                s += "<p>No NAS Workloads detected</p>";
+                            }
                         }
-                        else
+                        catch (Exception)
                         {
                             this.log.Info("No NAS Workloads detected.", false);
                             s += "<p>No NAS Workloads detected</p>";
@@ -1115,45 +1159,45 @@ namespace VeeamHealthCheck.Html.VBR
                     s += "</table>";
                     s += "<h3>Entra Backups</h3>";
 
-                    // Small table for Entra Tenant Count:
-                    s += "<div id=\"entraTenantCount\" border=\"1\" class=\"content-table\"></div>";
-                    s += this.form.Table();
-                    s += "<tr>";
-                    s += this.form.TableHeader("Tenant Count:", "Number of tenants backed up by this backup server");
-                    s += this.form.TableHeaderEnd();
-                    s += this.form.TableBodyStart();
-
-                    s += "<tr>";
-                    s += this.form.TableData(cProtectedWorkloads.entraWorkloads.Count.ToString(), string.Empty);
-                    s += "</tr>";
-                    s += this.form.EndTable();
-
-                    // Table for Entra Tenants
-                    s += "<div id=\"entraTable\" border=\"1\" class=\"content-table\"></div>";
-                    s += this.form.Table();
-                    s += "<tr>";
-                    s += this.form.TableHeader("Tenant Name", "Name of the Entra ID Tenant being backed up.");
-                    s += this.form.TableHeader("Cache Repo", "Cache Repo selected for the tentant");
-                    s += this.form.TableHeaderEnd();
-                    s += this.form.TableBodyStart();
-
                     if (cProtectedWorkloads.entraWorkloads.Count == 0)
                     {
-                        s += "<tr>";
-                        s += this.form.TableData(string.Empty, string.Empty);
-                        s += this.form.TableData(string.Empty, string.Empty);
-                        s += "</tr>";
+                        this.log.Info("No Entra tenants detected.", false);
+                        s += "<p>No Entra tenants detected</p>";
                     }
-
-                    foreach (var load in cProtectedWorkloads.entraWorkloads)
+                    else
                     {
+                        // Small table for Entra Tenant Count:
+                        s += "<div id=\"entraTenantCount\" border=\"1\" class=\"content-table\"></div>";
+                        s += this.form.Table();
                         s += "<tr>";
-                        s += this.form.TableData(load.TenantName, string.Empty);
-                        s += this.form.TableData(load.CacheRepoName, string.Empty);
-                        s += "</tr>";
-                    }
+                        s += this.form.TableHeader("Tenant Count:", "Number of tenants backed up by this backup server");
+                        s += this.form.TableHeaderEnd();
+                        s += this.form.TableBodyStart();
 
-                    s += this.form.EndTable();
+                        s += "<tr>";
+                        s += this.form.TableData(cProtectedWorkloads.entraWorkloads.Count.ToString(), string.Empty);
+                        s += "</tr>";
+                        s += this.form.EndTable();
+
+                        // Table for Entra Tenants
+                        s += "<div id=\"entraTable\" border=\"1\" class=\"content-table\"></div>";
+                        s += this.form.Table();
+                        s += "<tr>";
+                        s += this.form.TableHeader("Tenant Name", "Name of the Entra ID Tenant being backed up.");
+                        s += this.form.TableHeader("Cache Repo", "Cache Repo selected for the tenant");
+                        s += this.form.TableHeaderEnd();
+                        s += this.form.TableBodyStart();
+
+                        foreach (var load in cProtectedWorkloads.entraWorkloads)
+                        {
+                            s += "<tr>";
+                            s += this.form.TableData(load.TenantName, string.Empty);
+                            s += this.form.TableData(load.CacheRepoName, string.Empty);
+                            s += "</tr>";
+                        }
+
+                        s += this.form.EndTable();
+                    }
                 }
                 catch (Exception)
                 {
