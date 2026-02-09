@@ -51,6 +51,12 @@ namespace VeeamHealthCheck.Functions.Reporting.Html
 
         private readonly CLogger log = CGlobals.Logger;
 
+        // Caches for expensive data conversions (avoid redundant CSV reads and re-computation)
+        private List<string[]> _cachedProxyData;
+        private bool _cachedProxyScrub;
+        private List<CManagedServer> _cachedServerData;
+        private bool _cachedServerScrub;
+
         // Use null-coalescing to ensure we always have a valid list, even if CSV files are missing
         private readonly IEnumerable<dynamic> viProxy;
         private readonly IEnumerable<dynamic> hvProxy;
@@ -684,6 +690,13 @@ namespace VeeamHealthCheck.Functions.Reporting.Html
 
         public List<string[]> ProxyXmlFromCsv(bool scrub)
         {
+            // Return cached result if available for the same scrub mode
+            if (_cachedProxyData != null && _cachedProxyScrub == scrub)
+            {
+                this.log.Info("converting proxy info to xml (cached)");
+                return _cachedProxyData;
+            }
+
             this.log.Info("converting proxy info to xml");
             List<string[]> list = new();
 
@@ -725,11 +738,20 @@ namespace VeeamHealthCheck.Functions.Reporting.Html
 
             this.log.Info(this.logStart + "converting proxy info to xml..done!");
 
+            _cachedProxyData = list;
+            _cachedProxyScrub = scrub;
             return list;
         }
 
         public List<CManagedServer> ServerXmlFromCsv(bool scrub)    // managed servers protect vm count
         {
+            // Return cached result if available for the same scrub mode
+            if (_cachedServerData != null && _cachedServerScrub == scrub)
+            {
+                this.log.Info(this.logStart + "converting server info to xml (cached)");
+                return _cachedServerData;
+            }
+
             this.log.Info(this.logStart + "converting server info to xml");
             List<CManagedServer> list = new();
             List<CServerTypeInfos> csv = CGlobals.ServerInfo;
@@ -738,6 +760,18 @@ namespace VeeamHealthCheck.Functions.Reporting.Html
             csv = csv.OrderBy(x => x.Type).ToList();
 
             CCsvParser csvp = new();
+
+            // Cache the requirements CSV once instead of re-reading per server
+            List<CRequirementsCsvInfo> cachedReqRows = null;
+            try
+            {
+                cachedReqRows = csvp.ServersRequirementsCsvParser()?.ToList();
+            }
+            catch (Exception ex)
+            {
+                this.log.Warning(this.logStart + "Failed to pre-load requirements CSV: " + ex.Message);
+            }
+
             List<CViProtected> protectedVms = new();
             List<CViProtected> unProtectedVms = new();
             try
@@ -796,8 +830,8 @@ namespace VeeamHealthCheck.Functions.Reporting.Html
                         }
                     }
 
-                    // check for VBR Roles
-                   this.CheckServerRoles(c.Id);
+                    // check for VBR Roles (using cached requirements CSV)
+                   this.CheckServerRoles(c.Id, cachedReqRows);
 
                     // scrub name if selected
                     string newName = c.Name;
@@ -827,6 +861,8 @@ namespace VeeamHealthCheck.Functions.Reporting.Html
 
 
             this.log.Info(this.logStart + "converting server info to xml..done!");
+            _cachedServerData = list;
+            _cachedServerScrub = scrub;
             return list;
         }
 
@@ -1139,7 +1175,7 @@ namespace VeeamHealthCheck.Functions.Reporting.Html
             // _isBackupServerProxyDisabled = false;
         }
 
-        private void CheckServerRoles(string serverId)
+        private void CheckServerRoles(string serverId, List<CRequirementsCsvInfo> reqRows = null)
         {
             log.Info($"Checking server roles.. for server: {serverId}");
             ResetRoles();
@@ -1148,8 +1184,6 @@ namespace VeeamHealthCheck.Functions.Reporting.Html
             try
             {
                 log.Info("Roles: checking requirements CSV for BackupServer roles...");
-                var csvp = new CCsvParser();
-                var reqRows = csvp.ServersRequirementsCsvParser()?.ToList();
 
                 // Does the CSV contain any BackupServer type entries?
                 if (reqRows != null && reqRows.Any(r => !string.IsNullOrEmpty(r.Type) && r.Type.IndexOf("BackupServer", StringComparison.OrdinalIgnoreCase) >= 0))

@@ -1462,34 +1462,58 @@ if ($VBRVersion -ge 12) {
                     throw
                 }
                 
-                Write-LogFile("Waiting 45 seconds for scan to complete...")
-                Start-Sleep -Seconds 45
-                
-                # Capture scanner results
-                Write-LogFile("Attempting to retrieve scan results...")
-                try {
-                    # VBR 13+ uses Get-VBRSecurityComplianceAnalyzerResults cmdlet
-                    # VBR 12 uses [Veeam.Backup.DBManager.CDBManager]::Instance.BestPractices.GetAll()
-                    if ($VBRVersion -ge 13) {
-                        Write-LogFile("Using Get-VBRSecurityComplianceAnalyzerResults for VBR v13+")
-                        $SecurityCompliances = Get-VBRSecurityComplianceAnalyzerResults
-                    }
-                    else {
-                        Write-LogFile("Using database method for VBR v12")
-                        $SecurityCompliances = [Veeam.Backup.DBManager.CDBManager]::Instance.BestPractices.GetAll()
-                    }
-                    Write-LogFile("Retrieved " + $SecurityCompliances.Count + " compliance items")
-                }
-                catch {
-                    $errMsg = ""
+                # Poll for scan results instead of sleeping a fixed 45 seconds
+                $maxWaitSeconds = 45
+                $pollIntervalSeconds = 3
+                $elapsed = 0
+                $SecurityCompliances = $null
+                Write-LogFile("Polling for scan results (max ${maxWaitSeconds}s, every ${pollIntervalSeconds}s)...")
+
+                while ($elapsed -lt $maxWaitSeconds) {
+                    Start-Sleep -Seconds $pollIntervalSeconds
+                    $elapsed += $pollIntervalSeconds
                     try {
-                        $errMsg = if ($_.Exception.Message) { $_.Exception.Message.ToString() } else { "No error message" }
+                        if ($VBRVersion -ge 13) {
+                            $SecurityCompliances = Get-VBRSecurityComplianceAnalyzerResults
+                        }
+                        else {
+                            $SecurityCompliances = [Veeam.Backup.DBManager.CDBManager]::Instance.BestPractices.GetAll()
+                        }
+                        if ($SecurityCompliances -and $SecurityCompliances.Count -gt 0) {
+                            Write-LogFile("Scan results ready after ${elapsed}s - retrieved " + $SecurityCompliances.Count + " compliance items")
+                            break
+                        }
                     }
                     catch {
-                        $errMsg = "Unable to get error details"
+                        Write-LogFile("Poll attempt at ${elapsed}s not ready yet, retrying...")
                     }
-                    Write-LogFile("Failed to retrieve compliance data: " + $errMsg, "Errors", "ERROR")
-                    throw
+                }
+
+                # Final attempt if polling didn't get results
+                if (-not $SecurityCompliances -or $SecurityCompliances.Count -eq 0) {
+                    Write-LogFile("Polling timed out after ${maxWaitSeconds}s. Final retrieval attempt...")
+                    try {
+                        if ($VBRVersion -ge 13) {
+                            Write-LogFile("Using Get-VBRSecurityComplianceAnalyzerResults for VBR v13+")
+                            $SecurityCompliances = Get-VBRSecurityComplianceAnalyzerResults
+                        }
+                        else {
+                            Write-LogFile("Using database method for VBR v12")
+                            $SecurityCompliances = [Veeam.Backup.DBManager.CDBManager]::Instance.BestPractices.GetAll()
+                        }
+                        Write-LogFile("Retrieved " + $SecurityCompliances.Count + " compliance items")
+                    }
+                    catch {
+                        $errMsg = ""
+                        try {
+                            $errMsg = if ($_.Exception.Message) { $_.Exception.Message.ToString() } else { "No error message" }
+                        }
+                        catch {
+                            $errMsg = "Unable to get error details"
+                        }
+                        Write-LogFile("Failed to retrieve compliance data: " + $errMsg, "Errors", "ERROR")
+                        throw
+                    }
                 }
                 
                 Write-LogFile("Security & Compliance scan completed.")
