@@ -181,9 +181,9 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VB365
                         this.log.Info("[VB365][HTML] VB365 server name from Proxies CSV: " + serverName);
                         return serverName;
                     }
-                }
-                else
-                {
+            }
+            else
+            {
                     this.log.Warning("[VB365][HTML] Proxies.csv not found or empty");
                 }
             }

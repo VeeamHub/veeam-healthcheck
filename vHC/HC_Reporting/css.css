@@ -218,7 +218,7 @@ div.bulletlist {
 
 .subhdr {
     padding-left: 10px;
-    color: var(--accent-light);
+    color: var(--accent-dark);
     font-weight: 600;
     font-size: 14px;
 }
@@ -274,6 +274,7 @@ div.bulletlist {
     padding: 20px;
     display: none;
     overflow: auto;
+    max-height: 600px;
     background-color: var(--bg-secondary);
     border: 1px solid var(--border-accent);
     border-top: none;
@@ -293,6 +294,9 @@ th {
     font-size: 14px;
     transition: all 0.2s ease;
     text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+    position: sticky;
+    top: 0;
+    z-index: 2;
 }
 
 th:hover {
@@ -355,7 +359,8 @@ dd {
 table {
     page-break-inside: auto;
     page-break-after: auto;
-    border-collapse: collapse;
+    border-collapse: separate;
+    border-spacing: 0;
 }
 
 tr {
@@ -377,12 +382,12 @@ tfoot {
 }
 
 .content-table {
-    border-collapse: collapse;
+    border-collapse: separate;
+    border-spacing: 0;
     margin: 25px 0;
     font-size: 14px;
     min-width: 100%;
     border-radius: 8px;
-    overflow: hidden;
     box-shadow: 0 4px 16px var(--shadow-light);
     background: var(--bg-secondary);
     border: 1px solid var(--border-accent);
@@ -538,7 +543,7 @@ th.active {
 }
 
 .smoothscroll {
-    color: var(--accent-light);
+    color: var(--accent-dark);
     text-decoration: none;
     font-weight: 500;
     transition: all 0.2s ease;

@@ -51,6 +51,12 @@ namespace VeeamHealthCheck.Functions.Reporting.Html
 
         private readonly CLogger log = CGlobals.Logger;
 
+        // Caches for expensive data conversions (avoid redundant CSV reads and re-computation)
+        private List<string[]> _cachedProxyData;
+        private bool _cachedProxyScrub;
+        private List<CManagedServer> _cachedServerData;
+        private bool _cachedServerScrub;
+
         // Use null-coalescing to ensure we always have a valid list, even if CSV files are missing
         private readonly IEnumerable<dynamic> viProxy;
         private readonly IEnumerable<dynamic> hvProxy;
@@ -377,7 +383,7 @@ namespace VeeamHealthCheck.Functions.Reporting.Html
             CBackupServerTableHelper bt = new(scrub);
             BackupServer b = bt.SetBackupServerData();
 
-            this.CheckServerRoles(CGlobals.backupServerId);
+           this.CheckServerRoles(CGlobals.backupServerId);
 
             b.HasProxyRole = this.isBackupServerProxy;
             b.HasRepoRole = this.isBackupServerRepo;
@@ -684,6 +690,13 @@ namespace VeeamHealthCheck.Functions.Reporting.Html
 
         public List<string[]> ProxyXmlFromCsv(bool scrub)
         {
+            // Return cached result if available for the same scrub mode
+            if (_cachedProxyData != null && _cachedProxyScrub == scrub)
+            {
+                this.log.Info("converting proxy info to xml (cached)");
+                return _cachedProxyData;
+            }
+
             this.log.Info("converting proxy info to xml");
             List<string[]> list = new();
 
@@ -725,11 +738,20 @@ namespace VeeamHealthCheck.Functions.Reporting.Html
 
             this.log.Info(this.logStart + "converting proxy info to xml..done!");
 
+            _cachedProxyData = list;
+            _cachedProxyScrub = scrub;
             return list;
         }
 
         public List<CManagedServer> ServerXmlFromCsv(bool scrub)    // managed servers protect vm count
         {
+            // Return cached result if available for the same scrub mode
+            if (_cachedServerData != null && _cachedServerScrub == scrub)
+            {
+                this.log.Info(this.logStart + "converting server info to xml (cached)");
+                return _cachedServerData;
+            }
+
             this.log.Info(this.logStart + "converting server info to xml");
             List<CManagedServer> list = new();
             List<CServerTypeInfos> csv = CGlobals.ServerInfo;
@@ -738,6 +760,18 @@ namespace VeeamHealthCheck.Functions.Reporting.Html
             csv = csv.OrderBy(x => x.Type).ToList();
 
             CCsvParser csvp = new();
+
+            // Cache the requirements CSV once instead of re-reading per server
+            List<CRequirementsCsvInfo> cachedReqRows = null;
+            try
+            {
+                cachedReqRows = csvp.ServersRequirementsCsvParser()?.ToList();
+            }
+            catch (Exception ex)
+            {
+                this.log.Warning(this.logStart + "Failed to pre-load requirements CSV: " + ex.Message);
+            }
+
             List<CViProtected> protectedVms = new();
             List<CViProtected> unProtectedVms = new();
             try
@@ -796,8 +830,8 @@ namespace VeeamHealthCheck.Functions.Reporting.Html
                         }
                     }
 
-                    // check for VBR Roles
-                    this.CheckServerRoles(c.Id);
+                    // check for VBR Roles (using cached requirements CSV)
+                   this.CheckServerRoles(c.Id, cachedReqRows);
 
                     // scrub name if selected
                     string newName = c.Name;
@@ -827,6 +861,8 @@ namespace VeeamHealthCheck.Functions.Reporting.Html
 
 
             this.log.Info(this.logStart + "converting server info to xml..done!");
+            _cachedServerData = list;
+            _cachedServerScrub = scrub;
             return list;
         }
 
@@ -993,6 +1029,105 @@ namespace VeeamHealthCheck.Functions.Reporting.Html
             }
         }
 
+        public List<string[]> ServersRequirementsToXml(bool scrub)
+        {
+            var csvp = new CCsvParser();
+            var rows = csvp.ServersRequirementsCsvParser(); 
+            return RequirementsToStringArray(rows, scrub);
+        }
+
+        private List<string[]> RequirementsToStringArray(IEnumerable<CRequirementsCsvInfo> rows, bool scrub)
+        {
+            var list = new List<string[]>();
+            if (rows == null) return list;
+
+            foreach (var r in rows)
+            {
+                var server = r.Server;
+                var names = r.Names;
+
+                if (scrub)
+                {
+                    server = CGlobals.Scrubber.ScrubItem(server, ScrubItemType.Server);
+                    names = CGlobals.Scrubber.ScrubItem(names, ScrubItemType.Server);
+                }
+
+                // Summarize repeated role types (e.g., "Gateway/ Gateway/ Repository" -> "Gateway ×2<br>Repository ×1")
+                var summarizedType = SummarizeRoleTypes(r.Type);
+
+                list.Add(new[]
+                {
+                    server,
+                    summarizedType,
+                    r.RequiredCores,
+                    r.AvailableCores,
+                    r.RequiredRamGb,
+                    r.AvailableRamGb,
+                    r.ConcurrentTasks,
+                    r.SuggestedTasks,
+                    names
+                });
+            }
+
+            return list;
+        }
+
+        /// <summary>
+        /// Summarizes repeated role types into a count format with friendly names.
+        /// Example: "Gateway/ Gateway/ Gateway/ Repository/ Gateway" becomes "Gateway Server ×4<br>Repository ×1"
+        /// </summary>
+        private string SummarizeRoleTypes(string typeString)
+        {
+            if (string.IsNullOrWhiteSpace(typeString))
+                return typeString;
+
+            // Split by "/ " or "/" to get individual types
+            var types = typeString.Split(new[] { "/ ", "/" }, StringSplitOptions.RemoveEmptyEntries)
+                                  .Select(t => t.Trim())
+                                  .Where(t => !string.IsNullOrWhiteSpace(t))
+                                  .Select(t => GetFriendlyRoleName(t)) // Convert to friendly names
+                                  .ToList();
+
+            if (types.Count == 0)
+                return typeString;
+
+            if (types.Count == 1)
+                return types[0];
+
+            // Count occurrences of each type
+            var typeCounts = types.GroupBy(t => t)
+                                  .OrderByDescending(g => g.Count())
+                                  .ThenBy(g => g.Key)
+                                  .Select(g => g.Count() > 1 ? $"{g.Key} ×{g.Count()}" : g.Key);
+
+            // Join with HTML line breaks for vertical display
+            return string.Join("<br>", typeCounts);
+        }
+
+        /// <summary>
+        /// Maps technical role type names to user-friendly display names.
+        /// </summary>
+        private static readonly Dictionary<string, string> RoleNameMappings = new(StringComparer.OrdinalIgnoreCase)
+        {
+            { "GPProxy", "File Proxy" },
+            { "Proxy", "VMware Proxy" },
+            { "CDPProxy", "CDP Proxy" },
+            { "Gateway", "Gateway Server" },
+            { "Repository", "Repository" },
+            { "BackupServer", "Backup Server" },
+            { "SQLServer", "SQL Server" }
+        };
+
+        private static string GetFriendlyRoleName(string technicalName)
+        {
+            if (string.IsNullOrWhiteSpace(technicalName))
+                return technicalName;
+
+            return RoleNameMappings.TryGetValue(technicalName.Trim(), out var friendlyName)
+                ? friendlyName
+                : technicalName; // Return original if no mapping found
+        }
+
         #endregion
 
         #region localFunctions
@@ -1040,56 +1175,108 @@ namespace VeeamHealthCheck.Functions.Reporting.Html
             // _isBackupServerProxyDisabled = false;
         }
 
-        private void CheckServerRoles(string serverId)
+        private void CheckServerRoles(string serverId, List<CRequirementsCsvInfo> reqRows = null)
         {
-            this.log.Info("Checking server roles.. for server: " + serverId);
-            this.ResetRoles();
+            log.Info($"Checking server roles.. for server: {serverId}");
+            ResetRoles();
 
-            List<CProxyTypeInfos> proxy = CGlobals.DtParser.ProxyInfos;
-            List<CRepoTypeInfos> extents = CGlobals.DtParser.ExtentInfo;
-            List<CRepoTypeInfos> repos = CGlobals.DtParser.RepoInfos;
-            List<CWanTypeInfo> wans = CGlobals.DtParser.WanInfos;
-
-            this.isBackupServerProxy = this.CheckProxyRole(serverId);
-
-            // if(proxy != null){
-            //     log.Debug("Proxy count: " + proxy.Count);
-            // }
-            // if(extents != null){
-            //     log.Debug("Extent count: " + extents.Count);
-            // }
-            // if(repos != null){
-            //     log.Debug("Repo count: " + repos.Count);
-            // }
-            // if(wans != null){
-            //     log.Debug("Wan count: " + wans.Count);
-            // }
-            foreach (var e in extents)
+            // Prefer using the AllServersRequirementsComparison.csv when it contains BackupServer entries.
+            try
             {
-                if (e.HostId == serverId)
+                log.Info("Roles: checking requirements CSV for BackupServer roles...");
+
+                // Does the CSV contain any BackupServer type entries?
+                if (reqRows != null && reqRows.Any(r => !string.IsNullOrEmpty(r.Type) && r.Type.IndexOf("BackupServer", StringComparison.OrdinalIgnoreCase) >= 0))
                 {
-                    this.isBackupServerRepo = true;
+                    // Try to match CSV row by multiple strategies: serverId, server name lookup, partial matches
+                    var serverName = CGlobals.ServerInfo?.FirstOrDefault(s => s.Id == serverId)?.Name;
+
+                    CRequirementsCsvInfo matching = null;
+
+                    // 1) exact match against serverId (CSV may contain IP or short name which sometimes equals id)
+                    matching = reqRows.FirstOrDefault(r => string.Equals(r.Server?.Trim(), serverId?.Trim(), StringComparison.OrdinalIgnoreCase)
+                                                          && !string.IsNullOrEmpty(r.Type));
+
+                    // 2) exact match against serverName
+                    if (matching == null && !string.IsNullOrEmpty(serverName))
+                    {
+                        matching = reqRows.FirstOrDefault(r => string.Equals(r.Server?.Trim(), serverName?.Trim(), StringComparison.OrdinalIgnoreCase)
+                                                              && !string.IsNullOrEmpty(r.Type));
+                    }
+
+                    // 3) partial contains (either direction) to handle "Name / Something" entries or IP vs FQDN
+                    if (matching == null && !string.IsNullOrEmpty(serverName))
+                    {
+                        matching = reqRows.FirstOrDefault(r => !string.IsNullOrEmpty(r.Server) && (
+                            r.Server.IndexOf(serverName, StringComparison.OrdinalIgnoreCase) >= 0 ||
+                            serverName.IndexOf(r.Server, StringComparison.OrdinalIgnoreCase) >= 0) && !string.IsNullOrEmpty(r.Type));
+                    }
+
+                    if (matching != null)
+                    {
+                        isBackupServerProxy = matching.Type.IndexOf("Proxy", StringComparison.OrdinalIgnoreCase) >= 0;
+                        isBackupServerRepo = matching.Type.IndexOf("Repository", StringComparison.OrdinalIgnoreCase) >= 0;
+                        log.Info($"Roles: determined from CSV - isProxy={isBackupServerProxy}, isRepo={isBackupServerRepo}");
+                    }
+                    else
+                    {
+                        // No matching CSV row for this server — do not mark proxy/repo
+                        isBackupServerProxy = false;
+                        isBackupServerRepo = false;
+                        log.Info($"Roles: no matching requirements CSV row for serverId='{serverId}' serverName='{serverName}'; not marking proxy or repo.");
+                    }
+                }
+                else
+                {
+                    // No BackupServer info in CSV -> do not mark as proxy
+                    log.Info("Roles: requirements CSV does not contain BackupServer entries; not marking as proxy.");
+                    isBackupServerProxy = false;
                 }
             }
-
-            foreach (var r in repos)
+            catch (Exception ex)
             {
-                if (r.HostId == serverId)
-                {
-                    this.isBackupServerRepo = true;
-                }
+                log.Warning($"Roles: error reading requirements CSV; not marking proxy: {ex.Message}");
+                isBackupServerProxy = false;
             }
 
+            // Repositories and extents: if CSV provided repo info we already set isBackupServerRepo above, otherwise use legacy DT parser checks.
+            var extents = CGlobals.DtParser.ExtentInfo ?? new List<CRepoTypeInfos>();
+            var repos = CGlobals.DtParser.RepoInfos ?? new List<CRepoTypeInfos>();
+            var wans = CGlobals.DtParser.WanInfos ?? new List<CWanTypeInfo>();
+
+            if (!isBackupServerRepo)
+            {
+                log.Info($"Roles: extents loop start (count={extents.Count})");
+                foreach (var e in extents)
+                {
+                    if (e.HostId == serverId)
+                    {
+                        isBackupServerRepo = true;
+                        break;
+                    }
+                }
+                log.Info("Roles: extents loop done");
+
+                log.Info($"Roles: repos loop start (count={repos.Count})");
+                foreach (var r in repos)
+                {
+                    if (r.HostId == serverId)
+                    {
+                        isBackupServerRepo = true;
+                        break;
+                    }
+                }
+                log.Info("Roles: repos loop done");
+            }
+
+            log.Info($"Roles: wans loop start (count={wans.Count})");
             foreach (var w in wans)
-            {
-                if (w.HostId == serverId)
-                {
-                    this.isBackupServerWan = true;
-                }
-            }
+                if (w.HostId == serverId) isBackupServerWan = true;
+            log.Info("Roles: wans loop done");
 
-            this.log.Info("Checking server roles..done!");
+            log.Info("Checking server roles..done!");
         }
+
 
         private bool CheckProxyRole(string serverId)
         {

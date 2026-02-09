@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Management.Automation;
+using System.Globalization;
 using System.Text.Json;
 using VeeamHealthCheck.Functions.Analysis.DataModels;
 using VeeamHealthCheck.Functions.Collection;
@@ -1448,18 +1449,6 @@ namespace VeeamHealthCheck.Html.VBR
                 {
                     foreach (var d in list)
                     {
-                        var prov = d[12];
-                        int shade = 0;
-                        if (prov == "under")
-                        {
-                            shade = 2;
-                        }
-
-                        if (prov == "over")
-                        {
-                            shade = 1;
-                        }
-
                         s += "<tr>";
                         if (scrub)
                         {
@@ -1471,7 +1460,7 @@ namespace VeeamHealthCheck.Html.VBR
                         }
 
                         s += this.form.TableData(d[1], string.Empty);
-                        s += this.form.TableData(d[2], string.Empty, shade);
+                        s += this.form.TableData(d[2], string.Empty);
                         s += this.form.TableData(d[3], string.Empty);
                         s += this.form.TableData(d[4], string.Empty);
                         s += this.form.TableData(d[5], string.Empty);
@@ -3131,6 +3120,166 @@ this.form.TableHeader(VbrLocalizationHelper.SbrExt15, VbrLocalizationHelper.SbrE
             return s;
         }
 
+        // --- Requirements tables (new) ---
+        public string AddServersRequirementsTable(bool scrub)
+        {
+            return this.AddRequirementsTable(
+                sectionId: "serversrequirements",
+                title: "Server Sizing",
+                buttonText: "Server Sizing",
+                rows: this.df.ServersRequirementsToXml(scrub),
+                jsonKey: "serversRequirements",
+                doScrub: scrub);
+        }
+
+        private string AddRequirementsTable(
+            string sectionId,
+            string title,
+            string buttonText,
+            List<string[]> rows,
+            string jsonKey,
+            bool doScrub)
+        {
+            string s = this.form.SectionStartWithButton(sectionId, title, buttonText);
+            string summary = string.Empty;
+
+            // headers
+            s += "<tr>" +
+                this.form.TableHeader("Server", "Server name") +
+                this.form.TableHeader("Type", "Role/type") +
+                this.form.TableHeader("Required Cores", "Required CPU cores") +
+                this.form.TableHeader("Available Cores", "Available CPU cores") +
+                this.form.TableHeader("Required RAM (GB)", "Required RAM in GB") +
+                this.form.TableHeader("Available RAM (GB)", "Available RAM in GB") +
+                this.form.TableHeader("Concurrent Tasks", "Current concurrent tasks") +
+                this.form.TableHeader("Suggested Tasks", "Suggested tasks based on sizing") +
+                this.form.TableHeader("Proxy/Repository Names", "Proxy and repository names on this server") +
+                "</tr>";
+
+            s += this.form.TableHeaderEnd();
+            s += this.form.TableBodyStart();
+
+            try
+            {
+                if (rows == null || rows.Count == 0)
+                {
+                    s += "<tr><td colspan='9' style='text-align:center; padding:20px; color:#666;'>" +
+                        "<em>No data available. The CSV file may be missing or empty.</em>" +
+                        "</td></tr>";
+                }
+                else
+                {
+                    foreach (var r in rows)
+                    {
+                        // expected indices:
+                        // 0 Server, 1 Type, 2 ReqCores, 3 AvailCores, 4 ReqRam, 5 AvailRam, 6 ConTasks, 7 SugTasks, 8 Names
+                        string server = r[0];
+                        string names = r[8];
+
+                        if (doScrub)
+                        {
+                            server = this.scrub.ScrubItem(server, ScrubItemType.Server);
+
+                            // "Names" might contain server/proxy/repo names; scrubging as Server is usually "good enough"
+                            names = this.scrub.ScrubItem(names, ScrubItemType.Server);
+                        }
+
+                        // Safely parse numeric fields and highlight cells where requirements exceed availability
+                        double reqCoresVal = 0, availCoresVal = 0, reqRamVal = 0, availRamVal = 0, concurrentTasksVal = 0, suggestedTasksVal = 0;
+                        bool parsedReqCores = r.Length > 2 && double.TryParse(r[2], NumberStyles.Any, CultureInfo.InvariantCulture, out reqCoresVal);
+                        bool parsedAvailCores = r.Length > 3 && double.TryParse(r[3], NumberStyles.Any, CultureInfo.InvariantCulture, out availCoresVal);
+                        bool parsedReqRam = r.Length > 4 && double.TryParse(r[4], NumberStyles.Any, CultureInfo.InvariantCulture, out reqRamVal);
+                        bool parsedAvailRam = r.Length > 5 && double.TryParse(r[5], NumberStyles.Any, CultureInfo.InvariantCulture, out availRamVal);
+                        bool parsedConTasks = r.Length > 6 && double.TryParse(r[6], NumberStyles.Any, CultureInfo.InvariantCulture, out concurrentTasksVal);
+                        bool parsedSugTasks = r.Length > 7 && double.TryParse(r[7], NumberStyles.Any, CultureInfo.InvariantCulture, out suggestedTasksVal);
+
+                        bool reqCoresWarn = parsedReqCores && parsedAvailCores && reqCoresVal > availCoresVal;
+                        bool reqRamWarn = parsedReqRam && parsedAvailRam && reqRamVal > availRamVal;
+                        bool conTasksWarn = parsedConTasks && parsedSugTasks && concurrentTasksVal > suggestedTasksVal;
+
+                        s += "<tr>";
+                        s += this.form.TableData(server, string.Empty);
+                        s += this.form.TableData(r[1], string.Empty);
+
+                        // Required Cores (highlight if required > available)
+                        if (reqCoresWarn)
+                        {
+                            s += this.form.TableData(r[2], string.Empty, 1);
+                        }
+                        else
+                        {
+                            s += this.form.TableData(r[2], string.Empty);
+                        }
+
+                        // Available Cores
+                        s += this.form.TableData(r[3], string.Empty);
+
+                        // Required RAM (highlight if required > available)
+                        if (reqRamWarn)
+                        {
+                            s += this.form.TableData(r[4], string.Empty, 1);
+                        }
+                        else
+                        {
+                            s += this.form.TableData(r[4], string.Empty);
+                        }
+
+                        // Available RAM
+                        s += this.form.TableData(r[5], string.Empty);
+
+                        // Concurrent Tasks (highlight if concurrent > suggested)
+                        if (conTasksWarn)
+                        {
+                            s += this.form.TableData(r[6], string.Empty, 1);
+                        }
+                        else
+                        {
+                            s += this.form.TableData(r[6], string.Empty);
+                        }
+
+                        // Suggested Tasks
+                        s += this.form.TableData(r[7], string.Empty);
+
+                        // Format names one per line
+                        string formattedNames = names?.Replace("/ ", "<br>").Replace("/", "<br>") ?? "";
+                        s += this.form.TableData(formattedNames, string.Empty);
+                        s += "</tr>";
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                this.log.Error($"Requirements table '{title}' import failed. ERROR:");
+                this.log.Error("\t" + ex.Message);
+                s += "<tr><td colspan='9' style='text-align:center; padding:20px; color:#d9534f;'>" +
+                    "<em>Error loading data. See logs for details.</em>" +
+                    "</td></tr>";
+            }
+
+            s += this.form.SectionEnd(summary);
+
+            // JSON capture (optional, but consistent with your file)
+            try
+            {
+                List<string> headers = new()
+                {
+                    "Server","Type","RequiredCores","AvailableCores","RequiredRamGb","AvailableRamGb","ConcurrentTasks","SuggestedTasks","Names"
+                };
+
+                List<List<string>> jsonRows = (rows ?? new List<string[]>())
+                    .Select(r => r.ToList())
+                    .ToList();
+
+                SetSection(jsonKey, headers, jsonRows, summary);
+            }
+            catch (Exception ex)
+            {
+                this.log.Error($"Failed to capture {jsonKey} JSON section: " + ex.Message);
+            }
+
+            return s;
+        }
+
         private string SetJobSessionsHeaders()
         {
             string s = string.Empty;
@@ -3218,6 +3367,36 @@ this.form.TableHeader(VbrLocalizationHelper.SbrExt15, VbrLocalizationHelper.SbrE
         }
 
         public string AddConfigurationTablesFooter()
+        {
+            return string.Empty;
+        }
+
+        public string AddProxyInfoHeader()
+        {
+            return this.form.header1("Proxy Info");
+        }
+
+        public string AddProxyInfoFooter()
+        {
+            return string.Empty;
+        }
+
+        public string AddRepositoryInfoHeader()
+        {
+            return this.form.header1("Repository Info");
+        }
+
+        public string AddRepositoryInfoFooter()
+        {
+            return string.Empty;
+        }
+
+        public string AddJobTablesHeader()
+        {
+            return this.form.header1("Job Tables");
+        }
+
+        public string AddJobTablesFooter()
         {
             return string.Empty;
         }

@@ -1,0 +1,1701 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <data name="GuiAcceptButton" xml:space="preserve">
+    <value>Accept Terms</value>
+  </data>
+  <data name="GuiAcceptText" xml:space="preserve">
+    <value>This tool is offered as a free utility to assess your Veeam Configuration. It is offered \"at your own risk\".\n\nThe tool will engage PowerShell and SQL to gather data and then output files and folders to local disk.\n\nThe files may be anonymized to hide sensitive data. Accepting the Terms means that the user agrees to execute this program in its full capacity.</value>
+  </data>
+  <data name="GuiImportButton" xml:space="preserve">
+    <value>Import</value>
+  </data>
+  <data name="GuiImportModeOnly" xml:space="preserve">
+    <value>Import Mode</value>
+  </data>
+  <data name="GuiInstCaveat1" xml:space="preserve">
+    <value>* If opted to remove sensitive data types, only HTML report will be cleansed. See:</value>
+  </data>
+  <data name="GuiInstCaveat2" xml:space="preserve">
+    <value>** Note, in larger environments, this tool can take up to 3 hours to complete.</value>
+  </data>
+  <data name="GuiInstHeader" xml:space="preserve">
+    <value>Instructions:</value>
+  </data>
+  <data name="GuiInstLine1" xml:space="preserve">
+    <value>1. Accept Terms</value>
+  </data>
+  <data name="GuiInstLine2" xml:space="preserve">
+    <value>2. Click RUN</value>
+  </data>
+  <data name="GuiInstLine3" xml:space="preserve">
+    <value>3. Upon completion, Windows Explorer will open to the output directory. (If enabled, HTML report will be shown)</value>
+  </data>
+  <data name="GuiInstLine4" xml:space="preserve">
+    <value>4. Review the report as desired</value>
+  </data>
+  <data name="GuiInstLine5" xml:space="preserve">
+    <value>5. Capture output from C:\\temp\\vHC* - or whichever directory was specified.</value>
+  </data>
+  <data name="GuiInstLine6" xml:space="preserve">
+    <value>6. Notify your Veeam SE and/or send them the results for review</value>
+  </data>
+  <data name="GuiOptionsHeader" xml:space="preserve">
+    <value>Options:</value>
+  </data>
+  <data name="GuiOutPath" xml:space="preserve">
+    <value>Output path</value>
+  </data>
+  <data name="GuiRunButton" xml:space="preserve">
+    <value>Run</value>
+  </data>
+  <data name="GuiSensData" xml:space="preserve">
+    <value>Remove sensitive data types from report</value>
+  </data>
+  <data name="GuiShowFiles" xml:space="preserve">
+    <value>Show files on completion</value>
+  </data>
+  <data name="GuiShowHtml" xml:space="preserve">
+    <value>Show HTML report upon completion</value>
+  </data>
+  <data name="GuiTitle" xml:space="preserve">
+    <value>Veeam Health Check</value>
+  </data>
+  <data name="GuiTitleBnR" xml:space="preserve">
+    <value>B&amp;R</value>
+  </data>
+  <data name="GuiTitleVB365" xml:space="preserve">
+    <value>VB365</value>
+  </data>
+  <data name="GuiRescanHosts" xml:space="preserve">
+    <value>Rescan Hosts</value>
+  </data>
+  <data name="PlHdr0" xml:space="preserve">
+    <value>Vi Total</value>
+  </data>
+  <data name="PlHdrTT0" xml:space="preserve">
+    <value>Total VMware VMs found.</value>
+  </data>
+  <data name="PlHdr1" xml:space="preserve">
+    <value>Vi Protected</value>
+  </data>
+  <data name="PlHdrTT1" xml:space="preserve">
+    <value>Total VMware VMs found with backups</value>
+  </data>
+  <data name="PlHdr2" xml:space="preserve">
+    <value>Vi Not Prot</value>
+  </data>
+  <data name="PlHdrTT2" xml:space="preserve">
+    <value>Total VMwar VMs found with no backups</value>
+  </data>
+  <data name="PlHdr3" xml:space="preserve">
+    <value>Vi Potential Dupes</value>
+  </data>
+  <data name="PlHdrTT3" xml:space="preserve">
+    <value>Potentially duplicated workloads</value>
+  </data>
+  <data name="PlHdr4" xml:space="preserve">
+    <value>Vi Protected as Physical</value>
+  </data>
+  <data name="PlHdrTT4" xml:space="preserve">
+    <value>VMs backed up via Agents as physical workloads</value>
+  </data>
+  <data name="PlHdr5" xml:space="preserve">
+    <value>Phys Total</value>
+  </data>
+  <data name="PlHdrTT5" xml:space="preserve">
+    <value>Total count of servers added into Protection Groups</value>
+  </data>
+  <data name="PlHdr6" xml:space="preserve">
+    <value>Phy Protected</value>
+  </data>
+  <data name="PlHdrTT6" xml:space="preserve">
+    <value>Total count of servers with backups</value>
+  </data>
+  <data name="PlHdr7" xml:space="preserve">
+    <value>Phys Not Prot</value>
+  </data>
+  <data name="PlHdrTT7" xml:space="preserve">
+    <value>Total count of servers in a Protection Group but with no current backups</value>
+  </data>
+  <data name="PlSum1" xml:space="preserve">
+    <value>This table summarizes the amount of workloads detected in the current backup server. The VMware (Vi Total) count is determined by the local Veeam Broker service and compares that VM count with the existing backups. The physical workloads (Phys Total) are determined by the number of VMs added to Protection Groups and then compared to what is in backup jobs.</value>
+  </data>
+  <data name="PlNote1" xml:space="preserve">
+    <value>"Duplicates" shows the discrepancy between unique workloads in backup jobs and those workloads across multiple backup jobs as may be reflected in the VMC file. It does not mean VM's (or their license consumption) is being duplicated.</value>
+  </data>
+  <data name="PlButton" xml:space="preserve">
+    <value>Show count of protected workloads</value>
+  </data>
+  <data name="PlTitle" xml:space="preserve">
+    <value>Protected Workloads</value>
+  </data>
+  <data name="GeneralNotesHeader" xml:space="preserve">
+    <value>Notes:</value>
+  </data>
+  <data name="GeneralSummaryHeader" xml:space="preserve">
+    <value>Summary:</value>
+  </data>
+  <data name="HtmlHeader" xml:space="preserve">
+    <value>Veeam Backup &amp; Recovery Health Check Report</value>
+  </data>
+  <data name="HtmlSecurityHeader" xml:space="preserve">
+    <value>Veeam Backup &amp; Recovery Health Check Security Report</value>
+  </data>
+  <data name="HtmlIntroLine1" xml:space="preserve">
+    <value>The Veeam Health Check Report report provides data and insight into your Veeam Backup and Replication (VBR) deployment. The information provided here is intended to be used in collaboration with your Veeam representative.</value>
+  </data>
+  <data name="HtmlIntroLine2" xml:space="preserve">
+    <value>The raw data is captured in CSV format and is accessible locally in the Export Folder. CSV will let you manipulate the data in tools such as Excel.</value>
+  </data>
+  <data name="HtmlIntroLine3Original" xml:space="preserve">
+    <value>Additional information on individual job sessions can be found in the &lt;a href="C:\\temp\\vHC\\Original\\JobSessionReports"&gt; output folder at C:\\temp\\vHC\\Original\\JobSessionReports &lt;/a&gt;</value>
+  </data>
+  <data name="HtmlIntroLine3Anon" xml:space="preserve">
+    <value>Additional information on individual job sessions can be found in the &lt;a href="C:\\temp\\vHC\\Anonymous\\JobSessionReports"&gt; output folder at C:\\temp\\vHC\\Anonymous\\JobSessionReports &lt;/a&gt;</value>
+  </data>
+  <data name="HtmlIntroLine4" xml:space="preserve">
+    <value>During mouseover, a tool tip may appear containing explanatory data of the table header or data column.</value>
+  </data>
+  <data name="HtmlIntroLine5" xml:space="preserve">
+    <value>The tool you ran to generate this report is completely self-contained, does not ‘phone-home’ and was only executed on your Veeam Backup and Replication server. It queries the VBR database, registry, configuration and log files. It does not require access to vCenter or any other infrastructure.</value>
+  </data>
+  <data name="HtmlIntroLine5vb365" xml:space="preserve">
+    <value>NOTE: The tool you ran to generate this report is completely self-contained, does not ‘phone-home’ and was only executed on your Veeam Backup for Microsoft 365 server. It queries the VB365 database, registry, configuration and log files. It does not require access to M365 or any other infrastructure.</value>
+  </data>
+  <data name="NavBkpSrvDeet" xml:space="preserve">
+    <value>Detailed information on the Backup Server, Configuration DB, roles, and resources.</value>
+  </data>
+  <data name="NavBkpSrvLink" xml:space="preserve">
+    <value>Backup Server</value>
+  </data>
+  <data name="NavColapse" xml:space="preserve">
+    <value>Expand/Collapse All Sections</value>
+  </data>
+  <data name="NavHeader" xml:space="preserve">
+    <value>Navigation:</value>
+  </data>
+  <data name="NavJobConDeet" xml:space="preserve">
+    <value>Heatmap showing max job concurrency found per hour.</value>
+  </data>
+  <data name="NavJobConLink" xml:space="preserve">
+    <value>Job Concurrency</value>
+  </data>
+  <data name="NavJobInfoDeet" xml:space="preserve">
+    <value>Detailed breakdown of each job.</value>
+  </data>
+  <data name="NavJobInfoLink" xml:space="preserve">
+    <value>Job Info</value>
+  </data>
+  <data name="NavJobSessSumDeet" xml:space="preserve">
+    <value>Summary of job sessions by job name.</value>
+  </data>
+  <data name="NavJobSessSumLink" xml:space="preserve">
+    <value>Job Session Summary</value>
+  </data>
+  <data name="NavJobSumDeet" xml:space="preserve">
+    <value>Summary of found jobs by type and count.</value>
+  </data>
+  <data name="NavJobSumLink" xml:space="preserve">
+    <value>Job Summary</value>
+  </data>
+  <data name="NavLicInfoDetail" xml:space="preserve">
+    <value>Displays license information.</value>
+  </data>
+  <data name="NavLicInfoLink" xml:space="preserve">
+    <value>License Info</value>
+  </data>
+  <data name="NavMissingDeet" xml:space="preserve">
+    <value>Displays workloads and types that are not utilized.</value>
+  </data>
+  <data name="NavMissingJobLink" xml:space="preserve">
+    <value>Missing Job Types</value>
+  </data>
+  <data name="NavProtWkldDeet" xml:space="preserve">
+    <value>Shows count of detected VM &amp; Physical objects compared to objects with backups.</value>
+  </data>
+  <data name="NavProtWrkld" xml:space="preserve">
+    <value>Protected Workloads</value>
+  </data>
+  <data name="NavProxyDeet" xml:space="preserve">
+    <value>Details on proxy resources and config.</value>
+  </data>
+  <data name="NavProxyInfoLink" xml:space="preserve">
+    <value>Proxy Info</value>
+  </data>
+  <data name="NavRegKeyDeet" xml:space="preserve">
+    <value>Shows any registry values differing from a vanilla install.</value>
+  </data>
+  <data name="NavRegKeyLink" xml:space="preserve">
+    <value>Non-Default Registry Keys</value>
+  </data>
+  <data name="NavRepoDeet" xml:space="preserve">
+    <value>Details on non-SOBR repositories, resources, and config.</value>
+  </data>
+  <data name="NavRepoInfoLink" xml:space="preserve">
+    <value>Repository Info</value>
+  </data>
+  <data name="NavSecSumDeet" xml:space="preserve">
+    <value>Brief table showing security features in use.</value>
+  </data>
+  <data name="NavSecSumLink" xml:space="preserve">
+    <value>Security Summary</value>
+  </data>
+  <data name="NavSobrDeet" xml:space="preserve">
+    <value>Summary of SOBRs and config options.</value>
+  </data>
+  <data name="NavSobrExtDeet" xml:space="preserve">
+    <value>Details on SOBR Extents, resources, and config.</value>
+  </data>
+  <data name="NavSobrExtLink" xml:space="preserve">
+    <value>SOBR Extent Info</value>
+  </data>
+  <data name="NavSobrInfoLink" xml:space="preserve">
+    <value>SOBR Info</value>
+  </data>
+  <data name="NavSrvInfoDeet" xml:space="preserve">
+    <value>List of all servers added into the configuration by the user.</value>
+  </data>
+  <data name="NavSrvInfoLink" xml:space="preserve">
+    <value>Server Info</value>
+  </data>
+  <data name="NavSrvSumDeet" xml:space="preserve">
+    <value>Summary of detected infrastructure types and counts.</value>
+  </data>
+  <data name="NavSrvSumLink" xml:space="preserve">
+    <value>Server Summary</value>
+  </data>
+  <data name="NavTaskConDeet" xml:space="preserve">
+    <value>Heatmap showing max VM concurrency found per hour.</value>
+  </data>
+  <data name="NavTaskConLink" xml:space="preserve">
+    <value>VM Concurrency</value>
+  </data>
+  <data name="LicCcTT" xml:space="preserve">
+    <value>Is Cloud Connect enabled?</value>
+  </data>
+  <data name="LicExpTT" xml:space="preserve">
+    <value>License expiration date</value>
+  </data>
+  <data name="LicTblLicTo" xml:space="preserve">
+    <value>Licensed To</value>
+  </data>
+  <data name="LicSupExpTT" xml:space="preserve">
+    <value>Support expiration date</value>
+  </data>
+  <data name="LicTableHeader" xml:space="preserve">
+    <value>License Summary</value>
+  </data>
+  <data name="LicTblCc" xml:space="preserve">
+    <value>Cloud Connect Enabled</value>
+  </data>
+  <data name="LicTblEdition" xml:space="preserve">
+    <value>Edition</value>
+  </data>
+  <data name="LicTblExpDate" xml:space="preserve">
+    <value>Exp Date</value>
+  </data>
+  <data name="LicTblLicInst" xml:space="preserve">
+    <value>Licensed Inst.</value>
+  </data>
+  <data name="LicTblLicNas" xml:space="preserve">
+    <value>Licensed Nas</value>
+  </data>
+  <data name="LicTblLicSock" xml:space="preserve">
+    <value>Licensed Sockets</value>
+  </data>
+  <data name="LicTblNewInst" xml:space="preserve">
+    <value>New Inst.</value>
+  </data>
+  <data name="LicTblRentInst" xml:space="preserve">
+    <value>Rental Inst.</value>
+  </data>
+  <data name="LicTblStatus" xml:space="preserve">
+    <value>Status</value>
+  </data>
+  <data name="LicTblSupExpDate" xml:space="preserve">
+    <value>Support Exp Date</value>
+  </data>
+  <data name="LicTblType" xml:space="preserve">
+    <value>Types</value>
+  </data>
+  <data name="LicTblUsedInst" xml:space="preserve">
+    <value>Used Inst.</value>
+  </data>
+  <data name="LicTblUsedNas" xml:space="preserve">
+    <value>Used Nas</value>
+  </data>
+  <data name="LicTblUsedSock" xml:space="preserve">
+    <value>Used Sockets</value>
+  </data>
+  <data name="LtEdTT" xml:space="preserve">
+    <value>Veeam License Edition</value>
+  </data>
+  <data name="LtInstLicTT" xml:space="preserve">
+    <value>Total licensed instances</value>
+  </data>
+  <data name="LtInstNewTT" xml:space="preserve">
+    <value>Total new instances</value>
+  </data>
+  <data name="LtInstRentalTT" xml:space="preserve">
+    <value>Totaly rental instances</value>
+  </data>
+  <data name="LtInstUsedTT" xml:space="preserve">
+    <value>Total used instances</value>
+  </data>
+  <data name="LtNasLicTT" xml:space="preserve">
+    <value>Total NAS licensed</value>
+  </data>
+  <data name="LtNasUsedTT" xml:space="preserve">
+    <value>Total NAS license used</value>
+  </data>
+  <data name="LtSocLicTT" xml:space="preserve">
+    <value>Total sockets licensed</value>
+  </data>
+  <data name="LtSocUsedTT" xml:space="preserve">
+    <value>Total sockets used</value>
+  </data>
+  <data name="LtStatusTT" xml:space="preserve">
+    <value>Veeam License Status</value>
+  </data>
+  <data name="LtTypeTT" xml:space="preserve">
+    <value>Veeam License Type</value>
+  </data>
+  <data name="NpButton" xml:space="preserve">
+    <value>Show details on missing job types</value>
+  </data>
+  <data name="NpSum1" xml:space="preserve">
+    <value>This table summarizes job types that are either missing from your configuration or could not be analyzed. Please consult with your Veeam Engineer for more information.</value>
+  </data>
+  <data name="NpTitle" xml:space="preserve">
+    <value>Missing Job Types</value>
+  </data>
+  <data name="SSHdr0" xml:space="preserve">
+    <value>Immutability</value>
+  </data>
+  <data name="SSHdrTT0" xml:space="preserve">
+    <value>Is immutability being used anywhere in this server?</value>
+  </data>
+  <data name="SSHdr1" xml:space="preserve">
+    <value>Traffic Encryption</value>
+  </data>
+  <data name="SSHdrTT1" xml:space="preserve">
+    <value>Is traffic encryption enabled?</value>
+  </data>
+  <data name="SSHdr2" xml:space="preserve">
+    <value>Backup File Encryption</value>
+  </data>
+  <data name="SSHdrTT2" xml:space="preserve">
+    <value>Are backup files being encrypted?</value>
+  </data>
+  <data name="SSHdr3" xml:space="preserve">
+    <value>Config Backup Encryption</value>
+  </data>
+  <data name="SSHdrTT3" xml:space="preserve">
+    <value>Is configuration backup encrypted?</value>
+  </data>
+  <data name="SSSum1" xml:space="preserve">
+    <value>The Security Summary Table provides an at-a-glance view of which security features are enabled on one or more components within your B&amp;amp;R Configuration. A value of "false" may be an area for remediation.</value>
+  </data>
+  <data name="SSSubHdr1" xml:space="preserve">
+    <value>Immutability</value>
+  </data>
+  <data name="SSSubHdr2" xml:space="preserve">
+    <value>Traffic Encryption</value>
+  </data>
+  <data name="SSSubHdr3" xml:space="preserve">
+    <value>Backup File Encryption</value>
+  </data>
+  <data name="SSSubHdr4" xml:space="preserve">
+    <value>Config Backup Encryption</value>
+  </data>
+  <data name="SSNote1" xml:space="preserve">
+    <value>For immutable backups, consider deploying a &lt;a href="https://helpcenter.veeam.com/docs/backup/vsphere/hardened_repository.html?ver=110"&gt;Hardened Linux Repository&lt;/a&gt; or choose a &lt;a href="https://helpcenter.veeam.com/docs/backup/vsphere/object_storage_repository.html?ver=110"&gt;Public Cloud or S3-Compatible&lt;/a&gt; option that offers immutability.</value>
+  </data>
+  <data name="SSNote2" xml:space="preserve">
+    <value>&lt;a href="https://helpcenter.veeam.com/docs/backup/vsphere/security_considerations.html?zoom_highlight=traffic+encryption&amp;amp;ver=110#:~:text=Encrypt%20network%20traffic,Network%20Data%20Encryption."&gt;Traffic Encryption&lt;/a&gt; is enabled for all public traffic by default. If this value shows as false, consider re-enabling the setting for Internet or any other potentially sensitive transfers.</value>
+  </data>
+  <data name="SSNote3" xml:space="preserve">
+    <value>Backup File Encryption prevents outsiders from importing your backups and having access to the contents. If backups are stored offsite, consider &lt;a href="https://helpcenter.veeam.com/docs/backup/vsphere/backup_job_advanced_storage_vm.html?ver=110#:~:text=To%20encrypt%20the%20content%20of%20backup%20files%2C%20select%20the%20Enable%20backup%20file%20encryption%20check%20box."&gt;enabling&lt;/a&gt; Backup File Encryption to protect the backups from unwanted access.</value>
+  </data>
+  <data name="SSNote4" xml:space="preserve">
+    <value>The &lt;a href="https://helpcenter.veeam.com/docs/backup/vsphere/vbr_config.html?ver=110"&gt;Configuration Backup&lt;/a&gt; ensures your B&amp;amp;R configuration is backed up and ready to restore in the event of an outage or migration. Having the config backup &lt;a href="https://helpcenter.veeam.com/docs/backup/vsphere/config_backup_encrypted.html?ver=110"&gt;encrypted&lt;/a&gt; allows protection from unwanted access as well as the ability to restore the passwords previously stored inside the configuration. &lt;a style="font-weight:bold"&gt;Consider using Backup Enterprise Manager's &lt;/a&gt; &lt;a href="https://helpcenter.veeam.com/docs/backup/em/em_manage_keys.html?ver=110"&gt;password protection&lt;/a&gt; &lt;a style="font-weight:bold"&gt; to ensure lost passwords are recoverable, and separating Enterprise Manager and VBR in the event of a catastrophic outage. Also consider exporting the keyset to a secure location. Without this protection, lost passwords can cripple the ability to use backup files.&lt;/a&gt;</value>
+  </data>
+  <data name="SSButton" xml:space="preserve">
+    <value>Show details for security summary.</value>
+  </data>
+  <data name="SSTitle" xml:space="preserve">
+    <value>Security Summary</value>
+  </data>
+  <data name="MssTitle" xml:space="preserve">
+    <value>Detected Infrastructure Types &amp; Count</value>
+  </data>
+  <data name="MssHdr1" xml:space="preserve">
+    <value>Name</value>
+  </data>
+  <data name="MssHdr2" xml:space="preserve">
+    <value>Count</value>
+  </data>
+  <data name="MssHdr1TT" xml:space="preserve">
+    <value>Server/Share Name</value>
+  </data>
+  <data name="MssHdr2TT" xml:space="preserve">
+    <value>Total count detected</value>
+  </data>
+  <data name="MssSum1" xml:space="preserve">
+    <value>This table summarizes the different types and counts of infrastructure items that are manually added into the Veeam configuration by the user.</value>
+  </data>
+  <data name="MssButton" xml:space="preserve">
+    <value>Show details for detected infrastructure types &amp; counts</value>
+  </data>
+  <data name="BkpSrvButton" xml:space="preserve">
+    <value>Show backup server summary and notes.</value>
+  </data>
+  <data name="BkpSrvNotes1" xml:space="preserve">
+    <value>• Ensure resource &lt;a href="https://bp.veeam.com/vbr/3_Build_structures/B_Veeam_Components/B_VBR_Server/Backup_Server.html#compute-requirements"&gt;sizing&lt;/a&gt; of the Backup Server are adequate for the amount of concurrently running jobs that it manages. See &lt;a href="#jobConcurrency7"&gt;Concurrency Table&lt;/a&gt; in this report. Note: if combining other roles or components onto the Backup Server host, resource sizing is additive (e.g., Backup Server + SQL + Proxy + Repository, etc.).</value>
+  </data>
+  <data name="BkpSrvNotes2" xml:space="preserve">
+    <value>• Ensure resource &lt;a href="https://bp.veeam.com/vbr/2_Design_Structures/D_Veeam_Components/D_VBR_DB/database.html#sizing"&gt;sizing&lt;/a&gt; of the SQL server are adequate</value>
+  </data>
+  <data name="BkpSrvNotes3" xml:space="preserve">
+    <value>• If using SQL Express, ensure it is not breaching the SQL Express &lt;a href="https://bp.veeam.com/vbr/2_Design_Structures/D_Veeam_Components/D_VBR_DB/database.html#sql-server-edition"&gt;hard-coded limits&lt;/a&gt; (e.g., # of CPUs, cores, memory, and database capacity). A slow, non-responsive, or error-laden backup server can often be a result of reaching these SQL limits.</value>
+  </data>
+  <data name="BkpSrvNotes4" xml:space="preserve">
+    <value>• Assigning data protection tasks to use the Default Proxy or Default Backup Repository components can lead to contention for backup server resources or other unintended traffic. Disabling, removing, and/or reassigning these away from the Backup Server may be desired in larger or distributed deployments.</value>
+  </data>
+  <data name="BkpSrvNotes5" xml:space="preserve">
+    <value>• Fast-performing disk is recommended for the &lt;a href="https://bp.veeam.com/vbr/3_Build_structures/B_Veeam_Components/B_VBR_Server/Backup_Server.html#log-files"&gt;log location&lt;/a&gt;, which by default is "%ProgramData%\\Veeam\\Backup"</value>
+  </data>
+  <data name="BkpSrvNotes6" xml:space="preserve">
+    <value>• DNS is a key component. Ensure &lt;a href="https://bp.veeam.com/vbr/3_Build_structures/B_Other/dns_resolution.html#dns-resolution"&gt;DNS resolution&lt;/a&gt; both from the Backup Server, and for other systems to the Backup Server is functioning correctly. Other components in the environment should be able to resolve the Backup Server and other Veeam infrastructure components (e.g., Proxy, Repository) by FQDN. Both forward and reverse queries should be functional.</value>
+  </data>
+  <data name="BkpSrvSummary1" xml:space="preserve">
+    <value>The Backup Server (aka VBS or VBR Server) is the core component in the backup infrastructure that fills the role of the “configuration and control center”. The backup server performs all types of administrative activities, including: coordinating data protection &amp; recovery tasks, task scheduling &amp; resource allocation, and managing other backup infrastructure components.</value>
+  </data>
+  <data name="BkpSrvSummary2" xml:space="preserve">
+    <value>• Backup Servers run on Microsoft Windows</value>
+  </data>
+  <data name="BkpSrvSummary3" xml:space="preserve">
+    <value>• Stores data about the backup infrastructure, jobs, sessions, and other configuration data in either a local or remote SQL server. In a default installation, SQL Server Express is installed locally.</value>
+  </data>
+  <data name="BkpSrvSummary4" xml:space="preserve">
+    <value>• Has additional components deployed by default: Proxy, Repository</value>
+  </data>
+  <data name="BkpSrvTblCfgEnabled" xml:space="preserve">
+    <value>Config Backup(CB) Enabled</value>
+  </data>
+  <data name="BkpSrvTblCfgEncrypt" xml:space="preserve">
+    <value>CB Encrypted</value>
+  </data>
+  <data name="BkpSrvTblCfgLastRes" xml:space="preserve">
+    <value>CB Last Result</value>
+  </data>
+  <data name="BkpSrvTblCore" xml:space="preserve">
+    <value>Cores</value>
+  </data>
+  <data name="BkpSrvTblHead" xml:space="preserve">
+    <value>Backup Server &amp; Config DB Info</value>
+  </data>
+  <data name="BkpSrvTblName" xml:space="preserve">
+    <value>Name</value>
+  </data>
+  <data name="BkpSrvTblProxyRole" xml:space="preserve">
+    <value>Proxy Role</value>
+  </data>
+  <data name="BkpSrvTblRam" xml:space="preserve">
+    <value>RAM</value>
+  </data>
+  <data name="BkpSrvTblRepoRole" xml:space="preserve">
+    <value>Repo/Gateway Role</value>
+  </data>
+  <data name="BkpSrvTblSqlCores" xml:space="preserve">
+    <value>SQL Cores</value>
+  </data>
+  <data name="BkpSrvTblSqlEdition" xml:space="preserve">
+    <value>SQL Edition</value>
+  </data>
+  <data name="BkpSrvTblSqlLocal" xml:space="preserve">
+    <value>Local SQL</value>
+  </data>
+  <data name="BkpSrvTblSqlName" xml:space="preserve">
+    <value>SQL Server Name</value>
+  </data>
+  <data name="BkpSrvTblSqlRam" xml:space="preserve">
+    <value>SQL RAM</value>
+  </data>
+  <data name="BkpSrvTblSqlVersion" xml:space="preserve">
+    <value>SQL Version</value>
+  </data>
+  <data name="BkpSrvTblTarget" xml:space="preserve">
+    <value>CB Target</value>
+  </data>
+  <data name="BkpSrvTblVersion" xml:space="preserve">
+    <value>Veeam Version</value>
+  </data>
+  <data name="BkpSrvTblWanRole" xml:space="preserve">
+    <value>WAN Acc.</value>
+  </data>
+  <data name="BstCfgEnabledTT" xml:space="preserve">
+    <value>Config Backup enabled/disabled</value>
+  </data>
+  <data name="BstCfgEncTT" xml:space="preserve">
+    <value>Config Backup encryption status</value>
+  </data>
+  <data name="BstCfgLastResTT" xml:space="preserve">
+    <value>Config Backup Last Result</value>
+  </data>
+  <data name="BstCfgTarTT" xml:space="preserve">
+    <value>Config Backup target repository name</value>
+  </data>
+  <data name="BstCpuTT" xml:space="preserve">
+    <value>Detected physical cores on B&amp;R server</value>
+  </data>
+  <data name="BstNameTT" xml:space="preserve">
+    <value>Hostname of the B&amp;R Server</value>
+  </data>
+  <data name="BstPrxTT" xml:space="preserve">
+    <value>Is backup server also a proxy?</value>
+  </data>
+  <data name="BstRamTT" xml:space="preserve">
+    <value>Detected total RAM on B&amp;R server</value>
+  </data>
+  <data name="BstRepTT" xml:space="preserve">
+    <value>Is backup server also a repository or gateway server?</value>
+  </data>
+  <data name="BstSqlCpuTT" xml:space="preserve">
+    <value>SQL Server CPU (0 if shared with B&amp;R Server)</value>
+  </data>
+  <data name="BstSqlEdTT" xml:space="preserve">
+    <value>SQL Server Edition</value>
+  </data>
+  <data name="BstSqlLocTT" xml:space="preserve">
+    <value>Is SQL installed on the same server as B&amp;R?</value>
+  </data>
+  <data name="BstSqlNameTT" xml:space="preserve">
+    <value>SQL Server hostname (if not local)</value>
+  </data>
+  <data name="BstSqlRamTT" xml:space="preserve">
+    <value>SQL Server RAM (0 if shared with B&amp;R server)</value>
+  </data>
+  <data name="BstSqlVerTT" xml:space="preserve">
+    <value>SQL Server Version</value>
+  </data>
+  <data name="BstVerTT" xml:space="preserve">
+    <value>Detected version of B&amp;R software</value>
+  </data>
+  <data name="BstWaTT" xml:space="preserve">
+    <value>Is backup server also a WAN Accelerator?</value>
+  </data>
+  <data name="BackupServerConsoleInstalled" xml:space="preserve">
+    <value>Console Installed</value>
+  </data>
+  <data name="BackupServerRdpEnabled" xml:space="preserve">
+    <value>RDP Enabled</value>
+  </data>
+  <data name="BackupServerDomainJoined" xml:space="preserve">
+    <value>Domain Joined</value>
+  </data>
+  <data name="SbrTitle" xml:space="preserve">
+    <value>SOBR Details</value>
+  </data>
+  <data name="SbrBtn" xml:space="preserve">
+    <value>Show SOBR Details</value>
+  </data>
+  <data name="Sbr0" xml:space="preserve">
+    <value>Name</value>
+  </data>
+  <data name="Sbr0TT" xml:space="preserve">
+    <value>SOBR Name</value>
+  </data>
+  <data name="Sbr1" xml:space="preserve">
+    <value>Extents</value>
+  </data>
+  <data name="Sbr1TT" xml:space="preserve">
+    <value>Extent count</value>
+  </data>
+  <data name="Sbr2" xml:space="preserve">
+    <value>Policy</value>
+  </data>
+  <data name="Sbr2TT" xml:space="preserve">
+    <value>Data Policy</value>
+  </data>
+  <data name="Sbr3" xml:space="preserve">
+    <value>Capacity Tier</value>
+  </data>
+  <data name="Sbr3TT" xml:space="preserve">
+    <value>Is capacaity tier enabled?</value>
+  </data>
+  <data name="Sbr4" xml:space="preserve">
+    <value>Copy</value>
+  </data>
+  <data name="Sbr4TT" xml:space="preserve">
+    <value>Is Copy mode in use?</value>
+  </data>
+  <data name="Sbr5" xml:space="preserve">
+    <value>Move</value>
+  </data>
+  <data name="Sbr5TT" xml:space="preserve">
+    <value>Is Move mode in use?</value>
+  </data>
+  <data name="Sbr6" xml:space="preserve">
+    <value>Archive Tier</value>
+  </data>
+  <data name="Sbr6TT" xml:space="preserve">
+    <value>Is Archive Tier enabled?</value>
+  </data>
+  <data name="Sbr7" xml:space="preserve">
+    <value>Per-Machine</value>
+  </data>
+  <data name="Sbr7TT" xml:space="preserve">
+    <value>Does the SOBR use Per-Machine backup files?</value>
+  </data>
+  <data name="Sbr8" xml:space="preserve">
+    <value>CapTier Type</value>
+  </data>
+  <data name="Sbr8TT" xml:space="preserve">
+    <value>Type of capacity tier in use</value>
+  </data>
+  <data name="Sbr9" xml:space="preserve">
+    <value>CapTier Immutable</value>
+  </data>
+  <data name="Sbr9TT" xml:space="preserve">
+    <value>Does the CapTier use immutability</value>
+  </data>
+  <data name="Sbr10" xml:space="preserve">
+    <value>Immutable Period</value>
+  </data>
+  <data name="Sbr10TT" xml:space="preserve">
+    <value>Time period for immutability</value>
+  </data>
+  <data name="Sbr11" xml:space="preserve">
+    <value>Size Limit Enabled</value>
+  </data>
+  <data name="Sbr11TT" xml:space="preserve">
+    <value>Is capacity tier limited by total capacity?</value>
+  </data>
+  <data name="Sbr12" xml:space="preserve">
+    <value>Size Limit</value>
+  </data>
+  <data name="Sbr12TT" xml:space="preserve">
+    <value>Capacity Tier upload max capacity limit set by user</value>
+  </data>
+  <data name="SbrSum0" xml:space="preserve">
+    <value>o	A scale-out backup repository ("SOBR") is a single logical repository namespace that consists of one or more underlying backup repositories, or "extents", enabling horizontal scaling across multiple tiers. Data lands on the SOBR's local Performance tier(s), which can be extended with object storage tiers for long-term and archive storage: capacity tier and archive tier.</value>
+  </data>
+  <data name="SbrSum1" xml:space="preserve">
+    <value>•	SOBR can include multiple types of underlying extents, including: Window, Linux, NFS, SMB, Deduplication Appliances, and Object Storage</value>
+  </data>
+  <data name="SbrNote0" xml:space="preserve">
+    <value>•	How many extents are in use? A large number of underlying extents can potentially lead to metadata management challenges and performance degradation. Discuss with your Veeam Engineer whether your extent count is satisfactory.</value>
+  </data>
+  <data name="SbrNote1" xml:space="preserve">
+    <value>•	Is the "Performance" &lt;a href="https://helpcenter.veeam.com/docs/backup/vsphere/backup_repository_sobr_placement.html?ver=110"&gt;Placement Policy&lt;/a&gt; in use? If so, consider whether there was a specific reason or use case? "Data Locality" Placement Policy is more often the ideal policy for most deployments and use cases.</value>
+  </data>
+  <data name="SbrNote2" xml:space="preserve">
+    <value>•	If using ReFS or XFS &lt;a href="https://helpcenter.veeam.com/docs/backup/vsphere/backup_repository_block_cloning.html?ver=110"&gt;block cloning&lt;/a&gt;, the "Data Locality" placement policy is required in order to leverage block cloning ("Fast clone") functionality.</value>
+  </data>
+  <data name="SbrNote3" xml:space="preserve">
+    <value>•	Is a &lt;a href="https://helpcenter.veeam.com/docs/backup/hyperv/compatible_repository_account.html?ver=110"&gt; gateway server in use for capacity tier copy/offload&lt;/a&gt;? Ensure that the gateway server has adequate resources to act as the funnel for all backups sent to this object storage repository.</value>
+  </data>
+  <data name="SbrNote4" xml:space="preserve">
+    <value>•	The "&lt;a href="https://helpcenter.veeam.com/docs/backup/hyperv/sobr_add_extents.html?ver=110"&gt;Perform full backup when the required extent is offline&lt;/a&gt;" option (configured in the VBR console) should be considered carefully. It ensures that backups occur when the expected extent is offline, but with the trade off of additional space consumed for additional Active Full(s), and possible loss of storage efficiencies from volume-based block sharing technologies such as ReFS &amp;amp; XFS.</value>
+  </data>
+  <data name="SbrNote5" xml:space="preserve">
+    <value>•	Is "&lt;a href="https://helpcenter.veeam.com/docs/backup/vsphere/per_vm_backup_files.html?ver=110"&gt;Per-Machine&lt;/a&gt;" false? If so, consider whether there was a specific reason or use case for disabling it? Enabling this is the ideal policy for most deployments and use cases. Consult with your Veeam Engineer.</value>
+  </data>
+  <data name="SbrNote6" xml:space="preserve">
+    <value>•	Is Infrequent Access storage tier used in conjunction with Veeam copy mode or Immutability on object storage? There are &lt;a href="https://forums.veeam.com/object-storage-f52/aws-s3-how-to-reduce-the-number-of-api-calls-t68858.html#p382566"&gt;additional API calls associated with these processes&lt;/a&gt; that should be considered when budgeting access costs.</value>
+  </data>
+  <data name="SbrButton" xml:space="preserve">
+    <value>Show SOBR Details</value>
+  </data>
+  <data name="SbrExtTitle" xml:space="preserve">
+    <value>SOBR Extent Details</value>
+  </data>
+  <data name="SbrExtBtn" xml:space="preserve">
+    <value>Show SOBR Extent Details</value>
+  </data>
+  <data name="SbrExt0" xml:space="preserve">
+    <value>Name</value>
+  </data>
+  <data name="SbrExt0TT" xml:space="preserve">
+    <value>Repository Name</value>
+  </data>
+  <data name="SbrExt1" xml:space="preserve">
+    <value>SOBR</value>
+  </data>
+  <data name="SbrExt1TT" xml:space="preserve">
+    <value>SOBR in which the extent is joined.</value>
+  </data>
+  <data name="SbrExt2" xml:space="preserve">
+    <value>Set Tasks</value>
+  </data>
+  <data name="SbrExt2TT" xml:space="preserve">
+    <value>Task limit specified (-1 means unlimited)</value>
+  </data>
+  <data name="SbrExt3" xml:space="preserve">
+    <value>Cores</value>
+  </data>
+  <data name="SbrExt3TT" xml:space="preserve">
+    <value>Physical CPU cores detected on repository server</value>
+  </data>
+  <data name="SbrExt4" xml:space="preserve">
+    <value>RAM</value>
+  </data>
+  <data name="SbrExt4TT" xml:space="preserve">
+    <value>Total RAM detected on respository server</value>
+  </data>
+  <data name="SbrExt5" xml:space="preserve">
+    <value>Auto Gateway</value>
+  </data>
+  <data name="SbrExt5TT" xml:space="preserve">
+    <value>Does the repository use Autmatica Gateway?</value>
+  </data>
+  <data name="SbrExt6" xml:space="preserve">
+    <value>Host</value>
+  </data>
+  <data name="SbrExt6TT" xml:space="preserve">
+    <value>Host/Gateway assigned if not set to use Automatic Gateway</value>
+  </data>
+  <data name="SbrExt7" xml:space="preserve">
+    <value>Path</value>
+  </data>
+  <data name="SbrExt7TT" xml:space="preserve">
+    <value>File path specified for repository</value>
+  </data>
+  <data name="SbrExt8" xml:space="preserve">
+    <value>Free Space (TB)</value>
+  </data>
+  <data name="SbrExt8TT" xml:space="preserve">
+    <value>Detected free space based on last cached scan</value>
+  </data>
+  <data name="SbrExt9" xml:space="preserve">
+    <value>Total Space (TB)</value>
+  </data>
+  <data name="SbrExt9TT" xml:space="preserve">
+    <value>Detected capacity of repository</value>
+  </data>
+  <data name="SbrExt10" xml:space="preserve">
+    <value>Free Space %</value>
+  </data>
+  <data name="SbrExt10TT" xml:space="preserve">
+    <value>Calculated free space percentage (free space / total space)</value>
+  </data>
+  <data name="SbrExt11" xml:space="preserve">
+    <value>DeCompress</value>
+  </data>
+  <data name="SbrExt11TT" xml:space="preserve">
+    <value>Does the repository decompress backup files before final storage?</value>
+  </data>
+  <data name="SbrExt12" xml:space="preserve">
+    <value>Align Blocks</value>
+  </data>
+  <data name="SbrExt12TT" xml:space="preserve">
+    <value>Does the repository align data blocks?</value>
+  </data>
+  <data name="SbrExt13" xml:space="preserve">
+    <value>Rotated Drives</value>
+  </data>
+  <data name="SbrExt13TT" xml:space="preserve">
+    <value>Is the repository backed by rotated drives?</value>
+  </data>
+  <data name="SbrExt14" xml:space="preserve">
+    <value>Use Immutability</value>
+  </data>
+  <data name="SbrExt14TT" xml:space="preserve">
+    <value>Does the repository use Immutability?</value>
+  </data>
+  <data name="SbrExt15" xml:space="preserve">
+    <value>Type</value>
+  </data>
+  <data name="SbrExt15TT" xml:space="preserve">
+    <value>Repository type</value>
+  </data>
+  <data name="SbrExtSum0" xml:space="preserve">
+    <value>•A SOBR is created by taking one, or many individual Veeam repositories (basic, or hardened) and placing them into the SOBR construct. The individual repositories comprising the SOBR are referred to as 'Extents'.</value>
+  </data>
+  <data name="SbrExtSum1" xml:space="preserve">
+    <value>•This section of the Health Check report details repository setting as they are configured in the Veeam Backup and Replication UI.  These settings can affect, or help performance of a backup job.</value>
+  </data>
+  <data name="SbrExtNote0subhdr" xml:space="preserve">
+    <value>Set Tasks:</value>
+  </data>
+  <data name="SbrExtNote1" xml:space="preserve">
+    <value>•This column is the max concurrent task setting allowed to a repository. It specifies the maximum allowed number of concurrent tasks for the backup repository. If this value is exceeded, Veeam Backup &amp;amp; Replication will not start a new task until one of current tasks finishes. For more information, see &lt;a href="https://helpcenter.veeam.com/docs/backup/vsphere/limiting_tasks.html"&gt;Limiting the Number of Concurrent Tasks&lt;/a&gt;.</value>
+  </data>
+  <data name="SbrExtNote2" xml:space="preserve">
+    <value>•To determine the number of tasks/cores needed for a backup repository(s) use the following &lt;a href="https://bp.veeam.com/vbr/2_Design_Structures/D_Veeam_Components/D_backup_repositories/"&gt;formula&lt;/a&gt;:</value>
+  </data>
+  <data name="SbrExtNote3" xml:space="preserve">
+    <value>oThe number of proxy vCPU/cores / 3 = the number of needed repository tasks.</value>
+  </data>
+  <data name="SbrExtNote4" xml:space="preserve">
+    <value>•The setting should align with the next two columns: &lt;a style="font-weight: bold"&gt;Cores&lt;/a&gt;, and &lt;a style="font-weight:bold"&gt;RAM(GB)&lt;/a&gt;</value>
+  </data>
+  <data name="SbrExtNote5subhdr" xml:space="preserve">
+    <value>Cores:</value>
+  </data>
+  <data name="SbrExtNote6" xml:space="preserve">
+    <value>•This number is equal to the number of CPU cores in the repository server.</value>
+  </data>
+  <data name="SbrExtNote7" xml:space="preserve">
+    <value>RAM:</value>
+  </data>
+  <data name="SbrExtNote8" xml:space="preserve">
+    <value>•This number is equal to the amount of RAM in the repository server.</value>
+  </data>
+  <data name="SbrExtNote9" xml:space="preserve">
+    <value>•The amount of RAM should be 4x the number of cores.</value>
+  </data>
+  <data name="SbrExtNote10subhdr" xml:space="preserve">
+    <value>Free Space (TB) and Free Space %</value>
+  </data>
+  <data name="SbrExtNote11" xml:space="preserve">
+    <value>•Best practice is to maintain 20% free space in a repository. This is especially important if the SOBR extents are formatted with XFS/REFS file systems as the block cloning and spaceless synthetic backups need to have all the relevant Veeam backup files on the same disk.  Free space is also important on other file systems as Veeam needs working space to create synthetic full backups.</value>
+  </data>
+  <data name="SbrExtNote12" xml:space="preserve">
+    <value>•In the General Options section of the VBR Console an alarm can be set to alert on repository low free disk space percentage.</value>
+  </data>
+  <data name="SbrExtNote13subhdr" xml:space="preserve">
+    <value>Align Blocks</value>
+  </data>
+  <data name="SbrExtNote14" xml:space="preserve">
+    <value>•For storage systems using a fixed block size, select the &lt;a style="font-weight:bold"&gt;Align backup file data blocks&lt;/a&gt; check box. Veeam Backup &amp;amp; Replication will align VM data saved to a backup file at a 4 KB block boundary.</value>
+  </data>
+  <data name="SbrExtNote15" xml:space="preserve">
+    <value>•This setting also helps speed data transfer and uses less RAM when transferring data to a block-based repository</value>
+  </data>
+  <data name="SbrExtNote16" xml:space="preserve">
+    <value>•For block-based repositories in Veeam Backup and Replication v11 and newer this setting should be set to &lt;a style="font-weight:bold"&gt;true&lt;/a&gt;.</value>
+  </data>
+  <data name="RepoTitle" xml:space="preserve">
+    <value>Standalone Repository Details</value>
+  </data>
+  <data name="RepoBtn" xml:space="preserve">
+    <value>Show Repository Details</value>
+  </data>
+  <data name="Repo0" xml:space="preserve">
+    <value>Job Count</value>
+  </data>
+  <data name="Repo0TT" xml:space="preserve">
+    <value>Total jobs assigned to the repository</value>
+  </data>
+  <data name="Repo1" xml:space="preserve">
+    <value>Per-VM</value>
+  </data>
+  <data name="Repo1TT" xml:space="preserve">
+    <value>Does the repository use Per-VM/Machine backup files?</value>
+  </data>
+  <data name="RepoSum0" xml:space="preserve">
+    <value>•Standalone Repositories includes those not configured as part of a SOBR</value>
+  </data>
+  <data name="RepoSum1" xml:space="preserve">
+    <value>•This section of the Health Check report details repository setting as they are configured in the Veeam Backup and Replication UI. These settings can affect, or help performance of a backup job.</value>
+  </data>
+  <data name="PrxTitle" xml:space="preserve">
+    <value>Proxy Info</value>
+  </data>
+  <data name="PrxBtn" xml:space="preserve">
+    <value>Show Proxy Summary</value>
+  </data>
+  <data name="Prx0" xml:space="preserve">
+    <value>Name</value>
+  </data>
+  <data name="Prx0TT" xml:space="preserve">
+    <value>Hostname of the proxy</value>
+  </data>
+  <data name="Prx1" xml:space="preserve">
+    <value>Tasks</value>
+  </data>
+  <data name="Prx1TT" xml:space="preserve">
+    <value>Task limit assigned in proxy configuration.</value>
+  </data>
+  <data name="Prx2" xml:space="preserve">
+    <value>Cores</value>
+  </data>
+  <data name="Prx2TT" xml:space="preserve">
+    <value>Physical CPU Cores detected (Hyperthreading is not counted)</value>
+  </data>
+  <data name="Prx3" xml:space="preserve">
+    <value>RAM</value>
+  </data>
+  <data name="Prx3TT" xml:space="preserve">
+    <value>Total RAM detected on proxy host</value>
+  </data>
+  <data name="Prx4" xml:space="preserve">
+    <value>Proxy Type</value>
+  </data>
+  <data name="Prx4TT" xml:space="preserve">
+    <value>Vi (Vmware), HV, CDP, File</value>
+  </data>
+  <data name="Prx5" xml:space="preserve">
+    <value>Transport Mode</value>
+  </data>
+  <data name="Prx5TT" xml:space="preserve">
+    <value>Transport mode specified in proxy configuration</value>
+  </data>
+  <data name="Prx6" xml:space="preserve">
+    <value>Failover to NBD</value>
+  </data>
+  <data name="Prx6TT" xml:space="preserve">
+    <value>Is proxy allowed to fail over to NBD (network mode)</value>
+  </data>
+  <data name="Prx7" xml:space="preserve">
+    <value>Chassis</value>
+  </data>
+  <data name="Prx7TT" xml:space="preserve">
+    <value>Is proxy physical or virtual?</value>
+  </data>
+  <data name="Prx8" xml:space="preserve">
+    <value>Cache Path</value>
+  </data>
+  <data name="Prx8TT" xml:space="preserve">
+    <value>Path specified for CDP Proxy cache</value>
+  </data>
+  <data name="Prx9" xml:space="preserve">
+    <value>Cache Size</value>
+  </data>
+  <data name="Prx9TT" xml:space="preserve">
+    <value>Cache size specified for CDP Proxy</value>
+  </data>
+  <data name="Prx10" xml:space="preserve">
+    <value>Host</value>
+  </data>
+  <data name="Prx10TT" xml:space="preserve">
+    <value></value>
+  </data>
+  <data name="Prx11" xml:space="preserve">
+    <value>Is Disabled</value>
+  </data>
+  <data name="Prx11TT" xml:space="preserve">
+    <value>Is proxy disabled by user?</value>
+  </data>
+  <data name="PrxSum0" xml:space="preserve">
+    <value>Veeam proxies are a logical datamover component. There are two types of proxies: (&lt;a href="https://helpcenter.veeam.com/docs/backup/vsphere/backup_proxy.html?zoom_highlight=proxy&amp;amp;ver=110"&gt;Backup Proxies&lt;/a&gt;, &lt;a href="https://helpcenter.veeam.com/docs/backup/vsphere/cdp_proxy.html?ver=110"&gt;CDP Proxies&lt;/a&gt;). Backup Proxies are further subdivided based on function or platform e.g. File Proxies for NAS-based backups, or different source hypervisors.</value>
+  </data>
+  <data name="PrxSum1" xml:space="preserve">
+    <value>•	Backup proxies sit between source data (VMs or File Shares) and the backup repositories. Their role is to process backup jobs and deliver backup traffic to the repositories.</value>
+  </data>
+  <data name="PrxSum2" xml:space="preserve">
+    <value>o	VM Backup proxies can leverage different &lt;a href="https://helpcenter.veeam.com/docs/backup/vsphere/transport_modes.html?ver=110"&gt;transport modes&lt;/a&gt;.</value>
+  </data>
+  <data name="PrxSum3" xml:space="preserve">
+    <value>o	File Backup proxies can backup source data from manual or automated snapshot paths for &lt;a href="https://helpcenter.veeam.com/docs/backup/vsphere/file_share_backup_nfs_share_advanced_settings.html?ver=110"&gt; NFS&lt;/a&gt;, &lt;a href="https://helpcenter.veeam.com/docs/backup/vsphere/file_share_backup_smb_share_advanced_settings.html?ver=110"&gt;SMB&lt;/a&gt;, Enterprise NAS filers. (Note: Managed servers do not leverage File Backup Proxies)</value>
+  </data>
+  <data name="PrxSum4" xml:space="preserve">
+    <value>o	Backup Proxies do not store or cache any data locally.</value>
+  </data>
+  <data name="PrxSum5" xml:space="preserve">
+    <value>•	CDP proxies process CDP policies and operate as data movers between source and target VMware hosts.</value>
+  </data>
+  <data name="PrxSum6" xml:space="preserve">
+    <value>o	CDP proxies require a &lt;a href="https://helpcenter.veeam.com/docs/backup/vsphere/system_requirements.html?ver=110#vmware-cdp-proxy-server"&gt;local cache.&lt;/a&gt;</value>
+  </data>
+  <data name="PrxNote0" xml:space="preserve">
+    <value>•	Review the “host” column and identify the host(s) that support &lt;a href="https://helpcenter.veeam.com/docs/backup/vsphere/limiting_tasks.html?ver=110#task-limitation-for-components-with-several-roles"&gt;multiple&lt;/a&gt; proxy roles:</value>
+  </data>
+  <data name="PrxNote1" xml:space="preserve">
+    <value>o	Roles can be combined providing you allocate &lt;a href="https://helpcenter.veeam.com/docs/backup/vsphere/limiting_tasks.html?ver=110"&gt;enough resources&lt;/a&gt;.</value>
+  </data>
+  <data name="PrxNote2" xml:space="preserve">
+    <value>	If roles are non-concurrent then allocate the max resources calculated across all supported roles.</value>
+  </data>
+  <data name="PrxNote3" xml:space="preserve">
+    <value>	If roles are concurrent then allocate &lt;a href="https://helpcenter.veeam.com/docs/backup/vsphere/limiting_tasks.html?ver=110#task-limitation-for-components-with-several-roles"&gt;enough&lt;/a&gt; resources for all roles</value>
+  </data>
+  <data name="PrxNote4" xml:space="preserve">
+    <value>	Keep in mind that CDP proxies are constantly active and transferring data, therefore it is imperative to “reserve” enough resources for its role and add what is necessary the combined role(s).</value>
+  </data>
+  <data name="PrxNote5" xml:space="preserve">
+    <value>•	CDP proxies:</value>
+  </data>
+  <data name="PrxNote6" xml:space="preserve">
+    <value>o	Ensure &lt;a href="https://helpcenter.veeam.com/docs/backup/vsphere/cdp_proxy.html?zoom_highlight=CDP+cache&amp;amp;ver=110#vmware-cdp-proxy-cache"&gt;cache&lt;/a&gt; is properly sized</value>
+  </data>
+  <data name="PrxNote7" xml:space="preserve">
+    <value>o	Flag CDP proxies with cache located on the C:\\ drive as a potential risk.</value>
+  </data>
+  <data name="PrxNote8" xml:space="preserve">
+    <value>•	Compare assigned &lt;a href="https://helpcenter.veeam.com/docs/backup/vsphere/limiting_tasks.html?ver=110"&gt;tasks&lt;/a&gt; and core count and identify &lt;a href="https://helpcenter.veeam.com/docs/backup/vsphere/limiting_tasks.html?ver=110#task-limitation-for-backup-proxies"&gt;oversubscription&lt;/a&gt;.</value>
+  </data>
+  <data name="PrxNote9" xml:space="preserve">
+    <value>•	Confirm the RAM to core ratio is &lt;a href="https://helpcenter.veeam.com/docs/backup/vsphere/system_requirements.html?ver=110#vmware-cdp-proxy-server"&gt;adequate&lt;/a&gt;.</value>
+  </data>
+  <data name="PrxNote10" xml:space="preserve">
+    <value>•	Ensure there are enough resources for the base OS. (&lt;a href="https://helpcenter.veeam.com/docs/backup/vsphere/system_requirements.html?ver=110#backup-proxy-server"&gt;backup proxy&lt;/a&gt;, &lt;a href="https://helpcenter.veeam.com/docs/backup/vsphere/system_requirements.html?ver=110#vmware-cdp-proxy-server"&gt;CDP proxy&lt;/a&gt;)</value>
+  </data>
+  <data name="PrxNote11" xml:space="preserve">
+    <value>•	Check selected &lt;a href="https://helpcenter.veeam.com/docs/backup/vsphere/transport_modes.html?zoom_highlight=transport+mode&amp;amp;ver=110"&gt;transport mode&lt;/a&gt; and highlight where &lt;a href="https://helpcenter.veeam.com/docs/backup/vsphere/network_mode_failover.html?ver=110"&gt;failover to network mode&lt;/a&gt; is disabled when jobs are failing or where failover to network is enabled for jobs to run slower than expected (NBD traffic could flow through the &lt;a href="https://helpcenter.veeam.com/docs/backup/vsphere/select_backup_network.html?zoom_highlight=preferred+network&amp;amp;ver=110"&gt;wrong network&lt;/a&gt;).</value>
+  </data>
+  <data name="PrxNote12" xml:space="preserve">
+    <value>•	Hyper-V off host proxies should &lt;a href="https://helpcenter.veeam.com/docs/backup/hyperv/offhost_backup_proxy.html?ver=110"&gt;match&lt;/a&gt; protected Hyper-V host versions.</value>
+  </data>
+  <data name="ManSrvTitle" xml:space="preserve">
+    <value>Managed Server Info</value>
+  </data>
+  <data name="ManSrvBtn" xml:space="preserve">
+    <value>Show Managed Server Details</value>
+  </data>
+  <data name="ManSrv0" xml:space="preserve">
+    <value>Name</value>
+  </data>
+  <data name="ManSrv0TT" xml:space="preserve">
+    <value>Host/FileShare name</value>
+  </data>
+  <data name="ManSrv1" xml:space="preserve">
+    <value>Cores</value>
+  </data>
+  <data name="ManSrv1TT" xml:space="preserve">
+    <value>Physical CPU Cores detected (if applicable)</value>
+  </data>
+  <data name="ManSrv2" xml:space="preserve">
+    <value>RAM</value>
+  </data>
+  <data name="ManSrv2TT" xml:space="preserve">
+    <value>Physical RAM detected (if applicable)</value>
+  </data>
+  <data name="ManSrv3" xml:space="preserve">
+    <value>Type</value>
+  </data>
+  <data name="ManSrv3TT" xml:space="preserve">
+    <value>Server or share type</value>
+  </data>
+  <data name="ManSrv4" xml:space="preserve">
+    <value>API Version</value>
+  </data>
+  <data name="ManSrv4TT" xml:space="preserve">
+    <value>VMware API Version</value>
+  </data>
+  <data name="ManSrv5" xml:space="preserve">
+    <value>Protected VMs</value>
+  </data>
+  <data name="ManSrv5TT" xml:space="preserve">
+    <value>Total VMs detected on this host with associated backups</value>
+  </data>
+  <data name="ManSrv6" xml:space="preserve">
+    <value>Not Protected VMs</value>
+  </data>
+  <data name="ManSrv6TT" xml:space="preserve">
+    <value>Total VMs detected on this host without associated backups</value>
+  </data>
+  <data name="ManSrv7" xml:space="preserve">
+    <value>Total VMs</value>
+  </data>
+  <data name="ManSrv7TT" xml:space="preserve">
+    <value>Total VMs detected on this host</value>
+  </data>
+  <data name="ManSrv8" xml:space="preserve">
+    <value>Is Proxy</value>
+  </data>
+  <data name="ManSrv8TT" xml:space="preserve">
+    <value>Is the server serving as a Veeam Proxy?</value>
+  </data>
+  <data name="ManSrv9" xml:space="preserve">
+    <value>Is Repo</value>
+  </data>
+  <data name="ManSrv9TT" xml:space="preserve">
+    <value>Is the server serving as a Veeam Repository?</value>
+  </data>
+  <data name="ManSrv10" xml:space="preserve">
+    <value>Is WAN Acc.</value>
+  </data>
+  <data name="ManSrv10TT" xml:space="preserve">
+    <value>Is the server serving as a Veeam WAN Accelerator?</value>
+  </data>
+  <data name="ManSrv11" xml:space="preserve">
+    <value>Is Unavailable</value>
+  </data>
+  <data name="ManSrv11TT" xml:space="preserve">
+    <value>Is the server unavailable?</value>
+  </data>
+  <data name="ManSrvSum0" xml:space="preserve">
+    <value>This lists all servers &lt;a href="https://helpcenter.veeam.com/docs/backup/vsphere/setup_add_server.html?ver=110"&gt;managed&lt;/a&gt; by Veeam that identify data sources (Hypervisors),  backup infrastructure servers (windows, linux) and Veeam Backup for AWS/Azure/GCP appliances.</value>
+  </data>
+  <data name="ManSrvNote0" xml:space="preserve">
+    <value>•	Review the API version column and ensure they are &lt;a href="https://helpcenter.veeam.com/docs/backup/vsphere/platform_support.html?ver=110"&gt;supported&lt;/a&gt; and meet the minimum &lt;a href="https://helpcenter.veeam.com/docs/backup/vsphere/system_requirements.html?ver=110"&gt;requirements&lt;/a&gt;.</value>
+  </data>
+  <data name="ManSrvNote1" xml:space="preserve">
+    <value>•	Highlight host supporting multiple roles and confirm &lt;a href=""&gt;enough resources&lt;/a&gt; are available to support them.</value>
+  </data>
+  <data name="JobSumTitle" xml:space="preserve">
+    <value>Job Summary</value>
+  </data>
+  <data name="JobSumBtn" xml:space="preserve">
+    <value>Show Job Summary Notes</value>
+  </data>
+  <data name="JobSum0" xml:space="preserve">
+    <value>Type</value>
+  </data>
+  <data name="JobSum0TT" xml:space="preserve">
+    <value>Type of job</value>
+  </data>
+  <data name="JobSum1" xml:space="preserve">
+    <value>Total</value>
+  </data>
+  <data name="JobSum1TT" xml:space="preserve">
+    <value>Total jobs detected of this type</value>
+  </data>
+  <data name="JobSumSum0" xml:space="preserve">
+    <value>Counts for all job types created on the Veeam Backup and replication server, and sum total of all jobs. The number of concurrently running jobs directly impacts the sizing and performance of the VBR server.</value>
+  </data>
+  <data name="JobSumNote0" xml:space="preserve">
+    <value>Be aware that some jobs, such as Backup Copy Jobs, are often configured to run continuously.</value>
+  </data>
+  <data name="JobSumNote1" xml:space="preserve">
+    <value>See &lt;a href="#jobConcurrency7"&gt;Concurrency Table&lt;/a&gt;</value>
+  </data>
+  <data name="JobConTitle" xml:space="preserve">
+    <value>Job Concurrency Table</value>
+  </data>
+  <data name="JobConBtn" xml:space="preserve">
+    <value>Show Concurrency Table</value>
+  </data>
+  <data name="JobCon0" xml:space="preserve">
+    <value>Hour</value>
+  </data>
+  <data name="JobCon0TT" xml:space="preserve">
+    <value>Hour of the day (24 hour format)</value>
+  </data>
+  <data name="JobCon1" xml:space="preserve">
+    <value>Sunday</value>
+  </data>
+  <data name="JobCon1TT" xml:space="preserve">
+    <value></value>
+  </data>
+  <data name="JobCon2" xml:space="preserve">
+    <value>Monday</value>
+  </data>
+  <data name="JobCon2TT" xml:space="preserve">
+    <value></value>
+  </data>
+  <data name="JobCon3" xml:space="preserve">
+    <value>Tuesday</value>
+  </data>
+  <data name="JobCon3TT" xml:space="preserve">
+    <value></value>
+  </data>
+  <data name="JobCon4" xml:space="preserve">
+    <value>Wednesday</value>
+  </data>
+  <data name="JobCon4TT" xml:space="preserve">
+    <value></value>
+  </data>
+  <data name="JobCon5" xml:space="preserve">
+    <value>Thursday</value>
+  </data>
+  <data name="JobCon5TT" xml:space="preserve">
+    <value></value>
+  </data>
+  <data name="JobCon6" xml:space="preserve">
+    <value>Friday</value>
+  </data>
+  <data name="JobCon6TT" xml:space="preserve">
+    <value></value>
+  </data>
+  <data name="JobCon7" xml:space="preserve">
+    <value>Saturday</value>
+  </data>
+  <data name="JobCon7TT" xml:space="preserve">
+    <value></value>
+  </data>
+  <data name="JobConSum0" xml:space="preserve">
+    <value>The concurrency table is meant to serve as a heat map. Each hour of each day is represented. The number in each cell represents the highest calculated number of total concurrent running jobs within the specific hour. This data can be used to ensure more accurate VBR server sizing.</value>
+  </data>
+  <data name="JobConNote0subhdr" xml:space="preserve">
+    <value>Compute</value>
+  </data>
+  <data name="JobConNote1" xml:space="preserve">
+    <value>Recommended Veeam backup server configuration is 1 CPU core (physical or virtual) and 4 GB RAM per 10 concurrently running jobs. Concurrent jobs include any running backup or replication jobs as well as any job with a continuous schedule such as backup copy jobs and tape jobs.</value>
+  </data>
+  <data name="JobConNote2" xml:space="preserve">
+    <value>&lt;a href="https://bp.veeam.com/vbr/3_Build_structures/B_Veeam_Components/B_VBR_Server/Backup_Server.html" target="_blank"&gt;The minimum recommendation is 2 CPU cores and 8 GB RAM.&lt;/a&gt;</value>
+  </data>
+  <data name="JobConNote3" xml:space="preserve">
+    <value>If the required resources exceed the current VBR CPU and RAM, job scheduling should be analyzed to minimize the number of concurrent jobs. If job scheduling changes are not possible, multiple VBR servers should be deployed, and jobs migrated to the new servers.</value>
+  </data>
+  <data name="JobConNote4subhdr" xml:space="preserve">
+    <value>Veeam Microsoft SQL Database</value>
+  </data>
+  <data name="JobConNote5bold" xml:space="preserve">
+    <value>Please follow these guidelines:</value>
+  </data>
+  <data name="JobConNoteSqlTableRow1Col1" xml:space="preserve">
+    <value>Number of concurrently running jobs</value>
+  </data>
+  <data name="JobConNoteSqlTableRow1Col2" xml:space="preserve">
+    <value>CPU</value>
+  </data>
+  <data name="JobConNoteSqlTableRow1Col3" xml:space="preserve">
+    <value>RAM</value>
+  </data>
+  <data name="JobConNoteSqlTableRow2Col1" xml:space="preserve">
+    <value>Up to 25</value>
+  </data>
+  <data name="JobConNoteSqlTableRow2Col2" xml:space="preserve">
+    <value>2 CPU</value>
+  </data>
+  <data name="JobConNoteSqlTableRow2Col3" xml:space="preserve">
+    <value>4 GB</value>
+  </data>
+  <data name="JobConNoteSqlTableRowRow3Col1" xml:space="preserve">
+    <value>Up to 50</value>
+  </data>
+  <data name="JobConNoteSqlTableRow3Col2" xml:space="preserve">
+    <value>4 CPU</value>
+  </data>
+  <data name="JobConNoteSqlTableRow3Col3" xml:space="preserve">
+    <value>8 GB</value>
+  </data>
+  <data name="JobConNoteSqlTableRow4Col1" xml:space="preserve">
+    <value>Up to 100</value>
+  </data>
+  <data name="JobConNoteSqlTableRow4Col2" xml:space="preserve">
+    <value>8 CPU</value>
+  </data>
+  <data name="JobConNoteSqlTableRow4Col3" xml:space="preserve">
+    <value>16 GB</value>
+  </data>
+  <data name="JobConNoteSqlTableNote0" xml:space="preserve">
+    <value>It is recommended to install SQL Standard or Enterprise Edition if any of the following apply:</value>
+  </data>
+  <data name="JobConNoteSqlTableNote1" xml:space="preserve">
+    <value>• When protecting more than 500 servers. The max database size allowed by Express Edition is usually sufficient, so do not consider this a constraint. Veeam Backup &amp;amp; Replication console and job processing may however slow down as a result of CPU and RAM constraints on the SQL Server Express instance.</value>
+  </data>
+  <data name="JobConNoteSqlTableNote2" xml:space="preserve">
+    <value>• When using Files to Tape jobs extensively, the database may grow significantly, and the 10 GB limitation may be exceeded quickly.</value>
+  </data>
+  <data name="JobConNoteSqlTableNote3" xml:space="preserve">
+    <value>• When unable to configure an external staging server for use with Veeam Explorer for Microsoft SQL Server or Veeam Explorer for Microsoft SharePoint. When working with databases larger than 10 GB, SQL Server Express cannot mount the databases.</value>
+  </data>
+  <data name="JobConNoteSqlTableNote4" xml:space="preserve">
+    <value>• When databases are using advanced features of Microsoft SQL Server. Such as encryption or table partitioning, the licensing level of the staging server (local or remote) must match the level of the original instance.</value>
+  </data>
+  <data name="TaskConTitle" xml:space="preserve">
+    <value>VM Task Concurrency</value>
+  </data>
+  <data name="TaskConBtn" xml:space="preserve">
+    <value>Show Concurrency Table</value>
+  </data>
+  <data name="TaskCon0" xml:space="preserve">
+    <value>Hour</value>
+  </data>
+  <data name="TaskCon0TT" xml:space="preserve">
+    <value>Hour of the day (24-hour format)</value>
+  </data>
+  <data name="TaskCon1" xml:space="preserve">
+    <value>Sunday</value>
+  </data>
+  <data name="TaskCon1TT" xml:space="preserve">
+    <value></value>
+  </data>
+  <data name="TaskCon2" xml:space="preserve">
+    <value>Monday</value>
+  </data>
+  <data name="TaskCon2TT" xml:space="preserve">
+    <value></value>
+  </data>
+  <data name="TaskCon3" xml:space="preserve">
+    <value>Tuesday</value>
+  </data>
+  <data name="TaskCon3TT" xml:space="preserve">
+    <value></value>
+  </data>
+  <data name="TaskCon4" xml:space="preserve">
+    <value>Wednesday</value>
+  </data>
+  <data name="TaskCon4TT" xml:space="preserve">
+    <value></value>
+  </data>
+  <data name="TaskCon5" xml:space="preserve">
+    <value>Thursday</value>
+  </data>
+  <data name="TaskCon5TT" xml:space="preserve">
+    <value></value>
+  </data>
+  <data name="TaskCon6" xml:space="preserve">
+    <value>Friday</value>
+  </data>
+  <data name="TaskCon6TT" xml:space="preserve">
+    <value></value>
+  </data>
+  <data name="TaskCon7" xml:space="preserve">
+    <value>Saturday</value>
+  </data>
+  <data name="TaskCon7TT" xml:space="preserve">
+    <value></value>
+  </data>
+  <data name="TaskConSum0" xml:space="preserve">
+    <value>The concurrency table is meant to serve as a heat map. Each hour of each day is represented. The number in each cell represents the highest calculated number of concurrent running Tasks within the specific hour. This data can be used to aid in job scheduling and proxy/repository task sizing.</value>
+  </data>
+  <data name="TaskConNote0" xml:space="preserve">
+    <value>Use this chart to check maximum concurrency. Each task here should be backed by 1 corresponding Proxy Task and 1/3 corresponding Repository Task.</value>
+  </data>
+  <data name="RegTitle" xml:space="preserve">
+    <value>Non-Default Registry Keys</value>
+  </data>
+  <data name="RegBtn" xml:space="preserve">
+    <value>Show RegKey Details</value>
+  </data>
+  <data name="Reg0" xml:space="preserve">
+    <value>Key</value>
+  </data>
+  <data name="Reg0TT" xml:space="preserve">
+    <value></value>
+  </data>
+  <data name="Reg1" xml:space="preserve">
+    <value>Value</value>
+  </data>
+  <data name="Reg1TT" xml:space="preserve">
+    <value></value>
+  </data>
+  <data name="RegSum0" xml:space="preserve">
+    <value>This table details any Registry Keys that are different from the default keys set during a basic install of Veeam Backup &amp;amp; Replication. Specifically in &lt;a class="bld"&gt;HKLM\\SOFTWARE\\Veeam\\Veeam Backup and Replication&lt;/a&gt;</value>
+  </data>
+  <data name="RegNote0" xml:space="preserve">
+    <value>Because some registry keys are tied to bug fixes and/or other tweaks recommended for various reasons, it's best advised to consult your past support case emails and notes or contact your Veeam Engineer for any questions regarding keys shown here.</value>
+  </data>
+  <data name="RegNote1" xml:space="preserve">
+    <value>Some keys, such as LoggingLevel and other "Log" related keys are perfectly fine to adjust, if required, when following the corresponding &lt;a href="https://www.veeam.com/kb1825"&gt;KB Article.&lt;/a&gt;</value>
+  </data>
+  <data name="JobInfoTitle" xml:space="preserve">
+    <value>Job Info</value>
+  </data>
+  <data name="JobInfoBtn" xml:space="preserve">
+    <value>Show Job Info Details</value>
+  </data>
+  <data name="JobInfo0" xml:space="preserve">
+    <value>Name</value>
+  </data>
+  <data name="JobInfo0TT" xml:space="preserve">
+    <value>Job Name as shown in console</value>
+  </data>
+  <data name="JobInfo1" xml:space="preserve">
+    <value>Repository</value>
+  </data>
+  <data name="JobInfo1TT" xml:space="preserve">
+    <value>Repository in which the job is targeting</value>
+  </data>
+  <data name="JobInfo2" xml:space="preserve">
+    <value>Source Size</value>
+  </data>
+  <data name="JobInfo2TT" xml:space="preserve">
+    <value>Actual size of source data for job</value>
+  </data>
+  <data name="JobInfo3" xml:space="preserve">
+    <value>Restore Points</value>
+  </data>
+  <data name="JobInfo3TT" xml:space="preserve">
+    <value>Desired restore points as set in job config</value>
+  </data>
+  <data name="JobInfo4" xml:space="preserve">
+    <value>Encrypted</value>
+  </data>
+  <data name="JobInfo4TT" xml:space="preserve">
+    <value>Does the job encrypt the backups?</value>
+  </data>
+  <data name="JobInfo5" xml:space="preserve">
+    <value>Job Type</value>
+  </data>
+  <data name="JobInfo5TT" xml:space="preserve">
+    <value>Type of job</value>
+  </data>
+  <data name="JobInfo6" xml:space="preserve">
+    <value>Algorithm</value>
+  </data>
+  <data name="JobInfo6TT" xml:space="preserve">
+    <value></value>
+  </data>
+  <data name="JobInfo7" xml:space="preserve">
+    <value>Schedule Enabled Time</value>
+  </data>
+  <data name="JobInfo7TT" xml:space="preserve">
+    <value></value>
+  </data>
+  <data name="JobInfo8" xml:space="preserve">
+    <value>Full Backup Days</value>
+  </data>
+  <data name="JobInfo8TT" xml:space="preserve">
+    <value></value>
+  </data>
+  <data name="JobInfo9" xml:space="preserve">
+    <value>Full Backup Schedule</value>
+  </data>
+  <data name="JobInfo9TT" xml:space="preserve">
+    <value></value>
+  </data>
+  <data name="JobInfo10" xml:space="preserve">
+    <value>Schedule Options</value>
+  </data>
+  <data name="JobInfo10TT" xml:space="preserve">
+    <value></value>
+  </data>
+  <data name="JobInfo11" xml:space="preserve">
+    <value>Transform Full to Synth</value>
+  </data>
+  <data name="JobInfo11TT" xml:space="preserve">
+    <value></value>
+  </data>
+  <data name="JobInfo12" xml:space="preserve">
+    <value>Transform Inc To Synth</value>
+  </data>
+  <data name="JobInfo12TT" xml:space="preserve">
+    <value></value>
+  </data>
+  <data name="JobInfo13" xml:space="preserve">
+    <value>Transform Days</value>
+  </data>
+  <data name="JobInfo13TT" xml:space="preserve">
+    <value></value>
+  </data>
+  <data name="JobInfoSum0" xml:space="preserve">
+    <value>•	Jobs define source data, destination, schedule, and advanced settings on handling that source data. There are multiple job types within Veeam Backup &amp;amp; Replication, including Backup, Backup Copy, CDP Policy, NAS Backup, and more. Not all job types will have data in every column.</value>
+  </data>
+  <data name="JobInfoNote0" xml:space="preserve">
+    <value>•	Verify that the Restore Points and Schedule Options listed for the Job match with the source application’s required RPO. See &lt;a href="https://helpcenter.veeam.com/docs/backup/vsphere/backup_job_schedule_vm.html?ver=110"&gt;Job Scheduling&lt;/a&gt;.</value>
+  </data>
+  <data name="JssTitle" xml:space="preserve">
+    <value>Job Session Summary</value>
+  </data>
+  <data name="JssBtn" xml:space="preserve">
+    <value>Show Job Details</value>
+  </data>
+  <data name="Jss0" xml:space="preserve">
+    <value>Job Name</value>
+  </data>
+  <data name="Jss0TT" xml:space="preserve">
+    <value>Name of job as seen in B&amp;R Console</value>
+  </data>
+  <data name="Jss1" xml:space="preserve">
+    <value>Items</value>
+  </data>
+  <data name="Jss1TT" xml:space="preserve">
+    <value>Number of items the job contains</value>
+  </data>
+  <data name="Jss2" xml:space="preserve">
+    <value>Min Time (min)</value>
+  </data>
+  <data name="Jss2TT" xml:space="preserve">
+    <value>Shorted detected job run</value>
+  </data>
+  <data name="Jss3" xml:space="preserve">
+    <value>Max Time (min)</value>
+  </data>
+  <data name="Jss3TT" xml:space="preserve">
+    <value>Longest detected job run</value>
+  </data>
+  <data name="Jss4" xml:space="preserve">
+    <value>Avg Time (min)</value>
+  </data>
+  <data name="Jss4TT" xml:space="preserve">
+    <value>Average job duration</value>
+  </data>
+  <data name="Jss5" xml:space="preserve">
+    <value>Total Sessions</value>
+  </data>
+  <data name="Jss5TT" xml:space="preserve">
+    <value>Total job sessions detected</value>
+  </data>
+  <data name="Jss6" xml:space="preserve">
+    <value>Success Rate %</value>
+  </data>
+  <data name="Jss6TT" xml:space="preserve">
+    <value>Success rate over detected sessions ( (Total Sessions - Fails + Retries) / Total Sessions * 100 )</value>
+  </data>
+  <data name="Jss7" xml:space="preserve">
+    <value>Avg Backup Size (TB)</value>
+  </data>
+  <data name="Jss7TT" xml:space="preserve">
+    <value>Average size of backup file in TB</value>
+  </data>
+  <data name="Jss8" xml:space="preserve">
+    <value>Max Backup Size (TB)</value>
+  </data>
+  <data name="Jss8TT" xml:space="preserve">
+    <value>Largest backup file in TB</value>
+  </data>
+  <data name="Jss9" xml:space="preserve">
+    <value>Avg Data Size (TB)</value>
+  </data>
+  <data name="Jss9TT" xml:space="preserve">
+    <value>Average source data size in TB</value>
+  </data>
+  <data name="Jss10" xml:space="preserve">
+    <value>Max Data Size (TB)</value>
+  </data>
+  <data name="Jss10TT" xml:space="preserve">
+    <value>Largest source data size in TB</value>
+  </data>
+  <data name="Jss11" xml:space="preserve">
+    <value>Avg Change Rate %</value>
+  </data>
+  <data name="Jss11TT" xml:space="preserve">
+    <value>Average calculated change rate for the job</value>
+  </data>
+  <data name="Jss12" xml:space="preserve">
+    <value>Wait for Res. Count</value>
+  </data>
+  <data name="Jss12TT" xml:space="preserve">
+    <value>Total number of times the job was forced to wait for available resources</value>
+  </data>
+  <data name="Jss13" xml:space="preserve">
+    <value>Max Wait (dd.hh:mm:ss)</value>
+  </data>
+  <data name="Jss13TT" xml:space="preserve">
+    <value>Longest detected wait for resources</value>
+  </data>
+  <data name="Jss14" xml:space="preserve">
+    <value>Avg Wait (dd.hh:mm:ss)</value>
+  </data>
+  <data name="Jss14TT" xml:space="preserve">
+    <value>Average duration job is waiting for available resources</value>
+  </data>
+  <data name="Jss15" xml:space="preserve">
+    <value>Job Type</value>
+  </data>
+  <data name="Jss15TT" xml:space="preserve">
+    <value>Job Type</value>
+  </data>
+  <data name="JssSum0" xml:space="preserve">
+    <value>This table is meant to detail the recent history of individual jobs over the last 7 or 30 days depending on specified period during collection.</value>
+  </data>
+  <data name="JssNote0subhdr" xml:space="preserve">
+    <value>Waiting for Resources / job session length issues:</value>
+  </data>
+  <data name="JssNote1" xml:space="preserve">
+    <value>•	Scheduling jobs to start at different time slots will help to distribute resources and prevent the bottleneck that is a job waiting on available resources. (Ex. Instead of scheduling your jobs to all start at 8:00PM, start one job at 8:00, another at 8:30, and another at 9:00.)</value>
+  </data>
+  <data name="JssNote2" xml:space="preserve">
+    <value>•	If resources allow, increase the number of concurrent tasks allowed on your proxies.&lt;a href="https://helpcenter.veeam.com/docs/backup/vsphere/vmware_proxy_server.html?ver=110#:~:text=In%20the%20Max%20concurrent%20tasks%20field%2C%20specify%20the%20number%20of%20tasks%20that%20the%20backup%20proxy%20must%20handle%20in%20parallel.%20If%20this%20value%20is%20exceeded%2C%20the%20backup%20proxy%20will%20not%20start%20a%20new%20task%20until%20one%20of%20current%20tasks%20finishes."&gt;See How to set max concurrent tasks.&lt;/a&gt;</value>
+  </data>
+  <data name="JssNote3" xml:space="preserve">
+    <value>o	If your backup proxy does not have adequate resources to increase tasks, and it is a virtual machine, you should consider increasing the amount of CPU and RAM available to the proxy.</value>
+  </data>
+  <data name="JssNote4" xml:space="preserve">
+    <value>o	If adding resources to existing proxies is not an options, consider deploying additional backup proxies from within “Backup Infrastructure-&gt;Backup Proxies”</value>
+  </data>
+  <data name="JssNote5" xml:space="preserve">
+    <value>•	Make sure that your backup job or replication job is selecting the correct proxies by viewing the job session statistics in the VBR Console.</value>
+  </data>
+  <data name="JssNote6" xml:space="preserve">
+    <value>•	Investigate backup job performance. If specific jobs are taking longer to process than normal, check for warnings, compare the bottleneck statistics to previous jobs sessions, and try to isolate the problem to a specific proxy, repository, host, or datastore.</value>
+  </data>
+  <data name="JssNote7" xml:space="preserve">
+    <value>o	Move larger VMs / servers to their own job and schedule to ensure conflict does not occur with faster completing job's backup window (schedule these jobs before all other jobs or after all other jobs, for example)</value>
+  </data>
+  <data name="JssNote8" xml:space="preserve">
+    <value>•	Separate NAS Proxies, Cache Repos, and Repositories from VM proxies and VM and Agent Repositories</value>
+  </data>
+  <data name="JssNote9" xml:space="preserve">
+    <value>•	&lt;a href="https://helpcenter.veeam.com/docs/backup/vsphere/gateway_server.html?ver=110#gateway-servers-deployment"&gt;Use Static Gateways and Mount Servers&lt;/a&gt;if possible to offload resources consumption required for synthetic operations, SOBR offload processing, backup copy jobs, and other tasks.</value>
+  </data>
+  <data name="JssNote10" xml:space="preserve">
+    <value>•	If appropriate,&lt;a href="https://www.veeam.com/kb2660"&gt;review Architecture Guidelines for deduplicating storage systems.&lt;/a&gt;</value>
+  </data>
+  <data name="Vb365Banner" xml:space="preserve">
+    <value>VB365 Health Check Report</value>
+  </data>
+  <data name="v365NavTitle0" xml:space="preserve">
+    <value>Global Configuration</value>
+  </data>
+  <data name="v365NavValue0" xml:space="preserve">
+    <value>Summary of license and global settings.</value>
+  </data>
+  <data name="v365NavTitle1" xml:space="preserve">
+    <value>Unprotected Users</value>
+  </data>
+  <data name="v365NavValue1" xml:space="preserve">
+    <value>Summary of protected and unprotected users.</value>
+  </data>
+  <data name="v365NavTitle2" xml:space="preserve">
+    <value>Backup Server</value>
+  </data>
+  <data name="v365NavValue2" xml:space="preserve">
+    <value>Details on the VB365 Server.</value>
+  </data>
+  <data name="v365NavTitle3" xml:space="preserve">
+    <value>Backup Server Disks</value>
+  </data>
+  <data name="v365NavValue3" xml:space="preserve">
+    <value>Details on the disks attached to the VB365 Server.</value>
+  </data>
+  <data name="v365NavTitle4" xml:space="preserve">
+    <value>Proxies</value>
+  </data>
+  <data name="v365NavValue4" xml:space="preserve">
+    <value>Details on proxies added to the current VB365 Server.</value>
+  </data>
+  <data name="v365NavTitle5" xml:space="preserve">
+    <value>Repositories</value>
+  </data>
+  <data name="v365NavValue5" xml:space="preserve">
+    <value>Details on reposiories added to the current VB365.</value>
+  </data>
+  <data name="v365NavTitle6" xml:space="preserve">
+    <value>Object Storage</value>
+  </data>
+  <data name="v365NavValue6" xml:space="preserve">
+    <value>Details on object storage used.</value>
+  </data>
+  <data name="v365NavTitle7" xml:space="preserve">
+    <value>Security Info</value>
+  </data>
+  <data name="v365NavValue7" xml:space="preserve">
+    <value>Summary of security settings relevant to VB365.</value>
+  </data>
+  <data name="v365NavTitle8" xml:space="preserve">
+    <value>RBAC Roles Info</value>
+  </data>
+  <data name="v365NavValue8" xml:space="preserve">
+    <value>Summary of Role Based Access Control settings.</value>
+  </data>
+  <data name="v365NavTitle9" xml:space="preserve">
+    <value>Permissions Check</value>
+  </data>
+  <data name="v365NavValue9" xml:space="preserve">
+    <value>Summary of permissions granted &amp; used.</value>
+  </data>
+  <data name="v365NavTitle10" xml:space="preserve">
+    <value>Organizations</value>
+  </data>
+  <data name="v365NavValue10" xml:space="preserve">
+    <value>Details on organizations protected by VB365.</value>
+  </data>
+  <data name="v365NavTitle11" xml:space="preserve">
+    <value>Backup Jobs</value>
+  </data>
+  <data name="v365NavValue11" xml:space="preserve">
+    <value>Details on jobs configued on this VB365 Server.</value>
+  </data>
+  <data name="v365NavTitle12" xml:space="preserve">
+    <value>Job Statistics</value>
+  </data>
+  <data name="v365NavValue12" xml:space="preserve">
+    <value>Analysis of recent job runs.</value>
+  </data>
+  <data name="v365NavTitle13" xml:space="preserve">
+    <value>Job Sessions</value>
+  </data>
+  <data name="v365NavValue13" xml:space="preserve">
+    <value>Details on recent job runs.</value>
+  </data>
+  <data name="v365NavTitle14" xml:space="preserve">
+    <value>Processing Stats</value>
+  </data>
+  <data name="v365NavValue14" xml:space="preserve">
+    <value>Statistic breakdown of processed objects.</value>
+  </data>
+  <data name="helpMenu" xml:space="preserve">
+    <value>"HELP MENU\n\nrun - executes the program"</value>
+  </data>
+</root>

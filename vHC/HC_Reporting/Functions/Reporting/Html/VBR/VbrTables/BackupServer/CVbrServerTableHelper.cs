@@ -42,6 +42,14 @@ namespace VeeamHealthCheck.Reporting.Html.VBR
             return Tuple.Create(header, data);
         }
 
+        public Tuple<string, string> OSVersion()
+        {
+            string header = this.form.TableHeader("OS Version", "Operating System version of the VBR server");
+            string data = this.form.TableData(this.b.OSVersion ?? string.Empty, string.Empty);
+
+            return Tuple.Create(header, data);
+        }
+
         public Tuple<string, string> Cores()
         {
             string header = this.form.TableHeader(VbrLocalizationHelper.BkpSrvTblCore, VbrLocalizationHelper.BstCpuTT);

@@ -298,12 +298,9 @@ namespace VeeamHealthCheck.Functions.Reporting.DataTypes
                     }
                     else
                     {
-                        eInfo.Ram = 0;
-                        eInfo.Cores = 0;
-                        eInfo.Povisioning = "NA";
-
-                        eInfo.TotalSpace = 0;
-                        eInfo.FreeSPace = 0;
+                        // Skip SanSnapshotOnly repos - they're metadata placeholders, not real storage targets
+                        // See GitHub Issue #29: https://github.com/VeeamHub/veeam-healthcheck/issues/29
+                        continue;
                     }
 
                     eInfoList.Add(eInfo);

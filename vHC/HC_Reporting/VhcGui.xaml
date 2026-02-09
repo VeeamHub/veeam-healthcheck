@@ -9,7 +9,7 @@ MIT License
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         mc:Ignorable="d"
         Title="" 
-        MinHeight="700" MinWidth="950"
+        MinHeight="500" MinWidth="900"
         Height="Auto" Width="950"
         SizeToContent="Height"
         WindowStartupLocation="CenterScreen"
@@ -98,7 +98,8 @@ MIT License
             <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
 
-        <Grid Grid.Row="0" Margin="25,25,25,15">
+        <ScrollViewer Grid.Row="0" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+        <Grid Margin="25,25,25,15">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="380"/>
                 <ColumnDefinition Width="20"/>
@@ -191,6 +192,11 @@ MIT License
                                 <ComboBoxItem Content="90 Days"/>
                             </ComboBox>
                         </StackPanel>
+
+                        <CheckBox x:Name="RescanBox" Style="{StaticResource ModernCheckBox}"                                
+                                Checked="RescanBox_Checked" Unchecked="RescanBox_Unchecked"
+                                Margin="0,8,0,0"
+                                ToolTip="Rescan for Hardware change"/>
 
                         <Separator Margin="0,12,0,12" Background="#EEEEEE"/>
 
@@ -298,6 +304,7 @@ MIT License
                         ToolTip="Create a report from previously collected data"/>
             </StackPanel>
         </Grid>
+        </ScrollViewer>
 
         <!-- Modern Progress Bar Section -->
         <Border Grid.Row="1" Background="White" BorderBrush="#DDDDDD" BorderThickness="0,1,0,0">

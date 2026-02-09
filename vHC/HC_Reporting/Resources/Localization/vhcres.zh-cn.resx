@@ -1,0 +1,1677 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <data name="GuiAcceptButton" xml:space="preserve">
+    <value>接受条款</value>
+  </data>
+  <data name="GuiAcceptText" xml:space="preserve">
+    <value>该工具作为免费实用程序提供，用于评估您的 Veeam 配置。它是“自担风险”提供的。 \n\n该工具将使用 PowerShell 和 SQL 来收集数据，然后将文件和文件夹输出到本地磁盘。\n\n这些文件可能会被匿名化以隐藏敏感数据。接受条款意味着用户同意以全部能力执行此程序。</value>
+  </data>
+  <data name="GuiImportButton" xml:space="preserve">
+    <value>导入</value>
+  </data>
+  <data name="GuiImportModeOnly" xml:space="preserve">
+    <value>导入模式</value>
+  </data>
+  <data name="GuiInstCaveat1" xml:space="preserve">
+    <value>* 如果选择删除敏感数据类型，则只会清除 HTML 报告。看：</value>
+  </data>
+  <data name="GuiInstCaveat2" xml:space="preserve">
+    <value>** 注意，在较大的环境中，此工具最多可能需要 3 小时才能完成。</value>
+  </data>
+  <data name="GuiInstHeader" xml:space="preserve">
+    <value>指示：</value>
+  </data>
+  <data name="GuiInstLine1" xml:space="preserve">
+    <value>1. 接受条款</value>
+  </data>
+  <data name="GuiInstLine2" xml:space="preserve">
+    <value>2. 点击运行</value>
+  </data>
+  <data name="GuiInstLine3" xml:space="preserve">
+    <value>3. 完成后，Windows 资源管理器将打开到输出目录。 （如果启用，将显示 HTML 报告）</value>
+  </data>
+  <data name="GuiInstLine4" xml:space="preserve">
+    <value>4. 根据需要查看报告</value>
+  </data>
+  <data name="GuiInstLine5" xml:space="preserve">
+    <value>5. 从 C:\\temp\\vHC* 或指定的任何目录捕获输出。</value>
+  </data>
+  <data name="GuiInstLine6" xml:space="preserve">
+    <value>6. 通知您的 Veeam SE 和/或将结果发送给他们以供审核</value>
+  </data>
+  <data name="GuiOptionsHeader" xml:space="preserve">
+    <value>选项：</value>
+  </data>
+  <data name="GuiOutPath" xml:space="preserve">
+    <value>输出路径</value>
+  </data>
+  <data name="GuiRunButton" xml:space="preserve">
+    <value>运行</value>
+  </data>
+  <data name="GuiSensData" xml:space="preserve">
+    <value>从报告中删除敏感数据类型</value>
+  </data>
+  <data name="GuiShowFiles" xml:space="preserve">
+    <value>完成时显示文件</value>
+  </data>
+  <data name="GuiShowHtml" xml:space="preserve">
+    <value>完成后显示 HTML 报告</value>
+  </data>
+  <data name="GuiTitle" xml:space="preserve">
+    <value>Veeam 健康检查</value>
+  </data>
+  <data name="GuiTitleBnR" xml:space="preserve">
+    <value>B&amp;R</value>
+  </data>
+  <data name="GuiTitleVB365" xml:space="preserve">
+    <value>VB365</value>
+  </data>
+  <data name="GuiRescanHosts" xml:space="preserve">
+    <value>重新扫描主机</value>
+  </data>
+  <data name="PlHdr0" xml:space="preserve">
+    <value>Vi 总计</value>
+  </data>
+  <data name="PlHdrTT0" xml:space="preserve">
+    <value>找到的 VMware VM 总数。</value>
+  </data>
+  <data name="PlHdr1" xml:space="preserve">
+    <value>Vi 受保护</value>
+  </data>
+  <data name="PlHdrTT1" xml:space="preserve">
+    <value>通过备份找到的 VMware VM 总数</value>
+  </data>
+  <data name="PlHdr2" xml:space="preserve">
+    <value>Vi 不保护</value>
+  </data>
+  <data name="PlHdrTT2" xml:space="preserve">
+    <value>找到的没有备份的 VMware 虚拟机总数</value>
+  </data>
+  <data name="PlHdr3" xml:space="preserve">
+    <value>Vi 潜在重复的</value>
+  </data>
+  <data name="PlHdrTT3" xml:space="preserve">
+    <value>可能重复的工作负载</value>
+  </data>
+  <data name="PlHdr4" xml:space="preserve">
+    <value>Vi 作为物理保护</value>
+  </data>
+  <data name="PlHdrTT4" xml:space="preserve">
+    <value>通过代理备份的虚拟机作为物理工作负载</value>
+  </data>
+  <data name="PlHdr5" xml:space="preserve">
+    <value>物理总量</value>
+  </data>
+  <data name="PlHdrTT5" xml:space="preserve">
+    <value>添加到保护组的服务器总数</value>
+  </data>
+  <data name="PlHdr6" xml:space="preserve">
+    <value>物理保护</value>
+  </data>
+  <data name="PlHdrTT6" xml:space="preserve">
+    <value>具有备份的服务器总数</value>
+  </data>
+  <data name="PlHdr7" xml:space="preserve">
+    <value>物理不保护</value>
+  </data>
+  <data name="PlHdrTT7" xml:space="preserve">
+    <value>保护组中但当前没有备份的服务器总数</value>
+  </data>
+  <data name="PlSum1" xml:space="preserve">
+    <value>此表汇总了在当前备份服务器中检测到的工作负载量。 VMware (Vi Total) 计数由本地 Veeam Broker 服务确定，并将该 VM 计数与现有备份进行比较。物理工作负载 (Phys Total) 由添加到保护组的 VM 数量确定，然后与备份作业中的内容进行比较。</value>
+  </data>
+  <data name="PlNote1" xml:space="preserve">
+    <value></value>
+  </data>
+  <data name="PlButton" xml:space="preserve">
+    <value>显示受保护工作负载的数量</value>
+  </data>
+  <data name="PlTitle" xml:space="preserve">
+    <value>受保护的工作负载</value>
+  </data>
+  <data name="GeneralNotesHeader" xml:space="preserve">
+    <value>笔记：</value>
+  </data>
+  <data name="GeneralSummaryHeader" xml:space="preserve">
+    <value>概括：</value>
+  </data>
+  <data name="HtmlHeader" xml:space="preserve">
+    <value>VBR 健康检查报告</value>
+  </data>
+  <data name="HtmlIntroLine1" xml:space="preserve">
+    <value>- 此报告提供有关 Veeam Backup and Replication (VBR) 部署的数据和见解。此处提供的信息旨在与您的 Veeam 代表合作使用。</value>
+  </data>
+  <data name="HtmlIntroLine2" xml:space="preserve">
+    <value>- 原始数据以 CSV 格式捕获，可在导出文件夹中本地访问。 CSV 将允许您在 Excel 等工具中操作数据。</value>
+  </data>
+  <data name="HtmlIntroLine3" xml:space="preserve">
+    <value>- 有关各个作业会话的其他信息，请参见&lt;a href="C:\\temp\\vHC\\JobSessionReports"&gt; 输出文件夹C:\\temp\\vHC\\JobSessionReports</value>
+  </data>
+  <data name="HtmlIntroLine4" xml:space="preserve">
+    <value>- 注意：在鼠标悬停期间，可能会出现一个工具提示，其中包含表头或数据列的解释性数据。</value>
+  </data>
+  <data name="HtmlIntroLine5" xml:space="preserve">
+    <value>- 注意：您为生成此报告而运行的工具是完全独立的，不会“打电话回家”，并且仅在 Veeam Backup and Replication 服务器上执行。它查询 VBR 数据库、注册表、配置和日志文件。它不需要访问 vCenter 或任何其他基础架构。</value>
+  </data>
+  <data name="HtmlIntroLine5vb365" xml:space="preserve">
+    <value>- 注意：您为生成此报告而运行的工具是完全独立的，不会“打电话回家”，并且仅在 Veeam Backup for Microsoft 365 服务器上执行。它查询 VB365 数据库、注册表、配置和日志文件。它不需要访问 M365 或任何其他基础设施。</value>
+  </data>
+  <data name="NavBkpSrvDeet" xml:space="preserve">
+    <value>有关备份服务器、配置数据库、角色和资源的详细信息。</value>
+  </data>
+  <data name="NavBkpSrvLink" xml:space="preserve">
+    <value>备份服务器</value>
+  </data>
+  <data name="NavColapse" xml:space="preserve">
+    <value>折叠/展开全部</value>
+  </data>
+  <data name="NavHeader" xml:space="preserve">
+    <value>导航：</value>
+  </data>
+  <data name="NavJobConDeet" xml:space="preserve">
+    <value>显示每小时发现的最大作业并发的热图。</value>
+  </data>
+  <data name="NavJobConLink" xml:space="preserve">
+    <value>作业并发</value>
+  </data>
+  <data name="NavJobInfoDeet" xml:space="preserve">
+    <value>每个作业的详细细分。</value>
+  </data>
+  <data name="NavJobInfoLink" xml:space="preserve">
+    <value>作业信息</value>
+  </data>
+  <data name="NavJobSessSumDeet" xml:space="preserve">
+    <value>按作业名称汇总的作业会话。</value>
+  </data>
+  <data name="NavJobSessSumLink" xml:space="preserve">
+    <value>作业会话摘要</value>
+  </data>
+  <data name="NavJobSumDeet" xml:space="preserve">
+    <value>按类型和计数列出的找到的作业摘要。</value>
+  </data>
+  <data name="NavJobSumLink" xml:space="preserve">
+    <value>作业摘要</value>
+  </data>
+  <data name="NavLicInfoDetail" xml:space="preserve">
+    <value>显示许可证信息。</value>
+  </data>
+  <data name="NavLicInfoLink" xml:space="preserve">
+    <value>许可证信息</value>
+  </data>
+  <data name="NavMissingDeet" xml:space="preserve">
+    <value>显示未使用的工作负载和类型。</value>
+  </data>
+  <data name="NavMissingJobLink" xml:space="preserve">
+    <value>缺少作业类型</value>
+  </data>
+  <data name="NavProtWkldDeet" xml:space="preserve">
+    <value>显示检测到的虚拟机和物理对象的计数与具有备份的对象相比。</value>
+  </data>
+  <data name="NavProtWrkld" xml:space="preserve">
+    <value>受保护的工作负载</value>
+  </data>
+  <data name="NavProxyDeet" xml:space="preserve">
+    <value>有关代理资源和配置的详细信息。</value>
+  </data>
+  <data name="NavProxyInfoLink" xml:space="preserve">
+    <value>代理信息</value>
+  </data>
+  <data name="NavRegKeyDeet" xml:space="preserve">
+    <value>显示与普通安装不同的任何注册表值。</value>
+  </data>
+  <data name="NavRegKeyLink" xml:space="preserve">
+    <value>非默认注册表项</value>
+  </data>
+  <data name="NavRepoDeet" xml:space="preserve">
+    <value>有关非 SOBR 存储库、资源和配置的详细信息。</value>
+  </data>
+  <data name="NavRepoInfoLink" xml:space="preserve">
+    <value>存储库信息</value>
+  </data>
+  <data name="NavSecSumDeet" xml:space="preserve">
+    <value>简要表显示正在使用的安全功能。</value>
+  </data>
+  <data name="NavSecSumLink" xml:space="preserve">
+    <value>安全摘要</value>
+  </data>
+  <data name="NavSobrDeet" xml:space="preserve">
+    <value>SOBR 和配置选项的总结。</value>
+  </data>
+  <data name="NavSobrExtDeet" xml:space="preserve">
+    <value>SOBR 范围、资源和配置的详细信息。</value>
+  </data>
+  <data name="NavSobrExtLink" xml:space="preserve">
+    <value>SOBR 范围信息</value>
+  </data>
+  <data name="NavSobrInfoLink" xml:space="preserve">
+    <value>SOBR 信息</value>
+  </data>
+  <data name="NavSrvInfoDeet" xml:space="preserve">
+    <value>用户添加到配置中的所有服务器的列表。</value>
+  </data>
+  <data name="NavSrvInfoLink" xml:space="preserve">
+    <value>服务器信息</value>
+  </data>
+  <data name="NavSrvSumDeet" xml:space="preserve">
+    <value>检测到的基础设施类型和计数的摘要。</value>
+  </data>
+  <data name="NavSrvSumLink" xml:space="preserve">
+    <value>服务器摘要</value>
+  </data>
+  <data name="NavTaskConDeet" xml:space="preserve">
+    <value>显示每小时发现的最大 VM 并发的热图。</value>
+  </data>
+  <data name="NavTaskConLink" xml:space="preserve">
+    <value>虚拟机并发</value>
+  </data>
+  <data name="LicCcTT" xml:space="preserve">
+    <value>是否启用了Cloud Connect？</value>
+  </data>
+  <data name="LicExpTT" xml:space="preserve">
+    <value>许可证到期日期</value>
+  </data>
+  <data name="LicTblLicTo" xml:space="preserve">
+    <value>授权给</value>
+  </data>
+  <data name="LicSupExpTT" xml:space="preserve">
+    <value>支持有效期</value>
+  </data>
+  <data name="LicTableHeader" xml:space="preserve">
+    <value>许可证摘要</value>
+  </data>
+  <data name="LicTblCc" xml:space="preserve">
+    <value>Cloud Connect 已启用</value>
+  </data>
+  <data name="LicTblEdition" xml:space="preserve">
+    <value>版本</value>
+  </data>
+  <data name="LicTblExpDate" xml:space="preserve">
+    <value>过期日期</value>
+  </data>
+  <data name="LicTblLicInst" xml:space="preserve">
+    <value>许可的实例。</value>
+  </data>
+  <data name="LicTblLicNas" xml:space="preserve">
+    <value>许可的NAS</value>
+  </data>
+  <data name="LicTblLicSock" xml:space="preserve">
+    <value>许可的Socket</value>
+  </data>
+  <data name="LicTblNewInst" xml:space="preserve">
+    <value>新实例</value>
+  </data>
+  <data name="LicTblRentInst" xml:space="preserve">
+    <value>租赁实例</value>
+  </data>
+  <data name="LicTblStatus" xml:space="preserve">
+    <value>状况</value>
+  </data>
+  <data name="LicTblSupExpDate" xml:space="preserve">
+    <value>支持有效期</value>
+  </data>
+  <data name="LicTblType" xml:space="preserve">
+    <value>类型</value>
+  </data>
+  <data name="LicTblUsedInst" xml:space="preserve">
+    <value>已使用的实例</value>
+  </data>
+  <data name="LicTblUsedNas" xml:space="preserve">
+    <value>已使用的NAS</value>
+  </data>
+  <data name="LicTblUsedSock" xml:space="preserve">
+    <value>已使用的Sockets</value>
+  </data>
+  <data name="LtEdTT" xml:space="preserve">
+    <value>Veeam 许可版本</value>
+  </data>
+  <data name="LtInstLicTT" xml:space="preserve">
+    <value>许可实例总数</value>
+  </data>
+  <data name="LtInstNewTT" xml:space="preserve">
+    <value>新实例总数</value>
+  </data>
+  <data name="LtInstRentalTT" xml:space="preserve">
+    <value>总租用实例</value>
+  </data>
+  <data name="LtInstUsedTT" xml:space="preserve">
+    <value>使用的实例总数</value>
+  </data>
+  <data name="LtNasLicTT" xml:space="preserve">
+    <value>许可的 NAS 总数</value>
+  </data>
+  <data name="LtNasUsedTT" xml:space="preserve">
+    <value>使用的 NAS 许可证总数</value>
+  </data>
+  <data name="LtSocLicTT" xml:space="preserve">
+    <value>许可的插座总数</value>
+  </data>
+  <data name="LtSocUsedTT" xml:space="preserve">
+    <value>使用的套接字总数</value>
+  </data>
+  <data name="LtStatusTT" xml:space="preserve">
+    <value>Veeam 许可证状态</value>
+  </data>
+  <data name="LtTypeTT" xml:space="preserve">
+    <value>Veeam 许可类型</value>
+  </data>
+  <data name="NpButton" xml:space="preserve">
+    <value>显示缺少的作业类型的详细信息</value>
+  </data>
+  <data name="NpSum1" xml:space="preserve">
+    <value>此表汇总了您的配置中缺少或无法分析的作业类型。有关更多信息，请咨询您的 Veeam 工程师。</value>
+  </data>
+  <data name="NpTitle" xml:space="preserve">
+    <value>缺少作业类型</value>
+  </data>
+  <data name="SSHdr0" xml:space="preserve">
+    <value>Immutability</value>
+  </data>
+  <data name="SSHdrTT0" xml:space="preserve">
+    <value>此服务器中的任何地方都使用了不变性吗？</value>
+  </data>
+  <data name="SSHdr1" xml:space="preserve">
+    <value>流量加密</value>
+  </data>
+  <data name="SSHdrTT1" xml:space="preserve">
+    <value>是否启用了流量加密？</value>
+  </data>
+  <data name="SSHdr2" xml:space="preserve">
+    <value>备份文件加密</value>
+  </data>
+  <data name="SSHdrTT2" xml:space="preserve">
+    <value>备份文件是否被加密？</value>
+  </data>
+  <data name="SSHdr3" xml:space="preserve">
+    <value>配置备份加密</value>
+  </data>
+  <data name="SSHdrTT3" xml:space="preserve">
+    <value>配置备份是否加密？</value>
+  </data>
+  <data name="SSSum1" xml:space="preserve">
+    <value>安全摘要表可让您一目了然地查看B&amp;amp;R中的一个或多个组件上启用了哪些安全功能。一个值</value>
+  </data>
+  <data name="SSSubHdr1" xml:space="preserve">
+    <value>Immutability</value>
+  </data>
+  <data name="SSSubHdr2" xml:space="preserve">
+    <value>流量加密</value>
+  </data>
+  <data name="SSSubHdr3" xml:space="preserve">
+    <value>备份文件加密</value>
+  </data>
+  <data name="SSSubHdr4" xml:space="preserve">
+    <value>配置备份加密</value>
+  </data>
+  <data name="SSNote1" xml:space="preserve">
+    <value>对于不可变备份，请考虑部署 &lt;a href="https://helpcenter.veeam.com/docs/backup/vsphere/hardened_repository.html?ver=110"&gt;强化 Linux 存储库&lt;/a&gt; 或选择 &lt;a href="https://helpcenter.veeam.com/docs/backup/vsphere/object_storage_repository.html?ver=110"&gt;提供不变性的公共云或 S3 兼容&lt;/a&gt; 选项。</value>
+  </data>
+  <data name="SSNote2" xml:space="preserve">
+    <value>&lt;a href="https://helpcenter.veeam.com/docs/backup/vsphere/security_considerations.html?zoom_highlight=traffic+encryption&amp;amp;ver=110#:~:text=Encrypt%20network%20traffic,Network%20Data%20Encryption."&gt;流量加密&lt;/a&gt;默认为所有公共流量启用。 如果此值显示为 false，请考虑重新启用 Internet 或任何其他潜在敏感传输的设置。</value>
+  </data>
+  <data name="SSNote3" xml:space="preserve">
+    <value>备份文件加密可防止外人导入您的备份并访问内容。 如果备份存储在异地，请考虑 &lt;a href="https://helpcenter.veeam.com/docs/backup/vsphere/backup_job_advanced_storage_vm.html?ver=110#:~:text=To%20encrypt%20the%20content%20of%20backup%20files%2C%20select%20the%20Enable%20backup%20file%20encryption%20check%20box."&gt;启用&lt;/a&gt;备份文件加密以保护备份免受不必要的访问。</value>
+  </data>
+  <data name="SSNote4" xml:space="preserve">
+    <value>&lt;a href="https://helpcenter.veeam.com/docs/backup/vsphere/vbr_config.html?ver=110"&gt;配置备份&lt;/a&gt;可确保您的B&amp;amp;R配置已备份并准备好恢复在中断或迁移的情况下。 将配置备份&lt;a href="https://helpcenter.veeam.com/docs/backup/vsphere/config_backup_encrypted.html?ver=110"&gt;加密&lt;/a&gt;可以防止不必要的访问以及能够恢复以前存储在配置中的密码。 &lt;a style="font-weight:bold"&gt;考虑使用 Backup Enterprise Manager 的&lt;/a&gt; &lt;a href="https://helpcenter.veeam.com/docs/backup/em/em_manage_keys.html?ver=110"&gt;密码保护&lt;/a&gt; &lt;a style="font-weight:bold"&gt; 确保丢失的密码可恢复，并在发生灾难性中断时将 Enterprise Manager 和 VBR 分开。 还可以考虑将密钥集导出到安全位置。 如果没有这种保护，丢失的密码可能会削弱使用备份文件的能力。&lt;/a&gt;</value>
+  </data>
+  <data name="SSButton" xml:space="preserve">
+    <value>显示安全摘要的详细信息。</value>
+  </data>
+  <data name="SSTitle" xml:space="preserve">
+    <value>安全摘要</value>
+  </data>
+  <data name="MssTitle" xml:space="preserve">
+    <value>检测到的基础设施类型和数量</value>
+  </data>
+  <data name="MssHdr1" xml:space="preserve">
+    <value>名称</value>
+  </data>
+  <data name="MssHdr2" xml:space="preserve">
+    <value>计数</value>
+  </data>
+  <data name="MssHdr1TT" xml:space="preserve">
+    <value>服务器/共享名称</value>
+  </data>
+  <data name="MssHdr2TT" xml:space="preserve">
+    <value>检测到的总数</value>
+  </data>
+  <data name="MssSum1" xml:space="preserve">
+    <value>此表总结了用户手动添加到 Veeam 配置中的不同类型和数量的基础设施项目。</value>
+  </data>
+  <data name="MssButton" xml:space="preserve">
+    <value>显示检测到的基础设施类型和计数的详细信息</value>
+  </data>
+  <data name="BkpSrvButton" xml:space="preserve">
+    <value>显示备份服务器摘要和注释。</value>
+  </data>
+  <data name="BkpSrvNotes1" xml:space="preserve">
+    <value>• 确保备份服务器的资源&lt;a href="https://bp.veeam.com/vbr/3_Build_structures/B_Veeam_Components/B_VBR_Server/Backup_Server.html#compute-requirements"&gt;大小&lt;/a&gt;足以满足 同时运行它管理的作业。 请参阅此报告中的&lt;a href="#jobConcurrency7"&gt;并发表&lt;/a&gt;。 注意：如果将其他角色或组件组合到 Backup Server 主机上，则资源大小是附加的（例如，Backup Server + SQL + Proxy + Repository 等）。</value>
+  </data>
+  <data name="BkpSrvNotes2" xml:space="preserve">
+    <value>• 确保 SQL 服务器的资源 &lt;a href="https://bp.veeam.com/vbr/2_Design_Structures/D_Veeam_Components/D_VBR_DB/database.html#sizing"&gt;sizing&lt;/a&gt; 足够</value>
+  </data>
+  <data name="BkpSrvNotes3" xml:space="preserve">
+    <value>• 如果使用 SQL Express，请确保它没有违反 SQL Express &lt;a href="https://bp.veeam.com/vbr/2_Design_Structures/D_Veeam_Components/D_VBR_DB/database.html#sql-server-edition"&gt;版本限制&lt;/a&gt;（例如，CPU 数量、内核、内存和数据库容量）。 一个缓慢、无响应或充满错误的备份服务器通常可能是达到这些 SQL 限制的结果。</value>
+  </data>
+  <data name="BkpSrvNotes4" xml:space="preserve">
+    <value>• 分配数据保护任务以使用默认代理或默认备份存储库组件可能会导致争用备份服务器资源或其他意外流量。在大型或分布式部署中，可能需要禁用、删除和/或重新分配这些备份服务器。</value>
+  </data>
+  <data name="BkpSrvNotes5" xml:space="preserve">
+    <value>• 建议将快速性能磁盘用于&lt;a href="https://bp.veeam.com/vbr/3_Build_structures/B_Veeam_Components/B_VBR_Server/Backup_Server.html#log-files"&gt;日志位置&lt;/a&gt;，该位置的默认值为“%ProgramData%\\Veeam\\Backup”</value>
+  </data>
+  <data name="BkpSrvNotes6" xml:space="preserve">
+    <value>• DNS 是一个关键组件。 确保从备份服务器和其他系统到备份的 &lt;a href="https://bp.veeam.com/vbr/3_Build_structures/B_Other/dns_resolution.html#dns-resolution"&gt;DNS 解析&lt;/a&gt; 服务器运行正常。 环境中的其他组件应该能够通过 FQDN 解析 Backup Server 和其他 Veeam 基础架构组件（例如代理、存储库）。 正向和反向查询都应该是正常的。</value>
+  </data>
+  <data name="BkpSrvSummary1" xml:space="preserve">
+    <value>备份服务器（又名 VBS 或 VBR 服务器）是备份基础架构中的核心组件，充当“配置和控制中心”的角色。备份服务器执行所有类型的管理活动，包括：协调数据保护和恢复任务、任务调度和资源分配，以及管理其他备份基础架构组件。</value>
+  </data>
+  <data name="BkpSrvSummary2" xml:space="preserve">
+    <value>• 备份服务器在 Microsoft Windows 上运行</value>
+  </data>
+  <data name="BkpSrvSummary3" xml:space="preserve">
+    <value>• 将有关备份基础架构、作业、会话和其他配置数据的数据存储在本地或远程 SQL 服务器中。在默认安装中，SQL Server Express 安装在本地。</value>
+  </data>
+  <data name="BkpSrvSummary4" xml:space="preserve">
+    <value>• 默认部署了其他组件：代理、存储库</value>
+  </data>
+  <data name="BkpSrvTblCfgEnabled" xml:space="preserve">
+    <value>配置备份（CB）启用</value>
+  </data>
+  <data name="BkpSrvTblCfgEncrypt" xml:space="preserve">
+    <value>CB 加密</value>
+  </data>
+  <data name="BkpSrvTblCfgLastRes" xml:space="preserve">
+    <value>CB 最后结果</value>
+  </data>
+  <data name="BkpSrvTblCore" xml:space="preserve">
+    <value>核心</value>
+  </data>
+  <data name="BkpSrvTblHead" xml:space="preserve">
+    <value>备份服务器和配置数据库信息</value>
+  </data>
+  <data name="BkpSrvTblName" xml:space="preserve">
+    <value>名称</value>
+  </data>
+  <data name="BkpSrvTblProxyRole" xml:space="preserve">
+    <value>代理角色</value>
+  </data>
+  <data name="BkpSrvTblRam" xml:space="preserve">
+    <value>内存</value>
+  </data>
+  <data name="BkpSrvTblRepoRole" xml:space="preserve">
+    <value>存储库/网关角色</value>
+  </data>
+  <data name="BkpSrvTblSqlCores" xml:space="preserve">
+    <value>SQL 核心</value>
+  </data>
+  <data name="BkpSrvTblSqlEdition" xml:space="preserve">
+    <value>SQL版</value>
+  </data>
+  <data name="BkpSrvTblSqlLocal" xml:space="preserve">
+    <value>本地 SQL</value>
+  </data>
+  <data name="BkpSrvTblSqlName" xml:space="preserve">
+    <value>SQL 服务器名称</value>
+  </data>
+  <data name="BkpSrvTblSqlRam" xml:space="preserve">
+    <value>SQL 内存</value>
+  </data>
+  <data name="BkpSrvTblSqlVersion" xml:space="preserve">
+    <value>SQL 版本</value>
+  </data>
+  <data name="BkpSrvTblTarget" xml:space="preserve">
+    <value>CB目标</value>
+  </data>
+  <data name="BkpSrvTblVersion" xml:space="preserve">
+    <value>Veeam 版本</value>
+  </data>
+  <data name="BkpSrvTblWanRole" xml:space="preserve">
+    <value>广域网加速器</value>
+  </data>
+  <data name="BstCfgEnabledTT" xml:space="preserve">
+    <value>配置备份启用/禁用</value>
+  </data>
+  <data name="BstCfgEncTT" xml:space="preserve">
+    <value>配置备份加密状态</value>
+  </data>
+  <data name="BstCfgLastResTT" xml:space="preserve">
+    <value>配置备份最后结果</value>
+  </data>
+  <data name="BstCfgTarTT" xml:space="preserve">
+    <value>配置备份目标仓库名称</value>
+  </data>
+  <data name="BstCpuTT" xml:space="preserve">
+    <value>检测到 B&amp;R 服务器上的物理内核</value>
+  </data>
+  <data name="BstNameTT" xml:space="preserve">
+    <value>B&amp;R 服务器的主机名</value>
+  </data>
+  <data name="BstPrxTT" xml:space="preserve">
+    <value>备份服务器也是代理吗？</value>
+  </data>
+  <data name="BstRamTT" xml:space="preserve">
+    <value>检测到 B&amp;R 服务器上的总 RAM</value>
+  </data>
+  <data name="BstRepTT" xml:space="preserve">
+    <value>备份服务器也是存储库或网关服务器吗？</value>
+  </data>
+  <data name="BstSqlCpuTT" xml:space="preserve">
+    <value>SQL Server CPU（如果不是本地的）</value>
+  </data>
+  <data name="BstSqlEdTT" xml:space="preserve">
+    <value>SQL 服务器版</value>
+  </data>
+  <data name="BstSqlLocTT" xml:space="preserve">
+    <value>SQL 是否与 B&amp;R 安装在同一台服务器上？</value>
+  </data>
+  <data name="BstSqlNameTT" xml:space="preserve">
+    <value>SQL Server 主机名（如果不是本地的）</value>
+  </data>
+  <data name="BstSqlRamTT" xml:space="preserve">
+    <value>SQL Server RAM（如果不是本地的）</value>
+  </data>
+  <data name="BstSqlVerTT" xml:space="preserve">
+    <value>SQL Server 版本</value>
+  </data>
+  <data name="BstVerTT" xml:space="preserve">
+    <value>检测到的B&amp;R软件的版本</value>
+  </data>
+  <data name="BstWaTT" xml:space="preserve">
+    <value>备份服务器也是广域网加速器吗？</value>
+  </data>
+  <data name="SbrTitle" xml:space="preserve">
+    <value>SOBR 详细信息</value>
+  </data>
+  <data name="SbrBtn" xml:space="preserve">
+    <value>显示 SOBR 详细信息</value>
+  </data>
+  <data name="Sbr0" xml:space="preserve">
+    <value>名称</value>
+  </data>
+  <data name="Sbr0TT" xml:space="preserve">
+    <value>SOBR 名称</value>
+  </data>
+  <data name="Sbr1" xml:space="preserve">
+    <value>Extents</value>
+  </data>
+  <data name="Sbr1TT" xml:space="preserve">
+    <value>Extent count</value>
+  </data>
+  <data name="Sbr2" xml:space="preserve">
+    <value>策略</value>
+  </data>
+  <data name="Sbr2TT" xml:space="preserve">
+    <value>数据策略</value>
+  </data>
+  <data name="Sbr3" xml:space="preserve">
+    <value>容量层</value>
+  </data>
+  <data name="Sbr3TT" xml:space="preserve">
+    <value>容量层是否启用？</value>
+  </data>
+  <data name="Sbr4" xml:space="preserve">
+    <value>复制</value>
+  </data>
+  <data name="Sbr4TT" xml:space="preserve">
+    <value>是否正在使用复制模式？</value>
+  </data>
+  <data name="Sbr5" xml:space="preserve">
+    <value>移动</value>
+  </data>
+  <data name="Sbr5TT" xml:space="preserve">
+    <value>是否正在使用移动模式？</value>
+  </data>
+  <data name="Sbr6" xml:space="preserve">
+    <value>存档层</value>
+  </data>
+  <data name="Sbr6TT" xml:space="preserve">
+    <value>存档层是否启用？</value>
+  </data>
+  <data name="Sbr7" xml:space="preserve">
+    <value>每台机器</value>
+  </data>
+  <data name="Sbr7TT" xml:space="preserve">
+    <value>SOBR 是否使用 Per-Machine 备份文件？</value>
+  </data>
+  <data name="Sbr8" xml:space="preserve">
+    <value>CapTier 类型</value>
+  </data>
+  <data name="Sbr8TT" xml:space="preserve">
+    <value>正在使用的容量层类型</value>
+  </data>
+  <data name="Sbr9" xml:space="preserve">
+    <value>Immutable</value>
+  </data>
+  <data name="Sbr9TT" xml:space="preserve">
+    <value>CapTier 是否使用不变性</value>
+  </data>
+  <data name="Sbr10" xml:space="preserve">
+    <value>不可变时期</value>
+  </data>
+  <data name="Sbr10TT" xml:space="preserve">
+    <value>不变性的时间段</value>
+  </data>
+  <data name="Sbr11" xml:space="preserve">
+    <value>启用大小限制</value>
+  </data>
+  <data name="Sbr11TT" xml:space="preserve">
+    <value>容量层是否受总容量限制？</value>
+  </data>
+  <data name="Sbr12" xml:space="preserve">
+    <value>尺寸限制</value>
+  </data>
+  <data name="Sbr12TT" xml:space="preserve">
+    <value>容量层上传用户设置的最大容量限制</value>
+  </data>
+  <data name="SbrSum0" xml:space="preserve">
+    <value>o 横向扩展备份存储库 (“SOBR”) 是一个单一的逻辑存储库命名空间，由一个或多个底层备份存储库或“范围”组成，可实现跨多个层的水平扩展。 数据位于 SOBR 的本地性能层上，可以使用对象存储层进行扩展以实现长期和归档存储：容量层和归档层。</value>
+  </data>
+  <data name="SbrSum1" xml:space="preserve">
+    <value>• SOBR 可以包括多种类型的底层扩展，包括：Window、Linux、NFS、SMB、重复数据删除设备和对象存储</value>
+  </data>
+  <data name="SbrNote0" xml:space="preserve">
+    <value>• 有多少个盘区正在使用？大量底层范围可能会导致元数据管理挑战和性能下降。与您的 Veeam 工程师讨论您的范围计数是否令人满意。</value>
+  </data>
+  <data name="SbrNote1" xml:space="preserve">
+    <value>•	是否正在使用“性能”&lt;a href="https://helpcenter.veeam.com/docs/backup/vsphere/backup_repository_sobr_placement.html?ver=110"&gt;Placement Policy&lt;/a&gt;？ 如果是这样，请考虑是否有特定的原因或用例？ “Data Locality”放置策略通常是大多数部署和用例的理想策略。</value>
+  </data>
+  <data name="SbrNote2" xml:space="preserve">
+    <value>•	如果使用 ReFS 或 XFS &lt;a href="https://helpcenter.veeam.com/docs/backup/vsphere/backup_repository_block_cloning.html?ver=110"&gt;块克隆&lt;/a&gt;，则“Data Locality”放置策略为 需要以利用块克隆（“快速克隆”）功能。</value>
+  </data>
+  <data name="SbrNote3" xml:space="preserve">
+    <value>•	&lt;a href="https://helpcenter.veeam.com/docs/backup/hyperv/compatible_repository_account.html?ver=110"&gt;网关服务器是否正在用于容量层复制/卸载&lt;/a&gt;？ 确保网关服务器有足够的资源充当发送到此对象存储库的所有备份的渠道。</value>
+  </data>
+  <data name="SbrNote4" xml:space="preserve">
+    <value>•	“&lt;a href="https://helpcenter.veeam.com/docs/backup/hyperv/sobr_add_extents.html?ver=110"&gt;Perform full backup when the required extent is offline&lt;/a&gt;”选项（在 VBR 控制台）应仔细考虑。 它确保在预期的范围处于脱机状态时进行备份，但要权衡额外的 Active Full(s) 消耗的额外空间，以及 ReFS 和 XFS。</value>
+  </data>
+  <data name="SbrNote5" xml:space="preserve">
+    <value>•	“&lt;a href="https://helpcenter.veeam.com/docs/backup/vsphere/per_vm_backup_files.html?ver=110"&gt;Per-Machine&lt;/a&gt;”是否为假？ 如果是这样，请考虑是否有禁用它的特定原因或用例？ 启用此功能是大多数部署和用例的理想策略。 请咨询您的 Veeam 工程师。</value>
+  </data>
+  <data name="SbrNote6" xml:space="preserve">
+    <value>•	Infrequent Access 存储层是否与 Veeam 复制模式或对象存储上的 Immutability 结合使用？ 有 &lt;a href="https://forums.veeam.com/object-storage-f52/aws-s3-how-to-reduce-the-number-of-api-calls-t68858.html#p382566"&gt; 在预算访问成本时应考虑与这些流程相关的额外 API 调用&lt;/a&gt;。</value>
+  </data>
+  <data name="SbrButton" xml:space="preserve">
+    <value>显示 SOBR 详细信息</value>
+  </data>
+  <data name="SbrExtTitle" xml:space="preserve">
+    <value>SOBR 范围详细信息</value>
+  </data>
+  <data name="SbrExtBtn" xml:space="preserve">
+    <value>显示 SOBR 范围详细信息</value>
+  </data>
+  <data name="SbrExt0" xml:space="preserve">
+    <value>名称</value>
+  </data>
+  <data name="SbrExt0TT" xml:space="preserve">
+    <value>存储库名称</value>
+  </data>
+  <data name="SbrExt1" xml:space="preserve">
+    <value>SOBR</value>
+  </data>
+  <data name="SbrExt1TT" xml:space="preserve">
+    <value>连接范围的 SOBR。</value>
+  </data>
+  <data name="SbrExt2" xml:space="preserve">
+    <value>设置任务</value>
+  </data>
+  <data name="SbrExt2TT" xml:space="preserve">
+    <value>指定的任务限制（-1 表示无限制）</value>
+  </data>
+  <data name="SbrExt3" xml:space="preserve">
+    <value>核心</value>
+  </data>
+  <data name="SbrExt3TT" xml:space="preserve">
+    <value>在存储库服务器上检测到物理 CPU 内核</value>
+  </data>
+  <data name="SbrExt4" xml:space="preserve">
+    <value>内存</value>
+  </data>
+  <data name="SbrExt4TT" xml:space="preserve">
+    <value>在存储库服务器上检测到的总 RAM</value>
+  </data>
+  <data name="SbrExt5" xml:space="preserve">
+    <value>自动网关</value>
+  </data>
+  <data name="SbrExt5TT" xml:space="preserve">
+    <value>存储库是否使用 Autmatica Gateway？</value>
+  </data>
+  <data name="SbrExt6" xml:space="preserve">
+    <value>主机</value>
+  </data>
+  <data name="SbrExt6TT" xml:space="preserve">
+    <value>如果未设置为使用自动网关，则分配主机/网关</value>
+  </data>
+  <data name="SbrExt7" xml:space="preserve">
+    <value>路径</value>
+  </data>
+  <data name="SbrExt7TT" xml:space="preserve">
+    <value>为存储库指定的文件路径</value>
+  </data>
+  <data name="SbrExt8" xml:space="preserve">
+    <value>可用空间 (TB)</value>
+  </data>
+  <data name="SbrExt8TT" xml:space="preserve">
+    <value>基于上次缓存扫描检测到的可用空间</value>
+  </data>
+  <data name="SbrExt9" xml:space="preserve">
+    <value>总空间 (TB)</value>
+  </data>
+  <data name="SbrExt9TT" xml:space="preserve">
+    <value>检测到的存储库容量</value>
+  </data>
+  <data name="SbrExt10" xml:space="preserve">
+    <value>可用空间 ％</value>
+  </data>
+  <data name="SbrExt10TT" xml:space="preserve">
+    <value>计算的可用空间百分比（可用空间/总空间）</value>
+  </data>
+  <data name="SbrExt11" xml:space="preserve">
+    <value>解压缩</value>
+  </data>
+  <data name="SbrExt11TT" xml:space="preserve">
+    <value>存储库是否在最终存储之前解压缩备份文件？</value>
+  </data>
+  <data name="SbrExt12" xml:space="preserve">
+    <value>对齐块</value>
+  </data>
+  <data name="SbrExt12TT" xml:space="preserve">
+    <value>存储库是否对齐数据块？</value>
+  </data>
+  <data name="SbrExt13" xml:space="preserve">
+    <value>旋转驱动器</value>
+  </data>
+  <data name="SbrExt13TT" xml:space="preserve">
+    <value>存储库是否由旋转驱动器支持？</value>
+  </data>
+  <data name="SbrExt14" xml:space="preserve">
+    <value>使用不变性</value>
+  </data>
+  <data name="SbrExt14TT" xml:space="preserve">
+    <value>存储库是否使用不变性？</value>
+  </data>
+  <data name="SbrExt15" xml:space="preserve">
+    <value>类型</value>
+  </data>
+  <data name="SbrExt15TT" xml:space="preserve">
+    <value>存储库类型</value>
+  </data>
+  <data name="SbrExtSum0" xml:space="preserve">
+    <value>• SOBR 是通过获取一个或多个单独的 Veeam 存储库（基本或强化）并将它们放入 SOBR 构造而创建的。组成 SOBR 的各个存储库称为“范围”。</value>
+  </data>
+  <data name="SbrExtSum1" xml:space="preserve">
+    <value>•健康检查报告的这一部分详细介绍了存储库设置，因为它们是在 Veeam Backup and Replication UI 中配置的。这些设置可以影响或帮助备份作业的性能。</value>
+  </data>
+  <data name="SbrExtNote0subhdr" xml:space="preserve">
+    <value>设置任务：</value>
+  </data>
+  <data name="SbrExtNote1" xml:space="preserve">
+    <value>•此列是存储库允许的最大并发任务设置。 它指定备份存储库允许的最大并发任务数。 如果超过此值，Veeam Backup &amp;amp; 在当前任务之一完成之前，复制不会启动新任务。 有关详细信息，请参阅&lt;a href="https://helpcenter.veeam.com/docs/backup/vsphere/limiting_tasks.html"&gt;限制并发任务数&lt;/a&gt;。</value>
+  </data>
+  <data name="SbrExtNote2" xml:space="preserve">
+    <value>•要确定备份存储库所需的任务/核心数量，请使用以下&lt;a href="https://bp.veeam.com/vbr/2_Design_Structures/D_Veeam_Components/D_backup_repositories/"&gt;公式&lt;/a&gt;：</value>
+  </data>
+  <data name="SbrExtNote3" xml:space="preserve">
+    <value>o代理 vCPU/核心数 ÷ 3 = 所需的存储库任务数。</value>
+  </data>
+  <data name="SbrExtNote4" xml:space="preserve">
+    <value>•该设置应与接下来的两列对齐：&lt;a style="font-weight: bold"&gt;Cores&lt;/a&gt; 和 &lt;a style="font-weight:bold"&gt;RAM(GB)&lt;/a&gt;</value>
+  </data>
+  <data name="SbrExtNote5subhdr" xml:space="preserve">
+    <value>核心：</value>
+  </data>
+  <data name="SbrExtNote6" xml:space="preserve">
+    <value>•此数字等于存储库服务器中的 CPU 内核数。</value>
+  </data>
+  <data name="SbrExtNote7" xml:space="preserve">
+    <value>内存：</value>
+  </data>
+  <data name="SbrExtNote8" xml:space="preserve">
+    <value>•此数字等于存储库服务器中的 RAM 量。</value>
+  </data>
+  <data name="SbrExtNote9" xml:space="preserve">
+    <value>•RAM 的数量应该是内核数量的 4 倍。</value>
+  </data>
+  <data name="SbrExtNote10subhdr" xml:space="preserve">
+    <value>可用空间 (TB) 和可用空间百分比</value>
+  </data>
+  <data name="SbrExtNote11" xml:space="preserve">
+    <value>•最佳做法是在存储库中保留 20% 的可用空间。如果 SOBR 扩展区使用 XFS/REFS 文件系统格式化，这一点尤其重要，因为块克隆和无空间合成备份需要在同一个磁盘上拥有所有相关的 Veeam 备份文件。可用空间在其他文件系统上也很重要，因为 Veeam 需要工作空间来创建合成完整备份。</value>
+  </data>
+  <data name="SbrExtNote12" xml:space="preserve">
+    <value>•在 VBR 控制台的常规选项部分，可以设置警报以提醒存储库可用磁盘空间百分比低。</value>
+  </data>
+  <data name="SbrExtNote13subhdr" xml:space="preserve">
+    <value>对齐块</value>
+  </data>
+  <data name="SbrExtNote14" xml:space="preserve">
+    <value>•对于使用固定块大小的存储系统，请选中&lt;a style="font-weight:bold"&gt;对齐备份文件数据块&lt;/a&gt;复选框。 Veeam Backup &amp;amp; Replication将在 4 KB 块边界对齐保存到备份文件的 VM 数据。</value>
+  </data>
+  <data name="SbrExtNote15" xml:space="preserve">
+    <value>•此设置还有助于加快数据传输并在将数据传输到基于块的存储库时使用更少的 RAM</value>
+  </data>
+  <data name="SbrExtNote16" xml:space="preserve">
+    <value>•对于 Veeam Backup and Replication v11 及更高版本中基于块的存储库，此设置应设置为 &lt;a style="font-weight:bold"&gt;true&lt;/a&gt;。</value>
+  </data>
+  <data name="RepoTitle" xml:space="preserve">
+    <value>独立存储库详细信息</value>
+  </data>
+  <data name="RepoBtn" xml:space="preserve">
+    <value>显示存储库详细信息</value>
+  </data>
+  <data name="Repo0" xml:space="preserve">
+    <value>作业计数</value>
+  </data>
+  <data name="Repo0TT" xml:space="preserve">
+    <value>分配给存储库的总作业</value>
+  </data>
+  <data name="Repo1" xml:space="preserve">
+    <value>每个虚拟机</value>
+  </data>
+  <data name="Repo1TT" xml:space="preserve">
+    <value>存储库是否使用 Per-VM/Machine 备份文件？</value>
+  </data>
+  <data name="RepoSum0" xml:space="preserve">
+    <value>•独立存储库包括未配置为 SOBR 一部分的存储库</value>
+  </data>
+  <data name="RepoSum1" xml:space="preserve">
+    <value>•健康检查报告的这一部分详细介绍了存储库设置，因为它们是在 Veeam Backup and Replication UI 中配置的。这些设置可以影响或帮助备份作业的性能。</value>
+  </data>
+  <data name="PrxTitle" xml:space="preserve">
+    <value>代理信息</value>
+  </data>
+  <data name="PrxBtn" xml:space="preserve">
+    <value>显示代理摘要</value>
+  </data>
+  <data name="Prx0" xml:space="preserve">
+    <value>名称</value>
+  </data>
+  <data name="Prx0TT" xml:space="preserve">
+    <value>代理的主机名</value>
+  </data>
+  <data name="Prx1" xml:space="preserve">
+    <value>任务</value>
+  </data>
+  <data name="Prx1TT" xml:space="preserve">
+    <value>代理配置中分配的任务限制。</value>
+  </data>
+  <data name="Prx2" xml:space="preserve">
+    <value>核心</value>
+  </data>
+  <data name="Prx2TT" xml:space="preserve">
+    <value>检测到物理 CPU 内核（不计算超线程）</value>
+  </data>
+  <data name="Prx3" xml:space="preserve">
+    <value>内存</value>
+  </data>
+  <data name="Prx3TT" xml:space="preserve">
+    <value>在代理主机上检测到的总 RAM</value>
+  </data>
+  <data name="Prx4" xml:space="preserve">
+    <value>代理类型</value>
+  </data>
+  <data name="Prx4TT" xml:space="preserve">
+    <value>Vi (Vmware)、HV、CDP、文件</value>
+  </data>
+  <data name="Prx5" xml:space="preserve">
+    <value>运输方式</value>
+  </data>
+  <data name="Prx5TT" xml:space="preserve">
+    <value>代理配置中指定的传输模式</value>
+  </data>
+  <data name="Prx6" xml:space="preserve">
+    <value>故障转移到 NBD</value>
+  </data>
+  <data name="Prx6TT" xml:space="preserve">
+    <value>是否允许代理故障转移到 NBD（网络模式）</value>
+  </data>
+  <data name="Prx7" xml:space="preserve">
+    <value>机壳</value>
+  </data>
+  <data name="Prx7TT" xml:space="preserve">
+    <value>代理是物理的还是虚拟的？</value>
+  </data>
+  <data name="Prx8" xml:space="preserve">
+    <value>缓存路径</value>
+  </data>
+  <data name="Prx8TT" xml:space="preserve">
+    <value>为 CDP 代理缓存指定的路径</value>
+  </data>
+  <data name="Prx9" xml:space="preserve">
+    <value>缓存大小</value>
+  </data>
+  <data name="Prx9TT" xml:space="preserve">
+    <value>为 CDP 代理指定的缓存大小</value>
+  </data>
+  <data name="Prx10" xml:space="preserve">
+    <value>主机</value>
+  </data>
+  <data name="Prx10TT" xml:space="preserve">
+    <value></value>
+  </data>
+  <data name="Prx11" xml:space="preserve">
+    <value>被禁用</value>
+  </data>
+  <data name="Prx11TT" xml:space="preserve">
+    <value>用户是否禁用了代理？</value>
+  </data>
+  <data name="PrxSum0" xml:space="preserve">
+    <value>Veeam 代理是一个逻辑数据移动器组件。 有两种类型的代理：（&lt;a href="https://helpcenter.veeam.com/docs/backup/vsphere/backup_proxy.html?zoom_highlight=proxy&amp;amp;ver=110"&gt;备份代理&lt;/a&gt;，&lt; a href="https://helpcenter.veeam.com/docs/backup/vsphere/cdp_proxy.html?ver=110"&gt;CDP 代理&lt;/a&gt;）。 备份代理根据功能或平台进一步细分，例如 用于基于 NAS 的备份或不同源虚拟机管理程序的文件代理。</value>
+  </data>
+  <data name="PrxSum1" xml:space="preserve">
+    <value>• 备份代理位于源数据（VM 或文件共享）和备份存储库之间。它们的作用是处理备份作业并将备份流量传送到存储库。</value>
+  </data>
+  <data name="PrxSum2" xml:space="preserve">
+    <value>o	VM 备份代理可以利用不同的&lt;a href="https://helpcenter.veeam.com/docs/backup/vsphere/transport_modes.html?ver=110"&gt;传输模式&lt;/a&gt;。</value>
+  </data>
+  <data name="PrxSum3" xml:space="preserve">
+    <value>o	文件备份代理可以从 &lt;a href="https://helpcenter.veeam.com/docs/backup/vsphere/file_share_backup_nfs_share_advanced_settings.html?ver=110"&gt; NFS&lt;/a&gt; 的手动或自动快照路径备份源数据， &lt;a href="https://helpcenter.veeam.com/docs/backup/vsphere/file_share_backup_smb_share_advanced_settings.html?ver=110"&gt;SMB&lt;/a&gt;，企业 NAS 文件管理器。 （注意：托管服务器不利用文件备份代理）</value>
+  </data>
+  <data name="PrxSum4" xml:space="preserve">
+    <value>o	备份代理不会在本地存储或缓存任何数据。</value>
+  </data>
+  <data name="PrxSum5" xml:space="preserve">
+    <value>• CDP 代理处理CDP 策略并作为源和目标VMware 主机之间的数据移动器运行。</value>
+  </data>
+  <data name="PrxSum6" xml:space="preserve">
+    <value>o	CDP 代理需要&lt;a href="https://helpcenter.veeam.com/docs/backup/vsphere/system_requirements.html?ver=110#vmware-cdp-proxy-server"&gt;本地缓存。&lt;/a&gt;</value>
+  </data>
+  <data name="PrxNote0" xml:space="preserve">
+    <value>•	查看“主机”列并确定支持的主机&lt;a href="https://helpcenter.veeam.com/docs/backup/vsphere/limiting_tasks.html?ver=110#task-limitation-for-components-with-several-roles"&gt;多个&lt;/a&gt;代理角色:</value>
+  </data>
+  <data name="PrxNote1" xml:space="preserve">
+    <value>o	角色可以组合，只要您分配&lt;a href="https://helpcenter.veeam.com/docs/backup/vsphere/limiting_tasks.html?ver=110"&gt;足够的资源&lt;/a&gt;。</value>
+  </data>
+  <data name="PrxNote2" xml:space="preserve">
+    <value>	如果角色是非并发的，则分配跨所有支持的角色计算的最大资源。</value>
+  </data>
+  <data name="PrxNote3" xml:space="preserve">
+    <value>	如果角色是并发的，则分配 &lt;a href="https://helpcenter.veeam.com/docs/backup/vsphere/limiting_tasks.html?ver=110#task-limitation-for-components-with-several-roles"&gt; 足够&lt;/a&gt; 资源供所有角色使用</value>
+  </data>
+  <data name="PrxNote4" xml:space="preserve">
+    <value>	请记住，CDP 代理始终处于活动状态并传输数据，因此必须为其角色“保留”足够的资源并添加必要的组合角色。</value>
+  </data>
+  <data name="PrxNote5" xml:space="preserve">
+    <value>•	CDP 代理：</value>
+  </data>
+  <data name="PrxNote6" xml:space="preserve">
+    <value>o	确保 &lt;a href="https://helpcenter.veeam.com/docs/backup/vsphere/cdp_proxy.html?zoom_highlight=CDP+cache&amp;amp;ver=110#vmware-cdp-proxy-cache"&gt;缓存&lt;/a&gt; 大小适当</value>
+  </data>
+  <data name="PrxNote7" xml:space="preserve">
+    <value>o	将缓存位于 C:\\ 驱动器上的 CDP 代理标记为潜在风险。</value>
+  </data>
+  <data name="PrxNote8" xml:space="preserve">
+    <value>•	比较分配的 &lt;a href="https://helpcenter.veeam.com/docs/backup/vsphere/limiting_tasks.html?ver=110"&gt;任务&lt;/a&gt; 和核心计数并识别 &lt;a href="https://helpcenter.veeam.com/docs/backup/vsphere/limiting_tasks.html?ver=110#task-limitation-for-backup-proxies"&gt;超额订阅&lt;/a&gt;。</value>
+  </data>
+  <data name="PrxNote9" xml:space="preserve">
+    <value>•	确认 RAM 与内核的比率&lt;a href="https://helpcenter.veeam.com/docs/backup/vsphere/system_requirements.html?ver=110#vmware-cdp-proxy-server"&gt;足够&lt;/a&gt; .</value>
+  </data>
+  <data name="PrxNote10" xml:space="preserve">
+    <value>•	确保基本操作系统有足够的资源。 （&lt;a href="https://helpcenter.veeam.com/docs/backup/vsphere/system_requirements.html?ver=110#backup-proxy-server"&gt;备份代理&lt;/a&gt;，&lt;a href="https://helpcenter.veeam.com/docs/backup/vsphere/system_requirements.html?ver=110#vmware-cdp-proxy-server"&gt;CDP 代理&lt;/a&gt;)</value>
+  </data>
+  <data name="PrxNote11" xml:space="preserve">
+    <value>•	检查所选&lt;a href="https://helpcenter.veeam.com/docs/backup/vsphere/transport_modes.html?zoom_highlight=transport+mode&amp;amp;ver=110"&gt;传输模式&lt;/a&gt;并突出显示&lt;a href ="https://helpcenter.veeam.com/docs/backup/vsphere/network_mode_failover.html?ver=110"&gt;故障转移到网络模式&lt;/a&gt;在作业失败或为作业启用故障转移到网络时禁用 运行速度低于预期（NBD 流量可能流经 &lt;a href="https://helpcenter.veeam.com/docs/backup/vsphere/select_backup_network.html?zoom_highlight=preferred+network&amp;amp;ver=110"&gt;错误的网络 &lt;/a&gt;）。</value>
+  </data>
+  <data name="PrxNote12" xml:space="preserve">
+    <value>•	Hyper-V off host proxies应&lt;a href="https://helpcenter.veeam.com/docs/backup/hyperv/offhost_backup_proxy.html?ver=110"&gt;匹配&lt;/a&gt;受保护的 Hyper-V 主机版本。</value>
+  </data>
+  <data name="ManSrvTitle" xml:space="preserve">
+    <value>托管服务器信息</value>
+  </data>
+  <data name="ManSrvBtn" xml:space="preserve">
+    <value>显示托管服务器详细信息</value>
+  </data>
+  <data name="ManSrv0" xml:space="preserve">
+    <value>名称</value>
+  </data>
+  <data name="ManSrv0TT" xml:space="preserve">
+    <value>主机/文件共享名称</value>
+  </data>
+  <data name="ManSrv1" xml:space="preserve">
+    <value>核心</value>
+  </data>
+  <data name="ManSrv1TT" xml:space="preserve">
+    <value>检测到物理 CPU 内核（如果适用）</value>
+  </data>
+  <data name="ManSrv2" xml:space="preserve">
+    <value>内存</value>
+  </data>
+  <data name="ManSrv2TT" xml:space="preserve">
+    <value>检测到物理 RAM（如果适用）</value>
+  </data>
+  <data name="ManSrv3" xml:space="preserve">
+    <value>类型</value>
+  </data>
+  <data name="ManSrv3TT" xml:space="preserve">
+    <value>服务器或共享类型</value>
+  </data>
+  <data name="ManSrv4" xml:space="preserve">
+    <value>API 版本</value>
+  </data>
+  <data name="ManSrv4TT" xml:space="preserve">
+    <value>VMware API 版本</value>
+  </data>
+  <data name="ManSrv5" xml:space="preserve">
+    <value>受保护的虚拟机</value>
+  </data>
+  <data name="ManSrv5TT" xml:space="preserve">
+    <value>在此主机上检测到的具有关联备份的虚拟机总数</value>
+  </data>
+  <data name="ManSrv6" xml:space="preserve">
+    <value>不受保护的虚拟机</value>
+  </data>
+  <data name="ManSrv6TT" xml:space="preserve">
+    <value>在此主机上检测到的没有关联备份的虚拟机总数</value>
+  </data>
+  <data name="ManSrv7" xml:space="preserve">
+    <value>虚拟机总数</value>
+  </data>
+  <data name="ManSrv7TT" xml:space="preserve">
+    <value>在此主机上检测到的虚拟机总数</value>
+  </data>
+  <data name="ManSrv8" xml:space="preserve">
+    <value>是代理</value>
+  </data>
+  <data name="ManSrv8TT" xml:space="preserve">
+    <value>服务器是否用作 Veeam 代理？</value>
+  </data>
+  <data name="ManSrv9" xml:space="preserve">
+    <value>是存储库</value>
+  </data>
+  <data name="ManSrv9TT" xml:space="preserve">
+    <value>服务器是否用作 Veeam 存储库？</value>
+  </data>
+  <data name="ManSrv10" xml:space="preserve">
+    <value>是 WAN Acc。</value>
+  </data>
+  <data name="ManSrv10TT" xml:space="preserve">
+    <value>服务器是否用作 Veeam WAN 加速器？</value>
+  </data>
+  <data name="ManSrv11" xml:space="preserve">
+    <value>不可用</value>
+  </data>
+  <data name="ManSrv11TT" xml:space="preserve">
+    <value>服务器不可用？</value>
+  </data>
+  <data name="ManSrvSum0" xml:space="preserve">
+    <value>这列出了由 Veeam &lt;a href="https://helpcenter.veeam.com/docs/backup/vsphere/setup_add_server.html?ver=110"&gt;管理&lt;/a&gt;的所有服务器，这些服务器可识别数据源（管理程序）、备份 基础设施服务器（windows、linux）和 Veeam Backup for AWS/Azure/GCP 设备。</value>
+  </data>
+  <data name="ManSrvNote0" xml:space="preserve">
+    <value>• 查看 API 版本列并确保它们&lt;a href="https://helpcenter.veeam.com/docs/backup/vsphere/platform_support.html?ver=110"&gt;受支持&lt;/a&gt;并满足最低要求&lt;a href="https://helpcenter.veeam.com/docs/backup/vsphere/system_requirements.html?ver=110"&gt;要求&lt;/a&gt;。</value>
+  </data>
+  <data name="ManSrvNote1" xml:space="preserve">
+    <value>• 突出显示支持多个角色的主机并确认有&lt;a href=""&gt;足够的资源&lt;/a&gt; 可用于支持它们。</value>
+  </data>
+  <data name="JobSumTitle" xml:space="preserve">
+    <value>作业摘要</value>
+  </data>
+  <data name="JobSumBtn" xml:space="preserve">
+    <value>显示工作总结笔记</value>
+  </data>
+  <data name="JobSum0" xml:space="preserve">
+    <value>类型</value>
+  </data>
+  <data name="JobSum0TT" xml:space="preserve">
+    <value>作业类型</value>
+  </data>
+  <data name="JobSum1" xml:space="preserve">
+    <value>全部的</value>
+  </data>
+  <data name="JobSum1TT" xml:space="preserve">
+    <value>检测到的此类作业总数</value>
+  </data>
+  <data name="JobSumSum0" xml:space="preserve">
+    <value>在 Veeam Backup 和复制服务器上创建的所有作业类型的计数，以及所有作业的总和。并发运行的作业数量直接影响 VBR 服务器的大小和性能。</value>
+  </data>
+  <data name="JobSumNote0" xml:space="preserve">
+    <value>请注意，某些作业（例如备份复制作业）通常配置为连续运行。</value>
+  </data>
+  <data name="JobSumNote1" xml:space="preserve">
+    <value>请参阅&lt;a href="#jobConcurrency7"&gt;并发表&lt;/a&gt;</value>
+  </data>
+  <data name="JobConTitle" xml:space="preserve">
+    <value>作业并发表（7天）</value>
+  </data>
+  <data name="JobConBtn" xml:space="preserve">
+    <value>显示并发表</value>
+  </data>
+  <data name="JobCon0" xml:space="preserve">
+    <value>小时</value>
+  </data>
+  <data name="JobCon0TT" xml:space="preserve">
+    <value>一天中的小时（24 小时格式）</value>
+  </data>
+  <data name="JobCon1" xml:space="preserve">
+    <value>周日</value>
+  </data>
+  <data name="JobCon1TT" xml:space="preserve">
+    <value></value>
+  </data>
+  <data name="JobCon2" xml:space="preserve">
+    <value>周一</value>
+  </data>
+  <data name="JobCon2TT" xml:space="preserve">
+    <value></value>
+  </data>
+  <data name="JobCon3" xml:space="preserve">
+    <value>周二</value>
+  </data>
+  <data name="JobCon3TT" xml:space="preserve">
+    <value></value>
+  </data>
+  <data name="JobCon4" xml:space="preserve">
+    <value>周三</value>
+  </data>
+  <data name="JobCon4TT" xml:space="preserve">
+    <value></value>
+  </data>
+  <data name="JobCon5" xml:space="preserve">
+    <value>周四</value>
+  </data>
+  <data name="JobCon5TT" xml:space="preserve">
+    <value></value>
+  </data>
+  <data name="JobCon6" xml:space="preserve">
+    <value>周五</value>
+  </data>
+  <data name="JobCon6TT" xml:space="preserve">
+    <value></value>
+  </data>
+  <data name="JobCon7" xml:space="preserve">
+    <value>周六</value>
+  </data>
+  <data name="JobCon7TT" xml:space="preserve">
+    <value></value>
+  </data>
+  <data name="JobConSum0" xml:space="preserve">
+    <value>并发表旨在用作热图。表示每天的每个小时。每个单元格中的数字代表特定小时内计算的最高并发运行作业总数。此数据可用于确保更准确地确定 VBR 服务器大小。</value>
+  </data>
+  <data name="JobConNote0subhdr" xml:space="preserve">
+    <value>计算</value>
+  </data>
+  <data name="JobConNote1" xml:space="preserve">
+    <value>建议的 Veeam 备份服务器配置为每 10 个并发运行的作业 1 个 CPU 内核（物理或虚拟）和 4 GB RAM。并发作业包括任何正在运行的备份或复制作业以及任何具有连续计划的作业，例如备份复制作业和磁带作业。</value>
+  </data>
+  <data name="JobConNote2" xml:space="preserve">
+    <value>&lt;a href="https://bp.veeam.com/vbr/3_Build_structures/B_Veeam_Components/B_VBR_Server/Backup_Server.html" target="_blank"&gt;最低建议是 2 个 CPU 内核和 8 GB RAM。&lt;/a&gt;</value>
+  </data>
+  <data name="JobConNote3" xml:space="preserve">
+    <value>如果所需资源超过当前 VBR CPU 和 RAM，则应分析作业调度以最小化并发作业数。如果无法更改作业调度，则应部署多个 VBR 服务器，并将作业迁移到新服务器。</value>
+  </data>
+  <data name="JobConNote4subhdr" xml:space="preserve">
+    <value>Veeam Microsoft SQL 数据库</value>
+  </data>
+  <data name="JobConNote5bold" xml:space="preserve">
+    <value>请遵循以下准则：</value>
+  </data>
+  <data name="JobConNoteSqlTableRow1Col1" xml:space="preserve">
+    <value>并发运行的作业数</value>
+  </data>
+  <data name="JobConNoteSqlTableRow1Col2" xml:space="preserve">
+    <value>中央处理器</value>
+  </data>
+  <data name="JobConNoteSqlTableRow1Col3" xml:space="preserve">
+    <value>内存</value>
+  </data>
+  <data name="JobConNoteSqlTableRow2Col1" xml:space="preserve">
+    <value>最多 25 个</value>
+  </data>
+  <data name="JobConNoteSqlTableRow2Col2" xml:space="preserve">
+    <value>2个中央处理器</value>
+  </data>
+  <data name="JobConNoteSqlTableRow2Col3" xml:space="preserve">
+    <value>4GB</value>
+  </data>
+  <data name="JobConNoteSqlTableRowRow3Col1" xml:space="preserve">
+    <value>高达50</value>
+  </data>
+  <data name="JobConNoteSqlTableRow3Col2" xml:space="preserve">
+    <value>4 CPU</value>
+  </data>
+  <data name="JobConNoteSqlTableRow3Col3" xml:space="preserve">
+    <value>8 GB</value>
+  </data>
+  <data name="JobConNoteSqlTableRow4Col1" xml:space="preserve">
+    <value>最多 100 个</value>
+  </data>
+  <data name="JobConNoteSqlTableRow4Col2" xml:space="preserve">
+    <value>8个中央处理器</value>
+  </data>
+  <data name="JobConNoteSqlTableRow4Col3" xml:space="preserve">
+    <value>16 GB</value>
+  </data>
+  <data name="JobConNoteSqlTableNote0" xml:space="preserve">
+    <value>如果以下任何一项适用，建议安装 SQL Standard 或 Enterprise Edition：</value>
+  </data>
+  <data name="JobConNoteSqlTableNote1" xml:space="preserve">
+    <value>• 保护超过 500 台服务器时。 Express Edition 允许的最大数据库大小通常就足够了，因此不要将其视为约束。 Veeam Backup &amp;amp; Replication但是，由于 SQL Server Express 实例上的 CPU 和 RAM 限制，控制台和作业处理可能会变慢。</value>
+  </data>
+  <data name="JobConNoteSqlTableNote2" xml:space="preserve">
+    <value>• 当广泛使用文件到磁带作业时，数据库可能会显着增长，并且可能会很快超过 10 GB 的限制。</value>
+  </data>
+  <data name="JobConNoteSqlTableNote3" xml:space="preserve">
+    <value>• 当无法配置外部登台服务器以与 Veeam Explorer for Microsoft SQL Server 或 Veeam Explorer for Microsoft SharePoint 一起使用时。处理大于 10 GB 的数据库时，SQL Server Express 无法装载数据库。</value>
+  </data>
+  <data name="JobConNoteSqlTableNote4" xml:space="preserve">
+    <value>• 当数据库使用 Microsoft SQL Server 的高级功能时。例如加密或表分区，登台服务器（本地或远程）的许可级别必须与原始实例的级别匹配。</value>
+  </data>
+  <data name="TaskConTitle" xml:space="preserve">
+    <value>虚拟机任务并发（7 天）</value>
+  </data>
+  <data name="TaskConBtn" xml:space="preserve">
+    <value>显示并发表</value>
+  </data>
+  <data name="TaskCon0" xml:space="preserve">
+    <value>小时</value>
+  </data>
+  <data name="TaskCon0TT" xml:space="preserve">
+    <value>一天中的小时（24 小时格式）</value>
+  </data>
+  <data name="TaskCon1" xml:space="preserve">
+    <value>周日</value>
+  </data>
+  <data name="TaskCon1TT" xml:space="preserve">
+    <value></value>
+  </data>
+  <data name="TaskCon2" xml:space="preserve">
+    <value>周一</value>
+  </data>
+  <data name="TaskCon2TT" xml:space="preserve">
+    <value></value>
+  </data>
+  <data name="TaskCon3" xml:space="preserve">
+    <value>周二</value>
+  </data>
+  <data name="TaskCon3TT" xml:space="preserve">
+    <value></value>
+  </data>
+  <data name="TaskCon4" xml:space="preserve">
+    <value>周三</value>
+  </data>
+  <data name="TaskCon4TT" xml:space="preserve">
+    <value></value>
+  </data>
+  <data name="TaskCon5" xml:space="preserve">
+    <value>周四</value>
+  </data>
+  <data name="TaskCon5TT" xml:space="preserve">
+    <value></value>
+  </data>
+  <data name="TaskCon6" xml:space="preserve">
+    <value>周五</value>
+  </data>
+  <data name="TaskCon6TT" xml:space="preserve">
+    <value></value>
+  </data>
+  <data name="TaskCon7" xml:space="preserve">
+    <value>周六</value>
+  </data>
+  <data name="TaskCon7TT" xml:space="preserve">
+    <value></value>
+  </data>
+  <data name="TaskConSum0" xml:space="preserve">
+    <value>并发表旨在用作热图。表示每天的每个小时。每个单元格中的数字代表特定小时内计算的最高并发运行任务数。此数据可用于辅助作业调度和代理/存储库任务大小调整。</value>
+  </data>
+  <data name="TaskConNote0" xml:space="preserve">
+    <value>使用此图表检查最大并发性。这里的每个任务都应该有 1 个对应的 Proxy Task 和 1/3 对应的 Repository Task 支持。</value>
+  </data>
+  <data name="RegTitle" xml:space="preserve">
+    <value>非默认注册表项</value>
+  </data>
+  <data name="RegBtn" xml:space="preserve">
+    <value>显示 RegKey 详细信息</value>
+  </data>
+  <data name="Reg0" xml:space="preserve">
+    <value>钥匙</value>
+  </data>
+  <data name="Reg0TT" xml:space="preserve">
+    <value></value>
+  </data>
+  <data name="Reg1" xml:space="preserve">
+    <value>价值</value>
+  </data>
+  <data name="Reg1TT" xml:space="preserve">
+    <value></value>
+  </data>
+  <data name="RegSum0" xml:space="preserve">
+    <value>此表详细列出了与 Veeam Backup &amp;amp; Replication 基本安装期间设置的默认键不同的任何注册表键，特别是在 &lt;a class="bld"&gt;HKLM\\SOFTWARE\\Veeam\\Veeam Backup and Replication&lt;/a&gt;</value>
+  </data>
+  <data name="RegNote0" xml:space="preserve">
+    <value>由于某些注册表项与错误修复和/或出于各种原因推荐的其他调整相关联，因此最好查阅您过去的支持案例电子邮件和说明，或联系您的 Veeam 工程师以了解有关此处显示的密钥的任何问题。</value>
+  </data>
+  <data name="RegNote1" xml:space="preserve">
+    <value>一些键，例如 LoggingLevel 和其他与“日志”相关的键，如果需要，在遵循相应的&lt;a href="https://www.veeam.com/kb1825"&gt;KB Article.&lt;/a&gt;</value>
+  </data>
+  <data name="JobInfoTitle" xml:space="preserve">
+    <value>工作信息</value>
+  </data>
+  <data name="JobInfoBtn" xml:space="preserve">
+    <value>显示工作信息详情</value>
+  </data>
+  <data name="JobInfo0" xml:space="preserve">
+    <value>名称</value>
+  </data>
+  <data name="JobInfo0TT" xml:space="preserve">
+    <value>控制台中显示的作业名称</value>
+  </data>
+  <data name="JobInfo1" xml:space="preserve">
+    <value>存储库</value>
+  </data>
+  <data name="JobInfo1TT" xml:space="preserve">
+    <value>作业所针对的存储库</value>
+  </data>
+  <data name="JobInfo2" xml:space="preserve">
+    <value>源大小</value>
+  </data>
+  <data name="JobInfo2TT" xml:space="preserve">
+    <value>作业源数据的实际大小</value>
+  </data>
+  <data name="JobInfo3" xml:space="preserve">
+    <value>还原点</value>
+  </data>
+  <data name="JobInfo3TT" xml:space="preserve">
+    <value>作业配置中设置的所需还原点</value>
+  </data>
+  <data name="JobInfo4" xml:space="preserve">
+    <value>加密</value>
+  </data>
+  <data name="JobInfo4TT" xml:space="preserve">
+    <value>作业是否加密备份？</value>
+  </data>
+  <data name="JobInfo5" xml:space="preserve">
+    <value>工作类型</value>
+  </data>
+  <data name="JobInfo5TT" xml:space="preserve">
+    <value>工作类型</value>
+  </data>
+  <data name="JobInfo6" xml:space="preserve">
+    <value>算法</value>
+  </data>
+  <data name="JobInfo6TT" xml:space="preserve">
+    <value></value>
+  </data>
+  <data name="JobInfo7" xml:space="preserve">
+    <value>计划启用时间</value>
+  </data>
+  <data name="JobInfo7TT" xml:space="preserve">
+    <value></value>
+  </data>
+  <data name="JobInfo8" xml:space="preserve">
+    <value>完全备份天数</value>
+  </data>
+  <data name="JobInfo8TT" xml:space="preserve">
+    <value></value>
+  </data>
+  <data name="JobInfo9" xml:space="preserve">
+    <value>完整备份计划</value>
+  </data>
+  <data name="JobInfo9TT" xml:space="preserve">
+    <value></value>
+  </data>
+  <data name="JobInfo10" xml:space="preserve">
+    <value>计划选项</value>
+  </data>
+  <data name="JobInfo10TT" xml:space="preserve">
+    <value></value>
+  </data>
+  <data name="JobInfo11" xml:space="preserve">
+    <value>将 Full 转换为 Synth</value>
+  </data>
+  <data name="JobInfo11TT" xml:space="preserve">
+    <value></value>
+  </data>
+  <data name="JobInfo12" xml:space="preserve">
+    <value>将 Inc 转换为 Synth</value>
+  </data>
+  <data name="JobInfo12TT" xml:space="preserve">
+    <value></value>
+  </data>
+  <data name="JobInfo13" xml:space="preserve">
+    <value>转变天数</value>
+  </data>
+  <data name="JobInfo13TT" xml:space="preserve">
+    <value></value>
+  </data>
+  <data name="JobInfoSum0" xml:space="preserve">
+    <value>• 作业定义源数据、目标、计划和处理源数据的高级设置。 Veeam Backup &amp;amp; Replication中有多种作业类型。包括备份、备份复制、CDP 策略、NAS 备份等。并非所有工作类型的每一列都有数据。</value>
+  </data>
+  <data name="JobInfoNote0" xml:space="preserve">
+    <value>•	验证为作业列出的还原点和计划选项是否与源应用程序所需的 RPO 匹配。 请参阅&lt;a href="https://helpcenter.veeam.com/docs/backup/vsphere/backup_job_schedule_vm.html?ver=110"&gt;作业调度&lt;/a&gt;。</value>
+  </data>
+  <data name="JssTitle" xml:space="preserve">
+    <value>工作会议总结（7 天）</value>
+  </data>
+  <data name="JssBtn" xml:space="preserve">
+    <value>显示工作详情</value>
+  </data>
+  <data name="Jss0" xml:space="preserve">
+    <value>职位名称</value>
+  </data>
+  <data name="Jss0TT" xml:space="preserve">
+    <value>B&amp;R 控制台中显示的作业名称</value>
+  </data>
+  <data name="Jss1" xml:space="preserve">
+    <value>项目</value>
+  </data>
+  <data name="Jss1TT" xml:space="preserve">
+    <value>作业包含的项目数</value>
+  </data>
+  <data name="Jss2" xml:space="preserve">
+    <value>最短时间（分钟）</value>
+  </data>
+  <data name="Jss2TT" xml:space="preserve">
+    <value>检测到作业运行短路</value>
+  </data>
+  <data name="Jss3" xml:space="preserve">
+    <value>最长时间（分钟）</value>
+  </data>
+  <data name="Jss3TT" xml:space="preserve">
+    <value>检测到的最长作业运行</value>
+  </data>
+  <data name="Jss4" xml:space="preserve">
+    <value>平均时间（分钟）</value>
+  </data>
+  <data name="Jss4TT" xml:space="preserve">
+    <value>平均工作时间</value>
+  </data>
+  <data name="Jss5" xml:space="preserve">
+    <value>总会话数</value>
+  </data>
+  <data name="Jss5TT" xml:space="preserve">
+    <value>检测到的作业会话总数</value>
+  </data>
+  <data name="Jss6" xml:space="preserve">
+    <value>成功率 ％</value>
+  </data>
+  <data name="Jss6TT" xml:space="preserve">
+    <value>检测到的会话的成功率</value>
+  </data>
+  <data name="Jss7" xml:space="preserve">
+    <value>平均备份大小 (TB)</value>
+  </data>
+  <data name="Jss7TT" xml:space="preserve">
+    <value>备份文件的平均大小（TB）</value>
+  </data>
+  <data name="Jss8" xml:space="preserve">
+    <value>最大备份大小 (TB)</value>
+  </data>
+  <data name="Jss8TT" xml:space="preserve">
+    <value>TB 中最大的备份文件</value>
+  </data>
+  <data name="Jss9" xml:space="preserve">
+    <value>平均数据大小 (TB)</value>
+  </data>
+  <data name="Jss9TT" xml:space="preserve">
+    <value>以 TB 为单位的平均源数据大小</value>
+  </data>
+  <data name="Jss10" xml:space="preserve">
+    <value>最大数据大小 (TB)</value>
+  </data>
+  <data name="Jss10TT" xml:space="preserve">
+    <value>以 TB 为单位的最大源数据大小</value>
+  </data>
+  <data name="Jss11" xml:space="preserve">
+    <value>平均变化率 %</value>
+  </data>
+  <data name="Jss11TT" xml:space="preserve">
+    <value>作业的平均计算变化率</value>
+  </data>
+  <data name="Jss12" xml:space="preserve">
+    <value>等待水库。数数</value>
+  </data>
+  <data name="Jss12TT" xml:space="preserve">
+    <value>作业被迫等待可用资源的总次数</value>
+  </data>
+  <data name="Jss13" xml:space="preserve">
+    <value>最大等待 (dd.hh:mm:ss)</value>
+  </data>
+  <data name="Jss13TT" xml:space="preserve">
+    <value>检测到的最长等待资源</value>
+  </data>
+  <data name="Jss14" xml:space="preserve">
+    <value>平均等待时间 (dd.hh:mm:ss)</value>
+  </data>
+  <data name="Jss14TT" xml:space="preserve">
+    <value>平均持续时间作业正在等待可用资源</value>
+  </data>
+  <data name="Jss15" xml:space="preserve">
+    <value>作业类型</value>
+  </data>
+  <data name="Jss15TT" xml:space="preserve">
+    <value>作业类型</value>
+  </data>
+  <data name="JssSum0" xml:space="preserve">
+    <value>此表旨在详细说明过去 7 天内各个作业的近期历史记录。</value>
+  </data>
+  <data name="JssNote0subhdr" xml:space="preserve">
+    <value>等待资源/作业会话长度问题：</value>
+  </data>
+  <data name="JssNote1" xml:space="preserve">
+    <value>• 将作业安排在不同的时间段开始将有助于分配资源并防止作业等待可用资源的瓶颈。 （例如，不要将所有工作安排在晚上 8:00 开始，而是在 8:00 开始一个工作，另一个在 8:30 开始，另一个在 9:00 开始。）</value>
+  </data>
+  <data name="JssNote2" xml:space="preserve">
+    <value>•	如果资源允许，增加代理上允许的并发任务数。 &lt;a href="https://helpcenter.veeam.com/docs/backup/vsphere/vmware_proxy_server.html?ver=110#:~:text=In%20the%20Max%20concurrent%20tasks%20field%2C%20specify%20the%20number%20of%20tasks%20that%20the%20backup%20proxy%20must%20handle%20in%20parallel.%20If%20this%20value%20is%20exceeded%2C%20the%20backup%20proxy%20will%20not%20start%20a%20new%20task%20until%20one%20of%20current%20tasks%20finishes."&gt;请参阅如何设置最大并发任务。&lt;/a&gt;</value>
+  </data>
+  <data name="JssNote3" xml:space="preserve">
+    <value>o	如果您的备份代理没有足够的资源来增加任务，并且它是一个虚拟机，您应该考虑增加代理可用的 CPU 和 RAM 量。</value>
+  </data>
+  <data name="JssNote4" xml:space="preserve">
+    <value>o	如果无法向现有代理添加资源，请考虑从“备份基础架构- &gt;备份代理”中部署其他备份代理</value>
+  </data>
+  <data name="JssNote5" xml:space="preserve">
+    <value>•	通过查看 VBR 控制台中的作业会话统计信息，确保您的备份作业或复制作业选择了正确的代理。</value>
+  </data>
+  <data name="JssNote6" xml:space="preserve">
+    <value>•	调查备份作业性能。如果特定作业的处理时间比正常情况长，请检查警告，将瓶颈统计信息与以前的作业会话进行比较，并尝试将问题隔离到特定代理、存储库、主机或数据存储。</value>
+  </data>
+  <data name="JssNote7" xml:space="preserve">
+    <value>o	将较大的虚拟机/服务器移动到自己的作业和计划中，以确保不会发生冲突并更快地完成作业的备份窗口（例如，将这些作业安排在所有其他作业之前或所有其他作业之后）</value>
+  </data>
+  <data name="JssNote8" xml:space="preserve">
+    <value>•	将 NAS 代理、缓存存储库和存储库与 VM 代理以及 VM 和代理存储库分开</value>
+  </data>
+  <data name="JssNote9" xml:space="preserve">
+    <value>•	&lt;a href="https://helpcenter.veeam.com/docs/backup/vsphere/gateway_server.html?ver=110#gateway-servers-deployment"&gt;使用静态网关和挂载服务器&lt;/a&gt;如果可能，卸载合成操作、SOBR 卸载处理、备份复制作业和其他任务所需的资源消耗。</value>
+  </data>
+  <data name="JssNote10" xml:space="preserve">
+    <value>•	如果合适， &lt;a href="https://www.veeam.com/kb2660"&gt;查看重复数据删除存储系统的体系结构指南。&lt;/a&gt;</value>
+  </data>
+  <data name="Vb365Banner" xml:space="preserve">
+    <value>VB365 健康检查报告</value>
+  </data>
+  <data name="v365NavTitle0" xml:space="preserve">
+    <value>全局配置</value>
+  </data>
+  <data name="v365NavValue0" xml:space="preserve">
+    <value>许可证和全局设置摘要。</value>
+  </data>
+  <data name="v365NavTitle1" xml:space="preserve">
+    <value>受保护的用户</value>
+  </data>
+  <data name="v365NavValue1" xml:space="preserve">
+    <value>受保护和未受保护用户的摘要。</value>
+  </data>
+  <data name="v365NavTitle2" xml:space="preserve">
+    <value>备份服务器</value>
+  </data>
+  <data name="v365NavValue2" xml:space="preserve">
+    <value>VB365 服务器的详细信息。</value>
+  </data>
+  <data name="v365NavTitle3" xml:space="preserve">
+    <value>备份服务器磁盘</value>
+  </data>
+  <data name="v365NavValue3" xml:space="preserve">
+    <value>有关连接到 VB365 服务器的磁盘的详细信息。</value>
+  </data>
+  <data name="v365NavTitle4" xml:space="preserve">
+    <value>代理</value>
+  </data>
+  <data name="v365NavValue4" xml:space="preserve">
+    <value>添加到当前 VB365 服务器的代理的详细信息。</value>
+  </data>
+  <data name="v365NavTitle5" xml:space="preserve">
+    <value>存储库</value>
+  </data>
+  <data name="v365NavValue5" xml:space="preserve">
+    <value>添加到当前 VB365 的存储库的详细信息。</value>
+  </data>
+  <data name="v365NavTitle6" xml:space="preserve">
+    <value>对象存储</value>
+  </data>
+  <data name="v365NavValue6" xml:space="preserve">
+    <value>有关使用的对象存储的详细信息。</value>
+  </data>
+  <data name="v365NavTitle7" xml:space="preserve">
+    <value>安全信息</value>
+  </data>
+  <data name="v365NavValue7" xml:space="preserve">
+    <value>与 VB365 相关的安全设置摘要。</value>
+  </data>
+  <data name="v365NavTitle8" xml:space="preserve">
+    <value>RBAC 角色信息</value>
+  </data>
+  <data name="v365NavValue8" xml:space="preserve">
+    <value>基于角色的访问控制设置摘要。</value>
+  </data>
+  <data name="v365NavTitle9" xml:space="preserve">
+    <value>权限检查</value>
+  </data>
+  <data name="v365NavValue9" xml:space="preserve">
+    <value>授予和使用的权限摘要。</value>
+  </data>
+  <data name="v365NavTitle10" xml:space="preserve">
+    <value>组织</value>
+  </data>
+  <data name="v365NavValue10" xml:space="preserve">
+    <value>有关受 VB365 保护的组织的详细信息。</value>
+  </data>
+  <data name="v365NavTitle11" xml:space="preserve">
+    <value>备份作业</value>
+  </data>
+  <data name="v365NavValue11" xml:space="preserve">
+    <value>此 VB365 服务器上配置的作业的详细信息。</value>
+  </data>
+  <data name="v365NavTitle12" xml:space="preserve">
+    <value>作业统计</value>
+  </data>
+  <data name="v365NavValue12" xml:space="preserve">
+    <value>分析最近的作业运行。</value>
+  </data>
+  <data name="v365NavTitle13" xml:space="preserve">
+    <value>作业会话</value>
+  </data>
+  <data name="v365NavValue13" xml:space="preserve">
+    <value>最近作业运行的详细信息。</value>
+  </data>
+</root>

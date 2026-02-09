@@ -335,6 +335,7 @@ namespace VeeamHealthCheck.Functions.Collection.PSCollections
         {
             bool success = true;
             success = this.ExecutePsScript(this.VbrConfigStartInfo());
+
             
             // Skip NAS script during remote execution as it reads from local log files
             // that don't exist on the management machine
@@ -461,6 +462,11 @@ namespace VeeamHealthCheck.Functions.Collection.PSCollections
                                $"-VBRVersion \"{CGlobals.VBRMAJORVERSION}\" " +
                                $"-ReportInterval {CGlobals.ReportDays} ";
 
+            if (CGlobals.RescanHosts)
+            {
+                argString += "-RescanHosts ";
+            }
+            
             // Add ReportPath parameter
             if (!string.IsNullOrEmpty(CVariables.vbrDir))
             {

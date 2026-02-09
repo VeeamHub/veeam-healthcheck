@@ -61,37 +61,17 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR
             this.RegistryKeyTable();
             this.log.Info(this.logStart + "RegistryKeyTable completed.");
             
-            this.log.Info(this.logStart + "Generating ProxyTable...");
-            this.ProxyTable();
-            this.log.Info(this.logStart + "ProxyTable completed.");
+            this.log.Info(this.logStart + "Generating Proxy Info section...");
+            this.ProxyInfoSection();
+            this.log.Info(this.logStart + "Proxy Info section completed.");
+
+            this.log.Info(this.logStart + "Generating Repository Info section...");
+            this.RepositoryInfoSection();
+            this.log.Info(this.logStart + "Repository Info section completed.");
             
-            this.log.Info(this.logStart + "Generating SobrTable...");
-            this.SobrTable();
-            this.log.Info(this.logStart + "SobrTable completed.");
-            
-            this.log.Info(this.logStart + "Generating ExtentTable...");
-            this.ExtentTable();
-            this.log.Info(this.logStart + "ExtentTable completed.");
-            
-            this.log.Info(this.logStart + "Generating RepoTable...");
-            this.RepoTable();
-            this.log.Info(this.logStart + "RepoTable completed.");
-            
-            this.log.Info(this.logStart + "Generating JobConcurrencyTable...");
-            this.JobConcurrencyTable();
-            this.log.Info(this.logStart + "JobConcurrencyTable completed.");
-            
-            this.log.Info(this.logStart + "Generating TaskConcurrencyTable...");
-            this.TaskConcurrencyTable();
-            this.log.Info(this.logStart + "TaskConcurrencyTable completed.");
-            
-            this.log.Info(this.logStart + "Generating JobSessionSummaryTable...");
-            this.JobSessionSummaryTable();
-            this.log.Info(this.logStart + "JobSessionSummaryTable completed.");
-            
-            this.log.Info(this.logStart + "Generating JobInfoTable...");
-            this.JobInfoTable();
-            this.log.Info(this.logStart + "JobInfoTable completed.");
+            this.log.Info(this.logStart + "Generating Job Tables section...");
+            this.JobTablesSection();
+            this.log.Info(this.logStart + "Job Tables section completed.");
 
             if (CGlobals.EXPORTINDIVIDUALJOBHTMLS)
             {
@@ -180,6 +160,45 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR
             
             // Close the parent section
             this.HTMLSTRING += this.tables.AddConfigurationTablesFooter();
+        }
+
+
+        private void ProxyInfoSection()
+        {
+            this.HTMLSTRING += this.tables.AddProxyInfoHeader();
+
+            this.ProxyTable();
+            this.ServersRequirementsTable();
+
+            this.HTMLSTRING += this.tables.AddProxyInfoFooter();
+        }
+
+        private void RepositoryInfoSection()
+        {
+            this.HTMLSTRING += this.tables.AddRepositoryInfoHeader();
+
+            this.SobrTable();
+            this.ExtentTable();
+            this.RepoTable();
+
+            this.HTMLSTRING += this.tables.AddRepositoryInfoFooter();
+        }
+
+        private void JobTablesSection()
+        {
+            this.HTMLSTRING += this.tables.AddJobTablesHeader();
+
+            this.JobConcurrencyTable();
+            this.TaskConcurrencyTable();
+            this.JobSessionSummaryTable();
+            this.JobInfoTable();
+
+            this.HTMLSTRING += this.tables.AddJobTablesFooter();
+        }
+
+        private void ServersRequirementsTable()
+        {
+            this.HTMLSTRING += this.tables.AddServersRequirementsTable(this.SCRUB);
         }
 
         private void MissingJobsTable()

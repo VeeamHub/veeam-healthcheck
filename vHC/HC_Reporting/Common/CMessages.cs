@@ -39,7 +39,7 @@ REMOTE OPERATIONS:
 SPECIAL MODES:
   /security         Run security-focused assessment only
   /import           Generate report from existing data (no new collection)
-                    Uses default path: C:\temp\vHC
+                     Uses default path: C:\temp\vHC
   /import:<path>    Generate report from CSV files at specified path
                     Supports both flat and nested directory structures:
                     - Direct: /import:C:\path\to\csvs

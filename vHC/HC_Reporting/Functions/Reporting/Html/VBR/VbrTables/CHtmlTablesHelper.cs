@@ -7,6 +7,7 @@ using VeeamHealthCheck.Functions.Reporting.Html;
 using VeeamHealthCheck.Functions.Reporting.Html.Shared;
 using VeeamHealthCheck.Functions.Reporting.Html.VBR;
 using VeeamHealthCheck.Reporting.Html.VBR;
+using VeeamHealthCheck.Shared;
 
 // using VeeamHealthCheck.Reporting.Html.VBR.VbrTables.Security;
 namespace VeeamHealthCheck.Reporting.Html.VBR
@@ -46,12 +47,15 @@ namespace VeeamHealthCheck.Reporting.Html.VBR
 
         public List<string> CollectedOsInfo()
         {
-            CDataFormer df = new();
-            List<CManagedServer> list = df.ServerXmlFromCsv(false);
+            // Use cached server info from CGlobals instead of creating a new CDataFormer
             List<string> operatingSystems = new();
-            foreach (CManagedServer server in list)
+            var serverInfo = CGlobals.ServerInfo;
+            if (serverInfo != null)
             {
-                operatingSystems.Add(server.OsInfo);
+                foreach (var server in serverInfo)
+                {
+                    operatingSystems.Add(server.OSInfo);
+                }
             }
 
             operatingSystems.Sort();

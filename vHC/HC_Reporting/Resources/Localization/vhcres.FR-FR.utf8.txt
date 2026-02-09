@@ -1,0 +1,618 @@
+# This is the base file where Resource (String) edits will be completed.
+# All translations will need to be based on this file
+#
+# To translate:
+# information left of the "=" is off limits.
+# The information to the right (->) side of "=" is what shall be translated.
+
+# GUI
+GuiAcceptButton = Accepter les conditions
+GuiAcceptText = Cet outil est proposé en tant qu'utilitaire gratuit pour évaluer votre configuration Veeam. Il est proposé \"à vos risques et périls\".\n\nL'outil utilisera PowerShell et SQL pour collecter des données, puis générera des fichiers et des dossiers stocké localement.\n\nLes fichiers peuvent être anonymisés pour masquer les données sensibles. L'acceptation des Conditions signifie que l'utilisateur s'engage à exécuter ce programme pleinement.
+GuiImportButton = Importer
+GuiImportModeOnly = Mode d'importation
+GuiInstCaveat1 = * Si vous choisissez de supprimer les types de données sensibles, seul le rapport HTML sera nettoyé. Voir: 
+GuiInstCaveat2 = ** Notez que dans de large environnements, cet outil peut prendre jusqu'à 3 heures à compléter.
+GuiInstHeader = Instructions:
+GuiInstLine1 = 1. Accepter les conditions
+GuiInstLine2 = 2. Cliquez sur EXÉCUTER
+GuiInstLine3 = 3. À la fin, l'Explorateur Windows s'ouvrira dans le répertoire de sauvegarde. (Si activé, le rapport HTML sera affiché)
+GuiInstLine4 = 4. Examiner le rapport comme vous le souhaitez
+GuiInstLine5 = 5. Capturez les résultats dans C:\\temp\\vHC* - ou du répertoire spécifié.
+GuiInstLine6 = 6. Avertissez votre Veeam SE et/ou envoyez-lui les résultats pour examen
+GuiOptionsHeader = Options:
+GuiOutPath = Répertoire de sauvegarde
+GuiRunButton = Exécuter
+GuiSensData = Supprimer les données sensibles du rapport
+GuiShowFiles = Afficher les fichiers à la fin
+GuiShowHtml = Afficher le rapport HTML à la fin
+GuiTitle = Bilan de santé Veeam
+GuiTitleBnR = B&R
+GuiTitleVB365 = VB365
+GuiRescanHosts = Rescan Hosts
+
+#protworkload
+PlHdr0 = VM Total
+PlHdrTT0 = Nombre total de VMs VMware detectées.
+PlHdr1 = VM Protégées
+PlHdrTT1 = Nombre total de VMs VMware protégées
+PlHdr2 = VM Non Protégées
+PlHdrTT2 = Nombre total de VMs VMware non protégées
+PlHdr3 = VM Potentiellement Dupliquées
+PlHdrTT3 = Charges de travail potentiellement dupliquées
+PlHdr4 = VM Protégées par Agents
+PlHdrTT4 = VM sauvegardées via des agents en tant que serveurs physiques
+PlHdr5 = Serveurs Total
+PlHdrTT5 = Nombre total de serveurs ajoutés aux groupes de protection
+PlHdr6 = Serveurs Protégés
+PlHdrTT6 = Nombre total de serveurs avec des sauvegardes
+PlHdr7 = Serveurs non Protégés
+PlHdrTT7 = Nombre total de serveurs non protégés listé dans un groupe de protection
+PlSum1 = Ce tableau récapitule la quantité de charges de travail détectées dans le serveur de sauvegarde actuel. Le nombre de VMs VMware (Vi Total) est déterminé par le service Veeam Broker local et compare ce nombre de VM avec les sauvegardes existantes. Les charges de travail physiques (Phys Total) sont déterminées par le nombre de machines virtuelles ajoutées aux groupes de protection, puis comparées au contenu des tâches de sauvegarde.
+PlNote1 = "Duplicates" montre l'écart entre les charges de travail uniques dans les tâches de sauvegarde et les charges de travail sur plusieurs tâches de sauvegarde, comme cela peut être reflété dans le fichier VMC. Cela ne signifie pas que les machines virtuelles (ou leur consommation de licences) sont dupliquées.
+#end protected workload section
+
+
+
+
+
+# general strings
+GeneralNotesHeader =	Notes:
+GeneralSummaryHeader =	Résumé:
+
+#header 
+HtmlHeader =	Bilan de santé VBR
+HtmlIntroLine1 =	- Ce rapport fournit des données et un aperçu de votre déploiement Veeam Backup and Replication (VBR). Les informations fournies ici sont destinées à être utilisées en collaboration avec votre représentant Veeam.
+HtmlIntroLine2 =	- Les données brutes sont capturées au format CSV et sont accessibles localement dans le dossier d'exportation. CSV vous permettra de manipuler les données dans des outils tels qu'Excel.
+HtmlIntroLine3 =	- Des informations supplémentaires sur les sessions de travail individuelles peuvent être trouvées dans le dossier de résultats <a href="C:\\temp\\vHC\\JobSessionReports"> sous C:\\temp\\vHC\\JobSessionReports
+HtmlIntroLine4 =	- NOTE: Lors du passage de la souris, une info-bulle peut apparaître contenant des données explicatives de l'en-tête du tableau ou de la colonne de données.
+HtmlIntroLine5 =	- NOTE: L'outil que vous avez exécuté pour générer ce rapport est entièrement autonome, ne fait pas de « phone-home » et n'a été exécuté que sur votre serveur Veeam Backup and Replication. Il interroge la base de données VBR, le registre, la configuration et les fichiers logs. Il ne nécessite pas d'accès à vCenter ou à toute autre infrastructure.
+
+# navigation
+NavBkpSrvDeet =	Informations détaillées sur le serveur de sauvegarde, la base de données de configuration, les rôles et les ressources.
+NavBkpSrvLink =	Serveur de sauvegarde
+NavColapse = Réduire/Développer tout
+NavHeader =	Navigation:
+NavJobConDeet =	Heatmap montrant la simultanéité maximale des tâches trouvées par heure.
+NavJobConLink =	Concurrence des Job
+NavJobInfoDeet = Répartition détaillée de chaque Job.
+NavJobInfoLink = Informations des Jobs
+NavJobSessSumDeet =	Résumé des sessions de Job par nom de Job.
+NavJobSessSumLink =	Résumé de la session Job
+NavJobSumDeet =	Résumé des Jobs trouvés par type et nombre.
+NavJobSumLink =	Résumé des Jobs
+NavLicInfoDetail = Affiche les informations de licence.
+NavLicInfoLink = Informations license.
+NavMissingDeet = Affiche les charges de travail et les types qui ne sont pas utilisés.
+NavMissingJobLink =	Types de Job manquants
+NavProtWkldDeet = Affiche le nombre d'objets VM et serveur détectés par rapport aux objets avec sauvegardes.
+NavProtWrkld = Charges de travail protégées
+NavProxyDeet = Détails sur les ressources proxy et leur configuration.
+NavProxyInfoLink = Informations sur le proxy
+NavRegKeyDeet =	Affiche toutes les valeurs de registre différentes d'une installation par défaut.
+NavRegKeyLink =	Clés de registre rajoutées / modifiées
+NavRepoDeet = Détails des ressources et configuration pour non-SOBR repositories.
+NavRepoInfoLink = Information Repository
+NavSecSumDeet =	Petit tableau montrant les fonctionnalités de sécurité utilisées.
+NavSecSumLink =	Résumé de sécurité
+NavSobrDeet = Résumé des SOBR et de leur options de configuration.
+NavSobrExtDeet = Détails sur les extentions SOBR, leur ressources et configuration.
+NavSobrExtLink = Information des extentions SOBR
+NavSobrInfoLink = Information des SOBR
+NavSrvInfoDeet = Liste de tous les serveurs ajoutés dans la configuration par l'utilisateur.
+NavSrvInfoLink = Informations Serveurs
+NavSrvSumDeet =	Résumé des types et des nombres d'infrastructures détectés.
+NavSrvSumLink =	Résumé Serveurs
+NavTaskConDeet = Heatmap montrant la concurrence maximale des VMs par heure.	
+NavTaskConLink = Concurrence VMs
+
+
+#License table
+LicCcTT = Est-ce que Cloud Connect est activé?
+LicExpTT = Date d'expiration de la licence
+LicTblLicTo = Licensé à
+LicSupExpTT = Date d'expiration du support
+LicTableHeader = Résumé de la licence
+LicTblCc = Cloud Connect activé
+LicTblEdition =	Édition
+LicTblExpDate =	Date d'expiration
+LicTblLicInst =	Instances licencées.
+LicTblLicNas =	Nas licencé
+LicTblLicSock =	Sockets licencés.
+LicTblNewInst =	Nouvelle Instance.
+LicTblRentInst = Rental Inst.
+LicTblStatus = Statut
+LicTblSupExpDate = Date d'expiration du support
+LicTblType = Types
+LicTblUsedInst = Instances utilisées
+LicTblUsedNas =	Nas utilisé
+LicTblUsedSock = Sockets utilisés
+LtEdTT = Édition de licence Veeam
+LtInstLicTT = Nombre total d'instances sous licence
+LtInstNewTT = Nombre total de nouvelles instances
+LtInstRentalTT = Total des instances de location
+LtInstUsedTT = Nombre total d'instances utilisées
+LtNasLicTT = Nombre total de NAS sous licence
+LtNasUsedTT = Nombre total de licences NAS utilisées
+LtSocLicTT = Nombre total de sockets sous licence
+LtSocUsedTT = Nombre total de sockets utilisés
+LtStatusTT = Statut de la licence Veeam
+LtTypeTT = Type de licence Veeam
+
+
+# not protected workloads
+NpButton = Afficher les détails sur les types de travaux manquants
+NpSum1 = Ce tableau récapitule les types de travaux qui sont absents de votre configuration ou qui n'ont pas pu être analysés. Veuillez consulter votre ingénieur Veeam pour plus d'informations.
+NpTitle = Types de travail manquants
+
+#sec Summary
+
+SSHdr0 = Immuabilité
+SSHdrTT0 = L'immuabilité est-elle utilisée quelque part sur ce serveur?
+SSHdr1 = Cryptage du trafic
+SSHdrTT1 = Le cryptage du trafic est-elle activée?
+SSHdr2 = Cryptage des fichiers de sauvegarde
+SSHdrTT2 = Les fichiers de sauvegarde sont-ils cryptés?
+SSHdr3 = Cryptage de la sauvegarde de configuration
+SSHdrTT3 = La sauvegarde de la configuration est-elle cryptée?
+SSSum1 = Le tableau récapitulatif de la sécurité fournit une vue d'ensemble des fonctionnalités de sécurité activées sur un ou plusieurs composants de votre configuration B&R . Une valeur "faux" peut être une zone à corriger.
+SSSubHdr1 = Immuabilité
+SSSubHdr2 = Cryptage Trafic
+SSSubHdr3 = Cryptage des fichiers de sauvegarde
+SSSubHdr4 = Cryptage de la sauvegarde de configuration
+SSNote1 = Pour des sauvegardes immuables, envisagez de déployer un <a href="https://helpcenter.veeam.com/docs/backup/vsphere/hardened_repository.html?ver=110">Hardened Linux Repository</a> ou choisissez un <a href="https://helpcenter.veeam.com/docs/backup/vsphere/object_storage_repository.html?ver=110">Public Cloud ou S3-Compatible</a> qui offre l'immuabilité.
+SSNote2 = <a href="https://helpcenter.veeam.com/docs/backup/vsphere/security_considerations.html?zoom_highlight=traffic+encryption&amp;ver=110#:~:text=Encrypt%20network%20traffic,Network%20Data%20Encryption.">Le cryptage du trafic Encryption</a> est activé par défaut pour tout le trafic public. Si cette valeur s'affiche comme fausse, envisagez de réactiver le paramètre pour Internet ou tout autre transfert potentiellement sensible.
+SSNote3 = Le cryptage des fichiers de sauvegardeempêche les tiers d'importer vos sauvegardes et d'avoir accès au contenu. Si les sauvegardes sont stockées hors site, pensez à <a href="https://helpcenter.veeam.com/docs/backup/vsphere/backup_job_advanced_storage_vm.html?ver=110#:~:text=To%20encrypt%20the%20content%20of%20backup%20files%2C%20select%20the%20Enable%20backup%20file%20encryption%20check%20box.">activer</a> le cryptage des fichiers de sauvegarde pour protéger les sauvegardes contre tout accès indésirable.
+SSNote4 = La <a href="https://helpcenter.veeam.com/docs/backup/vsphere/vbr_config.html?ver=110">Sauvegarde de la configuration</a> garantit que votre configuration B&R est sauvegardée et prête à être restaurée en cas de panne ou de migration. Avoir la sauvegarde de configuration  <a href="https://helpcenter.veeam.com/docs/backup/vsphere/config_backup_encrypted.html?ver=110">encrypted</a> permet une protection contre les accès indésirables ainsi que la possibilité de restaurer les mots de passe précédemment stockés dans la configuration. <a style="font-weight:bold">Envisagez d'utiliser Backup Enterprise Manager</a> <a href="https://helpcenter.veeam.com/docs/backup/em/em_manage_keys.html?ver=110">pour la protection des mots de passe</a> <a style="font-weight:bold"> pour s'assurer que les mots de passe perdus soient récupérables, et séparer Enterprise Manager et VBR en cas de panne catastrophique. Pensez également à exporter le jeu de clés vers un emplacement sécurisé. Sans cette protection, les mots de passe perdus peuvent paralyser la capacité d'utiliser les fichiers de sauvegarde.</a>
+
+
+#managed server Summary
+MssTitle = Types d'infrastructure détectés
+MssHdr1 = Nom
+MssHdr2 = Nombre
+MssHdr1TT = Nom du Serveur/Répertoire partagé
+MssHdr2TT = Nombre total détecté
+MssSum1 = Ce tableau résume les différents types et nombres d'éléments d'infrastructure ajoutés manuellement dans la configuration Veeam par l'utilisateur. 
+
+#backup server section
+BkpSrvButton = Afficher le résumé et les notes du serveur de sauvegarde.
+BkpSrvNotes1 = • Assurez-vous que le <a href="https://bp.veeam.com/vbr/3_Build_structures/B_Veeam_Components/B_VBR_Server/Backup_Server.html#compute-requirements">dimensionnement</a> du serveur de sauvegarde est adéquat pour le nombre de tâches exécutées simultanément qu'il gère. Voir le <a href="#jobConcurrency7">tableau de simultanéité</a> dans ce rapport. Remarque : si vous combinez d'autres rôles ou composants sur l'hôte du serveur de sauvegarde, le dimensionnement des ressources est additif (par exemple, serveur de sauvegarde + SQL + proxy + référentiel, etc.).
+BkpSrvNotes2 = • Assurez-vous que le <a href="https://bp.veeam.com/vbr/2_Design_Structures/D_Veeam_Components/D_VBR_DB/database.html#sizing">dimensionnement</a> du serveur SQL est adéquat
+BkpSrvNotes3 =	• Si vous utilisez SQL Express, assurez-vous qu'il ne viole pas les <a href="https://bp.veeam.com/vbr/2_Design_Structures/D_Veeam_Components/D_VBR_DB/database.html#sql-server-edition">limites de SQL Express</a> (par exemple, le nombre de processeurs, de cœurs, de mémoire et de capacité de base de données). Un serveur de sauvegarde lent, non réactif ou chargé d'erreurs peut souvent résulter de l'atteinte de ces limites SQL.
+BkpSrvNotes4 =	• L'attribution de tâches de protection des données pour utiliser les composants Proxy par défaut ou Référentiel de sauvegarde par défaut peut entraîner des conflits pour les ressources du serveur de sauvegarde ou tout autre trafic involontaire. La désactivation, la suppression et/ou la réaffectation de ces éléments hors du serveur de sauvegarde peuvent être souhaitables dans les déploiements plus importants ou distribués.
+BkpSrvNotes5 =	• Un disque performant est recommandé pour l'<a href="https://bp.veeam.com/vbr/3_Build_structures/B_Veeam_Components/B_VBR_Server/Backup_Server.html#log-files">emplacement des fichiers logs</a>>, qui par défaut est "%ProgramData%\\Veeam\\Backup"
+BkpSrvNotes6 =	• Le DNS est un composant clé. Assurez la <a href="https://bp.veeam.com/vbr/3_Build_structures/B_Other/dns_resolution.html#dns-resolution"> resolution DNS</a> à la fois depuis le serveur de sauvegarde et pour les autres systèmes vers le serveur de sauvegarde Le serveur fonctionne correctement. Les autres composants de l'environnement doivent pouvoir résoudre le serveur de sauvegarde et les autres composants de l'infrastructure Veeam (par exemple, proxy, référentiel) par FQDN. Les requêtes directes et inverses doivent être fonctionnelles.
+BkpSrvSummary1 = Le serveur de sauvegarde (alias VBS ou VBR Server) est le composant central de l'infrastructure de sauvegarde qui remplit le rôle de « centre de configuration et de contrôle ». Le serveur de sauvegarde exécute tous les types d'activités administratives, notamment : la coordination des tâches de protection et de récupération des données, la planification des tâches et l'allocation des ressources, et la gestion d'autres composants de l'infrastructure de sauvegarde.
+BkpSrvSummary2 =	• Les serveurs de sauvegarde fonctionnent sous Microsoft Windows
+BkpSrvSummary3 =	• Stocke les données sur l'infrastructure de sauvegarde, les travaux, les sessions et d'autres données de configuration sur un serveur SQL local ou distant. Dans une installation par défaut, SQL Server Express est installé localement.
+BkpSrvSummary4 =	• A des composants supplémentaires déployés par défaut : Proxy, Repository
+BkpSrvTblCfgEnabled = Sauvegarde de la configuration (CB) activée
+BkpSrvTblCfgEncrypt = CB Cryptée
+BkpSrvTblCfgLastRes = CB Dernier résultat
+BkpSrvTblCore =	Cœurs
+BkpSrvTblHead =	Informations sur le serveur de sauvegarde et la base de données de configuration
+BkpSrvTblName =	Nom
+BkpSrvTblProxyRole = Rôle de proxy
+BkpSrvTblRam = RAM
+BkpSrvTblRepoRole = rôle de Repo/Gateway
+BkpSrvTblSqlCores = Cœurs SQL
+BkpSrvTblSqlEdition = Édition SQL
+BkpSrvTblSqlLocal = SQL local
+BkpSrvTblSqlName = Nom du serveur SQL
+BkpSrvTblSqlRam = RAM SQL
+BkpSrvTblSqlVersion = Version SQL
+BkpSrvTblTarget = Répertoire de sauvegarde CB
+BkpSrvTblVersion = Version Veeam
+BkpSrvTblWanRole = Accélérateur WAN.
+BstCfgEnabledTT = Sauvegarde de la configuration activée/désactivée
+BstCfgEncTT = Statut du cryptage de la sauvegarde de la configuration
+BstCfgLastResTT = 	Dernier résultat de la sauvegarde de la configuration
+BstCfgTarTT = 	Nom du repository utilisé our la sauvegarde de la configuration
+BstCpuTT = Cœurs physiques détectés sur le serveur B&R
+BstNameTT =	Nom d'hôte du serveur B&R
+BstPrxTT = Le serveur de sauvegarde est-il également un proxy ?
+BstRamTT = RAM totale détectée sur le serveur B&R
+BstRepTT = Le serveur de sauvegarde est-il également un serveur de repository ou gateway ?
+BstSqlCpuTT = 	CPU SQL Server (si non local)
+BstSqlEdTT = 	Édition SQL Server
+BstSqlLocTT = 	SQL est-il installé sur le même serveur que B&R ?
+BstSqlNameTT = 	nom d'hôte SQL Server (si non local)
+BstSqlRamTT = 	RAM SQL Server (si non locale)
+BstSqlVerTT = 	version du serveur SQL
+BstVerTT = 	Version détectée du logiciel B&R
+BstWaTT = 	Le serveur de sauvegarde est-il également un accélérateur WAN ?
+
+#SOBRs
+Titre Sbr = Détails SOBR
+SbrBtn = Afficher les détails SOBR
+Sbr0 = Nom
+Sbr0TT = Nom SOBR
+Sbr1 = Extents
+Sbr1TT = Nombre d'extents
+Sbr2 = Police
+Sbr2TT = Police de données
+Sbr3 = Tier Capacité
+Sbr3TT = Le tier de capacité est-il activé ?
+Sbr4 = Copier
+Sbr4TT = Le mode Copie est-il utilisé ?
+Sbr5 = Déplacer
+Sbr5TT = Le mode Déplacer est-il utilisé ?
+Sbr6 = Tier Archive
+Sbr6TT = Le Tier archive est-il activé ?
+Sbr7 = Par machine
+Sbr7TT = Le SOBR utilise-t-il des fichiers de sauvegarde par machine ?
+Sbr8 = Type de Tier Capacité
+Sbr8TT = Type de Tier Capacité utilisé
+Sbr9 = Immuable
+Sbr9TT = Le Tier Capacité utilise-t-il l'immuabilité
+Sbr10 = période immuable
+Sbr10TT = Période d'immuabilité
+Sbr11 = Limite de taille activée
+Sbr11TT = Le Tier Capacité est-il limité par la capacité totale ?
+Sbr12 = Limite de taille
+Sbr12TT = limite de capacité maximale de téléchargement du Tier Capacité définie par l'utilisateur
+SbrSum0 = • Un scale-out backup repository ("SOBR") est un espace logique unique qui est composé d'un ou plusieurs extensions repository de sauvegarde, permettant de grandir de manière horizontale sur plusieurs tiers. Les données atterrissent sur le ou les tiers de performance locaux du SOBR, qui peuvent être étendus avec des tiers de stockage objets pour le stockage à long terme et d'archivage : tier de capacité et tier d'archivage.
+SbrSum1 = • SOBR peut inclure plusieurs types d'extensions, notamment : Windows, Linux, NFS, SMB, les appliances de déduplication et le stockage objets
+SbrNote0 = • Combien d'extensions sont utilisées? Un grand nombre d'extensions peut potentiellement entraîner des problèmes de gestion des métadonnées et une dégradation des performances. Discutez avec votre ingénieur Veeam si votre nombre d'extensions est adéquat.
+SbrNote1 = • La <a href="https://helpcenter.veeam.com/docs/backup/vsphere/backup_repository_sobr_placement.html?ver=110">Police de placement</a> "Performance" est-elle utilisée? Si oui, demandez-vous s'il y avait une raison spécifique ou un cas d'utilisation particulier? La police de placement "Data Locality" est plus souvent la police idéale pour la plupart des déploiements et des cas d'utilisation.
+SbrNote2 = • Si vous utilisez ReFS ou XFS <a href="https://helpcenter.veeam.com/docs/backup/vsphere/backup_repository_block_cloning.html?ver=110">clonage de bloc</a>, la police de placement "Data Locality" est requise pour tirer parti de la fonctionnalité de clonage de blocs ("Fast clone").
+SbrNote3 = • Un <a href="https://helpcenter.veeam.com/docs/backup/hyperv/compatible_repository_account.html?ver=110">serveur gateway est-il utilisé pour la copie/le déchargement du tier de capacité</a>? Assurez-vous que le serveur gateway dispose des ressources adéquates pour transférer toutes les sauvegardes envoyées à ce tier de stockage objets.
+SbrNote4 = • L'option "<a href="https://helpcenter.veeam.com/docs/backup/hyperv/sobr_add_extents.html?ver=110">Perform full backup when the required extent is offline</a>" (configuré dans la console VBR) doit être considérée avec soin. Elle garantit que les sauvegardes se produisent lorsque l'extension repository attendue est hors ligne, mais consomme plus d'espace pour des sauvegardes complètes supplémentaires et rend le clonage de blocs basées sur le volume telles que ReFS & XFS inefficace.
+SbrNote5 = • Est-ce que "<a href="https://helpcenter.veeam.com/docs/backup/vsphere/per_vm_backup_files.html?ver=110">per-machine</a>" est faux? S'il est faux, demandez-vous s'il y avait une raison spécifique ou un cas d'utilisation pour le désactiver? L'activer est la stratégie idéale pour la plupart des déploiements et des cas d'utilisation. Consultez votre ingénieur Veeam.
+SbrNote6 = • Le tier de stockage Accès Infréquent est-il utilisé conjointement avec le mode de copie Veeam ou l'Immuabilité sur le stockage objet? Il y a un nombre <a href="https://forums.veeam.com/object-storage-f52/aws-s3-how-to-reduce-the-number-of-api-calls-t68858.html#p382566">d'appels API supplémentaires associés à ces processus</a> qui doivent être pris en compte lors de la budgétisation des coûts d'accès.
+
+# sobr extents
+
+SbrExtTitle = Détails des extensions SOBR
+SbrExtBtn = Afficher les détails des extensions SOBR
+SbrExt0 = Nom
+SbrExt0TT = Nom de l'extension
+SbrExt1 = SOBR
+SbrExt1TT = SOBR dans lequel l'extension est jointe.
+SbrExt2 = Définir les tâches
+SbrExt2TT = Limite de tâche spécifiée (-1 signifie illimité)
+SbrExt3 = Cœurs
+SbrExt3TT = Cœurs de CPU physiques détectés sur le serveur de référentiel
+SbrExt4 = RAM
+SbrExt4TT = RAM totale détectée sur le serveur repository
+SbrExt5 = Gateway automatique
+SbrExt5TT = Le repository utilise-t-il le mode Gateway automatique?
+SbrExt6 = Serveur
+SbrExt6TT = Serveur/Gateway attribué s'il n'est pas configuré pour utiliser la Gateway automatique
+SbrExt7 = Chemin
+SbrExt7TT = Chemin de fichier spécifié pour le repository
+SbrExt 8 = Espace libre (To)
+SbrExt8TT = Espace libre détecté basé sur la dernière analyse de cache
+SbrExt9 = Espace total (To)
+SbrExt9TT = Capacité détectée du repository
+SbrExt 10 = % d'espace libre
+SbrExt10TT = Pourcentage d'espace libre calculé (espace libre / espace total)
+SbrExt 11 = Décompresser
+SbrExt11TT = Le repository décompresse-t-il les fichiers de sauvegarde avant le stockage final ?
+SbrExt 12 = Aligner les blocs
+SbrExt12TT = Le repository aligne-t-il les blocs de données ?
+SbrExt 13 = Disques en rotation
+SbrExt13TT = Le repository est-il soutenu par des disques en rotation ?
+SbrExt 14 = Utiliser l'immuabilité
+SbrExt14TT = Le repository utilise-t-il l'immuabilité?
+SbrExt15 = Type
+SbrExt15TT = Type de repository
+SbrExtSum0 = • Un SOBR est créé en prenant un ou plusieurs repository Veeam individuels (de base ou renforcés) et en les plaçant dans le SOBR. Les repository individuels composant le SOBR sont appelés «Extents».
+SbrExtSum1 = • Cette section du rapport Health Check détaille les paramètres du rrepository tels qu'ils sont configurés dans l'interface utilisateur Veeam Backup and Replication. Ces paramètres peuvent affecter ou améliorer les performances d'un travail de sauvegarde.
+SbrExtNote0subhdr = Définir les tâches:
+SbrExtNote1 = • Cette colonne est le paramètre de tâches simultanées maximum autorisé pour un repository. Il spécifie le nombre maximal autorisé de tâches simultanées pour le repository de sauvegarde. Si cette valeur est dépassée, Veeam Backup&Réplication ne démarre pas une nouvelle tâche tant que l'une des tâches en cours n'est pas terminée. Pour plus d'informations, consultez <a href="https://helpcenter.veeam.com/docs/backup/vsphere/limiting_tasks.html">Limiting the Number of Concurrent Tasks</a>.
+SbrExtNote2 = • Pour déterminer le nombre de tâches/cœurs nécessaires pour un ou plusieurs repository de sauvegarde, utilisez cette <a href="https://bp.veeam.com/vbr/2_Design_Structures/D_Veeam_Components/D_backup_repositories/">formule</ a> :
+SbrExtNote3 = • Le nombre de vCPU/cœurs proxy / 3 = le nombre de tâches de repository nécessaires.
+SbrExtNote4 = • Le paramètre doit s'aligner sur les deux colonnes suivantes : <a style="font-weight: bold">Cœurs</a> et <a style="font-weight:bold"> RAM ( Go)</ un>
+SbrExtNote5subhdr = Cœurs :
+SbrExtNote6 = • Ce nombre est égal au nombre de cœurs de CPU dans le serveur de repository.
+SbrExtNote7 = RAM :
+SbrExtNote8 = • Ce nombre est égal à la quantité de RAM dans le serveur de repository.
+SbrExtNote9 = • La quantité de RAM doit être 4x le nombre de cœurs.
+SbrExtNote10subhdr = Espace libre (To) et % d'espace libre
+SbrExtNote11 = • La meilleure pratique consiste à conserver 20 % d'espace libre dans un repository. Ceci est particulièrement important si les extensions SOBR sont formatées avec des systèmes de fichiers XFS/REFS, car le clonage de blocs et les sauvegardes synthétiques sans espace doivent avoir tous les fichiers de sauvegarde Veeam pertinents sur le même disque. L'espace libre est également important sur d'autres systèmes de fichiers car Veeam a besoin d'espace de travail pour créer des sauvegardes complètes synthétiques.
+SbrExtNote12 = • Dans la section Options générales de la console VBR, une alarme peut être définie pour alerter sur le faible pourcentage d'espace disque libre du repository.
+SbrExtNote13subhdr = Aligner les blocs
+SbrExtNote14 = • Pour les systèmes de stockage utilisant une taille de bloc fixe, cochez la case <a style=" font-weight:bold ">Align backup file data blocks</a>. Veeam Sauvegarde&Réplication aligne les données de machine virtuelle enregistrées dans un fichier de sauvegarde à une limite de bloc de 4 Ko.
+SbrExtNote15 = • Ce paramètre permet également d'accélérer le transfert de données et utilise moins de RAM lors du transfert de données vers un repository bloc
+SbrExtNote16 = • Pour les repository bloc dans Veeam Backup et Replication v11 et ultérieures, ce paramètre doit être défini comme <a style=" font-weight:bold ">true</a>.
+
+
+#Repositories
+
+RepoTitle = Détails du repository autonome
+RepoBtn = Afficher les détails du repository
+Repo0 = nombre de travaux
+Repo0TT = Total des travaux affectés au repository
+Repo1 = Per-VM
+Repo1TT = Le repository utilise-t-il des fichiers de sauvegarde par VM/Machine?
+
+# Proxies
+
+PrxTitle = Informations sur le proxy
+PrxBtn = Afficher le résumé du proxy
+Prx0 = Nom
+Prx0TT = Nom d'hôte du proxy
+Prx1 = Tâches
+Prx1TT = Limite de tâche attribuée dans la configuration du proxy.
+Prx2 = cœurs
+Prx2TT = cœurs de processeur physiques détectés (l'hyperthreading n'est pas compté)
+Prx3 = RAM
+Prx3TT = RAM totale détectée sur l'hôte proxy
+Prx4 = type de proxy
+Prx4TT = Vi ( Vmware ), HV, CDP, File
+Prx5 = mode transport
+Prx5TT = mode de transport spécifié dans la configuration du proxy
+Prx6 = Basculement vers NBD
+Prx6TT = Le proxy est-il autorisé à basculer vers NBD (mode réseau)
+Prx7 = Châssis
+Prx7TT = Le proxy est-il physique ou virtuel ?
+Prx8 = chemin du cache
+Prx8TT = Chemin spécifié pour le cache du proxy CDP
+Prx9 = taille du cache
+Prx9TT = taille de cache spécifiée pour le proxy CDP
+Prx10 = Hôte
+Prx10TT =
+Prx11 = est désactivé
+Prx11TT = Le proxy est-il désactivé par l'utilisateur?
+PrxSum0 = Les proxys Veeam sont des composant logique datamover. Il existe deux types de proxy: (<a href="https://helpcenter.veeam.com/docs/backup/vsphere/backup_proxy.html?zoom_highlight=proxy&amp;ver=110">Backup Proxies</a>, < a href="https://helpcenter.veeam.com/docs/backup/vsphere/cdp_proxy.html?ver=110">Proxies CDP</a>). Les Backup proxys sont subdivisés par fonction ou plate-forme, par exemple les File proxys pour les sauvegardes NAS ou différents hyperviseurs.
+PrxSum1 = • Les proxys de sauvegarde se situent entre les données source (VM ou partages de fichiers) et les repository de sauvegarde. Leur rôle est de traiter les tâches de sauvegarde et de fournir le trafic de sauvegarde aux repository.
+PrxSum2 = o Les proxys VM Backup peuvent exploiter différents <a href="https://helpcenter.veeam.com/docs/backup/vsphere/transport_modes.html?ver=110">modes de transport</a>.
+PrxSum3 = o Les proxys de sauvegarde de fichiers peuvent sauvegarder les données source à partir de chemins snapshot spécifiés manuellement ou automatiquement pour <a href="https://helpcenter.veeam.com/docs/backup/vsphere/file_share_backup_nfs_share_advanced_settings.html?ver=110">NFS</a>, <a href="https://helpcenter.veeam.com/docs/backup/vsphere/file_share_backup_smb_share_advanced_settings.html?ver=110">SMB</a>, filers NAS d'entreprise. (Remarque: les serveurs gérés n'utilisent pas les File proxys)
+PrxSum4 = o 	Les proxys de sauvegarde ne stockent ni ne cachent aucune donnée localement.
+PrxSum5 = • Les proxys CDP traitent les polices CDP et fonctionnent comme des dispositifs de transfert de données entre les hôtes VMware source et cible.
+PrxSum6 = o Les proxys CDP nécessitent un <a href="https://helpcenter.veeam.com/docs/backup/vsphere/system_requirements.html?ver=110#vmware-cdp-proxy-server">cache local.</a>
+PrxNote0 = • 	Examinez la colonne « hôte » et identifiez le ou les hôtes qui prennent en charge <a href="https://helpcenter.veeam.com/docs/backup/vsphere/limiting_tasks.html?ver=110#task-limitation -for-components-with-several-roles">plusieurs</a> rôles proxy:
+PrxNote1 = o 	Les rôles peuvent être combinés à condition que vous allouiez <a href="https://helpcenter.veeam.com/docs/backup/vsphere/limiting_tasks.html?ver=110">suffisamment de ressources</a>.
+PrxNote2 =  	Si les rôles ne sont pas simultanés, allouez les ressources maximales calculées sur tous les rôles pris en charge.
+PrxNote3 =  	Si les rôles sont simultanés, allouez <a href="https://helpcenter.veeam.com/docs/backup/vsphere/limiting_tasks.html?ver=110#task-limitation-for-components-with-several- rôles">suffisamment</a> de ressources pour tous les rôles
+PrxNote4 =  	Gardez à l'esprit que les proxys CDP sont constamment actifs et transfèrent des données, il est donc impératif de "réserver" suffisamment de ressources pour son rôle et d'ajouter ce qui est nécessaire au(x) rôle(s) combiné(s).
+PrxNote5 = • Proxy CDP:
+PrxNote6 = o 	Assurez-vous que le <a href="https://helpcenter.veeam.com/docs/backup/vsphere/cdp_proxy.html?zoom_highlight=CDP+cache&amp;ver=110#vmware-cdp-proxy-cache">cache</a> est correctement dimensionné
+PrxNote7 = o 	Marquer les proxys CDP avec cache situé sur le disque C:\\ comme un risque potentiel.
+PrxNote8 = • 	Comparez les <a href="https://helpcenter.veeam.com/docs/backup/vsphere/limiting_tasks.html?ver=110">tâches</a> assignées et le nombre de cœurs et identifiez un <a href=" https://helpcenter.veeam.com/docs/backup/vsphere/limiting_tasks.html?ver=110#task-limitation-for-backup-proxies">surabonnement</a>.
+PrxNote9 = • 	Confirmez que le ratio RAM/cœur est <a href="https://helpcenter.veeam.com/docs/backup/vsphere/system_requirements.html?ver=110#vmware-cdp-proxy-server">adéquat</a>.
+PrxNote10 = • 	Assurez-vous qu'il y a suffisamment de ressources pour le système d'exploitation de base. (<a href="https://helpcenter.veeam.com/docs/backup/vsphere/system_requirements.html?ver=110#backup-proxy-server">backup proxy</a>, <a href="https ://helpcenter.veeam.com/docs/backup/vsphere/system_requirements.html?ver=110#vmware-cdp-proxy-server">proxy CDP</a>)
+PrxNote11 = • 	Cochez le <a href="https://helpcenter.veeam.com/docs/backup/vsphere/transport_modes.html?zoom_highlight=transport+mode&amp;ver=110">mode de transport</a> sélectionné et notez où <a href="https://helpcenter.veeam.com/docs/backup/vsphere/network_mode_failover.html?ver=110">le basculement vers le mode réseau</a> est désactivé lorsque les tâches échouent ou lorsque le basculement vers le réseau est activé pour les tâches s'exécutant plus lentement que prévu (le trafic NBD peut passer par le <a href="https://helpcenter.veeam.com/docs/backup/vsphere/select_backup_network.html?zoom_highlight=preferred+network&amp;ver=110" >mauvais réseau</a>).
+PrxNote12 = • 	Les proxys Hyper-V hors hôte doivent <a href="https://helpcenter.veeam.com/docs/backup/hyperv/offhost_backup_proxy.html?ver=110">correspondre</a> à la version de l'hôte Hyper-V protégé.
+
+
+# managed servers
+
+ManSrvTitle = Infos sur le serveur géré
+ManSrvBtn = Afficher les détails du serveur géré
+ManSrv0 = Nom
+ManSrv0TT = Nom de l'hôte/ du fichier de partage
+ManSrv1 = Cœurs
+ManSrv1TT = Cœurs de CPU physiques détectés (le cas échéant)
+ManSrv2 = RAM
+ManSrv2TT = RAM physique détectée (le cas échéant)
+ManSrv3 = Type
+ManSrv3TT = Type de serveur ou de partage
+ManSrv4 = version de l'API
+ManSrv4TT = version de l'API VMware
+ManSrv5 = VM protégées
+ManSrv5TT = Nombre total de VM détectées sur cet hôte avec les sauvegardes associées
+ManSrv6 = Machines virtuelles non protégées
+ManSrv6TT = Nombre total de VM détectées sur cet hôte sans sauvegardes associées
+ManSrv7 = nombre total de machines virtuelles
+ManSrv7TT = Nombre total de VM détectées sur cet hôte
+ManSrv8 = est un proxy
+ManSrv8TT = Le serveur sert-il de Veeam Proxy?
+ManSrv9 = Est un repository
+ManSrv9TT = Le serveur sert-il de repository Veeam ?
+ManSrv10 = Est-ce que WAN Acc.
+ManSrv10TT = Le serveur sert-il d'accélérateur WAN Veeam ?
+ManSrv11 = n'est pas disponible
+ManSrv11TT = Le serveur est-il indisponible ?
+ManSrvSum0 = Ceci répertorie tous les serveurs <a href="https://helpcenter.veeam.com/docs/backup/vsphere/setup_add_server.html?ver=110">gérés</a> par Veeam qui identifient les sources de données (Hyperviseurs), serveurs d'infrastructure de sauvegarde (windows, linux) et Veeam Backup pour les appliances AWS/Azure/GCP.
+ManSrvNote0 = •	Examinez la colonne de version de l'API et assurez-vous qu'elle est <a href="https://helpcenter.veeam.com/docs/backup/vsphere/platform_support.html?ver=110">supportée</a> et qu'elle respecte les <a href="https://helpcenter.veeam.com/docs/backup/vsphere/system_requirements.html?ver=110">exigences minimales</a>.
+ManSrvNote1 = • Notez l'hôte prenant en charge plusieurs rôles et confirmez que <a href ="">suffisamment de ressources</a> sont disponibles pour les prendre en charge.
+
+# Job Summary
+JobSumTitle = Résumé du travail
+JobSumBtn = Afficher les notes récapitulatives du travail
+JobSum0 = Type
+JobSum0TT = Type de travail
+JobSum1 = Total
+JobSum1TT = Nombre total de travaux détectés de ce type
+JobSumSum0 = Compte pour tous les types de jobs créés sur le serveur Backup et Réplication Veeam, et somme le total de tous les jobs. Le nombre de tâches exécutées simultanément a un impact direct sur le dimensionnement et les performances du serveur VBR.
+JobSumNote0 = Sachez que certaines tâches, telles que les tâches de copie de sauvegarde, sont souvent configurées pour s'exécuter en continu.
+JobSumNote1 = Voir <a href ="#jobConcurrency7">Table de concurrence</a>
+
+#job concurrency table
+JobConTitle = Tableau de simultanéité des tâches (7 jours)
+JobConBtn = Afficher la table de simultanéité
+JobCon0 = Heure
+JobCon0TT = Heure du jour ( format 24 heures )
+JobCon1 = dimanche
+JobCon1TT =
+JobCon2 = lundi
+JobCon2TT =
+JobCon3 = mardi
+JobCon3TT =
+JobCon4 = mercredi
+JobCon4TT =
+JobCon5 = jeudi
+JobCon5TT =
+JobCon6 = vendredi
+JobCon6TT =
+JobCon7 = samedi
+JobCon7TT =
+JobConSum0 = La table de concurrence est destinée à servir de carte thermique. Chaque heure de chaque jour est représentée. Le nombre dans chaque cellule représente le nombre calculé le plus élevé de travaux en cours d'exécution simultanés au cours de l'heure spécifique. Ces données peuvent être utilisées pour assurer un dimensionnement plus précis du serveur VBR.
+JobConNote0subhdr = Cœurs
+JobConNote1 = La configuration recommandée du serveur de sauvegarde Veeam est de 1 cœur de processeur (physique ou virtuel) et de 4 Go de RAM pour 10 tâches exécutées simultanément. Les tâches simultanées incluent toutes les tâches de sauvegarde ou de réplication en cours d'exécution ainsi que toutes les tâches avec une planification continue telles que les tâches de copie de sauvegarde et les tâches de Tape.
+JobConNote2 = <a href="https://bp.veeam.com/vbr/3_Build_structures/B_Veeam_Components/B_VBR_Server/Backup_Server.html" target="_blank">La recommandation minimale est de 2 cœurs de processeur et 8 Go de RAM</a>.
+JobConNote3 = Si les ressources requises dépassent le CPU et la RAM VBR actuels, la planification des tâches doit être analysée pour minimiser le nombre de tâches simultanées. Si les modifications de planification des tâches ne sont pas possibles, plusieurs serveurs VBR doivent être déployés et les tâches migrées vers les nouveaux serveurs.
+JobConNote4subhdr = Base de données Veeam Microsoft SQL
+JobConNote5bold = Veuillez suivre ces directives :
+JobConNoteSqlTableRow1Col1=Nombre de tâches exécutées simultanément
+JobConNoteSqlTableRow1Col2 = CPU
+JobConNoteSqlTableRow1Col3 = RAM
+JobConNoteSqlTableRow2Col1 = Jusqu'à 25
+JobConNoteSqlTableRow2Col2 = 2 CPU
+JobConNoteSqlTableRow2Col3 = 4 Go
+JobConNoteSqlTableRowRow3Col1 = Jusqu'à 50
+JobConNoteSqlTableRow3Col2 = 4 CPU
+JobConNoteSqlTableRow3Col3 = 8 Go
+JobConNoteSqlTableRow4Col1 = Jusqu'à 100
+JobConNoteSqlTableRow4Col2 = 8 CPU
+JobConNoteSqlTableRow4Col3 = 16 Go
+JobConNoteSqlTableNote0 = Il est recommandé d'installer SQL Standard ou Enterprise Edition si l'une des conditions suivantes s'applique:
+JobConNoteSqlTableNote1 = • Lors de la protection de plus de 500 serveurs. La taille maximale de la base de données autorisée par Express Edition est généralement suffisante, ne la considérez donc pas comme une contrainte. La console Veeam Backup & Réplication et le traitement des tâches peuvent cependant ralentir en raison des contraintes de CPU et de RAM sur l'instance SQL Server Express.
+JobConNoteSqlTableNote2 = • Lors de l'utilisation intensive des tâches Fichiers sur Tape, la base de données peut augmenter considérablement et la limite de 10 Go peut être rapidement dépassée.
+JobConNoteSqlTableNote3 = • Lorsqu'il est impossible de configurer un serveur intermédiaire externe à utiliser avec Veeam Explorer pour Microsoft SQL Server ou Veeam Explorer pour Microsoft SharePoint. Lorsque vous travaillez avec des bases de données supérieures à 10 Go, SQL Server Express ne peut pas monter les bases de données.
+JobConNoteSqlTableNote4 = • Lorsque les bases de données utilisent des fonctionnalités avancées de Microsoft SQL Server. Comme le cryptage ou le partitionnement de table, le niveau de licence du serveur intermédiaire (local ou distant) doit correspondre au niveau de l'instance d'origine.
+
+
+# VM concurrency chart
+TaskConTitle = simultanéité des tâches VM (7 jours)
+TaskConBtn = Afficher le tableau de concurrence
+TaskCon0 = Heure
+TaskCon0TT = Heure du jour (format 24 heures)
+TaskCon1 = dimanche
+TaskCon1TT =
+TaskCon2 = Lundi
+TaskCon2TT =
+TaskCon3 = mardi
+TaskCon3TT =
+TaskCon4 = mercredi
+TaskCon4TT =
+TaskCon5 = jeudi
+TaskCon5TT =
+TaskCon6 = vendredi
+TaskCon6TT =
+TaskCon7 = samedi
+TaskCon7TT =
+TaskConSum0 = La table de concurrence est destinée à servir de carte thermique. Chaque heure de chaque jour est représentée. Le nombre dans chaque cellule représente le nombre calculé le plus élevé de tâches en cours d'exécution simultanées au cours de l'heure spécifique. Ces données peuvent être utilisées pour faciliter la planification des travaux et le dimensionnement des tâches proxy/repository.
+TaskConNote0 = Utilisez ce tableau pour vérifier la simultanéité maximale. Chaque tâche ici doit être soutenue par 1 tâche proxy correspondante et 1/3 tâche de repository correspondante.
+
+
+# Reg options
+RegTitle = Clés de registre non par défaut
+RegBtn = Afficher les détails de la clé de registre
+Reg0 = clé
+Reg0TT =
+Reg1 = valeur
+Reg1TT =
+RegSum0 = Ce tableau détaille toutes les clés de registre différentes des clés par défaut définies lors d'une installation de base de Veeam Backup & Réplication. Plus précisément dans <a class="bld">HKLM\\SOFTWARE\\Veeam\\Veeam Backup and Replication</a>
+RegNote0 = Étant donné que certaines clés de registre sont liées à des corrections de bogues et/ou à d'autres ajustements recommandés pour diverses raisons, il est préférable de consulter vos anciens e-mails et notes de support ou de contacter votre ingénieur Veeam pour toute question concernant les clés présentées ici.
+RegNote1 = Certaines clés, telles que LoggingLevel et d'autres clés liées au "Log" peuvent parfaitement être ajustées, si nécessaire, en suivant l'<a href ="https://www.veeam.com/kb1825"> article de KB.</a>
+
+
+#Job Info
+JobInfoTitle = Informations sur le travail
+JobInfoBtn = Afficher les détails des informations sur le travail
+JobInfo0 = Nom
+JobInfo0TT = Nom de la tâche tel qu'affiché dans la console
+JobInfo1 = Repository
+JobInfo1TT = Repository dans lequel le travail est ciblé
+JobInfo2 = Taille de la source
+JobInfo2TT = Taille réelle des données source pour le travail
+JobInfo3 = points de restauration
+JobInfo3TT = Points de restauration souhaités tels que définis dans la configuration du travail
+JobInfo4 = Crypté
+JobInfo4TT = La tâche crypte-t-elle les sauvegardes ?
+JobInfo5 = Type de travail
+JobInfo5TT = Type de travail
+JobInfo6 = Algorithme
+JobInfo6TT =
+JobInfo7 = Heure d'activation de la planification
+JobInfo7TT =
+JobInfo8 = Jours de sauvegarde complète
+JobInfo8TT =
+JobInfo9 = Planification de sauvegarde complète
+JobInfo9TT =
+JobInfo10 = Options de planification
+JobInfo10TT =
+JobInfo11 = Transformer Full en synthétique
+JobInfo11TT =
+JobInfo12 = Transformer Inc en synthétique
+JobInfo12TT =
+JobInfo13 = jours de transformation
+JobInfo13TT =
+JobInfoSum0 = • Les tâches définissent les données source, la destination, la planification et les paramètres avancés de gestion de ces données source. Il existe plusieurs types de tâches dans Veeam Backup & Réplication, y compris la sauvegarde, la copie de sauvegarde, la police CDP, la sauvegarde NAS, etc. Les types de travaux n'auront pas tous de données dans chaque colonne.
+JobInfoNote0 = • Vérifiez que les points de restauration et les options de planification répertoriés pour la tâche correspondent au RPO requis de l'application source. Voir <a href="https://helpcenter.veeam.com/docs/backup/vsphere/backup_job_schedule_vm.html?ver=110">Job Scheduling</a>.
+
+# job session summary
+JssTitle = Résumé de la session de travail (7 jours)
+JssBtn = Afficher les détails du travail
+Jss0 = Nom du travail
+Jss0TT = Nom de la tâche tel qu'il apparaît dans la console B&R
+Jss1 = Articles
+Jss1TT = Nombre d'éléments contenus dans la tâche
+Jss2 = Durée minimale (min)
+Jss2TT = Exécution de la tâche détectée en court-circuit
+Jss3 = Temps maximum (min)
+Jss3TT = Exécution de tâche détectée la plus longue
+Jss4 = Temps moyen (min)
+Jss4TT = Durée moyenne de l'emploi
+Jss5 = nombre total de sessions
+Jss5TT = Nombre total de sessions de travail détectées
+Jss6 = Taux de réussite %
+Jss6TT = Taux de réussite sur les sessions détectées
+Jss7 = taille de sauvegarde moyenne (To)
+Jss7TT = Taille moyenne du fichier de sauvegarde en To
+Jss8 = taille de sauvegarde maximale (To)
+Jss8TT = Fichier de sauvegarde le plus volumineux en To
+Jss9 = taille moyenne des données (To)
+Jss9TT = Taille moyenne des données source en To
+Jss10 = taille maximale des données (To)
+Jss10TT = plus grande taille de données source en To
+Jss11 = % de taux de modification moyen
+Jss11TT = taux de modification moyen calculé pour la tâche
+Jss12 = Attendre Res. Compter
+Jss12TT = Nombre total de fois que le travail a été forcé d'attendre les ressources disponibles
+Jss13 = Attente max ( jj.hh :mm:ss )
+Jss13TT = Attente détectée la plus longue pour les ressources
+Jss14 = Attente moyenne ( jj.hh :mm:ss )
+Jss14TT = Le travail de durée moyenne attend les ressources disponibles
+Jss15 = Type de travail
+Jss15TT = type de travail
+JssSum0 = Ce tableau est destiné à détailler l'historique récent des travaux individuels au cours des 7 derniers jours.
+JssNote0subhdr = En attente de ressources/problèmes de longueur de session :
+JssNote1 = • La planification des travaux pour qu'ils démarrent à différents créneaux horaires aidera à répartir les ressources et à éviter le goulot d'étranglement qu'est un travail en attente des ressources disponibles. (Ex. Au lieu de programmer vos travaux pour qu'ils commencent tous à 20h00, commencez un travail à 20h00, un autre à 20h30 et un autre à 21h00.)
+JssNote2 = • Si les ressources le permettent, augmentez le nombre de tâches simultanées autorisées sur vos proxys.<a href="https://helpcenter.veeam.com/docs/backup/vsphere/vmware_proxy_server.html?ver=110#:~:text=In%20the%20Max%20concurrent%20tasks%20field%2C%20specify%20the%20number%20of%20tasks%20that%20the%20backup%20proxy%20must%20handle%20in%20parallel.%20If%20this%20value%20is%20exceeded%2C%20the%20backup%20proxy%20will%20not%20start%20a%20new%20task%20until%20one%20of%20current%20tasks%20finishes.">Voir Comment définir le nombre maximal de tâches simultanées.</a>
+JssNote3 = o 	Si votre proxy de sauvegarde ne dispose pas des ressources adéquates pour augmenter les tâches et qu'il s'agit d'une machine virtuelle, vous devez envisager d'augmenter la quantité de CPU et de RAM disponible pour le proxy.
+JssNote4 = o 	Si l'ajout de ressources aux proxys existants n'est pas une option , envisagez de déployer des proxys de sauvegarde supplémentaires à partir de "Backup Infrastructure->Backup Proxies"
+JssNote5 = • 	Assurez-vous que votre travail de sauvegarde ou de réplication sélectionne les proxys corrects en affichant les statistiques de session de travail dans la console VBR.
+JssNote6 = • 	Étudiez les performances de la tâche de sauvegarde. Si des travaux spécifiques prennent plus de temps à traiter que la normale, vérifiez les avertissements, comparez les statistiques de goulot d'étranglement aux sessions de travaux précédentes et essayez d'isoler le problème sur un proxy, un repository, un hôte ou un magasin de données spécifique.
+JssNote7 = o 	Déplacez les machines virtuelles/serveurs plus importants vers leur propre job et planifiez pour vous assurer qu'aucun conflit ne se produit avec une fenêtre de sauvegarde du travail plus rapide (planifiez ces travaux avant tous les autres travaux ou après tous les autres travaux, par exemple)
+JssNote8 = • 	Séparez les proxys NAS, les référentiels de cache et les référentiels des proxys de VM et des référentiels de VM et d'agents
+JssNote9 = • 	<a href="https://helpcenter.veeam.com/docs/backup/vsphere/gateway_server.html?ver=110#gateway-servers-deployment">Utiliser des gateways statiques et mount serveurs</a> si possible pour décharger la consommation des ressources requises pour les opérations synthétiques, le traitement de déchargement SOBR, les travaux de copie de sauvegarde et d'autres tâches.
+JssNote10 = • Le cas échéant,<a href ="https://www.veeam.com/kb2660">consultez les directives d'architecture pour la déduplication des systèmes de stockage.</a>
+
+
+######## VB365
+Vb365Banner = Rapport de vérification de l'état VB365
+# navigation
+v365NavTitle0 = Configuration globale
+v365NavValeur0 =
+v365NavTitle1 = Utilisateurs protégés
+v365NavValeur1 =
+v365NavTitle2 = Serveur de sauvegarde
+v365NavValeur2 =
+v365NavTitle3 = Disques du serveur de sauvegarde
+v365NavValeur3 =
+v365NavTitle4 = Proxy
+v365NavValeur4 =
+v365NavTitle5 = Repository
+v365NavValeur5 =
+v365NavTitle6 = Stockage objets
+v365NavValue6 =
+v365NavTitle7 = Informations de sécurité
+v365NavValeur7 =
+v365NavTitle8 = Informations sur les rôles RBAC
+v365NavValeur8 =
+v365NavTitle9 = Vérification des autorisations
+v365NavValeur9 =
+v365NavTitle10 = Organisations
+v365NavValue10 =
+v365NavTitle11 = Tâches de sauvegarde
+v365NavValue11 =
+v365NavTitle12 = Statistiques de l'emploi
+v365NavValue12 =
+v365NavTitle13 = Sessions de travail
+v365NavValue13 =
+
+# Global Config
+

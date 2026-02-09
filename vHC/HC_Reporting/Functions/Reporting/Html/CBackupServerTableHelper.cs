@@ -230,6 +230,10 @@ namespace VeeamHealthCheck.Functions.Reporting.Html
                     try { this.backupServer.RAM = bs.Ram; }
                     catch (NullReferenceException e)
                     { log.Error("[VBR Config] failed to add backup server RAM:\n\t" + e.Message); }
+                    // Issue #39: Add OS Version to report
+                    try { this.backupServer.OSVersion = bs.OSInfo; }
+                    catch (NullReferenceException e)
+                    { log.Error("[VBR Config] failed to add backup server OS version:\n\t" + e.Message); }
                 }
             }
         }

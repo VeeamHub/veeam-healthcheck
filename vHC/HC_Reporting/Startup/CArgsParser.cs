@@ -204,17 +204,21 @@ namespace VeeamHealthCheck.Startup
                         _hfdPath = this.ParsePath(a);
                         CGlobals.Logger.Info("HFD path: " + targetDir);
                         break;
-                    case var match when new Regex("/HOST=.*").IsMatch(a):
-                        CGlobals.REMOTEEXEC = true;
-                        CGlobals.REMOTEHOST = this.ParsePath(a);
+                    case var match when new Regex("/host=.*", RegexOptions.IgnoreCase).IsMatch(a):
+                        string providedHost = this.ParsePath(a);
 
-                        // CGlobals.Logger.Info("HFD path: " + targetDir);
-                        break;
-                    case var match when new Regex("/host=.*").IsMatch(a):
-                        CGlobals.REMOTEEXEC = true;
-                        CGlobals.REMOTEHOST = this.ParsePath(a);
-
-                        // CGlobals.Logger.Info("HFD path: " + targetDir);
+                        // Check if the provided host is actually the local machine (Issue #82)
+                        if (CHostNameHelper.IsLocalHost(providedHost))
+                        {
+                            CGlobals.Logger.Info($"Detected /host={providedHost} is local machine - using local execution mode", false);
+                            CGlobals.REMOTEEXEC = false;
+                            CGlobals.REMOTEHOST = "localhost";
+                        }
+                        else
+                        {
+                            CGlobals.REMOTEEXEC = true;
+                            CGlobals.REMOTEHOST = providedHost;
+                        }
                         break;
 
                         // case var match when new Regex("outdir:.*").IsMatch(a):
