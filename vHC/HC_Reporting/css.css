@@ -359,7 +359,8 @@ dd {
 table {
     page-break-inside: auto;
     page-break-after: auto;
-    border-collapse: collapse;
+    border-collapse: separate;
+    border-spacing: 0;
 }
 
 tr {
@@ -381,7 +382,8 @@ tfoot {
 }
 
 .content-table {
-    border-collapse: collapse;
+    border-collapse: separate;
+    border-spacing: 0;
     margin: 25px 0;
     font-size: 14px;
     min-width: 100%;
