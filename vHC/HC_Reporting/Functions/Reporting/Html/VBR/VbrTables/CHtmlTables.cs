@@ -3153,7 +3153,7 @@ this.form.TableHeader(VbrLocalizationHelper.SbrExt15, VbrLocalizationHelper.SbrE
                 this.form.TableHeader("Available RAM (GB)", "Available RAM in GB") +
                 this.form.TableHeader("Concurrent Tasks", "Current concurrent tasks") +
                 this.form.TableHeader("Suggested Tasks", "Suggested tasks based on sizing") +
-                this.form.TableHeader("Names", "Objects included") +
+                this.form.TableHeader("Proxy/Repository Names", "Proxy and repository names on this server") +
                 "</tr>";
 
             s += this.form.TableHeaderEnd();
@@ -3239,7 +3239,10 @@ this.form.TableHeader(VbrLocalizationHelper.SbrExt15, VbrLocalizationHelper.SbrE
 
                         // Suggested Tasks
                         s += this.form.TableData(r[7], string.Empty);
-                        s += this.form.TableData(names, string.Empty);
+
+                        // Format names one per line
+                        string formattedNames = names?.Replace("/ ", "<br>").Replace("/", "<br>") ?? "";
+                        s += this.form.TableData(formattedNames, string.Empty);
                         s += "</tr>";
                     }
                 }
