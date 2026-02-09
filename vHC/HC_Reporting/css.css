@@ -388,7 +388,6 @@ tfoot {
     font-size: 14px;
     min-width: 100%;
     border-radius: 8px;
-    overflow: hidden;
     box-shadow: 0 4px 16px var(--shadow-light);
     background: var(--bg-secondary);
     border: 1px solid var(--border-accent);
