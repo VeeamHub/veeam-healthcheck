@@ -218,7 +218,7 @@ div.bulletlist {
 
 .subhdr {
     padding-left: 10px;
-    color: var(--accent-light);
+    color: var(--accent-dark);
     font-weight: 600;
     font-size: 14px;
 }
@@ -538,7 +538,7 @@ th.active {
 }
 
 .smoothscroll {
-    color: var(--accent-light);
+    color: var(--accent-dark);
     text-decoration: none;
     font-weight: 500;
     transition: all 0.2s ease;
