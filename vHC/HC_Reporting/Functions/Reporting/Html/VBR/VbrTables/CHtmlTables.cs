@@ -3421,5 +3421,15 @@ this.form.TableHeader(VbrLocalizationHelper.SbrExt15, VbrLocalizationHelper.SbrE
         {
             return string.Empty;
         }
+
+        public string AddJobTablesHeader()
+        {
+            return this.form.header1("Job Tables");
+        }
+
+        public string AddJobTablesFooter()
+        {
+            return string.Empty;
+        }
     }
 }

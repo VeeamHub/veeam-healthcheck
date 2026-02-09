@@ -69,21 +69,9 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR
             this.RepositoryInfoSection();
             this.log.Info(this.logStart + "Repository Info section completed.");
             
-            this.log.Info(this.logStart + "Generating JobConcurrencyTable...");
-            this.JobConcurrencyTable();
-            this.log.Info(this.logStart + "JobConcurrencyTable completed.");
-            
-            this.log.Info(this.logStart + "Generating TaskConcurrencyTable...");
-            this.TaskConcurrencyTable();
-            this.log.Info(this.logStart + "TaskConcurrencyTable completed.");
-            
-            this.log.Info(this.logStart + "Generating JobSessionSummaryTable...");
-            this.JobSessionSummaryTable();
-            this.log.Info(this.logStart + "JobSessionSummaryTable completed.");
-            
-            this.log.Info(this.logStart + "Generating JobInfoTable...");
-            this.JobInfoTable();
-            this.log.Info(this.logStart + "JobInfoTable completed.");
+            this.log.Info(this.logStart + "Generating Job Tables section...");
+            this.JobTablesSection();
+            this.log.Info(this.logStart + "Job Tables section completed.");
 
             if (CGlobals.EXPORTINDIVIDUALJOBHTMLS)
             {
@@ -196,6 +184,18 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR
             this.RepoTable();
 
             this.HTMLSTRING += this.tables.AddRepositoryInfoFooter();
+        }
+
+        private void JobTablesSection()
+        {
+            this.HTMLSTRING += this.tables.AddJobTablesHeader();
+
+            this.JobConcurrencyTable();
+            this.TaskConcurrencyTable();
+            this.JobSessionSummaryTable();
+            this.JobInfoTable();
+
+            this.HTMLSTRING += this.tables.AddJobTablesFooter();
         }
 
         private void ServersRequirementsTable()
