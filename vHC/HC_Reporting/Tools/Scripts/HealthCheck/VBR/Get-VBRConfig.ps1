@@ -450,11 +450,9 @@ try{
         $GPProxyRAM = ConverttoGB($Serv.GetPhysicalHost().HardwareInfo.PhysicalRAMTotal)
     
         $GPProxyDetails = [PSCustomObject]@{
-            "GP Proxy Name"         = $GPProxy.Server.Name
-            "GP Proxy Server"       = $GPProxy.Server.Name
-            "GP Proxy Cores"        = $GPProxyCores
-            "GP Proxy RAM (GB)"     = $GPProxyRAM        
-            "GP Concurrent Tasks"   = $NrofGPProxyTasks
+            "ConcurrentTaskNumber"  = $NrofGPProxyTasks
+            "Host"                  = $GPProxy.Server.Name
+            "HostId"                = $GPProxy.Server.Id
         }                        
 
         $GPProxyData += $GPProxyDetails
@@ -503,12 +501,22 @@ try{
         if ($proxy.Type -eq "Vi") { $proxytype = "VMware" } else {$proxytype = $proxy.Type}
 
         $ProxyDetails = [PSCustomObject]@{
-            "Proxy Name"         = $Proxy.Name
-            "Proxy Server"       = $Proxy.Host.Name
+            "Id"                 = $Proxy.Id
+            "Name"               = $Proxy.Name
+            "Description"        = $Proxy.Description
+            "Info"               = $Proxy.Info
+            "HostId"             = $Proxy.Host.Id
+            "Host"               = $Proxy.Host.Name
             "Type"               = $proxytype
-            "Proxy Cores"        = $ProxyCores
-            "Proxy RAM (GB)"     = $ProxyRAM        
-            "Concurrent Tasks"   = $NrofProxyTasks
+            "IsDisabled"         = $Proxy.IsDisabled
+            "Options"            = $Proxy.Options
+            "MaxTasksCount"      = $NrofProxyTasks
+            "UseSsl"             = if ($proxy.Type -eq "Vi") { $Proxy.Options.UseSsl } else { "" }
+            "FailoverToNetwork"  = if ($proxy.Type -eq "Vi") { $Proxy.Options.FailoverToNetwork } else { "" }
+            "TransportMode"      = if ($proxy.Type -eq "Vi") { $Proxy.Options.TransportMode } else { "" }
+            "IsVbrProxy"         = ""
+            "ChosenVm"           = if ($proxy.Type -eq "Vi") { $Proxy.Options.ChosenVm } else { "" }
+            "ChassisType"        = $Proxy.ChassisType
         }                       
 
         $ProxyData += $ProxyDetails
@@ -550,10 +558,15 @@ try{
         $CDPProxyRAM = ConverttoGB($CDPServer.GetPhysicalHost().HardwareInfo.PhysicalRAMTotal)
         
         $CDPProxyDetails = [PSCustomObject]@{
-            "CDP Proxy Name"     = $CDPProxy.Name    
-            "CDP Proxy Server"   = $CDPServer.Name
-            "CDP Proxy Cores"    = $CDPProxyCores
-            "CDP Proxy RAM (GB)" = $CDPProxyRAM
+            "ServerId"                  = $CDPProxy.ServerId
+            "CacheSize"                 = $CDPProxy.CacheSize
+            "CachePath"                 = $CDPProxy.CachePath
+            "IsEnabled"                 = $CDPProxy.IsEnabled
+            "SourceProxyTrafficPort"    = $CDPProxy.SourceProxyTrafficPort
+            "TargetProxyTrafficPort"    = $CDPProxy.TargetProxyTrafficPort
+            "Id"                        = $CDPProxy.Id
+            "Name"                      = $CDPProxy.Name
+            "Description"               = $CDPProxy.Description
         }
 
         $CDPProxyData += $CDPProxyDetails
@@ -801,54 +814,13 @@ if ($multiRoleServers) {
 # Output the requirements comparison
 Write-Host "Requirements Comparison:"
 
-# Separate the outputs into optimized, and suboptimal configurations based on the comparison
-
-try{
-    $message = "Calculating Requirements comparison..."
-    Write-LogFile($message)
-
-    $OptimizedConfiguration = @()
-    $SuboptimalConfiguration = @()
-
-    foreach ($req in $RequirementsComparison) {
-
-        if ($req."Concurrent Tasks" -le $req."Suggested Tasks" -or ($req.'Required RAM (GB)' -le $req.'Available RAM (GB)' -and $req.'Required Cores' -le $req.'Available Cores')) {
-            $OptimizedConfiguration += $req
-        } else {
-            $SuboptimalConfiguration += $req
-        }
-    }
-        Write-LogFile($message + "DONE")
-}
-catch {
-    Write-LogFile($message + "FAILED!")
-    $err = $Error[0].Exception
-    Write-LogFile($err.message)
-}
-
-# Display the Optimized Configuration
-if ($OptimizedConfiguration.Count -gt 0) {
-    Write-LogFile($OptimizedConfiguration.Count.ToString() + "Servers are found with optimized configuration")
-} else {
-    Write-LogFile("No servers found with optimized configuration.")
-}
-
-# Display the Suboptimal Configuration
-if ($SuboptimalConfiguration.Count -gt 0) {
-    Write-LogFile($SuboptimalConfiguration.Count.ToString() + "Servers are found with suboptimal configuration")
-} else {
-    Write-LogFile("No servers found with optimized configuration.")
-}
-
 # Exporting the data to CSV files
 $RepoData | Export-VhcCsv -FileName '_RepositoryServers.csv'
 $GWData | Export-VhcCsv -FileName '_Gateways.csv'
 $ProxyData | Export-VhcCsv -FileName '_Proxies.csv'
-$CDPProxyData | Export-VhcCsv -FileName '_CDPProxies.csv'
-$GPProxyData | Export-VhcCsv -FileName '_GPProxies.csv'
+$CDPProxyData | Export-VhcCsv -FileName '_CdpProxy.csv'
+$GPProxyData | Export-VhcCsv -FileName '_NasProxy.csv'
 $RequirementsComparison | Export-VhcCsv -FileName '_AllServersRequirementsComparison.csv'
-$OptimizedConfiguration | Export-VhcCsv -FileName '_OptimizedConfiguration.csv'
-$SuboptimalConfiguration | Export-VhcCsv -FileName '_SuboptimalConfiguration.csv'
 
 Write-LogFile("Concurrency inspection files are exported.")  
 

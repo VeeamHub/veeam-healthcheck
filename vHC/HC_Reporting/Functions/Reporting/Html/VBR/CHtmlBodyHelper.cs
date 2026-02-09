@@ -169,8 +169,6 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR
 
             this.ProxyTable();
             this.ServersRequirementsTable();
-            this.OptimizedConfigurationTable();
-            this.SuboptimalConfigurationTable();
 
             this.HTMLSTRING += this.tables.AddProxyInfoFooter();
         }
@@ -203,15 +201,6 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR
             this.HTMLSTRING += this.tables.AddServersRequirementsTable(this.SCRUB);
         }
 
-        private void OptimizedConfigurationTable()
-        {
-            this.HTMLSTRING += this.tables.AddOptimizedConfigurationTable(this.SCRUB);
-        }
-
-        private void SuboptimalConfigurationTable()
-        {
-            this.HTMLSTRING += this.tables.AddSuboptimalConfigurationTable(this.SCRUB);
-        }
         private void MissingJobsTable()
         {
             this.HTMLSTRING += this.tables.AddMissingJobsTable(this.SCRUB);

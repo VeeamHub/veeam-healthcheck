@@ -1000,20 +1000,6 @@ namespace VeeamHealthCheck.Functions.Reporting.Html
             return RequirementsToStringArray(rows, scrub);
         }
 
-        public List<string[]> OptimizedConfigurationToXml(bool scrub)
-        {
-            var csvp = new CCsvParser();
-            var rows = csvp.OptimizedConfigurationCsvParser();
-            return RequirementsToStringArray(rows, scrub);
-        }
-
-        public List<string[]> SuboptimalConfigurationToXml(bool scrub)
-        {
-            var csvp = new CCsvParser();
-            var rows = csvp.SuboptimalConfigurationCsvParser();
-            return RequirementsToStringArray(rows, scrub);
-        }
-
         private List<string[]> RequirementsToStringArray(IEnumerable<CRequirementsCsvInfo> rows, bool scrub)
         {
             var list = new List<string[]>();

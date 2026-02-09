@@ -3137,32 +3137,10 @@ this.form.TableHeader(VbrLocalizationHelper.SbrExt15, VbrLocalizationHelper.SbrE
         {
             return this.AddRequirementsTable(
                 sectionId: "serversrequirements",
-                title: "Server Requirements",
-                buttonText: "ServersRequirements",
-                rows: this.df.ServersRequirementsToXml(scrub),   // <- adjust to your actual method name
+                title: "Server Sizing",
+                buttonText: "Server Sizing",
+                rows: this.df.ServersRequirementsToXml(scrub),
                 jsonKey: "serversRequirements",
-                doScrub: scrub);
-        }
-
-        public string AddOptimizedConfigurationTable(bool scrub)
-        {
-            return this.AddRequirementsTable(
-                sectionId: "optimizedconfiguration",
-                title: "Optimized Configuration",
-                buttonText: "Optimized Configuration",
-                rows: this.df.OptimizedConfigurationToXml(scrub), // <- adjust to your actual method name
-                jsonKey: "optimizedConfiguration",
-                doScrub: scrub);
-        }
-
-        public string AddSuboptimalConfigurationTable(bool scrub)
-        {
-            return this.AddRequirementsTable(
-                sectionId: "suboptimalconfiguration",
-                title: "Suboptimal Configuration",
-                buttonText: "Suboptimal Configuration",
-                rows: this.df.SuboptimalConfigurationToXml(scrub), // <- adjust to your actual method name
-                jsonKey: "suboptimalConfiguration",
                 doScrub: scrub);
         }
 

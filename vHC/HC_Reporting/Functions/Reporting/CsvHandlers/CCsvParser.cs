@@ -62,8 +62,6 @@ namespace VeeamHealthCheck.Functions.Reporting.CsvHandlers
         public readonly string nasObjectSize = "NasObjectSourceStorageSize";
         public readonly string compliance = "SecurityCompliance";
         public readonly string allServersRequirements = "AllServersRequirementsComparison";
-        public readonly string OptimizedConfiguration = "OptimizedConfiguration";
-        public readonly string SuboptimalConfiguration = "SuboptimalConfiguration";
 
         // Job files
         public readonly string piReportName = "pluginjobs";
@@ -814,16 +812,6 @@ namespace VeeamHealthCheck.Functions.Reporting.CsvHandlers
         public IEnumerable<CRequirementsCsvInfo> ServersRequirementsCsvParser()
         {
             return this.RequirementsCsvParserInternal(this.allServersRequirements);
-        }
-
-        public IEnumerable<CRequirementsCsvInfo> OptimizedConfigurationCsvParser()
-        {
-            return this.RequirementsCsvParserInternal(this.OptimizedConfiguration);
-        }
-
-        public IEnumerable<CRequirementsCsvInfo> SuboptimalConfigurationCsvParser()
-        {
-            return this.RequirementsCsvParserInternal(this.SuboptimalConfiguration);
         }
 
         public IEnumerable<CSobrCsvInfo> SobrCsvParser()
