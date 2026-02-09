@@ -336,6 +336,7 @@ namespace VeeamHealthCheck.Functions.Collection.PSCollections
             bool success = true;
             success = this.ExecutePsScript(this.VbrConfigStartInfo());
 
+            
             // Skip NAS script during remote execution as it reads from local log files
             // that don't exist on the management machine
             if (success && !CGlobals.REMOTEEXEC)
