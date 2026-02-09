@@ -1449,18 +1449,6 @@ namespace VeeamHealthCheck.Html.VBR
                 {
                     foreach (var d in list)
                     {
-                        var prov = d[12];
-                        int shade = 0;
-                        if (prov == "under")
-                        {
-                            shade = 2;
-                        }
-
-                        if (prov == "over")
-                        {
-                            shade = 1;
-                        }
-
                         s += "<tr>";
                         if (scrub)
                         {
@@ -1472,7 +1460,7 @@ namespace VeeamHealthCheck.Html.VBR
                         }
 
                         s += this.form.TableData(d[1], string.Empty);
-                        s += this.form.TableData(d[2], string.Empty, shade);
+                        s += this.form.TableData(d[2], string.Empty);
                         s += this.form.TableData(d[3], string.Empty);
                         s += this.form.TableData(d[4], string.Empty);
                         s += this.form.TableData(d[5], string.Empty);
