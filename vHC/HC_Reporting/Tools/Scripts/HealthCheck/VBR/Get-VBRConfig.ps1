@@ -1273,37 +1273,37 @@ try {
         #$VBRJob = $PSItem
         # Find Restore Points
         try{
-        $LastBackup = $Job.GetLastBackup()
+            $LastBackup = $Job.GetLastBackup()
             $RestorePoints = Get-VBRRestorePoint -Backup $LastBackup
-        $TotalOnDiskGB = 0
-        # Extract Restore Point Backup Sizes
-        $RestorePoints.Foreach{
-            $RestorePoint = $PSItem
-            $OnDiskGB = $RestorePoint.GetStorage().Stats.BackupSize / 1GB # Convert from Bytes to GB
-            $TotalOnDiskGB += $OnDiskGB
-        }
-        # Calculate OriginalSize from the latest restore point per protected object
-        $CalculatedOriginalSize = 0
-        try {
-            if ($RestorePoints -and $RestorePoints.Count -gt 0) {
-                $LatestPoints = $RestorePoints | Group-Object -Property { $_.ObjectId } | ForEach-Object {
-                    $_.Group | Sort-Object CreationTimeUtc -Descending | Select-Object -First 1
-                }
-                $ApproxSum = ($LatestPoints | Where-Object { $null -ne $_.ApproxSize } | Measure-Object -Property ApproxSize -Sum).Sum
-                if ($ApproxSum -and $ApproxSum -gt 0) {
-                    $CalculatedOriginalSize = $ApproxSum
+            $TotalOnDiskGB = 0
+            # Extract Restore Point Backup Sizes
+            $RestorePoints.Foreach{
+                $RestorePoint = $PSItem
+                $OnDiskGB = $RestorePoint.GetStorage().Stats.BackupSize / 1GB # Convert from Bytes to GB
+                $TotalOnDiskGB += $OnDiskGB
+            }
+            # Calculate OriginalSize from the latest restore point per protected object
+            $CalculatedOriginalSize = 0
+            try {
+                if ($RestorePoints -and $RestorePoints.Count -gt 0) {
+                    $LatestPoints = $RestorePoints | Group-Object -Property { $_.ObjectId } | ForEach-Object {
+                        $_.Group | Sort-Object CreationTimeUtc -Descending | Select-Object -First 1
+                    }
+                    $ApproxSum = ($LatestPoints | Where-Object { $null -ne $_.ApproxSize } | Measure-Object -Property ApproxSize -Sum).Sum
+                    if ($ApproxSum -and $ApproxSum -gt 0) {
+                        $CalculatedOriginalSize = $ApproxSum
+                    } else {
+                        # Fallback: restore points exist but lack ApproxSize (legacy backups)
+                        $CalculatedOriginalSize = $Job.Info.IncludedSize
+                    }
                 } else {
-                    # Fallback: restore points exist but lack ApproxSize (legacy backups)
+                    # No restore points available, fall back to cached IncludedSize
                     $CalculatedOriginalSize = $Job.Info.IncludedSize
                 }
-            } else {
-                # No restore points available, fall back to cached IncludedSize
+            } catch {
                 $CalculatedOriginalSize = $Job.Info.IncludedSize
             }
-        } catch {
-            $CalculatedOriginalSize = $Job.Info.IncludedSize
         }
-    }
         catch{
             Write-LogFile("Warning: Could not get last backup for job: " + $Job.Name, "Warnings", "WARN")
 
