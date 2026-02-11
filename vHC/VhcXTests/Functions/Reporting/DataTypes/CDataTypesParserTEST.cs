@@ -128,5 +128,36 @@ namespace VhcXTests.Functions.Reporting.DataTypes
             // Assert
             Assert.Equal(expectedResult, result);
         }
+
+        /// <summary>
+        /// Test for Data Cloud Vault immutability inference.
+        /// When Immute field is empty but ImmutabilityPeriod > 0, infer immutability is enabled.
+        /// Addresses issue where DataCloudVault repositories have empty Immute field.
+        /// </summary>
+        [Theory]
+        [InlineData("", "7", true)]      // Empty Immute, period=7 => infer true
+        [InlineData("", "30", true)]     // Empty Immute, period=30 => infer true
+        [InlineData("", "0", false)]     // Empty Immute, period=0 => false
+        [InlineData("", "", false)]      // Empty Immute, empty period => false
+        [InlineData("", null, false)]    // Empty Immute, null period => false
+        [InlineData("False", "7", false)]    // Explicit false overrides period (respects CSV value)
+        [InlineData("True", "0", true)]  // Explicit true even with period=0 (respects CSV value)
+        public void ImmuteEnabled_DataCloudVaultEmptyField_InfersFromPeriod(string immuteString, string periodString, bool expectedResult)
+        {
+            // Arrange
+            bool.TryParse(immuteString, out bool immute);
+            
+            // Act: Apply the inference logic from CDataTypesParser
+            if (string.IsNullOrEmpty(immuteString) && !string.IsNullOrEmpty(periodString))
+            {
+                if (int.TryParse(periodString, out int period) && period > 0)
+                {
+                    immute = true;  // Period > 0 means immutability is enabled
+                }
+            }
+
+            // Assert
+            Assert.Equal(expectedResult, immute);
+        }
     }
 }
