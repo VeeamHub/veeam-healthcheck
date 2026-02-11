@@ -922,6 +922,23 @@ catch {
 }
 $capOut | Export-VhcCsv -FileName '_capTier.csv'
 
+# archive extent grab
+try {
+    $message = "Collecting archive tier info..."
+    Write-LogFile($message)
+
+    $arch = Get-VBRBackupRepository -ScaleOut | Get-VBRArchiveExtent
+    $archOut = $arch | Select-Object Status, ParentId, @{n = 'RepoId'; e = { $_.Repository.Id } }, @{n = 'Name'; e = { $_.Repository.Name } }, @{n = 'ArchiveType'; e = { $_.Repository.ArchiveType } }, @{n = 'BackupImmutabilityEnabled'; e = { $_.Repository.BackupImmutabilityEnabled } }
+
+    Write-LogFile($message + "DONE")
+}
+catch {
+    Write-LogFile($message + "FAILED!")
+    $err = $Error[0].Exception
+    Write-LogFile($err.message)
+}
+$archOut | Export-VhcCsv -FileName '_archTier.csv'
+
 # traffic config
 try {
     $message = "Collecting traffic info..."

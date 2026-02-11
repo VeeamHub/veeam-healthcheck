@@ -23,6 +23,22 @@ namespace VhcXTests.TestData
 
         #endregion
 
+        #region archTier.csv
+
+        /// <summary>
+        /// Generate a sample archTier.csv matching the production script structure.
+        /// This represents the _archTier.csv file created by Get-VBRConfig.ps1
+        /// when collecting archive extent information.
+        /// </summary>
+        public static string GenerateArchTier(bool immutableEnabled = false)
+        {
+            var immutableValue = immutableEnabled.ToString();
+            return @$"""Status"",""ParentId"",""RepoId"",""Name"",""ArchiveType"",""BackupImmutabilityEnabled""
+    ""Normal"",""55555555-5555-5555-5555-555555555555"",""77777777-8888-9999-aaaa-bbbbbbbbbbbb"",""Azure-Archive-Blob"",""AzureArchive"",""{immutableValue}""";
+        }
+
+        #endregion
+
         #region Servers.csv
 
         /// <summary>
@@ -307,6 +323,7 @@ namespace VhcXTests.TestData
             SafeWriteFile(vbrDir, "VeeamSessionReport.csv", GenerateSessionReport());
             SafeWriteFile(vbrDir, "_UserRoles.csv", GenerateUserRoles());
             SafeWriteFile(vbrDir, "capTier.csv", GenerateCapTier());
+            SafeWriteFile(vbrDir, "archTier.csv", GenerateArchTier());
 
             return vbrDir;
         }

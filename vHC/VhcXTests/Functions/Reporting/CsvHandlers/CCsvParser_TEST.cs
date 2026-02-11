@@ -49,6 +49,31 @@ namespace VhcXTests.Functions.Reporting.CsvHandlers
 
         #endregion
 
+        #region Archive Tier Tests
+
+        [Fact]
+        public void ArchiveTierCsvParser_ValidFile_ReturnsRecords()
+        {
+            var parser = new CCsvParser(_vbrDir);
+            var result = parser.ArchiveTierCsvParser();
+
+            Assert.NotNull(result);
+            var records = result.ToList();
+            Assert.Single(records);
+        }
+
+        [Fact]
+        public void GetDynamicArchiveTier_ValidFile_ReturnsRecords()
+        {
+            var parser = new CCsvParser(_vbrDir);
+            var result = parser.GetDynamicArchiveTier();
+
+            Assert.NotNull(result);
+            Assert.NotEmpty(result);
+        }
+
+        #endregion
+
         #region vbrinfo.csv Tests
 
         [Fact]

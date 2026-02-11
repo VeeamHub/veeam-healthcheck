@@ -39,6 +39,7 @@ namespace VeeamHealthCheck.Functions.Reporting.DataTypes
         public Dictionary<string, int> ServerSummaryInfo { get { return this.serverSummaryInfo; } }
 
         public List<CSobrTypeInfos> SobrInfo = new();
+        public List<CArchiveTierCsv> ArchiveTierInfos = new();
 
         // public List<CLicTypeInfo> LicInfo { get { return LicInfos(); } }
         public List<CRepoTypeInfos> RepoInfos = new();
@@ -73,6 +74,8 @@ namespace VeeamHealthCheck.Functions.Reporting.DataTypes
                 this.ExtentInfo = this.SobrExtInfo();
                 this.log.Info("[CDataTypesParser] Parsing SobrInfos...");
                 this.SobrInfo = this.SobrInfos();
+                this.log.Info("[CDataTypesParser] Parsing ArchiveTierInfo...");
+                this.ArchiveTierInfos = this.ArchiveTierCsvInfo();
                 this.log.Info("[CDataTypesParser] Parsing RepoInfo...");
                 this.RepoInfos = this.RepoInfo();
                 this.log.Info("[CDataTypesParser] Parsing WanInfo...");
@@ -211,6 +214,20 @@ namespace VeeamHealthCheck.Functions.Reporting.DataTypes
             }
 
             return eInfoList;
+        }
+
+        private List<CArchiveTierCsv> ArchiveTierCsvInfo()
+        {
+            try
+            {
+                return this.csvParser.ArchiveTierCsvParser()?.ToList() ?? new List<CArchiveTierCsv>();
+            }
+            catch (Exception ex)
+            {
+                this.log.Error($"[CDataTypesParser] Failed to parse ArchiveTier CSV: {ex.Message}");
+                this.log.Debug($"[CDataTypesParser] Stack trace: {ex.StackTrace}");
+                return new List<CArchiveTierCsv>();
+            }
         }
 
         private string ParseBool(string input)

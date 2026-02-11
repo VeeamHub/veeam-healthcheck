@@ -1417,45 +1417,59 @@ namespace VeeamHealthCheck.Functions.Reporting.Html
 
             try
             {
-                var archiveTierCsvData = CGlobals.DtParser.SobrInfo;
-                if (archiveTierCsvData == null || archiveTierCsvData.Count == 0)
+                var sobrs = CGlobals.DtParser.SobrInfo ?? new List<CSobrTypeInfos>();
+                var archiveTierCsvData = CGlobals.DtParser.ArchiveTierInfos ?? new List<CArchiveTierCsv>();
+
+                if (archiveTierCsvData.Count == 0)
                 {
-                    this.log.Info(this.logStart + "No SOBR data available for archive tier extraction");
+                    this.log.Info(this.logStart + "No archive tier CSV data available for extraction");
                     return archiveExtents;
                 }
 
-                foreach (var sobr in archiveTierCsvData)
+                var sobrById = sobrs
+                    .Where(s => !string.IsNullOrWhiteSpace(s.Id))
+                    .ToDictionary(s => s.Id, s => s);
+
+                foreach (var arch in archiveTierCsvData)
                 {
-                    // Only process SOBR entries that have archive tier enabled
-                    if (!sobr.ArchiveTierEnabled)
+                    sobrById.TryGetValue(arch.ParentId ?? string.Empty, out var sobr);
+                    if (sobr == null && !string.IsNullOrWhiteSpace(arch.ParentId))
                     {
-                        continue;
+                        this.log.Debug(this.logStart + "Archive extent without matching SOBR: " + arch.ParentId);
                     }
 
-                    string sobrName = sobr.Name;
-                    string archiveExtentName = sobr.ArchiveExtent;
+                    string sobrName = sobr?.Name ?? string.Empty;
+                    string archiveExtentName = !string.IsNullOrWhiteSpace(arch.Name) ? arch.Name : (sobr?.ArchiveExtent ?? string.Empty);
 
                     if (scrub)
                     {
-                        sobrName = CGlobals.Scrubber.ScrubItem(sobrName, ScrubItemType.SOBR);
-                        archiveExtentName = CGlobals.Scrubber.ScrubItem(archiveExtentName, ScrubItemType.Repository);
+                        if (!string.IsNullOrEmpty(sobrName))
+                        {
+                            sobrName = CGlobals.Scrubber.ScrubItem(sobrName, ScrubItemType.SOBR);
+                        }
+
+                        if (!string.IsNullOrEmpty(archiveExtentName))
+                        {
+                            archiveExtentName = CGlobals.Scrubber.ScrubItem(archiveExtentName, ScrubItemType.Repository);
+                        }
                     }
 
-                    // Create archive tier extent from SOBR settings
+                    bool.TryParse(arch.BackupImmutabilityEnabled, out bool immutableEnabled);
+
                     var archiveExtent = new CArchiveTierExtent
                     {
                         SobrName = sobrName,
                         Name = archiveExtentName,
-                        Type = "Archive", // Will be populated in Phase 2 when separate archive extent CSV is available
-                        Status = "Enabled", // Archive tier is enabled if we're processing it
-                        RetentionPeriod = sobr.ArchivePeriod,
-                        ArchiveTierEnabled = sobr.ArchiveTierEnabled,
-                        ImmutableEnabled = false, // Will be populated in Phase 2
-                        ImmutablePeriod = string.Empty, // Will be populated in Phase 2
-                        SizeLimitEnabled = false, // Will be populated in Phase 2
-                        SizeLimit = string.Empty, // Will be populated in Phase 2
-                        CostOptimizedEnabled = sobr.CostOptimizedArchiveEnabled,
-                        FullBackupModeEnabled = sobr.ArchiveFullBackupModeEnabled
+                        Type = arch.ArchiveType,
+                        Status = arch.Status,
+                        RetentionPeriod = sobr?.ArchivePeriod ?? string.Empty,
+                        ArchiveTierEnabled = sobr?.ArchiveTierEnabled ?? true,
+                        ImmutableEnabled = immutableEnabled,
+                        ImmutablePeriod = string.Empty,
+                        SizeLimitEnabled = false,
+                        SizeLimit = string.Empty,
+                        CostOptimizedEnabled = sobr?.CostOptimizedArchiveEnabled ?? false,
+                        FullBackupModeEnabled = sobr?.ArchiveFullBackupModeEnabled ?? false
                     };
 
                     archiveExtents.Add(archiveExtent);
