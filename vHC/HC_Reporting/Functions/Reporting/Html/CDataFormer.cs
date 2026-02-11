@@ -1390,6 +1390,7 @@ namespace VeeamHealthCheck.Functions.Reporting.Html
                         ImmutableEnabled = sobr.ImmuteEnabled,
                         ImmutablePeriod = sobr.ImmutePeriod,
                         SizeLimitEnabled = sobr.SizeLimitEnabled,
+                        SizeLimit = sobr.SizeLimit,
                         Status = "Enabled", // Capacity tier is enabled if we're processing it
                         TierType = "Capacity"
                     };
