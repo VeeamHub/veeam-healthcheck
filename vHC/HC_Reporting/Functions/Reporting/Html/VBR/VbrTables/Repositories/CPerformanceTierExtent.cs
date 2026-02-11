@@ -8,8 +8,6 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR
     /// </summary>
     public class CPerformanceTierExtent : CRepository
     {
-        public string Status { get; set; }
-
         public bool IsObjectLockEnabled { get; set; }
 
         public CPerformanceTierExtent()

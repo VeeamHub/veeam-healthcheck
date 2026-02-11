@@ -18,6 +18,16 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR
         /// </summary>
         public int MaxArchiveTaskCount { get; set; }
 
+        /// <summary>
+        /// Whether size limiting is enabled on capacity tier
+        /// </summary>
+        public new bool SizeLimitEnabled { get; set; }
+
+        /// <summary>
+        /// Maximum size limit for capacity tier storage
+        /// </summary>
+        public new string SizeLimit { get; set; }
+
         public CCapacityTierExtent()
         {
             this.TierType = "Capacity";

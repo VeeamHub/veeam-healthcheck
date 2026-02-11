@@ -1356,7 +1356,7 @@ namespace VeeamHealthCheck.Functions.Reporting.Html
 
             try
             {
-                var capacityTierCsvData = CGlobals.DtParser.SobrInfos;
+                var capacityTierCsvData = CGlobals.DtParser.SobrInfo;
                 if (capacityTierCsvData == null || capacityTierCsvData.Count == 0)
                 {
                     this.log.Info(this.logStart + "No SOBR data available for capacity tier extraction");
@@ -1416,7 +1416,7 @@ namespace VeeamHealthCheck.Functions.Reporting.Html
 
             try
             {
-                var archiveTierCsvData = CGlobals.DtParser.SobrInfos;
+                var archiveTierCsvData = CGlobals.DtParser.SobrInfo;
                 if (archiveTierCsvData == null || archiveTierCsvData.Count == 0)
                 {
                     this.log.Info(this.logStart + "No SOBR data available for archive tier extraction");
