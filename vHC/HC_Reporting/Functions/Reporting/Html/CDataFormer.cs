@@ -1345,6 +1345,201 @@ namespace VeeamHealthCheck.Functions.Reporting.Html
 
             return 0;
         }
+
+        /// <summary>
+        /// Extracts Capacity Tier extents from the parsed CSV data
+        /// </summary>
+        public List<CCapacityTierExtent> CapacityTierXmlFromCsv(bool scrub)
+        {
+            this.log.Info(this.logStart + "Converting capacity tier extent info to xml");
+            List<CCapacityTierExtent> capacityExtents = new();
+
+            try
+            {
+                var capacityTierCsvData = CGlobals.DtParser.SobrInfos;
+                if (capacityTierCsvData == null || capacityTierCsvData.Count == 0)
+                {
+                    this.log.Info(this.logStart + "No SOBR data available for capacity tier extraction");
+                    return capacityExtents;
+                }
+
+                foreach (var sobr in capacityTierCsvData)
+                {
+                    // Only process SOBR entries that have capacity tier enabled
+                    if (!sobr.EnableCapacityTier)
+                    {
+                        continue;
+                    }
+
+                    string sobrName = sobr.Name;
+                    string capacityTierName = sobr.CapacityExtent;
+
+                    if (scrub)
+                    {
+                        sobrName = CGlobals.Scrubber.ScrubItem(sobrName, ScrubItemType.SOBR);
+                        capacityTierName = CGlobals.Scrubber.ScrubItem(capacityTierName, ScrubItemType.Repository);
+                    }
+
+                    // Create capacity tier extent from SOBR settings
+                    var capacityExtent = new CCapacityTierExtent
+                    {
+                        Name = capacityTierName,
+                        SobrName = sobrName,
+                        ParentSobrId = sobr.Id,
+                        Type = sobr.CapTierType,
+                        ImmutableEnabled = sobr.ImmuteEnabled,
+                        ImmutablePeriod = sobr.ImmutePeriod,
+                        SizeLimitEnabled = sobr.SizeLimitEnabled,
+                        Status = "Enabled", // Capacity tier is enabled if we're processing it
+                        TierType = "Capacity"
+                    };
+
+                    capacityExtents.Add(capacityExtent);
+                }
+            }
+            catch (Exception e)
+            {
+                this.log.Error(this.logStart + "Failed to extract capacity tier extents: " + e.Message);
+            }
+
+            this.log.Info(this.logStart + "Converting capacity tier extent info to xml..done!");
+            return capacityExtents;
+        }
+
+        /// <summary>
+        /// Extracts Archive Tier extents from the parsed CSV data
+        /// </summary>
+        public List<CArchiveTierExtent> ArchiveTierXmlFromCsv(bool scrub)
+        {
+            this.log.Info(this.logStart + "Converting archive tier extent info to xml");
+            List<CArchiveTierExtent> archiveExtents = new();
+
+            try
+            {
+                var archiveTierCsvData = CGlobals.DtParser.SobrInfos;
+                if (archiveTierCsvData == null || archiveTierCsvData.Count == 0)
+                {
+                    this.log.Info(this.logStart + "No SOBR data available for archive tier extraction");
+                    return archiveExtents;
+                }
+
+                foreach (var sobr in archiveTierCsvData)
+                {
+                    // Only process SOBR entries that have archive tier enabled
+                    if (!sobr.ArchiveTierEnabled)
+                    {
+                        continue;
+                    }
+
+                    string sobrName = sobr.Name;
+                    string archiveExtentName = sobr.ArchiveExtent;
+
+                    if (scrub)
+                    {
+                        sobrName = CGlobals.Scrubber.ScrubItem(sobrName, ScrubItemType.SOBR);
+                        archiveExtentName = CGlobals.Scrubber.ScrubItem(archiveExtentName, ScrubItemType.Repository);
+                    }
+
+                    // Create archive tier extent from SOBR settings
+                    var archiveExtent = new CArchiveTierExtent
+                    {
+                        SobrName = sobrName,
+                        Name = archiveExtentName,
+                        Type = "Archive", // Will be populated in Phase 2 when separate archive extent CSV is available
+                        Status = "Enabled", // Archive tier is enabled if we're processing it
+                        RetentionPeriod = sobr.ArchivePeriod,
+                        ImmutableEnabled = false, // Will be populated in Phase 2
+                        ImmutablePeriod = string.Empty, // Will be populated in Phase 2
+                        SizeLimitEnabled = false, // Will be populated in Phase 2
+                        SizeLimit = string.Empty, // Will be populated in Phase 2
+                        CostOptimizedEnabled = sobr.CostOptimizedArchiveEnabled,
+                        FullBackupModeEnabled = sobr.ArchiveFullBackupModeEnabled
+                    };
+
+                    archiveExtents.Add(archiveExtent);
+                }
+            }
+            catch (Exception e)
+            {
+                this.log.Error(this.logStart + "Failed to extract archive tier extents: " + e.Message);
+            }
+
+            this.log.Info(this.logStart + "Converting archive tier extent info to xml..done!");
+            return archiveExtents;
+        }
+
+        /// <summary>
+        /// Extracts Performance Tier (primary) extents from the parsed CSV data
+        /// </summary>
+        public List<CPerformanceTierExtent> PerformanceTierXmlFromCsv(bool scrub)
+        {
+            this.log.Info(this.logStart + "Converting performance tier extent info to xml");
+            List<CPerformanceTierExtent> perfExtents = new();
+
+            try
+            {
+                var perfTierCsvData = CGlobals.DtParser.ExtentInfo;
+                if (perfTierCsvData == null || perfTierCsvData.Count == 0)
+                {
+                    this.log.Warning(this.logStart + "No performance tier extent data available");
+                    return perfExtents;
+                }
+
+                var orderedList = perfTierCsvData.OrderBy(x => x.RepoName).ThenBy(y => y.SobrName).ToList();
+
+                foreach (var extent in orderedList)
+                {
+                    string extentName = extent.RepoName;
+                    string sobrName = extent.SobrName;
+                    string hostName = extent.Host;
+                    string path = extent.Path;
+
+                    if (scrub)
+                    {
+                        extentName = CGlobals.Scrubber.ScrubItem(extentName, ScrubItemType.Repository);
+                        sobrName = CGlobals.Scrubber.ScrubItem(sobrName, ScrubItemType.SOBR);
+                        hostName = CGlobals.Scrubber.ScrubItem(hostName, ScrubItemType.Server);
+                        path = CGlobals.Scrubber.ScrubItem(path, ScrubItemType.Path);
+                    }
+
+                    var freePercent = this.FreePercent(extent.FreeSPace, extent.TotalSpace);
+
+                    var perfExtent = new CPerformanceTierExtent
+                    {
+                        Name = extentName,
+                        SobrName = sobrName,
+                        MaxTasks = extent.MaxTasks,
+                        Cores = extent.Cores,
+                        Ram = extent.Ram,
+                        IsAutoGate = extent.IsAutoGateway,
+                        Host = hostName,
+                        Path = path,
+                        FreeSpace = Math.Round((decimal)extent.FreeSPace / 1024, 2),
+                        TotalSpace = Math.Round((decimal)extent.TotalSpace / 1024, 2),
+                        FreeSpacePercent = freePercent,
+                        IsDecompress = extent.IsDecompress,
+                        AlignBlocks = extent.AlignBlocks,
+                        IsRotatedDrives = extent.IsRotatedDriveRepository,
+                        IsImmutabilitySupported = extent.IsImmutabilitySupported || extent.ObjectLockEnabled,
+                        Type = string.IsNullOrEmpty(extent.TypeDisplay) ? extent.Type : extent.TypeDisplay,
+                        Provisioning = extent.Povisioning,
+                        Status = extent.Status,
+                        IsObjectLockEnabled = extent.ObjectLockEnabled,
+                        TierType = "Performance"
+                    };
+
+                    perfExtents.Add(perfExtent);
+                }
+            }
+            catch (Exception e)
+            {
+                this.log.Error(this.logStart + "Failed to extract performance tier extents: " + e.Message);
+            }
+
+            this.log.Info(this.logStart + "Converting performance tier extent info to xml..done!");
+            return perfExtents;
+        }
+
         #endregion
 
     }
