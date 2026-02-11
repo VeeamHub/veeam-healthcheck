@@ -59,6 +59,8 @@ namespace VeeamHealthCheck.Functions.Reporting.DataTypes
 
         public string CapTierType { get; set; }
 
+        public string CapTierStatus { get; set; }
+
         public bool ImmuteEnabled { get; set; }
 
         public string ImmutePeriod { get; set; }

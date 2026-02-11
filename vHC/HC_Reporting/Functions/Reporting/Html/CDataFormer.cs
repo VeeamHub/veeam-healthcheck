@@ -1387,11 +1387,14 @@ namespace VeeamHealthCheck.Functions.Reporting.Html
                         SobrName = sobrName,
                         ParentSobrId = sobr.Id,
                         Type = sobr.CapTierType,
+                        CopyModeEnabled = sobr.CapacityTierCopyPolicyEnabled,
+                        MoveModeEnabled = sobr.CapacityTierMovePolicyEnabled,
+                        MovePeriodDays = sobr.OperationalRestorePeriod,
                         ImmutableEnabled = sobr.ImmuteEnabled,
                         ImmutablePeriod = sobr.ImmutePeriod,
                         SizeLimitEnabled = sobr.SizeLimitEnabled,
                         SizeLimit = sobr.SizeLimit,
-                        Status = "Enabled", // Capacity tier is enabled if we're processing it
+                        Status = string.IsNullOrWhiteSpace(sobr.CapTierStatus) ? "Enabled" : sobr.CapTierStatus,
                         TierType = "Capacity"
                     };
 

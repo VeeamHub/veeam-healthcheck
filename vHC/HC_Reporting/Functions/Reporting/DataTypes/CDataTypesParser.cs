@@ -154,6 +154,7 @@ namespace VeeamHealthCheck.Functions.Reporting.DataTypes
 
 
                                 eInfo.CapTierType = cap.Type;
+                                eInfo.CapTierStatus = cap.Status;
                             }
                         }
                     }

@@ -2136,6 +2136,9 @@ this.form.TableHeader(VbrLocalizationHelper.SbrExt15, VbrLocalizationHelper.SbrE
                 this.form.TableHeader("SOBR Name", "Parent Scale-Out Backup Repository") +
                 this.form.TableHeader("Type", "Repository type (e.g., AWS S3, Azure Blob)") +
                 this.form.TableHeader("Status", "Capacity tier status") +
+                this.form.TableHeader("Copy Mode Enabled", "Whether copy mode is enabled for capacity tier") +
+                this.form.TableHeader("Move Mode Enabled", "Whether move mode is enabled for capacity tier") +
+                this.form.TableHeader("Move Period (Days)", "Age threshold before data is moved to capacity tier") +
                 this.form.TableHeader("Immutable Enabled", "Whether immutability is enforced") +
                 this.form.TableHeader("Immutable Period", "How long data is locked in capacity tier") +
                 this.form.TableHeader("Size Limit Enabled", "Whether size limiting is enforced") +
@@ -2161,6 +2164,26 @@ this.form.TableHeader(VbrLocalizationHelper.SbrExt15, VbrLocalizationHelper.SbrE
                     s += this.form.TableData(d.SobrName, string.Empty);
                     s += this.form.TableData(d.Type, string.Empty);
                     s += this.form.TableData(d.Status, string.Empty);
+
+                    if (d.CopyModeEnabled)
+                    {
+                        s += this.form.TableData(this.form.True, string.Empty);
+                    }
+                    else
+                    {
+                        s += this.form.TableData(this.form.False, string.Empty);
+                    }
+
+                    if (d.MoveModeEnabled)
+                    {
+                        s += this.form.TableData(this.form.True, string.Empty);
+                    }
+                    else
+                    {
+                        s += this.form.TableData(this.form.False, string.Empty);
+                    }
+
+                    s += this.form.TableData(d.MovePeriodDays.ToString(), string.Empty);
 
                     if (d.ImmutableEnabled)
                     {
@@ -2198,13 +2221,16 @@ this.form.TableHeader(VbrLocalizationHelper.SbrExt15, VbrLocalizationHelper.SbrE
             try
             {
                 var list = this.df.CapacityTierXmlFromCsv(scrub) ?? new List<CCapacityTierExtent>();
-                List<string> headers = new() { "Name", "SobrName", "Type", "Status", "ImmutableEnabled", "ImmutablePeriod", "SizeLimitEnabled", "SizeLimit" };
+                List<string> headers = new() { "Name", "SobrName", "Type", "Status", "CopyModeEnabled", "MoveModeEnabled", "MovePeriodDays", "ImmutableEnabled", "ImmutablePeriod", "SizeLimitEnabled", "SizeLimit" };
                 List<List<string>> rows = list.Select(d => new List<string>
                 {
                     d.Name,
                     d.SobrName,
                     d.Type,
                     d.Status,
+                    d.CopyModeEnabled ? "True" : "False",
+                    d.MoveModeEnabled ? "True" : "False",
+                    d.MovePeriodDays.ToString(),
                     d.ImmutableEnabled ? "True" : "False",
                     d.ImmutablePeriod,
                     d.SizeLimitEnabled ? "True" : "False",

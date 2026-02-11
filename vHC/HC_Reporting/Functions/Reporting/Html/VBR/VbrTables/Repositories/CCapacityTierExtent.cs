@@ -28,6 +28,21 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR
         /// </summary>
         public string SizeLimit { get; set; }
 
+        /// <summary>
+        /// Whether copy mode is enabled for capacity tier
+        /// </summary>
+        public bool CopyModeEnabled { get; set; }
+
+        /// <summary>
+        /// Whether move mode is enabled for capacity tier
+        /// </summary>
+        public bool MoveModeEnabled { get; set; }
+
+        /// <summary>
+        /// Move period in days for capacity tier
+        /// </summary>
+        public int MovePeriodDays { get; set; }
+
         public CCapacityTierExtent()
         {
             this.TierType = "Capacity";
