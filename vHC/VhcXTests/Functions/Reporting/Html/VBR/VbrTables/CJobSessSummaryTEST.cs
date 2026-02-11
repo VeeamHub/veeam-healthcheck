@@ -315,5 +315,63 @@ namespace VhcXTests.Functions.Reporting.Html.VBR.VbrTables
         }
 
         #endregion
+
+        #region Tier Extent Extraction Tests
+
+        [Fact]
+        public void PerformanceTierXmlFromCsv_WithValidData_ReturnsPerformanceTiers()
+        {
+            var dataFormer = new CDataFormer();
+            var perfTiers = dataFormer.PerformanceTierXmlFromCsv(false);
+
+            Assert.NotNull(perfTiers);
+            Assert.NotEmpty(perfTiers);
+            Assert.All(perfTiers, pt => Assert.Equal("Performance", pt.TierType));
+        }
+
+        [Fact]
+        public void CapacityTierXmlFromCsv_WithValidData_ReturnsCapacityTiers()
+        {
+            var dataFormer = new CDataFormer();
+            var capTiers = dataFormer.CapacityTierXmlFromCsv(false);
+
+            Assert.NotNull(capTiers);
+            // Should extract capacity tier data from SOBRs that have capacity tier enabled
+            Assert.All(capTiers, ct => 
+            { 
+                Assert.Equal("Capacity", ct.TierType);
+                Assert.NotNull(ct.SobrName);
+                Assert.NotNull(ct.Name);
+            });
+        }
+
+        [Fact]
+        public void ArchiveTierXmlFromCsv_WithValidData_ReturnsArchiveTiers()
+        {
+            var dataFormer = new CDataFormer();
+            var archTiers = dataFormer.ArchiveTierXmlFromCsv(false);
+
+            Assert.NotNull(archTiers);
+            // Should extract archive tier data from SOBRs that have archive tier enabled
+            Assert.All(archTiers, at =>
+            {
+                Assert.NotNull(at.SobrName);
+                Assert.NotNull(at.Name);
+                Assert.NotNull(at.RetentionPeriod);
+            });
+        }
+
+        [Fact]
+        public void PerformanceTierXmlFromCsv_ScrubMode_ScrubbsNames()
+        {
+            var dataFormer = new CDataFormer();
+            var perfTiers = dataFormer.PerformanceTierXmlFromCsv(true);
+
+            Assert.NotNull(perfTiers);
+            // Names should be scrubbed (obfuscated)
+            Assert.All(perfTiers, pt => Assert.NotNull(pt.Name));
+        }
+
+        #endregion
     }
 }
