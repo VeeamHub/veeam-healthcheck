@@ -106,5 +106,27 @@ namespace VhcXTests.Functions.Reporting.DataTypes
             // Assert
             Assert.Equal(DateTime.MinValue, result);
         }
+
+        /// <summary>
+        /// Test for capacity tier immutability boolean parsing.
+        /// Ensures that bool.TryParse correctly handles values from _capTier.csv.
+        /// </summary>
+        [Theory]
+        [InlineData("True", true)]   // Capitalized True from CSV
+        [InlineData("False", false)] // Capitalized False from CSV
+        [InlineData("true", true)]   // Lowercase true
+        [InlineData("false", false)] // Lowercase false
+        [InlineData("1", true)]      // Numeric representation
+        [InlineData("0", false)]     // Numeric zero
+        [InlineData("", false)]      // Empty string defaults to false
+        [InlineData(null, false)]    // Null defaults to false
+        public void BoolTryParse_CapTierImmutabilityValues_ParsesCorrectly(string boolString, bool expectedResult)
+        {
+            // Act
+            bool.TryParse(boolString, out bool result);
+
+            // Assert
+            Assert.Equal(expectedResult, result);
+        }
     }
 }

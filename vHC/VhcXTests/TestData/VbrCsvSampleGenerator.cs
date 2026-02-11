@@ -173,13 +173,16 @@ namespace VhcXTests.TestData
         #region capTier.csv
 
         /// <summary>
-        /// Generate a sample capTier.csv
+        /// Generate a sample capTier.csv matching the production script structure.
+        /// This represents the _capTier.csv file created by Get-VBRConfig.ps1
+        /// when collecting capacity extent information.
         /// </summary>
         public static string GenerateCapTier(bool immutableEnabled = true)
         {
-            return $@"""Name"",""BucketName"",""immute"",""ServicePoint""
-""S3 Archive"",""veeam-archive-bucket"",""{immutableEnabled}"",""s3.amazonaws.com""
-""Azure Archive"",""veeam-container"",""False"",""blob.core.windows.net""";
+            var immutableValue = immutableEnabled.ToString();
+            return @$"""Status"",""Type"",""Immute"",""immutabilityperiod"",""SizeLimitEnabled"",""SizeLimit"",""RepoId"",""parentid""
+""Online"",""AmazonS3"",""{immutableValue}"",""30"",""False"",""0"",""66666666-7777-8888-9999-aaaaaaaaaaaa"",""55555555-5555-5555-5555-555555555555""
+""Online"",""AzureBlob"",""False"",""0"",""True"",""10240"",""77777777-8888-9999-aaaa-bbbbbbbbbbbb"",""66666666-6666-6666-6666-666666666666""";
         }
 
         #endregion
