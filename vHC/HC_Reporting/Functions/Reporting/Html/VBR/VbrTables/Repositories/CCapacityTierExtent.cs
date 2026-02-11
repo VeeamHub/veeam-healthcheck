@@ -21,12 +21,12 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR
         /// <summary>
         /// Whether size limiting is enabled on capacity tier
         /// </summary>
-        public new bool SizeLimitEnabled { get; set; }
+        public bool SizeLimitEnabled { get; set; }
 
         /// <summary>
         /// Maximum size limit for capacity tier storage
         /// </summary>
-        public new string SizeLimit { get; set; }
+        public string SizeLimit { get; set; }
 
         public CCapacityTierExtent()
         {
