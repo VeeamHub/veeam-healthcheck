@@ -3,6 +3,7 @@ using System.IO;
 using System.Linq;
 using VeeamHealthCheck;
 using VeeamHealthCheck.Functions.Reporting.CsvHandlers;
+using VeeamHealthCheck.Functions.Reporting.DataTypes;
 using VeeamHealthCheck.Functions.Reporting.Html;
 using VeeamHealthCheck.Shared;
 using VhcXTests.TestData;
@@ -348,6 +349,105 @@ namespace VhcXTests.Functions.Reporting.Html.VBR.VbrTables
                 Assert.NotNull(at.Name);
                 Assert.NotNull(at.RetentionPeriod);
             });
+        }
+
+        [Fact]
+        public void ArchiveTierXmlFromCsv_JoinsArchiveTierCsvOnParentId()
+        {
+            var integrationDir = Path.Combine(Path.GetTempPath(), "VhcArchiveTierIntegration_" + Guid.NewGuid().ToString());
+            var integrationVbrDir = VbrCsvSampleGenerator.CreateTestDataDirectory(integrationDir);
+
+            var sobrId = "11111111-2222-3333-4444-555555555555";
+            var repoId = "77777777-8888-9999-aaaa-bbbbbbbbbbbb";
+            var sobrCsv = @"""PolicyType"",""Extents"",""UsePerVMBackupFiles"",""PerformFullWhenExtentOffline"",""EnableCapacityTier"",""OperationalRestorePeriod"",""OverridePolicyEnabled"",""OverrideSpaceThreshold"",""OffloadWindowOptions"",""CapacityExtent"",""EncryptionEnabled"",""EncryptionKey"",""CapacityTierCopyPolicyEnabled"",""CapacityTierMovePolicyEnabled"",""ArchiveTierEnabled"",""ArchiveExtent"",""ArchivePeriod"",""CostOptimizedArchiveEnabled"",""ArchiveFullBackupModeEnabled"",""PluginBackupsOffloadEnabled"",""CopyAllPluginBackupsEnabled"",""CopyAllMachineBackupsEnabled"",""Id"",""Name"",""Description""
+""Performance"","""",""False"",""False"",""False"",""7"",""False"",""0"","""","""",""False"","""",""False"",""False"",""True"",""Azure-Archive-Blob"",""30"",""True"",""True"",""False"",""False"",""False"",""" + sobrId + """,""SOBR-Archive"",""Archive SOBR""";
+            var archTierCsv = @$"""Status"",""ParentId"",""RepoId"",""Name"",""ArchiveType"",""BackupImmutabilityEnabled""
+""Normal"",""{sobrId}"",""{repoId}"",""Azure-Archive-Blob"",""AzureArchive"",""True""";
+
+            VbrCsvSampleGenerator.CreateCsvFile(integrationVbrDir, "SOBRs.csv", sobrCsv);
+            VbrCsvSampleGenerator.CreateCsvFile(integrationVbrDir, "archTier.csv", archTierCsv);
+
+            var previousImport = CGlobals.IMPORT;
+            var previousImportPath = CGlobals.IMPORT_PATH;
+            var previousResolvedPath = CVariables.ResolvedImportPath;
+            var previousParser = CGlobals.DtParser;
+
+            try
+            {
+                CGlobals.IMPORT = true;
+                CGlobals.IMPORT_PATH = integrationVbrDir;
+                CVariables.ResolvedImportPath = integrationVbrDir;
+                CGlobals.DtParser = new CDataTypesParser();
+
+                var dataFormer = new CDataFormer();
+                var archTiers = dataFormer.ArchiveTierXmlFromCsv(false);
+
+                Assert.Single(archTiers);
+                var extent = archTiers[0];
+                Assert.Equal("SOBR-Archive", extent.SobrName);
+                Assert.Equal("Azure-Archive-Blob", extent.Name);
+                Assert.Equal("AzureArchive", extent.Type);
+                Assert.Equal("Normal", extent.Status);
+                Assert.True(extent.ArchiveTierEnabled);
+                Assert.Equal("30", extent.RetentionPeriod);
+                Assert.True(extent.ImmutableEnabled);
+            }
+            finally
+            {
+                CGlobals.IMPORT = previousImport;
+                CGlobals.IMPORT_PATH = previousImportPath;
+                CVariables.ResolvedImportPath = previousResolvedPath;
+                CGlobals.DtParser = previousParser;
+                VbrCsvSampleGenerator.CleanupTestDirectory(integrationDir);
+            }
+        }
+
+        [Fact]
+        public void ArchiveTierXmlFromCsv_UnknownParentId_UsesArchiveCsvDefaults()
+        {
+            var integrationDir = Path.Combine(Path.GetTempPath(), "VhcArchiveTierIntegrationMissing_" + Guid.NewGuid().ToString());
+            var integrationVbrDir = VbrCsvSampleGenerator.CreateTestDataDirectory(integrationDir);
+
+            var unknownParentId = "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee";
+            var repoId = "99999999-8888-7777-6666-555555555555";
+            var archTierCsv = @$"""Status"",""ParentId"",""RepoId"",""Name"",""ArchiveType"",""BackupImmutabilityEnabled""
+""Normal"",""{unknownParentId}"",""{repoId}"",""Archive-Only"",""AzureArchive"",""False""";
+
+            VbrCsvSampleGenerator.CreateCsvFile(integrationVbrDir, "archTier.csv", archTierCsv);
+
+            var previousImport = CGlobals.IMPORT;
+            var previousImportPath = CGlobals.IMPORT_PATH;
+            var previousResolvedPath = CVariables.ResolvedImportPath;
+            var previousParser = CGlobals.DtParser;
+
+            try
+            {
+                CGlobals.IMPORT = true;
+                CGlobals.IMPORT_PATH = integrationVbrDir;
+                CVariables.ResolvedImportPath = integrationVbrDir;
+                CGlobals.DtParser = new CDataTypesParser();
+
+                var dataFormer = new CDataFormer();
+                var archTiers = dataFormer.ArchiveTierXmlFromCsv(false);
+
+                Assert.Single(archTiers);
+                var extent = archTiers[0];
+                Assert.Equal(string.Empty, extent.SobrName);
+                Assert.Equal("Archive-Only", extent.Name);
+                Assert.Equal("AzureArchive", extent.Type);
+                Assert.Equal("Normal", extent.Status);
+                Assert.True(extent.ArchiveTierEnabled);
+                Assert.Equal(string.Empty, extent.RetentionPeriod);
+                Assert.False(extent.ImmutableEnabled);
+            }
+            finally
+            {
+                CGlobals.IMPORT = previousImport;
+                CGlobals.IMPORT_PATH = previousImportPath;
+                CVariables.ResolvedImportPath = previousResolvedPath;
+                CGlobals.DtParser = previousParser;
+                VbrCsvSampleGenerator.CleanupTestDirectory(integrationDir);
+            }
         }
 
         #endregion
