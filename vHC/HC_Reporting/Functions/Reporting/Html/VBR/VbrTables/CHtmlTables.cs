@@ -2124,6 +2124,374 @@ this.form.TableHeader(VbrLocalizationHelper.SbrExt15, VbrLocalizationHelper.SbrE
             return s;
         }
 
+        /// <summary>
+        /// Generates HTML table displaying Performance Tier extents for all SOBRs
+        /// </summary>
+        public string AddPerformanceTierExtTable(bool scrub)
+        {
+            string s = this.form.SectionStartWithButton("perfextents", "Performance Tier Extents", "Performance");
+            string summary = this.sum.Extents();
+            s += "<tr>" +
+                this.form.TableHeader("Extent Name", "Name of the performance tier extent") +
+                this.form.TableHeader("SOBR Name", "Parent Scale-Out Backup Repository") +
+                this.form.TableHeader("Cores", "CPU cores allocated") +
+                this.form.TableHeader("RAM", "Memory in GB") +
+                this.form.TableHeader("Max Tasks", "Maximum concurrent tasks") +
+                this.form.TableHeader("Auto Gateway / Direct Connection", "Gateway selection method") +
+                this.form.TableHeader("Gateway Host(s)", "Specified gateway hosts") +
+                this.form.TableHeader("Path", "Storage path location") +
+                this.form.TableHeader("Free Space (GB)", "Available storage space") +
+                this.form.TableHeader("Total Space (GB)", "Total storage capacity") +
+                this.form.TableHeader("Free Space %", "Percentage of available space") +
+                this.form.TableHeader("Decompress", "Decompression enabled") +
+                this.form.TableHeader("Block Align", "Block alignment optimization") +
+                this.form.TableHeader("Rotated Drives", "Rotated drive repository") +
+                this.form.TableHeader("Object Lock", "S3 Object Lock / Immutability Support") +
+                this.form.TableHeader("Type", "Repository type") +
+                this.form.TableHeader("Status", "Current status") +
+                "</tr>";
+            s += this.form.TableHeaderEnd();
+            s += this.form.TableBodyStart();
+
+            try
+            {
+                this.log.Info("Attempting to load Performance Tier Extent data...");
+                List<CPerformanceTierExtent> list = this.df.PerformanceTierXmlFromCsv(scrub);
+
+                if (list == null || list.Count == 0)
+                {
+                    this.log.Warning("No Performance Tier Extent data found. The SOBRExtents CSV file may be missing or empty.");
+                }
+
+                foreach (var d in list)
+                {
+                    var prov = d.Provisioning;
+                    int shade = 0;
+                    if (prov == "under")
+                    {
+                        shade = 2;
+                    }
+
+                    if (prov == "over")
+                    {
+                        shade = 1;
+                    }
+
+                    int freeSpaceShade = 0;
+                    if (d.FreeSpacePercent < 20) { freeSpaceShade = 1; }
+
+                    s += "<tr>";
+                    s += this.form.TableData(d.Name, string.Empty);
+                    s += this.form.TableData(d.SobrName, string.Empty);
+                    s += this.form.TableData(d.Cores.ToString(), string.Empty);
+                    s += this.form.TableData(d.Ram.ToString(), string.Empty);
+                    s += this.form.TableData(d.MaxTasks.ToString(), string.Empty, shade);
+
+                    if (d.IsAutoGate)
+                    {
+                        s += this.form.TableData(this.form.True, string.Empty);
+                    }
+                    else
+                    {
+                        s += this.form.TableData(this.form.False, string.Empty);
+                    }
+
+                    s += this.form.TableData(d.Host, string.Empty);
+                    s += this.form.TableData(d.Path, string.Empty);
+                    s += this.form.TableData(d.FreeSpace.ToString(), string.Empty);
+                    s += this.form.TableData(d.TotalSpace.ToString(), string.Empty);
+                    s += this.form.TableData(d.FreeSpacePercent.ToString(), string.Empty, freeSpaceShade);
+
+                    if (d.IsDecompress)
+                    {
+                        s += this.form.TableData(this.form.True, string.Empty);
+                    }
+                    else
+                    {
+                        s += this.form.TableData(this.form.False, string.Empty);
+                    }
+
+                    if (d.AlignBlocks)
+                    {
+                        s += this.form.TableData(this.form.True, string.Empty);
+                    }
+                    else
+                    {
+                        s += this.form.TableData(this.form.False, string.Empty);
+                    }
+
+                    if (d.IsRotatedDrives)
+                    {
+                        s += this.form.TableData(this.form.True, string.Empty);
+                    }
+                    else
+                    {
+                        s += this.form.TableData(this.form.False, string.Empty);
+                    }
+
+                    if (d.IsObjectLockEnabled)
+                    {
+                        s += this.form.TableData(this.form.True, string.Empty);
+                    }
+                    else
+                    {
+                        s += this.form.TableData(this.form.False, string.Empty);
+                    }
+
+                    s += this.form.TableData(d.Type, string.Empty);
+                    s += this.form.TableData(d.Status, string.Empty);
+                    s += "</tr>";
+                }
+            }
+            catch (Exception e)
+            {
+                this.log.Error("Performance Tier Extent Data import failed. ERROR:");
+                this.log.Error("\t" + e.Message);
+            }
+
+            s += this.form.SectionEnd(summary);
+
+            // JSON Performance Tier Extents
+            try
+            {
+                var list = this.df.PerformanceTierXmlFromCsv(scrub) ?? new List<CPerformanceTierExtent>();
+                List<string> headers = new() { "Name", "SobrName", "Cores", "Ram", "MaxTasks", "IsAutoGate", "Host", "Path", "FreeSpace", "TotalSpace", "FreeSpacePercent", "IsDecompress", "AlignBlocks", "IsRotatedDrives", "ObjectLockEnabled", "Type", "Status" };
+                List<List<string>> rows = list.Select(d => new List<string>
+                {
+                    d.Name,
+                    d.SobrName,
+                    d.Cores.ToString(),
+                    d.Ram.ToString(),
+                    d.MaxTasks.ToString(),
+                    d.IsAutoGate ? "True" : "False",
+                    d.Host,
+                    d.Path,
+                    d.FreeSpace.ToString(),
+                    d.TotalSpace.ToString(),
+                    d.FreeSpacePercent.ToString(),
+                    d.IsDecompress ? "True" : "False",
+                    d.AlignBlocks ? "True" : "False",
+                    d.IsRotatedDrives ? "True" : "False",
+                    d.IsObjectLockEnabled ? "True" : "False",
+                    d.Type,
+                    d.Status,
+                }).ToList();
+                SetSection("perfextents", headers, rows, summary);
+            }
+            catch (Exception ex)
+            {
+                this.log.Error("Failed to capture performance tier extents JSON section: " + ex.Message);
+            }
+
+            return s;
+        }
+
+        /// <summary>
+        /// Generates HTML table displaying Capacity Tier extents for all SOBRs
+        /// </summary>
+        public string AddCapacityTierExtTable(bool scrub)
+        {
+            string s = this.form.SectionStartWithButton("capextents", "Capacity Tier Configuration", "Capacity");
+            string summary = "Capacity tier extent configuration and retention policies";
+            s += "<tr>" +
+                this.form.TableHeader("Extent Name", "Name of the capacity tier extent") +
+                this.form.TableHeader("SOBR Name", "Parent Scale-Out Backup Repository") +
+                this.form.TableHeader("Type", "Repository type (e.g., AWS S3, Azure Blob)") +
+                this.form.TableHeader("Status", "Capacity tier status") +
+                this.form.TableHeader("Immutable Enabled", "Whether immutability is enforced") +
+                this.form.TableHeader("Immutable Period", "How long data is locked in capacity tier") +
+                this.form.TableHeader("Size Limit Enabled", "Whether size limiting is enforced") +
+                this.form.TableHeader("Size Limit", "Maximum capacity tier size") +
+                "</tr>";
+            s += this.form.TableHeaderEnd();
+            s += this.form.TableBodyStart();
+
+            try
+            {
+                this.log.Info("Attempting to load Capacity Tier Extent data...");
+                List<CCapacityTierExtent> list = this.df.CapacityTierXmlFromCsv(scrub);
+
+                if (list == null || list.Count == 0)
+                {
+                    this.log.Warning("No Capacity Tier Extent data found. No SOBRs with capacity tier may be configured.");
+                }
+
+                foreach (var d in list)
+                {
+                    s += "<tr>";
+                    s += this.form.TableData(d.Name, string.Empty);
+                    s += this.form.TableData(d.SobrName, string.Empty);
+                    s += this.form.TableData(d.Type, string.Empty);
+                    s += this.form.TableData(d.Status, string.Empty);
+
+                    if (d.ImmutableEnabled)
+                    {
+                        s += this.form.TableData(this.form.True, string.Empty);
+                    }
+                    else
+                    {
+                        s += this.form.TableData(this.form.False, string.Empty);
+                    }
+
+                    s += this.form.TableData(d.ImmutablePeriod, string.Empty);
+
+                    if (d.SizeLimitEnabled)
+                    {
+                        s += this.form.TableData(this.form.True, string.Empty);
+                    }
+                    else
+                    {
+                        s += this.form.TableData(this.form.False, string.Empty);
+                    }
+
+                    s += this.form.TableData(d.SizeLimit ?? string.Empty, string.Empty);
+                    s += "</tr>";
+                }
+            }
+            catch (Exception e)
+            {
+                this.log.Error("Capacity Tier Extent Data import failed. ERROR:");
+                this.log.Error("\t" + e.Message);
+            }
+
+            s += this.form.SectionEnd(summary);
+
+            // JSON Capacity Tier Extents
+            try
+            {
+                var list = this.df.CapacityTierXmlFromCsv(scrub) ?? new List<CCapacityTierExtent>();
+                List<string> headers = new() { "Name", "SobrName", "Type", "Status", "ImmutableEnabled", "ImmutablePeriod", "SizeLimitEnabled", "SizeLimit" };
+                List<List<string>> rows = list.Select(d => new List<string>
+                {
+                    d.Name,
+                    d.SobrName,
+                    d.Type,
+                    d.Status,
+                    d.ImmutableEnabled ? "True" : "False",
+                    d.ImmutablePeriod,
+                    d.SizeLimitEnabled ? "True" : "False",
+                    d.SizeLimit ?? string.Empty,
+                }).ToList();
+                SetSection("capextents", headers, rows, summary);
+            }
+            catch (Exception ex)
+            {
+                this.log.Error("Failed to capture capacity tier extents JSON section: " + ex.Message);
+            }
+
+            return s;
+        }
+
+        /// <summary>
+        /// Generates HTML table displaying Archive Tier configuration for all SOBRs
+        /// </summary>
+        public string AddArchiveTierExtTable(bool scrub)
+        {
+            string s = this.form.SectionStartWithButton("archextents", "Archive Tier Configuration", "Archive");
+            string summary = "Archive tier extent retention and immutability policies";
+            s += "<tr>" +
+                this.form.TableHeader("SOBR Name", "Scale-Out Backup Repository name") +
+                this.form.TableHeader("Archive Extent Name", "Name of archive tier repository/bucket") +
+                this.form.TableHeader("Retention Period (Days)", "How long before data is deleted from archive") +
+                this.form.TableHeader("Archive Tier Enabled", "Whether archive tier is active") +
+                this.form.TableHeader("Cost Optimized", "Cost optimization policy enabled") +
+                this.form.TableHeader("Full Backup Mode", "Full backup mode for archive tier") +
+                this.form.TableHeader("Immutable Enabled", "Whether immutability is enforced on archive") +
+                this.form.TableHeader("Archive Immutable Period", "Archive-specific immutability lock period") +
+                "</tr>";
+            s += this.form.TableHeaderEnd();
+            s += this.form.TableBodyStart();
+
+            try
+            {
+                this.log.Info("Attempting to load Archive Tier Extent data...");
+                List<CArchiveTierExtent> list = this.df.ArchiveTierXmlFromCsv(scrub);
+
+                if (list == null || list.Count == 0)
+                {
+                    this.log.Warning("No Archive Tier Extent data found. No SOBRs with archive tier may be configured.");
+                }
+
+                foreach (var d in list)
+                {
+                    s += "<tr>";
+                    s += this.form.TableData(d.SobrName, string.Empty);
+                    s += this.form.TableData(d.Name, string.Empty);
+                    s += this.form.TableData(d.RetentionPeriod ?? string.Empty, string.Empty);
+
+                    if (d.ImmutableEnabled)
+                    {
+                        s += this.form.TableData(this.form.True, string.Empty);
+                    }
+                    else
+                    {
+                        s += this.form.TableData(this.form.False, string.Empty);
+                    }
+
+                    if (d.CostOptimizedEnabled)
+                    {
+                        s += this.form.TableData(this.form.True, string.Empty);
+                    }
+                    else
+                    {
+                        s += this.form.TableData(this.form.False, string.Empty);
+                    }
+
+                    if (d.FullBackupModeEnabled)
+                    {
+                        s += this.form.TableData(this.form.True, string.Empty);
+                    }
+                    else
+                    {
+                        s += this.form.TableData(this.form.False, string.Empty);
+                    }
+
+                    if (d.ImmutableEnabled)
+                    {
+                        s += this.form.TableData(this.form.True, string.Empty);
+                    }
+                    else
+                    {
+                        s += this.form.TableData(this.form.False, string.Empty);
+                    }
+
+                    s += this.form.TableData(d.ImmutablePeriod ?? string.Empty, string.Empty);
+                    s += "</tr>";
+                }
+            }
+            catch (Exception e)
+            {
+                this.log.Error("Archive Tier Extent Data import failed. ERROR:");
+                this.log.Error("\t" + e.Message);
+            }
+
+            s += this.form.SectionEnd(summary);
+
+            // JSON Archive Tier Extents
+            try
+            {
+                var list = this.df.ArchiveTierXmlFromCsv(scrub) ?? new List<CArchiveTierExtent>();
+                List<string> headers = new() { "SobrName", "Name", "RetentionPeriod", "ImmutableEnabled", "CostOptimizedEnabled", "FullBackupModeEnabled", "ImmutablePeriod" };
+                List<List<string>> rows = list.Select(d => new List<string>
+                {
+                    d.SobrName,
+                    d.Name,
+                    d.RetentionPeriod ?? string.Empty,
+                    d.ImmutableEnabled ? "True" : "False",
+                    d.CostOptimizedEnabled ? "True" : "False",
+                    d.FullBackupModeEnabled ? "True" : "False",
+                    d.ImmutablePeriod ?? string.Empty,
+                }).ToList();
+                SetSection("archextents", headers, rows, summary);
+            }
+            catch (Exception ex)
+            {
+                this.log.Error("Failed to capture archive tier extents JSON section: " + ex.Message);
+            }
+
+            return s;
+        }
+
         public string AddJobConTable(bool scrub)
         {
             string s = this.form.SectionStartWithButton("jobcon", VbrLocalizationHelper.JobConTitle, VbrLocalizationHelper.JobConBtn, CGlobals.ReportDays);
