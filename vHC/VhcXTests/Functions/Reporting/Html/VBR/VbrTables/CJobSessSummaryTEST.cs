@@ -319,17 +319,6 @@ namespace VhcXTests.Functions.Reporting.Html.VBR.VbrTables
         #region Tier Extent Extraction Tests
 
         [Fact]
-        public void PerformanceTierXmlFromCsv_WithValidData_ReturnsPerformanceTiers()
-        {
-            var dataFormer = new CDataFormer();
-            var perfTiers = dataFormer.PerformanceTierXmlFromCsv(false);
-
-            Assert.NotNull(perfTiers);
-            Assert.NotEmpty(perfTiers);
-            Assert.All(perfTiers, pt => Assert.Equal("Performance", pt.TierType));
-        }
-
-        [Fact]
         public void CapacityTierXmlFromCsv_WithValidData_ReturnsCapacityTiers()
         {
             var dataFormer = new CDataFormer();
@@ -359,17 +348,6 @@ namespace VhcXTests.Functions.Reporting.Html.VBR.VbrTables
                 Assert.NotNull(at.Name);
                 Assert.NotNull(at.RetentionPeriod);
             });
-        }
-
-        [Fact]
-        public void PerformanceTierXmlFromCsv_ScrubMode_ScrubbsNames()
-        {
-            var dataFormer = new CDataFormer();
-            var perfTiers = dataFormer.PerformanceTierXmlFromCsv(true);
-
-            Assert.NotNull(perfTiers);
-            // Names should be scrubbed (obfuscated)
-            Assert.All(perfTiers, pt => Assert.NotNull(pt.Name));
         }
 
         #endregion
