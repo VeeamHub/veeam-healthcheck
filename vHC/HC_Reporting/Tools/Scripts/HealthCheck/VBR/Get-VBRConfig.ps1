@@ -901,7 +901,15 @@ try {
 
     # work here
     $cap = get-vbrbackuprepository -ScaleOut | Get-VBRCapacityExtent
-    $capOut = $cap | Select-Object Status, @{n = 'Type'; e = { $_.Repository.Type } }, @{n = 'Immute'; e = { $_.Repository.BackupImmutabilityEnabled } }, @{n = 'immutabilityperiod'; e = { $_.Repository.ImmutabilityPeriod } }, @{n = 'SizeLimitEnabled'; e = { $_.Repository.SizeLimitEnabled } }, @{n = 'SizeLimit'; e = { $_.Repository.SizeLimit } }, @{n = 'RepoId'; e = { $_.Repository.Id } }, parentid
+    $capOut = $cap | Select-Object Status, @{n = 'Type'; e = { $_.Repository.Type } }, @{n = 'Immute'; e = { 
+        # DataCloudVault repositories (Type = 6) don't expose BackupImmutabilityEnabled property
+        # Instead, determine immutability from ImmutabilityPeriod: if period > 0, immutability is enabled
+        if ($_.Repository.Type -eq 6) {
+            if ($_.Repository.ImmutabilityPeriod -gt 0) { "True" } else { "False" }
+        } else {
+            $_.Repository.BackupImmutabilityEnabled
+        }
+    } }, @{n = 'immutabilityperiod'; e = { $_.Repository.ImmutabilityPeriod } }, @{n = 'SizeLimitEnabled'; e = { $_.Repository.SizeLimitEnabled } }, @{n = 'SizeLimit'; e = { $_.Repository.SizeLimit } }, @{n = 'RepoId'; e = { $_.Repository.Id } }, parentid
 
 
     Write-LogFile($message + "DONE")
