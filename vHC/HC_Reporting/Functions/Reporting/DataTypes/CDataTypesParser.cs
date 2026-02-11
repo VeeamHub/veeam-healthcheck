@@ -139,19 +139,6 @@ namespace VeeamHealthCheck.Functions.Reporting.DataTypes
                             if (cap.ParentId == s.Id)
                             {
                                 bool.TryParse(cap.Immute, out bool immute);
-                                
-                                // For Data Cloud Vault repositories, the Immute field may be empty
-                                // In this case, infer immutability from the ImmutabilityPeriod:
-                                // If period > 0, immutability is enabled; if 0 or empty, it's disabled
-                                if (string.IsNullOrEmpty(cap.Immute) && !string.IsNullOrEmpty(cap.ImmutePeriod))
-                                {
-                                    if (int.TryParse(cap.ImmutePeriod, out int period) && period > 0)
-                                    {
-                                        immute = true;  // Period > 0 means immutability is enabled
-                                        this.log.Debug($"[CDataTypesParser] SOBR '{s.Name}' CapTier - Empty Immute field, inferring from ImmutabilityPeriod: {period} days => ImmuteEnabled: True");
-                                    }
-                                }
-                                
                                 eInfo.ImmuteEnabled = immute;
                                 eInfo.ImmutePeriod = cap.ImmutePeriod;
                                 this.log.Debug($"[CDataTypesParser] SOBR '{s.Name}' CapTier - Immute: '{cap.Immute}' => ImmuteEnabled: {immute}, ImmutePeriod: {cap.ImmutePeriod}");

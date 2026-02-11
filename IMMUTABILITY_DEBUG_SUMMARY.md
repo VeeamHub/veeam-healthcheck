@@ -50,79 +50,61 @@ This is correct boolean parsing behavior, but gives misleading results when the 
 
 ## The Fix
 
-**Infer immutability from the ImmutabilityPeriod value:**
+**Fix at the source (PowerShell Script):**
 
-If the `Immute` field is empty BUT `ImmutabilityPeriod > 0`, then immutability IS enabled.
+For **DataCloudVault repositories only (Type = 6)**, determine immutability from the `ImmutabilityPeriod`:
 
-**Logic:**
-- Empty `Immute` field + `ImmutabilityPeriod = 7` → Immutability = **TRUE** ✅
-- Empty `Immute` field + `ImmutabilityPeriod = 30` → Immutability = **TRUE** ✅  
-- Empty `Immute` field + `ImmutabilityPeriod = 0` → Immutability = **FALSE** ✅
-- Explicit `Immute = "False"` + `ImmutabilityPeriod = 7` → Immutability = **FALSE** (respects CSV)
+Logic:
+- DataCloudVault Type 6 + ImmutabilityPeriod > 0 → Immutability = **TRUE** ✅
+- DataCloudVault Type 6 + ImmutabilityPeriod = 0 → Immutability = **FALSE** ✅
+- Other repository types → Use **BackupImmutabilityEnabled property** ✅
 
-**Code Implementation** ([CDataTypesParser.cs](CDataTypesParser.cs#L142-160)):
-```csharp
-bool.TryParse(cap.Immute, out bool immute);
-
-// For Data Cloud Vault repositories, the Immute field may be empty
-// Infer immutability from the ImmutabilityPeriod: if period > 0, immutability is enabled
-if (string.IsNullOrEmpty(cap.Immute) && !string.IsNullOrEmpty(cap.ImmutePeriod))
-{
-    if (int.TryParse(cap.ImmutePeriod, out int period) && period > 0)
-    {
-        immute = true;  // Period > 0 means immutability is enabled
+**Code Implementation** ([Get-VBRConfig.ps1](vHC/HC_Reporting/Tools/Scripts/HealthCheck/VBR/Get-VBRConfig.ps1#L880-895)):
+```powershell
+@{n = 'Immute'; e = { 
+    if ($_.Repository.Type -eq 6) {
+        if ($_.Repository.ImmutabilityPeriod -gt 0) { "True" } else { "False" }
+    } else {
+        $_.Repository.BackupImmutabilityEnabled
     }
-}
-
-eInfo.ImmuteEnabled = immute;
+} }
 ```
 
-## Why This Fix Works
+This ensures CSV is properly populated with the correct boolean value at collection time.
 
-1. **Respects explicit values**: If CSV explicitly says `Immute="False"`, that's honored
-2. **Infers missing values**: When field is empty, uses period value as hint
-3. **Safe default**: Only infers true if period is explicitly > 0
-4. **Backwards compatible**: Doesn't break existing repos where Immute field is properly set
+## Why This Approach Works
+
+1. **Fixes at the source** - Correct data in CSV, no workarounds needed elsewhere
+2. **DataCloudVault-specific** - Only affects Type 6 repositories  
+3. **Respects other types** - AmazonS3, AzureBlob, etc. continue using existing logic
+4. **Simple and maintainable** - Single place to understand the logic
+5. **Compatible** - All consumers (C#, PowerBI, other tools) get correct data
 
 ## Testing
 
-Added comprehensive unit tests in [CDataTypesParserTEST.cs](CDataTypesParserTEST.cs):
-
-```csharp
-[Theory]
-[InlineData("", "7", true)]      // Empty Immute, period=7 => true
-[InlineData("", "30", true)]     // Empty Immute, period=30 => true
-[InlineData("", "0", false)]     // Empty Immute, period=0 => false
-[InlineData("False", "7", false)]    // Explicit false overrides period
-[InlineData("True", "0", true)]  // Explicit true overrides period
-public void ImmuteEnabled_DataCloudVaultEmptyField_InfersFromPeriod(...)
-```
+Added unit tests in [CDataTypesParserTEST.cs](CDataTypesParserTEST.cs) to verify:
+- `bool.TryParse("True")` → `true` ✅
+- `bool.TryParse("False")` → `false` ✅
+- `bool.TryParse("")` → `false` ✅
+- `bool.TryParse(null)` → `false` ✅
 
 ## Files Modified
 
-- [CDataTypesParser.cs](CDataTypesParser.cs#L142-160) - Added immutability inference logic
-- [CDataTypesParserTEST.cs](CDataTypesParserTEST.cs) - Added unit tests for inference logic
-
-## Validation with User Data
-
-✅ User's CSV data:
-```csv
-"Normal","DataCloudVault",,"7",...  → Will now show ImmuteEnabled = TRUE ✅
-"Maintenance","DataCloudVault",,"30",... → Will now show ImmuteEnabled = TRUE ✅
-```
-
-Where previously they would have shown FALSE due to empty CSV field.
+- [Get-VBRConfig.ps1](vHC/HC_Reporting/Tools/Scripts/HealthCheck/VBR/Get-VBRConfig.ps1) - Fixed capacity tier immutability collection for Type 6
+- [CDataTypesParserTEST.cs](vHC/VhcXTests/Functions/Reporting/DataTypes/CDataTypesParserTEST.cs) - Added unit tests for boolean parsing
 
 ## Conclusion
 
 **Root Cause:** ✅ IDENTIFIED
-- DataCloudVault repositories have empty Immute field in CSV
+- DataCloudVault (Type = 6) repositories don't expose BackupImmutabilityEnabled property
+- PowerShell script was trying to access non-existent property, resulting in empty CSV field
 
 **Fix:** ✅ IMPLEMENTED  
-- Infer immutability from period value when field is empty
+- PowerShell now checks repository Type and determines immutability from ImmutabilityPeriod for Type = 6
+- Other repository types continue to use BackupImmutabilityEnabled as before
 
 **Testing:** ✅ ADDED
-- Unit tests verify inference logic
+- Unit tests verify boolean parsing from CSV
 
-**Status:** Ready for Windows validation to confirm fix works with actual report generation.
+**Status:** Ready for Windows validation to confirm PowerShell fix works with actual report generation.
 
