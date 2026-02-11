@@ -47,6 +47,14 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR
 
         public string Provisioning { get; set; }
 
+        public string TierType { get; set; }
+
+        public string ImmutablePeriod { get; set; }
+
+        public bool ImmutableEnabled { get; set; }
+
+        public string Status { get; set; }
+
         // public string GateHosts { get; set; }
     }
 }
