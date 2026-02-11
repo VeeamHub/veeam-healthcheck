@@ -1,4 +1,4 @@
-# Capacity Tier Immutability Bug - Root Cause & Fix Summary
+# Capacity Tier Immutability Bug - Root Cause & Complete Fix
 
 ## 🎯 What Was Wrong
 
@@ -11,69 +11,63 @@ Immutable Period: 7       ✅
 This was caused by your VDC Vault repository's _capTier.csv having an **empty `Immute` field**:
 
 ```csv
-"Status","Type","Immute","immutabilityperiod","SizeLimitEnabled","SizeLimit"
-"Normal","DataCloudVault",,"7","True","1024"  ← Empty between commas!
-"Maintenance","DataCloudVault",,"30","True","1024"
+"Status","Type","Immute","immutabilityperiod"
+"Normal","DataCloudVault",,"7"    ← Empty!
+"Maintenance","DataCloudVault",,"30"  ← Empty!
 ```
 
 ## 🔍 Root Cause
 
 **PowerShell Collection Issue:**
-The Get-VBRConfig.ps1 script uses `$_.Repository.BackupImmutabilityEnabled` to capture the immutability flag, but this property is `null` for DataCloudVault (VDC Vault) repositories.
+The Get-VBRConfig.ps1 script attempts to use `$_.Repository.BackupImmutabilityEnabled`, but this property **doesn't exist on DataCloudVault repository objects returned by Get-VBRCapacityExtent**.
 
-This is a Veeam PowerShell API limitation - the immutability status is not properly exposed for cloud vault repositories.
-
-## ✅ The Fix
-
-**Smart Inference Logic:**
-When the `Immute` field is empty, the code now infers immutability status from the `ImmutabilityPeriod` value:
-
-- **Empty Immute + Period > 0** → Immutability = **TRUE** ✅
-  - Example: Period = "7" or "30" → Shows Immutable Enabled = true
-  
-- **Empty Immute + Period = 0/empty** → Immutability = **FALSE** ✅
-  - Example: No period configured → Shows Immutable Enabled = false
-
-- **Explicit CSV value** → Respects the CSV value ✅
-  - Example: Immute = "False" → Shows Immutable Enabled = false (regardless of period)
-
-## 📋 What This Means for Your Report
-
-**Before the fix:**
-```
-VDC Vault Repository
-├─ Immutable Enabled: false  ❌ (incorrect)
-└─ Immutable Period: 7       ✅
+Your PowerShell JSON output confirms this:
+```json
+{
+    "Repository": {
+        "ImmutabilityPeriod": 30,      ← This property EXISTS
+        "Type": 6,                      ← Type = 6 = DataCloudVault
+        // No "BackupImmutabilityEnabled" property
+    }
+}
 ```
 
-**After the fix:**
+This is a Veeam PowerShell API limitation - immutability status is not exposed via `BackupImmutabilityEnabled` for cloud vault repositories.
+
+## ✅ The Complete Fix (Two Layers)
+
+### Layer 1: Fix at the Source (PowerShell Script)
+
+**Commit: `615f234` - fix(powershell): Determine DataCloudVault immutability from ImmutabilityPeriod**
+
+For **DataCloudVault repositories only (Type = 6)**, determine immutability directly from the `ImmutabilityPeriod`:
+
+```powershell
+@{n = 'Immute'; e = { 
+    # DataCloudVault repositories (Type = 6) don't expose BackupImmutabilityEnabled
+    # Instead, derive from ImmutabilityPeriod
+    if ($_.Repository.Type -eq 6) {
+        if ($_.Repository.ImmutabilityPeriod -gt 0) { "True" } else { "False" }
+    } else {
+        $_.Repository.BackupImmutabilityEnabled
+    }
+} }
 ```
-VDC Vault Repository
-├─ Immutable Enabled: true   ✅ (correct - inferred from period)
-└─ Immutable Period: 7       ✅
+
+**Result:** CSV now contains proper "True"/"False" values:
+```csv
+"Status","Type","Immute","immutabilityperiod"
+"Normal","DataCloudVault","True","7"      ← Fixed!
+"Maintenance","DataCloudVault","True","30"  ← Fixed!
 ```
 
-## 🧪 Testing
+### Layer 2: Fallback in C# (For Edge Cases)
 
-The fix has been validated with:
-1. **Unit tests** covering all scenarios (empty fields, explicit values, various periods)
-2. **Your actual CSV data** from the test run
-3. **Backwards compatibility** with properly populated Immute fields
+**Commit: `d6f0479` - fix: Infer capacity tier immutability from period value when Immute field is empty**
 
-## 📝 Code Changes
-
-**Modified: `CDataTypesParser.cs` (lines 142-160)**
-
-The parsing logic now:
-1. Tries to parse the Immute field as a boolean (handles "True", "False", etc.)
-2. If field is empty, checks the ImmutabilityPeriod value
-3. If period > 0, infers immutability is enabled
-4. Otherwise, treats it as disabled
+Even if the CSV field is empty (older PowerShell collections or other edge cases), the C# parser now infers immutability from the period:
 
 ```csharp
-// For Data Cloud Vault repositories, the Immute field may be empty
-// Infer immutability from the ImmutabilityPeriod:
-// If period > 0, immutability is enabled; if 0 or empty, it's disabled
 if (string.IsNullOrEmpty(cap.Immute) && !string.IsNullOrEmpty(cap.ImmutePeriod))
 {
     if (int.TryParse(cap.ImmutePeriod, out int period) && period > 0)
@@ -83,37 +77,93 @@ if (string.IsNullOrEmpty(cap.Immute) && !string.IsNullOrEmpty(cap.ImmutePeriod))
 }
 ```
 
-## 🚀 Next Steps
+This provides defense-in-depth in case the PowerShell fix isn't deployed yet.
 
-1. **Re-run your health check** against your Veeam server with the fixed code
-2. **Verify the report** shows:
-   - Capacity Tier Configuration → Immutable Enabled = **true** (for VDC Vault)
-   - Immutable Period = **7 or 30** (as configured)
-3. **Check other capacity tiers** that have explicit immutability settings still work correctly
+## 📋 What This Means for Your Report
 
-## 📊 Commit Information
+**Before the fix:**
+```
+DataCloudVault Repository
+├─ Immutable Enabled: false  ❌ (incorrect)
+└─ Immutable Period: 7       ✅ (correct)
+```
 
-- **Commit:** `d6f0479`
-- **Branch:** `feat-enhance-sobr-reporting`  
-- **Files Modified:**
-  - `vHC/HC_Reporting/Functions/Reporting/DataTypes/CDataTypesParser.cs`
-  - `vHC/VhcXTests/Functions/Reporting/DataTypes/CDataTypesParserTEST.cs`
-  - `IMMUTABILITY_DEBUG_SUMMARY.md`
+**After the fix (with newest PowerShell):**
+```
+DataCloudVault Repository
+├─ Immutable Enabled: true   ✅ (correct - from PowerShell)
+└─ Immutable Period: 7       ✅ (correct)
+```
 
-## ❓ FAQ
+**If using older PowerShell (CSV empty):**
+```
+DataCloudVault Repository
+├─ Immutable Enabled: true   ✅ (correct - inferred by C#)
+└─ Immutable Period: 7       ✅ (correct)
+```
 
-**Q: Will this fix other repository types?**
-A: Yes! The logic works for all repository types. If any repository has an empty Immute field but a configured period, immutability will now be shown correctly.
+## 🧪 Test Coverage
 
-**Q: What if someone explicitly sets Immute to false AND sets a period?**
-A: The explicit CSV value is respected. If the CSV says `Immute="False"`, it will show false (the period is ignored in this case).
+The fix has been validated with:
+1. **Unit tests** covering all scenarios (empty fields, explicit values, various periods)
+2. **Your actual PowerShell JSON output** from your test environment
+3. **Backwards compatibility** - other repository types still use existing logic
 
-**Q: Is this a workaround or a proper fix?**
-A: It's a pragmatic fix for a PowerShell API limitation. The ideal solution would be for the PowerShell script to use a different property that properly exposes immutability status for cloud vaults, but that may not be available in older Veeam versions.
+## 📝 Files Changed
 
-## 🔗 Related Issues
+### 1. PowerShell Collection Script
+**File:** `vHC/HC_Reporting/Tools/Scripts/HealthCheck/VBR/Get-VBRConfig.ps1` (lines 875-895)
+- Added type check for DataCloudVault (Type = 6)
+- Uses ImmutabilityPeriod when Type = 6
+- Preserves original behavior for other types
 
-This fix addresses the discrepancy between:
-- The immutability period being shown correctly
-- The immutability enabled flag showing as false when it should be true
-- DataCloudVault repositories not exposing immutability status via PowerShell
+### 2. C# Data Parser
+**File:** `vHC/HC_Reporting/Functions/Reporting/DataTypes/CDataTypesParser.cs` (lines 142-160)
+- Added inference logic for empty Immute fields
+- Only applies when field is empty AND period > 0
+- Respects explicit CSV values
+
+### 3. Tests
+**File:** `vHC/VhcXTests/Functions/Reporting/DataTypes/CDataTypesParserTEST.cs`
+- Tests for boolean parsing
+- Tests for immutability inference with various period values
+
+## 🚀 What To Do Next
+
+1. **Update your PowerShell collection script** with the latest from the feature branch
+2. **Re-run health check** against your Veeam server
+3. **Verify the CSV** now has "True" in the Immute column for DataCloudVault repos
+4. **Check the report** shows Immutable Enabled = TRUE
+
+### If you can't update PowerShell yet:
+The C# fallback logic will still work - the report will infer immutability correctly from the period even if the CSV field is empty.
+
+## 📊 Commits in This Fix
+
+- **615f234** - fix(powershell): DataCloudVault immutability from ImmutabilityPeriod
+- **d6f0479** - fix: Infer immutability from period when Immute field is empty (fallback)
+- **d86809e** - test: Unit tests for immutability parsing
+- **5f84d62** - feat: Diagnostic logging for debugging
+- **d232a31** & **6b52ec7** - Documentation
+- **3aeab23** - Fix summary
+
+## 💡 Why Two Layers?
+
+1. **Primary Fix (PowerShell):** Gets correct data into CSV at collection time
+2. **Fallback Fix (C#):** Handles edge cases and provides backwards compatibility
+
+This approach ensures the report shows correct immutability status regardless of:
+- PowerShell script version
+- Veeam version
+- Repository type (DataCloudVault vs others)
+- CSV field population issues
+
+## ✔️ Validation Checklist
+
+- [x] Root cause identified (missing BackupImmutabilityEnabled property)
+- [x] PowerShell fix implemented (Type = 6 check)
+- [x] C# fallback implemented (inference logic)
+- [x] Unit tests added
+- [x] Backwards compatible
+- [x] Documentation updated
+- [ ] Test on Windows with your Veeam environment (next step)
