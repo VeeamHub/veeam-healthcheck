@@ -78,26 +78,17 @@ namespace VeeamHealthCheck.Functions.Collection.DB
 
         public string GetVbrVersionFilePath()
         {
-            // Try default C: drive installation path first
             string consoleInstallPath = @"C:\Program Files\Veeam\Backup and Replication\Console\Veeam.Backup.Core.dll";
 
-            if (File.Exists(consoleInstallPath))
+            var coreVersion = FileVersionInfo.GetVersionInfo (consoleInstallPath).FileVersion;
+            this.log.Debug("[InstallDirectoryFileChecker]" + "VBR Core Version: " + coreVersion);
+            if (!string.IsNullOrEmpty(coreVersion))
             {
-                var coreVersion = FileVersionInfo.GetVersionInfo(consoleInstallPath).FileVersion;
-                this.log.Debug("[InstallDirectoryFileChecker]" + "VBR Core Version: " + coreVersion);
-                if (!string.IsNullOrEmpty(coreVersion))
-                {
-                    CGlobals.VBRFULLVERSION = coreVersion;
-                    this.ParseVbrMajorVersion(CGlobals.VBRFULLVERSION);
-                    return coreVersion;
-                }
-            }
-            else
-            {
-                this.log.Debug("[InstallDirectoryFileChecker] VBR not found at default path: " + consoleInstallPath);
+                CGlobals.VBRFULLVERSION = coreVersion;
+                this.ParseVbrMajorVersion(CGlobals.VBRFULLVERSION);
+                return coreVersion;
             }
 
-            // Fall back to registry-based detection for non-standard installation paths (e.g., D: drive)
             log.Info("[InstallDirectoryFileChecker]" + "VBR Core Version not found in Console path, trying Mount Service path...");
             log.Debug(this.logStart + "Checking Registry for VBR Core path via Mount Service key...");
             try

@@ -604,6 +604,10 @@ try{
         $NrofRepositoryTasks = $Repository.Options.MaxTaskCount
         $gatewayServers = $Repository.GetActualGateways()
         $NrofgatewayServers = $gatewayServers.Count
+        
+        if ($NrofRepositoryTasks -eq -1) {
+        $NrofRepositoryTasks = 128
+        } 
 
         if ($gatewayServers.Count -gt 0) {
             foreach ($gatewayServer in $gatewayServers) {
@@ -634,14 +638,8 @@ try{
                     $hostRoles[$gatewayServer.Name].Roles += "Gateway"
                     $hostRoles[$gatewayServer.Name].Names += $Repository.Name
                 }
-                    if ($NrofRepositoryTasks -ne -1) {
-
-                $hostRoles[$gatewayServer.Name].TotalGWTasks += $NrofRepositoryTasks
-                $hostRoles[$gatewayServer.Name].TotalTasks += $NrofRepositoryTasks
-                }else {
-                 $hostRoles[$gatewayServer.Name].TotalGWTasks += 128
-                $hostRoles[$gatewayServer.Name].TotalTasks += 128
-                }
+                $hostRoles[$gatewayServer.Name].TotalGWTasks += $NrofRepositoryTasks / $NrofgatewayServers
+                $hostRoles[$gatewayServer.Name].TotalTasks += $NrofRepositoryTasks / $NrofgatewayServers 
             }
         } else {
             # Handle the repository host
@@ -672,13 +670,8 @@ try{
                 $hostRoles[$Repository.Host.Name].Roles += "Repository"
                 $hostRoles[$Repository.Host.Name].Names += $Repository.Name
             }
-             if ($NrofRepositoryTasks -ne -1) {
             $hostRoles[$Repository.Host.Name].TotalRepoTasks += $NrofRepositoryTasks
             $hostRoles[$Repository.Host.Name].TotalTasks += $NrofRepositoryTasks
-            } else {
-             $hostRoles[$Repository.Host.Name].TotalRepoTasks += 128
-            $hostRoles[$Repository.Host.Name].TotalTasks += 128
-            }
         }
     }
         Write-LogFile($message + "DONE")
