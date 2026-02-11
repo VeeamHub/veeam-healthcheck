@@ -34,6 +34,11 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR
         public string RetentionPeriod { get; set; }
 
         /// <summary>
+        /// Whether archive tier is enabled on the SOBR
+        /// </summary>
+        public bool ArchiveTierEnabled { get; set; }
+
+        /// <summary>
         /// Whether immutability is enabled on archive tier
         /// </summary>
         public bool ImmutableEnabled { get; set; }

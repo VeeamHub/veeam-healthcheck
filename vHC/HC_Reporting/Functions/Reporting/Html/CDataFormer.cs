@@ -1449,6 +1449,7 @@ namespace VeeamHealthCheck.Functions.Reporting.Html
                         Type = "Archive", // Will be populated in Phase 2 when separate archive extent CSV is available
                         Status = "Enabled", // Archive tier is enabled if we're processing it
                         RetentionPeriod = sobr.ArchivePeriod,
+                        ArchiveTierEnabled = sobr.ArchiveTierEnabled,
                         ImmutableEnabled = false, // Will be populated in Phase 2
                         ImmutablePeriod = string.Empty, // Will be populated in Phase 2
                         SizeLimitEnabled = false, // Will be populated in Phase 2

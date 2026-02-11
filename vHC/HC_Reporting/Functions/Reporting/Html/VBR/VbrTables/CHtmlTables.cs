@@ -2226,7 +2226,7 @@ this.form.TableHeader(VbrLocalizationHelper.SbrExt15, VbrLocalizationHelper.SbrE
         public string AddArchiveTierExtTable(bool scrub)
         {
             string s = this.form.SectionStartWithButton("archextents", "Archive Tier Configuration", "Archive");
-            string summary = "Archive tier extent retention and immutability policies";
+            string summary = "Archive tier extent retention and policy configuration";
             s += "<tr>" +
                 this.form.TableHeader("SOBR Name", "Scale-Out Backup Repository name") +
                 this.form.TableHeader("Archive Extent Name", "Name of archive tier repository/bucket") +
@@ -2234,8 +2234,6 @@ this.form.TableHeader(VbrLocalizationHelper.SbrExt15, VbrLocalizationHelper.SbrE
                 this.form.TableHeader("Archive Tier Enabled", "Whether archive tier is active") +
                 this.form.TableHeader("Cost Optimized", "Cost optimization policy enabled") +
                 this.form.TableHeader("Full Backup Mode", "Full backup mode for archive tier") +
-                this.form.TableHeader("Immutable Enabled", "Whether immutability is enforced on archive") +
-                this.form.TableHeader("Archive Immutable Period", "Archive-specific immutability lock period") +
                 "</tr>";
             s += this.form.TableHeaderEnd();
             s += this.form.TableBodyStart();
@@ -2257,7 +2255,7 @@ this.form.TableHeader(VbrLocalizationHelper.SbrExt15, VbrLocalizationHelper.SbrE
                     s += this.form.TableData(d.Name, string.Empty);
                     s += this.form.TableData(d.RetentionPeriod ?? string.Empty, string.Empty);
 
-                    if (d.ImmutableEnabled)
+                    if (d.ArchiveTierEnabled)
                     {
                         s += this.form.TableData(this.form.True, string.Empty);
                     }
@@ -2284,16 +2282,6 @@ this.form.TableHeader(VbrLocalizationHelper.SbrExt15, VbrLocalizationHelper.SbrE
                         s += this.form.TableData(this.form.False, string.Empty);
                     }
 
-                    if (d.ImmutableEnabled)
-                    {
-                        s += this.form.TableData(this.form.True, string.Empty);
-                    }
-                    else
-                    {
-                        s += this.form.TableData(this.form.False, string.Empty);
-                    }
-
-                    s += this.form.TableData(d.ImmutablePeriod ?? string.Empty, string.Empty);
                     s += "</tr>";
                 }
             }
@@ -2309,16 +2297,15 @@ this.form.TableHeader(VbrLocalizationHelper.SbrExt15, VbrLocalizationHelper.SbrE
             try
             {
                 var list = this.df.ArchiveTierXmlFromCsv(scrub) ?? new List<CArchiveTierExtent>();
-                List<string> headers = new() { "SobrName", "Name", "RetentionPeriod", "ImmutableEnabled", "CostOptimizedEnabled", "FullBackupModeEnabled", "ImmutablePeriod" };
+                List<string> headers = new() { "SobrName", "Name", "RetentionPeriod", "ArchiveTierEnabled", "CostOptimizedEnabled", "FullBackupModeEnabled" };
                 List<List<string>> rows = list.Select(d => new List<string>
                 {
                     d.SobrName,
                     d.Name,
                     d.RetentionPeriod ?? string.Empty,
-                    d.ImmutableEnabled ? "True" : "False",
+                    d.ArchiveTierEnabled ? "True" : "False",
                     d.CostOptimizedEnabled ? "True" : "False",
                     d.FullBackupModeEnabled ? "True" : "False",
-                    d.ImmutablePeriod ?? string.Empty,
                 }).ToList();
                 SetSection("archextents", headers, rows, summary);
             }
