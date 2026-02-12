@@ -3133,15 +3133,10 @@ this.form.TableHeader(VbrLocalizationHelper.SbrExt15, VbrLocalizationHelper.SbrE
                             // row+= _form.TableData(trueSizeGB.ToString() + " GB", "");
                             // row+= _form.TableData(job.RetentionType, "");
                             row += job.RetentionType == "Cycles" ? this.form.TableData("Points", string.Empty) : this.form.TableData(job.RetentionType, string.Empty);
-                            if (CGlobals.VBRMAJORVERSION > 12)
-                            {
-                                row += form.TableData(job.RetainDaysToKeep, string.Empty);
-                            }
-                            else
-                            {
-                                row += this.form.TableData(job.RetentionCount, string.Empty);
-
-                            }
+                            string retentionValue = job.RetentionType == "Cycles"
+                                ? job.RetentionCount
+                                : job.RetainDaysToKeep;
+                            row += this.form.TableData(retentionValue, string.Empty);
 
                             // row += _form.TableData(job.StgEncryptionEnabled, "");
                             row += job.StgEncryptionEnabled == "True" ? this.form.TableData(this.form.True, string.Empty) : this.form.TableData(this.form.False, string.Empty);
@@ -3403,7 +3398,7 @@ this.form.TableHeader(VbrLocalizationHelper.SbrExt15, VbrLocalizationHelper.SbrE
                         sourceSizeGB.ToString(),
                         (job.OnDiskGB ?? 0).ToString(), //"0", // OnDisk calculated separately for NAS
                         job.RetentionType == "Cycles" ? "Points" : job.RetentionType,
-                        job.RetainDaysToKeep,
+                        job.RetentionType == "Cycles" ? job.RetentionCount : job.RetainDaysToKeep,
                         job.StgEncryptionEnabled,
                         CJobTypesParser.GetJobType(job.JobType),
                         compressionLevel,
