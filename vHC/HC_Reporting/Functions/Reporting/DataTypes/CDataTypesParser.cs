@@ -165,6 +165,8 @@ namespace VeeamHealthCheck.Functions.Reporting.DataTypes
                     eInfo.ArchivePeriod = s.ArchivePeriod;
                     bool.TryParse(s.ArchiveTierEnabled, out bool archiveTier);
                     eInfo.ArchiveTierEnabled = archiveTier;
+                    bool.TryParse(s.ArchiveTierEncryptionEnabled, out bool archiveTierEncryption);
+                    eInfo.ArchiveTierEncryptionEnabled = archiveTierEncryption;
                     eInfo.CapacityExtent = s.CapacityExtent;
                     bool.TryParse(s.CapacityTierCopyPolicyEnabled, out bool capTierCopy);
                     eInfo.CapacityTierCopyPolicyEnabled = capTierCopy;

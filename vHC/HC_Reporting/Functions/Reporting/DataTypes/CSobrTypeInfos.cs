@@ -35,6 +35,8 @@ namespace VeeamHealthCheck.Functions.Reporting.DataTypes
 
         public bool ArchiveTierEnabled { get; set; }
 
+        public bool ArchiveTierEncryptionEnabled { get; set; }
+
         public string ArchiveExtent { get; set; }
 
         public string ArchivePeriod { get; set; }

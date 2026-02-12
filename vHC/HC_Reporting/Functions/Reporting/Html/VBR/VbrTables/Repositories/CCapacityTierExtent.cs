@@ -43,6 +43,11 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR
         /// </summary>
         public int MovePeriodDays { get; set; }
 
+        /// <summary>
+        /// Whether encryption is enabled for capacity tier
+        /// </summary>
+        public bool EncryptionEnabled { get; set; }
+
         public CCapacityTierExtent()
         {
             this.TierType = "Capacity";

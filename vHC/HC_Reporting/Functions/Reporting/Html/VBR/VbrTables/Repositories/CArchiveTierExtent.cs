@@ -68,6 +68,11 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR
         /// </summary>
         public bool FullBackupModeEnabled { get; set; }
 
+        /// <summary>
+        /// Whether encryption is enabled for archive tier
+        /// </summary>
+        public bool EncryptionEnabled { get; set; }
+
         public CArchiveTierExtent()
         {
         }

@@ -252,6 +252,18 @@
   <data name="NavSecSumLink" xml:space="preserve">
     <value>Security Summary</value>
   </data>
+  <data name="NavCapTierDeet" xml:space="preserve">
+    <value>Details on capacity tier configuration.</value>
+  </data>
+  <data name="NavCapTierLink" xml:space="preserve">
+    <value>Capacity Tier Configuration</value>
+  </data>
+  <data name="NavArchTierDeet" xml:space="preserve">
+    <value>Details on archive tier configuration.</value>
+  </data>
+  <data name="NavArchTierLink" xml:space="preserve">
+    <value>Archive Tier Configuration</value>
+  </data>
   <data name="NavSobrDeet" xml:space="preserve">
     <value>Summary of SOBRs and config options.</value>
   </data>
