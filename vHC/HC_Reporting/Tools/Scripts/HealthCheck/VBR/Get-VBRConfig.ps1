@@ -299,14 +299,20 @@ Write-LogFile("Collecting component info for concurrency inspection...")
 #VMware - Hyper-V Proxy Requirements:
 $VPProxyRAMReq = 1    #1 GB per task
 $VPProxyCPUReq = 0.5  #1 CPU core per 2 tasks
+$VPProxyOSCPUReq = 2 #2 CPU core per OS Vi and Hv
+$VPProxyOSRAMReq = 2  #2 GB per OS Vi and Hv
 
 #General Purprose Proxy
 $GPProxyRAMReq = 4  #4GB per task
 $GPProxyCPUReq = 2   #2 CPU core per task
+$GPProxyOSCPUReq = 2 #2 CPU core per OS General Purpose Proxy
+$GPProxyOSRAMReq = 4  #2 GB per OS General Purpose Proxy
 
 # Repository / Gateway Requirements:
 $RepoGWRAMReq = 1    #1 GB per task
 $RepoGWCPUReq = 0.5  #1 CPU core per 2 tasks
+$RepoOSCPUReq = 1   #1 CPU core per OS Repository/Gateway
+$RepoOSRAMReq = 4   #4 GB per OS Repository/Gateway
 
 # CDP Proxy Requirements:
 $CDPProxyRAMReq = 8    #8 GB
@@ -732,7 +738,12 @@ try{
             (SafeValue $server.Value.TotalGWTasks)      * $RepoGWCPUReq +
             (SafeValue $server.Value.TotalVpProxyTasks) * $VPProxyCPUReq +
             (SafeValue $server.Value.TotalGPProxyTasks)* $GPProxyCPUReq +
-            (SafeValue $server.Value.TotalCDPProxyTasks)* $CDPProxyCPUReq
+            (SafeValue $server.Value.TotalCDPProxyTasks)* $CDPProxyCPUReq +
+
+            # OS overhead added if the server hosts that role (any tasks > 0)
+            ((SafeValue $server.Value.TotalRepoTasks)    -gt 0 -or (SafeValue $server.Value.TotalGWTasks) -gt 0 ? $RepoOSCPUReq : 0) +
+            ((SafeValue $server.Value.TotalVpProxyTasks) -gt 0 ? $VPProxyOSCPUReq : 0) +
+            ((SafeValue $server.Value.TotalGPProxyTasks) -gt 0 ? $GPProxyOSCPUReq : 0)
         )
 
         $RequiredRAM = [Math]::Ceiling(
@@ -740,7 +751,12 @@ try{
             (SafeValue $server.Value.TotalGWTasks)      * $RepoGWRAMReq +
             (SafeValue $server.Value.TotalVpProxyTasks) * $VPProxyRAMReq +
             (SafeValue $server.Value.TotalGPProxyTasks)* $GPProxyRAMReq +
-            (SafeValue $server.Value.TotalCDPProxyTasks)* $CDPProxyRAMReq
+            (SafeValue $server.Value.TotalCDPProxyTasks)* $CDPProxyRAMReq +
+
+            # OS overhead added if the server hosts that role (any tasks > 0)
+            ((SafeValue $server.Value.TotalRepoTasks)    -gt 0 -or (SafeValue $server.Value.TotalGWTasks) -gt 0 ? $RepoOSRAMReq    : 0) +
+            ((SafeValue $server.Value.TotalVpProxyTasks) -gt 0 ? $VPProxyOSRAMReq : 0) +
+            ((SafeValue $server.Value.TotalGPProxyTasks) -gt 0 ? $GPProxyOSRAMReq : 0)
         )
   
         $coresAvailable = $server.Value.Cores
@@ -748,11 +764,24 @@ try{
         $totalTasks = $server.Value.TotalTasks
     
         #suggestion cores / RAM are only to calculate the suggested nr of tasks. 
-        $SuggestedTasksByCores = $coresAvailable
-        $SuggestedTasksByRAM = [Math]::Ceiling(
-         (SafeValue $ramAvailable) -
-         (SafeValue $server.Value.TotalGPProxyTasks) *  $GPProxyRAMReq -
-         (SafeValue $server.Value.TotalCDPProxyTasks) * $CDPProxyRAMReq
+        $SuggestedTasksByCores = [Math]::Floor(
+            (SafeValue $coresAvailable) -
+
+            # OS overhead subtracted if the server hosts that role (any tasks > 0)
+            ((SafeValue $server.Value.TotalRepoTasks)    -gt 0 -or (SafeValue $server.Value.TotalGWTasks) -gt 0 ? $RepoOSCPUReq    : 0) -
+            ((SafeValue $server.Value.TotalVpProxyTasks) -gt 0 ? $VPProxyOSCPUReq : 0) -
+            ((SafeValue $server.Value.TotalGPProxyTasks) -gt 0 ? $GPProxyOSCPUReq : 0) - 
+            ((SafeValue $server.Value.TotalCDPProxyTasks) -gt 0 ? $CDPProxyOSCPUReq : 0)
+        )
+ 
+        $SuggestedTasksByRAM = [Math]::Floor(
+            (SafeValue $ramAvailable) - 
+
+            # OS overhead subtracted if the server hosts that role (any tasks > 0)
+            ((SafeValue $server.Value.TotalRepoTasks)    -gt 0 -or (SafeValue $server.Value.TotalGWTasks) -gt 0 ? $RepoOSRAMReq    : 0) -
+            ((SafeValue $server.Value.TotalVpProxyTasks) -gt 0 ? $VPProxyOSRAMReq : 0) -
+            ((SafeValue $server.Value.TotalGPProxyTasks) -gt 0 ? $GPProxyOSRAMReq : 0) -
+            ((SafeValue $server.Value.TotalCDPProxyTasks) -gt 0 ? $CDPProxyOSRAMReq : 0)
         )
    
         if ($serverName -contains $BackupServerName) {
