@@ -19,6 +19,11 @@ using VeeamHealthCheck.Functions.Reporting.Html.VBR.VbrTables;
 using VeeamHealthCheck.Functions.Reporting.Html.VBR.VbrTables.Jobs_Info;
 using VeeamHealthCheck.Functions.Reporting.Html.VBR.VbrTables.ProtectedWorkloads;
 using VeeamHealthCheck.Functions.Reporting.Html.VBR.VbrTables.Security;
+using VeeamHealthCheck.Functions.Reporting.Html.VBR.VbrTables.Replication;
+using VeeamHealthCheck.Functions.Reporting.Html.VBR.VbrTables.TapeInfra;
+using VeeamHealthCheck.Functions.Reporting.Html.VBR.VbrTables.CloudConnect;
+using VeeamHealthCheck.Functions.Reporting.Html.VBR.VbrTables.SureBackup;
+using VeeamHealthCheck.Functions.Reporting.Html.VBR.VbrTables.GeneralSettings;
 using VeeamHealthCheck.Reporting.Html.VBR;
 using VeeamHealthCheck.Resources.Localization;
 using VeeamHealthCheck.Scrubber;
@@ -1062,12 +1067,56 @@ namespace VeeamHealthCheck.Html.VBR
                     s += "<h3>NAS Backups</h3>";
                     if (cProtectedWorkloads.nasWorkloads.Count() == 0)
                     {
-                        if (CGlobals.REMOTEEXEC)
+                        // VMC log data not available - check if NAS backup jobs exist as fallback
+                        try
                         {
-                            this.log.Info("No NAS Workloads detected. This may be due to remote execution mode limitations.", false);
-                            s += "<p>No NAS Workloads detected. This may be due to remote execution mode limitations.</p>";
+                            CCsvParser nasJobParser = new();
+                            var nasJobs = nasJobParser.GetDynamicNasBackup()?.ToList();
+                            if (nasJobs != null && nasJobs.Count > 0)
+                            {
+                                this.log.Info($"VMC log data unavailable but {nasJobs.Count} NAS backup jobs found - showing job summary", false);
+                                double totalSourceGB = 0;
+                                foreach (var job in nasJobs)
+                                {
+                                    try
+                                    {
+                                        var dict = (IDictionary<string, object>)job;
+                                        object srcObj = null;
+                                        foreach (var key in dict.Keys)
+                                        {
+                                            if (key.Equals("SourceGB", StringComparison.OrdinalIgnoreCase))
+                                            { srcObj = dict[key]; break; }
+                                            if (key.Equals("OnDiskGB", StringComparison.OrdinalIgnoreCase))
+                                            { srcObj = dict[key]; break; }
+                                        }
+
+                                        if (srcObj != null && double.TryParse(srcObj.ToString(), System.Globalization.NumberStyles.Any, System.Globalization.CultureInfo.InvariantCulture, out double val))
+                                            totalSourceGB += val;
+                                    }
+                                    catch { }
+                                }
+
+                                s += "<div id=\"nasTable\" border=\"1\" class=\"content-table\"></div>";
+                                s += this.form.Table();
+                                s += "<tr>";
+                                s += this.form.TableHeader("NAS Backup Jobs", "Number of NAS backup jobs detected");
+                                s += this.form.TableHeader("Total Source Size", "Total source size across all NAS backup jobs");
+                                s += this.form.TableHeaderEnd();
+                                s += this.form.TableBodyStart();
+                                s += "<tr>";
+                                s += this.form.TableData(nasJobs.Count.ToString(), string.Empty);
+                                s += this.form.TableData($"{totalSourceGB:0.00} GB", string.Empty);
+                                s += "</tr>";
+                                s += this.form.EndTable();
+                                s += "<p class=\"subtext\">Detailed file share statistics require local execution (VMC log access)</p>";
+                            }
+                            else
+                            {
+                                this.log.Info("No NAS Workloads detected.", false);
+                                s += "<p>No NAS Workloads detected</p>";
+                            }
                         }
-                        else
+                        catch (Exception)
                         {
                             this.log.Info("No NAS Workloads detected.", false);
                             s += "<p>No NAS Workloads detected</p>";
@@ -1115,45 +1164,45 @@ namespace VeeamHealthCheck.Html.VBR
                     s += "</table>";
                     s += "<h3>Entra Backups</h3>";
 
-                    // Small table for Entra Tenant Count:
-                    s += "<div id=\"entraTenantCount\" border=\"1\" class=\"content-table\"></div>";
-                    s += this.form.Table();
-                    s += "<tr>";
-                    s += this.form.TableHeader("Tenant Count:", "Number of tenants backed up by this backup server");
-                    s += this.form.TableHeaderEnd();
-                    s += this.form.TableBodyStart();
-
-                    s += "<tr>";
-                    s += this.form.TableData(cProtectedWorkloads.entraWorkloads.Count.ToString(), string.Empty);
-                    s += "</tr>";
-                    s += this.form.EndTable();
-
-                    // Table for Entra Tenants
-                    s += "<div id=\"entraTable\" border=\"1\" class=\"content-table\"></div>";
-                    s += this.form.Table();
-                    s += "<tr>";
-                    s += this.form.TableHeader("Tenant Name", "Name of the Entra ID Tenant being backed up.");
-                    s += this.form.TableHeader("Cache Repo", "Cache Repo selected for the tentant");
-                    s += this.form.TableHeaderEnd();
-                    s += this.form.TableBodyStart();
-
                     if (cProtectedWorkloads.entraWorkloads.Count == 0)
                     {
-                        s += "<tr>";
-                        s += this.form.TableData(string.Empty, string.Empty);
-                        s += this.form.TableData(string.Empty, string.Empty);
-                        s += "</tr>";
+                        this.log.Info("No Entra tenants detected.", false);
+                        s += "<p>No Entra tenants detected</p>";
                     }
-
-                    foreach (var load in cProtectedWorkloads.entraWorkloads)
+                    else
                     {
+                        // Small table for Entra Tenant Count:
+                        s += "<div id=\"entraTenantCount\" border=\"1\" class=\"content-table\"></div>";
+                        s += this.form.Table();
                         s += "<tr>";
-                        s += this.form.TableData(load.TenantName, string.Empty);
-                        s += this.form.TableData(load.CacheRepoName, string.Empty);
-                        s += "</tr>";
-                    }
+                        s += this.form.TableHeader("Tenant Count:", "Number of tenants backed up by this backup server");
+                        s += this.form.TableHeaderEnd();
+                        s += this.form.TableBodyStart();
 
-                    s += this.form.EndTable();
+                        s += "<tr>";
+                        s += this.form.TableData(cProtectedWorkloads.entraWorkloads.Count.ToString(), string.Empty);
+                        s += "</tr>";
+                        s += this.form.EndTable();
+
+                        // Table for Entra Tenants
+                        s += "<div id=\"entraTable\" border=\"1\" class=\"content-table\"></div>";
+                        s += this.form.Table();
+                        s += "<tr>";
+                        s += this.form.TableHeader("Tenant Name", "Name of the Entra ID Tenant being backed up.");
+                        s += this.form.TableHeader("Cache Repo", "Cache Repo selected for the tenant");
+                        s += this.form.TableHeaderEnd();
+                        s += this.form.TableBodyStart();
+
+                        foreach (var load in cProtectedWorkloads.entraWorkloads)
+                        {
+                            s += "<tr>";
+                            s += this.form.TableData(load.TenantName, string.Empty);
+                            s += this.form.TableData(load.CacheRepoName, string.Empty);
+                            s += "</tr>";
+                        }
+
+                        s += this.form.EndTable();
+                    }
                 }
                 catch (Exception)
                 {
@@ -3400,5 +3449,123 @@ this.form.TableHeader(VbrLocalizationHelper.SbrExt15, VbrLocalizationHelper.SbrE
         {
             return string.Empty;
         }
+
+        // Replication section
+        public string AddReplicationHeader()
+        {
+            return this.form.header1("Replication");
+        }
+
+        public string AddReplicationFooter()
+        {
+            return string.Empty;
+        }
+
+        public string AddReplicaJobsTable(bool scrub)
+        {
+            var table = new CReplicaJobsTable();
+            return table.Render(scrub);
+        }
+
+        public string AddReplicasTable(bool scrub)
+        {
+            var table = new CReplicasTable();
+            return table.Render(scrub);
+        }
+
+        public string AddFailoverPlansTable(bool scrub)
+        {
+            var table = new CFailoverPlansTable();
+            return table.Render(scrub);
+        }
+
+        // Tape Infrastructure section
+        public string AddTapeInfrastructureHeader()
+        {
+            return this.form.header1("Tape Infrastructure");
+        }
+
+        public string AddTapeInfrastructureFooter()
+        {
+            return string.Empty;
+        }
+
+        public string AddTapeServersTable(bool scrub)
+        {
+            var table = new CTapeServersTable();
+            return table.Render(scrub);
+        }
+
+        public string AddTapeLibrariesTable(bool scrub)
+        {
+            var table = new CTapeLibrariesTable();
+            return table.Render(scrub);
+        }
+
+        public string AddTapeMediaPoolsTable(bool scrub)
+        {
+            var table = new CTapeMediaPoolsTable();
+            return table.Render(scrub);
+        }
+
+        public string AddTapeVaultsTable(bool scrub)
+        {
+            var table = new CTapeVaultsTable();
+            return table.Render(scrub);
+        }
+
+        // Cloud Connect section
+        public string AddCloudConnectHeader()
+        {
+            return this.form.header1("Cloud Connect");
+        }
+
+        public string AddCloudConnectFooter()
+        {
+            return string.Empty;
+        }
+
+        public string AddCloudGatewaysTable(bool scrub)
+        {
+            var table = new CCloudGatewaysTable();
+            return table.Render(scrub);
+        }
+
+        public string AddCloudTenantsTable(bool scrub)
+        {
+            var table = new CCloudTenantsTable();
+            return table.Render(scrub);
+        }
+
+        // SureBackup Details
+        public string AddSureBackupAppGroupsTable(bool scrub)
+        {
+            var table = new CSureBackupAppGroupsTable();
+            return table.Render(scrub);
+        }
+
+        public string AddSureBackupVirtualLabsTable(bool scrub)
+        {
+            var table = new CSureBackupVirtualLabsTable();
+            return table.Render(scrub);
+        }
+
+        // General Settings section
+        public string AddGeneralSettingsHeader()
+        {
+            return this.form.header1("General Settings");
+        }
+
+        public string AddGeneralSettingsFooter()
+        {
+            return string.Empty;
+        }
+
+        public string AddEmailNotificationTable(bool scrub)
+        {
+            var table = new CEmailNotificationTable();
+            return table.Render(scrub);
+        }
+
     }
 }

@@ -299,14 +299,20 @@ Write-LogFile("Collecting component info for concurrency inspection...")
 #VMware - Hyper-V Proxy Requirements:
 $VPProxyRAMReq = 1    #1 GB per task
 $VPProxyCPUReq = 0.5  #1 CPU core per 2 tasks
+$VPProxyOSCPUReq = 2 #2 CPU core per OS Vi and Hv
+$VPProxyOSRAMReq = 2  #2 GB per OS Vi and Hv
 
 #General Purprose Proxy
 $GPProxyRAMReq = 4  #4GB per task
 $GPProxyCPUReq = 2   #2 CPU core per task
+$GPProxyOSCPUReq = 2 #2 CPU core per OS General Purpose Proxy
+$GPProxyOSRAMReq = 4  #2 GB per OS General Purpose Proxy
 
 # Repository / Gateway Requirements:
 $RepoGWRAMReq = 1    #1 GB per task
 $RepoGWCPUReq = 0.5  #1 CPU core per 2 tasks
+$RepoOSCPUReq = 1   #1 CPU core per OS Repository/Gateway
+$RepoOSRAMReq = 4   #4 GB per OS Repository/Gateway
 
 # CDP Proxy Requirements:
 $CDPProxyRAMReq = 8    #8 GB
@@ -604,6 +610,10 @@ try{
         $NrofRepositoryTasks = $Repository.Options.MaxTaskCount
         $gatewayServers = $Repository.GetActualGateways()
         $NrofgatewayServers = $gatewayServers.Count
+        
+        if ($NrofRepositoryTasks -eq -1) {
+        $NrofRepositoryTasks = 128
+        } 
 
         if ($gatewayServers.Count -gt 0) {
             foreach ($gatewayServer in $gatewayServers) {
@@ -634,14 +644,8 @@ try{
                     $hostRoles[$gatewayServer.Name].Roles += "Gateway"
                     $hostRoles[$gatewayServer.Name].Names += $Repository.Name
                 }
-                    if ($NrofRepositoryTasks -ne -1) {
-
-                $hostRoles[$gatewayServer.Name].TotalGWTasks += $NrofRepositoryTasks
-                $hostRoles[$gatewayServer.Name].TotalTasks += $NrofRepositoryTasks
-                }else {
-                 $hostRoles[$gatewayServer.Name].TotalGWTasks += 128
-                $hostRoles[$gatewayServer.Name].TotalTasks += 128
-                }
+                $hostRoles[$gatewayServer.Name].TotalGWTasks += $NrofRepositoryTasks / $NrofgatewayServers
+                $hostRoles[$gatewayServer.Name].TotalTasks += $NrofRepositoryTasks / $NrofgatewayServers 
             }
         } else {
             # Handle the repository host
@@ -672,13 +676,8 @@ try{
                 $hostRoles[$Repository.Host.Name].Roles += "Repository"
                 $hostRoles[$Repository.Host.Name].Names += $Repository.Name
             }
-             if ($NrofRepositoryTasks -ne -1) {
             $hostRoles[$Repository.Host.Name].TotalRepoTasks += $NrofRepositoryTasks
             $hostRoles[$Repository.Host.Name].TotalTasks += $NrofRepositoryTasks
-            } else {
-             $hostRoles[$Repository.Host.Name].TotalRepoTasks += 128
-            $hostRoles[$Repository.Host.Name].TotalTasks += 128
-            }
         }
     }
         Write-LogFile($message + "DONE")
@@ -732,7 +731,12 @@ try{
             (SafeValue $server.Value.TotalGWTasks)      * $RepoGWCPUReq +
             (SafeValue $server.Value.TotalVpProxyTasks) * $VPProxyCPUReq +
             (SafeValue $server.Value.TotalGPProxyTasks)* $GPProxyCPUReq +
-            (SafeValue $server.Value.TotalCDPProxyTasks)* $CDPProxyCPUReq
+            (SafeValue $server.Value.TotalCDPProxyTasks)* $CDPProxyCPUReq +
+
+            # OS overhead added if the server hosts that role (any tasks > 0)
+            ((SafeValue $server.Value.TotalRepoTasks)    -gt 0 -or (SafeValue $server.Value.TotalGWTasks) -gt 0 ? $RepoOSCPUReq : 0) +
+            ((SafeValue $server.Value.TotalVpProxyTasks) -gt 0 ? $VPProxyOSCPUReq : 0) +
+            ((SafeValue $server.Value.TotalGPProxyTasks) -gt 0 ? $GPProxyOSCPUReq : 0)
         )
 
         $RequiredRAM = [Math]::Ceiling(
@@ -740,7 +744,12 @@ try{
             (SafeValue $server.Value.TotalGWTasks)      * $RepoGWRAMReq +
             (SafeValue $server.Value.TotalVpProxyTasks) * $VPProxyRAMReq +
             (SafeValue $server.Value.TotalGPProxyTasks)* $GPProxyRAMReq +
-            (SafeValue $server.Value.TotalCDPProxyTasks)* $CDPProxyRAMReq
+            (SafeValue $server.Value.TotalCDPProxyTasks)* $CDPProxyRAMReq +
+
+            # OS overhead added if the server hosts that role (any tasks > 0)
+            ((SafeValue $server.Value.TotalRepoTasks)    -gt 0 -or (SafeValue $server.Value.TotalGWTasks) -gt 0 ? $RepoOSRAMReq    : 0) +
+            ((SafeValue $server.Value.TotalVpProxyTasks) -gt 0 ? $VPProxyOSRAMReq : 0) +
+            ((SafeValue $server.Value.TotalGPProxyTasks) -gt 0 ? $GPProxyOSRAMReq : 0)
         )
   
         $coresAvailable = $server.Value.Cores
@@ -748,11 +757,24 @@ try{
         $totalTasks = $server.Value.TotalTasks
     
         #suggestion cores / RAM are only to calculate the suggested nr of tasks. 
-        $SuggestedTasksByCores = $coresAvailable
-        $SuggestedTasksByRAM = [Math]::Ceiling(
-         (SafeValue $ramAvailable) -
-         (SafeValue $server.Value.TotalGPProxyTasks) *  $GPProxyRAMReq -
-         (SafeValue $server.Value.TotalCDPProxyTasks) * $CDPProxyRAMReq
+        $SuggestedTasksByCores = [Math]::Floor(
+            (SafeValue $coresAvailable) -
+
+            # OS overhead subtracted if the server hosts that role (any tasks > 0)
+            ((SafeValue $server.Value.TotalRepoTasks)    -gt 0 -or (SafeValue $server.Value.TotalGWTasks) -gt 0 ? $RepoOSCPUReq    : 0) -
+            ((SafeValue $server.Value.TotalVpProxyTasks) -gt 0 ? $VPProxyOSCPUReq : 0) -
+            ((SafeValue $server.Value.TotalGPProxyTasks) -gt 0 ? $GPProxyOSCPUReq : 0) - 
+            ((SafeValue $server.Value.TotalCDPProxyTasks) -gt 0 ? $CDPProxyOSCPUReq : 0)
+        )
+ 
+        $SuggestedTasksByRAM = [Math]::Floor(
+            (SafeValue $ramAvailable) - 
+
+            # OS overhead subtracted if the server hosts that role (any tasks > 0)
+            ((SafeValue $server.Value.TotalRepoTasks)    -gt 0 -or (SafeValue $server.Value.TotalGWTasks) -gt 0 ? $RepoOSRAMReq    : 0) -
+            ((SafeValue $server.Value.TotalVpProxyTasks) -gt 0 ? $VPProxyOSRAMReq : 0) -
+            ((SafeValue $server.Value.TotalGPProxyTasks) -gt 0 ? $GPProxyOSRAMReq : 0) -
+            ((SafeValue $server.Value.TotalCDPProxyTasks) -gt 0 ? $CDPProxyOSRAMReq : 0)
         )
    
         if ($serverName -contains $BackupServerName) {
@@ -1105,6 +1127,54 @@ try {
     $tapeJob | Export-VhcCsv -FileName '_TapeJobs.csv'
     #end tape jobs
 
+    # Tape Servers
+    Write-LogFile("Starting Tape Servers collection...")
+    try {
+        $tapeServers = Get-VBRTapeServer
+        Write-LogFile("Found " + $tapeServers.Count + " tape servers")
+    }
+    catch {
+        Write-LogFile("Tape Servers collection failed: " + $Error[0].Exception.Message, "Errors", "ERROR")
+        $tapeServers = $null
+    }
+    $tapeServers | Export-VhcCsv -FileName '_TapeServers.csv'
+
+    # Tape Libraries
+    Write-LogFile("Starting Tape Libraries collection...")
+    try {
+        $tapeLibraries = Get-VBRTapeLibrary
+        Write-LogFile("Found " + $tapeLibraries.Count + " tape libraries")
+    }
+    catch {
+        Write-LogFile("Tape Libraries collection failed: " + $Error[0].Exception.Message, "Errors", "ERROR")
+        $tapeLibraries = $null
+    }
+    $tapeLibraries | Export-VhcCsv -FileName '_TapeLibraries.csv'
+
+    # Tape Media Pools
+    Write-LogFile("Starting Tape Media Pools collection...")
+    try {
+        $tapeMediaPools = Get-VBRTapeMediaPool
+        Write-LogFile("Found " + $tapeMediaPools.Count + " tape media pools")
+    }
+    catch {
+        Write-LogFile("Tape Media Pools collection failed: " + $Error[0].Exception.Message, "Errors", "ERROR")
+        $tapeMediaPools = $null
+    }
+    $tapeMediaPools | Export-VhcCsv -FileName '_TapeMediaPools.csv'
+
+    # Tape Vaults
+    Write-LogFile("Starting Tape Vaults collection...")
+    try {
+        $tapeVaults = Get-VBRTapeVault
+        Write-LogFile("Found " + $tapeVaults.Count + " tape vaults")
+    }
+    catch {
+        Write-LogFile("Tape Vaults collection failed: " + $Error[0].Exception.Message, "Errors", "ERROR")
+        $tapeVaults = $null
+    }
+    $tapeVaults | Export-VhcCsv -FileName '_TapeVaults.csv'
+
     # NAS Jobs
     Write-LogFile("Starting NAS Jobs collection...")
     try {
@@ -1241,7 +1311,115 @@ try {
   
     $nasBackup | Export-VhcCsv -FileName '_nasBackup.csv'
     $nasBCJ | Export-VhcCsv -FileName '_nasBCJ.csv'
-  
+
+    # Replica Jobs
+    Write-LogFile("Starting Replica Jobs collection...")
+    try {
+        $replicaJobs = Get-VBRJob | Where-Object { $_.JobType -eq "Replica" }
+        Write-LogFile("Found " + @($replicaJobs).Count + " replica jobs")
+    }
+    catch {
+        Write-LogFile("Replica Jobs collection failed: " + $Error[0].Exception.Message, "Errors", "ERROR")
+        $replicaJobs = $null
+    }
+    $replicaJobs | Export-VhcCsv -FileName '_ReplicaJobs.csv'
+
+    # Replicas
+    Write-LogFile("Starting Replicas collection...")
+    try {
+        $replicas = Get-VBRReplica
+        Write-LogFile("Found " + @($replicas).Count + " replicas")
+    }
+    catch {
+        Write-LogFile("Replicas collection failed: " + $Error[0].Exception.Message, "Errors", "ERROR")
+        $replicas = $null
+    }
+    $replicas | Export-VhcCsv -FileName '_Replicas.csv'
+
+    # Failover Plans
+    Write-LogFile("Starting Failover Plans collection...")
+    try {
+        $failoverPlans = Get-VBRFailoverPlan
+        Write-LogFile("Found " + @($failoverPlans).Count + " failover plans")
+    }
+    catch {
+        Write-LogFile("Failover Plans collection failed: " + $Error[0].Exception.Message, "Errors", "ERROR")
+        $failoverPlans = $null
+    }
+    $failoverPlans | Export-VhcCsv -FileName '_FailoverPlans.csv'
+
+    # SureBackup Application Groups
+    Write-LogFile("Starting SureBackup Application Groups collection...")
+    try {
+        $sbAppGroups = Get-VSBApplicationGroup
+        Write-LogFile("Found " + @($sbAppGroups).Count + " SureBackup application groups")
+    }
+    catch {
+        Write-LogFile("SureBackup Application Groups collection failed: " + $Error[0].Exception.Message, "Errors", "ERROR")
+        $sbAppGroups = $null
+    }
+    $sbAppGroups | Export-VhcCsv -FileName '_SureBackupAppGroups.csv'
+
+    # SureBackup Virtual Labs
+    Write-LogFile("Starting SureBackup Virtual Labs collection...")
+    try {
+        $sbVirtualLabs = Get-VSBVirtualLab
+        Write-LogFile("Found " + @($sbVirtualLabs).Count + " SureBackup virtual labs")
+    }
+    catch {
+        Write-LogFile("SureBackup Virtual Labs collection failed: " + $Error[0].Exception.Message, "Errors", "ERROR")
+        $sbVirtualLabs = $null
+    }
+    $sbVirtualLabs | Export-VhcCsv -FileName '_SureBackupVirtualLabs.csv'
+
+    # Cloud Connect Gateways
+    Write-LogFile("Starting Cloud Connect Gateways collection...")
+    try {
+        $cloudGateways = Get-VBRCloudGateway
+        Write-LogFile("Found " + @($cloudGateways).Count + " cloud gateways")
+    }
+    catch {
+        Write-LogFile("Cloud Connect Gateways collection failed: " + $Error[0].Exception.Message, "Errors", "ERROR")
+        $cloudGateways = $null
+    }
+    $cloudGateways | Export-VhcCsv -FileName '_CloudGateways.csv'
+
+    # Cloud Connect Tenants
+    Write-LogFile("Starting Cloud Connect Tenants collection...")
+    try {
+        $cloudTenants = Get-VBRCloudTenant
+        Write-LogFile("Found " + @($cloudTenants).Count + " cloud tenants")
+    }
+    catch {
+        Write-LogFile("Cloud Connect Tenants collection failed: " + $Error[0].Exception.Message, "Errors", "ERROR")
+        $cloudTenants = $null
+    }
+    $cloudTenants | Export-VhcCsv -FileName '_CloudTenants.csv'
+
+    # Email Notification Settings
+    Write-LogFile("Starting Email Notification Settings collection...")
+    try {
+        $emailNotification = Get-VBRMailNotification
+        Write-LogFile("Email notification collected")
+    }
+    catch {
+        Write-LogFile("Email Notification Settings collection failed: " + $Error[0].Exception.Message, "Errors", "ERROR")
+        $emailNotification = $null
+    }
+    $emailNotification | Export-VhcCsv -FileName '_EmailNotification.csv'
+
+    # Credentials (passwords are not exported by Veeam cmdlets)
+    Write-LogFile("Starting Credentials collection...")
+    try {
+        $credentials = Get-VBRCredentials | Select-Object Name, UserName, Description, CurrentUser, LastModified
+        Write-LogFile("Found " + @($credentials).Count + " credentials")
+    }
+    catch {
+        Write-LogFile("Credentials collection failed: " + $Error[0].Exception.Message, "Errors", "ERROR")
+        $credentials = $null
+    }
+    $credentials | Export-VhcCsv -FileName '_Credentials.csv'
+
     # removing tape jobs from here, exporting independently
     # $tapeJob | Add-Member -MemberType NoteProperty -Name JobType -Value "Tape Backup"
     # $Jobs += $tapeJob
@@ -1273,20 +1451,42 @@ try {
         #$VBRJob = $PSItem
         # Find Restore Points
         try{
-        $LastBackup = $Job.GetLastBackup()
+            $LastBackup = $Job.GetLastBackup()
             $RestorePoints = Get-VBRRestorePoint -Backup $LastBackup
-        $TotalOnDiskGB = 0
-        # Extract Restore Point Backup Sizes
-        $RestorePoints.Foreach{
-            $RestorePoint = $PSItem
-            $OnDiskGB = $RestorePoint.GetStorage().Stats.BackupSize / 1GB # Convert from Bytes to GB
-            $TotalOnDiskGB += $OnDiskGB
+            $TotalOnDiskGB = 0
+            # Extract Restore Point Backup Sizes
+            $RestorePoints.Foreach{
+                $RestorePoint = $PSItem
+                $OnDiskGB = $RestorePoint.GetStorage().Stats.BackupSize / 1GB # Convert from Bytes to GB
+                $TotalOnDiskGB += $OnDiskGB
+            }
+            # Calculate OriginalSize from the latest restore point per protected object
+            $CalculatedOriginalSize = 0
+            try {
+                if ($RestorePoints -and $RestorePoints.Count -gt 0) {
+                    $LatestPoints = $RestorePoints | Group-Object -Property { $_.ObjectId } | ForEach-Object {
+                        $_.Group | Sort-Object CreationTimeUtc -Descending | Select-Object -First 1
+                    }
+                    $ApproxSum = ($LatestPoints | Where-Object { $null -ne $_.ApproxSize } | Measure-Object -Property ApproxSize -Sum).Sum
+                    if ($ApproxSum -and $ApproxSum -gt 0) {
+                        $CalculatedOriginalSize = $ApproxSum
+                    } else {
+                        # Fallback: restore points exist but lack ApproxSize (legacy backups)
+                        $CalculatedOriginalSize = $Job.Info.IncludedSize
+                    }
+                } else {
+                    # No restore points available, fall back to cached IncludedSize
+                    $CalculatedOriginalSize = $Job.Info.IncludedSize
+                }
+            } catch {
+                $CalculatedOriginalSize = $Job.Info.IncludedSize
+            }
         }
-    }
         catch{
             Write-LogFile("Warning: Could not get last backup for job: " + $Job.Name, "Warnings", "WARN")
 
             $TotalOnDiskGB = 0
+            $CalculatedOriginalSize = $Job.Info.IncludedSize
         }
 
         # [pscustomobject]@{
@@ -1308,7 +1508,7 @@ try {
         @{n = 'TransformIncrementsToSyntethic'; e = { $Job.Options.BackupTargetOptions.TransformIncrementsToSyntethic } }, 
         @{n = 'TransformToSyntethicDays'; e = { $Job.Options.BackupTargetOptions.TransformToSyntethicDays } }, 
         @{n = 'PwdKeyId'; e = { $_.Info.PwdKeyId } }, 
-        @{n = 'OriginalSize'; e = { $_.Info.IncludedSize } },
+        @{n = 'OriginalSize'; e = { $CalculatedOriginalSize } },
         @{n = 'RetentionType'; e = { $Job.BackupStorageOptions.RetentionType } },
         @{n = 'RetentionCount'; e = { $Job.BackupStorageOptions.RetainCycles } },
         @{n = 'RetainDaysToKeep'; e = { $Job.BackupStorageOptions.RetainDaysToKeep } },

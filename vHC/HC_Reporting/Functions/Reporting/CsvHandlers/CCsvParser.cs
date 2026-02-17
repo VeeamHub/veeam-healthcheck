@@ -78,6 +78,29 @@ namespace VeeamHealthCheck.Functions.Reporting.CsvHandlers
 
         public readonly string tapeJobInfo = "TapeJobs";
 
+        // Replication
+        public readonly string replicaJobs = "ReplicaJobs";
+        public readonly string replicas = "Replicas";
+        public readonly string failoverPlans = "FailoverPlans";
+
+        // Tape Infrastructure
+        public readonly string tapeServers = "TapeServers";
+        public readonly string tapeLibraries = "TapeLibraries";
+        public readonly string tapeMediaPools = "TapeMediaPools";
+        public readonly string tapeVaults = "TapeVaults";
+
+        // Cloud Connect
+        public readonly string cloudGateways = "CloudGateways";
+        public readonly string cloudTenants = "CloudTenants";
+
+        // SureBackup Details
+        public readonly string sureBackupAppGroups = "SureBackupAppGroups";
+        public readonly string sureBackupVirtualLabs = "SureBackupVirtualLabs";
+
+        // General Settings
+        public readonly string emailNotification = "EmailNotification";
+        public readonly string credentials = "Credentials";
+
         // VBO Files
         private readonly string vboGlobalCsv = "Global";
         private readonly string vboProxies = "Proxies";
@@ -353,6 +376,76 @@ namespace VeeamHealthCheck.Functions.Reporting.CsvHandlers
         public IEnumerable<dynamic> GetDynamicSureBackupJob()
         {
             return this.VbrGetDynamicCsvRecs(this.SureBackupJob, CVariables.vbrDir);
+        }
+
+        // Replication
+        public IEnumerable<dynamic> GetDynamicReplicaJobs()
+        {
+            return this.VbrGetDynamicCsvRecs(this.replicaJobs, CVariables.vbrDir);
+        }
+
+        public IEnumerable<dynamic> GetDynamicReplicas()
+        {
+            return this.VbrGetDynamicCsvRecs(this.replicas, CVariables.vbrDir);
+        }
+
+        public IEnumerable<dynamic> GetDynamicFailoverPlans()
+        {
+            return this.VbrGetDynamicCsvRecs(this.failoverPlans, CVariables.vbrDir);
+        }
+
+        // Tape Infrastructure
+        public IEnumerable<dynamic> GetDynamicTapeServers()
+        {
+            return this.VbrGetDynamicCsvRecs(this.tapeServers, CVariables.vbrDir);
+        }
+
+        public IEnumerable<dynamic> GetDynamicTapeLibraries()
+        {
+            return this.VbrGetDynamicCsvRecs(this.tapeLibraries, CVariables.vbrDir);
+        }
+
+        public IEnumerable<dynamic> GetDynamicTapeMediaPools()
+        {
+            return this.VbrGetDynamicCsvRecs(this.tapeMediaPools, CVariables.vbrDir);
+        }
+
+        public IEnumerable<dynamic> GetDynamicTapeVaults()
+        {
+            return this.VbrGetDynamicCsvRecs(this.tapeVaults, CVariables.vbrDir);
+        }
+
+        // Cloud Connect
+        public IEnumerable<dynamic> GetDynamicCloudGateways()
+        {
+            return this.VbrGetDynamicCsvRecs(this.cloudGateways, CVariables.vbrDir);
+        }
+
+        public IEnumerable<dynamic> GetDynamicCloudTenants()
+        {
+            return this.VbrGetDynamicCsvRecs(this.cloudTenants, CVariables.vbrDir);
+        }
+
+        // SureBackup Details
+        public IEnumerable<dynamic> GetDynamicSureBackupAppGroups()
+        {
+            return this.VbrGetDynamicCsvRecs(this.sureBackupAppGroups, CVariables.vbrDir);
+        }
+
+        public IEnumerable<dynamic> GetDynamicSureBackupVirtualLabs()
+        {
+            return this.VbrGetDynamicCsvRecs(this.sureBackupVirtualLabs, CVariables.vbrDir);
+        }
+
+        // General Settings
+        public IEnumerable<dynamic> GetDynamicEmailNotification()
+        {
+            return this.VbrGetDynamicCsvRecs(this.emailNotification, CVariables.vbrDir);
+        }
+
+        public IEnumerable<dynamic> GetDynamicCredentials()
+        {
+            return this.VbrGetDynamicCsvRecs(this.credentials, CVariables.vbrDir);
         }
 
         public IEnumerable<dynamic> GetDynamicBjobs()
