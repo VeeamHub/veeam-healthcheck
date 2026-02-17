@@ -1105,6 +1105,54 @@ try {
     $tapeJob | Export-VhcCsv -FileName '_TapeJobs.csv'
     #end tape jobs
 
+    # Tape Servers
+    Write-LogFile("Starting Tape Servers collection...")
+    try {
+        $tapeServers = Get-VBRTapeServer
+        Write-LogFile("Found " + $tapeServers.Count + " tape servers")
+    }
+    catch {
+        Write-LogFile("Tape Servers collection failed: " + $Error[0].Exception.Message, "Errors", "ERROR")
+        $tapeServers = $null
+    }
+    $tapeServers | Export-VhcCsv -FileName '_TapeServers.csv'
+
+    # Tape Libraries
+    Write-LogFile("Starting Tape Libraries collection...")
+    try {
+        $tapeLibraries = Get-VBRTapeLibrary
+        Write-LogFile("Found " + $tapeLibraries.Count + " tape libraries")
+    }
+    catch {
+        Write-LogFile("Tape Libraries collection failed: " + $Error[0].Exception.Message, "Errors", "ERROR")
+        $tapeLibraries = $null
+    }
+    $tapeLibraries | Export-VhcCsv -FileName '_TapeLibraries.csv'
+
+    # Tape Media Pools
+    Write-LogFile("Starting Tape Media Pools collection...")
+    try {
+        $tapeMediaPools = Get-VBRTapeMediaPool
+        Write-LogFile("Found " + $tapeMediaPools.Count + " tape media pools")
+    }
+    catch {
+        Write-LogFile("Tape Media Pools collection failed: " + $Error[0].Exception.Message, "Errors", "ERROR")
+        $tapeMediaPools = $null
+    }
+    $tapeMediaPools | Export-VhcCsv -FileName '_TapeMediaPools.csv'
+
+    # Tape Vaults
+    Write-LogFile("Starting Tape Vaults collection...")
+    try {
+        $tapeVaults = Get-VBRTapeVault
+        Write-LogFile("Found " + $tapeVaults.Count + " tape vaults")
+    }
+    catch {
+        Write-LogFile("Tape Vaults collection failed: " + $Error[0].Exception.Message, "Errors", "ERROR")
+        $tapeVaults = $null
+    }
+    $tapeVaults | Export-VhcCsv -FileName '_TapeVaults.csv'
+
     # NAS Jobs
     Write-LogFile("Starting NAS Jobs collection...")
     try {
@@ -1241,7 +1289,115 @@ try {
   
     $nasBackup | Export-VhcCsv -FileName '_nasBackup.csv'
     $nasBCJ | Export-VhcCsv -FileName '_nasBCJ.csv'
-  
+
+    # Replica Jobs
+    Write-LogFile("Starting Replica Jobs collection...")
+    try {
+        $replicaJobs = Get-VBRJob | Where-Object { $_.JobType -eq "Replica" }
+        Write-LogFile("Found " + @($replicaJobs).Count + " replica jobs")
+    }
+    catch {
+        Write-LogFile("Replica Jobs collection failed: " + $Error[0].Exception.Message, "Errors", "ERROR")
+        $replicaJobs = $null
+    }
+    $replicaJobs | Export-VhcCsv -FileName '_ReplicaJobs.csv'
+
+    # Replicas
+    Write-LogFile("Starting Replicas collection...")
+    try {
+        $replicas = Get-VBRReplica
+        Write-LogFile("Found " + @($replicas).Count + " replicas")
+    }
+    catch {
+        Write-LogFile("Replicas collection failed: " + $Error[0].Exception.Message, "Errors", "ERROR")
+        $replicas = $null
+    }
+    $replicas | Export-VhcCsv -FileName '_Replicas.csv'
+
+    # Failover Plans
+    Write-LogFile("Starting Failover Plans collection...")
+    try {
+        $failoverPlans = Get-VBRFailoverPlan
+        Write-LogFile("Found " + @($failoverPlans).Count + " failover plans")
+    }
+    catch {
+        Write-LogFile("Failover Plans collection failed: " + $Error[0].Exception.Message, "Errors", "ERROR")
+        $failoverPlans = $null
+    }
+    $failoverPlans | Export-VhcCsv -FileName '_FailoverPlans.csv'
+
+    # SureBackup Application Groups
+    Write-LogFile("Starting SureBackup Application Groups collection...")
+    try {
+        $sbAppGroups = Get-VSBApplicationGroup
+        Write-LogFile("Found " + @($sbAppGroups).Count + " SureBackup application groups")
+    }
+    catch {
+        Write-LogFile("SureBackup Application Groups collection failed: " + $Error[0].Exception.Message, "Errors", "ERROR")
+        $sbAppGroups = $null
+    }
+    $sbAppGroups | Export-VhcCsv -FileName '_SureBackupAppGroups.csv'
+
+    # SureBackup Virtual Labs
+    Write-LogFile("Starting SureBackup Virtual Labs collection...")
+    try {
+        $sbVirtualLabs = Get-VSBVirtualLab
+        Write-LogFile("Found " + @($sbVirtualLabs).Count + " SureBackup virtual labs")
+    }
+    catch {
+        Write-LogFile("SureBackup Virtual Labs collection failed: " + $Error[0].Exception.Message, "Errors", "ERROR")
+        $sbVirtualLabs = $null
+    }
+    $sbVirtualLabs | Export-VhcCsv -FileName '_SureBackupVirtualLabs.csv'
+
+    # Cloud Connect Gateways
+    Write-LogFile("Starting Cloud Connect Gateways collection...")
+    try {
+        $cloudGateways = Get-VBRCloudGateway
+        Write-LogFile("Found " + @($cloudGateways).Count + " cloud gateways")
+    }
+    catch {
+        Write-LogFile("Cloud Connect Gateways collection failed: " + $Error[0].Exception.Message, "Errors", "ERROR")
+        $cloudGateways = $null
+    }
+    $cloudGateways | Export-VhcCsv -FileName '_CloudGateways.csv'
+
+    # Cloud Connect Tenants
+    Write-LogFile("Starting Cloud Connect Tenants collection...")
+    try {
+        $cloudTenants = Get-VBRCloudTenant
+        Write-LogFile("Found " + @($cloudTenants).Count + " cloud tenants")
+    }
+    catch {
+        Write-LogFile("Cloud Connect Tenants collection failed: " + $Error[0].Exception.Message, "Errors", "ERROR")
+        $cloudTenants = $null
+    }
+    $cloudTenants | Export-VhcCsv -FileName '_CloudTenants.csv'
+
+    # Email Notification Settings
+    Write-LogFile("Starting Email Notification Settings collection...")
+    try {
+        $emailNotification = Get-VBRMailNotification
+        Write-LogFile("Email notification collected")
+    }
+    catch {
+        Write-LogFile("Email Notification Settings collection failed: " + $Error[0].Exception.Message, "Errors", "ERROR")
+        $emailNotification = $null
+    }
+    $emailNotification | Export-VhcCsv -FileName '_EmailNotification.csv'
+
+    # Credentials (passwords are not exported by Veeam cmdlets)
+    Write-LogFile("Starting Credentials collection...")
+    try {
+        $credentials = Get-VBRCredentials | Select-Object Name, UserName, Description, CurrentUser, LastModified
+        Write-LogFile("Found " + @($credentials).Count + " credentials")
+    }
+    catch {
+        Write-LogFile("Credentials collection failed: " + $Error[0].Exception.Message, "Errors", "ERROR")
+        $credentials = $null
+    }
+    $credentials | Export-VhcCsv -FileName '_Credentials.csv'
+
     # removing tape jobs from here, exporting independently
     # $tapeJob | Add-Member -MemberType NoteProperty -Name JobType -Value "Tape Backup"
     # $Jobs += $tapeJob
