@@ -25,5 +25,11 @@ namespace VeeamHealthCheck.Functions.Reporting.CsvHandlers
 
         [Index(5)]
         public string BackupImmutabilityEnabled { get; set; }
+
+        [Index(6)]
+        public string GatewayMode { get; set; }
+
+        [Index(7)]
+        public string GatewayServer { get; set; }
     }
 }

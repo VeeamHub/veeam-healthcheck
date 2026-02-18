@@ -1396,7 +1396,10 @@ namespace VeeamHealthCheck.Functions.Reporting.Html
                         SizeLimitEnabled = sobr.SizeLimitEnabled,
                         SizeLimit = sobr.SizeLimit,
                         Status = string.IsNullOrWhiteSpace(sobr.CapTierStatus) ? "Enabled" : sobr.CapTierStatus,
-                        TierType = "Capacity"
+                        TierType = "Capacity",
+                        ImmutabilityMode = sobr.CapTierImmutabilityMode,
+                        ConnectionType = sobr.CapTierConnectionType,
+                        GatewayServer = sobr.CapTierGatewayServer
                     };
 
                     capacityExtents.Add(capacityExtent);
@@ -1471,7 +1474,9 @@ namespace VeeamHealthCheck.Functions.Reporting.Html
                         EncryptionEnabled = sobr?.ArchiveTierEncryptionEnabled ?? false,
                         ImmutableEnabled = immutableEnabled,
                         CostOptimizedEnabled = sobr?.CostOptimizedArchiveEnabled ?? false,
-                        FullBackupModeEnabled = sobr?.ArchiveFullBackupModeEnabled ?? false
+                        FullBackupModeEnabled = sobr?.ArchiveFullBackupModeEnabled ?? false,
+                        GatewayMode = arch.GatewayMode,
+                        GatewayServer = arch.GatewayServer
                     };
 
                     archiveExtents.Add(archiveExtent);

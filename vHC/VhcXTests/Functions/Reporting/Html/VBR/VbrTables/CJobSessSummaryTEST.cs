@@ -344,8 +344,8 @@ namespace VhcXTests.Functions.Reporting.Html.VBR.VbrTables
             var sobrId = "55555555-5555-5555-5555-555555555555";
             var sobrCsv = @"""PolicyType"",""Extents"",""UsePerVMBackupFiles"",""PerformFullWhenExtentOffline"",""EnableCapacityTier"",""OperationalRestorePeriod"",""OverridePolicyEnabled"",""OverrideSpaceThreshold"",""OffloadWindowOptions"",""CapacityExtent"",""EncryptionEnabled"",""EncryptionKey"",""CapacityTierCopyPolicyEnabled"",""CapacityTierMovePolicyEnabled"",""ArchiveTierEnabled"",""ArchiveExtent"",""ArchivePeriod"",""CostOptimizedArchiveEnabled"",""ArchiveFullBackupModeEnabled"",""PluginBackupsOffloadEnabled"",""CopyAllPluginBackupsEnabled"",""CopyAllMachineBackupsEnabled"",""Id"",""Name"",""Description""
 ""Performance"","""",""False"",""False"",""True"",""7"",""False"",""0"","""",""CapExtent-01"",""False"","""",""True"",""True"",""False"","""",""0"",""False"",""False"",""False"",""False"",""False"",""" + sobrId + """,""SOBR-Cap"",""Capacity SOBR""";
-            var capTierCsv = @$"""Status"",""Type"",""Immute"",""immutabilityperiod"",""SizeLimitEnabled"",""SizeLimit"",""RepoId"",""parentid""
-""Maintenance"",""AzureBlob"",""True"",""30"",""False"",""0"",""11111111-2222-3333-4444-555555555555"",""{sobrId}""";
+            var capTierCsv = @$"""Status"",""Type"",""Immute"",""immutabilityperiod"",""ImmutabilityMode"",""SizeLimitEnabled"",""SizeLimit"",""RepoId"",""ConnectionType"",""GatewayServer"",""parentid""
+""Maintenance"",""AzureBlob"",""True"",""30"",""RepositoryRetention"",""False"",""0"",""11111111-2222-3333-4444-555555555555"",""Direct"","""",""{sobrId}""";
 
             VbrCsvSampleGenerator.CreateCsvFile(integrationVbrDir, "SOBRs.csv", sobrCsv);
             VbrCsvSampleGenerator.CreateCsvFile(integrationVbrDir, "capTier.csv", capTierCsv);

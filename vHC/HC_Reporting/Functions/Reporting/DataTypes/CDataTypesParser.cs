@@ -154,6 +154,9 @@ namespace VeeamHealthCheck.Functions.Reporting.DataTypes
 
                                 eInfo.CapTierType = cap.Type;
                                 eInfo.CapTierStatus = cap.Status;
+                                eInfo.CapTierImmutabilityMode = cap.ImmutabilityMode;
+                                eInfo.CapTierConnectionType = cap.ConnectionType;
+                                eInfo.CapTierGatewayServer = cap.GatewayServer;
                             }
                         }
                     }

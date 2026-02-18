@@ -24,5 +24,9 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR
         public bool FullBackupModeEnabled { get; set; }
 
         public bool EncryptionEnabled { get; set; }
+
+        public string GatewayMode { get; set; }
+
+        public string GatewayServer { get; set; }
     }
 }

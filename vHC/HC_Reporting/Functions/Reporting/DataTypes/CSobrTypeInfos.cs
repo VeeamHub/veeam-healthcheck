@@ -81,6 +81,12 @@ namespace VeeamHealthCheck.Functions.Reporting.DataTypes
 
         public string ArchiveTierImmutablePeriod { get; set; }
 
+        public string CapTierImmutabilityMode { get; set; }
+
+        public string CapTierConnectionType { get; set; }
+
+        public string CapTierGatewayServer { get; set; }
+
         public CSobrTypeInfos()
         {
         }

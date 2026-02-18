@@ -2143,9 +2143,12 @@ this.form.TableHeader(VbrLocalizationHelper.SbrExt15, VbrLocalizationHelper.SbrE
                 this.form.TableHeader("Encryption", "Whether encryption is enabled for capacity tier") +
                 this.form.TableHeader("Immutable Enabled", "Whether immutability is enforced") +
                 this.form.TableHeader("Immutable Period", "How long data is locked in capacity tier") +
+                this.form.TableHeader("Immutability Mode", "Immutability mode (v13+, e.g. RepositoryRetention)") +
                 this.form.TableHeader("Size Limit Enabled", "Whether size limiting is enforced") +
                 this.form.TableHeader("Size Limit", "Maximum capacity tier size") +
                 this.form.TableHeader("Type", "Repository type (e.g., AWS S3, Azure Blob)") +
+                this.form.TableHeader("Connection Type", "Gateway connection type (e.g., Direct, Gateway)") +
+                this.form.TableHeader("Gateway Servers", "Gateway servers assigned to this capacity extent") +
                 "</tr>";
             s += this.form.TableHeaderEnd();
             s += this.form.TableBodyStart();
@@ -2206,6 +2209,7 @@ this.form.TableHeader(VbrLocalizationHelper.SbrExt15, VbrLocalizationHelper.SbrE
                     }
 
                     s += this.form.TableData(d.ImmutablePeriod, string.Empty);
+                    s += this.form.TableData(d.ImmutabilityMode ?? string.Empty, string.Empty);
 
                     if (d.SizeLimitEnabled)
                     {
@@ -2218,6 +2222,8 @@ this.form.TableHeader(VbrLocalizationHelper.SbrExt15, VbrLocalizationHelper.SbrE
 
                     s += this.form.TableData(d.SizeLimit ?? string.Empty, string.Empty);
                     s += this.form.TableData(d.Type, string.Empty);
+                    s += this.form.TableData(d.ConnectionType ?? string.Empty, string.Empty);
+                    s += this.form.TableData(d.GatewayServer ?? string.Empty, string.Empty);
                     s += "</tr>";
                 }
             }
@@ -2233,7 +2239,7 @@ this.form.TableHeader(VbrLocalizationHelper.SbrExt15, VbrLocalizationHelper.SbrE
             try
             {
                 var list = this.df.CapacityTierXmlFromCsv(scrub) ?? new List<CCapacityTierExtent>();
-                List<string> headers = new() { "Name", "SobrName", "Status", "CopyModeEnabled", "MoveModeEnabled", "MovePeriodDays", "EncryptionEnabled", "ImmutableEnabled", "ImmutablePeriod", "SizeLimitEnabled", "SizeLimit", "Type" };
+                List<string> headers = new() { "Name", "SobrName", "Status", "CopyModeEnabled", "MoveModeEnabled", "MovePeriodDays", "EncryptionEnabled", "ImmutableEnabled", "ImmutablePeriod", "ImmutabilityMode", "SizeLimitEnabled", "SizeLimit", "Type", "ConnectionType", "GatewayServer" };
                 List<List<string>> rows = list.Select(d => new List<string>
                 {
                     d.Name,
@@ -2245,9 +2251,12 @@ this.form.TableHeader(VbrLocalizationHelper.SbrExt15, VbrLocalizationHelper.SbrE
                     d.EncryptionEnabled ? "True" : "False",
                     d.ImmutableEnabled ? "True" : "False",
                     d.ImmutablePeriod,
+                    d.ImmutabilityMode ?? string.Empty,
                     d.SizeLimitEnabled ? "True" : "False",
                     d.SizeLimit ?? string.Empty,
                     d.Type,
+                    d.ConnectionType ?? string.Empty,
+                    d.GatewayServer ?? string.Empty,
                 }).ToList();
                 SetSection("capextents", headers, rows, summary);
             }
@@ -2277,6 +2286,8 @@ this.form.TableHeader(VbrLocalizationHelper.SbrExt15, VbrLocalizationHelper.SbrE
                 this.form.TableHeader("Encryption", "Whether encryption is enabled for archive tier") +
                 this.form.TableHeader("Immutable Enabled", "Whether immutability is enforced on archive") +
                 this.form.TableHeader("Type", "Archive repository type (e.g., AmazonS3, AzureBlob)") +
+                this.form.TableHeader("Gateway Mode", "Gateway connection mode (e.g., Direct, Gateway)") +
+                this.form.TableHeader("Gateway Servers", "Gateway servers assigned to this archive extent") +
                 "</tr>";
             s += this.form.TableHeaderEnd();
             s += this.form.TableBodyStart();
@@ -2345,6 +2356,8 @@ this.form.TableHeader(VbrLocalizationHelper.SbrExt15, VbrLocalizationHelper.SbrE
                     }
 
                     s += this.form.TableData(d.Type ?? string.Empty, string.Empty);
+                    s += this.form.TableData(d.GatewayMode ?? string.Empty, string.Empty);
+                    s += this.form.TableData(d.GatewayServer ?? string.Empty, string.Empty);
 
                     s += "</tr>";
                 }
@@ -2361,7 +2374,7 @@ this.form.TableHeader(VbrLocalizationHelper.SbrExt15, VbrLocalizationHelper.SbrE
             try
             {
                 var list = this.df.ArchiveTierXmlFromCsv(scrub) ?? new List<CArchiveTierExtent>();
-                List<string> headers = new() { "Name", "SobrName", "Status", "OffloadPeriod", "ArchiveTierEnabled", "CostOptimizedEnabled", "FullBackupModeEnabled", "EncryptionEnabled", "ImmutableEnabled", "Type" };
+                List<string> headers = new() { "Name", "SobrName", "Status", "OffloadPeriod", "ArchiveTierEnabled", "CostOptimizedEnabled", "FullBackupModeEnabled", "EncryptionEnabled", "ImmutableEnabled", "Type", "GatewayMode", "GatewayServer" };
                 List<List<string>> rows = list.Select(d => new List<string>
                 {
                     d.Name,
@@ -2374,6 +2387,8 @@ this.form.TableHeader(VbrLocalizationHelper.SbrExt15, VbrLocalizationHelper.SbrE
                     d.EncryptionEnabled ? "True" : "False",
                     d.ImmutableEnabled ? "True" : "False",
                     d.Type ?? string.Empty,
+                    d.GatewayMode ?? string.Empty,
+                    d.GatewayServer ?? string.Empty,
                 }).ToList();
                 SetSection("archextents", headers, rows, summary);
             }

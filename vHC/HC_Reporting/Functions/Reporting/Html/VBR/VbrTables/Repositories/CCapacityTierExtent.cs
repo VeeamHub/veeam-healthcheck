@@ -18,5 +18,11 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR
         public int MovePeriodDays { get; set; }
 
         public bool EncryptionEnabled { get; set; }
+
+        public string ImmutabilityMode { get; set; }
+
+        public string ConnectionType { get; set; }
+
+        public string GatewayServer { get; set; }
     }
 }

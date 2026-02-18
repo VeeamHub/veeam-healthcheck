@@ -21,15 +21,24 @@ namespace VeeamHealthCheck.Functions.Reporting.CsvHandlers
         public string ImmutePeriod { get; set; }
 
         [Index(4)]
-        public string SizeLimitEnabled { get; set; }
+        public string ImmutabilityMode { get; set; }
 
         [Index(5)]
-        public string SizeLimit { get; set; }
+        public string SizeLimitEnabled { get; set; }
 
         [Index(6)]
-        public string RepoId { get; set; }
+        public string SizeLimit { get; set; }
 
         [Index(7)]
+        public string RepoId { get; set; }
+
+        [Index(8)]
+        public string ConnectionType { get; set; }
+
+        [Index(9)]
+        public string GatewayServer { get; set; }
+
+        [Index(10)]
         public string ParentId { get; set; }
     }
 }
