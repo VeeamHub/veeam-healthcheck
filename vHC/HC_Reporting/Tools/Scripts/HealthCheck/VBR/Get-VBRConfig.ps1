@@ -1027,7 +1027,7 @@ try {
         $Extents = Get-VBRRepositoryExtent -Repository $SOBR
 
         foreach ($Extent in $Extents) {
-            if ($VBRVersion -eq 12) {
+            if ($VBRVersion -ge 12) {
                 #write-host("DEBUG: GATES:")  
                 #$Extent.Repository.GetActualGateways().Name
                 $ExtentDetails = $Extent.Repository | Select-Object *, @{n = 'SOBR_Name'; e = { $SOBR.Name } }, @{name = 'CachedFreeSpace'; expression = { $_.GetContainer().cachedfreespace.InGigabytes } }, @{name = 'CachedTotalSpace'; expression = { $_.GetContainer().cachedtotalspace.InGigabytes } }, @{name = 'gatewayHosts'; expression = { $_.GetActualGateways().Name } }, @{n = 'ObjectLockEnabled'; e = { $_.ObjectLockEnabled } }
