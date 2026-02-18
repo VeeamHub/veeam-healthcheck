@@ -909,7 +909,7 @@ try {
         } else {
             $_.Repository.BackupImmutabilityEnabled
         }
-    } }, @{n = 'immutabilityperiod'; e = { $_.Repository.ImmutabilityPeriod } }, @{n = 'ImmutabilityMode'; e = { $_.Repository.ImmutabilityMode } }, @{n = 'SizeLimitEnabled'; e = { $_.Repository.SizeLimitEnabled } }, @{n = 'SizeLimit'; e = { $_.Repository.SizeLimit } }, @{n = 'RepoId'; e = { $_.Repository.Id } }, @{n = 'ConnectionType'; e = { $_.Repository.ConnectionType } }, @{n = 'GatewayServer'; e = { $_.Repository.GatewayServer -join '; ' } }, parentid
+    } }, @{n = 'immutabilityperiod'; e = { $_.Repository.ImmutabilityPeriod } }, @{n = 'ImmutabilityMode'; e = { $_.Repository.ImmutabilityMode } }, @{n = 'SizeLimitEnabled'; e = { $_.Repository.SizeLimitEnabled } }, @{n = 'SizeLimit'; e = { $_.Repository.SizeLimit } }, @{n = 'RepoId'; e = { $_.Repository.Id } }, @{n = 'ConnectionType'; e = { $_.Repository.ConnectionType } }, @{n = 'GatewayServer'; e = { $_.Repository.GatewayServer.Name -join '; ' } }, parentid
 
 
     Write-LogFile($message + "DONE")
@@ -928,7 +928,7 @@ try {
     Write-LogFile($message)
 
     $arch = Get-VBRBackupRepository -ScaleOut | Get-VBRArchiveExtent
-    $archOut = $arch | Select-Object Status, ParentId, @{n = 'RepoId'; e = { $_.Repository.Id } }, @{n = 'Name'; e = { $_.Repository.Name } }, @{n = 'ArchiveType'; e = { $_.Repository.ArchiveType } }, @{n = 'BackupImmutabilityEnabled'; e = { $_.Repository.BackupImmutabilityEnabled } }, @{n = 'GatewayMode'; e = { $_.Repository.GatewayMode } }, @{n = 'GatewayServer'; e = { $_.Repository.GatewayServer -join '; ' } }
+    $archOut = $arch | Select-Object Status, ParentId, @{n = 'RepoId'; e = { $_.Repository.Id } }, @{n = 'Name'; e = { $_.Repository.Name } }, @{n = 'ArchiveType'; e = { $_.Repository.ArchiveType } }, @{n = 'BackupImmutabilityEnabled'; e = { $_.Repository.BackupImmutabilityEnabled } }, @{n = 'GatewayMode'; e = { $_.Repository.GatewayMode } }, @{n = 'GatewayServer'; e = { $_.Repository.GatewayServer.Name -join '; ' } }
 
     Write-LogFile($message + "DONE")
 }
