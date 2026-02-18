@@ -144,7 +144,6 @@ namespace VeeamHealthCheck.Functions.Reporting.DataTypes
                                 bool.TryParse(cap.Immute, out bool immute);
                                 eInfo.ImmuteEnabled = immute;
                                 eInfo.ImmutePeriod = cap.ImmutePeriod;
-                                this.log.Debug($"[CDataTypesParser] SOBR '{s.Name}' CapTier - Immute: '{cap.Immute}' => ImmuteEnabled: {immute}, ImmutePeriod: {cap.ImmutePeriod}");
                                 bool.TryParse(cap.SizeLimitEnabled, out bool sizeLimitEnabled);
                                 eInfo.SizeLimitEnabled = sizeLimitEnabled;
                                 if (eInfo.SizeLimitEnabled == true)
