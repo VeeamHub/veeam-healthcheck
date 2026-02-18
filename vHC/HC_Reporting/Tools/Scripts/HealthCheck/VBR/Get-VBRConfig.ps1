@@ -1656,10 +1656,10 @@ $licInfo | Export-VhcCsv -FileName '_LicInfo.csv'
 <# Malware Detection Section #>
 if ($VBRVersion -ge 12) {
     try {
-        Get-VBRMalwareDetectionOptions | Export-VhcCsv -FileName 'malware_settings.csv'
-        Get-VBRMalwareDetectionObject | Export-VhcCsv -FileName 'malware_infectedobject.csv'
-        Get-VBRMalwareDetectionEvent | Export-VhcCsv -FileName 'malware_events.csv'
-        Get-VBRMalwareDetectionExclusion | Export-VhcCsv -FileName 'malware_exclusions.csv'
+        Get-VBRMalwareDetectionOptions | Export-VhcCsv -FileName '_malware_settings.csv'
+        Get-VBRMalwareDetectionObject | Export-VhcCsv -FileName '_malware_infectedobject.csv'
+        Get-VBRMalwareDetectionEvent | Export-VhcCsv -FileName '_malware_events.csv'
+        Get-VBRMalwareDetectionExclusion | Export-VhcCsv -FileName '_malware_exclusions.csv'
     }
     catch {
         Write-LogFile("Failed on Malware Detection")
