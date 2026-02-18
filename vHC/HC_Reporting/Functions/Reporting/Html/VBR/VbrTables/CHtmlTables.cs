@@ -364,6 +364,9 @@ namespace VeeamHealthCheck.Html.VBR
             };
         }
 
+        // helper to render a boolean value as a table data cell
+        private string BoolCell(bool value) => this.form.TableData(value ? this.form.True : this.form.False, string.Empty);
+
         private static string WriteTupleListToHtml(List<Tuple<string, string>> list)
         {
             string headers = string.Empty;
@@ -2153,12 +2156,13 @@ this.form.TableHeader(VbrLocalizationHelper.SbrExt15, VbrLocalizationHelper.SbrE
             s += this.form.TableHeaderEnd();
             s += this.form.TableBodyStart();
 
+            List<CCapacityTierExtent> list = new();
             try
             {
                 this.log.Info("Attempting to load Capacity Tier Extent data...");
-                List<CCapacityTierExtent> list = this.df.CapacityTierXmlFromCsv(scrub);
+                list = this.df.CapacityTierXmlFromCsv(scrub) ?? list;
 
-                if (list == null || list.Count == 0)
+                if (list.Count == 0)
                 {
                     this.log.Warning("No Capacity Tier Extent data found. No SOBRs with capacity tier may be configured.");
                 }
@@ -2169,57 +2173,14 @@ this.form.TableHeader(VbrLocalizationHelper.SbrExt15, VbrLocalizationHelper.SbrE
                     s += this.form.TableData(d.Name, string.Empty);
                     s += this.form.TableData(d.SobrName, string.Empty);
                     s += this.form.TableData(d.Status, string.Empty);
-
-                    if (d.CopyModeEnabled)
-                    {
-                        s += this.form.TableData(this.form.True, string.Empty);
-                    }
-                    else
-                    {
-                        s += this.form.TableData(this.form.False, string.Empty);
-                    }
-
-                    if (d.MoveModeEnabled)
-                    {
-                        s += this.form.TableData(this.form.True, string.Empty);
-                    }
-                    else
-                    {
-                        s += this.form.TableData(this.form.False, string.Empty);
-                    }
-
+                    s += this.BoolCell(d.CopyModeEnabled);
+                    s += this.BoolCell(d.MoveModeEnabled);
                     s += this.form.TableData(d.MovePeriodDays.ToString(), string.Empty);
-
-                    if (d.EncryptionEnabled)
-                    {
-                        s += this.form.TableData(this.form.True, string.Empty);
-                    }
-                    else
-                    {
-                        s += this.form.TableData(this.form.False, string.Empty);
-                    }
-
-                    if (d.ImmutableEnabled)
-                    {
-                        s += this.form.TableData(this.form.True, string.Empty);
-                    }
-                    else
-                    {
-                        s += this.form.TableData(this.form.False, string.Empty);
-                    }
-
+                    s += this.BoolCell(d.EncryptionEnabled);
+                    s += this.BoolCell(d.ImmutableEnabled);
                     s += this.form.TableData(d.ImmutablePeriod, string.Empty);
                     s += this.form.TableData(d.ImmutabilityMode ?? string.Empty, string.Empty);
-
-                    if (d.SizeLimitEnabled)
-                    {
-                        s += this.form.TableData(this.form.True, string.Empty);
-                    }
-                    else
-                    {
-                        s += this.form.TableData(this.form.False, string.Empty);
-                    }
-
+                    s += this.BoolCell(d.SizeLimitEnabled);
                     s += this.form.TableData(d.SizeLimit ?? string.Empty, string.Empty);
                     s += this.form.TableData(d.ConnectionType ?? string.Empty, string.Empty);
                     s += this.form.TableData(d.GatewayServer ?? string.Empty, string.Empty);
@@ -2238,7 +2199,6 @@ this.form.TableHeader(VbrLocalizationHelper.SbrExt15, VbrLocalizationHelper.SbrE
             // JSON Capacity Tier Extents
             try
             {
-                var list = this.df.CapacityTierXmlFromCsv(scrub) ?? new List<CCapacityTierExtent>();
                 List<string> headers = new() { "Name", "SobrName", "Status", "CopyModeEnabled", "MoveModeEnabled", "MovePeriodDays", "EncryptionEnabled", "ImmutableEnabled", "ImmutablePeriod", "ImmutabilityMode", "SizeLimitEnabled", "SizeLimit", "ConnectionType", "GatewayServer", "Type" };
                 List<List<string>> rows = list.Select(d => new List<string>
                 {
@@ -2292,12 +2252,13 @@ this.form.TableHeader(VbrLocalizationHelper.SbrExt15, VbrLocalizationHelper.SbrE
             s += this.form.TableHeaderEnd();
             s += this.form.TableBodyStart();
 
+            List<CArchiveTierExtent> list = new();
             try
             {
                 this.log.Info("Attempting to load Archive Tier Extent data...");
-                List<CArchiveTierExtent> list = this.df.ArchiveTierXmlFromCsv(scrub);
+                list = this.df.ArchiveTierXmlFromCsv(scrub) ?? list;
 
-                if (list == null || list.Count == 0)
+                if (list.Count == 0)
                 {
                     this.log.Warning("No Archive Tier Extent data found. No SOBRs with archive tier may be configured.");
                 }
@@ -2309,56 +2270,14 @@ this.form.TableHeader(VbrLocalizationHelper.SbrExt15, VbrLocalizationHelper.SbrE
                     s += this.form.TableData(d.SobrName, string.Empty);
                     s += this.form.TableData(d.Status, string.Empty);
                     s += this.form.TableData(d.OffloadPeriod ?? string.Empty, string.Empty);
-
-                    if (d.ArchiveTierEnabled)
-                    {
-                        s += this.form.TableData(this.form.True, string.Empty);
-                    }
-                    else
-                    {
-                        s += this.form.TableData(this.form.False, string.Empty);
-                    }
-
-                    if (d.CostOptimizedEnabled)
-                    {
-                        s += this.form.TableData(this.form.True, string.Empty);
-                    }
-                    else
-                    {
-                        s += this.form.TableData(this.form.False, string.Empty);
-                    }
-
-                    if (d.FullBackupModeEnabled)
-                    {
-                        s += this.form.TableData(this.form.True, string.Empty);
-                    }
-                    else
-                    {
-                        s += this.form.TableData(this.form.False, string.Empty);
-                    }
-
-                    if (d.EncryptionEnabled)
-                    {
-                        s += this.form.TableData(this.form.True, string.Empty);
-                    }
-                    else
-                    {
-                        s += this.form.TableData(this.form.False, string.Empty);
-                    }
-
-                    if (d.ImmutableEnabled)
-                    {
-                        s += this.form.TableData(this.form.True, string.Empty);
-                    }
-                    else
-                    {
-                        s += this.form.TableData(this.form.False, string.Empty);
-                    }
-
+                    s += this.BoolCell(d.ArchiveTierEnabled);
+                    s += this.BoolCell(d.CostOptimizedEnabled);
+                    s += this.BoolCell(d.FullBackupModeEnabled);
+                    s += this.BoolCell(d.EncryptionEnabled);
+                    s += this.BoolCell(d.ImmutableEnabled);
                     s += this.form.TableData(d.Type ?? string.Empty, string.Empty);
                     s += this.form.TableData(d.GatewayMode ?? string.Empty, string.Empty);
                     s += this.form.TableData(d.GatewayServer ?? string.Empty, string.Empty);
-
                     s += "</tr>";
                 }
             }
@@ -2373,7 +2292,6 @@ this.form.TableHeader(VbrLocalizationHelper.SbrExt15, VbrLocalizationHelper.SbrE
             // JSON Archive Tier Extents
             try
             {
-                var list = this.df.ArchiveTierXmlFromCsv(scrub) ?? new List<CArchiveTierExtent>();
                 List<string> headers = new() { "Name", "SobrName", "Status", "OffloadPeriod", "ArchiveTierEnabled", "CostOptimizedEnabled", "FullBackupModeEnabled", "EncryptionEnabled", "ImmutableEnabled", "Type", "GatewayMode", "GatewayServer" };
                 List<List<string>> rows = list.Select(d => new List<string>
                 {
@@ -3409,6 +3327,7 @@ this.form.TableHeader(VbrLocalizationHelper.SbrExt15, VbrLocalizationHelper.SbrE
                     //debug log for ondiskgb
                     this.log.Debug($"Job: {jobName}, OnDiskGB: {job.OnDiskGB}");
 
+                    string retentionValue = job.RetentionType == "Cycles" ? job.RetentionCount : job.RetainDaysToKeep;
                     rows.Add(new List<string>
                     {
                         jobName,
@@ -3416,7 +3335,7 @@ this.form.TableHeader(VbrLocalizationHelper.SbrExt15, VbrLocalizationHelper.SbrE
                         sourceSizeGB.ToString(),
                         (job.OnDiskGB ?? 0).ToString(), //"0", // OnDisk calculated separately for NAS
                         job.RetentionType == "Cycles" ? "Points" : job.RetentionType,
-                        job.RetentionType == "Cycles" ? job.RetentionCount : job.RetainDaysToKeep,
+                        retentionValue,
                         job.StgEncryptionEnabled,
                         CJobTypesParser.GetJobType(job.JobType),
                         compressionLevel,
