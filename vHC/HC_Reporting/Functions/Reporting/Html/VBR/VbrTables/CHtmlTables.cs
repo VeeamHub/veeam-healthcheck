@@ -2295,7 +2295,7 @@ this.form.TableHeader(VbrLocalizationHelper.SbrExt15, VbrLocalizationHelper.SbrE
                     s += "<tr>";
                     s += this.form.TableData(d.SobrName, string.Empty);
                     s += this.form.TableData(d.Name, string.Empty);
-                    s += this.form.TableData(d.RetentionPeriod ?? string.Empty, string.Empty);
+                    s += this.form.TableData(d.OffloadPeriod ?? string.Empty, string.Empty);
 
                     if (d.ArchiveTierEnabled)
                     {
@@ -2359,12 +2359,12 @@ this.form.TableHeader(VbrLocalizationHelper.SbrExt15, VbrLocalizationHelper.SbrE
             try
             {
                 var list = this.df.ArchiveTierXmlFromCsv(scrub) ?? new List<CArchiveTierExtent>();
-                List<string> headers = new() { "SobrName", "Name", "RetentionPeriod", "ArchiveTierEnabled", "CostOptimizedEnabled", "FullBackupModeEnabled", "EncryptionEnabled", "ImmutableEnabled", "ImmutablePeriod" };
+                List<string> headers = new() { "SobrName", "Name", "OffloadPeriod", "ArchiveTierEnabled", "CostOptimizedEnabled", "FullBackupModeEnabled", "EncryptionEnabled", "ImmutableEnabled", "ImmutablePeriod" };
                 List<List<string>> rows = list.Select(d => new List<string>
                 {
                     d.SobrName,
                     d.Name,
-                    d.RetentionPeriod ?? string.Empty,
+                    d.OffloadPeriod ?? string.Empty,
                     d.ArchiveTierEnabled ? "True" : "False",
                     d.CostOptimizedEnabled ? "True" : "False",
                     d.FullBackupModeEnabled ? "True" : "False",

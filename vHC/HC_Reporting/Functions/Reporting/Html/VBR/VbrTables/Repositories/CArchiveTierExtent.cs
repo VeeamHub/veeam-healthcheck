@@ -13,7 +13,7 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR
 
         public string Status { get; set; }
 
-        public string RetentionPeriod { get; set; }
+        public string OffloadPeriod { get; set; }
 
         public bool ArchiveTierEnabled { get; set; }
 

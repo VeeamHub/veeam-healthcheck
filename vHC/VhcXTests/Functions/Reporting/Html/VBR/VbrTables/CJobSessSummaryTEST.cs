@@ -390,7 +390,7 @@ namespace VhcXTests.Functions.Reporting.Html.VBR.VbrTables
             {
                 Assert.NotNull(at.SobrName);
                 Assert.NotNull(at.Name);
-                Assert.NotNull(at.RetentionPeriod);
+                Assert.NotNull(at.OffloadPeriod);
             });
         }
 
@@ -432,7 +432,7 @@ namespace VhcXTests.Functions.Reporting.Html.VBR.VbrTables
                 Assert.Equal("AzureArchive", extent.Type);
                 Assert.Equal("Normal", extent.Status);
                 Assert.True(extent.ArchiveTierEnabled);
-                Assert.Equal("30", extent.RetentionPeriod);
+                Assert.Equal("30", extent.OffloadPeriod);
                 Assert.True(extent.ImmutableEnabled);
             }
             finally
@@ -480,7 +480,7 @@ namespace VhcXTests.Functions.Reporting.Html.VBR.VbrTables
                 Assert.Equal("AzureArchive", extent.Type);
                 Assert.Equal("Normal", extent.Status);
                 Assert.True(extent.ArchiveTierEnabled);
-                Assert.Equal(string.Empty, extent.RetentionPeriod);
+                Assert.Equal(string.Empty, extent.OffloadPeriod);
                 Assert.False(extent.ImmutableEnabled);
             }
             finally

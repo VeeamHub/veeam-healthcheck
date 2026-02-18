@@ -1466,7 +1466,7 @@ namespace VeeamHealthCheck.Functions.Reporting.Html
                         Name = archiveExtentName,
                         Type = arch.ArchiveType,
                         Status = arch.Status,
-                        RetentionPeriod = sobr?.ArchivePeriod ?? string.Empty,
+                        OffloadPeriod = sobr?.ArchivePeriod ?? string.Empty,
                         ArchiveTierEnabled = sobr?.ArchiveTierEnabled ?? true,
                         EncryptionEnabled = sobr?.ArchiveTierEncryptionEnabled ?? false,
                         ImmutableEnabled = immutableEnabled,
