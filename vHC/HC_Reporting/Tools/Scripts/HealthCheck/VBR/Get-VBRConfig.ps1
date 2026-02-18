@@ -726,6 +726,16 @@ try{
         $SuggestedTasksByRAM = 0
         $serverName = $server.Key
 
+        # Pre-compute OS overhead conditionals (PS5.1 compatible - no ternary operator)
+        $RepoGWOSCPUOverhead  = if ((SafeValue $server.Value.TotalRepoTasks) -gt 0 -or (SafeValue $server.Value.TotalGWTasks) -gt 0) { $RepoOSCPUReq } else { 0 }
+        $VpProxyOSCPUOverhead = if ((SafeValue $server.Value.TotalVpProxyTasks) -gt 0) { $VPProxyOSCPUReq } else { 0 }
+        $GPProxyOSCPUOverhead = if ((SafeValue $server.Value.TotalGPProxyTasks) -gt 0) { $GPProxyOSCPUReq } else { 0 }
+        $CDPProxyOSCPUOverhead = if ((SafeValue $server.Value.TotalCDPProxyTasks) -gt 0) { $CDPProxyOSCPUReq } else { 0 }
+        $RepoGWOSRAMOverhead  = if ((SafeValue $server.Value.TotalRepoTasks) -gt 0 -or (SafeValue $server.Value.TotalGWTasks) -gt 0) { $RepoOSRAMReq } else { 0 }
+        $VpProxyOSRAMOverhead = if ((SafeValue $server.Value.TotalVpProxyTasks) -gt 0) { $VPProxyOSRAMReq } else { 0 }
+        $GPProxyOSRAMOverhead = if ((SafeValue $server.Value.TotalGPProxyTasks) -gt 0) { $GPProxyOSRAMReq } else { 0 }
+        $CDPProxyOSRAMOverhead = if ((SafeValue $server.Value.TotalCDPProxyTasks) -gt 0) { $CDPProxyOSRAMReq } else { 0 }
+
         $RequiredCores = [Math]::Ceiling(
             (SafeValue $server.Value.TotalRepoTasks)    * $RepoGWCPUReq +
             (SafeValue $server.Value.TotalGWTasks)      * $RepoGWCPUReq +
@@ -734,9 +744,9 @@ try{
             (SafeValue $server.Value.TotalCDPProxyTasks)* $CDPProxyCPUReq +
 
             # OS overhead added if the server hosts that role (any tasks > 0)
-            ((SafeValue $server.Value.TotalRepoTasks)    -gt 0 -or (SafeValue $server.Value.TotalGWTasks) -gt 0 ? $RepoOSCPUReq : 0) +
-            ((SafeValue $server.Value.TotalVpProxyTasks) -gt 0 ? $VPProxyOSCPUReq : 0) +
-            ((SafeValue $server.Value.TotalGPProxyTasks) -gt 0 ? $GPProxyOSCPUReq : 0)
+            $RepoGWOSCPUOverhead +
+            $VpProxyOSCPUOverhead +
+            $GPProxyOSCPUOverhead
         )
 
         $RequiredRAM = [Math]::Ceiling(
@@ -747,9 +757,9 @@ try{
             (SafeValue $server.Value.TotalCDPProxyTasks)* $CDPProxyRAMReq +
 
             # OS overhead added if the server hosts that role (any tasks > 0)
-            ((SafeValue $server.Value.TotalRepoTasks)    -gt 0 -or (SafeValue $server.Value.TotalGWTasks) -gt 0 ? $RepoOSRAMReq    : 0) +
-            ((SafeValue $server.Value.TotalVpProxyTasks) -gt 0 ? $VPProxyOSRAMReq : 0) +
-            ((SafeValue $server.Value.TotalGPProxyTasks) -gt 0 ? $GPProxyOSRAMReq : 0)
+            $RepoGWOSRAMOverhead +
+            $VpProxyOSRAMOverhead +
+            $GPProxyOSRAMOverhead
         )
   
         $coresAvailable = $server.Value.Cores
@@ -761,20 +771,20 @@ try{
             (SafeValue $coresAvailable) -
 
             # OS overhead subtracted if the server hosts that role (any tasks > 0)
-            ((SafeValue $server.Value.TotalRepoTasks)    -gt 0 -or (SafeValue $server.Value.TotalGWTasks) -gt 0 ? $RepoOSCPUReq    : 0) -
-            ((SafeValue $server.Value.TotalVpProxyTasks) -gt 0 ? $VPProxyOSCPUReq : 0) -
-            ((SafeValue $server.Value.TotalGPProxyTasks) -gt 0 ? $GPProxyOSCPUReq : 0) - 
-            ((SafeValue $server.Value.TotalCDPProxyTasks) -gt 0 ? $CDPProxyOSCPUReq : 0)
+            $RepoGWOSCPUOverhead -
+            $VpProxyOSCPUOverhead -
+            $GPProxyOSCPUOverhead -
+            $CDPProxyOSCPUOverhead
         )
  
         $SuggestedTasksByRAM = [Math]::Floor(
             (SafeValue $ramAvailable) - 
 
             # OS overhead subtracted if the server hosts that role (any tasks > 0)
-            ((SafeValue $server.Value.TotalRepoTasks)    -gt 0 -or (SafeValue $server.Value.TotalGWTasks) -gt 0 ? $RepoOSRAMReq    : 0) -
-            ((SafeValue $server.Value.TotalVpProxyTasks) -gt 0 ? $VPProxyOSRAMReq : 0) -
-            ((SafeValue $server.Value.TotalGPProxyTasks) -gt 0 ? $GPProxyOSRAMReq : 0) -
-            ((SafeValue $server.Value.TotalCDPProxyTasks) -gt 0 ? $CDPProxyOSRAMReq : 0)
+            $RepoGWOSRAMOverhead -
+            $VpProxyOSRAMOverhead -
+            $GPProxyOSRAMOverhead -
+            $CDPProxyOSRAMOverhead
         )
    
         if ($serverName -contains $BackupServerName) {
