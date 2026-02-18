@@ -1,6 +1,7 @@
 // Copyright (c) 2021, Adam Congdon <adam.congdon2@gmail.com>
 // MIT License
 using CsvHelper.Configuration.Attributes;
+using System;
 
 namespace VeeamHealthCheck.Functions.Reporting.CsvHandlers
 {
