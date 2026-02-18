@@ -19,12 +19,6 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR
 
         public bool ImmutableEnabled { get; set; }
 
-        public string ImmutablePeriod { get; set; }
-
-        public bool SizeLimitEnabled { get; set; }
-
-        public string SizeLimit { get; set; }
-
         public bool CostOptimizedEnabled { get; set; }
 
         public bool FullBackupModeEnabled { get; set; }

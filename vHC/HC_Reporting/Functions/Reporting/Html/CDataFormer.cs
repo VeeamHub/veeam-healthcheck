@@ -1470,9 +1470,6 @@ namespace VeeamHealthCheck.Functions.Reporting.Html
                         ArchiveTierEnabled = sobr?.ArchiveTierEnabled ?? true,
                         EncryptionEnabled = sobr?.ArchiveTierEncryptionEnabled ?? false,
                         ImmutableEnabled = immutableEnabled,
-                        ImmutablePeriod = string.Empty,
-                        SizeLimitEnabled = false,
-                        SizeLimit = string.Empty,
                         CostOptimizedEnabled = sobr?.CostOptimizedArchiveEnabled ?? false,
                         FullBackupModeEnabled = sobr?.ArchiveFullBackupModeEnabled ?? false
                     };

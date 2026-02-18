@@ -2269,13 +2269,13 @@ this.form.TableHeader(VbrLocalizationHelper.SbrExt15, VbrLocalizationHelper.SbrE
             s += "<tr>" +
                 this.form.TableHeader("Archive Extent Name", "Name of archive tier repository/bucket") +
                 this.form.TableHeader("SOBR Name", "Scale-Out Backup Repository name") +
+                this.form.TableHeader("Status", "Archive extent status") +
                 this.form.TableHeader("Offload Period", "How long before data is offloaded to archive") +
                 this.form.TableHeader("Archive Tier Enabled", "Whether archive tier is active") +
                 this.form.TableHeader("Cost Optimized", "Cost optimization policy enabled") +
                 this.form.TableHeader("Full Backup Mode", "Full backup mode for archive tier") +
                 this.form.TableHeader("Encryption", "Whether encryption is enabled for archive tier") +
                 this.form.TableHeader("Immutable Enabled", "Whether immutability is enforced on archive") +
-                this.form.TableHeader("Archive Immutable Period", "Archive-specific immutability lock period") +
                 this.form.TableHeader("Type", "Archive repository type (e.g., AmazonS3, AzureBlob)") +
                 "</tr>";
             s += this.form.TableHeaderEnd();
@@ -2296,6 +2296,7 @@ this.form.TableHeader(VbrLocalizationHelper.SbrExt15, VbrLocalizationHelper.SbrE
                     s += "<tr>";
                     s += this.form.TableData(d.Name, string.Empty);
                     s += this.form.TableData(d.SobrName, string.Empty);
+                    s += this.form.TableData(d.Status, string.Empty);
                     s += this.form.TableData(d.OffloadPeriod ?? string.Empty, string.Empty);
 
                     if (d.ArchiveTierEnabled)
@@ -2343,7 +2344,6 @@ this.form.TableHeader(VbrLocalizationHelper.SbrExt15, VbrLocalizationHelper.SbrE
                         s += this.form.TableData(this.form.False, string.Empty);
                     }
 
-                    s += this.form.TableData(d.ImmutablePeriod ?? string.Empty, string.Empty);
                     s += this.form.TableData(d.Type ?? string.Empty, string.Empty);
 
                     s += "</tr>";
@@ -2361,18 +2361,18 @@ this.form.TableHeader(VbrLocalizationHelper.SbrExt15, VbrLocalizationHelper.SbrE
             try
             {
                 var list = this.df.ArchiveTierXmlFromCsv(scrub) ?? new List<CArchiveTierExtent>();
-                List<string> headers = new() { "Name", "SobrName", "OffloadPeriod", "ArchiveTierEnabled", "CostOptimizedEnabled", "FullBackupModeEnabled", "EncryptionEnabled", "ImmutableEnabled", "ImmutablePeriod", "Type" };
+                List<string> headers = new() { "Name", "SobrName", "Status", "OffloadPeriod", "ArchiveTierEnabled", "CostOptimizedEnabled", "FullBackupModeEnabled", "EncryptionEnabled", "ImmutableEnabled", "Type" };
                 List<List<string>> rows = list.Select(d => new List<string>
                 {
                     d.Name,
                     d.SobrName,
+                    d.Status,
                     d.OffloadPeriod ?? string.Empty,
                     d.ArchiveTierEnabled ? "True" : "False",
                     d.CostOptimizedEnabled ? "True" : "False",
                     d.FullBackupModeEnabled ? "True" : "False",
                     d.EncryptionEnabled ? "True" : "False",
                     d.ImmutableEnabled ? "True" : "False",
-                    d.ImmutablePeriod ?? string.Empty,
                     d.Type ?? string.Empty,
                 }).ToList();
                 SetSection("archextents", headers, rows, summary);
