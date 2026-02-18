@@ -2137,20 +2137,20 @@ this.form.TableHeader(VbrLocalizationHelper.SbrExt15, VbrLocalizationHelper.SbrE
             string s = this.form.SectionStartWithButton("capextents", "Capacity Tier Configuration", "Capacity");
             string summary = "Capacity tier extent configuration and retention policies";
             s += "<tr>" +
-                this.form.TableHeader("Extent Name", "Name of the capacity tier extent") +
+                this.form.TableHeader("Name", "Name of the capacity tier extent") +
                 this.form.TableHeader("SOBR Name", "Parent Scale-Out Backup Repository") +
                 this.form.TableHeader("Status", "Capacity tier status") +
+                this.form.TableHeader("Auto Gateway / Direct Connection", "Gateway connection type (e.g., Direct, Gateway)") +
+                this.form.TableHeader("Specified Gateway(s)", "Gateway servers assigned to this capacity extent") +
                 this.form.TableHeader("Copy Mode Enabled", "Whether copy mode is enabled for capacity tier") +
                 this.form.TableHeader("Move Mode Enabled", "Whether move mode is enabled for capacity tier") +
                 this.form.TableHeader("Move Period (Days)", "Age threshold before data is moved to capacity tier") +
                 this.form.TableHeader("Encryption", "Whether encryption is enabled for capacity tier") +
-                this.form.TableHeader("Immutable Enabled", "Whether immutability is enforced") +
+                this.form.TableHeader("Use Immutability", "Whether immutability is enforced") +
                 this.form.TableHeader("Immutable Period", "How long data is locked in capacity tier") +
                 this.form.TableHeader("Immutability Mode", "Immutability mode (v13+, e.g. RepositoryRetention)") +
                 this.form.TableHeader("Size Limit Enabled", "Whether size limiting is enforced") +
                 this.form.TableHeader("Size Limit", "Maximum capacity tier size") +
-                this.form.TableHeader("Connection Type", "Gateway connection type (e.g., Direct, Gateway)") +
-                this.form.TableHeader("Gateway Servers", "Gateway servers assigned to this capacity extent") +
                 this.form.TableHeader("Type", "Repository type (e.g., AWS S3, Azure Blob)") +
                 "</tr>";
             s += this.form.TableHeaderEnd();
@@ -2173,6 +2173,8 @@ this.form.TableHeader(VbrLocalizationHelper.SbrExt15, VbrLocalizationHelper.SbrE
                     s += this.form.TableData(d.Name, string.Empty);
                     s += this.form.TableData(d.SobrName, string.Empty);
                     s += this.form.TableData(d.Status, string.Empty);
+                    s += this.form.TableData(d.ConnectionType ?? string.Empty, string.Empty);
+                    s += this.form.TableData(d.GatewayServer ?? string.Empty, string.Empty);
                     s += this.BoolCell(d.CopyModeEnabled);
                     s += this.BoolCell(d.MoveModeEnabled);
                     s += this.form.TableData(d.MovePeriodDays.ToString(), string.Empty);
@@ -2182,8 +2184,6 @@ this.form.TableHeader(VbrLocalizationHelper.SbrExt15, VbrLocalizationHelper.SbrE
                     s += this.form.TableData(d.ImmutabilityMode ?? string.Empty, string.Empty);
                     s += this.BoolCell(d.SizeLimitEnabled);
                     s += this.form.TableData(d.SizeLimit ?? string.Empty, string.Empty);
-                    s += this.form.TableData(d.ConnectionType ?? string.Empty, string.Empty);
-                    s += this.form.TableData(d.GatewayServer ?? string.Empty, string.Empty);
                     s += this.form.TableData(d.Type, string.Empty);
                     s += "</tr>";
                 }
@@ -2199,12 +2199,14 @@ this.form.TableHeader(VbrLocalizationHelper.SbrExt15, VbrLocalizationHelper.SbrE
             // JSON Capacity Tier Extents
             try
             {
-                List<string> headers = new() { "Name", "SobrName", "Status", "CopyModeEnabled", "MoveModeEnabled", "MovePeriodDays", "EncryptionEnabled", "ImmutableEnabled", "ImmutablePeriod", "ImmutabilityMode", "SizeLimitEnabled", "SizeLimit", "ConnectionType", "GatewayServer", "Type" };
+                List<string> headers = new() { "Name", "SobrName", "Status", "ConnectionType", "GatewayServer", "CopyModeEnabled", "MoveModeEnabled", "MovePeriodDays", "EncryptionEnabled", "ImmutableEnabled", "ImmutablePeriod", "ImmutabilityMode", "SizeLimitEnabled", "SizeLimit", "Type" };
                 List<List<string>> rows = list.Select(d => new List<string>
                 {
                     d.Name,
                     d.SobrName,
                     d.Status,
+                    d.ConnectionType ?? string.Empty,
+                    d.GatewayServer ?? string.Empty,
                     d.CopyModeEnabled ? "True" : "False",
                     d.MoveModeEnabled ? "True" : "False",
                     d.MovePeriodDays.ToString(),
@@ -2214,8 +2216,6 @@ this.form.TableHeader(VbrLocalizationHelper.SbrExt15, VbrLocalizationHelper.SbrE
                     d.ImmutabilityMode ?? string.Empty,
                     d.SizeLimitEnabled ? "True" : "False",
                     d.SizeLimit ?? string.Empty,
-                    d.ConnectionType ?? string.Empty,
-                    d.GatewayServer ?? string.Empty,
                     d.Type,
                 }).ToList();
                 SetSection("capextents", headers, rows, summary);
@@ -2236,18 +2236,18 @@ this.form.TableHeader(VbrLocalizationHelper.SbrExt15, VbrLocalizationHelper.SbrE
             string s = this.form.SectionStartWithButton("archextents", "Archive Tier Configuration", "Archive");
             string summary = "Archive tier extent retention and immutability policies";
             s += "<tr>" +
-                this.form.TableHeader("Archive Extent Name", "Name of archive tier repository/bucket") +
+                this.form.TableHeader("Name", "Name of archive tier repository/bucket") +
                 this.form.TableHeader("SOBR Name", "Scale-Out Backup Repository name") +
                 this.form.TableHeader("Status", "Archive extent status") +
+                this.form.TableHeader("Auto Gateway / Direct Connection", "Gateway connection mode (e.g., Direct, Gateway)") +
+                this.form.TableHeader("Specified Gateway(s)", "Gateway servers assigned to this archive extent") +
                 this.form.TableHeader("Offload Period", "How long before data is offloaded to archive") +
                 this.form.TableHeader("Archive Tier Enabled", "Whether archive tier is active") +
                 this.form.TableHeader("Cost Optimized", "Cost optimization policy enabled") +
                 this.form.TableHeader("Full Backup Mode", "Full backup mode for archive tier") +
                 this.form.TableHeader("Encryption", "Whether encryption is enabled for archive tier") +
-                this.form.TableHeader("Immutable Enabled", "Whether immutability is enforced on archive") +
+                this.form.TableHeader("Use Immutability", "Whether immutability is enforced on archive") +
                 this.form.TableHeader("Type", "Archive repository type (e.g., AmazonS3, AzureBlob)") +
-                this.form.TableHeader("Gateway Mode", "Gateway connection mode (e.g., Direct, Gateway)") +
-                this.form.TableHeader("Gateway Servers", "Gateway servers assigned to this archive extent") +
                 "</tr>";
             s += this.form.TableHeaderEnd();
             s += this.form.TableBodyStart();
@@ -2269,6 +2269,8 @@ this.form.TableHeader(VbrLocalizationHelper.SbrExt15, VbrLocalizationHelper.SbrE
                     s += this.form.TableData(d.Name, string.Empty);
                     s += this.form.TableData(d.SobrName, string.Empty);
                     s += this.form.TableData(d.Status, string.Empty);
+                    s += this.form.TableData(d.GatewayMode ?? string.Empty, string.Empty);
+                    s += this.form.TableData(d.GatewayServer ?? string.Empty, string.Empty);
                     s += this.form.TableData(d.OffloadPeriod ?? string.Empty, string.Empty);
                     s += this.BoolCell(d.ArchiveTierEnabled);
                     s += this.BoolCell(d.CostOptimizedEnabled);
@@ -2276,8 +2278,6 @@ this.form.TableHeader(VbrLocalizationHelper.SbrExt15, VbrLocalizationHelper.SbrE
                     s += this.BoolCell(d.EncryptionEnabled);
                     s += this.BoolCell(d.ImmutableEnabled);
                     s += this.form.TableData(d.Type ?? string.Empty, string.Empty);
-                    s += this.form.TableData(d.GatewayMode ?? string.Empty, string.Empty);
-                    s += this.form.TableData(d.GatewayServer ?? string.Empty, string.Empty);
                     s += "</tr>";
                 }
             }
@@ -2292,12 +2292,14 @@ this.form.TableHeader(VbrLocalizationHelper.SbrExt15, VbrLocalizationHelper.SbrE
             // JSON Archive Tier Extents
             try
             {
-                List<string> headers = new() { "Name", "SobrName", "Status", "OffloadPeriod", "ArchiveTierEnabled", "CostOptimizedEnabled", "FullBackupModeEnabled", "EncryptionEnabled", "ImmutableEnabled", "Type", "GatewayMode", "GatewayServer" };
+                List<string> headers = new() { "Name", "SobrName", "Status", "GatewayMode", "GatewayServer", "OffloadPeriod", "ArchiveTierEnabled", "CostOptimizedEnabled", "FullBackupModeEnabled", "EncryptionEnabled", "ImmutableEnabled", "Type" };
                 List<List<string>> rows = list.Select(d => new List<string>
                 {
                     d.Name,
                     d.SobrName,
                     d.Status,
+                    d.GatewayMode ?? string.Empty,
+                    d.GatewayServer ?? string.Empty,
                     d.OffloadPeriod ?? string.Empty,
                     d.ArchiveTierEnabled ? "True" : "False",
                     d.CostOptimizedEnabled ? "True" : "False",
@@ -2305,8 +2307,6 @@ this.form.TableHeader(VbrLocalizationHelper.SbrExt15, VbrLocalizationHelper.SbrE
                     d.EncryptionEnabled ? "True" : "False",
                     d.ImmutableEnabled ? "True" : "False",
                     d.Type ?? string.Empty,
-                    d.GatewayMode ?? string.Empty,
-                    d.GatewayServer ?? string.Empty,
                 }).ToList();
                 SetSection("archextents", headers, rows, summary);
             }
