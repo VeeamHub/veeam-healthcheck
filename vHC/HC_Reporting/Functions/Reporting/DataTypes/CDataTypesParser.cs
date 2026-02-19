@@ -115,6 +115,8 @@ namespace VeeamHealthCheck.Functions.Reporting.DataTypes
             }
         }
 
+        // Depends on this.CapTierInfos being populated first — CapTierCsvInfos() must be
+        // called before SobrInfos() in Init().
         private List<CSobrTypeInfos> SobrInfos()
         {
             var sobrCsv = this.csvParser.SobrCsvParser();// .ToList();
@@ -161,10 +163,6 @@ namespace VeeamHealthCheck.Functions.Reporting.DataTypes
 
 
                                 eInfo.CapTierType = cap.Type;
-                                eInfo.CapTierStatus = cap.Status;
-                                eInfo.CapTierImmutabilityMode = cap.ImmutabilityMode;
-                                eInfo.CapTierConnectionType = cap.ConnectionType;
-                                eInfo.CapTierGatewayServer = cap.GatewayServer;
                             }
                         }
                     }
@@ -229,7 +227,7 @@ namespace VeeamHealthCheck.Functions.Reporting.DataTypes
             return eInfoList;
         }
 
-        private List<CArchiveTierCsv> ArchiveTierCsvInfo() // Note: CapTierCsvInfos() is above SobrInfos()
+        private List<CArchiveTierCsv> ArchiveTierCsvInfo()
         {
             try
             {
