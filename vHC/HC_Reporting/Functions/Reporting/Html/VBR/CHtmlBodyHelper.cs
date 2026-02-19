@@ -68,7 +68,7 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR
             this.log.Info(this.logStart + "Generating Repository Info section...");
             this.RepositoryInfoSection();
             this.log.Info(this.logStart + "Repository Info section completed.");
-            
+
             this.log.Info(this.logStart + "Generating Job Tables section...");
             this.JobTablesSection();
             this.log.Info(this.logStart + "Job Tables section completed.");
@@ -192,7 +192,6 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR
             this.TaskConcurrencyTable();
             this.JobSessionSummaryTable();
             this.JobInfoTable();
-
             this.HTMLSTRING += this.tables.AddJobTablesFooter();
         }
 
@@ -266,5 +265,6 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR
         {
             this.tables.AddSessionsFiles(this.SCRUB);
         }
+
     }
 }

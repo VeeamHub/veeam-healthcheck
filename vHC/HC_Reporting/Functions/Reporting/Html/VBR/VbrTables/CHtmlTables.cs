@@ -19,6 +19,11 @@ using VeeamHealthCheck.Functions.Reporting.Html.VBR.VbrTables;
 using VeeamHealthCheck.Functions.Reporting.Html.VBR.VbrTables.Jobs_Info;
 using VeeamHealthCheck.Functions.Reporting.Html.VBR.VbrTables.ProtectedWorkloads;
 using VeeamHealthCheck.Functions.Reporting.Html.VBR.VbrTables.Security;
+using VeeamHealthCheck.Functions.Reporting.Html.VBR.VbrTables.Replication;
+using VeeamHealthCheck.Functions.Reporting.Html.VBR.VbrTables.TapeInfra;
+using VeeamHealthCheck.Functions.Reporting.Html.VBR.VbrTables.CloudConnect;
+using VeeamHealthCheck.Functions.Reporting.Html.VBR.VbrTables.SureBackup;
+using VeeamHealthCheck.Functions.Reporting.Html.VBR.VbrTables.GeneralSettings;
 using VeeamHealthCheck.Reporting.Html.VBR;
 using VeeamHealthCheck.Resources.Localization;
 using VeeamHealthCheck.Scrubber;
@@ -3476,5 +3481,123 @@ this.form.TableHeader(VbrLocalizationHelper.SbrExt15, VbrLocalizationHelper.SbrE
         {
             return string.Empty;
         }
+
+        // Replication section
+        public string AddReplicationHeader()
+        {
+            return this.form.header1("Replication");
+        }
+
+        public string AddReplicationFooter()
+        {
+            return string.Empty;
+        }
+
+        public string AddReplicaJobsTable(bool scrub)
+        {
+            var table = new CReplicaJobsTable();
+            return table.Render(scrub);
+        }
+
+        public string AddReplicasTable(bool scrub)
+        {
+            var table = new CReplicasTable();
+            return table.Render(scrub);
+        }
+
+        public string AddFailoverPlansTable(bool scrub)
+        {
+            var table = new CFailoverPlansTable();
+            return table.Render(scrub);
+        }
+
+        // Tape Infrastructure section
+        public string AddTapeInfrastructureHeader()
+        {
+            return this.form.header1("Tape Infrastructure");
+        }
+
+        public string AddTapeInfrastructureFooter()
+        {
+            return string.Empty;
+        }
+
+        public string AddTapeServersTable(bool scrub)
+        {
+            var table = new CTapeServersTable();
+            return table.Render(scrub);
+        }
+
+        public string AddTapeLibrariesTable(bool scrub)
+        {
+            var table = new CTapeLibrariesTable();
+            return table.Render(scrub);
+        }
+
+        public string AddTapeMediaPoolsTable(bool scrub)
+        {
+            var table = new CTapeMediaPoolsTable();
+            return table.Render(scrub);
+        }
+
+        public string AddTapeVaultsTable(bool scrub)
+        {
+            var table = new CTapeVaultsTable();
+            return table.Render(scrub);
+        }
+
+        // Cloud Connect section
+        public string AddCloudConnectHeader()
+        {
+            return this.form.header1("Cloud Connect");
+        }
+
+        public string AddCloudConnectFooter()
+        {
+            return string.Empty;
+        }
+
+        public string AddCloudGatewaysTable(bool scrub)
+        {
+            var table = new CCloudGatewaysTable();
+            return table.Render(scrub);
+        }
+
+        public string AddCloudTenantsTable(bool scrub)
+        {
+            var table = new CCloudTenantsTable();
+            return table.Render(scrub);
+        }
+
+        // SureBackup Details
+        public string AddSureBackupAppGroupsTable(bool scrub)
+        {
+            var table = new CSureBackupAppGroupsTable();
+            return table.Render(scrub);
+        }
+
+        public string AddSureBackupVirtualLabsTable(bool scrub)
+        {
+            var table = new CSureBackupVirtualLabsTable();
+            return table.Render(scrub);
+        }
+
+        // General Settings section
+        public string AddGeneralSettingsHeader()
+        {
+            return this.form.header1("General Settings");
+        }
+
+        public string AddGeneralSettingsFooter()
+        {
+            return string.Empty;
+        }
+
+        public string AddEmailNotificationTable(bool scrub)
+        {
+            var table = new CEmailNotificationTable();
+            return table.Render(scrub);
+        }
+
     }
 }
