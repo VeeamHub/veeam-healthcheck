@@ -726,6 +726,16 @@ try{
         $SuggestedTasksByRAM = 0
         $serverName = $server.Key
 
+        # Pre-compute OS overhead conditionals (PS5.1 compatible - no ternary operator)
+        $RepoGWOSCPUOverhead  = if ((SafeValue $server.Value.TotalRepoTasks) -gt 0 -or (SafeValue $server.Value.TotalGWTasks) -gt 0) { $RepoOSCPUReq } else { 0 }
+        $VpProxyOSCPUOverhead = if ((SafeValue $server.Value.TotalVpProxyTasks) -gt 0) { $VPProxyOSCPUReq } else { 0 }
+        $GPProxyOSCPUOverhead = if ((SafeValue $server.Value.TotalGPProxyTasks) -gt 0) { $GPProxyOSCPUReq } else { 0 }
+        $CDPProxyOSCPUOverhead = if ((SafeValue $server.Value.TotalCDPProxyTasks) -gt 0) { $CDPProxyOSCPUReq } else { 0 }
+        $RepoGWOSRAMOverhead  = if ((SafeValue $server.Value.TotalRepoTasks) -gt 0 -or (SafeValue $server.Value.TotalGWTasks) -gt 0) { $RepoOSRAMReq } else { 0 }
+        $VpProxyOSRAMOverhead = if ((SafeValue $server.Value.TotalVpProxyTasks) -gt 0) { $VPProxyOSRAMReq } else { 0 }
+        $GPProxyOSRAMOverhead = if ((SafeValue $server.Value.TotalGPProxyTasks) -gt 0) { $GPProxyOSRAMReq } else { 0 }
+        $CDPProxyOSRAMOverhead = if ((SafeValue $server.Value.TotalCDPProxyTasks) -gt 0) { $CDPProxyOSRAMReq } else { 0 }
+
         $RequiredCores = [Math]::Ceiling(
             (SafeValue $server.Value.TotalRepoTasks)    * $RepoGWCPUReq +
             (SafeValue $server.Value.TotalGWTasks)      * $RepoGWCPUReq +
@@ -734,9 +744,9 @@ try{
             (SafeValue $server.Value.TotalCDPProxyTasks)* $CDPProxyCPUReq +
 
             # OS overhead added if the server hosts that role (any tasks > 0)
-            ((SafeValue $server.Value.TotalRepoTasks)    -gt 0 -or (SafeValue $server.Value.TotalGWTasks) -gt 0 ? $RepoOSCPUReq : 0) +
-            ((SafeValue $server.Value.TotalVpProxyTasks) -gt 0 ? $VPProxyOSCPUReq : 0) +
-            ((SafeValue $server.Value.TotalGPProxyTasks) -gt 0 ? $GPProxyOSCPUReq : 0)
+            $RepoGWOSCPUOverhead +
+            $VpProxyOSCPUOverhead +
+            $GPProxyOSCPUOverhead
         )
 
         $RequiredRAM = [Math]::Ceiling(
@@ -747,9 +757,9 @@ try{
             (SafeValue $server.Value.TotalCDPProxyTasks)* $CDPProxyRAMReq +
 
             # OS overhead added if the server hosts that role (any tasks > 0)
-            ((SafeValue $server.Value.TotalRepoTasks)    -gt 0 -or (SafeValue $server.Value.TotalGWTasks) -gt 0 ? $RepoOSRAMReq    : 0) +
-            ((SafeValue $server.Value.TotalVpProxyTasks) -gt 0 ? $VPProxyOSRAMReq : 0) +
-            ((SafeValue $server.Value.TotalGPProxyTasks) -gt 0 ? $GPProxyOSRAMReq : 0)
+            $RepoGWOSRAMOverhead +
+            $VpProxyOSRAMOverhead +
+            $GPProxyOSRAMOverhead
         )
   
         $coresAvailable = $server.Value.Cores
@@ -761,20 +771,20 @@ try{
             (SafeValue $coresAvailable) -
 
             # OS overhead subtracted if the server hosts that role (any tasks > 0)
-            ((SafeValue $server.Value.TotalRepoTasks)    -gt 0 -or (SafeValue $server.Value.TotalGWTasks) -gt 0 ? $RepoOSCPUReq    : 0) -
-            ((SafeValue $server.Value.TotalVpProxyTasks) -gt 0 ? $VPProxyOSCPUReq : 0) -
-            ((SafeValue $server.Value.TotalGPProxyTasks) -gt 0 ? $GPProxyOSCPUReq : 0) - 
-            ((SafeValue $server.Value.TotalCDPProxyTasks) -gt 0 ? $CDPProxyOSCPUReq : 0)
+            $RepoGWOSCPUOverhead -
+            $VpProxyOSCPUOverhead -
+            $GPProxyOSCPUOverhead -
+            $CDPProxyOSCPUOverhead
         )
  
         $SuggestedTasksByRAM = [Math]::Floor(
             (SafeValue $ramAvailable) - 
 
             # OS overhead subtracted if the server hosts that role (any tasks > 0)
-            ((SafeValue $server.Value.TotalRepoTasks)    -gt 0 -or (SafeValue $server.Value.TotalGWTasks) -gt 0 ? $RepoOSRAMReq    : 0) -
-            ((SafeValue $server.Value.TotalVpProxyTasks) -gt 0 ? $VPProxyOSRAMReq : 0) -
-            ((SafeValue $server.Value.TotalGPProxyTasks) -gt 0 ? $GPProxyOSRAMReq : 0) -
-            ((SafeValue $server.Value.TotalCDPProxyTasks) -gt 0 ? $CDPProxyOSRAMReq : 0)
+            $RepoGWOSRAMOverhead -
+            $VpProxyOSRAMOverhead -
+            $GPProxyOSRAMOverhead -
+            $CDPProxyOSRAMOverhead
         )
    
         if ($serverName -contains $BackupServerName) {
@@ -902,7 +912,15 @@ try {
 
     # work here
     $cap = get-vbrbackuprepository -ScaleOut | Get-VBRCapacityExtent
-    $capOut = $cap | Select-Object Status, @{n = 'Type'; e = { $_.Repository.Type } }, @{n = 'Immute'; e = { $_.Repository.BackupImmutabilityEnabled } }, @{n = 'immutabilityperiod'; e = { $_.Repository.ImmutabilityPeriod } }, @{n = 'SizeLimitEnabled'; e = { $_.Repository.SizeLimitEnabled } }, @{n = 'SizeLimit'; e = { $_.Repository.SizeLimit } }, @{n = 'RepoId'; e = { $_.Repository.Id } }, parentid
+    $capOut = $cap | Select-Object Status, @{n = 'Type'; e = { $_.Repository.Type } }, @{n = 'Immute'; e = { 
+        # DataCloudVault repositories (Type = 6) don't expose BackupImmutabilityEnabled property
+        # Instead, determine immutability from ImmutabilityPeriod: if period > 0, immutability is enabled
+        if ($_.Repository.Type -eq 6) {
+            if ($_.Repository.ImmutabilityPeriod -gt 0) { "True" } else { "False" }
+        } else {
+            $_.Repository.BackupImmutabilityEnabled
+        }
+    } }, @{n = 'immutabilityperiod'; e = { $_.Repository.ImmutabilityPeriod } }, @{n = 'ImmutabilityMode'; e = { $_.Repository.ImmutabilityMode } }, @{n = 'SizeLimitEnabled'; e = { $_.Repository.SizeLimitEnabled } }, @{n = 'SizeLimit'; e = { $_.Repository.SizeLimit } }, @{n = 'RepoId'; e = { $_.Repository.Id } }, @{n = 'ConnectionType'; e = { $_.Repository.ConnectionType } }, @{n = 'GatewayServer'; e = { $_.Repository.GatewayServer.Name -join '; ' } }, parentid, @{n = 'Name'; e = { $_.Repository.Name }}
 
 
     Write-LogFile($message + "DONE")
@@ -914,6 +932,23 @@ catch {
     Write-LogFile($err.message)
 }
 $capOut | Export-VhcCsv -FileName '_capTier.csv'
+
+# archive extent grab
+try {
+    $message = "Collecting archive tier info..."
+    Write-LogFile($message)
+
+    $arch = Get-VBRBackupRepository -ScaleOut | Get-VBRArchiveExtent
+    $archOut = $arch | Select-Object Status, ParentId, @{n = 'RepoId'; e = { $_.Repository.Id } }, @{n = 'Name'; e = { $_.Repository.Name } }, @{n = 'ArchiveType'; e = { $_.Repository.ArchiveType } }, @{n = 'BackupImmutabilityEnabled'; e = { $_.Repository.BackupImmutabilityEnabled } }, @{n = 'GatewayMode'; e = { $_.Repository.GatewayMode } }, @{n = 'GatewayServer'; e = { $_.Repository.GatewayServer.Name -join '; ' } }
+
+    Write-LogFile($message + "DONE")
+}
+catch {
+    Write-LogFile($message + "FAILED!")
+    $err = $Error[0].Exception
+    Write-LogFile($err.message)
+}
+$archOut | Export-VhcCsv -FileName '_archTier.csv'
 
 # traffic config
 try {
@@ -1003,7 +1038,7 @@ try {
         $Extents = Get-VBRRepositoryExtent -Repository $SOBR
 
         foreach ($Extent in $Extents) {
-            if ($VBRVersion -eq 12) {
+            if ($VBRVersion -ge 12) {
                 #write-host("DEBUG: GATES:")  
                 #$Extent.Repository.GetActualGateways().Name
                 $ExtentDetails = $Extent.Repository | Select-Object *, @{n = 'SOBR_Name'; e = { $SOBR.Name } }, @{name = 'CachedFreeSpace'; expression = { $_.GetContainer().cachedfreespace.InGigabytes } }, @{name = 'CachedTotalSpace'; expression = { $_.GetContainer().cachedtotalspace.InGigabytes } }, @{name = 'gatewayHosts'; expression = { $_.GetActualGateways().Name } }, @{n = 'ObjectLockEnabled'; e = { $_.ObjectLockEnabled } }
@@ -1015,7 +1050,7 @@ try {
             $AllSOBRExtents.Add($ExtentDetails) | Out-Null
         }
     }
-    $SOBROutput = $SOBRs | Select-Object -Property "PolicyType", @{n = "Extents"; e = { $SOBRs.extent.name -as [String] } } , "UsePerVMBackupFiles", "PerformFullWhenExtentOffline", "EnableCapacityTier", "OperationalRestorePeriod", "OverridePolicyEnabled", "OverrideSpaceThreshold", "OffloadWindowOptions", "CapacityExtent", "EncryptionEnabled", "EncryptionKey", "CapacityTierCopyPolicyEnabled", "CapacityTierMovePolicyEnabled", "ArchiveTierEnabled", "ArchiveExtent", "ArchivePeriod", "CostOptimizedArchiveEnabled", "ArchiveFullBackupModeEnabled", "PluginBackupsOffloadEnabled", "CopyAllPluginBackupsEnabled", "CopyAllMachineBackupsEnabled", "Id", "Name", "Description"
+    $SOBROutput = $SOBRs | Select-Object -Property "PolicyType", @{n = "Extents"; e = { $SOBRs.extent.name -as [String] } } , "UsePerVMBackupFiles", "PerformFullWhenExtentOffline", "EnableCapacityTier", "OperationalRestorePeriod", "OverridePolicyEnabled", "OverrideSpaceThreshold", "OffloadWindowOptions", "CapacityExtent", "EncryptionEnabled", "EncryptionKey", "CapacityTierCopyPolicyEnabled", "CapacityTierMovePolicyEnabled", "ArchiveTierEnabled", "ArchiveExtent", "ArchivePeriod", "CostOptimizedArchiveEnabled", "ArchiveFullBackupModeEnabled", "PluginBackupsOffloadEnabled", "CopyAllPluginBackupsEnabled", "CopyAllMachineBackupsEnabled", "Id", "Name", "Description", "ArchiveTierEncryptionEnabled"
     $AllSOBRExtentsOutput = $AllSOBRExtents | Select-Object -property @{name = 'Host'; expression = { $_.host.name } } , "Id", "Name", "HostId", "MountHostId", "Description", "CreationTime", "Path", "FullPath", "FriendlyPath", "ShareCredsId", "Type", "Status", "IsUnavailable", "Group", "UseNfsOnMountHost", "VersionOfCreation", "Tag", "IsTemporary", "TypeDisplay", "IsRotatedDriveRepository", "EndPointCryptoKeyId", "HasBackupChainLengthLimitation", "IsSanSnapshotOnly", "IsDedupStorage", "SplitStoragesPerVm", "IsImmutabilitySupported", "SOBR_Name", @{name = 'Options(maxtasks)'; expression = { $_.Options.MaxTaskCount } }, @{name = 'Options(Unlimited Tasks)'; expression = { $_.Options.IsTaskCountUnlim } }, @{name = 'Options(MaxArchiveTaskCount)'; expression = { $_.Options.MaxArchiveTaskCount } }, @{name = 'Options(CombinedDataRateLimit)'; expression = { $_.Options.CombinedDataRateLimit } }, @{name = 'Options(Uncompress)'; expression = { $_.Options.Uncompress } }, @{name = 'Options(OptimizeBlockAlign)'; expression = { $_.Options.OptimizeBlockAlign } }, @{name = 'Options(RemoteAccessLimitation)'; expression = { $_.Options.RemoteAccessLimitation } }, @{name = 'Options(EpEncryptionEnabled)'; expression = { $_.Options.EpEncryptionEnabled } }, @{name = 'Options(OneBackupFilePerVm)'; expression = { $_.Options.OneBackupFilePerVm } }, @{name = 'Options(IsAutoDetectAffinityProxies)'; expression = { $_.Options.IsAutoDetectAffinityProxies } }, @{name = 'Options(NfsRepositoryEncoding)'; expression = { $_.Options.NfsRepositoryEncoding } }, "CachedFreeSpace", "CachedTotalSpace", "gatewayHosts", "ObjectLockEnabled"
 
 
@@ -1626,10 +1661,10 @@ $licInfo | Export-VhcCsv -FileName '_LicInfo.csv'
 <# Malware Detection Section #>
 if ($VBRVersion -ge 12) {
     try {
-        Get-VBRMalwareDetectionOptions | Export-VhcCsv -FileName 'malware_settings.csv'
-        Get-VBRMalwareDetectionObject | Export-VhcCsv -FileName 'malware_infectedobject.csv'
-        Get-VBRMalwareDetectionEvent | Export-VhcCsv -FileName 'malware_events.csv'
-        Get-VBRMalwareDetectionExclusion | Export-VhcCsv -FileName 'malware_exclusions.csv'
+        Get-VBRMalwareDetectionOptions | Export-VhcCsv -FileName '_malware_settings.csv'
+        Get-VBRMalwareDetectionObject | Export-VhcCsv -FileName '_malware_infectedobject.csv'
+        Get-VBRMalwareDetectionEvent | Export-VhcCsv -FileName '_malware_events.csv'
+        Get-VBRMalwareDetectionExclusion | Export-VhcCsv -FileName '_malware_exclusions.csv'
     }
     catch {
         Write-LogFile("Failed on Malware Detection")

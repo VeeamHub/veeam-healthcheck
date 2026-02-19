@@ -50,6 +50,7 @@ namespace VeeamHealthCheck.Functions.Collection
             // Info files - nice to have but not essential
             { "WanAcc", CsvValidationSeverity.Info },
             { "capTier", CsvValidationSeverity.Info },
+            { "archTier", CsvValidationSeverity.Info },
             { "trafficRules", CsvValidationSeverity.Info },
             { "waits", CsvValidationSeverity.Info },
             { "ViProtected", CsvValidationSeverity.Info },

@@ -106,6 +106,8 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR
             this.ProxyTable();
             this.SobrTable();
             this.ExtentTable();
+            this.CapacityTierExtentTable();
+            this.ArchiveTierExtentTable();
             this.RepoTable();
             this.JobInfoTable();
 
@@ -179,6 +181,8 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR
 
             this.SobrTable();
             this.ExtentTable();
+            this.CapacityTierExtentTable();
+            this.ArchiveTierExtentTable();
             this.RepoTable();
 
             this.HTMLSTRING += this.tables.AddRepositoryInfoFooter();
@@ -233,6 +237,16 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR
         private void ExtentTable()
         {
             this.HTMLSTRING += this.tables.AddSobrExtTable(this.SCRUB);
+        }
+
+        private void CapacityTierExtentTable()
+        {
+            this.HTMLSTRING += this.tables.AddCapacityTierExtTable(this.SCRUB);
+        }
+
+        private void ArchiveTierExtentTable()
+        {
+            this.HTMLSTRING += this.tables.AddArchiveTierExtTable(this.SCRUB);
         }
 
         private void RepoTable()

@@ -39,6 +39,8 @@ namespace VeeamHealthCheck.Functions.Reporting.DataTypes
         public Dictionary<string, int> ServerSummaryInfo { get { return this.serverSummaryInfo; } }
 
         public List<CSobrTypeInfos> SobrInfo = new();
+        public List<CCapTierCsv> CapTierInfos = new();
+        public List<CArchiveTierCsv> ArchiveTierInfos = new();
 
         // public List<CLicTypeInfo> LicInfo { get { return LicInfos(); } }
         public List<CRepoTypeInfos> RepoInfos = new();
@@ -71,8 +73,12 @@ namespace VeeamHealthCheck.Functions.Reporting.DataTypes
                 this.ProxyInfos = this.ProxyInfo();
                 this.log.Info("[CDataTypesParser] Parsing SobrExtInfo...");
                 this.ExtentInfo = this.SobrExtInfo();
+                this.log.Info("[CDataTypesParser] Parsing CapTierInfo...");
+                this.CapTierInfos = this.CapTierCsvInfos();
                 this.log.Info("[CDataTypesParser] Parsing SobrInfos...");
                 this.SobrInfo = this.SobrInfos();
+                this.log.Info("[CDataTypesParser] Parsing ArchiveTierInfo...");
+                this.ArchiveTierInfos = this.ArchiveTierCsvInfo();
                 this.log.Info("[CDataTypesParser] Parsing RepoInfo...");
                 this.RepoInfos = this.RepoInfo();
                 this.log.Info("[CDataTypesParser] Parsing WanInfo...");
@@ -95,20 +101,27 @@ namespace VeeamHealthCheck.Functions.Reporting.DataTypes
 
         public void Dispose() { }
 
-        private List<CSobrTypeInfos> SobrInfos()
+        private List<CCapTierCsv> CapTierCsvInfos()
         {
-            var sobrCsv = this.csvParser.SobrCsvParser();// .ToList();
-            List<CCapTierCsv> capTierCsv;
             try
             {
-                capTierCsv = this.csvParser.CapTierCsvParser()?.ToList() ?? new List<CCapTierCsv>();
+                return this.csvParser.CapTierCsvParser()?.ToList() ?? new List<CCapTierCsv>();
             }
             catch (Exception ex)
             {
                 this.log.Error($"[CDataTypesParser] Failed to parse CapTier CSV: {ex.Message}");
                 this.log.Debug($"[CDataTypesParser] Stack trace: {ex.StackTrace}");
-                capTierCsv = new List<CCapTierCsv>();
+                return new List<CCapTierCsv>();
             }
+        }
+
+        // Depends on this.CapTierInfos being populated first — CapTierCsvInfos() must be
+        // called before SobrInfos() in Init().
+        private List<CSobrTypeInfos> SobrInfos()
+        {
+            var sobrCsv = this.csvParser.SobrCsvParser();// .ToList();
+            // Reuse already-parsed cap tier data to avoid parsing the CSV twice
+            List<CCapTierCsv> capTierCsv = this.CapTierInfos;
 
             List<CSobrTypeInfos> eInfoList = new List<CSobrTypeInfos>();
 
@@ -160,6 +173,8 @@ namespace VeeamHealthCheck.Functions.Reporting.DataTypes
                     eInfo.ArchivePeriod = s.ArchivePeriod;
                     bool.TryParse(s.ArchiveTierEnabled, out bool archiveTier);
                     eInfo.ArchiveTierEnabled = archiveTier;
+                    bool.TryParse(s.ArchiveTierEncryptionEnabled, out bool archiveTierEncryption);
+                    eInfo.ArchiveTierEncryptionEnabled = archiveTierEncryption;
                     eInfo.CapacityExtent = s.CapacityExtent;
                     bool.TryParse(s.CapacityTierCopyPolicyEnabled, out bool capTierCopy);
                     eInfo.CapacityTierCopyPolicyEnabled = capTierCopy;
@@ -210,6 +225,20 @@ namespace VeeamHealthCheck.Functions.Reporting.DataTypes
             }
 
             return eInfoList;
+        }
+
+        private List<CArchiveTierCsv> ArchiveTierCsvInfo()
+        {
+            try
+            {
+                return this.csvParser.ArchiveTierCsvParser()?.ToList() ?? new List<CArchiveTierCsv>();
+            }
+            catch (Exception ex)
+            {
+                this.log.Error($"[CDataTypesParser] Failed to parse ArchiveTier CSV: {ex.Message}");
+                this.log.Debug($"[CDataTypesParser] Stack trace: {ex.StackTrace}");
+                return new List<CArchiveTierCsv>();
+            }
         }
 
         private string ParseBool(string input)

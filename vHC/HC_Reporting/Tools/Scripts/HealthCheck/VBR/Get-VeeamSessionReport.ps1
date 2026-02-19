@@ -43,6 +43,15 @@ if ([string]::IsNullOrEmpty($ReportPath)) {
 
 
 #Functions:
+enum LogLevel {
+    TRACE
+    PROFILE
+    DEBUG
+    INFO
+    WARNING
+    ERROR
+    FATAL
+}
 $global:SETTINGS = '{"LogLevel":"INFO","OutputPath":"C:\\temp\\vHC\\Original\\Log","ReportingIntervalDays":7,"VBOServerFqdnOrIp":"localhost"}'<#,"SkipCollect":false,"ExportJson":false,"ExportXml":false,"DebugInConsole":false,"Watch":false}#> | ConvertFrom-Json
 if (Test-Path ($global:SETTINGS.OutputPath + "\CollectorConfig.json")) {
   [pscustomobject]$json = Get-Content -Path ($global:SETTINGS.OutputPath + "\CollectorConfig.json") | ConvertFrom-Json

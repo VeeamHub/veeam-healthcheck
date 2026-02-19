@@ -14,6 +14,7 @@ namespace VeeamHealthCheck.Scrubber
     {
         private readonly string matchListPath = CVariables.unsafeDir + @"\vHC_KeyFile.xml";
         private Dictionary<string, string> matchDictionary;
+        private readonly Dictionary<string, int> typeCounters = new();
         private readonly XDocument doc;
 
         public CScrubHandler()
@@ -98,7 +99,9 @@ namespace VeeamHealthCheck.Scrubber
 
             if (!this.matchDictionary.ContainsKey(item))
             {
-                int counter = this.matchDictionary.Count;
+                if (!this.typeCounters.ContainsKey(type))
+                    this.typeCounters[type] = 0;
+                int counter = this.typeCounters[type]++;
                 string newName = type + "_" + counter.ToString();
                 this.matchDictionary.Add(item, newName);
                 this.AddItemToList(type, item, newName);
