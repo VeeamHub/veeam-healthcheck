@@ -275,7 +275,7 @@ namespace VeeamHealthCheck.Functions.Reporting.Html
             {
                 if (!string.IsNullOrEmpty(id))
                 {
-                    return id.Substring(0, 7);
+                    return id.Length >= 7 ? id.Substring(0, 7) : id;
                 }
                 else
                 {
