@@ -1347,7 +1347,9 @@ namespace VeeamHealthCheck.Functions.Reporting.Html
         }
 
         /// <summary>
-        /// Extracts Capacity Tier extents from the parsed CSV data
+        /// Extracts Capacity Tier extents from the parsed CSV data.
+        /// A SOBR can have multiple capacity extents; iterating CapTierInfos (one row per extent)
+        /// ensures all extents are reported rather than only the last-matched one.
         /// </summary>
         public List<CCapacityTierExtent> CapacityTierXmlFromCsv(bool scrub)
         {
@@ -1356,50 +1358,67 @@ namespace VeeamHealthCheck.Functions.Reporting.Html
 
             try
             {
-                var capacityTierCsvData = CGlobals.DtParser.SobrInfo;
-                if (capacityTierCsvData == null || capacityTierCsvData.Count == 0)
+                var capTierRows = CGlobals.DtParser.CapTierInfos ?? new List<CCapTierCsv>();
+                if (capTierRows.Count == 0)
                 {
-                    this.log.Info(this.logStart + "No SOBR data available for capacity tier extraction");
+                    this.log.Info(this.logStart + "No capacity tier CSV data available for extraction");
                     return capacityExtents;
                 }
 
-                foreach (var sobr in capacityTierCsvData)
+                // Build lookup for SOBR-level settings (copy/move policy, encryption, etc.)
+                var sobrById = (CGlobals.DtParser.SobrInfo ?? new List<CSobrTypeInfos>())
+                    .Where(s => !string.IsNullOrWhiteSpace(s.Id))
+                    .ToDictionary(s => s.Id, s => s);
+
+                foreach (var cap in capTierRows)
                 {
-                    // Only process SOBR entries that have capacity tier enabled
-                    if (!sobr.EnableCapacityTier)
+                    sobrById.TryGetValue(cap.ParentId ?? string.Empty, out var sobr);
+
+                    // Skip extents whose parent SOBR has capacity tier disabled
+                    // (shouldn't occur in practice, but guard defensively)
+                    if (sobr != null && !sobr.EnableCapacityTier)
                     {
                         continue;
                     }
 
-                    string sobrName = sobr.Name;
-                    string capacityTierName = sobr.CapacityExtent;
+                    // Name comes from per-extent CSV column; fall back to the SOBR's singular
+                    // CapacityExtent field for data collected before this column was added.
+                    string capacityTierName = !string.IsNullOrWhiteSpace(cap.Name)
+                        ? cap.Name
+                        : (sobr?.CapacityExtent ?? string.Empty);
+
+                    string sobrName = sobr?.Name ?? string.Empty;
 
                     if (scrub)
                     {
-                        sobrName = CGlobals.Scrubber.ScrubItem(sobrName, ScrubItemType.SOBR);
-                        capacityTierName = CGlobals.Scrubber.ScrubItem(capacityTierName, ScrubItemType.Repository);
+                        if (!string.IsNullOrEmpty(sobrName))
+                            sobrName = CGlobals.Scrubber.ScrubItem(sobrName, ScrubItemType.SOBR);
+                        if (!string.IsNullOrEmpty(capacityTierName))
+                            capacityTierName = CGlobals.Scrubber.ScrubItem(capacityTierName, ScrubItemType.Repository);
                     }
 
-                    // Create capacity tier extent from SOBR settings
+                    bool.TryParse(cap.Immute, out bool immutableEnabled);
+                    bool.TryParse(cap.SizeLimitEnabled, out bool sizeLimitEnabled);
+
                     var capacityExtent = new CCapacityTierExtent
                     {
                         Name = capacityTierName,
                         SobrName = sobrName,
-                        ParentSobrId = sobr.Id,
-                        Type = sobr.CapTierType,
-                        CopyModeEnabled = sobr.CapacityTierCopyPolicyEnabled,
-                        MoveModeEnabled = sobr.CapacityTierMovePolicyEnabled,
-                        MovePeriodDays = sobr.OperationalRestorePeriod,
-                        EncryptionEnabled = sobr.EncryptionEnabled,
-                        ImmutableEnabled = sobr.ImmuteEnabled,
-                        ImmutablePeriod = sobr.ImmutePeriod,
-                        SizeLimitEnabled = sobr.SizeLimitEnabled,
-                        SizeLimit = sobr.SizeLimit,
-                        Status = string.IsNullOrWhiteSpace(sobr.CapTierStatus) ? "Enabled" : sobr.CapTierStatus,
+                        ParentSobrId = cap.ParentId,
+                        Type = cap.Type,
+                        CopyModeEnabled = sobr?.CapacityTierCopyPolicyEnabled ?? false,
+                        MoveModeEnabled = sobr?.CapacityTierMovePolicyEnabled ?? false,
+                        MovePeriodDays = sobr?.OperationalRestorePeriod ?? 0,
+                        EncryptionEnabled = sobr?.EncryptionEnabled ?? false,
+                        ImmutableEnabled = immutableEnabled,
+                        ImmutablePeriod = cap.ImmutePeriod,
+                        SizeLimitEnabled = sizeLimitEnabled,
+                        SizeLimit = sizeLimitEnabled ? cap.SizeLimit : null,
+                        Status = string.IsNullOrWhiteSpace(cap.Status) ? "Enabled" : cap.Status,
                         TierType = "Capacity",
-                        ImmutabilityMode = sobr.CapTierImmutabilityMode,
-                        ConnectionType = sobr.CapTierConnectionType,
-                        GatewayServer = sobr.CapTierGatewayServer
+                        ImmutabilityMode = cap.ImmutabilityMode,
+                        ConnectionType = cap.ConnectionType,
+                        GatewayServer = cap.GatewayServer
                     };
 
                     capacityExtents.Add(capacityExtent);

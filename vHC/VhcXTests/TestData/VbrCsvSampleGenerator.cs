@@ -196,9 +196,9 @@ namespace VhcXTests.TestData
         public static string GenerateCapTier(bool immutableEnabled = true)
         {
             var immutableValue = immutableEnabled.ToString();
-            return @$"""Status"",""Type"",""Immute"",""immutabilityperiod"",""ImmutabilityMode"",""SizeLimitEnabled"",""SizeLimit"",""RepoId"",""ConnectionType"",""GatewayServer"",""parentid""
-""Online"",""AmazonS3"",""{immutableValue}"",""30"",""RepositoryRetention"",""False"",""0"",""66666666-7777-8888-9999-aaaaaaaaaaaa"",""Direct"",""vbr01.lab.local(6745a759-2205-4cd2-b172-8ec8f7e60ef8); proxy01.lab.local(154516d7-ea7e-4619-9cdd-7cfac2e6b926)"",""55555555-5555-5555-5555-555555555555""
-""Online"",""AzureBlob"",""False"",""0"","""",""True"",""10240"",""77777777-8888-9999-aaaa-bbbbbbbbbbbb"",""Direct"",""vbr01.lab.local(6745a759-2205-4cd2-b172-8ec8f7e60ef8)"",""66666666-6666-6666-6666-666666666666""";
+            return @$"""Status"",""Type"",""Immute"",""immutabilityperiod"",""ImmutabilityMode"",""SizeLimitEnabled"",""SizeLimit"",""RepoId"",""ConnectionType"",""GatewayServer"",""parentid"",""Name""
+""Online"",""AmazonS3"",""{immutableValue}"",""30"",""RepositoryRetention"",""False"",""0"",""66666666-7777-8888-9999-aaaaaaaaaaaa"",""Direct"",""vbr01.lab.local(6745a759-2205-4cd2-b172-8ec8f7e60ef8); proxy01.lab.local(154516d7-ea7e-4619-9cdd-7cfac2e6b926)"",""55555555-5555-5555-5555-555555555555"",""s3-repo-01""
+""Online"",""AzureBlob"",""False"",""0"","""",""True"",""10240"",""77777777-8888-9999-aaaa-bbbbbbbbbbbb"",""Direct"",""vbr01.lab.local(6745a759-2205-4cd2-b172-8ec8f7e60ef8)"",""66666666-6666-6666-6666-666666666666"",""azure-blob-01""";
         }
 
         #endregion

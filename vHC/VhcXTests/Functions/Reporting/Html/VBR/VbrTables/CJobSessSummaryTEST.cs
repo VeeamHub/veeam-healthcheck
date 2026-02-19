@@ -344,8 +344,8 @@ namespace VhcXTests.Functions.Reporting.Html.VBR.VbrTables
             var sobrId = "55555555-5555-5555-5555-555555555555";
             var sobrCsv = @"""PolicyType"",""Extents"",""UsePerVMBackupFiles"",""PerformFullWhenExtentOffline"",""EnableCapacityTier"",""OperationalRestorePeriod"",""OverridePolicyEnabled"",""OverrideSpaceThreshold"",""OffloadWindowOptions"",""CapacityExtent"",""EncryptionEnabled"",""EncryptionKey"",""CapacityTierCopyPolicyEnabled"",""CapacityTierMovePolicyEnabled"",""ArchiveTierEnabled"",""ArchiveExtent"",""ArchivePeriod"",""CostOptimizedArchiveEnabled"",""ArchiveFullBackupModeEnabled"",""PluginBackupsOffloadEnabled"",""CopyAllPluginBackupsEnabled"",""CopyAllMachineBackupsEnabled"",""Id"",""Name"",""Description""
 ""Performance"","""",""False"",""False"",""True"",""7"",""False"",""0"","""",""CapExtent-01"",""False"","""",""True"",""True"",""False"","""",""0"",""False"",""False"",""False"",""False"",""False"",""" + sobrId + """,""SOBR-Cap"",""Capacity SOBR""";
-            var capTierCsv = @$"""Status"",""Type"",""Immute"",""immutabilityperiod"",""ImmutabilityMode"",""SizeLimitEnabled"",""SizeLimit"",""RepoId"",""ConnectionType"",""GatewayServer"",""parentid""
-""Maintenance"",""AzureBlob"",""True"",""30"",""RepositoryRetention"",""False"",""0"",""11111111-2222-3333-4444-555555555555"",""Direct"","""",""{sobrId}""";
+            var capTierCsv = @$"""Status"",""Type"",""Immute"",""immutabilityperiod"",""ImmutabilityMode"",""SizeLimitEnabled"",""SizeLimit"",""RepoId"",""ConnectionType"",""GatewayServer"",""parentid"",""Name""
+""Normal"",""AzureBlob"",""True"",""30"",""RepositoryRetention"",""False"",""0"",""11111111-2222-3333-4444-555555555555"",""Direct"","""",""{sobrId}"",""SOBR Cap Extent""";
 
             VbrCsvSampleGenerator.CreateCsvFile(integrationVbrDir, "SOBRs.csv", sobrCsv);
             VbrCsvSampleGenerator.CreateCsvFile(integrationVbrDir, "capTier.csv", capTierCsv);
@@ -366,7 +366,69 @@ namespace VhcXTests.Functions.Reporting.Html.VBR.VbrTables
                 var capTiers = dataFormer.CapacityTierXmlFromCsv(false);
 
                 Assert.Single(capTiers);
-                Assert.Equal("Maintenance", capTiers[0].Status);
+                Assert.Equal("Normal", capTiers[0].Status);
+                Assert.Equal("SOBR Cap Extent", capTiers[0].Name);
+                Assert.Equal("SOBR-Cap", capTiers[0].SobrName);
+            }
+            finally
+            {
+                CGlobals.IMPORT = previousImport;
+                CGlobals.IMPORT_PATH = previousImportPath;
+                CVariables.ResolvedImportPath = previousResolvedPath;
+                CGlobals.DtParser = previousParser;
+                VbrCsvSampleGenerator.CleanupTestDirectory(integrationDir);
+            }
+        }
+
+        [Fact]
+        public void CapacityTierXmlFromCsv_MultipleExtentsPerSobr_ReturnsAllExtents()
+        {
+            // Regression test: a SOBR can legitimately have multiple capacity extents.
+            // Each row in _capTier.csv with the same parentid must produce a separate
+            // CCapacityTierExtent — not silently discard all but the last one.
+            var integrationDir = Path.Combine(Path.GetTempPath(), "VhcCapTierMulti_" + Guid.NewGuid().ToString());
+            var integrationVbrDir = VbrCsvSampleGenerator.CreateTestDataDirectory(integrationDir);
+
+            var sobrId = "4cc8a973-5073-4711-ae32-b18b56fec7e6";
+            var sobrCsv = @"""PolicyType"",""Extents"",""UsePerVMBackupFiles"",""PerformFullWhenExtentOffline"",""EnableCapacityTier"",""OperationalRestorePeriod"",""OverridePolicyEnabled"",""OverrideSpaceThreshold"",""OffloadWindowOptions"",""CapacityExtent"",""EncryptionEnabled"",""EncryptionKey"",""CapacityTierCopyPolicyEnabled"",""CapacityTierMovePolicyEnabled"",""ArchiveTierEnabled"",""ArchiveExtent"",""ArchivePeriod"",""CostOptimizedArchiveEnabled"",""ArchiveFullBackupModeEnabled"",""PluginBackupsOffloadEnabled"",""CopyAllPluginBackupsEnabled"",""CopyAllMachineBackupsEnabled"",""Id"",""Name"",""Description""
+""Performance"",""qnapnas01-repo01"",""True"",""False"",""True"",""1"",""False"",""90"","""",""vault-bwe-chc01"",""True"",""1Password"",""True"",""True"",""False"","""",""0"",""False"",""False"",""True"",""True"",""True"",""" + sobrId + @""",""On-prem NAS -> VDC Vault"",""Created for Beers with Engineers""";
+            // Two capacity extents with the same parentid — this is the scenario that was broken.
+            var capTierCsv = @$"""Status"",""Type"",""Immute"",""immutabilityperiod"",""ImmutabilityMode"",""SizeLimitEnabled"",""SizeLimit"",""RepoId"",""ConnectionType"",""GatewayServer"",""parentid"",""Name""
+""Online"",""6"",""True"",""30"",""RepositoryRetention"",""True"",""1024"",""390b99dc-9d0e-46f9-ba25-cc50583318be"",""0"","""",""{sobrId}"",""vault-bwe-chc01""
+""Disabled"",""6"",""True"",""7"",""RepositoryRetention"",""True"",""1024"",""d319391b-c1fc-43a7-9109-23c3f4178a96"",""0"","""",""{sobrId}"",""Ben Thomas - Vault 01 - AUE""";
+
+            VbrCsvSampleGenerator.CreateCsvFile(integrationVbrDir, "SOBRs.csv", sobrCsv);
+            VbrCsvSampleGenerator.CreateCsvFile(integrationVbrDir, "capTier.csv", capTierCsv);
+
+            var previousImport = CGlobals.IMPORT;
+            var previousImportPath = CGlobals.IMPORT_PATH;
+            var previousResolvedPath = CVariables.ResolvedImportPath;
+            var previousParser = CGlobals.DtParser;
+
+            try
+            {
+                CGlobals.IMPORT = true;
+                CGlobals.IMPORT_PATH = integrationVbrDir;
+                CVariables.ResolvedImportPath = integrationVbrDir;
+                CGlobals.DtParser = new CDataTypesParser();
+
+                var dataFormer = new CDataFormer();
+                var capTiers = dataFormer.CapacityTierXmlFromCsv(false);
+
+                // Both extents must appear — the old code only kept the last one.
+                Assert.Equal(2, capTiers.Count);
+
+                var first = capTiers.Single(e => e.Name == "vault-bwe-chc01");
+                Assert.Equal("Online", first.Status);
+                Assert.Equal("On-prem NAS -> VDC Vault", first.SobrName);
+                Assert.Equal(sobrId, first.ParentSobrId);
+                Assert.True(first.CopyModeEnabled);
+                Assert.True(first.MoveModeEnabled);
+
+                var second = capTiers.Single(e => e.Name == "Ben Thomas - Vault 01 - AUE");
+                Assert.Equal("Disabled", second.Status);
+                Assert.Equal("On-prem NAS -> VDC Vault", second.SobrName);
+                Assert.Equal(sobrId, second.ParentSobrId);
             }
             finally
             {

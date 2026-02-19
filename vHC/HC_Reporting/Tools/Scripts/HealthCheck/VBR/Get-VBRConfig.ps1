@@ -919,7 +919,7 @@ try {
         } else {
             $_.Repository.BackupImmutabilityEnabled
         }
-    } }, @{n = 'immutabilityperiod'; e = { $_.Repository.ImmutabilityPeriod } }, @{n = 'ImmutabilityMode'; e = { $_.Repository.ImmutabilityMode } }, @{n = 'SizeLimitEnabled'; e = { $_.Repository.SizeLimitEnabled } }, @{n = 'SizeLimit'; e = { $_.Repository.SizeLimit } }, @{n = 'RepoId'; e = { $_.Repository.Id } }, @{n = 'ConnectionType'; e = { $_.Repository.ConnectionType } }, @{n = 'GatewayServer'; e = { $_.Repository.GatewayServer.Name -join '; ' } }, parentid
+    } }, @{n = 'immutabilityperiod'; e = { $_.Repository.ImmutabilityPeriod } }, @{n = 'ImmutabilityMode'; e = { $_.Repository.ImmutabilityMode } }, @{n = 'SizeLimitEnabled'; e = { $_.Repository.SizeLimitEnabled } }, @{n = 'SizeLimit'; e = { $_.Repository.SizeLimit } }, @{n = 'RepoId'; e = { $_.Repository.Id } }, @{n = 'ConnectionType'; e = { $_.Repository.ConnectionType } }, @{n = 'GatewayServer'; e = { $_.Repository.GatewayServer.Name -join '; ' } }, parentid, @{n = 'Name'; e = { $_.Repository.Name }}
 
 
     Write-LogFile($message + "DONE")

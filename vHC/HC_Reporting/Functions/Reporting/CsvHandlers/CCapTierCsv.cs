@@ -40,5 +40,8 @@ namespace VeeamHealthCheck.Functions.Reporting.CsvHandlers
 
         [Index(10)]
         public string ParentId { get; set; }
+
+        [Index(11)]
+        public string Name { get; set; }
     }
 }

@@ -39,6 +39,7 @@ namespace VeeamHealthCheck.Functions.Reporting.DataTypes
         public Dictionary<string, int> ServerSummaryInfo { get { return this.serverSummaryInfo; } }
 
         public List<CSobrTypeInfos> SobrInfo = new();
+        public List<CCapTierCsv> CapTierInfos = new();
         public List<CArchiveTierCsv> ArchiveTierInfos = new();
 
         // public List<CLicTypeInfo> LicInfo { get { return LicInfos(); } }
@@ -72,6 +73,8 @@ namespace VeeamHealthCheck.Functions.Reporting.DataTypes
                 this.ProxyInfos = this.ProxyInfo();
                 this.log.Info("[CDataTypesParser] Parsing SobrExtInfo...");
                 this.ExtentInfo = this.SobrExtInfo();
+                this.log.Info("[CDataTypesParser] Parsing CapTierInfo...");
+                this.CapTierInfos = this.CapTierCsvInfos();
                 this.log.Info("[CDataTypesParser] Parsing SobrInfos...");
                 this.SobrInfo = this.SobrInfos();
                 this.log.Info("[CDataTypesParser] Parsing ArchiveTierInfo...");
@@ -98,20 +101,25 @@ namespace VeeamHealthCheck.Functions.Reporting.DataTypes
 
         public void Dispose() { }
 
-        private List<CSobrTypeInfos> SobrInfos()
+        private List<CCapTierCsv> CapTierCsvInfos()
         {
-            var sobrCsv = this.csvParser.SobrCsvParser();// .ToList();
-            List<CCapTierCsv> capTierCsv;
             try
             {
-                capTierCsv = this.csvParser.CapTierCsvParser()?.ToList() ?? new List<CCapTierCsv>();
+                return this.csvParser.CapTierCsvParser()?.ToList() ?? new List<CCapTierCsv>();
             }
             catch (Exception ex)
             {
                 this.log.Error($"[CDataTypesParser] Failed to parse CapTier CSV: {ex.Message}");
                 this.log.Debug($"[CDataTypesParser] Stack trace: {ex.StackTrace}");
-                capTierCsv = new List<CCapTierCsv>();
+                return new List<CCapTierCsv>();
             }
+        }
+
+        private List<CSobrTypeInfos> SobrInfos()
+        {
+            var sobrCsv = this.csvParser.SobrCsvParser();// .ToList();
+            // Reuse already-parsed cap tier data to avoid parsing the CSV twice
+            List<CCapTierCsv> capTierCsv = this.CapTierInfos;
 
             List<CSobrTypeInfos> eInfoList = new List<CSobrTypeInfos>();
 
@@ -221,7 +229,7 @@ namespace VeeamHealthCheck.Functions.Reporting.DataTypes
             return eInfoList;
         }
 
-        private List<CArchiveTierCsv> ArchiveTierCsvInfo()
+        private List<CArchiveTierCsv> ArchiveTierCsvInfo() // Note: CapTierCsvInfos() is above SobrInfos()
         {
             try
             {
