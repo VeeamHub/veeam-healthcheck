@@ -842,6 +842,7 @@ $GWData | Export-VhcCsv -FileName '_Gateways.csv'
 $ProxyData | Export-VhcCsv -FileName '_Proxies.csv'
 $CDPProxyData | Export-VhcCsv -FileName '_CdpProxy.csv'
 $GPProxyData | Export-VhcCsv -FileName '_NasProxy.csv'
+$HyperVProxies | Select-Object Id, Name, Description, @{n='HostId';e={$_.Host.Id}}, @{n='Host';e={$_.Host.Name}}, Type, IsDisabled, Options, MaxTasksCount, Info | Export-VhcCsv -FileName '_HvProxy.csv'
 $RequirementsComparison | Export-VhcCsv -FileName '_AllServersRequirementsComparison.csv'
 
 Write-LogFile("Concurrency inspection files are exported.")  
