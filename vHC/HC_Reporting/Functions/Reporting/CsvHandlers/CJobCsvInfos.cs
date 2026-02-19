@@ -117,5 +117,21 @@ namespace VeeamHealthCheck.Functions.Reporting.CsvHandlers
         [Index(35)]
         [Optional]
         public double? OnDiskGB { get; set; }
+
+        [Index(36)]
+        [Optional]
+        public string AAIPEnabled { get; set; }
+
+        [Index(37)]
+        [Optional]
+        public string VSSEnabled { get; set; }
+
+        [Index(38)]
+        [Optional]
+        public string VSSIgnoreErrors { get; set; }
+
+        [Index(39)]
+        [Optional]
+        public string GuestFSIndexingEnabled { get; set; }
     }
 }

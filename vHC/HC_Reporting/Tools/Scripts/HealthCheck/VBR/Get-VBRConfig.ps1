@@ -1330,8 +1330,12 @@ try {
         @{n = 'GfsYearlyEnabled'; e = { $Job.options.gfspolicy.yearly.IsEnabled } },
         @{n = 'GfsYearlyCount'; e = { $Job.options.gfspolicy.yearly.KeepBackupsForNumberOfYears } },
         @{n = 'IndexingType'; e = { $Job.VssOptions.GuestFSIndexingType } },
-        @{n = 'OnDiskGB'; e = { $TotalOnDiskGB } }
-  
+        @{n = 'OnDiskGB'; e = { $TotalOnDiskGB } },
+        @{n = 'AAIPEnabled'; e = { $Job.VssOptions.VssSnapshotOptions.Enabled } },
+        @{n = 'VSSEnabled'; e = { $Job.VssOptions.VssSnapshotOptions.ApplicationProcessingEnabled } },
+        @{n = 'VSSIgnoreErrors'; e = { $Job.VssOptions.VssSnapshotOptions.IgnoreErrors } },
+        @{n = 'GuestFSIndexingEnabled'; e = { $Job.VssOptions.GuestFSIndexingOptions.IsEnabled } }
+
         $AllJobs.Add($JobDetails) | Out-Null
     }
   

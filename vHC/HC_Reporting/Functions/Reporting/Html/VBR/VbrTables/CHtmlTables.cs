@@ -2784,7 +2784,7 @@ this.form.TableHeader(VbrLocalizationHelper.SbrExt15, VbrLocalizationHelper.SbrE
                         var realType = CJobTypesParser.GetJobType(jType);
                         string jobTable = this.form.SectionStartWithButton("jobTable", realType + " Jobs", string.Empty);
                         s += jobTable;
-                        s += this.SetGenericJobTablHeader(useSourceSize);
+                        s += this.SetGenericJobTablHeader(useSourceSize, jType);
                         var res = source.Where(x => x.JobType == jType).ToList();
                         foreach (var job in res)
                         {
@@ -2973,6 +2973,14 @@ this.form.TableHeader(VbrLocalizationHelper.SbrExt15, VbrLocalizationHelper.SbrE
 
                             row += job.IndexingType != "None" ? this.form.TableData(this.form.True, string.Empty) : this.form.TableData(this.form.False, string.Empty);
 
+                            // AAIP/Guest Processing columns - only for job types that support it
+                            if (JobTypeSupportsAaip(jType))
+                            {
+                                row += job.AAIPEnabled == "True" ? this.form.TableData(this.form.True, string.Empty) : this.form.TableData(this.form.False, string.Empty);
+                                row += job.VSSIgnoreErrors == "True" ? this.form.TableData(this.form.True, string.Empty) : this.form.TableData(this.form.False, string.Empty);
+                                row += job.GuestFSIndexingEnabled == "True" ? this.form.TableData(this.form.True, string.Empty) : this.form.TableData(this.form.False, string.Empty);
+                            }
+
                             row += "</tr>";
 
                             s += row;
@@ -3088,7 +3096,7 @@ this.form.TableHeader(VbrLocalizationHelper.SbrExt15, VbrLocalizationHelper.SbrE
             {
                 CCsvParser csvparser = new();
                 var source = csvparser.JobCsvParser().ToList();
-                List<string> headers = new() { "JobName", "RepoName", "SourceSizeGB", "OnDiskGB", "RetentionScheme", "RetainDays", "Encrypted", "JobType", "CompressionLevel", "BlockSize", "GfsEnabled", "GfsDetails", "ActiveFullEnabled", "SyntheticFullEnabled", "BackupChainType", "IndexingEnabled" };
+                List<string> headers = new() { "JobName", "RepoName", "SourceSizeGB", "OnDiskGB", "RetentionScheme", "RetainDays", "Encrypted", "JobType", "CompressionLevel", "BlockSize", "GfsEnabled", "GfsDetails", "ActiveFullEnabled", "SyntheticFullEnabled", "BackupChainType", "IndexingEnabled", "AAIPEnabled", "VSSEnabled", "VSSIgnoreErrors", "GuestFSIndexing" };
                 List<List<string>> rows = new();
 
                 foreach (var job in source)
@@ -3151,6 +3159,10 @@ this.form.TableHeader(VbrLocalizationHelper.SbrExt15, VbrLocalizationHelper.SbrE
                         syntheticFull.ToString(),
                         backupChainType,
                         indexingEnabled.ToString(),
+                        job.AAIPEnabled?.ToString() ?? "",
+                        job.VSSEnabled?.ToString() ?? "",
+                        job.VSSIgnoreErrors?.ToString() ?? "",
+                        job.GuestFSIndexingEnabled?.ToString() ?? "",
                     });
                 }
 
@@ -3351,8 +3363,20 @@ this.form.TableHeader(VbrLocalizationHelper.SbrExt15, VbrLocalizationHelper.SbrE
             return s;
         }
 
-        private string SetGenericJobTablHeader(bool useSourceSize)
+        // Job types that support Application Aware Image Processing (guest OS quiescence)
+        private static readonly HashSet<string> AaipSupportedJobTypes = new(StringComparer.OrdinalIgnoreCase)
         {
+            "Backup",           // VM backups (VMware/Hyper-V)
+            "EpAgentBackup",    // Physical/Endpoint backups
+            "Replica"           // VM replication
+        };
+
+        private static bool JobTypeSupportsAaip(string jobType) => AaipSupportedJobTypes.Contains(jobType);
+
+        private string SetGenericJobTablHeader(bool useSourceSize, string jobType = null)
+        {
+            bool showAaipColumns = jobType != null && JobTypeSupportsAaip(jobType);
+
             string s = string.Empty;
             s += this.form.TableHeaderLeftAligned(VbrLocalizationHelper.JobInfo0, VbrLocalizationHelper.JobInfo0TT); // Name
             s += this.form.TableHeader(VbrLocalizationHelper.JobInfo1, VbrLocalizationHelper.JobInfo1TT); // Repo
@@ -3386,6 +3410,14 @@ this.form.TableHeader(VbrLocalizationHelper.SbrExt15, VbrLocalizationHelper.SbrE
             s += this.form.TableHeader("Synthetic Full Enabled", string.Empty);
             s += this.form.TableHeader("Backup Chain Type", "Type of backup chain used in the job");
             s += this.form.TableHeader("Indexing Enabled", string.Empty);
+
+            // AAIP columns only for job types that support guest processing
+            if (showAaipColumns)
+            {
+                s += this.form.TableHeader("AAIP Enabled", "Enable application-aware processing checkbox in job settings");
+                s += this.form.TableHeader("VSS Ignore Errors", "Continue backup if VSS errors occur");
+                s += this.form.TableHeader("Guest FS Indexing", "Guest file system indexing enabled for file-level restore");
+            }
 
             // s += _form.TableData("Totals", "");
             // s += _form.TableHeader("", "");
