@@ -380,3 +380,4 @@ test_run_log.txt
 # Local dev tools
 TestImportResolver.csx
 CLEANUP_SUMMARY.md
+vHC-Reports/
