@@ -389,13 +389,13 @@ namespace VhcXTests.Functions.Reporting.Html.VBR.VbrTables
             var integrationDir = Path.Combine(Path.GetTempPath(), "VhcCapTierMulti_" + Guid.NewGuid().ToString());
             var integrationVbrDir = VbrCsvSampleGenerator.CreateTestDataDirectory(integrationDir);
 
-            var sobrId = "4cc8a973-5073-4711-ae32-b18b56fec7e6";
+            var sobrId = "aaaaaaaa-1111-2222-3333-bbbbbbbbbbbb";
             var sobrCsv = @"""PolicyType"",""Extents"",""UsePerVMBackupFiles"",""PerformFullWhenExtentOffline"",""EnableCapacityTier"",""OperationalRestorePeriod"",""OverridePolicyEnabled"",""OverrideSpaceThreshold"",""OffloadWindowOptions"",""CapacityExtent"",""EncryptionEnabled"",""EncryptionKey"",""CapacityTierCopyPolicyEnabled"",""CapacityTierMovePolicyEnabled"",""ArchiveTierEnabled"",""ArchiveExtent"",""ArchivePeriod"",""CostOptimizedArchiveEnabled"",""ArchiveFullBackupModeEnabled"",""PluginBackupsOffloadEnabled"",""CopyAllPluginBackupsEnabled"",""CopyAllMachineBackupsEnabled"",""Id"",""Name"",""Description""
-""Performance"",""qnapnas01-repo01"",""True"",""False"",""True"",""1"",""False"",""90"","""",""vault-bwe-chc01"",""True"",""1Password"",""True"",""True"",""False"","""",""0"",""False"",""False"",""True"",""True"",""True"",""" + sobrId + @""",""On-prem NAS -> VDC Vault"",""Created for Beers with Engineers""";
+""Performance"",""perf-extent-01"",""True"",""False"",""True"",""1"",""False"",""90"","""",""cap-extent-01"",""True"",""test-encryption-key"",""True"",""True"",""False"","""",""0"",""False"",""False"",""True"",""True"",""True"",""" + sobrId + @""",""SOBR-Multi-Extent"",""Test SOBR with multiple capacity extents""";
             // Two capacity extents with the same parentid — this is the scenario that was broken.
             var capTierCsv = @$"""Status"",""Type"",""Immute"",""immutabilityperiod"",""ImmutabilityMode"",""SizeLimitEnabled"",""SizeLimit"",""RepoId"",""ConnectionType"",""GatewayServer"",""parentid"",""Name""
-""Online"",""6"",""True"",""30"",""RepositoryRetention"",""True"",""1024"",""390b99dc-9d0e-46f9-ba25-cc50583318be"",""0"","""",""{sobrId}"",""vault-bwe-chc01""
-""Disabled"",""6"",""True"",""7"",""RepositoryRetention"",""True"",""1024"",""d319391b-c1fc-43a7-9109-23c3f4178a96"",""0"","""",""{sobrId}"",""Ben Thomas - Vault 01 - AUE""";
+""Online"",""6"",""True"",""30"",""RepositoryRetention"",""True"",""1024"",""cccccccc-1111-2222-3333-dddddddddddd"",""0"","""",""{sobrId}"",""cap-extent-01""
+""Disabled"",""6"",""True"",""7"",""RepositoryRetention"",""True"",""1024"",""eeeeeeee-1111-2222-3333-ffffffffffff"",""0"","""",""{sobrId}"",""cap-extent-02""";
 
             VbrCsvSampleGenerator.CreateCsvFile(integrationVbrDir, "SOBRs.csv", sobrCsv);
             VbrCsvSampleGenerator.CreateCsvFile(integrationVbrDir, "capTier.csv", capTierCsv);
@@ -418,16 +418,16 @@ namespace VhcXTests.Functions.Reporting.Html.VBR.VbrTables
                 // Both extents must appear — the old code only kept the last one.
                 Assert.Equal(2, capTiers.Count);
 
-                var first = capTiers.Single(e => e.Name == "vault-bwe-chc01");
+                var first = capTiers.Single(e => e.Name == "cap-extent-01");
                 Assert.Equal("Online", first.Status);
-                Assert.Equal("On-prem NAS -> VDC Vault", first.SobrName);
+                Assert.Equal("SOBR-Multi-Extent", first.SobrName);
                 Assert.Equal(sobrId, first.ParentSobrId);
                 Assert.True(first.CopyModeEnabled);
                 Assert.True(first.MoveModeEnabled);
 
-                var second = capTiers.Single(e => e.Name == "Ben Thomas - Vault 01 - AUE");
+                var second = capTiers.Single(e => e.Name == "cap-extent-02");
                 Assert.Equal("Disabled", second.Status);
-                Assert.Equal("On-prem NAS -> VDC Vault", second.SobrName);
+                Assert.Equal("SOBR-Multi-Extent", second.SobrName);
                 Assert.Equal(sobrId, second.ParentSobrId);
             }
             finally
