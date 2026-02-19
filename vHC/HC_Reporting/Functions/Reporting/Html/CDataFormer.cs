@@ -1389,12 +1389,16 @@ namespace VeeamHealthCheck.Functions.Reporting.Html
 
                     string sobrName = sobr?.Name ?? string.Empty;
 
+                    string gatewayServer = cap.GatewayServer ?? string.Empty;
+
                     if (scrub)
                     {
                         if (!string.IsNullOrEmpty(sobrName))
                             sobrName = CGlobals.Scrubber.ScrubItem(sobrName, ScrubItemType.SOBR);
                         if (!string.IsNullOrEmpty(capacityTierName))
                             capacityTierName = CGlobals.Scrubber.ScrubItem(capacityTierName, ScrubItemType.Repository);
+                        if (!string.IsNullOrEmpty(gatewayServer))
+                            gatewayServer = CGlobals.Scrubber.ScrubItem(gatewayServer, ScrubItemType.Server);
                     }
 
                     bool.TryParse(cap.Immute, out bool immutableEnabled);
@@ -1418,7 +1422,7 @@ namespace VeeamHealthCheck.Functions.Reporting.Html
                         TierType = "Capacity",
                         ImmutabilityMode = cap.ImmutabilityMode,
                         ConnectionType = cap.ConnectionType,
-                        GatewayServer = cap.GatewayServer
+                        GatewayServer = gatewayServer
                     };
 
                     capacityExtents.Add(capacityExtent);
@@ -1467,6 +1471,8 @@ namespace VeeamHealthCheck.Functions.Reporting.Html
                     string sobrName = sobr?.Name ?? string.Empty;
                     string archiveExtentName = !string.IsNullOrWhiteSpace(arch.Name) ? arch.Name : (sobr?.ArchiveExtent ?? string.Empty);
 
+                    string archiveGatewayServer = arch.GatewayServer ?? string.Empty;
+
                     if (scrub)
                     {
                         if (!string.IsNullOrEmpty(sobrName))
@@ -1477,6 +1483,11 @@ namespace VeeamHealthCheck.Functions.Reporting.Html
                         if (!string.IsNullOrEmpty(archiveExtentName))
                         {
                             archiveExtentName = CGlobals.Scrubber.ScrubItem(archiveExtentName, ScrubItemType.Repository);
+                        }
+
+                        if (!string.IsNullOrEmpty(archiveGatewayServer))
+                        {
+                            archiveGatewayServer = CGlobals.Scrubber.ScrubItem(archiveGatewayServer, ScrubItemType.Server);
                         }
                     }
 
@@ -1498,7 +1509,7 @@ namespace VeeamHealthCheck.Functions.Reporting.Html
                         CostOptimizedEnabled = sobr?.CostOptimizedArchiveEnabled ?? false,
                         FullBackupModeEnabled = sobr?.ArchiveFullBackupModeEnabled ?? false,
                         GatewayMode = arch.GatewayMode,
-                        GatewayServer = arch.GatewayServer
+                        GatewayServer = archiveGatewayServer
                     };
 
                     archiveExtents.Add(archiveExtent);
