@@ -1,0 +1,189 @@
+# PowerShell 5.1 Syntax Validation
+# Prevents PS7-only syntax from being introduced into scripts that must run on PS5.1
+#
+# Background: VBR 12 and earlier use PowerShell 5.1. The ternary operator (?:),
+# null-coalescing (??), and pipeline chain operators (|| &&) are PS7+ only.
+# Issue #97 was caused by ternary operators breaking PS5.1 compatibility.
+
+name: PS5.1 Syntax Validation
+
+on:
+  push:
+    branches: [master, dev]
+    paths:
+      - 'vHC/HC_Reporting/Tools/Scripts/**/*.ps1'
+  pull_request:
+    branches: [master, dev]
+    paths:
+      - 'vHC/HC_Reporting/Tools/Scripts/**/*.ps1'
+  workflow_dispatch:
+
+jobs:
+  validate-ps51-syntax:
+    name: Validate PowerShell 5.1 Compatibility
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Validate PS5.1 syntax (static analysis)
+        id: static_analysis
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Continue'
+          $errors = @()
+
+          # Scripts that MUST be PS5.1 compatible (used by VBR 12 and earlier)
+          $ps51Scripts = @(
+            "vHC/HC_Reporting/Tools/Scripts/HealthCheck/VBR/Get-VBRConfig.ps1",
+            "vHC/HC_Reporting/Tools/Scripts/HealthCheck/VBR/Get-VeeamSessionReport.ps1",
+            "vHC/HC_Reporting/Tools/Scripts/HealthCheck/VBR/Get-NasInfo.ps1",
+            "vHC/HC_Reporting/Tools/Scripts/HotfixDetection/Collect-VBRLogs.ps1",
+            "vHC/HC_Reporting/Tools/Scripts/HotfixDetection/DumpManagedServerToText.ps1"
+          )
+
+          # PS7-only syntax patterns
+          $ps7Patterns = @(
+            @{ Pattern = '\s+\?\s+\$\w+\s*:\s*'; Description = 'Ternary operator (condition ? value : alternative)' },
+            @{ Pattern = '\?\?'; Description = 'Null-coalescing operator (??)' },
+            @{ Pattern = '\?\?='; Description = 'Null-coalescing assignment (??=)' },
+            @{ Pattern = '\|\|(?!\s*$)'; Description = 'Pipeline chain OR operator (||)' },
+            @{ Pattern = '&&(?!\s*$)'; Description = 'Pipeline chain AND operator (&&)' }
+          )
+
+          foreach ($scriptPath in $ps51Scripts) {
+            if (-not (Test-Path $scriptPath)) {
+              Write-Host "::warning::Script not found: $scriptPath"
+              continue
+            }
+
+            Write-Host "Checking: $scriptPath"
+            $content = Get-Content $scriptPath -Raw
+            $lines = Get-Content $scriptPath
+
+            foreach ($pattern in $ps7Patterns) {
+              $lineNum = 0
+              foreach ($line in $lines) {
+                $lineNum++
+                # Skip comments
+                if ($line.Trim().StartsWith('#')) { continue }
+
+                if ($line -match $pattern.Pattern) {
+                  $errors += [PSCustomObject]@{
+                    File = $scriptPath
+                    Line = $lineNum
+                    Pattern = $pattern.Description
+                    Content = $line.Trim().Substring(0, [Math]::Min(80, $line.Trim().Length))
+                  }
+                  Write-Host "::error file=$scriptPath,line=$lineNum::PS7-only syntax detected: $($pattern.Description)"
+                }
+              }
+            }
+          }
+
+          if ($errors.Count -gt 0) {
+            Write-Host ""
+            Write-Host "========================================"
+            Write-Host "PS5.1 COMPATIBILITY ERRORS FOUND: $($errors.Count)"
+            Write-Host "========================================"
+            $errors | Format-Table -AutoSize
+            Write-Host ""
+            Write-Host "Fix: Replace PS7-only syntax with PS5.1-compatible alternatives:"
+            Write-Host "  - Ternary:    `$x ? `$a : `$b  -->  if (`$x) { `$a } else { `$b }"
+            Write-Host "  - Null-coal:  `$x ?? `$y      -->  if (`$null -eq `$x) { `$y } else { `$x }"
+            Write-Host "  - Chain ops:  cmd1 && cmd2   -->  cmd1; if (`$?) { cmd2 }"
+            exit 1
+          }
+
+          Write-Host "✅ All scripts pass PS5.1 static analysis"
+
+      - name: Validate PS5.1 syntax (runtime parse test)
+        if: success() || failure()
+        shell: powershell  # Uses Windows PowerShell 5.1
+        run: |
+          $ErrorActionPreference = 'Continue'
+          $parseErrors = @()
+
+          $ps51Scripts = @(
+            "vHC/HC_Reporting/Tools/Scripts/HealthCheck/VBR/Get-VBRConfig.ps1",
+            "vHC/HC_Reporting/Tools/Scripts/HealthCheck/VBR/Get-VeeamSessionReport.ps1",
+            "vHC/HC_Reporting/Tools/Scripts/HealthCheck/VBR/Get-NasInfo.ps1"
+          )
+
+          Write-Host "PowerShell Version: $($PSVersionTable.PSVersion)"
+          Write-Host ""
+
+          foreach ($scriptPath in $ps51Scripts) {
+            if (-not (Test-Path $scriptPath)) {
+              Write-Host "::warning::Script not found: $scriptPath"
+              continue
+            }
+
+            Write-Host "Parsing with PS5.1: $scriptPath"
+
+            $tokens = $null
+            $errors = $null
+            $ast = [System.Management.Automation.Language.Parser]::ParseFile(
+              $scriptPath,
+              [ref]$tokens,
+              [ref]$errors
+            )
+
+            if ($errors.Count -gt 0) {
+              foreach ($err in $errors) {
+                $parseErrors += [PSCustomObject]@{
+                  File = $scriptPath
+                  Line = $err.Extent.StartLineNumber
+                  Message = $err.Message
+                }
+                Write-Host "::error file=$scriptPath,line=$($err.Extent.StartLineNumber)::PS5.1 Parse Error: $($err.Message)"
+              }
+            } else {
+              Write-Host "  ✅ Parses successfully"
+            }
+          }
+
+          if ($parseErrors.Count -gt 0) {
+            Write-Host ""
+            Write-Host "========================================"
+            Write-Host "PS5.1 PARSE ERRORS FOUND: $($parseErrors.Count)"
+            Write-Host "========================================"
+            $parseErrors | Format-Table -AutoSize
+            exit 1
+          }
+
+          Write-Host ""
+          Write-Host "✅ All scripts parse successfully in PowerShell 5.1"
+
+      - name: Write job summary
+        if: always()
+        shell: pwsh
+        run: |
+          $summary = @"
+          ## PowerShell 5.1 Compatibility Check
+
+          This workflow validates that PowerShell scripts remain compatible with PS5.1,
+          which is required for VBR 12 and earlier installations.
+
+          ### Checks Performed
+
+          1. **Static Analysis**: Regex scan for PS7-only syntax patterns
+          2. **Runtime Parse**: Actual parsing with Windows PowerShell 5.1
+
+          ### Scripts Validated
+
+          - ``Get-VBRConfig.ps1`` - Main VBR configuration collection
+          - ``Get-VeeamSessionReport.ps1`` - Session reporting
+          - ``Get-NasInfo.ps1`` - NAS information collection
+
+          ### PS7-Only Syntax (Not Allowed)
+
+          | Syntax | PS7+ | PS5.1 Compatible |
+          |--------|------|------------------|
+          | ``\`$x ? \`$a : \`$b`` | Ternary | ``if (\`$x) { \`$a } else { \`$b }`` |
+          | ``\`$x ?? \`$y`` | Null-coalesce | ``if (\`$null -eq \`$x) { \`$y } else { \`$x }`` |
+          | ``cmd1 && cmd2`` | Chain AND | ``cmd1; if (\`$?) { cmd2 }`` |
+          "@
+
+          $summary | Out-File -FilePath $env:GITHUB_STEP_SUMMARY -Encoding utf8

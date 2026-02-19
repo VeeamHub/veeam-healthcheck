@@ -209,7 +209,7 @@ namespace VeeamHealthCheck.Functions.Collection
                 this.ExecVbrConfigOnly(p);
             }
 
-            // WeighSuccessContinuation();
+            WeighSuccessContinuation();
             CGlobals.Logger.Info("Starting PS Invoke...done!", false);
         }
 
