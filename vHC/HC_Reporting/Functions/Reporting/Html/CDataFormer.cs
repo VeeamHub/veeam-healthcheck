@@ -1470,6 +1470,9 @@ namespace VeeamHealthCheck.Functions.Reporting.Html
                         Type = arch.ArchiveType,
                         Status = arch.Status,
                         OffloadPeriod = sobr?.ArchivePeriod ?? string.Empty,
+                        // Archive extents only exist because archive tier is enabled on their SOBR.
+                        // If the SOBR row is missing (unexpected, since both come from the same collection
+                        // run), default to true rather than silently misrepresenting the extent.
                         ArchiveTierEnabled = sobr?.ArchiveTierEnabled ?? true,
                         EncryptionEnabled = sobr?.ArchiveTierEncryptionEnabled ?? false,
                         ImmutableEnabled = immutableEnabled,

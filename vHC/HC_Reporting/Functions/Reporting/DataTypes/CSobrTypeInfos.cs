@@ -75,12 +75,6 @@ namespace VeeamHealthCheck.Functions.Reporting.DataTypes
 
         public int JobCount { get; set; }
 
-        public int CapacityTierExtentCount { get; set; }
-
-        public string PerformanceTierImmutablePeriod { get; set; }
-
-        public string ArchiveTierImmutablePeriod { get; set; }
-
         public string CapTierImmutabilityMode { get; set; }
 
         public string CapTierConnectionType { get; set; }
