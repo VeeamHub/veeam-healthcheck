@@ -273,7 +273,7 @@ namespace VeeamHealthCheck.Functions.Reporting.Html
             this.log.Debug("InstallID String = " + id);
             try
             {
-                if (!string.IsNullOrEmpty(id))
+                if (!string.IsNullOrEmpty(id) && id.Length >= 7)
                 {
                     return id.Substring(0, 7);
                 }

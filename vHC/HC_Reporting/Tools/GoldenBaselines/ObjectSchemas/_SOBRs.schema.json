@@ -219,12 +219,21 @@
       "csharpType": "string",
       "nullable": true,
       "description": "SOBR description"
+    },
+    {
+      "index": 25,
+      "csvName": "ArchiveTierEncryptionEnabled",
+      "csharpProperty": "ArchiveTierEncryptionEnabled",
+      "csharpType": "string",
+      "nullable": true,
+      "expectedValues": ["True", "False"],
+      "description": "Whether archive tier encryption is enabled"
     }
   ],
   "validationRules": {
     "requiredColumns": ["PolicyType", "Id", "Name"],
     "guidColumns": ["Id"],
-    "booleanColumns": ["UsePerVMBackupFiles", "PerformFullWhenExtentOffline", "EnableCapacityTier", "OverridePolicyEnabled", "EncryptionEnabled", "CapacityTierCopyPolicyEnabled", "CapacityTierMovePolicyEnabled", "ArchiveTierEnabled", "CostOptimizedArchiveEnabled", "ArchiveFullBackupModeEnabled", "PluginBackupsOffloadEnabled", "CopyAllPluginBackupsEnabled", "CopyAllMachineBackupsEnabled"],
+    "booleanColumns": ["UsePerVMBackupFiles", "PerformFullWhenExtentOffline", "EnableCapacityTier", "OverridePolicyEnabled", "EncryptionEnabled", "CapacityTierCopyPolicyEnabled", "CapacityTierMovePolicyEnabled", "ArchiveTierEnabled", "CostOptimizedArchiveEnabled", "ArchiveFullBackupModeEnabled", "PluginBackupsOffloadEnabled", "CopyAllPluginBackupsEnabled", "CopyAllMachineBackupsEnabled", "ArchiveTierEncryptionEnabled"],
     "numericColumns": ["OperationalRestorePeriod", "OverrideSpaceThreshold", "ArchivePeriod"]
   }
 }

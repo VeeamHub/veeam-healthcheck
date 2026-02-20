@@ -1345,6 +1345,185 @@ namespace VeeamHealthCheck.Functions.Reporting.Html
 
             return 0;
         }
+
+        /// <summary>
+        /// Extracts Capacity Tier extents from the parsed CSV data.
+        /// A SOBR can have multiple capacity extents; iterating CapTierInfos (one row per extent)
+        /// ensures all extents are reported rather than only the last-matched one.
+        /// </summary>
+        public List<CCapacityTierExtent> CapacityTierXmlFromCsv(bool scrub)
+        {
+            this.log.Info(this.logStart + "Converting capacity tier extent info to xml");
+            List<CCapacityTierExtent> capacityExtents = new();
+
+            try
+            {
+                var capTierRows = CGlobals.DtParser.CapTierInfos ?? new List<CCapTierCsv>();
+                if (capTierRows.Count == 0)
+                {
+                    this.log.Info(this.logStart + "No capacity tier CSV data available for extraction");
+                    return capacityExtents;
+                }
+
+                // Build lookup for SOBR-level settings (copy/move policy, encryption, etc.)
+                var sobrById = (CGlobals.DtParser.SobrInfo ?? new List<CSobrTypeInfos>())
+                    .Where(s => !string.IsNullOrWhiteSpace(s.Id))
+                    .ToDictionary(s => s.Id, s => s);
+
+                foreach (var cap in capTierRows)
+                {
+                    sobrById.TryGetValue(cap.ParentId ?? string.Empty, out var sobr);
+
+                    // Skip extents whose parent SOBR has capacity tier disabled
+                    // (shouldn't occur in practice, but guard defensively)
+                    if (sobr != null && !sobr.EnableCapacityTier)
+                    {
+                        continue;
+                    }
+
+                    // Name comes from per-extent CSV column; fall back to the SOBR's singular
+                    // CapacityExtent field for data collected before this column was added.
+                    string capacityTierName = !string.IsNullOrWhiteSpace(cap.Name)
+                        ? cap.Name
+                        : (sobr?.CapacityExtent ?? string.Empty);
+
+                    string sobrName = sobr?.Name ?? string.Empty;
+
+                    string gatewayServer = cap.GatewayServer ?? string.Empty;
+
+                    if (scrub)
+                    {
+                        if (!string.IsNullOrEmpty(sobrName))
+                            sobrName = CGlobals.Scrubber.ScrubItem(sobrName, ScrubItemType.SOBR);
+                        if (!string.IsNullOrEmpty(capacityTierName))
+                            capacityTierName = CGlobals.Scrubber.ScrubItem(capacityTierName, ScrubItemType.Repository);
+                        if (!string.IsNullOrEmpty(gatewayServer))
+                            gatewayServer = CGlobals.Scrubber.ScrubItem(gatewayServer, ScrubItemType.Server);
+                    }
+
+                    bool.TryParse(cap.Immute, out bool immutableEnabled);
+                    bool.TryParse(cap.SizeLimitEnabled, out bool sizeLimitEnabled);
+
+                    var capacityExtent = new CCapacityTierExtent
+                    {
+                        Name = capacityTierName,
+                        SobrName = sobrName,
+                        ParentSobrId = cap.ParentId,
+                        Type = cap.Type,
+                        CopyModeEnabled = sobr?.CapacityTierCopyPolicyEnabled ?? false,
+                        MoveModeEnabled = sobr?.CapacityTierMovePolicyEnabled ?? false,
+                        MovePeriodDays = sobr?.OperationalRestorePeriod ?? 0,
+                        EncryptionEnabled = sobr?.EncryptionEnabled ?? false,
+                        ImmutableEnabled = immutableEnabled,
+                        ImmutablePeriod = cap.ImmutePeriod,
+                        SizeLimitEnabled = sizeLimitEnabled,
+                        SizeLimit = sizeLimitEnabled ? cap.SizeLimit : null,
+                        Status = string.IsNullOrWhiteSpace(cap.Status) ? "Enabled" : cap.Status,
+                        TierType = "Capacity",
+                        ImmutabilityMode = cap.ImmutabilityMode,
+                        ConnectionType = cap.ConnectionType,
+                        GatewayServer = gatewayServer
+                    };
+
+                    capacityExtents.Add(capacityExtent);
+                }
+            }
+            catch (Exception e)
+            {
+                this.log.Error(this.logStart + "Failed to extract capacity tier extents: " + e.Message);
+            }
+
+            this.log.Info(this.logStart + "Converting capacity tier extent info to xml..done!");
+            return capacityExtents;
+        }
+
+        /// <summary>
+        /// Extracts Archive Tier extents from the parsed CSV data
+        /// </summary>
+        public List<CArchiveTierExtent> ArchiveTierXmlFromCsv(bool scrub)
+        {
+            this.log.Info(this.logStart + "Converting archive tier extent info to xml");
+            List<CArchiveTierExtent> archiveExtents = new();
+
+            try
+            {
+                var sobrs = CGlobals.DtParser.SobrInfo ?? new List<CSobrTypeInfos>();
+                var archiveTierCsvData = CGlobals.DtParser.ArchiveTierInfos ?? new List<CArchiveTierCsv>();
+
+                if (archiveTierCsvData.Count == 0)
+                {
+                    this.log.Info(this.logStart + "No archive tier CSV data available for extraction");
+                    return archiveExtents;
+                }
+
+                var sobrById = sobrs
+                    .Where(s => !string.IsNullOrWhiteSpace(s.Id))
+                    .ToDictionary(s => s.Id, s => s);
+
+                foreach (var arch in archiveTierCsvData)
+                {
+                    sobrById.TryGetValue(arch.ParentId ?? string.Empty, out var sobr);
+                    if (sobr == null && !string.IsNullOrWhiteSpace(arch.ParentId))
+                    {
+                        this.log.Debug(this.logStart + "Archive extent without matching SOBR: " + arch.ParentId);
+                    }
+
+                    string sobrName = sobr?.Name ?? string.Empty;
+                    string archiveExtentName = !string.IsNullOrWhiteSpace(arch.Name) ? arch.Name : (sobr?.ArchiveExtent ?? string.Empty);
+
+                    string archiveGatewayServer = arch.GatewayServer ?? string.Empty;
+
+                    if (scrub)
+                    {
+                        if (!string.IsNullOrEmpty(sobrName))
+                        {
+                            sobrName = CGlobals.Scrubber.ScrubItem(sobrName, ScrubItemType.SOBR);
+                        }
+
+                        if (!string.IsNullOrEmpty(archiveExtentName))
+                        {
+                            archiveExtentName = CGlobals.Scrubber.ScrubItem(archiveExtentName, ScrubItemType.Repository);
+                        }
+
+                        if (!string.IsNullOrEmpty(archiveGatewayServer))
+                        {
+                            archiveGatewayServer = CGlobals.Scrubber.ScrubItem(archiveGatewayServer, ScrubItemType.Server);
+                        }
+                    }
+
+                    bool.TryParse(arch.BackupImmutabilityEnabled, out bool immutableEnabled);
+
+                    var archiveExtent = new CArchiveTierExtent
+                    {
+                        SobrName = sobrName,
+                        Name = archiveExtentName,
+                        Type = arch.ArchiveType,
+                        Status = arch.Status,
+                        OffloadPeriod = sobr?.ArchivePeriod ?? string.Empty,
+                        // Archive extents only exist because archive tier is enabled on their SOBR.
+                        // If the SOBR row is missing (unexpected, since both come from the same collection
+                        // run), default to true rather than silently misrepresenting the extent.
+                        ArchiveTierEnabled = sobr?.ArchiveTierEnabled ?? true,
+                        EncryptionEnabled = sobr?.ArchiveTierEncryptionEnabled ?? false,
+                        ImmutableEnabled = immutableEnabled,
+                        CostOptimizedEnabled = sobr?.CostOptimizedArchiveEnabled ?? false,
+                        FullBackupModeEnabled = sobr?.ArchiveFullBackupModeEnabled ?? false,
+                        GatewayMode = arch.GatewayMode,
+                        GatewayServer = archiveGatewayServer
+                    };
+
+                    archiveExtents.Add(archiveExtent);
+                }
+            }
+            catch (Exception e)
+            {
+                this.log.Error(this.logStart + "Failed to extract archive tier extents: " + e.Message);
+            }
+
+            this.log.Info(this.logStart + "Converting archive tier extent info to xml..done!");
+            return archiveExtents;
+        }
+
         #endregion
 
     }

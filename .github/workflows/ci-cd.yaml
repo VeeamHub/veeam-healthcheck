@@ -272,6 +272,7 @@ jobs:
         }
 
     - name: Validate CSV collection outputs
+      id: csv_validation
       if: always()
       run: |
         $csvDir = Get-ChildItem "C:\temp\vHC\Original\VBR\*\*" -Directory -ErrorAction SilentlyContinue | Sort-Object LastWriteTime -Descending | Select-Object -First 1
@@ -279,27 +280,55 @@ jobs:
         if ($csvDir) {
           Write-Host "📁 CSV Directory: $($csvDir.FullName)" -ForegroundColor Cyan
 
-          $expectedFiles = @('_UserRoles.csv', '_Servers.csv', '_Proxies.csv', '_Repositories.csv', '_SOBRs.csv', '_Jobs.csv', '_LicInfo.csv', 'VeeamSessionReport.csv', '_vbrinfo.csv')
+          # CRITICAL files - job FAILS if any are missing (indicates PS script failure)
+          # Files are prefixed with hostname: e.g., localhost_Jobs.csv, servername_Servers.csv
+          $criticalPatterns = @('*_Servers.csv', '*_Proxies.csv', '*_Repositories.csv', '*_Jobs.csv', '*_vbrinfo.csv')
+
+          # Optional files - warning only
+          $optionalPatterns = @('*_UserRoles.csv', '*_SOBRs.csv', '*_LicInfo.csv', 'VeeamSessionReport.csv')
 
           $foundCount = 0
-          $missingCount = 0
+          $criticalMissing = @()
+          $optionalMissing = @()
 
-          foreach ($file in $expectedFiles) {
-            $path = Join-Path $csvDir.FullName $file
-            if (Test-Path $path) {
-              $size = (Get-Item $path).Length
-              $rowCount = (Import-Csv $path -ErrorAction SilentlyContinue).Count
-              Write-Host "  ✅ $file - $size bytes, $rowCount rows" -ForegroundColor Green
+          foreach ($pattern in $criticalPatterns) {
+            $found = Get-ChildItem -Path $csvDir.FullName -Filter $pattern -ErrorAction SilentlyContinue | Select-Object -First 1
+            if ($found) {
+              $size = $found.Length
+              $rowCount = (Import-Csv $found.FullName -ErrorAction SilentlyContinue).Count
+              Write-Host "  ✅ [CRITICAL] $($found.Name) - $size bytes, $rowCount rows" -ForegroundColor Green
               $foundCount++
             } else {
-              Write-Host "  ❌ $file - MISSING" -ForegroundColor Red
-              $missingCount++
+              Write-Host "  ❌ [CRITICAL] $pattern - MISSING" -ForegroundColor Red
+              $criticalMissing += $pattern
             }
           }
 
-          Write-Host "📊 CSV Summary: $foundCount found, $missingCount missing" -ForegroundColor Cyan
+          foreach ($pattern in $optionalPatterns) {
+            $found = Get-ChildItem -Path $csvDir.FullName -Filter $pattern -ErrorAction SilentlyContinue | Select-Object -First 1
+            if ($found) {
+              $size = $found.Length
+              $rowCount = (Import-Csv $found.FullName -ErrorAction SilentlyContinue).Count
+              Write-Host "  ✅ [OPTIONAL] $($found.Name) - $size bytes, $rowCount rows" -ForegroundColor Green
+              $foundCount++
+            } else {
+              Write-Host "  ⚠️ [OPTIONAL] $pattern - missing" -ForegroundColor Yellow
+              $optionalMissing += $pattern
+            }
+          }
+
+          Write-Host ""
+          Write-Host "📊 CSV Summary: $foundCount found" -ForegroundColor Cyan
+
+          if ($criticalMissing.Count -gt 0) {
+            Write-Host "❌ CRITICAL FILES MISSING: $($criticalMissing -join ', ')" -ForegroundColor Red
+            Write-Host "This indicates the PowerShell collection script failed." -ForegroundColor Red
+            Write-Host "Check the logs above for 'PowerShell Errors' or 'Script failed with exit code'" -ForegroundColor Yellow
+            exit 1
+          }
         } else {
-          Write-Host "❌ CSV output directory not found" -ForegroundColor Red
+          Write-Host "❌ CSV output directory not found - collection likely failed completely" -ForegroundColor Red
+          exit 1
         }
 
     - name: Validate CSV content quality
@@ -643,6 +672,7 @@ jobs:
         }
 
     - name: Validate CSV collection outputs
+      id: csv_validation
       if: always()
       run: |
         $csvDir = Get-ChildItem "C:\temp\vHC\Original\VBR\*\*" -Directory -ErrorAction SilentlyContinue | Sort-Object LastWriteTime -Descending | Select-Object -First 1
@@ -650,27 +680,55 @@ jobs:
         if ($csvDir) {
           Write-Host "📁 CSV Directory: $($csvDir.FullName)" -ForegroundColor Cyan
 
-          $expectedFiles = @('_UserRoles.csv', '_Servers.csv', '_Proxies.csv', '_Repositories.csv', '_SOBRs.csv', '_Jobs.csv', '_LicInfo.csv', 'VeeamSessionReport.csv', '_vbrinfo.csv')
+          # CRITICAL files - job FAILS if any are missing (indicates PS script failure)
+          # Files are prefixed with hostname: e.g., localhost_Jobs.csv, servername_Servers.csv
+          $criticalPatterns = @('*_Servers.csv', '*_Proxies.csv', '*_Repositories.csv', '*_Jobs.csv', '*_vbrinfo.csv')
+
+          # Optional files - warning only
+          $optionalPatterns = @('*_UserRoles.csv', '*_SOBRs.csv', '*_LicInfo.csv', 'VeeamSessionReport.csv')
 
           $foundCount = 0
-          $missingCount = 0
+          $criticalMissing = @()
+          $optionalMissing = @()
 
-          foreach ($file in $expectedFiles) {
-            $path = Join-Path $csvDir.FullName $file
-            if (Test-Path $path) {
-              $size = (Get-Item $path).Length
-              $rowCount = (Import-Csv $path -ErrorAction SilentlyContinue).Count
-              Write-Host "  ✅ $file - $size bytes, $rowCount rows" -ForegroundColor Green
+          foreach ($pattern in $criticalPatterns) {
+            $found = Get-ChildItem -Path $csvDir.FullName -Filter $pattern -ErrorAction SilentlyContinue | Select-Object -First 1
+            if ($found) {
+              $size = $found.Length
+              $rowCount = (Import-Csv $found.FullName -ErrorAction SilentlyContinue).Count
+              Write-Host "  ✅ [CRITICAL] $($found.Name) - $size bytes, $rowCount rows" -ForegroundColor Green
               $foundCount++
             } else {
-              Write-Host "  ❌ $file - MISSING" -ForegroundColor Red
-              $missingCount++
+              Write-Host "  ❌ [CRITICAL] $pattern - MISSING" -ForegroundColor Red
+              $criticalMissing += $pattern
             }
           }
 
-          Write-Host "📊 CSV Summary: $foundCount found, $missingCount missing" -ForegroundColor Cyan
+          foreach ($pattern in $optionalPatterns) {
+            $found = Get-ChildItem -Path $csvDir.FullName -Filter $pattern -ErrorAction SilentlyContinue | Select-Object -First 1
+            if ($found) {
+              $size = $found.Length
+              $rowCount = (Import-Csv $found.FullName -ErrorAction SilentlyContinue).Count
+              Write-Host "  ✅ [OPTIONAL] $($found.Name) - $size bytes, $rowCount rows" -ForegroundColor Green
+              $foundCount++
+            } else {
+              Write-Host "  ⚠️ [OPTIONAL] $pattern - missing" -ForegroundColor Yellow
+              $optionalMissing += $pattern
+            }
+          }
+
+          Write-Host ""
+          Write-Host "📊 CSV Summary: $foundCount found" -ForegroundColor Cyan
+
+          if ($criticalMissing.Count -gt 0) {
+            Write-Host "❌ CRITICAL FILES MISSING: $($criticalMissing -join ', ')" -ForegroundColor Red
+            Write-Host "This indicates the PowerShell collection script failed." -ForegroundColor Red
+            Write-Host "Check the logs above for 'PowerShell Errors' or 'Script failed with exit code'" -ForegroundColor Yellow
+            exit 1
+          }
         } else {
-          Write-Host "❌ CSV output directory not found" -ForegroundColor Red
+          Write-Host "❌ CSV output directory not found - collection likely failed completely" -ForegroundColor Red
+          exit 1
         }
 
     - name: Validate CSV content quality
@@ -1013,6 +1071,7 @@ jobs:
         }
 
     - name: Validate CSV collection outputs
+      id: csv_validation
       if: always()
       run: |
         $csvDir = Get-ChildItem "C:\temp\vHC\Original\VBR\*\*" -Directory -ErrorAction SilentlyContinue | Sort-Object LastWriteTime -Descending | Select-Object -First 1
@@ -1020,27 +1079,55 @@ jobs:
         if ($csvDir) {
           Write-Host "📁 CSV Directory: $($csvDir.FullName)" -ForegroundColor Cyan
 
-          $expectedFiles = @('_UserRoles.csv', '_Servers.csv', '_Proxies.csv', '_Repositories.csv', '_SOBRs.csv', '_Jobs.csv', '_LicInfo.csv', 'VeeamSessionReport.csv', '_vbrinfo.csv')
+          # CRITICAL files - job FAILS if any are missing (indicates PS script failure)
+          # Files are prefixed with hostname: e.g., localhost_Jobs.csv, servername_Servers.csv
+          $criticalPatterns = @('*_Servers.csv', '*_Proxies.csv', '*_Repositories.csv', '*_Jobs.csv', '*_vbrinfo.csv')
+
+          # Optional files - warning only
+          $optionalPatterns = @('*_UserRoles.csv', '*_SOBRs.csv', '*_LicInfo.csv', 'VeeamSessionReport.csv')
 
           $foundCount = 0
-          $missingCount = 0
+          $criticalMissing = @()
+          $optionalMissing = @()
 
-          foreach ($file in $expectedFiles) {
-            $path = Join-Path $csvDir.FullName $file
-            if (Test-Path $path) {
-              $size = (Get-Item $path).Length
-              $rowCount = (Import-Csv $path -ErrorAction SilentlyContinue).Count
-              Write-Host "  ✅ $file - $size bytes, $rowCount rows" -ForegroundColor Green
+          foreach ($pattern in $criticalPatterns) {
+            $found = Get-ChildItem -Path $csvDir.FullName -Filter $pattern -ErrorAction SilentlyContinue | Select-Object -First 1
+            if ($found) {
+              $size = $found.Length
+              $rowCount = (Import-Csv $found.FullName -ErrorAction SilentlyContinue).Count
+              Write-Host "  ✅ [CRITICAL] $($found.Name) - $size bytes, $rowCount rows" -ForegroundColor Green
               $foundCount++
             } else {
-              Write-Host "  ❌ $file - MISSING" -ForegroundColor Red
-              $missingCount++
+              Write-Host "  ❌ [CRITICAL] $pattern - MISSING" -ForegroundColor Red
+              $criticalMissing += $pattern
             }
           }
 
-          Write-Host "📊 CSV Summary: $foundCount found, $missingCount missing" -ForegroundColor Cyan
+          foreach ($pattern in $optionalPatterns) {
+            $found = Get-ChildItem -Path $csvDir.FullName -Filter $pattern -ErrorAction SilentlyContinue | Select-Object -First 1
+            if ($found) {
+              $size = $found.Length
+              $rowCount = (Import-Csv $found.FullName -ErrorAction SilentlyContinue).Count
+              Write-Host "  ✅ [OPTIONAL] $($found.Name) - $size bytes, $rowCount rows" -ForegroundColor Green
+              $foundCount++
+            } else {
+              Write-Host "  ⚠️ [OPTIONAL] $pattern - missing" -ForegroundColor Yellow
+              $optionalMissing += $pattern
+            }
+          }
+
+          Write-Host ""
+          Write-Host "📊 CSV Summary: $foundCount found" -ForegroundColor Cyan
+
+          if ($criticalMissing.Count -gt 0) {
+            Write-Host "❌ CRITICAL FILES MISSING: $($criticalMissing -join ', ')" -ForegroundColor Red
+            Write-Host "This indicates the PowerShell collection script failed." -ForegroundColor Red
+            Write-Host "Check the logs above for 'PowerShell Errors' or 'Script failed with exit code'" -ForegroundColor Yellow
+            exit 1
+          }
         } else {
-          Write-Host "❌ CSV output directory not found" -ForegroundColor Red
+          Write-Host "❌ CSV output directory not found - collection likely failed completely" -ForegroundColor Red
+          exit 1
         }
 
     - name: Validate CSV content quality

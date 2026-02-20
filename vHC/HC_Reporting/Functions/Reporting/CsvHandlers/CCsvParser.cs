@@ -43,6 +43,7 @@ namespace VeeamHealthCheck.Functions.Reporting.CsvHandlers
         public readonly string bnrInfoName = "vbrinfo";
         public readonly string bjobs = "bjobs";
         public readonly string capTier = "capTier";
+        public readonly string archTier = "archTier";
         public readonly string trafficRules = "trafficRules";
         public readonly string configBackup = "configBackup";
         public readonly string regOptions = "regkeys";
@@ -483,6 +484,11 @@ namespace VeeamHealthCheck.Functions.Reporting.CsvHandlers
             return this.VbrGetDynamicCsvRecs(this.capTier, CVariables.vbrDir);
         }
 
+        public IEnumerable<dynamic> GetDynamicArchiveTier()
+        {
+            return this.VbrGetDynamicCsvRecs(this.archTier, CVariables.vbrDir);
+        }
+
         public static IEnumerable<dynamic> GetDynViProxy()
         {
             return VbrGetDynamicCsvRecsStatic(proxyReportName, CVariables.vbrDir);
@@ -808,6 +814,17 @@ namespace VeeamHealthCheck.Functions.Reporting.CsvHandlers
                 return res.GetRecords<CCapTierCsv>();
             }
 
+
+            return null;
+        }
+
+        public IEnumerable<CArchiveTierCsv> ArchiveTierCsvParser()
+        {
+            var res = this.VbrFileReader(this.archTier);
+            if (res != null)
+            {
+                return res.GetRecords<CArchiveTierCsv>();
+            }
 
             return null;
         }

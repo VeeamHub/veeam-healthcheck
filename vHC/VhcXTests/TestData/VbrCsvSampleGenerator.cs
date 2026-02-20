@@ -23,6 +23,22 @@ namespace VhcXTests.TestData
 
         #endregion
 
+        #region archTier.csv
+
+        /// <summary>
+        /// Generate a sample archTier.csv matching the production script structure.
+        /// This represents the _archTier.csv file created by Get-VBRConfig.ps1
+        /// when collecting archive extent information.
+        /// </summary>
+        public static string GenerateArchTier(bool immutableEnabled = false)
+        {
+            var immutableValue = immutableEnabled.ToString();
+            return @$"""Status"",""ParentId"",""RepoId"",""Name"",""ArchiveType"",""BackupImmutabilityEnabled"",""GatewayMode"",""GatewayServer""
+    ""Normal"",""55555555-5555-5555-5555-555555555555"",""77777777-8888-9999-aaaa-bbbbbbbbbbbb"",""Azure-Archive-Blob"",""AzureArchive"",""{immutableValue}"",""Direct"",""vbr-server-01.test.local(aaaaaaaa-1111-2222-3333-bbbbbbbbbbbb); proxy-server-01.test.local(cccccccc-1111-2222-3333-dddddddddddd)""";
+        }
+
+        #endregion
+
         #region Servers.csv
 
         /// <summary>
@@ -113,9 +129,9 @@ namespace VhcXTests.TestData
         /// </summary>
         public static string GenerateSobrs()
         {
-            return @"""Name"",""PolicyType"",""CapacityTierEnabled"",""OperationalRestorePeriod""
-""SOBR-01"",""Performance"",""True"",""7""
-""SOBR-02"",""Capacity"",""False"",""14""";
+            return @"""PolicyType"",""Extents"",""UsePerVMBackupFiles"",""PerformFullWhenExtentOffline"",""EnableCapacityTier"",""OperationalRestorePeriod"",""OverridePolicyEnabled"",""OverrideSpaceThreshold"",""OffloadWindowOptions"",""CapacityExtent"",""EncryptionEnabled"",""EncryptionKey"",""CapacityTierCopyPolicyEnabled"",""CapacityTierMovePolicyEnabled"",""ArchiveTierEnabled"",""ArchiveExtent"",""ArchivePeriod"",""CostOptimizedArchiveEnabled"",""ArchiveFullBackupModeEnabled"",""PluginBackupsOffloadEnabled"",""CopyAllPluginBackupsEnabled"",""CopyAllMachineBackupsEnabled"",""Id"",""Name"",""Description"",""ArchiveTierEncryptionEnabled""
+    ""PerVM"",""Extent1;Extent2"",""True"",""True"",""True"",""7"",""False"",""80"","""",""Capacity-Repo"",""True"","""",""True"",""True"",""True"",""Archive-Repo"",""30"",""True"",""False"",""True"",""False"",""True"",""55555555-5555-5555-5555-555555555555"",""SOBR-01"",""Scale-Out Repository for production workloads"",""True""
+    ""DataLocality"",""Extent3"",""True"",""False"",""False"",""14"",""True"",""70"","""","""",""False"","""",""False"",""False"",""False"","""",""0"",""False"",""False"",""False"",""False"",""False"",""66666666-6666-6666-6666-666666666666"",""SOBR-02"",""Scale-Out Repository for archive data"",""False""";
         }
 
         /// <summary>
@@ -173,13 +189,16 @@ namespace VhcXTests.TestData
         #region capTier.csv
 
         /// <summary>
-        /// Generate a sample capTier.csv
+        /// Generate a sample capTier.csv matching the production script structure.
+        /// This represents the _capTier.csv file created by Get-VBRConfig.ps1
+        /// when collecting capacity extent information.
         /// </summary>
         public static string GenerateCapTier(bool immutableEnabled = true)
         {
-            return $@"""Name"",""BucketName"",""immute"",""ServicePoint""
-""S3 Archive"",""veeam-archive-bucket"",""{immutableEnabled}"",""s3.amazonaws.com""
-""Azure Archive"",""veeam-container"",""False"",""blob.core.windows.net""";
+            var immutableValue = immutableEnabled.ToString();
+            return @$"""Status"",""Type"",""Immute"",""immutabilityperiod"",""ImmutabilityMode"",""SizeLimitEnabled"",""SizeLimit"",""RepoId"",""ConnectionType"",""GatewayServer"",""parentid"",""Name""
+""Online"",""AmazonS3"",""{immutableValue}"",""30"",""RepositoryRetention"",""False"",""0"",""66666666-7777-8888-9999-aaaaaaaaaaaa"",""Direct"",""vbr-server-01.test.local(aaaaaaaa-1111-2222-3333-bbbbbbbbbbbb); proxy-server-01.test.local(cccccccc-1111-2222-3333-dddddddddddd)"",""55555555-5555-5555-5555-555555555555"",""s3-repo-01""
+""Online"",""AzureBlob"",""False"",""0"","""",""True"",""10240"",""77777777-8888-9999-aaaa-bbbbbbbbbbbb"",""Direct"",""vbr-server-01.test.local(aaaaaaaa-1111-2222-3333-bbbbbbbbbbbb)"",""66666666-6666-6666-6666-666666666666"",""azure-blob-01""";
         }
 
         #endregion
@@ -304,6 +323,7 @@ namespace VhcXTests.TestData
             SafeWriteFile(vbrDir, "VeeamSessionReport.csv", GenerateSessionReport());
             SafeWriteFile(vbrDir, "_UserRoles.csv", GenerateUserRoles());
             SafeWriteFile(vbrDir, "capTier.csv", GenerateCapTier());
+            SafeWriteFile(vbrDir, "archTier.csv", GenerateArchTier());
 
             return vbrDir;
         }

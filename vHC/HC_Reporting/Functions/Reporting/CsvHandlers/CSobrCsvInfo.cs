@@ -82,5 +82,8 @@ namespace VeeamHealthCheck.Functions.Reporting.CsvHandlers
 
         [Index(24)]
         public string Description { get; set; }
+
+        [Index(25)]
+        public string ArchiveTierEncryptionEnabled { get; set; }
     }
 }

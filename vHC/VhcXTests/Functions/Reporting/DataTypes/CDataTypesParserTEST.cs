@@ -106,5 +106,6 @@ namespace VhcXTests.Functions.Reporting.DataTypes
             // Assert
             Assert.Equal(DateTime.MinValue, result);
         }
+
     }
 }
