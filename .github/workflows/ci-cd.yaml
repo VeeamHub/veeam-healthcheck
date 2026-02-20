@@ -281,38 +281,39 @@ jobs:
           Write-Host "📁 CSV Directory: $($csvDir.FullName)" -ForegroundColor Cyan
 
           # CRITICAL files - job FAILS if any are missing (indicates PS script failure)
-          $criticalFiles = @('_Servers.csv', '_Proxies.csv', '_Repositories.csv', '_Jobs.csv', '_vbrinfo.csv')
+          # Files are prefixed with hostname: e.g., localhost_Jobs.csv, servername_Servers.csv
+          $criticalPatterns = @('*_Servers.csv', '*_Proxies.csv', '*_Repositories.csv', '*_Jobs.csv', '*_vbrinfo.csv')
 
           # Optional files - warning only
-          $optionalFiles = @('_UserRoles.csv', '_SOBRs.csv', '_LicInfo.csv', 'VeeamSessionReport.csv')
+          $optionalPatterns = @('*_UserRoles.csv', '*_SOBRs.csv', '*_LicInfo.csv', 'VeeamSessionReport.csv')
 
           $foundCount = 0
           $criticalMissing = @()
           $optionalMissing = @()
 
-          foreach ($file in $criticalFiles) {
-            $path = Join-Path $csvDir.FullName $file
-            if (Test-Path $path) {
-              $size = (Get-Item $path).Length
-              $rowCount = (Import-Csv $path -ErrorAction SilentlyContinue).Count
-              Write-Host "  ✅ [CRITICAL] $file - $size bytes, $rowCount rows" -ForegroundColor Green
+          foreach ($pattern in $criticalPatterns) {
+            $found = Get-ChildItem -Path $csvDir.FullName -Filter $pattern -ErrorAction SilentlyContinue | Select-Object -First 1
+            if ($found) {
+              $size = $found.Length
+              $rowCount = (Import-Csv $found.FullName -ErrorAction SilentlyContinue).Count
+              Write-Host "  ✅ [CRITICAL] $($found.Name) - $size bytes, $rowCount rows" -ForegroundColor Green
               $foundCount++
             } else {
-              Write-Host "  ❌ [CRITICAL] $file - MISSING" -ForegroundColor Red
-              $criticalMissing += $file
+              Write-Host "  ❌ [CRITICAL] $pattern - MISSING" -ForegroundColor Red
+              $criticalMissing += $pattern
             }
           }
 
-          foreach ($file in $optionalFiles) {
-            $path = Join-Path $csvDir.FullName $file
-            if (Test-Path $path) {
-              $size = (Get-Item $path).Length
-              $rowCount = (Import-Csv $path -ErrorAction SilentlyContinue).Count
-              Write-Host "  ✅ [OPTIONAL] $file - $size bytes, $rowCount rows" -ForegroundColor Green
+          foreach ($pattern in $optionalPatterns) {
+            $found = Get-ChildItem -Path $csvDir.FullName -Filter $pattern -ErrorAction SilentlyContinue | Select-Object -First 1
+            if ($found) {
+              $size = $found.Length
+              $rowCount = (Import-Csv $found.FullName -ErrorAction SilentlyContinue).Count
+              Write-Host "  ✅ [OPTIONAL] $($found.Name) - $size bytes, $rowCount rows" -ForegroundColor Green
               $foundCount++
             } else {
-              Write-Host "  ⚠️ [OPTIONAL] $file - missing" -ForegroundColor Yellow
-              $optionalMissing += $file
+              Write-Host "  ⚠️ [OPTIONAL] $pattern - missing" -ForegroundColor Yellow
+              $optionalMissing += $pattern
             }
           }
 
@@ -680,38 +681,39 @@ jobs:
           Write-Host "📁 CSV Directory: $($csvDir.FullName)" -ForegroundColor Cyan
 
           # CRITICAL files - job FAILS if any are missing (indicates PS script failure)
-          $criticalFiles = @('_Servers.csv', '_Proxies.csv', '_Repositories.csv', '_Jobs.csv', '_vbrinfo.csv')
+          # Files are prefixed with hostname: e.g., localhost_Jobs.csv, servername_Servers.csv
+          $criticalPatterns = @('*_Servers.csv', '*_Proxies.csv', '*_Repositories.csv', '*_Jobs.csv', '*_vbrinfo.csv')
 
           # Optional files - warning only
-          $optionalFiles = @('_UserRoles.csv', '_SOBRs.csv', '_LicInfo.csv', 'VeeamSessionReport.csv')
+          $optionalPatterns = @('*_UserRoles.csv', '*_SOBRs.csv', '*_LicInfo.csv', 'VeeamSessionReport.csv')
 
           $foundCount = 0
           $criticalMissing = @()
           $optionalMissing = @()
 
-          foreach ($file in $criticalFiles) {
-            $path = Join-Path $csvDir.FullName $file
-            if (Test-Path $path) {
-              $size = (Get-Item $path).Length
-              $rowCount = (Import-Csv $path -ErrorAction SilentlyContinue).Count
-              Write-Host "  ✅ [CRITICAL] $file - $size bytes, $rowCount rows" -ForegroundColor Green
+          foreach ($pattern in $criticalPatterns) {
+            $found = Get-ChildItem -Path $csvDir.FullName -Filter $pattern -ErrorAction SilentlyContinue | Select-Object -First 1
+            if ($found) {
+              $size = $found.Length
+              $rowCount = (Import-Csv $found.FullName -ErrorAction SilentlyContinue).Count
+              Write-Host "  ✅ [CRITICAL] $($found.Name) - $size bytes, $rowCount rows" -ForegroundColor Green
               $foundCount++
             } else {
-              Write-Host "  ❌ [CRITICAL] $file - MISSING" -ForegroundColor Red
-              $criticalMissing += $file
+              Write-Host "  ❌ [CRITICAL] $pattern - MISSING" -ForegroundColor Red
+              $criticalMissing += $pattern
             }
           }
 
-          foreach ($file in $optionalFiles) {
-            $path = Join-Path $csvDir.FullName $file
-            if (Test-Path $path) {
-              $size = (Get-Item $path).Length
-              $rowCount = (Import-Csv $path -ErrorAction SilentlyContinue).Count
-              Write-Host "  ✅ [OPTIONAL] $file - $size bytes, $rowCount rows" -ForegroundColor Green
+          foreach ($pattern in $optionalPatterns) {
+            $found = Get-ChildItem -Path $csvDir.FullName -Filter $pattern -ErrorAction SilentlyContinue | Select-Object -First 1
+            if ($found) {
+              $size = $found.Length
+              $rowCount = (Import-Csv $found.FullName -ErrorAction SilentlyContinue).Count
+              Write-Host "  ✅ [OPTIONAL] $($found.Name) - $size bytes, $rowCount rows" -ForegroundColor Green
               $foundCount++
             } else {
-              Write-Host "  ⚠️ [OPTIONAL] $file - missing" -ForegroundColor Yellow
-              $optionalMissing += $file
+              Write-Host "  ⚠️ [OPTIONAL] $pattern - missing" -ForegroundColor Yellow
+              $optionalMissing += $pattern
             }
           }
 
@@ -1078,38 +1080,39 @@ jobs:
           Write-Host "📁 CSV Directory: $($csvDir.FullName)" -ForegroundColor Cyan
 
           # CRITICAL files - job FAILS if any are missing (indicates PS script failure)
-          $criticalFiles = @('_Servers.csv', '_Proxies.csv', '_Repositories.csv', '_Jobs.csv', '_vbrinfo.csv')
+          # Files are prefixed with hostname: e.g., localhost_Jobs.csv, servername_Servers.csv
+          $criticalPatterns = @('*_Servers.csv', '*_Proxies.csv', '*_Repositories.csv', '*_Jobs.csv', '*_vbrinfo.csv')
 
           # Optional files - warning only
-          $optionalFiles = @('_UserRoles.csv', '_SOBRs.csv', '_LicInfo.csv', 'VeeamSessionReport.csv')
+          $optionalPatterns = @('*_UserRoles.csv', '*_SOBRs.csv', '*_LicInfo.csv', 'VeeamSessionReport.csv')
 
           $foundCount = 0
           $criticalMissing = @()
           $optionalMissing = @()
 
-          foreach ($file in $criticalFiles) {
-            $path = Join-Path $csvDir.FullName $file
-            if (Test-Path $path) {
-              $size = (Get-Item $path).Length
-              $rowCount = (Import-Csv $path -ErrorAction SilentlyContinue).Count
-              Write-Host "  ✅ [CRITICAL] $file - $size bytes, $rowCount rows" -ForegroundColor Green
+          foreach ($pattern in $criticalPatterns) {
+            $found = Get-ChildItem -Path $csvDir.FullName -Filter $pattern -ErrorAction SilentlyContinue | Select-Object -First 1
+            if ($found) {
+              $size = $found.Length
+              $rowCount = (Import-Csv $found.FullName -ErrorAction SilentlyContinue).Count
+              Write-Host "  ✅ [CRITICAL] $($found.Name) - $size bytes, $rowCount rows" -ForegroundColor Green
               $foundCount++
             } else {
-              Write-Host "  ❌ [CRITICAL] $file - MISSING" -ForegroundColor Red
-              $criticalMissing += $file
+              Write-Host "  ❌ [CRITICAL] $pattern - MISSING" -ForegroundColor Red
+              $criticalMissing += $pattern
             }
           }
 
-          foreach ($file in $optionalFiles) {
-            $path = Join-Path $csvDir.FullName $file
-            if (Test-Path $path) {
-              $size = (Get-Item $path).Length
-              $rowCount = (Import-Csv $path -ErrorAction SilentlyContinue).Count
-              Write-Host "  ✅ [OPTIONAL] $file - $size bytes, $rowCount rows" -ForegroundColor Green
+          foreach ($pattern in $optionalPatterns) {
+            $found = Get-ChildItem -Path $csvDir.FullName -Filter $pattern -ErrorAction SilentlyContinue | Select-Object -First 1
+            if ($found) {
+              $size = $found.Length
+              $rowCount = (Import-Csv $found.FullName -ErrorAction SilentlyContinue).Count
+              Write-Host "  ✅ [OPTIONAL] $($found.Name) - $size bytes, $rowCount rows" -ForegroundColor Green
               $foundCount++
             } else {
-              Write-Host "  ⚠️ [OPTIONAL] $file - missing" -ForegroundColor Yellow
-              $optionalMissing += $file
+              Write-Host "  ⚠️ [OPTIONAL] $pattern - missing" -ForegroundColor Yellow
+              $optionalMissing += $pattern
             }
           }
 
