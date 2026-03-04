@@ -30,7 +30,12 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR.VbrTables.Jobs_Info
                     .Select(d => new JobSummaryRow { JobType = d.Key, Count = d.Value.ToString() })
                     .ToList();
 
-                displayData.Add(new JobSummaryRow { JobType = "<b>Total Jobs", Count = totalJobs.ToString() + "</b>" });
+                // Use &#8203; (zero-width space) to trigger CSectionTable raw pass-through for the bold span
+                displayData.Add(new JobSummaryRow
+                {
+                    JobType = $"<span style=\"font-weight:600\">Total Jobs&#8203;</span>",
+                    Count = $"<span style=\"font-weight:600\">&#8203;{totalJobs}</span>",
+                });
 
                 var table = new CSectionTable<JobSummaryRow>("jobsummary", VbrLocalizationHelper.JobSumTitle)
                     .WithIcon("J", "#eff6ff", "#1d4ed8")

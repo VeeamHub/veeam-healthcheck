@@ -47,8 +47,8 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.Shared
         private string _iconFgColor = "";
         private bool _hasIcon;
 
-        // Section options
-        private bool _defaultOpen;
+        // Section options (open by default, consistent with SectionCardStart)
+        private bool _defaultOpen = true;
         private int? _intervalDays;
 
         // Checkbox emoji constants (matching CHtmlFormatting)
