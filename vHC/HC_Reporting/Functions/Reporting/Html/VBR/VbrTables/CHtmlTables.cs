@@ -541,7 +541,7 @@ namespace VeeamHealthCheck.Html.VBR
 
         public string AddBkpSrvTable(bool scrub)
         {
-            string s = this.form.SectionStart("vbrserver", VbrLocalizationHelper.BkpSrvTblHead);
+            string s = this.form.SectionStartWithButtonNoTable("vbrserver", VbrLocalizationHelper.BkpSrvTblHead, string.Empty);
             string summary = this.sum.SetVbrSummary();
 
             // CDataFormer cd = new(true);
@@ -591,7 +591,7 @@ namespace VeeamHealthCheck.Html.VBR
 
             // if (CGlobals.RunSecReport)
             //    s += InstalledAppsTable();
-            s += this.form.SectionEnd(summary);
+            s += this.form.SectionEndNoTable(summary);
 
             // JSON section capture (backup server core info)
             try
@@ -642,11 +642,8 @@ namespace VeeamHealthCheck.Html.VBR
         {
             CGlobals.Scrub = scrub;
 
-            string s = this.form.SectionStart("secsummary", VbrLocalizationHelper.SSTitle);
+            string s = this.form.SectionStartWithButtonNoTable("secsummary", VbrLocalizationHelper.SSTitle, string.Empty);
             string summary = this.sum.SecSum();
-
-            // Close the table opened by SectionStart - we will use a security grid instead
-            s += "</tr></thead></table>";
 
             try
             {
@@ -699,7 +696,7 @@ namespace VeeamHealthCheck.Html.VBR
                 }
             }
 
-            s += this.form.SectionEnd(summary);
+            s += this.form.SectionEndNoTable(summary);
 
             // JSON section capture security summary
             try
