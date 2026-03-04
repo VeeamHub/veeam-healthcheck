@@ -32,7 +32,12 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR
 
             this.SCRUB = scrub;
             this.HTMLSTRING = htmlString;
-            
+
+            // KPI cards row (new for executive dashboard)
+            this.log.Info(this.logStart + "Generating KPI Row...");
+            this.HTMLSTRING += this.tables.AddKpiRow(this.SCRUB);
+            this.log.Info(this.logStart + "KPI Row completed.");
+
             this.log.Info(this.logStart + "Generating LicenseTable...");
             this.LicenseTable();
             this.log.Info(this.logStart + "LicenseTable completed.");

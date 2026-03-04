@@ -224,19 +224,9 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR
 
         private void SetNavigation()
         {
-            // SetUniversalNavStart();
-            this.NavTable();
-
-            this.AddToHtml(this.SetVbrHcIntro(false));
-
-            // add end div for card holding nav & summary
-            this.AddToHtml("</div>");
-
-            // add end div for end of section
-            this.AddToHtml("</div>");
-
-            // add line break for spacing
-            this.AddToHtml("<br>");
+            // Sidebar is now emitted in FormBodyStart().
+            // Emit toolbar for expand/collapse all.
+            this.AddToHtml(this.form.Toolbar());
         }
 
         private string SetVbrHcIntro(bool scrub)
@@ -335,18 +325,16 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR
             CGlobals.Scrub = scrub;
             string h = this.form.body;
             h += this.form.FormHtmlButtonGoToTop();
-            if (scrub)
-            {
-                h += this.form.SetHeaderAndLogo(" ");
 
-                // h += _form.SetBannerAndIntro(true);
-            }
-            else
-            {
-                h += this.form.SetHeaderAndLogo(this.SetLicHolder());
+            // Build and emit the sidebar
+            h += this.BuildSidebar();
 
-                // h += _form.SetBannerAndIntro(false);
-            }
+            // Open main content wrapper
+            h += this.form.MainContentStart();
+
+            // Page header (replaces hero image banner)
+            string licHolder = scrub ? " " : this.SetLicHolder();
+            h += this.form.PageHeader(licHolder, CGlobals.ReportDays);
 
             return h;
         }
@@ -467,8 +455,6 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR
                 this.htmldocScrubbed += this.FormBodyStart(this.htmldocScrubbed, true);
                 this.SetNavigation();
 
-                this.AddToHtml(string.Format("<button id='expandBtn' type=\"button\" class=\"btn\" onclick=\"test()\">{0}</button>", "Expand All Sections"));
-
                 this.log.Info(this.logStart + "About to call helper.FormVbrFullReport() [SCRUBBED]...");
                 this.htmldocScrubbed = helper.FormVbrFullReport(this.htmldocScrubbed, true);
                 this.log.Info(this.logStart + "helper.FormVbrFullReport() [SCRUBBED] completed.");
@@ -479,8 +465,6 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR
                 this.log.Info(this.logStart + "Scrub mode disabled. Starting original report generation...");
                 this.htmldocOriginal += this.FormBodyStart(this.htmldocOriginal, false);
                 this.SetNavigation();
-
-                this.AddToHtml(string.Format("<button id='expandBtn' type=\"button\" class=\"btn\" onclick=\"test()\">{0}</button>", "Expand All Sections"));
 
                 this.log.Info(this.logStart + "About to call helper.FormVbrFullReport() [ORIGINAL]...");
                 this.htmldocOriginal = helper.FormVbrFullReport(this.htmldocOriginal, false);
@@ -497,6 +481,76 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR
 
             this.log.Info("[HTML] forming HTML body...done!");
         }
+
+        #region SidebarConstruction
+
+        private static string GetIconAsBase64()
+        {
+            try
+            {
+                var assembly = Assembly.GetExecutingAssembly();
+                using var stream = assembly.GetManifestResourceStream(
+                    $"{assembly.GetName().Name}.Health_Check_Icon.ico");
+                if (stream == null) return string.Empty;
+                using var ms = new MemoryStream();
+                stream.CopyTo(ms);
+                return Convert.ToBase64String(ms.ToArray());
+            }
+            catch
+            {
+                return string.Empty;
+            }
+        }
+
+        private string BuildSidebar()
+        {
+            string nav = "";
+
+            // Overview
+            nav += this.form.NavSection("Overview",
+                this.form.NavLink("license", VbrLocalizationHelper.NavLicInfoLink) +
+                this.form.NavLink("secsummary", VbrLocalizationHelper.NavSecSumLink));
+
+            // Infrastructure
+            nav += this.form.NavSection("Infrastructure",
+                this.form.NavLink("vbrserver", VbrLocalizationHelper.NavBkpSrvLink) +
+                this.form.NavLink("managedServerInfo", VbrLocalizationHelper.NavSrvInfoLink) +
+                this.form.NavLink("regkeys", VbrLocalizationHelper.NavRegKeyLink) +
+                this.form.NavLink("proxies", VbrLocalizationHelper.NavProxyInfoLink) +
+                this.form.NavLink("serversrequirements", "Server Requirements"));
+
+            // Storage
+            nav += this.form.NavSection("Storage",
+                this.form.NavLink("sobr", VbrLocalizationHelper.NavSobrInfoLink) +
+                this.form.NavLink("extents", VbrLocalizationHelper.NavSobrExtLink) +
+                this.form.NavLink("capextents", VbrLocalizationHelper.NavCapTierLink) +
+                this.form.NavLink("archextents", VbrLocalizationHelper.NavArchTierLink) +
+                this.form.NavLink("repos", VbrLocalizationHelper.NavRepoInfoLink));
+
+            // Workloads
+            nav += this.form.NavSection("Workloads",
+                this.form.NavLink("serversummary", VbrLocalizationHelper.NavSrvSumLink) +
+                this.form.NavLink("jobsummary", VbrLocalizationHelper.NavJobSumLink) +
+                this.form.NavLink("missingjobs", VbrLocalizationHelper.NavMissingJobLink) +
+                this.form.NavLink("protectedworkloads", VbrLocalizationHelper.NavProtWrkld));
+
+            // Job Activity
+            nav += this.form.NavSection("Job Activity",
+                this.form.NavLink("jobcon", VbrLocalizationHelper.NavJobConLink) +
+                this.form.NavLink("taskcon", VbrLocalizationHelper.NavTaskConLink) +
+                this.form.NavLink("jobsesssum", VbrLocalizationHelper.NavJobSessSumLink) +
+                this.form.NavLink("jobs", VbrLocalizationHelper.NavJobInfoLink));
+
+            // Build icon tag
+            string iconB64 = GetIconAsBase64();
+            string iconImgTag = string.IsNullOrEmpty(iconB64)
+                ? null
+                : $"<img src=\"data:image/x-icon;base64,{iconB64}\" style=\"width:36px;height:36px;object-fit:contain;margin-bottom:12px;display:block\" alt=\"Veeam Health Check\">";
+
+            return this.form.Sidebar(nav, iconImgTag);
+        }
+
+        #endregion
 
         #region TableFormation
 
@@ -534,11 +588,14 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR
         private string FormFooter()
         {
             string jsScript = GetEmbeddedCssContent("ReportScript.js");
-            string s = "</body><footer>";
+            string s = this.form.MainContentEnd(); // close <main>
+            s += "<footer>";
             s += "<a>vHC Version: " + CVersionSetter.GetFileVersion() + "</a>";
+            s += "</footer>";
             s += "<script type=\"text/javascript\">";
             s += jsScript;
-            s += "</script></footer></html>";
+            s += "</script>";
+            s += "</body></html>";
             return s;
         }
 

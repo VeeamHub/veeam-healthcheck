@@ -186,7 +186,7 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.Shared
 
         public string Table()
         {
-            return "<table border=\"1\" class=\"content-table\" >";
+            return "<table>";
         }
 
         public string EndTable()
@@ -239,7 +239,7 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.Shared
         #region Buttons
         public string FormHtmlButtonGoToTop()
         {
-            return "<button onclick=\"topFunction()\" id=\"myBtn\" title=\"Go to top\">Go To Top</button><button id=\"themeToggleBtn\" title=\"Toggle dark mode\">🌙 Dark Mode</button>";
+            return @"<button onclick=""topFunction()"" id=""myBtn"" title=""Go to top"">Go To Top</button>";
         }
 
         #endregion
@@ -415,6 +415,139 @@ Vb365ResourceHandler.HtmlIntroLine5vb365, string.Empty
         {
             return string.Format("<div class=\"{0} table-sortable card\" id=\"{1}\">", identifier, identifier);
         }
+
+        #region Executive Dashboard Layout
+
+        /// <summary>
+        /// Generates the sidebar HTML for the executive dashboard.
+        /// </summary>
+        public string Sidebar(string navContent, string iconImgTag)
+        {
+            string logoHtml = string.IsNullOrEmpty(iconImgTag)
+                ? "<div class=\"logo-mark\">V</div>"
+                : iconImgTag;
+
+            return @"<nav class=""sidebar"">
+  <div class=""sidebar-brand"">"
+                + logoHtml
+                + @"<h2>Veeam Health Check</h2>
+    <p>Configuration Report</p>
+  </div>"
+                + navContent
+                + "</nav>";
+        }
+
+        /// <summary>
+        /// Opens the main content wrapper.
+        /// </summary>
+        public string MainContentStart()
+        {
+            return @"<main class=""main"">";
+        }
+
+        /// <summary>
+        /// Closes the main content wrapper.
+        /// </summary>
+        public string MainContentEnd()
+        {
+            return "</main>";
+        }
+
+        /// <summary>
+        /// Generates the page header with company name and meta info.
+        /// </summary>
+        public string PageHeader(string licenseHolder, int reportDays)
+        {
+            string reportDate = DateTime.Now.ToString("MMM d, yyyy");
+            return string.Format(@"<div class=""page-header"">
+    <h1>{0} - Infrastructure Health Report</h1>
+    <div class=""meta"">
+      <span>Veeam Backup &amp; Replication</span>
+      <span>{1} day report</span>
+      <span>Generated {2}</span>
+    </div>
+  </div>", licenseHolder, reportDays, reportDate);
+        }
+
+        /// <summary>
+        /// Generates the toolbar with expand/collapse all button.
+        /// </summary>
+        public string Toolbar()
+        {
+            return @"<div class=""toolbar"">
+    <button class=""btn"" onclick=""toggleAll()"">Expand / Collapse All</button>
+  </div>";
+        }
+
+        /// <summary>
+        /// Generates a sidebar navigation section with title and links.
+        /// </summary>
+        public string NavSection(string title, string linksHtml)
+        {
+            return string.Format(@"<div class=""nav-section"">
+    <div class=""nav-section-title"">{0}</div>
+    {1}
+  </div>", title, linksHtml);
+        }
+
+        /// <summary>
+        /// Generates a sidebar navigation link.
+        /// </summary>
+        public string NavLink(string href, string text)
+        {
+            return string.Format(@"<a href=""#{0}"" class=""nav-link"">{1}</a>", href, text);
+        }
+
+        /// <summary>
+        /// Starts a section card. Open sections are visible by default.
+        /// </summary>
+        public string SectionCardStart(string id, string title, string iconLetter, string iconBg, string iconColor, bool defaultOpen)
+        {
+            string openClass = defaultOpen ? " open" : "";
+            return string.Format(@"<div id=""{0}"" class=""section-card{5}"">
+    <div class=""section-header"" onclick=""toggleSection(this)"">
+      <h2><span class=""icon"" style=""background:{2};color:{3}"">{1}</span> {4}</h2>
+      <span class=""toggle"">&#9662;</span>
+    </div>
+    <div class=""section-body"">",
+                id, iconLetter, iconBg, iconColor, title, openClass);
+        }
+
+        /// <summary>
+        /// Starts a section card that wraps a table. Opens table and thead.
+        /// </summary>
+        public string SectionCardTableStart(string id, string title, string iconLetter, string iconBg, string iconColor, bool defaultOpen)
+        {
+            string s = SectionCardStart(id, title, iconLetter, iconBg, iconColor, defaultOpen);
+            s += "<table><thead><tr>";
+            return s;
+        }
+
+        /// <summary>
+        /// Overload with report interval in title.
+        /// </summary>
+        public string SectionCardTableStart(string id, string title, string iconLetter, string iconBg, string iconColor, bool defaultOpen, int reportInterval)
+        {
+            return SectionCardTableStart(id, string.Format("{0} ({1} Days)", title, reportInterval), iconLetter, iconBg, iconColor, defaultOpen);
+        }
+
+        /// <summary>
+        /// Ends a section card. Closes section-body and section-card divs.
+        /// </summary>
+        public string SectionCardEnd()
+        {
+            return "</div></div>";
+        }
+
+        /// <summary>
+        /// Ends a section card that contains a table. Closes table, section-body, section-card.
+        /// </summary>
+        public string SectionCardTableEnd()
+        {
+            return "</tbody></table>" + SectionCardEnd();
+        }
+
+        #endregion
     }
 
     enum CellShade
