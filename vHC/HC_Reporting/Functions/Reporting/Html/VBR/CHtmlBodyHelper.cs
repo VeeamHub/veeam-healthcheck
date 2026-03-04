@@ -197,6 +197,9 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR
         {
             this.HTMLSTRING += this.tables.AddJobTablesHeader();
 
+            // Job schedule heatmap placeholder (schedule data not available in structured format)
+            this.HTMLSTRING += "<p class=\"text-secondary\">Schedule heatmap: Job schedule data is not available in a structured day-of-week and hour-of-day format for heatmap rendering.</p>";
+
             this.JobConcurrencyTable();
             this.TaskConcurrencyTable();
             this.JobSessionSummaryTable();

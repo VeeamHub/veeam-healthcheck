@@ -387,6 +387,18 @@ namespace VeeamHealthCheck.Html.VBR
             return $"<span class=\"badge badge-{variant}\">{System.Net.WebUtility.HtmlEncode(text)}</span>";
         }
 
+        /// <summary>
+        /// Renders a security feature as a grid item with a colored status dot.
+        /// </summary>
+        private static string SecurityGridItem(string label, bool enabled)
+        {
+            string dotColor = enabled ? "green" : "red";
+            return $"<div class=\"security-item\">" +
+                   $"<div class=\"status-dot {dotColor}\"></div>" +
+                   $"<div class=\"label\">{System.Net.WebUtility.HtmlEncode(label)}</div>" +
+                   "</div>";
+        }
+
         private static string WriteTupleListToHtml(List<Tuple<string, string>> list)
         {
             string headers = string.Empty;
@@ -621,69 +633,20 @@ namespace VeeamHealthCheck.Html.VBR
             string s = this.form.SectionStart("secsummary", VbrLocalizationHelper.SSTitle);
             string summary = this.sum.SecSum();
 
-            s += this.form.TableHeader(VbrLocalizationHelper.SSHdr0, VbrLocalizationHelper.SSHdrTT0) +
-                this.form.TableHeader(VbrLocalizationHelper.SSHdr1, VbrLocalizationHelper.SSHdrTT1) +
-                this.form.TableHeader(VbrLocalizationHelper.SSHdr2, VbrLocalizationHelper.SSHdrTT2) +
-                this.form.TableHeader(VbrLocalizationHelper.SSHdr3, VbrLocalizationHelper.SSHdrTT3) +
-                this.form.TableHeader("MFA Enabled", "Is MFA enabled for console access to VBR");
-            s += this.form.TableHeaderEnd();
-            s += this.form.TableBodyStart();
-            s += "<tr>";
+            // Close the table opened by SectionStart - we will use a security grid instead
+            s += "</tr></thead></table>";
 
             try
             {
-                // table data
                 CSecuritySummaryTable t = this.df.SecSummary();
 
-                if (t.ImmutabilityEnabled)
-                {
-                    s += this.form.TableData(this.form.True, string.Empty);
-                }
-                else
-                {
-                    s += this.form.TableData(this.form.False, string.Empty);
-                }
-
-                if (t.TrafficEncrptionEnabled)
-                {
-                    s += this.form.TableData(this.form.True, string.Empty);
-                }
-                else
-                {
-                    s += this.form.TableData(this.form.False, string.Empty);
-                }
-
-                if (t.BackupFileEncrptionEnabled)
-                {
-                    s += this.form.TableData(this.form.True, string.Empty);
-                }
-                else
-                {
-                    s += this.form.TableData(this.form.False, string.Empty);
-                }
-
-                if (t.ConfigBackupEncrptionEnabled)
-                {
-                    s += this.form.TableData(this.form.True, string.Empty);
-                }
-                else
-                {
-                    s += this.form.TableData(this.form.False, string.Empty);
-                }
-
-                if (t.MFAEnabled)
-                {
-                    s += this.form.TableData(this.form.True, string.Empty);
-                }
-                else
-                {
-                    s += this.form.TableData(this.form.False, string.Empty);
-                }
-
-                s += "</tr>";
-
-                // s += _form.TableData((t.ImmutabilityEnabled : _form.True ? _form.False), "");
-                s += this.form.EndTable();
+                s += "<div class=\"security-grid\">";
+                s += SecurityGridItem("Immutability", t.ImmutabilityEnabled);
+                s += SecurityGridItem("Traffic Encryption", t.TrafficEncrptionEnabled);
+                s += SecurityGridItem("Backup File Encryption", t.BackupFileEncrptionEnabled);
+                s += SecurityGridItem("Config Backup Encryption", t.ConfigBackupEncrptionEnabled);
+                s += SecurityGridItem("MFA Enabled", t.MFAEnabled);
+                s += "</div>";
             }
 
             catch (Exception e)
