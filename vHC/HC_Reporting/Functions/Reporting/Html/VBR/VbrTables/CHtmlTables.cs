@@ -82,7 +82,7 @@ namespace VeeamHealthCheck.Html.VBR
         /// <returns>A string containing the HTML navigation table.</returns>
         public string MakeNavTable()
         {
-            return this.form.FormNavRows(VbrLocalizationHelper.NavLicInfoLink, "license", VbrLocalizationHelper.NavLicInfoDetail) +
+            return this.form.FormNavRows(VbrLocalizationHelper.NavLicInfoLink, "license", VbrLocalizationHelper.NavLicInfoDetail, isActive: true) +
                 this.form.FormNavRows(VbrLocalizationHelper.NavBkpSrvLink, "vbrserver", VbrLocalizationHelper.NavBkpSrvDeet) +
                 this.form.FormNavRows(VbrLocalizationHelper.NavSecSumLink, "secsummary", VbrLocalizationHelper.NavSecSumDeet) +
                 this.form.FormNavRows(VbrLocalizationHelper.NavSrvSumLink, "serversummary", VbrLocalizationHelper.NavSrvSumDeet) +
@@ -185,7 +185,7 @@ namespace VeeamHealthCheck.Html.VBR
                     }
 
                     s += this.form.TableData(l.edition, string.Empty);
-                    s += this.form.TableData(l.status, string.Empty);
+                    s += this.form.TableData(Badge(l.status), string.Empty);
                     s += this.form.TableData(l.type, string.Empty);
                     s += this.form.TableData(l.licensedinstances, string.Empty);
                     s += this.form.TableData(l.usedinstances, string.Empty);
@@ -367,6 +367,26 @@ namespace VeeamHealthCheck.Html.VBR
         // helper to render a boolean value as a table data cell
         private string BoolCell(bool value) => this.form.TableData(value ? this.form.True : this.form.False, string.Empty);
 
+        /// <summary>
+        /// Renders a text value as a styled status badge.
+        /// Maps common status strings to appropriate visual variants.
+        /// </summary>
+        internal static string Badge(string text)
+        {
+            if (string.IsNullOrWhiteSpace(text))
+                return text ?? string.Empty;
+
+            string variant = text.Trim().ToLowerInvariant() switch
+            {
+                "success" or "ok" or "enabled" or "yes" or "true" or "valid" or "active" => "success",
+                "warning" or "warn" or "partial" => "warning",
+                "failed" or "error" or "disabled" or "no" or "false" or "expired" or "invalid" => "danger",
+                "info" or "information" => "info",
+                _ => "neutral"
+            };
+            return $"<span class=\"badge badge-{variant}\">{System.Net.WebUtility.HtmlEncode(text)}</span>";
+        }
+
         private static string WriteTupleListToHtml(List<Tuple<string, string>> list)
         {
             string headers = string.Empty;
@@ -528,7 +548,7 @@ namespace VeeamHealthCheck.Html.VBR
                 s += this.form.TableData(this.form.False, string.Empty);
             }
 
-            s += this.form.TableData(b.ConfigBackupLastResult, string.Empty);
+            s += this.form.TableData(Badge(b.ConfigBackupLastResult), string.Empty);
             if (b.ConfigBackupEncryption)
             {
                 s += this.form.TableData(this.form.True, string.Empty);
@@ -835,7 +855,7 @@ namespace VeeamHealthCheck.Html.VBR
                 foreach (var d in list)
                 {
                     s += "<tr>";
-                    s += this.form.TableDataLeftAligned(d.Key, string.Empty);
+                    s += $"<td style=\"font-weight:600;text-align:left\">{d.Key}</td>";
                     s += this.form.TableData(d.Value.ToString(), string.Empty);
                     s += "</tr>";
                 }
@@ -894,14 +914,14 @@ namespace VeeamHealthCheck.Html.VBR
                     }
 
                     s += "<tr>";
-                    s += this.form.TableDataLeftAligned(d.Key, string.Empty);
+                    s += $"<td style=\"font-weight:600;text-align:left\">{d.Key}</td>";
                     s += this.form.TableData(d.Value.ToString(), string.Empty);
                     s += "</tr>";
                 }
 
                 s += "<tr>";
-                s += this.form.TableDataLeftAligned("<b>Total Jobs", string.Empty);
-                s += this.form.TableData(totalJobs.ToString() + "</b>", string.Empty);
+                s += $"<td style=\"font-weight:600;text-align:left\"><b>Total Jobs</b></td>";
+                s += this.form.TableData("<b>" + totalJobs.ToString() + "</b>", string.Empty);
                 s += "</tr>";
             }
             catch (Exception e)
@@ -1435,7 +1455,7 @@ namespace VeeamHealthCheck.Html.VBR
                     foreach (var d in list)
                     {
                         s += "<tr>";
-                        s += this.form.TableData(d.Key, string.Empty);
+                        s += $"<td style=\"font-weight:600\">{d.Key}</td>";
                         s += this.form.TableData(d.Value.ToString(), string.Empty);
                         s += "</tr>";
                     }
@@ -2172,7 +2192,7 @@ this.form.TableHeader(VbrLocalizationHelper.SbrExt15, VbrLocalizationHelper.SbrE
                     s += "<tr>";
                     s += this.form.TableData(d.Name, string.Empty);
                     s += this.form.TableData(d.SobrName, string.Empty);
-                    s += this.form.TableData(d.Status, string.Empty);
+                    s += this.form.TableData(Badge(d.Status), string.Empty);
                     s += this.form.TableData(d.ConnectionType ?? string.Empty, string.Empty);
                     s += this.form.TableData(d.GatewayServer ?? string.Empty, string.Empty);
                     s += this.BoolCell(d.CopyModeEnabled);
@@ -2268,7 +2288,7 @@ this.form.TableHeader(VbrLocalizationHelper.SbrExt15, VbrLocalizationHelper.SbrE
                     s += "<tr>";
                     s += this.form.TableData(d.Name, string.Empty);
                     s += this.form.TableData(d.SobrName, string.Empty);
-                    s += this.form.TableData(d.Status, string.Empty);
+                    s += this.form.TableData(Badge(d.Status), string.Empty);
                     s += this.form.TableData(d.GatewayMode ?? string.Empty, string.Empty);
                     s += this.form.TableData(d.GatewayServer ?? string.Empty, string.Empty);
                     s += this.form.TableData(d.OffloadPeriod ?? string.Empty, string.Empty);

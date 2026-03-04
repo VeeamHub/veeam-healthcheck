@@ -56,12 +56,13 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.Shared
             return this.SectionButton(this.collapsible, buttonText);
         }
 
-        public string FormNavRows(string linkText, string sectionLink, string info)
+        public string FormNavRows(string linkText, string sectionLink, string info, bool isActive = false)
         {
+            string cssClass = isActive ? "smoothscroll active" : "smoothscroll";
             return "<tr>" +
                    "<td>" +
                 "<dt>" +
-                string.Format("<a class=\"smoothscroll\" data-link=\"{0}\" href=\"#{0}\">{1}</a>", sectionLink, linkText) +
+                string.Format("<a class=\"{2}\" data-link=\"{0}\" href=\"#{0}\">{1}</a>", sectionLink, linkText, cssClass) +
                 "</dt>" +
                 string.Format("<dd>{0}</dd>", info)
                + "</td>" +

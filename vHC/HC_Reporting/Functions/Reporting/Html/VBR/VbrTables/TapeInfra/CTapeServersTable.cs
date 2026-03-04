@@ -5,6 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 using VeeamHealthCheck.Functions.Reporting.CsvHandlers;
 using VeeamHealthCheck.Functions.Reporting.Html.Shared;
+using VeeamHealthCheck.Html.VBR;
 using VeeamHealthCheck.Scrubber;
 using VeeamHealthCheck.Shared;
 
@@ -48,7 +49,7 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR.VbrTables.TapeInfra
 
                         s += this.form.TableDataLeftAligned(name, string.Empty);
                         s += this.form.TableData((string)(item.description ?? ""), string.Empty);
-                        s += this.form.TableData((string)(item.state ?? ""), string.Empty);
+                        s += this.form.TableData(CHtmlTables.Badge((string)(item.state ?? "")), string.Empty);
 
                         s += "</tr>";
                     }
