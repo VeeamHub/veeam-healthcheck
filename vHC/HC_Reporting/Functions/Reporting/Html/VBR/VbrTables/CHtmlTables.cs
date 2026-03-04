@@ -927,7 +927,7 @@ namespace VeeamHealthCheck.Html.VBR
 
         public string AddProtectedWorkLoadsTable(bool scrub)
         {
-            string s = this.form.SectionStartWithButton("protectedworkloads", VbrLocalizationHelper.PlTitle, VbrLocalizationHelper.PlButton);
+            string s = this.form.SectionStartWithButtonNoTable("protectedworkloads", VbrLocalizationHelper.PlTitle, VbrLocalizationHelper.PlButton);
             string summary = this.sum.ProtectedWorkloads();
             try
             {
@@ -936,7 +936,7 @@ namespace VeeamHealthCheck.Html.VBR
                 // vi table
                 s += "<h3>VMware Backups</h3>";
                 s += this.form.Table();
-                s += "<tr>" +
+                s += "<thead><tr>" +
                 this.form.TableHeader(VbrLocalizationHelper.PlHdr0, VbrLocalizationHelper.PlHdrTT0) +
                 this.form.TableHeader(VbrLocalizationHelper.PlHdr1, VbrLocalizationHelper.PlHdrTT1) +
                 this.form.TableHeader(VbrLocalizationHelper.PlHdr2, VbrLocalizationHelper.PlHdrTT2) +
@@ -956,7 +956,7 @@ namespace VeeamHealthCheck.Html.VBR
                 s += this.form.Table();
 
                 // hv table
-                s += "<tr>";
+                s += "<thead><tr>";
                 s += this.form.TableHeader("HV Total", "Total HV VMs found in environment");
                 s += this.form.TableHeader("HV Protected", "Total HV VMs found with existing backup");
                 s += this.form.TableHeader("HV Unprotected", "Total HV VMs found without backup");
@@ -973,7 +973,7 @@ namespace VeeamHealthCheck.Html.VBR
                 // phys
                 s += "<h3>Physical Backups</h3>";
                 s += this.form.Table();
-                s += "<tr>";
+                s += "<thead><tr>";
                 s += this.form.TableHeader(VbrLocalizationHelper.PlHdr4, VbrLocalizationHelper.PlHdrTT4);
                 s += this.form.TableHeader(VbrLocalizationHelper.PlHdr5, VbrLocalizationHelper.PlHdrTT5);
                 s += this.form.TableHeader(VbrLocalizationHelper.PlHdr6, VbrLocalizationHelper.PlHdrTT6);
@@ -1033,7 +1033,7 @@ namespace VeeamHealthCheck.Html.VBR
 
                                 s += "<div id=\"nasTable\" border=\"1\" class=\"content-table\"></div>";
                                 s += this.form.Table();
-                                s += "<tr>";
+                                s += "<thead><tr>";
                                 s += this.form.TableHeader("NAS Backup Jobs", "Number of NAS backup jobs detected");
                                 s += this.form.TableHeader("Total Source Size", "Total source size across all NAS backup jobs");
                                 s += this.form.TableHeaderEnd();
@@ -1109,7 +1109,7 @@ namespace VeeamHealthCheck.Html.VBR
                         // Small table for Entra Tenant Count:
                         s += "<div id=\"entraTenantCount\" border=\"1\" class=\"content-table\"></div>";
                         s += this.form.Table();
-                        s += "<tr>";
+                        s += "<thead><tr>";
                         s += this.form.TableHeader("Tenant Count:", "Number of tenants backed up by this backup server");
                         s += this.form.TableHeaderEnd();
                         s += this.form.TableBodyStart();
@@ -1122,7 +1122,7 @@ namespace VeeamHealthCheck.Html.VBR
                         // Table for Entra Tenants
                         s += "<div id=\"entraTable\" border=\"1\" class=\"content-table\"></div>";
                         s += this.form.Table();
-                        s += "<tr>";
+                        s += "<thead><tr>";
                         s += this.form.TableHeader("Tenant Name", "Name of the Entra ID Tenant being backed up.");
                         s += this.form.TableHeader("Cache Repo", "Cache Repo selected for the tenant");
                         s += this.form.TableHeaderEnd();
@@ -1151,7 +1151,7 @@ namespace VeeamHealthCheck.Html.VBR
                 this.log.Error("\t" + e.Message);
             }
 
-            s += this.form.SectionEnd(summary);
+            s += this.form.SectionEndNoTable(summary);
 
             // JSON protected workloads
             try
@@ -1667,18 +1667,15 @@ namespace VeeamHealthCheck.Html.VBR
             string summary = string.Empty;
 
             // headers
-            s += "<tr>" +
-                this.form.TableHeader("Server", "Server name") +
-                this.form.TableHeader("Type", "Role/type") +
-                this.form.TableHeader("Required Cores", "Required CPU cores") +
-                this.form.TableHeader("Available Cores", "Available CPU cores") +
-                this.form.TableHeader("Required RAM (GB)", "Required RAM in GB") +
-                this.form.TableHeader("Available RAM (GB)", "Available RAM in GB") +
-                this.form.TableHeader("Concurrent Tasks", "Current concurrent tasks") +
-                this.form.TableHeader("Suggested Tasks", "Suggested tasks based on sizing") +
-                this.form.TableHeader("Proxy/Repository Names", "Proxy and repository names on this server") +
-                "</tr>";
-
+            s += this.form.TableHeader("Server", "Server name");
+            s += this.form.TableHeader("Type", "Role/type");
+            s += this.form.TableHeader("Required Cores", "Required CPU cores");
+            s += this.form.TableHeader("Available Cores", "Available CPU cores");
+            s += this.form.TableHeader("Required RAM (GB)", "Required RAM in GB");
+            s += this.form.TableHeader("Available RAM (GB)", "Available RAM in GB");
+            s += this.form.TableHeader("Concurrent Tasks", "Current concurrent tasks");
+            s += this.form.TableHeader("Suggested Tasks", "Suggested tasks based on sizing");
+            s += this.form.TableHeader("Proxy/Repository Names", "Proxy and repository names on this server");
             s += this.form.TableHeaderEnd();
             s += this.form.TableBodyStart();
 
