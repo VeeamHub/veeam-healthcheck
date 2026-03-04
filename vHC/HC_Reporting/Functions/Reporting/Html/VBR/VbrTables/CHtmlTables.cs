@@ -726,7 +726,7 @@ namespace VeeamHealthCheck.Html.VBR
 
         public string AddSecurityReportSecuritySummaryTable()
         {
-            string s = this.form.SectionStart("secsummary", VbrLocalizationHelper.SSTitle);
+            string s = this.form.SectionStartWithButtonNoTable("secsummary", VbrLocalizationHelper.SSTitle, string.Empty);
             string summary = this.sum.SecSum();
 
             // s += AddSecuritySummaryDetails();
@@ -769,7 +769,7 @@ namespace VeeamHealthCheck.Html.VBR
             //    s += "<tr>" + v + "</tr>";
             // }
             // s += _form.EndTable();
-            s += this.form.SectionEnd(summary);
+            s += this.form.SectionEndNoTable(summary);
 
             return s;
         }
