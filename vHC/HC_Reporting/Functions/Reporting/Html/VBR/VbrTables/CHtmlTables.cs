@@ -255,7 +255,7 @@ namespace VeeamHealthCheck.Html.VBR
                 return string.Empty; // No validation data available
             }
 
-            string s = this.form.SectionStart("datacollection", "Data Collection Summary");
+            string s = this.form.SectionStartWithButtonNoTable("datacollection", "Data Collection Summary", string.Empty);
             
             // Calculate summary statistics
             int totalFiles = results.Count;
@@ -321,7 +321,7 @@ namespace VeeamHealthCheck.Html.VBR
             }
 
             string summary = Functions.Collection.CCsvValidator.GetReportSummary(results);
-            s += this.form.SectionEnd(summary);
+            s += this.form.SectionEndNoTable(summary);
             return s;
         }
 
@@ -815,8 +815,7 @@ namespace VeeamHealthCheck.Html.VBR
             string s = this.form.SectionStart("serversummary", VbrLocalizationHelper.MssTitle);
 
             s += this.form.TableHeaderLeftAligned(VbrLocalizationHelper.MssHdr1, VbrLocalizationHelper.MssHdr1TT) +
-                            this.form.TableHeader(VbrLocalizationHelper.MssHdr2, VbrLocalizationHelper.MssHdr2TT) +
-                            "</tr>";
+                            this.form.TableHeader(VbrLocalizationHelper.MssHdr2, VbrLocalizationHelper.MssHdr2TT);
             s += this.form.TableHeaderEnd();
             s += this.form.TableBodyStart();
 
@@ -869,10 +868,9 @@ namespace VeeamHealthCheck.Html.VBR
 
             string summary = this.sum.MissingJobsSUmmary();
 
-            s += this.form.TableHeaderLeftAligned(VbrLocalizationHelper.JobSum0, string.Empty) +
+            s += this.form.TableHeaderLeftAligned(VbrLocalizationHelper.JobSum0, string.Empty);
 
-                // _form.TableHeader("Count", "Total detected of this type") +
-                "</tr>";
+                // _form.TableHeader("Count", "Total detected of this type")
             s += this.form.TableHeaderEnd();
             s += this.form.TableBodyStart();
 
@@ -1249,20 +1247,18 @@ namespace VeeamHealthCheck.Html.VBR
         {
             string s = this.form.SectionStartWithButton("proxies", VbrLocalizationHelper.PrxTitle, VbrLocalizationHelper.PrxBtn);
             string summary = this.sum.Proxies();
-            s += "<tr>" +
-           this.form.TableHeader(VbrLocalizationHelper.Prx0, VbrLocalizationHelper.Prx0TT) +
-           this.form.TableHeader(VbrLocalizationHelper.Prx1, VbrLocalizationHelper.Prx1TT) +
-           this.form.TableHeader(VbrLocalizationHelper.Prx2, VbrLocalizationHelper.Prx2TT) +
-           this.form.TableHeader(VbrLocalizationHelper.Prx3, VbrLocalizationHelper.Prx3TT) +
-           this.form.TableHeader(VbrLocalizationHelper.Prx4, VbrLocalizationHelper.Prx4TT) +
-           this.form.TableHeader(VbrLocalizationHelper.Prx5, VbrLocalizationHelper.Prx5TT) +
-           this.form.TableHeader(VbrLocalizationHelper.Prx6, VbrLocalizationHelper.Prx6TT) +
-           this.form.TableHeader(VbrLocalizationHelper.Prx7, VbrLocalizationHelper.Prx7TT) +
-           this.form.TableHeader(VbrLocalizationHelper.Prx8, VbrLocalizationHelper.Prx8TT) +
-           this.form.TableHeader(VbrLocalizationHelper.Prx9, VbrLocalizationHelper.Prx9TT) +
-           this.form.TableHeader(VbrLocalizationHelper.Prx10, VbrLocalizationHelper.Prx10TT) +
-           this.form.TableHeader(VbrLocalizationHelper.Prx11, VbrLocalizationHelper.Prx11TT) +
-   "</tr>";
+            s += this.form.TableHeader(VbrLocalizationHelper.Prx0, VbrLocalizationHelper.Prx0TT);
+            s += this.form.TableHeader(VbrLocalizationHelper.Prx1, VbrLocalizationHelper.Prx1TT);
+            s += this.form.TableHeader(VbrLocalizationHelper.Prx2, VbrLocalizationHelper.Prx2TT);
+            s += this.form.TableHeader(VbrLocalizationHelper.Prx3, VbrLocalizationHelper.Prx3TT);
+            s += this.form.TableHeader(VbrLocalizationHelper.Prx4, VbrLocalizationHelper.Prx4TT);
+            s += this.form.TableHeader(VbrLocalizationHelper.Prx5, VbrLocalizationHelper.Prx5TT);
+            s += this.form.TableHeader(VbrLocalizationHelper.Prx6, VbrLocalizationHelper.Prx6TT);
+            s += this.form.TableHeader(VbrLocalizationHelper.Prx7, VbrLocalizationHelper.Prx7TT);
+            s += this.form.TableHeader(VbrLocalizationHelper.Prx8, VbrLocalizationHelper.Prx8TT);
+            s += this.form.TableHeader(VbrLocalizationHelper.Prx9, VbrLocalizationHelper.Prx9TT);
+            s += this.form.TableHeader(VbrLocalizationHelper.Prx10, VbrLocalizationHelper.Prx10TT);
+            s += this.form.TableHeader(VbrLocalizationHelper.Prx11, VbrLocalizationHelper.Prx11TT);
             s += this.form.TableHeaderEnd();
             s += this.form.TableBodyStart();
             try
@@ -1323,24 +1319,22 @@ namespace VeeamHealthCheck.Html.VBR
         {
             string s = this.form.SectionStartWithButton("extents", VbrLocalizationHelper.SbrExtTitle, VbrLocalizationHelper.SbrExtBtn);
             string summary = this.sum.Extents();
-            s += "<tr>" +
-this.form.TableHeader(VbrLocalizationHelper.SbrExt0, VbrLocalizationHelper.SbrExt0TT) +
-this.form.TableHeader(VbrLocalizationHelper.SbrExt1, VbrLocalizationHelper.SbrExt1TT) +
-this.form.TableHeader(VbrLocalizationHelper.SbrExt2, VbrLocalizationHelper.SbrExt2TT) +
-this.form.TableHeader(VbrLocalizationHelper.SbrExt3, VbrLocalizationHelper.SbrExt3TT) +
-this.form.TableHeader(VbrLocalizationHelper.SbrExt4, VbrLocalizationHelper.SbrExt4TT) +
-this.form.TableHeader("Auto Gateway / Direct Connection", VbrLocalizationHelper.SbrExt5TT) +
-this.form.TableHeader("Specified Gateway(s)", VbrLocalizationHelper.SbrExt6TT) +
-this.form.TableHeader(VbrLocalizationHelper.SbrExt7, VbrLocalizationHelper.SbrExt7TT) +
-this.form.TableHeader(VbrLocalizationHelper.SbrExt8, VbrLocalizationHelper.SbrExt8TT) +
-this.form.TableHeader(VbrLocalizationHelper.SbrExt9, VbrLocalizationHelper.SbrExt9TT) +
-this.form.TableHeader(VbrLocalizationHelper.SbrExt10, VbrLocalizationHelper.SbrExt10TT) +
-this.form.TableHeader(VbrLocalizationHelper.SbrExt11, VbrLocalizationHelper.SbrExt11TT) +
-this.form.TableHeader(VbrLocalizationHelper.SbrExt12, VbrLocalizationHelper.SbrExt12TT) +
-this.form.TableHeader(VbrLocalizationHelper.SbrExt13, VbrLocalizationHelper.SbrExt13TT) +
-this.form.TableHeader(VbrLocalizationHelper.SbrExt14, VbrLocalizationHelper.SbrExt14TT) +
-this.form.TableHeader(VbrLocalizationHelper.SbrExt15, VbrLocalizationHelper.SbrExt15TT) +
-"</tr>";
+            s += this.form.TableHeader(VbrLocalizationHelper.SbrExt0, VbrLocalizationHelper.SbrExt0TT);
+            s += this.form.TableHeader(VbrLocalizationHelper.SbrExt1, VbrLocalizationHelper.SbrExt1TT);
+            s += this.form.TableHeader(VbrLocalizationHelper.SbrExt2, VbrLocalizationHelper.SbrExt2TT);
+            s += this.form.TableHeader(VbrLocalizationHelper.SbrExt3, VbrLocalizationHelper.SbrExt3TT);
+            s += this.form.TableHeader(VbrLocalizationHelper.SbrExt4, VbrLocalizationHelper.SbrExt4TT);
+            s += this.form.TableHeader("Auto Gateway / Direct Connection", VbrLocalizationHelper.SbrExt5TT);
+            s += this.form.TableHeader("Specified Gateway(s)", VbrLocalizationHelper.SbrExt6TT);
+            s += this.form.TableHeader(VbrLocalizationHelper.SbrExt7, VbrLocalizationHelper.SbrExt7TT);
+            s += this.form.TableHeader(VbrLocalizationHelper.SbrExt8, VbrLocalizationHelper.SbrExt8TT);
+            s += this.form.TableHeader(VbrLocalizationHelper.SbrExt9, VbrLocalizationHelper.SbrExt9TT);
+            s += this.form.TableHeader(VbrLocalizationHelper.SbrExt10, VbrLocalizationHelper.SbrExt10TT);
+            s += this.form.TableHeader(VbrLocalizationHelper.SbrExt11, VbrLocalizationHelper.SbrExt11TT);
+            s += this.form.TableHeader(VbrLocalizationHelper.SbrExt12, VbrLocalizationHelper.SbrExt12TT);
+            s += this.form.TableHeader(VbrLocalizationHelper.SbrExt13, VbrLocalizationHelper.SbrExt13TT);
+            s += this.form.TableHeader(VbrLocalizationHelper.SbrExt14, VbrLocalizationHelper.SbrExt14TT);
+            s += this.form.TableHeader(VbrLocalizationHelper.SbrExt15, VbrLocalizationHelper.SbrExt15TT);
             s += this.form.TableHeaderEnd();
             s += this.form.TableBodyStart();
             try
@@ -1504,7 +1498,6 @@ this.form.TableHeader(VbrLocalizationHelper.SbrExt15, VbrLocalizationHelper.SbrE
             s += this.form.TableHeader(VbrLocalizationHelper.JobCon5, string.Empty);
             s += this.form.TableHeader(VbrLocalizationHelper.JobCon6, string.Empty);
             s += this.form.TableHeader(VbrLocalizationHelper.JobCon7, string.Empty);
-            s += "</tr>";
             s += this.form.TableHeaderEnd();
             s += this.form.TableBodyStart();
             try
@@ -1561,7 +1554,6 @@ this.form.TableHeader(VbrLocalizationHelper.SbrExt15, VbrLocalizationHelper.SbrE
             s += this.form.TableHeader(VbrLocalizationHelper.TaskCon5, string.Empty);
             s += this.form.TableHeader(VbrLocalizationHelper.TaskCon6, string.Empty);
             s += this.form.TableHeader(VbrLocalizationHelper.TaskCon7, string.Empty);
-            s += "</tr>";
             s += this.form.TableHeaderEnd();
             s += this.form.TableBodyStart();
             try
