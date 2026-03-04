@@ -658,6 +658,7 @@ namespace VeeamHealthCheck.Html.VBR
             }
 
             // test area
+            s += "<table><thead><tr>";
             s += AddBackupServerDetails(b);
             s += this.form.EndTable();
 
