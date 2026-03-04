@@ -56,12 +56,13 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.Shared
             return this.SectionButton(this.collapsible, buttonText);
         }
 
-        public string FormNavRows(string linkText, string sectionLink, string info)
+        public string FormNavRows(string linkText, string sectionLink, string info, bool isActive = false)
         {
+            string cssClass = isActive ? "smoothscroll active" : "smoothscroll";
             return "<tr>" +
                    "<td>" +
                 "<dt>" +
-                string.Format("<a class=\"smoothscroll\" data-link=\"{0}\" href=\"#{0}\">{1}</a>", sectionLink, linkText) +
+                string.Format("<a class=\"{2}\" data-link=\"{0}\" href=\"#{0}\">{1}</a>", sectionLink, linkText, cssClass) +
                 "</dt>" +
                 string.Format("<dd>{0}</dd>", info)
                + "</td>" +
@@ -75,7 +76,6 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.Shared
             string s = "</tr>";
             s += "</tbody>";
             s += "</table>";
-            s += this.LineBreak();
 
             // s += summary;
             s += this.endDiv;
@@ -128,22 +128,26 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.Shared
 
         public string TableHeaderLeftAligned(string header, string tooltip)
         {
-            return string.Format("<th title=\"{0}\" style=\"text-align:left\">{1}</th>", tooltip, header);
+            string titleAttr = string.IsNullOrEmpty(tooltip) ? "" : $" title=\"{tooltip}\"";
+            return $"<th{titleAttr} style=\"text-align:left\">{header}</th>";
         }
 
         public string TableHeaderLeftAligned(string header, string tooltip, int index)
         {
-            return string.Format("<th onclick=\"sortTable({2})\" title=\"{0}\" style=\"text-align:left\">{1}</th>", tooltip, header, index);
+            string titleAttr = string.IsNullOrEmpty(tooltip) ? "" : $" title=\"{tooltip}\"";
+            return $"<th onclick=\"sortTable({index})\"{titleAttr} style=\"text-align:left\">{header}</th>";
         }
 
         public string TableHeader(string header, string tooltip)
         {
-            return string.Format("<th title=\"{0}\">{1}</th>", tooltip, header);
+            string titleAttr = string.IsNullOrEmpty(tooltip) ? "" : $" title=\"{tooltip}\"";
+            return $"<th{titleAttr}>{header}</th>";
         }
 
         public string TableHeader(string header, string tooltip, int index)
         {
-            return string.Format("<th onclick=\"sortTable({2})\" title=\"{0}\" >{1}</th>", tooltip, header, index);
+            string titleAttr = string.IsNullOrEmpty(tooltip) ? "" : $" title=\"{tooltip}\"";
+            return $"<th onclick=\"sortTable({index})\"{titleAttr}>{header}</th>";
         }
 
         public string TableHeaderEnd()
@@ -168,12 +172,14 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.Shared
 
         public string TableDataLeftAligned(string data, string toolTip)
         {
-            return string.Format("<td title=\"{0}\" style=\"text-align:left\">{1}</td>", toolTip, data);
+            string titleAttr = string.IsNullOrEmpty(toolTip) ? "" : $" title=\"{toolTip}\"";
+            return $"<td{titleAttr} style=\"text-align:left\">{data}</td>";
         }
 
         public string TableData(string data, string toolTip)
         {
-            return string.Format("<td title=\"{0}\">{1}</td>", toolTip, data);
+            string titleAttr = string.IsNullOrEmpty(toolTip) ? "" : $" title=\"{toolTip}\"";
+            return $"<td{titleAttr}>{data}</td>";
         }
 
         public string TableData(string data, string toolTip, int shading)

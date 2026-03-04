@@ -269,13 +269,10 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR
                     s += String.Format(@"<dl>
                 <dt>CSV Raw Data Output</dt>
                 <dd>{0}</dd>
-                </br>
                 <dt>Individual Job Session Reports</dt>
                 <dd>{1}</dd>
-                </br>
                 <dt>NOTE</dt>
                 <dd>{2}</dd>
-                </br>
                 <dt>NOTE</dt>
                 <dd>{3}</dd>
 

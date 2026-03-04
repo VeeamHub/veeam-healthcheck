@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using VeeamHealthCheck.Functions.Reporting.CsvHandlers;
 using VeeamHealthCheck.Functions.Reporting.Html.Shared;
+using VeeamHealthCheck.Html.VBR;
 using VeeamHealthCheck.Scrubber;
 using VeeamHealthCheck.Shared;
 
