@@ -58,11 +58,11 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.Shared
 
         public string FormNavRows(string linkText, string sectionLink, string info, bool isActive = false)
         {
-            string cssClass = isActive ? "smoothscroll active" : "smoothscroll";
+            string activeClass = isActive ? " active" : "";
             return "<tr>" +
                    "<td>" +
                 "<dt>" +
-                string.Format("<a class=\"{2}\" data-link=\"{0}\" href=\"#{0}\">{1}</a>", sectionLink, linkText, cssClass) +
+                string.Format("<a class=\"smoothscroll{2}\" data-link=\"{0}\" href=\"#{0}\">{1}</a>", sectionLink, linkText, activeClass) +
                 "</dt>" +
                 string.Format("<dd>{0}</dd>", info)
                + "</td>" +
@@ -73,8 +73,7 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.Shared
 
         public string SectionEnd(string summary)
         {
-            string s = "</tr>";
-            s += "</tbody>";
+            string s = "</tbody>";
             s += "</table>";
 
             // s += summary;
@@ -89,10 +88,31 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.Shared
              return this.SectionEnd(string.Empty);
         }
 
+        public string SectionEndNoTable(string summary)
+        {
+            return "</div></div>";
+        }
+
+        public string SectionEndNoTable()
+        {
+            return this.SectionEndNoTable(string.Empty);
+        }
+
+        private string SectionCardStart(string id, string title)
+        {
+            string firstLetter = string.IsNullOrEmpty(title) ? "?" : title[0].ToString().ToUpper();
+            string s = $"<div class=\"section-card open\" id=\"{id}\">";
+            s += $"<div class=\"section-header\" onclick=\"toggleSection(this)\">";
+            s += $"<h2><span class=\"icon\" style=\"background:#f0f9ff;color:#0369a1\">{firstLetter}</span> {title}</h2>";
+            s += "<span class=\"toggle\">&#8964;</span>";
+            s += "</div>";
+            s += "<div class=\"section-body\">";
+            return s;
+        }
+
         public string SectionStart(string id, string header)
         {
-            string s = this.SectionId(id);
-            s += this.header2(header);
+            string s = this.SectionCardStart(id, header);
             s += this.Table();
             s += "<thead><tr>";
             return s;
@@ -100,12 +120,7 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.Shared
 
         public string SectionStartWithButton(string id, string header, string buttonName)
         {
-            string s = this.SectionId(id);
-
-            // s += header2(header);
-            // s += CollapsibleButton(buttonName);
-            s += this.CollapsibleButton(header);
-            s += "<div class=\"content\" style=\"display: none\">";
+            string s = this.SectionCardStart(id, header);
             s += this.Table();
             s += "<thead><tr>";
 
@@ -114,16 +129,23 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.Shared
 
         public string SectionStartWithButton(string id, string header, string buttonName, int reportInterval)
         {
-            string s = this.SectionId(id);
-
-            // s += header2(header + " (" + reportInterval + " Days)");
-            // s += CollapsibleButton(buttonName);
-            s += this.CollapsibleButton(String.Format(header + " (" + reportInterval + " Days)"));
-            s += "<div class=\"content\" style=\"display: none\">";
+            string displayTitle = String.Format(header + " (" + reportInterval + " Days)");
+            string s = this.SectionCardStart(id, displayTitle);
             s += this.Table();
             s += "<thead><tr>";
 
             return s;
+        }
+
+        public string SectionStartWithButtonNoTable(string id, string header, string buttonName)
+        {
+            return this.SectionCardStart(id, header);
+        }
+
+        public string SectionStartWithButtonNoTable(string id, string header, string buttonName, int reportInterval)
+        {
+            string displayTitle = String.Format(header + " (" + reportInterval + " Days)");
+            return this.SectionCardStart(id, displayTitle);
         }
 
         public string TableHeaderLeftAligned(string header, string tooltip)
