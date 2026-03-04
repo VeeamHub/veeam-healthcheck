@@ -500,11 +500,54 @@ footer {
   border-top: 1px solid var(--border);
 }
 
+/* ===== Table cell status colors ===== */
+td.cell-danger  { background: #fef2f2; color: #dc2626; font-weight: 600; }
+td.cell-warning { background: #fffbeb; color: #d97706; font-weight: 600; }
+td.cell-success { background: #ecfdf5; color: #059669; font-weight: 600; }
+
+/* ===== Progress bar color variants ===== */
+.progress-fill.progress-ok      { background: #059669; }
+.progress-fill.progress-warning { background: #d97706; }
+.progress-fill.progress-danger  { background: #dc2626; }
+
+/* ===== Subsection (compliance table sub-groups) ===== */
+.subsection {
+  margin: 16px 0 8px 0;
+  padding: 4px 0;
+  border-bottom: 1px solid var(--border);
+}
+.subsection h4 {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  margin: 0;
+}
+
+/* ===== Legacy collapsible sections ===== */
+button.collapsible.classBtn {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 8px 8px 0 0;
+  color: var(--text);
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 600;
+  padding: 12px 16px;
+  text-align: left;
+  width: 100%;
+  margin-bottom: 0;
+}
+button.collapsible.classBtn:hover { background: var(--hover); }
+.content { border: 1px solid var(--border); border-top: none; border-radius: 0 0 8px 8px; padding: 0; overflow: auto; }
+
 /* ===== Print ===== */
 @media print {
   .sidebar { display: none; }
   .main { margin-left: 0; padding: 16px; }
   .section-card.open .section-body, .section-body { display: block !important; }
+  .content { display: block !important; }
   .toolbar { display: none; }
   #myBtn { display: none !important; }
   footer { margin-left: 0; }

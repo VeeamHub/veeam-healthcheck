@@ -38,6 +38,9 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR
             this.HTMLSTRING += this.tables.AddKpiRow(this.SCRUB);
             this.log.Info(this.logStart + "KPI Row completed.");
 
+            // Toolbar (expand/collapse all) — appears after KPI, before tables
+            this.HTMLSTRING += this.tables.AddToolbar();
+
             this.log.Info(this.logStart + "Generating LicenseTable...");
             this.LicenseTable();
             this.log.Info(this.logStart + "LicenseTable completed.");

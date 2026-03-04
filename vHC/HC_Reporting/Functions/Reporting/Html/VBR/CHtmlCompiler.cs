@@ -453,7 +453,7 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR
             {
                 this.log.Info(this.logStart + "Scrub mode enabled. Starting scrubbed report generation...");
                 this.htmldocScrubbed += this.FormBodyStart(this.htmldocScrubbed, true);
-                this.SetNavigation();
+                // Toolbar now emitted inside FormVbrFullReport after KPI row
 
                 this.log.Info(this.logStart + "About to call helper.FormVbrFullReport() [SCRUBBED]...");
                 this.htmldocScrubbed = helper.FormVbrFullReport(this.htmldocScrubbed, true);
@@ -464,7 +464,7 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR
             {
                 this.log.Info(this.logStart + "Scrub mode disabled. Starting original report generation...");
                 this.htmldocOriginal += this.FormBodyStart(this.htmldocOriginal, false);
-                this.SetNavigation();
+                // Toolbar now emitted inside FormVbrFullReport after KPI row
 
                 this.log.Info(this.logStart + "About to call helper.FormVbrFullReport() [ORIGINAL]...");
                 this.htmldocOriginal = helper.FormVbrFullReport(this.htmldocOriginal, false);

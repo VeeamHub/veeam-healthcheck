@@ -378,10 +378,11 @@ namespace VeeamHealthCheck.Html.VBR
                 data += table.Item2;
             }
 
+            s += "<table><thead><tr>";
             s += headers;
-            s += "</tr></thead><tr>";
+            s += "</tr></thead><tbody><tr>";
             s += data;
-            s += "</table><br>";
+            s += "</tr></tbody></table>";
 
             return s;
         }
@@ -505,9 +506,7 @@ namespace VeeamHealthCheck.Html.VBR
                 b.Version = CGlobals.VBRFULLVERSION;
             }
 
-            // test area
             s += AddBackupServerDetails(b);
-            s += this.form.EndTable();
 
             s += this.form.header3("Config Backup Info");
             s += "<table border=\"1\" class=\"content-table\">";
@@ -1354,24 +1353,24 @@ namespace VeeamHealthCheck.Html.VBR
                 Dictionary<string, string> list = this.df.RegOptions();
                 if (list.Count == 0)
                 {
+                    s += this.form.TableHeaderEnd();
+                    s += this.form.TableBodyStart();
                     if (CGlobals.REMOTEEXEC) // remote exec does not support registry and VBR could be linux based without regsitry
                     {
-                        s += "<p>Registry key collection not supported in remote execution mode</p>";
+                        s += "<tr><td colspan=\"2\">Registry key collection not supported in remote execution mode</td></tr>";
                     }
                     else
                     {
-                        s += "<p>No modified registry keys found</p>";
+                        s += "<tr><td colspan=\"2\">No modified registry keys found</td></tr>";
                     }
                 }
                 else
                 {
-                    s += "<tr>" +
+                    s +=
                     this.form.TableHeader(VbrLocalizationHelper.Reg0, VbrLocalizationHelper.Reg0TT) +
-                    this.form.TableHeader(VbrLocalizationHelper.Reg1, VbrLocalizationHelper.Reg1TT) +
-                    "</tr>";
+                    this.form.TableHeader(VbrLocalizationHelper.Reg1, VbrLocalizationHelper.Reg1TT);
                     s += this.form.TableHeaderEnd();
                     s += this.form.TableBodyStart();
-                    s += "<tr>";
                     foreach (var d in list)
                     {
                         s += "<tr>";
@@ -3727,6 +3726,43 @@ this.form.TableHeader(VbrLocalizationHelper.SbrExt15, VbrLocalizationHelper.SbrE
         {
             var table = new CEmailNotificationTable();
             return table.Render(scrub);
+        }
+
+        /// <summary>
+        /// Generates the KPI summary cards row for the executive dashboard header area.
+        /// </summary>
+        public string AddKpiRow(bool scrub)
+        {
+            string version = scrub ? "x.x.x.x" : (CGlobals.VBRFULLVERSION ?? "Unknown");
+            string reportDays = CGlobals.ReportDays.ToString();
+            string reportDate = DateTime.Now.ToString("yyyy-MM-dd");
+
+            return $@"<div class=""kpi-row"">
+  <div class=""kpi-card"">
+    <div class=""kpi-label"">VBR Version</div>
+    <div class=""kpi-value"">{version}</div>
+  </div>
+  <div class=""kpi-card"">
+    <div class=""kpi-label"">Report Period</div>
+    <div class=""kpi-value"">{reportDays} days</div>
+  </div>
+  <div class=""kpi-card"">
+    <div class=""kpi-label"">Report Date</div>
+    <div class=""kpi-value"">{reportDate}</div>
+  </div>
+  <div class=""kpi-card"">
+    <div class=""kpi-label"">Report Type</div>
+    <div class=""kpi-value"">{(CGlobals.RunSecReport ? "Security" : "Full Health Check")}</div>
+  </div>
+</div>";
+        }
+
+        /// <summary>
+        /// Generates the expand/collapse toolbar.
+        /// </summary>
+        public string AddToolbar()
+        {
+            return this.form.Toolbar();
         }
 
     }

@@ -178,10 +178,16 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.Shared
 
         public string TableData(string data, string toolTip, int shading)
         {
-            Type shade = typeof(CellShade);
-            var color = shade.GetEnumName(shading);
-
-            return string.Format("<td title=\"{0}\" bgcolor=\"{2}\">{1}</td>", toolTip, data, color);
+            string cssClass = shading switch
+            {
+                1 => "cell-danger",
+                2 => "cell-success",
+                3 => "cell-warning",
+                _ => string.Empty
+            };
+            return string.IsNullOrEmpty(cssClass)
+                ? string.Format("<td title=\"{0}\">{1}</td>", toolTip, data)
+                : string.Format("<td title=\"{0}\" class=\"{2}\">{1}</td>", toolTip, data, cssClass);
         }
 
         public string Table()

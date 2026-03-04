@@ -4,12 +4,31 @@ function toggleSection(header) {
 }
 
 function toggleAll() {
+  // Toggle section-card elements
   var cards = document.querySelectorAll('.section-card');
   var allOpen = Array.from(cards).every(function(c) { return c.classList.contains('open'); });
   cards.forEach(function(c) {
     if (allOpen) { c.classList.remove('open'); } else { c.classList.add('open'); }
   });
+  // Toggle legacy collapsible/content elements
+  var contents = document.querySelectorAll('.collapsible + .content');
+  var allVisible = Array.from(contents).every(function(c) { return c.style.display !== 'none' && c.style.display !== ''; });
+  contents.forEach(function(c) {
+    c.style.display = (allOpen || allVisible) ? 'none' : 'block';
+  });
 }
+
+// ===== Legacy Collapsible Toggle (for sections using SectionStartWithButton) =====
+document.addEventListener('DOMContentLoaded', function() {
+  document.querySelectorAll('.collapsible').forEach(function(btn) {
+    btn.addEventListener('click', function() {
+      var content = this.nextElementSibling;
+      if (content && content.classList.contains('content')) {
+        content.style.display = (content.style.display === 'none' || content.style.display === '') ? 'block' : 'none';
+      }
+    });
+  });
+});
 
 // ===== Table Sort =====
 function sortTableByColumn(table, column, asc) {
