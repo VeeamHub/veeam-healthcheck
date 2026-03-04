@@ -1793,11 +1793,6 @@ this.form.TableHeader(VbrLocalizationHelper.SbrExt15, VbrLocalizationHelper.SbrE
                         shade = 1;
                     }
 
-                    int freeSpaceShade = 0;
-
-                    // decimal.TryParse(d.FreeSpacePercent, out decimal i);
-                    if (d.FreeSpacePercent < 20) { freeSpaceShade = 1; }
-
                     s += "<tr>";
                     s += this.form.TableData(d.Name, string.Empty);
                     s += this.form.TableData(d.SobrName, string.Empty);
@@ -1818,7 +1813,7 @@ this.form.TableHeader(VbrLocalizationHelper.SbrExt15, VbrLocalizationHelper.SbrE
                     s += this.form.TableData(d.Path, string.Empty);
                     s += this.form.TableData(d.FreeSpace.ToString(), string.Empty);
                     s += this.form.TableData(d.TotalSpace.ToString(), string.Empty);
-                    s += this.form.TableData(d.FreeSpacePercent.ToString(), string.Empty, freeSpaceShade);
+                    s += RenderStorageProgressBar(d.FreeSpacePercent);
 
                     if (d.IsDecompress)
                     {
@@ -1947,14 +1942,6 @@ this.form.TableHeader(VbrLocalizationHelper.SbrExt15, VbrLocalizationHelper.SbrE
                         shade = 1;
                     }
 
-                    int freeSpaceShade = 0;
-
-                    // decimal.TryParse(d.FreeSpacePercent, out decimal i);
-
-                    // int perVmShade = 0;
-                    // if (d[11] == "False")
-                    //    perVmShade = 3;
-                    if (d.FreeSpacePercent < 20) { freeSpaceShade = 1; }
                     s += "<tr>";
                     s += this.form.TableData(d.Name, string.Empty);
                     s += this.form.TableData(d.JobCount.ToString(), string.Empty);
@@ -1974,7 +1961,7 @@ this.form.TableHeader(VbrLocalizationHelper.SbrExt15, VbrLocalizationHelper.SbrE
                     s += this.form.TableData(d.Path, string.Empty);
                     s += this.form.TableData(d.FreeSpace.ToString(), string.Empty);
                     s += this.form.TableData(d.TotalSpace.ToString(), string.Empty);
-                    s += this.form.TableData(d.FreeSpacePercent.ToString(), string.Empty, freeSpaceShade);
+                    s += RenderStorageProgressBar(d.FreeSpacePercent);
                     if (d.IsPerVmBackupFiles)
                     {
                         s += this.form.TableData(this.form.True, string.Empty);
@@ -3726,6 +3713,19 @@ this.form.TableHeader(VbrLocalizationHelper.SbrExt15, VbrLocalizationHelper.SbrE
         {
             var table = new CEmailNotificationTable();
             return table.Render(scrub);
+        }
+
+        /// <summary>
+        /// Renders a storage utilization progress bar as a table cell.
+        /// freePercent is the percentage of free space (0-100).
+        /// </summary>
+        private static string RenderStorageProgressBar(decimal freePercent)
+        {
+            decimal usedPercent = Math.Max(0, Math.Min(100, 100 - freePercent));
+            string colorClass = usedPercent >= 80 ? "progress-danger"
+                              : usedPercent >= 60 ? "progress-warning"
+                              : "progress-ok";
+            return $@"<td><div class=""progress-bar""><div class=""progress-track""><div class=""progress-fill {colorClass}"" style=""width:{usedPercent:F0}%""></div></div><div class=""progress-label"">{freePercent:F0}% free</div></div></td>";
         }
 
         /// <summary>
