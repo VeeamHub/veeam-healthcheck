@@ -131,158 +131,6 @@ namespace VeeamHealthCheck.Html.VBR
                 this.form.FormNavRows(VbrLocalizationHelper.NavJobInfoLink, "jobs", VbrLocalizationHelper.NavJobInfoDeet);
         }
 
-
-        /// <summary>
-        /// Generates the KPI cards row with License Utilization, Job Success Rate, Security Score, and Storage Utilization.
-        /// </summary>
-        public string AddKpiRow(bool scrub)
-        {
-            string s = @"<div class=""kpi-row"">";
-
-            // === KPI 1: License Utilization ===
-            try
-            {
-                CCsvParser csvp = new();
-                var lic = csvp.GetDynamicLicenseCsv();
-                double licensedInst = 0;
-                double usedInst = 0;
-                foreach (var l in lic)
-                {
-                    double.TryParse(l.licensedinstances, System.Globalization.NumberStyles.Any,
-                        System.Globalization.CultureInfo.InvariantCulture, out licensedInst);
-                    double.TryParse(l.usedinstances, System.Globalization.NumberStyles.Any,
-                        System.Globalization.CultureInfo.InvariantCulture, out usedInst);
-                    break; // first license record
-                }
-
-                double licPct = licensedInst > 0 ? (usedInst / licensedInst) * 100 : 0;
-                string licClass = licPct > 100 ? "kpi-danger" : licPct >= 85 ? "kpi-warning" : "kpi-green";
-                string licBarColor = licPct > 100 ? "var(--danger)" : licPct >= 85 ? "var(--warning)" : "var(--green)";
-                double licBarWidth = Math.Min(licPct, 100);
-
-                s += string.Format(@"<div class=""kpi-card"">
-      <div class=""kpi-label"">License Utilization</div>
-      <div class=""kpi-value {0}"">{1:F0}%</div>
-      <div class=""kpi-sub"">{2:N0} of {3:N0} instances used</div>
-      <div class=""kpi-bar""><div class=""kpi-bar-fill"" style=""width:{4:F0}%;background:{5}""></div></div>
-    </div>", licClass, licPct, usedInst, licensedInst, licBarWidth, licBarColor);
-            }
-            catch (Exception ex)
-            {
-                this.log.Error("KPI License Utilization failed: " + ex.Message);
-                s += @"<div class=""kpi-card""><div class=""kpi-label"">License Utilization</div><div class=""kpi-value"">--</div></div>";
-            }
-
-            // === KPI 2: Job Success Rate ===
-            try
-            {
-                var stuff = this.df.ConvertJobSessSummaryToXml(scrub);
-                double totalSessions = 0;
-                double totalFails = 0;
-                foreach (var job in stuff)
-                {
-                    if (job.JobName == "Total" || job.JobName == "Totals") continue;
-                    if (job.JobName != null && job.JobName.Contains("Offload")) continue;
-                    totalSessions += job.SessionCount;
-                    totalFails += job.Fails;
-                }
-
-                double successCount = totalSessions - totalFails;
-                double successPct = totalSessions > 0 ? (successCount / totalSessions) * 100 : 0;
-                string jobClass = successPct >= 95 ? "kpi-green" : successPct >= 85 ? "kpi-warning" : "kpi-danger";
-                string jobBarColor = successPct >= 95 ? "var(--green)" : successPct >= 85 ? "var(--warning)" : "var(--danger)";
-
-                s += string.Format(@"<div class=""kpi-card"">
-      <div class=""kpi-label"">Job Success Rate</div>
-      <div class=""kpi-value {0}"">{1:F1}%</div>
-      <div class=""kpi-sub"">{2:N0} of {3:N0} sessions succeeded</div>
-      <div class=""kpi-bar""><div class=""kpi-bar-fill"" style=""width:{1:F0}%;background:{4}""></div></div>
-    </div>", jobClass, successPct, successCount, totalSessions, jobBarColor);
-            }
-            catch (Exception ex)
-            {
-                this.log.Error("KPI Job Success Rate failed: " + ex.Message);
-                s += @"<div class=""kpi-card""><div class=""kpi-label"">Job Success Rate</div><div class=""kpi-value"">--</div></div>";
-            }
-
-            // === KPI 3: Security Score ===
-            try
-            {
-                CSecuritySummaryTable sec = this.df.SecSummary();
-                int totalChecks = 5;
-                int passing = 0;
-                if (sec.ImmutabilityEnabled) passing++;
-                if (sec.TrafficEncrptionEnabled) passing++;
-                if (sec.BackupFileEncrptionEnabled) passing++;
-                if (sec.ConfigBackupEncrptionEnabled) passing++;
-                if (sec.MFAEnabled) passing++;
-
-                double secPct = (double)passing / totalChecks * 100;
-                int partial = totalChecks - passing;
-                string secSub = partial == 0 ? "All checks passed" : partial + " finding(s)";
-
-                s += string.Format(@"<div class=""kpi-card"">
-      <div class=""kpi-label"">Security Score</div>
-      <div class=""kpi-value kpi-info"">{0} / {1}</div>
-      <div class=""kpi-sub"">{2}</div>
-      <div class=""kpi-bar""><div class=""kpi-bar-fill"" style=""width:{3:F0}%;background:var(--info)""></div></div>
-    </div>", passing, totalChecks, secSub, secPct);
-            }
-            catch (Exception ex)
-            {
-                this.log.Error("KPI Security Score failed: " + ex.Message);
-                s += @"<div class=""kpi-card""><div class=""kpi-label"">Security Score</div><div class=""kpi-value"">--</div></div>";
-            }
-
-            // === KPI 4: Storage Utilization ===
-            try
-            {
-                List<CRepository> repos = this.df.RepoInfoToXml(scrub);
-                decimal totalCapacity = 0;
-                decimal totalUsed = 0;
-                foreach (var r in repos)
-                {
-                    if (r.TotalSpace > 0)
-                    {
-                        totalCapacity += r.TotalSpace;
-                        totalUsed += (r.TotalSpace - r.FreeSpace);
-                    }
-                }
-
-                double storagePct = totalCapacity > 0 ? (double)(totalUsed / totalCapacity) * 100 : 0;
-                string storClass = storagePct > 90 ? "kpi-danger" : storagePct >= 75 ? "kpi-warning" : "";
-                string storColor = storagePct > 90 ? "var(--danger)" : storagePct >= 75 ? "var(--warning)" : "var(--green)";
-                string styleAttr = string.IsNullOrEmpty(storClass) ? " style=\"color:#1a1d23\"" : "";
-                string classAttr = string.IsNullOrEmpty(storClass) ? "" : " " + storClass;
-
-                s += string.Format(@"<div class=""kpi-card"">
-      <div class=""kpi-label"">Storage Utilization</div>
-      <div class=""kpi-value{0}""{1}>{2:F1}%</div>
-      <div class=""kpi-sub"">{3:F1} TB used of {4:F1} TB</div>
-      <div class=""kpi-bar""><div class=""kpi-bar-fill"" style=""width:{5:F0}%;background:{6}""></div></div>
-    </div>", classAttr, styleAttr, storagePct, (double)totalUsed, (double)totalCapacity, Math.Min(storagePct, 100), storColor);
-            }
-            catch (Exception ex)
-            {
-                this.log.Error("KPI Storage Utilization failed: " + ex.Message);
-                s += @"<div class=""kpi-card""><div class=""kpi-label"">Storage Utilization</div><div class=""kpi-value"">--</div></div>";
-            }
-
-            s += "</div>"; // close kpi-row
-            return s;
-        }
-
-        /// <summary>
-        /// Generates a single security grid item with colored status dot.
-        /// </summary>
-        private static string SecurityGridItem(bool isEnabled, string label)
-        {
-            string dotClass = isEnabled ? "green" : "red";
-            return string.Format(
-                @"<div class=""security-item""><span class=""status-dot {0}""></span><span class=""label"">{1}</span></div>",
-                dotClass, label);
-        }
-
         /// <summary>
         /// Generates the HTML table for license information.
         /// </summary>
@@ -290,7 +138,7 @@ namespace VeeamHealthCheck.Html.VBR
         /// <returns>A string containing the HTML license table.</returns>
         public string LicTable(bool scrub)
         {
-            string s = this.form.SectionCardTableStart("license", VbrLocalizationHelper.LicTableHeader, "L", "#fffbeb", "#d97706", true);
+            string s = this.form.SectionStart("license", VbrLocalizationHelper.LicTableHeader);
             string summary = this.sum.LicSum();
 
             s += this.form.TableHeader(VbrLocalizationHelper.LicTblLicTo, string.Empty) +
@@ -386,7 +234,7 @@ namespace VeeamHealthCheck.Html.VBR
                 this.log.Error("\t" + e.Message);
             }
 
-            s += this.form.SectionCardTableEnd();
+            s += this.form.SectionEnd(summary);
             return s;
         }
 
@@ -402,7 +250,7 @@ namespace VeeamHealthCheck.Html.VBR
                 return string.Empty; // No validation data available
             }
 
-            string s = this.form.SectionCardTableStart("datacollection", "Data Collection Summary", "D", "#f3f4f6", "#6b7280", false);
+            string s = this.form.SectionStart("datacollection", "Data Collection Summary");
             
             // Calculate summary statistics
             int totalFiles = results.Count;
@@ -468,7 +316,7 @@ namespace VeeamHealthCheck.Html.VBR
             }
 
             string summary = Functions.Collection.CCsvValidator.GetReportSummary(results);
-            s += this.form.SectionCardTableEnd();
+            s += this.form.SectionEnd(summary);
             return s;
         }
 
@@ -647,7 +495,7 @@ namespace VeeamHealthCheck.Html.VBR
 
         public string AddBkpSrvTable(bool scrub)
         {
-            string s = this.form.SectionCardStart("vbrserver", VbrLocalizationHelper.BkpSrvTblHead, "B", "#f3f4f6", "#6b7280", true);
+            string s = this.form.SectionStart("vbrserver", VbrLocalizationHelper.BkpSrvTblHead);
             string summary = this.sum.SetVbrSummary();
 
             // CDataFormer cd = new(true);
@@ -658,12 +506,11 @@ namespace VeeamHealthCheck.Html.VBR
             }
 
             // test area
-            s += "<table><thead><tr>";
             s += AddBackupServerDetails(b);
             s += this.form.EndTable();
 
             s += this.form.header3("Config Backup Info");
-            s += "<table>";
+            s += "<table border=\"1\" class=\"content-table\">";
             s += "<tr>";
             s += this.form.TableHeader(VbrLocalizationHelper.BkpSrvTblCfgEnabled, VbrLocalizationHelper.BstCfgEnabledTT);
             s += this.form.TableHeader(VbrLocalizationHelper.BkpSrvTblCfgLastRes, VbrLocalizationHelper.BstCfgLastResTT);
@@ -700,7 +547,7 @@ namespace VeeamHealthCheck.Html.VBR
 
             // if (CGlobals.RunSecReport)
             //    s += InstalledAppsTable();
-            s += this.form.SectionCardEnd();
+            s += this.form.SectionEnd(summary);
 
             // JSON section capture (backup server core info)
             try
@@ -751,21 +598,74 @@ namespace VeeamHealthCheck.Html.VBR
         {
             CGlobals.Scrub = scrub;
 
-            string s = this.form.SectionCardStart("secsummary", VbrLocalizationHelper.SSTitle, "S", "#eff6ff", "#2563eb", true);
+            string s = this.form.SectionStart("secsummary", VbrLocalizationHelper.SSTitle);
             string summary = this.sum.SecSum();
+
+            s += this.form.TableHeader(VbrLocalizationHelper.SSHdr0, VbrLocalizationHelper.SSHdrTT0) +
+                this.form.TableHeader(VbrLocalizationHelper.SSHdr1, VbrLocalizationHelper.SSHdrTT1) +
+                this.form.TableHeader(VbrLocalizationHelper.SSHdr2, VbrLocalizationHelper.SSHdrTT2) +
+                this.form.TableHeader(VbrLocalizationHelper.SSHdr3, VbrLocalizationHelper.SSHdrTT3) +
+                this.form.TableHeader("MFA Enabled", "Is MFA enabled for console access to VBR");
+            s += this.form.TableHeaderEnd();
+            s += this.form.TableBodyStart();
+            s += "<tr>";
 
             try
             {
+                // table data
                 CSecuritySummaryTable t = this.df.SecSummary();
 
-                s += @"<div class=""security-grid"">";
-                s += SecurityGridItem(t.ImmutabilityEnabled, VbrLocalizationHelper.SSHdr0);
-                s += SecurityGridItem(t.TrafficEncrptionEnabled, VbrLocalizationHelper.SSHdr1);
-                s += SecurityGridItem(t.BackupFileEncrptionEnabled, VbrLocalizationHelper.SSHdr2);
-                s += SecurityGridItem(t.ConfigBackupEncrptionEnabled, VbrLocalizationHelper.SSHdr3);
-                s += SecurityGridItem(t.MFAEnabled, "MFA Enabled");
-                s += "</div>";
+                if (t.ImmutabilityEnabled)
+                {
+                    s += this.form.TableData(this.form.True, string.Empty);
+                }
+                else
+                {
+                    s += this.form.TableData(this.form.False, string.Empty);
+                }
+
+                if (t.TrafficEncrptionEnabled)
+                {
+                    s += this.form.TableData(this.form.True, string.Empty);
+                }
+                else
+                {
+                    s += this.form.TableData(this.form.False, string.Empty);
+                }
+
+                if (t.BackupFileEncrptionEnabled)
+                {
+                    s += this.form.TableData(this.form.True, string.Empty);
+                }
+                else
+                {
+                    s += this.form.TableData(this.form.False, string.Empty);
+                }
+
+                if (t.ConfigBackupEncrptionEnabled)
+                {
+                    s += this.form.TableData(this.form.True, string.Empty);
+                }
+                else
+                {
+                    s += this.form.TableData(this.form.False, string.Empty);
+                }
+
+                if (t.MFAEnabled)
+                {
+                    s += this.form.TableData(this.form.True, string.Empty);
+                }
+                else
+                {
+                    s += this.form.TableData(this.form.False, string.Empty);
+                }
+
+                s += "</tr>";
+
+                // s += _form.TableData((t.ImmutabilityEnabled : _form.True ? _form.False), "");
+                s += this.form.EndTable();
             }
+
             catch (Exception e)
             {
                 this.log.Error("Security Summary Data import failed. ERROR:");
@@ -804,7 +704,7 @@ namespace VeeamHealthCheck.Html.VBR
                 }
             }
 
-            s += this.form.SectionCardEnd();
+            s += this.form.SectionEnd(summary);
 
             // JSON section capture security summary
             try
@@ -920,7 +820,7 @@ namespace VeeamHealthCheck.Html.VBR
         {
             string summary = this.sum.SrvSum();
 
-            string s = this.form.SectionCardTableStart("serversummary", VbrLocalizationHelper.MssTitle, "I", "#eff6ff", "#2563eb", false);
+            string s = this.form.SectionStart("serversummary", VbrLocalizationHelper.MssTitle);
 
             s += this.form.TableHeaderLeftAligned(VbrLocalizationHelper.MssHdr1, VbrLocalizationHelper.MssHdr1TT) +
                             this.form.TableHeader(VbrLocalizationHelper.MssHdr2, VbrLocalizationHelper.MssHdr2TT) +
@@ -946,7 +846,7 @@ namespace VeeamHealthCheck.Html.VBR
                 this.log.Error("\t" + e.Message);
             }
 
-            s += this.form.SectionCardTableEnd();
+            s += this.form.SectionEnd(summary);
 
             // JSON capture server summary
             try
@@ -966,74 +866,14 @@ namespace VeeamHealthCheck.Html.VBR
 
         public string AddJobSummaryTable(bool scrub)
         {
-            string summary = this.sum.JobSummary();
-            string s = this.form.SectionCardTableStart("jobsummary", VbrLocalizationHelper.JobSumTitle, "J", "#ecfdf5", "#059669", true);
-
-            s += this.form.TableHeaderLeftAligned(VbrLocalizationHelper.JobSum0, VbrLocalizationHelper.JobSum0TT, 0) +
-                this.form.TableHeader(VbrLocalizationHelper.JobSum1, VbrLocalizationHelper.JobSum1TT, 1) +
-                "</tr>";
-            s += this.form.TableHeaderEnd();
-            s += this.form.TableBodyStart();
-            try
-            {
-                CJobSummaryTable st = new();
-
-                Dictionary<string, int> list = st.JobSummaryTable();
-
-                int totalJobs = list.Sum(x => x.Value);
-
-                // foreach (var c in list)
-                // {
-                //    totalJobs += c.Value;
-                // }
-                foreach (var d in list)
-                {
-                    if (d.Value == 0)
-                    {
-                        continue;
-                    }
-
-                    s += "<tr>";
-                    s += this.form.TableDataLeftAligned(d.Key, string.Empty);
-                    s += this.form.TableData(d.Value.ToString(), string.Empty);
-                    s += "</tr>";
-                }
-
-                s += "<tr>";
-                s += this.form.TableDataLeftAligned("<b>Total Jobs", string.Empty);
-                s += this.form.TableData(totalJobs.ToString() + "</b>", string.Empty);
-                s += "</tr>";
-            }
-            catch (Exception e)
-            {
-                this.log.Error("Job Summary Data import failed. ERROR:");
-                this.log.Error("\t" + e.Message);
-            }
-
-            s += this.form.SectionCardTableEnd();
-
-            // JSON job summary
-            try
-            {
-                CJobSummaryTable st = new();
-                var list = st.JobSummaryTable();
-                int totalJobs = list.Sum(x => x.Value);
-                List<string> headers = new() { "JobType", "Count" };
-                List<List<string>> rows = list.Where(d => d.Value > 0).Select(d => new List<string> { d.Key, d.Value.ToString() }).ToList();
-                rows.Add(new List<string> { "Total Jobs", totalJobs.ToString() });
-                SetSection("jobSummary", headers, rows, summary);
-            }
-            catch (Exception ex)
-            {
-                this.log.Error("Failed to capture jobSummary JSON section: " + ex.Message);
-            }
-
-            return s;
+            // Delegated to CJobSummaryInfoTable (extracted to use CSectionTable<T>)
+            var jobSummaryTable = new CJobSummaryInfoTable();
+            return jobSummaryTable.Render(scrub);
         }
 
         public string AddMissingJobsTable(bool scrub)
         {
-            string s = this.form.SectionCardTableStart("missingjobs", VbrLocalizationHelper.NpTitle, "M", "#fef2f2", "#dc2626", false);
+            string s = this.form.SectionStartWithButton("missingjobs", VbrLocalizationHelper.NpTitle, VbrLocalizationHelper.NpButton);
 
             string summary = this.sum.MissingJobsSUmmary();
 
@@ -1076,7 +916,7 @@ namespace VeeamHealthCheck.Html.VBR
                 this.log.Error("\t" + e.Message);
             }
 
-            s += this.form.SectionCardTableEnd();
+            s += this.form.SectionEnd(summary);
 
             // JSON missing jobs
             try
@@ -1097,7 +937,7 @@ namespace VeeamHealthCheck.Html.VBR
 
         public string AddProtectedWorkLoadsTable(bool scrub)
         {
-            string s = this.form.SectionCardStart("protectedworkloads", VbrLocalizationHelper.PlTitle, "W", "#eff6ff", "#2563eb", false);
+            string s = this.form.SectionStartWithButton("protectedworkloads", VbrLocalizationHelper.PlTitle, VbrLocalizationHelper.PlButton);
             string summary = this.sum.ProtectedWorkloads();
             try
             {
@@ -1321,7 +1161,7 @@ namespace VeeamHealthCheck.Html.VBR
                 this.log.Error("\t" + e.Message);
             }
 
-            s += this.form.SectionCardEnd();
+            s += this.form.SectionEnd(summary);
 
             // JSON protected workloads
             try
@@ -1392,7 +1232,7 @@ namespace VeeamHealthCheck.Html.VBR
 
         public string AddManagedServersTable(bool scrub)
         {
-            string s = this.form.SectionCardTableStart("managedServerInfo", VbrLocalizationHelper.ManSrvTitle, "M", "#f3f4f6", "#6b7280", false);
+            string s = this.form.SectionStartWithButton("managedServerInfo", VbrLocalizationHelper.ManSrvTitle, VbrLocalizationHelper.ManSrvBtn);
             string summary = this.sum.ManagedServers();
             s +=
            this.form.TableHeader(VbrLocalizationHelper.ManSrv0, VbrLocalizationHelper.ManSrv0TT, 0) +
@@ -1466,7 +1306,7 @@ namespace VeeamHealthCheck.Html.VBR
                 this.log.Error("\t" + e.Message);
             }
 
-            s += this.form.SectionCardTableEnd();
+            s += this.form.SectionEnd(summary);
 
             // JSON managed servers
             try
@@ -1506,7 +1346,7 @@ namespace VeeamHealthCheck.Html.VBR
 
         public string AddRegKeysTable(bool scrub)
         {
-            string s = this.form.SectionCardTableStart("regkeys", VbrLocalizationHelper.RegTitle, "R", "#fef2f2", "#dc2626", false);
+            string s = this.form.SectionStartWithButton("regkeys", VbrLocalizationHelper.RegTitle, VbrLocalizationHelper.RegBtn);
             string summary = this.sum.RegKeys();
 
             try
@@ -1547,7 +1387,7 @@ namespace VeeamHealthCheck.Html.VBR
                 this.log.Error("\t" + e.Message);
             }
 
-            s += this.form.SectionCardTableEnd();
+            s += this.form.SectionEnd(summary);
 
             // JSON reg keys
             try
@@ -1567,7 +1407,7 @@ namespace VeeamHealthCheck.Html.VBR
 
         public string AddProxyTable(bool scrub)
         {
-            string s = this.form.SectionCardTableStart("proxies", VbrLocalizationHelper.PrxTitle, "P", "#faf5ff", "#7c3aed", false);
+            string s = this.form.SectionStartWithButton("proxies", VbrLocalizationHelper.PrxTitle, VbrLocalizationHelper.PrxBtn);
             string summary = this.sum.Proxies();
             s += "<tr>" +
            this.form.TableHeader(VbrLocalizationHelper.Prx0, VbrLocalizationHelper.Prx0TT) +
@@ -1663,7 +1503,7 @@ namespace VeeamHealthCheck.Html.VBR
                      "</td></tr>";
             }
 
-            s += this.form.SectionCardTableEnd();
+            s += this.form.SectionEnd(summary);
 
             // JSON proxies
             try
@@ -1688,7 +1528,7 @@ namespace VeeamHealthCheck.Html.VBR
 
         public string AddMultiRoleTable(bool scrub)
         {
-            string s = this.form.SectionCardTableStart("proxies", VbrLocalizationHelper.PrxTitle, "P", "#faf5ff", "#7c3aed", false);
+            string s = this.form.SectionStartWithButton("proxies", VbrLocalizationHelper.PrxTitle, VbrLocalizationHelper.PrxBtn);
             string summary = this.sum.Proxies();
             s += "<tr>" +
            this.form.TableHeader(VbrLocalizationHelper.Prx0, VbrLocalizationHelper.Prx0TT) +
@@ -1750,13 +1590,13 @@ namespace VeeamHealthCheck.Html.VBR
                 this.log.Error("\t" + e.Message);
             }
 
-            s += this.form.SectionCardTableEnd();
+            s += this.form.SectionEnd(summary);
             return s;
         }
 
         public string AddSobrTable(bool scrub)
         {
-            string s = this.form.SectionCardTableStart("sobr", VbrLocalizationHelper.SbrTitle, "S", "#ecfdf5", "#059669", false);
+            string s = this.form.SectionStartWithButton("sobr", VbrLocalizationHelper.SbrTitle, VbrLocalizationHelper.SbrBtn);
             string summary = this.sum.Sobr();
             s += "<tr>" +
            this.form.TableHeader(VbrLocalizationHelper.Sbr0, VbrLocalizationHelper.Sbr0TT) +
@@ -1871,7 +1711,7 @@ namespace VeeamHealthCheck.Html.VBR
                 this.log.Error("\t" + e.Message);
             }
 
-            s += this.form.SectionCardTableEnd();
+            s += this.form.SectionEnd(summary);
 
             // JSON SOBR
             try
@@ -1907,7 +1747,7 @@ namespace VeeamHealthCheck.Html.VBR
 
         public string AddSobrExtTable(bool scrub)
         {
-            string s = this.form.SectionCardTableStart("extents", VbrLocalizationHelper.SbrExtTitle, "E", "#ecfdf5", "#059669", false);
+            string s = this.form.SectionStartWithButton("extents", VbrLocalizationHelper.SbrExtTitle, VbrLocalizationHelper.SbrExtBtn);
             string summary = this.sum.Extents();
             s += "<tr>" +
 this.form.TableHeader(VbrLocalizationHelper.SbrExt0, VbrLocalizationHelper.SbrExt0TT) +
@@ -2029,7 +1869,7 @@ this.form.TableHeader(VbrLocalizationHelper.SbrExt15, VbrLocalizationHelper.SbrE
                 this.log.Error("\t" + e.Message);
             }
 
-            s += this.form.SectionCardTableEnd();
+            s += this.form.SectionEnd(summary);
 
             // JSON extents
             try
@@ -2067,7 +1907,7 @@ this.form.TableHeader(VbrLocalizationHelper.SbrExt15, VbrLocalizationHelper.SbrE
 
         public string AddRepoTable(bool scrub)
         {
-            string s = this.form.SectionCardTableStart("repos", VbrLocalizationHelper.RepoTitle, "R", "#ecfdf5", "#059669", true);
+            string s = this.form.SectionStartWithButton("repos", VbrLocalizationHelper.RepoTitle, VbrLocalizationHelper.RepoBtn);
             string summary = this.sum.Repos();
             s +=
 this.form.TableHeader(VbrLocalizationHelper.SbrExt0, VbrLocalizationHelper.SbrExt0TT, 0) +
@@ -2192,7 +2032,7 @@ this.form.TableHeader(VbrLocalizationHelper.SbrExt15, VbrLocalizationHelper.SbrE
                 this.log.Error("\t" + e.Message);
             }
 
-            s += this.form.SectionCardTableEnd();
+            s += this.form.SectionEnd(summary);
 
             // JSON repos
             try
@@ -2234,7 +2074,7 @@ this.form.TableHeader(VbrLocalizationHelper.SbrExt15, VbrLocalizationHelper.SbrE
         /// </summary>
         public string AddCapacityTierExtTable(bool scrub)
         {
-            string s = this.form.SectionCardTableStart("capextents", "Capacity Tier Configuration", "C", "#ecfdf5", "#059669", false);
+            string s = this.form.SectionStartWithButton("capextents", "Capacity Tier Configuration", "Capacity");
             string summary = "Capacity tier extent configuration and retention policies";
             s += "<tr>" +
                 this.form.TableHeader("Name", "Name of the capacity tier extent") +
@@ -2294,7 +2134,7 @@ this.form.TableHeader(VbrLocalizationHelper.SbrExt15, VbrLocalizationHelper.SbrE
                 this.log.Error("\t" + e.Message);
             }
 
-            s += this.form.SectionCardTableEnd();
+            s += this.form.SectionEnd(summary);
 
             // JSON Capacity Tier Extents
             try
@@ -2333,7 +2173,7 @@ this.form.TableHeader(VbrLocalizationHelper.SbrExt15, VbrLocalizationHelper.SbrE
         /// </summary>
         public string AddArchiveTierExtTable(bool scrub)
         {
-            string s = this.form.SectionCardTableStart("archextents", "Archive Tier Configuration", "A", "#ecfdf5", "#059669", false);
+            string s = this.form.SectionStartWithButton("archextents", "Archive Tier Configuration", "Archive");
             string summary = "Archive tier extent retention and immutability policies";
             s += "<tr>" +
                 this.form.TableHeader("Name", "Name of archive tier repository/bucket") +
@@ -2387,7 +2227,7 @@ this.form.TableHeader(VbrLocalizationHelper.SbrExt15, VbrLocalizationHelper.SbrE
                 this.log.Error("\t" + e.Message);
             }
 
-            s += this.form.SectionCardTableEnd();
+            s += this.form.SectionEnd(summary);
 
             // JSON Archive Tier Extents
             try
@@ -2420,7 +2260,7 @@ this.form.TableHeader(VbrLocalizationHelper.SbrExt15, VbrLocalizationHelper.SbrE
 
         public string AddJobConTable(bool scrub)
         {
-            string s = this.form.SectionCardTableStart("jobcon", VbrLocalizationHelper.JobConTitle, "C", "#fff7ed", "#ea580c", false, CGlobals.ReportDays);
+            string s = this.form.SectionStartWithButton("jobcon", VbrLocalizationHelper.JobConTitle, VbrLocalizationHelper.JobConBtn, CGlobals.ReportDays);
             string summary = this.sum.JobCon();
             s += this.form.TableHeader(VbrLocalizationHelper.JobCon0, string.Empty);
             s += this.form.TableHeader(VbrLocalizationHelper.JobCon1, string.Empty);
@@ -2456,7 +2296,7 @@ this.form.TableHeader(VbrLocalizationHelper.SbrExt15, VbrLocalizationHelper.SbrE
                 this.log.Error("\t" + e.Message);
             }
 
-            s += this.form.SectionCardTableEnd();
+            s += this.form.SectionEnd(summary);
 
             // JSON job concurrency
             try
@@ -2476,7 +2316,7 @@ this.form.TableHeader(VbrLocalizationHelper.SbrExt15, VbrLocalizationHelper.SbrE
 
         public string AddTaskConTable(bool scrub)
         {
-            string s = this.form.SectionCardTableStart("taskcon", VbrLocalizationHelper.TaskConTitle, "V", "#fff7ed", "#ea580c", false, CGlobals.ReportDays);
+            string s = this.form.SectionStartWithButton("taskcon", VbrLocalizationHelper.TaskConTitle, VbrLocalizationHelper.TaskConBtn, CGlobals.ReportDays);
             string summary = this.sum.TaskCon();
 
             s += this.form.TableHeader(VbrLocalizationHelper.TaskCon0, string.Empty);
@@ -2513,7 +2353,7 @@ this.form.TableHeader(VbrLocalizationHelper.SbrExt15, VbrLocalizationHelper.SbrE
                 this.log.Error("\t" + e.Message);
             }
 
-            s += this.form.SectionCardTableEnd();
+            s += this.form.SectionEnd(summary);
 
             // JSON task concurrency
             try
@@ -2534,7 +2374,7 @@ this.form.TableHeader(VbrLocalizationHelper.SbrExt15, VbrLocalizationHelper.SbrE
         public string AddJobSessSummTable(bool scrub)
         {
             this.log.Info("Adding Job Session Summary Table");
-            string s = this.form.SectionCardTableStart("jobsesssum", VbrLocalizationHelper.JssTitle, "S", "#ecfdf5", "#059669", true, CGlobals.ReportDays);
+            string s = this.form.SectionStartWithButton("jobsesssum", VbrLocalizationHelper.JssTitle, VbrLocalizationHelper.JssBtn, CGlobals.ReportDays);
             string summary = this.sum.JobSessSummary();
 
             s += this.form.TableHeaderLeftAligned(VbrLocalizationHelper.Jss0, VbrLocalizationHelper.Jss0TT); // job name
@@ -2611,7 +2451,7 @@ this.form.TableHeader(VbrLocalizationHelper.SbrExt15, VbrLocalizationHelper.SbrE
                 this.log.Error("\t" + e.Message);
             }
 
-            s += this.form.SectionCardTableEnd();
+            s += this.form.SectionEnd(summary);
             this.log.Info("Job Session Summary Table added");
 
             // JSON job session summary
@@ -2675,7 +2515,8 @@ this.form.TableHeader(VbrLocalizationHelper.SbrExt15, VbrLocalizationHelper.SbrE
 
         public string AddJobSessSummTableByJob(bool scrub)
         {
-            string s = this.form.SectionCardStart("jobsesssum", VbrLocalizationHelper.JssTitle, "S", "#ecfdf5", "#059669", true);
+            string s = this.form.SectionStartWithButton("jobsesssum", VbrLocalizationHelper.JssTitle, VbrLocalizationHelper.JssBtn, CGlobals.ReportDays);
+            s += "</table>";
 
             string summary = this.sum.JobInfo();
 
@@ -2718,7 +2559,7 @@ this.form.TableHeader(VbrLocalizationHelper.SbrExt15, VbrLocalizationHelper.SbrE
                             sectionHeader = "Summary of All";
                         }
 
-                        string jobTable = this.form.SectionCardTableStart("jobTable", sectionHeader + " Jobs", "J", "#ecfdf5", "#059669", false);
+                        string jobTable = this.form.SectionStartWithButton("jobTable", sectionHeader + " Jobs", string.Empty);
                         s += jobTable;
                         s += this.SetJobSessionsHeaders();
                         var res = stuff.Where(x => x.JobType == jobType).ToList();
@@ -2859,7 +2700,7 @@ this.form.TableHeader(VbrLocalizationHelper.SbrExt15, VbrLocalizationHelper.SbrE
                         // table summary/totals
 
                         // end each table/section
-                        s += this.form.SectionCardTableEnd();
+                        s += this.form.SectionEnd(summary);
                     }
 
                     s += this.AddOffloadsTable(OffloadJobs);
@@ -2878,7 +2719,7 @@ this.form.TableHeader(VbrLocalizationHelper.SbrExt15, VbrLocalizationHelper.SbrE
                 this.log.Error("\t" + e.Message);
             }
 
-            s += this.form.SectionCardEnd();
+            s += this.form.SectionEnd(summary);
 
             // JSON job session summary by job
             try
@@ -2926,7 +2767,7 @@ this.form.TableHeader(VbrLocalizationHelper.SbrExt15, VbrLocalizationHelper.SbrE
                 // var translatedJobType = CJobTypesParser.GetJobType(jType);
                 // log.Debug("\tTranslated Job Type: " + translatedJobType);
                 var realType = "Offload";
-                string jobTable = this.form.SectionCardTableStart("jobTable", realType + " Jobs", "J", "#ecfdf5", "#059669", false);
+                string jobTable = this.form.SectionStartWithButton("jobTable", realType + " Jobs", string.Empty);
                 s += jobTable;
                 s += this.SetJobSessionsHeaders();
 
@@ -3045,7 +2886,7 @@ this.form.TableHeader(VbrLocalizationHelper.SbrExt15, VbrLocalizationHelper.SbrE
                 // table summary/totals
 
                 // end each table/section
-                s += this.form.SectionCardTableEnd();
+                s += this.form.SectionEnd(string.Empty);
             }
             catch (Exception e)
             {
@@ -3058,7 +2899,8 @@ this.form.TableHeader(VbrLocalizationHelper.SbrExt15, VbrLocalizationHelper.SbrE
 
         public string AddJobInfoTable(bool scrub)
         {
-            string s = this.form.SectionCardStart("jobs", VbrLocalizationHelper.JobInfoTitle, "J", "#ecfdf5", "#059669", false);
+            string s = this.form.SectionStartWithButton("jobs", VbrLocalizationHelper.JobInfoTitle, VbrLocalizationHelper.JobInfoBtn);
+            s += "</table>";
 
             string summary = this.sum.JobInfo();
 
@@ -3079,7 +2921,7 @@ this.form.TableHeader(VbrLocalizationHelper.SbrExt15, VbrLocalizationHelper.SbrE
                         bool useSourceSize = !(jType == "NasBackupCopy" || jType == "Copy");
 
                         var realType = CJobTypesParser.GetJobType(jType);
-                        string jobTable = this.form.SectionCardTableStart("jobTable", realType + " Jobs", "J", "#ecfdf5", "#059669", false);
+                        string jobTable = this.form.SectionStartWithButton("jobTable", realType + " Jobs", string.Empty);
                         s += jobTable;
                         s += this.SetGenericJobTablHeader(useSourceSize, jType);
                         var res = source.Where(x => x.JobType == jType).ToList();
@@ -3319,7 +3161,7 @@ this.form.TableHeader(VbrLocalizationHelper.SbrExt15, VbrLocalizationHelper.SbrE
                         }
 
                         // end each table/section
-                        s += this.form.SectionCardTableEnd();
+                        s += this.form.SectionEnd(summary);
                     }
 
                     // add tape table
@@ -3329,7 +3171,7 @@ this.form.TableHeader(VbrLocalizationHelper.SbrExt15, VbrLocalizationHelper.SbrE
                         string tt = tapeTable.TapeJobTable();
                         if (tt != string.Empty)
                         {
-                            string tableButton = this.form.SectionCardTableStart("jobTable", "Tape Jobs", "J", "#ecfdf5", "#059669", false);
+                            string tableButton = this.form.SectionStartWithButton("jobTable", "Tape Jobs", string.Empty);
                             s += tableButton;
                             s += tt;
                         }
@@ -3349,10 +3191,10 @@ this.form.TableHeader(VbrLocalizationHelper.SbrExt15, VbrLocalizationHelper.SbrE
                         {
                             // debug
                             this.log.Debug("Entra jobs table length: " + et.Length);
-                            string tableButton = this.form.SectionCardTableStart("jobTable", "Entra Jobs", "J", "#ecfdf5", "#059669", false);
+                            string tableButton = this.form.SectionStartWithButton("jobTable", "Entra Jobs", string.Empty);
                             s += tableButton;
                             s += et;
-                            s += this.form.SectionCardTableEnd();
+                            s += this.form.SectionEnd(summary);
                         }
                         else
                         {
@@ -3365,7 +3207,7 @@ this.form.TableHeader(VbrLocalizationHelper.SbrExt15, VbrLocalizationHelper.SbrE
                         this.log.Error("\t" + e.Message);
                     }
 
-                    s += this.form.SectionCardTableEnd();
+                    s += this.form.SectionEnd(summary);
                 }
                 catch (Exception e)
                 {
@@ -3381,7 +3223,7 @@ this.form.TableHeader(VbrLocalizationHelper.SbrExt15, VbrLocalizationHelper.SbrE
                 this.log.Error("\t" + e.Message);
             }
 
-            s += this.form.SectionCardEnd();
+            s += this.form.SectionEnd(summary);
 
             // JSON job info capture
             try
@@ -3489,7 +3331,7 @@ this.form.TableHeader(VbrLocalizationHelper.SbrExt15, VbrLocalizationHelper.SbrE
             string jsonKey,
             bool doScrub)
         {
-            string s = this.form.SectionCardTableStart(sectionId, title, "S", "#faf5ff", "#7c3aed", false);
+            string s = this.form.SectionStartWithButton(sectionId, title, buttonText);
             string summary = string.Empty;
 
             // headers
@@ -3605,7 +3447,7 @@ this.form.TableHeader(VbrLocalizationHelper.SbrExt15, VbrLocalizationHelper.SbrE
                     "</td></tr>";
             }
 
-            s += this.form.SectionCardTableEnd();
+            s += this.form.SectionEnd(summary);
 
             // JSON capture (optional, but consistent with your file)
             try
@@ -3732,7 +3574,7 @@ this.form.TableHeader(VbrLocalizationHelper.SbrExt15, VbrLocalizationHelper.SbrE
 
         public string AddConfigurationTablesHeader()
         {
-            return string.Empty; // Sections are now peers in the executive dashboard
+            return this.form.header1("Configuration Tables");
         }
 
         public string AddConfigurationTablesFooter()
@@ -3742,7 +3584,7 @@ this.form.TableHeader(VbrLocalizationHelper.SbrExt15, VbrLocalizationHelper.SbrE
 
         public string AddProxyInfoHeader()
         {
-            return string.Empty; // Sections are now peers in the executive dashboard
+            return this.form.header1("Proxy Info");
         }
 
         public string AddProxyInfoFooter()
@@ -3752,7 +3594,7 @@ this.form.TableHeader(VbrLocalizationHelper.SbrExt15, VbrLocalizationHelper.SbrE
 
         public string AddRepositoryInfoHeader()
         {
-            return string.Empty; // Sections are now peers in the executive dashboard
+            return this.form.header1("Repository Info");
         }
 
         public string AddRepositoryInfoFooter()
@@ -3762,7 +3604,7 @@ this.form.TableHeader(VbrLocalizationHelper.SbrExt15, VbrLocalizationHelper.SbrE
 
         public string AddJobTablesHeader()
         {
-            return string.Empty; // Sections are now peers in the executive dashboard
+            return this.form.header1("Job Tables");
         }
 
         public string AddJobTablesFooter()
