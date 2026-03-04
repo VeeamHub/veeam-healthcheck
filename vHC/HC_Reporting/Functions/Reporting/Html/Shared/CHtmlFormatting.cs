@@ -76,7 +76,6 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.Shared
             string s = "</tr>";
             s += "</tbody>";
             s += "</table>";
-            s += this.LineBreak();
 
             // s += summary;
             s += this.endDiv;
@@ -129,22 +128,26 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.Shared
 
         public string TableHeaderLeftAligned(string header, string tooltip)
         {
-            return string.Format("<th title=\"{0}\" style=\"text-align:left\">{1}</th>", tooltip, header);
+            string titleAttr = string.IsNullOrEmpty(tooltip) ? "" : $" title=\"{tooltip}\"";
+            return $"<th{titleAttr} style=\"text-align:left\">{header}</th>";
         }
 
         public string TableHeaderLeftAligned(string header, string tooltip, int index)
         {
-            return string.Format("<th onclick=\"sortTable({2})\" title=\"{0}\" style=\"text-align:left\">{1}</th>", tooltip, header, index);
+            string titleAttr = string.IsNullOrEmpty(tooltip) ? "" : $" title=\"{tooltip}\"";
+            return $"<th onclick=\"sortTable({index})\"{titleAttr} style=\"text-align:left\">{header}</th>";
         }
 
         public string TableHeader(string header, string tooltip)
         {
-            return string.Format("<th title=\"{0}\">{1}</th>", tooltip, header);
+            string titleAttr = string.IsNullOrEmpty(tooltip) ? "" : $" title=\"{tooltip}\"";
+            return $"<th{titleAttr}>{header}</th>";
         }
 
         public string TableHeader(string header, string tooltip, int index)
         {
-            return string.Format("<th onclick=\"sortTable({2})\" title=\"{0}\" >{1}</th>", tooltip, header, index);
+            string titleAttr = string.IsNullOrEmpty(tooltip) ? "" : $" title=\"{tooltip}\"";
+            return $"<th onclick=\"sortTable({index})\"{titleAttr}>{header}</th>";
         }
 
         public string TableHeaderEnd()
@@ -169,20 +172,23 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.Shared
 
         public string TableDataLeftAligned(string data, string toolTip)
         {
-            return string.Format("<td title=\"{0}\" style=\"text-align:left\">{1}</td>", toolTip, data);
+            string titleAttr = string.IsNullOrEmpty(toolTip) ? "" : $" title=\"{toolTip}\"";
+            return $"<td{titleAttr} style=\"text-align:left\">{data}</td>";
         }
 
         public string TableData(string data, string toolTip)
         {
-            return string.Format("<td title=\"{0}\">{1}</td>", toolTip, data);
+            string titleAttr = string.IsNullOrEmpty(toolTip) ? "" : $" title=\"{toolTip}\"";
+            return $"<td{titleAttr}>{data}</td>";
         }
 
         public string TableData(string data, string toolTip, int shading)
         {
             Type shade = typeof(CellShade);
             var color = shade.GetEnumName(shading);
+            string titleAttr = string.IsNullOrEmpty(toolTip) ? "" : $" title=\"{toolTip}\"";
 
-            return string.Format("<td title=\"{0}\" bgcolor=\"{2}\">{1}</td>", toolTip, data, color);
+            return $"<td{titleAttr} bgcolor=\"{color}\">{data}</td>";
         }
 
         public string Table()

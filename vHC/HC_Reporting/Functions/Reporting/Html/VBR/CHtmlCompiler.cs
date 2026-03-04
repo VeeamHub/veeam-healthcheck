@@ -235,8 +235,7 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR
             // add end div for end of section
             this.AddToHtml("</div>");
 
-            // add line break for spacing
-            this.AddToHtml("<br>");
+            // spacing handled by CSS margins
         }
 
         private string SetVbrHcIntro(bool scrub)
@@ -279,13 +278,10 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR
                     s += String.Format(@"<dl>
                 <dt>CSV Raw Data Output</dt>
                 <dd>{0}</dd>
-                </br>
                 <dt>Individual Job Session Reports</dt>
                 <dd>{1}</dd>
-                </br>
                 <dt>NOTE</dt>
                 <dd>{2}</dd>
-                </br>
                 <dt>NOTE</dt>
                 <dd>{3}</dd>
 
