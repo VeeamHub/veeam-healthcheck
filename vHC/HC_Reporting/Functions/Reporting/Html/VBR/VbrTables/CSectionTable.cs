@@ -53,7 +53,7 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR.VbrTables
         {
             string summary = this.GetSummary();
             string s = this.form.SectionStartWithButton(this.SectionId, this.Title, this.ButtonText);
-            s += "<tr>" + this.RenderHeaders() + "</tr>";
+            s += this.RenderHeaders();
             s += this.form.TableHeaderEnd();
             s += this.form.TableBodyStart();
 

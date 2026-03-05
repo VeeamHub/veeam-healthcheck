@@ -34,8 +34,7 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR.VbrTables.Jobs_Info
 
         public string Render(bool scrub)
         {
-            string s = this.form.SectionStartWithButton("jobs", VbrLocalizationHelper.JobInfoTitle, VbrLocalizationHelper.JobInfoBtn);
-            s += "</table>";
+            string s = this.form.SectionStartWithButtonNoTable("jobs", VbrLocalizationHelper.JobInfoTitle, VbrLocalizationHelper.JobInfoBtn);
 
             string summary = this.sum.JobInfo();
 
@@ -298,9 +297,10 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR.VbrTables.Jobs_Info
                         string tt = tapeTable.TapeJobTable();
                         if (tt != string.Empty)
                         {
-                            string tableButton = this.form.SectionStartWithButton("jobTable", "Tape Jobs", string.Empty);
+                            string tableButton = this.form.SectionStartWithButtonNoTable("jobTable", "Tape Jobs", string.Empty);
                             s += tableButton;
                             s += tt;
+                            s += this.form.SectionEndNoTable(summary);
                         }
                     }
                     catch (Exception e)
@@ -317,10 +317,10 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR.VbrTables.Jobs_Info
                         if (et != null && et.Length > 0)
                         {
                             this.log.Debug("Entra jobs table length: " + et.Length);
-                            string tableButton = this.form.SectionStartWithButton("jobTable", "Entra Jobs", string.Empty);
+                            string tableButton = this.form.SectionStartWithButtonNoTable("jobTable", "Entra Jobs", string.Empty);
                             s += tableButton;
                             s += et;
-                            s += this.form.SectionEnd(summary);
+                            s += this.form.SectionEndNoTable(summary);
                         }
                         else
                         {
@@ -332,8 +332,6 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR.VbrTables.Jobs_Info
                         this.log.Error("Entra Job Data import failed. ERROR:");
                         this.log.Error("\t" + e.Message);
                     }
-
-                    s += this.form.SectionEnd(summary);
                 }
                 catch (Exception e)
                 {
@@ -347,7 +345,7 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR.VbrTables.Jobs_Info
                 this.log.Error("\t" + e.Message);
             }
 
-            s += this.form.SectionEnd(summary);
+            s += this.form.SectionEndNoTable(summary);
 
             // JSON job info capture
             try

@@ -32,20 +32,18 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR.VbrTables.Proxies
 
             string s = form.SectionStartWithButton("proxies", VbrLocalizationHelper.PrxTitle, VbrLocalizationHelper.PrxBtn);
             string summary = sum.Proxies();
-            s += "<tr>" +
-           form.TableHeader(VbrLocalizationHelper.Prx0, VbrLocalizationHelper.Prx0TT) +
-           form.TableHeader(VbrLocalizationHelper.Prx1, VbrLocalizationHelper.Prx1TT) +
-           form.TableHeader(VbrLocalizationHelper.Prx2, VbrLocalizationHelper.Prx2TT) +
-           form.TableHeader(VbrLocalizationHelper.Prx3, VbrLocalizationHelper.Prx3TT) +
-           form.TableHeader(VbrLocalizationHelper.Prx4, VbrLocalizationHelper.Prx4TT) +
-           form.TableHeader(VbrLocalizationHelper.Prx5, VbrLocalizationHelper.Prx5TT) +
-           form.TableHeader(VbrLocalizationHelper.Prx6, VbrLocalizationHelper.Prx6TT) +
-           form.TableHeader(VbrLocalizationHelper.Prx7, VbrLocalizationHelper.Prx7TT) +
-           form.TableHeader(VbrLocalizationHelper.Prx8, VbrLocalizationHelper.Prx8TT) +
-           form.TableHeader(VbrLocalizationHelper.Prx9, VbrLocalizationHelper.Prx9TT) +
-           form.TableHeader(VbrLocalizationHelper.Prx10, VbrLocalizationHelper.Prx10TT) +
-           form.TableHeader(VbrLocalizationHelper.Prx11, VbrLocalizationHelper.Prx11TT) +
-   "</tr>";
+            s += form.TableHeader(VbrLocalizationHelper.Prx0, VbrLocalizationHelper.Prx0TT);
+            s += form.TableHeader(VbrLocalizationHelper.Prx1, VbrLocalizationHelper.Prx1TT);
+            s += form.TableHeader(VbrLocalizationHelper.Prx2, VbrLocalizationHelper.Prx2TT);
+            s += form.TableHeader(VbrLocalizationHelper.Prx3, VbrLocalizationHelper.Prx3TT);
+            s += form.TableHeader(VbrLocalizationHelper.Prx4, VbrLocalizationHelper.Prx4TT);
+            s += form.TableHeader(VbrLocalizationHelper.Prx5, VbrLocalizationHelper.Prx5TT);
+            s += form.TableHeader(VbrLocalizationHelper.Prx6, VbrLocalizationHelper.Prx6TT);
+            s += form.TableHeader(VbrLocalizationHelper.Prx7, VbrLocalizationHelper.Prx7TT);
+            s += form.TableHeader(VbrLocalizationHelper.Prx8, VbrLocalizationHelper.Prx8TT);
+            s += form.TableHeader(VbrLocalizationHelper.Prx9, VbrLocalizationHelper.Prx9TT);
+            s += form.TableHeader(VbrLocalizationHelper.Prx10, VbrLocalizationHelper.Prx10TT);
+            s += form.TableHeader(VbrLocalizationHelper.Prx11, VbrLocalizationHelper.Prx11TT);
             s += form.TableHeaderEnd();
             s += form.TableBodyStart();
 

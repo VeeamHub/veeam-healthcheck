@@ -454,6 +454,7 @@ namespace VeeamHealthCheck.Html.VBR
             string s = string.Empty;
             s += this.form.header3("Config DB Info");
             s += this.form.Table();
+            s += "<thead><tr>";
 
             // config DB Table
             s += this.form.TableHeader("DataBase Type", "MS SQL or PostgreSQL");
@@ -554,13 +555,12 @@ namespace VeeamHealthCheck.Html.VBR
             s += AddBackupServerDetails(b);
 
             s += this.form.header3("Config Backup Info");
-            s += "<table border=\"1\" class=\"content-table\">";
-            s += "<tr>";
+            s += "<table class=\"content-table\">";
+            s += "<thead><tr>";
             s += this.form.TableHeader(VbrLocalizationHelper.BkpSrvTblCfgEnabled, VbrLocalizationHelper.BstCfgEnabledTT);
             s += this.form.TableHeader(VbrLocalizationHelper.BkpSrvTblCfgLastRes, VbrLocalizationHelper.BstCfgLastResTT);
             s += this.form.TableHeader(VbrLocalizationHelper.BkpSrvTblCfgEncrypt, VbrLocalizationHelper.BstCfgEncTT);
             s += this.form.TableHeader(VbrLocalizationHelper.BkpSrvTblTarget, VbrLocalizationHelper.BstCfgTarTT);
-            s += "</tr>";
             s += this.form.TableBodyStart();
             s += "<tr>";
             if (b.ConfigBackupEnabled)
@@ -1790,7 +1790,7 @@ namespace VeeamHealthCheck.Html.VBR
 
         public string AddConfigurationTablesHeader()
         {
-            return this.form.header1("Configuration Tables");
+            return string.Empty;
         }
 
         public string AddConfigurationTablesFooter()
@@ -1800,7 +1800,7 @@ namespace VeeamHealthCheck.Html.VBR
 
         public string AddProxyInfoHeader()
         {
-            return this.form.header1("Proxy Info");
+            return string.Empty;
         }
 
         public string AddProxyInfoFooter()
@@ -1810,7 +1810,7 @@ namespace VeeamHealthCheck.Html.VBR
 
         public string AddRepositoryInfoHeader()
         {
-            return this.form.header1("Repository Info");
+            return string.Empty;
         }
 
         public string AddRepositoryInfoFooter()
@@ -1820,7 +1820,7 @@ namespace VeeamHealthCheck.Html.VBR
 
         public string AddJobTablesHeader()
         {
-            return this.form.header1("Job Tables");
+            return string.Empty;
         }
 
         public string AddJobTablesFooter()
