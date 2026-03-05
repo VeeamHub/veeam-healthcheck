@@ -36,6 +36,8 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR.VbrTables.Registry
                 Dictionary<string, string> list = df.RegOptions();
                 if (list.Count == 0)
                 {
+                    s += form.TableHeader(VbrLocalizationHelper.Reg0, VbrLocalizationHelper.Reg0TT);
+                    s += form.TableHeader(VbrLocalizationHelper.Reg1, VbrLocalizationHelper.Reg1TT);
                     s += form.TableHeaderEnd();
                     s += form.TableBodyStart();
                     if (CGlobals.REMOTEEXEC) // remote exec does not support registry and VBR could be linux based without regsitry

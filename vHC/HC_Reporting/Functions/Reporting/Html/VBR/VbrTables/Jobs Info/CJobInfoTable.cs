@@ -55,7 +55,7 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR.VbrTables.Jobs_Info
                         bool useSourceSize = !(jType == "NasBackupCopy" || jType == "Copy");
 
                         var realType = CJobTypesParser.GetJobType(jType);
-                        string jobTable = this.form.SectionStartWithButton("jobTable", realType + " Jobs", string.Empty);
+                        string jobTable = this.form.SectionStartWithButton("jobTable-" + jType.ToLower(), realType + " Jobs", string.Empty);
                         s += jobTable;
                         s += this.SetGenericJobTablHeader(useSourceSize, jType);
                         var res = source.Where(x => x.JobType == jType).ToList();
@@ -287,6 +287,11 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR.VbrTables.Jobs_Info
                         }
 
                         // end each table/section
+                        if (useSourceSize)
+                        {
+                            s += "</tr>";
+                        }
+
                         s += this.form.SectionEnd(summary);
                     }
 
@@ -297,7 +302,7 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR.VbrTables.Jobs_Info
                         string tt = tapeTable.TapeJobTable();
                         if (tt != string.Empty)
                         {
-                            string tableButton = this.form.SectionStartWithButtonNoTable("jobTable", "Tape Jobs", string.Empty);
+                            string tableButton = this.form.SectionStartWithButtonNoTable("jobTable-tape", "Tape Jobs", string.Empty);
                             s += tableButton;
                             s += tt;
                             s += this.form.SectionEndNoTable(summary);
@@ -317,7 +322,7 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR.VbrTables.Jobs_Info
                         if (et != null && et.Length > 0)
                         {
                             this.log.Debug("Entra jobs table length: " + et.Length);
-                            string tableButton = this.form.SectionStartWithButtonNoTable("jobTable", "Entra Jobs", string.Empty);
+                            string tableButton = this.form.SectionStartWithButtonNoTable("jobTable-entra", "Entra Jobs", string.Empty);
                             s += tableButton;
                             s += et;
                             s += this.form.SectionEndNoTable(summary);

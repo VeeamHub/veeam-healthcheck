@@ -501,7 +501,7 @@ namespace VeeamHealthCheck.Html.VBR
                     s += this.AddDbCoresRam(b);
                 }
 
-                s += this.form.EndTable();
+                s += "</tr></tbody></table>";
             }
             catch (Exception e)
             {
@@ -561,6 +561,7 @@ namespace VeeamHealthCheck.Html.VBR
             s += this.form.TableHeader(VbrLocalizationHelper.BkpSrvTblCfgLastRes, VbrLocalizationHelper.BstCfgLastResTT);
             s += this.form.TableHeader(VbrLocalizationHelper.BkpSrvTblCfgEncrypt, VbrLocalizationHelper.BstCfgEncTT);
             s += this.form.TableHeader(VbrLocalizationHelper.BkpSrvTblTarget, VbrLocalizationHelper.BstCfgTarTT);
+            s += this.form.TableHeaderEnd();
             s += this.form.TableBodyStart();
             s += "<tr>";
             if (b.ConfigBackupEnabled)
@@ -583,8 +584,7 @@ namespace VeeamHealthCheck.Html.VBR
             }
 
             s += this.form.TableData(b.ConfigBackupTarget, string.Empty);
-            s += "</tr>";
-            s += this.form.EndTable();
+            s += "</tr></tbody></table>";
 
             // s += _form.LineBreak();
             s += this.ConfigDbTable(b);
@@ -948,8 +948,7 @@ namespace VeeamHealthCheck.Html.VBR
                 s += this.form.TableData(this.df.viProtectedNames.Distinct().Count().ToString(), string.Empty);
                 s += this.form.TableData(this.df.viNotProtectedNames.Distinct().Count().ToString(), string.Empty);
                 s += this.form.TableData(this.df.viDupes.ToString(), string.Empty);
-                s += "</tr>";
-                s += "</table>";
+                s += "</tr></tbody></table>";
 
                 // hv
                 s += "<h3>HV Backups</h3>";
@@ -968,7 +967,7 @@ namespace VeeamHealthCheck.Html.VBR
                 s += this.form.TableData(this.df.hvProtectedNames.Distinct().Count().ToString(), string.Empty);
                 s += this.form.TableData(this.df.hvNotProtectedNames.Distinct().Count().ToString(), string.Empty);
                 s += this.form.TableData(this.df.hvDupes.ToString(), string.Empty);
-                s += "</tr></table>";
+                s += "</tr></tbody></table>";
 
                 // phys
                 s += "<h3>Physical Backups</h3>";
@@ -988,8 +987,7 @@ namespace VeeamHealthCheck.Html.VBR
                 s += this.form.TableData((this.df.physNotProtNames.Distinct().Count() + this.df.physProtNames.Distinct().Count()).ToString(), string.Empty);
                 s += this.form.TableData(this.df.physProtNames.Distinct().Count().ToString(), string.Empty);
                 s += this.form.TableData(this.df.physNotProtNames.Distinct().Count().ToString(), string.Empty);
-                s += "</tr>";
-                s += "</table>";
+                s += "</tr></tbody></table>";
 
                 try
                 {
@@ -1031,7 +1029,6 @@ namespace VeeamHealthCheck.Html.VBR
                                     catch { }
                                 }
 
-                                s += "<div id=\"nasTable\" border=\"1\" class=\"content-table\"></div>";
                                 s += this.form.Table();
                                 s += "<thead><tr>";
                                 s += this.form.TableHeader("NAS Backup Jobs", "Number of NAS backup jobs detected");
@@ -1041,8 +1038,7 @@ namespace VeeamHealthCheck.Html.VBR
                                 s += "<tr>";
                                 s += this.form.TableData(nasJobs.Count.ToString(), string.Empty);
                                 s += this.form.TableData($"{totalSourceGB:0.00} GB", string.Empty);
-                                s += "</tr>";
-                                s += this.form.EndTable();
+                                s += "</tr></tbody></table>";
                                 s += "<p class=\"subtext\">Detailed file share statistics require local execution (VMC log access)</p>";
                             }
                             else
@@ -1059,9 +1055,8 @@ namespace VeeamHealthCheck.Html.VBR
                     }
                     else
                     {
-                        s += "<div id=\"nasTable\" border=\"1\" class=\"content-table\"></div>";
                         s += this.form.Table();
-                        s += "<tr>";
+                        s += "<thead><tr>";
                         s += this.form.TableHeader("File Share Types", "Total File Share Types found in environment");
                         s += this.form.TableHeader("Total Share Size", "Total size of all shares found in environment");
                         s += this.form.TableHeader("Total Files Count", "Total files found in all shares");
@@ -1079,7 +1074,7 @@ namespace VeeamHealthCheck.Html.VBR
                             s += "</tr>";
                         }
 
-                        s += this.form.EndTable();
+                        s += "</tbody></table>";
                     }
                 }
                 catch (Exception e)
@@ -1095,8 +1090,6 @@ namespace VeeamHealthCheck.Html.VBR
                     CEntraTenants n = new();
 
                     cProtectedWorkloads.entraWorkloads = n.EntraTable().entraWorkloads;
-                    s += "</tr>";
-                    s += "</table>";
                     s += "<h3>Entra Backups</h3>";
 
                     if (cProtectedWorkloads.entraWorkloads.Count == 0)
@@ -1107,7 +1100,6 @@ namespace VeeamHealthCheck.Html.VBR
                     else
                     {
                         // Small table for Entra Tenant Count:
-                        s += "<div id=\"entraTenantCount\" border=\"1\" class=\"content-table\"></div>";
                         s += this.form.Table();
                         s += "<thead><tr>";
                         s += this.form.TableHeader("Tenant Count:", "Number of tenants backed up by this backup server");
@@ -1116,11 +1108,9 @@ namespace VeeamHealthCheck.Html.VBR
 
                         s += "<tr>";
                         s += this.form.TableData(cProtectedWorkloads.entraWorkloads.Count.ToString(), string.Empty);
-                        s += "</tr>";
-                        s += this.form.EndTable();
+                        s += "</tr></tbody></table>";
 
                         // Table for Entra Tenants
-                        s += "<div id=\"entraTable\" border=\"1\" class=\"content-table\"></div>";
                         s += this.form.Table();
                         s += "<thead><tr>";
                         s += this.form.TableHeader("Tenant Name", "Name of the Entra ID Tenant being backed up.");
@@ -1136,14 +1126,13 @@ namespace VeeamHealthCheck.Html.VBR
                             s += "</tr>";
                         }
 
-                        s += this.form.EndTable();
+                        s += "</tbody></table>";
                     }
                 }
                 catch (Exception)
                 {
                 }
 
-                s += this.form.endDiv;
             }
             catch (Exception e)
             {

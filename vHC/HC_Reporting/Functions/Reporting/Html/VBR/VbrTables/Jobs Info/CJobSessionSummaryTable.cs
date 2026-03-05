@@ -162,7 +162,7 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR.VbrTables.Jobs_Info
                             sectionHeader = "Summary of All";
                         }
 
-                        string jobTable = this.form.SectionStartWithButton("jobTable", sectionHeader + " Jobs", string.Empty);
+                        string jobTable = this.form.SectionStartWithButton("jobTable-" + realType.ToLower().Replace(" ", "-"), sectionHeader + " Jobs", string.Empty);
                         s += jobTable;
                         s += this.SetJobSessionsHeaders();
                         var res = stuff.Where(x => x.JobType == jobType).ToList();
@@ -286,6 +286,7 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR.VbrTables.Jobs_Info
                             totalRow += this.form.TableData(string.Empty, string.Empty);
                             totalRow += this.form.TableData(string.Empty, string.Empty);
                             totalRow += this.form.TableData(string.Empty, string.Empty);
+                            totalRow += "</tr>";
                             s += totalRow;
                         }
 
@@ -351,7 +352,7 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR.VbrTables.Jobs_Info
             try
             {
                 var realType = "Offload";
-                string jobTable = this.form.SectionStartWithButton("jobTable", realType + " Jobs", string.Empty);
+                string jobTable = this.form.SectionStartWithButton("jobTable-offload", realType + " Jobs", string.Empty);
                 s += jobTable;
                 s += this.SetJobSessionsHeaders();
 
@@ -445,6 +446,7 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR.VbrTables.Jobs_Info
                 totalRow += this.form.TableData(string.Empty, string.Empty);
                 totalRow += this.form.TableData(string.Empty, string.Empty);
                 totalRow += this.form.TableData(string.Empty, string.Empty);
+                totalRow += "</tr>";
                 s += totalRow;
 
                 s += this.form.SectionEnd(string.Empty);
