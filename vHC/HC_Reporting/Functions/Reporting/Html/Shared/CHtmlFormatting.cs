@@ -286,6 +286,11 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.Shared
             return string.Format("<h3><u>{0}:</u></h3>", text);
         }
 
+        public string Subsection(string text)
+        {
+            return $"<div class=\"subsection\"><h4>{text}</h4></div>";
+        }
+
         public string Header()
         {
             // log.Info("[HTML] Forming Header...");

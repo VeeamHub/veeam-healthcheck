@@ -423,7 +423,7 @@ namespace VeeamHealthCheck.Html.VBR
                 data += table.Item2;
             }
 
-            s += "<table><thead><tr>";
+            s += "<table class=\"content-table\"><thead><tr>";
             s += headers;
             s += "</tr></thead><tbody><tr>";
             s += data;
@@ -452,8 +452,8 @@ namespace VeeamHealthCheck.Html.VBR
         private string ConfigDbTable(BackupServer b)
         {
             string s = string.Empty;
-            s += this.form.header3("Config DB Info");
-            s += this.form.Table();
+            s += this.form.Subsection("Config Database");
+            s += "<table class=\"content-table\">";
             s += "<thead><tr>";
 
             // config DB Table
@@ -521,7 +521,7 @@ namespace VeeamHealthCheck.Html.VBR
             string dbRamToolTip = "RAM detected on SQL. 0 indicates SQL is local to VBR or there was an error in collection.";
             if (b.DbCores == 0)
             {
-                s += this.form.TableData(string.Empty, dbCoresToolTip);
+                s += this.form.TableData("<span class=\"text-muted\">&mdash;</span>", dbCoresToolTip);
             }
             else
             {
@@ -530,7 +530,7 @@ namespace VeeamHealthCheck.Html.VBR
 
             if (b.DbRAM == 0)
             {
-                s += this.form.TableData(string.Empty, dbRamToolTip);
+                s += this.form.TableData("<span class=\"text-muted\">&mdash;</span>", dbRamToolTip);
             }
             else
             {
@@ -554,7 +554,7 @@ namespace VeeamHealthCheck.Html.VBR
 
             s += AddBackupServerDetails(b);
 
-            s += this.form.header3("Config Backup Info");
+            s += this.form.Subsection("Config Backup");
             s += "<table class=\"content-table\">";
             s += "<thead><tr>";
             s += this.form.TableHeader(VbrLocalizationHelper.BkpSrvTblCfgEnabled, VbrLocalizationHelper.BstCfgEnabledTT);
@@ -778,8 +778,8 @@ namespace VeeamHealthCheck.Html.VBR
         private string AddTable(string title, string data)
         {
             string s = string.Empty;
-            s += this.form.header3(title);
-            s += this.form.Table();
+            s += this.form.Subsection(title);
+            s += "<table class=\"content-table\">";
             s += data;
             s += this.form.EndTable();
 
@@ -788,9 +788,8 @@ namespace VeeamHealthCheck.Html.VBR
 
         private string AddTable(string title, List<string> data)
         {
-            string s = "<tr>";
-            s += this.form.header3(title);
-            s += this.form.Table();
+            string s = this.form.Subsection(title);
+            s += "<table class=\"content-table\">";
             s += this.form.TableHeader("Detected Operating Systems", string.Empty);
             s += "</tr>";
             s += this.form.TableBodyStart();
