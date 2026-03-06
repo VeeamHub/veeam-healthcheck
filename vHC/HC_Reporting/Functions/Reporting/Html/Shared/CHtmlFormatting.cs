@@ -223,6 +223,44 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.Shared
             return "<table>";
         }
 
+        public string Table(string cssClass) =>
+            string.IsNullOrEmpty(cssClass) ? "<table>" : $"<table class=\"{cssClass}\">";
+
+        /// <summary>Heat-map-colored table cell. Assigns CSS class based on concurrency value.</summary>
+        public string TableDataHeat(string data)
+        {
+            int value = 0;
+            if (!string.IsNullOrEmpty(data))
+                int.TryParse(data, out value);
+
+            string heatClass = value switch
+            {
+                0 => "heat-0",
+                <= 2 => "heat-1",
+                <= 5 => "heat-2",
+                <= 10 => "heat-3",
+                <= 20 => "heat-4",
+                _ => "heat-5"
+            };
+
+            string display = value == 0 ? "" : data;
+            return $"<td class=\"{heatClass}\">{display}</td>";
+        }
+
+        public string HeatmapLegend()
+        {
+            return "<div class=\"heatmap-legend\">"
+                + "<span>Less</span>"
+                + "<div class=\"heatmap-legend-cell heat-0\"></div>"
+                + "<div class=\"heatmap-legend-cell heat-1\"></div>"
+                + "<div class=\"heatmap-legend-cell heat-2\"></div>"
+                + "<div class=\"heatmap-legend-cell heat-3\"></div>"
+                + "<div class=\"heatmap-legend-cell heat-4\"></div>"
+                + "<div class=\"heatmap-legend-cell heat-5\"></div>"
+                + "<span>More</span>"
+                + "</div>";
+        }
+
         public string EndTable()
         {
             return "</table>";

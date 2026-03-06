@@ -682,18 +682,7 @@ namespace VeeamHealthCheck.Html.VBR
                     this.log.Error("\t" + e.Message);
                 }
 
-                try
-                {
-                    // compliance table
-                    CComplianceTable c = new();
-                    s += c.ComplianceSummaryTable();
-                    s += c.ComplianceTable();
-                }
-                catch (Exception e)
-                {
-                    this.log.Error("Security Compliance Data import failed. ERROR:");
-                    this.log.Error("\t" + e.Message);
-                }
+                // Compliance tables extracted to separate sections
             }
 
             s += this.form.SectionEndNoTable(summary);
@@ -722,6 +711,18 @@ namespace VeeamHealthCheck.Html.VBR
             }
 
             return s;
+        }
+
+        public string AddComplianceSummaryTable()
+        {
+            var ct = new CComplianceTable();
+            return ct.ComplianceSummaryTable();
+        }
+
+        public string AddComplianceDetailTable()
+        {
+            var ct = new CComplianceTable();
+            return ct.ComplianceTable();
         }
 
         public string AddSecurityReportSecuritySummaryTable()
@@ -812,24 +813,19 @@ namespace VeeamHealthCheck.Html.VBR
         {
             string summary = this.sum.SrvSum();
 
-            string s = this.form.SectionStart("serversummary", VbrLocalizationHelper.MssTitle);
-
-            s += this.form.TableHeaderLeftAligned(VbrLocalizationHelper.MssHdr1, VbrLocalizationHelper.MssHdr1TT) +
-                            this.form.TableHeader(VbrLocalizationHelper.MssHdr2, VbrLocalizationHelper.MssHdr2TT);
-            s += this.form.TableHeaderEnd();
-            s += this.form.TableBodyStart();
+            string s = this.form.SectionStartWithButtonNoTable("serversummary", "Infrastructure Types", "srvSummaryButton");
 
             try
             {
                 Dictionary<string, int> list = this.df.ServerSummaryToXml();
 
+                s += "<div class=\"infra-grid\">";
                 foreach (var d in list)
                 {
-                    s += "<tr>";
-                    s += $"<td style=\"font-weight:600;text-align:left\">{d.Key}</td>";
-                    s += this.form.TableData(d.Value.ToString(), string.Empty);
-                    s += "</tr>";
+                    string infraName = MapInfraTypeName(d.Key);
+                    s += $"<span class=\"infra-chip\"><span class=\"infra-chip-count\">{d.Value}</span>{infraName}</span>";
                 }
+                s += "</div>";
             }
             catch (Exception e)
             {
@@ -837,7 +833,7 @@ namespace VeeamHealthCheck.Html.VBR
                 this.log.Error("\t" + e.Message);
             }
 
-            s += this.form.SectionEnd(summary);
+            s += this.form.SectionEndNoTable(summary);
 
             // JSON capture server summary
             try
@@ -854,6 +850,17 @@ namespace VeeamHealthCheck.Html.VBR
 
             return s;
         }
+
+        private static string MapInfraTypeName(string type) => type switch
+        {
+            "WinServer" or "Windows" => "Windows Server",
+            "Linux" => "Linux",
+            "HyperV" => "Hyper-V",
+            "vSphere" or "ESXi" => "VMware vSphere",
+            "AHV" => "Nutanix AHV",
+            "Cloud" => "Cloud",
+            _ => type
+        };
 
         public string AddJobSummaryTable(bool scrub)
         {
@@ -1477,8 +1484,10 @@ namespace VeeamHealthCheck.Html.VBR
 
         public string AddJobConTable(bool scrub)
         {
-            string s = this.form.SectionStartWithButton("jobcon", VbrLocalizationHelper.JobConTitle, VbrLocalizationHelper.JobConBtn, CGlobals.ReportDays);
+            string s = this.form.SectionStartWithButtonNoTable("jobcon", VbrLocalizationHelper.JobConTitle, VbrLocalizationHelper.JobConBtn, CGlobals.ReportDays);
             string summary = this.sum.JobCon();
+            s += this.form.Table("concurrency-heatmap");
+            s += "<thead><tr>";
             s += this.form.TableHeader(VbrLocalizationHelper.JobCon0, string.Empty);
             s += this.form.TableHeader(VbrLocalizationHelper.JobCon1, string.Empty);
             s += this.form.TableHeader(VbrLocalizationHelper.JobCon2, string.Empty);
@@ -1500,7 +1509,7 @@ namespace VeeamHealthCheck.Html.VBR
 
                     foreach (var st in stu.Value)
                     {
-                        s += this.form.TableData(st, string.Empty);
+                        s += this.form.TableDataHeat(st);
                     }
 
                     s += "</tr>";
@@ -1512,7 +1521,9 @@ namespace VeeamHealthCheck.Html.VBR
                 this.log.Error("\t" + e.Message);
             }
 
-            s += this.form.SectionEnd(summary);
+            s += "</tbody></table>";
+            s += this.form.HeatmapLegend();
+            s += this.form.SectionEndNoTable(summary);
 
             // JSON job concurrency
             try
@@ -1532,9 +1543,11 @@ namespace VeeamHealthCheck.Html.VBR
 
         public string AddTaskConTable(bool scrub)
         {
-            string s = this.form.SectionStartWithButton("taskcon", VbrLocalizationHelper.TaskConTitle, VbrLocalizationHelper.TaskConBtn, CGlobals.ReportDays);
+            string s = this.form.SectionStartWithButtonNoTable("taskcon", VbrLocalizationHelper.TaskConTitle, VbrLocalizationHelper.TaskConBtn, CGlobals.ReportDays);
             string summary = this.sum.TaskCon();
 
+            s += this.form.Table("concurrency-heatmap");
+            s += "<thead><tr>";
             s += this.form.TableHeader(VbrLocalizationHelper.TaskCon0, string.Empty);
             s += this.form.TableHeader(VbrLocalizationHelper.TaskCon1, string.Empty);
             s += this.form.TableHeader(VbrLocalizationHelper.TaskCon2, string.Empty);
@@ -1556,7 +1569,7 @@ namespace VeeamHealthCheck.Html.VBR
 
                     foreach (var st in stu.Value)
                     {
-                        s += this.form.TableData(st, string.Empty);
+                        s += this.form.TableDataHeat(st);
                     }
 
                     s += "</tr>";
@@ -1568,7 +1581,9 @@ namespace VeeamHealthCheck.Html.VBR
                 this.log.Error("\t" + e.Message);
             }
 
-            s += this.form.SectionEnd(summary);
+            s += "</tbody></table>";
+            s += this.form.HeatmapLegend();
+            s += this.form.SectionEndNoTable(summary);
 
             // JSON task concurrency
             try
@@ -1952,28 +1967,99 @@ namespace VeeamHealthCheck.Html.VBR
         /// </summary>
         public string AddKpiRow(bool scrub)
         {
-            string version = scrub ? "x.x.x.x" : (CGlobals.VBRFULLVERSION ?? "Unknown");
-            string reportDays = CGlobals.ReportDays.ToString();
-            string reportDate = DateTime.Now.ToString("yyyy-MM-dd");
+            try
+            {
+                // ── License Utilization ────────────────────────────────────────
+                int licUsed = 0, licTotal = 0;
+                try
+                {
+                    CCsvParser cp = new();
+                    var lic = cp.GetDynamicLicenseCsv();
+                    if (lic != null)
+                    {
+                        foreach (var row in lic)
+                        {
+                            string instLic = row.licensedinstances?.ToString() ?? "";
+                            string instUsed = row.usedinstances?.ToString() ?? "";
+                            int.TryParse(instLic, out licTotal);
+                            int.TryParse(instUsed, out licUsed);
+                        }
+                    }
+                }
+                catch { }
+                double licPct = licTotal > 0 ? (double)licUsed / licTotal * 100 : 0;
+                string licColor = licPct > 95 ? "danger" : licPct > 80 ? "warning" : "green";
+                string licDisplay = licTotal > 0 ? $"{licUsed}/{licTotal}" : "N/A";
 
-            return $@"<div class=""kpi-row"">
-  <div class=""kpi-card"">
-    <div class=""kpi-label"">VBR Version</div>
-    <div class=""kpi-value"">{version}</div>
-  </div>
-  <div class=""kpi-card"">
-    <div class=""kpi-label"">Report Period</div>
-    <div class=""kpi-value"">{reportDays} days</div>
-  </div>
-  <div class=""kpi-card"">
-    <div class=""kpi-label"">Report Date</div>
-    <div class=""kpi-value"">{reportDate}</div>
-  </div>
-  <div class=""kpi-card"">
-    <div class=""kpi-label"">Report Type</div>
-    <div class=""kpi-value"">{(CGlobals.RunSecReport ? "Security" : "Full Health Check")}</div>
-  </div>
-</div>";
+                // ── Security Score ─────────────────────────────────────────────
+                int secPassed = 0, secTotal = 0;
+                try
+                {
+                    CCsvParser cp2 = new();
+                    var comp = cp2.ComplianceCsv();
+                    if (comp != null)
+                    {
+                        foreach (var row in comp)
+                        {
+                            secTotal++;
+                            string status = row.Status?.ToString() ?? "";
+                            if (status.Equals("Passed", StringComparison.OrdinalIgnoreCase))
+                                secPassed++;
+                        }
+                    }
+                }
+                catch { }
+                double secPct = secTotal > 0 ? (double)secPassed / secTotal * 100 : 0;
+                string secColor = secPct >= 80 ? "green" : secPct >= 50 ? "warning" : "danger";
+                string secDisplay = secTotal > 0 ? $"{(int)secPct}%" : "N/A";
+
+                // ── Build KPI bar ──────────────────────────────────────────────
+                string s = "<div class=\"kpi-row\">";
+
+                // License Utilization
+                s += $"<div class=\"kpi-card kpi-card--{licColor}\">";
+                s += "<span class=\"kpi-icon\">&#128273;</span>";
+                s += "<div class=\"kpi-content\">";
+                s += "<span class=\"kpi-label\">License Utilization</span>";
+                s += $"<span class=\"kpi-value\">{licDisplay}</span>";
+                s += $"<span class=\"kpi-sub\">{(licTotal > 0 ? $"{(int)licPct}% used" : "No license data")}</span>";
+                s += "</div></div>";
+
+                // Security Score
+                s += $"<div class=\"kpi-card kpi-card--{secColor}\">";
+                s += "<span class=\"kpi-icon\">&#128737;</span>";
+                s += "<div class=\"kpi-content\">";
+                s += "<span class=\"kpi-label\">Security Score</span>";
+                s += $"<span class=\"kpi-value\">{secDisplay}</span>";
+                s += $"<span class=\"kpi-sub\">{(secTotal > 0 ? $"{secPassed}/{secTotal} checks passed" : "No compliance data")}</span>";
+                s += "</div></div>";
+
+                // VBR Version (informational)
+                string version = scrub ? "x.x.x.x" : (CGlobals.VBRFULLVERSION ?? "Unknown");
+                s += "<div class=\"kpi-card kpi-card--info\">";
+                s += "<span class=\"kpi-icon\">&#128230;</span>";
+                s += "<div class=\"kpi-content\">";
+                s += "<span class=\"kpi-label\">VBR Version</span>";
+                s += $"<span class=\"kpi-value\" style=\"font-size:1rem\">{version}</span>";
+                s += "</div></div>";
+
+                // Report Days
+                s += "<div class=\"kpi-card kpi-card--info\">";
+                s += "<span class=\"kpi-icon\">&#128197;</span>";
+                s += "<div class=\"kpi-content\">";
+                s += "<span class=\"kpi-label\">Report Period</span>";
+                s += $"<span class=\"kpi-value\">{CGlobals.ReportDays}d</span>";
+                s += "<span class=\"kpi-sub\">lookback window</span>";
+                s += "</div></div>";
+
+                s += "</div>"; // end kpi-row
+                return s;
+            }
+            catch (Exception ex)
+            {
+                CGlobals.Logger.Error("AddKpiRow failed: " + ex.Message);
+                return string.Empty;
+            }
         }
 
         /// <summary>

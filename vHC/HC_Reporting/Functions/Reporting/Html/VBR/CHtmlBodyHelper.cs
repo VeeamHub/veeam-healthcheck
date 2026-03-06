@@ -38,42 +38,39 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR
             this.HTMLSTRING += this.tables.AddKpiRow(this.SCRUB);
             this.log.Info(this.logStart + "KPI Row completed.");
 
-            // Toolbar (expand/collapse all) — appears after KPI, before tables
+            // Toolbar (expand/collapse all) -- appears after KPI, before tables
             this.HTMLSTRING += this.tables.AddToolbar();
 
+            // ── Overview ───────────────────────────────────────────────
             this.log.Info(this.logStart + "Generating LicenseTable...");
             this.LicenseTable();
             this.log.Info(this.logStart + "LicenseTable completed.");
-            
-            // this.log.Info(this.logStart + "Generating DataCollectionSummaryTable...");
-            // this.DataCollectionSummaryTable();
-            // this.log.Info(this.logStart + "DataCollectionSummaryTable completed.");
-            
-            this.log.Info(this.logStart + "Generating BackupServerTable...");
-            this.BackupServerTable();
-            this.log.Info(this.logStart + "BackupServerTable completed.");
-            
-            // Wrap Security Summary and Server Summary in a two-column layout
-            this.HTMLSTRING += "<div class=\"two-col\">";
 
             this.log.Info(this.logStart + "Generating SecuritySummaryTable...");
             this.SecuritySummaryTable();
             this.log.Info(this.logStart + "SecuritySummaryTable completed.");
 
-            this.log.Info(this.logStart + "Generating ServerSummaryTable...");
+            this.log.Info(this.logStart + "Generating ComplianceSummaryTable...");
+            this.HTMLSTRING += this.ComplianceSummaryTable();
+            this.log.Info(this.logStart + "ComplianceSummaryTable completed.");
+
+            this.log.Info(this.logStart + "Generating ComplianceDetailTable...");
+            this.HTMLSTRING += this.ComplianceDetailTable();
+            this.log.Info(this.logStart + "ComplianceDetailTable completed.");
+
+            // ── Infrastructure ─────────────────────────────────────────
+            this.log.Info(this.logStart + "Generating BackupServerTable...");
+            this.BackupServerTable();
+            this.log.Info(this.logStart + "BackupServerTable completed.");
+
+            this.log.Info(this.logStart + "Generating ServerSummaryTable (Infrastructure Types)...");
             this.ServerSummaryTable();
             this.log.Info(this.logStart + "ServerSummaryTable completed.");
 
-            this.HTMLSTRING += "</div>";
-            
-            this.log.Info(this.logStart + "Generating Configuration Tables section...");
-            this.ConfigurationTablesSection();
-            this.log.Info(this.logStart + "Configuration Tables section completed.");
-            
-            this.log.Info(this.logStart + "Generating RegistryKeyTable...");
-            this.RegistryKeyTable();
-            this.log.Info(this.logStart + "RegistryKeyTable completed.");
-            
+            this.log.Info(this.logStart + "Generating ManagedServersTable...");
+            this.ManagedServersTable();
+            this.log.Info(this.logStart + "ManagedServersTable completed.");
+
             this.log.Info(this.logStart + "Generating Proxy Info section...");
             this.ProxyInfoSection();
             this.log.Info(this.logStart + "Proxy Info section completed.");
@@ -82,15 +79,44 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR
             this.RepositoryInfoSection();
             this.log.Info(this.logStart + "Repository Info section completed.");
 
-            this.log.Info(this.logStart + "Generating Job Tables section...");
-            this.JobTablesSection();
-            this.log.Info(this.logStart + "Job Tables section completed.");
+            // ── Backup Jobs ────────────────────────────────────────────
+            this.log.Info(this.logStart + "Generating JobSessionSummaryTable...");
+            this.JobSessionSummaryTable();
+            this.log.Info(this.logStart + "JobSessionSummaryTable completed.");
+
+            this.log.Info(this.logStart + "Generating ProtectedWorkloadsTable...");
+            this.ProtectedWorkloadsTable();
+            this.log.Info(this.logStart + "ProtectedWorkloadsTable completed.");
+
+            this.log.Info(this.logStart + "Generating MissingJobsTable...");
+            this.MissingJobsTable();
+            this.log.Info(this.logStart + "MissingJobsTable completed.");
+
+            this.log.Info(this.logStart + "Generating JobSummaryTable...");
+            this.JobSummaryTable();
+            this.log.Info(this.logStart + "JobSummaryTable completed.");
+
+            this.log.Info(this.logStart + "Generating JobInfoTable...");
+            this.JobInfoTable();
+            this.log.Info(this.logStart + "JobInfoTable completed.");
+
+            // ── Performance ────────────────────────────────────────────
+            this.log.Info(this.logStart + "Generating JobConcurrencyTable...");
+            this.JobConcurrencyTable();
+            this.log.Info(this.logStart + "JobConcurrencyTable completed.");
+
+            this.log.Info(this.logStart + "Generating TaskConcurrencyTable...");
+            this.TaskConcurrencyTable();
+            this.log.Info(this.logStart + "TaskConcurrencyTable completed.");
+
+            // ── Misc ───────────────────────────────────────────────────
+            this.log.Info(this.logStart + "Generating RegistryKeyTable...");
+            this.RegistryKeyTable();
+            this.log.Info(this.logStart + "RegistryKeyTable completed.");
 
             if (CGlobals.EXPORTINDIVIDUALJOBHTMLS)
             {
                 this.log.Info(this.logStart + "EXPORTINDIVIDUALJOBHTMLS is enabled (skipping IndividualJobHtmlBuilder for now).");
-
-                // IndividualJobHtmlBuilder();
             }
 
             this.log.Info(this.logStart + "FormVbrFullReport() completed successfully.");
@@ -233,6 +259,16 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR
         private void ManagedServersTable()
         {
             this.HTMLSTRING += this.tables.AddManagedServersTable(this.SCRUB);
+        }
+
+        private string ComplianceSummaryTable()
+        {
+            return this.tables.AddComplianceSummaryTable();
+        }
+
+        private string ComplianceDetailTable()
+        {
+            return this.tables.AddComplianceDetailTable();
         }
 
         private void RegistryKeyTable()

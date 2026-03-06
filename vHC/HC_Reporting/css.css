@@ -273,6 +273,7 @@ body {
 .section-body {
   display: none;
   padding: 24px;
+  overflow-x: auto;
 }
 
 .section-card.open .section-body {
@@ -318,21 +319,6 @@ tbody tr:last-child td { border-bottom: none; }
 tbody tr:hover { background: #f9fafb; }
 
 /* ===== Badges ===== */
-.badge {
-  display: inline-flex;
-  align-items: center;
-  padding: 3px 10px;
-  border-radius: 20px;
-  font-size: 11px;
-  font-weight: 600;
-  gap: 4px;
-}
-
-.badge-success { background: #ecfdf5; color: #059669; }
-.badge-warning { background: #fffbeb; color: #d97706; }
-.badge-danger { background: #fef2f2; color: #dc2626; }
-.badge-info { background: #eff6ff; color: #2563eb; }
-.badge-neutral { background: #f3f4f6; color: #6b7280; }
 
 /* ===== Progress bars ===== */
 .progress-bar {
@@ -741,4 +727,75 @@ html.dark-theme .heat-5 { background-color: #6a2020; }
     color: var(--accent-color);
     font-weight: 700;
     text-decoration: underline;
+}
+
+/* ── KPI card accent variants ─────────────────────────────── */
+.kpi-card--green  { border-left: 4px solid var(--green); }
+.kpi-card--warning{ border-left: 4px solid var(--warning); }
+.kpi-card--danger { border-left: 4px solid var(--danger); }
+.kpi-card--info   { border-left: 4px solid var(--info); }
+.kpi-icon { font-size: 2rem; opacity: .6; }
+.kpi-content { display:flex; flex-direction:column; }
+.kpi-label { font-size: .75rem; text-transform:uppercase; letter-spacing:.04em; color: var(--text-secondary); }
+.kpi-value { font-size: 1.6rem; font-weight:700; line-height:1; }
+.kpi-sub   { font-size: .75rem; color: var(--text-secondary); margin-top:2px; }
+
+/* ── Compliance stat cards ───────────────────────────────── */
+.compliance-stats { display:flex; gap:1rem; flex-wrap:wrap; margin-bottom:1rem; }
+.compliance-stat  { flex:1; min-width:140px; background:var(--card); border:1px solid var(--border); border-radius:8px; padding:.75rem 1rem; text-align:center; }
+.compliance-count { font-size:1.5rem; font-weight:700; }
+.compliance-label { font-size:.75rem; color:var(--text-secondary); }
+
+/* ── Infrastructure chip grid ────────────────────────────── */
+.infra-grid  { display:flex; flex-wrap:wrap; gap:.5rem; padding:.5rem 0; }
+.infra-chip  { display:inline-flex; align-items:center; gap:.4rem; background:var(--card); border:1px solid var(--border); border-radius:20px; padding:.3rem .75rem; font-size:.85rem; }
+.infra-chip-count { font-weight:700; color:var(--info); }
+
+/* ── Utility ─────────────────────────────────────────────── */
+.text-muted { color: var(--text-secondary); font-size:.85rem; }
+
+/* ===== Concurrency Heat Map ===================================== */
+table.concurrency-heatmap {
+  table-layout: fixed;
+}
+table.concurrency-heatmap td {
+  text-align: center;
+  font-size: 12px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  padding: 6px 4px;
+  min-width: 36px;
+  transition: background-color 0.15s;
+}
+table.concurrency-heatmap td.heat-0 { color: var(--text-secondary); font-weight: 400; }
+table.concurrency-heatmap td.heat-1 { color: #155724; }
+table.concurrency-heatmap td.heat-2 { color: #155724; }
+table.concurrency-heatmap td.heat-3 { color: #664d03; }
+table.concurrency-heatmap td.heat-4 { color: #fff; }
+table.concurrency-heatmap td.heat-5 { color: #fff; }
+html.dark-theme table.concurrency-heatmap td.heat-0 { color: #9ca3af; }
+html.dark-theme table.concurrency-heatmap td.heat-1 { color: #d1fae5; }
+html.dark-theme table.concurrency-heatmap td.heat-2 { color: #d1fae5; }
+html.dark-theme table.concurrency-heatmap td.heat-3 { color: #fef3c7; }
+html.dark-theme table.concurrency-heatmap td.heat-4 { color: #fff; }
+html.dark-theme table.concurrency-heatmap td.heat-5 { color: #fff; }
+table.concurrency-heatmap td:first-child {
+  background: transparent !important;
+  color: var(--text-secondary);
+  font-weight: 500;
+  font-size: 11px;
+}
+.heatmap-legend {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 11px;
+  color: var(--text-secondary);
+  margin-top: 8px;
+  justify-content: flex-end;
+}
+.heatmap-legend-cell {
+  width: 16px;
+  height: 16px;
+  border-radius: 3px;
 }

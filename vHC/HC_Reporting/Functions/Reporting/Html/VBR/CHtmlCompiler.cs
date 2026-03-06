@@ -506,37 +506,35 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR
             // Overview
             nav += this.form.NavSection("Overview",
                 this.form.NavLink("license", VbrLocalizationHelper.NavLicInfoLink) +
-                this.form.NavLink("secsummary", VbrLocalizationHelper.NavSecSumLink));
+                this.form.NavLink("secsummary", VbrLocalizationHelper.NavSecSumLink) +
+                this.form.NavLink("ComplianceSummary", "Compliance Summary") +
+                this.form.NavLink("ComplianceTable", "Compliance Details"));
 
             // Infrastructure
             nav += this.form.NavSection("Infrastructure",
                 this.form.NavLink("vbrserver", VbrLocalizationHelper.NavBkpSrvLink) +
+                this.form.NavLink("serversummary", "Infrastructure Types") +
                 this.form.NavLink("managedServerInfo", VbrLocalizationHelper.NavSrvInfoLink) +
-                this.form.NavLink("regkeys", VbrLocalizationHelper.NavRegKeyLink) +
                 this.form.NavLink("proxies", VbrLocalizationHelper.NavProxyInfoLink) +
-                this.form.NavLink("serversrequirements", "Server Requirements"));
+                this.form.NavLink("repos", VbrLocalizationHelper.NavRepoInfoLink) +
+                this.form.NavLink("sobr", VbrLocalizationHelper.NavSobrInfoLink));
 
-            // Storage
-            nav += this.form.NavSection("Storage",
-                this.form.NavLink("sobr", VbrLocalizationHelper.NavSobrInfoLink) +
-                this.form.NavLink("extents", VbrLocalizationHelper.NavSobrExtLink) +
-                this.form.NavLink("capextents", VbrLocalizationHelper.NavCapTierLink) +
-                this.form.NavLink("archextents", VbrLocalizationHelper.NavArchTierLink) +
-                this.form.NavLink("repos", VbrLocalizationHelper.NavRepoInfoLink));
-
-            // Workloads
-            nav += this.form.NavSection("Workloads",
-                this.form.NavLink("serversummary", VbrLocalizationHelper.NavSrvSumLink) +
-                this.form.NavLink("jobsummary", VbrLocalizationHelper.NavJobSumLink) +
-                this.form.NavLink("missingjobs", VbrLocalizationHelper.NavMissingJobLink) +
-                this.form.NavLink("protectedworkloads", VbrLocalizationHelper.NavProtWrkld));
-
-            // Job Activity
-            nav += this.form.NavSection("Job Activity",
-                this.form.NavLink("jobcon", VbrLocalizationHelper.NavJobConLink) +
-                this.form.NavLink("taskcon", VbrLocalizationHelper.NavTaskConLink) +
+            // Backup Jobs
+            nav += this.form.NavSection("Backup Jobs",
                 this.form.NavLink("jobsesssum", VbrLocalizationHelper.NavJobSessSumLink) +
+                this.form.NavLink("protectedworkloads", VbrLocalizationHelper.NavProtWrkld) +
+                this.form.NavLink("missingjobs", VbrLocalizationHelper.NavMissingJobLink) +
+                this.form.NavLink("jobsummary", VbrLocalizationHelper.NavJobSumLink) +
                 this.form.NavLink("jobs", VbrLocalizationHelper.NavJobInfoLink));
+
+            // Performance
+            nav += this.form.NavSection("Performance",
+                this.form.NavLink("jobcon", VbrLocalizationHelper.NavJobConLink) +
+                this.form.NavLink("taskcon", VbrLocalizationHelper.NavTaskConLink));
+
+            // Misc
+            nav += this.form.NavSection("Misc",
+                this.form.NavLink("regkeys", VbrLocalizationHelper.NavRegKeyLink));
 
             // Build icon tag
             string iconB64 = GetIconAsBase64();
