@@ -5,7 +5,8 @@ on:
     branches: [ "master", "dev" ]
   pull_request:
     branches:
-      - main
+      - master
+      - dev
 
 jobs:
   semgrep:

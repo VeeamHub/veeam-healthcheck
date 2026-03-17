@@ -37,4 +37,15 @@ jobs:
         run: sudo mv /etc/clamav/freshclam.conf.bak /etc/clamav/freshclam.conf
 
       - name: Scan repository for viruses
-        run: sudo clamscan -r --bell -i .
+        run: |
+          set +e
+          sudo clamscan -r --bell -i .
+          SCAN_EXIT=$?
+          set -e
+          if [ $SCAN_EXIT -eq 1 ]; then
+            echo "::error::Virus detected in repository!"
+            exit 1
+          elif [ $SCAN_EXIT -eq 2 ]; then
+            echo "::error::ClamAV encountered an error during scan"
+            exit 1
+          fi
