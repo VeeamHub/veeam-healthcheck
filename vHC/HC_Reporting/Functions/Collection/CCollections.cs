@@ -552,6 +552,7 @@ namespace VeeamHealthCheck.Functions.Collection
 
                 // p.InvokeVb365CollectEmbedded();
                 p.InvokeVb365Collect();
+                this.SCRIPTSUCCESS = true;
             }
         }
 
