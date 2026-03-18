@@ -224,51 +224,28 @@ jobs:
         path: ${{ steps.find_report.outputs.report_path }}
         retention-days: 30
 
-    - name: Validate session cache creation
-      id: validate_cache
+    - name: Validate session report generation
       if: always()
       run: |
-        $cacheFile = Get-ChildItem "C:\temp\vHC\Original\VBR\*\*\SessionCache.xml" -ErrorAction SilentlyContinue | Sort-Object LastWriteTime -Descending | Select-Object -First 1
+        # Session reporting now runs inside Get-VBRConfig.ps1 via Get-VhcBackupSessions /
+        # Get-VhcSessionReport module functions. SessionCache.xml no longer exists.
+        $logDir = "C:\temp\vHC\Original\Log"
+        $logFile = Get-ChildItem $logDir -Filter "*.log" -ErrorAction SilentlyContinue |
+                   Where-Object Name -notmatch "VeeamSessionReport" |
+                   Sort-Object LastWriteTime -Descending | Select-Object -First 1
 
-        if ($cacheFile) {
-          $sizeMB = [math]::Round($cacheFile.Length / 1MB, 2)
-          Write-Host "✅ Session cache found: $($cacheFile.FullName) ($sizeMB MB)" -ForegroundColor Green
-
-          try {
-            $cache = Import-Clixml -Path $cacheFile.FullName
-            $sessionCount = $cache.Count
-            Write-Host "✅ Cache contains $sessionCount sessions" -ForegroundColor Green
-            echo "cache_found=true" >> $env:GITHUB_OUTPUT
-            echo "cache_sessions=$sessionCount" >> $env:GITHUB_OUTPUT
-            echo "cache_size_mb=$sizeMB" >> $env:GITHUB_OUTPUT
-          } catch {
-            Write-Host "⚠️ Cache file exists but couldn't be parsed: $_" -ForegroundColor Yellow
-            echo "cache_found=false" >> $env:GITHUB_OUTPUT
+        if ($logFile) {
+          $logContent = Get-Content $logFile.FullName -Raw -ErrorAction SilentlyContinue
+          if ($logContent -match "Fetched (\d+) backup sessions") {
+            Write-Host "✅ Backup sessions fetched: $($Matches[1])" -ForegroundColor Green
+          }
+          if ($logContent -match "Exported (\d+) session rows") {
+            Write-Host "✅ Session report exported: $($Matches[1]) rows" -ForegroundColor Green
+          } elseif ($logContent -match "No session rows produced") {
+            Write-Host "⚠️ Session report produced no rows" -ForegroundColor Yellow
           }
         } else {
-          Write-Host "❌ Session cache not found" -ForegroundColor Red
-          echo "cache_found=false" >> $env:GITHUB_OUTPUT
-        }
-
-    - name: Validate session cache usage in logs
-      if: always()
-      run: |
-        $logPath = "C:\temp\vHC\Original\Log\VeeamSessionReport.log"
-
-        if (Test-Path $logPath) {
-          $logContent = Get-Content $logPath -Raw
-
-          if ($logContent -match "Loaded (\d+) sessions from cache") {
-            Write-Host "✅ Session report used cache: $($Matches[1]) sessions loaded" -ForegroundColor Green
-          } elseif ($logContent -match "No session cache available") {
-            Write-Host "⚠️ Session report fell back to database query" -ForegroundColor Yellow
-          }
-
-          if ($logContent -match "Failed to load session cache") {
-            Write-Host "⚠️ Cache load failed - check logs for details" -ForegroundColor Yellow
-          }
-        } else {
-          Write-Host "⚠️ Session report log not found" -ForegroundColor Yellow
+          Write-Host "⚠️ Collection log not found at $logDir" -ForegroundColor Yellow
         }
 
     - name: Validate CSV collection outputs
@@ -624,51 +601,28 @@ jobs:
         path: ${{ steps.find_report.outputs.report_path }}
         retention-days: 30
 
-    - name: Validate session cache creation
-      id: validate_cache
+    - name: Validate session report generation
       if: always()
       run: |
-        $cacheFile = Get-ChildItem "C:\temp\vHC\Original\VBR\*\*\SessionCache.xml" -ErrorAction SilentlyContinue | Sort-Object LastWriteTime -Descending | Select-Object -First 1
+        # Session reporting now runs inside Get-VBRConfig.ps1 via Get-VhcBackupSessions /
+        # Get-VhcSessionReport module functions. SessionCache.xml no longer exists.
+        $logDir = "C:\temp\vHC\Original\Log"
+        $logFile = Get-ChildItem $logDir -Filter "*.log" -ErrorAction SilentlyContinue |
+                   Where-Object Name -notmatch "VeeamSessionReport" |
+                   Sort-Object LastWriteTime -Descending | Select-Object -First 1
 
-        if ($cacheFile) {
-          $sizeMB = [math]::Round($cacheFile.Length / 1MB, 2)
-          Write-Host "✅ Session cache found: $($cacheFile.FullName) ($sizeMB MB)" -ForegroundColor Green
-
-          try {
-            $cache = Import-Clixml -Path $cacheFile.FullName
-            $sessionCount = $cache.Count
-            Write-Host "✅ Cache contains $sessionCount sessions" -ForegroundColor Green
-            echo "cache_found=true" >> $env:GITHUB_OUTPUT
-            echo "cache_sessions=$sessionCount" >> $env:GITHUB_OUTPUT
-            echo "cache_size_mb=$sizeMB" >> $env:GITHUB_OUTPUT
-          } catch {
-            Write-Host "⚠️ Cache file exists but couldn't be parsed: $_" -ForegroundColor Yellow
-            echo "cache_found=false" >> $env:GITHUB_OUTPUT
+        if ($logFile) {
+          $logContent = Get-Content $logFile.FullName -Raw -ErrorAction SilentlyContinue
+          if ($logContent -match "Fetched (\d+) backup sessions") {
+            Write-Host "✅ Backup sessions fetched: $($Matches[1])" -ForegroundColor Green
+          }
+          if ($logContent -match "Exported (\d+) session rows") {
+            Write-Host "✅ Session report exported: $($Matches[1]) rows" -ForegroundColor Green
+          } elseif ($logContent -match "No session rows produced") {
+            Write-Host "⚠️ Session report produced no rows" -ForegroundColor Yellow
           }
         } else {
-          Write-Host "❌ Session cache not found" -ForegroundColor Red
-          echo "cache_found=false" >> $env:GITHUB_OUTPUT
-        }
-
-    - name: Validate session cache usage in logs
-      if: always()
-      run: |
-        $logPath = "C:\temp\vHC\Original\Log\VeeamSessionReport.log"
-
-        if (Test-Path $logPath) {
-          $logContent = Get-Content $logPath -Raw
-
-          if ($logContent -match "Loaded (\d+) sessions from cache") {
-            Write-Host "✅ Session report used cache: $($Matches[1]) sessions loaded" -ForegroundColor Green
-          } elseif ($logContent -match "No session cache available") {
-            Write-Host "⚠️ Session report fell back to database query" -ForegroundColor Yellow
-          }
-
-          if ($logContent -match "Failed to load session cache") {
-            Write-Host "⚠️ Cache load failed - check logs for details" -ForegroundColor Yellow
-          }
-        } else {
-          Write-Host "⚠️ Session report log not found" -ForegroundColor Yellow
+          Write-Host "⚠️ Collection log not found at $logDir" -ForegroundColor Yellow
         }
 
     - name: Validate CSV collection outputs
@@ -1023,51 +977,28 @@ jobs:
         path: ${{ steps.find_report.outputs.report_path }}
         retention-days: 30
 
-    - name: Validate session cache creation
-      id: validate_cache
+    - name: Validate session report generation
       if: always()
       run: |
-        $cacheFile = Get-ChildItem "C:\temp\vHC\Original\VBR\*\*\SessionCache.xml" -ErrorAction SilentlyContinue | Sort-Object LastWriteTime -Descending | Select-Object -First 1
+        # Session reporting now runs inside Get-VBRConfig.ps1 via Get-VhcBackupSessions /
+        # Get-VhcSessionReport module functions. SessionCache.xml no longer exists.
+        $logDir = "C:\temp\vHC\Original\Log"
+        $logFile = Get-ChildItem $logDir -Filter "*.log" -ErrorAction SilentlyContinue |
+                   Where-Object Name -notmatch "VeeamSessionReport" |
+                   Sort-Object LastWriteTime -Descending | Select-Object -First 1
 
-        if ($cacheFile) {
-          $sizeMB = [math]::Round($cacheFile.Length / 1MB, 2)
-          Write-Host "✅ Session cache found: $($cacheFile.FullName) ($sizeMB MB)" -ForegroundColor Green
-
-          try {
-            $cache = Import-Clixml -Path $cacheFile.FullName
-            $sessionCount = $cache.Count
-            Write-Host "✅ Cache contains $sessionCount sessions" -ForegroundColor Green
-            echo "cache_found=true" >> $env:GITHUB_OUTPUT
-            echo "cache_sessions=$sessionCount" >> $env:GITHUB_OUTPUT
-            echo "cache_size_mb=$sizeMB" >> $env:GITHUB_OUTPUT
-          } catch {
-            Write-Host "⚠️ Cache file exists but couldn't be parsed: $_" -ForegroundColor Yellow
-            echo "cache_found=false" >> $env:GITHUB_OUTPUT
+        if ($logFile) {
+          $logContent = Get-Content $logFile.FullName -Raw -ErrorAction SilentlyContinue
+          if ($logContent -match "Fetched (\d+) backup sessions") {
+            Write-Host "✅ Backup sessions fetched: $($Matches[1])" -ForegroundColor Green
+          }
+          if ($logContent -match "Exported (\d+) session rows") {
+            Write-Host "✅ Session report exported: $($Matches[1]) rows" -ForegroundColor Green
+          } elseif ($logContent -match "No session rows produced") {
+            Write-Host "⚠️ Session report produced no rows" -ForegroundColor Yellow
           }
         } else {
-          Write-Host "❌ Session cache not found" -ForegroundColor Red
-          echo "cache_found=false" >> $env:GITHUB_OUTPUT
-        }
-
-    - name: Validate session cache usage in logs
-      if: always()
-      run: |
-        $logPath = "C:\temp\vHC\Original\Log\VeeamSessionReport.log"
-
-        if (Test-Path $logPath) {
-          $logContent = Get-Content $logPath -Raw
-
-          if ($logContent -match "Loaded (\d+) sessions from cache") {
-            Write-Host "✅ Session report used cache: $($Matches[1]) sessions loaded" -ForegroundColor Green
-          } elseif ($logContent -match "No session cache available") {
-            Write-Host "⚠️ Session report fell back to database query" -ForegroundColor Yellow
-          }
-
-          if ($logContent -match "Failed to load session cache") {
-            Write-Host "⚠️ Cache load failed - check logs for details" -ForegroundColor Yellow
-          }
-        } else {
-          Write-Host "⚠️ Session report log not found" -ForegroundColor Yellow
+          Write-Host "⚠️ Collection log not found at $logDir" -ForegroundColor Yellow
         }
 
     - name: Validate CSV collection outputs

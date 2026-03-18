@@ -52,9 +52,9 @@ namespace VhcXTests
             // Get the method body to analyze UnblockFile calls
             var methodBody = tryUnblockMethod.GetMethodBody();
             
-            // Build list of unblocked scripts from the fields we found
+            // Build list of unblocked scripts from the individual file fields we found
             var unblockedScripts = new List<string>();
-            
+
             foreach (var field in scriptFields)
             {
                 var scriptPath = field.GetValue(psInvoker) as string;
@@ -65,23 +65,34 @@ namespace VhcXTests
                 }
             }
 
+            // Also find directory fields — non-.ps1 path fields whose subtree is enumerated at runtime
+            var coveredDirs = psInvokerType
+                .GetFields(BindingFlags.NonPublic | BindingFlags.Instance)
+                .Where(f => f.FieldType == typeof(string))
+                .Select(f => f.GetValue(psInvoker) as string)
+                .Where(v => !string.IsNullOrEmpty(v)
+                            && !v.EndsWith(".ps1", StringComparison.OrdinalIgnoreCase)
+                            && (v.Contains("\\") || v.Contains("/")))
+                .Select(v => Path.GetRelativePath(baseDirectory, v).Replace("\\", "/"))
+                .ToList();
+
             // Assert - Find any .ps1 files that are not being unblocked
             var missingScripts = new List<string>();
             foreach (var ps1File in allPs1Files)
             {
                 var normalizedPs1 = ps1File.Replace("\\", "/");
                 var ps1FileName = Path.GetFileName(ps1File);
-                
-                var isUnblocked = unblockedScripts.Any(us => 
+
+                var isUnblocked = unblockedScripts.Any(us =>
                 {
                     var normalizedUs = us.Replace("\\", "/");
                     var usFileName = Path.GetFileName(us);
-                    
+
                     // Match by full path or by filename (since paths are constructed differently)
                     return normalizedUs.Equals(normalizedPs1, StringComparison.OrdinalIgnoreCase) ||
                            usFileName.Equals(ps1FileName, StringComparison.OrdinalIgnoreCase) ||
                            normalizedPs1.EndsWith(usFileName, StringComparison.OrdinalIgnoreCase);
-                });
+                }) || coveredDirs.Any(dir => normalizedPs1.StartsWith(dir + "/", StringComparison.OrdinalIgnoreCase));
 
                 if (!isUnblocked)
                 {
@@ -195,8 +206,6 @@ namespace VhcXTests
             {
                 "vb365Script",
                 "vbrConfigScript",
-                "vbrSessionScript",
-                "vbrSessionScriptVersion13",
                 "nasScript",
                 "exportLogsScript",
                 "dumpServers",
