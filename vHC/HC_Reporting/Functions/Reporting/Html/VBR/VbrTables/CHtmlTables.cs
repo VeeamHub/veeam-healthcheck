@@ -6,6 +6,7 @@ using System.IO;
 using System.Linq;
 using System.Management.Automation;
 using System.Globalization;
+using System.Net;
 using System.Text.Json;
 using VeeamHealthCheck.Functions.Analysis.DataModels;
 using VeeamHealthCheck.Functions.Collection;
@@ -251,6 +252,31 @@ namespace VeeamHealthCheck.Html.VBR
             }
 
             string s = this.form.SectionStart("datacollection", "Data Collection Summary");
+
+            // Collector errors section — shown when any collector reported Success=false
+            var failedCollectors = CGlobals.CollectionManifest?.Where(e => !e.Success).ToList();
+            if (failedCollectors != null && failedCollectors.Count > 0)
+            {
+                s += $@"
+            <div style='margin-bottom: 15px; padding: 12px 15px; background-color: #f2dede; border: 1px solid #d9534f; border-radius: 4px;'>
+                <strong style='color: #d9534f;'>&#9888; Data Collection Errors &mdash; {failedCollectors.Count} collector(s) failed</strong>
+            </div>";
+
+                s += "<table class='table table-striped'><thead><tr>";
+                s += this.form.TableHeader("Collector", "Name of the collector function that failed");
+                s += this.form.TableHeader("Error", "Error message reported by the collector");
+                s += "</tr></thead><tbody>";
+
+                foreach (var entry in failedCollectors)
+                {
+                    s += $"<tr style='background-color: #f2dede;'>";
+                    s += $"<td style='color: #d9534f; font-weight: bold;'>{WebUtility.HtmlEncode(entry.Name)}</td>";
+                    s += $"<td style='color: #d9534f;'>{WebUtility.HtmlEncode(entry.Error ?? string.Empty)}</td>";
+                    s += "</tr>";
+                }
+
+                s += "</tbody></table>";
+            }
             
             // Calculate summary statistics
             int totalFiles = results.Count;
@@ -589,7 +615,17 @@ namespace VeeamHealthCheck.Html.VBR
             // header
             s += this.form.TableHeader("Installed Apps", string.Empty);
             s += this.form.TableHeaderEnd();
-            s += this.form.TableData("See <a href=\"C:\\\\temp\\\\vHC\\\\Original\\\\Log\\\\\">Veeam.HealthCheck.ServerApplications log file</a> at C:\\temp\\vHC\\Log\\", string.Empty);
+            var logDirPath = Path.Combine(CVariables.unsafeDir, "Log") + Path.DirectorySeparatorChar;
+            string logDirHref;
+            try
+            {
+                logDirHref = new Uri(logDirPath).AbsoluteUri;
+            }
+            catch (UriFormatException)
+            {
+                logDirHref = WebUtility.HtmlEncode(logDirPath);
+            }
+            s += this.form.TableData("See <a href=\"" + logDirHref + "\">Veeam.HealthCheck.ServerApplications log file</a> at " + WebUtility.HtmlEncode(logDirPath), string.Empty);
             s += this.form.EndTable();
             return s;
         }

@@ -204,6 +204,14 @@ namespace VeeamHealthCheck.Startup
                         _hfdPath = this.ParsePath(a);
                         CGlobals.Logger.Info("HFD path: " + targetDir);
                         break;
+                    case var match when new Regex("/outdir=.*", RegexOptions.IgnoreCase).IsMatch(a):
+                        string parsedOutDir = this.ParsePath(a);
+                        if (!string.IsNullOrEmpty(parsedOutDir))
+                        {
+                            targetDir = parsedOutDir;
+                            CGlobals.Logger.Info("Output directory overridden: " + targetDir, false);
+                        }
+                        break;
                     case var match when new Regex("/host=.*", RegexOptions.IgnoreCase).IsMatch(a):
                         string providedHost = this.ParsePath(a);
 
@@ -220,12 +228,6 @@ namespace VeeamHealthCheck.Startup
                             CGlobals.REMOTEHOST = providedHost;
                         }
                         break;
-
-                        // case var match when new Regex("outdir:.*").IsMatch(a):
-                        //    string[] outputDir = a.Split(":");
-                        //    targetDir = outputDir[1];
-                        //    CGlobals.Logger.Info("Output directory: " + targetDir);
-                        //    break;
                 }
             }
 
@@ -299,7 +301,7 @@ namespace VeeamHealthCheck.Startup
         {
             try
             {
-                string[] outputDir = input.Split("=");
+                string[] outputDir = input.Split('=', 2);
                 return outputDir[1];
             }
             catch (Exception)

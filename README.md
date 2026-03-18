@@ -45,10 +45,48 @@ This Windows utility is a lightweight executable that will generate an advanced 
 
 **CLI Options:**
 ```
--s, --scrub          Anonymize server names, IPs, and credentials in output
--o, --output PATH    Custom output directory (default: C:\temp\vHC)
--f, --format FORMAT  Export format: html, pdf, pptx (default: html)
--a, --auto           Skip GUI and run with default settings
+VeeamHealthCheck.exe [options]
+```
+
+| Option | Description |
+|---|---|
+| `/run` | Execute health check via CLI |
+| `/gui` | Launch graphical user interface |
+| `/help` | Show full help menu |
+| `/days:<N>` | Reporting interval: 7, 12, 30, or 90 days (default: 7) |
+| `/outdir=<path>` | Output directory (default: `C:\temp\vHC`) |
+| `/pdf` | Also export report as PDF |
+| `/pptx` | Also export report as PowerPoint |
+| `/scrub:true` | Anonymize sensitive data in output |
+| `/lite` | Skip per-job HTML exports (faster) |
+| `/show:report` | Open report in browser after generation |
+| `/show:files` | Open output folder in Explorer |
+| `/remote` | Enable remote execution |
+| `/host=<hostname>` | Target remote Veeam server |
+| `/security` | Run security-focused assessment only |
+| `/import[:<path>]` | Generate report from existing CSV data |
+| `/clearcreds` | Clear stored credentials |
+| `/debug` | Enable debug logging |
+
+**Examples:**
+```powershell
+# Run a standard health check
+VeeamHealthCheck.exe /run
+
+# Run with 30-day reporting window and export as PDF
+VeeamHealthCheck.exe /run /days:30 /pdf
+
+# Run and write output to a custom directory, opening the report when done
+VeeamHealthCheck.exe /run /outdir=D:\Reports /show:report
+
+# Run against a remote VBR server
+VeeamHealthCheck.exe /run /host=vbrserver.veeam.local
+
+# Run a security-focused assessment against a remote VBR server
+VeeamHealthCheck.exe /security /host=vbrserver.veeam.local
+
+# Generate a report from previously collected CSV data
+VeeamHealthCheck.exe /import:D:\Exports\VBR-data
 ```
 
 **Features**

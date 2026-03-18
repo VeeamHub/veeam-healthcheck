@@ -12,10 +12,12 @@ on:
     branches: [master, dev]
     paths:
       - 'vHC/HC_Reporting/Tools/Scripts/**/*.ps1'
+      - 'vHC/HC_Reporting/Tools/Scripts/**/*.psm1'
   pull_request:
     branches: [master, dev]
     paths:
       - 'vHC/HC_Reporting/Tools/Scripts/**/*.ps1'
+      - 'vHC/HC_Reporting/Tools/Scripts/**/*.psm1'
   workflow_dispatch:
 
 jobs:
@@ -35,13 +37,13 @@ jobs:
           $errors = @()
 
           # Scripts that MUST be PS5.1 compatible (used by VBR 12 and earlier)
-          $ps51Scripts = @(
-            "vHC/HC_Reporting/Tools/Scripts/HealthCheck/VBR/Get-VBRConfig.ps1",
-            "vHC/HC_Reporting/Tools/Scripts/HealthCheck/VBR/Get-VeeamSessionReport.ps1",
-            "vHC/HC_Reporting/Tools/Scripts/HealthCheck/VBR/Get-NasInfo.ps1",
-            "vHC/HC_Reporting/Tools/Scripts/HotfixDetection/Collect-VBRLogs.ps1",
-            "vHC/HC_Reporting/Tools/Scripts/HotfixDetection/DumpManagedServerToText.ps1"
-          )
+          $ps51Scripts = @(Get-ChildItem -Path @(
+            "vHC/HC_Reporting/Tools/Scripts/HealthCheck/VBR/*.ps1",
+            "vHC/HC_Reporting/Tools/Scripts/HealthCheck/VBR/vHC-VbrConfig/Public/*.ps1",
+            "vHC/HC_Reporting/Tools/Scripts/HealthCheck/VBR/vHC-VbrConfig/Private/*.ps1",
+            "vHC/HC_Reporting/Tools/Scripts/HotfixDetection/*.ps1"
+          ) -ErrorAction SilentlyContinue | Select-Object -ExpandProperty FullName)
+          $ps51Scripts += "vHC/HC_Reporting/Tools/Scripts/HealthCheck/VBR/vHC-VbrConfig/vHC-VbrConfig.psm1"
 
           # PS7-only syntax patterns
           $ps7Patterns = @(
@@ -105,11 +107,12 @@ jobs:
           $ErrorActionPreference = 'Continue'
           $parseErrors = @()
 
-          $ps51Scripts = @(
-            "vHC/HC_Reporting/Tools/Scripts/HealthCheck/VBR/Get-VBRConfig.ps1",
-            "vHC/HC_Reporting/Tools/Scripts/HealthCheck/VBR/Get-VeeamSessionReport.ps1",
-            "vHC/HC_Reporting/Tools/Scripts/HealthCheck/VBR/Get-NasInfo.ps1"
-          )
+          $ps51Scripts = @(Get-ChildItem -Path @(
+            "vHC/HC_Reporting/Tools/Scripts/HealthCheck/VBR/*.ps1",
+            "vHC/HC_Reporting/Tools/Scripts/HealthCheck/VBR/vHC-VbrConfig/Public/*.ps1",
+            "vHC/HC_Reporting/Tools/Scripts/HealthCheck/VBR/vHC-VbrConfig/Private/*.ps1"
+          ) -ErrorAction SilentlyContinue | Select-Object -ExpandProperty FullName)
+          $ps51Scripts += "vHC/HC_Reporting/Tools/Scripts/HealthCheck/VBR/vHC-VbrConfig/vHC-VbrConfig.psm1"
 
           Write-Host "PowerShell Version: $($PSVersionTable.PSVersion)"
           Write-Host ""
@@ -173,8 +176,9 @@ jobs:
 
           ### Scripts Validated
 
-          - ``Get-VBRConfig.ps1`` - Main VBR configuration collection
-          - ``Get-VeeamSessionReport.ps1`` - Session reporting
+          - ``Get-VBRConfig.ps1`` - Main VBR configuration entry point
+          - ``vHC-VbrConfig/Public/*.ps1`` - Exported collector functions (glob-discovered)
+          - ``vHC-VbrConfig/Private/*.ps1`` - Internal sub-collectors and helpers (glob-discovered)
           - ``Get-NasInfo.ps1`` - NAS information collection
 
           ### PS7-Only Syntax (Not Allowed)

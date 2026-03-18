@@ -79,9 +79,9 @@ namespace VhcXTests.Integration
         }
 
         [Fact]
-        public void GetVeeamSessionReport_ValidPowerShellSyntax()
+        public void GetVhcSessionReport_ValidPowerShellSyntax()
         {
-            var scriptPath = Path.Combine(_scriptsPath, "HealthCheck", "VBR", "Get-VeeamSessionReport.ps1");
+            var scriptPath = Path.Combine(_scriptsPath, "HealthCheck", "VBR", "vHC-VbrConfig", "Public", "Get-VhcSessionReport.ps1");
             
             if (!File.Exists(scriptPath))
             {
@@ -98,8 +98,8 @@ namespace VhcXTests.Integration
                 CreateNoWindow = true
             };
 
-            var rc = RunPwshAndLog(psi, "GetVeeamSessionReport_ValidPowerShellSyntax");
-            Assert.True(rc == 0, "Get-VeeamSessionReport.ps1 has syntax errors");
+            var rc = RunPwshAndLog(psi, "GetVhcSessionReport_ValidPowerShellSyntax");
+            Assert.True(rc == 0, "Get-VhcSessionReport.ps1 has syntax errors");
         }
 
         [Fact]
@@ -154,6 +154,39 @@ namespace VhcXTests.Integration
                 var logName = $"AllHotfixScripts-{Path.GetFileName(scriptPath)}";
                 var rc = RunPwshAndLog(psi, logName);
                 Assert.True(rc == 0, $"Script has syntax errors: {Path.GetFileName(scriptPath)} (see TestResults/pwsh-logs/{logName}.txt)");
+            }
+        }
+
+        [Fact]
+        public void VhcVbrConfigModule_AllFilesValidPowerShellSyntax()
+        {
+            var modulePath = Path.Combine(_scriptsPath, "HealthCheck", "VBR", "vHC-VbrConfig");
+
+            if (!Directory.Exists(modulePath))
+            {
+                Assert.Fail($"vHC-VbrConfig module directory not found at: {modulePath}");
+            }
+
+            var ps1Files  = Directory.GetFiles(modulePath, "*.ps1",  SearchOption.AllDirectories);
+            var psm1Files = Directory.GetFiles(modulePath, "*.psm1", SearchOption.AllDirectories);
+            var scripts   = ps1Files.Concat(psm1Files).ToArray();
+            Assert.NotEmpty(scripts);
+
+            foreach (var scriptPath in scripts)
+            {
+                var psi = new ProcessStartInfo
+                {
+                    FileName = "pwsh",
+                    Arguments = $"-NoProfile -NonInteractive -Command \"$errors = $null; [System.Management.Automation.Language.Parser]::ParseFile('{scriptPath}', [ref]$null, [ref]$errors); if ($errors) {{ exit 1 }} else {{ exit 0 }}\"",
+                    RedirectStandardError = true,
+                    RedirectStandardOutput = true,
+                    UseShellExecute = false,
+                    CreateNoWindow = true
+                };
+
+                var logName = $"VhcVbrConfigModule-{Path.GetFileName(scriptPath)}";
+                var rc = RunPwshAndLog(psi, logName);
+                Assert.True(rc == 0, $"Module file has syntax errors: {Path.GetFileName(scriptPath)} (see TestResults/pwsh-logs/{logName}.txt)");
             }
         }
 

@@ -134,7 +134,7 @@ namespace VhcXTests.Functions.Reporting.CsvHandlers
         }
 
         [Fact]
-        public void ServerCsvParser_NoFile_ReturnsNull()
+        public void ServerCsvParser_NoFile_ReturnsEmpty()
         {
             var emptyDir = Path.Combine(_testDataDir, "empty_servers");
             Directory.CreateDirectory(emptyDir);
@@ -142,7 +142,7 @@ namespace VhcXTests.Functions.Reporting.CsvHandlers
             var parser = new CCsvParser(emptyDir);
             var result = parser.ServerCsvParser();
 
-            Assert.Null(result);
+            Assert.Empty(result);
         }
 
         #endregion
@@ -171,7 +171,7 @@ namespace VhcXTests.Functions.Reporting.CsvHandlers
         }
 
         [Fact]
-        public void ProxyCsvParser_NoFile_ReturnsNull()
+        public void ProxyCsvParser_NoFile_ReturnsEmpty()
         {
             var emptyDir = Path.Combine(_testDataDir, "empty_proxy");
             Directory.CreateDirectory(emptyDir);
@@ -179,7 +179,7 @@ namespace VhcXTests.Functions.Reporting.CsvHandlers
             var parser = new CCsvParser(emptyDir);
             var result = parser.ProxyCsvParser();
 
-            Assert.Null(result);
+            Assert.Empty(result);
         }
 
         #endregion
@@ -418,11 +418,11 @@ namespace VhcXTests.Functions.Reporting.CsvHandlers
 
             var parser = new CCsvParser(emptyDir);
 
-            // All parsers should return null or empty for missing files
-            Assert.Null(parser.ServerCsvParser());
-            Assert.Null(parser.ProxyCsvParser());
-            Assert.Null(parser.RepoCsvParser());
-            Assert.Null(parser.SobrCsvParser());
+            // All parsers should return empty for missing files
+            Assert.Empty(parser.ServerCsvParser());
+            Assert.Empty(parser.ProxyCsvParser());
+            Assert.Empty(parser.RepoCsvParser());
+            Assert.Empty(parser.SobrCsvParser());
         }
 
         [Fact]
@@ -432,8 +432,8 @@ namespace VhcXTests.Functions.Reporting.CsvHandlers
 
             var parser = new CCsvParser(nonExistentDir);
 
-            // Should not throw, should return null or empty
-            Assert.Null(parser.ServerCsvParser());
+            // Should not throw, should return empty
+            Assert.Empty(parser.ServerCsvParser());
         }
 
         [Fact]

@@ -661,6 +661,7 @@ namespace VeeamHealthCheck.Functions.Reporting.DataTypes
 
                         jInfo.Name = s.JobName;
                         jInfo.Alg = s.Alg;
+                        jInfo.JobAlg = s.JobAlgorithm;
                         jInfo.BackupSize = this.ParseToDouble(s.BackupSize);
                         jInfo.Bottleneck = s.BottleneckDetails;
                         jInfo.CompressionRatio = s.CompressionRation;
