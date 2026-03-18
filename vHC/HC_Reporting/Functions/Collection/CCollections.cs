@@ -6,6 +6,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
+using System.Linq;
 using System.Windows;
 using Microsoft.Management.Infrastructure;
 using VeeamHealthCheck.Functions.Collection.DB;
@@ -542,6 +543,8 @@ namespace VeeamHealthCheck.Functions.Collection
         {
             CGlobals.Logger.Info("Entering vbr config collection");
             this.SCRIPTSUCCESS = p.RunVbrConfigCollect();
+            // Collector-failure warnings are logged in StartAnalysis after ValidateVbrCsvFiles
+            // loads the manifest. Logging here would duplicate those warnings.
         }
 
         private void ExecVb365Scripts(PSInvoker p)

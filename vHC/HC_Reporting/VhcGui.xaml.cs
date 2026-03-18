@@ -229,11 +229,53 @@ namespace VeeamHealthCheck
             System.Threading.Tasks.Task.Factory.StartNew(() =>
             {
                 this.functions.StartPrimaryFunctions();
+                this.UpdateCollectionStatusText();
+                this.ShowCollectionWarningsIfAny();
                 Environment.Exit(0);
             }).ContinueWith(t =>
             {
                 this.hideProgressBar();
             });
+        }
+
+        private void UpdateCollectionStatusText()
+        {
+            var failed = CGlobals.CollectionManifest?.Where(e => !e.Success).ToList();
+            if (failed != null && failed.Count > 0)
+            {
+                this.Dispatcher.Invoke((Action)(() =>
+                {
+                    progressText.Text = $"Collection complete \u2014 {failed.Count} collector warning(s)";
+                    progressText.Foreground = new System.Windows.Media.SolidColorBrush(
+                        System.Windows.Media.Color.FromRgb(0xf0, 0xad, 0x4e));
+                }));
+            }
+            else
+            {
+                this.Dispatcher.Invoke((Action)(() =>
+                {
+                    progressText.Text = "Collection complete";
+                    progressText.Foreground = new System.Windows.Media.SolidColorBrush(
+                        System.Windows.Media.Color.FromRgb(0x5c, 0xb8, 0x5c));
+                }));
+            }
+        }
+
+        private void ShowCollectionWarningsIfAny()
+        {
+            var failed = CGlobals.CollectionManifest?.Where(e => !e.Success).ToList();
+            if (failed != null && failed.Count > 0)
+            {
+                var names = string.Join(", ", failed.Select(e => e.Name));
+                this.Dispatcher.Invoke((Action)(() =>
+                {
+                    MessageBox.Show(
+                        $"{failed.Count} collector(s) reported errors: {names}\n\nThe report may have incomplete sections. Check the log for details.",
+                        "Collection Warnings",
+                        MessageBoxButton.OK,
+                        MessageBoxImage.Warning);
+                }));
+            }
         }
 
         private void DisableGuiAndStartProgressBar()

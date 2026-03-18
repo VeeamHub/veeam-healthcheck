@@ -22,6 +22,7 @@ BASIC COMMANDS:
 REPORTING OPTIONS:
   /days:<N>         Set reporting interval (7, 12, 30, or 90 days). Default: 7
   /lite             Skip individual job HTML exports (faster execution)
+  /outdir=<path>    Write all output to <path> instead of C:\temp\vHC
   /pdf              Export report as PDF in addition to HTML
   /pptx             Export report as PowerPoint presentation
   /scrub:true       Enable sensitive data removal (anonymize output)
@@ -54,6 +55,7 @@ UTILITY OPTIONS:
 EXAMPLES:
   VeeamHealthCheck.exe /run
   VeeamHealthCheck.exe /run /days:30 /lite /pdf
+  VeeamHealthCheck.exe /run /outdir=D:\Reports
   VeeamHealthCheck.exe /security /remote /host=vbr-server.domain.local
   VeeamHealthCheck.exe /import /run
   VeeamHealthCheck.exe /import:D:\Exports\VBR-data
@@ -65,7 +67,7 @@ NOTES:
   - Run with no arguments to launch the GUI
   - Credentials are managed via Windows Credential Manager
   - Remote execution requires appropriate permissions on target server
-  - Default output directory: C:\temp\vHC
+  - Default output directory: C:\temp\vHC (override with /outdir=)
 
 For more information, visit: https://github.com/VeeamHub/veeam-healthcheck
 ";        

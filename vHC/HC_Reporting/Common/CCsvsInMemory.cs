@@ -1,7 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.IO;
 using System.Linq;
+using CsvHelper;
+using CsvHelper.Configuration;
 
 namespace VeeamHealthCheck.Shared
 {
@@ -23,31 +26,40 @@ namespace VeeamHealthCheck.Shared
 
                 try
                 {
-                    var lines = File.ReadAllLines(filePath);
-                    if (lines.Length == 0)
+                    if (!File.Exists(filePath))
                     {
-                        Console.WriteLine($"Warning: CSV file {filePath} is empty.");
+                        Console.WriteLine($"Warning: CSV file {filePath} not found.");
                         return false;
                     }
 
-                    var headers = lines[0].Split(',').Select(h => h.Trim()).ToArray();
+                    var config = new CsvConfiguration(CultureInfo.InvariantCulture)
+                    {
+                        MissingFieldFound = null,
+                        HeaderValidated = null,
+                        BadDataFound = null,
+                    };
+
                     var data = new List<Dictionary<string, string>>();
 
-                    for (int i = 1; i < lines.Length; i++)
-                    {
-                        var values = lines[i].Split(',').Select(v => v.Trim()).ToArray();
-                        if (values.Length != headers.Length)
-                        {
-                            Console.WriteLine($"Warning: Row {i + 1} in {filePath} has mismatched columns. Skipping.");
-                            continue;
-                        }
+                    using var reader = new StreamReader(filePath);
+                    using var csv = new CsvReader(reader, config);
 
+                    if (!csv.Read())
+                    {
+                        csvData[filePath] = data;
+                        Console.WriteLine($"Warning: CSV file {filePath} is empty. Loaded 0 rows.");
+                        return true;
+                    }
+                    csv.ReadHeader();
+                    var headers = csv.HeaderRecord.ToArray();
+
+                    while (csv.Read())
+                    {
                         var row = new Dictionary<string, string>();
                         for (int j = 0; j < headers.Length; j++)
                         {
-                            row[headers[j]] = values[j];
+                            row[headers[j]] = csv.GetField(j) ?? string.Empty;
                         }
-
                         data.Add(row);
                     }
 

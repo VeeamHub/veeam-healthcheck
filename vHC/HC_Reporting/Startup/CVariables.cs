@@ -80,8 +80,10 @@ namespace VeeamHealthCheck
         {
             string basePath = unsafeDir + VbrDir;
 
-            // Get server name - use VBRServerName if set, otherwise default to "localhost"
-            string serverName = string.IsNullOrEmpty(CGlobals.VBRServerName) ? "localhost" : CGlobals.VBRServerName;
+            // Get server name - prefer REMOTEHOST (set from /host= in CLI mode), fall back to VBRServerName (GUI), then "localhost"
+            string serverName = !string.IsNullOrEmpty(CGlobals.REMOTEHOST)
+                ? CGlobals.REMOTEHOST
+                : (string.IsNullOrEmpty(CGlobals.VBRServerName) ? "localhost" : CGlobals.VBRServerName);
 
             // Get or create timestamp for this run
             string timestamp = CGlobals.GetRunTimestamp();
