@@ -31,11 +31,11 @@ jobs:
       - name: Generate SBOM (CycloneDX JSON)
         run: |
           New-Item -ItemType Directory -Force -Path sbom
-          dotnet CycloneDX vHC/HC.sln -o sbom/ -f VeeamHealthCheck-SBOM.json -t
+          dotnet CycloneDX vHC/HC.sln -o sbom/ -fn VeeamHealthCheck-SBOM.json -F Json
 
       - name: Generate SBOM (CycloneDX XML)
         run: |
-          dotnet CycloneDX vHC/HC.sln -o sbom/ -f VeeamHealthCheck-SBOM.xml -t
+          dotnet CycloneDX vHC/HC.sln -o sbom/ -fn VeeamHealthCheck-SBOM.xml -F Xml
 
       - name: Get version
         id: get_version

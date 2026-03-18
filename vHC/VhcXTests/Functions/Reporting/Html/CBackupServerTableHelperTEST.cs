@@ -23,12 +23,6 @@ namespace VhcXTests.Functions.Reporting.Html
             // Save original parser state
             hadOriginalParser = CGlobals.DtParser != null;
             originalParser = CGlobals.DtParser;
-
-            // Initialize logger if needed
-            if (CGlobals.Logger == null)
-            {
-                CGlobals.Logger = new VeeamHealthCheck.Shared.Logging.CLogger();
-            }
         }
 
         public void Dispose()

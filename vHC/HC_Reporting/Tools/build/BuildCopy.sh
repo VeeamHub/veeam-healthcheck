@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Source path from build output
-SOURCE="/Users/adam.congdon/code/veeam-healthcheck/vHC/HC_Reporting/bin/Debug/net8.0-windows7.0/win-x64/"
+SOURCE="/Users/adam/code/veeam-healthcheck/vHC/HC_Reporting/bin/Debug/net8.0-windows7.0/win-x64/"
 # Destination (mounted SMB share)
 DEST="$HOME/vhc_mount/veeam-healthcheck/vHC/HC_Reporting/bin/"
 # SMB details

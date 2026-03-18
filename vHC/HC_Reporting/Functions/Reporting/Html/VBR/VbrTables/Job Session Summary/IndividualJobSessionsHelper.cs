@@ -98,6 +98,8 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR.VbrTables.Job_Session_Su
 
             foreach (var name in namesList)
             {
+              try
+              {
                 var jName = name;
                 var jobSessions = this.ReturnJobSessionsList(name);
                 this.LogJobSessionParseProgress(percentCounter, totalSessions);
@@ -108,7 +110,7 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR.VbrTables.Job_Session_Su
                 string mainDir = this.SetMainDir(folderName, name);
                 string scrubDir = this.SetScrubDir(folderName, name);
 
-                if (name.Contains("/"))
+                if (name.Contains("/") || name.Contains("\\"))
                 {
                     jName = this.FixInvalidJobName(name);
                 }
@@ -178,6 +180,12 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR.VbrTables.Job_Session_Su
                 scrubString = null;
 
                 // percentCounter++;
+              }
+              catch (Exception e)
+              {
+                  this.log.Error($"Exception generating individual session HTML for job '{name}':");
+                  this.log.Error(e.Message);
+              }
             }
 
             this.LogJobSessionParseProgress(100, 100);
@@ -205,7 +213,7 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR.VbrTables.Job_Session_Su
         {
             var mainDir = CGlobals.desiredPath + CVariables.unsafeSuffix + folderName;
             CheckFolderExists(mainDir);
-            mainDir += "\\" + JobName + ".html";
+            mainDir += "\\" + SanitizeFileName(JobName) + ".html";
             return mainDir;
         }
 
@@ -215,8 +223,13 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR.VbrTables.Job_Session_Su
 
             // log.Warning("SAFE outdir = " + outDir, false);
             CheckFolderExists(scrubDir);
-            scrubDir += "\\" + this.scrubber.ScrubItem(JobName, ScrubItemType.Job) + ".html";
+            scrubDir += "\\" + SanitizeFileName(this.scrubber.ScrubItem(JobName, ScrubItemType.Job)) + ".html";
             return scrubDir;
+        }
+
+        private static string SanitizeFileName(string name)
+        {
+            return name.Replace("\\", "--").Replace("/", "-");
         }
 
         private string ReturnTableHeaderString(string jobname)
@@ -268,7 +281,7 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR.VbrTables.Job_Session_Su
             s += "<tr>";
             s += TableData(jname, "jobName");
             s += TableData(vmName, "vmName");
-            s += TableData(c.Alg, "alg");
+            s += TableData(c.JobAlg, "alg");
             s += TableData(c.PrimaryBottleneck, "primBottleneck");
             s += TableData(c.Bottleneck, "bottleneck");
             s += TableData(c.CompressionRatio, "compression");
@@ -291,8 +304,8 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR.VbrTables.Job_Session_Su
 
         private string FixInvalidJobName(string jobName)
         {
-            this.log.Debug("Caught invalid char: \"/\", replacing with \"-\": " + jobName);
-            var name = jobName.Replace("/", "-");
+            this.log.Debug("Caught invalid char in job name, replacing: " + jobName);
+            var name = jobName.Replace("/", "-").Replace("\\", "--");
             this.log.Debug("New Name = " + name);
             return name;
         }

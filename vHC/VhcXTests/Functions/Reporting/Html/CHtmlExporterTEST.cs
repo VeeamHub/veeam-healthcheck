@@ -1,5 +1,6 @@
 using System;
 using System.IO;
+using VeeamHealthCheck;
 using VeeamHealthCheck.Functions.Reporting.Html;
 using VeeamHealthCheck.Shared;
 using Xunit;

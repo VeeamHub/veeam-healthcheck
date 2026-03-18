@@ -2,8 +2,11 @@
 // MIT License
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.IO;
 using System.Linq;
+using CsvHelper;
+using CsvHelper.Configuration;
 using VeeamHealthCheck.Shared;
 using VeeamHealthCheck.Shared.Logging;
 
@@ -115,6 +118,8 @@ namespace VeeamHealthCheck.Functions.Collection
             }
 
             LogValidationSummary(results);
+
+            LoadManifest(_csvDirectory);
 
             return results;
         }
@@ -243,5 +248,59 @@ namespace VeeamHealthCheck.Functions.Collection
                 .Select(r => $"[{r.Severity}] {r.FileName}")
                 .ToList();
         }
+
+        /// <summary>
+        /// Finds and parses the _CollectionManifest.csv produced by Get-VBRConfig.ps1.
+        /// Stores parsed entries in CGlobals.CollectionManifest and logs warnings for
+        /// any collector that reported Success=false.
+        /// </summary>
+        /// <param name="csvDirectory">Directory containing the manifest file.</param>
+        public void LoadManifest(string csvDirectory)
+        {
+            try
+            {
+                var matches = Directory.GetFiles(csvDirectory, "*_CollectionManifest.csv", SearchOption.AllDirectories);
+                if (matches.Length == 0)
+                {
+                    _log.Info($"{_logPrefix}No _CollectionManifest.csv found — collector-level error surfacing unavailable.");
+                    return;
+                }
+
+                string manifestPath = matches.OrderBy(p => Path.GetFileName(p).Length).First();
+                _log.Info($"{_logPrefix}Loading collection manifest: {manifestPath}");
+
+                var entries = new List<CCollectionManifestEntry>();
+
+                var csvConfig = new CsvConfiguration(CultureInfo.InvariantCulture)
+                {
+                    HasHeaderRecord = true,
+                    MissingFieldFound = null,
+                };
+                using var reader = new StreamReader(manifestPath, System.Text.Encoding.UTF8);
+                using var csv = new CsvReader(reader, csvConfig);
+                entries = csv.GetRecords<CCollectionManifestEntry>().ToList();
+
+                CGlobals.CollectionManifest = entries;
+
+                var failed = entries.Where(e => !e.Success).ToList();
+                if (failed.Count > 0)
+                {
+                    _log.Warning($"{_logPrefix}Collection manifest loaded: {failed.Count} collector(s) reported failures.");
+                    foreach (var e in failed)
+                    {
+                        _log.Warning($"{_logPrefix}  [{e.Name}] {e.Error}");
+                    }
+                }
+                else
+                {
+                    _log.Info($"{_logPrefix}Collection manifest loaded: all {entries.Count} collectors succeeded.");
+                }
+            }
+            catch (Exception ex)
+            {
+                _log.Error($"{_logPrefix}Failed to load collection manifest: {ex.Message}");
+            }
+        }
+
     }
 }
