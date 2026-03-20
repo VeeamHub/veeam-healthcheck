@@ -92,7 +92,7 @@ if ([string]::IsNullOrEmpty($ReportPath)) {
 # ---------------------------------------------------------------------------
 # Early startup log - written before module init so hangs are visible on disk
 # ---------------------------------------------------------------------------
-$_earlyLogDir = if ($LogPath) { $LogPath } else { "C:\temp\vHC\Original\Log" }
+$_earlyLogDir = $LogPath
 if (-not (Test-Path $_earlyLogDir)) { New-Item -Path $_earlyLogDir -ItemType Directory -Force | Out-Null }
 $_earlyLog = Join-Path $_earlyLogDir "CollectorStartup.log"
 function Write-StartupLog([string]$msg) {
@@ -100,6 +100,8 @@ function Write-StartupLog([string]$msg) {
     Add-Content -Path $script:_earlyLog -Value $line -Encoding UTF8
     Write-Host $line
 }
+Add-Content -Path $_earlyLog -Value "" -Encoding UTF8
+Add-Content -Path $_earlyLog -Value "=== Run started $(Get-Date -Format 'yyyy-MM-dd HH:mm:ss') ===" -Encoding UTF8
 Write-StartupLog "Get-VBRConfig.ps1 started. VBRServer=$VBRServer VBRVersion=$VBRVersion PS=$($PSVersionTable.PSVersion)"
 
 # ---------------------------------------------------------------------------
