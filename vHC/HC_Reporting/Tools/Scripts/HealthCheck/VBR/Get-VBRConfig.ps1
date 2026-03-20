@@ -90,14 +90,32 @@ if ([string]::IsNullOrEmpty($ReportPath)) {
 }
 
 # ---------------------------------------------------------------------------
+# Early startup log - written before module init so hangs are visible on disk
+# ---------------------------------------------------------------------------
+$_earlyLogDir = $LogPath
+if (-not (Test-Path $_earlyLogDir)) { New-Item -Path $_earlyLogDir -ItemType Directory -Force | Out-Null }
+$_earlyLog = Join-Path $_earlyLogDir "CollectorStartup.log"
+function Write-StartupLog([string]$msg) {
+    $line = "$(Get-Date -Format 'yyyy-MM-dd HH:mm:ss') [STARTUP] $msg"
+    Add-Content -Path $script:_earlyLog -Value $line -Encoding UTF8
+    Write-Host $line
+}
+Add-Content -Path $_earlyLog -Value "" -Encoding UTF8
+Add-Content -Path $_earlyLog -Value "=== Run started $(Get-Date -Format 'yyyy-MM-dd HH:mm:ss') ===" -Encoding UTF8
+Write-StartupLog "Get-VBRConfig.ps1 started. VBRServer=$VBRServer VBRVersion=$VBRVersion PS=$($PSVersionTable.PSVersion)"
+
+# ---------------------------------------------------------------------------
 # Import the collector module
 # ---------------------------------------------------------------------------
+Write-StartupLog "Importing vHC-VbrConfig module..."
 Import-Module "$PSScriptRoot\vHC-VbrConfig\vHC-VbrConfig.psd1" -Force
+Write-StartupLog "vHC-VbrConfig module imported."
 
 # ---------------------------------------------------------------------------
 # Ensure Veeam module / PSSnapin is loaded
 # PS 6+ (Core/7+) only supports modules; PS 5.1 tries the PSSnapin first.
 # ---------------------------------------------------------------------------
+Write-StartupLog "Loading Veeam PowerShell module/snapin..."
 if ($PSVersionTable.PSVersion.Major -ge 6) {
     if (-not (Get-Module -Name Veeam.Backup.PowerShell -ErrorAction SilentlyContinue)) {
         Import-Module -Name Veeam.Backup.PowerShell -ErrorAction Stop
@@ -113,6 +131,7 @@ if ($PSVersionTable.PSVersion.Major -ge 6) {
         }
     }
 }
+Write-StartupLog "Veeam module loaded."
 
 # ---------------------------------------------------------------------------
 # Initialise module-level state (infra concerns shared by all collectors)
@@ -137,6 +156,7 @@ $useCreds = (-not [string]::IsNullOrWhiteSpace($User) -and
 # Wrap Connect -> Collectors -> Disconnect in try/finally so Disconnect always runs,
 # even if a prerequisite collector aborts the run early.
 try {
+    Write-StartupLog "Connecting to VBR server '$VBRServer' (useCreds=$useCreds)..."
     if ($useCreds) {
         if (-not [string]::IsNullOrWhiteSpace($PasswordBase64)) {
             $passwordBytes = [System.Convert]::FromBase64String($PasswordBase64)
@@ -150,6 +170,7 @@ try {
     } else {
         Connect-VBRServer -Server $VBRServer -ErrorAction Stop
     }
+    Write-StartupLog "Connected to VBR server '$VBRServer'."
 
 # ---------------------------------------------------------------------------
 # Version detection - replace parameter-supplied version with detected version
