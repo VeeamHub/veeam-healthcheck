@@ -364,12 +364,16 @@ namespace VeeamHealthCheck.Functions.Collection.PSCollections
 
             this.log.Info("[PS] Script execution started. PID: " + res1.Id.ToString(), false);
 
-            // Read output streams asynchronously to prevent deadlocks
-            string stdOut = res1.StandardOutput.ReadToEnd();
-            string stdErr = res1.StandardError.ReadToEnd();
+            // Read both streams concurrently to avoid deadlock:
+            // Sequential ReadToEnd() calls block if the process fills the stderr pipe buffer
+            // while C# is still waiting on stdout (and vice versa).
+            var stdOutTask = System.Threading.Tasks.Task.Run(() => res1.StandardOutput.ReadToEnd());
+            var stdErrTask = System.Threading.Tasks.Task.Run(() => res1.StandardError.ReadToEnd());
 
             // Wait for process to complete (with timeout)
             bool exited = res1.WaitForExit(300000); // 5 minute timeout
+            string stdOut = stdOutTask.GetAwaiter().GetResult();
+            string stdErr = stdErrTask.GetAwaiter().GetResult();
             if (!exited)
             {
                 this.log.Error("[PS] Script execution timeout after 5 minutes", false);
