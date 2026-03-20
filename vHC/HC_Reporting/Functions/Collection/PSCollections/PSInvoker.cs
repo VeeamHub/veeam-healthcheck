@@ -223,12 +223,20 @@ namespace VeeamHealthCheck.Functions.Collection.PSCollections
             this.UnblockFile(this.dumpServers);
             this.UnblockFile(this.vb365Script);
 
-            // Unblock all scripts in the vHC-VbrConfig PowerShell module
+            // Unblock all PowerShell files in the vHC-VbrConfig module (.ps1, .psm1, .psd1).
+            // Zone.Identifier on .psm1/.psd1 causes Unrestricted policy to prompt interactively,
+            // which hangs the process when there is no console window.
             if (Directory.Exists(this.vbrConfigModuleDir))
             {
-                foreach (var script in Directory.GetFiles(this.vbrConfigModuleDir, "*.ps1", SearchOption.AllDirectories))
+                foreach (var file in Directory.GetFiles(this.vbrConfigModuleDir, "*.*", SearchOption.AllDirectories))
                 {
-                    this.UnblockFile(script);
+                    var ext = Path.GetExtension(file);
+                    if (ext.Equals(".ps1", StringComparison.OrdinalIgnoreCase) ||
+                        ext.Equals(".psm1", StringComparison.OrdinalIgnoreCase) ||
+                        ext.Equals(".psd1", StringComparison.OrdinalIgnoreCase))
+                    {
+                        this.UnblockFile(file);
+                    }
                 }
             }
         }
@@ -463,7 +471,9 @@ namespace VeeamHealthCheck.Functions.Collection.PSCollections
             bool needsCredentials = CGlobals.REMOTEEXEC;
 
             // Build argument string with BOTH VBRVersion and ReportInterval
-            string argString = $"-NoProfile -ExecutionPolicy unrestricted -file \"{this.vbrConfigScript}\" " +
+            // Use Bypass (not Unrestricted) so PS never prompts for unsigned/internet-sourced
+            // scripts - Unrestricted still prompts interactively which hangs a windowless process.
+            string argString = $"-NoProfile -ExecutionPolicy Bypass -file \"{this.vbrConfigScript}\" " +
                                $"-VBRServer \"{CGlobals.REMOTEHOST}\" " +
                                $"-VBRVersion \"{CGlobals.VBRMAJORVERSION}\" " +
                                $"-ReportInterval {CGlobals.ReportDays} ";
