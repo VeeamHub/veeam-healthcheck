@@ -223,12 +223,20 @@ namespace VeeamHealthCheck.Functions.Collection.PSCollections
             this.UnblockFile(this.dumpServers);
             this.UnblockFile(this.vb365Script);
 
-            // Unblock all scripts in the vHC-VbrConfig PowerShell module
+            // Unblock all PowerShell files in the vHC-VbrConfig module (.ps1, .psm1, .psd1).
+            // Zone.Identifier on .psm1/.psd1 causes Unrestricted policy to prompt interactively,
+            // which hangs the process when there is no console window.
             if (Directory.Exists(this.vbrConfigModuleDir))
             {
-                foreach (var script in Directory.GetFiles(this.vbrConfigModuleDir, "*.ps1", SearchOption.AllDirectories))
+                foreach (var file in Directory.GetFiles(this.vbrConfigModuleDir, "*.*", SearchOption.AllDirectories))
                 {
-                    this.UnblockFile(script);
+                    var ext = Path.GetExtension(file);
+                    if (ext.Equals(".ps1", StringComparison.OrdinalIgnoreCase) ||
+                        ext.Equals(".psm1", StringComparison.OrdinalIgnoreCase) ||
+                        ext.Equals(".psd1", StringComparison.OrdinalIgnoreCase))
+                    {
+                        this.UnblockFile(file);
+                    }
                 }
             }
         }
@@ -364,12 +372,16 @@ namespace VeeamHealthCheck.Functions.Collection.PSCollections
 
             this.log.Info("[PS] Script execution started. PID: " + res1.Id.ToString(), false);
 
-            // Read output streams asynchronously to prevent deadlocks
-            string stdOut = res1.StandardOutput.ReadToEnd();
-            string stdErr = res1.StandardError.ReadToEnd();
+            // Read both streams concurrently to avoid deadlock:
+            // Sequential ReadToEnd() calls block if the process fills the stderr pipe buffer
+            // while C# is still waiting on stdout (and vice versa).
+            var stdOutTask = System.Threading.Tasks.Task.Run(() => res1.StandardOutput.ReadToEnd());
+            var stdErrTask = System.Threading.Tasks.Task.Run(() => res1.StandardError.ReadToEnd());
 
             // Wait for process to complete (with timeout)
             bool exited = res1.WaitForExit(300000); // 5 minute timeout
+            string stdOut = stdOutTask.GetAwaiter().GetResult();
+            string stdErr = stdErrTask.GetAwaiter().GetResult();
             if (!exited)
             {
                 this.log.Error("[PS] Script execution timeout after 5 minutes", false);
@@ -459,7 +471,9 @@ namespace VeeamHealthCheck.Functions.Collection.PSCollections
             bool needsCredentials = CGlobals.REMOTEEXEC;
 
             // Build argument string with BOTH VBRVersion and ReportInterval
-            string argString = $"-NoProfile -ExecutionPolicy unrestricted -file \"{this.vbrConfigScript}\" " +
+            // Use Bypass (not Unrestricted) so PS never prompts for unsigned/internet-sourced
+            // scripts - Unrestricted still prompts interactively which hangs a windowless process.
+            string argString = $"-NoProfile -ExecutionPolicy Bypass -file \"{this.vbrConfigScript}\" " +
                                $"-VBRServer \"{CGlobals.REMOTEHOST}\" " +
                                $"-VBRVersion \"{CGlobals.VBRMAJORVERSION}\" " +
                                $"-ReportInterval {CGlobals.ReportDays} ";
