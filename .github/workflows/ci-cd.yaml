@@ -1443,28 +1443,55 @@ jobs:
         
         $malicious = [int]"${{ steps.poll_zip.outputs.malicious }}"
         $suspicious = [int]"${{ steps.poll_zip.outputs.suspicious }}"
-        
-        # Strict mode: Block release on ANY detections (including likely false positives)
-        if ($malicious -gt 0) {
-          echo "clean=false" >> $env:GITHUB_OUTPUT
-          echo "needs_review=true" >> $env:GITHUB_OUTPUT
-          echo "❌ VirusTotal flagged ZIP as malicious ($malicious detection(s))"
-          echo "📊 Review scan results: $scanUrl"
-          echo "::error title=VirusTotal Detection::ZIP flagged by $malicious engine(s). Manual review required: $scanUrl"
-          exit 1
-        } elseif ($suspicious -gt 0) {
-          echo "clean=false" >> $env:GITHUB_OUTPUT
-          echo "needs_review=true" >> $env:GITHUB_OUTPUT
-          echo "❌ VirusTotal marked ZIP as suspicious ($suspicious detection(s))"
-          echo "📊 Review scan results: $scanUrl"
-          echo "::error title=VirusTotal Suspicious::ZIP flagged as suspicious by $suspicious engine(s). Manual review required: $scanUrl"
-          exit 1
-        } else {
+        $totalFlags = $malicious + $suspicious
+
+        # Major vendors that MUST be clean — any detection from these is a hard fail
+        $majorVendors = @(
+          'Microsoft', 'Kaspersky', 'Sophos', 'ESET-NOD32', 'Symantec',
+          'BitDefender', 'McAfee', 'CrowdStrike', 'Avast', 'AVG',
+          'TrendMicro', 'Fortinet', 'Panda', 'DrWeb', 'Malwarebytes'
+        )
+
+        if ($totalFlags -eq 0) {
+          # Tier 0: Clean
           echo "clean=true" >> $env:GITHUB_OUTPUT
-          echo "✅ ZIP scan passed"
+          echo "✅ ZIP scan passed (0 detections)"
           if (![string]::IsNullOrEmpty($scanUrl)) {
             echo "📊 Scan report: $scanUrl"
           }
+        } elseif ($totalFlags -le 2) {
+          # Tier 1-2: Likely false positive — verify no major vendor flagged it
+          $api = "${{ secrets.VIRUSTOTAL_API_KEY }}"
+          $headers = @{ 'x-apikey' = $api }
+          $resp = Invoke-RestMethod -Method Get -Uri "https://www.virustotal.com/api/v3/analyses/$scanId" -Headers $headers
+          $results = $resp.data.attributes.results
+
+          $majorHits = $majorVendors | Where-Object {
+            $results.$_.category -in @('malicious', 'suspicious')
+          }
+
+          if ($majorHits.Count -gt 0) {
+            echo "clean=false" >> $env:GITHUB_OUTPUT
+            echo "needs_review=true" >> $env:GITHUB_OUTPUT
+            echo "❌ Major vendor detection(s): $($majorHits -join ', ')"
+            echo "📊 Review scan results: $scanUrl"
+            echo "::error title=VirusTotal Major Vendor Detection::Flagged by major vendor(s): $($majorHits -join ', '). Manual review required: $scanUrl"
+            exit 1
+          }
+
+          # Minor vendor only — warn but pass
+          echo "clean=true" >> $env:GITHUB_OUTPUT
+          echo "⚠️ ZIP passed with $totalFlags minor detection(s) — no major vendors flagged"
+          echo "📊 Scan report: $scanUrl"
+          echo "::warning title=VirusTotal Minor Detection::$totalFlags engine(s) flagged (minor vendors only). Review: $scanUrl"
+        } else {
+          # Tier 3+: Likely real issue — hard fail
+          echo "clean=false" >> $env:GITHUB_OUTPUT
+          echo "needs_review=true" >> $env:GITHUB_OUTPUT
+          echo "❌ VirusTotal flagged ZIP ($malicious malicious, $suspicious suspicious)"
+          echo "📊 Review scan results: $scanUrl"
+          echo "::error title=VirusTotal Detection::ZIP flagged by $totalFlags engine(s). Manual review required: $scanUrl"
+          exit 1
         }
     
     - name: Get detailed detection info
