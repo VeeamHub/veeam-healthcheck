@@ -42,6 +42,13 @@ namespace VeeamHealthCheck.Startup
                     this.StartM365Report();
                 }
 
+                // Detect VBAWS data if present
+                string vbawsBaseDir = CVariables.GetVbawsBaseDir();
+                if (Directory.Exists(vbawsBaseDir) && CGlobals.IsVbaws)
+                {
+                    this.LOG.Info("VBAWS data detected, including in report", false);
+                }
+
                 if (Directory.Exists(CVariables.vbrDir) && CGlobals.RunFullReport)
                 {
                     res = this.StartVbrReport();

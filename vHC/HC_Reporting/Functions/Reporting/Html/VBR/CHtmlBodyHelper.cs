@@ -1,6 +1,7 @@
 ﻿// Copyright (c) 2021, Adam Congdon <adam.congdon2@gmail.com>
 // MIT License
 using VeeamHealthCheck.Functions.Reporting.DataTypes;
+using VeeamHealthCheck.Functions.Reporting.Html.VBR.VbrTables.VBAWS;
 using VeeamHealthCheck.Html.VBR;
 using VeeamHealthCheck.Shared;
 using VeeamHealthCheck.Shared.Logging;
@@ -78,6 +79,14 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR
                 this.log.Info(this.logStart + "EXPORTINDIVIDUALJOBHTMLS is enabled (skipping IndividualJobHtmlBuilder for now).");
 
                 // IndividualJobHtmlBuilder();
+            }
+
+            // VBAWS section (only rendered when VBAWS data is present)
+            if (CGlobals.IsVbaws)
+            {
+                this.log.Info(this.logStart + "Generating VBAWS Tables...");
+                this.VbawsSection();
+                this.log.Info(this.logStart + "VBAWS Tables completed.");
             }
 
             this.log.Info(this.logStart + "FormVbrFullReport() completed successfully.");
@@ -197,6 +206,19 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR
             this.JobSessionSummaryTable();
             this.JobInfoTable();
             this.HTMLSTRING += this.tables.AddJobTablesFooter();
+        }
+
+        private void VbawsSection()
+        {
+            try
+            {
+                CVbawsTables vbawsTables = new();
+                this.HTMLSTRING += vbawsTables.RenderAll(this.SCRUB);
+            }
+            catch (System.Exception ex)
+            {
+                this.log.Error(this.logStart + "VBAWS table rendering failed: " + ex.Message);
+            }
         }
 
         private void ServersRequirementsTable()
