@@ -424,6 +424,27 @@ namespace VeeamHealthCheck.Startup
                 CGlobals.IsVb365 = true;
             }
 
+            // Detect VBAWS data in import directory
+            string vbawsImportDir = Path.Combine(basePath, "VBAWS");
+            if (Directory.Exists(vbawsImportDir))
+            {
+                CGlobals.IsVbaws = true;
+                this.LOG.Info(this.logStart + "VBAWS data detected in import", false);
+            }
+            else
+            {
+                // Also check for VBAWS CSV files in the resolved directory
+                try
+                {
+                    if (Directory.Exists(csvDirectory) && Directory.GetFiles(csvDirectory, "_Vbaws*.csv").Length > 0)
+                    {
+                        CGlobals.IsVbaws = true;
+                        this.LOG.Info(this.logStart + "VBAWS CSV files detected in import directory", false);
+                    }
+                }
+                catch { /* ignore file search errors */ }
+            }
+
             // Extract timestamps for report interval
             var (earliest, latest) = CImportPathResolver.ExtractTimestamps(csvDirectory);
             this.LOG.Info(this.logStart + $"Data collection period: {earliest:yyyy-MM-dd} to {latest:yyyy-MM-dd}", false);
