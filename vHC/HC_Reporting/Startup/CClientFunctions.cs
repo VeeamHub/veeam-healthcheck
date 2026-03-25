@@ -443,15 +443,6 @@ namespace VeeamHealthCheck.Startup
                 this.PreRunCheck();
             }
 
-            try // REST TEST AREA
-            {
-                // RestInvoker restInvoker = new RestInvoker();
-                // restInvoker.Run();
-            }
-            catch (Exception)
-            {
-            }
-            
             return this.StartPrimaryFunctions();
         }
 
