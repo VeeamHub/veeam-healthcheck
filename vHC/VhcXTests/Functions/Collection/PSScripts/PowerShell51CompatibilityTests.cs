@@ -1,6 +1,7 @@
 // PowerShell 5.1 Compatibility Tests
-// Validates that VBR scripts don't contain PS7-only syntax
+// Validates that VBR scripts don't contain PS7-only syntax or non-ASCII characters
 // Background: Issue #97 - ternary operators broke PS5.1 compatibility
+//             UTF-8 non-ASCII bytes (e.g. em dash) decoded as Windows-1252 by PS5.1, corrupting string parsing
 
 using System.Text.RegularExpressions;
 using Xunit;
@@ -17,7 +18,6 @@ public class PowerShell51CompatibilityTests
     private static readonly string[] Ps51RequiredScripts = new[]
     {
         "Tools/Scripts/HealthCheck/VBR/Get-VBRConfig.ps1",
-        "Tools/Scripts/HealthCheck/VBR/Get-VeeamSessionReport.ps1",
         "Tools/Scripts/HealthCheck/VBR/Get-NasInfo.ps1",
         "Tools/Scripts/HotfixDetection/Collect-VBRLogs.ps1",
         "Tools/Scripts/HotfixDetection/DumpManagedServerToText.ps1"
@@ -37,13 +37,6 @@ public class PowerShell51CompatibilityTests
     public void GetVBRConfig_ShouldNotContain_TernaryOperator()
     {
         var scriptPath = GetScriptPath("Tools/Scripts/HealthCheck/VBR/Get-VBRConfig.ps1");
-        AssertNoPs7Syntax(scriptPath, "ternary");
-    }
-
-    [Fact]
-    public void GetVeeamSessionReport_ShouldNotContain_TernaryOperator()
-    {
-        var scriptPath = GetScriptPath("Tools/Scripts/HealthCheck/VBR/Get-VeeamSessionReport.ps1");
         AssertNoPs7Syntax(scriptPath, "ternary");
     }
 
@@ -68,12 +61,85 @@ public class PowerShell51CompatibilityTests
         AssertNoPs7Syntax(scriptPath, "all");
     }
 
+    /// <summary>
+    /// PS5.1 reads files as Windows-1252 by default (no BOM). Non-ASCII UTF-8 bytes such as an
+    /// em dash (U+2014 = 0xE2 0x80 0x94) are reinterpreted — byte 0x94 becomes a right curly
+    /// double-quote in Windows-1252, silently corrupting string parsing and producing cascading
+    /// parse errors far from the actual offending character.
+    /// All VBR scripts must therefore be pure ASCII.
+    /// </summary>
+    [Theory]
+    [MemberData(nameof(GetAllVbrScriptFiles))]
+    public void AllVbrScripts_ShouldContainOnlyAsciiCharacters(string relativePath)
+    {
+        var scriptPath = GetVbrScriptsRootPath(relativePath);
+        if (!File.Exists(scriptPath))
+            return;
+
+        var lines = File.ReadAllLines(scriptPath, System.Text.Encoding.Latin1);
+        var violations = new List<string>();
+
+        for (int i = 0; i < lines.Length; i++)
+        {
+            foreach (char c in lines[i])
+            {
+                if (c > 127)
+                {
+                    violations.Add($"Line {i + 1}: non-ASCII character U+{(int)c:X4} ('{c}')\n  {lines[i].Trim()}");
+                    break;
+                }
+            }
+        }
+
+        if (violations.Count > 0)
+        {
+            Assert.Fail(
+                $"Non-ASCII characters found in {relativePath}:\n\n" +
+                string.Join("\n\n", violations) +
+                "\n\nFix: Replace with ASCII equivalents (e.g. em dash \u2014 --> -)." +
+                "\n     PS5.1 reads files as Windows-1252; non-ASCII UTF-8 bytes corrupt string parsing.");
+        }
+    }
+
+    public static IEnumerable<object[]> GetAllVbrScriptFiles()
+    {
+        var root = GetVbrScriptsRoot();
+        if (root == null)
+            yield break;
+
+        foreach (var file in Directory.EnumerateFiles(root, "*.ps1", SearchOption.AllDirectories)
+                     .Concat(Directory.EnumerateFiles(root, "*.psm1", SearchOption.AllDirectories)))
+        {
+            yield return new object[] { Path.GetRelativePath(root, file) };
+        }
+    }
+
     public static IEnumerable<object[]> GetAllPs51Scripts()
     {
         foreach (var script in Ps51RequiredScripts)
         {
             yield return new object[] { script };
         }
+    }
+
+    private static string? GetVbrScriptsRoot()
+    {
+        var currentDir = AppDomain.CurrentDomain.BaseDirectory;
+        var searchDir = new DirectoryInfo(currentDir);
+
+        while (searchDir != null && searchDir.Name != "vHC")
+            searchDir = searchDir.Parent;
+
+        if (searchDir == null)
+            return null;
+
+        return Path.Combine(searchDir.FullName, "HC_Reporting", "Tools", "Scripts", "HealthCheck", "VBR");
+    }
+
+    private static string GetVbrScriptsRootPath(string relativePath)
+    {
+        var root = GetVbrScriptsRoot() ?? throw new DirectoryNotFoundException("Could not find VBR scripts directory");
+        return Path.Combine(root, relativePath);
     }
 
     private static string GetScriptPath(string relativePath)

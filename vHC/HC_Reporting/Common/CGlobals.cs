@@ -19,6 +19,12 @@ namespace VeeamHealthCheck.Shared
         /// Used to track which files are present/missing and generate data collection summaries.
         /// </summary>
         public static List<CsvValidationResult> CsvValidationResults { get; set; } = new();
+
+        /// <summary>
+        /// Stores per-collector success/failure entries loaded from _CollectionManifest.csv.
+        /// Populated by CCsvValidator.LoadManifest() after PowerShell collection completes.
+        /// </summary>
+        public static List<CCollectionManifestEntry> CollectionManifest { get; set; } = new();
         private static bool scrub;
         private static readonly CScrubHandler scrubberMain = new();
         public static readonly string backupServerId = "6745a759-2205-4cd2-b172-8ec8f7e60ef8";

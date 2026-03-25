@@ -120,6 +120,7 @@ namespace VeeamHealthCheck.Functions.Reporting.Html
                         if (sessionCount != 0)
                         {
                             double percent = (sessionCount - fails + retries) / sessionCount * 100;
+                            if (percent > 100) { percent = 100; }
                             info.SuccessRate = (int)Math.Round(percent, 0, MidpointRounding.ToEven);
                             string sessionInfoString = string.Format(string.Empty +
                                 "Total Sessions: {0}, " +
@@ -131,10 +132,6 @@ namespace VeeamHealthCheck.Functions.Reporting.Html
                                 retries,
                                 info.SuccessRate);
                             log.Info(this.logStart + "Session Calcuations:\t" + sessionInfoString);
-                            if (percent > 100)
-                            {// TODO: if percent greater than 100, set to 100
-                                percent = 100;
-                            }
 
                             if (fails != 0 || retries != 0)
                             {
