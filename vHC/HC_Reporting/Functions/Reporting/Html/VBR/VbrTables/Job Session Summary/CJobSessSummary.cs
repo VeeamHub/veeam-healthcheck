@@ -183,12 +183,28 @@ namespace VeeamHealthCheck.Functions.Reporting.Html
                         {
                             if (info.AvgDataSize > info.UsedVmSizeTB)
                             {
-                                info.AvgChangeRate = Math.Round(info.AvgDataSize / info.MaxDataSize * 100, 2);
+                                if (info.MaxDataSize > 0)
+                                {
+                                    info.AvgChangeRate = Math.Round(info.AvgDataSize / info.MaxDataSize * 100, 2);
+                                }
+                                else
+                                {
+                                    info.AvgChangeRate = 0;
+                                }
+
                                 avgRates.Add(info.AvgChangeRate);
                             }
                             else
                             {
-                                info.AvgChangeRate = Math.Round(info.AvgDataSize / info.UsedVmSizeTB * 100, 2);
+                                if (info.UsedVmSizeTB > 0)
+                                {
+                                    info.AvgChangeRate = Math.Round(info.AvgDataSize / info.UsedVmSizeTB * 100, 2);
+                                }
+                                else
+                                {
+                                    info.AvgChangeRate = 0;
+                                }
+
                                 avgRates.Add(info.AvgChangeRate);
                             }
                         }

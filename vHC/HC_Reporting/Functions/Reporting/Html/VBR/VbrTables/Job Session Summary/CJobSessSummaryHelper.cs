@@ -258,8 +258,12 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR.VbrTables.Job_Session_Su
         {
             CJobSummaryTypes jobSummaryTypes = new CJobSummaryTypes();
 
-            double totalSessionSuccessPercent = (totalSessions - totalFailedSessions + totalRetries) / totalSessions * 100;
-            double successPercent = Math.Round(totalSessionSuccessPercent, 2);
+            double successPercent = 0;
+            if (totalSessions > 0)
+            {
+                double totalSessionSuccessPercent = (totalSessions - totalFailedSessions + totalRetries) / totalSessions * 100;
+                successPercent = Math.Round(totalSessionSuccessPercent, 2);
+            }
 
             avgRates.RemoveAll(x => x == 0);
 
@@ -273,7 +277,8 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR.VbrTables.Job_Session_Su
             jobSummaryTypes.MaxBackupSize = Math.Round(maxBackupSize.Sum(), 2);
             jobSummaryTypes.AvgDataSize = Math.Round(avgDataSizes.Sum(), 2);
             jobSummaryTypes.MaxDataSize = Math.Round(maxDataSizes.Sum(), 2);
-            var avgChangedData = avgDataSizes.Sum() / maxDataSizes.Sum() * 100;
+            double maxDataSum = maxDataSizes.Sum();
+            double avgChangedData = maxDataSum > 0 ? avgDataSizes.Sum() / maxDataSum * 100 : 0;
             jobSummaryTypes.AvgChangeRate = Math.Round(avgChangedData, 2);
 
             return jobSummaryTypes;
