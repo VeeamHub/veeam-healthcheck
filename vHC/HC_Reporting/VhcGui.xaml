@@ -210,6 +210,30 @@ MIT License
                                   Checked="clearCredsCheckBox_Checked" Unchecked="clearCredsCheckBox_Unchecked"
                                   IsChecked="False"
                                   ToolTip="Clear any previously saved credentials before running"/>
+
+                        <Separator Margin="0,12,0,12" Background="#EEEEEE"/>
+
+                        <!-- Cloud Integration (Opt-In) -->
+                        <TextBlock Text="Cloud Integration" FontSize="13" FontWeight="SemiBold"
+                                   Foreground="#555555" Margin="0,0,0,8"/>
+                        <CheckBox x:Name="vbawsCheckBox" Style="{StaticResource ModernCheckBox}"
+                                  Content="Include Veeam Backup for AWS"
+                                  Checked="vbawsCheckBox_Checked" Unchecked="vbawsCheckBox_Unchecked"
+                                  IsChecked="False"
+                                  ToolTip="Enables network calls to your VBAWS appliance to collect backup policy and session data. Requires VBAWS admin credentials."/>
+                        <StackPanel x:Name="vbawsHostPanel" Orientation="Horizontal"
+                                    Margin="20,8,0,0" Visibility="Collapsed">
+                            <TextBlock Text="Appliance:" VerticalAlignment="Center"
+                                       FontSize="13" Foreground="#333333" Margin="0,0,10,0"/>
+                            <TextBox x:Name="vbawsHostBox" Style="{StaticResource ModernTextBox}"
+                                     Width="200" Height="32" FontSize="12"
+                                     ToolTip="VBAWS appliance hostname or IP (e.g., 10.0.1.50)"/>
+                        </StackPanel>
+                        <CheckBox x:Name="vbawsTrustCertBox" Style="{StaticResource ModernCheckBox}"
+                                  Content="Trust VBAWS self-signed certificate"
+                                  IsChecked="False" Visibility="Collapsed"
+                                  Margin="20,4,0,0"
+                                  ToolTip="Accept the VBAWS appliance TLS certificate without verification"/>
                     </StackPanel>
                 </GroupBox>
 

@@ -151,7 +151,7 @@ namespace VeeamHealthCheck
             this.Cav1Part1.Text = VbrLocalizationHelper.GuiInstCaveat1;
             this.Cav2.Text = VbrLocalizationHelper.GuiInstCaveat2;
             this.Cav3.Text = "*** This tool is community supported and not an officially supported Veeam product.\r\n";
-            this.Cav4.Text = "**** The tool does not automatically phone home, or reach out to any network infrastructure beyond the Veeam Backup and Replication components or the Veeam Backup for 365 components if appropriate.";
+            this.Cav4.Text = "**** The tool does not automatically phone home or reach out to any network infrastructure beyond the Veeam Backup and Replication components or VB365 components. If VBAWS collection is enabled, the tool will connect to your specified VBAWS appliance only.";
             this.OptHdr.Text = VbrLocalizationHelper.GuiOptionsHeader;
             this.htmlCheckBox.Content = VbrLocalizationHelper.GuiShowHtml;
             this.scrubBox.Content = VbrLocalizationHelper.GuiSensData;
@@ -211,6 +211,13 @@ namespace VeeamHealthCheck
 
             // Ensure the selected server is set before running
             UpdateSelectedServersGlobal();
+
+            // Read VBAWS settings from GUI controls
+            if (CGlobals.IsVbaws && vbawsHostBox != null)
+            {
+                CGlobals.VbawsHost = vbawsHostBox.Text.Trim();
+                CGlobals.VbawsTrustCert = vbawsTrustCertBox.IsChecked == true;
+            }
 
             if (!this.functions.VerifyPath())
             {
@@ -300,6 +307,9 @@ namespace VeeamHealthCheck
             clearServersBtn.IsEnabled = false;
             serverListBox.IsEnabled = false;
             RescanBox.IsEnabled = false;
+            vbawsCheckBox.IsEnabled = false;
+            vbawsHostBox.IsEnabled = false;
+            vbawsTrustCertBox.IsEnabled = false;
         }
 
         private void AcceptButton_click(object sender, RoutedEventArgs e)
@@ -399,6 +409,43 @@ namespace VeeamHealthCheck
         {
             CGlobals.RescanHosts = false;
             this.functions.LogUIAction("Rescan Hosts = false");
+        }
+
+        private void vbawsCheckBox_Checked(object sender, RoutedEventArgs e)
+        {
+            var result = MessageBox.Show(
+                "Enabling VBAWS collection will make network calls to your " +
+                "Veeam Backup for AWS appliance to retrieve backup policies, " +
+                "sessions, and repository information.\n\n" +
+                "This requires:\n" +
+                "\u2022 Network connectivity to the VBAWS appliance (port 11005)\n" +
+                "\u2022 VBAWS administrator credentials\n\n" +
+                "No data is sent to the internet \u2014 connections are only made " +
+                "to your specified VBAWS appliance.\n\n" +
+                "Do you want to enable VBAWS collection?",
+                "Enable Cloud Integration",
+                MessageBoxButton.YesNo, MessageBoxImage.Question);
+
+            if (result == MessageBoxResult.Yes)
+            {
+                CGlobals.IsVbaws = true;
+                vbawsHostPanel.Visibility = Visibility.Visible;
+                vbawsTrustCertBox.Visibility = Visibility.Visible;
+                this.functions.LogUIAction("VBAWS enabled");
+            }
+            else
+            {
+                vbawsCheckBox.IsChecked = false;
+            }
+        }
+
+        private void vbawsCheckBox_Unchecked(object sender, RoutedEventArgs e)
+        {
+            CGlobals.IsVbaws = false;
+            CGlobals.VbawsHost = string.Empty;
+            vbawsHostPanel.Visibility = Visibility.Collapsed;
+            vbawsTrustCertBox.Visibility = Visibility.Collapsed;
+            this.functions.LogUIAction("VBAWS disabled");
         }
 
         #endregion
