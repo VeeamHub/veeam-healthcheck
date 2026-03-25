@@ -1,0 +1,4 @@
+"ApplianceId","id","name","status","regionId","schedulePolicy","retentionPolicy"
+"10.0.1.50","pol-001","DailyBackup-Prod","Active","us-east-1","Daily at 02:00","14 days"
+"10.0.1.50","pol-002","WeeklyBackup-Dev","Active","us-west-2","Weekly Sunday 04:00","30 days"
+"10.0.1.50","pol-003","HourlyBackup-Critical","Disabled","eu-west-1","Every 4 hours","7 days"
