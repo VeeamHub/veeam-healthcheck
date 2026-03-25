@@ -196,6 +196,24 @@ namespace VeeamHealthCheck.Startup
                     case "/debug":
                         CGlobals.DEBUG = true;
                         break;
+                    case "/vbaws":
+                        CGlobals.IsVbaws = true;
+                        CGlobals.Logger.Info("VBAWS collection enabled", false);
+                        break;
+                    case var vbawsHost when new Regex("/vbaws:host=.*", RegexOptions.IgnoreCase).IsMatch(a):
+                        CGlobals.IsVbaws = true;
+                        CGlobals.VbawsHost = this.ParsePath(a);
+                        CGlobals.Logger.Info("VBAWS host set to: " + CGlobals.VbawsHost, false);
+                        break;
+                    case var vbawsPort when new Regex("/vbaws:port=.*", RegexOptions.IgnoreCase).IsMatch(a):
+                        if (int.TryParse(this.ParsePath(a), out int vbawsPortVal) && vbawsPortVal > 0)
+                            CGlobals.VbawsPort = vbawsPortVal;
+                        CGlobals.Logger.Info("VBAWS port set to: " + CGlobals.VbawsPort, false);
+                        break;
+                    case "/vbaws:trustcert":
+                        CGlobals.VbawsTrustCert = true;
+                        CGlobals.Logger.Info("VBAWS TLS certificate validation disabled", false);
+                        break;
                     case var match when new Regex("/path=.*").IsMatch(a):
                         _hfdPath = this.ParsePath(a);
                         CGlobals.Logger.Info("HFD path: " + targetDir);

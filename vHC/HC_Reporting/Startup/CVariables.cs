@@ -16,6 +16,7 @@ namespace VeeamHealthCheck
 
         public static string vb365Dir = "\\VB365";
         public static string VbrDir = "\\VBR";
+        public static string VbawsDir = "\\VBAWS";
         public static string safeSuffix = @"\vHC-AnonymousReport";
         public static string unsafeSuffix = @"\vHC-Report";
 
@@ -101,6 +102,42 @@ namespace VeeamHealthCheck
         public static string GetVbrBaseDir()
         {
             return unsafeDir + VbrDir;
+        }
+
+        /// <summary>
+        /// Gets the VBAWS directory path with appliance host and timestamp subdirectories.
+        /// Format: C:\temp\vHC\Original\VBAWS\{appliancehost}\{timestamp}
+        /// </summary>
+        public static string vbawsDir
+        {
+            get
+            {
+                // If importing with a resolved path, check for VBAWS data there
+                if (CGlobals.IMPORT && !string.IsNullOrEmpty(ResolvedImportPath))
+                {
+                    return ResolvedImportPath;
+                }
+
+                return GetVbawsDirWithTimestamp();
+            }
+        }
+
+        private static string GetVbawsDirWithTimestamp()
+        {
+            string basePath = unsafeDir + VbawsDir;
+
+            string applianceHost = string.IsNullOrEmpty(CGlobals.VbawsHost) ? "unknown" : CGlobals.VbawsHost;
+            string timestamp = CGlobals.GetRunTimestamp();
+
+            return Path.Combine(basePath, applianceHost, timestamp);
+        }
+
+        /// <summary>
+        /// Gets the base VBAWS directory without appliance/timestamp subdirectories.
+        /// </summary>
+        public static string GetVbawsBaseDir()
+        {
+            return unsafeDir + VbawsDir;
         }
     }
 }
