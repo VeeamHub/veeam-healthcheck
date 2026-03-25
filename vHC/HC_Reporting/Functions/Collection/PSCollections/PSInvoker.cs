@@ -378,16 +378,10 @@ namespace VeeamHealthCheck.Functions.Collection.PSCollections
             var stdOutTask = System.Threading.Tasks.Task.Run(() => res1.StandardOutput.ReadToEnd());
             var stdErrTask = System.Threading.Tasks.Task.Run(() => res1.StandardError.ReadToEnd());
 
-            // Wait for process to complete (with timeout)
-            bool exited = res1.WaitForExit(300000); // 5 minute timeout
+            // Wait for process to complete (no timeout - large environments may take a while)
+            res1.WaitForExit();
             string stdOut = stdOutTask.GetAwaiter().GetResult();
             string stdErr = stdErrTask.GetAwaiter().GetResult();
-            if (!exited)
-            {
-                this.log.Error("[PS] Script execution timeout after 5 minutes", false);
-                try { res1.Kill(); } catch { }
-                return false;
-            }
 
             // Log stdout if present
             if (!string.IsNullOrWhiteSpace(stdOut))

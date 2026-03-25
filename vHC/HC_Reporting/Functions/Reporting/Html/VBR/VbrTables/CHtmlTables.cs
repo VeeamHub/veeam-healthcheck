@@ -2750,15 +2750,19 @@ this.form.TableHeader(VbrLocalizationHelper.SbrExt15, VbrLocalizationHelper.SbrE
                         }
 
                         // clean up totals:
-                        double successPercent = (totalSessionCount - (double)totalFails + totalRetries) / totalSessionCount * 100;
-                        totalSuccessRate = (double)Math.Round(successPercent, 2);
-                        if (totalAvgDataSize == 0 && totalMaxDataSize == 0)
+                        if (totalSessionCount > 0)
                         {
-                            totalAvgChangeRate = 0;
+                            double successPercent = (totalSessionCount - (double)totalFails + totalRetries) / totalSessionCount * 100;
+                            totalSuccessRate = (double)Math.Round(successPercent, 2);
+                        }
+
+                        if (totalMaxDataSize > 0)
+                        {
+                            totalAvgChangeRate = Math.Round(totalAvgDataSize / totalMaxDataSize * 100, 2);
                         }
                         else
                         {
-                            totalAvgChangeRate = Math.Round(totalAvgDataSize / totalMaxDataSize * 100, 2);
+                            totalAvgChangeRate = 0;
                         }
 
                         // log.Debug("Total avg change rate = " + totalAvgChangeRate);
@@ -2780,7 +2784,7 @@ this.form.TableHeader(VbrLocalizationHelper.SbrExt15, VbrLocalizationHelper.SbrE
                             totalRow += this.form.TableData(Math.Round(totalMaxBackupSize, 2).ToString(), string.Empty);
                             totalRow += this.form.TableData(Math.Round(totalAvgDataSize, 2).ToString(), string.Empty);
                             totalRow += this.form.TableData(Math.Round(totalMaxDataSize, 2).ToString(), string.Empty);
-                            if (totalAvgChangeRate == double.NaN)
+                            if (double.IsNaN(totalAvgChangeRate))
                             {
                                 totalAvgChangeRate = 0;
                             }
