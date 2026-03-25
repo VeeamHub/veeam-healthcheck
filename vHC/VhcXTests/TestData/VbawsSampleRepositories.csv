@@ -1,0 +1,3 @@
+"ApplianceId","id","name","type","regionId","bucketName"
+"10.0.1.50","repo-001","prod-backups","S3Standard","us-east-1","veeam-prod-backups-us-east"
+"10.0.1.50","repo-002","dev-backups","S3Standard","us-west-2","veeam-dev-backups-us-west"

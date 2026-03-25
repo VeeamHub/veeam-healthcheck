@@ -154,6 +154,13 @@ namespace VeeamHealthCheck.Shared
 
         public static bool IsVb365 { get { return isVb365; } set { isVb365 = value; } }
 
+        // VBAWS Integration (opt-in only)
+        private static bool isVbaws;
+        public static bool IsVbaws { get { return isVbaws; } set { isVbaws = value; } }
+        public static string VbawsHost = string.Empty;
+        public static int VbawsPort = 11005;
+        public static bool VbawsTrustCert = false;
+
         public static bool RunFullReport { get { return runFullReport; } set { runFullReport = value; } }
 
         public static bool RunSecReport { get { return runSecReport; } set { runSecReport = value; } }

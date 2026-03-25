@@ -95,6 +95,12 @@ namespace VeeamHealthCheck.Scrubber
                     break;
                 case ScrubItemType.SOBR:
                     break;
+                case ScrubItemType.VbawsAppliance:
+                    break;
+                case ScrubItemType.AwsAccountId:
+                    break;
+                case ScrubItemType.S3Bucket:
+                    break;
             }
 
             if (!this.matchDictionary.ContainsKey(item))
@@ -129,6 +135,11 @@ namespace VeeamHealthCheck.Scrubber
         Path = 4,
         VM = 5,
         SOBR = 6,
+
+        // VBAWS-specific scrub types
+        VbawsAppliance = 10,
+        AwsAccountId = 11,
+        S3Bucket = 12,
 
         Item = 99
     }

@@ -1,0 +1,4 @@
+"ApplianceId","id","vmName","regionId","createdDate","type"
+"10.0.1.50","rp-001","web-server-01","us-east-1","2026-03-24T02:45:00Z","Snapshot"
+"10.0.1.50","rp-002","db-server-01","us-east-1","2026-03-24T02:42:00Z","Snapshot"
+"10.0.1.50","rp-003","web-server-01","us-east-1","2026-03-23T02:45:00Z","Snapshot"

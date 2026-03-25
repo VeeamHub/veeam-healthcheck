@@ -12,6 +12,7 @@ using Microsoft.Management.Infrastructure;
 using VeeamHealthCheck.Functions.Collection.DB;
 using VeeamHealthCheck.Functions.Collection.LogParser;
 using VeeamHealthCheck.Functions.Collection.PSCollections;
+using VeeamHealthCheck.Functions.Collection.REST;
 using VeeamHealthCheck.Functions.Collection.Security;
 using VeeamHealthCheck.Functions.CredsWindow;
 using VeeamHealthCheck.Functions.Reporting.Html.VBR.VbrTables.Security;
@@ -66,6 +67,20 @@ namespace VeeamHealthCheck.Functions.Collection
                 if (CGlobals.DBTYPE != CGlobals.PgTypeName)
                 {
                     this.ExecSqlQueries();
+                }
+            }
+
+            // VBAWS REST collection (opt-in only - zero-networking policy)
+            if (CGlobals.IsVbaws && !string.IsNullOrEmpty(CGlobals.VbawsHost))
+            {
+                try
+                {
+                    this.ExecVbawsCollection();
+                }
+                catch (Exception ex)
+                {
+                    // VBAWS failure must NEVER block VBR/VB365 reports
+                    CGlobals.Logger.Warning($"VBAWS collection failed: {ex.Message}. Skipping VBAWS report section.", false);
                 }
             }
         }
@@ -557,6 +572,33 @@ namespace VeeamHealthCheck.Functions.Collection
                 p.InvokeVb365Collect();
                 this.SCRIPTSUCCESS = true;
             }
+        }
+
+        private void ExecVbawsCollection()
+        {
+            log.Info("Starting VBAWS REST API collection...", false);
+
+            var collector = new CVbawsRestCollector(CGlobals.VbawsHost, CGlobals.VbawsPort, CGlobals.VbawsTrustCert);
+
+            // Get credentials - reuse CredsHandler pattern
+            CredsHandler ch = new();
+            var creds = ch.GetCreds();
+
+            if (creds == null)
+            {
+                log.Error("VBAWS credentials not provided. Skipping VBAWS collection.", false);
+                return;
+            }
+
+            if (!collector.Authenticate(creds.Value.Username, creds.Value.Password))
+            {
+                log.Error("VBAWS authentication failed. Skipping VBAWS collection.", false);
+                return;
+            }
+
+            // Use CVariables.vbawsDir for output path
+            string vbawsOutputDir = CVariables.vbawsDir;
+            collector.CollectAll(vbawsOutputDir);
         }
 
         private void PopulateWaits()
