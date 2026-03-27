@@ -69,9 +69,10 @@ namespace VhcXTests.TestData
         /// </summary>
         public static string GenerateProxies()
         {
-            return @"""Name"",""Host"",""MaxTasksCount"",""TransportMode"",""HostId""
-""Proxy-01"",""Proxy-01.domain.local"",""4"",""Auto"",""11111111-2222-3333-4444-555555555555""
-""VBR-Server"",""VBR-Server.domain.local"",""2"",""Auto"",""aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee""";
+            // Headers match CProxyCsvInfos [Index(n)] positional mapping (16 columns, indices 0-15).
+            return @"""Id"",""Name"",""Description"",""Info"",""HostId"",""Host"",""Type"",""IsDisabled"",""Options"",""MaxTasksCount"",""UseSsl"",""FailoverToNetwork"",""TransportMode"",""IsVbrProxy"",""ChosenVm"",""ChassisType""
+""11111111-2222-3333-4444-555555555555"",""Proxy-01"","""","""",""11111111-2222-3333-4444-555555555555"",""Proxy-01.domain.local"",""Vi"","""","""",""4"","""","""",""Auto"","""","""",""""
+""aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee"",""VBR-Server"","""","""",""aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee"",""VBR-Server.domain.local"",""Vi"","""","""",""2"","""","""",""Auto"","""","""",""""";
         }
 
         /// <summary>

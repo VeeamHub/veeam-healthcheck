@@ -113,8 +113,8 @@ namespace VhcXTests.Functions.Reporting.Html.VBR.VbrTables
             var jobs = parser.GetDynamicJobInfo().ToList();
 
             // Verify schedule enabled field
-            Assert.Contains(jobs, j => j.IsScheduleEnabled == "True");
-            Assert.Contains(jobs, j => j.IsScheduleEnabled == "False");
+            Assert.Contains(jobs, j => j.isscheduleenabled == "True");
+            Assert.Contains(jobs, j => j.isscheduleenabled == "False");
         }
 
         [Fact]
@@ -177,8 +177,8 @@ namespace VhcXTests.Functions.Reporting.Html.VBR.VbrTables
             // Verify space fields are present
             foreach (var repo in repos)
             {
-                Assert.NotNull(repo.TotalSpace);
-                Assert.NotNull(repo.FreeSpace);
+                Assert.NotNull(repo.totalspace);
+                Assert.NotNull(repo.freespace);
             }
         }
 
