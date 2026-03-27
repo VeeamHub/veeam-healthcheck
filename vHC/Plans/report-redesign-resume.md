@@ -1,6 +1,9 @@
 # VBR Report Redesign — Resume Plan
+
+> **STATUS: IN PROGRESS** | Last verified: 2026-03-27 (tests passing 390/390)
+
 **Branch**: `feature/report-redesign-executive-dashboard`
-**Last commit**: `c72d69e`
+**Last commit**: `0f36cd7`
 **Resume session**: check `/Users/adam/.claude/projects/-Users-adam-code-veeam-healthcheck/` for latest `.jsonl`
 
 ---
@@ -10,11 +13,15 @@
 ```
 [DONE] #39 — No VB365 files modified          ✅ git diff confirmed empty
 [DONE] #40 — No test files deleted             ✅ git diff confirmed empty
+[DONE] #53 — Backup Server cleanup            ✅ committed in 0f36cd7 (verified 2026-03-27)
 
-[READY] #38 — Run test suites                  run immediately, no code changes
-[BLOCKED] #53 — Backup Server cleanup          Designer spec complete, ready for Engineer
+[DONE] #38 — Run test suites                  ✅ 390/390 passing (2026-03-27)
 
-[DEFERRED] #30/#31 — Arch migration Phase 2-3  separate Algorithm session
+[DONE] #30 — Arch migration Phase 2            ✅ 5 methods extracted, CHtmlTables 2074→1625 lines (2026-03-27)
+
+[PINNED] #31 — Arch migration Phase 3          SectionStart/SectionEnd via base class contract — resume later
+
+[NEXT] HTML Report Polish                       Veeam color scheme + responsive table width
 ```
 
 ---
