@@ -244,7 +244,8 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.Shared
             };
 
             string display = value == 0 ? "" : data;
-            return $"<td class=\"{heatClass}\">{display}</td>";
+            string title = value == 0 ? "" : $" title=\"{data}\"";
+            return $"<td class=\"{heatClass}\"{title}>{display}</td>";
         }
 
         public string HeatmapLegend()

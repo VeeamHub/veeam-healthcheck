@@ -760,25 +760,35 @@ table.concurrency-heatmap {
 }
 table.concurrency-heatmap td {
   text-align: center;
-  font-size: 12px;
+  font-size: 10px;
   font-weight: 600;
   font-variant-numeric: tabular-nums;
-  padding: 6px 4px;
-  min-width: 36px;
-  transition: background-color 0.15s;
+  padding: 3px 2px;
+  min-width: 22px;
+  transition: background-color 0.15s, color 0.1s;
 }
 table.concurrency-heatmap td.heat-0 { color: var(--text-secondary); font-weight: 400; }
-table.concurrency-heatmap td.heat-1 { color: #007a24; }
-table.concurrency-heatmap td.heat-2 { color: #007a24; }
-table.concurrency-heatmap td.heat-3 { color: #664d03; }
-table.concurrency-heatmap td.heat-4 { color: #fff; }
-table.concurrency-heatmap td.heat-5 { color: #fff; }
+table.concurrency-heatmap td.heat-1 { color: transparent; }
+table.concurrency-heatmap td.heat-2 { color: transparent; }
+table.concurrency-heatmap td.heat-3 { color: transparent; }
+table.concurrency-heatmap td.heat-4 { color: transparent; }
+table.concurrency-heatmap td.heat-5 { color: transparent; }
+table.concurrency-heatmap td.heat-1:hover { color: #007a24; }
+table.concurrency-heatmap td.heat-2:hover { color: #007a24; }
+table.concurrency-heatmap td.heat-3:hover { color: #664d03; }
+table.concurrency-heatmap td.heat-4:hover { color: #fff; }
+table.concurrency-heatmap td.heat-5:hover { color: #fff; }
 html.dark-theme table.concurrency-heatmap td.heat-0 { color: #9ca3af; }
-html.dark-theme table.concurrency-heatmap td.heat-1 { color: #cceedd; }
-html.dark-theme table.concurrency-heatmap td.heat-2 { color: #cceedd; }
-html.dark-theme table.concurrency-heatmap td.heat-3 { color: #fef3c7; }
-html.dark-theme table.concurrency-heatmap td.heat-4 { color: #fff; }
-html.dark-theme table.concurrency-heatmap td.heat-5 { color: #fff; }
+html.dark-theme table.concurrency-heatmap td.heat-1 { color: transparent; }
+html.dark-theme table.concurrency-heatmap td.heat-2 { color: transparent; }
+html.dark-theme table.concurrency-heatmap td.heat-3 { color: transparent; }
+html.dark-theme table.concurrency-heatmap td.heat-4 { color: transparent; }
+html.dark-theme table.concurrency-heatmap td.heat-5 { color: transparent; }
+html.dark-theme table.concurrency-heatmap td.heat-1:hover { color: #cceedd; }
+html.dark-theme table.concurrency-heatmap td.heat-2:hover { color: #cceedd; }
+html.dark-theme table.concurrency-heatmap td.heat-3:hover { color: #fef3c7; }
+html.dark-theme table.concurrency-heatmap td.heat-4:hover { color: #fff; }
+html.dark-theme table.concurrency-heatmap td.heat-5:hover { color: #fff; }
 table.concurrency-heatmap td:first-child {
   background: transparent !important;
   color: var(--text-secondary);
