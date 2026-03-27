@@ -343,7 +343,7 @@ namespace VhcXTests.Functions.Reporting.Html.VBR.VbrTables
 
             var sobrId = "55555555-5555-5555-5555-555555555555";
             var sobrCsv = @"""PolicyType"",""Extents"",""UsePerVMBackupFiles"",""PerformFullWhenExtentOffline"",""EnableCapacityTier"",""OperationalRestorePeriod"",""OverridePolicyEnabled"",""OverrideSpaceThreshold"",""OffloadWindowOptions"",""CapacityExtent"",""EncryptionEnabled"",""EncryptionKey"",""CapacityTierCopyPolicyEnabled"",""CapacityTierMovePolicyEnabled"",""ArchiveTierEnabled"",""ArchiveExtent"",""ArchivePeriod"",""CostOptimizedArchiveEnabled"",""ArchiveFullBackupModeEnabled"",""PluginBackupsOffloadEnabled"",""CopyAllPluginBackupsEnabled"",""CopyAllMachineBackupsEnabled"",""Id"",""Name"",""Description""
-""Performance"","""",""False"",""False"",""True"",""7"",""False"",""0"","""",""CapExtent-01"",""False"","""",""True"",""True"",""False"","""",""0"",""False"",""False"",""False"",""False"",""False"",""" + sobrId + """,""SOBR-Cap"",""Capacity SOBR""";
+""Performance"","""",""False"",""False"",""True"",""7"",""False"",""0"","""",""CapExtent-01"",""False"","""",""True"",""True"",""False"","""",""0"",""False"",""False"",""False"",""False"",""False"",""" + sobrId + @""",""SOBR-Cap"",""Capacity SOBR""";
             var capTierCsv = @$"""Status"",""Type"",""Immute"",""immutabilityperiod"",""ImmutabilityMode"",""SizeLimitEnabled"",""SizeLimit"",""RepoId"",""ConnectionType"",""GatewayServer"",""parentid"",""Name""
 ""Normal"",""AzureBlob"",""True"",""30"",""RepositoryRetention"",""False"",""0"",""11111111-2222-3333-4444-555555555555"",""Direct"","""",""{sobrId}"",""SOBR Cap Extent""";
 
@@ -465,7 +465,7 @@ namespace VhcXTests.Functions.Reporting.Html.VBR.VbrTables
             var sobrId = "11111111-2222-3333-4444-555555555555";
             var repoId = "77777777-8888-9999-aaaa-bbbbbbbbbbbb";
             var sobrCsv = @"""PolicyType"",""Extents"",""UsePerVMBackupFiles"",""PerformFullWhenExtentOffline"",""EnableCapacityTier"",""OperationalRestorePeriod"",""OverridePolicyEnabled"",""OverrideSpaceThreshold"",""OffloadWindowOptions"",""CapacityExtent"",""EncryptionEnabled"",""EncryptionKey"",""CapacityTierCopyPolicyEnabled"",""CapacityTierMovePolicyEnabled"",""ArchiveTierEnabled"",""ArchiveExtent"",""ArchivePeriod"",""CostOptimizedArchiveEnabled"",""ArchiveFullBackupModeEnabled"",""PluginBackupsOffloadEnabled"",""CopyAllPluginBackupsEnabled"",""CopyAllMachineBackupsEnabled"",""Id"",""Name"",""Description""
-""Performance"","""",""False"",""False"",""False"",""7"",""False"",""0"","""","""",""False"","""",""False"",""False"",""True"",""Azure-Archive-Blob"",""30"",""True"",""True"",""False"",""False"",""False"",""" + sobrId + """,""SOBR-Archive"",""Archive SOBR""";
+""Performance"","""",""False"",""False"",""False"",""7"",""False"",""0"","""","""",""False"","""",""False"",""False"",""True"",""Azure-Archive-Blob"",""30"",""True"",""True"",""False"",""False"",""False"",""" + sobrId + @""",""SOBR-Archive"",""Archive SOBR""";
             var archTierCsv = @$"""Status"",""ParentId"",""RepoId"",""Name"",""ArchiveType"",""BackupImmutabilityEnabled""
 ""Normal"",""{sobrId}"",""{repoId}"",""Azure-Archive-Blob"",""AzureArchive"",""True""";
 
