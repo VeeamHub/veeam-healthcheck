@@ -34,7 +34,7 @@ namespace VhcXTests.TestData
         {
             var immutableValue = immutableEnabled.ToString();
             return @$"""Status"",""ParentId"",""RepoId"",""Name"",""ArchiveType"",""BackupImmutabilityEnabled"",""GatewayMode"",""GatewayServer""
-    ""Normal"",""55555555-5555-5555-5555-555555555555"",""77777777-8888-9999-aaaa-bbbbbbbbbbbb"",""Azure-Archive-Blob"",""AzureArchive"",""{immutableValue}"",""Direct"",""vbr-server-01.test.local(aaaaaaaa-1111-2222-3333-bbbbbbbbbbbb); proxy-server-01.test.local(cccccccc-1111-2222-3333-dddddddddddd)""";
+""Normal"",""55555555-5555-5555-5555-555555555555"",""77777777-8888-9999-aaaa-bbbbbbbbbbbb"",""Azure-Archive-Blob"",""AzureArchive"",""{immutableValue}"",""Direct"",""vbr-server-01.test.local(aaaaaaaa-1111-2222-3333-bbbbbbbbbbbb); proxy-server-01.test.local(cccccccc-1111-2222-3333-dddddddddddd)""";
         }
 
         #endregion
@@ -91,9 +91,13 @@ namespace VhcXTests.TestData
         /// </summary>
         public static string GenerateRepositories()
         {
-            return @"""Name"",""Path"",""TotalSpace"",""FreeSpace"",""isimmutabilitysupported"",""Host"",""Type""
-""Default Backup Repository"",""C:\Backup"",""1099511627776"",""549755813888"",""False"",""VBR-Server"",""WinLocal""
-""Hardened Repo"",""D:\HardenedBackup"",""2199023255552"",""1649267441664"",""True"",""Repo-01"",""LinuxHardened""";
+            // Headers match CRepoCsvInfos [Index(n)] positional mapping (40 columns).
+            // Position 25 uses "isimmutabilitysupported" (lowercase) so dynamic tests can access r.isimmutabilitysupported.
+            // Positions 37/38 use "TotalSpace"/"FreeSpace" so dynamic tests can access repo.TotalSpace / repo.FreeSpace.
+            // Bool positions (11,13,16,18,21,22,23,24,25) must have valid True/False values.
+            return @"""Id"",""Name"",""HostId"",""Description"",""CreationTime"",""Path"",""FullPath"",""FriendlyPath"",""ShareCredsId"",""Type"",""Status"",""IsUnavailable"",""Group"",""UseNfsOnMountHost"",""VersionOfCreation"",""Tag"",""IsTemporary"",""TypeDisplay"",""IsRotatedDriveRepository"",""EndPointCryptoKeyId"",""Options"",""HasBackupChainLengthLimitation"",""IsSanSnapshotOnly"",""IsDedupStorage"",""SplitStoragesPerVm"",""isimmutabilitysupported"",""MaxTasks"",""UnlimitedTasks"",""MaxArchiveTasks"",""DataRateLimit"",""Uncompress"",""AlignBlock"",""RemoteAccessLimitation"",""EpEncryptionEnabled"",""OneBackupFilePerVM"",""AutoDetectAffinity"",""NfsRepoEncoding"",""TotalSpace"",""FreeSpace"",""GateHosts""
+""repo-id-1"",""Default Backup Repository"",""aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee"","""","""",""C:\Backup"",""C:\Backup"",""C:\Backup"","""",""WinLocal"",""Available"",""False"","""",""False"","""","""",""False"",""Windows local"",""False"","""","""",""False"",""False"",""False"",""False"",""False"",""4"",""False"",""0"",""0"",""False"",""False"",""None"",""False"",""False"",""True"","""",""1099511627776"",""549755813888"",""""
+""repo-id-2"",""Hardened Repo"",""22222222-3333-4444-5555-666666666666"","""","""",""D:\HardenedBackup"",""D:\HardenedBackup"",""D:\HardenedBackup"","""",""LinuxHardened"",""Available"",""False"","""",""False"","""","""",""False"",""Linux hardened"",""False"","""","""",""False"",""False"",""False"",""True"",""True"",""4"",""False"",""0"",""0"",""False"",""False"",""None"",""False"",""False"",""True"","""",""2199023255552"",""1649267441664"",""""";
         }
 
         /// <summary>
@@ -101,8 +105,8 @@ namespace VhcXTests.TestData
         /// </summary>
         public static string GenerateInvalidRepositories()
         {
-            return @"""Name"",""Path"",""TotalSpace"",""FreeSpace"",""isimmutabilitysupported"",""Host"",""Type""
-""Bad Repo"",""C:\Backup"",""100"",""200"",""False"",""VBR-Server"",""WinLocal""";
+            return @"""Id"",""Name"",""HostId"",""Description"",""CreationTime"",""Path"",""FullPath"",""FriendlyPath"",""ShareCredsId"",""Type"",""Status"",""IsUnavailable"",""Group"",""UseNfsOnMountHost"",""VersionOfCreation"",""Tag"",""IsTemporary"",""TypeDisplay"",""IsRotatedDriveRepository"",""EndPointCryptoKeyId"",""Options"",""HasBackupChainLengthLimitation"",""IsSanSnapshotOnly"",""IsDedupStorage"",""SplitStoragesPerVm"",""isimmutabilitysupported"",""MaxTasks"",""UnlimitedTasks"",""MaxArchiveTasks"",""DataRateLimit"",""Uncompress"",""AlignBlock"",""RemoteAccessLimitation"",""EpEncryptionEnabled"",""OneBackupFilePerVM"",""AutoDetectAffinity"",""NfsRepoEncoding"",""TotalSpace"",""FreeSpace"",""GateHosts""
+""bad-repo-id"",""Bad Repo"",""aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee"","""","""",""C:\Backup"",""C:\Backup"",""C:\Backup"","""",""WinLocal"",""Available"",""False"","""",""False"","""","""",""False"",""Windows local"",""False"","""","""",""False"",""False"",""False"",""False"",""False"",""4"",""False"",""0"",""0"",""False"",""False"",""None"",""False"",""False"",""True"","""",""100"",""200"",""""";
         }
 
         #endregion
@@ -114,10 +118,14 @@ namespace VhcXTests.TestData
         /// </summary>
         public static string GenerateJobs()
         {
-            return @"""Name"",""JobType"",""RepositoryId"",""pwdkeyid"",""IsScheduleEnabled""
-""Daily Backup"",""Backup"",""repo-guid-1"",""00000000-0000-0000-0000-000000000000"",""True""
-""Weekly Full"",""Backup"",""repo-guid-1"",""enc-key-guid-1"",""True""
-""Copy to Cloud"",""BackupCopy"",""repo-guid-2"",""enc-key-guid-2"",""False""";
+            // Headers match CJobCsvInfos [Index(n)] positional mapping (40 columns).
+            // Position 4 uses "IsScheduleEnabled" header so dynamic tests can access j.IsScheduleEnabled.
+            // Position 12 uses "pwdkeyid" (lowercase) so dynamic tests can access j.pwdkeyid.
+            // Bool positions (9,26,28,30,32) and double position (13) must have valid values.
+            return @"""Name"",""JobType"",""SheduleEnabledTime"",""ScheduleOptions"",""IsScheduleEnabled"",""RepoName"",""Algorithm"",""FullBackupScheduleKind"",""FullBackupDays"",""TransformFullToSyntethic"",""TransformIncrementsToSyntethic"",""TransformToSyntethicDays"",""pwdkeyid"",""OriginalSize"",""RetentionType"",""RetentionCount"",""RetainDaysToKeep"",""DeletedVmRetentionDays"",""DeletedVmRetention"",""CompressionLevel"",""Deduplication"",""BlockSize"",""IntegrityChecks"",""SpecificStorageEncryption"",""StgEncryptionEnabled"",""KeepFirstFullBackup"",""EnableFullBackup"",""BackupIsAttached"",""GfsWeeklyIsEnabled"",""GfsWeeklyCount"",""GfsMonthlyEnabled"",""GfsMonthlyCount"",""GfsYearlyEnabled"",""GfsYearlyCount"",""IndexingType"",""OnDiskGB"",""AAIPEnabled"",""VSSEnabled"",""VSSIgnoreErrors"",""GuestFSIndexingEnabled""
+""Daily Backup"",""Backup"",""Daily"",""AtSpecifiedTime"",""True"",""Default Backup Repository"",""Incremental"",""FullMonthly"",""1"",""False"",""False"","""",""00000000-0000-0000-0000-000000000000"",""1000"",""Days"",""7"",""0"",""0"",""False"",""Optimal"",""True"",""LargeDeviceBlocks"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""0"",""False"",""0"",""False"",""0"",""None"",""0.5"",""True"",""True"",""False"",""True""
+""Weekly Full"",""Backup"",""Weekly"",""AtSpecifiedTime"",""True"",""Default Backup Repository"",""Incremental"",""FullWeekly"",""7"",""False"",""False"","""",""enc-key-guid-1"",""2000"",""Days"",""14"",""0"",""0"",""False"",""High"",""True"",""LargeDeviceBlocks"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""0"",""False"",""0"",""False"",""0"",""None"",""1.0"",""True"",""True"",""False"",""False""
+""Copy to Cloud"",""BackupCopy"",""Daily"",""AtSpecifiedTime"",""False"",""Cloud Repo"",""Reverse"","""","""",""False"",""False"","""",""enc-key-guid-2"",""500"",""Days"",""7"",""0"",""0"",""False"",""Optimal"",""True"",""LargeDeviceBlocks"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""0"",""False"",""0"",""False"",""0"",""None"",""0.25"",""False"",""False"",""False"",""False""";
         }
 
         #endregion
@@ -130,8 +138,8 @@ namespace VhcXTests.TestData
         public static string GenerateSobrs()
         {
             return @"""PolicyType"",""Extents"",""UsePerVMBackupFiles"",""PerformFullWhenExtentOffline"",""EnableCapacityTier"",""OperationalRestorePeriod"",""OverridePolicyEnabled"",""OverrideSpaceThreshold"",""OffloadWindowOptions"",""CapacityExtent"",""EncryptionEnabled"",""EncryptionKey"",""CapacityTierCopyPolicyEnabled"",""CapacityTierMovePolicyEnabled"",""ArchiveTierEnabled"",""ArchiveExtent"",""ArchivePeriod"",""CostOptimizedArchiveEnabled"",""ArchiveFullBackupModeEnabled"",""PluginBackupsOffloadEnabled"",""CopyAllPluginBackupsEnabled"",""CopyAllMachineBackupsEnabled"",""Id"",""Name"",""Description"",""ArchiveTierEncryptionEnabled""
-    ""PerVM"",""Extent1;Extent2"",""True"",""True"",""True"",""7"",""False"",""80"","""",""Capacity-Repo"",""True"","""",""True"",""True"",""True"",""Archive-Repo"",""30"",""True"",""False"",""True"",""False"",""True"",""55555555-5555-5555-5555-555555555555"",""SOBR-01"",""Scale-Out Repository for production workloads"",""True""
-    ""DataLocality"",""Extent3"",""True"",""False"",""False"",""14"",""True"",""70"","""","""",""False"","""",""False"",""False"",""False"","""",""0"",""False"",""False"",""False"",""False"",""False"",""66666666-6666-6666-6666-666666666666"",""SOBR-02"",""Scale-Out Repository for archive data"",""False""";
+""PerVM"",""Extent1;Extent2"",""True"",""True"",""True"",""7"",""False"",""80"","""",""Capacity-Repo"",""True"","""",""True"",""True"",""True"",""Archive-Repo"",""30"",""True"",""False"",""True"",""False"",""True"",""55555555-5555-5555-5555-555555555555"",""SOBR-01"",""Scale-Out Repository for production workloads"",""True""
+""DataLocality"",""Extent3"",""True"",""False"",""False"",""14"",""True"",""70"","""","""",""False"","""",""False"",""False"",""False"","""",""0"",""False"",""False"",""False"",""False"",""False"",""66666666-6666-6666-6666-666666666666"",""SOBR-02"",""Scale-Out Repository for archive data"",""False""";
         }
 
         /// <summary>
