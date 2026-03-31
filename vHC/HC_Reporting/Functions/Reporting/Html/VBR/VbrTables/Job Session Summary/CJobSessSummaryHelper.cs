@@ -261,7 +261,7 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR.VbrTables.Job_Session_Su
             double successPercent = 0;
             if (totalSessions > 0)
             {
-                double totalSessionSuccessPercent = (totalSessions - totalFailedSessions + totalRetries) / totalSessions * 100;
+                double totalSessionSuccessPercent = (totalSessions - totalFailedSessions) / totalSessions * 100;
                 successPercent = Math.Round(totalSessionSuccessPercent, 2);
             }
 

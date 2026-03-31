@@ -80,6 +80,17 @@ function Get-VhcVbrInfo {
                     }
                 }
             }
+
+            # Fallback: if registry read failed (e.g. non-admin), try VBR PS API
+            if (-not $version) {
+                try {
+                    $backupServer = Get-VBRBackupServerInfo
+                    $version = $backupServer.Build.ToString()
+                    Write-LogFile "Get-VhcVbrInfo: version obtained via Get-VBRBackupServerInfo fallback"
+                } catch {
+                    Write-LogFile "Get-VhcVbrInfo: fallback version detection failed: $($_.Exception.Message)" -LogLevel "WARNING"
+                }
+            }
         }
     } catch {
         Write-LogFile "Get-VhcVbrInfo: failed to read registry values: $($_.Exception.Message)" -LogLevel "WARNING"
