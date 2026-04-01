@@ -44,7 +44,6 @@ jobs:
           --logger "trx;LogFileName=test-results.trx" `
           --collect:"XPlat Code Coverage" `
           --results-directory ${{ github.workspace }}/TestResults
-      continue-on-error: true
 
     - name: Publish test results
       uses: EnricoMi/publish-unit-test-result-action/composite@v2
@@ -134,8 +133,15 @@ jobs:
     needs: build-and-test
     runs-on: [self-hosted, CONSOLE_HOST]
     if: github.event_name != 'pull_request'
-    
+
     steps:
+    - name: Pre-run cleanup
+      run: |
+        if (Test-Path "C:\temp\vHC") {
+          Remove-Item -Path "C:\temp\vHC" -Recurse -Force -ErrorAction SilentlyContinue
+          Write-Host "Cleaned stale data from C:\temp\vHC" -ForegroundColor Yellow
+        }
+
     - name: Checkout repository
       uses: actions/checkout@v4
       
@@ -451,8 +457,9 @@ jobs:
           if ($invalidPercentages.Count -eq 0) {
             Write-Host "  ✅ All percentages are within valid range (0-100%)" -ForegroundColor Green
           } else {
-            Write-Host "  ⚠️ Found $($invalidPercentages.Count) percentages out of range" -ForegroundColor Yellow
+            Write-Host "  ❌ Found $($invalidPercentages.Count) percentages out of range" -ForegroundColor Red
             $invalidPercentages | ForEach-Object { Write-Host "    - $_%" }
+            exit 1
           }
 
           Write-Host "✅ HTML report content validation complete" -ForegroundColor Green
@@ -471,14 +478,18 @@ jobs:
           $startLine = $content | Where-Object { $_ -match "Starting|Enter" } | Select-Object -First 1
           $endLine = $content | Where-Object { $_ -match "complete|DONE" } | Select-Object -Last 1
 
-          if ($startLine -and $endLine -and $startLine -match "(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2})" -and $endLine -match "(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2})") {
+          if ($startLine -match "(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2})") {
+            $startTs = $Matches[1]
+            if ($endLine -match "(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2})") {
+            $endTs = $Matches[1]
             try {
-              $start = [datetime]::ParseExact($Matches[1], "yyyy-MM-dd HH:mm:ss", $null)
-              $end = [datetime]::ParseExact($Matches[1], "yyyy-MM-dd HH:mm:ss", $null)
+              $start = [datetime]::ParseExact($startTs, "yyyy-MM-dd HH:mm:ss", $null)
+              $end = [datetime]::ParseExact($endTs, "yyyy-MM-dd HH:mm:ss", $null)
               $duration = ($end - $start).TotalMinutes
               Write-Host "  📄 $($log.BaseName): $([math]::Round($duration, 2)) minutes" -ForegroundColor White
             } catch {
               Write-Host "  ⚠️ $($log.BaseName): Could not parse timing" -ForegroundColor Yellow
+            }
             }
           }
         }
@@ -493,7 +504,7 @@ jobs:
         retention-days: 7
     
     - name: Cleanup
-      if: success()
+      if: always()
       continue-on-error: true
       run: |
         # Add delay to allow file handles to release
@@ -511,11 +522,18 @@ jobs:
     needs: build-and-test
     runs-on: [self-hosted, vbr-13-sql]
     if: github.event_name != 'pull_request'
-    
+
     steps:
+    - name: Pre-run cleanup
+      run: |
+        if (Test-Path "C:\temp\vHC") {
+          Remove-Item -Path "C:\temp\vHC" -Recurse -Force -ErrorAction SilentlyContinue
+          Write-Host "Cleaned stale data from C:\temp\vHC" -ForegroundColor Yellow
+        }
+
     - name: Checkout repository
       uses: actions/checkout@v4
-      
+
     - name: Download ZIP artifact
       uses: actions/download-artifact@v4
       with:
@@ -828,8 +846,9 @@ jobs:
           if ($invalidPercentages.Count -eq 0) {
             Write-Host "  ✅ All percentages are within valid range (0-100%)" -ForegroundColor Green
           } else {
-            Write-Host "  ⚠️ Found $($invalidPercentages.Count) percentages out of range" -ForegroundColor Yellow
+            Write-Host "  ❌ Found $($invalidPercentages.Count) percentages out of range" -ForegroundColor Red
             $invalidPercentages | ForEach-Object { Write-Host "    - $_%" }
+            exit 1
           }
 
           Write-Host "✅ HTML report content validation complete" -ForegroundColor Green
@@ -848,14 +867,18 @@ jobs:
           $startLine = $content | Where-Object { $_ -match "Starting|Enter" } | Select-Object -First 1
           $endLine = $content | Where-Object { $_ -match "complete|DONE" } | Select-Object -Last 1
 
-          if ($startLine -and $endLine -and $startLine -match "(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2})" -and $endLine -match "(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2})") {
+          if ($startLine -match "(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2})") {
+            $startTs = $Matches[1]
+            if ($endLine -match "(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2})") {
+            $endTs = $Matches[1]
             try {
-              $start = [datetime]::ParseExact($Matches[1], "yyyy-MM-dd HH:mm:ss", $null)
-              $end = [datetime]::ParseExact($Matches[1], "yyyy-MM-dd HH:mm:ss", $null)
+              $start = [datetime]::ParseExact($startTs, "yyyy-MM-dd HH:mm:ss", $null)
+              $end = [datetime]::ParseExact($endTs, "yyyy-MM-dd HH:mm:ss", $null)
               $duration = ($end - $start).TotalMinutes
               Write-Host "  📄 $($log.BaseName): $([math]::Round($duration, 2)) minutes" -ForegroundColor White
             } catch {
               Write-Host "  ⚠️ $($log.BaseName): Could not parse timing" -ForegroundColor Yellow
+            }
             }
           }
         }
@@ -870,7 +893,7 @@ jobs:
         retention-days: 7
 
     - name: Cleanup
-      if: success()
+      if: always()
       continue-on-error: true
       run: |
         # Add delay to allow file handles to release
@@ -888,8 +911,15 @@ jobs:
     needs: build-and-test
     runs-on: [self-hosted, vbr-v12]
     if: github.event_name != 'pull_request'
-    
+
     steps:
+    - name: Pre-run cleanup
+      run: |
+        if (Test-Path "C:\temp\vHC") {
+          Remove-Item -Path "C:\temp\vHC" -Recurse -Force -ErrorAction SilentlyContinue
+          Write-Host "Cleaned stale data from C:\temp\vHC" -ForegroundColor Yellow
+        }
+
     - name: Checkout repository
       uses: actions/checkout@v4
 
@@ -1204,8 +1234,9 @@ jobs:
           if ($invalidPercentages.Count -eq 0) {
             Write-Host "  ✅ All percentages are within valid range (0-100%)" -ForegroundColor Green
           } else {
-            Write-Host "  ⚠️ Found $($invalidPercentages.Count) percentages out of range" -ForegroundColor Yellow
+            Write-Host "  ❌ Found $($invalidPercentages.Count) percentages out of range" -ForegroundColor Red
             $invalidPercentages | ForEach-Object { Write-Host "    - $_%" }
+            exit 1
           }
 
           Write-Host "✅ HTML report content validation complete" -ForegroundColor Green
@@ -1224,14 +1255,18 @@ jobs:
           $startLine = $content | Where-Object { $_ -match "Starting|Enter" } | Select-Object -First 1
           $endLine = $content | Where-Object { $_ -match "complete|DONE" } | Select-Object -Last 1
 
-          if ($startLine -and $endLine -and $startLine -match "(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2})" -and $endLine -match "(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2})") {
+          if ($startLine -match "(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2})") {
+            $startTs = $Matches[1]
+            if ($endLine -match "(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2})") {
+            $endTs = $Matches[1]
             try {
-              $start = [datetime]::ParseExact($Matches[1], "yyyy-MM-dd HH:mm:ss", $null)
-              $end = [datetime]::ParseExact($Matches[1], "yyyy-MM-dd HH:mm:ss", $null)
+              $start = [datetime]::ParseExact($startTs, "yyyy-MM-dd HH:mm:ss", $null)
+              $end = [datetime]::ParseExact($endTs, "yyyy-MM-dd HH:mm:ss", $null)
               $duration = ($end - $start).TotalMinutes
               Write-Host "  📄 $($log.BaseName): $([math]::Round($duration, 2)) minutes" -ForegroundColor White
             } catch {
               Write-Host "  ⚠️ $($log.BaseName): Could not parse timing" -ForegroundColor Yellow
+            }
             }
           }
         }
@@ -1246,7 +1281,7 @@ jobs:
         retention-days: 7
 
     - name: Cleanup
-      if: success()
+      if: always()
       continue-on-error: true
       run: |
         # Add delay to allow file handles to release
