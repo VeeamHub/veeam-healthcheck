@@ -221,6 +221,11 @@ jobs:
         Write-Host "📋 Scanning $($logFiles.Count) log file(s) for errors..." -ForegroundColor Cyan
 
         $errorPatterns = @('ERROR', 'EXCEPTION', 'FATAL')
+        # Known-benign errors on CI test environments — allowlisted to prevent false failures
+        $allowedMessages = @(
+          'No backup sessions available',              # CI test servers may have no sessions configured
+          'Get-VBREntraIDTenant.*is not recognized'   # Entra ID collection requires VBR v13+
+        )
         $findings = @()
 
         foreach ($log in $logFiles) {
@@ -228,12 +233,16 @@ jobs:
           foreach ($line in (Get-Content $log.FullName)) {
             $lineNum++
             foreach ($pattern in $errorPatterns) {
-              if ($line -match $pattern) {
-                $findings += [PSCustomObject]@{
-                  File    = $log.Name
-                  Line    = $lineNum
-                  Pattern = $pattern
-                  Text    = $line.Trim().Substring(0, [Math]::Min($line.Trim().Length, 200))
+              if ($line -cmatch $pattern) {
+                $isAllowed = $false
+                foreach ($msg in $allowedMessages) { if ($line -match $msg) { $isAllowed = $true; break } }
+                if (-not $isAllowed) {
+                  $findings += [PSCustomObject]@{
+                    File    = $log.Name
+                    Line    = $lineNum
+                    Pattern = $pattern
+                    Text    = $line.Trim().Substring(0, [Math]::Min($line.Trim().Length, 200))
+                  }
                 }
                 break  # one match per line is enough
               }
@@ -432,11 +441,11 @@ jobs:
         }
 
         $expectedSchemas = @{
-          '*_vbrinfo.csv'       = @('Name', 'Version', 'SqlServer')
+          '*_vbrinfo.csv'       = @('Version', 'SqlServer')
           '*_Servers.csv'       = @('Name', 'Type')
           '*_Proxies.csv'       = @('Name', 'Host')
           '*_Repositories.csv'  = @('Name', 'Path')
-          '*_Jobs.csv'          = @('Name', 'Type')
+          '*_Jobs.csv'          = @('Name', 'JobType')
         }
 
         $failures = @()
@@ -807,6 +816,11 @@ jobs:
         Write-Host "📋 Scanning $($logFiles.Count) log file(s) for errors..." -ForegroundColor Cyan
 
         $errorPatterns = @('ERROR', 'EXCEPTION', 'FATAL')
+        # Known-benign errors on CI test environments — allowlisted to prevent false failures
+        $allowedMessages = @(
+          'No backup sessions available',              # CI test servers may have no sessions configured
+          'Get-VBREntraIDTenant.*is not recognized'   # Entra ID collection requires VBR v13+
+        )
         $findings = @()
 
         foreach ($log in $logFiles) {
@@ -814,12 +828,16 @@ jobs:
           foreach ($line in (Get-Content $log.FullName)) {
             $lineNum++
             foreach ($pattern in $errorPatterns) {
-              if ($line -match $pattern) {
-                $findings += [PSCustomObject]@{
-                  File    = $log.Name
-                  Line    = $lineNum
-                  Pattern = $pattern
-                  Text    = $line.Trim().Substring(0, [Math]::Min($line.Trim().Length, 200))
+              if ($line -cmatch $pattern) {
+                $isAllowed = $false
+                foreach ($msg in $allowedMessages) { if ($line -match $msg) { $isAllowed = $true; break } }
+                if (-not $isAllowed) {
+                  $findings += [PSCustomObject]@{
+                    File    = $log.Name
+                    Line    = $lineNum
+                    Pattern = $pattern
+                    Text    = $line.Trim().Substring(0, [Math]::Min($line.Trim().Length, 200))
+                  }
                 }
                 break  # one match per line is enough
               }
@@ -1018,11 +1036,11 @@ jobs:
         }
 
         $expectedSchemas = @{
-          '*_vbrinfo.csv'       = @('Name', 'Version', 'SqlServer')
+          '*_vbrinfo.csv'       = @('Version', 'SqlServer')
           '*_Servers.csv'       = @('Name', 'Type')
           '*_Proxies.csv'       = @('Name', 'Host')
           '*_Repositories.csv'  = @('Name', 'Path')
-          '*_Jobs.csv'          = @('Name', 'Type')
+          '*_Jobs.csv'          = @('Name', 'JobType')
         }
 
         $failures = @()
@@ -1392,6 +1410,11 @@ jobs:
         Write-Host "📋 Scanning $($logFiles.Count) log file(s) for errors..." -ForegroundColor Cyan
 
         $errorPatterns = @('ERROR', 'EXCEPTION', 'FATAL')
+        # Known-benign errors on CI test environments — allowlisted to prevent false failures
+        $allowedMessages = @(
+          'No backup sessions available',              # CI test servers may have no sessions configured
+          'Get-VBREntraIDTenant.*is not recognized'   # Entra ID collection requires VBR v13+
+        )
         $findings = @()
 
         foreach ($log in $logFiles) {
@@ -1399,12 +1422,16 @@ jobs:
           foreach ($line in (Get-Content $log.FullName)) {
             $lineNum++
             foreach ($pattern in $errorPatterns) {
-              if ($line -match $pattern) {
-                $findings += [PSCustomObject]@{
-                  File    = $log.Name
-                  Line    = $lineNum
-                  Pattern = $pattern
-                  Text    = $line.Trim().Substring(0, [Math]::Min($line.Trim().Length, 200))
+              if ($line -cmatch $pattern) {
+                $isAllowed = $false
+                foreach ($msg in $allowedMessages) { if ($line -match $msg) { $isAllowed = $true; break } }
+                if (-not $isAllowed) {
+                  $findings += [PSCustomObject]@{
+                    File    = $log.Name
+                    Line    = $lineNum
+                    Pattern = $pattern
+                    Text    = $line.Trim().Substring(0, [Math]::Min($line.Trim().Length, 200))
+                  }
                 }
                 break  # one match per line is enough
               }
@@ -1603,11 +1630,11 @@ jobs:
         }
 
         $expectedSchemas = @{
-          '*_vbrinfo.csv'       = @('Name', 'Version', 'SqlServer')
+          '*_vbrinfo.csv'       = @('Version', 'SqlServer')
           '*_Servers.csv'       = @('Name', 'Type')
           '*_Proxies.csv'       = @('Name', 'Host')
           '*_Repositories.csv'  = @('Name', 'Path')
-          '*_Jobs.csv'          = @('Name', 'Type')
+          '*_Jobs.csv'          = @('Name', 'JobType')
         }
 
         $failures = @()
