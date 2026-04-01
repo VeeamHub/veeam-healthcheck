@@ -631,7 +631,8 @@ namespace VeeamHealthCheck.Functions.Collection.PSCollections
                 Arguments = argString,
                 UseShellExecute = true,
                 CreateNoWindow = false,
-                WindowStyle = ProcessWindowStyle.Minimized
+                WindowStyle = ProcessWindowStyle.Minimized,
+                WorkingDirectory = AppDomain.CurrentDomain.BaseDirectory
             };
         }
 
