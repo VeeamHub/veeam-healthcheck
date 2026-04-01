@@ -52,6 +52,12 @@ UTILITY OPTIONS:
   /clearcreds       Clear stored credentials from Windows Credential Manager
   /debug            Enable debug logging for troubleshooting
 
+CONTINUOUS MONITORING:
+  /monitor:setup    Install vhc-monitor and register a 5-minute scheduled task
+  /monitor:run      Trigger an immediate monitor check
+  /monitor:status   Show current monitor installation and last-run status
+  /monitor:disable  Remove the scheduled task (keeps config and files)
+
 EXAMPLES:
   VeeamHealthCheck.exe /run
   VeeamHealthCheck.exe /run /days:30 /lite /pdf
