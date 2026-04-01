@@ -206,6 +206,53 @@ jobs:
           Pop-Location
         }
     
+    - name: Scan VHC logs for errors
+      # P2-1: extract to composite action
+      if: always()
+      run: |
+        $logDir = "C:\temp\vHC\Original\Log"
+        $logFiles = Get-ChildItem "$logDir\*.log" -ErrorAction SilentlyContinue
+
+        if (-not $logFiles) {
+          Write-Host "⚠️ No log files found in $logDir" -ForegroundColor Yellow
+          exit 0
+        }
+
+        Write-Host "📋 Scanning $($logFiles.Count) log file(s) for errors..." -ForegroundColor Cyan
+
+        $errorPatterns = @('ERROR', 'EXCEPTION', 'FATAL')
+        $findings = @()
+
+        foreach ($log in $logFiles) {
+          $lineNum = 0
+          foreach ($line in (Get-Content $log.FullName)) {
+            $lineNum++
+            foreach ($pattern in $errorPatterns) {
+              if ($line -match $pattern) {
+                $findings += [PSCustomObject]@{
+                  File    = $log.Name
+                  Line    = $lineNum
+                  Pattern = $pattern
+                  Text    = $line.Trim().Substring(0, [Math]::Min($line.Trim().Length, 200))
+                }
+                break  # one match per line is enough
+              }
+            }
+          }
+        }
+
+        if ($findings.Count -eq 0) {
+          Write-Host "✅ No ERROR/EXCEPTION/FATAL entries found in logs" -ForegroundColor Green
+        } else {
+          Write-Host "❌ Found $($findings.Count) error entries in VHC logs:" -ForegroundColor Red
+          $findings | ForEach-Object {
+            Write-Host "  [$($_.Pattern)] $($_.File):$($_.Line) — $($_.Text)" -ForegroundColor Red
+          }
+          Write-Host ""
+          Write-Host "VHC exited 0 but logged errors — this indicates partial data collection failure." -ForegroundColor Red
+          exit 1
+        }
+
     - name: Find generated report
       id: find_report
       if: always()
@@ -372,6 +419,75 @@ jobs:
           Write-Host "✅ CSV content validation complete" -ForegroundColor Green
         }
 
+    - name: Validate CSV column schemas
+      # P2-1: extract to composite action
+      if: always()
+      run: |
+        $csvDir = Get-ChildItem "C:\temp\vHC\Original\VBR\*\*" -Directory -ErrorAction SilentlyContinue |
+                  Sort-Object LastWriteTime -Descending | Select-Object -First 1
+
+        if (-not $csvDir) {
+          Write-Host "⚠️ CSV directory not found, skipping schema validation" -ForegroundColor Yellow
+          exit 0
+        }
+
+        $expectedSchemas = @{
+          '*_vbrinfo.csv'       = @('Name', 'Version', 'SqlServer')
+          '*_Servers.csv'       = @('Name', 'Type')
+          '*_Proxies.csv'       = @('Name', 'Host')
+          '*_Repositories.csv'  = @('Name', 'Path')
+          '*_Jobs.csv'          = @('Name', 'Type')
+        }
+
+        $failures = @()
+
+        foreach ($pattern in $expectedSchemas.Keys) {
+          $file = Get-ChildItem -Path $csvDir.FullName -Filter $pattern -ErrorAction SilentlyContinue |
+                  Select-Object -First 1
+
+          if (-not $file) {
+            Write-Host "  ⚠️ $pattern not found — skipping schema check (existence validated elsewhere)" -ForegroundColor Yellow
+            continue
+          }
+
+          # Read just the header row
+          $headerLine = Get-Content $file.FullName -TotalCount 1
+          if (-not $headerLine) {
+            Write-Host "  ❌ $($file.Name) is empty — no header row" -ForegroundColor Red
+            $failures += $file.Name
+            continue
+          }
+
+          $actualColumns = ($headerLine -split ',') | ForEach-Object { $_.Trim('"', ' ') }
+          $expectedColumns = $expectedSchemas[$pattern]
+          $missingColumns = @()
+
+          foreach ($col in $expectedColumns) {
+            if ($actualColumns -notcontains $col) {
+              $missingColumns += $col
+            }
+          }
+
+          if ($missingColumns.Count -eq 0) {
+            Write-Host "  ✅ $($file.Name) — all expected columns present: $($expectedColumns -join ', ')" -ForegroundColor Green
+          } else {
+            Write-Host "  ❌ $($file.Name) — missing columns: $($missingColumns -join ', ')" -ForegroundColor Red
+            Write-Host "       Expected: $($expectedColumns -join ', ')" -ForegroundColor Yellow
+            Write-Host "       Actual:   $($actualColumns -join ', ')" -ForegroundColor Yellow
+            $failures += "$($file.Name) (missing: $($missingColumns -join ', '))"
+          }
+        }
+
+        if ($failures.Count -gt 0) {
+          Write-Host ""
+          Write-Host "❌ CSV schema validation failed for $($failures.Count) file(s):" -ForegroundColor Red
+          $failures | ForEach-Object { Write-Host "  - $_" -ForegroundColor Red }
+          Write-Host "Column renames in PS scripts break the C# CSV parser silently." -ForegroundColor Red
+          exit 1
+        }
+
+        Write-Host "✅ CSV column schema validation complete" -ForegroundColor Green
+
     - name: Validate HTML report content
       if: always()
       run: |
@@ -439,8 +555,10 @@ jobs:
           if ($deadLinks.Count -eq 0) {
             Write-Host "  ✅ All navigation links are valid" -ForegroundColor Green
           } else {
-            Write-Host "  ⚠️ Found $($deadLinks.Count) dead navigation links" -ForegroundColor Yellow
+            Write-Host "  ❌ Found $($deadLinks.Count) dead navigation links" -ForegroundColor Red
             $deadLinks | ForEach-Object { Write-Host "    - #$_" }
+            Write-Host "Report navigation is broken — this is a release-blocking defect." -ForegroundColor Red
+            exit 1
           }
 
           # Validate percentages are in valid range
@@ -466,6 +584,85 @@ jobs:
         } else {
           Write-Host "⚠️ Report file not found, skipping HTML validation" -ForegroundColor Yellow
         }
+
+    - name: Validate HTML table data rows
+      # P2-1: extract to composite action
+      if: always()
+      run: |
+        $reportFile = "${{ steps.find_report.outputs.report_path }}"
+        if (-not $reportFile -or -not (Test-Path $reportFile)) {
+          Write-Host "⚠️ Report file not found, skipping table validation" -ForegroundColor Yellow
+          exit 0
+        }
+
+        $content = Get-Content $reportFile -Raw
+
+        # Tables that MUST have at least one data row (1 <tr> header + 1+ <tr> data)
+        # Key: regex to locate the table section; Value: human-readable name
+        $requiredTables = @{
+          'License Information'  = 'License Information'
+          'Backup Server'        = 'Backup Server'
+        }
+
+        # Tables that SHOULD have data rows (warn only)
+        $warnTables = @{
+          'Proxy Configuration'     = 'Proxy Configuration'
+          'Repository Configuration' = 'Repository Configuration'
+          'Job Summary'              = 'Job Summary'
+        }
+
+        $failures = @()
+        $warnings = @()
+
+        function Test-TableHasDataRows {
+          param([string]$Content, [string]$SectionName)
+          # Find the section, then the next <table>...</table> block
+          $sectionIdx = $Content.IndexOf($SectionName)
+          if ($sectionIdx -lt 0) { return $null }  # section not found
+
+          $tableStart = $Content.IndexOf('<table', $sectionIdx)
+          if ($tableStart -lt 0) { return $null }
+
+          $tableEnd = $Content.IndexOf('</table>', $tableStart)
+          if ($tableEnd -lt 0) { return $null }
+
+          $tableHtml = $Content.Substring($tableStart, $tableEnd - $tableStart + 8)
+          $rowCount = ([regex]::Matches($tableHtml, '<tr[\s>]')).Count
+
+          return $rowCount  # 1 = header only, 2+ = has data
+        }
+
+        foreach ($key in $requiredTables.Keys) {
+          $rows = Test-TableHasDataRows -Content $content -SectionName $key
+          if ($null -eq $rows) {
+            Write-Host "  ⚠️ [$($requiredTables[$key])] Section/table not found" -ForegroundColor Yellow
+          } elseif ($rows -le 1) {
+            Write-Host "  ❌ [$($requiredTables[$key])] Table has $rows row(s) — no data rows" -ForegroundColor Red
+            $failures += $requiredTables[$key]
+          } else {
+            Write-Host "  ✅ [$($requiredTables[$key])] Table has $($rows - 1) data row(s)" -ForegroundColor Green
+          }
+        }
+
+        foreach ($key in $warnTables.Keys) {
+          $rows = Test-TableHasDataRows -Content $content -SectionName $key
+          if ($null -eq $rows) {
+            Write-Host "  ⚠️ [$($warnTables[$key])] Section/table not found" -ForegroundColor Yellow
+          } elseif ($rows -le 1) {
+            Write-Host "  ⚠️ [$($warnTables[$key])] Table has $rows row(s) — empty" -ForegroundColor Yellow
+            $warnings += $warnTables[$key]
+          } else {
+            Write-Host "  ✅ [$($warnTables[$key])] Table has $($rows - 1) data row(s)" -ForegroundColor Green
+          }
+        }
+
+        if ($failures.Count -gt 0) {
+          Write-Host ""
+          Write-Host "❌ $($failures.Count) required table(s) have no data: $($failures -join ', ')" -ForegroundColor Red
+          exit 1
+        }
+
+        Write-Host "✅ HTML table row validation complete" -ForegroundColor Green
 
     - name: Collect performance metrics
       if: always()
@@ -595,6 +792,53 @@ jobs:
           Pop-Location
         }
     
+    - name: Scan VHC logs for errors
+      # P2-1: extract to composite action
+      if: always()
+      run: |
+        $logDir = "C:\temp\vHC\Original\Log"
+        $logFiles = Get-ChildItem "$logDir\*.log" -ErrorAction SilentlyContinue
+
+        if (-not $logFiles) {
+          Write-Host "⚠️ No log files found in $logDir" -ForegroundColor Yellow
+          exit 0
+        }
+
+        Write-Host "📋 Scanning $($logFiles.Count) log file(s) for errors..." -ForegroundColor Cyan
+
+        $errorPatterns = @('ERROR', 'EXCEPTION', 'FATAL')
+        $findings = @()
+
+        foreach ($log in $logFiles) {
+          $lineNum = 0
+          foreach ($line in (Get-Content $log.FullName)) {
+            $lineNum++
+            foreach ($pattern in $errorPatterns) {
+              if ($line -match $pattern) {
+                $findings += [PSCustomObject]@{
+                  File    = $log.Name
+                  Line    = $lineNum
+                  Pattern = $pattern
+                  Text    = $line.Trim().Substring(0, [Math]::Min($line.Trim().Length, 200))
+                }
+                break  # one match per line is enough
+              }
+            }
+          }
+        }
+
+        if ($findings.Count -eq 0) {
+          Write-Host "✅ No ERROR/EXCEPTION/FATAL entries found in logs" -ForegroundColor Green
+        } else {
+          Write-Host "❌ Found $($findings.Count) error entries in VHC logs:" -ForegroundColor Red
+          $findings | ForEach-Object {
+            Write-Host "  [$($_.Pattern)] $($_.File):$($_.Line) — $($_.Text)" -ForegroundColor Red
+          }
+          Write-Host ""
+          Write-Host "VHC exited 0 but logged errors — this indicates partial data collection failure." -ForegroundColor Red
+          exit 1
+        }
+
     - name: Find generated report
       id: find_report
       if: always()
@@ -761,6 +1005,75 @@ jobs:
           Write-Host "✅ CSV content validation complete" -ForegroundColor Green
         }
 
+    - name: Validate CSV column schemas
+      # P2-1: extract to composite action
+      if: always()
+      run: |
+        $csvDir = Get-ChildItem "C:\temp\vHC\Original\VBR\*\*" -Directory -ErrorAction SilentlyContinue |
+                  Sort-Object LastWriteTime -Descending | Select-Object -First 1
+
+        if (-not $csvDir) {
+          Write-Host "⚠️ CSV directory not found, skipping schema validation" -ForegroundColor Yellow
+          exit 0
+        }
+
+        $expectedSchemas = @{
+          '*_vbrinfo.csv'       = @('Name', 'Version', 'SqlServer')
+          '*_Servers.csv'       = @('Name', 'Type')
+          '*_Proxies.csv'       = @('Name', 'Host')
+          '*_Repositories.csv'  = @('Name', 'Path')
+          '*_Jobs.csv'          = @('Name', 'Type')
+        }
+
+        $failures = @()
+
+        foreach ($pattern in $expectedSchemas.Keys) {
+          $file = Get-ChildItem -Path $csvDir.FullName -Filter $pattern -ErrorAction SilentlyContinue |
+                  Select-Object -First 1
+
+          if (-not $file) {
+            Write-Host "  ⚠️ $pattern not found — skipping schema check (existence validated elsewhere)" -ForegroundColor Yellow
+            continue
+          }
+
+          # Read just the header row
+          $headerLine = Get-Content $file.FullName -TotalCount 1
+          if (-not $headerLine) {
+            Write-Host "  ❌ $($file.Name) is empty — no header row" -ForegroundColor Red
+            $failures += $file.Name
+            continue
+          }
+
+          $actualColumns = ($headerLine -split ',') | ForEach-Object { $_.Trim('"', ' ') }
+          $expectedColumns = $expectedSchemas[$pattern]
+          $missingColumns = @()
+
+          foreach ($col in $expectedColumns) {
+            if ($actualColumns -notcontains $col) {
+              $missingColumns += $col
+            }
+          }
+
+          if ($missingColumns.Count -eq 0) {
+            Write-Host "  ✅ $($file.Name) — all expected columns present: $($expectedColumns -join ', ')" -ForegroundColor Green
+          } else {
+            Write-Host "  ❌ $($file.Name) — missing columns: $($missingColumns -join ', ')" -ForegroundColor Red
+            Write-Host "       Expected: $($expectedColumns -join ', ')" -ForegroundColor Yellow
+            Write-Host "       Actual:   $($actualColumns -join ', ')" -ForegroundColor Yellow
+            $failures += "$($file.Name) (missing: $($missingColumns -join ', '))"
+          }
+        }
+
+        if ($failures.Count -gt 0) {
+          Write-Host ""
+          Write-Host "❌ CSV schema validation failed for $($failures.Count) file(s):" -ForegroundColor Red
+          $failures | ForEach-Object { Write-Host "  - $_" -ForegroundColor Red }
+          Write-Host "Column renames in PS scripts break the C# CSV parser silently." -ForegroundColor Red
+          exit 1
+        }
+
+        Write-Host "✅ CSV column schema validation complete" -ForegroundColor Green
+
     - name: Validate HTML report content
       if: always()
       run: |
@@ -828,8 +1141,10 @@ jobs:
           if ($deadLinks.Count -eq 0) {
             Write-Host "  ✅ All navigation links are valid" -ForegroundColor Green
           } else {
-            Write-Host "  ⚠️ Found $($deadLinks.Count) dead navigation links" -ForegroundColor Yellow
+            Write-Host "  ❌ Found $($deadLinks.Count) dead navigation links" -ForegroundColor Red
             $deadLinks | ForEach-Object { Write-Host "    - #$_" }
+            Write-Host "Report navigation is broken — this is a release-blocking defect." -ForegroundColor Red
+            exit 1
           }
 
           # Validate percentages are in valid range
@@ -855,6 +1170,85 @@ jobs:
         } else {
           Write-Host "⚠️ Report file not found, skipping HTML validation" -ForegroundColor Yellow
         }
+
+    - name: Validate HTML table data rows
+      # P2-1: extract to composite action
+      if: always()
+      run: |
+        $reportFile = "${{ steps.find_report.outputs.report_path }}"
+        if (-not $reportFile -or -not (Test-Path $reportFile)) {
+          Write-Host "⚠️ Report file not found, skipping table validation" -ForegroundColor Yellow
+          exit 0
+        }
+
+        $content = Get-Content $reportFile -Raw
+
+        # Tables that MUST have at least one data row (1 <tr> header + 1+ <tr> data)
+        # Key: regex to locate the table section; Value: human-readable name
+        $requiredTables = @{
+          'License Information'  = 'License Information'
+          'Backup Server'        = 'Backup Server'
+        }
+
+        # Tables that SHOULD have data rows (warn only)
+        $warnTables = @{
+          'Proxy Configuration'     = 'Proxy Configuration'
+          'Repository Configuration' = 'Repository Configuration'
+          'Job Summary'              = 'Job Summary'
+        }
+
+        $failures = @()
+        $warnings = @()
+
+        function Test-TableHasDataRows {
+          param([string]$Content, [string]$SectionName)
+          # Find the section, then the next <table>...</table> block
+          $sectionIdx = $Content.IndexOf($SectionName)
+          if ($sectionIdx -lt 0) { return $null }  # section not found
+
+          $tableStart = $Content.IndexOf('<table', $sectionIdx)
+          if ($tableStart -lt 0) { return $null }
+
+          $tableEnd = $Content.IndexOf('</table>', $tableStart)
+          if ($tableEnd -lt 0) { return $null }
+
+          $tableHtml = $Content.Substring($tableStart, $tableEnd - $tableStart + 8)
+          $rowCount = ([regex]::Matches($tableHtml, '<tr[\s>]')).Count
+
+          return $rowCount  # 1 = header only, 2+ = has data
+        }
+
+        foreach ($key in $requiredTables.Keys) {
+          $rows = Test-TableHasDataRows -Content $content -SectionName $key
+          if ($null -eq $rows) {
+            Write-Host "  ⚠️ [$($requiredTables[$key])] Section/table not found" -ForegroundColor Yellow
+          } elseif ($rows -le 1) {
+            Write-Host "  ❌ [$($requiredTables[$key])] Table has $rows row(s) — no data rows" -ForegroundColor Red
+            $failures += $requiredTables[$key]
+          } else {
+            Write-Host "  ✅ [$($requiredTables[$key])] Table has $($rows - 1) data row(s)" -ForegroundColor Green
+          }
+        }
+
+        foreach ($key in $warnTables.Keys) {
+          $rows = Test-TableHasDataRows -Content $content -SectionName $key
+          if ($null -eq $rows) {
+            Write-Host "  ⚠️ [$($warnTables[$key])] Section/table not found" -ForegroundColor Yellow
+          } elseif ($rows -le 1) {
+            Write-Host "  ⚠️ [$($warnTables[$key])] Table has $rows row(s) — empty" -ForegroundColor Yellow
+            $warnings += $warnTables[$key]
+          } else {
+            Write-Host "  ✅ [$($warnTables[$key])] Table has $($rows - 1) data row(s)" -ForegroundColor Green
+          }
+        }
+
+        if ($failures.Count -gt 0) {
+          Write-Host ""
+          Write-Host "❌ $($failures.Count) required table(s) have no data: $($failures -join ', ')" -ForegroundColor Red
+          exit 1
+        }
+
+        Write-Host "✅ HTML table row validation complete" -ForegroundColor Green
 
     - name: Collect performance metrics
       if: always()
@@ -983,6 +1377,53 @@ jobs:
           Pop-Location
         }
     
+    - name: Scan VHC logs for errors
+      # P2-1: extract to composite action
+      if: always()
+      run: |
+        $logDir = "C:\temp\vHC\Original\Log"
+        $logFiles = Get-ChildItem "$logDir\*.log" -ErrorAction SilentlyContinue
+
+        if (-not $logFiles) {
+          Write-Host "⚠️ No log files found in $logDir" -ForegroundColor Yellow
+          exit 0
+        }
+
+        Write-Host "📋 Scanning $($logFiles.Count) log file(s) for errors..." -ForegroundColor Cyan
+
+        $errorPatterns = @('ERROR', 'EXCEPTION', 'FATAL')
+        $findings = @()
+
+        foreach ($log in $logFiles) {
+          $lineNum = 0
+          foreach ($line in (Get-Content $log.FullName)) {
+            $lineNum++
+            foreach ($pattern in $errorPatterns) {
+              if ($line -match $pattern) {
+                $findings += [PSCustomObject]@{
+                  File    = $log.Name
+                  Line    = $lineNum
+                  Pattern = $pattern
+                  Text    = $line.Trim().Substring(0, [Math]::Min($line.Trim().Length, 200))
+                }
+                break  # one match per line is enough
+              }
+            }
+          }
+        }
+
+        if ($findings.Count -eq 0) {
+          Write-Host "✅ No ERROR/EXCEPTION/FATAL entries found in logs" -ForegroundColor Green
+        } else {
+          Write-Host "❌ Found $($findings.Count) error entries in VHC logs:" -ForegroundColor Red
+          $findings | ForEach-Object {
+            Write-Host "  [$($_.Pattern)] $($_.File):$($_.Line) — $($_.Text)" -ForegroundColor Red
+          }
+          Write-Host ""
+          Write-Host "VHC exited 0 but logged errors — this indicates partial data collection failure." -ForegroundColor Red
+          exit 1
+        }
+
     - name: Find generated report
       id: find_report
       if: always()
@@ -1149,6 +1590,75 @@ jobs:
           Write-Host "✅ CSV content validation complete" -ForegroundColor Green
         }
 
+    - name: Validate CSV column schemas
+      # P2-1: extract to composite action
+      if: always()
+      run: |
+        $csvDir = Get-ChildItem "C:\temp\vHC\Original\VBR\*\*" -Directory -ErrorAction SilentlyContinue |
+                  Sort-Object LastWriteTime -Descending | Select-Object -First 1
+
+        if (-not $csvDir) {
+          Write-Host "⚠️ CSV directory not found, skipping schema validation" -ForegroundColor Yellow
+          exit 0
+        }
+
+        $expectedSchemas = @{
+          '*_vbrinfo.csv'       = @('Name', 'Version', 'SqlServer')
+          '*_Servers.csv'       = @('Name', 'Type')
+          '*_Proxies.csv'       = @('Name', 'Host')
+          '*_Repositories.csv'  = @('Name', 'Path')
+          '*_Jobs.csv'          = @('Name', 'Type')
+        }
+
+        $failures = @()
+
+        foreach ($pattern in $expectedSchemas.Keys) {
+          $file = Get-ChildItem -Path $csvDir.FullName -Filter $pattern -ErrorAction SilentlyContinue |
+                  Select-Object -First 1
+
+          if (-not $file) {
+            Write-Host "  ⚠️ $pattern not found — skipping schema check (existence validated elsewhere)" -ForegroundColor Yellow
+            continue
+          }
+
+          # Read just the header row
+          $headerLine = Get-Content $file.FullName -TotalCount 1
+          if (-not $headerLine) {
+            Write-Host "  ❌ $($file.Name) is empty — no header row" -ForegroundColor Red
+            $failures += $file.Name
+            continue
+          }
+
+          $actualColumns = ($headerLine -split ',') | ForEach-Object { $_.Trim('"', ' ') }
+          $expectedColumns = $expectedSchemas[$pattern]
+          $missingColumns = @()
+
+          foreach ($col in $expectedColumns) {
+            if ($actualColumns -notcontains $col) {
+              $missingColumns += $col
+            }
+          }
+
+          if ($missingColumns.Count -eq 0) {
+            Write-Host "  ✅ $($file.Name) — all expected columns present: $($expectedColumns -join ', ')" -ForegroundColor Green
+          } else {
+            Write-Host "  ❌ $($file.Name) — missing columns: $($missingColumns -join ', ')" -ForegroundColor Red
+            Write-Host "       Expected: $($expectedColumns -join ', ')" -ForegroundColor Yellow
+            Write-Host "       Actual:   $($actualColumns -join ', ')" -ForegroundColor Yellow
+            $failures += "$($file.Name) (missing: $($missingColumns -join ', '))"
+          }
+        }
+
+        if ($failures.Count -gt 0) {
+          Write-Host ""
+          Write-Host "❌ CSV schema validation failed for $($failures.Count) file(s):" -ForegroundColor Red
+          $failures | ForEach-Object { Write-Host "  - $_" -ForegroundColor Red }
+          Write-Host "Column renames in PS scripts break the C# CSV parser silently." -ForegroundColor Red
+          exit 1
+        }
+
+        Write-Host "✅ CSV column schema validation complete" -ForegroundColor Green
+
     - name: Validate HTML report content
       if: always()
       run: |
@@ -1216,8 +1726,10 @@ jobs:
           if ($deadLinks.Count -eq 0) {
             Write-Host "  ✅ All navigation links are valid" -ForegroundColor Green
           } else {
-            Write-Host "  ⚠️ Found $($deadLinks.Count) dead navigation links" -ForegroundColor Yellow
+            Write-Host "  ❌ Found $($deadLinks.Count) dead navigation links" -ForegroundColor Red
             $deadLinks | ForEach-Object { Write-Host "    - #$_" }
+            Write-Host "Report navigation is broken — this is a release-blocking defect." -ForegroundColor Red
+            exit 1
           }
 
           # Validate percentages are in valid range
@@ -1243,6 +1755,85 @@ jobs:
         } else {
           Write-Host "⚠️ Report file not found, skipping HTML validation" -ForegroundColor Yellow
         }
+
+    - name: Validate HTML table data rows
+      # P2-1: extract to composite action
+      if: always()
+      run: |
+        $reportFile = "${{ steps.find_report.outputs.report_path }}"
+        if (-not $reportFile -or -not (Test-Path $reportFile)) {
+          Write-Host "⚠️ Report file not found, skipping table validation" -ForegroundColor Yellow
+          exit 0
+        }
+
+        $content = Get-Content $reportFile -Raw
+
+        # Tables that MUST have at least one data row (1 <tr> header + 1+ <tr> data)
+        # Key: regex to locate the table section; Value: human-readable name
+        $requiredTables = @{
+          'License Information'  = 'License Information'
+          'Backup Server'        = 'Backup Server'
+        }
+
+        # Tables that SHOULD have data rows (warn only)
+        $warnTables = @{
+          'Proxy Configuration'     = 'Proxy Configuration'
+          'Repository Configuration' = 'Repository Configuration'
+          'Job Summary'              = 'Job Summary'
+        }
+
+        $failures = @()
+        $warnings = @()
+
+        function Test-TableHasDataRows {
+          param([string]$Content, [string]$SectionName)
+          # Find the section, then the next <table>...</table> block
+          $sectionIdx = $Content.IndexOf($SectionName)
+          if ($sectionIdx -lt 0) { return $null }  # section not found
+
+          $tableStart = $Content.IndexOf('<table', $sectionIdx)
+          if ($tableStart -lt 0) { return $null }
+
+          $tableEnd = $Content.IndexOf('</table>', $tableStart)
+          if ($tableEnd -lt 0) { return $null }
+
+          $tableHtml = $Content.Substring($tableStart, $tableEnd - $tableStart + 8)
+          $rowCount = ([regex]::Matches($tableHtml, '<tr[\s>]')).Count
+
+          return $rowCount  # 1 = header only, 2+ = has data
+        }
+
+        foreach ($key in $requiredTables.Keys) {
+          $rows = Test-TableHasDataRows -Content $content -SectionName $key
+          if ($null -eq $rows) {
+            Write-Host "  ⚠️ [$($requiredTables[$key])] Section/table not found" -ForegroundColor Yellow
+          } elseif ($rows -le 1) {
+            Write-Host "  ❌ [$($requiredTables[$key])] Table has $rows row(s) — no data rows" -ForegroundColor Red
+            $failures += $requiredTables[$key]
+          } else {
+            Write-Host "  ✅ [$($requiredTables[$key])] Table has $($rows - 1) data row(s)" -ForegroundColor Green
+          }
+        }
+
+        foreach ($key in $warnTables.Keys) {
+          $rows = Test-TableHasDataRows -Content $content -SectionName $key
+          if ($null -eq $rows) {
+            Write-Host "  ⚠️ [$($warnTables[$key])] Section/table not found" -ForegroundColor Yellow
+          } elseif ($rows -le 1) {
+            Write-Host "  ⚠️ [$($warnTables[$key])] Table has $rows row(s) — empty" -ForegroundColor Yellow
+            $warnings += $warnTables[$key]
+          } else {
+            Write-Host "  ✅ [$($warnTables[$key])] Table has $($rows - 1) data row(s)" -ForegroundColor Green
+          }
+        }
+
+        if ($failures.Count -gt 0) {
+          Write-Host ""
+          Write-Host "❌ $($failures.Count) required table(s) have no data: $($failures -join ', ')" -ForegroundColor Red
+          exit 1
+        }
+
+        Write-Host "✅ HTML table row validation complete" -ForegroundColor Green
 
     - name: Collect performance metrics
       if: always()
