@@ -2237,7 +2237,7 @@ jobs:
           $changelog = @"
         ### 📝 Changes in This Release
 
-        $commits
+        $($commits -join "`n        ")
 
         **Files Changed:** $changedFiles
         "@
