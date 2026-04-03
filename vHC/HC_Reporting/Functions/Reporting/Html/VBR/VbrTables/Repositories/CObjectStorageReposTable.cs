@@ -27,6 +27,7 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR.VbrTables.Repositories
             s += this.form.TableHeader("Region", string.Empty);
             s += this.form.TableHeader("Endpoint", string.Empty);
             s += this.form.TableHeader("Account", string.Empty);
+            s += this.form.TableHeader("Connection", string.Empty);
             s += this.form.TableHeader("Gateway", string.Empty);
 
             s += this.form.TableHeaderEnd();
@@ -39,7 +40,7 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR.VbrTables.Repositories
 
                 if (data == null || !data.Any())
                 {
-                    s += "<tr><td colspan='8' style='text-align: center; padding: 20px; color: #666;'><em>No object storage repositories detected.</em></td></tr>";
+                    s += "<tr><td colspan='9' style='text-align: center; padding: 20px; color: #666;'><em>No object storage repositories detected.</em></td></tr>";
                 }
                 else
                 {
@@ -62,6 +63,7 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR.VbrTables.Repositories
                         s += this.form.TableData((string)(item.Region ?? ""), string.Empty);
                         s += this.form.TableData((string)(item.Endpoint ?? ""), string.Empty);
                         s += this.form.TableData(account, string.Empty);
+                        s += this.form.TableData((string)(item.ConnectionType ?? ""), string.Empty);
                         s += this.form.TableData((string)(item.Gateway ?? ""), string.Empty);
 
                         s += "</tr>";
