@@ -25,6 +25,7 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR.VbrTables.Repositories
             s += this.form.TableHeader("Bucket/Container", string.Empty);
             s += this.form.TableHeader("Folder", string.Empty);
             s += this.form.TableHeader("Region", string.Empty);
+            s += this.form.TableHeader("Endpoint", string.Empty);
             s += this.form.TableHeader("Account", string.Empty);
             s += this.form.TableHeader("Gateway", string.Empty);
 
@@ -38,7 +39,7 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR.VbrTables.Repositories
 
                 if (data == null || !data.Any())
                 {
-                    s += "<tr><td colspan='7' style='text-align: center; padding: 20px; color: #666;'><em>No object storage repositories detected.</em></td></tr>";
+                    s += "<tr><td colspan='8' style='text-align: center; padding: 20px; color: #666;'><em>No object storage repositories detected.</em></td></tr>";
                 }
                 else
                 {
@@ -46,8 +47,8 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR.VbrTables.Repositories
                     {
                         s += "<tr>";
 
-                        string name = (string)(item.name ?? "");
-                        string account = (string)(item.account ?? "");
+                        string name = (string)(item.Name ?? "");
+                        string account = (string)(item.Account ?? "");
                         if (scrub)
                         {
                             name = CGlobals.Scrubber.ScrubItem(name, ScrubItemType.Item);
@@ -55,12 +56,13 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR.VbrTables.Repositories
                         }
 
                         s += this.form.TableDataLeftAligned(name, string.Empty);
-                        s += this.form.TableData((string)(item.type ?? ""), string.Empty);
-                        s += this.form.TableData((string)(item.bucket ?? ""), string.Empty);
-                        s += this.form.TableData((string)(item.folder ?? ""), string.Empty);
-                        s += this.form.TableData((string)(item.region ?? ""), string.Empty);
+                        s += this.form.TableData((string)(item.Type ?? ""), string.Empty);
+                        s += this.form.TableData((string)(item.Bucket ?? ""), string.Empty);
+                        s += this.form.TableData((string)(item.Folder ?? ""), string.Empty);
+                        s += this.form.TableData((string)(item.Region ?? ""), string.Empty);
+                        s += this.form.TableData((string)(item.Endpoint ?? ""), string.Empty);
                         s += this.form.TableData(account, string.Empty);
-                        s += this.form.TableData((string)(item.gateway ?? ""), string.Empty);
+                        s += this.form.TableData((string)(item.Gateway ?? ""), string.Empty);
 
                         s += "</tr>";
                     }

@@ -4,8 +4,21 @@ function Get-VhciObjectStorageRepos {
     <#
     .Synopsis
         Collects object storage repository configuration (name, type, bucket/container,
-        region, account display name — never passwords).
+        region, endpoint, account display name — never passwords).
         Exports _ObjectStorageRepos.csv.
+
+        Provider routing uses $repo.Type to select the correct SDK property paths:
+          AmazonS3            → .AmazonS3.{BucketName, FolderName, RegionType}
+          AmazonS3Compatible  → .AmazonS3Compatible.{BucketName, FolderName, ServicePoint, RegionType}
+          WasabiCloud         → .WasabiCloud.{BucketName, FolderName, RegionId}
+          AzureBlob           → .AzureBlob.{ContainerName, FolderName, ServicePoint}
+          AzureArchive        → .AzureArchive.{ContainerName, FolderName, ServicePoint}
+          GoogleCloudStorage  → .GoogleCloud.{BucketName, FolderName, RegionId}
+          IBMCloud            → .IBMCloud.{BucketName, FolderName, Region}
+          Unknown             → reflection probe (logs warning, exports whatever it finds)
+
+        Account name comes from $repo.Account.Name (VBR 12+) or $repo.Credentials.Name (fallback).
+        Gateway: $repo.UseGatewayServer / $repo.GatewayServer.Name.
     #>
     [CmdletBinding()]
     param()
@@ -16,40 +29,112 @@ function Get-VhciObjectStorageRepos {
     try {
         $repos = Get-VBRObjectStorageRepository | ForEach-Object {
             $repo = $_
+            $typeName = "$($repo.Type)"
 
-            $bucket     = $null
-            $folder     = $null
-            $region     = $null
-            $account    = $null
-            $useGateway = $null
-            $gateway    = $null
+            $bucket    = ''
+            $folder    = ''
+            $region    = ''
+            $endpoint  = ''   # S3-compatible / Azure service point
+            $account   = ''
+            $useGw     = $false
+            $gateway   = ''
 
-            try { $bucket     = $repo.AmazonS3Folder.BucketName        } catch {}
-            try { if (-not $bucket) { $bucket = $repo.AzureBlobFolder.ContainerName } } catch {}
-            try { if (-not $bucket) { $bucket = $repo.Container.Name   } } catch {}
+            # ── Provider-specific property routing ──────────────────────────────
+            switch ($typeName) {
 
-            try { $folder     = $repo.AmazonS3Folder.FolderName        } catch {}
-            try { if (-not $folder) { $folder = $repo.AzureBlobFolder.FolderName    } } catch {}
-            try { if (-not $folder) { $folder = $repo.Folder           } } catch {}
+                'AmazonS3' {
+                    $sub    = $repo.AmazonS3
+                    $bucket = $sub.BucketName
+                    $folder = $sub.FolderName
+                    $region = $sub.RegionType   # e.g. 'us-east-1'
+                }
 
-            try { $region     = $repo.AmazonS3Folder.Connection.AmazonS3Region } catch {}
-            try { if (-not $region) { $region = $repo.AzureBlobFolder.Connection.AzureRegion } } catch {}
+                'AmazonS3Compatible' {
+                    $sub      = $repo.AmazonS3Compatible
+                    $bucket   = $sub.BucketName
+                    $folder   = $sub.FolderName
+                    $endpoint = $sub.ServicePoint   # custom S3 endpoint URL
+                    $region   = $sub.RegionType     # may be blank for on-prem S3
+                }
 
-            try { $account    = $repo.Account.Name                     } catch {}
-            try { if (-not $account) { $account = $repo.Credentials.Name } } catch {}
+                'WasabiCloud' {
+                    $sub    = $repo.WasabiCloud
+                    $bucket = $sub.BucketName
+                    $folder = $sub.FolderName
+                    $region = $sub.RegionId     # e.g. 'us-east-1'
+                }
 
-            try { $useGateway = $repo.UseGatewayServer                 } catch {}
-            try { $gateway    = $repo.GatewayServer.Name               } catch {}
+                'AzureBlob' {
+                    $sub      = $repo.AzureBlob
+                    $bucket   = $sub.ContainerName
+                    $folder   = $sub.FolderName
+                    $endpoint = $sub.ServicePoint   # storage account endpoint
+                }
+
+                'AzureArchive' {
+                    $sub      = $repo.AzureArchive
+                    $bucket   = $sub.ContainerName
+                    $folder   = $sub.FolderName
+                    $endpoint = $sub.ServicePoint
+                }
+
+                'GoogleCloudStorage' {
+                    $sub    = $repo.GoogleCloud
+                    $bucket = $sub.BucketName
+                    $folder = $sub.FolderName
+                    $region = $sub.RegionId     # e.g. 'us-central1'
+                }
+
+                'IBMCloud' {
+                    $sub    = $repo.IBMCloud
+                    $bucket = $sub.BucketName
+                    $folder = $sub.FolderName
+                    $region = $sub.Region
+                }
+
+                Default {
+                    # Unknown provider — probe via reflection so we get something useful.
+                    # Logs a warning so field SEs know to report the new type.
+                    Write-LogFile "ObjectStorageRepos: unrecognized Type '$typeName' on repo '$($repo.Name)' — probing via Get-Member" -LogLevel "WARN"
+                    $members = $repo | Get-Member -MemberType Property | Select-Object -ExpandProperty Name
+
+                    foreach ($m in $members) {
+                        $val = $repo.$m
+                        if ($null -eq $val -or $val -isnot [string]) { continue }
+                        $ml = $m.ToLower()
+                        if ($ml -match 'bucket|container')  { $bucket   = $val }
+                        elseif ($ml -match 'folder')        { $folder   = $val }
+                        elseif ($ml -match 'region')        { $region   = $val }
+                        elseif ($ml -match 'endpoint|servicepoint') { $endpoint = $val }
+                    }
+                }
+            }
+
+            # ── Account / credential name (never expose password) ───────────────
+            if ($repo.PSObject.Properties['Account'] -and $null -ne $repo.Account) {
+                $account = $repo.Account.Name
+            } elseif ($repo.PSObject.Properties['Credentials'] -and $null -ne $repo.Credentials) {
+                $account = $repo.Credentials.Name
+            }
+
+            # ── Gateway ─────────────────────────────────────────────────────────
+            if ($repo.PSObject.Properties['UseGatewayServer']) {
+                $useGw = $repo.UseGatewayServer
+            }
+            if ($repo.PSObject.Properties['GatewayServer'] -and $null -ne $repo.GatewayServer) {
+                $gateway = ($repo.GatewayServer.Name -join '; ')
+            }
 
             [PSCustomObject]@{
-                Name        = $repo.Name
-                Type        = $repo.Type
-                Bucket      = $bucket
-                Folder      = $folder
-                Region      = $region
-                Account     = $account
-                UseGateway  = $useGateway
-                Gateway     = $gateway
+                Name       = $repo.Name
+                Type       = $typeName
+                Bucket     = $bucket
+                Folder     = $folder
+                Region     = $region
+                Endpoint   = $endpoint
+                Account    = $account
+                UseGateway = $useGw
+                Gateway    = $gateway
             }
         }
 
