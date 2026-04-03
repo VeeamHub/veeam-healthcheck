@@ -25,6 +25,7 @@ using VeeamHealthCheck.Functions.Reporting.Html.VBR.VbrTables.TapeInfra;
 using VeeamHealthCheck.Functions.Reporting.Html.VBR.VbrTables.CloudConnect;
 using VeeamHealthCheck.Functions.Reporting.Html.VBR.VbrTables.SureBackup;
 using VeeamHealthCheck.Functions.Reporting.Html.VBR.VbrTables.GeneralSettings;
+using VeeamHealthCheck.Functions.Reporting.Html.VBR.VbrTables.Repositories;
 using VeeamHealthCheck.Reporting.Html.VBR;
 using VeeamHealthCheck.Resources.Localization;
 using VeeamHealthCheck.Scrubber;
@@ -3826,6 +3827,24 @@ this.form.TableHeader(VbrLocalizationHelper.SbrExt15, VbrLocalizationHelper.SbrE
         public string AddEmailNotificationTable(bool scrub)
         {
             var table = new CEmailNotificationTable();
+            return table.Render(scrub);
+        }
+
+        public string AddCredentialsTable(bool scrub)
+        {
+            var table = new CCredentialsTable();
+            return table.Render(scrub);
+        }
+
+        public string AddUserRolesTable(bool scrub)
+        {
+            var table = new CUserRolesTable();
+            return table.Render(scrub);
+        }
+
+        public string AddObjectStorageReposTable(bool scrub)
+        {
+            var table = new CObjectStorageReposTable();
             return table.Render(scrub);
         }
 
