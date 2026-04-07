@@ -1655,6 +1655,8 @@ namespace VeeamHealthCheck.Html.VBR
         public string AddToolbar()
         {
             return this.form.Toolbar();
+        }
+
         public string AddCredentialsTable(bool scrub)
         {
             var table = new CCredentialsTable();
