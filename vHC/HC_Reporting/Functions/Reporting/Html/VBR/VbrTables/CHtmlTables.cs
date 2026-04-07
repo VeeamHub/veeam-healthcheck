@@ -709,24 +709,25 @@ namespace VeeamHealthCheck.Html.VBR
                 this.log.Error("\t" + e.Message);
             }
 
+            // Malware tables — ungated; CSV presence controls rendering
+            try
+            {
+                var malware = new CMalwareTable();
+                s += malware.MalwareSettingsTable();
+
+                s += malware.MalwareExclusionsTable();
+                s += malware.MalwareEventsTable();
+                s += malware.MalwareInfectedObjectsTable();
+            }
+            catch (Exception e)
+            {
+                this.log.Error("Malware Settings Data import failed. ERROR:");
+                this.log.Error("\t" + e.Message);
+            }
+
+            // Compliance tables — version-gated
             if (CGlobals.VBRMAJORVERSION > 11)
             {
-                // add malware table
-                try
-                {
-                    var malware = new CMalwareTable();
-                    s += malware.MalwareSettingsTable();
-
-                    s += malware.MalwareExclusionsTable();
-                    s += malware.MalwareEventsTable();
-                    s += malware.MalwareInfectedObjectsTable();
-                }
-                catch (Exception e)
-                {
-                    this.log.Error("Malware Settings Data import failed. ERROR:");
-                    this.log.Error("\t" + e.Message);
-                }
-
                 try
                 {
                     // compliance table
