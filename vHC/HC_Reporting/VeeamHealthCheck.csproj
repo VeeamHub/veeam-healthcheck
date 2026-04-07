@@ -89,10 +89,8 @@
 		<None Remove="Tools\Scripts\Collect-VBRLogs.ps1" />
 		<None Remove="Tools\Scripts\DumpManagedServerToText.ps1" />
 		<None Remove="Tools\Scripts\Get-VBRConfig.ps1" />
-		<None Remove="Tools\Scripts\Get-VeeamSessionReport.ps1" />
 		<None Remove="Tools\Scripts\HealthCheck\VB365\Collect-VB365Data.ps1" />
 		<None Remove="Tools\Scripts\HealthCheck\VBR\Get-NasInfo.ps1" />
-		<None Remove="Tools\Scripts\HealthCheck\VBR\Get-VeeamSessionReportVersion13.ps1" />
 	</ItemGroup>
 	<ItemGroup>
 		<EmbeddedResource Include="Functions\Collection\PSCollections\Scripts\Collect-VB365Data.ps1">
@@ -104,9 +102,6 @@
 		<Content Include="Health_Check_Icon.ico" />
 		<EmbeddedResource Include="Health_Check_Icon.ico" />
 		<Content Include="Tools\Scripts\HealthCheck\VBR\Get-NasInfo.ps1">
-			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-		</Content>
-		<Content Include="Tools\Scripts\HealthCheck\VBR\Get-VeeamSessionReportVersion13.ps1">
 			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
 		</Content>
 		<Content Include="Tools\Scripts\HotfixDetection\Collect-VBRLogs.ps1">
@@ -140,9 +135,6 @@
 	</ItemGroup>
 	<ItemGroup>
 		<Content Include="Tools\Scripts\HealthCheck\VBR\Get-VBRConfig.ps1">
-			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-		</Content>
-		<Content Include="Tools\Scripts\HealthCheck\VBR\Get-VeeamSessionReport.ps1">
 			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
 		</Content>
 	</ItemGroup>
