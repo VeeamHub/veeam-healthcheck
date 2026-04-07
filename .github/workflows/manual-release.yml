@@ -21,6 +21,11 @@ on:
         required: false
         type: boolean
         default: false
+      vhc_monitor_version:
+        description: 'vhc-monitor version to bundle (e.g. v0.2.0.16, or "latest")'
+        required: false
+        type: string
+        default: 'latest'
 
 permissions:
   contents: write
@@ -78,6 +83,34 @@ jobs:
           -p:IncludeNativeLibrariesForSelfExtract=true `
           -p:EnableCompressionInSingleFile=true `
           -o publish/out
+
+    - name: Download vhc-monitor companion
+      id: download_vhc_monitor
+      shell: pwsh
+      env:
+        GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        VHC_MONITOR_VERSION: ${{ inputs.vhc_monitor_version || 'latest' }}
+      run: |
+        $repo = "VeeamHub/vhc-monitor"
+        try {
+          if ($env:VHC_MONITOR_VERSION -eq "latest") {
+            $release = gh release view --repo $repo --json tagName | ConvertFrom-Json
+            $tag = $release.tagName
+          } else {
+            $tag = $env:VHC_MONITOR_VERSION
+          }
+          Write-Host "Downloading vhc-monitor $tag..."
+          gh release download $tag --repo $repo --pattern "vhc-monitor.exe" --dir publish/out
+          $hash = (Get-FileHash "publish/out/vhc-monitor.exe" -Algorithm SHA256).Hash
+          $manifest = @{ version = $tag; sha256 = $hash; bundled_at = (Get-Date -Format o) }
+          $manifest | ConvertTo-Json | Out-File "publish/out/BUNDLE_MANIFEST.json" -Encoding utf8
+          Write-Host "Bundled vhc-monitor $tag (SHA256: $hash)"
+          "vhc_monitor_version=$tag" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
+        } catch {
+          Write-Warning "vhc-monitor download failed: $_"
+          Write-Warning "Proceeding without vhc-monitor. VHC will show 'Not bundled' status."
+        }
+      continue-on-error: true
 
     - name: Create ZIP archive
       shell: pwsh
