@@ -3,16 +3,16 @@
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
 :root {
-  --green: #00b336;
-  --green-light: #e6f5ec;
-  --green-dark: #008f2b;
-  --bg: #f8f9fb;
+  --green: #00d15f;
+  --green-light: #f0ffe8;
+  --green-dark: #00a847;
+  --bg: #f5f7fa;
   --card: #ffffff;
-  --text: #1a1d23;
+  --text: #1b2948;
   --text-secondary: #6b7280;
-  --border: #e5e7eb;
-  --sidebar-bg: #1a1d23;
-  --sidebar-text: #9ca3af;
+  --border: #e0e0e0;
+  --sidebar-bg: #1b2948;
+  --sidebar-text: #8a9bbf;
   --sidebar-active: #ffffff;
   --warning: #f59e0b;
   --danger: #ef4444;
@@ -108,9 +108,9 @@ body {
 }
 
 .nav-link.active {
-  background: rgba(0,209,95,0.12);
+  background: rgba(0,209,95,0.18);
   color: var(--green);
-  font-weight: 500;
+  font-weight: 600;
 }
 
 /* ===== Main Content ===== */
@@ -214,6 +214,7 @@ body {
   border-radius: var(--radius);
   box-shadow: var(--shadow);
   border: 1px solid var(--border);
+  border-left: 4px solid var(--green);
   margin-bottom: 20px;
   overflow: hidden;
 }
@@ -230,7 +231,7 @@ body {
 }
 
 .section-header:hover {
-  background: #fafbfc;
+  background: var(--green-light);
 }
 
 .section-card.open .section-header {
@@ -294,14 +295,14 @@ thead th {
   font-size: 11px;
   text-transform: uppercase;
   letter-spacing: 0.5px;
-  color: var(--text-secondary);
-  background: #f9fafb;
-  border-bottom: 1px solid var(--border);
+  color: var(--text);
+  background: var(--green-light);
+  border-bottom: 2px solid rgba(0,209,95,0.25);
   cursor: pointer;
 }
 
 thead th:hover {
-  background: #f3f4f6;
+  background: #e4ffda;
 }
 
 /* Sort indicators */
@@ -433,8 +434,8 @@ tbody tr:hover { background: #f9fafb; }
 .heat-1 { background: #cceedd; }
 .heat-2 { background: #80d4a0; }
 .heat-3 { background: #33bb66; }
-.heat-4 { background: #00b336; }
-.heat-5 { background: #007a24; }
+.heat-4 { background: var(--green); }
+.heat-5 { background: var(--green-dark); }
 
 /* ===== Toolbar ===== */
 .toolbar {
@@ -456,6 +457,13 @@ tbody tr:hover { background: #f9fafb; }
 }
 
 .btn:hover { background: #f3f4f6; }
+
+/* ===== Section body headings (Veeam green, like old report) ===== */
+.section-body h2,
+.section-body h3 {
+  color: var(--green-dark);
+  font-weight: 600;
+}
 
 /* ===== Scroll-to-top ===== */
 #myBtn {
@@ -489,10 +497,10 @@ footer {
 /* ===== Table cell status colors ===== */
 td.cell-danger  { background: #fef2f2; color: #dc2626; font-weight: 600; }
 td.cell-warning { background: #fffbeb; color: #d97706; font-weight: 600; }
-td.cell-success { background: #e6f5ec; color: #008f2b; font-weight: 600; }
+td.cell-success { background: var(--green-light); color: var(--green-dark); font-weight: 600; }
 
 /* ===== Progress bar color variants ===== */
-.progress-fill.progress-ok      { background: #00b336; }
+.progress-fill.progress-ok      { background: var(--green); }
 .progress-fill.progress-warning { background: #d97706; }
 .progress-fill.progress-danger  { background: #dc2626; }
 
@@ -773,8 +781,8 @@ table.concurrency-heatmap td.heat-2 { color: transparent; }
 table.concurrency-heatmap td.heat-3 { color: transparent; }
 table.concurrency-heatmap td.heat-4 { color: transparent; }
 table.concurrency-heatmap td.heat-5 { color: transparent; }
-table.concurrency-heatmap td.heat-1:hover { color: #007a24; }
-table.concurrency-heatmap td.heat-2:hover { color: #007a24; }
+table.concurrency-heatmap td.heat-1:hover { color: var(--green-dark); }
+table.concurrency-heatmap td.heat-2:hover { color: var(--green-dark); }
 table.concurrency-heatmap td.heat-3:hover { color: #664d03; }
 table.concurrency-heatmap td.heat-4:hover { color: #fff; }
 table.concurrency-heatmap td.heat-5:hover { color: #fff; }
