@@ -22,8 +22,6 @@ Write-Output ""Checking Veeam on $VeeamServer""
 ";
 
         private readonly string vbrConfigScript = Environment.CurrentDirectory + @"\Tools\Scripts\HealthCheck\VBR\Get-VBRConfig.ps1";
-        private readonly string vbrSessionScript = Environment.CurrentDirectory + @"\Tools\Scripts\HealthCheck\VBR\Get-VeeamSessionReport.ps1";
-        private readonly string vbrSessionScriptVersion13 = Environment.CurrentDirectory + @"\Tools\Scripts\HealthCheck\VBR\Get-VeeamSessionReportVersion13.ps1";
 
         /// Checks if the Veeam.Backup.PowerShell module is available in PS7.
 

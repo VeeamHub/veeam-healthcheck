@@ -64,7 +64,7 @@ namespace VhcXTests
         }
 
         [Fact]
-        public void ParsePath_InputWithMultipleEquals_ReturnsFirstSplitResult()
+        public void ParsePath_InputWithMultipleEquals_ReturnsFullValueAfterFirstEquals()
         {
             // Arrange
             var parser = new CArgsParser(new string[] { });
@@ -74,8 +74,8 @@ namespace VhcXTests
             var result = InvokeParsePathMethod(parser, input);
 
             // Assert
-            // Split only splits once by default, so we get the first part after the first =
-            Assert.Equal("C:\\temp", result);
+            // Split('=', 2) splits on first = only, preserving the rest of the path
+            Assert.Equal("C:\\temp=special", result);
         }
 
         [Fact]
@@ -186,6 +186,29 @@ namespace VhcXTests
 
             // Assert
             Assert.Matches(caseInsensitivePattern, arg);
+        }
+
+        [Theory]
+        [InlineData("/outdir=D:\\Reports", "D:\\Reports")]
+        [InlineData("/OUTDIR=D:\\Reports", "D:\\Reports")]
+        [InlineData("/outdir=C:\\temp\\vHC", "C:\\temp\\vHC")]
+        [InlineData("/outdir=D:\\My Reports\\HealthCheck", "D:\\My Reports\\HealthCheck")]
+        public void ParsePath_OutdirFormat_ReturnsPath(string arg, string expected)
+        {
+            var parser = new CArgsParser(new string[] { });
+            var result = InvokeParsePathMethod(parser, arg);
+            Assert.Equal(expected, result);
+        }
+
+        [Theory]
+        [InlineData("/outdir=D:\\Reports")]
+        [InlineData("/OUTDIR=D:\\Reports")]
+        [InlineData("/Outdir=D:\\Reports")]
+        public void ParseAllArgs_OutdirPattern_MatchesRegex(string arg)
+        {
+            var pattern = new System.Text.RegularExpressions.Regex("/outdir=.*",
+                System.Text.RegularExpressions.RegexOptions.IgnoreCase);
+            Assert.Matches(pattern, arg);
         }
 
         #endregion

@@ -164,14 +164,23 @@ namespace VeeamHealthCheck.Startup
         private List<string> ServerList()
         {
             List<string> newList = new();
-            string dir = Directory.GetCurrentDirectory();
-            string path = /*dir +*/ PSInvoker.SERVERLISTFILE;
-            using(StreamReader sr = new(path)) // need to get the source directory
+            string path = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, PSInvoker.SERVERLISTFILE);
+
+            if (!File.Exists(path))
+            {
+                this.LOG.Error(this.logStart + $"serverlist.txt not found at {path}. Server dump may have failed.", false);
+                return newList;
+            }
+
+            using(StreamReader sr = new(path))
             {
                 string line;
                 while((line = sr.ReadLine()) != null)
                 {
-                    newList.Add(line);
+                    if (!string.IsNullOrWhiteSpace(line))
+                    {
+                        newList.Add(line);
+                    }
                 }
             }
 

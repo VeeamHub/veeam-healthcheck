@@ -34,7 +34,7 @@ namespace VhcXTests.TestData
         {
             var immutableValue = immutableEnabled.ToString();
             return @$"""Status"",""ParentId"",""RepoId"",""Name"",""ArchiveType"",""BackupImmutabilityEnabled"",""GatewayMode"",""GatewayServer""
-""Normal"",""55555555-5555-5555-5555-555555555555"",""77777777-8888-9999-aaaa-bbbbbbbbbbbb"",""Azure-Archive-Blob"",""AzureArchive"",""{immutableValue}"",""Direct"",""vbr-server-01.test.local(aaaaaaaa-1111-2222-3333-bbbbbbbbbbbb); proxy-server-01.test.local(cccccccc-1111-2222-3333-dddddddddddd)""";
+""Normal"",""55555555-5555-5555-5555-555555555555"",""77777777-8888-9999-aaaa-bbbbbbbbbbbb"",""Azure-Archive-Blob"",""AzureArchive"",""{immutableValue}"",""Direct"",""vbr-server-01.test.local""";
         }
 
         #endregion
@@ -69,10 +69,11 @@ namespace VhcXTests.TestData
         /// </summary>
         public static string GenerateProxies()
         {
-            // Headers match CProxyCsvInfos [Index(n)] positional mapping (16 columns, indices 0-15).
+            // 16-column schema matching CProxyCsvInfos [Index(0..15)] and actual PS script output
+            // Type is "VMware" (PS script converts Vi → VMware); TransportMode "Auto" for test assertions
             return @"""Id"",""Name"",""Description"",""Info"",""HostId"",""Host"",""Type"",""IsDisabled"",""Options"",""MaxTasksCount"",""UseSsl"",""FailoverToNetwork"",""TransportMode"",""IsVbrProxy"",""ChosenVm"",""ChassisType""
-""11111111-2222-3333-4444-555555555555"",""Proxy-01"","""","""",""11111111-2222-3333-4444-555555555555"",""Proxy-01.domain.local"",""Vi"","""","""",""4"","""","""",""Auto"","""","""",""""
-""aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee"",""VBR-Server"","""","""",""aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee"",""VBR-Server.domain.local"",""Vi"","""","""",""2"","""","""",""Auto"","""","""",""""";
+""11111111-2222-3333-4444-555555555555"",""Proxy-01"",""Test VMware proxy"",""Veeam.Backup.Model.CBackupProxyInfo"",""11111111-2222-3333-4444-555555555555"",""Proxy-01.domain.local"",""VMware"",""False"",""Veeam.Backup.Model.CDomViProxyOptions"",""4"",""False"",""True"",""Auto"","""","""",""HvVirtual""
+""aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee"",""VBR-Server"",""VBR server as proxy"",""Veeam.Backup.Model.CBackupProxyInfo"",""aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee"",""VBR-Server.domain.local"",""VMware"",""False"",""Veeam.Backup.Model.CDomViProxyOptions"",""2"",""False"",""True"",""Auto"","""","""",""HvVirtual""";
         }
 
         /// <summary>
@@ -80,7 +81,7 @@ namespace VhcXTests.TestData
         /// </summary>
         public static string GenerateEmptyProxies()
         {
-            return @"""Name"",""Host"",""MaxTasksCount"",""TransportMode"",""HostId""";
+            return @"""Id"",""Name"",""Description"",""Info"",""HostId"",""Host"",""Type"",""IsDisabled"",""Options"",""MaxTasksCount"",""UseSsl"",""FailoverToNetwork"",""TransportMode"",""IsVbrProxy"",""ChosenVm"",""ChassisType""";
         }
 
         #endregion
@@ -92,13 +93,13 @@ namespace VhcXTests.TestData
         /// </summary>
         public static string GenerateRepositories()
         {
-            // Headers match CRepoCsvInfos [Index(n)] positional mapping (40 columns).
-            // Position 25 uses "isimmutabilitysupported" (lowercase) so dynamic tests can access r.isimmutabilitysupported.
-            // Positions 37/38 use "TotalSpace"/"FreeSpace" so dynamic tests can access repo.TotalSpace / repo.FreeSpace.
-            // Bool positions (11,13,16,18,21,22,23,24,25) must have valid True/False values.
-            return @"""Id"",""Name"",""HostId"",""Description"",""CreationTime"",""Path"",""FullPath"",""FriendlyPath"",""ShareCredsId"",""Type"",""Status"",""IsUnavailable"",""Group"",""UseNfsOnMountHost"",""VersionOfCreation"",""Tag"",""IsTemporary"",""TypeDisplay"",""IsRotatedDriveRepository"",""EndPointCryptoKeyId"",""Options"",""HasBackupChainLengthLimitation"",""IsSanSnapshotOnly"",""IsDedupStorage"",""SplitStoragesPerVm"",""isimmutabilitysupported"",""MaxTasks"",""UnlimitedTasks"",""MaxArchiveTasks"",""DataRateLimit"",""Uncompress"",""AlignBlock"",""RemoteAccessLimitation"",""EpEncryptionEnabled"",""OneBackupFilePerVM"",""AutoDetectAffinity"",""NfsRepoEncoding"",""TotalSpace"",""FreeSpace"",""GateHosts""
-""repo-id-1"",""Default Backup Repository"",""aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee"","""","""",""C:\Backup"",""C:\Backup"",""C:\Backup"","""",""WinLocal"",""Available"",""False"","""",""False"","""","""",""False"",""Windows local"",""False"","""","""",""False"",""False"",""False"",""False"",""False"",""4"",""False"",""0"",""0"",""False"",""False"",""None"",""False"",""False"",""True"","""",""1099511627776"",""549755813888"",""""
-""repo-id-2"",""Hardened Repo"",""22222222-3333-4444-5555-666666666666"","""","""",""D:\HardenedBackup"",""D:\HardenedBackup"",""D:\HardenedBackup"","""",""LinuxHardened"",""Available"",""False"","""",""False"","""","""",""False"",""Linux hardened"",""False"","""","""",""False"",""False"",""False"",""True"",""True"",""4"",""False"",""0"",""0"",""False"",""False"",""None"",""False"",""False"",""True"","""",""2199023255552"",""1649267441664"",""""";
+            // 40-column schema matching CRepoCsvInfos [Index(0..39)]
+            // Headers match actual PS script output (not all match property names):
+            //   Options(maxtasks)=26, CachedTotalSpace=37, CachedFreeSpace=38, gatewayHosts=39
+            // Booleans at indices 11,13,16,18,21,22,23,24,25
+            return @"""Id"",""Name"",""HostId"",""Description"",""CreationTime"",""Path"",""FullPath"",""FriendlyPath"",""ShareCredsId"",""Type"",""Status"",""IsUnavailable"",""Group"",""UseNfsOnMountHost"",""VersionOfCreation"",""Tag"",""IsTemporary"",""TypeDisplay"",""IsRotatedDriveRepository"",""EndPointCryptoKeyId"",""Options"",""HasBackupChainLengthLimitation"",""IsSanSnapshotOnly"",""IsDedupStorage"",""SplitStoragesPerVm"",""IsImmutabilitySupported"",""Options(maxtasks)"",""Options(Unlimited Tasks)"",""Options(MaxArchiveTaskCount)"",""Options(CombinedDataRateLimit)"",""Options(Uncompress)"",""Options(OptimizeBlockAlign)"",""Options(RemoteAccessLimitation)"",""Options(EpEncryptionEnabled)"",""Options(OneBackupFilePerVm)"",""Options(IsAutoDetectAffinityProxies)"",""Options(NfsRepositoryEncoding)"",""CachedTotalSpace"",""CachedFreeSpace"",""gatewayHosts""
+""aaaaaaaa-1111-2222-3333-bbbbbbbbbbbb"",""Default Backup Repository"",""aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee"",""Test repository"",""2020-01-01"",""C:\Backup"",""C:\Backup"",""C:\Backup"",""00000000-0000-0000-0000-000000000000"",""WinLocal"",""Ordinal"",""False"",""BackupRepository"",""False"",""12.0.0.0"","""",""False"","""",""False"",""00000000-0000-0000-0000-000000000000"",""Veeam.Backup.Model.CDomBackupRepositoryOptions"",""False"",""False"",""False"",""True"",""False"",""4"",""False"",""2"",""0"",""False"",""True"",""Everyone"",""False"",""True"",""True"",""Undefined"",""1024"",""512"",""""
+""bbbbbbbb-1111-2222-3333-cccccccccccc"",""Hardened Repo"",""22222222-3333-4444-5555-666666666666"",""Linux hardened repository"",""2021-06-01"",""D:\HardenedBackup"",""D:\HardenedBackup"",""D:\HardenedBackup"",""00000000-0000-0000-0000-000000000000"",""LinuxHardened"",""Ordinal"",""False"",""BackupRepository"",""True"",""12.0.0.0"","""",""False"","""",""False"",""00000000-0000-0000-0000-000000000000"",""Veeam.Backup.Model.CDomBackupRepositoryOptions"",""False"",""False"",""False"",""True"",""True"",""8"",""False"",""2"",""0"",""False"",""True"",""Everyone"",""False"",""True"",""True"",""Undefined"",""2048"",""1600"",""""";
         }
 
         /// <summary>
@@ -106,8 +107,9 @@ namespace VhcXTests.TestData
         /// </summary>
         public static string GenerateInvalidRepositories()
         {
-            return @"""Id"",""Name"",""HostId"",""Description"",""CreationTime"",""Path"",""FullPath"",""FriendlyPath"",""ShareCredsId"",""Type"",""Status"",""IsUnavailable"",""Group"",""UseNfsOnMountHost"",""VersionOfCreation"",""Tag"",""IsTemporary"",""TypeDisplay"",""IsRotatedDriveRepository"",""EndPointCryptoKeyId"",""Options"",""HasBackupChainLengthLimitation"",""IsSanSnapshotOnly"",""IsDedupStorage"",""SplitStoragesPerVm"",""isimmutabilitysupported"",""MaxTasks"",""UnlimitedTasks"",""MaxArchiveTasks"",""DataRateLimit"",""Uncompress"",""AlignBlock"",""RemoteAccessLimitation"",""EpEncryptionEnabled"",""OneBackupFilePerVM"",""AutoDetectAffinity"",""NfsRepoEncoding"",""TotalSpace"",""FreeSpace"",""GateHosts""
-""bad-repo-id"",""Bad Repo"",""aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee"","""","""",""C:\Backup"",""C:\Backup"",""C:\Backup"","""",""WinLocal"",""Available"",""False"","""",""False"","""","""",""False"",""Windows local"",""False"","""","""",""False"",""False"",""False"",""False"",""False"",""4"",""False"",""0"",""0"",""False"",""False"",""None"",""False"",""False"",""True"","""",""100"",""200"",""""";
+            // 40-column schema matching CRepoCsvInfos [Index(0..39)]
+            return @"""Id"",""Name"",""HostId"",""Description"",""CreationTime"",""Path"",""FullPath"",""FriendlyPath"",""ShareCredsId"",""Type"",""Status"",""IsUnavailable"",""Group"",""UseNfsOnMountHost"",""VersionOfCreation"",""Tag"",""IsTemporary"",""TypeDisplay"",""IsRotatedDriveRepository"",""EndPointCryptoKeyId"",""Options"",""HasBackupChainLengthLimitation"",""IsSanSnapshotOnly"",""IsDedupStorage"",""SplitStoragesPerVm"",""IsImmutabilitySupported"",""Options(maxtasks)"",""Options(Unlimited Tasks)"",""Options(MaxArchiveTaskCount)"",""Options(CombinedDataRateLimit)"",""Options(Uncompress)"",""Options(OptimizeBlockAlign)"",""Options(RemoteAccessLimitation)"",""Options(EpEncryptionEnabled)"",""Options(OneBackupFilePerVm)"",""Options(IsAutoDetectAffinityProxies)"",""Options(NfsRepositoryEncoding)"",""CachedTotalSpace"",""CachedFreeSpace"",""gatewayHosts""
+""cccccccc-1111-2222-3333-dddddddddddd"",""Bad Repo"",""aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee"",""Bad repo for testing"",""2020-01-01"",""C:\Backup"",""C:\Backup"",""C:\Backup"",""00000000-0000-0000-0000-000000000000"",""WinLocal"",""Ordinal"",""False"",""BackupRepository"",""False"",""12.0.0.0"","""",""False"","""",""False"",""00000000-0000-0000-0000-000000000000"",""Veeam.Backup.Model.CDomBackupRepositoryOptions"",""False"",""False"",""False"",""True"",""False"",""4"",""False"",""2"",""0"",""False"",""True"",""Everyone"",""False"",""True"",""True"",""Undefined"",""100"",""200"",""""";
         }
 
         #endregion
@@ -119,14 +121,12 @@ namespace VhcXTests.TestData
         /// </summary>
         public static string GenerateJobs()
         {
-            // Headers match CJobCsvInfos [Index(n)] positional mapping (40 columns).
-            // Position 4 uses "IsScheduleEnabled" header so dynamic tests can access j.IsScheduleEnabled.
-            // Position 12 uses "pwdkeyid" (lowercase) so dynamic tests can access j.pwdkeyid.
-            // Bool positions (9,26,28,30,32) and double position (13) must have valid values.
-            return @"""Name"",""JobType"",""SheduleEnabledTime"",""ScheduleOptions"",""IsScheduleEnabled"",""RepoName"",""Algorithm"",""FullBackupScheduleKind"",""FullBackupDays"",""TransformFullToSyntethic"",""TransformIncrementsToSyntethic"",""TransformToSyntethicDays"",""pwdkeyid"",""OriginalSize"",""RetentionType"",""RetentionCount"",""RetainDaysToKeep"",""DeletedVmRetentionDays"",""DeletedVmRetention"",""CompressionLevel"",""Deduplication"",""BlockSize"",""IntegrityChecks"",""SpecificStorageEncryption"",""StgEncryptionEnabled"",""KeepFirstFullBackup"",""EnableFullBackup"",""BackupIsAttached"",""GfsWeeklyIsEnabled"",""GfsWeeklyCount"",""GfsMonthlyEnabled"",""GfsMonthlyCount"",""GfsYearlyEnabled"",""GfsYearlyCount"",""IndexingType"",""OnDiskGB"",""AAIPEnabled"",""VSSEnabled"",""VSSIgnoreErrors"",""GuestFSIndexingEnabled""
-""Daily Backup"",""Backup"",""Daily"",""AtSpecifiedTime"",""True"",""Default Backup Repository"",""Incremental"",""FullMonthly"",""1"",""False"",""False"","""",""00000000-0000-0000-0000-000000000000"",""1000"",""Days"",""7"",""0"",""0"",""False"",""Optimal"",""True"",""LargeDeviceBlocks"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""0"",""False"",""0"",""False"",""0"",""None"",""0.5"",""True"",""True"",""False"",""True""
-""Weekly Full"",""Backup"",""Weekly"",""AtSpecifiedTime"",""True"",""Default Backup Repository"",""Incremental"",""FullWeekly"",""7"",""False"",""False"","""",""enc-key-guid-1"",""2000"",""Days"",""14"",""0"",""0"",""False"",""High"",""True"",""LargeDeviceBlocks"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""0"",""False"",""0"",""False"",""0"",""None"",""1.0"",""True"",""True"",""False"",""False""
-""Copy to Cloud"",""BackupCopy"",""Daily"",""AtSpecifiedTime"",""False"",""Cloud Repo"",""Reverse"","""","""",""False"",""False"","""",""enc-key-guid-2"",""500"",""Days"",""7"",""0"",""0"",""False"",""Optimal"",""True"",""LargeDeviceBlocks"",""False"",""False"",""False"",""False"",""False"",""False"",""False"",""0"",""False"",""0"",""False"",""0"",""None"",""0.25"",""False"",""False"",""False"",""False""";
+            // 42-column schema matching CJobCsvInfos [Index(0..41)]
+            // Booleans at indices 9,26,28,30,32; doubles at 13,35; IsJobEnabled at 40, IsScheduleDisabled at 41 (Optional)
+            return @"""Name"",""JobType"",""SheduleEnabledTime"",""ScheduleOptions"",""RestorePoints"",""RepoName"",""Algorithm"",""FullBackupScheduleKind"",""FullBackupDays"",""TransformFullToSyntethic"",""TransformIncrementsToSyntethic"",""TransformToSyntethicDays"",""PwdKeyId"",""OriginalSize"",""RetentionType"",""RetentionCount"",""RetainDaysToKeep"",""DeletedVmRetentionDays"",""DeletedVmRetention"",""CompressionLevel"",""Deduplication"",""BlockSize"",""IntegrityChecks"",""SpecificStorageEncryption"",""StgEncryptionEnabled"",""KeepFirstFullBackup"",""EnableFullBackup"",""BackupIsAttached"",""GfsWeeklyIsEnabled"",""GfsWeeklyCount"",""GfsMonthlyEnabled"",""GfsMonthlyCount"",""GfsYearlyEnabled"",""GfsYearlyCount"",""IndexingType"",""OnDiskGB"",""AAIPEnabled"",""VSSEnabled"",""VSSIgnoreErrors"",""GuestFSIndexingEnabled"",""IsJobEnabled"",""IsScheduleDisabled""
+""Daily Backup"",""Backup"",""01/01/2026 01:00:00 a.m."",""Start time: [01/01/2026 1:00:00 a.m.]"",""14"",""Default Backup Repository"",""Increment"",""Daily"",""Sunday"",""False"",""False"",""Sunday"",""00000000-0000-0000-0000-000000000000"",""1099511627776"",""Days"",""14"",""14"",""14"",""False"",""5"",""True"",""KbBlockSize1024"",""True"",""False"",""True"",""False"",""False"",""False"",""False"",""4"",""False"",""1"",""False"",""1"",""None"",""102.5"",""False"",""True"",""False"","""",""True"",""False""
+""Weekly Full"",""Backup"","""",""Start time: [07/01/2026 10:00:00 p.m.]"",""7"",""Default Backup Repository"",""Increment"",""Daily"",""Sunday"",""False"",""False"",""Sunday"",""enc-key-guid-1"",""0"",""Days"",""7"",""7"",""14"",""False"",""5"",""True"",""KbBlockSize1024"",""True"",""False"",""True"",""False"",""False"",""False"",""False"",""4"",""False"",""1"",""False"",""1"",""None"",""0"",""False"",""True"",""False"","""",""False"",""True""
+""Copy to Cloud"",""SimpleBackupCopyPolicy"",""01/01/2026 03:00:00 a.m."",""Start time: [01/01/2026 3:00:00 a.m.]"",""30"",""Cloud Repository"",""Increment"",""Daily"",""Sunday"",""False"",""False"","""",""enc-key-guid-2"",""0"",""Days"",""30"",""30"",""14"",""False"",""5"",""True"",""KbBlockSize1024"",""True"",""False"",""True"",""False"",""False"",""False"",""False"",""4"",""False"",""1"",""False"",""1"",""None"",""65.4"",""False"",""True"",""True"","""",""True"",""False""";
         }
 
         #endregion

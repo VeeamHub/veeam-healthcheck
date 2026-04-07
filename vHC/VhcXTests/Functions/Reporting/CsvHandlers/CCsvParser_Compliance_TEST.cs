@@ -50,21 +50,21 @@ namespace VhcXTests.Functions.Reporting.CsvHandlers
         #region Unit Tests - No CSV Files
 
         [Fact]
-        public void ComplianceCsv_NoFile_ReturnsNull()
+        public void ComplianceCsv_NoFile_ReturnsEmpty()
         {
             var vbrDir = Path.Combine(_testDataDir, "VBR");
             var parser = new CCsvParser(vbrDir);
             var result = parser.ComplianceCsv();
-            Assert.Null(result);
+            Assert.Empty(result);
         }
 
         [Fact]
-        public void ComplianceCsv_EmptyDirectory_ReturnsNull()
+        public void ComplianceCsv_EmptyDirectory_ReturnsEmpty()
         {
             var vbrDir = Path.Combine(_testDataDir, "VBR");
             var parser = new CCsvParser(vbrDir);
             var result = parser.ComplianceCsv();
-            Assert.Null(result);
+            Assert.Empty(result);
         }
 
         #endregion
