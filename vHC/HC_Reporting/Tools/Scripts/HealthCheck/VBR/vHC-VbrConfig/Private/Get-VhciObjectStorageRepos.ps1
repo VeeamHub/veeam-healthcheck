@@ -127,7 +127,7 @@ function Get-VhciObjectStorageRepos {
                 # ── Veeam Data Cloud Vault ────────────────────────────────────
                 # Proprietary type; limited PS property exposure. Probe via reflection.
                 'DataCloudVault' {
-                    Write-LogFile "ObjectStorageRepos: DataCloudVault repo '$($repo.Name)' — probing via Get-Member" -LogLevel "INFO"
+                    Write-LogFile "ObjectStorageRepos: DataCloudVault repo '$($repo.Name)' - probing via Get-Member" -LogLevel "INFO"
                     $bucket = Get-VhciObjStoreProp $repo @('BucketName','Bucket','Container','ContainerName')
                     $folder = Get-VhciObjStoreProp $repo @('FolderName','Folder')
                     $region = Get-VhciObjStoreProp $repo @('Region','RegionId','RegionType')
@@ -135,7 +135,7 @@ function Get-VhciObjectStorageRepos {
 
                 # ── 11:11 Cloud Object Storage ────────────────────────────────
                 'ElevenEleven' {
-                    Write-LogFile "ObjectStorageRepos: ElevenEleven repo '$($repo.Name)' — probing via Get-Member" -LogLevel "INFO"
+                    Write-LogFile "ObjectStorageRepos: ElevenEleven repo '$($repo.Name)' - probing via Get-Member" -LogLevel "INFO"
                     $bucket = Get-VhciObjStoreProp $repo @('BucketName','Bucket','Container','ContainerName')
                     $folder = Get-VhciObjStoreProp $repo @('FolderName','Folder')
                     $region = Get-VhciObjStoreProp $repo @('Region','RegionId','RegionType')
@@ -144,7 +144,7 @@ function Get-VhciObjectStorageRepos {
                 Default {
                     # Unrecognized type — full reflection probe.
                     # WARN so field SEs know to report new provider types for explicit support.
-                    Write-LogFile "ObjectStorageRepos: unrecognized Type '$typeName' on repo '$($repo.Name)' — probing via Get-Member" -LogLevel "WARN"
+                    Write-LogFile "ObjectStorageRepos: unrecognized Type '$typeName' on repo '$($repo.Name)' - probing via Get-Member" -LogLevel "WARN"
                     foreach ($m in ($repo | Get-Member -MemberType Property | Select-Object -ExpandProperty Name)) {
                         $val = $repo.$m
                         if ($null -eq $val -or $val -isnot [string] -or $val -eq '') { continue }
