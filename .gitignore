@@ -384,3 +384,5 @@ vHC-Reports/
 Plans/
 .playwright-mcp/
 docs/
+entities.json
+mempalace.yaml
