@@ -133,5 +133,13 @@ namespace VeeamHealthCheck.Functions.Reporting.CsvHandlers
         [Index(39)]
         [Optional]
         public string GuestFSIndexingEnabled { get; set; }
+
+        [Index(40)]
+        [Optional]
+        public string IsJobEnabled { get; set; }
+
+        [Index(41)]
+        [Optional]
+        public string IsScheduleDisabled { get; set; }
     }
 }

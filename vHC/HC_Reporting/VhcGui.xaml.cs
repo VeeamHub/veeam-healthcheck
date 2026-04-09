@@ -2,8 +2,11 @@
 // MIT License
 using System;
 using System.Linq;
+using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Media;
+using VeeamHealthCheck.Functions.Monitor;
 using VeeamHealthCheck.Resources.Localization;
 using VeeamHealthCheck.Shared;
 using VeeamHealthCheck.Startup;
@@ -24,6 +27,7 @@ namespace VeeamHealthCheck
             this.SetUi();
             pathBox.IsEnabled = true;
             this.InitializeServerList();
+            this.InitializeMonitorStatus();
 
             // pdfCheckBox.IsEnabled = false;
         }
@@ -229,11 +233,54 @@ namespace VeeamHealthCheck
             System.Threading.Tasks.Task.Factory.StartNew(() =>
             {
                 this.functions.StartPrimaryFunctions();
+                this.UpdateCollectionStatusText();
+                this.OfferMonitorSetupIfNeeded();
+                this.ShowCollectionWarningsIfAny();
                 Environment.Exit(0);
             }).ContinueWith(t =>
             {
                 this.hideProgressBar();
             });
+        }
+
+        private void UpdateCollectionStatusText()
+        {
+            var failed = CGlobals.CollectionManifest?.Where(e => !e.Success).ToList();
+            if (failed != null && failed.Count > 0)
+            {
+                this.Dispatcher.Invoke((Action)(() =>
+                {
+                    progressText.Text = $"Collection complete \u2014 {failed.Count} collector warning(s)";
+                    progressText.Foreground = new System.Windows.Media.SolidColorBrush(
+                        System.Windows.Media.Color.FromRgb(0xf0, 0xad, 0x4e));
+                }));
+            }
+            else
+            {
+                this.Dispatcher.Invoke((Action)(() =>
+                {
+                    progressText.Text = "Collection complete";
+                    progressText.Foreground = new System.Windows.Media.SolidColorBrush(
+                        System.Windows.Media.Color.FromRgb(0x5c, 0xb8, 0x5c));
+                }));
+            }
+        }
+
+        private void ShowCollectionWarningsIfAny()
+        {
+            var failed = CGlobals.CollectionManifest?.Where(e => !e.Success).ToList();
+            if (failed != null && failed.Count > 0)
+            {
+                var names = string.Join(", ", failed.Select(e => e.Name));
+                this.Dispatcher.Invoke((Action)(() =>
+                {
+                    MessageBox.Show(
+                        $"{failed.Count} collector(s) reported errors: {names}\n\nThe report may have incomplete sections. Check the log for details.",
+                        "Collection Warnings",
+                        MessageBoxButton.OK,
+                        MessageBoxImage.Warning);
+                }));
+            }
         }
 
         private void DisableGuiAndStartProgressBar()
@@ -513,6 +560,175 @@ namespace VeeamHealthCheck
             {
                 this.functions.LogUIAction($"Selected server: {serverListBox.SelectedItem}");
             }
+        }
+
+        #endregion
+
+        #region Monitor Integration
+
+        private void InitializeMonitorStatus()
+        {
+            bool bundled = CVhcMonitorIntegration.IsExePresentInBundle();
+            bool installed = CVhcMonitorIntegration.IsInstalled();
+            bool taskActive = CVhcMonitorIntegration.IsTaskRegistered();
+
+            if (!bundled)
+            {
+                monitorStatusText.Text = "Not bundled";
+                monitorStatusText.Foreground = new SolidColorBrush(Color.FromRgb(0x99, 0x99, 0x99));
+                monitorQuickSetupBtn.IsEnabled = false;
+                monitorVhcSetupBtn.IsEnabled = false;
+                monitorRunBtn.IsEnabled = false;
+            }
+            else if (!installed || !taskActive)
+            {
+                monitorStatusText.Text = "Available — not set up";
+                monitorStatusText.Foreground = new SolidColorBrush(Color.FromRgb(0xf0, 0xad, 0x4e));
+                monitorQuickSetupBtn.IsEnabled = true;
+                monitorRunBtn.IsEnabled = false;
+            }
+            else
+            {
+                string version = CVhcMonitorIntegration.GetInstalledVersion();
+                monitorStatusText.Text = $"Running ({version})";
+                monitorStatusText.Foreground = new SolidColorBrush(Color.FromRgb(0x5c, 0xb8, 0x5c));
+                monitorQuickSetupBtn.Content = "Reconfigure";
+                monitorQuickSetupBtn.IsEnabled = true;
+                monitorRunBtn.IsEnabled = true;
+
+                var status = CVhcMonitorIntegration.GetLastRunStatus();
+                if (status != null)
+                {
+                    monitorLastRunText.Text = $"Last run: {status.Timestamp:g} — {status.Summary}";
+                    monitorLastRunText.Visibility = Visibility.Visible;
+                }
+            }
+        }
+
+        private (string notifType, string notifUrl, string minSeverity) GetNotifSettings()
+        {
+            string notifType = (notifTypeBox.SelectedItem as ComboBoxItem)?.Content?.ToString()?.ToLower() ?? "ntfy";
+            string notifUrl = notifUrlBox.Text?.Trim() ?? string.Empty;
+            string minSeverity = (notifSeverityBox.SelectedItem as ComboBoxItem)?.Content?.ToString() ?? "warning";
+            return (notifType, notifUrl, minSeverity);
+        }
+
+        private void monitorQuickSetupBtn_Click(object sender, RoutedEventArgs e)
+        {
+            string server = serverListBox.SelectedItem?.ToString() ?? CGlobals.VBRServerName;
+            var creds = CredentialStore.Get(server);
+            string username = creds?.Username ?? string.Empty;
+            string password = creds?.Password ?? string.Empty;
+
+            if (string.IsNullOrEmpty(username))
+            {
+                MessageBox.Show(
+                    $"No stored credentials found for '{server}'.\nPlease add credentials by running a health check first, or use the credential prompt.",
+                    "Credentials Required", MessageBoxButton.OK, MessageBoxImage.Warning);
+                return;
+            }
+
+            if (!CVhcMonitorIntegration.IsExePresentInBundle())
+            {
+                MessageBox.Show("vhc-monitor.exe not found in the VHC installation directory.", "Monitor Not Found", MessageBoxButton.OK, MessageBoxImage.Error);
+                return;
+            }
+
+            monitorQuickSetupBtn.IsEnabled = false;
+            monitorStatusText.Text = "Installing...";
+
+            var (notifType, notifUrl, minSeverity) = this.GetNotifSettings();
+
+            System.Threading.Tasks.Task.Run(() =>
+            {
+                try
+                {
+                    CVhcMonitorIntegration.Install(server, username, password, notifType, notifUrl, minSeverity);
+                    this.Dispatcher.Invoke(this.InitializeMonitorStatus);
+                }
+                catch (Exception ex)
+                {
+                    CGlobals.Logger.Error($"Monitor setup failed: {ex.Message}", false);
+                    this.Dispatcher.Invoke(() =>
+                    {
+                        monitorStatusText.Text = "Setup failed — check log";
+                        monitorStatusText.Foreground = new SolidColorBrush(Color.FromRgb(0xd9, 0x53, 0x4f));
+                        monitorQuickSetupBtn.IsEnabled = true;
+                    });
+                }
+            });
+        }
+
+        private void monitorVhcSetupBtn_Click(object sender, RoutedEventArgs e)
+        {
+            monitorVhcSetupBtn.IsEnabled = false;
+            monitorStatusText.Text = "Installing from VHC data...";
+
+            var (notifType, notifUrl, minSeverity) = this.GetNotifSettings();
+
+            System.Threading.Tasks.Task.Run(() =>
+            {
+                try
+                {
+                    CVhcMonitorIntegration.InstallFromVhcData(notifType, notifUrl, minSeverity);
+                    this.Dispatcher.Invoke(this.InitializeMonitorStatus);
+                }
+                catch (Exception ex)
+                {
+                    CGlobals.Logger.Error($"Monitor VHC-assisted setup failed: {ex.Message}", false);
+                    this.Dispatcher.Invoke(() =>
+                    {
+                        monitorStatusText.Text = "Setup failed — check log";
+                        monitorStatusText.Foreground = new SolidColorBrush(Color.FromRgb(0xd9, 0x53, 0x4f));
+                        monitorVhcSetupBtn.IsEnabled = true;
+                    });
+                }
+            });
+        }
+
+        private void monitorRunBtn_Click(object sender, RoutedEventArgs e)
+        {
+            monitorRunBtn.IsEnabled = false;
+            monitorLastRunText.Text = "Running...";
+            monitorLastRunText.Visibility = Visibility.Visible;
+
+            System.Threading.Tasks.Task.Run(() =>
+            {
+                var (exitCode, output) = CVhcMonitorIntegration.RunNow();
+                this.Dispatcher.Invoke(() =>
+                {
+                    this.InitializeMonitorStatus();
+                    monitorRunBtn.IsEnabled = CVhcMonitorIntegration.IsTaskRegistered();
+                });
+            });
+        }
+
+        private void notifTypeBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            if (notifUrlBox == null) return;
+            string type = (notifTypeBox.SelectedItem as ComboBoxItem)?.Content?.ToString() ?? "ntfy";
+            notifUrlBox.Tag = type switch
+            {
+                "Teams"     => "https://org.webhook.office.com/...",
+                "Slack"     => "https://hooks.slack.com/services/...",
+                "PagerDuty" => "https://events.pagerduty.com/...",
+                _           => "https://ntfy.sh/your-topic"
+            };
+        }
+
+        private void OfferMonitorSetupIfNeeded()
+        {
+            if (!CVhcMonitorIntegration.IsExePresentInBundle()) return;
+            if (CVhcMonitorIntegration.IsTaskRegistered()) return;
+
+            this.Dispatcher.Invoke(() =>
+            {
+                monitorVhcSetupBtn.IsEnabled = true;
+                monitorLastRunText.Text = "Health check complete — click 'Setup from VHC' to configure continuous monitoring with auto-detected server settings.";
+                monitorLastRunText.Visibility = Visibility.Visible;
+                monitorStatusText.Text = "Available — not set up";
+                monitorStatusText.Foreground = new SolidColorBrush(Color.FromRgb(0xf0, 0xad, 0x4e));
+            });
         }
 
         #endregion

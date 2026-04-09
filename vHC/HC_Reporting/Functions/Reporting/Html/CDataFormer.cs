@@ -920,13 +920,11 @@ namespace VeeamHealthCheck.Functions.Reporting.Html
                 this.log.Debug("Report interval: " + CGlobals.ReportDays);
             }
 
-            var v = CGlobals.DtParser.JobSessions.Where(c => c.CreationTime >= CGlobals.GetToolStart.AddDays(CGlobals.ReportDays));
+            trimmedSessionInfo = CGlobals.DtParser.JobSessions.Where(c => c.CreationTime >= CGlobals.GetToolStart.AddDays(-CGlobals.ReportDays)).ToList();
             if (CGlobals.DEBUG)
             {
-                this.log.Debug("Job Sessions after filter: " + v.Count());
+                this.log.Debug("Job Sessions after filter: " + trimmedSessionInfo.Count);
             }
-
-            trimmedSessionInfo = CGlobals.DtParser.JobSessions.Where(c => c.CreationTime >= CGlobals.GetToolStart.AddDays(-CGlobals.ReportDays)).ToList();
             CGlobals.Logger.Info(this.logStart + $"Loaded {trimmedSessionInfo.Count} Job Sessions for Concurrency...");
 
             List<ConcurentTracker> ctList = new();

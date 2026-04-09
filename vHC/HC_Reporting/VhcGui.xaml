@@ -284,6 +284,85 @@ MIT License
                     </StackPanel>
                 </GroupBox>
 
+                <!-- Continuous Monitoring Section -->
+                <GroupBox Style="{StaticResource ModernGroupBox}" Margin="0,0,0,15">
+                    <GroupBox.Header>
+                        <TextBlock Text="Continuous Monitoring" FontSize="16" Foreground="#333333"/>
+                    </GroupBox.Header>
+                    <StackPanel Margin="5,10,5,0">
+
+                        <!-- Status Row -->
+                        <StackPanel Orientation="Horizontal" Margin="0,0,0,6">
+                            <TextBlock Text="Status: " FontSize="13" Foreground="#555555" VerticalAlignment="Center"/>
+                            <TextBlock x:Name="monitorStatusText" FontSize="13" FontWeight="SemiBold"
+                                       Foreground="#999999" VerticalAlignment="Center" Text="Checking..."/>
+                        </StackPanel>
+
+                        <!-- Last Run Info -->
+                        <TextBlock x:Name="monitorLastRunText" FontSize="11" Foreground="#777777"
+                                   Margin="0,0,0,10" Visibility="Collapsed" TextWrapping="Wrap"/>
+
+                        <!-- Notification Config -->
+                        <TextBlock Text="Alert Notifications" FontSize="12" FontWeight="SemiBold"
+                                   Foreground="#555555" Margin="0,0,0,6"/>
+                        <Grid Margin="0,0,0,8">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="100"/>
+                                <ColumnDefinition Width="8"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                            <ComboBox x:Name="notifTypeBox" Grid.Column="0"
+                                      Style="{StaticResource ModernComboBox}" Height="32" FontSize="12"
+                                      SelectionChanged="notifTypeBox_SelectionChanged">
+                                <ComboBoxItem Content="ntfy" IsSelected="True"/>
+                                <ComboBoxItem Content="Teams"/>
+                                <ComboBoxItem Content="Slack"/>
+                                <ComboBoxItem Content="PagerDuty"/>
+                            </ComboBox>
+                            <TextBox x:Name="notifUrlBox" Grid.Column="2"
+                                     Style="{StaticResource ModernTextBox}" Height="32" FontSize="12"
+                                     Tag="https://ntfy.sh/your-topic"/>
+                        </Grid>
+                        <StackPanel Orientation="Horizontal" Margin="0,0,0,12">
+                            <TextBlock Text="Min severity: " FontSize="12" Foreground="#555555"
+                                       VerticalAlignment="Center" Margin="0,0,8,0"/>
+                            <ComboBox x:Name="notifSeverityBox" Width="110"
+                                      Style="{StaticResource ModernComboBox}" Height="28" FontSize="12">
+                                <ComboBoxItem Content="warning" IsSelected="True"/>
+                                <ComboBoxItem Content="critical"/>
+                                <ComboBoxItem Content="ok"/>
+                            </ComboBox>
+                        </StackPanel>
+
+                        <!-- Monitor Action Buttons -->
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="8"/>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="8"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                            <Button x:Name="monitorQuickSetupBtn" Grid.Column="0"
+                                    Content="Quick Setup" Height="32" FontSize="11"
+                                    Style="{StaticResource ModernButton}" IsEnabled="False"
+                                    Click="monitorQuickSetupBtn_Click"
+                                    ToolTip="Install monitor using selected VBR server and stored credentials"/>
+                            <Button x:Name="monitorVhcSetupBtn" Grid.Column="2"
+                                    Content="Setup from VHC" Height="32" FontSize="11"
+                                    Style="{StaticResource SecondaryButton}" IsEnabled="False"
+                                    Click="monitorVhcSetupBtn_Click"
+                                    ToolTip="Configure monitor using data collected from the last health check run"/>
+                            <Button x:Name="monitorRunBtn" Grid.Column="4"
+                                    Content="Run Now" Height="32" FontSize="11"
+                                    Style="{StaticResource SecondaryButton}" IsEnabled="False"
+                                    Click="monitorRunBtn_Click"
+                                    ToolTip="Trigger an immediate monitor check"/>
+                        </Grid>
+
+                    </StackPanel>
+                </GroupBox>
+
                 <!-- Action Buttons -->
                 <Grid Margin="0,5,0,0">
                     <Grid.ColumnDefinitions>

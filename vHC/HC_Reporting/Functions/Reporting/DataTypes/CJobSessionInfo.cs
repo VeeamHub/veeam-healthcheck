@@ -36,6 +36,8 @@ namespace VeeamHealthCheck.Functions.Reporting.DataTypes
 
         public string Alg { get; set; }
 
+        public string JobAlg { get; set; }
+
         public DateTime CreationTime { get; set; }
 
         public double BackupSize { get; set; }

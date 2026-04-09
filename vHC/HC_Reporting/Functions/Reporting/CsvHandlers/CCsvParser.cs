@@ -1,4 +1,4 @@
-﻿// Copyright (c) 2021, Adam Congdon <adam.congdon2@gmail.com>
+// Copyright (c) 2021, Adam Congdon <adam.congdon2@gmail.com>
 // MIT License
 using CsvHelper;
 using CsvHelper.Configuration;
@@ -68,7 +68,7 @@ namespace VeeamHealthCheck.Functions.Reporting.CsvHandlers
         public readonly string piReportName = "pluginjobs";
         public readonly string jobReportName = "Jobs";
 
-        // make string for these job types: "AgentBackupJob.csv", "catalystJob", "cdpjobs", EndpointJob, nasBackup, nasBCJ, SureBackupJob 
+        // make string for these job types: "AgentBackupJob.csv", "catalystJob", "cdpjobs", EndpointJob, nasBackup, nasBCJ, SureBackupJob
         public readonly string agentBackupJob = "AgentBackupJob";
         public readonly string catalystJob = "catalystJob";
         public readonly string cdpjobs = "cdpjobs";
@@ -101,6 +101,8 @@ namespace VeeamHealthCheck.Functions.Reporting.CsvHandlers
         // General Settings
         public readonly string emailNotification = "EmailNotification";
         public readonly string credentials = "Credentials";
+        public readonly string objectStorageRepos = "ObjectStorageRepos";
+        public readonly string userRoles = "UserRoles";
 
         // VBO Files
         private readonly string vboGlobalCsv = "Global";
@@ -194,7 +196,7 @@ namespace VeeamHealthCheck.Functions.Reporting.CsvHandlers
             }
 
 
-            return null;
+            return Enumerable.Empty<CGlobalCsv>();
         }
 
         public IEnumerable<dynamic> GetDynamicVboProxies()
@@ -228,7 +230,7 @@ namespace VeeamHealthCheck.Functions.Reporting.CsvHandlers
             }
 
 
-            return null;
+            return Enumerable.Empty<CLocalRepos>();
 
             // return FileFinder(_vboRepositories, CVariables.vb365dir).GetRecords<CLocalRepos>();
         }
@@ -244,7 +246,7 @@ namespace VeeamHealthCheck.Functions.Reporting.CsvHandlers
             }
 
 
-            return null;
+            return Enumerable.Empty<CSecurityCsv>();
         }
 
         public IEnumerable<dynamic> GetDynVboController()
@@ -449,6 +451,16 @@ namespace VeeamHealthCheck.Functions.Reporting.CsvHandlers
             return this.VbrGetDynamicCsvRecs(this.credentials, CVariables.vbrDir);
         }
 
+        public IEnumerable<dynamic> GetDynamicObjectStorageRepos()
+        {
+            return this.VbrGetDynamicCsvRecs(this.objectStorageRepos, CVariables.vbrDir);
+        }
+
+        public IEnumerable<dynamic> GetDynamicUserRoles()
+        {
+            return this.VbrGetDynamicCsvRecs(this.userRoles, CVariables.vbrDir);
+        }
+
         public IEnumerable<dynamic> GetDynamicBjobs()
         {
             return this.VbrGetDynamicCsvRecs(this.bjobs, CVariables.vbrDir);
@@ -522,7 +534,7 @@ namespace VeeamHealthCheck.Functions.Reporting.CsvHandlers
             }
 
 
-            return null;
+            return Enumerable.Empty<CJobSessionCsvInfos>();
         }
 
         public IEnumerable<CBnRCsvInfo> BnrCsvParser()
@@ -535,7 +547,7 @@ namespace VeeamHealthCheck.Functions.Reporting.CsvHandlers
             }
 
 
-            return null;
+            return Enumerable.Empty<CBnRCsvInfo>();
         }
 
         public IEnumerable<CSobrExtentCsvInfos> SobrExtParser()
@@ -549,7 +561,7 @@ namespace VeeamHealthCheck.Functions.Reporting.CsvHandlers
             }
 
             this.log.Warning($"[CCsvParser] SOBR Extent CSV file not found: {this.sobrExtReportName}");
-            return null;
+            return Enumerable.Empty<CSobrExtentCsvInfos>();
         }
 
         public IEnumerable<CWaitsCsv> WaitsCsvReader()
@@ -562,7 +574,7 @@ namespace VeeamHealthCheck.Functions.Reporting.CsvHandlers
             }
 
 
-            return null;
+            return Enumerable.Empty<CWaitsCsv>();
         }
 
         public IEnumerable<CViProtected> ViProtectedReader()
@@ -575,7 +587,7 @@ namespace VeeamHealthCheck.Functions.Reporting.CsvHandlers
             }
 
 
-            return null;
+            return Enumerable.Empty<CViProtected>();
         }
 
         public IEnumerable<CViProtected> ViUnProtectedReader()
@@ -588,7 +600,7 @@ namespace VeeamHealthCheck.Functions.Reporting.CsvHandlers
             }
 
 
-            return null;
+            return Enumerable.Empty<CViProtected>();
         }
 
         public IEnumerable<CViProtected> HvProtectedReader()
@@ -601,7 +613,7 @@ namespace VeeamHealthCheck.Functions.Reporting.CsvHandlers
             }
 
 
-            return null;
+            return Enumerable.Empty<CViProtected>();
         }
 
         public IEnumerable<CViProtected> HvUnProtectedReader()
@@ -614,7 +626,7 @@ namespace VeeamHealthCheck.Functions.Reporting.CsvHandlers
             }
 
 
-            return null;
+            return Enumerable.Empty<CViProtected>();
         }
 
         public IEnumerable<CMalwareObject> MalwareSettings()
@@ -626,7 +638,7 @@ namespace VeeamHealthCheck.Functions.Reporting.CsvHandlers
                 return res.GetRecords<CMalwareObject>().ToList();
             }
 
-            return null;
+            return Enumerable.Empty<CMalwareObject>();
         }
 
         public IEnumerable<CMalwareInfectedObjects> MalwareInfectedObjects()
@@ -639,7 +651,7 @@ namespace VeeamHealthCheck.Functions.Reporting.CsvHandlers
             }
 
 
-            return null;
+            return Enumerable.Empty<CMalwareInfectedObjects>();
         }
 
         public IEnumerable<CMalwareEvents> MalwareEvents()
@@ -652,7 +664,7 @@ namespace VeeamHealthCheck.Functions.Reporting.CsvHandlers
             }
 
 
-            return null;
+            return Enumerable.Empty<CMalwareEvents>();
         }
 
         public IEnumerable<CComplianceCsv> ComplianceCsv()
@@ -665,7 +677,7 @@ namespace VeeamHealthCheck.Functions.Reporting.CsvHandlers
             }
 
 
-            return null;
+            return Enumerable.Empty<CComplianceCsv>();
         }
 
         public IEnumerable<CMalwareExcludedItem> MalwareExclusions()
@@ -678,7 +690,7 @@ namespace VeeamHealthCheck.Functions.Reporting.CsvHandlers
             }
 
 
-            return null;
+            return Enumerable.Empty<CMalwareExcludedItem>();
         }
 
         // public IEnumerable<CNasFileDataVmc> GetDynamicNasFileData()
@@ -698,7 +710,7 @@ namespace VeeamHealthCheck.Functions.Reporting.CsvHandlers
             }
 
 
-            return null;
+            return Enumerable.Empty<CNasVmcInfo>();
         }
 
         public IEnumerable<CEntraTenant> GetDynamicEntraTenants()
@@ -711,7 +723,7 @@ namespace VeeamHealthCheck.Functions.Reporting.CsvHandlers
             }
 
 
-            return null;
+            return Enumerable.Empty<CEntraTenant>();
         }
 
         public IEnumerable<CEntraLogJobs> GetDynamicEntraLogJobs()
@@ -724,7 +736,7 @@ namespace VeeamHealthCheck.Functions.Reporting.CsvHandlers
             }
 
 
-            return null;
+            return Enumerable.Empty<CEntraLogJobs>();
         }
 
         public IEnumerable<CEntraTenantJobs> GetDynamicEntraTenantJobs()
@@ -737,7 +749,7 @@ namespace VeeamHealthCheck.Functions.Reporting.CsvHandlers
             }
 
 
-            return null;
+            return Enumerable.Empty<CEntraTenantJobs>();
         }
 
         public IEnumerable<CObjectShareVmcInfo> GetDynamicNasObjectSize()
@@ -750,7 +762,7 @@ namespace VeeamHealthCheck.Functions.Reporting.CsvHandlers
             }
 
 
-            return null;
+            return Enumerable.Empty<CObjectShareVmcInfo>();
         }
 
         public IEnumerable<CTapeJobInfo> GetTapeJobInfoFromCsv()
@@ -763,7 +775,7 @@ namespace VeeamHealthCheck.Functions.Reporting.CsvHandlers
             }
 
 
-            return null;
+            return Enumerable.Empty<CTapeJobInfo>();
         }
 
         public IEnumerable<CRegOptionsCsv> RegOptionsCsvParser()
@@ -776,7 +788,7 @@ namespace VeeamHealthCheck.Functions.Reporting.CsvHandlers
             }
 
 
-            return null;
+            return Enumerable.Empty<CRegOptionsCsv>();
         }
 
         public IEnumerable<CConfigBackupCsv> ConfigBackupCsvParser()
@@ -789,7 +801,7 @@ namespace VeeamHealthCheck.Functions.Reporting.CsvHandlers
             }
 
 
-            return null;
+            return Enumerable.Empty<CConfigBackupCsv>();
         }
 
         public IEnumerable<CNetTrafficRulesCsv> NetTrafficCsvParser()
@@ -802,7 +814,7 @@ namespace VeeamHealthCheck.Functions.Reporting.CsvHandlers
             }
 
 
-            return null;
+            return Enumerable.Empty<CNetTrafficRulesCsv>();
         }
 
         public IEnumerable<CCapTierCsv> CapTierCsvParser()
@@ -815,7 +827,7 @@ namespace VeeamHealthCheck.Functions.Reporting.CsvHandlers
             }
 
 
-            return null;
+            return Enumerable.Empty<CCapTierCsv>();
         }
 
         public IEnumerable<CArchiveTierCsv> ArchiveTierCsvParser()
@@ -826,7 +838,7 @@ namespace VeeamHealthCheck.Functions.Reporting.CsvHandlers
                 return res.GetRecords<CArchiveTierCsv>();
             }
 
-            return null;
+            return Enumerable.Empty<CArchiveTierCsv>();
         }
 
         public IEnumerable<CPluginCsvInfo> PluginCsvParser()
@@ -839,7 +851,7 @@ namespace VeeamHealthCheck.Functions.Reporting.CsvHandlers
             }
 
 
-            return null;
+            return Enumerable.Empty<CPluginCsvInfo>();
         }
 
         public IEnumerable<CWanCsvInfos> WanParser()
@@ -852,7 +864,7 @@ namespace VeeamHealthCheck.Functions.Reporting.CsvHandlers
             }
 
 
-            return null;
+            return Enumerable.Empty<CWanCsvInfos>();
         }
 
         public IEnumerable<CJobCsvInfos> JobCsvParser()
@@ -865,7 +877,7 @@ namespace VeeamHealthCheck.Functions.Reporting.CsvHandlers
             }
 
 
-            return null;
+            return Enumerable.Empty<CJobCsvInfos>();
         }
 
         public IEnumerable<CBjobCsv> BJobCsvParser()
@@ -878,7 +890,7 @@ namespace VeeamHealthCheck.Functions.Reporting.CsvHandlers
             }
 
 
-            return null;
+            return Enumerable.Empty<CBjobCsv>();
         }
 
         public IEnumerable<CServerCsvInfos> ServerCsvParser()
@@ -891,7 +903,7 @@ namespace VeeamHealthCheck.Functions.Reporting.CsvHandlers
             }
 
 
-            return null;
+            return Enumerable.Empty<CServerCsvInfos>();
         }
 
         public IEnumerable<CProxyCsvInfos> ProxyCsvParser()
@@ -904,10 +916,10 @@ namespace VeeamHealthCheck.Functions.Reporting.CsvHandlers
             }
 
 
-            return null;
+            return Enumerable.Empty<CProxyCsvInfos>();
         }
 
-        // Requirements comparison CSVs 
+        // Requirements comparison CSVs
         private IEnumerable<CRequirementsCsvInfo> RequirementsCsvParserInternal(string reportName)
         {
             var res = this.VbrFileReader(reportName);
@@ -916,7 +928,7 @@ namespace VeeamHealthCheck.Functions.Reporting.CsvHandlers
                 return res.GetRecords<CRequirementsCsvInfo>();
             }
 
-            return null; // keep consistent with existing parsers in this class
+            return Enumerable.Empty<CRequirementsCsvInfo>();
         }
 
         public IEnumerable<CRequirementsCsvInfo> ServersRequirementsCsvParser()
@@ -935,7 +947,7 @@ namespace VeeamHealthCheck.Functions.Reporting.CsvHandlers
             }
 
             this.log.Warning($"[CCsvParser] SOBR CSV file not found: {this.sobrReportName}");
-            return null;
+            return Enumerable.Empty<CSobrCsvInfo>();
         }
 
         public IEnumerable<dynamic> RepoCsvParser()
@@ -948,7 +960,7 @@ namespace VeeamHealthCheck.Functions.Reporting.CsvHandlers
             }
 
 
-            return null;
+            return Enumerable.Empty<dynamic>();
 
             // if (String.IsNullOrEmpty(reportName))
             // {
@@ -974,7 +986,7 @@ namespace VeeamHealthCheck.Functions.Reporting.CsvHandlers
             }
 
 
-            return null;
+            return Enumerable.Empty<CCdpProxyCsvInfo>();
         }
 
         public IEnumerable<CHvProxyCsvInfo> HvProxCsvParser()
@@ -987,7 +999,7 @@ namespace VeeamHealthCheck.Functions.Reporting.CsvHandlers
             }
 
 
-            return null;
+            return Enumerable.Empty<CHvProxyCsvInfo>();
         }
 
         public IEnumerable<CFileProxyCsvInfo> NasProxCsvParser()
@@ -1000,7 +1012,7 @@ namespace VeeamHealthCheck.Functions.Reporting.CsvHandlers
             }
 
 
-            return null;
+            return Enumerable.Empty<CFileProxyCsvInfo>();
         }
 
         #endregion

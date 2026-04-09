@@ -28,14 +28,14 @@ namespace VeeamHealthCheck.Functions.Collection.PSCollections
         private readonly string vb365Script = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, @"Tools\Scripts\HealthCheck\VB365\Collect-VB365Data.ps1");
 
         private readonly string vbrConfigScript = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, @"Tools\Scripts\HealthCheck\VBR\Get-VBRConfig.ps1");
-        private readonly string vbrSessionScript = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, @"Tools\Scripts\HealthCheck\VBR\Get-VeeamSessionReport.ps1");
-        private readonly string vbrSessionScriptVersion13 = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, @"Tools\Scripts\HealthCheck\VBR\Get-VeeamSessionReportVersion13.ps1");
         private readonly string mfaTestScript = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, @"Functions\Collection\PSCollections\Scripts\TestMfa.ps1");
 
         private readonly string nasScript = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, @"Tools\Scripts\HealthCheck\VBR\Get-NasInfo.ps1");
 
         private readonly string exportLogsScript = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, @"Tools\Scripts\HotfixDetection\Collect-VBRLogs.ps1");
         private readonly string dumpServers = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, @"Tools\Scripts\HotfixDetection\DumpManagedServerToText.ps1");
+
+        private readonly string vbrConfigModuleDir = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, @"Tools\Scripts\HealthCheck\VBR\vHC-VbrConfig");
 
         public static readonly string SERVERLISTFILE = "serverlist.txt";
 
@@ -211,21 +211,34 @@ namespace VeeamHealthCheck.Functions.Collection.PSCollections
                 return false;
             }
 
-            // RunVbrSessionCollection();
-
             return res;
         }
 
         public void TryUnblockFiles()
         {
             this.UnblockFile(this.vbrConfigScript);
-            this.UnblockFile(this.vbrSessionScript);
             this.UnblockFile(this.nasScript);
-            UnblockFile(vbrSessionScriptVersion13);
             UnblockFile(mfaTestScript);
             this.UnblockFile(this.exportLogsScript);
             this.UnblockFile(this.dumpServers);
             this.UnblockFile(this.vb365Script);
+
+            // Unblock all PowerShell files in the vHC-VbrConfig module (.ps1, .psm1, .psd1).
+            // Zone.Identifier on .psm1/.psd1 causes Unrestricted policy to prompt interactively,
+            // which hangs the process when there is no console window.
+            if (Directory.Exists(this.vbrConfigModuleDir))
+            {
+                foreach (var file in Directory.GetFiles(this.vbrConfigModuleDir, "*.*", SearchOption.AllDirectories))
+                {
+                    var ext = Path.GetExtension(file);
+                    if (ext.Equals(".ps1", StringComparison.OrdinalIgnoreCase) ||
+                        ext.Equals(".psm1", StringComparison.OrdinalIgnoreCase) ||
+                        ext.Equals(".psd1", StringComparison.OrdinalIgnoreCase))
+                    {
+                        this.UnblockFile(file);
+                    }
+                }
+            }
         }
 
         public bool TestMfa()
@@ -348,9 +361,6 @@ namespace VeeamHealthCheck.Functions.Collection.PSCollections
                 this.log.Info("[PS] Skipping NAS info collection - not supported for remote execution", false);
             }
 
-            success = this.ExecutePsScript(this.VbrSessionStartInfo());
-
-
             return success;
         }
 
@@ -362,15 +372,19 @@ namespace VeeamHealthCheck.Functions.Collection.PSCollections
 
             this.log.Info("[PS] Script execution started. PID: " + res1.Id.ToString(), false);
 
-            // Read output streams asynchronously to prevent deadlocks
-            string stdOut = res1.StandardOutput.ReadToEnd();
-            string stdErr = res1.StandardError.ReadToEnd();
+            // Read both streams concurrently to avoid deadlock:
+            // Sequential ReadToEnd() calls block if the process fills the stderr pipe buffer
+            // while C# is still waiting on stdout (and vice versa).
+            var stdOutTask = System.Threading.Tasks.Task.Run(() => res1.StandardOutput.ReadToEnd());
+            var stdErrTask = System.Threading.Tasks.Task.Run(() => res1.StandardError.ReadToEnd());
 
-            // Wait for process to complete (with timeout)
-            bool exited = res1.WaitForExit(300000); // 5 minute timeout
+            // Wait for process to complete (7 day timeout for large environments)
+            bool exited = res1.WaitForExit(604800000);
+            string stdOut = stdOutTask.GetAwaiter().GetResult();
+            string stdErr = stdErrTask.GetAwaiter().GetResult();
             if (!exited)
             {
-                this.log.Error("[PS] Script execution timeout after 5 minutes", false);
+                this.log.Error("[PS] Script execution timeout after 7 days", false);
                 try { res1.Kill(); } catch { }
                 return false;
             }
@@ -457,7 +471,9 @@ namespace VeeamHealthCheck.Functions.Collection.PSCollections
             bool needsCredentials = CGlobals.REMOTEEXEC;
 
             // Build argument string with BOTH VBRVersion and ReportInterval
-            string argString = $"-NoProfile -ExecutionPolicy unrestricted -file \"{this.vbrConfigScript}\" " +
+            // Use Bypass (not Unrestricted) so PS never prompts for unsigned/internet-sourced
+            // scripts - Unrestricted still prompts interactively which hangs a windowless process.
+            string argString = $"-NoProfile -ExecutionPolicy Bypass -file \"{this.vbrConfigScript}\" " +
                                $"-VBRServer \"{CGlobals.REMOTEHOST}\" " +
                                $"-VBRVersion \"{CGlobals.VBRMAJORVERSION}\" " +
                                $"-ReportInterval {CGlobals.ReportDays} ";
@@ -466,13 +482,20 @@ namespace VeeamHealthCheck.Functions.Collection.PSCollections
             {
                 argString += "-RescanHosts ";
             }
-            
+
+            if (CGlobals.REMOTEEXEC)
+            {
+                argString += "-RemoteExecution ";
+            }
+
             // Add ReportPath parameter
             if (!string.IsNullOrEmpty(CVariables.vbrDir))
             {
                 argString += $"-ReportPath \"{CVariables.vbrDir}\" ";
             }
 
+            // Add LogPath parameter so collector logs follow the configured output root
+            argString += $"-LogPath \"{Path.Combine(CVariables.unsafeDir, "Log")}\" ";
             // Add credentials if needed for remote execution
             string safeArgString = argString; // For logging without sensitive data
             if (needsCredentials)
@@ -523,19 +546,6 @@ namespace VeeamHealthCheck.Functions.Collection.PSCollections
             this.log.Info(string.Empty);
             // Pass the VBR directory path which now includes server name and timestamp
             return this.ConfigStartInfo(this.nasScript, 0, CVariables.vbrDir);
-        }
-
-        private ProcessStartInfo VbrSessionStartInfo()
-        {
-            // Pass the VBR directory path which now includes server name and timestamp
-            if (CGlobals.VBRMAJORVERSION == 13)
-            {
-                return this.ConfigStartInfo(this.vbrSessionScriptVersion13, CGlobals.ReportDays, CVariables.vbrDir);
-            }
-            else
-            {
-                return this.ConfigStartInfo(this.vbrSessionScript, CGlobals.ReportDays, CVariables.vbrDir);
-            }
         }
 
         private ProcessStartInfo ExportLogsStartInfo(string path, string server)
@@ -621,24 +631,9 @@ namespace VeeamHealthCheck.Functions.Collection.PSCollections
                 Arguments = argString,
                 UseShellExecute = true,
                 CreateNoWindow = false,
-                WindowStyle = ProcessWindowStyle.Minimized
+                WindowStyle = ProcessWindowStyle.Minimized,
+                WorkingDirectory = AppDomain.CurrentDomain.BaseDirectory
             };
-        }
-
-        private void RunVbrSessionCollection()
-        {
-            this.log.Info("[PS][VBR Sessions] Enter Session Collection Invoker...", false);
-
-            var startInfo2 = this.ConfigStartInfo(this.vbrSessionScript, CGlobals.ReportDays, string.Empty);
-
-            this.log.Info("[PS][VBR Sessions] Starting Session Collection PowerShell Process...", false);
-
-            var result = Process.Start(startInfo2);
-
-            this.log.Info("[PS][VBR Sessions] Process started with ID: " + result.Id.ToString(), false);
-            result.WaitForExit();
-
-            this.log.Info("[PS][VBR Sessions] Session collection complete!", false);
         }
 
         private ProcessStartInfo ConfigStartInfo(string scriptLocation, int days, string path)

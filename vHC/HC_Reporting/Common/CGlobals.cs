@@ -2,6 +2,7 @@
 // MIT License
 using System;
 using System.Collections.Generic;
+using System.IO;
 using VeeamHealthCheck.Functions.Analysis.DataModels;
 using VeeamHealthCheck.Functions.Reporting.DataTypes;
 using VeeamHealthCheck.Scrubber;
@@ -19,6 +20,12 @@ namespace VeeamHealthCheck.Shared
         /// Used to track which files are present/missing and generate data collection summaries.
         /// </summary>
         public static List<CsvValidationResult> CsvValidationResults { get; set; } = new();
+
+        /// <summary>
+        /// Stores per-collector success/failure entries loaded from _CollectionManifest.csv.
+        /// Populated by CCsvValidator.LoadManifest() after PowerShell collection completes.
+        /// </summary>
+        public static List<CCollectionManifestEntry> CollectionManifest { get; set; } = new();
         private static bool scrub;
         private static readonly CScrubHandler scrubberMain = new();
         public static readonly string backupServerId = "6745a759-2205-4cd2-b172-8ec8f7e60ef8";
@@ -43,6 +50,15 @@ namespace VeeamHealthCheck.Shared
 
         // Remote Exec variables
         public static string VBRServerName = "localhost";
+
+        // vhc-monitor integration
+        public static string VhcMonitorInstallDir =>
+            Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "VeeamHealthCheck", "monitor");
+        public static string VhcMonitorConfigPath =>
+            Path.Combine(VhcMonitorInstallDir, "vhc-monitor.yaml");
+        public static string VhcMonitorExeBundlePath =>
+            Path.Combine(Path.GetDirectoryName(Environment.ProcessPath) ?? string.Empty, "vhc-monitor.exe");
+        public static readonly string VhcMonitorTaskName = "VHC Monitor";
         
         // Multi-server execution support
         public static List<string> SelectedServers = new List<string> { "localhost" };

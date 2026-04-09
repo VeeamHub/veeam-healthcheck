@@ -383,3 +383,6 @@ CLEANUP_SUMMARY.md
 vHC-Reports/
 entities.json
 mempalace.yaml
+Plans/
+.playwright-mcp/
+docs/
