@@ -6,6 +6,7 @@ using VeeamHealthCheck.Functions.Reporting.DataTypes;
 using VeeamHealthCheck.Functions.Reporting.Html.Shared;
 using VeeamHealthCheck.Scrubber;
 using VeeamHealthCheck.Shared;
+using VeeamHealthCheck.Html.VBR;
 using VeeamHealthCheck.Shared.Logging;
 
 namespace VeeamHealthCheck.Functions.Reporting.Html.VBR.VbrTables.Job_Session_Summary
@@ -295,7 +296,7 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR.VbrTables.Job_Session_Su
             s += TableData(c.maxTime.ToString(), "maxtime");
             s += TableData(c.avgTime.ToString(), "avgTime");
             s += TableData(c.ProcessingMode, "processingmode");
-            s += TableData(c.Status, "status");
+            s += TableData(CHtmlTables.Badge(c.Status), "status");
             s += TableData(c.TaskDuration, "taskDuration");
             s += "</tr>";
 

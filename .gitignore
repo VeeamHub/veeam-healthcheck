@@ -384,5 +384,6 @@ vHC-Reports/
 entities.json
 mempalace.yaml
 Plans/
+vHC/Plans/
 .playwright-mcp/
 docs/

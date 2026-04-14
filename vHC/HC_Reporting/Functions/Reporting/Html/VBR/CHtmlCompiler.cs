@@ -505,7 +505,7 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR
 
             // Overview
             nav += this.form.NavSection("Overview",
-                this.form.NavLink("license", VbrLocalizationHelper.NavLicInfoLink) +
+                this.form.NavLink("license", VbrLocalizationHelper.NavLicInfoLink, true) +
                 this.form.NavLink("secsummary", VbrLocalizationHelper.NavSecSumLink) +
                 this.form.NavLink("ComplianceSummary", "Compliance Summary") +
                 this.form.NavLink("ComplianceTable", "Compliance Details"));

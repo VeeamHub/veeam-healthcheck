@@ -762,6 +762,7 @@ html.dark-theme .heat-5 { background-color: #6a2020; }
 
 /* ── Utility ─────────────────────────────────────────────── */
 .text-muted { color: var(--text-secondary); font-size:.85rem; }
+.bold-first-col tbody tr td:first-child { font-weight: 600; }
 
 /* ===== Concurrency Heat Map ===================================== */
 table.concurrency-heatmap {

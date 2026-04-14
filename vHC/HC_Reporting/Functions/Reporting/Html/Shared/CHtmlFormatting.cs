@@ -226,6 +226,9 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.Shared
         public string Table(string cssClass) =>
             string.IsNullOrEmpty(cssClass) ? "<table>" : $"<table class=\"{cssClass}\">";
 
+        public string TwoColStart() => "<div class=\"two-col\">";
+        public string TwoColEnd() => "</div>";
+
         /// <summary>Heat-map-colored table cell. Assigns CSS class based on concurrency value.</summary>
         public string TableDataHeat(string data)
         {
@@ -574,6 +577,12 @@ Vb365ResourceHandler.HtmlIntroLine5vb365, string.Empty
         public string NavLink(string href, string text)
         {
             return string.Format(@"<a href=""#{0}"" class=""nav-link"">{1}</a>", href, text);
+        }
+
+        public string NavLink(string href, string text, bool isActive)
+        {
+            string cls = isActive ? "nav-link active" : "nav-link";
+            return string.Format(@"<a href=""#{0}"" class=""{2}"">{1}</a>", href, text, cls);
         }
 
         /// <summary>

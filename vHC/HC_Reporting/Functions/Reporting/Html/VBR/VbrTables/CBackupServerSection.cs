@@ -131,7 +131,7 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR.VbrTables
                 data += table.Item2;
             }
 
-            s += "<table class=\"content-table\"><thead><tr>";
+            s += "<table class=\"content-table bold-first-col\"><thead><tr>";
             s += headers;
             s += "</tr></thead><tbody><tr>";
             s += data;

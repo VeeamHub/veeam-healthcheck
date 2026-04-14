@@ -45,13 +45,17 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR
             this.BackupServerTable();
             this.log.Info(this.logStart + "BackupServerTable completed.");
             
+            this.HTMLSTRING += "<div class=\"two-col\">";
+
             this.log.Info(this.logStart + "Generating SecuritySummaryTable...");
             this.SecuritySummaryTable();
             this.log.Info(this.logStart + "SecuritySummaryTable completed.");
-            
+
             this.log.Info(this.logStart + "Generating ServerSummaryTable...");
             this.ServerSummaryTable();
             this.log.Info(this.logStart + "ServerSummaryTable completed.");
+
+            this.HTMLSTRING += "</div>";
             
             this.log.Info(this.logStart + "Generating Configuration Tables section...");
             this.ConfigurationTablesSection();

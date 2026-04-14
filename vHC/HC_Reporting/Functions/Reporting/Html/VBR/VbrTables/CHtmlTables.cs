@@ -531,7 +531,7 @@ namespace VeeamHealthCheck.Html.VBR
         {
             string s = string.Empty;
             s += this.form.Subsection(title);
-            s += "<table class=\"content-table\">";
+            s += "<table class=\"content-table bold-first-col\">";
             s += data;
             s += this.form.EndTable();
 
