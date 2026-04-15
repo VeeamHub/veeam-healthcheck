@@ -381,7 +381,10 @@ test_run_log.txt
 TestImportResolver.csx
 CLEANUP_SUMMARY.md
 vHC-Reports/
+entities.json
+mempalace.yaml
 Plans/
+vHC/Plans/
 .playwright-mcp/
 docs/
 entities.json

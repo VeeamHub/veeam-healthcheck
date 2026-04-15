@@ -23,6 +23,8 @@ namespace VhcXTests.Functions.Reporting.Html
             // Save original parser state
             hadOriginalParser = CGlobals.DtParser != null;
             originalParser = CGlobals.DtParser;
+
+            // Logger is already statically initialized in CGlobals — no setup needed.
         }
 
         public void Dispose()

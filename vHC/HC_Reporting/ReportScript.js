@@ -1,166 +1,138 @@
-﻿var coll = document.getElementsByClassName("collapsible");
-var navLink = document.getElementsByClassName("smoothscroll");
-var i;
-let expanded = false;
-
-// Initialize theme on page load
-function initializeTheme() {
-	const savedTheme = localStorage.getItem('vhc-theme') || 'light';
-	if (savedTheme === 'dark') {
-		document.documentElement.classList.add('dark-theme');
-		updateThemeButtonText('light');
-	} else {
-		document.documentElement.classList.remove('dark-theme');
-		updateThemeButtonText('dark');
-	}
+// ===== Section Toggle =====
+function toggleSection(header) {
+  header.closest('.section-card').classList.toggle('open');
 }
 
-// Toggle theme
-function toggleTheme() {
-	const isDarkMode = document.documentElement.classList.toggle('dark-theme');
-	localStorage.setItem('vhc-theme', isDarkMode ? 'dark' : 'light');
-	updateThemeButtonText(isDarkMode ? 'light' : 'dark');
+function toggleAll() {
+  // Toggle section-card elements
+  var cards = document.querySelectorAll('.section-card');
+  var allOpen = Array.from(cards).every(function(c) { return c.classList.contains('open'); });
+  cards.forEach(function(c) {
+    if (allOpen) { c.classList.remove('open'); } else { c.classList.add('open'); }
+  });
+  // Toggle legacy collapsible/content elements
+  var contents = document.querySelectorAll('.collapsible + .content');
+  var allVisible = Array.from(contents).every(function(c) { return c.style.display !== 'none' && c.style.display !== ''; });
+  contents.forEach(function(c) {
+    c.style.display = (allOpen || allVisible) ? 'none' : 'block';
+  });
 }
 
-// Update theme button text and icon
-function updateThemeButtonText(nextTheme) {
-	const btn = document.getElementById('themeToggleBtn');
-	if (btn) {
-		if (nextTheme === 'dark') {
-			btn.innerHTML = '🌙 Dark Mode';
-		} else {
-			btn.innerHTML = '☀️ Light Mode';
-		}
-	}
-}
-
-// Initialize theme when DOM is ready
-document.addEventListener('DOMContentLoaded', initializeTheme);
-
-// Add click handler to theme toggle button (will be created in HTML)
+// ===== Legacy Collapsible Toggle (for sections using SectionStartWithButton) =====
 document.addEventListener('DOMContentLoaded', function() {
-	const themeBtn = document.getElementById('themeToggleBtn');
-	if (themeBtn) {
-		themeBtn.addEventListener('click', toggleTheme);
-	}
-});
-
-for (i = 0; i < coll.length; i++) {
-	coll[i].addEventListener("click", function () {
-		this.classList.toggle("active");
-		var content = this.nextElementSibling;
-		if (content.style.display === "block") {
-			content.style.display = "none";
-		} else {
-			content.style.display = "block";
-		}
-	});
-}
-
-
-for (i = 0; i < navLink.length; i++) {
-	navLink[i].addEventListener("click", function () {
-		var link = this.dataset.link;
-		var sectionId = document.getElementById(link);
-
-		var divToOpen = sectionId.querySelector(".collapsible");
-
-		divToOpen.classList.toggle("active");
-		var content = divToOpen.nextElementSibling;
-		if (content.style.display === "block") {
-			content.style.display = "block";
-		} else {
-			content.style.display = "block";
-		}
-	});
-}
-
-let isExpanded = false;
-function test() {
-	var co = document.getElementsByClassName("collapsible");
-	var divs = document.querySelectorAll(".collapsible");
-
-	isExpanded = !isExpanded;
-
-	const btnText = isExpanded ? "Collapse All Sections" : "Expand All Sections";
-	document.getElementById("expandBtn").textContent = btnText;
-
-	divs.forEach(d => {
-		d.classList.toggle("active");
-		var content = d.nextElementSibling;
-		if (content.style.display === "block") {
-			content.style.display = "none";
-		} else {
-			content.style.display = "block";
-		}
-	});
-	//alert("The function 'test' is executed");
-
-}
-function sortTableByColumn(table, column, asc = true) {
-    const dirModifier = asc ? 1 : -1;
-    const tBody = table.tBodies[0];
-    const rows = Array.from(tBody.querySelectorAll("tr"));
-    const sortedRows = rows.sort((a, b) => {
-        const aColText = a.querySelector(`td:nth-child(${column + 1})`).textContent.trim();
-        const bColText = b.querySelector(`td:nth-child(${column + 1})`).textContent.trim();
-
-		const aStartsWithNumber = /^\d/.test(aColText); // Safe regex pattern
-		const bStartsWithNumber = /^\d/.test(bColText); // Safe regex pattern
-
-
-        if (aStartsWithNumber && bStartsWithNumber) {
-            const aColNumber = parseFloat(aColText);
-            const bColNumber = parseFloat(bColText);
-            return (aColNumber - bColNumber) * dirModifier;
-        } else {
-            return aColText > bColText ? (1 * dirModifier) : (-1 * dirModifier);
-        }
+  document.querySelectorAll('.collapsible').forEach(function(btn) {
+    btn.addEventListener('click', function() {
+      var content = this.nextElementSibling;
+      if (content && content.classList.contains('content')) {
+        content.style.display = (content.style.display === 'none' || content.style.display === '') ? 'block' : 'none';
+      }
     });
-
-    // Remove all existing TRs from the table
-    while (tBody.firstChild) {
-        tBody.removeChild(tBody.firstChild);
-    }
-
-    // Re-add the newly sorted rows
-    tBody.append(...sortedRows);
-
-    // Remember how the column is currently sorted
-    table.querySelectorAll("th").forEach(th => th.classList.remove("th-sort-asc", "th-sort-desc"));
-    table.querySelector(`th:nth-child(${column + 1})`).classList.toggle("th-sort-asc", asc);
-    table.querySelector(`th:nth-child(${column + 1})`).classList.toggle("th-sort-desc", !asc);
-}
-
-document.querySelectorAll(".table-sortable th").forEach(headerCell => {
-	headerCell.addEventListener("click", () => {
-		const tableElement = headerCell.parentElement.parentElement.parentElement;
-		const headerIndex = Array.prototype.indexOf.call(headerCell.parentElement.children, headerCell);
-		const currentIsAscending = headerCell.classList.contains("th-sort-asc");
-
-		sortTableByColumn(tableElement, headerIndex, !currentIsAscending);
-	});
+  });
 });
-// Get the button:
-let mybutton = document.getElementById("myBtn");
 
-// When the user scrolls down 20px from the top of the document, show the button
-window.onscroll = function () { scrollFunction() };
-
-function scrollFunction() {
-	if (document.body.scrollTop > 500 || document.documentElement.scrollTop > 500) {
-		mybutton.style.display = "block";
-	} else {
-		mybutton.style.display = "none";
-	}
+// ===== Table Sort =====
+function sortTableByColumn(table, column, asc) {
+  if (asc === undefined) asc = true;
+  var dirModifier = asc ? 1 : -1;
+  var tBody = table.tBodies[0];
+  if (!tBody) return;
+  var rows = Array.from(tBody.querySelectorAll("tr"));
+  var sortedRows = rows.sort(function(a, b) {
+    var aCell = a.querySelector("td:nth-child(" + (column + 1) + ")");
+    var bCell = b.querySelector("td:nth-child(" + (column + 1) + ")");
+    if (!aCell || !bCell) return 0;
+    var aColText = aCell.textContent.trim();
+    var bColText = bCell.textContent.trim();
+    var aNum = /^\d/.test(aColText);
+    var bNum = /^\d/.test(bColText);
+    if (aNum && bNum) {
+      return (parseFloat(aColText) - parseFloat(bColText)) * dirModifier;
+    } else {
+      return aColText > bColText ? (1 * dirModifier) : (-1 * dirModifier);
+    }
+  });
+  while (tBody.firstChild) { tBody.removeChild(tBody.firstChild); }
+  for (var i = 0; i < sortedRows.length; i++) { tBody.appendChild(sortedRows[i]); }
+  table.querySelectorAll("th").forEach(function(th) {
+    th.classList.remove("th-sort-asc", "th-sort-desc");
+  });
+  var targetTh = table.querySelector("th:nth-child(" + (column + 1) + ")");
+  if (targetTh) {
+    targetTh.classList.toggle("th-sort-asc", asc);
+    targetTh.classList.toggle("th-sort-desc", !asc);
+  }
 }
 
-// When the user clicks on the button, scroll to the top of the document
+// Column sort via header click
+document.addEventListener('DOMContentLoaded', function() {
+  document.querySelectorAll(".section-card th").forEach(function(headerCell) {
+    headerCell.addEventListener("click", function() {
+      var tableElement = headerCell.closest("table");
+      if (!tableElement) return;
+      var headerIndex = Array.prototype.indexOf.call(headerCell.parentElement.children, headerCell);
+      var currentIsAscending = headerCell.classList.contains("th-sort-asc");
+      sortTableByColumn(tableElement, headerIndex, !currentIsAscending);
+    });
+  });
+});
+
+// Backward-compatible sort function referenced by onclick="sortTable(N)" in headers
+function sortTable(columnIndex) {
+  // Find the table closest to the event target
+  var el = event && event.target ? event.target : null;
+  if (!el) return;
+  var table = el.closest("table");
+  if (!table) return;
+  var isAsc = el.classList.contains("th-sort-asc");
+  sortTableByColumn(table, columnIndex, !isAsc);
+}
+
+// ===== Scroll to Top =====
+var mybutton = document.getElementById("myBtn");
+window.onscroll = function() {
+  if (mybutton) {
+    if (document.body.scrollTop > 500 || document.documentElement.scrollTop > 500) {
+      mybutton.style.display = "block";
+    } else {
+      mybutton.style.display = "none";
+    }
+  }
+};
+
 function topFunction() {
-	document.body.scrollTop = 0; // For Safari
-	document.documentElement.scrollTop = 0; // For Chrome, Firefox, IE and Opera
+  document.body.scrollTop = 0;
+  document.documentElement.scrollTop = 0;
 }
 
-// nas Table Script
-const jsonData = JSON.parse(document.getElementById('NasTable').textContent);
+// ===== Sidebar Active Link Tracking =====
+document.addEventListener('DOMContentLoaded', function() {
+  var sections = document.querySelectorAll('.section-card[id]');
+  var navLinks = document.querySelectorAll('.nav-link');
 
+  // Click handler: open section if collapsed
+  navLinks.forEach(function(link) {
+    link.addEventListener('click', function(e) {
+      var targetId = this.getAttribute('href');
+      if (!targetId) return;
+      var targetSection = document.querySelector(targetId);
+      if (targetSection && !targetSection.classList.contains('open')) {
+        targetSection.classList.add('open');
+      }
+    });
+  });
+
+  // Scroll spy for active link
+  if (sections.length > 0 && navLinks.length > 0) {
+    var observer = new IntersectionObserver(function(entries) {
+      entries.forEach(function(entry) {
+        if (entry.isIntersecting) {
+          navLinks.forEach(function(l) { l.classList.remove('active'); });
+          var activeLink = document.querySelector('.nav-link[href="#' + entry.target.id + '"]');
+          if (activeLink) activeLink.classList.add('active');
+        }
+      });
+    }, { rootMargin: '-20% 0px -80% 0px' });
+
+    sections.forEach(function(section) { observer.observe(section); });
+  }
+});

@@ -31,55 +31,55 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR.VbrTables.Security
                     CGlobals.Logger.Warning("No compliance data available - CSV file may not have been generated");
                     return t;
                 }
-                
+
                 var passedCount = 0;
-                var notImplementedCount = 0;
-                var unableToDetectCount = 0;
-                var suppressedCount = 0;
+                var warnFailCount = 0;
+                var totalCount = 0;
 
                 foreach (var res in this.csvResults)
                 {
+                    totalCount++;
                     switch (res.Status)
                     {
                         case "Passed":
                             passedCount++;
                             break;
-                        case "Not Implemented":
-                            notImplementedCount++;
-                            break;
-                        case "Unable To Detect":
-                            unableToDetectCount++;
-                            break;
-                        case "Suppressed":
-                            suppressedCount++;
+                        default:
+                            warnFailCount++;
                             break;
                     }
                 }
 
-                t += this.form.SectionStartWithButton("ComplianceSummary", "ComplianceSummary", "complianceSummaryButton");
-                t += this.form.TableHeaderLeftAligned("Status", "Passed, Not Implemented, Unable to Detect, Suppressed");
-                t += this.form.TableHeader("Count", "Number of items");
-                t += this.form.TableHeaderEnd();
-                t += this.form.TableBodyStart();
+                int scorePct = totalCount > 0 ? (int)((double)passedCount / totalCount * 100) : 0;
 
-                t += this.form.TableRowStart();
-                t += this.form.TableDataLeftAligned("Passed", string.Empty);
-                t += this.form.TableData(passedCount.ToString(), string.Empty);
-                t += this.form.TableRowEnd();
-                t += this.form.TableRowStart();
-                t += this.form.TableDataLeftAligned("Not Implemented", string.Empty);
-                t += this.form.TableData(notImplementedCount.ToString(), string.Empty);
-                t += this.form.TableRowEnd();
-                t += this.form.TableRowStart();
-                t += this.form.TableDataLeftAligned("Unable to Detect", string.Empty);
-                t += this.form.TableData(unableToDetectCount.ToString(), string.Empty);
-                t += this.form.TableRowEnd();
-                t += this.form.TableRowStart();
-                t += this.form.TableDataLeftAligned("Suppressed", string.Empty);
-                t += this.form.TableData(suppressedCount.ToString(), string.Empty);
-                t += this.form.TableRowEnd();
+                t += this.form.SectionStartWithButtonNoTable("ComplianceSummary", "Compliance Summary", "complianceSummaryButton");
 
-                t += this.form.SectionEnd();
+                t += "<div class=\"compliance-stats\">";
+
+                t += "<div class=\"compliance-stat\">";
+                t += $"<div class=\"compliance-count\">{totalCount}</div>";
+                t += "<div class=\"compliance-label\">Total Rules</div>";
+                t += "</div>";
+
+                t += "<div class=\"compliance-stat\">";
+                t += $"<div class=\"compliance-count\" style=\"color:var(--green)\">{passedCount}</div>";
+                t += "<div class=\"compliance-label\">Passed</div>";
+                t += "</div>";
+
+                t += "<div class=\"compliance-stat\">";
+                t += $"<div class=\"compliance-count\" style=\"color:var(--danger)\">{warnFailCount}</div>";
+                t += "<div class=\"compliance-label\">Warnings / Failed</div>";
+                t += "</div>";
+
+                t += "<div class=\"compliance-stat\">";
+                string scoreColor = scorePct >= 80 ? "var(--green)" : scorePct >= 50 ? "var(--warning)" : "var(--danger)";
+                t += $"<div class=\"compliance-count\" style=\"color:{scoreColor}\">{scorePct}%</div>";
+                t += "<div class=\"compliance-label\">Compliance Score</div>";
+                t += "</div>";
+
+                t += "</div>"; // end compliance-stats
+
+                t += this.form.SectionEndNoTable();
             }
             catch (Exception e)
             {
@@ -113,7 +113,7 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR.VbrTables.Security
                 {
                     t += this.form.TableRowStart();
                     t += this.form.TableDataLeftAligned(res.BestPractice, string.Empty);
-                    t += this.form.TableData(res.Status.ToString(), string.Empty);
+                    t += this.form.TableData(ComplianceBadge(res.Status.ToString()), string.Empty);
                     t += this.form.TableRowEnd();
                 }
 
@@ -127,6 +127,21 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR.VbrTables.Security
             }
 
             return t;
+        }
+
+        private static string ComplianceBadge(string status)
+        {
+            if (string.IsNullOrEmpty(status)) return status;
+            string cls = status.ToLower() switch
+            {
+                "pass" or "passed" => "badge badge-success",
+                "warn" or "warning" => "badge badge-warning",
+                "fail" or "failed" or "not implemented" => "badge badge-danger",
+                "unable to detect" => "badge badge-warning",
+                "suppressed" => "badge badge-neutral",
+                _ => "badge"
+            };
+            return $"<span class=\"{cls}\">{status}</span>";
         }
     }
 }

@@ -1,7 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>net8.0</TargetFramework>
+    <TargetFramework>net10.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <IsPackable>false</IsPackable>
@@ -21,6 +21,8 @@
   <!-- Include source files directly instead of project reference to avoid WPF dependency -->
   <ItemGroup>
     <Compile Include="..\HC_Reporting\Startup\CHostNameHelper.cs" Link="CHostNameHelper.cs" />
+    <Compile Include="..\HC_Reporting\Functions\Reporting\Html\Shared\CHtmlBuilder.cs" Link="CHtmlBuilder.cs" />
+    <Compile Include="..\HC_Reporting\Functions\Reporting\Html\Shared\CSectionTable.cs" Link="CSectionTable.cs" />
   </ItemGroup>
 
 </Project>
