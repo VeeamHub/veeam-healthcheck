@@ -70,8 +70,10 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR.VbrTables.Jobs_Info
                 if (entraTenantJobs.Count > 0)
                 {
                     t += this.form.Table();
+                    t += "<thead><tr>";
                     t += this.form.TableHeaderLeftAligned("Job Name (Tenant)", string.Empty);
                     t += this.form.TableHeader("Retention Policy", string.Empty);
+                    t += this.form.TableHeaderEnd();
                     t += this.form.TableBodyStart();
 
                     foreach (var tenantJob in entraTenantJobs)
@@ -93,11 +95,13 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR.VbrTables.Jobs_Info
                 if (entraLogJobs.Count > 0)
                 {
                     t += this.form.Table();
+                    t += "<thead><tr>";
                     t += this.form.TableHeaderLeftAligned("Job Name (Logs)", string.Empty);
                     t += this.form.TableHeader("Tenant", string.Empty);
                     t += this.form.TableHeader("Short Term Retention", string.Empty);
                     t += this.form.TableHeader("Short Term Repo", string.Empty);
                     t += this.form.TableHeader("Copy Enabled", string.Empty);
+                    t += this.form.TableHeaderEnd();
                     t += this.form.TableBodyStart();
 
                     foreach (var tj in entraLogJobs)

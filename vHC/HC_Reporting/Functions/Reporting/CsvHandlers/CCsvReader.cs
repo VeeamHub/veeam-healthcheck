@@ -83,6 +83,7 @@ namespace VeeamHealthCheck.Functions.Reporting.CsvHandlers
                 .Replace("/", string.Empty)
                 .Replace("#", string.Empty),
                 MissingFieldFound = null,
+                HeaderValidated = null,
             };
             return config;
         }

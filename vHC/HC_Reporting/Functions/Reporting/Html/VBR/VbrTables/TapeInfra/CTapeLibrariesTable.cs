@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using VeeamHealthCheck.Functions.Reporting.CsvHandlers;
 using VeeamHealthCheck.Functions.Reporting.Html.Shared;
 using VeeamHealthCheck.Scrubber;
+using VeeamHealthCheck.Html.VBR;
 using VeeamHealthCheck.Shared;
 
 namespace VeeamHealthCheck.Functions.Reporting.Html.VBR.VbrTables.TapeInfra
@@ -49,7 +50,7 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR.VbrTables.TapeInfra
                             name = CGlobals.Scrubber.ScrubItem(name, ScrubItemType.Item);
 
                         s += this.form.TableDataLeftAligned(name, string.Empty);
-                        s += this.form.TableData((string)(item.state ?? ""), string.Empty);
+                        s += this.form.TableData(CHtmlTables.Badge((string)(item.state ?? "")), string.Empty);
                         s += this.form.TableData((string)(item.type ?? ""), string.Empty);
                         s += this.form.TableData((string)(item.slotscount ?? ""), string.Empty);
                         s += this.form.TableData((string)(item.drivescount ?? ""), string.Empty);

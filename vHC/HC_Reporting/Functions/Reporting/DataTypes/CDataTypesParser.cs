@@ -566,7 +566,7 @@ namespace VeeamHealthCheck.Functions.Reporting.DataTypes
             }
             catch (Exception) { }
 
-            var rec = this.csvParser.PluginCsvParser().ToList();
+            var rec = this.csvParser.PluginCsvParser()?.ToList() ?? new List<CPluginCsvInfo>();
             if (rec != null)
                 foreach (var r in rec)
                 {
