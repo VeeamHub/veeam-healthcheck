@@ -98,18 +98,35 @@ namespace VeeamHealthCheck
             
             if (modeCheckResult == "fail")
             {
-                string errorMessage = "No Veeam Software detected on this machine.\n\n" +
-                                     "This tool requires Veeam Backup & Replication (VBR) or Veeam Backup for Microsoft 365 (VB365) to be installed.\n\n" +
-                                     "To connect to a remote Veeam server:\n" +
-                                     "1. Close this window\n" +
-                                     "2. Run from command line with: VeeamHealthCheck.exe /remote /host=your-vbr-server\n\n" +
-                                     "For more information, see the documentation.";
-                
-                MessageBox.Show(errorMessage, "Veeam Software Not Detected", MessageBoxButton.OK, MessageBoxImage.Error);
-                
-                // Close the application
-                Application.Current.Shutdown();
-                return;
+                // If remote servers are configured, don't exit — let user select product type
+                bool hasRemoteServers = false;
+                foreach (var item in serverListBox.Items)
+                {
+                    if (!item.ToString().Equals("localhost", StringComparison.OrdinalIgnoreCase))
+                    {
+                        hasRemoteServers = true;
+                        break;
+                    }
+                }
+
+                if (hasRemoteServers)
+                {
+                    this.Title = "Veeam Health Check - Remote Mode";
+                    CGlobals.Logger.Info("No local Veeam detected, but remote servers configured.", false);
+                }
+                else
+                {
+                    string errorMessage = "No Veeam Software detected on this machine.\n\n" +
+                                         "This tool requires Veeam Backup & Replication (VBR) or Veeam Backup for Microsoft 365 (VB365) to be installed.\n\n" +
+                                         "To connect to a remote Veeam server:\n" +
+                                         "1. Close this window\n" +
+                                         "2. Run from command line with: VeeamHealthCheck.exe /remote /host=your-vbr-server\n\n" +
+                                         "For more information, see the documentation.";
+
+                    MessageBox.Show(errorMessage, "Veeam Software Not Detected", MessageBoxButton.OK, MessageBoxImage.Error);
+                    Application.Current.Shutdown();
+                    return;
+                }
             }
             
             this.Title = modeCheckResult;
@@ -304,6 +321,7 @@ namespace VeeamHealthCheck
             removeServerBtn.IsEnabled = false;
             clearServersBtn.IsEnabled = false;
             serverListBox.IsEnabled = false;
+            productTypeSelector.IsEnabled = false;
             RescanBox.IsEnabled = false;
         }
 
@@ -555,11 +573,24 @@ namespace VeeamHealthCheck
         private void serverListBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
             UpdateSelectedServersGlobal();
-            
+
             if (serverListBox.SelectedItem != null)
             {
                 this.functions.LogUIAction($"Selected server: {serverListBox.SelectedItem}");
             }
+        }
+
+        private void productTypeSelector_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            if (productTypeSelector == null) return;
+            switch (productTypeSelector.SelectedIndex)
+            {
+                case 0: CGlobals.TargetProductType = TargetProduct.Auto; break;
+                case 1: CGlobals.TargetProductType = TargetProduct.Vbr; break;
+                case 2: CGlobals.TargetProductType = TargetProduct.Vb365; break;
+                case 3: CGlobals.TargetProductType = TargetProduct.Both; break;
+            }
+            this.functions.LogUIAction("Product type set to " + CGlobals.TargetProductType);
         }
 
         #endregion

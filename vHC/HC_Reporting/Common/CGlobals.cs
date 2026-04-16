@@ -164,6 +164,32 @@ namespace VeeamHealthCheck.Shared
 
         public static bool IsVb365 { get { return isVb365; } set { isVb365 = value; } }
 
+        public static TargetProduct TargetProductType { get; set; } = TargetProduct.Auto;
+
+        public static bool EffectiveIsVbr
+        {
+            get
+            {
+                if (TargetProductType == TargetProduct.Vbr || TargetProductType == TargetProduct.Both)
+                    return true;
+                if (TargetProductType == TargetProduct.Auto)
+                    return IsVbr;
+                return false;
+            }
+        }
+
+        public static bool EffectiveIsVb365
+        {
+            get
+            {
+                if (TargetProductType == TargetProduct.Vb365 || TargetProductType == TargetProduct.Both)
+                    return true;
+                if (TargetProductType == TargetProduct.Auto)
+                    return IsVb365;
+                return false;
+            }
+        }
+
         public static bool RunFullReport { get { return runFullReport; } set { runFullReport = value; } }
 
         public static bool RunSecReport { get { return runSecReport; } set { runSecReport = value; } }

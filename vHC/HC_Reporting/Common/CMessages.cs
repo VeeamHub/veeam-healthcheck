@@ -48,6 +48,11 @@ SPECIAL MODES:
   /hotfix           Run hotfix detection
   /path=<dir>       Specify path for hotfix detection (used with /hotfix)
 
+PRODUCT TYPE FLAGS:
+  /vbr              Target a VBR (Backup & Replication) server
+  /vb365            Target a VB365 (Backup for Microsoft 365) server
+  /vbr /vb365       Target a server running both products
+
 UTILITY OPTIONS:
   /clearcreds       Clear stored credentials from Windows Credential Manager
   /debug            Enable debug logging for troubleshooting

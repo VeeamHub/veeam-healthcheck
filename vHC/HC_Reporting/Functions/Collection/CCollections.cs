@@ -45,7 +45,7 @@ namespace VeeamHealthCheck.Functions.Collection
             this.ExecPSScripts();
 
             // run diagnostic of CSV output and sizes, dump to logs:
-            if (CGlobals.IsVbr)
+            if (CGlobals.EffectiveIsVbr)
             {
                 this.GetCsvFileSizesToLog();
             }
@@ -54,7 +54,7 @@ namespace VeeamHealthCheck.Functions.Collection
 
             CheckRecon();
 
-            if (!CGlobals.RunSecReport && CGlobals.IsVbr)
+            if (!CGlobals.RunSecReport && CGlobals.EffectiveIsVbr)
             {
                 this.PopulateWaits();
             }
@@ -160,7 +160,16 @@ namespace VeeamHealthCheck.Functions.Collection
             {
                 try
                 {
-                    if (CGlobals.IsVbr || CGlobals.REMOTEEXEC)
+                    bool runVbr = CGlobals.EffectiveIsVbr;
+                    bool runVb365 = CGlobals.EffectiveIsVb365;
+
+                    // Dynamic fallback when remote + Auto + no local detection
+                    if (CGlobals.TargetProductType == TargetProduct.Auto && CGlobals.REMOTEEXEC && !runVbr && !runVb365)
+                    {
+                        (runVbr, runVb365) = this.DynamicFallback();
+                    }
+
+                    if (runVbr)
                     {
                         // Ensure VBR output directory exists (with server name and timestamp)
                         if (!Directory.Exists(CVariables.vbrDir))
@@ -175,7 +184,6 @@ namespace VeeamHealthCheck.Functions.Collection
                             // add debug logging to help troubleshoot MFA issues
                             CGlobals.Logger.Debug("MFA Not detected, continuing...");
 
-                            // if (CGlobals.IsVbr || CGlobals.REMOTEEXEC)
                             this.ExecVbrScripts(p);
                         }
                         else
@@ -184,15 +192,12 @@ namespace VeeamHealthCheck.Functions.Collection
                         }
                     }
 
-                    if (CGlobals.IsVb365)
+                    if (runVb365)
                     {
                         CGlobals.Logger.Info("Checking VB365 MFA Access...", false);
                         if (!this.TestPsMfaVb365(p))
                         {
-                            if (CGlobals.IsVb365)
-                            {
-                                this.ExecVb365Scripts(p);
-                            }
+                            this.ExecVb365Scripts(p);
                         }
                         else
                         {
@@ -530,9 +535,10 @@ namespace VeeamHealthCheck.Functions.Collection
             // debug log evaluation of what to run
             CGlobals.Logger.Debug("DEBUG: Evaluating PS Script Execution Conditions:");
             CGlobals.Logger.Debug("IsVbr: " + CGlobals.IsVbr.ToString());
+            CGlobals.Logger.Debug("EffectiveIsVbr: " + CGlobals.EffectiveIsVbr.ToString());
             CGlobals.Logger.Debug("REMOTEEXEC: " + CGlobals.REMOTEEXEC.ToString());
 
-            if (CGlobals.IsVbr || CGlobals.REMOTEEXEC)
+            if (CGlobals.EffectiveIsVbr)
             {
                 CGlobals.Logger.Info("Entering vbr ps invoker", false);
                 this.SCRIPTSUCCESS = p.Invoke();
@@ -549,7 +555,7 @@ namespace VeeamHealthCheck.Functions.Collection
 
         private void ExecVb365Scripts(PSInvoker p)
         {
-            if (CGlobals.IsVb365)
+            if (CGlobals.EffectiveIsVb365)
             {
                 CGlobals.Logger.Info("Entering vb365 ps invoker", false);
 
@@ -557,6 +563,74 @@ namespace VeeamHealthCheck.Functions.Collection
                 p.InvokeVb365Collect();
                 this.SCRIPTSUCCESS = true;
             }
+        }
+
+        private bool TryModuleLoad(string moduleName, string productLabel, int timeoutSeconds = 15)
+        {
+            try
+            {
+                CGlobals.Logger.Info($"[Dynamic Fallback] Trying {productLabel} connection to {CGlobals.REMOTEHOST}...", false);
+
+                string pwshPath = @"C:\Program Files\PowerShell\7\pwsh.exe";
+                if (!File.Exists(pwshPath))
+                    pwshPath = "powershell.exe";
+
+                string script = $"Import-Module {moduleName} -WarningAction Ignore -ErrorAction Stop";
+                string args = $"-NoProfile -ExecutionPolicy Bypass -Command \"{script}\"";
+
+                var processInfo = new ProcessStartInfo
+                {
+                    FileName = pwshPath,
+                    Arguments = args,
+                    RedirectStandardOutput = true,
+                    RedirectStandardError = true,
+                    UseShellExecute = false,
+                    CreateNoWindow = true
+                };
+
+                using var process = Process.Start(processInfo);
+                bool exited = process.WaitForExit(timeoutSeconds * 1000);
+
+                if (!exited)
+                {
+                    try { process.Kill(); } catch { }
+                    CGlobals.Logger.Info($"[Dynamic Fallback] {productLabel} connection timed out", false);
+                    return false;
+                }
+
+                bool result = process.ExitCode == 0;
+                CGlobals.Logger.Info($"[Dynamic Fallback] {productLabel} module load: {(result ? "available" : "not available")}", false);
+                return result;
+            }
+            catch (Exception ex)
+            {
+                CGlobals.Logger.Debug($"[Dynamic Fallback] {productLabel} test error: {ex.Message}");
+                return false;
+            }
+        }
+
+        private (bool runVbr, bool runVb365) DynamicFallback()
+        {
+            CGlobals.Logger.Info("No product type specified for remote server. Attempting auto-detection...", false);
+
+            // Try both — VBR first (more common deployment)
+            bool vbrAvailable = this.TryModuleLoad("Veeam.Backup.PowerShell", "VBR", timeoutSeconds: 15);
+            bool vb365Available = this.TryModuleLoad("Veeam.Archiver.PowerShell", "VB365", timeoutSeconds: 15);
+
+            if (!vbrAvailable && !vb365Available)
+            {
+                string msg = $"Unable to connect to {CGlobals.REMOTEHOST} as either VBR or VB365.\n\n" +
+                             "Please verify:\n" +
+                             "1. The server name/IP is correct\n" +
+                             "2. VBR or VB365 is installed and running\n" +
+                             "3. Use /vbr or /vb365 flag to specify the product type";
+                CGlobals.Logger.Error(msg, false);
+                CGlobals.UserFacingError = msg;
+                return (false, false);
+            }
+
+            CGlobals.Logger.Info($"Auto-detection results: VBR={vbrAvailable}, VB365={vb365Available}", false);
+            return (vbrAvailable, vb365Available);
         }
 
         private void PopulateWaits()

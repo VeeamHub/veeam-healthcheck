@@ -281,6 +281,23 @@ MIT License
                                     Style="{StaticResource SecondaryButton}"
                                     Click="clearServersBtn_Click"/>
                         </Grid>
+
+                        <Separator Margin="0,12,0,12" Background="#EEEEEE"/>
+
+                        <!-- Product Type Selector -->
+                        <TextBlock Text="Product Type:" FontSize="13" FontWeight="SemiBold"
+                                   Foreground="#555555" Margin="0,0,0,8"/>
+                        <ComboBox x:Name="productTypeSelector"
+                                  Style="{StaticResource ModernComboBox}"
+                                  Width="220"
+                                  HorizontalAlignment="Left"
+                                  SelectionChanged="productTypeSelector_SelectionChanged"
+                                  ToolTip="For remote servers, specifying the product type avoids connection failures. If set to Auto-detect, the tool will try both connection types.">
+                            <ComboBoxItem Content="Auto-detect" IsSelected="True"/>
+                            <ComboBoxItem Content="VBR (Backup &amp; Replication)"/>
+                            <ComboBoxItem Content="VB365 (Backup for Microsoft 365)"/>
+                            <ComboBoxItem Content="Both"/>
+                        </ComboBox>
                     </StackPanel>
                 </GroupBox>
 

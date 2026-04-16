@@ -333,15 +333,42 @@ namespace VeeamHealthCheck.Functions.Collection.PSCollections
         }
         public bool TestMfaVB365()
         {
-            if (CGlobals.REMOTEHOST == string.Empty)
-            {
+            if (string.IsNullOrEmpty(CGlobals.REMOTEHOST))
                 CGlobals.REMOTEHOST = "localhost";
+
+            bool isRemote = CGlobals.REMOTEEXEC;
+
+            if (isRemote)
+            {
+                // Remote VB365: use credential-based connection
+                CredsHandler ch = new();
+                var creds = ch.GetCreds();
+
+                if (creds == null)
+                {
+                    CGlobals.Logger.Error("Credentials required for remote VB365 execution.");
+                    return true; // true = MFA failure, stops collection
+                }
+
+                string base64Password = CredentialHelper.EncodePasswordToBase64(creds.Value.Password);
+                string argString = "Import-Module Veeam.Archiver.PowerShell -WarningAction Ignore; " +
+                    $"$pw = [System.Text.Encoding]::UTF8.GetString([System.Convert]::FromBase64String('{base64Password}')); " +
+                    "$secpw = ConvertTo-SecureString $pw -AsPlainText -Force; " +
+                    $"$cred = New-Object System.Management.Automation.PSCredential('{creds.Value.Username}', $secpw); " +
+                    $"Connect-VBOServer -Server \"{CGlobals.REMOTEHOST}\" -Credential $cred";
+
+                CGlobals.Logger.Info("[VB365 MFA Check] Testing remote connection...", false);
+                return this.ExecutePsScriptWithFailover(argString, useShellExecute: false,
+                    createNoWindow: true, redirectStdErr: true);
             }
-
-
-            string argString = $"Connect-VBOServer -Server \"{CGlobals.REMOTEHOST}\"";
-            CGlobals.Logger.Info("[MFA Check] args:\t" + argString, false);
-            return this.ExecutePsScriptWithFailover(argString, useShellExecute: false, createNoWindow: false, redirectStdErr: true);
+            else
+            {
+                // Local VB365: use existing Windows auth
+                string argString = $"Connect-VBOServer -Server \"{CGlobals.REMOTEHOST}\"";
+                CGlobals.Logger.Info("[VB365 MFA Check] Testing local connection...", false);
+                return this.ExecutePsScriptWithFailover(argString, useShellExecute: false,
+                    createNoWindow: false, redirectStdErr: true);
+            }
         }
 
         public bool RunVbrConfigCollect()
@@ -808,10 +835,12 @@ namespace VeeamHealthCheck.Functions.Collection.PSCollections
             var scriptFile = this.vb365Script;
             this.UnblockFile(scriptFile);
 
+            string serverArg = CGlobals.REMOTEEXEC ? $" -VBOServerFqdnOrIp \"{CGlobals.REMOTEHOST}\"" : "";
+
             var startInfo = new ProcessStartInfo()
             {
                 FileName = "powershell.exe",
-                Arguments = $"-NoProfile -ExecutionPolicy unrestricted -file \"{scriptFile}\" -ReportingIntervalDays \"{CGlobals.ReportDays}\"",
+                Arguments = $"-NoProfile -ExecutionPolicy unrestricted -file \"{scriptFile}\" -ReportingIntervalDays \"{CGlobals.ReportDays}\"{serverArg}",
                 UseShellExecute = false,
                 CreateNoWindow = true
             };

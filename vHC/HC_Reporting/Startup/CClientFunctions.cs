@@ -560,8 +560,9 @@ namespace VeeamHealthCheck.Startup
                 "\t\t\t\t\tOpen HTML = {1}\n" +
                 "\t\t\t\t\tOpen Explorer = {2}\n" +
                 "\t\t\t\t\tPath = {3}\n" +
-                "\t\t\t\t\tInterval = {4}",
-                CGlobals.Scrub, CGlobals.OpenHtml, CGlobals.OpenExplorer, CGlobals.desiredPath, CGlobals.ReportDays.ToString()
+                "\t\t\t\t\tInterval = {4}\n" +
+                "\t\t\t\t\tTargetProductType = {5}",
+                CGlobals.Scrub, CGlobals.OpenHtml, CGlobals.OpenExplorer, CGlobals.desiredPath, CGlobals.ReportDays.ToString(), CGlobals.TargetProductType
                 );
         }
 

@@ -197,6 +197,20 @@ namespace VeeamHealthCheck.Startup
                     case "/debug":
                         CGlobals.DEBUG = true;
                         break;
+                    case "/vbr":
+                        if (CGlobals.TargetProductType == TargetProduct.Vb365)
+                            CGlobals.TargetProductType = TargetProduct.Both;
+                        else
+                            CGlobals.TargetProductType = TargetProduct.Vbr;
+                        CGlobals.Logger.Info("Target product: VBR", false);
+                        break;
+                    case "/vb365":
+                        if (CGlobals.TargetProductType == TargetProduct.Vbr)
+                            CGlobals.TargetProductType = TargetProduct.Both;
+                        else
+                            CGlobals.TargetProductType = TargetProduct.Vb365;
+                        CGlobals.Logger.Info("Target product: VB365", false);
+                        break;
                     case var match when new Regex("/path=.*").IsMatch(a):
                         _hfdPath = this.ParsePath(a);
                         CGlobals.Logger.Info("HFD path: " + targetDir);
@@ -242,6 +256,14 @@ namespace VeeamHealthCheck.Startup
                         CGlobals.Logger.Info("VHC Monitor scheduled task removed.", false);
                         return 0;
                 }
+            }
+
+            // If a product flag and host are provided, imply remote execution
+            if (CGlobals.TargetProductType != TargetProduct.Auto
+                && !string.IsNullOrEmpty(CGlobals.REMOTEHOST)
+                && !CGlobals.REMOTEHOST.Equals("localhost", StringComparison.OrdinalIgnoreCase))
+            {
+                CGlobals.REMOTEEXEC = true;
             }
 
             // Now that arguments are parsed, detect VBR version
