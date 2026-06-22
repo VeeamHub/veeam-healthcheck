@@ -339,7 +339,8 @@ namespace VeeamHealthCheck.Functions.Collection
                     CGlobals.REMOTEHOST = "localhost";
                 }
 
-                // Encode password as Base64 for safe transmission
+                // Base64-encode only to avoid PowerShell arg quoting issues (argument-safety,
+                // NOT encryption — Base64 is reversible; the script decodes it to plaintext).
                 string base64Password = CredentialHelper.EncodePasswordToBase64(creds.Value.Password);
                 // Escape server and username for the double-quoted argument context
                 // (prevents PowerShell argument injection via these fields).

@@ -13,8 +13,13 @@
 #   # Import-replay regression against a known collection, diffed vs baseline:
 #   ./Invoke-VhcE2E.ps1 -Mode import -ImportPath 'C:\temp\vHC\Original\VBR\host\ts' -Baseline .\baseline.json
 #
-#   # Live end-to-end (run on/near the VBR server), then validate:
+#   # Live end-to-end ON the VBR server, then validate:
 #   ./Invoke-VhcE2E.ps1 -Mode live -LabServer vbr-v13-rtm -Build
+#
+#   # Live end-to-end from THIS workstation against a REMOTE VBR (collect over
+#   # PS-remoting). Needs a DPAPI-seeded cred for the host (run once:
+#   # VeeamHealthCheck.exe /savecreds /host=vbr-v13-rtm.home.lab) or a -CredFile:
+#   ./Invoke-VhcE2E.ps1 -Mode live -LabServer vbr-v13-rtm -RemoteHost vbr-v13-rtm.home.lab -Build
 #
 # Exit 0 = all gates passed; 1 = one or more gates failed; 2 = setup error.
 # ---------------------------------------------------------------------------
@@ -24,6 +29,15 @@ param(
     [ValidateSet('import', 'live', 'both')] [string] $Mode = 'import',
     [string] $ImportPath = '',
     [string] $LabServer = '',
+    # Live mode against a REMOTE VBR: run the tool locally (this workstation) and
+    # collect over PowerShell remoting from $RemoteHost. When empty, live mode runs
+    # the local collect path (tool must execute ON the VBR server). When set to a
+    # non-local FQDN, the tool is invoked with /vbr /host=<fqdn> (which implies
+    # /remote) so the changed collection scripts run against the real server.
+    [string] $RemoteHost = '',
+    # DPAPI-stored creds for $RemoteHost are used by default (/silent). Supply a
+    # JSON credfile to run fully unattended without a pre-seeded DPAPI entry.
+    [string] $CredFile = '',
     [switch] $Build,
     [switch] $SkipTests,        # skip BOTH the xUnit suite and the Pester suites
     [switch] $SkipDotnetTest,   # skip only the (slow) xUnit suite, still run Pester
@@ -34,8 +48,15 @@ param(
     [string[]] $RequiredHtmlAnchors = @('id="jobs"', 'id="jobsummary"', 'id="license"', 'id="proxies"'),
     [hashtable] $RequiredJsonSections = @{ jobInfo = 1 },
     [switch] $AllowLogErrors,
-    # Known-benign log errors surfaced but not gated (e.g. optional-CSV-missing in import replay).
-    [string[]] $IgnoreLogPatterns = @('Failed to load VBR CSV data or no data found'),
+    # Known-benign log errors surfaced but not gated:
+    #   - optional-CSV-missing in import replay
+    #   - VBR object-hierarchy API returning partial results during ProtectedWorkloads
+    #     collection (a Write-Warning; collection continues and exports normally).
+    #     Seen on remote/live lab collections; unrelated to job/report logic.
+    [string[]] $IgnoreLogPatterns = @(
+        'Failed to load VBR CSV data or no data found',
+        'Failed to retrieve object hierarchy'
+    ),
     [string] $ResultJson = ''
 )
 
@@ -103,10 +124,13 @@ function Invoke-Tests {
     if (-not $SkipDotnetTest) {
         $csproj = Join-Path (Split-Path $hcReporting -Parent) 'VhcXTests\VhcXTests.csproj'
         if (Test-Path $csproj) {
-            $out  = & dotnet test $csproj -c Debug --nologo -v q 2>&1
-            $line = ($out | Select-String 'Passed!|Failed!' | Select-Object -Last 1)
+            $out   = & dotnet test $csproj -c Debug --nologo -v q 2>&1
+            $match = $out | Select-String 'Passed!|Failed!' | Select-Object -Last 1
+            # Use the MatchInfo's .Line as an explicit string; coercing a MatchInfo
+            # (or a null/array) straight through -replace can yield Object[] and break .Trim().
+            $lineText = if ($match) { [string]$match.Line } else { 'no test summary line found' }
             $ok   = ($LASTEXITCODE -eq 0) -and ($out -match 'Passed!')
-            Add-Result (New-VhcE2EResult 'Tests:xUnit' $ok (($line -replace '\s+', ' ').Trim()))
+            Add-Result (New-VhcE2EResult 'Tests:xUnit' $ok (($lineText -replace '\s+', ' ').Trim()))
         } else {
             Add-Result (New-VhcE2EResult 'Tests:xUnit' $false "VhcXTests.csproj not found at $csproj")
         }
@@ -145,9 +169,23 @@ if ($Mode -in 'import', 'both') {
 }
 if ($Mode -in 'live', 'both') {
     if (-not $LabServer) { Add-Result (New-VhcE2EResult 'Setup' $false 'live mode needs -LabServer'); Write-Result; exit 2 }
-    # Live run uses the tool's normal collect+report path. Best run on/near the VBR
-    # server. CSV dir is the newest collection produced under Original\VBR.
-    Invoke-Pass -PassName 'live' -ExeArgs @('/run', '/scrub:false') -CsvDir (
+    # Live run uses the tool's normal collect+report path. Two shapes:
+    #   - LOCAL  : run the tool ON the VBR server -> @('/run','/scrub:false')
+    #   - REMOTE : run the tool on this workstation and collect from -RemoteHost
+    #              -> @('/run','/remote','/host=<fqdn>','/scrub:false')
+    #              The normal /run /remote path uses the DPAPI-stored cred for the
+    #              host (seed once: VeeamHealthCheck.exe /savecreds /host=<fqdn>),
+    #              or a /credfile= when supplied. NOTE: do NOT add /silent here --
+    #              its credential lookup misses stored creds that the normal path
+    #              resolves, which breaks unattended remote collection.
+    $liveArgs =
+        if ($RemoteHost -and -not ($RemoteHost -in @('localhost', '127.0.0.1', '.', $env:COMPUTERNAME))) {
+            $a = @('/run', '/remote', "/host=$RemoteHost", '/scrub:false')
+            if ($CredFile) { $a += "/credfile=$CredFile" }
+            $a
+        }
+        else { @('/run', '/scrub:false') }
+    Invoke-Pass -PassName 'live' -ExeArgs $liveArgs -CsvDir (
         (Get-ChildItem -Path (Join-Path $OutDir 'Original\VBR') -Directory -Recurse -ErrorAction SilentlyContinue |
             Where-Object { Get-ChildItem $_.FullName -Filter '*_Jobs.csv' -ErrorAction SilentlyContinue } |
             Sort-Object LastWriteTime -Descending | Select-Object -First 1).FullName ?? $OutDir
