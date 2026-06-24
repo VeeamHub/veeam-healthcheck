@@ -14,6 +14,9 @@ BeforeAll {
 
     # Dot-source the helper that the SUT calls plus the SUT itself.
     . (Join-Path $privateDir 'Get-VhciSessionLogWithTimeout.ps1')
+    # SUT now pipes its CSV through Protect-VhciCsvInjection (formula-injection
+    # neutralizer); dot-source it too or the export call throws CommandNotFound.
+    . (Join-Path $privateDir 'Protect-VhciCsvInjection.ps1')
     . $PSCommandPath.Replace('.Tests.ps1', '.ps1')
     . (Join-Path $publicDir 'Write-LogFile.ps1')
 

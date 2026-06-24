@@ -622,10 +622,14 @@ namespace VeeamHealthCheck.Functions.Collection.PSCollections
 
         private ProcessStartInfo LogCollectionInfo(string scriptLocation, string path, string server)
         {
-            string argString;
-            argString = $"-NoProfile -ExecutionPolicy unrestricted -file {scriptLocation} -Server {server} -ReportPath {path}";
+            // Quote and escape every value: scriptLocation/path may contain spaces, and
+            // server (REMOTEHOST) is operator-controlled — unquoted it allows PowerShell
+            // argument injection (aggravated by UseShellExecute=true). Code-review cd-13/cs-01.
+            string escapedScript = CredentialHelper.EscapeForPowerShellDoubleQuotes(scriptLocation);
+            string escapedServer = CredentialHelper.EscapeForPowerShellDoubleQuotes(server);
+            string escapedPath = CredentialHelper.EscapeForPowerShellDoubleQuotes(path);
+            string argString = $"-NoProfile -ExecutionPolicy unrestricted -file \"{escapedScript}\" -Server \"{escapedServer}\" -ReportPath \"{escapedPath}\"";
 
-            // string argString = $"-NoProfile -ExecutionPolicy unrestricted -file \"{scriptLocation}\" -ReportPath \"{path}\"";
             if (CGlobals.DEBUG)
             {
                 this.log.Debug(this.logStart + "PS ArgString = " + argString, false);
@@ -653,9 +657,12 @@ namespace VeeamHealthCheck.Functions.Collection.PSCollections
                 server = CGlobals.REMOTEHOST;
             }
 
-            argString = $"-NoProfile -ExecutionPolicy unrestricted -file \"{scriptLocation}\" -Server {server}";
+            // Escape both values; server (REMOTEHOST) is operator-controlled and was
+            // previously unquoted/unescaped — PowerShell argument injection. Code-review cd-13/cs-01.
+            string escapedScript = CredentialHelper.EscapeForPowerShellDoubleQuotes(scriptLocation);
+            string escapedServer = CredentialHelper.EscapeForPowerShellDoubleQuotes(server);
+            argString = $"-NoProfile -ExecutionPolicy unrestricted -file \"{escapedScript}\" -Server \"{escapedServer}\"";
 
-            // string argString = $"-NoProfile -ExecutionPolicy unrestricted -file \"{scriptLocation}\" -ReportPath \"{path}\"";
             if (CGlobals.DEBUG)
             {
                 this.log.Debug(this.logStart + "PS ArgString = " + argString, false);
