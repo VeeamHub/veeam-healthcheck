@@ -2525,7 +2525,7 @@ jobs:
         $n.Add("")
         $n.Add("---")
         $n.Add("")
-        $n.Add("**Branch:** \`dev\`")
+        $n.Add("**Branch:** ``dev``")
         $n.Add("**Built from:** [$commitSha](https://github.com/$repo/commit/$commitSha)")
         $n.Add("**Build Date:** $buildDate")
 
