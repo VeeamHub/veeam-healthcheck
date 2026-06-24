@@ -124,10 +124,13 @@ function Invoke-Tests {
     if (-not $SkipDotnetTest) {
         $csproj = Join-Path (Split-Path $hcReporting -Parent) 'VhcXTests\VhcXTests.csproj'
         if (Test-Path $csproj) {
-            $out  = & dotnet test $csproj -c Debug --nologo -v q 2>&1
-            $line = ($out | Select-String 'Passed!|Failed!' | Select-Object -Last 1)
+            $out   = & dotnet test $csproj -c Debug --nologo -v q 2>&1
+            $match = $out | Select-String 'Passed!|Failed!' | Select-Object -Last 1
+            # Use the MatchInfo's .Line as an explicit string; coercing a MatchInfo
+            # (or a null/array) straight through -replace can yield Object[] and break .Trim().
+            $lineText = if ($match) { [string]$match.Line } else { 'no test summary line found' }
             $ok   = ($LASTEXITCODE -eq 0) -and ($out -match 'Passed!')
-            Add-Result (New-VhcE2EResult 'Tests:xUnit' $ok (($line -replace '\s+', ' ').Trim()))
+            Add-Result (New-VhcE2EResult 'Tests:xUnit' $ok (($lineText -replace '\s+', ' ').Trim()))
         } else {
             Add-Result (New-VhcE2EResult 'Tests:xUnit' $false "VhcXTests.csproj not found at $csproj")
         }

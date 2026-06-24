@@ -58,22 +58,40 @@ namespace VeeamHealthCheck.Functions.Collection
 
             // GetCsvFileSizesToLog();
 
+            this.log.Info("[Collections] Phase: Recon check...", false);
             CheckRecon();
+            this.log.Info("[Collections] Phase: Recon check...done!", false);
 
             if (!CGlobals.RunSecReport && CGlobals.EffectiveIsVbr)
             {
+                this.log.Info("[Collections] Phase: Log wait analysis...", false);
                 this.PopulateWaits();
+                this.log.Info("[Collections] Phase: Log wait analysis...done!", false);
             }
 
             if (CGlobals.IsVbr && !CGlobals.REMOTEEXEC)
             {
+                this.log.Info("[Collections] Phase: VMC reader...", false);
                 this.ExecVmcReader();
+                this.log.Info("[Collections] Phase: VMC reader...done!", false);
+
+                this.log.Info("[Collections] Phase: Registry DB info...", false);
                 this.GetRegistryDbInfo();
+                this.log.Info("[Collections] Phase: Registry DB info...done!", false);
+
                 if (CGlobals.DBTYPE != CGlobals.PgTypeName)
                 {
+                    this.log.Info(string.Format("[Collections] Phase: SQL queries (DBTYPE={0})...", CGlobals.DBTYPE), false);
                     this.ExecSqlQueries();
+                    this.log.Info("[Collections] Phase: SQL queries...done!", false);
+                }
+                else
+                {
+                    this.log.Info(string.Format("[Collections] Phase: SQL queries skipped (PostgreSQL backend, DBTYPE={0})", CGlobals.DBTYPE), false);
                 }
             }
+
+            this.log.Info("[Collections] Run() complete.", false);
         }
 
         private static void CheckRecon()
@@ -138,16 +156,32 @@ namespace VeeamHealthCheck.Functions.Collection
 
         private void GetRegistryDbInfo()
         {
-            CRegReader reg = new CRegReader();
-            reg.GetDbInfo();
+            try
+            {
+                CRegReader reg = new CRegReader();
 
-            if (CGlobals.REMOTEEXEC)
-            {
-                CGlobals.DEFAULTREGISTRYKEYS = reg.DefaultVbrKeysRemote();
+                this.log.Info("[Collections] Registry: reading DB info (GetDbInfo)...", false);
+                reg.GetDbInfo();
+                this.log.Info("[Collections] Registry: reading DB info (GetDbInfo)...done!", false);
+
+                if (CGlobals.REMOTEEXEC)
+                {
+                    this.log.Info("[Collections] Registry: reading default VBR keys (remote)...", false);
+                    CGlobals.DEFAULTREGISTRYKEYS = reg.DefaultVbrKeysRemote();
+                }
+                else
+                {
+                    this.log.Info("[Collections] Registry: reading default VBR keys (local)...", false);
+                    CGlobals.DEFAULTREGISTRYKEYS = reg.DefaultVbrKeys();
+                }
+
+                this.log.Info("[Collections] Registry: default VBR keys...done!", false);
             }
-            else
+            catch (Exception e)
             {
-                CGlobals.DEFAULTREGISTRYKEYS = reg.DefaultVbrKeys();
+                // Don't let a registry-read failure silently abort collection. Log it loudly
+                // and continue so report generation can still proceed with whatever was gathered.
+                this.log.Error("[Collections] Registry DB info collection failed: " + e.Message, false);
             }
         }
 
@@ -305,7 +339,8 @@ namespace VeeamHealthCheck.Functions.Collection
                     CGlobals.REMOTEHOST = "localhost";
                 }
 
-                // Encode password as Base64 for safe transmission
+                // Base64-encode only to avoid PowerShell arg quoting issues (argument-safety,
+                // NOT encryption — Base64 is reversible; the script decodes it to plaintext).
                 string base64Password = CredentialHelper.EncodePasswordToBase64(creds.Value.Password);
                 // Escape server and username for the double-quoted argument context
                 // (prevents PowerShell argument injection via these fields).

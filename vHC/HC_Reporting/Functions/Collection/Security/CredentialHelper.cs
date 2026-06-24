@@ -7,7 +7,10 @@ namespace VeeamHealthCheck.Functions.Collection.Security
     public static class CredentialHelper
     {
         /// <summary>
-        /// Encodes a password as Base64 for safe transmission to PowerShell
+        /// Base64-encodes a password ONLY to avoid quoting/escaping issues when
+        /// passing it as a PowerShell argument. This is argument-safety encoding,
+        /// NOT encryption — Base64 is trivially reversible and provides zero
+        /// confidentiality. The script decodes it straight back to plaintext.
         /// </summary>
         public static string EncodePasswordToBase64(string password)
         {

@@ -64,6 +64,11 @@ namespace VeeamHealthCheck.Functions.Reporting.Html
             {
                 this.log.Info("exporting xml to html");
                 this.latestReport = this.SetReportNameAndPath(scrub, "VB365");
+                if (scrub)
+                {
+                    htmlString = CGlobals.Scrubber.FinalizeScrubbedText(htmlString);
+                }
+
                 this.WriteHtmlToFile(htmlString);
                 this.log.Info("exporting xml to html..done!");
 
@@ -95,6 +100,11 @@ namespace VeeamHealthCheck.Functions.Reporting.Html
             {
                 this.log.Info("exporting xml to html");
                 this.latestReport = this.SetReportNameAndPath(scrub, "VBR");
+                if (scrub)
+                {
+                    htmlString = CGlobals.Scrubber.FinalizeScrubbedText(htmlString);
+                }
+
                 this.WriteHtmlToFile(htmlString);
                 this.log.Info("exporting xml to html..done!");
 
@@ -182,6 +192,10 @@ namespace VeeamHealthCheck.Functions.Reporting.Html
         {
             this.log.Info("exporting xml to html");
             this.latestReport = this.SetReportNameAndPath(scrub, "VBR_Security");
+            if (scrub)
+            {
+                htmlString = CGlobals.Scrubber.FinalizeScrubbedText(htmlString);
+            }
 
             this.WriteHtmlToFile(htmlString);
             this.log.Info("exporting xml to html..done!");
