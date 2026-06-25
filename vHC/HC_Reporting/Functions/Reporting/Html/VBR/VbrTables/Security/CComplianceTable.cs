@@ -4,6 +4,7 @@ using System.Linq;
 using VeeamHealthCheck.Functions.Analysis.DataModels;
 using VeeamHealthCheck.Functions.Reporting.CsvHandlers;
 using VeeamHealthCheck.Functions.Reporting.Html.Shared;
+using VeeamHealthCheck.Html.VBR;
 using VeeamHealthCheck.Shared;
 
 namespace VeeamHealthCheck.Functions.Reporting.Html.VBR.VbrTables.Security
@@ -160,6 +161,9 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR.VbrTables.Security
                 t += this.form.TableHeaderEnd();
                 t += this.form.TableBodyStart();
 
+                // Accumulate raw values for JSON capture (no badge markup, no NEW span).
+                var jsonRows = new List<List<string>>();
+
                 foreach (var res in this.csvResults)
                 {
                     string labelCell = res.BestPractice;
@@ -171,9 +175,18 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR.VbrTables.Security
                     t += this.form.TableDataLeftAligned(labelCell, string.Empty);
                     t += this.form.TableData(ComplianceBadge(res.Status.ToString()), string.Empty);
                     t += this.form.TableRowEnd();
+
+                    jsonRows.Add(new List<string> { res.BestPractice, res.Status.ToString() });
                 }
 
                 t += this.form.SectionEnd();
+
+                // Per-rule rows — additive alongside the existing ComplianceScan metadata object.
+                CHtmlTables.SetSectionPublic(
+                    "complianceTable",
+                    new List<string> { "Best Practice", "Status" },
+                    jsonRows,
+                    null);
             }
             catch (Exception e)
             {

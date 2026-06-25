@@ -5,6 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 using VeeamHealthCheck.Functions.Reporting.CsvHandlers;
 using VeeamHealthCheck.Functions.Reporting.Html.Shared;
+using VeeamHealthCheck.Html.VBR;
 using VeeamHealthCheck.Scrubber;
 using VeeamHealthCheck.Shared;
 
@@ -26,6 +27,9 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR.VbrTables.GeneralSetting
 
             s += this.form.TableHeaderEnd();
             s += this.form.TableBodyStart();
+
+            // Declared before the try so the section is always emitted (empty rows when no data).
+            var jsonRows = new List<List<string>>();
 
             try
             {
@@ -64,6 +68,9 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR.VbrTables.GeneralSetting
                         s += this.form.TableData(description, string.Empty);
 
                         s += "</tr>";
+
+                        // Accumulate raw (already-scrubbed) values for JSON capture.
+                        jsonRows.Add(new List<string> { name, role, description });
                     }
                 }
             }
@@ -73,6 +80,8 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR.VbrTables.GeneralSetting
             }
 
             s += this.form.SectionEnd();
+
+            CHtmlTables.SetSectionPublic("userRoles", new List<string> { "Name", "Role", "Description" }, jsonRows, null);
 
             return s;
         }
