@@ -39,9 +39,7 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR.VbrTables.GeneralSetting
                     })
                     .Column("Last Modified", string.Empty, item => (string)(item.lastmodified ?? ""));
 
-                // JSON capture — must happen whether or not there's data so the section key
-                // always appears in the output. Uses the same scrub-aware extractors defined
-                // on the builder above; raw values (no HTML encoding).
+                // Before the empty-data guard — ensures the credentials key is always present in JSON.
                 CHtmlTables.SetSectionPublic("credentials", table.JsonHeaders, table.BuildJsonRows(data), null);
 
                 if (!data.Any())

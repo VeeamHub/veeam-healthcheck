@@ -240,9 +240,6 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.Shared
             return sb.ToString();
         }
 
-        /// <summary>
-        /// Returns the list of column header strings for JSON capture.
-        /// </summary>
         public List<string> JsonHeaders => _columns.Select(c => c.Header).ToList();
 
         /// <summary>

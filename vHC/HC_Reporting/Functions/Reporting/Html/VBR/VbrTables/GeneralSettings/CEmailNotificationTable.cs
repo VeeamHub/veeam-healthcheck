@@ -80,7 +80,6 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR.VbrTables.GeneralSetting
 
                         s += "</tr>";
 
-                        // Accumulate raw (already-scrubbed) values for JSON capture.
                         jsonRows.Add(new List<string> { isEnabled, smtpServer, fromAddr, toAddr, notifySuccess, notifyWarning, notifyError });
                     }
                 }

@@ -146,6 +146,7 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR.VbrTables.Security
                 if (this.csvResults == null || !this.csvResults.Any())
                 {
                     CGlobals.Logger.Warning("No compliance data available - CSV file may not have been generated");
+                    CHtmlTables.SetSectionPublic("complianceTable", new List<string> { "Best Practice", "Status" }, new List<List<string>>(), null);
                     return t;
                 }
 
@@ -161,7 +162,7 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR.VbrTables.Security
                 t += this.form.TableHeaderEnd();
                 t += this.form.TableBodyStart();
 
-                // Accumulate raw values for JSON capture (no badge markup, no NEW span).
+                // Plain text — no badge markup or NEW span, unlike the HTML cells below.
                 var jsonRows = new List<List<string>>();
 
                 foreach (var res in this.csvResults)

@@ -132,5 +132,17 @@ namespace VhcXTests.Functions.Reporting.Html.VBR.VbrTables.Security
             Assert.NotNull(CGlobals.FullReportJson.ComplianceScan);
             Assert.Equal(2, CGlobals.FullReportJson.ComplianceScan.RuleCount);
         }
+
+        [Fact]
+        public void ComplianceTable_NoData_JsonSection_StillPresentWithZeroRows()
+        {
+            // No CSV written — csvResults will be empty, triggering the early-return path.
+            var ct = new CComplianceTable();
+            ct.ComplianceTable();
+
+            Assert.True(CGlobals.FullReportJson.Sections.ContainsKey("complianceTable"),
+                "Expected Sections[\"complianceTable\"] to be present even when no compliance data is available.");
+            Assert.Empty(CGlobals.FullReportJson.Sections["complianceTable"].Rows);
+        }
     }
 }
