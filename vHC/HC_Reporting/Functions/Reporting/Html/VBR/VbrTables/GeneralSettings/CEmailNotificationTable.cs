@@ -6,6 +6,7 @@ using System.Text;
 using System.Threading.Tasks;
 using VeeamHealthCheck.Functions.Reporting.CsvHandlers;
 using VeeamHealthCheck.Functions.Reporting.Html.Shared;
+using VeeamHealthCheck.Html.VBR;
 using VeeamHealthCheck.Scrubber;
 using VeeamHealthCheck.Shared;
 
@@ -36,6 +37,9 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR.VbrTables.GeneralSetting
             s += this.form.TableHeaderEnd();
             s += this.form.TableBodyStart();
 
+            // Declared before the try so the section is always emitted (empty rows when no data).
+            var jsonRows = new List<List<string>>();
+
             try
             {
                 CCsvParser c = new();
@@ -61,15 +65,22 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR.VbrTables.GeneralSetting
                             toAddr = CGlobals.Scrubber.ScrubItem(toAddr, ScrubItemType.Item);
                         }
 
-                        s += this.form.TableData((string)(item.isenabled ?? ""), string.Empty);
+                        string isEnabled = (string)(item.isenabled ?? "");
+                        string notifySuccess = (string)(item.notifyonsuccess ?? "");
+                        string notifyWarning = (string)(item.notifyonwarning ?? "");
+                        string notifyError = (string)(item.notifyonerror ?? "");
+
+                        s += this.form.TableData(isEnabled, string.Empty);
                         s += this.form.TableData(smtpServer, string.Empty);
                         s += this.form.TableData(fromAddr, string.Empty);
                         s += this.form.TableData(toAddr, string.Empty);
-                        s += this.form.TableData((string)(item.notifyonsuccess ?? ""), string.Empty);
-                        s += this.form.TableData((string)(item.notifyonwarning ?? ""), string.Empty);
-                        s += this.form.TableData((string)(item.notifyonerror ?? ""), string.Empty);
+                        s += this.form.TableData(notifySuccess, string.Empty);
+                        s += this.form.TableData(notifyWarning, string.Empty);
+                        s += this.form.TableData(notifyError, string.Empty);
 
                         s += "</tr>";
+
+                        jsonRows.Add(new List<string> { isEnabled, smtpServer, fromAddr, toAddr, notifySuccess, notifyWarning, notifyError });
                     }
                 }
             }
@@ -79,6 +90,12 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR.VbrTables.GeneralSetting
             }
 
             s += this.form.SectionEnd();
+
+            CHtmlTables.SetSectionPublic(
+                "emailNotification",
+                new List<string> { "Is Enabled", "SMTP Server", "From", "To", "Notify On Success", "Notify On Warning", "Notify On Error" },
+                jsonRows,
+                null);
 
             return s;
         }
