@@ -43,9 +43,9 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR.VbrTables.GeneralSetting
             try
             {
                 CCsvParser c = new();
-                var data = c.GetDynamicEmailNotification();
+                var data = c.GetDynamicEmailNotification().ToList();
 
-                if (data == null || !data.Any())
+                if (!data.Any())
                 {
                     s += "<tr><td colspan='7' style='text-align: center; padding: 20px; color: #666;'><em>No email notification settings detected.</em></td></tr>";
                 }
