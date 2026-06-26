@@ -14,9 +14,10 @@ namespace VhcXTests.Functions.Reporting.Html.VBR.VbrTables.GeneralSettings
     public class CEmailNotificationTableTests : VbrTableScrubTestBase
     {
         // FileFinder matches "_EmailNotification.csv"; CsvHelper lowercases headers via
-        // PrepareHeaderForMatch, so dynamic properties are accessed as "smtpserver", "from", etc.
+        // PrepareHeaderForMatch, so dynamic properties are accessed as "enabled", "sender", etc.
+        // Column names match Get-VBRMailNotificationConfiguration output.
         private const string EmailNotificationCsv =
-            "\"IsEnabled\",\"SmtpServer\",\"From\",\"To\",\"NotifyOnSuccess\",\"NotifyOnWarning\",\"NotifyOnError\"\r\n" +
+            "\"Enabled\",\"SmtpServer\",\"Sender\",\"Recipient\",\"NotifyOnSuccess\",\"NotifyOnWarning\",\"NotifyOnFailure\"\r\n" +
             "\"True\",\"smtp.corp.example.com\",\"veeam@corp.example.com\",\"admin@corp.example.com\",\"False\",\"True\",\"True\"";
 
         public CEmailNotificationTableTests() : base("VhcEmailNotifTests_")
@@ -75,7 +76,7 @@ namespace VhcXTests.Functions.Reporting.Html.VBR.VbrTables.GeneralSettings
 
             var section = CGlobals.FullReportJson.Sections["emailNotification"];
             Assert.Equal(
-                new List<string> { "Is Enabled", "SMTP Server", "From", "To", "Notify On Success", "Notify On Warning", "Notify On Error" },
+                new List<string> { "Enabled", "SMTP Server", "Sender", "Recipient", "Notify On Success", "Notify On Warning", "Notify On Failure" },
                 section.Headers);
         }
 
@@ -87,10 +88,10 @@ namespace VhcXTests.Functions.Reporting.Html.VBR.VbrTables.GeneralSettings
 
             var section = CGlobals.FullReportJson.Sections["emailNotification"];
             Assert.Single(section.Rows);
-            Assert.Equal("True", section.Rows[0][0]);                       // Is Enabled
+            Assert.Equal("True", section.Rows[0][0]);                       // Enabled
             Assert.Equal("smtp.corp.example.com", section.Rows[0][1]);      // SMTP Server
-            Assert.Equal("veeam@corp.example.com", section.Rows[0][2]);     // From
-            Assert.Equal("admin@corp.example.com", section.Rows[0][3]);     // To
+            Assert.Equal("veeam@corp.example.com", section.Rows[0][2]);     // Sender
+            Assert.Equal("admin@corp.example.com", section.Rows[0][3]);     // Recipient
         }
 
         [Fact]
@@ -108,7 +109,7 @@ namespace VhcXTests.Functions.Reporting.Html.VBR.VbrTables.GeneralSettings
         public void Render_EmptyData_JsonSection_StillPresentWithZeroRows()
         {
             File.WriteAllText(System.IO.Path.Combine(VbrDir, "_EmailNotification.csv"),
-                "\"IsEnabled\",\"SmtpServer\",\"From\",\"To\",\"NotifyOnSuccess\",\"NotifyOnWarning\",\"NotifyOnError\"\r\n");
+                "\"Enabled\",\"SmtpServer\",\"Sender\",\"Recipient\",\"NotifyOnSuccess\",\"NotifyOnWarning\",\"NotifyOnFailure\"\r\n");
             new CEmailNotificationTable().Render(scrub: false);
 
             Assert.True(CGlobals.FullReportJson.Sections.ContainsKey("emailNotification"));
