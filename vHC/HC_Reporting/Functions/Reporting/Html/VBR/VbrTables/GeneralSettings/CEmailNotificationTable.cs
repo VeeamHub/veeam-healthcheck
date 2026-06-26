@@ -26,13 +26,13 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR.VbrTables.GeneralSetting
         {
             string s = this.form.SectionStartWithButton("emailnotification", "Email Notification", "Email Notification");
 
-            s += this.form.TableHeader("Is Enabled", string.Empty);
+            s += this.form.TableHeader("Enabled", string.Empty);
             s += this.form.TableHeader("SMTP Server", string.Empty);
-            s += this.form.TableHeader("From", string.Empty);
-            s += this.form.TableHeader("To", string.Empty);
+            s += this.form.TableHeader("Sender", string.Empty);
+            s += this.form.TableHeader("Recipient", string.Empty);
             s += this.form.TableHeader("Notify On Success", string.Empty);
             s += this.form.TableHeader("Notify On Warning", string.Empty);
-            s += this.form.TableHeader("Notify On Error", string.Empty);
+            s += this.form.TableHeader("Notify On Failure", string.Empty);
 
             s += this.form.TableHeaderEnd();
             s += this.form.TableBodyStart();
@@ -55,32 +55,33 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR.VbrTables.GeneralSetting
                     {
                         s += "<tr>";
 
-                        string smtpServer = (string)(item.smtpserver ?? "");
-                        string fromAddr = (string)(item.from ?? "");
-                        string toAddr = (string)(item.to ?? "");
+                        var row = (IDictionary<string, object>)item;
+                        string enabled = row.TryGetValue("enabled", out var en) ? (string)(en ?? "") : "";
+                        string smtpServer = row.TryGetValue("smtpserver", out var sv) ? (string)(sv ?? "") : "";
+                        string sender = row.TryGetValue("sender", out var sn) ? (string)(sn ?? "") : "";
+                        string recipient = row.TryGetValue("recipient", out var rc) ? (string)(rc ?? "") : "";
+                        string notifySuccess = row.TryGetValue("notifyonsuccess", out var ns) ? (string)(ns ?? "") : "";
+                        string notifyWarning = row.TryGetValue("notifyonwarning", out var nw) ? (string)(nw ?? "") : "";
+                        string notifyFailure = row.TryGetValue("notifyonfailure", out var nf) ? (string)(nf ?? "") : "";
+
                         if (scrub)
                         {
                             smtpServer = CGlobals.Scrubber.ScrubItem(smtpServer, ScrubItemType.Server);
-                            fromAddr = CGlobals.Scrubber.ScrubItem(fromAddr, ScrubItemType.Item);
-                            toAddr = CGlobals.Scrubber.ScrubItem(toAddr, ScrubItemType.Item);
+                            sender = CGlobals.Scrubber.ScrubItem(sender, ScrubItemType.Item);
+                            recipient = CGlobals.Scrubber.ScrubItem(recipient, ScrubItemType.Item);
                         }
 
-                        string isEnabled = (string)(item.isenabled ?? "");
-                        string notifySuccess = (string)(item.notifyonsuccess ?? "");
-                        string notifyWarning = (string)(item.notifyonwarning ?? "");
-                        string notifyError = (string)(item.notifyonerror ?? "");
-
-                        s += this.form.TableData(isEnabled, string.Empty);
+                        s += this.form.TableData(enabled, string.Empty);
                         s += this.form.TableData(smtpServer, string.Empty);
-                        s += this.form.TableData(fromAddr, string.Empty);
-                        s += this.form.TableData(toAddr, string.Empty);
+                        s += this.form.TableData(sender, string.Empty);
+                        s += this.form.TableData(recipient, string.Empty);
                         s += this.form.TableData(notifySuccess, string.Empty);
                         s += this.form.TableData(notifyWarning, string.Empty);
-                        s += this.form.TableData(notifyError, string.Empty);
+                        s += this.form.TableData(notifyFailure, string.Empty);
 
                         s += "</tr>";
 
-                        jsonRows.Add(new List<string> { isEnabled, smtpServer, fromAddr, toAddr, notifySuccess, notifyWarning, notifyError });
+                        jsonRows.Add(new List<string> { enabled, smtpServer, sender, recipient, notifySuccess, notifyWarning, notifyFailure });
                     }
                 }
             }
@@ -93,7 +94,7 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR.VbrTables.GeneralSetting
 
             CHtmlTables.SetSectionPublic(
                 "emailNotification",
-                new List<string> { "Is Enabled", "SMTP Server", "From", "To", "Notify On Success", "Notify On Warning", "Notify On Error" },
+                new List<string> { "Enabled", "SMTP Server", "Sender", "Recipient", "Notify On Success", "Notify On Warning", "Notify On Failure" },
                 jsonRows,
                 null);
 
