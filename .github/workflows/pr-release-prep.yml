@@ -87,3 +87,25 @@ jobs:
         echo "download_url=$downloadUrl" >> $env:GITHUB_OUTPUT
     
     # Commenting is handled by a separate safe workflow using pull_request_target
+
+  test-same-repo-pr:
+    runs-on: windows-latest
+    if: github.event.pull_request.base.repo.full_name == github.event.pull_request.head.repo.full_name
+
+    steps:
+    - name: Checkout PR code
+      uses: actions/checkout@v4
+
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: '8.0.x'
+
+    - name: Restore dependencies
+      run: dotnet restore vHC/HC.sln
+
+    - name: Build solution
+      run: dotnet build vHC/HC.sln --configuration Release --no-restore
+
+    - name: Run tests
+      run: dotnet test vHC/HC.sln --configuration Release --no-build --verbosity normal
