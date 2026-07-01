@@ -144,7 +144,7 @@ function Invoke-Tests {
         $cfg.Filter.ExcludeTag = 'LiveVBR'
         $cfg.Output.Verbosity  = 'None'
         $pr = Invoke-Pester -Configuration $cfg
-        Add-Result (New-VhcE2EResult 'Tests:Pester' ($pr.FailedCount -eq 0) "$($pr.PassedCount) passed, $($pr.FailedCount) failed, $($pr.SkippedCount) skipped")
+        Add-Result (New-VhcE2EResult 'Tests:Pester' (($pr.FailedCount + $pr.FailedBlocksCount + $pr.FailedContainersCount) -eq 0) "$($pr.PassedCount) passed, $($pr.FailedCount) failed, $($pr.SkippedCount) skipped")
     } catch {
         Add-Result (New-VhcE2EResult 'Tests:Pester' $false "Pester run error: $($_.Exception.Message)")
     }
