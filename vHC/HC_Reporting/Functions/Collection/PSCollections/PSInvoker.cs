@@ -874,7 +874,7 @@ namespace VeeamHealthCheck.Functions.Collection.PSCollections
             }
         }
 
-        public void InvokeVb365Collect()
+        public bool InvokeVb365Collect()
         {
             this.log.Info("[PS] Enter VB365 collection invoker...", false);
             var scriptFile = this.vb365Script;
@@ -890,14 +890,46 @@ namespace VeeamHealthCheck.Functions.Collection.PSCollections
                 FileName = "powershell.exe",
                 Arguments = args,
                 UseShellExecute = false,
-                CreateNoWindow = true
+                CreateNoWindow = true,
+                RedirectStandardOutput = true,
+                RedirectStandardError = true
             };
             this.log.Info("[PS] Starting VB365 Collection Powershell process", false);
             this.log.Info("[PS] [ARGS]: " + safeArgs, false);
             var result = Process.Start(startInfo);
             this.log.Info("[PS] Process started with ID: " + result.Id.ToString(), false);
+
+            // Capture output for diagnostics: the collector's own INFO/WARNING/ERROR
+            // logging goes to CollectorMain.log on disk, not stdout (Write-LogFile only
+            // echoes to the console-only Information/Warning/Error streams, and only
+            // when the script's own DebugInConsole setting is on) - so unlike the VBR
+            // config collector, there is no in-process "collection complete" marker we
+            // can observe from here. The real process exit code is the only reliable
+            // signal available; capturing stdout/stderr at least surfaces PowerShell-
+            // level failures (e.g. module load errors) that were previously silent.
+            var stdOutTask = System.Threading.Tasks.Task.Run(() => result.StandardOutput.ReadToEnd());
+            var stdErrTask = System.Threading.Tasks.Task.Run(() => result.StandardError.ReadToEnd());
             result.WaitForExit();
+            string stdOut = stdOutTask.GetAwaiter().GetResult();
+            string stdErr = stdErrTask.GetAwaiter().GetResult();
+
+            if (!string.IsNullOrWhiteSpace(stdOut))
+            {
+                this.log.Debug($"[PS][VB365][STDOUT] {stdOut}", false);
+            }
+            if (!string.IsNullOrWhiteSpace(stdErr))
+            {
+                this.log.Error($"[PS][VB365][STDERR] {stdErr}", false);
+            }
+
+            if (result.ExitCode != 0)
+            {
+                this.log.Error($"[PS] VB365 script failed with exit code: {result.ExitCode}", false);
+                return false;
+            }
+
             this.log.Info("[PS] VB365 collection complete!", false);
+            return true;
         }
 
         /// <summary>
