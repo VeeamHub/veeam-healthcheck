@@ -15,14 +15,14 @@ jobs:
     
     steps:
     - name: Checkout PR code
-      uses: actions/checkout@v4
+      uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
       with:
         repository: ${{ github.event.pull_request.head.repo.full_name }}
         ref: ${{ github.event.pull_request.head.sha }}
         fetch-depth: 0
       
     - name: Setup .NET
-      uses: actions/setup-dotnet@v4
+      uses: actions/setup-dotnet@67a3573c9a986a3f9c594539f4ab511d57bb3ce9 # v4
       with:
         dotnet-version: '8.0.x'
         
@@ -69,7 +69,7 @@ jobs:
         echo "zip_name=$($zipPath.Name)" >> $env:GITHUB_OUTPUT
     
     - name: Upload ZIP artifact
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
       with:
         name: veeam-healthcheck-pr-${{ github.event.pull_request.number }}
         path: publish/VeeamHealthCheck-${{ steps.get_version.outputs.version }}.zip
@@ -94,10 +94,10 @@ jobs:
 
     steps:
     - name: Checkout PR code
-      uses: actions/checkout@v4
+      uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
 
     - name: Setup .NET
-      uses: actions/setup-dotnet@v4
+      uses: actions/setup-dotnet@67a3573c9a986a3f9c594539f4ab511d57bb3ce9 # v4
       with:
         dotnet-version: '8.0.x'
 

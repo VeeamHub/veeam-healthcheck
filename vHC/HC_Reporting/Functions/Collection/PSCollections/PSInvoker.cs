@@ -242,6 +242,18 @@ namespace VeeamHealthCheck.Functions.Collection.PSCollections
             }
         }
 
+        /// <summary>
+        /// Builds the PowerShell command line for the remote / PS5-failover VBR MFA check.
+        /// <c>-ForceAcceptTlsCertificate</c> is REQUIRED (issue #149): without it VBR v13 raises an
+        /// interactive server-certificate trust prompt that hangs this headless process forever.
+        /// <c>-ErrorAction Stop</c> makes a failed connect surface as a non-zero exit. Callers MUST
+        /// pass values already escaped for a single-quoted PowerShell context via
+        /// <see cref="CredentialHelper.EscapeForPowerShellSingleQuotes"/>.
+        /// </summary>
+        internal static string BuildRemoteMfaConnectArgs(string escapedServer, string escapedUser, string escapedPassword) =>
+            $"Import-Module Veeam.Backup.PowerShell; Connect-VBRServer -Server '{escapedServer}' " +
+            $"-User '{escapedUser}' -Password '{escapedPassword}' -ForceAcceptTlsCertificate -ErrorAction Stop";
+
         public bool TestMfa()
         {
             var res = new Process();
@@ -265,16 +277,21 @@ namespace VeeamHealthCheck.Functions.Collection.PSCollections
                 ProcessStartInfo startInfo = new ProcessStartInfo
                 {
                     FileName = "powershell.exe",
-                    // Use single quotes for the password to avoid interpretation of special characters
-                    Arguments = $"Import-Module Veeam.Backup.PowerShell; Connect-VBRServer -Server '{escapedServer}' -User '{escapedUser}' -Password '{escapedPassword}'",
+                    // Args (incl. the REQUIRED -ForceAcceptTlsCertificate for issue #149) are built
+                    // by BuildRemoteMfaConnectArgs; server/user/password are single-quote escaped above.
+                    Arguments = BuildRemoteMfaConnectArgs(escapedServer, escapedUser, escapedPassword),
                     RedirectStandardOutput = true,
                     RedirectStandardError = true,
                     UseShellExecute = false,
                     CreateNoWindow = true
                 };
 
-                // Log the command with masked password - construct safe log message without ever including sensitive data
-                string safeLogArgs = $"Import-Module Veeam.Backup.PowerShell; Connect-VBRServer -Server '{escapedServer}' -User '{escapedUser}' -Password '****'";
+                // Log the command with a masked password. Built as a SEPARATE literal (NOT via
+                // BuildRemoteMfaConnectArgs) on purpose: if the real-password call and the masked-log
+                // call share one method, CodeQL's interprocedural taint summary treats the masked log
+                // as carrying the real password (cs/cleartext-storage false positive). Keeping them
+                // separate keeps the real password provably off every logging path.
+                string safeLogArgs = $"Import-Module Veeam.Backup.PowerShell; Connect-VBRServer -Server '{escapedServer}' -User '{escapedUser}' -Password '****' -ForceAcceptTlsCertificate -ErrorAction Stop";
                 CGlobals.Logger.Info("[TestMfa] Arguments: " + safeLogArgs);
 
                 this.log.Info($"[TestMfa] Creating ProcessStartInfo for MFA test:");
@@ -291,11 +308,32 @@ namespace VeeamHealthCheck.Functions.Collection.PSCollections
                     res.Start();
                     this.log.Info($"[TestMfa] PowerShell process started. PID: {res.Id}");
 
-                    res.WaitForExit();
+                    // Start async reads of BOTH streams BEFORE waiting, so a full redirected-pipe
+                    // buffer can never deadlock the wait (same protection as
+                    // CCollections.RunBoundedPowerShell). Reading only after WaitForExit would let
+                    // verbose Connect-VBRServer output wedge the process and trip a spurious
+                    // timeout on an otherwise-successful connect (issue #149).
+                    var stdOutTask = res.StandardOutput.ReadToEndAsync();
+                    var stdErrTask = res.StandardError.ReadToEndAsync();
+
+                    // Bounded wait so an interactive prompt (e.g. an unaccepted VBR server
+                    // certificate on v13) can never hang the check forever (issue #149).
+                    int timeoutSeconds = CCollections.MfaCheckTimeoutSeconds;
+                    this.log.Debug($"[TestMfa] Waiting up to {timeoutSeconds}s for the MFA test process to exit...");
+                    bool exited = res.WaitForExit(timeoutSeconds * 1000);
+                    if (!exited)
+                    {
+                        this.log.Warning($"[TestMfa] MFA test TIMED OUT after {timeoutSeconds}s — killing PID {res.Id}. " +
+                            "Most likely an unaccepted VBR server certificate or an interactive prompt. Treating as a connection failure.", false);
+                        try { res.Kill(entireProcessTree: true); }
+                        catch (Exception kex) { this.log.Debug($"[TestMfa] Failed to kill timed-out process PID {res.Id}: {kex.Message}"); }
+                        return false;
+                    }
+
                     this.log.Info($"[TestMfa] PowerShell process exited with code: {res.ExitCode}");
 
-                    string stdOut = res.StandardOutput.ReadToEnd();
-                    string stdErr = CCollections.StripAnsiCodes(res.StandardError.ReadToEnd());
+                    string stdOut = stdOutTask.GetAwaiter().GetResult();
+                    string stdErr = CCollections.StripAnsiCodes(stdErrTask.GetAwaiter().GetResult());
 
                     // Note: Not logging full stdout/stderr to avoid potential password leakage in error messages
                     this.log.Debug($"[TestMfa] STDOUT length: {stdOut?.Length ?? 0} chars");
@@ -415,14 +453,22 @@ namespace VeeamHealthCheck.Functions.Collection.PSCollections
 
             // Wait for process to complete (7 day timeout for large environments)
             bool exited = res1.WaitForExit(604800000);
-            string stdOut = stdOutTask.GetAwaiter().GetResult();
-            string stdErr = stdErrTask.GetAwaiter().GetResult();
             if (!exited)
             {
-                this.log.Error("[PS] Script execution timeout after 7 days", false);
-                try { res1.Kill(); } catch { }
+                // Kill FIRST, before reading the streams. If the child is wedged (e.g. blocked on
+                // an unaccepted VBR server-certificate prompt on v13 — issue #149), its stdout/stderr
+                // never close, so stdOutTask/stdErrTask never complete and GetResult() would block
+                // forever — silently defeating this very timeout. Killing the process tree closes the
+                // pipes and lets those background reads unwind.
+                this.log.Error("[PS] Script execution timeout after 7 days — killing process tree. " +
+                    "A wedged child usually means an unaccepted VBR server certificate or another interactive prompt.", false);
+                try { res1.Kill(entireProcessTree: true); } catch { }
                 return false;
             }
+
+            // Process has exited, so both pipes are closed and these reads return promptly.
+            string stdOut = stdOutTask.GetAwaiter().GetResult();
+            string stdErr = stdErrTask.GetAwaiter().GetResult();
 
             // Log stdout if present
             if (!string.IsNullOrWhiteSpace(stdOut))
