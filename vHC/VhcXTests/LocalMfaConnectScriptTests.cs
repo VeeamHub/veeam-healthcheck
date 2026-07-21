@@ -11,44 +11,48 @@ namespace VhcXTests
     /// Issue #149: on VBR v13, an untrusted / self-signed server certificate makes
     /// Connect-VBRServer raise an interactive "accept this certificate?" prompt. The MFA
     /// pre-check runs PowerShell headless (CreateNoWindow, no stdin), so the prompt can
-    /// never be answered and the whole collection hangs forever — exactly the symptom in
-    /// the reported screenshot (frozen at "Local VBR detected, using Windows authentication").
+    /// never be answered and the whole collection hangs forever.
     ///
-    /// The remote path (TestMfa.ps1) already passed -ForceAcceptTlsCertificate; the local
-    /// path (CCollections.RunLocalMfaCheckNoCredentials) was missing it. These tests trap
-    /// that class of bug at the script-construction seam so it cannot silently regress.
+    /// The fix adds -ForceAcceptTlsCertificate — but ONLY for v13+, because that parameter
+    /// does not exist on VBR v12's Connect-VBRServer (passing it there throws
+    /// "A parameter cannot be found..." and breaks collection). These tests pin both halves
+    /// of that contract: present on v13+, absent on v12.
     /// </summary>
     [Trait("Category", "Regression")]
     public class LocalMfaConnectScriptTests
     {
-        [Fact]
-        public void BuildLocalMfaConnectScript_ForcesTlsCertificateAcceptance_Issue149()
+        [Theory]
+        [InlineData(13)]
+        [InlineData(14)]
+        public void BuildLocalMfaConnectScript_V13Plus_ForcesTlsCertificateAcceptance_Issue149(int major)
         {
-            string script = CCollections.BuildLocalMfaConnectScript();
-
+            string script = CCollections.BuildLocalMfaConnectScript(major);
             // Without this flag VBR v13 prompts to accept the server certificate and the
-            // headless collection hangs forever (issue #149). This is the core regression guard.
+            // headless collection hangs forever (issue #149).
             Assert.Contains("-ForceAcceptTlsCertificate", script);
         }
 
-        [Fact]
-        public void BuildLocalMfaConnectScript_StopsOnError()
+        [Theory]
+        [InlineData(12)]
+        [InlineData(0)]
+        public void BuildLocalMfaConnectScript_V12OrUnknown_OmitsTlsFlag_NoParamNotFound(int major)
         {
-            string script = CCollections.BuildLocalMfaConnectScript();
-
-            // -ErrorAction Stop makes a failed connect surface as a non-zero exit code
-            // rather than a silent "success" the caller would misread.
-            Assert.Contains("-ErrorAction Stop", script);
+            string script = CCollections.BuildLocalMfaConnectScript(major);
+            // -ForceAcceptTlsCertificate does not exist on v12's Connect-VBRServer; including it
+            // throws NamedParameterNotFound and breaks collection. Must be absent below v13.
+            Assert.DoesNotContain("-ForceAcceptTlsCertificate", script);
         }
 
-        [Fact]
-        public void BuildLocalMfaConnectScript_ConnectsToLocalhostViaVeeamModule()
+        [Theory]
+        [InlineData(12)]
+        [InlineData(13)]
+        public void BuildLocalMfaConnectScript_AlwaysConnectsLocalhostAndStopsOnError(int major)
         {
-            string script = CCollections.BuildLocalMfaConnectScript();
-
+            string script = CCollections.BuildLocalMfaConnectScript(major);
             Assert.Contains("Import-Module Veeam.Backup.PowerShell", script);
             Assert.Contains("Connect-VBRServer", script);
             Assert.Contains("-Server localhost", script);
+            Assert.Contains("-ErrorAction Stop", script);
         }
 
         [Fact]

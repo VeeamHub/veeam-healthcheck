@@ -157,6 +157,11 @@ $useCreds = (-not [string]::IsNullOrWhiteSpace($User) -and
 # even if a prerequisite collector aborts the run early.
 try {
     Write-StartupLog "Connecting to VBR server '$VBRServer' (useCreds=$useCreds)..."
+    # -ForceAcceptTlsCertificate only exists on VBR v13+; passing it on v12 throws
+    # "A parameter cannot be found that matches parameter name 'ForceAcceptTlsCertificate'"
+    # and aborts collection. Gate it by version (issue #149 v12-regression guard).
+    $certParam = @{}
+    if ($VBRVersion -ge 13) { $certParam['ForceAcceptTlsCertificate'] = $true }
     if ($useCreds) {
         if (-not [string]::IsNullOrWhiteSpace($PasswordBase64)) {
             $passwordBytes = [System.Convert]::FromBase64String($PasswordBase64)
@@ -166,12 +171,9 @@ try {
         }
         $securePassword = ConvertTo-SecureString -String $plainPassword -AsPlainText -Force
         $credential     = New-Object System.Management.Automation.PSCredential($User, $securePassword)
-        Connect-VBRServer -Server $VBRServer -Credential $credential -ForceAcceptTlsCertificate -ErrorAction Stop
+        Connect-VBRServer -Server $VBRServer -Credential $credential @certParam -ErrorAction Stop
     } else {
-        # -ForceAcceptTlsCertificate is REQUIRED: on VBR v13 an untrusted server cert
-        # otherwise raises an interactive trust prompt that hangs this headless
-        # collection forever (issue #149) - the same hang the MFA pre-check guards against.
-        Connect-VBRServer -Server $VBRServer -ForceAcceptTlsCertificate -ErrorAction Stop
+        Connect-VBRServer -Server $VBRServer @certParam -ErrorAction Stop
     }
     Write-StartupLog "Connected to VBR server '$VBRServer'."
 

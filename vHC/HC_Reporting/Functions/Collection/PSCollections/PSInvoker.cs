@@ -244,15 +244,19 @@ namespace VeeamHealthCheck.Functions.Collection.PSCollections
 
         /// <summary>
         /// Builds the PowerShell command line for the remote / PS5-failover VBR MFA check.
-        /// <c>-ForceAcceptTlsCertificate</c> is REQUIRED (issue #149): without it VBR v13 raises an
-        /// interactive server-certificate trust prompt that hangs this headless process forever.
+        /// <c>-ForceAcceptTlsCertificate</c> is added ONLY for VBR v13+ (the parameter does not exist
+        /// on v12, where it throws and breaks the connect): on v13 it suppresses the interactive
+        /// server-certificate trust prompt that would otherwise hang this headless process (issue #149).
         /// <c>-ErrorAction Stop</c> makes a failed connect surface as a non-zero exit. Callers MUST
         /// pass values already escaped for a single-quoted PowerShell context via
         /// <see cref="CredentialHelper.EscapeForPowerShellSingleQuotes"/>.
         /// </summary>
-        internal static string BuildRemoteMfaConnectArgs(string escapedServer, string escapedUser, string escapedPassword) =>
-            $"Import-Module Veeam.Backup.PowerShell; Connect-VBRServer -Server '{escapedServer}' " +
-            $"-User '{escapedUser}' -Password '{escapedPassword}' -ForceAcceptTlsCertificate -ErrorAction Stop";
+        internal static string BuildRemoteMfaConnectArgs(string escapedServer, string escapedUser, string escapedPassword, int vbrMajorVersion)
+        {
+            string certFlag = vbrMajorVersion >= 13 ? " -ForceAcceptTlsCertificate" : string.Empty;
+            return $"Import-Module Veeam.Backup.PowerShell; Connect-VBRServer -Server '{escapedServer}' " +
+                   $"-User '{escapedUser}' -Password '{escapedPassword}'{certFlag} -ErrorAction Stop";
+        }
 
         public bool TestMfa()
         {
@@ -277,9 +281,9 @@ namespace VeeamHealthCheck.Functions.Collection.PSCollections
                 ProcessStartInfo startInfo = new ProcessStartInfo
                 {
                     FileName = "powershell.exe",
-                    // Args (incl. the REQUIRED -ForceAcceptTlsCertificate for issue #149) are built
-                    // by BuildRemoteMfaConnectArgs; server/user/password are single-quote escaped above.
-                    Arguments = BuildRemoteMfaConnectArgs(escapedServer, escapedUser, escapedPassword),
+                    // Args (incl. -ForceAcceptTlsCertificate for v13+ only, issue #149) are built by
+                    // BuildRemoteMfaConnectArgs; server/user/password are single-quote escaped above.
+                    Arguments = BuildRemoteMfaConnectArgs(escapedServer, escapedUser, escapedPassword, CGlobals.VBRMAJORVERSION),
                     RedirectStandardOutput = true,
                     RedirectStandardError = true,
                     UseShellExecute = false,
@@ -290,8 +294,10 @@ namespace VeeamHealthCheck.Functions.Collection.PSCollections
                 // BuildRemoteMfaConnectArgs) on purpose: if the real-password call and the masked-log
                 // call share one method, CodeQL's interprocedural taint summary treats the masked log
                 // as carrying the real password (cs/cleartext-storage false positive). Keeping them
-                // separate keeps the real password provably off every logging path.
-                string safeLogArgs = $"Import-Module Veeam.Backup.PowerShell; Connect-VBRServer -Server '{escapedServer}' -User '{escapedUser}' -Password '****' -ForceAcceptTlsCertificate -ErrorAction Stop";
+                // separate keeps the real password provably off every logging path. The cert flag
+                // mirrors the real args (v13+ only — it does not exist on v12).
+                string certFlag = CGlobals.VBRMAJORVERSION >= 13 ? " -ForceAcceptTlsCertificate" : string.Empty;
+                string safeLogArgs = $"Import-Module Veeam.Backup.PowerShell; Connect-VBRServer -Server '{escapedServer}' -User '{escapedUser}' -Password '****'{certFlag} -ErrorAction Stop";
                 CGlobals.Logger.Info("[TestMfa] Arguments: " + safeLogArgs);
 
                 this.log.Info($"[TestMfa] Creating ProcessStartInfo for MFA test:");

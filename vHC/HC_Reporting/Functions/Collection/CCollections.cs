@@ -46,16 +46,22 @@ namespace VeeamHealthCheck.Functions.Collection
 
         /// <summary>
         /// Builds the PowerShell script for the local (Windows-auth) VBR MFA pre-check.
-        /// <c>-ForceAcceptTlsCertificate</c> is REQUIRED: on VBR v13 a self-signed / untrusted
-        /// server certificate makes Connect-VBRServer raise an interactive trust prompt that can
-        /// never be answered when the process runs headless (CreateNoWindow, no stdin), hanging
-        /// the collection forever (issue #149). This mirrors the remote path in TestMfa.ps1, which
-        /// already passes the flag. <c>-ErrorAction Stop</c> makes a failed connect surface as a
-        /// non-zero exit code rather than a silent success.
+        /// <c>-ForceAcceptTlsCertificate</c> is added ONLY for VBR v13+ (the parameter does not
+        /// exist on v12): on v13 a self-signed / untrusted server certificate makes Connect-VBRServer
+        /// raise an interactive trust prompt that can never be answered when the process runs headless
+        /// (CreateNoWindow, no stdin), hanging the collection forever (issue #149). <c>-ErrorAction
+        /// Stop</c> makes a failed connect surface as a non-zero exit code rather than a silent success.
         /// </summary>
-        internal static string BuildLocalMfaConnectScript() =>
-            "Import-Module Veeam.Backup.PowerShell -WarningAction Ignore; " +
-            "Connect-VBRServer -Server localhost -ForceAcceptTlsCertificate -ErrorAction Stop";
+        internal static string BuildLocalMfaConnectScript(int vbrMajorVersion)
+        {
+            // -ForceAcceptTlsCertificate ONLY exists on VBR v13+. Passing it to v12's
+            // Connect-VBRServer throws "A parameter cannot be found that matches parameter
+            // name 'ForceAcceptTlsCertificate'" and breaks collection, so include it only for
+            // v13+ — which is also the only version where the untrusted-cert prompt hangs (#149).
+            string certFlag = vbrMajorVersion >= 13 ? " -ForceAcceptTlsCertificate" : string.Empty;
+            return "Import-Module Veeam.Backup.PowerShell -WarningAction Ignore; " +
+                   $"Connect-VBRServer -Server localhost{certFlag} -ErrorAction Stop";
+        }
 
         /// <summary>
         /// Starts a PowerShell process from <paramref name="startInfo"/> and runs it under a hard
@@ -451,7 +457,7 @@ namespace VeeamHealthCheck.Functions.Collection
 
                 // Build PowerShell arguments with Base64-encoded password
                 // Use double quotes around Base64 string to avoid issues with special characters
-                string args = $"-NoProfile -ExecutionPolicy Bypass -File \"{scriptPath}\" -Server \"{escapedServer}\" -Username \"{escapedUser}\" -PasswordBase64 \"{base64Password}\"";
+                string args = $"-NoProfile -ExecutionPolicy Bypass -File \"{scriptPath}\" -Server \"{escapedServer}\" -Username \"{escapedUser}\" -PasswordBase64 \"{base64Password}\" -VBRVersion {CGlobals.VBRMAJORVERSION}";
 
                 var processInfo = new ProcessStartInfo
                 {
@@ -464,11 +470,11 @@ namespace VeeamHealthCheck.Functions.Collection
                 };
 
                 // Log processInfo settings - construct safe log message without ever including sensitive data
-                string safeArgs = $"-NoProfile -ExecutionPolicy Bypass -File \"{scriptPath}\" -Server \"{escapedServer}\" -Username \"{escapedUser}\" -PasswordBase64 \"****\"";
+                string safeArgs = $"-NoProfile -ExecutionPolicy Bypass -File \"{scriptPath}\" -Server \"{escapedServer}\" -Username \"{escapedUser}\" -PasswordBase64 \"****\" -VBRVersion {CGlobals.VBRMAJORVERSION}";
                 CGlobals.Logger.Debug($"ProcessStartInfo Settings:\n  FileName: {processInfo.FileName}\n  Arguments: {safeArgs}\n  RedirectStandardOutput: {processInfo.RedirectStandardOutput}\n  RedirectStandardError: {processInfo.RedirectStandardError}\n  UseShellExecute: {processInfo.UseShellExecute}\n  CreateNoWindow: {processInfo.CreateNoWindow}");
                 // Run under a bounded timeout with async reads so an interactive prompt or a full
-                // pipe buffer cannot hang the remote MFA check forever (issue #149 defense-in-depth;
-                // TestMfa.ps1 already passes -ForceAcceptTlsCertificate, so no script change here).
+                // pipe buffer cannot hang the remote MFA check forever (issue #149 defense-in-depth).
+                // The cert flag is handled inside TestMfa.ps1, gated on the -VBRVersion we pass above.
                 RunBoundedPowerShell(
                     processInfo,
                     MfaCheckTimeoutSeconds,
@@ -649,11 +655,11 @@ namespace VeeamHealthCheck.Functions.Collection
                     psExe = "powershell.exe";
                 }
 
-                // Simple Connect-VBRServer without credentials.
-                // NOTE: the script MUST include -ForceAcceptTlsCertificate — without it, VBR v13
-                // prompts to accept the server certificate and this headless process hangs forever
-                // (issue #149). The connect string is built by BuildLocalMfaConnectScript().
-                string script = BuildLocalMfaConnectScript();
+                // Simple Connect-VBRServer without credentials. On VBR v13 the connect string adds
+                // -ForceAcceptTlsCertificate (built by BuildLocalMfaConnectScript, gated by version)
+                // to avoid the headless cert-prompt hang; on v12 that flag is omitted because the
+                // parameter does not exist there and would break the connect (issue #149).
+                string script = BuildLocalMfaConnectScript(CGlobals.VBRMAJORVERSION);
                 string args = $"-NoProfile -ExecutionPolicy Bypass -Command \"{script}\"";
 
                 CGlobals.Logger.Debug($"[Local MFA Check] Running local MFA check with Windows auth: {psExe} -Command \"{script}\"");
