@@ -19,10 +19,10 @@ jobs:
     
     steps:
     - name: Checkout repository
-      uses: actions/checkout@v4
+      uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
       
     - name: Setup .NET
-      uses: actions/setup-dotnet@v4
+      uses: actions/setup-dotnet@67a3573c9a986a3f9c594539f4ab511d57bb3ce9 # v4
       with:
         dotnet-version: '8.0.x'
 
@@ -46,7 +46,7 @@ jobs:
           --results-directory ${{ github.workspace }}/TestResults
 
     - name: Publish test results
-      uses: EnricoMi/publish-unit-test-result-action/composite@v2
+      uses: EnricoMi/publish-unit-test-result-action/composite@d0a4676d0e0b938bc201470d88276b7c74c712b3 # v2
       if: always()
       with:
         files: '${{ github.workspace }}/TestResults/**/*.trx'
@@ -78,7 +78,7 @@ jobs:
 
     - name: Upload coverage report
       if: always()
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
       with:
         name: code-coverage-report
         path: ${{ github.workspace }}/CoverageReport
@@ -122,7 +122,7 @@ jobs:
     
     - name: Upload ZIP artifact
       if: github.event_name != 'pull_request'
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
       with:
         name: veeam-healthcheck-zip
         path: publish/VeeamHealthCheck-${{ steps.get_version.outputs.version }}.zip
@@ -146,10 +146,10 @@ jobs:
         }
 
     - name: Checkout repository
-      uses: actions/checkout@v4
+      uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
       
     - name: Download ZIP artifact
-      uses: actions/download-artifact@v4
+      uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
       with:
         name: veeam-healthcheck-zip
         path: ${{ github.workspace }}/test-download
@@ -294,7 +294,7 @@ jobs:
     
     - name: Upload health check report
       if: always() && steps.find_report.outputs.report_path
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
       with:
         name: health-check-report-${{ github.run_number }}-v13-remote
         path: ${{ steps.find_report.outputs.report_path }}
@@ -728,7 +728,7 @@ jobs:
 
     - name: Upload health check logs
       if: always()
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
       with:
         name: health-check-logs-${{ github.run_number }}-v13-remote
         path: C:\temp\vHC\Original\Log\*.log
@@ -767,10 +767,10 @@ jobs:
         }
 
     - name: Checkout repository
-      uses: actions/checkout@v4
+      uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
 
     - name: Download ZIP artifact
-      uses: actions/download-artifact@v4
+      uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
       with:
         name: veeam-healthcheck-zip
         path: ${{ github.workspace }}/test-download
@@ -913,7 +913,7 @@ jobs:
     
     - name: Upload health check report
       if: always() && steps.find_report.outputs.report_path
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
       with:
         name: health-check-report-${{ github.run_number }}-v13-sql
         path: ${{ steps.find_report.outputs.report_path }}
@@ -1347,7 +1347,7 @@ jobs:
 
     - name: Upload health check logs
       if: always()
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
       with:
         name: health-check-logs-${{ github.run_number }}-v13-sql
         path: C:\temp\vHC\Original\Log\*.log
@@ -1383,10 +1383,10 @@ jobs:
         }
 
     - name: Checkout repository
-      uses: actions/checkout@v4
+      uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
 
     - name: Download ZIP artifact
-      uses: actions/download-artifact@v4
+      uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
       with:
         name: veeam-healthcheck-zip
         path: ${{ github.workspace }}/test-download
@@ -1523,7 +1523,7 @@ jobs:
     
     - name: Upload health check report
       if: always() && steps.find_report.outputs.report_path
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
       with:
         name: health-check-report-${{ github.run_number }}-v12
         path: ${{ steps.find_report.outputs.report_path }}
@@ -1946,7 +1946,7 @@ jobs:
 
     - name: Upload health check logs
       if: always()
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
       with:
         name: health-check-logs-${{ github.run_number }}-v12
         path: C:\temp\vHC\Original\Log\*.log
@@ -1979,7 +1979,7 @@ jobs:
     
     steps:
     - name: Download ZIP artifact
-      uses: actions/download-artifact@v4
+      uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
       with:
         name: veeam-healthcheck-zip
         path: publish
@@ -2238,12 +2238,12 @@ jobs:
 
     steps:
     - name: Checkout repository
-      uses: actions/checkout@v4
+      uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
       with:
         fetch-depth: 0  # Fetch full history for release notes generation
 
     - name: Download ZIP artifact
-      uses: actions/download-artifact@v4
+      uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
       with:
         name: veeam-healthcheck-zip
         path: release-files
@@ -2376,7 +2376,7 @@ jobs:
 
     - name: Create GitHub Release
       id: create_release
-      uses: softprops/action-gh-release@v1
+      uses: softprops/action-gh-release@de2c0eb89ae2a093876385947365aca7b0e5f844 # v1
       with:
         tag_name: v${{ needs.build-and-test.outputs.version }}
         name: Veeam Health Check v${{ needs.build-and-test.outputs.version }}
@@ -2402,12 +2402,12 @@ jobs:
 
     steps:
     - name: Checkout repository
-      uses: actions/checkout@v4
+      uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
       with:
         fetch-depth: 0
 
     - name: Download ZIP artifact
-      uses: actions/download-artifact@v4
+      uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
       with:
         name: veeam-healthcheck-zip
         path: release-files
@@ -2534,7 +2534,7 @@ jobs:
 
     - name: Create GitHub pre-release
       id: create_prerelease
-      uses: softprops/action-gh-release@v1
+      uses: softprops/action-gh-release@de2c0eb89ae2a093876385947365aca7b0e5f844 # v1
       with:
         tag_name: v${{ needs.build-and-test.outputs.version }}-dev
         name: "[Dev] Veeam Health Check v${{ needs.build-and-test.outputs.version }}"
