@@ -36,7 +36,13 @@ namespace VeeamHealthCheck.Functions.Collection
         // untrusted server certificate (or any other interactive prompt) can block
         // Connect-VBRServer forever; this timeout guarantees collection always proceeds
         // or fails cleanly instead of hanging indefinitely (GitHub issue #149).
-        internal const int MfaCheckTimeoutSeconds = 30;
+        //
+        // Set generously (90s): the ceiling is a safety net for a genuine hang, not a
+        // performance budget — with -ForceAcceptTlsCertificate present the check normally
+        // returns in a second or two. A cold `Import-Module Veeam.Backup.PowerShell` +
+        // Connect-VBRServer handshake on a large/loaded v13 server can legitimately take
+        // tens of seconds, and a too-tight ceiling has false-failed big environments before.
+        internal const int MfaCheckTimeoutSeconds = 90;
 
         /// <summary>
         /// Builds the PowerShell script for the local (Windows-auth) VBR MFA pre-check.

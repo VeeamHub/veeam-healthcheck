@@ -166,9 +166,12 @@ try {
         }
         $securePassword = ConvertTo-SecureString -String $plainPassword -AsPlainText -Force
         $credential     = New-Object System.Management.Automation.PSCredential($User, $securePassword)
-        Connect-VBRServer -Server $VBRServer -Credential $credential -ErrorAction Stop
+        Connect-VBRServer -Server $VBRServer -Credential $credential -ForceAcceptTlsCertificate -ErrorAction Stop
     } else {
-        Connect-VBRServer -Server $VBRServer -ErrorAction Stop
+        # -ForceAcceptTlsCertificate is REQUIRED: on VBR v13 an untrusted server cert
+        # otherwise raises an interactive trust prompt that hangs this headless
+        # collection forever (issue #149) — the same hang the MFA pre-check guards against.
+        Connect-VBRServer -Server $VBRServer -ForceAcceptTlsCertificate -ErrorAction Stop
     }
     Write-StartupLog "Connected to VBR server '$VBRServer'."
 
