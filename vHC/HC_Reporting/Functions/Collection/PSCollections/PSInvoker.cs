@@ -265,8 +265,11 @@ namespace VeeamHealthCheck.Functions.Collection.PSCollections
                 ProcessStartInfo startInfo = new ProcessStartInfo
                 {
                     FileName = "powershell.exe",
-                    // Use single quotes for the password to avoid interpretation of special characters
-                    Arguments = $"Import-Module Veeam.Backup.PowerShell; Connect-VBRServer -Server '{escapedServer}' -User '{escapedUser}' -Password '{escapedPassword}'",
+                    // Use single quotes for the password to avoid interpretation of special characters.
+                    // -ForceAcceptTlsCertificate is REQUIRED: on VBR v13 an untrusted server cert
+                    // otherwise triggers an interactive trust prompt that hangs this headless
+                    // process forever (issue #149). -ErrorAction Stop surfaces failures as non-zero.
+                    Arguments = $"Import-Module Veeam.Backup.PowerShell; Connect-VBRServer -Server '{escapedServer}' -User '{escapedUser}' -Password '{escapedPassword}' -ForceAcceptTlsCertificate -ErrorAction Stop",
                     RedirectStandardOutput = true,
                     RedirectStandardError = true,
                     UseShellExecute = false,
@@ -274,7 +277,7 @@ namespace VeeamHealthCheck.Functions.Collection.PSCollections
                 };
 
                 // Log the command with masked password - construct safe log message without ever including sensitive data
-                string safeLogArgs = $"Import-Module Veeam.Backup.PowerShell; Connect-VBRServer -Server '{escapedServer}' -User '{escapedUser}' -Password '****'";
+                string safeLogArgs = $"Import-Module Veeam.Backup.PowerShell; Connect-VBRServer -Server '{escapedServer}' -User '{escapedUser}' -Password '****' -ForceAcceptTlsCertificate -ErrorAction Stop";
                 CGlobals.Logger.Info("[TestMfa] Arguments: " + safeLogArgs);
 
                 this.log.Info($"[TestMfa] Creating ProcessStartInfo for MFA test:");
@@ -291,7 +294,20 @@ namespace VeeamHealthCheck.Functions.Collection.PSCollections
                     res.Start();
                     this.log.Info($"[TestMfa] PowerShell process started. PID: {res.Id}");
 
-                    res.WaitForExit();
+                    // Bounded wait so an interactive prompt (e.g. an unaccepted VBR server
+                    // certificate on v13) can never hang the check forever (issue #149).
+                    int timeoutSeconds = CCollections.MfaCheckTimeoutSeconds;
+                    this.log.Debug($"[TestMfa] Waiting up to {timeoutSeconds}s for the MFA test process to exit...");
+                    bool exited = res.WaitForExit(timeoutSeconds * 1000);
+                    if (!exited)
+                    {
+                        this.log.Warning($"[TestMfa] MFA test TIMED OUT after {timeoutSeconds}s — killing PID {res.Id}. " +
+                            "Most likely an unaccepted VBR server certificate or an interactive prompt. Treating as a connection failure.", false);
+                        try { res.Kill(entireProcessTree: true); }
+                        catch (Exception kex) { this.log.Debug($"[TestMfa] Failed to kill timed-out process PID {res.Id}: {kex.Message}"); }
+                        return false;
+                    }
+
                     this.log.Info($"[TestMfa] PowerShell process exited with code: {res.ExitCode}");
 
                     string stdOut = res.StandardOutput.ReadToEnd();
