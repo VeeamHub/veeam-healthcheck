@@ -286,9 +286,12 @@ namespace VeeamHealthCheck.Functions.Collection.PSCollections
                     CreateNoWindow = true
                 };
 
-                // Log the command with masked password - reuse the same builder with a '****' placeholder
-                // so the log line can never diverge from (or accidentally expose) the real password.
-                string safeLogArgs = BuildRemoteMfaConnectArgs(escapedServer, escapedUser, "****");
+                // Log the command with a masked password. Built as a SEPARATE literal (NOT via
+                // BuildRemoteMfaConnectArgs) on purpose: if the real-password call and the masked-log
+                // call share one method, CodeQL's interprocedural taint summary treats the masked log
+                // as carrying the real password (cs/cleartext-storage false positive). Keeping them
+                // separate keeps the real password provably off every logging path.
+                string safeLogArgs = $"Import-Module Veeam.Backup.PowerShell; Connect-VBRServer -Server '{escapedServer}' -User '{escapedUser}' -Password '****' -ForceAcceptTlsCertificate -ErrorAction Stop";
                 CGlobals.Logger.Info("[TestMfa] Arguments: " + safeLogArgs);
 
                 this.log.Info($"[TestMfa] Creating ProcessStartInfo for MFA test:");
