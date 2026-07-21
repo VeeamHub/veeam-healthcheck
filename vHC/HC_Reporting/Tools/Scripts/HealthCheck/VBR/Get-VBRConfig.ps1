@@ -170,7 +170,7 @@ try {
     } else {
         # -ForceAcceptTlsCertificate is REQUIRED: on VBR v13 an untrusted server cert
         # otherwise raises an interactive trust prompt that hangs this headless
-        # collection forever (issue #149) — the same hang the MFA pre-check guards against.
+        # collection forever (issue #149) - the same hang the MFA pre-check guards against.
         Connect-VBRServer -Server $VBRServer -ForceAcceptTlsCertificate -ErrorAction Stop
     }
     Write-StartupLog "Connected to VBR server '$VBRServer'."
