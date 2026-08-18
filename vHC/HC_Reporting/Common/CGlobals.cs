@@ -48,7 +48,18 @@ namespace VeeamHealthCheck.Shared
         public static string VbrConsoleInstallDir;
         public static int PowerShellVersion;
         public static DateTime TOOLSTART;
+
+        /// <summary>
+        /// True when targeting a VBR/VB365 server other than the local machine (set via /remote
+        /// /host=&lt;name&gt;). Despite the name, this does NOT mean PowerShell scripts execute on
+        /// that remote machine - vHC always launches pwsh.exe and the Veeam.Backup.PowerShell
+        /// module locally. REMOTEEXEC only changes which server the module connects to (via
+        /// -Server / -VBOServerFqdnOrIp) and whether explicit credentials are required instead
+        /// of Windows auth. See <see cref="REMOTEHOST"/>.
+        /// </summary>
         public static bool REMOTEEXEC = false;
+
+        /// <summary>The server to connect to when <see cref="REMOTEEXEC"/> is true.</summary>
         public static string REMOTEHOST = string.Empty;
         public static bool GUIEXEC = false;
         private static string _runTimestamp = null;
