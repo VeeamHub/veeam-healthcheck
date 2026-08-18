@@ -319,7 +319,9 @@ namespace VeeamHealthCheck.Startup
 
             // Now that arguments are parsed, detect VBR version
             // This must happen after parsing so REMOTEEXEC flag is properly set
-            try { this.functions.GetVbrVersion(); }
+            // Detection only here (no PS 7.6+ gate) - the gate only applies to paths that lead
+            // into actual PowerShell-module-based collection, not e.g. the hotfix detector.
+            try { this.functions.DetectVbrVersion(); }
             catch (Exception ex)
             {
                 CGlobals.Logger.Debug($"VBR version detection skipped: {ex.Message}");
@@ -344,6 +346,15 @@ namespace VeeamHealthCheck.Startup
                 this.LaunchUi(this.Handle(), false);
             else if (run)
             {
+                // Gate on the PS 7.6+ module requirement here, right before any path that leads
+                // into actual collection (import, remote, and local all reach FullRun below).
+                // VBR version detection already ran above, so VbrConsoleInstallDir is populated.
+                try { this.functions.GetVbrVersion(); }
+                catch (Exception ex)
+                {
+                    CGlobals.Logger.Debug($"PowerShell version gate skipped: {ex.Message}");
+                }
+
                 if (CGlobals.IMPORT)
                      result = this.FullRun(targetDir);
                 else if (CGlobals.REMOTEEXEC && CGlobals.REMOTEHOST == string.Empty)

@@ -223,7 +223,9 @@ namespace VeeamHealthCheck.Startup
         public void RunHotfixDetector(string path, string remoteServer)
         {
             this.LOG.Info(this.logStart + "Starting Hotfix Detector", false);
-            this.GetVbrVersion();
+            // Hotfix detection only needs the version number, not the PS 7.6+ module gate -
+            // it never touches Veeam.Backup.PowerShell.
+            this.DetectVbrVersion();
             if (!String.IsNullOrEmpty(path))
             {
                 if (!this.VerifyPath(path))
@@ -456,7 +458,20 @@ namespace VeeamHealthCheck.Startup
             return this.StartPrimaryFunctions();
         }
 
+        /// <summary>
+        /// Detects the VBR version and required PowerShell version and gates on the PS 7.6+
+        /// module requirement. Callers that don't lead into PowerShell-module-based collection
+        /// (e.g. RunHotfixDetector, which only needs the version number) should call
+        /// DetectVbrVersion directly instead, so a too-old-PowerShell machine doesn't hard-exit a
+        /// feature that never touches the Veeam.Backup.PowerShell module.
+        /// </summary>
         public void GetVbrVersion()
+        {
+            this.DetectVbrVersion();
+            this.ValidatePowerShellVersionMeetsVbrRequirement();
+        }
+
+        internal void DetectVbrVersion()
         {
             try
             {
@@ -475,8 +490,6 @@ namespace VeeamHealthCheck.Startup
                 this.LOG.Info(this.logStart + "VBR Version: " + version, false);
                 CGlobals.PowerShellVersion = CGlobals.VBRMAJORVERSION >= 13 ? 7 : 5;
                 this.LOG.Info(this.logStart + "Using PowerShell version: " + CGlobals.PowerShellVersion.ToString(), false);
-
-                this.ValidatePowerShellVersionMeetsVbrRequirement();
 
                 // If PowerShell 7 is required AND we're doing remote execution, ensure we have credentials available
                 // For local VBR (IsVbr=true, REMOTEEXEC=false), credentials are NOT required - Windows auth is used
