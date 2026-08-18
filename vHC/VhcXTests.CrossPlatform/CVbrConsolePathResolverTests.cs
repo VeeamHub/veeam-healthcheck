@@ -10,7 +10,7 @@ public class CVbrConsolePathResolverTests
     [Fact]
     public void SiblingConsoleDir_CorePathWithTrailingBackslash_ReturnsSiblingConsoleDirectory()
     {
-        string result = CVbrConsolePathResolver.SiblingConsoleDir(@"D:\Program Files\Veeam\Backup and Replication\Backup\");
+        string? result = CVbrConsolePathResolver.SiblingConsoleDir(@"D:\Program Files\Veeam\Backup and Replication\Backup\");
 
         Assert.Equal(@"D:\Program Files\Veeam\Backup and Replication\Console", result);
     }
@@ -18,7 +18,7 @@ public class CVbrConsolePathResolverTests
     [Fact]
     public void SiblingConsoleDir_MountServicePathWithoutTrailingBackslash_ReturnsSiblingConsoleDirectory()
     {
-        string result = CVbrConsolePathResolver.SiblingConsoleDir(@"C:\Program Files\Common Files\Veeam\Backup and Replication\Mount Service");
+        string? result = CVbrConsolePathResolver.SiblingConsoleDir(@"C:\Program Files\Common Files\Veeam\Backup and Replication\Mount Service");
 
         Assert.Equal(@"C:\Program Files\Common Files\Veeam\Backup and Replication\Console", result);
     }
@@ -26,7 +26,7 @@ public class CVbrConsolePathResolverTests
     [Fact]
     public void SiblingConsoleDir_NullPath_ReturnsNull()
     {
-        string result = CVbrConsolePathResolver.SiblingConsoleDir(null);
+        string? result = CVbrConsolePathResolver.SiblingConsoleDir(null);
 
         Assert.Null(result);
     }
@@ -34,7 +34,7 @@ public class CVbrConsolePathResolverTests
     [Fact]
     public void SiblingConsoleDir_EmptyPath_ReturnsNull()
     {
-        string result = CVbrConsolePathResolver.SiblingConsoleDir(string.Empty);
+        string? result = CVbrConsolePathResolver.SiblingConsoleDir(string.Empty);
 
         Assert.Null(result);
     }
@@ -42,7 +42,7 @@ public class CVbrConsolePathResolverTests
     [Fact]
     public void SiblingConsoleDir_DriveRootWithNoParent_ReturnsNull()
     {
-        string result = CVbrConsolePathResolver.SiblingConsoleDir(@"D:\");
+        string? result = CVbrConsolePathResolver.SiblingConsoleDir(@"D:\");
 
         Assert.Null(result);
     }
