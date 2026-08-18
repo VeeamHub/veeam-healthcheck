@@ -64,7 +64,7 @@ namespace VeeamHealthCheck.Tests.Functions.Collection.PSCollections
         }
 
         [Fact]
-        public void VersionComparison_BelowRequirement_IsDetected()
+        public void TryParsePwshVersionOutput_VersionBelowManifestRequirement_ComparesAsLower()
         {
             CPowerShellVersionChecker.TryParsePwshVersionOutput("7.4.6", out Version installed, out _);
             CPowerShellVersionChecker.TryParseManifestContent("PowerShellVersion = '7.6'", out Version required);
@@ -76,7 +76,7 @@ namespace VeeamHealthCheck.Tests.Functions.Collection.PSCollections
         [InlineData("7.6.0")]
         [InlineData("7.6.1")]
         [InlineData("8.0.0")]
-        public void VersionComparison_MeetsOrExceedsRequirement_IsNotBelowRequirement(string installedRaw)
+        public void TryParsePwshVersionOutput_VersionMeetsOrExceedsManifestRequirement_DoesNotCompareAsLower(string installedRaw)
         {
             CPowerShellVersionChecker.TryParsePwshVersionOutput(installedRaw, out Version installed, out _);
             CPowerShellVersionChecker.TryParseManifestContent("PowerShellVersion = '7.6'", out Version required);
