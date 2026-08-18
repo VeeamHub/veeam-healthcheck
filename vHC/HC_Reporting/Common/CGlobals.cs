@@ -39,6 +39,13 @@ namespace VeeamHealthCheck.Shared
         public static string IMPORT_PATH = null;
         public static int VBRMAJORVERSION;
         public static string VBRFULLVERSION;
+
+        /// <summary>
+        /// Directory containing the VBR Console installation (e.g. ".../Backup and Replication/Console"),
+        /// resolved by <see cref="Functions.Collection.DB.CRegReader.GetVbrVersionFilePath"/>. Used to locate
+        /// the Veeam.Backup.PowerShell module manifest for the PowerShell version preflight check.
+        /// </summary>
+        public static string VbrConsoleInstallDir;
         public static int PowerShellVersion;
         public static DateTime TOOLSTART;
         public static bool REMOTEEXEC = false;

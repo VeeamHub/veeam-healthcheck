@@ -88,6 +88,7 @@ namespace VeeamHealthCheck.Functions.Collection.DB
                 if (!string.IsNullOrEmpty(coreVersion))
                 {
                     CGlobals.VBRFULLVERSION = coreVersion;
+                    CGlobals.VbrConsoleInstallDir = Path.GetDirectoryName(consoleInstallPath);
                     this.ParseVbrMajorVersion(CGlobals.VBRFULLVERSION);
                     return coreVersion;
                 }
@@ -121,6 +122,7 @@ namespace VeeamHealthCheck.Functions.Collection.DB
                     // FileInfo dllInfo = new FileInfo(path + "\\Packages\\VeeamDeploymentDll.dll");
                     var version = FileVersionInfo.GetVersionInfo(path + "\\Veeam.Backup.Core.dll");
                     CGlobals.VBRFULLVERSION = version.FileVersion;
+                    CGlobals.VbrConsoleInstallDir = path;
                     this.ParseVbrMajorVersion(CGlobals.VBRFULLVERSION);
                     return CGlobals.VBRFULLVERSION;
                 }

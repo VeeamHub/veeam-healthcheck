@@ -8,6 +8,7 @@ using System.Windows;
 using System.Windows.Controls;
 using VeeamHealthCheck.Functions.Collection;
 using VeeamHealthCheck.Functions.Collection.DB;
+using VeeamHealthCheck.Functions.Collection.PSCollections;
 using VeeamHealthCheck.Functions.CredsWindow;
 using VeeamHealthCheck.Resources.Localization;
 using VeeamHealthCheck.Shared;
@@ -475,6 +476,8 @@ namespace VeeamHealthCheck.Startup
                 CGlobals.PowerShellVersion = CGlobals.VBRMAJORVERSION >= 13 ? 7 : 5;
                 this.LOG.Info(this.logStart + "Using PowerShell version: " + CGlobals.PowerShellVersion.ToString(), false);
 
+                this.ValidatePowerShellVersionMeetsVbrRequirement();
+
                 // If PowerShell 7 is required AND we're doing remote execution, ensure we have credentials available
                 // For local VBR (IsVbr=true, REMOTEEXEC=false), credentials are NOT required - Windows auth is used
                 if (CGlobals.PowerShellVersion == 7 && CGlobals.REMOTEEXEC)
@@ -494,6 +497,69 @@ namespace VeeamHealthCheck.Startup
                 this.LOG.Error(this.logStart + "Stack trace: " + ex.StackTrace, false);
                 throw; // Re-throw to fail fast rather than continue with wrong PowerShell version
             }
+        }
+
+        /// <summary>
+        /// Preflight check for VBR 13+: compares the installed PowerShell 7 version against the
+        /// minimum required by the local Veeam.Backup.PowerShell module manifest, and exits with an
+        /// actionable message if it's too old. Without this, an under-versioned PowerShell only fails
+        /// later, deep inside a collection script's Import-Module call, with a confusing error trail
+        /// (see issue: VBR 13.1 requires PowerShell 7.6, but a 7.4.x install produces cascading
+        /// Get-Package / Import-Module / Connect-VBRServer errors instead of a clear message).
+        /// Reads the requirement from the manifest rather than hardcoding it, since Veeam can raise
+        /// the minimum again in a future VBR release. Skips (does not block the run) if the manifest
+        /// or installed pwsh version can't be determined - this is a best-effort UX improvement, not
+        /// a hard gate.
+        /// </summary>
+        private void ValidatePowerShellVersionMeetsVbrRequirement()
+        {
+            if (CGlobals.PowerShellVersion != 7)
+            {
+                return;
+            }
+
+            if (string.IsNullOrEmpty(CGlobals.VbrConsoleInstallDir))
+            {
+                this.LOG.Debug(this.logStart + "VBR console install directory unknown. Skipping PowerShell module version preflight check.");
+                return;
+            }
+
+            string manifestPath = Path.Combine(CGlobals.VbrConsoleInstallDir, "Veeam.Backup.PowerShell", "Veeam.Backup.PowerShell.psd1");
+
+            if (!CPowerShellVersionChecker.TryGetManifestRequiredVersion(manifestPath, out Version requiredVersion))
+            {
+                this.LOG.Debug(this.logStart + $"Could not read required PowerShell version from '{manifestPath}'. Skipping preflight check.");
+                return;
+            }
+
+            if (!CPowerShellVersionChecker.TryGetInstalledPwshVersion(out Version installedVersion, out string rawInstalledVersion))
+            {
+                this.LOG.Debug(this.logStart + "Could not determine installed PowerShell 7 version. Skipping preflight check.");
+                return;
+            }
+
+            if (installedVersion >= requiredVersion)
+            {
+                return;
+            }
+
+            string msg = $"The Veeam Backup & Replication PowerShell module (VBR {CGlobals.VBRFULLVERSION}) requires PowerShell {requiredVersion} " +
+                         $"or higher, but this computer has PowerShell {rawInstalledVersion} installed. " +
+                         "Install a newer PowerShell 7 release (https://aka.ms/powershell-release?tag=stable) and re-run Veeam Health Check.";
+
+            this.LOG.Error(this.logStart + msg, false);
+
+            if (CGlobals.Silent)
+            {
+                SilentExit.ExitSilent(SilentExit.PowerShellVersionUnsupported, msg);
+            }
+
+            if (CGlobals.GUIEXEC)
+            {
+                MessageBox.Show(msg, "Unsupported PowerShell Version", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+
+            Environment.Exit(SilentExit.PowerShellVersionUnsupported);
         }
 
         private void EnsureCredentialsAvailable()
