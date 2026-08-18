@@ -118,11 +118,9 @@ namespace VeeamHealthCheck.Functions.Collection.DB
                         return null;
                     }
 
-                    // string path = key.GetValue("CorePath").ToString();
-                    // FileInfo dllInfo = new FileInfo(path + "\\Packages\\VeeamDeploymentDll.dll");
                     var version = FileVersionInfo.GetVersionInfo(path + "\\Veeam.Backup.Core.dll");
                     CGlobals.VBRFULLVERSION = version.FileVersion;
-                    CGlobals.VbrConsoleInstallDir = path;
+                    CGlobals.VbrConsoleInstallDir = this.ResolveConsoleInstallDir(path);
                     this.ParseVbrMajorVersion(CGlobals.VBRFULLVERSION);
                     return CGlobals.VBRFULLVERSION;
                 }
@@ -151,6 +149,43 @@ namespace VeeamHealthCheck.Functions.Collection.DB
                     throw;
                 }
             }
+        }
+
+        /// <summary>
+        /// Resolves the Console\ directory when only a sibling component's install path is known.
+        /// The Mount Service's own InstallationPath does not reliably indicate where Console lives
+        /// (confirmed on live VBR servers: Mount Service always installs under Common Files,
+        /// independent of the drive VBR itself was installed to), so CorePath - which does track the
+        /// actual install drive - is tried first, with Mount Service only as a last-resort candidate.
+        /// Every candidate is validated with Directory.Exists before being trusted.
+        /// </summary>
+        private string ResolveConsoleInstallDir(string mountServiceInstallationPath)
+        {
+            string corePath = null;
+            try
+            {
+                using RegistryKey coreKey = Registry.LocalMachine.OpenSubKey("Software\\Veeam\\Veeam Backup and Replication");
+                corePath = coreKey?.GetValue("CorePath")?.ToString();
+            }
+            catch (Exception ex)
+            {
+                this.log.Debug(this.logStart + "CorePath registry probe missed: " + ex.Message);
+            }
+
+            foreach (string candidate in new[]
+            {
+                CVbrConsolePathResolver.SiblingConsoleDir(corePath),
+                CVbrConsolePathResolver.SiblingConsoleDir(mountServiceInstallationPath)
+            })
+            {
+                if (!string.IsNullOrEmpty(candidate) && Directory.Exists(candidate))
+                {
+                    return candidate;
+                }
+            }
+
+            this.log.Warning(this.logStart + "Could not resolve VBR Console install directory from registry.");
+            return null;
         }
 
         private void ParseVbrMajorVersion(string fullVersion)
