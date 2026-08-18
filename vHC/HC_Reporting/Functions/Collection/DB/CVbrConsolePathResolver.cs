@@ -1,5 +1,6 @@
 // Copyright (c) 2021, Adam Congdon <adam.congdon2@gmail.com>
 // MIT License
+#nullable enable
 namespace VeeamHealthCheck.Functions.Collection.DB
 {
     /// <summary>
