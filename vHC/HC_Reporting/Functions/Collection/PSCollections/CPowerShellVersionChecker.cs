@@ -1,5 +1,6 @@
 // Copyright (c) 2021, Adam Congdon <adam.congdon2@gmail.com>
 // MIT License
+#nullable enable
 using System;
 using System.IO;
 using System.Text.RegularExpressions;
@@ -27,7 +28,7 @@ namespace VeeamHealthCheck.Functions.Collection.PSCollections
         /// Returns false (with requiredVersion null) if the file is missing or unparsable so callers
         /// can skip the preflight check rather than block a run over a manifest format they don't recognize.
         /// </summary>
-        public static bool TryGetManifestRequiredVersion(string manifestPath, out Version requiredVersion)
+        public static bool TryGetManifestRequiredVersion(string manifestPath, out Version? requiredVersion)
         {
             requiredVersion = null;
 
@@ -47,7 +48,7 @@ namespace VeeamHealthCheck.Functions.Collection.PSCollections
             }
         }
 
-        internal static bool TryParseManifestContent(string manifestContent, out Version requiredVersion)
+        internal static bool TryParseManifestContent(string manifestContent, out Version? requiredVersion)
         {
             requiredVersion = null;
 
@@ -75,7 +76,7 @@ namespace VeeamHealthCheck.Functions.Collection.PSCollections
             return false;
         }
 
-        internal static bool TryParsePwshVersionOutput(string rawOutput, out Version installedVersion, out string rawVersion)
+        internal static bool TryParsePwshVersionOutput(string rawOutput, out Version? installedVersion, out string? rawVersion)
         {
             installedVersion = null;
             rawVersion = null;
@@ -90,7 +91,7 @@ namespace VeeamHealthCheck.Functions.Collection.PSCollections
             // result is always printed last - any warning/notice text goes on earlier lines.
             string cleaned = AnsiEscapeRegex.Replace(rawOutput, string.Empty);
 
-            string lastNonEmptyLine = null;
+            string? lastNonEmptyLine = null;
             foreach (string line in cleaned.Split('\n'))
             {
                 string trimmedLine = line.Trim();
@@ -113,9 +114,9 @@ namespace VeeamHealthCheck.Functions.Collection.PSCollections
             return Version.TryParse(numericPart, out installedVersion);
         }
 
-        private static string FindPwshExecutable()
+        private static string? FindPwshExecutable()
         {
-            string pathEnv = Environment.GetEnvironmentVariable("PATH");
+            string? pathEnv = Environment.GetEnvironmentVariable("PATH");
             if (!string.IsNullOrEmpty(pathEnv))
             {
                 foreach (string dir in pathEnv.Split(Path.PathSeparator))
