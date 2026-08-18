@@ -24,6 +24,7 @@
     <Compile Include="..\HC_Reporting\Functions\Reporting\Html\Shared\CHtmlBuilder.cs" Link="CHtmlBuilder.cs" />
     <Compile Include="..\HC_Reporting\Functions\Reporting\Html\Shared\CSectionTable.cs" Link="CSectionTable.cs" />
     <Compile Include="..\HC_Reporting\Functions\Collection\DB\CVbrConsolePathResolver.cs" Link="CVbrConsolePathResolver.cs" />
+    <Compile Include="..\HC_Reporting\Functions\Collection\PSCollections\CPowerShellVersionChecker.cs" Link="CPowerShellVersionChecker.cs" />
   </ItemGroup>
 
 </Project>
