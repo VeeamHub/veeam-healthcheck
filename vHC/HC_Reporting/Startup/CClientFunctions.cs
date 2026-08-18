@@ -152,9 +152,20 @@ namespace VeeamHealthCheck.Startup
                     CGlobals.IsVbr = true;
                     CGlobals.IsVbrInstalled = true;
                     this.LOG.Info("VBR software detected", false);
+                }
+            }
 
-                    // Get VBR version to determine correct PowerShell version (PS7 for VBR 13+, PS5 for VBR 12-)
-                    this.GetVbrVersion();
+            if (CGlobals.IsVbr)
+            {
+                // Detect VBR version to determine correct PowerShell version (PS7 for VBR 13+,
+                // PS5 for VBR 12-). ModeCheck() runs from the GUI constructor before the window
+                // is shown and doesn't itself lead into PowerShell-module-based collection, so it
+                // must use the ungated DetectVbrVersion, not GetVbrVersion - the PS 7.6+ module
+                // gate is enforced once, immediately before real collection, in StartCollections().
+                try { this.DetectVbrVersion(); }
+                catch (Exception ex)
+                {
+                    this.LOG.Debug(this.logStart + $"VBR version detection skipped: {ex.Message}");
                 }
             }
 
@@ -224,8 +235,13 @@ namespace VeeamHealthCheck.Startup
         {
             this.LOG.Info(this.logStart + "Starting Hotfix Detector", false);
             // Hotfix detection only needs the version number, not the PS 7.6+ module gate -
-            // it never touches Veeam.Backup.PowerShell.
-            this.DetectVbrVersion();
+            // it never touches Veeam.Backup.PowerShell. DetectVbrVersion throws by design on
+            // failure (e.g. no local VBR console) - don't let that crash /hotfix uncaught.
+            try { this.DetectVbrVersion(); }
+            catch (Exception ex)
+            {
+                this.LOG.Debug(this.logStart + $"VBR version detection skipped: {ex.Message}");
+            }
             if (!String.IsNullOrEmpty(path))
             {
                 if (!this.VerifyPath(path))
@@ -304,6 +320,22 @@ namespace VeeamHealthCheck.Startup
         {
             if (!CGlobals.IMPORT)
             {
+                // Single authoritative PS 7.6+ module preflight gate, right before the two
+                // branches below that both lead into real PowerShell-module-based collection.
+                // Gated only on !IMPORT (matches this method's own existing guard) - never on
+                // REMOTEEXEC: per repo convention, a preflight on the local PowerShell/module
+                // install must run regardless of REMOTEEXEC, since it is never the remote
+                // machine's problem. GetVbrVersion -> DetectVbrVersion throws by design when
+                // local VBR detection fails (e.g. a remote-only client with no local console) -
+                // not fatal, the preflight just can't run. This never swallows a genuine
+                // too-old-PowerShell failure: that path terminates via Environment.Exit /
+                // SilentExit.ExitSilent, neither of which throws.
+                try { this.GetVbrVersion(); }
+                catch (Exception ex)
+                {
+                    this.LOG.Debug(this.logStart + $"PowerShell version gate skipped: {ex.Message}");
+                }
+
                 this.LOG.Info(this.logStart + "Init Collections", false);
 
                 if (CGlobals.REMOTEEXEC && CGlobals.RunSecReport)
@@ -460,12 +492,14 @@ namespace VeeamHealthCheck.Startup
 
         /// <summary>
         /// Detects the VBR version and required PowerShell version and gates on the PS 7.6+
-        /// module requirement. Callers that don't lead into PowerShell-module-based collection
-        /// (e.g. RunHotfixDetector, which only needs the version number) should call
-        /// DetectVbrVersion directly instead, so a too-old-PowerShell machine doesn't hard-exit a
-        /// feature that never touches the Veeam.Backup.PowerShell module.
+        /// module requirement. Private: StartCollections() is the only caller, since it's the
+        /// single choke point (from both the GUI Run button and every CLI run path) immediately
+        /// before real PowerShell-module-based collection begins. Every other caller (ModeCheck,
+        /// RunHotfixDetector, early CLI arg-parsing detection) must call the ungated
+        /// DetectVbrVersion instead, so a too-old-PowerShell machine doesn't hard-exit a feature
+        /// that never touches the Veeam.Backup.PowerShell module.
         /// </summary>
-        public void GetVbrVersion()
+        private void GetVbrVersion()
         {
             this.DetectVbrVersion();
             this.ValidatePowerShellVersionMeetsVbrRequirement();
@@ -569,7 +603,22 @@ namespace VeeamHealthCheck.Startup
 
             if (CGlobals.GUIEXEC)
             {
-                MessageBox.Show(msg, "Unsupported PowerShell Version", MessageBoxButton.OK, MessageBoxImage.Error);
+                // Dispatch to the UI thread so the box is owned by the main window instead of
+                // desktop-parented - this can run from a background Task (StartCollections is
+                // invoked from VhcGui.Run()'s Task.Factory.StartNew), matching the existing
+                // convention in VhcGui.xaml.cs's ShowCollectionWarningsIfAny. Fall back to an
+                // undocked MessageBox.Show if there's no Dispatcher to marshal to - the user must
+                // still see this message before the Environment.Exit below, never silently.
+                System.Windows.Threading.Dispatcher dispatcher = Application.Current?.Dispatcher;
+                if (dispatcher != null)
+                {
+                    dispatcher.Invoke(() =>
+                        MessageBox.Show(msg, "Unsupported PowerShell Version", MessageBoxButton.OK, MessageBoxImage.Error));
+                }
+                else
+                {
+                    MessageBox.Show(msg, "Unsupported PowerShell Version", MessageBoxButton.OK, MessageBoxImage.Error);
+                }
             }
 
             Environment.Exit(SilentExit.PowerShellVersionUnsupported);

@@ -346,15 +346,12 @@ namespace VeeamHealthCheck.Startup
                 this.LaunchUi(this.Handle(), false);
             else if (run)
             {
-                // Gate on the PS 7.6+ module requirement here, right before any path that leads
-                // into actual collection (import, remote, and local all reach FullRun below).
-                // VBR version detection already ran above, so VbrConsoleInstallDir is populated.
-                try { this.functions.GetVbrVersion(); }
-                catch (Exception ex)
-                {
-                    CGlobals.Logger.Debug($"PowerShell version gate skipped: {ex.Message}");
-                }
-
+                // The PS 7.6+ module gate is no longer called here. It's private on
+                // CClientFunctions and enforced exactly once, from StartCollections(), the single
+                // choke point every path below (import, remote, local) eventually reaches via
+                // FullRun -> CliRun -> StartPrimaryFunctions. Calling it here too used to run it
+                // unconditionally even for /import (which never reaches real collection) and
+                // spawn pwsh.exe a second time on the plain local /run path.
                 if (CGlobals.IMPORT)
                      result = this.FullRun(targetDir);
                 else if (CGlobals.REMOTEEXEC && CGlobals.REMOTEHOST == string.Empty)
