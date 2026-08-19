@@ -43,7 +43,10 @@ function Get-VhcServer {
                     $unixProp = $physHost.PSObject.Properties['UnixBasedOsInfo']
                     if ($unixProp) { $unixInfo = $unixProp.Value }
 
-                    if ($unixInfo) {
+                    # VBR reports Type='Unknown'/DistribVersion='0.0' as a sentinel for
+                    # non-OS-bearing entries (e.g. ExternalInfrastructureServer); treat
+                    # that as no data rather than surfacing a fabricated OS caption.
+                    if ($unixInfo -and $unixInfo.Type -and $unixInfo.Type -ne 'Unknown') {
                         "$($unixInfo.Type) $($unixInfo.DistribVersion)".Trim()
                     } elseif ($null -ne $physHost.OsType -and $physHost.OsType.ToString() -notin @('Other', 'Unknown')) {
                         $physHost.OsType.ToString()
