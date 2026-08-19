@@ -317,13 +317,10 @@ namespace VeeamHealthCheck.Startup
                 }
             }
 
-            // Now that arguments are parsed, detect VBR version
-            // This must happen after parsing so REMOTEEXEC flag is properly set
-            try { this.functions.GetVbrVersion(); }
-            catch (Exception ex)
-            {
-                CGlobals.Logger.Debug($"VBR version detection skipped: {ex.Message}");
-            }
+            // Now that arguments are parsed, detect VBR version - see
+            // DetectVbrVersionIfTargeted()'s doc comment for the full rationale.
+            // This must happen after parsing so REMOTEEXEC flag is properly set.
+            this.DetectVbrVersionIfTargeted();
 
             int result = 0;
             if (string.IsNullOrEmpty(CGlobals.REMOTEHOST))
@@ -344,6 +341,12 @@ namespace VeeamHealthCheck.Startup
                 this.LaunchUi(this.Handle(), false);
             else if (run)
             {
+                // The PS 7.6+ module gate is no longer called here. It's private on
+                // CClientFunctions and enforced exactly once, from StartCollections(), the single
+                // choke point every path below (import, remote, local) eventually reaches via
+                // FullRun -> CliRun -> StartPrimaryFunctions. Calling it here too used to run it
+                // unconditionally even for /import (which never reaches real collection) and
+                // spawn pwsh.exe a second time on the plain local /run path.
                 if (CGlobals.IMPORT)
                      result = this.FullRun(targetDir);
                 else if (CGlobals.REMOTEEXEC && CGlobals.REMOTEHOST == string.Empty)
@@ -641,6 +644,34 @@ namespace VeeamHealthCheck.Startup
             if (string.IsNullOrEmpty(parsedOutDir)) return;
             CGlobals.desiredPath = parsedOutDir;
             CGlobals.mainlog = new CLogger("HealthCheck");
+        }
+
+        /// <summary>
+        /// Detects the VBR version right after CLI argument parsing, for any run that might
+        /// touch VBR. Skipped only for an explicit /vb365-only target: DetectVbrVersion()
+        /// reads the LOCAL machine's VBR registry keys, which are legitimately absent on a
+        /// VB365-only server, and its failure branch logs 5 ERROR-level lines for a totally
+        /// expected condition. Checked against the explicit TargetProductType flag only (not
+        /// EffectiveIsVbr/IsVbr): ModeCheck(), which populates the auto-detected
+        /// IsVbr/IsVb365 flags, hasn't run yet at this point in the CLI flow (it runs later,
+        /// and only for a subset of dispatch branches), so an Auto-mode run's real product mix
+        /// is still unknown here and detection must still be attempted.
+        /// </summary>
+        internal void DetectVbrVersionIfTargeted()
+        {
+            if (CGlobals.TargetProductType == TargetProduct.Vb365)
+            {
+                return;
+            }
+
+            try
+            {
+                this.functions.DetectVbrVersion();
+            }
+            catch (Exception ex)
+            {
+                CGlobals.Logger.Debug($"VBR version detection skipped: {ex.Message}");
+            }
         }
 
         /// <summary>

@@ -55,6 +55,7 @@ Collection → Processing/Analysis → Report Generation
 - Multi-source collection: PowerShell scripts, SQL queries, registry reads, log parsing, WMI
 - PowerShell scripts in `Tools/Scripts/HealthCheck/VBR/` and `Tools/Scripts/HealthCheck/VB365/`
 - Outputs CSV files to `C:\temp\vHC\Original\{VBR|VB365}\{servername}\{timestamp}\`
+- **`CGlobals.REMOTEEXEC` does not mean scripts run on the remote server.** vHC always launches `pwsh.exe` and the `Veeam.Backup.PowerShell` module on the *local* machine; `REMOTEEXEC` only changes which server the module connects to (`-Server` / `-VBOServerFqdnOrIp`) and whether explicit credentials are required instead of Windows auth. Any preflight check on the local PowerShell/module install (e.g. version checks) must run regardless of `REMOTEEXEC` — it is never "the remote machine's problem."
 
 **Report Generation** (`Functions/Reporting/`)
 - `Functions/Reporting/Html/VBR/CHtmlCompiler.cs` - VBR report compiler

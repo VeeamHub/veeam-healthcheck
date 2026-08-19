@@ -91,11 +91,16 @@ namespace VeeamHealthCheck.Functions.Collection.PSCollections
                 catch { }
             }
 
-            // Return default path if not found in PATH
+            // Fall back to the default install path if not found in PATH - but only if it
+            // actually exists. Returning it unconditionally made DetectPowerShellVersions()
+            // treat PowerShell 7 as always present, so ExecutePsScriptWithFailover's "try PS7,
+            // then PS5" loop always attempted a nonexistent path and failed outright instead of
+            // falling back to PS5 when pwsh isn't installed. Mirrors
+            // CPowerShellVersionChecker.FindPwshExecutable.
             if (exeName.Equals("pwsh.exe", StringComparison.OrdinalIgnoreCase))
             {
-
-                return @"C:\Program Files\PowerShell\7\pwsh.exe";
+                const string defaultPwshPath = @"C:\Program Files\PowerShell\7\pwsh.exe";
+                return File.Exists(defaultPwshPath) ? defaultPwshPath : null;
             }
 
 

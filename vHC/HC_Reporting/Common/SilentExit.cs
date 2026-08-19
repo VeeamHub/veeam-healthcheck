@@ -26,6 +26,7 @@ namespace VeeamHealthCheck.Shared
         public const int HostUnreachable = 5;
         public const int BadCredFile = 6;
         public const int NoProductDetected = 7;
+        public const int PowerShellVersionUnsupported = 8;
 
         /// <summary>
         /// Used at silent-mode failure call sites that return an exit code
