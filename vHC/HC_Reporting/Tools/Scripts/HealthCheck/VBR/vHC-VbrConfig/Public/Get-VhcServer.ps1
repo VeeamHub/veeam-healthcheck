@@ -25,7 +25,35 @@ function Get-VhcServer {
             @{ name = 'Cores';    expression = { $_.GetPhysicalHost().hardwareinfo.CoresCount       } },
             @{ name = 'CPUCount'; expression = { $_.GetPhysicalHost().hardwareinfo.CPUCount          } },
             @{ name = 'RAM';      expression = { $_.GetPhysicalHost().hardwareinfo.PhysicalRamTotal  } },
-            @{ name = 'OSInfo';   expression = { $_.Info.Info                                        } },
+            @{ name = 'OSInfo';   expression = {
+                # $_.Info.Info holds a good caption for hypervisor-managed hosts (e.g. ESXi:
+                # "VMware ESXi 8.0.2 build-23305546") but is unpopulated for the backup
+                # server's own host record. Only fall back to GetPhysicalHost() when the
+                # primary source is empty, since GetPhysicalHost().OsType reports "Other"
+                # for host types like ESXi where Info.Info is the better source.
+                try {
+                    if ($_.Info -and $_.Info.Info) {
+                        return $_.Info.Info
+                    }
+
+                    $physHost = @($_.GetPhysicalHost())[0]
+                    if (-not $physHost) { return '' }
+
+                    $unixInfo = $null
+                    $unixProp = $physHost.PSObject.Properties['UnixBasedOsInfo']
+                    if ($unixProp) { $unixInfo = $unixProp.Value }
+
+                    if ($unixInfo) {
+                        "$($unixInfo.Type) $($unixInfo.DistribVersion)".Trim()
+                    } elseif ($null -ne $physHost.OsType -and $physHost.OsType.ToString() -notin @('Other', 'Unknown')) {
+                        $physHost.OsType.ToString()
+                    } else {
+                        ''
+                    }
+                } catch {
+                    ''
+                }
+            } },
             @{ name = 'Platform'; expression = {
                 $key = if ($_.Name) { $_.Name.ToLowerInvariant() } else { '' }
                 if ($script:PlatformMap -and $script:PlatformMap.ContainsKey($key)) {
