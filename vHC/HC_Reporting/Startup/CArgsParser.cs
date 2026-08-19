@@ -317,15 +317,10 @@ namespace VeeamHealthCheck.Startup
                 }
             }
 
-            // Now that arguments are parsed, detect VBR version
-            // This must happen after parsing so REMOTEEXEC flag is properly set
-            // Detection only here (no PS 7.6+ gate) - the gate only applies to paths that lead
-            // into actual PowerShell-module-based collection, not e.g. the hotfix detector.
-            try { this.functions.DetectVbrVersion(); }
-            catch (Exception ex)
-            {
-                CGlobals.Logger.Debug($"VBR version detection skipped: {ex.Message}");
-            }
+            // Now that arguments are parsed, detect VBR version - see
+            // DetectVbrVersionIfTargeted()'s doc comment for the full rationale.
+            // This must happen after parsing so REMOTEEXEC flag is properly set.
+            this.DetectVbrVersionIfTargeted();
 
             int result = 0;
             if (string.IsNullOrEmpty(CGlobals.REMOTEHOST))
@@ -649,6 +644,34 @@ namespace VeeamHealthCheck.Startup
             if (string.IsNullOrEmpty(parsedOutDir)) return;
             CGlobals.desiredPath = parsedOutDir;
             CGlobals.mainlog = new CLogger("HealthCheck");
+        }
+
+        /// <summary>
+        /// Detects the VBR version right after CLI argument parsing, for any run that might
+        /// touch VBR. Skipped only for an explicit /vb365-only target: DetectVbrVersion()
+        /// reads the LOCAL machine's VBR registry keys, which are legitimately absent on a
+        /// VB365-only server, and its failure branch logs 5 ERROR-level lines for a totally
+        /// expected condition. Checked against the explicit TargetProductType flag only (not
+        /// EffectiveIsVbr/IsVbr): ModeCheck(), which populates the auto-detected
+        /// IsVbr/IsVb365 flags, hasn't run yet at this point in the CLI flow (it runs later,
+        /// and only for a subset of dispatch branches), so an Auto-mode run's real product mix
+        /// is still unknown here and detection must still be attempted.
+        /// </summary>
+        internal void DetectVbrVersionIfTargeted()
+        {
+            if (CGlobals.TargetProductType == TargetProduct.Vb365)
+            {
+                return;
+            }
+
+            try
+            {
+                this.functions.DetectVbrVersion();
+            }
+            catch (Exception ex)
+            {
+                CGlobals.Logger.Debug($"VBR version detection skipped: {ex.Message}");
+            }
         }
 
         /// <summary>

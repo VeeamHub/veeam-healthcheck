@@ -235,13 +235,22 @@ namespace VeeamHealthCheck.Startup
         public void RunHotfixDetector(string path, string remoteServer)
         {
             this.LOG.Info(this.logStart + "Starting Hotfix Detector", false);
-            // Hotfix detection only needs the version number, not the PS 7.6+ module gate -
-            // it never touches Veeam.Backup.PowerShell. DetectVbrVersion throws by design on
+            // Hotfix detection only needs the version number, not the PS 7.6+ module gate - it
+            // never touches Veeam.Backup.PowerShell. DetectVbrVersion throws by design on
             // failure (e.g. no local VBR console) - don't let that crash /hotfix uncaught.
-            try { this.DetectVbrVersion(); }
-            catch (Exception ex)
+            // Skipped only for an explicit /vb365-only target - EffectiveIsVbr/IsVbr can't be
+            // used here either: ModeCheck() never runs at all on the /hotfix dispatch branch,
+            // so the auto-detected IsVbr/IsVb365 flags are never populated for this call path.
+            if (CGlobals.TargetProductType != TargetProduct.Vb365)
             {
-                this.LOG.Debug(this.logStart + $"VBR version detection skipped: {ex.Message}");
+                try
+                {
+                    this.DetectVbrVersion();
+                }
+                catch (Exception ex)
+                {
+                    this.LOG.Debug(this.logStart + $"VBR version detection skipped: {ex.Message}");
+                }
             }
             if (!String.IsNullOrEmpty(path))
             {

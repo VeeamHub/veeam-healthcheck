@@ -89,6 +89,10 @@ namespace VhcXTests
         [Fact]
         public void RunHotfixDetector_DetectVbrVersionThrows_DoesNotPropagate()
         {
+            // Pinned to Auto (not Vb365) so the new TargetProductType gate doesn't skip
+            // DetectVbrVersion() entirely and make this test vacuously pass regardless of
+            // whatever TargetProductType a prior test in this shared collection left behind.
+            CGlobals.TargetProductType = TargetProduct.Auto;
             CGlobals.VBRMAJORVERSION = 0;
             CGlobals.VbrConsoleInstallDir = null;
 
@@ -100,6 +104,23 @@ namespace VhcXTests
             Exception? ex = Record.Exception(() => functions.RunHotfixDetector(@"\\invalid\nonexistent\path", string.Empty));
 
             Assert.Null(ex);
+        }
+
+        [Fact]
+        public void RunHotfixDetector_TargetProductVb365_SkipsVbrDetection()
+        {
+            // Same invalid-UNC-path technique as RunHotfixDetector_DetectVbrVersionThrows_
+            // DoesNotPropagate above: VerifyPath rejects it before CHotfixDetector ever runs,
+            // isolating this test to just the new TargetProductType gate.
+            CGlobals.TargetProductType = TargetProduct.Vb365;
+            CGlobals.VBRMAJORVERSION = -1;
+
+            using var functions = new CClientFunctions();
+
+            Exception? ex = Record.Exception(() => functions.RunHotfixDetector(@"\\invalid\nonexistent\path", string.Empty));
+
+            Assert.Null(ex);
+            Assert.Equal(-1, CGlobals.VBRMAJORVERSION);
         }
 
         [Fact]
