@@ -161,7 +161,8 @@ namespace VeeamHealthCheck.Startup
                 // PS5 for VBR 12-). ModeCheck() runs from the GUI constructor before the window
                 // is shown and doesn't itself lead into PowerShell-module-based collection, so it
                 // must use the ungated DetectVbrVersion, not GetVbrVersion - the PS 7.6+ module
-                // gate is enforced once, immediately before real collection, in StartCollections().
+                // gate is enforced once, immediately before real collection, in StartCollections()
+                // via RunVbrPreflightGateIfTargeted().
                 try { this.DetectVbrVersion(); }
                 catch (Exception ex)
                 {
@@ -320,21 +321,9 @@ namespace VeeamHealthCheck.Startup
         {
             if (!CGlobals.IMPORT)
             {
-                // Single authoritative PS 7.6+ module preflight gate, right before the two
-                // branches below that both lead into real PowerShell-module-based collection.
-                // Gated only on !IMPORT (matches this method's own existing guard) - never on
-                // REMOTEEXEC: per repo convention, a preflight on the local PowerShell/module
-                // install must run regardless of REMOTEEXEC, since it is never the remote
-                // machine's problem. GetVbrVersion -> DetectVbrVersion throws by design when
-                // local VBR detection fails (e.g. a remote-only client with no local console) -
-                // not fatal, the preflight just can't run. This never swallows a genuine
-                // too-old-PowerShell failure: that path terminates via Environment.Exit /
-                // SilentExit.ExitSilent, neither of which throws.
-                try { this.GetVbrVersion(); }
-                catch (Exception ex)
-                {
-                    this.LOG.Debug(this.logStart + $"PowerShell version gate skipped: {ex.Message}");
-                }
+                // Single authoritative PS 7.6+ module preflight gate - see
+                // RunVbrPreflightGateIfTargeted()'s doc comment for the full rationale.
+                this.RunVbrPreflightGateIfTargeted();
 
                 this.LOG.Info(this.logStart + "Init Collections", false);
 
@@ -491,13 +480,47 @@ namespace VeeamHealthCheck.Startup
         }
 
         /// <summary>
+        /// Single authoritative PS 7.6+ module preflight gate, run once from StartCollections()
+        /// right before the two branches that both lead into real PowerShell-module-based
+        /// collection. Gated on EffectiveIsVbr - not IMPORT, not REMOTEEXEC - because this
+        /// preflight (and the PowerShell-version check it wraps) is meaningless for a run that
+        /// doesn't target VBR: DetectVbrVersion() reads the LOCAL machine's VBR registry keys,
+        /// which are legitimately absent on a VB365-only server, and previously spammed 5
+        /// ERROR-level log lines for a totally expected condition on every single such run.
+        /// Still runs whenever the target includes VBR (TargetProductType Vbr/Both, or Auto with
+        /// local VBR actually detected) regardless of REMOTEEXEC: per repo convention, a preflight
+        /// on the local PowerShell/module install must run regardless of REMOTEEXEC, since it is
+        /// never the remote machine's problem. GetVbrVersion -> DetectVbrVersion throws by design
+        /// when local VBR detection fails - not fatal, the preflight just can't run. This never
+        /// swallows a genuine too-old-PowerShell failure: that path terminates via
+        /// Environment.Exit / SilentExit.ExitSilent, neither of which throws.
+        /// </summary>
+        internal void RunVbrPreflightGateIfTargeted()
+        {
+            if (!CGlobals.EffectiveIsVbr)
+            {
+                return;
+            }
+
+            try
+            {
+                this.GetVbrVersion();
+            }
+            catch (Exception ex)
+            {
+                this.LOG.Debug(this.logStart + $"PowerShell version gate skipped: {ex.Message}");
+            }
+        }
+
+        /// <summary>
         /// Detects the VBR version and required PowerShell version and gates on the PS 7.6+
-        /// module requirement. Private: StartCollections() is the only caller, since it's the
-        /// single choke point (from both the GUI Run button and every CLI run path) immediately
-        /// before real PowerShell-module-based collection begins. Every other caller (ModeCheck,
-        /// RunHotfixDetector, early CLI arg-parsing detection) must call the ungated
-        /// DetectVbrVersion instead, so a too-old-PowerShell machine doesn't hard-exit a feature
-        /// that never touches the Veeam.Backup.PowerShell module.
+        /// module requirement. Private: RunVbrPreflightGateIfTargeted() is the only caller,
+        /// since it's the single choke point (reached from StartCollections(), itself reached
+        /// from both the GUI Run button and every CLI run path) immediately before real
+        /// PowerShell-module-based collection begins, and only when EffectiveIsVbr is true.
+        /// Every other caller (ModeCheck, RunHotfixDetector, early CLI arg-parsing detection)
+        /// must call the ungated DetectVbrVersion instead, so a too-old-PowerShell machine
+        /// doesn't hard-exit a feature that never touches the Veeam.Backup.PowerShell module.
         /// </summary>
         private void GetVbrVersion()
         {
