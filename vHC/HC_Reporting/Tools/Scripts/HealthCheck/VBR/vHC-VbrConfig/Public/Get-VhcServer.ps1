@@ -26,6 +26,7 @@ function Get-VhcServer {
             @{ name = 'CPUCount'; expression = { $_.GetPhysicalHost().hardwareinfo.CPUCount          } },
             @{ name = 'RAM';      expression = { $_.GetPhysicalHost().hardwareinfo.PhysicalRamTotal  } },
             @{ name = 'OSInfo';   expression = {
+                $server = $_
                 # $_.Info.Info holds a good caption for hypervisor-managed hosts (e.g. ESXi:
                 # "VMware ESXi 8.0.2 build-23305546") but is unpopulated for the backup
                 # server's own host record. Only fall back to GetPhysicalHost() when the
@@ -54,6 +55,7 @@ function Get-VhcServer {
                         ''
                     }
                 } catch {
+                    Write-LogFile "OS info unavailable for '$($server.Name)' - defaulting to blank OS Version." -LogLevel "WARNING"
                     ''
                 }
             } },
