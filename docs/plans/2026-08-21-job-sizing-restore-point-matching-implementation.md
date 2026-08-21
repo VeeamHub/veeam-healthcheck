@@ -640,7 +640,7 @@ no-op for already-top-level job types."
 - Modify: `vHC/HC_Reporting/Tools/Scripts/HealthCheck/VBR/vHC-VbrConfig/Public/Get-VhcJob.Tests.ps1`
 - Modify: `vHC/HC_Reporting/Tools/Scripts/HealthCheck/VBR/vHC-VbrConfig/Public/Get-VhcJob.ps1`
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 Add a new `Describe` block:
 
@@ -683,7 +683,7 @@ Describe 'Tier 1: resolved Id must be a member of $Jobs' {
 }
 ```
 
-- [ ] **Step 2: Run the test to verify it fails**
+- [x] **Step 2: Run the test to verify it fails**
 
 Run: `pwsh -Command "Invoke-Pester -Path 'vHC/HC_Reporting/Tools/Scripts/HealthCheck/VBR/vHC-VbrConfig/Public/Get-VhcJob.Tests.ps1' -Output Detailed"`
 
@@ -714,7 +714,7 @@ Note the `Mock Write-LogFile` override inside the `It` block — Pester allows r
 
 (The regex is `\b`-anchored rather than a bare `'0 matched via tier 1'` substring, so it can't accidentally match `10 matched via tier 1` on a busier sweep — Task 3's code review flagged the unanchored form as a false-positive risk.)
 
-- [ ] **Step 3: Implement the `$KnownJobIds` validation**
+- [x] **Step 3: Implement the `$KnownJobIds` validation**
 
 **Amended against the actual code landed in Task 3 (commit `ea16fd4`):** Task 3 folded forward two fixes from Task 2's review — a `$Tier1Failed` counter (incremented when `GetSourceJob()` throws) and a null-Id guard (`if ($null -eq $SourceJob.Id) { continue }`) — that aren't reflected in the plan text above. The actual current code has both. Use the version below, which preserves them and additionally routes the null-Id case into `$Unresolved` (Task 3's own code review flagged that a null Id *is* an unresolved condition tier 2 has a genuine shot at via the name-based path — silently dropping it would foreclose a recoverable case once Task 5 lands).
 
@@ -784,13 +784,13 @@ with:
 
 (`$Unresolved` isn't consumed by anything yet — tier 2, added in Task 5, is what reads it. Building the list now and reading it later is intentional; it keeps this task's diff focused on the validation check alone. `$Tier1Failed` is preserved rather than folded into `$Unresolved`'s count — "GetSourceJob threw" and "resolved but rejected" are different support conversations and shouldn't collapse into one number.)
 
-- [ ] **Step 4: Run the test to verify it passes**
+- [x] **Step 4: Run the test to verify it passes**
 
 Run: `pwsh -Command "Invoke-Pester -Path 'vHC/HC_Reporting/Tools/Scripts/HealthCheck/VBR/vHC-VbrConfig/Public/Get-VhcJob.Tests.ps1' -Output Detailed"`
 
 Expected: PASS. Re-confirm Tasks 1-3's tests and all `ISC-*` tests still PASS — in particular, re-run Task 2's and Task 3's tests to confirm the `$KnownJobIds` check doesn't reject any of their (legitimate, in-`$Jobs`) resolutions.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add vHC/HC_Reporting/Tools/Scripts/HealthCheck/VBR/vHC-VbrConfig/Public/Get-VhcJob.ps1 \
