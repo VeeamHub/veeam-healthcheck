@@ -917,13 +917,13 @@ Expected: The first two tests FAIL (`Linux-01`'s and `web01-schedule-backups`'s 
 
 - [ ] **Step 3: Implement tier 2 and the `Snapshot` skip**
 
-**Amended against the actual code landed in Tasks 3-4:** the plan text below predates Task 3's `$Tier1Failed` fold-forward and Task 4's amendment (see Task 4's own amendment note above). Use the version here, which carries `$Tier1Failed` through unchanged and keeps the final log line's `matched via tier 1` phrase intact — Task 4's own test (`Should -Match '\b0 matched via tier 1\b'`) greps for that exact phrase, and it must keep matching after this task's log-line rewrite.
+**Amended against the actual code landed in Tasks 3-4 (including the `f21f03b` regression fix):** the plan text below predates Task 3's `$Tier1Failed` fold-forward and Task 4's `$KnownJobIds`/null-guard work. Use the version here, which carries all of it through unchanged and keeps the final log line's `matched via tier 1` phrase intact — Task 4's own test (`Should -Match '\b0 matched via tier 1\b'`) greps for that exact phrase, and it must keep matching after this task's log-line rewrite. This version also folds in three Minor improvements from Task 4's code review: a WHY comment on the null-`$j` guard (its rationale previously lived only inside a test body), an ordinal-ignore-case comparer for `$KnownJobIds` so it can no longer be *stricter* than the case-insensitive `$RestorePointsByJob` hashtable it gates, and (see Step 1 below) discriminating log-line assertions replacing two decorative `Should -Not -Throw` checks.
 
 In `Get-VhcJob.ps1`, replace:
 
 ```powershell
             $KnownJobIds = New-Object 'System.Collections.Generic.HashSet[string]'
-            foreach ($j in @($Jobs)) { [void]$KnownJobIds.Add($j.Id.ToString()) }
+            foreach ($j in @($Jobs)) { if ($null -ne $j -and $null -ne $j.Id) { [void]$KnownJobIds.Add($j.Id.ToString()) } }
 
             $Unresolved   = [System.Collections.ArrayList]::new()
             $Tier1Matched = 0
@@ -933,10 +933,12 @@ In `Get-VhcJob.ps1`, replace:
                 try { $SourceJob = $RestorePoint.GetSourceJob() } catch { $Tier1Failed++ }
                 if ($null -eq $SourceJob) { [void]$Unresolved.Add($RestorePoint); continue }
 
-                try {
-                    $ParentJob = $SourceJob.GetParentJob()
-                    if ($null -ne $ParentJob) { $SourceJob = $ParentJob }
-                } catch {}
+                # A GetParentJob() throw means this job type doesn't implement
+                # it - falling back to the child's own Id is a valid outcome,
+                # not a failure, so it isn't counted alongside $Tier1Failed.
+                $ParentJob = $null
+                try { $ParentJob = $SourceJob.GetParentJob() } catch {}
+                if ($null -ne $ParentJob) { $SourceJob = $ParentJob }
 
                 if ($null -eq $SourceJob.Id) { [void]$Unresolved.Add($RestorePoint); continue }
                 $JobIdKey = $SourceJob.Id.ToString()
@@ -955,15 +957,24 @@ In `Get-VhcJob.ps1`, replace:
 with:
 
 ```powershell
+            # Same null-placeholder risk $KnownJobIds guards against below - a
+            # $Jobs element can be a non-null object with no populated Id (or,
+            # per f21f03b, $Jobs itself can carry a null placeholder when
+            # Get-VBRJob throws) - either way, .Id.ToString() on it aborts the
+            # whole sweep via the outer catch, not just this one lookup.
             $JobIdByName = @{}
             foreach ($j in @($Jobs)) {
-                if (-not $JobIdByName.ContainsKey($j.Name)) { $JobIdByName[$j.Name] = $j.Id.ToString() }
+                if ($null -ne $j -and $null -ne $j.Id -and -not $JobIdByName.ContainsKey($j.Name)) { $JobIdByName[$j.Name] = $j.Id.ToString() }
             }
 
-            $KnownJobIds = New-Object 'System.Collections.Generic.HashSet[string]'
-            foreach ($j in @($Jobs)) { [void]$KnownJobIds.Add($j.Id.ToString()) }
+            # OrdinalIgnoreCase: $RestorePointsByJob (a Hashtable) looks up
+            # keys case-insensitively, so this gate must not be stricter than
+            # the thing it's gating - a case-sensitive HashSet here would risk
+            # silently dropping a resolved Id that only ever mismatches on case.
+            $KnownJobIds = [System.Collections.Generic.HashSet[string]]::new([System.StringComparer]::OrdinalIgnoreCase)
+            foreach ($j in @($Jobs)) { if ($null -ne $j -and $null -ne $j.Id) { [void]$KnownJobIds.Add($j.Id.ToString()) } }
 
-            $Tier1MatchedJobIds = New-Object 'System.Collections.Generic.HashSet[string]'
+            $Tier1MatchedJobIds = [System.Collections.Generic.HashSet[string]]::new([System.StringComparer]::OrdinalIgnoreCase)
             $Unresolved         = [System.Collections.ArrayList]::new()
             $Tier1Matched       = 0
             $Tier1Failed        = 0
@@ -980,10 +991,12 @@ with:
                 try { $SourceJob = $RestorePoint.GetSourceJob() } catch { $Tier1Failed++ }
                 if ($null -eq $SourceJob) { [void]$Unresolved.Add($RestorePoint); continue }
 
-                try {
-                    $ParentJob = $SourceJob.GetParentJob()
-                    if ($null -ne $ParentJob) { $SourceJob = $ParentJob }
-                } catch {}
+                # A GetParentJob() throw means this job type doesn't implement
+                # it - falling back to the child's own Id is a valid outcome,
+                # not a failure, so it isn't counted alongside $Tier1Failed.
+                $ParentJob = $null
+                try { $ParentJob = $SourceJob.GetParentJob() } catch {}
+                if ($null -ne $ParentJob) { $SourceJob = $ParentJob }
 
                 if ($null -eq $SourceJob.Id) { [void]$Unresolved.Add($RestorePoint); continue }
                 $JobIdKey = $SourceJob.Id.ToString()
