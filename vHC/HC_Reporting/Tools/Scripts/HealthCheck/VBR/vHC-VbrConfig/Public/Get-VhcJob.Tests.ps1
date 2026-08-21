@@ -35,7 +35,10 @@ BeforeAll {
         function global:Get-VBRConfigurationBackupJob { }
     }
     if (-not (Get-Command Get-VBRRestorePoint -ErrorAction SilentlyContinue)) {
-        function global:Get-VBRRestorePoint { param($Backup) }
+        function global:Get-VBRRestorePoint {
+            [CmdletBinding()]
+            param($Backup)
+        }
     }
     if (-not (Get-Command Invoke-VhciJobSubCollectors -ErrorAction SilentlyContinue)) {
         function global:Invoke-VhciJobSubCollectors { param($Jobs) }
@@ -133,6 +136,155 @@ BeforeAll {
             return $job
         }
         return $backup
+    }
+
+    # Fake-job factory for the restore-point matching tests. Produces a
+    # CBackupJob-shaped object carrying every property the main loop's
+    # Select-Object projection touches, plus GetParentJob()/GetLastBackup()
+    # ScriptMethods parameterized for the sweep/tier/Replica test cases.
+    function script:New-FakeJob {
+        param(
+            [string]$Name = 'FakeJob',
+            [guid]$Id = [guid]::NewGuid(),
+            [string]$TypeToString = 'VMware Backup',
+            $ParentJob = $null,
+            [switch]$ThrowOnGetParentJob,
+            $LastBackup = $null,
+            [switch]$ThrowOnGetLastBackup
+        )
+        $ParentJobCapture       = $ParentJob
+        $ThrowParentJobCapture  = [bool]$ThrowOnGetParentJob
+        $LastBackupCapture      = $LastBackup
+        $ThrowLastBackupCapture = [bool]$ThrowOnGetLastBackup
+
+        $Job = [PSCustomObject]@{
+            Id                  = $Id
+            Name                = $Name
+            JobType             = 'Backup'
+            SheduleEnabledTime  = $null
+            ScheduleOptions     = $null
+            IsScheduleEnabled   = $true
+            TypeToString        = $TypeToString
+            Info                = [PSCustomObject]@{
+                PwdKeyId           = $null
+                IncludedSize       = 0
+                TargetRepositoryId = [PSCustomObject]@{ Guid = [guid]::Empty }
+            }
+            Options             = [PSCustomObject]@{
+                BackupStorageOptions = [PSCustomObject]@{ RetainCycles = 7 }
+                BackupTargetOptions  = [PSCustomObject]@{
+                    Algorithm                       = 'Increment'
+                    FullBackupScheduleKind          = $null
+                    FullBackupDays                  = $null
+                    TransformFullToSyntethic        = $false
+                    TransformIncrementsToSyntethic  = $false
+                    TransformToSyntethicDays        = $null
+                }
+                JobOptions  = [PSCustomObject]@{ RunManually = $false }
+                gfspolicy   = [PSCustomObject]@{
+                    weekly  = [PSCustomObject]@{ IsEnabled = $false; KeepBackupsForNumberOfWeeks  = 0 }
+                    Monthly = [PSCustomObject]@{ IsEnabled = $false; KeepBackupsForNumberOfMonths = 0 }
+                    yearly  = [PSCustomObject]@{ IsEnabled = $false; KeepBackupsForNumberOfYears  = 0 }
+                }
+            }
+            BackupStorageOptions = [PSCustomObject]@{
+                RetentionType                  = 'Cycles'
+                RetainCycles                   = 7
+                RetainDaysToKeep               = 7
+                RetainDays                     = 14
+                EnableDeletedVmDataRetention   = $false
+                CompressionLevel               = 5
+                EnableDeduplication            = $true
+                StgBlockSize                   = 'KbBlockSize1024'
+                EnableIntegrityChecks          = $false
+                UseSpecificStorageEncryption   = $false
+                StorageEncryptionEnabled       = $false
+                KeepFirstFullBackup            = $false
+                EnableFullBackup               = $false
+                BackupIsAttached               = $true
+            }
+            VssOptions = [PSCustomObject]@{
+                GuestFSIndexingType   = 'None'
+                VssSnapshotOptions    = [PSCustomObject]@{
+                    Enabled                       = $false
+                    ApplicationProcessingEnabled  = $false
+                    IgnoreErrors                  = $false
+                }
+                GuestFSIndexingOptions = [PSCustomObject]@{ IsEnabled = $false }
+            }
+        }
+        $Job | Add-Member -MemberType ScriptMethod -Name GetParentJob -Value {
+            if ($ThrowParentJobCapture) { throw 'GetParentJob failed' }
+            return $ParentJobCapture
+        }.GetNewClosure()
+        $Job | Add-Member -MemberType ScriptMethod -Name GetLastBackup -Value {
+            if ($ThrowLastBackupCapture) { throw 'GetLastBackup failed' }
+            return $LastBackupCapture
+        }.GetNewClosure()
+        return $Job
+    }
+
+    # Fake-backup factory backing New-FakeRestorePoint's GetBackup() -
+    # GetParentOrThis() chain (tier 2's resolution path).
+    function script:New-FakeBackup {
+        param(
+            [string]$ParentOrThisName = 'FakeJob',
+            [switch]$ThrowOnGetParentOrThis
+        )
+        $NameCapture  = $ParentOrThisName
+        $ThrowCapture = [bool]$ThrowOnGetParentOrThis
+        $Backup = [PSCustomObject]@{}
+        $Backup | Add-Member -MemberType ScriptMethod -Name GetParentOrThis -Value {
+            if ($ThrowCapture) { throw 'GetParentOrThis failed' }
+            [PSCustomObject]@{ Name = $NameCapture }
+        }.GetNewClosure()
+        return $Backup
+    }
+
+    # Fake restore-point factory. GetSourceJob()/GetBackup() are
+    # parameterized directly (no need to hand-build closures at each call
+    # site) to cover every tier-1/tier-2 resolution path under test.
+    function script:New-FakeRestorePoint {
+        param(
+            [string]$Name = 'FakeRestorePoint',
+            [string]$Type = 'Increment',
+            [guid]$ObjectId = [guid]::NewGuid(),
+            [datetime]$CreationTimeUtc = (Get-Date),
+            [double]$ApproxSize = 1GB,
+            [double]$BackupSize = 1GB,
+            $SourceJob = $null,
+            [switch]$ThrowOnGetSourceJob,
+            [switch]$ThrowOnGetBackup,
+            [string]$BackupParentOrThisName,
+            [switch]$ThrowOnGetParentOrThis
+        )
+        $SourceJobCapture      = $SourceJob
+        $ThrowSourceJobCapture = [bool]$ThrowOnGetSourceJob
+        $ThrowGetBackupCapture = [bool]$ThrowOnGetBackup
+        $FakeBackup            = if ($BackupParentOrThisName) {
+            script:New-FakeBackup -ParentOrThisName $BackupParentOrThisName -ThrowOnGetParentOrThis:$ThrowOnGetParentOrThis
+        } else { $null }
+
+        $RestorePoint = [PSCustomObject]@{
+            Name            = $Name
+            Type            = $Type
+            ObjectId        = $ObjectId
+            CreationTimeUtc = $CreationTimeUtc
+            ApproxSize      = $ApproxSize
+            BackupSizeValue = $BackupSize
+        }
+        $RestorePoint | Add-Member -MemberType ScriptMethod -Name GetSourceJob -Value {
+            if ($ThrowSourceJobCapture) { throw 'GetSourceJob failed' }
+            return $SourceJobCapture
+        }.GetNewClosure()
+        $RestorePoint | Add-Member -MemberType ScriptMethod -Name GetBackup -Value {
+            if ($ThrowGetBackupCapture) { throw 'GetBackup failed' }
+            return $FakeBackup
+        }.GetNewClosure()
+        $RestorePoint | Add-Member -MemberType ScriptMethod -Name GetStorage -Value {
+            [PSCustomObject]@{ Stats = [PSCustomObject]@{ BackupSize = $this.BackupSizeValue } }
+        }
+        return $RestorePoint
     }
 
     # Dot-source Write-LogFile then the function under test.
@@ -350,5 +502,67 @@ Describe 'ISC-10: Customer regression - GUID 186c0756 scenario succeeds' {
         Get-VhcJob
         $names = @($script:capturedSubCollectorJobs | Where-Object { $_ } | ForEach-Object { $_.Name })
         $names | Should -Contain 'HealthyAgent'
+    }
+}
+
+# ---------------------------------------------------------------------------
+# Performance gate (ADR 0022): sweep runs only when a job's TypeToString
+# isn't on the proven-safe allowlist.
+# ---------------------------------------------------------------------------
+Describe 'Performance gate: sweep triggers on unrecognized job types' {
+
+    BeforeEach {
+        $script:UnscopedCalls   = 0
+        $script:ScopedCalls     = 0
+        $script:CapturedJobRows = @()
+        Mock Write-LogFile                 -MockWith { }
+        Mock Get-VBRConfigurationBackupJob -MockWith { $null }
+        Mock Invoke-VhciJobSubCollectors   -MockWith { }
+        Mock Add-VhciModuleError           -MockWith { }
+        Mock Get-VBRBackup                 -MockWith { @() }
+        Mock Export-VhciCsv -MockWith {
+            if ($FileName -eq '_Jobs.csv' -and $InputObject) {
+                $script:CapturedJobRows += @($InputObject)
+            }
+        }
+        Mock Get-VBRRestorePoint -MockWith {
+            if ($null -eq $Backup) { $script:UnscopedCalls++ } else { $script:ScopedCalls++ }
+            @()
+        }
+    }
+
+    It 'calls Get-VBRRestorePoint without -Backup exactly once when a non-allowlisted job type is present' {
+        Mock Get-VBRJob -MockWith {
+            @( (script:New-FakeJob -Name 'MorpheusJob' -TypeToString 'HPE Morpheus VME Backup') )
+        }
+        Get-VhcJob
+        $script:UnscopedCalls | Should -Be 1
+    }
+
+    It 'never calls Get-VBRRestorePoint without -Backup when every job is a known-safe type' {
+        Mock Get-VBRJob -MockWith {
+            @(
+                (script:New-FakeJob -Name 'VMwareJob' -TypeToString 'VMware Backup' -LastBackup ([PSCustomObject]@{ Id = [guid]::NewGuid() })),
+                (script:New-FakeJob -Name 'HyperVJob' -TypeToString 'Hyper-V Backup' -LastBackup ([PSCustomObject]@{ Id = [guid]::NewGuid() }))
+            )
+        }
+        Get-VhcJob
+        $script:UnscopedCalls | Should -Be 0
+        $script:ScopedCalls   | Should -Be 2
+    }
+
+    It 'produces correct OnDiskGB and OriginalSize via the old per-job method when the gate is off' {
+        Mock Get-VBRJob -MockWith {
+            @( (script:New-FakeJob -Name 'VMwareJob' -TypeToString 'VMware Backup' -LastBackup ([PSCustomObject]@{ Id = [guid]::NewGuid() })) )
+        }
+        Mock Get-VBRRestorePoint -MockWith {
+            if ($null -ne $Backup) {
+                @( (script:New-FakeRestorePoint -ObjectId ([guid]'11111111-1111-1111-1111-111111111111') -ApproxSize 5GB -BackupSize 2GB) )
+            } else { @() }
+        }
+        Get-VhcJob
+        $Row = $script:CapturedJobRows | Where-Object { $_.Name -eq 'VMwareJob' }
+        $Row.OnDiskGB     | Should -Be 2
+        $Row.OriginalSize | Should -Be 5GB
     }
 }

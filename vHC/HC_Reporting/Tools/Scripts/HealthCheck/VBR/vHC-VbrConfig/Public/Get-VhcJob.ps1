@@ -80,16 +80,50 @@ function Get-VhcJob {
     Invoke-VhciJobSubCollectors -Jobs @($Jobs)
 
     # ------------------------------------------------------------------
+    # Restore-point matching: performance gate + global sweep
+    # (ADR 0021: tiered sweep; ADR 0022: allowlist gate)
+    # ------------------------------------------------------------------
+    $KnownSafeJobTypes = @(
+        'VMware Backup',
+        'Hyper-V Backup',
+        'Windows Agent Backup',
+        'Windows Agent Policy',
+        'Linux Agent Backup',
+        'Cloud Director Backup'
+    )
+
+    $NonReplicaJobs = @($Jobs | Where-Object { $_.TypeToString -notlike '*Replication*' })
+    $NeedsSweep     = [bool]($NonReplicaJobs | Where-Object { $_.TypeToString -notin $KnownSafeJobTypes } | Select-Object -First 1)
+
+    $RestorePointsByJob = @{}
+    if ($NeedsSweep) {
+        try {
+            $AllRestorePoints = @(Get-VBRRestorePoint -WarningAction SilentlyContinue)
+            Write-LogFile "Restore point sweep: $($AllRestorePoints.Count) restore points found server-wide"
+        } catch {
+            Write-LogFile "Restore point sweep failed: $($_.Exception.Message)" -LogLevel "ERROR"
+            Add-VhciModuleError -CollectorName 'Jobs' -ErrorMessage $_.Exception.Message
+        }
+    }
+
+    # ------------------------------------------------------------------
     # Main VBR job processing loop - restore point size calculation
     # ------------------------------------------------------------------
     [System.Collections.ArrayList]$AllJobs = @()
 
     foreach ($Job in @($Jobs)) {
         try {
-            $LastBackup    = $Job.GetLastBackup()
             $RestorePoints = @()
-            if ($null -ne $LastBackup) {
-                $RestorePoints = Get-VBRRestorePoint -Backup $LastBackup
+            if ($NeedsSweep) {
+                $JobIdKey = $Job.Id.ToString()
+                if ($RestorePointsByJob.ContainsKey($JobIdKey)) {
+                    $RestorePoints = $RestorePointsByJob[$JobIdKey]
+                }
+            } else {
+                $LastBackup = $Job.GetLastBackup()
+                if ($null -ne $LastBackup) {
+                    $RestorePoints = Get-VBRRestorePoint -Backup $LastBackup
+                }
             }
             $TotalOnDiskGB = 0
 
