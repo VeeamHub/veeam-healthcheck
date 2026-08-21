@@ -1,6 +1,6 @@
 # ADR 0022: Gate the Restore-Point Sweep Behind an Allowlist of Proven-Safe Job Types, Not a Flag or a Denylist
 
-* **Status:** Proposed
+* **Status:** Accepted
 * **Date:** 2026-08-21
 * **Decider:** Ben Thomas (@comnam90)
 * **Consulted:** Claude Code (design, empirical validation)

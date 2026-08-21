@@ -1,6 +1,6 @@
 # ADR 0021: Global Restore-Point Sweep with Tiered (Id-Based + Gated Name-Based) Job Matching Replaces Per-Job GetLastBackup()
 
-* **Status:** Proposed
+* **Status:** Accepted
 * **Date:** 2026-08-21
 * **Decider:** Ben Thomas (@comnam90)
 * **Consulted:** Claude Code (design, empirical validation across 4 live labs)
