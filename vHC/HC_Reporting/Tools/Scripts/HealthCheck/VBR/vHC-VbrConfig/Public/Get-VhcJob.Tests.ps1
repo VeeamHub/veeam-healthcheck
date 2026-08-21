@@ -721,4 +721,31 @@ Describe 'Tier 1: resolved Id must be a member of $Jobs' {
         $SweepLine = $script:LogMessages | Where-Object { $_ -match 'matched via tier 1' } | Select-Object -Last 1
         $SweepLine | Should -Match '\b0 matched via tier 1\b'
     }
+
+    It 'does not abort the sweep when $Jobs contains a null placeholder ahead of a real non-allowlisted job' {
+        # Reproduces: Get-VBRJob throws, so the outer catch leaves $Jobs =
+        # $null; $Jobs = @($Jobs) + $standaloneJobs then prepends a $null
+        # placeholder ahead of the surviving standalone job. That null alone
+        # wouldn't flip $NeedsSweep (Select-Object -First 1 silently drops a
+        # lone leading $null) - it's the real non-allowlisted standalone job
+        # behind it that does. The $KnownJobIds build must skip the null
+        # without throwing, or the sweep's outer catch aborts the whole
+        # sweep and every job in the run reports OnDiskGB = 0.
+        Mock Get-VBRJob -MockWith { throw 'Get-VBRJob failed' }
+
+        $MacAgentJob = script:New-FakeJob -Name 'MacAgentJob' -TypeToString 'Mac Agent Backup'
+        $StandaloneBackup = [PSCustomObject]@{ IsAgentStandaloneJob = $true }
+        $StandaloneBackup | Add-Member -MemberType ScriptMethod -Name GetJob -Value { $MacAgentJob }.GetNewClosure()
+        Mock Get-VBRBackup -MockWith { @($StandaloneBackup) }
+
+        Mock Get-VBRRestorePoint -MockWith {
+            if ($null -eq $Backup) {
+                @( (script:New-FakeRestorePoint -ObjectId ([guid]'77777777-7777-7777-7777-777777777777') -ApproxSize 12GB -BackupSize 6GB -SourceJob $MacAgentJob) )
+            } else { @() }
+        }
+
+        { Get-VhcJob } | Should -Not -Throw
+        $Row = $script:CapturedJobRows | Where-Object { $_.Name -eq 'MacAgentJob' }
+        $Row.OnDiskGB | Should -Be 6
+    }
 }

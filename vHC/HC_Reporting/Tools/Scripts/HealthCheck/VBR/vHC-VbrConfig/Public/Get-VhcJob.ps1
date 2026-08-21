@@ -101,7 +101,7 @@ function Get-VhcJob {
             $AllRestorePoints = @(Get-VBRRestorePoint -WarningAction SilentlyContinue)
 
             $KnownJobIds = New-Object 'System.Collections.Generic.HashSet[string]'
-            foreach ($j in @($Jobs)) { [void]$KnownJobIds.Add($j.Id.ToString()) }
+            foreach ($j in @($Jobs)) { if ($null -ne $j -and $null -ne $j.Id) { [void]$KnownJobIds.Add($j.Id.ToString()) } }
 
             $Unresolved   = [System.Collections.ArrayList]::new()
             $Tier1Matched = 0
