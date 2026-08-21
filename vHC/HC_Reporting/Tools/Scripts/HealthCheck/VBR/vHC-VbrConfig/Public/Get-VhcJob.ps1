@@ -101,11 +101,18 @@ function Get-VhcJob {
             $AllRestorePoints = @(Get-VBRRestorePoint -WarningAction SilentlyContinue)
 
             $Tier1Matched = 0
+            $Tier1Failed  = 0
             foreach ($RestorePoint in $AllRestorePoints) {
                 $SourceJob = $null
-                try { $SourceJob = $RestorePoint.GetSourceJob() } catch {}
+                try { $SourceJob = $RestorePoint.GetSourceJob() } catch { $Tier1Failed++ }
                 if ($null -eq $SourceJob) { continue }
 
+                try {
+                    $ParentJob = $SourceJob.GetParentJob()
+                    if ($null -ne $ParentJob) { $SourceJob = $ParentJob }
+                } catch {}
+
+                if ($null -eq $SourceJob.Id) { continue }
                 $JobIdKey = $SourceJob.Id.ToString()
                 if (-not $RestorePointsByJob.ContainsKey($JobIdKey)) {
                     $RestorePointsByJob[$JobIdKey] = [System.Collections.ArrayList]::new()
@@ -114,7 +121,7 @@ function Get-VhcJob {
                 $Tier1Matched++
             }
 
-            Write-LogFile "Restore point sweep: $($AllRestorePoints.Count) restore points found server-wide, $Tier1Matched matched via tier 1"
+            Write-LogFile "Restore point sweep: $($AllRestorePoints.Count) restore points found server-wide, $Tier1Matched matched via tier 1, $Tier1Failed tier-1 lookup failures"
         } catch {
             Write-LogFile "Restore point sweep failed: $($_.Exception.Message)" -LogLevel "ERROR"
             Add-VhciModuleError -CollectorName 'Jobs' -ErrorMessage $_.Exception.Message

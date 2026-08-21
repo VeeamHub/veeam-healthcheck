@@ -589,15 +589,66 @@ Describe 'Tier 1: Id-based match via GetSourceJob()' {
 
     It 'buckets a restore point under the job GetSourceJob() resolves to' {
         $MorpheusJob = script:New-FakeJob -Name 'MorpheusJob' -TypeToString 'HPE Morpheus VME Backup'
+        # Distinct object, same Id as $MorpheusJob - proves matching happens
+        # by Id, not by object reference.
+        $MorpheusJobTwin = [PSCustomObject]@{ Id = $MorpheusJob.Id; Name = 'DifferentObjectSameId' }
         Mock Get-VBRJob -MockWith { @($MorpheusJob) }
         Mock Get-VBRRestorePoint -MockWith {
             if ($null -eq $Backup) {
-                @( (script:New-FakeRestorePoint -ObjectId ([guid]'22222222-2222-2222-2222-222222222222') -ApproxSize 190GB -BackupSize 72.99GB -SourceJob $MorpheusJob) )
+                @( (script:New-FakeRestorePoint -ObjectId ([guid]'22222222-2222-2222-2222-222222222222') -ApproxSize 190GB -BackupSize 72.99GB -SourceJob $MorpheusJobTwin) )
             } else { @() }
         }
         Get-VhcJob
         $Row = $script:CapturedJobRows | Where-Object { $_.Name -eq 'MorpheusJob' }
         $Row.OnDiskGB     | Should -Be 72.99
         $Row.OriginalSize | Should -Be 190GB
+    }
+
+    It 'walks up to the parent job when GetSourceJob() resolves to a per-machine child job' {
+        # 'HPE Morpheus VME Backup' - not on $KnownSafeJobTypes, so this alone
+        # forces $NeedsSweep=$true. (Managed Agent jobs also use this
+        # per-machine-child pattern, but Windows/Linux Agent types ARE on the
+        # allowlist - using one here would leave the sweep untriggered and
+        # this test would pass for the wrong reason, whatever it asserted.)
+        $PolicyJob = script:New-FakeJob -Name 'HPE Morpheus - Windows - Linux' -TypeToString 'HPE Morpheus VME Backup'
+        $ChildJob  = script:New-FakeJob -Name 'HPE Morpheus - Windows - Linux\Windows01' -TypeToString 'HPE Morpheus VME Backup' -ParentJob $PolicyJob
+        Mock Get-VBRJob -MockWith { @($PolicyJob) }
+        Mock Get-VBRRestorePoint -MockWith {
+            if ($null -eq $Backup) {
+                @( (script:New-FakeRestorePoint -ObjectId ([guid]'33333333-3333-3333-3333-333333333333') -ApproxSize 30GB -BackupSize 18GB -SourceJob $ChildJob) )
+            } else { @() }
+        }
+        Get-VhcJob
+        $Row = $script:CapturedJobRows | Where-Object { $_.Name -eq 'HPE Morpheus - Windows - Linux' }
+        $Row.OnDiskGB | Should -Be 18
+    }
+
+    It 'stays on the original Id when GetParentJob() returns null (already top-level)' {
+        # 'Nutanix AHV Backup' - not on $KnownSafeJobTypes, for the same
+        # reason as above: 'VMware Backup' being allowlisted would leave the
+        # sweep untriggered and mask what this test is meant to prove.
+        $TopLevelJob = script:New-FakeJob -Name 'Nutanix AHV - Windows - Linux' -TypeToString 'Nutanix AHV Backup'
+        Mock Get-VBRJob -MockWith { @($TopLevelJob) }
+        Mock Get-VBRRestorePoint -MockWith {
+            if ($null -eq $Backup) {
+                @( (script:New-FakeRestorePoint -ObjectId ([guid]'44444444-4444-4444-4444-444444444444') -ApproxSize 10GB -BackupSize 5GB -SourceJob $TopLevelJob) )
+            } else { @() }
+        }
+        Get-VhcJob
+        $Row = $script:CapturedJobRows | Where-Object { $_.Name -eq 'Nutanix AHV - Windows - Linux' }
+        $Row.OnDiskGB | Should -Be 5
+    }
+
+    It 'falls back to the original Id when GetParentJob() throws' {
+        $ThrowingChild = script:New-FakeJob -Name 'ChildThatThrows' -TypeToString 'HPE Morpheus VME Backup' -ThrowOnGetParentJob
+        Mock Get-VBRJob -MockWith { @($ThrowingChild) }
+        Mock Get-VBRRestorePoint -MockWith {
+            if ($null -eq $Backup) {
+                @( (script:New-FakeRestorePoint -ObjectId ([guid]'55555555-5555-5555-5555-555555555555') -ApproxSize 8GB -BackupSize 4GB -SourceJob $ThrowingChild) )
+            } else { @() }
+        }
+        Get-VhcJob
+        $Row = $script:CapturedJobRows | Where-Object { $_.Name -eq 'ChildThatThrows' }
+        $Row.OnDiskGB | Should -Be 4
     }
 }
