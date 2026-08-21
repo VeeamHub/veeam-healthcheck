@@ -1,7 +1,7 @@
 # Job Sizing: Global Restore-Point Matching by Job Id — Design
 
 **Date:** 2026-08-21
-**Status:** Proposed
+**Status:** Implemented
 
 ## Problem
 

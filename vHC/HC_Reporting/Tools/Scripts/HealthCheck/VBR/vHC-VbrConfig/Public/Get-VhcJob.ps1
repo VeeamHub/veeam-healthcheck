@@ -107,7 +107,7 @@ function Get-VhcJob {
             # whole sweep via the outer catch, not just this one lookup.
             $JobIdByName = @{}
             foreach ($j in @($Jobs)) {
-                if ($null -ne $j -and $null -ne $j.Id -and -not $JobIdByName.ContainsKey($j.Name)) { $JobIdByName[$j.Name] = $j.Id.ToString() }
+                if ($null -ne $j -and $null -ne $j.Id -and $j.Name -and -not $JobIdByName.ContainsKey($j.Name)) { $JobIdByName[$j.Name] = $j.Id.ToString() }
             }
 
             # OrdinalIgnoreCase: $RestorePointsByJob (a Hashtable) looks up
@@ -175,10 +175,29 @@ function Get-VhcJob {
                 $Tier2Matched++
             }
 
+            # Replica jobs: sized via the original per-job method, unchanged -
+            # already correct for replicas, never routed through tier 1/2.
+            # Guard against a null Id for the same reason $KnownJobIds and
+            # $JobIdByName do above - a non-null $Job with no populated Id
+            # would otherwise abort the whole sweep via the outer catch.
+            foreach ($Job in @($Jobs | Where-Object { $_.TypeToString -like '*Replication*' })) {
+                if ($null -eq $Job.Id) { continue }
+                $JobIdKey   = $Job.Id.ToString()
+                $LastBackup = $null
+                try { $LastBackup = $Job.GetLastBackup() } catch {}
+                $ReplicaPoints = @()
+                if ($null -ne $LastBackup) {
+                    try { $ReplicaPoints = @(Get-VBRRestorePoint -Backup $LastBackup -WarningAction SilentlyContinue) } catch {}
+                }
+                $RestorePointsByJob[$JobIdKey] = [System.Collections.ArrayList]::new()
+                foreach ($RestorePoint in $ReplicaPoints) { [void]$RestorePointsByJob[$JobIdKey].Add($RestorePoint) }
+            }
+
             Write-LogFile "Restore point matching: $Tier1Matched matched via tier 1, $Tier1Failed tier-1 lookup failures, $Tier2Matched tier-2, $($AllRestorePoints.Count - $Tier1Matched - $Tier2Matched) unmatched/orphaned/snapshot"
         } catch {
             Write-LogFile "Restore point sweep failed: $($_.Exception.Message)" -LogLevel "ERROR"
             Add-VhciModuleError -CollectorName 'Jobs' -ErrorMessage $_.Exception.Message
+            $NeedsSweep = $false
         }
     }
 
