@@ -51,6 +51,19 @@ per `Get-VhcJob` invocation, before the main per-job loop.
   bucket it into a dictionary keyed by the owning job's `Id`. Restore points
   with no resolvable owning job are left unmatched — not attributed to any
   job, no "Old Backup Data" bucket in this design.
+- For policy-driven platforms — managed Windows/Linux Agents, Nutanix AHV
+  Agent, HPE Morpheus VME Agent, oVirt KVM Agent — `.GetSourceJob()` resolves
+  to a **per-machine child job**, not the top-level policy job that actually
+  appears in `$Jobs` (confirmed via live-lab comparison: plain `GetSourceJob()`
+  returned `VBR Managed Agents - Windows - WindowsAgent13.usdemo.veeam.local`,
+  while the real policy job is `VBR Managed Agents - Windows`). Before keying
+  into the dictionary, call `.GetParentJob()` on the resolved job and use its
+  result if non-null — this walks up to the real top-level job and still
+  exposes an `Id`, so matching stays Id-based throughout with no name
+  comparison needed. For job types that are already top-level (VMware,
+  Hyper-V, Cloud Director, Entra ID Tenant, standalone/native Agent, Replica),
+  this call is a safe no-op — live-lab testing showed identical results
+  whether or not it's applied.
 - In the main per-job loop, look up `$Job.Id` in this dictionary instead of
   calling `GetLastBackup()`. The downstream math (sum for On-Disk GB,
   latest-per-`ObjectId` for Source Size GB) is unchanged — it already operates
@@ -82,6 +95,8 @@ Get-VhcJob.ps1 (Public, modified)
     │       foreach rp in $allRestorePoints:
     │           try { $sourceJob = $rp.GetSourceJob() } catch { continue }
     │           if ($null -eq $sourceJob) { continue }             — orphaned/imported/out-of-scope, unmatched
+    │           try { $parent = $sourceJob.GetParentJob(); if ($parent) { $sourceJob = $parent } } catch {}
+    │                                                               — walk up from per-machine child job to real policy job (safe no-op if already top-level)
     │           $restorePointsByJob[$sourceJob.Id.ToString()].Add($rp)
     │
     └─ Main per-job loop (modified)
@@ -104,6 +119,15 @@ try {
         $sourceJob = $null
         try { $sourceJob = $rp.GetSourceJob() } catch { continue }
         if ($null -eq $sourceJob) { continue }
+
+        # Policy-driven platforms (Managed Agents, Nutanix AHV Agent, HPE
+        # Morpheus VME Agent, oVirt KVM Agent) resolve to a per-machine child
+        # job here, not the top-level policy job in $Jobs. GetParentJob()
+        # walks up to it; safe no-op for job types that are already top-level.
+        try {
+            $parentJob = $sourceJob.GetParentJob()
+            if ($null -ne $parentJob) { $sourceJob = $parentJob }
+        } catch {}
 
         $jobIdKey = $sourceJob.Id.ToString()
         if (-not $restorePointsByJob.ContainsKey($jobIdKey)) {
@@ -155,12 +179,21 @@ Existing stubs already declare a no-op `Get-VBRRestorePoint` (lines 37-39) and
 fake jobs with a `GetLastBackup` ScriptMethod (line 132). Add:
 
 - A fake restore point factory with a `GetSourceJob` ScriptMethod,
-  parameterized to return a matching fake job, `$null`, or throw.
+  parameterized to return a matching fake job, `$null`, or throw. The fake job
+  itself needs a `GetParentJob` ScriptMethod, parameterized to return a
+  distinct parent fake job, `$null` (already top-level), or throw.
 - Case: restore point resolves to a job Id → included in that job's
   `$RestorePoints`/`OnDiskGB`.
 - Case: `GetSourceJob()` returns `$null` → excluded from every job, no crash.
 - Case: `GetSourceJob()` throws → skipped, sweep continues, no crash (mirrors
   ISC-1's per-item try/catch pattern for `.GetJob()`).
+- Case: `GetSourceJob()` returns a child job whose `GetParentJob()` returns a
+  *different* job → the restore point is bucketed under the **parent's** Id,
+  not the child's, and shows up in that parent job's `$RestorePoints`.
+- Case: `GetSourceJob()` returns a job whose `GetParentJob()` returns `$null`
+  (already top-level) → bucketed under the original job's Id, unchanged.
+- Case: `GetParentJob()` throws → falls back to the original `GetSourceJob()`
+  result's Id, sweep continues, no crash.
 - Case: two restore points share a job Id but have different
   `ObjectId`/`CreationTimeUtc` (simulating pre/post-retarget chains) → both
   summed into `OnDiskGB`; only the latest per `ObjectId` feeds `OriginalSize`.
@@ -169,7 +202,8 @@ fake jobs with a `GetLastBackup` ScriptMethod (line 132). Add:
 
 1. `Get-VhcJob` fetches `$Jobs` (managed + standalone) — unchanged.
 2. New: one unscoped `Get-VBRRestorePoint` sweep resolves every restore
-   point's owning job via `GetSourceJob()` and buckets by job `Id` into
+   point's owning job via `GetSourceJob()`, walks up to the top-level policy
+   job via `GetParentJob()` where applicable, and buckets by job `Id` into
    `$restorePointsByJob`.
 3. The main per-job loop looks up `$Job.Id` in `$restorePointsByJob` instead
    of calling `GetLastBackup()`.
@@ -186,8 +220,11 @@ fake jobs with a `GetLastBackup` ScriptMethod (line 132). Add:
 | `Get-VBRRestorePoint` (global sweep) throws | Logged via top-level try/catch; `Add-VhciModuleError`; `$restorePointsByJob` stays empty; every job falls back to `Info.IncludedSize`/0 On-Disk GB (today's existing "no last backup" fallback) |
 | `GetSourceJob()` throws for a specific restore point | Caught per-item; that restore point is skipped, sweep continues |
 | `GetSourceJob()` returns `$null` | Restore point is unmatched — excluded from every job's totals (orphaned backup, imported backup, or VM no longer in any job's scope) |
+| `GetSourceJob()` resolves, but to a per-machine child job (Managed Agents, Nutanix AHV Agent, HPE Morpheus VME Agent, oVirt KVM Agent) | `.GetParentJob()` walk-up resolves to the real top-level policy job's Id before bucketing — confirmed via live-lab comparison across these platforms |
+| `.GetParentJob()` throws | Caught; falls back to the original `GetSourceJob()` result's Id (best effort — same outcome as if this refinement didn't exist) |
+| `.GetParentJob()` returns `$null` (job is already top-level) | Original `GetSourceJob()` result's Id is used — confirmed safe no-op via live-lab comparison for VMware, Hyper-V, Cloud Director, Entra ID Tenant |
 | A job's Id has no entry in `$restorePointsByJob` | `$RestorePoints` stays `@()`; same fallback as today's "no last backup" case |
-| Standalone agent job (via `.GetJob()`, ADR 0014) — `GetSourceJob()` resolution unverified | Falls back to `Info.IncludedSize`/0 if unmatched — not a regression vs. today, but needs live validation to confirm it's actually matching (see Open Items) |
+| Standalone agent job (via `.GetJob()`, ADR 0014) — `GetSourceJob()`/`GetParentJob()` resolution unverified | Falls back to `Info.IncludedSize`/0 if unmatched — not a regression vs. today, but needs live validation to confirm it's actually matching (see Open Items) |
 | Job with restore points across >1 backup chain (e.g. post-retarget) | All matched chains are summed — an intentional behavior change, surfacing previously invisible disk usage |
 | Replica job (`Snapshot`-type restore points) | No `Type` filter applied — included, same as today |
 | NAS job | Unaffected — sized via a separate cmdlet/CSV path that never appears in `Get-VBRRestorePoint` output |
@@ -195,16 +232,19 @@ fake jobs with a `GetLastBackup` ScriptMethod (line 132). Add:
 ## Open Items
 
 - **Empirical validation required before merge** (same practice as ADR 0014):
-  confirm `GetSourceJob().Id` correctly resolves and matches `$Job.Id` across
-  every job type this script iterates — VMware, Hyper-V, Cloud Director vApp,
-  Entra ID Tenant, managed Windows/Linux Agent, standalone agent, Nutanix AHV
-  Agent, HPE Morpheus VME Agent, and Replica. Any type where it doesn't
-  resolve degrades gracefully to today's fallback (per Error Handling above)
-  but should be documented as untested/unsupported by this change rather than
-  assumed to work.
-- **Performance on very large environments**: one global sweep + N
-  `GetSourceJob()` calls (N = total restore points server-wide) replaces N
-  `GetLastBackup()` + N scoped `Get-VBRRestorePoint` calls (N = job count).
+  confirm `GetSourceJob()` + `GetParentJob()` together resolve to an Id
+  matching `$Job.Id` across every job type this script iterates — VMware,
+  Hyper-V, Cloud Director vApp, Entra ID Tenant, managed Windows/Linux Agent,
+  standalone agent, Nutanix AHV Agent, HPE Morpheus VME Agent, oVirt KVM
+  Agent, and Replica. The live-lab spot check in this design already covers
+  most of these; standalone agent jobs (ADR 0014) and Replica specifically
+  remain unverified. Any type where it doesn't resolve degrades gracefully to
+  today's fallback (per Error Handling above) but should be documented as
+  untested/unsupported by this change rather than assumed to work.
+- **Performance on very large environments**: one global sweep + up to 2×N
+  method calls (`GetSourceJob()` plus `GetParentJob()`, N = total restore
+  points server-wide) replaces N `GetLastBackup()` + N scoped
+  `Get-VBRRestorePoint` calls (N = job count).
   For environments with long retention and many objects (e.g. an hourly-point
   job running for months), the global restore-point count can be far larger
   than the job count. Should be measured against a real large environment
