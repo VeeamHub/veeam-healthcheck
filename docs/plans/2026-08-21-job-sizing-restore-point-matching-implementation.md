@@ -308,7 +308,7 @@ Expected: The new `Describe 'Performance gate...'` block's three tests FAIL — 
 
 - [ ] **Step 4: Implement the gate**
 
-In `Get-VhcJob.ps1`, replace (current lines 80-95):
+In `Get-VhcJob.ps1`, replace (current lines 80-94; the replace is driven by matched text, not line numbers, so this reference is for orientation only):
 
 ```powershell
     Invoke-VhciJobSubCollectors -Jobs @($Jobs)
@@ -532,8 +532,13 @@ Add to `Describe 'Tier 1: Id-based match via GetSourceJob()'`:
 
 ```powershell
     It 'walks up to the parent job when GetSourceJob() resolves to a per-machine child job' {
-        $PolicyJob = script:New-FakeJob -Name 'VBR Managed Agents - Windows' -TypeToString 'Windows Agent Policy'
-        $ChildJob  = script:New-FakeJob -Name 'VBR Managed Agents - Windows - WindowsAgent13' -TypeToString 'Windows Agent Policy' -ParentJob $PolicyJob
+        # 'HPE Morpheus VME Backup' - not on $KnownSafeJobTypes, so this alone
+        # forces $NeedsSweep=$true. (Managed Agent jobs also use this
+        # per-machine-child pattern, but Windows/Linux Agent types ARE on the
+        # allowlist - using one here would leave the sweep untriggered and
+        # this test would pass for the wrong reason, whatever it asserted.)
+        $PolicyJob = script:New-FakeJob -Name 'HPE Morpheus - Windows - Linux' -TypeToString 'HPE Morpheus VME Backup'
+        $ChildJob  = script:New-FakeJob -Name 'HPE Morpheus - Windows - Linux\Windows01' -TypeToString 'HPE Morpheus VME Backup' -ParentJob $PolicyJob
         Mock Get-VBRJob -MockWith { @($PolicyJob) }
         Mock Get-VBRRestorePoint -MockWith {
             if ($null -eq $Backup) {
@@ -541,12 +546,15 @@ Add to `Describe 'Tier 1: Id-based match via GetSourceJob()'`:
             } else { @() }
         }
         Get-VhcJob
-        $Row = $script:CapturedJobRows | Where-Object { $_.Name -eq 'VBR Managed Agents - Windows' }
+        $Row = $script:CapturedJobRows | Where-Object { $_.Name -eq 'HPE Morpheus - Windows - Linux' }
         $Row.OnDiskGB | Should -Be 18
     }
 
     It 'stays on the original Id when GetParentJob() returns null (already top-level)' {
-        $TopLevelJob = script:New-FakeJob -Name 'VMwareJob' -TypeToString 'VMware Backup'
+        # 'Nutanix AHV Backup' - not on $KnownSafeJobTypes, for the same
+        # reason as above: 'VMware Backup' being allowlisted would leave the
+        # sweep untriggered and mask what this test is meant to prove.
+        $TopLevelJob = script:New-FakeJob -Name 'Nutanix AHV - Windows - Linux' -TypeToString 'Nutanix AHV Backup'
         Mock Get-VBRJob -MockWith { @($TopLevelJob) }
         Mock Get-VBRRestorePoint -MockWith {
             if ($null -eq $Backup) {
@@ -554,7 +562,7 @@ Add to `Describe 'Tier 1: Id-based match via GetSourceJob()'`:
             } else { @() }
         }
         Get-VhcJob
-        $Row = $script:CapturedJobRows | Where-Object { $_.Name -eq 'VMwareJob' }
+        $Row = $script:CapturedJobRows | Where-Object { $_.Name -eq 'Nutanix AHV - Windows - Linux' }
         $Row.OnDiskGB | Should -Be 5
     }
 
@@ -576,7 +584,7 @@ Add to `Describe 'Tier 1: Id-based match via GetSourceJob()'`:
 
 Run: `pwsh -Command "Invoke-Pester -Path 'vHC/HC_Reporting/Tools/Scripts/HealthCheck/VBR/vHC-VbrConfig/Public/Get-VhcJob.Tests.ps1' -Output Detailed"`
 
-Expected: The first new test FAILS — the restore point buckets under `$ChildJob`'s Id today, and `VBR Managed Agents - Windows`'s row shows `OnDiskGB = 0`. The second and third tests already PASS (no walk-up needed when there's no child job or the walk-up isn't exercised) — that's expected; they're written now as regression guards for the behavior Step 3 is about to add.
+Expected: The first new test FAILS — `$NeedsSweep` is `$true` (HPE Morpheus VME Backup isn't allowlisted) so the sweep runs, but today's tier 1 (Task 2's code, no walk-up yet) buckets the restore point directly under `$ChildJob`'s Id, and `HPE Morpheus - Windows - Linux`'s row shows `OnDiskGB = 0`. The second and third tests already PASS — test 2 needs no walk-up at all (there's no child job in that scenario, so direct tier-1 matching from Task 2 already handles it), and test 3's `GetParentJob()` throw doesn't matter yet either, since without Step 3's code there's no walk-up attempt to throw from. Both are legitimate regression guards for the behavior Step 3 is about to add, not tests that happen to pass by accident.
 
 - [ ] **Step 3: Implement the walk-up**
 
@@ -872,8 +880,15 @@ Describe 'Tier 2: gated name-based fallback' {
     }
 
     It 'never resolves a Type=Snapshot restore point via either tier' {
-        $VMwareJob = script:New-FakeJob -Name 'VMware - Domain Controller' -TypeToString 'VMware Backup'
-        Mock Get-VBRJob -MockWith { @($VMwareJob) }
+        # 'VMware Backup' alone would leave $NeedsSweep=$false and this test
+        # would pass because the sweep never ran, not because the skip logic
+        # under test works - add a non-allowlisted companion job (mirrors
+        # Task 6's Replica test) to force the sweep on. The realistic risk
+        # this guards is a VMware job in a mixed environment where a stray
+        # Snapshot-type point's name happens to resolve to it.
+        $VMwareJob   = script:New-FakeJob -Name 'VMware - Domain Controller' -TypeToString 'VMware Backup'
+        $MorpheusJob = script:New-FakeJob -Name 'MorpheusJob' -TypeToString 'HPE Morpheus VME Backup'
+        Mock Get-VBRJob -MockWith { @($VMwareJob, $MorpheusJob) }
         Mock Get-VBRRestorePoint -MockWith {
             if ($null -eq $Backup) {
                 @( (script:New-FakeRestorePoint -Type 'Snapshot' -ObjectId ([guid]'99999999-9999-9999-9999-999999999999') -ApproxSize 100GB -BackupSize 50GB -BackupParentOrThisName 'VMware - Domain Controller') )
@@ -1059,8 +1074,12 @@ Describe 'Replica jobs bypass tier 1/2 entirely' {
         # (and thus the Replica-bypass branch) actually runs.
         $MorpheusJob = script:New-FakeJob -Name 'MorpheusJob' -TypeToString 'HPE Morpheus VME Backup'
         Mock Get-VBRJob -MockWith { @($ReplicaJob, $MorpheusJob) }
+        # $ReplicaJob is the only job with a non-null LastBackup in this test,
+        # so $ReplicaJob's own scoped call is the only one that can ever pass
+        # a non-null -Backup here - no need to depend on reference equality
+        # surviving Pester's mock parameter binding.
         Mock Get-VBRRestorePoint -MockWith {
-            if ($null -ne $Backup -and $Backup -eq $ReplicaBackupRef) {
+            if ($null -ne $Backup) {
                 @( (script:New-FakeRestorePoint -Type 'Snapshot' -ObjectId ([guid]'10101010-1010-1010-1010-101010101010') -ApproxSize 44GB -BackupSize 23.47GB) )
             } else { @() }
         }
