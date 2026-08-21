@@ -12,13 +12,13 @@ Today `Get-VhcJob.ps1` computes Source Size GB / Est. On Disk GB per job via
 `ObjectId`, taking the latest `ApproxSize` per VM (`Get-VhcJob.ps1:94-126`).
 
 `GetLastBackup()` returns only the single most-recent backup chain object for
-a job. This has three known gaps:
+a job. This has four known gaps:
 
 1. **Confirmed root cause of the 0 MB / 0 GB bug this design set out to fix**:
-   for policy/plug-in-backed platforms — HPE Morpheus VME Backup, Nutanix AHV
-   Backup, and oVirt KVM Backup confirmed live, matching the same restriction
-   already documented for Proxmox in the Protected Workloads investigation —
-   `Get-VBRRestorePoint -Backup $LastBackup` throws:
+   for on-prem policy/plug-in-backed platforms — HPE Morpheus VME Backup,
+   Nutanix AHV Backup, and oVirt KVM Backup confirmed live, matching the same
+   restriction already documented for Proxmox in the Protected Workloads
+   investigation — `Get-VBRRestorePoint -Backup $LastBackup` throws:
    `Cannot get restore points from backup <name>, because it is encrypted or
    created by an enterprise application plug-in.` This exception is inside
    `Get-VhcJob.ps1`'s existing outer per-job `try/catch`
@@ -27,18 +27,28 @@ a job. This has three known gaps:
    which is also unpopulated for these platforms, producing exactly the 0 MB
    Source Size / 0 GB Est. On Disk GB shown in the report for HPE Morpheus and
    Nutanix AHV jobs today.
-2. A job that was ever retargeted to a different repository can still have an
+2. **A second, distinct confirmed root cause for public cloud plug-in
+   platforms** (AWS EC2/RDS/FSx/EFS, Azure IaaS/SQL, GCE): here
+   `$Job.GetLastBackup()` itself throws `Backup for job <name> does not
+   exist` — even for a job with real, current restore points on disk. Unlike
+   gap 1, this isn't a restriction on querying an existing backup; the
+   backups for these jobs are recorded under **per-machine child backup
+   names** (e.g. `Linux-01 Backup`, `Windows-01 Backup`) rather than under
+   any backup directly owned by the parent job's own `Id`, so the parent job
+   object can't find a backup tied to itself at all. Same downstream effect:
+   silently swallowed by the outer `try/catch`, 0 MB / 0 GB reported.
+3. A job that was ever retargeted to a different repository can still have an
    older backup chain physically present on disk under the old repository.
    That chain's restore points are invisible to `GetLastBackup()`, so their
    size is silently excluded from Source/On-Disk GB.
-3. There is no visibility into restore points that don't belong to any live
+4. There is no visibility into restore points that don't belong to any live
    job at all — imported backups, orphaned chains from deleted jobs, or VMs
    dropped from a job's current scope. These consume disk space today with no
    way to see them in the report.
 
-A live-lab query demonstrated that every restore point on the server can be
-resolved back to its owning job via `.GetSourceJob()`, and that restore points
-with no owning job (blank `SourceJob`) correspond exactly to
+A live-lab query demonstrated that most restore points on the server can be
+resolved back to their owning job via `.GetSourceJob()`, and that restore
+points with no owning job (blank `SourceJob`) correspond to
 orphaned/imported/no-longer-in-scope restore points:
 
 ```powershell
@@ -47,10 +57,18 @@ $VBRRestorePoints | Select Name, CreationTime,
     @{n='Type'; e={$_.GetSourceJob().TypeToString}}
 ```
 
-Surfacing those unmatched restore points as a per-repository "Old Backup Data"
-metric is a natural next step, but is **explicitly out of scope** for this
-design — this design only changes how Source Size GB / Est. On Disk GB get
-computed for jobs that exist today.
+However, for the public cloud platforms in gap 2, `.GetSourceJob()` doesn't
+return blank — it **throws**: `Unable to get job for backup: <id>`. A second
+live-lab query found a working alternative path for exactly this case:
+`.GetBackup().GetParentOrThis().Name` resolves to the real top-level job's
+name (not Id — `.GetParentOrThis().GetJob()` also throws for these
+platforms), confirmed against the same real job as `Get-VBRJob` returns. See
+Solution's tier 2 below.
+
+Surfacing unmatched restore points (gap 4) as a per-repository "Old Backup
+Data" metric is a natural next step, but is **explicitly out of scope** for
+this design — this design only changes how Source Size GB / Est. On Disk GB
+get computed for jobs that exist today.
 
 ## Solution
 
@@ -288,15 +306,40 @@ worked.
   degrades gracefully to today's fallback (per Error Handling above) but
   should be documented as untested/unsupported by this change rather than
   assumed to work.
-- **Performance on very large environments**: one global sweep + up to 2×N
-  method calls (`GetSourceJob()` plus `GetParentJob()`, N = total restore
-  points server-wide) replaces N `GetLastBackup()` + N scoped
-  `Get-VBRRestorePoint` calls (N = job count). The validation lab's 5,752
-  restore points (18 jobs, one job alone contributing 245 points) completed
-  without any noticeable delay running interactively, but that's still a
-  small/medium environment — this hasn't been measured against a real
-  large environment (tens of thousands of restore points) and no mitigation
-  beyond existing per-collector error handling is designed here.
+- **Performance on very large environments — measured, not assumed**: an
+  initial version of this design (Id-based `GetSourceJob()`/`GetParentJob()`
+  matching only, no `Type` short-circuit) was 20.33x slower than today's
+  method against the 5,752-restore-point validation lab (46.38s vs. 2.28s) —
+  almost entirely `GetSourceJob()` throwing for the 5,461 `Snapshot`-type
+  (replication) restore points in that lab, which never resolve via
+  `GetSourceJob()` at all and pay full exception cost for nothing. Adding a
+  cheap `.Type -eq 'Snapshot'` pre-check (skip the doomed call entirely) plus
+  routing Replica-type jobs through their own path (see the Type-filtering
+  note below) brought the same sweep down to 16.26s (7.5x old, 17.35s
+  including per-job lookups). Fetch (`Get-VBRRestorePoint` itself) is now
+  ~84% of that cost and is not something this design can optimize further.
+  Still unmeasured against a real large environment (tens of thousands of
+  restore points), and no mitigation beyond existing per-collector error
+  handling is designed here.
+- **Type filtering / Replica job routing — superseded, pending re-validation**:
+  the Solution and Error Handling sections below still say "no `Type` filter
+  is applied." That was true of the first validated version but is no longer
+  the plan — the performance finding above requires skipping `Snapshot`-type
+  restore points in the sweep and routing Replica-type jobs through the
+  original per-job `GetLastBackup()` + `Get-VBRRestorePoint -Backup` path
+  instead (proven correct for replicas already; the sweep skip doesn't touch
+  it). This has been validated behavior-preserving (identical per-job results
+  before/after) in the on-prem lab, but the two replica jobs there have never
+  produced a single restore point, so the replacement path itself is still
+  unexercised against a live replica chain. A second finding from the same
+  on-prem re-run: a per-job restore-point/name-matching fallback ("tier 2",
+  for cases where `GetSourceJob()` throws outright rather than resolving)
+  matched zero restore points here — all three 0/0 fixes came from
+  `GetSourceJob()`/`GetParentJob()` alone. Tier 2 only earns its place on the
+  public cloud lab, where `GetSourceJob()` throws outright and
+  `GetLastBackup()` fails too; that lab hasn't yet been re-run against this
+  revised script. The Solution/Error Handling sections will be rewritten once
+  that run confirms tier 2 is still needed there.
 - **"Old Backup Data" per-repository reporting** (explicitly deferred): the
   unmatched-restore-point bucket this design produces is a natural input for
   a future per-repository "leftover data" metric, but is not surfaced
