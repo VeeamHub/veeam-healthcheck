@@ -1071,7 +1071,7 @@ commit)."
 - Modify: `vHC/HC_Reporting/Tools/Scripts/HealthCheck/VBR/vHC-VbrConfig/Public/Get-VhcJob.ps1`
 - Modify: `docs/superpowers/specs/2026-08-21-job-sizing-restore-point-matching-design.md`
 
-- [ ] **Step 1: Write the failing tests**
+- [x] **Step 1: Write the failing tests**
 
 Add a new `Describe` block:
 
@@ -1170,13 +1170,13 @@ Describe 'Multi-chain summing for a single tier-1-matched job' {
 }
 ```
 
-- [ ] **Step 2: Run the tests to verify they fail**
+- [x] **Step 2: Run the tests to verify they fail**
 
 Run: `pwsh -Command "Invoke-Pester -Path 'vHC/HC_Reporting/Tools/Scripts/HealthCheck/VBR/vHC-VbrConfig/Public/Get-VhcJob.Tests.ps1' -Output Detailed"`
 
 Expected: Both `Describe 'Replica jobs...'` tests FAIL (`Hyper-V - Replicas` never gets any restore points today — nothing populates its entry in `$RestorePointsByJob`, since the Replica loop doesn't exist yet, so both a live-chain Replica and a never-run one currently look identical: `OnDiskGB = 0`. The first test's assertion of `23.47` catches this). `Describe 'Multi-chain summing...'` already PASSES — that logic is pre-existing, unchanged code (lines 94-131 of the original file); it's included here as a regression guard proving tier 1's bucketing correctly feeds it, not as new behavior.
 
-- [ ] **Step 3: Amend the sweep's outer catch — reset `$NeedsSweep` on failure (plan amendment, flagged by Task 1's code review; deliberately landed BEFORE the Replica loop below)**
+- [x] **Step 3: Amend the sweep's outer catch — reset `$NeedsSweep` on failure (plan amendment, flagged by Task 1's code review; deliberately landed BEFORE the Replica loop below)**
 
 **Ordering matters here, per Task 5's code review:** this step is sequenced ahead of the Replica loop (Step 3b, below) on purpose. Step 3b adds a new unguarded-ish dereference (`$Job.Id.ToString()`, guarded per the amendment in Step 3b itself, but still new code that runs inside the sweep's all-or-nothing `try`) into the exact block this step makes fail-safe. Landing the safety net first means the Replica loop is added into a sweep that already degrades gracefully instead of catastrophically; landing them in the other order leaves a window where the newest, least-proven code has no net.
 
@@ -1230,7 +1230,7 @@ Add a test to `Describe 'Performance gate: sweep triggers on unrecognized job ty
 
 This asserts BOTH jobs recover via the per-job fallback after the sweep throws — including `MorpheusJob`, which triggered the sweep in the first place and would otherwise be the job most starved of a fallback (it has no tier-1/2 result to fall back to; only `$NeedsSweep = $false` gives it one). Run the file-scoped Pester command; expect this test to FAIL before the fix (both rows show `0`, since `$NeedsSweep` stays `$true` and `$RestorePointsByJob` has nothing for either job — the sweep threw before either tier could populate it) and PASS after.
 
-- [ ] **Step 3b: Implement Replica handling**
+- [x] **Step 3b: Implement Replica handling**
 
 **Amended per Task 5's code review:** the plan's original Replica-loop text dereferenced `$Job.Id.ToString()` unguarded — the same bug class `f21f03b` and `d5aea23` each fixed once already in this same sweep (a non-null `$Job` with a null/absent `Id` aborts the entire sweep via the outer catch, not just this one job). The `Where-Object { $_.TypeToString -like '*Replication*' }` filter already screens out a null `$Job` element (`$null -like '*'` is `$false`), but not a real object whose `Id` happens to be null. Guarded here, matching the established pattern.
 
@@ -1272,19 +1272,19 @@ with:
             Write-LogFile "Restore point matching: $Tier1Matched matched via tier 1, $Tier1Failed tier-1 lookup failures, $Tier2Matched tier-2, $($AllRestorePoints.Count - $Tier1Matched - $Tier2Matched) unmatched/orphaned/snapshot"
 ```
 
-- [ ] **Step 4: Run the tests to verify they pass**
+- [x] **Step 4: Run the tests to verify they pass**
 
 Run: `pwsh -Command "Invoke-Pester -Path 'vHC/HC_Reporting/Tools/Scripts/HealthCheck/VBR/vHC-VbrConfig/Public/Get-VhcJob.Tests.ps1' -Output Detailed"`
 
 Expected: All tests PASS, including every `Describe` block from Tasks 1-6, Step 3b's sweep-failure-fallback test, and all `ISC-1` through `ISC-10` tests.
 
-- [ ] **Step 5: Run the complete test file one more time as the final regression gate**
+- [x] **Step 5: Run the complete test file one more time as the final regression gate**
 
 Run: `pwsh -Command "Invoke-Pester -Path 'vHC/HC_Reporting/Tools/Scripts/HealthCheck/VBR/vHC-VbrConfig/Public/Get-VhcJob.Tests.ps1' -Output Detailed"`
 
 Expected: `Tests Passed: <total>, Failed: 0, Skipped: 0` — zero failures across the entire file.
 
-- [ ] **Step 6: Flip the design spec's status to Implemented**
+- [x] **Step 6: Flip the design spec's status to Implemented**
 
 In `docs/superpowers/specs/2026-08-21-job-sizing-restore-point-matching-design.md`, replace:
 
@@ -1300,7 +1300,7 @@ with:
 **Status:** Implemented
 ```
 
-- [ ] **Step 7: Commit**
+- [x] **Step 7: Commit**
 
 ```bash
 git add vHC/HC_Reporting/Tools/Scripts/HealthCheck/VBR/vHC-VbrConfig/Public/Get-VhcJob.ps1 \
