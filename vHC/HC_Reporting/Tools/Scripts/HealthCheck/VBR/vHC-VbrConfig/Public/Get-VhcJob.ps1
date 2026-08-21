@@ -92,7 +92,7 @@ function Get-VhcJob {
         'Cloud Director Backup'
     )
 
-    $NonReplicaJobs = @($Jobs | Where-Object { $_.TypeToString -notlike '*Replication*' })
+    $NonReplicaJobs = @($Jobs | Where-Object { $null -ne $_ -and $_.TypeToString -notlike '*Replication*' })
     $NeedsSweep     = [bool]($NonReplicaJobs | Where-Object { $_.TypeToString -notin $KnownSafeJobTypes } | Select-Object -First 1)
 
     $RestorePointsByJob = @{}
@@ -182,7 +182,19 @@ function Get-VhcJob {
             # would otherwise abort the whole sweep via the outer catch.
             foreach ($Job in @($Jobs | Where-Object { $_.TypeToString -like '*Replication*' })) {
                 if ($null -eq $Job.Id) { continue }
-                $JobIdKey   = $Job.Id.ToString()
+                $JobIdKey = $Job.Id.ToString()
+
+                # $NonReplicaJobs only gates whether the sweep runs at all -
+                # it doesn't exclude Replica jobs from tier 1/2 matching, so
+                # a non-Snapshot restore point whose GetSourceJob() resolves
+                # to a Replication-type job can already be sitting in this
+                # bucket. That's not new behavior (this loop always
+                # overwrites it, same as pre-branch code always ignored
+                # tier 1/2 for Replicas), but it was previously invisible.
+                if ($RestorePointsByJob.ContainsKey($JobIdKey) -and $RestorePointsByJob[$JobIdKey].Count -gt 0) {
+                    Write-LogFile "Replica job '$($Job.Name)' had $($RestorePointsByJob[$JobIdKey].Count) tier-1/2-matched restore point(s) discarded in favor of its own GetLastBackup() lookup" -LogLevel "WARNING"
+                }
+
                 $LastBackup = $null
                 try { $LastBackup = $Job.GetLastBackup() } catch {}
                 $ReplicaPoints = @()

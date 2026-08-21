@@ -25,28 +25,41 @@
 
 BeforeAll {
     # Stub Veeam cmdlets - none of these exist outside a real VBR install.
-    if (-not (Get-Command Get-VBRJob -ErrorAction SilentlyContinue)) {
+    #
+    # Guard against more than mere existence: vHC-VbrConfig.Manifest.Tests.ps1
+    # installs its OWN parameterless global stubs for several of these same
+    # names (e.g. `function global:Get-VBRRestorePoint { }`) and never tears
+    # them down. When the whole test directory runs and that file loads
+    # first, a bare `Get-Command X` guard here sees that leftover stub,
+    # concludes a stub already exists, and skips installing the correctly
+    # SHAPED one below - so `Mock Get-VBRRestorePoint -MockWith { if ($null
+    # -eq $Backup) ... }` has no -Backup parameter to bind against, $Backup
+    # is always $null, and every scoped call gets the unscoped payload.
+    # Excluding CommandType 'Cmdlet' only screens out a leftover function
+    # stub - a real Veeam cmdlet (CommandType 'Cmdlet') still short-circuits
+    # this and is left alone, same as before.
+    if (-not (Get-Command Get-VBRJob -ErrorAction SilentlyContinue | Where-Object { $_.CommandType -eq 'Cmdlet' })) {
         function global:Get-VBRJob { param([string]$WarningAction) }
     }
-    if (-not (Get-Command Get-VBRBackup -ErrorAction SilentlyContinue)) {
+    if (-not (Get-Command Get-VBRBackup -ErrorAction SilentlyContinue | Where-Object { $_.CommandType -eq 'Cmdlet' })) {
         function global:Get-VBRBackup { param([string]$WarningAction) }
     }
-    if (-not (Get-Command Get-VBRConfigurationBackupJob -ErrorAction SilentlyContinue)) {
+    if (-not (Get-Command Get-VBRConfigurationBackupJob -ErrorAction SilentlyContinue | Where-Object { $_.CommandType -eq 'Cmdlet' })) {
         function global:Get-VBRConfigurationBackupJob { }
     }
-    if (-not (Get-Command Get-VBRRestorePoint -ErrorAction SilentlyContinue)) {
+    if (-not (Get-Command Get-VBRRestorePoint -ErrorAction SilentlyContinue | Where-Object { $_.CommandType -eq 'Cmdlet' })) {
         function global:Get-VBRRestorePoint {
             [CmdletBinding()]
             param($Backup)
         }
     }
-    if (-not (Get-Command Invoke-VhciJobSubCollectors -ErrorAction SilentlyContinue)) {
+    if (-not (Get-Command Invoke-VhciJobSubCollectors -ErrorAction SilentlyContinue | Where-Object { $_.CommandType -eq 'Cmdlet' })) {
         function global:Invoke-VhciJobSubCollectors { param($Jobs) }
     }
-    if (-not (Get-Command Export-VhciCsv -ErrorAction SilentlyContinue)) {
+    if (-not (Get-Command Export-VhciCsv -ErrorAction SilentlyContinue | Where-Object { $_.CommandType -eq 'Cmdlet' })) {
         function global:Export-VhciCsv { param([Parameter(ValueFromPipeline=$true)]$InputObject, [string]$FileName) process {} }
     }
-    if (-not (Get-Command Add-VhciModuleError -ErrorAction SilentlyContinue)) {
+    if (-not (Get-Command Add-VhciModuleError -ErrorAction SilentlyContinue | Where-Object { $_.CommandType -eq 'Cmdlet' })) {
         function global:Add-VhciModuleError { param([string]$CollectorName, [string]$ErrorMessage) }
     }
 
@@ -151,7 +164,8 @@ BeforeAll {
             $ParentJob = $null,
             [switch]$ThrowOnGetParentJob,
             $LastBackup = $null,
-            [switch]$ThrowOnGetLastBackup
+            [switch]$ThrowOnGetLastBackup,
+            [double]$IncludedSize = 0
         )
         $ParentJobCapture       = $ParentJob
         $ThrowParentJobCapture  = [bool]$ThrowOnGetParentJob
@@ -168,7 +182,7 @@ BeforeAll {
             TypeToString        = $TypeToString
             Info                = [PSCustomObject]@{
                 PwdKeyId           = $null
-                IncludedSize       = 0
+                IncludedSize       = $IncludedSize
                 TargetRepositoryId = [PSCustomObject]@{ Guid = [guid]::Empty }
             }
             Options             = [PSCustomObject]@{
@@ -952,13 +966,14 @@ Describe 'Replica jobs bypass tier 1/2 entirely' {
     }
 
     It 'a Replica job whose GetLastBackup() throws falls back to Info.IncludedSize / 0' {
-        $ReplicaJob  = script:New-FakeJob -Name 'VMware - Replicas' -TypeToString 'VMware Replication' -ThrowOnGetLastBackup
+        $ReplicaJob  = script:New-FakeJob -Name 'VMware - Replicas' -TypeToString 'VMware Replication' -ThrowOnGetLastBackup -IncludedSize 12.5
         $MorpheusJob = script:New-FakeJob -Name 'MorpheusJob' -TypeToString 'HPE Morpheus VME Backup'
         Mock Get-VBRJob -MockWith { @($ReplicaJob, $MorpheusJob) }
         Mock Get-VBRRestorePoint -MockWith { @() }
         Get-VhcJob
         $Row = $script:CapturedJobRows | Where-Object { $_.Name -eq 'VMware - Replicas' }
-        $Row.OnDiskGB | Should -Be 0
+        $Row.OnDiskGB     | Should -Be 0
+        $Row.OriginalSize | Should -Be 12.5
     }
 
     It 'does not abort the sweep when a Replica job has no Id' {
@@ -981,6 +996,30 @@ Describe 'Replica jobs bypass tier 1/2 entirely' {
         Get-VhcJob
         $Row = $script:CapturedJobRows | Where-Object { $_.Name -eq 'MorpheusJob' }
         $Row.OnDiskGB | Should -Be 11
+    }
+
+    It 'logs a WARNING when a Replica job already carries a tier-1/2-matched restore point before the overwrite' {
+        # $NonReplicaJobs only gates whether the sweep runs at all - it does
+        # NOT exclude Replica jobs from tier 1/2 matching (only the
+        # restore point's own Type -eq 'Snapshot' check does that). So a
+        # non-Snapshot restore point whose GetSourceJob() resolves back to
+        # a Replication-type job can land in $RestorePointsByJob before this
+        # loop unconditionally overwrites it - previously silent, now logged.
+        $script:LogMessages = [System.Collections.Generic.List[string]]::new()
+        Mock Write-LogFile -MockWith { $script:LogMessages.Add($Message) }
+
+        $ReplicaJob  = script:New-FakeJob -Name 'Hyper-V - Replicas' -TypeToString 'Hyper-V Replication' -LastBackup ([PSCustomObject]@{ Id = [guid]::NewGuid() })
+        $MorpheusJob = script:New-FakeJob -Name 'MorpheusJob' -TypeToString 'HPE Morpheus VME Backup'
+        Mock Get-VBRJob -MockWith { @($ReplicaJob, $MorpheusJob) }
+        Mock Get-VBRRestorePoint -MockWith {
+            if ($null -eq $Backup) {
+                # Non-Snapshot restore point that tier 1 resolves straight
+                # back to the Replica job itself via GetSourceJob().
+                @( (script:New-FakeRestorePoint -ObjectId ([guid]'50505050-5050-5050-5050-505050505050') -ApproxSize 5GB -BackupSize 3GB -SourceJob $ReplicaJob) )
+            } else { @() }
+        }
+        Get-VhcJob
+        @($script:LogMessages | Where-Object { $_ -match "Replica job 'Hyper-V - Replicas' had 1 tier-1/2-matched restore point" }).Count | Should -Be 1
     }
 }
 
