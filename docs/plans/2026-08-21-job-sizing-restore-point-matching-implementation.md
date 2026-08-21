@@ -50,7 +50,7 @@ Using `+=` (append, not overwrite) makes this correct regardless of whether Pest
 - Modify: `vHC/HC_Reporting/Tools/Scripts/HealthCheck/VBR/vHC-VbrConfig/Public/Get-VhcJob.Tests.ps1`
 - Modify: `vHC/HC_Reporting/Tools/Scripts/HealthCheck/VBR/vHC-VbrConfig/Public/Get-VhcJob.ps1`
 
-- [ ] **Step 1: Add test infrastructure — fix the `Get-VBRRestorePoint` stub and add `New-FakeJob`**
+- [x] **Step 1: Add test infrastructure — fix the `Get-VBRRestorePoint` stub and add `New-FakeJob`**
 
 In `Get-VhcJob.Tests.ps1`, replace the existing stub (lines 37-39):
 
@@ -163,7 +163,7 @@ Immediately after the existing `New-FakeStandaloneBackup` function (ends at line
     }
 ```
 
-- [ ] **Step 2: Write the failing test**
+- [x] **Step 2: Write the failing test**
 
 Append a new `Describe` block at the end of `Get-VhcJob.Tests.ps1`:
 
@@ -300,13 +300,13 @@ This references `New-FakeRestorePoint`, which does not exist yet — add it now 
 
 Add both of these directly after `New-FakeJob` from Step 1.
 
-- [ ] **Step 3: Run the tests to verify they fail**
+- [x] **Step 3: Run the tests to verify they fail**
 
 Run: `pwsh -Command "Invoke-Pester -Path 'vHC/HC_Reporting/Tools/Scripts/HealthCheck/VBR/vHC-VbrConfig/Public/Get-VhcJob.Tests.ps1' -Output Detailed"`
 
 Expected: The new `Describe 'Performance gate...'` block's three tests FAIL — `$script:UnscopedCalls` stays `0` in the first test (current code never calls `Get-VBRRestorePoint` without `-Backup`), and the third test's `$Row` may be `$null` or the assertions otherwise fail, because `$NeedsSweep` doesn't exist yet and `Export-VhciCsv` isn't being fed rows via the path this test expects. All existing `ISC-*` tests still PASS (untouched so far).
 
-- [ ] **Step 4: Implement the gate**
+- [x] **Step 4: Implement the gate**
 
 In `Get-VhcJob.ps1`, replace (current lines 80-94; the replace is driven by matched text, not line numbers, so this reference is for orientation only):
 
@@ -382,19 +382,19 @@ with:
             $TotalOnDiskGB = 0
 ```
 
-- [ ] **Step 5: Run the tests to verify they pass**
+- [x] **Step 5: Run the tests to verify they pass**
 
 Run: `pwsh -Command "Invoke-Pester -Path 'vHC/HC_Reporting/Tools/Scripts/HealthCheck/VBR/vHC-VbrConfig/Public/Get-VhcJob.Tests.ps1' -Output Detailed"`
 
 Expected: All three new tests PASS.
 
-- [ ] **Step 6: Run the full existing suite to confirm no regressions**
+- [x] **Step 6: Run the full existing suite to confirm no regressions**
 
 Run: `pwsh -Command "Invoke-Pester -Path 'vHC/HC_Reporting/Tools/Scripts/HealthCheck/VBR/vHC-VbrConfig/Public/Get-VhcJob.Tests.ps1' -Output Detailed"`
 
 Expected: All `ISC-1` through `ISC-10` tests still PASS (their surviving standalone jobs carry `TypeToString = 'Agent'`, which is not on the allowlist, so `$NeedsSweep` becomes `$true` for those tests — confirm the sweep's empty body doesn't throw, and that these jobs' `Info.IncludedSize = 0` fallback still yields the same `0` On-Disk GB / Source Size these tests already implicitly rely on).
 
-- [ ] **Step 7: Commit**
+- [x] **Step 7: Commit**
 
 ```bash
 git add vHC/HC_Reporting/Tools/Scripts/HealthCheck/VBR/vHC-VbrConfig/Public/Get-VhcJob.ps1 \
@@ -415,7 +415,7 @@ matching logic lands in follow-up commits."
 - Modify: `vHC/HC_Reporting/Tools/Scripts/HealthCheck/VBR/vHC-VbrConfig/Public/Get-VhcJob.Tests.ps1`
 - Modify: `vHC/HC_Reporting/Tools/Scripts/HealthCheck/VBR/vHC-VbrConfig/Public/Get-VhcJob.ps1`
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 Append to the `Describe 'Performance gate...'` block from Task 1 a new sibling `Describe`:
 
@@ -455,13 +455,13 @@ Describe 'Tier 1: Id-based match via GetSourceJob()' {
 }
 ```
 
-- [ ] **Step 2: Run the test to verify it fails**
+- [x] **Step 2: Run the test to verify it fails**
 
 Run: `pwsh -Command "Invoke-Pester -Path 'vHC/HC_Reporting/Tools/Scripts/HealthCheck/VBR/vHC-VbrConfig/Public/Get-VhcJob.Tests.ps1' -Output Detailed"`
 
 Expected: FAIL — `$Row.OnDiskGB` is `0` (or `$Row` is present but zeroed), because the sweep's `try` block only fetches and logs; nothing buckets restore points into `$RestorePointsByJob` yet.
 
-- [ ] **Step 3: Implement tier 1's direct match**
+- [x] **Step 3: Implement tier 1's direct match**
 
 In `Get-VhcJob.ps1`, replace:
 
@@ -500,13 +500,13 @@ with:
         } catch {
 ```
 
-- [ ] **Step 4: Run the test to verify it passes**
+- [x] **Step 4: Run the test to verify it passes**
 
 Run: `pwsh -Command "Invoke-Pester -Path 'vHC/HC_Reporting/Tools/Scripts/HealthCheck/VBR/vHC-VbrConfig/Public/Get-VhcJob.Tests.ps1' -Output Detailed"`
 
 Expected: PASS. Also re-confirm Task 1's three tests and all `ISC-*` tests still PASS.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add vHC/HC_Reporting/Tools/Scripts/HealthCheck/VBR/vHC-VbrConfig/Public/Get-VhcJob.ps1 \
@@ -526,7 +526,7 @@ directly to the job Get-VBRJob returns."
 - Modify: `vHC/HC_Reporting/Tools/Scripts/HealthCheck/VBR/vHC-VbrConfig/Public/Get-VhcJob.Tests.ps1`
 - Modify: `vHC/HC_Reporting/Tools/Scripts/HealthCheck/VBR/vHC-VbrConfig/Public/Get-VhcJob.ps1`
 
-- [ ] **Step 1: Write the failing tests**
+- [x] **Step 1: Write the failing tests**
 
 Add to `Describe 'Tier 1: Id-based match via GetSourceJob()'`:
 
@@ -580,13 +580,13 @@ Add to `Describe 'Tier 1: Id-based match via GetSourceJob()'`:
     }
 ```
 
-- [ ] **Step 2: Run the tests to verify they fail**
+- [x] **Step 2: Run the tests to verify they fail**
 
 Run: `pwsh -Command "Invoke-Pester -Path 'vHC/HC_Reporting/Tools/Scripts/HealthCheck/VBR/vHC-VbrConfig/Public/Get-VhcJob.Tests.ps1' -Output Detailed"`
 
 Expected: The first new test FAILS — `$NeedsSweep` is `$true` (HPE Morpheus VME Backup isn't allowlisted) so the sweep runs, but today's tier 1 (Task 2's code, no walk-up yet) buckets the restore point directly under `$ChildJob`'s Id, and `HPE Morpheus - Windows - Linux`'s row shows `OnDiskGB = 0`. The second and third tests already PASS — test 2 needs no walk-up at all (there's no child job in that scenario, so direct tier-1 matching from Task 2 already handles it), and test 3's `GetParentJob()` throw doesn't matter yet either, since without Step 3's code there's no walk-up attempt to throw from. Both are legitimate regression guards for the behavior Step 3 is about to add, not tests that happen to pass by accident.
 
-- [ ] **Step 3: Implement the walk-up**
+- [x] **Step 3: Implement the walk-up**
 
 In `Get-VhcJob.ps1`, replace:
 
@@ -613,13 +613,13 @@ with:
                 $JobIdKey = $SourceJob.Id.ToString()
 ```
 
-- [ ] **Step 4: Run the tests to verify they pass**
+- [x] **Step 4: Run the tests to verify they pass**
 
 Run: `pwsh -Command "Invoke-Pester -Path 'vHC/HC_Reporting/Tools/Scripts/HealthCheck/VBR/vHC-VbrConfig/Public/Get-VhcJob.Tests.ps1' -Output Detailed"`
 
 Expected: All three new tests PASS. Re-confirm Tasks 1-2's tests and all `ISC-*` tests still PASS.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add vHC/HC_Reporting/Tools/Scripts/HealthCheck/VBR/vHC-VbrConfig/Public/Get-VhcJob.ps1 \
@@ -706,13 +706,17 @@ Since a silently-lost restore point and a correctly-rejected one both show `OnDi
         }
         Get-VhcJob
         $SweepLine = $script:LogMessages | Where-Object { $_ -match 'matched via tier 1' } | Select-Object -Last 1
-        $SweepLine | Should -Match '0 matched via tier 1'
+        $SweepLine | Should -Match '\b0 matched via tier 1\b'
     }
 ```
 
 Note the `Mock Write-LogFile` override inside the `It` block — Pester allows re-mocking within a test to layer a more specific behavior on top of the `BeforeEach` mock. Re-run Step 2 with this version: FAIL, because today's log line reads `1 matched via tier 1` (the invalid Id is being counted as a match).
 
+(The regex is `\b`-anchored rather than a bare `'0 matched via tier 1'` substring, so it can't accidentally match `10 matched via tier 1` on a busier sweep — Task 3's code review flagged the unanchored form as a false-positive risk.)
+
 - [ ] **Step 3: Implement the `$KnownJobIds` validation**
+
+**Amended against the actual code landed in Task 3 (commit `ea16fd4`):** Task 3 folded forward two fixes from Task 2's review — a `$Tier1Failed` counter (incremented when `GetSourceJob()` throws) and a null-Id guard (`if ($null -eq $SourceJob.Id) { continue }`) — that aren't reflected in the plan text above. The actual current code has both. Use the version below, which preserves them and additionally routes the null-Id case into `$Unresolved` (Task 3's own code review flagged that a null Id *is* an unresolved condition tier 2 has a genuine shot at via the name-based path — silently dropping it would foreclose a recoverable case once Task 5 lands).
 
 In `Get-VhcJob.ps1`, replace:
 
@@ -720,9 +724,10 @@ In `Get-VhcJob.ps1`, replace:
             $AllRestorePoints = @(Get-VBRRestorePoint -WarningAction SilentlyContinue)
 
             $Tier1Matched = 0
+            $Tier1Failed  = 0
             foreach ($RestorePoint in $AllRestorePoints) {
                 $SourceJob = $null
-                try { $SourceJob = $RestorePoint.GetSourceJob() } catch {}
+                try { $SourceJob = $RestorePoint.GetSourceJob() } catch { $Tier1Failed++ }
                 if ($null -eq $SourceJob) { continue }
 
                 try {
@@ -730,6 +735,7 @@ In `Get-VhcJob.ps1`, replace:
                     if ($null -ne $ParentJob) { $SourceJob = $ParentJob }
                 } catch {}
 
+                if ($null -eq $SourceJob.Id) { continue }
                 $JobIdKey = $SourceJob.Id.ToString()
                 if (-not $RestorePointsByJob.ContainsKey($JobIdKey)) {
                     $RestorePointsByJob[$JobIdKey] = [System.Collections.ArrayList]::new()
@@ -738,7 +744,7 @@ In `Get-VhcJob.ps1`, replace:
                 $Tier1Matched++
             }
 
-            Write-LogFile "Restore point sweep: $($AllRestorePoints.Count) restore points found server-wide, $Tier1Matched matched via tier 1"
+            Write-LogFile "Restore point sweep: $($AllRestorePoints.Count) restore points found server-wide, $Tier1Matched matched via tier 1, $Tier1Failed tier-1 lookup failures"
 ```
 
 with:
@@ -751,9 +757,10 @@ with:
 
             $Unresolved   = [System.Collections.ArrayList]::new()
             $Tier1Matched = 0
+            $Tier1Failed  = 0
             foreach ($RestorePoint in $AllRestorePoints) {
                 $SourceJob = $null
-                try { $SourceJob = $RestorePoint.GetSourceJob() } catch {}
+                try { $SourceJob = $RestorePoint.GetSourceJob() } catch { $Tier1Failed++ }
                 if ($null -eq $SourceJob) { [void]$Unresolved.Add($RestorePoint); continue }
 
                 try {
@@ -761,6 +768,7 @@ with:
                     if ($null -ne $ParentJob) { $SourceJob = $ParentJob }
                 } catch {}
 
+                if ($null -eq $SourceJob.Id) { [void]$Unresolved.Add($RestorePoint); continue }
                 $JobIdKey = $SourceJob.Id.ToString()
                 if (-not $KnownJobIds.Contains($JobIdKey)) { [void]$Unresolved.Add($RestorePoint); continue }
 
@@ -771,10 +779,10 @@ with:
                 $Tier1Matched++
             }
 
-            Write-LogFile "Restore point sweep: $($AllRestorePoints.Count) restore points found server-wide, $Tier1Matched matched via tier 1, $($Unresolved.Count) unresolved"
+            Write-LogFile "Restore point sweep: $($AllRestorePoints.Count) restore points found server-wide, $Tier1Matched matched via tier 1, $Tier1Failed tier-1 lookup failures, $($Unresolved.Count) unresolved"
 ```
 
-(`$Unresolved` isn't consumed by anything yet — tier 2, added in Task 5, is what reads it. Building the list now and reading it later is intentional; it keeps this task's diff focused on the validation check alone.)
+(`$Unresolved` isn't consumed by anything yet — tier 2, added in Task 5, is what reads it. Building the list now and reading it later is intentional; it keeps this task's diff focused on the validation check alone. `$Tier1Failed` is preserved rather than folded into `$Unresolved`'s count — "GetSourceJob threw" and "resolved but rejected" are different support conversations and shouldn't collapse into one number.)
 
 - [ ] **Step 4: Run the test to verify it passes**
 
@@ -909,6 +917,8 @@ Expected: The first two tests FAIL (`Linux-01`'s and `web01-schedule-backups`'s 
 
 - [ ] **Step 3: Implement tier 2 and the `Snapshot` skip**
 
+**Amended against the actual code landed in Tasks 3-4:** the plan text below predates Task 3's `$Tier1Failed` fold-forward and Task 4's amendment (see Task 4's own amendment note above). Use the version here, which carries `$Tier1Failed` through unchanged and keeps the final log line's `matched via tier 1` phrase intact — Task 4's own test (`Should -Match '\b0 matched via tier 1\b'`) greps for that exact phrase, and it must keep matching after this task's log-line rewrite.
+
 In `Get-VhcJob.ps1`, replace:
 
 ```powershell
@@ -917,9 +927,10 @@ In `Get-VhcJob.ps1`, replace:
 
             $Unresolved   = [System.Collections.ArrayList]::new()
             $Tier1Matched = 0
+            $Tier1Failed  = 0
             foreach ($RestorePoint in $AllRestorePoints) {
                 $SourceJob = $null
-                try { $SourceJob = $RestorePoint.GetSourceJob() } catch {}
+                try { $SourceJob = $RestorePoint.GetSourceJob() } catch { $Tier1Failed++ }
                 if ($null -eq $SourceJob) { [void]$Unresolved.Add($RestorePoint); continue }
 
                 try {
@@ -927,6 +938,7 @@ In `Get-VhcJob.ps1`, replace:
                     if ($null -ne $ParentJob) { $SourceJob = $ParentJob }
                 } catch {}
 
+                if ($null -eq $SourceJob.Id) { [void]$Unresolved.Add($RestorePoint); continue }
                 $JobIdKey = $SourceJob.Id.ToString()
                 if (-not $KnownJobIds.Contains($JobIdKey)) { [void]$Unresolved.Add($RestorePoint); continue }
 
@@ -937,7 +949,7 @@ In `Get-VhcJob.ps1`, replace:
                 $Tier1Matched++
             }
 
-            Write-LogFile "Restore point sweep: $($AllRestorePoints.Count) restore points found server-wide, $Tier1Matched matched via tier 1, $($Unresolved.Count) unresolved"
+            Write-LogFile "Restore point sweep: $($AllRestorePoints.Count) restore points found server-wide, $Tier1Matched matched via tier 1, $Tier1Failed tier-1 lookup failures, $($Unresolved.Count) unresolved"
 ```
 
 with:
@@ -954,6 +966,7 @@ with:
             $Tier1MatchedJobIds = New-Object 'System.Collections.Generic.HashSet[string]'
             $Unresolved         = [System.Collections.ArrayList]::new()
             $Tier1Matched       = 0
+            $Tier1Failed        = 0
             $Tier2Matched       = 0
 
             # Tier 1: Id-based via GetSourceJob() (+ GetParentJob() walk-up).
@@ -964,7 +977,7 @@ with:
                 if ($RestorePoint.Type -eq 'Snapshot') { [void]$Unresolved.Add($RestorePoint); continue }
 
                 $SourceJob = $null
-                try { $SourceJob = $RestorePoint.GetSourceJob() } catch {}
+                try { $SourceJob = $RestorePoint.GetSourceJob() } catch { $Tier1Failed++ }
                 if ($null -eq $SourceJob) { [void]$Unresolved.Add($RestorePoint); continue }
 
                 try {
@@ -972,6 +985,7 @@ with:
                     if ($null -ne $ParentJob) { $SourceJob = $ParentJob }
                 } catch {}
 
+                if ($null -eq $SourceJob.Id) { [void]$Unresolved.Add($RestorePoint); continue }
                 $JobIdKey = $SourceJob.Id.ToString()
                 if (-not $KnownJobIds.Contains($JobIdKey)) { [void]$Unresolved.Add($RestorePoint); continue }
 
@@ -1005,8 +1019,10 @@ with:
                 $Tier2Matched++
             }
 
-            Write-LogFile "Restore point matching: $Tier1Matched tier-1, $Tier2Matched tier-2, $($AllRestorePoints.Count - $Tier1Matched - $Tier2Matched) unmatched/orphaned/snapshot"
+            Write-LogFile "Restore point matching: $Tier1Matched matched via tier 1, $Tier1Failed tier-1 lookup failures, $Tier2Matched tier-2, $($AllRestorePoints.Count - $Tier1Matched - $Tier2Matched) unmatched/orphaned/snapshot"
 ```
+
+(This log line's phrasing keeps `matched via tier 1` intact — Task 4's own test greps for that exact phrase, and it would silently break here if the wording changed.)
 
 - [ ] **Step 4: Run the tests to verify they pass**
 
@@ -1156,7 +1172,7 @@ In `Get-VhcJob.ps1`, replace:
                 $Tier2Matched++
             }
 
-            Write-LogFile "Restore point matching: $Tier1Matched tier-1, $Tier2Matched tier-2, $($AllRestorePoints.Count - $Tier1Matched - $Tier2Matched) unmatched/orphaned/snapshot"
+            Write-LogFile "Restore point matching: $Tier1Matched matched via tier 1, $Tier1Failed tier-1 lookup failures, $Tier2Matched tier-2, $($AllRestorePoints.Count - $Tier1Matched - $Tier2Matched) unmatched/orphaned/snapshot"
 ```
 
 with:
@@ -1180,14 +1196,66 @@ with:
                 foreach ($RestorePoint in $ReplicaPoints) { [void]$RestorePointsByJob[$JobIdKey].Add($RestorePoint) }
             }
 
-            Write-LogFile "Restore point matching: $Tier1Matched tier-1, $Tier2Matched tier-2, $($AllRestorePoints.Count - $Tier1Matched - $Tier2Matched) unmatched/orphaned/snapshot"
+            Write-LogFile "Restore point matching: $Tier1Matched matched via tier 1, $Tier1Failed tier-1 lookup failures, $Tier2Matched tier-2, $($AllRestorePoints.Count - $Tier1Matched - $Tier2Matched) unmatched/orphaned/snapshot"
 ```
+
+- [ ] **Step 3b: Amend the sweep's outer catch — reset `$NeedsSweep` on failure (plan amendment, flagged by Task 1's code review)**
+
+Task 1's code review found that the sweep's outer `catch` (added in Task 1, untouched since) doesn't reset `$NeedsSweep` to `$false` on failure. Left as-is, a sweep exception (thrown at any point during tiers 1/2 or the Replica loop above) leaves the main loop still branching on `$NeedsSweep = $true`, reading from a `$RestorePointsByJob` that's now permanently empty for every remaining job — including allowlisted VMware/Hyper-V jobs that were sized correctly before this branch existed, and including Replica jobs, which ADR 0022 requires to "always use the per-job path regardless of whether the sweep runs." Both guarantees currently break on a sweep failure.
+
+The fix is one line, and it composes cleanly with the main loop's existing `if ($NeedsSweep) { ... } else { $Job.GetLastBackup() ... }` branch (added in Task 1): flipping `$NeedsSweep` to `$false` makes every remaining job — allowlisted or not, Replica or not — fall through to the original, already-correct per-job path, with no other code change required.
+
+In `Get-VhcJob.ps1`, replace:
+
+```powershell
+        } catch {
+            Write-LogFile "Restore point sweep failed: $($_.Exception.Message)" -LogLevel "ERROR"
+            Add-VhciModuleError -CollectorName 'Jobs' -ErrorMessage $_.Exception.Message
+        }
+```
+
+with:
+
+```powershell
+        } catch {
+            Write-LogFile "Restore point sweep failed: $($_.Exception.Message)" -LogLevel "ERROR"
+            Add-VhciModuleError -CollectorName 'Jobs' -ErrorMessage $_.Exception.Message
+            $NeedsSweep = $false
+        }
+```
+
+Add a test to `Describe 'Performance gate: sweep triggers on unrecognized job types'` (from Task 1):
+
+```powershell
+    It 'falls back to the per-job method for every job when the sweep itself throws' {
+        Mock Get-VBRJob -MockWith {
+            @(
+                (script:New-FakeJob -Name 'VMwareJob' -TypeToString 'VMware Backup' -LastBackup ([PSCustomObject]@{ Id = [guid]::NewGuid() })),
+                (script:New-FakeJob -Name 'MorpheusJob' -TypeToString 'HPE Morpheus VME Backup' -LastBackup ([PSCustomObject]@{ Id = [guid]::NewGuid() }))
+            )
+        }
+        Mock Get-VBRRestorePoint -MockWith {
+            if ($null -eq $Backup) {
+                throw 'Simulated sweep failure'
+            } else {
+                @( (script:New-FakeRestorePoint -ObjectId ([guid]'12121212-1212-1212-1212-121212121212') -ApproxSize 9GB -BackupSize 6GB) )
+            }
+        }
+        Get-VhcJob
+        $VMwareRow   = $script:CapturedJobRows | Where-Object { $_.Name -eq 'VMwareJob' }
+        $MorpheusRow = $script:CapturedJobRows | Where-Object { $_.Name -eq 'MorpheusJob' }
+        $VMwareRow.OnDiskGB   | Should -Be 6
+        $MorpheusRow.OnDiskGB | Should -Be 6
+    }
+```
+
+This asserts BOTH jobs recover via the per-job fallback after the sweep throws — including `MorpheusJob`, which triggered the sweep in the first place and would otherwise be the job most starved of a fallback (it has no tier-1/2 result to fall back to; only `$NeedsSweep = $false` gives it one). Run the file-scoped Pester command; expect this test to FAIL before the fix (both rows show `0`, since `$NeedsSweep` stays `$true` and `$RestorePointsByJob` has nothing for either job — the sweep threw before either tier could populate it) and PASS after.
 
 - [ ] **Step 4: Run the tests to verify they pass**
 
 Run: `pwsh -Command "Invoke-Pester -Path 'vHC/HC_Reporting/Tools/Scripts/HealthCheck/VBR/vHC-VbrConfig/Public/Get-VhcJob.Tests.ps1' -Output Detailed"`
 
-Expected: All tests PASS, including every `Describe` block from Tasks 1-6 and all `ISC-1` through `ISC-10` tests.
+Expected: All tests PASS, including every `Describe` block from Tasks 1-6, Step 3b's sweep-failure-fallback test, and all `ISC-1` through `ISC-10` tests.
 
 - [ ] **Step 5: Run the complete test file one more time as the final regression gate**
 
@@ -1223,7 +1291,13 @@ Replica-type jobs (VMware/Hyper-V Replication) are sized via the same
 GetLastBackup() + Get-VBRRestorePoint -Backup call production already
 uses for them - correct today, never routed through tier 1/2. This
 completes the tiered sweep (ADR 0021) and its allowlist gate (ADR
-0022); flips the design spec's status to Implemented."
+0022); flips the design spec's status to Implemented.
+
+Also resets \$NeedsSweep to \$false in the sweep's outer catch (flagged
+by Task 1's code review): without it, a sweep exception left every
+remaining job - allowlisted and Replica alike - reading from a
+permanently-empty dictionary instead of falling back to the per-job
+method ADR 0022 requires unconditionally for Replicas."
 ```
 
 ---
