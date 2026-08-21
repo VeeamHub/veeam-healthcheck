@@ -653,6 +653,9 @@ Describe 'Tier 1: Id-based match via GetSourceJob()' {
     }
 
     It 'skips a restore point whose resolved job has no Id, without aborting the sweep' {
+        $script:LogMessages = [System.Collections.Generic.List[string]]::new()
+        Mock Write-LogFile -MockWith { $script:LogMessages.Add($Message) }
+
         $NoIdJob = [PSCustomObject]@{ Name = 'ObjectWithNoId' }
         $RealJob = script:New-FakeJob -Name 'RealJob' -TypeToString 'HPE Morpheus VME Backup'
         Mock Get-VBRJob -MockWith { @($RealJob) }
@@ -664,7 +667,8 @@ Describe 'Tier 1: Id-based match via GetSourceJob()' {
                 )
             } else { @() }
         }
-        { Get-VhcJob } | Should -Not -Throw
+        Get-VhcJob
+        @($script:LogMessages | Where-Object { $_ -match 'matched via tier 1' }).Count | Should -Be 1
         $Row = $script:CapturedJobRows | Where-Object { $_.Name -eq 'RealJob' }
         $Row.OnDiskGB | Should -Be 9
     }
@@ -731,6 +735,9 @@ Describe 'Tier 1: resolved Id must be a member of $Jobs' {
         # behind it that does. The $KnownJobIds build must skip the null
         # without throwing, or the sweep's outer catch aborts the whole
         # sweep and every job in the run reports OnDiskGB = 0.
+        $script:LogMessages = [System.Collections.Generic.List[string]]::new()
+        Mock Write-LogFile -MockWith { $script:LogMessages.Add($Message) }
+
         Mock Get-VBRJob -MockWith { throw 'Get-VBRJob failed' }
 
         $MacAgentJob = script:New-FakeJob -Name 'MacAgentJob' -TypeToString 'Mac Agent Backup'
@@ -744,8 +751,100 @@ Describe 'Tier 1: resolved Id must be a member of $Jobs' {
             } else { @() }
         }
 
-        { Get-VhcJob } | Should -Not -Throw
+        Get-VhcJob
+        @($script:LogMessages | Where-Object { $_ -match 'matched via tier 1' }).Count | Should -Be 1
         $Row = $script:CapturedJobRows | Where-Object { $_.Name -eq 'MacAgentJob' }
         $Row.OnDiskGB | Should -Be 6
+    }
+}
+
+# ---------------------------------------------------------------------------
+# Tier 2 (ADR 0021): gated name-based fallback via GetBackup().GetParentOrThis().Name.
+# ---------------------------------------------------------------------------
+Describe 'Tier 2: gated name-based fallback' {
+
+    BeforeEach {
+        $script:CapturedJobRows = @()
+        Mock Write-LogFile                 -MockWith { }
+        Mock Get-VBRConfigurationBackupJob -MockWith { $null }
+        Mock Invoke-VhciJobSubCollectors   -MockWith { }
+        Mock Add-VhciModuleError           -MockWith { }
+        Mock Get-VBRBackup                 -MockWith { @() }
+        Mock Export-VhciCsv -MockWith {
+            if ($FileName -eq '_Jobs.csv' -and $InputObject) {
+                $script:CapturedJobRows += @($InputObject)
+            }
+        }
+    }
+
+    It 'resolves via tier 2 when GetSourceJob() throws and the job has zero tier-1 matches' {
+        $CloudJob = script:New-FakeJob -Name 'Linux-01' -TypeToString 'Azure IaaS Backup'
+        Mock Get-VBRJob -MockWith { @($CloudJob) }
+        Mock Get-VBRRestorePoint -MockWith {
+            if ($null -eq $Backup) {
+                @( (script:New-FakeRestorePoint -ObjectId ([guid]'77777777-7777-7777-7777-777777777777') -ApproxSize 157GB -BackupSize 29.30GB -ThrowOnGetSourceJob -BackupParentOrThisName 'Linux-01') )
+            } else { @() }
+        }
+        Get-VhcJob
+        $Row = $script:CapturedJobRows | Where-Object { $_.Name -eq 'Linux-01' }
+        $Row.OnDiskGB     | Should -Be 29.30
+        $Row.OriginalSize | Should -Be 157GB
+    }
+
+    It 'resolves via tier 2 when GetSourceJob() returns $null (not throwing) and the job has zero tier-1 matches' {
+        # Same fallthrough-to-tier-2 path as the throw case above, but via the
+        # OTHER branch of tier 1's "if ($null -eq $SourceJob)" check - confirms
+        # both routes into $Unresolved converge on the same tier-2 behavior.
+        $CloudJob = script:New-FakeJob -Name 'web01-schedule-backups' -TypeToString 'Azure IaaS Backup'
+        Mock Get-VBRJob -MockWith { @($CloudJob) }
+        Mock Get-VBRRestorePoint -MockWith {
+            if ($null -eq $Backup) {
+                @( (script:New-FakeRestorePoint -ObjectId ([guid]'87878787-8787-8787-8787-878787878787') -ApproxSize 81GB -BackupSize 36.43GB -SourceJob $null -BackupParentOrThisName 'web01-schedule-backups') )
+            } else { @() }
+        }
+        Get-VhcJob
+        $Row = $script:CapturedJobRows | Where-Object { $_.Name -eq 'web01-schedule-backups' }
+        $Row.OnDiskGB     | Should -Be 36.43
+        $Row.OriginalSize | Should -Be 81GB
+    }
+
+    It 'suppresses a tier-2 name match when the resolved job already has a tier-1 match' {
+        $HpeJob = script:New-FakeJob -Name 'HPE Morpheus - Windows - Linux' -TypeToString 'HPE Morpheus VME Backup'
+        Mock Get-VBRJob -MockWith { @($HpeJob) }
+        Mock Get-VBRRestorePoint -MockWith {
+            if ($null -eq $Backup) {
+                @(
+                    # Tier-1 match: resolves cleanly via GetSourceJob().
+                    (script:New-FakeRestorePoint -Name 'Windows01-current' -ObjectId ([guid]'88888888-8888-8888-8888-888888888881') -ApproxSize 190GB -BackupSize 72.99GB -SourceJob $HpeJob),
+                    # Stale machine sharing a display name with an active one -
+                    # GetSourceJob() throws, and the name resolves to the SAME
+                    # job, which already has a tier-1 match above - suppressed.
+                    (script:New-FakeRestorePoint -Name 'Windows01-stale' -ObjectId ([guid]'88888888-8888-8888-8888-888888888882') -ApproxSize 190GB -BackupSize 117GB -ThrowOnGetSourceJob -BackupParentOrThisName 'HPE Morpheus - Windows - Linux')
+                )
+            } else { @() }
+        }
+        Get-VhcJob
+        $Row = $script:CapturedJobRows | Where-Object { $_.Name -eq 'HPE Morpheus - Windows - Linux' }
+        $Row.OnDiskGB | Should -Be 72.99
+    }
+
+    It 'never resolves a Type=Snapshot restore point via either tier' {
+        # 'VMware Backup' alone would leave $NeedsSweep=$false and this test
+        # would pass because the sweep never ran, not because the skip logic
+        # under test works - add a non-allowlisted companion job (mirrors
+        # Task 6's Replica test) to force the sweep on. The realistic risk
+        # this guards is a VMware job in a mixed environment where a stray
+        # Snapshot-type point's name happens to resolve to it.
+        $VMwareJob   = script:New-FakeJob -Name 'VMware - Domain Controller' -TypeToString 'VMware Backup'
+        $MorpheusJob = script:New-FakeJob -Name 'MorpheusJob' -TypeToString 'HPE Morpheus VME Backup'
+        Mock Get-VBRJob -MockWith { @($VMwareJob, $MorpheusJob) }
+        Mock Get-VBRRestorePoint -MockWith {
+            if ($null -eq $Backup) {
+                @( (script:New-FakeRestorePoint -Type 'Snapshot' -ObjectId ([guid]'99999999-9999-9999-9999-999999999999') -ApproxSize 100GB -BackupSize 50GB -BackupParentOrThisName 'VMware - Domain Controller') )
+            } else { @() }
+        }
+        Get-VhcJob
+        $Row = $script:CapturedJobRows | Where-Object { $_.Name -eq 'VMware - Domain Controller' }
+        $Row.OnDiskGB | Should -Be 0
     }
 }

@@ -100,13 +100,31 @@ function Get-VhcJob {
         try {
             $AllRestorePoints = @(Get-VBRRestorePoint -WarningAction SilentlyContinue)
 
-            $KnownJobIds = New-Object 'System.Collections.Generic.HashSet[string]'
+            $JobIdByName = @{}
+            foreach ($j in @($Jobs)) {
+                if ($null -ne $j -and -not $JobIdByName.ContainsKey($j.Name)) { $JobIdByName[$j.Name] = $j.Id.ToString() }
+            }
+
+            # OrdinalIgnoreCase: $RestorePointsByJob (a Hashtable) looks up
+            # keys case-insensitively, so this gate must not be stricter than
+            # the thing it's gating - a case-sensitive HashSet here would risk
+            # silently dropping a resolved Id that only ever mismatches on case.
+            $KnownJobIds = [System.Collections.Generic.HashSet[string]]::new([System.StringComparer]::OrdinalIgnoreCase)
             foreach ($j in @($Jobs)) { if ($null -ne $j -and $null -ne $j.Id) { [void]$KnownJobIds.Add($j.Id.ToString()) } }
 
-            $Unresolved   = [System.Collections.ArrayList]::new()
-            $Tier1Matched = 0
-            $Tier1Failed  = 0
+            $Tier1MatchedJobIds = New-Object 'System.Collections.Generic.HashSet[string]'
+            $Unresolved         = [System.Collections.ArrayList]::new()
+            $Tier1Matched       = 0
+            $Tier1Failed        = 0
+            $Tier2Matched       = 0
+
+            # Tier 1: Id-based via GetSourceJob() (+ GetParentJob() walk-up).
+            # Snapshot-type (replication) restore points never resolve via
+            # GetSourceJob() - skip the doomed call; they're sized via the
+            # Replica loop added in a later change.
             foreach ($RestorePoint in $AllRestorePoints) {
+                if ($RestorePoint.Type -eq 'Snapshot') { [void]$Unresolved.Add($RestorePoint); continue }
+
                 $SourceJob = $null
                 try { $SourceJob = $RestorePoint.GetSourceJob() } catch { $Tier1Failed++ }
                 if ($null -eq $SourceJob) { [void]$Unresolved.Add($RestorePoint); continue }
@@ -126,10 +144,33 @@ function Get-VhcJob {
                     $RestorePointsByJob[$JobIdKey] = [System.Collections.ArrayList]::new()
                 }
                 [void]$RestorePointsByJob[$JobIdKey].Add($RestorePoint)
+                [void]$Tier1MatchedJobIds.Add($JobIdKey)
                 $Tier1Matched++
             }
 
-            Write-LogFile "Restore point sweep: $($AllRestorePoints.Count) restore points found server-wide, $Tier1Matched matched via tier 1, $Tier1Failed tier-1 lookup failures, $($Unresolved.Count) unresolved"
+            # Tier 2: name-based fallback, GATED - only accepted if the
+            # resolved job has zero tier-1 matches. Display names collide
+            # across genuinely different backup objects, so this cannot be
+            # trusted to override an existing Id-based match.
+            foreach ($RestorePoint in $Unresolved) {
+                if ($RestorePoint.Type -eq 'Snapshot') { continue }
+
+                $JobIdKey = $null
+                try {
+                    $ParentName = $RestorePoint.GetBackup().GetParentOrThis().Name
+                    if ($ParentName -and $JobIdByName.ContainsKey($ParentName)) { $JobIdKey = $JobIdByName[$ParentName] }
+                } catch {}
+                if (-not $JobIdKey) { continue }
+                if ($Tier1MatchedJobIds.Contains($JobIdKey)) { continue }
+
+                if (-not $RestorePointsByJob.ContainsKey($JobIdKey)) {
+                    $RestorePointsByJob[$JobIdKey] = [System.Collections.ArrayList]::new()
+                }
+                [void]$RestorePointsByJob[$JobIdKey].Add($RestorePoint)
+                $Tier2Matched++
+            }
+
+            Write-LogFile "Restore point matching: $Tier1Matched matched via tier 1, $Tier1Failed tier-1 lookup failures, $Tier2Matched tier-2, $($AllRestorePoints.Count - $Tier1Matched - $Tier2Matched) unmatched/orphaned/snapshot"
         } catch {
             Write-LogFile "Restore point sweep failed: $($_.Exception.Message)" -LogLevel "ERROR"
             Add-VhciModuleError -CollectorName 'Jobs' -ErrorMessage $_.Exception.Message
