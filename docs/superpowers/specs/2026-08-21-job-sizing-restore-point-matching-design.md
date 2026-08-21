@@ -16,9 +16,10 @@ a job. This has four known gaps:
 
 1. **Confirmed root cause of the 0 MB / 0 GB bug this design set out to fix**:
    for on-prem policy/plug-in-backed platforms — HPE Morpheus VME Backup,
-   Nutanix AHV Backup, and oVirt KVM Backup confirmed live, matching the same
-   restriction already documented for Proxmox in the Protected Workloads
-   investigation — `Get-VBRRestorePoint -Backup $LastBackup` throws:
+   Nutanix AHV Backup, oVirt KVM Backup, and Proxmox Backup, all confirmed
+   live (Proxmox previously documented only in the Protected Workloads
+   investigation; now independently confirmed here too) —
+   `Get-VBRRestorePoint -Backup $LastBackup` throws:
    `Cannot get restore points from backup <name>, because it is encrypted or
    created by an enterprise application plug-in.` This exception is inside
    `Get-VhcJob.ps1`'s existing outer per-job `try/catch`
@@ -105,6 +106,23 @@ restore points are excluded from both tiers and sized separately.
   validation lab) throw on `GetSourceJob()` rather than resolving, and
   exceptions at this scale are expensive (measured ~43s of throw cost for
   that population alone in an earlier, unoptimized version of this design).
+- **A resolved Id must be validated against `$Jobs`, not just non-null.**
+  `.GetSourceJob()` (even after the `.GetParentJob()` walk-up above) can
+  "succeed" by returning a real job-like object whose `Id` was never a
+  member of `$Jobs` to begin with — confirmed live for Backup Copy jobs,
+  which expose their restore points through a per-source-job/per-VM child
+  object (e.g. `GetSourceJob().Name` returning
+  `Backup Copy - VMware to Vault\VMware - Backup to Vault Direct`) that
+  `.GetParentJob()` either can't walk past (returns itself) or only walks
+  up one level to another child, never reaching the real copy job's own
+  `Id`. Before accepting a tier-1 result, check the resolved `Id` against a
+  `HashSet` built from `$Jobs`; if it isn't there, treat the restore point
+  as unresolved and let tier 2 attempt it instead of silently bucketing it
+  under a key nothing will ever look up. Confirmed live: tier 2's
+  `.GetBackup().GetParentOrThis().Name` resolves cleanly to the real copy
+  job's plain name for every case tested — this check is what gives tier 2
+  the chance to do that; without it, tier 1's false "success" pre-empts
+  tier 2 entirely. See Validation.
 
 ### Tier 2 — name-based fallback, via `.GetBackup().GetParentOrThis().Name`, GATED
 
@@ -201,12 +219,15 @@ Get-VhcJob.ps1 (Public, modified)
     │       $allRestorePoints   = Get-VBRRestorePoint             — one call, whole server
     │       $restorePointsByJob = @{}                             — [jobId string] -> ArrayList<RestorePoint>
     │       $tier1MatchedJobIds = HashSet<string>                 — job Ids tier 1 touched at least once
+    │       $knownJobIds        = HashSet<string> of $Jobs' own Ids — validates tier-1 resolution below
     │
     │       Tier 1 (Id-based), for each rp in $allRestorePoints:
     │           if (rp.Type -eq 'Snapshot') { unresolved.Add(rp); continue }   — routed to Replica handling below
     │           try { $sourceJob = rp.GetSourceJob() } catch { unresolved.Add(rp); continue }
     │           if ($null -eq $sourceJob) { unresolved.Add(rp); continue }
     │           try { $parent = $sourceJob.GetParentJob(); if ($parent) { $sourceJob = $parent } } catch {}
+    │           if (-not $knownJobIds.Contains($sourceJob.Id.ToString())) { unresolved.Add(rp); continue }
+    │               — resolved, but not to one of $Jobs (e.g. Backup Copy's per-source/per-VM child) - not a match
     │           $restorePointsByJob[$sourceJob.Id.ToString()].Add(rp)
     │           $tier1MatchedJobIds.Add($sourceJob.Id.ToString())
     │
@@ -238,6 +259,13 @@ try {
         if (-not $jobIdByName.ContainsKey($j.Name)) { $jobIdByName[$j.Name] = $j.Id.ToString() }
     }
 
+    # Validates tier-1 resolution below - a non-null GetSourceJob() result is
+    # NOT sufficient evidence of a match (see Solution: Backup Copy jobs
+    # resolve to per-source-job/per-VM child objects whose Id was never a
+    # member of $Jobs at all).
+    $knownJobIds = New-Object 'System.Collections.Generic.HashSet[string]'
+    foreach ($j in @($Jobs)) { [void]$knownJobIds.Add($j.Id.ToString()) }
+
     $tier1MatchedJobIds = New-Object 'System.Collections.Generic.HashSet[string]'
     $unresolved         = [System.Collections.ArrayList]::new()
     $tier1Matched       = 0
@@ -260,6 +288,8 @@ try {
         } catch {}
 
         $jobIdKey = $sourceJob.Id.ToString()
+        if (-not $knownJobIds.Contains($jobIdKey)) { [void]$unresolved.Add($rp); continue }
+
         if (-not $restorePointsByJob.ContainsKey($jobIdKey)) {
             $restorePointsByJob[$jobIdKey] = [System.Collections.ArrayList]::new()
         }
@@ -406,6 +436,7 @@ fake jobs with a `GetLastBackup` ScriptMethod (line 132). Add:
 |---|---|
 | `Get-VBRRestorePoint` (global sweep) throws | Logged via top-level try/catch; `Add-VhciModuleError`; `$restorePointsByJob` stays empty; every job falls back to `Info.IncludedSize`/0 On-Disk GB (today's existing "no last backup" fallback) |
 | `GetSourceJob()` throws or returns `$null` for a specific restore point | Falls through to tier 2 |
+| `GetSourceJob()` (+ `GetParentJob()` walk-up) resolves to a real object, but its `Id` isn't a member of `$Jobs` (confirmed live for Backup Copy jobs' per-source/per-VM child objects) | Not accepted as a tier-1 match; falls through to tier 2 instead of being bucketed under a key nothing looks up |
 | `.Type -eq 'Snapshot'` | Skipped by tier 1 (no `GetSourceJob()` attempt) and tier 2; sized via the Replica per-job path instead (see below) |
 | `GetSourceJob()` resolves, but to a per-machine child job (Managed Agents, Nutanix AHV Agent, HPE Morpheus VME Agent, oVirt KVM Agent) | `.GetParentJob()` walk-up resolves to the real top-level policy job's Id before bucketing — confirmed via live-lab comparison across these platforms |
 | `.GetParentJob()` throws | Caught; falls back to the original `GetSourceJob()` result's Id |
@@ -413,14 +444,14 @@ fake jobs with a `GetLastBackup` ScriptMethod (line 132). Add:
 | Tier 2: `GetBackup()`/`GetParentOrThis()` throws, or the resolved name isn't in `$Jobs` | Restore point stays unmatched — excluded from every job's totals |
 | Tier 2: name resolves, but that job already has ≥1 tier-1 match | Suppressed — discarded rather than attributed, since display names are not reliable identity across distinct backup objects (see Solution) |
 | A job's Id has no entry in `$restorePointsByJob` | `$RestorePoints` stays `@()`; same fallback as today's "no last backup" case |
-| Standalone agent job (via `.GetJob()`, ADR 0014) — tier 1/2 resolution unverified | Falls back to `Info.IncludedSize`/0 if unmatched — not a regression vs. today, but needs live validation to confirm it's actually matching (see Open Items) |
+| Standalone agent job (via `.GetJob()`, ADR 0014) | Resolves via tier 1 same as any other job — confirmed live (see Validation) |
 | Job with restore points across >1 tier-1-matched backup chain (e.g. post-retarget) | All matched chains are summed — an intentional behavior change, surfacing previously invisible disk usage |
 | Replica job (`Snapshot`-type restore points) | Sized via `GetLastBackup()` + `Get-VBRRestorePoint -Backup`, same call production uses today — not routed through tier 1/2 at all |
 | NAS job | Unaffected — sized via a separate cmdlet/CSV path that never appears in `Get-VBRRestorePoint` output |
 
 ## Validation
 
-Validated against two live labs (VBR v13) using a standalone, read-only
+Validated against four live labs (VBR v13) using a standalone, read-only
 comparison script (`Test-JobSizingRestorePointMatching.ps1`, not part of the
 codebase) that runs both the current `GetLastBackup()` logic and the proposed
 sweep side-by-side per job, with no changes to `Get-VhcJob.ps1` itself.
@@ -466,21 +497,96 @@ jobs), 36 matched via tier 2, 0 suppressed, 0 unmatched.
 | Regressed | 0 | None. |
 | Unchanged | 17 | Includes 15 AWS/Azure/GCE policy jobs with no restore points at all (both approaches correctly report 0), and 2 VMware jobs matched identically old vs. new via tier 1. |
 
-Both labs together: 3 jobs fixed by tier 1 alone, 1 job fixed by tier 2
-alone, 0 regressions across 36 real jobs — each tier earns its place in a
-different environment, and neither tier alone would have fixed both.
+### Agent lab (4 jobs, 12 restore points) — exercises standalone agent jobs
+
+Includes a standalone (unmanaged) agent job (`Unmanaged-WindowsAgents-VTESTVM03`,
+collected via `.GetJob()` per ADR 0014) alongside managed agent jobs and a
+Backup Copy job. All 4 jobs matched tier 1 (12/12 restore points), and — once
+the `$knownJobIds` validation below was added — every job's numbers were
+identical to today's method. This closes the "standalone agent jobs unverified"
+open item from earlier revisions: they resolve via tier 1 the same as any
+other job, no special handling needed.
+
+### Backup Copy lab (16 jobs, 112 restore points) — exercises the `$knownJobIds` validation
+
+**Discovery**: two Backup Copy jobs (`Backup Copy - VMware to Vault`,
+`VOT - Offsite to Vault`) initially "regressed" to 0/0 under an earlier
+version of tier 1 that lacked the `$knownJobIds` check. Root cause: their
+restore points resolve via `GetSourceJob()` to a per-source-job/per-VM child
+object (e.g. `Backup Copy - VMware to Vault\VMware - Backup to Vault Direct`)
+whose `Id` was never a member of `$Jobs`, and `.GetParentJob()` either
+returns the same child back (no-op) or walks up only one level to another
+child — never reaching the real copy job's own `Id`. Tier 1 was accepting
+this non-null result as a match and silently losing the data.
+
+**Fix and result**: adding the `$knownJobIds` validation (see Solution)
+routed these correctly to tier 2, whose `.GetBackup().GetParentOrThis().Name`
+resolves cleanly to the plain copy-job name in every case tested. Both jobs
+now match today's method exactly: `Backup Copy - VMware to Vault` (9/9
+restore points, 23.00/23.00 GB Source, 27.63/27.63 GB On-Disk) and
+`VOT - Offsite to Vault` (27/27, 120.00/120.00, 64.77/64.77). The same
+validation check also corrected roughly a dozen other restore points in this
+lab that were landing on non-`$Jobs` Ids for unrelated reasons — every
+affected job's totals stayed identical or improved, confirming the check is
+a general strengthening, not a Backup-Copy-specific patch.
+
+**Anomaly, not yet resolved**: a third Backup Copy job (`Backup Copy Job 3`)
+went from 435.82 GB Source / 614.10 GB On-Disk (old) to 0/0 (new). Its
+`-Backup`-scoped restore points span 17 distinct `BackupId`s across a dozen
+unrelated jobs (VMware backups, physical agent backups, and two `Backup to
+Tape` jobs), and tier 2's name resolution for its points returns
+`VMware - Backup to Vault Direct on Tape` — a name absent from `$Jobs`. The
+0/0 is very likely *more* correct than the old 435.82/614.10 (which was
+never this job's own data), but this is analysis, not confirmation — it
+depends on whether a job called `VMware - Backup to Vault Direct on Tape`
+was deleted/renamed in this lab, which hasn't been checked. See Open Items.
+
+**Proxmox**: this lab independently reproduced the gap-1 "encrypted or
+created by an enterprise application plug-in" root cause for 4 Proxmox
+Backup jobs — a second confirmation of a platform previously validated only
+in the on-prem lab.
+
+**`web01-schedule-backups`** (Azure IaaS Backup): a second, independent
+confirmation of tier 2 / gap 2 — `GetLastBackup()` threw `Backup for job
+web01-schedule-backups does not exist` under the old method; tier 2 resolved
+all 15 of its restore points, taking it from 0/0 to 81.00 GB Source / 36.43
+GB On-Disk.
+
+### Summary across all four labs
+
+18 + 18 + 4 + 16 = 56 jobs tested. Tier 1 alone fixed 4 platforms (HPE
+Morpheus, Nutanix AHV, oVirt KVM, Proxmox); tier 2 alone fixed 2 independent
+cases (`Linux-01`, `web01-schedule-backups`); the `$knownJobIds` validation
+fixed 2 Backup Copy jobs that tier 1's original (unvalidated) resolution was
+silently losing. Zero confirmed regressions — the one 0/0 result
+(`Backup Copy Job 3`) is believed correct pending confirmation, not a
+regression against a trustworthy baseline (see above). Each mechanism earns
+its place in a different environment; no single lab would have surfaced all
+of them.
 
 ## Open Items
 
 - **Empirical validation** (same practice as ADR 0014): confirmed live for
-  tier 1 (VMware, VMware Cloud Director, Hyper-V, managed Windows/Linux
-  Agent, Nutanix AHV Agent, HPE Morpheus VME Agent, oVirt KVM Agent) and tier
-  2 (AWS/Azure/GCE public cloud plug-in jobs) — see Validation above. Still
-  unverified: standalone (unmanaged) agent jobs (ADR 0014), and the Replica
+  tier 1 (VMware, VMware Cloud Director, Hyper-V, managed and standalone
+  Windows/Linux Agents, Nutanix AHV Agent, HPE Morpheus VME Agent, oVirt KVM
+  Agent, Proxmox Backup, Backup Copy), tier 2 (AWS/Azure/GCE public cloud
+  plug-in jobs, Backup Copy jobs), and the `$knownJobIds` validation
+  (Backup Copy) — see Validation above. Still unverified: the Replica
   per-job path against a live replica chain with real snapshots (both
   replica jobs in the on-prem lab have never produced a restore point, so
   that path's *result* was validated as behavior-preserving but never
   actually exercised with data flowing through it).
+- **`Backup Copy Job 3` anomaly (Backup Copy lab)**: goes from 435.82 GB
+  Source / 614.10 GB On-Disk (old) to 0/0 (new). Analysis strongly suggests
+  the old number was never this job's own data (its `-Backup`-scoped restore
+  points span 17 `BackupId`s across a dozen unrelated jobs including two
+  `Backup to Tape` jobs), and the new 0/0 is more likely correct — but this
+  hinges on one unconfirmed fact: does a job called `VMware - Backup to
+  Vault Direct on Tape` (what tier 2's name resolution returns for its
+  points) exist, or was it deleted/renamed? Needs that one answer before
+  deciding whether this is a pre-existing production bug worth its own
+  report (alongside [#193](https://github.com/VeeamHub/veeam-healthcheck/issues/193))
+  or a lab-specific artifact.
 - **Performance — measured across both labs**: on-prem, 7.59x old (18.71s vs.
   2.47s; the one-time restore-point fetch is ~84% of the sweep and isn't
   something this design can optimize further). Cloud, 4.17x old (1.27s vs.
@@ -498,18 +604,16 @@ different environment, and neither tier alone would have fixed both.
   chain for the same VMs, could be the same stale-name pattern as HPE
   Morpheus. No further investigation is expected to resolve this; it's
   accepted as the cost of the gating rule.
-- **Restore-point accounting gap (on-prem lab)**: tier 1 matched 280 restore
-  points, but summing `NewRestorePointCount` across all 18 jobs (plus
-  standalone agent jobs, which this lab has zero of) totals only 277 — 3
-  tier-1-matched restore points resolve to job Ids that don't appear
-  anywhere in `$Jobs`. Not a correctness problem for any job's reported
-  numbers (those points aren't attributed to any job either way), but the
-  cause isn't identified — worth a look before this ships, since it means
-  `Get-VBRJob` (+ the standalone-agent supplement) doesn't cover every job Id
-  `GetSourceJob()` can return.
+- ~~**Restore-point accounting gap (on-prem lab)**~~ — **closed.** Tier 1
+  matched 280 restore points but only 277 landed on a job in `$Jobs`; root
+  cause identified in the Backup Copy lab as the same mechanism as the
+  `$knownJobIds` finding above (a non-null `GetSourceJob()`/`GetParentJob()`
+  result resolving to an Id absent from `$Jobs`). Fixed by the same
+  validation check — those 3 points now correctly fall through to tier 2.
 - **VMware Cloud Director Source Size double-count** (see Solution, "Out of
   scope"): confirmed pre-existing in production, unrelated to this design's
-  matching logic. Track as its own backlog item.
+  matching logic. Filed as
+  [#193](https://github.com/VeeamHub/veeam-healthcheck/issues/193).
 - **"Old Backup Data" per-repository reporting** (explicitly deferred): the
   unmatched-restore-point bucket this design produces is a natural input for
   a future per-repository "leftover data" metric, but is not surfaced
