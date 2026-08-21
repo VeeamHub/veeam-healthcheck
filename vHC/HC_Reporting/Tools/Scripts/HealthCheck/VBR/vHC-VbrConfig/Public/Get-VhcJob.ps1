@@ -100,20 +100,28 @@ function Get-VhcJob {
         try {
             $AllRestorePoints = @(Get-VBRRestorePoint -WarningAction SilentlyContinue)
 
+            $KnownJobIds = New-Object 'System.Collections.Generic.HashSet[string]'
+            foreach ($j in @($Jobs)) { [void]$KnownJobIds.Add($j.Id.ToString()) }
+
+            $Unresolved   = [System.Collections.ArrayList]::new()
             $Tier1Matched = 0
             $Tier1Failed  = 0
             foreach ($RestorePoint in $AllRestorePoints) {
                 $SourceJob = $null
                 try { $SourceJob = $RestorePoint.GetSourceJob() } catch { $Tier1Failed++ }
-                if ($null -eq $SourceJob) { continue }
+                if ($null -eq $SourceJob) { [void]$Unresolved.Add($RestorePoint); continue }
 
-                try {
-                    $ParentJob = $SourceJob.GetParentJob()
-                    if ($null -ne $ParentJob) { $SourceJob = $ParentJob }
-                } catch {}
+                # A GetParentJob() throw means this job type doesn't implement
+                # it - falling back to the child's own Id is a valid outcome,
+                # not a failure, so it isn't counted alongside $Tier1Failed.
+                $ParentJob = $null
+                try { $ParentJob = $SourceJob.GetParentJob() } catch {}
+                if ($null -ne $ParentJob) { $SourceJob = $ParentJob }
 
-                if ($null -eq $SourceJob.Id) { continue }
+                if ($null -eq $SourceJob.Id) { [void]$Unresolved.Add($RestorePoint); continue }
                 $JobIdKey = $SourceJob.Id.ToString()
+                if (-not $KnownJobIds.Contains($JobIdKey)) { [void]$Unresolved.Add($RestorePoint); continue }
+
                 if (-not $RestorePointsByJob.ContainsKey($JobIdKey)) {
                     $RestorePointsByJob[$JobIdKey] = [System.Collections.ArrayList]::new()
                 }
@@ -121,7 +129,7 @@ function Get-VhcJob {
                 $Tier1Matched++
             }
 
-            Write-LogFile "Restore point sweep: $($AllRestorePoints.Count) restore points found server-wide, $Tier1Matched matched via tier 1, $Tier1Failed tier-1 lookup failures"
+            Write-LogFile "Restore point sweep: $($AllRestorePoints.Count) restore points found server-wide, $Tier1Matched matched via tier 1, $Tier1Failed tier-1 lookup failures, $($Unresolved.Count) unresolved"
         } catch {
             Write-LogFile "Restore point sweep failed: $($_.Exception.Message)" -LogLevel "ERROR"
             Add-VhciModuleError -CollectorName 'Jobs' -ErrorMessage $_.Exception.Message

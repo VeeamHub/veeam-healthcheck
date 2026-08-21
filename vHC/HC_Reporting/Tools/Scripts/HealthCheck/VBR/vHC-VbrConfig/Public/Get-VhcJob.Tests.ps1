@@ -591,7 +591,7 @@ Describe 'Tier 1: Id-based match via GetSourceJob()' {
         $MorpheusJob = script:New-FakeJob -Name 'MorpheusJob' -TypeToString 'HPE Morpheus VME Backup'
         # Distinct object, same Id as $MorpheusJob - proves matching happens
         # by Id, not by object reference.
-        $MorpheusJobTwin = [PSCustomObject]@{ Id = $MorpheusJob.Id; Name = 'DifferentObjectSameId' }
+        $MorpheusJobTwin = script:New-FakeJob -Id $MorpheusJob.Id -Name 'DifferentObjectSameId' -TypeToString 'HPE Morpheus VME Backup'
         Mock Get-VBRJob -MockWith { @($MorpheusJob) }
         Mock Get-VBRRestorePoint -MockWith {
             if ($null -eq $Backup) {
@@ -650,5 +650,75 @@ Describe 'Tier 1: Id-based match via GetSourceJob()' {
         Get-VhcJob
         $Row = $script:CapturedJobRows | Where-Object { $_.Name -eq 'ChildThatThrows' }
         $Row.OnDiskGB | Should -Be 4
+    }
+
+    It 'skips a restore point whose resolved job has no Id, without aborting the sweep' {
+        $NoIdJob = [PSCustomObject]@{ Name = 'ObjectWithNoId' }
+        $RealJob = script:New-FakeJob -Name 'RealJob' -TypeToString 'HPE Morpheus VME Backup'
+        Mock Get-VBRJob -MockWith { @($RealJob) }
+        Mock Get-VBRRestorePoint -MockWith {
+            if ($null -eq $Backup) {
+                @(
+                    (script:New-FakeRestorePoint -Name 'NoIdPoint' -ObjectId ([guid]'13131313-1313-1313-1313-131313131313') -ApproxSize 10GB -BackupSize 3GB -SourceJob $NoIdJob),
+                    (script:New-FakeRestorePoint -Name 'RealPoint' -ObjectId ([guid]'14141414-1414-1414-1414-141414141414') -ApproxSize 20GB -BackupSize 9GB -SourceJob $RealJob)
+                )
+            } else { @() }
+        }
+        { Get-VhcJob } | Should -Not -Throw
+        $Row = $script:CapturedJobRows | Where-Object { $_.Name -eq 'RealJob' }
+        $Row.OnDiskGB | Should -Be 9
+    }
+
+    It 'counts a GetSourceJob() throw in the tier-1 failure counter, not silently' {
+        $script:LogMessages = [System.Collections.Generic.List[string]]::new()
+        Mock Write-LogFile -MockWith { $script:LogMessages.Add($Message) }
+        $RealJob = script:New-FakeJob -Name 'RealJob' -TypeToString 'HPE Morpheus VME Backup'
+        Mock Get-VBRJob -MockWith { @($RealJob) }
+        Mock Get-VBRRestorePoint -MockWith {
+            if ($null -eq $Backup) {
+                @( (script:New-FakeRestorePoint -ObjectId ([guid]'15151515-1515-1515-1515-151515151515') -ApproxSize 5GB -BackupSize 2GB -ThrowOnGetSourceJob) )
+            } else { @() }
+        }
+        Get-VhcJob
+        $SweepLine = $script:LogMessages | Where-Object { $_ -match 'matched via tier 1' } | Select-Object -Last 1
+        $SweepLine | Should -Match '\b1 tier-1 lookup failures\b'
+    }
+}
+
+# ---------------------------------------------------------------------------
+# Tier 1 (ADR 0021): a non-null GetSourceJob()/GetParentJob() result is not
+# sufficient evidence of a match - validate the resolved Id against $Jobs.
+# ---------------------------------------------------------------------------
+Describe 'Tier 1: resolved Id must be a member of $Jobs' {
+
+    BeforeEach {
+        $script:CapturedJobRows = @()
+        Mock Write-LogFile                 -MockWith { }
+        Mock Get-VBRConfigurationBackupJob -MockWith { $null }
+        Mock Invoke-VhciJobSubCollectors   -MockWith { }
+        Mock Add-VhciModuleError           -MockWith { }
+        Mock Get-VBRBackup                 -MockWith { @() }
+        Mock Export-VhciCsv -MockWith {
+            if ($FileName -eq '_Jobs.csv' -and $InputObject) {
+                $script:CapturedJobRows += @($InputObject)
+            }
+        }
+    }
+
+    It 'does not attribute a restore point to a per-source child object whose Id is absent from $Jobs' {
+        $script:LogMessages = [System.Collections.Generic.List[string]]::new()
+        Mock Write-LogFile -MockWith { $script:LogMessages.Add($Message) }
+
+        $CopyJob     = script:New-FakeJob -Name 'Backup Copy - VMware to Vault' -TypeToString 'Backup Copy'
+        $ChildObject = script:New-FakeJob -Name 'Backup Copy - VMware to Vault\VMware - Backup to Vault Direct' -TypeToString 'Backup Copy'
+        Mock Get-VBRJob -MockWith { @($CopyJob) }
+        Mock Get-VBRRestorePoint -MockWith {
+            if ($null -eq $Backup) {
+                @( (script:New-FakeRestorePoint -ObjectId ([guid]'66666666-6666-6666-6666-666666666666') -ApproxSize 23GB -BackupSize 27.63GB -SourceJob $ChildObject) )
+            } else { @() }
+        }
+        Get-VhcJob
+        $SweepLine = $script:LogMessages | Where-Object { $_ -match 'matched via tier 1' } | Select-Object -Last 1
+        $SweepLine | Should -Match '\b0 matched via tier 1\b'
     }
 }
