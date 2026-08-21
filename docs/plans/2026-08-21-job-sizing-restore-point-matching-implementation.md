@@ -812,7 +812,7 @@ losing it under a key nothing looks up."
 - Modify: `vHC/HC_Reporting/Tools/Scripts/HealthCheck/VBR/vHC-VbrConfig/Public/Get-VhcJob.Tests.ps1`
 - Modify: `vHC/HC_Reporting/Tools/Scripts/HealthCheck/VBR/vHC-VbrConfig/Public/Get-VhcJob.ps1`
 
-- [ ] **Step 1: Write the failing tests**
+- [x] **Step 1: Write the failing tests**
 
 Add a new `Describe` block:
 
@@ -909,13 +909,13 @@ Describe 'Tier 2: gated name-based fallback' {
 }
 ```
 
-- [ ] **Step 2: Run the tests to verify they fail**
+- [x] **Step 2: Run the tests to verify they fail**
 
 Run: `pwsh -Command "Invoke-Pester -Path 'vHC/HC_Reporting/Tools/Scripts/HealthCheck/VBR/vHC-VbrConfig/Public/Get-VhcJob.Tests.ps1' -Output Detailed"`
 
 Expected: The first two tests FAIL (`Linux-01`'s and `web01-schedule-backups`'s rows both show `OnDiskGB = 0` — no tier 2 exists yet, so both the throwing and the null-returning restore points are simply dropped into `$Unresolved` and never picked up). The third and fourth tests PASS trivially today (no tier 2 exists to wrongly include the stale/snapshot points either) — they're written now as regression guards for the gating and skip logic Step 3 adds.
 
-- [ ] **Step 3: Implement tier 2 and the `Snapshot` skip**
+- [x] **Step 3: Implement tier 2 and the `Snapshot` skip**
 
 **Amended against the actual code landed in Tasks 3-4 (including the `f21f03b` regression fix):** the plan text below predates Task 3's `$Tier1Failed` fold-forward and Task 4's `$KnownJobIds`/null-guard work. Use the version here, which carries all of it through unchanged and keeps the final log line's `matched via tier 1` phrase intact — Task 4's own test (`Should -Match '\b0 matched via tier 1\b'`) greps for that exact phrase, and it must keep matching after this task's log-line rewrite. This version also folds in three Minor improvements from Task 4's code review: a WHY comment on the null-`$j` guard (its rationale previously lived only inside a test body), an ordinal-ignore-case comparer for `$KnownJobIds` so it can no longer be *stricter* than the case-insensitive `$RestorePointsByJob` hashtable it gates, and (see Step 1 below) discriminating log-line assertions replacing two decorative `Should -Not -Throw` checks.
 
@@ -1037,13 +1037,13 @@ with:
 
 (This log line's phrasing keeps `matched via tier 1` intact — Task 4's own test greps for that exact phrase, and it would silently break here if the wording changed.)
 
-- [ ] **Step 4: Run the tests to verify they pass**
+- [x] **Step 4: Run the tests to verify they pass**
 
 Run: `pwsh -Command "Invoke-Pester -Path 'vHC/HC_Reporting/Tools/Scripts/HealthCheck/VBR/vHC-VbrConfig/Public/Get-VhcJob.Tests.ps1' -Output Detailed"`
 
 Expected: All four new tests PASS. Re-confirm Tasks 1-4's tests and all `ISC-*` tests still PASS.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add vHC/HC_Reporting/Tools/Scripts/HealthCheck/VBR/vHC-VbrConfig/Public/Get-VhcJob.ps1 \
