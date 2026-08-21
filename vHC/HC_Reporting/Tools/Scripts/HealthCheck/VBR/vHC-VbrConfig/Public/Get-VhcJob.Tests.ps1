@@ -847,4 +847,24 @@ Describe 'Tier 2: gated name-based fallback' {
         $Row = $script:CapturedJobRows | Where-Object { $_.Name -eq 'VMware - Domain Controller' }
         $Row.OnDiskGB | Should -Be 0
     }
+
+    It 'does not abort the sweep when $Jobs contains a job with no Id (the $JobIdByName build)' {
+        # Regression: $JobIdByName's build loop originally guarded only
+        # ($null -ne $j), not ($null -ne $j.Id) - unlike $KnownJobIds right
+        # below it. $j.Id.ToString() on a null Id throws, and the outer
+        # try/catch aborts the ENTIRE sweep (not just this one lookup), so
+        # every job - including a perfectly healthy, resolvable one - would
+        # report OnDiskGB = 0.
+        $NoIdJob = [PSCustomObject]@{ Name = 'NoIdJob'; TypeToString = 'HPE Morpheus VME Backup' }
+        $RealJob = script:New-FakeJob -Name 'RealJob' -TypeToString 'HPE Morpheus VME Backup'
+        Mock Get-VBRJob -MockWith { @($NoIdJob, $RealJob) }
+        Mock Get-VBRRestorePoint -MockWith {
+            if ($null -eq $Backup) {
+                @( (script:New-FakeRestorePoint -ObjectId ([guid]'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa') -ApproxSize 20GB -BackupSize 9GB -SourceJob $RealJob) )
+            } else { @() }
+        }
+        Get-VhcJob
+        $Row = $script:CapturedJobRows | Where-Object { $_.Name -eq 'RealJob' }
+        $Row.OnDiskGB | Should -Be 9
+    }
 }

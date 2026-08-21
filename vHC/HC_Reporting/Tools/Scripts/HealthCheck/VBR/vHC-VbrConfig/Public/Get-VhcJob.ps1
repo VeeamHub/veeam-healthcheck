@@ -100,9 +100,14 @@ function Get-VhcJob {
         try {
             $AllRestorePoints = @(Get-VBRRestorePoint -WarningAction SilentlyContinue)
 
+            # Same null-placeholder risk $KnownJobIds guards against below - a
+            # $Jobs element can be a non-null object with no populated Id (or,
+            # per f21f03b, $Jobs itself can carry a null placeholder when
+            # Get-VBRJob throws) - either way, .Id.ToString() on it aborts the
+            # whole sweep via the outer catch, not just this one lookup.
             $JobIdByName = @{}
             foreach ($j in @($Jobs)) {
-                if ($null -ne $j -and -not $JobIdByName.ContainsKey($j.Name)) { $JobIdByName[$j.Name] = $j.Id.ToString() }
+                if ($null -ne $j -and $null -ne $j.Id -and -not $JobIdByName.ContainsKey($j.Name)) { $JobIdByName[$j.Name] = $j.Id.ToString() }
             }
 
             # OrdinalIgnoreCase: $RestorePointsByJob (a Hashtable) looks up
@@ -112,7 +117,7 @@ function Get-VhcJob {
             $KnownJobIds = [System.Collections.Generic.HashSet[string]]::new([System.StringComparer]::OrdinalIgnoreCase)
             foreach ($j in @($Jobs)) { if ($null -ne $j -and $null -ne $j.Id) { [void]$KnownJobIds.Add($j.Id.ToString()) } }
 
-            $Tier1MatchedJobIds = New-Object 'System.Collections.Generic.HashSet[string]'
+            $Tier1MatchedJobIds = [System.Collections.Generic.HashSet[string]]::new([System.StringComparer]::OrdinalIgnoreCase)
             $Unresolved         = [System.Collections.ArrayList]::new()
             $Tier1Matched       = 0
             $Tier1Failed        = 0
