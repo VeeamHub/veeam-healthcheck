@@ -442,6 +442,7 @@ fake jobs with a `GetLastBackup` ScriptMethod (line 132). Add:
 | `.GetParentJob()` throws | Caught; falls back to the original `GetSourceJob()` result's Id |
 | `.GetParentJob()` returns `$null` (job is already top-level) | Original `GetSourceJob()` result's Id is used — confirmed safe no-op via live-lab comparison for VMware, Hyper-V, Cloud Director, Entra ID Tenant |
 | Tier 2: `GetBackup()`/`GetParentOrThis()` throws, or the resolved name isn't in `$Jobs` | Restore point stays unmatched — excluded from every job's totals |
+| Restore point belongs to a **tape backup** (VBR names these `<source job name> on Tape`, confirmed live in the console's Tape view) | Real backup record, but no corresponding `Get-VBRJob` entry exists — tier 2's name lookup correctly can't match it, same treatment as any other orphaned/imported point. Expected, permanent behavior, not a gap. |
 | Tier 2: name resolves, but that job already has ≥1 tier-1 match | Suppressed — discarded rather than attributed, since display names are not reliable identity across distinct backup objects (see Solution) |
 | A job's Id has no entry in `$restorePointsByJob` | `$RestorePoints` stays `@()`; same fallback as today's "no last backup" case |
 | Standalone agent job (via `.GetJob()`, ADR 0014) | Resolves via tier 1 same as any other job — confirmed live (see Validation) |
@@ -530,16 +531,30 @@ lab that were landing on non-`$Jobs` Ids for unrelated reasons — every
 affected job's totals stayed identical or improved, confirming the check is
 a general strengthening, not a Backup-Copy-specific patch.
 
-**Anomaly, not yet resolved**: a third Backup Copy job (`Backup Copy Job 3`)
-went from 435.82 GB Source / 614.10 GB On-Disk (old) to 0/0 (new). Its
-`-Backup`-scoped restore points span 17 distinct `BackupId`s across a dozen
-unrelated jobs (VMware backups, physical agent backups, and two `Backup to
-Tape` jobs), and tier 2's name resolution for its points returns
-`VMware - Backup to Vault Direct on Tape` — a name absent from `$Jobs`. The
-0/0 is very likely *more* correct than the old 435.82/614.10 (which was
-never this job's own data), but this is analysis, not confirmation — it
-depends on whether a job called `VMware - Backup to Vault Direct on Tape`
-was deleted/renamed in this lab, which hasn't been checked. See Open Items.
+**`Backup Copy Job 3` — old figure confirmed wrong, resolved (mostly)**: went
+from 435.82 GB Source / 614.10 GB On-Disk (old) to 0/0 (new). Its
+`-Backup`-scoped query returned restore points from a dozen unrelated jobs,
+confirmed against the live VBR console:
+- 12 of them grouped to `Backup to Tape Job 1` and 3 to `Backup to Tape Job
+  2` — both real, currently-existing jobs (GFS Media Pool 1 / Media Pool 1
+  respectively) — an exact match to the console's Tape view, which lists
+  the tape backups `VMware - Backup to DC220.E3 on Tape` (12 restore points)
+  and `VMware - Backup to Vault Direct on Tape` (3 restore points). VBR
+  names a tape backup `<source job name> on Tape`; it's a real backup
+  record (visible under Home → Backups → Tape) but has no corresponding
+  `Get-VBRJob` entry, so tier 2's name lookup correctly can't match it and
+  leaves it unattributed — the same outcome as any other orphaned/imported
+  restore point, not a bug. See Error Handling.
+- The rest resolve to other real, current jobs (`VMware - Backup to Vault
+  Direct`, `Physical Servers - Linux`, `TinyPveVM01 Backup`, etc.).
+
+So `Backup Copy Job 3`'s old 435.82/614.10 was never its own data — it was
+effectively a chunk of the server's aggregate, reached through a `-Backup`
+scope that doesn't actually scope to one backup for this job. The new 0/0
+is not a regression against a trustworthy baseline. One narrower question is
+still open: whether this job's own single object has a copy chain that
+resolves anywhere at all, or whether its own data is itself invisible to
+both methods — see Open Items.
 
 **Proxmox**: this lab independently reproduced the gap-1 "encrypted or
 created by an enterprise application plug-in" root cause for 4 Proxmox
@@ -559,10 +574,10 @@ Morpheus, Nutanix AHV, oVirt KVM, Proxmox); tier 2 alone fixed 2 independent
 cases (`Linux-01`, `web01-schedule-backups`); the `$knownJobIds` validation
 fixed 2 Backup Copy jobs that tier 1's original (unvalidated) resolution was
 silently losing. Zero confirmed regressions — the one 0/0 result
-(`Backup Copy Job 3`) is believed correct pending confirmation, not a
-regression against a trustworthy baseline (see above). Each mechanism earns
-its place in a different environment; no single lab would have surfaced all
-of them.
+(`Backup Copy Job 3`) is a fix, not a regression: its old figure is confirmed
+to include two live tape jobs' restore points (verified against the VBR
+console) plus other unrelated jobs' data. Each mechanism earns its place in
+a different environment; no single lab would have surfaced all of them.
 
 ## Open Items
 
@@ -576,17 +591,17 @@ of them.
   replica jobs in the on-prem lab have never produced a restore point, so
   that path's *result* was validated as behavior-preserving but never
   actually exercised with data flowing through it).
-- **`Backup Copy Job 3` anomaly (Backup Copy lab)**: goes from 435.82 GB
-  Source / 614.10 GB On-Disk (old) to 0/0 (new). Analysis strongly suggests
-  the old number was never this job's own data (its `-Backup`-scoped restore
-  points span 17 `BackupId`s across a dozen unrelated jobs including two
-  `Backup to Tape` jobs), and the new 0/0 is more likely correct — but this
-  hinges on one unconfirmed fact: does a job called `VMware - Backup to
-  Vault Direct on Tape` (what tier 2's name resolution returns for its
-  points) exist, or was it deleted/renamed? Needs that one answer before
-  deciding whether this is a pre-existing production bug worth its own
-  report (alongside [#193](https://github.com/VeeamHub/veeam-healthcheck/issues/193))
-  or a lab-specific artifact.
+- **`Backup Copy Job 3`'s own data (Backup Copy lab)** — narrowed, not fully
+  closed: confirmed its old 435.82 GB Source / 614.10 GB On-Disk was a
+  cross-job aggregate (12 restore points belong to the live `Backup to Tape
+  Job 1`, 3 to the live `Backup to Tape Job 2` — an exact match against the
+  VBR console's Tape view — plus other unrelated jobs' data), so the new 0/0
+  is not a regression. What's still unconfirmed: whether this job's own
+  single object has a copy chain that resolves under its own Id/name at all,
+  or whether its own data is invisible to both methods for a reason not yet
+  identified. Doesn't block this design (the wrong-attribution bug is fixed
+  either way); worth a quick `Get-VBRBackup | ?{ JobId -eq <this job's Id> }`
+  check before implementation, not a blocker for it.
 - **Performance — measured across both labs**: on-prem, 7.59x old (18.71s vs.
   2.47s; the one-time restore-point fetch is ~84% of the sweep and isn't
   something this design can optimize further). Cloud, 4.17x old (1.27s vs.
