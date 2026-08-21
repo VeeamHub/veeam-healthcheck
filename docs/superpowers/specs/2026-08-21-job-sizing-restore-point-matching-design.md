@@ -12,13 +12,26 @@ Today `Get-VhcJob.ps1` computes Source Size GB / Est. On Disk GB per job via
 `ObjectId`, taking the latest `ApproxSize` per VM (`Get-VhcJob.ps1:94-126`).
 
 `GetLastBackup()` returns only the single most-recent backup chain object for
-a job. This has two known gaps:
+a job. This has three known gaps:
 
-1. A job that was ever retargeted to a different repository can still have an
+1. **Confirmed root cause of the 0 MB / 0 GB bug this design set out to fix**:
+   for policy/plug-in-backed platforms — HPE Morpheus VME Backup, Nutanix AHV
+   Backup, and oVirt KVM Backup confirmed live, matching the same restriction
+   already documented for Proxmox in the Protected Workloads investigation —
+   `Get-VBRRestorePoint -Backup $LastBackup` throws:
+   `Cannot get restore points from backup <name>, because it is encrypted or
+   created by an enterprise application plug-in.` This exception is inside
+   `Get-VhcJob.ps1`'s existing outer per-job `try/catch`
+   (`Get-VhcJob.ps1:87-131`), so it's silently swallowed — `$TotalOnDiskGB`
+   stays 0 and `$CalculatedOriginalSize` falls back to `$Job.Info.IncludedSize`,
+   which is also unpopulated for these platforms, producing exactly the 0 MB
+   Source Size / 0 GB Est. On Disk GB shown in the report for HPE Morpheus and
+   Nutanix AHV jobs today.
+2. A job that was ever retargeted to a different repository can still have an
    older backup chain physically present on disk under the old repository.
    That chain's restore points are invisible to `GetLastBackup()`, so their
    size is silently excluded from Source/On-Disk GB.
-2. There is no visibility into restore points that don't belong to any live
+3. There is no visibility into restore points that don't belong to any live
    job at all — imported backups, orphaned chains from deleted jobs, or VMs
    dropped from a job's current scope. These consume disk space today with no
    way to see them in the report.
@@ -229,27 +242,61 @@ fake jobs with a `GetLastBackup` ScriptMethod (line 132). Add:
 | Replica job (`Snapshot`-type restore points) | No `Type` filter applied — included, same as today |
 | NAS job | Unaffected — sized via a separate cmdlet/CSV path that never appears in `Get-VBRRestorePoint` output |
 
+## Validation
+
+Validated against a live lab (18 jobs, VBR v13) using a standalone, read-only
+comparison script (`Test-JobSizingRestorePointMatching.ps1`, not part of the
+codebase) that runs both the current `GetLastBackup()` logic and the proposed
+global-sweep + `GetSourceJob()`/`GetParentJob()` logic side-by-side per job,
+with no changes to `Get-VhcJob.ps1` itself.
+
+**Sweep scale**: 5,752 restore points found server-wide; 280 matched to one of
+the 18 live jobs, 5,472 unmatched. The unmatched count is far larger than
+expected from the earlier ad hoc lab query — this environment has a
+substantial amount of restore-point data with no resolvable owning job. That
+data is untouched by this design (per the "Old Backup Data" scope decision
+above) but is strong real-world support for [#192](https://github.com/VeeamHub/veeam-healthcheck/issues/192),
+the deferred "Orphaned Backups" report-section backlog item.
+
+**Per-job results**:
+
+| Outcome | Count | Detail |
+|---|---|---|
+| Fixed (0/0 → real numbers) | 3 | `HPE Morpheus - Windows - Linux` (HPE Morpheus VME Backup): 0→190 GB Source, 0→72.99 GB On-Disk. `Nutanix AHV - Windows - Linux` (Nutanix AHV Backup): 0→66 GB / 0→8.93 GB. `OVIRT - Linux Backup` (oVirt KVM Backup): 0→25 GB / 0→5.59 GB. All three confirmed the `Get-VBRRestorePoint -Backup` "encrypted or created by an enterprise application plug-in" exception as root cause. |
+| Regressed (real numbers → 0/0) | 0 | None. |
+| Unchanged | 15 | Includes `VMware - Domain Controller` (245 restore points, matched identically old vs. new — the highest-volume job in the environment, confirming the sweep+match approach scales to a job with hundreds of points) and 5 jobs that have genuinely never produced a single backup/replica (`GetLastBackup()` itself throws `Backup for job ... not found`) — both approaches correctly report 0 On-Disk GB and fall back to `Info.IncludedSize` for Source Size in these cases, confirming that path is unaffected by this change. |
+
+This directly confirms the tier-2 `GetParentJob()` walk-up works as designed:
+`HPE Morpheus VME Backup`, `Nutanix AHV Backup`, and `oVirt KVM Backup` all
+went from 0 matched restore points (old) to their real counts (6, 2, and 1
+respectively) under the new approach, and `VBR Managed Agents -
+Windows`/`-Linux` (which also resolve to a per-machine child job via
+`GetSourceJob()`, per the Solution section above) matched identically old vs.
+new (3 restore points each) — the walk-up doesn't disturb a path that already
+worked.
+
 ## Open Items
 
-- **Empirical validation required before merge** (same practice as ADR 0014):
-  confirm `GetSourceJob()` + `GetParentJob()` together resolve to an Id
-  matching `$Job.Id` across every job type this script iterates — VMware,
-  Hyper-V, Cloud Director vApp, Entra ID Tenant, managed Windows/Linux Agent,
-  standalone agent, Nutanix AHV Agent, HPE Morpheus VME Agent, oVirt KVM
-  Agent, and Replica. The live-lab spot check in this design already covers
-  most of these; standalone agent jobs (ADR 0014) and Replica specifically
-  remain unverified. Any type where it doesn't resolve degrades gracefully to
-  today's fallback (per Error Handling above) but should be documented as
-  untested/unsupported by this change rather than assumed to work.
+- **Empirical validation** (same practice as ADR 0014): confirmed live for
+  VMware, VMware Cloud Director, Hyper-V, managed Windows/Linux Agent,
+  Nutanix AHV Agent, HPE Morpheus VME Agent, and oVirt KVM Agent (see
+  Validation above). Still unverified: standalone (unmanaged) agent jobs
+  (ADR 0014) and the Replica job type's `Snapshot`-type restore points — the
+  two replica-type jobs in the test lab (`VMware - Replicas`, `Hyper-V -
+  Replicas`) had never produced a single restore point, so the matching path
+  itself was never exercised for that type. Any type where it doesn't resolve
+  degrades gracefully to today's fallback (per Error Handling above) but
+  should be documented as untested/unsupported by this change rather than
+  assumed to work.
 - **Performance on very large environments**: one global sweep + up to 2×N
   method calls (`GetSourceJob()` plus `GetParentJob()`, N = total restore
   points server-wide) replaces N `GetLastBackup()` + N scoped
-  `Get-VBRRestorePoint` calls (N = job count).
-  For environments with long retention and many objects (e.g. an hourly-point
-  job running for months), the global restore-point count can be far larger
-  than the job count. Should be measured against a real large environment
-  before rollout; no mitigation is designed here beyond the existing
-  per-collector error handling.
+  `Get-VBRRestorePoint` calls (N = job count). The validation lab's 5,752
+  restore points (18 jobs, one job alone contributing 245 points) completed
+  without any noticeable delay running interactively, but that's still a
+  small/medium environment — this hasn't been measured against a real
+  large environment (tens of thousands of restore points) and no mitigation
+  beyond existing per-collector error handling is designed here.
 - **"Old Backup Data" per-repository reporting** (explicitly deferred): the
   unmatched-restore-point bucket this design produces is a natural input for
   a future per-repository "leftover data" metric, but is not surfaced
