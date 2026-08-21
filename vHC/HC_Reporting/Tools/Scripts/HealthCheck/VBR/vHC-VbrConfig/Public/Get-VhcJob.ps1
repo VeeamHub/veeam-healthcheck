@@ -99,7 +99,22 @@ function Get-VhcJob {
     if ($NeedsSweep) {
         try {
             $AllRestorePoints = @(Get-VBRRestorePoint -WarningAction SilentlyContinue)
-            Write-LogFile "Restore point sweep: $($AllRestorePoints.Count) restore points found server-wide"
+
+            $Tier1Matched = 0
+            foreach ($RestorePoint in $AllRestorePoints) {
+                $SourceJob = $null
+                try { $SourceJob = $RestorePoint.GetSourceJob() } catch {}
+                if ($null -eq $SourceJob) { continue }
+
+                $JobIdKey = $SourceJob.Id.ToString()
+                if (-not $RestorePointsByJob.ContainsKey($JobIdKey)) {
+                    $RestorePointsByJob[$JobIdKey] = [System.Collections.ArrayList]::new()
+                }
+                [void]$RestorePointsByJob[$JobIdKey].Add($RestorePoint)
+                $Tier1Matched++
+            }
+
+            Write-LogFile "Restore point sweep: $($AllRestorePoints.Count) restore points found server-wide, $Tier1Matched matched via tier 1"
         } catch {
             Write-LogFile "Restore point sweep failed: $($_.Exception.Message)" -LogLevel "ERROR"
             Add-VhciModuleError -CollectorName 'Jobs' -ErrorMessage $_.Exception.Message
@@ -159,7 +174,7 @@ function Get-VhcJob {
                 $CalculatedOriginalSize = $Job.Info.IncludedSize
             }
         } catch {
-            Write-LogFile "Warning: Could not get last backup for job: $($Job.Name)" -LogLevel "WARNING"
+            Write-LogFile "Could not calculate restore point sizes for job: $($Job.Name) - $($_.Exception.Message)" -LogLevel "WARNING"
             $TotalOnDiskGB          = 0
             $CalculatedOriginalSize = $Job.Info.IncludedSize
         }

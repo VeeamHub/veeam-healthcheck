@@ -78,12 +78,13 @@ BeforeAll {
             # $Job.Options.*, $Job.BackupStorageOptions.*, $Job.VssOptions.*,
             # $Job.IsScheduleEnabled, $Job.TypeToString. We stub the minimum.
             $job = [PSCustomObject]@{
+                Id                  = [guid]::NewGuid()
                 Name                = $this.JobName
                 JobType             = 'EpAgentBackup'
                 SheduleEnabledTime  = $null
                 ScheduleOptions     = $null
                 IsScheduleEnabled   = $true
-                TypeToString        = 'Agent'
+                TypeToString        = 'Windows Agent Backup'
                 Info                = [PSCustomObject]@{
                     PwdKeyId           = $null
                     IncludedSize       = 0
@@ -564,5 +565,39 @@ Describe 'Performance gate: sweep triggers on unrecognized job types' {
         $Row = $script:CapturedJobRows | Where-Object { $_.Name -eq 'VMwareJob' }
         $Row.OnDiskGB     | Should -Be 2
         $Row.OriginalSize | Should -Be 5GB
+    }
+}
+
+# ---------------------------------------------------------------------------
+# Tier 1 (ADR 0021): Id-based resolution via GetSourceJob().
+# ---------------------------------------------------------------------------
+Describe 'Tier 1: Id-based match via GetSourceJob()' {
+
+    BeforeEach {
+        $script:CapturedJobRows = @()
+        Mock Write-LogFile                 -MockWith { }
+        Mock Get-VBRConfigurationBackupJob -MockWith { $null }
+        Mock Invoke-VhciJobSubCollectors   -MockWith { }
+        Mock Add-VhciModuleError           -MockWith { }
+        Mock Get-VBRBackup                 -MockWith { @() }
+        Mock Export-VhciCsv -MockWith {
+            if ($FileName -eq '_Jobs.csv' -and $InputObject) {
+                $script:CapturedJobRows += @($InputObject)
+            }
+        }
+    }
+
+    It 'buckets a restore point under the job GetSourceJob() resolves to' {
+        $MorpheusJob = script:New-FakeJob -Name 'MorpheusJob' -TypeToString 'HPE Morpheus VME Backup'
+        Mock Get-VBRJob -MockWith { @($MorpheusJob) }
+        Mock Get-VBRRestorePoint -MockWith {
+            if ($null -eq $Backup) {
+                @( (script:New-FakeRestorePoint -ObjectId ([guid]'22222222-2222-2222-2222-222222222222') -ApproxSize 190GB -BackupSize 72.99GB -SourceJob $MorpheusJob) )
+            } else { @() }
+        }
+        Get-VhcJob
+        $Row = $script:CapturedJobRows | Where-Object { $_.Name -eq 'MorpheusJob' }
+        $Row.OnDiskGB     | Should -Be 72.99
+        $Row.OriginalSize | Should -Be 190GB
     }
 }
