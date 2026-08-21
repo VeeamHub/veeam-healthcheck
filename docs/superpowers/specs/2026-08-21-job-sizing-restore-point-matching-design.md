@@ -75,9 +75,72 @@ get computed for jobs that exist today.
 
 Replace the per-job `GetLastBackup()` + scoped `Get-VBRRestorePoint -Backup`
 call with a single global, unscoped `Get-VBRRestorePoint` sweep performed once
-per `Get-VhcJob` invocation, before the main per-job loop. The sweep resolves
-each restore point to its owning job in two tiers; `Snapshot`-type (Replica)
-restore points are excluded from both tiers and sized separately.
+per `Get-VhcJob` invocation, before the main per-job loop — but only when at
+least one job in the environment actually needs it (see the gate below). The
+sweep resolves each restore point to its owning job in two tiers;
+`Snapshot`-type (Replica) restore points are excluded from both tiers and
+sized separately.
+
+### Performance gate — allowlist of proven-safe types, not a denylist of known-broken ones
+
+The sweep costs real time on a large environment: not just the one-time
+`Get-VBRRestorePoint` fetch, but `GetSourceJob()` itself, which runs at
+~9ms/call (measured: 280 calls, 2.6s) — at 50,000 restore points in an
+all-VMware environment (nothing `Type=Snapshot`-skipped), that's minutes.
+Running it unconditionally would tax exactly the large, otherwise-simple
+environments this design has no reason to slow down.
+
+**Before running the sweep, check whether every job's `.TypeToString` is a
+member of a small allowlist of types already proven safe under today's
+method — if so, skip the sweep entirely and use today's method for
+everyone (zero behavior change, zero added cost). If `$Jobs` contains
+*anything* not on that list, run the sweep once and route every job through
+it** (tier 1 alone already reproduces today's numbers exactly for the
+allowlisted types, so there's no reason to keep them on the old path once
+the cost is paid for the rest).
+
+This is an allowlist, not a denylist, deliberately: a denylist ("run the
+sweep if any of these known-broken types is present") requires knowing
+every broken type in advance, and this session found two — Proxmox and
+Backup Copy — that weren't part of the original problem statement. A
+denylist misses the next one silently; an unrecognized type just keeps
+using today's (possibly wrong) numbers until someone notices and files a
+bug. An allowlist fails the other way: an unrecognized type gets the
+slower-but-correct sweep by default. Given the choice, wrong performance
+characteristics are recoverable; silently wrong data in a health-check
+report is the whole problem this design exists to fix.
+
+**The allowlist must be built only from types with actual evidence, not
+from "both methods showed 0/0."** Across the four validation labs, two very
+different classes of "unchanged" showed up:
+- Proven safe with real, non-zero, exactly-matching data: `VMware Backup`,
+  `Hyper-V Backup`, `Windows Agent Backup`, `Windows Agent Policy`, `Linux
+  Agent Backup`, `Cloud Director Backup` (Cloud Director's separate
+  Source-Size double-count bug, [#193](https://github.com/VeeamHub/veeam-healthcheck/issues/193),
+  is present identically under both methods, so it doesn't affect this
+  matching decision).
+- Only ever observed as 0/0 under *both* methods because the sampled jobs
+  never ran: `File Backup`, `Object Storage Backup`, `Entra ID Log Backup`,
+  `Microsoft Azure virtual network`. Two methods agreeing on zero for a job
+  with no data is not evidence either method handles real data for that
+  type correctly. These do **not** belong on the allowlist yet — they get
+  the sweep (a performance cost, not a correctness risk) until someone
+  observes a real-data job of that type matching old exactly.
+
+**Replica job types (`VMware Replication`, `Hyper-V Replication`) are
+outside this decision entirely** — they always use the per-job
+`GetLastBackup()` + `Get-VBRRestorePoint -Backup` path regardless of
+whether the sweep runs for other jobs (see Snapshot / Replica handling
+below), so they're neither on the allowlist nor a reason to trigger the
+sweep.
+
+**Build the allowlist from observed `.TypeToString` values, never from
+console display names or platform names** — they can differ (e.g. a job
+the VBR console displays as "Microsoft Azure virtual network" is a
+different string than `.TypeToString` may return), and a wrong string in
+the allowlist either silently defeats the gate or silently keeps a broken
+type on the fast path. The exact string list is implementation-plan detail,
+not fixed here.
 
 ### Tier 1 — Id-based, via `GetSourceJob()`
 
@@ -215,7 +278,11 @@ Get-VhcJob.ps1 (Public, modified)
     │
     ├─ $Jobs = Get-VBRJob (+ standalone agent jobs via .GetJob(), ADR 0014) — unchanged
     │
-    ├─ NEW: global restore-point sweep (before the main loop)
+    ├─ NEW: performance gate
+    │       $needsSweep = $Jobs.TypeToString | ?{ non-Replica types } | ?{ $_ -notin $knownSafeTypes } | any?
+    │       if (-not $needsSweep) { skip the sweep entirely; every job uses today's method below, unchanged }
+    │
+    ├─ NEW: global restore-point sweep (before the main loop, only if $needsSweep)
     │       $allRestorePoints   = Get-VBRRestorePoint             — one call, whole server
     │       $restorePointsByJob = @{}                             — [jobId string] -> ArrayList<RestorePoint>
     │       $tier1MatchedJobIds = HashSet<string>                 — job Ids tier 1 touched at least once
@@ -241,7 +308,8 @@ Get-VhcJob.ps1 (Public, modified)
     │           $restorePointsByJob[job.Id] = Get-VBRRestorePoint -Backup job.GetLastBackup()   — today's method, unchanged
     │
     └─ Main per-job loop (modified)
-            $RestorePoints = $restorePointsByJob[$Job.Id.ToString()]   — replaces GetLastBackup()+scoped Get-VBRRestorePoint
+            if ($needsSweep) { $RestorePoints = $restorePointsByJob[$Job.Id.ToString()] }
+            else             { $RestorePoints = today's GetLastBackup() + scoped Get-VBRRestorePoint }
             ... rest of loop (OnDiskGB sum, ObjectId-latest ApproxSize sum) — UNCHANGED
 ```
 
@@ -434,6 +502,7 @@ fake jobs with a `GetLastBackup` ScriptMethod (line 132). Add:
 
 | Failure | Behavior |
 |---|---|
+| Every job's `.TypeToString` is on the proven-safe allowlist (see Solution) | Sweep skipped entirely; every job uses today's `GetLastBackup()` + scoped `Get-VBRRestorePoint` method, unchanged, zero added cost |
 | `Get-VBRRestorePoint` (global sweep) throws | Logged via top-level try/catch; `Add-VhciModuleError`; `$restorePointsByJob` stays empty; every job falls back to `Info.IncludedSize`/0 On-Disk GB (today's existing "no last backup" fallback) |
 | `GetSourceJob()` throws or returns `$null` for a specific restore point | Falls through to tier 2 |
 | `GetSourceJob()` (+ `GetParentJob()` walk-up) resolves to a real object, but its `Id` isn't a member of `$Jobs` (confirmed live for Backup Copy jobs' per-source/per-VM child objects) | Not accepted as a tier-1 match; falls through to tier 2 instead of being bucketed under a key nothing looks up |
@@ -581,6 +650,14 @@ a different environment; no single lab would have surfaced all of them.
 
 ## Open Items
 
+- **Exact allowlist string list** (see Solution, "Performance gate"): only
+  `VMware Backup`, `Hyper-V Backup`, `Windows Agent Backup`, `Windows Agent
+  Policy`, and `Linux Agent Backup` have real, non-zero, exactly-matching
+  evidence behind them. `Cloud Director Backup` is also safe for matching
+  purposes (its Source Size bug is identical under both methods). Finalizing
+  the literal string constants (and confirming none differ from console
+  display names — see the `TypeToString`-vs-display-name caveat in Solution)
+  is implementation-plan work, not decided here.
 - **Empirical validation** (same practice as ADR 0014): confirmed live for
   tier 1 (VMware, VMware Cloud Director, Hyper-V, managed and standalone
   Windows/Linux Agents, Nutanix AHV Agent, HPE Morpheus VME Agent, oVirt KVM
