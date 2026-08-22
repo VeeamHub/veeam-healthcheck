@@ -264,6 +264,7 @@ BeforeAll {
             [string]$Name = 'FakeRestorePoint',
             [string]$Type = 'Increment',
             [guid]$ObjectId = [guid]::NewGuid(),
+            [guid]$BackupId = [guid]::NewGuid(),
             [datetime]$CreationTimeUtc = (Get-Date),
             [double]$ApproxSize = 1GB,
             [double]$BackupSize = 1GB,
@@ -279,20 +280,35 @@ BeforeAll {
         $FakeBackup            = if ($BackupParentOrThisName) {
             script:New-FakeBackup -ParentOrThisName $BackupParentOrThisName -ThrowOnGetParentOrThis:$ThrowOnGetParentOrThis
         } else { $null }
+        # $CallCounts is a Hashtable (reference type), captured below as a
+        # plain LOCAL alias before .GetNewClosure() runs, then mutated in
+        # place from inside the closure. A scalar counter incremented via
+        # $script: (e.g. `$script:GetSourceJobCallCount++`) does NOT work
+        # here: .GetNewClosure() snapshots $script:-qualified variables into
+        # a private copy at closure-creation time, so writes inside the
+        # closure never propagate back to the real script-scope variable -
+        # confirmed empirically, the assertion sees 0 forever. Mutating a
+        # shared object's properties through a captured reference does
+        # propagate, since the alias and the original point at the same
+        # object.
+        $CallCounts = if ($script:CallCounts) { $script:CallCounts } else { @{ GetSourceJob = 0; GetBackup = 0 } }
 
         $RestorePoint = [PSCustomObject]@{
             Name            = $Name
             Type            = $Type
             ObjectId        = $ObjectId
+            BackupId        = $BackupId
             CreationTimeUtc = $CreationTimeUtc
             ApproxSize      = $ApproxSize
             BackupSizeValue = $BackupSize
         }
         $RestorePoint | Add-Member -MemberType ScriptMethod -Name GetSourceJob -Value {
+            $CallCounts.GetSourceJob = $CallCounts.GetSourceJob + 1
             if ($ThrowSourceJobCapture) { throw 'GetSourceJob failed' }
             return $SourceJobCapture
         }.GetNewClosure()
         $RestorePoint | Add-Member -MemberType ScriptMethod -Name GetBackup -Value {
+            $CallCounts.GetBackup = $CallCounts.GetBackup + 1
             if ($ThrowGetBackupCapture) { throw 'GetBackup failed' }
             return $FakeBackup
         }.GetNewClosure()
