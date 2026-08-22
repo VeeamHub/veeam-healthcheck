@@ -138,13 +138,29 @@ function Get-VhcJob {
             # protected object's retention chain" - the actual cost driver
             # the old Type=Snapshot skip existed to work around, addressed
             # directly instead of by excluding an entire Type value.
-            $Groups = @($AllRestorePoints | Group-Object -Property BackupId)
+            #
+            # Manual foreach + Dictionary instead of Group-Object: Group-Object
+            # re-enters the pipeline and resolves -Property via
+            # PSPropertyExpression per item, then wraps every group in a
+            # GroupInfo/ArrayList. A single pass over the already-materialized
+            # $AllRestorePoints array skips all three, which matters once this
+            # runs against a large environment's full restore-point set.
+            $Groups = [System.Collections.Generic.Dictionary[string, System.Collections.Generic.List[object]]]::new([System.StringComparer]::OrdinalIgnoreCase)
+            foreach ($RestorePoint in $AllRestorePoints) {
+                $BackupIdKey = $RestorePoint.BackupId.ToString()
+                $GroupPoints = $null
+                if (-not $Groups.TryGetValue($BackupIdKey, [ref]$GroupPoints)) {
+                    $GroupPoints = [System.Collections.Generic.List[object]]::new()
+                    $Groups[$BackupIdKey] = $GroupPoints
+                }
+                $GroupPoints.Add($RestorePoint)
+            }
 
             # Tier 1: Id-based via GetSourceJob() (+ GetParentJob() walk-up),
             # one call per group, applied to every restore point in it.
             $UnresolvedGroups = [System.Collections.ArrayList]::new()
-            foreach ($Group in $Groups) {
-                $Representative = $Group.Group[0]
+            foreach ($GroupPoints in $Groups.Values) {
+                $Representative = $GroupPoints[0]
 
                 $SourceJob   = $null
                 $LookupThrew = $false
@@ -170,11 +186,11 @@ function Get-VhcJob {
                     if (-not $RestorePointsByJob.ContainsKey($JobIdKey)) {
                         $RestorePointsByJob[$JobIdKey] = [System.Collections.ArrayList]::new()
                     }
-                    foreach ($RestorePoint in $Group.Group) { [void]$RestorePointsByJob[$JobIdKey].Add($RestorePoint) }
-                    $Tier1Matched += $Group.Count
+                    foreach ($RestorePoint in $GroupPoints) { [void]$RestorePointsByJob[$JobIdKey].Add($RestorePoint) }
+                    $Tier1Matched += $GroupPoints.Count
                 } else {
-                    [void]$UnresolvedGroups.Add($Group)
-                    if ($LookupThrew) { $Tier1Failed += $Group.Count }
+                    [void]$UnresolvedGroups.Add($GroupPoints)
+                    if ($LookupThrew) { $Tier1Failed += $GroupPoints.Count }
                 }
             }
 
@@ -193,8 +209,8 @@ function Get-VhcJob {
                 [string[]]$RestorePointsByJob.Keys,
                 [System.StringComparer]::OrdinalIgnoreCase
             )
-            foreach ($Group in $UnresolvedGroups) {
-                $Representative = $Group.Group[0]
+            foreach ($GroupPoints in $UnresolvedGroups) {
+                $Representative = $GroupPoints[0]
 
                 $JobIdKey = $null
                 try {
@@ -207,8 +223,8 @@ function Get-VhcJob {
                 if (-not $RestorePointsByJob.ContainsKey($JobIdKey)) {
                     $RestorePointsByJob[$JobIdKey] = [System.Collections.ArrayList]::new()
                 }
-                foreach ($RestorePoint in $Group.Group) { [void]$RestorePointsByJob[$JobIdKey].Add($RestorePoint) }
-                $Tier2Matched += $Group.Count
+                foreach ($RestorePoint in $GroupPoints) { [void]$RestorePointsByJob[$JobIdKey].Add($RestorePoint) }
+                $Tier2Matched += $GroupPoints.Count
             }
 
             try {
