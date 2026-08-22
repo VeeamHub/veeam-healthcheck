@@ -901,7 +901,7 @@ git add Test-JobSizingRestorePointMatching.ps1
 git commit -m "test(jobs): update scratch validation script for BackupId-grouped matching (ADR 0023)"
 ```
 
-- [ ] **Step 5: Manual checkpoint — do not skip**
+- [x] **Step 5: Manual checkpoint — do not skip**
 
 This step cannot be automated by whoever executes this plan unless they have live VBR lab access. Before merging this change:
 1. Run the updated `Test-JobSizingRestorePointMatching.ps1` against at least one live VBR environment.
@@ -911,6 +911,16 @@ This step cannot be automated by whoever executes this plan unless they have liv
 5. The lab must include at least one Replication job alongside a non-allowlisted job type (so `$NeedsSweep` is true), and its `OnDiskGB` must be confirmed non-zero and matching the old method's result. Replication Jobs no longer have a dedicated per-job `GetLastBackup()` fallback (removed by this change per ADR 0023) — they now depend entirely on Tier 1/2 resolving their restore points, same as every other job type. ADR 0023's live evidence that `GetSourceJob()` resolves `Type=Snapshot` points correctly comes from exactly one lab's one job; a lab where the comparison "shows zero regressions" without a Replication job actually present under sweep conditions would pass green without ever testing this path.
 
 If this step surfaces a grouping violation (a `BackupId` group whose members resolve to different jobs), stop — do not proceed to Task 7. That would invalidate the core safety assumption this whole design rests on, and needs to go back through the design doc before any further code changes.
+
+**Results (2026-08-23), three live environments:**
+- Grouping-assumption audit: 66 multi-point `BackupId` groups checked cumulatively (13 + 9 + 44), **zero violations** in all three.
+- Item 5 (Replication job under real sweep conditions): satisfied twice — a `VMware Replication` job (one environment) and, independently, a `Hyper-V Replication` job in a third, much larger and differently-composed environment (21 jobs, 5091 restore points) — both matched old-vs-new exactly with non-zero `OnDiskGB`.
+- 8 jobs across all three environments went from a silent 0/0 to a correct non-zero size (the exact "encrypted/plug-in-backed backup" and "never-run job" failure modes this redesign targets) — zero jobs changed to a *different, wrong* non-zero number.
+- One flagged discrepancy in environment 1 (`Backup Copy Job 3`, 435.95GB → 0.00GB) traced via the script's own diagnostics to a pre-existing, unrelated `Get-VBRRestorePoint -Backup` scoping bug that was already leaking the entire server's restore points into that job's old number — not caused by this change.
+- One informative tier-2-suppression case in environment 3 (two `Proxmox` restore points suppressed in favor of an already-tier-1-matched chain, possibly a pre-retarget chain for the same VMs) — a pre-existing, already-accepted ADR 0021 gating tradeoff, not a regression.
+- Item 4 (Storage-Snapshot Backup population specifically) was not measured in any of the three — left as a known gap, not a blocker.
+- Performance was a net win in two environments and a 1.36x regression in the third (large lab), driven by the unavoidable upfront `Get-VBRRestorePoint` fetch and per-matched-point `GetStorage()` cost rather than by grouping itself (which cut `GetSourceJob()`/`GetBackup()` calls by 99% in that same environment) — noted for awareness, not a blocker for this change.
+- User (Ben Thomas) reviewed all three and confirmed this is sufficient to consider this step complete.
 
 ---
 
@@ -935,6 +945,8 @@ Expected: `0 errors`. If the auto-increment version bump touches `vHC/HC_Reporti
 Run: `grep -rn 'NonReplicaJobs\|ReplicaJobs\|HadPriorMatch\|LookupFailed' "vHC/HC_Reporting/Tools/Scripts/HealthCheck/VBR/vHC-VbrConfig/Public/Get-VhcJob.ps1" "vHC/HC_Reporting/Tools/Scripts/HealthCheck/VBR/vHC-VbrConfig/Public/Get-VhcJob.Tests.ps1"`
 Expected: no matches in either file.
 
-- [ ] **Step 4: Confirm Task 6's manual live-lab checkpoint was completed**
+- [x] **Step 4: Confirm Task 6's manual live-lab checkpoint was completed**
 
 Do not consider this plan complete until Task 6 Step 5 has been performed against at least one live environment and reported zero grouping violations. If it hasn't happened yet, stop here and flag it rather than proceeding to open/update a PR.
+
+Confirmed complete against three live environments — see Task 6 Step 5's Results note above. Plan complete.
