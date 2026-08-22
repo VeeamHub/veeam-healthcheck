@@ -106,7 +106,7 @@ git commit -m "test(jobs): add BackupId and call counters to the restore-point f
 
 This is independent of the grouping algorithm and safely separable — it only changes which job types trigger the sweep, not how the sweep resolves anything once it runs.
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 Insert after the existing `It 'never calls Get-VBRRestorePoint without -Backup when every job is a known-safe type'` block (after line 567's closing `}`) in `Get-VhcJob.Tests.ps1`:
 
@@ -125,12 +125,12 @@ Insert after the existing `It 'never calls Get-VBRRestorePoint without -Backup w
     }
 ```
 
-- [ ] **Step 2: Run it to verify it fails**
+- [x] **Step 2: Run it to verify it fails**
 
 Run: `pwsh -NoProfile -Command "Invoke-Pester -Path 'vHC/HC_Reporting/Tools/Scripts/HealthCheck/VBR/vHC-VbrConfig/Public/Get-VhcJob.Tests.ps1' -Output Detailed" 2>&1 | grep -A6 'only jobs are Replication'`
 Expected: FAIL — `ReplicaJob` isn't on `$KnownSafeJobTypes` yet and isn't excluded from the gate check either (it *is* excluded from `$NonReplicaJobs`, so today it's actually invisible to `$NeedsSweep` too — but `VMwareJob` alone being safe means today's code *also* reports `$NeedsSweep = $false` here, i.e. this specific test might pass by coincidence today). Confirm by checking `$script:UnscopedCalls` is `0` and `$script:ScopedCalls` is `2` — if it already passes, that's fine, it means today's carve-out and tomorrow's allowlist entry produce the same gate outcome for this scenario; proceed to Step 3 regardless, since the test still documents intended post-change behavior and Task 4 removes the carve-out this test would otherwise silently depend on.
 
-- [ ] **Step 3: Update `$KnownSafeJobTypes` and simplify `$NeedsSweep`**
+- [x] **Step 3: Update `$KnownSafeJobTypes` and simplify `$NeedsSweep`**
 
 Replace lines 86-97 of `Get-VhcJob.ps1`:
 
@@ -153,12 +153,12 @@ Replace lines 86-97 of `Get-VhcJob.ps1`:
 
 **Important — do not remove the `$NonReplicaJobs`/`$ReplicaJobs` assignment lines in this task**, even though they're now otherwise only used by the sweep-gate comment. They are still read by name inside the not-yet-replaced Replica loop further down (`foreach ($Job in $ReplicaJobs)`). Deleting them here would leave that loop reading an undefined variable — `foreach` over `$null` runs zero times without erroring, so every Replica-loop test would silently start failing (their assertions about Replica-job sizing would see nothing happen) even though nothing about the Replica loop's own code changed. Only `$NeedsSweep`'s formula changes in this task (from `$NonReplicaJobs` to `$Jobs`). The two now-single-purpose-remaining variables come out in Task 4, together with the Replica loop that's their only remaining reader.
 
-- [ ] **Step 4: Run the full suite to verify it passes**
+- [x] **Step 4: Run the full suite to verify it passes**
 
 Run: `pwsh -NoProfile -Command "Invoke-Pester -Path 'vHC/HC_Reporting/Tools/Scripts/HealthCheck/VBR/vHC-VbrConfig/Public/Get-VhcJob.Tests.ps1'"`
 Expected: `Tests Passed: 45, Failed: 0`
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add "vHC/HC_Reporting/Tools/Scripts/HealthCheck/VBR/vHC-VbrConfig/Public/Get-VhcJob.ps1" "vHC/HC_Reporting/Tools/Scripts/HealthCheck/VBR/vHC-VbrConfig/Public/Get-VhcJob.Tests.ps1"
