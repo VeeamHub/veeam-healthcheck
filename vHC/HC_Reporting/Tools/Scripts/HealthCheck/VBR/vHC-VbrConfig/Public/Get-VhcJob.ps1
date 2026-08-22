@@ -81,7 +81,8 @@ function Get-VhcJob {
 
     # ------------------------------------------------------------------
     # Restore-point matching: performance gate + global sweep
-    # (ADR 0021: tiered sweep; ADR 0022: allowlist gate)
+    # (ADR 0021: tiered sweep; ADR 0022: allowlist gate;
+    #  ADR 0023: BackupId-grouped matching for all job types)
     # ------------------------------------------------------------------
     $KnownSafeJobTypes = @(
         'VMware Backup',
@@ -94,9 +95,7 @@ function Get-VhcJob {
         'Hyper-V Replication'
     )
 
-    $NonReplicaJobs = @($Jobs | Where-Object { $null -ne $_ -and $_.TypeToString -notlike '*Replication*' })
-    $ReplicaJobs    = @($Jobs | Where-Object { $null -ne $_ -and $_.TypeToString -like '*Replication*' })
-    $NeedsSweep     = [bool]($Jobs | Where-Object { $null -ne $_ -and $_.TypeToString -notin $KnownSafeJobTypes } | Select-Object -First 1)
+    $NeedsSweep = [bool]($Jobs | Where-Object { $null -ne $_ -and $_.TypeToString -notin $KnownSafeJobTypes } | Select-Object -First 1)
 
     $RestorePointsByJob = @{}
     if ($NeedsSweep) {
@@ -127,38 +126,56 @@ function Get-VhcJob {
                 if ($j.Name -and -not $JobIdByName.ContainsKey($j.Name)) { $JobIdByName[$j.Name] = $idStr }
             }
 
-            $Unresolved         = [System.Collections.ArrayList]::new()
-            $Tier1Matched       = 0
-            $Tier1Failed        = 0
-            $Tier2Matched       = 0
+            $Tier1Matched = 0
+            $Tier1Failed  = 0
+            $Tier2Matched = 0
 
-            # Tier 1: Id-based via GetSourceJob() (+ GetParentJob() walk-up).
-            # Snapshot-type (replication) restore points never resolve via
-            # GetSourceJob() - skip the doomed call; they're sized via the
-            # Replica loop added in a later change.
-            foreach ($RestorePoint in $AllRestorePoints) {
-                if ($RestorePoint.Type -eq 'Snapshot') { [void]$Unresolved.Add($RestorePoint); continue }
+            # Group by BackupId (ADR 0023): confirmed live to be scoped to one
+            # protected object's chain within one job, so every restore point
+            # sharing a BackupId must resolve to the same owning job. Resolving
+            # ownership once per group instead of once per point turns "one
+            # GetSourceJob() call per restore point" into "one call per
+            # protected object's retention chain" - the actual cost driver
+            # the old Type=Snapshot skip existed to work around, addressed
+            # directly instead of by excluding an entire Type value.
+            $Groups = $AllRestorePoints | Group-Object -Property BackupId
 
-                $SourceJob = $null
-                try { $SourceJob = $RestorePoint.GetSourceJob() } catch { $Tier1Failed++ }
-                if ($null -eq $SourceJob) { [void]$Unresolved.Add($RestorePoint); continue }
+            # Tier 1: Id-based via GetSourceJob() (+ GetParentJob() walk-up),
+            # one call per group, applied to every restore point in it.
+            $UnresolvedGroups = [System.Collections.ArrayList]::new()
+            foreach ($Group in $Groups) {
+                $Representative = $Group.Group[0]
 
-                # A GetParentJob() throw means this job type doesn't implement
-                # it - falling back to the child's own Id is a valid outcome,
-                # not a failure, so it isn't counted alongside $Tier1Failed.
-                $ParentJob = $null
-                try { $ParentJob = $SourceJob.GetParentJob() } catch {}
-                if ($null -ne $ParentJob) { $SourceJob = $ParentJob }
+                $SourceJob   = $null
+                $LookupThrew = $false
+                try { $SourceJob = $Representative.GetSourceJob() } catch { $LookupThrew = $true }
 
-                if ($null -eq $SourceJob.Id) { [void]$Unresolved.Add($RestorePoint); continue }
-                $JobIdKey = $SourceJob.Id.ToString()
-                if (-not $KnownJobIds.Contains($JobIdKey)) { [void]$Unresolved.Add($RestorePoint); continue }
-
-                if (-not $RestorePointsByJob.ContainsKey($JobIdKey)) {
-                    $RestorePointsByJob[$JobIdKey] = [System.Collections.ArrayList]::new()
+                if ($null -ne $SourceJob) {
+                    # A GetParentJob() throw means this job type doesn't
+                    # implement it - falling back to the child's own Id is a
+                    # valid outcome, not a failure, so it isn't counted
+                    # alongside $Tier1Failed.
+                    $ParentJob = $null
+                    try { $ParentJob = $SourceJob.GetParentJob() } catch {}
+                    if ($null -ne $ParentJob) { $SourceJob = $ParentJob }
                 }
-                [void]$RestorePointsByJob[$JobIdKey].Add($RestorePoint)
-                $Tier1Matched++
+
+                $JobIdKey = $null
+                if ($null -ne $SourceJob -and $null -ne $SourceJob.Id) {
+                    $CandidateKey = $SourceJob.Id.ToString()
+                    if ($KnownJobIds.Contains($CandidateKey)) { $JobIdKey = $CandidateKey }
+                }
+
+                if ($JobIdKey) {
+                    if (-not $RestorePointsByJob.ContainsKey($JobIdKey)) {
+                        $RestorePointsByJob[$JobIdKey] = [System.Collections.ArrayList]::new()
+                    }
+                    foreach ($RestorePoint in $Group.Group) { [void]$RestorePointsByJob[$JobIdKey].Add($RestorePoint) }
+                    $Tier1Matched += $Group.Count
+                } else {
+                    [void]$UnresolvedGroups.Add($Group)
+                    if ($LookupThrew) { $Tier1Failed += $Group.Count }
+                }
             }
 
             # Tier 2: name-based fallback, GATED - only accepted if the
@@ -166,21 +183,22 @@ function Get-VhcJob {
             # across genuinely different backup objects, so this cannot be
             # trusted to override an existing Id-based match.
             #
-            # Snapshot Tier 1's output once, here, rather than checking
-            # $RestorePointsByJob.ContainsKey() live below - Tier 2 mutates
-            # $RestorePointsByJob as it runs, so a live check would let a
-            # restore point Tier 2 itself already placed on a job this same
-            # loop look "already matched" and get dropped instead of summed.
+            # Snapshot Tier 1's output once, here, after the full pass over
+            # every group completes - not a live check during tier 2, and not
+            # interleaved tier1->tier2 per group. Either of those would let a
+            # stale-name group get accepted before a same-job Id-match group
+            # (processed later) arrives, reintroducing exactly the
+            # misattribution ADR 0021's gating was built to prevent.
             $Tier1MatchedJobIds = [System.Collections.Generic.HashSet[string]]::new(
                 [string[]]$RestorePointsByJob.Keys,
                 [System.StringComparer]::OrdinalIgnoreCase
             )
-            foreach ($RestorePoint in $Unresolved) {
-                if ($RestorePoint.Type -eq 'Snapshot') { continue }
+            foreach ($Group in $UnresolvedGroups) {
+                $Representative = $Group.Group[0]
 
                 $JobIdKey = $null
                 try {
-                    $ParentName = $RestorePoint.GetBackup().GetParentOrThis().Name
+                    $ParentName = $Representative.GetBackup().GetParentOrThis().Name
                     if ($ParentName -and $JobIdByName.ContainsKey($ParentName)) { $JobIdKey = $JobIdByName[$ParentName] }
                 } catch {}
                 if (-not $JobIdKey) { continue }
@@ -189,55 +207,15 @@ function Get-VhcJob {
                 if (-not $RestorePointsByJob.ContainsKey($JobIdKey)) {
                     $RestorePointsByJob[$JobIdKey] = [System.Collections.ArrayList]::new()
                 }
-                [void]$RestorePointsByJob[$JobIdKey].Add($RestorePoint)
-                $Tier2Matched++
-            }
-
-            # Replica jobs: sized via their own GetLastBackup() lookup by
-            # default - already correct for replicas, never routed through
-            # tier 1/2. If that lookup fails outright, a tier-1/2 match
-            # already sitting in $RestorePointsByJob for this Id (see the
-            # comment below) is preserved instead of being replaced with an
-            # empty result. A *successful* lookup that legitimately finds
-            # zero points still overwrites, same as always. Guard against a
-            # null Id for the same reason $KnownJobIds and $JobIdByName do
-            # above - a non-null $Job with no populated Id would otherwise
-            # abort the whole sweep via the outer catch.
-            foreach ($Job in $ReplicaJobs) {
-                if ($null -eq $Job.Id) { continue }
-                $JobIdKey = $Job.Id.ToString()
-
-                # $NonReplicaJobs only gates whether the sweep runs at all -
-                # it doesn't exclude Replica jobs from tier 1/2 matching, so
-                # a non-Snapshot restore point whose GetSourceJob() resolves
-                # to a Replication-type job can already be sitting in this
-                # bucket. That's not new behavior (this loop always
-                # overwrites it on a successful lookup, same as pre-branch
-                # code always ignored tier 1/2 for Replicas), but it was
-                # previously invisible.
-                $HadPriorMatch = $RestorePointsByJob.ContainsKey($JobIdKey) -and $RestorePointsByJob[$JobIdKey].Count -gt 0
-
-                $LastBackup   = $null
-                $LookupFailed = $false
-                try { $LastBackup = $Job.GetLastBackup() } catch { $LookupFailed = $true }
-                $ReplicaPoints = @()
-                if ($null -ne $LastBackup) {
-                    try { $ReplicaPoints = @(Get-VBRRestorePoint -Backup $LastBackup -WarningAction SilentlyContinue) } catch { $LookupFailed = $true }
-                }
-
-                if ($LookupFailed -and $HadPriorMatch) {
-                    try { Write-LogFile "Replica job '$($Job.Name)' kept $($RestorePointsByJob[$JobIdKey].Count) tier-1/2-matched restore point(s) because its own GetLastBackup()/Get-VBRRestorePoint lookup failed" -LogLevel "WARNING" } catch {}
-                    continue
-                }
-                if ($HadPriorMatch) {
-                    try { Write-LogFile "Replica job '$($Job.Name)' had $($RestorePointsByJob[$JobIdKey].Count) tier-1/2-matched restore point(s) discarded in favor of its own GetLastBackup() lookup" -LogLevel "WARNING" } catch {}
-                }
-                $RestorePointsByJob[$JobIdKey] = [System.Collections.ArrayList]::new()
-                foreach ($RestorePoint in $ReplicaPoints) { [void]$RestorePointsByJob[$JobIdKey].Add($RestorePoint) }
+                foreach ($RestorePoint in $Group.Group) { [void]$RestorePointsByJob[$JobIdKey].Add($RestorePoint) }
+                $Tier2Matched += $Group.Count
             }
 
             try {
                 Write-LogFile "Restore point matching: $Tier1Matched matched via tier 1, $Tier1Failed tier-1 lookup failures, $Tier2Matched tier-2, $($AllRestorePoints.Count - $Tier1Matched - $Tier2Matched) unmatched/orphaned/snapshot"
+            } catch {}
+            try {
+                Write-LogFile "BackupId grouping: $($AllRestorePoints.Count) restore points reduced to $($Groups.Count) groups ($($Groups.Count) tier-1 lookups + $($UnresolvedGroups.Count) tier-2 lookups attempted, vs. $($AllRestorePoints.Count) lookups pre-grouping)"
             } catch {}
         } catch {
             # This is the sweep's outermost catch - unlike the Write-LogFile
