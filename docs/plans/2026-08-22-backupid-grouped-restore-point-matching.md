@@ -529,7 +529,7 @@ git commit -m "feat(jobs): replace Type=Snapshot skip and Replica loop with Back
 
 Three things to remove, each because the behavior they test no longer exists in the codebase (not because the tests are wrong to have existed).
 
-- [ ] **Step 1: Remove the entire `'Replica jobs are sized via their own lookup...'` Describe block**
+- [x] **Step 1: Remove the entire `'Replica jobs are sized via their own lookup...'` Describe block**
 
 Delete lines 1098-1230 of `Get-VhcJob.Tests.ps1` (line numbers approximate — Task 3's insertion shifted everything below it down; match by content) — the header comment block:
 ```powershell
@@ -542,7 +542,7 @@ Delete lines 1098-1230 of `Get-VhcJob.Tests.ps1` (line numbers approximate — T
 ```
 through the entire `Describe 'Replica jobs are sized via their own lookup, tier 1/2 only as a fallback on failure' { ... }` block and its closing `}`, plus the blank line immediately after it. Replication jobs are now covered by the `BackupId grouping (ADR 0023)` Describe block added in Task 3 (specifically `'a Replication job resolves via tier 1 when the sweep runs, summing multiple chains like any other job type'`), which replaces this block's coverage with the corrected behavior.
 
-- [ ] **Step 2: Remove the obsolete "Replica-loop discarded WARNING" logging-resilience test**
+- [x] **Step 2: Remove the obsolete "Replica-loop discarded WARNING" logging-resilience test**
 
 In the `'Sweep resilience: a logging failure does not disable the sweep'` Describe block, delete this test (the message it checks for, `'discarded in favor'`, no longer exists anywhere in `Get-VhcJob.ps1`):
 
@@ -573,7 +573,7 @@ In the `'Sweep resilience: a logging failure does not disable the sweep'` Descri
 
 (Leave the other two tests in this Describe block — the sweep-summary and sweep-failure logging-resilience tests — unchanged; both log lines still exist.)
 
-- [ ] **Step 3: Remove the invalidated `'never resolves a Type=Snapshot restore point via either tier'` test**
+- [x] **Step 3: Remove the invalidated `'never resolves a Type=Snapshot restore point via either tier'` test**
 
 In the `'Tier 2: gated name-based fallback'` Describe block, delete this test — its premise (a restore point with a real, resolvable `SourceJob` still reports `0` purely because `Type -eq 'Snapshot'`) is exactly what ADR 0023 corrects; this restore point now correctly resolves via Tier 1:
 
@@ -600,17 +600,17 @@ In the `'Tier 2: gated name-based fallback'` Describe block, delete this test �
 
 ```
 
-- [ ] **Step 4: Run the full file**
+- [x] **Step 4: Run the full file**
 
 Run: `pwsh -NoProfile -Command "Invoke-Pester -Path 'vHC/HC_Reporting/Tools/Scripts/HealthCheck/VBR/vHC-VbrConfig/Public/Get-VhcJob.Tests.ps1'"`
 Expected: `Tests Passed: 43, Failed: 0, Skipped: 0` (45 from Task 2, +5 new from Task 3, -7 removed in this task = 43).
 
-- [ ] **Step 5: Run the full directory-wide Pester tree**
+- [x] **Step 5: Run the full directory-wide Pester tree**
 
 Run: `pwsh -NoProfile -Command "Invoke-Pester -Path 'vHC/HC_Reporting/Tools/Scripts/HealthCheck/VBR/vHC-VbrConfig'"`
 Expected: all tests pass, no stub-collision regressions (per the suite's own documented cross-file global-stub-leak risk — single-file green is not sufficient evidence on its own).
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add "vHC/HC_Reporting/Tools/Scripts/HealthCheck/VBR/vHC-VbrConfig/Public/Get-VhcJob.Tests.ps1"
