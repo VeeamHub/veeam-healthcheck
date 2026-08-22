@@ -138,7 +138,7 @@ function Get-VhcJob {
             # protected object's retention chain" - the actual cost driver
             # the old Type=Snapshot skip existed to work around, addressed
             # directly instead of by excluding an entire Type value.
-            $Groups = $AllRestorePoints | Group-Object -Property BackupId
+            $Groups = @($AllRestorePoints | Group-Object -Property BackupId)
 
             # Tier 1: Id-based via GetSourceJob() (+ GetParentJob() walk-up),
             # one call per group, applied to every restore point in it.
