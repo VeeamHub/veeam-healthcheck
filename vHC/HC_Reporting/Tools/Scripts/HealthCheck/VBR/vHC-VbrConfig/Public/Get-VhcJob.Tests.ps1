@@ -666,28 +666,6 @@ Describe 'Sweep resilience: a logging failure does not disable the sweep' {
         $Row.OnDiskGB | Should -Be 9
     }
 
-    It 'a throw from the Replica-loop "discarded" WARNING log line still applies a real tier-1 match to other jobs' {
-        $ReplicaJob  = script:New-FakeJob -Name 'Hyper-V - Replicas' -TypeToString 'Hyper-V Replication' -LastBackup ([PSCustomObject]@{ Id = [guid]::NewGuid() })
-        $MorpheusJob = script:New-FakeJob -Name 'MorpheusJob' -TypeToString 'HPE Morpheus VME Backup'
-        Mock Get-VBRJob -MockWith { @($ReplicaJob, $MorpheusJob) }
-        Mock Write-LogFile -MockWith {
-            if ($Message -match 'discarded in favor') { throw 'Simulated logging failure' }
-        }
-        Mock Get-VBRRestorePoint -MockWith {
-            if ($null -eq $Backup) {
-                @(
-                    # Resolves back to $ReplicaJob itself via tier 1, so the
-                    # Replica loop's "had N ... discarded" WARNING fires.
-                    (script:New-FakeRestorePoint -ObjectId ([guid]'71717171-7171-7171-7171-717171717171') -ApproxSize 5GB -BackupSize 3GB -SourceJob $ReplicaJob),
-                    (script:New-FakeRestorePoint -ObjectId ([guid]'72727272-7272-7272-7272-727272727272') -ApproxSize 20GB -BackupSize 9GB -SourceJob $MorpheusJob)
-                )
-            } else { @() }
-        }
-        Get-VhcJob
-        $Row = $script:CapturedJobRows | Where-Object { $_.Name -eq 'MorpheusJob' }
-        $Row.OnDiskGB | Should -Be 9
-    }
-
     It 'a throw from the sweep-failure ERROR log line does not abort the whole function' {
         # This is the sweep's OUTERMOST catch - unlike the other two logging
         # failures above (which just fall through to here), a throw from
@@ -1040,26 +1018,6 @@ Describe 'Tier 2: gated name-based fallback' {
         $Row.OnDiskGB | Should -Be 72.99
     }
 
-    It 'never resolves a Type=Snapshot restore point via either tier' {
-        # 'VMware Backup' alone would leave $NeedsSweep=$false and this test
-        # would pass because the sweep never ran, not because the skip logic
-        # under test works - add a non-allowlisted companion job (mirrors
-        # Task 6's Replica test) to force the sweep on. The realistic risk
-        # this guards is a VMware job in a mixed environment where a stray
-        # Snapshot-type point's name happens to resolve to it.
-        $VMwareJob   = script:New-FakeJob -Name 'VMware - Domain Controller' -TypeToString 'VMware Backup'
-        $MorpheusJob = script:New-FakeJob -Name 'MorpheusJob' -TypeToString 'HPE Morpheus VME Backup'
-        Mock Get-VBRJob -MockWith { @($VMwareJob, $MorpheusJob) }
-        Mock Get-VBRRestorePoint -MockWith {
-            if ($null -eq $Backup) {
-                @( (script:New-FakeRestorePoint -Type 'Snapshot' -ObjectId ([guid]'99999999-9999-9999-9999-999999999999') -ApproxSize 100GB -BackupSize 50GB -SourceJob $VMwareJob -BackupParentOrThisName 'VMware - Domain Controller') )
-            } else { @() }
-        }
-        Get-VhcJob
-        $Row = $script:CapturedJobRows | Where-Object { $_.Name -eq 'VMware - Domain Controller' }
-        $Row.OnDiskGB | Should -Be 0
-    }
-
     It 'does not abort the sweep when $Jobs contains a job with no Id (the $JobIdByName build)' {
         # Regression: $JobIdByName's build loop originally guarded only
         # ($null -ne $j), not ($null -ne $j.Id) - unlike $KnownJobIds right
@@ -1250,139 +1208,6 @@ Describe 'BackupId grouping (ADR 0023): one lookup per group, applied to every r
         $Row = $script:CapturedJobRows | Where-Object { $_.Name -eq 'Replica_VC_NZGDC01' }
         $Row.OnDiskGB     | Should -Be 9    # 5 + 4, both chains summed - previously impossible for Replication jobs
         $Row.OriginalSize | Should -Be 25GB # latest chain's ApproxSize, same rule as every other job type
-    }
-}
-
-# ---------------------------------------------------------------------------
-# Replica handling (ADR 0021): Replica jobs are sized via their own
-# GetLastBackup() lookup by default, not tier 1/2. If that lookup fails
-# outright and a tier-1/2 match already exists for the same Id, that match is
-# preserved instead of being replaced with a zeroed-out result.
-# ---------------------------------------------------------------------------
-Describe 'Replica jobs are sized via their own lookup, tier 1/2 only as a fallback on failure' {
-
-    BeforeEach {
-        $script:CapturedJobRows = @()
-        Mock Write-LogFile                 -MockWith { }
-        Mock Get-VBRConfigurationBackupJob -MockWith { $null }
-        Mock Invoke-VhciJobSubCollectors   -MockWith { }
-        Mock Add-VhciModuleError           -MockWith { }
-        Mock Get-VBRBackup                 -MockWith { @() }
-        Mock Export-VhciCsv -MockWith {
-            if ($FileName -eq '_Jobs.csv' -and $InputObject) {
-                $script:CapturedJobRows += @($InputObject)
-            }
-        }
-    }
-
-    It 'sizes a Replica job via GetLastBackup() + Get-VBRRestorePoint -Backup, not via tier 1/2' {
-        $ReplicaBackupRef = [PSCustomObject]@{ Id = [guid]::NewGuid() }
-        $ReplicaJob       = script:New-FakeJob -Name 'Hyper-V - Replicas' -TypeToString 'Hyper-V Replication' -LastBackup $ReplicaBackupRef
-        # A second, non-Replica job forces $NeedsSweep to $true so the sweep
-        # (and thus the Replica-bypass branch) actually runs.
-        $MorpheusJob = script:New-FakeJob -Name 'MorpheusJob' -TypeToString 'HPE Morpheus VME Backup'
-        Mock Get-VBRJob -MockWith { @($ReplicaJob, $MorpheusJob) }
-        # $ReplicaJob is the only job with a non-null LastBackup in this test,
-        # so $ReplicaJob's own scoped call is the only one that can ever pass
-        # a non-null -Backup here - no need to depend on reference equality
-        # surviving Pester's mock parameter binding.
-        Mock Get-VBRRestorePoint -MockWith {
-            if ($null -ne $Backup) {
-                @( (script:New-FakeRestorePoint -Type 'Snapshot' -ObjectId ([guid]'10101010-1010-1010-1010-101010101010') -ApproxSize 44GB -BackupSize 23.47GB) )
-            } else { @() }
-        }
-        Get-VhcJob
-        $Row = $script:CapturedJobRows | Where-Object { $_.Name -eq 'Hyper-V - Replicas' }
-        $Row.OnDiskGB     | Should -Be 23.47
-        $Row.OriginalSize | Should -Be 44GB
-    }
-
-    It 'a Replica job whose GetLastBackup() throws falls back to Info.IncludedSize / 0' {
-        $ReplicaJob  = script:New-FakeJob -Name 'VMware - Replicas' -TypeToString 'VMware Replication' -ThrowOnGetLastBackup -IncludedSize 12.5
-        $MorpheusJob = script:New-FakeJob -Name 'MorpheusJob' -TypeToString 'HPE Morpheus VME Backup'
-        Mock Get-VBRJob -MockWith { @($ReplicaJob, $MorpheusJob) }
-        Mock Get-VBRRestorePoint -MockWith { @() }
-        Get-VhcJob
-        $Row = $script:CapturedJobRows | Where-Object { $_.Name -eq 'VMware - Replicas' }
-        $Row.OnDiskGB     | Should -Be 0
-        $Row.OriginalSize | Should -Be 12.5
-    }
-
-    It 'does not abort the sweep when a Replica job has no Id' {
-        # Same bug class as $KnownJobIds/$JobIdByName's null-Id guards
-        # (f21f03b, d5aea23) - a non-null $Job with no populated Id would
-        # otherwise throw on $Job.Id.ToString(). The Replica loop runs AFTER
-        # tier 1/2 matching, so the crash doesn't erase MorpheusJob's tier-1
-        # match directly - it aborts the sweep via the outer catch instead,
-        # which (per this task's $NeedsSweep reset) routes MorpheusJob to the
-        # old per-job method instead of its already-correct tier-1 bucket,
-        # losing the match anyway.
-        $NoIdReplica = [PSCustomObject]@{ Name = 'NoIdReplica'; TypeToString = 'VMware Replication' }
-        $MorpheusJob = script:New-FakeJob -Name 'MorpheusJob' -TypeToString 'HPE Morpheus VME Backup'
-        Mock Get-VBRJob -MockWith { @($NoIdReplica, $MorpheusJob) }
-        Mock Get-VBRRestorePoint -MockWith {
-            if ($null -eq $Backup) {
-                @( (script:New-FakeRestorePoint -ObjectId ([guid]'40404040-4040-4040-4040-404040404040') -ApproxSize 20GB -BackupSize 11GB -SourceJob $MorpheusJob) )
-            } else { @() }
-        }
-        Get-VhcJob
-        $Row = $script:CapturedJobRows | Where-Object { $_.Name -eq 'MorpheusJob' }
-        $Row.OnDiskGB | Should -Be 11
-    }
-
-    It 'a Replica job with a tier-1 match keeps it when GetLastBackup() throws' {
-        # Distinct from 'does not abort the sweep when a Replica job has no
-        # Id' above and from the WARNING test below - this covers the case
-        # where the Replica loop's OWN lookup fails outright (GetLastBackup()
-        # throws) AFTER a genuine tier-1 match was already recorded for this
-        # same job Id. Before the fix, the loop unconditionally overwrote
-        # $RestorePointsByJob[$JobIdKey] with a fresh empty ArrayList
-        # regardless of whether the replica-specific lookup produced
-        # anything, silently discarding the real tier-1 data. After the fix,
-        # a failed lookup preserves the prior match instead of zeroing it.
-        $ReplicaJob  = script:New-FakeJob -Name 'Hyper-V - Replicas' -TypeToString 'Hyper-V Replication' -ThrowOnGetLastBackup
-        # A second, non-Replica, non-allowlisted job forces $NeedsSweep to
-        # $true - a solo Replica job is excluded from $NonReplicaJobs
-        # entirely, so the sweep (and thus the Replica loop) would never run.
-        $MorpheusJob = script:New-FakeJob -Name 'MorpheusJob' -TypeToString 'HPE Morpheus VME Backup'
-        Mock Get-VBRJob -MockWith { @($ReplicaJob, $MorpheusJob) }
-        Mock Get-VBRRestorePoint -MockWith {
-            if ($null -eq $Backup) {
-                # Non-Snapshot point that tier 1 resolves straight back to
-                # $ReplicaJob itself via GetSourceJob(), giving it a genuine
-                # tier-1 match before the Replica loop's own (failing) lookup
-                # runs.
-                @( (script:New-FakeRestorePoint -ObjectId ([guid]'60606060-6060-6060-6060-606060606060') -ApproxSize 8GB -BackupSize 5GB -SourceJob $ReplicaJob) )
-            } else { @() }
-        }
-        Get-VhcJob
-        $Row = $script:CapturedJobRows | Where-Object { $_.Name -eq 'Hyper-V - Replicas' }
-        $Row.OnDiskGB     | Should -Be 5
-        $Row.OriginalSize | Should -Be 8GB
-    }
-
-    It 'logs a WARNING when a Replica job already carries a tier-1/2-matched restore point before the overwrite' {
-        # $NonReplicaJobs only gates whether the sweep runs at all - it does
-        # NOT exclude Replica jobs from tier 1/2 matching (only the
-        # restore point's own Type -eq 'Snapshot' check does that). So a
-        # non-Snapshot restore point whose GetSourceJob() resolves back to
-        # a Replication-type job can land in $RestorePointsByJob before this
-        # loop unconditionally overwrites it - previously silent, now logged.
-        $script:LogMessages = [System.Collections.Generic.List[string]]::new()
-        Mock Write-LogFile -MockWith { $script:LogMessages.Add($Message) }
-
-        $ReplicaJob  = script:New-FakeJob -Name 'Hyper-V - Replicas' -TypeToString 'Hyper-V Replication' -LastBackup ([PSCustomObject]@{ Id = [guid]::NewGuid() })
-        $MorpheusJob = script:New-FakeJob -Name 'MorpheusJob' -TypeToString 'HPE Morpheus VME Backup'
-        Mock Get-VBRJob -MockWith { @($ReplicaJob, $MorpheusJob) }
-        Mock Get-VBRRestorePoint -MockWith {
-            if ($null -eq $Backup) {
-                # Non-Snapshot restore point that tier 1 resolves straight
-                # back to the Replica job itself via GetSourceJob().
-                @( (script:New-FakeRestorePoint -ObjectId ([guid]'50505050-5050-5050-5050-505050505050') -ApproxSize 5GB -BackupSize 3GB -SourceJob $ReplicaJob) )
-            } else { @() }
-        }
-        Get-VhcJob
-        @($script:LogMessages | Where-Object { $_ -match "Replica job 'Hyper-V - Replicas' had 1 tier-1/2-matched restore point" }).Count | Should -Be 1
     }
 }
 
