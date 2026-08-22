@@ -286,7 +286,7 @@ Describe 'BackupId grouping (ADR 0023): one lookup per group, applied to every r
     }
 
     It 'a Replication job resolves via tier 1 when the sweep runs, summing multiple chains like any other job type' {
-        $ReplicaJob  = script:New-FakeJob -Name 'Replica_VC_NZGDC01' -TypeToString 'VMware Replication'
+        $ReplicaJob  = script:New-FakeJob -Name 'ReplicationJob01' -TypeToString 'VMware Replication'
         # A non-allowlisted companion job forces $NeedsSweep to $true -
         # 'VMware Replication' is itself on $KnownSafeJobTypes now, so a
         # solo replica job would never trigger the sweep on its own.
@@ -303,7 +303,7 @@ Describe 'BackupId grouping (ADR 0023): one lookup per group, applied to every r
             } else { @() }
         }
         Get-VhcJob
-        $Row = $script:CapturedJobRows | Where-Object { $_.Name -eq 'Replica_VC_NZGDC01' }
+        $Row = $script:CapturedJobRows | Where-Object { $_.Name -eq 'ReplicationJob01' }
         $Row.OnDiskGB     | Should -Be 9    # 5 + 4, both chains summed - previously impossible for Replication jobs
         $Row.OriginalSize | Should -Be 25GB # latest chain's ApproxSize, same rule as every other job type
     }

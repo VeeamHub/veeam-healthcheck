@@ -18,12 +18,12 @@ ADR 0021 routed `Type=Snapshot` restore points and `TypeToString -like
 throw rate, 5,461/5,461 in the on-prem lab)."
 
 That claim doesn't hold. Live evidence from a different environment (a
-`VMware Replication` job, `Replica_VC_NZGDC01`) shows `GetSourceJob()`
+`VMware Replication` job) shows `GetSourceJob()`
 resolving a `Type=Snapshot` restore point correctly:
 
 ```
 $RPs = Get-VBRRestorePoint -Backup $VBRJob.GetLastBackup()   # Type = Snapshot
-$RPs[0].GetSourceJob()                                        # -> Replica_VC_NZGDC01, correct
+$RPs[0].GetSourceJob()                                        # -> the replication job, correct
 ```
 
 Tracing the original measurement: the on-prem lab's two live replica jobs

@@ -15,12 +15,12 @@ never resolve via `GetSourceJob()` (100% throw rate, 5,461/5,461 in the
 on-prem lab)."
 
 That claim was wrong, or at least badly overgeneralized. Live evidence from
-a different environment (`Replica_VC_NZGDC01`, a `VMware Replication` job)
+a different environment (a `VMware Replication` job)
 shows `GetSourceJob()` resolving a `Type=Snapshot` restore point correctly:
 
 ```
 $RPs = Get-VBRRestorePoint -Backup $VBRJob.GetLastBackup()   # Type = Snapshot
-$RPs[0].GetSourceJob()                                        # returns Replica_VC_NZGDC01 correctly
+$RPs[0].GetSourceJob()                                        # returns the replication job correctly
 ```
 
 Tracing the original measurement's own write-up (the 2026-08-21 design
