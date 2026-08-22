@@ -93,31 +93,38 @@ function Get-VhcJob {
     )
 
     $NonReplicaJobs = @($Jobs | Where-Object { $null -ne $_ -and $_.TypeToString -notlike '*Replication*' })
+    $ReplicaJobs    = @($Jobs | Where-Object { $null -ne $_ -and $_.TypeToString -like '*Replication*' })
     $NeedsSweep     = [bool]($NonReplicaJobs | Where-Object { $_.TypeToString -notin $KnownSafeJobTypes } | Select-Object -First 1)
 
     $RestorePointsByJob = @{}
     if ($NeedsSweep) {
         try {
-            $AllRestorePoints = @(Get-VBRRestorePoint -WarningAction SilentlyContinue)
+            $AllRestorePoints = @(Get-VBRRestorePoint -WarningAction SilentlyContinue | Where-Object { $null -ne $_ })
 
-            # Same null-placeholder risk $KnownJobIds guards against below - a
-            # $Jobs element can be a non-null object with no populated Id (or,
-            # per f21f03b, $Jobs itself can carry a null placeholder when
+            # Same null-placeholder risk both structures below guard against -
+            # a $Jobs element can be a non-null object with no populated Id
+            # (or, per f21f03b, $Jobs itself can carry a null placeholder when
             # Get-VBRJob throws) - either way, .Id.ToString() on it aborts the
-            # whole sweep via the outer catch, not just this one lookup.
-            $JobIdByName = @{}
-            foreach ($j in @($Jobs)) {
-                if ($null -ne $j -and $null -ne $j.Id -and $j.Name -and -not $JobIdByName.ContainsKey($j.Name)) { $JobIdByName[$j.Name] = $j.Id.ToString() }
-            }
-
+            # whole sweep via the outer catch, not just this one lookup. Built
+            # in a single pass: $KnownJobIds only needs $j/$j.Id non-null,
+            # $JobIdByName additionally requires a non-empty, first-seen Name -
+            # keep that extra condition scoped to $JobIdByName's own branch,
+            # not folded into the shared guard, or a job with an Id but no
+            # Name would silently vanish from $KnownJobIds too.
+            #
             # OrdinalIgnoreCase: $RestorePointsByJob (a Hashtable) looks up
             # keys case-insensitively, so this gate must not be stricter than
             # the thing it's gating - a case-sensitive HashSet here would risk
             # silently dropping a resolved Id that only ever mismatches on case.
+            $JobIdByName = @{}
             $KnownJobIds = [System.Collections.Generic.HashSet[string]]::new([System.StringComparer]::OrdinalIgnoreCase)
-            foreach ($j in @($Jobs)) { if ($null -ne $j -and $null -ne $j.Id) { [void]$KnownJobIds.Add($j.Id.ToString()) } }
+            foreach ($j in @($Jobs)) {
+                if ($null -eq $j -or $null -eq $j.Id) { continue }
+                $idStr = $j.Id.ToString()
+                [void]$KnownJobIds.Add($idStr)
+                if ($j.Name -and -not $JobIdByName.ContainsKey($j.Name)) { $JobIdByName[$j.Name] = $idStr }
+            }
 
-            $Tier1MatchedJobIds = [System.Collections.Generic.HashSet[string]]::new([System.StringComparer]::OrdinalIgnoreCase)
             $Unresolved         = [System.Collections.ArrayList]::new()
             $Tier1Matched       = 0
             $Tier1Failed        = 0
@@ -149,7 +156,6 @@ function Get-VhcJob {
                     $RestorePointsByJob[$JobIdKey] = [System.Collections.ArrayList]::new()
                 }
                 [void]$RestorePointsByJob[$JobIdKey].Add($RestorePoint)
-                [void]$Tier1MatchedJobIds.Add($JobIdKey)
                 $Tier1Matched++
             }
 
@@ -157,6 +163,16 @@ function Get-VhcJob {
             # resolved job has zero tier-1 matches. Display names collide
             # across genuinely different backup objects, so this cannot be
             # trusted to override an existing Id-based match.
+            #
+            # Snapshot Tier 1's output once, here, rather than checking
+            # $RestorePointsByJob.ContainsKey() live below - Tier 2 mutates
+            # $RestorePointsByJob as it runs, so a live check would let a
+            # restore point Tier 2 itself already placed on a job this same
+            # loop look "already matched" and get dropped instead of summed.
+            $Tier1MatchedJobIds = [System.Collections.Generic.HashSet[string]]::new(
+                [string[]]$RestorePointsByJob.Keys,
+                [System.StringComparer]::OrdinalIgnoreCase
+            )
             foreach ($RestorePoint in $Unresolved) {
                 if ($RestorePoint.Type -eq 'Snapshot') { continue }
 
@@ -175,12 +191,17 @@ function Get-VhcJob {
                 $Tier2Matched++
             }
 
-            # Replica jobs: sized via the original per-job method, unchanged -
-            # already correct for replicas, never routed through tier 1/2.
-            # Guard against a null Id for the same reason $KnownJobIds and
-            # $JobIdByName do above - a non-null $Job with no populated Id
-            # would otherwise abort the whole sweep via the outer catch.
-            foreach ($Job in @($Jobs | Where-Object { $_.TypeToString -like '*Replication*' })) {
+            # Replica jobs: sized via their own GetLastBackup() lookup by
+            # default - already correct for replicas, never routed through
+            # tier 1/2. If that lookup fails outright, a tier-1/2 match
+            # already sitting in $RestorePointsByJob for this Id (see the
+            # comment below) is preserved instead of being replaced with an
+            # empty result. A *successful* lookup that legitimately finds
+            # zero points still overwrites, same as always. Guard against a
+            # null Id for the same reason $KnownJobIds and $JobIdByName do
+            # above - a non-null $Job with no populated Id would otherwise
+            # abort the whole sweep via the outer catch.
+            foreach ($Job in $ReplicaJobs) {
                 if ($null -eq $Job.Id) { continue }
                 $JobIdKey = $Job.Id.ToString()
 
@@ -189,25 +210,40 @@ function Get-VhcJob {
                 # a non-Snapshot restore point whose GetSourceJob() resolves
                 # to a Replication-type job can already be sitting in this
                 # bucket. That's not new behavior (this loop always
-                # overwrites it, same as pre-branch code always ignored
-                # tier 1/2 for Replicas), but it was previously invisible.
-                if ($RestorePointsByJob.ContainsKey($JobIdKey) -and $RestorePointsByJob[$JobIdKey].Count -gt 0) {
-                    Write-LogFile "Replica job '$($Job.Name)' had $($RestorePointsByJob[$JobIdKey].Count) tier-1/2-matched restore point(s) discarded in favor of its own GetLastBackup() lookup" -LogLevel "WARNING"
-                }
+                # overwrites it on a successful lookup, same as pre-branch
+                # code always ignored tier 1/2 for Replicas), but it was
+                # previously invisible.
+                $HadPriorMatch = $RestorePointsByJob.ContainsKey($JobIdKey) -and $RestorePointsByJob[$JobIdKey].Count -gt 0
 
-                $LastBackup = $null
-                try { $LastBackup = $Job.GetLastBackup() } catch {}
+                $LastBackup   = $null
+                $LookupFailed = $false
+                try { $LastBackup = $Job.GetLastBackup() } catch { $LookupFailed = $true }
                 $ReplicaPoints = @()
                 if ($null -ne $LastBackup) {
-                    try { $ReplicaPoints = @(Get-VBRRestorePoint -Backup $LastBackup -WarningAction SilentlyContinue) } catch {}
+                    try { $ReplicaPoints = @(Get-VBRRestorePoint -Backup $LastBackup -WarningAction SilentlyContinue) } catch { $LookupFailed = $true }
+                }
+
+                if ($LookupFailed -and $HadPriorMatch) {
+                    try { Write-LogFile "Replica job '$($Job.Name)' kept $($RestorePointsByJob[$JobIdKey].Count) tier-1/2-matched restore point(s) because its own GetLastBackup()/Get-VBRRestorePoint lookup failed" -LogLevel "WARNING" } catch {}
+                    continue
+                }
+                if ($HadPriorMatch) {
+                    try { Write-LogFile "Replica job '$($Job.Name)' had $($RestorePointsByJob[$JobIdKey].Count) tier-1/2-matched restore point(s) discarded in favor of its own GetLastBackup() lookup" -LogLevel "WARNING" } catch {}
                 }
                 $RestorePointsByJob[$JobIdKey] = [System.Collections.ArrayList]::new()
                 foreach ($RestorePoint in $ReplicaPoints) { [void]$RestorePointsByJob[$JobIdKey].Add($RestorePoint) }
             }
 
-            Write-LogFile "Restore point matching: $Tier1Matched matched via tier 1, $Tier1Failed tier-1 lookup failures, $Tier2Matched tier-2, $($AllRestorePoints.Count - $Tier1Matched - $Tier2Matched) unmatched/orphaned/snapshot"
+            try {
+                Write-LogFile "Restore point matching: $Tier1Matched matched via tier 1, $Tier1Failed tier-1 lookup failures, $Tier2Matched tier-2, $($AllRestorePoints.Count - $Tier1Matched - $Tier2Matched) unmatched/orphaned/snapshot"
+            } catch {}
         } catch {
-            Write-LogFile "Restore point sweep failed: $($_.Exception.Message)" -LogLevel "ERROR"
+            # This is the sweep's outermost catch - unlike the Write-LogFile
+            # calls inside the try block (which just fall through to here),
+            # a throw from this one has nowhere left to go: it unwinds
+            # Get-VhcJob entirely and _Jobs.csv/_configBackup.csv never
+            # export at all, which is worse than merely disabling the sweep.
+            try { Write-LogFile "Restore point sweep failed: $($_.Exception.Message)" -LogLevel "ERROR" } catch {}
             Add-VhciModuleError -CollectorName 'Jobs' -ErrorMessage $_.Exception.Message
             $NeedsSweep = $false
         }
@@ -219,17 +255,20 @@ function Get-VhcJob {
     [System.Collections.ArrayList]$AllJobs = @()
 
     foreach ($Job in @($Jobs)) {
+        if ($null -eq $Job) { continue }
         try {
             $RestorePoints = @()
             if ($NeedsSweep) {
-                $JobIdKey = $Job.Id.ToString()
-                if ($RestorePointsByJob.ContainsKey($JobIdKey)) {
-                    $RestorePoints = $RestorePointsByJob[$JobIdKey]
+                if ($null -ne $Job.Id) {
+                    $JobIdKey = $Job.Id.ToString()
+                    if ($RestorePointsByJob.ContainsKey($JobIdKey)) {
+                        $RestorePoints = $RestorePointsByJob[$JobIdKey]
+                    }
                 }
             } else {
                 $LastBackup = $Job.GetLastBackup()
                 if ($null -ne $LastBackup) {
-                    $RestorePoints = Get-VBRRestorePoint -Backup $LastBackup
+                    $RestorePoints = @(Get-VBRRestorePoint -Backup $LastBackup)
                 }
             }
             $TotalOnDiskGB = 0
@@ -271,7 +310,7 @@ function Get-VhcJob {
             $CalculatedOriginalSize = $Job.Info.IncludedSize
         }
 
-        Write-LogFile "Job: $($Job.Name) - Total OnDisk GB: $TotalOnDiskGB"
+        try { Write-LogFile "Job: $($Job.Name) - Total OnDisk GB: $TotalOnDiskGB" } catch {}
 
         $JobDetails = $Job | Select-Object -Property 'Name', 'JobType',
             'SheduleEnabledTime', 'ScheduleOptions',

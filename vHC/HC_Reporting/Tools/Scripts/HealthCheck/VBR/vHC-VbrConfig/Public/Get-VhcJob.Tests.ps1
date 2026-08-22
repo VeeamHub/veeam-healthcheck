@@ -604,6 +604,87 @@ Describe 'Performance gate: sweep triggers on unrecognized job types' {
 }
 
 # ---------------------------------------------------------------------------
+# Sweep resilience: a Write-LogFile failure inside the sweep must not
+# propagate to the outer catch and disable the sweep for every other job.
+# ---------------------------------------------------------------------------
+Describe 'Sweep resilience: a logging failure does not disable the sweep' {
+
+    BeforeEach {
+        $script:CapturedJobRows = @()
+        Mock Get-VBRConfigurationBackupJob -MockWith { $null }
+        Mock Invoke-VhciJobSubCollectors   -MockWith { }
+        Mock Add-VhciModuleError           -MockWith { }
+        Mock Get-VBRBackup                 -MockWith { @() }
+        Mock Export-VhciCsv -MockWith {
+            if ($FileName -eq '_Jobs.csv' -and $InputObject) {
+                $script:CapturedJobRows += @($InputObject)
+            }
+        }
+    }
+
+    It 'a throw from the sweep-summary log line still applies a real tier-1 match to other jobs' {
+        $RealJob = script:New-FakeJob -Name 'RealJob' -TypeToString 'HPE Morpheus VME Backup'
+        Mock Get-VBRJob -MockWith { @($RealJob) }
+        Mock Write-LogFile -MockWith {
+            if ($Message -match 'Restore point matching:') { throw 'Simulated logging failure' }
+        }
+        Mock Get-VBRRestorePoint -MockWith {
+            if ($null -eq $Backup) {
+                @( (script:New-FakeRestorePoint -ObjectId ([guid]'70707070-7070-7070-7070-707070707070') -ApproxSize 20GB -BackupSize 9GB -SourceJob $RealJob) )
+            } else { @() }
+        }
+        Get-VhcJob
+        $Row = $script:CapturedJobRows | Where-Object { $_.Name -eq 'RealJob' }
+        $Row.OnDiskGB | Should -Be 9
+    }
+
+    It 'a throw from the Replica-loop "discarded" WARNING log line still applies a real tier-1 match to other jobs' {
+        $ReplicaJob  = script:New-FakeJob -Name 'Hyper-V - Replicas' -TypeToString 'Hyper-V Replication' -LastBackup ([PSCustomObject]@{ Id = [guid]::NewGuid() })
+        $MorpheusJob = script:New-FakeJob -Name 'MorpheusJob' -TypeToString 'HPE Morpheus VME Backup'
+        Mock Get-VBRJob -MockWith { @($ReplicaJob, $MorpheusJob) }
+        Mock Write-LogFile -MockWith {
+            if ($Message -match 'discarded in favor') { throw 'Simulated logging failure' }
+        }
+        Mock Get-VBRRestorePoint -MockWith {
+            if ($null -eq $Backup) {
+                @(
+                    # Resolves back to $ReplicaJob itself via tier 1, so the
+                    # Replica loop's "had N ... discarded" WARNING fires.
+                    (script:New-FakeRestorePoint -ObjectId ([guid]'71717171-7171-7171-7171-717171717171') -ApproxSize 5GB -BackupSize 3GB -SourceJob $ReplicaJob),
+                    (script:New-FakeRestorePoint -ObjectId ([guid]'72727272-7272-7272-7272-727272727272') -ApproxSize 20GB -BackupSize 9GB -SourceJob $MorpheusJob)
+                )
+            } else { @() }
+        }
+        Get-VhcJob
+        $Row = $script:CapturedJobRows | Where-Object { $_.Name -eq 'MorpheusJob' }
+        $Row.OnDiskGB | Should -Be 9
+    }
+
+    It 'a throw from the sweep-failure ERROR log line does not abort the whole function' {
+        # This is the sweep's OUTERMOST catch - unlike the other two logging
+        # failures above (which just fall through to here), a throw from
+        # THIS Write-LogFile call has nowhere left to go: before the fix, it
+        # unwinds Get-VhcJob entirely, so _Jobs.csv is never exported for
+        # ANY job, not even via the per-job fallback method.
+        $RealJob = script:New-FakeJob -Name 'RealJob' -TypeToString 'HPE Morpheus VME Backup' -LastBackup ([PSCustomObject]@{ Id = [guid]::NewGuid() })
+        Mock Get-VBRJob -MockWith { @($RealJob) }
+        Mock Write-LogFile -MockWith {
+            if ($Message -match 'Restore point sweep failed') { throw 'Simulated logging failure' }
+        }
+        Mock Get-VBRRestorePoint -MockWith {
+            if ($null -eq $Backup) {
+                throw 'Simulated sweep failure'
+            } else {
+                @( (script:New-FakeRestorePoint -ObjectId ([guid]'73737373-7373-7373-7373-737373737373') -ApproxSize 9GB -BackupSize 6GB) )
+            }
+        }
+        { Get-VhcJob } | Should -Not -Throw
+        $Row = $script:CapturedJobRows | Where-Object { $_.Name -eq 'RealJob' }
+        $Row.OnDiskGB | Should -Be 6
+    }
+}
+
+# ---------------------------------------------------------------------------
 # Tier 1 (ADR 0021): Id-based resolution via GetSourceJob().
 # ---------------------------------------------------------------------------
 Describe 'Tier 1: Id-based match via GetSourceJob()' {
@@ -722,6 +803,36 @@ Describe 'Tier 1: Id-based match via GetSourceJob()' {
         $SweepLine = $script:LogMessages | Where-Object { $_ -match 'matched via tier 1' } | Select-Object -Last 1
         $SweepLine | Should -Match '\b1 tier-1 lookup failures\b'
     }
+
+    It 'a $Jobs element with no Id and no Info reaching the main consumption loop does not throw a null-reference through the per-job catch' {
+        # Distinct from the $JobIdByName/$KnownJobIds null-Id guards above -
+        # those only protect the SWEEP's own pre-processing. This fixture
+        # also flows into the main per-job consumption loop's
+        # `if ($NeedsSweep) { $JobIdKey = $Job.Id.ToString() }` at the point
+        # the loop looks up this job's own bucket - unlike every other .Id
+        # dereference in this file, that one had no null guard. Before the
+        # fix, $Job.Id.ToString() throws "cannot call a method on a
+        # null-valued expression", caught by the per-job try/catch, which
+        # logs a misleading "Could not calculate restore point sizes" WARNING
+        # for a job that isn't a calculation failure at all - it simply has
+        # no Id. After the fix, the lookup is skipped gracefully and no such
+        # WARNING is logged for this job.
+        $script:LogMessages = [System.Collections.Generic.List[string]]::new()
+        Mock Write-LogFile -MockWith { $script:LogMessages.Add($Message) }
+
+        $NoIdJob = [PSCustomObject]@{ Name = 'NoIdMainLoopJob'; TypeToString = 'HPE Morpheus VME Backup' }
+        $RealJob = script:New-FakeJob -Name 'RealJob' -TypeToString 'HPE Morpheus VME Backup'
+        Mock Get-VBRJob -MockWith { @($NoIdJob, $RealJob) }
+        Mock Get-VBRRestorePoint -MockWith {
+            if ($null -eq $Backup) {
+                @( (script:New-FakeRestorePoint -ObjectId ([guid]'16161616-1616-1616-1616-161616161616') -ApproxSize 20GB -BackupSize 9GB -SourceJob $RealJob) )
+            } else { @() }
+        }
+        { Get-VhcJob } | Should -Not -Throw
+        @($script:LogMessages | Where-Object { $_ -match 'Could not calculate restore point sizes' }).Count | Should -Be 0
+        $Row = $script:CapturedJobRows | Where-Object { $_.Name -eq 'RealJob' }
+        $Row.OnDiskGB | Should -Be 9
+    }
 }
 
 # ---------------------------------------------------------------------------
@@ -790,6 +901,44 @@ Describe 'Tier 1: resolved Id must be a member of $Jobs' {
         @($script:LogMessages | Where-Object { $_ -match 'matched via tier 1' }).Count | Should -Be 1
         $Row = $script:CapturedJobRows | Where-Object { $_.Name -eq 'MacAgentJob' }
         $Row.OnDiskGB | Should -Be 6
+    }
+
+    It 'a literal $null element in $Jobs never reaches Export-VhciCsv as a row' {
+        # Deliberately does NOT use the `-and $InputObject` capture pattern
+        # the other tests in this file use for Export-VhciCsv - that filter
+        # silently drops a null $InputObject, which would hide exactly the
+        # behavior this test exists to pin: without the
+        # `if ($null -eq $Job) { continue }` guard, the null placeholder
+        # element still reaches `$Job | Select-Object -Property ...`
+        # (which emits nothing for a null pipeline input) and the
+        # unchanged/null $JobDetails from that iteration still gets
+        # $AllJobs.Add()'ed, so `$AllJobs | Export-VhciCsv -FileName
+        # '_Jobs.csv'` invokes the real cmdlet once per element - including
+        # once with $InputObject = $null for the placeholder.
+        $script:JobsCsvCallCount = 0
+        $script:NullRowsSeen     = 0
+        Mock Write-LogFile -MockWith { }
+        Mock Export-VhciCsv -MockWith {
+            if ($FileName -eq '_Jobs.csv') {
+                $script:JobsCsvCallCount++
+                if ($null -eq $InputObject) { $script:NullRowsSeen++ }
+            }
+        }
+        Mock Get-VBRJob -MockWith { throw 'Get-VBRJob failed' }
+
+        $MacAgentJob = script:New-FakeJob -Name 'MacAgentJob' -TypeToString 'Mac Agent Backup'
+        $StandaloneBackup = [PSCustomObject]@{ IsAgentStandaloneJob = $true }
+        $StandaloneBackup | Add-Member -MemberType ScriptMethod -Name GetJob -Value { $MacAgentJob }.GetNewClosure()
+        Mock Get-VBRBackup -MockWith { @($StandaloneBackup) }
+        Mock Get-VBRRestorePoint -MockWith {
+            if ($null -eq $Backup) {
+                @( (script:New-FakeRestorePoint -ObjectId ([guid]'78787878-7878-7878-7878-787878787878') -ApproxSize 12GB -BackupSize 6GB -SourceJob $MacAgentJob) )
+            } else { @() }
+        }
+
+        Get-VhcJob
+        $script:JobsCsvCallCount | Should -Be 1
+        $script:NullRowsSeen     | Should -Be 0
     }
 }
 
@@ -903,6 +1052,29 @@ Describe 'Tier 2: gated name-based fallback' {
         $Row.OnDiskGB | Should -Be 9
     }
 
+    It 'sums two Tier-2-only restore points that both name-resolve to the same job' {
+        # Regression guard for a naive "$Tier1MatchedJobIds is redundant vs.
+        # $RestorePointsByJob" simplification: $RestorePointsByJob is
+        # mutated WHILE Tier 2 iterates (a job's first Tier-2 match is added
+        # to it mid-loop). Checking live hashtable keys instead of a
+        # snapshot taken once after Tier 1 completes would make the second
+        # of two Tier-2-only points on the same job look "already matched"
+        # by the first, and get silently dropped instead of summed.
+        $CloudJob = script:New-FakeJob -Name 'Linux-01' -TypeToString 'Azure IaaS Backup'
+        Mock Get-VBRJob -MockWith { @($CloudJob) }
+        Mock Get-VBRRestorePoint -MockWith {
+            if ($null -eq $Backup) {
+                @(
+                    (script:New-FakeRestorePoint -Name 'chain1' -ObjectId ([guid]'80808080-8080-8080-8080-808080808081') -ApproxSize 10GB -BackupSize 4GB -ThrowOnGetSourceJob -BackupParentOrThisName 'Linux-01'),
+                    (script:New-FakeRestorePoint -Name 'chain2' -ObjectId ([guid]'80808080-8080-8080-8080-808080808082') -ApproxSize 10GB -BackupSize 6GB -ThrowOnGetSourceJob -BackupParentOrThisName 'Linux-01')
+                )
+            } else { @() }
+        }
+        Get-VhcJob
+        $Row = $script:CapturedJobRows | Where-Object { $_.Name -eq 'Linux-01' }
+        $Row.OnDiskGB | Should -Be 10   # 4 + 6, both tier-2 matches summed, neither dropped
+    }
+
     It 'does not abort the sweep when $Jobs contains a job with a populated Id but no Name (the $JobIdByName build)' {
         # Regression: $JobIdByName's build loop guards ($null -ne $j) and
         # ($null -ne $j.Id), but not ($j.Name) - Hashtable.ContainsKey($null)
@@ -924,10 +1096,12 @@ Describe 'Tier 2: gated name-based fallback' {
 }
 
 # ---------------------------------------------------------------------------
-# Replica handling (ADR 0021): Snapshot-type restore points are routed
-# around the sweep entirely, sized via the original per-job method.
+# Replica handling (ADR 0021): Replica jobs are sized via their own
+# GetLastBackup() lookup by default, not tier 1/2. If that lookup fails
+# outright and a tier-1/2 match already exists for the same Id, that match is
+# preserved instead of being replaced with a zeroed-out result.
 # ---------------------------------------------------------------------------
-Describe 'Replica jobs bypass tier 1/2 entirely' {
+Describe 'Replica jobs are sized via their own lookup, tier 1/2 only as a fallback on failure' {
 
     BeforeEach {
         $script:CapturedJobRows = @()
@@ -996,6 +1170,37 @@ Describe 'Replica jobs bypass tier 1/2 entirely' {
         Get-VhcJob
         $Row = $script:CapturedJobRows | Where-Object { $_.Name -eq 'MorpheusJob' }
         $Row.OnDiskGB | Should -Be 11
+    }
+
+    It 'a Replica job with a tier-1 match keeps it when GetLastBackup() throws' {
+        # Distinct from 'does not abort the sweep when a Replica job has no
+        # Id' above and from the WARNING test below - this covers the case
+        # where the Replica loop's OWN lookup fails outright (GetLastBackup()
+        # throws) AFTER a genuine tier-1 match was already recorded for this
+        # same job Id. Before the fix, the loop unconditionally overwrote
+        # $RestorePointsByJob[$JobIdKey] with a fresh empty ArrayList
+        # regardless of whether the replica-specific lookup produced
+        # anything, silently discarding the real tier-1 data. After the fix,
+        # a failed lookup preserves the prior match instead of zeroing it.
+        $ReplicaJob  = script:New-FakeJob -Name 'Hyper-V - Replicas' -TypeToString 'Hyper-V Replication' -ThrowOnGetLastBackup
+        # A second, non-Replica, non-allowlisted job forces $NeedsSweep to
+        # $true - a solo Replica job is excluded from $NonReplicaJobs
+        # entirely, so the sweep (and thus the Replica loop) would never run.
+        $MorpheusJob = script:New-FakeJob -Name 'MorpheusJob' -TypeToString 'HPE Morpheus VME Backup'
+        Mock Get-VBRJob -MockWith { @($ReplicaJob, $MorpheusJob) }
+        Mock Get-VBRRestorePoint -MockWith {
+            if ($null -eq $Backup) {
+                # Non-Snapshot point that tier 1 resolves straight back to
+                # $ReplicaJob itself via GetSourceJob(), giving it a genuine
+                # tier-1 match before the Replica loop's own (failing) lookup
+                # runs.
+                @( (script:New-FakeRestorePoint -ObjectId ([guid]'60606060-6060-6060-6060-606060606060') -ApproxSize 8GB -BackupSize 5GB -SourceJob $ReplicaJob) )
+            } else { @() }
+        }
+        Get-VhcJob
+        $Row = $script:CapturedJobRows | Where-Object { $_.Name -eq 'Hyper-V - Replicas' }
+        $Row.OnDiskGB     | Should -Be 5
+        $Row.OriginalSize | Should -Be 8GB
     }
 
     It 'logs a WARNING when a Replica job already carries a tier-1/2-matched restore point before the overwrite' {

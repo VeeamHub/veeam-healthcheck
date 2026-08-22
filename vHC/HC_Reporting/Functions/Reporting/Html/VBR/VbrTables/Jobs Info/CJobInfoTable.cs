@@ -158,9 +158,9 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR.VbrTables.Jobs_Info
                                 }
                                 else
                                 {
-                                    double trueSizeGB = Math.Round(job.OriginalSize / 1024 / 1024 / 1024, 2);
-                                    double trueSizeTB = Math.Round(job.OriginalSize / 1024 / 1024 / 1024 / 1024, 2);
-                                    double trueSizeMB = Math.Round(job.OriginalSize / 1024 / 1024, 2);
+                                    double trueSizeGB = Math.Round((job.OriginalSize ?? 0) / 1024 / 1024 / 1024, 2);
+                                    double trueSizeTB = Math.Round((job.OriginalSize ?? 0) / 1024 / 1024 / 1024 / 1024, 2);
+                                    double trueSizeMB = Math.Round((job.OriginalSize ?? 0) / 1024 / 1024, 2);
                                     tSizeGB += trueSizeGB;
                                     if (trueSizeGB > 999)
                                     {
@@ -423,7 +423,7 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR.VbrTables.Jobs_Info
                     string jobName = scrub ? CGlobals.Scrubber.ScrubItem(job.Name, ScrubItemType.Job) : job.Name;
                     string repoName = scrub ? CGlobals.Scrubber.ScrubItem(job.RepoName, ScrubItemType.Repository) : job.RepoName;
 
-                    double sourceSizeGB = Math.Round(job.OriginalSize / 1024.0 / 1024.0 / 1024.0, 2);
+                    double sourceSizeGB = Math.Round((job.OriginalSize ?? 0) / 1024.0 / 1024.0 / 1024.0, 2);
                     string compressionLevel = job.CompressionLevel switch
                     {
                         "9" => "Extreme",

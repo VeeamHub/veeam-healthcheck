@@ -536,7 +536,7 @@ namespace VeeamHealthCheck.Functions.Reporting.DataTypes
                         }
 
 
-                        jInfo.ActualSize = s.OriginalSize.ToString();
+                        jInfo.ActualSize = (s.OriginalSize ?? 0).ToString();
                         eInfoList.Add(jInfo);
                     }
             }
@@ -649,7 +649,7 @@ namespace VeeamHealthCheck.Functions.Reporting.DataTypes
                             var jobFromCsv = jobRecords.Where(x => x.Name == s.JobName).SingleOrDefault();
                             if (jobFromCsv != null)
                             {
-                                jInfo.UsedVmSize = jobFromCsv.OriginalSize /1024 /1024 /1024;
+                                jInfo.UsedVmSize = (jobFromCsv.OriginalSize ?? 0) /1024 /1024 /1024;
                             }
                         }
                         catch (Exception e)
