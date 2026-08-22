@@ -1124,6 +1124,136 @@ Describe 'Tier 2: gated name-based fallback' {
 }
 
 # ---------------------------------------------------------------------------
+# BackupId grouping (ADR 0023): restore points sharing a BackupId are scoped
+# to one protected object's chain within one job - resolve ownership once
+# per group, apply the result to every point in it.
+# ---------------------------------------------------------------------------
+Describe 'BackupId grouping (ADR 0023): one lookup per group, applied to every restore point in it' {
+
+    BeforeEach {
+        $script:CapturedJobRows = @()
+        $script:CallCounts      = @{ GetSourceJob = 0; GetBackup = 0 }
+        Mock Write-LogFile                 -MockWith { }
+        Mock Get-VBRConfigurationBackupJob -MockWith { $null }
+        Mock Invoke-VhciJobSubCollectors   -MockWith { }
+        Mock Add-VhciModuleError           -MockWith { }
+        Mock Get-VBRBackup                 -MockWith { @() }
+        Mock Export-VhciCsv -MockWith {
+            if ($FileName -eq '_Jobs.csv' -and $InputObject) {
+                $script:CapturedJobRows += @($InputObject)
+            }
+        }
+    }
+
+    It 'reduces GetSourceJob() calls to one per BackupId group, applied to every restore point in the group' {
+        $Job = script:New-FakeJob -Name 'RetentionChainJob' -TypeToString 'HPE Morpheus VME Backup'
+        $SharedBackupId = [guid]'21212121-2121-2121-2121-212121212121'
+        $SharedObjectId = [guid]'21212121-aaaa-aaaa-aaaa-212121212121'
+        Mock Get-VBRJob -MockWith { @($Job) }
+        Mock Get-VBRRestorePoint -MockWith {
+            if ($null -eq $Backup) {
+                @(
+                    (script:New-FakeRestorePoint -Name 'Full'  -BackupId $SharedBackupId -ObjectId $SharedObjectId -ApproxSize 10GB -BackupSize 3GB -SourceJob $Job),
+                    (script:New-FakeRestorePoint -Name 'Incr1' -BackupId $SharedBackupId -ObjectId $SharedObjectId -ApproxSize 10GB -BackupSize 1GB -SourceJob $Job),
+                    (script:New-FakeRestorePoint -Name 'Incr2' -BackupId $SharedBackupId -ObjectId $SharedObjectId -ApproxSize 10GB -BackupSize 1GB -SourceJob $Job)
+                )
+            } else { @() }
+        }
+        Get-VhcJob
+        $script:CallCounts.GetSourceJob | Should -Be 1
+        $Row = $script:CapturedJobRows | Where-Object { $_.Name -eq 'RetentionChainJob' }
+        $Row.OnDiskGB | Should -Be 5   # 3 + 1 + 1 - all three points in the group bucketed, not just the representative
+    }
+
+    It 'a failed group''s single throw is credited to every restore point in the group, not just the representative' {
+        $script:LogMessages = [System.Collections.Generic.List[string]]::new()
+        Mock Write-LogFile -MockWith { $script:LogMessages.Add($Message) }
+        $RealJob = script:New-FakeJob -Name 'RealJob' -TypeToString 'HPE Morpheus VME Backup'
+        $FailingBackupId = [guid]'23232323-2323-2323-2323-232323232323'
+        $FailingObjectId = [guid]'23232323-aaaa-aaaa-aaaa-232323232323'
+        Mock Get-VBRJob -MockWith { @($RealJob) }
+        Mock Get-VBRRestorePoint -MockWith {
+            if ($null -eq $Backup) {
+                @(
+                    (script:New-FakeRestorePoint -Name 'Orphan1' -BackupId $FailingBackupId -ObjectId $FailingObjectId -ApproxSize 5GB -BackupSize 2GB -ThrowOnGetSourceJob),
+                    (script:New-FakeRestorePoint -Name 'Orphan2' -BackupId $FailingBackupId -ObjectId $FailingObjectId -ApproxSize 5GB -BackupSize 2GB -ThrowOnGetSourceJob),
+                    (script:New-FakeRestorePoint -Name 'Real'    -ObjectId ([guid]'25252525-aaaa-aaaa-aaaa-252525252521') -ApproxSize 20GB -BackupSize 9GB -SourceJob $RealJob)
+                )
+            } else { @() }
+        }
+        Get-VhcJob
+        $script:CallCounts.GetSourceJob | Should -Be 2   # one call per group (2 groups), not per point (3 points)
+        $SweepLine = $script:LogMessages | Where-Object { $_ -match 'matched via tier 1' } | Select-Object -Last 1
+        $SweepLine | Should -Match '\b2 tier-1 lookup failures\b'
+        $Row = $script:CapturedJobRows | Where-Object { $_.Name -eq 'RealJob' }
+        $Row.OnDiskGB | Should -Be 9
+    }
+
+    It 'a group unresolved by tier 1 resolves via tier 2 with one GetBackup() call, applied to the whole group' {
+        $CloudJob = script:New-FakeJob -Name 'Linux-01' -TypeToString 'Azure IaaS Backup'
+        $SharedBackupId = [guid]'26262626-2626-2626-2626-262626262626'
+        $SharedObjectId = [guid]'26262626-aaaa-aaaa-aaaa-262626262626'
+        Mock Get-VBRJob -MockWith { @($CloudJob) }
+        Mock Get-VBRRestorePoint -MockWith {
+            if ($null -eq $Backup) {
+                @(
+                    (script:New-FakeRestorePoint -Name 'chain1' -BackupId $SharedBackupId -ObjectId $SharedObjectId -ApproxSize 10GB -BackupSize 4GB -ThrowOnGetSourceJob -BackupParentOrThisName 'Linux-01'),
+                    (script:New-FakeRestorePoint -Name 'chain2' -BackupId $SharedBackupId -ObjectId $SharedObjectId -ApproxSize 10GB -BackupSize 6GB -ThrowOnGetSourceJob -BackupParentOrThisName 'Linux-01')
+                )
+            } else { @() }
+        }
+        Get-VhcJob
+        $script:CallCounts.GetBackup | Should -Be 1
+        $Row = $script:CapturedJobRows | Where-Object { $_.Name -eq 'Linux-01' }
+        $Row.OnDiskGB | Should -Be 10   # 4 + 6, both points in the group summed via one tier-2 lookup
+    }
+
+    It 'suppresses a tier-2 match for one group even when it is processed before the tier-1-matching group for the same job' {
+        $HpeJob = script:New-FakeJob -Name 'HPE Morpheus - Windows - Linux' -TypeToString 'HPE Morpheus VME Backup'
+        Mock Get-VBRJob -MockWith { @($HpeJob) }
+        Mock Get-VBRRestorePoint -MockWith {
+            if ($null -eq $Backup) {
+                @(
+                    # Stale machine's group appears FIRST. If tier 1 -> tier 2
+                    # were interleaved per group instead of two full passes,
+                    # this would be accepted before the real tier-1 match
+                    # (below) ever ran, since nothing has matched this job yet.
+                    (script:New-FakeRestorePoint -Name 'Windows01-stale' -BackupId ([guid]'88888888-8888-8888-8888-888888888882') -ObjectId ([guid]'88888888-8888-8888-8888-888888888882') -ApproxSize 190GB -BackupSize 117GB -ThrowOnGetSourceJob -BackupParentOrThisName 'HPE Morpheus - Windows - Linux'),
+                    # Current machine's group, tier-1-resolvable, appears SECOND.
+                    (script:New-FakeRestorePoint -Name 'Windows01-current' -BackupId ([guid]'88888888-8888-8888-8888-888888888881') -ObjectId ([guid]'88888888-8888-8888-8888-888888888881') -ApproxSize 190GB -BackupSize 72.99GB -SourceJob $HpeJob)
+                )
+            } else { @() }
+        }
+        Get-VhcJob
+        $Row = $script:CapturedJobRows | Where-Object { $_.Name -eq 'HPE Morpheus - Windows - Linux' }
+        $Row.OnDiskGB | Should -Be 72.99
+    }
+
+    It 'a Replication job resolves via tier 1 when the sweep runs, summing multiple chains like any other job type' {
+        $ReplicaJob  = script:New-FakeJob -Name 'Replica_VC_NZGDC01' -TypeToString 'VMware Replication'
+        # A non-allowlisted companion job forces $NeedsSweep to $true -
+        # 'VMware Replication' is itself on $KnownSafeJobTypes now, so a
+        # solo replica job would never trigger the sweep on its own.
+        $MorpheusJob = script:New-FakeJob -Name 'MorpheusJob' -TypeToString 'HPE Morpheus VME Backup'
+        Mock Get-VBRJob -MockWith { @($ReplicaJob, $MorpheusJob) }
+        Mock Get-VBRRestorePoint -MockWith {
+            if ($null -eq $Backup) {
+                @(
+                    # Two distinct chains (different BackupId) for the same
+                    # replica job - e.g. before/after a repository retarget.
+                    (script:New-FakeRestorePoint -Type 'Snapshot' -BackupId ([guid]'29292929-2929-2929-2929-292929292921') -ObjectId ([guid]'30303030-3030-3030-3030-303030303030') -ApproxSize 20GB -BackupSize 5GB -SourceJob $ReplicaJob),
+                    (script:New-FakeRestorePoint -Type 'Snapshot' -BackupId ([guid]'29292929-2929-2929-2929-292929292922') -ObjectId ([guid]'30303030-3030-3030-3030-303030303030') -ApproxSize 25GB -BackupSize 4GB -SourceJob $ReplicaJob)
+                )
+            } else { @() }
+        }
+        Get-VhcJob
+        $Row = $script:CapturedJobRows | Where-Object { $_.Name -eq 'Replica_VC_NZGDC01' }
+        $Row.OnDiskGB     | Should -Be 9    # 5 + 4, both chains summed - previously impossible for Replication jobs
+        $Row.OriginalSize | Should -Be 25GB # latest chain's ApproxSize, same rule as every other job type
+    }
+}
+
+# ---------------------------------------------------------------------------
 # Replica handling (ADR 0021): Replica jobs are sized via their own
 # GetLastBackup() lookup by default, not tier 1/2. If that lookup fails
 # outright and a tier-1/2 match already exists for the same Id, that match is
