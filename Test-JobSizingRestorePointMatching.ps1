@@ -203,7 +203,7 @@ foreach ($j in @($Jobs)) { [void]$knownJobIds.Add($j.Id.ToString()) }
 $tier1UnknownIdCount = 0
 
 $groupStopwatch = [System.Diagnostics.Stopwatch]::StartNew()
-$backupIdGroups = $allRestorePoints | Group-Object -Property BackupId
+$backupIdGroups = @($allRestorePoints | Group-Object -Property BackupId)
 $groupStopwatch.Stop()
 Write-Host ("Grouped {0} restore points into {1} BackupId groups in {2}s." -f $allRestorePoints.Count, $backupIdGroups.Count, [Math]::Round($groupStopwatch.Elapsed.TotalSeconds, 3))
 
