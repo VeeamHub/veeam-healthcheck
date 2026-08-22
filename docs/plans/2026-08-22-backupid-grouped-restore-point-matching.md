@@ -917,19 +917,19 @@ If this step surfaces a grouping violation (a `BackupId` group whose members res
 
 **Files:** None (verification only).
 
-- [ ] **Step 1: Full directory-wide Pester run**
+- [x] **Step 1: Full directory-wide Pester run**
 
 Run: `pwsh -NoProfile -Command "Invoke-Pester -Path 'vHC/HC_Reporting/Tools/Scripts/HealthCheck/VBR/vHC-VbrConfig'"`
 Expected: all tests pass.
 
-- [ ] **Step 2: C# build sanity check**
+- [x] **Step 2: C# build sanity check**
 
 This change is pure PowerShell — no C# files are touched by this plan — but `Get-VhcJob.ps1`'s output feeds the C# reporting pipeline, so confirm nothing else regressed:
 
 Run: `dotnet build vHC/HC.sln --configuration Debug`
 Expected: `0 errors`. If the auto-increment version bump touches `vHC/HC_Reporting/VeeamHealthCheck.csproj`, revert it (`git checkout -- vHC/HC_Reporting/VeeamHealthCheck.csproj`) before committing anything further — that bump is a build side effect, not part of this change.
 
-- [ ] **Step 3: Confirm no dangling references to removed identifiers**
+- [x] **Step 3: Confirm no dangling references to removed identifiers**
 
 Run: `grep -rn 'NonReplicaJobs\|ReplicaJobs\|HadPriorMatch\|LookupFailed' "vHC/HC_Reporting/Tools/Scripts/HealthCheck/VBR/vHC-VbrConfig/Public/Get-VhcJob.ps1" "vHC/HC_Reporting/Tools/Scripts/HealthCheck/VBR/vHC-VbrConfig/Public/Get-VhcJob.Tests.ps1"`
 Expected: no matches in either file.
