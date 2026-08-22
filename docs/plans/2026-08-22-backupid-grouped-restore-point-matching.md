@@ -908,6 +908,7 @@ This step cannot be automated by whoever executes this plan unless they have liv
 2. Confirm the grouping-assumption audit reports zero violations.
 3. Confirm old-vs-new sizing comparison shows zero regressions, including for any Replication jobs present.
 4. If possible, run it against an environment with Storage-Snapshot Backups specifically, and record the actual call-count reduction.
+5. The lab must include at least one Replication job alongside a non-allowlisted job type (so `$NeedsSweep` is true), and its `OnDiskGB` must be confirmed non-zero and matching the old method's result. Replication Jobs no longer have a dedicated per-job `GetLastBackup()` fallback (removed by this change per ADR 0023) — they now depend entirely on Tier 1/2 resolving their restore points, same as every other job type. ADR 0023's live evidence that `GetSourceJob()` resolves `Type=Snapshot` points correctly comes from exactly one lab's one job; a lab where the comparison "shows zero regressions" without a Replication job actually present under sweep conditions would pass green without ever testing this path.
 
 If this step surfaces a grouping violation (a `BackupId` group whose members resolve to different jobs), stop — do not proceed to Task 7. That would invalidate the core safety assumption this whole design rests on, and needs to go back through the design doc before any further code changes.
 
