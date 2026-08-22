@@ -17,7 +17,7 @@
 
 This is pure test infrastructure — no assertions yet, so no failing-test step. The grouping tests in Task 3 need two things `New-FakeRestorePoint` doesn't have today: a settable `BackupId` (defaulting to a fresh unique guid, so every existing test that doesn't pass one keeps behaving exactly as it does today — one restore point, one group), and a way to prove a call was actually skipped, not just that the final numbers came out right.
 
-- [ ] **Step 1: Add the `-BackupId` parameter and call counters**
+- [x] **Step 1: Add the `-BackupId` parameter and call counters**
 
 Replace lines 262-303 of `Get-VhcJob.Tests.ps1` (the whole `New-FakeRestorePoint` function, including its closing brace):
 
@@ -84,12 +84,12 @@ Replace lines 262-303 of `Get-VhcJob.Tests.ps1` (the whole `New-FakeRestorePoint
 
 `$CallCounts` defaults to a fresh `@{ GetSourceJob = 0; GetBackup = 0 }` when `$script:CallCounts` hasn't been set, so every Describe block that doesn't care about call counts keeps working unmodified without initializing anything.
 
-- [ ] **Step 2: Run the full existing suite to confirm nothing broke**
+- [x] **Step 2: Run the full existing suite to confirm nothing broke**
 
 Run: `pwsh -NoProfile -Command "Invoke-Pester -Path 'vHC/HC_Reporting/Tools/Scripts/HealthCheck/VBR/vHC-VbrConfig/Public/Get-VhcJob.Tests.ps1'"`
 Expected: `Tests Passed: 44, Failed: 0` (current baseline, confirmed by actually running the suite — no behavior change from this task: every existing call site keeps its default unique `BackupId`, so grouping doesn't exist yet to reduce anything).
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ```bash
 git add "vHC/HC_Reporting/Tools/Scripts/HealthCheck/VBR/vHC-VbrConfig/Public/Get-VhcJob.Tests.ps1"
