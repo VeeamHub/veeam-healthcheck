@@ -332,7 +332,7 @@ git commit -m "test(jobs): add failing tests for BackupId-grouped tiered matchin
 
 This is one cohesive replacement — Tier 1 grouping, the `$Tier1MatchedJobIds` snapshot, Tier 2 grouping, and removal of the Replica loop are not meaningfully separable (an intermediate state with only Tier 1 grouped would leave Tier 2 iterating a `$Unresolved` variable that no longer exists).
 
-- [ ] **Step 1: Replace the sweep body**
+- [x] **Step 1: Replace the sweep body**
 
 Replace lines 99-250 of `Get-VhcJob.ps1` (from `$RestorePointsByJob = @{}` through the sweep's closing brace) with:
 
@@ -503,17 +503,17 @@ with:
 Run: `grep -n 'NonReplicaJobs\|ReplicaJobs' "vHC/HC_Reporting/Tools/Scripts/HealthCheck/VBR/vHC-VbrConfig/Public/Get-VhcJob.ps1"`
 Expected: no matches.
 
-- [ ] **Step 2: Run the new grouping tests to verify they pass**
+- [x] **Step 2: Run the new grouping tests to verify they pass**
 
 Run: `pwsh -NoProfile -Command "Invoke-Pester -Path 'vHC/HC_Reporting/Tools/Scripts/HealthCheck/VBR/vHC-VbrConfig/Public/Get-VhcJob.Tests.ps1' -Output Detailed" 2>&1 | grep -A2 'BackupId grouping'`
 Expected: all five tests in the `BackupId grouping (ADR 0023)` Describe block PASS.
 
-- [ ] **Step 3: Run the full suite**
+- [x] **Step 3: Run the full suite**
 
 Run: `pwsh -NoProfile -Command "Invoke-Pester -Path 'vHC/HC_Reporting/Tools/Scripts/HealthCheck/VBR/vHC-VbrConfig/Public/Get-VhcJob.Tests.ps1'"`
 Expected: exactly 3 failures — `'sizes a Replica job via GetLastBackup() + Get-VBRRestorePoint -Backup, not via tier 1/2'` and `'logs a WARNING when a Replica job already carries a tier-1/2-matched restore point before the overwrite'` (both in the now-obsolete `Replica jobs are sized via their own lookup...` Describe block), plus `'never resolves a Type=Snapshot restore point via either tier'`. The other three tests in that same Describe block, and the Sweep resilience block's `'a throw from the Replica-loop "discarded" WARNING...'` test, keep PASSING at this checkpoint — not because the mechanism they were written to exercise still exists, but coincidentally (e.g. the WARNING message the latter checks for is simply never emitted anymore, so its simulated logging failure never triggers). All five new `BackupId grouping (ADR 0023)` tests from Task 3 must now PASS. Task 5 removes all 7 of these Replica/Snapshot-era tests regardless of which are currently failing vs. coincidentally passing, since their premises (the Replica loop, the Type=Snapshot skip) no longer exist in the codebase. Every other test (ISC-1 through ISC-10, Performance gate, Sweep resilience's other two tests, both Tier 1 Describe blocks, Tier 2, Multi-chain summing) must be green.
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git add "vHC/HC_Reporting/Tools/Scripts/HealthCheck/VBR/vHC-VbrConfig/Public/Get-VhcJob.ps1"
