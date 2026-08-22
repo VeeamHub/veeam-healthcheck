@@ -626,7 +626,7 @@ git commit -m "test(jobs): remove Replica-loop and Type=Snapshot-skip tests supe
 
 This script is how ADR 0021 was originally validated, and per the design doc's Validation Plan, it must run against live VBR labs before this change lands in production `Get-VhcJob.ps1`. Its embedded "new approach" simulation (lines 166-424) currently mirrors the *old* per-point, Replica-special-cased algorithm — it must be updated to mirror the new BackupId-grouped, unified algorithm, or the script's own old-vs-new comparison won't actually validate ADR 0023's change. This task updates the script; running it against live infrastructure (Step 4 below) is a manual step for whoever has lab access, not something this plan can execute.
 
-- [ ] **Step 1: Replace the Tier 1/Tier 2 loops with the grouped equivalent, and remove the Replica hybrid block**
+- [x] **Step 1: Replace the Tier 1/Tier 2 loops with the grouped equivalent, and remove the Replica hybrid block**
 
 Replace lines 166-424 of `Test-JobSizingRestorePointMatching.ps1` (from the `# NEW approach: one global restore-point sweep...` comment through the end of the `# Replica hybrid: ...` block) with:
 
@@ -874,12 +874,12 @@ Write-Host "NOTE: run this against an environment with a Storage-Snapshot Backup
 
 Note what this removes relative to the current script: the `$snapshotSkipped`/`$tier2SnapshotSkipped` counters and their "Skipped - Type=Snapshot" log lines (Type is no longer treated specially — Replica jobs' Snapshot-type points now flow through the same grouped Tier 1/2 pipeline), and the entire "Replica hybrid" block (the `$replicaJobs = @($Jobs | Where-Object { $_.TypeToString -like "*Replication*" })` loop and its `Write-Host "Routing N Replica-type job(s)..."` — no longer needed, since Replica jobs are no longer special-cased anywhere in this script either).
 
-- [ ] **Step 2: Confirm the rest of the script (Get-NewJobSizing, the comparison loop) still works unmodified**
+- [x] **Step 2: Confirm the rest of the script (Get-NewJobSizing, the comparison loop) still works unmodified**
 
 Run: `grep -n 'replicaJobs\|snapshotSkipped\|tier2SnapshotSkipped' Test-JobSizingRestorePointMatching.ps1`
 Expected: no matches — confirms the removed variables aren't referenced anywhere later in the script (e.g. `Get-NewJobSizing` at line ~499 reads from `$restorePointsByJob`, which both the old and new code populate identically in shape, so it needs no changes).
 
-- [ ] **Step 3: Add the note this task cannot execute itself**
+- [x] **Step 3: Add the note this task cannot execute itself**
 
 At the top of the script's existing comment-based help (do not remove any existing content there), add:
 
@@ -894,7 +894,7 @@ At the top of the script's existing comment-based help (do not remove any existi
         rate" measurement (see ADR 0023).
 ```
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git add Test-JobSizingRestorePointMatching.ps1
