@@ -89,12 +89,14 @@ function Get-VhcJob {
         'Windows Agent Backup',
         'Windows Agent Policy',
         'Linux Agent Backup',
-        'Cloud Director Backup'
+        'Cloud Director Backup',
+        'VMware Replication',
+        'Hyper-V Replication'
     )
 
     $NonReplicaJobs = @($Jobs | Where-Object { $null -ne $_ -and $_.TypeToString -notlike '*Replication*' })
     $ReplicaJobs    = @($Jobs | Where-Object { $null -ne $_ -and $_.TypeToString -like '*Replication*' })
-    $NeedsSweep     = [bool]($NonReplicaJobs | Where-Object { $_.TypeToString -notin $KnownSafeJobTypes } | Select-Object -First 1)
+    $NeedsSweep     = [bool]($Jobs | Where-Object { $null -ne $_ -and $_.TypeToString -notin $KnownSafeJobTypes } | Select-Object -First 1)
 
     $RestorePointsByJob = @{}
     if ($NeedsSweep) {

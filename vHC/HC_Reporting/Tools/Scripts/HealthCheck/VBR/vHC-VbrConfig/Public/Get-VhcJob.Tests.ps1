@@ -582,6 +582,18 @@ Describe 'Performance gate: sweep triggers on unrecognized job types' {
         $script:ScopedCalls   | Should -Be 2
     }
 
+    It 'never calls Get-VBRRestorePoint without -Backup when the only jobs are Replication and other known-safe types' {
+        Mock Get-VBRJob -MockWith {
+            @(
+                (script:New-FakeJob -Name 'VMwareJob' -TypeToString 'VMware Backup'      -LastBackup ([PSCustomObject]@{ Id = [guid]::NewGuid() })),
+                (script:New-FakeJob -Name 'ReplicaJob' -TypeToString 'VMware Replication' -LastBackup ([PSCustomObject]@{ Id = [guid]::NewGuid() }))
+            )
+        }
+        Get-VhcJob
+        $script:UnscopedCalls | Should -Be 0
+        $script:ScopedCalls   | Should -Be 2
+    }
+
     It 'produces correct OnDiskGB and OriginalSize via the old per-job method when the gate is off' {
         Mock Get-VBRJob -MockWith {
             @( (script:New-FakeJob -Name 'VMwareJob' -TypeToString 'VMware Backup' -LastBackup ([PSCustomObject]@{ Id = [guid]::NewGuid() })) )
