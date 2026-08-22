@@ -667,8 +667,8 @@ Describe 'Sweep resilience: a logging failure does not disable the sweep' {
     }
 
     It 'a throw from the sweep-failure ERROR log line does not abort the whole function' {
-        # This is the sweep's OUTERMOST catch - unlike the other two logging
-        # failures above (which just fall through to here), a throw from
+        # This is the sweep's OUTERMOST catch - unlike the other logging
+        # failure above (which just falls through to here), a throw from
         # THIS Write-LogFile call has nowhere left to go: before the fix, it
         # unwinds Get-VhcJob entirely, so _Jobs.csv is never exported for
         # ANY job, not even via the per-job fallback method.
