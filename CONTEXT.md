@@ -21,8 +21,32 @@ _Avoid_: Chain
 **Restore Point**:
 A single point-in-time recovery point within a Backup (`COib`, returned by
 `Get-VBRRestorePoint`). Its `Type` is either Full/Increment (produced by
-backup Jobs) or Snapshot (produced by replication Jobs) — never both.
+backup Jobs) or Snapshot — never both. **`Type = Snapshot` alone does not
+imply Replication Job**: it's shared by two unrelated features, Replication
+Jobs and Storage-Snapshot Backups (see both below). Corrected 2026-08-22 —
+[ADR 0021](docs/adr/0021-tiered-restore-point-sweep-for-job-sizing.md)
+originally conflated the two, see
+[ADR 0023](docs/adr/0023-backupid-grouped-tiered-matching-for-all-job-types.md).
 _Avoid_: Recovery point, oib
+
+**Replication Job**:
+A Job whose `TypeToString` matches `*Replication*` (e.g. `VMware
+Replication`, `Hyper-V Replication`) — VBR's VM replication feature. Its
+Restore Points are `Type = Snapshot`. Distinct from a Storage-Snapshot
+Backup, which also produces `Type = Snapshot` Restore Points but is a
+different feature entirely (see below) — the two are only distinguishable
+via the owning Job's `TypeToString`, never via `RestorePoint.Type` alone.
+_Avoid_: Replica (ambiguous between the Job and its Restore Points)
+
+**Storage-Snapshot Backup**:
+A Backup produced by VBR's storage-array snapshot integration (e.g.
+NetApp, HPE, Pure) — a backup method, not replication. Also produces
+Restore Points of `Type = Snapshot`, which is what caused
+[ADR 0021](docs/adr/0021-tiered-restore-point-sweep-for-job-sizing.md)'s
+original "Snapshot-type Restore Points never resolve via `GetSourceJob()`"
+measurement to be misattributed to Replication Jobs — the throws it
+measured almost certainly came from this feature instead.
+_Avoid_: Snapshot backup (ambiguous with Replication Job's Restore Points)
 
 **Policy Job**:
 A single VBR Job that protects multiple machines under one policy

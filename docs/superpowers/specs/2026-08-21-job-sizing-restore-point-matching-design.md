@@ -3,6 +3,17 @@
 **Date:** 2026-08-21
 **Status:** Implemented
 
+> **Correction (2026-08-22):** The Snapshot/Replica-handling analysis below
+> (including the "5,461 `Snapshot`-type points... near-certainly orphaned
+> chains from one or more deleted replica jobs" reasoning) is superseded by
+> [ADR 0023](../../adr/0023-backupid-grouped-tiered-matching-for-all-job-types.md)
+> and its design doc. Live evidence from a different environment shows
+> `GetSourceJob()` resolving `Type=Snapshot` restore points correctly for a
+> live Replication Job — the original 5,461 throws almost certainly came
+> from an unrelated feature (Storage-Snapshot Backups), not from orphaned
+> replicas. This document is left unmodified below as a historical record of
+> what was actually tested at the time.
+
 ## Problem
 
 Today `Get-VhcJob.ps1` computes Source Size GB / Est. On Disk GB per job via

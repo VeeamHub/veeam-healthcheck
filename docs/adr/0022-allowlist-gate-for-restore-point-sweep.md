@@ -1,9 +1,17 @@
 # ADR 0022: Gate the Restore-Point Sweep Behind an Allowlist of Proven-Safe Job Types, Not a Flag or a Denylist
 
-* **Status:** Accepted
+* **Status:** Accepted; "Replica job types... outside this decision entirely" carve-out amended by [ADR 0023](0023-backupid-grouped-tiered-matching-for-all-job-types.md)
 * **Date:** 2026-08-21
 * **Decider:** Ben Thomas (@comnam90)
 * **Consulted:** Claude Code (design, empirical validation)
+
+> **Correction (2026-08-22):** The Decision section below states "Replica
+> job types (`VMware Replication`, `Hyper-V Replication`) are outside this
+> decision entirely." That's no longer true — per
+> [ADR 0023](0023-backupid-grouped-tiered-matching-for-all-job-types.md),
+> both are added to `$KnownSafeJobTypes` and are gated by this same
+> allowlist decision like every other job type. The rest of this ADR
+> (allowlist vs. flag vs. denylist) is unaffected.
 
 ## Context and Problem Statement
 

@@ -1,9 +1,19 @@
 # ADR 0021: Global Restore-Point Sweep with Tiered (Id-Based + Gated Name-Based) Job Matching Replaces Per-Job GetLastBackup()
 
-* **Status:** Accepted
+* **Status:** Accepted; Snapshot/Replica-handling section amended by [ADR 0023](0023-backupid-grouped-tiered-matching-for-all-job-types.md)
 * **Date:** 2026-08-21
 * **Decider:** Ben Thomas (@comnam90)
 * **Consulted:** Claude Code (design, empirical validation across 4 live labs)
+
+> **Correction (2026-08-22):** The "Snapshot / Replica — routed around the
+> sweep entirely" section below states "`Snapshot`-type restore points never
+> resolve via `GetSourceJob()` (100% throw rate, 5,461/5,461...)". Live
+> evidence contradicts this for Replication Jobs specifically — the throws
+> almost certainly came from an unrelated feature (Storage-Snapshot Backups)
+> that also produces `Type=Snapshot` restore points. See
+> [ADR 0023](0023-backupid-grouped-tiered-matching-for-all-job-types.md) for
+> the corrected design. The rest of this ADR (Options A/B rejection, the
+> Tier 1/Tier 2 mechanism) is unaffected and still applies.
 
 ## Context and Problem Statement
 
