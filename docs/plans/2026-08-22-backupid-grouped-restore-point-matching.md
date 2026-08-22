@@ -174,7 +174,7 @@ git commit -m "feat(jobs): add Replication job types to the sweep allowlist (ADR
 
 All five tests below must fail against the current (per-point) code before Task 4 changes anything. `BackupId grouping (ADR 0023)` is a new Describe block; `New-FakeRestorePoint`'s new `-BackupId` parameter (Task 1) drives every scenario.
 
-- [ ] **Step 1: Insert the new Describe block**
+- [x] **Step 1: Insert the new Describe block**
 
 Insert immediately before line 1098 (the `# ---------------------------------------------------------------------------` divider directly above `# Replica handling (ADR 0021): ...`) in `Get-VhcJob.Tests.ps1` — i.e. before the divider itself, not between it and the comment text below it.
 
@@ -311,12 +311,12 @@ Describe 'BackupId grouping (ADR 0023): one lookup per group, applied to every r
 
 ```
 
-- [ ] **Step 2: Run all five new tests to verify they fail**
+- [x] **Step 2: Run all five new tests to verify they fail**
 
 Run: `pwsh -NoProfile -Command "Invoke-Pester -Path 'vHC/HC_Reporting/Tools/Scripts/HealthCheck/VBR/vHC-VbrConfig/Public/Get-VhcJob.Tests.ps1' -Output Detailed" 2>&1 | grep -B1 -A8 '\[-\]'`
 Expected: all five FAIL. The first three fail because grouping doesn't exist yet (`$script:CallCounts.GetSourceJob`/`$script:CallCounts.GetBackup` will show the current per-point call counts, e.g. `3` and `2` instead of `1`). The fourth fails or passes by chance depending on `Group-Object`'s absence — since there's no grouping yet, this exercises today's per-point two-pass logic, which should already handle this correctly (today's code already does two full passes over individual points); if it passes today, that's fine, it confirms the *invariant* already holds per-point and Task 4 must not break it when switching to groups. The fifth (Replication job) MUST fail today — `Type -eq 'Snapshot'` is still skipped unconditionally, so `OnDiskGB` will be `0`, not `9`.
 
-- [ ] **Step 3: Commit the failing tests**
+- [x] **Step 3: Commit the failing tests**
 
 ```bash
 git add "vHC/HC_Reporting/Tools/Scripts/HealthCheck/VBR/vHC-VbrConfig/Public/Get-VhcJob.Tests.ps1"
