@@ -128,628 +128,635 @@ jobs:
         path: publish/VeeamHealthCheck-${{ steps.get_version.outputs.version }}.zip
         retention-days: 7
 
-  # Integration test on self-hosted VBR
-  integration-test-vbr:
-    needs: build-and-test
-    runs-on: [self-hosted, CONSOLE_HOST]
-    if: github.event_name != 'pull_request'
-    permissions:
-      contents: read
-      issues: write
-
-    steps:
-    - name: Pre-run cleanup
-      run: |
-        if (Test-Path "C:\temp\vHC") {
-          Remove-Item -Path "C:\temp\vHC" -Recurse -Force -ErrorAction SilentlyContinue
-          Write-Host "Cleaned stale data from C:\temp\vHC" -ForegroundColor Yellow
-        }
-
-    - name: Checkout repository
-      uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
-      
-    - name: Download ZIP artifact
-      uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
-      with:
-        name: veeam-healthcheck-zip
-        path: ${{ github.workspace }}/test-download
-    
-    - name: Extract ZIP
-      run: |
-        $zipFile = Get-ChildItem "${{ github.workspace }}\test-download\*.zip" | Select-Object -First 1
-        $extractPath = "${{ github.workspace }}\test-run"
-        
-        Write-Host "Extracting: $($zipFile.FullName)" -ForegroundColor Cyan
-        Expand-Archive -Path $zipFile.FullName -DestinationPath $extractPath -Force
-        
-        # Verify extraction
-        $exePath = "$extractPath\VeeamHealthCheck.exe"
-        if (Test-Path $exePath) {
-          Write-Host "✅ Extracted successfully" -ForegroundColor Green
-          Write-Host "Contents:" -ForegroundColor Yellow
-          Get-ChildItem $extractPath -Recurse | Select-Object FullName
-        } else {
-          Write-Host "❌ Extraction failed - EXE not found" -ForegroundColor Red
-          exit 1
-        }
-    
-    - name: Run VeeamHealthCheck on VBR
-      id: run_healthcheck
-      env:
-        VBR_HOST: ${{ secrets.VBR_HOST }}
-        VBR_USERNAME: ${{ secrets.VBR_USERNAME }}
-        VBR_PASSWORD: ${{ secrets.VBR_13_REMOTE_PW }}
-      run: |
-        $exePath = "${{ github.workspace }}\test-run\VeeamHealthCheck.exe"
-        
-        Write-Host "Starting VeeamHealthCheck..." -ForegroundColor Cyan
-        Write-Host "Target VBR: $env:VBR_HOST" -ForegroundColor Yellow
-        Write-Host "Working directory: $(Split-Path $exePath)" -ForegroundColor Yellow
-        
-        # /creds=user:pass is NOT a supported flag (it is silently ignored, and would
-        # leak the password into process args + CI logs). The tool takes credentials via
-        # a credfile: JSON map of host -> { Username, PasswordBase64 }. One file can hold
-        # many hosts (fleet). PasswordBase64 = base64(UTF8(plaintext)).
-        $pwB64 = [Convert]::ToBase64String([Text.Encoding]::UTF8.GetBytes($env:VBR_PASSWORD))
-        $credFile = Join-Path $env:RUNNER_TEMP ("vbr-creds-" + [guid]::NewGuid().ToString() + ".json")
-        @{ "$env:VBR_HOST" = @{ Username = $env:VBR_USERNAME; PasswordBase64 = $pwB64 } } |
-          ConvertTo-Json -Depth 4 | Set-Content -Path $credFile -Encoding UTF8
-
-        # Run from the extracted directory so it can find relative paths
-        Push-Location (Split-Path $exePath)
-        try {
-          $process = Start-Process -FilePath $exePath `
-            -ArgumentList "/run", "/remote", "/host=$env:VBR_HOST", "/credfile=$credFile", "/silent" `
-            -NoNewWindow -PassThru -Wait
-          
-          $exitCode = $process.ExitCode
-          
-          if ($exitCode -eq 0) {
-            Write-Host "Health check completed successfully!" -ForegroundColor Green
-            echo "success=true" >> $env:GITHUB_OUTPUT
-          } else {
-            Write-Host "Health check failed with exit code: $exitCode" -ForegroundColor Red
-            echo "success=false" >> $env:GITHUB_OUTPUT
-            exit $exitCode
-          }
-        } finally {
-          Pop-Location
-        }
-    
-    - name: Scan VHC logs for errors
-      # P2-1: extract to composite action
-      if: always()
-      run: |
-        $logDir = "C:\temp\vHC\Original\Log"
-        $logFiles = Get-ChildItem "$logDir\*.log" -ErrorAction SilentlyContinue
-
-        if (-not $logFiles) {
-          Write-Host "⚠️ No log files found in $logDir" -ForegroundColor Yellow
-          exit 0
-        }
-
-        Write-Host "📋 Scanning $($logFiles.Count) log file(s) for errors..." -ForegroundColor Cyan
-
-        $errorPatterns = @('ERROR', 'EXCEPTION', 'FATAL')
-        # Known-benign errors on CI test environments — allowlisted to prevent false failures
-        $allowedMessages = @(
-          'No backup sessions available',              # CI test servers may have no sessions configured
-          'Get-VBREntraIDTenant.*is not recognized',  # Entra ID collection requires VBR v13+
-          'VMC\.log.*does not exist',                  # VMC.log only present when NAS backup configured
-          'Could not find file.*VMC\.log',             # VMC.log file-not-found variant
-          'Get-VhciObjectStorageRepos.*is not recognized', # Object storage cmdlet not available on all VBR versions
-          'Job Info Data import failed'                # Benign null-ref when job session data is sparse on CI
-        )
-        $findings = @()
-
-        foreach ($log in $logFiles) {
-          $lineNum = 0
-          foreach ($line in (Get-Content $log.FullName)) {
-            $lineNum++
-            foreach ($pattern in $errorPatterns) {
-              if ($line -cmatch $pattern) {
-                $isAllowed = $false
-                foreach ($msg in $allowedMessages) { if ($line -match $msg) { $isAllowed = $true; break } }
-                if (-not $isAllowed) {
-                  $findings += [PSCustomObject]@{
-                    File    = $log.Name
-                    Line    = $lineNum
-                    Pattern = $pattern
-                    Text    = $line.Trim().Substring(0, [Math]::Min($line.Trim().Length, 200))
-                  }
-                }
-                break  # one match per line is enough
-              }
-            }
-          }
-        }
-
-        if ($findings.Count -eq 0) {
-          Write-Host "✅ No ERROR/EXCEPTION/FATAL entries found in logs" -ForegroundColor Green
-        } else {
-          Write-Host "❌ Found $($findings.Count) error entries in VHC logs:" -ForegroundColor Red
-          $findings | ForEach-Object {
-            Write-Host "  [$($_.Pattern)] $($_.File):$($_.Line) — $($_.Text)" -ForegroundColor Red
-          }
-          Write-Host ""
-          Write-Host "VHC exited 0 but logged errors — this indicates partial data collection failure." -ForegroundColor Red
-          exit 1
-        }
-
-    - name: Find generated report
-      id: find_report
-      if: always()
-      run: |
-        $reportDir = "C:\temp\vHC\vHC-Report"
-        if (Test-Path $reportDir) {
-          $latestReport = Get-ChildItem -Path $reportDir -Filter "*.html" | 
-            Sort-Object LastWriteTime -Descending | 
-            Select-Object -First 1
-          
-          if ($latestReport) {
-            echo "report_path=$($latestReport.FullName)" >> $env:GITHUB_OUTPUT
-            echo "report_name=$($latestReport.Name)" >> $env:GITHUB_OUTPUT
-          }
-        }
-    
-    - name: Upload health check report
-      if: always() && steps.find_report.outputs.report_path
-      uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
-      with:
-        name: health-check-report-${{ github.run_number }}-v13-remote
-        path: ${{ steps.find_report.outputs.report_path }}
-        retention-days: 30
-
-    - name: Validate session report generation
-      if: always()
-      run: |
-        # Session reporting now runs inside Get-VBRConfig.ps1 via Get-VhcBackupSessions /
-        # Get-VhcSessionReport module functions. SessionCache.xml no longer exists.
-        $logDir = "C:\temp\vHC\Original\Log"
-        $logFile = Get-ChildItem $logDir -Filter "*.log" -ErrorAction SilentlyContinue |
-                   Where-Object Name -notmatch "VeeamSessionReport" |
-                   Sort-Object LastWriteTime -Descending | Select-Object -First 1
-
-        if ($logFile) {
-          $logContent = Get-Content $logFile.FullName -Raw -ErrorAction SilentlyContinue
-          if ($logContent -match "Fetched (\d+) backup sessions") {
-            Write-Host "✅ Backup sessions fetched: $($Matches[1])" -ForegroundColor Green
-          }
-          if ($logContent -match "Exported (\d+) session rows") {
-            Write-Host "✅ Session report exported: $($Matches[1]) rows" -ForegroundColor Green
-          } elseif ($logContent -match "No session rows produced") {
-            Write-Host "⚠️ Session report produced no rows" -ForegroundColor Yellow
-          }
-        } else {
-          Write-Host "⚠️ Collection log not found at $logDir" -ForegroundColor Yellow
-        }
-
-    - name: Validate CSV collection outputs
-      id: csv_validation
-      if: always()
-      run: |
-        $csvDir = Get-ChildItem "C:\temp\vHC\Original\VBR\*\*" -Directory -ErrorAction SilentlyContinue | Sort-Object LastWriteTime -Descending | Select-Object -First 1
-
-        if ($csvDir) {
-          Write-Host "📁 CSV Directory: $($csvDir.FullName)" -ForegroundColor Cyan
-
-          # CRITICAL files - job FAILS if any are missing (indicates PS script failure)
-          # Files are prefixed with hostname: e.g., localhost_Jobs.csv, servername_Servers.csv
-          $criticalPatterns = @('*_Servers.csv', '*_Proxies.csv', '*_Repositories.csv', '*_Jobs.csv', '*_vbrinfo.csv')
-
-          # Optional files - warning only
-          $optionalPatterns = @('*_UserRoles.csv', '*_SOBRs.csv', '*_LicInfo.csv', 'VeeamSessionReport.csv')
-
-          $foundCount = 0
-          $criticalMissing = @()
-          $optionalMissing = @()
-
-          foreach ($pattern in $criticalPatterns) {
-            $found = Get-ChildItem -Path $csvDir.FullName -Filter $pattern -ErrorAction SilentlyContinue | Select-Object -First 1
-            if ($found) {
-              $size = $found.Length
-              $rowCount = (Import-Csv $found.FullName -ErrorAction SilentlyContinue).Count
-              Write-Host "  ✅ [CRITICAL] $($found.Name) - $size bytes, $rowCount rows" -ForegroundColor Green
-              $foundCount++
-            } else {
-              Write-Host "  ❌ [CRITICAL] $pattern - MISSING" -ForegroundColor Red
-              $criticalMissing += $pattern
-            }
-          }
-
-          foreach ($pattern in $optionalPatterns) {
-            $found = Get-ChildItem -Path $csvDir.FullName -Filter $pattern -ErrorAction SilentlyContinue | Select-Object -First 1
-            if ($found) {
-              $size = $found.Length
-              $rowCount = (Import-Csv $found.FullName -ErrorAction SilentlyContinue).Count
-              Write-Host "  ✅ [OPTIONAL] $($found.Name) - $size bytes, $rowCount rows" -ForegroundColor Green
-              $foundCount++
-            } else {
-              Write-Host "  ⚠️ [OPTIONAL] $pattern - missing" -ForegroundColor Yellow
-              $optionalMissing += $pattern
-            }
-          }
-
-          Write-Host ""
-          Write-Host "📊 CSV Summary: $foundCount found" -ForegroundColor Cyan
-
-          if ($criticalMissing.Count -gt 0) {
-            Write-Host "❌ CRITICAL FILES MISSING: $($criticalMissing -join ', ')" -ForegroundColor Red
-            Write-Host "This indicates the PowerShell collection script failed." -ForegroundColor Red
-            Write-Host "Check the logs above for 'PowerShell Errors' or 'Script failed with exit code'" -ForegroundColor Yellow
-            exit 1
-          }
-        } else {
-          Write-Host "❌ CSV output directory not found - collection likely failed completely" -ForegroundColor Red
-          exit 1
-        }
-
-    - name: Validate CSV content quality
-      if: always()
-      run: |
-        $csvDir = Get-ChildItem "C:\temp\vHC\Original\VBR\*\*" -Directory -ErrorAction SilentlyContinue | Sort-Object LastWriteTime -Descending | Select-Object -First 1
-
-        if ($csvDir) {
-          Write-Host "🔍 Validating CSV Content Quality..." -ForegroundColor Cyan
-
-          # Validate _vbrinfo.csv version format
-          $vbrinfoPath = Join-Path $csvDir.FullName "_vbrinfo.csv"
-          if (Test-Path $vbrinfoPath) {
-            $vbrinfo = Import-Csv $vbrinfoPath
-            if ($vbrinfo.Version -match '^\d{1,2}\.\d{1,2}\.\d{1,2}\.\d{3,4}$') {
-              Write-Host "  ✅ VBR version format valid: $($vbrinfo.Version)" -ForegroundColor Green
-            } else {
-              Write-Host "  ⚠️ VBR version format unexpected: $($vbrinfo.Version)" -ForegroundColor Yellow
-            }
-          }
-
-          # Validate Repositories.csv data integrity
-          $reposPath = Join-Path $csvDir.FullName "_Repositories.csv"
-          if (Test-Path $reposPath) {
-            $repos = Import-Csv $reposPath
-            $invalidRepos = $repos | Where-Object {
-              [long]$_.FreeSpace -gt [long]$_.TotalSpace
-            }
-            if ($invalidRepos.Count -eq 0) {
-              Write-Host "  ✅ All repositories have valid FreeSpace <= TotalSpace" -ForegroundColor Green
-            } else {
-              Write-Host "  ❌ Found $($invalidRepos.Count) repositories with FreeSpace > TotalSpace" -ForegroundColor Red
-              $invalidRepos | ForEach-Object { Write-Host "    - $($_.Name): Free=$($_.FreeSpace) > Total=$($_.TotalSpace)" }
-              exit 1
-            }
-          }
-
-          # Validate Proxies reference valid Servers
-          $serversPath = Join-Path $csvDir.FullName "_Servers.csv"
-          $proxiesPath = Join-Path $csvDir.FullName "_Proxies.csv"
-          if ((Test-Path $serversPath) -and (Test-Path $proxiesPath)) {
-            $servers = Import-Csv $serversPath
-            $proxies = Import-Csv $proxiesPath
-            $serverNames = $servers.Name
-
-            $orphanProxies = $proxies | Where-Object {
-              $serverNames -notcontains $_.Host
-            }
-
-            if ($orphanProxies.Count -eq 0) {
-              Write-Host "  ✅ All proxy hosts have corresponding server entries" -ForegroundColor Green
-            } else {
-              Write-Host "  ⚠️ Found $($orphanProxies.Count) proxies with missing server entries" -ForegroundColor Yellow
-              $orphanProxies | ForEach-Object { Write-Host "    - Proxy '$($_.Name)' references unknown host '$($_.Host)'" }
-            }
-          }
-
-          Write-Host "✅ CSV content validation complete" -ForegroundColor Green
-        }
-
-    - name: Validate CSV column schemas
-      # P2-1: extract to composite action
-      if: always()
-      run: |
-        $csvDir = Get-ChildItem "C:\temp\vHC\Original\VBR\*\*" -Directory -ErrorAction SilentlyContinue |
-                  Sort-Object LastWriteTime -Descending | Select-Object -First 1
-
-        if (-not $csvDir) {
-          Write-Host "⚠️ CSV directory not found, skipping schema validation" -ForegroundColor Yellow
-          exit 0
-        }
-
-        $expectedSchemas = @{
-          '*_vbrinfo.csv'       = @('Version', 'SqlServer')
-          '*_Servers.csv'       = @('Name', 'Type')
-          '*_Proxies.csv'       = @('Name', 'Host')
-          '*_Repositories.csv'  = @('Name', 'Path')
-          '*_Jobs.csv'          = @('Name', 'JobType')
-        }
-
-        $failures = @()
-
-        foreach ($pattern in $expectedSchemas.Keys) {
-          $file = Get-ChildItem -Path $csvDir.FullName -Filter $pattern -ErrorAction SilentlyContinue |
-                  Select-Object -First 1
-
-          if (-not $file) {
-            Write-Host "  ⚠️ $pattern not found — skipping schema check (existence validated elsewhere)" -ForegroundColor Yellow
-            continue
-          }
-
-          # Read just the header row
-          $headerLine = Get-Content $file.FullName -TotalCount 1
-          if (-not $headerLine) {
-            Write-Host "  ❌ $($file.Name) is empty — no header row" -ForegroundColor Red
-            $failures += $file.Name
-            continue
-          }
-
-          $actualColumns = ($headerLine -split ',') | ForEach-Object { $_.Trim('"', ' ') }
-          $expectedColumns = $expectedSchemas[$pattern]
-          $missingColumns = @()
-
-          foreach ($col in $expectedColumns) {
-            if ($actualColumns -notcontains $col) {
-              $missingColumns += $col
-            }
-          }
-
-          if ($missingColumns.Count -eq 0) {
-            Write-Host "  ✅ $($file.Name) — all expected columns present: $($expectedColumns -join ', ')" -ForegroundColor Green
-          } else {
-            Write-Host "  ❌ $($file.Name) — missing columns: $($missingColumns -join ', ')" -ForegroundColor Red
-            Write-Host "       Expected: $($expectedColumns -join ', ')" -ForegroundColor Yellow
-            Write-Host "       Actual:   $($actualColumns -join ', ')" -ForegroundColor Yellow
-            $failures += "$($file.Name) (missing: $($missingColumns -join ', '))"
-          }
-        }
-
-        if ($failures.Count -gt 0) {
-          Write-Host ""
-          Write-Host "❌ CSV schema validation failed for $($failures.Count) file(s):" -ForegroundColor Red
-          $failures | ForEach-Object { Write-Host "  - $_" -ForegroundColor Red }
-          Write-Host "Column renames in PS scripts break the C# CSV parser silently." -ForegroundColor Red
-          exit 1
-        }
-
-        Write-Host "✅ CSV column schema validation complete" -ForegroundColor Green
-
-    - name: Validate HTML report content
-      if: always()
-      run: |
-        $reportPath = "${{ steps.find_report.outputs.report_path }}"
-
-        if ($reportPath -and (Test-Path $reportPath)) {
-          Write-Host "🔍 Validating HTML Report Content..." -ForegroundColor Cyan
-
-          $reportContent = Get-Content $reportPath -Raw
-
-          # Core required sections (fail if missing)
-          # Match by id attributes which are stable across report redesigns
-          $coreRequiredSections = @(
-            'License Summary',
-            'Backup Server'
-          )
-
-          # Optional sections (warn if missing, but don't fail)
-          $optionalSections = @(
-            'Security Summary',
-            'Proxy Info',
-            'Repository Details',
-            'Job Summary'
-          )
-
-          # Check core required sections
-          $missingCore = @()
-          foreach ($section in $coreRequiredSections) {
-            if ($reportContent -notmatch [regex]::Escape($section)) {
-              $missingCore += $section
-            }
-          }
-
-          if ($missingCore.Count -eq 0) {
-            Write-Host "  ✅ All core sections present" -ForegroundColor Green
-          } else {
-            Write-Host "  ❌ Missing core required sections:" -ForegroundColor Red
-            $missingCore | ForEach-Object { Write-Host "    - $_" }
-            exit 1
-          }
-
-          # Check optional sections (informational only)
-          $missingOptional = @()
-          foreach ($section in $optionalSections) {
-            if ($reportContent -notmatch [regex]::Escape($section)) {
-              $missingOptional += $section
-            }
-          }
-
-          if ($missingOptional.Count -gt 0) {
-            Write-Host "  ⚠️ Optional sections not found (may not be configured):" -ForegroundColor Yellow
-            $missingOptional | ForEach-Object { Write-Host "    - $_" }
-          } else {
-            Write-Host "  ✅ All optional sections present" -ForegroundColor Green
-          }
-
-          # Validate navigation links
-          $hrefMatches = [regex]::Matches($reportContent, 'href=[''"]#(\w+)[''"]')
-          $idMatches = [regex]::Matches($reportContent, 'id=[''"](\w+)[''"]')
-
-          $hrefs = $hrefMatches | ForEach-Object { $_.Groups[1].Value }
-          $ids = $idMatches | ForEach-Object { $_.Groups[1].Value }
-
-          $deadLinks = $hrefs | Where-Object { $ids -notcontains $_ }
-
-          if ($deadLinks.Count -eq 0) {
-            Write-Host "  ✅ All navigation links are valid" -ForegroundColor Green
-          } else {
-            Write-Host "  ❌ Found $($deadLinks.Count) dead navigation links" -ForegroundColor Red
-            $deadLinks | ForEach-Object { Write-Host "    - #$_" }
-            Write-Host "Report navigation is broken — this is a release-blocking defect." -ForegroundColor Red
-            exit 1
-          }
-
-          # Validate percentages are in valid range
-          $percentageMatches = [regex]::Matches($reportContent, '(\d+\.?\d*)\s*%')
-          $invalidPercentages = @()
-
-          foreach ($match in $percentageMatches) {
-            $value = [decimal]$match.Groups[1].Value
-            if ($value -lt 0 -or $value -gt 100) {
-              $invalidPercentages += $value
-            }
-          }
-
-          if ($invalidPercentages.Count -eq 0) {
-            Write-Host "  ✅ All percentages are within valid range (0-100%)" -ForegroundColor Green
-          } else {
-            Write-Host "  ❌ Found $($invalidPercentages.Count) percentages out of range" -ForegroundColor Red
-            $invalidPercentages | ForEach-Object { Write-Host "    - $_%" }
-            exit 1
-          }
-
-          Write-Host "✅ HTML report content validation complete" -ForegroundColor Green
-        } else {
-          Write-Host "⚠️ Report file not found, skipping HTML validation" -ForegroundColor Yellow
-        }
-
-    - name: Validate HTML table data rows
-      # P2-1: extract to composite action
-      if: always()
-      run: |
-        $reportFile = "${{ steps.find_report.outputs.report_path }}"
-        if (-not $reportFile -or -not (Test-Path $reportFile)) {
-          Write-Host "⚠️ Report file not found, skipping table validation" -ForegroundColor Yellow
-          exit 0
-        }
-
-        $content = Get-Content $reportFile -Raw
-
-        # Tables that MUST have at least one data row (1 <tr> header + 1+ <tr> data)
-        # Key: regex to locate the table section; Value: human-readable name
-        $requiredTables = @{
-          'License Summary'    = 'License Summary'
-          'Backup Server'      = 'Backup Server'
-        }
-
-        # Tables that SHOULD have data rows (warn only)
-        $warnTables = @{
-          'Proxy Info'              = 'Proxy Info'
-          'Repository Details'      = 'Repository Details'
-          'Job Summary'             = 'Job Summary'
-        }
-
-        $failures = @()
-        $warnings = @()
-
-        function Test-TableHasDataRows {
-          param([string]$Content, [string]$SectionName)
-          # Find the section, then the next <table>...</table> block
-          $sectionIdx = $Content.IndexOf($SectionName)
-          if ($sectionIdx -lt 0) { return $null }  # section not found
-
-          $tableStart = $Content.IndexOf('<table', $sectionIdx)
-          if ($tableStart -lt 0) { return $null }
-
-          $tableEnd = $Content.IndexOf('</table>', $tableStart)
-          if ($tableEnd -lt 0) { return $null }
-
-          $tableHtml = $Content.Substring($tableStart, $tableEnd - $tableStart + 8)
-          $rowCount = ([regex]::Matches($tableHtml, '<tr[\s>]')).Count
-
-          return $rowCount  # 1 = header only, 2+ = has data
-        }
-
-        foreach ($key in $requiredTables.Keys) {
-          $rows = Test-TableHasDataRows -Content $content -SectionName $key
-          if ($null -eq $rows) {
-            Write-Host "  ⚠️ [$($requiredTables[$key])] Section/table not found" -ForegroundColor Yellow
-          } elseif ($rows -le 1) {
-            Write-Host "  ❌ [$($requiredTables[$key])] Table has $rows row(s) — no data rows" -ForegroundColor Red
-            $failures += $requiredTables[$key]
-          } else {
-            Write-Host "  ✅ [$($requiredTables[$key])] Table has $($rows - 1) data row(s)" -ForegroundColor Green
-          }
-        }
-
-        foreach ($key in $warnTables.Keys) {
-          $rows = Test-TableHasDataRows -Content $content -SectionName $key
-          if ($null -eq $rows) {
-            Write-Host "  ⚠️ [$($warnTables[$key])] Section/table not found" -ForegroundColor Yellow
-          } elseif ($rows -le 1) {
-            Write-Host "  ⚠️ [$($warnTables[$key])] Table has $rows row(s) — empty" -ForegroundColor Yellow
-            $warnings += $warnTables[$key]
-          } else {
-            Write-Host "  ✅ [$($warnTables[$key])] Table has $($rows - 1) data row(s)" -ForegroundColor Green
-          }
-        }
-
-        if ($failures.Count -gt 0) {
-          Write-Host ""
-          Write-Host "❌ $($failures.Count) required table(s) have no data: $($failures -join ', ')" -ForegroundColor Red
-          exit 1
-        }
-
-        Write-Host "✅ HTML table row validation complete" -ForegroundColor Green
-
-    - name: Check SCA label drift
-      if: success() || failure()
-      shell: pwsh
-      env:
-        GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      run: |
-        & "${{ github.workspace }}\.github\scripts\Invoke-SecurityComplianceDriftCheck.ps1" `
-          -CatalogPath 'C:\temp\vHC\Original\VBR\*\*\_SecurityComplianceCatalog.csv' `
-          -Repo '${{ github.repository }}' `
-          -RunUrl '${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}'
-
-    - name: Collect performance metrics
-      if: always()
-      run: |
-        $logFiles = Get-ChildItem "C:\temp\vHC\Original\Log\*.log" -ErrorAction SilentlyContinue
-
-        Write-Host "⏱️ Performance Metrics:" -ForegroundColor Cyan
-        foreach ($log in $logFiles) {
-          $content = Get-Content $log.FullName
-          $startLine = $content | Where-Object { $_ -match "Starting|Enter" } | Select-Object -First 1
-          $endLine = $content | Where-Object { $_ -match "complete|DONE" } | Select-Object -Last 1
-
-          if ($startLine -match "(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2})") {
-            $startTs = $Matches[1]
-            if ($endLine -match "(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2})") {
-            $endTs = $Matches[1]
-            try {
-              $start = [datetime]::ParseExact($startTs, "yyyy-MM-dd HH:mm:ss", $null)
-              $end = [datetime]::ParseExact($endTs, "yyyy-MM-dd HH:mm:ss", $null)
-              $duration = ($end - $start).TotalMinutes
-              Write-Host "  📄 $($log.BaseName): $([math]::Round($duration, 2)) minutes" -ForegroundColor White
-            } catch {
-              Write-Host "  ⚠️ $($log.BaseName): Could not parse timing" -ForegroundColor Yellow
-            }
-            }
-          }
-        }
-
-    - name: Upload health check logs
-      if: always()
-      uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
-      with:
-        name: health-check-logs-${{ github.run_number }}-v13-remote
-        path: C:\temp\vHC\Original\Log\*.log
-        if-no-files-found: warn
-        retention-days: 7
-    
-    - name: Cleanup
-      if: always()
-      continue-on-error: true
-      run: |
-        # Add delay to allow file handles to release
-        Start-Sleep -Seconds 2
-        if (Test-Path "${{ github.workspace }}\test-run") {
-          Remove-Item -Path "${{ github.workspace }}\test-run" -Recurse -Force -ErrorAction SilentlyContinue
-        }
-        if (Test-Path "${{ github.workspace }}\test-download") {
-          Remove-Item -Path "${{ github.workspace }}\test-download" -Recurse -Force -ErrorAction SilentlyContinue
-        }
-        # if (Test-Path "C:\temp\vHC") {
-        #   Remove-Item -Path "C:\temp\vHC" -Recurse -Force
-        # }
+  # --- DISABLED 2026-08-24 ------------------------------------------------
+  # Old CONSOLE_HOST runner has a known VBR console/server version mismatch
+  # causing failures. integration-test-vbr-2 (below) runs the same checks
+  # against the USDEMO environment on the CONSOLE_HOST_2 runner instead.
+  # Re-enable: uncomment this job, and add "integration-test-vbr" back to
+  # virustotal-scan's needs list below.
+  # -------------------------------------------------------------------------
+#   # Integration test on self-hosted VBR
+#   integration-test-vbr:
+#     needs: build-and-test
+#     runs-on: [self-hosted, CONSOLE_HOST]
+#     if: github.event_name != 'pull_request'
+#     permissions:
+#       contents: read
+#       issues: write
+# 
+#     steps:
+#     - name: Pre-run cleanup
+#       run: |
+#         if (Test-Path "C:\temp\vHC") {
+#           Remove-Item -Path "C:\temp\vHC" -Recurse -Force -ErrorAction SilentlyContinue
+#           Write-Host "Cleaned stale data from C:\temp\vHC" -ForegroundColor Yellow
+#         }
+# 
+#     - name: Checkout repository
+#       uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+#       
+#     - name: Download ZIP artifact
+#       uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
+#       with:
+#         name: veeam-healthcheck-zip
+#         path: ${{ github.workspace }}/test-download
+#     
+#     - name: Extract ZIP
+#       run: |
+#         $zipFile = Get-ChildItem "${{ github.workspace }}\test-download\*.zip" | Select-Object -First 1
+#         $extractPath = "${{ github.workspace }}\test-run"
+#         
+#         Write-Host "Extracting: $($zipFile.FullName)" -ForegroundColor Cyan
+#         Expand-Archive -Path $zipFile.FullName -DestinationPath $extractPath -Force
+#         
+#         # Verify extraction
+#         $exePath = "$extractPath\VeeamHealthCheck.exe"
+#         if (Test-Path $exePath) {
+#           Write-Host "✅ Extracted successfully" -ForegroundColor Green
+#           Write-Host "Contents:" -ForegroundColor Yellow
+#           Get-ChildItem $extractPath -Recurse | Select-Object FullName
+#         } else {
+#           Write-Host "❌ Extraction failed - EXE not found" -ForegroundColor Red
+#           exit 1
+#         }
+#     
+#     - name: Run VeeamHealthCheck on VBR
+#       id: run_healthcheck
+#       env:
+#         VBR_HOST: ${{ secrets.VBR_HOST }}
+#         VBR_USERNAME: ${{ secrets.VBR_USERNAME }}
+#         VBR_PASSWORD: ${{ secrets.VBR_13_REMOTE_PW }}
+#       run: |
+#         $exePath = "${{ github.workspace }}\test-run\VeeamHealthCheck.exe"
+#         
+#         Write-Host "Starting VeeamHealthCheck..." -ForegroundColor Cyan
+#         Write-Host "Target VBR: $env:VBR_HOST" -ForegroundColor Yellow
+#         Write-Host "Working directory: $(Split-Path $exePath)" -ForegroundColor Yellow
+#         
+#         # /creds=user:pass is NOT a supported flag (it is silently ignored, and would
+#         # leak the password into process args + CI logs). The tool takes credentials via
+#         # a credfile: JSON map of host -> { Username, PasswordBase64 }. One file can hold
+#         # many hosts (fleet). PasswordBase64 = base64(UTF8(plaintext)).
+#         $pwB64 = [Convert]::ToBase64String([Text.Encoding]::UTF8.GetBytes($env:VBR_PASSWORD))
+#         $credFile = Join-Path $env:RUNNER_TEMP ("vbr-creds-" + [guid]::NewGuid().ToString() + ".json")
+#         @{ "$env:VBR_HOST" = @{ Username = $env:VBR_USERNAME; PasswordBase64 = $pwB64 } } |
+#           ConvertTo-Json -Depth 4 | Set-Content -Path $credFile -Encoding UTF8
+# 
+#         # Run from the extracted directory so it can find relative paths
+#         Push-Location (Split-Path $exePath)
+#         try {
+#           $process = Start-Process -FilePath $exePath `
+#             -ArgumentList "/run", "/remote", "/host=$env:VBR_HOST", "/credfile=$credFile", "/silent" `
+#             -NoNewWindow -PassThru -Wait
+#           
+#           $exitCode = $process.ExitCode
+#           
+#           if ($exitCode -eq 0) {
+#             Write-Host "Health check completed successfully!" -ForegroundColor Green
+#             echo "success=true" >> $env:GITHUB_OUTPUT
+#           } else {
+#             Write-Host "Health check failed with exit code: $exitCode" -ForegroundColor Red
+#             echo "success=false" >> $env:GITHUB_OUTPUT
+#             exit $exitCode
+#           }
+#         } finally {
+#           Pop-Location
+#         }
+#     
+#     - name: Scan VHC logs for errors
+#       # P2-1: extract to composite action
+#       if: always()
+#       run: |
+#         $logDir = "C:\temp\vHC\Original\Log"
+#         $logFiles = Get-ChildItem "$logDir\*.log" -ErrorAction SilentlyContinue
+# 
+#         if (-not $logFiles) {
+#           Write-Host "⚠️ No log files found in $logDir" -ForegroundColor Yellow
+#           exit 0
+#         }
+# 
+#         Write-Host "📋 Scanning $($logFiles.Count) log file(s) for errors..." -ForegroundColor Cyan
+# 
+#         $errorPatterns = @('ERROR', 'EXCEPTION', 'FATAL')
+#         # Known-benign errors on CI test environments — allowlisted to prevent false failures
+#         $allowedMessages = @(
+#           'No backup sessions available',              # CI test servers may have no sessions configured
+#           'Get-VBREntraIDTenant.*is not recognized',  # Entra ID collection requires VBR v13+
+#           'VMC\.log.*does not exist',                  # VMC.log only present when NAS backup configured
+#           'Could not find file.*VMC\.log',             # VMC.log file-not-found variant
+#           'Get-VhciObjectStorageRepos.*is not recognized', # Object storage cmdlet not available on all VBR versions
+#           'Job Info Data import failed'                # Benign null-ref when job session data is sparse on CI
+#         )
+#         $findings = @()
+# 
+#         foreach ($log in $logFiles) {
+#           $lineNum = 0
+#           foreach ($line in (Get-Content $log.FullName)) {
+#             $lineNum++
+#             foreach ($pattern in $errorPatterns) {
+#               if ($line -cmatch $pattern) {
+#                 $isAllowed = $false
+#                 foreach ($msg in $allowedMessages) { if ($line -match $msg) { $isAllowed = $true; break } }
+#                 if (-not $isAllowed) {
+#                   $findings += [PSCustomObject]@{
+#                     File    = $log.Name
+#                     Line    = $lineNum
+#                     Pattern = $pattern
+#                     Text    = $line.Trim().Substring(0, [Math]::Min($line.Trim().Length, 200))
+#                   }
+#                 }
+#                 break  # one match per line is enough
+#               }
+#             }
+#           }
+#         }
+# 
+#         if ($findings.Count -eq 0) {
+#           Write-Host "✅ No ERROR/EXCEPTION/FATAL entries found in logs" -ForegroundColor Green
+#         } else {
+#           Write-Host "❌ Found $($findings.Count) error entries in VHC logs:" -ForegroundColor Red
+#           $findings | ForEach-Object {
+#             Write-Host "  [$($_.Pattern)] $($_.File):$($_.Line) — $($_.Text)" -ForegroundColor Red
+#           }
+#           Write-Host ""
+#           Write-Host "VHC exited 0 but logged errors — this indicates partial data collection failure." -ForegroundColor Red
+#           exit 1
+#         }
+# 
+#     - name: Find generated report
+#       id: find_report
+#       if: always()
+#       run: |
+#         $reportDir = "C:\temp\vHC\vHC-Report"
+#         if (Test-Path $reportDir) {
+#           $latestReport = Get-ChildItem -Path $reportDir -Filter "*.html" | 
+#             Sort-Object LastWriteTime -Descending | 
+#             Select-Object -First 1
+#           
+#           if ($latestReport) {
+#             echo "report_path=$($latestReport.FullName)" >> $env:GITHUB_OUTPUT
+#             echo "report_name=$($latestReport.Name)" >> $env:GITHUB_OUTPUT
+#           }
+#         }
+#     
+#     - name: Upload health check report
+#       if: always() && steps.find_report.outputs.report_path
+#       uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+#       with:
+#         name: health-check-report-${{ github.run_number }}-v13-remote
+#         path: ${{ steps.find_report.outputs.report_path }}
+#         retention-days: 30
+# 
+#     - name: Validate session report generation
+#       if: always()
+#       run: |
+#         # Session reporting now runs inside Get-VBRConfig.ps1 via Get-VhcBackupSessions /
+#         # Get-VhcSessionReport module functions. SessionCache.xml no longer exists.
+#         $logDir = "C:\temp\vHC\Original\Log"
+#         $logFile = Get-ChildItem $logDir -Filter "*.log" -ErrorAction SilentlyContinue |
+#                    Where-Object Name -notmatch "VeeamSessionReport" |
+#                    Sort-Object LastWriteTime -Descending | Select-Object -First 1
+# 
+#         if ($logFile) {
+#           $logContent = Get-Content $logFile.FullName -Raw -ErrorAction SilentlyContinue
+#           if ($logContent -match "Fetched (\d+) backup sessions") {
+#             Write-Host "✅ Backup sessions fetched: $($Matches[1])" -ForegroundColor Green
+#           }
+#           if ($logContent -match "Exported (\d+) session rows") {
+#             Write-Host "✅ Session report exported: $($Matches[1]) rows" -ForegroundColor Green
+#           } elseif ($logContent -match "No session rows produced") {
+#             Write-Host "⚠️ Session report produced no rows" -ForegroundColor Yellow
+#           }
+#         } else {
+#           Write-Host "⚠️ Collection log not found at $logDir" -ForegroundColor Yellow
+#         }
+# 
+#     - name: Validate CSV collection outputs
+#       id: csv_validation
+#       if: always()
+#       run: |
+#         $csvDir = Get-ChildItem "C:\temp\vHC\Original\VBR\*\*" -Directory -ErrorAction SilentlyContinue | Sort-Object LastWriteTime -Descending | Select-Object -First 1
+# 
+#         if ($csvDir) {
+#           Write-Host "📁 CSV Directory: $($csvDir.FullName)" -ForegroundColor Cyan
+# 
+#           # CRITICAL files - job FAILS if any are missing (indicates PS script failure)
+#           # Files are prefixed with hostname: e.g., localhost_Jobs.csv, servername_Servers.csv
+#           $criticalPatterns = @('*_Servers.csv', '*_Proxies.csv', '*_Repositories.csv', '*_Jobs.csv', '*_vbrinfo.csv')
+# 
+#           # Optional files - warning only
+#           $optionalPatterns = @('*_UserRoles.csv', '*_SOBRs.csv', '*_LicInfo.csv', 'VeeamSessionReport.csv')
+# 
+#           $foundCount = 0
+#           $criticalMissing = @()
+#           $optionalMissing = @()
+# 
+#           foreach ($pattern in $criticalPatterns) {
+#             $found = Get-ChildItem -Path $csvDir.FullName -Filter $pattern -ErrorAction SilentlyContinue | Select-Object -First 1
+#             if ($found) {
+#               $size = $found.Length
+#               $rowCount = (Import-Csv $found.FullName -ErrorAction SilentlyContinue).Count
+#               Write-Host "  ✅ [CRITICAL] $($found.Name) - $size bytes, $rowCount rows" -ForegroundColor Green
+#               $foundCount++
+#             } else {
+#               Write-Host "  ❌ [CRITICAL] $pattern - MISSING" -ForegroundColor Red
+#               $criticalMissing += $pattern
+#             }
+#           }
+# 
+#           foreach ($pattern in $optionalPatterns) {
+#             $found = Get-ChildItem -Path $csvDir.FullName -Filter $pattern -ErrorAction SilentlyContinue | Select-Object -First 1
+#             if ($found) {
+#               $size = $found.Length
+#               $rowCount = (Import-Csv $found.FullName -ErrorAction SilentlyContinue).Count
+#               Write-Host "  ✅ [OPTIONAL] $($found.Name) - $size bytes, $rowCount rows" -ForegroundColor Green
+#               $foundCount++
+#             } else {
+#               Write-Host "  ⚠️ [OPTIONAL] $pattern - missing" -ForegroundColor Yellow
+#               $optionalMissing += $pattern
+#             }
+#           }
+# 
+#           Write-Host ""
+#           Write-Host "📊 CSV Summary: $foundCount found" -ForegroundColor Cyan
+# 
+#           if ($criticalMissing.Count -gt 0) {
+#             Write-Host "❌ CRITICAL FILES MISSING: $($criticalMissing -join ', ')" -ForegroundColor Red
+#             Write-Host "This indicates the PowerShell collection script failed." -ForegroundColor Red
+#             Write-Host "Check the logs above for 'PowerShell Errors' or 'Script failed with exit code'" -ForegroundColor Yellow
+#             exit 1
+#           }
+#         } else {
+#           Write-Host "❌ CSV output directory not found - collection likely failed completely" -ForegroundColor Red
+#           exit 1
+#         }
+# 
+#     - name: Validate CSV content quality
+#       if: always()
+#       run: |
+#         $csvDir = Get-ChildItem "C:\temp\vHC\Original\VBR\*\*" -Directory -ErrorAction SilentlyContinue | Sort-Object LastWriteTime -Descending | Select-Object -First 1
+# 
+#         if ($csvDir) {
+#           Write-Host "🔍 Validating CSV Content Quality..." -ForegroundColor Cyan
+# 
+#           # Validate _vbrinfo.csv version format
+#           $vbrinfoPath = Join-Path $csvDir.FullName "_vbrinfo.csv"
+#           if (Test-Path $vbrinfoPath) {
+#             $vbrinfo = Import-Csv $vbrinfoPath
+#             if ($vbrinfo.Version -match '^\d{1,2}\.\d{1,2}\.\d{1,2}\.\d{3,4}$') {
+#               Write-Host "  ✅ VBR version format valid: $($vbrinfo.Version)" -ForegroundColor Green
+#             } else {
+#               Write-Host "  ⚠️ VBR version format unexpected: $($vbrinfo.Version)" -ForegroundColor Yellow
+#             }
+#           }
+# 
+#           # Validate Repositories.csv data integrity
+#           $reposPath = Join-Path $csvDir.FullName "_Repositories.csv"
+#           if (Test-Path $reposPath) {
+#             $repos = Import-Csv $reposPath
+#             $invalidRepos = $repos | Where-Object {
+#               [long]$_.FreeSpace -gt [long]$_.TotalSpace
+#             }
+#             if ($invalidRepos.Count -eq 0) {
+#               Write-Host "  ✅ All repositories have valid FreeSpace <= TotalSpace" -ForegroundColor Green
+#             } else {
+#               Write-Host "  ❌ Found $($invalidRepos.Count) repositories with FreeSpace > TotalSpace" -ForegroundColor Red
+#               $invalidRepos | ForEach-Object { Write-Host "    - $($_.Name): Free=$($_.FreeSpace) > Total=$($_.TotalSpace)" }
+#               exit 1
+#             }
+#           }
+# 
+#           # Validate Proxies reference valid Servers
+#           $serversPath = Join-Path $csvDir.FullName "_Servers.csv"
+#           $proxiesPath = Join-Path $csvDir.FullName "_Proxies.csv"
+#           if ((Test-Path $serversPath) -and (Test-Path $proxiesPath)) {
+#             $servers = Import-Csv $serversPath
+#             $proxies = Import-Csv $proxiesPath
+#             $serverNames = $servers.Name
+# 
+#             $orphanProxies = $proxies | Where-Object {
+#               $serverNames -notcontains $_.Host
+#             }
+# 
+#             if ($orphanProxies.Count -eq 0) {
+#               Write-Host "  ✅ All proxy hosts have corresponding server entries" -ForegroundColor Green
+#             } else {
+#               Write-Host "  ⚠️ Found $($orphanProxies.Count) proxies with missing server entries" -ForegroundColor Yellow
+#               $orphanProxies | ForEach-Object { Write-Host "    - Proxy '$($_.Name)' references unknown host '$($_.Host)'" }
+#             }
+#           }
+# 
+#           Write-Host "✅ CSV content validation complete" -ForegroundColor Green
+#         }
+# 
+#     - name: Validate CSV column schemas
+#       # P2-1: extract to composite action
+#       if: always()
+#       run: |
+#         $csvDir = Get-ChildItem "C:\temp\vHC\Original\VBR\*\*" -Directory -ErrorAction SilentlyContinue |
+#                   Sort-Object LastWriteTime -Descending | Select-Object -First 1
+# 
+#         if (-not $csvDir) {
+#           Write-Host "⚠️ CSV directory not found, skipping schema validation" -ForegroundColor Yellow
+#           exit 0
+#         }
+# 
+#         $expectedSchemas = @{
+#           '*_vbrinfo.csv'       = @('Version', 'SqlServer')
+#           '*_Servers.csv'       = @('Name', 'Type')
+#           '*_Proxies.csv'       = @('Name', 'Host')
+#           '*_Repositories.csv'  = @('Name', 'Path')
+#           '*_Jobs.csv'          = @('Name', 'JobType')
+#         }
+# 
+#         $failures = @()
+# 
+#         foreach ($pattern in $expectedSchemas.Keys) {
+#           $file = Get-ChildItem -Path $csvDir.FullName -Filter $pattern -ErrorAction SilentlyContinue |
+#                   Select-Object -First 1
+# 
+#           if (-not $file) {
+#             Write-Host "  ⚠️ $pattern not found — skipping schema check (existence validated elsewhere)" -ForegroundColor Yellow
+#             continue
+#           }
+# 
+#           # Read just the header row
+#           $headerLine = Get-Content $file.FullName -TotalCount 1
+#           if (-not $headerLine) {
+#             Write-Host "  ❌ $($file.Name) is empty — no header row" -ForegroundColor Red
+#             $failures += $file.Name
+#             continue
+#           }
+# 
+#           $actualColumns = ($headerLine -split ',') | ForEach-Object { $_.Trim('"', ' ') }
+#           $expectedColumns = $expectedSchemas[$pattern]
+#           $missingColumns = @()
+# 
+#           foreach ($col in $expectedColumns) {
+#             if ($actualColumns -notcontains $col) {
+#               $missingColumns += $col
+#             }
+#           }
+# 
+#           if ($missingColumns.Count -eq 0) {
+#             Write-Host "  ✅ $($file.Name) — all expected columns present: $($expectedColumns -join ', ')" -ForegroundColor Green
+#           } else {
+#             Write-Host "  ❌ $($file.Name) — missing columns: $($missingColumns -join ', ')" -ForegroundColor Red
+#             Write-Host "       Expected: $($expectedColumns -join ', ')" -ForegroundColor Yellow
+#             Write-Host "       Actual:   $($actualColumns -join ', ')" -ForegroundColor Yellow
+#             $failures += "$($file.Name) (missing: $($missingColumns -join ', '))"
+#           }
+#         }
+# 
+#         if ($failures.Count -gt 0) {
+#           Write-Host ""
+#           Write-Host "❌ CSV schema validation failed for $($failures.Count) file(s):" -ForegroundColor Red
+#           $failures | ForEach-Object { Write-Host "  - $_" -ForegroundColor Red }
+#           Write-Host "Column renames in PS scripts break the C# CSV parser silently." -ForegroundColor Red
+#           exit 1
+#         }
+# 
+#         Write-Host "✅ CSV column schema validation complete" -ForegroundColor Green
+# 
+#     - name: Validate HTML report content
+#       if: always()
+#       run: |
+#         $reportPath = "${{ steps.find_report.outputs.report_path }}"
+# 
+#         if ($reportPath -and (Test-Path $reportPath)) {
+#           Write-Host "🔍 Validating HTML Report Content..." -ForegroundColor Cyan
+# 
+#           $reportContent = Get-Content $reportPath -Raw
+# 
+#           # Core required sections (fail if missing)
+#           # Match by id attributes which are stable across report redesigns
+#           $coreRequiredSections = @(
+#             'License Summary',
+#             'Backup Server'
+#           )
+# 
+#           # Optional sections (warn if missing, but don't fail)
+#           $optionalSections = @(
+#             'Security Summary',
+#             'Proxy Info',
+#             'Repository Details',
+#             'Job Summary'
+#           )
+# 
+#           # Check core required sections
+#           $missingCore = @()
+#           foreach ($section in $coreRequiredSections) {
+#             if ($reportContent -notmatch [regex]::Escape($section)) {
+#               $missingCore += $section
+#             }
+#           }
+# 
+#           if ($missingCore.Count -eq 0) {
+#             Write-Host "  ✅ All core sections present" -ForegroundColor Green
+#           } else {
+#             Write-Host "  ❌ Missing core required sections:" -ForegroundColor Red
+#             $missingCore | ForEach-Object { Write-Host "    - $_" }
+#             exit 1
+#           }
+# 
+#           # Check optional sections (informational only)
+#           $missingOptional = @()
+#           foreach ($section in $optionalSections) {
+#             if ($reportContent -notmatch [regex]::Escape($section)) {
+#               $missingOptional += $section
+#             }
+#           }
+# 
+#           if ($missingOptional.Count -gt 0) {
+#             Write-Host "  ⚠️ Optional sections not found (may not be configured):" -ForegroundColor Yellow
+#             $missingOptional | ForEach-Object { Write-Host "    - $_" }
+#           } else {
+#             Write-Host "  ✅ All optional sections present" -ForegroundColor Green
+#           }
+# 
+#           # Validate navigation links
+#           $hrefMatches = [regex]::Matches($reportContent, 'href=[''"]#(\w+)[''"]')
+#           $idMatches = [regex]::Matches($reportContent, 'id=[''"](\w+)[''"]')
+# 
+#           $hrefs = $hrefMatches | ForEach-Object { $_.Groups[1].Value }
+#           $ids = $idMatches | ForEach-Object { $_.Groups[1].Value }
+# 
+#           $deadLinks = $hrefs | Where-Object { $ids -notcontains $_ }
+# 
+#           if ($deadLinks.Count -eq 0) {
+#             Write-Host "  ✅ All navigation links are valid" -ForegroundColor Green
+#           } else {
+#             Write-Host "  ❌ Found $($deadLinks.Count) dead navigation links" -ForegroundColor Red
+#             $deadLinks | ForEach-Object { Write-Host "    - #$_" }
+#             Write-Host "Report navigation is broken — this is a release-blocking defect." -ForegroundColor Red
+#             exit 1
+#           }
+# 
+#           # Validate percentages are in valid range
+#           $percentageMatches = [regex]::Matches($reportContent, '(\d+\.?\d*)\s*%')
+#           $invalidPercentages = @()
+# 
+#           foreach ($match in $percentageMatches) {
+#             $value = [decimal]$match.Groups[1].Value
+#             if ($value -lt 0 -or $value -gt 100) {
+#               $invalidPercentages += $value
+#             }
+#           }
+# 
+#           if ($invalidPercentages.Count -eq 0) {
+#             Write-Host "  ✅ All percentages are within valid range (0-100%)" -ForegroundColor Green
+#           } else {
+#             Write-Host "  ❌ Found $($invalidPercentages.Count) percentages out of range" -ForegroundColor Red
+#             $invalidPercentages | ForEach-Object { Write-Host "    - $_%" }
+#             exit 1
+#           }
+# 
+#           Write-Host "✅ HTML report content validation complete" -ForegroundColor Green
+#         } else {
+#           Write-Host "⚠️ Report file not found, skipping HTML validation" -ForegroundColor Yellow
+#         }
+# 
+#     - name: Validate HTML table data rows
+#       # P2-1: extract to composite action
+#       if: always()
+#       run: |
+#         $reportFile = "${{ steps.find_report.outputs.report_path }}"
+#         if (-not $reportFile -or -not (Test-Path $reportFile)) {
+#           Write-Host "⚠️ Report file not found, skipping table validation" -ForegroundColor Yellow
+#           exit 0
+#         }
+# 
+#         $content = Get-Content $reportFile -Raw
+# 
+#         # Tables that MUST have at least one data row (1 <tr> header + 1+ <tr> data)
+#         # Key: regex to locate the table section; Value: human-readable name
+#         $requiredTables = @{
+#           'License Summary'    = 'License Summary'
+#           'Backup Server'      = 'Backup Server'
+#         }
+# 
+#         # Tables that SHOULD have data rows (warn only)
+#         $warnTables = @{
+#           'Proxy Info'              = 'Proxy Info'
+#           'Repository Details'      = 'Repository Details'
+#           'Job Summary'             = 'Job Summary'
+#         }
+# 
+#         $failures = @()
+#         $warnings = @()
+# 
+#         function Test-TableHasDataRows {
+#           param([string]$Content, [string]$SectionName)
+#           # Find the section, then the next <table>...</table> block
+#           $sectionIdx = $Content.IndexOf($SectionName)
+#           if ($sectionIdx -lt 0) { return $null }  # section not found
+# 
+#           $tableStart = $Content.IndexOf('<table', $sectionIdx)
+#           if ($tableStart -lt 0) { return $null }
+# 
+#           $tableEnd = $Content.IndexOf('</table>', $tableStart)
+#           if ($tableEnd -lt 0) { return $null }
+# 
+#           $tableHtml = $Content.Substring($tableStart, $tableEnd - $tableStart + 8)
+#           $rowCount = ([regex]::Matches($tableHtml, '<tr[\s>]')).Count
+# 
+#           return $rowCount  # 1 = header only, 2+ = has data
+#         }
+# 
+#         foreach ($key in $requiredTables.Keys) {
+#           $rows = Test-TableHasDataRows -Content $content -SectionName $key
+#           if ($null -eq $rows) {
+#             Write-Host "  ⚠️ [$($requiredTables[$key])] Section/table not found" -ForegroundColor Yellow
+#           } elseif ($rows -le 1) {
+#             Write-Host "  ❌ [$($requiredTables[$key])] Table has $rows row(s) — no data rows" -ForegroundColor Red
+#             $failures += $requiredTables[$key]
+#           } else {
+#             Write-Host "  ✅ [$($requiredTables[$key])] Table has $($rows - 1) data row(s)" -ForegroundColor Green
+#           }
+#         }
+# 
+#         foreach ($key in $warnTables.Keys) {
+#           $rows = Test-TableHasDataRows -Content $content -SectionName $key
+#           if ($null -eq $rows) {
+#             Write-Host "  ⚠️ [$($warnTables[$key])] Section/table not found" -ForegroundColor Yellow
+#           } elseif ($rows -le 1) {
+#             Write-Host "  ⚠️ [$($warnTables[$key])] Table has $rows row(s) — empty" -ForegroundColor Yellow
+#             $warnings += $warnTables[$key]
+#           } else {
+#             Write-Host "  ✅ [$($warnTables[$key])] Table has $($rows - 1) data row(s)" -ForegroundColor Green
+#           }
+#         }
+# 
+#         if ($failures.Count -gt 0) {
+#           Write-Host ""
+#           Write-Host "❌ $($failures.Count) required table(s) have no data: $($failures -join ', ')" -ForegroundColor Red
+#           exit 1
+#         }
+# 
+#         Write-Host "✅ HTML table row validation complete" -ForegroundColor Green
+# 
+#     - name: Check SCA label drift
+#       if: success() || failure()
+#       shell: pwsh
+#       env:
+#         GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+#       run: |
+#         & "${{ github.workspace }}\.github\scripts\Invoke-SecurityComplianceDriftCheck.ps1" `
+#           -CatalogPath 'C:\temp\vHC\Original\VBR\*\*\_SecurityComplianceCatalog.csv' `
+#           -Repo '${{ github.repository }}' `
+#           -RunUrl '${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}'
+# 
+#     - name: Collect performance metrics
+#       if: always()
+#       run: |
+#         $logFiles = Get-ChildItem "C:\temp\vHC\Original\Log\*.log" -ErrorAction SilentlyContinue
+# 
+#         Write-Host "⏱️ Performance Metrics:" -ForegroundColor Cyan
+#         foreach ($log in $logFiles) {
+#           $content = Get-Content $log.FullName
+#           $startLine = $content | Where-Object { $_ -match "Starting|Enter" } | Select-Object -First 1
+#           $endLine = $content | Where-Object { $_ -match "complete|DONE" } | Select-Object -Last 1
+# 
+#           if ($startLine -match "(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2})") {
+#             $startTs = $Matches[1]
+#             if ($endLine -match "(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2})") {
+#             $endTs = $Matches[1]
+#             try {
+#               $start = [datetime]::ParseExact($startTs, "yyyy-MM-dd HH:mm:ss", $null)
+#               $end = [datetime]::ParseExact($endTs, "yyyy-MM-dd HH:mm:ss", $null)
+#               $duration = ($end - $start).TotalMinutes
+#               Write-Host "  📄 $($log.BaseName): $([math]::Round($duration, 2)) minutes" -ForegroundColor White
+#             } catch {
+#               Write-Host "  ⚠️ $($log.BaseName): Could not parse timing" -ForegroundColor Yellow
+#             }
+#             }
+#           }
+#         }
+# 
+#     - name: Upload health check logs
+#       if: always()
+#       uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+#       with:
+#         name: health-check-logs-${{ github.run_number }}-v13-remote
+#         path: C:\temp\vHC\Original\Log\*.log
+#         if-no-files-found: warn
+#         retention-days: 7
+#     
+#     - name: Cleanup
+#       if: always()
+#       continue-on-error: true
+#       run: |
+#         # Add delay to allow file handles to release
+#         Start-Sleep -Seconds 2
+#         if (Test-Path "${{ github.workspace }}\test-run") {
+#           Remove-Item -Path "${{ github.workspace }}\test-run" -Recurse -Force -ErrorAction SilentlyContinue
+#         }
+#         if (Test-Path "${{ github.workspace }}\test-download") {
+#           Remove-Item -Path "${{ github.workspace }}\test-download" -Recurse -Force -ErrorAction SilentlyContinue
+#         }
+#         # if (Test-Path "C:\temp\vHC") {
+#         #   Remove-Item -Path "C:\temp\vHC" -Recurse -Force
+#         # }
   # Integration test on self-hosted VBR (second remote environment)
   integration-test-vbr-2:
     needs: build-and-test
@@ -2594,7 +2601,7 @@ jobs:
 
   # VirusTotal scan - runs on master (full release gate) and dev (pre-release gate)
   virustotal-scan:
-    needs: [integration-test-vbr, integration-test-vbr-2, integration-test-vbr-13-sql, integration-test-vbr-12]
+    needs: [integration-test-vbr-2, integration-test-vbr-13-sql, integration-test-vbr-12] # TODO: re-add integration-test-vbr once CONSOLE_HOST console version is fixed and its job above is uncommented
     runs-on: windows-latest
     if: github.ref == 'refs/heads/master' || github.ref == 'refs/heads/dev'
     outputs:
