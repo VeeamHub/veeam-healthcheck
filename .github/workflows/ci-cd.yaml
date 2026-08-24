@@ -2889,6 +2889,8 @@ jobs:
 
     - name: Generate Release Notes
       id: release_notes
+      env:
+        GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       run: |
         $version   = "${{ needs.build-and-test.outputs.version }}"
         $zipHash   = "${{ steps.release_hash.outputs.hash }}"
@@ -2921,8 +2923,14 @@ jobs:
           $subj   = $fields[1].Trim()
           $body   = if ($fields.Count -gt 2) { $fields[2] } else { '' }
 
+          # Only attribute when GitHub can resolve the commit's author email to a
+          # verified account; unresolved commits render with no attribution rather
+          # than a guessed or fallback name.
+          $login       = gh api "repos/$repo/commits/$sha" --jq '.author.login // empty' 2>$null
+          $attribution = if ($login) { " — @$login" } else { '' }
+
           if ($subj -match '^feat(?:\([^)]+\))?!?:\s*(.+)') {
-            $features.Add("- $($Matches[1].Trim()) ($sha)")
+            $features.Add("- $($Matches[1].Trim()) ($sha)$attribution")
           } elseif ($subj -match '^fix(?:\([^)]+\))?!?:\s*(.+)') {
             $desc      = $Matches[1].Trim()
             $issueRefs = [regex]::Matches($body, '(?:Fixes|Closes|Resolves)\s+#(\d+)', 'IgnoreCase') |
@@ -2930,12 +2938,12 @@ jobs:
             $closesNote = if ($issueRefs.Count -gt 0) {
               ', closes ' + (($issueRefs | ForEach-Object { "[#$_](https://github.com/$repo/issues/$_)" }) -join ', ')
             } else { '' }
-            $fixes.Add("- $desc ($sha)$closesNote")
+            $fixes.Add("- $desc ($sha)$closesNote$attribution")
             $issueRefs | ForEach-Object { [void]$handledIssues.Add($_) }
           } elseif ($subj -match '^(?:test|ci|chore|docs|build|refactor|style|perf)(?:\([^)]+\))?!?:\s*(.+)') {
-            $testsCI.Add("- $($Matches[1].Trim()) ($sha)")
+            $testsCI.Add("- $($Matches[1].Trim()) ($sha)$attribution")
           } else {
-            $other.Add("- $subj ($sha)")
+            $other.Add("- $subj ($sha)$attribution")
           }
         }
 
@@ -3069,6 +3077,8 @@ jobs:
 
     - name: Generate pre-release notes
       id: prerelease_notes
+      env:
+        GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       run: |
         $version   = "${{ needs.build-and-test.outputs.version }}"
         $zipHash   = "${{ steps.release_hash.outputs.hash }}"
@@ -3100,8 +3110,14 @@ jobs:
           $subj   = $fields[1].Trim()
           $body   = if ($fields.Count -gt 2) { $fields[2] } else { '' }
 
+          # Only attribute when GitHub can resolve the commit's author email to a
+          # verified account; unresolved commits render with no attribution rather
+          # than a guessed or fallback name.
+          $login       = gh api "repos/$repo/commits/$sha" --jq '.author.login // empty' 2>$null
+          $attribution = if ($login) { " — @$login" } else { '' }
+
           if ($subj -match '^feat(?:\([^)]+\))?!?:\s*(.+)') {
-            $features.Add("- $($Matches[1].Trim()) ($sha)")
+            $features.Add("- $($Matches[1].Trim()) ($sha)$attribution")
           } elseif ($subj -match '^fix(?:\([^)]+\))?!?:\s*(.+)') {
             $desc      = $Matches[1].Trim()
             $issueRefs = [regex]::Matches($body, '(?:Fixes|Closes|Resolves)\s+#(\d+)', 'IgnoreCase') |
@@ -3109,12 +3125,12 @@ jobs:
             $closesNote = if ($issueRefs.Count -gt 0) {
               ', closes ' + (($issueRefs | ForEach-Object { "[#$_](https://github.com/$repo/issues/$_)" }) -join ', ')
             } else { '' }
-            $fixes.Add("- $desc ($sha)$closesNote")
+            $fixes.Add("- $desc ($sha)$closesNote$attribution")
             $issueRefs | ForEach-Object { [void]$handledIssues.Add($_) }
           } elseif ($subj -match '^(?:test|ci|chore|docs|build|refactor|style|perf)(?:\([^)]+\))?!?:\s*(.+)') {
-            $testsCI.Add("- $($Matches[1].Trim()) ($sha)")
+            $testsCI.Add("- $($Matches[1].Trim()) ($sha)$attribution")
           } else {
-            $other.Add("- $subj ($sha)")
+            $other.Add("- $subj ($sha)$attribution")
           }
         }
 
