@@ -79,6 +79,19 @@ different, expected reason (see below).
 _Avoid_: Unmatched restore point (describes the symptom; use only when the
 cause is genuinely unknown)
 
+**Superseded Restore Point**:
+A Restore Point that resolves by name to a real, currently-existing Job,
+but belongs to data no longer counted as that Job's active state — either
+an ObjectId no longer present in the Job's `GetObjectsInJob()` membership
+(e.g. a rebuilt/re-registered machine's pre-rebuild data), or a BackupId
+excluded by the Tier 2 suppression gate because the Job already has Tier 1
+matches elsewhere (see
+[ADR 0023](docs/adr/0023-backupid-grouped-tiered-matching-for-all-job-types.md)).
+Distinct from an Orphaned Restore Point, whose owning Job doesn't resolve
+at all.
+_Avoid_: Stale restore point, old chain (both describe the symptom, not
+the cause)
+
 **Tape Backup**:
 A Backup written to tape media, named by VBR as `<source job name> on
 Tape` (e.g. `VMware - Backup to Vault Direct on Tape`). A real, queryable
