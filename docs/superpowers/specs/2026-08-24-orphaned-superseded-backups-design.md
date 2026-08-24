@@ -26,6 +26,18 @@ and `TotalOnDiskGB` can double-count a rebuilt object's old and new
 `ObjectId` restore points under the same job. Both terms are now defined in
 `CONTEXT.md`.
 
+A design review (before implementation started) and further live-lab
+investigation surfaced three correctness gaps in the first draft of this
+design, all fixed below: `GetObjectsInJob()` returns a container object
+instead of per-VM entries for at least one already-allowlisted job type
+(VMware Cloud Director Backup — documented in ADR 0021 itself), the
+classification logic had no way to exclude Tape Backup restore points
+(`CONTEXT.md` already distinguishes them from Orphaned, but nothing
+implemented that distinction), and the stale-`ObjectId` check was originally
+scoped only to non-swept job types, which is silently inert in any mixed
+environment because `$NeedsSweep` is a single environment-wide flag, not a
+per-job-type one.
+
 Goal: add a new report section that surfaces both categories per-repository
 — what jobs/backups they belong to, how much data, how old, and (for
 Orphaned rows) what platform the data originally came from — while fixing
@@ -42,34 +54,89 @@ Orphaned rows) what platform the data originally came from — while fixing
   new" undermines its own purpose.
 - Runs automatically whenever detection data is available — no new CLI flag.
 
+### Excluded before classification: Tape Backups
+
+Before anything is classified Orphaned or Superseded, each `BackupId`
+group is checked for `.GetBackup().IsTapeBackup` (level 1 — the immediate
+Backup object for that group, *not* `.GetParentOrThis()`, which walks past
+the tape-copy relationship and reports `False`). If `True`, the group is
+dropped entirely — not reported as Orphaned, Superseded, or a third visible
+category, matching `CONTEXT.md`'s existing framing of Tape Backup restore
+points as "unmatched for a different, expected reason," not a cleanup
+candidate. `IsTapeBackup` is a property of the Backup object, so every
+restore point within one `BackupId` group shares the same value — checking
+once per group (at the point where `.GetBackup()` is already being called
+for `JobName`/`RepositoryId` resolution) is sufficient.
+
+This has to be a dedicated boolean check, not a string match on
+`TypeToString`: live evidence shows `TypeToString` is *not* a reliable tape
+signal across platforms. A VMware-to-tape copy read `"VMware Backup to
+Tape"` (contains "Tape"), but a Proxmox-to-tape copy read `"Proxmox"` (no
+"Tape" substring at all) on the same property, at the same object level.
+`IsTapeBackup` was consistent (`True`/`False`) across both.
+
+Why tape restore points would otherwise land in Orphaned: `GetSourceJob()`
+on a tape-copied restore point doesn't throw — it resolves to the tape job
+itself (a real object, e.g. `"Tape - Proxmox Backups"`), but that job comes
+from `Get-VBRTapeJob`, a separate cmdlet family, and is never present in
+`$Jobs` (populated by `Get-VBRJob`). Tier 1's existing validation against
+`$Jobs`'s own Ids (already in the PR #194 sweep) correctly rejects this
+match, and Tier 2's name-based fallback also fails — a tape copy's
+`GetParentOrThis().Name` ends in `" on Tape"`, which never matches a live
+job's name. Both tiers legitimately fail, same as a true orphan — which is
+exactly why the classification logic needs a dedicated exclusion rather
+than relying on Tier 1/2 failure to imply Orphaned.
+
 ### Detection: two categories, two independent mechanisms
 
-Classification is `CurrentJobId == Guid.Empty` (or not found in `$Jobs`) →
-**Orphaned**; resolves to a real, current Job → **Superseded**. Both
-`JobName`, `OriginalJobType` (`.TypeToString`), and `RepositoryId` come from
-the same call — `.GetBackup().GetParentOrThis()` — for both categories, so
-grouping is uniform regardless of which mechanism flagged the row. Confirmed
-live: `.GetBackup().GetParentOrThis()` on a restore point whose owning job
-was deleted still returns a valid object with `JobName`, `TypeToString`, and
+For everything that survives the Tape exclusion above, classification is
+`CurrentJobId == Guid.Empty` (or not found in `$Jobs`) → **Orphaned**;
+resolves to a real, current Job → **Superseded**. Both `JobName`,
+`OriginalJobType` (`.TypeToString`), and `RepositoryId` come from the same
+call — `.GetBackup().GetParentOrThis()` — for both categories, so grouping
+is uniform regardless of which mechanism flagged the row. Confirmed live:
+`.GetBackup().GetParentOrThis()` on a restore point whose owning job was
+deleted still returns a valid object with `JobName`, `TypeToString`, and
 `RepositoryId` populated, `JobId` zeroed.
 
 Two independent detection paths feed the same classification, deliberately
 *not* unified into one mechanism (unifying would require confirming
-`GetObjectsInJob()` behaves reliably across plugin platforms like HPE
-Morpheus/Nutanix/Proxmox — the same APIs that throw for other calls on
-those types — which isn't worth blocking this feature on):
+`GetObjectsInJob()` behaves reliably across every plugin platform, which
+isn't worth blocking this feature on):
 
 - **Swept job types** (ADR 0022 non-allowlisted): reuse the existing Tier
   1/Tier 2 grouping. Tier 2-*suppressed* groups — today discarded via a bare
   `continue` in `Get-VhcJob.ps1`'s matching loop with nothing retained — get
   retained instead, tagged Superseded.
-- **Non-swept ("safe" allowlist) job types**: a new per-job
-  `$Job.GetObjectsInJob()` vs restore-point-`ObjectId` cross-reference.
-  Cheap and local — `GetObjectsInJob()` and the existing
-  `Get-VBRRestorePoint -Backup $Job.GetLastBackup()` call are both scoped to
-  one job already, not the expensive global sweep ADR 0022 exists to avoid.
-  Any restore point whose `ObjectId` isn't in current membership is tagged
-  Superseded.
+- **Every job, regardless of `$NeedsSweep`**: a new per-job
+  `$Job.GetObjectsInJob()` vs restore-point-`ObjectId` cross-reference,
+  run unconditionally rather than scoped to "the non-swept path." The first
+  draft of this design tied it to the non-swept branch, which meant it
+  silently never ran in any mixed environment — `$NeedsSweep` is one
+  environment-wide flag (`Get-VhcJob.ps1:98`); if any job needs the sweep,
+  *every* job (including otherwise-safe VMware/Hyper-V/Agent ones) routes
+  through the swept path, where no equivalent check existed. Running it
+  unconditionally, per job, closes that gap and widens #197's fix to swept
+  job types too. It's still cheap: `GetObjectsInJob()` is a per-job call
+  either way.
+
+  **Safety guard, not a per-type allowlist:** `GetObjectsInJob()` is not
+  trustworthy for every allowlisted type — ADR 0021 already measured it
+  returning the vApp container instead of 9 nested VMs for a VMware Cloud
+  Director Backup job (itself on `$KnownSafeJobTypes`). Trusting it blindly
+  would flag all 9 real objects Superseded and zero the job's size — the
+  exact regression PR #194 fixed. Rather than maintain an exhaustive
+  per-type "is `GetObjectsInJob()` reliable here" list, the check computes
+  the overlap between a job's restore-point `ObjectId`s and
+  `GetObjectsInJob()`'s current membership: if **zero** restore points
+  match any current object, `GetObjectsInJob()` isn't returning per-object
+  granularity for this job — skip the check for that job entirely (log it,
+  flag nothing) rather than flag everything. If **at least one** restore
+  point matches, the check is trusted and the non-matching ones are flagged
+  Superseded. This is what distinguishes the Cloud Director failure mode
+  (0 of 9 match — self-evidently broken) from the legitimate detection case
+  a rebuilt machine produces (the current object still matches; only the
+  stale one doesn't).
 
 **Orphaned detection requires the global sweep to have run at all.**
 Environments made entirely of ADR 0022 "safe" allowlist job types never
@@ -90,10 +157,13 @@ which would mean superseding ADR 0022 rather than layering on top of it.
 ### Bundled fix: issue #197 (sizing double-count)
 
 The same `GetObjectsInJob()` cross-reference that detects Superseded rows
-for non-swept job types also fixes `Get-VhcJob.ps1`'s existing
-`CalculatedOriginalSize`/`TotalOnDiskGB` computation: restore points for an
-`ObjectId` no longer in current job membership are excluded from those sums
-instead of being silently included. Ship in the same branch as #192,
+also fixes `Get-VhcJob.ps1`'s existing `CalculatedOriginalSize`/
+`TotalOnDiskGB` computation: restore points for an `ObjectId` no longer in
+current job membership (per the safety-guarded check above) are excluded
+from those sums instead of being silently included. Since the check now
+runs unconditionally rather than only on the non-swept path, this fix
+applies to swept job types too, not just the original non-swept scope #197
+was filed against. Ship in the same branch as #192,
 `Fixes #192, fixes #197` on the eventual commit(s).
 
 ### Collection: new script, shared cache
@@ -112,17 +182,22 @@ responsibilities and lets the new logic be tested in isolation.
    `$script:`-scoped cache instead of being discarded inline. This avoids a
    second global `Get-VBRRestorePoint` sweep, which would double the exact
    cost ADR 0022's allowlist gate exists to save.
-2. For non-swept job types, the new `GetObjectsInJob()` cross-reference
-   (above) runs per-job and writes excluded restore points into the same
-   cache shape, tagged Superseded.
+2. The new `GetObjectsInJob()` cross-reference (with its zero-overlap
+   safety guard, above) runs per-job, for every job regardless of
+   `$NeedsSweep`, and writes excluded restore points into the same cache
+   shape, tagged Superseded.
 3. If the sweep didn't run at all (pure-safe-allowlist environment) or
    failed, the cache is absent/empty and carries an explicit marker so the
    new script (and downstream report) can distinguish "not evaluated" from
-   "evaluated, found nothing."
+   "evaluated, found nothing." This only affects Orphaned coverage — the
+   `GetObjectsInJob()` check for Superseded/#197 doesn't depend on the
+   sweep having run.
 
-The new script reads the cache, resolves `JobName` / `OriginalJobType` /
-`RepositoryId` via `.GetBackup().GetParentOrThis()` for each group, and
-writes one CSV row per `BackupId` group — a `BackupId` is confirmed (ADR
+The new script reads the cache, drops any `BackupId` group where
+`.GetBackup().IsTapeBackup` is `True` (see Tape exclusion, above), resolves
+`JobName` / `OriginalJobType` / `RepositoryId` via
+`.GetBackup().GetParentOrThis()` for each remaining group, and writes one
+CSV row per `BackupId` group — a `BackupId` is confirmed (ADR
 0023, live evidence) to be scoped to exactly one `ObjectId`'s chain within
 one job, so in practice each row carries one object's data. The reverse
 isn't guaranteed: a single `ObjectId` could in principle span more than one
@@ -142,7 +217,7 @@ One CSV, `_orphanedSupersededBackups.csv` — one row per `BackupId` group:
 | `JobName` | via `.GetBackup().GetParentOrThis().Name`/`.JobName`; always populated, even for Orphaned rows |
 | `CurrentJobId` | zeroed GUID for Orphaned rows; a real, current Job Id for Superseded rows |
 | `Category` | `Orphaned` \| `Superseded` — stored explicitly rather than re-derived downstream |
-| `OriginalJobType` | `.TypeToString` — e.g. `Proxmox VE`, `VMware Backup` |
+| `OriginalJobType` | `.TypeToString` — e.g. `Proxmox Backup`, `VMware Backup` (confirmed live values; excludes Tape, see above) |
 | `ObjectId` / `BackupId` | both retained for correlation/troubleshooting; `ObjectId` is the report-facing identifier |
 | `ObjectName` | source VM/machine name |
 | `FullCount` / `IncrementalCount` | restore point counts by `Type` |
@@ -223,12 +298,28 @@ size by nature.
 - Golden-baseline schema updates for the new CSV
   (`Tools/GoldenBaselines/ObjectSchemas/`).
 - **Multi-lab validation before the PR is raised** (owner: repo maintainer,
-  not automated): confirm the accepted Category A gap is acceptable in
-  practice, and confirm the `GetObjectsInJob()` cross-reference doesn't
-  misclassify real-world edge cases — in particular, folder- or tag-based
-  dynamic job membership, where `GetObjectsInJob()` may return a container
-  object rather than per-VM entries and could produce false positives if
-  not accounted for.
+  not automated):
+  - Confirm the accepted Category A gap (pure-safe-allowlist environments
+    get no Orphaned detection) is acceptable in practice.
+  - Confirm the zero-overlap safety guard actually neutralizes the known
+    VMware Cloud Director Backup case (0 of N objects should match,
+    triggering skip-not-flag) rather than assuming the fix works from the
+    ADR 0021 evidence alone.
+  - Test `IsTapeBackup` exclusion against tape copies of at least two
+    different source platforms (already done for VMware and Proxmox during
+    this design's investigation; extend to others as available) to build
+    confidence the boolean, not `TypeToString`, is the stable signal.
+  - Watch for other Backup-object flags that might need similar exclusion
+    treatment to Tape — the live property dump surfaced many (`IsImported`,
+    `IsExported`, `IsBackupCopy`, `IsSnapReplica`, etc.) that weren't
+    individually evaluated for this design; if any produce the same
+    "legitimately unresolvable by either tier, but not actually a cleanup
+    candidate" shape that Tape did, they need the same kind of pre-
+    classification exclusion, not folding into Orphaned.
+  - More generally, confirm `GetObjectsInJob()`'s behavior on any other
+    allowlisted or plugin-platform job type actually encountered in the
+    test labs, now that the safety guard reduces (but doesn't eliminate)
+    the cost of being wrong about a given type.
 
 ## Documentation
 
@@ -247,11 +338,17 @@ size by nature.
 - The exact fallback UX/copy for "not evaluated for this environment"
   (per-repository vs whole-section messaging) — left to the implementation
   plan.
-- Whether `GetObjectsInJob()`'s behavior generalizes cleanly to plugin
-  platforms (HPE Morpheus, Nutanix, oVirt, Proxmox) is unconfirmed; shipping
-  as two separate mechanisms (this design) avoids blocking on that
-  confirmation, but unifying them remains a future simplification if it
-  turns out to generalize.
+- Whether other Backup-object flags beyond `IsTapeBackup` need the same
+  pre-classification exclusion treatment (see Testing) — the property
+  surface is large and this design only evaluated Tape in depth.
+- Whether `GetObjectsInJob()`'s behavior generalizes cleanly to every
+  plugin platform (HPE Morpheus, Nutanix, oVirt, Proxmox) beyond the one
+  confirmed-bad case (Cloud Director) is still unconfirmed; the zero-overlap
+  safety guard bounds the damage from being wrong, but multi-lab validation
+  should still exercise it directly rather than relying on the guard alone.
+  Shipping the two detection mechanisms separately (this design) avoids
+  blocking on full generalization confirmation; unifying them remains a
+  future simplification if it turns out to generalize.
 - Multi-lab validation (see Testing) happens before, not after, the PR is
   raised — if it surfaces problems with the accepted Category A gap, the
   fallback is forcing the global sweep unconditionally and superseding ADR
