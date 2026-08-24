@@ -128,7 +128,7 @@ namespace VeeamHealthCheck.Functions.Reporting.Html
                         jobInfo = csv.JobCsvParser().Where(x => x.Name == j).FirstOrDefault();
                         if (jobInfo != null)
                         {
-                            info.UsedVmSizeTB = jobInfo.OriginalSize / 1024 / 1024 / 1024 / 1024;
+                            info.UsedVmSizeTB = (jobInfo.OriginalSize ?? 0) / 1024 / 1024 / 1024 / 1024;
                         }
                     }
                     catch (Exception e)
