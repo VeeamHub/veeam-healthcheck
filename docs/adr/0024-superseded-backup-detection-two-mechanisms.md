@@ -130,6 +130,6 @@ detail, including the stale-`ObjectId` rebuild example
 (`MALWARE`/`WindowsAgent08`), in
 [`docs/superpowers/specs/2026-08-24-orphaned-superseded-backups-design.md`](../superpowers/specs/2026-08-24-orphaned-superseded-backups-design.md)
 and
-[`docs/superpowers/plans/2026-08-25-orphaned-superseded-backups-implementation.md`](../superpowers/plans/2026-08-25-orphaned-superseded-backups-implementation.md)
+[`docs/plans/2026-08-25-orphaned-superseded-backups-implementation.md`](../plans/2026-08-25-orphaned-superseded-backups-implementation.md)
 (Task 2). Multi-lab validation of the zero-overlap guard against a real
 Cloud Director job is still pending before this branch's PR is raised.

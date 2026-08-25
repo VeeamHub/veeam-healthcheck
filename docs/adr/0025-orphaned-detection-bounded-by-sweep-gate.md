@@ -90,4 +90,4 @@ confirming the accepted gap is acceptable in practice before this
 feature's PR is raised. See
 [`docs/superpowers/specs/2026-08-24-orphaned-superseded-backups-design.md`](../superpowers/specs/2026-08-24-orphaned-superseded-backups-design.md)
 and
-[`docs/superpowers/plans/2026-08-25-orphaned-superseded-backups-implementation.md`](../superpowers/plans/2026-08-25-orphaned-superseded-backups-implementation.md).
+[`docs/plans/2026-08-25-orphaned-superseded-backups-implementation.md`](../plans/2026-08-25-orphaned-superseded-backups-implementation.md).
