@@ -275,6 +275,16 @@ $collectorResults.Add((Invoke-VhcCollector -Name 'Jobs' -Action {
 # ---------------------------------------------------------------------------
 
 # ---------------------------------------------------------------------------
+# Orphaned/Superseded backups (#192) - depends on the $script:VhcOrphanedSupersededCache
+# Get-VhcJob populates above; must run after it in the same collection pass.
+# -RepositoryDetails is the same variable Get-VhcJob uses above, resolving
+# RepositoryId -> a human-readable name for the report's per-repo grouping.
+$collectorResults.Add((Invoke-VhcCollector -Name 'OrphanedSupersededBackups' -Action {
+    Get-VhcOrphanedSupersededBackups -RepositoryDetails $RepositoryDetails
+}))
+# ---------------------------------------------------------------------------
+
+# ---------------------------------------------------------------------------
 # Task 9: WAN accelerators and license (spec positions 17 & 18 - after Jobs, before Malware)
 $collectorResults.Add((Invoke-VhcCollector -Name 'WanAccelerator' -Action { Get-VhcWanAccelerator }))
 $collectorResults.Add((Invoke-VhcCollector -Name 'License'        -Action { Get-VhcLicense }))

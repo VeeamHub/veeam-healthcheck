@@ -1,0 +1,32 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Orphaned & Superseded Backups CSV Schema",
+  "description": "Maps _orphanedSupersededBackups.csv to the dynamic-CSV read path (CCsvParser.GetDynamicOrphanedSupersededBackups)",
+  "csvFile": "_orphanedSupersededBackups.csv",
+  "csharpClass": "VeeamHealthCheck.Functions.Reporting.CsvHandlers.CCsvParser",
+  "csharpFile": "Functions/Reporting/CsvHandlers/CCsvParser.cs",
+  "version": "1.0.0",
+  "columns": [
+    { "index": 0, "csvName": "RepositoryId", "csharpProperty": "RepositoryId", "csharpType": "string", "nullable": true, "description": "Repository Id the backup lives on" },
+    { "index": 1, "csvName": "RepositoryName", "csharpProperty": "RepositoryName", "csharpType": "string", "nullable": true, "description": "Repository display name, resolved from RepositoryId via -RepositoryDetails; blank if resolution failed" },
+    { "index": 2, "csvName": "JobName", "csharpProperty": "JobName", "csharpType": "string", "nullable": false, "description": "Job name, from the backup's own retained metadata" },
+    { "index": 3, "csvName": "CurrentJobId", "csharpProperty": "CurrentJobId", "csharpType": "string", "nullable": false, "description": "Zeroed Guid for Orphaned rows; a real current Job Id for Superseded rows" },
+    { "index": 4, "csvName": "Category", "csharpProperty": "Category", "csharpType": "string", "nullable": false, "description": "Orphaned or Superseded" },
+    { "index": 5, "csvName": "OriginalJobType", "csharpProperty": "OriginalJobType", "csharpType": "string", "nullable": true, "description": "TypeToString, e.g. Proxmox Backup, VMware Backup" },
+    { "index": 6, "csvName": "ObjectId", "csharpProperty": "ObjectId", "csharpType": "string", "nullable": false, "description": "Protected object Id - the report-facing identifier" },
+    { "index": 7, "csvName": "BackupId", "csharpProperty": "BackupId", "csharpType": "string", "nullable": false, "description": "Not unique on its own - multiple rows can share one when per-VM chains are disabled" },
+    { "index": 8, "csvName": "ObjectName", "csharpProperty": "ObjectName", "csharpType": "string", "nullable": true, "description": "Source VM/machine name" },
+    { "index": 9, "csvName": "FullCount", "csharpProperty": "FullCount", "csharpType": "int", "nullable": false, "description": "Full restore point count for this ObjectId" },
+    { "index": 10, "csvName": "IncrementalCount", "csharpProperty": "IncrementalCount", "csharpType": "int", "nullable": false, "description": "Incremental restore point count for this ObjectId" },
+    { "index": 11, "csvName": "AvgFullSizeBytes", "csharpProperty": "AvgFullSizeBytes", "csharpType": "double", "nullable": false, "description": "Average size of full restore points, bytes" },
+    { "index": 12, "csvName": "AvgIncrementalSizeBytes", "csharpProperty": "AvgIncrementalSizeBytes", "csharpType": "double", "nullable": false, "description": "Average size of incremental restore points, bytes" },
+    { "index": 13, "csvName": "TotalSizeBytes", "csharpProperty": "TotalSizeBytes", "csharpType": "double", "nullable": false, "description": "Sum of all retained restore points for this ObjectId, bytes" },
+    { "index": 14, "csvName": "OldestRestorePoint", "csharpProperty": "OldestRestorePoint", "csharpType": "DateTime", "nullable": false, "description": "Oldest restore point CreationTimeUtc for this ObjectId" },
+    { "index": 15, "csvName": "NewestRestorePoint", "csharpProperty": "NewestRestorePoint", "csharpType": "DateTime", "nullable": false, "description": "Newest restore point CreationTimeUtc for this ObjectId" }
+  ],
+  "validationRules": {
+    "requiredColumns": ["JobName", "Category", "ObjectId", "BackupId"],
+    "guidColumns": ["RepositoryId", "CurrentJobId", "ObjectId", "BackupId"],
+    "numericColumns": ["FullCount", "IncrementalCount", "AvgFullSizeBytes", "AvgIncrementalSizeBytes", "TotalSizeBytes"]
+  }
+}
