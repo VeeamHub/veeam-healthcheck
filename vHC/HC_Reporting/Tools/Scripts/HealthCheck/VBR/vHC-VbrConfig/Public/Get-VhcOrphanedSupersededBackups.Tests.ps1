@@ -304,6 +304,49 @@ Describe 'Get-VhcOrphanedSupersededBackups' {
         ($script:CapturedRows | Where-Object { $_.ObjectName -eq 'nullobjectvm' }) | Should -HaveCount 1
     }
 
+    It 'keeps two null-ObjectId restore points in the same BackupId group as separate, uncontaminated rows' {
+        $Backup = script:New-FakeBackupObject -Name 'Two Null ObjectIds' -TypeToString 'VMware Backup'
+        $SharedBackupId = [guid]::NewGuid()
+        # Both points share one BackupId and both have a null ObjectId -
+        # the exact shape a buggy grouping key (e.g. a bare postfix
+        # increment inside a string subexpression, which silently
+        # evaluates to an empty string every time in PowerShell) would
+        # collapse onto one shared key, re-merging their counts/sizes.
+        $Point1 = script:New-FakeCandidateRestorePoint -Name 'nullobj-a' -Type 'Full' -ApproxSize 10GB -BackupId $SharedBackupId -BackupObject $Backup
+        $Point1.ObjectId = $null
+        $Point2 = script:New-FakeCandidateRestorePoint -Name 'nullobj-b' -Type 'Full' -ApproxSize 999GB -BackupId $SharedBackupId -BackupObject $Backup
+        $Point2.ObjectId = $null
+
+        $script:VhcOrphanedSupersededCache = [PSCustomObject]@{
+            SweepRan        = $true
+            CandidateGroups = [System.Collections.Generic.List[object]]::new()
+        }
+        $script:VhcOrphanedSupersededCache.CandidateGroups.Add([PSCustomObject]@{
+            Reason        = 'Unresolved'
+            CurrentJobId  = $null
+            RestorePoints = @($Point1, $Point2)
+        })
+
+        Get-VhcOrphanedSupersededBackups
+
+        # HaveCount 2 alone isn't sufficient - some buggy grouping shapes
+        # can still produce a nonzero-but-wrong row count. The real proof
+        # each row is uncontaminated is that its own FullCount/
+        # TotalSizeBytes reflects only its own point, not both summed
+        # together (e.g. FullCount=2 / TotalSizeBytes=1083405500416, the
+        # blended shape a shared key produces).
+        $script:CapturedRows | Should -HaveCount 2
+
+        $RowA = $script:CapturedRows | Where-Object { $_.ObjectName -eq 'nullobj-a' }
+        $RowB = $script:CapturedRows | Where-Object { $_.ObjectName -eq 'nullobj-b' }
+        $RowA | Should -HaveCount 1
+        $RowB | Should -HaveCount 1
+        [int]$RowA.FullCount | Should -Be 1
+        [int]$RowB.FullCount | Should -Be 1
+        [double]$RowA.TotalSizeBytes | Should -Be 10GB
+        [double]$RowB.TotalSizeBytes | Should -Be 999GB
+    }
+
     It 'still exports a one-row meta CSV with SweepRan=false when the cache itself is $null' {
         # A real, reachable path: Get-VhcJob's sub-collectors (via
         # Invoke-VhciJobSubCollectors) can throw before ever assigning

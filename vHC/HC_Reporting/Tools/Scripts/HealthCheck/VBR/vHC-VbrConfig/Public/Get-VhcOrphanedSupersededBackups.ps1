@@ -36,7 +36,11 @@ function Get-VhcOrphanedSupersededBackups {
         # ambiguity the meta file exists to remove.
         Write-LogFile "No sweep cache available - Get-VhcJob did not run first, or found nothing to retain." -LogLevel "WARNING"
     } else {
-        $SweepRan = $script:VhcOrphanedSupersededCache.SweepRan
+        # [bool] cast, not a bare assignment: if the cache object exists but
+        # SweepRan is missing or explicitly $null, an unguarded assignment
+        # would carry $null into the meta CSV (a blank cell) instead of the
+        # $false the C# side needs to read as a real signal.
+        $SweepRan = [bool]$script:VhcOrphanedSupersededCache.SweepRan
         if (-not $SweepRan) {
             # Orphaned detection needs the global sweep; an environment made
             # entirely of ADR 0022 "safe" allowlist job types never triggers
@@ -107,7 +111,17 @@ function Get-VhcOrphanedSupersededBackups {
                 $NullObjectIdSequence = 0
                 foreach ($RestorePoint in $RestorePoints) {
                     if ($null -eq $RestorePoint.ObjectId) {
-                        $ObjKey = "null-objectid-$($NullObjectIdSequence++)"
+                        # NOT $($NullObjectIdSequence++) - a bare postfix
+                        # increment used as a value (even inside a string
+                        # subexpression) doesn't write to the output stream
+                        # in PowerShell, so that form evaluates to an empty
+                        # string every time and every null-ObjectId point
+                        # collapses onto the same "null-objectid-" key -
+                        # silently re-merging unrelated points' Full/
+                        # Increment counts and sizes, exactly what this
+                        # singleton-key approach exists to prevent.
+                        $ObjKey = "null-objectid-$NullObjectIdSequence"
+                        $NullObjectIdSequence++
                     } else {
                         $ObjKey = $RestorePoint.ObjectId.ToString()
                     }
