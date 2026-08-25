@@ -1365,6 +1365,10 @@ Describe 'Stale-ObjectId guard: GetObjectsInJob() cross-reference' {
         # OnDiskGB should reflect only the current object's 50GB, not 80GB combined.
         [double]$job.OnDiskGB | Should -BeGreaterThan 49
         [double]$job.OnDiskGB | Should -BeLessThan 51
+        # OriginalSize should reflect only the current object's 150GB
+        # ApproxSize, not 240GB (150GB + 90GB) if the stale point leaked
+        # into CalculatedOriginalSize's per-ObjectId sum.
+        $job.OriginalSize | Should -Be 150GB
 
         $stale = $script:VhcOrphanedSupersededCache.CandidateGroups | Where-Object { $_.Reason -eq 'StaleObject' }
         $stale | Should -HaveCount 1
@@ -1474,5 +1478,40 @@ Describe 'Stale-ObjectId guard: GetObjectsInJob() cross-reference' {
         [double]$job.OnDiskGB | Should -BeGreaterThan 69
         [double]$job.OnDiskGB | Should -BeLessThan 71
         @($script:LogMessages | Where-Object { $_ -match 'Could not calculate restore point sizes' }).Count | Should -Be 0
+    }
+
+    It 'guards against a null $Job.Id when caching a StaleObject entry on the non-sweep path' {
+        # Same failure class as the null-RestorePoint.ObjectId guard above,
+        # but for $Job.Id instead: the sweep path elsewhere in this
+        # function already checks ($null -ne $Job.Id) before using it, but
+        # the non-sweep StaleObject cache-entry construction did not. A
+        # null $Job.Id here (job resolved with no Id, but still producing
+        # matched+stale restore points) would throw on $Job.Id.ToString(),
+        # caught by this job's own per-job catch, zeroing its ENTIRE size -
+        # not merely skipping the CurrentJobId field on the cache entry.
+        $CurrentId = [guid]'99999999-9999-9999-9999-999999999994'
+        $StaleId   = [guid]'99999999-9999-9999-9999-999999999995'
+        $FakeJob = script:New-FakeJob -Name 'VMware - NullJobId' -TypeToString 'VMware Backup' -ObjectsInJobIds @($CurrentId)
+        $FakeJob.Id = $null
+        Mock Get-VBRJob -MockWith { @($FakeJob) }
+        $CurrentPoint = script:New-FakeRestorePoint -Name 'CURRENT' -ObjectId $CurrentId -ApproxSize 150GB -BackupSize 50GB
+        $StalePoint   = script:New-FakeRestorePoint -Name 'STALE'   -ObjectId $StaleId   -ApproxSize 90GB  -BackupSize 30GB
+        $FakeJob | Add-Member -MemberType ScriptMethod -Name GetLastBackup -Value { @($CurrentPoint) } -Force
+        Mock Get-VBRRestorePoint -MockWith {
+            if ($null -ne $Backup) { @($CurrentPoint, $StalePoint) } else { @() }
+        }
+
+        { Get-VhcJob } | Should -Not -Throw
+
+        $job = $script:CapturedJobRows | Where-Object { $_.Name -eq 'VMware - NullJobId' }
+        # The job's real size must survive intact - a throw on the null Id
+        # would have zeroed this to 0 via the per-job catch.
+        [double]$job.OnDiskGB | Should -BeGreaterThan 49
+        [double]$job.OnDiskGB | Should -BeLessThan 51
+
+        $stale = $script:VhcOrphanedSupersededCache.CandidateGroups | Where-Object { $_.Reason -eq 'StaleObject' }
+        $stale | Should -HaveCount 1
+        $stale[0].CurrentJobId | Should -BeNullOrEmpty
+        $stale[0].RestorePoints[0].Name | Should -Be 'STALE'
     }
 }

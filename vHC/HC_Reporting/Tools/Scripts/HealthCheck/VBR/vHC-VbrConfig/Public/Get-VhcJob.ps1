@@ -360,10 +360,18 @@ function Get-VhcJob {
                         # (0 iterations, no error) rather than throw.
                         $RestorePoints = @($ActiveRestorePoints)
 
+                        # $Job.Id.ToString() unguarded would throw on a null
+                        # Id - the sweep path elsewhere in this function
+                        # already checks ($null -ne $Job.Id) before use, but
+                        # this non-sweep path never did. A throw here is
+                        # caught by this job's own per-job catch and zeroes
+                        # its ENTIRE size, same failure mode the null-
+                        # RestorePoint.ObjectId guard above exists to avoid.
+                        $CurrentJobIdStr = if ($null -ne $Job.Id) { $Job.Id.ToString() } else { $null }
                         foreach ($StalePoints in $StaleByObjectId.Values) {
                             [void]$script:VhcOrphanedSupersededCache.CandidateGroups.Add([PSCustomObject]@{
                                 Reason        = 'StaleObject'
-                                CurrentJobId  = $Job.Id.ToString()
+                                CurrentJobId  = $CurrentJobIdStr
                                 RestorePoints = $StalePoints
                             })
                         }
