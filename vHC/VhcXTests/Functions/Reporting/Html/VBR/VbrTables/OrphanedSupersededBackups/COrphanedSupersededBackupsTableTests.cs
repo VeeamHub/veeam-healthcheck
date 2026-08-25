@@ -2,18 +2,34 @@ using System;
 using System.Collections.Generic;
 using VeeamHealthCheck.Functions.Reporting.DataFormers.OrphanedSupersededBackups;
 using VeeamHealthCheck.Functions.Reporting.Html.VBR.VbrTables.OrphanedSupersededBackups;
+using VhcXTests.Functions.Reporting.Html.VBR.VbrTables.GeneralSettings;
 using Xunit;
 
 namespace VhcXTests.Functions.Reporting.Html.VBR.VbrTables.OrphanedSupersededBackups
 {
     /// <summary>
-    /// Render(records, sweepEvaluated, scrub, out summary) is a pure function -
-    /// no CSV or CGlobals involved - so these build fixtures directly in memory
-    /// rather than following VbrTableScrubTestBase's CSV-writing pattern.
+    /// Render(records, sweepEvaluated, scrub, out summary) takes already-loaded
+    /// data directly (no CSV reading here), so most fixtures are built in memory
+    /// rather than following VbrTableScrubTestBase's CSV-writing pattern. It DOES
+    /// touch CGlobals when scrub=true though: it delegates to the codebase's
+    /// universal per-value scrub convention, CGlobals.Scrubber.ScrubItem, the
+    /// same as every other VBR table renderer (CUserRolesTable, CCredentialsTable,
+    /// CReplicasTable, ...). That handler writes a real de-anonymization key file
+    /// under CVariables.unsafeDir (CGlobals.desiredPath + "\Original"), so this
+    /// class still inherits VbrTableScrubTestBase - purely for its temp
+    /// desiredPath/"Original" directory setup and teardown, not for its
+    /// CSV-writing helpers - and is tagged [Collection("GlobalState")] because
+    /// CGlobals.Scrubber is a single process-lifetime static instance (see
+    /// GlobalStateCollection's own doc comment, which names Scrubber explicitly).
     /// </summary>
     [Trait("Category", "OrphanedSupersededBackups")]
-    public class COrphanedSupersededBackupsTableTests
+    [Collection("GlobalState")]
+    public class COrphanedSupersededBackupsTableTests : VbrTableScrubTestBase
     {
+        public COrphanedSupersededBackupsTableTests() : base("VhcOrphanedSupersededScrubTests_")
+        {
+        }
+
         private static OrphanedSupersededBackupRecord JobRecord(
             string repositoryId, string repositoryName, string jobName, string category)
         {

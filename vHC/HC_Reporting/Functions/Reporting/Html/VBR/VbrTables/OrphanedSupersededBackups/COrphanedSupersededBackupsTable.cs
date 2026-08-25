@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using VeeamHealthCheck.Functions.Reporting.CsvHandlers;
 using VeeamHealthCheck.Functions.Reporting.DataFormers.OrphanedSupersededBackups;
+using VeeamHealthCheck.Scrubber;
 using VeeamHealthCheck.Shared;
 
 namespace VeeamHealthCheck.Functions.Reporting.Html.VBR.VbrTables.OrphanedSupersededBackups
@@ -115,15 +116,21 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR.VbrTables.OrphanedSupers
                 // header. Falls back to the Guid if resolution failed for
                 // every record in the group (Get-VhcOrphanedSupersededBackups
                 // couldn't resolve it via -RepositoryDetails).
-                string repoLabel;
+                var resolvedName = repoRecords.Find(r => !string.IsNullOrEmpty(r.RepositoryName))?.RepositoryName;
+                string repoLabel = resolvedName ?? repoGroup.Key;
+
+                // Scrub via the codebase's universal per-value scrub convention
+                // (CGlobals.Scrubber.ScrubItem, used by every other VBR table -
+                // e.g. CUserRolesTable, CCredentialsTable, CReplicasTable) rather
+                // than a flat "Repository (scrubbed)" literal for every group. A
+                // stable per-value alias (Repository_0, Repository_1, ...)
+                // preserves which-is-which across a scrubbed report - a Veeam
+                // support engineer looking at 3 repositories and 12 flagged jobs
+                // in a scrubbed report can still tell them apart, which a single
+                // flat placeholder for every value cannot.
                 if (scrub)
                 {
-                    repoLabel = "Repository (scrubbed)";
-                }
-                else
-                {
-                    var resolvedName = repoRecords.Find(r => !string.IsNullOrEmpty(r.RepositoryName))?.RepositoryName;
-                    repoLabel = resolvedName ?? repoGroup.Key;
+                    repoLabel = CGlobals.Scrubber.ScrubItem(repoLabel, ScrubItemType.Repository);
                 }
 
                 s += $"<div class=\"orphaned-repo-group\">";
@@ -135,7 +142,7 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR.VbrTables.OrphanedSupers
 
                 foreach (var job in repoRecords.OrderBy(r => r.OldestRestorePoint))
                 {
-                    string jobName = scrub ? "Job (scrubbed)" : job.JobName;
+                    string jobName = scrub ? CGlobals.Scrubber.ScrubItem(job.JobName, ScrubItemType.Job) : job.JobName;
                     double totalGb = job.TotalSizeBytes / 1073741824d;
                     string badgeClass = job.Category == "Orphaned" ? "badge-orphaned" : "badge-superseded";
 
@@ -158,7 +165,22 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR.VbrTables.OrphanedSupers
                     s += "<table><thead><tr><th>Object</th><th>ObjectId</th><th>Fulls</th><th>Incrementals</th><th>Avg Full Size</th><th>Avg Incremental Size</th><th>Total Size</th><th>Oldest</th><th>Newest</th></tr></thead><tbody>";
                     foreach (var obj in job.Objects.OrderBy(o => o.OldestRestorePoint))
                     {
-                        string objName = scrub ? "Object (scrubbed)" : obj.ObjectName;
+                        // ScrubItemType.VM, not .Item: ObjectName is "source
+                        // VM/machine name" (see
+                        // _orphanedSupersededBackups.schema.json), and while this
+                        // feature's objects can come from any protected-workload
+                        // type (VMware, Hyper-V, Proxmox, Agent, physical, ...),
+                        // this codebase already uses ScrubItemType.VM as the
+                        // general "protected object display name" bucket
+                        // regardless of the underlying platform - e.g.
+                        // CReplicasTable.cs and IndividualJobSessionsHelper.cs use
+                        // it for VmName, and CM365Tables.cs uses it for M365
+                        // mailbox/site names, none of which are VMware VMs either.
+                        // There is no more specific ScrubItemType for a generic
+                        // protected object, so VM is the established fit, not Item
+                        // (which this codebase reserves for free-text/username
+                        // fields like CUserRolesTable's Description).
+                        string objName = scrub ? CGlobals.Scrubber.ScrubItem(obj.ObjectName, ScrubItemType.VM) : obj.ObjectName;
                         s += "<tr>";
                         s += $"<td>{objName}</td>";
                         s += $"<td>{obj.ObjectId}</td>";
