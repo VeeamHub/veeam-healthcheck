@@ -35,6 +35,16 @@ BeforeAll {
         return $b
     }
 
+    # BackupSizeValue/GetStorage mirror Get-VhcJob.Tests.ps1's own
+    # New-FakeRestorePoint fixture, modeling the real VBR SDK shape
+    # ($RestorePoint.GetStorage().Stats.BackupSize is the actual on-disk
+    # size the script reports). Deliberately kept independent from
+    # ApproxSize (the source VM's original size) so a test asserting on
+    # one can't accidentally pass because the fixture defaulted both to
+    # the same value. -ThrowOnGetStorage mirrors that same fixture's
+    # -ThrowOnGetSourceJob/-ThrowOnGetBackup switches, to prove a single
+    # point's unresolvable storage metadata doesn't take down its sibling
+    # ObjectId rows in the same candidate group.
     function script:New-FakeCandidateRestorePoint {
         param(
             [string]$Name = 'FakeObject',
@@ -43,8 +53,11 @@ BeforeAll {
             [guid]$BackupId = [guid]::NewGuid(),
             [datetime]$CreationTimeUtc = (Get-Date),
             [double]$ApproxSize = 1GB,
-            $BackupObject
+            [double]$BackupSize = 1GB,
+            $BackupObject,
+            [switch]$ThrowOnGetStorage
         )
+        $ThrowOnGetStorageCapture = [bool]$ThrowOnGetStorage
         $rp = [PSCustomObject]@{
             Name            = $Name
             Type            = $Type
@@ -52,8 +65,13 @@ BeforeAll {
             BackupId        = $BackupId
             CreationTimeUtc = $CreationTimeUtc
             ApproxSize      = $ApproxSize
+            BackupSizeValue = $BackupSize
         }
         $rp | Add-Member -MemberType ScriptMethod -Name GetBackup -Value { return $BackupObject }.GetNewClosure()
+        $rp | Add-Member -MemberType ScriptMethod -Name GetStorage -Value {
+            if ($ThrowOnGetStorageCapture) { throw 'GetStorage failed' }
+            [PSCustomObject]@{ Stats = [PSCustomObject]@{ BackupSize = $this.BackupSizeValue } }
+        }.GetNewClosure()
         return $rp
     }
 
@@ -251,13 +269,21 @@ Describe 'Get-VhcOrphanedSupersededBackups' {
     }
 
     It 'computes FullCount/IncrementalCount/AvgFullSizeBytes/AvgIncrementalSizeBytes/TotalSizeBytes correctly for one object' {
+        # ApproxSize (100GB/120GB/10GB) is deliberately set to different
+        # values than BackupSize (40GB/50GB/5GB) here: this is the source
+        # VM's original/uncompressed size (VBR console's "Original Size"),
+        # not the actual on-disk backup footprint this report exists to
+        # estimate (VBR console's "Backup Size"). If the collector ever
+        # regresses to reading ApproxSize again, these assertions fail
+        # instead of silently passing because the fixture happened to
+        # default both to the same value.
         $Backup = script:New-FakeBackupObject -Name 'VMware - Malware' -TypeToString 'VMware Backup'
         $ObjId = [guid]::NewGuid()
         $BkId  = [guid]::NewGuid()
         $Points = @(
-            (script:New-FakeCandidateRestorePoint -Name 'MALWARE' -Type 'Full' -ObjectId $ObjId -BackupId $BkId -ApproxSize 100GB -BackupObject $Backup -CreationTimeUtc (Get-Date '2026-01-01')),
-            (script:New-FakeCandidateRestorePoint -Name 'MALWARE' -Type 'Full' -ObjectId $ObjId -BackupId $BkId -ApproxSize 120GB -BackupObject $Backup -CreationTimeUtc (Get-Date '2026-03-01')),
-            (script:New-FakeCandidateRestorePoint -Name 'MALWARE' -Type 'Increment' -ObjectId $ObjId -BackupId $BkId -ApproxSize 10GB -BackupObject $Backup -CreationTimeUtc (Get-Date '2026-02-01'))
+            (script:New-FakeCandidateRestorePoint -Name 'MALWARE' -Type 'Full' -ObjectId $ObjId -BackupId $BkId -ApproxSize 100GB -BackupSize 40GB -BackupObject $Backup -CreationTimeUtc (Get-Date '2026-01-01')),
+            (script:New-FakeCandidateRestorePoint -Name 'MALWARE' -Type 'Full' -ObjectId $ObjId -BackupId $BkId -ApproxSize 120GB -BackupSize 50GB -BackupObject $Backup -CreationTimeUtc (Get-Date '2026-03-01')),
+            (script:New-FakeCandidateRestorePoint -Name 'MALWARE' -Type 'Increment' -ObjectId $ObjId -BackupId $BkId -ApproxSize 10GB -BackupSize 5GB -BackupObject $Backup -CreationTimeUtc (Get-Date '2026-02-01'))
         )
         $script:VhcOrphanedSupersededCache = [PSCustomObject]@{
             SweepRan        = $true
@@ -274,9 +300,9 @@ Describe 'Get-VhcOrphanedSupersededBackups' {
         $row = $script:CapturedRows[0]
         [int]$row.FullCount | Should -Be 2
         [int]$row.IncrementalCount | Should -Be 1
-        [double]$row.AvgFullSizeBytes | Should -Be 118111600640    # (100GB+120GB)/2 = 236223201280/2
-        [double]$row.AvgIncrementalSizeBytes | Should -Be 10737418240   # 10GB
-        [double]$row.TotalSizeBytes | Should -Be 246960619520    # 100GB+120GB+10GB = 230GB
+        [double]$row.AvgFullSizeBytes | Should -Be 48318382080    # (40GB+50GB)/2 = 96636764160/2
+        [double]$row.AvgIncrementalSizeBytes | Should -Be 5368709120   # 5GB
+        [double]$row.TotalSizeBytes | Should -Be 102005473280    # 40GB+50GB+5GB = 95GB
         [datetime]$row.OldestRestorePoint | Should -Be (Get-Date '2026-01-01')
         [datetime]$row.NewestRestorePoint | Should -Be (Get-Date '2026-03-01')
     }
@@ -298,7 +324,7 @@ Describe 'Get-VhcOrphanedSupersededBackups' {
             [System.Threading.Thread]::CurrentThread.CurrentCulture = [System.Globalization.CultureInfo]::GetCultureInfo('de-DE')
 
             $Backup = script:New-FakeBackupObject -Name 'VMware - Culture Check' -TypeToString 'VMware Backup'
-            $Point  = script:New-FakeCandidateRestorePoint -Name 'CultureCheckVM' -Type 'Full' -ApproxSize 8500000000.5 -BackupObject $Backup -CreationTimeUtc (Get-Date '2026-03-07T10:30:00')
+            $Point  = script:New-FakeCandidateRestorePoint -Name 'CultureCheckVM' -Type 'Full' -BackupSize 8500000000.5 -BackupObject $Backup -CreationTimeUtc (Get-Date '2026-03-07T10:30:00')
             $script:VhcOrphanedSupersededCache = [PSCustomObject]@{
                 SweepRan        = $true
                 CandidateGroups = [System.Collections.Generic.List[object]]::new()
@@ -451,6 +477,48 @@ Describe 'Get-VhcOrphanedSupersededBackups' {
         ($script:CapturedRows | Where-Object { $_.ObjectName -eq 'nullobjectvm' }) | Should -HaveCount 1
     }
 
+    It 'keeps sibling ObjectIds when one restore point in the group fails GetStorage()' {
+        # Regression test: ApproxSize (what the size fields used to read) is
+        # a plain property that can't throw. GetStorage().Stats.BackupSize
+        # (the actual on-disk size, now used instead) can - and this whole
+        # foreach ($ObjKey ...) loop runs inside the candidate's own
+        # try/catch, so an unguarded throw here would discard every ObjectId
+        # row in the group, not just the one point with unresolvable storage
+        # metadata. Same failure shape - and same fix shape - as the null-
+        # ObjectId sibling test above.
+        $Backup = script:New-FakeBackupObject -Name 'Mixed - Storage Failure' -TypeToString 'VMware Backup'
+        $SharedBackupId = [guid]::NewGuid()
+        $GoodPoint = script:New-FakeCandidateRestorePoint -Name 'goodvm' -Type 'Full' -BackupSize 10GB -BackupId $SharedBackupId -BackupObject $Backup
+        $ThrowingPoint = script:New-FakeCandidateRestorePoint -Name 'brokenstoragevm' -Type 'Full' -BackupId $SharedBackupId -BackupObject $Backup -ThrowOnGetStorage
+
+        $script:VhcOrphanedSupersededCache = [PSCustomObject]@{
+            SweepRan        = $true
+            CandidateGroups = [System.Collections.Generic.List[object]]::new()
+        }
+        $script:VhcOrphanedSupersededCache.CandidateGroups.Add([PSCustomObject]@{
+            Reason        = 'Unresolved'
+            CurrentJobId  = $null
+            RestorePoints = @($GoodPoint, $ThrowingPoint)
+        })
+
+        Get-VhcOrphanedSupersededBackups
+
+        $script:CapturedRows | Should -HaveCount 2
+        $GoodRow = $script:CapturedRows | Where-Object { $_.ObjectName -eq 'goodvm' }
+        $BrokenRow = $script:CapturedRows | Where-Object { $_.ObjectName -eq 'brokenstoragevm' }
+        $GoodRow | Should -HaveCount 1
+        $BrokenRow | Should -HaveCount 1
+        # The good sibling's own size must reflect only its own point (not
+        # zeroed out, not contaminated by the throwing point).
+        [double]$GoodRow.TotalSizeBytes | Should -Be 10GB
+        # The point whose storage couldn't be read contributes no size data
+        # (excluded, not counted as 0) but still gets a row - "unresolvable
+        # size" is not the same as "no size", and Get-VhciBackupSizeOrNull's
+        # design keeps them apart.
+        [double]$BrokenRow.TotalSizeBytes | Should -Be 0
+        [int]$BrokenRow.FullCount | Should -Be 1
+    }
+
     It 'keeps two null-ObjectId restore points in the same BackupId group as separate, uncontaminated rows' {
         $Backup = script:New-FakeBackupObject -Name 'Two Null ObjectIds' -TypeToString 'VMware Backup'
         $SharedBackupId = [guid]::NewGuid()
@@ -459,9 +527,9 @@ Describe 'Get-VhcOrphanedSupersededBackups' {
         # increment inside a string subexpression, which silently
         # evaluates to an empty string every time in PowerShell) would
         # collapse onto one shared key, re-merging their counts/sizes.
-        $Point1 = script:New-FakeCandidateRestorePoint -Name 'nullobj-a' -Type 'Full' -ApproxSize 10GB -BackupId $SharedBackupId -BackupObject $Backup
+        $Point1 = script:New-FakeCandidateRestorePoint -Name 'nullobj-a' -Type 'Full' -BackupSize 10GB -BackupId $SharedBackupId -BackupObject $Backup
         $Point1.ObjectId = $null
-        $Point2 = script:New-FakeCandidateRestorePoint -Name 'nullobj-b' -Type 'Full' -ApproxSize 999GB -BackupId $SharedBackupId -BackupObject $Backup
+        $Point2 = script:New-FakeCandidateRestorePoint -Name 'nullobj-b' -Type 'Full' -BackupSize 999GB -BackupId $SharedBackupId -BackupObject $Backup
         $Point2.ObjectId = $null
 
         $script:VhcOrphanedSupersededCache = [PSCustomObject]@{

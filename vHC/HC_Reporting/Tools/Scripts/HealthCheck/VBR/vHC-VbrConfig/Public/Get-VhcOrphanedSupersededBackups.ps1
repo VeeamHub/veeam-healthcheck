@@ -36,6 +36,28 @@ function Get-VhcOrphanedSupersededBackups {
     $message = "Collecting orphaned and superseded backups..."
     Write-LogFile $message
 
+    # Isolates one restore point's GetStorage() failure to just that point's
+    # contribution to the average/sum below, instead of the whole ObjectId
+    # group: .ApproxSize (what this used to read) is a plain property that
+    # can't throw, but GetStorage().Stats.BackupSize can, and this call sits
+    # inside the per-candidate try/catch a few lines down - an unguarded
+    # throw there discards every ObjectId row in the group, not just the
+    # one point that couldn't be read. Unresolvable storage metadata is
+    # exactly the risk profile "orphaned" implies, so this needs the same
+    # "one bad point shouldn't take down its siblings" treatment the null-
+    # ObjectId guard elsewhere in this function already gets. Returns $null
+    # (excluded below) rather than 0, which would silently understate both
+    # the average and the total.
+    function script:Get-VhciBackupSizeOrNull {
+        param($RestorePoint)
+        try {
+            return $RestorePoint.GetStorage().Stats.BackupSize
+        } catch {
+            Write-LogFile "Could not read backup size for restore point '$($RestorePoint.Name)' (ObjectId $($RestorePoint.ObjectId)): $($_.Exception.Message)" -LogLevel "WARNING"
+            return $null
+        }
+    }
+
     $Rows  = [System.Collections.Generic.List[object]]::new()
     $SweepRan = $false
     $Cache = if ($null -ne $OrphanedSupersededCache) { $OrphanedSupersededCache } else { $script:VhcOrphanedSupersededCache }
@@ -180,13 +202,29 @@ function Get-VhcOrphanedSupersededBackups {
                     $Increments   = @($ObjectPoints | Where-Object { $_.Type -eq 'Increment' })
                     $Sorted       = $ObjectPoints | Sort-Object CreationTimeUtc
 
-                    $AvgFullSize = if ($Fulls.Count -gt 0) {
-                        ($Fulls | Measure-Object -Property ApproxSize -Average).Average
+                    # GetStorage().Stats.BackupSize, not ApproxSize: ApproxSize is
+                    # the source VM's original/uncompressed size (what Get-VhcJob.ps1
+                    # calls CalculatedOriginalSize - VBR console's "Original Size"
+                    # column), which barely changes across a VM's own restore
+                    # points. This section's whole purpose is estimating
+                    # reclaimable REPOSITORY space, which has to be the actual
+                    # on-disk/compressed/deduped footprint - VBR console's
+                    # "Backup Size" column and "Backup size: X GB (X GB actual)"
+                    # total - the same property Get-VhcJob.ps1 already uses for
+                    # OnDiskGB.
+                    $FullSizes      = @($Fulls       | ForEach-Object { Get-VhciBackupSizeOrNull $_ } | Where-Object { $null -ne $_ })
+                    $IncrementSizes = @($Increments  | ForEach-Object { Get-VhciBackupSizeOrNull $_ } | Where-Object { $null -ne $_ })
+                    $AllSizes       = @($ObjectPoints | ForEach-Object { Get-VhciBackupSizeOrNull $_ } | Where-Object { $null -ne $_ })
+
+                    $AvgFullSize = if ($FullSizes.Count -gt 0) {
+                        ($FullSizes | Measure-Object -Average).Average
                     } else { 0 }
-                    $AvgIncrementalSize = if ($Increments.Count -gt 0) {
-                        ($Increments | Measure-Object -Property ApproxSize -Average).Average
+                    $AvgIncrementalSize = if ($IncrementSizes.Count -gt 0) {
+                        ($IncrementSizes | Measure-Object -Average).Average
                     } else { 0 }
-                    $TotalSize = ($ObjectPoints | Measure-Object -Property ApproxSize -Sum).Sum
+                    $TotalSize = if ($AllSizes.Count -gt 0) {
+                        ($AllSizes | Measure-Object -Sum).Sum
+                    } else { 0 }
 
                     # Pin an explicit, invariant wire format for the date/double
                     # columns instead of leaving them as raw [DateTime]/[double]
