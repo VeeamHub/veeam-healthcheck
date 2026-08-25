@@ -83,6 +83,7 @@ Each `.schema.json` file contains:
 | `_configBackup.schema.json` | `_configBackup.csv` | `CConfigBackupCsv` |
 | `_SecurityCompliance.schema.json` | `_SecurityCompliance.csv` | `CComplianceCsv` |
 | `_entraTenants.schema.json` | `_entraTenants.csv` | `CEntraTenant` |
+| `_orphanedSupersededBackups.schema.json` | `_orphanedSupersededBackups.csv` | `CCsvParser` (dynamic read via `GetDynamicOrphanedSupersededBackups`) |
 
 ## Name Mapping Examples
 
