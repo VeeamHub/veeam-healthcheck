@@ -98,6 +98,10 @@ function Get-VhcJob {
     $NeedsSweep = [bool]($Jobs | Where-Object { $null -ne $_ -and $_.TypeToString -notin $KnownSafeJobTypes } | Select-Object -First 1)
 
     $RestorePointsByJob = @{}
+    $script:VhcOrphanedSupersededCache = [PSCustomObject]@{
+        SweepRan        = $false
+        CandidateGroups = [System.Collections.Generic.List[object]]::new()
+    }
     if ($NeedsSweep) {
         try {
             $AllRestorePoints = @(Get-VBRRestorePoint -WarningAction SilentlyContinue | Where-Object { $null -ne $_ })
@@ -217,8 +221,28 @@ function Get-VhcJob {
                     $ParentName = $Representative.GetBackup().GetParentOrThis().Name
                     if ($ParentName -and $JobIdByName.ContainsKey($ParentName)) { $JobIdKey = $JobIdByName[$ParentName] }
                 } catch {}
-                if (-not $JobIdKey) { continue }
-                if ($Tier1MatchedJobIds.Contains($JobIdKey)) { continue }
+                if (-not $JobIdKey) {
+                    # Neither tier resolved this group to any current job -
+                    # a #192 Orphaned candidate (or a Tape Backup - excluded
+                    # downstream by Get-VhcOrphanedSupersededBackups.ps1,
+                    # not here).
+                    [void]$script:VhcOrphanedSupersededCache.CandidateGroups.Add([PSCustomObject]@{
+                        Reason        = 'Unresolved'
+                        CurrentJobId  = $null
+                        RestorePoints = $GroupPoints
+                    })
+                    continue
+                }
+                if ($Tier1MatchedJobIds.Contains($JobIdKey)) {
+                    # Named a real job, but that job already has a tier-1
+                    # match elsewhere - a #192 Superseded candidate.
+                    [void]$script:VhcOrphanedSupersededCache.CandidateGroups.Add([PSCustomObject]@{
+                        Reason        = 'Tier2Suppressed'
+                        CurrentJobId  = $JobIdKey
+                        RestorePoints = $GroupPoints
+                    })
+                    continue
+                }
 
                 if (-not $RestorePointsByJob.ContainsKey($JobIdKey)) {
                     $RestorePointsByJob[$JobIdKey] = [System.Collections.ArrayList]::new()
@@ -244,6 +268,7 @@ function Get-VhcJob {
             $NeedsSweep = $false
         }
     }
+    $script:VhcOrphanedSupersededCache.SweepRan = $NeedsSweep
 
     # ------------------------------------------------------------------
     # Main VBR job processing loop - restore point size calculation

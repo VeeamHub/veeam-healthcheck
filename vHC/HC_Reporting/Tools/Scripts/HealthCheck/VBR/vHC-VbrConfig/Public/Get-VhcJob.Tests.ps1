@@ -1250,3 +1250,66 @@ Describe 'Multi-chain summing for a single tier-1-matched job' {
         $Row.OriginalSize | Should -Be 15GB   # only the newer chain's ApproxSize
     }
 }
+
+# ---------------------------------------------------------------------------
+# Orphaned & Superseded Backups (#192): sweep groups retained, not discarded
+# ---------------------------------------------------------------------------
+Describe 'Orphaned/Superseded cache: sweep group retention' {
+
+    BeforeEach {
+        Mock Write-LogFile                 -MockWith { }
+        Mock Get-VBRConfigurationBackupJob -MockWith { $null }
+        Mock Invoke-VhciJobSubCollectors   -MockWith { }
+        Mock Export-VhciCsv                -MockWith { }
+        Mock Add-VhciModuleError           -MockWith { }
+        Mock Get-VBRBackup                 -MockWith { @() }
+        $script:VhcOrphanedSupersededCache = $null
+    }
+
+    It 'retains a group unresolved by either tier as Unresolved, tagged with no CurrentJobId' {
+        $FakeJob = script:New-FakeJob -Name 'VMware - Malware' -TypeToString 'Nutanix AHV Backup'
+        Mock Get-VBRJob -MockWith { @($FakeJob) }
+        Mock Get-VBRRestorePoint -MockWith {
+            if ($null -eq $Backup) {
+                @( (script:New-FakeRestorePoint -Name 'Ghost' -BackupId ([guid]'11111111-1111-1111-1111-111111111111') -ThrowOnGetSourceJob -BackupParentOrThisName 'No Such Job') )
+            } else { @() }
+        }
+
+        Get-VhcJob | Out-Null
+
+        $script:VhcOrphanedSupersededCache | Should -Not -BeNullOrEmpty
+        $unresolved = $script:VhcOrphanedSupersededCache.CandidateGroups | Where-Object { $_.Reason -eq 'Unresolved' }
+        $unresolved | Should -HaveCount 1
+        $unresolved[0].CurrentJobId | Should -BeNullOrEmpty
+        $unresolved[0].RestorePoints[0].Name | Should -Be 'Ghost'
+    }
+
+    It 'retains a tier-2-suppressed group as Tier2Suppressed, tagged with the job it named' {
+        $FakeJob = script:New-FakeJob -Name 'VBR Managed Agents - Windows' -TypeToString 'Nutanix AHV Backup'
+        Mock Get-VBRJob -MockWith { @($FakeJob) }
+        Mock Get-VBRRestorePoint -MockWith {
+            if ($null -eq $Backup) {
+                @(
+                    (script:New-FakeRestorePoint -Name 'WindowsAgent07' -BackupId ([guid]'22222222-2222-2222-2222-222222222222') -SourceJob $FakeJob),
+                    (script:New-FakeRestorePoint -Name 'WindowsAgent08' -BackupId ([guid]'33333333-3333-3333-3333-333333333333') -ThrowOnGetSourceJob -BackupParentOrThisName 'VBR Managed Agents - Windows')
+                )
+            } else { @() }
+        }
+
+        Get-VhcJob | Out-Null
+
+        $suppressed = $script:VhcOrphanedSupersededCache.CandidateGroups | Where-Object { $_.Reason -eq 'Tier2Suppressed' }
+        $suppressed | Should -HaveCount 1
+        $suppressed[0].CurrentJobId | Should -Be $FakeJob.Id.ToString()
+        $suppressed[0].RestorePoints[0].Name | Should -Be 'WindowsAgent08'
+    }
+
+    It 'sets SweepRan to $false when the environment needs no sweep at all' {
+        $FakeJob = script:New-FakeJob -Name 'VMware - Safe' -TypeToString 'VMware Backup' -LastBackup $null
+        Mock Get-VBRJob -MockWith { @($FakeJob) }
+
+        Get-VhcJob | Out-Null
+
+        $script:VhcOrphanedSupersededCache.SweepRan | Should -BeFalse
+    }
+}
