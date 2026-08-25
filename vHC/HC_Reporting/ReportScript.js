@@ -55,10 +55,27 @@ function sortTableByColumn(table, column, asc) {
   var dirModifier = asc ? 1 : -1;
   var tBody = table.tBodies[0];
   if (!tBody) return;
-  var rows = Array.from(tBody.querySelectorAll("tr"));
-  var sortedRows = rows.sort(function(a, b) {
-    var aCell = a.querySelector("td:nth-child(" + (column + 1) + ")");
-    var bCell = b.querySelector("td:nth-child(" + (column + 1) + ")");
+  // Direct children only, not tBody.querySelectorAll("tr"): the Orphaned &
+  // Superseded Backups table nests a full <table> (the per-object
+  // breakdown) inside a <td colspan> inside a sibling <tr class="detail-row">.
+  // A descendant query would also match that inner table's own <tr>s, and
+  // appendChild()-ing an already-attached node MOVES it - flattening the
+  // nested table into this one and destroying the toggle/detail-row pairing.
+  // Each "detail-row" is paired with the primary row immediately before it
+  // and must move together with it, not be sorted independently.
+  var directRows = Array.prototype.filter.call(tBody.children, function(el) {
+    return el.tagName === "TR";
+  });
+  var groups = [];
+  for (var g = 0; g < directRows.length; g++) {
+    if (directRows[g].classList.contains("detail-row")) { continue; }
+    var next = directRows[g + 1];
+    var detail = (next && next.classList.contains("detail-row")) ? next : null;
+    groups.push({ primary: directRows[g], detail: detail });
+  }
+  var sortedGroups = groups.sort(function(a, b) {
+    var aCell = a.primary.querySelector("td:nth-child(" + (column + 1) + ")");
+    var bCell = b.primary.querySelector("td:nth-child(" + (column + 1) + ")");
     if (!aCell || !bCell) return 0;
     var aColText = aCell.textContent.trim();
     var bColText = bCell.textContent.trim();
@@ -71,7 +88,10 @@ function sortTableByColumn(table, column, asc) {
     }
   });
   while (tBody.firstChild) { tBody.removeChild(tBody.firstChild); }
-  for (var i = 0; i < sortedRows.length; i++) { tBody.appendChild(sortedRows[i]); }
+  for (var i = 0; i < sortedGroups.length; i++) {
+    tBody.appendChild(sortedGroups[i].primary);
+    if (sortedGroups[i].detail) { tBody.appendChild(sortedGroups[i].detail); }
+  }
   table.querySelectorAll("th").forEach(function(th) {
     th.classList.remove("th-sort-asc", "th-sort-desc");
   });

@@ -295,14 +295,33 @@ body {
   display: none;
 }
 
+/* Light-theme defaults, following the same light-bg/dark-text pairing as
+   every other .badge-* variant below (.badge-success/-warning/-danger/-info/
+   -neutral) - the dark colors originally given for these two are only
+   correct once html.dark-theme is active, matching how those other
+   variants split their own light/dark pairs. */
 .badge-orphaned {
-  background: var(--amber-light, #5a3a1a);
-  color: var(--amber, #ffb74d);
+  background-color: #ffe8cc;
+  color: #7a4a00;
+  border: 1px solid #ffd9a8;
 }
 
 .badge-superseded {
-  background: var(--blue-light, #1a3a5a);
-  color: var(--blue, #64b5f6);
+  background-color: #cfe2ff;
+  color: #0a3875;
+  border: 1px solid #b6d4fe;
+}
+
+html.dark-theme .badge-orphaned {
+  background-color: #5a3a1a;
+  color: #ffb74d;
+  border-color: #7a5228;
+}
+
+html.dark-theme .badge-superseded {
+  background-color: #1a3a5a;
+  color: #64b5f6;
+  border-color: #2a5278;
 }
 
 /* Defensive fallback for an unexpected Category value; not part of the
