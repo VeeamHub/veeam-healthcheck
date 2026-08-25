@@ -11,7 +11,7 @@ namespace VeeamHealthCheck.Functions.Reporting.DataTypes
     {
         public CProtectedWorkloads cProtectedWorkloads { get; set; }
         public System.Collections.Generic.List<VeeamHealthCheck.Functions.Reporting.DataFormers.OrphanedSupersededBackups.OrphanedSupersededBackupRecord> OrphanedSupersededBackups { get; set; } = new();
-        public bool OrphanedBackupsSweepEvaluated { get; set; } = true;
+        public bool OrphanedBackupsSweepEvaluated { get; set; } = false;
 
         // License data captured from CHtmlTables.LicTable
         public List<License> Licenses { get; set; } = new();
