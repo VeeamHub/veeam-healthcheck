@@ -220,6 +220,65 @@ Describe 'Get-VhcOrphanedSupersededBackups' {
         [datetime]$row.NewestRestorePoint | Should -Be (Get-Date '2026-03-01')
     }
 
+    It 'writes AvgFullSizeBytes/AvgIncrementalSizeBytes/TotalSizeBytes/OldestRestorePoint/NewestRestorePoint in an invariant, host-culture-independent wire format' {
+        # Regression test: Export-Csv (via Export-VhciCsv) stringifies non-string
+        # properties using the collecting host's CURRENT culture, not invariant.
+        # The C# consumer (OrphanedSupersededBackupAggregator.MapRow) parses
+        # these columns with CultureInfo.InvariantCulture, so on a comma-decimal
+        # / dd.MM.yyyy host culture (most of continental Europe, UK, AU/NZ,
+        # India, LatAm), un-pinned raw [double]/[DateTime] values would be
+        # exported comma-decimal / day-first and either silently misparsed
+        # (e.g. "8500000000,5" read as 85000000005 - ~10x inflated) or throw
+        # and drop the whole row. Proves the fix by actually switching the
+        # thread's current culture before exporting, then asserting the
+        # exported strings are period-decimal / ISO 8601 regardless.
+        $OriginalCulture = [System.Threading.Thread]::CurrentThread.CurrentCulture
+        try {
+            [System.Threading.Thread]::CurrentThread.CurrentCulture = [System.Globalization.CultureInfo]::GetCultureInfo('de-DE')
+
+            $Backup = script:New-FakeBackupObject -Name 'VMware - Culture Check' -TypeToString 'VMware Backup'
+            $Point  = script:New-FakeCandidateRestorePoint -Name 'CultureCheckVM' -Type 'Full' -ApproxSize 8500000000.5 -BackupObject $Backup -CreationTimeUtc (Get-Date '2026-03-07T10:30:00')
+            $script:VhcOrphanedSupersededCache = [PSCustomObject]@{
+                SweepRan        = $true
+                CandidateGroups = [System.Collections.Generic.List[object]]::new()
+            }
+            $script:VhcOrphanedSupersededCache.CandidateGroups.Add([PSCustomObject]@{
+                Reason        = 'Unresolved'
+                CurrentJobId  = $null
+                RestorePoints = @($Point)
+            })
+
+            Get-VhcOrphanedSupersededBackups
+        } finally {
+            [System.Threading.Thread]::CurrentThread.CurrentCulture = $OriginalCulture
+        }
+
+        $row = $script:CapturedRows[0]
+        # GetType() checks first and separately from content checks: the
+        # mocked Export-VhciCsv captures the PSCustomObject BEFORE any real
+        # Export-Csv serialization, so a loose "-Be '8500000000.5'" content
+        # comparison against an un-pinned raw [double]/[DateTime] value can
+        # still pass via PowerShell's own type coercion, hiding the exact
+        # regression this test exists to catch. Asserting the captured
+        # value's runtime type is [string] is what actually proves the
+        # producer now pins the wire format itself, rather than leaving it
+        # to Export-Csv's implicit (culture-dependent) ToString().
+        $row.AvgFullSizeBytes.GetType().FullName        | Should -Be 'System.String'
+        $row.TotalSizeBytes.GetType().FullName          | Should -Be 'System.String'
+        $row.AvgIncrementalSizeBytes.GetType().FullName | Should -Be 'System.String'
+        $row.OldestRestorePoint.GetType().FullName      | Should -Be 'System.String'
+        $row.NewestRestorePoint.GetType().FullName      | Should -Be 'System.String'
+
+        # Period decimal, no de-DE comma and no thousands grouping.
+        $row.AvgFullSizeBytes         | Should -Be '8500000000.5'
+        $row.TotalSizeBytes           | Should -Be '8500000000.5'
+        $row.AvgIncrementalSizeBytes  | Should -Be '0'
+        # ISO 8601 round-trip, year-month-day order - unambiguous regardless
+        # of a dd/MM host culture.
+        $row.OldestRestorePoint       | Should -Match '^2026-03-07T'
+        $row.NewestRestorePoint       | Should -Match '^2026-03-07T'
+    }
+
     It 'resolves RepositoryName from RepositoryId via -RepositoryDetails, matching Get-VhcJob''s own RepoName pattern' {
         $RepoId = [guid]::NewGuid()
         $Backup = script:New-FakeBackupObject -Name 'VMware - Malware' -TypeToString 'VMware Backup' -RepositoryId $RepoId

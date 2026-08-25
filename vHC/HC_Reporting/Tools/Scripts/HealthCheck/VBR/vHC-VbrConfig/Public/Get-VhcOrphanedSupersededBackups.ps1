@@ -145,6 +145,24 @@ function Get-VhcOrphanedSupersededBackups {
                     } else { 0 }
                     $TotalSize = ($ObjectPoints | Measure-Object -Property ApproxSize -Sum).Sum
 
+                    # Pin an explicit, invariant wire format for the date/double
+                    # columns instead of leaving them as raw [DateTime]/[double]
+                    # values for Export-Csv (via Export-VhciCsv) to stringify
+                    # implicitly. Export-Csv formats non-string properties using
+                    # the collecting host's CURRENT culture, not invariant - on
+                    # a comma-decimal host (most of continental Europe) a value
+                    # like 8500000000.5 would be written as "8500000000,5", and
+                    # on a dd/MM host (UK, AU/NZ, India, LatAm, most of Europe)
+                    # a date would be written "07.03.2026 10:30:00" with no
+                    # unambiguous year-first ordering. The C# consumer
+                    # (OrphanedSupersededBackupAggregator.MapRow) parses these
+                    # columns with CultureInfo.InvariantCulture, so a
+                    # current-culture string either silently misparses (e.g.
+                    # "8500000000,5" read as 85000000005 - ~10x inflated,
+                    # or day/month swapped - both with no exception) or throws
+                    # and the whole row is silently dropped. Round-trip ISO
+                    # 8601 ("o") for dates and InvariantCulture for doubles are
+                    # the exact mutual inverse of what the consumer parses.
                     $Rows.Add([PSCustomObject]@{
                         RepositoryId             = $RepositoryId
                         RepositoryName           = $RepositoryName
@@ -157,11 +175,11 @@ function Get-VhcOrphanedSupersededBackups {
                         ObjectName               = $ObjectPoints[0].Name
                         FullCount                = $Fulls.Count
                         IncrementalCount         = $Increments.Count
-                        AvgFullSizeBytes         = $AvgFullSize
-                        AvgIncrementalSizeBytes  = $AvgIncrementalSize
-                        TotalSizeBytes           = $TotalSize
-                        OldestRestorePoint       = $Sorted[0].CreationTimeUtc
-                        NewestRestorePoint       = $Sorted[-1].CreationTimeUtc
+                        AvgFullSizeBytes         = $AvgFullSize.ToString([System.Globalization.CultureInfo]::InvariantCulture)
+                        AvgIncrementalSizeBytes  = $AvgIncrementalSize.ToString([System.Globalization.CultureInfo]::InvariantCulture)
+                        TotalSizeBytes           = $TotalSize.ToString([System.Globalization.CultureInfo]::InvariantCulture)
+                        OldestRestorePoint       = $Sorted[0].CreationTimeUtc.ToString('o', [System.Globalization.CultureInfo]::InvariantCulture)
+                        NewestRestorePoint       = $Sorted[-1].CreationTimeUtc.ToString('o', [System.Globalization.CultureInfo]::InvariantCulture)
                     })
                 }
             } catch {
