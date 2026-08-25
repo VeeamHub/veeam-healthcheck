@@ -1409,4 +1409,70 @@ Describe 'Stale-ObjectId guard: GetObjectsInJob() cross-reference' {
         $stale = $script:VhcOrphanedSupersededCache.CandidateGroups | Where-Object { $_.Reason -eq 'StaleObject' }
         $stale | Should -BeNullOrEmpty
     }
+
+    It 'excludes a stale ObjectId via the sweep path too (NeedsSweep=$true), and SweepRan is $true' {
+        # The three tests above all use allowlisted TypeToStrings, so
+        # NeedsSweep is $false for all of them and $RestorePoints comes
+        # from the per-job GetLastBackup()/Get-VBRRestorePoint -Backup
+        # path (a plain array). This test forces the sweep instead, so
+        # $RestorePoints comes from $RestorePointsByJob (a
+        # System.Collections.ArrayList) - proving the guard "runs for
+        # every job regardless of $NeedsSweep", not just on the
+        # non-sweep path, and that SweepRan still reports $true.
+        $CurrentId = [guid]'99999999-9999-9999-9999-999999999991'
+        $StaleId   = [guid]'99999999-9999-9999-9999-999999999992'
+        $FakeJob = script:New-FakeJob -Name 'HPE Morpheus - Sweep' -TypeToString 'HPE Morpheus VME Backup' -ObjectsInJobIds @($CurrentId)
+        Mock Get-VBRJob -MockWith { @($FakeJob) }
+        $CurrentPoint = script:New-FakeRestorePoint -Name 'CURRENT' -ObjectId $CurrentId -ApproxSize 150GB -BackupSize 50GB -SourceJob $FakeJob
+        $StalePoint   = script:New-FakeRestorePoint -Name 'STALE'   -ObjectId $StaleId   -ApproxSize 90GB  -BackupSize 30GB -SourceJob $FakeJob
+        Mock Get-VBRRestorePoint -MockWith {
+            if ($null -eq $Backup) { @($CurrentPoint, $StalePoint) } else { @() }
+        }
+
+        Get-VhcJob | Out-Null
+
+        $job = $script:CapturedJobRows | Where-Object { $_.Name -eq 'HPE Morpheus - Sweep' }
+        [double]$job.OnDiskGB | Should -BeGreaterThan 49
+        [double]$job.OnDiskGB | Should -BeLessThan 51
+
+        $script:VhcOrphanedSupersededCache.SweepRan | Should -BeTrue
+
+        $stale = $script:VhcOrphanedSupersededCache.CandidateGroups | Where-Object { $_.Reason -eq 'StaleObject' }
+        $stale | Should -HaveCount 1
+        $stale[0].CurrentJobId | Should -Be $FakeJob.Id.ToString()
+        $stale[0].RestorePoints[0].Name | Should -Be 'STALE'
+    }
+
+    It 'treats a restore point with a null ObjectId as active (uncertain, so not excluded) without aborting the job''s size calc' {
+        # Regression guard for the same class of bug this file already
+        # pins elsewhere (e.g. "skips a restore point whose resolved job
+        # has no Id, without aborting the sweep"): an unguarded
+        # RestorePoint.ObjectId.ToString() here would throw on a null
+        # ObjectId, caught by this job's own per-job try/catch, which
+        # zeroes OnDiskGB for the WHOLE job - not just the one point -
+        # and logs a misleading "Could not calculate restore point
+        # sizes" WARNING.
+        $script:LogMessages = [System.Collections.Generic.List[string]]::new()
+        Mock Write-LogFile -MockWith { $script:LogMessages.Add($Message) }
+        $CurrentId = [guid]'99999999-9999-9999-9999-999999999993'
+        $FakeJob = script:New-FakeJob -Name 'VMware - NullObjectId' -TypeToString 'VMware Backup' -ObjectsInJobIds @($CurrentId)
+        Mock Get-VBRJob -MockWith { @($FakeJob) }
+        $CurrentPoint = script:New-FakeRestorePoint -Name 'CURRENT' -ObjectId $CurrentId -ApproxSize 150GB -BackupSize 50GB
+        $NullIdPoint  = [PSCustomObject]@{ Name = 'NULLID'; ObjectId = $null; CreationTimeUtc = (Get-Date); ApproxSize = 20GB }
+        $NullIdPoint | Add-Member -MemberType ScriptMethod -Name GetStorage -Value { [PSCustomObject]@{ Stats = [PSCustomObject]@{ BackupSize = 20GB } } }
+        $FakeJob | Add-Member -MemberType ScriptMethod -Name GetLastBackup -Value { @($CurrentPoint) } -Force
+        Mock Get-VBRRestorePoint -MockWith {
+            if ($null -ne $Backup) { @($CurrentPoint, $NullIdPoint) } else { @() }
+        }
+
+        { Get-VhcJob } | Should -Not -Throw
+
+        $job = $script:CapturedJobRows | Where-Object { $_.Name -eq 'VMware - NullObjectId' }
+        # Both points' data must still be counted (50GB + 20GB) - the
+        # null-ObjectId point can't be classified, so it's kept, not
+        # excluded, and doesn't take the whole job down with it.
+        [double]$job.OnDiskGB | Should -BeGreaterThan 69
+        [double]$job.OnDiskGB | Should -BeLessThan 71
+        @($script:LogMessages | Where-Object { $_ -match 'Could not calculate restore point sizes' }).Count | Should -Be 0
+    }
 }

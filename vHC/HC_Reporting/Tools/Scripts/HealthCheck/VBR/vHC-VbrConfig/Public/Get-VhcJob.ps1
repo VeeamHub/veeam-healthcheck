@@ -322,15 +322,26 @@ function Get-VhcJob {
                 }
 
                 if ($null -ne $CurrentObjectIds) {
+                    # A null RestorePoint.ObjectId can't be classified as
+                    # either current or stale - .ToString() on it would
+                    # throw, caught by this job's own outer try/catch, which
+                    # would zero its ENTIRE size (not just the one point).
+                    # Treated as a non-match here, and kept (not excluded)
+                    # in the partition below, consistent with this guard's
+                    # own "uncertain => don't exclude" rule.
                     $MatchedAny = $false
                     foreach ($RestorePoint in $RestorePoints) {
-                        if ($CurrentObjectIds.Contains($RestorePoint.ObjectId.ToString())) { $MatchedAny = $true; break }
+                        if ($null -ne $RestorePoint.ObjectId -and $CurrentObjectIds.Contains($RestorePoint.ObjectId.ToString())) { $MatchedAny = $true; break }
                     }
 
                     if ($MatchedAny) {
                         $ActiveRestorePoints = [System.Collections.Generic.List[object]]::new()
                         $StaleByObjectId     = @{}
                         foreach ($RestorePoint in $RestorePoints) {
+                            if ($null -eq $RestorePoint.ObjectId) {
+                                $ActiveRestorePoints.Add($RestorePoint)
+                                continue
+                            }
                             $ObjIdKey = $RestorePoint.ObjectId.ToString()
                             if ($CurrentObjectIds.Contains($ObjIdKey)) {
                                 $ActiveRestorePoints.Add($RestorePoint)
