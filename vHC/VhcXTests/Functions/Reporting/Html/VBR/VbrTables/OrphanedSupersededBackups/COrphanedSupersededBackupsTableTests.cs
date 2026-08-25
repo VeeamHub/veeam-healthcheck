@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
 using VeeamHealthCheck.Functions.Reporting.DataFormers.OrphanedSupersededBackups;
 using VeeamHealthCheck.Functions.Reporting.Html.VBR.VbrTables.OrphanedSupersededBackups;
 using VhcXTests.Functions.Reporting.Html.VBR.VbrTables.GeneralSettings;
@@ -164,6 +165,60 @@ namespace VhcXTests.Functions.Reporting.Html.VBR.VbrTables.OrphanedSupersededBac
 
             Assert.DoesNotContain("Proxmox - Malware Lab", html);
             Assert.DoesNotContain("pve-vm-201", html);
+        }
+
+        // The tests above build OrphanedSupersededBackupRecord/dynamic rows
+        // by hand, so none of them go through the real CsvHelper dynamic-CSV
+        // pipeline (CCsvParser.GetDynamicOrphanedSupersededBackups[Meta]) -
+        // exactly the gap that let a PascalCase/lowercase member-name
+        // mismatch ship silently (every real row threw and was dropped,
+        // rendering "No orphaned or superseded backups detected" against any
+        // real environment). These write the exact PascalCase-header CSVs
+        // Get-VhcOrphanedSupersededBackups.ps1 actually exports and drive
+        // LoadRecords()/WasSweepEvaluated() end to end through
+        // VbrTableScrubTestBase's isolated VbrDir, so a regression here
+        // fails loudly instead of just rendering an empty table.
+        private void WriteDataCsv(string rows) =>
+            File.WriteAllText(
+                Path.Combine(VbrDir, "_orphanedSupersededBackups.csv"),
+                "RepositoryId,RepositoryName,JobName,CurrentJobId,Category,OriginalJobType,ObjectId,BackupId," +
+                "ObjectName,FullCount,IncrementalCount,AvgFullSizeBytes,AvgIncrementalSizeBytes,TotalSizeBytes," +
+                "OldestRestorePoint,NewestRestorePoint\n" + rows);
+
+        private void WriteMetaCsv(string sweepRan) =>
+            File.WriteAllText(
+                Path.Combine(VbrDir, "_orphanedSupersededBackupsMeta.csv"),
+                "SweepRan\n" + sweepRan);
+
+        [Fact]
+        public void LoadRecords_RealCsvHelperPipeline_ParsesPascalCaseExportedCsv()
+        {
+            WriteDataCsv(
+                "repo-1,Repo01 (Local ReFS),Proxmox - Malware Lab,00000000-0000-0000-0000-000000000000,Orphaned," +
+                "Proxmox Backup,obj-1,backup-1,pve-vm-201,3,42,12000000000,500000000,540000000000," +
+                "2025-11-02T00:00:00.0000000Z,2026-03-15T00:00:00.0000000Z\n");
+
+            var records = new COrphanedSupersededBackupsTable().LoadRecords();
+
+            var record = Assert.Single(records);
+            Assert.Equal("Proxmox - Malware Lab", record.JobName);
+            Assert.Equal("Repo01 (Local ReFS)", record.RepositoryName);
+            Assert.Equal("Orphaned", record.Category);
+            var obj = Assert.Single(record.Objects);
+            Assert.Equal("pve-vm-201", obj.ObjectName);
+            Assert.Equal(3, obj.FullCount);
+        }
+
+        [Theory]
+        [InlineData("True", true)]
+        [InlineData("False", false)]
+        public void WasSweepEvaluated_RealCsvHelperPipeline_ReadsPascalCaseExportedSweepRanColumn(string sweepRan, bool expected)
+        {
+            WriteMetaCsv(sweepRan);
+
+            bool evaluated = new COrphanedSupersededBackupsTable().WasSweepEvaluated();
+
+            Assert.Equal(expected, evaluated);
         }
     }
 }

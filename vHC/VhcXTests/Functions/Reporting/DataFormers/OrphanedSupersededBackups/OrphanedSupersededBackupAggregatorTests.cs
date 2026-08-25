@@ -10,6 +10,16 @@ namespace VhcXTests.Functions.Reporting.DataFormers.OrphanedSupersededBackups
     [Trait("Category", "OrphanedSupersededBackups")]
     public class OrphanedSupersededBackupAggregatorTests
     {
+        // Builds rows with lowercase member names - CCsvParser's real
+        // dynamic-CSV pipeline (CCsvReader.GetCsvConfig's
+        // PrepareHeaderForMatch) lowercases every header before it becomes a
+        // dynamic member, regardless of the PascalCase columns
+        // Get-VhcOrphanedSupersededBackups.ps1 actually exports. A prior
+        // version of this fixture used PascalCase keys, which let
+        // OrphanedSupersededBackupAggregator.MapRow's PascalCase property
+        // access compile and "work" against these hand-built ExpandoObjects
+        // while throwing (and silently dropping every row) against every
+        // real CSV - masking the bug from this entire test class.
         private static dynamic Row(
             string repositoryId, string repositoryName, string jobName, string currentJobId, string category,
             string originalJobType, string objectId, string backupId, string objectName,
@@ -17,22 +27,22 @@ namespace VhcXTests.Functions.Reporting.DataFormers.OrphanedSupersededBackups
             double totalSize, DateTime oldest, DateTime newest)
         {
             dynamic row = new ExpandoObject();
-            row.RepositoryId = repositoryId;
-            row.RepositoryName = repositoryName;
-            row.JobName = jobName;
-            row.CurrentJobId = currentJobId;
-            row.Category = category;
-            row.OriginalJobType = originalJobType;
-            row.ObjectId = objectId;
-            row.BackupId = backupId;
-            row.ObjectName = objectName;
-            row.FullCount = fullCount.ToString();
-            row.IncrementalCount = incrementalCount.ToString();
-            row.AvgFullSizeBytes = avgFull.ToString();
-            row.AvgIncrementalSizeBytes = avgIncremental.ToString();
-            row.TotalSizeBytes = totalSize.ToString();
-            row.OldestRestorePoint = oldest.ToString("O");
-            row.NewestRestorePoint = newest.ToString("O");
+            row.repositoryid = repositoryId;
+            row.repositoryname = repositoryName;
+            row.jobname = jobName;
+            row.currentjobid = currentJobId;
+            row.category = category;
+            row.originaljobtype = originalJobType;
+            row.objectid = objectId;
+            row.backupid = backupId;
+            row.objectname = objectName;
+            row.fullcount = fullCount.ToString();
+            row.incrementalcount = incrementalCount.ToString();
+            row.avgfullsizebytes = avgFull.ToString();
+            row.avgincrementalsizebytes = avgIncremental.ToString();
+            row.totalsizebytes = totalSize.ToString();
+            row.oldestrestorepoint = oldest.ToString("O");
+            row.newestrestorepoint = newest.ToString("O");
             return row;
         }
 
@@ -54,22 +64,22 @@ namespace VhcXTests.Functions.Reporting.DataFormers.OrphanedSupersededBackups
             string totalSize, string oldest, string newest)
         {
             dynamic row = new ExpandoObject();
-            row.RepositoryId = repositoryId;
-            row.RepositoryName = repositoryName;
-            row.JobName = jobName;
-            row.CurrentJobId = currentJobId;
-            row.Category = category;
-            row.OriginalJobType = originalJobType;
-            row.ObjectId = objectId;
-            row.BackupId = backupId;
-            row.ObjectName = objectName;
-            row.FullCount = fullCount;
-            row.IncrementalCount = incrementalCount;
-            row.AvgFullSizeBytes = avgFull;
-            row.AvgIncrementalSizeBytes = avgIncremental;
-            row.TotalSizeBytes = totalSize;
-            row.OldestRestorePoint = oldest;
-            row.NewestRestorePoint = newest;
+            row.repositoryid = repositoryId;
+            row.repositoryname = repositoryName;
+            row.jobname = jobName;
+            row.currentjobid = currentJobId;
+            row.category = category;
+            row.originaljobtype = originalJobType;
+            row.objectid = objectId;
+            row.backupid = backupId;
+            row.objectname = objectName;
+            row.fullcount = fullCount;
+            row.incrementalcount = incrementalCount;
+            row.avgfullsizebytes = avgFull;
+            row.avgincrementalsizebytes = avgIncremental;
+            row.totalsizebytes = totalSize;
+            row.oldestrestorepoint = oldest;
+            row.newestrestorepoint = newest;
             return row;
         }
 

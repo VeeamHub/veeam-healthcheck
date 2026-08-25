@@ -73,7 +73,13 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR.VbrTables.OrphanedSupers
                     return false;
                 }
 
-                return bool.TryParse((string)metaRows[0].SweepRan.ToString(), out bool sweepRan) && sweepRan;
+                // Lowercase member name: dynamic CSV rows go through
+                // CCsvReader.GetCsvConfig's PrepareHeaderForMatch, which
+                // lowercases every header regardless of the PascalCase
+                // "SweepRan" column Get-VhcOrphanedSupersededBackups.ps1
+                // actually exports (see OrphanedSupersededBackupAggregator.
+                // MapRow for the same fix on the sibling data CSV).
+                return bool.TryParse((string)metaRows[0].sweepran.ToString(), out bool sweepRan) && sweepRan;
             }
             catch (Exception ex)
             {

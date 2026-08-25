@@ -79,13 +79,21 @@ namespace VeeamHealthCheck.Functions.Reporting.DataFormers.OrphanedSupersededBac
 
             try
             {
-                rawFullCount = row.FullCount;
-                rawIncrementalCount = row.IncrementalCount;
-                rawAvgFull = row.AvgFullSizeBytes;
-                rawAvgIncremental = row.AvgIncrementalSizeBytes;
-                rawTotalSize = row.TotalSizeBytes;
-                rawOldest = row.OldestRestorePoint;
-                rawNewest = row.NewestRestorePoint;
+                // Dynamic rows come from CCsvParser's GetRecords<dynamic>(),
+                // whose CsvConfiguration.PrepareHeaderForMatch (CCsvReader.
+                // GetCsvConfig) lowercases every header before it becomes a
+                // dynamic member name - regardless of the PascalCase column
+                // names Get-VhcOrphanedSupersededBackups.ps1 actually writes
+                // via Export-Csv. Every existing dynamic-CSV consumer in this
+                // codebase (e.g. CJobInfoTable's GetDynamicNasBackup usage)
+                // reads lowercase members for exactly this reason.
+                rawFullCount = row.fullcount;
+                rawIncrementalCount = row.incrementalcount;
+                rawAvgFull = row.avgfullsizebytes;
+                rawAvgIncremental = row.avgincrementalsizebytes;
+                rawTotalSize = row.totalsizebytes;
+                rawOldest = row.oldestrestorepoint;
+                rawNewest = row.newestrestorepoint;
             }
             catch (Exception ex)
             {
@@ -137,9 +145,9 @@ namespace VeeamHealthCheck.Functions.Reporting.DataFormers.OrphanedSupersededBac
             {
                 var obj = new OrphanedSupersededObjectRecord
                 {
-                    ObjectId = row.ObjectId,
-                    BackupId = row.BackupId,
-                    ObjectName = row.ObjectName,
+                    ObjectId = row.objectid,
+                    BackupId = row.backupid,
+                    ObjectName = row.objectname,
                     FullCount = fullCount,
                     IncrementalCount = incrementalCount,
                     AvgFullSizeBytes = avgFullSizeBytes,
@@ -151,12 +159,12 @@ namespace VeeamHealthCheck.Functions.Reporting.DataFormers.OrphanedSupersededBac
 
                 return new MappedRow
                 {
-                    RepositoryId = row.RepositoryId,
-                    RepositoryName = row.RepositoryName,
-                    JobName = row.JobName,
-                    CurrentJobId = row.CurrentJobId,
-                    Category = row.Category,
-                    OriginalJobType = row.OriginalJobType,
+                    RepositoryId = row.repositoryid,
+                    RepositoryName = row.repositoryname,
+                    JobName = row.jobname,
+                    CurrentJobId = row.currentjobid,
+                    Category = row.category,
+                    OriginalJobType = row.originaljobtype,
                     ObjectRecord = obj,
                 };
             }
