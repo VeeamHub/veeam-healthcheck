@@ -18,6 +18,18 @@ function toggleAll() {
   });
 }
 
+// ===== Row-Level Detail Toggle (Orphaned & Superseded Backups) =====
+// Each job row is immediately followed by a sibling <tr class="detail-row">
+// holding the per-object breakdown, hidden by default. Toggle it directly
+// via inline style rather than a class, matching the existing Legacy
+// Collapsible Toggle's approach for <table>-shaped content below a button.
+function toggleDetailRow(rowElement) {
+  var detailRow = rowElement.nextElementSibling;
+  if (detailRow && detailRow.classList.contains('detail-row')) {
+    detailRow.style.display = (detailRow.style.display === 'table-row') ? 'none' : 'table-row';
+  }
+}
+
 // ===== Legacy Collapsible Toggle (for sections using SectionStartWithButton) =====
 // The element a collapsible button reveals is simply whatever follows it. Historically
 // that was a <div class="content">, but the VB365 stat sections (Job Statistics,

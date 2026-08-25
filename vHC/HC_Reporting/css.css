@@ -286,6 +286,34 @@ body {
   display: block;
 }
 
+/* ===== Orphaned & Superseded Backups: row-level detail ===== */
+.detail-toggle {
+  cursor: pointer;
+}
+
+.detail-row {
+  display: none;
+}
+
+.badge-orphaned {
+  background: var(--amber-light, #5a3a1a);
+  color: var(--amber, #ffb74d);
+}
+
+.badge-superseded {
+  background: var(--blue-light, #1a3a5a);
+  color: var(--blue, #64b5f6);
+}
+
+/* Defensive fallback for an unexpected Category value; not part of the
+   plan's literal spec, so it follows the existing .badge-neutral
+   light/dark pair (below) rather than inventing new colors. */
+.badge-unknown {
+  background-color: #e2e3e5;
+  color: #383d41;
+  border: 1px solid #d6d8db;
+}
+
 /* ===== Tables ===== */
 table {
   width: 100%;
@@ -547,6 +575,7 @@ button.collapsible.classBtn:hover { background: var(--hover); }
   .main { margin-left: 0; padding: 16px; }
   .section-card.open .section-body, .section-body { display: block !important; }
   .content { display: block !important; }
+  .detail-row { display: table-row !important; }
   .toolbar { display: none; }
   #myBtn { display: none !important; }
   footer { margin-left: 0; }
@@ -619,6 +648,12 @@ html.dark-theme .badge-info {
 }
 
 html.dark-theme .badge-neutral {
+    background-color: #2a2d30;
+    color: #a0a4a8;
+    border-color: #3a3d40;
+}
+
+html.dark-theme .badge-unknown {
     background-color: #2a2d30;
     color: #a0a4a8;
     border-color: #3a3d40;
