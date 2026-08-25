@@ -9,7 +9,7 @@
   "columns": [
     { "index": 0, "csvName": "RepositoryId", "csharpProperty": "RepositoryId", "csharpType": "string", "nullable": true, "description": "Repository Id the backup lives on" },
     { "index": 1, "csvName": "RepositoryName", "csharpProperty": "RepositoryName", "csharpType": "string", "nullable": true, "description": "Repository display name, resolved from RepositoryId via -RepositoryDetails; blank if resolution failed" },
-    { "index": 2, "csvName": "JobName", "csharpProperty": "JobName", "csharpType": "string", "nullable": false, "description": "Job name, from the backup's own retained metadata" },
+    { "index": 2, "csvName": "JobName", "csharpProperty": "JobName", "csharpType": "string", "nullable": true, "description": "Job name, from the backup's own retained metadata. Blank if GetParentOrThis().Name throws or returns null (Get-VhcOrphanedSupersededBackups.ps1 catches and defaults to $null rather than dropping the row)" },
     { "index": 3, "csvName": "CurrentJobId", "csharpProperty": "CurrentJobId", "csharpType": "string", "nullable": false, "description": "Zeroed Guid for Orphaned rows; a real current Job Id for Superseded rows" },
     { "index": 4, "csvName": "Category", "csharpProperty": "Category", "csharpType": "string", "nullable": false, "description": "Orphaned or Superseded" },
     { "index": 5, "csvName": "OriginalJobType", "csharpProperty": "OriginalJobType", "csharpType": "string", "nullable": true, "description": "TypeToString, e.g. Proxmox Backup, VMware Backup" },
@@ -25,7 +25,7 @@
     { "index": 15, "csvName": "NewestRestorePoint", "csharpProperty": "NewestRestorePoint", "csharpType": "DateTime", "nullable": false, "description": "Newest restore point CreationTimeUtc for this ObjectId" }
   ],
   "validationRules": {
-    "requiredColumns": ["JobName", "Category", "BackupId"],
+    "requiredColumns": ["Category", "BackupId"],
     "guidColumns": ["RepositoryId", "CurrentJobId", "ObjectId", "BackupId"],
     "nullableGuidColumns": ["RepositoryId", "ObjectId"],
     "numericColumns": ["FullCount", "IncrementalCount", "AvgFullSizeBytes", "AvgIncrementalSizeBytes", "TotalSizeBytes"]
