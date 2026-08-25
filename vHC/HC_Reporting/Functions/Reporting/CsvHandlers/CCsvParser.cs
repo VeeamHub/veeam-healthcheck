@@ -78,6 +78,8 @@ namespace VeeamHealthCheck.Functions.Reporting.CsvHandlers
         public readonly string nasBackup = "nasBackup";
         public readonly string nasBCJ = "nasBCJ";
         public readonly string SureBackupJob = "SureBackupJob";
+        public readonly string orphanedSupersededBackups = "orphanedSupersededBackups";
+        public readonly string orphanedSupersededBackupsMeta = "orphanedSupersededBackupsMeta";
 
         public readonly string tapeJobInfo = "TapeJobs";
 
@@ -379,6 +381,16 @@ namespace VeeamHealthCheck.Functions.Reporting.CsvHandlers
         public IEnumerable<dynamic> GetDynamicNasBackup()
         {
             return this.VbrGetDynamicCsvRecs(this.nasBackup, CVariables.vbrDir);
+        }
+
+        public IEnumerable<dynamic> GetDynamicOrphanedSupersededBackups()
+        {
+            return this.VbrGetDynamicCsvRecs(this.orphanedSupersededBackups, CVariables.vbrDir);
+        }
+
+        public IEnumerable<dynamic> GetDynamicOrphanedSupersededBackupsMeta()
+        {
+            return this.VbrGetDynamicCsvRecs(this.orphanedSupersededBackupsMeta, CVariables.vbrDir);
         }
 
         public IEnumerable<dynamic> GetDynamicNasBCJ()
