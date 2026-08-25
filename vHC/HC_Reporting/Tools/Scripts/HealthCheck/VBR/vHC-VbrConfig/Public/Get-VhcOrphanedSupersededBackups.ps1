@@ -23,124 +23,150 @@ function Get-VhcOrphanedSupersededBackups {
     $message = "Collecting orphaned and superseded backups..."
     Write-LogFile $message
 
-    $Rows = [System.Collections.Generic.List[object]]::new()
+    $Rows     = [System.Collections.Generic.List[object]]::new()
+    $SweepRan = $false
 
     if ($null -eq $script:VhcOrphanedSupersededCache) {
+        # Deliberately falls through to the meta-CSV export below instead of
+        # returning here: that file's entire purpose is letting the C# side
+        # tell "sweep never ran / cache never existed" apart from "ran, found
+        # nothing" (Get-VhcJob's sub-collectors can throw before ever setting
+        # the cache - a real, reachable path via Invoke-VhciJobSubCollectors).
+        # An early return here would recreate the exact missing-file
+        # ambiguity the meta file exists to remove.
         Write-LogFile "No sweep cache available - Get-VhcJob did not run first, or found nothing to retain." -LogLevel "WARNING"
-        return
-    }
+    } else {
+        $SweepRan = $script:VhcOrphanedSupersededCache.SweepRan
+        if (-not $SweepRan) {
+            # Orphaned detection needs the global sweep; an environment made
+            # entirely of ADR 0022 "safe" allowlist job types never triggers
+            # it. This is an accepted gap (see ADR 0025) - Superseded/#197
+            # coverage from the per-job stale-ObjectId guard is unaffected,
+            # since that guard doesn't depend on the sweep having run, so
+            # StaleObject candidates (if any) still export normally below.
+            Write-LogFile "Global restore-point sweep did not run for this environment - Orphaned Backup detection not evaluated." -LogLevel "INFO"
+        }
 
-    if (-not $script:VhcOrphanedSupersededCache.SweepRan) {
-        # Orphaned detection needs the global sweep; an environment made
-        # entirely of ADR 0022 "safe" allowlist job types never triggers it.
-        # This is an accepted gap (design doc, Q6/Q10) - Superseded/#197
-        # coverage from the per-job stale-ObjectId guard is unaffected,
-        # since that guard doesn't depend on the sweep having run, so
-        # StaleObject candidates (if any) still export normally below.
-        Write-LogFile "Global restore-point sweep did not run for this environment - Orphaned Backup detection not evaluated." -LogLevel "INFO"
-    }
+        foreach ($Candidate in $script:VhcOrphanedSupersededCache.CandidateGroups) {
+            try {
+                $RestorePoints = @($Candidate.RestorePoints)
+                if ($RestorePoints.Count -eq 0) { continue }
 
-    foreach ($Candidate in $script:VhcOrphanedSupersededCache.CandidateGroups) {
-        try {
-            $RestorePoints = @($Candidate.RestorePoints)
-            if ($RestorePoints.Count -eq 0) { continue }
+                $Representative = $RestorePoints[0]
+                $Backup = $null
+                try { $Backup = $Representative.GetBackup() } catch { $Backup = $null }
+                if ($null -eq $Backup) { continue }
 
-            $Representative = $RestorePoints[0]
-            $Backup = $null
-            try { $Backup = $Representative.GetBackup() } catch { $Backup = $null }
-            if ($null -eq $Backup) { continue }
+                $ParentOrThis = $null
+                try { $ParentOrThis = $Backup.GetParentOrThis() } catch { $ParentOrThis = $Backup }
+                if ($null -eq $ParentOrThis) { $ParentOrThis = $Backup }
 
-            $ParentOrThis = $null
-            try { $ParentOrThis = $Backup.GetParentOrThis() } catch { $ParentOrThis = $Backup }
-            if ($null -eq $ParentOrThis) { $ParentOrThis = $Backup }
+                # Tape exclusion (#192): checked on the immediate GetBackup()
+                # object, not GetParentOrThis(), which walks past the tape-copy
+                # relationship. Confirmed live: TypeToString is unreliable across
+                # platforms for this (a Proxmox-to-tape copy reads "Proxmox", no
+                # "Tape" substring), but IsTapeBackup is a consistent boolean at
+                # this level.
+                $IsTape = $false
+                try { $IsTape = [bool]$Backup.IsTapeBackup } catch { $IsTape = $false }
+                if ($IsTape) { continue }
 
-            # Tape exclusion (#192): checked on the immediate GetBackup()
-            # object, not GetParentOrThis(), which walks past the tape-copy
-            # relationship. Confirmed live: TypeToString is unreliable across
-            # platforms for this (a Proxmox-to-tape copy reads "Proxmox", no
-            # "Tape" substring), but IsTapeBackup is a consistent boolean at
-            # this level.
-            $IsTape = $false
-            try { $IsTape = [bool]$Backup.IsTapeBackup } catch { $IsTape = $false }
-            if ($IsTape) { continue }
+                $JobName        = $null
+                $OriginalType   = $null
+                $RepositoryId   = $null
+                try { $JobName      = $ParentOrThis.Name } catch {}
+                try { $OriginalType = $ParentOrThis.TypeToString } catch {}
+                try { $RepositoryId = $ParentOrThis.RepositoryId } catch {}
 
-            $JobName        = $null
-            $OriginalType   = $null
-            $RepositoryId   = $null
-            try { $JobName      = $ParentOrThis.Name } catch {}
-            try { $OriginalType = $ParentOrThis.TypeToString } catch {}
-            try { $RepositoryId = $ParentOrThis.RepositoryId } catch {}
-
-            # Same resolution Get-VhcJob.ps1 already does for its own
-            # RepoName column - RepositoryId alone is a bare Guid with no
-            # human-readable meaning to a report reader.
-            $RepositoryName = $null
-            if ($RepositoryDetails -and $RepositoryId) {
-                $RepositoryName = $RepositoryDetails |
-                    Where-Object { $_.Id -eq $RepositoryId } |
-                    Select-Object -First 1 -ExpandProperty Name
-            }
-
-            $CurrentJobId = if ($Candidate.CurrentJobId) { $Candidate.CurrentJobId } else { [guid]::Empty.ToString() }
-            $Category     = if ($Candidate.CurrentJobId) { 'Superseded' } else { 'Orphaned' }
-
-            $ByObjectId = @{}
-            foreach ($RestorePoint in $RestorePoints) {
-                $ObjKey = $RestorePoint.ObjectId.ToString()
-                if (-not $ByObjectId.ContainsKey($ObjKey)) {
-                    $ByObjectId[$ObjKey] = [System.Collections.Generic.List[object]]::new()
+                # Same resolution Get-VhcJob.ps1 already does for its own
+                # RepoName column - RepositoryId alone is a bare Guid with no
+                # human-readable meaning to a report reader.
+                $RepositoryName = $null
+                if ($RepositoryDetails -and $RepositoryId) {
+                    $RepositoryName = $RepositoryDetails |
+                        Where-Object { $_.Id -eq $RepositoryId } |
+                        Select-Object -First 1 -ExpandProperty Name
                 }
-                $ByObjectId[$ObjKey].Add($RestorePoint)
+
+                $CurrentJobId = if ($Candidate.CurrentJobId) { $Candidate.CurrentJobId } else { [guid]::Empty.ToString() }
+                $Category     = if ($Candidate.CurrentJobId) { 'Superseded' } else { 'Orphaned' }
+
+                # A null ObjectId can't be safely merged under any key shared
+                # with another restore point - two unrelated null-ObjectId
+                # points grouped together would misattribute Full/Increment
+                # counts and sizes across them. Calling .ToString() on a null
+                # ObjectId also throws, and (unguarded) that exception would
+                # be caught by this candidate's own try/catch above, silently
+                # discarding every OTHER ObjectId in this group along with
+                # the null one. Get-VhcJob.ps1's own stale-ObjectId guard
+                # treats a null ObjectId as "uncertain -> keep it, don't
+                # exclude, don't let it take anything else down" - mirrored
+                # here by giving each null-ObjectId point its own singleton
+                # key instead of ever calling .ToString() on it.
+                $ByObjectId = @{}
+                $NullObjectIdSequence = 0
+                foreach ($RestorePoint in $RestorePoints) {
+                    if ($null -eq $RestorePoint.ObjectId) {
+                        $ObjKey = "null-objectid-$($NullObjectIdSequence++)"
+                    } else {
+                        $ObjKey = $RestorePoint.ObjectId.ToString()
+                    }
+                    if (-not $ByObjectId.ContainsKey($ObjKey)) {
+                        $ByObjectId[$ObjKey] = [System.Collections.Generic.List[object]]::new()
+                    }
+                    $ByObjectId[$ObjKey].Add($RestorePoint)
+                }
+
+                foreach ($ObjKey in $ByObjectId.Keys) {
+                    $ObjectPoints = $ByObjectId[$ObjKey]
+                    $Fulls        = @($ObjectPoints | Where-Object { $_.Type -eq 'Full' })
+                    $Increments   = @($ObjectPoints | Where-Object { $_.Type -eq 'Increment' })
+                    $Sorted       = $ObjectPoints | Sort-Object CreationTimeUtc
+
+                    $AvgFullSize = if ($Fulls.Count -gt 0) {
+                        ($Fulls | Measure-Object -Property ApproxSize -Average).Average
+                    } else { 0 }
+                    $AvgIncrementalSize = if ($Increments.Count -gt 0) {
+                        ($Increments | Measure-Object -Property ApproxSize -Average).Average
+                    } else { 0 }
+                    $TotalSize = ($ObjectPoints | Measure-Object -Property ApproxSize -Sum).Sum
+
+                    $Rows.Add([PSCustomObject]@{
+                        RepositoryId             = $RepositoryId
+                        RepositoryName           = $RepositoryName
+                        JobName                  = $JobName
+                        CurrentJobId             = $CurrentJobId
+                        Category                 = $Category
+                        OriginalJobType          = $OriginalType
+                        ObjectId                 = $ObjectPoints[0].ObjectId
+                        BackupId                 = $ObjectPoints[0].BackupId
+                        ObjectName               = $ObjectPoints[0].Name
+                        FullCount                = $Fulls.Count
+                        IncrementalCount         = $Increments.Count
+                        AvgFullSizeBytes         = $AvgFullSize
+                        AvgIncrementalSizeBytes  = $AvgIncrementalSize
+                        TotalSizeBytes           = $TotalSize
+                        OldestRestorePoint       = $Sorted[0].CreationTimeUtc
+                        NewestRestorePoint       = $Sorted[-1].CreationTimeUtc
+                    })
+                }
+            } catch {
+                Write-LogFile "Could not process an orphaned/superseded candidate group: $($_.Exception.Message)" -LogLevel "WARNING"
+                Add-VhciModuleError -CollectorName 'OrphanedSupersededBackups' -ErrorMessage $_.Exception.Message
             }
-
-            foreach ($ObjKey in $ByObjectId.Keys) {
-                $ObjectPoints = $ByObjectId[$ObjKey]
-                $Fulls        = @($ObjectPoints | Where-Object { $_.Type -eq 'Full' })
-                $Increments   = @($ObjectPoints | Where-Object { $_.Type -eq 'Increment' })
-                $Sorted       = $ObjectPoints | Sort-Object CreationTimeUtc
-
-                $AvgFullSize = if ($Fulls.Count -gt 0) {
-                    ($Fulls | Measure-Object -Property ApproxSize -Average).Average
-                } else { 0 }
-                $AvgIncrementalSize = if ($Increments.Count -gt 0) {
-                    ($Increments | Measure-Object -Property ApproxSize -Average).Average
-                } else { 0 }
-                $TotalSize = ($ObjectPoints | Measure-Object -Property ApproxSize -Sum).Sum
-
-                $Rows.Add([PSCustomObject]@{
-                    RepositoryId             = $RepositoryId
-                    RepositoryName           = $RepositoryName
-                    JobName                  = $JobName
-                    CurrentJobId             = $CurrentJobId
-                    Category                 = $Category
-                    OriginalJobType          = $OriginalType
-                    ObjectId                 = $ObjectPoints[0].ObjectId
-                    BackupId                 = $ObjectPoints[0].BackupId
-                    ObjectName               = $ObjectPoints[0].Name
-                    FullCount                = $Fulls.Count
-                    IncrementalCount         = $Increments.Count
-                    AvgFullSizeBytes         = $AvgFullSize
-                    AvgIncrementalSizeBytes  = $AvgIncrementalSize
-                    TotalSizeBytes           = $TotalSize
-                    OldestRestorePoint       = $Sorted[0].CreationTimeUtc
-                    NewestRestorePoint       = $Sorted[-1].CreationTimeUtc
-                })
-            }
-        } catch {
-            Write-LogFile "Could not process an orphaned/superseded candidate group: $($_.Exception.Message)" -LogLevel "WARNING"
-            Add-VhciModuleError -CollectorName 'OrphanedSupersededBackups' -ErrorMessage $_.Exception.Message
         }
     }
 
     $Rows | Export-VhciCsv -FileName '_orphanedSupersededBackups.csv'
 
-    # Meta file, always exactly one row: Export-VhciCsv skips writing
-    # entirely when there are zero rows to export, so an empty/missing
-    # _orphanedSupersededBackups.csv can't distinguish "sweep never ran"
-    # from "ran, found nothing." This one-row file always exports (never
-    # zero rows), giving the C# side a real signal to tell them apart.
+    # Meta file, always exactly one row, even when the cache was entirely
+    # $null: Export-VhciCsv skips writing entirely when there are zero rows
+    # to export, so an empty/missing _orphanedSupersededBackups.csv can't
+    # distinguish "sweep never ran"/"cache never existed" from "ran, found
+    # nothing." This one-row file always exports (never zero rows), giving
+    # the C# side a real signal to tell them apart.
     [PSCustomObject]@{
-        SweepRan = $script:VhcOrphanedSupersededCache.SweepRan
+        SweepRan = $SweepRan
     } | Export-VhciCsv -FileName '_orphanedSupersededBackupsMeta.csv'
 
     Write-LogFile ($message + "DONE")

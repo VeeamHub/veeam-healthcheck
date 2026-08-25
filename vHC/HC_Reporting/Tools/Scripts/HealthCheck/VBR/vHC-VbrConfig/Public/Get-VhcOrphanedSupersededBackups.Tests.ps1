@@ -270,4 +270,54 @@ Describe 'Get-VhcOrphanedSupersededBackups' {
         $script:CapturedMeta | Should -HaveCount 1
         $script:CapturedMeta[0].SweepRan | Should -Be $false
     }
+
+    It 'keeps sibling ObjectIds when one restore point in the group has a null ObjectId' {
+        $Backup = script:New-FakeBackupObject -Name 'Mixed - Null ObjectId' -TypeToString 'VMware Backup'
+        $SharedBackupId = [guid]::NewGuid()
+        $GoodObjectId = [guid]::NewGuid()
+        $GoodPoint = script:New-FakeCandidateRestorePoint -Name 'goodvm' -Type 'Full' -ObjectId $GoodObjectId -BackupId $SharedBackupId -BackupObject $Backup
+        # New-FakeCandidateRestorePoint's -ObjectId param is typed [guid],
+        # which can't bind $null - set it directly on the constructed
+        # object instead, to fake a restore point VBR returned with no
+        # ObjectId at all.
+        $NullObjectPoint = script:New-FakeCandidateRestorePoint -Name 'nullobjectvm' -Type 'Full' -BackupId $SharedBackupId -BackupObject $Backup
+        $NullObjectPoint.ObjectId = $null
+
+        $script:VhcOrphanedSupersededCache = [PSCustomObject]@{
+            SweepRan        = $true
+            CandidateGroups = [System.Collections.Generic.List[object]]::new()
+        }
+        $script:VhcOrphanedSupersededCache.CandidateGroups.Add([PSCustomObject]@{
+            Reason        = 'Unresolved'
+            CurrentJobId  = $null
+            RestorePoints = @($GoodPoint, $NullObjectPoint)
+        })
+
+        Get-VhcOrphanedSupersededBackups
+
+        # Before the fix, $RestorePoint.ObjectId.ToString() on the null
+        # -ObjectId point threw inside the group's own try/catch, which
+        # discarded BOTH rows (including the good sibling ObjectId) rather
+        # than just the one point that couldn't be classified.
+        $script:CapturedRows | Should -HaveCount 2
+        ($script:CapturedRows | Where-Object { $_.ObjectName -eq 'goodvm' }) | Should -HaveCount 1
+        ($script:CapturedRows | Where-Object { $_.ObjectName -eq 'nullobjectvm' }) | Should -HaveCount 1
+    }
+
+    It 'still exports a one-row meta CSV with SweepRan=false when the cache itself is $null' {
+        # A real, reachable path: Get-VhcJob's sub-collectors (via
+        # Invoke-VhciJobSubCollectors) can throw before ever assigning
+        # $script:VhcOrphanedSupersededCache, leaving it $null rather than
+        # the SweepRan=$false placeholder object Get-VhcJob normally seeds
+        # up front. Before the fix, this case returned before exporting
+        # either CSV - including the meta file whose entire purpose is
+        # covering exactly this ambiguity.
+        $script:VhcOrphanedSupersededCache = $null
+
+        Get-VhcOrphanedSupersededBackups
+
+        $script:CapturedRows | Should -BeNullOrEmpty
+        $script:CapturedMeta | Should -HaveCount 1
+        $script:CapturedMeta[0].SweepRan | Should -Be $false
+    }
 }
