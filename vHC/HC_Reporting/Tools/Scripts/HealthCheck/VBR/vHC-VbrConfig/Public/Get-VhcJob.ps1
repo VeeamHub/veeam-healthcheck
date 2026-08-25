@@ -98,6 +98,12 @@ function Get-VhcJob {
     $NeedsSweep = [bool]($Jobs | Where-Object { $null -ne $_ -and $_.TypeToString -notin $KnownSafeJobTypes } | Select-Object -First 1)
 
     $RestorePointsByJob = @{}
+    # SweepRan=false does not mean the cache is empty - the stale-ObjectId
+    # guard below (in the main per-job loop) writes StaleObject entries
+    # unconditionally, independent of the sweep. Unresolved/Tier2Suppressed
+    # entries only ever come from inside the $NeedsSweep block below, so
+    # those two Reasons are absent when SweepRan is false, but StaleObject
+    # can still be present and trustworthy.
     $script:VhcOrphanedSupersededCache = [PSCustomObject]@{
         SweepRan        = $false
         CandidateGroups = [System.Collections.Generic.List[object]]::new()
@@ -292,6 +298,68 @@ function Get-VhcJob {
                     $RestorePoints = @(Get-VBRRestorePoint -Backup $LastBackup)
                 }
             }
+
+            # Stale-ObjectId guard (#192 Superseded / #197 fix): runs for
+            # every job regardless of $NeedsSweep, since GetObjectsInJob()
+            # and the sweep-cache lookup above are both per-job already -
+            # this isn't the expensive global sweep ADR 0022 gates. Zero
+            # overlap between this job's restore points and its current
+            # GetObjectsInJob() membership means the call isn't returning
+            # per-object granularity for this job (confirmed live: VMware
+            # Cloud Director Backup returns the vApp container, not its
+            # nested VMs, per ADR 0021) - trust nothing, exclude nothing,
+            # rather than flag every real object Superseded and zero the
+            # job's size.
+            if ($RestorePoints.Count -gt 0) {
+                $CurrentObjectIds = $null
+                try {
+                    $CurrentObjectIds = [System.Collections.Generic.HashSet[string]]::new(
+                        [string[]]($Job.GetObjectsInJob() | ForEach-Object { $_.ObjectId.ToString() }),
+                        [System.StringComparer]::OrdinalIgnoreCase
+                    )
+                } catch {
+                    $CurrentObjectIds = $null
+                }
+
+                if ($null -ne $CurrentObjectIds) {
+                    $MatchedAny = $false
+                    foreach ($RestorePoint in $RestorePoints) {
+                        if ($CurrentObjectIds.Contains($RestorePoint.ObjectId.ToString())) { $MatchedAny = $true; break }
+                    }
+
+                    if ($MatchedAny) {
+                        $ActiveRestorePoints = [System.Collections.Generic.List[object]]::new()
+                        $StaleByObjectId     = @{}
+                        foreach ($RestorePoint in $RestorePoints) {
+                            $ObjIdKey = $RestorePoint.ObjectId.ToString()
+                            if ($CurrentObjectIds.Contains($ObjIdKey)) {
+                                $ActiveRestorePoints.Add($RestorePoint)
+                            } else {
+                                if (-not $StaleByObjectId.ContainsKey($ObjIdKey)) {
+                                    $StaleByObjectId[$ObjIdKey] = [System.Collections.Generic.List[object]]::new()
+                                }
+                                $StaleByObjectId[$ObjIdKey].Add($RestorePoint)
+                            }
+                        }
+                        # Cast back to a plain array, not the List[object] itself:
+                        # List[T] defines its own native ForEach(Action<T>)
+                        # method, which silently shadows the PowerShell
+                        # array-intrinsic .ForEach{} the main loop below uses
+                        # to sum OnDiskGB - confirmed empirically to no-op
+                        # (0 iterations, no error) rather than throw.
+                        $RestorePoints = @($ActiveRestorePoints)
+
+                        foreach ($StalePoints in $StaleByObjectId.Values) {
+                            [void]$script:VhcOrphanedSupersededCache.CandidateGroups.Add([PSCustomObject]@{
+                                Reason        = 'StaleObject'
+                                CurrentJobId  = $Job.Id.ToString()
+                                RestorePoints = $StalePoints
+                            })
+                        }
+                    }
+                }
+            }
+
             $TotalOnDiskGB = 0
 
             $RestorePoints.ForEach{

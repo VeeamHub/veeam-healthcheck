@@ -165,12 +165,16 @@ BeforeAll {
             [switch]$ThrowOnGetParentJob,
             $LastBackup = $null,
             [switch]$ThrowOnGetLastBackup,
-            [double]$IncludedSize = 0
+            [double]$IncludedSize = 0,
+            [guid[]]$ObjectsInJobIds = @(),
+            [switch]$ThrowOnGetObjectsInJob
         )
-        $ParentJobCapture       = $ParentJob
-        $ThrowParentJobCapture  = [bool]$ThrowOnGetParentJob
-        $LastBackupCapture      = $LastBackup
-        $ThrowLastBackupCapture = [bool]$ThrowOnGetLastBackup
+        $ParentJobCapture         = $ParentJob
+        $ThrowParentJobCapture    = [bool]$ThrowOnGetParentJob
+        $LastBackupCapture        = $LastBackup
+        $ThrowLastBackupCapture   = [bool]$ThrowOnGetLastBackup
+        $ObjectsInJobCapture      = $ObjectsInJobIds
+        $ThrowObjectsInJobCapture = [bool]$ThrowOnGetObjectsInJob
 
         $Job = [PSCustomObject]@{
             Id                  = $Id
@@ -235,6 +239,10 @@ BeforeAll {
         $Job | Add-Member -MemberType ScriptMethod -Name GetLastBackup -Value {
             if ($ThrowLastBackupCapture) { throw 'GetLastBackup failed' }
             return $LastBackupCapture
+        }.GetNewClosure()
+        $Job | Add-Member -MemberType ScriptMethod -Name GetObjectsInJob -Value {
+            if ($ThrowObjectsInJobCapture) { throw 'GetObjectsInJob failed' }
+            return @($ObjectsInJobCapture | ForEach-Object { [PSCustomObject]@{ ObjectId = $_ } })
         }.GetNewClosure()
         return $Job
     }
@@ -1311,5 +1319,94 @@ Describe 'Orphaned/Superseded cache: sweep group retention' {
         Get-VhcJob | Out-Null
 
         $script:VhcOrphanedSupersededCache.SweepRan | Should -BeFalse
+    }
+}
+
+# ---------------------------------------------------------------------------
+# Orphaned & Superseded Backups (#192) / #197: stale-ObjectId guard
+# ---------------------------------------------------------------------------
+Describe 'Stale-ObjectId guard: GetObjectsInJob() cross-reference' {
+
+    BeforeEach {
+        # Get-VhcJob has no return value - job rows only ever flow through
+        # the Export-VhciCsv pipe (see every other Describe block in this
+        # file), never returned from the function itself. Capture rows via
+        # the mock, same convention as "Performance gate" et al., rather
+        # than assigning $Result = Get-VhcJob.
+        $script:CapturedJobRows = @()
+        Mock Write-LogFile                 -MockWith { }
+        Mock Get-VBRConfigurationBackupJob -MockWith { $null }
+        Mock Invoke-VhciJobSubCollectors   -MockWith { }
+        Mock Export-VhciCsv -MockWith {
+            if ($FileName -eq '_Jobs.csv' -and $InputObject) {
+                $script:CapturedJobRows += @($InputObject)
+            }
+        }
+        Mock Add-VhciModuleError           -MockWith { }
+        Mock Get-VBRBackup                 -MockWith { @() }
+        $script:VhcOrphanedSupersededCache = $null
+    }
+
+    It 'excludes a stale ObjectId from CalculatedOriginalSize and TotalOnDiskGB, caches it as StaleObject' {
+        $CurrentId = [guid]'44444444-4444-4444-4444-444444444444'
+        $StaleId   = [guid]'55555555-5555-5555-5555-555555555555'
+        $FakeJob = script:New-FakeJob -Name 'VMware - Malware' -TypeToString 'VMware Backup' -ObjectsInJobIds @($CurrentId)
+        Mock Get-VBRJob -MockWith { @($FakeJob) }
+        $CurrentPoint = script:New-FakeRestorePoint -Name 'MALWARE' -ObjectId $CurrentId -ApproxSize 150GB -BackupSize 50GB
+        $StalePoint   = script:New-FakeRestorePoint -Name 'MALWARE' -ObjectId $StaleId -ApproxSize 90GB -BackupSize 30GB
+        $FakeJob | Add-Member -MemberType ScriptMethod -Name GetLastBackup -Value { @($CurrentPoint) } -Force
+        Mock Get-VBRRestorePoint -MockWith {
+            if ($null -ne $Backup) { @($CurrentPoint, $StalePoint) } else { @() }
+        }
+
+        Get-VhcJob | Out-Null
+
+        $job = $script:CapturedJobRows | Where-Object { $_.Name -eq 'VMware - Malware' }
+        # OnDiskGB should reflect only the current object's 50GB, not 80GB combined.
+        [double]$job.OnDiskGB | Should -BeGreaterThan 49
+        [double]$job.OnDiskGB | Should -BeLessThan 51
+
+        $stale = $script:VhcOrphanedSupersededCache.CandidateGroups | Where-Object { $_.Reason -eq 'StaleObject' }
+        $stale | Should -HaveCount 1
+        $stale[0].CurrentJobId | Should -Be $FakeJob.Id.ToString()
+        $stale[0].RestorePoints[0].Name | Should -Be 'MALWARE'
+        $stale[0].RestorePoints[0].ObjectId | Should -Be $StaleId
+    }
+
+    It 'excludes nothing when GetObjectsInJob() matches zero restore points (Cloud Director vApp-container signature)' {
+        $VappContainerId = [guid]'66666666-6666-6666-6666-666666666666'
+        $RealVm1 = [guid]'77777777-7777-7777-7777-777777777777'
+        $RealVm2 = [guid]'88888888-8888-8888-8888-888888888888'
+        $FakeJob = script:New-FakeJob -Name 'VCD - vApp' -TypeToString 'Cloud Director Backup' -ObjectsInJobIds @($VappContainerId)
+        Mock Get-VBRJob -MockWith { @($FakeJob) }
+        $Point1 = script:New-FakeRestorePoint -Name 'vm1' -ObjectId $RealVm1 -ApproxSize 10GB -BackupSize 5GB
+        $Point2 = script:New-FakeRestorePoint -Name 'vm2' -ObjectId $RealVm2 -ApproxSize 10GB -BackupSize 5GB
+        $FakeJob | Add-Member -MemberType ScriptMethod -Name GetLastBackup -Value { @($Point1) } -Force
+        Mock Get-VBRRestorePoint -MockWith {
+            if ($null -ne $Backup) { @($Point1, $Point2) } else { @() }
+        }
+
+        Get-VhcJob | Out-Null
+
+        $job = $script:CapturedJobRows | Where-Object { $_.Name -eq 'VCD - vApp' }
+        # Both real VMs' data must still be counted - zero overlap means the
+        # guard trusts nothing and excludes nothing.
+        [double]$job.OnDiskGB | Should -BeGreaterThan 9
+        $stale = $script:VhcOrphanedSupersededCache.CandidateGroups | Where-Object { $_.Reason -eq 'StaleObject' -and $_.CurrentJobId -eq $FakeJob.Id.ToString() }
+        $stale | Should -BeNullOrEmpty
+    }
+
+    It 'excludes nothing and caches nothing when GetObjectsInJob() itself throws' {
+        $FakeJob = script:New-FakeJob -Name 'VMware - Weird' -TypeToString 'VMware Backup' -ThrowOnGetObjectsInJob
+        Mock Get-VBRJob -MockWith { @($FakeJob) }
+        $Point1 = script:New-FakeRestorePoint -Name 'vm1' -ApproxSize 10GB -BackupSize 5GB
+        $FakeJob | Add-Member -MemberType ScriptMethod -Name GetLastBackup -Value { @($Point1) } -Force
+        Mock Get-VBRRestorePoint -MockWith {
+            if ($null -ne $Backup) { @($Point1) } else { @() }
+        }
+
+        { Get-VhcJob } | Should -Not -Throw
+        $stale = $script:VhcOrphanedSupersededCache.CandidateGroups | Where-Object { $_.Reason -eq 'StaleObject' }
+        $stale | Should -BeNullOrEmpty
     }
 }
