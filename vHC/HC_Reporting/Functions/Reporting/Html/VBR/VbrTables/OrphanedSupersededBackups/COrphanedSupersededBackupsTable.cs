@@ -5,6 +5,7 @@ using System.Linq;
 using System.Net;
 using VeeamHealthCheck.Functions.Reporting.CsvHandlers;
 using VeeamHealthCheck.Functions.Reporting.DataFormers.OrphanedSupersededBackups;
+using VeeamHealthCheck.Functions.Reporting.Html.Shared;
 using VeeamHealthCheck.Scrubber;
 using VeeamHealthCheck.Shared;
 
@@ -12,6 +13,8 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR.VbrTables.OrphanedSupers
 {
     internal class COrphanedSupersededBackupsTable
     {
+        private readonly CHtmlFormatting form = new();
+
         // Get-VhcOrphanedSupersededBackups.ps1 is the sole producer of
         // Category and only ever writes one of these two literals - named
         // here rather than repeating raw strings so a future producer-side
@@ -198,10 +201,20 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR.VbrTables.OrphanedSupers
                     repoLabel = CGlobals.Scrubber.ScrubItem(repoLabel, ScrubItemType.Repository);
                 }
 
-                s += $"<div class=\"orphaned-repo-group\">";
-                s += $"<div class=\"orphaned-repo-header\"><strong>{WebUtility.HtmlEncode(repoLabel)}</strong>";
-                s += $"<span class=\"label\">{repoRecords.Count} backups flagged &middot; ~{repoTotalGb.ToString("N0", CultureInfo.InvariantCulture)} GB potentially reclaimable</span></div>";
-                s += "<table><thead><tr>";
+                // Nested section-card per repository, via the exact same
+                // form.SectionStartWithButton/SectionEnd pair
+                // CJobSessionSummaryTable.RenderByJob uses for its
+                // per-job-type groups - not a new UI pattern, just reused
+                // here so repository groups get the same icon badge and
+                // independent collapse toggle instead of a bare, unstyled
+                // div ("orphaned-repo-group" had no CSS rule at all).
+                string cardTitle = $"{WebUtility.HtmlEncode(repoLabel)} " +
+                    $"<span class=\"label\">{repoRecords.Count} backups flagged &middot; " +
+                    $"~{repoTotalGb.ToString("N0", CultureInfo.InvariantCulture)} GB potentially reclaimable</span>";
+                // repoGroup.Key is either a RepositoryId Guid or the literal
+                // "unknown" fallback - both are already valid, unique HTML id
+                // characters, so no further sanitizing is needed here.
+                s += this.form.SectionStartWithButton("orphaned-repo-" + repoGroup.Key, cardTitle, string.Empty);
                 s += "<th></th><th>Job Name</th><th>Status</th><th>Original Job Type</th><th>Fulls</th><th>Incrementals</th><th>Total Size</th><th>Oldest RP</th><th>Newest RP</th>";
                 s += "</tr></thead><tbody>";
 
@@ -282,7 +295,7 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR.VbrTables.OrphanedSupers
                     s += "</tbody></table></td></tr>";
                 }
 
-                s += "</tbody></table></div>";
+                s += this.form.SectionEnd(string.Empty);
             }
 
             summary = (sweepEvaluated ? "" : "Orphaned Backups: not evaluated for this environment. ")

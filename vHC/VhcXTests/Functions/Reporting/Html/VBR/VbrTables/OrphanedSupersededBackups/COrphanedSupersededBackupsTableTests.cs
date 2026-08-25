@@ -177,6 +177,37 @@ namespace VhcXTests.Functions.Reporting.Html.VBR.VbrTables.OrphanedSupersededBac
         }
 
         [Fact]
+        public void Render_GroupsByRepository_UsesCollapsibleSectionCardNotBareDiv()
+        {
+            // Job Session Summary groups by job type using
+            // CHtmlFormatting's section-card pattern (icon badge, its own
+            // toggleSection collapse, green accent border via css.css)
+            // instead of a plain div. Per-repository groups here should
+            // match that pattern rather than the old unstyled
+            // "orphaned-repo-group"/"orphaned-repo-header" markup so every
+            // repository group gets the same collapsible treatment.
+            var table = new COrphanedSupersededBackupsTable();
+            var records = new List<OrphanedSupersededBackupRecord>
+            {
+                JobRecord("repo-1", "Repo01 (Local ReFS)", "Proxmox - Malware Lab", "Orphaned")
+            };
+
+            string html = table.Render(records, sweepEvaluated: true, scrub: false, out string summary);
+
+            // Exact id from repoGroup.Key ("repo-1"), the same "open" class
+            // and toggle chevron (&#8964;) every other section-card in the
+            // report uses, and the icon badge markup - not just a loose
+            // "section-card" substring match, which would also pass for a
+            // differently-shaped/malformed card.
+            Assert.Contains("class=\"section-card open\" id=\"orphaned-repo-repo-1\"", html);
+            Assert.Contains("onclick=\"toggleSection(this)\"", html);
+            Assert.Contains("<span class=\"icon\"", html);
+            Assert.Contains("&#8964;", html);
+            Assert.DoesNotContain("orphaned-repo-group", html);
+            Assert.DoesNotContain("orphaned-repo-header", html);
+        }
+
+        [Fact]
         public void Render_RepositoryNameMissing_FallsBackToRepositoryId()
         {
             var table = new COrphanedSupersededBackupsTable();
