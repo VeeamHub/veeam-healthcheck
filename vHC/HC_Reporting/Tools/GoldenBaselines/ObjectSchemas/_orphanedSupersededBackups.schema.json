@@ -13,7 +13,7 @@
     { "index": 3, "csvName": "CurrentJobId", "csharpProperty": "CurrentJobId", "csharpType": "string", "nullable": false, "description": "Zeroed Guid for Orphaned rows; a real current Job Id for Superseded rows" },
     { "index": 4, "csvName": "Category", "csharpProperty": "Category", "csharpType": "string", "nullable": false, "description": "Orphaned or Superseded" },
     { "index": 5, "csvName": "OriginalJobType", "csharpProperty": "OriginalJobType", "csharpType": "string", "nullable": true, "description": "TypeToString, e.g. Proxmox Backup, VMware Backup" },
-    { "index": 6, "csvName": "ObjectId", "csharpProperty": "ObjectId", "csharpType": "string", "nullable": false, "description": "Protected object Id - the report-facing identifier" },
+    { "index": 6, "csvName": "ObjectId", "csharpProperty": "ObjectId", "csharpType": "string", "nullable": true, "description": "Protected object Id - the report-facing identifier. Blank for a restore point whose ObjectId could not be determined (Get-VhcOrphanedSupersededBackups.ps1 still emits it as its own row rather than dropping or merging it with others)" },
     { "index": 7, "csvName": "BackupId", "csharpProperty": "BackupId", "csharpType": "string", "nullable": false, "description": "Not unique on its own - multiple rows can share one when per-VM chains are disabled" },
     { "index": 8, "csvName": "ObjectName", "csharpProperty": "ObjectName", "csharpType": "string", "nullable": true, "description": "Source VM/machine name" },
     { "index": 9, "csvName": "FullCount", "csharpProperty": "FullCount", "csharpType": "int", "nullable": false, "description": "Full restore point count for this ObjectId" },
@@ -25,8 +25,9 @@
     { "index": 15, "csvName": "NewestRestorePoint", "csharpProperty": "NewestRestorePoint", "csharpType": "DateTime", "nullable": false, "description": "Newest restore point CreationTimeUtc for this ObjectId" }
   ],
   "validationRules": {
-    "requiredColumns": ["JobName", "Category", "ObjectId", "BackupId"],
+    "requiredColumns": ["JobName", "Category", "BackupId"],
     "guidColumns": ["RepositoryId", "CurrentJobId", "ObjectId", "BackupId"],
+    "nullableGuidColumns": ["RepositoryId", "ObjectId"],
     "numericColumns": ["FullCount", "IncrementalCount", "AvgFullSizeBytes", "AvgIncrementalSizeBytes", "TotalSizeBytes"]
   }
 }
