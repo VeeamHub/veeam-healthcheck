@@ -171,6 +171,7 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR.VbrTables.OrphanedSupers
             var byRepo = records.GroupBy(r => r.RepositoryId ?? "unknown");
             long grandTotalBytes = 0;
             int grandTotalCount = 0;
+            int repoGroupIndex = 0;
 
             foreach (var repoGroup in byRepo)
             {
@@ -211,10 +212,12 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR.VbrTables.OrphanedSupers
                 string cardTitle = $"{WebUtility.HtmlEncode(repoLabel)} " +
                     $"<span class=\"label\">{repoRecords.Count} backups flagged &middot; " +
                     $"~{repoTotalGb.ToString("N0", CultureInfo.InvariantCulture)} GB potentially reclaimable</span>";
-                // repoGroup.Key is either a RepositoryId Guid or the literal
-                // "unknown" fallback - both are already valid, unique HTML id
-                // characters, so no further sanitizing is needed here.
-                s += this.form.SectionStartWithButton("orphaned-repo-" + repoGroup.Key, cardTitle, string.Empty);
+                // repoGroup.Key is a RepositoryId Guid (or the literal
+                // "unknown" fallback) and must never appear in the rendered
+                // output, scrubbed or not - use the loop position instead so
+                // the section id stays unique without leaking it.
+                s += this.form.SectionStartWithButton("orphaned-repo-" + repoGroupIndex, cardTitle, string.Empty);
+                repoGroupIndex++;
                 s += "<th></th><th>Job Name</th><th>Status</th><th>Original Job Type</th><th>Fulls</th><th>Incrementals</th><th>Total Size</th><th>Oldest RP</th><th>Newest RP</th>";
                 s += "</tr></thead><tbody>";
 

@@ -194,12 +194,14 @@ namespace VhcXTests.Functions.Reporting.Html.VBR.VbrTables.OrphanedSupersededBac
 
             string html = table.Render(records, sweepEvaluated: true, scrub: false, out string summary);
 
-            // Exact id from repoGroup.Key ("repo-1"), the same "open" class
-            // and toggle chevron (&#8964;) every other section-card in the
-            // report uses, and the icon badge markup - not just a loose
-            // "section-card" substring match, which would also pass for a
-            // differently-shaped/malformed card.
-            Assert.Contains("class=\"section-card open\" id=\"orphaned-repo-repo-1\"", html);
+            // Id is the repo group's position (not the raw RepositoryId -
+            // see Render_GroupsByRepository_DisplaysRepositoryNameNotRawGuid,
+            // which requires that value never appear in output), the same
+            // "open" class and toggle chevron (&#8964;) every other
+            // section-card in the report uses, and the icon badge markup -
+            // not just a loose "section-card" substring match, which would
+            // also pass for a differently-shaped/malformed card.
+            Assert.Contains("class=\"section-card open\" id=\"orphaned-repo-0\"", html);
             Assert.Contains("onclick=\"toggleSection(this)\"", html);
             Assert.Contains("<span class=\"icon\"", html);
             Assert.Contains("&#8964;", html);
