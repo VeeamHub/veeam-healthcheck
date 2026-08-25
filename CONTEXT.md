@@ -15,7 +15,15 @@ _Avoid_: Task
 The chain object holding a Job's captured data over time (`CBackup`,
 returned by `Get-VBRBackup` or `Job.GetLastBackup()`). A single Job can
 accumulate more than one Backup over its lifetime — e.g. an older chain
-left behind after the Job was retargeted to a different repository.
+left behind after the Job was retargeted to a different repository. A
+Backup's `BackupId` is **not** 1:1 with `ObjectId`: a multi-machine Job
+targeting a repository with per-VM chains disabled
+(`Backup.IsTruePerVmContainer == $false`) produces one shared `BackupId`
+across every protected machine's Restore Points, each with its own
+`ObjectId` — confirmed live with a 3-VM Hyper-V job. PR #194's own
+description described `BackupId` as scoped to one object's chain; that
+was accurate for the repositories tested there but isn't a general
+guarantee — don't rely on it elsewhere.
 _Avoid_: Chain
 
 **Restore Point**:

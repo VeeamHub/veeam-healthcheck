@@ -210,23 +210,43 @@ responsibilities and lets the new logic be tested in isolation.
    `GetObjectsInJob()` check for Superseded/#197 doesn't depend on the
    sweep having run.
 
-The new script reads the cache, drops any `BackupId` group where
-`.GetBackup().IsTapeBackup` is `True` (see Tape exclusion, above), resolves
-`JobName` / `OriginalJobType` / `RepositoryId` via
-`.GetBackup().GetParentOrThis()` for each remaining group, and writes one
-CSV row per `BackupId` group — a `BackupId` is confirmed (ADR
-0023, live evidence) to be scoped to exactly one `ObjectId`'s chain within
-one job, so in practice each row carries one object's data. The reverse
-isn't guaranteed: a single `ObjectId` could in principle span more than one
+**Grain correction (live evidence):** `BackupId` is *not* 1:1 with
+`ObjectId`. A multi-VM job targeting a repository with per-VM chains
+disabled (`.GetBackup().IsTruePerVmContainer == $false`) produces restore
+points for every protected VM under **one shared `BackupId`** — confirmed
+live with a 3-VM Hyper-V job, all three VMs' restore points carrying the
+same `BackupId` but three distinct `ObjectId`s. This doesn't threaten the
+existing PR #194 sweep's correctness: `GetSourceJob()` on any restore point
+in such a group resolves to the same job regardless of which VM it's
+called on, so ADR 0023's "resolve ownership once per `BackupId` group"
+optimization only ever needed "one job per group," not "one object per
+group" — that stronger claim, as stated in PR #194's own description, is
+disproven by this evidence and shouldn't be relied on elsewhere. It does
+mean this design's original "one CSV row per `BackupId` group" grain would
+have silently blended multiple machines' Fulls/Incrementals/sizes/dates
+into one row for exactly this repository configuration — undermining the
+per-object granularity the feature exists to provide.
+
+Fixed grain: the new script resolves `JobName` / `OriginalJobType` /
+`RepositoryId` / Tape exclusion (`IsTapeBackup`) **once per `BackupId`
+group** (cheap, correct — these are shared across every `ObjectId` in the
+group), then splits that group's restore points **by `ObjectId`** to
+compute the actual stats row — `FullCount`/`IncrementalCount`/
+`AvgFullSizeBytes`/`AvgIncrementalSizeBytes`/`TotalSizeBytes`/
+`OldestRestorePoint`/`NewestRestorePoint`. The CSV's row grain is one row
+per `(BackupId, ObjectId)` pair, reusing the once-resolved job-level fields
+across however many `ObjectId` rows that group expands into. `BackupId` is
+therefore *not* a unique key on its own — multiple rows can share one when
+per-VM chains are disabled. The reverse direction still isn't guaranteed
+either: a single `ObjectId` could in principle span more than one
 `BackupId` over its lifetime (e.g. a job retarget creating a new Backup
 object for the same machine, distinct from the rebuild case seen live,
-which produced a new `ObjectId` instead). If that happens, it simply
-produces multiple rows for that `ObjectId`, which the report shows as
-separate object-level sub-rows rather than a false merge.
+which produced a new `ObjectId` instead) — that case simply produces
+multiple rows for that `ObjectId`, same as before.
 
 ### CSV schema
 
-One CSV, `_orphanedSupersededBackups.csv` — one row per `BackupId` group:
+One CSV, `_orphanedSupersededBackups.csv` — one row per `(BackupId, ObjectId)` pair:
 
 | Column | Notes |
 | --- | --- |
@@ -235,11 +255,11 @@ One CSV, `_orphanedSupersededBackups.csv` — one row per `BackupId` group:
 | `CurrentJobId` | zeroed GUID for Orphaned rows; a real, current Job Id for Superseded rows |
 | `Category` | `Orphaned` \| `Superseded` — stored explicitly rather than re-derived downstream |
 | `OriginalJobType` | `.TypeToString` — e.g. `Proxmox Backup`, `VMware Backup` (confirmed live values; excludes Tape, see above) |
-| `ObjectId` / `BackupId` | both retained for correlation/troubleshooting; `ObjectId` is the report-facing identifier |
+| `ObjectId` / `BackupId` | both retained; `ObjectId` is the report-facing identifier and, with `BackupId`, forms the row's actual unique key — `BackupId` alone is not unique (see grain correction, above) |
 | `ObjectName` | source VM/machine name |
-| `FullCount` / `IncrementalCount` | restore point counts by `Type` |
+| `FullCount` / `IncrementalCount` | restore point counts by `Type`, scoped to this row's `ObjectId` only |
 | `AvgFullSizeBytes` / `AvgIncrementalSizeBytes` | separate averages — not one blended average |
-| `TotalSizeBytes` | sum of all retained restore points for this object |
+| `TotalSizeBytes` | sum of all retained restore points for this `ObjectId` |
 | `OldestRestorePoint` / `NewestRestorePoint` | `CreationTimeUtc` range |
 
 A single CSV (not two per-category files) because the schemas overlap
@@ -257,7 +277,7 @@ count") with two causes.
 - A new Aggregator (mirroring PR #194's `AgentJobAggregator.cs`) groups CSV
   rows first by `RepositoryId`, then by `JobName`, rolling up
   `FullCount`/`IncrementalCount`/`TotalSizeBytes` and min/max dates to the
-  job level, while retaining the individual per-`BackupId`-group rows
+  job level, while retaining the individual per-`(BackupId, ObjectId)` rows
   (object-level detail) for the expandable detail view.
 - New report DataType classes for the job-level row and the nested
   object-level row.
@@ -344,6 +364,13 @@ size by nature.
     should stay cheap under ADR 0022's cost model, but this feature's
     history of performance surprises (that's the whole reason ADR 0022
     exists) makes it worth confirming rather than assuming.
+  - Confirm the `(BackupId, ObjectId)` grain against a multi-machine job on
+    a per-VM-chains-disabled repository (confirmed live with a 3-VM Hyper-V
+    job) — verify the new script actually produces one row per `ObjectId`
+    rather than one blended row per `BackupId` in this configuration, and
+    that the zero-overlap guard and Tier 1/2 retention logic behave
+    correctly when a `BackupId` group's restore points span more than one
+    `ObjectId`.
 
 ## Documentation
 
@@ -362,6 +389,13 @@ size by nature.
 - The exact fallback UX/copy for "not evaluated for this environment"
   (per-repository vs whole-section messaging) — left to the implementation
   plan.
+- PR #194's own description states `BackupId` is "confirmed, live, to be
+  scoped to exactly one protected object's chain within one job" — this
+  design's investigation disproves the "one object" half of that for
+  repositories with per-VM chains disabled (see `CONTEXT.md`'s corrected
+  "Backup" entry). The merged PR's text can't be edited, but worth
+  flagging to the maintainer so nothing else in the codebase leans on the
+  stronger claim.
 - Whether other Backup-object flags beyond `IsTapeBackup` need the same
   pre-classification exclusion treatment (see Testing) — the property
   surface is large and this design only evaluated Tape in depth.
