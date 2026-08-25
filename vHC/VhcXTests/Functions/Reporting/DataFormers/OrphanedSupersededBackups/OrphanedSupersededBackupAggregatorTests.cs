@@ -158,6 +158,39 @@ namespace VhcXTests.Functions.Reporting.DataFormers.OrphanedSupersededBackups
         }
 
         [Fact]
+        public void Build_TwoObjectsWithDifferentBackupIds_StillRollUpButRetainDistinctBackupIds()
+        {
+            // Companion to Build_TwoObjectsSharingOneJob_RollsUpToOneJobRecordWithTwoObjects:
+            // BackupId is deliberately NOT part of the grouping key (see
+            // OrphanedSupersededBackupAggregator.Build's comment - on a
+            // per-VM-chains-enabled repository, ADR 0027 means every object
+            // in a job already has its own distinct BackupId, so grouping on
+            // it would explode one job's roll-up into one row per object).
+            // Two objects under the same job with DIFFERENT BackupIds must
+            // still roll up into one JobRecord, with each object's own
+            // BackupId preserved so a reader can tell chains apart in the
+            // nested detail view.
+            var rows = new List<dynamic>
+            {
+                Row("repo-1", "Repo01 (Local ReFS)", "VBR Managed Agents - Windows", "job-1", "Superseded",
+                    "Windows Agent Policy", "obj-7", "backup-aaa", "WindowsAgent07",
+                    1, 5, 8_000_000_000, 100_000_000, 48_000_000_000,
+                    new DateTime(2026, 3, 1), new DateTime(2026, 3, 6)),
+                Row("repo-1", "Repo01 (Local ReFS)", "VBR Managed Agents - Windows", "job-1", "Superseded",
+                    "Windows Agent Policy", "obj-8", "backup-bbb", "WindowsAgent08",
+                    1, 2, 9_000_000_000, 90_000_000, 12_000_000_000,
+                    new DateTime(2026, 1, 1), new DateTime(2026, 1, 10))
+            };
+
+            var result = OrphanedSupersededBackupAggregator.Build(rows);
+
+            var job = Assert.Single(result);
+            Assert.Equal(2, job.Objects.Count);
+            Assert.Contains(job.Objects, o => o.BackupId == "backup-aaa");
+            Assert.Contains(job.Objects, o => o.BackupId == "backup-bbb");
+        }
+
+        [Fact]
         public void Build_EmptyInput_ReturnsEmptyList()
         {
             var result = OrphanedSupersededBackupAggregator.Build(new List<dynamic>());

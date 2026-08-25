@@ -269,18 +269,25 @@ $collectorResults.Add((Invoke-VhcCollector -Name 'SessionReport' -Action {
 
 # ---------------------------------------------------------------------------
 # Task 7: Job collectors (require $RepositoryDetails from Task 6)
-$collectorResults.Add((Invoke-VhcCollector -Name 'Jobs' -Action {
+$jobsResult = Invoke-VhcCollector -Name 'Jobs' -Action {
     Get-VhcJob -RepositoryDetails $RepositoryDetails -VBRVersion $VBRVersion
-}))
+}
+$collectorResults.Add($jobsResult)
 # ---------------------------------------------------------------------------
 
 # ---------------------------------------------------------------------------
-# Orphaned/Superseded backups (#192) - depends on the $script:VhcOrphanedSupersededCache
-# Get-VhcJob populates above; must run after it in the same collection pass.
+# Orphaned/Superseded backups (#192). $jobsResult.Output is the sweep-cache
+# object Get-VhcJob now returns explicitly - passed here instead of letting
+# Get-VhcOrphanedSupersededBackups reach for $script:VhcOrphanedSupersededCache
+# as an implicit side effect of Get-VhcJob having already run above in this
+# same pass. That ordering dependency used to be enforced only by a comment,
+# so a future reorder/parallelization of this collector list could silently
+# break it; threading the value explicitly makes the dependency visible at
+# the call site and removes the ordering requirement entirely.
 # -RepositoryDetails is the same variable Get-VhcJob uses above, resolving
 # RepositoryId -> a human-readable name for the report's per-repo grouping.
 $collectorResults.Add((Invoke-VhcCollector -Name 'OrphanedSupersededBackups' -Action {
-    Get-VhcOrphanedSupersededBackups -RepositoryDetails $RepositoryDetails
+    Get-VhcOrphanedSupersededBackups -RepositoryDetails $RepositoryDetails -OrphanedSupersededCache $jobsResult.Output
 }))
 # ---------------------------------------------------------------------------
 

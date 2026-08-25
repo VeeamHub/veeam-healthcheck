@@ -3,30 +3,44 @@
 function Get-VhcOrphanedSupersededBackups {
     <#
     .Synopsis
-        Reads the $script:VhcOrphanedSupersededCache Get-VhcJob populates,
-        excludes Tape Backups, classifies each remaining BackupId group's
-        restore points as Orphaned or Superseded, splits into one row per
-        (BackupId, ObjectId), and exports _orphanedSupersededBackups.csv.
+        Reads the sweep cache Get-VhcJob populates, excludes Tape Backups,
+        classifies each remaining BackupId group's restore points as
+        Orphaned or Superseded, splits into one row per (BackupId,
+        ObjectId), and exports _orphanedSupersededBackups.csv.
     .Parameter RepositoryDetails
         ArrayList of [pscustomobject]@{ID; Name} rows returned by
         Get-VhcRepository - the same object Get-VhcJob takes, used the same
         way: resolving RepositoryId to a human-readable RepositoryName for
         the report's per-repo grouping. May be $null - RepositoryName will
         be blank in that case, matching Get-VhcJob's own RepoName behavior.
+    .Parameter OrphanedSupersededCache
+        The sweep-result object Get-VhcJob now returns explicitly. Pass it
+        here (Get-VBRConfig.ps1 does) rather than relying on this function
+        reading $script:VhcOrphanedSupersededCache as a side effect of
+        Get-VhcJob having already run in the same collection pass - that
+        ordering dependency used to be enforced only by a comment, so a
+        future reorder/parallelization of the collector list could silently
+        break it. Falls back to $script:VhcOrphanedSupersededCache when not
+        supplied, for direct/standalone calls (this function's own Pester
+        tests build that script variable directly as a fixture).
     #>
     [CmdletBinding()]
     param(
         [Parameter(Mandatory = $false)]
-        [object]$RepositoryDetails = $null
+        [object]$RepositoryDetails = $null,
+
+        [Parameter(Mandatory = $false)]
+        [object]$OrphanedSupersededCache = $null
     )
 
     $message = "Collecting orphaned and superseded backups..."
     Write-LogFile $message
 
-    $Rows     = [System.Collections.Generic.List[object]]::new()
+    $Rows  = [System.Collections.Generic.List[object]]::new()
     $SweepRan = $false
+    $Cache = if ($null -ne $OrphanedSupersededCache) { $OrphanedSupersededCache } else { $script:VhcOrphanedSupersededCache }
 
-    if ($null -eq $script:VhcOrphanedSupersededCache) {
+    if ($null -eq $Cache) {
         # Deliberately falls through to the meta-CSV export below instead of
         # returning here: that file's entire purpose is letting the C# side
         # tell "sweep never ran / cache never existed" apart from "ran, found
@@ -40,7 +54,7 @@ function Get-VhcOrphanedSupersededBackups {
         # SweepRan is missing or explicitly $null, an unguarded assignment
         # would carry $null into the meta CSV (a blank cell) instead of the
         # $false the C# side needs to read as a real signal.
-        $SweepRan = [bool]$script:VhcOrphanedSupersededCache.SweepRan
+        $SweepRan = [bool]$Cache.SweepRan
         if (-not $SweepRan) {
             # Orphaned detection needs the global sweep; an environment made
             # entirely of ADR 0022 "safe" allowlist job types never triggers
@@ -51,7 +65,7 @@ function Get-VhcOrphanedSupersededBackups {
             Write-LogFile "Global restore-point sweep did not run for this environment - Orphaned Backup detection not evaluated." -LogLevel "INFO"
         }
 
-        foreach ($Candidate in $script:VhcOrphanedSupersededCache.CandidateGroups) {
+        foreach ($Candidate in $Cache.CandidateGroups) {
             try {
                 $RestorePoints = @($Candidate.RestorePoints)
                 if ($RestorePoints.Count -eq 0) { continue }

@@ -143,6 +143,14 @@ namespace VeeamHealthCheck.Functions.Reporting.Html
             // find all instances of class="collapsible classBtn" and replace with class="collapsible classBtn active"
             htmlShowAll = htmlShowAll.Replace("collapsible classBtn", "collapsible classBtn active");
 
+            // Orphaned & Superseded Backups' per-object detail rows are hidden
+            // via the .detail-row CSS class (css.css), not an inline style, so
+            // the "display: none" replace above never matches them. An inline
+            // style here wins over the class rule's specificity and forces the
+            // row visible for this export copy only - the saved .html report
+            // (htmlString, untouched) still hides it by default.
+            htmlShowAll = htmlShowAll.Replace("<tr class=\"detail-row\">", "<tr class=\"detail-row\" style=\"display: table-row\">");
+
             // find all instance of overflow: scroll; and replace with overflow: visible;
             htmlShowAll = htmlShowAll.Replace("overflow: scroll;", "overflow: visible;");
 
@@ -174,6 +182,11 @@ namespace VeeamHealthCheck.Functions.Reporting.Html
                 // Expand all collapsed sections for export
                 string htmlShowAll = htmlString.Replace("style=\"display: none\">", "style=\"display: block\">");
                 htmlShowAll = htmlShowAll.Replace("collapsible classBtn", "collapsible classBtn active");
+
+                // See the identical fix/comment in ExportHtmlStringToPDF:
+                // .detail-row is hidden via a CSS class, not an inline style,
+                // so it needs its own explicit replace here too.
+                htmlShowAll = htmlShowAll.Replace("<tr class=\"detail-row\">", "<tr class=\"detail-row\" style=\"display: table-row\">");
 
                 string pptxPath = this.latestReport.Replace(".html", ".pptx");
                 pptx.ConvertHtmlToPptx(htmlShowAll, pptxPath);

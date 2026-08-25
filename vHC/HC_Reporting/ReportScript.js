@@ -67,10 +67,22 @@ function sortTableByColumn(table, column, asc) {
     return el.tagName === "TR";
   });
   var groups = [];
+  // claimedAsDetail tracks which detail-row indices were already consumed
+  // as some earlier primary row's paired detail, so the check below can
+  // tell "already handled, safe to skip" apart from "never claimed by
+  // anyone" (e.g. two consecutive detail-rows, or a leading detail-row with
+  // nothing before it) - the latter must still become its own group, not
+  // silently vanish when tBody is emptied and rebuilt from `groups` below.
+  var claimedAsDetail = {};
   for (var g = 0; g < directRows.length; g++) {
-    if (directRows[g].classList.contains("detail-row")) { continue; }
+    if (directRows[g].classList.contains("detail-row")) {
+      if (claimedAsDetail[g]) { continue; }
+      groups.push({ primary: directRows[g], detail: null });
+      continue;
+    }
     var next = directRows[g + 1];
     var detail = (next && next.classList.contains("detail-row")) ? next : null;
+    if (detail) { claimedAsDetail[g + 1] = true; }
     groups.push({ primary: directRows[g], detail: detail });
   }
   var sortedGroups = groups.sort(function(a, b) {

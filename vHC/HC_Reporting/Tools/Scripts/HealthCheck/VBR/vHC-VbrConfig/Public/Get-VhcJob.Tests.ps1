@@ -1320,6 +1320,19 @@ Describe 'Orphaned/Superseded cache: sweep group retention' {
 
         $script:VhcOrphanedSupersededCache.SweepRan | Should -BeFalse
     }
+
+    It 'returns the same sweep-cache object it sets on $script:VhcOrphanedSupersededCache' {
+        # Get-VBRConfig.ps1 passes this return value explicitly to
+        # Get-VhcOrphanedSupersededBackups -OrphanedSupersededCache, instead
+        # of that function reaching for the script-scoped variable as an
+        # implicit side effect of collector ordering.
+        $FakeJob = script:New-FakeJob -Name 'VMware - Safe' -TypeToString 'VMware Backup' -LastBackup $null
+        Mock Get-VBRJob -MockWith { @($FakeJob) }
+
+        $Returned = Get-VhcJob
+
+        $Returned | Should -Be $script:VhcOrphanedSupersededCache
+    }
 }
 
 # ---------------------------------------------------------------------------

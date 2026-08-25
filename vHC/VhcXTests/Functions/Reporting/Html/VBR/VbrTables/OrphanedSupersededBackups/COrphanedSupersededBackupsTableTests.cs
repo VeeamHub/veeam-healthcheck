@@ -67,6 +67,44 @@ namespace VhcXTests.Functions.Reporting.Html.VBR.VbrTables.OrphanedSupersededBac
         }
 
         [Fact]
+        public void Render_NestedObjectRow_ShowsBackupIdSoReaderCanCompareChains()
+        {
+            // BackupId is deliberately not part of the aggregator's grouping
+            // key (a per-VM-chains-enabled repository gives every object its
+            // own distinct BackupId - grouping on it would explode one job's
+            // roll-up into one row per object). Surfacing it per-object here
+            // instead lets a reader tell whether two objects under the same
+            // job share a retention chain or come from separate ones.
+            var table = new COrphanedSupersededBackupsTable();
+            var record = JobRecord("repo-1", "Repo01 (Local ReFS)", "Proxmox - Malware Lab", "Orphaned");
+            record.Objects[0].BackupId = "11111111-2222-3333-4444-555555555555";
+
+            string html = table.Render(new List<OrphanedSupersededBackupRecord> { record }, sweepEvaluated: true, scrub: false, out string summary);
+
+            Assert.Contains("11111111-2222-3333-4444-555555555555", html);
+        }
+
+        [Fact]
+        public void Render_NamesContainingAngleBrackets_AreHtmlEncodedNotInjected()
+        {
+            // JobName/ObjectName/RepositoryName are free-text VBR fields -
+            // unescaped, a name containing '<'/'>' that happens to parse as
+            // a tag would corrupt the surrounding table markup.
+            var table = new COrphanedSupersededBackupsTable();
+            var record = JobRecord("repo-1", "Repo<script>alert(1)</script>", "Job<b>Name</b>", "Orphaned");
+            record.Objects[0].ObjectName = "Obj<img src=x>Name";
+
+            string html = table.Render(new List<OrphanedSupersededBackupRecord> { record }, sweepEvaluated: true, scrub: false, out string summary);
+
+            Assert.DoesNotContain("<script>", html);
+            Assert.DoesNotContain("<b>Name</b>", html);
+            Assert.DoesNotContain("<img src=x>", html);
+            Assert.Contains("&lt;script&gt;", html);
+            Assert.Contains("&lt;b&gt;Name&lt;/b&gt;", html);
+            Assert.Contains("&lt;img src=x&gt;", html);
+        }
+
+        [Fact]
         public void Render_NoRecordsAndSweepEvaluated_ShowsNoDataMessage()
         {
             var table = new COrphanedSupersededBackupsTable();

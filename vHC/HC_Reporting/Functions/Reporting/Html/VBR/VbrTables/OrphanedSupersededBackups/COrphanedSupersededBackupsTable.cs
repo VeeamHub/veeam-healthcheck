@@ -1,6 +1,8 @@
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
+using System.Net;
 using VeeamHealthCheck.Functions.Reporting.CsvHandlers;
 using VeeamHealthCheck.Functions.Reporting.DataFormers.OrphanedSupersededBackups;
 using VeeamHealthCheck.Scrubber;
@@ -197,8 +199,8 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR.VbrTables.OrphanedSupers
                 }
 
                 s += $"<div class=\"orphaned-repo-group\">";
-                s += $"<div class=\"orphaned-repo-header\"><strong>{repoLabel}</strong>";
-                s += $"<span class=\"label\">{repoRecords.Count} backups flagged &middot; ~{repoTotalGb:N0} GB potentially reclaimable</span></div>";
+                s += $"<div class=\"orphaned-repo-header\"><strong>{WebUtility.HtmlEncode(repoLabel)}</strong>";
+                s += $"<span class=\"label\">{repoRecords.Count} backups flagged &middot; ~{repoTotalGb.ToString("N0", CultureInfo.InvariantCulture)} GB potentially reclaimable</span></div>";
                 s += "<table><thead><tr>";
                 s += "<th></th><th>Job Name</th><th>Status</th><th>Original Job Type</th><th>Fulls</th><th>Incrementals</th><th>Total Size</th><th>Oldest RP</th><th>Newest RP</th>";
                 s += "</tr></thead><tbody>";
@@ -221,12 +223,12 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR.VbrTables.OrphanedSupers
 
                     s += "<tr class=\"detail-toggle\" onclick=\"toggleDetailRow(this)\">";
                     s += "<td>&#9656;</td>";
-                    s += $"<td>{jobName}</td>";
+                    s += $"<td>{WebUtility.HtmlEncode(jobName)}</td>";
                     s += $"<td><span class=\"badge {badgeClass}\">{job.Category}</span></td>";
                     s += $"<td>{job.OriginalJobType}</td>";
                     s += $"<td>{job.FullCount}</td>";
                     s += $"<td>{job.IncrementalCount}</td>";
-                    s += $"<td>{totalGb:N1} GB</td>";
+                    s += $"<td>{totalGb.ToString("N1", CultureInfo.InvariantCulture)} GB</td>";
                     s += $"<td>{job.OldestRestorePoint:yyyy-MM-dd}</td>";
                     s += $"<td>{job.NewestRestorePoint:yyyy-MM-dd}</td>";
                     s += "</tr>";
@@ -238,7 +240,14 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR.VbrTables.OrphanedSupers
                         CategorySuperseded => "<p class=\"label\">Still a live job - these points belong to an object no longer part of its currently-active membership.</p>",
                         _ => "<p class=\"label\">Unrecognized category - showing raw data without further interpretation.</p>",
                     };
-                    s += "<table><thead><tr><th>Object</th><th>ObjectId</th><th>Fulls</th><th>Incrementals</th><th>Avg Full Size</th><th>Avg Incremental Size</th><th>Total Size</th><th>Oldest</th><th>Newest</th></tr></thead><tbody>";
+                    // BackupId shown per-object rather than used to group
+                    // jobs (see Build()'s comment): a per-VM-chains-enabled
+                    // repository gives every object its own distinct
+                    // BackupId, so a reader comparing two objects' BackupId
+                    // values here can tell whether they share a retention
+                    // chain or come from entirely separate ones, without the
+                    // table exploding into one row per object.
+                    s += "<table><thead><tr><th>Object</th><th>ObjectId</th><th>BackupId</th><th>Fulls</th><th>Incrementals</th><th>Avg Full Size</th><th>Avg Incremental Size</th><th>Total Size</th><th>Oldest</th><th>Newest</th></tr></thead><tbody>";
                     foreach (var obj in job.Objects.OrderBy(o => o.OldestRestorePoint))
                     {
                         // ScrubItemType.VM, not .Item: ObjectName is "source
@@ -258,13 +267,14 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR.VbrTables.OrphanedSupers
                         // fields like CUserRolesTable's Description).
                         string objName = scrub ? CGlobals.Scrubber.ScrubItem(obj.ObjectName, ScrubItemType.VM) : obj.ObjectName;
                         s += "<tr>";
-                        s += $"<td>{objName}</td>";
+                        s += $"<td>{WebUtility.HtmlEncode(objName)}</td>";
                         s += $"<td>{obj.ObjectId}</td>";
+                        s += $"<td>{obj.BackupId}</td>";
                         s += $"<td>{obj.FullCount}</td>";
                         s += $"<td>{obj.IncrementalCount}</td>";
-                        s += $"<td>{obj.AvgFullSizeBytes / 1073741824d:N1} GB</td>";
-                        s += $"<td>{obj.AvgIncrementalSizeBytes / 1073741824d:N1} GB</td>";
-                        s += $"<td>{obj.TotalSizeBytes / 1073741824d:N1} GB</td>";
+                        s += $"<td>{(obj.AvgFullSizeBytes / 1073741824d).ToString("N1", CultureInfo.InvariantCulture)} GB</td>";
+                        s += $"<td>{(obj.AvgIncrementalSizeBytes / 1073741824d).ToString("N1", CultureInfo.InvariantCulture)} GB</td>";
+                        s += $"<td>{(obj.TotalSizeBytes / 1073741824d).ToString("N1", CultureInfo.InvariantCulture)} GB</td>";
                         s += $"<td>{obj.OldestRestorePoint:yyyy-MM-dd}</td>";
                         s += $"<td>{obj.NewestRestorePoint:yyyy-MM-dd}</td>";
                         s += "</tr>";
@@ -276,7 +286,7 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR.VbrTables.OrphanedSupers
             }
 
             summary = (sweepEvaluated ? "" : "Orphaned Backups: not evaluated for this environment. ")
-                + $"{grandTotalCount} orphaned/superseded backups found, ~{grandTotalBytes / 1073741824d:N0} GB potentially reclaimable.";
+                + $"{grandTotalCount} orphaned/superseded backups found, ~{(grandTotalBytes / 1073741824d).ToString("N0", CultureInfo.InvariantCulture)} GB potentially reclaimable.";
             return s;
         }
     }

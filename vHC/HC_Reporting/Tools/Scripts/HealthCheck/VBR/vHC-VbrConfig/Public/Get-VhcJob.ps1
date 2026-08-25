@@ -272,6 +272,21 @@ function Get-VhcJob {
             try { Write-LogFile "Restore point sweep failed: $($_.Exception.Message)" -LogLevel "ERROR" } catch {}
             Add-VhciModuleError -CollectorName 'Jobs' -ErrorMessage $_.Exception.Message
             $NeedsSweep = $false
+
+            # A throw partway through Tier 1/Tier 2 (above) can leave some
+            # Unresolved/Tier2Suppressed entries already added to
+            # CandidateGroups before the failure - Clear() them so
+            # SweepRan=false actually means "no Unresolved/Tier2Suppressed
+            # entries present" (the invariant this cache's own doc comment,
+            # a few lines above, states as a hard fact). Otherwise
+            # Get-VhcOrphanedSupersededBackups.ps1 - which doesn't gate its
+            # CandidateGroups loop on SweepRan - would render a table of
+            # Orphaned/Superseded rows sourced from a known-incomplete sweep
+            # at the same time as the "not evaluated" banner: an internally
+            # contradictory report. Safe to clear unconditionally here:
+            # StaleObject entries are added later, in the separate per-job
+            # loop below, which hasn't run yet at this point.
+            $script:VhcOrphanedSupersededCache.CandidateGroups.Clear()
         }
     }
     $script:VhcOrphanedSupersededCache.SweepRan = $NeedsSweep
@@ -486,4 +501,15 @@ function Get-VhcJob {
     $configBackup | Export-VhciCsv -FileName '_configBackup.csv'
 
     Write-LogFile ($message + "DONE")
+
+    # Returned explicitly so Get-VBRConfig.ps1 can pass this same object to
+    # Get-VhcOrphanedSupersededBackups -OrphanedSupersededCache, instead of
+    # that function reaching for $script:VhcOrphanedSupersededCache as an
+    # implicit side effect of this function having already run in the same
+    # collection pass - an ordering dependency that used to be enforced only
+    # by a comment on the caller. The script-scoped variable is still set
+    # too (untouched above), so nothing here changes for direct/standalone
+    # callers - including this function's own Pester tests, which read it
+    # back via $script:VhcOrphanedSupersededCache after calling Get-VhcJob.
+    return $script:VhcOrphanedSupersededCache
 }

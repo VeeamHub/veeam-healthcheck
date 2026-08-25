@@ -126,6 +126,39 @@ Describe 'Get-VhcOrphanedSupersededBackups' {
         $script:CapturedRows[0].CurrentJobId | Should -Be ([guid]::Empty).ToString()
     }
 
+    It 'uses the explicit -OrphanedSupersededCache parameter over $script:VhcOrphanedSupersededCache when both are present' {
+        # Get-VBRConfig.ps1 now passes Get-VhcJob's return value here
+        # explicitly, rather than relying on this function reaching for
+        # $script:VhcOrphanedSupersededCache as an implicit side effect of
+        # Get-VhcJob having already run first in the same collection pass.
+        # The explicit parameter must win when both are present, and this
+        # function must work correctly using ONLY the parameter - proving
+        # the hidden collector-ordering dependency is gone.
+        $Backup = script:New-FakeBackupObject -Name 'Explicit Param Job' -TypeToString 'VMware Backup'
+        $Point  = script:New-FakeCandidateRestorePoint -Name 'vm-explicit' -Type 'Full' -ApproxSize 5GB -BackupObject $Backup
+        $ExplicitCache = [PSCustomObject]@{
+            SweepRan        = $true
+            CandidateGroups = [System.Collections.Generic.List[object]]::new()
+        }
+        $ExplicitCache.CandidateGroups.Add([PSCustomObject]@{
+            Reason        = 'Unresolved'
+            CurrentJobId  = $null
+            RestorePoints = @($Point)
+        })
+        # Deliberately different/stale script-scoped cache, to prove the
+        # explicit parameter - not this - is what gets read.
+        $script:VhcOrphanedSupersededCache = [PSCustomObject]@{
+            SweepRan        = $false
+            CandidateGroups = [System.Collections.Generic.List[object]]::new()
+        }
+
+        Get-VhcOrphanedSupersededBackups -OrphanedSupersededCache $ExplicitCache
+
+        $script:CapturedRows | Should -HaveCount 1
+        $script:CapturedRows[0].JobName | Should -Be 'Explicit Param Job'
+        $script:CapturedMeta[0].SweepRan | Should -BeTrue
+    }
+
     It 'exports a Superseded row for a Tier2Suppressed/StaleObject group, using the given CurrentJobId' {
         $Backup = script:New-FakeBackupObject -Name 'VBR Managed Agents - Windows' -TypeToString 'Windows Agent Policy'
         $Point  = script:New-FakeCandidateRestorePoint -Name 'WindowsAgent08' -Type 'Increment' -ApproxSize 8GB -BackupObject $Backup

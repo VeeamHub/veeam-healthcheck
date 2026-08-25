@@ -36,6 +36,18 @@ namespace VeeamHealthCheck.Functions.Reporting.DataFormers.OrphanedSupersededBac
                 return result;
             }
 
+            // BackupId is deliberately NOT part of the grouping key: per ADR
+            // 0027, whether a job's VMs share one BackupId or each get their
+            // own is a per-repository setting (per-VM chains enabled/
+            // disabled), not something this code controls. On a per-VM-
+            // chains-enabled repository (the common case), every object in a
+            // multi-object job already has a distinct BackupId - grouping on
+            // it would fragment one job's roll-up into one row per object,
+            // defeating the point of nesting objects under a single
+            // JobRecord. BackupId is surfaced per-object instead (see
+            // OrphanedSupersededObjectRecord.BackupId, rendered in the
+            // nested detail table below) so a reader can still tell whether
+            // two objects share a chain without the table exploding in size.
             var groups = rows
                 .Select(MapRow)
                 .Where(r => r != null)
