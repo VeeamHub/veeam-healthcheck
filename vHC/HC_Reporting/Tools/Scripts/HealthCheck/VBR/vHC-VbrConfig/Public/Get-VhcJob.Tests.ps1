@@ -1456,6 +1456,17 @@ Describe 'Stale-ObjectId guard: GetObjectsInJob() cross-reference' {
         # zeroes OnDiskGB for the WHOLE job - not just the one point -
         # and logs a misleading "Could not calculate restore point
         # sizes" WARNING.
+        #
+        # Fixture order matters: the null-ObjectId point is placed FIRST,
+        # the real match SECOND. The $MatchedAny loop `break`s on the
+        # first match it finds - with the real point first (as an earlier
+        # version of this test had it), $MatchedAny short-circuits before
+        # ever reaching the null-ObjectId point, leaving that loop's own
+        # null guard completely unexercised (confirmed empirically: an
+        # earlier ordering here still passed 52/52 with that loop's guard
+        # condition deleted). Null-first forces the $MatchedAny loop to
+        # evaluate the null-ObjectId point's guard before it ever finds a
+        # match, so both loops' null guards are pinned by one test.
         $script:LogMessages = [System.Collections.Generic.List[string]]::new()
         Mock Write-LogFile -MockWith { $script:LogMessages.Add($Message) }
         $CurrentId = [guid]'99999999-9999-9999-9999-999999999993'
@@ -1466,7 +1477,7 @@ Describe 'Stale-ObjectId guard: GetObjectsInJob() cross-reference' {
         $NullIdPoint | Add-Member -MemberType ScriptMethod -Name GetStorage -Value { [PSCustomObject]@{ Stats = [PSCustomObject]@{ BackupSize = 20GB } } }
         $FakeJob | Add-Member -MemberType ScriptMethod -Name GetLastBackup -Value { @($CurrentPoint) } -Force
         Mock Get-VBRRestorePoint -MockWith {
-            if ($null -ne $Backup) { @($CurrentPoint, $NullIdPoint) } else { @() }
+            if ($null -ne $Backup) { @($NullIdPoint, $CurrentPoint) } else { @() }
         }
 
         { Get-VhcJob } | Should -Not -Throw
