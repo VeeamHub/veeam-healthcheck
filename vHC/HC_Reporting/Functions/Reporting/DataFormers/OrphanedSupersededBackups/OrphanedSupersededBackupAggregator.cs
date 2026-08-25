@@ -2,6 +2,8 @@ using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
+using VeeamHealthCheck.Shared;
+using VeeamHealthCheck.Shared.Logging;
 
 namespace VeeamHealthCheck.Functions.Reporting.DataFormers.OrphanedSupersededBackups
 {
@@ -15,6 +17,17 @@ namespace VeeamHealthCheck.Functions.Reporting.DataFormers.OrphanedSupersededBac
     /// </summary>
     public static class OrphanedSupersededBackupAggregator
     {
+        private static readonly CLogger Log = CGlobals.Logger;
+        private static readonly string LogPrefix = "[OrphanedSupersededBackupAggregator]\t";
+
+        // Matches the invariant "o" (round-trip) format
+        // Get-VhcOrphanedSupersededBackups.ps1 now explicitly pins for
+        // OldestRestorePoint/NewestRestorePoint before Export-Csv, instead of
+        // relying on Export-Csv's implicit current-culture ToString(). Must
+        // stay in lock-step with that script's
+        // CreationTimeUtc.ToString('o', [CultureInfo]::InvariantCulture) call.
+        private const string DateWireFormat = "o";
+
         public static List<OrphanedSupersededBackupRecord> Build(IEnumerable<dynamic> rows)
         {
             var result = new List<OrphanedSupersededBackupRecord>();
@@ -56,6 +69,70 @@ namespace VeeamHealthCheck.Functions.Reporting.DataFormers.OrphanedSupersededBac
 
         private static MappedRow MapRow(dynamic row)
         {
+            object rawFullCount;
+            object rawIncrementalCount;
+            object rawAvgFull;
+            object rawAvgIncremental;
+            object rawTotalSize;
+            object rawOldest;
+            object rawNewest;
+
+            try
+            {
+                rawFullCount = row.FullCount;
+                rawIncrementalCount = row.IncrementalCount;
+                rawAvgFull = row.AvgFullSizeBytes;
+                rawAvgIncremental = row.AvgIncrementalSizeBytes;
+                rawTotalSize = row.TotalSizeBytes;
+                rawOldest = row.OldestRestorePoint;
+                rawNewest = row.NewestRestorePoint;
+            }
+            catch (Exception ex)
+            {
+                Log.Warning($"{LogPrefix}Dropping a row from _orphanedSupersededBackups.csv: could not read its columns: {ex.Message}");
+                return null;
+            }
+
+            // TryParse/TryParseExact, not the throwing Parse overloads: a
+            // malformed value in one row must drop only that row, with a
+            // diagnostic saying which field and what the raw value was, not
+            // silently vanish into a generic catch (the same "silent drop"
+            // failure mode the PS1 script's null-ObjectId handling was
+            // written to avoid - see that script's comments).
+            if (!int.TryParse((string)rawFullCount, NumberStyles.Integer, CultureInfo.InvariantCulture, out int fullCount))
+            {
+                return LogAndDrop("FullCount", rawFullCount);
+            }
+            if (!int.TryParse((string)rawIncrementalCount, NumberStyles.Integer, CultureInfo.InvariantCulture, out int incrementalCount))
+            {
+                return LogAndDrop("IncrementalCount", rawIncrementalCount);
+            }
+            if (!double.TryParse((string)rawAvgFull, NumberStyles.Float, CultureInfo.InvariantCulture, out double avgFullSizeBytes))
+            {
+                return LogAndDrop("AvgFullSizeBytes", rawAvgFull);
+            }
+            if (!double.TryParse((string)rawAvgIncremental, NumberStyles.Float, CultureInfo.InvariantCulture, out double avgIncrementalSizeBytes))
+            {
+                return LogAndDrop("AvgIncrementalSizeBytes", rawAvgIncremental);
+            }
+            if (!double.TryParse((string)rawTotalSize, NumberStyles.Float, CultureInfo.InvariantCulture, out double totalSizeBytes))
+            {
+                return LogAndDrop("TotalSizeBytes", rawTotalSize);
+            }
+
+            // ParseExact against the exact "o" wire format the PS1 producer
+            // now pins explicitly (DateTime.Parse would otherwise still
+            // accept - and misparse - a current-culture-formatted date if one
+            // ever slipped through, e.g. day/month swapped on a dd/MM host).
+            if (!DateTime.TryParseExact((string)rawOldest, DateWireFormat, CultureInfo.InvariantCulture, DateTimeStyles.RoundtripKind, out DateTime oldestRestorePoint))
+            {
+                return LogAndDrop("OldestRestorePoint", rawOldest);
+            }
+            if (!DateTime.TryParseExact((string)rawNewest, DateWireFormat, CultureInfo.InvariantCulture, DateTimeStyles.RoundtripKind, out DateTime newestRestorePoint))
+            {
+                return LogAndDrop("NewestRestorePoint", rawNewest);
+            }
+
             try
             {
                 var obj = new OrphanedSupersededObjectRecord
@@ -63,13 +140,13 @@ namespace VeeamHealthCheck.Functions.Reporting.DataFormers.OrphanedSupersededBac
                     ObjectId = row.ObjectId,
                     BackupId = row.BackupId,
                     ObjectName = row.ObjectName,
-                    FullCount = int.Parse((string)row.FullCount, CultureInfo.InvariantCulture),
-                    IncrementalCount = int.Parse((string)row.IncrementalCount, CultureInfo.InvariantCulture),
-                    AvgFullSizeBytes = double.Parse((string)row.AvgFullSizeBytes, CultureInfo.InvariantCulture),
-                    AvgIncrementalSizeBytes = double.Parse((string)row.AvgIncrementalSizeBytes, CultureInfo.InvariantCulture),
-                    TotalSizeBytes = double.Parse((string)row.TotalSizeBytes, CultureInfo.InvariantCulture),
-                    OldestRestorePoint = DateTime.Parse((string)row.OldestRestorePoint, CultureInfo.InvariantCulture),
-                    NewestRestorePoint = DateTime.Parse((string)row.NewestRestorePoint, CultureInfo.InvariantCulture),
+                    FullCount = fullCount,
+                    IncrementalCount = incrementalCount,
+                    AvgFullSizeBytes = avgFullSizeBytes,
+                    AvgIncrementalSizeBytes = avgIncrementalSizeBytes,
+                    TotalSizeBytes = totalSizeBytes,
+                    OldestRestorePoint = oldestRestorePoint,
+                    NewestRestorePoint = newestRestorePoint,
                 };
 
                 return new MappedRow
@@ -83,10 +160,17 @@ namespace VeeamHealthCheck.Functions.Reporting.DataFormers.OrphanedSupersededBac
                     ObjectRecord = obj,
                 };
             }
-            catch
+            catch (Exception ex)
             {
+                Log.Warning($"{LogPrefix}Dropping a row from _orphanedSupersededBackups.csv: unexpected error mapping its remaining columns: {ex.Message}");
                 return null;
             }
+        }
+
+        private static MappedRow LogAndDrop(string fieldName, object rawValue)
+        {
+            Log.Warning($"{LogPrefix}Dropping a row from _orphanedSupersededBackups.csv: could not parse column '{fieldName}' (raw value: '{rawValue}').");
+            return null;
         }
 
         private class MappedRow

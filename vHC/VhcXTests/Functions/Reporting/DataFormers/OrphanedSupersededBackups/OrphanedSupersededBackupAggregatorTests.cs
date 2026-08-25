@@ -36,6 +36,43 @@ namespace VhcXTests.Functions.Reporting.DataFormers.OrphanedSupersededBackups
             return row;
         }
 
+        /// <summary>
+        /// Builds a row from literal wire-format strings instead of the
+        /// <c>Row</c> helper's <c>.ToString()</c>/<c>.ToString("O")</c>
+        /// shortcuts. Those shortcuts are already culture-invariant by
+        /// construction (a bare <c>double.ToString()</c> on a whole-GB
+        /// fixture never shows a decimal separator, and "O" is already
+        /// invariant ISO 8601) - they can't catch the bug class this class
+        /// exists to guard against. <c>RawRow</c> lets a test hand-pick the
+        /// exact strings the producer (Get-VhcOrphanedSupersededBackups.ps1)
+        /// now writes, or a deliberately malformed one.
+        /// </summary>
+        private static dynamic RawRow(
+            string repositoryId, string repositoryName, string jobName, string currentJobId, string category,
+            string originalJobType, string objectId, string backupId, string objectName,
+            string fullCount, string incrementalCount, string avgFull, string avgIncremental,
+            string totalSize, string oldest, string newest)
+        {
+            dynamic row = new ExpandoObject();
+            row.RepositoryId = repositoryId;
+            row.RepositoryName = repositoryName;
+            row.JobName = jobName;
+            row.CurrentJobId = currentJobId;
+            row.Category = category;
+            row.OriginalJobType = originalJobType;
+            row.ObjectId = objectId;
+            row.BackupId = backupId;
+            row.ObjectName = objectName;
+            row.FullCount = fullCount;
+            row.IncrementalCount = incrementalCount;
+            row.AvgFullSizeBytes = avgFull;
+            row.AvgIncrementalSizeBytes = avgIncremental;
+            row.TotalSizeBytes = totalSize;
+            row.OldestRestorePoint = oldest;
+            row.NewestRestorePoint = newest;
+            return row;
+        }
+
         [Fact]
         public void Build_SingleObjectRow_ProducesOneJobRecordWithOneObject()
         {
@@ -116,6 +153,91 @@ namespace VhcXTests.Functions.Reporting.DataFormers.OrphanedSupersededBackups
             var result = OrphanedSupersededBackupAggregator.Build(new List<dynamic>());
 
             Assert.Empty(result);
+        }
+
+        [Fact]
+        public void Build_NullInput_ReturnsEmptyList()
+        {
+            var result = OrphanedSupersededBackupAggregator.Build(null);
+
+            Assert.Empty(result);
+        }
+
+        [Fact]
+        public void Build_RealProducerWireFormat_RoundTripsCorrectly()
+        {
+            // Regression test for a real bug (empirically verified):
+            // Get-VhcOrphanedSupersededBackups.ps1 used to let Export-Csv
+            // stringify AvgFullSizeBytes/AvgIncrementalSizeBytes/
+            // TotalSizeBytes/OldestRestorePoint/NewestRestorePoint using the
+            // COLLECTING HOST'S CURRENT CULTURE, while this aggregator always
+            // parsed them with CultureInfo.InvariantCulture. On a
+            // comma-decimal host, double.Parse("8500000000,5",
+            // InvariantCulture) silently returned 85000000005 (~10x
+            // inflated, no exception, because the default NumberStyles for
+            // that overload allows a stray "," as a thousands separator).
+            // On a dd/MM host, DateTime.Parse("07.03.2026 10:30:00",
+            // InvariantCulture) silently swapped day and month. The fix
+            // pins an explicit invariant wire format at the producer (period
+            // decimal via .ToString([CultureInfo]::InvariantCulture); ISO
+            // 8601 round-trip via .ToString('o', ...)) and tightens the
+            // consumer to NumberStyles.Float (no AllowThousands, so a stray
+            // "," is now rejected rather than silently absorbed) and
+            // DateTime.TryParseExact("o", ...). This test uses literal
+            // strings in exactly that wire format - including a genuinely
+            // fractional size (not a whole-GB multiple, so a comma-vs-period
+            // mistake would actually show) and a day/month-ambiguous-looking
+            // date - to prove the round trip is correct end to end.
+            var rows = new List<dynamic>
+            {
+                RawRow("repo-1", "Repo01 (Local ReFS)", "VMware - Culture Check", Guid.Empty.ToString(), "Orphaned",
+                    "VMware Backup", "obj-1", "backup-1", "CultureCheckVM",
+                    "1", "0", "8500000000.5", "0", "8500000000.5",
+                    "2026-03-07T10:30:00.0000000Z", "2026-03-07T10:30:00.0000000Z")
+            };
+
+            var result = OrphanedSupersededBackupAggregator.Build(rows);
+
+            Assert.Single(result);
+            var obj = Assert.Single(result[0].Objects);
+            Assert.Equal(8500000000.5, obj.AvgFullSizeBytes);
+            Assert.Equal(8500000000.5, obj.TotalSizeBytes);
+            // Not just DateTime equality (which ignores Kind and could in
+            // principle be satisfied by a coincidentally-equal tick count) -
+            // Month/Day are asserted explicitly since a day/month swap is
+            // exactly the failure mode this test guards against.
+            Assert.Equal(3, obj.OldestRestorePoint.Month);
+            Assert.Equal(7, obj.OldestRestorePoint.Day);
+            Assert.Equal(2026, obj.OldestRestorePoint.Year);
+        }
+
+        [Fact]
+        public void Build_RowWithUnparseableNumericField_DropsOnlyThatRowWithoutThrowing()
+        {
+            // MapRow logs a warning (via CGlobals.Logger, matching
+            // CImportPathResolver's static-logger convention) naming the
+            // failed column and its raw value before dropping the row - not
+            // asserted here (this codebase's existing logger-touching tests,
+            // e.g. CImportPathResolverTests, don't intercept CGlobals.Logger
+            // output either), but the behavioral contract - one bad row
+            // never takes down the whole Build() call or any sibling row -
+            // is what this test proves.
+            var rows = new List<dynamic>
+            {
+                Row("repo-1", "Repo01 (Local ReFS)", "Good Job", "job-1", "Superseded",
+                    "VMware Backup", "obj-good", "backup-good", "GoodVM",
+                    1, 0, 10_000_000_000, 0, 10_000_000_000,
+                    new DateTime(2026, 1, 1), new DateTime(2026, 1, 1)),
+                RawRow("repo-1", "Repo01 (Local ReFS)", "Bad Job", "job-2", "Superseded",
+                    "VMware Backup", "obj-bad", "backup-bad", "BadVM",
+                    "not-a-number", "0", "10000000000", "0", "10000000000",
+                    "2026-01-01T00:00:00.0000000", "2026-01-01T00:00:00.0000000"),
+            };
+
+            var result = OrphanedSupersededBackupAggregator.Build(rows);
+
+            Assert.Single(result);
+            Assert.Equal("Good Job", result[0].JobName);
         }
     }
 }
