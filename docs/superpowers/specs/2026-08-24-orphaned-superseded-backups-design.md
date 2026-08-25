@@ -99,10 +99,16 @@ is uniform regardless of which mechanism flagged the row. Confirmed live:
 deleted still returns a valid object with `JobName`, `TypeToString`, and
 `RepositoryId` populated, `JobId` zeroed.
 
-Two independent detection paths feed the same classification, deliberately
-*not* unified into one mechanism (unifying would require confirming
-`GetObjectsInJob()` behaves reliably across every plugin platform, which
-isn't worth blocking this feature on):
+Two independent detection paths feed the same classification, kept
+separate rather than merged into one mechanism — not because
+`GetObjectsInJob()` is avoided for plugin-platform job types (the guard
+below is exactly what makes it safe to run there without per-platform
+confirmation first), but because the two mechanisms catch different
+things: Tier 2 suppression-retention catches a job with *multiple resolved
+`BackupId` chains* where tier ordering excluded one, while the
+`GetObjectsInJob()` cross-reference catches a *specific stale `ObjectId`*
+regardless of how many chains a job has. Neither subsumes the other, so
+both run for every swept job type:
 
 - **Swept job types** (ADR 0022 non-allowlisted): reuse the existing Tier
   1/Tier 2 grouping. Tier 2-*suppressed* groups — today discarded via a bare
@@ -137,6 +143,17 @@ isn't worth blocking this feature on):
   (0 of 9 match — self-evidently broken) from the legitimate detection case
   a rebuilt machine produces (the current object still matches; only the
   stale one doesn't).
+
+  **Accepted residual risk:** a job whose entire membership was
+  legitimately swapped out (100% stale, 0% overlap — e.g. every VM in a
+  job was replaced at once) looks identical to the Cloud Director failure
+  signature and gets skipped rather than flagged. That's a false negative
+  (misses real Superseded data), not a false positive (never misattributes
+  data to the wrong job or zeroes a real size) — consistent with this
+  design's existing bias elsewhere (the accepted Category A gap, and
+  `Get-VhcJob.ps1`'s own sweep-failure handling, which falls back to the
+  per-job path rather than zeroing every job). Scheduled for multi-lab
+  validation rather than solved here.
 
 **Orphaned detection requires the global sweep to have run at all.**
 Environments made entirely of ADR 0022 "safe" allowlist job types never
@@ -320,6 +337,13 @@ size by nature.
     allowlisted or plugin-platform job type actually encountered in the
     test labs, now that the safety guard reduces (but doesn't eliminate)
     the cost of being wrong about a given type.
+  - Confirm the added per-job `GetObjectsInJob()` call is negligible cost
+    in a large, 100%-safe-allowlist environment — previously zero extra
+    cost there, since the check didn't run at all before it was decoupled
+    from `$NeedsSweep`. It's a per-job, not per-restore-point, call, so it
+    should stay cheap under ADR 0022's cost model, but this feature's
+    history of performance surprises (that's the whole reason ADR 0022
+    exists) makes it worth confirming rather than assuming.
 
 ## Documentation
 
@@ -346,9 +370,9 @@ size by nature.
   confirmed-bad case (Cloud Director) is still unconfirmed; the zero-overlap
   safety guard bounds the damage from being wrong, but multi-lab validation
   should still exercise it directly rather than relying on the guard alone.
-  Shipping the two detection mechanisms separately (this design) avoids
-  blocking on full generalization confirmation; unifying them remains a
-  future simplification if it turns out to generalize.
+  The two detection mechanisms stay separate regardless of what that
+  validation finds — they catch genuinely different failure shapes (see
+  Detection, above), not just "not yet confirmed to generalize."
 - Multi-lab validation (see Testing) happens before, not after, the PR is
   raised — if it surfaces problems with the accepted Category A gap, the
   fallback is forcing the global sweep unconditionally and superseding ADR
