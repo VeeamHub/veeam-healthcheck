@@ -167,6 +167,46 @@ namespace VhcXTests.Functions.Reporting.Html.VBR.VbrTables.OrphanedSupersededBac
             Assert.DoesNotContain("pve-vm-201", html);
         }
 
+        [Fact]
+        public void ScrubRecordsForExport_AnonymizesNamesButPreservesGuidsAndCounts()
+        {
+            // Regression test: AddOrphanedSupersededBackupsTable
+            // (CHtmlTables.cs) persists these records into
+            // CGlobals.FullReportJson, the scrubbed-JSON export - but
+            // Render() above only ever scrubbed local HTML string
+            // variables, never the record objects themselves, so that JSON
+            // export leaked real RepositoryName/JobName/ObjectName even
+            // when scrub=true. ScrubRecordsForExport must apply the exact
+            // same scrubbing Render() applies to HTML, while leaving GUIDs
+            // and numeric fields untouched (matching Render()'s own
+            // convention of never scrubbing RepositoryId/ObjectId/BackupId).
+            var table = new COrphanedSupersededBackupsTable();
+            var records = new List<OrphanedSupersededBackupRecord>
+            {
+                JobRecord("repo-1", "Repo01 (Local ReFS)", "Proxmox - Malware Lab", "Orphaned")
+            };
+
+            var scrubbed = table.ScrubRecordsForExport(records);
+
+            var record = Assert.Single(scrubbed);
+            Assert.NotEqual("Repo01 (Local ReFS)", record.RepositoryName);
+            Assert.NotEqual("Proxmox - Malware Lab", record.JobName);
+            Assert.Equal("repo-1", record.RepositoryId);
+            var obj = Assert.Single(record.Objects);
+            Assert.NotEqual("pve-vm-201", obj.ObjectName);
+            Assert.Equal(1, obj.FullCount);
+        }
+
+        [Fact]
+        public void ScrubRecordsForExport_NullInput_ReturnsNull()
+        {
+            var table = new COrphanedSupersededBackupsTable();
+
+            var scrubbed = table.ScrubRecordsForExport(null);
+
+            Assert.Null(scrubbed);
+        }
+
         // The tests above build OrphanedSupersededBackupRecord/dynamic rows
         // by hand, so none of them go through the real CsvHelper dynamic-CSV
         // pipeline (CCsvParser.GetDynamicOrphanedSupersededBackups[Meta]) -

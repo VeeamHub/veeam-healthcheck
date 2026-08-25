@@ -879,7 +879,12 @@ namespace VeeamHealthCheck.Html.VBR
 
                 // CGlobals.FullReportJson is initialized inline at declaration
                 // (Common/CGlobals.cs:150) - never null, no ??= guard needed.
-                CGlobals.FullReportJson.OrphanedSupersededBackups = records;
+                // Must scrub the same way Render() just did for the HTML
+                // output above - otherwise the JSON export leaks real
+                // RepositoryName/JobName/ObjectName even when scrub=true.
+                CGlobals.FullReportJson.OrphanedSupersededBackups = scrub
+                    ? table.ScrubRecordsForExport(records)
+                    : records;
                 CGlobals.FullReportJson.OrphanedBackupsSweepEvaluated = sweepEvaluated;
             }
             catch (Exception e)

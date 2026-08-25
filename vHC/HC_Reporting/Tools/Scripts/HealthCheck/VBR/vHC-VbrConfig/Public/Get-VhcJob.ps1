@@ -313,8 +313,17 @@ function Get-VhcJob {
             if ($RestorePoints.Count -gt 0) {
                 $CurrentObjectIds = $null
                 try {
+                    # @(...), not a bare pipeline: PowerShell collapses a
+                    # zero-object pipeline result to $null rather than an
+                    # empty array, which [string[]] then leaves as $null too
+                    # - the HashSet constructor's `collection` parameter
+                    # rejects null outright (ArgumentNullException), so a
+                    # job with GetObjectsInJob() legitimately returning zero
+                    # current objects hit the catch below and got treated
+                    # identically to "GetObjectsInJob() itself threw", purely
+                    # by accident of this cast rather than by intent.
                     $CurrentObjectIds = [System.Collections.Generic.HashSet[string]]::new(
-                        [string[]]($Job.GetObjectsInJob() | ForEach-Object { $_.ObjectId.ToString() }),
+                        [string[]]@($Job.GetObjectsInJob() | ForEach-Object { $_.ObjectId.ToString() }),
                         [System.StringComparer]::OrdinalIgnoreCase
                     )
                 } catch {

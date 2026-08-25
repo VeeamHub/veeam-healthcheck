@@ -147,6 +147,34 @@ Describe 'Get-VhcOrphanedSupersededBackups' {
         $script:CapturedRows[0].CurrentJobId | Should -Be $RealJobId.ToString()
     }
 
+    It 'exports a Superseded row for a StaleObject group even when CurrentJobId is null' {
+        # Regression test: a StaleObject candidate (#197) always belongs to
+        # a live, currently-configured job by construction - Get-VhcJob.ps1
+        # only emits Reason='StaleObject' after confirming the job matched
+        # at least one of its own current restore points - but CurrentJobId
+        # can still be $null in the edge case where $Job.Id itself returned
+        # null. Category must come from Reason, not from CurrentJobId's
+        # truthiness, or this candidate gets misclassified as 'Orphaned'
+        # ("no live job") when the opposite is true.
+        $Backup = script:New-FakeBackupObject -Name 'VBR Managed Agents - Windows' -TypeToString 'Windows Agent Policy'
+        $Point  = script:New-FakeCandidateRestorePoint -Name 'WindowsAgent08' -Type 'Increment' -ApproxSize 8GB -BackupObject $Backup
+        $script:VhcOrphanedSupersededCache = [PSCustomObject]@{
+            SweepRan        = $true
+            CandidateGroups = [System.Collections.Generic.List[object]]::new()
+        }
+        $script:VhcOrphanedSupersededCache.CandidateGroups.Add([PSCustomObject]@{
+            Reason        = 'StaleObject'
+            CurrentJobId  = $null
+            RestorePoints = @($Point)
+        })
+
+        Get-VhcOrphanedSupersededBackups
+
+        $script:CapturedRows | Should -HaveCount 1
+        $script:CapturedRows[0].Category | Should -Be 'Superseded'
+        $script:CapturedRows[0].CurrentJobId | Should -Be ([guid]::Empty).ToString()
+    }
+
     It 'excludes a Tape Backup group entirely, regardless of Reason' {
         $Backup = script:New-FakeBackupObject -Name 'vm-vot-web02 Backup on Tape' -TypeToString 'Proxmox' -IsTapeBackup
         $Point  = script:New-FakeCandidateRestorePoint -Name 'vm-vot-web02' -BackupObject $Backup
@@ -314,6 +342,33 @@ Describe 'Get-VhcOrphanedSupersededBackups' {
 
         Get-VhcOrphanedSupersededBackups
 
+        $script:CapturedRows[0].RepositoryName | Should -BeNullOrEmpty
+    }
+
+    It 'treats a Guid.Empty RepositoryId as blank/unknown, not a literal all-zero-Guid value' {
+        # Regression test: [guid]::Empty is truthy in PowerShell ($g -eq
+        # [guid]::Empty doesn't make `if ($g)` false), so a "no repository"
+        # sentinel from the VBR SDK would otherwise pass the
+        # "$RepositoryId present" check, skip the blank-out, and get
+        # exported as the literal all-zero Guid string instead of blank -
+        # landing in a meaningless distinct group downstream instead of the
+        # C# table's "unknown" bucket (which only recognizes a true $null).
+        $Backup = script:New-FakeBackupObject -Name 'VMware - Malware' -TypeToString 'VMware Backup' -RepositoryId ([guid]::Empty)
+        $Point  = script:New-FakeCandidateRestorePoint -Name 'MALWARE' -Type 'Full' -ApproxSize 10GB -BackupObject $Backup
+        $script:VhcOrphanedSupersededCache = [PSCustomObject]@{
+            SweepRan        = $true
+            CandidateGroups = [System.Collections.Generic.List[object]]::new()
+        }
+        $script:VhcOrphanedSupersededCache.CandidateGroups.Add([PSCustomObject]@{
+            Reason        = 'Unresolved'
+            CurrentJobId  = $null
+            RestorePoints = @($Point)
+        })
+        $RepositoryDetails = @([PSCustomObject]@{ Id = [guid]::Empty; Name = 'Should not resolve' })
+
+        Get-VhcOrphanedSupersededBackups -RepositoryDetails $RepositoryDetails
+
+        $script:CapturedRows[0].RepositoryId   | Should -BeNullOrEmpty
         $script:CapturedRows[0].RepositoryName | Should -BeNullOrEmpty
     }
 

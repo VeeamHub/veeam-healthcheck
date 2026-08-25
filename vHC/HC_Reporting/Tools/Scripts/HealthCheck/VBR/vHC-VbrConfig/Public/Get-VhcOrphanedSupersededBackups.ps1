@@ -82,6 +82,22 @@ function Get-VhcOrphanedSupersededBackups {
                 try { $OriginalType = $ParentOrThis.TypeToString } catch {}
                 try { $RepositoryId = $ParentOrThis.RepositoryId } catch {}
 
+                # [guid]::Empty is truthy in PowerShell (`if ($g)` is $true
+                # even when $g -eq [guid]::Empty), so a "no repository"
+                # all-zero-Guid sentinel from the VBR SDK would otherwise
+                # pass the "$RepositoryId present" check below and the
+                # `RepositoryId = $RepositoryId` export a few lines down,
+                # landing in the CSV as the literal all-zero Guid string
+                # instead of blank/$null. Normalizing here, right after the
+                # read, means every downstream use (the RepositoryName
+                # lookup's truthiness check, and the exported column) treats
+                # it the same as a genuinely-missing RepositoryId - falling
+                # into the "unknown" bucket the C# table already has for
+                # $null (COrphanedSupersededBackupsTable.Render groups by
+                # `r.RepositoryId ?? "unknown"`), rather than a distinct,
+                # meaningless all-zero-Guid group.
+                if ($RepositoryId -eq [guid]::Empty) { $RepositoryId = $null }
+
                 # Same resolution Get-VhcJob.ps1 already does for its own
                 # RepoName column - RepositoryId alone is a bare Guid with no
                 # human-readable meaning to a report reader.
@@ -93,7 +109,20 @@ function Get-VhcOrphanedSupersededBackups {
                 }
 
                 $CurrentJobId = if ($Candidate.CurrentJobId) { $Candidate.CurrentJobId } else { [guid]::Empty.ToString() }
-                $Category     = if ($Candidate.CurrentJobId) { 'Superseded' } else { 'Orphaned' }
+
+                # Category must come from Candidate.Reason, not from
+                # CurrentJobId's truthiness: a 'StaleObject' candidate (#197)
+                # always belongs to a live, currently-configured job by
+                # construction (Get-VhcJob.ps1 only emits it after confirming
+                # $MatchedAny on that job's current membership) - but its
+                # CurrentJobId can still be $null in the edge case where
+                # $Job.Id itself returned null. Deriving Category from
+                # CurrentJobId's truthiness alone would misclassify that
+                # candidate as 'Orphaned' ("no live job") when the opposite
+                # is true. Only 'Unresolved' (Tier 1 + Tier 2 both failed to
+                # resolve any job) is genuinely Orphaned; 'Tier2Suppressed'
+                # and 'StaleObject' both name a real, current job.
+                $Category = if ($Candidate.Reason -eq 'Unresolved') { 'Orphaned' } else { 'Superseded' }
 
                 # A null ObjectId can't be safely merged under any key shared
                 # with another restore point - two unrelated null-ObjectId

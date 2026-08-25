@@ -90,6 +90,55 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR.VbrTables.OrphanedSupers
             }
         }
 
+        // AddOrphanedSupersededBackupsTable (CHtmlTables.cs) also persists
+        // records into CGlobals.FullReportJson, the DTO backing the
+        // "safe to share" scrubbed JSON export. Render() below only ever
+        // scrubs local HTML string variables - it never touches the record
+        // objects - so a caller that fed the raw `records` list straight
+        // into FullReportJson would leak real RepositoryName/JobName/
+        // ObjectName into that JSON export even when scrub=true. This
+        // produces a cloned, scrubbed copy using the exact same
+        // CGlobals.Scrubber.ScrubItem calls (and therefore the exact same
+        // per-value aliases) Render() uses for HTML, so the two exports
+        // stay consistent. RepositoryId/CurrentJobId/ObjectId/BackupId are
+        // left as-is, matching Render(): this codebase's scrub convention
+        // treats opaque GUIDs as non-identifying, same as the HTML table.
+        public List<OrphanedSupersededBackupRecord> ScrubRecordsForExport(List<OrphanedSupersededBackupRecord> records)
+        {
+            if (records == null)
+            {
+                return records;
+            }
+
+            return records.Select(r => new OrphanedSupersededBackupRecord
+            {
+                RepositoryId = r.RepositoryId,
+                RepositoryName = CGlobals.Scrubber.ScrubItem(r.RepositoryName, ScrubItemType.Repository),
+                JobName = CGlobals.Scrubber.ScrubItem(r.JobName, ScrubItemType.Job),
+                CurrentJobId = r.CurrentJobId,
+                Category = r.Category,
+                OriginalJobType = r.OriginalJobType,
+                FullCount = r.FullCount,
+                IncrementalCount = r.IncrementalCount,
+                TotalSizeBytes = r.TotalSizeBytes,
+                OldestRestorePoint = r.OldestRestorePoint,
+                NewestRestorePoint = r.NewestRestorePoint,
+                Objects = r.Objects.Select(o => new OrphanedSupersededObjectRecord
+                {
+                    ObjectId = o.ObjectId,
+                    BackupId = o.BackupId,
+                    ObjectName = CGlobals.Scrubber.ScrubItem(o.ObjectName, ScrubItemType.VM),
+                    FullCount = o.FullCount,
+                    IncrementalCount = o.IncrementalCount,
+                    AvgFullSizeBytes = o.AvgFullSizeBytes,
+                    AvgIncrementalSizeBytes = o.AvgIncrementalSizeBytes,
+                    TotalSizeBytes = o.TotalSizeBytes,
+                    OldestRestorePoint = o.OldestRestorePoint,
+                    NewestRestorePoint = o.NewestRestorePoint,
+                }).ToList(),
+            }).ToList();
+        }
+
         public string Render(List<OrphanedSupersededBackupRecord> records, bool sweepEvaluated, bool scrub, out string summary)
         {
             // Computed once, prepended regardless of whether there's other
