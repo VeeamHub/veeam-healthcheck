@@ -377,12 +377,15 @@ size by nature.
 - `CONTEXT.md` already updated with **Superseded Restore Point** (alongside
   the existing **Orphaned Restore Point** entry) during this design
   session.
-- A new ADR is expected during the implementation-planning phase, covering
-  the `GetObjectsInJob()`-based Superseded detection and
-  `GetParentOrThis()`-based repository/job-type resolution — both are
-  non-obvious, hard-to-reverse decisions with real trade-offs (per the
-  domain-modeling skill's ADR criteria), in the same vein as ADR
-  0021/0022/0023.
+- Five ADRs written after the implementation plan, covering the decisions
+  that clear the domain-modeling skill's bar (hard to reverse, surprising
+  without context, a real trade-off), in the same vein as ADR
+  0021/0022/0023:
+  - [ADR 0024](../../adr/0024-superseded-backup-detection-two-mechanisms.md) — Superseded detection via two independent mechanisms + the zero-overlap safety guard.
+  - [ADR 0025](../../adr/0025-orphaned-detection-bounded-by-sweep-gate.md) — Orphaned detection's dependency on the sweep, and the accepted coverage gap.
+  - [ADR 0026](../../adr/0026-tape-exclusion-via-istapebackup.md) — Tape exclusion via `IsTapeBackup`, not `TypeToString`.
+  - [ADR 0027](../../adr/0027-backupid-objectid-grain-correction.md) — the `(BackupId, ObjectId)` grain correction, which also corrects PR #194's own description.
+  - [ADR 0028](../../adr/0028-nested-json-via-dedicated-property.md) — nested JSON via a dedicated `CFullReportJson` property, not `SetSection`/`HtmlSection`.
 
 ## Open Items
 

@@ -23,7 +23,8 @@ across every protected machine's Restore Points, each with its own
 `ObjectId` — confirmed live with a 3-VM Hyper-V job. PR #194's own
 description described `BackupId` as scoped to one object's chain; that
 was accurate for the repositories tested there but isn't a general
-guarantee — don't rely on it elsewhere.
+guarantee — don't rely on it elsewhere. See
+[ADR 0027](docs/adr/0027-backupid-objectid-grain-correction.md).
 _Avoid_: Chain
 
 **Restore Point**:
@@ -83,7 +84,11 @@ _Avoid_: Unmanaged job
 A Restore Point with no resolvable owning Job — from a deleted job, an
 imported backup, or a machine removed from a Policy Job's current scope.
 Distinct from a Tape Backup's restore points, which are unmatched for a
-different, expected reason (see below).
+different, expected reason (see below). Detection requires the global
+restore-point sweep to have run at all — invisible in environments made
+entirely of [ADR 0022](docs/adr/0022-allowlist-gate-for-restore-point-sweep.md)'s
+safe-allowlist job types; see
+[ADR 0025](docs/adr/0025-orphaned-detection-bounded-by-sweep-gate.md).
 _Avoid_: Unmatched restore point (describes the symptom; use only when the
 cause is genuinely unknown)
 
@@ -94,9 +99,13 @@ an ObjectId no longer present in the Job's `GetObjectsInJob()` membership
 (e.g. a rebuilt/re-registered machine's pre-rebuild data), or a BackupId
 excluded by the Tier 2 suppression gate because the Job already has Tier 1
 matches elsewhere (see
-[ADR 0023](docs/adr/0023-backupid-grouped-tiered-matching-for-all-job-types.md)).
+[ADR 0023](docs/adr/0023-backupid-grouped-tiered-matching-for-all-job-types.md)
+and
+[ADR 0024](docs/adr/0024-superseded-backup-detection-two-mechanisms.md)).
 Distinct from an Orphaned Restore Point, whose owning Job doesn't resolve
-at all.
+at all, and from a Tape Backup's restore points, which are excluded from
+both categories entirely (see
+[ADR 0026](docs/adr/0026-tape-exclusion-via-istapebackup.md)).
 _Avoid_: Stale restore point, old chain (both describe the symptom, not
 the cause)
 
