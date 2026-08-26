@@ -314,6 +314,53 @@ function Get-VhcJob {
                 }
             }
 
+            # vApp-container exclusion (#193 double-count / #192 false-
+            # Superseded): confirmed live (VBR v13, 'VMware Cloud Director -
+            # vApp Backup') that GetObjectsInJob() returns a CObjectInJob
+            # entry for the vApp container itself, whose .Object is a
+            # Veeam.Backup.Core.CVcdHierarchyObject with Type='Vapp' - a
+            # real, general discriminator, not a job-TypeToString guess. The
+            # container's own restore-point chain exists in the backup too,
+            # with ApproxSize equal to the SUM of all nested VMs' ApproxSize
+            # (live: container 1,467,774,727,809 vs. 8 VMs summing to
+            # 1,467,787,315,602 - same number), so leaving it in the
+            # restore-point set double-counts CalculatedOriginalSize below.
+            # Its presence also poisons the stale-ObjectId guard just below:
+            # the container's own point trivially "matches" the container's
+            # own GetObjectsInJob() entry, making $MatchedAny true and
+            # flagging every real VM Superseded. Excluding it here (rather
+            # than disabling the guard for the whole job) keeps genuine
+            # per-VM stale detection working for any real VM ids
+            # GetObjectsInJob() does return alongside the container. Only
+            # 'Vapp' is matched - other dynamic-scope job types
+            # (datastore/host/tag) are not known to exhibit this and are
+            # deliberately left uncovered without live evidence.
+            $CurrentJobObjects = $null
+            try { $CurrentJobObjects = @($Job.GetObjectsInJob()) } catch { $CurrentJobObjects = $null }
+
+            $VappContainerIds = [System.Collections.Generic.HashSet[string]]::new([System.StringComparer]::OrdinalIgnoreCase)
+            foreach ($JobObject in @($CurrentJobObjects)) {
+                $ObjType = $null
+                try { $ObjType = $JobObject.Object.Type } catch { $ObjType = $null }
+                if ($ObjType -eq 'Vapp') {
+                    try { [void]$VappContainerIds.Add($JobObject.ObjectId.ToString()) } catch {}
+                }
+            }
+
+            if ($VappContainerIds.Count -gt 0 -and $RestorePoints.Count -gt 0) {
+                $KeptPoints   = [System.Collections.Generic.List[object]]::new()
+                $DroppedCount = 0
+                foreach ($RestorePoint in $RestorePoints) {
+                    $IsContainerPoint = $false
+                    try { $IsContainerPoint = ($null -ne $RestorePoint.ObjectId -and $VappContainerIds.Contains($RestorePoint.ObjectId.ToString())) } catch { $IsContainerPoint = $false }
+                    if ($IsContainerPoint) { $DroppedCount++ } else { $KeptPoints.Add($RestorePoint) }
+                }
+                if ($DroppedCount -gt 0) {
+                    Write-LogFile "Job '$($Job.Name)': excluded $DroppedCount vApp-container restore point(s) from sizing (container ApproxSize duplicates nested VM totals; see ADR 0021 / issue #193)." -LogLevel "INFO"
+                    $RestorePoints = @($KeptPoints)
+                }
+            }
+
             # Stale-ObjectId guard (#192 Superseded / #197 fix): runs for
             # every job regardless of $NeedsSweep, since GetObjectsInJob()
             # and the sweep-cache lookup above are both per-job already -
@@ -337,8 +384,15 @@ function Get-VhcJob {
                     # current objects hit the catch below and got treated
                     # identically to "GetObjectsInJob() itself threw", purely
                     # by accident of this cast rather than by intent.
+                    # Vapp-typed entries are excluded here too (not just from
+                    # $RestorePoints above) - otherwise the container's own
+                    # id would still sit in $CurrentObjectIds with nothing
+                    # left in $RestorePoints to match it, which is harmless,
+                    # but leaving it out entirely keeps this set's meaning
+                    # ("current, checkable, leaf objects") consistent with
+                    # the filter just applied above.
                     $CurrentObjectIds = [System.Collections.Generic.HashSet[string]]::new(
-                        [string[]]@($Job.GetObjectsInJob() | ForEach-Object { $_.ObjectId.ToString() }),
+                        [string[]]@(@($CurrentJobObjects) | Where-Object { -not $VappContainerIds.Contains($_.ObjectId.ToString()) } | ForEach-Object { $_.ObjectId.ToString() }),
                         [System.StringComparer]::OrdinalIgnoreCase
                     )
                 } catch {

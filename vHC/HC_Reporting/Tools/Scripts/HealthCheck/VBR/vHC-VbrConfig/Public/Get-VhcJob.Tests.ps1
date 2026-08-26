@@ -167,7 +167,12 @@ BeforeAll {
             [switch]$ThrowOnGetLastBackup,
             [double]$IncludedSize = 0,
             [guid[]]$ObjectsInJobIds = @(),
-            [switch]$ThrowOnGetObjectsInJob
+            [switch]$ThrowOnGetObjectsInJob,
+            # Ids (a subset of $ObjectsInJobIds) whose GetObjectsInJob() entry
+            # should carry Object.Type = 'Vapp' - live-lab-confirmed shape
+            # (Veeam.Backup.Core.CVcdHierarchyObject) for a VMware Cloud
+            # Director vApp container entry, as opposed to a real VM's entry.
+            [guid[]]$VappContainerIds = @()
         )
         $ParentJobCapture         = $ParentJob
         $ThrowParentJobCapture    = [bool]$ThrowOnGetParentJob
@@ -175,6 +180,7 @@ BeforeAll {
         $ThrowLastBackupCapture   = [bool]$ThrowOnGetLastBackup
         $ObjectsInJobCapture      = $ObjectsInJobIds
         $ThrowObjectsInJobCapture = [bool]$ThrowOnGetObjectsInJob
+        $VappContainerCapture     = $VappContainerIds
 
         $Job = [PSCustomObject]@{
             Id                  = $Id
@@ -242,7 +248,13 @@ BeforeAll {
         }.GetNewClosure()
         $Job | Add-Member -MemberType ScriptMethod -Name GetObjectsInJob -Value {
             if ($ThrowObjectsInJobCapture) { throw 'GetObjectsInJob failed' }
-            return @($ObjectsInJobCapture | ForEach-Object { [PSCustomObject]@{ ObjectId = $_ } })
+            return @($ObjectsInJobCapture | ForEach-Object {
+                $ObjType = if ($_ -in $VappContainerCapture) { 'Vapp' } else { 'Vm' }
+                [PSCustomObject]@{
+                    ObjectId = $_
+                    Object   = [PSCustomObject]@{ Type = $ObjType }
+                }
+            })
         }.GetNewClosure()
         return $Job
     }
@@ -1390,7 +1402,55 @@ Describe 'Stale-ObjectId guard: GetObjectsInJob() cross-reference' {
         $stale[0].RestorePoints[0].ObjectId | Should -Be $StaleId
     }
 
-    It 'excludes nothing when GetObjectsInJob() matches zero restore points (Cloud Director vApp-container signature)' {
+    It 'excludes the vApp container restore point (not the real VMs) when GetObjectsInJob() returns a Vapp-typed container' {
+        # Live-lab-confirmed shape (VBR v13, 'VMware Cloud Director - vApp
+        # Backup'): GetObjectsInJob() returns exactly ONE CObjectInJob entry
+        # for the vApp container itself (Object.Type = 'Vapp', a
+        # Veeam.Backup.Core.CVcdHierarchyObject) - never the real nested VMs.
+        # Unlike the "zero overlap" test below, the backup chain ALSO
+        # contains a restore point for that same container object, and its
+        # ApproxSize duplicates the SUM of the real VMs' ApproxSize (live
+        # evidence: container ApproxSize 1,467,774,727,809 vs. 8 VMs summing
+        # to 1,467,787,315,602 - same number). Before the fix, that
+        # container point trivially satisfies $MatchedAny (it's the only
+        # "current" id there is, and it's also present in the restore-point
+        # set), so every real VM ends up flagged StaleObject/Superseded and
+        # CalculatedOriginalSize silently doubles once the guard is
+        # naively disabled instead of the container being excluded.
+        $VappId = [guid]'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa'
+        $Vm1Id  = [guid]'11111111-1111-1111-1111-111111111111'
+        $Vm2Id  = [guid]'22222222-2222-2222-2222-222222222222'
+
+        $FakeJob = script:New-FakeJob -Name 'VMware Cloud Director - vApp Backup' -TypeToString 'Cloud Director Backup' `
+            -ObjectsInJobIds @($VappId) -VappContainerIds @($VappId)
+        Mock Get-VBRJob -MockWith { @($FakeJob) }
+        $VappPoint = script:New-FakeRestorePoint -Name 'v13' -ObjectId $VappId -ApproxSize 200GB -BackupSize 0
+        $Vm1Point  = script:New-FakeRestorePoint -Name 'vm1' -ObjectId $Vm1Id  -ApproxSize 120GB -BackupSize 40GB
+        $Vm2Point  = script:New-FakeRestorePoint -Name 'vm2' -ObjectId $Vm2Id  -ApproxSize 80GB  -BackupSize 20GB
+        $FakeJob | Add-Member -MemberType ScriptMethod -Name GetLastBackup -Value { @($VappPoint) } -Force
+        Mock Get-VBRRestorePoint -MockWith {
+            if ($null -ne $Backup) { @($VappPoint, $Vm1Point, $Vm2Point) } else { @() }
+        }
+
+        Get-VhcJob | Out-Null
+
+        $job = $script:CapturedJobRows | Where-Object { $_.Name -eq 'VMware Cloud Director - vApp Backup' }
+
+        # Neither real VM should ever be flagged Superseded/StaleObject.
+        $stale = $script:VhcOrphanedSupersededCache.CandidateGroups | Where-Object { $_.Reason -eq 'StaleObject' -and $_.CurrentJobId -eq $FakeJob.Id.ToString() }
+        $stale | Should -BeNullOrEmpty
+
+        # CalculatedOriginalSize must reflect only the two real VMs (200GB) -
+        # not the container's own 200GB duplicate summed on top (400GB),
+        # which is exactly what issue #193 reported.
+        $job.OriginalSize | Should -Be 200GB
+
+        # OnDiskGB must reflect only the two real VMs' actual on-disk bytes.
+        [double]$job.OnDiskGB | Should -BeGreaterThan 59
+        [double]$job.OnDiskGB | Should -BeLessThan 61
+    }
+
+    It 'excludes nothing when GetObjectsInJob() matches zero restore points (Cloud Director vApp-container signature, no container RP present)' {
         $VappContainerId = [guid]'66666666-6666-6666-6666-666666666666'
         $RealVm1 = [guid]'77777777-7777-7777-7777-777777777777'
         $RealVm2 = [guid]'88888888-8888-8888-8888-888888888888'
