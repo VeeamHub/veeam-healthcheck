@@ -16,6 +16,7 @@
         'Get-VhcModuleErrors',
         'Get-VhcMajorVersion',
         'Get-VhcMalwareDetection',
+        'Get-VhcOrphanedSupersededBackups',
         'Get-VhcProtectedWorkloads',
         'Get-VhcRegistrySettings',
         'Get-VhcRepository',

@@ -866,6 +866,36 @@ namespace VeeamHealthCheck.Html.VBR
             return s;
         }
 
+        public string AddOrphanedSupersededBackupsTable(bool scrub)
+        {
+            string s = this.form.SectionStartWithButtonNoTable("orphanedsupersededbackups", "Orphaned & Superseded Backups", "Show/Hide");
+            string summary;
+            try
+            {
+                var table = new VeeamHealthCheck.Functions.Reporting.Html.VBR.VbrTables.OrphanedSupersededBackups.COrphanedSupersededBackupsTable();
+                var records = table.LoadRecords();
+                bool sweepEvaluated = table.WasSweepEvaluated();
+                s += table.Render(records, sweepEvaluated, scrub, out summary);
+
+                // CGlobals.FullReportJson is initialized inline at declaration
+                // (Common/CGlobals.cs:150) - never null, no ??= guard needed.
+                // Must scrub the same way Render() just did for the HTML
+                // output above - otherwise the JSON export leaks real
+                // RepositoryName/JobName/ObjectName even when scrub=true.
+                CGlobals.FullReportJson.OrphanedSupersededBackups = scrub
+                    ? table.ScrubRecordsForExport(records)
+                    : records;
+                CGlobals.FullReportJson.OrphanedBackupsSweepEvaluated = sweepEvaluated;
+            }
+            catch (Exception e)
+            {
+                this.log.Error("Failed to build Orphaned/Superseded Backups table: " + e.Message);
+                summary = "Orphaned/Superseded Backups table failed to build.";
+            }
+            s += this.form.SectionEndNoTable(summary);
+            return s;
+        }
+
         public string AddManagedServersTable(bool scrub)
         {
             var table = new CManagedServerTable();

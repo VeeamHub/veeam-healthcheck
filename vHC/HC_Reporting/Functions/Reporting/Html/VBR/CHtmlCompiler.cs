@@ -505,7 +505,8 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR
                 this.form.NavLink("managedServerInfo", VbrLocalizationHelper.NavSrvInfoLink) +
                 this.form.NavLink("proxies", VbrLocalizationHelper.NavProxyInfoLink) +
                 this.form.NavLink("repos", VbrLocalizationHelper.NavRepoInfoLink) +
-                this.form.NavLink("sobr", VbrLocalizationHelper.NavSobrInfoLink));
+                this.form.NavLink("sobr", VbrLocalizationHelper.NavSobrInfoLink) +
+                this.form.NavLink("orphanedsupersededbackups", "Orphaned & Superseded Backups"));
 
             // Cloud Connect — only emit these nav links when the Cloud Connect section
             // actually renders (same data condition as CHtmlBodyHelper.CloudConnectSection).

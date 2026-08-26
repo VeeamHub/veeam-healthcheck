@@ -97,7 +97,44 @@ function Get-VhcJob {
 
     $NeedsSweep = [bool]($Jobs | Where-Object { $null -ne $_ -and $_.TypeToString -notin $KnownSafeJobTypes } | Select-Object -First 1)
 
+    # TEMPORARY OVERRIDE (2026-08-26, Ben Thomas) - DO NOT LEAVE IN PLACE:
+    # forces every collection run through the global sweep, bypassing the
+    # ADR 0022 allowlist gate above, regardless of what it computed.
+    # $KnownSafeJobTypes / $NeedsSweep are left intact (not deleted) so this
+    # is a one-line revert - delete the line below and the gate returns to
+    # normal ADR 0022 behavior.
+    #
+    # Why: an environment where every job is a $KnownSafeJobTypes type
+    # (e.g. VMware-only) never triggers the sweep, so Get-VhcJob only ever
+    # looks at each job's GetLastBackup() - its single CURRENT backup chain.
+    # Restore points sitting in a PRIOR chain (e.g. after a repository
+    # retarget) are never fetched at all in that case - not misclassified,
+    # simply invisible - so the Orphaned & Superseded Backups report
+    # silently under-reports for exactly the job types most customers run
+    # (plain VMware/Hyper-V backup jobs). Only the global sweep's unscoped
+    # Get-VBRRestorePoint call sees restore points outside a job's current
+    # chain at all (see ADR 0021's "previously-invisible multi-chain disk
+    # usage" note).
+    #
+    # A customer needs an accurate run in the next few minutes and complete
+    # Orphaned/Superseded data matters more than the sweep's performance
+    # cost for that run. Review after: if the perf hit is broadly
+    # acceptable, consider making this permanent (supersedes ADR 0022); if
+    # not, revert this line and find a cheaper way to close the same gap
+    # (e.g. only sweep jobs with >1 backup chain, or cache across runs).
+    $NeedsSweep = $true
+
     $RestorePointsByJob = @{}
+    # SweepRan=false does not mean the cache is empty - the stale-ObjectId
+    # guard below (in the main per-job loop) writes StaleObject entries
+    # unconditionally, independent of the sweep. Unresolved/Tier2Suppressed
+    # entries only ever come from inside the $NeedsSweep block below, so
+    # those two Reasons are absent when SweepRan is false, but StaleObject
+    # can still be present and trustworthy.
+    $script:VhcOrphanedSupersededCache = [PSCustomObject]@{
+        SweepRan        = $false
+        CandidateGroups = [System.Collections.Generic.List[object]]::new()
+    }
     if ($NeedsSweep) {
         try {
             $AllRestorePoints = @(Get-VBRRestorePoint -WarningAction SilentlyContinue | Where-Object { $null -ne $_ })
@@ -217,8 +254,28 @@ function Get-VhcJob {
                     $ParentName = $Representative.GetBackup().GetParentOrThis().Name
                     if ($ParentName -and $JobIdByName.ContainsKey($ParentName)) { $JobIdKey = $JobIdByName[$ParentName] }
                 } catch {}
-                if (-not $JobIdKey) { continue }
-                if ($Tier1MatchedJobIds.Contains($JobIdKey)) { continue }
+                if (-not $JobIdKey) {
+                    # Neither tier resolved this group to any current job -
+                    # a #192 Orphaned candidate (or a Tape Backup - excluded
+                    # downstream by Get-VhcOrphanedSupersededBackups.ps1,
+                    # not here).
+                    [void]$script:VhcOrphanedSupersededCache.CandidateGroups.Add([PSCustomObject]@{
+                        Reason        = 'Unresolved'
+                        CurrentJobId  = $null
+                        RestorePoints = $GroupPoints
+                    })
+                    continue
+                }
+                if ($Tier1MatchedJobIds.Contains($JobIdKey)) {
+                    # Named a real job, but that job already has a tier-1
+                    # match elsewhere - a #192 Superseded candidate.
+                    [void]$script:VhcOrphanedSupersededCache.CandidateGroups.Add([PSCustomObject]@{
+                        Reason        = 'Tier2Suppressed'
+                        CurrentJobId  = $JobIdKey
+                        RestorePoints = $GroupPoints
+                    })
+                    continue
+                }
 
                 if (-not $RestorePointsByJob.ContainsKey($JobIdKey)) {
                     $RestorePointsByJob[$JobIdKey] = [System.Collections.ArrayList]::new()
@@ -242,8 +299,24 @@ function Get-VhcJob {
             try { Write-LogFile "Restore point sweep failed: $($_.Exception.Message)" -LogLevel "ERROR" } catch {}
             Add-VhciModuleError -CollectorName 'Jobs' -ErrorMessage $_.Exception.Message
             $NeedsSweep = $false
+
+            # A throw partway through Tier 1/Tier 2 (above) can leave some
+            # Unresolved/Tier2Suppressed entries already added to
+            # CandidateGroups before the failure - Clear() them so
+            # SweepRan=false actually means "no Unresolved/Tier2Suppressed
+            # entries present" (the invariant this cache's own doc comment,
+            # a few lines above, states as a hard fact). Otherwise
+            # Get-VhcOrphanedSupersededBackups.ps1 - which doesn't gate its
+            # CandidateGroups loop on SweepRan - would render a table of
+            # Orphaned/Superseded rows sourced from a known-incomplete sweep
+            # at the same time as the "not evaluated" banner: an internally
+            # contradictory report. Safe to clear unconditionally here:
+            # StaleObject entries are added later, in the separate per-job
+            # loop below, which hasn't run yet at this point.
+            $script:VhcOrphanedSupersededCache.CandidateGroups.Clear()
         }
     }
+    $script:VhcOrphanedSupersededCache.SweepRan = $NeedsSweep
 
     # ------------------------------------------------------------------
     # Main VBR job processing loop - restore point size calculation
@@ -267,6 +340,150 @@ function Get-VhcJob {
                     $RestorePoints = @(Get-VBRRestorePoint -Backup $LastBackup)
                 }
             }
+
+            # vApp-container exclusion (#193 double-count / #192 false-
+            # Superseded): confirmed live (VBR v13, 'VMware Cloud Director -
+            # vApp Backup') that GetObjectsInJob() returns a CObjectInJob
+            # entry for the vApp container itself, whose .Object is a
+            # Veeam.Backup.Core.CVcdHierarchyObject with Type='Vapp' - a
+            # real, general discriminator, not a job-TypeToString guess. The
+            # container's own restore-point chain exists in the backup too,
+            # with ApproxSize equal to the SUM of all nested VMs' ApproxSize
+            # (live: container 1,467,774,727,809 vs. 8 VMs summing to
+            # 1,467,787,315,602 - same number), so leaving it in the
+            # restore-point set double-counts CalculatedOriginalSize below.
+            # Its presence also poisons the stale-ObjectId guard just below:
+            # the container's own point trivially "matches" the container's
+            # own GetObjectsInJob() entry, making $MatchedAny true and
+            # flagging every real VM Superseded. Excluding it here (rather
+            # than disabling the guard for the whole job) keeps genuine
+            # per-VM stale detection working for any real VM ids
+            # GetObjectsInJob() does return alongside the container. Only
+            # 'Vapp' is matched - other dynamic-scope job types
+            # (datastore/host/tag) are not known to exhibit this and are
+            # deliberately left uncovered without live evidence.
+            $CurrentJobObjects = $null
+            try { $CurrentJobObjects = @($Job.GetObjectsInJob()) } catch { $CurrentJobObjects = $null }
+
+            $VappContainerIds = [System.Collections.Generic.HashSet[string]]::new([System.StringComparer]::OrdinalIgnoreCase)
+            foreach ($JobObject in @($CurrentJobObjects)) {
+                $ObjType = $null
+                try { $ObjType = $JobObject.Object.Type } catch { $ObjType = $null }
+                if ($ObjType -eq 'Vapp') {
+                    try { [void]$VappContainerIds.Add($JobObject.ObjectId.ToString()) } catch {}
+                }
+            }
+
+            if ($VappContainerIds.Count -gt 0 -and $RestorePoints.Count -gt 0) {
+                $KeptPoints   = [System.Collections.Generic.List[object]]::new()
+                $DroppedCount = 0
+                foreach ($RestorePoint in $RestorePoints) {
+                    $IsContainerPoint = $false
+                    try { $IsContainerPoint = ($null -ne $RestorePoint.ObjectId -and $VappContainerIds.Contains($RestorePoint.ObjectId.ToString())) } catch { $IsContainerPoint = $false }
+                    if ($IsContainerPoint) { $DroppedCount++ } else { $KeptPoints.Add($RestorePoint) }
+                }
+                if ($DroppedCount -gt 0) {
+                    Write-LogFile "Job '$($Job.Name)': excluded $DroppedCount vApp-container restore point(s) from sizing (container ApproxSize duplicates nested VM totals; see ADR 0021 / issue #193)." -LogLevel "INFO"
+                    $RestorePoints = @($KeptPoints)
+                }
+            }
+
+            # Stale-ObjectId guard (#192 Superseded / #197 fix): runs for
+            # every job regardless of $NeedsSweep, since GetObjectsInJob()
+            # and the sweep-cache lookup above are both per-job already -
+            # this isn't the expensive global sweep ADR 0022 gates. Zero
+            # overlap between this job's restore points and its current
+            # GetObjectsInJob() membership means the call isn't returning
+            # per-object granularity for this job (confirmed live: VMware
+            # Cloud Director Backup returns the vApp container, not its
+            # nested VMs, per ADR 0021) - trust nothing, exclude nothing,
+            # rather than flag every real object Superseded and zero the
+            # job's size.
+            if ($RestorePoints.Count -gt 0) {
+                $CurrentObjectIds = $null
+                try {
+                    # @(...), not a bare pipeline: PowerShell collapses a
+                    # zero-object pipeline result to $null rather than an
+                    # empty array, which [string[]] then leaves as $null too
+                    # - the HashSet constructor's `collection` parameter
+                    # rejects null outright (ArgumentNullException), so a
+                    # job with GetObjectsInJob() legitimately returning zero
+                    # current objects hit the catch below and got treated
+                    # identically to "GetObjectsInJob() itself threw", purely
+                    # by accident of this cast rather than by intent.
+                    # Vapp-typed entries are excluded here too (not just from
+                    # $RestorePoints above) - otherwise the container's own
+                    # id would still sit in $CurrentObjectIds with nothing
+                    # left in $RestorePoints to match it, which is harmless,
+                    # but leaving it out entirely keeps this set's meaning
+                    # ("current, checkable, leaf objects") consistent with
+                    # the filter just applied above.
+                    $CurrentObjectIds = [System.Collections.Generic.HashSet[string]]::new(
+                        [string[]]@(@($CurrentJobObjects) | Where-Object { -not $VappContainerIds.Contains($_.ObjectId.ToString()) } | ForEach-Object { $_.ObjectId.ToString() }),
+                        [System.StringComparer]::OrdinalIgnoreCase
+                    )
+                } catch {
+                    $CurrentObjectIds = $null
+                }
+
+                if ($null -ne $CurrentObjectIds) {
+                    # A null RestorePoint.ObjectId can't be classified as
+                    # either current or stale - .ToString() on it would
+                    # throw, caught by this job's own outer try/catch, which
+                    # would zero its ENTIRE size (not just the one point).
+                    # Treated as a non-match here, and kept (not excluded)
+                    # in the partition below, consistent with this guard's
+                    # own "uncertain => don't exclude" rule.
+                    $MatchedAny = $false
+                    foreach ($RestorePoint in $RestorePoints) {
+                        if ($null -ne $RestorePoint.ObjectId -and $CurrentObjectIds.Contains($RestorePoint.ObjectId.ToString())) { $MatchedAny = $true; break }
+                    }
+
+                    if ($MatchedAny) {
+                        $ActiveRestorePoints = [System.Collections.Generic.List[object]]::new()
+                        $StaleByObjectId     = @{}
+                        foreach ($RestorePoint in $RestorePoints) {
+                            if ($null -eq $RestorePoint.ObjectId) {
+                                $ActiveRestorePoints.Add($RestorePoint)
+                                continue
+                            }
+                            $ObjIdKey = $RestorePoint.ObjectId.ToString()
+                            if ($CurrentObjectIds.Contains($ObjIdKey)) {
+                                $ActiveRestorePoints.Add($RestorePoint)
+                            } else {
+                                if (-not $StaleByObjectId.ContainsKey($ObjIdKey)) {
+                                    $StaleByObjectId[$ObjIdKey] = [System.Collections.Generic.List[object]]::new()
+                                }
+                                $StaleByObjectId[$ObjIdKey].Add($RestorePoint)
+                            }
+                        }
+                        # Cast back to a plain array, not the List[object] itself:
+                        # List[T] defines its own native ForEach(Action<T>)
+                        # method, which silently shadows the PowerShell
+                        # array-intrinsic .ForEach{} the main loop below uses
+                        # to sum OnDiskGB - confirmed empirically to no-op
+                        # (0 iterations, no error) rather than throw.
+                        $RestorePoints = @($ActiveRestorePoints)
+
+                        # $Job.Id.ToString() unguarded would throw on a null
+                        # Id - the sweep path elsewhere in this function
+                        # already checks ($null -ne $Job.Id) before use, but
+                        # this non-sweep path never did. A throw here is
+                        # caught by this job's own per-job catch and zeroes
+                        # its ENTIRE size, same failure mode the null-
+                        # RestorePoint.ObjectId guard above exists to avoid.
+                        $CurrentJobIdStr = if ($null -ne $Job.Id) { $Job.Id.ToString() } else { $null }
+                        foreach ($StalePoints in $StaleByObjectId.Values) {
+                            [void]$script:VhcOrphanedSupersededCache.CandidateGroups.Add([PSCustomObject]@{
+                                Reason        = 'StaleObject'
+                                CurrentJobId  = $CurrentJobIdStr
+                                RestorePoints = $StalePoints
+                            })
+                        }
+                    }
+                }
+            }
+
             $TotalOnDiskGB = 0
 
             $RestorePoints.ForEach{
@@ -365,4 +582,15 @@ function Get-VhcJob {
     $configBackup | Export-VhciCsv -FileName '_configBackup.csv'
 
     Write-LogFile ($message + "DONE")
+
+    # Returned explicitly so Get-VBRConfig.ps1 can pass this same object to
+    # Get-VhcOrphanedSupersededBackups -OrphanedSupersededCache, instead of
+    # that function reaching for $script:VhcOrphanedSupersededCache as an
+    # implicit side effect of this function having already run in the same
+    # collection pass - an ordering dependency that used to be enforced only
+    # by a comment on the caller. The script-scoped variable is still set
+    # too (untouched above), so nothing here changes for direct/standalone
+    # callers - including this function's own Pester tests, which read it
+    # back via $script:VhcOrphanedSupersededCache after calling Get-VhcJob.
+    return $script:VhcOrphanedSupersededCache
 }
