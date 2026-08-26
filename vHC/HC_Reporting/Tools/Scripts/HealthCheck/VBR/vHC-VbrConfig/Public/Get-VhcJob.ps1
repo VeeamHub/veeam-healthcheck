@@ -97,6 +97,33 @@ function Get-VhcJob {
 
     $NeedsSweep = [bool]($Jobs | Where-Object { $null -ne $_ -and $_.TypeToString -notin $KnownSafeJobTypes } | Select-Object -First 1)
 
+    # TEMPORARY OVERRIDE (2026-08-26, Ben Thomas) - DO NOT LEAVE IN PLACE:
+    # forces every collection run through the global sweep, bypassing the
+    # ADR 0022 allowlist gate above, regardless of what it computed.
+    # $KnownSafeJobTypes / $NeedsSweep are left intact (not deleted) so this
+    # is a one-line revert - delete the line below and the gate returns to
+    # normal ADR 0022 behavior.
+    #
+    # Why: an environment where every job is a $KnownSafeJobTypes type
+    # (e.g. VMware-only) never triggers the sweep, so Get-VhcJob only ever
+    # looks at each job's GetLastBackup() - its single CURRENT backup chain.
+    # Restore points sitting in a PRIOR chain (e.g. after a repository
+    # retarget) are never fetched at all in that case - not misclassified,
+    # simply invisible - so the Orphaned & Superseded Backups report
+    # silently under-reports for exactly the job types most customers run
+    # (plain VMware/Hyper-V backup jobs). Only the global sweep's unscoped
+    # Get-VBRRestorePoint call sees restore points outside a job's current
+    # chain at all (see ADR 0021's "previously-invisible multi-chain disk
+    # usage" note).
+    #
+    # A customer needs an accurate run in the next few minutes and complete
+    # Orphaned/Superseded data matters more than the sweep's performance
+    # cost for that run. Review after: if the perf hit is broadly
+    # acceptable, consider making this permanent (supersedes ADR 0022); if
+    # not, revert this line and find a cheaper way to close the same gap
+    # (e.g. only sweep jobs with >1 backup chain, or cache across runs).
+    $NeedsSweep = $true
+
     $RestorePointsByJob = @{}
     # SweepRan=false does not mean the cache is empty - the stale-ObjectId
     # guard below (in the main per-job loop) writes StaleObject entries
