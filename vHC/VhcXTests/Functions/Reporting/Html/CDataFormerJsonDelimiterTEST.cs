@@ -42,6 +42,35 @@ namespace VhcXTests.Functions.Reporting.Html
         }
 
         [Fact]
+        public void RegOptions_WithMultiValueKeyFlag_OnlyFlagsTheMultiValueEntry()
+        {
+            // Arrange
+            var originalKeys = CGlobals.DEFAULTREGISTRYKEYS;
+            CGlobals.DEFAULTREGISTRYKEYS = new Dictionary<string, object>
+            {
+                ["VhcTest_MultiValueKey"] = new[] { "austriaeast", "brazilsoutheast" },
+                ["VhcTest_SingleValueKey"] = "C:\\Path|WithLiteralPipe",
+            };
+
+            try
+            {
+                var df = new CDataFormer();
+
+                // Act
+                Dictionary<string, string> result = df.RegOptions(out HashSet<string> multiValueKeys);
+
+                // Assert
+                Assert.Contains("VhcTest_MultiValueKey", multiValueKeys);
+                Assert.DoesNotContain("VhcTest_SingleValueKey", multiValueKeys);
+                Assert.Equal("C:\\Path|WithLiteralPipe", result["VhcTest_SingleValueKey"]);
+            }
+            finally
+            {
+                CGlobals.DEFAULTREGISTRYKEYS = originalKeys;
+            }
+        }
+
+        [Fact]
         public void SummarizeRoleTypes_MultipleRoles_JoinsWithPipeNotHtmlBreak()
         {
             // Arrange

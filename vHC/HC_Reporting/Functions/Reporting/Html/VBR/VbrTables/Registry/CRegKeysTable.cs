@@ -33,7 +33,7 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR.VbrTables.Registry
 
             try
             {
-                Dictionary<string, string> list = df.RegOptions();
+                Dictionary<string, string> list = df.RegOptions(out HashSet<string> multiValueKeys);
                 if (list.Count == 0)
                 {
                     s += form.TableHeader(VbrLocalizationHelper.Reg0, VbrLocalizationHelper.Reg0TT);
@@ -60,7 +60,10 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR.VbrTables.Registry
                     {
                         s += "<tr>";
                         s += form.TableData(d.Key, string.Empty);
-                        s += form.TableData(d.Value.ToString().Replace("|", "<br>"), string.Empty);
+                        string displayValue = multiValueKeys.Contains(d.Key)
+                            ? form.RenderMultiValueHtml(d.Value)
+                            : d.Value;
+                        s += form.TableData(displayValue, string.Empty);
                         s += "</tr>";
                     }
                 }

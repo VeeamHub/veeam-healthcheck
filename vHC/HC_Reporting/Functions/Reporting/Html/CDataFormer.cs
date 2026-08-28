@@ -967,9 +967,21 @@ namespace VeeamHealthCheck.Functions.Reporting.Html
             return helper.FinalConcurrency(ctList);
         }
 
-        public Dictionary<string, string> RegOptions()
+        public Dictionary<string, string> RegOptions() => this.RegOptions(out _);
+
+        /// <summary>
+        /// Reads the diff between the collected registry keys and their defaults.
+        /// </summary>
+        /// <param name="multiValueKeys">
+        /// Keys whose value was joined from a multi-value (string[]) registry entry using
+        /// <see cref="CGlobals.MultiValueDelimiter"/>. HTML renderers must only convert the
+        /// delimiter to a line break for these keys — a single-value entry may legitimately
+        /// contain a literal "|" character.
+        /// </param>
+        public Dictionary<string, string> RegOptions(out HashSet<string> multiValueKeys)
         {
             Dictionary<string, string> returnDict = new();
+            HashSet<string> multiValues = new();
 
             var reg = new CCsvParser();
 
@@ -981,7 +993,8 @@ namespace VeeamHealthCheck.Functions.Reporting.Html
             foreach (var r in RegOptions2)
             {
                 string workingValue = string.Empty;
-                if (r.Value.GetType() == typeof(string[]))
+                bool isMultiValue = r.Value is string[];
+                if (isMultiValue)
                 {
                     var values = r.Value as IEnumerable;
                     List<string> valueArray = new();
@@ -1008,6 +1021,10 @@ namespace VeeamHealthCheck.Functions.Reporting.Html
                     if (setValue != workingValue)
                     {
                         returnDict.Add(r.Key, workingValue);
+                        if (isMultiValue)
+                        {
+                            multiValues.Add(r.Key);
+                        }
                     }
                 }
 
@@ -1015,9 +1032,14 @@ namespace VeeamHealthCheck.Functions.Reporting.Html
                 {
                     defaults.defaultKeys.TryGetValue(r.Key, out string setValue);
                     returnDict.Add(r.Key, workingValue);
+                    if (isMultiValue)
+                    {
+                        multiValues.Add(r.Key);
+                    }
                 }
             }
 
+            multiValueKeys = multiValues;
             return returnDict;
         }
 
