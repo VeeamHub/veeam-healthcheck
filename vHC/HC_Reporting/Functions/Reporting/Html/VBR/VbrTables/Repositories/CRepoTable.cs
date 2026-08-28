@@ -52,9 +52,11 @@ form.TableHeader(VbrLocalizationHelper.SbrExt15, VbrLocalizationHelper.SbrExt15T
             s += form.TableHeaderEnd();
             s += form.TableBodyStart();
             List<CRepository> list = new();
+            bool fetched = false;
             try
             {
                 list = df.RepoInfoToXml(scrub) ?? new List<CRepository>();
+                fetched = true;
 
                 foreach (var d in list)
                 {
@@ -149,34 +151,37 @@ form.TableHeader(VbrLocalizationHelper.SbrExt15, VbrLocalizationHelper.SbrExt15T
             s += form.SectionEnd(summary);
 
             // JSON repos
-            try
+            if (fetched)
             {
-                List<string> headers = new() { "Name", "JobCount", "MaxTasks", "Cores", "Ram", "IsAutoGate", "Host", "Path", "FreeSpace", "TotalSpace", "FreeSpacePercent", "IsPerVmBackupFiles", "IsDecompress", "AlignBlocks", "IsRotatedDrives", "IsImmutabilitySupported", "Type" };
-                List<List<string>> rows = list.Select(d => new List<string>
+                try
                 {
-                    d.Name,
-                    d.JobCount.ToString(),
-                    d.MaxTasks.ToString(),
-                    d.Cores.ToString(),
-                    d.Ram.ToString(),
-                    d.IsAutoGate ? "True" : "False",
-                    d.Host,
-                    d.Path,
-                    d.FreeSpace.ToString(),
-                    d.TotalSpace.ToString(),
-                    d.FreeSpacePercent.ToString(),
-                    d.IsPerVmBackupFiles ? "True" : "False",
-                    d.IsDecompress ? "True" : "False",
-                    d.AlignBlocks ? "True" : "False",
-                    d.IsRotatedDrives ? "True" : "False",
-                    d.IsImmutabilitySupported ? "True" : "False",
-                    d.Type,
-                }).ToList();
-                SetSection("repos", headers, rows, summary);
-            }
-            catch (Exception ex)
-            {
-                log.Error("Failed to capture repos JSON section: " + ex.Message);
+                    List<string> headers = new() { "Name", "JobCount", "MaxTasks", "Cores", "Ram", "IsAutoGate", "Host", "Path", "FreeSpace", "TotalSpace", "FreeSpacePercent", "IsPerVmBackupFiles", "IsDecompress", "AlignBlocks", "IsRotatedDrives", "IsImmutabilitySupported", "Type" };
+                    List<List<string>> rows = list.Select(d => new List<string>
+                    {
+                        d.Name,
+                        d.JobCount.ToString(),
+                        d.MaxTasks.ToString(),
+                        d.Cores.ToString(),
+                        d.Ram.ToString(),
+                        d.IsAutoGate ? "True" : "False",
+                        d.Host,
+                        d.Path,
+                        d.FreeSpace.ToString(),
+                        d.TotalSpace.ToString(),
+                        d.FreeSpacePercent.ToString(),
+                        d.IsPerVmBackupFiles ? "True" : "False",
+                        d.IsDecompress ? "True" : "False",
+                        d.AlignBlocks ? "True" : "False",
+                        d.IsRotatedDrives ? "True" : "False",
+                        d.IsImmutabilitySupported ? "True" : "False",
+                        d.Type,
+                    }).ToList();
+                    SetSection("repos", headers, rows, summary);
+                }
+                catch (Exception ex)
+                {
+                    log.Error("Failed to capture repos JSON section: " + ex.Message);
+                }
             }
 
             return s;
