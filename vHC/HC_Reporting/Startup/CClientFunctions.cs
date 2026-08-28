@@ -627,15 +627,21 @@ namespace VeeamHealthCheck.Startup
 
             PwshVersionStatus status = CPowerShellVersionChecker.EvaluatePwshVersionStatus(pwshPath, installedVersion, requiredVersion);
 
-            if (status == PwshVersionStatus.MeetsRequirement)
+            switch (status)
             {
-                return;
-            }
+                case PwshVersionStatus.MeetsRequirement:
+                    return;
 
-            if (status == PwshVersionStatus.VersionInconclusive)
-            {
-                this.LOG.Debug(this.logStart + "Skipping PowerShell module version preflight check: could not conclusively determine the installed vs. required version.");
-                return;
+                case PwshVersionStatus.VersionInconclusive:
+                    this.LOG.Debug(this.logStart + "Skipping PowerShell module version preflight check: could not conclusively determine the installed vs. required version.");
+                    return;
+
+                case PwshVersionStatus.NotInstalled:
+                case PwshVersionStatus.BelowRequirement:
+                    break;
+
+                default:
+                    throw new ArgumentOutOfRangeException(nameof(status), status, "Unhandled PwshVersionStatus in ValidatePowerShellVersionMeetsVbrRequirement.");
             }
 
             string msg = CPowerShellVersionChecker.BuildPwshVersionFailureMessage(status, CGlobals.VBRFULLVERSION, requiredVersion, rawInstalledVersion);
