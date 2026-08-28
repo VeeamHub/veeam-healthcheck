@@ -994,7 +994,7 @@ namespace VeeamHealthCheck.Html.VBR
                         s += this.form.TableData(this.form.False, string.Empty);
                     }
 
-                    s += this.form.TableData(d.Host?.Replace("|", "<br>"), string.Empty);
+                    s += this.form.TableData(this.form.RenderMultiValueHtml(d.Host), string.Empty);
                     s += this.form.TableData(d.Path, string.Empty);
                     s += this.form.TableData(d.FreeSpace.ToString(), string.Empty);
                     s += this.form.TableData(d.TotalSpace.ToString(), string.Empty);
@@ -1338,7 +1338,7 @@ namespace VeeamHealthCheck.Html.VBR
 
                         s += "<tr>";
                         s += this.form.TableData(server, string.Empty);
-                        s += this.form.TableData(r[1]?.Replace("|", "<br>"), string.Empty);
+                        s += this.form.TableData(this.form.RenderMultiValueHtml(r[1]), string.Empty);
 
                         if (reqCoresWarn)
                         {

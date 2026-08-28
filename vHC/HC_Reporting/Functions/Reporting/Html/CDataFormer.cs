@@ -1003,7 +1003,7 @@ namespace VeeamHealthCheck.Functions.Reporting.Html
                         valueArray.Add(v.ToString());
                     }
 
-                    workingValue = string.Join("|", valueArray);
+                    workingValue = string.Join(CGlobals.MultiValueDelimiter, valueArray);
                 }
                 else
                     workingValue = r.Value.ToString();
@@ -1133,7 +1133,7 @@ namespace VeeamHealthCheck.Functions.Reporting.Html
                                   .Select(g => g.Count() > 1 ? $"{g.Key} ×{g.Count()}" : g.Key);
 
             // Join with a plain delimiter; HTML call sites convert to <br> for display (issue #171)
-            return string.Join("|", typeCounts);
+            return string.Join(CGlobals.MultiValueDelimiter, typeCounts);
         }
 
         /// <summary>

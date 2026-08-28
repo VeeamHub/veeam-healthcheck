@@ -204,6 +204,15 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.Shared
             return $"<td{titleAttr}>{data}</td>";
         }
 
+        /// <summary>
+        /// Converts a producer's <see cref="CGlobals.MultiValueDelimiter"/>-joined value into
+        /// HTML line breaks for table rendering. JSON export keeps the delimiter unchanged.
+        /// </summary>
+        public string RenderMultiValueHtml(string value)
+        {
+            return value?.Replace(CGlobals.MultiValueDelimiter, "<br>");
+        }
+
         public string TableData(string data, string toolTip, int shading)
         {
             string cssClass = shading switch

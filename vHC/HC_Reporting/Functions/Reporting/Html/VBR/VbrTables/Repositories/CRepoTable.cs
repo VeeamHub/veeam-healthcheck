@@ -84,7 +84,7 @@ form.TableHeader(VbrLocalizationHelper.SbrExt15, VbrLocalizationHelper.SbrExt15T
                         s += form.TableData(form.False, string.Empty);
                     }
 
-                    s += form.TableData(d.Host?.Replace("|", "<br>"), string.Empty);
+                    s += form.TableData(form.RenderMultiValueHtml(d.Host), string.Empty);
                     s += form.TableData(d.Path, string.Empty);
                     s += form.TableData(d.FreeSpace.ToString(), string.Empty);
                     s += form.TableData(d.TotalSpace.ToString(), string.Empty);
