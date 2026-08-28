@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using VeeamHealthCheck;
 using VeeamHealthCheck.Functions.Reporting.Html;
+using VeeamHealthCheck.Shared;
 using Xunit;
 
 namespace VhcXTests.Functions.Reporting.Html
