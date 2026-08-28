@@ -93,3 +93,14 @@ None needed beyond compilation — this is a data-shape decision, not an
 empirical one. See
 [`docs/superpowers/specs/2026-08-24-orphaned-superseded-backups-design.md`](../superpowers/specs/2026-08-24-orphaned-superseded-backups-design.md)
 and the implementation plan's Task 7.
+
+## Addendum (2026-08-28)
+
+`cProtectedWorkloads`, the precedent property cited above, was removed
+from `CFullReportJson` by issue #172 — confirmed dead (assigned nowhere in
+the codebase; the real protected-workloads data has always lived in
+`Sections["protectedWorkloads"]`). This ADR's decision — a dedicated typed
+property for `OrphanedSupersededBackups`, bypassing `SetSection` — is
+unaffected; only the precedent example cited above no longer exists in
+the code. See
+[ADR 0029](0029-html-free-values-in-json-export-producers.md).
