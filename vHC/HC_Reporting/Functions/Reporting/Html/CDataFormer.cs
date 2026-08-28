@@ -1000,7 +1000,7 @@ namespace VeeamHealthCheck.Functions.Reporting.Html
                     isMultiValue = valueArray.Length > 1;
                 }
                 else if (r.Value is byte[] byteValue)
-                    workingValue = BitConverter.ToString(byteValue).Replace("-", string.Empty);
+                    workingValue = Convert.ToHexString(byteValue);
                 else
                     workingValue = r.Value.ToString();
 
