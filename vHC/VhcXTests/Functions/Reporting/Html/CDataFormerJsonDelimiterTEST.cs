@@ -71,6 +71,33 @@ namespace VhcXTests.Functions.Reporting.Html
         }
 
         [Fact]
+        public void RegOptions_BinaryRegistryValue_RendersHexNotTypeName()
+        {
+            // Arrange
+            var originalKeys = CGlobals.DEFAULTREGISTRYKEYS;
+            CGlobals.DEFAULTREGISTRYKEYS = new Dictionary<string, object>
+            {
+                ["VhcTest_BinaryKey"] = new byte[] { 0x01, 0x02, 0xAB },
+            };
+
+            try
+            {
+                var df = new CDataFormer();
+
+                // Act
+                Dictionary<string, string> result = df.RegOptions();
+
+                // Assert
+                Assert.Equal("0102AB", result["VhcTest_BinaryKey"]);
+                Assert.DoesNotContain("Byte[]", result["VhcTest_BinaryKey"]);
+            }
+            finally
+            {
+                CGlobals.DEFAULTREGISTRYKEYS = originalKeys;
+            }
+        }
+
+        [Fact]
         public void SummarizeRoleTypes_MultipleRoles_JoinsWithPipeNotHtmlBreak()
         {
             // Arrange

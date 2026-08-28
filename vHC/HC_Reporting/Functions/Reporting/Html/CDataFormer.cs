@@ -1005,6 +1005,8 @@ namespace VeeamHealthCheck.Functions.Reporting.Html
 
                     workingValue = string.Join(CGlobals.MultiValueDelimiter, valueArray);
                 }
+                else if (r.Value is byte[] byteValue)
+                    workingValue = BitConverter.ToString(byteValue).Replace("-", string.Empty);
                 else
                     workingValue = r.Value.ToString();
 
