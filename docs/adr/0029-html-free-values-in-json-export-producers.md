@@ -129,3 +129,22 @@ contributed to a real defect shipping in the same PR:
 
 See [PR #203](https://github.com/VeeamHub/veeam-healthcheck/pull/203)
 for the full review and the fix commits.
+
+## Addendum 2 (2026-08-28)
+
+A subsequent xhigh code review of PR #203 raised a further point about
+gateway-host rendering that is clarified here rather than changed in
+code:
+
+- **Unconditional `|` → `<br>` conversion for `Host` is intentional, not
+  a missing guard.** The review noted that `CRepoTable.cs` and
+  `CHtmlTables.AddSobrExtTable` call `RenderMultiValueHtml(d.Host)`
+  unconditionally, unlike `CRegKeysTable`'s `multiValueKeys`-gated
+  approach, and asked whether a literal `|` in a single host value could
+  be corrupted the same way. It cannot in practice: `Host` is always
+  produced by `SetGateHosts`, which splits `GateHosts` on spaces --
+  DNS hostnames cannot contain `|`. The `multiValueKeys` guard exists
+  specifically because arbitrary registry string values *can* legitimately
+  contain a literal `|`; that risk doesn't apply to hostnames, so no
+  equivalent guard is needed (or worth the added plumbing) for gateway
+  hosts.
