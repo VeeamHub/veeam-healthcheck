@@ -12,7 +12,7 @@ namespace VeeamHealthCheck.Functions.Collection.PSCollections
     /// required version. Kept separate from message text (see BuildPwshVersionFailureMessage) so
     /// both the decision and the wording are independently unit-testable.
     /// </summary>
-    internal enum PwshVersionStatus
+    public enum PwshVersionStatus
     {
         MeetsRequirement,
         NotInstalled,
@@ -172,6 +172,32 @@ namespace VeeamHealthCheck.Functions.Collection.PSCollections
             }
 
             return installedVersion < requiredVersion ? PwshVersionStatus.BelowRequirement : PwshVersionStatus.MeetsRequirement;
+        }
+
+        /// <summary>
+        /// Builds the actionable failure message for the NotInstalled and BelowRequirement statuses.
+        /// Never called for MeetsRequirement/VersionInconclusive - those aren't failures.
+        /// </summary>
+        internal static string BuildPwshVersionFailureMessage(PwshVersionStatus status, string vbrFullVersion, Version? requiredVersion, string? rawInstalledVersion)
+        {
+            string requirementClause = requiredVersion != null
+                ? $"requires PowerShell {requiredVersion} or higher"
+                : "requires PowerShell 7";
+
+            return status switch
+            {
+                PwshVersionStatus.NotInstalled =>
+                    $"The Veeam Backup & Replication PowerShell module (VBR {vbrFullVersion}) {requirementClause}, " +
+                    "but no PowerShell 7 installation was found on this computer. Install PowerShell 7 " +
+                    "(https://aka.ms/powershell-release?tag=stable) and re-run Veeam Health Check.",
+
+                PwshVersionStatus.BelowRequirement =>
+                    $"The Veeam Backup & Replication PowerShell module (VBR {vbrFullVersion}) {requirementClause}, " +
+                    $"but this computer has PowerShell {rawInstalledVersion} installed. Install a newer PowerShell 7 " +
+                    "release (https://aka.ms/powershell-release?tag=stable) and re-run Veeam Health Check.",
+
+                _ => throw new ArgumentOutOfRangeException(nameof(status), status, "BuildPwshVersionFailureMessage only supports NotInstalled and BelowRequirement.")
+            };
         }
     }
 }

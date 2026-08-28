@@ -76,4 +76,48 @@ public class CPowerShellVersionCheckerStatusTests
 
         Assert.Equal(PwshVersionStatus.MeetsRequirement, status);
     }
+
+    [Fact]
+    public void BuildPwshVersionFailureMessage_NotInstalledWithKnownRequiredVersion_MentionsRequiredVersionAndInstallLink()
+    {
+        string msg = CPowerShellVersionChecker.BuildPwshVersionFailureMessage(
+            PwshVersionStatus.NotInstalled, "13.1.0.1234", Version.Parse("7.6"), rawInstalledVersion: null);
+
+        Assert.Contains("requires PowerShell 7.6 or higher", msg);
+        Assert.Contains("no PowerShell 7 installation was found", msg);
+        Assert.Contains("https://aka.ms/powershell-release?tag=stable", msg);
+        Assert.Contains("VBR 13.1.0.1234", msg);
+    }
+
+    [Fact]
+    public void BuildPwshVersionFailureMessage_NotInstalledWithUnknownRequiredVersion_UsesGenericPowerShell7Wording()
+    {
+        string msg = CPowerShellVersionChecker.BuildPwshVersionFailureMessage(
+            PwshVersionStatus.NotInstalled, "13.1.0.1234", requiredVersion: null, rawInstalledVersion: null);
+
+        Assert.Contains("requires PowerShell 7,", msg);
+        Assert.Contains("no PowerShell 7 installation was found", msg);
+    }
+
+    [Fact]
+    public void BuildPwshVersionFailureMessage_BelowRequirement_MatchesExistingMessageWording()
+    {
+        string msg = CPowerShellVersionChecker.BuildPwshVersionFailureMessage(
+            PwshVersionStatus.BelowRequirement, "13.1.0.1234", Version.Parse("7.6"), "7.4.6");
+
+        Assert.Equal(
+            "The Veeam Backup & Replication PowerShell module (VBR 13.1.0.1234) requires PowerShell 7.6 or higher, " +
+            "but this computer has PowerShell 7.4.6 installed. Install a newer PowerShell 7 release " +
+            "(https://aka.ms/powershell-release?tag=stable) and re-run Veeam Health Check.",
+            msg);
+    }
+
+    [Theory]
+    [InlineData(PwshVersionStatus.MeetsRequirement)]
+    [InlineData(PwshVersionStatus.VersionInconclusive)]
+    public void BuildPwshVersionFailureMessage_NonFailureStatus_ThrowsArgumentOutOfRangeException(PwshVersionStatus status)
+    {
+        Assert.Throws<ArgumentOutOfRangeException>(() =>
+            CPowerShellVersionChecker.BuildPwshVersionFailureMessage(status, "13.1.0.1234", Version.Parse("7.6"), "7.4.6"));
+    }
 }
