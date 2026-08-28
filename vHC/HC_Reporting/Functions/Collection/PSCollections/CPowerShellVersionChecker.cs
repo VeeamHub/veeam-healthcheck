@@ -12,7 +12,7 @@ namespace VeeamHealthCheck.Functions.Collection.PSCollections
     /// required version. Kept separate from message text (see BuildPwshVersionFailureMessage) so
     /// both the decision and the wording are independently unit-testable.
     /// </summary>
-    public enum PwshVersionStatus
+    internal enum PwshVersionStatus
     {
         MeetsRequirement,
         NotInstalled,

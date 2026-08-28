@@ -95,7 +95,8 @@ public class CPowerShellVersionCheckerStatusTests
         string msg = CPowerShellVersionChecker.BuildPwshVersionFailureMessage(
             PwshVersionStatus.NotInstalled, "13.1.0.1234", requiredVersion: null, rawInstalledVersion: null);
 
-        Assert.Contains("requires PowerShell 7,", msg);
+        Assert.Contains("requires PowerShell 7", msg);
+        Assert.DoesNotContain("requires PowerShell 7.", msg); // Distinguishes generic (7) from specific (7.6 or higher)
         Assert.Contains("no PowerShell 7 installation was found", msg);
     }
 
@@ -112,12 +113,13 @@ public class CPowerShellVersionCheckerStatusTests
             msg);
     }
 
-    [Theory]
-    [InlineData(PwshVersionStatus.MeetsRequirement)]
-    [InlineData(PwshVersionStatus.VersionInconclusive)]
-    public void BuildPwshVersionFailureMessage_NonFailureStatus_ThrowsArgumentOutOfRangeException(PwshVersionStatus status)
+    [Fact]
+    public void BuildPwshVersionFailureMessage_NonFailureStatus_ThrowsArgumentOutOfRangeException()
     {
         Assert.Throws<ArgumentOutOfRangeException>(() =>
-            CPowerShellVersionChecker.BuildPwshVersionFailureMessage(status, "13.1.0.1234", Version.Parse("7.6"), "7.4.6"));
+            CPowerShellVersionChecker.BuildPwshVersionFailureMessage(PwshVersionStatus.MeetsRequirement, "13.1.0.1234", Version.Parse("7.6"), "7.4.6"));
+
+        Assert.Throws<ArgumentOutOfRangeException>(() =>
+            CPowerShellVersionChecker.BuildPwshVersionFailureMessage(PwshVersionStatus.VersionInconclusive, "13.1.0.1234", Version.Parse("7.6"), "7.4.6"));
     }
 }
