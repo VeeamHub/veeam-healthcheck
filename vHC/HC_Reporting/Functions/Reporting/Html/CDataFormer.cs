@@ -1010,14 +1010,13 @@ namespace VeeamHealthCheck.Functions.Reporting.Html
                 else
                     workingValue = r.Value.ToString();
 
+                if (CRegistrySkipKeys.SkipKeys.Contains(r.Key))
+                {
+                    continue;
+                }
+
                 if (defaults.defaultKeys.TryGetValue(r.Key, out string setValue))
                 {
-                    string[] skipKeys = CRegistrySkipKeys.SkipKeys;
-                    if (skipKeys.Contains(r.Key))
-                    {
-                        continue;
-                    }
-
                     if (setValue != workingValue)
                     {
                         returnDict.Add(r.Key, workingValue);
