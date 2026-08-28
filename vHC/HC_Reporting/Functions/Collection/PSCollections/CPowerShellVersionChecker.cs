@@ -127,7 +127,7 @@ namespace VeeamHealthCheck.Functions.Collection.PSCollections
             return Version.TryParse(numericPart, out installedVersion);
         }
 
-        private static string? FindPwshExecutable()
+        internal static string? FindPwshExecutable()
         {
             string? pathEnv = Environment.GetEnvironmentVariable("PATH");
             if (!string.IsNullOrEmpty(pathEnv))
