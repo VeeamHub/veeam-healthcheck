@@ -7,6 +7,7 @@ using VeeamHealthCheck.Functions.Reporting.DataTypes;
 using VeeamHealthCheck.Functions.Reporting.Html.DataFormers;
 using VeeamHealthCheck.Functions.Reporting.Html.Shared;
 using VeeamHealthCheck.Functions.Reporting.Html.VBR;
+using VeeamHealthCheck.Html.VBR;
 using VeeamHealthCheck.Resources.Localization;
 using VeeamHealthCheck.Shared;
 using VeeamHealthCheck.Shared.Logging;
@@ -84,7 +85,7 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR.VbrTables.Registry
                 {
                     List<string> headers = new() { "Key", "Value" };
                     List<List<string>> rows = list.Select(kv => new List<string> { kv.Key, kv.Value }).ToList();
-                    SetSection("regKeys", headers, rows, summary);
+                    CHtmlTables.SetSectionPublic("regKeys", headers, rows, summary);
                 }
                 catch (Exception ex)
                 {
@@ -93,21 +94,6 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR.VbrTables.Registry
             }
 
             return s;
-        }
-
-        private static void SetSection(string key, List<string> headers, List<List<string>> rows, string summary)
-        {
-            if (CGlobals.FullReportJson == null)
-            {
-                CGlobals.FullReportJson = new();
-            }
-
-            CGlobals.FullReportJson.Sections[key] = new HtmlSection
-            {
-                SectionName = key,
-                Headers = headers,
-                Rows = rows,
-            };
         }
     }
 }
