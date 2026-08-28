@@ -494,11 +494,6 @@ namespace VeeamHealthCheck.Functions.Reporting.Html
         internal string SetGateHosts(string original, bool scrub)
         {
             string[] hosts = original.Split(' ');
-            if (hosts.Count() == 1 && String.IsNullOrEmpty(hosts[0]))
-            {
-                return hosts[0];
-            }
-
             List<string> processed = new();
             foreach (string host in hosts)
             {
