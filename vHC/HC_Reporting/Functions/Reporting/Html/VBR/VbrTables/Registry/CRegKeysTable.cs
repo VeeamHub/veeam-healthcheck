@@ -31,9 +31,10 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR.VbrTables.Registry
             string s = form.SectionStartWithButton("regkeys", VbrLocalizationHelper.RegTitle, VbrLocalizationHelper.RegBtn);
             string summary = sum.RegKeys();
 
+            Dictionary<string, string> list = null;
             try
             {
-                Dictionary<string, string> list = df.RegOptions(out HashSet<string> multiValueKeys);
+                list = df.RegOptions(out HashSet<string> multiValueKeys);
                 if (list.Count == 0)
                 {
                     s += form.TableHeader(VbrLocalizationHelper.Reg0, VbrLocalizationHelper.Reg0TT);
@@ -77,16 +78,18 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR.VbrTables.Registry
             s += form.SectionEnd(summary);
 
             // JSON reg keys
-            try
+            if (list != null)
             {
-                var list = df.RegOptions();
-                List<string> headers = new() { "Key", "Value" };
-                List<List<string>> rows = list.Select(kv => new List<string> { kv.Key, kv.Value }).ToList();
-                SetSection("regKeys", headers, rows, summary);
-            }
-            catch (Exception ex)
-            {
-                log.Error("Failed to capture regKeys JSON section: " + ex.Message);
+                try
+                {
+                    List<string> headers = new() { "Key", "Value" };
+                    List<List<string>> rows = list.Select(kv => new List<string> { kv.Key, kv.Value }).ToList();
+                    SetSection("regKeys", headers, rows, summary);
+                }
+                catch (Exception ex)
+                {
+                    log.Error("Failed to capture regKeys JSON section: " + ex.Message);
+                }
             }
 
             return s;
