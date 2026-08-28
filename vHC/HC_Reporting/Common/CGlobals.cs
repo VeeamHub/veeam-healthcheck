@@ -66,6 +66,13 @@ namespace VeeamHealthCheck.Shared
         public static string VHCVERSION = string.Empty;
         public static bool DEBUG = false;
 
+        /// <summary>
+        /// Delimiter multi-value producers (e.g. CDataFormer.RegOptions, SetGateHosts,
+        /// SummarizeRoleTypes) join their values with. HTML rendering converts this to a
+        /// line break at the call site; JSON export keeps it as-is (see ADR 0029).
+        /// </summary>
+        public const string MultiValueDelimiter = "|";
+
         // Remote Exec variables
         public static string VBRServerName = "localhost";
 

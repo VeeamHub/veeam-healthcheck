@@ -953,12 +953,15 @@ namespace VeeamHealthCheck.Html.VBR
             s += this.form.TableHeader(VbrLocalizationHelper.SbrExt15, VbrLocalizationHelper.SbrExt15TT);
             s += this.form.TableHeaderEnd();
             s += this.form.TableBodyStart();
+            List<CRepository> list = new();
+            bool fetched = false;
             try
             {
                 this.log.Info("Attempting to load SOBR Extent data...");
-                List<CRepository> list = this.df.ExtentXmlFromCsv(scrub);
+                list = this.df.ExtentXmlFromCsv(scrub) ?? new List<CRepository>();
+                fetched = true;
 
-                if (list == null || list.Count == 0)
+                if (list.Count == 0)
                 {
                     this.log.Warning("No SOBR Extent data found. The SOBRExtents CSV file may be missing or empty.");
                     this.log.Info("This could indicate: 1) No SOBRs configured, 2) Collection script failed, or 3) CSV file not found");
@@ -994,7 +997,7 @@ namespace VeeamHealthCheck.Html.VBR
                         s += this.form.TableData(this.form.False, string.Empty);
                     }
 
-                    s += this.form.TableData(d.Host, string.Empty);
+                    s += this.form.TableData(this.form.RenderMultiValueHtml(d.Host), string.Empty);
                     s += this.form.TableData(d.Path, string.Empty);
                     s += this.form.TableData(d.FreeSpace.ToString(), string.Empty);
                     s += this.form.TableData(d.TotalSpace.ToString(), string.Empty);
@@ -1051,34 +1054,36 @@ namespace VeeamHealthCheck.Html.VBR
             s += this.form.SectionEnd(summary);
 
             // JSON extents
-            try
+            if (fetched)
             {
-                var list = this.df.ExtentXmlFromCsv(scrub) ?? new List<CRepository>();
-                List<string> headers = new() { "Name", "SobrName", "MaxTasks", "Cores", "Ram", "IsAutoGate", "Host", "Path", "FreeSpace", "TotalSpace", "FreeSpacePercent", "IsDecompress", "AlignBlocks", "IsRotatedDrives", "IsImmutabilitySupported", "Type" };
-                List<List<string>> rows = list.Select(d => new List<string>
+                try
                 {
-                    d.Name,
-                    d.SobrName,
-                    d.MaxTasks.ToString(),
-                    d.Cores.ToString(),
-                    d.Ram.ToString(),
-                    d.IsAutoGate ? "True" : "False",
-                    d.Host,
-                    d.Path,
-                    d.FreeSpace.ToString(),
-                    d.TotalSpace.ToString(),
-                    d.FreeSpacePercent.ToString(),
-                    d.IsDecompress ? "True" : "False",
-                    d.AlignBlocks ? "True" : "False",
-                    d.IsRotatedDrives ? "True" : "False",
-                    d.IsImmutabilitySupported ? "True" : "False",
-                    d.Type,
-                }).ToList();
-                SetSection("extents", headers, rows, summary);
-            }
-            catch (Exception ex)
-            {
-                this.log.Error("Failed to capture extents JSON section: " + ex.Message);
+                    List<string> headers = new() { "Name", "SobrName", "MaxTasks", "Cores", "Ram", "IsAutoGate", "Host", "Path", "FreeSpace", "TotalSpace", "FreeSpacePercent", "IsDecompress", "AlignBlocks", "IsRotatedDrives", "IsImmutabilitySupported", "Type" };
+                    List<List<string>> rows = list.Select(d => new List<string>
+                    {
+                        d.Name,
+                        d.SobrName,
+                        d.MaxTasks.ToString(),
+                        d.Cores.ToString(),
+                        d.Ram.ToString(),
+                        d.IsAutoGate ? "True" : "False",
+                        d.Host,
+                        d.Path,
+                        d.FreeSpace.ToString(),
+                        d.TotalSpace.ToString(),
+                        d.FreeSpacePercent.ToString(),
+                        d.IsDecompress ? "True" : "False",
+                        d.AlignBlocks ? "True" : "False",
+                        d.IsRotatedDrives ? "True" : "False",
+                        d.IsImmutabilitySupported ? "True" : "False",
+                        d.Type,
+                    }).ToList();
+                    SetSection("extents", headers, rows, summary);
+                }
+                catch (Exception ex)
+                {
+                    this.log.Error("Failed to capture extents JSON section: " + ex.Message);
+                }
             }
 
             return s;
@@ -1338,7 +1343,7 @@ namespace VeeamHealthCheck.Html.VBR
 
                         s += "<tr>";
                         s += this.form.TableData(server, string.Empty);
-                        s += this.form.TableData(r[1], string.Empty);
+                        s += this.form.TableData(this.form.RenderMultiValueHtml(r[1]), string.Empty);
 
                         if (reqCoresWarn)
                         {

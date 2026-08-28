@@ -7,6 +7,7 @@ using VeeamHealthCheck.Functions.Reporting.DataTypes;
 using VeeamHealthCheck.Functions.Reporting.Html.DataFormers;
 using VeeamHealthCheck.Functions.Reporting.Html.Shared;
 using VeeamHealthCheck.Functions.Reporting.Html.VBR;
+using VeeamHealthCheck.Html.VBR;
 using VeeamHealthCheck.Resources.Localization;
 using VeeamHealthCheck.Shared;
 using VeeamHealthCheck.Shared.Logging;
@@ -31,9 +32,10 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR.VbrTables.Registry
             string s = form.SectionStartWithButton("regkeys", VbrLocalizationHelper.RegTitle, VbrLocalizationHelper.RegBtn);
             string summary = sum.RegKeys();
 
+            Dictionary<string, string> list = null;
             try
             {
-                Dictionary<string, string> list = df.RegOptions();
+                list = df.RegOptions(out HashSet<string> multiValueKeys);
                 if (list.Count == 0)
                 {
                     s += form.TableHeader(VbrLocalizationHelper.Reg0, VbrLocalizationHelper.Reg0TT);
@@ -60,7 +62,10 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR.VbrTables.Registry
                     {
                         s += "<tr>";
                         s += form.TableData(d.Key, string.Empty);
-                        s += form.TableData(d.Value.ToString(), string.Empty);
+                        string displayValue = multiValueKeys.Contains(d.Key)
+                            ? form.RenderMultiValueHtml(d.Value)
+                            : d.Value;
+                        s += form.TableData(displayValue, string.Empty);
                         s += "</tr>";
                     }
                 }
@@ -74,34 +79,21 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR.VbrTables.Registry
             s += form.SectionEnd(summary);
 
             // JSON reg keys
-            try
+            if (list != null)
             {
-                var list = df.RegOptions();
-                List<string> headers = new() { "Key", "Value" };
-                List<List<string>> rows = list.Select(kv => new List<string> { kv.Key, kv.Value }).ToList();
-                SetSection("regKeys", headers, rows, summary);
-            }
-            catch (Exception ex)
-            {
-                log.Error("Failed to capture regKeys JSON section: " + ex.Message);
+                try
+                {
+                    List<string> headers = new() { "Key", "Value" };
+                    List<List<string>> rows = list.Select(kv => new List<string> { kv.Key, kv.Value }).ToList();
+                    CHtmlTables.SetSectionPublic("regKeys", headers, rows, summary);
+                }
+                catch (Exception ex)
+                {
+                    log.Error("Failed to capture regKeys JSON section: " + ex.Message);
+                }
             }
 
             return s;
-        }
-
-        private static void SetSection(string key, List<string> headers, List<List<string>> rows, string summary)
-        {
-            if (CGlobals.FullReportJson == null)
-            {
-                CGlobals.FullReportJson = new();
-            }
-
-            CGlobals.FullReportJson.Sections[key] = new HtmlSection
-            {
-                SectionName = key,
-                Headers = headers,
-                Rows = rows,
-            };
         }
     }
 }

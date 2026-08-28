@@ -7,6 +7,7 @@ using VeeamHealthCheck.Functions.Reporting.DataTypes;
 using VeeamHealthCheck.Functions.Reporting.Html.DataFormers;
 using VeeamHealthCheck.Functions.Reporting.Html.Shared;
 using VeeamHealthCheck.Functions.Reporting.Html.VBR;
+using VeeamHealthCheck.Html.VBR;
 using VeeamHealthCheck.Resources.Localization;
 using VeeamHealthCheck.Shared;
 using VeeamHealthCheck.Shared.Logging;
@@ -51,9 +52,12 @@ form.TableHeader(VbrLocalizationHelper.SbrExt15, VbrLocalizationHelper.SbrExt15T
 
             s += form.TableHeaderEnd();
             s += form.TableBodyStart();
+            List<CRepository> list = new();
+            bool fetched = false;
             try
             {
-                List<CRepository> list = df.RepoInfoToXml(scrub);
+                list = df.RepoInfoToXml(scrub) ?? new List<CRepository>();
+                fetched = true;
 
                 foreach (var d in list)
                 {
@@ -84,7 +88,7 @@ form.TableHeader(VbrLocalizationHelper.SbrExt15, VbrLocalizationHelper.SbrExt15T
                         s += form.TableData(form.False, string.Empty);
                     }
 
-                    s += form.TableData(d.Host, string.Empty);
+                    s += form.TableData(form.RenderMultiValueHtml(d.Host), string.Empty);
                     s += form.TableData(d.Path, string.Empty);
                     s += form.TableData(d.FreeSpace.ToString(), string.Empty);
                     s += form.TableData(d.TotalSpace.ToString(), string.Empty);
@@ -148,35 +152,37 @@ form.TableHeader(VbrLocalizationHelper.SbrExt15, VbrLocalizationHelper.SbrExt15T
             s += form.SectionEnd(summary);
 
             // JSON repos
-            try
+            if (fetched)
             {
-                var list = df.RepoInfoToXml(scrub) ?? new List<CRepository>();
-                List<string> headers = new() { "Name", "JobCount", "MaxTasks", "Cores", "Ram", "IsAutoGate", "Host", "Path", "FreeSpace", "TotalSpace", "FreeSpacePercent", "IsPerVmBackupFiles", "IsDecompress", "AlignBlocks", "IsRotatedDrives", "IsImmutabilitySupported", "Type" };
-                List<List<string>> rows = list.Select(d => new List<string>
+                try
                 {
-                    d.Name,
-                    d.JobCount.ToString(),
-                    d.MaxTasks.ToString(),
-                    d.Cores.ToString(),
-                    d.Ram.ToString(),
-                    d.IsAutoGate ? "True" : "False",
-                    d.Host,
-                    d.Path,
-                    d.FreeSpace.ToString(),
-                    d.TotalSpace.ToString(),
-                    d.FreeSpacePercent.ToString(),
-                    d.IsPerVmBackupFiles ? "True" : "False",
-                    d.IsDecompress ? "True" : "False",
-                    d.AlignBlocks ? "True" : "False",
-                    d.IsRotatedDrives ? "True" : "False",
-                    d.IsImmutabilitySupported ? "True" : "False",
-                    d.Type,
-                }).ToList();
-                SetSection("repos", headers, rows, summary);
-            }
-            catch (Exception ex)
-            {
-                log.Error("Failed to capture repos JSON section: " + ex.Message);
+                    List<string> headers = new() { "Name", "JobCount", "MaxTasks", "Cores", "Ram", "IsAutoGate", "Host", "Path", "FreeSpace", "TotalSpace", "FreeSpacePercent", "IsPerVmBackupFiles", "IsDecompress", "AlignBlocks", "IsRotatedDrives", "IsImmutabilitySupported", "Type" };
+                    List<List<string>> rows = list.Select(d => new List<string>
+                    {
+                        d.Name,
+                        d.JobCount.ToString(),
+                        d.MaxTasks.ToString(),
+                        d.Cores.ToString(),
+                        d.Ram.ToString(),
+                        d.IsAutoGate ? "True" : "False",
+                        d.Host,
+                        d.Path,
+                        d.FreeSpace.ToString(),
+                        d.TotalSpace.ToString(),
+                        d.FreeSpacePercent.ToString(),
+                        d.IsPerVmBackupFiles ? "True" : "False",
+                        d.IsDecompress ? "True" : "False",
+                        d.AlignBlocks ? "True" : "False",
+                        d.IsRotatedDrives ? "True" : "False",
+                        d.IsImmutabilitySupported ? "True" : "False",
+                        d.Type,
+                    }).ToList();
+                    CHtmlTables.SetSectionPublic("repos", headers, rows, summary);
+                }
+                catch (Exception ex)
+                {
+                    log.Error("Failed to capture repos JSON section: " + ex.Message);
+                }
             }
 
             return s;
@@ -189,21 +195,6 @@ form.TableHeader(VbrLocalizationHelper.SbrExt15, VbrLocalizationHelper.SbrExt15T
                               : usedPercent >= 60 ? "progress-warning"
                               : "progress-ok";
             return $@"<td><div class=""progress-bar""><div class=""progress-track""><div class=""progress-fill {colorClass}"" style=""width:{usedPercent:F0}%""></div></div><div class=""progress-label"">{freePercent:F0}% free</div></div></td>";
-        }
-
-        private static void SetSection(string key, List<string> headers, List<List<string>> rows, string summary)
-        {
-            if (CGlobals.FullReportJson == null)
-            {
-                CGlobals.FullReportJson = new();
-            }
-
-            CGlobals.FullReportJson.Sections[key] = new HtmlSection
-            {
-                SectionName = key,
-                Headers = headers,
-                Rows = rows,
-            };
         }
     }
 }

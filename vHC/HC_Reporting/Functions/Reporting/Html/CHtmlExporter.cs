@@ -239,6 +239,8 @@ namespace VeeamHealthCheck.Functions.Reporting.Html
                 string jsonPath = this.latestReport.Replace(".html", ".json");
                 this.log.Info("Exporting JSON report to: " + jsonPath);
 
+                CGlobals.FullReportJson.VhcVersion = CGlobals.VHCVERSION;
+
                 var options = new JsonSerializerOptions { WriteIndented = true };
                 string json = JsonSerializer.Serialize(CGlobals.FullReportJson, options);
                 File.WriteAllText(jsonPath, json);
