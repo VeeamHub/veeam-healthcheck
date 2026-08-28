@@ -65,8 +65,34 @@ namespace VhcXTests.Functions.Reporting.Html
             string result = df.SetGateHosts("gateway1 gateway2", false);
 
             // Assert
-            Assert.Equal("gateway1,|gateway2|", result);
+            Assert.Equal("gateway1|gateway2", result);
             Assert.DoesNotContain("<br>", result);
+        }
+
+        [Fact]
+        public void SetGateHosts_SingleHost_NoTrailingDelimiter()
+        {
+            // Arrange
+            var df = new CDataFormer();
+
+            // Act
+            string result = df.SetGateHosts("gateway1", false);
+
+            // Assert
+            Assert.Equal("gateway1", result);
+        }
+
+        [Fact]
+        public void SetGateHosts_EmptyString_ReturnsEmpty()
+        {
+            // Arrange
+            var df = new CDataFormer();
+
+            // Act
+            string result = df.SetGateHosts(string.Empty, false);
+
+            // Assert
+            Assert.Equal(string.Empty, result);
         }
     }
 }

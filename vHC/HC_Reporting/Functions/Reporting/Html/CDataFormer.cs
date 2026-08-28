@@ -499,9 +499,7 @@ namespace VeeamHealthCheck.Functions.Reporting.Html
                 return hosts[0];
             }
 
-            string r = string.Empty;
-            int counter = 1;
-            int end = hosts.Length;
+            List<string> processed = new();
             foreach (string host in hosts)
             {
                 string newhost = host;
@@ -510,21 +508,10 @@ namespace VeeamHealthCheck.Functions.Reporting.Html
                     newhost = CGlobals.Scrubber.ScrubItem(host, ScrubItemType.Server);
                 }
 
-
-                if (counter == end)
-                {
-                    r += newhost + "|";
-                }
-                else
-                {
-                    r += newhost + ",|";
-                }
-
-
-                counter++;
+                processed.Add(newhost);
             }
 
-            return r;
+            return string.Join(CGlobals.MultiValueDelimiter, processed);
         }
 
         public List<CRepository> ExtentXmlFromCsv(bool scrub)
