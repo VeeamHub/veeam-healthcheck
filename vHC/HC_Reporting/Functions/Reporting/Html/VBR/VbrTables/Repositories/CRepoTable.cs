@@ -51,9 +51,10 @@ form.TableHeader(VbrLocalizationHelper.SbrExt15, VbrLocalizationHelper.SbrExt15T
 
             s += form.TableHeaderEnd();
             s += form.TableBodyStart();
+            List<CRepository> list = new();
             try
             {
-                List<CRepository> list = df.RepoInfoToXml(scrub);
+                list = df.RepoInfoToXml(scrub) ?? new List<CRepository>();
 
                 foreach (var d in list)
                 {
@@ -150,7 +151,6 @@ form.TableHeader(VbrLocalizationHelper.SbrExt15, VbrLocalizationHelper.SbrExt15T
             // JSON repos
             try
             {
-                var list = df.RepoInfoToXml(scrub) ?? new List<CRepository>();
                 List<string> headers = new() { "Name", "JobCount", "MaxTasks", "Cores", "Ram", "IsAutoGate", "Host", "Path", "FreeSpace", "TotalSpace", "FreeSpacePercent", "IsPerVmBackupFiles", "IsDecompress", "AlignBlocks", "IsRotatedDrives", "IsImmutabilitySupported", "Type" };
                 List<List<string>> rows = list.Select(d => new List<string>
                 {
