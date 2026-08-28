@@ -249,15 +249,53 @@ namespace VeeamHealthCheck
         {
             System.Threading.Tasks.Task.Factory.StartNew(() =>
             {
-                this.functions.StartPrimaryFunctions();
-                this.UpdateCollectionStatusText();
-                this.OfferMonitorSetupIfNeeded();
-                this.ShowCollectionWarningsIfAny();
-                Environment.Exit(0);
+                // The whole run happens on a background task. Historically the body
+                // had no try/catch, so any exception in analysis/report generation was
+                // stored on the faulted task and never observed: no report was written,
+                // no error surfaced, Environment.Exit(0) was skipped, and the user was
+                // left staring at a hung-looking GUI. Catch here so failures are logged,
+                // surfaced, and the GUI returns to a usable state. Only exit(0) on success.
+                try
+                {
+                    this.functions.StartPrimaryFunctions();
+                    this.UpdateCollectionStatusText();
+                    this.OfferMonitorSetupIfNeeded();
+                    this.ShowCollectionWarningsIfAny();
+                    Environment.Exit(0);
+                }
+                catch (Exception ex)
+                {
+                    this.ReportRunFailure(ex);
+                }
             }).ContinueWith(t =>
             {
                 this.hideProgressBar();
             });
+        }
+
+        private void ReportRunFailure(Exception ex)
+        {
+            CGlobals.Logger.Error("Run failed: " + ex.Message, true);
+            CGlobals.Logger.Error("Stack trace: " + ex.StackTrace, false);
+            if (ex.InnerException != null)
+            {
+                CGlobals.Logger.Error("Inner exception: " + ex.InnerException.Message, false);
+                CGlobals.Logger.Error("Inner stack trace: " + ex.InnerException.StackTrace, false);
+            }
+
+            this.Dispatcher.Invoke((Action)(() =>
+            {
+                MessageBox.Show(
+                    "The health check failed before a report was generated:\n\n" +
+                    ex.Message +
+                    "\n\nNo report was produced. See the log for the full stack trace.",
+                    "Health Check Failed",
+                    MessageBoxButton.OK,
+                    MessageBoxImage.Error);
+
+                // Re-enable the run button so the user can retry without restarting.
+                run.IsEnabled = true;
+            }));
         }
 
         private void UpdateCollectionStatusText()
