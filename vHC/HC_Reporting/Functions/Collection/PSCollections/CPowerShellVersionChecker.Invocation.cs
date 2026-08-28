@@ -19,12 +19,11 @@ namespace VeeamHealthCheck.Functions.Collection.PSCollections
         /// Invokes pwsh.exe to read $PSVersionTable.PSVersion. Returns false if pwsh cannot be
         /// located, fails to exit within the timeout, or its output cannot be parsed.
         /// </summary>
-        public static bool TryGetInstalledPwshVersion(out Version installedVersion, out string rawVersion)
+        public static bool TryGetInstalledPwshVersion(string pwshPath, out Version installedVersion, out string rawVersion)
         {
             installedVersion = null;
             rawVersion = null;
 
-            string pwshPath = FindPwshExecutable();
             if (string.IsNullOrEmpty(pwshPath))
             {
                 return false;
