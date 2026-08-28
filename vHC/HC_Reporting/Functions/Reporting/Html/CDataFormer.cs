@@ -1010,7 +1010,7 @@ namespace VeeamHealthCheck.Functions.Reporting.Html
                 else
                     workingValue = r.Value.ToString();
 
-                if (defaults.defaultKeys.ContainsKey(r.Key))
+                if (defaults.defaultKeys.TryGetValue(r.Key, out string setValue))
                 {
                     string[] skipKeys = CRegistrySkipKeys.SkipKeys;
                     if (skipKeys.Contains(r.Key))
@@ -1018,8 +1018,6 @@ namespace VeeamHealthCheck.Functions.Reporting.Html
                         continue;
                     }
 
-
-                    defaults.defaultKeys.TryGetValue(r.Key, out string setValue);
                     if (setValue != workingValue)
                     {
                         returnDict.Add(r.Key, workingValue);
@@ -1029,10 +1027,8 @@ namespace VeeamHealthCheck.Functions.Reporting.Html
                         }
                     }
                 }
-
-                if (!defaults.defaultKeys.ContainsKey(r.Key))
+                else
                 {
-                    defaults.defaultKeys.TryGetValue(r.Key, out string setValue);
                     returnDict.Add(r.Key, workingValue);
                     if (isMultiValue)
                     {
