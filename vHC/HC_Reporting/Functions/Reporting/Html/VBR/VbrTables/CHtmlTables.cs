@@ -1338,7 +1338,7 @@ namespace VeeamHealthCheck.Html.VBR
 
                         s += "<tr>";
                         s += this.form.TableData(server, string.Empty);
-                        s += this.form.TableData(r[1], string.Empty);
+                        s += this.form.TableData(r[1]?.Replace("|", "<br>"), string.Empty);
 
                         if (reqCoresWarn)
                         {

@@ -60,7 +60,7 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR.VbrTables.Registry
                     {
                         s += "<tr>";
                         s += form.TableData(d.Key, string.Empty);
-                        s += form.TableData(d.Value.ToString(), string.Empty);
+                        s += form.TableData(d.Value.ToString().Replace("|", "<br>"), string.Empty);
                         s += "</tr>";
                     }
                 }

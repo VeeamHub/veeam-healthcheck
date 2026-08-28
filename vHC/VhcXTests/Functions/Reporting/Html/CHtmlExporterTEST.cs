@@ -1,5 +1,6 @@
 using System;
 using System.IO;
+using System.Linq;
 using VeeamHealthCheck;
 using VeeamHealthCheck.Functions.Reporting.Html;
 using VeeamHealthCheck.Shared;
@@ -215,6 +216,46 @@ namespace VhcXTests.Functions.Reporting.Html
                 CGlobals.OpenHtml = originalOpenHtml;
                 CGlobals.EXPORTPDF = originalExportPdf;
                 CGlobals.EXPORTPPTX = originalExportPptx;
+            }
+        }
+
+        [Fact]
+        public void ExportVbrHtml_ValidHtml_JsonReportIncludesVhcVersion()
+        {
+            // Arrange
+            var exporter = new CHtmlExporter("TestServer");
+            var testHtml = "<html><head><title>Test</title></head><body>Test content</body></html>";
+
+            bool originalOpenHtml = CGlobals.OpenHtml;
+            bool originalExportPdf = CGlobals.EXPORTPDF;
+            bool originalExportPptx = CGlobals.EXPORTPPTX;
+            string originalVersion = CGlobals.VHCVERSION;
+            var originalFullReportJson = CGlobals.FullReportJson;
+
+            CGlobals.OpenHtml = false;
+            CGlobals.EXPORTPDF = false;
+            CGlobals.EXPORTPPTX = false;
+            CGlobals.VHCVERSION = "9.9.9.9";
+            CGlobals.FullReportJson = new VeeamHealthCheck.Functions.Reporting.DataTypes.CFullReportJson();
+
+            try
+            {
+                // Act
+                exporter.ExportVbrHtml(testHtml, false);
+
+                // Assert
+                var origDir = Path.Combine(_testOutputDir, CVariables.unsafeSuffix.TrimStart('\\'));
+                var jsonFile = Directory.GetFiles(origDir, "*.json").Single();
+                var json = File.ReadAllText(jsonFile);
+                Assert.Contains("\"VhcVersion\": \"9.9.9.9\"", json);
+            }
+            finally
+            {
+                CGlobals.OpenHtml = originalOpenHtml;
+                CGlobals.EXPORTPDF = originalExportPdf;
+                CGlobals.EXPORTPPTX = originalExportPptx;
+                CGlobals.VHCVERSION = originalVersion;
+                CGlobals.FullReportJson = originalFullReportJson;
             }
         }
 

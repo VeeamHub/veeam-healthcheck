@@ -491,7 +491,7 @@ namespace VeeamHealthCheck.Functions.Reporting.Html
             return outList;
         }
 
-        private string SetGateHosts(string original, bool scrub)
+        internal string SetGateHosts(string original, bool scrub)
         {
             string[] hosts = original.Split(' ');
             if (hosts.Count() == 1 && String.IsNullOrEmpty(hosts[0]))
@@ -513,11 +513,11 @@ namespace VeeamHealthCheck.Functions.Reporting.Html
 
                 if (counter == end)
                 {
-                    r += newhost + "<br>";
+                    r += newhost + "|";
                 }
                 else
                 {
-                    r += newhost + ",<br>";
+                    r += newhost + ",|";
                 }
 
 
@@ -1003,7 +1003,7 @@ namespace VeeamHealthCheck.Functions.Reporting.Html
                         valueArray.Add(v.ToString());
                     }
 
-                    workingValue = string.Join("<br>", valueArray);
+                    workingValue = string.Join("|", valueArray);
                 }
                 else
                     workingValue = r.Value.ToString();
@@ -1106,9 +1106,9 @@ namespace VeeamHealthCheck.Functions.Reporting.Html
 
         /// <summary>
         /// Summarizes repeated role types into a count format with friendly names.
-        /// Example: "Gateway/ Gateway/ Gateway/ Repository/ Gateway" becomes "Gateway Server ×4<br>Repository ×1"
+        /// Example: "Gateway/ Gateway/ Gateway/ Repository/ Gateway" becomes "Gateway Server ×4|Repository ×1"
         /// </summary>
-        private string SummarizeRoleTypes(string typeString)
+        internal string SummarizeRoleTypes(string typeString)
         {
             if (string.IsNullOrWhiteSpace(typeString))
                 return typeString;
@@ -1132,8 +1132,8 @@ namespace VeeamHealthCheck.Functions.Reporting.Html
                                   .ThenBy(g => g.Key)
                                   .Select(g => g.Count() > 1 ? $"{g.Key} ×{g.Count()}" : g.Key);
 
-            // Join with HTML line breaks for vertical display
-            return string.Join("<br>", typeCounts);
+            // Join with a plain delimiter; HTML call sites convert to <br> for display (issue #171)
+            return string.Join("|", typeCounts);
         }
 
         /// <summary>

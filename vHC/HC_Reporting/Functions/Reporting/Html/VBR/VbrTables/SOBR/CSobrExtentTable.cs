@@ -80,7 +80,7 @@ this.form.TableHeader(VbrLocalizationHelper.SbrExt15, VbrLocalizationHelper.SbrE
 
                     s += this.BoolCell(d.IsAutoGate);
 
-                    s += this.form.TableData(d.Host, string.Empty);
+                    s += this.form.TableData(d.Host?.Replace("|", "<br>"), string.Empty);
                     s += this.form.TableData(d.Path, string.Empty);
                     s += this.form.TableData(d.FreeSpace.ToString(), string.Empty);
                     s += this.form.TableData(d.TotalSpace.ToString(), string.Empty);
