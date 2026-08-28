@@ -993,17 +993,11 @@ namespace VeeamHealthCheck.Functions.Reporting.Html
             foreach (var r in RegOptions2)
             {
                 string workingValue = string.Empty;
-                bool isMultiValue = r.Value is string[];
-                if (isMultiValue)
+                bool isMultiValue = false;
+                if (r.Value is string[] valueArray)
                 {
-                    var values = r.Value as IEnumerable;
-                    List<string> valueArray = new();
-                    foreach (var v in values)
-                    {
-                        valueArray.Add(v.ToString());
-                    }
-
                     workingValue = string.Join(CGlobals.MultiValueDelimiter, valueArray);
+                    isMultiValue = valueArray.Length > 1;
                 }
                 else if (r.Value is byte[] byteValue)
                     workingValue = BitConverter.ToString(byteValue).Replace("-", string.Empty);
