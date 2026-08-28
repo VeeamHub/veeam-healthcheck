@@ -132,9 +132,9 @@ for the full review and the fix commits.
 
 ## Addendum 2 (2026-08-28)
 
-A subsequent xhigh code review of PR #203 raised a further point about
-gateway-host rendering that is clarified here rather than changed in
-code:
+A subsequent xhigh code review of PR #203 raised two further points
+about gateway-host rendering that are clarified here rather than
+changed in code:
 
 - **Unconditional `|` → `<br>` conversion for `Host` is intentional, not
   a missing guard.** The review noted that `CRepoTable.cs` and
@@ -148,3 +148,17 @@ code:
   contain a literal `|`; that risk doesn't apply to hostnames, so no
   equivalent guard is needed (or worth the added plumbing) for gateway
   hosts.
+- **The gateway-host HTML format change (dropped commas and trailing
+  `<br>`) is a deliberate, if previously undocumented, consequence of
+  this ADR's Option C**, not an unrelated regression. The Decision
+  section above only says these three producers now join with `|`
+  instead of `<br>`; it doesn't call out that `SetGateHosts`' HTML
+  output *itself* changed shape -- the old code joined hosts with
+  `",<br>"` plus a trailing `<br>`, while the shared
+  `RenderMultiValueHtml` conversion (also used by the registry table)
+  produces a plain `<br>`-separated list with no comma and no trailing
+  break. Keeping the old comma/trailing-break format for gateway hosts
+  specifically would mean diverging per call site again -- the
+  per-call-site patching Option A rejected. This shape is confirmed by
+  the `SetGateHosts_SingleHost_NoTrailingDelimiter` test and is the
+  intended behavior going forward.
