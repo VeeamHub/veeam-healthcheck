@@ -89,3 +89,43 @@ the `|`-delimited value unchanged.
 None needed beyond compilation and the new xUnit facts covering each of
 the three producers' JSON output (no `<br>` present) and each HTML call
 site (line-break rendering unchanged).
+
+## Addendum (2026-08-28)
+
+A PR #203 code review found two inaccuracies in this ADR, one of which
+contributed to a real defect shipping in the same PR:
+
+- **"No single choke point" (Option B, above) is wrong.**
+  `CHtmlTables.SetSectionPublic` already existed as a shared internal
+  static helper and was already called by 13+ of the JSON-section call
+  sites at the time this ADR was written. Only ~5 files (including
+  `CRegKeysTable.cs`, `CRepoTable.cs`, and the unreachable
+  `CSobrExtentTable.cs`) duplicate a local private `SetSection` instead
+  of using it. Because this ADR concluded no choke point existed for
+  the HTML-side fix either, the `|` -> `<br>` conversion was hand-applied
+  separately at each call site instead of through one shared helper —
+  and one of those call sites (`CHtmlTables.AddSobrExtTable`, the *live*
+  SOBR Extents renderer) was missed entirely; the fix was applied to
+  `CSobrExtentTable.cs` instead, which has zero instantiation sites
+  anywhere in the repo. A follow-up commit introduced
+  `CGlobals.MultiValueDelimiter` and
+  `CHtmlFormatting.RenderMultiValueHtml` as the shared implementation
+  this ADR should have used from the start, and fixed the missed call
+  site.
+
+- **The Validation section above overclaimed test coverage.** It stated
+  tests covered "each HTML call site (line-break rendering unchanged)",
+  but none of the three new test files exercised any of the four HTML
+  call sites (`AddSobrExtTable`/`AddRequirementsTable` in
+  `CHtmlTables.cs`, `CRegKeysTable`, `CRepoTable`) — only the producers'
+  JSON-side output had coverage. This false confidence plausibly let the
+  missed call site above ship unnoticed. The follow-up commit adds
+  `CHtmlFormattingTEST.cs` (for the new shared helper) and
+  `CRegKeysTableTEST.cs` (HTML-rendering assertions for `CRegKeysTable`).
+  Per this repo's own tooling constraint, these new/changed facts were
+  verified only via `dotnet build` on this (non-Windows) machine —
+  `VhcXTests` compilation is deliberately skipped off-Windows — so they
+  are unverified locally and run for the first time in CI/on Windows.
+
+See [PR #203](https://github.com/VeeamHub/veeam-healthcheck/pull/203)
+for the full review and the fix commits.
