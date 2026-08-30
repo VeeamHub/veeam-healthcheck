@@ -96,6 +96,7 @@ function Get-VhcJob {
     )
 
     $NeedsSweep = [bool]($Jobs | Where-Object { $null -ne $_ -and $_.TypeToString -notin $KnownSafeJobTypes } | Select-Object -First 1)
+    $NeedsSweepNatural = $NeedsSweep
 
     # TEMPORARY OVERRIDE (2026-08-26, Ben Thomas) - DO NOT LEAVE IN PLACE:
     # forces every collection run through the global sweep, bypassing the
@@ -136,6 +137,7 @@ function Get-VhcJob {
         CandidateGroups = [System.Collections.Generic.List[object]]::new()
     }
     if ($NeedsSweep) {
+        $SweepStopwatch = [System.Diagnostics.Stopwatch]::StartNew()
         try {
             $AllRestorePoints = @(Get-VBRRestorePoint -WarningAction SilentlyContinue | Where-Object { $null -ne $_ })
 
@@ -289,6 +291,15 @@ function Get-VhcJob {
             } catch {}
             try {
                 Write-LogFile "BackupId grouping: $($AllRestorePoints.Count) restore points reduced to $($Groups.Count) groups ($($Groups.Count) tier-1 lookups + $($UnresolvedGroups.Count) tier-2 lookups attempted, vs. $($AllRestorePoints.Count) lookups pre-grouping)"
+            } catch {}
+            # Perf diagnostics for the temporary NeedsSweep override above: natural-gate
+            # is what ADR 0022's allowlist would have decided on its own, so a future
+            # perf complaint can be checked against whether the override actually
+            # changed the outcome for that run (natural-gate=False) or the sweep would
+            # have run anyway (natural-gate=True, reverting the override wouldn't help).
+            try {
+                $SweepStopwatch.Stop()
+                Write-LogFile "Restore point sweep: $($SweepStopwatch.ElapsedMilliseconds)ms elapsed, $($AllRestorePoints.Count) restore points, $(@($Jobs).Count) jobs, natural-gate=$NeedsSweepNatural, effective-gate=$NeedsSweep"
             } catch {}
         } catch {
             # This is the sweep's outermost catch - unlike the Write-LogFile
