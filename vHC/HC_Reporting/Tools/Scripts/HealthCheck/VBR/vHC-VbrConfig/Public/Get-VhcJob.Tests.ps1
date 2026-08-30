@@ -288,6 +288,7 @@ BeforeAll {
             [datetime]$CreationTimeUtc = (Get-Date),
             [double]$ApproxSize = 1GB,
             [double]$BackupSize = 1GB,
+            [switch]$ThrowOnGetStorage,
             $SourceJob = $null,
             [switch]$ThrowOnGetSourceJob,
             [switch]$ThrowOnGetBackup,
@@ -314,13 +315,14 @@ BeforeAll {
         $CallCounts = if ($script:CallCounts) { $script:CallCounts } else { @{ GetSourceJob = 0; GetBackup = 0 } }
 
         $RestorePoint = [PSCustomObject]@{
-            Name            = $Name
-            Type            = $Type
-            ObjectId        = $ObjectId
-            BackupId        = $BackupId
-            CreationTimeUtc = $CreationTimeUtc
-            ApproxSize      = $ApproxSize
-            BackupSizeValue = $BackupSize
+            Name              = $Name
+            Type              = $Type
+            ObjectId          = $ObjectId
+            BackupId          = $BackupId
+            CreationTimeUtc   = $CreationTimeUtc
+            ApproxSize        = $ApproxSize
+            BackupSizeValue   = $BackupSize
+            ThrowOnGetStorage = [bool]$ThrowOnGetStorage
         }
         $RestorePoint | Add-Member -MemberType ScriptMethod -Name GetSourceJob -Value {
             $CallCounts.GetSourceJob = $CallCounts.GetSourceJob + 1
@@ -333,6 +335,7 @@ BeforeAll {
             return $FakeBackup
         }.GetNewClosure()
         $RestorePoint | Add-Member -MemberType ScriptMethod -Name GetStorage -Value {
+            if ($this.ThrowOnGetStorage) { throw 'GetStorage failed' }
             [PSCustomObject]@{ Stats = [PSCustomObject]@{ BackupSize = $this.BackupSizeValue } }
         }
         return $RestorePoint
@@ -1309,6 +1312,83 @@ Describe 'Multi-chain summing for a single tier-1-matched job' {
         $Row = $script:CapturedJobRows | Where-Object { $_.Name -eq 'RetargetedJob' }
         $Row.OnDiskGB     | Should -Be 7      # 3 + 4, both chains summed
         $Row.OriginalSize | Should -Be 15GB   # only the newer chain's ApproxSize
+    }
+}
+
+# ---------------------------------------------------------------------------
+# #199: a per-restore-point GetStorage() failure must not zero the whole job
+# ---------------------------------------------------------------------------
+Describe 'Per-restore-point GetStorage() failure is isolated from job totals (#199)' {
+
+    BeforeEach {
+        $script:CapturedJobRows = @()
+        $script:LogMessages     = [System.Collections.Generic.List[string]]::new()
+        Mock Write-LogFile                 -MockWith { $script:LogMessages.Add($Message) }
+        Mock Get-VBRConfigurationBackupJob -MockWith { $null }
+        Mock Invoke-VhciJobSubCollectors   -MockWith { }
+        Mock Add-VhciModuleError           -MockWith { }
+        Mock Get-VBRBackup                 -MockWith { @() }
+        Mock Export-VhciCsv -MockWith {
+            if ($FileName -eq '_Jobs.csv' -and $InputObject) {
+                $script:CapturedJobRows += @($InputObject)
+            }
+        }
+    }
+
+    It 'sums the surviving restore points and logs a WARNING, instead of zeroing the whole job' {
+        $Job = script:New-FakeJob -Name 'Entra ID Tenant Backup' -TypeToString 'Entra ID Tenant Backup'
+        Mock Get-VBRJob -MockWith { @($Job) }
+
+        # Throwing point deliberately listed FIRST, with TWO healthy
+        # siblings: a fix that still aborts on the first throw (e.g. an
+        # unconverted .ForEach{}, or a stray `break`) would otherwise pass
+        # a throw-last/single-sibling fixture, since the outer per-job
+        # catch zeroes the total either way once nothing downstream runs.
+        Mock Get-VBRRestorePoint -MockWith {
+            if ($null -eq $Backup) {
+                @(
+                    (script:New-FakeRestorePoint -Name 'UnresolvableStorage' -ObjectId ([guid]'00000000-0000-0000-0000-000000000001') -BackupSize 3GB -SourceJob $Job -ThrowOnGetStorage),
+                    (script:New-FakeRestorePoint -Name 'GoodPoint1'          -ObjectId ([guid]'00000000-0000-0000-0000-000000000002') -BackupSize 4GB -SourceJob $Job),
+                    (script:New-FakeRestorePoint -Name 'GoodPoint2'          -ObjectId ([guid]'00000000-0000-0000-0000-000000000003') -BackupSize 5GB -SourceJob $Job)
+                )
+            } else { @() }
+        }
+
+        Get-VhcJob
+        $Row = $script:CapturedJobRows | Where-Object { $_.Name -eq 'Entra ID Tenant Backup' }
+
+        $Row.OnDiskGB | Should -Be 9   # 4 + 5; the unresolvable point is excluded, not zeroing the sum
+
+        @($script:LogMessages | Where-Object { $_ -match 'UnresolvableStorage' -and $_ -match 'Entra ID Tenant Backup' }) | Should -HaveCount 1
+
+        # Must not fall through to the outer per-job catch/IncludedSize
+        # fallback - that path logs different wording than the per-point warning above.
+        @($script:LogMessages | Where-Object { $_ -match 'Could not calculate restore point sizes' }) | Should -HaveCount 0
+    }
+
+    It 'still reports OnDiskGB of 0 but logs one WARNING per point when every restore point is unresolvable' {
+        # Live-confirmed shape (Entra ID Tenant Backup, StorageId all zeros):
+        # every point throws, so the sum is legitimately 0 - #199 doesn't
+        # make that job report a nonzero size, it makes the 0 traceable to
+        # a resolution failure instead of indistinguishable from "empty".
+        $Job = script:New-FakeJob -Name 'Entra ID Tenant Backup' -TypeToString 'Entra ID Tenant Backup'
+        Mock Get-VBRJob -MockWith { @($Job) }
+        Mock Get-VBRRestorePoint -MockWith {
+            if ($null -eq $Backup) {
+                @(
+                    (script:New-FakeRestorePoint -Name 'Unresolvable1' -ObjectId ([guid]'00000000-0000-0000-0000-000000000001') -BackupSize 3GB -SourceJob $Job -ThrowOnGetStorage),
+                    (script:New-FakeRestorePoint -Name 'Unresolvable2' -ObjectId ([guid]'00000000-0000-0000-0000-000000000002') -BackupSize 4GB -SourceJob $Job -ThrowOnGetStorage)
+                )
+            } else { @() }
+        }
+
+        Get-VhcJob
+        $Row = $script:CapturedJobRows | Where-Object { $_.Name -eq 'Entra ID Tenant Backup' }
+
+        $Row.OnDiskGB | Should -Be 0
+        @($script:LogMessages | Where-Object { $_ -match 'Unresolvable1' }) | Should -HaveCount 1
+        @($script:LogMessages | Where-Object { $_ -match 'Unresolvable2' }) | Should -HaveCount 1
+        @($script:LogMessages | Where-Object { $_ -match 'Could not calculate restore point sizes' }) | Should -HaveCount 0
     }
 }
 
