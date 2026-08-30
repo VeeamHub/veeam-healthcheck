@@ -431,9 +431,9 @@ namespace VeeamHealthCheck.Functions.Collection.PSCollections
         public bool RunVbrConfigCollect()
         {
             bool success = true;
-            success = this.ExecutePsScript(this.VbrConfigStartInfo());
+            success = this.ExecutePsScript(this.VbrConfigStartInfo(), tolerateExitCodeIfComplete: true);
 
-            
+
             // Skip NAS script during remote execution as it reads from local log files
             // that don't exist on the management machine
             if (success && !CGlobals.REMOTEEXEC)
@@ -448,7 +448,23 @@ namespace VeeamHealthCheck.Functions.Collection.PSCollections
             return success;
         }
 
-        public bool ExecutePsScript(ProcessStartInfo startInfo)
+        // Collection is "complete" if the manifest file (written as the final collection
+        // step, immediately before "Collection complete" is logged) exists on disk; the
+        // stdout marker is a fallback for callers that don't have a manifest path yet.
+        // A real on-disk artifact is the signal here, not a fragile exit-code assumption -
+        // this is what lets us tell "collection finished, teardown hiccuped" apart from
+        // "collection actually failed".
+        internal static bool VbrCollectionCompleted(string stdOut, string manifestPath)
+        {
+            if (!string.IsNullOrEmpty(manifestPath) && File.Exists(manifestPath))
+            {
+                return true;
+            }
+
+            return !string.IsNullOrEmpty(stdOut) && stdOut.Contains("[Get-VBRConfig] Collection complete");
+        }
+
+        public bool ExecutePsScript(ProcessStartInfo startInfo, bool tolerateExitCodeIfComplete = false)
         {
             var res1 = new Process();
             res1.StartInfo = startInfo;
@@ -515,8 +531,17 @@ namespace VeeamHealthCheck.Functions.Collection.PSCollections
             // Check exit code
             if (res1.ExitCode != 0)
             {
-                this.log.Error($"[PS] Script failed with exit code: {res1.ExitCode}", false);
-                failed = true;
+                string manifestPath = Path.Combine(CVariables.vbrDir, $"{CGlobals.REMOTEHOST}_CollectionManifest.csv");
+                if (tolerateExitCodeIfComplete && VbrCollectionCompleted(stdOut, manifestPath))
+                {
+                    this.log.Info($"[PS] Script exited with code {res1.ExitCode} but collection completed " +
+                        "(manifest present / 'Collection complete' logged). Proceeding to report generation.", false);
+                }
+                else
+                {
+                    this.log.Error($"[PS] Script failed with exit code: {res1.ExitCode}", false);
+                    failed = true;
+                }
             }
 
             this.log.Info(CMessages.PsVbrConfigProcIdDone, false);
@@ -906,7 +931,7 @@ namespace VeeamHealthCheck.Functions.Collection.PSCollections
             }
         }
 
-        public void InvokeVb365Collect()
+        public bool InvokeVb365Collect()
         {
             this.log.Info("[PS] Enter VB365 collection invoker...", false);
             var scriptFile = this.vb365Script;
@@ -922,14 +947,46 @@ namespace VeeamHealthCheck.Functions.Collection.PSCollections
                 FileName = "powershell.exe",
                 Arguments = args,
                 UseShellExecute = false,
-                CreateNoWindow = true
+                CreateNoWindow = true,
+                RedirectStandardOutput = true,
+                RedirectStandardError = true
             };
             this.log.Info("[PS] Starting VB365 Collection Powershell process", false);
             this.log.Info("[PS] [ARGS]: " + safeArgs, false);
             var result = Process.Start(startInfo);
             this.log.Info("[PS] Process started with ID: " + result.Id.ToString(), false);
+
+            // Capture output for diagnostics: the collector's own INFO/WARNING/ERROR
+            // logging goes to CollectorMain.log on disk, not stdout (Write-LogFile only
+            // echoes to the console-only Information/Warning/Error streams, and only
+            // when the script's own DebugInConsole setting is on) - so unlike the VBR
+            // config collector, there is no in-process "collection complete" marker we
+            // can observe from here. The real process exit code is the only reliable
+            // signal available; capturing stdout/stderr at least surfaces PowerShell-
+            // level failures (e.g. module load errors) that were previously silent.
+            var stdOutTask = System.Threading.Tasks.Task.Run(() => result.StandardOutput.ReadToEnd());
+            var stdErrTask = System.Threading.Tasks.Task.Run(() => result.StandardError.ReadToEnd());
             result.WaitForExit();
+            string stdOut = stdOutTask.GetAwaiter().GetResult();
+            string stdErr = stdErrTask.GetAwaiter().GetResult();
+
+            if (!string.IsNullOrWhiteSpace(stdOut))
+            {
+                this.log.Debug($"[PS][VB365][STDOUT] {stdOut}", false);
+            }
+            if (!string.IsNullOrWhiteSpace(stdErr))
+            {
+                this.log.Error($"[PS][VB365][STDERR] {stdErr}", false);
+            }
+
+            if (result.ExitCode != 0)
+            {
+                this.log.Error($"[PS] VB365 script failed with exit code: {result.ExitCode}", false);
+                return false;
+            }
+
             this.log.Info("[PS] VB365 collection complete!", false);
+            return true;
         }
 
         /// <summary>
