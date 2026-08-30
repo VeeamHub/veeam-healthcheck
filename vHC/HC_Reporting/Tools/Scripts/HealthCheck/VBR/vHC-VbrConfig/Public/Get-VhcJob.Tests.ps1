@@ -590,6 +590,38 @@ Describe 'Performance gate: sweep triggers on unrecognized job types' {
         $script:UnscopedCalls | Should -Be 1
     }
 
+    It 'logs the natural gate value separately from the overridden effective gate' {
+        $script:LogMessages = [System.Collections.Generic.List[string]]::new()
+        Mock Write-LogFile -MockWith { $script:LogMessages.Add($Message) }
+        Mock Get-VBRJob -MockWith {
+            @(
+                (script:New-FakeJob -Name 'VMwareJob' -TypeToString 'VMware Backup' -LastBackup ([PSCustomObject]@{ Id = [guid]::NewGuid() })),
+                (script:New-FakeJob -Name 'HyperVJob' -TypeToString 'Hyper-V Backup' -LastBackup ([PSCustomObject]@{ Id = [guid]::NewGuid() }))
+            )
+        }
+        Get-VhcJob
+        $SweepLine = $script:LogMessages | Where-Object { $_ -match '^Restore point sweep:' } | Select-Object -Last 1
+        $SweepLine | Should -Match 'natural-gate=False'
+        $SweepLine | Should -Match 'effective-gate=True'
+    }
+
+    It 'logs the sweep duration alongside restore point and job counts' {
+        $script:LogMessages = [System.Collections.Generic.List[string]]::new()
+        Mock Write-LogFile -MockWith { $script:LogMessages.Add($Message) }
+        $MorpheusJob = script:New-FakeJob -Name 'MorpheusJob' -TypeToString 'HPE Morpheus VME Backup'
+        Mock Get-VBRJob -MockWith { @($MorpheusJob) }
+        Mock Get-VBRRestorePoint -MockWith {
+            if ($null -eq $Backup) {
+                @( (script:New-FakeRestorePoint -ObjectId ([guid]'21212121-2121-2121-2121-212121212121') -ApproxSize 4GB -BackupSize 1GB -SourceJob $MorpheusJob) )
+            } else { @() }
+        }
+        Get-VhcJob
+        $SweepLine = $script:LogMessages | Where-Object { $_ -match '^Restore point sweep:' } | Select-Object -Last 1
+        $SweepLine | Should -Match '\d+ms elapsed'
+        $SweepLine | Should -Match '\b1 restore points\b'
+        $SweepLine | Should -Match '\b1 jobs\b'
+    }
+
     # SKIPPED (2026-08-26): Get-VhcJob.ps1 currently forces $NeedsSweep =
     # $true unconditionally (temporary override, see that file's comment
     # near $KnownSafeJobTypes) to close a data-completeness gap for the
