@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using System.IO;
 using VeeamHealthCheck.Functions.Analysis.DataModels;
 using VeeamHealthCheck.Functions.Reporting.DataTypes;
+using VeeamHealthCheck.Functions.UserInteraction;
 using VeeamHealthCheck.Scrubber;
 using VeeamHealthCheck.Shared.Logging;
 
@@ -14,7 +15,18 @@ namespace VeeamHealthCheck.Shared
     {
         // static globals:
         public static CLogger mainlog = new("HealthCheck");
-        
+
+        /// <summary>
+        /// UI-framework-specific dialog seam. Null until GUI mode wires it up
+        /// (CArgsParser.LaunchUi). Most call sites (PreRunCheck's admin-check box,
+        /// ResolveImportPath, ValidatePowerShellVersionMeetsVbrRequirement,
+        /// WeighSuccessContinuation) guard on CGlobals.GUIEXEC first, which is false
+        /// for every CLI code path. AcceptTerms is the one exception - it has no
+        /// such guard, but its only caller (VhcGui's AcceptButton_click) is GUI-only,
+        /// so this is still never dereferenced while null in practice.
+        /// </summary>
+        public static IUiNotifier Notifier { get; set; }
+
         /// <summary>
         /// Stores validation results for CSV files collected during the data gathering phase.
         /// Used to track which files are present/missing and generate data collection summaries.
