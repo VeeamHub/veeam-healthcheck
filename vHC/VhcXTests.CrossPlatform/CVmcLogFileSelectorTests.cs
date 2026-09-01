@@ -58,10 +58,11 @@ public class CVmcLogFileSelectorTests
     }
 
     [Fact]
-    public void SelectVmcLogFile_MultipleMatchingFiles_ReturnsFirstMatch()
+    public void SelectVmcLogFile_RotatedBackupListedBeforeLiveFile_ReturnsLiveFile()
     {
-        // Arrange - preserves the original (pre-fix) selection order: first match
-        // in the directory listing, not a specific sort order.
+        // Arrange - Directory.GetFiles() enumeration order is filesystem-defined, not
+        // chronological. Even when the rotated backup is listed first, the live "VMC.log"
+        // must win deterministically over "VMC.log.1".
         string[] files = new[]
         {
             @"C:\ProgramData\Veeam\Backup365\Logs\VMC.log.1",
@@ -72,7 +73,42 @@ public class CVmcLogFileSelectorTests
         var result = CVmcLogFileSelector.SelectVmcLogFile(files);
 
         // Assert
-        Assert.Equal(@"C:\ProgramData\Veeam\Backup365\Logs\VMC.log.1", result);
+        Assert.Equal(@"C:\ProgramData\Veeam\Backup365\Logs\VMC.log", result);
+    }
+
+    [Fact]
+    public void SelectVmcLogFile_LiveFileListedBeforeRotatedBackup_ReturnsLiveFile()
+    {
+        // Arrange - same rotation scenario, opposite enumeration order, same expected result.
+        string[] files = new[]
+        {
+            @"C:\ProgramData\Veeam\Backup365\Logs\VMC.log",
+            @"C:\ProgramData\Veeam\Backup365\Logs\VMC.log.1",
+        };
+
+        // Act
+        var result = CVmcLogFileSelector.SelectVmcLogFile(files);
+
+        // Assert
+        Assert.Equal(@"C:\ProgramData\Veeam\Backup365\Logs\VMC.log", result);
+    }
+
+    [Fact]
+    public void SelectVmcLogFile_OnlyRotatedBackupsPresent_ReturnsFirstMatch()
+    {
+        // Arrange - no exact "VMC.log" exists (e.g. the live file was deleted); falls
+        // back to whatever the filesystem lists first among the rotated backups.
+        string[] files = new[]
+        {
+            @"C:\ProgramData\Veeam\Backup365\Logs\VMC.log.2",
+            @"C:\ProgramData\Veeam\Backup365\Logs\VMC.log.1",
+        };
+
+        // Act
+        var result = CVmcLogFileSelector.SelectVmcLogFile(files);
+
+        // Assert
+        Assert.Equal(@"C:\ProgramData\Veeam\Backup365\Logs\VMC.log.2", result);
     }
 
     [Fact]
