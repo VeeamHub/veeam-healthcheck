@@ -10,6 +10,7 @@ using System.Text.RegularExpressions;
 using VeeamHealthCheck.Functions.Collection.PSCollections;
 using VeeamHealthCheck.Functions.CredsWindow;
 using VeeamHealthCheck.Functions.Monitor;
+using VeeamHealthCheck.Functions.UserInteraction;
 
 // using VeeamHealthCheck.Reporting.vsac;
 using VeeamHealthCheck.Shared;
@@ -69,6 +70,8 @@ namespace VeeamHealthCheck.Startup
             CGlobals.Logger.Info("Executing GUI", false);
             CGlobals.RunFullReport = true;
             CGlobals.GUIEXEC = true;
+            CGlobals.Notifier = new WpfUiNotifier();
+            CGlobals.CredentialPrompter = new WpfCredentialPrompter();
 
             // if (hide)
             //     ShowWindow(handle, SW_HIDE);

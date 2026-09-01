@@ -6,7 +6,6 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Net.Http.Headers;
-using System.Windows.Documents;
 using VeeamHealthCheck.Shared;
 using VeeamHealthCheck.Shared.Logging;
 
