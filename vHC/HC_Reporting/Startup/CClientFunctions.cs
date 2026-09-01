@@ -24,18 +24,6 @@ namespace VeeamHealthCheck.Startup
 
         public void Dispose() { }
 
-        public void KbLinkAction(System.Windows.Navigation.RequestNavigateEventArgs args)
-        {
-            CGlobals.Logger.Info("[GUI]\tOpening KB Link");
-            var p = new Process();
-            p.StartInfo = new ProcessStartInfo(args.Uri.ToString())
-            {
-                UseShellExecute = true
-            };
-            p.Start();
-            CGlobals.Logger.Info("[GUI]\tOpening KB Link...done!");
-        }
-
         public void PreRunCheck()
         {
             CGlobals.Logger.Info("Starting Admin Check", false);
