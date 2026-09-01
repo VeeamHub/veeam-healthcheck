@@ -105,18 +105,21 @@ MIT License
                         Padding="15" CornerRadius="4">
                     <StackPanel>
                         <TextBlock FontSize="12" TextWrapping="Wrap" Foreground="#333333" LineHeight="20">
-                            <Run Name="Cav1Part1" /><LineBreak />
-                            <Run Name="Cav2" />
+                            <Run Name="Cav1Part1" />
                         </TextBlock>
-                        <!-- Original had this as an inline WPF Hyperlink inside the TextBlock above;
+                        <!-- Original had this as an inline WPF Hyperlink between Cav1Part1 and Cav2;
                              Avalonia's TextBlock.Inlines has no Hyperlink inline, so this is a
-                             standalone HyperlinkButton (auto-opens NavigateUri, no click handler needed). -->
+                             standalone HyperlinkButton (auto-opens NavigateUri, no click handler needed).
+                             Split into two TextBlocks to preserve reading order: Cav1 → Link → Cav2. -->
                         <HyperlinkButton Name="kbLink"
                                          NavigateUri="https://www.veeam.com/kb2462"
                                          Content="KB 2462"
                                          Foreground="#0066CC"
                                          FontSize="12"
-                                         Margin="0,4,0,0" />
+                                         Margin="0,2,0,2" />
+                        <TextBlock FontSize="12" TextWrapping="Wrap" Foreground="#333333" LineHeight="20">
+                            <Run Name="Cav2" />
+                        </TextBlock>
                         <TextBlock TextWrapping="Wrap" FontSize="11" Foreground="#666666"
                                    Margin="0,10,0,0" LineHeight="16">
                             <Run Name="Cav3" /><LineBreak />
