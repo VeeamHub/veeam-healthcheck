@@ -6,8 +6,6 @@ using System;
 using System.Diagnostics;
 using System.IO;
 using System.Text.Json;
-using System.Windows;
-using System.Windows.Controls;
 using VeeamHealthCheck.Functions.Collection.LogParser;
 using VeeamHealthCheck.Functions.Reporting.Html.Exportables;
 using VeeamHealthCheck.Scrubber;
@@ -317,17 +315,12 @@ namespace VeeamHealthCheck.Functions.Reporting.Html
 
         private void ExecBrowser()
         {
-            Application.Current.Dispatcher.Invoke(delegate
+            var p = new Process();
+            p.StartInfo = new ProcessStartInfo(this.latestReport)
             {
-                WebBrowser w1 = new();
-
-                var p = new Process();
-                p.StartInfo = new ProcessStartInfo(this.latestReport)
-                {
-                    UseShellExecute = true
-                };
-                p.Start();
-            });
+                UseShellExecute = true
+            };
+            p.Start();
         }
     }
 }
