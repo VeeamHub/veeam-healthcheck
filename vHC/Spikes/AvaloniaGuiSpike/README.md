@@ -37,10 +37,30 @@ dotnet run
   UI thread" shape as today's code.
 - **Real gap:** Avalonia has no built-in `MessageBox`, and `Window.ShowDialog<T>`
   is async-only (no synchronous blocking call like WPF's `MessageBox.Show`).
-  Every `MessageBox.Show` call site in `CClientFunctions.cs`, `CCollections.cs`,
-  and `CredsHandler.cs` needs to become `await` a dialog, not just a type
-  swap — those methods will need to become `async` (or the call sites
-  restructured), which is the main non-mechanical part of a real migration.
+  Turns out this does **not** force an async cascade through business logic,
+  though — see the next finding.
+- **Blocking on the async dialog from a background thread is safe and
+  verified working**, not just reasoned about: `VerifyBlockingDialogPattern()`
+  in `MainWindow.axaml.cs` does
+  `Dispatcher.UIThread.InvokeAsync(async () => { await Task.Delay(800); return true; })`
+  from inside `Task.Run(...)`, then calls `.GetAwaiter().GetResult()` on the
+  result and blocks for the full 800ms before returning `true` — confirmed via
+  `dotnet run` output (`result=True elapsedMs=805 PASS`), not just successful
+  compilation. Two things this proves: (1) `InvokeAsync` correctly resolves to
+  the `Func<Task<TResult>> → Task<TResult>` overload rather than the
+  `Func<TResult> → Task<TResult>` one, which would have silently produced
+  `Task<Task<bool>>` and a bogus/unawaited result - `bool task = ...` wouldn't
+  even have compiled if it had; (2) blocking a **non-UI** thread on that call
+  is exactly WPF's `Dispatcher.Invoke` semantics, not a deadlock risk - only
+  blocking from the UI thread itself would deadlock. This means almost none of
+  `CClientFunctions`/`CCollections`/`CredsHandler`/`PSInvoker` needs to become
+  `async` at all: `IUiNotifier`/`ICredentialPrompter` expose async primitives
+  (`ShowErrorAsync`/`ConfirmAsync`/`PromptAsync`) plus synchronous wrapper
+  methods (default interface methods that call
+  `...Async(...).GetAwaiter().GetResult()`) that every existing synchronous
+  call site keeps using unchanged. Only the two call sites that already run
+  **on** the UI thread directly - `VhcGui`'s constructor-time `PreRunCheck`
+  call, and `AcceptButton_click` - need real `async`/`await`.
 - **Pin the Avalonia version to the installed SDK's compiler.** `Avalonia
   12.1.1` (current latest) failed silently on this machine: it ships a Roslyn
   source generator (`Avalonia.Generators.dll`) built against C# compiler

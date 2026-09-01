@@ -10,7 +10,39 @@ namespace AvaloniaGuiSpike;
 
 public partial class MainWindow : Window
 {
-    public MainWindow() => InitializeComponent();
+    public MainWindow()
+    {
+        InitializeComponent();
+        this.Loaded += (s, e) => Task.Run(VerifyBlockingDialogPattern);
+    }
+
+    // Verifies a claim the real migration plan depends on: does
+    // Dispatcher.UIThread.InvokeAsync(Func<Task<TResult>>) resolve to the
+    // Task<TResult>-returning overload (correct) or does it bind the wrong
+    // generic overload and hand back Task<Task<TResult>> (a silent-bug trap -
+    // .GetAwaiter().GetResult() on that returns an unstarted/unawaited inner
+    // Task, not the real result)? Task.Delay stands in for "user is looking
+    // at a real dialog" - if this deadlocked, the process would hang forever
+    // instead of printing PASS/FAIL, which is itself part of the proof.
+    private void VerifyBlockingDialogPattern()
+    {
+        var sw = System.Diagnostics.Stopwatch.StartNew();
+
+        Task<bool> task = Dispatcher.UIThread.InvokeAsync(async () =>
+        {
+            await Task.Delay(800);
+            return true;
+        });
+
+        // Confirms the static type really is Task<bool>, not Task<Task<bool>> -
+        // this line would fail to compile otherwise (CS0266/no implicit conversion).
+        bool result = task.GetAwaiter().GetResult();
+
+        sw.Stop();
+        bool timingLooksReal = sw.ElapsedMilliseconds >= 700; // proves it actually awaited the delay, not a fire-and-forget no-op
+        Console.WriteLine($"[VerifyBlockingDialogPattern] result={result} elapsedMs={sw.ElapsedMilliseconds} " +
+                           (result && timingLooksReal ? "PASS" : "FAIL"));
+    }
 
     private void PathBox_TextChanged(object? sender, TextChangedEventArgs e)
     {
