@@ -44,6 +44,9 @@ MIT License
         <Style Selector="Button.secondary:pointerover /template/ ContentPresenter">
             <Setter Property="Background" Value="#333333" />
         </Style>
+        <Style Selector="Button.secondary:disabled /template/ ContentPresenter">
+            <Setter Property="Background" Value="#CCCCCC" />
+        </Style>
 
         <Style Selector="CheckBox.modern">
             <Setter Property="FontSize" Value="13" />
