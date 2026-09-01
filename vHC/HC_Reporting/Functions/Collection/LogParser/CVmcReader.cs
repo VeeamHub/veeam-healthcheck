@@ -97,7 +97,22 @@ namespace VeeamHealthCheck.Functions.Collection.LogParser
 
         private void ParseInstallId(string line)
         {
+            // A malformed/truncated line here must not be indistinguishable from "no VMC.log
+            // found at all" - log it explicitly instead of letting it fall through to
+            // PopulateVmc's generic catch, which only logs the bare exception message.
+            if (line.Length <= 40)
+            {
+                CGlobals.Logger.Warning($"[VMC reader] '{CLogOptions.installIdLine}' line is shorter than expected - skipping install ID parse. Line: '{line}'");
+                return;
+            }
+
             string[] id = line.Substring(40).Split();
+            if (id.Length < 2)
+            {
+                CGlobals.Logger.Warning($"[VMC reader] '{CLogOptions.installIdLine}' line did not contain an install ID token after the prefix - skipping. Line: '{line}'");
+                return;
+            }
+
             this.INSTALLID = id[1];
         }
 
