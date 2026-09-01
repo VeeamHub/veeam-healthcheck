@@ -155,6 +155,15 @@ namespace VeeamHealthCheck
                 pdfCheckBox.IsEnabled = false;
                 ToolTip.SetTip(pdfCheckBox, "PDF Export not available when both VB365 & VBR are detected on the same machine.");
             }
+
+            // Originally the tail of the single synchronous SetUi(), which ran
+            // entirely before the WPF window was ever shown. SetUiAsync() below
+            // now sets these again after Loaded, but doing it here too closes
+            // the window between first paint and SetUiAsync's completion during
+            // which the axaml's declared state (run enabled, pBar spinning at
+            // full opacity) would otherwise be visible.
+            run.IsEnabled = false;
+            this.hideProgressBar();
         }
 
         private async Task SetUiAsync()
@@ -320,12 +329,24 @@ namespace VeeamHealthCheck
             });
         }
 
+        // Both UpdateCollectionStatusText() and ShowCollectionWarningsIfAny() are
+        // called only from the background thread inside Run()'s
+        // Task.Factory.StartNew, immediately before Environment.Exit(0). The
+        // real WPF file used Dispatcher.Invoke (synchronous - blocks the
+        // calling thread until the UI thread finishes, and for the MessageBox
+        // case, until the user dismisses it) specifically so Exit(0) couldn't
+        // race ahead of the UI update / warning dialog. Dispatcher.UIThread.Post
+        // is fire-and-forget and would let Exit(0) tear down the process before
+        // the queued work - or the warning dialog - ever ran, silently dropping
+        // the collection-warnings notification. Dispatcher.UIThread.Invoke (the
+        // Avalonia analog of WPF's Dispatcher.Invoke) and the notifier's
+        // blocking ShowError wrapper preserve the original blocking semantics.
         private void UpdateCollectionStatusText()
         {
             var failed = CGlobals.CollectionManifest?.Where(e => !e.Success).ToList();
             if (failed != null && failed.Count > 0)
             {
-                Dispatcher.UIThread.Post(() =>
+                Dispatcher.UIThread.Invoke(() =>
                 {
                     progressText.Text = $"Collection complete — {failed.Count} collector warning(s)";
                     progressText.Foreground = new SolidColorBrush(Color.FromRgb(0xf0, 0xad, 0x4e));
@@ -333,7 +354,7 @@ namespace VeeamHealthCheck
             }
             else
             {
-                Dispatcher.UIThread.Post(() =>
+                Dispatcher.UIThread.Invoke(() =>
                 {
                     progressText.Text = "Collection complete";
                     progressText.Foreground = new SolidColorBrush(Color.FromRgb(0x5c, 0xb8, 0x5c));
@@ -347,12 +368,9 @@ namespace VeeamHealthCheck
             if (failed != null && failed.Count > 0)
             {
                 var names = string.Join(", ", failed.Select(e => e.Name));
-                Dispatcher.UIThread.Post(async () =>
-                {
-                    await CGlobals.Notifier.ShowErrorAsync(
-                        $"{failed.Count} collector(s) reported errors: {names}\n\nThe report may have incomplete sections. Check the log for details.",
-                        "Collection Warnings");
-                });
+                CGlobals.Notifier.ShowError(
+                    $"{failed.Count} collector(s) reported errors: {names}\n\nThe report may have incomplete sections. Check the log for details.",
+                    "Collection Warnings");
             }
         }
 
@@ -803,12 +821,15 @@ namespace VeeamHealthCheck
             };
         }
 
+        // Same Invoke-not-Post reasoning as UpdateCollectionStatusText/
+        // ShowCollectionWarningsIfAny above - called from the background
+        // thread right before Environment.Exit(0) in Run().
         private void OfferMonitorSetupIfNeeded()
         {
             if (!CVhcMonitorIntegration.IsExePresentInBundle()) return;
             if (CVhcMonitorIntegration.IsTaskRegistered()) return;
 
-            Dispatcher.UIThread.Post(() =>
+            Dispatcher.UIThread.Invoke(() =>
             {
                 monitorVhcSetupBtn.IsEnabled = true;
                 monitorLastRunText.Text = "Health check complete — click 'Setup from VHC' to configure continuous monitoring with auto-detected server settings.";
