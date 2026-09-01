@@ -251,14 +251,23 @@ namespace VeeamHealthCheck.Functions.Collection
 
         private void ExecVmcReader()
         {
-            if (CGlobals.IsVbr)
+            try
             {
-                CLogOptions logOptions = new("vbr");
-            }
+                if (CGlobals.IsVbr)
+                {
+                    CLogOptions logOptions = new("vbr");
+                }
 
-            if (CGlobals.IsVb365)
+                if (CGlobals.IsVb365)
+                {
+                    CLogOptions logOptions = new("vb365");
+                }
+            }
+            catch (Exception e)
             {
-                CLogOptions logOptions = new("vb365");
+                // Don't let a VMC/install-ID lookup failure abort the whole run (issue #209) -
+                // log it loudly and continue so report generation can still proceed.
+                this.log.Error("[Collections] VMC reader failed: " + e.Message, false);
             }
         }
 
