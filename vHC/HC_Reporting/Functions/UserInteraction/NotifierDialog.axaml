@@ -1,0 +1,14 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        x:Class="VeeamHealthCheck.Functions.UserInteraction.NotifierDialog"
+        Width="440" Height="200"
+        CanResize="False"
+        WindowStartupLocation="CenterOwner">
+    <Grid Margin="20" RowDefinitions="*,Auto">
+        <TextBlock Grid.Row="0" Name="MessageText" TextWrapping="Wrap" />
+        <StackPanel Grid.Row="1" Orientation="Horizontal" HorizontalAlignment="Right" Spacing="8">
+            <Button Name="NoButton" Content="No" Click="No_Click" IsVisible="False" />
+            <Button Name="YesOkButton" Content="OK" Click="YesOk_Click" />
+        </StackPanel>
+    </Grid>
+</Window>
