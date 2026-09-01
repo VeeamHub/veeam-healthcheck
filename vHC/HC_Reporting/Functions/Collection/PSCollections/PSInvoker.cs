@@ -814,6 +814,14 @@ namespace VeeamHealthCheck.Functions.Collection.PSCollections
                     argString += $"-ReportPath \"{path}\" ";
                     safeArgString += $"-ReportPath \"{path}\" ";
                 }
+                // Add LogPath so this phase (e.g. Get-NasInfo) writes its own log next to the
+                // configured output root instead of running silently. Mirrors VbrConfigStartInfo.
+                if (!string.IsNullOrEmpty(CVariables.unsafeDir))
+                {
+                    string nasLogPath = Path.Combine(CVariables.unsafeDir, "Log");
+                    argString += $"-LogPath \"{nasLogPath}\" ";
+                    safeArgString += $"-LogPath \"{nasLogPath}\" ";
+                }
                 if (needsCredentials)
                 {
                     CredsHandler ch = new();
