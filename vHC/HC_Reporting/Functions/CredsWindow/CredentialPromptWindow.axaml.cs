@@ -30,6 +30,11 @@ namespace VeeamHealthCheck.Functions.CredsWindow
 
             this.Title = $"Authentication Required - {host}";
             ServerText.Text = $"Please enter credentials to connect to {host}";
+        }
+
+        protected override void OnOpened(EventArgs e)
+        {
+            base.OnOpened(e);
             UsernameBox.Focus();
         }
 
