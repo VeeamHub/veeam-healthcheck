@@ -497,10 +497,13 @@ function Get-VhcJob {
 
             $TotalOnDiskGB = 0
 
-            $RestorePoints.ForEach{
-                $RestorePoint  = $PSItem
-                $OnDiskGB      = $RestorePoint.GetStorage().Stats.BackupSize / 1GB
-                $TotalOnDiskGB += $OnDiskGB
+            foreach ($RestorePoint in $RestorePoints) {
+                try {
+                    $OnDiskGB       = $RestorePoint.GetStorage().Stats.BackupSize / 1GB
+                    $TotalOnDiskGB += $OnDiskGB
+                } catch {
+                    try { Write-LogFile "Could not read on-disk size for restore point '$($RestorePoint.Name)' (ObjectId $($RestorePoint.ObjectId)) in job '$($Job.Name)': $($_.Exception.Message)" -LogLevel "WARNING" } catch {}
+                }
             }
 
             # CalculatedOriginalSize: prefer ApproxSize from latest restore point per object;
