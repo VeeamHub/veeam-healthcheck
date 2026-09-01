@@ -499,7 +499,7 @@ namespace VeeamHealthCheck
         private void pathBox_TextChanged(object sender, TextChangedEventArgs e)
         {
             CGlobals.Logger.Info("Changing path from " + CGlobals.desiredPath + " to " + pathBox.Text);
-            CGlobals.desiredPath = pathBox.Text;
+            CGlobals.desiredPath = pathBox.Text ?? string.Empty;
         }
 
         // Guard added (not present in the real WPF file): Avalonia's generated
@@ -539,7 +539,7 @@ namespace VeeamHealthCheck
 
         private void addServerBtn_Click(object sender, RoutedEventArgs e)
         {
-            string serverName = serverTextBox.Text.Trim();
+            string serverName = serverTextBox.Text?.Trim() ?? string.Empty;
 
             if (string.IsNullOrWhiteSpace(serverName))
             {
