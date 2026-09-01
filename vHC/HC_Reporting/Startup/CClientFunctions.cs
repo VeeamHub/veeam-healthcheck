@@ -4,8 +4,6 @@ using System;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
-using System.Windows;
-using System.Windows.Controls;
 using VeeamHealthCheck.Functions.Collection;
 using VeeamHealthCheck.Functions.Collection.DB;
 using VeeamHealthCheck.Functions.CredsWindow;
@@ -29,17 +27,12 @@ namespace VeeamHealthCheck.Startup
         public void KbLinkAction(System.Windows.Navigation.RequestNavigateEventArgs args)
         {
             CGlobals.Logger.Info("[GUI]\tOpening KB Link");
-            Application.Current.Dispatcher.Invoke(delegate
+            var p = new Process();
+            p.StartInfo = new ProcessStartInfo(args.Uri.ToString())
             {
-                WebBrowser w1 = new();
-
-                var p = new Process();
-                p.StartInfo = new ProcessStartInfo(args.Uri.ToString())
-                {
-                    UseShellExecute = true
-                };
-                p.Start();
-            });
+                UseShellExecute = true
+            };
+            p.Start();
             CGlobals.Logger.Info("[GUI]\tOpening KB Link...done!");
         }
 
@@ -68,10 +61,9 @@ namespace VeeamHealthCheck.Startup
                                        "3. Select 'Run as Administrator'\n\n" +
                                        "Do you want to continue without administrator privileges?";
                         
-                        var result = MessageBox.Show(message, "Administrator Privileges Recommended", 
-                                                    MessageBoxButton.YesNo, MessageBoxImage.Warning);
-                        
-                        if (result == MessageBoxResult.No)
+                        bool continueWithoutAdmin = CGlobals.Notifier.Confirm(message, "Administrator Privileges Recommended");
+
+                        if (!continueWithoutAdmin)
                         {
                             CGlobals.Logger.Info("User declined to run without admin privileges", false);
                             Environment.Exit(0);
@@ -94,7 +86,7 @@ namespace VeeamHealthCheck.Startup
                     string message = "Please run program as Administrator";
                     if (CGlobals.GUIEXEC)
                     {
-                        MessageBox.Show(message);
+                        CGlobals.Notifier.ShowError(message, "Administrator Privileges Required");
                     }
                     CGlobals.Logger.Error(message, false);
                     Environment.Exit(0);
@@ -103,33 +95,6 @@ namespace VeeamHealthCheck.Startup
             }
 
             CGlobals.Logger.Info("Starting Admin Check...done!");
-        }
-
-        private void VbrVersionSupportCheck()
-        {
-            // GetVbrVersion();
-
-            // get the version of the current vhc software:
-            if(CGlobals.VBRMAJORVERSION < 12)
-            {
-                string[] vhcVersionSections = CGlobals.VHCVERSION.Split('.'); 
-                int.TryParse(vhcVersionSections[0], out int vhcMajorVersion);
-                int.TryParse(vhcVersionSections[3], out int vhcBuildVersion);
-
-                if(vhcMajorVersion >= 2 && vhcBuildVersion > 546)
-                {
-                    string msg = String.Format("Veeam Health Check version {0} does not support Veeam Backup & Replication Versions prior to v12. To check systems prior to v12, Please download 2.0.0.546: https://github.com/VeeamHub/veeam-healthcheck/releases/tag/2.0.0.546", CGlobals.VHCVERSION);
-
-                    this.LOG.Error(msg, false);
-
-                    if (CGlobals.GUIEXEC)
-                    {
-                        MessageBox.Show(msg, "Error", MessageBoxButton.OK, MessageBoxImage.Error);
-                    }
-
-                    Environment.Exit(0);
-                }
-            }
         }
 
         public string ModeCheck()
@@ -198,17 +163,7 @@ namespace VeeamHealthCheck.Startup
         public bool AcceptTerms()
         {
             string message = VbrLocalizationHelper.GuiAcceptText;
-
-            var res = MessageBox.Show(message, "Terms", MessageBoxButton.YesNo,MessageBoxImage.Question);
-            if (res.ToString() == "Yes")
-            {
-
-                return true;
-            }
-            else
-            {
-                return false;
-            }
+            return CGlobals.Notifier.Confirm(message, "Terms");
         }
 
         public int StartPrimaryFunctions()
@@ -380,11 +335,9 @@ namespace VeeamHealthCheck.Startup
 
                 if (CGlobals.GUIEXEC)
                 {
-                    System.Windows.MessageBox.Show(
+                    CGlobals.Notifier.ShowError(
                         $"No valid CSV files found in:\n{basePath}\n\nPlease verify the import path contains VBR or VB365 CSV export files.",
-                        "Import Error",
-                        System.Windows.MessageBoxButton.OK,
-                        System.Windows.MessageBoxImage.Error);
+                        "Import Error");
                 }
 
                 return false;
@@ -399,11 +352,9 @@ namespace VeeamHealthCheck.Startup
 
                 if (CGlobals.GUIEXEC)
                 {
-                    System.Windows.MessageBox.Show(
+                    CGlobals.Notifier.ShowError(
                         $"Import validation failed:\n{validationResult.ErrorMessage}\n\nMissing files: {string.Join(", ", validationResult.MissingCriticalFiles)}",
-                        "Import Validation Error",
-                        System.Windows.MessageBoxButton.OK,
-                        System.Windows.MessageBoxImage.Warning);
+                        "Import Validation Error");
                 }
 
                 // Allow import to continue with partial data
