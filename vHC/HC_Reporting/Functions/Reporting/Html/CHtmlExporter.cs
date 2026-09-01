@@ -264,7 +264,10 @@ namespace VeeamHealthCheck.Functions.Reporting.Html
 
                 if (scrub)
                 {
-                    installID = this.TrySetInstallId(CLogOptions.INSTALLID);
+                    // vbrOrVb365 is a report-name label ("VBR", "VB365", "VBR_Security"), not the
+                    // "vbr"/"vb365" mode string CLogOptions/CVmcReader key install IDs by.
+                    string vmcMode = vbrOrVb365.StartsWith("VBR", StringComparison.OrdinalIgnoreCase) ? "vbr" : "vb365";
+                    installID = this.TrySetInstallId(CLogOptions.GetInstallId(vmcMode));
 
                     htmlCore = this.anonPath + "\\" + this.htmlName + "_" + vbrOrVb365 + "_" + installID + dateTime.ToString("_yyyy.MM.dd.HHmmss") + ".html";
                 }

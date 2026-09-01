@@ -1,5 +1,7 @@
 ﻿// Copyright (c) 2021, Adam Congdon <adam.congdon2@gmail.com>
 // MIT License
+using System.Collections.Generic;
+
 namespace VeeamHealthCheck.Functions.Collection.LogParser
 {
     class CLogOptions
@@ -7,38 +9,27 @@ namespace VeeamHealthCheck.Functions.Collection.LogParser
         public static readonly string VMCLOG = "\\Utils\\VMC.log";
         public static readonly string installIdLine = "InstallationId:";
 
-        private static string installId;
+        // Keyed by the "vbr"/"vb365" mode string, so a combined install's two CLogOptions
+        // instances (constructed back-to-back by CCollections.ExecVmcReader()) each keep their
+        // own install ID instead of sharing one static value - otherwise a VB365 lookup that
+        // fails (e.g. no VMC.log present) would either blank out or, worse, silently inherit
+        // the VBR pass's ID on the VB365 report.
+        private static readonly Dictionary<string, string> installIdsByMode = new();
 
         public CLogOptions(string mode)
         {
             CVmcReader vReader = new(mode);
             vReader.PopulateVmc();
 
-            // installId is static and shared across the "vbr" and "vb365" instances that
-            // CCollections.ExecVmcReader() constructs back-to-back on a combined install -
-            // only overwrite it when this pass actually found one, so a failed/skipped
-            // lookup (e.g. no VB365 VMC.log present) can't blank out a value the other
-            // pass already found.
             if (!string.IsNullOrEmpty(vReader.INSTALLID))
             {
-                installId = vReader.INSTALLID;
+                installIdsByMode[mode] = vReader.INSTALLID;
             }
         }
 
-        public static string INSTALLID
+        public static string GetInstallId(string mode)
         {
-            get
-            {
-                if (!string.IsNullOrEmpty(installId))
-                {
-                    return installId;
-                }
-                else
-                {
-
-                    return string.Empty;
-                }
-            }
+            return installIdsByMode.TryGetValue(mode, out string id) ? id : string.Empty;
         }
     }
 }
