@@ -60,3 +60,13 @@ dotnet run
   by default and merges them into `AvaloniaResource` internally. Adding your
   own item on top double-registers every file and fails with a confusing
   "Duplicate x:Class directive" error.
+
+## Reference
+
+[Avalonia's official WPF migration cheat sheet](https://raw.githubusercontent.com/AvaloniaUI/avalonia-docs/refs/heads/main/docs/migration/wpf/cheat-sheet.md)
+confirms the `Dispatcher`/`Style.Triggers` findings above ("no triggers in
+Avalonia" — pseudo-classes replace them entirely). It does **not** mention
+`MessageBox` or `DialogResult` anywhere, so the async-only modal dialog gap
+found here isn't documented upstream — budget real time for it in the actual
+migration. It also flags `RoutedCommand` as having no built-in equivalent,
+which doesn't affect `VhcGui` since it only uses plain `Click` handlers.
