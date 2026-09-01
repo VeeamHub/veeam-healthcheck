@@ -1,9 +1,7 @@
 ﻿// Copyright (c) 2021, Adam Congdon <adam.congdon2@gmail.com>
 // MIT License
 using System;
-using System.Collections.Generic;
 using System.IO;
-using System.Linq;
 using VeeamHealthCheck.Functions.Collection.DB;
 using VeeamHealthCheck.Shared;
 
@@ -26,10 +24,13 @@ namespace VeeamHealthCheck.Functions.Collection.LogParser
 
         public void PopulateVmc()
         {
-            this.GetLogDir();
             try
             {
-                this.ReadVmc();
+                this.GetLogDir();
+                if (!string.IsNullOrEmpty(this.LOGLOCATION))
+                {
+                    this.ReadVmc();
+                }
             }
             catch (Exception e)
             {
@@ -48,19 +49,14 @@ namespace VeeamHealthCheck.Functions.Collection.LogParser
             else if (this.mode == "vb365")
             {
                 string[] filesList = Directory.GetFiles(this.vb365Logs);
-                List<FileInfo> fileInfoList = new();
-                foreach (var f in filesList)
+                string match = CVmcLogFileSelector.SelectVmcLogFile(filesList);
+                if (match == null)
                 {
-                    if (f.Contains("VMC.log"))
-                    {
-                        FileInfo fileInfo = new FileInfo(f);
-                        fileInfoList.Add(fileInfo);
-                    }
+                    CGlobals.Logger.Warning($"[VMC reader] No VMC.log file found under '{this.vb365Logs}' - skipping VB365 install ID lookup.");
+                    return;
                 }
 
-                fileInfoList.OrderBy(x => x.Name);
-                string fileName = fileInfoList.FirstOrDefault().Name;
-                this.LOGLOCATION = Path.Combine(this.vb365Logs + fileName);
+                this.LOGLOCATION = match;
             }
         }
 

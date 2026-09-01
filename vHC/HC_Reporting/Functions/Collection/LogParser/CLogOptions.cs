@@ -13,7 +13,16 @@ namespace VeeamHealthCheck.Functions.Collection.LogParser
         {
             CVmcReader vReader = new(mode);
             vReader.PopulateVmc();
-            installId = vReader.INSTALLID;
+
+            // installId is static and shared across the "vbr" and "vb365" instances that
+            // CCollections.ExecVmcReader() constructs back-to-back on a combined install -
+            // only overwrite it when this pass actually found one, so a failed/skipped
+            // lookup (e.g. no VB365 VMC.log present) can't blank out a value the other
+            // pass already found.
+            if (!string.IsNullOrEmpty(vReader.INSTALLID))
+            {
+                installId = vReader.INSTALLID;
+            }
         }
 
         public static string INSTALLID
