@@ -1,0 +1,47 @@
+<!--
+SPIKE / THROWAWAY: recreates the risky bits of vHC/HC_Reporting/VhcGui.xaml
+(ModernButton hover style, run button, progress bar, dynamic status color)
+to sanity-check a WPF -> Avalonia port. Not production code.
+-->
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        x:Class="AvaloniaGuiSpike.MainWindow"
+        Title="[SPIKE] Veeam Health Check - Avalonia Port"
+        Width="600" Height="360"
+        CanResize="True"
+        Background="#F5F5F5">
+
+    <Window.Styles>
+        <!-- WPF used Style.Triggers on IsMouseOver/IsEnabled; Avalonia uses pseudo-class selectors. -->
+        <Style Selector="Button.modern">
+            <Setter Property="Background" Value="#00B233" />
+            <Setter Property="Foreground" Value="White" />
+            <Setter Property="FontWeight" Value="SemiBold" />
+            <Setter Property="Padding" Value="20,10" />
+            <Setter Property="CornerRadius" Value="4" />
+            <Setter Property="Cursor" Value="Hand" />
+        </Style>
+        <Style Selector="Button.modern:pointerover /template/ ContentPresenter">
+            <Setter Property="Background" Value="#00A030" />
+        </Style>
+        <Style Selector="Button.modern:disabled /template/ ContentPresenter">
+            <Setter Property="Background" Value="#CCCCCC" />
+        </Style>
+    </Window.Styles>
+
+    <Grid Margin="20" RowDefinitions="Auto,Auto,Auto,Auto,*">
+
+        <TextBlock Grid.Row="0" Text="Output Path" FontWeight="SemiBold" Margin="0,0,0,4" />
+        <TextBox Grid.Row="1" Name="PathBox" Text="C:\temp\vHC" Margin="0,0,0,12"
+                  TextChanged="PathBox_TextChanged" />
+
+        <Button Grid.Row="2" Name="RunButton" Content="Run Health Check"
+                Classes="modern" HorizontalAlignment="Left"
+                Click="RunButton_Click" Margin="0,0,0,16" />
+
+        <StackPanel Grid.Row="3" Margin="0,0,0,8">
+            <ProgressBar Name="ProgressBarControl" IsIndeterminate="True" Height="18" IsVisible="False" />
+            <TextBlock Name="StatusText" Text="" Margin="0,8,0,0" IsVisible="False" />
+        </StackPanel>
+    </Grid>
+</Window>

@@ -1,0 +1,15 @@
+<!-- SPIKE / THROWAWAY: stand-in for WPF's built-in MessageBox.Show(...), which
+     Avalonia has no equivalent of. Mirrors CredentialPromptWindow's modal
+     dialog pattern instead (a small owned Window closed with a result). -->
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        x:Class="AvaloniaGuiSpike.CompletionDialog"
+        Title="Health Check Complete"
+        Width="380" Height="160"
+        CanResize="False"
+        WindowStartupLocation="CenterOwner">
+    <StackPanel Margin="20" Spacing="16">
+        <TextBlock Name="MessageText" TextWrapping="Wrap" />
+        <Button Content="OK" HorizontalAlignment="Right" Click="Ok_Click" />
+    </StackPanel>
+</Window>
