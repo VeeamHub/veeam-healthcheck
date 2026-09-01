@@ -65,9 +65,9 @@ namespace VeeamHealthCheck.Functions.CredsWindow
         private (string Username, string Password)? PromptForCredentials(string host)
         {
             // If GUI is available, use the GUI prompt
-            if (CGlobals.GUIEXEC && System.Windows.Application.Current != null)
+            if (CGlobals.GUIEXEC && CGlobals.CredentialPrompter != null)
             {
-                return this.PromptForCredentialsGui(host);
+                return CGlobals.CredentialPrompter.Prompt(host);
             }
 
             // Otherwise, use CLI prompt
@@ -150,57 +150,6 @@ namespace VeeamHealthCheck.Functions.CredsWindow
             return password.ToString();
         }
 
-        private (string Username, string Password)? PromptForCredentialsGui(string host)
-        {
-            var app = System.Windows.Application.Current;
-            var dispatcher = app.Dispatcher;
 
-            if (dispatcher == null)
-            {
-                CGlobals.Logger.Warning("No dispatcher available for credential prompt.");
-                return null;
-            }
-
-            (string Username, string Password)? result = null;
-
-            // Always use the Application dispatcher to ensure we can show the dialog
-            // even if MainWindow is not yet set
-            if (dispatcher.CheckAccess())
-            {
-                // We're on the UI thread, show dialog directly
-                result = this.ShowCredentialDialog(host, app.MainWindow);
-            }
-            else
-            {
-                // We're on a background thread, marshal to the UI thread
-                dispatcher.Invoke(() =>
-                {
-                    result = this.ShowCredentialDialog(host, app.MainWindow);
-                });
-            }
-
-            return result;
-        }
-
-        private (string Username, string Password)? ShowCredentialDialog(string host, System.Windows.Window owner)
-        {
-            var dialog = new CredentialPromptWindow(host);
-
-            // Set owner if available (makes the dialog modal to the main window)
-            if (owner != null)
-            {
-                dialog.Owner = owner;
-            }
-
-            if (dialog.ShowDialog() == true)
-            {
-                // Store credentials for future use
-                CredentialStore.Set(host, dialog.Username, dialog.Password);
-                CGlobals.Logger.Debug($"Credentials stored for host: {host}");
-                return (dialog.Username, dialog.Password);
-            }
-
-            return null;
-        }
     }
 }

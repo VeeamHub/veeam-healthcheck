@@ -28,6 +28,12 @@ namespace VeeamHealthCheck.Shared
         public static IUiNotifier Notifier { get; set; }
 
         /// <summary>
+        /// UI-framework-specific credential prompt seam. Null until GUI mode wires it up.
+        /// Used by CredsHandler.PromptForCredentials when GUIEXEC is true.
+        /// </summary>
+        public static ICredentialPrompter CredentialPrompter { get; set; }
+
+        /// <summary>
         /// Stores validation results for CSV files collected during the data gathering phase.
         /// Used to track which files are present/missing and generate data collection summaries.
         /// </summary>
