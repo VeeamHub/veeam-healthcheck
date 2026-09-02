@@ -52,7 +52,7 @@ namespace VeeamHealthCheck
                     return CGlobals.IMPORT_PATH;
                 }
 
-                return unsafeDir + vb365Dir;
+                return CCrossPlatformPath.Combine(unsafeDir, vb365Dir);
             }
         }
 
@@ -83,7 +83,7 @@ namespace VeeamHealthCheck
         /// </summary>
         private static string GetVbrDirWithTimestamp()
         {
-            string basePath = unsafeDir + VbrDir;
+            string basePath = CCrossPlatformPath.Combine(unsafeDir, VbrDir);
 
             // Get server name - prefer REMOTEHOST (set from /host= in CLI mode), fall back to VBRServerName (GUI), then "localhost"
             string serverName = !string.IsNullOrEmpty(CGlobals.REMOTEHOST)
@@ -105,7 +105,7 @@ namespace VeeamHealthCheck
         /// </summary>
         public static string GetVbrBaseDir()
         {
-            return unsafeDir + VbrDir;
+            return CCrossPlatformPath.Combine(unsafeDir, VbrDir);
         }
 
         /// <summary>
