@@ -17,7 +17,10 @@ public class CredentialRecord
 
 public static class CredentialStore
 {
-    private static readonly string StorePath = Path.Combine(
+    // Internal + settable so tests can point this at an isolated temp path instead
+    // of the real %APPDATA%/VeeamHealthCheck/creds.json. Production code never sets
+    // this; the default preserves real behavior exactly.
+    internal static string StorePath { get; set; } = Path.Combine(
         Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
         "VeeamHealthCheck", "creds.json");
 
@@ -28,7 +31,7 @@ public static class CredentialStore
         InitializeCache();
     }
 
-    private static void InitializeCache()
+    internal static void InitializeCache()
     {
         try
         {

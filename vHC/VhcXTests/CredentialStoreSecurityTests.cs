@@ -23,18 +23,24 @@ namespace VeeamHealthCheck.Tests.Security
 
         public CredentialStoreSecurityTests()
         {
-            // Create a temporary directory for test credential storage
+            _originalStorePath = CredentialStore.StorePath;
+
+            // Create a temporary directory for test credential storage, and point
+            // CredentialStore at a creds.json inside it instead of the real
+            // %APPDATA%/VeeamHealthCheck/creds.json, so these tests never touch a
+            // real user's stored credentials.
             _testStorePath = Path.Combine(Path.GetTempPath(), $"vhc-creds-test-{Guid.NewGuid()}");
             Directory.CreateDirectory(_testStorePath);
-            
-            // Store original path to restore later (if needed)
-            _originalStorePath = Path.Combine(
-                Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
-                "VeeamHealthCheck", "creds.json");
+
+            CredentialStore.StorePath = Path.Combine(_testStorePath, "creds.json");
+            CredentialStore.InitializeCache();
         }
 
         public void Dispose()
         {
+            CredentialStore.StorePath = _originalStorePath;
+            CredentialStore.InitializeCache();
+
             // Clean up test directory
             if (Directory.Exists(_testStorePath))
             {
@@ -61,9 +67,7 @@ namespace VeeamHealthCheck.Tests.Security
             CredentialStore.Set(server, username, password);
 
             // Read the raw file content
-            var storePath = Path.Combine(
-                Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
-                "VeeamHealthCheck", "creds.json");
+            var storePath = CredentialStore.StorePath;
             
             string fileContent = File.ReadAllText(storePath);
 
@@ -94,9 +98,7 @@ namespace VeeamHealthCheck.Tests.Security
             CredentialStore.Set(server, username, password);
 
             // Read the raw file
-            var storePath = Path.Combine(
-                Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
-                "VeeamHealthCheck", "creds.json");
+            var storePath = CredentialStore.StorePath;
             
             string fileContent = File.ReadAllText(storePath);
 
@@ -156,9 +158,7 @@ namespace VeeamHealthCheck.Tests.Security
             Assert.Equal(complexPassword, retrieved.Value.Password);
 
             // Verify file doesn't contain plaintext
-            var storePath = Path.Combine(
-                Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
-                "VeeamHealthCheck", "creds.json");
+            var storePath = CredentialStore.StorePath;
             
             string fileContent = File.ReadAllText(storePath);
             Assert.DoesNotContain(complexPassword, fileContent, StringComparison.Ordinal);
@@ -213,9 +213,7 @@ namespace VeeamHealthCheck.Tests.Security
             Assert.Null(CredentialStore.Get(server));
 
             // Verify file doesn't contain the server name anymore
-            var storePath = Path.Combine(
-                Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
-                "VeeamHealthCheck", "creds.json");
+            var storePath = CredentialStore.StorePath;
 
             if (File.Exists(storePath))
             {
@@ -233,9 +231,7 @@ namespace VeeamHealthCheck.Tests.Security
             // Arrange
             string serverA = "remove-sync-test-a.local";
             string serverB = "remove-sync-test-b.local";
-            var storePath = Path.Combine(
-                Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
-                "VeeamHealthCheck", "creds.json");
+            var storePath = CredentialStore.StorePath;
 
             CredentialStore.Clear();
 
@@ -278,9 +274,7 @@ namespace VeeamHealthCheck.Tests.Security
             CredentialStore.Set("server2.local", "user2", "pass2");
             CredentialStore.Set("server3.local", "user3", "pass3");
 
-            var storePath = Path.Combine(
-                Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
-                "VeeamHealthCheck", "creds.json");
+            var storePath = CredentialStore.StorePath;
 
             Assert.True(File.Exists(storePath));
 
@@ -322,9 +316,7 @@ namespace VeeamHealthCheck.Tests.Security
             }
 
             // Verify file doesn't contain any plaintext passwords
-            var storePath = Path.Combine(
-                Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
-                "VeeamHealthCheck", "creds.json");
+            var storePath = CredentialStore.StorePath;
             
             string fileContent = File.ReadAllText(storePath);
 
@@ -352,9 +344,7 @@ namespace VeeamHealthCheck.Tests.Security
             CredentialStore.Set(server2, username, password2);
 
             // Read raw file
-            var storePath = Path.Combine(
-                Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
-                "VeeamHealthCheck", "creds.json");
+            var storePath = CredentialStore.StorePath;
             
             string fileContent = File.ReadAllText(storePath);
 
@@ -412,9 +402,7 @@ namespace VeeamHealthCheck.Tests.Security
             // Act
             CredentialStore.Set(server, username, password);
 
-            var storePath = Path.Combine(
-                Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
-                "VeeamHealthCheck", "creds.json");
+            var storePath = CredentialStore.StorePath;
 
             // Assert - File should be in user's AppData
             Assert.True(File.Exists(storePath));
