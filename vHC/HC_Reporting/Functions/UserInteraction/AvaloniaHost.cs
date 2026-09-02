@@ -7,7 +7,7 @@ namespace VeeamHealthCheck.Functions.UserInteraction
     /// <summary>
     /// Holds the main window reference so AvaloniaUiNotifier/AvaloniaCredentialPrompter
     /// can own their dialogs (Window.ShowDialog requires an owner). Set once in
-    /// App.axaml.cs's OnFrameworkInitializationCompleted.
+    /// VhcGui's constructor, before App.axaml.cs finishes constructing the window.
     /// </summary>
     internal static class AvaloniaHost
     {
