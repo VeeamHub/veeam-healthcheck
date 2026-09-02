@@ -26,6 +26,10 @@ public static class CredentialStore
 
     private static Dictionary<string, (string Username, byte[] PasswordEnc)> _cache;
 
+    // Keys set via SetTransient() this run that must never be persisted, even when
+    // an unrelated Set() call for a different server triggers a disk write.
+    private static readonly HashSet<string> _transientKeys = new();
+
     static CredentialStore()
     {
         InitializeCache();
@@ -35,6 +39,7 @@ public static class CredentialStore
     {
         try
         {
+            _transientKeys.Clear();
             Directory.CreateDirectory(Path.GetDirectoryName(StorePath));
             // log the path for debugging purposes
             CGlobals.Logger.Debug($"Credential store path: {StorePath}");
@@ -108,6 +113,7 @@ public static class CredentialStore
         try
         {
             _cache = new Dictionary<string, (string, byte[])>();
+            _transientKeys.Clear();
 
             if (File.Exists(StorePath))
             {
@@ -160,6 +166,7 @@ public static class CredentialStore
     public static void Set(string server, string username, string password)
     {
         SetCache(server, username, password);
+        _transientKeys.Remove(server); // an explicit Set() for this server means "persist it now"
 
         if (OperatingSystem.IsWindows())
         {
@@ -176,11 +183,14 @@ public static class CredentialStore
     /// Stores credentials in the in-memory cache only — does NOT write to the
     /// DPAPI-encrypted creds.json on disk. Used by the /credfile= loader to
     /// populate transient credentials for the lifetime of the current process
-    /// without leaving anything behind on disk.
+    /// without leaving anything behind on disk. Marked so that a later, unrelated
+    /// Set() call for a different server (which persists the whole cache) can never
+    /// carry this entry to disk too.
     /// </summary>
     public static void SetTransient(string server, string username, string password)
     {
         SetCache(server, username, password);
+        _transientKeys.Add(server);
     }
 
     /// <summary>
@@ -197,20 +207,52 @@ public static class CredentialStore
     }
 
     /// <summary>
-    /// Internal: serialize the in-memory cache to the on-disk creds.json.
-    /// Only Set() (and not SetTransient) calls this.
+    /// Pure merge logic behind PersistCacheToDisk: upsert every non-transient _cache
+    /// entry into the existing on-disk dict, leaving transient entries and any other
+    /// pre-existing disk entries untouched. Never overwrite wholesale with a filtered
+    /// _cache -- a host that's both already-persisted on disk AND marked transient
+    /// this run (e.g. it also appears in a /credfile=) would otherwise have its
+    /// legitimately-persisted disk record silently deleted by the next unrelated
+    /// Set() call.
     /// </summary>
-    private static void PersistCacheToDisk()
+    internal static Dictionary<string, CredentialRecord> MergePersistablePayload(
+        Dictionary<string, CredentialRecord> existingOnDisk,
+        IReadOnlyDictionary<string, (string Username, byte[] PasswordEnc)> cache,
+        ISet<string> transientKeys)
     {
-        var serializable = _cache.ToDictionary(
-            kvp => kvp.Key,
-            kvp => new CredentialRecord
+        var result = new Dictionary<string, CredentialRecord>(existingOnDisk);
+        foreach (var kvp in cache)
+        {
+            if (transientKeys.Contains(kvp.Key))
+                continue;
+
+            result[kvp.Key] = new CredentialRecord
             {
                 Username = kvp.Value.Username,
                 PasswordEnc = Convert.ToBase64String(kvp.Value.PasswordEnc)
-            });
+            };
+        }
+        return result;
+    }
 
-        File.WriteAllText(StorePath, JsonSerializer.Serialize(serializable, new JsonSerializerOptions { WriteIndented = true }));
+    /// <summary>
+    /// Internal: merge the in-memory cache's non-transient entries into the on-disk
+    /// creds.json. Only Set() (and not SetTransient) calls this.
+    /// </summary>
+    private static void PersistCacheToDisk()
+    {
+        Dictionary<string, CredentialRecord> onDisk = new();
+        if (File.Exists(StorePath))
+        {
+            var json = File.ReadAllText(StorePath);
+            if (!string.IsNullOrWhiteSpace(json))
+            {
+                onDisk = JsonSerializer.Deserialize<Dictionary<string, CredentialRecord>>(json) ?? new();
+            }
+        }
+
+        var merged = MergePersistablePayload(onDisk, _cache, _transientKeys);
+        File.WriteAllText(StorePath, JsonSerializer.Serialize(merged, new JsonSerializerOptions { WriteIndented = true }));
     }
 
     /// <summary>
@@ -232,6 +274,8 @@ public static class CredentialStore
         {
             if (_cache.Remove(server))
             {
+                _transientKeys.Remove(server);
+
                 // Sync the on-disk file (if any) to match, by removing the key
                 // from whatever is actually there rather than re-serializing
                 // _cache: on non-Windows, Set() keeps unprotected password bytes

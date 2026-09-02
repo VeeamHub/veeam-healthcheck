@@ -266,6 +266,56 @@ namespace VeeamHealthCheck.Tests.Security
             CredentialStore.Clear();
         }
 
+        [Fact]
+        public void MergePersistablePayload_ExistingDiskEntryMarkedTransientInCache_KeepsOriginalDiskEntryUnchanged()
+        {
+            // A host can be both already-persisted on disk from a prior run AND
+            // marked transient in the current run's cache (e.g. it also appears in
+            // a /credfile= this run). Persisting must not let the transient marker
+            // delete or overwrite that host's legitimately-persisted disk record --
+            // only entries that are NOT transient should be written/updated.
+            var existingOnDisk = new Dictionary<string, CredentialRecord>
+            {
+                ["hostA"] = new CredentialRecord { Username = "diskUserA", PasswordEnc = "diskEncA" },
+            };
+            var cache = new Dictionary<string, (string Username, byte[] PasswordEnc)>
+            {
+                ["hostA"] = ("cacheUserA", Encoding.UTF8.GetBytes("cacheRawA")), // transient this run
+                ["hostB"] = ("userB", Encoding.UTF8.GetBytes("rawB")), // not transient
+            };
+            var transientKeys = new HashSet<string> { "hostA" };
+
+            var result = CredentialStore.MergePersistablePayload(existingOnDisk, cache, transientKeys);
+
+            Assert.True(result.ContainsKey("hostA"));
+            Assert.Equal("diskUserA", result["hostA"].Username);
+            Assert.Equal("diskEncA", result["hostA"].PasswordEnc);
+
+            Assert.True(result.ContainsKey("hostB"));
+            Assert.Equal("userB", result["hostB"].Username);
+            Assert.Equal(Convert.ToBase64String(Encoding.UTF8.GetBytes("rawB")), result["hostB"].PasswordEnc);
+        }
+
+        [WindowsOnlyFact]
+        public void SetTransient_ThenSetForDifferentHost_DoesNotPersistTransientHostToDisk()
+        {
+            // Reproduces the /credfile= -> interactive-prompt-for-a-different-host
+            // path: LoadCredFile seeds transient hosts via SetTransient, then later
+            // in the same process a Set() call for an unrelated host must not
+            // persist the transient hosts to disk too.
+            string transientHost = "credfile-transient-host.local";
+            string persistedHost = "interactive-persisted-host.local";
+
+            CredentialStore.SetTransient(transientHost, "userT", "pfake-T");
+            CredentialStore.Set(persistedHost, "userP", "pfake-P");
+
+            string fileContent = File.ReadAllText(CredentialStore.StorePath);
+            Assert.DoesNotContain(transientHost, fileContent, StringComparison.Ordinal);
+            Assert.Contains(persistedHost, fileContent, StringComparison.Ordinal);
+
+            CredentialStore.Clear();
+        }
+
         [WindowsOnlyFact]
         public void Clear_ShouldRemoveAllCredentialsAndFile()
         {
