@@ -6,6 +6,7 @@ using System.IO;
 using System.Linq;
 using VeeamHealthCheck.Functions.Collection;
 using VeeamHealthCheck.Functions.Collection.DB;
+using VeeamHealthCheck.Functions.Collection.PSCollections;
 using VeeamHealthCheck.Functions.CredsWindow;
 using VeeamHealthCheck.Resources.Localization;
 using VeeamHealthCheck.Shared;
@@ -104,9 +105,21 @@ namespace VeeamHealthCheck.Startup
                     CGlobals.IsVbr = true;
                     CGlobals.IsVbrInstalled = true;
                     this.LOG.Info("VBR software detected", false);
+                }
+            }
 
-                    // Get VBR version to determine correct PowerShell version (PS7 for VBR 13+, PS5 for VBR 12-)
-                    this.GetVbrVersion();
+            if (CGlobals.IsVbr)
+            {
+                // Detect VBR version to determine correct PowerShell version (PS7 for VBR 13+,
+                // PS5 for VBR 12-). ModeCheck() runs from the GUI constructor before the window
+                // is shown and doesn't itself lead into PowerShell-module-based collection, so it
+                // must use the ungated DetectVbrVersion, not GetVbrVersion - the PS 7.6+ module
+                // gate is enforced once, immediately before real collection, in StartCollections()
+                // via RunVbrPreflightGateIfTargeted().
+                try { this.DetectVbrVersion(); }
+                catch (Exception ex)
+                {
+                    this.LOG.Debug(this.logStart + $"VBR version detection skipped: {ex.Message}");
                 }
             }
 
@@ -165,7 +178,23 @@ namespace VeeamHealthCheck.Startup
         public void RunHotfixDetector(string path, string remoteServer)
         {
             this.LOG.Info(this.logStart + "Starting Hotfix Detector", false);
-            this.GetVbrVersion();
+            // Hotfix detection only needs the version number, not the PS 7.6+ module gate - it
+            // never touches Veeam.Backup.PowerShell. DetectVbrVersion throws by design on
+            // failure (e.g. no local VBR console) - don't let that crash /hotfix uncaught.
+            // Skipped only for an explicit /vb365-only target - EffectiveIsVbr/IsVbr can't be
+            // used here either: ModeCheck() never runs at all on the /hotfix dispatch branch,
+            // so the auto-detected IsVbr/IsVb365 flags are never populated for this call path.
+            if (CGlobals.TargetProductType != TargetProduct.Vb365)
+            {
+                try
+                {
+                    this.DetectVbrVersion();
+                }
+                catch (Exception ex)
+                {
+                    this.LOG.Debug(this.logStart + $"VBR version detection skipped: {ex.Message}");
+                }
+            }
             if (!String.IsNullOrEmpty(path))
             {
                 if (!this.VerifyPath(path))
@@ -244,6 +273,10 @@ namespace VeeamHealthCheck.Startup
         {
             if (!CGlobals.IMPORT)
             {
+                // Single authoritative PS 7.6+ module preflight gate - see
+                // RunVbrPreflightGateIfTargeted()'s doc comment for the full rationale.
+                this.RunVbrPreflightGateIfTargeted();
+
                 this.LOG.Info(this.logStart + "Init Collections", false);
 
                 if (CGlobals.REMOTEEXEC && CGlobals.RunSecReport)
@@ -394,7 +427,66 @@ namespace VeeamHealthCheck.Startup
             return this.StartPrimaryFunctions();
         }
 
-        public void GetVbrVersion()
+        /// <summary>
+        /// Single authoritative PS 7.6+ module preflight gate, run once from StartCollections()
+        /// right before the two branches that both lead into real PowerShell-module-based
+        /// collection. Gated on EffectiveIsVbr - not IMPORT, not REMOTEEXEC - because this
+        /// preflight (and the PowerShell-version check it wraps) is meaningless for a run that
+        /// doesn't target VBR: DetectVbrVersion() reads the LOCAL machine's VBR registry keys,
+        /// which are legitimately absent on a VB365-only server, and previously spammed 5
+        /// ERROR-level log lines for a totally expected condition on every single such run.
+        /// Still runs whenever the target includes VBR (TargetProductType Vbr/Both, or Auto with
+        /// local VBR actually detected) regardless of REMOTEEXEC: per repo convention, a preflight
+        /// on the local PowerShell/module install must run regardless of REMOTEEXEC, since it is
+        /// never the remote machine's problem. GetVbrVersion -> DetectVbrVersion throws by design
+        /// when local VBR detection fails - not fatal, the preflight just can't run; GetVbrVersion
+        /// catches only that expected failure, scoped to the DetectVbrVersion call, so an exception
+        /// out of the hard-fail path (ValidatePowerShellVersionMeetsVbrRequirement) is never
+        /// mistaken for it and swallowed here too.
+        /// </summary>
+        internal void RunVbrPreflightGateIfTargeted()
+        {
+            if (!CGlobals.EffectiveIsVbr)
+            {
+                return;
+            }
+
+            this.GetVbrVersion();
+        }
+
+        /// <summary>
+        /// Detects the VBR version and required PowerShell version and gates on the PS 7.6+
+        /// module requirement. Private: RunVbrPreflightGateIfTargeted() is the only caller,
+        /// since it's the single choke point (reached from StartCollections(), itself reached
+        /// from both the GUI Run button and every CLI run path) immediately before real
+        /// PowerShell-module-based collection begins, and only when EffectiveIsVbr is true.
+        /// Every other caller (ModeCheck, RunHotfixDetector, early CLI arg-parsing detection)
+        /// must call the ungated DetectVbrVersion instead, so a too-old-PowerShell machine
+        /// doesn't hard-exit a feature that never touches the Veeam.Backup.PowerShell module.
+        /// Known limitation, not fixed here: when DetectVbrVersion fails (e.g. non-admin
+        /// execution, where CRegReader.GetVbrVersionFilePath() returns null), we can't know
+        /// whether the local VBR is 13+ at all, so ValidatePowerShellVersionMeetsVbrRequirement
+        /// is skipped rather than called - it would no-op anyway, since it gates on
+        /// CGlobals.PowerShellVersion, which DetectVbrVersion only ever sets on success. Making
+        /// this reachable needs VBR-version detection to work without admin rights first; that's
+        /// separate, larger work in CRegReader, not a fix to this gate's catch scope.
+        /// </summary>
+        private void GetVbrVersion()
+        {
+            try
+            {
+                this.DetectVbrVersion();
+            }
+            catch (Exception ex)
+            {
+                this.LOG.Debug(this.logStart + $"PowerShell version gate skipped: {ex.Message}");
+                return;
+            }
+
+            this.ValidatePowerShellVersionMeetsVbrRequirement();
+        }
+
+        internal void DetectVbrVersion()
         {
             try
             {
@@ -433,6 +525,117 @@ namespace VeeamHealthCheck.Startup
                 this.LOG.Error(this.logStart + "Stack trace: " + ex.StackTrace, false);
                 throw; // Re-throw to fail fast rather than continue with wrong PowerShell version
             }
+        }
+
+        /// <summary>
+        /// Preflight check for VBR 13+: verifies PowerShell 7 is actually installed, and if so,
+        /// compares its version against the minimum required by the local Veeam.Backup.PowerShell
+        /// module manifest. Exits with an actionable message if PS7 is missing entirely, or if it's
+        /// installed but too old. Without this, a missing or under-versioned PowerShell only fails
+        /// later, deep inside a collection script's Import-Module call, with a confusing error trail
+        /// (see issue: VBR 13.1 requires PowerShell 7.6, but a 7.4.x install - or no PS7 install at
+        /// all - produces cascading Get-Package / Import-Module / Connect-VBRServer errors instead of
+        /// a clear message).
+        /// Reads the requirement from the manifest rather than hardcoding it, since Veeam can raise
+        /// the minimum again in a future VBR release. A missing PS7 install is always a hard failure,
+        /// even if the manifest itself couldn't be read (see EvaluatePwshVersionStatus - NotInstalled
+        /// is checked first and unconditionally). Only skips (does not block the run) when PS7 is
+        /// present but its version - or the manifest's required version - couldn't be conclusively
+        /// determined; that remains a best-effort UX improvement, not a hard gate, to avoid a
+        /// false-positive block on a transient detection hiccup.
+        /// </summary>
+        private void ValidatePowerShellVersionMeetsVbrRequirement()
+        {
+            if (CGlobals.PowerShellVersion != 7)
+            {
+                return;
+            }
+
+            string pwshPath = CPowerShellVersionChecker.FindPwshExecutable();
+
+            Version requiredVersion = null;
+            if (string.IsNullOrEmpty(CGlobals.VbrConsoleInstallDir))
+            {
+                this.LOG.Debug(this.logStart + "VBR console install directory unknown. Cannot read required PowerShell version from the module manifest.");
+            }
+            else
+            {
+                string manifestPath = Path.Combine(CGlobals.VbrConsoleInstallDir, "Veeam.Backup.PowerShell", "Veeam.Backup.PowerShell.psd1");
+                if (!CPowerShellVersionChecker.TryGetManifestRequiredVersion(manifestPath, out requiredVersion))
+                {
+                    this.LOG.Debug(this.logStart + $"Could not read required PowerShell version from '{manifestPath}'.");
+                }
+            }
+
+            // Only worth spawning pwsh.exe to read the installed version when a required version
+            // is actually known - EvaluatePwshVersionStatus treats a null requiredVersion as
+            // VersionInconclusive regardless of installedVersion, so the spawn would be wasted.
+            Version installedVersion = null;
+            string rawInstalledVersion = null;
+            if (!string.IsNullOrEmpty(pwshPath) && requiredVersion != null &&
+                !CPowerShellVersionChecker.TryGetInstalledPwshVersion(pwshPath, out installedVersion, out rawInstalledVersion))
+            {
+                this.LOG.Debug(this.logStart + "Could not determine installed PowerShell 7 version.");
+            }
+
+            PwshVersionStatus status = CPowerShellVersionChecker.EvaluatePwshVersionStatus(pwshPath, installedVersion, requiredVersion);
+
+            switch (status)
+            {
+                case PwshVersionStatus.MeetsRequirement:
+                    return;
+
+                case PwshVersionStatus.VersionInconclusive:
+                    this.LOG.Debug(this.logStart + "Skipping PowerShell module version preflight check: could not conclusively determine the installed vs. required version.");
+                    return;
+
+                case PwshVersionStatus.NotInstalled:
+                case PwshVersionStatus.BelowRequirement:
+                    break;
+
+                default:
+                    throw new ArgumentOutOfRangeException(nameof(status), status, "Unhandled PwshVersionStatus in ValidatePowerShellVersionMeetsVbrRequirement.");
+            }
+
+            string msg = CPowerShellVersionChecker.BuildPwshVersionFailureMessage(status, CGlobals.VBRFULLVERSION, requiredVersion, rawInstalledVersion);
+
+            this.LOG.Error(this.logStart + msg, false);
+
+            if (CGlobals.Silent)
+            {
+                // Guarded like the GUIEXEC branch below: ExitSilent's Console.Error.WriteLine
+                // could throw (e.g. a broken/redirected stderr pipe), and this hard-fail must
+                // still reach Environment.Exit either way.
+                try
+                {
+                    SilentExit.ExitSilent(SilentExit.PowerShellVersionUnsupported, msg);
+                }
+                catch (Exception ex)
+                {
+                    this.LOG.Debug(this.logStart + $"ExitSilent failed: {ex.Message}");
+                }
+            }
+
+            if (CGlobals.GUIEXEC)
+            {
+                // IUiNotifier.ShowError already does the dispatcher-or-direct marshaling this
+                // used to do inline. This method runs on a background Task (reached via
+                // StartCollections, itself on VhcGui.Run()'s background Task.Factory.StartNew),
+                // so blocking here on ShowError's synchronous wrapper is safe - see IUiNotifier's
+                // doc comment. This hard-fail must still reach Environment.Exit below even if
+                // showing the box itself throws (e.g. the notifier's dialog owner disappearing),
+                // so the try/catch stays.
+                try
+                {
+                    CGlobals.Notifier.ShowError(msg, "Unsupported PowerShell Version");
+                }
+                catch (Exception ex)
+                {
+                    this.LOG.Debug(this.logStart + $"Failed to show PowerShell version MessageBox: {ex.Message}");
+                }
+            }
+
+            Environment.Exit(SilentExit.PowerShellVersionUnsupported);
         }
 
         private void EnsureCredentialsAvailable()

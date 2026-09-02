@@ -4,6 +4,7 @@ using System;
 using System.IO;
 using System.Reflection;
 using System.Text.Json;
+using VeeamHealthCheck.Functions.Collection.Security;
 using VeeamHealthCheck.Functions.CredsWindow;
 using VeeamHealthCheck.Shared;
 using VeeamHealthCheck.Startup;
@@ -305,9 +306,12 @@ namespace VhcXTests
                 object[] invokeArgs = new object[] { null };
                 string args = (string)method.Invoke(invoker, invokeArgs);
 
-                // Assert
+                // Assert. The username is escaped for the double-quoted argument
+                // context (backslash is doubled), so assert the escaped form that
+                // the command builder now emits — this guards the injection fix.
+                string expectedUserInArgs = CredentialHelper.EscapeForPowerShellDoubleQuotes(user);
                 Assert.Contains("-Username", args);
-                Assert.Contains(user, args);
+                Assert.Contains(expectedUserInArgs, args);
                 Assert.Contains("-PasswordBase64", args);
                 Assert.Contains(expectedB64, args);
             }

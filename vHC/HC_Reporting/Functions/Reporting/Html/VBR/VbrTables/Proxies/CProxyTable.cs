@@ -7,6 +7,7 @@ using VeeamHealthCheck.Functions.Reporting.DataTypes;
 using VeeamHealthCheck.Functions.Reporting.Html.DataFormers;
 using VeeamHealthCheck.Functions.Reporting.Html.Shared;
 using VeeamHealthCheck.Functions.Reporting.Html.VBR;
+using VeeamHealthCheck.Html.VBR;
 using VeeamHealthCheck.Resources.Localization;
 using VeeamHealthCheck.Scrubber;
 using VeeamHealthCheck.Shared;
@@ -137,7 +138,7 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR.VbrTables.Proxies
                 {
                     d[0], d[1], d[2], d[3], d[4], d[6], d[7], d[8], d[9], d[10], d[11],
                 }).ToList();
-                SetSection("proxies", headers, rows, summary);
+                CHtmlTables.SetSectionPublic("proxies", headers, rows, summary);
             }
             catch (Exception ex)
             {
@@ -145,21 +146,6 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR.VbrTables.Proxies
             }
 
             return s;
-        }
-
-        private static void SetSection(string key, List<string> headers, List<List<string>> rows, string summary)
-        {
-            if (CGlobals.FullReportJson == null)
-            {
-                CGlobals.FullReportJson = new();
-            }
-
-            CGlobals.FullReportJson.Sections[key] = new HtmlSection
-            {
-                SectionName = key,
-                Headers = headers,
-                Rows = rows,
-            };
         }
     }
 }

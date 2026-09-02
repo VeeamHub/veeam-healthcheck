@@ -57,14 +57,39 @@ namespace VeeamHealthCheck.Shared
         public static string IMPORT_PATH = null;
         public static int VBRMAJORVERSION;
         public static string VBRFULLVERSION;
+
+        /// <summary>
+        /// Directory containing the VBR Console installation (e.g. ".../Backup and Replication/Console"),
+        /// resolved by <see cref="Functions.Collection.DB.CRegReader.GetVbrVersionFilePath"/>. Used to locate
+        /// the Veeam.Backup.PowerShell module manifest for the PowerShell version preflight check.
+        /// </summary>
+        public static string VbrConsoleInstallDir;
         public static int PowerShellVersion;
         public static DateTime TOOLSTART;
+
+        /// <summary>
+        /// True when targeting a VBR/VB365 server other than the local machine (set via /remote
+        /// /host=&lt;name&gt;). Despite the name, this does NOT mean PowerShell scripts execute on
+        /// that remote machine - vHC always launches pwsh.exe and the Veeam.Backup.PowerShell
+        /// module locally. REMOTEEXEC only changes which server the module connects to (via
+        /// -Server / -VBOServerFqdnOrIp) and whether explicit credentials are required instead
+        /// of Windows auth. See <see cref="REMOTEHOST"/>.
+        /// </summary>
         public static bool REMOTEEXEC = false;
+
+        /// <summary>The server to connect to when <see cref="REMOTEEXEC"/> is true.</summary>
         public static string REMOTEHOST = string.Empty;
         public static bool GUIEXEC = false;
         private static string _runTimestamp = null;
         public static string VHCVERSION = string.Empty;
         public static bool DEBUG = false;
+
+        /// <summary>
+        /// Delimiter multi-value producers (e.g. CDataFormer.RegOptions, SetGateHosts,
+        /// SummarizeRoleTypes) join their values with. HTML rendering converts this to a
+        /// line break at the call site; JSON export keeps it as-is (see ADR 0029).
+        /// </summary>
+        public const string MultiValueDelimiter = "|";
 
         // Remote Exec variables
         public static string VBRServerName = "localhost";

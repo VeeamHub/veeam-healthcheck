@@ -213,6 +213,8 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR
             this.RepoTable();
 
             this.HTMLSTRING += this.tables.AddRepositoryInfoFooter();
+
+            this.OrphanedSupersededBackupsTable();
         }
 
         private void CloudConnectSection()
@@ -317,6 +319,11 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR
         private void ProtectedWorkloadsTable()
         {
             this.HTMLSTRING += this.tables.AddProtectedWorkLoadsTable(this.SCRUB);
+        }
+
+        private void OrphanedSupersededBackupsTable()
+        {
+            this.HTMLSTRING += this.tables.AddOrphanedSupersededBackupsTable(this.SCRUB);
         }
 
         private void ManagedServersTable()

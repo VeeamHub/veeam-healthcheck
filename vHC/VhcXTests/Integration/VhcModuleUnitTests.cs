@@ -56,9 +56,14 @@ namespace VhcXTests.Integration
             var moduleRoot    = Path.GetFullPath(Path.Combine(
                 Path.GetDirectoryName(_exportCsvScriptPath) ?? tmpDir, ".."));
             var writeLogPath  = Path.Combine(moduleRoot, "Public", "Write-LogFile.ps1");
+            // Export-VhciCsv pipes through Protect-VhciCsvInjection (CSV formula-injection
+            // neutralizer), a sibling Private function — dot-source it too or the run throws.
+            var protectPath   = Path.Combine(
+                Path.GetDirectoryName(_exportCsvScriptPath) ?? tmpDir, "Protect-VhciCsvInjection.ps1");
             var scriptContent = $@"
 $ErrorActionPreference = 'Stop'
 . '{writeLogPath}'
+. '{protectPath}'
 . '{_exportCsvScriptPath}'
 
 $script:ReportPath = '{tmpDir}'
@@ -143,6 +148,7 @@ exit 0
             var scriptContent = $@"
 $ErrorActionPreference = 'Stop'
 . '{writeLogPath}'
+. (Join-Path (Split-Path -Parent '{exportCsvPath}') 'Protect-VhciCsvInjection.ps1')
 . '{exportCsvPath}'
 
 $script:ReportPath = '{nonExistentPath}'
@@ -290,6 +296,7 @@ exit 0
             var scriptContent = $@"
 $ErrorActionPreference = 'Stop'
 . '{writeLogPath}'
+. (Join-Path (Split-Path -Parent '{exportCsvPath}') 'Protect-VhciCsvInjection.ps1')
 . '{exportCsvPath}'
 . '{sessionLogPath}'
 . '{sessionRptPath}'
@@ -782,6 +789,7 @@ exit 0
             var scriptContent = $@"
 $ErrorActionPreference = 'Stop'
 . '{writeLogPath}'
+. (Join-Path (Split-Path -Parent '{exportCsvPath}') 'Protect-VhciCsvInjection.ps1')
 . '{exportCsvPath}'
 . '{sessionLogPath}'
 . '{sessionRptPath}'
@@ -886,6 +894,7 @@ exit 0
             var scriptContent = $@"
 $ErrorActionPreference = 'Stop'
 . '{writeLogPath}'
+. (Join-Path (Split-Path -Parent '{exportCsvPath}') 'Protect-VhciCsvInjection.ps1')
 . '{exportCsvPath}'
 . '{sessionLogPath}'
 . '{sessionRptPath}'
@@ -997,6 +1006,7 @@ exit 0
             var scriptContent = $@"
 $ErrorActionPreference = 'Stop'
 . '{writeLogPath}'
+. (Join-Path (Split-Path -Parent '{exportCsvPath}') 'Protect-VhciCsvInjection.ps1')
 . '{exportCsvPath}'
 . '{sessionLogPath}'
 . '{sessionRptPath}'

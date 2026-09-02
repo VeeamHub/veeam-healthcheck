@@ -107,7 +107,7 @@ namespace VeeamHealthCheck.Functions.Reporting.DataFormers.AgentJobs
                 JobType = r.JobType,
                 FriendlyType = ResolveFriendlyType(r),
                 RepoName = r.RepoName,
-                SourceSizeGB = System.Math.Round(r.OriginalSize / 1024.0 / 1024.0 / 1024.0, 2),
+                SourceSizeGB = System.Math.Round((r.OriginalSize ?? 0) / 1024.0 / 1024.0 / 1024.0, 2),
                 OnDiskGB = System.Math.Round(r.OnDiskGB ?? 0, 2),
                 RetentionScheme = retentionScheme,
                 RetainDays = retainDays,

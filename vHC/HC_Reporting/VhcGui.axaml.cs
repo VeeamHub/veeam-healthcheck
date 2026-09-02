@@ -306,27 +306,71 @@ namespace VeeamHealthCheck
             }
         }
 
-        // Ported verbatim from the real WPF file - no try/catch here (the
-        // reference draft for this task invented one, plus a ReportRunFailure
-        // method, that don't exist in reality). StartPrimaryFunctions() is
-        // fully synchronous (Part 1); if it throws, the antecedent task
-        // faults, but the ContinueWith below still runs by default (it only
-        // skips on TaskContinuationOptions.OnlyOnRanToCompletion, which this
-        // doesn't specify), so hideProgressBar() still executes exactly like
-        // the original.
+        // The try/catch and ReportRunFailure() below did not exist in the real
+        // WPF file when this method was first ported (an earlier reference
+        // draft had invented them, and was correctly rejected at the time).
+        // dev/master then landed a real fix (surface report-phase exceptions
+        // instead of silently exiting 0) independently while this migration
+        // was in flight; it's ported here during the merge with dev, adapted
+        // to Avalonia's dialog/dispatcher idioms - see ReportRunFailure's own
+        // comment below. hideProgressBar() in the ContinueWith still runs
+        // either way (it only skips on TaskContinuationOptions.
+        // OnlyOnRanToCompletion, which this doesn't specify).
         private void Run(bool import)
         {
             System.Threading.Tasks.Task.Factory.StartNew(() =>
             {
-                this.functions.StartPrimaryFunctions();
-                this.UpdateCollectionStatusText();
-                this.OfferMonitorSetupIfNeeded();
-                this.ShowCollectionWarningsIfAny();
-                Environment.Exit(0);
+                // The whole run happens on a background task. Historically the body
+                // had no try/catch, so any exception in analysis/report generation was
+                // stored on the faulted task and never observed: no report was written,
+                // no error surfaced, Environment.Exit(0) was skipped, and the user was
+                // left staring at a hung-looking GUI. Catch here so failures are logged,
+                // surfaced, and the GUI returns to a usable state. Only exit(0) on success.
+                try
+                {
+                    this.functions.StartPrimaryFunctions();
+                    this.UpdateCollectionStatusText();
+                    this.OfferMonitorSetupIfNeeded();
+                    this.ShowCollectionWarningsIfAny();
+                    Environment.Exit(0);
+                }
+                catch (Exception ex)
+                {
+                    this.ReportRunFailure(ex);
+                }
             }).ContinueWith(t =>
             {
                 this.hideProgressBar();
             });
+        }
+
+        // Runs only from Run()'s catch block, on the same background thread
+        // as the rest of Run()'s Task.Factory.StartNew body. The blocking
+        // CGlobals.Notifier.ShowError wrapper is called directly (unwrapped)
+        // for the same reason as ShowCollectionWarningsIfAny below - safe off
+        // the UI thread, and blocks until the user dismisses it so the
+        // failure is actually seen before this method returns. run.IsEnabled
+        // is a raw UI property mutation, not a dialog, so it still needs its
+        // own Dispatcher.UIThread.Invoke, same as UpdateCollectionStatusText
+        // below - it would throw/misbehave if set directly from this thread.
+        private void ReportRunFailure(Exception ex)
+        {
+            CGlobals.Logger.Error("Run failed: " + ex.Message, true);
+            CGlobals.Logger.Error("Stack trace: " + ex.StackTrace, false);
+            if (ex.InnerException != null)
+            {
+                CGlobals.Logger.Error("Inner exception: " + ex.InnerException.Message, false);
+                CGlobals.Logger.Error("Inner stack trace: " + ex.InnerException.StackTrace, false);
+            }
+
+            CGlobals.Notifier.ShowError(
+                "The health check failed before a report was generated:\n\n" +
+                ex.Message +
+                "\n\nNo report was produced. See the log for the full stack trace.",
+                "Health Check Failed");
+
+            // Re-enable the run button so the user can retry without restarting.
+            Dispatcher.UIThread.Invoke(() => run.IsEnabled = true);
         }
 
         // Both UpdateCollectionStatusText() and ShowCollectionWarningsIfAny() are

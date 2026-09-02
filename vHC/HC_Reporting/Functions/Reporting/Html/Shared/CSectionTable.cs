@@ -240,6 +240,35 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.Shared
             return sb.ToString();
         }
 
+        public List<string> JsonHeaders => _columns.Select(c => c.Header).ToList();
+
+        /// <summary>
+        /// Applies each column's extractor to every item and returns raw (non-HTML-encoded)
+        /// string rows for use with <see cref="CHtmlTables.SetSectionPublic"/>.
+        /// Extractor exceptions per cell are caught and replaced with an empty string,
+        /// mirroring the behaviour in <see cref="Render"/>.
+        /// </summary>
+        public List<List<string>> BuildJsonRows(IEnumerable<T> data)
+        {
+            var rows = new List<List<string>>();
+            if (data == null) return rows;
+
+            foreach (var item in data)
+            {
+                var row = new List<string>(_columns.Count);
+                foreach (var col in _columns)
+                {
+                    string value;
+                    try { value = col.Extractor(item) ?? ""; }
+                    catch { value = ""; }
+                    row.Add(value);
+                }
+                rows.Add(row);
+            }
+
+            return rows;
+        }
+
         /// <summary>
         /// Gets the number of columns defined.
         /// </summary>

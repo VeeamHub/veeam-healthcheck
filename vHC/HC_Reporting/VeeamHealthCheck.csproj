@@ -10,10 +10,10 @@
 		<Company>Veeam</Company>
 		<Authors>AdamC</Authors>
 		<ApplicationIcon>Health_Check_Icon.ico</ApplicationIcon>
-		<AssemblyVersion>3.0.0.764</AssemblyVersion>
+		<AssemblyVersion>3.0.0.785</AssemblyVersion>
 		<SignAssembly>False</SignAssembly>
 		<DelaySign>false</DelaySign>
-		<FileVersion>3.0.0.764</FileVersion>
+		<FileVersion>3.0.0.785</FileVersion>
 		<DebugType>full</DebugType>
 		<SelfContained Condition="'$(OS)' == 'Windows_NT'">true</SelfContained>
 		<!--These 2 lines are what produce the single file utility. Possibly doesn't work...-->
@@ -111,6 +111,7 @@
 		</Content>
 	</ItemGroup>
 	<ItemGroup>
+		<PackageReference Include="AngleSharp" Version="1.5.0" />
 		<PackageReference Include="Avalonia" Version="11.3.20" />
 		<PackageReference Include="Avalonia.Desktop" Version="11.3.20" />
 		<PackageReference Include="Avalonia.Themes.Fluent" Version="11.3.20" />
@@ -124,7 +125,7 @@
 		<PackageReference Include="Npm" Version="3.5.2" />
 		<PackageReference Include="System.Data.SqlClient" Version="4.8.6" />
 		<!-- Pinned to fix GHSA-37gx-xxp4-5rgx and GHSA-w3x6-4m5h-cxqf (transitive vuln from PowerShell SDK) -->
-		<PackageReference Include="System.Security.Cryptography.Xml" Version="8.0.3" />
+		<PackageReference Include="System.Security.Cryptography.Xml" Version="9.0.18" />
 		<PackageReference Include="System.Management.Automation" Version="7.4.6" />
 		<PackageReference Include="TaskScheduler" Version="2.12.1" />
 		<!-- Code Quality Analyzers -->

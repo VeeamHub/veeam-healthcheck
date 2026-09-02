@@ -183,7 +183,7 @@ function Get-VhcSessionReport {
 
     $csvPath = Join-Path -Path $script:ReportPath -ChildPath "VeeamSessionReport.csv"
     if ($allOutput.Count -gt 0) {
-        $allOutput | Export-Csv -Path $csvPath -NoTypeInformation -Encoding UTF8
+        $allOutput | Protect-VhciCsvInjection | Export-Csv -Path $csvPath -NoTypeInformation -Encoding UTF8
         Write-LogFile "Exported $($allOutput.Count) session rows to $csvPath"
     } else {
         Write-LogFile "No session rows produced - writing header-only CSV" -LogLevel "WARNING"

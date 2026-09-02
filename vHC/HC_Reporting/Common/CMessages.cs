@@ -92,6 +92,7 @@ UNATTENDED / SILENT MODE:
     5  Host unreachable
     6  /credfile= invalid (malformed JSON, missing fields, bad Base64)
     7  No Veeam product detected and no /host= provided
+    8  PowerShell 7 missing, or its installed version is below what the VBR PowerShell module requires
 
   Worked example (Task Scheduler / 20-server fleet):
     Seed once on each server as the service account:

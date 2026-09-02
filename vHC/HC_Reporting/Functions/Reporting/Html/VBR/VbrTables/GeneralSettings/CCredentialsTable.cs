@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using VeeamHealthCheck.Functions.Reporting.CsvHandlers;
 using VeeamHealthCheck.Functions.Reporting.Html.Shared;
+using VeeamHealthCheck.Html.VBR;
 using VeeamHealthCheck.Scrubber;
 using VeeamHealthCheck.Shared;
 
@@ -37,6 +38,9 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR.VbrTables.GeneralSetting
                         return scrub ? CGlobals.Scrubber.ScrubItem(description, ScrubItemType.Item) : description;
                     })
                     .Column("Last Modified", string.Empty, item => (string)(item.lastmodified ?? ""));
+
+                // Before the empty-data guard — ensures the credentials key is always present in JSON.
+                CHtmlTables.SetSectionPublic("credentials", table.JsonHeaders, table.BuildJsonRows(data), null);
 
                 if (!data.Any())
                     return table.RenderEmpty("No credentials detected.");

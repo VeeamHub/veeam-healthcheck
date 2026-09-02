@@ -157,6 +157,11 @@ $useCreds = (-not [string]::IsNullOrWhiteSpace($User) -and
 # even if a prerequisite collector aborts the run early.
 try {
     Write-StartupLog "Connecting to VBR server '$VBRServer' (useCreds=$useCreds)..."
+    # -ForceAcceptTlsCertificate only exists on VBR v13+; passing it on v12 throws
+    # "A parameter cannot be found that matches parameter name 'ForceAcceptTlsCertificate'"
+    # and aborts collection. Gate it by version (issue #149 v12-regression guard).
+    $certParam = @{}
+    if ($VBRVersion -ge 13) { $certParam['ForceAcceptTlsCertificate'] = $true }
     if ($useCreds) {
         if (-not [string]::IsNullOrWhiteSpace($PasswordBase64)) {
             $passwordBytes = [System.Convert]::FromBase64String($PasswordBase64)
@@ -166,9 +171,9 @@ try {
         }
         $securePassword = ConvertTo-SecureString -String $plainPassword -AsPlainText -Force
         $credential     = New-Object System.Management.Automation.PSCredential($User, $securePassword)
-        Connect-VBRServer -Server $VBRServer -Credential $credential -ErrorAction Stop
+        Connect-VBRServer -Server $VBRServer -Credential $credential @certParam -ErrorAction Stop
     } else {
-        Connect-VBRServer -Server $VBRServer -ErrorAction Stop
+        Connect-VBRServer -Server $VBRServer @certParam -ErrorAction Stop
     }
     Write-StartupLog "Connected to VBR server '$VBRServer'."
 
@@ -264,8 +269,25 @@ $collectorResults.Add((Invoke-VhcCollector -Name 'SessionReport' -Action {
 
 # ---------------------------------------------------------------------------
 # Task 7: Job collectors (require $RepositoryDetails from Task 6)
-$collectorResults.Add((Invoke-VhcCollector -Name 'Jobs' -Action {
+$jobsResult = Invoke-VhcCollector -Name 'Jobs' -Action {
     Get-VhcJob -RepositoryDetails $RepositoryDetails -VBRVersion $VBRVersion
+}
+$collectorResults.Add($jobsResult)
+# ---------------------------------------------------------------------------
+
+# ---------------------------------------------------------------------------
+# Orphaned/Superseded backups (#192). $jobsResult.Output is the sweep-cache
+# object Get-VhcJob now returns explicitly - passed here instead of letting
+# Get-VhcOrphanedSupersededBackups reach for $script:VhcOrphanedSupersededCache
+# as an implicit side effect of Get-VhcJob having already run above in this
+# same pass. That ordering dependency used to be enforced only by a comment,
+# so a future reorder/parallelization of this collector list could silently
+# break it; threading the value explicitly makes the dependency visible at
+# the call site and removes the ordering requirement entirely.
+# -RepositoryDetails is the same variable Get-VhcJob uses above, resolving
+# RepositoryId -> a human-readable name for the report's per-repo grouping.
+$collectorResults.Add((Invoke-VhcCollector -Name 'OrphanedSupersededBackups' -Action {
+    Get-VhcOrphanedSupersededBackups -RepositoryDetails $RepositoryDetails -OrphanedSupersededCache $jobsResult.Output
 }))
 # ---------------------------------------------------------------------------
 
@@ -338,5 +360,5 @@ $manifest | Export-Csv -Path (Join-Path $ReportPath "${VBRServer}_CollectionMani
 
 Write-Host "[Get-VBRConfig] Collection complete. Output: $ReportPath"
 } finally {
-    Disconnect-VBRServer -ErrorAction SilentlyContinue
+    try { Disconnect-VBRServer -ErrorAction SilentlyContinue } catch {}
 }

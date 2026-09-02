@@ -7,6 +7,7 @@ using VeeamHealthCheck.Functions.Reporting.DataTypes;
 using VeeamHealthCheck.Functions.Reporting.Html.DataFormers;
 using VeeamHealthCheck.Functions.Reporting.Html.Shared;
 using VeeamHealthCheck.Functions.Reporting.Html.VBR;
+using VeeamHealthCheck.Html.VBR;
 using VeeamHealthCheck.Reporting.Html.VBR;
 using VeeamHealthCheck.Resources.Localization;
 using VeeamHealthCheck.Shared;
@@ -129,7 +130,7 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR.VbrTables.Managed_Server
                     d.IsUnavailable.ToString(),
                     d.Platform ?? "",
                 }).ToList();
-                SetSection("managedServers", headers, rows, summary);
+                CHtmlTables.SetSectionPublic("managedServers", headers, rows, summary);
             }
             catch (Exception ex)
             {
@@ -137,21 +138,6 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR.VbrTables.Managed_Server
             }
 
             return s;
-        }
-
-        private static void SetSection(string key, List<string> headers, List<List<string>> rows, string summary)
-        {
-            if (CGlobals.FullReportJson == null)
-            {
-                CGlobals.FullReportJson = new();
-            }
-
-            CGlobals.FullReportJson.Sections[key] = new HtmlSection
-            {
-                SectionName = key,
-                Headers = headers,
-                Rows = rows,
-            };
         }
     }
 }

@@ -8,6 +8,7 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Text.RegularExpressions;
+using System.Threading.Tasks;
 using Microsoft.Management.Infrastructure;
 using VeeamHealthCheck.Functions.Collection.DB;
 using VeeamHealthCheck.Functions.Collection.LogParser;
@@ -29,6 +30,113 @@ namespace VeeamHealthCheck.Functions.Collection
 
         internal static string StripAnsiCodes(string s) =>
             s is null ? string.Empty : AnsiPattern.Replace(s, string.Empty);
+
+        // Hard ceiling for the VBR MFA pre-check PowerShell process. On VBR v13 an
+        // untrusted server certificate (or any other interactive prompt) can block
+        // Connect-VBRServer forever; this timeout guarantees collection always proceeds
+        // or fails cleanly instead of hanging indefinitely (GitHub issue #149).
+        //
+        // Set generously (90s): the ceiling is a safety net for a genuine hang, not a
+        // performance budget — with -ForceAcceptTlsCertificate present the check normally
+        // returns in a second or two. A cold `Import-Module Veeam.Backup.PowerShell` +
+        // Connect-VBRServer handshake on a large/loaded v13 server can legitimately take
+        // tens of seconds, and a too-tight ceiling has false-failed big environments before.
+        internal const int MfaCheckTimeoutSeconds = 90;
+
+        /// <summary>
+        /// Builds the PowerShell script for the local (Windows-auth) VBR MFA pre-check.
+        /// <c>-ForceAcceptTlsCertificate</c> is added ONLY for VBR v13+ (the parameter does not
+        /// exist on v12): on v13 a self-signed / untrusted server certificate makes Connect-VBRServer
+        /// raise an interactive trust prompt that can never be answered when the process runs headless
+        /// (CreateNoWindow, no stdin), hanging the collection forever (issue #149). <c>-ErrorAction
+        /// Stop</c> makes a failed connect surface as a non-zero exit code rather than a silent success.
+        /// </summary>
+        internal static string BuildLocalMfaConnectScript(int vbrMajorVersion)
+        {
+            // -ForceAcceptTlsCertificate ONLY exists on VBR v13+. Passing it to v12's
+            // Connect-VBRServer throws "A parameter cannot be found that matches parameter
+            // name 'ForceAcceptTlsCertificate'" and breaks collection, so include it only for
+            // v13+ — which is also the only version where the untrusted-cert prompt hangs (#149).
+            string certFlag = vbrMajorVersion >= 13 ? " -ForceAcceptTlsCertificate" : string.Empty;
+            return "Import-Module Veeam.Backup.PowerShell -WarningAction Ignore; " +
+                   $"Connect-VBRServer -Server localhost{certFlag} -ErrorAction Stop";
+        }
+
+        /// <summary>
+        /// Starts a PowerShell process from <paramref name="startInfo"/> and runs it under a hard
+        /// timeout with non-blocking (async) reads of BOTH output streams. Prevents the historical
+        /// hang where an interactive prompt (e.g. an unaccepted VBR server certificate on v13) or a
+        /// full redirected-pipe buffer blocked forever on synchronous ReadToEnd()/WaitForExit()
+        /// (issue #149). On timeout the process and its child tree are killed and
+        /// <paramref name="timedOut"/> is set true. Emits ample debug logging throughout.
+        /// </summary>
+        /// <returns>true if the process started and exited on its own within the timeout;
+        /// false if it failed to start or was killed after timing out.</returns>
+        internal static bool RunBoundedPowerShell(
+            ProcessStartInfo startInfo,
+            int timeoutSeconds,
+            string logTag,
+            out string stdOut,
+            out string stdErr,
+            out int exitCode,
+            out bool timedOut)
+        {
+            stdOut = string.Empty;
+            stdErr = string.Empty;
+            exitCode = -1;
+            timedOut = false;
+
+            CGlobals.Logger.Debug($"{logTag} Launching '{startInfo.FileName}' with a {timeoutSeconds}s timeout (async stream reads to avoid pipe deadlock).");
+
+            using var process = Process.Start(startInfo);
+            if (process == null)
+            {
+                CGlobals.Logger.Error($"{logTag} Failed to start PowerShell process (Process.Start returned null).", false);
+                return false;
+            }
+
+            CGlobals.Logger.Debug($"{logTag} PowerShell process started. PID={process.Id}. Waiting up to {timeoutSeconds}s for exit...");
+
+            // Begin reading both streams asynchronously BEFORE waiting, so a full pipe buffer on
+            // one stream can never deadlock the other (the classic ReadToEnd()-ordering hang).
+            Task<string> outTask = process.StandardOutput.ReadToEndAsync();
+            Task<string> errTask = process.StandardError.ReadToEndAsync();
+
+            bool exited = process.WaitForExit(timeoutSeconds * 1000);
+
+            if (!exited)
+            {
+                timedOut = true;
+                CGlobals.Logger.Warning(
+                    $"{logTag} PowerShell process TIMED OUT after {timeoutSeconds}s — killing PID {process.Id}. " +
+                    "Most likely an unaccepted VBR server certificate or another interactive prompt is blocking Connect-VBRServer.", false);
+                try
+                {
+                    process.Kill(entireProcessTree: true);
+                    CGlobals.Logger.Debug($"{logTag} Kill signal sent to PID {process.Id} and its child process tree.");
+                }
+                catch (Exception ex)
+                {
+                    CGlobals.Logger.Debug($"{logTag} Failed to kill timed-out process PID {process.Id}: {ex.Message}");
+                }
+
+                // Best-effort capture of whatever was produced before the kill (never block).
+                try { if (outTask.Wait(2000)) { stdOut = outTask.Result ?? string.Empty; } } catch { /* ignore */ }
+                try { if (errTask.Wait(2000)) { stdErr = StripAnsiCodes(errTask.Result); } } catch { /* ignore */ }
+                CGlobals.Logger.Debug($"{logTag} Post-timeout capture — STDOUT: {stdOut.Length} chars, STDERR: {stdErr.Length} chars.");
+                return false;
+            }
+
+            try { stdOut = outTask.GetAwaiter().GetResult() ?? string.Empty; }
+            catch (Exception ex) { CGlobals.Logger.Debug($"{logTag} Error reading STDOUT: {ex.Message}"); }
+
+            try { stdErr = StripAnsiCodes(errTask.GetAwaiter().GetResult()); }
+            catch (Exception ex) { CGlobals.Logger.Debug($"{logTag} Error reading STDERR: {ex.Message}"); }
+
+            exitCode = process.ExitCode;
+            CGlobals.Logger.Debug($"{logTag} PowerShell process exited on its own. ExitCode={exitCode}, STDOUT={stdOut.Length} chars, STDERR={stdErr.Length} chars.");
+            return true;
+        }
 
         public CCollections() { }
 
@@ -57,22 +165,40 @@ namespace VeeamHealthCheck.Functions.Collection
 
             // GetCsvFileSizesToLog();
 
+            this.log.Info("[Collections] Phase: Recon check...", false);
             CheckRecon();
+            this.log.Info("[Collections] Phase: Recon check...done!", false);
 
             if (!CGlobals.RunSecReport && CGlobals.EffectiveIsVbr)
             {
+                this.log.Info("[Collections] Phase: Log wait analysis...", false);
                 this.PopulateWaits();
+                this.log.Info("[Collections] Phase: Log wait analysis...done!", false);
             }
 
             if (CGlobals.IsVbr && !CGlobals.REMOTEEXEC)
             {
+                this.log.Info("[Collections] Phase: VMC reader...", false);
                 this.ExecVmcReader();
+                this.log.Info("[Collections] Phase: VMC reader...done!", false);
+
+                this.log.Info("[Collections] Phase: Registry DB info...", false);
                 this.GetRegistryDbInfo();
+                this.log.Info("[Collections] Phase: Registry DB info...done!", false);
+
                 if (CGlobals.DBTYPE != CGlobals.PgTypeName)
                 {
+                    this.log.Info(string.Format("[Collections] Phase: SQL queries (DBTYPE={0})...", CGlobals.DBTYPE), false);
                     this.ExecSqlQueries();
+                    this.log.Info("[Collections] Phase: SQL queries...done!", false);
+                }
+                else
+                {
+                    this.log.Info(string.Format("[Collections] Phase: SQL queries skipped (PostgreSQL backend, DBTYPE={0})", CGlobals.DBTYPE), false);
                 }
             }
+
+            this.log.Info("[Collections] Run() complete.", false);
         }
 
         private static void CheckRecon()
@@ -137,16 +263,32 @@ namespace VeeamHealthCheck.Functions.Collection
 
         private void GetRegistryDbInfo()
         {
-            CRegReader reg = new CRegReader();
-            reg.GetDbInfo();
+            try
+            {
+                CRegReader reg = new CRegReader();
 
-            if (CGlobals.REMOTEEXEC)
-            {
-                CGlobals.DEFAULTREGISTRYKEYS = reg.DefaultVbrKeysRemote();
+                this.log.Info("[Collections] Registry: reading DB info (GetDbInfo)...", false);
+                reg.GetDbInfo();
+                this.log.Info("[Collections] Registry: reading DB info (GetDbInfo)...done!", false);
+
+                if (CGlobals.REMOTEEXEC)
+                {
+                    this.log.Info("[Collections] Registry: reading default VBR keys (remote)...", false);
+                    CGlobals.DEFAULTREGISTRYKEYS = reg.DefaultVbrKeysRemote();
+                }
+                else
+                {
+                    this.log.Info("[Collections] Registry: reading default VBR keys (local)...", false);
+                    CGlobals.DEFAULTREGISTRYKEYS = reg.DefaultVbrKeys();
+                }
+
+                this.log.Info("[Collections] Registry: default VBR keys...done!", false);
             }
-            else
+            catch (Exception e)
             {
-                CGlobals.DEFAULTREGISTRYKEYS = reg.DefaultVbrKeys();
+                // Don't let a registry-read failure silently abort collection. Log it loudly
+                // and continue so report generation can still proceed with whatever was gathered.
+                this.log.Error("[Collections] Registry DB info collection failed: " + e.Message, false);
             }
         }
 
@@ -304,12 +446,17 @@ namespace VeeamHealthCheck.Functions.Collection
                     CGlobals.REMOTEHOST = "localhost";
                 }
 
-                // Encode password as Base64 for safe transmission
+                // Base64-encode only to avoid PowerShell arg quoting issues (argument-safety,
+                // NOT encryption — Base64 is reversible; the script decodes it to plaintext).
                 string base64Password = CredentialHelper.EncodePasswordToBase64(creds.Value.Password);
+                // Escape server and username for the double-quoted argument context
+                // (prevents PowerShell argument injection via these fields).
+                string escapedServer = CredentialHelper.EscapeForPowerShellDoubleQuotes(CGlobals.REMOTEHOST);
+                string escapedUser = CredentialHelper.EscapeForPowerShellDoubleQuotes(creds.Value.Username);
 
                 // Build PowerShell arguments with Base64-encoded password
                 // Use double quotes around Base64 string to avoid issues with special characters
-                string args = $"-NoProfile -ExecutionPolicy Bypass -File \"{scriptPath}\" -Server {CGlobals.REMOTEHOST} -Username \"{creds.Value.Username}\" -PasswordBase64 \"{base64Password}\"";
+                string args = $"-NoProfile -ExecutionPolicy Bypass -File \"{scriptPath}\" -Server \"{escapedServer}\" -Username \"{escapedUser}\" -PasswordBase64 \"{base64Password}\" -VBRVersion {CGlobals.VBRMAJORVERSION}";
 
                 var processInfo = new ProcessStartInfo
                 {
@@ -322,12 +469,36 @@ namespace VeeamHealthCheck.Functions.Collection
                 };
 
                 // Log processInfo settings - construct safe log message without ever including sensitive data
-                string safeArgs = $"-NoProfile -ExecutionPolicy Bypass -File \"{scriptPath}\" -Server {CGlobals.REMOTEHOST} -Username \"{creds.Value.Username}\" -PasswordBase64 \"****\"";
+                string safeArgs = $"-NoProfile -ExecutionPolicy Bypass -File \"{scriptPath}\" -Server \"{escapedServer}\" -Username \"{escapedUser}\" -PasswordBase64 \"****\" -VBRVersion {CGlobals.VBRMAJORVERSION}";
                 CGlobals.Logger.Debug($"ProcessStartInfo Settings:\n  FileName: {processInfo.FileName}\n  Arguments: {safeArgs}\n  RedirectStandardOutput: {processInfo.RedirectStandardOutput}\n  RedirectStandardError: {processInfo.RedirectStandardError}\n  UseShellExecute: {processInfo.UseShellExecute}\n  CreateNoWindow: {processInfo.CreateNoWindow}");
-                using var process = System.Diagnostics.Process.Start(processInfo);
-                string stdOut = process.StandardOutput.ReadToEnd();
-                string stdErr = StripAnsiCodes(process.StandardError.ReadToEnd());
-                process.WaitForExit();
+                // Run under a bounded timeout with async reads so an interactive prompt or a full
+                // pipe buffer cannot hang the remote MFA check forever (issue #149 defense-in-depth).
+                // The cert flag is handled inside TestMfa.ps1, gated on the -VBRVersion we pass above.
+                RunBoundedPowerShell(
+                    processInfo,
+                    MfaCheckTimeoutSeconds,
+                    "[Remote MFA Check]",
+                    out string stdOut,
+                    out string stdErr,
+                    out int exitCode,
+                    out bool timedOut);
+
+                if (timedOut)
+                {
+                    string timeoutMsg = $"Remote VBR MFA check to '{CGlobals.REMOTEHOST}' timed out after {MfaCheckTimeoutSeconds}s. " +
+                        "The server may be unreachable, or is waiting on an unaccepted certificate / interactive prompt.";
+                    CGlobals.Logger.Error(timeoutMsg, false);
+                    CGlobals.UserFacingError = timeoutMsg;
+                    if (CGlobals.Silent)
+                    {
+                        string host = string.IsNullOrEmpty(CGlobals.REMOTEHOST) ? "localhost" : CGlobals.REMOTEHOST;
+                        SilentExit.ExitSilent(
+                            SilentExit.HostUnreachable,
+                            $"Remote MFA check to host '{host}' timed out after {MfaCheckTimeoutSeconds}s.");
+                    }
+                    return false;
+                }
+
                 error = stdErr;
                 if (!string.IsNullOrWhiteSpace(stdOut))
                 {
@@ -341,10 +512,10 @@ namespace VeeamHealthCheck.Functions.Collection
                 }
 
 
-                result = process.ExitCode == 0;
+                result = exitCode == 0;
 
                 // Log result summary only - avoid logging full output which could contain sensitive data in error messages
-                CGlobals.Logger.Debug($"MFA Test Result: ExitCode={process.ExitCode}, StdOutLength={stdOut?.Length ?? 0}, StdErrLength={stdErr?.Length ?? 0}");
+                CGlobals.Logger.Debug($"MFA Test Result: ExitCode={exitCode}, StdOutLength={stdOut?.Length ?? 0}, StdErrLength={stdErr?.Length ?? 0}");
 
                 // Detect specific error conditions and provide user-friendly messages
                 if (!result && !string.IsNullOrWhiteSpace(stdErr))
@@ -483,11 +654,14 @@ namespace VeeamHealthCheck.Functions.Collection
                     psExe = "powershell.exe";
                 }
 
-                // Simple Connect-VBRServer without credentials
-                string script = "Import-Module Veeam.Backup.PowerShell -WarningAction Ignore; Connect-VBRServer -Server localhost ";
+                // Simple Connect-VBRServer without credentials. On VBR v13 the connect string adds
+                // -ForceAcceptTlsCertificate (built by BuildLocalMfaConnectScript, gated by version)
+                // to avoid the headless cert-prompt hang; on v12 that flag is omitted because the
+                // parameter does not exist there and would break the connect (issue #149).
+                string script = BuildLocalMfaConnectScript(CGlobals.VBRMAJORVERSION);
                 string args = $"-NoProfile -ExecutionPolicy Bypass -Command \"{script}\"";
 
-                CGlobals.Logger.Debug($"Running local MFA check with Windows auth: {psExe} {args}");
+                CGlobals.Logger.Debug($"[Local MFA Check] Running local MFA check with Windows auth: {psExe} -Command \"{script}\"");
 
                 var processInfo = new ProcessStartInfo
                 {
@@ -499,13 +673,29 @@ namespace VeeamHealthCheck.Functions.Collection
                     CreateNoWindow = true
                 };
 
-                using var process = Process.Start(processInfo);
-                string stdOut = process.StandardOutput.ReadToEnd();
-                string stdErr = StripAnsiCodes(process.StandardError.ReadToEnd());
-                process.WaitForExit();
+                RunBoundedPowerShell(
+                    processInfo,
+                    MfaCheckTimeoutSeconds,
+                    "[Local MFA Check]",
+                    out string stdOut,
+                    out string stdErr,
+                    out int exitCode,
+                    out bool timedOut);
 
-                // Log summary only - avoid logging full output which could contain sensitive data
-                CGlobals.Logger.Debug($"[Local MFA Check] Output lengths - STDOUT: {stdOut?.Length ?? 0}, STDERR: {stdErr?.Length ?? 0}");
+                // A timeout is a NON-blocking failure: surface a clear message and fail cleanly
+                // instead of hanging the whole collection (issue #149). With the cert flag above
+                // this should no longer trigger for the certificate case, but it protects against
+                // any other interactive prompt or a wedged PowerShell/module load.
+                if (timedOut)
+                {
+                    string timeoutMsg = $"VBR MFA pre-check timed out after {MfaCheckTimeoutSeconds}s. " +
+                        "This usually means the VBR server certificate needs to be accepted. " +
+                        "Try launching Veeam Health Check once from an elevated PowerShell or Command Prompt, " +
+                        "accept the certificate prompt, then run the report again.";
+                    CGlobals.Logger.Error(timeoutMsg, false);
+                    CGlobals.UserFacingError = timeoutMsg;
+                    return false;
+                }
 
                 if (!string.IsNullOrWhiteSpace(stdErr))
                 {
@@ -538,8 +728,8 @@ namespace VeeamHealthCheck.Functions.Collection
                     }
                 }
 
-                bool result = process.ExitCode == 0;
-                CGlobals.Logger.Info($"[Local MFA Check] Result: {(result ? "Success" : "Failed")} (ExitCode={process.ExitCode})", false);
+                bool result = exitCode == 0;
+                CGlobals.Logger.Info($"[Local MFA Check] Result: {(result ? "Success" : "Failed")} (ExitCode={exitCode})", false);
 
                 return result;
             }
@@ -569,7 +759,6 @@ namespace VeeamHealthCheck.Functions.Collection
 
         private bool TestPsMfaVb365(PSInvoker p)
         {
-            // CScripts scripts = new();
             return p.TestMfaVB365();
         }
 
@@ -602,8 +791,7 @@ namespace VeeamHealthCheck.Functions.Collection
                 CGlobals.Logger.Info("Entering vb365 ps invoker", false);
 
                 // p.InvokeVb365CollectEmbedded();
-                p.InvokeVb365Collect();
-                this.SCRIPTSUCCESS = true;
+                this.SCRIPTSUCCESS = p.InvokeVb365Collect();
             }
         }
 

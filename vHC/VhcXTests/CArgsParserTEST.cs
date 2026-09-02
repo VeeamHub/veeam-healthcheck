@@ -11,8 +11,23 @@ using Xunit;
 namespace VhcXTests
 {
     [Collection("GlobalState")]
-    public class CArgsParserTests
+    public class CArgsParserTests : IDisposable
     {
+        private readonly TargetProduct _origTargetProductType;
+        private readonly int _origMajorVersion;
+
+        public CArgsParserTests()
+        {
+            _origTargetProductType = CGlobals.TargetProductType;
+            _origMajorVersion = CGlobals.VBRMAJORVERSION;
+        }
+
+        public void Dispose()
+        {
+            CGlobals.TargetProductType = _origTargetProductType;
+            CGlobals.VBRMAJORVERSION = _origMajorVersion;
+        }
+
         // Helper method to access private ParsePath method via reflection
         private string? InvokeParsePathMethod(CArgsParser parser, string input)
         {
@@ -825,5 +840,37 @@ namespace VhcXTests
         }
 
         #endregion
+
+        [Fact]
+        public void DetectVbrVersionIfTargeted_TargetProductVb365_SkipsVbrDetection()
+        {
+            CGlobals.TargetProductType = TargetProduct.Vb365;
+            CGlobals.VBRMAJORVERSION = -1;
+
+            var parser = new CArgsParser(new string[] { });
+
+            Exception? ex = Record.Exception(() => parser.DetectVbrVersionIfTargeted());
+
+            Assert.Null(ex);
+            Assert.Equal(-1, CGlobals.VBRMAJORVERSION);
+        }
+
+        [Fact]
+        public void DetectVbrVersionIfTargeted_TargetProductAuto_DoesNotThrow()
+        {
+            // Smoke test only: DetectVbrVersion() swallows its own exceptions internally, so
+            // this can't distinguish "Auto mode correctly still attempted detection" from "the
+            // gate was wrongly broadened to skip it" - both look identical here. The actual
+            // guard against over-broadening this to EffectiveIsVbr-style logic (which would
+            // incorrectly skip Auto-mode detection, since ModeCheck() hasn't run yet at this
+            // point in the CLI flow) is DetectVbrVersionIfTargeted()'s own doc comment.
+            CGlobals.TargetProductType = TargetProduct.Auto;
+
+            var parser = new CArgsParser(new string[] { });
+
+            Exception? ex = Record.Exception(() => parser.DetectVbrVersionIfTargeted());
+
+            Assert.Null(ex);
+        }
     }
 }
