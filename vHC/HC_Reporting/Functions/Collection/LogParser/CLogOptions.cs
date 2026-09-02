@@ -21,10 +21,12 @@ namespace VeeamHealthCheck.Functions.Collection.LogParser
             CVmcReader vReader = new(mode);
             vReader.PopulateVmc();
 
-            if (!string.IsNullOrEmpty(vReader.INSTALLID))
-            {
-                installIdsByMode[mode] = vReader.INSTALLID;
-            }
+            // Always assign, even when the lookup found nothing: installIdsByMode is a
+            // static dictionary that outlives a single run (e.g. a GUI retry constructs a
+            // fresh CLogOptions in the same process). Skipping the write on empty would let
+            // a failed retry silently keep a stale ID from the previous run instead of
+            // correctly reporting "no ID this run".
+            installIdsByMode[mode] = vReader.INSTALLID ?? string.Empty;
         }
 
         public static string GetInstallId(string mode)
