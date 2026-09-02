@@ -452,12 +452,16 @@ namespace VeeamHealthCheck.Tests.Security
             // Act
             CredentialStore.Set(server, username, password);
 
-            var storePath = CredentialStore.StorePath;
+            // Assert - Set() persisted somewhere (the isolated test store, in this suite)
+            Assert.True(File.Exists(CredentialStore.StorePath));
 
-            // Assert - File should be in user's AppData
-            Assert.True(File.Exists(storePath));
-            Assert.Contains("AppData", storePath);
-            Assert.Contains("VeeamHealthCheck", storePath);
+            // Assert - the real production default (captured in the constructor
+            // before this class's isolation seam overrides it) lives under the
+            // user's profile in a VeeamHealthCheck folder. Asserting against
+            // _originalStorePath rather than CredentialStore.StorePath here since
+            // the latter is intentionally overridden to a temp path for this suite.
+            Assert.Contains("AppData", _originalStorePath);
+            Assert.Contains("VeeamHealthCheck", _originalStorePath);
 
             // Cleanup
             CredentialStore.Clear();
