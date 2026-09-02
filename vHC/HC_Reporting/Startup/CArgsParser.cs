@@ -237,13 +237,9 @@ namespace VeeamHealthCheck.Startup
                             CGlobals.TargetProductType = TargetProduct.Vb365;
                         CGlobals.Logger.Info("Target product: VB365", false);
                         break;
-                    case var match when new Regex("/path=.*").IsMatch(a):
+                    case var match when new Regex("/path=.*", RegexOptions.IgnoreCase).IsMatch(a):
                         _hfdPath = this.ParsePath(a);
-                        CGlobals.Logger.Info("HFD path: " + targetDir);
-                        break;
-                    case var match when new Regex("/PATH=.*").IsMatch(a):
-                        _hfdPath = this.ParsePath(a);
-                        CGlobals.Logger.Info("HFD path: " + targetDir);
+                        CGlobals.Logger.Info("HFD path: " + _hfdPath);
                         break;
                     case var match when new Regex("/outdir=.*", RegexOptions.IgnoreCase).IsMatch(a):
                         string parsedOutDir = this.ParsePath(a);
