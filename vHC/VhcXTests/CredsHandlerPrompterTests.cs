@@ -5,6 +5,7 @@ using Moq;
 using VeeamHealthCheck.Functions.CredsWindow;
 using VeeamHealthCheck.Functions.UserInteraction;
 using VeeamHealthCheck.Shared;
+using VeeamHealthCheck.Startup;
 using Xunit;
 
 namespace VhcXTests
