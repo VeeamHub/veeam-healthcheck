@@ -96,7 +96,6 @@ try {
         Write-NasLog ("Read {0} line(s) in {1:N1}s" -f @($content).Count, ($readSw.Elapsed.TotalSeconds))
     } else {
         Write-NasLog "VMC.log not found at $logsPath - skipping unstructured/NAS section parsing" 'WARNING'
-        Write-Verbose "VMC.log not found at $logsPath - skipping unstructured/NAS section parsing"
         $content = @()
     }
 
