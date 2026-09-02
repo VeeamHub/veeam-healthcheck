@@ -613,7 +613,7 @@ namespace VeeamHealthCheck.Functions.Collection.PSCollections
             }
 
             // Add LogPath parameter so collector logs follow the configured output root
-            argString += $"-LogPath \"{Path.Combine(CVariables.unsafeDir, "Log")}\" ";
+            argString += $"-LogPath \"{CollectorLogPath()}\" ";
             // Add credentials if needed for remote execution
             string safeArgString = argString; // For logging without sensitive data
             if (needsCredentials)
@@ -659,6 +659,10 @@ namespace VeeamHealthCheck.Functions.Collection.PSCollections
                 RedirectStandardError = true
             };
         }
+
+        // CVariables.unsafeDir is Path.Combine(CGlobals.desiredPath ?? outDir, "Original"),
+        // where outDir is a hardcoded non-empty constant - it can never be null or empty.
+        private static string CollectorLogPath() => Path.Combine(CVariables.unsafeDir, "Log");
 
         private ProcessStartInfo VbrNasStartInfo()
         {
@@ -816,12 +820,9 @@ namespace VeeamHealthCheck.Functions.Collection.PSCollections
                 }
                 // Add LogPath so this phase (e.g. Get-NasInfo) writes its own log next to the
                 // configured output root instead of running silently. Mirrors VbrConfigStartInfo.
-                if (!string.IsNullOrEmpty(CVariables.unsafeDir))
-                {
-                    string nasLogPath = Path.Combine(CVariables.unsafeDir, "Log");
-                    argString += $"-LogPath \"{nasLogPath}\" ";
-                    safeArgString += $"-LogPath \"{nasLogPath}\" ";
-                }
+                string nasLogPath = CollectorLogPath();
+                argString += $"-LogPath \"{nasLogPath}\" ";
+                safeArgString += $"-LogPath \"{nasLogPath}\" ";
                 if (needsCredentials)
                 {
                     CredsHandler ch = new();
