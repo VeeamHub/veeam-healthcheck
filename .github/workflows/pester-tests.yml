@@ -6,11 +6,15 @@ on:
     paths:
       - 'vHC/HC_Reporting/Functions/Collection/PSCollections/Scripts/TestMfa.ps1'
       - 'vHC/HC_Reporting/Functions/Collection/PSCollections/Scripts/TestMfa.Tests.ps1'
+      - 'vHC/HC_Reporting/Tools/Scripts/HealthCheck/VBR/Get-NasInfo.ps1'
+      - 'vHC/HC_Reporting/Tools/Scripts/HealthCheck/VBR/Get-NasInfo.Tests.ps1'
   pull_request:
     branches: [master, dev]
     paths:
       - 'vHC/HC_Reporting/Functions/Collection/PSCollections/Scripts/TestMfa.ps1'
       - 'vHC/HC_Reporting/Functions/Collection/PSCollections/Scripts/TestMfa.Tests.ps1'
+      - 'vHC/HC_Reporting/Tools/Scripts/HealthCheck/VBR/Get-NasInfo.ps1'
+      - 'vHC/HC_Reporting/Tools/Scripts/HealthCheck/VBR/Get-NasInfo.Tests.ps1'
   workflow_dispatch:
 
 jobs:
@@ -109,6 +113,90 @@ jobs:
           | T11 | CorePath absent, Get-Package finds path |
 
           > Full NUnit XML results available in the **pester-results-${{ github.run_number }}** artifact.
+          "@
+
+          $summary | Out-File -FilePath $env:GITHUB_STEP_SUMMARY -Encoding utf8
+
+  pester-nasinfo:
+    name: Pester — Get-NasInfo
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+
+      - name: Ensure Pester v5 is available
+        shell: pwsh
+        run: |
+          $pester = Get-Module -ListAvailable -Name Pester | Where-Object { $_.Version -ge '5.0.0' } | Select-Object -First 1
+          if (-not $pester) {
+            Write-Host 'Pester v5 not found — installing from PSGallery...'
+            Install-Module -Name Pester -MinimumVersion 5.0.0 -Scope CurrentUser -Force -SkipPublisherCheck
+          } else {
+            Write-Host "Pester $($pester.Version) already available"
+          }
+
+      - name: Run Pester tests
+        id: pester_run
+        shell: pwsh
+        run: |
+          Import-Module Pester -MinimumVersion 5.0.0
+
+          $testFile = 'vHC/HC_Reporting/Tools/Scripts/HealthCheck/VBR/Get-NasInfo.Tests.ps1'
+          $resultsFile = 'pester-nasinfo-results.xml'
+
+          $config = New-PesterConfiguration
+          $config.Run.Path = $testFile
+          $config.Output.Verbosity = 'Detailed'
+          $config.TestResult.Enabled = $true
+          $config.TestResult.OutputFormat = 'NUnitXml'
+          $config.TestResult.OutputPath = $resultsFile
+
+          $result = Invoke-Pester -Configuration $config
+
+          # Surface counts for summary step
+          "passed=$($result.PassedCount)"   | Out-File -FilePath $env:GITHUB_OUTPUT -Append
+          "failed=$($result.FailedCount)"   | Out-File -FilePath $env:GITHUB_OUTPUT -Append
+          "skipped=$($result.SkippedCount)" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
+          "total=$($result.TotalCount)"     | Out-File -FilePath $env:GITHUB_OUTPUT -Append
+
+          if ($result.FailedCount -gt 0) {
+            Write-Host "::error::$($result.FailedCount) Pester test(s) failed"
+            exit 1
+          }
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: pester-nasinfo-results-${{ github.run_number }}
+          path: pester-nasinfo-results.xml
+          retention-days: 30
+
+      - name: Write job summary
+        if: always()
+        shell: pwsh
+        run: |
+          $passed  = '${{ steps.pester_run.outputs.passed }}'
+          $failed  = '${{ steps.pester_run.outputs.failed }}'
+          $skipped = '${{ steps.pester_run.outputs.skipped }}'
+          $total   = '${{ steps.pester_run.outputs.total }}'
+
+          $status = if ($failed -eq '0') { ':white_check_mark: All tests passed' } else { ":x: $failed test(s) failed" }
+
+          $summary = @"
+          ## Pester Test Results — Get-NasInfo
+
+          **$status**
+
+          | Passed | Failed | Skipped | Total |
+          |--------|--------|---------|-------|
+          | $passed | $failed | $skipped | $total |
+
+          ### Test File
+          ``vHC/HC_Reporting/Tools/Scripts/HealthCheck/VBR/Get-NasInfo.Tests.ps1``
+
+          > Full NUnit XML results available in the **pester-nasinfo-results-${{ github.run_number }}** artifact.
           "@
 
           $summary | Out-File -FilePath $env:GITHUB_STEP_SUMMARY -Encoding utf8
