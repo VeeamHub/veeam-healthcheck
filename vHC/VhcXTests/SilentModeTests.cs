@@ -21,7 +21,7 @@ namespace VhcXTests
     ///
     /// Naming convention: [Method]_[Scenario]_[Expected].
     /// </summary>
-    [Collection("Credential Store Tests")]
+    [Collection("GlobalState")]
     [Trait("Category", "Silent")]
     public class SilentModeTests : IDisposable
     {

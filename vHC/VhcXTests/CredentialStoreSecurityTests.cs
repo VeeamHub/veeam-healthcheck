@@ -14,7 +14,7 @@ using VhcXTests;
 
 namespace VeeamHealthCheck.Tests.Security
 {
-    [Collection("Credential Store Tests")]
+    [Collection("GlobalState")]
     [Trait("Category", "Security")]
     public class CredentialStoreSecurityTests : IDisposable
     {
