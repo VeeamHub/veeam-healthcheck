@@ -62,7 +62,7 @@ namespace VhcXTests
             Assert.False(result);
         }
 
-        [Fact]
+        [WindowsOnlyFact]
         public void VerifyPath_WhitespacePath_ReturnsFalse()
         {
             // Arrange
@@ -143,7 +143,7 @@ namespace VhcXTests
             Assert.True(Directory.Exists(path));
         }
 
-        [Fact]
+        [WindowsOnlyFact]
         public void VerifyPath_InvalidCharacters_ReturnsFalse()
         {
             // Arrange

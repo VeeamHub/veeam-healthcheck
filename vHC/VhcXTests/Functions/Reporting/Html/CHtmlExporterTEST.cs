@@ -60,8 +60,8 @@ namespace VhcXTests.Functions.Reporting.Html
 
             // Assert
             Assert.True(Directory.Exists(CGlobals.desiredPath));
-            Assert.True(Directory.Exists(CGlobals.desiredPath + CVariables.safeSuffix));
-            Assert.True(Directory.Exists(CGlobals.desiredPath + CVariables.unsafeSuffix));
+            Assert.True(Directory.Exists(Path.Combine(CGlobals.desiredPath, CVariables.safeSuffix.TrimStart('\\'))));
+            Assert.True(Directory.Exists(Path.Combine(CGlobals.desiredPath, CVariables.unsafeSuffix.TrimStart('\\'))));
         }
 
         [Fact]

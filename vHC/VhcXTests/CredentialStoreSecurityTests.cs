@@ -7,6 +7,7 @@ using System.Text.RegularExpressions;
 using Xunit;
 using VeeamHealthCheck.Startup;
 using VeeamHealthCheck.Shared;
+using VhcXTests;
 
 namespace VeeamHealthCheck.Tests.Security
 {
@@ -45,7 +46,7 @@ namespace VeeamHealthCheck.Tests.Security
             }
         }
 
-        [Fact]
+        [WindowsOnlyFact]
         public void StoredCredentials_ShouldBeEncrypted()
         {
             // Arrange
@@ -78,7 +79,7 @@ namespace VeeamHealthCheck.Tests.Security
             CredentialStore.Clear();
         }
 
-        [Fact]
+        [WindowsOnlyFact]
         public void StoredCredentials_ShouldNotContainPlaintextPassword()
         {
             // Arrange
@@ -135,7 +136,7 @@ namespace VeeamHealthCheck.Tests.Security
             CredentialStore.Clear();
         }
 
-        [Fact]
+        [WindowsOnlyFact]
         public void Set_WithComplexPassword_ShouldEncryptAndDecryptCorrectly()
         {
             // Arrange - Test various special characters
@@ -223,7 +224,7 @@ namespace VeeamHealthCheck.Tests.Security
             CredentialStore.Clear();
         }
 
-        [Fact]
+        [WindowsOnlyFact]
         public void Clear_ShouldRemoveAllCredentialsAndFile()
         {
             // Arrange
@@ -248,7 +249,7 @@ namespace VeeamHealthCheck.Tests.Security
             Assert.False(CredentialStore.HasStoredCredentials());
         }
 
-        [Fact]
+        [WindowsOnlyFact]
         public void MultipleServers_ShouldStoreSeparateEncryptedCredentials()
         {
             // Arrange
@@ -290,7 +291,7 @@ namespace VeeamHealthCheck.Tests.Security
             CredentialStore.Clear();
         }
 
-        [Fact]
+        [WindowsOnlyFact]
         public void PasswordEncryption_ShouldBeUniquePerPassword()
         {
             // Arrange
@@ -354,7 +355,7 @@ namespace VeeamHealthCheck.Tests.Security
             Assert.False(removed);
         }
 
-        [Fact]
+        [WindowsOnlyFact]
         public void CredentialFile_ShouldBeInUserProfile()
         {
             // Arrange
