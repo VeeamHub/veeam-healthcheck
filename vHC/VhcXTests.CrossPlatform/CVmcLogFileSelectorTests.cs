@@ -94,10 +94,12 @@ public class CVmcLogFileSelectorTests
     }
 
     [Fact]
-    public void SelectVmcLogFile_OnlyRotatedBackupsPresent_ReturnsFirstMatch()
+    public void SelectVmcLogFile_OnlyRotatedBackupsPresent_ReturnsFirstInCallerOrder()
     {
-        // Arrange - no exact "VMC.log" exists (e.g. the live file was deleted); falls
-        // back to whatever the filesystem lists first among the rotated backups.
+        // Arrange - no exact "VMC.log" exists (e.g. the live file was deleted). There is no
+        // recency (LastWriteTime) signal available to this helper, so it falls back to
+        // whichever rotated backup is first in the caller-supplied order - this is NOT a
+        // "most recent" guarantee, just an order-preservation contract.
         string[] files = new[]
         {
             @"C:\ProgramData\Veeam\Backup365\Logs\VMC.log.2",
@@ -109,6 +111,24 @@ public class CVmcLogFileSelectorTests
 
         // Assert
         Assert.Equal(@"C:\ProgramData\Veeam\Backup365\Logs\VMC.log.2", result);
+    }
+
+    [Fact]
+    public void SelectVmcLogFile_LowerCaseFileName_MatchesCaseInsensitively()
+    {
+        // Arrange - Windows filesystems are case-insensitive, so a file that legitimately
+        // exists as "vmc.log" must still be recognized as the live file.
+        string[] files = new[]
+        {
+            @"C:\ProgramData\Veeam\Backup365\Logs\Collector.log",
+            @"C:\ProgramData\Veeam\Backup365\Logs\vmc.log",
+        };
+
+        // Act
+        var result = CVmcLogFileSelector.SelectVmcLogFile(files);
+
+        // Assert
+        Assert.Equal(@"C:\ProgramData\Veeam\Backup365\Logs\vmc.log", result);
     }
 
     [Fact]

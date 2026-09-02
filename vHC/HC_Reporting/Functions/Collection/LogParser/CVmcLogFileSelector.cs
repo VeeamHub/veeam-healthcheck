@@ -16,7 +16,7 @@ namespace VeeamHealthCheck.Functions.Collection.LogParser
                 return null;
             }
 
-            List<string> matches = filePaths.Where(f => f.Contains("VMC.log")).ToList();
+            List<string> matches = filePaths.Where(f => f.IndexOf("VMC.log", StringComparison.OrdinalIgnoreCase) >= 0).ToList();
 
             // Directory.GetFiles() enumeration order is filesystem-defined, not chronological, so
             // when a rotated backup (VMC.log.1, VMC.log.2, ...) sits alongside the live file, prefer
@@ -25,7 +25,10 @@ namespace VeeamHealthCheck.Functions.Collection.LogParser
             // check the suffix directly rather than via Path.GetFileName, which splits on the host
             // OS's separator and would treat the whole backslash-delimited path as one filename here
             // when running on non-Windows (e.g. this cross-platform test project on macOS/Linux CI).
-            return matches.FirstOrDefault(f => f.EndsWith(@"\VMC.log", StringComparison.Ordinal) || f == "VMC.log")
+            // When no exact "VMC.log" exists, the fallback below returns whichever rotated backup is
+            // first in the caller-supplied order - there is no recency (LastWriteTime) tie-break here,
+            // since this helper only ever sees path strings.
+            return matches.FirstOrDefault(f => f.EndsWith(@"\VMC.log", StringComparison.OrdinalIgnoreCase))
                 ?? matches.FirstOrDefault();
         }
     }
