@@ -37,8 +37,8 @@ namespace VeeamHealthCheck.Tests.Functions.Collection.LogParser
         {
             FieldInfo field = typeof(CLogOptions).GetField(
                 "installIdsByMode",
-                BindingFlags.NonPublic | BindingFlags.Static);
-            return (Dictionary<string, string>)field.GetValue(null);
+                BindingFlags.NonPublic | BindingFlags.Static)!;
+            return (Dictionary<string, string>)field.GetValue(null)!;
         }
 
         [Fact]
