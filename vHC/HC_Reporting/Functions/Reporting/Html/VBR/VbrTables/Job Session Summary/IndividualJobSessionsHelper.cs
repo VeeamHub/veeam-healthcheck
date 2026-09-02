@@ -135,14 +135,9 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR.VbrTables.Job_Session_Su
             this.LogJobSessionParseProgress(100, 100);
         }
 
-        /// <summary>
-        /// CVariables.safeSuffix/unsafeSuffix and folderName are all @"\..." literals
-        /// (written assuming Windows is always the separator), so TrimStart before
-        /// handing them to Path.Combine to build a genuinely cross-platform path.
-        /// </summary>
         private static string BuildReportDir(string suffix, string folderName)
         {
-            return Path.Combine(CGlobals.desiredPath, suffix.TrimStart('\\'), folderName.TrimStart('\\'));
+            return CCrossPlatformPath.Combine(CGlobals.desiredPath, suffix, folderName);
         }
 
         private void CleanFolder(string folderName)

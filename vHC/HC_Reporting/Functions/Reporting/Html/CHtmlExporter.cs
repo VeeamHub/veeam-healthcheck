@@ -23,12 +23,9 @@ namespace VeeamHealthCheck.Functions.Reporting.Html
         private readonly CLogger log = CGlobals.Logger;
 
         // path settings
-        // CVariables.safeSuffix/unsafeSuffix are @"\..." literals (other, unfixed
-        // consumers still string-concat them as Windows paths), so TrimStart before
-        // handing them to Path.Combine here to build a genuinely cross-platform path.
         private readonly string basePath = CGlobals.desiredPath;
-        private readonly string anonPath = Path.Combine(CGlobals.desiredPath, CVariables.safeSuffix.TrimStart('\\'));
-        private readonly string origPath = Path.Combine(CGlobals.desiredPath, CVariables.unsafeSuffix.TrimStart('\\'));
+        private readonly string anonPath = CCrossPlatformPath.Combine(CGlobals.desiredPath, CVariables.safeSuffix);
+        private readonly string origPath = CCrossPlatformPath.Combine(CGlobals.desiredPath, CVariables.unsafeSuffix);
 
         private readonly string backupServerName;
         private string latestReport;
