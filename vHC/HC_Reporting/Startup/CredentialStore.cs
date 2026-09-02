@@ -229,29 +229,31 @@ public static class CredentialStore
         {
             if (_cache.Remove(server))
             {
-                // Update the file with remaining credentials
-                var serializable = _cache.ToDictionary(
-                    kvp => kvp.Key,
-                    kvp => new CredentialRecord
-                    {
-                        Username = kvp.Value.Username,
-                        PasswordEnc = Convert.ToBase64String(kvp.Value.PasswordEnc)
-                    });
+                // Sync the on-disk file (if any) to match, by removing the key
+                // from whatever is actually there rather than re-serializing
+                // _cache: on non-Windows, Set() keeps unprotected password bytes
+                // in _cache without ever persisting them (see Set()), so writing
+                // _cache back out could leak those. Editing the file's own
+                // contents in place never introduces anything that wasn't
+                // already safely on disk, and works the same on every OS.
+                if (File.Exists(StorePath))
+                {
+                    var json = File.ReadAllText(StorePath);
+                    var dict = string.IsNullOrWhiteSpace(json)
+                        ? null
+                        : JsonSerializer.Deserialize<Dictionary<string, CredentialRecord>>(json);
 
-                if (_cache.Count == 0)
-                {
-                    // If no credentials left, delete the file
-                    if (File.Exists(StorePath))
+                    if (dict != null && dict.Remove(server))
                     {
-                        File.Delete(StorePath);
+                        if (dict.Count == 0)
+                        {
+                            File.Delete(StorePath);
+                        }
+                        else
+                        {
+                            File.WriteAllText(StorePath, JsonSerializer.Serialize(dict, new JsonSerializerOptions { WriteIndented = true }));
+                        }
                     }
-                }
-                else if (OperatingSystem.IsWindows())
-                {
-                    // Write remaining credentials back to file. Off Windows, Set()
-                    // never wrote these to disk in the first place (see Set()), so
-                    // there is nothing to rewrite there.
-                    File.WriteAllText(StorePath, JsonSerializer.Serialize(serializable, new JsonSerializerOptions { WriteIndented = true }));
                 }
 
                 CGlobals.Logger.Info($"Removed credentials for server: {server}");

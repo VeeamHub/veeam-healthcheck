@@ -207,9 +207,12 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR.VbrTables.Job_Session_Su
             return Path.Combine(scrubDir, SanitizeFileName(this.scrubber.ScrubItem(JobName, ScrubItemType.Job)) + ".html");
         }
 
-        private static string SanitizeFileName(string name)
+        internal static string SanitizeFileName(string name)
         {
-            return name.Replace("\\", "--").Replace("/", "-");
+            // ':' must go too: Path.Combine(base, second) discards `base` entirely
+            // whenever `second` starts with a drive letter followed by ':'
+            // (Windows' own rooted-path rule) — e.g. a job named "C: Nightly".
+            return name.Replace("\\", "--").Replace("/", "-").Replace(":", "-");
         }
 
         private string ReturnTableHeaderString(string jobname)

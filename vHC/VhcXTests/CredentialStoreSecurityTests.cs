@@ -1,8 +1,11 @@
 // Copyright (c) 2021, Adam Congdon <adam.congdon2@gmail.com>
 // MIT License
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Text;
+using System.Text.Json;
 using System.Text.RegularExpressions;
 using Xunit;
 using VeeamHealthCheck.Startup;
@@ -219,6 +222,49 @@ namespace VeeamHealthCheck.Tests.Security
                 string fileContent = File.ReadAllText(storePath);
                 Assert.DoesNotContain(server, fileContent, StringComparison.Ordinal);
             }
+
+            // Cleanup
+            CredentialStore.Clear();
+        }
+
+        [Fact]
+        public void Remove_WhenOtherCredentialsRemainOnDisk_ShouldRemoveEntryFromFileRegardlessOfOS()
+        {
+            // Arrange
+            string serverA = "remove-sync-test-a.local";
+            string serverB = "remove-sync-test-b.local";
+            var storePath = Path.Combine(
+                Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
+                "VeeamHealthCheck", "creds.json");
+
+            CredentialStore.Clear();
+
+            // Populate the in-memory cache for both servers. Set() always updates
+            // the cache; on non-Windows it does NOT persist to disk (DPAPI is
+            // unavailable there), so _cache and the on-disk file can diverge.
+            CredentialStore.Set(serverA, "userA", "pfake-A");
+            CredentialStore.Set(serverB, "userB", "pfake-B");
+
+            // Simulate a creds.json that already has both entries on disk, e.g.
+            // written by a prior run on Windows and then loaded here by
+            // InitializeCache() on any OS.
+            var onDisk = new Dictionary<string, CredentialRecord>
+            {
+                [serverA] = new CredentialRecord { Username = "userA", PasswordEnc = Convert.ToBase64String(Encoding.UTF8.GetBytes("fakeA")) },
+                [serverB] = new CredentialRecord { Username = "userB", PasswordEnc = Convert.ToBase64String(Encoding.UTF8.GetBytes("fakeB")) },
+            };
+            File.WriteAllText(storePath, JsonSerializer.Serialize(onDisk, new JsonSerializerOptions { WriteIndented = true }));
+
+            // Act
+            bool removed = CredentialStore.Remove(serverA);
+
+            // Assert
+            Assert.True(removed);
+            Assert.True(File.Exists(storePath), "creds.json should still exist since serverB's credentials remain.");
+
+            string fileContent = File.ReadAllText(storePath);
+            Assert.DoesNotContain(serverA, fileContent, StringComparison.Ordinal);
+            Assert.Contains(serverB, fileContent, StringComparison.Ordinal);
 
             // Cleanup
             CredentialStore.Clear();
