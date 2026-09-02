@@ -8,6 +8,11 @@ namespace VeeamHealthCheck
 {
     public class CVariables
     {
+        // Intentionally a Windows path literal, not OperatingSystem.IsWindows()-guarded:
+        // actual collection always depends on the Windows-only Veeam.Backup.PowerShell
+        // module, so the compiled binary only ever runs on Windows for now regardless of
+        // where it's built/tested. Revisit if cross-platform execution (not just
+        // cross-platform compilation/testing) is ever expected.
         public static readonly string outDir = @"C:\temp\vHC";
 
         // Use CGlobals.desiredPath as the base, falling back to the default if not set

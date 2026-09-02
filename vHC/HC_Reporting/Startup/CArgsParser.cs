@@ -113,6 +113,8 @@ namespace VeeamHealthCheck.Startup
             bool runHfd = false;
             string _hfdPath = string.Empty;
 
+            // Same intentional Windows-only default as CVariables.outDir - see that
+            // comment for why this isn't cross-platform-guarded.
             string targetDir = @"C:\temp\vHC";
             foreach (var a in args)
             {

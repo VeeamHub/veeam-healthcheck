@@ -135,11 +135,21 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR.VbrTables.Job_Session_Su
             this.LogJobSessionParseProgress(100, 100);
         }
 
+        /// <summary>
+        /// CVariables.safeSuffix/unsafeSuffix and folderName are all @"\..." literals
+        /// (written assuming Windows is always the separator), so TrimStart before
+        /// handing them to Path.Combine to build a genuinely cross-platform path.
+        /// </summary>
+        private static string BuildReportDir(string suffix, string folderName)
+        {
+            return Path.Combine(CGlobals.desiredPath, suffix.TrimStart('\\'), folderName.TrimStart('\\'));
+        }
+
         private void CleanFolder(string folderName)
         {
             try
             {
-                var mainDir = CGlobals.desiredPath + CVariables.unsafeSuffix + folderName;
+                var mainDir = BuildReportDir(CVariables.unsafeSuffix, folderName);
                 if (Directory.Exists(mainDir))
                 {
                     foreach (var f in Directory.GetFiles(mainDir, "*.html"))
@@ -149,7 +159,7 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR.VbrTables.Job_Session_Su
                     }
                 }
 
-                var scrubDir = CGlobals.desiredPath + CVariables.safeSuffix + folderName;
+                var scrubDir = BuildReportDir(CVariables.safeSuffix, folderName);
                 if (Directory.Exists(scrubDir))
                 {
                     foreach (var f in Directory.GetFiles(scrubDir, "*.html"))
@@ -167,38 +177,34 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR.VbrTables.Job_Session_Su
 
         private string SetMainDir(string folderName, CJobSessionInfo cs)
         {
-            var mainDir = CGlobals.desiredPath + CVariables.unsafeSuffix + folderName;
+            var mainDir = BuildReportDir(CVariables.unsafeSuffix, folderName);
             CheckFolderExists(mainDir);
-            mainDir += "\\" + cs.JobName + ".html";
-            return mainDir;
+            return Path.Combine(mainDir, cs.JobName + ".html");
         }
 
         private string SetScrubDir(string folderName, CJobSessionInfo cs)
         {
-            var scrubDir = CGlobals.desiredPath + CVariables.safeSuffix + folderName;
+            var scrubDir = BuildReportDir(CVariables.safeSuffix, folderName);
 
             // log.Warning("SAFE outdir = " + outDir, false);
             CheckFolderExists(scrubDir);
-            scrubDir += "\\" + this.scrubber.ScrubItem(cs.JobName, ScrubItemType.Job) + ".html";
-            return scrubDir;
+            return Path.Combine(scrubDir, this.scrubber.ScrubItem(cs.JobName, ScrubItemType.Job) + ".html");
         }
 
         private string SetMainDir(string folderName, string JobName)
         {
-            var mainDir = CGlobals.desiredPath + CVariables.unsafeSuffix + folderName;
+            var mainDir = BuildReportDir(CVariables.unsafeSuffix, folderName);
             CheckFolderExists(mainDir);
-            mainDir += "\\" + SanitizeFileName(JobName) + ".html";
-            return mainDir;
+            return Path.Combine(mainDir, SanitizeFileName(JobName) + ".html");
         }
 
         private string SetScrubDir(string folderName, string JobName)
         {
-            var scrubDir = CGlobals.desiredPath + CVariables.safeSuffix + folderName;
+            var scrubDir = BuildReportDir(CVariables.safeSuffix, folderName);
 
             // log.Warning("SAFE outdir = " + outDir, false);
             CheckFolderExists(scrubDir);
-            scrubDir += "\\" + SanitizeFileName(this.scrubber.ScrubItem(JobName, ScrubItemType.Job)) + ".html";
-            return scrubDir;
+            return Path.Combine(scrubDir, SanitizeFileName(this.scrubber.ScrubItem(JobName, ScrubItemType.Job)) + ".html");
         }
 
         private static string SanitizeFileName(string name)
