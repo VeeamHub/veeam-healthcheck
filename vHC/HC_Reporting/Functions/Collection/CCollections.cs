@@ -204,13 +204,22 @@ namespace VeeamHealthCheck.Functions.Collection
 
         private static void CheckRecon()
         {
-            if (CGlobals.DEBUG)
+            try
             {
-                CGlobals.Logger.Debug("Checking for Coveware Recon Task");
-            }
+                if (CGlobals.DEBUG)
+                {
+                    CGlobals.Logger.Debug("Checking for Coveware Recon Task");
+                }
 
-            CReconChecker rc = new();
-            rc.Check();
+                CReconChecker rc = new();
+                rc.Check();
+            }
+            catch (Exception e)
+            {
+                // Don't let a Recon check failure abort the whole run. Log it loudly and
+                // continue so report generation can still proceed.
+                CGlobals.Logger.Error("[Collections] Recon check failed: " + e.Message, false);
+            }
         }
 
         private void GetCsvFileSizesToLog()
@@ -314,8 +323,17 @@ namespace VeeamHealthCheck.Functions.Collection
 
         private void ExecSqlQueries()
         {
-            CSqlExecutor sql = new();
-            sql.Run();
+            try
+            {
+                CSqlExecutor sql = new();
+                sql.Run();
+            }
+            catch (Exception e)
+            {
+                // Don't let a SQL query failure abort the whole run. Log it loudly and
+                // continue so report generation can still proceed with whatever was gathered.
+                this.log.Error("[Collections] SQL query collection failed: " + e.Message, false);
+            }
         }
 
         private void ExecPSScripts()
