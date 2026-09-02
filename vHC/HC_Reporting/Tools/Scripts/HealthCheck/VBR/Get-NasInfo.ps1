@@ -37,13 +37,11 @@ function Protect-VhciCsvInjection {
     }
 }
 
-# Self-contained logger. This script is launched standalone by PSInvoker, without going
-# through Initialize-VhcModule (VBR-Orchestrator's setup step for the vHC-VbrConfig
-# module's Write-LogFile), so it can't call that function here. Every line is written to
-# STDOUT (captured by the GUI as [PS][STDOUT]) and appended to its own log file - named to
-# match the CollectorX.log family other phases write - when a log directory is resolvable.
-# This phase used to run completely silently, which is why a slow or stuck VMC.log parse
-# looked like the whole tool hanging.
+# Self-contained logger. This script runs as its own PowerShell process (launched by
+# PSInvoker), so it cannot use the vHC-VbrConfig module's Write-LogFile. Every line is
+# written to STDOUT (captured by the GUI as [PS][STDOUT]) and appended to its own log
+# file when a log directory is resolvable. This phase used to run completely silently,
+# which is why a slow or stuck VMC.log parse looked like the whole tool hanging.
 $script:NasLogFile = $null
 function Write-NasLog {
     param([string]$Message, [string]$Level = 'INFO')
@@ -65,7 +63,7 @@ if ([string]::IsNullOrEmpty($ReportPath)) {
 if ([string]::IsNullOrEmpty($LogPath)) { $LogPath = $ReportPath }
 try {
     if (-not (Test-Path -LiteralPath $LogPath)) { New-Item -Path $LogPath -ItemType Directory -Force | Out-Null }
-    $script:NasLogFile = Join-Path $LogPath "CollectorNasInfo.log"
+    $script:NasLogFile = Join-Path $LogPath "Get-NasInfo.log"
 } catch {
     $script:NasLogFile = $null
 }
@@ -74,10 +72,6 @@ $stopwatch = [System.Diagnostics.Stopwatch]::StartNew()
 Write-NasLog "Starting. VBRServer=$VBRServer VBRVersion=$VBRVersion ReportPath=$ReportPath PS=$($PSVersionTable.PSVersion)"
 
 try {
-    # Without this, most cmdlet failures below (Get-Content, Export-Csv, New-Item, ...) are
-    # non-terminating and silently skip past the catch block, defeating the point of having one.
-    $ErrorActionPreference = 'Stop'
-
     # VMC log path is hardcoded for now. If logs are sent elsewhere, please adjust accordingly.
     $logsPath = "C:\ProgramData\Veeam\Backup\Utils\VMC.log"
 
@@ -99,12 +93,11 @@ try {
         $readSw = [System.Diagnostics.Stopwatch]::StartNew()
         $content = Get-Content -LiteralPath $logsPath
         $readSw.Stop()
-        $contentCount = @($content).Count
-        Write-NasLog ("Read {0} line(s) in {1:N1}s" -f $contentCount, ($readSw.Elapsed.TotalSeconds))
+        Write-NasLog ("Read {0} line(s) in {1:N1}s" -f @($content).Count, ($readSw.Elapsed.TotalSeconds))
     } else {
         Write-NasLog "VMC.log not found at $logsPath - skipping unstructured/NAS section parsing" 'WARNING'
+        Write-Verbose "VMC.log not found at $logsPath - skipping unstructured/NAS section parsing"
         $content = @()
-        $contentCount = 0
     }
 
     $sections = @()
@@ -115,7 +108,7 @@ try {
     foreach($line in $content){
         $lineNum++
         if (($lineNum % 200000) -eq 0) {
-            Write-NasLog ("Scanning VMC.log... {0}/{1} lines, {2} section(s) captured" -f $lineNum, $contentCount, $sections.Count)
+            Write-NasLog ("Scanning VMC.log... {0}/{1} lines, {2} section(s) captured" -f $lineNum, @($content).Count, $sections.Count)
         }
         if(-not $capturing -and $line -match $unstrucStart){
             $capturing = $true
@@ -184,89 +177,66 @@ try {
         return $props
     }
 
-    # Ensure the output directory exists before any of the three export stages below, so a
-    # directory-creation failure is attributed correctly instead of looking like a
-    # NasObjectSourceStorageSize-specific failure.
+    $csvData = @($totalObjectStorageSize | ForEach-Object { [PSCustomObject](ConvertTo-LogProperties $_) })
     if (!(Test-Path $ReportPath)) { New-Item -Path $ReportPath -ItemType Directory -Force | Out-Null }
+    $csvData | Protect-VhciCsvInjection | Export-Csv -Path "$ReportPath\${VBRServer}_NasObjectSourceStorageSize.csv" -NoTypeInformation
+    Write-NasLog ("Exported {0} row(s) to {1}_NasObjectSourceStorageSize.csv" -f $csvData.Count, $VBRServer)
 
-    # Each export stage below gets its own try/catch: NAS info is supplementary, so a failure
-    # partway through (locked file, disk full, permissions) must not cascade and silently skip
-    # every stage after it - only the stage that actually failed should end up missing its CSV.
-    try {
-        $csvData = @($totalObjectStorageSize | ForEach-Object { [PSCustomObject](ConvertTo-LogProperties $_) })
-        $csvData | Protect-VhciCsvInjection | Export-Csv -Path "$ReportPath\${VBRServer}_NasObjectSourceStorageSize.csv" -NoTypeInformation
-        Write-NasLog ("Exported {0} row(s) to {1}_NasObjectSourceStorageSize.csv" -f $csvData.Count, $VBRServer)
-    } catch {
-        Write-NasLog "FAILED exporting NasObjectSourceStorageSize.csv: $($_.Exception.Message)" 'ERROR'
+    $csvData2 = @($nasBackupSourceShareStats | ForEach-Object { [PSCustomObject](ConvertTo-LogProperties $_) })
+    $csvData2 | Protect-VhciCsvInjection | Export-Csv -Path "$ReportPath\${VBRServer}_NasFileData.csv" -NoTypeInformation
+    Write-NasLog ("Exported {0} row(s) to {1}_NasFileData.csv" -f $csvData2.Count, $VBRServer)
+
+    # Parse v12 combined lines
+    $v12Rows = @($totalShareSize | ForEach-Object {
+        $props = ConvertTo-LogProperties $_
+        if (-not $props.ContainsKey('ParentServerID')) { $props['ParentServerID'] = $null }
+        [PSCustomObject]$props
+    })
+
+    # Parse v13 parent lines into a hashtable keyed by FileShareID
+    $parentMap = @{}
+    $parentShares | ForEach-Object {
+        $props = ConvertTo-LogProperties $_
+        if ($props.ContainsKey('FileShareID')) {
+            $parentMap[$props['FileShareID']] = $props
+        }
     }
 
-    try {
-        $csvData2 = @($nasBackupSourceShareStats | ForEach-Object { [PSCustomObject](ConvertTo-LogProperties $_) })
-        $csvData2 | Protect-VhciCsvInjection | Export-Csv -Path "$ReportPath\${VBRServer}_NasFileData.csv" -NoTypeInformation
-        Write-NasLog ("Exported {0} row(s) to {1}_NasFileData.csv" -f $csvData2.Count, $VBRServer)
-    } catch {
-        Write-NasLog "FAILED exporting NasFileData.csv: $($_.Exception.Message)" 'ERROR'
-    }
+    # Parse v13 child lines and join with parent
+    $v13Rows = @($childShares | ForEach-Object {
+        $childProps = ConvertTo-LogProperties $_
+        $merged = @{}
 
-    try {
-        # Parse v12 combined lines
-        $v12Rows = @($totalShareSize | ForEach-Object {
-            $props = ConvertTo-LogProperties $_
-            if (-not $props.ContainsKey('ParentServerID')) { $props['ParentServerID'] = $null }
-            [PSCustomObject]$props
-        })
-
-        # Parse v13 parent lines into a hashtable keyed by FileShareID
-        $parentMap = @{}
-        $parentShares | ForEach-Object {
-            $props = ConvertTo-LogProperties $_
-            if ($props.ContainsKey('FileShareID')) {
-                $parentMap[$props['FileShareID']] = $props
+        # Start with parent properties (if parent found)
+        $parentId = $childProps['ParentServerID']
+        if ($parentId -and $parentMap.ContainsKey($parentId)) {
+            foreach ($key in $parentMap[$parentId].Keys) {
+                $merged[$key] = $parentMap[$parentId][$key]
             }
         }
 
-        # Parse v13 child lines and join with parent
-        $v13Rows = @($childShares | ForEach-Object {
-            $childProps = ConvertTo-LogProperties $_
-            $merged = @{}
+        # Overlay child properties (child wins on conflict)
+        foreach ($key in $childProps.Keys) {
+            $merged[$key] = $childProps[$key]
+        }
 
-            # Start with parent properties (if parent found)
-            $parentId = $childProps['ParentServerID']
-            if ($parentId -and $parentMap.ContainsKey($parentId)) {
-                foreach ($key in $parentMap[$parentId].Keys) {
-                    $merged[$key] = $parentMap[$parentId][$key]
-                }
-            }
+        # Ensure ParentServerID always present
+        if (-not $merged.ContainsKey('ParentServerID')) { $merged['ParentServerID'] = $null }
+        [PSCustomObject]$merged
+    })
 
-            # Overlay child properties (child wins on conflict)
-            foreach ($key in $childProps.Keys) {
-                $merged[$key] = $childProps[$key]
-            }
+    # Union v12 and v13 rows; v13 rows first so the header reflects the full v13 schema
+    $allShareRows = @()
+    if ($v13Rows.Count -gt 0) { $allShareRows += $v13Rows }
+    if ($v12Rows.Count -gt 0) { $allShareRows += $v12Rows }
 
-            # Ensure ParentServerID always present
-            if (-not $merged.ContainsKey('ParentServerID')) { $merged['ParentServerID'] = $null }
-            [PSCustomObject]$merged
-        })
-
-        # Union v12 and v13 rows; v13 rows first so the header reflects the full v13 schema
-        $allShareRows = @()
-        if ($v13Rows.Count -gt 0) { $allShareRows += $v13Rows }
-        if ($v12Rows.Count -gt 0) { $allShareRows += $v12Rows }
-
-        $allShareRows | Protect-VhciCsvInjection | Export-Csv -Path "$ReportPath\${VBRServer}_NasSharesize.csv" -NoTypeInformation
-        Write-NasLog ("Exported {0} row(s) to {1}_NasSharesize.csv ({2} v13 + {3} v12)" -f $allShareRows.Count, $VBRServer, $v13Rows.Count, $v12Rows.Count)
-    } catch {
-        Write-NasLog "FAILED exporting NasSharesize.csv: $($_.Exception.Message)" 'ERROR'
-    }
+    $allShareRows | Protect-VhciCsvInjection | Export-Csv -Path "$ReportPath\${VBRServer}_NasSharesize.csv" -NoTypeInformation
+    Write-NasLog ("Exported {0} row(s) to {1}_NasSharesize.csv ({2} v13 + {3} v12)" -f $allShareRows.Count, $VBRServer, $v13Rows.Count, $v12Rows.Count)
 }
 catch {
-    # Deliberately not re-thrown: PSInvoker treats a non-zero exit from this script as a
-    # collection failure and aborts the whole run (unlike the VBR config phase, which
-    # tolerates a bad exit code when its manifest is already on disk). NAS info is
-    # supplementary - log the failure loudly and let the script finish normally so a NAS-only
-    # problem can't take down report generation for everything else.
     Write-NasLog "FAILED: $($_.Exception.Message)" 'ERROR'
     Write-NasLog "$($_.ScriptStackTrace)" 'ERROR'
+    throw
 }
 finally {
     $stopwatch.Stop()
