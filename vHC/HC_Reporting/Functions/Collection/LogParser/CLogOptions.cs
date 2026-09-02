@@ -10,10 +10,10 @@ namespace VeeamHealthCheck.Functions.Collection.LogParser
         public static readonly string installIdLine = "InstallationId:";
 
         // Keyed by the "vbr"/"vb365" mode string, so a combined install's two CLogOptions
-        // instances (constructed back-to-back by CCollections.ExecVmcReader()) each keep their
-        // own install ID instead of sharing one static value - otherwise a VB365 lookup that
-        // fails (e.g. no VMC.log present) would either blank out or, worse, silently inherit
-        // the VBR pass's ID on the VB365 report.
+        // instances (constructed back-to-back by CCollections.ExecVmcReader(), "vbr" first)
+        // each keep their own install ID instead of sharing one static value - otherwise a
+        // VB365 lookup that fails (e.g. no VMC.log present) would blank out, or silently
+        // overwrite, the earlier VBR pass's ID on the VBR report.
         private static readonly Dictionary<string, string> installIdsByMode = new();
 
         public CLogOptions(string mode)
