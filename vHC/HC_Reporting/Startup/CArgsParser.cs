@@ -84,7 +84,10 @@ namespace VeeamHealthCheck.Startup
 
         private IntPtr Handle()
         {
-            return GetConsoleWindow();
+            // GetConsoleWindow is a kernel32.dll P/Invoke — no console-window
+            // concept exists off Windows, so calling it there would throw
+            // DllNotFoundException.
+            return OperatingSystem.IsWindows() ? GetConsoleWindow() : IntPtr.Zero;
         }
 
         // private int ParseZeroArgs()

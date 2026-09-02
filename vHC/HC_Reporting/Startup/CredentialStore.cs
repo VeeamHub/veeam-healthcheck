@@ -137,17 +137,36 @@ public static class CredentialStore
             if (val.PasswordEnc == null || val.PasswordEnc.Length == 0)
                 return null; // Prevent null/empty password decryption
 
-            var password = Encoding.UTF8.GetString(
-                ProtectedData.Unprotect(val.PasswordEnc, null, DataProtectionScope.CurrentUser));
+            var passwordBytes = OperatingSystem.IsWindows()
+                ? ProtectedData.Unprotect(val.PasswordEnc, null, DataProtectionScope.CurrentUser)
+                : val.PasswordEnc;
+            var password = Encoding.UTF8.GetString(passwordBytes);
             return (val.Username, password);
         }
         return null;
     }
 
+    /// <summary>
+    /// Stores credentials in the in-memory cache and, on Windows, persists them
+    /// DPAPI-encrypted to disk. DPAPI has no cross-platform equivalent, so on
+    /// macOS/Linux this only keeps the credential for the lifetime of the
+    /// current process — see <see cref="SetTransient"/> for the always-in-memory
+    /// case. We never write the raw (non-DPAPI) bytes to disk, to avoid silently
+    /// persisting credentials unencrypted.
+    /// </summary>
     public static void Set(string server, string username, string password)
     {
         SetCache(server, username, password);
-        PersistCacheToDisk();
+
+        if (OperatingSystem.IsWindows())
+        {
+            PersistCacheToDisk();
+        }
+        else
+        {
+            CGlobals.Logger.Warning(
+                $"Persistent credential storage requires Windows (DPAPI); credentials for '{server}' will only be kept for this session.");
+        }
     }
 
     /// <summary>
@@ -167,8 +186,10 @@ public static class CredentialStore
     /// </summary>
     private static void SetCache(string server, string username, string password)
     {
-        var enc = ProtectedData.Protect(
-            Encoding.UTF8.GetBytes(password), null, DataProtectionScope.CurrentUser);
+        var passwordBytes = Encoding.UTF8.GetBytes(password);
+        var enc = OperatingSystem.IsWindows()
+            ? ProtectedData.Protect(passwordBytes, null, DataProtectionScope.CurrentUser)
+            : passwordBytes;
         _cache[server] = (username, enc);
     }
 
@@ -225,9 +246,11 @@ public static class CredentialStore
                         File.Delete(StorePath);
                     }
                 }
-                else
+                else if (OperatingSystem.IsWindows())
                 {
-                    // Write remaining credentials back to file
+                    // Write remaining credentials back to file. Off Windows, Set()
+                    // never wrote these to disk in the first place (see Set()), so
+                    // there is nothing to rewrite there.
                     File.WriteAllText(StorePath, JsonSerializer.Serialize(serializable, new JsonSerializerOptions { WriteIndented = true }));
                 }
 
