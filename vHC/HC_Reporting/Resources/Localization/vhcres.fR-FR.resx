@@ -16,7 +16,11 @@
     <value>Accepter les conditions</value>
   </data>
   <data name="GuiAcceptText" xml:space="preserve">
-    <value>Cet outil est proposé en tant qu'utilitaire gratuit pour évaluer votre configuration Veeam. Il est proposé \"à vos risques et périls\".\n\nL'outil utilisera PowerShell et SQL pour collecter des données, puis générera des fichiers et des dossiers stocké localement.\n\nLes fichiers peuvent être anonymisés pour masquer les données sensibles. L'acceptation des Conditions signifie que l'utilisateur s'engage à exécuter ce programme pleinement.</value>
+    <value>Cet outil est proposé en tant qu'utilitaire gratuit pour évaluer votre configuration Veeam. Il est proposé "à vos risques et périls".
+
+L'outil utilisera PowerShell et SQL pour collecter des données, puis générera des fichiers et des dossiers stocké localement.
+
+Les fichiers peuvent être anonymisés pour masquer les données sensibles. L'acceptation des Conditions signifie que l'utilisateur s'engage à exécuter ce programme pleinement.</value>
   </data>
   <data name="GuiImportButton" xml:space="preserve">
     <value>Importer</value>

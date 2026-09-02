@@ -16,7 +16,11 @@
     <value>接受条款</value>
   </data>
   <data name="GuiAcceptText" xml:space="preserve">
-    <value>该工具作为免费实用程序提供，用于评估您的 Veeam 配置。它是“自担风险”提供的。 \n\n该工具将使用 PowerShell 和 SQL 来收集数据，然后将文件和文件夹输出到本地磁盘。\n\n这些文件可能会被匿名化以隐藏敏感数据。接受条款意味着用户同意以全部能力执行此程序。</value>
+    <value>该工具作为免费实用程序提供，用于评估您的 Veeam 配置。它是“自担风险”提供的。
+
+该工具将使用 PowerShell 和 SQL 来收集数据，然后将文件和文件夹输出到本地磁盘。
+
+这些文件可能会被匿名化以隐藏敏感数据。接受条款意味着用户同意以全部能力执行此程序。</value>
   </data>
   <data name="GuiImportButton" xml:space="preserve">
     <value>导入</value>
