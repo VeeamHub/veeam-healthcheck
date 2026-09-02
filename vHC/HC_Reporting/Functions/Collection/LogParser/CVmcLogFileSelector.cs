@@ -9,6 +9,8 @@ namespace VeeamHealthCheck.Functions.Collection.LogParser
 {
     internal static class CVmcLogFileSelector
     {
+        private const string VmcLogFileName = "VMC.log";
+
         internal static string? SelectVmcLogFile(IEnumerable<string>? filePaths)
         {
             if (filePaths == null)
@@ -16,7 +18,7 @@ namespace VeeamHealthCheck.Functions.Collection.LogParser
                 return null;
             }
 
-            List<string> matches = filePaths.Where(f => f.IndexOf("VMC.log", StringComparison.OrdinalIgnoreCase) >= 0).ToList();
+            List<string> matches = filePaths.Where(f => f.IndexOf(VmcLogFileName, StringComparison.OrdinalIgnoreCase) >= 0).ToList();
 
             // Directory.GetFiles() enumeration order is filesystem-defined, not chronological, so
             // when a rotated backup (VMC.log.1, VMC.log.2, ...) sits alongside the live file, prefer
@@ -28,7 +30,7 @@ namespace VeeamHealthCheck.Functions.Collection.LogParser
             // When no exact "VMC.log" exists, the fallback below returns whichever rotated backup is
             // first in the caller-supplied order - there is no recency (LastWriteTime) tie-break here,
             // since this helper only ever sees path strings.
-            return matches.FirstOrDefault(f => f.EndsWith(@"\VMC.log", StringComparison.OrdinalIgnoreCase))
+            return matches.FirstOrDefault(f => f.EndsWith(@"\" + VmcLogFileName, StringComparison.OrdinalIgnoreCase))
                 ?? matches.FirstOrDefault();
         }
     }

@@ -12,14 +12,14 @@ namespace VeeamHealthCheck.Functions.Collection.LogParser
         private string LOGLOCATION;
         public string INSTALLID;
 
-        private readonly string mode;
+        private readonly VmcLogMode mode;
 
         // Test seams - production never sets these, defaults preserve real behavior.
         internal string Vb365LogsDir { get; set; } = @"C:\ProgramData\Veeam\Backup365\Logs\";
-        internal Action<string> WarningSink { get; set; } = CGlobals.Logger.Warning;
-        internal Action<string> ErrorSink { get; set; } = CGlobals.Logger.Error;
+        internal Action<string> WarningSink { get; set; } = msg => CGlobals.Logger.Warning(msg);
+        internal Action<string> ErrorSink { get; set; } = msg => CGlobals.Logger.Error(msg);
 
-        public CVmcReader(string mode)
+        public CVmcReader(VmcLogMode mode)
         {
             this.mode = mode;
         }
@@ -42,15 +42,15 @@ namespace VeeamHealthCheck.Functions.Collection.LogParser
 
         private void GetLogDir()
         {
-            if (this.mode == "vbr")
+            if (this.mode == VmcLogMode.Vbr)
             {
                 CRegReader reg = new();
                 string regDir = reg.DefaultLogDir();
                 this.LOGLOCATION = Path.Combine(regDir + CLogOptions.VMCLOG);
             }
-            else if (this.mode == "vb365")
+            else
             {
-                string[] filesList = Directory.GetFiles(this.Vb365LogsDir);
+                string[] filesList = Directory.GetFiles(this.Vb365LogsDir, "*VMC.log*");
                 string match = CVmcLogFileSelector.SelectVmcLogFile(filesList);
                 if (match == null)
                 {
@@ -88,25 +88,21 @@ namespace VeeamHealthCheck.Functions.Collection.LogParser
                 return;
             }
 
-            string[] id = line.Substring(40).Split();
-            if (id.Length < 2)
+            // Locate the label token itself rather than assuming it lands at a fixed offset:
+            // this tolerates any amount of drift in the assumed 40-char prefix width (which
+            // isn't documented anywhere in this repo or the local VBR docs mirror) instead of
+            // silently mis-parsing a shifted line. The install ID's own format is likewise
+            // unverified, so don't assume a shape for it either - just take whatever token
+            // immediately follows the label.
+            string[] tokens = line.Substring(40).Split((char[])null, StringSplitOptions.RemoveEmptyEntries);
+            int labelIndex = Array.IndexOf(tokens, CLogOptions.installIdLine);
+            if (labelIndex < 0 || labelIndex + 1 >= tokens.Length)
             {
-                this.WarningSink($"[VMC reader] '{CLogOptions.installIdLine}' line did not contain an install ID token after the prefix - skipping. Line: '{line}'");
+                this.WarningSink($"[VMC reader] '{CLogOptions.installIdLine}' line did not contain an install ID token after the label - skipping. Line: '{line}'");
                 return;
             }
 
-            // A shifted prefix (e.g. one stray leading char) can make Split() emit a leading
-            // empty entry, landing the "InstallationId:" label itself in id[1] instead of the
-            // real token. The actual install ID format isn't documented anywhere in this repo
-            // or the local VBR docs mirror, so don't assume a specific shape (e.g. GUID) -
-            // just reject the one concrete failure mode this would otherwise produce.
-            if (id[1] == CLogOptions.installIdLine || id[1].Contains(':'))
-            {
-                this.WarningSink($"[VMC reader] '{CLogOptions.installIdLine}' token looked like the label, not an ID - skipping. Line: '{line}'");
-                return;
-            }
-
-            this.INSTALLID = id[1];
+            this.INSTALLID = tokens[labelIndex + 1];
         }
     }
 }
