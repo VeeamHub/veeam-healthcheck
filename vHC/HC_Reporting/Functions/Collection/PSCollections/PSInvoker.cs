@@ -501,6 +501,21 @@ namespace VeeamHealthCheck.Functions.Collection.PSCollections
             if (!string.IsNullOrWhiteSpace(stdOut))
             {
                 this.log.Debug($"[PS][STDOUT] {stdOut}", false);
+
+                // Get-NasInfo.ps1 deliberately never fails the whole run over a NAS-only
+                // problem (it's supplementary data) - its own catch blocks log via
+                // Write-NasLog and let the script exit 0. Without this, that failure is only
+                // visible in the Debug-only dump above (or a separate log file nobody opens),
+                // so a partial NAS data gap looks like a clean, complete run. Promote it to a
+                // Warning in the main log without touching `failed` - the script's own "don't
+                // abort the run" decision stands.
+                foreach (string outLine in stdOut.Split(new[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries))
+                {
+                    if (outLine.Contains("[Get-NasInfo]") && outLine.Contains("[ERROR]"))
+                    {
+                        this.log.Warning(outLine, false);
+                    }
+                }
             }
 
             // Process stderr
