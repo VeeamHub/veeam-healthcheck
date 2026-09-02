@@ -93,10 +93,12 @@ namespace VeeamHealthCheck.Functions.Collection.LogParser
 
             // A shifted prefix (e.g. one stray leading char) can make Split() emit a leading
             // empty entry, landing the "InstallationId:" label itself in id[1] instead of the
-            // real token. Validate it actually looks like an install ID before accepting it.
-            if (!Guid.TryParse(id[1], out _))
+            // real token. The actual install ID format isn't documented anywhere in this repo
+            // or the local VBR docs mirror, so don't assume a specific shape (e.g. GUID) -
+            // just reject the one concrete failure mode this would otherwise produce.
+            if (id[1] == CLogOptions.installIdLine || id[1].Contains(':'))
             {
-                CGlobals.Logger.Warning($"[VMC reader] '{CLogOptions.installIdLine}' token did not look like a valid install ID - skipping. Line: '{line}'");
+                CGlobals.Logger.Warning($"[VMC reader] '{CLogOptions.installIdLine}' token looked like the label, not an ID - skipping. Line: '{line}'");
                 return;
             }
 
