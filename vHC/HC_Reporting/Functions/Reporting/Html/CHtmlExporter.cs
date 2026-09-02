@@ -63,7 +63,7 @@ namespace VeeamHealthCheck.Functions.Reporting.Html
             try
             {
                 this.log.Info("exporting xml to html");
-                this.latestReport = this.SetReportNameAndPath(scrub, "VB365");
+                this.latestReport = this.SetReportNameAndPath(scrub, "VB365", VmcLogMode.Vb365);
                 if (scrub)
                 {
                     htmlString = CGlobals.Scrubber.FinalizeScrubbedText(htmlString);
@@ -99,7 +99,7 @@ namespace VeeamHealthCheck.Functions.Reporting.Html
             try
             {
                 this.log.Info("exporting xml to html");
-                this.latestReport = this.SetReportNameAndPath(scrub, "VBR");
+                this.latestReport = this.SetReportNameAndPath(scrub, "VBR", VmcLogMode.Vbr);
                 if (scrub)
                 {
                     htmlString = CGlobals.Scrubber.FinalizeScrubbedText(htmlString);
@@ -204,7 +204,7 @@ namespace VeeamHealthCheck.Functions.Reporting.Html
         public int ExportVbrSecurityHtml(string htmlString, bool scrub)
         {
             this.log.Info("exporting xml to html");
-            this.latestReport = this.SetReportNameAndPath(scrub, "VBR_Security");
+            this.latestReport = this.SetReportNameAndPath(scrub, "VBR_Security", VmcLogMode.Vbr);
             if (scrub)
             {
                 htmlString = CGlobals.Scrubber.FinalizeScrubbedText(htmlString);
@@ -253,7 +253,7 @@ namespace VeeamHealthCheck.Functions.Reporting.Html
             }
         }
 
-        private string SetReportNameAndPath(bool scrub, string vbrOrVb365)
+        private string SetReportNameAndPath(bool scrub, string vbrOrVb365, VmcLogMode vmcMode)
         {
             string installID = null;
             string htmlCore = string.Empty;
@@ -264,7 +264,7 @@ namespace VeeamHealthCheck.Functions.Reporting.Html
 
                 if (scrub)
                 {
-                    installID = this.TrySetInstallId(CLogOptions.INSTALLID);
+                    installID = this.TrySetInstallId(CLogOptions.GetInstallId(vmcMode));
 
                     htmlCore = this.anonPath + "\\" + this.htmlName + "_" + vbrOrVb365 + "_" + installID + dateTime.ToString("_yyyy.MM.dd.HHmmss") + ".html";
                 }
