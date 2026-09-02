@@ -251,23 +251,33 @@ namespace VeeamHealthCheck.Functions.Collection
 
         private void ExecVmcReader()
         {
-            try
+            // Each mode gets its own try/catch so a "vbr"-side failure can't skip the
+            // "vb365" lookup entirely - matching the per-mode isolation CLogOptions already
+            // gives the install IDs themselves.
+            if (CGlobals.IsVbr)
             {
-                if (CGlobals.IsVbr)
+                try
                 {
                     CLogOptions logOptions = new("vbr");
                 }
+                catch (Exception e)
+                {
+                    // Don't let a VMC/install-ID lookup failure abort the whole run (issue #209) -
+                    // log it loudly and continue so report generation can still proceed.
+                    this.log.Error("[Collections] VMC reader failed for mode 'vbr': " + e.Message, false);
+                }
+            }
 
-                if (CGlobals.IsVb365)
+            if (CGlobals.IsVb365)
+            {
+                try
                 {
                     CLogOptions logOptions = new("vb365");
                 }
-            }
-            catch (Exception e)
-            {
-                // Don't let a VMC/install-ID lookup failure abort the whole run (issue #209) -
-                // log it loudly and continue so report generation can still proceed.
-                this.log.Error("[Collections] VMC reader failed: " + e.Message, false);
+                catch (Exception e)
+                {
+                    this.log.Error("[Collections] VMC reader failed for mode 'vb365': " + e.Message, false);
+                }
             }
         }
 
