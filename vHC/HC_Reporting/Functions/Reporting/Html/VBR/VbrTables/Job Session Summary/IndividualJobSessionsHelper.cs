@@ -75,6 +75,27 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR.VbrTables.Job_Session_Su
             // don't linger.
             this.CleanFolder(folderName);
 
+            // mainDirBase/scrubDirBase are loop-invariant (same directory every group,
+            // since CleanFolder only deletes *.html files, never the directory itself),
+            // so create them once here instead of once per group inside SetMainDir/
+            // SetScrubDir. A failure here now skips report generation entirely (logged),
+            // rather than letting every group individually fail into a directory that
+            // doesn't exist.
+            string mainDirBase;
+            string scrubDirBase;
+            try
+            {
+                mainDirBase = BuildReportDir(CVariables.unsafeSuffix, folderName);
+                scrubDirBase = BuildReportDir(CVariables.safeSuffix, folderName);
+                CheckFolderExists(mainDirBase);
+                CheckFolderExists(scrubDirBase);
+            }
+            catch (Exception e)
+            {
+                this.log.Error("Could not create job session report output directories: " + e.Message);
+                return;
+            }
+
             var allSessions = this.ReturnJobSessionsList();
 
             // Group sessions by the same rollup key the summary table uses, so
@@ -100,8 +121,8 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR.VbrTables.Job_Session_Su
 
                     this.LogJobSessionParseProgress(percentCounter, totalSessions);
 
-                    string mainDir = this.SetMainDir(folderName, displayName);
-                    string scrubDir = this.SetScrubDir(folderName, displayName);
+                    string mainDir = this.SetMainDir(mainDirBase, displayName);
+                    string scrubDir = this.SetScrubDir(scrubDirBase, displayName);
 
                     string mainString = this.ReturnTableHeaderString(displayName);
                     File.WriteAllText(mainDir, mainString);
@@ -170,36 +191,14 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR.VbrTables.Job_Session_Su
             }
         }
 
-        private string SetMainDir(string folderName, CJobSessionInfo cs)
+        private string SetMainDir(string mainDirBase, string JobName)
         {
-            var mainDir = BuildReportDir(CVariables.unsafeSuffix, folderName);
-            CheckFolderExists(mainDir);
-            return Path.Combine(mainDir, cs.JobName + ".html");
+            return Path.Combine(mainDirBase, SanitizeFileName(JobName) + ".html");
         }
 
-        private string SetScrubDir(string folderName, CJobSessionInfo cs)
+        private string SetScrubDir(string scrubDirBase, string JobName)
         {
-            var scrubDir = BuildReportDir(CVariables.safeSuffix, folderName);
-
-            // log.Warning("SAFE outdir = " + outDir, false);
-            CheckFolderExists(scrubDir);
-            return Path.Combine(scrubDir, this.scrubber.ScrubItem(cs.JobName, ScrubItemType.Job) + ".html");
-        }
-
-        private string SetMainDir(string folderName, string JobName)
-        {
-            var mainDir = BuildReportDir(CVariables.unsafeSuffix, folderName);
-            CheckFolderExists(mainDir);
-            return Path.Combine(mainDir, SanitizeFileName(JobName) + ".html");
-        }
-
-        private string SetScrubDir(string folderName, string JobName)
-        {
-            var scrubDir = BuildReportDir(CVariables.safeSuffix, folderName);
-
-            // log.Warning("SAFE outdir = " + outDir, false);
-            CheckFolderExists(scrubDir);
-            return Path.Combine(scrubDir, SanitizeFileName(this.scrubber.ScrubItem(JobName, ScrubItemType.Job)) + ".html");
+            return Path.Combine(scrubDirBase, SanitizeFileName(this.scrubber.ScrubItem(JobName, ScrubItemType.Job)) + ".html");
         }
 
         internal static string SanitizeFileName(string name)
