@@ -37,11 +37,13 @@ function Protect-VhciCsvInjection {
     }
 }
 
-# Self-contained logger. This script runs as its own PowerShell process (launched by
-# PSInvoker), so it cannot use the vHC-VbrConfig module's Write-LogFile. Every line is
-# written to STDOUT (captured by the GUI as [PS][STDOUT]) and appended to its own log
-# file when a log directory is resolvable. This phase used to run completely silently,
-# which is why a slow or stuck VMC.log parse looked like the whole tool hanging.
+# Self-contained logger. This script is launched standalone by PSInvoker, without going
+# through Initialize-VhcModule (VBR-Orchestrator's setup step for the vHC-VbrConfig
+# module's Write-LogFile), so it can't call that function here. Every line is written to
+# STDOUT (captured by the GUI as [PS][STDOUT]) and appended to its own log file - named to
+# match the CollectorX.log family other phases write - when a log directory is resolvable.
+# This phase used to run completely silently, which is why a slow or stuck VMC.log parse
+# looked like the whole tool hanging.
 $script:NasLogFile = $null
 function Write-NasLog {
     param([string]$Message, [string]$Level = 'INFO')
@@ -63,7 +65,7 @@ if ([string]::IsNullOrEmpty($ReportPath)) {
 if ([string]::IsNullOrEmpty($LogPath)) { $LogPath = $ReportPath }
 try {
     if (-not (Test-Path -LiteralPath $LogPath)) { New-Item -Path $LogPath -ItemType Directory -Force | Out-Null }
-    $script:NasLogFile = Join-Path $LogPath "Get-NasInfo.log"
+    $script:NasLogFile = Join-Path $LogPath "CollectorNasInfo.log"
 } catch {
     $script:NasLogFile = $null
 }
