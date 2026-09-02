@@ -13,7 +13,11 @@ namespace VeeamHealthCheck.Functions.Collection.LogParser
         public string INSTALLID;
 
         private readonly string mode;
-        private readonly string vb365Logs = @"C:\ProgramData\Veeam\Backup365\Logs\";
+
+        // Test seams - production never sets these, defaults preserve real behavior.
+        internal string Vb365LogsDir { get; set; } = @"C:\ProgramData\Veeam\Backup365\Logs\";
+        internal Action<string> WarningSink { get; set; } = CGlobals.Logger.Warning;
+        internal Action<string> ErrorSink { get; set; } = CGlobals.Logger.Error;
 
         public CVmcReader(string mode)
         {
@@ -32,7 +36,7 @@ namespace VeeamHealthCheck.Functions.Collection.LogParser
             }
             catch (Exception e)
             {
-                CGlobals.Logger.Error(e.Message);
+                this.ErrorSink(e.Message);
             }
         }
 
@@ -46,11 +50,11 @@ namespace VeeamHealthCheck.Functions.Collection.LogParser
             }
             else if (this.mode == "vb365")
             {
-                string[] filesList = Directory.GetFiles(this.vb365Logs);
+                string[] filesList = Directory.GetFiles(this.Vb365LogsDir);
                 string match = CVmcLogFileSelector.SelectVmcLogFile(filesList);
                 if (match == null)
                 {
-                    CGlobals.Logger.Warning($"[VMC reader] No VMC.log file found under '{this.vb365Logs}' - skipping VB365 install ID lookup.");
+                    this.WarningSink($"[VMC reader] No VMC.log file found under '{this.Vb365LogsDir}' - skipping VB365 install ID lookup.");
                     return;
                 }
 
@@ -80,14 +84,14 @@ namespace VeeamHealthCheck.Functions.Collection.LogParser
             // PopulateVmc's generic catch, which only logs the bare exception message.
             if (line.Length <= 40)
             {
-                CGlobals.Logger.Warning($"[VMC reader] '{CLogOptions.installIdLine}' line is shorter than expected - skipping install ID parse. Line: '{line}'");
+                this.WarningSink($"[VMC reader] '{CLogOptions.installIdLine}' line is shorter than expected - skipping install ID parse. Line: '{line}'");
                 return;
             }
 
             string[] id = line.Substring(40).Split();
             if (id.Length < 2)
             {
-                CGlobals.Logger.Warning($"[VMC reader] '{CLogOptions.installIdLine}' line did not contain an install ID token after the prefix - skipping. Line: '{line}'");
+                this.WarningSink($"[VMC reader] '{CLogOptions.installIdLine}' line did not contain an install ID token after the prefix - skipping. Line: '{line}'");
                 return;
             }
 
@@ -98,7 +102,7 @@ namespace VeeamHealthCheck.Functions.Collection.LogParser
             // just reject the one concrete failure mode this would otherwise produce.
             if (id[1] == CLogOptions.installIdLine || id[1].Contains(':'))
             {
-                CGlobals.Logger.Warning($"[VMC reader] '{CLogOptions.installIdLine}' token looked like the label, not an ID - skipping. Line: '{line}'");
+                this.WarningSink($"[VMC reader] '{CLogOptions.installIdLine}' token looked like the label, not an ID - skipping. Line: '{line}'");
                 return;
             }
 
