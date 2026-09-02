@@ -91,6 +91,15 @@ namespace VeeamHealthCheck.Functions.Collection.LogParser
                 return;
             }
 
+            // A shifted prefix (e.g. one stray leading char) can make Split() emit a leading
+            // empty entry, landing the "InstallationId:" label itself in id[1] instead of the
+            // real token. Validate it actually looks like an install ID before accepting it.
+            if (!Guid.TryParse(id[1], out _))
+            {
+                CGlobals.Logger.Warning($"[VMC reader] '{CLogOptions.installIdLine}' token did not look like a valid install ID - skipping. Line: '{line}'");
+                return;
+            }
+
             this.INSTALLID = id[1];
         }
     }
