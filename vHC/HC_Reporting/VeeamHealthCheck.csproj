@@ -4,7 +4,6 @@
 		<OutputType>Exe</OutputType>
 		<TargetFramework>net8.0-windows7.0</TargetFramework>
 		<EnableWindowsTargeting>true</EnableWindowsTargeting>
-		<UseWPF>true</UseWPF>
 		<Platforms>AnyCPU;x64</Platforms>
 		<PackageIcon></PackageIcon>
 		<PackageIconUrl />
@@ -16,11 +15,11 @@
 		<DelaySign>false</DelaySign>
 		<FileVersion>3.0.0.785</FileVersion>
 		<DebugType>full</DebugType>
-		<SelfContained>true</SelfContained>
+		<SelfContained Condition="'$(OS)' == 'Windows_NT'">true</SelfContained>
 		<!--These 2 lines are what produce the single file utility. Possibly doesn't work...-->
 		<!--<PublishSingleFile>true</PublishSingleFile>-->
 		<!--<IncludeAllContentForSelfExtract>true</IncludeAllContentForSelfExtract>-->
-		<RuntimeIdentifier>win-x64</RuntimeIdentifier>
+		<RuntimeIdentifier Condition="'$(OS)' == 'Windows_NT'">win-x64</RuntimeIdentifier>
 		<NeutralLanguage>en-US</NeutralLanguage>
 		<AnalysisLevel>latest</AnalysisLevel>
 		<AnalysisMode>Default</AnalysisMode>
@@ -113,6 +112,9 @@
 	</ItemGroup>
 	<ItemGroup>
 		<PackageReference Include="AngleSharp" Version="1.5.0" />
+		<PackageReference Include="Avalonia" Version="11.3.20" />
+		<PackageReference Include="Avalonia.Desktop" Version="11.3.20" />
+		<PackageReference Include="Avalonia.Themes.Fluent" Version="11.3.20" />
 		<PackageReference Include="CsvHelper" Version="33.0.1" />
 		<PackageReference Include="DinkToPdf.Standard" Version="1.1.0" />
 		<PackageReference Include="DocumentFormat.OpenXml" Version="3.1.0" />

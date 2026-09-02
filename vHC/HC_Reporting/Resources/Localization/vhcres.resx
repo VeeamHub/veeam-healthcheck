@@ -16,7 +16,11 @@
     <value>Accept Terms</value>
   </data>
   <data name="GuiAcceptText" xml:space="preserve">
-    <value>This tool is offered as a free utility to assess your Veeam Configuration. It is offered \"at your own risk\".\n\nThe tool will engage PowerShell and SQL to gather data and then output files and folders to local disk.\n\nThe files may be anonymized to hide sensitive data. Accepting the Terms means that the user agrees to execute this program in its full capacity.</value>
+    <value>This tool is offered as a free utility to assess your Veeam Configuration. It is offered "at your own risk".
+
+The tool will engage PowerShell and SQL to gather data and then output files and folders to local disk.
+
+The files may be anonymized to hide sensitive data. Accepting the Terms means that the user agrees to execute this program in its full capacity.</value>
   </data>
   <data name="GuiImportButton" xml:space="preserve">
     <value>Import</value>

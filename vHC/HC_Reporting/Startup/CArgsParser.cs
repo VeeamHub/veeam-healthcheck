@@ -7,9 +7,11 @@ using System.Runtime.InteropServices;
 using System.Text;
 using System.Text.Json;
 using System.Text.RegularExpressions;
+using Avalonia;
 using VeeamHealthCheck.Functions.Collection.PSCollections;
 using VeeamHealthCheck.Functions.CredsWindow;
 using VeeamHealthCheck.Functions.Monitor;
+using VeeamHealthCheck.Functions.UserInteraction;
 
 // using VeeamHealthCheck.Reporting.vsac;
 using VeeamHealthCheck.Shared;
@@ -69,11 +71,15 @@ namespace VeeamHealthCheck.Startup
             CGlobals.Logger.Info("Executing GUI", false);
             CGlobals.RunFullReport = true;
             CGlobals.GUIEXEC = true;
+            CGlobals.Notifier = new AvaloniaUiNotifier();
+            CGlobals.CredentialPrompter = new AvaloniaCredentialPrompter();
 
             // if (hide)
             //     ShowWindow(handle, SW_HIDE);
-            var app = new System.Windows.Application();
-            return app.Run(new VhcGui());
+            return AppBuilder.Configure<App>()
+                .UsePlatformDetect()
+                .LogToTrace()
+                .StartWithClassicDesktopLifetime(Array.Empty<string>());
         }
 
         private IntPtr Handle()

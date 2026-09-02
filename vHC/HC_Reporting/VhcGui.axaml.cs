@@ -1,12 +1,15 @@
-﻿// Copyright (c) 2021, Adam Congdon <adam.congdon2@gmail.com>
+// Copyright (c) 2021, Adam Congdon <adam.congdon2@gmail.com>
 // MIT License
 using System;
 using System.Linq;
 using System.Threading.Tasks;
-using System.Windows;
-using System.Windows.Controls;
-using System.Windows.Media;
+using Avalonia.Controls;
+using Avalonia.Controls.ApplicationLifetimes;
+using Avalonia.Interactivity;
+using Avalonia.Media;
+using Avalonia.Threading;
 using VeeamHealthCheck.Functions.Monitor;
+using VeeamHealthCheck.Functions.UserInteraction;
 using VeeamHealthCheck.Resources.Localization;
 using VeeamHealthCheck.Shared;
 using VeeamHealthCheck.Startup;
@@ -14,35 +17,44 @@ using VeeamHealthCheck.Startup;
 namespace VeeamHealthCheck
 {
     /// <summary>
-    /// Interaction logic for MainWindow.xaml
+    /// Interaction logic for VhcGui.axaml
     /// </summary>
-    public partial class VhcGui : System.Windows.Window
+    public partial class VhcGui : Window
     {
         private readonly CClientFunctions functions = new();
+        private bool _modeCheckFailed;
 
         public VhcGui()
         {
             InitializeComponent();
 
-            this.SetUi();
+            // AvaloniaUiNotifier passes this as the ShowDialog owner. Set it
+            // here (rather than waiting for Task 12's App.axaml.cs) because
+            // AcceptButton_click's Task.Run(AcceptTerms) can raise a dialog
+            // before that wiring exists.
+            AvaloniaHost.MainWindow = this;
+
+            this.SetUiSync();
             pathBox.IsEnabled = true;
             this.InitializeServerList();
             this.InitializeMonitorStatus();
 
             // pdfCheckBox.IsEnabled = false;
+
+            this.Loaded += async (s, e) => await this.SetUiAsync();
         }
 
         private void InitializeServerList()
         {
             // Load saved servers from credentials
             var savedServers = CredentialStore.GetAllServers();
-            
+
             // Add localhost if VBR is installed
             if (CGlobals.IsVbrInstalled && !savedServers.Contains("localhost"))
             {
                 savedServers.Insert(0, "localhost");
             }
-            
+
             // Populate dropdown with unique servers
             foreach (var server in savedServers.Distinct())
             {
@@ -51,7 +63,7 @@ namespace VeeamHealthCheck
                     serverListBox.Items.Add(server);
                 }
             }
-            
+
             // Select localhost by default if it exists
             if (serverListBox.Items.Contains("localhost"))
             {
@@ -61,7 +73,7 @@ namespace VeeamHealthCheck
             {
                 serverListBox.SelectedIndex = 0;
             }
-            
+
             UpdateSelectedServersGlobal();
         }
 
@@ -85,17 +97,33 @@ namespace VeeamHealthCheck
                 CGlobals.VBRServerName = "localhost";
                 CGlobals.REMOTEHOST = "localhost";
             }
-            
+
             // Set REMOTEEXEC flag if not localhost
             CGlobals.REMOTEEXEC = !CGlobals.VBRServerName.Equals("localhost", StringComparison.OrdinalIgnoreCase);
         }
 
-        private void SetUi()
+        // Split from the original single SetUi(): everything here is synchronous
+        // and must resolve immediately in the constructor (title, mode-check-fail
+        // detection, pdfCheckBox state) so the window renders correctly the first
+        // time. Only the mode-check-fail dialog, PreRunCheck (which internally
+        // calls the notifier's blocking wrapper), and everything after them in
+        // the original method depend on being off the UI thread / on the async
+        // notifier primitives - that part moves to SetUiAsync, run from Loaded
+        // instead of the constructor.
+        //
+        // NOTE: preserved verbatim from the real WPF file - SetUiSync() runs
+        // before InitializeServerList() in the constructor, so the
+        // hasRemoteServers scan below always sees an empty serverListBox, and
+        // (when it doesn't fail) "this.Title = modeCheckResult;" immediately
+        // overwrites the "Remote Mode" title set a few lines above. Both are
+        // pre-existing bugs in the original file, not introduced by this port -
+        // left intact rather than silently fixed.
+        private void SetUiSync()
         {
             this.SetImportRelease();
 
             string modeCheckResult = this.functions.ModeCheck();
-            
+
             if (modeCheckResult == "fail")
             {
                 // If remote servers are configured, don't exit — let user select product type
@@ -116,27 +144,53 @@ namespace VeeamHealthCheck
                 }
                 else
                 {
-                    string errorMessage = "No Veeam Software detected on this machine.\n\n" +
-                                         "This tool requires Veeam Backup & Replication (VBR) or Veeam Backup for Microsoft 365 (VB365) to be installed.\n\n" +
-                                         "To connect to a remote Veeam server:\n" +
-                                         "1. Close this window\n" +
-                                         "2. Run from command line with: VeeamHealthCheck.exe /remote /host=your-vbr-server\n\n" +
-                                         "For more information, see the documentation.";
-
-                    MessageBox.Show(errorMessage, "Veeam Software Not Detected", MessageBoxButton.OK, MessageBoxImage.Error);
-                    Application.Current.Shutdown();
+                    _modeCheckFailed = true;
                     return;
                 }
             }
-            
+
             this.Title = modeCheckResult;
-            if(CGlobals.IsVb365 && CGlobals.IsVbr)
+            if (CGlobals.IsVb365 && CGlobals.IsVbr)
             {
                 pdfCheckBox.IsEnabled = false;
-                pdfCheckBox.ToolTip = "PDF Export not available when both VB365 & VBR are detected on the same machine.";
+                ToolTip.SetTip(pdfCheckBox, "PDF Export not available when both VB365 & VBR are detected on the same machine.");
             }
 
-            this.functions.PreRunCheck();
+            // Originally the tail of the single synchronous SetUi(), which ran
+            // entirely before the WPF window was ever shown. SetUiAsync() below
+            // now sets these again after Loaded, but doing it here too closes
+            // the window between first paint and SetUiAsync's completion during
+            // which the axaml's declared state (run enabled, pBar spinning at
+            // full opacity) would otherwise be visible.
+            run.IsEnabled = false;
+            this.hideProgressBar();
+        }
+
+        private async Task SetUiAsync()
+        {
+            if (_modeCheckFailed)
+            {
+                string errorMessage = "No Veeam Software detected on this machine.\n\n" +
+                                     "This tool requires Veeam Backup & Replication (VBR) or Veeam Backup for Microsoft 365 (VB365) to be installed.\n\n" +
+                                     "To connect to a remote Veeam server:\n" +
+                                     "1. Close this window\n" +
+                                     "2. Run from command line with: VeeamHealthCheck.exe /remote /host=your-vbr-server\n\n" +
+                                     "For more information, see the documentation.";
+
+                await CGlobals.Notifier.ShowErrorAsync(errorMessage, "Veeam Software Not Detected");
+
+                if (Avalonia.Application.Current?.ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
+                {
+                    desktop.Shutdown();
+                }
+                return;
+            }
+
+            // PreRunCheck() stays synchronous (Part 1) but calls the notifier's
+            // blocking wrapper (IUiNotifier.Confirm/ShowError) internally.
+            // Calling that directly from the UI thread would deadlock, so it's
+            // moved off the UI thread here, same as AcceptButton_click below.
+            await Task.Run(() => this.functions.PreRunCheck());
 
             this.SetUiText();
             scrubBox.IsChecked = true;
@@ -180,7 +234,7 @@ namespace VeeamHealthCheck
             this.pdfCheckBox.Content = "Export PDF";
             // this.pptxCheckBox.Content = "Export PowerPoint";
             this.clearCredsCheckBox.Content = "Clear Saved Credentials";
-            this.outPath.Text = VbrLocalizationHelper.GuiOutPath; 
+            this.outPath.Text = VbrLocalizationHelper.GuiOutPath;
             this.termsBtn.Content = VbrLocalizationHelper.GuiAcceptButton;
             this.run.Content = VbrLocalizationHelper.GuiRunButton;
             this.importButton.Content = VbrLocalizationHelper.GuiImportButton;
@@ -195,24 +249,31 @@ namespace VeeamHealthCheck
             pathBox.Text = text;
         }
 
+        // pBar deliberately never gets IsVisible=false - WPF's Visibility.Hidden
+        // (what this replaces) keeps the control's layout slot reserved so the
+        // progress bar area doesn't reflow when hidden; only Opacity/hit-testing
+        // toggle. progressText mirrors WPF's Visibility.Collapsed, which does
+        // remove it from layout - IsVisible is the correct match there.
         private void hideProgressBar()
         {
-            this.Dispatcher.Invoke((Action)(() =>
+            Dispatcher.UIThread.Post(() =>
             {
                 // run.IsEnabled = true;
-                pBar.Visibility = Visibility.Hidden;
-                progressText.Visibility = Visibility.Collapsed;
-            }));
+                pBar.Opacity = 0;
+                pBar.IsHitTestVisible = false;
+                progressText.IsVisible = false;
+            });
         }
 
         private void showProgressBar()
         {
-            this.Dispatcher.Invoke((Action)(() =>
+            Dispatcher.UIThread.Post(() =>
             {
                 run.IsEnabled = false;
-                pBar.Visibility = Visibility.Visible;
-                progressText.Visibility = Visibility.Visible;
-            }));
+                pBar.Opacity = 1;
+                pBar.IsHitTestVisible = true;
+                progressText.IsVisible = true;
+            });
         }
         #endregion
 
@@ -235,7 +296,7 @@ namespace VeeamHealthCheck
 
             if (!this.functions.VerifyPath())
             {
-                MessageBox.Show("Error: Failed to validate desired output path. Please try a different path.");
+                _ = CGlobals.Notifier.ShowErrorAsync("Error: Failed to validate desired output path. Please try a different path.", "Error");
             }
 
             if (this.functions.VerifyPath())
@@ -245,6 +306,16 @@ namespace VeeamHealthCheck
             }
         }
 
+        // The try/catch and ReportRunFailure() below did not exist in the real
+        // WPF file when this method was first ported (an earlier reference
+        // draft had invented them, and was correctly rejected at the time).
+        // dev/master then landed a real fix (surface report-phase exceptions
+        // instead of silently exiting 0) independently while this migration
+        // was in flight; it's ported here during the merge with dev, adapted
+        // to Avalonia's dialog/dispatcher idioms - see ReportRunFailure's own
+        // comment below. hideProgressBar() in the ContinueWith still runs
+        // either way (it only skips on TaskContinuationOptions.
+        // OnlyOnRanToCompletion, which this doesn't specify).
         private void Run(bool import)
         {
             System.Threading.Tasks.Task.Factory.StartNew(() =>
@@ -273,6 +344,15 @@ namespace VeeamHealthCheck
             });
         }
 
+        // Runs only from Run()'s catch block, on the same background thread
+        // as the rest of Run()'s Task.Factory.StartNew body. The blocking
+        // CGlobals.Notifier.ShowError wrapper is called directly (unwrapped)
+        // for the same reason as ShowCollectionWarningsIfAny below - safe off
+        // the UI thread, and blocks until the user dismisses it so the
+        // failure is actually seen before this method returns. run.IsEnabled
+        // is a raw UI property mutation, not a dialog, so it still needs its
+        // own Dispatcher.UIThread.Invoke, same as UpdateCollectionStatusText
+        // below - it would throw/misbehave if set directly from this thread.
         private void ReportRunFailure(Exception ex)
         {
             CGlobals.Logger.Error("Run failed: " + ex.Message, true);
@@ -283,41 +363,46 @@ namespace VeeamHealthCheck
                 CGlobals.Logger.Error("Inner stack trace: " + ex.InnerException.StackTrace, false);
             }
 
-            this.Dispatcher.Invoke((Action)(() =>
-            {
-                MessageBox.Show(
-                    "The health check failed before a report was generated:\n\n" +
-                    ex.Message +
-                    "\n\nNo report was produced. See the log for the full stack trace.",
-                    "Health Check Failed",
-                    MessageBoxButton.OK,
-                    MessageBoxImage.Error);
+            CGlobals.Notifier.ShowError(
+                "The health check failed before a report was generated:\n\n" +
+                ex.Message +
+                "\n\nNo report was produced. See the log for the full stack trace.",
+                "Health Check Failed");
 
-                // Re-enable the run button so the user can retry without restarting.
-                run.IsEnabled = true;
-            }));
+            // Re-enable the run button so the user can retry without restarting.
+            Dispatcher.UIThread.Invoke(() => run.IsEnabled = true);
         }
 
+        // Both UpdateCollectionStatusText() and ShowCollectionWarningsIfAny() are
+        // called only from the background thread inside Run()'s
+        // Task.Factory.StartNew, immediately before Environment.Exit(0). The
+        // real WPF file used Dispatcher.Invoke (synchronous - blocks the
+        // calling thread until the UI thread finishes, and for the MessageBox
+        // case, until the user dismisses it) specifically so Exit(0) couldn't
+        // race ahead of the UI update / warning dialog. Dispatcher.UIThread.Post
+        // is fire-and-forget and would let Exit(0) tear down the process before
+        // the queued work - or the warning dialog - ever ran, silently dropping
+        // the collection-warnings notification. Dispatcher.UIThread.Invoke (the
+        // Avalonia analog of WPF's Dispatcher.Invoke) and the notifier's
+        // blocking ShowError wrapper preserve the original blocking semantics.
         private void UpdateCollectionStatusText()
         {
             var failed = CGlobals.CollectionManifest?.Where(e => !e.Success).ToList();
             if (failed != null && failed.Count > 0)
             {
-                this.Dispatcher.Invoke((Action)(() =>
+                Dispatcher.UIThread.Invoke(() =>
                 {
-                    progressText.Text = $"Collection complete \u2014 {failed.Count} collector warning(s)";
-                    progressText.Foreground = new System.Windows.Media.SolidColorBrush(
-                        System.Windows.Media.Color.FromRgb(0xf0, 0xad, 0x4e));
-                }));
+                    progressText.Text = $"Collection complete — {failed.Count} collector warning(s)";
+                    progressText.Foreground = new SolidColorBrush(Color.FromRgb(0xf0, 0xad, 0x4e));
+                });
             }
             else
             {
-                this.Dispatcher.Invoke((Action)(() =>
+                Dispatcher.UIThread.Invoke(() =>
                 {
                     progressText.Text = "Collection complete";
-                    progressText.Foreground = new System.Windows.Media.SolidColorBrush(
-                        System.Windows.Media.Color.FromRgb(0x5c, 0xb8, 0x5c));
-                }));
+                    progressText.Foreground = new SolidColorBrush(Color.FromRgb(0x5c, 0xb8, 0x5c));
+                });
             }
         }
 
@@ -327,14 +412,9 @@ namespace VeeamHealthCheck
             if (failed != null && failed.Count > 0)
             {
                 var names = string.Join(", ", failed.Select(e => e.Name));
-                this.Dispatcher.Invoke((Action)(() =>
-                {
-                    MessageBox.Show(
-                        $"{failed.Count} collector(s) reported errors: {names}\n\nThe report may have incomplete sections. Check the log for details.",
-                        "Collection Warnings",
-                        MessageBoxButton.OK,
-                        MessageBoxImage.Warning);
-                }));
+                CGlobals.Notifier.ShowError(
+                    $"{failed.Count} collector(s) reported errors: {names}\n\nThe report may have incomplete sections. Check the log for details.",
+                    "Collection Warnings");
             }
         }
 
@@ -363,10 +443,14 @@ namespace VeeamHealthCheck
             RescanBox.IsEnabled = false;
         }
 
-        private void AcceptButton_click(object sender, RoutedEventArgs e)
+        // AcceptTerms() stays synchronous (Part 1) - but this handler runs
+        // directly on the UI thread, so calling its blocking wrapper form here
+        // would deadlock. Task.Run moves it off the UI thread first, exactly
+        // like SetUiAsync's PreRunCheck call above.
+        private async void AcceptButton_click(object sender, RoutedEventArgs e)
         {
             this.functions.LogUIAction("Accept");
-            run.IsEnabled = this.functions.AcceptTerms();
+            run.IsEnabled = await Task.Run(() => this.functions.AcceptTerms());
         }
 
         #endregion
@@ -396,6 +480,10 @@ namespace VeeamHealthCheck
             CGlobals.Scrub = false;
         }
 
+        // Retained dead code from the real WPF file: not wired to any control
+        // event in either the original XAML or the Task 10 AXAML (scrubBox has
+        // no IsThreeState/Indeterminate wiring in either) - pre-existing, not
+        // introduced by this port.
         private void HandleThirdState(object sender, RoutedEventArgs e)
         {
             this.functions.LogUIAction("Scrub 3rd state = false");
@@ -426,18 +514,6 @@ namespace VeeamHealthCheck
             CGlobals.EXPORTPDF = false;
         }
 
-        private void pptxCheckBox_Checked(object sender, RoutedEventArgs e)
-        {
-            this.functions.LogUIAction("Export PowerPoint = true");
-            CGlobals.EXPORTPPTX = true;
-        }
-
-        private void pptxCheckBox_Unchecked(object sender, RoutedEventArgs e)
-        {
-            this.functions.LogUIAction("Export PowerPoint = false");
-            CGlobals.EXPORTPPTX = false;
-        }
-
         private void clearCredsCheckBox_Checked(object sender, RoutedEventArgs e)
         {
             this.functions.LogUIAction("Clear Stored Creds = true");
@@ -450,7 +526,7 @@ namespace VeeamHealthCheck
             CGlobals.ClearStoredCreds = false;
         }
 
-         private void RescanBox_Checked(object sender, RoutedEventArgs e)
+        private void RescanBox_Checked(object sender, RoutedEventArgs e)
         {
             CGlobals.RescanHosts = true;
             this.functions.LogUIAction("Rescan Hosts = true");
@@ -464,20 +540,22 @@ namespace VeeamHealthCheck
 
         #endregion
 
-        private void kbLink_RequestNavigate(object sender, System.Windows.Navigation.RequestNavigateEventArgs e)
-        {
-            this.functions.LogUIAction("KB Link");
-            this.functions.KbLinkAction(e);
-        }
-
         private void pathBox_TextChanged(object sender, TextChangedEventArgs e)
         {
             CGlobals.Logger.Info("Changing path from " + CGlobals.desiredPath + " to " + pathBox.Text);
-            CGlobals.desiredPath = pathBox.Text;
+            CGlobals.desiredPath = pathBox.Text ?? string.Empty;
         }
 
+        // Guard added (not present in the real WPF file): Avalonia's generated
+        // InitializeComponent() can raise SelectionChanged while assigning
+        // named fields as the tree is built, so daysSelector could still be
+        // null on first raise. Same defensive pattern already used by
+        // productTypeSelector_SelectionChanged/notifTypeBox_SelectionChanged
+        // below - not testable on macOS, but zero behavior change once
+        // daysSelector is non-null.
         private void ComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
+            if (daysSelector == null) return;
             switch (daysSelector.SelectedIndex)
             {
                 case 0:
@@ -502,114 +580,116 @@ namespace VeeamHealthCheck
         }
 
         #region Server Management
-        
+
         private void addServerBtn_Click(object sender, RoutedEventArgs e)
         {
-            string serverName = serverTextBox.Text.Trim();
-            
+            string serverName = serverTextBox.Text?.Trim() ?? string.Empty;
+
             if (string.IsNullOrWhiteSpace(serverName))
             {
-                MessageBox.Show("Please enter a server name.", "Input Required", MessageBoxButton.OK, MessageBoxImage.Warning);
+                _ = CGlobals.Notifier.ShowErrorAsync("Please enter a server name.", "Input Required");
                 return;
             }
-            
+
             // Check if server already exists in list
             foreach (var item in serverListBox.Items)
             {
                 if (item.ToString().Equals(serverName, StringComparison.OrdinalIgnoreCase))
                 {
-                    MessageBox.Show($"Server '{serverName}' is already in the list.", "Duplicate Server", MessageBoxButton.OK, MessageBoxImage.Information);
-                    serverTextBox.Clear();
+                    _ = CGlobals.Notifier.ShowErrorAsync($"Server '{serverName}' is already in the list.", "Duplicate Server");
+                    serverTextBox.Text = string.Empty;
                     return;
                 }
             }
-            
+
             // Add server to list
             serverListBox.Items.Add(serverName);
-            serverTextBox.Clear();
+            serverTextBox.Text = string.Empty;
             UpdateSelectedServersGlobal();
-            
+
             this.functions.LogUIAction($"Added server: {serverName}");
         }
 
-        private void removeServerBtn_Click(object sender, RoutedEventArgs e)
+        private async void removeServerBtn_Click(object sender, RoutedEventArgs e)
         {
             if (serverListBox.SelectedItem == null)
             {
-                MessageBox.Show("Please select a server to remove.", "No Selection", MessageBoxButton.OK, MessageBoxImage.Warning);
+                await CGlobals.Notifier.ShowErrorAsync("Please select a server to remove.", "No Selection");
                 return;
             }
-            
+
             string selectedServer = serverListBox.SelectedItem.ToString();
-            
+
             // Don't allow removing localhost if it's the only item
             if (serverListBox.Items.Count == 1 && selectedServer.Equals("localhost", StringComparison.OrdinalIgnoreCase))
             {
-                MessageBox.Show("Cannot remove the last server. At least one server must remain in the list.", "Cannot Remove", MessageBoxButton.OK, MessageBoxImage.Warning);
+                await CGlobals.Notifier.ShowErrorAsync("Cannot remove the last server. At least one server must remain in the list.", "Cannot Remove");
                 return;
             }
-            
+
             // Ask for confirmation if this server has stored credentials
             bool hasCredentials = CredentialStore.Get(selectedServer) != null;
             if (hasCredentials)
             {
-                var result = MessageBox.Show(
+                bool confirmed = await CGlobals.Notifier.ConfirmAsync(
                     $"Remove '{selectedServer}' from the list?\n\nThis will also delete any stored credentials for this server.",
-                    "Confirm Remove",
-                    MessageBoxButton.YesNo,
-                    MessageBoxImage.Question);
-                
-                if (result == MessageBoxResult.No)
+                    "Confirm Remove");
+
+                if (!confirmed)
                 {
                     return;
                 }
             }
-            
+
             // Remove from UI list
             serverListBox.Items.Remove(serverListBox.SelectedItem);
-            
+
             // Remove credentials if they exist
             if (hasCredentials)
             {
                 CredentialStore.Remove(selectedServer);
             }
-            
+
             UpdateSelectedServersGlobal();
-            
+
             this.functions.LogUIAction($"Removed server: {selectedServer}");
         }
 
-        private void clearServersBtn_Click(object sender, RoutedEventArgs e)
+        private async void clearServersBtn_Click(object sender, RoutedEventArgs e)
         {
             if (serverListBox.Items.Count == 0)
             {
-                MessageBox.Show("Server list is already empty.", "Empty List", MessageBoxButton.OK, MessageBoxImage.Information);
+                await CGlobals.Notifier.ShowErrorAsync("Server list is already empty.", "Empty List");
                 return;
             }
-            
-            var result = MessageBox.Show(
+
+            bool confirmed = await CGlobals.Notifier.ConfirmAsync(
                 "Are you sure you want to clear all servers from the list?",
-                "Confirm Clear",
-                MessageBoxButton.YesNo,
-                MessageBoxImage.Question);
-            
-            if (result == MessageBoxResult.Yes)
+                "Confirm Clear");
+
+            if (confirmed)
             {
                 serverListBox.Items.Clear();
-                
+
                 // Add localhost back if VBR is installed locally
                 if (CGlobals.IsVbrInstalled)
                 {
                     serverListBox.Items.Add("localhost");
                 }
-                
+
                 UpdateSelectedServersGlobal();
                 this.functions.LogUIAction("Cleared all servers from list");
             }
         }
 
+        // Guard added (not present in the real WPF file): same
+        // InitializeComponent()-timing rationale as ComboBox_SelectionChanged
+        // above - serverListBox could still be null on a SelectionChanged
+        // raised during tree construction.
         private void serverListBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
+            if (serverListBox == null) return;
+
             UpdateSelectedServersGlobal();
 
             if (serverListBox.SelectedItem != null)
@@ -669,7 +749,7 @@ namespace VeeamHealthCheck
                 if (status != null)
                 {
                     monitorLastRunText.Text = $"Last run: {status.Timestamp:g} — {status.Summary}";
-                    monitorLastRunText.Visibility = Visibility.Visible;
+                    monitorLastRunText.IsVisible = true;
                 }
             }
         }
@@ -691,15 +771,15 @@ namespace VeeamHealthCheck
 
             if (string.IsNullOrEmpty(username))
             {
-                MessageBox.Show(
+                _ = CGlobals.Notifier.ShowErrorAsync(
                     $"No stored credentials found for '{server}'.\nPlease add credentials by running a health check first, or use the credential prompt.",
-                    "Credentials Required", MessageBoxButton.OK, MessageBoxImage.Warning);
+                    "Credentials Required");
                 return;
             }
 
             if (!CVhcMonitorIntegration.IsExePresentInBundle())
             {
-                MessageBox.Show("vhc-monitor.exe not found in the VHC installation directory.", "Monitor Not Found", MessageBoxButton.OK, MessageBoxImage.Error);
+                _ = CGlobals.Notifier.ShowErrorAsync("vhc-monitor.exe not found in the VHC installation directory.", "Monitor Not Found");
                 return;
             }
 
@@ -713,12 +793,12 @@ namespace VeeamHealthCheck
                 try
                 {
                     CVhcMonitorIntegration.Install(server, username, password, notifType, notifUrl, minSeverity);
-                    this.Dispatcher.Invoke(this.InitializeMonitorStatus);
+                    Dispatcher.UIThread.Post(this.InitializeMonitorStatus);
                 }
                 catch (Exception ex)
                 {
                     CGlobals.Logger.Error($"Monitor setup failed: {ex.Message}", false);
-                    this.Dispatcher.Invoke(() =>
+                    Dispatcher.UIThread.Post(() =>
                     {
                         monitorStatusText.Text = "Setup failed — check log";
                         monitorStatusText.Foreground = new SolidColorBrush(Color.FromRgb(0xd9, 0x53, 0x4f));
@@ -740,12 +820,12 @@ namespace VeeamHealthCheck
                 try
                 {
                     CVhcMonitorIntegration.InstallFromVhcData(notifType, notifUrl, minSeverity);
-                    this.Dispatcher.Invoke(this.InitializeMonitorStatus);
+                    Dispatcher.UIThread.Post(this.InitializeMonitorStatus);
                 }
                 catch (Exception ex)
                 {
                     CGlobals.Logger.Error($"Monitor VHC-assisted setup failed: {ex.Message}", false);
-                    this.Dispatcher.Invoke(() =>
+                    Dispatcher.UIThread.Post(() =>
                     {
                         monitorStatusText.Text = "Setup failed — check log";
                         monitorStatusText.Foreground = new SolidColorBrush(Color.FromRgb(0xd9, 0x53, 0x4f));
@@ -759,12 +839,12 @@ namespace VeeamHealthCheck
         {
             monitorRunBtn.IsEnabled = false;
             monitorLastRunText.Text = "Running...";
-            monitorLastRunText.Visibility = Visibility.Visible;
+            monitorLastRunText.IsVisible = true;
 
             System.Threading.Tasks.Task.Run(() =>
             {
                 var (exitCode, output) = CVhcMonitorIntegration.RunNow();
-                this.Dispatcher.Invoke(() =>
+                Dispatcher.UIThread.Post(() =>
                 {
                     this.InitializeMonitorStatus();
                     monitorRunBtn.IsEnabled = CVhcMonitorIntegration.IsTaskRegistered();
@@ -778,23 +858,26 @@ namespace VeeamHealthCheck
             string type = (notifTypeBox.SelectedItem as ComboBoxItem)?.Content?.ToString() ?? "ntfy";
             notifUrlBox.Tag = type switch
             {
-                "Teams"     => "https://org.webhook.office.com/...",
-                "Slack"     => "https://hooks.slack.com/services/...",
+                "Teams" => "https://org.webhook.office.com/...",
+                "Slack" => "https://hooks.slack.com/services/...",
                 "PagerDuty" => "https://events.pagerduty.com/...",
-                _           => "https://ntfy.sh/your-topic"
+                _ => "https://ntfy.sh/your-topic"
             };
         }
 
+        // Same Invoke-not-Post reasoning as UpdateCollectionStatusText/
+        // ShowCollectionWarningsIfAny above - called from the background
+        // thread right before Environment.Exit(0) in Run().
         private void OfferMonitorSetupIfNeeded()
         {
             if (!CVhcMonitorIntegration.IsExePresentInBundle()) return;
             if (CVhcMonitorIntegration.IsTaskRegistered()) return;
 
-            this.Dispatcher.Invoke(() =>
+            Dispatcher.UIThread.Invoke(() =>
             {
                 monitorVhcSetupBtn.IsEnabled = true;
                 monitorLastRunText.Text = "Health check complete — click 'Setup from VHC' to configure continuous monitoring with auto-detected server settings.";
-                monitorLastRunText.Visibility = Visibility.Visible;
+                monitorLastRunText.IsVisible = true;
                 monitorStatusText.Text = "Available — not set up";
                 monitorStatusText.Foreground = new SolidColorBrush(Color.FromRgb(0xf0, 0xad, 0x4e));
             });

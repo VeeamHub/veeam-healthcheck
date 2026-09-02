@@ -1,0 +1,366 @@
+<!--
+Copyright (c) 2021, Adam Congdon <adam.congdon2@gmail.com>
+MIT License
+-->
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        x:Class="VeeamHealthCheck.VhcGui"
+        Title=""
+        MinHeight="500" MinWidth="900"
+        Width="950"
+        SizeToContent="Height"
+        WindowStartupLocation="CenterScreen"
+        CanResize="True"
+        Background="#F5F5F5">
+
+    <Window.Styles>
+        <Style Selector="Button.modern">
+            <Setter Property="Background" Value="#00B233" />
+            <Setter Property="Foreground" Value="White" />
+            <Setter Property="FontSize" Value="14" />
+            <Setter Property="FontWeight" Value="SemiBold" />
+            <Setter Property="Padding" Value="20,10" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="CornerRadius" Value="4" />
+            <Setter Property="Cursor" Value="Hand" />
+        </Style>
+        <Style Selector="Button.modern:pointerover /template/ ContentPresenter">
+            <Setter Property="Background" Value="#00A030" />
+        </Style>
+        <Style Selector="Button.modern:disabled /template/ ContentPresenter">
+            <Setter Property="Background" Value="#CCCCCC" />
+        </Style>
+
+        <Style Selector="Button.secondary">
+            <Setter Property="Background" Value="#555555" />
+            <Setter Property="Foreground" Value="White" />
+            <Setter Property="FontSize" Value="14" />
+            <Setter Property="FontWeight" Value="SemiBold" />
+            <Setter Property="Padding" Value="20,10" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="CornerRadius" Value="4" />
+            <Setter Property="Cursor" Value="Hand" />
+        </Style>
+        <Style Selector="Button.secondary:pointerover /template/ ContentPresenter">
+            <Setter Property="Background" Value="#333333" />
+        </Style>
+        <Style Selector="Button.secondary:disabled /template/ ContentPresenter">
+            <Setter Property="Background" Value="#CCCCCC" />
+        </Style>
+
+        <Style Selector="CheckBox.modern">
+            <Setter Property="FontSize" Value="13" />
+            <Setter Property="Foreground" Value="#333333" />
+            <Setter Property="Margin" Value="0,8,0,0" />
+            <Setter Property="Cursor" Value="Hand" />
+        </Style>
+
+        <!-- Avalonia 11.3.20 has no native GroupBox (verified: absent from Avalonia.Controls,
+             no HeaderedContentControl default template either) - the four "GroupBox" sections
+             below are ported as Border + StackPanel (header TextBlock as first child) instead.
+             None of the original GroupBox elements had Name/x:Name, so this has no code-behind impact. -->
+        <Style Selector="Border.groupbox">
+            <Setter Property="BorderBrush" Value="#DDDDDD" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="Padding" Value="15" />
+            <Setter Property="Background" Value="White" />
+        </Style>
+
+        <Style Selector="TextBox.modern">
+            <Setter Property="Padding" Value="8" />
+            <Setter Property="BorderBrush" Value="#CCCCCC" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="FontSize" Value="13" />
+        </Style>
+
+        <Style Selector="ComboBox.modern">
+            <Setter Property="Padding" Value="8" />
+            <Setter Property="BorderBrush" Value="#CCCCCC" />
+            <Setter Property="FontSize" Value="13" />
+        </Style>
+    </Window.Styles>
+
+    <Grid RowDefinitions="*,Auto">
+
+        <ScrollViewer Grid.Row="0" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+        <Grid Margin="25,25,25,15" ColumnDefinitions="380,20,*">
+
+            <!-- Left Panel - Instructions and Warnings -->
+            <StackPanel Grid.Column="0">
+                <Border Background="White" Padding="20" Margin="0,0,0,15" CornerRadius="6"
+                        BoxShadow="0 2 10 0 #4CCCCCCC">
+                    <StackPanel>
+                        <TextBlock FontSize="18" FontWeight="Bold" Foreground="#00B233" Margin="0,0,0,10">
+                            <Run Name="InsHeader" />
+                        </TextBlock>
+                        <TextBlock TextWrapping="Wrap" FontSize="12" Foreground="#555555" LineHeight="20">
+                            <Run Name="line1" /><LineBreak />
+                            <Run Name="line2" /><LineBreak />
+                            <Run Name="line3" /><LineBreak />
+                            <Run Name="line4" /><LineBreak />
+                            <Run Name="line5" /><LineBreak />
+                            <Run Name="line6" />
+                        </TextBlock>
+                    </StackPanel>
+                </Border>
+
+                <Border Background="#FFF8E1" BorderBrush="#FFC107" BorderThickness="1"
+                        Padding="15" CornerRadius="4">
+                    <StackPanel>
+                        <TextBlock FontSize="12" TextWrapping="Wrap" Foreground="#333333" LineHeight="20">
+                            <Run Name="Cav1Part1" />
+                        </TextBlock>
+                        <!-- Original had this as an inline WPF Hyperlink between Cav1Part1 and Cav2;
+                             Avalonia's TextBlock.Inlines has no Hyperlink inline, so this is a
+                             standalone HyperlinkButton (auto-opens NavigateUri, no click handler needed).
+                             Split into two TextBlocks to preserve reading order: Cav1 → Link → Cav2. -->
+                        <HyperlinkButton Name="kbLink"
+                                         NavigateUri="https://www.veeam.com/kb2462"
+                                         Content="KB 2462"
+                                         Foreground="#0066CC"
+                                         FontSize="12"
+                                         Margin="0,2,0,2" />
+                        <TextBlock FontSize="12" TextWrapping="Wrap" Foreground="#333333" LineHeight="20">
+                            <Run Name="Cav2" />
+                        </TextBlock>
+                        <TextBlock TextWrapping="Wrap" FontSize="11" Foreground="#666666"
+                                   Margin="0,10,0,0" LineHeight="16">
+                            <Run Name="Cav3" /><LineBreak />
+                            <Run Name="Cav4" /><LineBreak /><LineBreak />
+                            <Run FontWeight="SemiBold" Foreground="#555555">Credential Storage:</Run><Run> Credentials are stored encrypted at </Run><Run FontFamily="Consolas" Foreground="#555555">%AppData%\VeeamHealthCheck\creds.json</Run><Run>. You can delete this file to remove saved credentials or use the "Clear Saved Credentials" option.</Run>
+                        </TextBlock>
+                    </StackPanel>
+                </Border>
+            </StackPanel>
+
+            <!-- Right Panel - Options and Controls -->
+            <StackPanel Grid.Column="2">
+                <Border Classes="groupbox" Margin="0,0,0,15">
+                    <StackPanel TextElement.FontWeight="SemiBold">
+                        <TextBlock FontSize="16" Foreground="#333333">
+                            <Run Name="OptHdr" />
+                        </TextBlock>
+                        <StackPanel Margin="5,10,5,0">
+                            <TextBlock Text="Export Options" FontSize="13" FontWeight="SemiBold"
+                                       Foreground="#555555" Margin="0,0,0,8" />
+                            <CheckBox x:Name="pdfCheckBox" Classes="modern"
+                                      Checked="pdfCheckBox_Checked" Unchecked="pdfCheckBox_Unchecked"
+                                      IsChecked="False" />
+                            <CheckBox x:Name="explorerShowBox" Classes="modern"
+                                      Checked="explorerShowBox_Checked" Unchecked="explorerShowBox_Unchecked"
+                                      IsChecked="True" />
+                            <CheckBox Name="htmlCheckBox" Classes="modern"
+                                      Checked="htmlChecked" Unchecked="htmlUnchecked"
+                                      ToolTip.Tip="Display the HTML report in your default browser after generation" />
+
+                            <Separator Margin="0,12,0,12" Background="#EEEEEE" />
+
+                            <TextBlock Text="Data Collection" FontSize="13" FontWeight="SemiBold"
+                                       Foreground="#555555" Margin="0,0,0,8" />
+                            <StackPanel Orientation="Horizontal" Margin="0,8,0,0">
+                                <TextBlock Text="Collection Period:" VerticalAlignment="Center"
+                                           FontSize="13" Foreground="#333333" Margin="0,0,10,0" />
+                                <ComboBox Name="daysSelector" Classes="modern"
+                                          Width="120" SelectedIndex="0" SelectionChanged="ComboBox_SelectionChanged">
+                                    <ComboBoxItem Content="7 Days" IsSelected="True" />
+                                    <ComboBoxItem Content="30 Days" />
+                                    <ComboBoxItem Content="90 Days" />
+                                </ComboBox>
+                            </StackPanel>
+
+                            <CheckBox x:Name="RescanBox" Classes="modern"
+                                    Checked="RescanBox_Checked" Unchecked="RescanBox_Unchecked"
+                                    Margin="0,8,0,0"
+                                    ToolTip.Tip="Rescan for Hardware change" />
+
+                            <Separator Margin="0,12,0,12" Background="#EEEEEE" />
+
+                            <TextBlock Text="Security &amp; Privacy" FontSize="13" FontWeight="SemiBold"
+                                       Foreground="#555555" Margin="0,0,0,8" />
+                            <CheckBox x:Name="scrubBox" Classes="modern"
+                                      Checked="HandleCheck" Unchecked="HandleUnchecked"
+                                      ToolTip.Tip="Anonymize sensitive data according to Veeam KB 2462" />
+                            <CheckBox x:Name="clearCredsCheckBox" Classes="modern"
+                                      Checked="clearCredsCheckBox_Checked" Unchecked="clearCredsCheckBox_Unchecked"
+                                      IsChecked="False"
+                                      ToolTip.Tip="Clear any previously saved credentials before running" />
+                        </StackPanel>
+                    </StackPanel>
+                </Border>
+
+                <Border Classes="groupbox" Margin="0,0,0,15">
+                    <StackPanel TextElement.FontWeight="SemiBold">
+                        <TextBlock Name="outPath" FontSize="16" Foreground="#333333" />
+                        <TextBox x:Name="pathBox" Classes="modern"
+                                 TextChanged="pathBox_TextChanged" Height="32" Margin="0,10,0,0" />
+                    </StackPanel>
+                </Border>
+
+                <Border Classes="groupbox" Margin="0,0,0,15">
+                    <StackPanel TextElement.FontWeight="SemiBold">
+                        <TextBlock Text="VBR Server" FontSize="16" Foreground="#333333" />
+                        <StackPanel Margin="5,10,5,0">
+                            <Grid Margin="0,0,0,10" ColumnDefinitions="*,10,80">
+                                <TextBox x:Name="serverTextBox" Grid.Column="0"
+                                         Classes="modern"
+                                         Height="32"
+                                         FontSize="12"
+                                         ToolTip.Tip="Enter VBR server hostname or IP address" />
+                                <Button x:Name="addServerBtn" Grid.Column="2"
+                                        Content="Add"
+                                        Height="32"
+                                        FontSize="12"
+                                        Classes="modern"
+                                        Click="addServerBtn_Click" />
+                            </Grid>
+
+                            <Border BorderBrush="#CCCCCC" BorderThickness="1"
+                                    Background="White" Height="120">
+                                <ListBox x:Name="serverListBox"
+                                         BorderThickness="0"
+                                         SelectionMode="Single"
+                                         FontSize="13"
+                                         Padding="5"
+                                         SelectionChanged="serverListBox_SelectionChanged" />
+                            </Border>
+
+                            <Grid Margin="0,10,0,0" ColumnDefinitions="*,10,*">
+                                <Button x:Name="removeServerBtn" Grid.Column="0"
+                                        Content="Remove Selected"
+                                        Height="32"
+                                        FontSize="12"
+                                        Padding="10,5"
+                                        Classes="secondary"
+                                        Click="removeServerBtn_Click" />
+                                <Button x:Name="clearServersBtn" Grid.Column="2"
+                                        Content="Clear All"
+                                        Height="32"
+                                        FontSize="12"
+                                        Padding="10,5"
+                                        Classes="secondary"
+                                        Click="clearServersBtn_Click" />
+                            </Grid>
+
+                            <Separator Margin="0,12,0,12" Background="#EEEEEE" />
+
+                            <TextBlock Text="Product Type:" FontSize="13" FontWeight="SemiBold"
+                                       Foreground="#555555" Margin="0,0,0,8" />
+                            <ComboBox x:Name="productTypeSelector"
+                                      Classes="modern"
+                                      Width="220"
+                                      SelectedIndex="0"
+                                      HorizontalAlignment="Left"
+                                      SelectionChanged="productTypeSelector_SelectionChanged"
+                                      ToolTip.Tip="For remote servers, specifying the product type avoids connection failures. If set to Auto-detect, the tool will try both connection types.">
+                                <ComboBoxItem Content="Auto-detect" IsSelected="True" />
+                                <ComboBoxItem Content="VBR (Backup &amp; Replication)" />
+                                <ComboBoxItem Content="VB365 (Backup for Microsoft 365)" />
+                                <ComboBoxItem Content="Both" />
+                            </ComboBox>
+                        </StackPanel>
+                    </StackPanel>
+                </Border>
+
+                <Border Classes="groupbox" Margin="0,0,0,15">
+                    <StackPanel TextElement.FontWeight="SemiBold">
+                        <TextBlock Text="Continuous Monitoring" FontSize="16" Foreground="#333333" />
+                        <StackPanel Margin="5,10,5,0">
+
+                            <StackPanel Orientation="Horizontal" Margin="0,0,0,6">
+                                <TextBlock Text="Status: " FontSize="13" Foreground="#555555" VerticalAlignment="Center" />
+                                <TextBlock x:Name="monitorStatusText" FontSize="13" FontWeight="SemiBold"
+                                           Foreground="#999999" VerticalAlignment="Center" Text="Checking..." />
+                            </StackPanel>
+
+                            <TextBlock x:Name="monitorLastRunText" FontSize="11" Foreground="#777777"
+                                       Margin="0,0,0,10" IsVisible="False" TextWrapping="Wrap" />
+
+                            <TextBlock Text="Alert Notifications" FontSize="12" FontWeight="SemiBold"
+                                       Foreground="#555555" Margin="0,0,0,6" />
+                            <Grid Margin="0,0,0,8" ColumnDefinitions="100,8,*">
+                                <ComboBox x:Name="notifTypeBox" Grid.Column="0"
+                                          Classes="modern" Height="32" FontSize="12"
+                                          SelectedIndex="0"
+                                          SelectionChanged="notifTypeBox_SelectionChanged">
+                                    <ComboBoxItem Content="ntfy" IsSelected="True" />
+                                    <ComboBoxItem Content="Teams" />
+                                    <ComboBoxItem Content="Slack" />
+                                    <ComboBoxItem Content="PagerDuty" />
+                                </ComboBox>
+                                <TextBox x:Name="notifUrlBox" Grid.Column="2"
+                                         Classes="modern" Height="32" FontSize="12"
+                                         Tag="https://ntfy.sh/your-topic" />
+                            </Grid>
+                            <StackPanel Orientation="Horizontal" Margin="0,0,0,12">
+                                <TextBlock Text="Min severity: " FontSize="12" Foreground="#555555"
+                                           VerticalAlignment="Center" Margin="0,0,8,0" />
+                                <ComboBox x:Name="notifSeverityBox" Width="110"
+                                          Classes="modern" Height="28" FontSize="12"
+                                          SelectedIndex="0">
+                                    <ComboBoxItem Content="warning" IsSelected="True" />
+                                    <ComboBoxItem Content="critical" />
+                                    <ComboBoxItem Content="ok" />
+                                </ComboBox>
+                            </StackPanel>
+
+                            <Grid ColumnDefinitions="*,8,*,8,*">
+                                <Button x:Name="monitorQuickSetupBtn" Grid.Column="0"
+                                        Content="Quick Setup" Height="32" FontSize="11"
+                                        Classes="modern" IsEnabled="False"
+                                        Click="monitorQuickSetupBtn_Click"
+                                        ToolTip.Tip="Install monitor using selected VBR server and stored credentials" />
+                                <Button x:Name="monitorVhcSetupBtn" Grid.Column="2"
+                                        Content="Setup from VHC" Height="32" FontSize="11"
+                                        Classes="secondary" IsEnabled="False"
+                                        Click="monitorVhcSetupBtn_Click"
+                                        ToolTip.Tip="Configure monitor using data collected from the last health check run" />
+                                <Button x:Name="monitorRunBtn" Grid.Column="4"
+                                        Content="Run Now" Height="32" FontSize="11"
+                                        Classes="secondary" IsEnabled="False"
+                                        Click="monitorRunBtn_Click"
+                                        ToolTip.Tip="Trigger an immediate monitor check" />
+                            </Grid>
+
+                        </StackPanel>
+                    </StackPanel>
+                </Border>
+
+                <Grid Margin="0,5,0,0" ColumnDefinitions="*,10,*">
+                    <Button Name="termsBtn" Grid.Column="0" Classes="secondary"
+                            Height="45" Click="AcceptButton_click" />
+                    <Button x:Name="run" Grid.Column="2" Classes="modern"
+                            Height="45" Click="run_Click" />
+                </Grid>
+
+                <Button x:Name="importButton" Classes="secondary"
+                        Height="40" Margin="0,10,0,0" Click="Import_click"
+                        ToolTip.Tip="Create a report from previously collected data" />
+            </StackPanel>
+        </Grid>
+        </ScrollViewer>
+
+        <!-- pBar must NOT get IsVisible="False" here: hideProgressBar()/showProgressBar() in the
+             code-behind toggle only its Opacity (matching WPF's Visibility.Hidden, which reserves
+             layout space) - it always stays IsVisible="True" in markup. progressText DOES default
+             to IsVisible="False" here, matching WPF's Visibility.Collapsed default (removed from
+             layout entirely). -->
+        <Border Grid.Row="1" Background="White" BorderBrush="#DDDDDD" BorderThickness="0,1,0,0">
+            <StackPanel Margin="25,15,25,15">
+                <ProgressBar Name="pBar"
+                             Height="20"
+                             IsIndeterminate="True"
+                             BorderThickness="0"
+                             Background="#E8E8E8"
+                             Foreground="#00B233"
+                             BorderBrush="Transparent" />
+                <TextBlock Name="progressText"
+                           Text="Processing health check..."
+                           FontSize="12"
+                           Foreground="#666666"
+                           Margin="0,8,0,0"
+                           HorizontalAlignment="Center"
+                           IsVisible="False" />
+            </StackPanel>
+        </Border>
+    </Grid>
+</Window>

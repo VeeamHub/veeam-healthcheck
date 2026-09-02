@@ -9,7 +9,6 @@ using System.IO;
 using System.Linq;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
-using System.Windows;
 using Microsoft.Management.Infrastructure;
 using VeeamHealthCheck.Functions.Collection.DB;
 using VeeamHealthCheck.Functions.Collection.LogParser;
@@ -382,7 +381,7 @@ namespace VeeamHealthCheck.Functions.Collection
 
             if (CGlobals.GUIEXEC)
             {
-                MessageBox.Show(errorToShow, "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                CGlobals.Notifier.ShowError(errorToShow, "Error");
             }
 
             Environment.Exit(1);
