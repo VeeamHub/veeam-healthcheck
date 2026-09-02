@@ -74,6 +74,10 @@ $stopwatch = [System.Diagnostics.Stopwatch]::StartNew()
 Write-NasLog "Starting. VBRServer=$VBRServer VBRVersion=$VBRVersion ReportPath=$ReportPath PS=$($PSVersionTable.PSVersion)"
 
 try {
+    # Without this, most cmdlet failures below (Get-Content, Export-Csv, New-Item, ...) are
+    # non-terminating and silently skip past the catch block, defeating the point of having one.
+    $ErrorActionPreference = 'Stop'
+
     # VMC log path is hardcoded for now. If logs are sent elsewhere, please adjust accordingly.
     $logsPath = "C:\ProgramData\Veeam\Backup\Utils\VMC.log"
 
@@ -237,9 +241,13 @@ try {
     Write-NasLog ("Exported {0} row(s) to {1}_NasSharesize.csv ({2} v13 + {3} v12)" -f $allShareRows.Count, $VBRServer, $v13Rows.Count, $v12Rows.Count)
 }
 catch {
+    # Deliberately not re-thrown: PSInvoker treats a non-zero exit from this script as a
+    # collection failure and aborts the whole run (unlike the VBR config phase, which
+    # tolerates a bad exit code when its manifest is already on disk). NAS info is
+    # supplementary - log the failure loudly and let the script finish normally so a NAS-only
+    # problem can't take down report generation for everything else.
     Write-NasLog "FAILED: $($_.Exception.Message)" 'ERROR'
     Write-NasLog "$($_.ScriptStackTrace)" 'ERROR'
-    throw
 }
 finally {
     $stopwatch.Stop()
