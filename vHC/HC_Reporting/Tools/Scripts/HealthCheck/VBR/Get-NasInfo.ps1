@@ -93,10 +93,12 @@ try {
         $readSw = [System.Diagnostics.Stopwatch]::StartNew()
         $content = Get-Content -LiteralPath $logsPath
         $readSw.Stop()
-        Write-NasLog ("Read {0} line(s) in {1:N1}s" -f @($content).Count, ($readSw.Elapsed.TotalSeconds))
+        $contentCount = @($content).Count
+        Write-NasLog ("Read {0} line(s) in {1:N1}s" -f $contentCount, ($readSw.Elapsed.TotalSeconds))
     } else {
         Write-NasLog "VMC.log not found at $logsPath - skipping unstructured/NAS section parsing" 'WARNING'
         $content = @()
+        $contentCount = 0
     }
 
     $sections = @()
@@ -107,7 +109,7 @@ try {
     foreach($line in $content){
         $lineNum++
         if (($lineNum % 200000) -eq 0) {
-            Write-NasLog ("Scanning VMC.log... {0}/{1} lines, {2} section(s) captured" -f $lineNum, @($content).Count, $sections.Count)
+            Write-NasLog ("Scanning VMC.log... {0}/{1} lines, {2} section(s) captured" -f $lineNum, $contentCount, $sections.Count)
         }
         if(-not $capturing -and $line -match $unstrucStart){
             $capturing = $true
