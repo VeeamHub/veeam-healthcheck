@@ -47,7 +47,7 @@ namespace VhcXTests
         {
             public (string Username, string Password)? Result { get; set; }
 
-            public string LastHost { get; private set; }
+            public string? LastHost { get; private set; }
 
             public int CallCount { get; private set; }
 
