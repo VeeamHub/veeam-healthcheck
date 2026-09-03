@@ -1,5 +1,6 @@
 ﻿// Copyright (c) 2021, Adam Congdon <adam.congdon2@gmail.com>
 // MIT License
+using System;
 using System.Security.Principal;
 
 namespace VeeamHealthCheck
@@ -8,12 +9,9 @@ namespace VeeamHealthCheck
     {
         public bool IsAdmin()
         {
-            using (WindowsIdentity identity = WindowsIdentity.GetCurrent())
-            {
-                WindowsPrincipal principal = new WindowsPrincipal(identity);
-                bool IsAdmin = principal.IsInRole(WindowsBuiltInRole.Administrator);
-                return IsAdmin;
-            }
+            return OperatingSystem.IsWindows()
+                ? new WindowsPrincipal(WindowsIdentity.GetCurrent()).IsInRole(WindowsBuiltInRole.Administrator)
+                : Environment.IsPrivilegedProcess;
         }
     }
 }

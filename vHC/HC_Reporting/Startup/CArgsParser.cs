@@ -84,7 +84,10 @@ namespace VeeamHealthCheck.Startup
 
         private IntPtr Handle()
         {
-            return GetConsoleWindow();
+            // GetConsoleWindow is a kernel32.dll P/Invoke — no console-window
+            // concept exists off Windows, so calling it there would throw
+            // DllNotFoundException.
+            return OperatingSystem.IsWindows() ? GetConsoleWindow() : IntPtr.Zero;
         }
 
         // private int ParseZeroArgs()
@@ -110,6 +113,8 @@ namespace VeeamHealthCheck.Startup
             bool runHfd = false;
             string _hfdPath = string.Empty;
 
+            // Same intentional Windows-only default as CVariables.outDir - see that
+            // comment for why this isn't cross-platform-guarded.
             string targetDir = @"C:\temp\vHC";
             foreach (var a in args)
             {
@@ -232,13 +237,9 @@ namespace VeeamHealthCheck.Startup
                             CGlobals.TargetProductType = TargetProduct.Vb365;
                         CGlobals.Logger.Info("Target product: VB365", false);
                         break;
-                    case var match when new Regex("/path=.*").IsMatch(a):
+                    case var match when new Regex("/path=.*", RegexOptions.IgnoreCase).IsMatch(a):
                         _hfdPath = this.ParsePath(a);
-                        CGlobals.Logger.Info("HFD path: " + targetDir);
-                        break;
-                    case var match when new Regex("/PATH=.*").IsMatch(a):
-                        _hfdPath = this.ParsePath(a);
-                        CGlobals.Logger.Info("HFD path: " + targetDir);
+                        CGlobals.Logger.Info("HFD path: " + _hfdPath);
                         break;
                     case var match when new Regex("/outdir=.*", RegexOptions.IgnoreCase).IsMatch(a):
                         string parsedOutDir = this.ParsePath(a);

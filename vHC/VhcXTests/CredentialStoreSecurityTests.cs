@@ -1,16 +1,20 @@
 // Copyright (c) 2021, Adam Congdon <adam.congdon2@gmail.com>
 // MIT License
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Text;
+using System.Text.Json;
 using System.Text.RegularExpressions;
 using Xunit;
 using VeeamHealthCheck.Startup;
 using VeeamHealthCheck.Shared;
+using VhcXTests;
 
 namespace VeeamHealthCheck.Tests.Security
 {
-    [Collection("Credential Store Tests")]
+    [Collection("GlobalState")]
     [Trait("Category", "Security")]
     public class CredentialStoreSecurityTests : IDisposable
     {
@@ -19,18 +23,24 @@ namespace VeeamHealthCheck.Tests.Security
 
         public CredentialStoreSecurityTests()
         {
-            // Create a temporary directory for test credential storage
+            _originalStorePath = CredentialStore.StorePath;
+
+            // Create a temporary directory for test credential storage, and point
+            // CredentialStore at a creds.json inside it instead of the real
+            // %APPDATA%/VeeamHealthCheck/creds.json, so these tests never touch a
+            // real user's stored credentials.
             _testStorePath = Path.Combine(Path.GetTempPath(), $"vhc-creds-test-{Guid.NewGuid()}");
             Directory.CreateDirectory(_testStorePath);
-            
-            // Store original path to restore later (if needed)
-            _originalStorePath = Path.Combine(
-                Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
-                "VeeamHealthCheck", "creds.json");
+
+            CredentialStore.StorePath = Path.Combine(_testStorePath, "creds.json");
+            CredentialStore.InitializeCache();
         }
 
         public void Dispose()
         {
+            CredentialStore.StorePath = _originalStorePath;
+            CredentialStore.InitializeCache();
+
             // Clean up test directory
             if (Directory.Exists(_testStorePath))
             {
@@ -45,7 +55,7 @@ namespace VeeamHealthCheck.Tests.Security
             }
         }
 
-        [Fact]
+        [WindowsOnlyFact]
         public void StoredCredentials_ShouldBeEncrypted()
         {
             // Arrange
@@ -57,9 +67,7 @@ namespace VeeamHealthCheck.Tests.Security
             CredentialStore.Set(server, username, password);
 
             // Read the raw file content
-            var storePath = Path.Combine(
-                Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
-                "VeeamHealthCheck", "creds.json");
+            var storePath = CredentialStore.StorePath;
             
             string fileContent = File.ReadAllText(storePath);
 
@@ -78,7 +86,7 @@ namespace VeeamHealthCheck.Tests.Security
             CredentialStore.Clear();
         }
 
-        [Fact]
+        [WindowsOnlyFact]
         public void StoredCredentials_ShouldNotContainPlaintextPassword()
         {
             // Arrange
@@ -90,9 +98,7 @@ namespace VeeamHealthCheck.Tests.Security
             CredentialStore.Set(server, username, password);
 
             // Read the raw file
-            var storePath = Path.Combine(
-                Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
-                "VeeamHealthCheck", "creds.json");
+            var storePath = CredentialStore.StorePath;
             
             string fileContent = File.ReadAllText(storePath);
 
@@ -135,7 +141,7 @@ namespace VeeamHealthCheck.Tests.Security
             CredentialStore.Clear();
         }
 
-        [Fact]
+        [WindowsOnlyFact]
         public void Set_WithComplexPassword_ShouldEncryptAndDecryptCorrectly()
         {
             // Arrange - Test various special characters
@@ -152,9 +158,7 @@ namespace VeeamHealthCheck.Tests.Security
             Assert.Equal(complexPassword, retrieved.Value.Password);
 
             // Verify file doesn't contain plaintext
-            var storePath = Path.Combine(
-                Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
-                "VeeamHealthCheck", "creds.json");
+            var storePath = CredentialStore.StorePath;
             
             string fileContent = File.ReadAllText(storePath);
             Assert.DoesNotContain(complexPassword, fileContent, StringComparison.Ordinal);
@@ -209,9 +213,7 @@ namespace VeeamHealthCheck.Tests.Security
             Assert.Null(CredentialStore.Get(server));
 
             // Verify file doesn't contain the server name anymore
-            var storePath = Path.Combine(
-                Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
-                "VeeamHealthCheck", "creds.json");
+            var storePath = CredentialStore.StorePath;
 
             if (File.Exists(storePath))
             {
@@ -224,6 +226,97 @@ namespace VeeamHealthCheck.Tests.Security
         }
 
         [Fact]
+        public void Remove_WhenOtherCredentialsRemainOnDisk_ShouldRemoveEntryFromFileRegardlessOfOS()
+        {
+            // Arrange
+            string serverA = "remove-sync-test-a.local";
+            string serverB = "remove-sync-test-b.local";
+            var storePath = CredentialStore.StorePath;
+
+            CredentialStore.Clear();
+
+            // Populate the in-memory cache for both servers. Set() always updates
+            // the cache; on non-Windows it does NOT persist to disk (DPAPI is
+            // unavailable there), so _cache and the on-disk file can diverge.
+            CredentialStore.Set(serverA, "userA", "pfake-A");
+            CredentialStore.Set(serverB, "userB", "pfake-B");
+
+            // Simulate a creds.json that already has both entries on disk, e.g.
+            // written by a prior run on Windows and then loaded here by
+            // InitializeCache() on any OS.
+            var onDisk = new Dictionary<string, CredentialRecord>
+            {
+                [serverA] = new CredentialRecord { Username = "userA", PasswordEnc = Convert.ToBase64String(Encoding.UTF8.GetBytes("fakeA")) },
+                [serverB] = new CredentialRecord { Username = "userB", PasswordEnc = Convert.ToBase64String(Encoding.UTF8.GetBytes("fakeB")) },
+            };
+            File.WriteAllText(storePath, JsonSerializer.Serialize(onDisk, new JsonSerializerOptions { WriteIndented = true }));
+
+            // Act
+            bool removed = CredentialStore.Remove(serverA);
+
+            // Assert
+            Assert.True(removed);
+            Assert.True(File.Exists(storePath), "creds.json should still exist since serverB's credentials remain.");
+
+            string fileContent = File.ReadAllText(storePath);
+            Assert.DoesNotContain(serverA, fileContent, StringComparison.Ordinal);
+            Assert.Contains(serverB, fileContent, StringComparison.Ordinal);
+
+            // Cleanup
+            CredentialStore.Clear();
+        }
+
+        [Fact]
+        public void MergePersistablePayload_ExistingDiskEntryMarkedTransientInCache_KeepsOriginalDiskEntryUnchanged()
+        {
+            // A host can be both already-persisted on disk from a prior run AND
+            // marked transient in the current run's cache (e.g. it also appears in
+            // a /credfile= this run). Persisting must not let the transient marker
+            // delete or overwrite that host's legitimately-persisted disk record --
+            // only entries that are NOT transient should be written/updated.
+            var existingOnDisk = new Dictionary<string, CredentialRecord>
+            {
+                ["hostA"] = new CredentialRecord { Username = "diskUserA", PasswordEnc = "diskEncA" },
+            };
+            var cache = new Dictionary<string, (string Username, byte[] PasswordEnc)>
+            {
+                ["hostA"] = ("cacheUserA", Encoding.UTF8.GetBytes("cacheRawA")), // transient this run
+                ["hostB"] = ("userB", Encoding.UTF8.GetBytes("rawB")), // not transient
+            };
+            var transientKeys = new HashSet<string> { "hostA" };
+
+            var result = CredentialStore.MergePersistablePayload(existingOnDisk, cache, transientKeys);
+
+            Assert.True(result.ContainsKey("hostA"));
+            Assert.Equal("diskUserA", result["hostA"].Username);
+            Assert.Equal("diskEncA", result["hostA"].PasswordEnc);
+
+            Assert.True(result.ContainsKey("hostB"));
+            Assert.Equal("userB", result["hostB"].Username);
+            Assert.Equal(Convert.ToBase64String(Encoding.UTF8.GetBytes("rawB")), result["hostB"].PasswordEnc);
+        }
+
+        [WindowsOnlyFact]
+        public void SetTransient_ThenSetForDifferentHost_DoesNotPersistTransientHostToDisk()
+        {
+            // Reproduces the /credfile= -> interactive-prompt-for-a-different-host
+            // path: LoadCredFile seeds transient hosts via SetTransient, then later
+            // in the same process a Set() call for an unrelated host must not
+            // persist the transient hosts to disk too.
+            string transientHost = "credfile-transient-host.local";
+            string persistedHost = "interactive-persisted-host.local";
+
+            CredentialStore.SetTransient(transientHost, "userT", "pfake-T");
+            CredentialStore.Set(persistedHost, "userP", "pfake-P");
+
+            string fileContent = File.ReadAllText(CredentialStore.StorePath);
+            Assert.DoesNotContain(transientHost, fileContent, StringComparison.Ordinal);
+            Assert.Contains(persistedHost, fileContent, StringComparison.Ordinal);
+
+            CredentialStore.Clear();
+        }
+
+        [WindowsOnlyFact]
         public void Clear_ShouldRemoveAllCredentialsAndFile()
         {
             // Arrange
@@ -231,9 +324,7 @@ namespace VeeamHealthCheck.Tests.Security
             CredentialStore.Set("server2.local", "user2", "pass2");
             CredentialStore.Set("server3.local", "user3", "pass3");
 
-            var storePath = Path.Combine(
-                Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
-                "VeeamHealthCheck", "creds.json");
+            var storePath = CredentialStore.StorePath;
 
             Assert.True(File.Exists(storePath));
 
@@ -248,7 +339,7 @@ namespace VeeamHealthCheck.Tests.Security
             Assert.False(CredentialStore.HasStoredCredentials());
         }
 
-        [Fact]
+        [WindowsOnlyFact]
         public void MultipleServers_ShouldStoreSeparateEncryptedCredentials()
         {
             // Arrange
@@ -275,9 +366,7 @@ namespace VeeamHealthCheck.Tests.Security
             }
 
             // Verify file doesn't contain any plaintext passwords
-            var storePath = Path.Combine(
-                Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
-                "VeeamHealthCheck", "creds.json");
+            var storePath = CredentialStore.StorePath;
             
             string fileContent = File.ReadAllText(storePath);
 
@@ -290,7 +379,7 @@ namespace VeeamHealthCheck.Tests.Security
             CredentialStore.Clear();
         }
 
-        [Fact]
+        [WindowsOnlyFact]
         public void PasswordEncryption_ShouldBeUniquePerPassword()
         {
             // Arrange
@@ -305,9 +394,7 @@ namespace VeeamHealthCheck.Tests.Security
             CredentialStore.Set(server2, username, password2);
 
             // Read raw file
-            var storePath = Path.Combine(
-                Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
-                "VeeamHealthCheck", "creds.json");
+            var storePath = CredentialStore.StorePath;
             
             string fileContent = File.ReadAllText(storePath);
 
@@ -354,7 +441,7 @@ namespace VeeamHealthCheck.Tests.Security
             Assert.False(removed);
         }
 
-        [Fact]
+        [WindowsOnlyFact]
         public void CredentialFile_ShouldBeInUserProfile()
         {
             // Arrange
@@ -365,14 +452,16 @@ namespace VeeamHealthCheck.Tests.Security
             // Act
             CredentialStore.Set(server, username, password);
 
-            var storePath = Path.Combine(
-                Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
-                "VeeamHealthCheck", "creds.json");
+            // Assert - Set() persisted somewhere (the isolated test store, in this suite)
+            Assert.True(File.Exists(CredentialStore.StorePath));
 
-            // Assert - File should be in user's AppData
-            Assert.True(File.Exists(storePath));
-            Assert.Contains("AppData", storePath);
-            Assert.Contains("VeeamHealthCheck", storePath);
+            // Assert - the real production default (captured in the constructor
+            // before this class's isolation seam overrides it) lives under the
+            // user's profile in a VeeamHealthCheck folder. Asserting against
+            // _originalStorePath rather than CredentialStore.StorePath here since
+            // the latter is intentionally overridden to a temp path for this suite.
+            Assert.Contains("AppData", _originalStorePath);
+            Assert.Contains("VeeamHealthCheck", _originalStorePath);
 
             // Cleanup
             CredentialStore.Clear();

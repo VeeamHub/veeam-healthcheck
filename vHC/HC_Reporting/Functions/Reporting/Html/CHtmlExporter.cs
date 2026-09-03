@@ -24,8 +24,8 @@ namespace VeeamHealthCheck.Functions.Reporting.Html
 
         // path settings
         private readonly string basePath = CGlobals.desiredPath;
-        private readonly string anonPath = CGlobals.desiredPath + CVariables.safeSuffix;
-        private readonly string origPath = CGlobals.desiredPath + CVariables.unsafeSuffix;
+        private readonly string anonPath = CCrossPlatformPath.Combine(CGlobals.desiredPath, CVariables.safeSuffix);
+        private readonly string origPath = CCrossPlatformPath.Combine(CGlobals.desiredPath, CVariables.unsafeSuffix);
 
         private readonly string backupServerName;
         private string latestReport;
@@ -264,11 +264,11 @@ namespace VeeamHealthCheck.Functions.Reporting.Html
                 {
                     installID = this.TrySetInstallId(CLogOptions.INSTALLID);
 
-                    htmlCore = this.anonPath + "\\" + this.htmlName + "_" + vbrOrVb365 + "_" + installID + dateTime.ToString("_yyyy.MM.dd.HHmmss") + ".html";
+                    htmlCore = Path.Combine(this.anonPath, this.htmlName + "_" + vbrOrVb365 + "_" + installID + dateTime.ToString("_yyyy.MM.dd.HHmmss") + ".html");
                 }
                 else if (!scrub)
                 {
-                    htmlCore = this.origPath + "\\" + this.htmlName + "_" + vbrOrVb365 + "_" + this.backupServerName + dateTime.ToString("_yyyy.MM.dd.HHmmss") + ".html";
+                    htmlCore = Path.Combine(this.origPath, this.htmlName + "_" + vbrOrVb365 + "_" + this.backupServerName + dateTime.ToString("_yyyy.MM.dd.HHmmss") + ".html");
 
                     // log.Warning("htmlcore = " + htmlCore, false);
                 }

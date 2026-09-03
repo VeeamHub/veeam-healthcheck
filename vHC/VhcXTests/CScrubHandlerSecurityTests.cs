@@ -109,7 +109,7 @@ namespace VhcXTests
 
         // ---- RestrictFileToOwner (ACL lockdown) -------------------------
 
-        [Fact]
+        [WindowsOnlyFact]
         public void RestrictFileToOwner_RemovesBroadAccessAndBreaksInheritance()
         {
             string path = Path.Combine(Path.GetTempPath(), $"vhc-keyfile-acl-{System.Guid.NewGuid():N}.json");
