@@ -225,7 +225,8 @@ MIT License
         <Grid Grid.Row="0" ColumnDefinitions="*,Auto,Auto,Auto,Auto" Margin="25,16,25,8">
             <TextBlock Grid.Column="0" Text="Veeam Health Check" FontSize="20" FontWeight="Bold" VerticalAlignment="Center" />
             <Button x:Name="importButton" Grid.Column="1" Classes="secondary"
-                    Margin="0,0,12,0" Click="Import_click" />
+                    Margin="0,0,12,0" Click="Import_click"
+                    ToolTip.Tip="Create a report from previously collected data" />
             <Border x:Name="importDivider" Grid.Column="2" Width="1" Height="18" VerticalAlignment="Center" Margin="0,0,12,0"
                     Background="{DynamicResource CardBorderBrush}" />
             <Button x:Name="ThemeToggleButton" Grid.Column="3" Classes="secondary"
