@@ -450,10 +450,11 @@ MIT License
                 <Button x:Name="termsBtn" Grid.Column="0" Classes="secondary"
                         Height="45" Click="AcceptButton_click" />
 
-                <!-- progressText now hides via Opacity, not IsVisible (see code-behind) -
-                     sharing this column with nothing else to collapse against means
-                     IsVisible=false would shrink the column and shift termsBtn/run
-                     vertically on every run start/stop. -->
+                <!-- progressText now hides via Opacity, not IsVisible (see code-behind).
+                     Opacity is a paint-time effect only - it never changes an element's
+                     measured size, so nothing in the bottom bar can reflow when progress
+                     shows or hides. IsVisible=false would zero progressText's DesiredSize
+                     and let the bottom bar's layout change on every run start/stop. -->
                 <StackPanel Grid.Column="1" Margin="16,0" VerticalAlignment="Center">
                     <ProgressBar Name="pBar"
                                  Height="20"
@@ -578,10 +579,11 @@ Find:
 Replace with:
 
 ```csharp
-        // Both pBar and progressText hide via Opacity, not IsVisible: they now
-        // share a bottom-bar column with nothing else to collapse against, so
-        // IsVisible=false would shrink the column and shift termsBtn/run
-        // vertically on every run start/stop.
+        // Both pBar and progressText hide via Opacity, not IsVisible. Opacity is a
+        // paint-time effect only - it never changes an element's measured size, so
+        // nothing in the bottom bar can reflow when progress shows or hides.
+        // IsVisible=false would zero progressText's DesiredSize and let the bottom
+        // bar's layout change on every run start/stop.
 ```
 
 - [ ] **Step 4: Toggle the import divider alongside the import button**
@@ -681,14 +683,47 @@ Replace with:
             AdHocTabPanel.IsVisible = isAdHoc;
             MonitoringTabPanel.IsVisible = !isAdHoc;
 
+            // Opacity/IsHitTestVisible alone block pointer input, not keyboard focus -
+            // without Focusable=false too, Tab navigation could still land on and
+            // activate the invisible button from the wrong tab.
             termsBtn.Opacity = isAdHoc ? 1 : 0;
             termsBtn.IsHitTestVisible = isAdHoc;
+            termsBtn.Focusable = isAdHoc;
             run.Opacity = isAdHoc ? 1 : 0;
             run.IsHitTestVisible = isAdHoc;
+            run.Focusable = isAdHoc;
 
             AdHocTabButton.Classes.Set("tab-active", isAdHoc);
             MonitoringTabButton.Classes.Set("tab-active", !isAdHoc);
         }
+```
+
+Also call `SelectTab(isAdHoc: true)` from the constructor, right after `InitializeComponent()`, so it's the single source of truth for the Ad-hoc-tab default rather than three independently-encoded XAML defaults (`AdHocTabPanel`'s implicit `IsVisible=true`, `AdHocTabButton`'s `tab-active` class, and `termsBtn`/`run`'s implicit default state) that could silently drift apart on a future edit — and so `termsBtn`/`run` don't start `Focusable=true` from XAML alone. Find:
+
+```csharp
+        public VhcGui()
+        {
+            InitializeComponent();
+
+            ThemeToggleButton.Content = ThemeLabelFor(Application.Current!.RequestedThemeVariant);
+```
+
+Replace with:
+
+```csharp
+        public VhcGui()
+        {
+            InitializeComponent();
+
+            // Establishes SelectTab as the single source of truth for the Ad-hoc-tab
+            // default (XAML alone encodes it three separate ways: AdHocTabPanel's
+            // implicit IsVisible=true, AdHocTabButton's tab-active class, and
+            // termsBtn/run's implicit default Opacity/IsHitTestVisible/Focusable) -
+            // without this call, a future edit to one could silently drift from the
+            // others, and termsBtn/run would start Focusable=true from XAML alone.
+            SelectTab(isAdHoc: true);
+
+            ThemeToggleButton.Content = ThemeLabelFor(Application.Current!.RequestedThemeVariant);
 ```
 
 - [ ] **Step 6: Build to verify**

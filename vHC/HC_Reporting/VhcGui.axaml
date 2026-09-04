@@ -242,10 +242,11 @@ MIT License
                 <Button x:Name="termsBtn" Grid.Column="0" Classes="secondary"
                         Height="45" Click="AcceptButton_click" />
 
-                <!-- progressText now hides via Opacity, not IsVisible (see code-behind) -
-                     sharing this column with nothing else to collapse against means
-                     IsVisible=false would shrink the column and shift termsBtn/run
-                     vertically on every run start/stop. -->
+                <!-- progressText now hides via Opacity, not IsVisible (see code-behind).
+                     Opacity is a paint-time effect only - it never changes an element's
+                     measured size, so nothing in the bottom bar can reflow when progress
+                     shows or hides. IsVisible=false would zero progressText's DesiredSize
+                     and let the bottom bar's layout change on every run start/stop. -->
                 <StackPanel Grid.Column="1" Margin="16,0" VerticalAlignment="Center">
                     <ProgressBar Name="pBar"
                                  Height="20"
