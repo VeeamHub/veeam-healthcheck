@@ -39,7 +39,7 @@ MIT License
         <ScrollViewer Grid.Row="2" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" Margin="25,0,25,15">
             <Panel>
 
-                <!-- Ad-hoc Health Check tab (interim: single column - Task 4 splits into two) -->
+                <!-- Ad-hoc Health Check tab -->
                 <Grid x:Name="AdHocTabPanel" ColumnDefinitions="*,20,*">
                     <StackPanel Grid.Column="0">
                         <Border Classes="card" Margin="0,0,0,15">
@@ -168,7 +168,7 @@ MIT License
                     </StackPanel>
                 </Grid>
 
-                <!-- Continuous Monitoring tab (interim: card moved bodily, unsplit - Task 4 splits into two) -->
+                <!-- Continuous Monitoring tab -->
                 <Grid x:Name="MonitoringTabPanel" ColumnDefinitions="*,20,*" IsVisible="False">
                     <Border Grid.Column="0" Classes="card">
                         <StackPanel TextElement.FontWeight="SemiBold">
