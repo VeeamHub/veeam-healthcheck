@@ -10,90 +10,22 @@ MIT License
         Width="950"
         SizeToContent="Height"
         WindowStartupLocation="CenterScreen"
-        CanResize="True"
-        Background="#F5F5F5">
-
-    <Window.Styles>
-        <Style Selector="Button.modern">
-            <Setter Property="Background" Value="#00B233" />
-            <Setter Property="Foreground" Value="White" />
-            <Setter Property="FontSize" Value="14" />
-            <Setter Property="FontWeight" Value="SemiBold" />
-            <Setter Property="Padding" Value="20,10" />
-            <Setter Property="BorderThickness" Value="0" />
-            <Setter Property="CornerRadius" Value="4" />
-            <Setter Property="Cursor" Value="Hand" />
-        </Style>
-        <Style Selector="Button.modern:pointerover /template/ ContentPresenter">
-            <Setter Property="Background" Value="#00A030" />
-        </Style>
-        <Style Selector="Button.modern:disabled /template/ ContentPresenter">
-            <Setter Property="Background" Value="#CCCCCC" />
-        </Style>
-
-        <Style Selector="Button.secondary">
-            <Setter Property="Background" Value="#555555" />
-            <Setter Property="Foreground" Value="White" />
-            <Setter Property="FontSize" Value="14" />
-            <Setter Property="FontWeight" Value="SemiBold" />
-            <Setter Property="Padding" Value="20,10" />
-            <Setter Property="BorderThickness" Value="0" />
-            <Setter Property="CornerRadius" Value="4" />
-            <Setter Property="Cursor" Value="Hand" />
-        </Style>
-        <Style Selector="Button.secondary:pointerover /template/ ContentPresenter">
-            <Setter Property="Background" Value="#333333" />
-        </Style>
-        <Style Selector="Button.secondary:disabled /template/ ContentPresenter">
-            <Setter Property="Background" Value="#CCCCCC" />
-        </Style>
-
-        <Style Selector="CheckBox.modern">
-            <Setter Property="FontSize" Value="13" />
-            <Setter Property="Foreground" Value="#333333" />
-            <Setter Property="Margin" Value="0,8,0,0" />
-            <Setter Property="Cursor" Value="Hand" />
-        </Style>
-
-        <!-- Avalonia 11.3.20 has no native GroupBox (verified: absent from Avalonia.Controls,
-             no HeaderedContentControl default template either) - the four "GroupBox" sections
-             below are ported as Border + StackPanel (header TextBlock as first child) instead.
-             None of the original GroupBox elements had Name/x:Name, so this has no code-behind impact. -->
-        <Style Selector="Border.groupbox">
-            <Setter Property="BorderBrush" Value="#DDDDDD" />
-            <Setter Property="BorderThickness" Value="1" />
-            <Setter Property="Padding" Value="15" />
-            <Setter Property="Background" Value="White" />
-        </Style>
-
-        <Style Selector="TextBox.modern">
-            <Setter Property="Padding" Value="8" />
-            <Setter Property="BorderBrush" Value="#CCCCCC" />
-            <Setter Property="BorderThickness" Value="1" />
-            <Setter Property="FontSize" Value="13" />
-        </Style>
-
-        <Style Selector="ComboBox.modern">
-            <Setter Property="Padding" Value="8" />
-            <Setter Property="BorderBrush" Value="#CCCCCC" />
-            <Setter Property="FontSize" Value="13" />
-        </Style>
-    </Window.Styles>
+        CanResize="True">
 
     <Grid RowDefinitions="*,Auto">
 
-        <ScrollViewer Grid.Row="0" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+        <Panel Grid.Row="0">
+        <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
         <Grid Margin="25,25,25,15" ColumnDefinitions="380,20,*">
 
             <!-- Left Panel - Instructions and Warnings -->
             <StackPanel Grid.Column="0">
-                <Border Background="White" Padding="20" Margin="0,0,0,15" CornerRadius="6"
-                        BoxShadow="0 2 10 0 #4CCCCCCC">
+                <Border Classes="card" Margin="0,0,0,15">
                     <StackPanel>
-                        <TextBlock FontSize="18" FontWeight="Bold" Foreground="#00B233" Margin="0,0,0,10">
+                        <TextBlock Classes="card-title" FontSize="18" FontWeight="Bold" Foreground="{DynamicResource AccentBrush}" Margin="0,0,0,10">
                             <Run Name="InsHeader" />
                         </TextBlock>
-                        <TextBlock TextWrapping="Wrap" FontSize="12" Foreground="#555555" LineHeight="20">
+                        <TextBlock Classes="secondary-text" TextWrapping="Wrap" LineHeight="20">
                             <Run Name="line1" /><LineBreak />
                             <Run Name="line2" /><LineBreak />
                             <Run Name="line3" /><LineBreak />
@@ -104,10 +36,10 @@ MIT License
                     </StackPanel>
                 </Border>
 
-                <Border Background="#FFF8E1" BorderBrush="#FFC107" BorderThickness="1"
+                <Border Background="{DynamicResource CautionBackgroundBrush}" BorderBrush="{DynamicResource CautionBorderBrush}" BorderThickness="1"
                         Padding="15" CornerRadius="4">
                     <StackPanel>
-                        <TextBlock FontSize="12" TextWrapping="Wrap" Foreground="#333333" LineHeight="20">
+                        <TextBlock FontSize="12" TextWrapping="Wrap" Foreground="{DynamicResource PrimaryTextBrush}" LineHeight="20">
                             <Run Name="Cav1Part1" />
                         </TextBlock>
                         <!-- Original had this as an inline WPF Hyperlink between Cav1Part1 and Cav2;
@@ -117,17 +49,17 @@ MIT License
                         <HyperlinkButton Name="kbLink"
                                          NavigateUri="https://www.veeam.com/kb2462"
                                          Content="KB 2462"
-                                         Foreground="#0066CC"
+                                         Foreground="{DynamicResource CautionLinkBrush}"
                                          FontSize="12"
                                          Margin="0,2,0,2" />
-                        <TextBlock FontSize="12" TextWrapping="Wrap" Foreground="#333333" LineHeight="20">
+                        <TextBlock FontSize="12" TextWrapping="Wrap" Foreground="{DynamicResource PrimaryTextBrush}" LineHeight="20">
                             <Run Name="Cav2" />
                         </TextBlock>
-                        <TextBlock TextWrapping="Wrap" FontSize="11" Foreground="#666666"
+                        <TextBlock Classes="secondary-text" TextWrapping="Wrap" FontSize="11"
                                    Margin="0,10,0,0" LineHeight="16">
                             <Run Name="Cav3" /><LineBreak />
                             <Run Name="Cav4" /><LineBreak /><LineBreak />
-                            <Run FontWeight="SemiBold" Foreground="#555555">Credential Storage:</Run><Run> Credentials are stored encrypted at </Run><Run FontFamily="Consolas" Foreground="#555555">%AppData%\VeeamHealthCheck\creds.json</Run><Run>. You can delete this file to remove saved credentials or use the "Clear Saved Credentials" option.</Run>
+                            <Run FontWeight="SemiBold">Credential Storage:</Run><Run> Credentials are stored encrypted at </Run><Run FontFamily="Consolas">%AppData%\VeeamHealthCheck\creds.json</Run><Run>. You can delete this file to remove saved credentials or use the "Clear Saved Credentials" option.</Run>
                         </TextBlock>
                     </StackPanel>
                 </Border>
@@ -135,14 +67,13 @@ MIT License
 
             <!-- Right Panel - Options and Controls -->
             <StackPanel Grid.Column="2">
-                <Border Classes="groupbox" Margin="0,0,0,15">
+                <Border Classes="card" Margin="0,0,0,15">
                     <StackPanel TextElement.FontWeight="SemiBold">
-                        <TextBlock FontSize="16" Foreground="#333333">
+                        <TextBlock Classes="card-title">
                             <Run Name="OptHdr" />
                         </TextBlock>
                         <StackPanel Margin="5,10,5,0">
-                            <TextBlock Text="Export Options" FontSize="13" FontWeight="SemiBold"
-                                       Foreground="#555555" Margin="0,0,0,8" />
+                            <TextBlock Text="Export Options" Classes="field-label" Margin="0,0,0,8" />
                             <CheckBox x:Name="pdfCheckBox" Classes="modern"
                                       Checked="pdfCheckBox_Checked" Unchecked="pdfCheckBox_Unchecked"
                                       IsChecked="False" />
@@ -153,13 +84,12 @@ MIT License
                                       Checked="htmlChecked" Unchecked="htmlUnchecked"
                                       ToolTip.Tip="Display the HTML report in your default browser after generation" />
 
-                            <Separator Margin="0,12,0,12" Background="#EEEEEE" />
+                            <Separator Margin="0,12,0,12" />
 
-                            <TextBlock Text="Data Collection" FontSize="13" FontWeight="SemiBold"
-                                       Foreground="#555555" Margin="0,0,0,8" />
+                            <TextBlock Text="Data Collection" Classes="field-label" Margin="0,0,0,8" />
                             <StackPanel Orientation="Horizontal" Margin="0,8,0,0">
                                 <TextBlock Text="Collection Period:" VerticalAlignment="Center"
-                                           FontSize="13" Foreground="#333333" Margin="0,0,10,0" />
+                                           Classes="field-label" Margin="0,0,10,0" />
                                 <ComboBox Name="daysSelector" Classes="modern"
                                           Width="120" SelectedIndex="0" SelectionChanged="ComboBox_SelectionChanged">
                                     <ComboBoxItem Content="7 Days" IsSelected="True" />
@@ -173,10 +103,9 @@ MIT License
                                     Margin="0,8,0,0"
                                     ToolTip.Tip="Rescan for Hardware change" />
 
-                            <Separator Margin="0,12,0,12" Background="#EEEEEE" />
+                            <Separator Margin="0,12,0,12" />
 
-                            <TextBlock Text="Security &amp; Privacy" FontSize="13" FontWeight="SemiBold"
-                                       Foreground="#555555" Margin="0,0,0,8" />
+                            <TextBlock Text="Security &amp; Privacy" Classes="field-label" Margin="0,0,0,8" />
                             <CheckBox x:Name="scrubBox" Classes="modern"
                                       Checked="HandleCheck" Unchecked="HandleUnchecked"
                                       ToolTip.Tip="Anonymize sensitive data according to Veeam KB 2462" />
@@ -188,17 +117,17 @@ MIT License
                     </StackPanel>
                 </Border>
 
-                <Border Classes="groupbox" Margin="0,0,0,15">
+                <Border Classes="card" Margin="0,0,0,15">
                     <StackPanel TextElement.FontWeight="SemiBold">
-                        <TextBlock Name="outPath" FontSize="16" Foreground="#333333" />
+                        <TextBlock Name="outPath" Classes="card-title" />
                         <TextBox x:Name="pathBox" Classes="modern"
                                  TextChanged="pathBox_TextChanged" Height="32" Margin="0,10,0,0" />
                     </StackPanel>
                 </Border>
 
-                <Border Classes="groupbox" Margin="0,0,0,15">
+                <Border Classes="card" Margin="0,0,0,15">
                     <StackPanel TextElement.FontWeight="SemiBold">
-                        <TextBlock Text="VBR Server" FontSize="16" Foreground="#333333" />
+                        <TextBlock Text="VBR Server" Classes="card-title" />
                         <StackPanel Margin="5,10,5,0">
                             <Grid Margin="0,0,0,10" ColumnDefinitions="*,10,80">
                                 <TextBox x:Name="serverTextBox" Grid.Column="0"
@@ -210,12 +139,12 @@ MIT License
                                         Content="Add"
                                         Height="32"
                                         FontSize="12"
-                                        Classes="modern"
+                                        Classes="primary"
                                         Click="addServerBtn_Click" />
                             </Grid>
 
-                            <Border BorderBrush="#CCCCCC" BorderThickness="1"
-                                    Background="White" Height="120">
+                            <Border BorderBrush="{DynamicResource CardBorderBrush}" BorderThickness="1"
+                                    Background="{DynamicResource CardBackgroundBrush}" Height="120">
                                 <ListBox x:Name="serverListBox"
                                          BorderThickness="0"
                                          SelectionMode="Single"
@@ -241,10 +170,9 @@ MIT License
                                         Click="clearServersBtn_Click" />
                             </Grid>
 
-                            <Separator Margin="0,12,0,12" Background="#EEEEEE" />
+                            <Separator Margin="0,12,0,12" />
 
-                            <TextBlock Text="Product Type:" FontSize="13" FontWeight="SemiBold"
-                                       Foreground="#555555" Margin="0,0,0,8" />
+                            <TextBlock Text="Product Type:" Classes="field-label" Margin="0,0,0,8" />
                             <ComboBox x:Name="productTypeSelector"
                                       Classes="modern"
                                       Width="220"
@@ -261,22 +189,21 @@ MIT License
                     </StackPanel>
                 </Border>
 
-                <Border Classes="groupbox" Margin="0,0,0,15">
+                <Border Classes="card" Margin="0,0,0,15">
                     <StackPanel TextElement.FontWeight="SemiBold">
-                        <TextBlock Text="Continuous Monitoring" FontSize="16" Foreground="#333333" />
+                        <TextBlock Text="Continuous Monitoring" Classes="card-title" />
                         <StackPanel Margin="5,10,5,0">
 
                             <StackPanel Orientation="Horizontal" Margin="0,0,0,6">
-                                <TextBlock Text="Status: " FontSize="13" Foreground="#555555" VerticalAlignment="Center" />
+                                <TextBlock Text="Status: " Classes="secondary-text" VerticalAlignment="Center" />
                                 <TextBlock x:Name="monitorStatusText" FontSize="13" FontWeight="SemiBold"
-                                           Foreground="#999999" VerticalAlignment="Center" Text="Checking..." />
+                                           Foreground="{DynamicResource StatusNeutralBrush}" VerticalAlignment="Center" Text="Checking..." />
                             </StackPanel>
 
-                            <TextBlock x:Name="monitorLastRunText" FontSize="11" Foreground="#777777"
+                            <TextBlock x:Name="monitorLastRunText" Classes="secondary-text" FontSize="11"
                                        Margin="0,0,0,10" IsVisible="False" TextWrapping="Wrap" />
 
-                            <TextBlock Text="Alert Notifications" FontSize="12" FontWeight="SemiBold"
-                                       Foreground="#555555" Margin="0,0,0,6" />
+                            <TextBlock Text="Alert Notifications" Classes="field-label" Margin="0,0,0,6" />
                             <Grid Margin="0,0,0,8" ColumnDefinitions="100,8,*">
                                 <ComboBox x:Name="notifTypeBox" Grid.Column="0"
                                           Classes="modern" Height="32" FontSize="12"
@@ -292,7 +219,7 @@ MIT License
                                          Tag="https://ntfy.sh/your-topic" />
                             </Grid>
                             <StackPanel Orientation="Horizontal" Margin="0,0,0,12">
-                                <TextBlock Text="Min severity: " FontSize="12" Foreground="#555555"
+                                <TextBlock Text="Min severity: " Classes="field-label"
                                            VerticalAlignment="Center" Margin="0,0,8,0" />
                                 <ComboBox x:Name="notifSeverityBox" Width="110"
                                           Classes="modern" Height="28" FontSize="12"
@@ -306,7 +233,7 @@ MIT License
                             <Grid ColumnDefinitions="*,8,*,8,*">
                                 <Button x:Name="monitorQuickSetupBtn" Grid.Column="0"
                                         Content="Quick Setup" Height="32" FontSize="11"
-                                        Classes="modern" IsEnabled="False"
+                                        Classes="primary" IsEnabled="False"
                                         Click="monitorQuickSetupBtn_Click"
                                         ToolTip.Tip="Install monitor using selected VBR server and stored credentials" />
                                 <Button x:Name="monitorVhcSetupBtn" Grid.Column="2"
@@ -328,7 +255,7 @@ MIT License
                 <Grid Margin="0,5,0,0" ColumnDefinitions="*,10,*">
                     <Button Name="termsBtn" Grid.Column="0" Classes="secondary"
                             Height="45" Click="AcceptButton_click" />
-                    <Button x:Name="run" Grid.Column="2" Classes="modern"
+                    <Button x:Name="run" Grid.Column="2" Classes="primary"
                             Height="45" Click="run_Click" />
                 </Grid>
 
@@ -339,24 +266,29 @@ MIT License
         </Grid>
         </ScrollViewer>
 
+        <Button x:Name="ThemeToggleButton" Classes="secondary"
+                HorizontalAlignment="Right" VerticalAlignment="Top"
+                Margin="0,12,12,0" Padding="10,4" FontSize="12"
+                Click="ThemeToggleButton_Click" />
+        </Panel>
+
         <!-- pBar must NOT get IsVisible="False" here: hideProgressBar()/showProgressBar() in the
              code-behind toggle only its Opacity (matching WPF's Visibility.Hidden, which reserves
              layout space) - it always stays IsVisible="True" in markup. progressText DOES default
              to IsVisible="False" here, matching WPF's Visibility.Collapsed default (removed from
              layout entirely). -->
-        <Border Grid.Row="1" Background="White" BorderBrush="#DDDDDD" BorderThickness="0,1,0,0">
+        <Border Grid.Row="1" Background="{DynamicResource CardBackgroundBrush}" BorderBrush="{DynamicResource CardBorderBrush}" BorderThickness="0,1,0,0">
             <StackPanel Margin="25,15,25,15">
                 <ProgressBar Name="pBar"
                              Height="20"
                              IsIndeterminate="True"
                              BorderThickness="0"
-                             Background="#E8E8E8"
-                             Foreground="#00B233"
+                             Background="{DynamicResource CardBorderBrush}"
+                             Foreground="{DynamicResource AccentBrush}"
                              BorderBrush="Transparent" />
                 <TextBlock Name="progressText"
+                           Classes="secondary-text"
                            Text="Processing health check..."
-                           FontSize="12"
-                           Foreground="#666666"
                            Margin="0,8,0,0"
                            HorizontalAlignment="Center"
                            IsVisible="False" />

@@ -3,10 +3,12 @@
 using System;
 using System.Linq;
 using System.Threading.Tasks;
+using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Interactivity;
 using Avalonia.Media;
+using Avalonia.Styling;
 using Avalonia.Threading;
 using VeeamHealthCheck.Functions.Monitor;
 using VeeamHealthCheck.Functions.UserInteraction;
@@ -28,6 +30,8 @@ namespace VeeamHealthCheck
         {
             InitializeComponent();
 
+            ThemeToggleButton.Content = ThemeLabelFor(Application.Current!.RequestedThemeVariant);
+
             // AvaloniaUiNotifier passes this as the ShowDialog owner. Set it
             // here (rather than waiting for Task 12's App.axaml.cs) because
             // AcceptButton_click's Task.Run(AcceptTerms) can raise a dialog
@@ -43,6 +47,32 @@ namespace VeeamHealthCheck
 
             this.Loaded += async (s, e) => await this.SetUiAsync();
         }
+
+        // Safe to call from the constructor (e.g. InitializeMonitorStatus above, before Show()):
+        // resolution reaches Application.Resources at construction time, not tree-attach time.
+        // Only holds because App.axaml keeps the four Status*Brush keys flat, outside
+        // ResourceDictionary.ThemeDictionaries - moving them into per-theme dictionaries would
+        // make this lookup theme-variant-sensitive before a variant can be resolved pre-attachment.
+        private IBrush GetStatusBrush(string resourceKey) => (IBrush)this.FindResource(resourceKey);
+
+        private void ThemeToggleButton_Click(object sender, RoutedEventArgs e)
+        {
+            var app = Application.Current!;
+            ThemeVariant next = app.RequestedThemeVariant switch
+            {
+                var v when v == ThemeVariant.Dark => ThemeVariant.Light,
+                var v when v == ThemeVariant.Light => ThemeVariant.Default,
+                _ => ThemeVariant.Dark, // System (Default) -> Dark
+            };
+
+            app.RequestedThemeVariant = next;
+            CAppSettings.Set(CThemePreference.FromVariant(next));
+            ThemeToggleButton.Content = ThemeLabelFor(next);
+        }
+
+        private static string ThemeLabelFor(ThemeVariant variant) =>
+            variant == ThemeVariant.Dark ? "🌙 Dark" :
+            variant == ThemeVariant.Light ? "☀ Light" : "🖥 System";
 
         private void InitializeServerList()
         {
@@ -393,7 +423,7 @@ namespace VeeamHealthCheck
                 Dispatcher.UIThread.Invoke(() =>
                 {
                     progressText.Text = $"Collection complete — {failed.Count} collector warning(s)";
-                    progressText.Foreground = new SolidColorBrush(Color.FromRgb(0xf0, 0xad, 0x4e));
+                    progressText.Foreground = GetStatusBrush("StatusWarningBrush");
                 });
             }
             else
@@ -401,7 +431,7 @@ namespace VeeamHealthCheck
                 Dispatcher.UIThread.Invoke(() =>
                 {
                     progressText.Text = "Collection complete";
-                    progressText.Foreground = new SolidColorBrush(Color.FromRgb(0x5c, 0xb8, 0x5c));
+                    progressText.Foreground = GetStatusBrush("StatusSuccessBrush");
                 });
             }
         }
@@ -724,7 +754,7 @@ namespace VeeamHealthCheck
             if (!bundled)
             {
                 monitorStatusText.Text = "Not bundled";
-                monitorStatusText.Foreground = new SolidColorBrush(Color.FromRgb(0x99, 0x99, 0x99));
+                monitorStatusText.Foreground = GetStatusBrush("StatusNeutralBrush");
                 monitorQuickSetupBtn.IsEnabled = false;
                 monitorVhcSetupBtn.IsEnabled = false;
                 monitorRunBtn.IsEnabled = false;
@@ -732,7 +762,7 @@ namespace VeeamHealthCheck
             else if (!installed || !taskActive)
             {
                 monitorStatusText.Text = "Available — not set up";
-                monitorStatusText.Foreground = new SolidColorBrush(Color.FromRgb(0xf0, 0xad, 0x4e));
+                monitorStatusText.Foreground = GetStatusBrush("StatusWarningBrush");
                 monitorQuickSetupBtn.IsEnabled = true;
                 monitorRunBtn.IsEnabled = false;
             }
@@ -740,7 +770,7 @@ namespace VeeamHealthCheck
             {
                 string version = CVhcMonitorIntegration.GetInstalledVersion();
                 monitorStatusText.Text = $"Running ({version})";
-                monitorStatusText.Foreground = new SolidColorBrush(Color.FromRgb(0x5c, 0xb8, 0x5c));
+                monitorStatusText.Foreground = GetStatusBrush("StatusSuccessBrush");
                 monitorQuickSetupBtn.Content = "Reconfigure";
                 monitorQuickSetupBtn.IsEnabled = true;
                 monitorRunBtn.IsEnabled = true;
@@ -801,7 +831,7 @@ namespace VeeamHealthCheck
                     Dispatcher.UIThread.Post(() =>
                     {
                         monitorStatusText.Text = "Setup failed — check log";
-                        monitorStatusText.Foreground = new SolidColorBrush(Color.FromRgb(0xd9, 0x53, 0x4f));
+                        monitorStatusText.Foreground = GetStatusBrush("StatusErrorBrush");
                         monitorQuickSetupBtn.IsEnabled = true;
                     });
                 }
@@ -828,7 +858,7 @@ namespace VeeamHealthCheck
                     Dispatcher.UIThread.Post(() =>
                     {
                         monitorStatusText.Text = "Setup failed — check log";
-                        monitorStatusText.Foreground = new SolidColorBrush(Color.FromRgb(0xd9, 0x53, 0x4f));
+                        monitorStatusText.Foreground = GetStatusBrush("StatusErrorBrush");
                         monitorVhcSetupBtn.IsEnabled = true;
                     });
                 }
@@ -879,7 +909,7 @@ namespace VeeamHealthCheck
                 monitorLastRunText.Text = "Health check complete — click 'Setup from VHC' to configure continuous monitoring with auto-detected server settings.";
                 monitorLastRunText.IsVisible = true;
                 monitorStatusText.Text = "Available — not set up";
-                monitorStatusText.Foreground = new SolidColorBrush(Color.FromRgb(0xf0, 0xad, 0x4e));
+                monitorStatusText.Foreground = GetStatusBrush("StatusWarningBrush");
             });
         }
 

@@ -1,7 +1,279 @@
 <Application xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              x:Class="VeeamHealthCheck.App">
+    <Application.Resources>
+        <ResourceDictionary>
+            <!-- Flat (non-theme-variant) resources: FluentTheme's default controls (CheckBox,
+                 ComboBox selection, ToggleSwitch, etc.) resolve against SystemAccentColor and
+                 its 6 shade variants through several layers of FluentTheme's own internal
+                 resources - notably CheckBoxCheckBackgroundFillChecked, which is a StaticResource
+                 alias (resolved once, not live-rebound) several levels deep. Defining these
+                 per-theme inside ThemeDictionaries breaks runtime light/dark switching for those
+                 native controls - confirmed in vHC/Spikes/GuiRedesignSpike/App.axaml. Flat
+                 placement sidesteps this. -->
+            <Color x:Key="SystemAccentColor">#00B336</Color>
+            <Color x:Key="SystemAccentColorDark1">#009C2F</Color>
+            <Color x:Key="SystemAccentColorDark2">#007A25</Color>
+            <Color x:Key="SystemAccentColorDark3">#005A1B</Color>
+            <Color x:Key="SystemAccentColorLight1">#33C15C</Color>
+            <Color x:Key="SystemAccentColorLight2">#66D183</Color>
+            <Color x:Key="SystemAccentColorLight3">#99E0AA</Color>
+
+            <!-- Runtime status colors used by VhcGui.axaml.cs (monitor status / progress
+                 text). Flat because these 4 exact values already ship today across both
+                 themes and are legible against both page backgrounds - naming them here
+                 replaces 8 inline `new SolidColorBrush(...)` call sites with a single
+                 source of truth; it does not change any color. -->
+            <SolidColorBrush x:Key="StatusNeutralBrush">#999999</SolidColorBrush>
+            <SolidColorBrush x:Key="StatusWarningBrush">#F0AD4E</SolidColorBrush>
+            <SolidColorBrush x:Key="StatusSuccessBrush">#5CB85C</SolidColorBrush>
+            <SolidColorBrush x:Key="StatusErrorBrush">#D9534F</SolidColorBrush>
+
+            <ResourceDictionary.ThemeDictionaries>
+                <ResourceDictionary x:Key="Light">
+                    <SolidColorBrush x:Key="PageBackgroundBrush">#F8FAFC</SolidColorBrush>
+                    <SolidColorBrush x:Key="CardBackgroundBrush">#FFFFFF</SolidColorBrush>
+                    <SolidColorBrush x:Key="CardBorderBrush">#E2E8F0</SolidColorBrush>
+                    <SolidColorBrush x:Key="PrimaryTextBrush">#0F172A</SolidColorBrush>
+                    <SolidColorBrush x:Key="SecondaryTextBrush">#64748B</SolidColorBrush>
+                    <SolidColorBrush x:Key="AccentBrush">#00B336</SolidColorBrush>
+                    <SolidColorBrush x:Key="AccentHoverBrush">#009C2F</SolidColorBrush>
+                    <SolidColorBrush x:Key="AccentPressedBrush">#007A25</SolidColorBrush>
+                    <SolidColorBrush x:Key="OnAccentTextBrush">#0B1220</SolidColorBrush>
+                    <SolidColorBrush x:Key="SegmentBackgroundBrush">#F1F5F9</SolidColorBrush>
+                    <SolidColorBrush x:Key="SegmentSelectedBrush">#5BC98A</SolidColorBrush>
+                    <SolidColorBrush x:Key="ListSelectedTintBrush">#2600B336</SolidColorBrush>
+                    <SolidColorBrush x:Key="CautionBackgroundBrush">#FFF8E1</SolidColorBrush>
+                    <SolidColorBrush x:Key="CautionBorderBrush">#FFC107</SolidColorBrush>
+                    <!-- AccentBrush (#00B336) on this theme's CautionBackgroundBrush (#FFF8E1)
+                         computes to ~2.6:1, failing WCAG AA (4.5:1) for the kbLink hyperlink -
+                         found when a code-quality review computed contrast for every brush
+                         pairing actually used in the app, not just the ones the design spec
+                         happened to check. This darker green (AccentPressedBrush's own value)
+                         computes to ~5.2:1 against the same background. -->
+                    <SolidColorBrush x:Key="CautionLinkBrush">#007A25</SolidColorBrush>
+                </ResourceDictionary>
+                <ResourceDictionary x:Key="Dark">
+                    <SolidColorBrush x:Key="PageBackgroundBrush">#0F172A</SolidColorBrush>
+                    <SolidColorBrush x:Key="CardBackgroundBrush">#1B1F24</SolidColorBrush>
+                    <SolidColorBrush x:Key="CardBorderBrush">#2D333B</SolidColorBrush>
+                    <SolidColorBrush x:Key="PrimaryTextBrush">#F8FAFC</SolidColorBrush>
+                    <SolidColorBrush x:Key="SecondaryTextBrush">#94A3B8</SolidColorBrush>
+                    <SolidColorBrush x:Key="AccentBrush">#00D647</SolidColorBrush>
+                    <SolidColorBrush x:Key="AccentHoverBrush">#00B336</SolidColorBrush>
+                    <SolidColorBrush x:Key="AccentPressedBrush">#009129</SolidColorBrush>
+                    <SolidColorBrush x:Key="OnAccentTextBrush">#0B1220</SolidColorBrush>
+                    <SolidColorBrush x:Key="SegmentBackgroundBrush">#242A31</SolidColorBrush>
+                    <SolidColorBrush x:Key="SegmentSelectedBrush">#3ECB74</SolidColorBrush>
+                    <SolidColorBrush x:Key="ListSelectedTintBrush">#2600D647</SolidColorBrush>
+                    <SolidColorBrush x:Key="CautionBackgroundBrush">#332B14</SolidColorBrush>
+                    <SolidColorBrush x:Key="CautionBorderBrush">#8A6D1F</SolidColorBrush>
+                    <!-- AccentBrush (#00D647) already computes to ~7.2:1 against this theme's
+                         CautionBackgroundBrush - no contrast problem here, only in Light (see
+                         that dictionary's CautionLinkBrush comment). Kept distinct from
+                         AccentBrush anyway so both themes reference the same named resource. -->
+                    <SolidColorBrush x:Key="CautionLinkBrush">#00D647</SolidColorBrush>
+                </ResourceDictionary>
+            </ResourceDictionary.ThemeDictionaries>
+        </ResourceDictionary>
+    </Application.Resources>
+
     <Application.Styles>
         <FluentTheme />
+
+        <Style Selector="Window">
+            <Setter Property="Background" Value="{DynamicResource PageBackgroundBrush}" />
+            <!-- Segoe UI leads (not Inter, as in the spike): Inter isn't a guaranteed
+                 system font and isn't bundled with the app; the spike's own README
+                 flagged this. Segoe UI is guaranteed on the Windows target. -->
+            <Setter Property="FontFamily" Value="Segoe UI,-apple-system,sans-serif" />
+        </Style>
+
+        <Style Selector="Separator">
+            <Setter Property="Background" Value="{DynamicResource CardBorderBrush}" />
+        </Style>
+
+        <Style Selector="Button.primary">
+            <Setter Property="Background" Value="{DynamicResource AccentBrush}" />
+            <Setter Property="Foreground" Value="{DynamicResource OnAccentTextBrush}" />
+            <Setter Property="FontWeight" Value="SemiBold" />
+            <Setter Property="Padding" Value="16,8" />
+            <Setter Property="CornerRadius" Value="4" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="Cursor" Value="Hand" />
+        </Style>
+        <Style Selector="Button.primary:pointerover /template/ ContentPresenter">
+            <Setter Property="Background" Value="{DynamicResource AccentHoverBrush}" />
+            <Setter Property="TextElement.Foreground" Value="{DynamicResource OnAccentTextBrush}" />
+        </Style>
+        <Style Selector="Button.primary:pressed /template/ ContentPresenter">
+            <Setter Property="Background" Value="{DynamicResource AccentPressedBrush}" />
+            <Setter Property="TextElement.Foreground" Value="{DynamicResource OnAccentTextBrush}" />
+        </Style>
+        <Style Selector="Button.primary:disabled /template/ ContentPresenter">
+            <Setter Property="Background" Value="#66808080" />
+            <Setter Property="TextElement.Foreground" Value="{DynamicResource SecondaryTextBrush}" />
+        </Style>
+
+        <Style Selector="Button.secondary">
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="Foreground" Value="{DynamicResource PrimaryTextBrush}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource CardBorderBrush}" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="Padding" Value="12,6" />
+            <Setter Property="CornerRadius" Value="4" />
+            <Setter Property="Cursor" Value="Hand" />
+        </Style>
+        <Style Selector="Button.secondary:pointerover /template/ ContentPresenter">
+            <Setter Property="Background" Value="{DynamicResource CardBorderBrush}" />
+        </Style>
+        <!-- New, beyond the spike: the spike's Button.secondary was never exercised
+             disabled, so it has no :disabled override. The real monitorQuickSetupBtn/
+             monitorVhcSetupBtn/monitorRunBtn all ship IsEnabled="False" from first
+             launch and need one. Matches Button.primary:disabled's translucent-gray
+             treatment. -->
+        <Style Selector="Button.secondary:disabled /template/ ContentPresenter">
+            <Setter Property="Background" Value="#66808080" />
+            <Setter Property="TextElement.Foreground" Value="{DynamicResource SecondaryTextBrush}" />
+        </Style>
+
+        <Style Selector="Button.link">
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="Foreground" Value="{DynamicResource AccentBrush}" />
+            <Setter Property="Padding" Value="0" />
+            <Setter Property="Cursor" Value="Hand" />
+            <Setter Property="FontSize" Value="12" />
+        </Style>
+        <Style Selector="Button.link:pointerover /template/ ContentPresenter">
+            <Setter Property="Background" Value="Transparent" />
+        </Style>
+        <Style Selector="Button.link:pressed /template/ ContentPresenter">
+            <Setter Property="Background" Value="Transparent" />
+        </Style>
+
+        <Style Selector="Border.card">
+            <Setter Property="Background" Value="{DynamicResource CardBackgroundBrush}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource CardBorderBrush}" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="CornerRadius" Value="8" />
+            <Setter Property="Padding" Value="16" />
+        </Style>
+
+        <Style Selector="TextBlock.card-title">
+            <Setter Property="FontSize" Value="15" />
+            <Setter Property="FontWeight" Value="SemiBold" />
+            <Setter Property="Foreground" Value="{DynamicResource PrimaryTextBrush}" />
+        </Style>
+        <Style Selector="TextBlock.field-label">
+            <Setter Property="FontSize" Value="12" />
+            <Setter Property="FontWeight" Value="Medium" />
+            <Setter Property="Foreground" Value="{DynamicResource SecondaryTextBrush}" />
+        </Style>
+        <Style Selector="TextBlock.secondary-text">
+            <Setter Property="FontSize" Value="12" />
+            <Setter Property="Foreground" Value="{DynamicResource SecondaryTextBrush}" />
+        </Style>
+
+        <Style Selector="TextBox.modern">
+            <Setter Property="Padding" Value="8" />
+            <Setter Property="CornerRadius" Value="4" />
+            <Setter Property="BorderBrush" Value="{DynamicResource CardBorderBrush}" />
+            <Setter Property="Background" Value="{DynamicResource CardBackgroundBrush}" />
+            <Setter Property="Foreground" Value="{DynamicResource PrimaryTextBrush}" />
+        </Style>
+        <Style Selector="ComboBox.modern">
+            <Setter Property="Padding" Value="8" />
+            <Setter Property="CornerRadius" Value="4" />
+            <Setter Property="BorderBrush" Value="{DynamicResource CardBorderBrush}" />
+            <Setter Property="Background" Value="{DynamicResource CardBackgroundBrush}" />
+            <Setter Property="Foreground" Value="{DynamicResource PrimaryTextBrush}" />
+        </Style>
+        <Style Selector="CheckBox.modern">
+            <Setter Property="Foreground" Value="{DynamicResource PrimaryTextBrush}" />
+            <Setter Property="FontSize" Value="13" />
+            <Setter Property="Cursor" Value="Hand" />
+        </Style>
+
+        <!-- Segmented control (hand-rolled from grouped RadioButtons — no Semi.Avalonia).
+             Confirmed against the real Avalonia 11.3.20 RadioButton.xaml source: the template's
+             outer Grid is ColumnDefinitions="20,*" (a fixed 20px column for the bullet/ring,
+             followed by the content column), and PART_ContentPresenter sits only in the second
+             column. Hiding the bullet Ellipses doesn't reclaim that reserved 20px, so centering
+             content within just the second column lands text ~10px right of the pill's true
+             center. Fixed by respanning PART_ContentPresenter across both grid columns, so
+             centering it centers on the whole pill instead of just the content column. -->
+        <Style Selector="RadioButton.segment">
+            <Setter Property="Background" Value="{DynamicResource SegmentBackgroundBrush}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource CardBorderBrush}" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="Padding" Value="14,6" />
+            <Setter Property="Foreground" Value="{DynamicResource SecondaryTextBrush}" />
+            <Setter Property="HorizontalContentAlignment" Value="Center" />
+            <Setter Property="Cursor" Value="Hand" />
+        </Style>
+        <Style Selector="RadioButton.segment /template/ Ellipse">
+            <Setter Property="IsVisible" Value="False" />
+        </Style>
+        <Style Selector="RadioButton.segment /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Grid.Column" Value="0" />
+            <Setter Property="Grid.ColumnSpan" Value="2" />
+        </Style>
+        <!-- Unlike Button, RadioButton's Fluent template only stretches the ContentPresenter
+             to the text's own tight bounds, not the full control box - a Background set via
+             /template/ ContentPresenter only paints a small rectangle hugging the text instead
+             of the whole pill. Setting Background directly on the control (matching how the
+             base style above sets Background="Transparent" directly, not via /template/) hits
+             the template's outer chrome element instead, which does fill the whole box. -->
+        <Style Selector="RadioButton.segment:checked">
+            <Setter Property="Background" Value="{DynamicResource SegmentSelectedBrush}" />
+            <Setter Property="Foreground" Value="{DynamicResource OnAccentTextBrush}" />
+            <Setter Property="FontWeight" Value="SemiBold" />
+        </Style>
+
+        <!-- ListBoxItem selection: FluentTheme's default (confirmed against the real
+             ListBoxItem.xaml source) paints a 100% solid accent-color fill with
+             SystemControlHighlightAltBaseHighBrush as the text color - a theme-native
+             "white in dark theme" value that assumes it's contrasting against the theme's
+             OWN dark background, not an accent-colored one. Against our green that reads as
+             an unreadable "spreadsheet row highlight." Replaced with a subtle translucent
+             tint + left accent bar, keeping text on PrimaryTextBrush regardless of theme -
+             all three selected sub-states need an explicit override since FluentTheme
+             registers separate, equally-specific rules for each (same reason Button.primary
+             needed its own explicit :pressed override earlier). -->
+        <Style Selector="ListBoxItem:selected /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="{DynamicResource ListSelectedTintBrush}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource AccentBrush}" />
+            <Setter Property="BorderThickness" Value="3,0,0,0" />
+            <Setter Property="Foreground" Value="{DynamicResource PrimaryTextBrush}" />
+        </Style>
+        <Style Selector="ListBoxItem:selected:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="{DynamicResource ListSelectedTintBrush}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource AccentBrush}" />
+            <Setter Property="BorderThickness" Value="3,0,0,0" />
+            <Setter Property="Foreground" Value="{DynamicResource PrimaryTextBrush}" />
+        </Style>
+        <Style Selector="ListBoxItem:selected:pressed /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="{DynamicResource ListSelectedTintBrush}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource AccentBrush}" />
+            <Setter Property="BorderThickness" Value="3,0,0,0" />
+            <Setter Property="Foreground" Value="{DynamicResource PrimaryTextBrush}" />
+        </Style>
+
+        <!-- No consumer yet in the real window - ready for Stage B. -->
+        <Style Selector="Button.remove-server">
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="Foreground" Value="{DynamicResource SecondaryTextBrush}" />
+            <Setter Property="Padding" Value="6" />
+            <Setter Property="Opacity" Value="0.5" />
+            <Setter Property="Cursor" Value="Hand" />
+        </Style>
+        <Style Selector="Button.remove-server:pointerover /template/ ContentPresenter">
+            <Setter Property="Background" Value="Transparent" />
+        </Style>
+        <Style Selector="ListBoxItem:pointerover Button.remove-server">
+            <Setter Property="Opacity" Value="1" />
+        </Style>
     </Application.Styles>
 </Application>
