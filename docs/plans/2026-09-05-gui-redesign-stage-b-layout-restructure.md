@@ -991,7 +991,7 @@ Replace with:
 
 ```xml
                 <Grid x:Name="MonitoringTabPanel" ColumnDefinitions="*,20,*" IsVisible="False">
-                    <Border Grid.Column="0" Classes="card">
+                    <Border Grid.Column="0" Classes="card" VerticalAlignment="Top">
                         <StackPanel TextElement.FontWeight="SemiBold">
                             <TextBlock Text="Monitor Status" Classes="card-title" />
                             <StackPanel Margin="5,10,5,0">
@@ -1025,7 +1025,7 @@ Replace with:
                         </StackPanel>
                     </Border>
 
-                    <Border Grid.Column="2" Classes="card">
+                    <Border Grid.Column="2" Classes="card" VerticalAlignment="Top">
                         <StackPanel TextElement.FontWeight="SemiBold">
                             <TextBlock Text="Alert Notifications" Classes="card-title" />
                             <StackPanel Margin="5,10,5,0">
