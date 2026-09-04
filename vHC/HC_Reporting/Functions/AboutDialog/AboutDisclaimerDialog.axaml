@@ -23,11 +23,6 @@ MIT License
                     <Run Name="line5" /><LineBreak />
                     <Run Name="line6" />
                 </TextBlock>
-                <!-- This was inside a caution-colored Border (CautionBackgroundBrush/
-                     CautionBorderBrush) in VhcGui.axaml. Downgraded to plain informational
-                     styling here: an About dialog is informational, not an active warning
-                     (design decision, see spec). The individual Run styling below is
-                     otherwise unchanged from the original. -->
                 <TextBlock FontSize="12" TextWrapping="Wrap" Foreground="{DynamicResource PrimaryTextBrush}" LineHeight="20">
                     <Run Name="Cav1Part1" />
                 </TextBlock>
