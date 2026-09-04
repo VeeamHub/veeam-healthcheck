@@ -10,6 +10,7 @@ using Avalonia.Interactivity;
 using Avalonia.Media;
 using Avalonia.Styling;
 using Avalonia.Threading;
+using VeeamHealthCheck.Functions.AboutDialog;
 using VeeamHealthCheck.Functions.Monitor;
 using VeeamHealthCheck.Functions.UserInteraction;
 using VeeamHealthCheck.Resources.Localization;
@@ -73,6 +74,42 @@ namespace VeeamHealthCheck
         private static string ThemeLabelFor(ThemeVariant variant) =>
             variant == ThemeVariant.Dark ? "🌙 Dark" :
             variant == ThemeVariant.Light ? "☀ Light" : "🖥 System";
+
+        private async void AboutButton_Click(object sender, RoutedEventArgs e)
+        {
+            await new AboutDisclaimerDialog().ShowDialog(this);
+        }
+
+        private void AdHocTabButton_Click(object sender, RoutedEventArgs e) => SelectTab(isAdHoc: true);
+
+        private void MonitoringTabButton_Click(object sender, RoutedEventArgs e) => SelectTab(isAdHoc: false);
+
+        // termsBtn/run belong to the ad-hoc workflow and follow the active tab; the
+        // progress stack does not (see the bottom-bar comment in VhcGui.axaml) - a
+        // real run can take minutes and must stay visible from either tab.
+        //
+        // termsBtn and run each sit alone in their own Auto column of the bottom
+        // bar's Grid. IsVisible=false removes a control from layout entirely, so
+        // an Auto column with nothing else to measure collapses to zero width -
+        // the same reflow this plan already fixed for progressText, just
+        // triggered by a tab switch instead of a run starting/stopping, and
+        // horizontal instead of vertical. Toggling Opacity/IsHitTestVisible
+        // instead (matching pBar's existing pattern) keeps both Auto columns at
+        // their reserved width always, so the progress stack's position never
+        // shifts when switching tabs.
+        private void SelectTab(bool isAdHoc)
+        {
+            AdHocTabPanel.IsVisible = isAdHoc;
+            MonitoringTabPanel.IsVisible = !isAdHoc;
+
+            termsBtn.Opacity = isAdHoc ? 1 : 0;
+            termsBtn.IsHitTestVisible = isAdHoc;
+            run.Opacity = isAdHoc ? 1 : 0;
+            run.IsHitTestVisible = isAdHoc;
+
+            AdHocTabButton.Classes.Set("tab-active", isAdHoc);
+            MonitoringTabButton.Classes.Set("tab-active", !isAdHoc);
+        }
 
         private void InitializeServerList()
         {
@@ -234,29 +271,20 @@ namespace VeeamHealthCheck
         {
             importButton.IsEnabled = false;
             importButton.Width = 0;
+            importDivider.IsVisible = false;
         }
 
         private void SetImportDebug()
         {
             importButton.IsEnabled = true;
             importButton.Width = 100;
+            importDivider.IsVisible = true;
         }
 
         #region UI Functions
 
         private void SetUiText()
         {
-            this.InsHeader.Text = VbrLocalizationHelper.GuiInstHeader;
-            this.line1.Text = VbrLocalizationHelper.GuiInstLine1;
-            this.line2.Text = VbrLocalizationHelper.GuiInstLine2;
-            this.line3.Text = VbrLocalizationHelper.GuiInstLine3;
-            this.line4.Text = VbrLocalizationHelper.GuiInstLine4;
-            this.line5.Text = VbrLocalizationHelper.GuiInstLine5;
-            this.line6.Text = VbrLocalizationHelper.GuiInstLine6;
-            this.Cav1Part1.Text = VbrLocalizationHelper.GuiInstCaveat1;
-            this.Cav2.Text = VbrLocalizationHelper.GuiInstCaveat2;
-            this.Cav3.Text = "*** This tool is community supported and not an officially supported Veeam product.\r\n";
-            this.Cav4.Text = "**** The tool does not automatically phone home, or reach out to any network infrastructure beyond the Veeam Backup and Replication components or the Veeam Backup for 365 components if appropriate.";
             this.OptHdr.Text = VbrLocalizationHelper.GuiOptionsHeader;
             this.htmlCheckBox.Content = VbrLocalizationHelper.GuiShowHtml;
             this.scrubBox.Content = VbrLocalizationHelper.GuiSensData;
@@ -279,11 +307,10 @@ namespace VeeamHealthCheck
             pathBox.Text = text;
         }
 
-        // pBar deliberately never gets IsVisible=false - WPF's Visibility.Hidden
-        // (what this replaces) keeps the control's layout slot reserved so the
-        // progress bar area doesn't reflow when hidden; only Opacity/hit-testing
-        // toggle. progressText mirrors WPF's Visibility.Collapsed, which does
-        // remove it from layout - IsVisible is the correct match there.
+        // Both pBar and progressText hide via Opacity, not IsVisible: they now
+        // share a bottom-bar column with nothing else to collapse against, so
+        // IsVisible=false would shrink the column and shift termsBtn/run
+        // vertically on every run start/stop.
         private void hideProgressBar()
         {
             Dispatcher.UIThread.Post(() =>
@@ -291,7 +318,7 @@ namespace VeeamHealthCheck
                 // run.IsEnabled = true;
                 pBar.Opacity = 0;
                 pBar.IsHitTestVisible = false;
-                progressText.IsVisible = false;
+                progressText.Opacity = 0;
             });
         }
 
@@ -302,7 +329,7 @@ namespace VeeamHealthCheck
                 run.IsEnabled = false;
                 pBar.Opacity = 1;
                 pBar.IsHitTestVisible = true;
-                progressText.IsVisible = true;
+                progressText.Opacity = 1;
             });
         }
         #endregion
