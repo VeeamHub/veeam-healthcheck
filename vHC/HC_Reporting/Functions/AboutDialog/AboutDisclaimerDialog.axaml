@@ -1,0 +1,64 @@
+<!--
+Copyright (c) 2021, Adam Congdon <adam.congdon2@gmail.com>
+MIT License
+-->
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        x:Class="VeeamHealthCheck.Functions.AboutDialog.AboutDisclaimerDialog"
+        Title="About / Disclaimer"
+        Width="480" SizeToContent="Height" MaxHeight="600"
+        CanResize="False"
+        WindowStartupLocation="CenterOwner">
+    <Grid RowDefinitions="Auto,Auto" Margin="20">
+        <!-- MaxHeight belongs on the ScrollViewer, not just on the Window. A cell in an
+             Auto grid row is always measured with an infinite height (Avalonia's
+             Grid.MeasureCell shortcuts "to content" for Auto rows), so a ScrollViewer
+             there reports its full content height and never scrolls; Grid.SetFinalSize
+             then only shrinks Star rows, so both Auto rows overflow the clamped window
+             and the Close button below is pushed out of view. Capping the ScrollViewer
+             itself gives it a finite viewport so it scrolls, and keeps the window's own
+             SizeToContent="Height" behaviour for shorter (e.g. localized) content.
+             460 + Grid Margin (40) + Close button (~31) + its Margin (12) = ~543, which
+             stays under the Window's MaxHeight="600" whether that clamp applies to the
+             client area or to the whole frame including the title bar - so the outer
+             clamp never binds and the Close button is never pushed out of view. -->
+        <ScrollViewer Grid.Row="0" MaxHeight="460">
+            <StackPanel Spacing="10">
+                <TextBlock Classes="card-title" FontSize="18" FontWeight="Bold" Foreground="{DynamicResource AccentBrush}">
+                    <Run Name="InsHeader" />
+                </TextBlock>
+                <TextBlock Classes="secondary-text" TextWrapping="Wrap" LineHeight="20">
+                    <Run Name="line1" /><LineBreak />
+                    <Run Name="line2" /><LineBreak />
+                    <Run Name="line3" /><LineBreak />
+                    <Run Name="line4" /><LineBreak />
+                    <Run Name="line5" /><LineBreak />
+                    <Run Name="line6" />
+                </TextBlock>
+                <!-- This was inside a caution-colored Border (CautionBackgroundBrush/
+                     CautionBorderBrush) in VhcGui.axaml. Downgraded to plain informational
+                     styling here: an About dialog is informational, not an active warning
+                     (design decision, see spec). The individual Run styling below is
+                     otherwise unchanged from the original. -->
+                <TextBlock FontSize="12" TextWrapping="Wrap" Foreground="{DynamicResource PrimaryTextBrush}" LineHeight="20">
+                    <Run Name="Cav1Part1" />
+                </TextBlock>
+                <HyperlinkButton Name="kbLink"
+                                 NavigateUri="https://www.veeam.com/kb2462"
+                                 Content="KB 2462"
+                                 FontSize="12"
+                                 Margin="0,-4,0,0" />
+                <TextBlock FontSize="12" TextWrapping="Wrap" Foreground="{DynamicResource PrimaryTextBrush}" LineHeight="20">
+                    <Run Name="Cav2" />
+                </TextBlock>
+                <TextBlock Classes="secondary-text" TextWrapping="Wrap" FontSize="11" LineHeight="16">
+                    <Run Name="Cav3" /><LineBreak />
+                    <Run Name="Cav4" /><LineBreak /><LineBreak />
+                    <Run FontWeight="SemiBold">Credential Storage:</Run><Run> Credentials are stored encrypted at </Run><Run FontFamily="Consolas">%AppData%\VeeamHealthCheck\creds.json</Run><Run>. You can delete this file to remove saved credentials or use the "Clear Saved Credentials" option.</Run>
+                </TextBlock>
+            </StackPanel>
+        </ScrollViewer>
+        <Button Grid.Row="1" Content="Close" Classes="secondary" HorizontalAlignment="Right"
+                Margin="0,12,0,0" IsCancel="True" Click="Close_Click" />
+    </Grid>
+</Window>

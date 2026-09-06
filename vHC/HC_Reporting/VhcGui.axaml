@@ -6,293 +6,274 @@ MIT License
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         x:Class="VeeamHealthCheck.VhcGui"
         Title=""
-        MinHeight="500" MinWidth="900"
-        Width="950"
-        SizeToContent="Height"
+        MinWidth="860" MinHeight="580"
+        Width="900" Height="620"
         WindowStartupLocation="CenterScreen"
         CanResize="True">
 
-    <Grid RowDefinitions="*,Auto">
+    <Grid RowDefinitions="Auto,Auto,*,Auto">
 
-        <Panel Grid.Row="0">
-        <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
-        <Grid Margin="25,25,25,15" ColumnDefinitions="380,20,*">
+        <!-- Header row -->
+        <Grid Grid.Row="0" ColumnDefinitions="*,Auto,Auto,Auto,Auto" Margin="25,16,25,8">
+            <TextBlock Grid.Column="0" Text="Veeam Health Check" FontSize="20" FontWeight="Bold" VerticalAlignment="Center" />
+            <Button x:Name="importButton" Grid.Column="1" Classes="secondary"
+                    Margin="0,0,12,0" Click="Import_click"
+                    ToolTip.Tip="Create a report from previously collected data" />
+            <Border x:Name="importDivider" Grid.Column="2" Width="1" Height="18" VerticalAlignment="Center" Margin="0,0,12,0"
+                    Background="{DynamicResource CardBorderBrush}" />
+            <Button x:Name="ThemeToggleButton" Grid.Column="3" Classes="secondary"
+                    Margin="0,0,8,0" Click="ThemeToggleButton_Click" ToolTip.Tip="Toggle light/dark theme" />
+            <Button x:Name="aboutButton" Grid.Column="4" Content="About / Disclaimer" Classes="secondary"
+                    Click="AboutButton_Click" />
+        </Grid>
 
-            <!-- Left Panel - Instructions and Warnings -->
-            <StackPanel Grid.Column="0">
-                <Border Classes="card" Margin="0,0,0,15">
-                    <StackPanel>
-                        <TextBlock Classes="card-title" FontSize="18" FontWeight="Bold" Foreground="{DynamicResource AccentBrush}" Margin="0,0,0,10">
-                            <Run Name="InsHeader" />
-                        </TextBlock>
-                        <TextBlock Classes="secondary-text" TextWrapping="Wrap" LineHeight="20">
-                            <Run Name="line1" /><LineBreak />
-                            <Run Name="line2" /><LineBreak />
-                            <Run Name="line3" /><LineBreak />
-                            <Run Name="line4" /><LineBreak />
-                            <Run Name="line5" /><LineBreak />
-                            <Run Name="line6" />
-                        </TextBlock>
-                    </StackPanel>
-                </Border>
+        <!-- Tab strip row -->
+        <StackPanel Grid.Row="1" Orientation="Horizontal" Spacing="8" Margin="25,0,25,12">
+            <Button x:Name="AdHocTabButton" Content="Ad-hoc Health Check" Classes="tab tab-active"
+                    Click="AdHocTabButton_Click" />
+            <Button x:Name="MonitoringTabButton" Content="Continuous Monitoring" Classes="tab"
+                    Click="MonitoringTabButton_Click" />
+        </StackPanel>
 
-                <Border Background="{DynamicResource CautionBackgroundBrush}" BorderBrush="{DynamicResource CautionBorderBrush}" BorderThickness="1"
-                        Padding="15" CornerRadius="4">
-                    <StackPanel>
-                        <TextBlock FontSize="12" TextWrapping="Wrap" Foreground="{DynamicResource PrimaryTextBrush}" LineHeight="20">
-                            <Run Name="Cav1Part1" />
-                        </TextBlock>
-                        <!-- Original had this as an inline WPF Hyperlink between Cav1Part1 and Cav2;
-                             Avalonia's TextBlock.Inlines has no Hyperlink inline, so this is a
-                             standalone HyperlinkButton (auto-opens NavigateUri, no click handler needed).
-                             Split into two TextBlocks to preserve reading order: Cav1 → Link → Cav2. -->
-                        <HyperlinkButton Name="kbLink"
-                                         NavigateUri="https://www.veeam.com/kb2462"
-                                         Content="KB 2462"
-                                         Foreground="{DynamicResource CautionLinkBrush}"
-                                         FontSize="12"
-                                         Margin="0,2,0,2" />
-                        <TextBlock FontSize="12" TextWrapping="Wrap" Foreground="{DynamicResource PrimaryTextBrush}" LineHeight="20">
-                            <Run Name="Cav2" />
-                        </TextBlock>
-                        <TextBlock Classes="secondary-text" TextWrapping="Wrap" FontSize="11"
-                                   Margin="0,10,0,0" LineHeight="16">
-                            <Run Name="Cav3" /><LineBreak />
-                            <Run Name="Cav4" /><LineBreak /><LineBreak />
-                            <Run FontWeight="SemiBold">Credential Storage:</Run><Run> Credentials are stored encrypted at </Run><Run FontFamily="Consolas">%AppData%\VeeamHealthCheck\creds.json</Run><Run>. You can delete this file to remove saved credentials or use the "Clear Saved Credentials" option.</Run>
-                        </TextBlock>
-                    </StackPanel>
-                </Border>
-            </StackPanel>
+        <!-- Tab content row -->
+        <ScrollViewer Grid.Row="2" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" Margin="25,0,25,15">
+            <Panel>
 
-            <!-- Right Panel - Options and Controls -->
-            <StackPanel Grid.Column="2">
-                <Border Classes="card" Margin="0,0,0,15">
-                    <StackPanel TextElement.FontWeight="SemiBold">
-                        <TextBlock Classes="card-title">
-                            <Run Name="OptHdr" />
-                        </TextBlock>
-                        <StackPanel Margin="5,10,5,0">
-                            <TextBlock Text="Export Options" Classes="field-label" Margin="0,0,0,8" />
-                            <CheckBox x:Name="pdfCheckBox" Classes="modern"
-                                      Checked="pdfCheckBox_Checked" Unchecked="pdfCheckBox_Unchecked"
-                                      IsChecked="False" />
-                            <CheckBox x:Name="explorerShowBox" Classes="modern"
-                                      Checked="explorerShowBox_Checked" Unchecked="explorerShowBox_Unchecked"
-                                      IsChecked="True" />
-                            <CheckBox Name="htmlCheckBox" Classes="modern"
-                                      Checked="htmlChecked" Unchecked="htmlUnchecked"
-                                      ToolTip.Tip="Display the HTML report in your default browser after generation" />
+                <!-- Ad-hoc Health Check tab -->
+                <Grid x:Name="AdHocTabPanel" ColumnDefinitions="*,20,*">
+                    <StackPanel Grid.Column="0">
+                        <Border Classes="card" Margin="0,0,0,15">
+                            <StackPanel TextElement.FontWeight="SemiBold">
+                                <TextBlock Text="VBR Server" Classes="card-title" />
+                                <StackPanel Margin="5,10,5,0">
+                                    <Grid Margin="0,0,0,10" ColumnDefinitions="*,10,80">
+                                        <TextBox x:Name="serverTextBox" Grid.Column="0"
+                                                 Classes="modern"
+                                                 Height="32"
+                                                 FontSize="12"
+                                                 ToolTip.Tip="Enter VBR server hostname or IP address" />
+                                        <Button x:Name="addServerBtn" Grid.Column="2"
+                                                Content="Add"
+                                                Height="32"
+                                                FontSize="12"
+                                                Classes="primary"
+                                                Click="addServerBtn_Click" />
+                                    </Grid>
 
-                            <Separator Margin="0,12,0,12" />
+                                    <Border BorderBrush="{DynamicResource CardBorderBrush}" BorderThickness="1"
+                                            Background="{DynamicResource CardBackgroundBrush}" Height="120">
+                                        <ListBox x:Name="serverListBox"
+                                                 BorderThickness="0"
+                                                 SelectionMode="Single"
+                                                 FontSize="13"
+                                                 Padding="5"
+                                                 SelectionChanged="serverListBox_SelectionChanged" />
+                                    </Border>
 
-                            <TextBlock Text="Data Collection" Classes="field-label" Margin="0,0,0,8" />
-                            <StackPanel Orientation="Horizontal" Margin="0,8,0,0">
-                                <TextBlock Text="Collection Period:" VerticalAlignment="Center"
-                                           Classes="field-label" Margin="0,0,10,0" />
-                                <ComboBox Name="daysSelector" Classes="modern"
-                                          Width="120" SelectedIndex="0" SelectionChanged="ComboBox_SelectionChanged">
-                                    <ComboBoxItem Content="7 Days" IsSelected="True" />
-                                    <ComboBoxItem Content="30 Days" />
-                                    <ComboBoxItem Content="90 Days" />
-                                </ComboBox>
+                                    <Grid Margin="0,10,0,0" ColumnDefinitions="*,10,*">
+                                        <Button x:Name="removeServerBtn" Grid.Column="0"
+                                                Content="Remove Selected"
+                                                Height="32"
+                                                FontSize="12"
+                                                Padding="10,5"
+                                                Classes="secondary"
+                                                Click="removeServerBtn_Click" />
+                                        <Button x:Name="clearServersBtn" Grid.Column="2"
+                                                Content="Clear All"
+                                                Height="32"
+                                                FontSize="12"
+                                                Padding="10,5"
+                                                Classes="secondary"
+                                                Click="clearServersBtn_Click" />
+                                    </Grid>
+
+                                    <Separator Margin="0,12,0,12" />
+
+                                    <TextBlock Text="Product Type:" Classes="field-label" Margin="0,0,0,8" />
+                                    <ComboBox x:Name="productTypeSelector"
+                                              Classes="modern"
+                                              Width="220"
+                                              SelectedIndex="0"
+                                              HorizontalAlignment="Left"
+                                              SelectionChanged="productTypeSelector_SelectionChanged"
+                                              ToolTip.Tip="For remote servers, specifying the product type avoids connection failures. If set to Auto-detect, the tool will try both connection types.">
+                                        <ComboBoxItem Content="Auto-detect" IsSelected="True" />
+                                        <ComboBoxItem Content="VBR (Backup &amp; Replication)" />
+                                        <ComboBoxItem Content="VB365 (Backup for Microsoft 365)" />
+                                        <ComboBoxItem Content="Both" />
+                                    </ComboBox>
+                                </StackPanel>
                             </StackPanel>
+                        </Border>
 
-                            <CheckBox x:Name="RescanBox" Classes="modern"
-                                    Checked="RescanBox_Checked" Unchecked="RescanBox_Unchecked"
-                                    Margin="0,8,0,0"
-                                    ToolTip.Tip="Rescan for Hardware change" />
-
-                            <Separator Margin="0,12,0,12" />
-
-                            <TextBlock Text="Security &amp; Privacy" Classes="field-label" Margin="0,0,0,8" />
-                            <CheckBox x:Name="scrubBox" Classes="modern"
-                                      Checked="HandleCheck" Unchecked="HandleUnchecked"
-                                      ToolTip.Tip="Anonymize sensitive data according to Veeam KB 2462" />
-                            <CheckBox x:Name="clearCredsCheckBox" Classes="modern"
-                                      Checked="clearCredsCheckBox_Checked" Unchecked="clearCredsCheckBox_Unchecked"
-                                      IsChecked="False"
-                                      ToolTip.Tip="Clear any previously saved credentials before running" />
-                        </StackPanel>
-                    </StackPanel>
-                </Border>
-
-                <Border Classes="card" Margin="0,0,0,15">
-                    <StackPanel TextElement.FontWeight="SemiBold">
-                        <TextBlock Name="outPath" Classes="card-title" />
-                        <TextBox x:Name="pathBox" Classes="modern"
-                                 TextChanged="pathBox_TextChanged" Height="32" Margin="0,10,0,0" />
-                    </StackPanel>
-                </Border>
-
-                <Border Classes="card" Margin="0,0,0,15">
-                    <StackPanel TextElement.FontWeight="SemiBold">
-                        <TextBlock Text="VBR Server" Classes="card-title" />
-                        <StackPanel Margin="5,10,5,0">
-                            <Grid Margin="0,0,0,10" ColumnDefinitions="*,10,80">
-                                <TextBox x:Name="serverTextBox" Grid.Column="0"
-                                         Classes="modern"
-                                         Height="32"
-                                         FontSize="12"
-                                         ToolTip.Tip="Enter VBR server hostname or IP address" />
-                                <Button x:Name="addServerBtn" Grid.Column="2"
-                                        Content="Add"
-                                        Height="32"
-                                        FontSize="12"
-                                        Classes="primary"
-                                        Click="addServerBtn_Click" />
-                            </Grid>
-
-                            <Border BorderBrush="{DynamicResource CardBorderBrush}" BorderThickness="1"
-                                    Background="{DynamicResource CardBackgroundBrush}" Height="120">
-                                <ListBox x:Name="serverListBox"
-                                         BorderThickness="0"
-                                         SelectionMode="Single"
-                                         FontSize="13"
-                                         Padding="5"
-                                         SelectionChanged="serverListBox_SelectionChanged" />
-                            </Border>
-
-                            <Grid Margin="0,10,0,0" ColumnDefinitions="*,10,*">
-                                <Button x:Name="removeServerBtn" Grid.Column="0"
-                                        Content="Remove Selected"
-                                        Height="32"
-                                        FontSize="12"
-                                        Padding="10,5"
-                                        Classes="secondary"
-                                        Click="removeServerBtn_Click" />
-                                <Button x:Name="clearServersBtn" Grid.Column="2"
-                                        Content="Clear All"
-                                        Height="32"
-                                        FontSize="12"
-                                        Padding="10,5"
-                                        Classes="secondary"
-                                        Click="clearServersBtn_Click" />
-                            </Grid>
-
-                            <Separator Margin="0,12,0,12" />
-
-                            <TextBlock Text="Product Type:" Classes="field-label" Margin="0,0,0,8" />
-                            <ComboBox x:Name="productTypeSelector"
-                                      Classes="modern"
-                                      Width="220"
-                                      SelectedIndex="0"
-                                      HorizontalAlignment="Left"
-                                      SelectionChanged="productTypeSelector_SelectionChanged"
-                                      ToolTip.Tip="For remote servers, specifying the product type avoids connection failures. If set to Auto-detect, the tool will try both connection types.">
-                                <ComboBoxItem Content="Auto-detect" IsSelected="True" />
-                                <ComboBoxItem Content="VBR (Backup &amp; Replication)" />
-                                <ComboBoxItem Content="VB365 (Backup for Microsoft 365)" />
-                                <ComboBoxItem Content="Both" />
-                            </ComboBox>
-                        </StackPanel>
-                    </StackPanel>
-                </Border>
-
-                <Border Classes="card" Margin="0,0,0,15">
-                    <StackPanel TextElement.FontWeight="SemiBold">
-                        <TextBlock Text="Continuous Monitoring" Classes="card-title" />
-                        <StackPanel Margin="5,10,5,0">
-
-                            <StackPanel Orientation="Horizontal" Margin="0,0,0,6">
-                                <TextBlock Text="Status: " Classes="secondary-text" VerticalAlignment="Center" />
-                                <TextBlock x:Name="monitorStatusText" FontSize="13" FontWeight="SemiBold"
-                                           Foreground="{DynamicResource StatusNeutralBrush}" VerticalAlignment="Center" Text="Checking..." />
+                        <Border Classes="card">
+                            <StackPanel TextElement.FontWeight="SemiBold">
+                                <TextBlock Name="outPath" Classes="card-title" />
+                                <TextBox x:Name="pathBox" Classes="modern"
+                                         TextChanged="pathBox_TextChanged" Height="32" Margin="0,10,0,0" />
                             </StackPanel>
-
-                            <TextBlock x:Name="monitorLastRunText" Classes="secondary-text" FontSize="11"
-                                       Margin="0,0,0,10" IsVisible="False" TextWrapping="Wrap" />
-
-                            <TextBlock Text="Alert Notifications" Classes="field-label" Margin="0,0,0,6" />
-                            <Grid Margin="0,0,0,8" ColumnDefinitions="100,8,*">
-                                <ComboBox x:Name="notifTypeBox" Grid.Column="0"
-                                          Classes="modern" Height="32" FontSize="12"
-                                          SelectedIndex="0"
-                                          SelectionChanged="notifTypeBox_SelectionChanged">
-                                    <ComboBoxItem Content="ntfy" IsSelected="True" />
-                                    <ComboBoxItem Content="Teams" />
-                                    <ComboBoxItem Content="Slack" />
-                                    <ComboBoxItem Content="PagerDuty" />
-                                </ComboBox>
-                                <TextBox x:Name="notifUrlBox" Grid.Column="2"
-                                         Classes="modern" Height="32" FontSize="12"
-                                         Tag="https://ntfy.sh/your-topic" />
-                            </Grid>
-                            <StackPanel Orientation="Horizontal" Margin="0,0,0,12">
-                                <TextBlock Text="Min severity: " Classes="field-label"
-                                           VerticalAlignment="Center" Margin="0,0,8,0" />
-                                <ComboBox x:Name="notifSeverityBox" Width="110"
-                                          Classes="modern" Height="28" FontSize="12"
-                                          SelectedIndex="0">
-                                    <ComboBoxItem Content="warning" IsSelected="True" />
-                                    <ComboBoxItem Content="critical" />
-                                    <ComboBoxItem Content="ok" />
-                                </ComboBox>
-                            </StackPanel>
-
-                            <Grid ColumnDefinitions="*,8,*,8,*">
-                                <Button x:Name="monitorQuickSetupBtn" Grid.Column="0"
-                                        Content="Quick Setup" Height="32" FontSize="11"
-                                        Classes="primary" IsEnabled="False"
-                                        Click="monitorQuickSetupBtn_Click"
-                                        ToolTip.Tip="Install monitor using selected VBR server and stored credentials" />
-                                <Button x:Name="monitorVhcSetupBtn" Grid.Column="2"
-                                        Content="Setup from VHC" Height="32" FontSize="11"
-                                        Classes="secondary" IsEnabled="False"
-                                        Click="monitorVhcSetupBtn_Click"
-                                        ToolTip.Tip="Configure monitor using data collected from the last health check run" />
-                                <Button x:Name="monitorRunBtn" Grid.Column="4"
-                                        Content="Run Now" Height="32" FontSize="11"
-                                        Classes="secondary" IsEnabled="False"
-                                        Click="monitorRunBtn_Click"
-                                        ToolTip.Tip="Trigger an immediate monitor check" />
-                            </Grid>
-
-                        </StackPanel>
+                        </Border>
                     </StackPanel>
-                </Border>
 
-                <Grid Margin="0,5,0,0" ColumnDefinitions="*,10,*">
-                    <Button Name="termsBtn" Grid.Column="0" Classes="secondary"
-                            Height="45" Click="AcceptButton_click" />
-                    <Button x:Name="run" Grid.Column="2" Classes="primary"
-                            Height="45" Click="run_Click" />
+                    <StackPanel Grid.Column="2">
+                        <Border Classes="card">
+                            <StackPanel TextElement.FontWeight="SemiBold">
+                                <TextBlock Classes="card-title">
+                                    <Run Name="OptHdr" />
+                                </TextBlock>
+                                <StackPanel Margin="5,10,5,0">
+                                    <TextBlock Text="Export Options" Classes="field-label" Margin="0,0,0,8" />
+                                    <CheckBox x:Name="pdfCheckBox" Classes="modern"
+                                              Checked="pdfCheckBox_Checked" Unchecked="pdfCheckBox_Unchecked"
+                                              IsChecked="False" />
+                                    <CheckBox x:Name="explorerShowBox" Classes="modern"
+                                              Checked="explorerShowBox_Checked" Unchecked="explorerShowBox_Unchecked"
+                                              IsChecked="True" />
+                                    <CheckBox Name="htmlCheckBox" Classes="modern"
+                                              Checked="htmlChecked" Unchecked="htmlUnchecked"
+                                              ToolTip.Tip="Display the HTML report in your default browser after generation" />
+
+                                    <Separator Margin="0,12,0,12" />
+
+                                    <TextBlock Text="Data Collection" Classes="field-label" Margin="0,0,0,8" />
+                                    <StackPanel Orientation="Horizontal" Margin="0,8,0,0">
+                                        <TextBlock Text="Collection Period:" VerticalAlignment="Center"
+                                                   Classes="field-label" Margin="0,0,10,0" />
+                                        <ComboBox Name="daysSelector" Classes="modern"
+                                                  Width="120" SelectedIndex="0" SelectionChanged="ComboBox_SelectionChanged">
+                                            <ComboBoxItem Content="7 Days" IsSelected="True" />
+                                            <ComboBoxItem Content="30 Days" />
+                                            <ComboBoxItem Content="90 Days" />
+                                        </ComboBox>
+                                    </StackPanel>
+
+                                    <CheckBox x:Name="RescanBox" Classes="modern"
+                                            Checked="RescanBox_Checked" Unchecked="RescanBox_Unchecked"
+                                            Margin="0,8,0,0"
+                                            ToolTip.Tip="Rescan for Hardware change" />
+
+                                    <Separator Margin="0,12,0,12" />
+
+                                    <TextBlock Text="Security &amp; Privacy" Classes="field-label" Margin="0,0,0,8" />
+                                    <CheckBox x:Name="scrubBox" Classes="modern"
+                                              Checked="HandleCheck" Unchecked="HandleUnchecked"
+                                              ToolTip.Tip="Anonymize sensitive data according to Veeam KB 2462" />
+                                    <CheckBox x:Name="clearCredsCheckBox" Classes="modern"
+                                              Checked="clearCredsCheckBox_Checked" Unchecked="clearCredsCheckBox_Unchecked"
+                                              IsChecked="False"
+                                              ToolTip.Tip="Clear any previously saved credentials before running" />
+                                </StackPanel>
+                            </StackPanel>
+                        </Border>
+                    </StackPanel>
                 </Grid>
 
-                <Button x:Name="importButton" Classes="secondary"
-                        Height="40" Margin="0,10,0,0" Click="Import_click"
-                        ToolTip.Tip="Create a report from previously collected data" />
-            </StackPanel>
-        </Grid>
+                <!-- Continuous Monitoring tab -->
+                <Grid x:Name="MonitoringTabPanel" ColumnDefinitions="*,20,*" IsVisible="False">
+                    <Border Grid.Column="0" Classes="card" VerticalAlignment="Top">
+                        <StackPanel TextElement.FontWeight="SemiBold">
+                            <TextBlock Text="Monitor Status" Classes="card-title" />
+                            <StackPanel Margin="5,10,5,0">
+                                <StackPanel Orientation="Horizontal" Margin="0,0,0,6">
+                                    <TextBlock Text="Status: " Classes="secondary-text" VerticalAlignment="Center" />
+                                    <TextBlock x:Name="monitorStatusText" FontSize="13" FontWeight="SemiBold"
+                                               Foreground="{DynamicResource StatusNeutralBrush}" VerticalAlignment="Center" Text="Checking..." />
+                                </StackPanel>
+
+                                <TextBlock x:Name="monitorLastRunText" Classes="secondary-text" FontSize="11"
+                                           Margin="0,0,0,10" IsVisible="False" TextWrapping="Wrap" />
+
+                                <Grid ColumnDefinitions="*,8,*,8,*">
+                                    <Button x:Name="monitorQuickSetupBtn" Grid.Column="0"
+                                            Content="Quick Setup" Height="32" FontSize="11"
+                                            Classes="primary" IsEnabled="False"
+                                            Click="monitorQuickSetupBtn_Click"
+                                            ToolTip.Tip="Install monitor using selected VBR server and stored credentials" />
+                                    <Button x:Name="monitorVhcSetupBtn" Grid.Column="2"
+                                            Content="Setup from VHC" Height="32" FontSize="11"
+                                            Classes="secondary" IsEnabled="False"
+                                            Click="monitorVhcSetupBtn_Click"
+                                            ToolTip.Tip="Configure monitor using data collected from the last health check run" />
+                                    <Button x:Name="monitorRunBtn" Grid.Column="4"
+                                            Content="Run Now" Height="32" FontSize="11"
+                                            Classes="secondary" IsEnabled="False"
+                                            Click="monitorRunBtn_Click"
+                                            ToolTip.Tip="Trigger an immediate monitor check" />
+                                </Grid>
+                            </StackPanel>
+                        </StackPanel>
+                    </Border>
+
+                    <Border Grid.Column="2" Classes="card" VerticalAlignment="Top">
+                        <StackPanel TextElement.FontWeight="SemiBold">
+                            <TextBlock Text="Alert Notifications" Classes="card-title" />
+                            <StackPanel Margin="5,10,5,0">
+                                <Grid Margin="0,0,0,8" ColumnDefinitions="100,8,*">
+                                    <ComboBox x:Name="notifTypeBox" Grid.Column="0"
+                                              Classes="modern" Height="32" FontSize="12"
+                                              SelectedIndex="0"
+                                              SelectionChanged="notifTypeBox_SelectionChanged">
+                                        <ComboBoxItem Content="ntfy" IsSelected="True" />
+                                        <ComboBoxItem Content="Teams" />
+                                        <ComboBoxItem Content="Slack" />
+                                        <ComboBoxItem Content="PagerDuty" />
+                                    </ComboBox>
+                                    <TextBox x:Name="notifUrlBox" Grid.Column="2"
+                                             Classes="modern" Height="32" FontSize="12"
+                                             Tag="https://ntfy.sh/your-topic" />
+                                </Grid>
+                                <StackPanel Orientation="Horizontal" Margin="0,0,0,12">
+                                    <TextBlock Text="Min severity: " Classes="field-label"
+                                               VerticalAlignment="Center" Margin="0,0,8,0" />
+                                    <ComboBox x:Name="notifSeverityBox" Width="110"
+                                              Classes="modern" Height="28" FontSize="12"
+                                              SelectedIndex="0">
+                                        <ComboBoxItem Content="warning" IsSelected="True" />
+                                        <ComboBoxItem Content="critical" />
+                                        <ComboBoxItem Content="ok" />
+                                    </ComboBox>
+                                </StackPanel>
+                            </StackPanel>
+                        </StackPanel>
+                    </Border>
+                </Grid>
+
+            </Panel>
         </ScrollViewer>
 
-        <Button x:Name="ThemeToggleButton" Classes="secondary"
-                HorizontalAlignment="Right" VerticalAlignment="Top"
-                Margin="0,12,12,0" Padding="10,4" FontSize="12"
-                Click="ThemeToggleButton_Click" />
-        </Panel>
+        <!-- Bottom bar row (fixed - never inside the ScrollViewer). termsBtn/run follow the
+             active tab (ad-hoc-only workflow); the progress stack does NOT - a real health
+             check run can take minutes, and a user switching to Continuous Monitoring
+             mid-run must not lose visibility into it. -->
+        <Border Grid.Row="3" Background="{DynamicResource CardBackgroundBrush}" BorderBrush="{DynamicResource CardBorderBrush}" BorderThickness="0,1,0,0">
+            <Grid ColumnDefinitions="Auto,*,Auto" Margin="25,15,25,15">
+                <Button x:Name="termsBtn" Grid.Column="0" Classes="secondary"
+                        Height="45" Click="AcceptButton_click" />
 
-        <!-- pBar must NOT get IsVisible="False" here: hideProgressBar()/showProgressBar() in the
-             code-behind toggle only its Opacity (matching WPF's Visibility.Hidden, which reserves
-             layout space) - it always stays IsVisible="True" in markup. progressText DOES default
-             to IsVisible="False" here, matching WPF's Visibility.Collapsed default (removed from
-             layout entirely). -->
-        <Border Grid.Row="1" Background="{DynamicResource CardBackgroundBrush}" BorderBrush="{DynamicResource CardBorderBrush}" BorderThickness="0,1,0,0">
-            <StackPanel Margin="25,15,25,15">
-                <ProgressBar Name="pBar"
-                             Height="20"
-                             IsIndeterminate="True"
-                             BorderThickness="0"
-                             Background="{DynamicResource CardBorderBrush}"
-                             Foreground="{DynamicResource AccentBrush}"
-                             BorderBrush="Transparent" />
-                <TextBlock Name="progressText"
-                           Classes="secondary-text"
-                           Text="Processing health check..."
-                           Margin="0,8,0,0"
-                           HorizontalAlignment="Center"
-                           IsVisible="False" />
-            </StackPanel>
+                <!-- progressText now hides via Opacity, not IsVisible (see code-behind).
+                     Opacity is a paint-time effect only - it never changes an element's
+                     measured size, so nothing in the bottom bar can reflow when progress
+                     shows or hides. IsVisible=false would zero progressText's DesiredSize
+                     and let the bottom bar's layout change on every run start/stop. -->
+                <StackPanel Grid.Column="1" Margin="16,0" VerticalAlignment="Center">
+                    <ProgressBar Name="pBar"
+                                 Height="20"
+                                 IsIndeterminate="True"
+                                 BorderThickness="0"
+                                 Background="{DynamicResource CardBorderBrush}"
+                                 Foreground="{DynamicResource AccentBrush}"
+                                 BorderBrush="Transparent" />
+                    <TextBlock Name="progressText"
+                               Classes="secondary-text"
+                               Text="Processing health check..."
+                               Margin="0,8,0,0"
+                               HorizontalAlignment="Center"
+                               Opacity="0" />
+                </StackPanel>
+
+                <Button x:Name="run" Grid.Column="2" Classes="primary"
+                        Height="45" Click="run_Click" />
+            </Grid>
         </Border>
     </Grid>
 </Window>

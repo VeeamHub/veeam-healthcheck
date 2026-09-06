@@ -152,6 +152,52 @@
             <Setter Property="Background" Value="Transparent" />
         </Style>
 
+        <!-- Tab header buttons -->
+        <Style Selector="Button.tab">
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="BorderThickness" Value="0,0,0,2" />
+            <Setter Property="BorderBrush" Value="Transparent" />
+            <Setter Property="CornerRadius" Value="0" />
+            <Setter Property="Foreground" Value="{DynamicResource SecondaryTextBrush}" />
+            <Setter Property="Padding" Value="4,8" />
+            <Setter Property="FontSize" Value="14" />
+            <Setter Property="Cursor" Value="Hand" />
+        </Style>
+        <Style Selector="Button.tab.tab-active">
+            <Setter Property="BorderBrush" Value="{DynamicResource AccentBrush}" />
+            <Setter Property="Foreground" Value="{DynamicResource PrimaryTextBrush}" />
+            <Setter Property="FontWeight" Value="SemiBold" />
+        </Style>
+        <!-- FluentTheme's Button ControlTheme sets Background, BorderBrush AND Foreground
+             on ContentPresenter#PART_ContentPresenter for both :pointerover and :pressed.
+             Those setters live on the ContentPresenter at StyleTrigger priority, which
+             outranks the TemplateBinding (Template priority) that carries this Button's
+             own BorderBrush - so every one of the three has to be neutralized here or
+             Fluent's value wins. BorderBrush matters most for tabs: the 2px bottom border
+             IS the active-tab indicator, so without these overrides hovering an inactive
+             tab paints a phantom underline and hovering the active tab replaces the accent
+             underline with Fluent's gray ButtonBorderBrushPointerOver/Pressed. -->
+        <Style Selector="Button.tab:pointerover /template/ ContentPresenter">
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="BorderBrush" Value="Transparent" />
+            <Setter Property="TextElement.Foreground" Value="{DynamicResource SecondaryTextBrush}" />
+        </Style>
+        <Style Selector="Button.tab:pressed /template/ ContentPresenter">
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="BorderBrush" Value="Transparent" />
+            <Setter Property="TextElement.Foreground" Value="{DynamicResource SecondaryTextBrush}" />
+        </Style>
+        <Style Selector="Button.tab.tab-active:pointerover /template/ ContentPresenter">
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="BorderBrush" Value="{DynamicResource AccentBrush}" />
+            <Setter Property="TextElement.Foreground" Value="{DynamicResource PrimaryTextBrush}" />
+        </Style>
+        <Style Selector="Button.tab.tab-active:pressed /template/ ContentPresenter">
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="BorderBrush" Value="{DynamicResource AccentBrush}" />
+            <Setter Property="TextElement.Foreground" Value="{DynamicResource PrimaryTextBrush}" />
+        </Style>
+
         <Style Selector="Border.card">
             <Setter Property="Background" Value="{DynamicResource CardBackgroundBrush}" />
             <Setter Property="BorderBrush" Value="{DynamicResource CardBorderBrush}" />
@@ -260,7 +306,10 @@
             <Setter Property="Foreground" Value="{DynamicResource PrimaryTextBrush}" />
         </Style>
 
-        <!-- No consumer yet in the real window - ready for Stage B. -->
+        <!-- No consumer yet in the real window - Stage B's server-management UI
+             stayed the existing inline textbox+listbox model; this is ready for
+             whichever later stage revisits that model (originally "Stage C" in
+             the port's stage breakdown). -->
         <Style Selector="Button.remove-server">
             <Setter Property="Background" Value="Transparent" />
             <Setter Property="BorderThickness" Value="0" />
