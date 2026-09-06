@@ -280,10 +280,17 @@ namespace VeeamHealthCheck
             run.IsEnabled = false;
         }
 
+        // Width=0 alone was enough when importButton was a standalone element, but in
+        // the header row it sits in its own Auto column with Margin="0,0,12,0", and a
+        // zero-width control still contributes its margin - leaving a 12px gap next to
+        // the (already hidden) divider in every shipped build. IsVisible=false zeroes
+        // the whole DesiredSize including margin, collapsing the Auto column completely.
+        // The Width lines stay so SetImportDebug still gets its 100px button.
         private void SetImportRelease()
         {
             importButton.IsEnabled = false;
             importButton.Width = 0;
+            importButton.IsVisible = false;
             importDivider.IsVisible = false;
         }
 
@@ -291,6 +298,7 @@ namespace VeeamHealthCheck
         {
             importButton.IsEnabled = true;
             importButton.Width = 100;
+            importButton.IsVisible = true;
             importDivider.IsVisible = true;
         }
 
