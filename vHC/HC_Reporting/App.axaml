@@ -168,12 +168,33 @@
             <Setter Property="Foreground" Value="{DynamicResource PrimaryTextBrush}" />
             <Setter Property="FontWeight" Value="SemiBold" />
         </Style>
+        <!-- FluentTheme's Button ControlTheme sets Background, BorderBrush AND Foreground
+             on ContentPresenter#PART_ContentPresenter for both :pointerover and :pressed.
+             Those setters live on the ContentPresenter at StyleTrigger priority, which
+             outranks the TemplateBinding (Template priority) that carries this Button's
+             own BorderBrush - so every one of the three has to be neutralized here or
+             Fluent's value wins. BorderBrush matters most for tabs: the 2px bottom border
+             IS the active-tab indicator, so without these overrides hovering an inactive
+             tab paints a phantom underline and hovering the active tab replaces the accent
+             underline with Fluent's gray ButtonBorderBrushPointerOver/Pressed. -->
         <Style Selector="Button.tab:pointerover /template/ ContentPresenter">
             <Setter Property="Background" Value="Transparent" />
+            <Setter Property="BorderBrush" Value="Transparent" />
+            <Setter Property="TextElement.Foreground" Value="{DynamicResource SecondaryTextBrush}" />
+        </Style>
+        <Style Selector="Button.tab:pressed /template/ ContentPresenter">
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="BorderBrush" Value="Transparent" />
             <Setter Property="TextElement.Foreground" Value="{DynamicResource SecondaryTextBrush}" />
         </Style>
         <Style Selector="Button.tab.tab-active:pointerover /template/ ContentPresenter">
             <Setter Property="Background" Value="Transparent" />
+            <Setter Property="BorderBrush" Value="{DynamicResource AccentBrush}" />
+            <Setter Property="TextElement.Foreground" Value="{DynamicResource PrimaryTextBrush}" />
+        </Style>
+        <Style Selector="Button.tab.tab-active:pressed /template/ ContentPresenter">
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="BorderBrush" Value="{DynamicResource AccentBrush}" />
             <Setter Property="TextElement.Foreground" Value="{DynamicResource PrimaryTextBrush}" />
         </Style>
 
