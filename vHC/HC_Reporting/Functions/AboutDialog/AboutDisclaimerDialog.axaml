@@ -10,7 +10,19 @@ MIT License
         CanResize="False"
         WindowStartupLocation="CenterOwner">
     <Grid RowDefinitions="Auto,Auto" Margin="20">
-        <ScrollViewer Grid.Row="0">
+        <!-- MaxHeight belongs on the ScrollViewer, not just on the Window. A cell in an
+             Auto grid row is always measured with an infinite height (Avalonia's
+             Grid.MeasureCell shortcuts "to content" for Auto rows), so a ScrollViewer
+             there reports its full content height and never scrolls; Grid.SetFinalSize
+             then only shrinks Star rows, so both Auto rows overflow the clamped window
+             and the Close button below is pushed out of view. Capping the ScrollViewer
+             itself gives it a finite viewport so it scrolls, and keeps the window's own
+             SizeToContent="Height" behaviour for shorter (e.g. localized) content.
+             460 + Grid Margin (40) + Close button (~31) + its Margin (12) = ~543, which
+             stays under the Window's MaxHeight="600" whether that clamp applies to the
+             client area or to the whole frame including the title bar - so the outer
+             clamp never binds and the Close button is never pushed out of view. -->
+        <ScrollViewer Grid.Row="0" MaxHeight="460">
             <StackPanel Spacing="10">
                 <TextBlock Classes="card-title" FontSize="18" FontWeight="Bold" Foreground="{DynamicResource AccentBrush}">
                     <Run Name="InsHeader" />
