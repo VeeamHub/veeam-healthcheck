@@ -160,6 +160,13 @@ public static class CAppSettings
     /// every server the user already had. The credential itself is already persisted
     /// by the caller, so the eventual seed picks this host up anyway.
     ///
+    /// As a consequence of that same guard, this also never writes over an unreadable
+    /// settings file: <see cref="Get"/> collapses <c>Unreadable</c> to a fresh
+    /// <see cref="AppSettings"/> with <c>Servers == null</c>, so the null check above
+    /// returns before any write. That guarantee currently holds only by transitivity -
+    /// a future refactor that has this call <see cref="Load"/> directly must preserve
+    /// it explicitly.
+    ///
     /// Knows nothing about localhost by design - see
     /// <c>AddServer_DoesNotSpecialCaseLocalhost</c>.
     /// </summary>
@@ -170,18 +177,24 @@ public static class CAppSettings
             return;
         }
 
+        var trimmed = server.Trim();
+
         var settings = Get();
         if (settings.Servers == null)
         {
             return;
         }
 
-        if (settings.Servers.Any(s => s.Equals(server, StringComparison.OrdinalIgnoreCase)))
+        // Static string.Equals rather than instance s.Equals: the persisted list can
+        // contain a null element (e.g. a hand-edited settings.json), and s.Equals would
+        // throw a NullReferenceException on it. The static overload returns false for a
+        // null left-hand side instead.
+        if (settings.Servers.Any(s => string.Equals(s, trimmed, StringComparison.OrdinalIgnoreCase)))
         {
             return;
         }
 
-        settings.Servers.Add(server);
+        settings.Servers.Add(trimmed);
         Write(settings);
     }
 

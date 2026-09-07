@@ -368,5 +368,50 @@ namespace VhcXTests
 
             Assert.Equal(new[] { "localhost" }, CAppSettings.Get().Servers);
         }
+
+        [Fact]
+        public void AddServer_WithNullElementInPersistedList_DoesNotThrowAndDetectsDuplicate()
+        {
+            // A hand-edited settings.json can contain a null element. The instance-based
+            // s.Equals(...) used to throw NullReferenceException on it; the static
+            // string.Equals(...) form returns false for a null left-hand side instead.
+            Directory.CreateDirectory(Path.GetDirectoryName(CAppSettings.StorePath)!);
+            File.WriteAllText(CAppSettings.StorePath, "{\"Servers\":[null,\"vbr01\"]}");
+
+            var ex = Record.Exception(() => CAppSettings.AddServer("vbr01"));
+
+            Assert.Null(ex);
+            Assert.Equal(new[] { null, "vbr01" }, CAppSettings.Get().Servers);
+        }
+
+        [Fact]
+        public void AddServer_WhenSettingsFileIsUnreadable_LeavesFileUnchanged()
+        {
+            // AddServer never writes over a corrupt settings.json, but only by
+            // transitivity: Get() collapses Unreadable to a fresh AppSettings with
+            // Servers == null, so the null guard returns before any write ever happens.
+            // A future refactor that has AddServer call Load directly must preserve
+            // this explicitly rather than relying on that side effect.
+            Directory.CreateDirectory(Path.GetDirectoryName(CAppSettings.StorePath)!);
+            const string corrupt = "{ not valid json ";
+            File.WriteAllText(CAppSettings.StorePath, corrupt);
+
+            CAppSettings.AddServer("newhost");
+
+            Assert.Equal(corrupt, File.ReadAllText(CAppSettings.StorePath));
+        }
+
+        [Fact]
+        public void AddServer_WithWhitespacePaddedExistingName_DoesNotDuplicate()
+        {
+            // Matches addServerBtn_Click's trimming behavior (VhcGui.axaml.cs) and
+            // ServerListEditor.Add's, so all three entry points treat padding the same
+            // way rather than leaving AddServer the odd one out.
+            CAppSettings.SetServers(new[] { "vbr01" });
+
+            CAppSettings.AddServer("  vbr01  ");
+
+            Assert.Equal(new[] { "vbr01" }, CAppSettings.Get().Servers);
+        }
     }
 }
