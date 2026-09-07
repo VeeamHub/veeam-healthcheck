@@ -507,7 +507,13 @@ git commit -m "feat(settings): add CAppSettings.AddServer, no-op until the list 
 
 **Still open, deliberately deferred to Task 3:** per-element filtering in `SetServers`, so it can reuse `Filter`'s `IsNullOrWhiteSpace` predicate instead of hand-rolling a second copy of the same rule. It needs its own test, because `SetServers(new[] { "  " })` would then persist `[]` — "the user emptied it" — which is a meaningful and irreversible statement under the null-versus-empty rule.
 
-**Suite after Task 2: 866 passed, 0 failed, 12 skipped.** Baseline for Task 3.
+5. **`AddServer` calls `Load` and logs on `Unreadable`, rather than `Get()` and silence.** The transitivity argument (`Get()` yields `Servers == null`, so the null guard returns first) was verified sound, so this is observability rather than correctness — but without it a user with a corrupt `settings.json` gets the auto-add promise silently broken with nothing in the log explaining why their `/savecreds` host never appeared. Making it explicit also let the "any future refactor must preserve this" caveat be deleted, since the guarantee stopped being incidental.
+
+6. **The comparator is `string.Equals(s?.Trim(), trimmed, ...)`.** Trimming only the *input* left the stored side exposed to the same hand-edited-file source: a persisted `["  vbr01  "]` plus `AddServer("vbr01")` found no match and appended, giving two picker rows for one host. `s?.Trim()` makes the null-safety a property of the construction rather than a separate argument, so one line subsumes both hardenings.
+
+7. **Five further tests** across the two correction rounds: padded-*input* and padded-*stored* duplicates, a `null` element tolerated with the duplicate still detected, an unreadable file left byte-identical, and `AddServer_PreservesThemePreference` completing the per-mutator matrix Task 1 established. That last one has a subtlety worth preserving if it is ever rewritten: it must seed via `SetServers` *before* asserting, or `AddServer`'s no-op-while-null guard makes it pass vacuously without ever exercising the write path.
+
+**Suite after Task 2: 868 passed, 0 failed, 12 skipped** (verified directly). Baseline for Task 3.
 
 ---
 
@@ -2536,7 +2542,7 @@ dotnet test vHC/VhcXTests/VhcXTests.csproj 2>&1 | tail -20
 git checkout -- vHC/HC_Reporting/VeeamHealthCheck.csproj
 ```
 
-Expected: `0 Error(s)`, and `Failed: 0, Skipped: 12` with `Passed` at **884** — the 843 baseline plus 41 new tests (14 in Task 1, 9 in Task 2, 7 in Task 3, 11 in Task 4), each count including post-review corrections.
+Expected: `0 Error(s)`, and `Failed: 0, Skipped: 12` with `Passed` at **888** — the 843 baseline plus 45 new tests (14 in Task 1, 11 in Task 2, 9 in Task 3 including the two null/trim tests added after Task 2's review, 11 in Task 4), each count including post-review corrections.
 
 - [ ] **Step 2: Confirm nothing stale survives**
 
