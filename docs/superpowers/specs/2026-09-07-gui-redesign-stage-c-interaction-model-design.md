@@ -28,6 +28,7 @@ Two corrections to the record before the design, because both prior documents ca
 - Convert the collection-period selector to the segmented-pill style ported in Stage A and unused since.
 - Restore the spike's output-directory folder picker, which Stage B did not port.
 - Localize every string this stage authors or rewrites, rather than adding to the hardcoded-English backlog.
+- Fix the two `SetUiSync()` bugs that keep the remote-only startup path from working, now that the persisted list makes the first of them tractable (§7).
 
 ## Non-goals (explicitly deferred)
 
@@ -180,6 +181,34 @@ Mechanics, verified rather than assumed:
 - `NeutralLanguage=en-US` means keys present only in the neutral resx fall back to English for the other four cultures. Translation is a later content-only edit.
 - Strings are applied in code-behind via `SetUiText()` (and `ToolTip.SetTip(control, …)` for tooltips), because `VbrLocalizationHelper` is an internal class and is not reachable from XAML markup — the same pattern the file already uses for its 9 existing resx-driven assignments.
 
+### 7. Fixing the remote-only startup path
+
+`SetUiSync()` carries two pre-existing bugs that Stage B documented in code and deliberately left intact. Stage C is rewriting the exact data flow the first one depends on, so both are fixed here.
+
+**Bug 1 — the `hasRemoteServers` scan always sees an empty list.** `SetUiSync()` runs before `InitializeServerList()` in the constructor, so its `foreach (var item in serverListBox.Items)` iterates nothing. The branch exists so that a machine with no local Veeam install but remote servers configured continues into the UI instead of aborting; because the scan can never find anything, such a machine always falls through to `_modeCheckFailed = true` and gets exactly the failure the branch was written to prevent.
+
+**Bug 2 — the Remote Mode title is immediately overwritten.** The `hasRemoteServers` branch sets `this.Title = "Veeam Health Check - Remote Mode"`, then execution falls through to `this.Title = modeCheckResult;` a few lines later — and on this path `modeCheckResult` is the literal string `"fail"`. Fixing bug 1 makes this branch reachable for the first time, so leaving bug 2 would ship a newly-live code path that titles the window `"fail"`.
+
+**The fix.** The seed-and-resolve logic becomes a static method on `CAppSettings`:
+
+```csharp
+public static List<string> LoadOrSeedServers(IEnumerable<string> credentialStoreServers);
+```
+
+It returns `Servers` when non-null (including when empty), and otherwise seeds from `credentialStoreServers` — filtering `localhost` per §2 — persists the result, and returns it. Taking the credential-store servers as a parameter rather than calling `CredentialStore.GetAllServers()` internally keeps it a pure function of its inputs and directly unit-testable, in line with the seam pattern `CAppSettings.StorePath` and `CredentialStore.StorePath` already use.
+
+`VhcGui`'s constructor calls it once, **before** `SetUiSync()`, and caches the result in a `_persistedServers` field that both `SetUiSync()` and `InitializeServerList()` read.
+
+`SetUiSync()`'s scan then collapses to a count check, with no `localhost` filtering needed because `localhost` is never persisted by design:
+
+```csharp
+bool hasRemoteServers = _persistedServers.Count > 0;
+```
+
+For bug 2, the trailing `this.Title = modeCheckResult;` becomes conditional so it does not clobber the Remote Mode title on the fail-but-remote path.
+
+This ordering matters and is the reason for extracting a method rather than writing a one-liner: if `SetUiSync()` simply read `CAppSettings.Get().Servers` directly, the very first launch after upgrade would see `null` — the seed would not yet have run, because it lives in `InitializeServerList()`, which runs later. A user upgrading with remote servers already credentialed would hit the abort path exactly once, which is the worst possible time for it. Resolving the list before `SetUiSync()` removes the constructor-ordering fragility rather than working around it.
+
 ## Implementation notes / hazards
 
 - **`VbrLocalizationHelper.cs` and `vhcres.txt` are both UTF-16LE with CRLF line endings** (PowerShell `out-file` output). An edit tool that rewrites either as UTF-8 corrupts every localized string in the application. Edits to these two files must be encoding-preserving, and the encoding must be re-verified afterwards (`file` should still report "Unicode text, UTF-16, little-endian"). `vhcres.resx` is plain UTF-8 and needs no special handling. Note that this encoding is also why `cat`/`grep` on the two UTF-16 files appears to fail with "stream did not contain valid UTF-8" — that is expected, not a sign of a damaged file.
@@ -195,7 +224,7 @@ Unit-testable on macOS, and therefore required as part of this stage:
 
 - `ServerListEditor`: add, duplicate rejection (case-insensitive), stage removal, undo removal, add-undoes-pending-removal, a pinned row rejecting `Remove`, `PendingChangeCount`, `Commit()` producing the correct final list and credential-deletion set, and `Commit().FinalServers` excluding pinned entries.
 - `CAppSettings`: `Servers` round-trip through `SetServers`/`Get`, `AddServer` idempotence and case-insensitivity, `AddServer` ignoring `localhost` in any casing, and the `null`-versus-empty seed rule. `CAppSettings.StorePath` already has an internal test seam for isolation.
-- The seed path: seeding filters `localhost` out of `GetAllServers()` before persisting. Requires isolating both `CredentialStore.StorePath` and `CAppSettings.StorePath`, which each already have a seam.
+- `CAppSettings.LoadOrSeedServers`: returns the persisted list unchanged when non-null; returns an empty list unchanged when persisted as empty (the null-versus-empty rule); seeds and persists when null; filters `localhost` in any casing out of the seed input. Pure in its parameter, so no `CredentialStore` isolation is needed — only the existing `CAppSettings.StorePath` seam.
 
 Baseline to hold: **843 passed, 0 failed, 12 skipped** on `dotnet test vHC/VhcXTests/VhcXTests.csproj`, plus the new tests. `dotnet build vHC/HC.sln --configuration Debug` must report 0 errors.
 
@@ -209,10 +238,11 @@ Windows-only, handed to the user (this sandbox cannot render Avalonia at all —
 - Period pills: all three select correctly, `days7` default, correct `CGlobals.ReportDays` in the log.
 - Folder picker: cancel leaves the path untouched; a chosen folder updates both the textbox and the effective output path.
 - Both new icon buttons render at 32px and align with their partner controls in light and dark themes.
+- **The remote-only path (§7), which has never actually worked:** on a machine with no local Veeam install but at least one persisted remote server, the window opens instead of aborting, and its title reads "Veeam Health Check - Remote Mode" rather than "fail". Also confirm the still-broken case is genuinely broken — no local Veeam *and* no persisted servers should still abort.
 
 ## Recorded, not fixed
 
 - **`notifTypeBox` and `notifSeverityBox` round-trip backend values through their visible `Content`.** `GetNotifSettings()` reads `(notifTypeBox.SelectedItem as ComboBoxItem)?.Content?.ToString()?.ToLower()` and the same for severity. Localizing those labels in Stage D would silently break notification delivery. Stage D must add a `Tag`-based value mapping before touching them.
-- **Two pre-existing bugs in `SetUiSync()`**, documented in code by Stage B and still intact: it runs before `InitializeServerList()`, so its `hasRemoteServers` scan always sees an empty list; and `this.Title = modeCheckResult` immediately overwrites the "Remote Mode" title set a few lines above. With the list now loaded from `CAppSettings` the first of these becomes worth revisiting, but not in this stage.
+- ~~Two pre-existing bugs in `SetUiSync()`~~ — **now in scope, see §7.**
 - **`Clear All`'s removal is a deliberate behavior deletion**, not an oversight.
 - **The freed left-column space** makes the Ad-hoc height imbalance more visible. Out of scope by decision.
