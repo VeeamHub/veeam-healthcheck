@@ -1417,7 +1417,7 @@ using Avalonia.Controls;
 using Avalonia.Interactivity;
 using Avalonia.Layout;
 using Avalonia.Media;
-using VeeamHealthCheck.Common;
+using VeeamHealthCheck.Shared;
 using VeeamHealthCheck.Resources.Localization;
 using VeeamHealthCheck.Startup;
 
@@ -1637,7 +1637,9 @@ dotnet build vHC/HC.sln --configuration Debug
 git checkout -- vHC/HC_Reporting/VeeamHealthCheck.csproj
 ```
 
-Expected: 0 errors. If `CGlobals` resolves to the wrong namespace, check what `VhcGui.axaml.cs` imports and match it — do not guess.
+Expected: 0 errors.
+
+`CGlobals` lives in `VeeamHealthCheck.Shared`, **not** `VeeamHealthCheck.Common` — the latter namespace does not exist anywhere in the solution, despite `CGlobals.cs` sitting in a `Common/` folder (`vHC/HC_Reporting/Common/CGlobals.cs:12` declares `namespace VeeamHealthCheck.Shared`). `VhcGui.axaml.cs:17` and `CAppSettings.cs:6` both import `VeeamHealthCheck.Shared` for exactly this reason. Folder name and namespace diverge here; trust the namespace.
 
 - [ ] **Step 4: Run the full suite**
 
