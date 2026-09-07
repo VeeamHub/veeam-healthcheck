@@ -1175,7 +1175,14 @@ git commit -m "feat(servers): add Avalonia-free ServerListEditor staging model"
 
    Two new tests: `Add_PinnedNameAbsentFromInitial_ReturnsDuplicateAndCreatesNoRow` and `Constructor_WithUntrimmedInitialAndPinned_TrimsBothAndKeepsPinnedRowNotRemovable`.
 
-**Suite after Task 4: 896 passed, 0 failed, 12 skipped** (verified directly). Baseline for Task 5.
+3. **A mutation-testing pass by spec review found three more surviving mutants, all now killed.**
+
+   - `Commit_WithNoPinned_TreatsLocalhostAsAnOrdinaryEntry` asserted `IsRemovable` and `FinalServers` membership but never called `Add` or `Remove`, so a hardcoded `if (name == "localhost") return;`/`return Duplicate;` inserted into either method would pass the entire suite — every other test pins localhost, so none of them exercise the non-injecting (VB365-only) path where localhost must behave as an ordinary name. That is precisely the bug spec §2 warns a blanket filter would cause. Fixed by extending the same test to call `Remove("localhost")` and assert the result behaviourally (`IsPendingRemoval` true, excluded from `Commit().FinalServers`), and adding `Add_WithNoPinned_AddsLocalhostAsAnOrdinaryEntry` for the `Add` side. Both mutants (a hardcoded check inserted into `Add` and into `Remove`) were reproduced and confirmed killed, then reverted.
+   - The constructor's dedup `continue` (skipping a case-insensitive repeat in `initial`) had no direct test — third-line defence, since `CAppSettings.NormalizeServers` already dedupes upstream, but worth pinning in this class too. Added `Constructor_WithDuplicateInitialEntries_CreatesOneRow`, which also confirms dedup runs *after* trimming (removing the `continue` reproduces `["localhost", "LOCALHOST", "vbr01"]` — trimmed but not deduped — proving both).
+   - The class header comment (`:36-41`) and `Add_CoversItsFourOutcomes`'s inline comment both still framed `Add("localhost")` returning `Duplicate` as caused by "pinned names also appearing in `initial`" — true of the test fixture, but superseded by item 2's `_pinned.Contains` check as the actual mechanism. Reworded both: the `pinned ⊆ initial` relationship is now described as a caller contract for *display* purposes only, not a correctness dependency.
+   - `Remove` and `UndoRemove` now trim their argument, matching `Add` and the constructor, for the same "no longer depends on caller hygiene" principle — commented as belt-and-braces rather than load-bearing, since every stored `row.Name` is already trimmed and Task 8 passes `row.Name` straight back in, so no reachable path exercises the trim today.
+
+**Suite after Task 4: 898 passed, 0 failed, 12 skipped** (verified directly). Baseline for Task 5.
 
 ---
 
@@ -2596,7 +2603,7 @@ dotnet test vHC/VhcXTests/VhcXTests.csproj 2>&1 | tail -20
 git checkout -- vHC/HC_Reporting/VeeamHealthCheck.csproj
 ```
 
-Expected: `0 Error(s)`, and `Failed: 0, Skipped: 12` with `Passed` at **896** — the 843 baseline plus 53 new tests (14 in Task 1, 11 in Task 2, 15 in Task 3, 13 in Task 4), each count including post-review corrections.
+Expected: `0 Error(s)`, and `Failed: 0, Skipped: 12` with `Passed` at **898** — the 843 baseline plus 55 new tests (14 in Task 1, 11 in Task 2, 15 in Task 3, 15 in Task 4), each count including post-review corrections.
 
 - [ ] **Step 2: Confirm nothing stale survives**
 
