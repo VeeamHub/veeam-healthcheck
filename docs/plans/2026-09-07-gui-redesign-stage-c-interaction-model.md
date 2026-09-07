@@ -26,7 +26,7 @@ Read these once; they are not repeated per task.
 
 3. **One commit per task.** Never `git commit --amend` — create a new commit instead.
 
-4. **You cannot render the GUI here.** Avalonia crashes at native platform bootstrap in this sandbox before any application code runs. Do not try. Anything visual is verified by a human on Windows, and Task 15 collects that list.
+4. **You cannot render the GUI here.** Avalonia crashes at native platform bootstrap in this sandbox before any application code runs. Do not try. Anything visual is verified by a human on Windows, and Task 14 collects that list.
 
 5. **The spike is not on this branch.** It lives on `spike/gui-redesign`. Read spike files with:
    ```bash
@@ -51,6 +51,7 @@ Read these once; they are not repeated per task.
 | `vHC/HC_Reporting/Functions/ManageServers/ManageServersDialog.axaml` | Modal dialog markup. |
 | `vHC/HC_Reporting/Functions/ManageServers/ManageServersDialog.axaml.cs` | Dialog code-behind: binds `ServerListEditor` to the list, commits on Done. |
 | `vHC/VhcXTests/ServerListEditorTests.cs` | Unit tests for the staging model. |
+| `docs/plans/2026-09-07-gui-redesign-stage-c-verification.md` | The Windows-only verification checklist (Task 14). |
 
 **Modified:**
 
@@ -65,6 +66,7 @@ Read these once; they are not repeated per task.
 | `vHC/HC_Reporting/Resources/Localization/vhcres.resx` | 23 new keys. |
 | `vHC/HC_Reporting/Resources/Localization/VbrLocalizationHelper.cs` | 23 new accessors (UTF-16LE). |
 | `vHC/VhcXTests/CAppSettingsTests.cs` | Tests for all new `CAppSettings` behavior. |
+| `vHC/HC_Reporting/Resources/Localization/vhcres.txt` | Matching ResGen source entries (**UTF-16LE**, `Key = Value` format). |
 
 **Ordering rationale:** Tasks 1-6 are pure logic and localization — fully verifiable on this machine, and they land the tests that catch the design's two dangerous holes. Task 7 is a style-only change and Task 8 is a self-contained new dialog. Tasks 9-13 touch the main window, pairing each XAML change with its own code-behind so every task compiles on its own; splitting XAML from its code-behind would leave the tree broken mid-task.
 
@@ -274,6 +276,12 @@ Replace the body of `CAppSettings` from `Get()` through `Set(...)` with:
         return Write(settings);
     }
 
+    // NOT synchronized. This and AddServer and Set(themePreference) are all
+    // Get() -> mutate -> write read-modify-writes over one shared file, so a GUI commit
+    // racing a CLI /savecreds AddServer, or two GUI instances, loses an update - and a
+    // lost update can resurrect a just-removed server. Stage C assumes a single
+    // instance. Recorded here deliberately so the resulting bug is not a mystery later.
+    //
     // Writes via a temp file plus an atomic move, so an interrupted write can never
     // leave a truncated settings.json behind. That matters more than usual here:
     // a truncated file reads back as Unreadable, and an earlier design that collapsed
@@ -1039,7 +1047,7 @@ dotnet test vHC/VhcXTests/VhcXTests.csproj --filter "FullyQualifiedName~ServerLi
 git checkout -- vHC/HC_Reporting/VeeamHealthCheck.csproj
 ```
 
-Expected: PASS, all 12.
+Expected: PASS, all 11.
 
 - [ ] **Step 5: Commit**
 
@@ -1238,7 +1246,7 @@ file vHC/HC_Reporting/Resources/Localization/VbrLocalizationHelper.cs
 iconv -f UTF-16LE -t UTF-8 vHC/HC_Reporting/Resources/Localization/VbrLocalizationHelper.cs | grep -c 'GuiManageServers'
 ```
 
-Expected: `Unicode text, UTF-16, little-endian text, with CRLF line terminators` and a count of `16`. **If `file` reports UTF-8, stop and `git checkout --` the file** — a UTF-8 rewrite corrupts every localized string in the application.
+Expected: `Unicode text, UTF-16, little-endian text, with CRLF line terminators` and a count of `17` (the key list has 17 `GuiManageServers*` entries; the other six new keys use different prefixes). **If `file` reports UTF-8, stop and `git checkout --` the file** — a UTF-8 rewrite corrupts every localized string in the application.
 
 - [ ] **Step 4: Append the matching entries to `vhcres.txt`**
 
@@ -1294,7 +1302,7 @@ dotnet build vHC/HC.sln --configuration Debug
 git checkout -- vHC/HC_Reporting/VeeamHealthCheck.csproj
 ```
 
-Expected: 0 errors. A blank-label typo cannot be caught here — Task 15 puts it on the Windows checklist. Re-read your resx names against the accessor names character for character now, while the diff is small.
+Expected: 0 errors. A blank-label typo cannot be caught here — Task 14 puts it on the Windows checklist. Re-read your resx names against the accessor names character for character now, while the diff is small.
 
 - [ ] **Step 6: Commit**
 
@@ -1791,7 +1799,19 @@ In `DisableButtons`, replace `termsBtn.IsEnabled = false;` with:
             termsCheckBox.IsEnabled = false;
 ```
 
-- [ ] **Step 5: Build and test**
+- [ ] **Step 5: Update the comments that name `termsBtn`**
+
+Comments do not break the build, so these are silent — and one of them is load-bearing. `termsBtn` survives at `VhcGui.axaml.cs:37`, `:39`, `:95`, `:99` and `VhcGui.axaml:244`. The block at `:95-107` is the explanation of *why* `SelectTab` uses the Opacity/IsHitTestVisible/Focusable triple, which Step 3 depends on, so it needs updating rather than tolerating.
+
+Replace every `termsBtn` in those comments with `termsCheckBox`, keeping the surrounding reasoning intact. Verify:
+
+```bash
+grep -n 'termsBtn' vHC/HC_Reporting/VhcGui.axaml.cs vHC/HC_Reporting/VhcGui.axaml
+```
+
+Expected: no output.
+
+- [ ] **Step 6: Build and test**
 
 ```bash
 dotnet build vHC/HC.sln --configuration Debug
@@ -1799,9 +1819,9 @@ dotnet test vHC/VhcXTests/VhcXTests.csproj
 git checkout -- vHC/HC_Reporting/VeeamHealthCheck.csproj
 ```
 
-Expected: 0 build errors, 0 failed tests. Any remaining `termsBtn` reference is a compile error — good, that is the safety net.
+Expected: 0 build errors, 0 failed tests. Any remaining `termsBtn` reference *in code* is a compile error — that part has a safety net; the comments in Step 5 do not.
 
-- [ ] **Step 6: Commit**
+- [ ] **Step 7: Commit**
 
 ```bash
 git add vHC/HC_Reporting/VhcGui.axaml vHC/HC_Reporting/VhcGui.axaml.cs
@@ -1855,8 +1875,15 @@ In `vHC/HC_Reporting/VhcGui.axaml.cs`, replace `ComboBox_SelectionChanged` (and 
         // Reads sender, never the days7/days30/days90 fields. days7's IsChecked="True"
         // in XAML raises Checked DURING InitializeComponent(), when the other two named
         // fields may not be assigned yet - inspecting them to find the checked one would
-        // throw a NullReferenceException at construction. This is the same timing hazard
-        // the old daysSelector handler guarded against with a null check.
+        // throw a NullReferenceException at construction. This is the same class of
+        // timing hazard the ComboBox handler this replaces guarded against with a null
+        // check.
+        //
+        // This also makes SetReportDays reachable during InitializeComponent() for the
+        // first time, which the old null guard suppressed. That is safe: `functions` is
+        // a field initializer so it runs before the constructor body, and LogUIAction
+        // only writes to the static CGlobals.mainlog. It is harmless either way, because
+        // CGlobals.reportDays already defaults to 7 - so do not "fix" the ordering.
         //
         // The value comes from Tag rather than Name or Content because Content is
         // localized, and parsing a localized label as data is exactly the mistake
@@ -2038,12 +2065,12 @@ git commit -m "feat(gui): restore the output-directory folder picker Stage B mis
 The largest task, and it must be atomic: deleting `serverListBox` breaks three consumers at once, so the XAML and all three call sites move together or the tree does not compile.
 
 **Files:**
-- Modify: `vHC/HC_Reporting/VhcGui.axaml` (~lines 44-88)
+- Modify: `vHC/HC_Reporting/VhcGui.axaml` (lines 49-88)
 - Modify: `vHC/HC_Reporting/VhcGui.axaml.cs` (`InitializeServerList`, `UpdateSelectedServersGlobal`, the three server handlers, `monitorQuickSetupBtn_Click`, `DisableButtons`, `SetUiText`, constructor)
 
 - [ ] **Step 1: Collapse the server card markup**
 
-In `vHC/HC_Reporting/VhcGui.axaml`, replace everything from `<Grid Margin="0,0,0,10" ColumnDefinitions="*,10,80">` through the closing `</Grid>` of the Remove/Clear row (the add row, the 120px ListBox `Border`, and the Remove/Clear `Grid` — roughly lines 49-87) with:
+In `vHC/HC_Reporting/VhcGui.axaml`, replace everything from `<Grid Margin="0,0,0,10" ColumnDefinitions="*,10,80">` through the closing `</Grid>` of the Remove/Clear row (the add row, the 120px ListBox `Border`, and the Remove/Clear `Grid` — lines 49-88) with:
 
 ```xml
                                     <TextBlock x:Name="serverLabel" Classes="field-label" Margin="0,0,0,8" />
@@ -2432,15 +2459,17 @@ dotnet test vHC/VhcXTests/VhcXTests.csproj 2>&1 | tail -20
 git checkout -- vHC/HC_Reporting/VeeamHealthCheck.csproj
 ```
 
-Expected: `0 Error(s)`, and `Failed: 0, Skipped: 12` with `Passed` at 843 plus the new tests (~868).
+Expected: `0 Error(s)`, and `Failed: 0, Skipped: 12` with `Passed` at **873** — the 843 baseline plus 30 new tests (6 in Task 1, 6 in Task 2, 7 in Task 3, 11 in Task 4).
 
 - [ ] **Step 2: Confirm nothing stale survives**
 
 ```bash
-grep -rn 'termsBtn\|serverListBox\|serverTextBox\|addServerBtn\|removeServerBtn\|clearServersBtn\|daysSelector' vHC/HC_Reporting --include="*.cs" --include="*.axaml" | grep -v /obj/ || echo "clean: no stale control references"
+grep -rn 'termsBtn\|serverListBox\|serverTextBox\|addServerBtn\|removeServerBtn\|clearServersBtn\|daysSelector' vHC/HC_Reporting --include="*.cs" --include="*.axaml" | grep -v /obj/
 ```
 
-Expected: `clean: no stale control references`. A hit in a *comment* is acceptable if it is describing history; a hit in code is a bug.
+Expected: **no output at all.** Tasks 9, 10, 12 and 13 each update the comments that mention their own removed controls, so by this point nothing — code or comment — should still name one. Any hit is a missed comment update; go back and fix it in place rather than accepting it here.
+
+Do not use the `|| echo "clean"` form: `grep` exits 0 when it matches, so the echo can never fire while a single stale reference survives, which makes the check silently useless.
 
 - [ ] **Step 3: Confirm the localization encodings survived every task**
 
@@ -2552,11 +2581,13 @@ Every spec section, and the task that implements it:
 | §3 `ManageServersDialog`, staged rows, commit order | 8 |
 | §3 `ServerListEditor` | 4 |
 | §3 dialog never changes selection; post-Done repopulate | 8, 12 |
-| §3 third consumer (`monitorQuickSetupBtn_Click`) | 12 |
+| §3 all four `serverListBox` consumers (incl. `monitorQuickSetupBtn_Click` and `SetUiSync`) | 12 |
+| §3 concurrency / single-instance assumption recorded | 1 (comment on `Write`) |
 | §3a `DisableButtons` | 9, 11, 12 |
 | §4 period pills, `sender`/`Tag` handler | 10 |
 | §5 folder picker | 11 |
 | §6 localization | 6 (keys), 9-12 (`SetUiText` wiring) |
-| §7 `SetUiSync` bugs 1 and 2 | 13 |
+| §7 bug 1 (dead `hasRemoteServers` scan) | 12 |
+| §7 bug 2 (title clobbered with "fail") + stale comment | 13 |
 | App.axaml undo style | 7 |
 | Testing / verification | 1-4 (unit), 14 (handoff checklist) |
