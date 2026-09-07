@@ -1169,11 +1169,13 @@ git commit -m "feat(servers): add Avalonia-free ServerListEditor staging model"
 
    Fixed by adding `"localhost"` to `withCreds`. `localhost` is pinned, so `Remove("localhost")` is a no-op (per `Remove_OnPinnedRow_IsNoOp`), giving the fixture a row that has credentials and is never staged for removal. Verified both clauses are now independently load-bearing: removing `IsPendingRemoval &&` fails the assertion (`localhost` leaks into the result), and removing `&& r.HasCredentials` also fails (`vbr02` leaks in). Both mutations were run and reverted before this commit.
 
-2. **Two design notes for Task 12's author, not acted on here (YAGNI for this task):**
-   - `Add`'s new-row branch hardcodes `IsRemovable = true` and does not check `_pinned`. If a caller ever violates the documented "`pinned` must also appear in `initial`" invariant, `Add("localhost")` on a fresh row would return `Added`, render a removable row, and then `Commit` would silently exclude it via the pinned check anyway — a confusing but not incorrect outcome. Concretely: `CAppSettings.LoadOrSeedServers(..., excludeLocalhost: true)` returns a list *without* localhost on an injecting machine, so Task 12 must explicitly prepend the pinned name(s) to `initial` before constructing the editor, not just pass them as `pinned`. If Task 12 forgets, this is the symptom to look for.
-   - The constructor does not trim `Name` on `initial` entries (`Add` does trim). This is safe today only because `initial` is expected to arrive already trimmed and deduped (`CAppSettings.NormalizeServers`'s output). Worth a one-line comment if Task 12's wiring changes what feeds `initial`.
+2. **`Add` now treats a pinned name as `Duplicate` unconditionally, and the constructor trims both `initial` and `pinned`.** The first cut of this task left both of these as caller obligations rather than class guarantees — flagged in the original report as "design notes for Task 12," but on reflection that framing understated the risk. Before this fix, a caller that violated "`pinned` must also appear in `initial`" would see `Add("localhost")` return `Added`, render a removable row, increment the pending-change count — and then have `Commit` silently discard it. That is a silent discard of an explicit user action, the same failure shape as Task 3's seed burning itself, not a merely "confusing" outcome.
 
-**Suite after Task 4: 894 passed, 0 failed, 12 skipped** (verified directly). Baseline for Task 5.
+   `Add` now checks `_pinned.Contains(trimmed)` before the existing-row lookup and returns `Duplicate` regardless of whether a matching row exists, so persisted correctness no longer depends on the `pinned ⊆ initial` invariant holding. The constructor trims both `initial` and `pinned` before use, building `_pinned` from trimmed values *first* and then comparing trimmed row names against it — the order matters, since trimming one list but not the other lets a padded pinned entry (`"  localhost  "`) fail to match a trimmed row name and render that row removable, exactly the bug this guards against. Verified with three separate mutations, each restored after confirming failure: removing the `_pinned.Contains` check in `Add`, removing trimming entirely, and removing trimming from only one of the two lists (which reproduces the order-sensitive bug specifically). Task 12 as planned already seeds `initial` with every pinned name, so none of this changes production behaviour today — it removes a dependency on that invariant rather than fixing an active bug.
+
+   Two new tests: `Add_PinnedNameAbsentFromInitial_ReturnsDuplicateAndCreatesNoRow` and `Constructor_WithUntrimmedInitialAndPinned_TrimsBothAndKeepsPinnedRowNotRemovable`.
+
+**Suite after Task 4: 896 passed, 0 failed, 12 skipped** (verified directly). Baseline for Task 5.
 
 ---
 
@@ -2586,7 +2588,7 @@ dotnet test vHC/VhcXTests/VhcXTests.csproj 2>&1 | tail -20
 git checkout -- vHC/HC_Reporting/VeeamHealthCheck.csproj
 ```
 
-Expected: `0 Error(s)`, and `Failed: 0, Skipped: 12` with `Passed` at **894** — the 843 baseline plus 51 new tests (14 in Task 1, 11 in Task 2, 15 in Task 3, 11 in Task 4), each count including post-review corrections.
+Expected: `0 Error(s)`, and `Failed: 0, Skipped: 12` with `Passed` at **896** — the 843 baseline plus 53 new tests (14 in Task 1, 11 in Task 2, 15 in Task 3, 13 in Task 4), each count including post-review corrections.
 
 - [ ] **Step 2: Confirm nothing stale survives**
 

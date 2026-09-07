@@ -47,9 +47,22 @@ namespace VeeamHealthCheck.Functions.ManageServers
             IEnumerable<string> pinned,
             Func<string, bool> hasCredentials)
         {
-            _pinned = new HashSet<string>(pinned ?? Enumerable.Empty<string>(), StringComparer.OrdinalIgnoreCase);
+            // Trim pinned names before building the set, and compare TRIMMED row
+            // names against it below. Order matters: trimming `initial` but not
+            // `pinned` would let a padded pinned entry ("  localhost  ") fail to
+            // match a trimmed row name, rendering that row removable - the exact
+            // bug this self-normalisation exists to prevent. This mirrors
+            // CAppSettings.NormalizeServers on the settings side, so the class no
+            // longer depends on caller hygiene for either list.
+            _pinned = new HashSet<string>(
+                (pinned ?? Enumerable.Empty<string>())
+                    .Where(n => !string.IsNullOrWhiteSpace(n))
+                    .Select(n => n.Trim()),
+                StringComparer.OrdinalIgnoreCase);
 
-            foreach (var name in (initial ?? Enumerable.Empty<string>()).Where(n => !string.IsNullOrWhiteSpace(n)))
+            foreach (var name in (initial ?? Enumerable.Empty<string>())
+                .Where(n => !string.IsNullOrWhiteSpace(n))
+                .Select(n => n.Trim()))
             {
                 if (_rows.Any(r => r.Name.Equals(name, StringComparison.OrdinalIgnoreCase)))
                 {
@@ -81,6 +94,20 @@ namespace VeeamHealthCheck.Functions.ManageServers
             if (string.IsNullOrWhiteSpace(trimmed))
             {
                 return AddResult.Invalid;
+            }
+
+            // A pinned name is always conceptually present - it is injected by the
+            // caller rather than stored - so adding one is a duplicate even if it is
+            // somehow absent from `initial`. Without this, a caller that passed
+            // `pinned` without also seeding `initial` would get Added, render a
+            // removable row, and have Commit silently discard it: an explicit user
+            // action dropped with no feedback. Defence in depth: Task 12 as planned
+            // does seed `initial` with every pinned name, so this should never be the
+            // path taken in production - but persisted state must never depend on
+            // that invariant holding.
+            if (_pinned.Contains(trimmed))
+            {
+                return AddResult.Duplicate;
             }
 
             var existing = _rows.FirstOrDefault(

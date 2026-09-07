@@ -180,5 +180,40 @@ namespace VhcXTests
             Assert.True(editor.Rows.Single(r => r.Name == "localhost").IsRemovable);
             Assert.Contains("localhost", editor.Commit().FinalServers);
         }
+
+        [Fact]
+        public void Add_PinnedNameAbsentFromInitial_ReturnsDuplicateAndCreatesNoRow()
+        {
+            // Defence in depth against a caller violating "pinned must also appear in
+            // initial". Without this check, Add would return Added, render a removable
+            // row for a name that is conceptually already present, and Commit would
+            // then silently discard it - an explicit user action dropped with no
+            // feedback, the same failure shape as Task 3's seed burning itself.
+            var editor = new ServerListEditor(
+                new[] { "vbr01" },
+                new[] { "localhost" },
+                _ => false);
+
+            var result = editor.Add("localhost");
+
+            Assert.Equal(AddResult.Duplicate, result);
+            Assert.DoesNotContain("localhost", editor.Rows.Select(r => r.Name));
+        }
+
+        [Fact]
+        public void Constructor_WithUntrimmedInitialAndPinned_TrimsBothAndKeepsPinnedRowNotRemovable()
+        {
+            // Order matters here: trimming `initial` but not `pinned` (or vice versa)
+            // would leave "  localhost  " and "localhost" as distinct strings under
+            // OrdinalIgnoreCase comparison, so the row would come out removable - the
+            // exact bug this self-normalisation exists to prevent.
+            var editor = new ServerListEditor(
+                new[] { "  localhost  ", "vbr01" },
+                new[] { "  localhost  " },
+                _ => false);
+
+            var row = editor.Rows.Single(r => r.Name == "localhost");
+            Assert.False(row.IsRemovable);
+        }
     }
 }
