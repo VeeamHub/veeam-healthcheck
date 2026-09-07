@@ -288,7 +288,13 @@ public static List<string> LoadOrSeedServers(
     bool excludeLocalhost);
 ```
 
-It returns `Servers` when non-null (including when empty), and otherwise seeds from `credentialStoreServers`, persists the result, and returns it. `excludeLocalhost` is supplied by the caller as `LocalhostIsInjected` (§2) — the same predicate that drives injection and pinning — which is what keeps `CAppSettings` free of `localhost` policy and stops the two rules from drifting apart.
+It returns `Servers` when non-null (including when empty), and otherwise seeds from `credentialStoreServers`, persists the result, and returns it. `excludeLocalhost` is supplied by the caller as `LocalhostIsInjected` (§2) — the same predicate that drives injection and pinning — which is what keeps `CAppSettings` free of `localhost` policy and stops the rules from drifting apart.
+
+**`excludeLocalhost` filters the returned list on every path, not just the seed.** This is what makes §2's invariant self-healing instead of dependent on every writer behaving, and it closes a hole that the "`CAppSettings` knows nothing about `localhost`" decision otherwise opens: `AddServer` has no `localhost` special case, so on an injecting machine with an already-seeded `Servers`, a `/savecreds` run against `localhost` genuinely does persist the name — and injection would then render it a second time as a duplicate row.
+
+Filtering at read time means a stray persisted `localhost` is simply ignored wherever it would be injected, and honored wherever it would not, no matter how it got there. The alternative — pushing `excludeLocalhost` into `AddServer` — is worse: `AddServer` runs from CLI paths where it is not established that `ModeCheck()` has populated `CGlobals.IsVbrInstalled`/`IsVb365` yet, so the predicate cannot be trusted at that moment. Read time is the only place the answer is reliably known.
+
+Composition should also de-duplicate case-insensitively when injection prepends `localhost`, matching the `.Distinct()` that `InitializeServerList()` already applies today.
 
 Taking the credential-store servers as a parameter rather than calling `CredentialStore.GetAllServers()` internally keeps it a pure function of its inputs and directly unit-testable, in line with the seam pattern `CAppSettings.StorePath` and `CredentialStore.StorePath` already use.
 
@@ -324,7 +330,7 @@ Unit-testable on macOS, and therefore required as part of this stage:
 
 - `ServerListEditor`: add, duplicate rejection (case-insensitive), stage removal, undo removal, add-undoes-pending-removal, a pinned row rejecting `Remove`, `Add` of a pinned name returning `Duplicate`, `PendingChangeCount`, `Commit()` producing the correct final list and credential-deletion set, and `Commit().FinalServers` excluding pinned entries. Also the non-injecting case: with an empty `pinned`, `localhost` is addable, removable, and present in `Commit().FinalServers`.
 - `CAppSettings`: `Servers` round-trip through `SetServers`/`Get`, `AddServer` idempotence and case-insensitivity, and **`AddServer` being a no-op while `Servers` is `null`** — the test that catches the upgrade-data-loss hole in §2.
-- `CAppSettings.LoadOrSeedServers`: returns the persisted list unchanged when non-null; returns an empty list unchanged when persisted as empty (the null-versus-empty rule); seeds and persists when null; filters `localhost` in any casing from the seed input when `excludeLocalhost` is true, and **retains it when false**. Pure in its parameters, so no `CredentialStore` isolation is needed — only the `CAppSettings.StorePath` seam plus the collection attribute above.
+- `CAppSettings.LoadOrSeedServers`: returns the persisted list unchanged when non-null; returns an empty list unchanged when persisted as empty (the null-versus-empty rule); seeds and persists when null; filters `localhost` in any casing when `excludeLocalhost` is true — **from a non-null persisted list as well as from the seed input**, which is the self-healing property — and **retains it when false**. Pure in its parameters, so no `CredentialStore` isolation is needed — only the `CAppSettings.StorePath` seam plus the collection attribute above.
 
 Baseline to hold: **843 passed, 0 failed, 12 skipped** on `dotnet test vHC/VhcXTests/VhcXTests.csproj`, plus the new tests. `dotnet build vHC/HC.sln --configuration Debug` must report 0 errors.
 
@@ -334,7 +340,7 @@ Windows-only, handed to the user (this sandbox cannot render Avalonia at all —
 - Tab switching with the checkbox present — no bottom-bar reflow, and no keyboard focus landing on hidden controls.
 - Manage Servers: add, staged removal appearance, undo, Cancel discarding, OS-close discarding, Done applying, the summary confirm firing only when credentials would be deleted, and `localhost` having no remove affordance.
 - Removing the **currently active** server via the dialog, then confirming the tab's selection falls back correctly and a subsequent run does not target the deleted host.
-- Persistence: added server survives a restart; removed server stays removed; removing every server and restarting leaves the list empty rather than resurrecting it (the `null`-versus-empty rule, end to end); `/savecreds` against a new host makes it appear in the list; `/savecreds` against `localhost` does **not** add a persisted entry.
+- Persistence: added server survives a restart; removed server stays removed; removing every server and restarting leaves the list empty rather than resurrecting it (the `null`-versus-empty rule, end to end); `/savecreds` against a new host makes it appear in the list; and `/savecreds` against `localhost` on a machine with a local product yields exactly **one** `localhost` row, not a duplicate.
 - Period pills: all three select correctly, `days7` default, correct `CGlobals.ReportDays` in the log — **and** hover and press each pill, checked and unchecked, in both light and dark themes, to confirm FluentTheme is not painting over the checked state (see the `RadioButton.segment` hazard note).
 - The Manage Servers rows: the remove affordance appears on row hover as `Button.remove-server` intends, and the undo affordance on a struck-through row is legible *without* hovering.
 - Folder picker: cancel leaves the path untouched; a chosen folder updates both the textbox and the effective output path.
