@@ -1698,6 +1698,14 @@ namespace VeeamHealthCheck.Functions.ManageServers
             }
         }
 
+        // Removals and undos go through the editor's Remove/UndoRemove ONLY. Never set
+        // ServerRow.IsPendingRemoval directly: that setter is internal, so this dialog
+        // can reach it, and doing so bypasses Remove's IsRemovable short-circuit - the
+        // only thing stopping a pinned row from being staged. Commit's
+        // CredentialsToDelete filter carries no pinned guard of its own (it does not
+        // need one, because a pinned row cannot acquire the flag through the public
+        // API), so a directly-set flag on a pinned, credentialed localhost would delete
+        // its stored credentials. Unreachable today; one line of dialog code away.
         private void RemoveRow_Click(object sender, RoutedEventArgs e)
         {
             _editor.Remove((string)((Button)sender).Tag);
