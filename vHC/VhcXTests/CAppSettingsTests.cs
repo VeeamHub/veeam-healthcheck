@@ -387,11 +387,10 @@ namespace VhcXTests
         [Fact]
         public void AddServer_WhenSettingsFileIsUnreadable_LeavesFileUnchanged()
         {
-            // AddServer never writes over a corrupt settings.json, but only by
-            // transitivity: Get() collapses Unreadable to a fresh AppSettings with
-            // Servers == null, so the null guard returns before any write ever happens.
-            // A future refactor that has AddServer call Load directly must preserve
-            // this explicitly rather than relying on that side effect.
+            // AddServer explicitly checks Load's Unreadable result (matching Set) and
+            // logs rather than silently swallowing it, so a user with a corrupt
+            // settings file gets an explanation in the log for why their /savecreds
+            // host never appeared in the picker.
             Directory.CreateDirectory(Path.GetDirectoryName(CAppSettings.StorePath)!);
             const string corrupt = "{ not valid json ";
             File.WriteAllText(CAppSettings.StorePath, corrupt);
@@ -412,6 +411,36 @@ namespace VhcXTests
             CAppSettings.AddServer("  vbr01  ");
 
             Assert.Equal(new[] { "vbr01" }, CAppSettings.Get().Servers);
+        }
+
+        [Fact]
+        public void AddServer_WithWhitespacePaddedStoredName_DoesNotDuplicate()
+        {
+            // The other direction of the padding fix: a hand-edited settings.json can
+            // hold a padded name. Comparing both sides trimmed catches this the same
+            // way the input-side test above catches a padded call argument.
+            Directory.CreateDirectory(Path.GetDirectoryName(CAppSettings.StorePath)!);
+            File.WriteAllText(CAppSettings.StorePath, "{\"Servers\":[\"  vbr01  \"]}");
+
+            CAppSettings.AddServer("vbr01");
+
+            Assert.Equal(new[] { "  vbr01  " }, CAppSettings.Get().Servers);
+        }
+
+        [Fact]
+        public void AddServer_PreservesThemePreference()
+        {
+            // Seed first: AddServer no-ops while Servers is null, and a no-op would
+            // make this test pass without ever exercising the write path it's meant
+            // to pin.
+            CAppSettings.SetServers(new[] { "vbr01" });
+            CAppSettings.Set("Dark");
+
+            CAppSettings.AddServer("vbr02");
+
+            var settings = CAppSettings.Get();
+            Assert.Equal("Dark", settings.ThemePreference);
+            Assert.Equal(new[] { "vbr01", "vbr02" }, settings.Servers);
         }
     }
 }

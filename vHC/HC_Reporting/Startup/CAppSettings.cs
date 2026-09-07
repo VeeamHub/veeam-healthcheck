@@ -160,12 +160,9 @@ public static class CAppSettings
     /// every server the user already had. The credential itself is already persisted
     /// by the caller, so the eventual seed picks this host up anyway.
     ///
-    /// As a consequence of that same guard, this also never writes over an unreadable
-    /// settings file: <see cref="Get"/> collapses <c>Unreadable</c> to a fresh
-    /// <see cref="AppSettings"/> with <c>Servers == null</c>, so the null check above
-    /// returns before any write. That guarantee currently holds only by transitivity -
-    /// a future refactor that has this call <see cref="Load"/> directly must preserve
-    /// it explicitly.
+    /// Also a no-op, logged, when the settings file is <c>Unreadable</c> - writing here
+    /// would turn a transient, recoverable read failure into a permanent one, the same
+    /// hazard <see cref="Set"/> guards against.
     ///
     /// Knows nothing about localhost by design - see
     /// <c>AddServer_DoesNotSpecialCaseLocalhost</c>.
@@ -179,17 +176,25 @@ public static class CAppSettings
 
         var trimmed = server.Trim();
 
-        var settings = Get();
+        if (Load(out var settings) == SettingsLoadResult.Unreadable)
+        {
+            CGlobals.Logger.Warning($"Settings unreadable; not recording server '{trimmed}' in the picker list.");
+            return;
+        }
+
+        // Servers == null means "never seeded" - see the no-op remarks above. Checked
+        // after the Unreadable branch so the two distinct reasons for not writing are
+        // both explicit rather than one masquerading as the other.
         if (settings.Servers == null)
         {
             return;
         }
 
-        // Static string.Equals rather than instance s.Equals: the persisted list can
-        // contain a null element (e.g. a hand-edited settings.json), and s.Equals would
-        // throw a NullReferenceException on it. The static overload returns false for a
-        // null left-hand side instead.
-        if (settings.Servers.Any(s => string.Equals(s, trimmed, StringComparison.OrdinalIgnoreCase)))
+        // s?.Trim() rather than s.Trim(): the persisted list can contain a null element
+        // (e.g. a hand-edited settings.json). Trimming both sides also catches a
+        // persisted-but-padded duplicate, e.g. a hand-edited "  vbr01  " against an
+        // AddServer("vbr01") call.
+        if (settings.Servers.Any(s => string.Equals(s?.Trim(), trimmed, StringComparison.OrdinalIgnoreCase)))
         {
             return;
         }
