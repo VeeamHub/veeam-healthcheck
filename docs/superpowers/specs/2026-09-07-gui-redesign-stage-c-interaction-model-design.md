@@ -54,6 +54,8 @@ Three constraints, the first of which is a correctness issue this sandbox cannot
 
 - **The handler must stay `async void` and keep `await Task.Run(() => this.functions.AcceptTerms())`.** Today's `AcceptButton_click` does exactly that, and the comments at `VhcGui.axaml.cs:525` and `IUiNotifier.cs:27` explain why: `AcceptTerms()` is synchronous and reaches the notifier's *blocking* wrapper, which deadlocks if invoked on the UI thread. A checkbox-handler rewrite is precisely where that gets dropped, and the resulting deadlock will not reproduce on macOS. Keep the shape:
 
+  **Both handlers, in full.** The guard matters most in the one the programmatic revert actually raises, so neither can be left to prose:
+
   ```csharp
   private async void termsCheckBox_Checked(object sender, RoutedEventArgs e)
   {
@@ -64,15 +66,22 @@ Three constraints, the first of which is a correctness issue this sandbox cannot
       if (!accepted)
       {
           _suppressTermsHandler = true;
-          termsCheckBox.IsChecked = false;
+          termsCheckBox.IsChecked = false;   // raises Unchecked synchronously
           _suppressTermsHandler = false;
       }
+  }
+
+  // Deliberately NOT async void. See the re-entrancy note below.
+  private void termsCheckBox_Unchecked(object sender, RoutedEventArgs e)
+  {
+      if (_suppressTermsHandler) return;
+      run.IsEnabled = false;
   }
   ```
 
   Note the checkbox is *visibly checked while the modal is open* and springs back only on decline. That is intended, not a bug — a reviewer should not flag it.
 
-- **Re-entrancy.** Assigning `IsChecked = false` raises `Unchecked` synchronously, which would re-enter the handler pair. A plain `bool _suppressTermsHandler` field bracketing the programmatic revert is sufficient precisely because the event is synchronous; no locking or `Interlocked` is needed.
+- **Re-entrancy.** `IsChecked = false` raises **`Unchecked`**, not `Checked` — so the guard that does the real work is the one in `termsCheckBox_Unchecked`. A plain `bool _suppressTermsHandler` suffices *only because that event is delivered synchronously*, inside the assignment, while the flag is still set. **`termsCheckBox_Unchecked` must therefore not be `async void`**, however tempting the symmetry with its sibling: an `await` before the guard check moves the continuation past the point where `_suppressTermsHandler` is reset back to `false`, and the guard silently stops working. It has nothing to await in any case.
 - **`SelectTab()` must use the `Opacity` / `IsHitTestVisible` / `Focusable` triple, never `IsVisible`.** The checkbox inherits `termsBtn`'s position: alone in an `Auto` column of the bottom-bar grid. `IsVisible = false` zeroes its `DesiredSize`, collapsing that column and shifting the progress stack and Run — the exact bug Stage B fixed twice (once for `progressText`, once for `termsBtn`/`run` themselves). The constructor's existing explicit initialization of these three properties must be updated to cover the checkbox rather than the button.
 
 ### 2. Server list: storage and semantics
