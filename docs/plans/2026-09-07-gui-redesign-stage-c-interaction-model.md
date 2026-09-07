@@ -491,6 +491,24 @@ git add vHC/HC_Reporting/Startup/CAppSettings.cs vHC/VhcXTests/CAppSettingsTests
 git commit -m "feat(settings): add CAppSettings.AddServer, no-op until the list is seeded"
 ```
 
+### Corrections applied after review — Task 2 as built
+
+**Executed: `b940d34` (steps above) + `390a19b` (these corrections).** Where the steps disagree with this list, this list is what shipped.
+
+1. **The duplicate check uses `string.Equals(s, trimmed, ...)`, not `s.Equals(...)`.** Step 3's sample would throw `NullReferenceException` on a `null` element in the persisted list — reachable via a hand-edited `settings.json`, since `SetServers` does `servers?.ToList()` with no per-element filtering and a `null` element round-trips through `Write` unchanged. That violates this class's never-throws contract, and Task 5 hooks `AddServer` into `AvaloniaCredentialPrompter.PromptAsync`, an `async` handler where an unobserved exception is a crash rather than a logged warning.
+
+   Note *why* the fix belongs here rather than in Task 3: `AddServer` reads via `Get()`, so §3's `Filter` is a **different read path** and never sees the element. Fixing it there would leave the crash open while appearing to address it.
+
+2. **`AddServer` trims its input**, matching `addServerBtn_Click` (`VhcGui.axaml.cs:665`) and `ServerListEditor.Add`. Without it, case-insensitive-but-not-trim-insensitive detection lets `AddServer(" vbr01 ")` append a near-duplicate of `vbr01`. Trim happens after the whitespace short-circuit, so `"   "` still no-ops, and the trimmed value is what gets compared and persisted.
+
+3. **No write-back healing.** `AddServer` must not rewrite the file to strip a bad element. Writing-on-read is the pattern Task 1's correction #1 removed from `Set`, and Task 3's `Unreadable` branch forbids it outright. A `null` element is harmless once item 1 lands and invisible after `Filter`.
+
+4. **Three further tests:** a `null` element in the persisted list is tolerated and the duplicate still detected; a whitespace-padded existing name does not duplicate; and `AddServer` leaves an unreadable `settings.json` byte-identical. That last guarantee previously held only *by transitivity* — `Get()` returns `Servers == null`, so the null guard returns before any write — a real guarantee resting on a guard that exists for another reason, with no coverage. A doc note now says any future refactor to call `Load` directly must preserve it explicitly.
+
+**Still open, deliberately deferred to Task 3:** per-element filtering in `SetServers`, so it can reuse `Filter`'s `IsNullOrWhiteSpace` predicate instead of hand-rolling a second copy of the same rule. It needs its own test, because `SetServers(new[] { "  " })` would then persist `[]` — "the user emptied it" — which is a meaningful and irreversible statement under the null-versus-empty rule.
+
+**Suite after Task 2: 866 passed, 0 failed, 12 skipped.** Baseline for Task 3.
+
 ---
 
 ## Task 3: `CAppSettings.LoadOrSeedServers`
@@ -2476,7 +2494,7 @@ dotnet test vHC/VhcXTests/VhcXTests.csproj 2>&1 | tail -20
 git checkout -- vHC/HC_Reporting/VeeamHealthCheck.csproj
 ```
 
-Expected: `0 Error(s)`, and `Failed: 0, Skipped: 12` with `Passed` at **881** — the 843 baseline plus 38 new tests (14 in Task 1 including its two post-review correction rounds, 6 in Task 2, 7 in Task 3, 11 in Task 4).
+Expected: `0 Error(s)`, and `Failed: 0, Skipped: 12` with `Passed` at **884** — the 843 baseline plus 41 new tests (14 in Task 1, 9 in Task 2, 7 in Task 3, 11 in Task 4), each count including post-review corrections.
 
 - [ ] **Step 2: Confirm nothing stale survives**
 
