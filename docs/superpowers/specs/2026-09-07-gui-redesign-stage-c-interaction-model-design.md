@@ -149,7 +149,23 @@ An earlier draft of this spec gated injection on `IsVbrInstalled` alone while fi
 
 **Staged removals stay visible, struck-through, with an undo affordance** rather than disappearing. This is what makes Cancel legible: if rows vanished on click, a staged dialog would look identical to today's immediate one and the user would have no way to see what Done is about to destroy.
 
-`Done` applies the staged changes: `CAppSettings.SetServers(...)`, then `CredentialStore.Remove(...)` for each removed host that had credentials. When any removal would destroy a credential, Done first raises **one** summary confirm ("Removing N servers. Saved credentials for M of them will be deleted.") replacing today's per-item prompts. `Cancel` and the OS close button both discard every staged change and touch nothing.
+When any removal would destroy a credential, `Done` first raises **one** summary confirm ("Removing N servers. Saved credentials for M of them will be deleted.") replacing today's per-item prompts. `Cancel` and the OS close button both discard every staged change and touch nothing.
+
+**Commit order is credentials first, then settings** — and this is the reverse of what an earlier draft specified, for a reason. Both primitives Done depends on swallow their own exceptions:
+
+- `CAppSettings`'s write path catches, logs, and returns (`CAppSettings.cs:58-61`).
+- `CredentialStore.Remove` catches `Exception`, logs, and returns `false` (`CredentialStore.cs:315-319`).
+
+So a naive `Done` can report success having written nothing. Worse, persisting the list *first* creates a failure mode the old immediate-commit model could not produce: settings write succeeds, a credential deletion silently fails, and `creds.json` now holds an entry for a host that is no longer in the list — **unreachable from the GUI**, because it is not in the list to remove, and clearable only via `clearCredsCheckBox`. Previously the list *was* the credential key set, so orphaning was structurally impossible.
+
+Deleting credentials first means a failed deletion leaves the host still listed, which is recoverable by retrying. Concretely: delete credentials for each removed host, log any `Remove` returning `false`, then call `SetServers` — which returns a `bool` for this purpose — and surface a failure to the user rather than closing the dialog as though it worked.
+
+**Durability of the null-versus-empty rule.** `CAppSettings.cs:56` uses `File.WriteAllText`, which is not atomic, and `Get()`'s catch-all (`:42-46`) turns a truncated or malformed file into defaults — meaning `Servers == null`, meaning re-seed, meaning the list resurrects. That is precisely the bug §2 exists to prevent, reachable through any interrupted write. Two changes close it:
+
+- Write via a temp file plus `File.Move(..., overwrite: true)` so a partial write can never be observed.
+- Distinguish "file absent" from "file unreadable" in `Get()`, so corruption does not silently mean "never seeded".
+
+**Concurrency is out of scope, but must be stated.** `SetServers`, `AddServer`, and the pre-existing `Set(themePreference)` are all unsynchronized `Get()` → mutate → `WriteAllText` read-modify-writes over one shared file. A GUI `Done` racing a CLI `/savecreds` `AddServer`, or two GUI instances, loses an update — and a lost update can resurrect a just-removed host. Repeated sequential launches are fine; concurrent ones are not. Stage C assumes a single instance and does not add locking; the assumption is recorded here so nobody later treats the resulting bug as a mystery.
 
 **The staging logic lives in a plain `ServerListEditor` class with no Avalonia dependency**, in the same folder:
 
