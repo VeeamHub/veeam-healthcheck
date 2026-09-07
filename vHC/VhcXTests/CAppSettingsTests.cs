@@ -227,7 +227,10 @@ namespace VhcXTests
         [Fact]
         public void SetServers_OnSuccess_LeavesNoTempFileBehind()
         {
-            CAppSettings.SetServers(new[] { "vbr01" });
+            bool ok = CAppSettings.SetServers(new[] { "vbr01" });
+
+            Assert.True(ok);
+            Assert.True(File.Exists(CAppSettings.StorePath));
 
             // The temp name is a fresh Guid per write (see CAppSettings.Write), so
             // assert on the absence of any *.tmp file in the store directory rather
@@ -237,15 +240,45 @@ namespace VhcXTests
         }
 
         [Fact]
-        public void SetServers_WhenWriteFails_ReturnsFalseAndDoesNotThrow()
+        public void SetServers_WhenCreateDirectoryFails_ReturnsFalseAndDoesNotThrow()
         {
             // Parent path is a file, so Directory.CreateDirectory throws:
-            // ENOTDIR on Unix, IOException on Windows.
+            // ENOTDIR on Unix, IOException on Windows. This fails before WriteAllText
+            // ever runs, so it never exercises the temp file or the Move step - see
+            // SetServers_WhenMoveFails_ReturnsFalseAndLeavesNoTempFile for that.
             var blocker = Path.Combine(_testStorePath, "blocker");
             File.WriteAllText(blocker, "not a directory");
             CAppSettings.StorePath = Path.Combine(blocker, "settings.json");
 
             Assert.False(CAppSettings.SetServers(new[] { "vbr01" }));
+        }
+
+        [Fact]
+        public void SetServers_WhenMoveFails_ReturnsFalseAndLeavesNoTempFile()
+        {
+            // A directory where the file belongs: CreateDirectory and WriteAllText both
+            // succeed, so this exercises the Move failure - the one path where a temp
+            // file genuinely exists and the catch block's cleanup has something to
+            // delete, unlike the CreateDirectory-failure test above (which fails before
+            // any temp file is created).
+            Directory.CreateDirectory(CAppSettings.StorePath);
+
+            Assert.False(CAppSettings.SetServers(new[] { "vbr01" }));
+            Assert.Empty(Directory.GetFiles(_testStorePath, "*.tmp"));
+        }
+
+        [Fact]
+        public void SetServers_SweepsStaleTempFilesFromPreviousRuns()
+        {
+            // A process killed between WriteAllText and Move leaves a Guid-named orphan
+            // that no catch block can reach; the sweep at the top of Write is what
+            // eventually clears it. Name must match Write's glob:
+            // Path.GetFileName(StorePath) + ".*.tmp".
+            var stale = CAppSettings.StorePath + ".deadbeef00000000000000000000dead.tmp";
+            File.WriteAllText(stale, "orphan");
+
+            Assert.True(CAppSettings.SetServers(new[] { "vbr01" }));
+            Assert.False(File.Exists(stale));
         }
 
         [Fact]

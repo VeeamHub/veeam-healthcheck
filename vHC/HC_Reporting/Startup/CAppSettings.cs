@@ -167,11 +167,29 @@ public static class CAppSettings
     // swallow-and-log contract of this class.
     private static bool Write(AppSettings settings)
     {
+        var dir = Path.GetDirectoryName(StorePath)!;
         var tempPath = StorePath + "." + Guid.NewGuid().ToString("N") + ".tmp";
 
         try
         {
-            Directory.CreateDirectory(Path.GetDirectoryName(StorePath)!);
+            Directory.CreateDirectory(dir);
+
+            // Guid temp names are not self-healing the way a fixed name was, so a process
+            // killed between the write and the move leaves an orphan no catch block can
+            // reach. Best-effort sweep; never let cleanup failure block a real write.
+            // This can also delete a concurrent writer's still-in-flight temp file;
+            // acceptable only under the single-instance assumption stated above.
+            try
+            {
+                foreach (var stale in Directory.GetFiles(dir, Path.GetFileName(StorePath) + ".*.tmp"))
+                {
+                    File.Delete(stale);
+                }
+            }
+            catch
+            {
+                // Best effort cleanup only.
+            }
 
             var json = JsonSerializer.Serialize(settings, new JsonSerializerOptions { WriteIndented = true });
 
