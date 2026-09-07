@@ -746,6 +746,28 @@ git add vHC/HC_Reporting/Startup/CAppSettings.cs vHC/VhcXTests/CAppSettingsTests
 git commit -m "feat(settings): add LoadOrSeedServers with a read-time localhost filter"
 ```
 
+### Corrections applied after review — Task 3 as built
+
+**Executed: `a5aac49` + `d294279` + `9b42b14`.** Where the steps disagree with this list, this list is what shipped.
+
+1. **An empty seed is never persisted — this was the most consequential defect in the whole plan.** `LoadOrSeedServers` takes *two* inputs, and the plan guarded the readability of one meticulously while treating the other as unconditionally trustworthy. `CredentialStore.InitializeCache` catches `JsonException` **and** bare `Exception`, installing an empty `_cache` in both handlers, from a static constructor that runs once per process. So a locked `creds.json`, a permissions error, an IO error or transient corruption yields `GetAllServers() == []` **with the credentials intact on disk** → `seeded` empty → `SetServers([])` persists an authoritative empty list → no later launch ever re-seeds and `AddServer` will not backfill. Permanent silent loss of the server list, on precisely the upgrade path this method exists to protect.
+
+   Now guarded by `if (seeded.Count > 0)`. Leaving `Servers` null lets a later launch retry — the same convergence argument `AddServer`'s no-op-while-null relies on. This does not weaken the "user emptied the list" signal, which arrives via the dialog's explicit `SetServers([])`, a different path. Pinned in both directions (empty input and `null` input each leave `Servers` null *and* the file unwritten); neither case had any test before.
+
+2. **The seed writes via `settings.Servers = seeded; Write(settings);`, not `SetServers(seeded)`.** `SetServers` re-reads through `Get()` → `Load`, which collapses `Unreadable` into defaults — the exact thing the guard three lines above exists to prevent. One read, no second round-trip, `ThemePreference` preserved on both the `Absent` and `Loaded` paths.
+
+3. **`Filter` is named `NormalizeServers`.** It *transforms* values via `Trim`, which was its most surprising behaviour and invisible at the call site.
+
+4. **`NormalizeServers` dedupes** via `.Distinct(StringComparer.OrdinalIgnoreCase)`, placed after the localhost exclusion. Without it a hand-edited `["vbr01", "  vbr01  "]` returns two identical picker rows — and the Task 12 warning at the `initial` call site does not close this route, because the editor is fed from this method's own output.
+
+5. **`AddServer` uses `!IsUsableServerName(server)`** rather than re-spelling the rule inline, making the "single rule" comment true rather than aspirational.
+
+6. **`SetServers` logs when writing over an `Unreadable` file.** Deliberately **no refusing guard** — declining a user's explicit list commit because an unrelated part of the file is corrupt would be worse, and the seed-signal hazard that justified the guard on `Set` is absent here. Its `///` now states the `ThemePreference`-reset consequence, and the branch has a test.
+
+7. **`LoadOrSeedServers_ToleratesNullElementsAndTrimsPaddedEntries` arranges via raw `File.WriteAllText`, not `SetServers`.** Step 1's literal arrangement was **defective**: this same task makes `SetServers` strip null/whitespace, so the `null` would never reach disk and the test would pass green without ever running `NormalizeServers`' null-safety clause. Second vacuous-test defect this plan produced; matches in-file precedent set by `AddServer_WithNullElementInPersistedList_...`.
+
+**Suite after Task 3: 883 passed, 0 failed, 12 skipped** (verified directly). Baseline for Task 4.
+
 ---
 
 ## Task 4: `ServerListEditor`
@@ -2550,7 +2572,7 @@ dotnet test vHC/VhcXTests/VhcXTests.csproj 2>&1 | tail -20
 git checkout -- vHC/HC_Reporting/VeeamHealthCheck.csproj
 ```
 
-Expected: `0 Error(s)`, and `Failed: 0, Skipped: 12` with `Passed` at **888** — the 843 baseline plus 45 new tests (14 in Task 1, 11 in Task 2, 9 in Task 3 including the two null/trim tests added after Task 2's review, 11 in Task 4), each count including post-review corrections.
+Expected: `0 Error(s)`, and `Failed: 0, Skipped: 12` with `Passed` at **894** — the 843 baseline plus 51 new tests (14 in Task 1, 11 in Task 2, 15 in Task 3, 11 in Task 4), each count including post-review corrections.
 
 - [ ] **Step 2: Confirm nothing stale survives**
 
