@@ -2395,6 +2395,14 @@ Replace `serverListBox_SelectionChanged` with:
             // Pinned names are passed in `initial` as well - they are displayed rows,
             // and that is what makes Add("localhost") a plain duplicate rather than a
             // second row.
+            //
+            // Feed this from _displayServers, NOT from CAppSettings.Get().Servers.
+            // The direct read looks equivalent and is not: ServerListEditor's ctor
+            // filters whitespace but does not TRIM, while _displayServers has already
+            // been through Filter's trim. Wire it to the raw settings and a hand-edited
+            // "  vbr01  " enters the editor untrimmed, Add's comparison misses it
+            // against "vbr01", Commit().FinalServers carries both, and the picker
+            // renders two identical rows.
             var initial = _displayServers.ToList();
 
             var dialog = new ManageServersDialog(initial, pinned);
