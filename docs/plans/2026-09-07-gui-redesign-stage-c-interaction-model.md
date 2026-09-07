@@ -338,9 +338,11 @@ Two independent reviews found one substantive defect and several smaller gaps, a
 3. **A file whose entire content is the JSON literal `null` returns `Absent`, not `Unreadable`.** It parses cleanly and means "no content", the same as an empty file. As `Unreadable` it would leave `LoadOrSeedServers` returning empty *every* session and never writing — permanently stuck rather than retry-recoverable.
 4. **`Write` uses a fresh `Guid` per call for the temp filename**, not a fixed `StorePath + ".tmp"`. A fixed name lets two concurrent writers put a partially-written file into place via `File.Move`, which quietly contradicted the comment's own "can never leave a truncated file" claim. The catch block also best-effort deletes the temp file, so a failed `Move` leaves no litter in `%APPDATA%`.
 5. **Caller-facing contracts moved to `///` on `SetServers` and `Set`** (return value, not-synchronized), with temp-file mechanics left on private `Write` — matching how `CredentialStore.cs` splits caller docs from implementation rationale.
-6. **Six further tests**, beyond the six in Step 1: the empty-file and JSON-`null` → `Absent` branches, `SetServers(null)` normalising to an authoritative empty list, `Set` refusing to write over an unreadable file, no temp file surviving a successful write, and `SetServers` returning `false` without throwing when the write fails. Before these, reverting `Write` to the original one-line `File.WriteAllText` kept the entire suite green — the `bool` the spec pins as contract surface had no coverage of its interesting branch.
+6. **Eight further tests**, beyond the six in Step 1: the empty-file and JSON-`null` → `Absent` branches, `SetServers(null)` normalising to an authoritative empty list, `Set` refusing to write over an unreadable file, no temp file surviving a successful write, and `SetServers` returning `false` without throwing when the write fails. Before these, reverting `Write` to the original one-line `File.WriteAllText` kept the entire suite green — the `bool` the spec pins as contract surface had no coverage of its interesting branch.
 
-**Suite after Task 1: 855 passed, 0 failed, 12 skipped.** Use 855, not 849, as the baseline for Task 2.
+   A second review round then found the write-failure test threw at `Directory.CreateDirectory`, *before* `WriteAllText` ran, so the catch block's temp-file cleanup was still unexercised. Closed by `SetServers_WhenMoveFails_ReturnsFalseAndLeavesNoTempFile`, which pre-creates a *directory* at `StorePath` so only `File.Move` fails. `Write` also gained a best-effort sweep of stale `settings.json.*.tmp` files, since `Guid` names — unlike the fixed name they replaced — are not self-healing when a process is killed mid-write.
+
+**Suite after Task 1: 857 passed, 0 failed, 12 skipped** (verified directly, not just reported). Use **857** as the baseline for Task 2, not the 843 in standing rule 2.
 
 ---
 
@@ -2474,7 +2476,7 @@ dotnet test vHC/VhcXTests/VhcXTests.csproj 2>&1 | tail -20
 git checkout -- vHC/HC_Reporting/VeeamHealthCheck.csproj
 ```
 
-Expected: `0 Error(s)`, and `Failed: 0, Skipped: 12` with `Passed` at **879** — the 843 baseline plus 36 new tests (12 in Task 1 including its post-review corrections, 6 in Task 2, 7 in Task 3, 11 in Task 4).
+Expected: `0 Error(s)`, and `Failed: 0, Skipped: 12` with `Passed` at **881** — the 843 baseline plus 38 new tests (14 in Task 1 including its two post-review correction rounds, 6 in Task 2, 7 in Task 3, 11 in Task 4).
 
 - [ ] **Step 2: Confirm nothing stale survives**
 
