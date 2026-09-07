@@ -212,7 +212,26 @@ This is not cosmetic. Without `manageServersBtn` in the list, a user can open Ma
 
 `daysSelector` (`ComboBox`) becomes three `RadioButton Classes="segment"` controls — `days7` / `days30` / `days90`, shared `GroupName`, in a horizontal `StackPanel`, using the spike's corner-radius and `Margin="-1,0,0,0"` treatment for a joined appearance. `days7` starts checked.
 
-`ComboBox_SelectionChanged`'s `switch (daysSelector.SelectedIndex)` becomes a checked-button lookup calling the same `SetReportDays(7|30|90)`. The default-to-7 branch is preserved for the no-selection case. `SetReportDays` itself, and its `CGlobals.ReportDays` write plus `LogUIAction` call, are unchanged.
+`ComboBox_SelectionChanged`'s `switch (daysSelector.SelectedIndex)` becomes a `Checked` handler calling the same `SetReportDays(7|30|90)`. `SetReportDays` itself, and its `CGlobals.ReportDays` write plus `LogUIAction` call, are unchanged.
+
+**The handler must read `sender`, never the sibling named fields.** `days7`'s `IsChecked="True"` in XAML raises `Checked` *during* `InitializeComponent()`, at which point `days30` and `days90` may not yet be assigned — the identical timing hazard the comment at `VhcGui.axaml.cs:628-634` documents for `daysSelector`, and which §3 is careful to preserve for `serverSelector_SelectionChanged`. A "checked-button lookup" that inspects the three fields to find the checked one will throw a `NullReferenceException` at construction.
+
+Reading the `RadioButton` that raised the event sidesteps it entirely, and makes the default case trivially correct:
+
+```csharp
+private void PeriodRadio_Checked(object sender, RoutedEventArgs e)
+{
+    int days = (sender as RadioButton)?.Tag switch
+    {
+        "30" => 30,
+        "90" => 90,
+        _ => 7,
+    };
+    this.SetReportDays(days);
+}
+```
+
+Each `RadioButton` carries its value in `Tag` rather than the handler deriving it from `Name` or `Content` — `Content` is localized (§6) and must never be parsed as data, which is the same mistake §"Recorded, not fixed" flags for `notifSeverityBox`.
 
 The three visible labels ("7 Days" / "30 Days" / "90 Days") are currently hardcoded `ComboBoxItem` `Content` values. Since these controls are being replaced outright, the labels come from resx (see §6).
 
