@@ -35,8 +35,10 @@ namespace VeeamHealthCheck.Functions.ManageServers
     //
     // `pinned` carries localhost in from the caller rather than being hardcoded, so the
     // pinning rule is directly testable and the class never mentions localhost. Pinned
-    // names must ALSO appear in `initial` (they are displayed rows) - that is what makes
-    // Add("localhost") a plain duplicate on an injecting machine rather than a second row.
+    // names are expected to ALSO appear in `initial` - that is a caller contract for
+    // DISPLAY purposes only (the user needs to see the row), not a correctness
+    // dependency: Add()'s own pinned check makes Add("localhost") a duplicate even if a
+    // caller violates this, so persisted state never depends on the contract holding.
     internal sealed class ServerListEditor
     {
         private readonly List<ServerRow> _rows = new();
@@ -140,8 +142,15 @@ namespace VeeamHealthCheck.Functions.ManageServers
 
         public void Remove(string name)
         {
+            // Belt-and-braces, not load-bearing: every stored row.Name is already
+            // trimmed (by the constructor or by Add), and Task 8 passes row.Name back
+            // in here, so an untrimmed match never actually happens today. Trimming
+            // anyway keeps this method's own robustness independent of that caller
+            // behaviour, matching the "no longer depends on caller hygiene" principle
+            // the constructor and Add already follow.
+            var trimmed = name?.Trim();
             var row = _rows.FirstOrDefault(
-                r => r.Name.Equals(name, StringComparison.OrdinalIgnoreCase));
+                r => r.Name.Equals(trimmed, StringComparison.OrdinalIgnoreCase));
 
             if (row == null || !row.IsRemovable)
             {
@@ -161,8 +170,11 @@ namespace VeeamHealthCheck.Functions.ManageServers
 
         public void UndoRemove(string name)
         {
+            // Same belt-and-braces trim as Remove - not load-bearing today, kept
+            // consistent with it.
+            var trimmed = name?.Trim();
             var row = _rows.FirstOrDefault(
-                r => r.Name.Equals(name, StringComparison.OrdinalIgnoreCase));
+                r => r.Name.Equals(trimmed, StringComparison.OrdinalIgnoreCase));
 
             if (row != null)
             {

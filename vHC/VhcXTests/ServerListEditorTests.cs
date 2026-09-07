@@ -55,8 +55,10 @@ namespace VhcXTests
             Assert.Equal(AddResult.Added, added);
             Assert.Equal(AddResult.Duplicate, duplicate);
             Assert.Equal(AddResult.Invalid, invalid);
-            // Pinned names are also in `initial`, which is what makes adding one a
-            // plain duplicate instead of creating a second localhost row.
+            // Duplicate here because Add's own pinned check treats a pinned name as
+            // always-present, regardless of whether it also appears in `initial` (it
+            // does in this fixture, for display, but that is not what makes this a
+            // duplicate).
             Assert.Equal(AddResult.Duplicate, pinnedDuplicate);
             Assert.Equal(AddResult.UndidPendingRemoval, undid);
             Assert.False(editor.Rows.Single(r => r.Name == "vbr01").IsPendingRemoval);
@@ -172,13 +174,50 @@ namespace VhcXTests
         public void Commit_WithNoPinned_TreatsLocalhostAsAnOrdinaryEntry()
         {
             // The non-injecting machine: no local Veeam product, so localhost is
-            // addable, removable and persistable like any other name.
+            // addable, removable and persistable like any other name. This must be
+            // proven behaviourally (actually calling Remove), not just by inspecting
+            // IsRemovable - a hardcoded "if name == localhost, no-op" inserted into
+            // Remove would leave IsRemovable untouched and still pass a flag-only
+            // check while reintroducing exactly the hardcoded-localhost bug the class
+            // is designed to avoid (spec: a blanket filter would silently discard a
+            // legitimate localhost entry on a VB365-only machine).
             var editor = Editor(
                 initial: new[] { "localhost", "vbr01" },
                 pinned: Array.Empty<string>());
 
             Assert.True(editor.Rows.Single(r => r.Name == "localhost").IsRemovable);
             Assert.Contains("localhost", editor.Commit().FinalServers);
+
+            editor.Remove("localhost");
+            Assert.True(editor.Rows.Single(r => r.Name == "localhost").IsPendingRemoval);
+            Assert.DoesNotContain("localhost", editor.Commit().FinalServers);
+        }
+
+        [Fact]
+        public void Add_WithNoPinned_AddsLocalhostAsAnOrdinaryEntry()
+        {
+            // Same behavioural proof for Add: a hardcoded "if name == localhost,
+            // Duplicate" would pass every other test in this file (all of them pin
+            // localhost) while reintroducing the hardcoded-localhost bug the class
+            // exists to avoid on a non-injecting machine.
+            var editor = Editor(initial: new[] { "vbr01" }, pinned: Array.Empty<string>());
+
+            Assert.Equal(AddResult.Added, editor.Add("localhost"));
+            Assert.Contains("localhost", editor.Rows.Select(r => r.Name));
+        }
+
+        [Fact]
+        public void Constructor_WithDuplicateInitialEntries_CreatesOneRow()
+        {
+            // Third-line defence: CAppSettings.NormalizeServers already dedupes
+            // case-insensitively upstream, so a duplicate should never actually reach
+            // this constructor in production. Kept anyway so the class's own dedup
+            // loop has direct coverage, and to pin that dedup happens AFTER trimming
+            // (a padded near-duplicate collapses too, not just an exact repeat).
+            var editor = new ServerListEditor(
+                new[] { "localhost", "  LOCALHOST ", "vbr01" }, new[] { "localhost" }, _ => false);
+
+            Assert.Equal(new[] { "localhost", "vbr01" }, editor.Rows.Select(r => r.Name));
         }
 
         [Fact]
