@@ -149,6 +149,42 @@ public static class CAppSettings
         return Write(settings);
     }
 
+    /// <summary>
+    /// Called from the two production <c>CredentialStore.Set</c> call sites so a host
+    /// that gains credentials outside the GUI (a <c>/savecreds</c> run, a CLI
+    /// collection) does not stay invisible in the picker.
+    ///
+    /// NO-OP while <see cref="AppSettings.Servers"/> is <c>null</c>, and that is not an
+    /// optimisation. <c>null</c> means "never seeded"; writing here would flip it to
+    /// authoritative and permanently suppress the one-time seed, silently discarding
+    /// every server the user already had. The credential itself is already persisted
+    /// by the caller, so the eventual seed picks this host up anyway.
+    ///
+    /// Knows nothing about localhost by design - see
+    /// <c>AddServer_DoesNotSpecialCaseLocalhost</c>.
+    /// </summary>
+    public static void AddServer(string server)
+    {
+        if (string.IsNullOrWhiteSpace(server))
+        {
+            return;
+        }
+
+        var settings = Get();
+        if (settings.Servers == null)
+        {
+            return;
+        }
+
+        if (settings.Servers.Any(s => s.Equals(server, StringComparison.OrdinalIgnoreCase)))
+        {
+            return;
+        }
+
+        settings.Servers.Add(server);
+        Write(settings);
+    }
+
     // Writes via a temp file plus an atomic move, so an interrupted write can never
     // leave a truncated settings.json behind. That matters more than usual here: a
     // truncated file reads back as Unreadable, and an earlier design that collapsed

@@ -299,5 +299,74 @@ namespace VhcXTests
             Assert.False(ok);
             Assert.Equal(corrupt, File.ReadAllText(CAppSettings.StorePath));
         }
+
+        [Fact]
+        public void AddServer_WhenServersNeverSeeded_IsNoOp()
+        {
+            // THE upgrade-data-loss guard. If AddServer materialised the list here,
+            // Servers would flip null -> non-null, non-null is authoritative, and the
+            // one-time seed would never run - silently dropping every server the user
+            // already had credentials for. CredentialStore.Set has already persisted
+            // the credential by this point, so the eventual seed picks the host up.
+            CAppSettings.AddServer("newhost");
+
+            Assert.Null(CAppSettings.Get().Servers);
+        }
+
+        [Fact]
+        public void AddServer_WhenSeeded_AppendsServer()
+        {
+            CAppSettings.SetServers(new[] { "vbr01" });
+
+            CAppSettings.AddServer("vbr02");
+
+            Assert.Equal(new[] { "vbr01", "vbr02" }, CAppSettings.Get().Servers);
+        }
+
+        [Fact]
+        public void AddServer_WhenSeededEmpty_AppendsServer()
+        {
+            // An empty list is authoritative, not "never seeded", so AddServer applies.
+            CAppSettings.SetServers(System.Array.Empty<string>());
+
+            CAppSettings.AddServer("vbr02");
+
+            Assert.Equal(new[] { "vbr02" }, CAppSettings.Get().Servers);
+        }
+
+        [Fact]
+        public void AddServer_WithExistingNameInDifferentCase_DoesNotDuplicate()
+        {
+            CAppSettings.SetServers(new[] { "VBR01" });
+
+            CAppSettings.AddServer("vbr01");
+
+            Assert.Equal(new[] { "VBR01" }, CAppSettings.Get().Servers);
+        }
+
+        [Fact]
+        public void AddServer_WithNullOrWhitespace_IsNoOp()
+        {
+            CAppSettings.SetServers(new[] { "vbr01" });
+
+            CAppSettings.AddServer(null);
+            CAppSettings.AddServer("   ");
+
+            Assert.Equal(new[] { "vbr01" }, CAppSettings.Get().Servers);
+        }
+
+        [Fact]
+        public void AddServer_DoesNotSpecialCaseLocalhost()
+        {
+            // CAppSettings deliberately knows nothing about localhost. The injection
+            // policy lives in the GUI layer, and a blanket filter here would silently
+            // discard a legitimate entry on a machine with no local Veeam product.
+            // A stray localhost is neutralised at read time by LoadOrSeedServers.
+            CAppSettings.SetServers(System.Array.Empty<string>());
+
+            CAppSettings.AddServer("localhost");
+
+            Assert.Equal(new[] { "localhost" }, CAppSettings.Get().Servers);
+        }
     }
 }
