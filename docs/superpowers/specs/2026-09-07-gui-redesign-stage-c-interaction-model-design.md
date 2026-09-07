@@ -9,6 +9,8 @@
 
 Stages A and B were deliberately behavior-preserving: A recolored the existing layout, B restructured it. Every control kept its `x:Name` and its handler. Stage C is the first stage that changes how the GUI *behaves*, and it exists to settle the two interaction models both prior stages explicitly deferred, plus one smaller control-type question.
 
+**Finding the spike.** `vHC/Spikes/GuiRedesignSpike/` does **not** exist on this branch — it lives on `spike/gui-redesign`, kept as reference material and not to be modified. Every spike path cited below is reachable as `git show spike/gui-redesign:vHC/Spikes/GuiRedesignSpike/<path>`.
+
 Two corrections to the record before the design, because both prior documents carry them:
 
 1. **There is no chip, and there never was one.** Stage B's non-goals describe the spike's server UI as "chip + Manage Servers dialog". It is actually a stretched `ComboBox` plus a 36px gear button (`Views/AdHocHealthCheckView.axaml`), opening `Dialogs/ManageServersDialog`.
@@ -36,7 +38,6 @@ Two corrections to the record before the design, because both prior documents ca
 
 - **Severity selector control type.** `notifSeverityBox` stays a `ComboBox`. Its values (`warning`, `critical`, `ok`) are not an ordered progression, so a horizontal segmented control would imply a ranking the list does not have; it sits beside a 4-item notification-type `ComboBox` that stays a `ComboBox` regardless, so pills there would create an inconsistency rather than remove one; and `GetNotifSettings()` reads its visible `Content` as the backend value, so a rewrite would have to introduce a `Tag`-based value mapping (see "Recorded, not fixed").
 - **Credential entry or editing.** The Manage Servers dialog shows a read-only "credentials saved" marker and nothing more. Capture stays lazy — `CredsHandler.PromptForCredentials` → `CGlobals.CredentialPrompter` → `CredentialPromptWindow`, raised mid-run when a connection needs it. There is no proactive credential surface in the GUI today and this stage does not add one.
-- **Where the spike lives.** `vHC/Spikes/GuiRedesignSpike/` does **not** exist on this branch — it is on `spike/gui-redesign`, kept as reference material and not to be modified. Every spike path cited in this document is reachable as `git show spike/gui-redesign:vHC/Spikes/GuiRedesignSpike/<path>`.
 - **Ad-hoc column rebalancing.** Collapsing the server block frees roughly 200px in the left column, which makes the left/right height imbalance the spike README flagged (item 2) more visible, not less. Stage B's real-machine pass already accepted an internal scrollbar on the right column. Rebalancing is layout work and Stage B is closed.
 - **Localization of pre-existing hardcoded strings.** `VhcGui.axaml` carries 11 hardcoded `ToolTip.Tip` attributes and 36 hardcoded `Text`/`Content` attributes against 9 resx-driven assignments in `SetUiText()`. Stage C localizes only what it authors or rewrites; the remainder is Stage D.
 - **Translation of the new keys.** New keys are added to the neutral `vhcres.resx` only. `NeutralLanguage=en-US` resolves them to English for `fr-FR`/`ja`/`zh-cn`/`zh-tw` automatically, so translation is a later content-only edit with no code change.
