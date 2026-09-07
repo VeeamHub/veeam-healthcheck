@@ -1,0 +1,192 @@
+# GUI Redesign Stage C: Interaction Model — Design
+
+**Date:** 2026-09-07
+**Branch:** `stage-c/interaction-model` (off `feature/gui-redesign-port` @ `39ab236`)
+**Depends on:** Stage A (theme/style port, `48336ec`), Stage B (layout restructure, `39ab236`, PR #215)
+**Followed by:** Stage D (localization sweep of pre-existing hardcoded strings)
+
+## Context
+
+Stages A and B were deliberately behavior-preserving: A recolored the existing layout, B restructured it. Every control kept its `x:Name` and its handler. Stage C is the first stage that changes how the GUI *behaves*, and it exists to settle the two interaction models both prior stages explicitly deferred, plus one smaller control-type question.
+
+Two corrections to the record before the design, because both prior documents carry them:
+
+1. **The spike has no chip.** Stage B's non-goals describe the spike's server UI as "chip + Manage Servers dialog". It is actually a stretched `ComboBox` plus a 36px gear button (`Views/AdHocHealthCheckView.axaml`), opening `Dialogs/ManageServersDialog`. The `chip` style exists in `App.axaml` from Stage A but is unused in the spike's ad-hoc view. No chip is being ported and none is being built.
+
+2. **The spike README's framing of its own dialog bug does not transfer.** The README says to "ensure the dialog only applies changes on explicit Done/OK, and rolls them back on Cancel/close." In production that promise is not straightforwardly keepable, because the server list is not a list — it is a view onto the credential store, with three different persistence semantics:
+   - `InitializeServerList()` populates from `CredentialStore.GetAllServers()`, which returns `_cache.Keys` — the credential-store key set — plus `localhost` when `CGlobals.IsVbrInstalled`.
+   - `addServerBtn_Click` only calls `serverListBox.Items.Add(...)`. Nothing persists a bare server name. `CredentialStore.Set` has exactly two production call sites (`CredsHandler.PromptForCredentialsCli:105`, which also serves `/savecreds` via `CArgsParser.RunSaveCredsFlow`, and `AvaloniaCredentialPrompter.Prompt:25`), both reached only when credentials are actually captured. **An added server is therefore ephemeral** until a run against it stores credentials.
+   - `removeServerBtn_Click` calls `CredentialStore.Remove(...)` — permanent, on-disk, after a per-item confirm.
+   - `clearServersBtn_Click` empties the ListBox and re-adds localhost but **never purges credentials**, so the next launch resurrects the entire list from `GetAllServers()`.
+
+   Add is ephemeral, Remove is permanent, Clear is cosmetic. Fixing the surface without fixing that asymmetry would produce a dialog whose central promise the backend cannot keep. This stage therefore changes the storage model as well as the surface.
+
+## Goals
+
+- Replace the Terms button + modal with an inline checkbox that still guarantees the user saw the disclaimer, without losing any existing localized string or making `AcceptTerms()` dead code.
+- Give the server list an honest, independent persistence model, and move its management into a modal dialog whose Cancel actually cancels.
+- Convert the collection-period selector to the segmented-pill style ported in Stage A and unused since.
+- Restore the spike's output-directory folder picker, which Stage B did not port.
+- Localize every string this stage authors or rewrites, rather than adding to the hardcoded-English backlog.
+
+## Non-goals (explicitly deferred)
+
+- **Severity selector control type.** `notifSeverityBox` stays a `ComboBox`. Its values (`warning`, `critical`, `ok`) are not an ordered progression, so a horizontal segmented control would imply a ranking the list does not have; it sits beside a 4-item notification-type `ComboBox` that stays a `ComboBox` regardless, so pills there would create an inconsistency rather than remove one; and `GetNotifSettings()` reads its visible `Content` as the backend value, so a rewrite would have to introduce a `Tag`-based value mapping (see "Recorded, not fixed").
+- **Credential entry or editing.** The Manage Servers dialog shows a read-only "credentials saved" marker and nothing more. Capture stays lazy — `CredsHandler.PromptForCredentials` → `CGlobals.CredentialPrompter` → `CredentialPromptWindow`, raised mid-run when a connection needs it. There is no proactive credential surface in the GUI today and this stage does not add one.
+- **Ad-hoc column rebalancing.** Collapsing the server block frees roughly 200px in the left column, which makes the left/right height imbalance the spike README flagged (item 2) more visible, not less. Stage B's real-machine pass already accepted an internal scrollbar on the right column. Rebalancing is layout work and Stage B is closed.
+- **Localization of pre-existing hardcoded strings.** `VhcGui.axaml` carries 11 hardcoded `ToolTip.Tip` attributes and 36 hardcoded `Text`/`Content` attributes against 9 resx-driven assignments in `SetUiText()`. Stage C localizes only what it authors or rewrites; the remainder is Stage D.
+- **Translation of the new keys.** New keys are added to the neutral `vhcres.resx` only. `NeutralLanguage=en-US` resolves them to English for `fr-FR`/`ja`/`zh-cn`/`zh-tw` automatically, so translation is a later content-only edit with no code change.
+
+## Design
+
+### 1. Terms acceptance
+
+`termsBtn` becomes `termsCheckBox` — a `CheckBox Classes="modern"` in the same `Auto` column of the bottom bar, labelled `VbrLocalizationHelper.GuiAcceptButton` ("Accept Terms") verbatim, assigned in `SetUiText()` exactly as the button's `Content` is today.
+
+Checking it calls the existing `this.functions.AcceptTerms()`, which raises today's `CGlobals.Notifier.Confirm` dialog carrying `GuiAcceptText`. Confirm → the box stays checked and `run.IsEnabled = true`. Decline or dismiss → the box reverts to unchecked and Run stays disabled. Unchecking manually disables Run again.
+
+This is the only one of the four models considered that adopts the spike's inline visual model while keeping all three assets: the read-guarantee (the disclaimer is still shown, not merely linked), both resx keys across all five locales, and `AcceptTerms()` live and called rather than dead.
+
+Acceptance **does not persist** across restarts. `CAppSettings` is being extended this stage and a `TermsAccepted` flag would have been nearly free, but per-launch acceptance matches today's behavior and is the safer posture.
+
+Two constraints carried from Stage B's findings:
+
+- **Re-entrancy.** Reverting `IsChecked` programmatically raises `Unchecked`, which would re-enter the handler. A guard field (`_suppressTermsHandler`) must bracket the programmatic revert.
+- **`SelectTab()` must use the `Opacity` / `IsHitTestVisible` / `Focusable` triple, never `IsVisible`.** The checkbox inherits `termsBtn`'s position: alone in an `Auto` column of the bottom-bar grid. `IsVisible = false` zeroes its `DesiredSize`, collapsing that column and shifting the progress stack and Run — the exact bug Stage B fixed twice (once for `progressText`, once for `termsBtn`/`run` themselves). The constructor's existing explicit initialization of these three properties must be updated to cover the checkbox rather than the button.
+
+### 2. Server list: storage and semantics
+
+`AppSettings` gains one property; `CAppSettings` gains two methods following its existing `Get()` → mutate → serialize pattern:
+
+```csharp
+public List<string>? Servers { get; set; } = null;
+
+public static void SetServers(IEnumerable<string> servers);
+public static void AddServer(string server);   // idempotent, case-insensitive
+```
+
+**`null` versus empty is load-bearing.** `null` — the property absent from `settings.json` — means never seeded, and triggers a one-time seed from `CredentialStore.GetAllServers()` so no existing user loses their servers on upgrade. Any non-null value, **including an empty list**, is authoritative. Without that distinction, "the user removed everything" and "fresh upgrade" are indistinguishable and the list resurrects itself, which is the bug being fixed.
+
+**The persisted list is authoritative, with auto-add on credential capture.** `InitializeServerList()` no longer reads `GetAllServers()` except during the one-time seed. To keep a host that gains credentials outside the GUI (a `/savecreds` run, a CLI collection) from being invisible, `CAppSettings.AddServer(host)` is called at the **two production `CredentialStore.Set` call sites** — `CredsHandler.PromptForCredentialsCli:105` and `AvaloniaCredentialPrompter.Prompt:25`.
+
+The hook must **not** go inside `CredentialStore.Set` itself. `Set` has ~25 call sites in `VhcXTests`, and `CredentialStoreSecurityTests` redirects `CredentialStore.StorePath` but not `CAppSettings.StorePath` — a hook inside `Set` would make the test suite write to the developer's real `%APPDATA%/VeeamHealthCheck/settings.json`. `CArgsParser:574`'s `SetTransient` path correctly gets no hook, since transient credentials are never persisted.
+
+**`localhost` is injected, not persisted.** It is always present when `CGlobals.IsVbrInstalled`, is never written to `AppSettings.Servers`, and has no remove affordance in the dialog. It is not a user-managed server, it is the local install. This preserves the intent of today's "cannot remove the last server if it is localhost" rule as a cleaner invariant, and prevents an empty persisted list from producing nonsensical `REMOTEEXEC` state.
+
+Two consequences that are easy to miss, because `localhost` genuinely can carry stored credentials (`CArgsParser.RunSaveCredsFlow` defaults its host to `"localhost"` when `REMOTEHOST` is empty, so `GetAllServers()` can legitimately contain it):
+
+- **The one-time seed must filter `localhost` out** before writing `AppSettings.Servers`, or the first launch after upgrade persists the very entry that is supposed to be injected.
+- **`CAppSettings.AddServer` must ignore `localhost`** (case-insensitive) for the same reason, since the auto-add hook fires on the `/savecreds` path.
+
+`UpdateSelectedServersGlobal()`'s `else if` / `else` fallbacks and its `CGlobals.REMOTEEXEC = !VBRServerName.Equals("localhost")` assignment are preserved verbatim. A `ComboBox` with a default selection is rarely null where `ListBox.SelectedItem` often was, but the branches cost nothing and deleting them is how a null-deref arrives later.
+
+### 3. Server management UI
+
+**Ad-hoc tab.** The current ~200px block (textbox + Add row, 120px `ListBox`, Remove/Clear row) collapses to a `Server` field-label above a single 32px row: a stretched `ComboBox x:Name="serverSelector"` plus a 32px gear `Button x:Name="manageServersBtn"`, in a `*,8,Auto` grid. 32px rather than the spike's 36px, to match the established control height in the ported window (`serverTextBox`, `pathBox`, and the Add button are all `Height="32"`).
+
+`serverListBox_SelectionChanged` becomes `serverSelector_SelectionChanged` with the same body, including the existing `null` guard for `SelectionChanged` raised during `InitializeComponent()`.
+
+**`Clear All` is dropped.** With per-row removal and a real Cancel in the dialog it has no home, it was the least honest control in the old block, and `clearCredsCheckBox` still covers wholesale credential purging.
+
+**`ManageServersDialog`** lives at `Functions/ManageServers/ManageServersDialog.axaml(.cs)`, following this project's `Functions/<Name>/` per-dialog convention (as Stage B's `Functions/AboutDialog/` did) rather than the spike's `Dialogs/` folder. It contains:
+
+- An add row: `TextBox` with watermark + `Add` button.
+- A `ListBox` of rows, each showing the server name, a read-only "credentials saved" marker where `CredentialStore.Get(server) != null`, and a remove affordance. `localhost` renders without one.
+- A pending-change count line stating that nothing is saved until Done.
+- A `Cancel` / `Done` footer.
+
+**Staged removals stay visible, struck-through, with an undo affordance** rather than disappearing. This is what makes Cancel legible: if rows vanished on click, a staged dialog would look identical to today's immediate one and the user would have no way to see what Done is about to destroy.
+
+`Done` applies the staged changes: `CAppSettings.SetServers(...)`, then `CredentialStore.Remove(...)` for each removed host that had credentials. When any removal would destroy a credential, Done first raises **one** summary confirm ("Removing N servers. Saved credentials for M of them will be deleted.") replacing today's per-item prompts. `Cancel` and the OS close button both discard every staged change and touch nothing.
+
+**The staging logic lives in a plain `ServerListEditor` class with no Avalonia dependency**, in the same folder:
+
+```csharp
+internal sealed class ServerListEditor
+{
+    ServerListEditor(
+        IEnumerable<string> initial,
+        IEnumerable<string> pinned,              // never removable, never returned by Commit
+        Func<string, bool> hasCredentials);
+
+    IReadOnlyList<ServerRow> Rows { get; }        // Name, HasCredentials, IsPendingRemoval, IsRemovable
+    int PendingChangeCount { get; }
+    AddResult Add(string name);                   // Added | Duplicate | Invalid | UndidPendingRemoval
+    void Remove(string name);                     // stages; no-op for a pinned row
+    void UndoRemove(string name);
+    CommitPlan Commit();                          // FinalServers, CredentialsToDelete
+}
+```
+
+`pinned` carries `localhost` in from the caller rather than the editor hardcoding it, which keeps the class free of both Avalonia and `CGlobals` and makes the pinning rule directly testable. `Commit().FinalServers` **excludes pinned entries**, since that value is handed straight to `CAppSettings.SetServers` and `localhost` must never be persisted.
+
+Adding a name that is currently staged for removal undoes the removal rather than creating a duplicate. Duplicate detection is case-insensitive, matching today's `addServerBtn_Click`. This is the only part of Stage C with real logic and real edge cases, and separating it from the dialog is the only way any of it is testable on a non-Windows machine.
+
+**The dialog manages membership only, never the active selection.** The spike's dialog returned the selected server as its dialog result; this one does not. Selection stays with the tab's `ComboBox`. After `Done`, the caller repopulates `serverSelector` from the committed list and then re-runs `UpdateSelectedServersGlobal()`. If the previously-active server was among those removed, selection falls back to `localhost` when present and otherwise to the first entry — the same precedence `InitializeServerList()` already uses. Without this step a removed server would remain in `CGlobals.VBRServerName`/`REMOTEHOST` and a subsequent run would target a host the user just deleted.
+
+### 4. Collection-period segmented selector
+
+`daysSelector` (`ComboBox`) becomes three `RadioButton Classes="segment"` controls — `days7` / `days30` / `days90`, shared `GroupName`, in a horizontal `StackPanel`, using the spike's corner-radius and `Margin="-1,0,0,0"` treatment for a joined appearance. `days7` starts checked.
+
+`ComboBox_SelectionChanged`'s `switch (daysSelector.SelectedIndex)` becomes a checked-button lookup calling the same `SetReportDays(7|30|90)`. The default-to-7 branch is preserved for the no-selection case. `SetReportDays` itself, and its `CGlobals.ReportDays` write plus `LogUIAction` call, are unchanged.
+
+The three visible labels ("7 Days" / "30 Days" / "90 Days") are currently hardcoded `ComboBoxItem` `Content` values. Since these controls are being replaced outright, the labels come from resx (see §6).
+
+### 5. Output-directory folder picker
+
+Stage B did not port the spike's `PickFolderButton`, leaving `pathBox` a bare `TextBox`. It is restored here: `pathBox` moves into a `*,8,Auto` grid with a 32px `...` button, matching the gear button's treatment — which is also what makes the gear a coherent choice rather than the window's only icon-only control.
+
+This is the **first use of Avalonia's `StorageProvider` anywhere in the application** (no production file references it today), so it needs real guards rather than the spike's optimistic version:
+
+- `TopLevel.GetTopLevel(this)` may be null → return.
+- `OpenFolderPickerAsync` returns an empty collection on cancel → return.
+- `TryGetLocalPath()` returns null for non-filesystem locations → return without writing.
+
+On success it assigns `pathBox.Text`, which propagates to `CGlobals.desiredPath` through the existing `pathBox_TextChanged` handler. No additional wiring, and no change to how the path reaches the rest of the application.
+
+### 6. Localization
+
+Every string this stage authors or rewrites is resx-backed. Concretely, new keys are needed for: the gear tooltip, the dialog title, the dialog's add-row watermark and Add button, the remove and undo tooltips, the credentials-saved marker, the pending-changes line, the Cancel and Done buttons, the Done summary confirm body and title, the `...` tooltip, the folder-picker dialog title, the `Server` field label, and the three period-pill labels.
+
+Mechanics, verified rather than assumed:
+
+- MSBuild compiles the `.resx` files directly — confirmed by `obj/.../VeeamHealthCheck.Resources.Localization.vhcres{,.fR-FR,.ja,.zh-cn,.zh-tw}.resources` and the `ja/VeeamHealthCheck.resources.dll` satellite in `bin`. The `vhcres.txt` → `ResGen.exe` → `.resources` pipeline in `VbrResFileBuilder.ps1` is dead legacy: it requires Visual Studio 2022 Professional and contains a hardcoded `A:\source\veeam-healthcheck\...` path from the original author's machine. It is not needed and must not be run.
+- Adding a string is therefore: one `<data name="X"><value>…</value></data>` block in the neutral `vhcres.resx`, plus one `public static string X = m4.GetString("X");` line in `VbrLocalizationHelper.cs`. The same line should also be appended to `vhcres.txt` so the legacy generator would stay consistent if anyone ever repairs it.
+- `NeutralLanguage=en-US` means keys present only in the neutral resx fall back to English for the other four cultures. Translation is a later content-only edit.
+- Strings are applied in code-behind via `SetUiText()` (and `ToolTip.SetTip(control, …)` for tooltips), because `VbrLocalizationHelper` is an internal class and is not reachable from XAML markup — the same pattern the file already uses for its 9 existing resx-driven assignments.
+
+## Implementation notes / hazards
+
+- **`VbrLocalizationHelper.cs` is UTF-16LE with CRLF line endings** (PowerShell `out-file` output). An edit tool that rewrites it as UTF-8 corrupts every localized string in the application. All edits to this file must be encoding-preserving, and the encoding must be re-verified (`file` reports "Unicode text, UTF-16, little-endian") after editing.
+- **`m4.GetString()` returns `null` for a missing key** — no exception, no build error. A typo'd key produces a silently blank label. Every new key needs render verification on the real-machine pass, and the resx name must be character-for-character identical to the helper field name.
+- **Avalonia `/template/`-level styling is out of scope here**, but if `RadioButton.segment` or the gear button turns out to need FluentTheme neutralization, follow `feedback_avalonia_fetch_real_template_source`: fetch the real template source for the pinned Avalonia version or copy an already-validated sibling pattern from `App.axaml`. Do not guess. Stage B's `Button.tab` fix needed `Background`, `BorderBrush`, **and** `Foreground` neutralized on `ContentPresenter#PART_ContentPresenter` for both `:pointerover` and `:pressed`; `Background` alone was verified insufficient on real hardware.
+- **Every build auto-increments `vHC/HC_Reporting/VeeamHealthCheck.csproj`.** Run `git checkout -- vHC/HC_Reporting/VeeamHealthCheck.csproj` after building or testing and before committing.
+- One commit per logical change; never `git commit --amend`.
+
+## Testing / verification
+
+Unit-testable on macOS, and therefore required as part of this stage:
+
+- `ServerListEditor`: add, duplicate rejection (case-insensitive), stage removal, undo removal, add-undoes-pending-removal, a pinned row rejecting `Remove`, `PendingChangeCount`, `Commit()` producing the correct final list and credential-deletion set, and `Commit().FinalServers` excluding pinned entries.
+- `CAppSettings`: `Servers` round-trip through `SetServers`/`Get`, `AddServer` idempotence and case-insensitivity, `AddServer` ignoring `localhost` in any casing, and the `null`-versus-empty seed rule. `CAppSettings.StorePath` already has an internal test seam for isolation.
+- The seed path: seeding filters `localhost` out of `GetAllServers()` before persisting. Requires isolating both `CredentialStore.StorePath` and `CAppSettings.StorePath`, which each already have a seam.
+
+Baseline to hold: **843 passed, 0 failed, 12 skipped** on `dotnet test vHC/VhcXTests/VhcXTests.csproj`, plus the new tests. `dotnet build vHC/HC.sln --configuration Debug` must report 0 errors.
+
+Windows-only, handed to the user (this sandbox cannot render Avalonia at all — it crashes at native platform bootstrap before any application code runs):
+
+- Terms checkbox: confirm enables Run; decline and dismiss both revert the checkbox and leave Run disabled; no handler re-entrancy; label renders localized.
+- Tab switching with the checkbox present — no bottom-bar reflow, and no keyboard focus landing on hidden controls.
+- Manage Servers: add, staged removal appearance, undo, Cancel discarding, OS-close discarding, Done applying, the summary confirm firing only when credentials would be deleted, and `localhost` having no remove affordance.
+- Removing the **currently active** server via the dialog, then confirming the tab's selection falls back correctly and a subsequent run does not target the deleted host.
+- Persistence: added server survives a restart; removed server stays removed; removing every server and restarting leaves the list empty rather than resurrecting it (the `null`-versus-empty rule, end to end); `/savecreds` against a new host makes it appear in the list; `/savecreds` against `localhost` does **not** add a persisted entry.
+- Period pills: all three select correctly, `days7` default, correct `CGlobals.ReportDays` in the log.
+- Folder picker: cancel leaves the path untouched; a chosen folder updates both the textbox and the effective output path.
+- Both new icon buttons render at 32px and align with their partner controls in light and dark themes.
+
+## Recorded, not fixed
+
+- **`notifTypeBox` and `notifSeverityBox` round-trip backend values through their visible `Content`.** `GetNotifSettings()` reads `(notifTypeBox.SelectedItem as ComboBoxItem)?.Content?.ToString()?.ToLower()` and the same for severity. Localizing those labels in Stage D would silently break notification delivery. Stage D must add a `Tag`-based value mapping before touching them.
+- **Two pre-existing bugs in `SetUiSync()`**, documented in code by Stage B and still intact: it runs before `InitializeServerList()`, so its `hasRemoteServers` scan always sees an empty list; and `this.Title = modeCheckResult` immediately overwrites the "Remote Mode" title set a few lines above. With the list now loaded from `CAppSettings` the first of these becomes worth revisiting, but not in this stage.
+- **`Clear All`'s removal is a deliberate behavior deletion**, not an oversight.
+- **The freed left-column space** makes the Ad-hoc height imbalance more visible. Out of scope by decision.
