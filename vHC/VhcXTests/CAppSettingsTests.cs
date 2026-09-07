@@ -470,6 +470,26 @@ namespace VhcXTests
         }
 
         [Fact]
+        public void LoadOrSeedServers_WhenFileExistsWithoutServersProperty_Seeds()
+        {
+            // The literal upgrade state: an existing settings.json (from before Servers
+            // existed) has a ThemePreference but no Servers property, which is Loaded
+            // with Servers == null - not Absent. Every other seed-firing test above
+            // reaches the seed via Absent (no file at all); this is the one a real
+            // upgrading user actually hits, and the null-vs-empty rule exists
+            // specifically to protect it.
+            CAppSettings.Set("Dark");
+
+            var result = CAppSettings.LoadOrSeedServers(new[] { "vbr01" }, excludeLocalhost: true);
+
+            Assert.Equal(new[] { "vbr01" }, result);
+
+            var settings = CAppSettings.Get();
+            Assert.Equal(new[] { "vbr01" }, settings.Servers);
+            Assert.Equal("Dark", settings.ThemePreference);
+        }
+
+        [Fact]
         public void LoadOrSeedServers_WhenAlreadySeeded_IgnoresCredentialServers()
         {
             CAppSettings.SetServers(new[] { "kept" });
