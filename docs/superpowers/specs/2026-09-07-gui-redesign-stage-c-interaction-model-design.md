@@ -82,24 +82,44 @@ Three constraints, the first of which is a correctness issue this sandbox cannot
 ```csharp
 public List<string> Servers { get; set; } = null;   // deliberately null, see below
 
-public static void SetServers(IEnumerable<string> servers);
-public static void AddServer(string server);   // idempotent, case-insensitive
+public static bool SetServers(IEnumerable<string> servers);   // false if the write failed
+public static void AddServer(string server);   // idempotent, case-insensitive; NO-OP when Servers is null
 ```
+
+**`CAppSettings` has no knowledge of `localhost`.** The injection policy lives entirely in the GUI layer (see below) and is communicated to `CAppSettings` as a parameter. Putting a `localhost` special case inside `SetServers` or `AddServer` looks like a safety net but is actively wrong: on a machine with no local Veeam product, `localhost` is a legitimate ordinary entry, and a blanket filter would silently discard it.
 
 No `?` annotation: `VeeamHealthCheck.csproj` sets no `<Nullable>` property and the codebase has no `#nullable` directives, so `List<string>?` emits CS8632 — which `NoWarn` (CA rules only) does not suppress. A plain `List<string>` defaulting to `null` deserializes to `null` for an absent JSON property exactly the same way, so the null-versus-empty rule below is unaffected. The explicit `= null` is redundant to the compiler but kept as documentation, since the null default is load-bearing rather than incidental.
 
 **`null` versus empty is load-bearing.** `null` — the property absent from `settings.json` — means never seeded, and triggers a one-time seed from `CredentialStore.GetAllServers()` so no existing user loses their servers on upgrade. Any non-null value, **including an empty list**, is authoritative. Without that distinction, "the user removed everything" and "fresh upgrade" are indistinguishable and the list resurrects itself, which is the bug being fixed.
 
+**`AddServer` must be a no-op while `Servers` is `null`.** This is the single most dangerous interaction in the design and it is easy to get wrong. The obvious implementation — `Get()` → `Servers ??= new()` → add → serialize — flips `null` to non-null, and non-null is authoritative, so it *destroys the seed signal before the seed has ever run*.
+
+The failure is silent upgrade data loss, on exactly the users the seed exists to protect: someone with three credentialed remote servers in `creds.json` who has not yet launched the new GUI (`Servers == null`) runs `/savecreds` against a fourth host. `AddServer` writes `Servers = ["newhost"]`. The next GUI launch finds a non-null list, never seeds, and **the three pre-existing servers are gone.**
+
+No-op is the correct resolution rather than "seed first, then add": `CredentialStore.Set` has already persisted the credential by the time the hook runs, so the eventual one-time seed picks the new host up for free. It also keeps `AddServer` free of any `CredentialStore` dependency, and makes the behavior independent of whether the hook runs before or after `Set` — an ordering this spec deliberately does not constrain.
+
 **The persisted list is authoritative, with auto-add on credential capture.** `InitializeServerList()` no longer reads `GetAllServers()` except during the one-time seed. To keep a host that gains credentials outside the GUI (a `/savecreds` run, a CLI collection) from being invisible, `CAppSettings.AddServer(host)` is called at the **two production `CredentialStore.Set` call sites** — `CredsHandler.PromptForCredentialsCli:105` and `AvaloniaCredentialPrompter.Prompt:25`.
 
 The hook must **not** go inside `CredentialStore.Set` itself. `Set` has ~25 call sites in `VhcXTests`, and `CredentialStoreSecurityTests` redirects `CredentialStore.StorePath` but not `CAppSettings.StorePath` — a hook inside `Set` would make the test suite write to the developer's real `%APPDATA%/VeeamHealthCheck/settings.json`. `CArgsParser:574`'s `SetTransient` path correctly gets no hook, since transient credentials are never persisted.
 
-**`localhost` is injected, not persisted.** It is always present when `CGlobals.IsVbrInstalled`, is never written to `AppSettings.Servers`, and has no remove affordance in the dialog. It is not a user-managed server, it is the local install. This preserves the intent of today's "cannot remove the last server if it is localhost" rule as a cleaner invariant, and prevents an empty persisted list from producing nonsensical `REMOTEEXEC` state.
+**`localhost` is injected when a local product exists, and is an ordinary entry otherwise.** One predicate owns this, and every rule derives from it:
 
-Two consequences that are easy to miss, because `localhost` genuinely can carry stored credentials (`CArgsParser.RunSaveCredsFlow` defaults its host to `"localhost"` when `REMOTEHOST` is empty, so `GetAllServers()` can legitimately contain it):
+```csharp
+// VhcGui, GUI layer only
+private static bool LocalhostIsInjected =>
+    CGlobals.IsVbrInstalled || CGlobals.IsVb365;
+```
 
-- **The one-time seed must filter `localhost` out** before writing `AppSettings.Servers`, or the first launch after upgrade persists the very entry that is supposed to be injected.
-- **`CAppSettings.AddServer` must ignore `localhost`** (case-insensitive) for the same reason, since the auto-add hook fires on the `/savecreds` path.
+When `LocalhostIsInjected` is true, `localhost` is prepended to the displayed list, passed to `ServerListEditor` as **pinned** (so it has no remove affordance), and filtered out of the one-time seed — because it will be supplied by injection on every future launch, persisting it would duplicate it. When it is false, `localhost` receives no special treatment anywhere: it is not injected, not pinned, not filtered from the seed, and persists like any other name.
+
+The three rules must derive from the one predicate rather than being written independently, and that is the whole point of naming it. `CGlobals.IsVbrInstalled` is set in exactly one place — `CClientFunctions.cs:106`, only when a `Veeam.Backup.Service` process is running — so it is **false on a VB365-only machine**. `localhost` genuinely can carry stored credentials there, since `CArgsParser.RunSaveCredsFlow` defaults its host to `"localhost"` when `REMOTEHOST` is empty (`CArgsParser.cs:562`), which means `GetAllServers()` can legitimately contain it.
+
+An earlier draft of this spec gated injection on `IsVbrInstalled` alone while filtering the seed unconditionally. Those two rules disagree, and the disagreement is a real defect: on a VB365-only machine with a `localhost` credential, the seed strips the entry and nothing injects it back, so **the effective list is empty and the server picker renders blank.** `UpdateSelectedServersGlobal()`'s `else` branch (`VhcGui.axaml.cs:183-187`) still sets `VBRServerName = "localhost"` and `REMOTEEXEC = false`, so a run would work — but with nothing selectable in the UI. Adding `IsVb365` to the predicate and deriving the filter from it closes that; keeping them independent reopens it.
+
+**Persisted state must never depend on this invariant holding.** Two consumers would otherwise be one bug away from targeting the wrong host, so both are written defensively:
+
+- `ServerListEditor` receives pinned names in **both** `initial` and `pinned`, so `Add("localhost")` on an injecting machine returns `Duplicate` and cannot create a second entry. `Commit().FinalServers` excludes pinned names, so an injecting machine never persists `localhost` even if one reaches the editor by another route.
+- §7's `hasRemoteServers` check filters `localhost` explicitly rather than assuming it is absent from the persisted list. On a non-injecting machine it legitimately *is* present, and treating it as a remote server would put a local-only box into Remote Mode.
 
 `UpdateSelectedServersGlobal()`'s `else if` / `else` fallbacks and its `CGlobals.REMOTEEXEC = !VBRServerName.Equals("localhost")` assignment are preserved verbatim. A `ComboBox` with a default selection is rarely null where `ListBox.SelectedItem` often was, but the branches cost nothing and deleting them is how a null-deref arrives later.
 
@@ -141,7 +161,9 @@ internal sealed class ServerListEditor
 }
 ```
 
-`pinned` carries `localhost` in from the caller rather than the editor hardcoding it, which keeps the class free of both Avalonia and `CGlobals` and makes the pinning rule directly testable. `Commit().FinalServers` **excludes pinned entries**, since that value is handed straight to `CAppSettings.SetServers` and `localhost` must never be persisted.
+`pinned` carries `localhost` in from the caller rather than the editor hardcoding it, which keeps the class free of both Avalonia and `CGlobals` and makes the pinning rule directly testable. **Pinned names must also appear in `initial`**, since they are displayed rows; that is what makes `Add("localhost")` return `Duplicate` on an injecting machine instead of creating a second entry. `Commit().FinalServers` **excludes pinned entries**, since that value is handed straight to `CAppSettings.SetServers`.
+
+On a machine where `LocalhostIsInjected` is false (§2), the caller passes an empty `pinned`, and `localhost` is then an ordinary addable, removable, persistable entry. The editor itself never mentions `localhost`.
 
 Adding a name that is currently staged for removal undoes the removal rather than creating a duplicate. Duplicate detection is case-insensitive, matching today's `addServerBtn_Click`. This is the only part of Stage C with real logic and real edge cases, and separating it from the dialog is the only way any of it is testable on a non-Windows machine.
 
@@ -192,17 +214,22 @@ Mechanics, verified rather than assumed:
 **The fix.** The seed-and-resolve logic becomes a static method on `CAppSettings`:
 
 ```csharp
-public static List<string> LoadOrSeedServers(IEnumerable<string> credentialStoreServers);
+public static List<string> LoadOrSeedServers(
+    IEnumerable<string> credentialStoreServers,
+    bool excludeLocalhost);
 ```
 
-It returns `Servers` when non-null (including when empty), and otherwise seeds from `credentialStoreServers` — filtering `localhost` per §2 — persists the result, and returns it. Taking the credential-store servers as a parameter rather than calling `CredentialStore.GetAllServers()` internally keeps it a pure function of its inputs and directly unit-testable, in line with the seam pattern `CAppSettings.StorePath` and `CredentialStore.StorePath` already use.
+It returns `Servers` when non-null (including when empty), and otherwise seeds from `credentialStoreServers`, persists the result, and returns it. `excludeLocalhost` is supplied by the caller as `LocalhostIsInjected` (§2) — the same predicate that drives injection and pinning — which is what keeps `CAppSettings` free of `localhost` policy and stops the two rules from drifting apart.
+
+Taking the credential-store servers as a parameter rather than calling `CredentialStore.GetAllServers()` internally keeps it a pure function of its inputs and directly unit-testable, in line with the seam pattern `CAppSettings.StorePath` and `CredentialStore.StorePath` already use.
 
 `VhcGui`'s constructor calls it once, **before** `SetUiSync()`, and caches the result in a `_persistedServers` field that both `SetUiSync()` and `InitializeServerList()` read.
 
-`SetUiSync()`'s scan then collapses to a count check, with no `localhost` filtering needed because `localhost` is never persisted by design:
+`SetUiSync()`'s scan then becomes a filtered check. It keeps the `localhost` exclusion that the current `foreach` already has, rather than relying on §2's invariant to guarantee absence — on a non-injecting machine `localhost` is legitimately persisted, and counting it as a remote server would put a local-only box into Remote Mode:
 
 ```csharp
-bool hasRemoteServers = _persistedServers.Count > 0;
+bool hasRemoteServers = _persistedServers
+    .Any(s => !s.Equals("localhost", StringComparison.OrdinalIgnoreCase));
 ```
 
 For bug 2, the trailing `this.Title = modeCheckResult;` becomes conditional so it does not clobber the Remote Mode title on the fail-but-remote path.
