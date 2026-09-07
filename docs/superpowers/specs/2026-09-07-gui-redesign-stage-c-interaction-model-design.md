@@ -178,6 +178,20 @@ Adding a name that is currently staged for removal undoes the removal rather tha
 
 **The dialog manages membership only, never the active selection.** The spike's dialog returned the selected server as its dialog result; this one does not. Selection stays with the tab's `ComboBox`. After `Done`, the caller repopulates `serverSelector` from the committed list and then re-runs `UpdateSelectedServersGlobal()`. If the previously-active server was among those removed, selection falls back to `localhost` when present and otherwise to the first entry — the same precedence `InitializeServerList()` already uses. Without this step a removed server would remain in `CGlobals.VBRServerName`/`REMOTEHOST` and a subsequent run would target a host the user just deleted.
 
+### 3a. `DisableButtons()` must learn about the new controls
+
+`DisableButtons()` (`VhcGui.axaml.cs:506-523`) greys the whole input surface out for the duration of a run. It currently names `serverTextBox`, `addServerBtn`, `removeServerBtn`, `clearServersBtn`, `serverListBox`, and `termsBtn` — every one of which this stage renames or deletes.
+
+The renames and deletions are compile errors and will be caught. **The additions are silent**, so they are called out explicitly:
+
+- Remove: `serverTextBox`, `addServerBtn`, `removeServerBtn`, `clearServersBtn`, `serverListBox` (all deleted by §3).
+- Add: `serverSelector`, `manageServersBtn` (§3) and the `...` folder-picker button (§5).
+- Rename: `termsBtn` → `termsCheckBox` (§1).
+
+This is not cosmetic. Without `manageServersBtn` in the list, a user can open Manage Servers **mid-run**, delete the host the collection is currently targeting, and have `Done` call `CredentialStore.Remove` on it. It also makes `ServerListEditor`'s `hasCredentials` results — snapshotted at construction — stale, so the Done summary confirm's credential count can be wrong.
+
+`daysSelector` is deliberately absent from today's list and the period pills stay absent too; leaving the collection period editable mid-run is pre-existing behavior and not this stage's to change.
+
 ### 4. Collection-period segmented selector
 
 `daysSelector` (`ComboBox`) becomes three `RadioButton Classes="segment"` controls — `days7` / `days30` / `days90`, shared `GroupName`, in a horizontal `StackPanel`, using the spike's corner-radius and `Margin="-1,0,0,0"` treatment for a joined appearance. `days7` starts checked.
