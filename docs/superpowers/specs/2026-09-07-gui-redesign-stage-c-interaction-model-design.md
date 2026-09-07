@@ -199,7 +199,9 @@ internal sealed class ServerListEditor
 }
 ```
 
-`pinned` carries `localhost` in from the caller rather than the editor hardcoding it, which keeps the class free of both Avalonia and `CGlobals` and makes the pinning rule directly testable. **Pinned names must also appear in `initial`**, since they are displayed rows; that is what makes `Add("localhost")` return `Duplicate` on an injecting machine instead of creating a second entry. `Commit().FinalServers` **excludes pinned entries**, since that value is handed straight to `CAppSettings.SetServers`.
+`pinned` carries `localhost` in from the caller rather than the editor hardcoding it, which keeps the class free of both Avalonia and `CGlobals` and makes the pinning rule directly testable. **Pinned names must also appear in `initial`**, since they are displayed rows — the user has to be able to see the injected entry. That is a *display* contract, not a correctness one: `Add` checks `pinned` directly, so `Add("localhost")` returns `Duplicate` on an injecting machine whether or not the caller honoured the contract.
+
+An earlier draft of this section derived that `Duplicate` result *from* the `pinned` ⊆ `initial` invariant, which contradicted §2's rule that persisted state must never depend on the invariant holding. `Add` enforcing it itself resolves the tension in §2's favour: a caller that passes `pinned` without seeding `initial` gets `Duplicate` rather than a row that renders, increments the pending count, and is then silently discarded by `Commit` — a silent discard of an explicit user action. `Commit().FinalServers` **excludes pinned entries**, since that value is handed straight to `CAppSettings.SetServers`.
 
 On a machine where `LocalhostIsInjected` is false (§2), the caller passes an empty `pinned`, and `localhost` is then an ordinary addable, removable, persistable entry. The editor itself never mentions `localhost`.
 
