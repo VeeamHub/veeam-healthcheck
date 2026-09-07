@@ -327,6 +327,21 @@ git add vHC/HC_Reporting/Startup/CAppSettings.cs vHC/VhcXTests/CAppSettingsTests
 git commit -m "feat(settings): add Servers, atomic writes and a tri-state load to CAppSettings"
 ```
 
+### Corrections applied after review — Task 1 as built
+
+**Executed: `9eb450f` (steps above) + `ec79d68` (these corrections).** The steps above are left as written for history; where they disagree with this list, **this list is what shipped and what later tasks build on.**
+
+Two independent reviews found one substantive defect and several smaller gaps, all traceable to the steps above rather than to the implementation:
+
+1. **`Set` now returns `bool` and respects the `Unreadable` guard.** As specified above it went through `Get()`, which collapses `Unreadable` into defaults, then wrote unconditionally — so a corrupt `settings.json` plus a theme toggle would write `Servers: null`, which the next launch cannot distinguish from "never seeded", firing the migration seed and resurrecting removed servers. A *recoverable* read failure became *permanent* via an unrelated cosmetic action. Task 3's `LoadOrSeedServers_WhenSettingsUnreadable_ReturnsEmptyAndDoesNotWrite` would have asserted a guarantee its own sibling method falsified. `Set` now calls `Load` directly, logs, and returns `false` without writing when the file is unreadable.
+2. **`TryLoad` is named `Load`.** `Try*` promises "returns `bool`, never throws"; a three-valued enum reads against that. **Tasks 2 and 3 must call `Load`, not `TryLoad`.**
+3. **A file whose entire content is the JSON literal `null` returns `Absent`, not `Unreadable`.** It parses cleanly and means "no content", the same as an empty file. As `Unreadable` it would leave `LoadOrSeedServers` returning empty *every* session and never writing — permanently stuck rather than retry-recoverable.
+4. **`Write` uses a fresh `Guid` per call for the temp filename**, not a fixed `StorePath + ".tmp"`. A fixed name lets two concurrent writers put a partially-written file into place via `File.Move`, which quietly contradicted the comment's own "can never leave a truncated file" claim. The catch block also best-effort deletes the temp file, so a failed `Move` leaves no litter in `%APPDATA%`.
+5. **Caller-facing contracts moved to `///` on `SetServers` and `Set`** (return value, not-synchronized), with temp-file mechanics left on private `Write` — matching how `CredentialStore.cs` splits caller docs from implementation rationale.
+6. **Six further tests**, beyond the six in Step 1: the empty-file and JSON-`null` → `Absent` branches, `SetServers(null)` normalising to an authoritative empty list, `Set` refusing to write over an unreadable file, no temp file surviving a successful write, and `SetServers` returning `false` without throwing when the write fails. Before these, reverting `Write` to the original one-line `File.WriteAllText` kept the entire suite green — the `bool` the spec pins as contract surface had no coverage of its interesting branch.
+
+**Suite after Task 1: 855 passed, 0 failed, 12 skipped.** Use 855, not 849, as the baseline for Task 2.
+
 ---
 
 ## Task 2: `CAppSettings.AddServer`
@@ -609,7 +624,7 @@ Add to `CAppSettings`:
     // wherever it would be injected and honours it wherever it would not.
     public static List<string> LoadOrSeedServers(IEnumerable<string> credentialStoreServers, bool excludeLocalhost)
     {
-        var state = TryLoad(out var settings);
+        var state = Load(out var settings);
 
         if (state == SettingsLoadResult.Unreadable)
         {
@@ -2459,7 +2474,7 @@ dotnet test vHC/VhcXTests/VhcXTests.csproj 2>&1 | tail -20
 git checkout -- vHC/HC_Reporting/VeeamHealthCheck.csproj
 ```
 
-Expected: `0 Error(s)`, and `Failed: 0, Skipped: 12` with `Passed` at **873** — the 843 baseline plus 30 new tests (6 in Task 1, 6 in Task 2, 7 in Task 3, 11 in Task 4).
+Expected: `0 Error(s)`, and `Failed: 0, Skipped: 12` with `Passed` at **879** — the 843 baseline plus 36 new tests (12 in Task 1 including its post-review corrections, 6 in Task 2, 7 in Task 3, 11 in Task 4).
 
 - [ ] **Step 2: Confirm nothing stale survives**
 
