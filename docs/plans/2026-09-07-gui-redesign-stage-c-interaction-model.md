@@ -1161,6 +1161,20 @@ git add vHC/HC_Reporting/Functions/ManageServers/ServerListEditor.cs vHC/VhcXTes
 git commit -m "feat(servers): add Avalonia-free ServerListEditor staging model"
 ```
 
+### Corrections applied after review — Task 4 as built
+
+**Executed: `416ee8a`** (implementation as specified) **+ this correction commit.** `ServerListEditor.cs` and `Add`/`Remove`/`Commit` shipped exactly as written in Step 3 — no code defect. One test fixture was defective.
+
+1. **`Commit_ListsOnlyRemovedHostsThatHaveCredentials` did not exercise the `IsPendingRemoval` clause of `Commit`'s `CredentialsToDelete` filter (`r.IsPendingRemoval && r.HasCredentials`).** As written, the fixture's only credentialed row (`vbr01`) was also the only row removed with credentials — `vbr02` had no credentials, `localhost` was pinned and untouched. Deleting `r.IsPendingRemoval &&` from the predicate (verified by temporarily doing exactly that) left the result unchanged at `["vbr01"]`, and the test still passed. This is the same failure mode flagged elsewhere on this branch: a green test with the right name and no coverage of the branch it claims to pin. The regression it would have missed — deleting stored credentials for a host the user chose to *keep* — is irreversible and the worst outcome this class can produce.
+
+   Fixed by adding `"localhost"` to `withCreds`. `localhost` is pinned, so `Remove("localhost")` is a no-op (per `Remove_OnPinnedRow_IsNoOp`), giving the fixture a row that has credentials and is never staged for removal. Verified both clauses are now independently load-bearing: removing `IsPendingRemoval &&` fails the assertion (`localhost` leaks into the result), and removing `&& r.HasCredentials` also fails (`vbr02` leaks in). Both mutations were run and reverted before this commit.
+
+2. **Two design notes for Task 12's author, not acted on here (YAGNI for this task):**
+   - `Add`'s new-row branch hardcodes `IsRemovable = true` and does not check `_pinned`. If a caller ever violates the documented "`pinned` must also appear in `initial`" invariant, `Add("localhost")` on a fresh row would return `Added`, render a removable row, and then `Commit` would silently exclude it via the pinned check anyway — a confusing but not incorrect outcome. Concretely: `CAppSettings.LoadOrSeedServers(..., excludeLocalhost: true)` returns a list *without* localhost on an injecting machine, so Task 12 must explicitly prepend the pinned name(s) to `initial` before constructing the editor, not just pass them as `pinned`. If Task 12 forgets, this is the symptom to look for.
+   - The constructor does not trim `Name` on `initial` entries (`Add` does trim). This is safe today only because `initial` is expected to arrive already trimmed and deduped (`CAppSettings.NormalizeServers`'s output). Worth a one-line comment if Task 12's wiring changes what feeds `initial`.
+
+**Suite after Task 4: 894 passed, 0 failed, 12 skipped** (verified directly). Baseline for Task 5.
+
 ---
 
 ## Task 5: Wire the auto-add hooks
