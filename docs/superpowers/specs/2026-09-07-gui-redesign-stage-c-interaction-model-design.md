@@ -142,7 +142,10 @@ An earlier draft of this spec gated injection on `IsVbrInstalled` alone while fi
 
 `serverListBox_SelectionChanged` becomes `serverSelector_SelectionChanged` with the same body, including the existing `null` guard for `SelectionChanged` raised during `InitializeComponent()`.
 
-`serverListBox` has a third consumer beyond that handler and `InitializeServerList()`: `monitorQuickSetupBtn_Click` reads `serverListBox.SelectedItem?.ToString()` at `VhcGui.axaml.cs:846`, so the **Continuous Monitoring tab depends on the Ad-hoc tab's server selection**. The rename is a compile error and will be caught, but the cross-tab coupling is worth knowing about when reasoning about "the dialog never changes the active selection" — the selection it leaves alone is read by both tabs.
+`serverListBox` has **two** consumers beyond that handler and `InitializeServerList()`, and both matter:
+
+- `monitorQuickSetupBtn_Click` reads `serverListBox.SelectedItem?.ToString()` at `VhcGui.axaml.cs:846`, so the **Continuous Monitoring tab depends on the Ad-hoc tab's server selection**. The rename is a compile error and will be caught, but the cross-tab coupling matters when reasoning about "the dialog never changes the active selection" — the selection it leaves alone is read by both tabs.
+- `SetUiSync()` iterates it at `VhcGui.axaml.cs:211` for the `hasRemoteServers` scan. That is §7's bug 1, so it is easy to think of it as belonging to §7 alone — but it is also a *reference to the control this section deletes*, which means §3's rewrite and §7's fix cannot be sequenced independently. They touch the same method and must land together.
 
 **`Clear All` is dropped.** With per-row removal and a real Cancel in the dialog it has no home, and it was the least honest control in the old block.
 
@@ -202,7 +205,11 @@ On a machine where `LocalhostIsInjected` is false (§2), the caller passes an em
 
 Adding a name that is currently staged for removal undoes the removal rather than creating a duplicate. Duplicate detection is case-insensitive, matching today's `addServerBtn_Click`. This is the only part of Stage C with real logic and real edge cases, and separating it from the dialog is the only way any of it is testable on a non-Windows machine.
 
-**The dialog manages membership only, never the active selection.** The spike's dialog returned the selected server as its dialog result; this one does not. Selection stays with the tab's `ComboBox`. After `Done`, the caller repopulates `serverSelector` from the committed list and then re-runs `UpdateSelectedServersGlobal()`. If the previously-active server was among those removed, selection falls back to `localhost` when present and otherwise to the first entry — the same precedence `InitializeServerList()` already uses. Without this step a removed server would remain in `CGlobals.VBRServerName`/`REMOTEHOST` and a subsequent run would target a host the user just deleted.
+**The dialog manages membership only, never the active selection.** The spike's dialog returned the selected server as its dialog result; this one does not. Selection stays with the tab's `ComboBox`.
+
+After `Done`, the caller repopulates `serverSelector` from the committed list and then re-runs `UpdateSelectedServersGlobal()`. **The repopulate must preserve the current selection** — capture it first, and restore it if it survived the commit. Only if the previously-active server was among those removed does selection fall back to `localhost` when present and otherwise to the first entry, the same precedence `InitializeServerList()` uses at startup.
+
+Reusing `InitializeServerList()`'s startup path verbatim here is a trap worth naming, because its localhost-first precedence is unconditional: a user sitting on `vbr01` who opens the dialog and presses `Done` — even having changed nothing — would silently land back on `localhost`, with `REMOTEEXEC` flipped to `false` and the next run collecting from the local box. That is the mirror image of the failure this paragraph exists to prevent, and no amount of testing the *removal* case catches it. Without this step a removed server would remain in `CGlobals.VBRServerName`/`REMOTEHOST` and a subsequent run would target a host the user just deleted.
 
 ### 3a. `DisableButtons()` must learn about the new controls
 
@@ -277,6 +284,8 @@ Mechanics, verified rather than assumed:
 
 `SetUiSync()` carries two pre-existing bugs that Stage B documented in code and deliberately left intact. Stage C is rewriting the exact data flow the first one depends on, so both are fixed here.
 
+Because the scan at `VhcGui.axaml.cs:211` is also a reference to the control §3 deletes, **§3's server rewrite and this fix must land in the same change.** They are described separately for clarity; they cannot be sequenced separately.
+
 **Bug 1 — the `hasRemoteServers` scan always sees an empty list.** `SetUiSync()` runs before `InitializeServerList()` in the constructor, so its `foreach (var item in serverListBox.Items)` iterates nothing. The branch exists so that a machine with no local Veeam install but remote servers configured continues into the UI instead of aborting; because the scan can never find anything, such a machine always falls through to `_modeCheckFailed = true` and gets exactly the failure the branch was written to prevent.
 
 **Bug 2 — the Remote Mode title is immediately overwritten.** The `hasRemoteServers` branch sets `this.Title = "Veeam Health Check - Remote Mode"`, then execution falls through to `this.Title = modeCheckResult;` a few lines later — and on this path `modeCheckResult` is the literal string `"fail"`. Fixing bug 1 makes this branch reachable for the first time, so leaving bug 2 would ship a newly-live code path that titles the window `"fail"`.
@@ -299,7 +308,13 @@ Composition should also de-duplicate case-insensitively when injection prepends 
 
 Taking the credential-store servers as a parameter rather than calling `CredentialStore.GetAllServers()` internally keeps it a pure function of its inputs and directly unit-testable, in line with the seam pattern `CAppSettings.StorePath` and `CredentialStore.StorePath` already use.
 
-`VhcGui`'s constructor calls it once, **before** `SetUiSync()`, and caches the result in a `_persistedServers` field that both `SetUiSync()` and `InitializeServerList()` read.
+**The call goes inside `SetUiSync()`, immediately after `ModeCheck()`** — not in the constructor before it, which an earlier draft of this section specified and which is unsatisfiable.
+
+`ModeCheck()` is the only thing that sets `CGlobals.IsVbrInstalled` (`CClientFunctions.cs:106`) or `IsVb365` (`:99`) on the GUI startup path, and it is called from exactly one place there: `VhcGui.axaml.cs:205`, *inside* `SetUiSync()`. `CArgsParser.LaunchUi` never calls it. So resolving the list before `SetUiSync()` evaluates `LocalhostIsInjected` while both flags are still `false` — on **every** machine, including a VBR box — which makes `excludeLocalhost` permanently `false`, persists `localhost` into the seed on injecting machines, and renders the read-time filter inert. Worse, the second `LoadOrSeedServers` call in `manageServersBtn_Click` runs after `ModeCheck()` and evaluates the *same* predicate as `true`, so two calls to one function disagree — exactly the drift this predicate was named to prevent.
+
+Placing the call after `ModeCheck()` but before the `if (modeCheckResult == "fail")` block satisfies both constraints: the flags are populated, and `hasRemoteServers` below still sees the resolved list. The result is cached in a `_persistedServers` field that both `SetUiSync()` and `InitializeServerList()` read.
+
+`CredentialStore.GetAllServers()` is safe to call at that point — `CredentialStore`'s static constructor initializes `_cache` (`CredentialStore.cs:34-36`), so there is no ordering constraint on it.
 
 `SetUiSync()`'s scan then becomes a filtered check. It keeps the `localhost` exclusion that the current `foreach` already has, rather than relying on §2's invariant to guarantee absence — on a non-injecting machine `localhost` is legitimately persisted, and counting it as a remote server would put a local-only box into Remote Mode:
 
@@ -312,7 +327,9 @@ For bug 2, the trailing `this.Title = modeCheckResult;` becomes conditional so i
 
 Making this branch live also means `SetUiAsync()` now reaches `Task.Run(() => PreRunCheck())` on a machine with no local Veeam, which sounds like it might raise an unexpected dialog. It does not: both of `PreRunCheck`'s non-admin dialog branches are gated on `CGlobals.IsVbr` / `CGlobals.IsVb365` (`CClientFunctions.cs:36`, `:72`), and both are false on this path, so it is a no-op. Recorded so nobody has to re-derive it nervously.
 
-This ordering matters and is the reason for extracting a method rather than writing a one-liner: if `SetUiSync()` simply read `CAppSettings.Get().Servers` directly, the very first launch after upgrade would see `null` — the seed would not yet have run, because it lives in `InitializeServerList()`, which runs later. A user upgrading with remote servers already credentialed would hit the abort path exactly once, which is the worst possible time for it. Resolving the list before `SetUiSync()` removes the constructor-ordering fragility rather than working around it.
+Extracting a method rather than writing a one-liner is still the right call, for the original reason: if `SetUiSync()` simply read `CAppSettings.Get().Servers` inline, the very first launch after upgrade would see `null`, because the seed would not have run — a user upgrading with remote servers already credentialed would hit the abort path exactly once, which is the worst possible moment for it. `LoadOrSeedServers` seeds on demand, so wherever it is called first, the list is correct.
+
+What changed is only *where* it is called. Since both `SetUiSync()` and `InitializeServerList()` now read one field resolved at a single well-defined point, the constructor-ordering fragility is removed rather than relocated.
 
 ## Implementation notes / hazards
 
