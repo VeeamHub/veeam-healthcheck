@@ -51,6 +51,8 @@ public static class CAppSettings
         Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
         "VeeamHealthCheck", "settings.json");
 
+    private const string LocalhostName = "localhost";
+
     internal static SettingsLoadResult Load(out AppSettings settings)
     {
         settings = new AppSettings();
@@ -135,8 +137,13 @@ public static class CAppSettings
     /// normalized to an empty list rather than rejected - throwing would violate this
     /// class's never-throws contract - but note that doing so converts "never seeded"
     /// into "user emptied it", since <c>null</c> is the natural way to spell "clear it"
-    /// at a call site. Returns <c>false</c> (having logged) if the write failed.
-    /// Not synchronized: this, <c>AddServer</c>, and <see cref="Set"/> are all
+    /// at a call site. Also drops any null-or-whitespace element from a non-null list
+    /// before persisting, reusing <see cref="IsUsableServerName"/> - the same
+    /// predicate <see cref="Filter"/> applies on read - rather than a second copy of
+    /// the same rule. Deliberately does not trim surviving elements; that
+    /// normalization is <see cref="Filter"/>'s job on read, not this method's job on
+    /// write. Returns <c>false</c> (having logged) if the write failed. Not
+    /// synchronized: this, <c>AddServer</c>, and <see cref="Set"/> are all
     /// Get() -&gt; mutate -&gt; write read-modify-writes over one shared file, so a GUI
     /// commit racing a CLI <c>/savecreds</c> AddServer, or two GUI instances, loses an
     /// update - and a lost update can resurrect a just-removed server. Stage C assumes
@@ -145,7 +152,7 @@ public static class CAppSettings
     public static bool SetServers(IEnumerable<string> servers)
     {
         var settings = Get();
-        settings.Servers = servers?.ToList() ?? new List<string>();
+        settings.Servers = servers?.Where(IsUsableServerName).ToList() ?? new List<string>();
         return Write(settings);
     }
 
@@ -201,6 +208,84 @@ public static class CAppSettings
 
         settings.Servers.Add(trimmed);
         Write(settings);
+    }
+
+    /// <summary>
+    /// Resolves the effective server list, seeding once from the credential store on
+    /// the first launch after upgrade. <paramref name="credentialStoreServers"/> is a
+    /// parameter rather than an internal <c>CredentialStore.GetAllServers()</c> call
+    /// so this stays a pure function of its inputs and is directly unit-testable,
+    /// matching the <see cref="StorePath"/> seam pattern this class and
+    /// <c>CredentialStore</c> already use.
+    ///
+    /// <paramref name="excludeLocalhost"/> is the GUI's localhost-injection
+    /// predicate. It filters the RETURNED list on every path, not just the seed -
+    /// that is what makes the "localhost is injected, never persisted" invariant
+    /// self-healing rather than dependent on every writer behaving. <see
+    /// cref="AddServer"/> has no localhost special case, so a stray persisted
+    /// localhost is possible; ignoring it at read time neutralises it wherever it
+    /// would be injected and honours it wherever it would not.
+    ///
+    /// Returns an empty list, and writes nothing, if the settings file is
+    /// unreadable - seeding over a file that could not be parsed would turn a
+    /// transient read failure into a permanent resurrection of removed servers.
+    /// </summary>
+    public static List<string> LoadOrSeedServers(IEnumerable<string> credentialStoreServers, bool excludeLocalhost)
+    {
+        var state = Load(out var settings);
+
+        if (state == SettingsLoadResult.Unreadable)
+        {
+            CGlobals.Logger.Warning(
+                "Settings file unreadable; server list unavailable this session. Not seeding, to avoid resurrecting removed servers.");
+            return new List<string>();
+        }
+
+        if (settings.Servers == null)
+        {
+            var seeded = Filter(credentialStoreServers, excludeLocalhost);
+            SetServers(seeded);
+            return seeded;
+        }
+
+        return Filter(settings.Servers, excludeLocalhost);
+    }
+
+    // The single rule for "not a usable server name", shared by Filter (read) and
+    // SetServers (write) so the two paths cannot drift into different definitions of
+    // the same rule.
+    private static bool IsUsableServerName(string server) => !string.IsNullOrWhiteSpace(server);
+
+    private static List<string> Filter(IEnumerable<string> servers, bool excludeLocalhost)
+    {
+        if (servers == null)
+        {
+            return new List<string>();
+        }
+
+        // Clause order is load-bearing, twice over.
+        //
+        // The IsNullOrWhiteSpace Where MUST come first: the persisted list can still
+        // contain a null element via a hand-edited settings.json - SetServers itself
+        // drops null/whitespace elements on write (see IsUsableServerName), but a
+        // file edited directly bypasses that guard - and any Equals below would
+        // throw on it. LINQ chains lazily, so this ordering IS the null-safety, not
+        // incidental tidiness.
+        //
+        // The Trim Select must precede the localhost Where, or a persisted
+        // "  localhost  " survives excludeLocalhost and renders BESIDE the injected
+        // localhost row - exactly the duplicate this filter exists to prevent.
+        // Trimming on read also stops the picker showing a padded hostname.
+        var query = servers
+            .Where(IsUsableServerName)
+            .Select(s => s.Trim());
+
+        if (excludeLocalhost)
+        {
+            query = query.Where(s => !s.Equals(LocalhostName, StringComparison.OrdinalIgnoreCase));
+        }
+
+        return query.ToList();
     }
 
     // Writes via a temp file plus an atomic move, so an interrupted write can never

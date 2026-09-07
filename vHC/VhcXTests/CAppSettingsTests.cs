@@ -442,5 +442,147 @@ namespace VhcXTests
             Assert.Equal("Dark", settings.ThemePreference);
             Assert.Equal(new[] { "vbr01", "vbr02" }, settings.Servers);
         }
+
+        [Fact]
+        public void SetServers_WithNullAndWhitespaceElements_PersistsEmptyList()
+        {
+            // Deferred from Task 2: SetServers must drop null/whitespace elements on
+            // write, reusing Filter's IsUsableServerName predicate rather than a
+            // second copy of the same rule. Under the null-vs-empty rule this is the
+            // meaningful, irreversible statement "the user emptied the list" - not
+            // "one blank entry survives as a phantom persisted server".
+            bool ok = CAppSettings.SetServers(new[] { null, "  " });
+
+            var settings = CAppSettings.Get();
+            Assert.True(ok);
+            Assert.NotNull(settings.Servers);
+            Assert.Empty(settings.Servers);
+        }
+
+        [Fact]
+        public void LoadOrSeedServers_WhenNeverSeeded_SeedsFromCredentialServersAndPersists()
+        {
+            var result = CAppSettings.LoadOrSeedServers(
+                new[] { "vbr01", "vbr02" }, excludeLocalhost: true);
+
+            Assert.Equal(new[] { "vbr01", "vbr02" }, result);
+            Assert.Equal(new[] { "vbr01", "vbr02" }, CAppSettings.Get().Servers);
+        }
+
+        [Fact]
+        public void LoadOrSeedServers_WhenAlreadySeeded_IgnoresCredentialServers()
+        {
+            CAppSettings.SetServers(new[] { "kept" });
+
+            var result = CAppSettings.LoadOrSeedServers(
+                new[] { "ignored" }, excludeLocalhost: true);
+
+            Assert.Equal(new[] { "kept" }, result);
+        }
+
+        [Fact]
+        public void LoadOrSeedServers_WhenSeededEmpty_StaysEmpty()
+        {
+            // The null-vs-empty rule, end to end: a user who removed everything must
+            // not have their list rebuilt from the credential store on next launch.
+            CAppSettings.SetServers(System.Array.Empty<string>());
+
+            var result = CAppSettings.LoadOrSeedServers(
+                new[] { "vbr01" }, excludeLocalhost: true);
+
+            Assert.Empty(result);
+        }
+
+        [Fact]
+        public void LoadOrSeedServers_WhenExcludingLocalhost_FiltersSeedInput()
+        {
+            var result = CAppSettings.LoadOrSeedServers(
+                new[] { "LocalHost", "vbr01" }, excludeLocalhost: true);
+
+            Assert.Equal(new[] { "vbr01" }, result);
+            Assert.Equal(new[] { "vbr01" }, CAppSettings.Get().Servers);
+        }
+
+        [Fact]
+        public void LoadOrSeedServers_WhenNotExcludingLocalhost_RetainsIt()
+        {
+            // A VB365-only machine has IsVbrInstalled == false, so nothing injects
+            // localhost - and RunSaveCredsFlow defaults its host to "localhost", so a
+            // credential for it legitimately exists. Filtering unconditionally here
+            // would leave the picker blank.
+            var result = CAppSettings.LoadOrSeedServers(
+                new[] { "localhost" }, excludeLocalhost: false);
+
+            Assert.Equal(new[] { "localhost" }, result);
+        }
+
+        [Fact]
+        public void LoadOrSeedServers_WhenExcludingLocalhost_FiltersAlreadyPersistedList()
+        {
+            // The self-healing half. AddServer has no localhost special case, so
+            // /savecreds against localhost on an already-seeded injecting machine
+            // really does persist the name. Filtering only the seed would then let
+            // injection render it a second time as a duplicate row.
+            CAppSettings.SetServers(new[] { "localhost", "vbr01" });
+
+            var result = CAppSettings.LoadOrSeedServers(
+                System.Array.Empty<string>(), excludeLocalhost: true);
+
+            Assert.Equal(new[] { "vbr01" }, result);
+        }
+
+        [Fact]
+        public void LoadOrSeedServers_ToleratesNullElementsAndTrimsPaddedEntries()
+        {
+            // Arranged via a direct file write rather than SetServers: SetServers now
+            // drops null/whitespace elements on write (the item this task also owns),
+            // so routing this through SetServers would never put a null on disk to
+            // begin with. A hand-edited settings.json is the realistic route to both a
+            // null element and un-trimmed padding surviving to a read. The null
+            // element must not throw (Filter's IsNullOrWhiteSpace clause has to run
+            // first), and "  localhost  " must still be excluded when localhost is
+            // injected - otherwise it renders beside the injected row as a duplicate.
+            Directory.CreateDirectory(Path.GetDirectoryName(CAppSettings.StorePath)!);
+            File.WriteAllText(
+                CAppSettings.StorePath,
+                "{\"Servers\":[null,\"  vbr01  \",\"  localhost  \",\"   \"]}");
+
+            var result = CAppSettings.LoadOrSeedServers(
+                System.Array.Empty<string>(), excludeLocalhost: true);
+
+            Assert.Equal(new[] { "vbr01" }, result);
+        }
+
+        [Fact]
+        public void LoadOrSeedServers_WhenNotExcludingLocalhost_ReturnsPaddedLocalhostTrimmed()
+        {
+            // SetServers only drops null/whitespace elements on write - it does not
+            // trim survivors (only Filter does, on read) - so a padded "localhost"
+            // legitimately reaches disk this way and this still exercises the
+            // read-time trim in Filter, not a write-time one.
+            CAppSettings.SetServers(new[] { "  localhost  " });
+
+            var result = CAppSettings.LoadOrSeedServers(
+                System.Array.Empty<string>(), excludeLocalhost: false);
+
+            Assert.Equal(new[] { "localhost" }, result);
+        }
+
+        [Fact]
+        public void LoadOrSeedServers_WhenSettingsUnreadable_ReturnsEmptyAndDoesNotWrite()
+        {
+            Directory.CreateDirectory(Path.GetDirectoryName(CAppSettings.StorePath)!);
+            File.WriteAllText(CAppSettings.StorePath, "{ not valid json ");
+            var before = File.ReadAllText(CAppSettings.StorePath);
+
+            var result = CAppSettings.LoadOrSeedServers(
+                new[] { "vbr01" }, excludeLocalhost: true);
+
+            // Seeding over an unreadable file would turn a transient read failure into
+            // a permanent resurrection of removed servers. Better to show nothing this
+            // session and leave the file alone so a retry can recover.
+            Assert.Empty(result);
+            Assert.Equal(before, File.ReadAllText(CAppSettings.StorePath));
+        }
     }
 }
