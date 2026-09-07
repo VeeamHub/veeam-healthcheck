@@ -139,10 +139,21 @@ public static class CAppSettings
     /// into "user emptied it", since <c>null</c> is the natural way to spell "clear it"
     /// at a call site. Also drops any null-or-whitespace element from a non-null list
     /// before persisting, reusing <see cref="IsUsableServerName"/> - the same
-    /// predicate <see cref="Filter"/> applies on read - rather than a second copy of
-    /// the same rule. Deliberately does not trim surviving elements; that
-    /// normalization is <see cref="Filter"/>'s job on read, not this method's job on
-    /// write. Returns <c>false</c> (having logged) if the write failed. Not
+    /// predicate <see cref="NormalizeServers"/> applies on read - rather than a
+    /// second copy of the same rule. Deliberately does not trim surviving elements;
+    /// that normalization is <see cref="NormalizeServers"/>'s job on read, not this
+    /// method's job on write.
+    ///
+    /// Unlike <see cref="Set"/> and <see cref="AddServer"/>, this has no
+    /// <c>Unreadable</c> guard: it commits the list regardless, logging instead of
+    /// refusing. Refusing an explicit, deliberate user action (a dialog commit)
+    /// because an unrelated part of the file is corrupt is worse than the actual
+    /// consequence, which is that <c>ThemePreference</c> silently resets to its
+    /// default alongside the commit - and the seed-signal hazard that motivates the
+    /// guard on <see cref="Set"/> does not apply here, since this method is the one
+    /// that sets the signal.
+    ///
+    /// Returns <c>false</c> (having logged) if the write failed. Not
     /// synchronized: this, <c>AddServer</c>, and <see cref="Set"/> are all
     /// Get() -&gt; mutate -&gt; write read-modify-writes over one shared file, so a GUI
     /// commit racing a CLI <c>/savecreds</c> AddServer, or two GUI instances, loses an
@@ -151,7 +162,12 @@ public static class CAppSettings
     /// </summary>
     public static bool SetServers(IEnumerable<string> servers)
     {
-        var settings = Get();
+        if (Load(out var settings) == SettingsLoadResult.Unreadable)
+        {
+            CGlobals.Logger.Warning(
+                "Settings file was unreadable; committing the new server list anyway rather than silently refusing an explicit user action. ThemePreference resets to its default as a result.");
+        }
+
         settings.Servers = servers?.Where(IsUsableServerName).ToList() ?? new List<string>();
         return Write(settings);
     }
@@ -176,7 +192,7 @@ public static class CAppSettings
     /// </summary>
     public static void AddServer(string server)
     {
-        if (string.IsNullOrWhiteSpace(server))
+        if (!IsUsableServerName(server))
         {
             return;
         }
@@ -229,6 +245,19 @@ public static class CAppSettings
     /// Returns an empty list, and writes nothing, if the settings file is
     /// unreadable - seeding over a file that could not be parsed would turn a
     /// transient read failure into a permanent resurrection of removed servers.
+    ///
+    /// Also writes nothing - and leaves <see cref="AppSettings.Servers"/> null - if
+    /// the seed itself normalizes to empty. <paramref name="credentialStoreServers"/>
+    /// being empty is indistinguishable from <c>CredentialStore</c>'s static
+    /// constructor having swallowed a transient failure (a locked or momentarily
+    /// unreadable <c>creds.json</c>) and installed an empty cache, with the actual
+    /// credentials still intact on disk. Persisting <c>[]</c> here would read back as
+    /// an authoritative "user emptied it" on every later launch and never retry -
+    /// permanent, silent loss of the server list on the exact path this method exists
+    /// to protect. Only a non-empty seed is worth burning the never-seeded signal for;
+    /// a genuinely credential-less machine simply converges on a later launch's seed
+    /// once credentials exist, the same convergence argument behind <see
+    /// cref="AddServer"/>'s no-op-while-null guard.
     /// </summary>
     public static List<string> LoadOrSeedServers(IEnumerable<string> credentialStoreServers, bool excludeLocalhost)
     {
@@ -243,20 +272,35 @@ public static class CAppSettings
 
         if (settings.Servers == null)
         {
-            var seeded = Filter(credentialStoreServers, excludeLocalhost);
-            SetServers(seeded);
+            var seeded = NormalizeServers(credentialStoreServers, excludeLocalhost);
+
+            // Only a non-empty seed is worth burning the never-seeded signal - see the
+            // summary. Written directly via settings/Write rather than SetServers: this
+            // is a single read (the Load above) rather than a second Get()/Load that
+            // would also collapse Unreadable into defaults, the exact thing the guard
+            // three lines up exists to prevent. seeded is already normalized, so
+            // SetServers' own element filter would add nothing here.
+            if (seeded.Count > 0)
+            {
+                settings.Servers = seeded;
+                Write(settings);
+            }
+
             return seeded;
         }
 
-        return Filter(settings.Servers, excludeLocalhost);
+        return NormalizeServers(settings.Servers, excludeLocalhost);
     }
 
-    // The single rule for "not a usable server name", shared by Filter (read) and
-    // SetServers (write) so the two paths cannot drift into different definitions of
-    // the same rule.
+    // The single rule for "not a usable server name", shared by NormalizeServers
+    // (read), SetServers (write), and AddServer's input guard, so the three paths
+    // cannot drift into different definitions of the same rule.
     private static bool IsUsableServerName(string server) => !string.IsNullOrWhiteSpace(server);
 
-    private static List<string> Filter(IEnumerable<string> servers, bool excludeLocalhost)
+    // Named for what it does to the values, not just how it selects them: it trims
+    // survivors, which SetServers deliberately does not - a name like "Filter" would
+    // wrongly imply the caller's own strings come back unchanged.
+    private static List<string> NormalizeServers(IEnumerable<string> servers, bool excludeLocalhost)
     {
         if (servers == null)
         {
@@ -285,7 +329,14 @@ public static class CAppSettings
             query = query.Where(s => !s.Equals(LocalhostName, StringComparison.OrdinalIgnoreCase));
         }
 
-        return query.ToList();
+        // A persisted or seeded ["vbr01", "  vbr01  "] would otherwise survive as two
+        // rows that render identically once trimmed - the same case-insensitive
+        // comparator AddServer uses to prevent the duplicate at write time, applied
+        // here so a duplicate that reaches disk by some other route (a hand-edited
+        // file, a future writer) still can't render twice. Distinct preserves
+        // first-occurrence order, so which of two case variants "wins" matches
+        // whichever appeared first in the source list.
+        return query.Distinct(StringComparer.OrdinalIgnoreCase).ToList();
     }
 
     // Writes via a temp file plus an atomic move, so an interrupted write can never

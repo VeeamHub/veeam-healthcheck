@@ -447,16 +447,36 @@ namespace VhcXTests
         public void SetServers_WithNullAndWhitespaceElements_PersistsEmptyList()
         {
             // Deferred from Task 2: SetServers must drop null/whitespace elements on
-            // write, reusing Filter's IsUsableServerName predicate rather than a
-            // second copy of the same rule. Under the null-vs-empty rule this is the
-            // meaningful, irreversible statement "the user emptied the list" - not
-            // "one blank entry survives as a phantom persisted server".
+            // write, reusing IsUsableServerName - the same predicate NormalizeServers
+            // applies on read - rather than a second copy of the same rule. Under the
+            // null-vs-empty rule this is the meaningful, irreversible statement "the
+            // user emptied the list" - not "one blank entry survives as a phantom
+            // persisted server".
             bool ok = CAppSettings.SetServers(new[] { null, "  " });
 
             var settings = CAppSettings.Get();
             Assert.True(ok);
             Assert.NotNull(settings.Servers);
             Assert.Empty(settings.Servers);
+        }
+
+        [Fact]
+        public void SetServers_WhenSettingsFileIsUnreadable_StillPersistsNewList()
+        {
+            // SetServers deliberately has no refusing Unreadable guard, unlike Set and
+            // AddServer: refusing an explicit, deliberate user action (a dialog commit)
+            // because an unrelated part of the file is corrupt would be worse than the
+            // actual consequence, which is ThemePreference silently resetting to its
+            // default alongside the commit. Logged, not silent - but not refused either.
+            Directory.CreateDirectory(Path.GetDirectoryName(CAppSettings.StorePath)!);
+            File.WriteAllText(CAppSettings.StorePath, "{ not valid json ");
+
+            bool ok = CAppSettings.SetServers(new[] { "vbr01" });
+
+            var settings = CAppSettings.Get();
+            Assert.True(ok);
+            Assert.Equal(new[] { "vbr01" }, settings.Servers);
+            Assert.Equal("System", settings.ThemePreference);
         }
 
         [Fact]
@@ -470,14 +490,61 @@ namespace VhcXTests
         }
 
         [Fact]
-        public void LoadOrSeedServers_WhenFileExistsWithoutServersProperty_Seeds()
+        public void LoadOrSeedServers_WhenNeverSeededAndCredentialListEmpty_LeavesServersNullAndDoesNotWrite()
+        {
+            // A CredentialStore whose static constructor swallowed a transient failure
+            // (a locked or momentarily unreadable creds.json) installs an empty cache
+            // with the real credentials still intact on disk - indistinguishable, from
+            // this method's side of the seam, from a genuinely credential-less machine.
+            // Persisting [] would read back as an authoritative "user emptied it" on
+            // every later launch and never retry. Leaving Servers null instead means a
+            // later launch, once the credential store is readable again, still seeds.
+            var result = CAppSettings.LoadOrSeedServers(
+                System.Array.Empty<string>(), excludeLocalhost: true);
+
+            Assert.Empty(result);
+            Assert.Null(CAppSettings.Get().Servers);
+            Assert.False(File.Exists(CAppSettings.StorePath));
+        }
+
+        [Fact]
+        public void LoadOrSeedServers_WhenNeverSeededAndCredentialListNull_LeavesServersNullAndDoesNotWrite()
+        {
+            // Same guard, the other empty-input route: NormalizeServers(null, ...)
+            // also normalizes to [], so this must not be distinguishable from the
+            // empty-array case above - both leave the never-seeded signal alone.
+            var result = CAppSettings.LoadOrSeedServers(null, excludeLocalhost: true);
+
+            Assert.Empty(result);
+            Assert.Null(CAppSettings.Get().Servers);
+            Assert.False(File.Exists(CAppSettings.StorePath));
+        }
+
+        [Fact]
+        public void LoadOrSeedServers_WhenSeedingWithCaseInsensitiveDuplicate_DedupesToFirstOccurrence()
+        {
+            // Without Distinct, a credential store (or a persisted list, via the same
+            // NormalizeServers call) containing both casings would feed the picker two
+            // rows that render identically once trimmed - the exact indistinguishable
+            // duplicate NormalizeServers otherwise still exists to prevent.
+            var result = CAppSettings.LoadOrSeedServers(
+                new[] { "vbr01", "VBR01" }, excludeLocalhost: true);
+
+            Assert.Equal(new[] { "vbr01" }, result);
+            Assert.Equal(new[] { "vbr01" }, CAppSettings.Get().Servers);
+        }
+
+        [Fact]
+        public void LoadOrSeedServers_WhenFileExistsWithNullServers_Seeds()
         {
             // The literal upgrade state: an existing settings.json (from before Servers
             // existed) has a ThemePreference but no Servers property, which is Loaded
             // with Servers == null - not Absent. Every other seed-firing test above
             // reaches the seed via Absent (no file at all); this is the one a real
             // upgrading user actually hits, and the null-vs-empty rule exists
-            // specifically to protect it.
+            // specifically to protect it. (Set("Dark") actually serializes an explicit
+            // "Servers": null rather than omitting the property - deserialization-
+            // identical to an absent property, so the coverage is the same either way.)
             CAppSettings.Set("Dark");
 
             var result = CAppSettings.LoadOrSeedServers(new[] { "vbr01" }, excludeLocalhost: true);
@@ -559,8 +626,8 @@ namespace VhcXTests
             // so routing this through SetServers would never put a null on disk to
             // begin with. A hand-edited settings.json is the realistic route to both a
             // null element and un-trimmed padding surviving to a read. The null
-            // element must not throw (Filter's IsNullOrWhiteSpace clause has to run
-            // first), and "  localhost  " must still be excluded when localhost is
+            // element must not throw (NormalizeServers' IsNullOrWhiteSpace clause has
+            // to run first), and "  localhost  " must still be excluded when localhost is
             // injected - otherwise it renders beside the injected row as a duplicate.
             Directory.CreateDirectory(Path.GetDirectoryName(CAppSettings.StorePath)!);
             File.WriteAllText(
@@ -577,9 +644,9 @@ namespace VhcXTests
         public void LoadOrSeedServers_WhenNotExcludingLocalhost_ReturnsPaddedLocalhostTrimmed()
         {
             // SetServers only drops null/whitespace elements on write - it does not
-            // trim survivors (only Filter does, on read) - so a padded "localhost"
-            // legitimately reaches disk this way and this still exercises the
-            // read-time trim in Filter, not a write-time one.
+            // trim survivors (only NormalizeServers does, on read) - so a padded
+            // "localhost" legitimately reaches disk this way and this still exercises
+            // the read-time trim in NormalizeServers, not a write-time one.
             CAppSettings.SetServers(new[] { "  localhost  " });
 
             var result = CAppSettings.LoadOrSeedServers(
