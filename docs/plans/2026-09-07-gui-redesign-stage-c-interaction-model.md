@@ -1434,6 +1434,9 @@ namespace VeeamHealthCheck.Functions.ManageServers
     {
         private readonly ServerListEditor _editor;
 
+        // Required by the XAML loader. The real entry point is the two-argument
+        // constructor; nothing should show a dialog built this way, and leaving _editor
+        // null would NRE on the first click rather than failing where the mistake was.
         public ManageServersDialog()
         {
             InitializeComponent();
@@ -1454,6 +1457,7 @@ namespace VeeamHealthCheck.Functions.ManageServers
                 name => CredentialStore.Get(name) != null);
 
             this.RenderRows();
+            this.doneBtn.IsEnabled = true;
         }
 
         // Rebuilt wholesale on every mutation. The list is a handful of rows and this
@@ -1588,13 +1592,34 @@ namespace VeeamHealthCheck.Functions.ManageServers
 
             if (plan.CredentialsToDelete.Count > 0)
             {
-                bool confirmed = await CGlobals.Notifier.ConfirmAsync(
-                    string.Format(
-                        CultureInfo.CurrentCulture,
-                        VbrLocalizationHelper.GuiManageServersConfirmBody,
-                        _editor.Rows.Count(r => r.IsPendingRemoval),
-                        plan.CredentialsToDelete.Count),
-                    VbrLocalizationHelper.GuiManageServersConfirmTitle);
+                // Both buttons are disabled across the await, and this is not just
+                // double-click hygiene. AvaloniaUiNotifier always owns its dialogs with
+                // AvaloniaHost.MainWindow (AvaloniaUiNotifier.cs:23, :32), which is
+                // VhcGui - NOT this window. So the confirm below disables the main
+                // window and leaves THIS dialog fully interactive: without the guard the
+                // user can click Cancel while the confirm is up, Close(false) resolves
+                // the caller's ShowDialog<bool> so it skips its refresh, and then this
+                // suspended handler resumes and deletes credentials anyway - after a
+                // cancel, with the list still showing the servers it just unlinked.
+                this.doneBtn.IsEnabled = false;
+                this.cancelBtn.IsEnabled = false;
+
+                bool confirmed;
+                try
+                {
+                    confirmed = await CGlobals.Notifier.ConfirmAsync(
+                        string.Format(
+                            CultureInfo.CurrentCulture,
+                            VbrLocalizationHelper.GuiManageServersConfirmBody,
+                            _editor.Rows.Count(r => r.IsPendingRemoval),
+                            plan.CredentialsToDelete.Count),
+                        VbrLocalizationHelper.GuiManageServersConfirmTitle);
+                }
+                finally
+                {
+                    this.doneBtn.IsEnabled = true;
+                    this.cancelBtn.IsEnabled = true;
+                }
 
                 if (!confirmed)
                 {
@@ -2461,6 +2486,9 @@ Requires a real Windows machine with VBR installed. Nothing here can be checked 
 - [ ] `localhost` has no remove control.
 - [ ] Cancel discards everything; the OS close button discards everything.
 - [ ] Done applies changes; the summary confirm appears **only** when a removal would delete a saved credential, and its counts are right.
+- [ ] **With the summary confirm open:** it appears in front of the dialog, and Done/Cancel on the dialog behind it are visibly disabled. Then decline the confirm and check both re-enable. (The notifier owns its dialogs with the *main* window, not this one, so this dialog is not automatically inert while the confirm is up — that is what the `try`/`finally` guard covers.)
+- [ ] Double-click Done rapidly on a change set that triggers the confirm: exactly one commit happens.
+- [ ] The three new glyphs render as glyphs and not as tofu boxes: the gear on the Ad-hoc tab, and `✕` / `↶` on the dialog rows.
 - [ ] Removing the currently-selected server, then Done: the picker falls back sensibly and a subsequent run does not target the deleted host.
 - [ ] Select a **remote** server, open the dialog, press Done having changed **nothing**: the selection is still that remote server, not `localhost`. Then start a run and confirm it targets the remote host. (This is the `preserveSelection` path — a regression here is silent, and testing only the removal case above will not catch it.)
 - [ ] Select a remote server, add an unrelated server, Done: selection still on the original remote server.
