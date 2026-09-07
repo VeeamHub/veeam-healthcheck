@@ -66,7 +66,9 @@ Read these once; they are not repeated per task.
 | `vHC/HC_Reporting/Resources/Localization/VbrLocalizationHelper.cs` | 23 new accessors (UTF-16LE). |
 | `vHC/VhcXTests/CAppSettingsTests.cs` | Tests for all new `CAppSettings` behavior. |
 
-**Ordering rationale:** Tasks 1-6 are pure logic and localization — fully verifiable on this machine, and they land the tests that catch the design's two dangerous holes. Tasks 7-13 touch XAML and code-behind together *per feature*, so every task compiles on its own; splitting XAML from its code-behind would leave the tree broken mid-task. Task 14 depends on Task 12's `_persistedServers` field.
+**Ordering rationale:** Tasks 1-6 are pure logic and localization — fully verifiable on this machine, and they land the tests that catch the design's two dangerous holes. Task 7 is a style-only change and Task 8 is a self-contained new dialog. Tasks 9-13 touch the main window, pairing each XAML change with its own code-behind so every task compiles on its own; splitting XAML from its code-behind would leave the tree broken mid-task.
+
+Task 12 is the one that cannot be subdivided. Deleting `serverListBox` breaks **four** consumers at once — `InitializeServerList`, `UpdateSelectedServersGlobal`, `monitorQuickSetupBtn_Click`, and `SetUiSync`'s `hasRemoteServers` scan — so all four move together, which is why §7's bug 1 is fixed inside Task 12 rather than Task 13. Task 13 then depends on Task 12's `_persistedServers` field.
 
 ---
 
@@ -2068,20 +2070,70 @@ In `vHC/HC_Reporting/VhcGui.axaml.cs`, near the other private fields:
 
 Ensure `using System.Collections.Generic;` and `using System.Linq;` are present.
 
-- [ ] **Step 3: Resolve the list in the constructor before `SetUiSync()`**
+- [ ] **Step 3: Resolve the list inside `SetUiSync()`, immediately after `ModeCheck()`**
 
-Replace the constructor's `this.SetUiSync();` line with:
+Two things force this into Task 12 rather than a later one, and both are easy to miss:
+
+- **`SetUiSync` is a fourth consumer of `serverListBox`** (`VhcGui.axaml.cs:211`, the `hasRemoteServers` scan). Step 1 deletes that control, which removes its compiler-generated backing field, so this method must be fixed in the *same* task or Step 9 fails with CS0103.
+- **`LocalhostIsInjected` is meaningless before `ModeCheck()` runs.** `ModeCheck()` is the only thing that sets `CGlobals.IsVbrInstalled` (`CClientFunctions.cs:106`) or `IsVb365` (`:99`) on the GUI path, and it is called from `VhcGui.axaml.cs:205` — inside `SetUiSync`. `CArgsParser.LaunchUi` never calls it. Resolving the list in the constructor *before* `SetUiSync()` would read both flags as `false` on **every** machine, including a VBR box, silently making `excludeLocalhost` always `false`.
+
+In `SetUiSync()`, replace:
 
 ```csharp
-            // MUST run before SetUiSync(), which needs the resolved list. Reading
-            // CAppSettings.Get().Servers inline inside SetUiSync would see null on the
-            // very first launch after upgrade, because the seed lives here.
+            string modeCheckResult = this.functions.ModeCheck();
+
+            if (modeCheckResult == "fail")
+            {
+                // If remote servers are configured, don't exit — let user select product type
+                bool hasRemoteServers = false;
+                foreach (var item in serverListBox.Items)
+                {
+                    if (!item.ToString().Equals("localhost", StringComparison.OrdinalIgnoreCase))
+                    {
+                        hasRemoteServers = true;
+                        break;
+                    }
+                }
+```
+
+with:
+
+```csharp
+            string modeCheckResult = this.functions.ModeCheck();
+
+            // Resolved HERE, and not one line earlier in the constructor. ModeCheck() is
+            // the only thing that populates CGlobals.IsVbrInstalled / IsVb365 on the GUI
+            // path, so evaluating LocalhostIsInjected before this call reads both as
+            // false on every machine - which would make excludeLocalhost permanently
+            // false, persist localhost into the one-time seed on injecting machines, and
+            // render the read-time filter inert. The same predicate evaluates correctly
+            // in manageServersBtn_Click (which runs later), so getting this wrong makes
+            // two calls to one function disagree.
+            //
+            // Placed before the fail branch below so hasRemoteServers still sees the
+            // resolved list. CredentialStore.GetAllServers() is safe at any point - a
+            // static constructor initialises its cache (CredentialStore.cs:34-36).
             _persistedServers = CAppSettings.LoadOrSeedServers(
                 CredentialStore.GetAllServers(),
                 excludeLocalhost: LocalhostIsInjected);
 
-            this.SetUiSync();
+            if (modeCheckResult == "fail")
+            {
+                // Reads the resolved list rather than a control that has not been
+                // populated yet. The old scan iterated an empty serverListBox, because
+                // SetUiSync() runs before InitializeServerList() - so this branch could
+                // never fire, and a machine with no local Veeam but remote servers
+                // configured always got the abort the branch exists to prevent.
+                //
+                // The localhost filter is kept rather than relying on the "localhost is
+                // never persisted" invariant: on a non-injecting machine localhost IS
+                // legitimately persisted, and counting it as a remote server would put a
+                // local-only box into Remote Mode.
+                bool hasRemoteServers = _persistedServers
+                    .Any(s => !s.Equals(LocalhostName, StringComparison.OrdinalIgnoreCase));
 ```
+
+Leave the constructor's `this.SetUiSync();` line exactly as it is.
 
 - [ ] **Step 4: Rewrite `InitializeServerList`**
 
@@ -2253,47 +2305,14 @@ git commit -m "feat(gui): collapse inline server management into a picker plus d
 
 ---
 
-## Task 13: Fix the remote-only startup path
+## Task 13: Finish the remote-only startup fix
 
-Two pre-existing bugs that Stage B documented and left intact. Stage C rewrote the data flow the first depends on, so both are fixed here — and fixing the first makes the second reachable for the first time, so they cannot be separated.
+Task 12 fixed bug 1 (the dead `hasRemoteServers` scan), because it had to — that scan referenced a control Task 12 deletes. Fixing bug 1 makes the Remote Mode branch reachable for the first time ever, which exposes bug 2 on it. This task closes bug 2 and updates the comment that documents both as unfixed.
 
 **Files:**
 - Modify: `vHC/HC_Reporting/VhcGui.axaml.cs` (`SetUiSync`, ~lines 190-232)
 
-- [ ] **Step 1: Replace the scan**
-
-In `SetUiSync`, replace the `foreach` scan:
-
-```csharp
-                bool hasRemoteServers = false;
-                foreach (var item in serverListBox.Items)
-                {
-                    if (!item.ToString().Equals("localhost", StringComparison.OrdinalIgnoreCase))
-                    {
-                        hasRemoteServers = true;
-                        break;
-                    }
-                }
-```
-
-with:
-
-```csharp
-                // Reads the resolved list rather than a control that has not been
-                // populated yet. The old scan iterated an empty serverListBox, because
-                // SetUiSync() runs before InitializeServerList() - so this branch could
-                // never fire, and a machine with no local Veeam but remote servers
-                // configured always got the abort the branch exists to prevent.
-                //
-                // The localhost filter is kept rather than relying on the "localhost is
-                // never persisted" invariant: on a non-injecting machine localhost IS
-                // legitimately persisted, and counting it as a remote server would put a
-                // local-only box into Remote Mode.
-                bool hasRemoteServers = _persistedServers
-                    .Any(s => !s.Equals(LocalhostName, StringComparison.OrdinalIgnoreCase));
-```
-
-- [ ] **Step 2: Stop the title being clobbered**
+- [ ] **Step 1: Stop the title being clobbered**
 
 Replace:
 
@@ -2315,7 +2334,7 @@ with:
             }
 ```
 
-- [ ] **Step 3: Update the stale comment above `SetUiSync`**
+- [ ] **Step 2: Update the stale comment above `SetUiSync`**
 
 The comment block at `:194-200` documents both bugs as deliberately left intact. Replace those lines with:
 
@@ -2333,7 +2352,7 @@ The comment block at `:194-200` documents both bugs as deliberately left intact.
         // false on this path.
 ```
 
-- [ ] **Step 4: Build and test**
+- [ ] **Step 3: Build and test**
 
 ```bash
 dotnet build vHC/HC.sln --configuration Debug
@@ -2343,11 +2362,11 @@ git checkout -- vHC/HC_Reporting/VeeamHealthCheck.csproj
 
 Expected: 0 errors, 0 failed, 12 skipped.
 
-- [ ] **Step 5: Commit**
+- [ ] **Step 4: Commit**
 
 ```bash
 git add vHC/HC_Reporting/VhcGui.axaml.cs
-git commit -m "fix(gui): make the remote-only startup path work for the first time"
+git commit -m "fix(gui): stop the Remote Mode window title being overwritten with 'fail'"
 ```
 
 ---
