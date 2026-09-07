@@ -49,9 +49,29 @@ This is the only one of the four models considered that adopts the spike's inlin
 
 Acceptance **does not persist** across restarts. `CAppSettings` is being extended this stage and a `TermsAccepted` flag would have been nearly free, but per-launch acceptance matches today's behavior and is the safer posture.
 
-Two constraints carried from Stage B's findings:
+Three constraints, the first of which is a correctness issue this sandbox cannot catch:
 
-- **Re-entrancy.** Reverting `IsChecked` programmatically raises `Unchecked`, which would re-enter the handler. A guard field (`_suppressTermsHandler`) must bracket the programmatic revert.
+- **The handler must stay `async void` and keep `await Task.Run(() => this.functions.AcceptTerms())`.** Today's `AcceptButton_click` does exactly that, and the comments at `VhcGui.axaml.cs:525` and `IUiNotifier.cs:27` explain why: `AcceptTerms()` is synchronous and reaches the notifier's *blocking* wrapper, which deadlocks if invoked on the UI thread. A checkbox-handler rewrite is precisely where that gets dropped, and the resulting deadlock will not reproduce on macOS. Keep the shape:
+
+  ```csharp
+  private async void termsCheckBox_Checked(object sender, RoutedEventArgs e)
+  {
+      if (_suppressTermsHandler) return;
+      this.functions.LogUIAction("Accept");
+      bool accepted = await Task.Run(() => this.functions.AcceptTerms());
+      run.IsEnabled = accepted;
+      if (!accepted)
+      {
+          _suppressTermsHandler = true;
+          termsCheckBox.IsChecked = false;
+          _suppressTermsHandler = false;
+      }
+  }
+  ```
+
+  Note the checkbox is *visibly checked while the modal is open* and springs back only on decline. That is intended, not a bug — a reviewer should not flag it.
+
+- **Re-entrancy.** Assigning `IsChecked = false` raises `Unchecked` synchronously, which would re-enter the handler pair. A plain `bool _suppressTermsHandler` field bracketing the programmatic revert is sufficient precisely because the event is synchronous; no locking or `Interlocked` is needed.
 - **`SelectTab()` must use the `Opacity` / `IsHitTestVisible` / `Focusable` triple, never `IsVisible`.** The checkbox inherits `termsBtn`'s position: alone in an `Auto` column of the bottom-bar grid. `IsVisible = false` zeroes its `DesiredSize`, collapsing that column and shifting the progress stack and Run — the exact bug Stage B fixed twice (once for `progressText`, once for `termsBtn`/`run` themselves). The constructor's existing explicit initialization of these three properties must be updated to cover the checkbox rather than the button.
 
 ### 2. Server list: storage and semantics
@@ -59,11 +79,13 @@ Two constraints carried from Stage B's findings:
 `AppSettings` gains one property; `CAppSettings` gains two methods following its existing `Get()` → mutate → serialize pattern:
 
 ```csharp
-public List<string>? Servers { get; set; } = null;
+public List<string> Servers { get; set; } = null;   // deliberately null, see below
 
 public static void SetServers(IEnumerable<string> servers);
 public static void AddServer(string server);   // idempotent, case-insensitive
 ```
+
+No `?` annotation: `VeeamHealthCheck.csproj` sets no `<Nullable>` property and the codebase has no `#nullable` directives, so `List<string>?` emits CS8632 — which `NoWarn` (CA rules only) does not suppress. A plain `List<string>` defaulting to `null` deserializes to `null` for an absent JSON property exactly the same way, so the null-versus-empty rule below is unaffected. The explicit `= null` is redundant to the compiler but kept as documentation, since the null default is load-bearing rather than incidental.
 
 **`null` versus empty is load-bearing.** `null` — the property absent from `settings.json` — means never seeded, and triggers a one-time seed from `CredentialStore.GetAllServers()` so no existing user loses their servers on upgrade. Any non-null value, **including an empty list**, is authoritative. Without that distinction, "the user removed everything" and "fresh upgrade" are indistinguishable and the list resurrects itself, which is the bug being fixed.
 
@@ -151,15 +173,19 @@ Every string this stage authors or rewrites is resx-backed. Concretely, new keys
 Mechanics, verified rather than assumed:
 
 - MSBuild compiles the `.resx` files directly — confirmed by `obj/.../VeeamHealthCheck.Resources.Localization.vhcres{,.fR-FR,.ja,.zh-cn,.zh-tw}.resources` and the `ja/VeeamHealthCheck.resources.dll` satellite in `bin`. The `vhcres.txt` → `ResGen.exe` → `.resources` pipeline in `VbrResFileBuilder.ps1` is dead legacy: it requires Visual Studio 2022 Professional and contains a hardcoded `A:\source\veeam-healthcheck\...` path from the original author's machine. It is not needed and must not be run.
-- Adding a string is therefore: one `<data name="X"><value>…</value></data>` block in the neutral `vhcres.resx`, plus one `public static string X = m4.GetString("X");` line in `VbrLocalizationHelper.cs`. The same line should also be appended to `vhcres.txt` so the legacy generator would stay consistent if anyone ever repairs it.
+- Adding a string is therefore two required edits and one optional one:
+  1. **Required** — a `<data name="X"><value>…</value></data>` block in the neutral `vhcres.resx`. This file is plain **UTF-8** and edits normally.
+  2. **Required** — one `public static string X = m4.GetString("X");` line in `VbrLocalizationHelper.cs`. This file is **UTF-16LE with CRLF**; see the hazard note below.
+  3. **Optional** — the matching entry in `vhcres.txt`, so the legacy generator would stay consistent if anyone ever repairs it. Note this file is the **ResGen resource source, not C#**: its format is `Key = Value` (e.g. `GuiAcceptButton = Accept Terms` at line 9), and `VbrResFileBuilder.ps1` reads it, takes `$line.Split()[0]` as the key, and *emits* the C# line in item 2 from it. Do not append C# to this file. It is also **UTF-16LE with CRLF**, so the same encoding hazard applies.
 - `NeutralLanguage=en-US` means keys present only in the neutral resx fall back to English for the other four cultures. Translation is a later content-only edit.
 - Strings are applied in code-behind via `SetUiText()` (and `ToolTip.SetTip(control, …)` for tooltips), because `VbrLocalizationHelper` is an internal class and is not reachable from XAML markup — the same pattern the file already uses for its 9 existing resx-driven assignments.
 
 ## Implementation notes / hazards
 
-- **`VbrLocalizationHelper.cs` is UTF-16LE with CRLF line endings** (PowerShell `out-file` output). An edit tool that rewrites it as UTF-8 corrupts every localized string in the application. All edits to this file must be encoding-preserving, and the encoding must be re-verified (`file` reports "Unicode text, UTF-16, little-endian") after editing.
+- **`VbrLocalizationHelper.cs` and `vhcres.txt` are both UTF-16LE with CRLF line endings** (PowerShell `out-file` output). An edit tool that rewrites either as UTF-8 corrupts every localized string in the application. Edits to these two files must be encoding-preserving, and the encoding must be re-verified afterwards (`file` should still report "Unicode text, UTF-16, little-endian"). `vhcres.resx` is plain UTF-8 and needs no special handling. Note that this encoding is also why `cat`/`grep` on the two UTF-16 files appears to fail with "stream did not contain valid UTF-8" — that is expected, not a sign of a damaged file.
 - **`m4.GetString()` returns `null` for a missing key** — no exception, no build error. A typo'd key produces a silently blank label. Every new key needs render verification on the real-machine pass, and the resx name must be character-for-character identical to the helper field name.
 - **Avalonia `/template/`-level styling is out of scope here**, but if `RadioButton.segment` or the gear button turns out to need FluentTheme neutralization, follow `feedback_avalonia_fetch_real_template_source`: fetch the real template source for the pinned Avalonia version or copy an already-validated sibling pattern from `App.axaml`. Do not guess. Stage B's `Button.tab` fix needed `Background`, `BorderBrush`, **and** `Foreground` neutralized on `ContentPresenter#PART_ContentPresenter` for both `:pointerover` and `:pressed`; `Background` alone was verified insufficient on real hardware.
+- **`AddResult` is an internal enum, and `VhcXTests` reaches internals via `InternalsVisibleTo`.** An internal enum used as an `[InlineData]` parameter in a `[Theory]` produces **CS0051** (inconsistent accessibility on the generated test method). The fix is to reshape the test — a `[Fact]` with several asserts, or a `[Theory]` keyed on strings that maps to the enum inside the body — **not** to widen `AddResult` to `public`. This has been hit and resolved in this repo before; do not "fix" it by changing the enum's accessibility.
 - **Every build auto-increments `vHC/HC_Reporting/VeeamHealthCheck.csproj`.** Run `git checkout -- vHC/HC_Reporting/VeeamHealthCheck.csproj` after building or testing and before committing.
 - One commit per logical change; never `git commit --amend`.
 
