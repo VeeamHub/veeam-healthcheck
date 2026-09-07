@@ -515,6 +515,8 @@ git commit -m "feat(settings): add CAppSettings.AddServer, no-op until the list 
 
 The one-time seed, plus the read-time `localhost` filter that makes the injection invariant self-healing.
 
+**Task 3 also owns one item deferred from Task 2:** make `SetServers` drop null/whitespace elements on write, reusing `Filter`'s predicate rather than hand-rolling a second copy of the same rule — that shared predicate is the actual internal-consistency win. It needs its own test, because `SetServers(new[] { "  " })` would then persist `[]`, which under the null-versus-empty rule is the meaningful and irreversible statement "the user emptied the list" rather than "one blank entry".
+
 **Files:**
 - Modify: `vHC/HC_Reporting/Startup/CAppSettings.cs`
 - Test: `vHC/VhcXTests/CAppSettingsTests.cs`
@@ -595,6 +597,32 @@ The one-time seed, plus the read-time `localhost` filter that makes the injectio
         }
 
         [Fact]
+        public void LoadOrSeedServers_ToleratesNullElementsAndTrimsPaddedEntries()
+        {
+            // A hand-edited settings.json is the realistic route to both. The null
+            // element must not throw (Filter's IsNullOrWhiteSpace clause has to run
+            // first), and "  localhost  " must still be excluded when localhost is
+            // injected - otherwise it renders beside the injected row as a duplicate.
+            CAppSettings.SetServers(new[] { null, "  vbr01  ", "  localhost  ", "   " });
+
+            var result = CAppSettings.LoadOrSeedServers(
+                System.Array.Empty<string>(), excludeLocalhost: true);
+
+            Assert.Equal(new[] { "vbr01" }, result);
+        }
+
+        [Fact]
+        public void LoadOrSeedServers_WhenNotExcludingLocalhost_ReturnsPaddedLocalhostTrimmed()
+        {
+            CAppSettings.SetServers(new[] { "  localhost  " });
+
+            var result = CAppSettings.LoadOrSeedServers(
+                System.Array.Empty<string>(), excludeLocalhost: false);
+
+            Assert.Equal(new[] { "localhost" }, result);
+        }
+
+        [Fact]
         public void LoadOrSeedServers_WhenSettingsUnreadable_ReturnsEmptyAndDoesNotWrite()
         {
             Directory.CreateDirectory(Path.GetDirectoryName(CAppSettings.StorePath)!);
@@ -671,7 +699,21 @@ Add to `CAppSettings`:
             return new List<string>();
         }
 
-        var query = servers.Where(s => !string.IsNullOrWhiteSpace(s));
+        // Clause order is load-bearing, twice over.
+        //
+        // The IsNullOrWhiteSpace Where MUST come first: the persisted list can
+        // legitimately contain a null element (a hand-edited settings.json, since
+        // SetServers does no per-element filtering and a null round-trips through
+        // Write), and any Equals below would throw on it. LINQ chains lazily, so this
+        // ordering IS the null-safety - not incidental tidiness.
+        //
+        // The Trim Select must precede the localhost Where, or a persisted
+        // "  localhost  " survives excludeLocalhost and renders BESIDE the injected
+        // localhost row - exactly the duplicate this filter exists to prevent.
+        // Trimming on read also stops the picker showing a padded hostname.
+        var query = servers
+            .Where(s => !string.IsNullOrWhiteSpace(s))
+            .Select(s => s.Trim());
 
         if (excludeLocalhost)
         {
