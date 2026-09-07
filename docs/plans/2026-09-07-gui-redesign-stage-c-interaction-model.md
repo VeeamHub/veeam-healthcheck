@@ -2140,10 +2140,21 @@ Leave the constructor's `this.SetUiSync();` line exactly as it is.
 Replace the whole method:
 
 ```csharp
-        private void InitializeServerList()
+        // preserveSelection distinguishes the two callers, and the distinction is
+        // load-bearing. At startup there is no selection to keep and localhost-first is
+        // the right default. After the dialog commits, silently reasserting that default
+        // would move a user who was sitting on vbr01 back to localhost - flipping
+        // REMOTEEXEC to false and pointing the next run at the local box - even if they
+        // pressed Done having changed nothing. Both tabs read that selection
+        // (monitorQuickSetupBtn_Click at :846), so it must survive a repopulate.
+        private void InitializeServerList(bool preserveSelection = false)
         {
+            string previous = preserveSelection
+                ? serverSelector.SelectedItem?.ToString()
+                : null;
+
             // The persisted list is authoritative; GetAllServers() is consulted only by
-            // LoadOrSeedServers' one-time seed, in the constructor.
+            // LoadOrSeedServers' one-time seed and the post-commit refresh.
             var display = new List<string>();
 
             if (LocalhostIsInjected)
@@ -2165,7 +2176,19 @@ Replace the whole method:
             _displayServers = display;
             serverSelector.ItemsSource = _displayServers;
 
-            if (_displayServers.Any(s => s.Equals(LocalhostName, StringComparison.OrdinalIgnoreCase)))
+            // Restore the prior selection when it survived the commit; otherwise fall
+            // back to localhost-first, then first-entry - the precedence this method has
+            // always used at startup.
+            string keep = previous == null
+                ? null
+                : _displayServers.FirstOrDefault(
+                    s => s.Equals(previous, StringComparison.OrdinalIgnoreCase));
+
+            if (keep != null)
+            {
+                serverSelector.SelectedItem = keep;
+            }
+            else if (_displayServers.Any(s => s.Equals(LocalhostName, StringComparison.OrdinalIgnoreCase)))
             {
                 serverSelector.SelectedItem = _displayServers.First(
                     s => s.Equals(LocalhostName, StringComparison.OrdinalIgnoreCase));
@@ -2254,7 +2277,7 @@ Replace `serverListBox_SelectionChanged` with:
                 CredentialStore.GetAllServers(),
                 excludeLocalhost: LocalhostIsInjected);
 
-            this.InitializeServerList();
+            this.InitializeServerList(preserveSelection: true);
         }
 ```
 
@@ -2439,6 +2462,8 @@ Requires a real Windows machine with VBR installed. Nothing here can be checked 
 - [ ] Cancel discards everything; the OS close button discards everything.
 - [ ] Done applies changes; the summary confirm appears **only** when a removal would delete a saved credential, and its counts are right.
 - [ ] Removing the currently-selected server, then Done: the picker falls back sensibly and a subsequent run does not target the deleted host.
+- [ ] Select a **remote** server, open the dialog, press Done having changed **nothing**: the selection is still that remote server, not `localhost`. Then start a run and confirm it targets the remote host. (This is the `preserveSelection` path — a regression here is silent, and testing only the removal case above will not catch it.)
+- [ ] Select a remote server, add an unrelated server, Done: selection still on the original remote server.
 
 ## Persistence
 - [ ] Add a server, restart: it is still there.
