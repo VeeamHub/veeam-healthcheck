@@ -11,11 +11,13 @@ Stages A and B were deliberately behavior-preserving: A recolored the existing l
 
 Two corrections to the record before the design, because both prior documents carry them:
 
-1. **The spike has no chip.** Stage B's non-goals describe the spike's server UI as "chip + Manage Servers dialog". It is actually a stretched `ComboBox` plus a 36px gear button (`Views/AdHocHealthCheckView.axaml`), opening `Dialogs/ManageServersDialog`. The `chip` style exists in `App.axaml` from Stage A but is unused in the spike's ad-hoc view. No chip is being ported and none is being built.
+1. **There is no chip, and there never was one.** Stage B's non-goals describe the spike's server UI as "chip + Manage Servers dialog". It is actually a stretched `ComboBox` plus a 36px gear button (`Views/AdHocHealthCheckView.axaml`), opening `Dialogs/ManageServersDialog`.
+
+   The chip is a documentation artifact that has now propagated through three documents. The spike's own README lists `chip` in its "steal these directly" style inventory (`README.md:155`), but **no `chip` style was ever written** — not in the spike's `App.axaml` (which mentions "chips" only in a comment) and not in production `App.axaml`, whose full selector inventory contains no such entry. Stage B inherited the error from the README; an earlier draft of this spec corrected half of it and repeated the other half by claiming Stage A had ported the style. No chip exists anywhere, none is being ported, and none is being built.
 
 2. **The spike README's framing of its own dialog bug does not transfer.** The README says to "ensure the dialog only applies changes on explicit Done/OK, and rolls them back on Cancel/close." In production that promise is not straightforwardly keepable, because the server list is not a list — it is a view onto the credential store, with three different persistence semantics:
-   - `InitializeServerList()` populates from `CredentialStore.GetAllServers()`, which returns `_cache.Keys` — the credential-store key set — plus `localhost` when `CGlobals.IsVbrInstalled`.
-   - `addServerBtn_Click` only calls `serverListBox.Items.Add(...)`. Nothing persists a bare server name. `CredentialStore.Set` has exactly two production call sites (`CredsHandler.PromptForCredentialsCli:105`, which also serves `/savecreds` via `CArgsParser.RunSaveCredsFlow`, and `AvaloniaCredentialPrompter.Prompt:25`), both reached only when credentials are actually captured. **An added server is therefore ephemeral** until a run against it stores credentials.
+   - `InitializeServerList()` populates from `CredentialStore.GetAllServers()`, which returns `_cache.Keys` and nothing else (`CredentialStore.cs:261-264`) — the credential-store key set. `localhost` is added separately, by `InitializeServerList()` itself at `VhcGui.axaml.cs:133-136`, gated on `CGlobals.IsVbrInstalled`. Knowing exactly where `localhost` enters matters for §2's rules.
+   - `addServerBtn_Click` only calls `serverListBox.Items.Add(...)`. Nothing persists a bare server name. `CredentialStore.Set` has exactly two production call sites (`CredsHandler.PromptForCredentialsCli:105`, which also serves `/savecreds` via `CArgsParser.RunSaveCredsFlow`, and `AvaloniaCredentialPrompter.PromptAsync:25`), both reached only when credentials are actually captured. **An added server is therefore ephemeral** until a run against it stores credentials.
    - `removeServerBtn_Click` calls `CredentialStore.Remove(...)` — permanent, on-disk, after a per-item confirm.
    - `clearServersBtn_Click` empties the ListBox and re-adds localhost but **never purges credentials**, so the next launch resurrects the entire list from `GetAllServers()`.
 
@@ -82,7 +84,7 @@ Three constraints, the first of which is a correctness issue this sandbox cannot
   Note the checkbox is *visibly checked while the modal is open* and springs back only on decline. That is intended, not a bug — a reviewer should not flag it.
 
 - **Re-entrancy.** `IsChecked = false` raises **`Unchecked`**, not `Checked` — so the guard that does the real work is the one in `termsCheckBox_Unchecked`. A plain `bool _suppressTermsHandler` suffices *only because that event is delivered synchronously*, inside the assignment, while the flag is still set. **`termsCheckBox_Unchecked` must therefore not be `async void`**, however tempting the symmetry with its sibling: an `await` before the guard check moves the continuation past the point where `_suppressTermsHandler` is reset back to `false`, and the guard silently stops working. It has nothing to await in any case.
-- **`SelectTab()` must use the `Opacity` / `IsHitTestVisible` / `Focusable` triple, never `IsVisible`.** The checkbox inherits `termsBtn`'s position: alone in an `Auto` column of the bottom-bar grid. `IsVisible = false` zeroes its `DesiredSize`, collapsing that column and shifting the progress stack and Run — the exact bug Stage B fixed twice (once for `progressText`, once for `termsBtn`/`run` themselves). The constructor's existing explicit initialization of these three properties must be updated to cover the checkbox rather than the button.
+- **`SelectTab()` must use the `Opacity` / `IsHitTestVisible` / `Focusable` triple, never `IsVisible`.** The checkbox inherits `termsBtn`'s position: alone in an `Auto` column of the bottom-bar grid. `IsVisible = false` zeroes its `DesiredSize`, collapsing that column and shifting the progress stack and Run — the exact bug Stage B fixed twice (once for `progressText`, once for `termsBtn`/`run` themselves). `SelectTab` is the place to change: there is no explicit initialization of these three properties in the constructor, which calls `SelectTab(isAdHoc: true)` at `VhcGui.axaml.cs:40` precisely so that it remains the single source of truth (see the comment at `:34-39`). `SelectTab` (`:108-125`) is the only place the triple is set.
 
 ### 2. Server list: storage and semantics
 
@@ -97,7 +99,7 @@ public static void AddServer(string server);   // idempotent, case-insensitive; 
 
 **`CAppSettings` has no knowledge of `localhost`.** The injection policy lives entirely in the GUI layer (see below) and is communicated to `CAppSettings` as a parameter. Putting a `localhost` special case inside `SetServers` or `AddServer` looks like a safety net but is actively wrong: on a machine with no local Veeam product, `localhost` is a legitimate ordinary entry, and a blanket filter would silently discard it.
 
-No `?` annotation: `VeeamHealthCheck.csproj` sets no `<Nullable>` property and the codebase has no `#nullable` directives, so `List<string>?` emits CS8632 — which `NoWarn` (CA rules only) does not suppress. A plain `List<string>` defaulting to `null` deserializes to `null` for an absent JSON property exactly the same way, so the null-versus-empty rule below is unaffected. The explicit `= null` is redundant to the compiler but kept as documentation, since the null default is load-bearing rather than incidental.
+No `?` annotation: `VeeamHealthCheck.csproj` sets no `<Nullable>` property (`:29`'s `NoWarn` covers CA rules only) and `CAppSettings.cs` has no `#nullable` context, so `List<string>?` there emits CS8632. Note two unrelated files *do* opt in locally — `CPowerShellVersionChecker.cs` and `CVbrConsolePathResolver.cs` — so adding `#nullable enable` to `CAppSettings.cs` would be a legitimate alternative with existing precedent; it is simply more change than this stage needs. CS8632 is also a warning rather than an error, since no csproj or CI workflow sets `TreatWarningsAsErrors`. A plain `List<string>` defaulting to `null` deserializes to `null` for an absent JSON property exactly the same way, so the null-versus-empty rule below is unaffected. The explicit `= null` is redundant to the compiler but kept as documentation, since the null default is load-bearing rather than incidental.
 
 **`null` versus empty is load-bearing.** `null` — the property absent from `settings.json` — means never seeded, and triggers a one-time seed from `CredentialStore.GetAllServers()` so no existing user loses their servers on upgrade. Any non-null value, **including an empty list**, is authoritative. Without that distinction, "the user removed everything" and "fresh upgrade" are indistinguishable and the list resurrects itself, which is the bug being fixed.
 
@@ -107,7 +109,7 @@ The failure is silent upgrade data loss, on exactly the users the seed exists to
 
 No-op is the correct resolution rather than "seed first, then add": `CredentialStore.Set` has already persisted the credential by the time the hook runs, so the eventual one-time seed picks the new host up for free. It also keeps `AddServer` free of any `CredentialStore` dependency, and makes the behavior independent of whether the hook runs before or after `Set` — an ordering this spec deliberately does not constrain.
 
-**The persisted list is authoritative, with auto-add on credential capture.** `InitializeServerList()` no longer reads `GetAllServers()` except during the one-time seed. To keep a host that gains credentials outside the GUI (a `/savecreds` run, a CLI collection) from being invisible, `CAppSettings.AddServer(host)` is called at the **two production `CredentialStore.Set` call sites** — `CredsHandler.PromptForCredentialsCli:105` and `AvaloniaCredentialPrompter.Prompt:25`.
+**The persisted list is authoritative, with auto-add on credential capture.** `InitializeServerList()` no longer reads `GetAllServers()` except during the one-time seed. To keep a host that gains credentials outside the GUI (a `/savecreds` run, a CLI collection) from being invisible, `CAppSettings.AddServer(host)` is called at the **two production `CredentialStore.Set` call sites** — `CredsHandler.PromptForCredentialsCli:105` and `AvaloniaCredentialPrompter.PromptAsync:25`. Note the method is `PromptAsync`: `ICredentialPrompter.Prompt` is a *default interface method* (`ICredentialPrompter.cs:17-18`) that `AvaloniaCredentialPrompter` never overrides — worth naming precisely, given this repo's documented Moq-versus-default-interface-method trap.
 
 The hook must **not** go inside `CredentialStore.Set` itself. `Set` has ~25 call sites in `VhcXTests`, and `CredentialStoreSecurityTests` redirects `CredentialStore.StorePath` but not `CAppSettings.StorePath` — a hook inside `Set` would make the test suite write to the developer's real `%APPDATA%/VeeamHealthCheck/settings.json`. `CArgsParser:574`'s `SetTransient` path correctly gets no hook, since transient credentials are never persisted.
 
@@ -130,7 +132,7 @@ An earlier draft of this spec gated injection on `IsVbrInstalled` alone while fi
 - `ServerListEditor` receives pinned names in **both** `initial` and `pinned`, so `Add("localhost")` on an injecting machine returns `Duplicate` and cannot create a second entry. `Commit().FinalServers` excludes pinned names, so an injecting machine never persists `localhost` even if one reaches the editor by another route.
 - §7's `hasRemoteServers` check filters `localhost` explicitly rather than assuming it is absent from the persisted list. On a non-injecting machine it legitimately *is* present, and treating it as a remote server would put a local-only box into Remote Mode.
 
-`UpdateSelectedServersGlobal()`'s `else if` / `else` fallbacks and its `CGlobals.REMOTEEXEC = !VBRServerName.Equals("localhost")` assignment are preserved verbatim. A `ComboBox` with a default selection is rarely null where `ListBox.SelectedItem` often was, but the branches cost nothing and deleting them is how a null-deref arrives later.
+`UpdateSelectedServersGlobal()`'s `else if` / `else` fallbacks and its `CGlobals.REMOTEEXEC = !VBRServerName.Equals("localhost", StringComparison.OrdinalIgnoreCase)` assignment (`VhcGui.axaml.cs:190`) are preserved verbatim. A `ComboBox` with a default selection is rarely null where `ListBox.SelectedItem` often was, but the branches cost nothing and deleting them is how a null-deref arrives later.
 
 ### 3. Server management UI
 
@@ -239,11 +241,13 @@ The three visible labels ("7 Days" / "30 Days" / "90 Days") are currently hardco
 
 Stage B did not port the spike's `PickFolderButton`, leaving `pathBox` a bare `TextBox`. It is restored here: `pathBox` moves into a `*,8,Auto` grid with a 32px `...` button, matching the gear button's treatment — which is also what makes the gear a coherent choice rather than the window's only icon-only control.
 
-This is the **first use of Avalonia's `StorageProvider` anywhere in the application** (no production file references it today), so it needs real guards rather than the spike's optimistic version:
+This is the **first use of Avalonia's `StorageProvider` anywhere in the application** — no production file references it today — but the spike's implementation is sound and should be **ported verbatim**. `git show spike/gui-redesign:vHC/Spikes/GuiRedesignSpike/Views/AdHocHealthCheckView.axaml.cs`, lines 42-64, already handles all three cases:
 
-- `TopLevel.GetTopLevel(this)` may be null → return.
-- `OpenFolderPickerAsync` returns an empty collection on cancel → return.
-- `TryGetLocalPath()` returns null for non-filesystem locations → return without writing.
+- null `TopLevel` → return (lines 44-48).
+- `OpenFolderPickerAsync` returning an empty collection on cancel → `if (folders.Count > 0)` (line 56).
+- `TryGetLocalPath()` returning null for non-filesystem locations → `!string.IsNullOrEmpty(path)` (lines 58-59).
+
+Keep all three. The only difference in production is that `this` **is** the `Window`, so `GetTopLevel` cannot return null once the constructor has run — retain the guard anyway, but do not go looking for a subtlety the spike missed. There isn't one.
 
 On success it assigns `pathBox.Text`, which propagates to `CGlobals.desiredPath` through the existing `pathBox_TextChanged` handler. No additional wiring, and no change to how the path reaches the rest of the application.
 
@@ -253,13 +257,13 @@ Every string this stage authors or rewrites is resx-backed. Concretely, new keys
 
 Mechanics, verified rather than assumed:
 
-- MSBuild compiles the `.resx` files directly — confirmed by `obj/.../VeeamHealthCheck.Resources.Localization.vhcres{,.fR-FR,.ja,.zh-cn,.zh-tw}.resources` and the `ja/VeeamHealthCheck.resources.dll` satellite in `bin`. The `vhcres.txt` → `ResGen.exe` → `.resources` pipeline in `VbrResFileBuilder.ps1` is dead legacy: it requires Visual Studio 2022 Professional and contains a hardcoded `A:\source\veeam-healthcheck\...` path from the original author's machine. It is not needed and must not be run.
+- MSBuild compiles the `.resx` files directly — confirmed by `obj/.../VeeamHealthCheck.Resources.Localization.vhcres{,.fR-FR,.ja,.zh-cn,.zh-tw}.resources` and the `ja/VeeamHealthCheck.resources.dll` satellite in `bin`. The `vhcres.txt` → `ResGen.exe` → `.resources` pipeline in `VbrResFileBuilder.ps1` is dead legacy: it requires Visual Studio 2022 Professional and contains a hardcoded `A:\source\veeam-healthcheck\...` path from the original author's machine. It is not needed for VBR and must not be run. Scope that claim to VBR, though: for VB365 the precompiled artifact is the live one, explicitly declared at `VeeamHealthCheck.csproj:156` as `<EmbeddedResource Include="Resources\Localization\VB365\vb365_vhcres.resources" />`. Stage C touches nothing under `VB365/`, but the generator should not be deleted on the strength of "dead legacy".
 - Adding a string is therefore two required edits and one optional one:
   1. **Required** — a `<data name="X"><value>…</value></data>` block in the neutral `vhcres.resx`. This file is plain **UTF-8** and edits normally.
   2. **Required** — one `public static string X = m4.GetString("X");` line in `VbrLocalizationHelper.cs`. This file is **UTF-16LE with CRLF**; see the hazard note below.
   3. **Optional** — the matching entry in `vhcres.txt`, so the legacy generator would stay consistent if anyone ever repairs it. Note this file is the **ResGen resource source, not C#**: its format is `Key = Value` (e.g. `GuiAcceptButton = Accept Terms` at line 9), and `VbrResFileBuilder.ps1` reads it, takes `$line.Split()[0]` as the key, and *emits* the C# line in item 2 from it. Do not append C# to this file. It is also **UTF-16LE with CRLF**, so the same encoding hazard applies.
 - `NeutralLanguage=en-US` means keys present only in the neutral resx fall back to English for the other four cultures. Translation is a later content-only edit.
-- Strings are applied in code-behind via `SetUiText()` (and `ToolTip.SetTip(control, …)` for tooltips), because `VbrLocalizationHelper` is an internal class and is not reachable from XAML markup — the same pattern the file already uses for its 9 existing resx-driven assignments.
+- Strings are applied in code-behind via `SetUiText()` (and `ToolTip.SetTip(control, …)` for tooltips), matching the pattern the file already uses for its 9 existing resx-driven assignments. Do not justify this by claiming `VbrLocalizationHelper` is unreachable from XAML — it is internal, but compiled Avalonia XAML generates code into the same assembly and can reach internal types, so that reasoning would not survive scrutiny. Code-behind is the right choice because it is the established convention here, not because markup is impossible.
 
 ### 7. Fixing the remote-only startup path
 
