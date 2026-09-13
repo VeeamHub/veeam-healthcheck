@@ -2,6 +2,7 @@
 // MIT License
 using System;
 using System.Linq;
+using System.Security.Cryptography;
 using VeeamHealthCheck.Functions.ManageServers;
 using Xunit;
 
@@ -278,10 +279,10 @@ namespace VhcXTests
         }
 
         [Fact]
-        public void Constructor_HasCredentialsPredicateThrows_DefaultsToTrueAndDoesNotThrow()
+        public void Constructor_HasCredentialsPredicateThrowsCryptographicException_DefaultsToTrueAndDoesNotThrow()
         {
-            // The real predicate (CredentialStore.Get) calls into DPAPI, which can
-            // throw CryptographicException if the encrypted blob can't be decrypted
+            // The real predicate (CredentialStore.Get) calls into DPAPI, which throws
+            // exactly CryptographicException if the encrypted blob can't be decrypted
             // on this machine/profile. Left unguarded, that throw would propagate out
             // of the constructor - reachable from a button click in the Manage
             // Servers dialog - and leave the one surface that could remove the
@@ -289,25 +290,41 @@ namespace VhcXTests
             var editor = new ServerListEditor(
                 new[] { "vbr01" },
                 Array.Empty<string>(),
-                _ => throw new InvalidOperationException("simulated DPAPI failure"));
+                _ => throw new CryptographicException("simulated DPAPI failure"));
 
             Assert.True(editor.Rows.Single(r => r.Name == "vbr01").HasCredentials);
         }
 
         [Fact]
-        public void Add_HasCredentialsPredicateThrows_DefaultsToTrueAndDoesNotThrow()
+        public void Add_HasCredentialsPredicateThrowsCryptographicException_DefaultsToTrueAndDoesNotThrow()
         {
             // Same guarantee as the constructor case, but for a name typed in after
             // construction via Add.
             var editor = new ServerListEditor(
                 new[] { "vbr01" },
                 Array.Empty<string>(),
-                _ => throw new InvalidOperationException("simulated DPAPI failure"));
+                _ => throw new CryptographicException("simulated DPAPI failure"));
 
             var result = editor.Add("vbr09");
 
             Assert.Equal(AddResult.Added, result);
             Assert.True(editor.Rows.Single(r => r.Name == "vbr09").HasCredentials);
+        }
+
+        [Fact]
+        public void Constructor_HasCredentialsPredicateThrowsUnrelatedException_PropagatesRatherThanDefaulting()
+        {
+            // SafeHasCredentials catches CryptographicException specifically, not
+            // Exception generally: an unrelated predicate bug should fail loudly
+            // rather than be silently absorbed into "assume this row has
+            // credentials," which is not an inert default further downstream -
+            // ServerListCommitter reinstates any host whose credential removal
+            // failed, so a wrongly-true HasCredentials on a host with nothing to
+            // remove would silently undo an explicit user removal.
+            Assert.Throws<InvalidOperationException>(() => new ServerListEditor(
+                new[] { "vbr01" },
+                Array.Empty<string>(),
+                _ => throw new InvalidOperationException("unrelated predicate bug")));
         }
 
         [Fact]

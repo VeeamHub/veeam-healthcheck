@@ -3,6 +3,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Security.Cryptography;
 
 namespace VeeamHealthCheck.Functions.ManageServers
 {
@@ -157,19 +158,31 @@ namespace VeeamHealthCheck.Functions.ManageServers
             return AddResult.Added;
         }
 
-        // Guards every call to the injected hasCredentials predicate. The real
-        // predicate - name => CredentialStore.Get(name) != null - calls into DPAPI
-        // (ProtectedData.Unprotect, uncaught in CredentialStore.Get), which can throw
-        // CryptographicException if the encrypted blob can't be decrypted on this
-        // machine/profile (creds.json copied to another machine, or a recreated
-        // Windows user profile). Left unguarded, that throw would propagate out of
-        // this constructor or Add() - both reachable from a button click in the
-        // Manage Servers dialog - and leave that dialog, the one surface that could
-        // remove the offending host, permanently unopenable. Defaulting to true keeps
-        // the "credentials saved" marker honest for a row that does have SOMETHING on
-        // disk, and if the row is later removed, routes the corrupted entry through
+        // Guards every call to the injected hasCredentials predicate against exactly
+        // the failure it exists to survive. The real predicate - name =>
+        // CredentialStore.Get(name) != null - calls into DPAPI (ProtectedData.Unprotect,
+        // uncaught in CredentialStore.Get), which throws CryptographicException if the
+        // encrypted blob can't be decrypted on this machine/profile (creds.json copied
+        // to another machine, or a recreated Windows user profile). Left unguarded,
+        // that throw would propagate out of this constructor or Add() - both reachable
+        // from a button click in the Manage Servers dialog - and, for the constructor
+        // case, leave that dialog, the one surface that could remove the offending
+        // host, permanently unopenable. Defaulting to true keeps the "credentials
+        // saved" marker honest for a row that does have SOMETHING on disk, and if the
+        // row is later removed, routes the corrupted entry through
         // CredentialStore.Remove, which never decrypts anything and so actually
         // cleans it up.
+        //
+        // Deliberately narrow to CryptographicException rather than a bare catch: any
+        // OTHER exception from a caller's predicate defaulting to true would make a
+        // genuine predicate bug indistinguishable from "has credentials," and that
+        // false positive is not inert downstream. A row wrongly marked HasCredentials
+        // and then removed gets staged into Commit().CredentialsToDelete;
+        // ServerListCommitter's CredentialStore.Remove call returns false for a host
+        // with nothing to remove, and ServerListCommitter reinstates any host whose
+        // removal failed - so the net effect is an explicit user removal silently
+        // undone. A narrower catch lets an unrelated predicate bug propagate and fail
+        // loudly instead of being absorbed into that chain.
         private bool SafeHasCredentials(string name)
         {
             if (_hasCredentials == null)
@@ -181,7 +194,7 @@ namespace VeeamHealthCheck.Functions.ManageServers
             {
                 return _hasCredentials(name);
             }
-            catch
+            catch (CryptographicException)
             {
                 return true;
             }
