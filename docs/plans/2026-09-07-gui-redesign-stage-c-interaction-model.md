@@ -1619,6 +1619,16 @@ PendingRemovalCount = _rows.Count(r => r.IsPendingRemoval),
 
 This exists so the confirm dialog's "Removing N servers. Saved credentials for M of them will be deleted." can read N and M off the same `CommitPlan` instead of the dialog recomputing N separately from `_editor.Rows` — two numbers in one sentence that would otherwise be free to drift apart. Add one test to `ServerListEditorTests.cs`: `Commit_PendingRemovalCount_CountsAllPendingRemovalsRegardlessOfCredentials` — stage removal of one credentialed row and one non-credentialed row, assert `PendingRemovalCount == 2` while `CredentialsToDelete.Count == 1`, so the test actually distinguishes the two fields rather than a fixture where they'd coincidentally match.
 
+### Corrections applied after review — Task 8 Steps 1-2 as built
+
+**Executed: `1aaf742` (`ServerListCommitter` + tests) + `957cea6` (`PendingRemovalCount` + test) + this correction, no separate commit for the correction itself — folded into a `test(servers): ...` commit.** `ServerListCommitter.cs` and `CommitPlan.PendingRemovalCount` both shipped exactly as specified — no code defect. One test fixture in `ServerListCommitterTests.cs` was under-specified.
+
+1. **None of the 4 `ServerListCommitterTests` fixtures independently varied `CommitOutcome.SettingsSaved` from `failed.Count == 0`, so `Execute`'s actual use of `_setServers`'s return value was unpinned.** A spec-compliance review built the mutant `bool saved = failed.Count == 0;` in place of `bool saved = _setServers(toPersist);` and found all 4 tests still passed: `Execute_AllCredentialRemovalsSucceed_...` and `Execute_NoCredentialsToDelete_...` never assert on `SettingsSaved` at all; `Execute_SettingsSaveFails_...` has `failed.Count > 0` *and* `setServers` returning `false`, so the mutant's stand-in formula coincidentally agrees with the real value; only `Execute_ACredentialRemovalFails_ReinstatesThatHostInServersPersisted` has the one fixture shape that would expose the bug (`failed.Count > 0` while `setServers` returns `true`), and it didn't check `SettingsSaved` either. This is the same failure shape flagged repeatedly elsewhere on this branch: every individual assertion passes, but the property the test suite claims to guard is not actually independent of a plausible wrong implementation.
+
+   Fixed by adding `Assert.True(outcome.SettingsSaved);` to `Execute_ACredentialRemovalFails_ReinstatesThatHostInServersPersisted` — the one fixture where `failed.Count` and the real `_setServers` result diverge from the mutant's formula. Verified: reproduced the exact mutant above, ran the full suite, got exactly 1 failure (`Execute_ACredentialRemovalFails_ReinstatesThatHostInServersPersisted`, on the new assertion) and 907 passes; reverted the mutant and confirmed the file returned to byte-identical with the plan's Step 1 code before re-running to a clean 908/0/12.
+
+**Suite after Task 8 Steps 1-2: 908 passed, 0 failed, 12 skipped** (verified directly). Steps 3-7 (the dialog itself) remain to be implemented.
+
 - [ ] **Step 3: Create the markup**
 
 `vHC/HC_Reporting/Functions/ManageServers/ManageServersDialog.axaml`:
