@@ -171,7 +171,29 @@ When any removal would destroy a credential, `Done` first raises **one** summary
 
 So a naive `Done` can report success having written nothing. Worse, persisting the list *first* creates a failure mode the old immediate-commit model could not produce: settings write succeeds, a credential deletion silently fails, and `creds.json` now holds an entry for a host that is no longer in the list — **unreachable from the GUI**, because it is not in the list to remove, and clearable only via `clearCredsCheckBox`. Previously the list *was* the credential key set, so orphaning was structurally impossible.
 
-Deleting credentials first means a failed deletion leaves the host still listed, which is recoverable by retrying. Concretely: delete credentials for each removed host, log any `Remove` returning `false`, then call `SetServers` — which returns a `bool` for this purpose — and surface a failure to the user rather than closing the dialog as though it worked.
+Deleting credentials first only prevents the orphan if a failed deletion's host is kept in the persisted list — reordering the two calls alone is not enough. `CommitPlan.FinalServers` already excludes every removed row unconditionally, computed before any deletion is attempted, so calling `SetServers(plan.FinalServers)` straight after the deletion loop still drops a host whose credential deletion just failed: exactly the orphan this reordering exists to prevent, just with the drop happening in settings instead of in credentials. The commit-execution logic must **reinstate** any host whose `CredentialStore.Remove` call returned `false` into the list it actually persists. `Remove` returning `false` is unambiguous here: every host in `CredentialsToDelete` had `CredentialStore.Get(host) != null` at `ServerListEditor` construction, so `false` means the deletion genuinely failed, not that there was nothing to delete.
+
+This ordering-plus-reinstatement logic lives in its own `ServerListCommitter`, alongside `ServerListEditor` and free of the same Avalonia/`CGlobals` dependencies, for the same testability reason — it is the part of `Done` with real failure-handling edge cases, and the dialog code-behind is not where those should be proven correct:
+
+```csharp
+internal sealed class CommitOutcome
+{
+    bool SettingsSaved { get; }
+    List<string> FailedCredentialRemovals { get; }
+    List<string> ServersPersisted { get; }        // FinalServers with any failed removals reinstated
+}
+
+internal sealed class ServerListCommitter
+{
+    ServerListCommitter(
+        Func<string, bool> removeCredential,      // CredentialStore.Remove
+        Func<IEnumerable<string>, bool> setServers); // CAppSettings.SetServers
+
+    CommitOutcome Execute(CommitPlan plan);
+}
+```
+
+Concretely: delete credentials for each removed host, collect the hosts where `Remove` returned `false`, persist `FinalServers` with those hosts appended back in, and surface a failure to the user if `SetServers` itself then returns `false` rather than closing the dialog as though it worked. A reinstated host is appended after `FinalServers` rather than restored to its original position — position in the persisted list carries no behavioural meaning elsewhere in the codebase, so this is a documented choice, not an oversight.
 
 **Durability of the null-versus-empty rule.** `CAppSettings.cs:56` uses `File.WriteAllText`, which is not atomic, and `Get()`'s catch-all (`:42-46`) turns a truncated or malformed file into defaults — meaning `Servers == null`, meaning re-seed, meaning the list resurrects. That is precisely the bug §2 exists to prevent, reachable through any interrupted write. Two changes close it:
 
@@ -195,9 +217,13 @@ internal sealed class ServerListEditor
     AddResult Add(string name);                   // Added | Duplicate | Invalid | UndidPendingRemoval
     void Remove(string name);                     // stages; no-op for a pinned row
     void UndoRemove(string name);
-    CommitPlan Commit();                          // FinalServers, CredentialsToDelete
+    CommitPlan Commit();                          // FinalServers, CredentialsToDelete, PendingRemovalCount
 }
 ```
+
+`PendingRemovalCount` counts every row staged for removal, with or without credentials. The confirm's "Removing N servers. Saved credentials for M of them will be deleted." message reads `PendingRemovalCount` for N and `CredentialsToDelete.Count` for M directly off the one `CommitPlan`, rather than the dialog recomputing N separately from `Rows` — two numbers in one sentence that can never drift apart because they share a source.
+
+The constructor and `Add` guard every call to the injected `hasCredentials` predicate with a try/catch, defaulting to `true` on a caught exception. The real predicate — `name => CredentialStore.Get(name) != null` — calls into DPAPI (`ProtectedData.Unprotect`, uncaught in `Get`), which can throw `CryptographicException` if the encrypted blob can't be decrypted on this machine or user profile (`creds.json` copied to another machine, a recreated Windows profile). Left unguarded, that throw would propagate out of a button click and leave `ManageServersDialog` — the one surface that could remove the offending host — permanently unopenable, with no way to fix it since opening the dialog is what crashes. Defaulting to `true` keeps the "credentials saved" marker honest for a row that does have *something* on disk, and if the row is later removed, routes the corrupted entry through `CredentialStore.Remove`, which never decrypts anything and so actually cleans it up.
 
 `pinned` carries `localhost` in from the caller rather than the editor hardcoding it, which keeps the class free of both Avalonia and `CGlobals` and makes the pinning rule directly testable. **Pinned names must also appear in `initial`**, since they are displayed rows — the user has to be able to see the injected entry. That is a *display* contract, not a correctness one: `Add` checks `pinned` directly, so `Add("localhost")` returns `Duplicate` on an injecting machine whether or not the caller honoured the contract.
 
