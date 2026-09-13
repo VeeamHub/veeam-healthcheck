@@ -324,5 +324,21 @@
         <Style Selector="ListBoxItem:pointerover Button.remove-server">
             <Setter Property="Opacity" Value="1" />
         </Style>
+
+        <!-- Undo deliberately does NOT reuse Button.remove-server. That style starts at
+             Opacity 0.5 and only reaches 1 via ListBoxItem:pointerover (above), which is
+             right for a remove affordance but wrong here: a user scanning a staged list
+             to see what Done is about to destroy must be able to read the undo control
+             without hovering every row. Full opacity, accent-coloured, always legible. -->
+        <Style Selector="Button.undo-server">
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="Foreground" Value="{DynamicResource AccentBrush}" />
+            <Setter Property="Padding" Value="6" />
+            <Setter Property="Cursor" Value="Hand" />
+        </Style>
+        <Style Selector="Button.undo-server:pointerover /template/ ContentPresenter">
+            <Setter Property="Background" Value="Transparent" />
+        </Style>
     </Application.Styles>
 </Application>
