@@ -23,6 +23,7 @@ namespace VeeamHealthCheck.Functions.UserInteraction
                 }
 
                 CredentialStore.Set(host, dialog.Username, dialog.Password);
+                CAppSettings.AddServer(host);
                 CGlobals.Logger.Debug($"Credentials stored for host: {host}");
                 return (dialog.Username, dialog.Password);
             });

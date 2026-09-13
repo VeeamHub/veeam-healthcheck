@@ -103,6 +103,10 @@ namespace VeeamHealthCheck.Functions.CredsWindow
 
                 // Store credentials for future use
                 CredentialStore.Set(host, username, password);
+                // Keep the GUI's persisted server list in step with credentials captured
+                // outside it (/savecreds, CLI collection). No-ops until the list has been
+                // seeded, so it can never pre-empt the one-time upgrade seed.
+                CAppSettings.AddServer(host);
                 CGlobals.Logger.Info($"Credentials stored for host: {host}", false);
 
                 return (username, password);
