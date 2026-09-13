@@ -28,6 +28,7 @@ namespace VeeamHealthCheck.Functions.ManageServers
     {
         public List<string> FinalServers { get; internal set; } = new();
         public List<string> CredentialsToDelete { get; internal set; } = new();
+        public int PendingRemovalCount { get; internal set; }
     }
 
     // Staging model for the Manage Servers dialog. Deliberately free of Avalonia and
@@ -258,6 +259,8 @@ namespace VeeamHealthCheck.Functions.ManageServers
                     .Where(r => r.IsPendingRemoval && r.HasCredentials)
                     .Select(r => r.Name)
                     .ToList(),
+
+                PendingRemovalCount = _rows.Count(r => r.IsPendingRemoval),
             };
         }
     }

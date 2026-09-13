@@ -175,6 +175,25 @@ namespace VhcXTests
         }
 
         [Fact]
+        public void Commit_PendingRemovalCount_CountsAllPendingRemovalsRegardlessOfCredentials()
+        {
+            // One credentialed removal and one non-credentialed removal, so the test
+            // actually distinguishes PendingRemovalCount from CredentialsToDelete.Count
+            // rather than relying on a fixture where they'd coincidentally match.
+            var editor = Editor(
+                initial: new[] { "localhost", "vbr01", "vbr02" },
+                pinned: new[] { "localhost" },
+                withCreds: new[] { "vbr01" });
+            editor.Remove("vbr01");
+            editor.Remove("vbr02");
+
+            var plan = editor.Commit();
+
+            Assert.Equal(2, plan.PendingRemovalCount);
+            Assert.Equal(1, plan.CredentialsToDelete.Count);
+        }
+
+        [Fact]
         public void Commit_WithNoPinned_TreatsLocalhostAsAnOrdinaryEntry()
         {
             // The non-injecting machine: no local Veeam product, so localhost is
