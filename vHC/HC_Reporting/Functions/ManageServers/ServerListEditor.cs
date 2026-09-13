@@ -43,12 +43,15 @@ namespace VeeamHealthCheck.Functions.ManageServers
     {
         private readonly List<ServerRow> _rows = new();
         private readonly HashSet<string> _pinned;
+        private readonly Func<string, bool> _hasCredentials;
 
         public ServerListEditor(
             IEnumerable<string> initial,
             IEnumerable<string> pinned,
             Func<string, bool> hasCredentials)
         {
+            _hasCredentials = hasCredentials;
+
             // Trim pinned names before building the set, and compare TRIMMED row
             // names against it below. Order matters: trimming `initial` but not
             // `pinned` would let a padded pinned entry ("  localhost  ") fail to
@@ -74,10 +77,12 @@ namespace VeeamHealthCheck.Functions.ManageServers
                 _rows.Add(new ServerRow
                 {
                     Name = name,
-                    // Snapshotted once at construction. The dialog is modal and is
-                    // disabled during a run, so nothing can change credentials
-                    // underneath it while it is open.
-                    HasCredentials = hasCredentials != null && hasCredentials(name),
+                    // Safe to call more than once during the dialog's lifetime - it is
+                    // modal, so nothing can change stored credentials underneath it
+                    // while open. Add() also calls this (via SafeHasCredentials) for
+                    // names typed in after construction, so this is not a one-shot
+                    // snapshot.
+                    HasCredentials = SafeHasCredentials(name),
                     IsPendingRemoval = false,
                     IsRemovable = !_pinned.Contains(name),
                     IsNewlyAdded = false,
@@ -131,13 +136,55 @@ namespace VeeamHealthCheck.Functions.ManageServers
             _rows.Add(new ServerRow
             {
                 Name = trimmed,
-                HasCredentials = false,
+                // Consult the predicate rather than hardcoding false: a name typed in
+                // here may already have a stored credential (e.g. it was previously
+                // removed from the persisted list without its credential being
+                // cleaned up, or captured via a path that never echoed it back into
+                // `initial`). Not load-bearing for Commit today - a newly added row
+                // is dropped outright by Remove() rather than staged, so it can never
+                // satisfy CredentialsToDelete's (IsPendingRemoval && HasCredentials)
+                // filter in this session. Consulting the predicate keeps the row's
+                // "credentials saved" marker truthful and makes HasCredentials mean
+                // the same thing on every row, so no future consumer (a renderer, or
+                // a later change that makes newly-added rows stageable) has to know
+                // which branch built it.
+                HasCredentials = SafeHasCredentials(trimmed),
                 IsPendingRemoval = false,
                 IsRemovable = true,
                 IsNewlyAdded = true,
             });
 
             return AddResult.Added;
+        }
+
+        // Guards every call to the injected hasCredentials predicate. The real
+        // predicate - name => CredentialStore.Get(name) != null - calls into DPAPI
+        // (ProtectedData.Unprotect, uncaught in CredentialStore.Get), which can throw
+        // CryptographicException if the encrypted blob can't be decrypted on this
+        // machine/profile (creds.json copied to another machine, or a recreated
+        // Windows user profile). Left unguarded, that throw would propagate out of
+        // this constructor or Add() - both reachable from a button click in the
+        // Manage Servers dialog - and leave that dialog, the one surface that could
+        // remove the offending host, permanently unopenable. Defaulting to true keeps
+        // the "credentials saved" marker honest for a row that does have SOMETHING on
+        // disk, and if the row is later removed, routes the corrupted entry through
+        // CredentialStore.Remove, which never decrypts anything and so actually
+        // cleans it up.
+        private bool SafeHasCredentials(string name)
+        {
+            if (_hasCredentials == null)
+            {
+                return false;
+            }
+
+            try
+            {
+                return _hasCredentials(name);
+            }
+            catch
+            {
+                return true;
+            }
         }
 
         public void Remove(string name)

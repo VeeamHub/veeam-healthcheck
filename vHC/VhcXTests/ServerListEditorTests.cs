@@ -29,10 +29,12 @@ namespace VhcXTests
             var editor = Editor(withCreds: new[] { "vbr01" });
 
             Assert.Equal(new[] { "localhost", "vbr01" }, editor.Rows.Select(r => r.Name));
-            Assert.False(editor.Rows[0].IsRemovable);
-            Assert.True(editor.Rows[1].IsRemovable);
-            Assert.False(editor.Rows[0].HasCredentials);
-            Assert.True(editor.Rows[1].HasCredentials);
+            var localhostRow = editor.Rows.Single(r => r.Name == "localhost");
+            var vbr01Row = editor.Rows.Single(r => r.Name == "vbr01");
+            Assert.False(localhostRow.IsRemovable);
+            Assert.True(vbr01Row.IsRemovable);
+            Assert.False(localhostRow.HasCredentials);
+            Assert.True(vbr01Row.HasCredentials);
             Assert.Equal(0, editor.PendingChangeCount);
         }
 
@@ -61,6 +63,7 @@ namespace VhcXTests
             // duplicate).
             Assert.Equal(AddResult.Duplicate, pinnedDuplicate);
             Assert.Equal(AddResult.UndidPendingRemoval, undid);
+            Assert.Contains("vbr01", editor.Rows.Select(r => r.Name));
             Assert.False(editor.Rows.Single(r => r.Name == "vbr01").IsPendingRemoval);
         }
 
@@ -253,6 +256,70 @@ namespace VhcXTests
 
             var row = editor.Rows.Single(r => r.Name == "localhost");
             Assert.False(row.IsRemovable);
+        }
+
+        [Fact]
+        public void Add_NameWithExistingCredentialsNotInInitial_ReportsHasCredentialsTrue()
+        {
+            // "vbr02" is NOT in the default `initial`, so this is a brand-new row -
+            // but it may already have a stored credential from a previous session
+            // (e.g. it was removed from the persisted list without its credential
+            // being cleaned up, or captured via a path that never echoed it back into
+            // `initial`). Add's new-row branch must consult the predicate rather than
+            // hardcoding HasCredentials = false, or the row's "credentials saved"
+            // marker would be a lie and HasCredentials would mean something different
+            // depending on which branch built the row.
+            var editor = Editor(withCreds: new[] { "vbr02" });
+
+            var result = editor.Add("vbr02");
+
+            Assert.Equal(AddResult.Added, result);
+            Assert.True(editor.Rows.Single(r => r.Name == "vbr02").HasCredentials);
+        }
+
+        [Fact]
+        public void Constructor_HasCredentialsPredicateThrows_DefaultsToTrueAndDoesNotThrow()
+        {
+            // The real predicate (CredentialStore.Get) calls into DPAPI, which can
+            // throw CryptographicException if the encrypted blob can't be decrypted
+            // on this machine/profile. Left unguarded, that throw would propagate out
+            // of the constructor - reachable from a button click in the Manage
+            // Servers dialog - and leave the one surface that could remove the
+            // offending host permanently unopenable.
+            var editor = new ServerListEditor(
+                new[] { "vbr01" },
+                Array.Empty<string>(),
+                _ => throw new InvalidOperationException("simulated DPAPI failure"));
+
+            Assert.True(editor.Rows.Single(r => r.Name == "vbr01").HasCredentials);
+        }
+
+        [Fact]
+        public void Add_HasCredentialsPredicateThrows_DefaultsToTrueAndDoesNotThrow()
+        {
+            // Same guarantee as the constructor case, but for a name typed in after
+            // construction via Add.
+            var editor = new ServerListEditor(
+                new[] { "vbr01" },
+                Array.Empty<string>(),
+                _ => throw new InvalidOperationException("simulated DPAPI failure"));
+
+            var result = editor.Add("vbr09");
+
+            Assert.Equal(AddResult.Added, result);
+            Assert.True(editor.Rows.Single(r => r.Name == "vbr09").HasCredentials);
+        }
+
+        [Fact]
+        public void Add_NullName_ReturnsInvalid()
+        {
+            // The existing null-conditional `name?.Trim()` already handles this; this
+            // pins it explicitly since only whitespace was tested before.
+            var editor = Editor();
+
+            var result = editor.Add(null);
+
+            Assert.Equal(AddResult.Invalid, result);
         }
     }
 }
