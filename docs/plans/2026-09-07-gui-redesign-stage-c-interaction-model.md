@@ -1491,12 +1491,116 @@ git commit -m "feat(gui): add Button.undo-server style for staged-removal undo"
 ## Task 8: `ManageServersDialog`
 
 **Files:**
+- Create: `vHC/HC_Reporting/Functions/ManageServers/ServerListCommitter.cs`
+- Create: `vHC/VhcXTests/ServerListCommitterTests.cs`
 - Create: `vHC/HC_Reporting/Functions/ManageServers/ManageServersDialog.axaml`
 - Create: `vHC/HC_Reporting/Functions/ManageServers/ManageServersDialog.axaml.cs`
 
 Follows this project's `Functions/<Name>/` per-dialog convention, as Stage B's `Functions/AboutDialog/` did — **not** the spike's `Dialogs/` folder.
 
-- [ ] **Step 1: Create the markup**
+**Why this task now starts with a new class.** Task 4's code-quality re-review found that the credentials-first-then-settings ordering (spec, resolved in `a1b639b`) does not by itself deliver "a failed deletion is recoverable by retrying": `CommitPlan.FinalServers` already excludes every removed row unconditionally, computed before any deletion is attempted, so persisting it after the deletion loop still drops a host whose deletion just failed. The fix — reinstate that host into the persisted list — has real edge cases (which host, in what order, what happens if the settings write *also* fails) and belongs in a small, dependency-free, directly-testable class for the same reason `ServerListEditor` does, not inline in `doneBtn_Click` where the only way to exercise it is a running Avalonia dialog. Extracting it now, before the dialog exists, is cheaper than extracting it after — this is exactly the pattern `ServerListEditor` itself followed relative to the old inline `addServerBtn_Click`/`removeServerBtn_Click` handlers.
+
+- [ ] **Step 1: Create `ServerListCommitter`**
+
+`vHC/HC_Reporting/Functions/ManageServers/ServerListCommitter.cs`:
+
+```csharp
+// Copyright (c) 2021, Adam Congdon <adam.congdon2@gmail.com>
+// MIT License
+using System;
+using System.Collections.Generic;
+using System.Linq;
+
+namespace VeeamHealthCheck.Functions.ManageServers
+{
+    internal sealed class CommitOutcome
+    {
+        public bool SettingsSaved { get; internal set; }
+        public List<string> FailedCredentialRemovals { get; internal set; } = new();
+        public List<string> ServersPersisted { get; internal set; } = new();
+    }
+
+    // Executes a CommitPlan against the two primitives Done depends on, both of which
+    // swallow their own exceptions (CredentialStore.Remove catches and returns false;
+    // CAppSettings.SetServers catches, logs, and returns false). Avalonia- and
+    // CGlobals-free, same as ServerListEditor and for the same reason: this is the
+    // part of Done with real failure-handling edge cases, and a dialog code-behind is
+    // not where those should be proven correct.
+    internal sealed class ServerListCommitter
+    {
+        private readonly Func<string, bool> _removeCredential;
+        private readonly Func<IEnumerable<string>, bool> _setServers;
+
+        public ServerListCommitter(
+            Func<string, bool> removeCredential,
+            Func<IEnumerable<string>, bool> setServers)
+        {
+            _removeCredential = removeCredential ?? throw new ArgumentNullException(nameof(removeCredential));
+            _setServers = setServers ?? throw new ArgumentNullException(nameof(setServers));
+        }
+
+        public CommitOutcome Execute(CommitPlan plan)
+        {
+            var failed = new List<string>();
+
+            foreach (var host in plan.CredentialsToDelete)
+            {
+                if (!_removeCredential(host))
+                {
+                    failed.Add(host);
+                }
+            }
+
+            // FinalServers already excludes every removed row unconditionally - Commit()
+            // computed it before any deletion was attempted, so it cannot know the
+            // outcome. A host whose deletion just failed is reinstated here rather than
+            // left orphaned: without this, a failed deletion still drops the host from
+            // the persisted list while its credential survives - unreachable from the
+            // GUI, the exact failure mode deleting credentials first exists to prevent.
+            // Appended after FinalServers rather than restored to its original position:
+            // position in the persisted list has no behavioural meaning elsewhere in the
+            // codebase, so this is a deliberate choice, not an oversight.
+            var toPersist = plan.FinalServers
+                .Concat(failed.Where(h => !plan.FinalServers.Contains(h, StringComparer.OrdinalIgnoreCase)))
+                .ToList();
+
+            bool saved = _setServers(toPersist);
+
+            return new CommitOutcome
+            {
+                SettingsSaved = saved,
+                FailedCredentialRemovals = failed,
+                ServersPersisted = toPersist,
+            };
+        }
+    }
+}
+```
+
+`vHC/VhcXTests/ServerListCommitterTests.cs` — no `[Collection("GlobalState")]` needed, this class touches neither `CGlobals` nor the filesystem; a plain xUnit test class with hand-built `CommitPlan`s and `Func` stubs is enough. Cover at least:
+
+- `Execute_AllCredentialRemovalsSucceed_PersistsFinalServersUnchanged` — `removeCredential` always returns `true`; assert `ServersPersisted` equals `FinalServers` exactly and `FailedCredentialRemovals` is empty.
+- `Execute_ACredentialRemovalFails_ReinstatesThatHostInServersPersisted` — the property-under-test. `FinalServers = ["vbr01"]`, `CredentialsToDelete = ["vbr02"]` (i.e. `vbr02` was removed from the list and had credentials), `removeCredential` returns `false` for `"vbr02"`; assert `ServersPersisted` contains both `"vbr01"` and `"vbr02"`, and `FailedCredentialRemovals` is `["vbr02"]`. Mutation-check this one specifically: deleting the `.Concat(...)` reinstatement should make this test fail (that's the whole point of the class existing).
+- `Execute_SettingsSaveFails_ReturnsSettingsSavedFalseButStillReportsFailedRemovals` — `setServers` returns `false`; assert `SettingsSaved` is `false` while `FailedCredentialRemovals` still reflects what actually happened in the removal loop (the caller needs both pieces of information, not just one).
+- `Execute_NoCredentialsToDelete_SkipsRemovalLoopAndPersistsFinalServersVerbatim` — empty `CredentialsToDelete`; assert `_removeCredential` is never invoked (a `Func` that throws if called, passed as the stub, is a simple way to pin this) and `ServersPersisted` equals `FinalServers`.
+
+- [ ] **Step 2: Add `PendingRemovalCount` to `CommitPlan`**
+
+This is a small addition to the `ServerListEditor.cs` shipped in Task 4, not a new file. In `CommitPlan` (`vHC/HC_Reporting/Functions/ManageServers/ServerListEditor.cs`), add a third property alongside `FinalServers` and `CredentialsToDelete`:
+
+```csharp
+public int PendingRemovalCount { get; internal set; }
+```
+
+Set it in `Commit()`:
+
+```csharp
+PendingRemovalCount = _rows.Count(r => r.IsPendingRemoval),
+```
+
+This exists so the confirm dialog's "Removing N servers. Saved credentials for M of them will be deleted." can read N and M off the same `CommitPlan` instead of the dialog recomputing N separately from `_editor.Rows` — two numbers in one sentence that would otherwise be free to drift apart. Add one test to `ServerListEditorTests.cs`: `Commit_PendingRemovalCount_CountsAllPendingRemovalsRegardlessOfCredentials` — stage removal of one credentialed row and one non-credentialed row, assert `PendingRemovalCount == 2` while `CredentialsToDelete.Count == 1`, so the test actually distinguishes the two fields rather than a fixture where they'd coincidentally match.
+
+- [ ] **Step 3: Create the markup**
 
 `vHC/HC_Reporting/Functions/ManageServers/ManageServersDialog.axaml`:
 
@@ -1540,7 +1644,7 @@ MIT License
 </Window>
 ```
 
-- [ ] **Step 2: Create the code-behind**
+- [ ] **Step 4: Create the code-behind**
 
 `vHC/HC_Reporting/Functions/ManageServers/ManageServersDialog.axaml.cs`:
 
@@ -1755,7 +1859,7 @@ namespace VeeamHealthCheck.Functions.ManageServers
                         string.Format(
                             CultureInfo.CurrentCulture,
                             VbrLocalizationHelper.GuiManageServersConfirmBody,
-                            _editor.Rows.Count(r => r.IsPendingRemoval),
+                            plan.PendingRemovalCount,
                             plan.CredentialsToDelete.Count),
                         VbrLocalizationHelper.GuiManageServersConfirmTitle);
                 }
@@ -1771,23 +1875,23 @@ namespace VeeamHealthCheck.Functions.ManageServers
                 }
             }
 
-            // Credentials FIRST, then settings - deliberately, and not the other way
-            // round. Both primitives swallow their own exceptions (CAppSettings logs and
-            // returns; CredentialStore.Remove catches and returns false), so ordering
-            // decides which failure mode you get. Persisting the list first and then
-            // failing to delete a credential leaves creds.json holding an entry for a
-            // host no longer in the list - unreachable from the GUI, since it is not
-            // there to remove. Deleting first leaves a failed removal still listed,
-            // which the user can simply retry.
-            foreach (var host in plan.CredentialsToDelete)
+            // ServerListCommitter owns credentials-first-then-settings ordering AND the
+            // reinstatement that makes "recoverable by retrying" actually true: without
+            // it, plan.FinalServers already excludes every removed row regardless of
+            // whether its deletion succeeded, so a failed deletion would still drop the
+            // host from the persisted list while orphaning its credential. See
+            // ServerListCommitter.cs for why.
+            var committer = new ServerListCommitter(
+                CredentialStore.Remove,
+                CAppSettings.SetServers);
+            var outcome = committer.Execute(plan);
+
+            foreach (var host in outcome.FailedCredentialRemovals)
             {
-                if (!CredentialStore.Remove(host))
-                {
-                    CGlobals.Logger.Error($"Failed to remove stored credentials for host: {host}");
-                }
+                CGlobals.Logger.Error($"Failed to remove stored credentials for host: {host}");
             }
 
-            if (!CAppSettings.SetServers(plan.FinalServers))
+            if (!outcome.SettingsSaved)
             {
                 await CGlobals.Notifier.ShowErrorAsync(
                     VbrLocalizationHelper.GuiManageServersSaveFailed,
@@ -1801,7 +1905,7 @@ namespace VeeamHealthCheck.Functions.ManageServers
 }
 ```
 
-- [ ] **Step 3: Build**
+- [ ] **Step 5: Build**
 
 ```bash
 dotnet build vHC/HC.sln --configuration Debug
@@ -1812,7 +1916,7 @@ Expected: 0 errors.
 
 `CGlobals` lives in `VeeamHealthCheck.Shared`, **not** `VeeamHealthCheck.Common` — the latter namespace does not exist anywhere in the solution, despite `CGlobals.cs` sitting in a `Common/` folder (`vHC/HC_Reporting/Common/CGlobals.cs:12` declares `namespace VeeamHealthCheck.Shared`). `VhcGui.axaml.cs:17` and `CAppSettings.cs:6` both import `VeeamHealthCheck.Shared` for exactly this reason. Folder name and namespace diverge here; trust the namespace.
 
-- [ ] **Step 4: Run the full suite**
+- [ ] **Step 6: Run the full suite**
 
 ```bash
 dotnet test vHC/VhcXTests/VhcXTests.csproj
@@ -1821,10 +1925,18 @@ git checkout -- vHC/HC_Reporting/VeeamHealthCheck.csproj
 
 Expected: 0 failed, 12 skipped.
 
-- [ ] **Step 5: Commit**
+- [ ] **Step 7: Commit**
+
+Two commits, since `ServerListCommitter` and the `CommitPlan.PendingRemovalCount` addition are independently testable and reviewable without the dialog that consumes them, matching how Task 4's `ServerListEditor` was committed separately from anything that would eventually call it:
 
 ```bash
-git add vHC/HC_Reporting/Functions/ManageServers/
+git add vHC/HC_Reporting/Functions/ManageServers/ServerListCommitter.cs vHC/VhcXTests/ServerListCommitterTests.cs
+git commit -m "feat(servers): add ServerListCommitter to fix the credentials-first recovery claim"
+
+git add vHC/HC_Reporting/Functions/ManageServers/ServerListEditor.cs vHC/VhcXTests/ServerListEditorTests.cs
+git commit -m "feat(servers): add CommitPlan.PendingRemovalCount"
+
+git add vHC/HC_Reporting/Functions/ManageServers/ManageServersDialog.axaml vHC/HC_Reporting/Functions/ManageServers/ManageServersDialog.axaml.cs
 git commit -m "feat(servers): add staged ManageServersDialog"
 ```
 
