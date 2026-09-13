@@ -12,6 +12,75 @@
   <resheader name="writer">
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
+  <data name="GuiServerLabel" xml:space="preserve">
+    <value>Server</value>
+  </data>
+  <data name="GuiManageServersTooltip" xml:space="preserve">
+    <value>Manage servers...</value>
+  </data>
+  <data name="GuiManageServersTitle" xml:space="preserve">
+    <value>Manage Servers</value>
+  </data>
+  <data name="GuiManageServersAddWatermark" xml:space="preserve">
+    <value>Add server...</value>
+  </data>
+  <data name="GuiManageServersAddButton" xml:space="preserve">
+    <value>Add</value>
+  </data>
+  <data name="GuiManageServersRemoveTooltip" xml:space="preserve">
+    <value>Remove server</value>
+  </data>
+  <data name="GuiManageServersUndoTooltip" xml:space="preserve">
+    <value>Undo removal</value>
+  </data>
+  <data name="GuiManageServersCredsSaved" xml:space="preserve">
+    <value>credentials saved</value>
+  </data>
+  <data name="GuiManageServersPending" xml:space="preserve">
+    <value>{0} pending change(s) - nothing is saved until you click Done</value>
+  </data>
+  <data name="GuiManageServersNoPending" xml:space="preserve">
+    <value>No pending changes</value>
+  </data>
+  <data name="GuiManageServersCancel" xml:space="preserve">
+    <value>Cancel</value>
+  </data>
+  <data name="GuiManageServersDone" xml:space="preserve">
+    <value>Done</value>
+  </data>
+  <data name="GuiManageServersConfirmTitle" xml:space="preserve">
+    <value>Confirm Changes</value>
+  </data>
+  <data name="GuiManageServersConfirmBody" xml:space="preserve">
+    <value>Removing {0} server(s). Saved credentials for {1} of them will be deleted.</value>
+  </data>
+  <data name="GuiManageServersSaveFailedTitle" xml:space="preserve">
+    <value>Save Failed</value>
+  </data>
+  <data name="GuiManageServersSaveFailed" xml:space="preserve">
+    <value>Could not save the server list. See the log for details.</value>
+  </data>
+  <data name="GuiManageServersDuplicate" xml:space="preserve">
+    <value>Server '{0}' is already in the list.</value>
+  </data>
+  <data name="GuiManageServersInvalid" xml:space="preserve">
+    <value>Please enter a server name.</value>
+  </data>
+  <data name="GuiBrowseFolderTooltip" xml:space="preserve">
+    <value>Browse for folder...</value>
+  </data>
+  <data name="GuiBrowseFolderTitle" xml:space="preserve">
+    <value>Select Output Directory</value>
+  </data>
+  <data name="GuiPeriod7" xml:space="preserve">
+    <value>7 Days</value>
+  </data>
+  <data name="GuiPeriod30" xml:space="preserve">
+    <value>30 Days</value>
+  </data>
+  <data name="GuiPeriod90" xml:space="preserve">
+    <value>90 Days</value>
+  </data>
   <data name="GuiAcceptButton" xml:space="preserve">
     <value>Accept Terms</value>
   </data>
