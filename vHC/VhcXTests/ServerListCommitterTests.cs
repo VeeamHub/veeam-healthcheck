@@ -47,6 +47,13 @@ namespace VhcXTests
             // the GUI, the exact failure mode deleting credentials first exists to
             // prevent. Mutation-tested: deleting the `.Concat(...)` reinstatement in
             // ServerListCommitter.Execute makes exactly this test fail.
+            //
+            // Also the only fixture where a credential removal fails (failed.Count > 0)
+            // while the settings save still succeeds - asserting SettingsSaved here is
+            // what pins Execute reading _setServers's actual return value rather than a
+            // stand-in like "failed.Count == 0" that happens to agree with it on every
+            // OTHER fixture in this file (every other test's failed.Count and SettingsSaved
+            // move together, so neither alone was previously proven independent).
             var plan = Plan(
                 finalServers: new List<string> { "vbr01" },
                 credentialsToDelete: new List<string> { "vbr02" });
@@ -56,6 +63,7 @@ namespace VhcXTests
 
             var outcome = committer.Execute(plan);
 
+            Assert.True(outcome.SettingsSaved);
             Assert.Contains("vbr01", outcome.ServersPersisted);
             Assert.Contains("vbr02", outcome.ServersPersisted);
             Assert.Equal(new List<string> { "vbr02" }, outcome.FailedCredentialRemovals);
