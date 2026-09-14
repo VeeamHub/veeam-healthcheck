@@ -1985,6 +1985,10 @@ git commit -m "feat(servers): add staged ManageServersDialog"
 
    No test added, for the same reason as item 1. Task 14's Windows verification checklist should add: stage removal of a credentialed host, make `CredentialStore.Remove` return `false` for it while `CAppSettings.SetServers` still succeeds, confirm the "Removal Incomplete" dialog names that host and that it is still present in the picker after Done — the exact defect this item fixes.
 
+3. **Item 2's new `await CGlobals.Notifier.ShowErrorAsync(...)` had no `try`/`finally`, unlike the sibling confirm-guard in Step 4 that it was modeled on.** If that call threw, `doneBtn`/`cancelBtn` — already disabled just above it — would stay disabled forever and `Close(true)` would never run, even though the commit had already durably succeeded on disk by that point. Found by an independent spec-compliance review of item 2's fix.
+
+   Fixed by moving `Close(true)` into a `finally` block wrapping the `await`, so it always runs exactly once for this branch regardless of whether the notification succeeds, throws, or (structurally) is skipped. No test added, same reason as items 1-2.
+
 **Suite after Task 8 (all steps): 908 passed, 0 failed, 12 skipped** (verified directly; this task added no new tests). Baseline for Task 9.
 
 ---
