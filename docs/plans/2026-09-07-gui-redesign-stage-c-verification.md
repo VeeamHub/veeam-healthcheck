@@ -2,6 +2,8 @@
 
 Requires a real Windows machine with VBR installed. Nothing here can be checked off-Windows.
 
+**Baseline at handoff** (measured during Task 14 on this branch): `dotnet build vHC/HC.sln --configuration Debug` → 0 errors. `dotnet test vHC/VhcXTests/VhcXTests.csproj` → **Failed: 0, Passed: 908, Skipped: 12, Total: 920**. Measured on macOS — the 12 skips are `[WindowsOnlyFact]` tests that will actually execute on the Windows machine running this checklist, so expect up to 920 passed / 0 skipped there.
+
 ## Terms checkbox
 - [ ] Label reads "Accept Terms" (localized, not blank — a blank label means a resx/accessor key mismatch).
 - [ ] Checking it raises the disclaimer modal; confirming leaves it checked and enables Run.
