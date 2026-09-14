@@ -512,6 +512,15 @@ namespace VeeamHealthCheck
         // implicit, specifically so termsCheckBox_Checked's async continuation can tell
         // whether a run/import started while its own accept flow was still in flight -
         // Import_click does not wait on terms acceptance, so it can race ahead of one.
+        //
+        // Set HERE, synchronously inside DisableButtons() - not inside showProgressBar(),
+        // which posts its own IsEnabled writes via Dispatcher.UIThread.Post and is
+        // therefore NOT synchronous with the caller. A terms-accept continuation resuming
+        // on the UI thread could dequeue ahead of a posted-but-not-yet-run action and
+        // still observe the pre-lock state. Setting the flag directly in the synchronous
+        // call path both Import_click and run_Click share (via DisableGuiAndStartProgressBar)
+        // is what makes the check in termsCheckBox_Checked airtight; moving it into
+        // showProgressBar (or anything else Dispatcher-posted) would silently reopen this.
         private bool _guiLockedForRun;
 
         private void DisableButtons()
