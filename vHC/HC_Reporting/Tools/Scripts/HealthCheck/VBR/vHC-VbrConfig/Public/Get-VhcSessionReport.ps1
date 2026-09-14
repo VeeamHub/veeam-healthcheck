@@ -112,6 +112,20 @@ function Get-VhcSessionReport {
                 try { $jobDuration  = $task.JobSess.Progress.Duration.ToString() } catch { $jobDuration  = '' }
                 try { $taskDuration = $task.WorkDetails.WorkDuration.ToString() }  catch { $taskDuration = '' }
 
+                # Pin CreationTime to an invariant, unambiguous round-trip string ("o") instead of
+                # leaving it as a raw [DateTime] for Export-Csv to stringify implicitly using the
+                # collecting host's CURRENT culture. That implicit stringification is what made
+                # Issue #217 possible: a day-first host (en-AU, en-GB, ...) and a month-first host
+                # (en-US) write CreationTime differently, and /import lets the CSV be read back on
+                # a DIFFERENT machine than the one that wrote it, so no single reporting-machine
+                # culture can un-ambiguously re-parse every collecting-machine's format. Round-trip
+                # ("o") has no locale ambiguity, so CDataTypesParser.TryParseDateTime can parse it
+                # exactly regardless of which machine collected it or which machine reports on it.
+                # See the remarks on TryParseDateTime for the concrete cross-machine failure this
+                # replaces, and Get-VhcOrphanedSupersededBackups.ps1 for the same pattern already
+                # used for restore-point dates.
+                try { $creationTime = $task.JobSess.CreationTime.ToString('o', [System.Globalization.CultureInfo]::InvariantCulture) } catch { $creationTime = '' }
+
                 # Agent task JobName has the machine name appended by Veeam; use the parent
                 # session Name for the clean job name instead. See ADR 0012.
                 $jobName = if ($task.ObjectPlatform.IsEpAgentPlatform) { $session.Name } else { $task.JobName }
@@ -152,7 +166,7 @@ function Get-VhcSessionReport {
                     'JobDuration'       = $jobDuration
                     'TaskDuration'      = $taskDuration
                     'TaskAlgorithm'     = $task.WorkDetails.TaskAlgorithm
-                    'CreationTime'      = $task.JobSess.CreationTime
+                    'CreationTime'      = $creationTime
                     # NAS jobs leave BackupStats at 0; fall back to Progress fields (see ADR 0005)
                     'BackupSizeGB'      = if ($task.JobSess.BackupStats.BackupSize -gt 0) {
                         [math]::Round(($task.JobSess.BackupStats.BackupSize / 1GB), 4)

@@ -691,13 +691,28 @@ namespace VeeamHealthCheck.Functions.Reporting.DataTypes
         }
 
         /// <remarks>
-        /// The CSV is written by PowerShell using the collecting machine's culture, so that
-        /// culture is tried first. <see cref="System.Globalization.CultureInfo.InvariantCulture"/>
-        /// is month-first, so on a day-first locale (en-AU, en-GB, etc.) it silently misparses
-        /// day-first strings -- a date meaning "2 September" gets read as "9 February" -- for
-        /// any CreationTime whose day-of-month is &lt;= 12, corrupting the date. InvariantCulture
-        /// stays as a fallback so US/ISO-shaped strings still parse when read on a day-first
-        /// machine.
+        /// Newly-collected CSVs (see Get-VhcSessionReport.ps1) write CreationTime as an
+        /// invariant round-trip ("o" / ISO-8601) string, so the first attempt below parses that
+        /// format exactly via <see cref="DateTime.TryParseExact(string, string, IFormatProvider,
+        /// System.Globalization.DateTimeStyles, out DateTime)"/>. That format carries no locale
+        /// ambiguity, so it parses identically no matter which culture collected it or which
+        /// culture is running on the machine generating the report -- unlike the fallback chain
+        /// below, it is safe for this repo's /import feature, which can read a CSV back on a
+        /// completely different machine than the one that wrote it.
+        ///
+        /// The remaining rungs exist ONLY to keep parsing CSVs collected before this fix (or
+        /// imported from an older vHC version) that still hold a culture-formatted date string.
+        /// For those legacy strings, the collecting machine's own culture is tried first, then
+        /// InvariantCulture -- see Issue #217. That legacy chain is inherently unsafe across
+        /// machines: it was written using the COLLECTING machine's culture, but this method only
+        /// knows the REPORTING machine's culture, and under /import those can differ. Concretely:
+        /// an en-US collector writes CreationTime as "2/9/2026 11:00:06 PM" (9 February,
+        /// month/day order); if that CSV is later imported and reported on an en-AU machine
+        /// (day/month order), <see cref="System.Globalization.CultureInfo.CurrentCulture"/> on
+        /// the REPORTING machine successfully -- but wrongly -- parses it as 2 September, with no
+        /// exception thrown. There is no way to recover the correct value from a legacy string
+        /// alone; the invariant round-trip format above is the actual fix for newly-collected
+        /// data, and this fallback chain is retained purely for backward compatibility.
         /// </remarks>
         internal static DateTime TryParseDateTime(string dateTime, System.Globalization.CultureInfo culture)
         {
@@ -712,22 +727,34 @@ namespace VeeamHealthCheck.Functions.Reporting.DataTypes
             // Remove corrupted AM/PM indicators (Chinese systems may export "??" instead of 上午/下午)
             string cleanedDateTime = dateTime.Replace("??", "").Replace("  ", " ").Trim();
 
-            // First attempt: Try the collecting machine's culture (day-first locales parse
-            // ambiguous dates like "2/09/2026" correctly as day-first here).
-            if (DateTime.TryParse(cleanedDateTime, culture,
-                System.Globalization.DateTimeStyles.None, out DateTime result))
+            // First attempt: invariant round-trip ("o") format written by newly-collected CSVs
+            // (Get-VhcSessionReport.ps1). Unambiguous regardless of collecting- or
+            // reporting-machine culture, and RoundtripKind preserves whatever DateTimeKind the
+            // value had at collection time instead of silently converting it to this machine's
+            // local time zone. Must run before any culture-dependent attempt below.
+            if (DateTime.TryParseExact(cleanedDateTime, "o", System.Globalization.CultureInfo.InvariantCulture,
+                System.Globalization.DateTimeStyles.RoundtripKind, out DateTime result))
             {
                 return result;
             }
 
-            // Second attempt: Try InvariantCulture (month-first fallback for US/ISO-shaped formats)
+            // Second attempt: Try the collecting machine's culture (day-first locales parse
+            // ambiguous dates like "2/09/2026" correctly as day-first here). Legacy-format CSVs
+            // only -- see remarks above for why this cannot be trusted under /import.
+            if (DateTime.TryParse(cleanedDateTime, culture,
+                System.Globalization.DateTimeStyles.None, out result))
+            {
+                return result;
+            }
+
+            // Third attempt: Try InvariantCulture (month-first fallback for US/ISO-shaped formats)
             if (DateTime.TryParse(cleanedDateTime, System.Globalization.CultureInfo.InvariantCulture,
                 System.Globalization.DateTimeStyles.None, out result))
             {
                 return result;
             }
 
-            // Third attempt: Try specific format patterns common in Chinese/Asian systems
+            // Fourth attempt: Try specific format patterns common in Chinese/Asian systems
             string[] commonFormats = new[]
             {
                 "yyyy/MM/dd HH:mm:ss",

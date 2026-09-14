@@ -115,5 +115,78 @@ namespace VhcXTests.Functions.Reporting.DataTypes
 
             Assert.Equal(DateTime.MinValue, result);
         }
+
+        /// <summary>
+        /// Regression test for the follow-up found during independent review of the #217 fix:
+        /// newly-collected CSVs (Get-VhcSessionReport.ps1) write CreationTime as an invariant
+        /// round-trip ("o") string. That format must parse to the exact same DateTime no matter
+        /// which culture is passed in -- it carries no locale ambiguity, unlike the legacy
+        /// culture-formatted strings the rest of this method's fallback chain still has to
+        /// support.
+        /// </summary>
+        [Theory]
+        [InlineData("en-US")]
+        [InlineData("en-AU")]
+        [InlineData("en-GB")]
+        [InlineData("th-TH")] // non-Gregorian (Buddhist) calendar by default - must not shift the year
+        public void TryParseDateTime_InvariantRoundTripFormat_ParsesIdenticallyRegardlessOfCulture(string cultureName)
+        {
+            string roundTripString = "2026-02-09T23:00:06.0000000";
+
+            DateTime result = CDataTypesParser.TryParseDateTime(roundTripString, new CultureInfo(cultureName));
+
+            Assert.Equal(new DateTime(2026, 2, 9, 23, 0, 6), result);
+        }
+
+        /// <summary>
+        /// Contract guard for the concrete /import failure scenario described in the #217
+        /// follow-up: an en-US collector's CreationTime, written in the new invariant round-trip
+        /// format, must still resolve to 9 February when parsed on a simulated en-AU reporting
+        /// machine (day-first locale) -- the same cross-machine shape that corrupted the date
+        /// under the old culture-formatted CSV.
+        ///
+        /// Note: this specific assertion (day/month ordering) does NOT distinguish the fixed
+        /// parser from the pre-fix one -- .NET's DateTime.TryParse already recognizes a
+        /// year-first ISO-shaped string like this as unambiguous and parses the day/month
+        /// correctly under any culture, including the pre-fix culture-first chain. The real,
+        /// culture-independent regression this format fixes is DateTimeKind handling (see
+        /// TryParseDateTime_InvariantRoundTripFormat_PreservesUtcKindAcrossCultures below), which
+        /// DOES fail against the pre-fix code. This test is kept as a black-box guard that the
+        /// concrete scenario from the issue stays correct, not as the TDD-red case for this fix.
+        /// </summary>
+        [Fact]
+        public void TryParseDateTime_UsCollectedRoundTripFormat_ParsesCorrectlyOnDayFirstReportingCulture()
+        {
+            string usCollectedRoundTripString = new DateTime(2026, 2, 9, 23, 0, 6)
+                .ToString("o", CultureInfo.InvariantCulture);
+
+            DateTime result = CDataTypesParser.TryParseDateTime(usCollectedRoundTripString, new CultureInfo("en-AU"));
+
+            Assert.Equal(2, result.Month);
+            Assert.Equal(9, result.Day);
+        }
+
+        /// <summary>
+        /// The actual culture-independent regression guard for this fix. Without parsing the
+        /// round-trip format via <see cref="DateTimeStyles.RoundtripKind"/> as the FIRST attempt,
+        /// a value collected with <see cref="DateTimeKind.Utc"/> falls through to the legacy
+        /// chain's plain DateTime.TryParse(..., DateTimeStyles.None, ...), which silently
+        /// converts a "Z"-suffixed UTC string to this machine's local time zone (Kind becomes
+        /// Local, and the wall-clock value shifts on any machine not itself running in UTC).
+        /// TryParseExact("o", ..., RoundtripKind) preserves the original Kind and value exactly.
+        /// Asserting on Kind (rather than the shifted wall-clock value) keeps this test
+        /// deterministic on any test-runner time zone, including a UTC-zoned CI machine.
+        /// </summary>
+        [Fact]
+        public void TryParseDateTime_InvariantRoundTripFormat_PreservesUtcKindAcrossCultures()
+        {
+            var utcCreationTime = DateTime.SpecifyKind(new DateTime(2026, 2, 9, 23, 0, 6), DateTimeKind.Utc);
+            string roundTripString = utcCreationTime.ToString("o", CultureInfo.InvariantCulture);
+
+            DateTime result = CDataTypesParser.TryParseDateTime(roundTripString, new CultureInfo("en-AU"));
+
+            Assert.Equal(DateTimeKind.Utc, result.Kind);
+            Assert.Equal(utcCreationTime, result);
+        }
     }
 }
