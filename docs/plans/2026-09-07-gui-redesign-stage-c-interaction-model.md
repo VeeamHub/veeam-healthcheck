@@ -2288,7 +2288,7 @@ Restores the control Stage B did not port. The spike's implementation is sound â
 - Modify: `vHC/HC_Reporting/VhcGui.axaml` (~lines 109-114)
 - Modify: `vHC/HC_Reporting/VhcGui.axaml.cs` (new handler, `SetUiText`, `DisableButtons`)
 
-- [ ] **Step 1: Read the reference implementation**
+- [x] **Step 1: Read the reference implementation**
 
 ```bash
 git show spike/gui-redesign:vHC/Spikes/GuiRedesignSpike/Views/AdHocHealthCheckView.axaml.cs | sed -n '42,64p'
@@ -2296,7 +2296,7 @@ git show spike/gui-redesign:vHC/Spikes/GuiRedesignSpike/Views/AdHocHealthCheckVi
 
 All three guards you need are already there. Do not go looking for a subtlety it missed; there isn't one.
 
-- [ ] **Step 2: Add the button to the markup**
+- [x] **Step 2: Add the button to the markup**
 
 In `vHC/HC_Reporting/VhcGui.axaml`, replace:
 
@@ -2320,7 +2320,7 @@ with:
 
 32px, not the spike's 36px, to match every other control height in this window.
 
-- [ ] **Step 3: Add the handler**
+- [x] **Step 3: Add the handler**
 
 In `vHC/HC_Reporting/VhcGui.axaml.cs`:
 
@@ -2367,7 +2367,7 @@ Add to the using block:
 using Avalonia.Platform.Storage;
 ```
 
-- [ ] **Step 4: Wire the tooltip and the disable**
+- [x] **Step 4: Wire the tooltip and the disable**
 
 Add to `SetUiText`:
 
@@ -2381,7 +2381,7 @@ Add to `DisableButtons`:
             browseFolderBtn.IsEnabled = false;
 ```
 
-- [ ] **Step 5: Build and test**
+- [x] **Step 5: Build and test**
 
 ```bash
 dotnet build vHC/HC.sln --configuration Debug
@@ -2391,7 +2391,7 @@ git checkout -- vHC/HC_Reporting/VeeamHealthCheck.csproj
 
 Expected: 0 errors, 0 failed.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add vHC/HC_Reporting/VhcGui.axaml vHC/HC_Reporting/VhcGui.axaml.cs
