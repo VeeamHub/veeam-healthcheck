@@ -284,12 +284,29 @@ namespace VeeamHealthCheck.Functions.ManageServers
                 this.doneBtn.IsEnabled = false;
                 this.cancelBtn.IsEnabled = false;
 
-                await CGlobals.Notifier.ShowErrorAsync(
-                    string.Format(
-                        CultureInfo.CurrentCulture,
-                        VbrLocalizationHelper.GuiManageServersPartialFailureBody,
-                        string.Join(", ", outcome.FailedCredentialRemovals)),
-                    VbrLocalizationHelper.GuiManageServersPartialFailureTitle);
+                // Close(true) lives in `finally`, not after this block, so it still runs
+                // even if ShowErrorAsync itself throws: the commit already succeeded on
+                // disk by this point, and leaving the dialog open with both buttons
+                // disabled forever - reachable if the notification call throws - would
+                // both strand the user AND, since _editor's state is unchanged, leave
+                // Done re-enabled-by-nothing for a retry that would re-trip the exact
+                // reinstatement hazard the doneBtn-disable above this block exists to
+                // prevent. Closing regardless is strictly safer than staying open.
+                try
+                {
+                    await CGlobals.Notifier.ShowErrorAsync(
+                        string.Format(
+                            CultureInfo.CurrentCulture,
+                            VbrLocalizationHelper.GuiManageServersPartialFailureBody,
+                            string.Join(", ", outcome.FailedCredentialRemovals)),
+                        VbrLocalizationHelper.GuiManageServersPartialFailureTitle);
+                }
+                finally
+                {
+                    Close(true);
+                }
+
+                return;
             }
 
             Close(true);
