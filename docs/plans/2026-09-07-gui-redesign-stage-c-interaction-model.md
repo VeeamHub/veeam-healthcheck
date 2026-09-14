@@ -1279,7 +1279,7 @@ git commit -m "feat(servers): auto-add hosts to the persisted list on credential
 - Modify: `vHC/HC_Reporting/Resources/Localization/VbrLocalizationHelper.cs` (**UTF-16LE + CRLF**)
 - Modify: `vHC/HC_Reporting/Resources/Localization/vhcres.txt` (**UTF-16LE + CRLF**, optional but preferred)
 
-- [ ] **Step 1: Add the keys to `vhcres.resx`**
+- [x] **Step 1: Add the keys to `vhcres.resx`**
 
 Insert these `<data>` blocks immediately before the existing `<data name="GuiAcceptButton" ...>` block at line 15. Keys are added to the **neutral** resx only — `NeutralLanguage=en-US` resolves them to English for `fr-FR`/`ja`/`zh-cn`/`zh-tw` automatically, so translation is a later content-only edit with no code change.
 
@@ -1355,7 +1355,7 @@ Insert these `<data>` blocks immediately before the existing `<data name="GuiAcc
   </data>
 ```
 
-- [ ] **Step 2: Add the accessors to `VbrLocalizationHelper.cs`, encoding-preserving**
+- [x] **Step 2: Add the accessors to `VbrLocalizationHelper.cs`, encoding-preserving**
 
 The helper is UTF-16LE with CRLF and its last two lines are `}}`. Insert the new accessors before them with this script — do **not** use a text editor or an edit tool that would rewrite the file as UTF-8:
 
@@ -1386,7 +1386,7 @@ print("inserted", len(keys), "accessors")
 PY
 ```
 
-- [ ] **Step 3: Verify the encoding survived**
+- [x] **Step 3: Verify the encoding survived**
 
 ```bash
 file vHC/HC_Reporting/Resources/Localization/VbrLocalizationHelper.cs
@@ -1395,7 +1395,7 @@ iconv -f UTF-16LE -t UTF-8 vHC/HC_Reporting/Resources/Localization/VbrLocalizati
 
 Expected: `Unicode text, UTF-16, little-endian text, with CRLF line terminators` and a count of `17` (the key list has 17 `GuiManageServers*` entries; the other six new keys use different prefixes). **If `file` reports UTF-8, stop and `git checkout --` the file** — a UTF-8 rewrite corrupts every localized string in the application.
 
-- [ ] **Step 4: Append the matching entries to `vhcres.txt`**
+- [x] **Step 4: Append the matching entries to `vhcres.txt`**
 
 This file is the ResGen resource source, **not C#** — its format is `Key = Value` (see `GuiAcceptButton = Accept Terms` at line 9). `VbrResFileBuilder.ps1` reads it, takes `$line.Split()[0]` as the key, and *generates* the C# accessor from it. Do not append C# here. It is also UTF-16LE.
 
@@ -1440,7 +1440,7 @@ file vHC/HC_Reporting/Resources/Localization/vhcres.txt
 
 Expected: still UTF-16LE.
 
-- [ ] **Step 5: Build and verify every key resolves**
+- [x] **Step 5: Build and verify every key resolves**
 
 `m4.GetString()` returns **null** for a missing key — no exception, no build error, just a silently blank label. Build, then assert every new accessor is non-null:
 
@@ -1451,7 +1451,7 @@ git checkout -- vHC/HC_Reporting/VeeamHealthCheck.csproj
 
 Expected: 0 errors. A blank-label typo cannot be caught here — Task 14 puts it on the Windows checklist. Re-read your resx names against the accessor names character for character now, while the diff is small.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add vHC/HC_Reporting/Resources/Localization/
@@ -2160,7 +2160,7 @@ git commit -m "feat(gui): replace the Terms button with a checkbox that raises A
 - Modify: `vHC/HC_Reporting/VhcGui.axaml` (~lines 140-147)
 - Modify: `vHC/HC_Reporting/VhcGui.axaml.cs` (`ComboBox_SelectionChanged` → new handler, `SetUiText`)
 
-- [ ] **Step 1: Replace the ComboBox with pills**
+- [x] **Step 1: Replace the ComboBox with pills**
 
 In `vHC/HC_Reporting/VhcGui.axaml`, replace:
 
@@ -2191,7 +2191,7 @@ with:
 
 The `-1` left margins overlap adjacent 1px borders so the three pills read as one joined control.
 
-- [ ] **Step 2: Replace the handler**
+- [x] **Step 2: Replace the handler**
 
 In `vHC/HC_Reporting/VhcGui.axaml.cs`, replace `ComboBox_SelectionChanged` (and its comment block about the `daysSelector` null guard) with:
 
@@ -2227,7 +2227,7 @@ In `vHC/HC_Reporting/VhcGui.axaml.cs`, replace `ComboBox_SelectionChanged` (and 
 
 `SetReportDays` itself — its `CGlobals.ReportDays` write and `LogUIAction` call — is unchanged.
 
-- [ ] **Step 3: Set the pill labels in `SetUiText`**
+- [x] **Step 3: Set the pill labels in `SetUiText`**
 
 Add to `SetUiText`:
 
@@ -2237,7 +2237,7 @@ Add to `SetUiText`:
             this.days90.Content = VbrLocalizationHelper.GuiPeriod90;
 ```
 
-- [ ] **Step 4: Confirm `RadioButton` is imported**
+- [x] **Step 4: Confirm `RadioButton` is imported**
 
 ```bash
 grep -n "using Avalonia.Controls;" vHC/HC_Reporting/VhcGui.axaml.cs
@@ -2245,7 +2245,7 @@ grep -n "using Avalonia.Controls;" vHC/HC_Reporting/VhcGui.axaml.cs
 
 Expected: a match. `RadioButton` lives in `Avalonia.Controls`.
 
-- [ ] **Step 5: Build and test**
+- [x] **Step 5: Build and test**
 
 ```bash
 dotnet build vHC/HC.sln --configuration Debug
@@ -2255,7 +2255,7 @@ git checkout -- vHC/HC_Reporting/VeeamHealthCheck.csproj
 
 Expected: 0 errors, 0 failed.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add vHC/HC_Reporting/VhcGui.axaml vHC/HC_Reporting/VhcGui.axaml.cs
