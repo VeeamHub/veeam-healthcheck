@@ -263,6 +263,35 @@ namespace VeeamHealthCheck.Functions.ManageServers
                 return;
             }
 
+            if (outcome.FailedCredentialRemovals.Count > 0)
+            {
+                // Both buttons off before this await and deliberately NOT re-enabled -
+                // unlike the confirm guard above, this path closes unconditionally right
+                // after. AvaloniaUiNotifier owns its dialogs with AvaloniaHost.MainWindow
+                // (VhcGui), not this window (see the confirm-guard comment above), so
+                // THIS dialog stays fully interactive while the message is on screen. A
+                // Cancel click during that window would resolve the caller's
+                // ShowDialog<bool> with false - which skips manageServersBtn_Click's
+                // repopulate for a commit that DID succeed, leaving the picker stale -
+                // and would then leave this suspended handler to Close(true) a window
+                // that is already closed. Disabling Cancel here, with no re-enable,
+                // removes that path entirely.
+                //
+                // outcome.SettingsSaved is true here (the false case already returned
+                // above), so the list genuinely saved - this is telling the user which
+                // host(s) were kept in it because their credential survived, not
+                // blocking the close.
+                this.doneBtn.IsEnabled = false;
+                this.cancelBtn.IsEnabled = false;
+
+                await CGlobals.Notifier.ShowErrorAsync(
+                    string.Format(
+                        CultureInfo.CurrentCulture,
+                        VbrLocalizationHelper.GuiManageServersPartialFailureBody,
+                        string.Join(", ", outcome.FailedCredentialRemovals)),
+                    VbrLocalizationHelper.GuiManageServersPartialFailureTitle);
+            }
+
             Close(true);
         }
     }
