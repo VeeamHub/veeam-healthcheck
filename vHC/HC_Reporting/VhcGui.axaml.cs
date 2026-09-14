@@ -111,7 +111,7 @@ namespace VeeamHealthCheck
             // others, and termsCheckBox/run would start Focusable=true from XAML alone.
             SelectTab(isAdHoc: true);
 
-            ThemeToggleButton.Content = ThemeLabelFor(Application.Current!.RequestedThemeVariant);
+            ThemeToggleButton.Content = ThemeLabelFor(NextThemeVariant(Application.Current!.RequestedThemeVariant));
 
             // AvaloniaUiNotifier passes this as the ShowDialog owner. Set it
             // here (rather than waiting for Task 12's App.axaml.cs) because
@@ -139,17 +139,26 @@ namespace VeeamHealthCheck
         private void ThemeToggleButton_Click(object sender, RoutedEventArgs e)
         {
             var app = Application.Current!;
-            ThemeVariant next = app.RequestedThemeVariant switch
-            {
-                var v when v == ThemeVariant.Dark => ThemeVariant.Light,
-                var v when v == ThemeVariant.Light => ThemeVariant.Default,
-                _ => ThemeVariant.Dark, // System (Default) -> Dark
-            };
+            ThemeVariant next = NextThemeVariant(app.RequestedThemeVariant);
 
             app.RequestedThemeVariant = next;
             CAppSettings.Set(CThemePreference.FromVariant(next));
-            ThemeToggleButton.Content = ThemeLabelFor(next);
+
+            // Labels the button with what a FURTHER click will do from this new
+            // current state - not this state itself. A toggle button showing its
+            // own current state ("you are in Light mode") reads as a status
+            // indicator, not a control; showing the target of the next click is
+            // the standard convention and is what actually tells the user what
+            // pressing it does.
+            ThemeToggleButton.Content = ThemeLabelFor(NextThemeVariant(next));
         }
+
+        private static ThemeVariant NextThemeVariant(ThemeVariant current) => current switch
+        {
+            var v when v == ThemeVariant.Dark => ThemeVariant.Light,
+            var v when v == ThemeVariant.Light => ThemeVariant.Default,
+            _ => ThemeVariant.Dark, // System (Default) -> Dark
+        };
 
         private static string ThemeLabelFor(ThemeVariant variant) =>
             variant == ThemeVariant.Dark ? "🌙 Dark" :
