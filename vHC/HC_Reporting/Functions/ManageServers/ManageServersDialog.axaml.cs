@@ -23,12 +23,45 @@ namespace VeeamHealthCheck.Functions.ManageServers
     {
         private readonly ServerListEditor _editor;
 
+        // Guards the native window-close button (OS title-bar X, Alt+F4, etc.), which
+        // has no Button to disable and is not blocked by doneBtn/cancelBtn.IsEnabled.
+        // See OnClosing below for why that gap matters and how this flag closes it.
+        private bool _busy;
+
         // Required by the XAML loader. The real entry point is the two-argument
         // constructor; nothing should show a dialog built this way, and leaving _editor
         // null would NRE on the first click rather than failing where the mistake was.
         public ManageServersDialog()
         {
             InitializeComponent();
+        }
+
+        // Blocks a user-initiated close while any CGlobals.Notifier await below is in
+        // flight. This dialog stays fully interactive during those awaits -
+        // AvaloniaUiNotifier owns its dialogs with AvaloniaHost.MainWindow, not this
+        // window (see the confirm-guard comment in doneBtn_Click) - and the in-app
+        // doneBtn/cancelBtn disables only block clicks reaching THIS dialog's own
+        // buttons. The native close button drives CloseCore through a separate path
+        // with no button in it to disable, so without this override the exact hazard
+        // those disables exist to prevent - resolving the caller's ShowDialog<bool>
+        // with a stale result while a commit is still being decided, or has already
+        // happened - is reachable through that second door.
+        //
+        // Close(...) calls made from this class's own code (cancelBtn_Click, both
+        // Close(true) sites in doneBtn_Click) route through Window.Close/CloseCore with
+        // isProgrammatic: true (verified against the actual Avalonia 11.3.20 source,
+        // not assumed), so IsProgrammatic reliably distinguishes "this class closing
+        // itself" from "the user closing it" regardless of _busy's exact value at that
+        // instant - a programmatic close is never blocked here.
+        protected override void OnClosing(WindowClosingEventArgs e)
+        {
+            if (_busy && !e.IsProgrammatic)
+            {
+                e.Cancel = true;
+                return;
+            }
+
+            base.OnClosing(e);
         }
 
         public ManageServersDialog(IEnumerable<string> initial, IEnumerable<string> pinned)
@@ -202,6 +235,7 @@ namespace VeeamHealthCheck.Functions.ManageServers
                 this.cancelBtn.IsEnabled = false;
 
                 bool confirmed;
+                _busy = true;
                 try
                 {
                     confirmed = await CGlobals.Notifier.ConfirmAsync(
@@ -214,6 +248,7 @@ namespace VeeamHealthCheck.Functions.ManageServers
                 }
                 finally
                 {
+                    _busy = false;
                     this.doneBtn.IsEnabled = true;
                     this.cancelBtn.IsEnabled = true;
                 }
@@ -242,9 +277,17 @@ namespace VeeamHealthCheck.Functions.ManageServers
 
             if (!outcome.SettingsSaved)
             {
-                await CGlobals.Notifier.ShowErrorAsync(
-                    VbrLocalizationHelper.GuiManageServersSaveFailed,
-                    VbrLocalizationHelper.GuiManageServersSaveFailedTitle);
+                _busy = true;
+                try
+                {
+                    await CGlobals.Notifier.ShowErrorAsync(
+                        VbrLocalizationHelper.GuiManageServersSaveFailed,
+                        VbrLocalizationHelper.GuiManageServersSaveFailedTitle);
+                }
+                finally
+                {
+                    _busy = false;
+                }
 
                 // Permanently disable Done rather than leave it clickable for a retry
                 // from this same dialog instance. A retry would recompute the identical
@@ -292,6 +335,7 @@ namespace VeeamHealthCheck.Functions.ManageServers
                 // Done re-enabled-by-nothing for a retry that would re-trip the exact
                 // reinstatement hazard the doneBtn-disable above this block exists to
                 // prevent. Closing regardless is strictly safer than staying open.
+                _busy = true;
                 try
                 {
                     await CGlobals.Notifier.ShowErrorAsync(
@@ -303,6 +347,7 @@ namespace VeeamHealthCheck.Functions.ManageServers
                 }
                 finally
                 {
+                    _busy = false;
                     Close(true);
                 }
 
