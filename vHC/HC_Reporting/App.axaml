@@ -285,6 +285,49 @@
             <Setter Property="FontWeight" Value="SemiBold" />
         </Style>
 
+        <!-- Confirmed against the real 11.3.20 RadioButton.xaml source: FluentTheme's
+             RadioButton ControlTheme repaints Background/BorderBrush on /template/
+             Border#RootBorder for both :pointerover and :pressed, and Foreground on
+             /template/ ContentPresenter#PART_ContentPresenter - all at StyleTrigger
+             priority, which outranks the plain setters above (same class of override
+             Button.tab needed in Stage B: Background alone was not enough there
+             either). Without these, hovering or pressing a pill replaces its
+             Background AND BorderBrush with FluentTheme's own theme-native defaults,
+             which don't contrast against this app's own page background - the pill's
+             outline disappears and the highlight blends into the page. -->
+        <Style Selector="RadioButton.segment:pointerover /template/ Border#RootBorder">
+            <Setter Property="Background" Value="{DynamicResource CardBorderBrush}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource CardBorderBrush}" />
+        </Style>
+        <Style Selector="RadioButton.segment:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Foreground" Value="{DynamicResource SecondaryTextBrush}" />
+        </Style>
+        <Style Selector="RadioButton.segment:pressed /template/ Border#RootBorder">
+            <Setter Property="Background" Value="{DynamicResource CardBorderBrush}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource CardBorderBrush}" />
+        </Style>
+        <Style Selector="RadioButton.segment:pressed /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Foreground" Value="{DynamicResource SecondaryTextBrush}" />
+        </Style>
+        <!-- Checked+hover/press need their own overrides too: without them, the same
+             FluentTheme rules above would replace the checked pill's green Background
+             with the unchecked hover/press treatment, so hovering the active pill would
+             visibly un-highlight it. -->
+        <Style Selector="RadioButton.segment:checked:pointerover /template/ Border#RootBorder">
+            <Setter Property="Background" Value="{DynamicResource SegmentSelectedBrush}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource SegmentSelectedBrush}" />
+        </Style>
+        <Style Selector="RadioButton.segment:checked:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Foreground" Value="{DynamicResource OnAccentTextBrush}" />
+        </Style>
+        <Style Selector="RadioButton.segment:checked:pressed /template/ Border#RootBorder">
+            <Setter Property="Background" Value="{DynamicResource SegmentSelectedBrush}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource SegmentSelectedBrush}" />
+        </Style>
+        <Style Selector="RadioButton.segment:checked:pressed /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Foreground" Value="{DynamicResource OnAccentTextBrush}" />
+        </Style>
+
         <!-- ListBoxItem selection: FluentTheme's default (confirmed against the real
              ListBoxItem.xaml source) paints a 100% solid accent-color fill with
              SystemControlHighlightAltBaseHighBrush as the text color - a theme-native
