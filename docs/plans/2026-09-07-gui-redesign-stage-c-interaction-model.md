@@ -2004,6 +2004,8 @@ XAML and code-behind together, so the tree compiles at the end of the task.
 **Files:**
 - Modify: `vHC/HC_Reporting/VhcGui.axaml` (bottom bar, ~line 250)
 - Modify: `vHC/HC_Reporting/VhcGui.axaml.cs` (`SelectTab`, `SetUiText`, `DisableButtons`, `AcceptButton_click`)
+- Modify: `vHC/HC_Reporting/Common/CGlobals.cs` (doc comment naming the old handler)
+- Modify: `vHC/HC_Reporting/Functions/UserInteraction/IUiNotifier.cs` (doc comment naming the old handler)
 
 - [ ] **Step 1: Replace the button in the bottom bar**
 
@@ -2108,11 +2110,13 @@ Comments do not break the build, so these are silent — and one of them is load
 
 Separately, two comments name the old *handler* rather than the old control, and a `termsBtn`-only grep does not catch them: `VhcGui.axaml.cs:46` ("AcceptButton_click's Task.Run(AcceptTerms) can raise a dialog") and `:272` ("moved off the UI thread here, same as AcceptButton_click below"). Once Step 2 renames the handler, both go stale the same way a leftover `termsBtn` would.
 
+The `AcceptButton_click` grep must not be scoped to just these two files either: the handler name also appears in doc comments in `vHC/HC_Reporting/Common/CGlobals.cs` and `vHC/HC_Reporting/Functions/UserInteraction/IUiNotifier.cs`, neither of which this task otherwise touches. Run it repo-wide over `vHC/` (excluding `obj`/`bin`) and fix every hit, not just the two named files.
+
 Replace every `termsBtn` in those comments with `termsCheckBox`, and every `AcceptButton_click` with `termsCheckBox_Checked`, keeping the surrounding reasoning intact. Verify both:
 
 ```bash
 grep -n 'termsBtn' vHC/HC_Reporting/VhcGui.axaml.cs vHC/HC_Reporting/VhcGui.axaml
-grep -n 'AcceptButton_click' vHC/HC_Reporting/VhcGui.axaml.cs vHC/HC_Reporting/VhcGui.axaml
+grep -rn 'AcceptButton_click' vHC/ --include='*.cs' --include='*.axaml' | grep -v '/obj/\|/bin/'
 ```
 
 Expected: no output from either.
