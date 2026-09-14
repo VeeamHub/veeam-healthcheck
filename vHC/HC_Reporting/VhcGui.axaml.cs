@@ -1,6 +1,7 @@
 // Copyright (c) 2021, Adam Congdon <adam.congdon2@gmail.com>
 // MIT License
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Avalonia;
@@ -8,9 +9,11 @@ using Avalonia.Controls;
 using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Interactivity;
 using Avalonia.Media;
+using Avalonia.Platform.Storage;
 using Avalonia.Styling;
 using Avalonia.Threading;
 using VeeamHealthCheck.Functions.AboutDialog;
+using VeeamHealthCheck.Functions.ManageServers;
 using VeeamHealthCheck.Functions.Monitor;
 using VeeamHealthCheck.Functions.UserInteraction;
 using VeeamHealthCheck.Resources.Localization;
@@ -27,23 +30,92 @@ namespace VeeamHealthCheck
         private readonly CClientFunctions functions = new();
         private bool _modeCheckFailed;
 
+        private const string LocalhostName = "localhost";
+
+        // Resolved inside SetUiSync(), right after ModeCheck() runs - see that
+        // method's comments for why it can't be resolved any earlier. Caching it in
+        // a field is what lets SetUiSync's own hasRemoteServers scan see the real
+        // list instead of a not-yet-populated control. This is the PERSISTED list:
+        // it never contains localhost on an injecting machine.
+        private List<string> _persistedServers = new();
+
+        // What the picker actually shows: _persistedServers plus injected localhost.
+        // Kept as a field rather than read back off serverSelector.ItemsSource, because
+        // casting ItemsSource back to a concrete collection type is a runtime cast that
+        // silently depends on what InitializeServerList happened to assign.
+        private List<string> _displayServers = new();
+
+        // The single predicate that owns localhost policy. Injection, pinning and the
+        // seed filter all derive from it; writing those three rules independently is how
+        // they drift apart and produce a blank picker on a VB365-only machine.
+        //
+        // IsVbrInstalled alone is not enough: it is set only for a running
+        // Veeam.Backup.Service (CClientFunctions.cs:106), so it is false on a VB365-only
+        // box - which can still legitimately hold a localhost credential, because
+        // RunSaveCredsFlow defaults its host to "localhost".
+        private static bool LocalhostIsInjected =>
+            CGlobals.IsVbrInstalled || CGlobals.IsVb365;
+
         public VhcGui()
         {
+            // Captured before InitializeComponent() touches it - see the resync
+            // immediately below for why.
+            int reportDaysAtStartup = CGlobals.ReportDays;
+
             InitializeComponent();
+
+            // days7's IsChecked="True" in XAML raises Checked synchronously during the
+            // InitializeComponent() call above, unconditionally running
+            // PeriodRadio_Checked -> SetReportDays(7) -> CGlobals.ReportDays = 7. That
+            // silently stomps a /days:N CLI value set before this window was ever
+            // constructed (CArgsParser.cs's /days:7|30|90|12 cases all run before
+            // LaunchUi gets anywhere near `new VhcGui()`). The old period-selection
+            // control this replaced did not have this problem: its SelectionChanged
+            // handler guarded on its own field being null, and that field was not yet
+            // assigned to itself at the moment its own initial SelectionChanged fired -
+            // but a RadioButton's `sender` on its OWN Checked event is never null, so
+            // the same guard shape does not carry over to this control. Restore the
+            // value captured above, now that construction has settled.
+            switch (reportDaysAtStartup)
+            {
+                case 30:
+                    days30.IsChecked = true; // re-fires PeriodRadio_Checked, restoring 30
+                    break;
+                case 90:
+                    days90.IsChecked = true; // re-fires PeriodRadio_Checked, restoring 90
+                    break;
+                case 7:
+                    break; // already correct; days7 is already checked
+                default:
+                    // No pill represents this value (e.g. /days:12) - the segmented
+                    // control only ever offers 7/30/90, the same three the ComboBox it
+                    // replaced offered. Restore the value directly so the report still
+                    // uses it; the UI is left showing days7 checked, the same cosmetic
+                    // mismatch the ComboBox's SelectedIndex="0" default showed for this
+                    // same case.
+                    //
+                    // Goes through SetReportDays rather than a raw assignment so the log
+                    // also gets a correcting "Interval set to N" entry - otherwise the
+                    // unconditional SetReportDays(7) that already ran during
+                    // InitializeComponent() above leaves "Interval set to 7" as the log's
+                    // last word on this even though CGlobals.ReportDays ends up N.
+                    this.SetReportDays(reportDaysAtStartup);
+                    break;
+            }
 
             // Establishes SelectTab as the single source of truth for the Ad-hoc-tab
             // default (XAML alone encodes it three separate ways: AdHocTabPanel's
             // implicit IsVisible=true, AdHocTabButton's tab-active class, and
-            // termsBtn/run's implicit default Opacity/IsHitTestVisible/Focusable) -
+            // termsCheckBox/run's implicit default Opacity/IsHitTestVisible/Focusable) -
             // without this call, a future edit to one could silently drift from the
-            // others, and termsBtn/run would start Focusable=true from XAML alone.
+            // others, and termsCheckBox/run would start Focusable=true from XAML alone.
             SelectTab(isAdHoc: true);
 
-            ThemeToggleButton.Content = ThemeLabelFor(Application.Current!.RequestedThemeVariant);
+            ThemeToggleButton.Content = ThemeLabelFor(NextThemeVariant(Application.Current!.RequestedThemeVariant));
 
             // AvaloniaUiNotifier passes this as the ShowDialog owner. Set it
             // here (rather than waiting for Task 12's App.axaml.cs) because
-            // AcceptButton_click's Task.Run(AcceptTerms) can raise a dialog
+            // termsCheckBox_Checked's Task.Run(AcceptTerms) can raise a dialog
             // before that wiring exists.
             AvaloniaHost.MainWindow = this;
 
@@ -67,17 +139,26 @@ namespace VeeamHealthCheck
         private void ThemeToggleButton_Click(object sender, RoutedEventArgs e)
         {
             var app = Application.Current!;
-            ThemeVariant next = app.RequestedThemeVariant switch
-            {
-                var v when v == ThemeVariant.Dark => ThemeVariant.Light,
-                var v when v == ThemeVariant.Light => ThemeVariant.Default,
-                _ => ThemeVariant.Dark, // System (Default) -> Dark
-            };
+            ThemeVariant next = NextThemeVariant(app.RequestedThemeVariant);
 
             app.RequestedThemeVariant = next;
             CAppSettings.Set(CThemePreference.FromVariant(next));
-            ThemeToggleButton.Content = ThemeLabelFor(next);
+
+            // Labels the button with what a FURTHER click will do from this new
+            // current state - not this state itself. A toggle button showing its
+            // own current state ("you are in Light mode") reads as a status
+            // indicator, not a control; showing the target of the next click is
+            // the standard convention and is what actually tells the user what
+            // pressing it does.
+            ThemeToggleButton.Content = ThemeLabelFor(NextThemeVariant(next));
         }
+
+        private static ThemeVariant NextThemeVariant(ThemeVariant current) => current switch
+        {
+            var v when v == ThemeVariant.Dark => ThemeVariant.Light,
+            var v when v == ThemeVariant.Light => ThemeVariant.Default,
+            _ => ThemeVariant.Dark, // System (Default) -> Dark
+        };
 
         private static string ThemeLabelFor(ThemeVariant variant) =>
             variant == ThemeVariant.Dark ? "🌙 Dark" :
@@ -92,11 +173,11 @@ namespace VeeamHealthCheck
 
         private void MonitoringTabButton_Click(object sender, RoutedEventArgs e) => SelectTab(isAdHoc: false);
 
-        // termsBtn/run belong to the ad-hoc workflow and follow the active tab; the
+        // termsCheckBox/run belong to the ad-hoc workflow and follow the active tab; the
         // progress stack does not (see the bottom-bar comment in VhcGui.axaml) - a
         // real run can take minutes and must stay visible from either tab.
         //
-        // termsBtn and run each sit alone in their own Auto column of the bottom
+        // termsCheckBox and run each sit alone in their own Auto column of the bottom
         // bar's Grid. IsVisible=false removes a control from layout entirely, so
         // an Auto column with nothing else to measure collapses to zero width -
         // the same reflow this plan already fixed for progressText, just
@@ -113,9 +194,9 @@ namespace VeeamHealthCheck
             // Opacity/IsHitTestVisible alone block pointer input, not keyboard focus -
             // without Focusable=false too, Tab navigation could still land on and
             // activate the invisible button from the wrong tab.
-            termsBtn.Opacity = isAdHoc ? 1 : 0;
-            termsBtn.IsHitTestVisible = isAdHoc;
-            termsBtn.Focusable = isAdHoc;
+            termsCheckBox.Opacity = isAdHoc ? 1 : 0;
+            termsCheckBox.IsHitTestVisible = isAdHoc;
+            termsCheckBox.Focusable = isAdHoc;
             run.Opacity = isAdHoc ? 1 : 0;
             run.IsHitTestVisible = isAdHoc;
             run.Focusable = isAdHoc;
@@ -124,34 +205,62 @@ namespace VeeamHealthCheck
             MonitoringTabButton.Classes.Set("tab-active", !isAdHoc);
         }
 
-        private void InitializeServerList()
+        // preserveSelection distinguishes the two callers, and the distinction is
+        // load-bearing. At startup there is no selection to keep and localhost-first is
+        // the right default. After the dialog commits, silently reasserting that default
+        // would move a user who was sitting on vbr01 back to localhost - flipping
+        // REMOTEEXEC to false and pointing the next run at the local box - even if they
+        // pressed Done having changed nothing. Both tabs read that selection
+        // (monitorQuickSetupBtn_Click), so it must survive a repopulate.
+        private void InitializeServerList(bool preserveSelection = false)
         {
-            // Load saved servers from credentials
-            var savedServers = CredentialStore.GetAllServers();
+            string previous = preserveSelection
+                ? serverSelector.SelectedItem?.ToString()
+                : null;
 
-            // Add localhost if VBR is installed
-            if (CGlobals.IsVbrInstalled && !savedServers.Contains("localhost"))
+            // The persisted list is authoritative; GetAllServers() is consulted only by
+            // LoadOrSeedServers' one-time seed and the post-commit refresh.
+            var display = new List<string>();
+
+            if (LocalhostIsInjected)
             {
-                savedServers.Insert(0, "localhost");
+                display.Add(LocalhostName);
             }
 
-            // Populate dropdown with unique servers
-            foreach (var server in savedServers.Distinct())
+            // Case-insensitive de-dup, matching the .Distinct() this method used to
+            // apply. LoadOrSeedServers already strips localhost when it is injected;
+            // this is belt and braces so a stray entry can never render twice.
+            foreach (var server in _persistedServers)
             {
-                if (!string.IsNullOrWhiteSpace(server))
+                if (!display.Any(s => s.Equals(server, StringComparison.OrdinalIgnoreCase)))
                 {
-                    serverListBox.Items.Add(server);
+                    display.Add(server);
                 }
             }
 
-            // Select localhost by default if it exists
-            if (serverListBox.Items.Contains("localhost"))
+            _displayServers = display;
+            serverSelector.ItemsSource = _displayServers;
+
+            // Restore the prior selection when it survived the commit; otherwise fall
+            // back to localhost-first, then first-entry - the precedence this method has
+            // always used at startup.
+            string keep = previous == null
+                ? null
+                : _displayServers.FirstOrDefault(
+                    s => s.Equals(previous, StringComparison.OrdinalIgnoreCase));
+
+            if (keep != null)
             {
-                serverListBox.SelectedItem = "localhost";
+                serverSelector.SelectedItem = keep;
             }
-            else if (serverListBox.Items.Count > 0)
+            else if (_displayServers.Any(s => s.Equals(LocalhostName, StringComparison.OrdinalIgnoreCase)))
             {
-                serverListBox.SelectedIndex = 0;
+                serverSelector.SelectedItem = _displayServers.First(
+                    s => s.Equals(LocalhostName, StringComparison.OrdinalIgnoreCase));
+            }
+            else if (_displayServers.Count > 0)
+            {
+                serverSelector.SelectedIndex = 0;
             }
 
             UpdateSelectedServersGlobal();
@@ -159,27 +268,23 @@ namespace VeeamHealthCheck
 
         private void UpdateSelectedServersGlobal()
         {
-            // Set the VBR server name from the selected item
-            if (serverListBox.SelectedItem != null)
+            if (serverSelector.SelectedItem != null)
             {
-                CGlobals.VBRServerName = serverListBox.SelectedItem.ToString();
-                CGlobals.REMOTEHOST = serverListBox.SelectedItem.ToString();
+                CGlobals.VBRServerName = serverSelector.SelectedItem.ToString();
+                CGlobals.REMOTEHOST = serverSelector.SelectedItem.ToString();
             }
-            else if (serverListBox.Items.Count > 0)
+            else if (_displayServers.Count > 0)
             {
-                // If nothing selected but items exist, use first item
-                CGlobals.VBRServerName = serverListBox.Items[0].ToString();
-                CGlobals.REMOTEHOST = serverListBox.Items[0].ToString();
+                CGlobals.VBRServerName = _displayServers[0];
+                CGlobals.REMOTEHOST = CGlobals.VBRServerName;
             }
             else
             {
-                // Fallback to localhost
-                CGlobals.VBRServerName = "localhost";
-                CGlobals.REMOTEHOST = "localhost";
+                CGlobals.VBRServerName = LocalhostName;
+                CGlobals.REMOTEHOST = LocalhostName;
             }
 
-            // Set REMOTEEXEC flag if not localhost
-            CGlobals.REMOTEEXEC = !CGlobals.VBRServerName.Equals("localhost", StringComparison.OrdinalIgnoreCase);
+            CGlobals.REMOTEEXEC = !CGlobals.VBRServerName.Equals(LocalhostName, StringComparison.OrdinalIgnoreCase);
         }
 
         // Split from the original single SetUi(): everything here is synchronous
@@ -191,31 +296,59 @@ namespace VeeamHealthCheck
         // notifier primitives - that part moves to SetUiAsync, run from Loaded
         // instead of the constructor.
         //
-        // NOTE: preserved verbatim from the real WPF file - SetUiSync() runs
-        // before InitializeServerList() in the constructor, so the
-        // hasRemoteServers scan below always sees an empty serverListBox, and
-        // (when it doesn't fail) "this.Title = modeCheckResult;" immediately
-        // overwrites the "Remote Mode" title set a few lines above. Both are
-        // pre-existing bugs in the original file, not introduced by this port -
-        // left intact rather than silently fixed.
+        // NOTE: the hasRemoteServers scan used to always see an empty list
+        // (it read the old server list control, and SetUiSync() ran before
+        // InitializeServerList() populated it), so the hasRemoteServers branch below - and the title
+        // it sets - could never actually run. Task 12 fixed the scan to read
+        // _persistedServers, resolved above, instead of that not-yet-populated
+        // control - which makes the branch reachable for the first time. That
+        // exposed a second, previously-dormant bug: "this.Title = modeCheckResult;"
+        // a few lines below unconditionally overwrote whatever title was just
+        // set, including "Remote Mode", with the literal string "fail". Guarded
+        // below so "Remote Mode" survives.
+        //
+        // Making this branch live also means SetUiAsync() now reaches
+        // Task.Run(() => PreRunCheck()) on a machine with no local Veeam. That is a
+        // no-op: modeCheckResult can only be "fail" when both CGlobals.IsVbr and
+        // CGlobals.IsVb365 are false (CClientFunctions.cs:130), and both of
+        // PreRunCheck's dialog branches are gated on one of those flags
+        // (CClientFunctions.cs:36, :72).
         private void SetUiSync()
         {
             this.SetImportRelease();
 
             string modeCheckResult = this.functions.ModeCheck();
 
+            // Resolved HERE, and not one line earlier in the constructor. ModeCheck() is
+            // the only thing that populates CGlobals.IsVbrInstalled / IsVb365 on the GUI
+            // path, so evaluating LocalhostIsInjected before this call reads both as
+            // false on every machine - which would make excludeLocalhost permanently
+            // false, persist localhost into the one-time seed on injecting machines, and
+            // render the read-time filter inert. The same predicate evaluates correctly
+            // in manageServersBtn_Click (which runs later), so getting this wrong makes
+            // two calls to one function disagree.
+            //
+            // Placed before the fail branch below so hasRemoteServers still sees the
+            // resolved list. CredentialStore.GetAllServers() is safe at any point - a
+            // static constructor initialises its cache (CredentialStore.cs:34-36).
+            _persistedServers = CAppSettings.LoadOrSeedServers(
+                CredentialStore.GetAllServers(),
+                excludeLocalhost: LocalhostIsInjected);
+
             if (modeCheckResult == "fail")
             {
-                // If remote servers are configured, don't exit — let user select product type
-                bool hasRemoteServers = false;
-                foreach (var item in serverListBox.Items)
-                {
-                    if (!item.ToString().Equals("localhost", StringComparison.OrdinalIgnoreCase))
-                    {
-                        hasRemoteServers = true;
-                        break;
-                    }
-                }
+                // Reads the resolved list rather than a control that has not been
+                // populated yet. The old scan iterated an empty list control, because
+                // SetUiSync() runs before InitializeServerList() - so this branch could
+                // never fire, and a machine with no local Veeam but remote servers
+                // configured always got the abort the branch exists to prevent.
+                //
+                // The localhost filter is kept rather than relying on the "localhost is
+                // never persisted" invariant: on a non-injecting machine localhost IS
+                // legitimately persisted, and counting it as a remote server would put a
+                // local-only box into Remote Mode.
+                bool hasRemoteServers = _persistedServers
+                    .Any(s => !s.Equals(LocalhostName, StringComparison.OrdinalIgnoreCase));
 
                 if (hasRemoteServers)
                 {
@@ -229,7 +362,11 @@ namespace VeeamHealthCheck
                 }
             }
 
-            this.Title = modeCheckResult;
+            if (modeCheckResult != "fail")
+            {
+                this.Title = modeCheckResult;
+            }
+
             if (CGlobals.IsVb365 && CGlobals.IsVbr)
             {
                 pdfCheckBox.IsEnabled = false;
@@ -269,7 +406,7 @@ namespace VeeamHealthCheck
             // PreRunCheck() stays synchronous (Part 1) but calls the notifier's
             // blocking wrapper (IUiNotifier.Confirm/ShowError) internally.
             // Calling that directly from the UI thread would deadlock, so it's
-            // moved off the UI thread here, same as AcceptButton_click below.
+            // moved off the UI thread here, same as termsCheckBox_Checked below.
             await Task.Run(() => this.functions.PreRunCheck());
 
             this.SetUiText();
@@ -314,13 +451,20 @@ namespace VeeamHealthCheck
             // this.pptxCheckBox.Content = "Export PowerPoint";
             this.clearCredsCheckBox.Content = "Clear Saved Credentials";
             this.outPath.Text = VbrLocalizationHelper.GuiOutPath;
-            this.termsBtn.Content = VbrLocalizationHelper.GuiAcceptButton;
+            this.termsCheckBox.Content = VbrLocalizationHelper.GuiAcceptButton;
             this.run.Content = VbrLocalizationHelper.GuiRunButton;
             this.importButton.Content = VbrLocalizationHelper.GuiImportButton;
             this.RescanBox.Content = VbrLocalizationHelper.GuiRescanHosts;
+            this.days7.Content = VbrLocalizationHelper.GuiPeriod7;
+            this.days30.Content = VbrLocalizationHelper.GuiPeriod30;
+            this.days90.Content = VbrLocalizationHelper.GuiPeriod90;
 
             this.SetPathBoxText(CVariables.outDir);
             CGlobals.desiredPath = CVariables.outDir;
+            ToolTip.SetTip(this.browseFolderBtn, VbrLocalizationHelper.GuiBrowseFolderTooltip);
+
+            this.serverLabel.Text = VbrLocalizationHelper.GuiServerLabel;
+            ToolTip.SetTip(this.manageServersBtn, VbrLocalizationHelper.GuiManageServersTooltip);
         }
 
         private void SetPathBoxText(string text)
@@ -503,33 +647,141 @@ namespace VeeamHealthCheck
             this.showProgressBar();
         }
 
+        // Set once and never cleared. Every control DisableButtons() touches, other than
+        // run.IsEnabled (which ReportRunFailure explicitly restores on failure), stays
+        // disabled for the rest of this process's life once a run or import starts:
+        // success exits the process outright (Run()'s Task.Factory.StartNew body calls
+        // Environment.Exit(0)), and on failure only Run is meant to work again. This flag
+        // makes that pre-existing one-way-ratchet invariant checkable rather than
+        // implicit, specifically so termsCheckBox_Checked's async continuation can tell
+        // whether a run/import started while its own accept flow was still in flight -
+        // Import_click does not wait on terms acceptance, so it can race ahead of one.
+        //
+        // Set HERE, synchronously inside DisableButtons() - not inside showProgressBar(),
+        // which posts its own IsEnabled writes via Dispatcher.UIThread.Post and is
+        // therefore NOT synchronous with the caller. A terms-accept continuation resuming
+        // on the UI thread could dequeue ahead of a posted-but-not-yet-run action and
+        // still observe the pre-lock state. Setting the flag directly in the synchronous
+        // call path both Import_click and run_Click share (via DisableGuiAndStartProgressBar)
+        // is what makes the check in termsCheckBox_Checked airtight; moving it into
+        // showProgressBar (or anything else Dispatcher-posted) would silently reopen this.
+        private bool _guiLockedForRun;
+
         private void DisableButtons()
         {
+            _guiLockedForRun = true;
             explorerShowBox.IsEnabled = false;
             htmlCheckBox.IsEnabled = false;
             pdfCheckBox.IsEnabled = false;
             scrubBox.IsEnabled = false;
-            termsBtn.IsEnabled = false;
+            termsCheckBox.IsEnabled = false;
             importButton.IsEnabled = false;
             pathBox.IsEnabled = false;
+            browseFolderBtn.IsEnabled = false;
             clearCredsCheckBox.IsEnabled = false;
-            serverTextBox.IsEnabled = false;
-            addServerBtn.IsEnabled = false;
-            removeServerBtn.IsEnabled = false;
-            clearServersBtn.IsEnabled = false;
-            serverListBox.IsEnabled = false;
+            serverSelector.IsEnabled = false;
+            manageServersBtn.IsEnabled = false;
             productTypeSelector.IsEnabled = false;
             RescanBox.IsEnabled = false;
         }
 
-        // AcceptTerms() stays synchronous (Part 1) - but this handler runs
-        // directly on the UI thread, so calling its blocking wrapper form here
-        // would deadlock. Task.Run moves it off the UI thread first, exactly
-        // like SetUiAsync's PreRunCheck call above.
-        private async void AcceptButton_click(object sender, RoutedEventArgs e)
+        // Guards the programmatic revert below. A plain bool is sufficient ONLY because
+        // Avalonia raises Unchecked synchronously inside the IsChecked assignment, while
+        // this flag is still set - which is also why termsCheckBox_Unchecked must not be
+        // async void.
+        private bool _suppressTermsHandler;
+
+        // Blocks re-entrancy while an accept flow's await is pending. Without this (and
+        // the termsCheckBox.IsEnabled=false below), a fast uncheck-then-recheck during
+        // that window starts a SECOND overlapping AcceptTerms() flow: two confirm
+        // dialogs, and two continuations racing to write run.IsEnabled with no
+        // coordination between them - whichever resolves last wins, regardless of the
+        // checkbox's actual state by then, or of whether a run has since started off the
+        // first flow's own (still valid) acceptance. Disabling the checkbox for the
+        // duration closes this at the source: the user cannot trigger a second Checked
+        // while this one is in flight, so run.IsEnabled can only ever be written by the
+        // one accept flow that is allowed to be running at a time.
+        private bool _termsAcceptInFlight;
+
+        // AcceptTerms() stays synchronous - but this handler runs directly on the UI
+        // thread, and AcceptTerms() reaches the notifier's BLOCKING wrapper, which
+        // deadlocks there. Task.Run moves it off the UI thread first, exactly like
+        // SetUiAsync's PreRunCheck call. Do not "simplify" this away: the deadlock
+        // cannot reproduce on a non-Windows machine.
+        //
+        // The checkbox is visibly checked while the modal is open and springs back only
+        // on decline. That is intended, not a bug.
+        private async void termsCheckBox_Checked(object sender, RoutedEventArgs e)
         {
-            this.functions.LogUIAction("Accept");
-            run.IsEnabled = await Task.Run(() => this.functions.AcceptTerms());
+            if (_suppressTermsHandler || _termsAcceptInFlight)
+            {
+                return;
+            }
+
+            _termsAcceptInFlight = true;
+            termsCheckBox.IsEnabled = false;
+
+            try
+            {
+                this.functions.LogUIAction("Accept");
+                bool accepted = await Task.Run(() => this.functions.AcceptTerms());
+
+                // A run or import may have started (and locked the GUI, see
+                // _guiLockedForRun) while this await was pending - Import_click does not
+                // wait on terms acceptance, so it can race ahead of an in-flight accept
+                // flow. Once that happens this flow's result is stale and must not touch
+                // anything DisableButtons() already fixed in place: writing run.IsEnabled
+                // here could silently re-enable Run while a collection is already active,
+                // which is the one outcome this whole guard exists to prevent.
+                if (_guiLockedForRun)
+                {
+                    return;
+                }
+
+                // Belt-and-braces, not load-bearing given the IsEnabled=false above: while
+                // this flow owns the checkbox, nothing else can change IsChecked. Kept so
+                // this write's correctness does not silently start depending on that
+                // invariant holding if this method is ever restructured.
+                if (termsCheckBox.IsChecked == true)
+                {
+                    run.IsEnabled = accepted;
+                }
+
+                if (!accepted)
+                {
+                    _suppressTermsHandler = true;
+                    termsCheckBox.IsChecked = false;
+                    _suppressTermsHandler = false;
+                }
+            }
+            finally
+            {
+                _termsAcceptInFlight = false;
+                if (!_guiLockedForRun)
+                {
+                    termsCheckBox.IsEnabled = true;
+                }
+            }
+        }
+
+        // Deliberately NOT async void. An await before the guard check would resume the
+        // continuation after _suppressTermsHandler has been reset to false, silently
+        // disabling the guard. There is nothing to await here anyway.
+        //
+        // Logs unconditionally, including while _suppressTermsHandler is set: "terms are
+        // no longer accepted" is equally true whether this fired from a real user click
+        // or the programmatic revert on decline, so there is exactly one log line for
+        // that fact either way rather than the decline path needing its own separate one.
+        private void termsCheckBox_Unchecked(object sender, RoutedEventArgs e)
+        {
+            this.functions.LogUIAction("Accept = false");
+
+            if (_suppressTermsHandler)
+            {
+                return;
+            }
+
+            run.IsEnabled = false;
         }
 
         #endregion
@@ -625,31 +877,77 @@ namespace VeeamHealthCheck
             CGlobals.desiredPath = pathBox.Text ?? string.Empty;
         }
 
-        // Guard added (not present in the real WPF file): Avalonia's generated
-        // InitializeComponent() can raise SelectionChanged while assigning
-        // named fields as the tree is built, so daysSelector could still be
-        // null on first raise. Same defensive pattern already used by
-        // productTypeSelector_SelectionChanged/notifTypeBox_SelectionChanged
-        // below - not testable on macOS, but zero behavior change once
-        // daysSelector is non-null.
-        private void ComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        // First use of Avalonia's StorageProvider anywhere in this application. Ported
+        // from the spike verbatim, including all three guards. In production `this` IS
+        // the Window, so GetTopLevel cannot return null once the constructor has run -
+        // the guard is retained anyway.
+        //
+        // Assigning pathBox.Text is all that is needed: the existing pathBox_TextChanged
+        // handler propagates it to CGlobals.desiredPath.
+        private async void browseFolderBtn_Click(object sender, RoutedEventArgs e)
         {
-            if (daysSelector == null) return;
-            switch (daysSelector.SelectedIndex)
+            var topLevel = TopLevel.GetTopLevel(this);
+            if (topLevel is null)
             {
-                case 0:
-                    this.SetReportDays(7);
-                    break;
-                case 1:
-                    this.SetReportDays(30);
-                    break;
-                case 2:
-                    this.SetReportDays(90);
-                    break;
-                default:
-                    this.SetReportDays(7);
-                    break;
+                return;
             }
+
+            var folders = await topLevel.StorageProvider.OpenFolderPickerAsync(new FolderPickerOpenOptions
+            {
+                Title = VbrLocalizationHelper.GuiBrowseFolderTitle,
+                AllowMultiple = false,
+            });
+
+            if (folders.Count == 0)
+            {
+                return;
+            }
+
+            var path = folders[0].TryGetLocalPath();
+            if (string.IsNullOrEmpty(path))
+            {
+                return;
+            }
+
+            this.SetPathBoxText(path);
+        }
+
+        // Reads sender, never the days7/days30/days90 fields. days7's IsChecked="True"
+        // in XAML raises Checked DURING InitializeComponent(), when the other two named
+        // fields may not be assigned yet - inspecting them to find the checked one would
+        // throw a NullReferenceException at construction. This is the same class of
+        // timing hazard the ComboBox handler this replaces guarded against with a null
+        // check.
+        //
+        // This also makes SetReportDays reachable during InitializeComponent() for the
+        // first time, which the old null guard suppressed. That is safe with respect to
+        // initialization order: `functions` is a field initializer so it runs before the
+        // constructor body, and LogUIAction only writes to the static CGlobals.mainlog.
+        // It is NOT harmless with respect to a /days:N CLI override, though - writing 7
+        // here unconditionally stomps a /days:30 or /days:90 value set before this window
+        // was ever constructed. That case is real and is fixed immediately after
+        // InitializeComponent() in the constructor (capture reportDaysAtStartup first,
+        // then resync) - do not remove that capture/resync block as "redundant" just
+        // because this handler's own write looks harmless in isolation.
+        //
+        // The value comes from Tag rather than Name or Content because Content is
+        // localized, and parsing a localized label as data is exactly the mistake
+        // notifSeverityBox already makes.
+        private void PeriodRadio_Checked(object sender, RoutedEventArgs e)
+        {
+            // "7" is listed explicitly rather than folded into the `_` default, so `_`
+            // means only "unreachable" (sender wasn't a RadioButton, or Tag wasn't one
+            // of the three set in XAML) - a future fourth pill with a different Tag
+            // hits `_` and lands on this comment instead of silently behaving like "7".
+            int days = (sender as RadioButton)?.Tag switch
+            {
+                "7" => 7,
+                "30" => 30,
+                "90" => 90,
+                _ => 7,
+            };
+
+            this.SetReportDays(days);
         }
 
         private void SetReportDays(int days)
@@ -660,121 +958,56 @@ namespace VeeamHealthCheck
 
         #region Server Management
 
-        private void addServerBtn_Click(object sender, RoutedEventArgs e)
+        // Guard preserved from the ListBox version: Avalonia's generated
+        // InitializeComponent() can raise SelectionChanged while assigning named fields
+        // as the tree is built, so serverSelector can still be null on first raise.
+        private void serverSelector_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
-            string serverName = serverTextBox.Text?.Trim() ?? string.Empty;
-
-            if (string.IsNullOrWhiteSpace(serverName))
-            {
-                _ = CGlobals.Notifier.ShowErrorAsync("Please enter a server name.", "Input Required");
-                return;
-            }
-
-            // Check if server already exists in list
-            foreach (var item in serverListBox.Items)
-            {
-                if (item.ToString().Equals(serverName, StringComparison.OrdinalIgnoreCase))
-                {
-                    _ = CGlobals.Notifier.ShowErrorAsync($"Server '{serverName}' is already in the list.", "Duplicate Server");
-                    serverTextBox.Text = string.Empty;
-                    return;
-                }
-            }
-
-            // Add server to list
-            serverListBox.Items.Add(serverName);
-            serverTextBox.Text = string.Empty;
-            UpdateSelectedServersGlobal();
-
-            this.functions.LogUIAction($"Added server: {serverName}");
-        }
-
-        private async void removeServerBtn_Click(object sender, RoutedEventArgs e)
-        {
-            if (serverListBox.SelectedItem == null)
-            {
-                await CGlobals.Notifier.ShowErrorAsync("Please select a server to remove.", "No Selection");
-                return;
-            }
-
-            string selectedServer = serverListBox.SelectedItem.ToString();
-
-            // Don't allow removing localhost if it's the only item
-            if (serverListBox.Items.Count == 1 && selectedServer.Equals("localhost", StringComparison.OrdinalIgnoreCase))
-            {
-                await CGlobals.Notifier.ShowErrorAsync("Cannot remove the last server. At least one server must remain in the list.", "Cannot Remove");
-                return;
-            }
-
-            // Ask for confirmation if this server has stored credentials
-            bool hasCredentials = CredentialStore.Get(selectedServer) != null;
-            if (hasCredentials)
-            {
-                bool confirmed = await CGlobals.Notifier.ConfirmAsync(
-                    $"Remove '{selectedServer}' from the list?\n\nThis will also delete any stored credentials for this server.",
-                    "Confirm Remove");
-
-                if (!confirmed)
-                {
-                    return;
-                }
-            }
-
-            // Remove from UI list
-            serverListBox.Items.Remove(serverListBox.SelectedItem);
-
-            // Remove credentials if they exist
-            if (hasCredentials)
-            {
-                CredentialStore.Remove(selectedServer);
-            }
+            if (serverSelector == null) return;
 
             UpdateSelectedServersGlobal();
 
-            this.functions.LogUIAction($"Removed server: {selectedServer}");
+            if (serverSelector.SelectedItem != null)
+            {
+                this.functions.LogUIAction($"Selected server: {serverSelector.SelectedItem}");
+            }
         }
 
-        private async void clearServersBtn_Click(object sender, RoutedEventArgs e)
+        private async void manageServersBtn_Click(object sender, RoutedEventArgs e)
         {
-            if (serverListBox.Items.Count == 0)
+            var pinned = LocalhostIsInjected
+                ? new[] { LocalhostName }
+                : System.Array.Empty<string>();
+
+            // Pinned names are passed in `initial` as well - they are displayed rows,
+            // and that is what makes Add("localhost") a plain duplicate rather than a
+            // second row.
+            //
+            // Feed this from _displayServers, NOT from CAppSettings.Get().Servers.
+            // The direct read looks equivalent and is not: ServerListEditor's ctor
+            // filters whitespace but does not TRIM, while _displayServers has already
+            // been through Filter's trim. Wire it to the raw settings and a hand-edited
+            // "  vbr01  " enters the editor untrimmed, Add's comparison misses it
+            // against "vbr01", Commit().FinalServers carries both, and the picker
+            // renders two identical rows.
+            var initial = _displayServers.ToList();
+
+            var dialog = new ManageServersDialog(initial, pinned);
+            bool committed = await dialog.ShowDialog<bool>(this);
+
+            if (!committed)
             {
-                await CGlobals.Notifier.ShowErrorAsync("Server list is already empty.", "Empty List");
                 return;
             }
 
-            bool confirmed = await CGlobals.Notifier.ConfirmAsync(
-                "Are you sure you want to clear all servers from the list?",
-                "Confirm Clear");
+            // Re-resolve and repopulate. Without this, a removed server would remain in
+            // CGlobals.VBRServerName/REMOTEHOST and the next run would target a host the
+            // user just deleted.
+            _persistedServers = CAppSettings.LoadOrSeedServers(
+                CredentialStore.GetAllServers(),
+                excludeLocalhost: LocalhostIsInjected);
 
-            if (confirmed)
-            {
-                serverListBox.Items.Clear();
-
-                // Add localhost back if VBR is installed locally
-                if (CGlobals.IsVbrInstalled)
-                {
-                    serverListBox.Items.Add("localhost");
-                }
-
-                UpdateSelectedServersGlobal();
-                this.functions.LogUIAction("Cleared all servers from list");
-            }
-        }
-
-        // Guard added (not present in the real WPF file): same
-        // InitializeComponent()-timing rationale as ComboBox_SelectionChanged
-        // above - serverListBox could still be null on a SelectionChanged
-        // raised during tree construction.
-        private void serverListBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
-        {
-            if (serverListBox == null) return;
-
-            UpdateSelectedServersGlobal();
-
-            if (serverListBox.SelectedItem != null)
-            {
-                this.functions.LogUIAction($"Selected server: {serverListBox.SelectedItem}");
-            }
+            this.InitializeServerList(preserveSelection: true);
         }
 
         private void productTypeSelector_SelectionChanged(object sender, SelectionChangedEventArgs e)
@@ -843,7 +1076,7 @@ namespace VeeamHealthCheck
 
         private void monitorQuickSetupBtn_Click(object sender, RoutedEventArgs e)
         {
-            string server = serverListBox.SelectedItem?.ToString() ?? CGlobals.VBRServerName;
+            string server = serverSelector.SelectedItem?.ToString() ?? CGlobals.VBRServerName;
             var creds = CredentialStore.Get(server);
             string username = creds?.Username ?? string.Empty;
             string password = creds?.Password ?? string.Empty;

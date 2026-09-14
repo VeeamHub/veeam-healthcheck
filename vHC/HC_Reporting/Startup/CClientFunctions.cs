@@ -130,35 +130,15 @@ namespace VeeamHealthCheck.Startup
                 return "fail";
             }
 
-            if (CGlobals.IsVbr && CGlobals.IsVb365)
-            {
-
-                return title + " - " + VbrLocalizationHelper.GuiTitleBnR + " & " + VbrLocalizationHelper.GuiTitleVB365;
-            }
-
-
-            if (!CGlobals.IsVb365 && !CGlobals.IsVbr)
-            {
-
-                return title + " - " + VbrLocalizationHelper.GuiImportModeOnly;
-            }
-
-            if (CGlobals.IsVbr)
-            {
-                return title + " - " + VbrLocalizationHelper.GuiTitleBnR;
-            }
-
-
-            if (CGlobals.IsVb365)
-            {
-
-                return title + " - " + VbrLocalizationHelper.GuiTitleVB365;
-            }
-            else
-            {
-
-                return title;
-            }
+            // The title used to badge the detected product ("... - B&R", "... - VB365",
+            // "... - B&R & VB365") - dropped by product decision, since this tool
+            // supports both VBR and VB365 and badging whichever one happened to be
+            // detected read as though the other weren't supported. The
+            // GuiTitleBnR/GuiTitleVB365/GuiImportModeOnly resx keys are left in place,
+            // unused, rather than removed - see the GuiServerLabel precedent in the
+            // Stage C verification checklist for why a shipped key stays even once its
+            // only caller is gone.
+            return title;
         }
 
         public bool AcceptTerms()

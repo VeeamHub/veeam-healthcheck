@@ -44,47 +44,19 @@ MIT License
                     <StackPanel Grid.Column="0">
                         <Border Classes="card" Margin="0,0,0,15">
                             <StackPanel TextElement.FontWeight="SemiBold">
-                                <TextBlock Text="VBR Server" Classes="card-title" />
+                                <TextBlock Text="Veeam Server" Classes="card-title" />
                                 <StackPanel Margin="5,10,5,0">
-                                    <Grid Margin="0,0,0,10" ColumnDefinitions="*,10,80">
-                                        <TextBox x:Name="serverTextBox" Grid.Column="0"
-                                                 Classes="modern"
-                                                 Height="32"
-                                                 FontSize="12"
-                                                 ToolTip.Tip="Enter VBR server hostname or IP address" />
-                                        <Button x:Name="addServerBtn" Grid.Column="2"
-                                                Content="Add"
-                                                Height="32"
-                                                FontSize="12"
-                                                Classes="primary"
-                                                Click="addServerBtn_Click" />
-                                    </Grid>
-
-                                    <Border BorderBrush="{DynamicResource CardBorderBrush}" BorderThickness="1"
-                                            Background="{DynamicResource CardBackgroundBrush}" Height="120">
-                                        <ListBox x:Name="serverListBox"
-                                                 BorderThickness="0"
-                                                 SelectionMode="Single"
-                                                 FontSize="13"
-                                                 Padding="5"
-                                                 SelectionChanged="serverListBox_SelectionChanged" />
-                                    </Border>
-
-                                    <Grid Margin="0,10,0,0" ColumnDefinitions="*,10,*">
-                                        <Button x:Name="removeServerBtn" Grid.Column="0"
-                                                Content="Remove Selected"
-                                                Height="32"
-                                                FontSize="12"
-                                                Padding="10,5"
-                                                Classes="secondary"
-                                                Click="removeServerBtn_Click" />
-                                        <Button x:Name="clearServersBtn" Grid.Column="2"
-                                                Content="Clear All"
-                                                Height="32"
-                                                FontSize="12"
-                                                Padding="10,5"
-                                                Classes="secondary"
-                                                Click="clearServersBtn_Click" />
+                                    <TextBlock x:Name="serverLabel" Classes="field-label" Margin="0,0,0,8" />
+                                    <Grid ColumnDefinitions="*,8,Auto">
+                                        <ComboBox x:Name="serverSelector" Grid.Column="0"
+                                                  Classes="modern"
+                                                  Height="32" FontSize="12"
+                                                  HorizontalAlignment="Stretch"
+                                                  SelectionChanged="serverSelector_SelectionChanged" />
+                                        <Button x:Name="manageServersBtn" Grid.Column="2" Classes="secondary"
+                                                Content="&#x2699;" Width="32" Height="32" Padding="0"
+                                                HorizontalContentAlignment="Center" VerticalContentAlignment="Center"
+                                                Click="manageServersBtn_Click" />
                                     </Grid>
 
                                     <Separator Margin="0,12,0,12" />
@@ -92,7 +64,7 @@ MIT License
                                     <TextBlock Text="Product Type:" Classes="field-label" Margin="0,0,0,8" />
                                     <ComboBox x:Name="productTypeSelector"
                                               Classes="modern"
-                                              Width="220"
+                                              Width="220" FontSize="12"
                                               SelectedIndex="0"
                                               HorizontalAlignment="Left"
                                               SelectionChanged="productTypeSelector_SelectionChanged"
@@ -109,8 +81,14 @@ MIT License
                         <Border Classes="card">
                             <StackPanel TextElement.FontWeight="SemiBold">
                                 <TextBlock Name="outPath" Classes="card-title" />
-                                <TextBox x:Name="pathBox" Classes="modern"
-                                         TextChanged="pathBox_TextChanged" Height="32" Margin="0,10,0,0" />
+                                <Grid ColumnDefinitions="*,8,Auto" Margin="0,10,0,0">
+                                    <TextBox x:Name="pathBox" Grid.Column="0" Classes="modern"
+                                             TextChanged="pathBox_TextChanged" Height="32" FontSize="12" />
+                                    <Button x:Name="browseFolderBtn" Grid.Column="2" Classes="secondary"
+                                            Content="..." Width="32" Height="32" Padding="0" FontWeight="Bold"
+                                            HorizontalContentAlignment="Center" VerticalContentAlignment="Center"
+                                            Click="browseFolderBtn_Click" />
+                                </Grid>
                             </StackPanel>
                         </Border>
                     </StackPanel>
@@ -139,12 +117,17 @@ MIT License
                                     <StackPanel Orientation="Horizontal" Margin="0,8,0,0">
                                         <TextBlock Text="Collection Period:" VerticalAlignment="Center"
                                                    Classes="field-label" Margin="0,0,10,0" />
-                                        <ComboBox Name="daysSelector" Classes="modern"
-                                                  Width="120" SelectedIndex="0" SelectionChanged="ComboBox_SelectionChanged">
-                                            <ComboBoxItem Content="7 Days" IsSelected="True" />
-                                            <ComboBoxItem Content="30 Days" />
-                                            <ComboBoxItem Content="90 Days" />
-                                        </ComboBox>
+                                        <StackPanel Orientation="Horizontal" Spacing="0">
+                                            <RadioButton x:Name="days7" GroupName="Period" Classes="segment"
+                                                         Tag="7" CornerRadius="4,0,0,4" IsChecked="True"
+                                                         Checked="PeriodRadio_Checked" />
+                                            <RadioButton x:Name="days30" GroupName="Period" Classes="segment"
+                                                         Tag="30" CornerRadius="0" Margin="-1,0,0,0"
+                                                         Checked="PeriodRadio_Checked" />
+                                            <RadioButton x:Name="days90" GroupName="Period" Classes="segment"
+                                                         Tag="90" CornerRadius="0,4,4,0" Margin="-1,0,0,0"
+                                                         Checked="PeriodRadio_Checked" />
+                                        </StackPanel>
                                     </StackPanel>
 
                                     <CheckBox x:Name="RescanBox" Classes="modern"
@@ -241,14 +224,20 @@ MIT License
             </Panel>
         </ScrollViewer>
 
-        <!-- Bottom bar row (fixed - never inside the ScrollViewer). termsBtn/run follow the
+        <!-- Bottom bar row (fixed - never inside the ScrollViewer). termsCheckBox/run follow the
              active tab (ad-hoc-only workflow); the progress stack does NOT - a real health
              check run can take minutes, and a user switching to Continuous Monitoring
              mid-run must not lose visibility into it. -->
         <Border Grid.Row="3" Background="{DynamicResource CardBackgroundBrush}" BorderBrush="{DynamicResource CardBorderBrush}" BorderThickness="0,1,0,0">
-            <Grid ColumnDefinitions="Auto,*,Auto" Margin="25,15,25,15">
-                <Button x:Name="termsBtn" Grid.Column="0" Classes="secondary"
-                        Height="45" Click="AcceptButton_click" />
+            <!-- Margin and run's Height trimmed slightly (15->12, 45->42, progressText's
+                 top margin 8->6) to reclaim a few px for row 2's ScrollViewer - at the
+                 window's default 620px height the two-column card layout was just tall
+                 enough to force a visible vertical scrollbar. Reported from real Windows
+                 hardware. -->
+            <Grid ColumnDefinitions="Auto,*,Auto" Margin="25,12,25,12">
+                <CheckBox x:Name="termsCheckBox" Grid.Column="0" Classes="modern"
+                          VerticalAlignment="Center"
+                          Checked="termsCheckBox_Checked" Unchecked="termsCheckBox_Unchecked" />
 
                 <!-- progressText now hides via Opacity, not IsVisible (see code-behind).
                      Opacity is a paint-time effect only - it never changes an element's
@@ -266,13 +255,13 @@ MIT License
                     <TextBlock Name="progressText"
                                Classes="secondary-text"
                                Text="Processing health check..."
-                               Margin="0,8,0,0"
+                               Margin="0,6,0,0"
                                HorizontalAlignment="Center"
                                Opacity="0" />
                 </StackPanel>
 
                 <Button x:Name="run" Grid.Column="2" Classes="primary"
-                        Height="45" Click="run_Click" />
+                        Height="42" Click="run_Click" />
             </Grid>
         </Border>
     </Grid>
