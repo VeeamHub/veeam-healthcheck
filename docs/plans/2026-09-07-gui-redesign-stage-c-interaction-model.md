@@ -1969,6 +1969,18 @@ git add vHC/HC_Reporting/Functions/ManageServers/ManageServersDialog.axaml vHC/H
 git commit -m "feat(servers): add staged ManageServersDialog"
 ```
 
+### Corrections applied after review — Task 8 Steps 3-7 (dialog) as built
+
+**Executed: `a7ae144`** (dialog, as specified — no deviation from the plan's Step 3/4 code) **+ `33a9ca6`** (this correction). `ManageServersDialog.axaml`/`.axaml.cs` shipped byte-identical to the plan; the defect was in the plan's own design of the `SettingsSaved == false` path, not a transcription error.
+
+1. **A `SettingsSaved == false` result left `doneBtn` re-enabled, and a subsequent Done click — sequential and deliberate, not just re-entrant — could silently un-delete a credential the user had just successfully removed.** Trace: attempt 1 removes a credential (`CredentialStore.Remove` returns `true`) but `CAppSettings.SetServers` then fails; `_editor`'s state is untouched by `Commit()`, so it still shows that row `IsPendingRemoval = true`. A second Done click (the user retrying after dismissing the error, exactly the recovery path re-enabling the buttons was meant to support) recomputes the identical `CommitPlan` and calls `CredentialStore.Remove` on the same host again — which now correctly returns `false` ("nothing left to remove"). `ServerListCommitter` cannot distinguish that from a genuine failure, so it reinstates the host into `ServersPersisted`, and if the settings write then succeeds, the host the user asked to remove silently reappears in the persisted list with no indication why. Found by an independent code-quality review, which traced it past the initial "is this just the same re-entrancy class as the confirm-dialog guard" framing to confirm it is reachable via ordinary sequential use.
+
+   Fixed by permanently disabling `doneBtn` (not `cancelBtn`) on the `SettingsSaved == false` path, forcing Cancel-and-reopen as the only retry route. This works because a fresh `ManageServersDialog`/`ServerListEditor` re-queries `CredentialStore.Get` per row at construction, so a host whose credential really was deleted now correctly shows `HasCredentials = false` and is excluded from `CredentialsToDelete` on the next attempt — the removal completes cleanly via `FinalServers` alone, with no re-deletion attempt and nothing to reinstate.
+
+   No test added — this is Avalonia UI code with no test coverage in this codebase (the same reason `ServerListEditor`/`ServerListCommitter` exist as separately-tested seams in the first place); Task 14's Windows verification checklist should include exercising this exact path (stage a removal with credentials, make the settings write fail, confirm Done is disabled and Cancel/reopen is the only way forward).
+
+**Suite after Task 8 (all steps): 908 passed, 0 failed, 12 skipped** (verified directly; this task added no new tests). Baseline for Task 9.
+
 ---
 
 ## Task 9: Terms checkbox
