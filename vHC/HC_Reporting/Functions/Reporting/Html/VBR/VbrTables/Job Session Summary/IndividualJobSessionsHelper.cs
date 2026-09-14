@@ -79,24 +79,20 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR.VbrTables.Job_Session_Su
 
             // Group sessions by the same rollup key the summary table uses, so
             // per-machine child sessions land in the same HTML file as their
-            // parent. See ADR 0019.
-            var groups = allSessions
-                .GroupBy(s => CSessionGroupKey.Of(s))
-                .ToList();
+            // parent. A second pass rolls up hierarchical ("<Parent>\<child>")
+            // identities that carry no parent GUID at all. See ADR 0019, issue #219.
+            var groups = CSessionGroupKey.Group(allSessions);
 
             double percentCounter = 0;
             int totalSessions = allSessions.Count;
 
             foreach (var group in groups)
             {
-                var displayName = group
-                    .Select(s => CSessionGroupKey.DisplayName(s))
-                    .FirstOrDefault(n => !string.IsNullOrEmpty(n))
-                    ?? group.First().JobName ?? string.Empty;
+                var displayName = group.DisplayName;
 
                 try
                 {
-                    var sessionsForJob = group.ToList();
+                    var sessionsForJob = group.Sessions;
 
                     this.LogJobSessionParseProgress(percentCounter, totalSessions);
 

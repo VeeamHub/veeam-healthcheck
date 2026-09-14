@@ -7,88 +7,99 @@ namespace VhcXTests.Functions.Reporting.DataTypes
 {
     /// <summary>
     /// Tests for CDataTypesParser DateTime parsing functionality.
-    /// Focus: Ensuring correct parsing of DateTime values from different locales (Issue #41).
+    /// Focus: Ensuring correct parsing of DateTime values from different locales (Issue #41)
+    /// and from different day-first/month-first collecting-machine cultures (Issue #217).
     /// </summary>
     [Trait("Category", "Unit")]
     public class CDataTypesParserTEST
     {
         /// <summary>
-        /// Test for Issue #41: DateTime parsing with Chinese locale formats.
+        /// Test for Issue #41: DateTime parsing with Chinese locale formats, exercised via the
+        /// real parser pinned to en-US so the collecting-machine-culture rung behaves like
+        /// InvariantCulture did before Issue #217's fix.
         /// Chinese systems export DateTime with "??" where AM/PM should be (上午/下午).
         /// </summary>
         [Theory]
-        [InlineData("2024/12/27 ?? 08:53:50", false)] // Corrupted Chinese AM/PM
-        [InlineData("2024/12/27 上午 08:53:50", true)] // Actual Chinese AM
-        [InlineData("2024/12/27 下午 08:53:50", true)] // Actual Chinese PM
-        [InlineData("2024/11/27 04:18:06", true)]    // Standard format without AM/PM
-        [InlineData("2024-11-27 04:18:06", true)]    // ISO format with dash
-        [InlineData("24.02.2025 21:16:15", true)]    // European format (DD.MM.YYYY)
-        [InlineData("02/24/2025 21:16:15", true)]    // US format (MM/DD/YYYY)
-        public void TryParseDateTime_VariousFormats_ReturnsValidDateTime(string dateTimeString, bool shouldSucceed)
+        [InlineData("2024/12/27 ?? 08:53:50", 2024, 12, 27)] // Corrupted Chinese AM/PM -> "??" stripped, parses as 08:53:50
+        [InlineData("2024/12/27 上午 08:53:50", 2024, 12, 27)] // Actual Chinese AM (literal marker, matched by the explicit format list)
+        [InlineData("2024/12/27 下午 08:53:50", 2024, 12, 27)] // Actual Chinese PM (literal marker - the format is not a real PM designator, so the hour is NOT shifted)
+        [InlineData("2024/11/27 04:18:06", 2024, 11, 27)]    // Standard format without AM/PM
+        [InlineData("2024-11-27 04:18:06", 2024, 11, 27)]    // ISO format with dash
+        [InlineData("24.02.2025 21:16:15", 2025, 2, 24)]     // European format (DD.MM.YYYY)
+        public void TryParseDateTime_VariousFormats_ReturnsValidDateTime(string dateTimeString, int year, int month, int day)
         {
-            // Arrange: Test the parsing logic that should handle multiple formats
-            DateTime result;
-            bool success = false;
+            DateTime result = CDataTypesParser.TryParseDateTime(dateTimeString, new CultureInfo("en-US"));
 
-            // Act: Try multiple parsing strategies (simulating the fix we'll apply)
-            // First try: InvariantCulture
-            success = DateTime.TryParse(dateTimeString, CultureInfo.InvariantCulture, DateTimeStyles.None, out result);
-
-            if (!success)
-            {
-                // Second try: Current culture
-                success = DateTime.TryParse(dateTimeString, out result);
-            }
-
-            if (!success)
-            {
-                // Third try: Common Chinese format patterns
-                string[] chineseFormats = new[]
-                {
-                    "yyyy/MM/dd HH:mm:ss",
-                    "yyyy/MM/dd 上午 HH:mm:ss",
-                    "yyyy/MM/dd 下午 HH:mm:ss",
-                    "yyyy-MM-dd HH:mm:ss",
-                    "dd.MM.yyyy HH:mm:ss",
-                    "MM/dd/yyyy HH:mm:ss"
-                };
-
-                success = DateTime.TryParseExact(dateTimeString, chineseFormats, CultureInfo.InvariantCulture, DateTimeStyles.None, out result);
-            }
-
-            // Assert
-            if (shouldSucceed)
-            {
-                Assert.True(success || result > DateTime.MinValue, $"Failed to parse: {dateTimeString}");
-                if (success)
-                {
-                    Assert.NotEqual(DateTime.MinValue, result);
-                }
-            }
+            Assert.NotEqual(DateTime.MinValue, result);
+            Assert.Equal(year, result.Year);
+            Assert.Equal(month, result.Month);
+            Assert.Equal(day, result.Day);
         }
 
         /// <summary>
-        /// Test: DateTime with "??" characters should fall back to basic format parsing.
-        /// The corrupted AM/PM indicators should be ignored and time parsed as-is.
+        /// Test: DateTime with "??" characters should have the corrupted AM/PM indicator
+        /// stripped and the date/time parsed as-is (no AM/PM shift applied).
         /// </summary>
         [Fact]
         public void TryParseDateTime_CorruptedAMPM_ParsesDateAndTime()
         {
-            // Arrange: Date string with "??" where Chinese AM/PM should be
             string dateTimeString = "2024/12/27 ?? 08:53:50";
 
-            // Act: Remove the "??" and try parsing
-            string cleaned = dateTimeString.Replace("??", "").Replace("  ", " ").Trim();
-            bool success = DateTime.TryParse(cleaned, CultureInfo.InvariantCulture, DateTimeStyles.None, out DateTime result);
+            DateTime result = CDataTypesParser.TryParseDateTime(dateTimeString, new CultureInfo("en-US"));
 
-            // Assert: Should successfully parse the date and time
-            Assert.True(success);
             Assert.Equal(2024, result.Year);
             Assert.Equal(12, result.Month);
             Assert.Equal(27, result.Day);
             Assert.Equal(8, result.Hour);
             Assert.Equal(53, result.Minute);
             Assert.Equal(50, result.Second);
+        }
+
+        /// <summary>
+        /// Regression test for Issue #217: on a day-first locale, an ambiguous date like
+        /// "2/09/2026" (day/month, both &lt;= 12) must parse as day-first (2 September), not be
+        /// silently swapped to month-first (9 February) by falling through to InvariantCulture.
+        /// </summary>
+        [Fact]
+        public void TryParseDateTime_DayFirstLocaleAmbiguousDate_ParsesAsDayFirst()
+        {
+            DateTime result = CDataTypesParser.TryParseDateTime("2/09/2026 11:00:06 PM", new CultureInfo("en-AU"));
+
+            Assert.Equal(new DateTime(2026, 9, 2, 23, 0, 6), result);
+            Assert.Equal(9, result.Month);
+        }
+
+        /// <summary>
+        /// More ambiguous day-first-locale dates (day-of-month &lt;= 12), pinned to en-AU, plus
+        /// one unambiguous case (day > 12) confirming the InvariantCulture fallback rung still
+        /// isn't needed/doesn't interfere when the culture rung already succeeds.
+        /// </summary>
+        [Theory]
+        [InlineData("1/03/2026 08:15:00 AM", 2026, 3, 1)]    // ambiguous: day-first -> 1 March
+        [InlineData("5/11/2026 06:30:45 PM", 2026, 11, 5)]   // ambiguous: day-first -> 5 November
+        [InlineData("12/01/2026 12:00:00 AM", 2026, 1, 12)]  // ambiguous: day-first -> 12 January
+        [InlineData("25/12/2026 09:00:00 AM", 2026, 12, 25)] // unambiguous: day > 12, only valid as day-first
+        public void TryParseDateTime_DayFirstLocaleAmbiguousDates_ParseAsDayFirst(string dateTimeString, int year, int month, int day)
+        {
+            DateTime result = CDataTypesParser.TryParseDateTime(dateTimeString, new CultureInfo("en-AU"));
+
+            Assert.Equal(year, result.Year);
+            Assert.Equal(month, result.Month);
+            Assert.Equal(day, result.Day);
+        }
+
+        /// <summary>
+        /// A US-shaped date (MM/dd/yyyy, unambiguous because day > 12) read on a day-first
+        /// machine must still parse correctly via the InvariantCulture fallback rung.
+        /// </summary>
+        [Fact]
+        public void TryParseDateTime_UsFormatOnDayFirstLocale_FallsBackToInvariantCulture()
+        {
+            DateTime result = CDataTypesParser.TryParseDateTime("02/24/2025 21:16:15", new CultureInfo("en-AU"));
+
+            Assert.Equal(2025, result.Year);
+            Assert.Equal(2, result.Month);
+            Assert.Equal(24, result.Day);
         }
 
         /// <summary>
@@ -100,12 +111,82 @@ namespace VhcXTests.Functions.Reporting.DataTypes
         [InlineData("   ")]
         public void TryParseDateTime_EmptyOrNull_ReturnsMinValue(string dateTimeString)
         {
-            // Act
-            DateTime.TryParse(dateTimeString, out DateTime result);
+            DateTime result = CDataTypesParser.TryParseDateTime(dateTimeString, CultureInfo.InvariantCulture);
 
-            // Assert
             Assert.Equal(DateTime.MinValue, result);
         }
 
+        /// <summary>
+        /// Regression test for the follow-up found during independent review of the #217 fix:
+        /// newly-collected CSVs (Get-VhcSessionReport.ps1) write CreationTime as an invariant
+        /// round-trip ("o") string. That format must parse to the exact same DateTime no matter
+        /// which culture is passed in -- it carries no locale ambiguity, unlike the legacy
+        /// culture-formatted strings the rest of this method's fallback chain still has to
+        /// support.
+        /// </summary>
+        [Theory]
+        [InlineData("en-US")]
+        [InlineData("en-AU")]
+        [InlineData("en-GB")]
+        [InlineData("th-TH")] // non-Gregorian (Buddhist) calendar by default - must not shift the year
+        public void TryParseDateTime_InvariantRoundTripFormat_ParsesIdenticallyRegardlessOfCulture(string cultureName)
+        {
+            string roundTripString = "2026-02-09T23:00:06.0000000";
+
+            DateTime result = CDataTypesParser.TryParseDateTime(roundTripString, new CultureInfo(cultureName));
+
+            Assert.Equal(new DateTime(2026, 2, 9, 23, 0, 6), result);
+        }
+
+        /// <summary>
+        /// Contract guard for the concrete /import failure scenario described in the #217
+        /// follow-up: an en-US collector's CreationTime, written in the new invariant round-trip
+        /// format, must still resolve to 9 February when parsed on a simulated en-AU reporting
+        /// machine (day-first locale) -- the same cross-machine shape that corrupted the date
+        /// under the old culture-formatted CSV.
+        ///
+        /// Note: this specific assertion (day/month ordering) does NOT distinguish the fixed
+        /// parser from the pre-fix one -- .NET's DateTime.TryParse already recognizes a
+        /// year-first ISO-shaped string like this as unambiguous and parses the day/month
+        /// correctly under any culture, including the pre-fix culture-first chain. The real,
+        /// culture-independent regression this format fixes is DateTimeKind handling (see
+        /// TryParseDateTime_InvariantRoundTripFormat_PreservesUtcKindAcrossCultures below), which
+        /// DOES fail against the pre-fix code. This test is kept as a black-box guard that the
+        /// concrete scenario from the issue stays correct, not as the TDD-red case for this fix.
+        /// </summary>
+        [Fact]
+        public void TryParseDateTime_UsCollectedRoundTripFormat_ParsesCorrectlyOnDayFirstReportingCulture()
+        {
+            string usCollectedRoundTripString = new DateTime(2026, 2, 9, 23, 0, 6)
+                .ToString("o", CultureInfo.InvariantCulture);
+
+            DateTime result = CDataTypesParser.TryParseDateTime(usCollectedRoundTripString, new CultureInfo("en-AU"));
+
+            Assert.Equal(2, result.Month);
+            Assert.Equal(9, result.Day);
+        }
+
+        /// <summary>
+        /// The actual culture-independent regression guard for this fix. Without parsing the
+        /// round-trip format via <see cref="DateTimeStyles.RoundtripKind"/> as the FIRST attempt,
+        /// a value collected with <see cref="DateTimeKind.Utc"/> falls through to the legacy
+        /// chain's plain DateTime.TryParse(..., DateTimeStyles.None, ...), which silently
+        /// converts a "Z"-suffixed UTC string to this machine's local time zone (Kind becomes
+        /// Local, and the wall-clock value shifts on any machine not itself running in UTC).
+        /// TryParseExact("o", ..., RoundtripKind) preserves the original Kind and value exactly.
+        /// Asserting on Kind (rather than the shifted wall-clock value) keeps this test
+        /// deterministic on any test-runner time zone, including a UTC-zoned CI machine.
+        /// </summary>
+        [Fact]
+        public void TryParseDateTime_InvariantRoundTripFormat_PreservesUtcKindAcrossCultures()
+        {
+            var utcCreationTime = DateTime.SpecifyKind(new DateTime(2026, 2, 9, 23, 0, 6), DateTimeKind.Utc);
+            string roundTripString = utcCreationTime.ToString("o", CultureInfo.InvariantCulture);
+
+            DateTime result = CDataTypesParser.TryParseDateTime(roundTripString, new CultureInfo("en-AU"));
+
+            Assert.Equal(DateTimeKind.Utc, result.Kind);
+            Assert.Equal(utcCreationTime, result);
+        }
     }
 }
