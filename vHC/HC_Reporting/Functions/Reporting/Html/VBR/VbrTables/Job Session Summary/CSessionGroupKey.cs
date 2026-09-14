@@ -80,15 +80,27 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR.VbrTables.Job_Session_Su
         /// session identity is always a parent/child marker. Needed because VBR reports
         /// some Backup-Copy per-object child sessions with PolicyTag == JobId -- a
         /// self-reference that carries no parent GUID at all. See ADR 0019, issue #219.
+        ///
+        /// A hierarchical child whose prefix matches an already-indexed parent identity
+        /// always merges into that parent's group, even when the parent identity also
+        /// carries non-zero data of its own in the same window. An earlier revision
+        /// gated the merge on the parent identity being data-free, to guard against two
+        /// *unrelated* jobs coincidentally sharing a name prefix. In practice, a single
+        /// Backup Copy job routinely has both a GUID-linked child with data and a
+        /// self-referencing hierarchical child with data for the same parent in the same
+        /// window -- both are simply normal, healthy children of the same job -- and the
+        /// guard misfired on exactly that shape, kicking the hierarchical child out into
+        /// its own mangled row and reproducing issue #219's symptom for the case this
+        /// pass was added to fix. See ADR 0020.
         /// </summary>
         public static List<CSessionGroup> Group(IEnumerable<CJobSessionInfo> sessions)
         {
             var ordered = (sessions ?? Enumerable.Empty<CJobSessionInfo>()).ToList();
 
-            // Pass 1: index non-hierarchical identities (candidate parents) and note
-            // which of them carry data of their own.
+            // Pass 1: index non-hierarchical identities (candidate parents) by their
+            // rollup key, so Pass 2 can match a hierarchical child's name prefix
+            // against them.
             var keyByIdentity = new Dictionary<string, string>(StringComparer.Ordinal);
-            var identityHasData = new Dictionary<string, bool>(StringComparer.Ordinal);
             foreach (var s in ordered)
             {
                 var identity = DisplayName(s);
@@ -100,11 +112,6 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR.VbrTables.Job_Session_Su
                 if (!keyByIdentity.ContainsKey(identity))
                 {
                     keyByIdentity[identity] = Of(s);
-                }
-
-                if (s.DataSize > 0 || s.BackupSize > 0)
-                {
-                    identityHasData[identity] = true;
                 }
             }
 
@@ -122,13 +129,12 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR.VbrTables.Job_Session_Su
                 {
                     if (keyByIdentity.TryGetValue(parent, out var parentKey))
                     {
-                        // Defensive: only absorb children into a parent whose own sessions
-                        // carry no data of their own -- a data-bearing parent keeps its own row.
-                        if (!identityHasData.TryGetValue(parent, out var hasData) || !hasData)
-                        {
-                            key = parentKey;
-                            name = parent;
-                        }
+                        // Always merge on a prefix match, regardless of whether the parent
+                        // identity carries data of its own -- see the Group() doc comment
+                        // above and ADR 0020 for why the previous data-based guard here was
+                        // removed.
+                        key = parentKey;
+                        name = parent;
                     }
                     else
                     {

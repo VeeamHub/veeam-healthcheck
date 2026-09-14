@@ -175,10 +175,17 @@ namespace VhcXTests.Functions.Reporting.Html.VBR.VbrTables
         }
 
         [Fact]
-        public void Group_DataBearingParentWithHierarchicalChild_DoesNotMerge()
+        public void Group_DataBearingParentWithHierarchicalChild_StillMerges()
         {
-            // Guard: a parent identity that carries data of its own keeps its own row
-            // rather than being swallowed by a same-named-prefix child group.
+            // Was "DoesNotMerge" -- this test used to pin the identityHasData guard
+            // (removed in ADR 0020/0030): a parent identity that carries data of its
+            // own used to keep its own row instead of absorbing a same-prefix child.
+            // That guard was found to backfire on the confirmed real-world case where a
+            // Backup Copy job has a GUID-linked child with data AND a self-referencing
+            // hierarchical child with data for the same parent in the same window (see
+            // the regression tests below and ADR 0030) -- so the assertion is flipped
+            // here to match the corrected behavior: a prefix match always merges now,
+            // regardless of whether the parent identity has data of its own.
             var parentName = "Site-A to Site-B - Bronze Copy";
             var parentId = Guid.Parse("11111111-1111-1111-1111-111111111111");
             var childId = Guid.Parse("22222222-2222-2222-2222-222222222222");
@@ -190,7 +197,7 @@ namespace VhcXTests.Functions.Reporting.Html.VBR.VbrTables
                 PolicyName = null,
                 JobId      = parentId,
                 PolicyTag  = parentId, // self-reference
-                DataSize   = 500,      // parent carries data of its own
+                DataSize   = 500,      // parent carries data of its own -- no longer blocks the merge
                 BackupSize = 250,
             };
             var child = new CJobSessionInfo
@@ -206,7 +213,125 @@ namespace VhcXTests.Functions.Reporting.Html.VBR.VbrTables
 
             var groups = CSessionGroupKey.Group(new[] { parent, child });
 
-            Assert.Equal(2, groups.Count);
+            Assert.Single(groups);
+            Assert.Equal(parentName, groups[0].DisplayName);
+            Assert.Equal(2, groups[0].Sessions.Count);
+        }
+
+        // Follow-up regression (found during independent PR review, not issue #219
+        // itself): the identityHasData guard above reproduced issue #219's symptom for
+        // the case the hierarchical pass exists to fix. A Backup Copy job's GUID-linked
+        // child (real, different PolicyTag) and its self-referencing hierarchical child
+        // (PolicyTag == own JobId) are both normal, healthy children of the same job and
+        // routinely both carry data in the same reporting window -- not a rare
+        // coincidence. The guard saw the GUID-linked child's data under the shared
+        // "ParentJob" identity and refused to merge the hierarchical child into it,
+        // kicking it out into its own mangled "ParentJob\..." row. See ADR 0030.
+
+        [Fact]
+        public void Group_GuidLinkedSiblingWithData_HierarchicalSelfReferencingChildStillMerges()
+        {
+            var parentJobId = Guid.Parse("22222222-2222-2222-2222-222222222222");
+            var guidLinkedChildId = Guid.Parse("11111111-1111-1111-1111-111111111111");
+            var selfRefChildId = Guid.Parse("33333333-3333-3333-3333-333333333333");
+
+            var orchestrator = new CJobSessionInfo
+            {
+                Name       = "ParentJob",
+                JobName    = "ParentJob",
+                JobId      = parentJobId,
+                PolicyTag  = parentJobId, // self-reference: own row, no rollup needed
+                PolicyName = null,
+                DataSize   = 0,
+                BackupSize = 0,
+            };
+            var guidLinkedChild = new CJobSessionInfo
+            {
+                Name       = "GuidLinkedChild",
+                JobName    = "GuidLinkedChild",
+                JobId      = guidLinkedChildId,
+                PolicyTag  = parentJobId, // real GUID link to a different job (the parent)
+                PolicyName = "ParentJob", // no backslash
+                DataSize   = 100,
+                BackupSize = 50,
+            };
+            var selfRefChild = new CJobSessionInfo
+            {
+                Name       = "ParentJob\\ChildVm01 Backup",
+                JobName    = "ParentJob\\ChildVm01 Backup",
+                JobId      = selfRefChildId,
+                PolicyTag  = selfRefChildId, // self-reference: no parent GUID link at all
+                PolicyName = null,           // DisplayName falls back to JobName
+                DataSize   = 200,
+                BackupSize = 75,
+            };
+
+            var groups = CSessionGroupKey.Group(new[] { orchestrator, guidLinkedChild, selfRefChild });
+
+            Assert.Single(groups);
+            Assert.Equal("ParentJob", groups[0].DisplayName);
+            Assert.Equal(3, groups[0].Sessions.Count);
+            Assert.Contains(guidLinkedChild, groups[0].Sessions);
+            Assert.Contains(selfRefChild, groups[0].Sessions);
+        }
+
+        [Fact]
+        public void Group_MultipleSelfReferencingChildren_AllMergeUnderSameDataBearingParentIdentity()
+        {
+            // Extends the regression above: a second self-referencing hierarchical child
+            // under the same parent identity also merges -- the fix isn't limited to
+            // absorbing a single hierarchical child per parent.
+            var parentJobId = Guid.Parse("22222222-2222-2222-2222-222222222222");
+            var guidLinkedChildId = Guid.Parse("11111111-1111-1111-1111-111111111111");
+            var selfRefChildId1 = Guid.Parse("33333333-3333-3333-3333-333333333333");
+            var selfRefChildId2 = Guid.Parse("44444444-4444-4444-4444-444444444444");
+
+            var orchestrator = new CJobSessionInfo
+            {
+                Name       = "ParentJob",
+                JobName    = "ParentJob",
+                JobId      = parentJobId,
+                PolicyTag  = parentJobId,
+                PolicyName = null,
+                DataSize   = 0,
+                BackupSize = 0,
+            };
+            var guidLinkedChild = new CJobSessionInfo
+            {
+                Name       = "GuidLinkedChild",
+                JobName    = "GuidLinkedChild",
+                JobId      = guidLinkedChildId,
+                PolicyTag  = parentJobId,
+                PolicyName = "ParentJob",
+                DataSize   = 100,
+                BackupSize = 50,
+            };
+            var selfRefChild1 = new CJobSessionInfo
+            {
+                Name       = "ParentJob\\ChildVm01 Backup",
+                JobName    = "ParentJob\\ChildVm01 Backup",
+                JobId      = selfRefChildId1,
+                PolicyTag  = selfRefChildId1,
+                PolicyName = null,
+                DataSize   = 200,
+                BackupSize = 75,
+            };
+            var selfRefChild2 = new CJobSessionInfo
+            {
+                Name       = "ParentJob\\ChildVm02 Backup",
+                JobName    = "ParentJob\\ChildVm02 Backup",
+                JobId      = selfRefChildId2,
+                PolicyTag  = selfRefChildId2,
+                PolicyName = null,
+                DataSize   = 300,
+                BackupSize = 90,
+            };
+
+            var groups = CSessionGroupKey.Group(new[] { orchestrator, guidLinkedChild, selfRefChild1, selfRefChild2 });
+
+            Assert.Single(groups);
+            Assert.Equal("ParentJob", groups[0].DisplayName);
+            Assert.Equal(4, groups[0].Sessions.Count);
         }
 
         [Fact]
