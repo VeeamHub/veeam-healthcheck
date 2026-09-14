@@ -41,6 +41,14 @@
                     <SolidColorBrush x:Key="AccentPressedBrush">#007A25</SolidColorBrush>
                     <SolidColorBrush x:Key="OnAccentTextBrush">#0B1220</SolidColorBrush>
                     <SolidColorBrush x:Key="SegmentBackgroundBrush">#F1F5F9</SolidColorBrush>
+                    <!-- Deliberately NOT AccentBrush, and not a contrast fix - AccentBrush
+                         against OnAccentTextBrush already computes to ~6.7:1 here (~9.1:1 for
+                         this brush), both comfortably clearing WCAG AA's 4.5:1. Carried over
+                         from the spike's own segmented-control palette, whose comment (not
+                         itself ported - restoring it here) recorded why: full-saturation
+                         AccentBrush "felt jarringly heavy" next to the segment's own outlined,
+                         low-saturation unselected pills in live testing. A muted, less
+                         saturated green was chosen for visual weight, not legibility. -->
                     <SolidColorBrush x:Key="SegmentSelectedBrush">#5BC98A</SolidColorBrush>
                     <SolidColorBrush x:Key="ListSelectedTintBrush">#2600B336</SolidColorBrush>
                     <SolidColorBrush x:Key="CautionBackgroundBrush">#FFF8E1</SolidColorBrush>
@@ -64,6 +72,8 @@
                     <SolidColorBrush x:Key="AccentPressedBrush">#009129</SolidColorBrush>
                     <SolidColorBrush x:Key="OnAccentTextBrush">#0B1220</SolidColorBrush>
                     <SolidColorBrush x:Key="SegmentBackgroundBrush">#242A31</SolidColorBrush>
+                    <!-- Same visual-weight reasoning as the Light dictionary's
+                         SegmentSelectedBrush - not a contrast fix. -->
                     <SolidColorBrush x:Key="SegmentSelectedBrush">#3ECB74</SolidColorBrush>
                     <SolidColorBrush x:Key="ListSelectedTintBrush">#2600D647</SolidColorBrush>
                     <SolidColorBrush x:Key="CautionBackgroundBrush">#332B14</SolidColorBrush>
