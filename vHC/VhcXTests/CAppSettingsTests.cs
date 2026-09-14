@@ -403,9 +403,8 @@ namespace VhcXTests
         [Fact]
         public void AddServer_WithWhitespacePaddedExistingName_DoesNotDuplicate()
         {
-            // Matches addServerBtn_Click's trimming behavior (VhcGui.axaml.cs) and
-            // ServerListEditor.Add's, so all three entry points treat padding the same
-            // way rather than leaving AddServer the odd one out.
+            // Matches ServerListEditor.Add's trimming behavior, so both entry points
+            // treat padding the same way rather than leaving AddServer the odd one out.
             CAppSettings.SetServers(new[] { "vbr01" });
 
             CAppSettings.AddServer("  vbr01  ");

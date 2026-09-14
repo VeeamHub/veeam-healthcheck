@@ -202,7 +202,7 @@ namespace VeeamHealthCheck
         // would move a user who was sitting on vbr01 back to localhost - flipping
         // REMOTEEXEC to false and pointing the next run at the local box - even if they
         // pressed Done having changed nothing. Both tabs read that selection
-        // (monitorQuickSetupBtn_Click at :846), so it must survive a repopulate.
+        // (monitorQuickSetupBtn_Click), so it must survive a repopulate.
         private void InitializeServerList(bool preserveSelection = false)
         {
             string previous = preserveSelection
@@ -301,7 +301,7 @@ namespace VeeamHealthCheck
         // Making this branch live also means SetUiAsync() now reaches
         // Task.Run(() => PreRunCheck()) on a machine with no local Veeam. That is a
         // no-op: modeCheckResult can only be "fail" when both CGlobals.IsVbr and
-        // CGlobals.IsVb365 are false (CClientFunctions.cs:120), and both of
+        // CGlobals.IsVb365 are false (CClientFunctions.cs:130), and both of
         // PreRunCheck's dialog branches are gated on one of those flags
         // (CClientFunctions.cs:36, :72).
         private void SetUiSync()
@@ -911,10 +911,15 @@ namespace VeeamHealthCheck
         // check.
         //
         // This also makes SetReportDays reachable during InitializeComponent() for the
-        // first time, which the old null guard suppressed. That is safe: `functions` is
-        // a field initializer so it runs before the constructor body, and LogUIAction
-        // only writes to the static CGlobals.mainlog. It is harmless either way, because
-        // CGlobals.reportDays already defaults to 7 - so do not "fix" the ordering.
+        // first time, which the old null guard suppressed. That is safe with respect to
+        // initialization order: `functions` is a field initializer so it runs before the
+        // constructor body, and LogUIAction only writes to the static CGlobals.mainlog.
+        // It is NOT harmless with respect to a /days:N CLI override, though - writing 7
+        // here unconditionally stomps a /days:30 or /days:90 value set before this window
+        // was ever constructed. That case is real and is fixed immediately after
+        // InitializeComponent() in the constructor (capture reportDaysAtStartup first,
+        // then resync) - do not remove that capture/resync block as "redundant" just
+        // because this handler's own write looks harmless in isolation.
         //
         // The value comes from Tag rather than Name or Content because Content is
         // localized, and parsing a localized label as data is exactly the mistake
