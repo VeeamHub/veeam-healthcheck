@@ -2408,7 +2408,7 @@ The largest task, and it must be atomic: deleting `serverListBox` breaks three c
 - Modify: `vHC/HC_Reporting/VhcGui.axaml` (lines 49-88)
 - Modify: `vHC/HC_Reporting/VhcGui.axaml.cs` (`InitializeServerList`, `UpdateSelectedServersGlobal`, the three server handlers, `monitorQuickSetupBtn_Click`, `DisableButtons`, `SetUiText`, constructor)
 
-- [ ] **Step 1: Collapse the server card markup**
+- [x] **Step 1: Collapse the server card markup**
 
 In `vHC/HC_Reporting/VhcGui.axaml`, replace everything from `<Grid Margin="0,0,0,10" ColumnDefinitions="*,10,80">` through the closing `</Grid>` of the Remove/Clear row (the add row, the 120px ListBox `Border`, and the Remove/Clear `Grid` — lines 49-88) with:
 
@@ -2429,7 +2429,7 @@ In `vHC/HC_Reporting/VhcGui.axaml`, replace everything from `<Grid Margin="0,0,0
 
 Leave the `<Separator>` and the `Product Type:` block that follow it untouched.
 
-- [ ] **Step 2: Add the localhost predicate and the resolved-list field**
+- [x] **Step 2: Add the localhost predicate and the resolved-list field**
 
 In `vHC/HC_Reporting/VhcGui.axaml.cs`, near the other private fields:
 
@@ -2462,7 +2462,7 @@ In `vHC/HC_Reporting/VhcGui.axaml.cs`, near the other private fields:
 
 Ensure `using System.Collections.Generic;` and `using System.Linq;` are present.
 
-- [ ] **Step 3: Resolve the list inside `SetUiSync()`, immediately after `ModeCheck()`**
+- [x] **Step 3: Resolve the list inside `SetUiSync()`, immediately after `ModeCheck()`**
 
 Two things force this into Task 12 rather than a later one, and both are easy to miss:
 
@@ -2527,7 +2527,7 @@ with:
 
 Leave the constructor's `this.SetUiSync();` line exactly as it is.
 
-- [ ] **Step 4: Rewrite `InitializeServerList`**
+- [x] **Step 4: Rewrite `InitializeServerList`**
 
 Replace the whole method:
 
@@ -2594,7 +2594,7 @@ Replace the whole method:
         }
 ```
 
-- [ ] **Step 5: Repoint `UpdateSelectedServersGlobal` at the ComboBox**
+- [x] **Step 5: Repoint `UpdateSelectedServersGlobal` at the ComboBox**
 
 Change only the control name — the `else if` / `else` fallbacks and the `REMOTEEXEC` assignment stay exactly as they are. A `ComboBox` with a default selection is rarely null where `ListBox.SelectedItem` often was, but the branches cost nothing and deleting them is how a null-deref arrives later:
 
@@ -2621,7 +2621,7 @@ Change only the control name — the `else if` / `else` fallbacks and the `REMOT
         }
 ```
 
-- [ ] **Step 6: Replace the three server handlers with two**
+- [x] **Step 6: Replace the three server handlers with two**
 
 Delete `addServerBtn_Click`, `removeServerBtn_Click` and `clearServersBtn_Click` entirely. `Clear All` is gone: with per-row removal and a real Cancel in the dialog it has no home. Note that `clearCredsCheckBox` is **not** a substitute — it clears credentials and now leaves the list standing, which is a different behavior, not the same one.
 
@@ -2683,7 +2683,7 @@ Replace `serverListBox_SelectionChanged` with:
 
 Add `using VeeamHealthCheck.Functions.ManageServers;` to the using block.
 
-- [ ] **Step 7: Fix the third consumer**
+- [x] **Step 7: Fix the third consumer**
 
 In `monitorQuickSetupBtn_Click` (~line 846), the Continuous Monitoring tab reads the Ad-hoc tab's selection. Change only the control name:
 
@@ -2691,7 +2691,7 @@ In `monitorQuickSetupBtn_Click` (~line 846), the Continuous Monitoring tab reads
             string server = serverSelector.SelectedItem?.ToString() ?? CGlobals.VBRServerName;
 ```
 
-- [ ] **Step 8: Update `DisableButtons` and `SetUiText`**
+- [x] **Step 8: Update `DisableButtons` and `SetUiText`**
 
 In `DisableButtons`, delete the five now-nonexistent lines (`serverTextBox`, `addServerBtn`, `removeServerBtn`, `clearServersBtn`, `serverListBox`) and add:
 
@@ -2709,7 +2709,7 @@ Add to `SetUiText`:
             ToolTip.SetTip(this.manageServersBtn, VbrLocalizationHelper.GuiManageServersTooltip);
 ```
 
-- [ ] **Step 9: Build and test**
+- [x] **Step 9: Build and test**
 
 ```bash
 dotnet build vHC/HC.sln --configuration Debug
@@ -2719,7 +2719,7 @@ git checkout -- vHC/HC_Reporting/VeeamHealthCheck.csproj
 
 Expected: 0 errors, 0 failed, 12 skipped. Any surviving reference to a deleted control is a compile error.
 
-- [ ] **Step 10: Commit**
+- [x] **Step 10: Commit**
 
 ```bash
 git add vHC/HC_Reporting/VhcGui.axaml vHC/HC_Reporting/VhcGui.axaml.cs
