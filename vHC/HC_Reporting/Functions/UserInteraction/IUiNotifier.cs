@@ -23,7 +23,7 @@ namespace VeeamHealthCheck.Functions.UserInteraction
     /// Most of VhcGui's own button-click handlers run on the UI thread and
     /// call ShowErrorAsync/ConfirmAsync directly with await/fire-and-forget -
     /// that's fine, ordinary async UI code. Two specific call sites are
-    /// different: VhcGui's constructor path and AcceptButton_click both go
+    /// different: VhcGui's constructor path and termsCheckBox_Checked both go
     /// through a synchronous business-logic method (PreRunCheck/AcceptTerms)
     /// that uses ShowError/Confirm internally - calling that method directly
     /// from the UI thread would deadlock, so those two wrap the call in

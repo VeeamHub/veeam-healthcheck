@@ -22,7 +22,7 @@ namespace VeeamHealthCheck.Shared
         /// ResolveImportPath, ValidatePowerShellVersionMeetsVbrRequirement,
         /// WeighSuccessContinuation) guard on CGlobals.GUIEXEC first, which is false
         /// for every CLI code path. AcceptTerms is the one exception - it has no
-        /// such guard, but its only caller (VhcGui's AcceptButton_click) is GUI-only,
+        /// such guard, but its only caller (VhcGui's termsCheckBox_Checked) is GUI-only,
         /// so this is still never dereferenced while null in practice.
         /// </summary>
         public static IUiNotifier Notifier { get; set; }
