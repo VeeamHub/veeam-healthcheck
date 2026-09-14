@@ -245,6 +245,21 @@ namespace VeeamHealthCheck.Functions.ManageServers
                 await CGlobals.Notifier.ShowErrorAsync(
                     VbrLocalizationHelper.GuiManageServersSaveFailed,
                     VbrLocalizationHelper.GuiManageServersSaveFailedTitle);
+
+                // Permanently disable Done rather than leave it clickable for a retry
+                // from this same dialog instance. A retry would recompute the identical
+                // CommitPlan from unchanged _editor state, so any host whose credential
+                // WAS actually deleted just above gets submitted to CredentialStore.Remove
+                // a second time - which now correctly returns false ("nothing left to
+                // remove"), indistinguishable to ServerListCommitter from a genuine
+                // failure, so it silently reinstates that host into the persisted list on
+                // the next successful save. The user asked to remove it; retrying would
+                // bring it back with no indication why. Cancel (still enabled) and
+                // reopening the dialog is the only safe way to retry: a fresh
+                // ServerListEditor re-queries CredentialStore.Get per row, so a host
+                // that really was deleted now shows HasCredentials = false and is
+                // correctly excluded from CredentialsToDelete next time.
+                this.doneBtn.IsEnabled = false;
                 return;
             }
 
