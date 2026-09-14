@@ -503,8 +503,20 @@ namespace VeeamHealthCheck
             this.showProgressBar();
         }
 
+        // Set once and never cleared. Every control DisableButtons() touches, other than
+        // run.IsEnabled (which ReportRunFailure explicitly restores on failure), stays
+        // disabled for the rest of this process's life once a run or import starts:
+        // success exits the process outright (Run()'s Task.Factory.StartNew body calls
+        // Environment.Exit(0)), and on failure only Run is meant to work again. This flag
+        // makes that pre-existing one-way-ratchet invariant checkable rather than
+        // implicit, specifically so termsCheckBox_Checked's async continuation can tell
+        // whether a run/import started while its own accept flow was still in flight -
+        // Import_click does not wait on terms acceptance, so it can race ahead of one.
+        private bool _guiLockedForRun;
+
         private void DisableButtons()
         {
+            _guiLockedForRun = true;
             explorerShowBox.IsEnabled = false;
             htmlCheckBox.IsEnabled = false;
             pdfCheckBox.IsEnabled = false;
@@ -528,6 +540,18 @@ namespace VeeamHealthCheck
         // async void.
         private bool _suppressTermsHandler;
 
+        // Blocks re-entrancy while an accept flow's await is pending. Without this (and
+        // the termsCheckBox.IsEnabled=false below), a fast uncheck-then-recheck during
+        // that window starts a SECOND overlapping AcceptTerms() flow: two confirm
+        // dialogs, and two continuations racing to write run.IsEnabled with no
+        // coordination between them - whichever resolves last wins, regardless of the
+        // checkbox's actual state by then, or of whether a run has since started off the
+        // first flow's own (still valid) acceptance. Disabling the checkbox for the
+        // duration closes this at the source: the user cannot trigger a second Checked
+        // while this one is in flight, so run.IsEnabled can only ever be written by the
+        // one accept flow that is allowed to be running at a time.
+        private bool _termsAcceptInFlight;
+
         // AcceptTerms() stays synchronous - but this handler runs directly on the UI
         // thread, and AcceptTerms() reaches the notifier's BLOCKING wrapper, which
         // deadlocks there. Task.Run moves it off the UI thread first, exactly like
@@ -538,28 +562,69 @@ namespace VeeamHealthCheck
         // on decline. That is intended, not a bug.
         private async void termsCheckBox_Checked(object sender, RoutedEventArgs e)
         {
-            if (_suppressTermsHandler)
+            if (_suppressTermsHandler || _termsAcceptInFlight)
             {
                 return;
             }
 
-            this.functions.LogUIAction("Accept");
-            bool accepted = await Task.Run(() => this.functions.AcceptTerms());
-            run.IsEnabled = accepted;
+            _termsAcceptInFlight = true;
+            termsCheckBox.IsEnabled = false;
 
-            if (!accepted)
+            try
             {
-                _suppressTermsHandler = true;
-                termsCheckBox.IsChecked = false;
-                _suppressTermsHandler = false;
+                this.functions.LogUIAction("Accept");
+                bool accepted = await Task.Run(() => this.functions.AcceptTerms());
+
+                // A run or import may have started (and locked the GUI, see
+                // _guiLockedForRun) while this await was pending - Import_click does not
+                // wait on terms acceptance, so it can race ahead of an in-flight accept
+                // flow. Once that happens this flow's result is stale and must not touch
+                // anything DisableButtons() already fixed in place: writing run.IsEnabled
+                // here could silently re-enable Run while a collection is already active,
+                // which is the one outcome this whole guard exists to prevent.
+                if (_guiLockedForRun)
+                {
+                    return;
+                }
+
+                // Belt-and-braces, not load-bearing given the IsEnabled=false above: while
+                // this flow owns the checkbox, nothing else can change IsChecked. Kept so
+                // this write's correctness does not silently start depending on that
+                // invariant holding if this method is ever restructured.
+                if (termsCheckBox.IsChecked == true)
+                {
+                    run.IsEnabled = accepted;
+                }
+
+                if (!accepted)
+                {
+                    _suppressTermsHandler = true;
+                    termsCheckBox.IsChecked = false;
+                    _suppressTermsHandler = false;
+                }
+            }
+            finally
+            {
+                _termsAcceptInFlight = false;
+                if (!_guiLockedForRun)
+                {
+                    termsCheckBox.IsEnabled = true;
+                }
             }
         }
 
         // Deliberately NOT async void. An await before the guard check would resume the
         // continuation after _suppressTermsHandler has been reset to false, silently
         // disabling the guard. There is nothing to await here anyway.
+        //
+        // Logs unconditionally, including while _suppressTermsHandler is set: "terms are
+        // no longer accepted" is equally true whether this fired from a real user click
+        // or the programmatic revert on decline, so there is exactly one log line for
+        // that fact either way rather than the decline path needing its own separate one.
         private void termsCheckBox_Unchecked(object sender, RoutedEventArgs e)
         {
+            this.functions.LogUIAction("Accept = false");
+
             if (_suppressTermsHandler)
             {
                 return;
