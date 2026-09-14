@@ -318,6 +318,9 @@ namespace VeeamHealthCheck
             this.run.Content = VbrLocalizationHelper.GuiRunButton;
             this.importButton.Content = VbrLocalizationHelper.GuiImportButton;
             this.RescanBox.Content = VbrLocalizationHelper.GuiRescanHosts;
+            this.days7.Content = VbrLocalizationHelper.GuiPeriod7;
+            this.days30.Content = VbrLocalizationHelper.GuiPeriod30;
+            this.days90.Content = VbrLocalizationHelper.GuiPeriod90;
 
             this.SetPathBoxText(CVariables.outDir);
             CGlobals.desiredPath = CVariables.outDir;
@@ -735,31 +738,32 @@ namespace VeeamHealthCheck
             CGlobals.desiredPath = pathBox.Text ?? string.Empty;
         }
 
-        // Guard added (not present in the real WPF file): Avalonia's generated
-        // InitializeComponent() can raise SelectionChanged while assigning
-        // named fields as the tree is built, so daysSelector could still be
-        // null on first raise. Same defensive pattern already used by
-        // productTypeSelector_SelectionChanged/notifTypeBox_SelectionChanged
-        // below - not testable on macOS, but zero behavior change once
-        // daysSelector is non-null.
-        private void ComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        // Reads sender, never the days7/days30/days90 fields. days7's IsChecked="True"
+        // in XAML raises Checked DURING InitializeComponent(), when the other two named
+        // fields may not be assigned yet - inspecting them to find the checked one would
+        // throw a NullReferenceException at construction. This is the same class of
+        // timing hazard the ComboBox handler this replaces guarded against with a null
+        // check.
+        //
+        // This also makes SetReportDays reachable during InitializeComponent() for the
+        // first time, which the old null guard suppressed. That is safe: `functions` is
+        // a field initializer so it runs before the constructor body, and LogUIAction
+        // only writes to the static CGlobals.mainlog. It is harmless either way, because
+        // CGlobals.reportDays already defaults to 7 - so do not "fix" the ordering.
+        //
+        // The value comes from Tag rather than Name or Content because Content is
+        // localized, and parsing a localized label as data is exactly the mistake
+        // notifSeverityBox already makes.
+        private void PeriodRadio_Checked(object sender, RoutedEventArgs e)
         {
-            if (daysSelector == null) return;
-            switch (daysSelector.SelectedIndex)
+            int days = (sender as RadioButton)?.Tag switch
             {
-                case 0:
-                    this.SetReportDays(7);
-                    break;
-                case 1:
-                    this.SetReportDays(30);
-                    break;
-                case 2:
-                    this.SetReportDays(90);
-                    break;
-                default:
-                    this.SetReportDays(7);
-                    break;
-            }
+                "30" => 30,
+                "90" => 90,
+                _ => 7,
+            };
+
+            this.SetReportDays(days);
         }
 
         private void SetReportDays(int days)
@@ -872,7 +876,7 @@ namespace VeeamHealthCheck
         }
 
         // Guard added (not present in the real WPF file): same
-        // InitializeComponent()-timing rationale as ComboBox_SelectionChanged
+        // InitializeComponent()-timing rationale as PeriodRadio_Checked
         // above - serverListBox could still be null on a SelectionChanged
         // raised during tree construction.
         private void serverListBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
