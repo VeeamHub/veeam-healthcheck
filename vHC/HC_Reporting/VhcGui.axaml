@@ -44,7 +44,7 @@ MIT License
                     <StackPanel Grid.Column="0">
                         <Border Classes="card" Margin="0,0,0,15">
                             <StackPanel TextElement.FontWeight="SemiBold">
-                                <TextBlock Text="VBR Server" Classes="card-title" />
+                                <TextBlock Text="Veeam Server" Classes="card-title" />
                                 <StackPanel Margin="5,10,5,0">
                                     <TextBlock x:Name="serverLabel" Classes="field-label" Margin="0,0,0,8" />
                                     <Grid ColumnDefinitions="*,8,Auto">
