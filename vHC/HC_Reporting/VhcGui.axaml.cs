@@ -64,7 +64,13 @@ namespace VeeamHealthCheck
                     // uses it; the UI is left showing days7 checked, the same cosmetic
                     // mismatch the ComboBox's SelectedIndex="0" default showed for this
                     // same case.
-                    CGlobals.ReportDays = reportDaysAtStartup;
+                    //
+                    // Goes through SetReportDays rather than a raw assignment so the log
+                    // also gets a correcting "Interval set to N" entry - otherwise the
+                    // unconditional SetReportDays(7) that already ran during
+                    // InitializeComponent() above leaves "Interval set to 7" as the log's
+                    // last word on this even though CGlobals.ReportDays ends up N.
+                    this.SetReportDays(reportDaysAtStartup);
                     break;
             }
 
