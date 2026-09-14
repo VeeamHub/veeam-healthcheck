@@ -8,6 +8,7 @@ using Avalonia.Controls;
 using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Interactivity;
 using Avalonia.Media;
+using Avalonia.Platform.Storage;
 using Avalonia.Styling;
 using Avalonia.Threading;
 using VeeamHealthCheck.Functions.AboutDialog;
@@ -367,6 +368,7 @@ namespace VeeamHealthCheck
 
             this.SetPathBoxText(CVariables.outDir);
             CGlobals.desiredPath = CVariables.outDir;
+            ToolTip.SetTip(this.browseFolderBtn, VbrLocalizationHelper.GuiBrowseFolderTooltip);
         }
 
         private void SetPathBoxText(string text)
@@ -579,6 +581,7 @@ namespace VeeamHealthCheck
             termsCheckBox.IsEnabled = false;
             importButton.IsEnabled = false;
             pathBox.IsEnabled = false;
+            browseFolderBtn.IsEnabled = false;
             clearCredsCheckBox.IsEnabled = false;
             serverTextBox.IsEnabled = false;
             addServerBtn.IsEnabled = false;
@@ -779,6 +782,41 @@ namespace VeeamHealthCheck
         {
             CGlobals.Logger.Info("Changing path from " + CGlobals.desiredPath + " to " + pathBox.Text);
             CGlobals.desiredPath = pathBox.Text ?? string.Empty;
+        }
+
+        // First use of Avalonia's StorageProvider anywhere in this application. Ported
+        // from the spike verbatim, including all three guards. In production `this` IS
+        // the Window, so GetTopLevel cannot return null once the constructor has run -
+        // the guard is retained anyway.
+        //
+        // Assigning pathBox.Text is all that is needed: the existing pathBox_TextChanged
+        // handler propagates it to CGlobals.desiredPath.
+        private async void browseFolderBtn_Click(object sender, RoutedEventArgs e)
+        {
+            var topLevel = TopLevel.GetTopLevel(this);
+            if (topLevel is null)
+            {
+                return;
+            }
+
+            var folders = await topLevel.StorageProvider.OpenFolderPickerAsync(new FolderPickerOpenOptions
+            {
+                Title = VbrLocalizationHelper.GuiBrowseFolderTitle,
+                AllowMultiple = false,
+            });
+
+            if (folders.Count == 0)
+            {
+                return;
+            }
+
+            var path = folders[0].TryGetLocalPath();
+            if (string.IsNullOrEmpty(path))
+            {
+                return;
+            }
+
+            this.SetPathBoxText(path);
         }
 
         // Reads sender, never the days7/days30/days90 fields. days7's IsChecked="True"

@@ -109,8 +109,14 @@ MIT License
                         <Border Classes="card">
                             <StackPanel TextElement.FontWeight="SemiBold">
                                 <TextBlock Name="outPath" Classes="card-title" />
-                                <TextBox x:Name="pathBox" Classes="modern"
-                                         TextChanged="pathBox_TextChanged" Height="32" Margin="0,10,0,0" />
+                                <Grid ColumnDefinitions="*,8,Auto" Margin="0,10,0,0">
+                                    <TextBox x:Name="pathBox" Grid.Column="0" Classes="modern"
+                                             TextChanged="pathBox_TextChanged" Height="32" />
+                                    <Button x:Name="browseFolderBtn" Grid.Column="2" Classes="secondary"
+                                            Content="..." Width="32" Height="32" Padding="0" FontWeight="Bold"
+                                            HorizontalContentAlignment="Center" VerticalContentAlignment="Center"
+                                            Click="browseFolderBtn_Click" />
+                                </Grid>
                             </StackPanel>
                         </Border>
                     </StackPanel>
