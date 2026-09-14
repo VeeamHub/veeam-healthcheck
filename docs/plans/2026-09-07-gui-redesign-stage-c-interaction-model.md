@@ -2807,6 +2807,7 @@ Requires a real Windows machine with VBR installed. Nothing here can be checked 
 - [ ] Add appends a row; adding a duplicate (any casing) shows the duplicate error; adding blank shows the input error.
 - [ ] Clicking remove leaves the row visible, struck through, with an undo control.
 - [ ] The undo control is legible **without** hovering the row.
+- [ ] **Hover the undo control specifically.** `Button.undo-server:pointerover /template/ ContentPresenter` (`App.axaml`, Task 7) resets `Background` but not `Foreground` — matching the pre-existing `Button.link` pattern it was modeled on, but unverified on real hardware. If FluentTheme's default hover foreground competes with `AccentBrush` and the glyph looks off-color or low-contrast on hover, add a `Foreground` setter to that rule the same way Stage B's `Button.tab` fix needed one.
 - [ ] The remove control appears on row hover as intended.
 - [ ] Undo clears the strike-through; the pending count updates on every change.
 - [ ] `localhost` has no remove control.
