@@ -2809,7 +2809,7 @@ Shipped as `28c0bd85` + `670915ed` under different messages — see the "Complet
 **Files:**
 - Create: `docs/plans/2026-09-07-gui-redesign-stage-c-verification.md`
 
-- [ ] **Step 1: Full clean build and test**
+- [x] **Step 1: Full clean build and test**
 
 ```bash
 dotnet build vHC/HC.sln --configuration Debug 2>&1 | tail -20
@@ -2819,7 +2819,7 @@ git checkout -- vHC/HC_Reporting/VeeamHealthCheck.csproj
 
 Expected: `0 Error(s)`, and `Failed: 0, Skipped: 12`. `Passed` was last independently confirmed at **908** after Task 12's corrections (commit `ed3b324e`) — this count has drifted upward from an earlier, now-stale "898" as later tasks added tests and corrections, so re-verify it fresh rather than trusting either number: run the suite yourself and treat whatever it reports (with 0 failed, 12 skipped) as the real baseline.
 
-- [ ] **Step 2: Confirm nothing stale survives**
+- [x] **Step 2: Confirm nothing stale survives**
 
 ```bash
 grep -rn 'termsBtn\|serverListBox\|serverTextBox\|addServerBtn\|removeServerBtn\|clearServersBtn\|daysSelector' vHC/HC_Reporting --include="*.cs" --include="*.axaml" | grep -v /obj/
@@ -2829,7 +2829,7 @@ Expected: **no output at all.** Tasks 9, 10, 12 and 13 each update the comments 
 
 Do not use the `|| echo "clean"` form: `grep` exits 0 when it matches, so the echo can never fire while a single stale reference survives, which makes the check silently useless.
 
-- [ ] **Step 3: Confirm the localization encodings survived every task**
+- [x] **Step 3: Confirm the localization encodings survived every task**
 
 ```bash
 file vHC/HC_Reporting/Resources/Localization/VbrLocalizationHelper.cs vHC/HC_Reporting/Resources/Localization/vhcres.txt
@@ -2837,7 +2837,7 @@ file vHC/HC_Reporting/Resources/Localization/VbrLocalizationHelper.cs vHC/HC_Rep
 
 Expected: both still `Unicode text, UTF-16, little-endian`.
 
-- [ ] **Step 4: Confirm the tree is clean**
+- [x] **Step 4: Confirm the tree is clean**
 
 ```bash
 git status --short
@@ -2845,7 +2845,7 @@ git status --short
 
 Expected: empty. If `VeeamHealthCheck.csproj` appears, revert it.
 
-- [ ] **Step 5: Write the human verification checklist**
+- [x] **Step 5: Write the human verification checklist**
 
 Create `docs/plans/2026-09-07-gui-redesign-stage-c-verification.md` containing the list below. Nothing visual or interactive can be checked in this sandbox — Avalonia crashes at native platform bootstrap before any application code runs — so this is the handoff.
 
@@ -2920,7 +2920,7 @@ Requires a real Windows machine with VBR installed. Nothing here can be checked 
 - [ ] **Judgement call:** the card is titled "VBR Server" and the new field-label under it reads "Server". The spec called for that label (the spike's equivalent card was titled "Target & Output", where it wasn't redundant). If it reads as duplication on real hardware, delete the `serverLabel` `TextBlock` and its `SetUiText` line; leave the `GuiServerLabel` resx key in place for Stage D rather than removing a shipped key.
 ```
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add docs/plans/2026-09-07-gui-redesign-stage-c-verification.md
