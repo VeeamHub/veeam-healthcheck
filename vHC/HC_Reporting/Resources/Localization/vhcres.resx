@@ -60,6 +60,12 @@
   <data name="GuiManageServersSaveFailed" xml:space="preserve">
     <value>Could not save the server list. See the log for details.</value>
   </data>
+  <data name="GuiManageServersPartialFailureTitle" xml:space="preserve">
+    <value>Removal Incomplete</value>
+  </data>
+  <data name="GuiManageServersPartialFailureBody" xml:space="preserve">
+    <value>Could not remove saved credentials for: {0}. These servers were kept in the list so you can try again.</value>
+  </data>
   <data name="GuiManageServersDuplicate" xml:space="preserve">
     <value>Server '{0}' is already in the list.</value>
   </data>
