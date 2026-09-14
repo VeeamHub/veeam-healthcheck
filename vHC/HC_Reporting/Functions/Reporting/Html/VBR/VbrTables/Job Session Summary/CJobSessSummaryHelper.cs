@@ -161,8 +161,13 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR.VbrTables.Job_Session_Su
 
             foreach (var session in this.JobSessionInfoList())
             {
-                double diff = (DateTime.Now - session.CreationTime).TotalDays;
-                if (names.Contains(session.Name) && diff < CGlobals.ReportDays)
+                // JobSessionInfoList() already filtered on TargetDate() (GetToolStart -
+                // ReportDays). Re-checking here with DateTime.Now instead of the same
+                // TargetDate() reference lets the two references drift apart on a
+                // long-running collection (hours can elapse between tool start and this
+                // code running), silently dropping sessions the first pass had already
+                // included. Anchor both passes on the same reference point.
+                if (names.Contains(session.Name) && session.CreationTime >= this.TargetDate())
                 {
                     stats.SessionCount++;
                     if (session.Status == "Failed")
