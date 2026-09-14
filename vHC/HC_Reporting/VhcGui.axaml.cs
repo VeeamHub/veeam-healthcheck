@@ -29,7 +29,44 @@ namespace VeeamHealthCheck
 
         public VhcGui()
         {
+            // Captured before InitializeComponent() touches it - see the resync
+            // immediately below for why.
+            int reportDaysAtStartup = CGlobals.ReportDays;
+
             InitializeComponent();
+
+            // days7's IsChecked="True" in XAML raises Checked synchronously during the
+            // InitializeComponent() call above, unconditionally running
+            // PeriodRadio_Checked -> SetReportDays(7) -> CGlobals.ReportDays = 7. That
+            // silently stomps a /days:N CLI value set before this window was ever
+            // constructed (CArgsParser.cs's /days:7|30|90|12 cases all run before
+            // LaunchUi gets anywhere near `new VhcGui()`). The ComboBox this replaced
+            // did not have this problem: its SelectionChanged handler guarded on
+            // `daysSelector == null`, and daysSelector's own field was not yet assigned
+            // to itself at the moment its own initial SelectionChanged fired - but a
+            // RadioButton's `sender` on its OWN Checked event is never null, so the same
+            // guard shape does not carry over to this control. Restore the value
+            // captured above, now that construction has settled.
+            switch (reportDaysAtStartup)
+            {
+                case 30:
+                    days30.IsChecked = true; // re-fires PeriodRadio_Checked, restoring 30
+                    break;
+                case 90:
+                    days90.IsChecked = true; // re-fires PeriodRadio_Checked, restoring 90
+                    break;
+                case 7:
+                    break; // already correct; days7 is already checked
+                default:
+                    // No pill represents this value (e.g. /days:12) - the segmented
+                    // control only ever offers 7/30/90, the same three the ComboBox it
+                    // replaced offered. Restore the value directly so the report still
+                    // uses it; the UI is left showing days7 checked, the same cosmetic
+                    // mismatch the ComboBox's SelectedIndex="0" default showed for this
+                    // same case.
+                    CGlobals.ReportDays = reportDaysAtStartup;
+                    break;
+            }
 
             // Establishes SelectTab as the single source of truth for the Ad-hoc-tab
             // default (XAML alone encodes it three separate ways: AdHocTabPanel's
@@ -756,8 +793,13 @@ namespace VeeamHealthCheck
         // notifSeverityBox already makes.
         private void PeriodRadio_Checked(object sender, RoutedEventArgs e)
         {
+            // "7" is listed explicitly rather than folded into the `_` default, so `_`
+            // means only "unreachable" (sender wasn't a RadioButton, or Tag wasn't one
+            // of the three set in XAML) - a future fourth pill with a different Tag
+            // hits `_` and lands on this comment instead of silently behaving like "7".
             int days = (sender as RadioButton)?.Tag switch
             {
+                "7" => 7,
                 "30" => 30,
                 "90" => 90,
                 _ => 7,
