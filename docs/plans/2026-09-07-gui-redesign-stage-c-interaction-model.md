@@ -2726,6 +2726,10 @@ git add vHC/HC_Reporting/VhcGui.axaml vHC/HC_Reporting/VhcGui.axaml.cs
 git commit -m "feat(gui): collapse inline server management into a picker plus dialog"
 ```
 
+### Corrections applied after review — Task 12 as built
+
+1. **`SetUiSync()` overwrote the "Remote Mode" title with the literal string `"fail"`.** Before this task, the `hasRemoteServers` scan always read an empty `serverListBox` (`SetUiSync()` runs before `InitializeServerList()` populates it), so the `if (hasRemoteServers)` branch that sets `this.Title = "Veeam Health Check - Remote Mode";` could never actually run — it was dead code. Step 3 fixed the scan to read the resolved `_persistedServers` list instead, which made that branch reachable for the first time on a machine with no local Veeam but at least one persisted remote server. That exposed a second, previously-dormant bug a few lines below: an unconditional `this.Title = modeCheckResult;` that immediately overwrote whatever title the branch had just set — including "Remote Mode" — with `modeCheckResult`'s own value, the literal 4-character string `"fail"`. A code-quality review caught this (the spec-compliance review, checking the same lines for a *different* reason, had already flagged the adjacent `NOTE:` comment as newly self-contradictory but did not trace the runtime consequence). Fixed by guarding the assignment: `if (modeCheckResult != "fail") { this.Title = modeCheckResult; }`. Also corrected two comments that had gone stale in opposite directions from the same fix: the `_persistedServers` field comment (still said "resolved once in the constructor" after Step 3 moved that resolution into `SetUiSync()`) and the `NOTE:` above `SetUiSync()` (still described the title-overwrite as dormant/left-intact, when Step 3's own fix had just made it live). Verified via `dotnet build`/`dotnet test` (908 passed, 0 failed, 12 skipped, matching baseline) — committed as `28c0bd85`.
+
 ---
 
 ## Task 13: Finish the remote-only startup fix
