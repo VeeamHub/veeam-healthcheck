@@ -297,6 +297,13 @@ namespace VeeamHealthCheck
         // a few lines below unconditionally overwrote whatever title was just
         // set, including "Remote Mode", with the literal string "fail". Guarded
         // below so "Remote Mode" survives.
+        //
+        // Making this branch live also means SetUiAsync() now reaches
+        // Task.Run(() => PreRunCheck()) on a machine with no local Veeam. That is a
+        // no-op: modeCheckResult can only be "fail" when both CGlobals.IsVbr and
+        // CGlobals.IsVb365 are false (CClientFunctions.cs:120), and both of
+        // PreRunCheck's dialog branches are gated on one of those flags
+        // (CClientFunctions.cs:36, :72).
         private void SetUiSync()
         {
             this.SetImportRelease();
