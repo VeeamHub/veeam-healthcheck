@@ -101,6 +101,14 @@
             <Setter Property="CornerRadius" Value="4" />
             <Setter Property="BorderThickness" Value="0" />
             <Setter Property="Cursor" Value="Hand" />
+            <!-- FluentTheme's Button ControlTheme (confirmed against the real 11.3.20
+                 source) sets no default for either alignment property, so a Button.primary
+                 taller than its text - "run" is Height="45" against a Padding of 16,8 -
+                 renders its content Top-aligned rather than centered. Every icon button
+                 elsewhere in this window sets these two properties per-instance; setting
+                 them here once covers every current and future Button.primary instead. -->
+            <Setter Property="HorizontalContentAlignment" Value="Center" />
+            <Setter Property="VerticalContentAlignment" Value="Center" />
         </Style>
         <Style Selector="Button.primary:pointerover /template/ ContentPresenter">
             <Setter Property="Background" Value="{DynamicResource AccentHoverBrush}" />
