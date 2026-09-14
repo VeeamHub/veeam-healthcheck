@@ -69,13 +69,13 @@ namespace VeeamHealthCheck
             // PeriodRadio_Checked -> SetReportDays(7) -> CGlobals.ReportDays = 7. That
             // silently stomps a /days:N CLI value set before this window was ever
             // constructed (CArgsParser.cs's /days:7|30|90|12 cases all run before
-            // LaunchUi gets anywhere near `new VhcGui()`). The ComboBox this replaced
-            // did not have this problem: its SelectionChanged handler guarded on
-            // `daysSelector == null`, and daysSelector's own field was not yet assigned
-            // to itself at the moment its own initial SelectionChanged fired - but a
-            // RadioButton's `sender` on its OWN Checked event is never null, so the same
-            // guard shape does not carry over to this control. Restore the value
-            // captured above, now that construction has settled.
+            // LaunchUi gets anywhere near `new VhcGui()`). The old period-selection
+            // control this replaced did not have this problem: its SelectionChanged
+            // handler guarded on its own field being null, and that field was not yet
+            // assigned to itself at the moment its own initial SelectionChanged fired -
+            // but a RadioButton's `sender` on its OWN Checked event is never null, so
+            // the same guard shape does not carry over to this control. Restore the
+            // value captured above, now that construction has settled.
             switch (reportDaysAtStartup)
             {
                 case 30:
@@ -287,9 +287,9 @@ namespace VeeamHealthCheck
         // notifier primitives - that part moves to SetUiAsync, run from Loaded
         // instead of the constructor.
         //
-        // NOTE: the hasRemoteServers scan used to always see an empty
-        // serverListBox (SetUiSync() ran before InitializeServerList()
-        // populated it), so the hasRemoteServers branch below - and the title
+        // NOTE: the hasRemoteServers scan used to always see an empty list
+        // (it read the old server list control, and SetUiSync() ran before
+        // InitializeServerList() populated it), so the hasRemoteServers branch below - and the title
         // it sets - could never actually run. Task 12 fixed the scan to read
         // _persistedServers, resolved above, instead of that not-yet-populated
         // control - which makes the branch reachable for the first time. That
@@ -329,7 +329,7 @@ namespace VeeamHealthCheck
             if (modeCheckResult == "fail")
             {
                 // Reads the resolved list rather than a control that has not been
-                // populated yet. The old scan iterated an empty serverListBox, because
+                // populated yet. The old scan iterated an empty list control, because
                 // SetUiSync() runs before InitializeServerList() - so this branch could
                 // never fire, and a machine with no local Veeam but remote servers
                 // configured always got the abort the branch exists to prevent.
