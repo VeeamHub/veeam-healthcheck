@@ -2102,17 +2102,20 @@ In `DisableButtons`, replace `termsBtn.IsEnabled = false;` with:
             termsCheckBox.IsEnabled = false;
 ```
 
-- [ ] **Step 5: Update the comments that name `termsBtn`**
+- [ ] **Step 5: Update the comments that name `termsBtn` or `AcceptButton_click`**
 
 Comments do not break the build, so these are silent — and one of them is load-bearing. `termsBtn` survives at `VhcGui.axaml.cs:37`, `:39`, `:95`, `:99` and `VhcGui.axaml:244`. The block at `:95-107` is the explanation of *why* `SelectTab` uses the Opacity/IsHitTestVisible/Focusable triple, which Step 3 depends on, so it needs updating rather than tolerating.
 
-Replace every `termsBtn` in those comments with `termsCheckBox`, keeping the surrounding reasoning intact. Verify:
+Separately, two comments name the old *handler* rather than the old control, and a `termsBtn`-only grep does not catch them: `VhcGui.axaml.cs:46` ("AcceptButton_click's Task.Run(AcceptTerms) can raise a dialog") and `:272` ("moved off the UI thread here, same as AcceptButton_click below"). Once Step 2 renames the handler, both go stale the same way a leftover `termsBtn` would.
+
+Replace every `termsBtn` in those comments with `termsCheckBox`, and every `AcceptButton_click` with `termsCheckBox_Checked`, keeping the surrounding reasoning intact. Verify both:
 
 ```bash
 grep -n 'termsBtn' vHC/HC_Reporting/VhcGui.axaml.cs vHC/HC_Reporting/VhcGui.axaml
+grep -n 'AcceptButton_click' vHC/HC_Reporting/VhcGui.axaml.cs vHC/HC_Reporting/VhcGui.axaml
 ```
 
-Expected: no output.
+Expected: no output from either.
 
 - [ ] **Step 6: Build and test**
 
