@@ -34,16 +34,16 @@ namespace VeeamHealthCheck
             // Establishes SelectTab as the single source of truth for the Ad-hoc-tab
             // default (XAML alone encodes it three separate ways: AdHocTabPanel's
             // implicit IsVisible=true, AdHocTabButton's tab-active class, and
-            // termsBtn/run's implicit default Opacity/IsHitTestVisible/Focusable) -
+            // termsCheckBox/run's implicit default Opacity/IsHitTestVisible/Focusable) -
             // without this call, a future edit to one could silently drift from the
-            // others, and termsBtn/run would start Focusable=true from XAML alone.
+            // others, and termsCheckBox/run would start Focusable=true from XAML alone.
             SelectTab(isAdHoc: true);
 
             ThemeToggleButton.Content = ThemeLabelFor(Application.Current!.RequestedThemeVariant);
 
             // AvaloniaUiNotifier passes this as the ShowDialog owner. Set it
             // here (rather than waiting for Task 12's App.axaml.cs) because
-            // AcceptButton_click's Task.Run(AcceptTerms) can raise a dialog
+            // termsCheckBox_Checked's Task.Run(AcceptTerms) can raise a dialog
             // before that wiring exists.
             AvaloniaHost.MainWindow = this;
 
@@ -92,11 +92,11 @@ namespace VeeamHealthCheck
 
         private void MonitoringTabButton_Click(object sender, RoutedEventArgs e) => SelectTab(isAdHoc: false);
 
-        // termsBtn/run belong to the ad-hoc workflow and follow the active tab; the
+        // termsCheckBox/run belong to the ad-hoc workflow and follow the active tab; the
         // progress stack does not (see the bottom-bar comment in VhcGui.axaml) - a
         // real run can take minutes and must stay visible from either tab.
         //
-        // termsBtn and run each sit alone in their own Auto column of the bottom
+        // termsCheckBox and run each sit alone in their own Auto column of the bottom
         // bar's Grid. IsVisible=false removes a control from layout entirely, so
         // an Auto column with nothing else to measure collapses to zero width -
         // the same reflow this plan already fixed for progressText, just
@@ -113,9 +113,9 @@ namespace VeeamHealthCheck
             // Opacity/IsHitTestVisible alone block pointer input, not keyboard focus -
             // without Focusable=false too, Tab navigation could still land on and
             // activate the invisible button from the wrong tab.
-            termsBtn.Opacity = isAdHoc ? 1 : 0;
-            termsBtn.IsHitTestVisible = isAdHoc;
-            termsBtn.Focusable = isAdHoc;
+            termsCheckBox.Opacity = isAdHoc ? 1 : 0;
+            termsCheckBox.IsHitTestVisible = isAdHoc;
+            termsCheckBox.Focusable = isAdHoc;
             run.Opacity = isAdHoc ? 1 : 0;
             run.IsHitTestVisible = isAdHoc;
             run.Focusable = isAdHoc;
@@ -269,7 +269,7 @@ namespace VeeamHealthCheck
             // PreRunCheck() stays synchronous (Part 1) but calls the notifier's
             // blocking wrapper (IUiNotifier.Confirm/ShowError) internally.
             // Calling that directly from the UI thread would deadlock, so it's
-            // moved off the UI thread here, same as AcceptButton_click below.
+            // moved off the UI thread here, same as termsCheckBox_Checked below.
             await Task.Run(() => this.functions.PreRunCheck());
 
             this.SetUiText();
@@ -314,7 +314,7 @@ namespace VeeamHealthCheck
             // this.pptxCheckBox.Content = "Export PowerPoint";
             this.clearCredsCheckBox.Content = "Clear Saved Credentials";
             this.outPath.Text = VbrLocalizationHelper.GuiOutPath;
-            this.termsBtn.Content = VbrLocalizationHelper.GuiAcceptButton;
+            this.termsCheckBox.Content = VbrLocalizationHelper.GuiAcceptButton;
             this.run.Content = VbrLocalizationHelper.GuiRunButton;
             this.importButton.Content = VbrLocalizationHelper.GuiImportButton;
             this.RescanBox.Content = VbrLocalizationHelper.GuiRescanHosts;
@@ -509,7 +509,7 @@ namespace VeeamHealthCheck
             htmlCheckBox.IsEnabled = false;
             pdfCheckBox.IsEnabled = false;
             scrubBox.IsEnabled = false;
-            termsBtn.IsEnabled = false;
+            termsCheckBox.IsEnabled = false;
             importButton.IsEnabled = false;
             pathBox.IsEnabled = false;
             clearCredsCheckBox.IsEnabled = false;
@@ -522,14 +522,50 @@ namespace VeeamHealthCheck
             RescanBox.IsEnabled = false;
         }
 
-        // AcceptTerms() stays synchronous (Part 1) - but this handler runs
-        // directly on the UI thread, so calling its blocking wrapper form here
-        // would deadlock. Task.Run moves it off the UI thread first, exactly
-        // like SetUiAsync's PreRunCheck call above.
-        private async void AcceptButton_click(object sender, RoutedEventArgs e)
+        // Guards the programmatic revert below. A plain bool is sufficient ONLY because
+        // Avalonia raises Unchecked synchronously inside the IsChecked assignment, while
+        // this flag is still set - which is also why termsCheckBox_Unchecked must not be
+        // async void.
+        private bool _suppressTermsHandler;
+
+        // AcceptTerms() stays synchronous - but this handler runs directly on the UI
+        // thread, and AcceptTerms() reaches the notifier's BLOCKING wrapper, which
+        // deadlocks there. Task.Run moves it off the UI thread first, exactly like
+        // SetUiAsync's PreRunCheck call. Do not "simplify" this away: the deadlock
+        // cannot reproduce on a non-Windows machine.
+        //
+        // The checkbox is visibly checked while the modal is open and springs back only
+        // on decline. That is intended, not a bug.
+        private async void termsCheckBox_Checked(object sender, RoutedEventArgs e)
         {
+            if (_suppressTermsHandler)
+            {
+                return;
+            }
+
             this.functions.LogUIAction("Accept");
-            run.IsEnabled = await Task.Run(() => this.functions.AcceptTerms());
+            bool accepted = await Task.Run(() => this.functions.AcceptTerms());
+            run.IsEnabled = accepted;
+
+            if (!accepted)
+            {
+                _suppressTermsHandler = true;
+                termsCheckBox.IsChecked = false;
+                _suppressTermsHandler = false;
+            }
+        }
+
+        // Deliberately NOT async void. An await before the guard check would resume the
+        // continuation after _suppressTermsHandler has been reset to false, silently
+        // disabling the guard. There is nothing to await here anyway.
+        private void termsCheckBox_Unchecked(object sender, RoutedEventArgs e)
+        {
+            if (_suppressTermsHandler)
+            {
+                return;
+            }
+
+            run.IsEnabled = false;
         }
 
         #endregion

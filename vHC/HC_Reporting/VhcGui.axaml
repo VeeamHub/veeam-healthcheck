@@ -241,14 +241,15 @@ MIT License
             </Panel>
         </ScrollViewer>
 
-        <!-- Bottom bar row (fixed - never inside the ScrollViewer). termsBtn/run follow the
+        <!-- Bottom bar row (fixed - never inside the ScrollViewer). termsCheckBox/run follow the
              active tab (ad-hoc-only workflow); the progress stack does NOT - a real health
              check run can take minutes, and a user switching to Continuous Monitoring
              mid-run must not lose visibility into it. -->
         <Border Grid.Row="3" Background="{DynamicResource CardBackgroundBrush}" BorderBrush="{DynamicResource CardBorderBrush}" BorderThickness="0,1,0,0">
             <Grid ColumnDefinitions="Auto,*,Auto" Margin="25,15,25,15">
-                <Button x:Name="termsBtn" Grid.Column="0" Classes="secondary"
-                        Height="45" Click="AcceptButton_click" />
+                <CheckBox x:Name="termsCheckBox" Grid.Column="0" Classes="modern"
+                          VerticalAlignment="Center"
+                          Checked="termsCheckBox_Checked" Unchecked="termsCheckBox_Unchecked" />
 
                 <!-- progressText now hides via Opacity, not IsVisible (see code-behind).
                      Opacity is a paint-time effect only - it never changes an element's
