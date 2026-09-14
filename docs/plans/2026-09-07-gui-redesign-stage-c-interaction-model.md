@@ -2262,6 +2262,20 @@ git add vHC/HC_Reporting/VhcGui.axaml vHC/HC_Reporting/VhcGui.axaml.cs
 git commit -m "feat(gui): convert the collection-period selector to segmented pills"
 ```
 
+### Corrections applied after review — Task 10 as built
+
+**Executed: `87d8cbb8`** (feature, as specified — no deviation from the plan's XAML/handler text) **+ `71c40c5b`** (this correction). The pill markup and `PeriodRadio_Checked` shipped exactly as written; the defect was in the plan's own claim that the construction-time firing is "harmless either way" (Step 2's comment block, since corrected in the shipped code's own comment), not a transcription error.
+
+1. **`days7`'s `IsChecked="True"` unconditionally overwrote a `/days:N` CLI value with `7` the instant the window was constructed — a real regression versus the `ComboBox` this task replaced.** The plan's own Step 2 comment asserted this was safe "because `CGlobals.reportDays` already defaults to 7," which only covers the no-CLI-override case. Traced by an independent code-quality review against `CArgsParser.cs`'s `/days:7|30|90|12` cases (all of which run and set `CGlobals.ReportDays` before `LaunchUi` ever constructs `VhcGui`): the old `ComboBox_SelectionChanged`'s `daysSelector == null` guard suppressed its own equivalent initial firing, because `daysSelector`'s named field was not yet assigned to itself at the moment its own `SelectedIndex="0"`-driven `SelectionChanged` fired during `InitializeComponent()` — but a `RadioButton`'s `sender` on its own `Checked` event is always non-null (it *is* the object raising the event), so the same guard shape does not carry over to the new control. `/gui /days:90` silently became `/gui /days:7` the moment the window opened; `/gui /days:12` (no matching pill even before this task) is a narrower pre-existing limitation that this task did not introduce or worsen.
+
+   Fixed by capturing `CGlobals.ReportDays` before `InitializeComponent()` runs, then resyncing after: for `30`/`90`, checking the matching pill (which re-fires `PeriodRadio_Checked`, correctly restoring the value); for `7`, doing nothing (already correct); for anything else (e.g. `12`), restoring the captured value directly, since no pill can represent it — the same cosmetic "value preserved, wrong pill shown" outcome the old `ComboBox`'s `SelectedIndex="0"` default already produced for that case.
+
+   Also, per the same review's minor note, `PeriodRadio_Checked`'s `Tag` switch now lists `"7" => 7` explicitly rather than folding it into the `_` default, so `_` means only "unreachable" and won't silently absorb a mistagged future pill.
+
+   No test added — this is Avalonia UI code with no coverage in this codebase, the same pattern as every other GUI task on this branch. Task 14's Windows verification checklist should add: launch with `/gui /days:30` (and separately `/days:90`) and confirm the matching pill is checked on open, not "7 Days", and that a run actually uses that period.
+
+**Suite after Task 10: 908 passed, 0 failed, 12 skipped** (verified directly; this task added no new tests). Baseline for Task 11.
+
 ---
 
 ## Task 11: Output-directory folder picker
