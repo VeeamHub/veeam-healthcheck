@@ -145,6 +145,22 @@ function Get-VhcJob {
                 continue
             }
             if ($null -eq $ResolvedJob -or $null -eq $ResolvedJob.Id) { continue }
+
+            # Walk up to the parent job, mirroring the sweep's own Tier 1
+            # resolution further down in this file (GetSourceJob() then
+            # GetParentJob()) - .GetJob() can resolve to a per-machine
+            # child job object (an agent policy child, or a Backup Copy
+            # per-object child), and without this walk-up tier B would add
+            # one _Jobs.csv row per child instead of collapsing to the one
+            # real job. A GetParentJob() throw means this job type doesn't
+            # implement it - falling back to the child's own Id is a valid
+            # outcome here too, same as Tier 1's handling.
+            $ParentOfResolvedJob = $null
+            try { $ParentOfResolvedJob = $ResolvedJob.GetParentJob() } catch {}
+            if ($null -ne $ParentOfResolvedJob -and $null -ne $ParentOfResolvedJob.Id) {
+                $ResolvedJob = $ParentOfResolvedJob
+            }
+
             if ($KnownJobIdSet.Add($ResolvedJob.Id.ToString())) {
                 $TierBJobs.Add($ResolvedJob)
             }

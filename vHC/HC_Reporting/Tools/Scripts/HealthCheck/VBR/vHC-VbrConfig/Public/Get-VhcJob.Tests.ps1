@@ -1830,6 +1830,47 @@ Describe 'Tier B: job discovery via backup objects (issue #222)' {
         Get-VhcJob
         ($script:LogMessages | Where-Object { $_ -eq 'Jobs discovered via backup objects (tier B): 1' }).Count | Should -Be 1
     }
+
+    It 'walks up to the parent job when .GetJob() resolves to a per-machine child job object' {
+        $RealParentJob = script:New-FakeJob -Name 'RealParentJob' -TypeToString 'Backup Copy'
+        $ChildJobObject = script:New-FakeJob -Name 'ChildJobObject' -ParentJob $RealParentJob
+        Mock Get-VBRJob    -MockWith { @() }
+        Mock Get-VBRBackup -MockWith {
+            @( (script:New-FakeTierBBackup -Name 'ChildBackup' -ResolvedJob $ChildJobObject) )
+        }
+
+        Get-VhcJob
+
+        $names = @($script:CapturedJobRows | ForEach-Object { $_.Name })
+        $names | Should -Contain 'RealParentJob'
+        $names | Should -Not -Contain 'ChildJobObject'
+    }
+
+    It 'stays on the resolved job when .GetJob() returns an already-top-level job (GetParentJob() returns null)' {
+        $TopLevelJob = script:New-FakeJob -Name 'TopLevelJob' -TypeToString 'VMware Backup'
+        Mock Get-VBRJob    -MockWith { @() }
+        Mock Get-VBRBackup -MockWith {
+            @( (script:New-FakeTierBBackup -Name 'TopLevelBackup' -ResolvedJob $TopLevelJob) )
+        }
+
+        Get-VhcJob
+
+        $names = @($script:CapturedJobRows | ForEach-Object { $_.Name })
+        $names | Should -Contain 'TopLevelJob'
+    }
+
+    It 'falls back to the resolved job when its GetParentJob() throws' {
+        $ThrowingChild = script:New-FakeJob -Name 'ChildThatThrowsOnParentLookup' -TypeToString 'HPE Morpheus VME Backup' -ThrowOnGetParentJob
+        Mock Get-VBRJob    -MockWith { @() }
+        Mock Get-VBRBackup -MockWith {
+            @( (script:New-FakeTierBBackup -Name 'ThrowingChildBackup' -ResolvedJob $ThrowingChild) )
+        }
+
+        { Get-VhcJob } | Should -Not -Throw
+
+        $names = @($script:CapturedJobRows | ForEach-Object { $_.Name })
+        $names | Should -Contain 'ChildThatThrowsOnParentLookup'
+    }
 }
 
 # ---------------------------------------------------------------------------
