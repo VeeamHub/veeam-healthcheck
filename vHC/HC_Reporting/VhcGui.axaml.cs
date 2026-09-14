@@ -32,10 +32,11 @@ namespace VeeamHealthCheck
 
         private const string LocalhostName = "localhost";
 
-        // Resolved once in the constructor, BEFORE SetUiSync() needs it. Caching it is
-        // what lets SetUiSync see the real list instead of a not-yet-populated control -
-        // see the SetUiSync fix. This is the PERSISTED list: it never contains localhost
-        // on an injecting machine.
+        // Resolved inside SetUiSync(), right after ModeCheck() runs - see that
+        // method's comments for why it can't be resolved any earlier. Caching it in
+        // a field is what lets SetUiSync's own hasRemoteServers scan see the real
+        // list instead of a not-yet-populated control. This is the PERSISTED list:
+        // it never contains localhost on an injecting machine.
         private List<string> _persistedServers = new();
 
         // What the picker actually shows: _persistedServers plus injected localhost.
@@ -286,16 +287,16 @@ namespace VeeamHealthCheck
         // notifier primitives - that part moves to SetUiAsync, run from Loaded
         // instead of the constructor.
         //
-        // NOTE: preserved verbatim from the real WPF file - when modeCheckResult
-        // is not "fail", "this.Title = modeCheckResult;" below immediately
-        // overwrites the "Remote Mode" title set a few lines above in the
-        // hasRemoteServers branch. This is a pre-existing bug in the original
-        // file, not introduced by this port - left intact rather than silently
-        // fixed. (The sibling bug this comment used to describe - the
-        // hasRemoteServers scan seeing an empty serverListBox because
-        // SetUiSync() ran before InitializeServerList() - was fixed by Task 12:
-        // the scan now reads _persistedServers, resolved above, instead of a
-        // control that had not been populated yet.)
+        // NOTE: the hasRemoteServers scan used to always see an empty
+        // serverListBox (SetUiSync() ran before InitializeServerList()
+        // populated it), so the hasRemoteServers branch below - and the title
+        // it sets - could never actually run. Task 12 fixed the scan to read
+        // _persistedServers, resolved above, instead of that not-yet-populated
+        // control - which makes the branch reachable for the first time. That
+        // exposed a second, previously-dormant bug: "this.Title = modeCheckResult;"
+        // a few lines below unconditionally overwrote whatever title was just
+        // set, including "Remote Mode", with the literal string "fail". Guarded
+        // below so "Remote Mode" survives.
         private void SetUiSync()
         {
             this.SetImportRelease();
@@ -345,7 +346,11 @@ namespace VeeamHealthCheck
                 }
             }
 
-            this.Title = modeCheckResult;
+            if (modeCheckResult != "fail")
+            {
+                this.Title = modeCheckResult;
+            }
+
             if (CGlobals.IsVb365 && CGlobals.IsVbr)
             {
                 pdfCheckBox.IsEnabled = false;
