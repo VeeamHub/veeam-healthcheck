@@ -64,7 +64,7 @@ MIT License
                                     <TextBlock Text="Product Type:" Classes="field-label" Margin="0,0,0,8" />
                                     <ComboBox x:Name="productTypeSelector"
                                               Classes="modern"
-                                              Width="220"
+                                              Width="220" FontSize="12"
                                               SelectedIndex="0"
                                               HorizontalAlignment="Left"
                                               SelectionChanged="productTypeSelector_SelectionChanged"
