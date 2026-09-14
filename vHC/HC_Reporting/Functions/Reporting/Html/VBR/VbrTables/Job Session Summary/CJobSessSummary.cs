@@ -70,26 +70,10 @@ namespace VeeamHealthCheck.Functions.Reporting.Html
             // Group all sessions by their stable rollup key. Children inherit the
             // parent's PolicyTag (GUID), so grouping by CSessionGroupKey.Of merges
             // per-machine sessions under the parent without any name parsing.
-            // See ADR 0019.
-            var groups = helper.JobSessionInfoList()
-                .GroupBy(s => CSessionGroupKey.Of(s))
-                .Select(g => new
-                {
-                    // DisplayName: pick the first non-empty PolicyName/JobName in the group.
-                    // The filter skips empty values (BC orchestrator parents leave PolicyName
-                    // empty - children supply it). Multiple non-empty values in the same group
-                    // shouldn't happen because Task 1's PS layer canonicalizes PolicyName via
-                    // $jobIdMap; if it ever does (mid-window rename), JobSessionInfoList's
-                    // CreationTime descending order means the most recent wins. See ADR 0019.
-                    DisplayName = g
-                        .Select(s => CSessionGroupKey.DisplayName(s))
-                        .FirstOrDefault(n => !string.IsNullOrEmpty(n))
-                        ?? (g.First().JobName ?? string.Empty),
-                    SessionNames = new HashSet<string>(
-                        g.Select(s => s.Name).Where(n => !string.IsNullOrEmpty(n)),
-                        StringComparer.Ordinal),
-                })
-                .ToList();
+            // A second pass rolls up hierarchical ("<Parent>\<child>") identities that
+            // carry no parent GUID at all (PolicyTag == JobId self-reference).
+            // See ADR 0019, issue #219.
+            var groups = CSessionGroupKey.Group(helper.JobSessionInfoList());
 
             int totalProtectedInstances = 0;
             foreach (var group in groups)
@@ -109,7 +93,10 @@ namespace VeeamHealthCheck.Functions.Reporting.Html
                     List<double> dataSize = new();
                     List<double> backupSize = new();
 
-                    SessionStats thisSession = helper.SessionStats(group.SessionNames);
+                    SessionStats thisSession = helper.SessionStats(
+                        new HashSet<string>(
+                            group.Sessions.Select(s => s.Name).Where(n => !string.IsNullOrEmpty(n)),
+                            StringComparer.Ordinal));
                     durations = thisSession.JobDuration;
                     vmNames = thisSession.VmNames;
                     dataSize = thisSession.DataSize;
