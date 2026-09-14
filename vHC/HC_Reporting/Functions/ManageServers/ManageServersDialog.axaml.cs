@@ -131,6 +131,16 @@ namespace VeeamHealthCheck.Functions.ManageServers
             Grid.SetColumn(label, 0);
             grid.Children.Add(label);
 
+            // Not "the last server can't be removed" - there is no such rule. This is
+            // specifically the row pinned because it's the locally-injected machine
+            // (ServerListEditor's _pinned set), which is unremovable regardless of how
+            // many other servers exist. Without this, the row's missing remove control
+            // reads as unexplained rather than as a deliberate, permanent state.
+            if (!row.IsRemovable)
+            {
+                ToolTip.SetTip(label, VbrLocalizationHelper.GuiManageServersPinnedTooltip);
+            }
+
             if (row.IsRemovable)
             {
                 var button = new Button
