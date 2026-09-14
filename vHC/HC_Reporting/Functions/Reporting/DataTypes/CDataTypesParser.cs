@@ -687,24 +687,42 @@ namespace VeeamHealthCheck.Functions.Reporting.DataTypes
 
         private DateTime TryParseDateTime(string dateTime)
         {
+            return TryParseDateTime(dateTime, System.Globalization.CultureInfo.CurrentCulture);
+        }
+
+        /// <remarks>
+        /// The CSV is written by PowerShell using the collecting machine's culture, so that
+        /// culture is tried first. <see cref="System.Globalization.CultureInfo.InvariantCulture"/>
+        /// is month-first, so on a day-first locale (en-AU, en-GB, etc.) it silently misparses
+        /// day-first strings -- a date meaning "2 September" gets read as "9 February" -- for
+        /// any CreationTime whose day-of-month is &lt;= 12, corrupting the date. InvariantCulture
+        /// stays as a fallback so US/ISO-shaped strings still parse when read on a day-first
+        /// machine.
+        /// </remarks>
+        internal static DateTime TryParseDateTime(string dateTime, System.Globalization.CultureInfo culture)
+        {
             // Issue #41: Enhanced DateTime parsing to handle Chinese locale formats and encoding issues
             if (string.IsNullOrWhiteSpace(dateTime))
             {
                 return DateTime.MinValue;
             }
 
+            culture ??= System.Globalization.CultureInfo.CurrentCulture;
+
             // Remove corrupted AM/PM indicators (Chinese systems may export "??" instead of 上午/下午)
             string cleanedDateTime = dateTime.Replace("??", "").Replace("  ", " ").Trim();
 
-            // First attempt: Try InvariantCulture (works for most standard formats)
-            if (DateTime.TryParse(cleanedDateTime, System.Globalization.CultureInfo.InvariantCulture,
+            // First attempt: Try the collecting machine's culture (day-first locales parse
+            // ambiguous dates like "2/09/2026" correctly as day-first here).
+            if (DateTime.TryParse(cleanedDateTime, culture,
                 System.Globalization.DateTimeStyles.None, out DateTime result))
             {
                 return result;
             }
 
-            // Second attempt: Try current culture (respects system locale)
-            if (DateTime.TryParse(cleanedDateTime, out result))
+            // Second attempt: Try InvariantCulture (month-first fallback for US/ISO-shaped formats)
+            if (DateTime.TryParse(cleanedDateTime, System.Globalization.CultureInfo.InvariantCulture,
+                System.Globalization.DateTimeStyles.None, out result))
             {
                 return result;
             }
