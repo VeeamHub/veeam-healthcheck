@@ -2736,10 +2736,12 @@ git commit -m "feat(gui): collapse inline server management into a picker plus d
 
 Task 12 fixed bug 1 (the dead `hasRemoteServers` scan), because it had to — that scan referenced a control Task 12 deletes. Fixing bug 1 makes the Remote Mode branch reachable for the first time ever, which exposes bug 2 on it. This task closes bug 2 and updates the comment that documents both as unfixed.
 
+**Completed early.** This task's entire substance — the guard in Step 1 and the comment rewrite in Step 2 — was already applied as part of Task 12's own post-review correction, because Task 12's code-quality reviewer found bug 2 live (not dormant) and traced it to a concrete user-visible regression (the title bar reading the literal string `"fail"`) before this task was ever dispatched separately. Rather than manufacture a second, functionally-empty diff against code that's already fixed, the four steps below are checked off against what actually shipped: the guard is `28c0bd85` ("fix(gui): stop SetUiSync from overwriting the Remote Mode title with 'fail'"), the comment rewrite is split across `28c0bd85` and a follow-up, `670915ed`, which added the verified `PreRunCheck` no-op paragraph Step 2's sample calls for. Wording differs from the exact code samples below (independently reviewed and verified rather than transcribed), but the described defect, fix, and comment content are the same. See Task 12's "Corrections applied after review" subsection for the full narrative.
+
 **Files:**
 - Modify: `vHC/HC_Reporting/VhcGui.axaml.cs` (`SetUiSync`, ~lines 190-232)
 
-- [ ] **Step 1: Stop the title being clobbered**
+- [x] **Step 1: Stop the title being clobbered**
 
 Replace:
 
@@ -2761,7 +2763,7 @@ with:
             }
 ```
 
-- [ ] **Step 2: Update the stale comment above `SetUiSync`**
+- [x] **Step 2: Update the stale comment above `SetUiSync`**
 
 The comment block at `:194-200` documents both bugs as deliberately left intact. Replace those lines with:
 
@@ -2779,7 +2781,7 @@ The comment block at `:194-200` documents both bugs as deliberately left intact.
         // false on this path.
 ```
 
-- [ ] **Step 3: Build and test**
+- [x] **Step 3: Build and test**
 
 ```bash
 dotnet build vHC/HC.sln --configuration Debug
@@ -2787,14 +2789,16 @@ dotnet test vHC/VhcXTests/VhcXTests.csproj
 git checkout -- vHC/HC_Reporting/VeeamHealthCheck.csproj
 ```
 
-Expected: 0 errors, 0 failed, 12 skipped.
+Expected: 0 errors, 0 failed, 12 skipped. Confirmed at `28c0bd85` and again at `670915ed` (908 passed, 0 failed, 12 skipped both times).
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git add vHC/HC_Reporting/VhcGui.axaml.cs
 git commit -m "fix(gui): stop the Remote Mode window title being overwritten with 'fail'"
 ```
+
+Shipped as `28c0bd85` + `670915ed` under different messages — see the "Completed early" note above.
 
 ---
 
