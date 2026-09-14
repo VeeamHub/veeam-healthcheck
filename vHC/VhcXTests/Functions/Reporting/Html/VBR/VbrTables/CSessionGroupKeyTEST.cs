@@ -178,7 +178,7 @@ namespace VhcXTests.Functions.Reporting.Html.VBR.VbrTables
         public void Group_DataBearingParentWithHierarchicalChild_StillMerges()
         {
             // Was "DoesNotMerge" -- this test used to pin the identityHasData guard
-            // (removed in ADR 0020/0030): a parent identity that carries data of its
+            // (removed in ADR 0030): a parent identity that carries data of its
             // own used to keep its own row instead of absorbing a same-prefix child.
             // That guard was found to backfire on the confirmed real-world case where a
             // Backup Copy job has a GUID-linked child with data AND a self-referencing

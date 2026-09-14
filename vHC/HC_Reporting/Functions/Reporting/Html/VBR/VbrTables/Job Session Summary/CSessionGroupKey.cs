@@ -91,7 +91,7 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR.VbrTables.Job_Session_Su
         /// window -- both are simply normal, healthy children of the same job -- and the
         /// guard misfired on exactly that shape, kicking the hierarchical child out into
         /// its own mangled row and reproducing issue #219's symptom for the case this
-        /// pass was added to fix. See ADR 0020.
+        /// pass was added to fix. See ADR 0030.
         /// </summary>
         public static List<CSessionGroup> Group(IEnumerable<CJobSessionInfo> sessions)
         {
@@ -131,7 +131,7 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR.VbrTables.Job_Session_Su
                     {
                         // Always merge on a prefix match, regardless of whether the parent
                         // identity carries data of its own -- see the Group() doc comment
-                        // above and ADR 0020 for why the previous data-based guard here was
+                        // above and ADR 0030 for why the previous data-based guard here was
                         // removed.
                         key = parentKey;
                         name = parent;
