@@ -229,7 +229,12 @@ MIT License
              check run can take minutes, and a user switching to Continuous Monitoring
              mid-run must not lose visibility into it. -->
         <Border Grid.Row="3" Background="{DynamicResource CardBackgroundBrush}" BorderBrush="{DynamicResource CardBorderBrush}" BorderThickness="0,1,0,0">
-            <Grid ColumnDefinitions="Auto,*,Auto" Margin="25,15,25,15">
+            <!-- Margin and run's Height trimmed slightly (15->12, 45->42, progressText's
+                 top margin 8->6) to reclaim a few px for row 2's ScrollViewer - at the
+                 window's default 620px height the two-column card layout was just tall
+                 enough to force a visible vertical scrollbar. Reported from real Windows
+                 hardware. -->
+            <Grid ColumnDefinitions="Auto,*,Auto" Margin="25,12,25,12">
                 <CheckBox x:Name="termsCheckBox" Grid.Column="0" Classes="modern"
                           VerticalAlignment="Center"
                           Checked="termsCheckBox_Checked" Unchecked="termsCheckBox_Unchecked" />
@@ -250,13 +255,13 @@ MIT License
                     <TextBlock Name="progressText"
                                Classes="secondary-text"
                                Text="Processing health check..."
-                               Margin="0,8,0,0"
+                               Margin="0,6,0,0"
                                HorizontalAlignment="Center"
                                Opacity="0" />
                 </StackPanel>
 
                 <Button x:Name="run" Grid.Column="2" Classes="primary"
-                        Height="45" Click="run_Click" />
+                        Height="42" Click="run_Click" />
             </Grid>
         </Border>
     </Grid>
