@@ -2730,6 +2730,8 @@ git commit -m "feat(gui): collapse inline server management into a picker plus d
 
 1. **`SetUiSync()` overwrote the "Remote Mode" title with the literal string `"fail"`.** Before this task, the `hasRemoteServers` scan always read an empty `serverListBox` (`SetUiSync()` runs before `InitializeServerList()` populates it), so the `if (hasRemoteServers)` branch that sets `this.Title = "Veeam Health Check - Remote Mode";` could never actually run — it was dead code. Step 3 fixed the scan to read the resolved `_persistedServers` list instead, which made that branch reachable for the first time on a machine with no local Veeam but at least one persisted remote server. That exposed a second, previously-dormant bug a few lines below: an unconditional `this.Title = modeCheckResult;` that immediately overwrote whatever title the branch had just set — including "Remote Mode" — with `modeCheckResult`'s own value, the literal 4-character string `"fail"`. A code-quality review caught this (the spec-compliance review, checking the same lines for a *different* reason, had already flagged the adjacent `NOTE:` comment as newly self-contradictory but did not trace the runtime consequence). Fixed by guarding the assignment: `if (modeCheckResult != "fail") { this.Title = modeCheckResult; }`. Also corrected two comments that had gone stale in opposite directions from the same fix: the `_persistedServers` field comment (still said "resolved once in the constructor" after Step 3 moved that resolution into `SetUiSync()`) and the `NOTE:` above `SetUiSync()` (still described the title-overwrite as dormant/left-intact, when Step 3's own fix had just made it live). Verified via `dotnet build`/`dotnet test` (908 passed, 0 failed, 12 skipped, matching baseline) — committed as `28c0bd85`.
 
+2. **A verified-but-unrelated safety note was added, then its own wording tripped Task 14's stale-reference gate.** Confirmed empirically (`CClientFunctions.cs:120` gates `modeCheckResult == "fail"` on both `IsVbr`/`IsVb365` being false, and both of `PreRunCheck`'s dialog branches on one of those flags being true) that making the Remote Mode branch reachable does not also make `SetUiAsync()`'s `Task.Run(() => PreRunCheck())` unsafe on that path — it stays a no-op. Documented in a comment (`670915ed`). That comment, plus two comments already carried over verbatim from earlier tasks' plan samples, named `serverListBox` and `daysSelector` — controls Tasks 10 and 12 had already deleted. Task 14 Step 2's gate greps for zero surviving references to any removed control, comments included, so these three would have failed it. Reworded to describe the old controls without naming them; no logic changed (`ed3b324e`).
+
 ---
 
 ## Task 13: Finish the remote-only startup fix
@@ -2815,7 +2817,7 @@ dotnet test vHC/VhcXTests/VhcXTests.csproj 2>&1 | tail -20
 git checkout -- vHC/HC_Reporting/VeeamHealthCheck.csproj
 ```
 
-Expected: `0 Error(s)`, and `Failed: 0, Skipped: 12` with `Passed` at **898** — the 843 baseline plus 55 new tests (14 in Task 1, 11 in Task 2, 15 in Task 3, 15 in Task 4), each count including post-review corrections.
+Expected: `0 Error(s)`, and `Failed: 0, Skipped: 12`. `Passed` was last independently confirmed at **908** after Task 12's corrections (commit `ed3b324e`) — this count has drifted upward from an earlier, now-stale "898" as later tasks added tests and corrections, so re-verify it fresh rather than trusting either number: run the suite yourself and treat whatever it reports (with 0 failed, 12 skipped) as the real baseline.
 
 - [ ] **Step 2: Confirm nothing stale survives**
 
@@ -2860,6 +2862,7 @@ Requires a real Windows machine with VBR installed. Nothing here can be checked 
 - [ ] Unchecking manually disables Run again.
 - [ ] No hang when checking the box (this is the deadlock guard — `Task.Run` around `AcceptTerms`).
 - [ ] Switching to Continuous Monitoring and back causes no bottom-bar reflow or shifting of the progress area.
+- [ ] Check the box, and before the disclaimer modal resolves, click **Import**: once the modal is answered (either way), `run.IsEnabled` is not silently flipped back on and the checkbox is not silently re-enabled — the in-flight accept flow must recognize it's now stale and do nothing observable. (Task 9's `_guiLockedForRun` race fix — reachable specifically via Import, which does not itself wait on terms acceptance.)
 
 ## Manage Servers
 - [ ] Gear button opens the dialog; its tooltip is localized.
@@ -2878,6 +2881,10 @@ Requires a real Windows machine with VBR installed. Nothing here can be checked 
 - [ ] Removing the currently-selected server, then Done: the picker falls back sensibly and a subsequent run does not target the deleted host.
 - [ ] Select a **remote** server, open the dialog, press Done having changed **nothing**: the selection is still that remote server, not `localhost`. Then start a run and confirm it targets the remote host. (This is the `preserveSelection` path — a regression here is silent, and testing only the removal case above will not catch it.)
 - [ ] Select a remote server, add an unrelated server, Done: selection still on the original remote server.
+- [ ] Corrupt or otherwise make undecryptable a stored credential's DPAPI blob (e.g. edit the encrypted file on disk, or move the profile to another machine), then open the dialog: that row still shows the "has credentials" marker (defaults to true on `CryptographicException` rather than silently reporting no credentials) — then Remove it and confirm it's actually cleaned up (`CredentialStore.Remove` never decrypts, so cleanup itself does not throw).
+- [ ] Make a credential removal genuinely fail (e.g. revoke write permission on the credential file mid-session), then Done: the "Removal Incomplete" notice names the specific reinstated host, and that host is still present in the picker afterward — not silently dropped.
+- [ ] Make the settings save itself fail (e.g. revoke write permission on `settings.json`) and press Done: an error is shown, Done becomes **permanently** disabled for the rest of the dialog's life, and Cancel + reopening the dialog is the only way to retry (a fresh dialog re-queries credentials per row).
+- [ ] With the summary confirm open, click the dialog's own OS title-bar close button (not Cancel): it does nothing while the confirm is in flight — the close is blocked, not merely visually disabled. Answer the confirm, then confirm the OS close button works normally afterward.
 
 ## Persistence
 - [ ] Add a server, restart: it is still there.
@@ -2889,7 +2896,9 @@ Requires a real Windows machine with VBR installed. Nothing here can be checked 
 
 ## Period pills
 - [ ] All three select correctly and the log shows the matching `Interval set to 7|30|90`.
-- [ ] "7 Days" is selected on launch.
+- [ ] "7 Days" is selected on launch **when no `/days:N` argument is given**. (This is the no-override case only — see the CLI-override item below, which selects a different pill on purpose.)
+- [ ] Launch with `/days:30`: the 30 pill (not 7) is selected on open, and the log reads `Interval set to 30`, not `Interval set to 7`. Repeat for `/days:90`. (Task 10's CLI-stomping regression fix — the pills' `IsChecked="True"` on the 7-day option fires synchronously during construction and would otherwise silently overwrite the CLI value.)
+- [ ] Launch with `/days:12` (or any value with no matching pill): no pill appears selected, and the log reads `Interval set to 12` — not `7`, and not silently defaulting without a log entry.
 - [ ] Labels are localized, not blank.
 - [ ] **Hover and press each pill, checked and unchecked, in both light and dark themes.** `RadioButton.segment` defines no `:pointerover` or `:pressed` rules while every other interactive class in `App.axaml` does, so FluentTheme is expected to paint over the checked pill. If it does, fix it by fetching the real template source for the pinned Avalonia version or copying an already-validated sibling pattern from `App.axaml` — do not guess. Stage B's `Button.tab` fix needed `Background`, `BorderBrush` **and** `Foreground` neutralized on `ContentPresenter#PART_ContentPresenter` for both states; `Background` alone was verified insufficient on real hardware.
 
