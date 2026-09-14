@@ -46,45 +46,17 @@ MIT License
                             <StackPanel TextElement.FontWeight="SemiBold">
                                 <TextBlock Text="VBR Server" Classes="card-title" />
                                 <StackPanel Margin="5,10,5,0">
-                                    <Grid Margin="0,0,0,10" ColumnDefinitions="*,10,80">
-                                        <TextBox x:Name="serverTextBox" Grid.Column="0"
-                                                 Classes="modern"
-                                                 Height="32"
-                                                 FontSize="12"
-                                                 ToolTip.Tip="Enter VBR server hostname or IP address" />
-                                        <Button x:Name="addServerBtn" Grid.Column="2"
-                                                Content="Add"
-                                                Height="32"
-                                                FontSize="12"
-                                                Classes="primary"
-                                                Click="addServerBtn_Click" />
-                                    </Grid>
-
-                                    <Border BorderBrush="{DynamicResource CardBorderBrush}" BorderThickness="1"
-                                            Background="{DynamicResource CardBackgroundBrush}" Height="120">
-                                        <ListBox x:Name="serverListBox"
-                                                 BorderThickness="0"
-                                                 SelectionMode="Single"
-                                                 FontSize="13"
-                                                 Padding="5"
-                                                 SelectionChanged="serverListBox_SelectionChanged" />
-                                    </Border>
-
-                                    <Grid Margin="0,10,0,0" ColumnDefinitions="*,10,*">
-                                        <Button x:Name="removeServerBtn" Grid.Column="0"
-                                                Content="Remove Selected"
-                                                Height="32"
-                                                FontSize="12"
-                                                Padding="10,5"
-                                                Classes="secondary"
-                                                Click="removeServerBtn_Click" />
-                                        <Button x:Name="clearServersBtn" Grid.Column="2"
-                                                Content="Clear All"
-                                                Height="32"
-                                                FontSize="12"
-                                                Padding="10,5"
-                                                Classes="secondary"
-                                                Click="clearServersBtn_Click" />
+                                    <TextBlock x:Name="serverLabel" Classes="field-label" Margin="0,0,0,8" />
+                                    <Grid ColumnDefinitions="*,8,Auto">
+                                        <ComboBox x:Name="serverSelector" Grid.Column="0"
+                                                  Classes="modern"
+                                                  Height="32" FontSize="12"
+                                                  HorizontalAlignment="Stretch"
+                                                  SelectionChanged="serverSelector_SelectionChanged" />
+                                        <Button x:Name="manageServersBtn" Grid.Column="2" Classes="secondary"
+                                                Content="&#x2699;" Width="32" Height="32" Padding="0"
+                                                HorizontalContentAlignment="Center" VerticalContentAlignment="Center"
+                                                Click="manageServersBtn_Click" />
                                     </Grid>
 
                                     <Separator Margin="0,12,0,12" />

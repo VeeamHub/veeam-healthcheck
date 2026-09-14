@@ -1,6 +1,7 @@
 // Copyright (c) 2021, Adam Congdon <adam.congdon2@gmail.com>
 // MIT License
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Avalonia;
@@ -12,6 +13,7 @@ using Avalonia.Platform.Storage;
 using Avalonia.Styling;
 using Avalonia.Threading;
 using VeeamHealthCheck.Functions.AboutDialog;
+using VeeamHealthCheck.Functions.ManageServers;
 using VeeamHealthCheck.Functions.Monitor;
 using VeeamHealthCheck.Functions.UserInteraction;
 using VeeamHealthCheck.Resources.Localization;
@@ -27,6 +29,31 @@ namespace VeeamHealthCheck
     {
         private readonly CClientFunctions functions = new();
         private bool _modeCheckFailed;
+
+        private const string LocalhostName = "localhost";
+
+        // Resolved once in the constructor, BEFORE SetUiSync() needs it. Caching it is
+        // what lets SetUiSync see the real list instead of a not-yet-populated control -
+        // see the SetUiSync fix. This is the PERSISTED list: it never contains localhost
+        // on an injecting machine.
+        private List<string> _persistedServers = new();
+
+        // What the picker actually shows: _persistedServers plus injected localhost.
+        // Kept as a field rather than read back off serverSelector.ItemsSource, because
+        // casting ItemsSource back to a concrete collection type is a runtime cast that
+        // silently depends on what InitializeServerList happened to assign.
+        private List<string> _displayServers = new();
+
+        // The single predicate that owns localhost policy. Injection, pinning and the
+        // seed filter all derive from it; writing those three rules independently is how
+        // they drift apart and produce a blank picker on a VB365-only machine.
+        //
+        // IsVbrInstalled alone is not enough: it is set only for a running
+        // Veeam.Backup.Service (CClientFunctions.cs:106), so it is false on a VB365-only
+        // box - which can still legitimately hold a localhost credential, because
+        // RunSaveCredsFlow defaults its host to "localhost".
+        private static bool LocalhostIsInjected =>
+            CGlobals.IsVbrInstalled || CGlobals.IsVb365;
 
         public VhcGui()
         {
@@ -168,34 +195,62 @@ namespace VeeamHealthCheck
             MonitoringTabButton.Classes.Set("tab-active", !isAdHoc);
         }
 
-        private void InitializeServerList()
+        // preserveSelection distinguishes the two callers, and the distinction is
+        // load-bearing. At startup there is no selection to keep and localhost-first is
+        // the right default. After the dialog commits, silently reasserting that default
+        // would move a user who was sitting on vbr01 back to localhost - flipping
+        // REMOTEEXEC to false and pointing the next run at the local box - even if they
+        // pressed Done having changed nothing. Both tabs read that selection
+        // (monitorQuickSetupBtn_Click at :846), so it must survive a repopulate.
+        private void InitializeServerList(bool preserveSelection = false)
         {
-            // Load saved servers from credentials
-            var savedServers = CredentialStore.GetAllServers();
+            string previous = preserveSelection
+                ? serverSelector.SelectedItem?.ToString()
+                : null;
 
-            // Add localhost if VBR is installed
-            if (CGlobals.IsVbrInstalled && !savedServers.Contains("localhost"))
+            // The persisted list is authoritative; GetAllServers() is consulted only by
+            // LoadOrSeedServers' one-time seed and the post-commit refresh.
+            var display = new List<string>();
+
+            if (LocalhostIsInjected)
             {
-                savedServers.Insert(0, "localhost");
+                display.Add(LocalhostName);
             }
 
-            // Populate dropdown with unique servers
-            foreach (var server in savedServers.Distinct())
+            // Case-insensitive de-dup, matching the .Distinct() this method used to
+            // apply. LoadOrSeedServers already strips localhost when it is injected;
+            // this is belt and braces so a stray entry can never render twice.
+            foreach (var server in _persistedServers)
             {
-                if (!string.IsNullOrWhiteSpace(server))
+                if (!display.Any(s => s.Equals(server, StringComparison.OrdinalIgnoreCase)))
                 {
-                    serverListBox.Items.Add(server);
+                    display.Add(server);
                 }
             }
 
-            // Select localhost by default if it exists
-            if (serverListBox.Items.Contains("localhost"))
+            _displayServers = display;
+            serverSelector.ItemsSource = _displayServers;
+
+            // Restore the prior selection when it survived the commit; otherwise fall
+            // back to localhost-first, then first-entry - the precedence this method has
+            // always used at startup.
+            string keep = previous == null
+                ? null
+                : _displayServers.FirstOrDefault(
+                    s => s.Equals(previous, StringComparison.OrdinalIgnoreCase));
+
+            if (keep != null)
             {
-                serverListBox.SelectedItem = "localhost";
+                serverSelector.SelectedItem = keep;
             }
-            else if (serverListBox.Items.Count > 0)
+            else if (_displayServers.Any(s => s.Equals(LocalhostName, StringComparison.OrdinalIgnoreCase)))
             {
-                serverListBox.SelectedIndex = 0;
+                serverSelector.SelectedItem = _displayServers.First(
+                    s => s.Equals(LocalhostName, StringComparison.OrdinalIgnoreCase));
+            }
+            else if (_displayServers.Count > 0)
+            {
+                serverSelector.SelectedIndex = 0;
             }
 
             UpdateSelectedServersGlobal();
@@ -203,27 +258,23 @@ namespace VeeamHealthCheck
 
         private void UpdateSelectedServersGlobal()
         {
-            // Set the VBR server name from the selected item
-            if (serverListBox.SelectedItem != null)
+            if (serverSelector.SelectedItem != null)
             {
-                CGlobals.VBRServerName = serverListBox.SelectedItem.ToString();
-                CGlobals.REMOTEHOST = serverListBox.SelectedItem.ToString();
+                CGlobals.VBRServerName = serverSelector.SelectedItem.ToString();
+                CGlobals.REMOTEHOST = serverSelector.SelectedItem.ToString();
             }
-            else if (serverListBox.Items.Count > 0)
+            else if (_displayServers.Count > 0)
             {
-                // If nothing selected but items exist, use first item
-                CGlobals.VBRServerName = serverListBox.Items[0].ToString();
-                CGlobals.REMOTEHOST = serverListBox.Items[0].ToString();
+                CGlobals.VBRServerName = _displayServers[0];
+                CGlobals.REMOTEHOST = CGlobals.VBRServerName;
             }
             else
             {
-                // Fallback to localhost
-                CGlobals.VBRServerName = "localhost";
-                CGlobals.REMOTEHOST = "localhost";
+                CGlobals.VBRServerName = LocalhostName;
+                CGlobals.REMOTEHOST = LocalhostName;
             }
 
-            // Set REMOTEEXEC flag if not localhost
-            CGlobals.REMOTEEXEC = !CGlobals.VBRServerName.Equals("localhost", StringComparison.OrdinalIgnoreCase);
+            CGlobals.REMOTEEXEC = !CGlobals.VBRServerName.Equals(LocalhostName, StringComparison.OrdinalIgnoreCase);
         }
 
         // Split from the original single SetUi(): everything here is synchronous
@@ -235,31 +286,52 @@ namespace VeeamHealthCheck
         // notifier primitives - that part moves to SetUiAsync, run from Loaded
         // instead of the constructor.
         //
-        // NOTE: preserved verbatim from the real WPF file - SetUiSync() runs
-        // before InitializeServerList() in the constructor, so the
-        // hasRemoteServers scan below always sees an empty serverListBox, and
-        // (when it doesn't fail) "this.Title = modeCheckResult;" immediately
-        // overwrites the "Remote Mode" title set a few lines above. Both are
-        // pre-existing bugs in the original file, not introduced by this port -
-        // left intact rather than silently fixed.
+        // NOTE: preserved verbatim from the real WPF file - when modeCheckResult
+        // is not "fail", "this.Title = modeCheckResult;" below immediately
+        // overwrites the "Remote Mode" title set a few lines above in the
+        // hasRemoteServers branch. This is a pre-existing bug in the original
+        // file, not introduced by this port - left intact rather than silently
+        // fixed. (The sibling bug this comment used to describe - the
+        // hasRemoteServers scan seeing an empty serverListBox because
+        // SetUiSync() ran before InitializeServerList() - was fixed by Task 12:
+        // the scan now reads _persistedServers, resolved above, instead of a
+        // control that had not been populated yet.)
         private void SetUiSync()
         {
             this.SetImportRelease();
 
             string modeCheckResult = this.functions.ModeCheck();
 
+            // Resolved HERE, and not one line earlier in the constructor. ModeCheck() is
+            // the only thing that populates CGlobals.IsVbrInstalled / IsVb365 on the GUI
+            // path, so evaluating LocalhostIsInjected before this call reads both as
+            // false on every machine - which would make excludeLocalhost permanently
+            // false, persist localhost into the one-time seed on injecting machines, and
+            // render the read-time filter inert. The same predicate evaluates correctly
+            // in manageServersBtn_Click (which runs later), so getting this wrong makes
+            // two calls to one function disagree.
+            //
+            // Placed before the fail branch below so hasRemoteServers still sees the
+            // resolved list. CredentialStore.GetAllServers() is safe at any point - a
+            // static constructor initialises its cache (CredentialStore.cs:34-36).
+            _persistedServers = CAppSettings.LoadOrSeedServers(
+                CredentialStore.GetAllServers(),
+                excludeLocalhost: LocalhostIsInjected);
+
             if (modeCheckResult == "fail")
             {
-                // If remote servers are configured, don't exit — let user select product type
-                bool hasRemoteServers = false;
-                foreach (var item in serverListBox.Items)
-                {
-                    if (!item.ToString().Equals("localhost", StringComparison.OrdinalIgnoreCase))
-                    {
-                        hasRemoteServers = true;
-                        break;
-                    }
-                }
+                // Reads the resolved list rather than a control that has not been
+                // populated yet. The old scan iterated an empty serverListBox, because
+                // SetUiSync() runs before InitializeServerList() - so this branch could
+                // never fire, and a machine with no local Veeam but remote servers
+                // configured always got the abort the branch exists to prevent.
+                //
+                // The localhost filter is kept rather than relying on the "localhost is
+                // never persisted" invariant: on a non-injecting machine localhost IS
+                // legitimately persisted, and counting it as a remote server would put a
+                // local-only box into Remote Mode.
+                bool hasRemoteServers = _persistedServers
+                    .Any(s => !s.Equals(LocalhostName, StringComparison.OrdinalIgnoreCase));
 
                 if (hasRemoteServers)
                 {
@@ -369,6 +441,9 @@ namespace VeeamHealthCheck
             this.SetPathBoxText(CVariables.outDir);
             CGlobals.desiredPath = CVariables.outDir;
             ToolTip.SetTip(this.browseFolderBtn, VbrLocalizationHelper.GuiBrowseFolderTooltip);
+
+            this.serverLabel.Text = VbrLocalizationHelper.GuiServerLabel;
+            ToolTip.SetTip(this.manageServersBtn, VbrLocalizationHelper.GuiManageServersTooltip);
         }
 
         private void SetPathBoxText(string text)
@@ -583,11 +658,8 @@ namespace VeeamHealthCheck
             pathBox.IsEnabled = false;
             browseFolderBtn.IsEnabled = false;
             clearCredsCheckBox.IsEnabled = false;
-            serverTextBox.IsEnabled = false;
-            addServerBtn.IsEnabled = false;
-            removeServerBtn.IsEnabled = false;
-            clearServersBtn.IsEnabled = false;
-            serverListBox.IsEnabled = false;
+            serverSelector.IsEnabled = false;
+            manageServersBtn.IsEnabled = false;
             productTypeSelector.IsEnabled = false;
             RescanBox.IsEnabled = false;
         }
@@ -860,121 +932,56 @@ namespace VeeamHealthCheck
 
         #region Server Management
 
-        private void addServerBtn_Click(object sender, RoutedEventArgs e)
+        // Guard preserved from the ListBox version: Avalonia's generated
+        // InitializeComponent() can raise SelectionChanged while assigning named fields
+        // as the tree is built, so serverSelector can still be null on first raise.
+        private void serverSelector_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
-            string serverName = serverTextBox.Text?.Trim() ?? string.Empty;
-
-            if (string.IsNullOrWhiteSpace(serverName))
-            {
-                _ = CGlobals.Notifier.ShowErrorAsync("Please enter a server name.", "Input Required");
-                return;
-            }
-
-            // Check if server already exists in list
-            foreach (var item in serverListBox.Items)
-            {
-                if (item.ToString().Equals(serverName, StringComparison.OrdinalIgnoreCase))
-                {
-                    _ = CGlobals.Notifier.ShowErrorAsync($"Server '{serverName}' is already in the list.", "Duplicate Server");
-                    serverTextBox.Text = string.Empty;
-                    return;
-                }
-            }
-
-            // Add server to list
-            serverListBox.Items.Add(serverName);
-            serverTextBox.Text = string.Empty;
-            UpdateSelectedServersGlobal();
-
-            this.functions.LogUIAction($"Added server: {serverName}");
-        }
-
-        private async void removeServerBtn_Click(object sender, RoutedEventArgs e)
-        {
-            if (serverListBox.SelectedItem == null)
-            {
-                await CGlobals.Notifier.ShowErrorAsync("Please select a server to remove.", "No Selection");
-                return;
-            }
-
-            string selectedServer = serverListBox.SelectedItem.ToString();
-
-            // Don't allow removing localhost if it's the only item
-            if (serverListBox.Items.Count == 1 && selectedServer.Equals("localhost", StringComparison.OrdinalIgnoreCase))
-            {
-                await CGlobals.Notifier.ShowErrorAsync("Cannot remove the last server. At least one server must remain in the list.", "Cannot Remove");
-                return;
-            }
-
-            // Ask for confirmation if this server has stored credentials
-            bool hasCredentials = CredentialStore.Get(selectedServer) != null;
-            if (hasCredentials)
-            {
-                bool confirmed = await CGlobals.Notifier.ConfirmAsync(
-                    $"Remove '{selectedServer}' from the list?\n\nThis will also delete any stored credentials for this server.",
-                    "Confirm Remove");
-
-                if (!confirmed)
-                {
-                    return;
-                }
-            }
-
-            // Remove from UI list
-            serverListBox.Items.Remove(serverListBox.SelectedItem);
-
-            // Remove credentials if they exist
-            if (hasCredentials)
-            {
-                CredentialStore.Remove(selectedServer);
-            }
+            if (serverSelector == null) return;
 
             UpdateSelectedServersGlobal();
 
-            this.functions.LogUIAction($"Removed server: {selectedServer}");
+            if (serverSelector.SelectedItem != null)
+            {
+                this.functions.LogUIAction($"Selected server: {serverSelector.SelectedItem}");
+            }
         }
 
-        private async void clearServersBtn_Click(object sender, RoutedEventArgs e)
+        private async void manageServersBtn_Click(object sender, RoutedEventArgs e)
         {
-            if (serverListBox.Items.Count == 0)
+            var pinned = LocalhostIsInjected
+                ? new[] { LocalhostName }
+                : System.Array.Empty<string>();
+
+            // Pinned names are passed in `initial` as well - they are displayed rows,
+            // and that is what makes Add("localhost") a plain duplicate rather than a
+            // second row.
+            //
+            // Feed this from _displayServers, NOT from CAppSettings.Get().Servers.
+            // The direct read looks equivalent and is not: ServerListEditor's ctor
+            // filters whitespace but does not TRIM, while _displayServers has already
+            // been through Filter's trim. Wire it to the raw settings and a hand-edited
+            // "  vbr01  " enters the editor untrimmed, Add's comparison misses it
+            // against "vbr01", Commit().FinalServers carries both, and the picker
+            // renders two identical rows.
+            var initial = _displayServers.ToList();
+
+            var dialog = new ManageServersDialog(initial, pinned);
+            bool committed = await dialog.ShowDialog<bool>(this);
+
+            if (!committed)
             {
-                await CGlobals.Notifier.ShowErrorAsync("Server list is already empty.", "Empty List");
                 return;
             }
 
-            bool confirmed = await CGlobals.Notifier.ConfirmAsync(
-                "Are you sure you want to clear all servers from the list?",
-                "Confirm Clear");
+            // Re-resolve and repopulate. Without this, a removed server would remain in
+            // CGlobals.VBRServerName/REMOTEHOST and the next run would target a host the
+            // user just deleted.
+            _persistedServers = CAppSettings.LoadOrSeedServers(
+                CredentialStore.GetAllServers(),
+                excludeLocalhost: LocalhostIsInjected);
 
-            if (confirmed)
-            {
-                serverListBox.Items.Clear();
-
-                // Add localhost back if VBR is installed locally
-                if (CGlobals.IsVbrInstalled)
-                {
-                    serverListBox.Items.Add("localhost");
-                }
-
-                UpdateSelectedServersGlobal();
-                this.functions.LogUIAction("Cleared all servers from list");
-            }
-        }
-
-        // Guard added (not present in the real WPF file): same
-        // InitializeComponent()-timing rationale as PeriodRadio_Checked
-        // above - serverListBox could still be null on a SelectionChanged
-        // raised during tree construction.
-        private void serverListBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
-        {
-            if (serverListBox == null) return;
-
-            UpdateSelectedServersGlobal();
-
-            if (serverListBox.SelectedItem != null)
-            {
-                this.functions.LogUIAction($"Selected server: {serverListBox.SelectedItem}");
-            }
+            this.InitializeServerList(preserveSelection: true);
         }
 
         private void productTypeSelector_SelectionChanged(object sender, SelectionChangedEventArgs e)
@@ -1043,7 +1050,7 @@ namespace VeeamHealthCheck
 
         private void monitorQuickSetupBtn_Click(object sender, RoutedEventArgs e)
         {
-            string server = serverListBox.SelectedItem?.ToString() ?? CGlobals.VBRServerName;
+            string server = serverSelector.SelectedItem?.ToString() ?? CGlobals.VBRServerName;
             var creds = CredentialStore.Get(server);
             string username = creds?.Username ?? string.Empty;
             string password = creds?.Password ?? string.Empty;
