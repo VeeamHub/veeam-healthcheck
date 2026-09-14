@@ -53,6 +53,13 @@ namespace VeeamHealthCheck.Functions.ManageServers
             // Appended after FinalServers rather than restored to its original position:
             // position in the persisted list has no behavioural meaning elsewhere in the
             // codebase, so this is a deliberate choice, not an oversight.
+            //
+            // The Contains guard is unreachable via ServerListEditor.Commit() - it
+            // partitions FinalServers and CredentialsToDelete on the same IsPendingRemoval
+            // flag, so a host can never land in both. Kept anyway: CommitPlan's setters are
+            // `internal set`, not enforced-immutable, so nothing stops an in-assembly
+            // caller (this file's own tests included) from constructing an incoherent
+            // plan where it would matter.
             var toPersist = plan.FinalServers
                 .Concat(failed.Where(h => !plan.FinalServers.Contains(h, StringComparer.OrdinalIgnoreCase)))
                 .ToList();
