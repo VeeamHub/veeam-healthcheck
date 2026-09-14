@@ -62,6 +62,9 @@ BeforeAll {
     if (-not (Get-Command Add-VhciModuleError -ErrorAction SilentlyContinue | Where-Object { $_.CommandType -eq 'Cmdlet' })) {
         function global:Add-VhciModuleError { param([string]$CollectorName, [string]$ErrorMessage) }
     }
+    if (-not (Get-Command Invoke-VhciCBackupJobFetch -ErrorAction SilentlyContinue | Where-Object { $_.CommandType -eq 'Cmdlet' })) {
+        function global:Invoke-VhciCBackupJobFetch { }
+    }
 
     # Fake-backup factory:
     #   $ThrowOnGetJob = orphaned backup (GetJob throws). Otherwise GetJob
@@ -336,6 +339,64 @@ BeforeAll {
             [PSCustomObject]@{ Stats = [PSCustomObject]@{ BackupSize = $this.BackupSizeValue } }
         }
         return $RestorePoint
+    }
+
+    # Fake tier-B backup factory (issue #222): produces a non-standalone
+    # backup object (IsAgentStandaloneJob explicitly $false) carrying a
+    # JobId property and a GetJob() ScriptMethod, for exercising
+    # Get-VhcJob's tier B (Get-VBRBackup + .GetJob()) discovery path
+    # independently of the standalone-agent fixtures above. $CallCounter
+    # (a shared Hashtable reference, same pattern as New-FakeRestorePoint's
+    # $CallCounts) lets a test assert .GetJob() was skipped entirely for
+    # an already-known JobId.
+    function script:New-FakeTierBBackup {
+        param(
+            [string]$Name = 'TierBBackup',
+            [guid]$Id = [guid]::NewGuid(),
+            [guid]$JobId = [guid]::Empty,
+            [switch]$ThrowOnGetJob,
+            $ResolvedJob = $null,
+            [hashtable]$CallCounter = $null
+        )
+        $ThrowCapture    = [bool]$ThrowOnGetJob
+        $ResolvedCapture = $ResolvedJob
+        $CounterCapture  = $CallCounter
+        $backup = [PSCustomObject]@{
+            Id                   = $Id
+            Name                 = $Name
+            JobId                = $JobId
+            IsAgentStandaloneJob = $false
+        }
+        $backup | Add-Member -MemberType ScriptMethod -Name GetJob -Value {
+            if ($CounterCapture) { $CounterCapture.Count = $CounterCapture.Count + 1 }
+            if ($ThrowCapture) { throw "Unable to get job for backup: $($this.Id)" }
+            return $ResolvedCapture
+        }.GetNewClosure()
+        return $backup
+    }
+
+    # Fake tier-C core-job-record factory (issue #222): mimics one item
+    # from [Veeam.Backup.Core.CBackupJob]::GetAll() - an Id, the
+    # unconfirmed-meaning HasNoJobRecord flag, and a GetParent()
+    # ScriptMethod (NOT GetParentJob() - a different method on the real
+    # type; see Get-VhcJob.ps1's tier C comments for why .GetParent() is
+    # the one confirmed live to collapse internal per-guest "agent child"
+    # artifacts onto their real parent job).
+    function script:New-FakeCoreJobRecord {
+        param(
+            [guid]$Id = [guid]::NewGuid(),
+            [bool]$HasNoJobRecord = $false,
+            $Parent = $null,
+            [switch]$ThrowOnGetParent
+        )
+        $ParentCapture = $Parent
+        $ThrowCapture  = [bool]$ThrowOnGetParent
+        $record = [PSCustomObject]@{ Id = $Id; HasNoJobRecord = $HasNoJobRecord }
+        $record | Add-Member -MemberType ScriptMethod -Name GetParent -Value {
+            if ($ThrowCapture) { throw 'GetParent failed' }
+            return $ParentCapture
+        }.GetNewClosure()
+        return $record
     }
 
     # Dot-source Write-LogFile then the function under test.
@@ -1660,5 +1721,238 @@ Describe 'Stale-ObjectId guard: GetObjectsInJob() cross-reference' {
         $stale | Should -HaveCount 1
         $stale[0].CurrentJobId | Should -BeNullOrEmpty
         $stale[0].RestorePoints[0].Name | Should -Be 'STALE'
+    }
+}
+
+# ---------------------------------------------------------------------------
+# Tier B (issue #222): reconstruct jobs Get-VBRJob doesn't return, via the
+# backup objects they own (Get-VBRBackup + .GetJob()).
+# ---------------------------------------------------------------------------
+Describe 'Tier B: job discovery via backup objects (issue #222)' {
+
+    BeforeEach {
+        $script:capturedSubCollectorJobs = $null
+        $script:warnings                 = [System.Collections.Generic.List[string]]::new()
+        $script:LogMessages              = [System.Collections.Generic.List[string]]::new()
+        $script:CapturedJobRows          = @()
+        Mock Write-LogFile -MockWith {
+            $script:LogMessages.Add($Message)
+            if ($LogLevel -eq 'WARNING') { $script:warnings.Add($Message) }
+        }
+        Mock Get-VBRConfigurationBackupJob -MockWith { $null }
+        Mock Invoke-VhciJobSubCollectors -MockWith {
+            $script:capturedSubCollectorJobs = $Jobs
+        }
+        Mock Export-VhciCsv -MockWith {
+            if ($FileName -eq '_Jobs.csv' -and $InputObject) {
+                $script:CapturedJobRows += @($InputObject)
+            }
+        }
+        Mock Add-VhciModuleError        -MockWith { }
+        Mock Invoke-VhciCBackupJobFetch -MockWith { @() }
+    }
+
+    It 'discovers a job whose backup exists but was absent from Get-VBRJob output, and it reaches _Jobs.csv' {
+        $DiscoveredJob = script:New-FakeJob -Name 'DiscoveredAhvJob' -TypeToString 'Nutanix AHV Backup'
+        Mock Get-VBRJob    -MockWith { @() }
+        Mock Get-VBRBackup -MockWith {
+            @( (script:New-FakeTierBBackup -Name 'AhvBackup' -ResolvedJob $DiscoveredJob) )
+        }
+
+        Get-VhcJob
+
+        $names = @($script:CapturedJobRows | ForEach-Object { $_.Name })
+        $names | Should -Contain 'DiscoveredAhvJob'
+    }
+
+    It 'skips one throwing backup among healthy siblings without propagating, merges the siblings, and logs a WARNING with the backup Id' {
+        $JobA  = script:New-FakeJob -Name 'SiblingJobA' -TypeToString 'Proxmox Backup'
+        $JobB  = script:New-FakeJob -Name 'SiblingJobB' -TypeToString 'Proxmox Backup'
+        $BadId = [guid]'91919191-9191-9191-9191-919191919191'
+        Mock Get-VBRJob    -MockWith { @() }
+        Mock Get-VBRBackup -MockWith {
+            @(
+                (script:New-FakeTierBBackup -Name 'GoodBackupA' -ResolvedJob $JobA),
+                (script:New-FakeTierBBackup -Name 'BadBackup' -Id $BadId -ThrowOnGetJob),
+                (script:New-FakeTierBBackup -Name 'GoodBackupB' -ResolvedJob $JobB)
+            )
+        }
+
+        { Get-VhcJob } | Should -Not -Throw
+
+        $names = @($script:capturedSubCollectorJobs | Where-Object { $_ } | ForEach-Object { $_.Name })
+        $names | Should -Contain 'SiblingJobA'
+        $names | Should -Contain 'SiblingJobB'
+        ($script:warnings | Where-Object { $_ -match [regex]::Escape($BadId.ToString()) }).Count | Should -BeGreaterThan 0
+    }
+
+    It 'does not call Add-VhciModuleError for a single per-item GetJob() failure' {
+        Mock Get-VBRJob    -MockWith { @() }
+        Mock Get-VBRBackup -MockWith {
+            @( (script:New-FakeTierBBackup -Name 'BadBackup' -ThrowOnGetJob) )
+        }
+
+        Get-VhcJob
+        Should -Invoke Add-VhciModuleError -Times 0 -Exactly
+    }
+
+    It 'does not call .GetJob() for a backup whose JobId is already a known job Id' {
+        $KnownJob = script:New-FakeJob -Name 'KnownJob' -TypeToString 'VMware Backup'
+        $Counter  = @{ Count = 0 }
+        Mock Get-VBRJob    -MockWith { @($KnownJob) }
+        Mock Get-VBRBackup -MockWith {
+            @( (script:New-FakeTierBBackup -Name 'AlreadyKnownBackup' -JobId $KnownJob.Id -CallCounter $Counter -ResolvedJob $KnownJob) )
+        }
+
+        Get-VhcJob
+        $Counter.Count | Should -Be 0
+    }
+
+    It 'does not re-process a standalone-agent backup (no double merge, no spurious warning)' {
+        Mock Get-VBRJob    -MockWith { @() }
+        Mock Get-VBRBackup -MockWith {
+            @( (script:New-FakeStandaloneBackup -Name 'Good1' -JobName 'GoodAgent1') )
+        }
+
+        Get-VhcJob
+        $names = @($script:capturedSubCollectorJobs | Where-Object { $_ } | ForEach-Object { $_.Name })
+        ($names | Where-Object { $_ -eq 'GoodAgent1' }).Count | Should -Be 1
+        $script:warnings.Count | Should -Be 0
+    }
+
+    It 'logs the tier B merge count in the documented format' {
+        $DiscoveredJob = script:New-FakeJob -Name 'DiscoveredAhvJob' -TypeToString 'Nutanix AHV Backup'
+        Mock Get-VBRJob    -MockWith { @() }
+        Mock Get-VBRBackup -MockWith {
+            @( (script:New-FakeTierBBackup -Name 'AhvBackup' -ResolvedJob $DiscoveredJob) )
+        }
+
+        Get-VhcJob
+        ($script:LogMessages | Where-Object { $_ -eq 'Jobs discovered via backup objects (tier B): 1' }).Count | Should -Be 1
+    }
+}
+
+# ---------------------------------------------------------------------------
+# Tier B outer failure (issue #222): a wholesale Get-VBRBackup failure (not
+# a per-item .GetJob() failure) DOES escalate via Add-VhciModuleError.
+# ---------------------------------------------------------------------------
+Describe 'Tier B: outer failure escalation (issue #222)' {
+
+    BeforeEach {
+        Mock Write-LogFile                  -MockWith { }
+        Mock Get-VBRJob                     -MockWith { @() }
+        Mock Get-VBRConfigurationBackupJob  -MockWith { $null }
+        Mock Invoke-VhciJobSubCollectors    -MockWith { }
+        Mock Export-VhciCsv                 -MockWith { }
+        Mock Add-VhciModuleError            -MockWith { }
+        Mock Invoke-VhciCBackupJobFetch     -MockWith { @() }
+    }
+
+    It "calls Add-VhciModuleError when tier B's own Get-VBRBackup call fails (distinct from the standalone block's call)" {
+        # The standalone-agent block above calls Get-VBRBackup first, tier B
+        # calls it again immediately after - both invocations hit this same
+        # mock. Succeeding on the 1st call (the standalone block's) and
+        # throwing on the 2nd (tier B's) isolates tier B's own outer catch
+        # without needing Pester to distinguish call sites directly.
+        $script:GetBackupCallCount = 0
+        Mock Get-VBRBackup -MockWith {
+            $script:GetBackupCallCount++
+            if ($script:GetBackupCallCount -eq 2) { throw 'Simulated tier B Get-VBRBackup failure' }
+            return @()
+        }
+
+        { Get-VhcJob } | Should -Not -Throw
+        Should -Invoke Add-VhciModuleError -Times 1 -Exactly
+    }
+}
+
+# ---------------------------------------------------------------------------
+# Tier C (issue #222): enumerate the core job model directly (VBR < 13).
+# ---------------------------------------------------------------------------
+Describe 'Tier C: job discovery via core job enumeration (issue #222)' {
+
+    BeforeEach {
+        $script:capturedSubCollectorJobs = $null
+        $script:CapturedJobRows          = @()
+        $script:LogMessages              = [System.Collections.Generic.List[string]]::new()
+        Mock Write-LogFile -MockWith { $script:LogMessages.Add($Message) }
+        Mock Get-VBRJob                     -MockWith { @() }
+        Mock Get-VBRBackup                  -MockWith { @() }
+        Mock Get-VBRConfigurationBackupJob  -MockWith { $null }
+        Mock Invoke-VhciJobSubCollectors -MockWith {
+            $script:capturedSubCollectorJobs = $Jobs
+        }
+        Mock Export-VhciCsv -MockWith {
+            if ($FileName -eq '_Jobs.csv' -and $InputObject) {
+                $script:CapturedJobRows += @($InputObject)
+            }
+        }
+        Mock Add-VhciModuleError -MockWith { }
+    }
+
+    It 'collapses 1 parent + 3 internal children (same .GetParent() result) to exactly 1 newly merged job, and logs the count' {
+        $ParentJob = script:New-FakeJob -Name 'ParentJob' -TypeToString 'Nutanix AHV Backup'
+        $Records = @(
+            (script:New-FakeCoreJobRecord -Id $ParentJob.Id -Parent $ParentJob),
+            (script:New-FakeCoreJobRecord -Parent $ParentJob),
+            (script:New-FakeCoreJobRecord -Parent $ParentJob),
+            (script:New-FakeCoreJobRecord -Parent $ParentJob)
+        )
+        Mock Invoke-VhciCBackupJobFetch -MockWith { @($Records) }
+
+        Get-VhcJob -VBRVersion 12
+
+        $names = @($script:capturedSubCollectorJobs | Where-Object { $_ } | ForEach-Object { $_.Name })
+        ($names | Where-Object { $_ -eq 'ParentJob' }).Count | Should -Be 1
+        ($script:LogMessages | Where-Object { $_ -eq 'Jobs discovered via core job enumeration (tier C): 1 (of 4 core job objects enumerated)' }).Count | Should -Be 1
+    }
+
+    It 'does not fail the run when the core-job-fetch function throws, and other jobs still export' {
+        $ExistingJob = script:New-FakeJob -Name 'ExistingJob' -TypeToString 'VMware Backup'
+        Mock Get-VBRJob -MockWith { @($ExistingJob) }
+        Mock Invoke-VhciCBackupJobFetch -MockWith { throw 'CBackupJob type not loaded' }
+
+        { Get-VhcJob -VBRVersion 12 } | Should -Not -Throw
+
+        ($script:CapturedJobRows | Where-Object { $_.Name -eq 'ExistingJob' }) | Should -Not -BeNullOrEmpty
+        Should -Invoke Add-VhciModuleError -Times 0 -Exactly
+    }
+
+    It 'still produces a _Jobs.csv row for a tier-C job with zero restore points' {
+        $NeverRunJob = script:New-FakeJob -Name 'NeverRunJob' -TypeToString 'Proxmox Backup'
+        Mock Invoke-VhciCBackupJobFetch -MockWith {
+            @( (script:New-FakeCoreJobRecord -Id $NeverRunJob.Id -Parent $NeverRunJob) )
+        }
+
+        Get-VhcJob -VBRVersion 12
+
+        ($script:CapturedJobRows | Where-Object { $_.Name -eq 'NeverRunJob' }) | Should -Not -BeNullOrEmpty
+    }
+}
+
+# ---------------------------------------------------------------------------
+# Tier C version gate (issue #222): only runs below VBR 13.
+# ---------------------------------------------------------------------------
+Describe 'Tier C: version gate (issue #222)' {
+
+    BeforeEach {
+        Mock Write-LogFile                  -MockWith { }
+        Mock Get-VBRJob                     -MockWith { @() }
+        Mock Get-VBRBackup                  -MockWith { @() }
+        Mock Get-VBRConfigurationBackupJob  -MockWith { $null }
+        Mock Invoke-VhciJobSubCollectors    -MockWith { }
+        Mock Export-VhciCsv                 -MockWith { }
+        Mock Add-VhciModuleError            -MockWith { }
+        Mock Invoke-VhciCBackupJobFetch     -MockWith { @() }
+    }
+
+    It 'invokes the core-job-fetch function when VBRVersion is below 13' {
+        Get-VhcJob -VBRVersion 12
+        Should -Invoke Invoke-VhciCBackupJobFetch -Times 1 -Exactly
+    }
+
+    It 'does not invoke the core-job-fetch function when VBRVersion is 13 or above' {
+        Get-VhcJob -VBRVersion 13
+        Should -Invoke Invoke-VhciCBackupJobFetch -Times 0 -Exactly
     }
 }
