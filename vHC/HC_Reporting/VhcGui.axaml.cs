@@ -1231,7 +1231,7 @@ namespace VeeamHealthCheck
             Dispatcher.UIThread.Invoke(() =>
             {
                 monitorVhcSetupBtn.IsEnabled = true;
-                monitorLastRunText.Text = VbrLocalizationHelper.GuiMonitorCompleteSetupPrompt;
+                monitorLastRunText.Text = string.Format(VbrLocalizationHelper.GuiMonitorCompleteSetupPrompt, VbrLocalizationHelper.GuiMonitorVhcSetup);
                 monitorLastRunText.IsVisible = true;
                 monitorStatusText.Text = VbrLocalizationHelper.GuiMonitorAvailableNotSetUp;
                 monitorStatusText.Foreground = GetStatusBrush("StatusWarningBrush");

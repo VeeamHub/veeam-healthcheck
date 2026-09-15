@@ -1955,7 +1955,7 @@ The files may be anonymized to hide sensitive data. Accepting the Terms means th
     <value>Running...</value>
   </data>
   <data name="GuiMonitorCompleteSetupPrompt" xml:space="preserve">
-    <value>Health check complete — click 'Setup from VHC' to configure continuous monitoring with auto-detected server settings.</value>
+    <value>Health check complete — click '{0}' to configure continuous monitoring with auto-detected server settings.</value>
   </data>
   <data name="GuiThemeDark" xml:space="preserve">
     <value>Dark</value>
