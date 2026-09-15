@@ -63,11 +63,6 @@ jobs:
         with:
           fetch-depth: 1
 
-      - name: Setup PowerShell
-        uses: actions/setup-powershell@v1
-        with:
-          powershell-version: '7.4'
-
       - name: Validate CSV schemas against golden baselines
         id: validate
         shell: pwsh
@@ -199,11 +194,6 @@ jobs:
         uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:
           fetch-depth: 1
-
-      - name: Setup PowerShell
-        uses: actions/setup-powershell@v1
-        with:
-          powershell-version: '7.4'
 
       - name: Validate object schema files
         shell: pwsh
