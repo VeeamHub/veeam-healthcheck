@@ -87,6 +87,19 @@ confirm that on its own:
   French today, via the same empty-`<value>` mechanism Task 4 fixed for 9 sibling keys —
   found while investigating those 9, out of scope for this stage, and unrelated to anything
   Stage D added or renamed.
+- **Culture-name casing is a dormant landmine for any future Linux CI expansion of
+  `VhcXTests`.** `vhcres.fR-FR.resx`/`vhcres.zh-tw.resx` and Task 6's `SatelliteCultures`
+  array both use non-canonical casing (`fR-FR`, `zh-tw`); .NET's satellite-assembly probing
+  canonicalizes to `fr-FR`/`zh-TW`. On a case-insensitive filesystem (Windows, macOS, the
+  current CI) this is invisible. On a hypothetical future case-sensitive Linux CI run of the
+  main `VhcXTests` project (today's `crossplatform-tests.yml` only builds the separate,
+  smaller `VhcXTests.CrossPlatform` project, which doesn't include
+  `VbrLocalizationHelperTests.cs`, so this is not live today), `GetResourceSet` would fail to
+  find those two satellite directories and the guard test would report ~600 false "missing
+  key" failures for exactly those two cultures. Fixing it means renaming the `.resx` files
+  and their build-output folder names — real, cross-cutting work outside this stage's scope,
+  flagged here (as the spec's own hazards section already predicted) so it isn't rediscovered
+  from scratch if `VhcXTests` is ever added to Linux CI.
 
 ## Known, deliberate translation debt (Task 4/6)
 
