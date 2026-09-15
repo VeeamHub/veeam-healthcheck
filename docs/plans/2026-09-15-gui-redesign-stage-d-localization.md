@@ -54,11 +54,11 @@ Read these once; they are not repeated per task.
 
 | Path | Change |
 |---|---|
-| `vHC/HC_Reporting/VhcGui.axaml` | Task 1: `Tag` on notif ComboBoxItems. Task 2: `x:Name` added to 18 previously-unnamed elements; hardcoded `Text`/`Content`/`ToolTip.Tip` values removed. |
+| `vHC/HC_Reporting/VhcGui.axaml` | Task 1: `Tag` on notif ComboBoxItems. Task 2: `xmlns:loc` added; `x:Name` added to 11 previously-unnamed elements; hardcoded `Text`/`Content`/`ToolTip.Tip` values removed; 7 `ComboBoxItem.Content` values (`productTypeSelector`'s 4, `notifSeverityBox`'s 3) set via `{x:Static}` instead of `x:Name`, because Avalonia's ComboBox snapshots an item's `Content` at attach time and never re-reads it — see Task 2 Step 5's note. |
 | `vHC/HC_Reporting/VhcGui.axaml.cs` | Task 1: 3 `.Content` reads → `.Tag`. Task 2: `SetUiText()` additions + one `SetUiSync()` tooltip line. Task 3: `SetUiText()`'s 2 remaining hardcoded lines, `ThemeLabelFor()`, and 6 monitor/progress methods. |
 | `vHC/HC_Reporting/Resources/Localization/vhcres.resx` | Task 2 adds 35 keys, Task 3 adds 17 keys (52 total). |
 | `vHC/HC_Reporting/Resources/Localization/VbrLocalizationHelper.cs` | Matching 52 new accessors (UTF-16LE). |
-| `vHC/HC_Reporting/Resources/Localization/vhcres.txt` | Matching ResGen source entries (UTF-16LE, `Key = Value` format) — inert for the actual VBR build (see spec Context) but kept in sync per existing convention. |
+| `vHC/HC_Reporting/Resources/Localization/vhcres.txt` | Matching ResGen source entries (UTF-16LE, `Key = Value` format) — inert for the actual VBR build (see spec Context). Kept in sync in spirit, not byte-for-byte: Task 3's entries use a plain hyphen in place of the em-dash the real resx carries, since nothing reads this file and a second UTF-16LE em-dash round-trip on it would verify nothing. |
 | `vHC/HC_Reporting/Resources/Localization/vhcres.fR-FR.resx` | Task 4: 17 key renames. Task 5: 52 new keys (English content). |
 | `vHC/HC_Reporting/Resources/Localization/vhcres.ja.resx` | Task 4: 1 key rename. Task 5: 52 new keys. |
 | `vHC/HC_Reporting/Resources/Localization/vhcres.zh-cn.resx` | Task 4: 1 key rename. Task 5: 52 new keys. |
@@ -298,6 +298,8 @@ Expected output: `inserted 35 keys into vhcres.resx`. (`GuiTitle`, reused for li
 grep -c '<data name="Gui' vHC/HC_Reporting/Resources/Localization/vhcres.resx
 ```
 
+Expected: `84` (49 pre-existing `Gui`-prefixed keys from earlier stages + this task's 35 new ones).
+
 - [ ] **Step 2: Add the accessors to `VbrLocalizationHelper.cs`, encoding-preserving**
 
 ```bash
@@ -337,7 +339,7 @@ file vHC/HC_Reporting/Resources/Localization/VbrLocalizationHelper.cs
 iconv -f UTF-16LE -t UTF-8 vHC/HC_Reporting/Resources/Localization/VbrLocalizationHelper.cs | grep -c 'GuiMonitor\|GuiProductType\|GuiNotifSeverity'
 ```
 
-Expected: `Unicode text, UTF-16, little-endian text, with CRLF line terminators` and a count of `17` (8 `GuiMonitor*` + 6 `GuiProductType*` + 3 `GuiNotifSeverity*`). **If `file` reports UTF-8, stop and `git checkout --` the file.**
+Expected: `Unicode text, UTF-16, little-endian text, with CRLF line terminators` and a count of `18` (8 `GuiMonitor*` + `GuiMonitoringTab`, which also matches the `GuiMonitor` pattern as a substring + 6 `GuiProductType*` + 3 `GuiNotifSeverity*`). **If `file` reports UTF-8, stop and `git checkout --` the file.**
 
 - [ ] **Step 4: Append the matching entries to `vhcres.txt`**
 
@@ -395,6 +397,35 @@ file vHC/HC_Reporting/Resources/Localization/vhcres.txt
 Expected: `appended 35 entries` and still UTF-16LE.
 
 - [ ] **Step 5: Update `VhcGui.axaml`**
+
+**Why some items use `x:Static` instead of a `SetUiText()` assignment:** Avalonia's `ComboBox` does not live-bind its closed-box display to a selected item's `Content` — `UpdateSelectionBoxItem` (verified against the pinned `Avalonia` 11.3.20 source, `src/Avalonia.Controls/ComboBox.cs`) is only invoked from `OnAttachedToVisualTree` and from the `SelectedItemProperty` change handler, never from the item's own `Content` changing. Since `SelectedIndex="0"` is already set at XAML-load time, the box attaches and snapshots `Content` *before* `SetUiText()` ever runs (`SetUiText()` runs on `Loaded`, well after construction). Setting `Content` later via `SetUiText()`, as the rest of this sweep does, would leave `productTypeSelector` and `notifSeverityBox` permanently blank in their closed state. `{x:Static}` sidesteps this entirely: it resolves at XAML-load time, before attachment, so the correct text is already in place when the box takes its snapshot. Verified to compile against `VbrLocalizationHelper` (which is `internal`, no access-modifier change needed) with a scratch build before this plan was finalized.
+
+Window root — find:
+
+```xml
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        x:Class="VeeamHealthCheck.VhcGui"
+        Title=""
+        MinWidth="860" MinHeight="580"
+        Width="900" Height="620"
+        WindowStartupLocation="CenterScreen"
+        CanResize="True">
+```
+
+Replace with:
+
+```xml
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:loc="clr-namespace:VeeamHealthCheck.Resources.Localization;assembly=VeeamHealthCheck"
+        x:Class="VeeamHealthCheck.VhcGui"
+        Title=""
+        MinWidth="860" MinHeight="580"
+        Width="900" Height="620"
+        WindowStartupLocation="CenterScreen"
+        CanResize="True">
+```
 
 Header row — find:
 
@@ -483,12 +514,14 @@ Replace with:
                                               SelectedIndex="0"
                                               HorizontalAlignment="Left"
                                               SelectionChanged="productTypeSelector_SelectionChanged">
-                                        <ComboBoxItem x:Name="productTypeAutoItem" IsSelected="True" />
-                                        <ComboBoxItem x:Name="productTypeVbrItem" />
-                                        <ComboBoxItem x:Name="productTypeVb365Item" />
-                                        <ComboBoxItem x:Name="productTypeBothItem" />
+                                        <ComboBoxItem Content="{x:Static loc:VbrLocalizationHelper.GuiProductTypeAuto}" IsSelected="True" />
+                                        <ComboBoxItem Content="{x:Static loc:VbrLocalizationHelper.GuiProductTypeVbr}" />
+                                        <ComboBoxItem Content="{x:Static loc:VbrLocalizationHelper.GuiProductTypeVb365}" />
+                                        <ComboBoxItem Content="{x:Static loc:VbrLocalizationHelper.GuiProductTypeBoth}" />
                                     </ComboBox>
 ```
+
+`Content` is set directly via `{x:Static}` here rather than `x:Name` + `SetUiText()` — see the note at the top of this step. `productTypeSelector_SelectionChanged` already reads `SelectedIndex`, never `Content` (`VhcGui.axaml.cs:1013-1024`), so this is safe.
 
 Options card — find:
 
@@ -668,12 +701,14 @@ Replace with:
                                     <ComboBox x:Name="notifSeverityBox" Width="110"
                                               Classes="modern" Height="28" FontSize="12"
                                               SelectedIndex="0">
-                                        <ComboBoxItem x:Name="notifSeverityWarningItem" Tag="warning" IsSelected="True" />
-                                        <ComboBoxItem x:Name="notifSeverityCriticalItem" Tag="critical" />
-                                        <ComboBoxItem x:Name="notifSeverityOkItem" Tag="ok" />
+                                        <ComboBoxItem Content="{x:Static loc:VbrLocalizationHelper.GuiNotifSeverityWarning}" Tag="warning" IsSelected="True" />
+                                        <ComboBoxItem Content="{x:Static loc:VbrLocalizationHelper.GuiNotifSeverityCritical}" Tag="critical" />
+                                        <ComboBoxItem Content="{x:Static loc:VbrLocalizationHelper.GuiNotifSeverityOk}" Tag="ok" />
                                     </ComboBox>
                                 </StackPanel>
 ```
+
+`Content` is set via `{x:Static}` for the same reason as `productTypeSelector` above — `Tag` (from Task 1) is untouched and still carries the fixed English protocol value the correctness fix depends on.
 
 Bottom bar — find:
 
@@ -722,10 +757,6 @@ Replace with:
             this.serverCardTitle.Text = VbrLocalizationHelper.GuiServerCardTitle;
             this.productTypeLabel.Text = VbrLocalizationHelper.GuiProductTypeLabel;
             ToolTip.SetTip(this.productTypeSelector, VbrLocalizationHelper.GuiProductTypeTooltip);
-            this.productTypeAutoItem.Content = VbrLocalizationHelper.GuiProductTypeAuto;
-            this.productTypeVbrItem.Content = VbrLocalizationHelper.GuiProductTypeVbr;
-            this.productTypeVb365Item.Content = VbrLocalizationHelper.GuiProductTypeVb365;
-            this.productTypeBothItem.Content = VbrLocalizationHelper.GuiProductTypeBoth;
             this.exportOptionsLabel.Text = VbrLocalizationHelper.GuiExportOptionsLabel;
             ToolTip.SetTip(this.htmlCheckBox, VbrLocalizationHelper.GuiHtmlReportTooltip);
             this.dataCollectionLabel.Text = VbrLocalizationHelper.GuiDataCollectionLabel;
@@ -736,7 +767,6 @@ Replace with:
             ToolTip.SetTip(this.clearCredsCheckBox, VbrLocalizationHelper.GuiClearCredsTooltip);
             this.monitorStatusHeader.Text = VbrLocalizationHelper.GuiMonitorStatusHeader;
             this.monitorStatusLabel.Text = VbrLocalizationHelper.GuiMonitorStatusLabel;
-            this.monitorQuickSetupBtn.Content = VbrLocalizationHelper.GuiMonitorQuickSetup;
             ToolTip.SetTip(this.monitorQuickSetupBtn, VbrLocalizationHelper.GuiMonitorQuickSetupTooltip);
             this.monitorVhcSetupBtn.Content = VbrLocalizationHelper.GuiMonitorVhcSetup;
             ToolTip.SetTip(this.monitorVhcSetupBtn, VbrLocalizationHelper.GuiMonitorVhcSetupTooltip);
@@ -744,12 +774,11 @@ Replace with:
             ToolTip.SetTip(this.monitorRunBtn, VbrLocalizationHelper.GuiMonitorRunTooltip);
             this.alertNotificationsHeader.Text = VbrLocalizationHelper.GuiAlertNotificationsHeader;
             this.minSeverityLabel.Text = VbrLocalizationHelper.GuiMinSeverityLabel;
-            this.notifSeverityWarningItem.Content = VbrLocalizationHelper.GuiNotifSeverityWarning;
-            this.notifSeverityCriticalItem.Content = VbrLocalizationHelper.GuiNotifSeverityCritical;
-            this.notifSeverityOkItem.Content = VbrLocalizationHelper.GuiNotifSeverityOk;
             this.progressText.Text = VbrLocalizationHelper.GuiProcessingText;
         }
 ```
+
+`productTypeAutoItem`/`productTypeVbrItem`/`productTypeVb365Item`/`productTypeBothItem` and `notifSeverityWarningItem`/`notifSeverityCriticalItem`/`notifSeverityOkItem` do **not** appear here — their `Content` is set via `{x:Static}` directly in the XAML (Step 5), not through `SetUiText()`. Do not add lines for them; doing so would just set `Content` to the same value a second time, uselessly, without fixing anything (the snapshot already happened at attach time using the `{x:Static}` value, which was already correct).
 
 - [ ] **Step 7: Update the code-behind-set tooltip in `SetUiSync()`**
 
@@ -780,7 +809,7 @@ dotnet build vHC/HC.sln --configuration Debug
 git checkout -- vHC/HC_Reporting/VeeamHealthCheck.csproj
 ```
 
-Expected: 0 errors. A blank-label typo cannot be caught by the build — Task 6's guard test catches it going forward, but for *this* task, re-read every `x:Name` you just added in the XAML against every reference in `SetUiText()` character-for-character now, while the diff is small: every `x:Name` introduced in Step 5 must appear exactly once on the left-hand side of an assignment in Step 6 or 7.
+Expected: 0 errors. If `{x:Static loc:VbrLocalizationHelper.GuiXxx}` references a key that doesn't exist, this build step *does* catch it (unlike a `SetUiText()` typo, which only fails at runtime) — the XAML compiler resolves `x:Static` targets at compile time. A blank-label typo in a `SetUiText()`-driven control cannot be caught by the build — Task 6's guard test catches it going forward, but for *this* task, re-read every `x:Name` you just added in the XAML (the 11 plain `Text`/`Content`/tooltip targets, not the 7 `{x:Static}` `ComboBoxItem`s) against every reference in `SetUiText()` character-for-character now, while the diff is small: every `x:Name` introduced in Step 5 must appear exactly once on the left-hand side of an assignment in Step 6 or 7.
 
 - [ ] **Step 9: Confirm the excluded strings are untouched**
 
@@ -887,7 +916,7 @@ file vHC/HC_Reporting/Resources/Localization/VbrLocalizationHelper.cs
 iconv -f UTF-16LE -t UTF-8 vHC/HC_Reporting/Resources/Localization/VbrLocalizationHelper.cs | grep -c 'GuiMonitor\|GuiTheme'
 ```
 
-Expected: `Unicode text, UTF-16, little-endian text, with CRLF line terminators` and a count of `21` (18 `GuiMonitor*` lines — Task 2's 8 plus this task's 10 — + 3 `GuiTheme*`). **If `file` reports UTF-8, stop and `git checkout --` the file.**
+Expected: `Unicode text, UTF-16, little-endian text, with CRLF line terminators` and a count of `23` (19 lines matching `GuiMonitor` — Task 2's 8 `GuiMonitor*` plus `GuiMonitoringTab`, plus this task's 10 `GuiMonitor*` — + 4 lines matching `GuiTheme` — Task 2's `GuiThemeToggleTooltip` plus this task's 3 `GuiTheme*`). **If `file` reports UTF-8, stop and `git checkout --` the file.**
 
 - [ ] **Step 4: Append the matching entries to `vhcres.txt`**
 
@@ -1068,6 +1097,16 @@ Replace with:
             bool installed = CVhcMonitorIntegration.IsInstalled();
             bool taskActive = CVhcMonitorIntegration.IsTaskRegistered();
 
+            // Set before the branches below so every state has a correct label as
+            // soon as this method runs (constructor time) - the "else" branch
+            // overrides it to GuiMonitorReconfigure when the monitor is already
+            // installed. This line moved here from SetUiText() (Task 2), which runs
+            // later on Loaded and would otherwise either leave the button blank
+            // until then (bundled/not-installed branches) or briefly show the
+            // correct "Reconfigure" text and then wrongly revert it back to
+            // "Quick Setup" once SetUiText() finally ran (already-installed branch).
+            monitorQuickSetupBtn.Content = VbrLocalizationHelper.GuiMonitorQuickSetup;
+
             if (!bundled)
             {
                 monitorStatusText.Text = VbrLocalizationHelper.GuiMonitorNotBundled;
@@ -1102,7 +1141,7 @@ Replace with:
         }
 ```
 
-Note: `monitorStatusText`'s XAML default (`Text="Checking..."`, removed in Task 2 Step 5) is never visible — every branch above unconditionally sets `monitorStatusText.Text`, and this method runs synchronously in the constructor (`this.InitializeMonitorStatus();`) before the window is shown.
+Note: `monitorStatusText`'s XAML default (`Text="Checking..."`, removed in Task 2 Step 5) is never visible — every branch above unconditionally sets `monitorStatusText.Text`, and this method runs synchronously in the constructor (`this.InitializeMonitorStatus();`) before the window is shown. The same reasoning is why `monitorQuickSetupBtn.Content` is set unconditionally here rather than in `SetUiText()` — see Task 2 Step 6's note on `SetUiText()` for the general rule this follows: anything a constructor-time method (this one) also writes must be set no later than that method, not left to `SetUiText()`, which runs on `Loaded`.
 
 - [ ] **Step 9: Update the three monitor button click handlers**
 
@@ -1284,14 +1323,16 @@ git commit -m "feat(l10n): resx-back VhcGui.axaml.cs's remaining hardcoded strin
 ## Task 4: Fix the pre-existing orphaned/mistranslated keys in the four locale files
 
 **Files:**
-- Modify: `vHC/HC_Reporting/Resources/Localization/vhcres.fR-FR.resx` (17 renames)
+- Modify: `vHC/HC_Reporting/Resources/Localization/vhcres.fR-FR.resx` (17 renames, 9 of which also get an English value fill — see below)
 - Modify: `vHC/HC_Reporting/Resources/Localization/vhcres.ja.resx` (1 rename)
 - Modify: `vHC/HC_Reporting/Resources/Localization/vhcres.zh-cn.resx` (1 rename)
 - Modify: `vHC/HC_Reporting/Resources/Localization/vhcres.zh-tw.resx` (1 rename)
 
-This is a pure rename — no translation. These are real, already-written human translations that are silently dead today because their `<data name="...">` doesn't match the neutral resx's key name. `HtmlIntroLine3` (all four files) predates the neutral resx being split into `HtmlIntroLine3Anon`/`HtmlIntroLine3Original`; its old content (a single generic path, no Anonymous/Original distinction) is closest to `HtmlIntroLine3Original`, so that is the rename target. `HtmlIntroLine3Anon` remains genuinely new/untranslated in every locale — Task 5 covers it like any other new key.
+This is mostly a pure rename — no translation — but **9 of fR-FR's 17 keys need more than a rename**. `SbrExt8/10-14` and `Titre Sbr`→`SbrTitle` (8 keys) plus `HtmlIntroLine3`→`HtmlIntroLine3Original` are real, already-written French translations that are silently dead today because their `<data name="...">` doesn't match the neutral resx's key name — renaming alone recovers them. But `v365NavValeur0,1,2,3,4,5,7,8,9` (9 keys) have **empty `<value>` elements** — confirmed by direct inspection, not a rendering artifact. Renaming an empty value from a wrong key name to the correct one does not create a translation; it just moves the emptiness somewhere new, and an *empty* satellite value is worse than a *missing* one — `ResourceManager` falls back to the neutral English text for a missing key, but an empty string is itself a valid value and suppresses that fallback. Today these 9 show correct English (because the key is missing under its correct name); a naive rename would make them render blank in French. So for these 9, this step renames *and* fills the value with the current English neutral text (the same policy Task 5 uses for brand-new keys), and lists them in `untranslated-keys.txt` in Task 5.
 
-- [ ] **Step 1: Rename fR-FR's 17 keys**
+`HtmlIntroLine3` (all four files) predates the neutral resx being split into `HtmlIntroLine3Anon`/`HtmlIntroLine3Original`; its old content (a single generic path, no Anonymous/Original distinction) is closest to `HtmlIntroLine3Original`, so that is the rename target. `HtmlIntroLine3Anon` remains genuinely new/untranslated in every locale — Task 5 covers it like any other new key.
+
+- [ ] **Step 1: Rename fR-FR's 17 keys, and fill the 9 that are empty**
 
 ```bash
 python3 - <<'PY'
@@ -1316,6 +1357,21 @@ renames = [
     ("v365NavValeur8", "v365NavValue8"),
     ("v365NavValeur9", "v365NavValue9"),
 ]
+# These 9 renamed keys have an EMPTY <value> today (confirmed by inspection) -
+# fill them with the current English neutral text rather than shipping an empty
+# string, which would suppress ResourceManager's normal missing-key fallback.
+empty_key_english_fill = {
+    "v365NavValue0": "Summary of license and global settings.",
+    "v365NavValue1": "Summary of protected and unprotected users.",
+    "v365NavValue2": "Details on the VB365 Server.",
+    "v365NavValue3": "Details on the disks attached to the VB365 Server.",
+    "v365NavValue4": "Details on proxies added to the current VB365 Server.",
+    "v365NavValue5": "Details on reposiories added to the current VB365.",
+    "v365NavValue7": "Summary of security settings relevant to VB365.",
+    "v365NavValue8": "Summary of Role Based Access Control settings.",
+    "v365NavValue9": "Summary of permissions granted &amp; used.",
+}
+
 s = io.open(p, encoding="utf-8").read()
 for old, new in renames:
     needle = '<data name="%s" xml:space="preserve">' % old
@@ -1323,12 +1379,19 @@ for old, new in renames:
     assert needle in s, "not found: %r" % old
     assert s.count(needle) == 1, "not unique: %r" % old
     s = s.replace(needle, replacement)
+
+for key, english in empty_key_english_fill.items():
+    needle = '<data name="%s" xml:space="preserve">\n    <value></value>\n  </data>' % key
+    replacement = '<data name="%s" xml:space="preserve">\n    <value>%s</value>\n  </data>' % (key, english)
+    assert needle in s, "empty-value block not found or format differs for %r - inspect the file before proceeding" % key
+    s = s.replace(needle, replacement)
+
 io.open(p, "w", encoding="utf-8").write(s)
-print("renamed", len(renames), "keys")
+print("renamed", len(renames), "keys,", "filled", len(empty_key_english_fill), "empty values")
 PY
 ```
 
-Expected: `renamed 17 keys`.
+Expected: `renamed 17 keys, filled 9 empty values`. If the `assert` on an empty-value block fails, the actual whitespace/formatting of that `<data>` element differs from what's assumed here — open the file and check the exact block around that key name before adjusting the script; do not weaken the assertion to skip it silently.
 
 - [ ] **Step 2: Rename `HtmlIntroLine3` in ja/zh-cn/zh-tw**
 
@@ -1374,7 +1437,7 @@ Expected: 0 errors.
 
 ```bash
 git add vHC/HC_Reporting/Resources/Localization/vhcres.fR-FR.resx vHC/HC_Reporting/Resources/Localization/vhcres.ja.resx vHC/HC_Reporting/Resources/Localization/vhcres.zh-cn.resx vHC/HC_Reporting/Resources/Localization/vhcres.zh-tw.resx
-git commit -m "fix(l10n): rename 20 orphaned resx keys, recovering dead French/Japanese/Chinese translations"
+git commit -m "fix(l10n): rename 20 orphaned resx keys, recovering 11 dead translations and fixing 9 blank ones"
 ```
 
 ---
@@ -1437,6 +1500,16 @@ for locale in locales:
     io.open(p, "w", encoding="utf-8").write(s)
     print("added", len(new_keys), "keys to", locale)
 
+# Task 4 filled these 9 fR-FR keys with English text (they were empty under the
+# wrong key name before the rename) rather than a real translation - track them
+# here too, fR-FR only, alongside this task's own 52 x 4 additions.
+fr_fr_only_untranslated = [
+    "v365NavValue0", "v365NavValue1", "v365NavValue2", "v365NavValue3", "v365NavValue4",
+    "v365NavValue5", "v365NavValue7", "v365NavValue8", "v365NavValue9",
+]
+for key in fr_fr_only_untranslated:
+    todo_lines.append("fR-FR:%s" % key)
+
 todo_path = "vHC/HC_Reporting/Resources/Localization/untranslated-keys.txt"
 with io.open(todo_path, "w", encoding="utf-8", newline="\n") as f:
     f.write("# Stage D keys added with English content, pending real translation.\n")
@@ -1447,7 +1520,7 @@ print("wrote", len(todo_lines), "lines to untranslated-keys.txt")
 PY
 ```
 
-Expected: `added 52 keys to fR-FR` / `ja` / `zh-cn` / `zh-tw`, and `wrote 208 lines to untranslated-keys.txt`.
+Expected: `added 52 keys to fR-FR` / `ja` / `zh-cn` / `zh-tw`, and `wrote 217 lines to untranslated-keys.txt` (208 from this task's 52-keys-times-4-locales, plus the 9 fR-FR-only entries Task 4 introduced).
 
 - [ ] **Step 2: Build and confirm the satellites pick up the new keys**
 
@@ -1518,7 +1591,7 @@ print("wrote", total, "known-missing entries")
 PY
 ```
 
-Expected: `wrote 161 known-missing entries` (47 for fR-FR + 38 each for ja/zh-CN/zh-tw, matching the counts in the spec's Context table).
+Expected: `wrote 161 known-missing entries` (47 for fR-FR + 38 each for ja/zh-CN/zh-tw). **This is not the same as the spec's Context table** — that table's 64/39/39/39 are the *pre-Task-4* counts (before the rename fix). 47/38/38/38 is the correct *post-Task-4/5* state this step computes fresh; per the plan's own preamble, a mismatch against the spec would normally be a stop-and-report, but this one is expected — the spec and this step are describing the state of the resx files at two different points in the branch's history, not disagreeing about a fact.
 
 - [ ] **Step 2: Link the allowlist into the test project's output**
 
@@ -1548,6 +1621,8 @@ This links the single source file into `VhcXTests`'s own build output without du
 
 - [ ] **Step 3: Write the failing tests**
 
+The neutral resx has 25 pre-existing keys whose `<value>` is already empty (confirmed by direct inspection — none are Stage D keys, none are new). A first cut of `AllStaticStrings_ResolveNonNullAndNonEmpty` that asserts blanket non-empty would fail against these 25 immediately, for reasons unrelated to anything this stage touches. `KnownEmptyNeutralKeys` below is that confirmed list — it exists so the test still catches a real typo (any *other* blank field) while not being poisoned by pre-existing debt.
+
 Create `vHC/VhcXTests/VbrLocalizationHelperTests.cs`:
 
 ```csharp
@@ -1568,6 +1643,21 @@ namespace VhcXTests
     {
         private static readonly string[] SatelliteCultures = { "fR-FR", "ja", "zh-CN", "zh-tw" };
 
+        // Pre-existing neutral resx keys whose <value> is genuinely empty - not
+        // Stage D's concern, and not a missing/typo'd key. Confirmed by direct
+        // inspection of vhcres.resx before this stage touched it. A key belongs
+        // here only if its blank value is a pre-existing fact, not a new typo -
+        // do not add a Stage D key to this list to make a failing test pass.
+        private static readonly HashSet<string> KnownEmptyNeutralKeys = new()
+        {
+            "Prx10TT",
+            "JobCon1TT", "JobCon2TT", "JobCon3TT", "JobCon4TT", "JobCon5TT", "JobCon6TT", "JobCon7TT",
+            "TaskCon1TT", "TaskCon2TT", "TaskCon3TT", "TaskCon4TT", "TaskCon5TT", "TaskCon6TT", "TaskCon7TT",
+            "Reg0TT", "Reg1TT",
+            "JobInfo6TT", "JobInfo7TT", "JobInfo8TT", "JobInfo9TT",
+            "JobInfo10TT", "JobInfo11TT", "JobInfo12TT", "JobInfo13TT",
+        };
+
         [Fact]
         public void AllStaticStrings_ResolveNonNullAndNonEmpty()
         {
@@ -1579,14 +1669,14 @@ namespace VhcXTests
             foreach (var field in fields)
             {
                 var value = (string)field.GetValue(null);
-                if (string.IsNullOrEmpty(value))
+                if (string.IsNullOrEmpty(value) && !KnownEmptyNeutralKeys.Contains(field.Name))
                 {
                     blank.Add(field.Name);
                 }
             }
 
             Assert.True(blank.Count == 0,
-                "Fields resolving null/empty under the neutral resx (missing or typo'd key): " + string.Join(", ", blank));
+                "Fields resolving null/empty under the neutral resx (missing or typo'd key, not in KnownEmptyNeutralKeys): " + string.Join(", ", blank));
         }
 
         [Fact]
@@ -1727,6 +1817,28 @@ needs a real Windows machine with VBR and/or VB365 installed.
 
 ## XAML/code-behind sweep (Tasks 2-3)
 
+**These two checks are the only verification for a defect class the build and both guard
+tests cannot see** — a render-time ordering bug, not a missing/wrong resx value. Two
+instances of it were found and fixed while writing this plan (a `ComboBox` never re-reading
+an item's `Content` after attach, and a competing constructor-time writer overwritten by
+`SetUiText()` running later on `Loaded`); check specifically for a *third* instance rather
+than assuming the fix is complete, since neither this sandbox nor either guard test can
+confirm that on its own:
+
+- [ ] On first opening the app (default English), before touching either dropdown, confirm
+      the Product Type box already shows "Auto-detect" and the Min severity box already
+      shows "warning" — not blank. This is the specific symptom of the ComboBox-snapshot bug
+      Task 2 fixes with `{x:Static}`; if it regresses (e.g. a future edit moves a `Content`
+      value back into `SetUiText()`), both boxes render blank until the user manually opens
+      and re-selects an item.
+- [ ] On a machine with the monitor already installed and its scheduled task registered,
+      confirm the "Quick Setup" button reads "Reconfigure" **immediately** on window open —
+      not "Quick Setup" that then flips to "Reconfigure", and not blank. This is the specific
+      symptom of Task 3's `InitializeMonitorStatus()`/`SetUiText()` ordering fix; a
+      regression here means something reintroduced a `SetUiText()` write to
+      `monitorQuickSetupBtn.Content` without removing the unconditional one now at the top
+      of `InitializeMonitorStatus()`.
+
 - [ ] With Windows display language set to French, Japanese, Simplified Chinese, or
       Traditional Chinese, open the app and confirm no blank labels, buttons, or tooltips
       appear anywhere in the main window or the Continuous Monitoring tab. A blank control
@@ -1748,10 +1860,14 @@ needs a real Windows machine with VBR and/or VB365 installed.
 
 ## Locale-file fixes (Task 4)
 
-- [ ] With Windows display language set to French, navigate to the "SOBR" (Sbr) and
-      "VB365 Nav" sections of a generated HTML report (not the GUI window) and spot-check
-      that the recovered translations (`SbrTitle`, `SbrExt8`/`10`-`14`, `v365NavValue0`-`9`
-      excluding 6) render in French, not English fallback.
+- [ ] With Windows display language set to French, navigate to the "SOBR" (Sbr) section of a
+      generated HTML report (not the GUI window) and spot-check that the recovered
+      translations (`SbrTitle`, `SbrExt8`/`10`-`14`) render in French, not English fallback.
+- [ ] In the same report's "VB365 Nav" section, confirm `v365NavValue0`-`5`/`7`-`9` render in
+      **English**, not French — these 9 keys had an empty French value under their old
+      (wrong) key name, so Task 4 filled them with English text rather than inventing a
+      translation. Seeing English here is the *correct*, expected outcome, not a bug — only
+      flag it if one of these renders blank or in the wrong language entirely.
 
 ## Recorded, not fixed (informational only — no action needed)
 
@@ -1761,6 +1877,10 @@ needs a real Windows machine with VBR and/or VB365 installed.
 - The vestigial VBR-side `ResGen.exe`/`VbrResFileBuilder.ps1` pipeline is untouched.
 - No locale picker exists; the four satellites above are reachable only via the OS's own
   display-language setting.
+- `vhcres.fR-FR.resx`'s `v365NavValue6`, `10`, `11`, `12`, and `13` are *already* blank in
+  French today, via the same empty-`<value>` mechanism Task 4 fixed for 9 sibling keys —
+  found while investigating those 9, out of scope for this stage, and unrelated to anything
+  Stage D added or renamed.
 ```
 
 - [ ] **Step 4: Commit**
