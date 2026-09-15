@@ -385,6 +385,13 @@ namespace VeeamHealthCheck
 
         private async Task SetUiAsync()
         {
+            // Stage D removed VhcGui.axaml's hardcoded English defaults from the ~15
+            // controls this method resx-backs, so SetUiText() must run before the
+            // _modeCheckFailed branch below, not after it - otherwise the window
+            // briefly shows blank labels/buttons behind the error dialog on a machine
+            // with no local Veeam software and no remote servers configured.
+            this.SetUiText();
+
             if (_modeCheckFailed)
             {
                 string errorMessage = "No Veeam Software detected on this machine.\n\n" +
@@ -402,8 +409,6 @@ namespace VeeamHealthCheck
                 }
                 return;
             }
-
-            this.SetUiText();
 
             // PreRunCheck() stays synchronous (Part 1) but calls the notifier's
             // blocking wrapper (IUiNotifier.Confirm/ShowError) internally.
