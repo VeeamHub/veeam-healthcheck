@@ -403,12 +403,12 @@ namespace VeeamHealthCheck
                 return;
             }
 
+            this.SetUiText();
+
             // PreRunCheck() stays synchronous (Part 1) but calls the notifier's
             // blocking wrapper (IUiNotifier.Confirm/ShowError) internally.
             // Calling that directly from the UI thread would deadlock, so it's
             // moved off the UI thread here, same as termsCheckBox_Checked below.
-            this.SetUiText();
-
             await Task.Run(() => this.functions.PreRunCheck());
             scrubBox.IsChecked = true;
             RescanBox.IsChecked = false;
