@@ -23,13 +23,14 @@ needs a real Windows machine with VBR and/or VB365 installed.
 
 ## XAML/code-behind sweep (Tasks 2-3)
 
-**These two checks are the only verification for a defect class the build and both guard
-tests cannot see** — a render-time ordering bug, not a missing/wrong resx value. Two
-instances of it were found and fixed while writing this plan (a `ComboBox` never re-reading
-an item's `Content` after attach, and a competing constructor-time writer overwritten by
-`SetUiText()` running later on `Loaded`); check specifically for a *third* instance rather
-than assuming the fix is complete, since neither this sandbox nor either guard test can
-confirm that on its own:
+**These checks are the only verification for a defect class the build and both guard
+tests cannot see** — a render-time ordering bug, not a missing/wrong resx value. Three
+instances of it were found and fixed while writing/implementing this plan (a `ComboBox`
+never re-reading an item's `Content` after attach; a competing constructor-time writer
+overwritten by `SetUiText()` running later on `Loaded`; and `SetUiAsync()`'s
+`_modeCheckFailed` branch never calling `SetUiText()` at all before showing its error
+dialog); check specifically for a *fourth* instance rather than assuming the fix is
+complete, since neither this sandbox nor either guard test can confirm that on its own:
 
 - [ ] On first opening the app (default English), before touching either dropdown, confirm
       the Product Type box already shows "Auto-detect" and the Min severity box already
@@ -63,6 +64,18 @@ confirm that on its own:
 - [ ] Confirm the PDF export tooltip ("PDF Export not available when both VB365 & VBR are
       detected on the same machine.") renders correctly, on a machine with both products
       installed.
+- [ ] On a machine with **no local VBR/VB365 process detected and zero servers already
+      persisted in `settings.json`** (the cold-start case — also the machine Stage E's
+      remote-GUI gap concerns, so this can be checked on the same box), open the app and
+      confirm the window behind the "No Veeam Software Detected" dialog shows fully
+      populated, localized labels/buttons — not blank ones — for the instant before the
+      dialog appears and the app shuts down. This is the specific symptom of
+      `SetUiAsync()`'s `_modeCheckFailed` branch previously never calling `SetUiText()`
+      (fixed in commit `54bccdd6`, found by this stage's final cross-task review, not by
+      any single task's own review). Note: on this same path the progress bar (`pBar`)
+      renders visibly spinning behind the dialog — that's pre-existing, unrelated to this
+      fix (it has no XAML-declared default opacity and `hideProgressBar()` is skipped on
+      this branch), not a new regression to report.
 
 ## Locale-file fixes (Task 4)
 
