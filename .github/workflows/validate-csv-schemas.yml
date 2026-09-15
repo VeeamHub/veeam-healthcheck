@@ -59,14 +59,9 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:
           fetch-depth: 1
-
-      - name: Setup PowerShell
-        uses: actions/setup-powershell@v1
-        with:
-          powershell-version: '7.4'
 
       - name: Validate CSV schemas against golden baselines
         id: validate
@@ -183,7 +178,7 @@ jobs:
 
       - name: Upload validation report
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: validation-report-${{ matrix.baseline-set.name }}
           path: validation-report-${{ matrix.baseline-set.name }}.md
@@ -196,14 +191,9 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:
           fetch-depth: 1
-
-      - name: Setup PowerShell
-        uses: actions/setup-powershell@v1
-        with:
-          powershell-version: '7.4'
 
       - name: Validate object schema files
         shell: pwsh
@@ -332,7 +322,7 @@ jobs:
 
     steps:
       - name: Download all artifacts
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
         with:
           path: reports
           pattern: validation-report-*
