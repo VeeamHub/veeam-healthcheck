@@ -208,6 +208,8 @@ zh-tw:GuiMonitorCompleteSetupPrompt
 zh-tw:GuiThemeDark
 zh-tw:GuiThemeLight
 zh-tw:GuiThemeSystem
+# Task 4 leftovers: renamed keys that were empty under their old (wrong) key
+# name and got filled with English text as part of the rename fix, fR-FR only.
 fR-FR:v365NavValue0
 fR-FR:v365NavValue1
 fR-FR:v365NavValue2
