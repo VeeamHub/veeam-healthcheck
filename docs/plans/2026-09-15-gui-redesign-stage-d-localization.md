@@ -59,10 +59,10 @@ Read these once; they are not repeated per task.
 | `vHC/HC_Reporting/Resources/Localization/vhcres.resx` | Task 2 adds 35 keys, Task 3 adds 17 keys (52 total). |
 | `vHC/HC_Reporting/Resources/Localization/VbrLocalizationHelper.cs` | Matching 52 new accessors (UTF-16LE). |
 | `vHC/HC_Reporting/Resources/Localization/vhcres.txt` | Matching ResGen source entries (UTF-16LE, `Key = Value` format) — inert for the actual VBR build (see spec Context). Kept in sync in spirit, not byte-for-byte: Task 3's entries use a plain hyphen in place of the em-dash the real resx carries, since nothing reads this file and a second UTF-16LE em-dash round-trip on it would verify nothing. |
-| `vHC/HC_Reporting/Resources/Localization/vhcres.fR-FR.resx` | Task 4: 17 key renames. Task 5: 52 new keys (English content). |
-| `vHC/HC_Reporting/Resources/Localization/vhcres.ja.resx` | Task 4: 1 key rename. Task 5: 52 new keys. |
-| `vHC/HC_Reporting/Resources/Localization/vhcres.zh-cn.resx` | Task 4: 1 key rename. Task 5: 52 new keys. |
-| `vHC/HC_Reporting/Resources/Localization/vhcres.zh-tw.resx` | Task 4: 1 key rename. Task 5: 52 new keys. |
+| `vHC/HC_Reporting/Resources/Localization/vhcres.fR-FR.resx` | Task 4: 16 key renames (7 recovered translations, 9 English-filled). Task 5: 52 new keys (English content). One 17th rename (`HtmlIntroLine3`) was applied then reverted — see Task 4's "Correction applied after review" — and remains a deliberate orphan. |
+| `vHC/HC_Reporting/Resources/Localization/vhcres.ja.resx` | Task 5: 52 new keys. (Task 4's only planned rename here, `HtmlIntroLine3`, was reverted — see above; no net rename in this file.) |
+| `vHC/HC_Reporting/Resources/Localization/vhcres.zh-cn.resx` | Task 5: 52 new keys. (Same `HtmlIntroLine3` revert as ja — no net rename in this file.) |
+| `vHC/HC_Reporting/Resources/Localization/vhcres.zh-tw.resx` | Task 5: 52 new keys. (Same `HtmlIntroLine3` revert as ja — no net rename in this file.) |
 | `vHC/VhcXTests/VhcXTests.csproj` | Task 6: one `<None Include>` linking `locale-known-missing.txt` into the test output. |
 
 **Ordering rationale:** Task 1 must land before Task 2 touches either notif box's `Content`, per the spec. Tasks 2-3 are independently compilable and testable-by-build (each is its own commit, matching Stage C's Task 6 precedent of "add keys, verify build, commit" with no TDD ceremony for pure string relocation). Task 4 (rename bug fix) is independent of everything else and could technically run first, but is sequenced after 1-3 so that Task 5 adds *all* of Stage D's new keys (from Tasks 2 and 3) to the locale files in one pass rather than two. Task 6's tests depend on Tasks 4-5 having already fixed the orphans and added the new keys, or the guard tests would fail against the very state they're meant to police going forward.
