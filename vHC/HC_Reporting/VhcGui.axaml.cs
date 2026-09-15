@@ -1062,6 +1062,12 @@ namespace VeeamHealthCheck
             bool installed = CVhcMonitorIntegration.IsInstalled();
             bool taskActive = CVhcMonitorIntegration.IsTaskRegistered();
 
+            // Set before the branches below so every state has a correct label as
+            // soon as this method runs (constructor time, before SetUiText() ever
+            // runs on Loaded) - the "else" branch below overrides it to
+            // GuiMonitorReconfigure when the monitor is already installed.
+            monitorQuickSetupBtn.Content = VbrLocalizationHelper.GuiMonitorQuickSetup;
+
             if (!bundled)
             {
                 monitorStatusText.Text = "Not bundled";
