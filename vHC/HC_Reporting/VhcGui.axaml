@@ -62,6 +62,13 @@ MIT License
                                     <Separator Margin="0,12,0,12" />
 
                                     <TextBlock x:Name="productTypeLabel" Classes="field-label" Margin="0,0,0,8" />
+                                    <!-- Content uses {x:Static}, not x:Name + SetUiText(), for all 4 items below.
+                                         Avalonia's ComboBox snapshots the selected item's Content into its closed-box
+                                         display at attach time and never re-reads it afterward, so a SetUiText()
+                                         assignment (which runs later, on Loaded) would leave this box blank until
+                                         the user manually re-selects an item. {x:Static} resolves at XAML-load time,
+                                         before attachment, avoiding that. Do not "fix" this to match the x:Name
+                                         pattern used elsewhere in this file - see Stage D Task 2. -->
                                     <ComboBox x:Name="productTypeSelector"
                                               Classes="modern"
                                               Width="220" FontSize="12"
@@ -200,6 +207,10 @@ MIT License
                                 <StackPanel Orientation="Horizontal" Margin="0,0,0,12">
                                     <TextBlock x:Name="minSeverityLabel" Classes="field-label"
                                                VerticalAlignment="Center" Margin="0,0,8,0" />
+                                    <!-- Content uses {x:Static} for the same reason as productTypeSelector above
+                                         (Avalonia never re-reads a ComboBoxItem's Content after attach). Tag (from
+                                         Stage D Task 1) is unrelated and still carries the fixed English protocol
+                                         value the correctness fix depends on. -->
                                     <ComboBox x:Name="notifSeverityBox" Width="110"
                                               Classes="modern" Height="28" FontSize="12"
                                               SelectedIndex="0">
