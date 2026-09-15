@@ -467,6 +467,9 @@ namespace VeeamHealthCheck
             ToolTip.SetTip(this.manageServersBtn, VbrLocalizationHelper.GuiManageServersTooltip);
 
             // Stage D: resx-back the strings VhcGui.axaml previously hardcoded.
+            // productTypeSelector's and notifSeverityBox's ComboBoxItem.Content values are
+            // NOT set here - they're {x:Static}-bound directly in XAML. See the comments
+            // there for why (ComboBox never re-reads Content after attach).
             this.appHeaderText.Text = VbrLocalizationHelper.GuiTitle;
             ToolTip.SetTip(this.importButton, VbrLocalizationHelper.GuiImportTooltip);
             ToolTip.SetTip(this.ThemeToggleButton, VbrLocalizationHelper.GuiThemeToggleTooltip);
