@@ -160,7 +160,7 @@
   <data name="HtmlIntroLine2" xml:space="preserve">
     <value>- 生データはCSV形式でキャプチャされ、エクスポートフォルダからローカルにアクセスできます。 CSVを使用すると、Excelなどのツールでデータを操作できます。</value>
   </data>
-  <data name="HtmlIntroLine3Original" xml:space="preserve">
+  <data name="HtmlIntroLine3" xml:space="preserve">
     <value>- 個々のジョブセッションに関する追加情報は、&lt;a href="C:\\temp\\vHC\\JobSessionReports"&gt; 出力フォルダ C:\\temp\\vHC\\JobSessionReports</value>
   </data>
   <data name="HtmlIntroLine4" xml:space="preserve">

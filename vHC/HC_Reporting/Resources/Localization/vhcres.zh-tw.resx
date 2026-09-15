@@ -160,7 +160,7 @@
   <data name="HtmlIntroLine2" xml:space="preserve">
     <value>- 原始數據以 CSV 格式收集，可在匯出文件夾中本地存取。 CSV 將允許您在 Excel 等工具中操作數據。</value>
   </data>
-  <data name="HtmlIntroLine3Original" xml:space="preserve">
+  <data name="HtmlIntroLine3" xml:space="preserve">
     <value>- 可以在 &lt;a href 中查詢有關各個工作會話的其他訊息</value>
   </data>
   <data name="HtmlIntroLine4" xml:space="preserve">
