@@ -116,13 +116,17 @@
 		<PackageReference Include="DinkToPdf.Standard" Version="1.1.0" />
 		<PackageReference Include="DocumentFormat.OpenXml" Version="3.1.0" />
 		<PackageReference Include="HtmlToOpenXml.dll" Version="3.2.2" />
+		<!-- Direct override of the transitive AngleSharp (pulled by HtmlToOpenXml.dll, which requires >=1.1.0). -->
+		<!-- 1.1.0 is vulnerable to GHSA-pgww-w46g-26qg (Moderate), fixed in 1.5.0. -->
+		<PackageReference Include="AngleSharp" Version="1.5.0" />
 		<PackageReference Include="Microsoft.Management.Infrastructure" Version="3.0.0" />
 		<PackageReference Include="Microsoft.PowerShell.SDK" Version="7.4.6" />
 		<PackageReference Include="Node.js" Version="5.3.0" />
 		<PackageReference Include="Npm" Version="3.5.2" />
 		<PackageReference Include="System.Data.SqlClient" Version="4.8.6" />
-		<!-- Pinned to fix GHSA-37gx-xxp4-5rgx and GHSA-w3x6-4m5h-cxqf (transitive vuln from PowerShell SDK) -->
-		<PackageReference Include="System.Security.Cryptography.Xml" Version="8.0.3" />
+		<!-- Pinned override of the transitive System.Security.Cryptography.Xml (from the PowerShell SDK). -->
+		<!-- 8.0.4 clears the high-severity advisories flagged on 8.0.3: GHSA-g8r8-53c2-pm3f, GHSA-8q5v-6pqq-x66h, GHSA-cvvh-rhrc-wg4q, GHSA-23rf-6693-g89p, GHSA-mmjf-rqrv-855v. -->
+		<PackageReference Include="System.Security.Cryptography.Xml" Version="8.0.4" />
 		<PackageReference Include="System.Management.Automation" Version="7.4.6" />
 		<PackageReference Include="TaskScheduler" Version="2.12.1" />
 		<!-- Code Quality Analyzers -->
