@@ -13,6 +13,12 @@ namespace VhcXTests
 {
     public class VbrLocalizationHelperTests
     {
+        // These exact casings are also ordinal lookup keys into locale-known-missing.txt
+        // and KnownDeliberateOrphans below. CultureInfo resolves them case-insensitively,
+        // so "normalizing" the casing here (e.g. "fR-FR" -> "fr-FR") would still load the
+        // right satellite but silently stop matching every allowlist entry for that
+        // culture, failing loudly with dozens of spurious missing/orphan reports whose
+        // real cause (a casing change) wouldn't be obvious from the failure message.
         private static readonly string[] SatelliteCultures = { "fR-FR", "ja", "zh-CN", "zh-tw" };
 
         // Pre-existing neutral resx keys whose <value> is genuinely empty - not
