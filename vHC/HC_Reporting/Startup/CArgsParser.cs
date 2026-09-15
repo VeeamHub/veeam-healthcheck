@@ -102,6 +102,7 @@ namespace VeeamHealthCheck.Startup
             bool run = false;
             bool ui = false;
             bool runHfd = false;
+            bool helpRequested = false;
             string _hfdPath = string.Empty;
 
             string targetDir = @"C:\temp\vHC";
@@ -112,6 +113,7 @@ namespace VeeamHealthCheck.Startup
                     case "/help":
                         CGlobals.Logger.Info("entering help menu", false);
                         Console.WriteLine(CMessages.helpMenu);
+                        helpRequested = true;
                         break;
                     case "/run":
                         run = true;
@@ -148,6 +150,13 @@ namespace VeeamHealthCheck.Startup
                         break;
                     case "/lite":
                         run = true;
+                        // /lite still produces the main report - it only skips the
+                        // per-job HTML exports. RunFullReport gates whether the report
+                        // compiles at all (default false), so it must be set here or
+                        // "/lite" alone collects data and then renders nothing. In
+                        // practice /lite is documented paired with /run (which sets it),
+                        // which is why the gap went unnoticed.
+                        CGlobals.RunFullReport = true;
                         CGlobals.EXPORTINDIVIDUALJOBHTMLS = false;
                         break;
                     case "/import":
@@ -282,6 +291,20 @@ namespace VeeamHealthCheck.Startup
                 CGlobals.REMOTEEXEC = true;
             }
 
+            // Collection-intent flags (/remote, /host=, /vbr, /vb365) express intent to
+            // collect and report even when no explicit execution verb (/run) was given.
+            // Without this, "VeeamHealthCheck.exe /remote /host=X" parsed everything,
+            // validated credentials, then returned 0 with no report - the tool appeared
+            // to "do nothing". Treat that intent as an implied /run, and set RunFullReport
+            // (default false) so the report actually compiles rather than moving the no-op
+            // downstream into CReportModeSelector. See ShouldImplyRun.
+            if (ShouldImplyRun(run, ui, runHfd, CGlobals.REMOTEEXEC, CGlobals.REMOTEHOST, CGlobals.TargetProductType))
+            {
+                run = true;
+                CGlobals.RunFullReport = true;
+                CGlobals.Logger.Info("No /run given, but collection-intent flags were provided - implying /run.", false);
+            }
+
             // ----------------------------------------------------------------
             // Silent / unattended mode validation and dispatch.
             //
@@ -380,7 +403,57 @@ namespace VeeamHealthCheck.Startup
                 }
             }
 
+            // Nothing - explicit or implied - selected an action to perform, yet
+            // arguments were supplied. This is the state that used to return 0 in
+            // silence (e.g. only modifier flags, or a bare /clearcreds): the tool
+            // "did nothing" with no guidance. Tell the user what to add instead.
+            // Guarded by helpRequested so a bare "/help" does not print the menu
+            // twice, and the menu is suppressed under /silent to honour its
+            // no-console contract (the warnings still reach the log file).
+            if (IsNoActionRequested(run, ui, runHfd, helpRequested))
+            {
+                CGlobals.Logger.Warning("No action specified - nothing was collected or reported.", false);
+                CGlobals.Logger.Warning("Add /run to execute a health check, or /gui to open the interface.", false);
+                CGlobals.Logger.Warning("Example: VeeamHealthCheck.exe /run /remote /host=HOSTNAME", false);
+                if (!CGlobals.Silent)
+                {
+                    Console.WriteLine(CMessages.helpMenu);
+                }
+            }
+
             return result;
+        }
+
+        /// <summary>
+        /// True when the parsed arguments express intent to collect from / report on a
+        /// Veeam server - remote execution, an explicit host, or a product target - but
+        /// no explicit execution verb (/run, /lite, /security, /import, /gui, /hotfix)
+        /// was given. Historically that combination parsed everything, validated
+        /// credentials, then returned 0 without doing anything (the "/remote /host=...
+        /// does nothing" report). The caller treats this as an implied /run.
+        /// An explicit verb (run/ui/runHfd already set) is always honoured as-is.
+        /// </summary>
+        internal static bool ShouldImplyRun(bool run, bool ui, bool runHfd, bool remoteExec, string remoteHost, TargetProduct product)
+        {
+            if (run || ui || runHfd)
+            {
+                return false; // an explicit verb already decided the action
+            }
+
+            bool hasHost = !string.IsNullOrEmpty(remoteHost);
+            bool hasProductTarget = product != TargetProduct.Auto;
+            return remoteExec || hasHost || hasProductTarget;
+        }
+
+        /// <summary>
+        /// True when arguments were supplied but none of them - directly or by
+        /// implication - selects an action to perform (and help was not requested).
+        /// This is the state that used to return 0 silently; the caller logs guidance
+        /// plus the help menu instead of doing nothing.
+        /// </summary>
+        internal static bool IsNoActionRequested(bool run, bool ui, bool runHfd, bool helpRequested)
+        {
+            return !run && !ui && !runHfd && !helpRequested;
         }
 
         private string ParsePath(string input)

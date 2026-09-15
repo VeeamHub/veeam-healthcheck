@@ -36,6 +36,9 @@ REMOTE OPERATIONS:
   /remote           Enable remote execution mode
   /host=<hostname>  Specify remote Veeam server hostname (required with /remote)
                     Note: Credentials will be prompted if needed
+                    Note: /remote, /host=, /vbr, or /vb365 imply /run - a health
+                    check is executed even if /run is omitted. Passing no action
+                    flag at all prints this help instead of exiting silently.
 
 SPECIAL MODES:
   /security         Run security-focused assessment only
