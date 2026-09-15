@@ -932,7 +932,7 @@ namespace VeeamHealthCheck
         //
         // The value comes from Tag rather than Name or Content because Content is
         // localized, and parsing a localized label as data is exactly the mistake
-        // notifSeverityBox already makes.
+        // notifSeverityBox used to make - fixed in Stage D Task 1.
         private void PeriodRadio_Checked(object sender, RoutedEventArgs e)
         {
             // "7" is listed explicitly rather than folded into the `_` default, so `_`
@@ -1167,7 +1167,12 @@ namespace VeeamHealthCheck
         private void notifTypeBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
             if (notifUrlBox == null) return;
+            // No .ToLower() here, unlike GetNotifSettings()'s reads - the switch below
+            // compares Tag case-sensitively against "Teams"/"Slack"/"PagerDuty". Adding
+            // .ToLower() "for consistency" would make every arm fall through to the
+            // default case instead of matching.
             string type = (notifTypeBox.SelectedItem as ComboBoxItem)?.Tag?.ToString() ?? "ntfy";
+            // unrelated dead code: nothing reads notifUrlBox.Tag today
             notifUrlBox.Tag = type switch
             {
                 "Teams" => "https://org.webhook.office.com/...",
