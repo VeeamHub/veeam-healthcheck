@@ -2,7 +2,7 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Fix the notif-box `Content`-as-data correctness trap, resx-back every remaining hardcoded XAML/code-behind UI string in `VhcGui.axaml`/`VhcGui.axaml.cs`, fix 20 pre-existing orphaned/mistranslated keys across the four satellite locale files, bring the new keys to key-parity (English content, not translation) across those locales, and add a mechanical guard against silent localization regressions.
+**Goal:** Fix the notif-box `Content`-as-data correctness trap, resx-back every remaining hardcoded XAML/code-behind UI string in `VhcGui.axaml`/`VhcGui.axaml.cs`, fix 16 pre-existing orphaned/mistranslated keys across the four satellite locale files (a 17th, `HtmlIntroLine3`, was found post-fix to be unsafe to rename — see Task 4's "Correction applied after review" — and is deliberately left orphaned), bring the new keys to key-parity (English content, not translation) across those locales, and add a mechanical guard against silent localization regressions.
 
 **Architecture:** No new components. This is a string-relocation exercise across five files (`VhcGui.axaml`, `VhcGui.axaml.cs`, `VbrLocalizationHelper.cs`, `vhcres.resx`, and the four satellite `vhcres.*.resx` files) plus two new xUnit tests. The one behavior change that is not pure relocation is Task 1: today `notifTypeBox`/`notifSeverityBox` read their own displayed `Content` back out as a backend value, and localizing those labels without fixing that first would corrupt monitor config. Task 1 fixes that with a `Tag` attribute, using the same pattern this file already uses once (`PeriodRadio_Checked` reading `Tag`, not `Content`).
 
@@ -1424,6 +1424,14 @@ done
 
 Expected: empty output under every `---` header (zero orphans in every locale). Note: run this *after* Tasks 2-3 have already added their new keys to `vhcres.resx` — those new keys are correctly absent from the locale files at this point (Task 5 adds them next) and will show up as "missing," not "orphan," which is expected and not what this check is for.
 
+### Correction applied after review (commit `39be2be5`)
+
+Step 2's `HtmlIntroLine3` → `HtmlIntroLine3Original` rename was reverted in all four locale files: `CHtmlCompiler.cs:270` interpolates the value into `<dd>{1}</dd>` with no closing tag (unlike `HtmlIntroLine1`, which gets `"</a>\n"` appended in code), and none of the four renamed locale values had a closing `</a>` of their own (fR-FR/ja/zh-cn end mid-sentence on an open `<a href="...">`; zh-tw is a bare `<a href` fragment with no `=`/quotes/`>` at all). Renaming them onto the live key activated malformed HTML in the report's About card. The revert restores `HtmlIntroLine3` as a deliberate, permanent orphan — the translated content is preserved under the old key name (not deleted) for a future translator to produce well-formed `HtmlIntroLine3Original`/`HtmlIntroLine3Anon` replacements with a correct closing tag and the current (post-path-split) `JobSessionReports` path.
+
+**Corrected totals for Task 4: 16 renames (not 20) — 7 dead translations recovered (`SbrExt8/10/11/12/13/14`, `SbrTitle`) + 9 blank fR-FR `v365NavValue0/1/2/3/4/5/7/8/9` values filled with English text.** `HtmlIntroLine3` is intentionally excluded and remains orphaned in all four locale files.
+
+**Step 3's expected output above is now stale.** Re-running that check after `39be2be5` correctly prints `HtmlIntroLine3` under all four `---` headers — this is the expected, deliberate exception, not a regression. Do not "fix" this by re-renaming or by deleting the four `<data name="HtmlIntroLine3">` blocks. See Task 6's `KnownDeliberateOrphans` allowlist below, which this exception feeds into.
+
 - [ ] **Step 4: Build**
 
 ```bash
@@ -1658,6 +1666,22 @@ namespace VhcXTests
             "JobInfo10TT", "JobInfo11TT", "JobInfo12TT", "JobInfo13TT",
         };
 
+        // HtmlIntroLine3 is deliberately left orphaned in all four satellites (commit
+        // 39be2be5). Its translated values predate the neutral key's split into
+        // HtmlIntroLine3Anon/HtmlIntroLine3Original and are malformed HTML (no closing
+        // </a>; zh-tw's is a truncated tag fragment) pointing at the pre-split
+        // JobSessionReports path. Renaming them onto the live key emits broken HTML into
+        // the report (CHtmlCompiler.cs interpolates the value into <dd>{1}</dd> with no
+        // closing tag appended). They are kept under the old key name so a translator can
+        // produce well-formed replacements later. DO NOT delete these keys or rename them
+        // to make this test pass - either "fix" reintroduces the bug 39be2be5 resolved,
+        // or destroys real translated content.
+        private static readonly HashSet<(string Culture, string Key)> KnownDeliberateOrphans = new()
+        {
+            ("fR-FR", "HtmlIntroLine3"), ("ja", "HtmlIntroLine3"),
+            ("zh-CN", "HtmlIntroLine3"), ("zh-tw", "HtmlIntroLine3"),
+        };
+
         [Fact]
         public void AllStaticStrings_ResolveNonNullAndNonEmpty()
         {
@@ -1693,9 +1717,11 @@ namespace VhcXTests
             {
                 var satelliteKeys = GetKeySet(resourceManager, new CultureInfo(culture));
 
-                var orphans = satelliteKeys.Except(neutralKeys).ToList();
+                var orphans = satelliteKeys.Except(neutralKeys)
+                    .Where(k => !KnownDeliberateOrphans.Contains((culture, k)))
+                    .ToList();
                 Assert.True(orphans.Count == 0,
-                    $"{culture} has {orphans.Count} orphan key(s) absent from the neutral resx: {string.Join(", ", orphans)}");
+                    $"{culture} has {orphans.Count} orphan key(s) absent from the neutral resx and not in KnownDeliberateOrphans: {string.Join(", ", orphans)}");
 
                 var missing = neutralKeys.Except(satelliteKeys)
                     .Where(k => !knownMissing.Contains((culture, k)))
@@ -1742,7 +1768,7 @@ dotnet test vHC/VhcXTests/VhcXTests.csproj --filter "FullyQualifiedName~VbrLocal
 git checkout -- vHC/HC_Reporting/VeeamHealthCheck.csproj
 ```
 
-Expected: `Passed! - Failed: 0, Passed: 2, Skipped: 0`. If `EverySatellite_HasNoOrphansAndNoUnexpectedMissingKeys` fails listing keys from Tasks 2/3 (not pre-existing ones), Task 5's copy step missed something — re-check its key list against Tasks 2-3's. If it fails listing pre-existing keys not in Step 1's generated allowlist, Step 1 was run before Task 5 finished, or against stale files — regenerate it.
+Expected: `Passed! - Failed: 0, Passed: 2, Skipped: 0`. If `EverySatellite_HasNoOrphansAndNoUnexpectedMissingKeys` fails listing keys from Tasks 2/3 (not pre-existing ones), Task 5's copy step missed something — re-check its key list against Tasks 2-3's. If it fails listing pre-existing keys not in Step 1's generated allowlist, Step 1 was run before Task 5 finished, or against stale files — regenerate it. **If the failure lists `HtmlIntroLine3` as an orphan, that is deliberate** — see the `KnownDeliberateOrphans` comment above; the fix is to confirm the culture/key pair is already in that HashSet (it should be, from Task 4/`39be2be5`), not to delete the key from the resx or rename it back to `HtmlIntroLine3Original`.
 
 - [ ] **Step 5: Run the full suite**
 
@@ -1898,7 +1924,7 @@ gh pr create --base feature/gui-redesign-port --title "feat(gui): Stage D locali
 ## Summary
 - Fixes a correctness trap where notifTypeBox/notifSeverityBox read their own displayed (soon-to-be-localized) Content as a backend protocol value; min_severity was written raw into a monitor YAML config.
 - Resx-backs the remaining ~52 hardcoded strings across VhcGui.axaml and its code-behind that Stage C left as a known gap.
-- Fixes 20 pre-existing orphaned/mistranslated keys across the four satellite locale files, recovering dead French/Japanese/Chinese translations.
+- Fixes 16 pre-existing orphaned/mistranslated keys across the four satellite locale files, recovering 7 dead French/Japanese/Chinese translations and filling 9 blank French ones. A 17th (`HtmlIntroLine3`) was found post-rename to carry malformed HTML with no closing tag and is deliberately left orphaned rather than renamed onto the live key or deleted; see Task 4's "Correction applied after review" and Task 6's `KnownDeliberateOrphans` allowlist.
 - Brings all new keys to parity across the four locales (English content, tracked in untranslated-keys.txt for a future translator) rather than shipping unaudited machine translation.
 - Adds a two-part guard test against silent resx regressions (neutral-key coverage + per-satellite orphan/missing-key parity).
 
