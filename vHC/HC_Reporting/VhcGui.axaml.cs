@@ -161,8 +161,8 @@ namespace VeeamHealthCheck
         };
 
         private static string ThemeLabelFor(ThemeVariant variant) =>
-            variant == ThemeVariant.Dark ? "🌙 Dark" :
-            variant == ThemeVariant.Light ? "☀ Light" : "🖥 System";
+            variant == ThemeVariant.Dark ? $"🌙 {VbrLocalizationHelper.GuiThemeDark}" :
+            variant == ThemeVariant.Light ? $"☀ {VbrLocalizationHelper.GuiThemeLight}" : $"🖥 {VbrLocalizationHelper.GuiThemeSystem}";
 
         private async void AboutButton_Click(object sender, RoutedEventArgs e)
         {
@@ -447,9 +447,9 @@ namespace VeeamHealthCheck
             this.htmlCheckBox.Content = VbrLocalizationHelper.GuiShowHtml;
             this.scrubBox.Content = VbrLocalizationHelper.GuiSensData;
             this.explorerShowBox.Content = VbrLocalizationHelper.GuiShowFiles;
-            this.pdfCheckBox.Content = "Export PDF";
+            this.pdfCheckBox.Content = VbrLocalizationHelper.GuiExportPdfLabel;
             // this.pptxCheckBox.Content = "Export PowerPoint";
-            this.clearCredsCheckBox.Content = "Clear Saved Credentials";
+            this.clearCredsCheckBox.Content = VbrLocalizationHelper.GuiClearCredsLabel;
             this.outPath.Text = VbrLocalizationHelper.GuiOutPath;
             this.termsCheckBox.Content = VbrLocalizationHelper.GuiAcceptButton;
             this.run.Content = VbrLocalizationHelper.GuiRunButton;
@@ -647,7 +647,7 @@ namespace VeeamHealthCheck
             {
                 Dispatcher.UIThread.Invoke(() =>
                 {
-                    progressText.Text = $"Collection complete — {failed.Count} collector warning(s)";
+                    progressText.Text = string.Format(VbrLocalizationHelper.GuiCollectionCompleteWarnings, failed.Count);
                     progressText.Foreground = GetStatusBrush("StatusWarningBrush");
                 });
             }
@@ -655,7 +655,7 @@ namespace VeeamHealthCheck
             {
                 Dispatcher.UIThread.Invoke(() =>
                 {
-                    progressText.Text = "Collection complete";
+                    progressText.Text = VbrLocalizationHelper.GuiCollectionComplete;
                     progressText.Foreground = GetStatusBrush("StatusSuccessBrush");
                 });
             }
@@ -1073,7 +1073,7 @@ namespace VeeamHealthCheck
 
             if (!bundled)
             {
-                monitorStatusText.Text = "Not bundled";
+                monitorStatusText.Text = VbrLocalizationHelper.GuiMonitorNotBundled;
                 monitorStatusText.Foreground = GetStatusBrush("StatusNeutralBrush");
                 monitorQuickSetupBtn.IsEnabled = false;
                 monitorVhcSetupBtn.IsEnabled = false;
@@ -1081,7 +1081,7 @@ namespace VeeamHealthCheck
             }
             else if (!installed || !taskActive)
             {
-                monitorStatusText.Text = "Available — not set up";
+                monitorStatusText.Text = VbrLocalizationHelper.GuiMonitorAvailableNotSetUp;
                 monitorStatusText.Foreground = GetStatusBrush("StatusWarningBrush");
                 monitorQuickSetupBtn.IsEnabled = true;
                 monitorRunBtn.IsEnabled = false;
@@ -1089,16 +1089,16 @@ namespace VeeamHealthCheck
             else
             {
                 string version = CVhcMonitorIntegration.GetInstalledVersion();
-                monitorStatusText.Text = $"Running ({version})";
+                monitorStatusText.Text = string.Format(VbrLocalizationHelper.GuiMonitorRunningVersion, version);
                 monitorStatusText.Foreground = GetStatusBrush("StatusSuccessBrush");
-                monitorQuickSetupBtn.Content = "Reconfigure";
+                monitorQuickSetupBtn.Content = VbrLocalizationHelper.GuiMonitorReconfigure;
                 monitorQuickSetupBtn.IsEnabled = true;
                 monitorRunBtn.IsEnabled = true;
 
                 var status = CVhcMonitorIntegration.GetLastRunStatus();
                 if (status != null)
                 {
-                    monitorLastRunText.Text = $"Last run: {status.Timestamp:g} — {status.Summary}";
+                    monitorLastRunText.Text = string.Format(VbrLocalizationHelper.GuiMonitorLastRun, status.Timestamp?.ToString("g") ?? string.Empty, status.Summary);
                     monitorLastRunText.IsVisible = true;
                 }
             }
@@ -1134,7 +1134,7 @@ namespace VeeamHealthCheck
             }
 
             monitorQuickSetupBtn.IsEnabled = false;
-            monitorStatusText.Text = "Installing...";
+            monitorStatusText.Text = VbrLocalizationHelper.GuiMonitorInstalling;
 
             var (notifType, notifUrl, minSeverity) = this.GetNotifSettings();
 
@@ -1150,7 +1150,7 @@ namespace VeeamHealthCheck
                     CGlobals.Logger.Error($"Monitor setup failed: {ex.Message}", false);
                     Dispatcher.UIThread.Post(() =>
                     {
-                        monitorStatusText.Text = "Setup failed — check log";
+                        monitorStatusText.Text = VbrLocalizationHelper.GuiMonitorSetupFailed;
                         monitorStatusText.Foreground = GetStatusBrush("StatusErrorBrush");
                         monitorQuickSetupBtn.IsEnabled = true;
                     });
@@ -1161,7 +1161,7 @@ namespace VeeamHealthCheck
         private void monitorVhcSetupBtn_Click(object sender, RoutedEventArgs e)
         {
             monitorVhcSetupBtn.IsEnabled = false;
-            monitorStatusText.Text = "Installing from VHC data...";
+            monitorStatusText.Text = VbrLocalizationHelper.GuiMonitorInstallingFromVhc;
 
             var (notifType, notifUrl, minSeverity) = this.GetNotifSettings();
 
@@ -1177,7 +1177,7 @@ namespace VeeamHealthCheck
                     CGlobals.Logger.Error($"Monitor VHC-assisted setup failed: {ex.Message}", false);
                     Dispatcher.UIThread.Post(() =>
                     {
-                        monitorStatusText.Text = "Setup failed — check log";
+                        monitorStatusText.Text = VbrLocalizationHelper.GuiMonitorSetupFailed;
                         monitorStatusText.Foreground = GetStatusBrush("StatusErrorBrush");
                         monitorVhcSetupBtn.IsEnabled = true;
                     });
@@ -1188,7 +1188,7 @@ namespace VeeamHealthCheck
         private void monitorRunBtn_Click(object sender, RoutedEventArgs e)
         {
             monitorRunBtn.IsEnabled = false;
-            monitorLastRunText.Text = "Running...";
+            monitorLastRunText.Text = VbrLocalizationHelper.GuiMonitorCheckInProgress;
             monitorLastRunText.IsVisible = true;
 
             System.Threading.Tasks.Task.Run(() =>
@@ -1231,9 +1231,9 @@ namespace VeeamHealthCheck
             Dispatcher.UIThread.Invoke(() =>
             {
                 monitorVhcSetupBtn.IsEnabled = true;
-                monitorLastRunText.Text = "Health check complete — click 'Setup from VHC' to configure continuous monitoring with auto-detected server settings.";
+                monitorLastRunText.Text = VbrLocalizationHelper.GuiMonitorCompleteSetupPrompt;
                 monitorLastRunText.IsVisible = true;
-                monitorStatusText.Text = "Available — not set up";
+                monitorStatusText.Text = VbrLocalizationHelper.GuiMonitorAvailableNotSetUp;
                 monitorStatusText.Foreground = GetStatusBrush("StatusWarningBrush");
             });
         }

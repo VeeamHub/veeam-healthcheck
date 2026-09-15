@@ -1915,4 +1915,55 @@ The files may be anonymized to hide sensitive data. Accepting the Terms means th
   <data name="GuiProcessingText" xml:space="preserve">
     <value>Processing health check...</value>
   </data>
+  <data name="GuiExportPdfLabel" xml:space="preserve">
+    <value>Export PDF</value>
+  </data>
+  <data name="GuiClearCredsLabel" xml:space="preserve">
+    <value>Clear Saved Credentials</value>
+  </data>
+  <data name="GuiCollectionCompleteWarnings" xml:space="preserve">
+    <value>Collection complete — {0} collector warning(s)</value>
+  </data>
+  <data name="GuiCollectionComplete" xml:space="preserve">
+    <value>Collection complete</value>
+  </data>
+  <data name="GuiMonitorNotBundled" xml:space="preserve">
+    <value>Not bundled</value>
+  </data>
+  <data name="GuiMonitorAvailableNotSetUp" xml:space="preserve">
+    <value>Available — not set up</value>
+  </data>
+  <data name="GuiMonitorRunningVersion" xml:space="preserve">
+    <value>Running ({0})</value>
+  </data>
+  <data name="GuiMonitorReconfigure" xml:space="preserve">
+    <value>Reconfigure</value>
+  </data>
+  <data name="GuiMonitorLastRun" xml:space="preserve">
+    <value>Last run: {0} — {1}</value>
+  </data>
+  <data name="GuiMonitorInstalling" xml:space="preserve">
+    <value>Installing...</value>
+  </data>
+  <data name="GuiMonitorSetupFailed" xml:space="preserve">
+    <value>Setup failed — check log</value>
+  </data>
+  <data name="GuiMonitorInstallingFromVhc" xml:space="preserve">
+    <value>Installing from VHC data...</value>
+  </data>
+  <data name="GuiMonitorCheckInProgress" xml:space="preserve">
+    <value>Running...</value>
+  </data>
+  <data name="GuiMonitorCompleteSetupPrompt" xml:space="preserve">
+    <value>Health check complete — click 'Setup from VHC' to configure continuous monitoring with auto-detected server settings.</value>
+  </data>
+  <data name="GuiThemeDark" xml:space="preserve">
+    <value>Dark</value>
+  </data>
+  <data name="GuiThemeLight" xml:space="preserve">
+    <value>Light</value>
+  </data>
+  <data name="GuiThemeSystem" xml:space="preserve">
+    <value>System</value>
+  </data>
 </root>
