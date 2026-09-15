@@ -29,4 +29,10 @@
     <ProjectReference Include="..\HC_Reporting\VeeamHealthCheck.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <None Include="..\HC_Reporting\Resources\Localization\locale-known-missing.txt"
+          Link="Resources\Localization\locale-known-missing.txt"
+          CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+
 </Project>
