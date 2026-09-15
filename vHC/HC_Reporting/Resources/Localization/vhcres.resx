@@ -1810,4 +1810,109 @@ The files may be anonymized to hide sensitive data. Accepting the Terms means th
   <data name="helpMenu" xml:space="preserve">
     <value>"HELP MENU\n\nrun - executes the program"</value>
   </data>
+  <data name="GuiImportTooltip" xml:space="preserve">
+    <value>Create a report from previously collected data</value>
+  </data>
+  <data name="GuiThemeToggleTooltip" xml:space="preserve">
+    <value>Toggle light/dark theme</value>
+  </data>
+  <data name="GuiAboutButton" xml:space="preserve">
+    <value>About / Disclaimer</value>
+  </data>
+  <data name="GuiAdHocTab" xml:space="preserve">
+    <value>Ad-hoc Health Check</value>
+  </data>
+  <data name="GuiMonitoringTab" xml:space="preserve">
+    <value>Continuous Monitoring</value>
+  </data>
+  <data name="GuiServerCardTitle" xml:space="preserve">
+    <value>Veeam Server</value>
+  </data>
+  <data name="GuiProductTypeLabel" xml:space="preserve">
+    <value>Product Type:</value>
+  </data>
+  <data name="GuiProductTypeTooltip" xml:space="preserve">
+    <value>For remote servers, specifying the product type avoids connection failures. If set to Auto-detect, the tool will try both connection types.</value>
+  </data>
+  <data name="GuiProductTypeAuto" xml:space="preserve">
+    <value>Auto-detect</value>
+  </data>
+  <data name="GuiProductTypeVbr" xml:space="preserve">
+    <value>VBR (Backup &amp; Replication)</value>
+  </data>
+  <data name="GuiProductTypeVb365" xml:space="preserve">
+    <value>VB365 (Backup for Microsoft 365)</value>
+  </data>
+  <data name="GuiProductTypeBoth" xml:space="preserve">
+    <value>Both</value>
+  </data>
+  <data name="GuiExportOptionsLabel" xml:space="preserve">
+    <value>Export Options</value>
+  </data>
+  <data name="GuiHtmlReportTooltip" xml:space="preserve">
+    <value>Display the HTML report in your default browser after generation</value>
+  </data>
+  <data name="GuiDataCollectionLabel" xml:space="preserve">
+    <value>Data Collection</value>
+  </data>
+  <data name="GuiCollectionPeriodLabel" xml:space="preserve">
+    <value>Collection Period:</value>
+  </data>
+  <data name="GuiRescanTooltip" xml:space="preserve">
+    <value>Rescan for Hardware change</value>
+  </data>
+  <data name="GuiSecurityPrivacyLabel" xml:space="preserve">
+    <value>Security &amp; Privacy</value>
+  </data>
+  <data name="GuiScrubTooltip" xml:space="preserve">
+    <value>Anonymize sensitive data according to Veeam KB 2462</value>
+  </data>
+  <data name="GuiClearCredsTooltip" xml:space="preserve">
+    <value>Clear any previously saved credentials before running</value>
+  </data>
+  <data name="GuiPdfUnavailableTooltip" xml:space="preserve">
+    <value>PDF Export not available when both VB365 &amp; VBR are detected on the same machine.</value>
+  </data>
+  <data name="GuiMonitorStatusHeader" xml:space="preserve">
+    <value>Monitor Status</value>
+  </data>
+  <data name="GuiMonitorStatusLabel" xml:space="preserve">
+    <value>Status: </value>
+  </data>
+  <data name="GuiMonitorQuickSetup" xml:space="preserve">
+    <value>Quick Setup</value>
+  </data>
+  <data name="GuiMonitorQuickSetupTooltip" xml:space="preserve">
+    <value>Install monitor using selected VBR server and stored credentials</value>
+  </data>
+  <data name="GuiMonitorVhcSetup" xml:space="preserve">
+    <value>Setup from VHC</value>
+  </data>
+  <data name="GuiMonitorVhcSetupTooltip" xml:space="preserve">
+    <value>Configure monitor using data collected from the last health check run</value>
+  </data>
+  <data name="GuiMonitorRunNow" xml:space="preserve">
+    <value>Run Now</value>
+  </data>
+  <data name="GuiMonitorRunTooltip" xml:space="preserve">
+    <value>Trigger an immediate monitor check</value>
+  </data>
+  <data name="GuiAlertNotificationsHeader" xml:space="preserve">
+    <value>Alert Notifications</value>
+  </data>
+  <data name="GuiMinSeverityLabel" xml:space="preserve">
+    <value>Min severity: </value>
+  </data>
+  <data name="GuiNotifSeverityWarning" xml:space="preserve">
+    <value>warning</value>
+  </data>
+  <data name="GuiNotifSeverityCritical" xml:space="preserve">
+    <value>critical</value>
+  </data>
+  <data name="GuiNotifSeverityOk" xml:space="preserve">
+    <value>ok</value>
+  </data>
+  <data name="GuiProcessingText" xml:space="preserve">
+    <value>Processing health check...</value>
+  </data>
 </root>

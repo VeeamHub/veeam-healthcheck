@@ -370,7 +370,7 @@ namespace VeeamHealthCheck
             if (CGlobals.IsVb365 && CGlobals.IsVbr)
             {
                 pdfCheckBox.IsEnabled = false;
-                ToolTip.SetTip(pdfCheckBox, "PDF Export not available when both VB365 & VBR are detected on the same machine.");
+                ToolTip.SetTip(pdfCheckBox, VbrLocalizationHelper.GuiPdfUnavailableTooltip);
             }
 
             // Originally the tail of the single synchronous SetUi(), which ran
@@ -465,6 +465,35 @@ namespace VeeamHealthCheck
 
             this.serverLabel.Text = VbrLocalizationHelper.GuiServerLabel;
             ToolTip.SetTip(this.manageServersBtn, VbrLocalizationHelper.GuiManageServersTooltip);
+
+            // Stage D: resx-back the strings VhcGui.axaml previously hardcoded.
+            this.appHeaderText.Text = VbrLocalizationHelper.GuiTitle;
+            ToolTip.SetTip(this.importButton, VbrLocalizationHelper.GuiImportTooltip);
+            ToolTip.SetTip(this.ThemeToggleButton, VbrLocalizationHelper.GuiThemeToggleTooltip);
+            this.aboutButton.Content = VbrLocalizationHelper.GuiAboutButton;
+            this.AdHocTabButton.Content = VbrLocalizationHelper.GuiAdHocTab;
+            this.MonitoringTabButton.Content = VbrLocalizationHelper.GuiMonitoringTab;
+            this.serverCardTitle.Text = VbrLocalizationHelper.GuiServerCardTitle;
+            this.productTypeLabel.Text = VbrLocalizationHelper.GuiProductTypeLabel;
+            ToolTip.SetTip(this.productTypeSelector, VbrLocalizationHelper.GuiProductTypeTooltip);
+            this.exportOptionsLabel.Text = VbrLocalizationHelper.GuiExportOptionsLabel;
+            ToolTip.SetTip(this.htmlCheckBox, VbrLocalizationHelper.GuiHtmlReportTooltip);
+            this.dataCollectionLabel.Text = VbrLocalizationHelper.GuiDataCollectionLabel;
+            this.collectionPeriodLabel.Text = VbrLocalizationHelper.GuiCollectionPeriodLabel;
+            ToolTip.SetTip(this.RescanBox, VbrLocalizationHelper.GuiRescanTooltip);
+            this.securityPrivacyLabel.Text = VbrLocalizationHelper.GuiSecurityPrivacyLabel;
+            ToolTip.SetTip(this.scrubBox, VbrLocalizationHelper.GuiScrubTooltip);
+            ToolTip.SetTip(this.clearCredsCheckBox, VbrLocalizationHelper.GuiClearCredsTooltip);
+            this.monitorStatusHeader.Text = VbrLocalizationHelper.GuiMonitorStatusHeader;
+            this.monitorStatusLabel.Text = VbrLocalizationHelper.GuiMonitorStatusLabel;
+            ToolTip.SetTip(this.monitorQuickSetupBtn, VbrLocalizationHelper.GuiMonitorQuickSetupTooltip);
+            this.monitorVhcSetupBtn.Content = VbrLocalizationHelper.GuiMonitorVhcSetup;
+            ToolTip.SetTip(this.monitorVhcSetupBtn, VbrLocalizationHelper.GuiMonitorVhcSetupTooltip);
+            this.monitorRunBtn.Content = VbrLocalizationHelper.GuiMonitorRunNow;
+            ToolTip.SetTip(this.monitorRunBtn, VbrLocalizationHelper.GuiMonitorRunTooltip);
+            this.alertNotificationsHeader.Text = VbrLocalizationHelper.GuiAlertNotificationsHeader;
+            this.minSeverityLabel.Text = VbrLocalizationHelper.GuiMinSeverityLabel;
+            this.progressText.Text = VbrLocalizationHelper.GuiProcessingText;
         }
 
         private void SetPathBoxText(string text)

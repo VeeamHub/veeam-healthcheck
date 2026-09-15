@@ -4,6 +4,7 @@ MIT License
 -->
 <Window xmlns="https://github.com/avaloniaui"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:loc="clr-namespace:VeeamHealthCheck.Resources.Localization;assembly=VeeamHealthCheck"
         x:Class="VeeamHealthCheck.VhcGui"
         Title=""
         MinWidth="860" MinHeight="580"
@@ -15,23 +16,22 @@ MIT License
 
         <!-- Header row -->
         <Grid Grid.Row="0" ColumnDefinitions="*,Auto,Auto,Auto,Auto" Margin="25,16,25,8">
-            <TextBlock Grid.Column="0" Text="Veeam Health Check" FontSize="20" FontWeight="Bold" VerticalAlignment="Center" />
+            <TextBlock x:Name="appHeaderText" Grid.Column="0" FontSize="20" FontWeight="Bold" VerticalAlignment="Center" />
             <Button x:Name="importButton" Grid.Column="1" Classes="secondary"
-                    Margin="0,0,12,0" Click="Import_click"
-                    ToolTip.Tip="Create a report from previously collected data" />
+                    Margin="0,0,12,0" Click="Import_click" />
             <Border x:Name="importDivider" Grid.Column="2" Width="1" Height="18" VerticalAlignment="Center" Margin="0,0,12,0"
                     Background="{DynamicResource CardBorderBrush}" />
             <Button x:Name="ThemeToggleButton" Grid.Column="3" Classes="secondary"
-                    Margin="0,0,8,0" Click="ThemeToggleButton_Click" ToolTip.Tip="Toggle light/dark theme" />
-            <Button x:Name="aboutButton" Grid.Column="4" Content="About / Disclaimer" Classes="secondary"
+                    Margin="0,0,8,0" Click="ThemeToggleButton_Click" />
+            <Button x:Name="aboutButton" Grid.Column="4" Classes="secondary"
                     Click="AboutButton_Click" />
         </Grid>
 
         <!-- Tab strip row -->
         <StackPanel Grid.Row="1" Orientation="Horizontal" Spacing="8" Margin="25,0,25,12">
-            <Button x:Name="AdHocTabButton" Content="Ad-hoc Health Check" Classes="tab tab-active"
+            <Button x:Name="AdHocTabButton" Classes="tab tab-active"
                     Click="AdHocTabButton_Click" />
-            <Button x:Name="MonitoringTabButton" Content="Continuous Monitoring" Classes="tab"
+            <Button x:Name="MonitoringTabButton" Classes="tab"
                     Click="MonitoringTabButton_Click" />
         </StackPanel>
 
@@ -44,7 +44,7 @@ MIT License
                     <StackPanel Grid.Column="0">
                         <Border Classes="card" Margin="0,0,0,15">
                             <StackPanel TextElement.FontWeight="SemiBold">
-                                <TextBlock Text="Veeam Server" Classes="card-title" />
+                                <TextBlock x:Name="serverCardTitle" Classes="card-title" />
                                 <StackPanel Margin="5,10,5,0">
                                     <TextBlock x:Name="serverLabel" Classes="field-label" Margin="0,0,0,8" />
                                     <Grid ColumnDefinitions="*,8,Auto">
@@ -61,18 +61,17 @@ MIT License
 
                                     <Separator Margin="0,12,0,12" />
 
-                                    <TextBlock Text="Product Type:" Classes="field-label" Margin="0,0,0,8" />
+                                    <TextBlock x:Name="productTypeLabel" Classes="field-label" Margin="0,0,0,8" />
                                     <ComboBox x:Name="productTypeSelector"
                                               Classes="modern"
                                               Width="220" FontSize="12"
                                               SelectedIndex="0"
                                               HorizontalAlignment="Left"
-                                              SelectionChanged="productTypeSelector_SelectionChanged"
-                                              ToolTip.Tip="For remote servers, specifying the product type avoids connection failures. If set to Auto-detect, the tool will try both connection types.">
-                                        <ComboBoxItem Content="Auto-detect" IsSelected="True" />
-                                        <ComboBoxItem Content="VBR (Backup &amp; Replication)" />
-                                        <ComboBoxItem Content="VB365 (Backup for Microsoft 365)" />
-                                        <ComboBoxItem Content="Both" />
+                                              SelectionChanged="productTypeSelector_SelectionChanged">
+                                        <ComboBoxItem Content="{x:Static loc:VbrLocalizationHelper.GuiProductTypeAuto}" IsSelected="True" />
+                                        <ComboBoxItem Content="{x:Static loc:VbrLocalizationHelper.GuiProductTypeVbr}" />
+                                        <ComboBoxItem Content="{x:Static loc:VbrLocalizationHelper.GuiProductTypeVb365}" />
+                                        <ComboBoxItem Content="{x:Static loc:VbrLocalizationHelper.GuiProductTypeBoth}" />
                                     </ComboBox>
                                 </StackPanel>
                             </StackPanel>
@@ -100,7 +99,7 @@ MIT License
                                     <Run Name="OptHdr" />
                                 </TextBlock>
                                 <StackPanel Margin="5,10,5,0">
-                                    <TextBlock Text="Export Options" Classes="field-label" Margin="0,0,0,8" />
+                                    <TextBlock x:Name="exportOptionsLabel" Classes="field-label" Margin="0,0,0,8" />
                                     <CheckBox x:Name="pdfCheckBox" Classes="modern"
                                               Checked="pdfCheckBox_Checked" Unchecked="pdfCheckBox_Unchecked"
                                               IsChecked="False" />
@@ -108,14 +107,13 @@ MIT License
                                               Checked="explorerShowBox_Checked" Unchecked="explorerShowBox_Unchecked"
                                               IsChecked="True" />
                                     <CheckBox Name="htmlCheckBox" Classes="modern"
-                                              Checked="htmlChecked" Unchecked="htmlUnchecked"
-                                              ToolTip.Tip="Display the HTML report in your default browser after generation" />
+                                              Checked="htmlChecked" Unchecked="htmlUnchecked" />
 
                                     <Separator Margin="0,12,0,12" />
 
-                                    <TextBlock Text="Data Collection" Classes="field-label" Margin="0,0,0,8" />
+                                    <TextBlock x:Name="dataCollectionLabel" Classes="field-label" Margin="0,0,0,8" />
                                     <StackPanel Orientation="Horizontal" Margin="0,8,0,0">
-                                        <TextBlock Text="Collection Period:" VerticalAlignment="Center"
+                                        <TextBlock x:Name="collectionPeriodLabel" VerticalAlignment="Center"
                                                    Classes="field-label" Margin="0,0,10,0" />
                                         <StackPanel Orientation="Horizontal" Spacing="0">
                                             <RadioButton x:Name="days7" GroupName="Period" Classes="segment"
@@ -132,19 +130,16 @@ MIT License
 
                                     <CheckBox x:Name="RescanBox" Classes="modern"
                                             Checked="RescanBox_Checked" Unchecked="RescanBox_Unchecked"
-                                            Margin="0,8,0,0"
-                                            ToolTip.Tip="Rescan for Hardware change" />
+                                            Margin="0,8,0,0" />
 
                                     <Separator Margin="0,12,0,12" />
 
-                                    <TextBlock Text="Security &amp; Privacy" Classes="field-label" Margin="0,0,0,8" />
+                                    <TextBlock x:Name="securityPrivacyLabel" Classes="field-label" Margin="0,0,0,8" />
                                     <CheckBox x:Name="scrubBox" Classes="modern"
-                                              Checked="HandleCheck" Unchecked="HandleUnchecked"
-                                              ToolTip.Tip="Anonymize sensitive data according to Veeam KB 2462" />
+                                              Checked="HandleCheck" Unchecked="HandleUnchecked" />
                                     <CheckBox x:Name="clearCredsCheckBox" Classes="modern"
                                               Checked="clearCredsCheckBox_Checked" Unchecked="clearCredsCheckBox_Unchecked"
-                                              IsChecked="False"
-                                              ToolTip.Tip="Clear any previously saved credentials before running" />
+                                              IsChecked="False" />
                                 </StackPanel>
                             </StackPanel>
                         </Border>
@@ -155,12 +150,12 @@ MIT License
                 <Grid x:Name="MonitoringTabPanel" ColumnDefinitions="*,20,*" IsVisible="False">
                     <Border Grid.Column="0" Classes="card" VerticalAlignment="Top">
                         <StackPanel TextElement.FontWeight="SemiBold">
-                            <TextBlock Text="Monitor Status" Classes="card-title" />
+                            <TextBlock x:Name="monitorStatusHeader" Classes="card-title" />
                             <StackPanel Margin="5,10,5,0">
                                 <StackPanel Orientation="Horizontal" Margin="0,0,0,6">
-                                    <TextBlock Text="Status: " Classes="secondary-text" VerticalAlignment="Center" />
+                                    <TextBlock x:Name="monitorStatusLabel" Classes="secondary-text" VerticalAlignment="Center" />
                                     <TextBlock x:Name="monitorStatusText" FontSize="13" FontWeight="SemiBold"
-                                               Foreground="{DynamicResource StatusNeutralBrush}" VerticalAlignment="Center" Text="Checking..." />
+                                               Foreground="{DynamicResource StatusNeutralBrush}" VerticalAlignment="Center" />
                                 </StackPanel>
 
                                 <TextBlock x:Name="monitorLastRunText" Classes="secondary-text" FontSize="11"
@@ -168,20 +163,17 @@ MIT License
 
                                 <Grid ColumnDefinitions="*,8,*,8,*">
                                     <Button x:Name="monitorQuickSetupBtn" Grid.Column="0"
-                                            Content="Quick Setup" Height="32" FontSize="11"
+                                            Height="32" FontSize="11"
                                             Classes="primary" IsEnabled="False"
-                                            Click="monitorQuickSetupBtn_Click"
-                                            ToolTip.Tip="Install monitor using selected VBR server and stored credentials" />
+                                            Click="monitorQuickSetupBtn_Click" />
                                     <Button x:Name="monitorVhcSetupBtn" Grid.Column="2"
-                                            Content="Setup from VHC" Height="32" FontSize="11"
+                                            Height="32" FontSize="11"
                                             Classes="secondary" IsEnabled="False"
-                                            Click="monitorVhcSetupBtn_Click"
-                                            ToolTip.Tip="Configure monitor using data collected from the last health check run" />
+                                            Click="monitorVhcSetupBtn_Click" />
                                     <Button x:Name="monitorRunBtn" Grid.Column="4"
-                                            Content="Run Now" Height="32" FontSize="11"
+                                            Height="32" FontSize="11"
                                             Classes="secondary" IsEnabled="False"
-                                            Click="monitorRunBtn_Click"
-                                            ToolTip.Tip="Trigger an immediate monitor check" />
+                                            Click="monitorRunBtn_Click" />
                                 </Grid>
                             </StackPanel>
                         </StackPanel>
@@ -189,7 +181,7 @@ MIT License
 
                     <Border Grid.Column="2" Classes="card" VerticalAlignment="Top">
                         <StackPanel TextElement.FontWeight="SemiBold">
-                            <TextBlock Text="Alert Notifications" Classes="card-title" />
+                            <TextBlock x:Name="alertNotificationsHeader" Classes="card-title" />
                             <StackPanel Margin="5,10,5,0">
                                 <Grid Margin="0,0,0,8" ColumnDefinitions="100,8,*">
                                     <ComboBox x:Name="notifTypeBox" Grid.Column="0"
@@ -206,14 +198,14 @@ MIT License
                                              Tag="https://ntfy.sh/your-topic" />
                                 </Grid>
                                 <StackPanel Orientation="Horizontal" Margin="0,0,0,12">
-                                    <TextBlock Text="Min severity: " Classes="field-label"
+                                    <TextBlock x:Name="minSeverityLabel" Classes="field-label"
                                                VerticalAlignment="Center" Margin="0,0,8,0" />
                                     <ComboBox x:Name="notifSeverityBox" Width="110"
                                               Classes="modern" Height="28" FontSize="12"
                                               SelectedIndex="0">
-                                        <ComboBoxItem Content="warning" Tag="warning" IsSelected="True" />
-                                        <ComboBoxItem Content="critical" Tag="critical" />
-                                        <ComboBoxItem Content="ok" Tag="ok" />
+                                        <ComboBoxItem Content="{x:Static loc:VbrLocalizationHelper.GuiNotifSeverityWarning}" Tag="warning" IsSelected="True" />
+                                        <ComboBoxItem Content="{x:Static loc:VbrLocalizationHelper.GuiNotifSeverityCritical}" Tag="critical" />
+                                        <ComboBoxItem Content="{x:Static loc:VbrLocalizationHelper.GuiNotifSeverityOk}" Tag="ok" />
                                     </ComboBox>
                                 </StackPanel>
                             </StackPanel>
@@ -254,7 +246,6 @@ MIT License
                                  BorderBrush="Transparent" />
                     <TextBlock Name="progressText"
                                Classes="secondary-text"
-                               Text="Processing health check..."
                                Margin="0,6,0,0"
                                HorizontalAlignment="Center"
                                Opacity="0" />
