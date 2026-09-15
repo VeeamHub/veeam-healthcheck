@@ -1920,6 +1920,14 @@ git add docs/plans/2026-09-15-gui-redesign-stage-d-verification.md
 git commit -m "docs(gui): add the Stage D Windows verification checklist"
 ```
 
+### Correction applied after the final cross-task review (commit `54bccdd6`)
+
+The final whole-diff review (run after Step 4, before Step 5) found a real composition bug no single task's isolated diff review could see: `SetUiAsync()` short-circuits to an error dialog and `desktop.Shutdown()` when `_modeCheckFailed` is true (no local Veeam software detected and no remote servers configured), *without* ever calling `SetUiText()`. Since Task 2 removed the ~15 controls' hardcoded English XAML defaults in favor of resx values set only in `SetUiText()`, that already-shown window briefly rendered blank labels/buttons behind the dialog on that specific machine, instead of localized text. Fixed by moving `this.SetUiText();` to the top of `SetUiAsync()`, ahead of the `_modeCheckFailed` check.
+
+Verified `SetUiText()`'s one non-control write, `CGlobals.desiredPath = CVariables.outDir;`, is safe to run unconditionally here: every reader of `CGlobals.desiredPath` (`CClientFunctions`, `CHtmlExporter`, `IndividualJobSessionsHelper`, `CVariables.safeDir`/`unsafeDir`) is on a health-check-run code path, none of which executes between this write and the `desktop.Shutdown()` call three lines later on the failed-mode-check branch.
+
+One pre-existing cosmetic quirk on this same path, unrelated to this fix and not introduced by it: `hideProgressBar()` is skipped on the `_modeCheckFailed` branch (the `return` in `SetUiSync()` precedes it), and `pBar` (unlike `progressText`, which XAML already declares with `Opacity="0"` unconditionally) has no XAML-declared default opacity, so it renders fully visible and spinning (`IsIndeterminate="True"`) behind the error dialog on this path, both before and after this fix. `SetUiText()` never touches `pBar`'s opacity either way. Documented in the verification checklist so a tester doesn't mistake the spinning bar for something this fix introduced.
+
 - [ ] **Step 5: Push and open the PR**
 
 ```bash
