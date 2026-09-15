@@ -1599,7 +1599,11 @@ print("wrote", total, "known-missing entries")
 PY
 ```
 
-Expected: `wrote 161 known-missing entries` (47 for fR-FR + 38 each for ja/zh-CN/zh-tw). **This is not the same as the spec's Context table** — that table's 64/39/39/39 are the *pre-Task-4* counts (before the rename fix). 47/38/38/38 is the correct *post-Task-4/5* state this step computes fresh; per the plan's own preamble, a mismatch against the spec would normally be a stop-and-report, but this one is expected — the spec and this step are describing the state of the resx files at two different points in the branch's history, not disagreeing about a fact.
+Expected (verified by directly running this exact script against the actual post-Task-5 file state, commit `b7e18bab`): `wrote 165 known-missing entries` (48 for fR-FR + 39 each for ja/zh-CN/zh-tw). **This is not the same as the spec's Context table** — that table's 64/39/39/39 are the *pre-Task-4* counts (before the rename fix). 165 is the correct *post-Task-4/5* state this step computes fresh; per the plan's own preamble, a mismatch against the spec would normally be a stop-and-report, but this one is expected — the spec and this step are describing the state of the resx files at two different points in the branch's history, not disagreeing about a fact.
+
+### Correction applied after review (Task 4's HtmlIntroLine3 revert, commit `39be2be5`)
+
+An earlier draft of this step expected `wrote 161 known-missing entries` (47/38/38/38), computed when Task 4 was still expected to fully eliminate the `HtmlIntroLine3` orphan via a rename to `HtmlIntroLine3Original`. That rename was reverted (see Task 4's own "Correction applied after review") because none of the four locale values had a closing `</a>` tag and renaming them onto the live key emitted malformed HTML. The revert means `HtmlIntroLine3Original` is now *also* missing from every locale (on top of `HtmlIntroLine3Anon`, which was already going to be missing either way), adding one missing entry per locale: 47→48 for fR-FR, 38→39 each for ja/zh-CN/zh-tw, 161→165 total. `HtmlIntroLine3` itself shows up as an *orphan*, not a missing key — see `KnownDeliberateOrphans` in Step 3 below, not this allowlist.
 
 - [ ] **Step 2: Link the allowlist into the test project's output**
 
