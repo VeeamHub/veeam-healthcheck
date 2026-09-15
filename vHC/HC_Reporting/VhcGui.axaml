@@ -196,10 +196,10 @@ MIT License
                                               Classes="modern" Height="32" FontSize="12"
                                               SelectedIndex="0"
                                               SelectionChanged="notifTypeBox_SelectionChanged">
-                                        <ComboBoxItem Content="ntfy" IsSelected="True" />
-                                        <ComboBoxItem Content="Teams" />
-                                        <ComboBoxItem Content="Slack" />
-                                        <ComboBoxItem Content="PagerDuty" />
+                                        <ComboBoxItem Content="ntfy" Tag="ntfy" IsSelected="True" />
+                                        <ComboBoxItem Content="Teams" Tag="Teams" />
+                                        <ComboBoxItem Content="Slack" Tag="Slack" />
+                                        <ComboBoxItem Content="PagerDuty" Tag="PagerDuty" />
                                     </ComboBox>
                                     <TextBox x:Name="notifUrlBox" Grid.Column="2"
                                              Classes="modern" Height="32" FontSize="12"
@@ -211,9 +211,9 @@ MIT License
                                     <ComboBox x:Name="notifSeverityBox" Width="110"
                                               Classes="modern" Height="28" FontSize="12"
                                               SelectedIndex="0">
-                                        <ComboBoxItem Content="warning" IsSelected="True" />
-                                        <ComboBoxItem Content="critical" />
-                                        <ComboBoxItem Content="ok" />
+                                        <ComboBoxItem Content="warning" Tag="warning" IsSelected="True" />
+                                        <ComboBoxItem Content="critical" Tag="critical" />
+                                        <ComboBoxItem Content="ok" Tag="ok" />
                                     </ComboBox>
                                 </StackPanel>
                             </StackPanel>

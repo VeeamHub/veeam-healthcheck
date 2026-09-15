@@ -1068,9 +1068,9 @@ namespace VeeamHealthCheck
 
         private (string notifType, string notifUrl, string minSeverity) GetNotifSettings()
         {
-            string notifType = (notifTypeBox.SelectedItem as ComboBoxItem)?.Content?.ToString()?.ToLower() ?? "ntfy";
+            string notifType = (notifTypeBox.SelectedItem as ComboBoxItem)?.Tag?.ToString()?.ToLower() ?? "ntfy";
             string notifUrl = notifUrlBox.Text?.Trim() ?? string.Empty;
-            string minSeverity = (notifSeverityBox.SelectedItem as ComboBoxItem)?.Content?.ToString() ?? "warning";
+            string minSeverity = (notifSeverityBox.SelectedItem as ComboBoxItem)?.Tag?.ToString() ?? "warning";
             return (notifType, notifUrl, minSeverity);
         }
 
@@ -1167,7 +1167,7 @@ namespace VeeamHealthCheck
         private void notifTypeBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
             if (notifUrlBox == null) return;
-            string type = (notifTypeBox.SelectedItem as ComboBoxItem)?.Content?.ToString() ?? "ntfy";
+            string type = (notifTypeBox.SelectedItem as ComboBoxItem)?.Tag?.ToString() ?? "ntfy";
             notifUrlBox.Tag = type switch
             {
                 "Teams" => "https://org.webhook.office.com/...",
