@@ -1134,7 +1134,7 @@ Replace with:
                 var status = CVhcMonitorIntegration.GetLastRunStatus();
                 if (status != null)
                 {
-                    monitorLastRunText.Text = string.Format(VbrLocalizationHelper.GuiMonitorLastRun, status.Timestamp.ToString("g"), status.Summary);
+                    monitorLastRunText.Text = string.Format(VbrLocalizationHelper.GuiMonitorLastRun, status.Timestamp?.ToString("g") ?? string.Empty, status.Summary);
                     monitorLastRunText.IsVisible = true;
                 }
             }
