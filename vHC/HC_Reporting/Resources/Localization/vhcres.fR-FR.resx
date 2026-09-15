@@ -154,7 +154,7 @@ Les fichiers peuvent être anonymisés pour masquer les données sensibles. L'ac
   <data name="HtmlIntroLine2" xml:space="preserve">
     <value>- Les données brutes sont capturées au format CSV et sont accessibles localement dans le dossier d'exportation. CSV vous permettra de manipuler les données dans des outils tels qu'Excel.</value>
   </data>
-  <data name="HtmlIntroLine3" xml:space="preserve">
+  <data name="HtmlIntroLine3Original" xml:space="preserve">
     <value>- Des informations supplémentaires sur les sessions de travail individuelles peuvent être trouvées dans le dossier de résultats &lt;a href="C:\\temp\\vHC\\JobSessionReports"&gt; sous C:\\temp\\vHC\\JobSessionReports</value>
   </data>
   <data name="HtmlIntroLine4" xml:space="preserve">
@@ -583,7 +583,7 @@ Les fichiers peuvent être anonymisés pour masquer les données sensibles. L'ac
   <data name="BstWaTT" xml:space="preserve">
     <value>Le serveur de sauvegarde est-il également un accélérateur WAN ?</value>
   </data>
-  <data name="Titre Sbr" xml:space="preserve">
+  <data name="SbrTitle" xml:space="preserve">
     <value>Détails SOBR</value>
   </data>
   <data name="SbrBtn" xml:space="preserve">
@@ -748,7 +748,7 @@ Les fichiers peuvent être anonymisés pour masquer les données sensibles. L'ac
   <data name="SbrExt7TT" xml:space="preserve">
     <value>Chemin de fichier spécifié pour le repository</value>
   </data>
-  <data name="SbrExt 8" xml:space="preserve">
+  <data name="SbrExt8" xml:space="preserve">
     <value>Espace libre (To)</value>
   </data>
   <data name="SbrExt8TT" xml:space="preserve">
@@ -760,31 +760,31 @@ Les fichiers peuvent être anonymisés pour masquer les données sensibles. L'ac
   <data name="SbrExt9TT" xml:space="preserve">
     <value>Capacité détectée du repository</value>
   </data>
-  <data name="SbrExt 10" xml:space="preserve">
+  <data name="SbrExt10" xml:space="preserve">
     <value>% d'espace libre</value>
   </data>
   <data name="SbrExt10TT" xml:space="preserve">
     <value>Pourcentage d'espace libre calculé (espace libre / espace total)</value>
   </data>
-  <data name="SbrExt 11" xml:space="preserve">
+  <data name="SbrExt11" xml:space="preserve">
     <value>Décompresser</value>
   </data>
   <data name="SbrExt11TT" xml:space="preserve">
     <value>Le repository décompresse-t-il les fichiers de sauvegarde avant le stockage final ?</value>
   </data>
-  <data name="SbrExt 12" xml:space="preserve">
+  <data name="SbrExt12" xml:space="preserve">
     <value>Aligner les blocs</value>
   </data>
   <data name="SbrExt12TT" xml:space="preserve">
     <value>Le repository aligne-t-il les blocs de données ?</value>
   </data>
-  <data name="SbrExt 13" xml:space="preserve">
+  <data name="SbrExt13" xml:space="preserve">
     <value>Disques en rotation</value>
   </data>
   <data name="SbrExt13TT" xml:space="preserve">
     <value>Le repository est-il soutenu par des disques en rotation ?</value>
   </data>
-  <data name="SbrExt 14" xml:space="preserve">
+  <data name="SbrExt14" xml:space="preserve">
     <value>Utiliser l'immuabilité</value>
   </data>
   <data name="SbrExt14TT" xml:space="preserve">
@@ -1588,38 +1588,38 @@ Les fichiers peuvent être anonymisés pour masquer les données sensibles. L'ac
   <data name="v365NavTitle0" xml:space="preserve">
     <value>Configuration globale</value>
   </data>
-  <data name="v365NavValeur0" xml:space="preserve">
-    <value></value>
+  <data name="v365NavValue0" xml:space="preserve">
+    <value>Summary of license and global settings.</value>
   </data>
   <data name="v365NavTitle1" xml:space="preserve">
     <value>Utilisateurs protégés</value>
   </data>
-  <data name="v365NavValeur1" xml:space="preserve">
-    <value></value>
+  <data name="v365NavValue1" xml:space="preserve">
+    <value>Summary of protected and unprotected users.</value>
   </data>
   <data name="v365NavTitle2" xml:space="preserve">
     <value>Serveur de sauvegarde</value>
   </data>
-  <data name="v365NavValeur2" xml:space="preserve">
-    <value></value>
+  <data name="v365NavValue2" xml:space="preserve">
+    <value>Details on the VB365 Server.</value>
   </data>
   <data name="v365NavTitle3" xml:space="preserve">
     <value>Disques du serveur de sauvegarde</value>
   </data>
-  <data name="v365NavValeur3" xml:space="preserve">
-    <value></value>
+  <data name="v365NavValue3" xml:space="preserve">
+    <value>Details on the disks attached to the VB365 Server.</value>
   </data>
   <data name="v365NavTitle4" xml:space="preserve">
     <value>Proxy</value>
   </data>
-  <data name="v365NavValeur4" xml:space="preserve">
-    <value></value>
+  <data name="v365NavValue4" xml:space="preserve">
+    <value>Details on proxies added to the current VB365 Server.</value>
   </data>
   <data name="v365NavTitle5" xml:space="preserve">
     <value>Repository</value>
   </data>
-  <data name="v365NavValeur5" xml:space="preserve">
-    <value></value>
+  <data name="v365NavValue5" xml:space="preserve">
+    <value>Details on reposiories added to the current VB365.</value>
   </data>
   <data name="v365NavTitle6" xml:space="preserve">
     <value>Stockage objets</value>
@@ -1630,20 +1630,20 @@ Les fichiers peuvent être anonymisés pour masquer les données sensibles. L'ac
   <data name="v365NavTitle7" xml:space="preserve">
     <value>Informations de sécurité</value>
   </data>
-  <data name="v365NavValeur7" xml:space="preserve">
-    <value></value>
+  <data name="v365NavValue7" xml:space="preserve">
+    <value>Summary of security settings relevant to VB365.</value>
   </data>
   <data name="v365NavTitle8" xml:space="preserve">
     <value>Informations sur les rôles RBAC</value>
   </data>
-  <data name="v365NavValeur8" xml:space="preserve">
-    <value></value>
+  <data name="v365NavValue8" xml:space="preserve">
+    <value>Summary of Role Based Access Control settings.</value>
   </data>
   <data name="v365NavTitle9" xml:space="preserve">
     <value>Vérification des autorisations</value>
   </data>
-  <data name="v365NavValeur9" xml:space="preserve">
-    <value></value>
+  <data name="v365NavValue9" xml:space="preserve">
+    <value>Summary of permissions granted &amp; used.</value>
   </data>
   <data name="v365NavTitle10" xml:space="preserve">
     <value>Organisations</value>

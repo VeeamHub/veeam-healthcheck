@@ -160,7 +160,7 @@
   <data name="HtmlIntroLine2" xml:space="preserve">
     <value>- 原始数据以 CSV 格式捕获，可在导出文件夹中本地访问。 CSV 将允许您在 Excel 等工具中操作数据。</value>
   </data>
-  <data name="HtmlIntroLine3" xml:space="preserve">
+  <data name="HtmlIntroLine3Original" xml:space="preserve">
     <value>- 有关各个作业会话的其他信息，请参见&lt;a href="C:\\temp\\vHC\\JobSessionReports"&gt; 输出文件夹C:\\temp\\vHC\\JobSessionReports</value>
   </data>
   <data name="HtmlIntroLine4" xml:space="preserve">
