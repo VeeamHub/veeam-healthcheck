@@ -32,12 +32,13 @@ overwritten by `SetUiText()` running later on `Loaded`; and `SetUiAsync()`'s
 dialog); check specifically for a *fourth* instance rather than assuming the fix is
 complete, since neither this sandbox nor either guard test can confirm that on its own:
 
-- [ ] On first opening the app (default English), before touching either dropdown, confirm
+- [x] On first opening the app (default English), before touching either dropdown, confirm
       the Product Type box already shows "Auto-detect" and the Min severity box already
       shows "warning" — not blank. This is the specific symptom of the ComboBox-snapshot bug
       Task 2 fixes with `{x:Static}`; if it regresses (e.g. a future edit moves a `Content`
       value back into `SetUiText()`), both boxes render blank until the user manually opens
       and re-selects an item.
+      **Confirmed 2026-09-16 on Windows, English UI, general click-through.**
 - [ ] On a machine with the monitor already installed and its scheduled task registered,
       confirm the "Quick Setup" button reads "Reconfigure" **immediately** on window open —
       not "Quick Setup" that then flips to "Reconfigure", and not blank. This is the specific
@@ -45,6 +46,11 @@ complete, since neither this sandbox nor either guard test can confirm that on i
       regression here means something reintroduced a `SetUiText()` write to
       `monitorQuickSetupBtn.Content` without removing the unconditional one now at the top
       of `InitializeMonitorStatus()`.
+      **Partially confirmed 2026-09-16**: Continuous Monitoring tab button/status text
+      rendered correctly (no blanks) in English on a general click-through, but the
+      specific pre-installed-monitor "immediate Reconfigure, not Quick-Setup-then-flip"
+      condition wasn't isolated — still needs a machine with the monitor already installed
+      and its scheduled task registered to fully close this item.
 
 - [ ] With Windows display language set to French, Japanese, Simplified Chinese, or
       Traditional Chinese, open the app and confirm no blank labels, buttons, or tooltips
