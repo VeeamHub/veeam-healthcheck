@@ -583,7 +583,7 @@ Les fichiers peuvent être anonymisés pour masquer les données sensibles. L'ac
   <data name="BstWaTT" xml:space="preserve">
     <value>Le serveur de sauvegarde est-il également un accélérateur WAN ?</value>
   </data>
-  <data name="Titre Sbr" xml:space="preserve">
+  <data name="SbrTitle" xml:space="preserve">
     <value>Détails SOBR</value>
   </data>
   <data name="SbrBtn" xml:space="preserve">
@@ -748,7 +748,7 @@ Les fichiers peuvent être anonymisés pour masquer les données sensibles. L'ac
   <data name="SbrExt7TT" xml:space="preserve">
     <value>Chemin de fichier spécifié pour le repository</value>
   </data>
-  <data name="SbrExt 8" xml:space="preserve">
+  <data name="SbrExt8" xml:space="preserve">
     <value>Espace libre (To)</value>
   </data>
   <data name="SbrExt8TT" xml:space="preserve">
@@ -760,31 +760,31 @@ Les fichiers peuvent être anonymisés pour masquer les données sensibles. L'ac
   <data name="SbrExt9TT" xml:space="preserve">
     <value>Capacité détectée du repository</value>
   </data>
-  <data name="SbrExt 10" xml:space="preserve">
+  <data name="SbrExt10" xml:space="preserve">
     <value>% d'espace libre</value>
   </data>
   <data name="SbrExt10TT" xml:space="preserve">
     <value>Pourcentage d'espace libre calculé (espace libre / espace total)</value>
   </data>
-  <data name="SbrExt 11" xml:space="preserve">
+  <data name="SbrExt11" xml:space="preserve">
     <value>Décompresser</value>
   </data>
   <data name="SbrExt11TT" xml:space="preserve">
     <value>Le repository décompresse-t-il les fichiers de sauvegarde avant le stockage final ?</value>
   </data>
-  <data name="SbrExt 12" xml:space="preserve">
+  <data name="SbrExt12" xml:space="preserve">
     <value>Aligner les blocs</value>
   </data>
   <data name="SbrExt12TT" xml:space="preserve">
     <value>Le repository aligne-t-il les blocs de données ?</value>
   </data>
-  <data name="SbrExt 13" xml:space="preserve">
+  <data name="SbrExt13" xml:space="preserve">
     <value>Disques en rotation</value>
   </data>
   <data name="SbrExt13TT" xml:space="preserve">
     <value>Le repository est-il soutenu par des disques en rotation ?</value>
   </data>
-  <data name="SbrExt 14" xml:space="preserve">
+  <data name="SbrExt14" xml:space="preserve">
     <value>Utiliser l'immuabilité</value>
   </data>
   <data name="SbrExt14TT" xml:space="preserve">
@@ -1588,38 +1588,38 @@ Les fichiers peuvent être anonymisés pour masquer les données sensibles. L'ac
   <data name="v365NavTitle0" xml:space="preserve">
     <value>Configuration globale</value>
   </data>
-  <data name="v365NavValeur0" xml:space="preserve">
-    <value></value>
+  <data name="v365NavValue0" xml:space="preserve">
+    <value>Summary of license and global settings.</value>
   </data>
   <data name="v365NavTitle1" xml:space="preserve">
     <value>Utilisateurs protégés</value>
   </data>
-  <data name="v365NavValeur1" xml:space="preserve">
-    <value></value>
+  <data name="v365NavValue1" xml:space="preserve">
+    <value>Summary of protected and unprotected users.</value>
   </data>
   <data name="v365NavTitle2" xml:space="preserve">
     <value>Serveur de sauvegarde</value>
   </data>
-  <data name="v365NavValeur2" xml:space="preserve">
-    <value></value>
+  <data name="v365NavValue2" xml:space="preserve">
+    <value>Details on the VB365 Server.</value>
   </data>
   <data name="v365NavTitle3" xml:space="preserve">
     <value>Disques du serveur de sauvegarde</value>
   </data>
-  <data name="v365NavValeur3" xml:space="preserve">
-    <value></value>
+  <data name="v365NavValue3" xml:space="preserve">
+    <value>Details on the disks attached to the VB365 Server.</value>
   </data>
   <data name="v365NavTitle4" xml:space="preserve">
     <value>Proxy</value>
   </data>
-  <data name="v365NavValeur4" xml:space="preserve">
-    <value></value>
+  <data name="v365NavValue4" xml:space="preserve">
+    <value>Details on proxies added to the current VB365 Server.</value>
   </data>
   <data name="v365NavTitle5" xml:space="preserve">
     <value>Repository</value>
   </data>
-  <data name="v365NavValeur5" xml:space="preserve">
-    <value></value>
+  <data name="v365NavValue5" xml:space="preserve">
+    <value>Details on reposiories added to the current VB365.</value>
   </data>
   <data name="v365NavTitle6" xml:space="preserve">
     <value>Stockage objets</value>
@@ -1630,20 +1630,20 @@ Les fichiers peuvent être anonymisés pour masquer les données sensibles. L'ac
   <data name="v365NavTitle7" xml:space="preserve">
     <value>Informations de sécurité</value>
   </data>
-  <data name="v365NavValeur7" xml:space="preserve">
-    <value></value>
+  <data name="v365NavValue7" xml:space="preserve">
+    <value>Summary of security settings relevant to VB365.</value>
   </data>
   <data name="v365NavTitle8" xml:space="preserve">
     <value>Informations sur les rôles RBAC</value>
   </data>
-  <data name="v365NavValeur8" xml:space="preserve">
-    <value></value>
+  <data name="v365NavValue8" xml:space="preserve">
+    <value>Summary of Role Based Access Control settings.</value>
   </data>
   <data name="v365NavTitle9" xml:space="preserve">
     <value>Vérification des autorisations</value>
   </data>
-  <data name="v365NavValeur9" xml:space="preserve">
-    <value></value>
+  <data name="v365NavValue9" xml:space="preserve">
+    <value>Summary of permissions granted &amp; used.</value>
   </data>
   <data name="v365NavTitle10" xml:space="preserve">
     <value>Organisations</value>
@@ -1668,5 +1668,161 @@ Les fichiers peuvent être anonymisés pour masquer les données sensibles. L'ac
   </data>
   <data name="v365NavValue13" xml:space="preserve">
     <value></value>
+  </data>
+  <data name="GuiImportTooltip" xml:space="preserve">
+    <value>Create a report from previously collected data</value>
+  </data>
+  <data name="GuiThemeToggleTooltip" xml:space="preserve">
+    <value>Toggle light/dark theme</value>
+  </data>
+  <data name="GuiAboutButton" xml:space="preserve">
+    <value>About / Disclaimer</value>
+  </data>
+  <data name="GuiAdHocTab" xml:space="preserve">
+    <value>Ad-hoc Health Check</value>
+  </data>
+  <data name="GuiMonitoringTab" xml:space="preserve">
+    <value>Continuous Monitoring</value>
+  </data>
+  <data name="GuiServerCardTitle" xml:space="preserve">
+    <value>Veeam Server</value>
+  </data>
+  <data name="GuiProductTypeLabel" xml:space="preserve">
+    <value>Product Type:</value>
+  </data>
+  <data name="GuiProductTypeTooltip" xml:space="preserve">
+    <value>For remote servers, specifying the product type avoids connection failures. If set to Auto-detect, the tool will try both connection types.</value>
+  </data>
+  <data name="GuiProductTypeAuto" xml:space="preserve">
+    <value>Auto-detect</value>
+  </data>
+  <data name="GuiProductTypeVbr" xml:space="preserve">
+    <value>VBR (Backup &amp; Replication)</value>
+  </data>
+  <data name="GuiProductTypeVb365" xml:space="preserve">
+    <value>VB365 (Backup for Microsoft 365)</value>
+  </data>
+  <data name="GuiProductTypeBoth" xml:space="preserve">
+    <value>Both</value>
+  </data>
+  <data name="GuiExportOptionsLabel" xml:space="preserve">
+    <value>Export Options</value>
+  </data>
+  <data name="GuiHtmlReportTooltip" xml:space="preserve">
+    <value>Display the HTML report in your default browser after generation</value>
+  </data>
+  <data name="GuiDataCollectionLabel" xml:space="preserve">
+    <value>Data Collection</value>
+  </data>
+  <data name="GuiCollectionPeriodLabel" xml:space="preserve">
+    <value>Collection Period:</value>
+  </data>
+  <data name="GuiRescanTooltip" xml:space="preserve">
+    <value>Rescan for Hardware change</value>
+  </data>
+  <data name="GuiSecurityPrivacyLabel" xml:space="preserve">
+    <value>Security &amp; Privacy</value>
+  </data>
+  <data name="GuiScrubTooltip" xml:space="preserve">
+    <value>Anonymize sensitive data according to Veeam KB 2462</value>
+  </data>
+  <data name="GuiClearCredsTooltip" xml:space="preserve">
+    <value>Clear any previously saved credentials before running</value>
+  </data>
+  <data name="GuiPdfUnavailableTooltip" xml:space="preserve">
+    <value>PDF Export not available when both VB365 &amp; VBR are detected on the same machine.</value>
+  </data>
+  <data name="GuiMonitorStatusHeader" xml:space="preserve">
+    <value>Monitor Status</value>
+  </data>
+  <data name="GuiMonitorStatusLabel" xml:space="preserve">
+    <value>Status: </value>
+  </data>
+  <data name="GuiMonitorQuickSetup" xml:space="preserve">
+    <value>Quick Setup</value>
+  </data>
+  <data name="GuiMonitorQuickSetupTooltip" xml:space="preserve">
+    <value>Install monitor using selected VBR server and stored credentials</value>
+  </data>
+  <data name="GuiMonitorVhcSetup" xml:space="preserve">
+    <value>Setup from VHC</value>
+  </data>
+  <data name="GuiMonitorVhcSetupTooltip" xml:space="preserve">
+    <value>Configure monitor using data collected from the last health check run</value>
+  </data>
+  <data name="GuiMonitorRunNow" xml:space="preserve">
+    <value>Run Now</value>
+  </data>
+  <data name="GuiMonitorRunTooltip" xml:space="preserve">
+    <value>Trigger an immediate monitor check</value>
+  </data>
+  <data name="GuiAlertNotificationsHeader" xml:space="preserve">
+    <value>Alert Notifications</value>
+  </data>
+  <data name="GuiMinSeverityLabel" xml:space="preserve">
+    <value>Min severity: </value>
+  </data>
+  <data name="GuiNotifSeverityWarning" xml:space="preserve">
+    <value>warning</value>
+  </data>
+  <data name="GuiNotifSeverityCritical" xml:space="preserve">
+    <value>critical</value>
+  </data>
+  <data name="GuiNotifSeverityOk" xml:space="preserve">
+    <value>ok</value>
+  </data>
+  <data name="GuiProcessingText" xml:space="preserve">
+    <value>Processing health check...</value>
+  </data>
+  <data name="GuiExportPdfLabel" xml:space="preserve">
+    <value>Export PDF</value>
+  </data>
+  <data name="GuiClearCredsLabel" xml:space="preserve">
+    <value>Clear Saved Credentials</value>
+  </data>
+  <data name="GuiCollectionCompleteWarnings" xml:space="preserve">
+    <value>Collection complete — {0} collector warning(s)</value>
+  </data>
+  <data name="GuiCollectionComplete" xml:space="preserve">
+    <value>Collection complete</value>
+  </data>
+  <data name="GuiMonitorNotBundled" xml:space="preserve">
+    <value>Not bundled</value>
+  </data>
+  <data name="GuiMonitorAvailableNotSetUp" xml:space="preserve">
+    <value>Available — not set up</value>
+  </data>
+  <data name="GuiMonitorRunningVersion" xml:space="preserve">
+    <value>Running ({0})</value>
+  </data>
+  <data name="GuiMonitorReconfigure" xml:space="preserve">
+    <value>Reconfigure</value>
+  </data>
+  <data name="GuiMonitorLastRun" xml:space="preserve">
+    <value>Last run: {0} — {1}</value>
+  </data>
+  <data name="GuiMonitorInstalling" xml:space="preserve">
+    <value>Installing...</value>
+  </data>
+  <data name="GuiMonitorSetupFailed" xml:space="preserve">
+    <value>Setup failed — check log</value>
+  </data>
+  <data name="GuiMonitorInstallingFromVhc" xml:space="preserve">
+    <value>Installing from VHC data...</value>
+  </data>
+  <data name="GuiMonitorCheckInProgress" xml:space="preserve">
+    <value>Running...</value>
+  </data>
+  <data name="GuiMonitorCompleteSetupPrompt" xml:space="preserve">
+    <value>Health check complete — click '{0}' to configure continuous monitoring with auto-detected server settings.</value>
+  </data>
+  <data name="GuiThemeDark" xml:space="preserve">
+    <value>Dark</value>
+  </data>
+  <data name="GuiThemeLight" xml:space="preserve">
+    <value>Light</value>
+  </data>
+  <data name="GuiThemeSystem" xml:space="preserve">
+    <value>System</value>
   </data>
 </root>

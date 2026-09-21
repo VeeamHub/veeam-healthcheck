@@ -161,8 +161,8 @@ namespace VeeamHealthCheck
         };
 
         private static string ThemeLabelFor(ThemeVariant variant) =>
-            variant == ThemeVariant.Dark ? "🌙 Dark" :
-            variant == ThemeVariant.Light ? "☀ Light" : "🖥 System";
+            variant == ThemeVariant.Dark ? $"🌙 {VbrLocalizationHelper.GuiThemeDark}" :
+            variant == ThemeVariant.Light ? $"☀ {VbrLocalizationHelper.GuiThemeLight}" : $"🖥 {VbrLocalizationHelper.GuiThemeSystem}";
 
         private async void AboutButton_Click(object sender, RoutedEventArgs e)
         {
@@ -370,7 +370,7 @@ namespace VeeamHealthCheck
             if (CGlobals.IsVb365 && CGlobals.IsVbr)
             {
                 pdfCheckBox.IsEnabled = false;
-                ToolTip.SetTip(pdfCheckBox, "PDF Export not available when both VB365 & VBR are detected on the same machine.");
+                ToolTip.SetTip(pdfCheckBox, VbrLocalizationHelper.GuiPdfUnavailableTooltip);
             }
 
             // Originally the tail of the single synchronous SetUi(), which ran
@@ -385,6 +385,13 @@ namespace VeeamHealthCheck
 
         private async Task SetUiAsync()
         {
+            // Stage D removed VhcGui.axaml's hardcoded English defaults from the ~15
+            // controls this method resx-backs, so SetUiText() must run before the
+            // _modeCheckFailed branch below, not after it - otherwise the window
+            // briefly shows blank labels/buttons behind the error dialog on a machine
+            // with no local Veeam software and no remote servers configured.
+            this.SetUiText();
+
             if (_modeCheckFailed)
             {
                 string errorMessage = "No Veeam Software detected on this machine.\n\n" +
@@ -408,8 +415,6 @@ namespace VeeamHealthCheck
             // Calling that directly from the UI thread would deadlock, so it's
             // moved off the UI thread here, same as termsCheckBox_Checked below.
             await Task.Run(() => this.functions.PreRunCheck());
-
-            this.SetUiText();
             scrubBox.IsChecked = true;
             RescanBox.IsChecked = false;
             Console.WriteLine("Value: " + VbrLocalizationHelper.GuiRescanHosts);
@@ -447,9 +452,9 @@ namespace VeeamHealthCheck
             this.htmlCheckBox.Content = VbrLocalizationHelper.GuiShowHtml;
             this.scrubBox.Content = VbrLocalizationHelper.GuiSensData;
             this.explorerShowBox.Content = VbrLocalizationHelper.GuiShowFiles;
-            this.pdfCheckBox.Content = "Export PDF";
+            this.pdfCheckBox.Content = VbrLocalizationHelper.GuiExportPdfLabel;
             // this.pptxCheckBox.Content = "Export PowerPoint";
-            this.clearCredsCheckBox.Content = "Clear Saved Credentials";
+            this.clearCredsCheckBox.Content = VbrLocalizationHelper.GuiClearCredsLabel;
             this.outPath.Text = VbrLocalizationHelper.GuiOutPath;
             this.termsCheckBox.Content = VbrLocalizationHelper.GuiAcceptButton;
             this.run.Content = VbrLocalizationHelper.GuiRunButton;
@@ -465,6 +470,38 @@ namespace VeeamHealthCheck
 
             this.serverLabel.Text = VbrLocalizationHelper.GuiServerLabel;
             ToolTip.SetTip(this.manageServersBtn, VbrLocalizationHelper.GuiManageServersTooltip);
+
+            // Stage D: resx-back the strings VhcGui.axaml previously hardcoded.
+            // productTypeSelector's and notifSeverityBox's ComboBoxItem.Content values are
+            // NOT set here - they're {x:Static}-bound directly in XAML. See the comments
+            // there for why (ComboBox never re-reads Content after attach).
+            this.appHeaderText.Text = VbrLocalizationHelper.GuiTitle;
+            ToolTip.SetTip(this.importButton, VbrLocalizationHelper.GuiImportTooltip);
+            ToolTip.SetTip(this.ThemeToggleButton, VbrLocalizationHelper.GuiThemeToggleTooltip);
+            this.aboutButton.Content = VbrLocalizationHelper.GuiAboutButton;
+            this.AdHocTabButton.Content = VbrLocalizationHelper.GuiAdHocTab;
+            this.MonitoringTabButton.Content = VbrLocalizationHelper.GuiMonitoringTab;
+            this.serverCardTitle.Text = VbrLocalizationHelper.GuiServerCardTitle;
+            this.productTypeLabel.Text = VbrLocalizationHelper.GuiProductTypeLabel;
+            ToolTip.SetTip(this.productTypeSelector, VbrLocalizationHelper.GuiProductTypeTooltip);
+            this.exportOptionsLabel.Text = VbrLocalizationHelper.GuiExportOptionsLabel;
+            ToolTip.SetTip(this.htmlCheckBox, VbrLocalizationHelper.GuiHtmlReportTooltip);
+            this.dataCollectionLabel.Text = VbrLocalizationHelper.GuiDataCollectionLabel;
+            this.collectionPeriodLabel.Text = VbrLocalizationHelper.GuiCollectionPeriodLabel;
+            ToolTip.SetTip(this.RescanBox, VbrLocalizationHelper.GuiRescanTooltip);
+            this.securityPrivacyLabel.Text = VbrLocalizationHelper.GuiSecurityPrivacyLabel;
+            ToolTip.SetTip(this.scrubBox, VbrLocalizationHelper.GuiScrubTooltip);
+            ToolTip.SetTip(this.clearCredsCheckBox, VbrLocalizationHelper.GuiClearCredsTooltip);
+            this.monitorStatusHeader.Text = VbrLocalizationHelper.GuiMonitorStatusHeader;
+            this.monitorStatusLabel.Text = VbrLocalizationHelper.GuiMonitorStatusLabel;
+            ToolTip.SetTip(this.monitorQuickSetupBtn, VbrLocalizationHelper.GuiMonitorQuickSetupTooltip);
+            this.monitorVhcSetupBtn.Content = VbrLocalizationHelper.GuiMonitorVhcSetup;
+            ToolTip.SetTip(this.monitorVhcSetupBtn, VbrLocalizationHelper.GuiMonitorVhcSetupTooltip);
+            this.monitorRunBtn.Content = VbrLocalizationHelper.GuiMonitorRunNow;
+            ToolTip.SetTip(this.monitorRunBtn, VbrLocalizationHelper.GuiMonitorRunTooltip);
+            this.alertNotificationsHeader.Text = VbrLocalizationHelper.GuiAlertNotificationsHeader;
+            this.minSeverityLabel.Text = VbrLocalizationHelper.GuiMinSeverityLabel;
+            this.progressText.Text = VbrLocalizationHelper.GuiProcessingText;
         }
 
         private void SetPathBoxText(string text)
@@ -615,7 +652,7 @@ namespace VeeamHealthCheck
             {
                 Dispatcher.UIThread.Invoke(() =>
                 {
-                    progressText.Text = $"Collection complete — {failed.Count} collector warning(s)";
+                    progressText.Text = string.Format(VbrLocalizationHelper.GuiCollectionCompleteWarnings, failed.Count);
                     progressText.Foreground = GetStatusBrush("StatusWarningBrush");
                 });
             }
@@ -623,7 +660,7 @@ namespace VeeamHealthCheck
             {
                 Dispatcher.UIThread.Invoke(() =>
                 {
-                    progressText.Text = "Collection complete";
+                    progressText.Text = VbrLocalizationHelper.GuiCollectionComplete;
                     progressText.Foreground = GetStatusBrush("StatusSuccessBrush");
                 });
             }
@@ -932,7 +969,7 @@ namespace VeeamHealthCheck
         //
         // The value comes from Tag rather than Name or Content because Content is
         // localized, and parsing a localized label as data is exactly the mistake
-        // notifSeverityBox already makes.
+        // notifSeverityBox used to make - fixed in Stage D Task 1.
         private void PeriodRadio_Checked(object sender, RoutedEventArgs e)
         {
             // "7" is listed explicitly rather than folded into the `_` default, so `_`
@@ -1033,9 +1070,15 @@ namespace VeeamHealthCheck
             bool installed = CVhcMonitorIntegration.IsInstalled();
             bool taskActive = CVhcMonitorIntegration.IsTaskRegistered();
 
+            // Set before the branches below so every state has a correct label as
+            // soon as this method runs (constructor time, before SetUiText() ever
+            // runs on Loaded) - the "else" branch below overrides it to
+            // GuiMonitorReconfigure when the monitor is already installed.
+            monitorQuickSetupBtn.Content = VbrLocalizationHelper.GuiMonitorQuickSetup;
+
             if (!bundled)
             {
-                monitorStatusText.Text = "Not bundled";
+                monitorStatusText.Text = VbrLocalizationHelper.GuiMonitorNotBundled;
                 monitorStatusText.Foreground = GetStatusBrush("StatusNeutralBrush");
                 monitorQuickSetupBtn.IsEnabled = false;
                 monitorVhcSetupBtn.IsEnabled = false;
@@ -1043,7 +1086,7 @@ namespace VeeamHealthCheck
             }
             else if (!installed || !taskActive)
             {
-                monitorStatusText.Text = "Available — not set up";
+                monitorStatusText.Text = VbrLocalizationHelper.GuiMonitorAvailableNotSetUp;
                 monitorStatusText.Foreground = GetStatusBrush("StatusWarningBrush");
                 monitorQuickSetupBtn.IsEnabled = true;
                 monitorRunBtn.IsEnabled = false;
@@ -1051,16 +1094,16 @@ namespace VeeamHealthCheck
             else
             {
                 string version = CVhcMonitorIntegration.GetInstalledVersion();
-                monitorStatusText.Text = $"Running ({version})";
+                monitorStatusText.Text = string.Format(VbrLocalizationHelper.GuiMonitorRunningVersion, version);
                 monitorStatusText.Foreground = GetStatusBrush("StatusSuccessBrush");
-                monitorQuickSetupBtn.Content = "Reconfigure";
+                monitorQuickSetupBtn.Content = VbrLocalizationHelper.GuiMonitorReconfigure;
                 monitorQuickSetupBtn.IsEnabled = true;
                 monitorRunBtn.IsEnabled = true;
 
                 var status = CVhcMonitorIntegration.GetLastRunStatus();
                 if (status != null)
                 {
-                    monitorLastRunText.Text = $"Last run: {status.Timestamp:g} — {status.Summary}";
+                    monitorLastRunText.Text = string.Format(VbrLocalizationHelper.GuiMonitorLastRun, status.Timestamp?.ToString("g") ?? string.Empty, status.Summary);
                     monitorLastRunText.IsVisible = true;
                 }
             }
@@ -1068,9 +1111,9 @@ namespace VeeamHealthCheck
 
         private (string notifType, string notifUrl, string minSeverity) GetNotifSettings()
         {
-            string notifType = (notifTypeBox.SelectedItem as ComboBoxItem)?.Content?.ToString()?.ToLower() ?? "ntfy";
+            string notifType = (notifTypeBox.SelectedItem as ComboBoxItem)?.Tag?.ToString()?.ToLower() ?? "ntfy";
             string notifUrl = notifUrlBox.Text?.Trim() ?? string.Empty;
-            string minSeverity = (notifSeverityBox.SelectedItem as ComboBoxItem)?.Content?.ToString() ?? "warning";
+            string minSeverity = (notifSeverityBox.SelectedItem as ComboBoxItem)?.Tag?.ToString() ?? "warning";
             return (notifType, notifUrl, minSeverity);
         }
 
@@ -1096,7 +1139,7 @@ namespace VeeamHealthCheck
             }
 
             monitorQuickSetupBtn.IsEnabled = false;
-            monitorStatusText.Text = "Installing...";
+            monitorStatusText.Text = VbrLocalizationHelper.GuiMonitorInstalling;
 
             var (notifType, notifUrl, minSeverity) = this.GetNotifSettings();
 
@@ -1112,7 +1155,7 @@ namespace VeeamHealthCheck
                     CGlobals.Logger.Error($"Monitor setup failed: {ex.Message}", false);
                     Dispatcher.UIThread.Post(() =>
                     {
-                        monitorStatusText.Text = "Setup failed — check log";
+                        monitorStatusText.Text = VbrLocalizationHelper.GuiMonitorSetupFailed;
                         monitorStatusText.Foreground = GetStatusBrush("StatusErrorBrush");
                         monitorQuickSetupBtn.IsEnabled = true;
                     });
@@ -1123,7 +1166,7 @@ namespace VeeamHealthCheck
         private void monitorVhcSetupBtn_Click(object sender, RoutedEventArgs e)
         {
             monitorVhcSetupBtn.IsEnabled = false;
-            monitorStatusText.Text = "Installing from VHC data...";
+            monitorStatusText.Text = VbrLocalizationHelper.GuiMonitorInstallingFromVhc;
 
             var (notifType, notifUrl, minSeverity) = this.GetNotifSettings();
 
@@ -1139,7 +1182,7 @@ namespace VeeamHealthCheck
                     CGlobals.Logger.Error($"Monitor VHC-assisted setup failed: {ex.Message}", false);
                     Dispatcher.UIThread.Post(() =>
                     {
-                        monitorStatusText.Text = "Setup failed — check log";
+                        monitorStatusText.Text = VbrLocalizationHelper.GuiMonitorSetupFailed;
                         monitorStatusText.Foreground = GetStatusBrush("StatusErrorBrush");
                         monitorVhcSetupBtn.IsEnabled = true;
                     });
@@ -1150,7 +1193,7 @@ namespace VeeamHealthCheck
         private void monitorRunBtn_Click(object sender, RoutedEventArgs e)
         {
             monitorRunBtn.IsEnabled = false;
-            monitorLastRunText.Text = "Running...";
+            monitorLastRunText.Text = VbrLocalizationHelper.GuiMonitorCheckInProgress;
             monitorLastRunText.IsVisible = true;
 
             System.Threading.Tasks.Task.Run(() =>
@@ -1167,7 +1210,12 @@ namespace VeeamHealthCheck
         private void notifTypeBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
             if (notifUrlBox == null) return;
-            string type = (notifTypeBox.SelectedItem as ComboBoxItem)?.Content?.ToString() ?? "ntfy";
+            // No .ToLower() here, unlike GetNotifSettings()'s reads - the switch below
+            // compares Tag case-sensitively against "Teams"/"Slack"/"PagerDuty". Adding
+            // .ToLower() "for consistency" would make every arm fall through to the
+            // default case instead of matching.
+            string type = (notifTypeBox.SelectedItem as ComboBoxItem)?.Tag?.ToString() ?? "ntfy";
+            // unrelated dead code: nothing reads notifUrlBox.Tag today
             notifUrlBox.Tag = type switch
             {
                 "Teams" => "https://org.webhook.office.com/...",
@@ -1188,9 +1236,9 @@ namespace VeeamHealthCheck
             Dispatcher.UIThread.Invoke(() =>
             {
                 monitorVhcSetupBtn.IsEnabled = true;
-                monitorLastRunText.Text = "Health check complete — click 'Setup from VHC' to configure continuous monitoring with auto-detected server settings.";
+                monitorLastRunText.Text = string.Format(VbrLocalizationHelper.GuiMonitorCompleteSetupPrompt, VbrLocalizationHelper.GuiMonitorVhcSetup);
                 monitorLastRunText.IsVisible = true;
-                monitorStatusText.Text = "Available — not set up";
+                monitorStatusText.Text = VbrLocalizationHelper.GuiMonitorAvailableNotSetUp;
                 monitorStatusText.Foreground = GetStatusBrush("StatusWarningBrush");
             });
         }
