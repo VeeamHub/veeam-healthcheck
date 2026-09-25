@@ -281,6 +281,18 @@ namespace VeeamHealthCheck
             CGlobals.REMOTEEXEC = !CGlobals.VBRServerName.Equals(LocalhostName, StringComparison.OrdinalIgnoreCase);
         }
 
+        // Shared by SetUiSync's pre-persisted branch and SetUiAsync's cold-start
+        // recovery branch - both reach the identical "no local Veeam, but a real
+        // remote server is available" state and need to announce it the same way.
+        // Kept as a plain title/log setter, not resx-backed: the title string is a
+        // pre-existing, deliberately out-of-scope localization gap (see the Stage E
+        // spec's "Out of scope" section), unrelated to why this method exists.
+        private void EnterRemoteMode()
+        {
+            this.Title = "Veeam Health Check - Remote Mode";
+            CGlobals.Logger.Info("No local Veeam detected, but remote servers configured.", false);
+        }
+
         // Split from the original single SetUi(): everything here is synchronous
         // and must resolve immediately in the constructor (title, mode-check-fail
         // detection, pdfCheckBox state) so the window renders correctly the first
@@ -347,8 +359,7 @@ namespace VeeamHealthCheck
 
                 if (hasRemoteServers)
                 {
-                    this.Title = "Veeam Health Check - Remote Mode";
-                    CGlobals.Logger.Info("No local Veeam detected, but remote servers configured.", false);
+                    this.EnterRemoteMode();
                 }
                 else
                 {
@@ -441,8 +452,7 @@ namespace VeeamHealthCheck
                     return;
                 }
 
-                this.Title = "Veeam Health Check - Remote Mode";
-                CGlobals.Logger.Info("No local Veeam detected, but remote servers configured.", false);
+                this.EnterRemoteMode();
 
                 // InitializeServerList's own fallback (via CAppSettings.ChooseDefaultServer)
                 // is LocalhostIsInjected-aware and prefers a genuinely non-local entry over
