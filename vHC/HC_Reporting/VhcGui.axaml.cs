@@ -396,7 +396,7 @@ namespace VeeamHealthCheck
             if (_modeCheckFailed)
             {
                 // SetUiSync()'s fail branch returns before reaching its own
-                // run.IsEnabled/hideProgressBar tail. A prior stage's final review already
+                // run.IsEnabled/hideProgressBar tail. Stage D's final review already
                 // documented pBar spinning behind the OK-only dialog here as a harmless
                 // pre-existing quirk, harmless only because the app used to shut down
                 // within a frame or two. Once the confirm + ManageServersDialog
