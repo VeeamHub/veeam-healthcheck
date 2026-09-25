@@ -43,7 +43,7 @@ No new files beyond the verification checklist — this stage reuses `ManageServ
 
 - [ ] **Step 1: Write the failing tests**
 
-Open `vHC/VhcXTests/CAppSettingsTests.cs`. Find the last test method, `LoadOrSeedServers_WhenSettingsUnreadable_ReturnsEmptyAndDoesNotWrite` (ends just before the class's closing `}`):
+Open `vHC/VhcXTests/CAppSettingsTests.cs`. Find the last test method and the class/namespace's two closing braces that immediately follow it:
 
 ```csharp
         [Fact]
@@ -66,7 +66,7 @@ Open `vHC/VhcXTests/CAppSettingsTests.cs`. Find the last test method, `LoadOrSee
 }
 ```
 
-Insert 4 new `[Fact]` methods immediately after that method's closing `}` and before the class's closing `}`:
+**Replace it** (the whole block above, including both closing braces) **with** the same method unchanged, followed by 4 new `[Fact]` methods, followed by the same two closing braces — do not leave the original block in place and paste this below it, that duplicates the method and fails with `CS0111`:
 
 ```csharp
         [Fact]
@@ -203,13 +203,18 @@ dotnet test vHC/VhcXTests/VhcXTests.csproj --filter "FullyQualifiedName~CAppSett
 git checkout -- vHC/HC_Reporting/VeeamHealthCheck.csproj
 ```
 
-Expected: 0 build errors. Test run: `Passed! - Failed: 0, Passed: <prior CAppSettingsTests count + 4>, Skipped: 0`.
+Expected: 0 build errors. Test run: `Passed! - Failed: 0, Passed: 49, Skipped: 0` (45 pre-existing `CAppSettingsTests` + this task's 4 new ones).
 
 - [ ] **Step 7: Commit**
 
 ```bash
 git add vHC/HC_Reporting/Startup/CAppSettings.cs vHC/HC_Reporting/VhcGui.axaml.cs vHC/VhcXTests/CAppSettingsTests.cs
-git commit -m "feat(gui): add CAppSettings.HasNonLocalhostServer, shared by SetUiSync and Stage E's cold-start recovery"
+git commit -m "$(cat <<'EOF'
+feat(gui): add CAppSettings.HasNonLocalhostServer, shared by SetUiSync and Stage E's cold-start recovery
+
+Co-Authored-By: Claude Sonnet 5 <noreply@anthropic.com>
+EOF
+)"
 ```
 
 ---
@@ -249,14 +254,14 @@ pairs = [
 ]
 
 p = "vHC/HC_Reporting/Resources/Localization/vhcres.resx"
-s = io.open(p, encoding="utf-8").read()
+s = io.open(p, encoding="utf-8", newline="").read()
 block = "".join(
     '  <data name="%s" xml:space="preserve">\n    <value>%s</value>\n  </data>\n' % (k, esc(v))
     for k, v in pairs
 )
 assert "</root>" in s
 s = s.replace("</root>", block + "</root>")
-io.open(p, "w", encoding="utf-8").write(s)
+io.open(p, "w", encoding="utf-8", newline="").write(s)
 print("inserted", len(pairs), "keys into vhcres.resx")
 PY
 ```
@@ -331,7 +336,7 @@ PY
 file vHC/HC_Reporting/Resources/Localization/vhcres.txt
 ```
 
-Expected: `appended 2 entries` and still `Unicode text, UTF-16, little-endian text, with CRLF line terminators`.
+Expected: `appended 2 entries` and still `HTML document text, Unicode text, UTF-16, little-endian text, with very long lines (976), with CRLF line terminators` (this file's HTML-flavored heuristic in `file`'s magic detection produces this longer string both before and after the edit — the exact wording that matters is `UTF-16, little-endian` and `CRLF line terminators`, not the `HTML document text`/`very long lines (976)` prefix, which is `vhcres.txt`'s existing, unrelated file signature).
 
 - [ ] **Step 5: Build and confirm the new field resolves**
 
@@ -348,7 +353,12 @@ Expected: 0 build errors, `Passed! - Failed: 0, Passed: 1, Skipped: 0`. (Don't r
 
 ```bash
 git add vHC/HC_Reporting/Resources/Localization/vhcres.resx vHC/HC_Reporting/Resources/Localization/VbrLocalizationHelper.cs vHC/HC_Reporting/Resources/Localization/vhcres.txt
-git commit -m "feat(l10n): add GuiNoVeeamDetectedTitle/Message resx keys for Stage E"
+git commit -m "$(cat <<'EOF'
+feat(l10n): add GuiNoVeeamDetectedTitle/Message resx keys for Stage E
+
+Co-Authored-By: Claude Sonnet 5 <noreply@anthropic.com>
+EOF
+)"
 ```
 
 ---
@@ -373,14 +383,14 @@ import io, re
 new_keys = ["GuiNoVeeamDetectedTitle", "GuiNoVeeamDetectedMessage"]
 
 neutral_path = "vHC/HC_Reporting/Resources/Localization/vhcres.resx"
-neutral = io.open(neutral_path, encoding="utf-8").read()
+neutral = io.open(neutral_path, encoding="utf-8", newline="").read()
 values = dict(re.findall(r'<data name="([^"]+)"[^>]*>\s*<value>(.*?)</value>', neutral, re.S))
 
 locales = ["fR-FR", "ja", "zh-cn", "zh-tw"]
 todo_lines = []
 for locale in locales:
     p = "vHC/HC_Reporting/Resources/Localization/vhcres.%s.resx" % locale
-    s = io.open(p, encoding="utf-8").read()
+    s = io.open(p, encoding="utf-8", newline="").read()
     block_parts = []
     for key in new_keys:
         assert key in values, "missing from neutral: %s" % key
@@ -391,7 +401,7 @@ for locale in locales:
     block = "".join(block_parts)
     assert "</root>" in s
     s = s.replace("</root>", block + "</root>")
-    io.open(p, "w", encoding="utf-8").write(s)
+    io.open(p, "w", encoding="utf-8", newline="").write(s)
     print("added", len(new_keys), "keys to", locale)
 
 todo_path = "vHC/HC_Reporting/Resources/Localization/untranslated-keys.txt"
@@ -420,7 +430,12 @@ Expected: 0 build errors, `Passed! - Failed: 0, Passed: 2, Skipped: 0` (both `Al
 
 ```bash
 git add vHC/HC_Reporting/Resources/Localization/vhcres.fR-FR.resx vHC/HC_Reporting/Resources/Localization/vhcres.ja.resx vHC/HC_Reporting/Resources/Localization/vhcres.zh-cn.resx vHC/HC_Reporting/Resources/Localization/vhcres.zh-tw.resx vHC/HC_Reporting/Resources/Localization/untranslated-keys.txt
-git commit -m "feat(l10n): bring Stage E's new keys to parity across all four locales (English, untranslated)"
+git commit -m "$(cat <<'EOF'
+feat(l10n): bring Stage E's new keys to parity across all four locales (English, untranslated)
+
+Co-Authored-By: Claude Sonnet 5 <noreply@anthropic.com>
+EOF
+)"
 ```
 
 ---
@@ -594,7 +609,12 @@ Re-read `docs/superpowers/specs/2026-09-25-gui-redesign-stage-e-cold-start-desig
 
 ```bash
 git add vHC/HC_Reporting/VhcGui.axaml.cs
-git commit -m "feat(gui): recover from cold-start mode-check failure by offering to add a remote server"
+git commit -m "$(cat <<'EOF'
+feat(gui): recover from cold-start mode-check failure by offering to add a remote server
+
+Co-Authored-By: Claude Sonnet 5 <noreply@anthropic.com>
+EOF
+)"
 ```
 
 ---
@@ -686,5 +706,10 @@ needs a real Windows machine, and most items specifically need a machine (or a V
 
 ```bash
 git add docs/plans/2026-09-25-gui-redesign-stage-e-verification.md
-git commit -m "docs(gui): add the Stage E Windows verification checklist"
+git commit -m "$(cat <<'EOF'
+docs(gui): add the Stage E Windows verification checklist
+
+Co-Authored-By: Claude Sonnet 5 <noreply@anthropic.com>
+EOF
+)"
 ```
