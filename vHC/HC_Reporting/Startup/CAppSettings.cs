@@ -292,6 +292,17 @@ public static class CAppSettings
         return NormalizeServers(settings.Servers, excludeLocalhost);
     }
 
+    /// <summary>
+    /// True if <paramref name="servers"/> contains at least one entry other than
+    /// "localhost" (case-insensitive). Shared by <c>VhcGui</c>'s <c>SetUiSync</c>
+    /// and its cold-start recovery branch in <c>SetUiAsync</c> - both need the
+    /// identical "is there a remote server to fall back to" check, and this is
+    /// the only piece of that logic directly unit-testable outside the Avalonia
+    /// code-behind.
+    /// </summary>
+    public static bool HasNonLocalhostServer(IEnumerable<string> servers) =>
+        servers.Any(s => !string.Equals(s, LocalhostName, StringComparison.OrdinalIgnoreCase));
+
     // The single rule for "not a usable server name", shared by NormalizeServers
     // (read), SetServers (write), and AddServer's input guard, so the three paths
     // cannot drift into different definitions of the same rule.

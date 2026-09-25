@@ -346,9 +346,10 @@ namespace VeeamHealthCheck
                 // The localhost filter is kept rather than relying on the "localhost is
                 // never persisted" invariant: on a non-injecting machine localhost IS
                 // legitimately persisted, and counting it as a remote server would put a
-                // local-only box into Remote Mode.
-                bool hasRemoteServers = _persistedServers
-                    .Any(s => !s.Equals(LocalhostName, StringComparison.OrdinalIgnoreCase));
+                // local-only box into Remote Mode. Shared with SetUiAsync's cold-start
+                // recovery branch via CAppSettings.HasNonLocalhostServer, so both paths
+                // agree on the definition.
+                bool hasRemoteServers = CAppSettings.HasNonLocalhostServer(_persistedServers);
 
                 if (hasRemoteServers)
                 {

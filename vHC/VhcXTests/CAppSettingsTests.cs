@@ -670,5 +670,30 @@ namespace VhcXTests
             Assert.Empty(result);
             Assert.Equal(before, File.ReadAllText(CAppSettings.StorePath));
         }
+
+        [Fact]
+        public void HasNonLocalhostServer_WithEmptyList_ReturnsFalse()
+        {
+            Assert.False(CAppSettings.HasNonLocalhostServer(System.Array.Empty<string>()));
+        }
+
+        [Fact]
+        public void HasNonLocalhostServer_WithOnlyLocalhostAnyCasing_ReturnsFalse()
+        {
+            Assert.False(CAppSettings.HasNonLocalhostServer(
+                new[] { "localhost", "LOCALHOST", "LocalHost" }));
+        }
+
+        [Fact]
+        public void HasNonLocalhostServer_WithRealHostPresent_ReturnsTrue()
+        {
+            Assert.True(CAppSettings.HasNonLocalhostServer(new[] { "vbr01" }));
+        }
+
+        [Fact]
+        public void HasNonLocalhostServer_WithMixedLocalhostAndRealHost_ReturnsTrue()
+        {
+            Assert.True(CAppSettings.HasNonLocalhostServer(new[] { "localhost", "vbr01" }));
+        }
     }
 }
