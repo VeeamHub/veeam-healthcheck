@@ -206,12 +206,14 @@ namespace VeeamHealthCheck
         }
 
         // preserveSelection distinguishes the two callers, and the distinction is
-        // load-bearing. At startup there is no selection to keep and localhost-first is
-        // the right default. After the dialog commits, silently reasserting that default
-        // would move a user who was sitting on vbr01 back to localhost - flipping
-        // REMOTEEXEC to false and pointing the next run at the local box - even if they
-        // pressed Done having changed nothing. Both tabs read that selection
-        // (monitorQuickSetupBtn_Click), so it must survive a repopulate.
+        // load-bearing. At startup there is no selection to keep and injected-localhost-
+        // first is the right default (see the fallback below - localhost only wins when
+        // it's the injected row, i.e. this machine actually has local Veeam). After the
+        // dialog commits, silently reasserting that default would move a user who was
+        // sitting on vbr01 back to localhost - flipping REMOTEEXEC to false and pointing
+        // the next run at the local box - even if they pressed Done having changed
+        // nothing. Both tabs read that selection (monitorQuickSetupBtn_Click), so it
+        // must survive a repopulate.
         private void InitializeServerList(bool preserveSelection = false)
         {
             string previous = preserveSelection
@@ -242,8 +244,10 @@ namespace VeeamHealthCheck
             serverSelector.ItemsSource = _displayServers;
 
             // Restore the prior selection when it survived the commit; otherwise fall
-            // back to localhost-first, then first-entry - the precedence this method has
-            // always used at startup.
+            // back to injected-localhost-first, then the first real (non-localhost)
+            // entry, then whatever is first - in that order. The middle tier exists so
+            // a non-injected, merely-persisted "localhost" (stray or otherwise) never
+            // wins over an actual remote server - see the comment on that branch below.
             string keep = previous == null
                 ? null
                 : _displayServers.FirstOrDefault(
@@ -469,16 +473,19 @@ namespace VeeamHealthCheck
 
                 this.InitializeServerList(preserveSelection: false);
 
-                // InitializeServerList's own fallback selects "localhost" first when
-                // present - correct for its other two call sites, but wrong here:
-                // reaching this point means HasNonLocalhostServer is true, and
-                // selecting a lingering "localhost" entry over the server just added
-                // would set REMOTEEXEC = false and point the run straight back at the
-                // local box that has no Veeam installed, defeating the point of this
-                // recovery path. remoteServer cannot be null: _displayServers is built
-                // from _persistedServers with LocalhostIsInjected false on this path,
-                // so no injected-localhost row exists to interfere with the check just
-                // made above.
+                // InitializeServerList's own fallback is now LocalhostIsInjected-aware
+                // (see that method), so it would already avoid selecting a lingering,
+                // non-injected "localhost" here - LocalhostIsInjected is false on this
+                // whole path. This explicit re-selection is kept anyway as a direct,
+                // local guarantee for the one behavior this recovery path exists to
+                // provide (targeting the server just added, not the local box that has
+                // no Veeam installed), rather than relying on a shared method's fallback
+                // ordering staying correct. remoteServer cannot be null: _persistedServers
+                // was just confirmed by CAppSettings.HasNonLocalhostServer (above) to
+                // contain a non-localhost entry, and _displayServers' only transformation
+                // on top of it is case-insensitive de-dup, which can merge two
+                // non-localhost entries but never drop one outright - so that entry
+                // necessarily survives into _displayServers.
                 var remoteServer = _displayServers.FirstOrDefault(
                     s => !s.Equals(LocalhostName, StringComparison.OrdinalIgnoreCase));
                 serverSelector.SelectedItem = remoteServer;
