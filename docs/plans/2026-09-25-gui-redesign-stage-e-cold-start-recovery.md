@@ -694,6 +694,15 @@ needs a real Windows machine, and most items specifically need a machine (or a V
       "zero servers"). Accept, add a real host, commit — confirm the picker selects and
       targets the real host, **not** `"localhost"`, and that a run actually reaches the
       remote server rather than failing against the local, Veeam-less box.
+- [ ] **Quit and relaunch** after the item above (still no local Veeam, `settings.json`
+      now has `["localhost", "<the host you added>"]`). Confirm the picker still selects
+      and targets the real host on this second launch too, not `"localhost"` — this
+      exercises `SetUiSync`'s pre-existing "already has remote servers" branch, which
+      this stage's own recovery path never runs on a second launch (`_modeCheckFailed`
+      stays `false`), so `InitializeServerList`'s own fallback ordering is what has to
+      get this right, not `SetUiAsync`'s explicit override. A code-quality review during
+      implementation (Task 4) found and fixed a real regression here — this item exists
+      specifically to catch it on real hardware if the fix regresses.
 - [ ] After successfully adding a host via any of the above and starting a run, confirm
       the lazy credential prompt (`CredentialPromptWindow`) still appears at the
       expected point if that host has no stored credentials yet.
