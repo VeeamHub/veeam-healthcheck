@@ -245,9 +245,10 @@ namespace VeeamHealthCheck
 
             // Restore the prior selection when it survived the commit; otherwise fall
             // back to injected-localhost-first, then the first real (non-localhost)
-            // entry, then whatever is first - in that order. The middle tier exists so
-            // a non-injected, merely-persisted "localhost" (stray or otherwise) never
-            // wins over an actual remote server - see the comment on that branch below.
+            // entry, then whatever is first - in that order. The first fallback's own
+            // comment, just below, explains why a non-injected, merely-persisted
+            // "localhost" (stray or otherwise) must never win over an actual remote
+            // server - that's what the second (non-localhost) fallback tier prevents.
             string keep = previous == null
                 ? null
                 : _displayServers.FirstOrDefault(
