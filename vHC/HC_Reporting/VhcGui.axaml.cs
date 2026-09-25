@@ -206,12 +206,13 @@ namespace VeeamHealthCheck
         }
 
         // preserveSelection distinguishes the two callers, and the distinction is
-        // load-bearing. At startup there is no selection to keep and localhost-first is
-        // the right default. After the dialog commits, silently reasserting that default
-        // would move a user who was sitting on vbr01 back to localhost - flipping
-        // REMOTEEXEC to false and pointing the next run at the local box - even if they
-        // pressed Done having changed nothing. Both tabs read that selection
-        // (monitorQuickSetupBtn_Click), so it must survive a repopulate.
+        // load-bearing. At startup there is no selection to keep, so CAppSettings.
+        // ChooseDefaultServer (below) picks its own default. After the dialog commits,
+        // silently reasserting that default would move a user who was sitting on
+        // vbr01 back to localhost - flipping REMOTEEXEC to false and pointing the next
+        // run at the local box - even if they pressed Done having changed nothing.
+        // Both tabs read that selection (monitorQuickSetupBtn_Click), so it must
+        // survive a repopulate.
         private void InitializeServerList(bool preserveSelection = false)
         {
             string previous = preserveSelection
@@ -241,26 +242,19 @@ namespace VeeamHealthCheck
             _displayServers = display;
             serverSelector.ItemsSource = _displayServers;
 
-            // Restore the prior selection when it survived the commit; otherwise fall
-            // back to localhost-first, then first-entry - the precedence this method has
-            // always used at startup.
-            string keep = previous == null
-                ? null
-                : _displayServers.FirstOrDefault(
-                    s => s.Equals(previous, StringComparison.OrdinalIgnoreCase));
+            // The decision itself - preserved selection, else injected-localhost-first,
+            // else the first genuinely non-local entry, else whatever is first - lives
+            // in CAppSettings.ChooseDefaultServer, not here: that's the exact logic a
+            // real regression once lived in (a persisted, non-injected "localhost"
+            // winning over a real remote server on repeat launches after Stage E's
+            // cold-start recovery), and it's now a directly unit-tested pure function
+            // instead of untestable Avalonia code-behind.
+            string chosen = CAppSettings.ChooseDefaultServer(
+                _displayServers, previous, LocalhostIsInjected);
 
-            if (keep != null)
+            if (chosen != null)
             {
-                serverSelector.SelectedItem = keep;
-            }
-            else if (_displayServers.Any(s => s.Equals(LocalhostName, StringComparison.OrdinalIgnoreCase)))
-            {
-                serverSelector.SelectedItem = _displayServers.First(
-                    s => s.Equals(LocalhostName, StringComparison.OrdinalIgnoreCase));
-            }
-            else if (_displayServers.Count > 0)
-            {
-                serverSelector.SelectedIndex = 0;
+                serverSelector.SelectedItem = chosen;
             }
 
             UpdateSelectedServersGlobal();
@@ -285,6 +279,18 @@ namespace VeeamHealthCheck
             }
 
             CGlobals.REMOTEEXEC = !CGlobals.VBRServerName.Equals(LocalhostName, StringComparison.OrdinalIgnoreCase);
+        }
+
+        // Shared by SetUiSync's pre-persisted branch and SetUiAsync's cold-start
+        // recovery branch - both reach the identical "no local Veeam, but a real
+        // remote server is available" state and need to announce it the same way.
+        // Kept as a plain title/log setter, not resx-backed: the title string is a
+        // pre-existing, deliberately out-of-scope localization gap (see the Stage E
+        // spec's "Out of scope" section), unrelated to why this method exists.
+        private void EnterRemoteMode()
+        {
+            this.Title = "Veeam Health Check - Remote Mode";
+            CGlobals.Logger.Info("No local Veeam detected, but remote servers configured.", false);
         }
 
         // Split from the original single SetUi(): everything here is synchronous
@@ -346,14 +352,14 @@ namespace VeeamHealthCheck
                 // The localhost filter is kept rather than relying on the "localhost is
                 // never persisted" invariant: on a non-injecting machine localhost IS
                 // legitimately persisted, and counting it as a remote server would put a
-                // local-only box into Remote Mode.
-                bool hasRemoteServers = _persistedServers
-                    .Any(s => !s.Equals(LocalhostName, StringComparison.OrdinalIgnoreCase));
+                // local-only box into Remote Mode. Shared with SetUiAsync's cold-start
+                // recovery branch via CAppSettings.HasNonLocalhostServer, so both paths
+                // agree on the definition.
+                bool hasRemoteServers = CAppSettings.HasNonLocalhostServer(_persistedServers);
 
                 if (hasRemoteServers)
                 {
-                    this.Title = "Veeam Health Check - Remote Mode";
-                    CGlobals.Logger.Info("No local Veeam detected, but remote servers configured.", false);
+                    this.EnterRemoteMode();
                 }
                 else
                 {
@@ -394,20 +400,71 @@ namespace VeeamHealthCheck
 
             if (_modeCheckFailed)
             {
-                string errorMessage = "No Veeam Software detected on this machine.\n\n" +
-                                     "This tool requires Veeam Backup & Replication (VBR) or Veeam Backup for Microsoft 365 (VB365) to be installed.\n\n" +
-                                     "To connect to a remote Veeam server:\n" +
-                                     "1. Close this window\n" +
-                                     "2. Run from command line with: VeeamHealthCheck.exe /remote /host=your-vbr-server\n\n" +
-                                     "For more information, see the documentation.";
+                // SetUiSync()'s fail branch returns before reaching its own
+                // run.IsEnabled/hideProgressBar tail. Stage D's final review already
+                // documented pBar spinning behind the OK-only dialog here as a harmless
+                // pre-existing quirk, harmless only because the app used to shut down
+                // within a frame or two. Once the confirm + ManageServersDialog
+                // interaction below can take real, human-paced time, leaving Run
+                // enabled and the progress bar spinning for that whole interval would
+                // no longer be harmless. Safe to set here regardless of which way this
+                // branch resolves below.
+                run.IsEnabled = false;
+                this.hideProgressBar();
 
-                await CGlobals.Notifier.ShowErrorAsync(errorMessage, "Veeam Software Not Detected");
+                bool wantsToAddServer = await CGlobals.Notifier.ConfirmAsync(
+                    VbrLocalizationHelper.GuiNoVeeamDetectedMessage,
+                    VbrLocalizationHelper.GuiNoVeeamDetectedTitle);
 
-                if (Avalonia.Application.Current?.ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
+                if (wantsToAddServer)
                 {
-                    desktop.Shutdown();
+                    // Same initial/pinned shape manageServersBtn_Click uses when not
+                    // injecting localhost (LocalhostIsInjected is always false on this
+                    // path - ModeCheck()'s fail condition is !IsVb365 && !IsVbr, and
+                    // IsVbrInstalled is set alongside IsVbr, so LocalhostIsInjected -
+                    // IsVbrInstalled || IsVb365 - is false whenever this branch runs).
+                    // initial MUST be _displayServers, not empty: ManageServersDialog's
+                    // commit overwrites settings.json's server list wholesale from its
+                    // own state, so an empty initial would silently drop whatever was
+                    // already persisted, including a stray "localhost".
+                    var dialog = new ManageServersDialog(
+                        initial: _displayServers.ToList(),
+                        pinned: Array.Empty<string>());
+                    bool committed = await dialog.ShowDialog<bool>(this);
+
+                    if (committed)
+                    {
+                        _persistedServers = CAppSettings.LoadOrSeedServers(
+                            CredentialStore.GetAllServers(),
+                            excludeLocalhost: LocalhostIsInjected);
+                    }
                 }
-                return;
+
+                if (!CAppSettings.HasNonLocalhostServer(_persistedServers))
+                {
+                    // Declined the confirm, cancelled ManageServersDialog, or committed
+                    // with net zero non-localhost servers - every non-success route
+                    // converges on the same shutdown this branch always had.
+                    if (Avalonia.Application.Current?.ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
+                    {
+                        desktop.Shutdown();
+                    }
+                    return;
+                }
+
+                this.EnterRemoteMode();
+
+                // InitializeServerList's own fallback (via CAppSettings.ChooseDefaultServer)
+                // is LocalhostIsInjected-aware and prefers a genuinely non-local entry over
+                // a merely-persisted "localhost" - correct on its own for this path, since
+                // LocalhostIsInjected is always false here and HasNonLocalhostServer just
+                // confirmed a real remote server exists. An earlier version of this branch
+                // kept a second, explicit re-selection anyway, "rather than relying on a
+                // shared method's fallback ordering staying correct" - removed once that
+                // shared logic became a directly unit-tested pure function
+                // (CAppSettingsTests' ChooseDefaultServer_* cases), which closes the exact
+                // gap that justified keeping a second copy.
+                this.InitializeServerList(preserveSelection: false);
             }
 
             // PreRunCheck() stays synchronous (Part 1) but calls the notifier's

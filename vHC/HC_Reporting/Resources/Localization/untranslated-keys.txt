@@ -219,3 +219,12 @@ fR-FR:v365NavValue5
 fR-FR:v365NavValue7
 fR-FR:v365NavValue8
 fR-FR:v365NavValue9
+# Stage E keys added with English content, pending real translation.
+fR-FR:GuiNoVeeamDetectedTitle
+fR-FR:GuiNoVeeamDetectedMessage
+ja:GuiNoVeeamDetectedTitle
+ja:GuiNoVeeamDetectedMessage
+zh-cn:GuiNoVeeamDetectedTitle
+zh-cn:GuiNoVeeamDetectedMessage
+zh-tw:GuiNoVeeamDetectedTitle
+zh-tw:GuiNoVeeamDetectedMessage
