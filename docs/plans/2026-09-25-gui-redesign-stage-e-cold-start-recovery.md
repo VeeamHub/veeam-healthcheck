@@ -20,7 +20,7 @@
 |---|---|
 | `vHC/HC_Reporting/Startup/CAppSettings.cs` | Task 1: add `HasNonLocalhostServer(IEnumerable<string>)`, the shared, testable "is there a remote server" predicate. |
 | `vHC/VhcXTests/CAppSettingsTests.cs` | Task 1: direct unit tests for the new predicate. |
-| `vHC/HC_Reporting/VhcGui.axaml.cs` | Task 1: wire `SetUiSync()`'s existing inline check onto the shared predicate. Task 4: rewrite `SetUiAsync()`'s `_modeCheckFailed` branch — the actual recovery flow. |
+| `vHC/HC_Reporting/VhcGui.axaml.cs` | Task 1: wire `SetUiSync()`'s existing inline check onto the shared predicate. Task 4: rewrite `SetUiAsync()`'s `_modeCheckFailed` branch — the actual recovery flow. Also touched by a review-driven fix (`979cb5fe`, not part of any task's own diff): `InitializeServerList()`'s selection fallback, to close a regression Task 4's own review found — see Task 4's "Correction applied after review" note. |
 | `vHC/HC_Reporting/Resources/Localization/vhcres.resx` | Task 2: add `GuiNoVeeamDetectedTitle`/`GuiNoVeeamDetectedMessage` (neutral/English). |
 | `vHC/HC_Reporting/Resources/Localization/VbrLocalizationHelper.cs` | Task 2: add the two matching accessor fields (UTF-16LE/CRLF). |
 | `vHC/HC_Reporting/Resources/Localization/vhcres.txt` | Task 2: matching ResGen source entries (UTF-16LE/CRLF). |
@@ -607,6 +607,27 @@ Replace the entire method with:
             run.IsEnabled = false;
         }
 ```
+
+### Correction applied after review
+
+The comment at lines 582-591 above (`InitializeServerList's own fallback selects "localhost"
+first when present - correct for its other two call sites, but wrong here`) is the code
+exactly as Task 4 committed it (`b3d9abc2`) — left unedited above as an accurate record of
+what that commit contained. It stopped being true almost immediately: code-quality review
+found the fallback was *not* correct for one of those "other two call sites" either — a
+machine with a stray persisted `"localhost"` alongside a real server added via this stage's
+own recovery would silently reselect `"localhost"` on every launch after the first, because
+that second launch never reaches this `_modeCheckFailed` branch at all (see
+`docs/superpowers/specs/2026-09-25-gui-redesign-stage-e-cold-start-design.md`'s matching
+correction note for the full trace). Fixed in three follow-up commits, not part of Task 4's
+own diff and not touching `SetUiAsync` itself: `979cb5fe` (the actual fallback fix, in
+`InitializeServerList`, gating localhost-preference on `LocalhostIsInjected` and adding a
+real-server-preferring tier), `077ec742` and `6328f8ec` (updating the comments this fix left
+stale, including the one at lines 582-591's real, current counterpart in the source file —
+this plan's code block is not re-synced to match, per this arc's convention of recording
+history rather than rewriting it). The explicit `remoteServer` override at lines 592-595
+above is unaffected and still committed exactly as shown; it's merely redundant with the
+fixed fallback now, not incorrect.
 
 - [ ] **Step 2: Build**
 

@@ -76,7 +76,9 @@ Replace the `_modeCheckFailed` branch in `SetUiAsync()` with:
 5. If `true`: set `this.Title = "Veeam Health Check - Remote Mode"` and log, matching
    `SetUiSync`'s existing pre-persisted Remote Mode branch; call
    `InitializeServerList(preserveSelection: false)` to repopulate the server picker (it was
-   populated with an empty list at construction time). `InitializeServerList`'s own fallback
+   already populated once at construction time, from whatever `_persistedServers` held then —
+   empty in the common case, or just `["localhost"]` in the stray-localhost case below).
+   `InitializeServerList`'s own fallback
    selects `"localhost"` first when present (`:256-260`) — correct for its other two call
    sites, but wrong here: reaching this point means `HasNonLocalhostServer` is `true`, and
    selecting a lingering `"localhost"` entry over the remote host the user just added would
@@ -95,6 +97,30 @@ Replace the `_modeCheckFailed` branch in `SetUiAsync()` with:
    through into the rest of `SetUiAsync` unchanged (`Task.Run(PreRunCheck)`,
    `scrubBox`/`RescanBox` defaults, etc.) — the same tail every pre-persisted Remote Mode
    launch already executes.
+
+### Correction applied after review (Task 4, post-implementation)
+
+The paragraph above claims `InitializeServerList`'s localhost-first fallback is "correct for
+its other two call sites" — that turned out to be false for one of them. Code-quality review
+during implementation traced a real regression: on a machine with a stray persisted
+`"localhost"` alongside a real remote server added via this stage's own recovery, the
+*second* launch (and every launch after) reaches `InitializeServerList` through
+`SetUiSync`'s pre-existing "already has remote servers" branch, not through this recovery
+branch — `_modeCheckFailed` stays `false` on that path, so the explicit `remoteServer`
+override above never runs, and the old unconditional "prefer localhost when present"
+fallback silently reselected `"localhost"` every time, defeating the whole point of the
+recovery feature after its first successful use.
+
+Fixed at the root instead of only in this branch: `InitializeServerList`'s fallback is now
+gated on `LocalhostIsInjected` (only prefer localhost when it's genuinely the injected
+default, i.e. this machine actually has local Veeam), with a new middle tier that prefers
+any real server over a non-injected, merely-persisted `"localhost"` before finally falling
+back to index 0. This also happens to fix the identical latent bug in Stage C's own
+pre-persisted Remote Mode startup path (the constructor's own non-fail call to
+`InitializeServerList`), which shared the same faulty fallback. The explicit `remoteServer`
+override in this branch is now redundant with the fixed fallback but was left in place as a
+direct, local guarantee rather than relying solely on a shared method's ordering. See
+`979cb5fe`, `077ec742`, and `6328f8ec` for the fix and its comment cleanup.
 
 `SetUiText()` still runs unconditionally at the top of `SetUiAsync()` before this branch
 (Stage D's fix, `:393`) — unchanged, and sufficient, since it already runs before any of the
