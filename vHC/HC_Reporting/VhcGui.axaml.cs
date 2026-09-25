@@ -253,10 +253,27 @@ namespace VeeamHealthCheck
             {
                 serverSelector.SelectedItem = keep;
             }
-            else if (_displayServers.Any(s => s.Equals(LocalhostName, StringComparison.OrdinalIgnoreCase)))
+            else if (LocalhostIsInjected && _displayServers.Any(s => s.Equals(LocalhostName, StringComparison.OrdinalIgnoreCase)))
             {
+                // Only prefer localhost when it's the injected default (this machine
+                // genuinely has local Veeam) - a merely-persisted, non-injected
+                // "localhost" (e.g. a stray entry left over from a machine that used
+                // to have local Veeam, or a /savecreds run against the default host)
+                // must never win over a real remote server: it has no Veeam to talk
+                // to. Without this guard, SetUiAsync's cold-start recovery branch
+                // would silently regress on every launch after the first one that
+                // added a remote server alongside a stray localhost - that branch
+                // only runs once, on the launch where _modeCheckFailed is still true;
+                // every subsequent launch reaches this method through SetUiSync's
+                // "already has remote servers" path instead, which never re-derives
+                // a preferred selection of its own.
                 serverSelector.SelectedItem = _displayServers.First(
                     s => s.Equals(LocalhostName, StringComparison.OrdinalIgnoreCase));
+            }
+            else if (_displayServers.Any(s => !s.Equals(LocalhostName, StringComparison.OrdinalIgnoreCase)))
+            {
+                serverSelector.SelectedItem = _displayServers.First(
+                    s => !s.Equals(LocalhostName, StringComparison.OrdinalIgnoreCase));
             }
             else if (_displayServers.Count > 0)
             {
