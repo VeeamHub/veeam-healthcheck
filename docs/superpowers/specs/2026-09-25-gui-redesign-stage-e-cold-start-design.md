@@ -151,11 +151,26 @@ parity pattern (English content only, no new translation):
   This tool requires Veeam Backup & Replication (VBR) or Veeam Backup for Microsoft 365
   (VB365) to be installed locally, or a remote server to connect to.
 
-  Would you like to add a remote server now?
+  Alternatively, quit and run from the command line instead:
+  VeeamHealthCheck.exe /run /remote /host=your-vbr-server
 
-  Alternatively, close this window and run from the command line with:
-  VeeamHealthCheck.exe /remote /host=your-vbr-server
+  Would you like to add a remote server now?
   ```
+
+  ### Correction applied after review
+  A code-quality review during implementation (Task 2) caught two real problems with this
+  message's first-drafted text, both now fixed above: (1) the suggested command was
+  `VeeamHealthCheck.exe /remote /host=your-vbr-server` with no `/run` — traced against
+  `CArgsParser.ParseAllArgs`, `/remote` and `/host=` both only set `CGlobals` flags
+  (`REMOTEEXEC`/`REMOTEHOST`); the actual dispatch at the end of that method only fires when
+  `/run`, `/gui`, `/lite`, `/import`, or `/security` sets a local `run`/`ui` flag, so the
+  original example was a verified silent no-op; (2) the CLI-alternative paragraph sat after
+  the "Would you like to add a remote server now?" question, but that question is what the
+  Yes/No confirm dialog's buttons actually answer, so it needs to be the last thing the user
+  reads before the buttons, not a paragraph in the middle — reordered, and "close this window"
+  changed to "quit" to match what a decline actually does (a full `desktop.Shutdown()`, not a
+  window close). Caught before the satellite-locale-parity task propagated the flawed text
+  into four more files, so only the neutral resx/txt needed correcting.
 
 Every file this touches, matching Stage D's precedent of listing them explicitly rather than
 leaving "all locale files" implicit (all under `Resources/Localization/`):

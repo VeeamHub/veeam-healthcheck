@@ -361,6 +361,22 @@ EOF
 )"
 ```
 
+### Correction applied after review
+
+Code-quality review on the resulting commit found the `GuiNoVeeamDetectedMessage` text
+above had two real problems: the suggested CLI command
+(`VeeamHealthCheck.exe /remote /host=your-vbr-server`) is a verified silent no-op against
+`CArgsParser.ParseAllArgs` (neither `/remote` nor `/host=` sets the local `run`/`ui` flag the
+dispatch at the end of that method requires — only `/run`/`/gui`/`/lite`/`/import`/`/security`
+do), and the CLI-alternative paragraph sat after the "Would you like to add a remote server
+now?" question instead of immediately before the Yes/No buttons that answer it. Both fixed in
+a follow-up commit, before Task 3 could propagate the flawed text into four more locale files
+— see `docs/superpowers/specs/2026-09-25-gui-redesign-stage-e-cold-start-design.md`'s matching
+correction note for the corrected value. The Step 1/Step 4 scripts above are left as originally
+written/executed for this task, since Task 2's own commit is unaffected — Task 3, below,
+picks up the corrected neutral value automatically since it reads whatever is currently in
+`vhcres.resx` rather than a hardcoded copy of the text.
+
 ---
 
 ## Task 3: Key-parity for Stage E's new keys across the four locales
