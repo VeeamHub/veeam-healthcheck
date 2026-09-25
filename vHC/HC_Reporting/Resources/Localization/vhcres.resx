@@ -1974,9 +1974,9 @@ The files may be anonymized to hide sensitive data. Accepting the Terms means th
 
 This tool requires Veeam Backup &amp; Replication (VBR) or Veeam Backup for Microsoft 365 (VB365) to be installed locally, or a remote server to connect to.
 
-Would you like to add a remote server now?
+Alternatively, quit and run from the command line instead:
+VeeamHealthCheck.exe /run /remote /host=your-vbr-server
 
-Alternatively, close this window and run from the command line with:
-VeeamHealthCheck.exe /remote /host=your-vbr-server</value>
+Would you like to add a remote server now?</value>
   </data>
 </root>
