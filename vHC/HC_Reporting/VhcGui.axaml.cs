@@ -206,14 +206,13 @@ namespace VeeamHealthCheck
         }
 
         // preserveSelection distinguishes the two callers, and the distinction is
-        // load-bearing. At startup there is no selection to keep and injected-localhost-
-        // first is the right default (see the fallback below - localhost only wins when
-        // it's the injected row, i.e. this machine actually has local Veeam). After the
-        // dialog commits, silently reasserting that default would move a user who was
-        // sitting on vbr01 back to localhost - flipping REMOTEEXEC to false and pointing
-        // the next run at the local box - even if they pressed Done having changed
-        // nothing. Both tabs read that selection (monitorQuickSetupBtn_Click), so it
-        // must survive a repopulate.
+        // load-bearing. At startup there is no selection to keep, so CAppSettings.
+        // ChooseDefaultServer (below) picks its own default. After the dialog commits,
+        // silently reasserting that default would move a user who was sitting on
+        // vbr01 back to localhost - flipping REMOTEEXEC to false and pointing the next
+        // run at the local box - even if they pressed Done having changed nothing.
+        // Both tabs read that selection (monitorQuickSetupBtn_Click), so it must
+        // survive a repopulate.
         private void InitializeServerList(bool preserveSelection = false)
         {
             string previous = preserveSelection
@@ -243,46 +242,19 @@ namespace VeeamHealthCheck
             _displayServers = display;
             serverSelector.ItemsSource = _displayServers;
 
-            // Restore the prior selection when it survived the commit; otherwise fall
-            // back to injected-localhost-first, then the first real (non-localhost)
-            // entry, then whatever is first - in that order. The first fallback's own
-            // comment, just below, explains why a non-injected, merely-persisted
-            // "localhost" (stray or otherwise) must never win over an actual remote
-            // server - that's what the second (non-localhost) fallback tier prevents.
-            string keep = previous == null
-                ? null
-                : _displayServers.FirstOrDefault(
-                    s => s.Equals(previous, StringComparison.OrdinalIgnoreCase));
+            // The decision itself - preserved selection, else injected-localhost-first,
+            // else the first genuinely non-local entry, else whatever is first - lives
+            // in CAppSettings.ChooseDefaultServer, not here: that's the exact logic a
+            // real regression once lived in (a persisted, non-injected "localhost"
+            // winning over a real remote server on repeat launches after Stage E's
+            // cold-start recovery), and it's now a directly unit-tested pure function
+            // instead of untestable Avalonia code-behind.
+            string chosen = CAppSettings.ChooseDefaultServer(
+                _displayServers, previous, LocalhostIsInjected);
 
-            if (keep != null)
+            if (chosen != null)
             {
-                serverSelector.SelectedItem = keep;
-            }
-            else if (LocalhostIsInjected && _displayServers.Any(s => s.Equals(LocalhostName, StringComparison.OrdinalIgnoreCase)))
-            {
-                // Only prefer localhost when it's the injected default (this machine
-                // genuinely has local Veeam) - a merely-persisted, non-injected
-                // "localhost" (e.g. a stray entry left over from a machine that used
-                // to have local Veeam, or a /savecreds run against the default host)
-                // must never win over a real remote server: it has no Veeam to talk
-                // to. Without this guard, SetUiAsync's cold-start recovery branch
-                // would silently regress on every launch after the first one that
-                // added a remote server alongside a stray localhost - that branch
-                // only runs once, on the launch where _modeCheckFailed is still true;
-                // every subsequent launch reaches this method through SetUiSync's
-                // "already has remote servers" path instead, which never re-derives
-                // a preferred selection of its own.
-                serverSelector.SelectedItem = _displayServers.First(
-                    s => s.Equals(LocalhostName, StringComparison.OrdinalIgnoreCase));
-            }
-            else if (_displayServers.Any(s => !s.Equals(LocalhostName, StringComparison.OrdinalIgnoreCase)))
-            {
-                serverSelector.SelectedItem = _displayServers.First(
-                    s => !s.Equals(LocalhostName, StringComparison.OrdinalIgnoreCase));
-            }
-            else if (_displayServers.Count > 0)
-            {
-                serverSelector.SelectedIndex = 0;
+                serverSelector.SelectedItem = chosen;
             }
 
             UpdateSelectedServersGlobal();
@@ -472,25 +444,17 @@ namespace VeeamHealthCheck
                 this.Title = "Veeam Health Check - Remote Mode";
                 CGlobals.Logger.Info("No local Veeam detected, but remote servers configured.", false);
 
+                // InitializeServerList's own fallback (via CAppSettings.ChooseDefaultServer)
+                // is LocalhostIsInjected-aware and prefers a genuinely non-local entry over
+                // a merely-persisted "localhost" - correct on its own for this path, since
+                // LocalhostIsInjected is always false here and HasNonLocalhostServer just
+                // confirmed a real remote server exists. An earlier version of this branch
+                // kept a second, explicit re-selection anyway, "rather than relying on a
+                // shared method's fallback ordering staying correct" - removed once that
+                // shared logic became a directly unit-tested pure function
+                // (CAppSettingsTests' ChooseDefaultServer_* cases), which closes the exact
+                // gap that justified keeping a second copy.
                 this.InitializeServerList(preserveSelection: false);
-
-                // InitializeServerList's own fallback is now LocalhostIsInjected-aware
-                // (see that method), so it would already avoid selecting a lingering,
-                // non-injected "localhost" here - LocalhostIsInjected is false on this
-                // whole path. This explicit re-selection is kept anyway as a direct,
-                // local guarantee for the one behavior this recovery path exists to
-                // provide (targeting the server just added, not the local box that has
-                // no Veeam installed), rather than relying on a shared method's fallback
-                // ordering staying correct. remoteServer cannot be null: _persistedServers
-                // was just confirmed by CAppSettings.HasNonLocalhostServer (above) to
-                // contain a non-localhost entry, and _displayServers' only transformation
-                // on top of it is case-insensitive de-dup, which can merge two
-                // non-localhost entries but never drop one outright - so that entry
-                // necessarily survives into _displayServers.
-                var remoteServer = _displayServers.FirstOrDefault(
-                    s => !s.Equals(LocalhostName, StringComparison.OrdinalIgnoreCase));
-                serverSelector.SelectedItem = remoteServer;
-                UpdateSelectedServersGlobal();
             }
 
             // PreRunCheck() stays synchronous (Part 1) but calls the notifier's
