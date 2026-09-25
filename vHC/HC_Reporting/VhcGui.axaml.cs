@@ -395,20 +395,77 @@ namespace VeeamHealthCheck
 
             if (_modeCheckFailed)
             {
-                string errorMessage = "No Veeam Software detected on this machine.\n\n" +
-                                     "This tool requires Veeam Backup & Replication (VBR) or Veeam Backup for Microsoft 365 (VB365) to be installed.\n\n" +
-                                     "To connect to a remote Veeam server:\n" +
-                                     "1. Close this window\n" +
-                                     "2. Run from command line with: VeeamHealthCheck.exe /remote /host=your-vbr-server\n\n" +
-                                     "For more information, see the documentation.";
+                // SetUiSync()'s fail branch returns before reaching its own
+                // run.IsEnabled/hideProgressBar tail. A prior stage's final review already
+                // documented pBar spinning behind the OK-only dialog here as a harmless
+                // pre-existing quirk, harmless only because the app used to shut down
+                // within a frame or two. Once the confirm + ManageServersDialog
+                // interaction below can take real, human-paced time, leaving Run
+                // enabled and the progress bar spinning for that whole interval would
+                // no longer be harmless. Safe to set here regardless of which way this
+                // branch resolves below.
+                run.IsEnabled = false;
+                this.hideProgressBar();
 
-                await CGlobals.Notifier.ShowErrorAsync(errorMessage, "Veeam Software Not Detected");
+                bool wantsToAddServer = await CGlobals.Notifier.ConfirmAsync(
+                    VbrLocalizationHelper.GuiNoVeeamDetectedMessage,
+                    VbrLocalizationHelper.GuiNoVeeamDetectedTitle);
 
-                if (Avalonia.Application.Current?.ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
+                if (wantsToAddServer)
                 {
-                    desktop.Shutdown();
+                    // Same initial/pinned shape manageServersBtn_Click uses when not
+                    // injecting localhost (LocalhostIsInjected is always false on this
+                    // path - ModeCheck()'s fail condition is !IsVb365 && !IsVbr, and
+                    // IsVbrInstalled is set alongside IsVbr, so LocalhostIsInjected -
+                    // IsVbrInstalled || IsVb365 - is false whenever this branch runs).
+                    // initial MUST be _displayServers, not empty: ManageServersDialog's
+                    // commit overwrites settings.json's server list wholesale from its
+                    // own state, so an empty initial would silently drop whatever was
+                    // already persisted, including a stray "localhost".
+                    var dialog = new ManageServersDialog(
+                        initial: _displayServers.ToList(),
+                        pinned: Array.Empty<string>());
+                    bool committed = await dialog.ShowDialog<bool>(this);
+
+                    if (committed)
+                    {
+                        _persistedServers = CAppSettings.LoadOrSeedServers(
+                            CredentialStore.GetAllServers(),
+                            excludeLocalhost: LocalhostIsInjected);
+                    }
                 }
-                return;
+
+                if (!CAppSettings.HasNonLocalhostServer(_persistedServers))
+                {
+                    // Declined the confirm, cancelled ManageServersDialog, or committed
+                    // with net zero non-localhost servers - every non-success route
+                    // converges on the same shutdown this branch always had.
+                    if (Avalonia.Application.Current?.ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
+                    {
+                        desktop.Shutdown();
+                    }
+                    return;
+                }
+
+                this.Title = "Veeam Health Check - Remote Mode";
+                CGlobals.Logger.Info("No local Veeam detected, but remote servers configured.", false);
+
+                this.InitializeServerList(preserveSelection: false);
+
+                // InitializeServerList's own fallback selects "localhost" first when
+                // present - correct for its other two call sites, but wrong here:
+                // reaching this point means HasNonLocalhostServer is true, and
+                // selecting a lingering "localhost" entry over the server just added
+                // would set REMOTEEXEC = false and point the run straight back at the
+                // local box that has no Veeam installed, defeating the point of this
+                // recovery path. remoteServer cannot be null: _displayServers is built
+                // from _persistedServers with LocalhostIsInjected false on this path,
+                // so no injected-localhost row exists to interfere with the check just
+                // made above.
+                var remoteServer = _displayServers.FirstOrDefault(
+                    s => !s.Equals(LocalhostName, StringComparison.OrdinalIgnoreCase));
+                serverSelector.SelectedItem = remoteServer;
+                UpdateSelectedServersGlobal();
             }
 
             // PreRunCheck() stays synchronous (Part 1) but calls the notifier's
