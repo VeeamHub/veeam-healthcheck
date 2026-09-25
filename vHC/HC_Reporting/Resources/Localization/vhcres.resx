@@ -1966,4 +1966,17 @@ The files may be anonymized to hide sensitive data. Accepting the Terms means th
   <data name="GuiThemeSystem" xml:space="preserve">
     <value>System</value>
   </data>
+  <data name="GuiNoVeeamDetectedTitle" xml:space="preserve">
+    <value>Veeam Software Not Detected</value>
+  </data>
+  <data name="GuiNoVeeamDetectedMessage" xml:space="preserve">
+    <value>No Veeam Software detected on this machine.
+
+This tool requires Veeam Backup &amp; Replication (VBR) or Veeam Backup for Microsoft 365 (VB365) to be installed locally, or a remote server to connect to.
+
+Would you like to add a remote server now?
+
+Alternatively, close this window and run from the command line with:
+VeeamHealthCheck.exe /remote /host=your-vbr-server</value>
+  </data>
 </root>
