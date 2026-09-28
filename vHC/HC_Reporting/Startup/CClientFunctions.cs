@@ -114,8 +114,10 @@ namespace VeeamHealthCheck.Startup
                 // PS5 for VBR 12-). ModeCheck() runs from the GUI constructor before the window
                 // is shown and doesn't itself lead into PowerShell-module-based collection, so it
                 // must use the ungated DetectVbrVersion, not GetVbrVersion - the PS 7.6+ module
-                // gate is enforced once, immediately before real collection, in StartCollections()
-                // via RunVbrPreflightGateIfTargeted().
+                // gate is enforced immediately before real collection, in StartCollections() via
+                // RunVbrPreflightGateIfTargeted() (or, for the Auto+remote+no-local-detection
+                // case that one can't cover, CCollections.ExecPSScripts()'s
+                // RunVbrPreflightGateForDynamicFallback() - see issue #233).
                 try { this.DetectVbrVersion(); }
                 catch (Exception ex)
                 {
@@ -253,8 +255,10 @@ namespace VeeamHealthCheck.Startup
         {
             if (!CGlobals.IMPORT)
             {
-                // Single authoritative PS 7.6+ module preflight gate - see
-                // RunVbrPreflightGateIfTargeted()'s doc comment for the full rationale.
+                // Primary PS 7.6+ module preflight gate for this call path - see
+                // RunVbrPreflightGateIfTargeted()'s doc comment for the full rationale, including
+                // the separate RunVbrPreflightGateForDynamicFallback() gate CCollections uses for
+                // the Auto+remote+no-local-detection case this one can't cover (issue #233).
                 this.RunVbrPreflightGateIfTargeted();
 
                 this.LOG.Info(this.logStart + "Init Collections", false);
@@ -408,7 +412,7 @@ namespace VeeamHealthCheck.Startup
         }
 
         /// <summary>
-        /// Single authoritative PS 7.6+ module preflight gate, run once from StartCollections()
+        /// Primary PS 7.6+ module preflight gate for the StartCollections() call path, run once
         /// right before the two branches that both lead into real PowerShell-module-based
         /// collection. Gated on EffectiveIsVbr - not IMPORT, not REMOTEEXEC - because this
         /// preflight (and the PowerShell-version check it wraps) is meaningless for a run that
