@@ -670,5 +670,133 @@ namespace VhcXTests
             Assert.Empty(result);
             Assert.Equal(before, File.ReadAllText(CAppSettings.StorePath));
         }
+
+        [Fact]
+        public void HasNonLocalhostServer_WithEmptyList_ReturnsFalse()
+        {
+            Assert.False(CAppSettings.HasNonLocalhostServer(System.Array.Empty<string>()));
+        }
+
+        [Fact]
+        public void HasNonLocalhostServer_WithOnlyLocalhostAnyCasing_ReturnsFalse()
+        {
+            Assert.False(CAppSettings.HasNonLocalhostServer(
+                new[] { "localhost", "LOCALHOST", "LocalHost" }));
+        }
+
+        [Fact]
+        public void HasNonLocalhostServer_WithRealHostPresent_ReturnsTrue()
+        {
+            Assert.True(CAppSettings.HasNonLocalhostServer(new[] { "vbr01" }));
+        }
+
+        [Fact]
+        public void HasNonLocalhostServer_WithMixedLocalhostAndRealHost_ReturnsTrue()
+        {
+            Assert.True(CAppSettings.HasNonLocalhostServer(new[] { "localhost", "vbr01" }));
+        }
+
+        [Fact]
+        public void HasNonLocalhostServer_With127001Only_ReturnsFalse()
+        {
+            // Not just the literal string "localhost" - CHostNameHelper.IsLocalHost
+            // also recognizes 127.0.0.1 as this machine, so it gets the same
+            // protection: it's not a usable remote target on a machine with no local
+            // Veeam installed.
+            Assert.False(CAppSettings.HasNonLocalhostServer(new[] { "127.0.0.1" }));
+        }
+
+        [Fact]
+        public void HasNonLocalhostServer_WithOwnMachineNameOnly_ReturnsFalse()
+        {
+            Assert.False(CAppSettings.HasNonLocalhostServer(new[] { Environment.MachineName }));
+        }
+
+        [Fact]
+        public void HasNonLocalhostServer_WithMixed127001AndRealHost_ReturnsTrue()
+        {
+            Assert.True(CAppSettings.HasNonLocalhostServer(new[] { "127.0.0.1", "vbr01" }));
+        }
+
+        [Fact]
+        public void ChooseDefaultServer_WithEmptyList_ReturnsNull()
+        {
+            Assert.Null(CAppSettings.ChooseDefaultServer(
+                System.Array.Empty<string>(), previousSelection: null, localhostIsInjected: false));
+        }
+
+        [Fact]
+        public void ChooseDefaultServer_WithPreservedSelectionPresent_ReturnsIt()
+        {
+            var chosen = CAppSettings.ChooseDefaultServer(
+                new[] { "vbr01", "vbr02" }, previousSelection: "vbr02", localhostIsInjected: false);
+
+            Assert.Equal("vbr02", chosen);
+        }
+
+        [Fact]
+        public void ChooseDefaultServer_WhenLocalhostInjected_PrefersLocalhostOverRealServer()
+        {
+            var chosen = CAppSettings.ChooseDefaultServer(
+                new[] { "localhost", "vbr01" }, previousSelection: null, localhostIsInjected: true);
+
+            Assert.Equal("localhost", chosen);
+        }
+
+        [Fact]
+        public void ChooseDefaultServer_WhenLocalhostNotInjected_PrefersRealServerOverStrayLocalhost()
+        {
+            // THE regression this predicate was extracted to guard: on a machine with
+            // no local Veeam (localhostIsInjected: false) but a stray persisted
+            // "localhost" alongside a real remote server, the real server must win -
+            // a non-injected "localhost" has no Veeam to talk to.
+            var chosen = CAppSettings.ChooseDefaultServer(
+                new[] { "localhost", "vbr01" }, previousSelection: null, localhostIsInjected: false);
+
+            Assert.Equal("vbr01", chosen);
+        }
+
+        [Fact]
+        public void ChooseDefaultServer_WhenLocalhostNotInjectedAndOnlyStray127001Present_PrefersRealServer()
+        {
+            // Same regression, via the broader CHostNameHelper.IsLocalHost definition
+            // rather than the literal string "localhost".
+            var chosen = CAppSettings.ChooseDefaultServer(
+                new[] { "127.0.0.1", "vbr01" }, previousSelection: null, localhostIsInjected: false);
+
+            Assert.Equal("vbr01", chosen);
+        }
+
+        [Fact]
+        public void ChooseDefaultServer_WhenLocalhostNotInjectedAndOnlyLocalhostPresent_FallsBackToLocalhost()
+        {
+            // Nothing else to pick - localhost survives as the last-resort fallback
+            // even though it isn't the injected default.
+            var chosen = CAppSettings.ChooseDefaultServer(
+                new[] { "localhost" }, previousSelection: null, localhostIsInjected: false);
+
+            Assert.Equal("localhost", chosen);
+        }
+
+        [Fact]
+        public void ChooseDefaultServer_PreservedSelectionWinsEvenOverLocalhostPreference()
+        {
+            // preserveSelection's whole point (see InitializeServerList's own remarks):
+            // an explicit prior choice must survive a repopulate regardless of what
+            // the no-prior-selection fallback would otherwise pick.
+            var chosen = CAppSettings.ChooseDefaultServer(
+                new[] { "localhost", "vbr01" }, previousSelection: "localhost", localhostIsInjected: true);
+
+            Assert.Equal("localhost", chosen);
+        }
+
+        [Fact]
+        public void ChooseDefaultServer_WithAbsentPreservedSelection_FallsThroughToDefault()
+        {
+            var chosen = CAppSettings.ChooseDefaultServer(
+                new[] { "vbr01" }, previousSelection: "removed-host", localhostIsInjected: false);
+
+            Assert.Equal("vbr01", chosen);
+        }
     }
 }

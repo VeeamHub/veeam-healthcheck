@@ -292,6 +292,80 @@ public static class CAppSettings
         return NormalizeServers(settings.Servers, excludeLocalhost);
     }
 
+    /// <summary>
+    /// True if <paramref name="servers"/> contains at least one entry that isn't a local
+    /// address or hostname - not just the literal string "localhost". Shared by
+    /// <c>VhcGui</c>'s <c>SetUiSync</c> and its cold-start recovery branch in
+    /// <c>SetUiAsync</c> - both need the identical "is there a remote server to fall back
+    /// to" check, and this is one of two pieces of that logic directly unit-testable
+    /// outside the Avalonia code-behind (see also <see cref="ChooseDefaultServer"/>).
+    ///
+    /// Uses <see cref="CHostNameHelper.IsLocalHost"/> (recognizes "127.0.0.1", this
+    /// machine's own name, DNS hostname, and FQDN variants - not just "localhost")
+    /// rather than a literal string comparison, so a persisted "127.0.0.1" or this
+    /// machine's own hostname gets the same protection the literal "localhost" case
+    /// already has: neither is a usable remote target on a machine with no local Veeam
+    /// installed, which is exactly the state this predicate exists to detect. This
+    /// deliberately does NOT change how <see cref="NormalizeServers"/>,
+    /// <see cref="AddServer"/>, or <see cref="LoadOrSeedServers"/> persist or dedupe
+    /// server names - those only ever special-case the literal "localhost" (see
+    /// AddServer's remarks), a narrower, deliberate concern about injection/persistence,
+    /// not about whether a given name is a valid remote target to run against.
+    /// </summary>
+    public static bool HasNonLocalhostServer(IEnumerable<string> servers) =>
+        servers.Any(s => !CHostNameHelper.IsLocalHost(s));
+
+    /// <summary>
+    /// Picks the server a picker should default to, given the list it's about to
+    /// display, an optional prior selection to preserve, and whether "localhost" is
+    /// genuinely this machine's own injected default (i.e. local Veeam is actually
+    /// installed). Extracted from <c>VhcGui.InitializeServerList</c> so this decision -
+    /// exactly the logic a real regression once lived in (a persisted, non-injected
+    /// "localhost" winning over a real remote server on repeat launches) - is directly
+    /// unit-testable outside the untestable Avalonia code-behind, the same reasoning
+    /// behind extracting <see cref="HasNonLocalhostServer"/>.
+    ///
+    /// Precedence: the preserved prior selection, if it survived a repopulate; else
+    /// "localhost" only when it's the injected default; else the first genuinely
+    /// non-local entry (via <see cref="CHostNameHelper.IsLocalHost"/>, not a literal
+    /// string match, so a persisted "127.0.0.1" or this machine's own hostname can't
+    /// win here either); else whatever is first. Returns <c>null</c> only when
+    /// <paramref name="displayServers"/> is empty.
+    /// </summary>
+    public static string ChooseDefaultServer(
+        IEnumerable<string> displayServers, string previousSelection, bool localhostIsInjected)
+    {
+        var servers = displayServers as IReadOnlyList<string> ?? displayServers.ToList();
+
+        if (previousSelection != null)
+        {
+            var keep = servers.FirstOrDefault(
+                s => string.Equals(s, previousSelection, StringComparison.OrdinalIgnoreCase));
+            if (keep != null)
+            {
+                return keep;
+            }
+        }
+
+        if (localhostIsInjected)
+        {
+            var localhost = servers.FirstOrDefault(
+                s => string.Equals(s, LocalhostName, StringComparison.OrdinalIgnoreCase));
+            if (localhost != null)
+            {
+                return localhost;
+            }
+        }
+
+        var nonLocal = servers.FirstOrDefault(s => !CHostNameHelper.IsLocalHost(s));
+        if (nonLocal != null)
+        {
+            return nonLocal;
+        }
+
+        return servers.Count > 0 ? servers[0] : null;
+    }
+
     // The single rule for "not a usable server name", shared by NormalizeServers
     // (read), SetServers (write), and AddServer's input guard, so the three paths
     // cannot drift into different definitions of the same rule.
