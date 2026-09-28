@@ -187,17 +187,23 @@ confirmed VBR — not for the `runVb365`-only outcome, and not duplicating the e
 call site requires `!runVbr` to be reached at all, i.e. `!EffectiveIsVbr`, so it can never fire
 in the same run as the `StartCollections()` gate — no double-preflight case exists).
 `CCollections.cs` doesn't currently have a `using VeeamHealthCheck.Startup;` — needs adding.
-Note (corrected after code-quality review): `CImpersonation.cs:11` has the same `using`, but
-grepping that file shows its only use of the namespace is a **commented-out** line
-(`// CClientFunctions cf = new(); // cf.GetVbrVersion();`) — there is no live, compiled precedent
-for `Functions.Collection` reaching into `Startup` anywhere in the repo before this change. This
-call site is genuinely the first live instance of that coupling direction, and it creates a
-two-way namespace dependency (`CClientFunctions.cs` already depends on `Functions.Collection` via
-its own `using`, so this adds the reverse edge). Not a blocking defect — C# doesn't enforce
-acyclic namespace graphs, and this was the least-bad option among the alternatives already
-rejected above (widening `EffectiveIsVbr` risks the #187 regression; hoisting into
-`VhcGui.SetUiSync()` fires too early) — but worth flagging explicitly as a real, accepted
-architectural trade-off rather than something that was "just following precedent."
+Note (corrected after code-quality review, then corrected again after the final whole-diff
+review): `CImpersonation.cs:11` and `PSInvoker.cs:17` both have the same `using`, but both are
+dead — `CImpersonation.cs`'s only use is a commented-out line
+(`// CClientFunctions cf = new(); // cf.GetVbrVersion();`), and `PSInvoker.cs`'s `Startup` using
+is unused entirely (everything it references, `CPowerShellVersionChecker`, `PwshVersionStatus`,
+the `PowerShellVersion` enum, lives in `Functions.Collection.PSCollections`). So within
+`Functions.Collection` specifically, this call site genuinely is the first *live* instance of
+that coupling direction. But "first live instance anywhere in the repo" overstated it: several
+other `Functions.*` classes (`CredsHandler`, `AvaloniaCredentialPrompter`, `ServerListCommitter`,
+`ServerListEditor`, `ManageServersDialog`, `CVhcMonitorIntegration`) already reach into `Startup`
+live, via `CredentialStore` and similar. This diff does create a new two-way namespace dependency
+specifically for `Functions.Collection` ↔ `Startup` (`CClientFunctions.cs` already depends on
+`Functions.Collection` via its own `using`, so this adds the reverse edge for that one namespace
+pair) — not a blocking defect, C# doesn't enforce acyclic namespace graphs, and this was the
+least-bad option among the alternatives already rejected above (widening `EffectiveIsVbr` risks
+the #187 regression; hoisting into `VhcGui.SetUiSync()` fires too early) — but it's a narrower,
+more accurate claim than "the first time `Functions.*` has ever reached into `Startup`."
 
 ### Out of scope, filed separately: VB365's mirror of this gap
 

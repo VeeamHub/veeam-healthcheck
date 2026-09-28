@@ -76,7 +76,7 @@ namespace VhcXTests
             // this can't distinguish "gate correctly skipped" from "gate ran and failed anyway".
             // The real regression guard for the gate's call-site contract is
             // GetVbrVersion_MethodVisibility_IsPrivate below, which confirms GetVbrVersion() is
-            // only reachable through its two internal gate wrappers at compile time.
+            // not callable from outside CClientFunctions.
             CGlobals.IMPORT = true;
 
             using var functions = new CClientFunctions();
