@@ -4,13 +4,13 @@
 
 **Goal:** Fix issue #233 — when `CCollections.ExecPSScripts()`'s `DynamicFallback()` resolves a remote VBR target in the `Auto`+`REMOTEEXEC`+no-local-detection scenario, `CGlobals.VBRMAJORVERSION` never gets populated, so `PSInvoker` picks PowerShell 5.1 against VBR 13+ servers that require 7.6+.
 
-**Architecture:** Add a new unconditional `CClientFunctions.RunVbrPreflightGate()` (thin wrapper around the existing private `GetVbrVersion()`), and call it from `CCollections.ExecPSScripts()` only in the branch where `DynamicFallback()` just confirmed `runVbr = true` — before `MfaTestPassed()` runs, since that script's arguments need the version too. Full rationale, evidence, and rejected alternatives: `docs/superpowers/specs/2026-09-28-vbr-ps7-detection-dynamic-fallback-design.md`.
+**Architecture:** Add a new unconditional `CClientFunctions.RunVbrPreflightGateForDynamicFallback()` (thin wrapper around the existing private `GetVbrVersion()`), and call it from `CCollections.ExecPSScripts()` only in the branch where `DynamicFallback()` just confirmed `runVbr = true` — before `MfaTestPassed()` runs, since that script's arguments need the version too. Full rationale, evidence, and rejected alternatives: `docs/superpowers/specs/2026-09-28-vbr-ps7-detection-dynamic-fallback-design.md`.
 
 **Tech Stack:** C# / .NET 8, xUnit, this repo's existing `CClientFunctions`/`CCollections` classes.
 
 ---
 
-## Task 1: Add `RunVbrPreflightGate()` with a reflection-only contract test
+## Task 1: Add `RunVbrPreflightGateForDynamicFallback()` with a reflection-only contract test
 
 **Files:**
 - Modify: `vHC/HC_Reporting/Startup/CClientFunctions.cs:435-436` (insert new method)
@@ -29,20 +29,26 @@ class's closing `}` (i.e. immediately after the closing `}` of
 
 ```csharp
         [Fact]
-        public void RunVbrPreflightGate_MethodExists_IsInternalInstanceMethodOnCClientFunctions()
+        public void RunVbrPreflightGateForDynamicFallback_MethodExists_IsInternalInstanceMethodOnCClientFunctions()
         {
-            // Shape/contract test only - deliberately does NOT invoke RunVbrPreflightGate().
-            // Unlike every other gate test in this file, RunVbrPreflightGate() has no skip
-            // path: it's a one-line { this.GetVbrVersion(); } with no CGlobals state that can
-            // force it onto a safe branch, since CRegReader reads the real OS registry directly
-            // with no test seam. On a machine that genuinely has both a local VBR 13+ console
-            // and an under-versioned local pwsh (this repo's own lab/dev hardware included),
-            // actually running it would reach ValidatePowerShellVersionMeetsVbrRequirement() ->
-            // Environment.Exit() and kill the test host process outright. So this only confirms
-            // the method exists, is internal (same-assembly callable from CCollections), and
-            // takes no parameters - the one-line body is verified by code review. See #233.
+            // Shape/contract test only - deliberately does NOT invoke
+            // RunVbrPreflightGateForDynamicFallback(). Unlike every other gate test in this
+            // file, this method has no skip path: it's a one-line { this.GetVbrVersion(); }
+            // with no CGlobals state that can force it onto a safe branch, since CRegReader
+            // reads the real OS registry directly with no test seam. On a machine that
+            // genuinely has both a local VBR 13+ console and an under-versioned local pwsh
+            // (this repo's own lab/dev hardware included), actually running it would reach
+            // ValidatePowerShellVersionMeetsVbrRequirement() -> Environment.Exit() and kill the
+            // test host process outright. So this only confirms the method exists, is internal
+            // (same-assembly callable from CCollections), and takes no parameters - the
+            // one-line body is verified by code review. See #233.
+            // Includes Public in the query (unlike a plain NonPublic-only lookup) so that if
+            // this method were ever mistakenly made public, GetMethod would still find it and
+            // Assert.True(method.IsAssembly) below - not a misleading "method not found" from
+            // Assert.NotNull - is the assertion that actually catches the mistake.
             var method = typeof(CClientFunctions).GetMethod(
-                "RunVbrPreflightGate", BindingFlags.NonPublic | BindingFlags.Instance);
+                "RunVbrPreflightGateForDynamicFallback",
+                BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance);
 
             Assert.NotNull(method);
             Assert.True(method.IsAssembly); // C# "internal" reports as Assembly via reflection
@@ -55,9 +61,9 @@ The file already has `using System.Reflection;` at the top (used by the existing
 
 - [ ] **Step 2: Run the test to verify it fails**
 
-Run: `dotnet test vHC/VhcXTests/VhcXTests.csproj --filter "FullyQualifiedName~RunVbrPreflightGate_MethodExists"`
+Run: `dotnet test vHC/VhcXTests/VhcXTests.csproj --filter "FullyQualifiedName~RunVbrPreflightGateForDynamicFallback_MethodExists"`
 
-Expected: FAIL — `Assert.NotNull(method)` fails because `RunVbrPreflightGate` doesn't exist yet
+Expected: FAIL — `Assert.NotNull(method)` fails because `RunVbrPreflightGateForDynamicFallback` doesn't exist yet
 on `CClientFunctions` (`GetMethod` returns `null`).
 
 - [ ] **Step 3: Implement the method**
@@ -74,9 +80,15 @@ Open `vHC/HC_Reporting/Startup/CClientFunctions.cs`. Insert this new method betw
         /// currently only CCollections.ExecPSScripts()'s DynamicFallback-confirmed branch, where
         /// a successful local Import-Module probe (TryModuleLoad(), not a remote connection)
         /// established that the VBR module is installed locally and therefore VBR is worth
-        /// detecting a version for. See issue #233.
+        /// detecting a version for. Named for that one caller deliberately: unlike
+        /// RunVbrPreflightGateIfTargeted(), this has NO target check at all, so calling it from
+        /// anywhere that hasn't already confirmed VBR by some other means - e.g. ModeCheck(),
+        /// whose past misuse of the ungated path is exactly what RunVbrPreflightGateIfTargeted()'s
+        /// EffectiveIsVbr gate exists to prevent, see GetVbrVersion_MethodVisibility_IsPrivate's
+        /// test comment - can reach ValidatePowerShellVersionMeetsVbrRequirement() ->
+        /// Environment.Exit() for a run that never touches VBR at all. See issue #233.
         /// </summary>
-        internal void RunVbrPreflightGate()
+        internal void RunVbrPreflightGateForDynamicFallback()
         {
             this.GetVbrVersion();
         }
@@ -84,7 +96,7 @@ Open `vHC/HC_Reporting/Startup/CClientFunctions.cs`. Insert this new method betw
 
 - [ ] **Step 4: Run the test to verify it passes**
 
-Run: `dotnet test vHC/VhcXTests/VhcXTests.csproj --filter "FullyQualifiedName~RunVbrPreflightGate_MethodExists"`
+Run: `dotnet test vHC/VhcXTests/VhcXTests.csproj --filter "FullyQualifiedName~RunVbrPreflightGateForDynamicFallback_MethodExists"`
 
 Expected: PASS
 
@@ -165,7 +177,7 @@ Replace with:
                             // module is importable - it never calls DetectVbrVersion(), so
                             // CGlobals.VBRMAJORVERSION stays 0 unless detected here. See #233.
                             using var functions = new CClientFunctions();
-                            functions.RunVbrPreflightGate();
+                            functions.RunVbrPreflightGateForDynamicFallback();
                         }
                     }
 ```
@@ -269,7 +281,7 @@ Replace with:
         /// out of the hard-fail path (ValidatePowerShellVersionMeetsVbrRequirement) is never
         /// mistaken for it and swallowed here too.
         /// Not the only caller of GetVbrVersion(): CCollections.ExecPSScripts() also calls the
-        /// unconditional RunVbrPreflightGate() once its own DynamicFallback() has confirmed VBR
+        /// unconditional RunVbrPreflightGateForDynamicFallback() once its own DynamicFallback() has confirmed VBR
         /// as the target by a different means (a local module-import probe, not EffectiveIsVbr) -
         /// see issue #233.
         /// </summary>
@@ -309,7 +321,7 @@ Replace with:
         /// module requirement. Private: reachable only through its two internal gate wrappers -
         /// RunVbrPreflightGateIfTargeted() (gated on EffectiveIsVbr, the choke point reached from
         /// StartCollections() for both the GUI Run button and every CLI run path) and the
-        /// unconditional RunVbrPreflightGate() (called only from CCollections.ExecPSScripts()'s
+        /// unconditional RunVbrPreflightGateForDynamicFallback() (called only from CCollections.ExecPSScripts()'s
         /// DynamicFallback-confirmed-VBR branch, issue #233) - never called directly. Every other
         /// caller (ModeCheck, RunHotfixDetector, early CLI arg-parsing detection) must call the
         /// ungated DetectVbrVersion instead, so a too-old-PowerShell machine doesn't hard-exit a
@@ -350,7 +362,7 @@ Replace with:
     /// Regression tests for the PS 7.6+ module preflight gate's call-site contract: GetVbrVersion
     /// (gated: detect + hard-exit-if-too-old) must only ever be called through one of its two
     /// internal gate wrappers - RunVbrPreflightGateIfTargeted(), reached from StartCollections()
-    /// when CGlobals.EffectiveIsVbr is true, or RunVbrPreflightGate(), the unconditional variant
+    /// when CGlobals.EffectiveIsVbr is true, or RunVbrPreflightGateForDynamicFallback(), the unconditional variant
     /// CCollections.ExecPSScripts() calls once its own DynamicFallback() has confirmed VBR as the
     /// target by a different means (issue #233) - never called directly. Every other caller
     /// (ModeCheck, RunHotfixDetector) must use the ungated DetectVbrVersion so a too-old-
@@ -375,7 +387,7 @@ Replace with:
 ```csharp
             // Regression guard for the root cause of the ModeCheck() hard-exit-on-GUI-startup
             // bug: GetVbrVersion must stay private so it's only reachable through its two
-            // internal gate wrappers (RunVbrPreflightGateIfTargeted() and RunVbrPreflightGate()),
+            // internal gate wrappers (RunVbrPreflightGateIfTargeted() and RunVbrPreflightGateForDynamicFallback()),
             // never called directly.
 ```
 
@@ -449,7 +461,7 @@ docs(vbr): update stale single-caller doc comments after #233
 
 RunVbrPreflightGateIfTargeted() was documented as GetVbrVersion()'s
 only caller in several places. It no longer is now that
-RunVbrPreflightGate() exists as a second, unconditional wrapper -
+RunVbrPreflightGateForDynamicFallback() exists as a second, unconditional wrapper -
 update the comments to describe both choke points instead of letting
 them go stale.
 EOF

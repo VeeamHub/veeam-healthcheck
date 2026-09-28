@@ -115,7 +115,7 @@ Two comparison logs from the same binary against the same lab VBR 13.1.1.18 serv
 
 ## Design
 
-### `CClientFunctions.RunVbrPreflightGate()` (new)
+### `CClientFunctions.RunVbrPreflightGateForDynamicFallback()` (new)
 
 ```csharp
 /// <summary>
@@ -125,7 +125,7 @@ Two comparison logs from the same binary against the same lab VBR 13.1.1.18 serv
 /// Import-Module probe (TryModuleLoad(), not a remote connection) established that the VBR
 /// module is installed locally and therefore VBR is the target worth detecting a version for.
 /// </summary>
-internal void RunVbrPreflightGate()
+internal void RunVbrPreflightGateForDynamicFallback()
 {
     this.GetVbrVersion();
 }
@@ -175,7 +175,7 @@ if (CGlobals.TargetProductType == TargetProduct.Auto && CGlobals.REMOTEEXEC && !
     if (runVbr)
     {
         using var functions = new CClientFunctions();
-        functions.RunVbrPreflightGate();
+        functions.RunVbrPreflightGateForDynamicFallback();
     }
 }
 ```
@@ -209,7 +209,7 @@ CI runs on macOS/Linux with no Windows registry or VBR install — the real runt
 there, matching every other fix in this arc. Automated coverage is limited to the API-contract
 level:
 
-- **Not viable:** a sentinel-based test asserting `RunVbrPreflightGate()` "always calls
+- **Not viable:** a sentinel-based test asserting `RunVbrPreflightGateForDynamicFallback()` "always calls
   `GetVbrVersion()` regardless of `EffectiveIsVbr`" can't actually prove that here, and is
   actively unsafe to run. On a CI runner without VBR, the sentinel value can't distinguish "ran
   and failed" from "skipped" (`CRegReader.cs:233-236` only writes on success — same limitation
@@ -217,7 +217,7 @@ level:
   *does* have a local VBR 13+ console but an under-versioned pwsh, this call chain reaches
   `ValidatePowerShellVersionMeetsVbrRequirement()` → `Environment.Exit()`
   (`CClientFunctions.cs:618`), which would kill the test host process outright.
-- **Instead:** a reflection-only shape test, deliberately never invoking `RunVbrPreflightGate()`
+- **Instead:** a reflection-only shape test, deliberately never invoking `RunVbrPreflightGateForDynamicFallback()`
   at all — unlike every other test in this file, this method has no skip path (it's a one-line
   `{ this.GetVbrVersion(); }`), and there's no global/`CGlobals` state that can force it onto a
   safe branch, since `CRegReader` reads the real OS registry directly with no test seam. Actually

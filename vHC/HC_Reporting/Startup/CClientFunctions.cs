@@ -440,9 +440,15 @@ namespace VeeamHealthCheck.Startup
         /// currently only CCollections.ExecPSScripts()'s DynamicFallback-confirmed branch, where
         /// a successful local Import-Module probe (TryModuleLoad(), not a remote connection)
         /// established that the VBR module is installed locally and therefore VBR is worth
-        /// detecting a version for. See issue #233.
+        /// detecting a version for. Named for that one caller deliberately: unlike
+        /// RunVbrPreflightGateIfTargeted(), this has NO target check at all, so calling it from
+        /// anywhere that hasn't already confirmed VBR by some other means - e.g. ModeCheck(),
+        /// whose past misuse of the ungated path is exactly what RunVbrPreflightGateIfTargeted()'s
+        /// EffectiveIsVbr gate exists to prevent, see GetVbrVersion_MethodVisibility_IsPrivate's
+        /// test comment - can reach ValidatePowerShellVersionMeetsVbrRequirement() ->
+        /// Environment.Exit() for a run that never touches VBR at all. See issue #233.
         /// </summary>
-        internal void RunVbrPreflightGate()
+        internal void RunVbrPreflightGateForDynamicFallback()
         {
             this.GetVbrVersion();
         }
