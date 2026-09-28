@@ -217,15 +217,19 @@ level:
   *does* have a local VBR 13+ console but an under-versioned pwsh, this call chain reaches
   `ValidatePowerShellVersionMeetsVbrRequirement()` → `Environment.Exit()`
   (`CClientFunctions.cs:618`), which would kill the test host process outright.
-- **Instead:** add an honest smoke test matching the existing
-  `StartCollections_ImportModeEnabled_DoesNotThrow` pattern (`CClientFunctionsGateTests.cs:68-87`)
-  — call `RunVbrPreflightGate()` directly via reflection or as an `internal` member and assert it
-  does not throw, with the same explicit comment already used elsewhere in that file: this proves
-  the method is safely callable and reachable, not that detection specifically ran vs. skipped
-  (that distinction genuinely requires a real VBR install and isn't provable in CI regardless of
-  test design). The call site inside `ExecPSScripts()`/`DynamicFallback()` itself stays untested
-  by automation, same as the rest of that method's real-process-launch logic — real verification
-  is the Windows/VBR hardware check below.
+- **Instead:** a reflection-only shape test, deliberately never invoking `RunVbrPreflightGate()`
+  at all — unlike every other test in this file, this method has no skip path (it's a one-line
+  `{ this.GetVbrVersion(); }`), and there's no global/`CGlobals` state that can force it onto a
+  safe branch, since `CRegReader` reads the real OS registry directly with no test seam. Actually
+  invoking it on a machine that genuinely has both a local VBR 13+ console and an under-versioned
+  local pwsh (this repo's own lab/dev hardware included) would hit `Environment.Exit()` for real.
+  So the test only confirms the method exists as an internal, parameterless instance method on
+  `CClientFunctions` via `BindingFlags.NonPublic | BindingFlags.Instance` +
+  `MethodInfo.IsAssembly` (internal reports as `Assembly` accessibility) — proving it's reachable
+  from `CCollections` (same-assembly `internal`) without ever executing its body. The one-line
+  body itself is verified by code review, not a runtime assertion. The call site inside
+  `ExecPSScripts()`/`DynamicFallback()` stays untested by automation, same as the rest of that
+  method's real-process-launch logic — real verification is the Windows/VBR hardware check below.
 - No changes needed to `EffectiveIsVbr`, `RunVbrPreflightGateIfTargeted()`, or their existing
   test *assertions* — this fix adds a new, narrowly-scoped call site rather than modifying the
   existing gate. (Their doc comments do need updating — see Design section above.)
