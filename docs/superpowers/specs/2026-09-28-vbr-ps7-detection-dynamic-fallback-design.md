@@ -199,8 +199,8 @@ VB365-only outcome leaves `SCRIPTSUCCESS` false and exits via `WeighSuccessConti
 `CCollections.cs:369-387`). This is the VB365-side mirror of the exact guard `ExecVbrScripts()`
 deliberately dropped for VBR (`CCollections.cs:773-774`), just never fixed for VB365. Not fixed
 by this design — different symptom (collection not running at all, vs. running under the wrong
-PowerShell version), different code path, deserves its own issue rather than expanding this
-fix's scope.
+PowerShell version), different code path. Filed separately as
+[issue #235](https://github.com/VeeamHub/veeam-healthcheck/issues/235).
 
 ## Testing
 
