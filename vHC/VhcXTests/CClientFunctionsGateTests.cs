@@ -198,5 +198,26 @@ namespace VhcXTests
 
             Assert.Equal(expected, CGlobals.EffectiveIsVbr);
         }
+
+        [Fact]
+        public void RunVbrPreflightGate_MethodExists_IsInternalInstanceMethodOnCClientFunctions()
+        {
+            // Shape/contract test only - deliberately does NOT invoke RunVbrPreflightGate().
+            // Unlike every other gate test in this file, RunVbrPreflightGate() has no skip
+            // path: it's a one-line { this.GetVbrVersion(); } with no CGlobals state that can
+            // force it onto a safe branch, since CRegReader reads the real OS registry directly
+            // with no test seam. On a machine that genuinely has both a local VBR 13+ console
+            // and an under-versioned local pwsh (this repo's own lab/dev hardware included),
+            // actually running it would reach ValidatePowerShellVersionMeetsVbrRequirement() ->
+            // Environment.Exit() and kill the test host process outright. So this only confirms
+            // the method exists, is internal (same-assembly callable from CCollections), and
+            // takes no parameters - the one-line body is verified by code review. See #233.
+            var method = typeof(CClientFunctions).GetMethod(
+                "RunVbrPreflightGate", BindingFlags.NonPublic | BindingFlags.Instance);
+
+            Assert.NotNull(method);
+            Assert.True(method.IsAssembly); // C# "internal" reports as Assembly via reflection
+            Assert.Empty(method.GetParameters());
+        }
     }
 }

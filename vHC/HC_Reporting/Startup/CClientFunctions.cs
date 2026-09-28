@@ -435,6 +435,19 @@ namespace VeeamHealthCheck.Startup
         }
 
         /// <summary>
+        /// Unconditional variant of RunVbrPreflightGateIfTargeted(), for callers that have
+        /// already confirmed VBR is the target through some means other than EffectiveIsVbr -
+        /// currently only CCollections.ExecPSScripts()'s DynamicFallback-confirmed branch, where
+        /// a successful local Import-Module probe (TryModuleLoad(), not a remote connection)
+        /// established that the VBR module is installed locally and therefore VBR is worth
+        /// detecting a version for. See issue #233.
+        /// </summary>
+        internal void RunVbrPreflightGate()
+        {
+            this.GetVbrVersion();
+        }
+
+        /// <summary>
         /// Detects the VBR version and required PowerShell version and gates on the PS 7.6+
         /// module requirement. Private: RunVbrPreflightGateIfTargeted() is the only caller,
         /// since it's the single choke point (reached from StartCollections(), itself reached
