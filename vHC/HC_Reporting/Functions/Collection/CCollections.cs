@@ -320,7 +320,9 @@ namespace VeeamHealthCheck.Functions.Collection
                         {
                             // DynamicFallback() only proves the local Veeam.Backup.PowerShell
                             // module is importable - it never calls DetectVbrVersion(), so
-                            // CGlobals.VBRMAJORVERSION stays 0 unless detected here. See #233.
+                            // CGlobals.VBRMAJORVERSION stays 0 unless detected here. Left at 0,
+                            // PSInvoker picks PowerShell 5.1 against a VBR 13+ target, which then
+                            // fails deep inside the collection script's Import-Module call. #233.
                             using var functions = new CClientFunctions();
                             functions.RunVbrPreflightGateForDynamicFallback();
                         }
