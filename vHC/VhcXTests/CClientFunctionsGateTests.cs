@@ -10,12 +10,14 @@ namespace VhcXTests
 {
     /// <summary>
     /// Regression tests for the PS 7.6+ module preflight gate's call-site contract: GetVbrVersion
-    /// (gated: detect + hard-exit-if-too-old) must only ever be called from
-    /// RunVbrPreflightGateIfTargeted(), reached from StartCollections() - the single choke point
-    /// immediately before real PowerShell-module-based collection, and only when
-    /// CGlobals.EffectiveIsVbr is true. Every other caller (ModeCheck, RunHotfixDetector) must use
-    /// the ungated DetectVbrVersion so a too-old-PowerShell machine doesn't hard-exit a feature
-    /// that never touches Veeam.Backup.PowerShell.
+    /// (gated: detect + hard-exit-if-too-old) must only ever be called through one of its two
+    /// internal gate wrappers - RunVbrPreflightGateIfTargeted(), reached from StartCollections()
+    /// when CGlobals.EffectiveIsVbr is true, or RunVbrPreflightGateForDynamicFallback(), the
+    /// unconditional variant CCollections.ExecPSScripts() calls once its own DynamicFallback()
+    /// has confirmed VBR as the target by a different means (issue #233) - never called
+    /// directly. Every other caller (ModeCheck, RunHotfixDetector) must use the ungated
+    /// DetectVbrVersion so a too-old-PowerShell machine doesn't hard-exit a feature that never
+    /// touches Veeam.Backup.PowerShell.
     ///
     /// Naming convention: [Method]_[Scenario]_[Expected].
     /// </summary>
@@ -56,8 +58,9 @@ namespace VhcXTests
         public void GetVbrVersion_MethodVisibility_IsPrivate()
         {
             // Regression guard for the root cause of the ModeCheck() hard-exit-on-GUI-startup
-            // bug: GetVbrVersion must stay private so RunVbrPreflightGateIfTargeted() remains
-            // its only possible caller.
+            // bug: GetVbrVersion must stay private so it's only reachable through its two
+            // internal gate wrappers (RunVbrPreflightGateIfTargeted() and
+            // RunVbrPreflightGateForDynamicFallback()), never called directly.
             var method = typeof(CClientFunctions).GetMethod(
                 "GetVbrVersion", BindingFlags.NonPublic | BindingFlags.Instance);
 
@@ -72,8 +75,8 @@ namespace VhcXTests
             // leave VBRMAJORVERSION at 0 whether or not the !IMPORT guard actually skipped it, so
             // this can't distinguish "gate correctly skipped" from "gate ran and failed anyway".
             // The real regression guard for the gate's call-site contract is
-            // GetVbrVersion_MethodVisibility_IsPrivate below, which makes
-            // RunVbrPreflightGateIfTargeted() the only possible caller at compile time.
+            // GetVbrVersion_MethodVisibility_IsPrivate below, which confirms GetVbrVersion() is
+            // only reachable through its two internal gate wrappers at compile time.
             CGlobals.IMPORT = true;
 
             using var functions = new CClientFunctions();

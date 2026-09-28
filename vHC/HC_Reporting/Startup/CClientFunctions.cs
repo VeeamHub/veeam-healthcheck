@@ -423,6 +423,10 @@ namespace VeeamHealthCheck.Startup
         /// catches only that expected failure, scoped to the DetectVbrVersion call, so an exception
         /// out of the hard-fail path (ValidatePowerShellVersionMeetsVbrRequirement) is never
         /// mistaken for it and swallowed here too.
+        /// Not the only caller of GetVbrVersion(): CCollections.ExecPSScripts() also calls the
+        /// unconditional RunVbrPreflightGateForDynamicFallback() once its own DynamicFallback()
+        /// has confirmed VBR as the target by a different means (a local module-import probe,
+        /// not EffectiveIsVbr) - see issue #233.
         /// </summary>
         internal void RunVbrPreflightGateIfTargeted()
         {
@@ -455,13 +459,15 @@ namespace VeeamHealthCheck.Startup
 
         /// <summary>
         /// Detects the VBR version and required PowerShell version and gates on the PS 7.6+
-        /// module requirement. Private: RunVbrPreflightGateIfTargeted() is the only caller,
-        /// since it's the single choke point (reached from StartCollections(), itself reached
-        /// from both the GUI Run button and every CLI run path) immediately before real
-        /// PowerShell-module-based collection begins, and only when EffectiveIsVbr is true.
-        /// Every other caller (ModeCheck, RunHotfixDetector, early CLI arg-parsing detection)
-        /// must call the ungated DetectVbrVersion instead, so a too-old-PowerShell machine
-        /// doesn't hard-exit a feature that never touches the Veeam.Backup.PowerShell module.
+        /// module requirement. Private: reachable only through its two internal gate wrappers -
+        /// RunVbrPreflightGateIfTargeted() (gated on EffectiveIsVbr, the choke point reached from
+        /// StartCollections() for both the GUI Run button and every CLI run path) and the
+        /// unconditional RunVbrPreflightGateForDynamicFallback() (called only from
+        /// CCollections.ExecPSScripts()'s DynamicFallback-confirmed-VBR branch, issue #233) -
+        /// never called directly. Every other caller (ModeCheck, RunHotfixDetector, early CLI
+        /// arg-parsing detection) must call the ungated DetectVbrVersion instead, so a
+        /// too-old-PowerShell machine doesn't hard-exit a feature that never touches the
+        /// Veeam.Backup.PowerShell module.
         /// Known limitation, not fixed here: when DetectVbrVersion fails (e.g. non-admin
         /// execution, where CRegReader.GetVbrVersionFilePath() returns null), we can't know
         /// whether the local VBR is 13+ at all, so ValidatePowerShellVersionMeetsVbrRequirement

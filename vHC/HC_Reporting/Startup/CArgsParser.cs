@@ -349,11 +349,14 @@ namespace VeeamHealthCheck.Startup
             else if (run)
             {
                 // The PS 7.6+ module gate is no longer called here. It's private on
-                // CClientFunctions and enforced exactly once, from StartCollections(), the single
-                // choke point every path below (import, remote, local) eventually reaches via
-                // FullRun -> CliRun -> StartPrimaryFunctions. Calling it here too used to run it
-                // unconditionally even for /import (which never reaches real collection) and
-                // spawn pwsh.exe a second time on the plain local /run path.
+                // CClientFunctions and enforced from StartCollections() - the choke point every
+                // path below (import, remote, local) eventually reaches via
+                // FullRun -> CliRun -> StartPrimaryFunctions - and, since issue #233, also from
+                // CCollections.ExecPSScripts()'s DynamicFallback-confirmed-VBR branch, for the
+                // Auto+remote+no-local-detection case StartCollections()'s own EffectiveIsVbr gate
+                // can't cover. Calling it here too used to run it unconditionally even for
+                // /import (which never reaches real collection) and spawn pwsh.exe a second time
+                // on the plain local /run path.
                 if (CGlobals.IMPORT)
                      result = this.FullRun(targetDir);
                 else if (CGlobals.REMOTEEXEC && CGlobals.REMOTEHOST == string.Empty)
