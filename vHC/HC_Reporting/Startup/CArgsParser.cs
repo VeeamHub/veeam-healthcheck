@@ -100,21 +100,19 @@ namespace VeeamHealthCheck.Startup
             }
 
             IntPtr hwnd = GetConsoleWindow();
-            if (hwnd == IntPtr.Zero)
-            {
-                return;
-            }
-
-            uint count = GetConsoleProcessList(new uint[2], 2);
-            bool hide = ShouldHideConsole(count);
-            CGlobals.Logger.Debug($"Console process count = {count}; hiding console = {hide}", false);
+            bool hasConsoleWindow = hwnd != IntPtr.Zero;
+            uint count = hasConsoleWindow ? GetConsoleProcessList(new uint[2], 2) : 0;
+            bool hide = ShouldHideConsole(hasConsoleWindow, count);
+            CGlobals.Logger.Debug($"Console window present = {hasConsoleWindow}; console process count = {count}; hiding console = {hide}", false);
             if (hide)
             {
                 ShowWindow(hwnd, SW_HIDE);
             }
         }
 
-        internal static bool ShouldHideConsole(uint consoleProcessCount) => consoleProcessCount == 1;
+        // Hide only when a console window exists and we are the sole process on it.
+        internal static bool ShouldHideConsole(bool hasConsoleWindow, uint consoleProcessCount) =>
+            hasConsoleWindow && consoleProcessCount == 1;
 
         private int ParseAllArgs(string[] args)
         {

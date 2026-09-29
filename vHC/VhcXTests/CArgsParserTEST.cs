@@ -874,13 +874,15 @@ namespace VhcXTests
         }
 
         [Theory]
-        [InlineData(0u, false)] // API failure / no console attached - never hide
-        [InlineData(1u, true)]  // only our process on the console: launched by double-click
-        [InlineData(2u, false)] // shell + us: launched from a terminal
-        [InlineData(5u, false)]
-        public void ShouldHideConsole_ConsoleProcessCount_HidesOnlyWhenSoleOwner(uint count, bool expected)
+        [InlineData(true, 0u, false)]  // API failure - never hide
+        [InlineData(true, 1u, true)]   // only our process on the console: launched by double-click
+        [InlineData(true, 2u, false)]  // shell + us: launched from a terminal
+        [InlineData(true, 5u, false)]
+        [InlineData(false, 1u, false)] // no console window (e.g. CreateNoWindow/DETACHED_PROCESS parent) - nothing to hide
+        [InlineData(false, 0u, false)]
+        public void ShouldHideConsole_WindowAndProcessCount_HidesOnlyWhenSoleOwnerOfARealConsole(bool hasConsoleWindow, uint count, bool expected)
         {
-            Assert.Equal(expected, CArgsParser.ShouldHideConsole(count));
+            Assert.Equal(expected, CArgsParser.ShouldHideConsole(hasConsoleWindow, count));
         }
     }
 }
