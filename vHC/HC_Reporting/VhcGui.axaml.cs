@@ -905,16 +905,6 @@ namespace VeeamHealthCheck
             CGlobals.Scrub = false;
         }
 
-        // Retained dead code from the real WPF file: not wired to any control
-        // event in either the original XAML or the Task 10 AXAML (scrubBox has
-        // no IsThreeState/Indeterminate wiring in either) - pre-existing, not
-        // introduced by this port.
-        private void HandleThirdState(object sender, RoutedEventArgs e)
-        {
-            this.functions.LogUIAction("Scrub 3rd state = false");
-            CGlobals.Scrub = false;
-        }
-
         private void explorerShowBox_Checked(object sender, RoutedEventArgs e)
         {
             this.functions.LogUIAction("Show Explorer = true");

@@ -20,7 +20,7 @@ Collection → Processing/Analysis → Report Generation
 |---|---|---|
 | `EntryPoint` | `Startup/EntryPoint.cs` | Main entry, handles single-file deployment |
 | `CArgsParser` | `Startup/CArgsParser.cs` | CLI argument parsing, routes to GUI or CLI mode |
-| `VhcGui` | `Startup/VhcGui.xaml.cs` | WPF GUI for interactive use |
+| `VhcGui` | `VhcGui.axaml.cs` | Avalonia GUI for interactive use |
 | `CGlobals` | `Common/CGlobals.cs` | Central static configuration — all execution flags and shared state |
 
 ### Data Collection
@@ -59,7 +59,7 @@ Each product has separate collection scripts, HTML compilers, and table renderer
 | Technology | Usage |
 |---|---|
 | **.NET 8.0** | Windows 7.0+ target |
-| **WPF** | GUI |
+| **Avalonia** | GUI |
 | **PowerShell 7 SDK** | Embedded script execution |
 | **CsvHelper** | CSV processing |
 | **DinkToPdf** | PDF export |

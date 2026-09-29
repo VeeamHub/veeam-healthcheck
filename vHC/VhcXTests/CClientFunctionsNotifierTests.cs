@@ -27,7 +27,7 @@ namespace VhcXTests
         }
 
         // A plain implementation of only the two Async primitives - exactly
-        // the shape WpfUiNotifier/AvaloniaUiNotifier use - rather than a Moq
+        // the shape AvaloniaUiNotifier uses - rather than a Moq
         // mock. Moq's proxy overrides every interface member, including C#
         // default interface methods, so calling Confirm(...) on a
         // Mock<IUiNotifier> where only ConfirmAsync(...) is set up does NOT
@@ -50,8 +50,8 @@ namespace VhcXTests
             // Locks in the shape Part 1/Part 2 depend on: an implementation
             // providing only the two Async members must make the
             // default-interface Confirm(...) wrapper work with zero extra
-            // code, exactly as WpfUiNotifier/AvaloniaUiNotifier only ever
-            // implement the two Async members.
+            // code, exactly as AvaloniaUiNotifier only ever
+            // implements the two Async members.
             var stubNotifier = new StubUiNotifier { ConfirmResult = true };
             CGlobals.Notifier = stubNotifier;
 

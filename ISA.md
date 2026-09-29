@@ -33,7 +33,7 @@ A field engineer runs `VeeamHealthCheck.exe /run` on a customer's Veeam server, 
 
 ## Constraints
 
-- **Runtime:** Currently .NET 8.0 targeting `net8.0-windows7.0`; planned upgrade to **.NET 10** (see Decisions 2026-05-15). WPF for GUI. PowerShell 7 SDK embedded for script execution. No Mono, no cross-compile of the main binary.
+- **Runtime:** Currently .NET 8.0 targeting `net8.0-windows7.0`; planned upgrade to **.NET 10** (see Decisions 2026-05-15). Avalonia for GUI. PowerShell 7 SDK embedded for script execution. No Mono, no cross-compile of the main binary.
 - **Deployment:** Single-file self-contained `.exe` packaged via `VeeamHealthCheck.zip`. Must run from an arbitrary directory without an installer.
 - **Privileges:** Runs at any privilege level. **Elevation is not required.** Limited-privilege runs surface a clearly-degraded capability set (e.g. WMI/SQL probes that need admin are skipped with a recorded reason) rather than hard-failing. Full-fidelity collection benefits from Veeam Backup Administrator role.
 - **Output isolation:** Default working directory `C:\temp\vHC`. No write outside the configured `outdir`. A specific free-disk-space minimum has not been measured against current report sizes — the historical "500 MB on `C:\`" figure was an initial guess and is flagged for re-measurement (see Decisions 2026-05-15).
@@ -111,7 +111,7 @@ Deliver a Windows executable that, when run on a host with Veeam VBR or VB365 in
 
 | name | description | satisfies | depends_on | parallelizable |
 |------|-------------|-----------|------------|----------------|
-| Entry & arg parsing | `Startup/EntryPoint.cs`, `Startup/CArgsParser.cs`, `Startup/VhcGui.xaml.cs` — routes between GUI and CLI, parses flags. | ISC-7, ISC-15, ISC-16, ISC-17 | — | yes |
+| Entry & arg parsing | `Startup/EntryPoint.cs`, `Startup/CArgsParser.cs`, `VhcGui.axaml.cs` — routes between GUI and CLI, parses flags. | ISC-7, ISC-15, ISC-16, ISC-17 | — | yes |
 | Mode detection | `CClientFunctions.ModeCheck()` — detects VBR vs VB365 by running processes. | ISC-7 | Entry & arg parsing | yes |
 | Collection — VBR | `Functions/Collection/` + `Tools/Scripts/HealthCheck/VBR/` PowerShell scripts; writes CSV to `C:\temp\vHC\Original\VBR\…`. | ISC-8, ISC-14, ISC-15 | Mode detection | yes |
 | Collection — VB365 | `Functions/Collection/` + `Tools/Scripts/HealthCheck/VB365/`. | ISC-9, ISC-15 | Mode detection | yes |
@@ -125,7 +125,7 @@ Deliver a Windows executable that, when run on a host with Veeam VBR or VB365 in
 | Remote execution | `/remote /host=<fqdn>` path through Collection. | ISC-14 | Collection (either) | no |
 | Import mode | `/import:<path>` — bypass collection, render from prior CSV. | ISC-13 | Data processing | yes |
 | CI/CD | `.github/workflows/ci-cd.yaml`, `codeql.yml` — build, .NET tests, Pester tests, CodeQL. | ISC-1, ISC-2, ISC-3, ISC-5, ISC-6 | — | yes |
-| Cross-platform test slice | `vHC/VhcXTests.CrossPlatform/` — portable unit tests for non-WPF logic. | ISC-4 | — | yes |
+| Cross-platform test slice | `vHC/VhcXTests.CrossPlatform/` — portable unit tests for logic that doesn't need the main project's Windows-targeted dependencies. | ISC-4 | — | yes |
 | Documentation site | MkDocs Material at `docs/` deployed to GitHub Pages via CI. | — | — | yes |
 
 ## Decisions

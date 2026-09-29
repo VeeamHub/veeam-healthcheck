@@ -35,7 +35,7 @@ namespace VhcXTests
         }
 
         // A plain implementation of only PromptAsync - exactly the shape
-        // WpfCredentialPrompter/AvaloniaCredentialPrompter use - rather than
+        // AvaloniaCredentialPrompter uses - rather than
         // a Moq mock. Moq's proxy overrides every interface member,
         // including C# default interface methods, so calling Prompt(...) on
         // a Mock<ICredentialPrompter> where only PromptAsync(...) is set up
