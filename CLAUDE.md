@@ -48,7 +48,7 @@ Collection → Processing/Analysis → Report Generation
 **Entry Point & Flow**
 - `vHC/HC_Reporting/Startup/EntryPoint.cs` - Main entry, handles single-file deployment
 - `vHC/HC_Reporting/Startup/CArgsParser.cs` - CLI argument parsing, routes to GUI or CLI mode
-- `vHC/HC_Reporting/Startup/VhcGui.xaml.cs` - WPF GUI for interactive use
+- `vHC/HC_Reporting/VhcGui.axaml.cs` - Avalonia GUI for interactive use
 
 **Global State**
 - `vHC/HC_Reporting/Common/CGlobals.cs` - Central static configuration class holding all execution flags, paths, and shared data
@@ -90,7 +90,7 @@ Each product has separate:
 ## Tech Stack
 
 - **.NET 8.0** targeting Windows 7.0+ (`net8.0-windows7.0`)
-- **WPF** for GUI
+- **Avalonia** for GUI
 - **PowerShell 7 SDK** for embedded script execution
 - **CsvHelper** for CSV processing
 - **xUnit + Moq** for testing

@@ -27,12 +27,9 @@ dotnet restore vHC/HC.sln
 # Build (debug)
 dotnet build vHC/HC.sln --configuration Debug
 
-# Run tests (Windows only — requires WPF/.NET Windows)
+# Run tests (Windows, macOS, Linux; Windows-only tests skip elsewhere)
 dotnet test vHC/VhcXTests/VhcXTests.csproj
 ```
-
-!!! note
-    Tests require Windows due to WPF dependencies. Non-Windows builds skip test compilation.
 
 ## Commit Convention
 

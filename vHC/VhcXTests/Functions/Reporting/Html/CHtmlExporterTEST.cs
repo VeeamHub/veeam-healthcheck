@@ -92,8 +92,8 @@ namespace VhcXTests.Functions.Reporting.Html
             Assert.Equal(1, result);
         }
 
-        // Note: OpenHtmlIfEnabled(true) cannot be easily tested as it tries to launch a browser
-        // and depends on WPF Application.Current.Dispatcher
+        // Note: OpenHtmlIfEnabled(true) cannot be easily tested as it shell-executes the report
+        // to launch a browser
 
         #endregion
 

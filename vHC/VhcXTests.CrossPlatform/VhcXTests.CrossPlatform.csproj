@@ -18,7 +18,8 @@
     <PackageReference Include="coverlet.collector" Version="3.2.0" />
   </ItemGroup>
 
-  <!-- Include source files directly instead of project reference to avoid WPF dependency -->
+  <!-- Include source files directly instead of a project reference: this project targets net10.0 and
+       cannot reference the net8.0-windows7.0 main project (which also brings in Avalonia and the PowerShell SDK) -->
   <ItemGroup>
     <Compile Include="..\HC_Reporting\Startup\CHostNameHelper.cs" Link="CHostNameHelper.cs" />
     <Compile Include="..\HC_Reporting\Functions\Reporting\Html\Shared\CHtmlBuilder.cs" Link="CHtmlBuilder.cs" />
