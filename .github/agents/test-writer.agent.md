@@ -372,6 +372,5 @@ namespace VhcXTests.Functions.Analysis
 ## Continuous Integration Notes
 
 - Tests must pass on Windows, macOS and Linux (Windows-only tests are marked `[WindowsOnlyFact]`)
-- Non-Windows builds skip test compilation with informational message
 - Run `dotnet test` locally before pushing changes
 - Integration tests may require elevated permissions for certain file operations
