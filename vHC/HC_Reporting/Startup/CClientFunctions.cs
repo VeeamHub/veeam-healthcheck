@@ -114,8 +114,10 @@ namespace VeeamHealthCheck.Startup
                 // PS5 for VBR 12-). ModeCheck() runs from the GUI constructor before the window
                 // is shown and doesn't itself lead into PowerShell-module-based collection, so it
                 // must use the ungated DetectVbrVersion, not GetVbrVersion - the PS 7.6+ module
-                // gate is enforced once, immediately before real collection, in StartCollections()
-                // via RunVbrPreflightGateIfTargeted().
+                // gate is enforced immediately before real collection, in StartCollections() via
+                // RunVbrPreflightGateIfTargeted() (or, for the Auto+remote+no-local-detection
+                // case that one can't cover, CCollections.ExecPSScripts()'s
+                // RunVbrPreflightGateForDynamicFallback() - see issue #233).
                 try { this.DetectVbrVersion(); }
                 catch (Exception ex)
                 {
@@ -253,8 +255,10 @@ namespace VeeamHealthCheck.Startup
         {
             if (!CGlobals.IMPORT)
             {
-                // Single authoritative PS 7.6+ module preflight gate - see
-                // RunVbrPreflightGateIfTargeted()'s doc comment for the full rationale.
+                // Primary PS 7.6+ module preflight gate for this call path - see
+                // RunVbrPreflightGateIfTargeted()'s doc comment for the full rationale, including
+                // the separate RunVbrPreflightGateForDynamicFallback() gate CCollections uses for
+                // the Auto+remote+no-local-detection case this one can't cover (issue #233).
                 this.RunVbrPreflightGateIfTargeted();
 
                 this.LOG.Info(this.logStart + "Init Collections", false);
@@ -408,7 +412,7 @@ namespace VeeamHealthCheck.Startup
         }
 
         /// <summary>
-        /// Single authoritative PS 7.6+ module preflight gate, run once from StartCollections()
+        /// Primary PS 7.6+ module preflight gate for the StartCollections() call path, run once
         /// right before the two branches that both lead into real PowerShell-module-based
         /// collection. Gated on EffectiveIsVbr - not IMPORT, not REMOTEEXEC - because this
         /// preflight (and the PowerShell-version check it wraps) is meaningless for a run that
@@ -423,6 +427,10 @@ namespace VeeamHealthCheck.Startup
         /// catches only that expected failure, scoped to the DetectVbrVersion call, so an exception
         /// out of the hard-fail path (ValidatePowerShellVersionMeetsVbrRequirement) is never
         /// mistaken for it and swallowed here too.
+        /// Not the only caller of GetVbrVersion(): CCollections.ExecPSScripts() also calls the
+        /// unconditional RunVbrPreflightGateForDynamicFallback() once its own DynamicFallback()
+        /// has confirmed VBR as the target by a different means (a local module-import probe,
+        /// not EffectiveIsVbr) - see issue #233.
         /// </summary>
         internal void RunVbrPreflightGateIfTargeted()
         {
@@ -435,14 +443,35 @@ namespace VeeamHealthCheck.Startup
         }
 
         /// <summary>
+        /// Unconditional variant of RunVbrPreflightGateIfTargeted(), for callers that have
+        /// already confirmed VBR is the target through some means other than EffectiveIsVbr -
+        /// currently only CCollections.ExecPSScripts()'s DynamicFallback-confirmed branch, where
+        /// a successful local Import-Module probe (TryModuleLoad(), not a remote connection)
+        /// established that the VBR module is installed locally and therefore VBR is worth
+        /// detecting a version for. Named for that one caller deliberately: unlike
+        /// RunVbrPreflightGateIfTargeted(), this has NO target check at all, so calling it from
+        /// anywhere that hasn't already confirmed VBR by some other means - e.g. ModeCheck(),
+        /// whose past misuse of the ungated path is exactly what RunVbrPreflightGateIfTargeted()'s
+        /// EffectiveIsVbr gate exists to prevent, see GetVbrVersion_MethodVisibility_IsPrivate's
+        /// test comment - can reach ValidatePowerShellVersionMeetsVbrRequirement() ->
+        /// Environment.Exit() for a run that never touches VBR at all. See issue #233.
+        /// </summary>
+        internal void RunVbrPreflightGateForDynamicFallback()
+        {
+            this.GetVbrVersion();
+        }
+
+        /// <summary>
         /// Detects the VBR version and required PowerShell version and gates on the PS 7.6+
-        /// module requirement. Private: RunVbrPreflightGateIfTargeted() is the only caller,
-        /// since it's the single choke point (reached from StartCollections(), itself reached
-        /// from both the GUI Run button and every CLI run path) immediately before real
-        /// PowerShell-module-based collection begins, and only when EffectiveIsVbr is true.
-        /// Every other caller (ModeCheck, RunHotfixDetector, early CLI arg-parsing detection)
-        /// must call the ungated DetectVbrVersion instead, so a too-old-PowerShell machine
-        /// doesn't hard-exit a feature that never touches the Veeam.Backup.PowerShell module.
+        /// module requirement. Private: reachable only through its two internal gate wrappers -
+        /// RunVbrPreflightGateIfTargeted() (gated on EffectiveIsVbr, the choke point reached from
+        /// StartCollections() for both the GUI Run button and every CLI run path) and the
+        /// unconditional RunVbrPreflightGateForDynamicFallback() (called only from
+        /// CCollections.ExecPSScripts()'s DynamicFallback-confirmed-VBR branch, issue #233) -
+        /// never called directly. Every other caller (ModeCheck, RunHotfixDetector, early CLI
+        /// arg-parsing detection) must call the ungated DetectVbrVersion instead, so a
+        /// too-old-PowerShell machine doesn't hard-exit a feature that never touches the
+        /// Veeam.Backup.PowerShell module.
         /// Known limitation, not fixed here: when DetectVbrVersion fails (e.g. non-admin
         /// execution, where CRegReader.GetVbrVersionFilePath() returns null), we can't know
         /// whether the local VBR is 13+ at all, so ValidatePowerShellVersionMeetsVbrRequirement

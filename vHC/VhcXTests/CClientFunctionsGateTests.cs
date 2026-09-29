@@ -10,12 +10,14 @@ namespace VhcXTests
 {
     /// <summary>
     /// Regression tests for the PS 7.6+ module preflight gate's call-site contract: GetVbrVersion
-    /// (gated: detect + hard-exit-if-too-old) must only ever be called from
-    /// RunVbrPreflightGateIfTargeted(), reached from StartCollections() - the single choke point
-    /// immediately before real PowerShell-module-based collection, and only when
-    /// CGlobals.EffectiveIsVbr is true. Every other caller (ModeCheck, RunHotfixDetector) must use
-    /// the ungated DetectVbrVersion so a too-old-PowerShell machine doesn't hard-exit a feature
-    /// that never touches Veeam.Backup.PowerShell.
+    /// (gated: detect + hard-exit-if-too-old) must only ever be called through one of its two
+    /// internal gate wrappers - RunVbrPreflightGateIfTargeted(), reached from StartCollections()
+    /// when CGlobals.EffectiveIsVbr is true, or RunVbrPreflightGateForDynamicFallback(), the
+    /// unconditional variant CCollections.ExecPSScripts() calls once its own DynamicFallback()
+    /// has confirmed VBR as the target by a different means (issue #233) - never called
+    /// directly. Every other caller (ModeCheck, RunHotfixDetector) must use the ungated
+    /// DetectVbrVersion so a too-old-PowerShell machine doesn't hard-exit a feature that never
+    /// touches Veeam.Backup.PowerShell.
     ///
     /// Naming convention: [Method]_[Scenario]_[Expected].
     /// </summary>
@@ -56,8 +58,9 @@ namespace VhcXTests
         public void GetVbrVersion_MethodVisibility_IsPrivate()
         {
             // Regression guard for the root cause of the ModeCheck() hard-exit-on-GUI-startup
-            // bug: GetVbrVersion must stay private so RunVbrPreflightGateIfTargeted() remains
-            // its only possible caller.
+            // bug: GetVbrVersion must stay private so it's only reachable through its two
+            // internal gate wrappers (RunVbrPreflightGateIfTargeted() and
+            // RunVbrPreflightGateForDynamicFallback()), never called directly.
             var method = typeof(CClientFunctions).GetMethod(
                 "GetVbrVersion", BindingFlags.NonPublic | BindingFlags.Instance);
 
@@ -72,8 +75,8 @@ namespace VhcXTests
             // leave VBRMAJORVERSION at 0 whether or not the !IMPORT guard actually skipped it, so
             // this can't distinguish "gate correctly skipped" from "gate ran and failed anyway".
             // The real regression guard for the gate's call-site contract is
-            // GetVbrVersion_MethodVisibility_IsPrivate below, which makes
-            // RunVbrPreflightGateIfTargeted() the only possible caller at compile time.
+            // GetVbrVersion_MethodVisibility_IsPrivate below, which confirms GetVbrVersion() is
+            // not callable from outside CClientFunctions.
             CGlobals.IMPORT = true;
 
             using var functions = new CClientFunctions();
@@ -197,6 +200,33 @@ namespace VhcXTests
             CGlobals.IsVbr = isVbr;
 
             Assert.Equal(expected, CGlobals.EffectiveIsVbr);
+        }
+
+        [Fact]
+        public void RunVbrPreflightGateForDynamicFallback_MethodExists_IsInternalInstanceMethodOnCClientFunctions()
+        {
+            // Shape/contract test only - deliberately does NOT invoke
+            // RunVbrPreflightGateForDynamicFallback(). Unlike every other gate test in this
+            // file, this method has no skip path: it's a one-line { this.GetVbrVersion(); }
+            // with no CGlobals state that can force it onto a safe branch, since CRegReader
+            // reads the real OS registry directly with no test seam. On a machine that
+            // genuinely has both a local VBR 13+ console and an under-versioned local pwsh
+            // (this repo's own lab/dev hardware included), actually running it would reach
+            // ValidatePowerShellVersionMeetsVbrRequirement() -> Environment.Exit() and kill the
+            // test host process outright. So this only confirms the method exists, is internal
+            // (same-assembly callable from CCollections), and takes no parameters - the
+            // one-line body is verified by code review. See #233.
+            // Includes Public in the query (unlike a plain NonPublic-only lookup) so that if
+            // this method were ever mistakenly made public, GetMethod would still find it and
+            // Assert.True(method.IsAssembly) below - not a misleading "method not found" from
+            // Assert.NotNull - is the assertion that actually catches the mistake.
+            var method = typeof(CClientFunctions).GetMethod(
+                "RunVbrPreflightGateForDynamicFallback",
+                BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance);
+
+            Assert.NotNull(method);
+            Assert.True(method.IsAssembly); // C# "internal" reports as Assembly via reflection
+            Assert.Empty(method.GetParameters());
         }
     }
 }
