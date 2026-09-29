@@ -872,5 +872,15 @@ namespace VhcXTests
 
             Assert.Null(ex);
         }
+
+        [Theory]
+        [InlineData(0u, false)] // API failure / no console attached - never hide
+        [InlineData(1u, true)]  // only our process on the console: launched by double-click
+        [InlineData(2u, false)] // shell + us: launched from a terminal
+        [InlineData(5u, false)]
+        public void ShouldHideConsole_ConsoleProcessCount_HidesOnlyWhenSoleOwner(uint count, bool expected)
+        {
+            Assert.Equal(expected, CArgsParser.ShouldHideConsole(count));
+        }
     }
 }

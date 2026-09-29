@@ -24,11 +24,16 @@ namespace VeeamHealthCheck.Startup
         [DllImport("kernel32.dll")]
         static extern IntPtr GetConsoleWindow();
 
+        // Returns the number of processes attached to the calling process's console,
+        // or 0 on failure (e.g. no console). If the buffer is too small it returns the
+        // required count without filling it, which is all we need.
+        [DllImport("kernel32.dll")]
+        static extern uint GetConsoleProcessList(uint[] processList, uint processCount);
+
         [DllImport("user32.dll")]
         static extern bool ShowWindow(IntPtr hWnd, int nCmdShow);
 
         const int SW_HIDE = 0;
-        const int SW_SHOW = 5;
 
         private readonly string[] args;
         private readonly CClientFunctions functions = new();
@@ -49,12 +54,12 @@ namespace VeeamHealthCheck.Startup
 
             if (this.args.Length == 0){
                 CGlobals.Logger.Debug("No arguments provided. Launching GUI", false);
-                return this.LaunchUi(this.Handle(), true);
+                return this.LaunchUi();
             }
             else if (this.args != null && this.args.Length > 0)
                 return this.ParseAllArgs(this.args);
             else
-                return this.LaunchUi(this.Handle(), false);
+                return this.LaunchUi();
         }
 
         private void LogInitialInfo()
@@ -66,7 +71,7 @@ namespace VeeamHealthCheck.Startup
             f.Dispose();
         }
 
-        private int LaunchUi(IntPtr handle, bool hide)
+        private int LaunchUi()
         {
             CGlobals.Logger.Info("Executing GUI", false);
             CGlobals.RunFullReport = true;
@@ -74,38 +79,43 @@ namespace VeeamHealthCheck.Startup
             CGlobals.Notifier = new AvaloniaUiNotifier();
             CGlobals.CredentialPrompter = new AvaloniaCredentialPrompter();
 
-            // if (hide)
-            //     ShowWindow(handle, SW_HIDE);
+            HideConsoleIfOwned();
             return AppBuilder.Configure<App>()
                 .UsePlatformDetect()
                 .LogToTrace()
                 .StartWithClassicDesktopLifetime(Array.Empty<string>());
         }
 
-        private IntPtr Handle()
+        // Double-clicking the exe makes Explorer create a fresh console with us as its
+        // only process; launching from cmd/pwsh/Terminal puts the shell on it too. Hide
+        // (not FreeConsole) so child processes inherit a hidden console instead of each
+        // allocating a visible new one.
+        private static void HideConsoleIfOwned()
         {
-            // GetConsoleWindow is a kernel32.dll P/Invoke — no console-window
-            // concept exists off Windows, so calling it there would throw
+            // The console P/Invokes are Windows-only; calling them elsewhere throws
             // DllNotFoundException.
-            return OperatingSystem.IsWindows() ? GetConsoleWindow() : IntPtr.Zero;
+            if (!OperatingSystem.IsWindows())
+            {
+                return;
+            }
+
+            IntPtr hwnd = GetConsoleWindow();
+            if (hwnd == IntPtr.Zero)
+            {
+                return;
+            }
+
+            uint count = GetConsoleProcessList(new uint[2], 2);
+            bool hide = ShouldHideConsole(count);
+            CGlobals.Logger.Debug($"Console process count = {count}; hiding console = {hide}", false);
+            if (hide)
+            {
+                ShowWindow(hwnd, SW_HIDE);
+            }
         }
 
-        // private int ParseZeroArgs()
-        // {
-        //    var pos = Console.GetCursorPosition();
-        //    CGlobals.Logger.Debug("pos = " + pos.ToString(), false);
-        //    if (pos == (0, 1) || pos == (0, 2))
-        //    {
-        //        CGlobals.Logger.Info("0s");
-        //         return LaunchUi(Handle(), true);
-        //    }
-        //    else
-        //    {
-        //        CGlobals.Logger.Info("not 0");
-        //        Console.WriteLine(CMessages.helpMenu);
-        //        return 0;
-        //    }
-        // }
+        internal static bool ShouldHideConsole(uint consoleProcessCount) => consoleProcessCount == 1;
+
         private int ParseAllArgs(string[] args)
         {
             bool run = false;
@@ -345,7 +355,7 @@ namespace VeeamHealthCheck.Startup
                 this.functions.RunHotfixDetector(_hfdPath, string.Empty);
             }
             else if (ui)
-                this.LaunchUi(this.Handle(), false);
+                this.LaunchUi();
             else if (run)
             {
                 // The PS 7.6+ module gate is no longer called here. It's private on
