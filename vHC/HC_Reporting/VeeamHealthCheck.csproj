@@ -54,24 +54,6 @@
 		<AssemblyFileVersionSettings>None.None.None.Increment</AssemblyFileVersionSettings>
 	</PropertyGroup>
 	<ItemGroup>
-		<Compile Remove="Functions\Reporting\Html\VBR\VbrTables\NewFolder\**" />
-		<Compile Remove="Softwares\**" />
-		<Compile Remove="Startup\GUI\**" />
-		<Compile Remove="VBO\**" />
-		<EmbeddedResource Remove="Functions\Reporting\Html\VBR\VbrTables\NewFolder\**" />
-		<EmbeddedResource Remove="Softwares\**" />
-		<EmbeddedResource Remove="Startup\GUI\**" />
-		<EmbeddedResource Remove="VBO\**" />
-		<None Remove="Functions\Reporting\Html\VBR\VbrTables\NewFolder\**" />
-		<None Remove="Softwares\**" />
-		<None Remove="Startup\GUI\**" />
-		<None Remove="VBO\**" />
-		<Page Remove="Functions\Reporting\Html\VBR\VbrTables\NewFolder\**" />
-		<Page Remove="Softwares\**" />
-		<Page Remove="Startup\GUI\**" />
-		<Page Remove="VBO\**" />
-	</ItemGroup>
-	<ItemGroup>
 		<Compile Remove="Functions\Reporting\DataTypes\NAS\CNasFileDataVmc.cs" />
 		<Compile Remove="Functions\Reporting\Html\VBR\VbrTables\Job Session Summary\JobSessionSummaryRow.cs" />
 	</ItemGroup>
@@ -168,13 +150,6 @@
 		<None Update="Veeam_HealthCheck_228x228.ico">
 			<CopyToOutputDirectory>Never</CopyToOutputDirectory>
 		</None>
-	</ItemGroup>
-	<ItemGroup>
-		<Folder Include="Functions\Reporting\CsvHandlers\Proxies\" />
-		<Folder Include="Functions\Reporting\CsvHandlers\Repositories\" />
-		<Folder Include="Functions\Reporting\DataTypes\NewFolder\" />
-		<Folder Include="Functions\Reporting\TableDatas\" />
-		<Folder Include="Resources\Localization\VBR\" />
 	</ItemGroup>
 	<Target Name="IncrementVersion" BeforeTargets="BeforeBuild">
 		<Message Text="Incrementing version..." Importance="High" />
