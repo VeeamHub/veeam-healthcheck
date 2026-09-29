@@ -874,15 +874,16 @@ namespace VhcXTests
         }
 
         [Theory]
-        [InlineData(true, 0u, false)]  // API failure - never hide
-        [InlineData(true, 1u, true)]   // only our process on the console: launched by double-click
-        [InlineData(true, 2u, false)]  // shell + us: launched from a terminal
-        [InlineData(true, 5u, false)]
-        [InlineData(false, 1u, false)] // no console window (e.g. CreateNoWindow/DETACHED_PROCESS parent) - nothing to hide
-        [InlineData(false, 0u, false)]
-        public void ShouldHideConsole_WindowAndProcessCount_HidesOnlyWhenSoleOwnerOfARealConsole(bool hasConsoleWindow, uint count, bool expected)
+        [InlineData(true, 0u, false, false)]  // API failure - never hide
+        [InlineData(true, 1u, false, true)]   // only our process on the console: launched by double-click
+        [InlineData(true, 2u, false, false)]  // shell + us: launched from a terminal
+        [InlineData(true, 5u, false, false)]
+        [InlineData(false, 1u, false, false)] // no console window (e.g. CreateNoWindow/DETACHED_PROCESS parent) - nothing to hide
+        [InlineData(false, 0u, false, false)]
+        [InlineData(true, 1u, true, false)]   // debugger launched us on a fresh console: keep the live log visible
+        public void ShouldHideConsole_WindowCountAndDebugger_HidesOnlyWhenSoleOwnerOfARealConsole(bool hasConsoleWindow, uint count, bool debuggerAttached, bool expected)
         {
-            Assert.Equal(expected, CArgsParser.ShouldHideConsole(hasConsoleWindow, count));
+            Assert.Equal(expected, CArgsParser.ShouldHideConsole(hasConsoleWindow, count, debuggerAttached));
         }
     }
 }

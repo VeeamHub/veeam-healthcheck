@@ -102,17 +102,20 @@ namespace VeeamHealthCheck.Startup
             IntPtr hwnd = GetConsoleWindow();
             bool hasConsoleWindow = hwnd != IntPtr.Zero;
             uint count = hasConsoleWindow ? GetConsoleProcessList(new uint[2], 2) : 0;
-            bool hide = ShouldHideConsole(hasConsoleWindow, count);
-            CGlobals.Logger.Debug($"Console window present = {hasConsoleWindow}; console process count = {count}; hiding console = {hide}", false);
+            bool debuggerAttached = System.Diagnostics.Debugger.IsAttached;
+            bool hide = ShouldHideConsole(hasConsoleWindow, count, debuggerAttached);
+            CGlobals.Logger.Debug($"Console window present = {hasConsoleWindow}; console process count = {count}; debugger attached = {debuggerAttached}; hiding console = {hide}", false);
             if (hide)
             {
                 ShowWindow(hwnd, SW_HIDE);
             }
         }
 
-        // Hide only when a console window exists and we are the sole process on it.
-        internal static bool ShouldHideConsole(bool hasConsoleWindow, uint consoleProcessCount) =>
-            hasConsoleWindow && consoleProcessCount == 1;
+        // Hide only when a console window exists and we are the sole process on it. A debugger
+        // (F5 from Visual Studio/Rider) launches us on a fresh console too, but a developer
+        // debugging wants the live console log, so never hide under a debugger.
+        internal static bool ShouldHideConsole(bool hasConsoleWindow, uint consoleProcessCount, bool debuggerAttached) =>
+            hasConsoleWindow && consoleProcessCount == 1 && !debuggerAttached;
 
         private int ParseAllArgs(string[] args)
         {
