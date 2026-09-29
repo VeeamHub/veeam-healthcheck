@@ -103,8 +103,9 @@ namespace VeeamHealthCheck.Startup
             bool hasConsoleWindow = hwnd != IntPtr.Zero;
             uint count = hasConsoleWindow ? GetConsoleProcessList(new uint[2], 2) : 0;
             bool debuggerAttached = System.Diagnostics.Debugger.IsAttached;
-            bool hide = ShouldHideConsole(hasConsoleWindow, count, debuggerAttached);
-            CGlobals.Logger.Debug($"Console window present = {hasConsoleWindow}; console process count = {count}; debugger attached = {debuggerAttached}; hiding console = {hide}", false);
+            bool consoleInputRequired = CGlobals.RunSecReport;
+            bool hide = ShouldHideConsole(hasConsoleWindow, count, debuggerAttached, consoleInputRequired);
+            CGlobals.Logger.Debug($"Console window present = {hasConsoleWindow}; console process count = {count}; debugger attached = {debuggerAttached}; console input required = {consoleInputRequired}; hiding console = {hide}", false);
             if (hide)
             {
                 ShowWindow(hwnd, SW_HIDE);
@@ -113,9 +114,12 @@ namespace VeeamHealthCheck.Startup
 
         // Hide only when a console window exists and we are the sole process on it. A debugger
         // (F5 from Visual Studio/Rider) launches us on a fresh console too, but a developer
-        // debugging wants the live console log, so never hide under a debugger.
-        internal static bool ShouldHideConsole(bool hasConsoleWindow, uint consoleProcessCount, bool debuggerAttached) =>
-            hasConsoleWindow && consoleProcessCount == 1 && !debuggerAttached;
+        // debugging wants the live console log, so never hide under a debugger. /security
+        // (CGlobals.RunSecReport) with a remote host prompts for credentials via
+        // CImpersonation's Console.ReadLine/ReadKey even in GUI mode, and an invisible
+        // console would look like a hang, so keep the console visible for that run mode.
+        internal static bool ShouldHideConsole(bool hasConsoleWindow, uint consoleProcessCount, bool debuggerAttached, bool consoleInputRequired) =>
+            hasConsoleWindow && consoleProcessCount == 1 && !debuggerAttached && !consoleInputRequired;
 
         private int ParseAllArgs(string[] args)
         {
