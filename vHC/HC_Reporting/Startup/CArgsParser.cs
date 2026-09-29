@@ -88,8 +88,11 @@ namespace VeeamHealthCheck.Startup
 
         // Double-clicking the exe makes Explorer create a fresh console with us as its
         // only process; launching from cmd/pwsh/Terminal puts the shell on it too. Hide
-        // (not FreeConsole) so child processes inherit a hidden console instead of each
-        // allocating a visible new one.
+        // rather than FreeConsole: a child started with UseShellExecute=false and
+        // CreateNoWindow=false (the local VB365 MFA check) inherits our console, so
+        // detaching it would make that child allocate its own visible console. Children
+        // with CreateNoWindow=true, and UseShellExecute=true ones (ShellExecuteEx makes
+        // its own console), get a console of their own either way.
         private static void HideConsoleIfOwned()
         {
             // The console P/Invokes are Windows-only; calling them elsewhere throws
