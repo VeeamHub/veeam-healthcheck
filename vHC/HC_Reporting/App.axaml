@@ -51,15 +51,6 @@
                          saturated green was chosen for visual weight, not legibility. -->
                     <SolidColorBrush x:Key="SegmentSelectedBrush">#5BC98A</SolidColorBrush>
                     <SolidColorBrush x:Key="ListSelectedTintBrush">#2600B336</SolidColorBrush>
-                    <SolidColorBrush x:Key="CautionBackgroundBrush">#FFF8E1</SolidColorBrush>
-                    <SolidColorBrush x:Key="CautionBorderBrush">#FFC107</SolidColorBrush>
-                    <!-- AccentBrush (#00B336) on this theme's CautionBackgroundBrush (#FFF8E1)
-                         computes to ~2.6:1, failing WCAG AA (4.5:1) for the kbLink hyperlink -
-                         found when a code-quality review computed contrast for every brush
-                         pairing actually used in the app, not just the ones the design spec
-                         happened to check. This darker green (AccentPressedBrush's own value)
-                         computes to ~5.2:1 against the same background. -->
-                    <SolidColorBrush x:Key="CautionLinkBrush">#007A25</SolidColorBrush>
                 </ResourceDictionary>
                 <ResourceDictionary x:Key="Dark">
                     <SolidColorBrush x:Key="PageBackgroundBrush">#0F172A</SolidColorBrush>
@@ -76,13 +67,6 @@
                          SegmentSelectedBrush - not a contrast fix. -->
                     <SolidColorBrush x:Key="SegmentSelectedBrush">#3ECB74</SolidColorBrush>
                     <SolidColorBrush x:Key="ListSelectedTintBrush">#2600D647</SolidColorBrush>
-                    <SolidColorBrush x:Key="CautionBackgroundBrush">#332B14</SolidColorBrush>
-                    <SolidColorBrush x:Key="CautionBorderBrush">#8A6D1F</SolidColorBrush>
-                    <!-- AccentBrush (#00D647) already computes to ~7.2:1 against this theme's
-                         CautionBackgroundBrush - no contrast problem here, only in Light (see
-                         that dictionary's CautionLinkBrush comment). Kept distinct from
-                         AccentBrush anyway so both themes reference the same named resource. -->
-                    <SolidColorBrush x:Key="CautionLinkBrush">#00D647</SolidColorBrush>
                 </ResourceDictionary>
             </ResourceDictionary.ThemeDictionaries>
         </ResourceDictionary>
@@ -153,21 +137,6 @@
         <Style Selector="Button.secondary:disabled /template/ ContentPresenter">
             <Setter Property="Background" Value="#66808080" />
             <Setter Property="TextElement.Foreground" Value="{DynamicResource SecondaryTextBrush}" />
-        </Style>
-
-        <Style Selector="Button.link">
-            <Setter Property="Background" Value="Transparent" />
-            <Setter Property="BorderThickness" Value="0" />
-            <Setter Property="Foreground" Value="{DynamicResource AccentBrush}" />
-            <Setter Property="Padding" Value="0" />
-            <Setter Property="Cursor" Value="Hand" />
-            <Setter Property="FontSize" Value="12" />
-        </Style>
-        <Style Selector="Button.link:pointerover /template/ ContentPresenter">
-            <Setter Property="Background" Value="Transparent" />
-        </Style>
-        <Style Selector="Button.link:pressed /template/ ContentPresenter">
-            <Setter Property="Background" Value="Transparent" />
         </Style>
 
         <!-- Tab header buttons -->
