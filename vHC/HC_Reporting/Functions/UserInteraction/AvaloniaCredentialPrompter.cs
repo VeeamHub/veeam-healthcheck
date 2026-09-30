@@ -15,8 +15,9 @@ namespace VeeamHealthCheck.Functions.UserInteraction
         {
             return await Dispatcher.UIThread.InvokeAsync(async () =>
             {
+                var owner = AvaloniaHost.CurrentOwner();
                 var dialog = new CredentialPromptWindow(host);
-                bool accepted = await dialog.ShowDialog<bool>(AvaloniaHost.MainWindow);
+                bool accepted = await dialog.ShowDialog<bool>(owner);
 
                 if (!accepted)
                 {

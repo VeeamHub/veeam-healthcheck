@@ -19,8 +19,9 @@ namespace VeeamHealthCheck.Functions.UserInteraction
         {
             await Dispatcher.UIThread.InvokeAsync(async () =>
             {
+                var owner = AvaloniaHost.CurrentOwner();
                 var dialog = new NotifierDialog(message, title, isConfirm: false);
-                await dialog.ShowDialog<bool>(AvaloniaHost.MainWindow);
+                await dialog.ShowDialog<bool>(owner);
             });
         }
 
@@ -28,8 +29,9 @@ namespace VeeamHealthCheck.Functions.UserInteraction
         {
             return await Dispatcher.UIThread.InvokeAsync(async () =>
             {
+                var owner = AvaloniaHost.CurrentOwner();
                 var dialog = new NotifierDialog(message, title, isConfirm: true);
-                return await dialog.ShowDialog<bool>(AvaloniaHost.MainWindow);
+                return await dialog.ShowDialog<bool>(owner);
             });
         }
     }
