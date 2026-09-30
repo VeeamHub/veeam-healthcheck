@@ -38,6 +38,8 @@ dotnet test vHC/VhcXTests/VhcXTests.csproj
 
 Use [Conventional Commits](https://www.conventionalcommits.org/) — `feat:`, `fix:`, `chore:`, `ci:`, `test:`, `docs:`. Feature commits (`feat:`) appear in the auto-generated [Feature Timeline](timeline.md).
 
+The prefix also decides the next release version: `feat:` bumps the minor version, `type!:` or a `BREAKING CHANGE:` footer bumps the major version, and everything else bumps the patch. If your PR may be squash-merged, make the PR title a Conventional Commit, because the title is what gets read. The `Commit Lint` check on PRs only warns; it never blocks a merge.
+
 ## License
 
 By contributing, you agree that your contributions will be licensed under the project's [MIT License](https://github.com/VeeamHub/veeam-healthcheck/blob/master/LICENSE).
