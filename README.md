@@ -29,6 +29,10 @@
 > [!NOTE]
 > This is a community-supported tool from [VeeamHub](https://github.com/VeeamHub) and is not an officially supported Veeam product. It does not phone home or communicate with anything beyond your Veeam infrastructure components.
 
+<p align="center">
+  <img src="docs/images/vhc-gui-light_dark.png" alt="The Veeam Health Check GUI in light and dark themes, showing the Ad-hoc Health Check tab" width="700">
+</p>
+
 ## What It Does
 
 Veeam Health Check is a lightweight Windows utility that analyzes your **Veeam Backup & Replication (VBR)** or **Veeam Backup for Microsoft 365 (VB365)** installation and produces a detailed, single-page HTML report covering:
