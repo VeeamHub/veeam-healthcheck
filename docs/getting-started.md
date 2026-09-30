@@ -27,7 +27,7 @@ No installer. Single executable. The only prerequisite is PowerShell 7 where you
 
 === "GUI"
     1. Launch `VeeamHealthCheck.exe` as Administrator (running it with no arguments, or with `/gui`, opens the GUI)
-    2. On the **Ad-hoc Health Check** tab, pick the server, the **Product Type** (*Auto-detect*, *VBR*, *VB365*, or *Both*), and the **Collection Period** (**7**, **30**, or **90 Days**), then set the export and anonymization checkboxes
+    2. On the **Ad-hoc Health Check** tab, pick the server, the **Product Type** (*Auto-detect*, *VBR*, *VB365*, or *Both*), and the **Collection Period** (**7**, **30**, or **90 Days**), set the **Output path** (default `C:\temp\vHC`), then choose the export, collection, and privacy options
     3. Click **Accept Terms**, then **Run**
     4. Review the generated report
 
