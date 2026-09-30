@@ -15,7 +15,7 @@ All contributions to this repository must be signed as described in the [Develop
 1. Fork the repository
 2. Create a feature branch from `dev`
 3. Write your change with tests where applicable
-4. Follow the [test naming convention](architecture/index.md#testing): `[MethodUnderTest]_[Scenario]_[ExpectedBehavior]`
+4. Follow the test naming convention: `[MethodUnderTest]_[Scenario]_[ExpectedBehavior]`
 5. Open a pull request against `dev` (`master` is the release branch and only takes release PRs from `dev`)
 
 ## Development Setup
