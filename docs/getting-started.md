@@ -95,19 +95,19 @@ Credentials are prompted and stored securely in Windows Credential Manager.
 
 For non-interactive runs (CI, scripts, running across many VBR servers) supply credentials
 with a **credfile** instead of an interactive prompt. A credfile is a JSON map of
-host → `{ Username, PasswordBase64 }`, where `PasswordBase64` is the base64 of the
+host → `{ username, passwordBase64 }`, where `passwordBase64` is the base64 of the
 UTF‑8 plaintext password. One file can hold credentials for an entire fleet:
 
 ```json
 {
-  "vbr01.corp.local": { "Username": "svc-vhc", "PasswordBase64": "<base64-pw>" },
-  "vbr02.corp.local": { "Username": "svc-vhc", "PasswordBase64": "<base64-pw>" },
-  "vbr15.corp.local": { "Username": "svc-vhc", "PasswordBase64": "<base64-pw>" }
+  "vbr01.corp.local": { "username": "svc-vhc", "passwordBase64": "<base64-pw>" },
+  "vbr02.corp.local": { "username": "svc-vhc", "passwordBase64": "<base64-pw>" },
+  "vbr15.corp.local": { "username": "svc-vhc", "passwordBase64": "<base64-pw>" }
 }
 ```
 
 ```powershell
-# generate a PasswordBase64 value
+# generate a passwordBase64 value
 [Convert]::ToBase64String([Text.Encoding]::UTF8.GetBytes($plaintextPassword))
 
 # run unattended against one host using the credfile
