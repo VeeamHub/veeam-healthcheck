@@ -142,10 +142,14 @@ function Assert-VhcVersionOverride {
     [CmdletBinding()]
     param([Parameter(Mandatory)][string]$Override, [version]$BaseTagVersion)
 
-    if ($Override -notmatch '^\d+\.\d+\.\d+\.\d+$') {
-        throw "Version override '$Override' must be four numeric parts (Major.Minor.Patch.Revision)."
+    $friendly = "Version override '$Override' must be four numeric parts (Major.Minor.Patch.Revision)."
+    # [0-9], not \d (non-ASCII digits); the cast also fails when a part overflows Int32.
+    if ($Override -notmatch '^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$') { throw $friendly }
+    try {
+        $v = [version]$Override
+    } catch {
+        throw $friendly
     }
-    $v = [version]$Override
     if ($null -ne $BaseTagVersion -and $v -le $BaseTagVersion) {
         throw "Version override $Override is not above the last GA version $BaseTagVersion."
     }
@@ -166,7 +170,10 @@ function Invoke-VhcGit {
     } finally {
         Remove-Item -LiteralPath $errFile -Force -ErrorAction SilentlyContinue
     }
-    if ($exit -ne 0) { throw "git $($Arguments -join ' ') failed: $(@($out) -join ' ') $errText".TrimEnd() }
+    if ($exit -ne 0) {
+        $detail = ((@($out) -join ' ') + ' ' + $errText).Trim()
+        throw "git $($Arguments -join ' ') failed: $detail"
+    }
     $out
 }
 

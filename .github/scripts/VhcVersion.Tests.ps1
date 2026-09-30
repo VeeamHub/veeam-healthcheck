@@ -154,6 +154,12 @@ Describe 'Assert-VhcVersionOverride' {
     It 'rejects a non four-part version' {
         { Assert-VhcVersionOverride -Override '3.2.0' } | Should -Throw '*four numeric parts*'
     }
+    It 'rejects an override whose numbers overflow a version with the friendly error' {
+        { Assert-VhcVersionOverride -Override '99999999999.0.0.1' } | Should -Throw '*four numeric parts*'
+    }
+    It 'rejects an override with non-ASCII digits with the friendly error' {
+        { Assert-VhcVersionOverride -Override "$([char]0x0663).0.0.1" } | Should -Throw '*four numeric parts*'
+    }
     It 'rejects a version not above the last GA' {
         { Assert-VhcVersionOverride -Override '3.1.0.240' -BaseTagVersion ([version]'3.1.0.240') } | Should -Throw '*not above*'
     }
@@ -289,7 +295,14 @@ Describe 'Get-VhcVersionInfo (synthetic repos)' {
 
     It 'still throws with git output when git fails' {
         $script:repo = New-TestRepo
-        { Invoke-VhcGit -RepoPath $repo -Arguments @('log', 'no-such-ref', '--') } | Should -Throw '*failed*'
+        { Invoke-VhcGit -RepoPath $repo -Arguments @('log', 'no-such-ref', '--') } | Should -Throw '*no-such-ref*fatal*'
+    }
+    It 'does not leave a double space in the git failure message when stdout is empty' {
+        $script:repo = New-TestRepo
+        $message = ''
+        try { Invoke-VhcGit -RepoPath $repo -Arguments @('log', 'no-such-ref', '--') } catch { $message = $_.Exception.Message }
+        $message | Should -Match 'fatal'
+        $message.Contains('  ') | Should -Be $false
     }
 }
 
