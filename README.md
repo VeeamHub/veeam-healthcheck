@@ -61,6 +61,7 @@ Export as **HTML**, **PDF**, or **PowerPoint**. Use **scrubbed mode** to anonymi
 
 - Run as an **elevated user** with **Backup Administrator** role
 - Must execute on a system with VBR Console or VB365 installed
+- **PowerShell 7** on the machine running the tool, even for `/remote` runs. Required for VBR v13, where the minimum version comes from the installed VBR PowerShell module (7.6 or later for current v13 builds). VBR v12.3 can run under Windows PowerShell 5.1.
 - **500 MB** free disk space on `C:\` (default output: `C:\temp\vHC`)
 - Veeam Cloud Service Provider servers are **not** supported
 
@@ -131,7 +132,7 @@ VeeamHealthCheck.exe /import:D:\Exports\VBR-data
 | **"Access Denied"** | Run as Administrator with Backup Administrator role |
 | **"No Veeam installation detected"** | Tool must run on a system with VBR Console or VB365 installed |
 | **Low disk space errors** | Ensure `C:\` has at least 500 MB free |
-| **PowerShell errors** | Verify PowerShell 7+ is installed |
+| **PowerShell errors** | Verify PowerShell 7 is installed and meets the VBR module's minimum version (7.6+ for VBR v13). In silent mode this is exit code 8 |
 
 ## Building from Source
 
