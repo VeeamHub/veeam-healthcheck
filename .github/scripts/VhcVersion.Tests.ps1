@@ -49,6 +49,14 @@ Describe 'Select-VhcHighestTag' {
     It 'includes -dev tags when asked' {
         (Select-VhcHighestTag -Tags 'v3.0.1.193', 'v3.0.1.225-dev' -IncludeDev).Name | Should -Be 'v3.0.1.225-dev'
     }
+    It 'skips a stray tag whose numbers do not fit a version instead of throwing' {
+        (Select-VhcHighestTag -Tags 'v99999999999.0.0.1', 'v3.0.1.193').Name | Should -Be 'v3.0.1.193'
+        Select-VhcHighestTag -Tags 'v99999999999.0.0.1' | Should -BeNullOrEmpty
+        Select-VhcHighestTag -Tags 'v3.0.1.193', 'v99999999999.0.0.1-dev' -IncludeDev | ForEach-Object Name | Should -Be 'v3.0.1.193'
+    }
+    It 'does not accept non-ASCII digits in a tag' {
+        Select-VhcHighestTag -Tags "v$([char]0x0663).0.1.193" | Should -BeNullOrEmpty
+    }
     It 'returns $null when nothing matches' {
         Select-VhcHighestTag -Tags 'v3.0.2-beta.1' | Should -BeNullOrEmpty
         Select-VhcHighestTag -Tags @() | Should -BeNullOrEmpty
@@ -95,6 +103,12 @@ Describe 'Get-VhcReleaseAs' {
             [pscustomobject]@{ Subject = 'a'; Body = "x`n`nRelease-As: 3.4.0" },
             [pscustomobject]@{ Subject = 'b'; Body = "Release-As: 4.0.0`r`n" })
         $r | Should -Be ([version]'4.0.0')
+    }
+    It 'throws the malformed error for a footer whose numbers do not fit a version' {
+        { Get-VhcReleaseAs -Commits @([pscustomobject]@{ Subject = 'a'; Body = 'Release-As: 99999999999.0.0' }) } | Should -Throw '*Malformed Release-As*'
+    }
+    It 'does not accept non-ASCII digits in a footer' {
+        { Get-VhcReleaseAs -Commits @([pscustomobject]@{ Subject = 'a'; Body = "Release-As: $([char]0x0663).0.0" }) } | Should -Throw '*Malformed Release-As*'
     }
     It 'throws on a malformed footer' {
         { Get-VhcReleaseAs -Commits @([pscustomobject]@{ Subject = 'a'; Body = 'Release-As: v4' }) } | Should -Throw '*Malformed Release-As*'

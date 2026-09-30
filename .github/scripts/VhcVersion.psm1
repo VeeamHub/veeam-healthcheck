@@ -13,8 +13,9 @@
 
 Set-StrictMode -Version Latest
 
-$script:GaTagPattern  = '^v(\d+)\.(\d+)\.(\d+)\.(\d+)$'
-$script:AnyTagPattern = '^v(\d+)\.(\d+)\.(\d+)\.(\d+)(-dev)?$'
+# [0-9], not \d: \d also matches non-ASCII Unicode digits, which [version] cannot parse.
+$script:GaTagPattern  = '^v([0-9]+)\.([0-9]+)\.([0-9]+)\.([0-9]+)$'
+$script:AnyTagPattern = '^v([0-9]+)\.([0-9]+)\.([0-9]+)\.([0-9]+)(-dev)?$'
 $script:BumpRank      = @{ none = 0; patch = 1; minor = 2; major = 3 }
 $script:CommitTypes   = 'feat|fix|docs|style|refactor|perf|test|build|ci|chore|revert'
 
@@ -24,10 +25,13 @@ function ConvertTo-VhcTagInfo {
 
     $m = [regex]::Match($Name, $Pattern)
     if (-not $m.Success) { return $null }
-    [pscustomobject]@{
-        Name    = $Name
-        Version = [version]"$($m.Groups[1].Value).$($m.Groups[2].Value).$($m.Groups[3].Value).$($m.Groups[4].Value)"
+    # A stray tag with a part above Int32.MaxValue does not fit a [version]: skip it, do not abort.
+    try {
+        $version = [version]"$($m.Groups[1].Value).$($m.Groups[2].Value).$($m.Groups[3].Value).$($m.Groups[4].Value)"
+    } catch {
+        return $null
     }
+    [pscustomobject]@{ Name = $Name; Version = $version }
 }
 
 function Select-VhcHighestTag {
@@ -72,10 +76,14 @@ function Get-VhcReleaseAs {
     foreach ($c in $Commits) {
         foreach ($line in ("$($c.Body)" -split "`r?`n")) {
             if ($line -notmatch '^\s*Release-As\s*:') { continue }
-            if ($line -notmatch '^Release-As: (\d+)\.(\d+)\.(\d+)\s*$') {
+            if ($line -notmatch '^Release-As: ([0-9]+)\.([0-9]+)\.([0-9]+)\s*$') {
                 throw "Malformed Release-As footer '$($line.Trim())' (expected 'Release-As: X.Y.Z')."
             }
-            $v = [version]"$($Matches[1]).$($Matches[2]).$($Matches[3])"
+            try {
+                $v = [version]"$($Matches[1]).$($Matches[2]).$($Matches[3])"
+            } catch {
+                throw "Malformed Release-As footer '$($line.Trim())' (expected 'Release-As: X.Y.Z' with numbers that fit a version)."
+            }
             if ($null -eq $highest -or $v -gt $highest) { $highest = $v }
         }
     }
