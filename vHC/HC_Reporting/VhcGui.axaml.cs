@@ -31,10 +31,15 @@ namespace VeeamHealthCheck
         private readonly CClientFunctions functions = new();
         private bool _modeCheckFailed;
 
-        // Bumped by every InitializeMonitorStatus call so a slow, older probe (the
-        // scheduled-task check can take up to 30 s) cannot overwrite the fresher
-        // state a later refresh has already applied.
+        // Bumped by every InitializeMonitorStatus call AND by every monitor action
+        // handler, so a slow, older probe (the scheduled-task check can take up to
+        // 30 s) cannot overwrite fresher state: neither a later refresh's result nor
+        // the disabled buttons / "in progress" text an action set after it started
+        // (which would re-enable Run Now mid-run and allow a second concurrent run).
         private int _monitorRefreshSeq;
+
+        private void InvalidateMonitorRefreshes() =>
+            System.Threading.Interlocked.Increment(ref _monitorRefreshSeq);
 
         private const string LocalhostName = "localhost";
 
@@ -1238,6 +1243,7 @@ namespace VeeamHealthCheck
                 return;
             }
 
+            this.InvalidateMonitorRefreshes();
             monitorQuickSetupBtn.IsEnabled = false;
             monitorStatusText.Text = VbrLocalizationHelper.GuiMonitorInstalling;
 
@@ -1265,6 +1271,7 @@ namespace VeeamHealthCheck
 
         private void monitorVhcSetupBtn_Click(object sender, RoutedEventArgs e)
         {
+            this.InvalidateMonitorRefreshes();
             monitorVhcSetupBtn.IsEnabled = false;
             monitorStatusText.Text = VbrLocalizationHelper.GuiMonitorInstallingFromVhc;
 
@@ -1292,6 +1299,7 @@ namespace VeeamHealthCheck
 
         private void monitorRunBtn_Click(object sender, RoutedEventArgs e)
         {
+            this.InvalidateMonitorRefreshes();
             monitorRunBtn.IsEnabled = false;
             monitorLastRunText.Text = VbrLocalizationHelper.GuiMonitorCheckInProgress;
             monitorLastRunText.IsVisible = true;
