@@ -4,11 +4,11 @@
 
 **Goal:** Compute every release version (`Major.Minor.Patch.Revision`) from Conventional Commits and the last GA tag in one shared script, used by all four workflows that need a version, and tag releases on the commit that was built.
 
-**Architecture:** A PowerShell module (`VhcVersion.psm1`) holds pure, unit-tested functions plus a thin git layer; a CLI wrapper (`Get-VhcVersion.ps1`) publishes the result as GitHub step outputs. `Base Tag` is the highest reachable suffix-less GA tag, not `git describe`'s nearest tag. The csproj `Major.Minor` is a floor, `Release-As:` footers override. Commit-lint and a no-build version-preview workflow ship with it.
+**Architecture:** A PowerShell module (`VhcVersion.psm1`) holds pure, unit-tested functions plus a thin git layer; a CLI wrapper (`Get-VhcVersion.ps1`) publishes the result as GitHub step outputs. `Base Tag` is the highest suffix-less GA tag among all fetched tags (not `git describe`'s nearest tag, and not limited to tags reachable from the ref, because `dev` cannot reach GA tags on `master`'s merge commits). The csproj `Major.Minor` is a floor, `Release-As:` footers override. Commit-lint and a no-build version-preview workflow ship with it.
 
 **Tech Stack:** PowerShell 7 (`pwsh`), Pester 5+, git, GitHub Actions (`windows-latest`, `ubuntu-latest`), `actionlint`.
 
-**Decisions and rationale:** [ADR 0031](../adr/0031-commit-driven-four-part-versioning-with-csproj-floor.md), [ADR 0032](../adr/0032-base-tag-is-highest-reachable-ga-tag.md), terms in [`CONTEXT.md`](../../CONTEXT.md), and the settled thread on issue #244. Do not re-litigate them here.
+**Decisions and rationale:** [ADR 0031](../adr/0031-commit-driven-four-part-versioning-with-csproj-floor.md), [ADR 0032](../adr/0032-base-tag-is-highest-ga-tag.md), terms in [`CONTEXT.md`](../../CONTEXT.md), and the settled thread on issue #244. Do not re-litigate them here.
 
 ---
 
@@ -33,9 +33,11 @@
 | D3 | `manual-release.yml` keeps `version_override`, now validated (four-part, above the last GA version). It also now passes `-p:Version/AssemblyVersion/FileVersion` to `dotnet publish`. | Approved as an escape hatch. The publish flags were missing, so a manual release's exe carried the csproj version while the tag carried something else. |
 | D4 | `sbom-generation.yml` uses the release tag's version on `release` events and computes otherwise. | Recomputing on a release event would label the SBOM with a version the release does not have. |
 | D5 | `pr-release-prep.yml` falls back to the csproj version when the fork's branch lacks the script. | It checks out the fork's head, which can predate this change. |
-| D6 | Dev release notes start at the highest reachable tag of either kind (GA or `-dev`). ADR 0032's sentence is updated to say so. | `git describe`'s "nearest" is unreliable for the reasons in ADR 0032. |
+| D6 | Dev release notes start at the highest tag of either kind (GA or `-dev`). | `git describe`'s "nearest" is unreliable for the reasons in ADR 0032. |
 | D7 | `actions: read` is added to the permissions of `manual-release.yml` and the SBOM job. | Both set explicit permissions and call `gh run list`. |
 | D8 | New `version-preview.yml` (PR + manual dispatch, no build). | Dispatching `ci-cd.yaml` from a branch starts the three self-hosted VBR lab jobs (`if: github.event_name != 'pull_request'`), so it cannot serve as a dry run. This proves the script on a real Windows runner with the real tags before merge. |
+| D9 | `manual-release.yml` refuses to run for a computed tag that already exists (real releases only), unless `version_override` is given. | With no new commits the computed version equals the last CI release, and the workflow's update-in-place path would replace a VirusTotal-gated ZIP with an ungated one. |
+| D10 | The Base Tag is the highest GA tag among **all fetched tags**, not only those reachable from the ref. **You chose this over "highest reachable" (Q19) after review.** | With tags on `master`'s merge commits and `master` never merged back, `dev` cannot reach new GA tags and would compute a version that already shipped. ADR 0032 was rewritten and the glossary updated; the two post-GA Pester scenarios pin it. |
 
 ## File structure
 
@@ -51,7 +53,7 @@
 | `.github/workflows/ci-cd.yaml` | modify | Full-history checkout, compute step, notes range, release `target_commitish`. |
 | `.github/workflows/manual-release.yml` | modify | Shared script, revision source, `-rc`, publish flags, `--target`. |
 | `.github/workflows/pr-release-prep.yml`, `sbom-generation.yml` | modify | Shared script. |
-| `CLAUDE.md`, `.github/workflows/README.md`, `CONTEXT.md`, ADR 0031/0032 | modify | Docs. |
+| `CLAUDE.md`, `.github/workflows/README.md`, `CONTEXT.md`, ADR 0031 | modify | Docs. (ADR 0032 and the glossary's Base Tag were already rewritten on this branch.) |
 
 ---
 
@@ -309,6 +311,42 @@ Describe 'Get-VhcVersionInfo (synthetic repos)' {
     }
 }
 
+Describe 'Get-VhcVersionInfo after a GA tagged on master (dev is never merged back)' {
+    AfterEach { if ($script:repo -and (Test-Path $script:repo)) { Remove-Item -Recurse -Force $script:repo } }
+
+    It 'lets dev and master agree once the first GA exists only on the master merge commit' {
+        $script:repo = New-TestRepo
+        Add-TestCommit -Repo $repo -Subject 'fix: a' -Tag 'v3.0.1.193'
+        git -C $repo checkout -q -b dev
+        Add-TestCommit -Repo $repo -Subject 'feat: b'
+        git -C $repo checkout -q master
+        Merge-TestBranch -Repo $repo -Branch dev
+        git -C $repo tag 'v3.1.0.300'
+        git -C $repo checkout -q dev
+        Add-TestCommit -Repo $repo -Subject 'fix: c'
+        $onDev = Get-VhcVersionInfo -Revision 400 -RepoPath $repo -Channel dev
+        $onDev.BaseTag | Should -Be 'v3.1.0.300'
+        $onDev.CommitCount | Should -Be 1
+        $onDev.Version | Should -Be '3.1.1.400'
+        git -C $repo checkout -q master
+        Merge-TestBranch -Repo $repo -Branch dev
+        (Get-VhcVersionInfo -Revision 401 -RepoPath $repo).Version | Should -Be '3.1.1.401'
+    }
+
+    It 'does not carry a consumed Release-As footer into the next dev range' {
+        $script:repo = New-TestRepo
+        Add-TestCommit -Repo $repo -Subject 'fix: a' -Tag 'v3.0.1.193'
+        git -C $repo checkout -q -b dev
+        Add-TestCommit -Repo $repo -Subject 'chore: bump' -Body 'Release-As: 4.0.0'
+        git -C $repo checkout -q master
+        Merge-TestBranch -Repo $repo -Branch dev
+        git -C $repo tag 'v4.0.0.300'
+        git -C $repo checkout -q dev
+        Add-TestCommit -Repo $repo -Subject 'fix: later'
+        (Get-VhcVersionInfo -Revision 400 -RepoPath $repo -Channel dev).Version | Should -Be '4.0.1.400'
+    }
+}
+
 Describe 'Test-VhcCommitMessage' {
     It 'accepts conventional subjects' {
         Test-VhcCommitMessage -Subject 'feat(gui): add thing' | Should -BeNullOrEmpty
@@ -353,8 +391,10 @@ Expected: the run fails with an error naming `VhcVersion.psm1` (the module does 
 #                       raised to the csproj Major.Minor floor, or set by a
 #                       'Release-As: X.Y.Z' commit footer.
 #   Revision          : the CI run number, passed in by the caller.
-#   Base Tag          : the highest reachable GA tag (vMajor.Minor.Patch.Revision,
-#                       no suffix), NOT `git describe`'s nearest tag.
+#   Base Tag          : the highest GA tag (vMajor.Minor.Patch.Revision, no suffix)
+#                       among ALL fetched tags, NOT `git describe`'s nearest tag and NOT
+#                       limited to tags reachable from the ref: GA tags sit on master's
+#                       merge commits, which dev never merges back.
 
 Set-StrictMode -Version Latest
 
@@ -521,7 +561,8 @@ function Get-VhcVersionInfo {
 
     if (-not $CsprojPath) { $CsprojPath = Join-Path $RepoPath 'vHC/HC_Reporting/VeeamHealthCheck.csproj' }
 
-    $tags     = @(Invoke-VhcGit -RepoPath $RepoPath -Arguments @('tag', '--merged', $Ref))
+    # All fetched tags, not `tag --merged $Ref`: dev cannot reach GA tags on master's merge commits.
+    $tags     = @(Invoke-VhcGit -RepoPath $RepoPath -Arguments @('tag', '--list'))
     $baseTag  = Select-VhcHighestTag -Tags $tags
     $baseName = if ($baseTag) { $baseTag.Name } else { '' }
     $base3    = if ($baseTag) { [version]::new($baseTag.Version.Major, $baseTag.Version.Minor, $baseTag.Version.Build) } else { [version]'0.0.0' }
@@ -585,7 +626,7 @@ Export-ModuleMember -Function Select-VhcHighestTag, Get-VhcCommitBump, Get-VhcRe
 - [ ] **Step 2: Run the tests**
 
 Run: `pwsh -NoProfile -Command "Invoke-Pester -Path .github/scripts/VhcVersion.Tests.ps1 -Output Normal"`
-Expected: `Tests Passed: 37, Failed: 0, Skipped: 0`.
+Expected: `Tests Passed: 39, Failed: 0, Skipped: 0`.
 
 - [ ] **Step 3: Commit**
 
@@ -1000,6 +1041,7 @@ with:
         GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         VERSION_OVERRIDE: ${{ inputs.version_override }}
         IS_PRERELEASE: ${{ inputs.prerelease }}
+        DRY_RUN: ${{ inputs.dry_run }}
       run: |
         # github.run_number is per workflow and would restart at 1 here, so take the revision
         # from the ci-cd.yaml counter to keep manual builds ordered with CI builds.
@@ -1017,6 +1059,15 @@ with:
         # Manual pre-releases are tagged -rc so they never count as a Base Tag.
         $tag = "v$($info.Version)" + $(if ($env:IS_PRERELEASE -eq 'true') { '-rc' } else { '' })
         "tag=$tag" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
+
+        # With no new commits the computed version equals the last CI release. Replacing that
+        # release would swap a VirusTotal-gated ZIP for an ungated one, so require an explicit override.
+        if (-not $env:VERSION_OVERRIDE -and $env:DRY_RUN -ne 'true') {
+          gh release view $tag *> $null
+          if ($LASTEXITCODE -eq 0) {
+            throw "Release $tag already exists. Dispatch with version_override to replace it deliberately."
+          }
+        }
 ```
 
 - [ ] **Step 4: Stamp the built exe with the computed version**
@@ -1126,10 +1177,14 @@ with:
         Write-Host "Release URL: https://github.com/$env:GH_REPO/releases/tag/$tag"
 ```
 
-- [ ] **Step 7: Confirm the `gh run list` call works**
+- [ ] **Step 7: Confirm the two `gh` calls the version step relies on**
 
-Run: `gh run list --workflow ci-cd.yaml --limit 1 --json number --jq '.[0].number'`
-Expected: a single integer (225 on 2026-10-01).
+Run:
+```bash
+gh run list --workflow ci-cd.yaml --limit 1 --json number --jq '.[0].number'
+pwsh -NoProfile -Command 'gh release view v3.0.1.193 *> $null; "existing: exit=$LASTEXITCODE"; gh release view v9.9.9.9 *> $null; "missing:  exit=$LASTEXITCODE"'
+```
+Expected: a single integer (225 on 2026-10-01), then `existing: exit=0` and `missing:  exit=1`.
 
 - [ ] **Step 8: Commit**
 
@@ -1424,7 +1479,7 @@ Expected: `actionlint` prints nothing.
 
 **Files:**
 - Modify: `CLAUDE.md`, `.github/workflows/README.md`, `CONTEXT.md`
-- Modify: `docs/adr/0031-commit-driven-four-part-versioning-with-csproj-floor.md`, `docs/adr/0032-base-tag-is-highest-reachable-ga-tag.md`
+- Modify: `docs/adr/0031-commit-driven-four-part-versioning-with-csproj-floor.md`
 
 - [ ] **Step 1: `CLAUDE.md`**
 
@@ -1441,7 +1496,7 @@ with:
 ```markdown
 ## Versioning
 
-Release versions are computed from commits, not hand-edited ([ADR 0031](docs/adr/0031-commit-driven-four-part-versioning-with-csproj-floor.md), [ADR 0032](docs/adr/0032-base-tag-is-highest-reachable-ga-tag.md)). Format: `Major.Minor.Patch.Revision`, where Revision is the CI run number.
+Release versions are computed from commits, not hand-edited ([ADR 0031](docs/adr/0031-commit-driven-four-part-versioning-with-csproj-floor.md), [ADR 0032](docs/adr/0032-base-tag-is-highest-ga-tag.md)). Format: `Major.Minor.Patch.Revision`, where Revision is the CI run number.
 
 | Commit since the last GA tag | Bump |
 |---|---|
@@ -1496,7 +1551,7 @@ Then append this to the end of `.github/workflows/README.md` (it ends with a new
 
 Release versions are computed from commits by `.github/scripts/Get-VhcVersion.ps1` (see
 [ADR 0031](../../docs/adr/0031-commit-driven-four-part-versioning-with-csproj-floor.md) and
-[ADR 0032](../../docs/adr/0032-base-tag-is-highest-reachable-ga-tag.md)). `ci-cd.yaml`,
+[ADR 0032](../../docs/adr/0032-base-tag-is-highest-ga-tag.md)). `ci-cd.yaml`,
 `manual-release.yml`, `pr-release-prep.yml` and `sbom-generation.yml` all call it, so they agree.
 
 - `Major.Minor.Patch` comes from the Conventional Commits since the last GA tag
@@ -1523,21 +1578,7 @@ required in branch protection.
 `pwsh -NoProfile -Command "Invoke-Pester -Path .github/scripts/VhcVersion.Tests.ps1 -Output Detailed"`.
 ```
 
-- [ ] **Step 3: ADR and glossary wording**
-
-In `docs/adr/0032-base-tag-is-highest-reachable-ga-tag.md`, replace:
-
-```markdown
-it is the start of the GA release-notes range. Dev release notes instead
-start from the nearest tag of any kind, including `-dev`, since they
-describe what changed since the previous build.```
-
-with:
-
-```markdown
-it is the start of the GA release-notes range. Dev release notes instead
-start from the highest reachable tag of either kind (GA or `-dev`), since
-they describe what changed since the previous build.```
+- [ ] **Step 3: ADR 0031 and glossary wording**
 
 In `docs/adr/0031-commit-driven-four-part-versioning-with-csproj-floor.md`, replace:
 
@@ -1550,8 +1591,9 @@ with:
 - **`manual-release.yml` keeps its `version_override` input** as an escape
   hatch, validated to be four-part and above the last GA version. Its default
   revision is the latest `ci-cd.yaml` run number (`run_number` is per workflow
-  and would restart), and its pre-releases are tagged `-rc` so they never
-  count as a Base Tag.
+  and would restart), its pre-releases are tagged `-rc` so they never count as
+  a Base Tag, and it refuses to replace an existing release unless
+  `version_override` is given.
 - **The local auto-increment is untouched.**```
 
 In `CONTEXT.md`, replace:
@@ -1576,7 +1618,7 @@ _Avoid_: Beta, RC build
 - [ ] **Step 4: Commit the docs**
 
 ```bash
-git add CLAUDE.md .github/workflows/README.md CONTEXT.md docs/adr/0031-commit-driven-four-part-versioning-with-csproj-floor.md docs/adr/0032-base-tag-is-highest-reachable-ga-tag.md
+git add CLAUDE.md .github/workflows/README.md CONTEXT.md docs/adr/0031-commit-driven-four-part-versioning-with-csproj-floor.md
 git commit -m "docs(version): document the commit-driven versioning workflow" -m "Refs #244"
 ```
 
@@ -1628,9 +1670,9 @@ Body:
 ```markdown
 ## Summary
 
-Release versions are now computed from Conventional Commits and the last GA tag by one shared script, instead of `Major.Minor.1.<run_number>`. Design and rationale: [ADR 0031](docs/adr/0031-commit-driven-four-part-versioning-with-csproj-floor.md), [ADR 0032](docs/adr/0032-base-tag-is-highest-reachable-ga-tag.md), and the decisions thread on #244.
+Release versions are now computed from Conventional Commits and the last GA tag by one shared script, instead of `Major.Minor.1.<run_number>`. Design and rationale: [ADR 0031](docs/adr/0031-commit-driven-four-part-versioning-with-csproj-floor.md), [ADR 0032](docs/adr/0032-base-tag-is-highest-ga-tag.md), and the decisions thread on #244.
 
-- `.github/scripts/VhcVersion.psm1` + `Get-VhcVersion.ps1`: bump from commits, csproj `Major.Minor` floor, `Release-As:` override, Base Tag = highest reachable GA tag.
+- `.github/scripts/VhcVersion.psm1` + `Get-VhcVersion.ps1`: bump from commits, csproj `Major.Minor` floor, `Release-As:` override, Base Tag = highest GA tag among all fetched tags.
 - Used by `ci-cd.yaml`, `manual-release.yml`, `pr-release-prep.yml`, `sbom-generation.yml`.
 - Fixes two existing release bugs: GA notes started from the newest `-dev` tag (empty notes after a dev->master merge) and release tags landed on the default branch tip instead of the built commit.
 - Advisory `Commit Lint` and a no-build `Version Preview` workflow.
@@ -1639,11 +1681,11 @@ First computed GA: `3.1.0` (base `v3.0.1.193`, three `feat` commits since).
 
 ## Decisions beyond the issue thread
 
-D1-D8 are listed at the top of [the plan](docs/plans/2026-10-01-commit-driven-semver.md). Please look at D1 (manual-release revision from the latest `ci-cd.yaml` run), D2 (manual pre-releases tagged `-rc`) and D3 (`version_override` kept, validated).
+D1-D10 are listed at the top of [the plan](docs/plans/2026-10-01-commit-driven-semver.md). Please look at D1 (manual-release revision from the latest `ci-cd.yaml` run), D2 (manual pre-releases tagged `-rc`), D3 (`version_override` kept, validated), D8 (the new no-build `Version Preview` workflow) and D9 (manual-release refuses to overwrite an existing release without `version_override`).
 
 ## Testing
 
-- 37 Pester tests (`VhcVersion.Tests.ps1`), including throwaway-repo scenarios for the stray `v3.0.2-beta.1` and `-dev` tags and the hotfix topology. They run in `pester-tests.yml`.
+- 39 Pester tests (`VhcVersion.Tests.ps1`), including throwaway-repo scenarios for the stray `v3.0.2-beta.1` and `-dev` tags, the hotfix topology, and dev after a GA tagged on `master` (the case that motivated ADR 0032's Base Tag rule). They run in `pester-tests.yml`, and were run locally on Pester 5.7.1 and 6.1.
 - Run against the real tags on 2026-10-01: `3.1.0.999` from `v3.0.1.193` + 50 commits; dev notes start at `v3.0.1.225-dev`.
 - `actionlint`: no new findings against `origin/dev` (the existing ones are a self-hosted label and shellcheck noise on PowerShell blocks).
 - **Not run before merge:** the changed `ci-cd.yaml` release jobs, `manual-release.yml`, `sbom-generation.yml` and `pr-release-prep.yml` paths. Dispatching `ci-cd.yaml` from a branch would start the self-hosted lab jobs, so the `Version Preview` check on this PR is the pre-merge proof of the script on a Windows runner. The release path is proven by the first push to `dev` after merge (checklist below).
@@ -1678,9 +1720,9 @@ Expected: `Computed version` (Version Preview) passes and its job summary shows 
 
 - [ ] **Step 5: When the PR is approved, accept the ADRs**
 
-In `docs/adr/0031-commit-driven-four-part-versioning-with-csproj-floor.md` and `docs/adr/0032-base-tag-is-highest-reachable-ga-tag.md`, change `* **Status:** Proposed` to `* **Status:** Accepted`, then:
+In `docs/adr/0031-commit-driven-four-part-versioning-with-csproj-floor.md` and `docs/adr/0032-base-tag-is-highest-ga-tag.md`, change `* **Status:** Proposed` to `* **Status:** Accepted`, then:
 ```bash
-git add docs/adr/0031-commit-driven-four-part-versioning-with-csproj-floor.md docs/adr/0032-base-tag-is-highest-reachable-ga-tag.md
+git add docs/adr/0031-commit-driven-four-part-versioning-with-csproj-floor.md docs/adr/0032-base-tag-is-highest-ga-tag.md
 git commit -m "docs(adr): accept 0031 and 0032" -m "Refs #244"
 git push
 ```
@@ -1703,6 +1745,8 @@ gh release view "v<version>" --json tagName,targetCommitish,isPrerelease --jq .
 git fetch origin --tags && git rev-parse "v<version>^{commit}" && git rev-parse origin/master
 ```
 Expected: `isPrerelease` is `false`, `targetCommitish` is the merge commit's SHA, the two `rev-parse` lines are equal, and the notes list the commits since the previous GA tag (not an empty list). If the notes are empty or the tag is on `dev`, revert this PR.
+
+Then check that `dev` sees the new GA tag even though `master` is not merged back. Push any commit to `dev` (or run `gh workflow run version-preview.yml --ref dev` and open the run summary) and confirm the `Base tag` is `v<version>` of the release just made, not `v3.0.1.193`. This is the case the post-GA Pester scenarios cover; it is the first time it is exercised on the real repository.
 
 - [ ] **Step 8: Update and unblock the GUI PR #247**
 
