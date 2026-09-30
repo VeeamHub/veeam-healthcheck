@@ -128,20 +128,22 @@ If a PR resolves multiple issues, list them: `Fixes #112, fixes #152, fixes #155
 
 ## Versioning
 
-Release versions are computed from commits, not hand-edited ([ADR 0031](docs/adr/0031-commit-driven-four-part-versioning-with-csproj-floor.md), [ADR 0032](docs/adr/0032-base-tag-is-highest-ga-tag.md)). Format: `Major.Minor.Patch.Revision`, where Revision is the CI run number.
+Release versions are computed from commits, not hand-edited ([ADR 0031](docs/adr/0031-commit-driven-four-part-versioning-with-csproj-floor.md), [ADR 0032](docs/adr/0032-base-tag-is-highest-ga-tag.md)). Format: `Major.Minor.Patch.Revision`, where Revision is a CI run number (the workflow's own for `ci-cd.yaml`; the latest `ci-cd.yaml` run for manual releases).
 
 | Commit since the last GA tag | Bump |
 |---|---|
 | `type!:` subject or a `BREAKING CHANGE:` footer | major |
 | `feat:` | minor |
 | anything else (`fix:`, `chore:`, no type at all) | patch |
+| no non-merge commits at all | none: the Base Tag's `Major.Minor.Patch` (raised to the floor), with the new Revision |
 
 - The csproj `Major.Minor` is a **floor**: the result is never lower than `Major.Minor.0`. Raise it to force a bump.
-- A `Release-As: X.Y.Z` commit footer overrides everything. It is rejected if below the floor or not above the last GA version.
-- **Merge method matters.** `dev -> master` must be a merge commit so the individual commits survive. A PR squash-merged into `dev` contributes only its title, so the title needs a Conventional Commits prefix (`feat:`, `fix:`, ...).
+- A `Release-As: X.Y.Z` commit footer overrides the commit-derived bump; the highest one across commits wins. It is rejected if below the floor or not above the last GA version. A malformed footer (non-numeric, out-of-range, non-ASCII digits) fails compute with a `Malformed Release-As footer` error; an out-of-range stray tag is ignored when choosing the Base Tag.
+- `Release-As:` and `BREAKING CHANGE:` footers are read from non-merge commits only (`git log --no-merges`); a footer in a merge commit message is ignored.
+- **Merge method matters.** `dev -> master` must be a merge commit so the individual commits survive. A PR squash-merged into `dev` becomes one commit: the type and `!` are read from its title (subject), so the title needs a Conventional Commits prefix (`feat:`, `fix:`, ...), while `Release-As:` / `BREAKING CHANGE:` footers are read from the squash commit body.
 - **Hotfix:** branch from `master`, PR into `master`, then `git cherry-pick -x` the fix onto `dev`. The fix may appear in two versions' release notes.
 - Dry run locally: `pwsh ./.github/scripts/Get-VhcVersion.ps1 -Revision 999 -Channel ga` (needs tags: `git fetch --tags`).
-- The `Commit Lint` check on PRs is advisory; it annotates titles and commits that would count as an untyped patch.
+- The `Commit Lint` check on PRs is advisory; it annotates titles and commits that would count as an untyped patch, use an unknown commit type, or carry a malformed `Release-As:` footer.
 
 ## Important Notes
 

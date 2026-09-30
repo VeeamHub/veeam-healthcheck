@@ -111,24 +111,36 @@ If runners aren't configured, integration tests will be skipped and releases wil
 Release versions are computed from commits by `.github/scripts/Get-VhcVersion.ps1` (see
 [ADR 0031](../../docs/adr/0031-commit-driven-four-part-versioning-with-csproj-floor.md) and
 [ADR 0032](../../docs/adr/0032-base-tag-is-highest-ga-tag.md)). `ci-cd.yaml`,
-`manual-release.yml`, `pr-release-prep.yml` and `sbom-generation.yml` all call it, so they agree.
+`manual-release.yml`, `pr-release-prep.yml` and `sbom-generation.yml` all call it. Two exceptions:
+`pr-release-prep.yml` falls back to the csproj version when a fork's branch lacks the script, and
+`sbom-generation.yml` uses the release tag's version on `release` events.
 
 - `Major.Minor.Patch` comes from the Conventional Commits since the last GA tag
   (`!:` / `BREAKING CHANGE:` = major, `feat:` = minor, anything else = patch), raised to the csproj
-  `Major.Minor` floor, or set by a `Release-As: X.Y.Z` commit footer.
-- `Revision` is the `ci-cd.yaml` run number.
+  `Major.Minor` floor, or set by a `Release-As: X.Y.Z` commit footer. With no non-merge commits since
+  the last GA tag the bump is `none`: the version is that tag's `Major.Minor.Patch` (raised to the floor).
+- `Release-As:` and `BREAKING CHANGE:` footers are read from non-merge commits only (`git log --no-merges`),
+  so a footer in a merge commit message is ignored. The highest `Release-As` wins and overrides the
+  commit-derived bump. A malformed one (non-numeric, out of range, non-ASCII digits) fails the compute
+  step with a `Malformed Release-As footer` error. An out-of-range stray tag is ignored when choosing the
+  last GA tag.
+- `Revision` is a run number: `ci-cd.yaml`, `pr-release-prep.yml` and `version-preview.yml` use their own
+  `github.run_number`; `manual-release.yml` and the non-release path of `sbom-generation.yml` use the
+  latest `ci-cd.yaml` run number.
 - Any job that calls the script needs `actions/checkout` with `fetch-depth: 0` so tags and history exist.
 - Release tags are created on the commit that was built (`target_commitish`), not the default branch tip.
 
 ### Version Preview (`version-preview.yml`)
 
-Runs on every PR and on demand. It prints the version the commit would get, without building anything
-or touching the lab runners. Check the job summary.
+Runs on PRs into `master` or `dev` and on manual dispatch. It prints the version the commit would get,
+without building anything or touching the lab runners. Check the job summary. Only `Major.Minor.Patch`
+is meaningful: the Revision is this workflow's own run number. On dispatch the preview uses the `dev`
+channel, which only affects `notes_from_tag`.
 
 ### Commit Lint (`commit-lint.yml`)
 
 Advisory: annotates PR titles and commits that are not Conventional Commits (an untyped commit counts
-as a patch). It never fails the PR. To enforce it, add `-Strict` to the script call and mark the check
+as a patch), use an unknown commit type, or carry a malformed `Release-As:` footer. It never fails the PR. To enforce it, add `-Strict` to the script call and mark the check
 required in branch protection.
 
 ### Pester tests
