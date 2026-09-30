@@ -130,7 +130,7 @@ dotnet restore vHC/HC.sln
 dotnet build vHC/HC.sln --configuration Release
 ```
 
-**Run tests** (Windows only):
+**Run tests** (Windows, macOS, or Linux; Windows-only tests skip elsewhere):
 ```bash
 dotnet test vHC/VhcXTests/VhcXTests.csproj
 ```
