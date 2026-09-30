@@ -26,10 +26,15 @@ No installer. Single executable. The only prerequisite is PowerShell 7 where you
 ## Running a Health Check
 
 === "GUI"
-    1. Launch `VeeamHealthCheck.exe` as Administrator
-    2. Configure options (reporting window, export format, output path)
-    3. Accept the terms and click **RUN**
+    1. Launch `VeeamHealthCheck.exe` as Administrator (running it with no arguments, or with `/gui`, opens the GUI)
+    2. On the **Ad-hoc Health Check** tab, pick the server, the **Product Type** (*Auto-detect*, *VBR*, *VB365*, or *Both*), and the **Collection Period** (**7**, **30**, or **90 Days**), then set the export and anonymization checkboxes
+    3. Click **Accept Terms**, then **Run**
     4. Review the generated report
+
+    To add or remove servers, use the gear button next to the server list to open **Manage Servers**. Removing a server also deletes its saved credentials, and the local machine can't be removed. The theme button in the header cycles through Dark, Light, and **System** (which follows the OS setting) and remembers your choice, and **About / Disclaimer** shows the terms.
+
+    !!! note
+        The GUI offers 7, 30, and 90 days. The 12-day window is available only from the CLI (`/days:12`).
 
 === "CLI"
     ```powershell
