@@ -92,7 +92,7 @@ jobs:
       id: get_version
       shell: pwsh
       run: |
-        # master builds GA releases; every other ref (dev, manual dispatch) builds dev pre-releases.
+        # Builds from master (including a manual dispatch on master) use the ga channel; every other ref builds dev pre-releases.
         $channel = if ('${{ github.ref }}' -eq 'refs/heads/master') { 'ga' } else { 'dev' }
         ./.github/scripts/Get-VhcVersion.ps1 -Revision ${{ github.run_number }} -Channel $channel -GitHubOutput
     
