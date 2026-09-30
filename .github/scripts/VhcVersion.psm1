@@ -51,7 +51,7 @@ function Get-VhcCommitBump {
     foreach ($c in $Commits) {
         $subject = "$($c.Subject)"
         $body    = "$($c.Body)"
-        if ($subject -match '^[A-Za-z]+(\([^)]*\))?!:' -or $body -match '(?m)^BREAKING[ -]CHANGE:') {
+        if ($subject -match '^[A-Za-z]+(\([^)]*\))?!:' -or $body -cmatch '(?m)^BREAKING[ -]CHANGE:') {
             $level = 'major'
         } elseif ($subject -match '^feat(\([^)]*\))?:') {
             $level = 'minor'

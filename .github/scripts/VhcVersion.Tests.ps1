@@ -75,6 +75,12 @@ Describe 'Get-VhcCommitBump' {
     It 'is major for a BREAKING CHANGE footer' {
         Get-VhcCommitBump -Commits @([pscustomobject]@{ Subject = 'fix: a'; Body = "details`n`nBREAKING CHANGE: gone" }) | Should -Be 'major'
     }
+    It 'is major for a hyphenated BREAKING-CHANGE footer' {
+        Get-VhcCommitBump -Commits @([pscustomobject]@{ Subject = 'fix: a'; Body = "details`n`nBREAKING-CHANGE: x" }) | Should -Be 'major'
+    }
+    It 'does not treat a lower-case breaking change line as a footer' {
+        Get-VhcCommitBump -Commits @([pscustomobject]@{ Subject = 'fix: a'; Body = "details`n`nbreaking change: not a footer" }) | Should -Be 'patch'
+    }
     It 'does not treat a mid-line BREAKING CHANGE mention as a footer' {
         Get-VhcCommitBump -Commits @([pscustomobject]@{ Subject = 'fix: a'; Body = 'this is not a BREAKING CHANGE: really' }) | Should -Be 'patch'
     }
