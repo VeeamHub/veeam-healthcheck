@@ -53,6 +53,7 @@ jobs:
             $version = $env:RELEASE_TAG.TrimStart('v')
           } else {
             $revision = gh run list --workflow ci-cd.yaml --limit 1 --json number --jq '.[0].number'
+            if (-not $revision) { throw 'Could not read the latest ci-cd.yaml run number.' }
             $info = ./.github/scripts/Get-VhcVersion.ps1 -Revision ([int]$revision) -Channel ga
             $version = $info.Version
           }
