@@ -67,6 +67,22 @@ function Get-VhcCommitBump {
     $bump
 }
 
+function ConvertFrom-VhcReleaseAsLine {
+    # Parse one 'Release-As: X.Y.Z' footer line into a [version]. Throws on a malformed line.
+    # Shared by Get-VhcReleaseAs (compute) and Test-VhcCommitMessage (lint) so they cannot disagree.
+    [CmdletBinding()]
+    param([Parameter(Mandatory)][string]$Line)
+
+    if ($Line -notmatch '^Release-As: ([0-9]+)\.([0-9]+)\.([0-9]+)\s*$') {
+        throw "Malformed Release-As footer '$($Line.Trim())' (expected 'Release-As: X.Y.Z')."
+    }
+    try {
+        [version]"$($Matches[1]).$($Matches[2]).$($Matches[3])"
+    } catch {
+        throw "Malformed Release-As footer '$($Line.Trim())' (expected 'Release-As: X.Y.Z' with numbers that fit a version)."
+    }
+}
+
 function Get-VhcReleaseAs {
     # Highest 'Release-As: X.Y.Z' footer across the commits, or $null. Throws on a malformed footer.
     [CmdletBinding()]
@@ -76,14 +92,7 @@ function Get-VhcReleaseAs {
     foreach ($c in $Commits) {
         foreach ($line in ("$($c.Body)" -split "`r?`n")) {
             if ($line -notmatch '^\s*Release-As\s*:') { continue }
-            if ($line -notmatch '^Release-As: ([0-9]+)\.([0-9]+)\.([0-9]+)\s*$') {
-                throw "Malformed Release-As footer '$($line.Trim())' (expected 'Release-As: X.Y.Z')."
-            }
-            try {
-                $v = [version]"$($Matches[1]).$($Matches[2]).$($Matches[3])"
-            } catch {
-                throw "Malformed Release-As footer '$($line.Trim())' (expected 'Release-As: X.Y.Z' with numbers that fit a version)."
-            }
+            $v = ConvertFrom-VhcReleaseAsLine -Line $line
             if ($null -eq $highest -or $v -gt $highest) { $highest = $v }
         }
     }
@@ -245,8 +254,11 @@ function Test-VhcCommitMessage {
         $problems.Add("Subject '$Subject' is not '<type>(<scope>)!: <description>' (types: $($script:CommitTypes -replace '\|', ', ')).")
     }
     foreach ($line in ("$Body" -split "`r?`n")) {
-        if ($line -match '^\s*Release-As\s*:' -and $line -notmatch '^Release-As: \d+\.\d+\.\d+\s*$') {
-            $problems.Add("Malformed footer '$($line.Trim())' (expected 'Release-As: X.Y.Z').")
+        if ($line -notmatch '^\s*Release-As\s*:') { continue }
+        try {
+            $null = ConvertFrom-VhcReleaseAsLine -Line $line
+        } catch {
+            $problems.Add($_.Exception.Message)
         }
     }
     $problems.ToArray()

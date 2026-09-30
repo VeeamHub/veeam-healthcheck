@@ -347,4 +347,10 @@ Describe 'Test-VhcCommitMessage' {
     It 'accepts a valid Release-As footer' {
         Test-VhcCommitMessage -Subject 'chore: x' -Body "note`n`nRelease-As: 4.0.0" | Should -BeNullOrEmpty
     }
+    It 'flags a Release-As footer whose numbers do not fit a version' {
+        @(Test-VhcCommitMessage -Subject 'chore: x' -Body 'Release-As: 99999999999.0.0').Count | Should -Be 1
+    }
+    It 'flags a Release-As footer with non-ASCII digits' {
+        @(Test-VhcCommitMessage -Subject 'chore: x' -Body "Release-As: $([char]0x0663).0.0").Count | Should -Be 1
+    }
 }
