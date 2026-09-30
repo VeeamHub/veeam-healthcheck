@@ -35,13 +35,19 @@ jobs:
     - name: Run tests
       run: dotnet test vHC/HC.sln --configuration Release --no-build --verbosity normal
     
-    - name: Get version from assembly
+    - name: Compute version from commits
       id: get_version
+      shell: pwsh
       run: |
-        $csproj = [xml](Get-Content vHC/HC_Reporting/VeeamHealthCheck.csproj)
-        $version = $csproj.Project.PropertyGroup[0].AssemblyVersion
-        echo "version=$version" >> $env:GITHUB_OUTPUT
-        echo "Version: $version"
+        # A fork's branch may predate the version script; fall back to the csproj version then.
+        if (Test-Path ./.github/scripts/Get-VhcVersion.ps1) {
+          ./.github/scripts/Get-VhcVersion.ps1 -Revision ${{ github.run_number }} -Channel dev -GitHubOutput
+        } else {
+          $csproj = [xml](Get-Content vHC/HC_Reporting/VeeamHealthCheck.csproj)
+          $version = $csproj.Project.PropertyGroup[0].AssemblyVersion
+          "version=$version" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
+          Write-Host "Version (csproj fallback): $version"
+        }
     
     - name: Publish single-file executable
       run: |
