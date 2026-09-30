@@ -26,9 +26,9 @@ namespace VhcXTests
             _origSilent = CGlobals.Silent;
             _origRemoteHost = CGlobals.REMOTEHOST;
 
-            // GetCreds() persists prompted credentials via CredentialStore.Set; keep
-            // that off the real %APPDATA% store (and cleanup independent of a
-            // Remove that a failing assertion would skip).
+            // GetCreds() reads CredentialStore (a stored credential would short-circuit
+            // the prompter), so keep it pointed at an empty temp store rather than a
+            // developer's real %APPDATA% one.
             _store = new IsolatedCredentialStore();
         }
 
