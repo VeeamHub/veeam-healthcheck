@@ -13,7 +13,7 @@ Please note we have a [Code of Conduct](#code-of-conduct). Please follow it in a
 
 ## Report Bugs/Feature Requests using the Github Issue Tracker
 
-We use GitHub's Issue Tracker to track bugs/feature Requests. Report a bug or feature request by [opening a new issue](https://github.com/VeeamHub/{repo-name}/issues/new/choose). It's that easy!
+We use GitHub's Issue Tracker to track bugs/feature Requests. Report a bug or feature request by [opening a new issue](https://github.com/VeeamHub/veeam-healthcheck/issues/new/choose). It's that easy!
 
 ## Branching strategy
 
