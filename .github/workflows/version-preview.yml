@@ -25,4 +25,8 @@ jobs:
 
       - name: Compute version
         shell: pwsh
-        run: ./.github/scripts/Get-VhcVersion.ps1 -Revision ${{ github.run_number }} -Channel ${{ github.base_ref == 'master' && 'ga' || 'dev' }} -GitHubOutput
+        env:
+          BASE_REF: ${{ github.base_ref }}
+        run: |
+          $channel = if ($env:BASE_REF -eq 'master') { 'ga' } else { 'dev' }
+          ./.github/scripts/Get-VhcVersion.ps1 -Revision ${{ github.run_number }} -Channel $channel -GitHubOutput

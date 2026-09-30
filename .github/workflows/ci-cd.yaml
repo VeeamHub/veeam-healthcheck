@@ -91,9 +91,11 @@ jobs:
     - name: Compute version from commits
       id: get_version
       shell: pwsh
+      env:
+        GIT_REF: ${{ github.ref }}
       run: |
         # Builds from master (including a manual dispatch on master) use the ga channel; every other ref builds dev pre-releases.
-        $channel = if ('${{ github.ref }}' -eq 'refs/heads/master') { 'ga' } else { 'dev' }
+        $channel = if ($env:GIT_REF -eq 'refs/heads/master') { 'ga' } else { 'dev' }
         ./.github/scripts/Get-VhcVersion.ps1 -Revision ${{ github.run_number }} -Channel $channel -GitHubOutput
     
     - name: Publish single-file executable
