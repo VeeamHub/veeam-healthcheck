@@ -17,6 +17,7 @@ namespace VhcXTests
         private readonly bool _origGuiExec;
         private readonly bool _origSilent;
         private readonly string _origRemoteHost;
+        private readonly IsolatedCredentialStore _store;
 
         public CredsHandlerPrompterTests()
         {
@@ -24,6 +25,11 @@ namespace VhcXTests
             _origGuiExec = CGlobals.GUIEXEC;
             _origSilent = CGlobals.Silent;
             _origRemoteHost = CGlobals.REMOTEHOST;
+
+            // GetCreds() reads CredentialStore (a stored credential would short-circuit
+            // the prompter), so keep it pointed at an empty temp store rather than a
+            // developer's real %APPDATA% one.
+            _store = new IsolatedCredentialStore();
         }
 
         public void Dispose()
@@ -32,6 +38,7 @@ namespace VhcXTests
             CGlobals.GUIEXEC = _origGuiExec;
             CGlobals.Silent = _origSilent;
             CGlobals.REMOTEHOST = _origRemoteHost;
+            _store.Dispose();
         }
 
         // A plain implementation of only PromptAsync - exactly the shape
@@ -65,7 +72,6 @@ namespace VhcXTests
             CGlobals.Silent = false;
             CGlobals.GUIEXEC = true;
             CGlobals.REMOTEHOST = "test-vbr-host-that-has-no-stored-creds";
-            CredentialStore.Remove(CGlobals.REMOTEHOST);
 
             // Stub implements only PromptAsync - Prompt(...) still resolves via
             // the interface's default method, exactly like production usage.
@@ -78,8 +84,6 @@ namespace VhcXTests
             Assert.Equal(("user", "pass"), result);
             Assert.Equal(1, stubPrompter.CallCount);
             Assert.Equal(CGlobals.REMOTEHOST, stubPrompter.LastHost);
-
-            CredentialStore.Remove(CGlobals.REMOTEHOST);
         }
     }
 }

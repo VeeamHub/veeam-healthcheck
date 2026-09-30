@@ -399,3 +399,6 @@ progress-*.md
 labs-config.json
 .env
 .superpowers/
+
+# C# Dev Kit language-service cache (regenerated automatically)
+*.lscache

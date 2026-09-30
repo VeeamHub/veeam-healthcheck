@@ -3,6 +3,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Security.Cryptography;
 using System.Threading.Tasks;
 using Avalonia;
 using Avalonia.Controls;
@@ -29,6 +30,16 @@ namespace VeeamHealthCheck
     {
         private readonly CClientFunctions functions = new();
         private bool _modeCheckFailed;
+
+        // Bumped by every InitializeMonitorStatus call AND by every monitor action
+        // handler, so a slow, older probe (the scheduled-task check can take up to
+        // 30 s) cannot overwrite fresher state: neither a later refresh's result nor
+        // the disabled buttons / "in progress" text an action set after it started
+        // (which would re-enable Run Now mid-run and allow a second concurrent run).
+        private int _monitorRefreshSeq;
+
+        private void InvalidateMonitorRefreshes() =>
+            System.Threading.Interlocked.Increment(ref _monitorRefreshSeq);
 
         private const string LocalhostName = "localhost";
 
@@ -1111,16 +1122,52 @@ namespace VeeamHealthCheck
 
         #region Monitor Integration
 
+        // Refreshes the Monitor tab without blocking the UI thread: the probes
+        // (powershell.exe for the scheduled task, the monitor exe for its version) can
+        // take up to 30 s each, and this runs from the constructor and after every
+        // monitor action. They run on a worker thread; the result is applied on the UI
+        // thread via Post rather than an awaited continuation, because the constructor
+        // call happens before the window is shown.
         private void InitializeMonitorStatus()
         {
-            bool bundled = CVhcMonitorIntegration.IsExePresentInBundle();
-            bool installed = CVhcMonitorIntegration.IsInstalled();
-            bool taskActive = CVhcMonitorIntegration.IsTaskRegistered();
+            // Set now, before the probes return, so the button has a correct label as
+            // soon as this method runs (constructor time, before SetUiText() ever runs
+            // on Loaded). ApplyMonitorStatus overrides it to GuiMonitorReconfigure when
+            // the monitor is already installed.
+            monitorQuickSetupBtn.Content = VbrLocalizationHelper.GuiMonitorQuickSetup;
 
-            // Set before the branches below so every state has a correct label as
-            // soon as this method runs (constructor time, before SetUiText() ever
-            // runs on Loaded) - the "else" branch below overrides it to
-            // GuiMonitorReconfigure when the monitor is already installed.
+            int seq = System.Threading.Interlocked.Increment(ref _monitorRefreshSeq);
+
+            System.Threading.Tasks.Task.Run(() =>
+            {
+                CVhcMonitorIntegration.MonitorStatusSnapshot snapshot;
+                try
+                {
+                    snapshot = CVhcMonitorIntegration.CaptureStatus();
+                }
+                catch (Exception ex)
+                {
+                    CGlobals.Logger.Error($"Monitor status refresh failed: {ex.Message}", false);
+                    return;
+                }
+
+                Dispatcher.UIThread.Post(() =>
+                {
+                    // A newer refresh started after this one; let it apply instead.
+                    if (seq == _monitorRefreshSeq)
+                    {
+                        this.ApplyMonitorStatus(snapshot);
+                    }
+                });
+            });
+        }
+
+        private void ApplyMonitorStatus(CVhcMonitorIntegration.MonitorStatusSnapshot snapshot)
+        {
+            bool bundled = snapshot.Bundled;
+            bool installed = snapshot.Installed;
+            bool taskActive = snapshot.TaskActive;
+
             monitorQuickSetupBtn.Content = VbrLocalizationHelper.GuiMonitorQuickSetup;
 
             if (!bundled)
@@ -1140,14 +1187,13 @@ namespace VeeamHealthCheck
             }
             else
             {
-                string version = CVhcMonitorIntegration.GetInstalledVersion();
-                monitorStatusText.Text = string.Format(VbrLocalizationHelper.GuiMonitorRunningVersion, version);
+                monitorStatusText.Text = string.Format(VbrLocalizationHelper.GuiMonitorRunningVersion, snapshot.Version);
                 monitorStatusText.Foreground = GetStatusBrush("StatusSuccessBrush");
                 monitorQuickSetupBtn.Content = VbrLocalizationHelper.GuiMonitorReconfigure;
                 monitorQuickSetupBtn.IsEnabled = true;
                 monitorRunBtn.IsEnabled = true;
 
-                var status = CVhcMonitorIntegration.GetLastRunStatus();
+                var status = snapshot.LastRun;
                 if (status != null)
                 {
                     monitorLastRunText.Text = string.Format(VbrLocalizationHelper.GuiMonitorLastRun, status.Timestamp?.ToString("g") ?? string.Empty, status.Summary);
@@ -1167,7 +1213,19 @@ namespace VeeamHealthCheck
         private void monitorQuickSetupBtn_Click(object sender, RoutedEventArgs e)
         {
             string server = serverSelector.SelectedItem?.ToString() ?? CGlobals.VBRServerName;
-            var creds = CredentialStore.Get(server);
+            (string Username, string Password)? creds = null;
+            try
+            {
+                creds = CredentialStore.Get(server);
+            }
+            catch (CryptographicException ex)
+            {
+                // The stored blob cannot be decrypted on this machine/profile (creds.json
+                // copied from elsewhere). Treat it as "no stored credentials" so the user
+                // gets the prompt below instead of an unhandled UI-thread exception.
+                CGlobals.Logger.Warning($"Stored credentials for '{server}' could not be decrypted: {ex.Message}", false);
+            }
+
             string username = creds?.Username ?? string.Empty;
             string password = creds?.Password ?? string.Empty;
 
@@ -1185,6 +1243,7 @@ namespace VeeamHealthCheck
                 return;
             }
 
+            this.InvalidateMonitorRefreshes();
             monitorQuickSetupBtn.IsEnabled = false;
             monitorStatusText.Text = VbrLocalizationHelper.GuiMonitorInstalling;
 
@@ -1212,6 +1271,7 @@ namespace VeeamHealthCheck
 
         private void monitorVhcSetupBtn_Click(object sender, RoutedEventArgs e)
         {
+            this.InvalidateMonitorRefreshes();
             monitorVhcSetupBtn.IsEnabled = false;
             monitorStatusText.Text = VbrLocalizationHelper.GuiMonitorInstallingFromVhc;
 
@@ -1239,18 +1299,30 @@ namespace VeeamHealthCheck
 
         private void monitorRunBtn_Click(object sender, RoutedEventArgs e)
         {
+            this.InvalidateMonitorRefreshes();
             monitorRunBtn.IsEnabled = false;
             monitorLastRunText.Text = VbrLocalizationHelper.GuiMonitorCheckInProgress;
             monitorLastRunText.IsVisible = true;
 
             System.Threading.Tasks.Task.Run(() =>
             {
-                var (exitCode, output) = CVhcMonitorIntegration.RunNow();
-                Dispatcher.UIThread.Post(() =>
+                try
                 {
-                    this.InitializeMonitorStatus();
-                    monitorRunBtn.IsEnabled = CVhcMonitorIntegration.IsTaskRegistered();
-                });
+                    CVhcMonitorIntegration.RunNow();
+                    Dispatcher.UIThread.Post(this.InitializeMonitorStatus);
+                }
+                catch (Exception ex)
+                {
+                    // RunNow throws if the monitor exe cannot be started. Without this
+                    // the fault went unobserved, "check in progress" stayed on screen
+                    // and the button stayed disabled until the app was restarted.
+                    CGlobals.Logger.Error($"Monitor on-demand run failed: {ex.Message}", false);
+                    Dispatcher.UIThread.Post(() =>
+                    {
+                        monitorLastRunText.IsVisible = false;
+                        this.InitializeMonitorStatus();
+                    });
+                }
             });
         }
 

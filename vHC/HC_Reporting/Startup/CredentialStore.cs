@@ -247,12 +247,36 @@ public static class CredentialStore
             var json = File.ReadAllText(StorePath);
             if (!string.IsNullOrWhiteSpace(json))
             {
-                onDisk = JsonSerializer.Deserialize<Dictionary<string, CredentialRecord>>(json) ?? new();
+                try
+                {
+                    onDisk = JsonSerializer.Deserialize<Dictionary<string, CredentialRecord>>(json) ?? new();
+                }
+                catch (JsonException ex)
+                {
+                    // Same recovery InitializeCache applies on load: a truncated or
+                    // hand-edited file is treated as empty and overwritten below, so a
+                    // bad file can never make Set() throw away credentials the user just typed.
+                    CGlobals.Logger.Warning($"Credential store file is malformed, replacing it. Error: {ex.Message}");
+                }
             }
         }
 
         var merged = MergePersistablePayload(onDisk, _cache, _transientKeys);
-        File.WriteAllText(StorePath, JsonSerializer.Serialize(merged, new JsonSerializerOptions { WriteIndented = true }));
+
+        // Temp file + atomic move (same approach as CAppSettings.Write) so an
+        // interrupted write can never leave a half-written creds.json behind.
+        var tempPath = StorePath + "." + Guid.NewGuid().ToString("N") + ".tmp";
+        try
+        {
+            File.WriteAllText(tempPath, JsonSerializer.Serialize(merged, new JsonSerializerOptions { WriteIndented = true }));
+            File.Move(tempPath, StorePath, overwrite: true);
+        }
+        catch
+        {
+            try { File.Delete(tempPath); }
+            catch { /* best effort: don't mask the original failure */ }
+            throw;
+        }
     }
 
     /// <summary>

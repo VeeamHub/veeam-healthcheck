@@ -467,6 +467,50 @@ namespace VeeamHealthCheck.Tests.Security
             CredentialStore.Clear();
         }
 
+        [WindowsOnlyFact]
+        public void Set_TruncatedExistingFile_RecoversAndPersists()
+        {
+            // Arrange - a creds.json cut off mid-write
+            File.WriteAllText(CredentialStore.StorePath, "{ \"old-host\": { \"Username\": \"u\", \"Passw");
+
+            // Act - must not throw: the credentials the user just typed would be lost
+            CredentialStore.Set("recover.local", "user", "Pass@123");
+
+            // Assert - the file is valid JSON again and holds the new entry
+            var persisted = JsonSerializer.Deserialize<Dictionary<string, CredentialRecord>>(
+                File.ReadAllText(CredentialStore.StorePath));
+            Assert.NotNull(persisted);
+            Assert.True(persisted.ContainsKey("recover.local"));
+            Assert.Equal("user", CredentialStore.Get("recover.local")?.Username);
+
+            CredentialStore.Clear();
+        }
+
+        [WindowsOnlyFact]
+        public void Set_GarbageExistingFile_DoesNotThrow()
+        {
+            File.WriteAllText(CredentialStore.StorePath, "not json at all <<<>>>");
+
+            var ex = Record.Exception(() => CredentialStore.Set("garbage.local", "user", "Pass@123"));
+
+            Assert.Null(ex);
+            Assert.Equal("user", CredentialStore.Get("garbage.local")?.Username);
+
+            CredentialStore.Clear();
+        }
+
+        [WindowsOnlyFact]
+        public void Set_Success_LeavesNoTempFile()
+        {
+            CredentialStore.Set("tidy.local", "user", "Pass@123");
+
+            var dir = Path.GetDirectoryName(CredentialStore.StorePath);
+            Assert.Empty(Directory.GetFiles(dir, "*.tmp"));
+            Assert.True(File.Exists(CredentialStore.StorePath));
+
+            CredentialStore.Clear();
+        }
+
         [Fact]
         public void GetAllServers_ShouldReturnStoredServerNames()
         {

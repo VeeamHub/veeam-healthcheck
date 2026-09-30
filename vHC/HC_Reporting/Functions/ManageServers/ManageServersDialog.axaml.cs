@@ -37,15 +37,16 @@ namespace VeeamHealthCheck.Functions.ManageServers
         }
 
         // Blocks a user-initiated close while any CGlobals.Notifier await below is in
-        // flight. This dialog stays fully interactive during those awaits -
-        // AvaloniaUiNotifier owns its dialogs with AvaloniaHost.MainWindow, not this
-        // window (see the confirm-guard comment in doneBtn_Click) - and the in-app
-        // doneBtn/cancelBtn disables only block clicks reaching THIS dialog's own
-        // buttons. The native close button drives CloseCore through a separate path
-        // with no button in it to disable, so without this override the exact hazard
-        // those disables exist to prevent - resolving the caller's ShowDialog<bool>
-        // with a stale result while a commit is still being decided, or has already
-        // happened - is reachable through that second door.
+        // flight. AvaloniaUiNotifier now owns its dialogs with the topmost visible
+        // window (AvaloniaHost.CurrentOwner), which is this dialog while it is open, so
+        // the notifier is modal to it and its buttons and native close are already
+        // unreachable during those awaits. This guard and the doneBtn/cancelBtn
+        // disables are kept as defence in depth: a window that is not actually blocked
+        // (an owner that fell back to MainWindow, or a platform that does not block
+        // the owner) would otherwise let the native close button drive CloseCore
+        // through a path with no button to disable, and resolve the caller's
+        // ShowDialog<bool> with a stale result while a commit is still being decided,
+        // or has already happened.
         //
         // Close(...) calls made from this class's own code (cancelBtn_Click, both
         // Close(true) sites in doneBtn_Click) route through Window.Close/CloseCore with
@@ -233,13 +234,12 @@ namespace VeeamHealthCheck.Functions.ManageServers
             if (plan.CredentialsToDelete.Count > 0)
             {
                 // Both buttons are disabled across the await, and this is not just
-                // double-click hygiene. AvaloniaUiNotifier always owns its dialogs with
-                // AvaloniaHost.MainWindow (AvaloniaUiNotifier.cs:23, :32), which is
-                // VhcGui - NOT this window. So the confirm below disables the main
-                // window and leaves THIS dialog fully interactive: without the guard the
-                // user can click Cancel while the confirm is up, Close(false) resolves
+                // double-click hygiene. The notifier is owned by the topmost visible
+                // window (AvaloniaHost.CurrentOwner), i.e. this dialog, so it should block
+                // this window. If it ever does not (owner fell back to MainWindow), a
+                // click on Cancel while the confirm is up would Close(false), resolving
                 // the caller's ShowDialog<bool> so it skips its refresh, and then this
-                // suspended handler resumes and deletes credentials anyway - after a
+                // suspended handler would resume and delete credentials anyway - after a
                 // cancel, with the list still showing the servers it just unlinked.
                 this.doneBtn.IsEnabled = false;
                 this.cancelBtn.IsEnabled = false;
@@ -320,10 +320,9 @@ namespace VeeamHealthCheck.Functions.ManageServers
             {
                 // Both buttons off before this await and deliberately NOT re-enabled -
                 // unlike the confirm guard above, this path closes unconditionally right
-                // after. AvaloniaUiNotifier owns its dialogs with AvaloniaHost.MainWindow
-                // (VhcGui), not this window (see the confirm-guard comment above), so
-                // THIS dialog stays fully interactive while the message is on screen. A
-                // Cancel click during that window would resolve the caller's
+                // after. The notifier is owned by this dialog (see the confirm-guard
+                // comment above), so it should be blocked while the message is on screen;
+                // if it ever is not, a Cancel click during that window would resolve the caller's
                 // ShowDialog<bool> with false - which skips manageServersBtn_Click's
                 // repopulate for a commit that DID succeed, leaving the picker stale -
                 // and would then leave this suspended handler to Close(true) a window

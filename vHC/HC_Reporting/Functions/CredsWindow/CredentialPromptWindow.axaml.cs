@@ -3,7 +3,6 @@
 using System;
 using Avalonia.Controls;
 using Avalonia.Interactivity;
-using VeeamHealthCheck.Functions.UserInteraction;
 using VeeamHealthCheck.Shared;
 
 namespace VeeamHealthCheck.Functions.CredsWindow
@@ -46,7 +45,10 @@ namespace VeeamHealthCheck.Functions.CredsWindow
             }
             else
             {
-                await new AvaloniaUiNotifier().ShowErrorAsync("Please enter both username and password.", "Missing Information");
+                // Through CGlobals.Notifier (not a fresh AvaloniaUiNotifier) like the other
+                // dialogs; the notifier owns the error dialog with this window, so this
+                // window is blocked - Enter cannot stack a second error - until it is closed.
+                await CGlobals.Notifier.ShowErrorAsync("Please enter both username and password.", "Missing Information");
             }
         }
 
