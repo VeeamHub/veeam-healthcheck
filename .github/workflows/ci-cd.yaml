@@ -16,18 +16,21 @@ jobs:
     runs-on: windows-latest
     outputs:
       version: ${{ steps.get_version.outputs.version }}
+      notes_from_tag: ${{ steps.get_version.outputs.notes_from_tag }}
     
     steps:
     - name: Checkout repository
       uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      with:
+        fetch-depth: 0  # full history and tags: the version is computed from commits since the last GA tag
       
     - name: Setup .NET
       uses: actions/setup-dotnet@67a3573c9a986a3f9c594539f4ab511d57bb3ce9 # v4
       with:
         dotnet-version: '8.0.x'
 
-    # Version is managed in VeeamHealthCheck.csproj and auto-incremented on every build
-    # Version increments via increment_version script during build process
+    # The release version is computed from commits by .github/scripts/Get-VhcVersion.ps1
+    # (the "Compute version from commits" step below). The csproj Major.Minor is only a floor.
 
     - name: Restore dependencies
       run: dotnet restore vHC/HC.sln
@@ -85,20 +88,13 @@ jobs:
         retention-days: 30
         if-no-files-found: warn
     
-    - name: Get version from assembly
+    - name: Compute version from commits
       id: get_version
+      shell: pwsh
       run: |
-        $csproj = [xml](Get-Content vHC/HC_Reporting/VeeamHealthCheck.csproj)
-        $baseVersion = $csproj.Project.PropertyGroup[0].AssemblyVersion
-
-        # Parse base version (e.g., 3.0.0.501) and replace last segment with run number
-        $versionParts = $baseVersion.Split('.')
-        # Use format: Major.Minor.Patch.RunNumber (e.g., 3.0.1.45)
-        $version = "$($versionParts[0]).$($versionParts[1]).1.${{ github.run_number }}"
-
-        echo "version=$version" >> $env:GITHUB_OUTPUT
-        echo "Base version: $baseVersion"
-        echo "Release version: $version (using run number ${{ github.run_number }})"
+        # master builds GA releases; every other ref (dev, manual dispatch) builds dev pre-releases.
+        $channel = if ('${{ github.ref }}' -eq 'refs/heads/master') { 'ga' } else { 'dev' }
+        ./.github/scripts/Get-VhcVersion.ps1 -Revision ${{ github.run_number }} -Channel $channel -GitHubOutput
     
     - name: Publish single-file executable
       run: |
@@ -2899,8 +2895,8 @@ jobs:
         $repo      = "${{ github.repository }}"
         $buildDate = "${{ github.event.head_commit.timestamp }}"
 
-        # Find last release tag
-        $lastTag = git describe --tags --abbrev=0 2>$null
+        # Start of the notes range: the Base Tag, computed once in build-and-test (ADR 0032)
+        $lastTag = "${{ needs.build-and-test.outputs.notes_from_tag }}"
         if (-not $lastTag) { $lastTag = git rev-list --max-parents=0 HEAD }
 
         # Categorize commits by conventional commit prefix
@@ -3033,6 +3029,7 @@ jobs:
       uses: softprops/action-gh-release@de2c0eb89ae2a093876385947365aca7b0e5f844 # v1
       with:
         tag_name: v${{ needs.build-and-test.outputs.version }}
+        target_commitish: ${{ github.sha }}  # tag the commit that was built, not the default branch tip (ADR 0032)
         name: Veeam Health Check v${{ needs.build-and-test.outputs.version }}
         body_path: release_notes.md
         draft: false
@@ -3087,8 +3084,8 @@ jobs:
         $repo      = "${{ github.repository }}"
         $buildDate = "${{ github.event.head_commit.timestamp }}"
 
-        # Find last release tag to scope changelog
-        $lastTag = git describe --tags --abbrev=0 2>$null
+        # Start of the notes range: the most recent GA or -dev tag, computed in build-and-test
+        $lastTag = "${{ needs.build-and-test.outputs.notes_from_tag }}"
         if (-not $lastTag) { $lastTag = git rev-list --max-parents=0 HEAD }
 
         $features = [System.Collections.Generic.List[string]]::new()
@@ -3215,6 +3212,7 @@ jobs:
       uses: softprops/action-gh-release@de2c0eb89ae2a093876385947365aca7b0e5f844 # v1
       with:
         tag_name: v${{ needs.build-and-test.outputs.version }}-dev
+        target_commitish: ${{ github.sha }}
         name: "[Dev] Veeam Health Check v${{ needs.build-and-test.outputs.version }}"
         body_path: prerelease_notes.md
         draft: false
