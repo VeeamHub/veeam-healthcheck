@@ -51,21 +51,33 @@ VeeamHealthCheck.exe [options]
 | Option | Description |
 |---|---|
 | `/run` | Execute health check via CLI |
-| `/gui` | Launch graphical interface |
+| `/gui` | Launch graphical interface (also the default when run with no arguments) |
 | `/help` | Show full help menu |
 | `/days:<N>` | Reporting window: 7, 12, 30, or 90 days (default: 7) |
 | `/outdir=<path>` | Output directory (default: `C:\temp\vHC`) |
 | `/pdf` | Also export as PDF |
 | `/pptx` | Also export as PowerPoint |
 | `/scrub:true` | Anonymize sensitive data |
+| `/scrub:false` | Keep full detail (disable anonymization) |
 | `/lite` | Skip per-job HTML exports (faster) |
 | `/show:report` | Open report in browser when done |
 | `/show:files` | Open output folder in Explorer |
+| `/vbr`, `/vb365` | Target VBR or VB365 instead of auto-detecting; use both (`/vbr /vb365`) for a server running both products |
 | `/remote` | Enable remote execution |
 | `/host=<hostname>` | Target remote Veeam server |
 | `/security` | Run security-focused assessment only |
-| `/import[:<path>]` | Generate report from existing CSV data |
+| `/import` | Generate report from existing data, no new collection (default path: `C:\temp\vHC`) |
+| `/import:<path>` | Generate report from CSV files at `<path>` (flat or nested `Original\VBR\<server>\<timestamp>` layout) |
+| `/hotfix` | Run hotfix detection |
+| `/path=<dir>` | Path for hotfix detection (used with `/hotfix`) |
+| `/silent` | Never prompt; fail fast with an [exit code](getting-started.md#exit-codes). Mutually exclusive with `/savecreds` |
+| `/savecreds` | One-shot interactive seed: prompts for a username and password and stores them (DPAPI, current user) for `/host=` (default: localhost), then exits |
+| `/credfile=<path>` | Load host credentials from a JSON credfile into memory only (nothing is persisted). Composes with `/silent` |
 | `/clearcreds` | Clear stored credentials |
+| `/monitor:setup` | Install vhc-monitor and register a 5-minute scheduled task |
+| `/monitor:run` | Trigger an immediate monitor check |
+| `/monitor:status` | Show monitor installation and last-run status |
+| `/monitor:disable` | Remove the scheduled task (keeps config and files) |
 | `/debug` | Enable debug logging |
 
 ## Remote Execution
