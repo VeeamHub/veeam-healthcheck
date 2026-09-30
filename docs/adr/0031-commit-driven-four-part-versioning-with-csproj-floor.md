@@ -83,6 +83,12 @@ since.
 - **Hotfixes** branch from `master`, are PR'd into `master`, and are
   cherry-picked to `dev` with `-x`. The hotfix gets its own patch bump; the
   same fix may appear in two versions' release notes.
+- **`manual-release.yml` keeps its `version_override` input** as an escape
+  hatch, validated to be four-part and above the last GA version. Its default
+  revision is the latest `ci-cd.yaml` run number (`run_number` is per workflow
+  and would restart), its pre-releases are tagged `-rc` so they never count as
+  a Base Tag, and it refuses to replace an existing release unless
+  `version_override` is given.
 - **The local auto-increment is untouched.** `increment_version.ps1/.sh` and
   the csproj `Exec` hooks still rewrite the csproj build segment on every
   local build; CI ignores it. Replacing it is #246.

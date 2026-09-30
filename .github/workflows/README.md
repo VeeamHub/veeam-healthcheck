@@ -17,7 +17,8 @@ A manually-triggered workflow for creating releases with full control over the p
 | Input | Required | Description |
 |-------|----------|-------------|
 | `pr_number` | No | PR number to extract changelog from. Leave empty for no changelog. |
-| `version_override` | No | Override version (e.g., `3.0.0.500`). Leave empty to use AssemblyVersion from csproj. |
+| `version_override` | No | Override the version (four parts, e.g., `3.2.0.5`; must be above the last GA version). Leave empty to compute it from commits. |
+| `prerelease` | No | Mark as pre-release. The tag gets an `-rc` suffix, so it never becomes a Base Tag. |
 | `skip_virustotal` | No | Check to skip VirusTotal scanning |
 | `dry_run` | No | Check to build without creating release (preview mode) |
 
@@ -104,3 +105,33 @@ Integration tests require self-hosted runners with these labels:
 - `VBR13SQL_HOST` - VBR v13 with SQL
 
 If runners aren't configured, integration tests will be skipped and releases will proceed normally.
+
+## Versioning
+
+Release versions are computed from commits by `.github/scripts/Get-VhcVersion.ps1` (see
+[ADR 0031](../../docs/adr/0031-commit-driven-four-part-versioning-with-csproj-floor.md) and
+[ADR 0032](../../docs/adr/0032-base-tag-is-highest-ga-tag.md)). `ci-cd.yaml`,
+`manual-release.yml`, `pr-release-prep.yml` and `sbom-generation.yml` all call it, so they agree.
+
+- `Major.Minor.Patch` comes from the Conventional Commits since the last GA tag
+  (`!:` / `BREAKING CHANGE:` = major, `feat:` = minor, anything else = patch), raised to the csproj
+  `Major.Minor` floor, or set by a `Release-As: X.Y.Z` commit footer.
+- `Revision` is the `ci-cd.yaml` run number.
+- Any job that calls the script needs `actions/checkout` with `fetch-depth: 0` so tags and history exist.
+- Release tags are created on the commit that was built (`target_commitish`), not the default branch tip.
+
+### Version Preview (`version-preview.yml`)
+
+Runs on every PR and on demand. It prints the version the commit would get, without building anything
+or touching the lab runners. Check the job summary.
+
+### Commit Lint (`commit-lint.yml`)
+
+Advisory: annotates PR titles and commits that are not Conventional Commits (an untyped commit counts
+as a patch). It never fails the PR. To enforce it, add `-Strict` to the script call and mark the check
+required in branch protection.
+
+### Pester tests
+
+`.github/scripts/VhcVersion.Tests.ps1` runs in `pester-tests.yml`. Locally:
+`pwsh -NoProfile -Command "Invoke-Pester -Path .github/scripts/VhcVersion.Tests.ps1 -Output Detailed"`.

@@ -126,9 +126,26 @@ fix(nas): fix Get-NasInfo.ps1 for VBR v13 (#112)
 
 If a PR resolves multiple issues, list them: `Fixes #112, fixes #152, fixes #155`.
 
+## Versioning
+
+Release versions are computed from commits, not hand-edited ([ADR 0031](docs/adr/0031-commit-driven-four-part-versioning-with-csproj-floor.md), [ADR 0032](docs/adr/0032-base-tag-is-highest-ga-tag.md)). Format: `Major.Minor.Patch.Revision`, where Revision is the CI run number.
+
+| Commit since the last GA tag | Bump |
+|---|---|
+| `type!:` subject or a `BREAKING CHANGE:` footer | major |
+| `feat:` | minor |
+| anything else (`fix:`, `chore:`, no type at all) | patch |
+
+- The csproj `Major.Minor` is a **floor**: the result is never lower than `Major.Minor.0`. Raise it to force a bump.
+- A `Release-As: X.Y.Z` commit footer overrides everything. It is rejected if below the floor or not above the last GA version.
+- **Merge method matters.** `dev -> master` must be a merge commit so the individual commits survive. A PR squash-merged into `dev` contributes only its title, so the title needs a Conventional Commits prefix (`feat:`, `fix:`, ...).
+- **Hotfix:** branch from `master`, PR into `master`, then `git cherry-pick -x` the fix onto `dev`. The fix may appear in two versions' release notes.
+- Dry run locally: `pwsh ./.github/scripts/Get-VhcVersion.ps1 -Revision 999 -Channel ga` (needs tags: `git fetch --tags`).
+- The `Commit Lint` check on PRs is advisory; it annotates titles and commits that would count as an untyped patch.
+
 ## Important Notes
 
 - Tests require Windows (WPF dependency) - non-Windows builds skip test compilation
 - Internal types exposed to `VhcXTests` via `InternalsVisibleTo` in csproj
-- Version auto-increments on build via `increment_version.ps1`
+- Local builds auto-increment the csproj build segment via `increment_version.ps1`; CI ignores it (see Versioning). Revert the csproj after building: `git checkout -- vHC/HC_Reporting/VeeamHealthCheck.csproj`
 - Suppressed code analysis warnings: CA1305, CA1307, CA1820, CA2242, CA1031, CA1806, CA1822

@@ -132,7 +132,12 @@ A release built from `dev`, tagged `vMajor.Minor.Patch.Revision-dev` and
 published as a prerelease. The only kind of prerelease the pipeline
 produces on its own.
 _Avoid_: Beta, RC, nightly (`v3.0.2-beta.1` is a stray tag, not a release
-type; `manual-release.yml`'s "beta/RC" input is a separate manual path)
+type; hand-cut prereleases are Manual Prereleases, below)
+
+**Manual Prerelease**:
+A prerelease cut by hand through `manual-release.yml`, tagged
+`vMajor.Minor.Patch.Revision-rc`. It is never a Base Tag.
+_Avoid_: Beta, RC build
 
 **Revision**:
 The fourth version segment: the CI `run_number` of the workflow run that
