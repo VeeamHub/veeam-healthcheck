@@ -48,6 +48,9 @@ No installer. Single executable. The only prerequisite is PowerShell 7 where you
     VeeamHealthCheck.exe /run /outdir=D:\Reports /show:report
     ```
 
+!!! note "Console window"
+    Double-clicking `VeeamHealthCheck.exe` hides the console window. Launching it from a shell (cmd, PowerShell, Windows Terminal) keeps the console visible. `/gui /security` always keeps it visible, because a remote security run prompts for credentials on the console.
+
 ## CLI Reference
 
 ```
