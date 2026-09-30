@@ -177,7 +177,7 @@ namespace VeeamHealthCheck.Functions.Collection
                 this.log.Info("[Collections] Phase: Log wait analysis...done!", false);
             }
 
-            if (CGlobals.IsVbr && !CGlobals.REMOTEEXEC)
+            if (CGlobals.EffectiveIsVbr && !CGlobals.REMOTEEXEC)
             {
                 this.log.Info("[Collections] Phase: VMC reader...", false);
                 this.ExecVmcReader();
@@ -202,15 +202,33 @@ namespace VeeamHealthCheck.Functions.Collection
             this.log.Info("[Collections] Run() complete.", false);
         }
 
+        // Shared by every non-critical collection phase below: log the failure loudly and
+        // continue so report generation can still proceed with whatever was gathered, instead
+        // of letting one phase's exception abort the whole run.
+        private static void SafeExec(string label, Action action)
+        {
+            try
+            {
+                action();
+            }
+            catch (Exception e)
+            {
+                CGlobals.Logger.Error($"[Collections] {label} failed: {e.Message}", false);
+            }
+        }
+
         private static void CheckRecon()
         {
-            if (CGlobals.DEBUG)
+            SafeExec("Recon check", () =>
             {
-                CGlobals.Logger.Debug("Checking for Coveware Recon Task");
-            }
+                if (CGlobals.DEBUG)
+                {
+                    CGlobals.Logger.Debug("Checking for Coveware Recon Task");
+                }
 
-            CReconChecker rc = new();
-            rc.Check();
+                CReconChecker rc = new();
+                rc.Check();
+            });
         }
 
         private void GetCsvFileSizesToLog()
@@ -251,20 +269,25 @@ namespace VeeamHealthCheck.Functions.Collection
 
         private void ExecVmcReader()
         {
-            if (CGlobals.IsVbr)
+            // No try/catch here: CVmcReader.PopulateVmc() already catches everything that can
+            // go wrong reading/parsing a VMC.log (issue #209), and nothing else in the
+            // CLogOptions constructor can throw. Each mode is still looked up independently so
+            // a "vbr" install-ID miss can't skip the "vb365" lookup - matching the per-mode
+            // isolation CLogOptions already gives the install IDs themselves.
+            if (CGlobals.EffectiveIsVbr)
             {
-                CLogOptions logOptions = new("vbr");
+                new CLogOptions(VmcLogMode.Vbr);
             }
 
-            if (CGlobals.IsVb365)
+            if (CGlobals.EffectiveIsVb365)
             {
-                CLogOptions logOptions = new("vb365");
+                new CLogOptions(VmcLogMode.Vb365);
             }
         }
 
         private void GetRegistryDbInfo()
         {
-            try
+            SafeExec("Registry DB info collection", () =>
             {
                 CRegReader reg = new CRegReader();
 
@@ -284,19 +307,16 @@ namespace VeeamHealthCheck.Functions.Collection
                 }
 
                 this.log.Info("[Collections] Registry: default VBR keys...done!", false);
-            }
-            catch (Exception e)
-            {
-                // Don't let a registry-read failure silently abort collection. Log it loudly
-                // and continue so report generation can still proceed with whatever was gathered.
-                this.log.Error("[Collections] Registry DB info collection failed: " + e.Message, false);
-            }
+            });
         }
 
         private void ExecSqlQueries()
         {
-            CSqlExecutor sql = new();
-            sql.Run();
+            SafeExec("SQL query collection", () =>
+            {
+                CSqlExecutor sql = new();
+                sql.Run();
+            });
         }
 
         private void ExecPSScripts()

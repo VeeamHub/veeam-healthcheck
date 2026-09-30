@@ -501,6 +501,21 @@ namespace VeeamHealthCheck.Functions.Collection.PSCollections
             if (!string.IsNullOrWhiteSpace(stdOut))
             {
                 this.log.Debug($"[PS][STDOUT] {stdOut}", false);
+
+                // Get-NasInfo.ps1 deliberately never fails the whole run over a NAS-only
+                // problem (it's supplementary data) - its own catch blocks log via
+                // Write-NasLog and let the script exit 0. Without this, that failure is only
+                // visible in the Debug-only dump above (or a separate log file nobody opens),
+                // so a partial NAS data gap looks like a clean, complete run. Promote it to a
+                // Warning in the main log without touching `failed` - the script's own "don't
+                // abort the run" decision stands.
+                foreach (string outLine in stdOut.Split(new[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries))
+                {
+                    if (outLine.Contains("[Get-NasInfo]") && outLine.Contains("[ERROR]"))
+                    {
+                        this.log.Warning(outLine, false);
+                    }
+                }
             }
 
             // Process stderr
@@ -613,7 +628,7 @@ namespace VeeamHealthCheck.Functions.Collection.PSCollections
             }
 
             // Add LogPath parameter so collector logs follow the configured output root
-            argString += $"-LogPath \"{Path.Combine(CVariables.unsafeDir, "Log")}\" ";
+            argString += $"-LogPath \"{CollectorLogPath()}\" ";
             // Add credentials if needed for remote execution
             string safeArgString = argString; // For logging without sensitive data
             if (needsCredentials)
@@ -659,6 +674,10 @@ namespace VeeamHealthCheck.Functions.Collection.PSCollections
                 RedirectStandardError = true
             };
         }
+
+        // CVariables.unsafeDir is Path.Combine(CGlobals.desiredPath ?? outDir, "Original"),
+        // where outDir is a hardcoded non-empty constant - it can never be null or empty.
+        private static string CollectorLogPath() => Path.Combine(CVariables.unsafeDir, "Log");
 
         private ProcessStartInfo VbrNasStartInfo()
         {
@@ -816,12 +835,9 @@ namespace VeeamHealthCheck.Functions.Collection.PSCollections
                 }
                 // Add LogPath so this phase (e.g. Get-NasInfo) writes its own log next to the
                 // configured output root instead of running silently. Mirrors VbrConfigStartInfo.
-                if (!string.IsNullOrEmpty(CVariables.unsafeDir))
-                {
-                    string nasLogPath = Path.Combine(CVariables.unsafeDir, "Log");
-                    argString += $"-LogPath \"{nasLogPath}\" ";
-                    safeArgString += $"-LogPath \"{nasLogPath}\" ";
-                }
+                string nasLogPath = CollectorLogPath();
+                argString += $"-LogPath \"{nasLogPath}\" ";
+                safeArgString += $"-LogPath \"{nasLogPath}\" ";
                 if (needsCredentials)
                 {
                     CredsHandler ch = new();
