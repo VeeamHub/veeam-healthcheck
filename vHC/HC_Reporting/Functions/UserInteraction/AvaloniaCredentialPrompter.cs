@@ -1,6 +1,7 @@
 // Copyright (c) 2021, Adam Congdon <adam.congdon2@gmail.com>
 // MIT License
 using System;
+using System.IO;
 using System.Threading.Tasks;
 using Avalonia.Threading;
 using VeeamHealthCheck.Functions.CredsWindow;
@@ -28,11 +29,14 @@ namespace VeeamHealthCheck.Functions.UserInteraction
                 {
                     CredentialStore.Set(host, dialog.Username, dialog.Password);
                 }
-                catch (Exception ex)
+                catch (Exception ex) when (ex is IOException || ex is UnauthorizedAccessException)
                 {
-                    // Set() caches in memory before it persists, so the credentials are
-                    // still good for this run. Losing them here would abort a run over
-                    // a disk problem the user can do nothing about mid-prompt.
+                    // Only the disk write is tolerated. Set() caches in memory before it
+                    // persists, so after an IO failure the credentials are still good for
+                    // this run, and losing them would abort a run over a disk problem the
+                    // user can do nothing about mid-prompt. A failure to encrypt them
+                    // (CryptographicException from DPAPI) means nothing was cached, so it
+                    // is deliberately not caught here and surfaces as before.
                     CGlobals.Logger.Warning($"Could not persist credentials for host {host}; using them for this session only. Error: {ex.Message}");
                 }
 
