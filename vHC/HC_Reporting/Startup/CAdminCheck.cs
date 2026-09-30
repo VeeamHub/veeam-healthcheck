@@ -9,9 +9,14 @@ namespace VeeamHealthCheck
     {
         public bool IsAdmin()
         {
-            return OperatingSystem.IsWindows()
-                ? new WindowsPrincipal(WindowsIdentity.GetCurrent()).IsInRole(WindowsBuiltInRole.Administrator)
-                : Environment.IsPrivilegedProcess;
+            if (!OperatingSystem.IsWindows())
+            {
+                return Environment.IsPrivilegedProcess;
+            }
+
+            // WindowsIdentity owns a token handle; dispose it (the pre-Avalonia code did).
+            using var identity = WindowsIdentity.GetCurrent();
+            return new WindowsPrincipal(identity).IsInRole(WindowsBuiltInRole.Administrator);
         }
     }
 }
