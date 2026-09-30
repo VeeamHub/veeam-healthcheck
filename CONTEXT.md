@@ -120,7 +120,7 @@ _Avoid_: Archived backup
 
 How vHC's own releases are numbered, as opposed to the Veeam product data
 above. See [ADR 0031](docs/adr/0031-commit-driven-four-part-versioning-with-csproj-floor.md)
-and [ADR 0032](docs/adr/0032-base-tag-is-highest-reachable-ga-tag.md).
+and [ADR 0032](docs/adr/0032-base-tag-is-highest-ga-tag.md).
 
 **GA Release**:
 A release built from `master`, tagged `vMajor.Minor.Patch.Revision` with no
@@ -142,11 +142,12 @@ _Avoid_: Build number, build version (the name `VbrVersionSupportCheck`
 uses for it)
 
 **Base Tag**:
-The highest-versioned GA tag reachable from the commit being built. The
-commits since it decide the next version and the start of the GA
-release-notes range.
-_Avoid_: Last tag, previous tag (`git describe` returns the nearest tag of
-any kind, which may be a Dev Prerelease or a stray tag)
+The highest-versioned GA tag among all fetched tags, whether or not it is
+an ancestor of the commit being built (GA tags sit on `master`'s merge
+commits, which `dev` never merges back). The commits since it decide the
+next version and the start of the GA release-notes range.
+_Avoid_: Last tag, previous tag, nearest tag (`git describe` returns the
+nearest tag of any kind, which may be a Dev Prerelease or a stray tag)
 
 **Version Floor**:
 The `Major.Minor` in the csproj, read as the lowest version a build may

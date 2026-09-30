@@ -5,7 +5,7 @@
 * **Decider:** Ben Thomas (@comnam90)
 * **Consulted:** Adam Congdon (@adamcongdon) — agreed in principle on #244, has not reviewed the individual decisions; Claude Code (design)
 * **Relates to:** #244 (proposal and decisions),
-  [ADR 0032](0032-base-tag-is-highest-reachable-ga-tag.md) (how the base tag is chosen),
+  [ADR 0032](0032-base-tag-is-highest-ga-tag.md) (how the base tag is chosen),
   #245 and #246 (follow-ups deliberately kept out of this change)
 
 ## Context and Problem Statement
@@ -46,7 +46,7 @@ script called by every workflow that needs a version (`ci-cd.yaml`,
   "later builds are higher", and it is what keeps two builds with the same
   `Major.Minor.Patch` distinct.
 - **`Major.Minor.Patch`** is computed from the commits since the Base Tag
-  ([ADR 0032](0032-base-tag-is-highest-reachable-ga-tag.md)): a `!:` type or
+  ([ADR 0032](0032-base-tag-is-highest-ga-tag.md)): a `!:` type or
   `BREAKING CHANGE:` footer is a major, a `feat` is a minor, anything else
   (including commits with no Conventional Commits type) is a patch.
 - **The csproj `Major.Minor` is a floor.** The result is
