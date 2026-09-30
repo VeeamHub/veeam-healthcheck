@@ -95,6 +95,9 @@ jobs:
           if ($LASTEXITCODE -eq 0) {
             throw "Release $tag already exists. Dispatch with version_override to replace it deliberately."
           }
+          # gh exits non-zero when the release is absent (the normal path); clear it so the pwsh
+          # step wrapper's trailing `exit $LASTEXITCODE` does not fail the step.
+          $global:LASTEXITCODE = 0
         }
 
     - name: Publish single-file executable
