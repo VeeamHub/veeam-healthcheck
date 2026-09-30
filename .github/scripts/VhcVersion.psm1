@@ -139,8 +139,17 @@ function Invoke-VhcGit {
     [CmdletBinding()]
     param([Parameter(Mandatory)][string]$RepoPath, [Parameter(Mandatory)][string[]]$Arguments)
 
-    $out = & git -C $RepoPath @Arguments 2>&1
-    if ($LASTEXITCODE -ne 0) { throw "git $($Arguments -join ' ') failed: $out" }
+    # stderr goes to a temp file, not `2>&1`: a git warning on an exit-0 call must not
+    # end up in the parsed stdout. It is only reported when git fails.
+    $errFile = [System.IO.Path]::GetTempFileName()
+    try {
+        $out     = & git -C $RepoPath @Arguments 2>$errFile
+        $exit    = $LASTEXITCODE
+        $errText = (Get-Content -LiteralPath $errFile -Raw)
+    } finally {
+        Remove-Item -LiteralPath $errFile -Force -ErrorAction SilentlyContinue
+    }
+    if ($exit -ne 0) { throw "git $($Arguments -join ' ') failed: $(@($out) -join ' ') $errText".TrimEnd() }
     $out
 }
 
@@ -150,7 +159,7 @@ function Get-VhcCommitsSince {
     param([Parameter(Mandatory)][string]$RepoPath, [Parameter(Mandatory)][string]$Ref, [string]$From)
 
     $range = if ($From) { "$From..$Ref" } else { $Ref }
-    $raw = (Invoke-VhcGit -RepoPath $RepoPath -Arguments @('log', $range, '--no-merges', '--pretty=format:%H%x1f%s%x1f%b%x1e')) -join "`n"
+    $raw = (Invoke-VhcGit -RepoPath $RepoPath -Arguments @('log', $range, '--no-merges', '--pretty=format:%H%x1f%s%x1f%b%x1e', '--')) -join "`n"
     $records = $raw -split [char]0x1E
     foreach ($record in $records) {
         if ([string]::IsNullOrWhiteSpace($record)) { continue }

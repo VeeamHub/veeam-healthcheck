@@ -25,10 +25,10 @@ BeforeAll {
 
     function Add-TestCommit {
         param([string]$Repo, [string]$Subject, [string]$Body = '', [string]$Tag)
-        $args = @('-C', $Repo, '-c', 'user.name=t', '-c', 'user.email=t@example.com', '-c', 'commit.gpgsign=false',
+        $gitArgs = @('-C', $Repo, '-c', 'user.name=t', '-c', 'user.email=t@example.com', '-c', 'commit.gpgsign=false',
             'commit', '-q', '--allow-empty', '-m', $Subject)
-        if ($Body) { $args += @('-m', $Body) }
-        git @args | Out-Null
+        if ($Body) { $gitArgs += @('-m', $Body) }
+        git @gitArgs | Out-Null
         if ($Tag) { git -C $Repo tag $Tag | Out-Null }
     }
 
@@ -242,6 +242,40 @@ Describe 'Get-VhcVersionInfo (synthetic repos)' {
         git -C $repo tag 'v3.0.2.260'
         Merge-TestBranch -Repo $repo -Branch dev
         (Get-VhcVersionInfo -Revision 300 -RepoPath $repo).Version | Should -Be '3.0.3.300'
+    }
+
+    It 'is not broken by a tracked file named like the ref' {
+        $script:repo = New-TestRepo
+        # No tags, so the log range is the bare ref 'HEAD', which collides with the file below.
+        Add-TestCommit -Repo $repo -Subject 'fix: a'
+        Set-Content -Path (Join-Path $repo 'HEAD') -Value 'x'
+        git -C $repo add HEAD | Out-Null
+        Add-TestCommit -Repo $repo -Subject 'feat: b'
+        $i = Get-VhcVersionInfo -Revision 3 -RepoPath $repo
+        $i.Version | Should -Be '3.0.0.3'
+        $i.CommitCount | Should -Be 2
+    }
+
+    It 'keeps git stderr out of the parsed output when git succeeds' {
+        $script:repo = New-TestRepo
+        Add-TestCommit -Repo $repo -Subject 'fix: a' -Tag 'v3.0.1.193'
+        Add-TestCommit -Repo $repo -Subject 'fix: b'
+        $saved = $env:GIT_TRACE
+        try {
+            $env:GIT_TRACE = '1'   # makes every git command write trace lines to stderr, exit code 0
+            $tags    = @(Invoke-VhcGit -RepoPath $repo -Arguments @('tag', '--list'))
+            $commits = @(Get-VhcCommitsSince -RepoPath $repo -Ref 'HEAD')
+        } finally {
+            if ($null -eq $saved) { Remove-Item Env:GIT_TRACE -ErrorAction SilentlyContinue } else { $env:GIT_TRACE = $saved }
+        }
+        $tags | Should -Be @('v3.0.1.193')
+        $commits.Count | Should -Be 2
+        $commits[0].Sha | Should -Match '^[0-9a-f]{40}$'
+    }
+
+    It 'still throws with git output when git fails' {
+        $script:repo = New-TestRepo
+        { Invoke-VhcGit -RepoPath $repo -Arguments @('log', 'no-such-ref', '--') } | Should -Throw '*failed*'
     }
 }
 
