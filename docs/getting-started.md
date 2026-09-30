@@ -51,6 +51,24 @@ No installer. Single executable. The only prerequisite is PowerShell 7 where you
 !!! note "Console window"
     Double-clicking `VeeamHealthCheck.exe` hides the console window. Launching it from a shell (cmd, PowerShell, Windows Terminal) keeps the console visible. `/gui /security` always keeps it visible, because a remote security run prompts for credentials on the console.
 
+### GUI options
+
+The **Ad-hoc Health Check** tab exposes these settings. Most have a CLI equivalent (see the [CLI Reference](#cli-reference)).
+
+| Setting | What it does | CLI equivalent |
+|---|---|---|
+| **Server** | The Veeam server to collect from. Use the gear button to open **Manage Servers** | `/host=` |
+| **Product Type** | *Auto-detect*, *VBR*, *VB365*, or *Both*. For remote servers, choosing the product explicitly avoids connection failures | `/vbr`, `/vb365` |
+| **Output path** | Where output is written (default `C:\temp\vHC`); `...` opens a folder picker | `/outdir=` |
+| **Export PDF** | Also export the report as PDF. Unavailable when VB365 and VBR are both detected on the same machine | `/pdf` |
+| **Show files on completion** | Open the output folder in Explorer when the run finishes | `/show:files` |
+| **Show HTML report upon completion** | Open the HTML report in your browser when the run finishes | `/show:report` |
+| **Collection Period** | **7**, **30**, or **90 Days** of job history | `/days:<N>` (also accepts 12) |
+| **Rescan Hosts** | Before collecting, rescan all hosts in VBR (`Rescan-VBREntity -AllHosts`) so hardware changes are picked up. This can add several minutes to the run | GUI only |
+| **Remove sensitive data types from report** | Anonymize sensitive data in the report ([Veeam KB 2462](https://www.veeam.com/kb2462)) | `/scrub:true`, `/scrub:false` |
+| **Clear Saved Credentials** | Delete any previously saved credentials before running, so you are prompted again | `/clearcreds` |
+| **Accept Terms** | Must be ticked before **Run** is enabled | n/a |
+
 ## CLI Reference
 
 ```
