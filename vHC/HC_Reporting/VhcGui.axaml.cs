@@ -31,6 +31,11 @@ namespace VeeamHealthCheck
         private readonly CClientFunctions functions = new();
         private bool _modeCheckFailed;
 
+        // Bumped by every InitializeMonitorStatus call so a slow, older probe (the
+        // scheduled-task check can take up to 30 s) cannot overwrite the fresher
+        // state a later refresh has already applied.
+        private int _monitorRefreshSeq;
+
         private const string LocalhostName = "localhost";
 
         // Resolved inside SetUiSync(), right after ModeCheck() runs - see that
@@ -1126,6 +1131,8 @@ namespace VeeamHealthCheck
             // the monitor is already installed.
             monitorQuickSetupBtn.Content = VbrLocalizationHelper.GuiMonitorQuickSetup;
 
+            int seq = System.Threading.Interlocked.Increment(ref _monitorRefreshSeq);
+
             System.Threading.Tasks.Task.Run(() =>
             {
                 CVhcMonitorIntegration.MonitorStatusSnapshot snapshot;
@@ -1139,7 +1146,14 @@ namespace VeeamHealthCheck
                     return;
                 }
 
-                Dispatcher.UIThread.Post(() => this.ApplyMonitorStatus(snapshot));
+                Dispatcher.UIThread.Post(() =>
+                {
+                    // A newer refresh started after this one; let it apply instead.
+                    if (seq == _monitorRefreshSeq)
+                    {
+                        this.ApplyMonitorStatus(snapshot);
+                    }
+                });
             });
         }
 
