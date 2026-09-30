@@ -3,7 +3,7 @@ site_description: Generate comprehensive configuration reports for your Veeam en
 site_url: https://veeamhub.github.io/veeam-healthcheck/
 repo_url: https://github.com/VeeamHub/veeam-healthcheck
 repo_name: VeeamHub/veeam-healthcheck
-edit_uri: edit/master/docs/
+edit_uri: edit/dev/docs/
 
 docs_dir: docs
 
