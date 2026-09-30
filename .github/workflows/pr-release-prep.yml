@@ -51,6 +51,7 @@ jobs:
     
     - name: Publish single-file executable
       run: |
+        $version = "${{ steps.get_version.outputs.version }}"
         dotnet publish vHC/HC_Reporting/VeeamHealthCheck.csproj `
           -c Release `
           -r win-x64 `
@@ -58,6 +59,9 @@ jobs:
           -p:PublishSingleFile=true `
           -p:IncludeNativeLibrariesForSelfExtract=true `
           -p:EnableCompressionInSingleFile=true `
+          -p:Version=$version `
+          -p:AssemblyVersion=$version `
+          -p:FileVersion=$version `
           -o publish/out
     
     - name: Create ZIP archive
