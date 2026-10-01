@@ -1,0 +1,33 @@
+name: Commit Lint
+
+# Advisory: reports Conventional Commits problems as annotations and never fails the PR.
+# Commit types drive the release version (docs/adr/0031), so an untyped commit silently
+# counts as a patch. To enforce, add -Strict to the script call and make this check required
+# in branch protection.
+
+on:
+  pull_request:
+    types: [opened, edited, synchronize, reopened]
+    branches: [master, dev]
+
+permissions:
+  contents: read
+
+jobs:
+  commit-lint:
+    name: Conventional Commits (advisory)
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          fetch-depth: 0
+
+      - name: Lint PR title and commits
+        shell: pwsh
+        env:
+          PR_TITLE: ${{ github.event.pull_request.title }}
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: ./.github/scripts/Invoke-VhcCommitLint.ps1 -Title $env:PR_TITLE -BaseSha $env:BASE_SHA -HeadSha $env:HEAD_SHA

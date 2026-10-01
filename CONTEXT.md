@@ -115,3 +115,53 @@ Tape` (e.g. `VMware - Backup to Vault Direct on Tape`). A real, queryable
 Backup record, but with no corresponding `Get-VBRJob` entry — its Restore
 Points are permanently unmatchable to a job by name or Id, by design.
 _Avoid_: Archived backup
+
+## Release and versioning
+
+How vHC's own releases are numbered, as opposed to the Veeam product data
+above. See [ADR 0031](docs/adr/0031-commit-driven-four-part-versioning-with-csproj-floor.md)
+and [ADR 0032](docs/adr/0032-base-tag-is-highest-ga-tag.md).
+
+**GA Release**:
+A release built from `master`, tagged `vMajor.Minor.Patch.Revision` with no
+suffix and published as a non-prerelease.
+_Avoid_: Stable release, production release
+
+**Dev Prerelease**:
+A release built from `dev`, tagged `vMajor.Minor.Patch.Revision-dev` and
+published as a prerelease. The only kind of prerelease the pipeline
+produces on its own.
+_Avoid_: Beta, RC, nightly (`v3.0.2-beta.1` is a stray tag, not a release
+type; hand-cut prereleases are Manual Prereleases, below)
+
+**Manual Prerelease**:
+A prerelease cut by hand through `manual-release.yml`, tagged
+`vMajor.Minor.Patch.Revision-rc`. It is never a Base Tag.
+_Avoid_: Beta, RC build
+
+**Revision**:
+The fourth version segment: the CI `run_number` of the workflow run that
+built it. Increases with every run across all branches and carries no
+meaning beyond "later builds are higher".
+_Avoid_: Build number, build version (the name `VbrVersionSupportCheck`
+uses for it)
+
+**Base Tag**:
+The highest-versioned GA tag among all fetched tags, whether or not it is
+an ancestor of the commit being built (GA tags sit on `master`'s merge
+commits, which `dev` never merges back). The commits since it decide the
+next version and the start of the GA release-notes range.
+_Avoid_: Last tag, previous tag, nearest tag (`git describe` returns the
+nearest tag of any kind, which may be a Dev Prerelease or a stray tag)
+
+**Version Floor**:
+The `Major.Minor` in the csproj, read as the lowest version a build may
+compute. It can raise the commit-derived version, never lower it.
+_Avoid_: Csproj version, AssemblyVersion (its last segment is a local-build
+counter, not a release number)
+
+**Hotfix**:
+A fix released from `master` ahead of unreleased work on `dev`, then
+cherry-picked to `dev`. It gets its own patch bump, and may appear in the
+release notes of two versions.
+_Avoid_: Patch release (any release can be a patch bump)

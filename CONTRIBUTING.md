@@ -33,6 +33,20 @@ If you accidentally opened a PR against `master`, you can change the base branch
 
 PRs to `master` will appear stuck (mergeability "blocked") because `master`'s required `build-and-test` check only runs on push events, not on PRs. Targeting `dev` avoids this entirely.
 
+## Commit messages and versioning
+
+Release versions are computed from commit messages, so the prefix you choose matters. Use [Conventional Commits](https://www.conventionalcommits.org/):
+
+| Commit | Next version |
+|---|---|
+| `feat: ...` | minor bump (`3.0.x` → `3.1.0`) |
+| `fix: ...`, `chore: ...`, `docs: ...`, anything else | patch bump (`3.1.0` → `3.1.1`) |
+| `feat!: ...` (any type with `!`) or a `BREAKING CHANGE:` footer | major bump |
+
+If your PR may be squash-merged, **make the PR title a Conventional Commit**: after a squash, the title is the only place the type is read. `Release-As:` and `BREAKING CHANGE:` footers are read from the commit body.
+
+The `Commit Lint` check on your PR only warns about messages that don't follow the convention; it never blocks a merge. The full rules, and how to preview the version a commit would get, are in the [Versioning section of the workflows README](.github/workflows/README.md#versioning).
+
 ## License
 
 By contributing, you agree that your contributions will be licensed under the projects original open source license.

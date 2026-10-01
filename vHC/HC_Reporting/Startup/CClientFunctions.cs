@@ -86,6 +86,38 @@ namespace VeeamHealthCheck.Startup
             CGlobals.Logger.Info("Starting Admin Check...done!");
         }
 
+        /// <summary>
+        /// True when this Health Check build is too new to run against a pre-v12 VBR: 2.0.0.547 and
+        /// later 2.x, or any 3.x+. Returns false (do not block) when the version string is missing,
+        /// has fewer than four segments, or the major/revision segment is not numeric.
+        /// </summary>
+        internal static bool IsVhcTooNewForPreV12(string version)
+        {
+            if (string.IsNullOrEmpty(version))
+            {
+                return false;
+            }
+
+            string[] vhcVersionSections = version.Split('.');
+            if (vhcVersionSections.Length < 4)
+            {
+                return false;
+            }
+
+            if (!int.TryParse(vhcVersionSections[0], out int vhcMajorVersion)
+                || !int.TryParse(vhcVersionSections[3], out int vhcRevision))
+            {
+                return false;
+            }
+
+            return (vhcMajorVersion == 2 && vhcRevision > 546) || vhcMajorVersion >= 3;
+        }
+
+        internal static bool ShouldBlockVbrVersion(int vbrMajorVersion, string vhcVersion)
+        {
+            return vbrMajorVersion < 12 && IsVhcTooNewForPreV12(vhcVersion);
+        }
+
         public string ModeCheck()
         {
             CGlobals.Logger.Info("Checking processes to determine execution mode..", false);

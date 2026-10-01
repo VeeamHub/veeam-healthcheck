@@ -8,11 +8,11 @@ on:
         required: false
         type: string
       version_override:
-        description: 'Version override (leave empty to use AssemblyVersion from csproj)'
+        description: 'Version override, four parts e.g. 3.2.0.5 (leave empty to compute from commits)'
         required: false
         type: string
       prerelease:
-        description: 'Mark as pre-release (beta/RC from dev branch)'
+        description: 'Mark as pre-release (tagged -rc; build from a non-master branch)'
         required: false
         type: boolean
         default: false
@@ -33,6 +33,7 @@ on:
         default: 'latest'
 
 permissions:
+  actions: read
   contents: write
   pull-requests: read
 
@@ -65,21 +66,44 @@ jobs:
       id: get_version
       shell: pwsh
       env:
+        GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         VERSION_OVERRIDE: ${{ inputs.version_override }}
+        IS_PRERELEASE: ${{ inputs.prerelease }}
+        DRY_RUN: ${{ inputs.dry_run }}
       run: |
-        if ("$env:VERSION_OVERRIDE" -ne "") {
-          $version = "$env:VERSION_OVERRIDE"
-          Write-Host "Using override version: $version"
-        } else {
-          $csproj = [xml](Get-Content vHC/HC_Reporting/VeeamHealthCheck.csproj)
-          $version = $csproj.Project.PropertyGroup[0].AssemblyVersion
-          Write-Host "Using AssemblyVersion from csproj: $version"
+        # github.run_number is per workflow and would restart at 1 here, so take the revision
+        # from the ci-cd.yaml counter to keep manual builds ordered with CI builds.
+        $revision = gh run list --workflow ci-cd.yaml --limit 1 --json number --jq '.[0].number'
+        if (-not $revision) { throw 'Could not read the latest ci-cd.yaml run number.' }
+
+        $params = @{
+          Revision     = [int]$revision
+          Channel      = $(if ($env:IS_PRERELEASE -eq 'true') { 'dev' } else { 'ga' })
+          GitHubOutput = $true
         }
-        "version=$version" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
+        if ($env:VERSION_OVERRIDE) { $params.VersionOverride = $env:VERSION_OVERRIDE }
+        $info = ./.github/scripts/Get-VhcVersion.ps1 @params
+
+        # Manual pre-releases are tagged -rc so they never count as a Base Tag.
+        $tag = "v$($info.Version)" + $(if ($env:IS_PRERELEASE -eq 'true') { '-rc' } else { '' })
+        "tag=$tag" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
+
+        # With no new commits the computed version equals the last CI release. Replacing that
+        # release would swap a VirusTotal-gated ZIP for an ungated one, so require an explicit override.
+        if (-not $env:VERSION_OVERRIDE -and $env:DRY_RUN -ne 'true') {
+          gh release view $tag *> $null
+          if ($LASTEXITCODE -eq 0) {
+            throw "Release $tag already exists. Dispatch with version_override to replace it deliberately."
+          }
+          # gh exits non-zero when the release is absent (the normal path); clear it so the pwsh
+          # step wrapper's trailing `exit $LASTEXITCODE` does not fail the step.
+          $global:LASTEXITCODE = 0
+        }
 
     - name: Publish single-file executable
       shell: pwsh
       run: |
+        $version = "${{ steps.get_version.outputs.version }}"
         dotnet publish vHC/HC_Reporting/VeeamHealthCheck.csproj `
           -c Release `
           -r win-x64 `
@@ -87,6 +111,9 @@ jobs:
           -p:PublishSingleFile=true `
           -p:IncludeNativeLibrariesForSelfExtract=true `
           -p:EnableCompressionInSingleFile=true `
+          -p:Version=$version `
+          -p:AssemblyVersion=$version `
+          -p:FileVersion=$version `
           -o publish/out
 
     - name: Download vhc-monitor companion
@@ -331,8 +358,8 @@ jobs:
           $notes.Add("")
         } else {
           # No PR body — auto-generate from git log since last tag
-          $prevTag = git describe --tags --abbrev=0 HEAD 2>$null
-          if ($LASTEXITCODE -eq 0 -and $prevTag) {
+          $prevTag = "${{ steps.get_version.outputs.notes_from_tag }}"
+          if ($prevTag) {
             $logLines = git log "$prevTag..HEAD" --no-merges --format="%s" 2>$null
             $featLines = [System.Collections.Generic.List[string]]::new()
             $fixLines  = [System.Collections.Generic.List[string]]::new()
@@ -411,24 +438,27 @@ jobs:
       env:
         GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         RELEASE_VERSION: ${{ steps.get_version.outputs.version }}
+        RELEASE_TAG: ${{ steps.get_version.outputs.tag }}
         IS_PRERELEASE: ${{ inputs.prerelease }}
         GH_REPO: ${{ github.repository }}
       run: |
         $version = $env:RELEASE_VERSION
+        $tag = $env:RELEASE_TAG
         $zipPath = "publish/VeeamHealthCheck-$version.zip"
         $notesFile = "release_notes.md"
 
-        $existingRelease = gh release view "v$version" 2>&1
+        $existingRelease = gh release view $tag 2>&1
         if ($LASTEXITCODE -eq 0) {
-          Write-Host "Release v$version already exists. Updating..."
-          gh release edit "v$version" --notes-file $notesFile
-          gh release upload "v$version" $zipPath --clobber
+          Write-Host "Release $tag already exists. Updating..."
+          gh release edit $tag --notes-file $notesFile
+          gh release upload $tag $zipPath --clobber
         } else {
-          Write-Host "Creating new release v$version..."
+          Write-Host "Creating new release $tag..."
           $prereleaseFlag = if ($env:IS_PRERELEASE -eq "true") { "--prerelease" } else { "" }
-          gh release create "v$version" --title "Veeam Health Check v$version" --notes-file $notesFile $zipPath $prereleaseFlag
+          # --target tags the commit that was built, not the default branch tip (ADR 0032)
+          gh release create $tag --target $env:GITHUB_SHA --title "Veeam Health Check v$version" --notes-file $notesFile $zipPath $prereleaseFlag
         }
-        Write-Host "Release URL: https://github.com/$env:GH_REPO/releases/tag/v$version"
+        Write-Host "Release URL: https://github.com/$env:GH_REPO/releases/tag/$tag"
 
     - name: Dry run summary
       if: ${{ inputs.dry_run }}
