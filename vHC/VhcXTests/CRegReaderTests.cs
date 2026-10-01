@@ -21,7 +21,7 @@ namespace VhcXTests
         private const string DefaultConsolePath =
             @"C:\Program Files\Veeam\Backup and Replication\Console\Veeam.Backup.Core.dll";
 
-        [Fact]
+        [WindowsOnlyFact]
         public void GetVbrVersionFilePath_NoLocalConsoleAndNoMountServiceKey_ReturnsNullInsteadOfThrowing()
         {
             // This regression guard only applies on a machine without VBR/Mount Service

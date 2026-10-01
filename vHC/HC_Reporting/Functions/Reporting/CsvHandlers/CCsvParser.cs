@@ -627,7 +627,16 @@ namespace VeeamHealthCheck.Functions.Reporting.CsvHandlers
             if (string.IsNullOrEmpty(fileName))
                 return null;
 
-            fileName = Path.GetFileName(fileName);
+            // These file names originate from the VBR server's (always-Windows) collection
+            // folder structure, independent of the OS this parser runs on, so the separator
+            // must be treated as literal rather than via Path.GetFileName's host-OS behavior
+            // (which ignores '\' entirely on non-Windows).
+            int lastSeparator = fileName.LastIndexOfAny(new[] { '\\', '/' });
+            if (lastSeparator >= 0)
+            {
+                fileName = fileName[(lastSeparator + 1)..];
+            }
+
             if (!fileName.EndsWith(VbrInfoCsvSuffix, StringComparison.OrdinalIgnoreCase))
                 return null;
 

@@ -60,8 +60,8 @@ namespace VhcXTests.Functions.Reporting.Html
 
             // Assert
             Assert.True(Directory.Exists(CGlobals.desiredPath));
-            Assert.True(Directory.Exists(CGlobals.desiredPath + CVariables.safeSuffix));
-            Assert.True(Directory.Exists(CGlobals.desiredPath + CVariables.unsafeSuffix));
+            Assert.True(Directory.Exists(Path.Combine(CGlobals.desiredPath, CVariables.safeSuffix.TrimStart('\\'))));
+            Assert.True(Directory.Exists(Path.Combine(CGlobals.desiredPath, CVariables.unsafeSuffix.TrimStart('\\'))));
         }
 
         [Fact]
@@ -92,8 +92,8 @@ namespace VhcXTests.Functions.Reporting.Html
             Assert.Equal(1, result);
         }
 
-        // Note: OpenHtmlIfEnabled(true) cannot be easily tested as it tries to launch a browser
-        // and depends on WPF Application.Current.Dispatcher
+        // Note: OpenHtmlIfEnabled(true) cannot be easily tested as it shell-executes the report
+        // to launch a browser
 
         #endregion
 

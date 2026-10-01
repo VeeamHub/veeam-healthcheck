@@ -4,23 +4,22 @@
 		<OutputType>Exe</OutputType>
 		<TargetFramework>net8.0-windows7.0</TargetFramework>
 		<EnableWindowsTargeting>true</EnableWindowsTargeting>
-		<UseWPF>true</UseWPF>
 		<Platforms>AnyCPU;x64</Platforms>
 		<PackageIcon></PackageIcon>
 		<PackageIconUrl />
 		<Company>Veeam</Company>
 		<Authors>AdamC</Authors>
 		<ApplicationIcon>Health_Check_Icon.ico</ApplicationIcon>
-		<AssemblyVersion>3.0.0.785</AssemblyVersion>
+		<AssemblyVersion>3.1.0.0</AssemblyVersion>
 		<SignAssembly>False</SignAssembly>
 		<DelaySign>false</DelaySign>
-		<FileVersion>3.0.0.785</FileVersion>
+		<FileVersion>3.1.0.0</FileVersion>
 		<DebugType>full</DebugType>
-		<SelfContained>true</SelfContained>
+		<SelfContained Condition="'$(OS)' == 'Windows_NT'">true</SelfContained>
 		<!--These 2 lines are what produce the single file utility. Possibly doesn't work...-->
 		<!--<PublishSingleFile>true</PublishSingleFile>-->
 		<!--<IncludeAllContentForSelfExtract>true</IncludeAllContentForSelfExtract>-->
-		<RuntimeIdentifier>win-x64</RuntimeIdentifier>
+		<RuntimeIdentifier Condition="'$(OS)' == 'Windows_NT'">win-x64</RuntimeIdentifier>
 		<NeutralLanguage>en-US</NeutralLanguage>
 		<AnalysisLevel>latest</AnalysisLevel>
 		<AnalysisMode>Default</AnalysisMode>
@@ -54,24 +53,6 @@
 		<InheritWinAppVersionFrom>None</InheritWinAppVersionFrom>
 		<AssemblyFileVersionSettings>None.None.None.Increment</AssemblyFileVersionSettings>
 	</PropertyGroup>
-	<ItemGroup>
-		<Compile Remove="Functions\Reporting\Html\VBR\VbrTables\NewFolder\**" />
-		<Compile Remove="Softwares\**" />
-		<Compile Remove="Startup\GUI\**" />
-		<Compile Remove="VBO\**" />
-		<EmbeddedResource Remove="Functions\Reporting\Html\VBR\VbrTables\NewFolder\**" />
-		<EmbeddedResource Remove="Softwares\**" />
-		<EmbeddedResource Remove="Startup\GUI\**" />
-		<EmbeddedResource Remove="VBO\**" />
-		<None Remove="Functions\Reporting\Html\VBR\VbrTables\NewFolder\**" />
-		<None Remove="Softwares\**" />
-		<None Remove="Startup\GUI\**" />
-		<None Remove="VBO\**" />
-		<Page Remove="Functions\Reporting\Html\VBR\VbrTables\NewFolder\**" />
-		<Page Remove="Softwares\**" />
-		<Page Remove="Startup\GUI\**" />
-		<Page Remove="VBO\**" />
-	</ItemGroup>
 	<ItemGroup>
 		<Compile Remove="Functions\Reporting\DataTypes\NAS\CNasFileDataVmc.cs" />
 		<Compile Remove="Functions\Reporting\Html\VBR\VbrTables\Job Session Summary\JobSessionSummaryRow.cs" />
@@ -113,6 +94,9 @@
 	</ItemGroup>
 	<ItemGroup>
 		<PackageReference Include="AngleSharp" Version="1.5.0" />
+		<PackageReference Include="Avalonia" Version="11.3.20" />
+		<PackageReference Include="Avalonia.Desktop" Version="11.3.20" />
+		<PackageReference Include="Avalonia.Themes.Fluent" Version="11.3.20" />
 		<PackageReference Include="CsvHelper" Version="33.0.1" />
 		<PackageReference Include="DinkToPdf.Standard" Version="1.1.0" />
 		<PackageReference Include="DocumentFormat.OpenXml" Version="3.1.0" />
@@ -166,13 +150,6 @@
 		<None Update="Veeam_HealthCheck_228x228.ico">
 			<CopyToOutputDirectory>Never</CopyToOutputDirectory>
 		</None>
-	</ItemGroup>
-	<ItemGroup>
-		<Folder Include="Functions\Reporting\CsvHandlers\Proxies\" />
-		<Folder Include="Functions\Reporting\CsvHandlers\Repositories\" />
-		<Folder Include="Functions\Reporting\DataTypes\NewFolder\" />
-		<Folder Include="Functions\Reporting\TableDatas\" />
-		<Folder Include="Resources\Localization\VBR\" />
 	</ItemGroup>
 	<Target Name="IncrementVersion" BeforeTargets="BeforeBuild">
 		<Message Text="Incrementing version..." Importance="High" />

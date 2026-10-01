@@ -4,8 +4,6 @@ using System;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
-using System.Windows;
-using System.Windows.Controls;
 using VeeamHealthCheck.Functions.Collection;
 using VeeamHealthCheck.Functions.Collection.DB;
 using VeeamHealthCheck.Functions.Collection.PSCollections;
@@ -26,23 +24,6 @@ namespace VeeamHealthCheck.Startup
         }
 
         public void Dispose() { }
-
-        public void KbLinkAction(System.Windows.Navigation.RequestNavigateEventArgs args)
-        {
-            CGlobals.Logger.Info("[GUI]\tOpening KB Link");
-            Application.Current.Dispatcher.Invoke(delegate
-            {
-                WebBrowser w1 = new();
-
-                var p = new Process();
-                p.StartInfo = new ProcessStartInfo(args.Uri.ToString())
-                {
-                    UseShellExecute = true
-                };
-                p.Start();
-            });
-            CGlobals.Logger.Info("[GUI]\tOpening KB Link...done!");
-        }
 
         public void PreRunCheck()
         {
@@ -69,10 +50,9 @@ namespace VeeamHealthCheck.Startup
                                        "3. Select 'Run as Administrator'\n\n" +
                                        "Do you want to continue without administrator privileges?";
                         
-                        var result = MessageBox.Show(message, "Administrator Privileges Recommended", 
-                                                    MessageBoxButton.YesNo, MessageBoxImage.Warning);
-                        
-                        if (result == MessageBoxResult.No)
+                        bool continueWithoutAdmin = CGlobals.Notifier.Confirm(message, "Administrator Privileges Recommended");
+
+                        if (!continueWithoutAdmin)
                         {
                             CGlobals.Logger.Info("User declined to run without admin privileges", false);
                             Environment.Exit(0);
@@ -95,7 +75,7 @@ namespace VeeamHealthCheck.Startup
                     string message = "Please run program as Administrator";
                     if (CGlobals.GUIEXEC)
                     {
-                        MessageBox.Show(message);
+                        CGlobals.Notifier.ShowError(message, "Administrator Privileges Required");
                     }
                     CGlobals.Logger.Error(message, false);
                     Environment.Exit(0);
@@ -138,26 +118,6 @@ namespace VeeamHealthCheck.Startup
             return vbrMajorVersion < 12 && IsVhcTooNewForPreV12(vhcVersion);
         }
 
-        // NOTE: currently not called. The call in ModeCheck was commented out in 5da2c865 and later
-        // replaced by DetectVbrVersion(). Note that an undetected VBR (VBRMAJORVERSION == 0) counts as < 12.
-        private void VbrVersionSupportCheck()
-        {
-            // GetVbrVersion();
-            if (ShouldBlockVbrVersion(CGlobals.VBRMAJORVERSION, CGlobals.VHCVERSION))
-            {
-                string msg = String.Format("Veeam Health Check version {0} does not support Veeam Backup & Replication Versions prior to v12. To check systems prior to v12, Please download 2.0.0.546: https://github.com/VeeamHub/veeam-healthcheck/releases/tag/2.0.0.546", CGlobals.VHCVERSION);
-
-                this.LOG.Error(msg, false);
-
-                if (CGlobals.GUIEXEC)
-                {
-                    MessageBox.Show(msg, "Error", MessageBoxButton.OK, MessageBoxImage.Error);
-                }
-
-                Environment.Exit(0);
-            }
-        }
-
         public string ModeCheck()
         {
             CGlobals.Logger.Info("Checking processes to determine execution mode..", false);
@@ -186,8 +146,10 @@ namespace VeeamHealthCheck.Startup
                 // PS5 for VBR 12-). ModeCheck() runs from the GUI constructor before the window
                 // is shown and doesn't itself lead into PowerShell-module-based collection, so it
                 // must use the ungated DetectVbrVersion, not GetVbrVersion - the PS 7.6+ module
-                // gate is enforced once, immediately before real collection, in StartCollections()
-                // via RunVbrPreflightGateIfTargeted().
+                // gate is enforced immediately before real collection, in StartCollections() via
+                // RunVbrPreflightGateIfTargeted() (or, for the Auto+remote+no-local-detection
+                // case that one can't cover, CCollections.ExecPSScripts()'s
+                // RunVbrPreflightGateForDynamicFallback() - see issue #233).
                 try { this.DetectVbrVersion(); }
                 catch (Exception ex)
                 {
@@ -202,51 +164,21 @@ namespace VeeamHealthCheck.Startup
                 return "fail";
             }
 
-            if (CGlobals.IsVbr && CGlobals.IsVb365)
-            {
-
-                return title + " - " + VbrLocalizationHelper.GuiTitleBnR + " & " + VbrLocalizationHelper.GuiTitleVB365;
-            }
-
-
-            if (!CGlobals.IsVb365 && !CGlobals.IsVbr)
-            {
-
-                return title + " - " + VbrLocalizationHelper.GuiImportModeOnly;
-            }
-
-            if (CGlobals.IsVbr)
-            {
-                return title + " - " + VbrLocalizationHelper.GuiTitleBnR;
-            }
-
-
-            if (CGlobals.IsVb365)
-            {
-
-                return title + " - " + VbrLocalizationHelper.GuiTitleVB365;
-            }
-            else
-            {
-
-                return title;
-            }
+            // The title used to badge the detected product ("... - B&R", "... - VB365",
+            // "... - B&R & VB365") - dropped by product decision, since this tool
+            // supports both VBR and VB365 and badging whichever one happened to be
+            // detected read as though the other weren't supported. The
+            // GuiTitleBnR/GuiTitleVB365/GuiImportModeOnly resx keys are left in place,
+            // unused, rather than removed - see the GuiServerLabel precedent in the
+            // Stage C verification checklist for why a shipped key stays even once its
+            // only caller is gone.
+            return title;
         }
 
         public bool AcceptTerms()
         {
             string message = VbrLocalizationHelper.GuiAcceptText;
-
-            var res = MessageBox.Show(message, "Terms", MessageBoxButton.YesNo,MessageBoxImage.Question);
-            if (res.ToString() == "Yes")
-            {
-
-                return true;
-            }
-            else
-            {
-                return false;
-            }
+            return CGlobals.Notifier.Confirm(message, "Terms");
         }
 
         public int StartPrimaryFunctions()
@@ -355,8 +287,10 @@ namespace VeeamHealthCheck.Startup
         {
             if (!CGlobals.IMPORT)
             {
-                // Single authoritative PS 7.6+ module preflight gate - see
-                // RunVbrPreflightGateIfTargeted()'s doc comment for the full rationale.
+                // Primary PS 7.6+ module preflight gate for this call path - see
+                // RunVbrPreflightGateIfTargeted()'s doc comment for the full rationale, including
+                // the separate RunVbrPreflightGateForDynamicFallback() gate CCollections uses for
+                // the Auto+remote+no-local-detection case this one can't cover (issue #233).
                 this.RunVbrPreflightGateIfTargeted();
 
                 this.LOG.Info(this.logStart + "Init Collections", false);
@@ -438,11 +372,9 @@ namespace VeeamHealthCheck.Startup
 
                 if (CGlobals.GUIEXEC)
                 {
-                    System.Windows.MessageBox.Show(
+                    CGlobals.Notifier.ShowError(
                         $"No valid CSV files found in:\n{basePath}\n\nPlease verify the import path contains VBR or VB365 CSV export files.",
-                        "Import Error",
-                        System.Windows.MessageBoxButton.OK,
-                        System.Windows.MessageBoxImage.Error);
+                        "Import Error");
                 }
 
                 return false;
@@ -457,11 +389,9 @@ namespace VeeamHealthCheck.Startup
 
                 if (CGlobals.GUIEXEC)
                 {
-                    System.Windows.MessageBox.Show(
+                    CGlobals.Notifier.ShowError(
                         $"Import validation failed:\n{validationResult.ErrorMessage}\n\nMissing files: {string.Join(", ", validationResult.MissingCriticalFiles)}",
-                        "Import Validation Error",
-                        System.Windows.MessageBoxButton.OK,
-                        System.Windows.MessageBoxImage.Warning);
+                        "Import Validation Error");
                 }
 
                 // Allow import to continue with partial data
@@ -514,7 +444,7 @@ namespace VeeamHealthCheck.Startup
         }
 
         /// <summary>
-        /// Single authoritative PS 7.6+ module preflight gate, run once from StartCollections()
+        /// Primary PS 7.6+ module preflight gate for the StartCollections() call path, run once
         /// right before the two branches that both lead into real PowerShell-module-based
         /// collection. Gated on EffectiveIsVbr - not IMPORT, not REMOTEEXEC - because this
         /// preflight (and the PowerShell-version check it wraps) is meaningless for a run that
@@ -529,6 +459,10 @@ namespace VeeamHealthCheck.Startup
         /// catches only that expected failure, scoped to the DetectVbrVersion call, so an exception
         /// out of the hard-fail path (ValidatePowerShellVersionMeetsVbrRequirement) is never
         /// mistaken for it and swallowed here too.
+        /// Not the only caller of GetVbrVersion(): CCollections.ExecPSScripts() also calls the
+        /// unconditional RunVbrPreflightGateForDynamicFallback() once its own DynamicFallback()
+        /// has confirmed VBR as the target by a different means (a local module-import probe,
+        /// not EffectiveIsVbr) - see issue #233.
         /// </summary>
         internal void RunVbrPreflightGateIfTargeted()
         {
@@ -541,14 +475,35 @@ namespace VeeamHealthCheck.Startup
         }
 
         /// <summary>
+        /// Unconditional variant of RunVbrPreflightGateIfTargeted(), for callers that have
+        /// already confirmed VBR is the target through some means other than EffectiveIsVbr -
+        /// currently only CCollections.ExecPSScripts()'s DynamicFallback-confirmed branch, where
+        /// a successful local Import-Module probe (TryModuleLoad(), not a remote connection)
+        /// established that the VBR module is installed locally and therefore VBR is worth
+        /// detecting a version for. Named for that one caller deliberately: unlike
+        /// RunVbrPreflightGateIfTargeted(), this has NO target check at all, so calling it from
+        /// anywhere that hasn't already confirmed VBR by some other means - e.g. ModeCheck(),
+        /// whose past misuse of the ungated path is exactly what RunVbrPreflightGateIfTargeted()'s
+        /// EffectiveIsVbr gate exists to prevent, see GetVbrVersion_MethodVisibility_IsPrivate's
+        /// test comment - can reach ValidatePowerShellVersionMeetsVbrRequirement() ->
+        /// Environment.Exit() for a run that never touches VBR at all. See issue #233.
+        /// </summary>
+        internal void RunVbrPreflightGateForDynamicFallback()
+        {
+            this.GetVbrVersion();
+        }
+
+        /// <summary>
         /// Detects the VBR version and required PowerShell version and gates on the PS 7.6+
-        /// module requirement. Private: RunVbrPreflightGateIfTargeted() is the only caller,
-        /// since it's the single choke point (reached from StartCollections(), itself reached
-        /// from both the GUI Run button and every CLI run path) immediately before real
-        /// PowerShell-module-based collection begins, and only when EffectiveIsVbr is true.
-        /// Every other caller (ModeCheck, RunHotfixDetector, early CLI arg-parsing detection)
-        /// must call the ungated DetectVbrVersion instead, so a too-old-PowerShell machine
-        /// doesn't hard-exit a feature that never touches the Veeam.Backup.PowerShell module.
+        /// module requirement. Private: reachable only through its two internal gate wrappers -
+        /// RunVbrPreflightGateIfTargeted() (gated on EffectiveIsVbr, the choke point reached from
+        /// StartCollections() for both the GUI Run button and every CLI run path) and the
+        /// unconditional RunVbrPreflightGateForDynamicFallback() (called only from
+        /// CCollections.ExecPSScripts()'s DynamicFallback-confirmed-VBR branch, issue #233) -
+        /// never called directly. Every other caller (ModeCheck, RunHotfixDetector, early CLI
+        /// arg-parsing detection) must call the ungated DetectVbrVersion instead, so a
+        /// too-old-PowerShell machine doesn't hard-exit a feature that never touches the
+        /// Veeam.Backup.PowerShell module.
         /// Known limitation, not fixed here: when DetectVbrVersion fails (e.g. non-admin
         /// execution, where CRegReader.GetVbrVersionFilePath() returns null), we can't know
         /// whether the local VBR is 13+ at all, so ValidatePowerShellVersionMeetsVbrRequirement
@@ -704,26 +659,16 @@ namespace VeeamHealthCheck.Startup
 
             if (CGlobals.GUIEXEC)
             {
-                // Dispatch to the UI thread so the box is owned by the main window instead of
-                // desktop-parented - this can run from a background Task (StartCollections is
-                // invoked from VhcGui.Run()'s Task.Factory.StartNew), matching the existing
-                // convention in VhcGui.xaml.cs's ShowCollectionWarningsIfAny. Fall back to an
-                // undocked MessageBox.Show if there's no Dispatcher to marshal to - the user must
-                // still see this message before the Environment.Exit below, never silently.
-                // Guarded: dispatcher.Invoke/MessageBox.Show can itself throw (e.g. Dispatcher
-                // shutting down), and this hard-fail must reach Environment.Exit either way.
+                // IUiNotifier.ShowError already does the dispatcher-or-direct marshaling this
+                // used to do inline. This method runs on a background Task (reached via
+                // StartCollections, itself on VhcGui.Run()'s background Task.Factory.StartNew),
+                // so blocking here on ShowError's synchronous wrapper is safe - see IUiNotifier's
+                // doc comment. This hard-fail must still reach Environment.Exit below even if
+                // showing the box itself throws (e.g. the notifier's dialog owner disappearing),
+                // so the try/catch stays.
                 try
                 {
-                    System.Windows.Threading.Dispatcher dispatcher = Application.Current?.Dispatcher;
-                    if (dispatcher != null)
-                    {
-                        dispatcher.Invoke(() =>
-                            MessageBox.Show(msg, "Unsupported PowerShell Version", MessageBoxButton.OK, MessageBoxImage.Error));
-                    }
-                    else
-                    {
-                        MessageBox.Show(msg, "Unsupported PowerShell Version", MessageBoxButton.OK, MessageBoxImage.Error);
-                    }
+                    CGlobals.Notifier.ShowError(msg, "Unsupported PowerShell Version");
                 }
                 catch (Exception ex)
                 {

@@ -1,3 +1,9 @@
+# WARNING: this script regenerates vhcres*.resx FROM the vhcres*.txt files below via
+# ResGen.exe. As of Stage D (2026-09), the .txt sources still carry 16 old/orphaned key
+# names that the .resx files were deliberately renamed away from (dead/mistranslated
+# fR-FR/ja/zh-cn/zh-tw keys - see commit bc13cc92 and vHC/VhcXTests/VbrLocalizationHelperTests.cs).
+# Re-running this script will silently revert those renames. Update the .txt sources to
+# match before running, or this undoes real translation-recovery work.
 #cd C:\Users\cac89\Source\Repos\VeeamHub\veeam-healthcheck\vHC\HC_Reporting\Resources\Localization
 $loc = "A:\source\veeam-healthcheck\vHC\HC_Reporting\Resources\Localization\"
 

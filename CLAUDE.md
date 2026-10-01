@@ -5,7 +5,8 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ## Build Commands
 
 ```bash
-# Build the solution (Windows required for full build)
+# Build the solution (plain build works cross-platform; only the
+# self-contained single-file Windows publish requires Windows)
 dotnet build vHC/HC.sln --configuration Debug
 
 # Build release version
@@ -18,7 +19,8 @@ dotnet restore vHC/HC.sln
 ## Test Commands
 
 ```bash
-# Run all tests (Windows only - tests require WPF/.NET Windows)
+# Run all tests (cross-platform; genuinely Windows-only tests are marked
+# [WindowsOnlyFact] and skip automatically off Windows)
 dotnet test vHC/VhcXTests/VhcXTests.csproj
 
 # Run specific test class
@@ -46,7 +48,7 @@ Collection → Processing/Analysis → Report Generation
 **Entry Point & Flow**
 - `vHC/HC_Reporting/Startup/EntryPoint.cs` - Main entry, handles single-file deployment
 - `vHC/HC_Reporting/Startup/CArgsParser.cs` - CLI argument parsing, routes to GUI or CLI mode
-- `vHC/HC_Reporting/Startup/VhcGui.xaml.cs` - WPF GUI for interactive use
+- `vHC/HC_Reporting/VhcGui.axaml.cs` - Avalonia GUI for interactive use
 
 **Global State**
 - `vHC/HC_Reporting/Common/CGlobals.cs` - Central static configuration class holding all execution flags, paths, and shared data
@@ -88,7 +90,7 @@ Each product has separate:
 ## Tech Stack
 
 - **.NET 8.0** targeting Windows 7.0+ (`net8.0-windows7.0`)
-- **WPF** for GUI
+- **Avalonia** for GUI
 - **PowerShell 7 SDK** for embedded script execution
 - **CsvHelper** for CSV processing
 - **xUnit + Moq** for testing
@@ -147,7 +149,8 @@ Release versions are computed from commits, not hand-edited ([ADR 0031](docs/adr
 
 ## Important Notes
 
-- Tests require Windows (WPF dependency) - non-Windows builds skip test compilation
+- Tests build and run on Windows, macOS, and Linux. `EnableWindowsTargeting=true` in `VeeamHealthCheck.csproj` is what lets the `net8.0-windows7.0` TFM build off-Windows at all, combined with the WPF → Avalonia GUI migration (PR #211) replacing the Windows-only UI toolkit. Genuinely Windows-only tests (DPAPI, registry, etc.) are marked `[WindowsOnlyFact]` and skip individually rather than gating the whole suite.
+- A second test project, `VhcXTests.CrossPlatform` (`net10.0`), compiles a hand-picked subset of source files directly rather than referencing `VeeamHealthCheck.csproj`.
 - Internal types exposed to `VhcXTests` via `InternalsVisibleTo` in csproj
 - Local builds auto-increment the csproj build segment via `increment_version.ps1`; CI ignores it (see Versioning). Revert the csproj after building: `git checkout -- vHC/HC_Reporting/VeeamHealthCheck.csproj`
 - Suppressed code analysis warnings: CA1305, CA1307, CA1820, CA2242, CA1031, CA1806, CA1822

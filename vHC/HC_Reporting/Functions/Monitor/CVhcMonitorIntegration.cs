@@ -50,6 +50,35 @@ namespace VeeamHealthCheck.Functions.Monitor
             }
         }
 
+        /// <summary>
+        /// Everything the Monitor tab needs to render its status, gathered in one call.
+        /// Several probes spawn <c>powershell.exe</c> or the monitor exe (up to 30 s each),
+        /// so callers run <see cref="CaptureStatus"/> on a background thread and apply the
+        /// result on the UI thread.
+        /// </summary>
+        public sealed record MonitorStatusSnapshot(
+            bool Bundled,
+            bool Installed,
+            bool TaskActive,
+            string Version,
+            MonitorLastRunStatus LastRun);
+
+        public static MonitorStatusSnapshot CaptureStatus()
+        {
+            bool bundled = IsExePresentInBundle();
+            bool installed = IsInstalled();
+
+            // The task, version and last-run only affect the display when the exe is
+            // bundled AND installed, so don't spawn processes for them otherwise.
+            bool taskActive = bundled && installed && IsTaskRegistered();
+            if (!taskActive)
+            {
+                return new MonitorStatusSnapshot(bundled, installed, false, null, null);
+            }
+
+            return new MonitorStatusSnapshot(bundled, installed, true, GetInstalledVersion(), GetLastRunStatus());
+        }
+
         public static string GetInstalledVersion()
         {
             try

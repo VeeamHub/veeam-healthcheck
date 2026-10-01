@@ -67,4 +67,4 @@ Added in May 2026. Enables fleet-wide automation with no interactive prompts.
 VeeamHealthCheck.exe /run /silent /days:30 /outdir=\\nas\reports\$env:COMPUTERNAME /pdf
 ```
 
-Exit codes are documented in the help menu (`/help`).
+Exit codes are listed in [Getting Started](getting-started.md#exit-codes) and in the help menu (`/help`).

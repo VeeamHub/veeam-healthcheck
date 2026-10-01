@@ -7,9 +7,11 @@ using System.Runtime.InteropServices;
 using System.Text;
 using System.Text.Json;
 using System.Text.RegularExpressions;
+using Avalonia;
 using VeeamHealthCheck.Functions.Collection.PSCollections;
 using VeeamHealthCheck.Functions.CredsWindow;
 using VeeamHealthCheck.Functions.Monitor;
+using VeeamHealthCheck.Functions.UserInteraction;
 
 // using VeeamHealthCheck.Reporting.vsac;
 using VeeamHealthCheck.Shared;
@@ -22,11 +24,16 @@ namespace VeeamHealthCheck.Startup
         [DllImport("kernel32.dll")]
         static extern IntPtr GetConsoleWindow();
 
+        // Returns the number of processes attached to the calling process's console,
+        // or 0 on failure (e.g. no console). If the buffer is too small it returns the
+        // required count without filling it, which is all we need.
+        [DllImport("kernel32.dll")]
+        static extern uint GetConsoleProcessList(uint[] processList, uint processCount);
+
         [DllImport("user32.dll")]
         static extern bool ShowWindow(IntPtr hWnd, int nCmdShow);
 
         const int SW_HIDE = 0;
-        const int SW_SHOW = 5;
 
         private readonly string[] args;
         private readonly CClientFunctions functions = new();
@@ -47,12 +54,12 @@ namespace VeeamHealthCheck.Startup
 
             if (this.args.Length == 0){
                 CGlobals.Logger.Debug("No arguments provided. Launching GUI", false);
-                return this.LaunchUi(this.Handle(), true);
+                return this.LaunchUi();
             }
             else if (this.args != null && this.args.Length > 0)
                 return this.ParseAllArgs(this.args);
             else
-                return this.LaunchUi(this.Handle(), false);
+                return this.LaunchUi();
         }
 
         private void LogInitialInfo()
@@ -64,39 +71,59 @@ namespace VeeamHealthCheck.Startup
             f.Dispose();
         }
 
-        private int LaunchUi(IntPtr handle, bool hide)
+        private int LaunchUi()
         {
             CGlobals.Logger.Info("Executing GUI", false);
             CGlobals.RunFullReport = true;
             CGlobals.GUIEXEC = true;
+            CGlobals.Notifier = new AvaloniaUiNotifier();
+            CGlobals.CredentialPrompter = new AvaloniaCredentialPrompter();
 
-            // if (hide)
-            //     ShowWindow(handle, SW_HIDE);
-            var app = new System.Windows.Application();
-            return app.Run(new VhcGui());
+            HideConsoleIfOwned();
+            return AppBuilder.Configure<App>()
+                .UsePlatformDetect()
+                .LogToTrace()
+                .StartWithClassicDesktopLifetime(Array.Empty<string>());
         }
 
-        private IntPtr Handle()
+        // Double-clicking the exe makes Explorer create a fresh console with us as its
+        // only process; launching from cmd/pwsh/Terminal puts the shell on it too. Hide
+        // rather than FreeConsole: a child started with UseShellExecute=false and
+        // CreateNoWindow=false (the local VB365 MFA check) inherits our console, so
+        // detaching it would make that child allocate its own visible console. Children
+        // with CreateNoWindow=true, and UseShellExecute=true ones (ShellExecuteEx makes
+        // its own console), get a console of their own either way.
+        private static void HideConsoleIfOwned()
         {
-            return GetConsoleWindow();
+            // The console P/Invokes are Windows-only; calling them elsewhere throws
+            // DllNotFoundException.
+            if (!OperatingSystem.IsWindows())
+            {
+                return;
+            }
+
+            IntPtr hwnd = GetConsoleWindow();
+            bool hasConsoleWindow = hwnd != IntPtr.Zero;
+            uint count = hasConsoleWindow ? GetConsoleProcessList(new uint[2], 2) : 0;
+            bool debuggerAttached = System.Diagnostics.Debugger.IsAttached;
+            bool consoleInputRequired = CGlobals.RunSecReport;
+            bool hide = ShouldHideConsole(hasConsoleWindow, count, debuggerAttached, consoleInputRequired);
+            CGlobals.Logger.Debug($"Console window present = {hasConsoleWindow}; console process count = {count}; debugger attached = {debuggerAttached}; console input required = {consoleInputRequired}; hiding console = {hide}", false);
+            if (hide)
+            {
+                ShowWindow(hwnd, SW_HIDE);
+            }
         }
 
-        // private int ParseZeroArgs()
-        // {
-        //    var pos = Console.GetCursorPosition();
-        //    CGlobals.Logger.Debug("pos = " + pos.ToString(), false);
-        //    if (pos == (0, 1) || pos == (0, 2))
-        //    {
-        //        CGlobals.Logger.Info("0s");
-        //         return LaunchUi(Handle(), true);
-        //    }
-        //    else
-        //    {
-        //        CGlobals.Logger.Info("not 0");
-        //        Console.WriteLine(CMessages.helpMenu);
-        //        return 0;
-        //    }
-        // }
+        // Hide only when a console window exists and we are the sole process on it. A debugger
+        // (F5 from Visual Studio/Rider) launches us on a fresh console too, but a developer
+        // debugging wants the live console log, so never hide under a debugger. /security
+        // (CGlobals.RunSecReport) with a remote host prompts for credentials via
+        // CImpersonation's Console.ReadLine/ReadKey even in GUI mode, and an invisible
+        // console would look like a hang, so keep the console visible for that run mode.
+        internal static bool ShouldHideConsole(bool hasConsoleWindow, uint consoleProcessCount, bool debuggerAttached, bool consoleInputRequired) =>
+            hasConsoleWindow && consoleProcessCount == 1 && !debuggerAttached && !consoleInputRequired;
+
         private int ParseAllArgs(string[] args)
         {
             bool run = false;
@@ -104,6 +131,8 @@ namespace VeeamHealthCheck.Startup
             bool runHfd = false;
             string _hfdPath = string.Empty;
 
+            // Same intentional Windows-only default as CVariables.outDir - see that
+            // comment for why this isn't cross-platform-guarded.
             string targetDir = @"C:\temp\vHC";
             foreach (var a in args)
             {
@@ -226,13 +255,9 @@ namespace VeeamHealthCheck.Startup
                             CGlobals.TargetProductType = TargetProduct.Vb365;
                         CGlobals.Logger.Info("Target product: VB365", false);
                         break;
-                    case var match when new Regex("/path=.*").IsMatch(a):
+                    case var match when new Regex("/path=.*", RegexOptions.IgnoreCase).IsMatch(a):
                         _hfdPath = this.ParsePath(a);
-                        CGlobals.Logger.Info("HFD path: " + targetDir);
-                        break;
-                    case var match when new Regex("/PATH=.*").IsMatch(a):
-                        _hfdPath = this.ParsePath(a);
-                        CGlobals.Logger.Info("HFD path: " + targetDir);
+                        CGlobals.Logger.Info("HFD path: " + _hfdPath);
                         break;
                     case var match when new Regex("/outdir=.*", RegexOptions.IgnoreCase).IsMatch(a):
                         string parsedOutDir = this.ParsePath(a);
@@ -338,15 +363,18 @@ namespace VeeamHealthCheck.Startup
                 this.functions.RunHotfixDetector(_hfdPath, string.Empty);
             }
             else if (ui)
-                this.LaunchUi(this.Handle(), false);
+                this.LaunchUi();
             else if (run)
             {
                 // The PS 7.6+ module gate is no longer called here. It's private on
-                // CClientFunctions and enforced exactly once, from StartCollections(), the single
-                // choke point every path below (import, remote, local) eventually reaches via
-                // FullRun -> CliRun -> StartPrimaryFunctions. Calling it here too used to run it
-                // unconditionally even for /import (which never reaches real collection) and
-                // spawn pwsh.exe a second time on the plain local /run path.
+                // CClientFunctions and enforced from StartCollections() - the choke point every
+                // path below (import, remote, local) eventually reaches via
+                // FullRun -> CliRun -> StartPrimaryFunctions - and, since issue #233, also from
+                // CCollections.ExecPSScripts()'s DynamicFallback-confirmed-VBR branch, for the
+                // Auto+remote+no-local-detection case StartCollections()'s own EffectiveIsVbr gate
+                // can't cover. Calling it here too used to run it unconditionally even for
+                // /import (which never reaches real collection) and spawn pwsh.exe a second time
+                // on the plain local /run path.
                 if (CGlobals.IMPORT)
                      result = this.FullRun(targetDir);
                 else if (CGlobals.REMOTEEXEC && CGlobals.REMOTEHOST == string.Empty)

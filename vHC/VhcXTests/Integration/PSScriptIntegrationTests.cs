@@ -27,7 +27,7 @@ namespace VhcXTests.Integration
 
         private static int RunPwshAndLog(ProcessStartInfo psi, string logName)
         {
-            Directory.CreateDirectory("TestResults\\pwsh-logs");
+            Directory.CreateDirectory(Path.Combine("TestResults", "pwsh-logs"));
 
             using var process = Process.Start(psi);
             if (process == null)

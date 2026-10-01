@@ -9,7 +9,6 @@ using System.IO;
 using System.Linq;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
-using System.Windows;
 using Microsoft.Management.Infrastructure;
 using VeeamHealthCheck.Functions.Collection.DB;
 using VeeamHealthCheck.Functions.Collection.LogParser;
@@ -19,6 +18,7 @@ using VeeamHealthCheck.Functions.CredsWindow;
 using VeeamHealthCheck.Functions.Reporting.Html.VBR.VbrTables.Security;
 using VeeamHealthCheck.Shared;
 using VeeamHealthCheck.Shared.Logging;
+using VeeamHealthCheck.Startup;
 
 namespace VeeamHealthCheck.Functions.Collection
 {
@@ -335,6 +335,17 @@ namespace VeeamHealthCheck.Functions.Collection
                     if (CGlobals.TargetProductType == TargetProduct.Auto && CGlobals.REMOTEEXEC && !runVbr && !runVb365)
                     {
                         (runVbr, runVb365) = this.DynamicFallback();
+
+                        if (runVbr)
+                        {
+                            // DynamicFallback() only proves the local Veeam.Backup.PowerShell
+                            // module is importable - it never calls DetectVbrVersion(), so
+                            // CGlobals.VBRMAJORVERSION stays 0 unless detected here. Left at 0,
+                            // PSInvoker picks PowerShell 5.1 against a VBR 13+ target, which then
+                            // fails deep inside the collection script's Import-Module call. #233.
+                            using var functions = new CClientFunctions();
+                            functions.RunVbrPreflightGateForDynamicFallback();
+                        }
                     }
 
                     if (runVbr)
@@ -402,7 +413,7 @@ namespace VeeamHealthCheck.Functions.Collection
 
             if (CGlobals.GUIEXEC)
             {
-                MessageBox.Show(errorToShow, "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                CGlobals.Notifier.ShowError(errorToShow, "Error");
             }
 
             Environment.Exit(1);

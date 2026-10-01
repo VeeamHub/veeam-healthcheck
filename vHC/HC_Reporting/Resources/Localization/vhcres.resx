@@ -12,11 +12,93 @@
   <resheader name="writer">
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
+  <data name="GuiServerLabel" xml:space="preserve">
+    <value>Server</value>
+  </data>
+  <data name="GuiManageServersTooltip" xml:space="preserve">
+    <value>Manage servers...</value>
+  </data>
+  <data name="GuiManageServersTitle" xml:space="preserve">
+    <value>Manage Servers</value>
+  </data>
+  <data name="GuiManageServersAddWatermark" xml:space="preserve">
+    <value>Add server...</value>
+  </data>
+  <data name="GuiManageServersAddButton" xml:space="preserve">
+    <value>Add</value>
+  </data>
+  <data name="GuiManageServersRemoveTooltip" xml:space="preserve">
+    <value>Remove server</value>
+  </data>
+  <data name="GuiManageServersUndoTooltip" xml:space="preserve">
+    <value>Undo removal</value>
+  </data>
+  <data name="GuiManageServersPinnedTooltip" xml:space="preserve">
+    <value>Local machine cannot be removed</value>
+  </data>
+  <data name="GuiManageServersCredsSaved" xml:space="preserve">
+    <value>credentials saved</value>
+  </data>
+  <data name="GuiManageServersPending" xml:space="preserve">
+    <value>{0} pending change(s) - nothing is saved until you click Done</value>
+  </data>
+  <data name="GuiManageServersNoPending" xml:space="preserve">
+    <value>No pending changes</value>
+  </data>
+  <data name="GuiManageServersCancel" xml:space="preserve">
+    <value>Cancel</value>
+  </data>
+  <data name="GuiManageServersDone" xml:space="preserve">
+    <value>Done</value>
+  </data>
+  <data name="GuiManageServersConfirmTitle" xml:space="preserve">
+    <value>Confirm Changes</value>
+  </data>
+  <data name="GuiManageServersConfirmBody" xml:space="preserve">
+    <value>Removing {0} server(s). Saved credentials for {1} of them will be deleted.</value>
+  </data>
+  <data name="GuiManageServersSaveFailedTitle" xml:space="preserve">
+    <value>Save Failed</value>
+  </data>
+  <data name="GuiManageServersSaveFailed" xml:space="preserve">
+    <value>Could not save the server list. See the log for details.</value>
+  </data>
+  <data name="GuiManageServersPartialFailureTitle" xml:space="preserve">
+    <value>Removal Incomplete</value>
+  </data>
+  <data name="GuiManageServersPartialFailureBody" xml:space="preserve">
+    <value>Could not remove saved credentials for: {0}. These servers were kept in the list so you can try again.</value>
+  </data>
+  <data name="GuiManageServersDuplicate" xml:space="preserve">
+    <value>Server '{0}' is already in the list.</value>
+  </data>
+  <data name="GuiManageServersInvalid" xml:space="preserve">
+    <value>Please enter a server name.</value>
+  </data>
+  <data name="GuiBrowseFolderTooltip" xml:space="preserve">
+    <value>Browse for folder...</value>
+  </data>
+  <data name="GuiBrowseFolderTitle" xml:space="preserve">
+    <value>Select Output Directory</value>
+  </data>
+  <data name="GuiPeriod7" xml:space="preserve">
+    <value>7 Days</value>
+  </data>
+  <data name="GuiPeriod30" xml:space="preserve">
+    <value>30 Days</value>
+  </data>
+  <data name="GuiPeriod90" xml:space="preserve">
+    <value>90 Days</value>
+  </data>
   <data name="GuiAcceptButton" xml:space="preserve">
     <value>Accept Terms</value>
   </data>
   <data name="GuiAcceptText" xml:space="preserve">
-    <value>This tool is offered as a free utility to assess your Veeam Configuration. It is offered \"at your own risk\".\n\nThe tool will engage PowerShell and SQL to gather data and then output files and folders to local disk.\n\nThe files may be anonymized to hide sensitive data. Accepting the Terms means that the user agrees to execute this program in its full capacity.</value>
+    <value>This tool is offered as a free utility to assess your Veeam Configuration. It is offered "at your own risk".
+
+The tool will engage PowerShell and SQL to gather data and then output files and folders to local disk.
+
+The files may be anonymized to hide sensitive data. Accepting the Terms means that the user agrees to execute this program in its full capacity.</value>
   </data>
   <data name="GuiImportButton" xml:space="preserve">
     <value>Import</value>
@@ -1727,5 +1809,174 @@
   </data>
   <data name="helpMenu" xml:space="preserve">
     <value>"HELP MENU\n\nrun - executes the program"</value>
+  </data>
+  <data name="GuiImportTooltip" xml:space="preserve">
+    <value>Create a report from previously collected data</value>
+  </data>
+  <data name="GuiThemeToggleTooltip" xml:space="preserve">
+    <value>Toggle light/dark theme</value>
+  </data>
+  <data name="GuiAboutButton" xml:space="preserve">
+    <value>About / Disclaimer</value>
+  </data>
+  <data name="GuiAdHocTab" xml:space="preserve">
+    <value>Ad-hoc Health Check</value>
+  </data>
+  <data name="GuiMonitoringTab" xml:space="preserve">
+    <value>Continuous Monitoring</value>
+  </data>
+  <data name="GuiServerCardTitle" xml:space="preserve">
+    <value>Veeam Server</value>
+  </data>
+  <data name="GuiProductTypeLabel" xml:space="preserve">
+    <value>Product Type:</value>
+  </data>
+  <data name="GuiProductTypeTooltip" xml:space="preserve">
+    <value>For remote servers, specifying the product type avoids connection failures. If set to Auto-detect, the tool will try both connection types.</value>
+  </data>
+  <data name="GuiProductTypeAuto" xml:space="preserve">
+    <value>Auto-detect</value>
+  </data>
+  <data name="GuiProductTypeVbr" xml:space="preserve">
+    <value>VBR (Backup &amp; Replication)</value>
+  </data>
+  <data name="GuiProductTypeVb365" xml:space="preserve">
+    <value>VB365 (Backup for Microsoft 365)</value>
+  </data>
+  <data name="GuiProductTypeBoth" xml:space="preserve">
+    <value>Both</value>
+  </data>
+  <data name="GuiExportOptionsLabel" xml:space="preserve">
+    <value>Export Options</value>
+  </data>
+  <data name="GuiHtmlReportTooltip" xml:space="preserve">
+    <value>Display the HTML report in your default browser after generation</value>
+  </data>
+  <data name="GuiDataCollectionLabel" xml:space="preserve">
+    <value>Data Collection</value>
+  </data>
+  <data name="GuiCollectionPeriodLabel" xml:space="preserve">
+    <value>Collection Period:</value>
+  </data>
+  <data name="GuiRescanTooltip" xml:space="preserve">
+    <value>Rescan for Hardware change</value>
+  </data>
+  <data name="GuiSecurityPrivacyLabel" xml:space="preserve">
+    <value>Security &amp; Privacy</value>
+  </data>
+  <data name="GuiScrubTooltip" xml:space="preserve">
+    <value>Anonymize sensitive data according to Veeam KB 2462</value>
+  </data>
+  <data name="GuiClearCredsTooltip" xml:space="preserve">
+    <value>Clear any previously saved credentials before running</value>
+  </data>
+  <data name="GuiPdfUnavailableTooltip" xml:space="preserve">
+    <value>PDF Export not available when both VB365 &amp; VBR are detected on the same machine.</value>
+  </data>
+  <data name="GuiMonitorStatusHeader" xml:space="preserve">
+    <value>Monitor Status</value>
+  </data>
+  <data name="GuiMonitorStatusLabel" xml:space="preserve">
+    <value>Status: </value>
+  </data>
+  <data name="GuiMonitorQuickSetup" xml:space="preserve">
+    <value>Quick Setup</value>
+  </data>
+  <data name="GuiMonitorQuickSetupTooltip" xml:space="preserve">
+    <value>Install monitor using selected VBR server and stored credentials</value>
+  </data>
+  <data name="GuiMonitorVhcSetup" xml:space="preserve">
+    <value>Setup from VHC</value>
+  </data>
+  <data name="GuiMonitorVhcSetupTooltip" xml:space="preserve">
+    <value>Configure monitor using data collected from the last health check run</value>
+  </data>
+  <data name="GuiMonitorRunNow" xml:space="preserve">
+    <value>Run Now</value>
+  </data>
+  <data name="GuiMonitorRunTooltip" xml:space="preserve">
+    <value>Trigger an immediate monitor check</value>
+  </data>
+  <data name="GuiAlertNotificationsHeader" xml:space="preserve">
+    <value>Alert Notifications</value>
+  </data>
+  <data name="GuiMinSeverityLabel" xml:space="preserve">
+    <value>Min severity: </value>
+  </data>
+  <data name="GuiNotifSeverityWarning" xml:space="preserve">
+    <value>warning</value>
+  </data>
+  <data name="GuiNotifSeverityCritical" xml:space="preserve">
+    <value>critical</value>
+  </data>
+  <data name="GuiNotifSeverityOk" xml:space="preserve">
+    <value>ok</value>
+  </data>
+  <data name="GuiProcessingText" xml:space="preserve">
+    <value>Processing health check...</value>
+  </data>
+  <data name="GuiExportPdfLabel" xml:space="preserve">
+    <value>Export PDF</value>
+  </data>
+  <data name="GuiClearCredsLabel" xml:space="preserve">
+    <value>Clear Saved Credentials</value>
+  </data>
+  <data name="GuiCollectionCompleteWarnings" xml:space="preserve">
+    <value>Collection complete — {0} collector warning(s)</value>
+  </data>
+  <data name="GuiCollectionComplete" xml:space="preserve">
+    <value>Collection complete</value>
+  </data>
+  <data name="GuiMonitorNotBundled" xml:space="preserve">
+    <value>Not bundled</value>
+  </data>
+  <data name="GuiMonitorAvailableNotSetUp" xml:space="preserve">
+    <value>Available — not set up</value>
+  </data>
+  <data name="GuiMonitorRunningVersion" xml:space="preserve">
+    <value>Running ({0})</value>
+  </data>
+  <data name="GuiMonitorReconfigure" xml:space="preserve">
+    <value>Reconfigure</value>
+  </data>
+  <data name="GuiMonitorLastRun" xml:space="preserve">
+    <value>Last run: {0} — {1}</value>
+  </data>
+  <data name="GuiMonitorInstalling" xml:space="preserve">
+    <value>Installing...</value>
+  </data>
+  <data name="GuiMonitorSetupFailed" xml:space="preserve">
+    <value>Setup failed — check log</value>
+  </data>
+  <data name="GuiMonitorInstallingFromVhc" xml:space="preserve">
+    <value>Installing from VHC data...</value>
+  </data>
+  <data name="GuiMonitorCheckInProgress" xml:space="preserve">
+    <value>Running...</value>
+  </data>
+  <data name="GuiMonitorCompleteSetupPrompt" xml:space="preserve">
+    <value>Health check complete — click '{0}' to configure continuous monitoring with auto-detected server settings.</value>
+  </data>
+  <data name="GuiThemeDark" xml:space="preserve">
+    <value>Dark</value>
+  </data>
+  <data name="GuiThemeLight" xml:space="preserve">
+    <value>Light</value>
+  </data>
+  <data name="GuiThemeSystem" xml:space="preserve">
+    <value>System</value>
+  </data>
+  <data name="GuiNoVeeamDetectedTitle" xml:space="preserve">
+    <value>Veeam Software Not Detected</value>
+  </data>
+  <data name="GuiNoVeeamDetectedMessage" xml:space="preserve">
+    <value>No Veeam Software detected on this machine.
+
+This tool requires Veeam Backup &amp; Replication (VBR) or Veeam Backup for Microsoft 365 (VB365) to be installed locally, or a remote server to connect to.
+
+Alternatively, quit and run from the command line instead:
+VeeamHealthCheck.exe /run /remote /host=your-vbr-server
+
+Would you like to add a remote server now?</value>
   </data>
 </root>

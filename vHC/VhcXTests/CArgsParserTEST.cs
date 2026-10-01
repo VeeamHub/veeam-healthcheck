@@ -872,5 +872,19 @@ namespace VhcXTests
 
             Assert.Null(ex);
         }
+
+        [Theory]
+        [InlineData(true, 0u, false, false, false)]  // API failure - never hide
+        [InlineData(true, 1u, false, false, true)]   // only our process on the console: launched by double-click
+        [InlineData(true, 2u, false, false, false)]  // shell + us: launched from a terminal
+        [InlineData(true, 5u, false, false, false)]
+        [InlineData(false, 1u, false, false, false)] // no console window (e.g. CreateNoWindow/DETACHED_PROCESS parent) - nothing to hide
+        [InlineData(false, 0u, false, false, false)]
+        [InlineData(true, 1u, true, false, false)]   // debugger launched us on a fresh console: keep the live log visible
+        [InlineData(true, 1u, false, true, false)]   // /security remote run prompts on the console: hiding it would look like a hang
+        public void ShouldHideConsole_ConsoleStateAndRunMode_HidesOnlyWhenSoleOwnerAndNoConsoleNeeded(bool hasConsoleWindow, uint count, bool debuggerAttached, bool consoleInputRequired, bool expected)
+        {
+            Assert.Equal(expected, CArgsParser.ShouldHideConsole(hasConsoleWindow, count, debuggerAttached, consoleInputRequired));
+        }
     }
 }
