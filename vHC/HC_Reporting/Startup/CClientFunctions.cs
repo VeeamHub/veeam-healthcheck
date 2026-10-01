@@ -106,30 +106,55 @@ namespace VeeamHealthCheck.Startup
             CGlobals.Logger.Info("Starting Admin Check...done!");
         }
 
+        /// <summary>
+        /// True when this Health Check build is too new to run against a pre-v12 VBR: 2.0.0.547 and
+        /// later 2.x, or any 3.x+. Returns false (do not block) when the version string is missing,
+        /// has fewer than four segments, or the major/revision segment is not numeric.
+        /// </summary>
+        internal static bool IsVhcTooNewForPreV12(string version)
+        {
+            if (string.IsNullOrEmpty(version))
+            {
+                return false;
+            }
+
+            string[] vhcVersionSections = version.Split('.');
+            if (vhcVersionSections.Length < 4)
+            {
+                return false;
+            }
+
+            if (!int.TryParse(vhcVersionSections[0], out int vhcMajorVersion)
+                || !int.TryParse(vhcVersionSections[3], out int vhcRevision))
+            {
+                return false;
+            }
+
+            return (vhcMajorVersion == 2 && vhcRevision > 546) || vhcMajorVersion >= 3;
+        }
+
+        internal static bool ShouldBlockVbrVersion(int vbrMajorVersion, string vhcVersion)
+        {
+            return vbrMajorVersion < 12 && IsVhcTooNewForPreV12(vhcVersion);
+        }
+
+        // NOTE: currently not called. The call in ModeCheck was commented out in 5da2c865 and later
+        // replaced by DetectVbrVersion(). Note that an undetected VBR (VBRMAJORVERSION == 0) counts as < 12.
         private void VbrVersionSupportCheck()
         {
             // GetVbrVersion();
-
-            // get the version of the current vhc software:
-            if(CGlobals.VBRMAJORVERSION < 12)
+            if (ShouldBlockVbrVersion(CGlobals.VBRMAJORVERSION, CGlobals.VHCVERSION))
             {
-                string[] vhcVersionSections = CGlobals.VHCVERSION.Split('.'); 
-                int.TryParse(vhcVersionSections[0], out int vhcMajorVersion);
-                int.TryParse(vhcVersionSections[3], out int vhcBuildVersion);
+                string msg = String.Format("Veeam Health Check version {0} does not support Veeam Backup & Replication Versions prior to v12. To check systems prior to v12, Please download 2.0.0.546: https://github.com/VeeamHub/veeam-healthcheck/releases/tag/2.0.0.546", CGlobals.VHCVERSION);
 
-                if(vhcMajorVersion >= 2 && vhcBuildVersion > 546)
+                this.LOG.Error(msg, false);
+
+                if (CGlobals.GUIEXEC)
                 {
-                    string msg = String.Format("Veeam Health Check version {0} does not support Veeam Backup & Replication Versions prior to v12. To check systems prior to v12, Please download 2.0.0.546: https://github.com/VeeamHub/veeam-healthcheck/releases/tag/2.0.0.546", CGlobals.VHCVERSION);
-
-                    this.LOG.Error(msg, false);
-
-                    if (CGlobals.GUIEXEC)
-                    {
-                        MessageBox.Show(msg, "Error", MessageBoxButton.OK, MessageBoxImage.Error);
-                    }
-
-                    Environment.Exit(0);
+                    MessageBox.Show(msg, "Error", MessageBoxButton.OK, MessageBoxImage.Error);
                 }
+
+                Environment.Exit(0);
             }
         }
 
