@@ -1,6 +1,6 @@
 # ADR 0032: The Base Tag Is the Highest GA Tag, Not `git describe`'s Nearest or Reachable Tag
 
-* **Status:** Proposed
+* **Status:** Accepted
 * **Date:** 2026-10-01
 * **Decider:** Ben Thomas (@comnam90)
 * **Consulted:** Adam Congdon (@adamcongdon) — agreed in principle on #244; Claude Code (design, and an independent review that found the reachability hole below)

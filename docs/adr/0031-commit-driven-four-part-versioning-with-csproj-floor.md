@@ -1,6 +1,6 @@
 # ADR 0031: Release Versions Are Computed From Commits, Four-Part, With the csproj as a Floor
 
-* **Status:** Proposed
+* **Status:** Accepted
 * **Date:** 2026-10-01
 * **Decider:** Ben Thomas (@comnam90)
 * **Consulted:** Adam Congdon (@adamcongdon) — agreed in principle on #244, has not reviewed the individual decisions; Claude Code (design)
