@@ -11,11 +11,14 @@ jobs:
   sbom:
     runs-on: windows-latest
     permissions:
+      actions: read
       contents: write
       
     steps:
       - name: Checkout repository
         uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          fetch-depth: 0
 
       - name: Setup .NET
         uses: actions/setup-dotnet@67a3573c9a986a3f9c594539f4ab511d57bb3ce9 # v4
@@ -39,11 +42,23 @@ jobs:
 
       - name: Get version
         id: get_version
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          EVENT_NAME: ${{ github.event_name }}
+          RELEASE_TAG: ${{ github.event.release.tag_name }}
         run: |
-          $csproj = [xml](Get-Content vHC/HC_Reporting/VeeamHealthCheck.csproj)
-          $version = $csproj.Project.PropertyGroup[0].AssemblyVersion
-          echo "version=$version" >> $env:GITHUB_OUTPUT
-          echo "Version: $version"
+          if ($env:EVENT_NAME -eq 'release') {
+            # The release already has its version; do not compute a different one.
+            $version = $env:RELEASE_TAG.TrimStart('v')
+          } else {
+            $revision = gh run list --workflow ci-cd.yaml --limit 1 --json number --jq '.[0].number'
+            if (-not $revision) { throw 'Could not read the latest ci-cd.yaml run number.' }
+            $info = ./.github/scripts/Get-VhcVersion.ps1 -Revision ([int]$revision) -Channel ga
+            $version = $info.Version
+          }
+          "version=$version" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
+          Write-Host "Version: $version"
 
       - name: Create SBOM summary
         run: |

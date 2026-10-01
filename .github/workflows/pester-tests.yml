@@ -8,6 +8,8 @@ on:
       - 'vHC/HC_Reporting/Functions/Collection/PSCollections/Scripts/TestMfa.Tests.ps1'
       - 'vHC/HC_Reporting/Tools/Scripts/HealthCheck/VBR/Get-NasInfo.ps1'
       - 'vHC/HC_Reporting/Tools/Scripts/HealthCheck/VBR/Get-NasInfo.Tests.ps1'
+      - '.github/scripts/VhcVersion.psm1'
+      - '.github/scripts/VhcVersion.Tests.ps1'
   pull_request:
     branches: [master, dev]
     paths:
@@ -15,6 +17,8 @@ on:
       - 'vHC/HC_Reporting/Functions/Collection/PSCollections/Scripts/TestMfa.Tests.ps1'
       - 'vHC/HC_Reporting/Tools/Scripts/HealthCheck/VBR/Get-NasInfo.ps1'
       - 'vHC/HC_Reporting/Tools/Scripts/HealthCheck/VBR/Get-NasInfo.Tests.ps1'
+      - '.github/scripts/VhcVersion.psm1'
+      - '.github/scripts/VhcVersion.Tests.ps1'
   workflow_dispatch:
 
 jobs:
@@ -200,3 +204,32 @@ jobs:
           "@
 
           $summary | Out-File -FilePath $env:GITHUB_STEP_SUMMARY -Encoding utf8
+
+  pester-vhcversion:
+    name: Pester — VhcVersion
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+
+      - name: Ensure Pester v5 is available
+        shell: pwsh
+        run: |
+          $pester = Get-Module -ListAvailable -Name Pester | Where-Object { $_.Version -ge '5.0.0' } | Select-Object -First 1
+          if (-not $pester) {
+            Write-Host 'Pester v5 not found — installing from PSGallery...'
+            Install-Module -Name Pester -MinimumVersion 5.0.0 -Scope CurrentUser -Force -SkipPublisherCheck
+          } else {
+            Write-Host "Pester $($pester.Version) already available"
+          }
+
+      - name: Run Pester tests
+        shell: pwsh
+        run: |
+          Import-Module Pester -MinimumVersion 5.0.0
+          $config = New-PesterConfiguration
+          $config.Run.Path = '.github/scripts/VhcVersion.Tests.ps1'
+          $config.Run.Exit = $true
+          $config.Output.Verbosity = 'Detailed'
+          Invoke-Pester -Configuration $config
