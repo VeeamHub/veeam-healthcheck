@@ -9,7 +9,10 @@ namespace VeeamHealthCheck.Shared
     {
         private static readonly string ProcEnd = "DONE!";
 
-        public static string helpMenu = @"
+        public static string helpMenu =>
+            HelpMenuHead + (CFeatureFlags.ExperimentsEnabled ? HelpMenuMonitorSection : string.Empty) + HelpMenuTail;
+
+        private const string HelpMenuHead = @"
 Veeam Health Check - Command Line Help
 
 USAGE: VeeamHealthCheck.exe [options]
@@ -57,13 +60,19 @@ UTILITY OPTIONS:
   /clearcreds       Clear stored credentials from Windows Credential Manager
   /debug            Enable debug logging for troubleshooting
 
-CONTINUOUS MONITORING:
+";
+
+        // Experimental: only shown when VHC_EXPERIMENTS enables the vhc-monitor commands
+        // (see CFeatureFlags, and the matching gate in CArgsParser.TryHandleMonitorCommand).
+        private const string HelpMenuMonitorSection = @"CONTINUOUS MONITORING:
   /monitor:setup    Install vhc-monitor and register a 5-minute scheduled task
   /monitor:run      Trigger an immediate monitor check
   /monitor:status   Show current monitor installation and last-run status
   /monitor:disable  Remove the scheduled task (keeps config and files)
 
-UNATTENDED / SILENT MODE:
+";
+
+        private const string HelpMenuTail = @"UNATTENDED / SILENT MODE:
   /silent           Master ""never prompt, fail fast"" flag. Suppresses GUI
                     dialogs, console password prompts, and PowerShell
                     Get-Credential calls. Required for unattended (Task
