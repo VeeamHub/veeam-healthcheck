@@ -7,6 +7,11 @@ edit_uri: edit/dev/docs/
 
 docs_dir: docs
 
+# Internal implementation plans and specs stay in the repo but are not published.
+exclude_docs: |
+  plans/
+  superpowers/
+
 theme:
   name: material
   palette:

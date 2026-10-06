@@ -102,7 +102,7 @@ accepted, reintroducing the exact stale-machine misattribution ADR 0021's
 gating was built to prevent.
 
 Full algorithm, diagnostics, and removed/changed code detail:
-[`docs/superpowers/specs/2026-08-22-restore-point-backupid-grouping-design.md`](../superpowers/specs/2026-08-22-restore-point-backupid-grouping-design.md).
+[`docs/superpowers/specs/2026-08-22-restore-point-backupid-grouping-design.md`](https://github.com/VeeamHub/veeam-healthcheck/blob/dev/docs/superpowers/specs/2026-08-22-restore-point-backupid-grouping-design.md).
 
 ## Rationale
 
@@ -149,6 +149,6 @@ count). Full validation plan — a grouping-assumption audit across the whole
 live population, old-vs-new sizing comparison including Replication Jobs,
 and performance measurement against a Storage-Snapshot Backup population —
 is in
-[`docs/superpowers/specs/2026-08-22-restore-point-backupid-grouping-design.md`](../superpowers/specs/2026-08-22-restore-point-backupid-grouping-design.md)
+[`docs/superpowers/specs/2026-08-22-restore-point-backupid-grouping-design.md`](https://github.com/VeeamHub/veeam-healthcheck/blob/dev/docs/superpowers/specs/2026-08-22-restore-point-backupid-grouping-design.md)
 and must run against `Test-JobSizingRestorePointMatching.ps1` before this
 lands in `Get-VhcJob.ps1`.

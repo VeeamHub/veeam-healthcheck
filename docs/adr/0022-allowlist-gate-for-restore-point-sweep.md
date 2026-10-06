@@ -129,4 +129,4 @@ per-call cost (~9ms), applied to a large all-VMware environment with none
 of the `Type=Snapshot` skip's amortization, would scale linearly with
 restore-point count — the scenario this gate exists to protect. Full detail
 in
-[`docs/superpowers/specs/2026-08-21-job-sizing-restore-point-matching-design.md`](../superpowers/specs/2026-08-21-job-sizing-restore-point-matching-design.md).
+[`docs/superpowers/specs/2026-08-21-job-sizing-restore-point-matching-design.md`](https://github.com/VeeamHub/veeam-healthcheck/blob/dev/docs/superpowers/specs/2026-08-21-job-sizing-restore-point-matching-design.md).
