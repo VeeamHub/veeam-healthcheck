@@ -284,18 +284,8 @@ namespace VeeamHealthCheck.Startup
                             CGlobals.REMOTEHOST = providedHost;
                         }
                         break;
-                    case "/monitor:setup":
-                        this.RunMonitorSetup();
-                        return 0;
-                    case "/monitor:run":
-                        return this.RunMonitorNow();
-                    case "/monitor:status":
-                        this.PrintMonitorStatus();
-                        return 0;
-                    case "/monitor:disable":
-                        CVhcMonitorIntegration.Uninstall();
-                        CGlobals.Logger.Info("VHC Monitor scheduled task removed.", false);
-                        return 0;
+                    case var _ when this.TryHandleMonitorCommand(a, out int monitorExitCode):
+                        return monitorExitCode;
                 }
             }
 
@@ -727,6 +717,40 @@ namespace VeeamHealthCheck.Startup
             CGlobals.Logger.Info("Output is stored in " + targetDir, false);
 
             return res;
+        }
+
+        // Experimental (VHC_EXPERIMENTS, see CFeatureFlags): the /monitor:* commands are
+        // inert unless the flag is on. That includes /monitor:disable on purpose, so the
+        // flag hides the feature completely rather than leaving one stray command visible
+        // (vhc-monitor is a beta feature that was never officially released). With the flag
+        // off this returns false and the argument is treated like any other unrecognised
+        // one: ParseAllArgs's switch has no default case, so it is ignored.
+        internal bool TryHandleMonitorCommand(string arg, out int exitCode)
+        {
+            exitCode = 0;
+            if (!CFeatureFlags.ExperimentsEnabled)
+            {
+                return false;
+            }
+
+            switch (arg)
+            {
+                case "/monitor:setup":
+                    this.RunMonitorSetup();
+                    return true;
+                case "/monitor:run":
+                    exitCode = this.RunMonitorNow();
+                    return true;
+                case "/monitor:status":
+                    this.PrintMonitorStatus();
+                    return true;
+                case "/monitor:disable":
+                    CVhcMonitorIntegration.Uninstall();
+                    CGlobals.Logger.Info("VHC Monitor scheduled task removed.", false);
+                    return true;
+                default:
+                    return false;
+            }
         }
 
         private void RunMonitorSetup()

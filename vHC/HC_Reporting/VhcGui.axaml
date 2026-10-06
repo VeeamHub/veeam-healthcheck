@@ -27,8 +27,10 @@ MIT License
                     Click="AboutButton_Click" />
         </Grid>
 
-        <!-- Tab strip row -->
-        <StackPanel Grid.Row="1" Orientation="Horizontal" Spacing="8" Margin="25,0,25,12">
+        <!-- Tab strip row. Hidden unless VHC_EXPERIMENTS is on (VhcGui.axaml.cs reveals it):
+             Continuous Monitoring is the only other tab, so a lone Ad-hoc tab is just noise. -->
+        <StackPanel x:Name="tabStrip" Grid.Row="1" Orientation="Horizontal" Spacing="8" Margin="25,0,25,12"
+                    IsVisible="False">
             <Button x:Name="AdHocTabButton" Classes="tab tab-active"
                     Click="AdHocTabButton_Click" />
             <Button x:Name="MonitoringTabButton" Classes="tab"
