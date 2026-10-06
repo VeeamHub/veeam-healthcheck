@@ -133,7 +133,15 @@ namespace VeeamHealthCheck
             this.SetUiSync();
             pathBox.IsEnabled = true;
             this.InitializeServerList();
-            this.InitializeMonitorStatus();
+
+            // Experimental (VHC_EXPERIMENTS, see CFeatureFlags): everything monitor-related
+            // stays hidden unless the flag is on. InitializeMonitorStatus also spawns
+            // PowerShell probes on a worker thread, so skipping it saves that work too.
+            if (CFeatureFlags.ExperimentsEnabled)
+            {
+                this.tabStrip.IsVisible = true;
+                this.InitializeMonitorStatus();
+            }
 
             // pdfCheckBox.IsEnabled = false;
 
@@ -1349,6 +1357,7 @@ namespace VeeamHealthCheck
         // thread right before Environment.Exit(0) in Run().
         private void OfferMonitorSetupIfNeeded()
         {
+            if (!CFeatureFlags.ExperimentsEnabled) return;
             if (!CVhcMonitorIntegration.IsExePresentInBundle()) return;
             if (CVhcMonitorIntegration.IsTaskRegistered()) return;
 
