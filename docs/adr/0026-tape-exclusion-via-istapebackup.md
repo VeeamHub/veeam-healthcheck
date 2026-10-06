@@ -97,6 +97,6 @@ silently defeat the exclusion entirely.
 
 Confirmed live against a VMware-to-tape copy and a Proxmox-to-tape copy
 during this design's investigation (see
-[`docs/superpowers/specs/2026-08-24-orphaned-superseded-backups-design.md`](../superpowers/specs/2026-08-24-orphaned-superseded-backups-design.md)).
+[`docs/superpowers/specs/2026-08-24-orphaned-superseded-backups-design.md`](https://github.com/VeeamHub/veeam-healthcheck/blob/dev/docs/superpowers/specs/2026-08-24-orphaned-superseded-backups-design.md)).
 Further tape variants to be confirmed during the implementation plan's
 multi-lab validation (Task 10, Step 4).

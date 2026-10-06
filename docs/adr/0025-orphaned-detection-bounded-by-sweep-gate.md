@@ -88,6 +88,6 @@ which would then mean **superseding**, not working around, ADR 0022.
 Pending: multi-lab testing per the implementation plan's Task 10, Step 4 —
 confirming the accepted gap is acceptable in practice before this
 feature's PR is raised. See
-[`docs/superpowers/specs/2026-08-24-orphaned-superseded-backups-design.md`](../superpowers/specs/2026-08-24-orphaned-superseded-backups-design.md)
+[`docs/superpowers/specs/2026-08-24-orphaned-superseded-backups-design.md`](https://github.com/VeeamHub/veeam-healthcheck/blob/dev/docs/superpowers/specs/2026-08-24-orphaned-superseded-backups-design.md)
 and
-[`docs/plans/2026-08-25-orphaned-superseded-backups-implementation.md`](../plans/2026-08-25-orphaned-superseded-backups-implementation.md).
+[`docs/plans/2026-08-25-orphaned-superseded-backups-implementation.md`](https://github.com/VeeamHub/veeam-healthcheck/blob/dev/docs/plans/2026-08-25-orphaned-superseded-backups-implementation.md).

@@ -217,4 +217,4 @@ against 4 live VBR v13 labs, 56 jobs total, with no changes to
 Full detail, including the HPE Morpheus `BackupId` evidence and the tape-
 backup naming confirmation (cross-checked against the live VBR console), is
 recorded in
-[`docs/superpowers/specs/2026-08-21-job-sizing-restore-point-matching-design.md`](../superpowers/specs/2026-08-21-job-sizing-restore-point-matching-design.md).
+[`docs/superpowers/specs/2026-08-21-job-sizing-restore-point-matching-design.md`](https://github.com/VeeamHub/veeam-healthcheck/blob/dev/docs/superpowers/specs/2026-08-21-job-sizing-restore-point-matching-design.md).

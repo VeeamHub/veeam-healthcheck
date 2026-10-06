@@ -96,7 +96,7 @@ computed per `ObjectId` within that group.
 Confirmed live: a 3-VM Hyper-V job on a per-VM-chains-disabled repository,
 one shared `BackupId`, three distinct `ObjectId`s, `IsTruePerVmContainer =
 $false` on the resulting `Backup` object. See
-[`docs/superpowers/specs/2026-08-24-orphaned-superseded-backups-design.md`](../superpowers/specs/2026-08-24-orphaned-superseded-backups-design.md).
+[`docs/superpowers/specs/2026-08-24-orphaned-superseded-backups-design.md`](https://github.com/VeeamHub/veeam-healthcheck/blob/dev/docs/superpowers/specs/2026-08-24-orphaned-superseded-backups-design.md).
 The implementation plan's Task 3 tests this grain directly (one CSV row
 per `ObjectId` within a shared-`BackupId` group); Task 10 calls for
 re-confirming it against a real lab before this feature's PR is raised.

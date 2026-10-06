@@ -128,8 +128,8 @@ Confirmed live: ADR 0021's own on-prem-lab measurement (`GetObjectsInJob()`
 returning 1 of 9 real objects for a VMware Cloud Director vApp job). Full
 detail, including the stale-`ObjectId` rebuild example
 (`MALWARE`/`WindowsAgent08`), in
-[`docs/superpowers/specs/2026-08-24-orphaned-superseded-backups-design.md`](../superpowers/specs/2026-08-24-orphaned-superseded-backups-design.md)
+[`docs/superpowers/specs/2026-08-24-orphaned-superseded-backups-design.md`](https://github.com/VeeamHub/veeam-healthcheck/blob/dev/docs/superpowers/specs/2026-08-24-orphaned-superseded-backups-design.md)
 and
-[`docs/plans/2026-08-25-orphaned-superseded-backups-implementation.md`](../plans/2026-08-25-orphaned-superseded-backups-implementation.md)
+[`docs/plans/2026-08-25-orphaned-superseded-backups-implementation.md`](https://github.com/VeeamHub/veeam-healthcheck/blob/dev/docs/plans/2026-08-25-orphaned-superseded-backups-implementation.md)
 (Task 2). Multi-lab validation of the zero-overlap guard against a real
 Cloud Director job is still pending before this branch's PR is raised.

@@ -91,7 +91,7 @@ grep finds it assigned nowhere in the current codebase).
 
 None needed beyond compilation — this is a data-shape decision, not an
 empirical one. See
-[`docs/superpowers/specs/2026-08-24-orphaned-superseded-backups-design.md`](../superpowers/specs/2026-08-24-orphaned-superseded-backups-design.md)
+[`docs/superpowers/specs/2026-08-24-orphaned-superseded-backups-design.md`](https://github.com/VeeamHub/veeam-healthcheck/blob/dev/docs/superpowers/specs/2026-08-24-orphaned-superseded-backups-design.md)
 and the implementation plan's Task 7.
 
 ## Addendum (2026-08-28)
