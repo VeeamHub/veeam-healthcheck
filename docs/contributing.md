@@ -37,6 +37,16 @@ Use [Conventional Commits](https://www.conventionalcommits.org/) — `feat:`, `f
 
 The prefix also decides the next release version: `feat:` bumps the minor version, `type!:` or a `BREAKING CHANGE:` footer bumps the major version, and everything else bumps the patch. If your PR may be squash-merged, make the PR title a Conventional Commit, because the title is what gets read. The `Commit Lint` check on PRs only warns; it never blocks a merge.
 
+## Experimental Features
+
+Work that is not ready for general use ships hidden behind the `VHC_EXPERIMENTS` environment variable. The values `1` and `true` (case-insensitive) turn it on. Anything else, including `0`, `false`, `yes` or leaving it unset, keeps it off. The variable is read from the environment of the process that launches `VeeamHealthCheck.exe`, so set it in the same shell session. In code, check `CFeatureFlags.ExperimentsEnabled`.
+
+Currently gated:
+
+- **vhc-monitor (continuous monitoring, beta):** the `/monitor:setup`, `/monitor:run`, `/monitor:status` and `/monitor:disable` commands, their `/help` entries, and the Continuous Monitoring tab in the GUI. Release builds still bundle `vhc-monitor.exe` so testers do not need a separate download.
+
+When a feature graduates, delete its `CFeatureFlags.ExperimentsEnabled` checks and its entry in this list.
+
 ## License
 
 By contributing, you agree that your contributions will be licensed under the project's [MIT License](https://github.com/VeeamHub/veeam-healthcheck/blob/master/LICENSE).

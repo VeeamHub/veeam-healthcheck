@@ -101,10 +101,6 @@ VeeamHealthCheck.exe [options]
 | `/savecreds` | One-shot interactive seed: prompts for a username and password and stores them (DPAPI, current user) for `/host=` (default: localhost), then exits |
 | `/credfile=<path>` | Load host credentials from a JSON credfile into memory only (nothing is persisted). Composes with `/silent` |
 | `/clearcreds` | Clear stored credentials |
-| `/monitor:setup` | Install vhc-monitor and register a 5-minute scheduled task |
-| `/monitor:run` | Trigger an immediate monitor check |
-| `/monitor:status` | Show monitor installation and last-run status |
-| `/monitor:disable` | Remove the scheduled task (keeps config and files) |
 | `/debug` | Enable debug logging |
 
 ### Examples
