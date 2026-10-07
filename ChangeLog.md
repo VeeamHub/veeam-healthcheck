@@ -41,6 +41,8 @@ checksums, and scan results.
 
 ### Fixed
 
+- The GUI now writes the main log file to the chosen output folder instead of the default folder, and a log
+  folder that can't be written to no longer causes errors. Fixes [#259](https://github.com/VeeamHub/veeam-healthcheck/issues/259).
 - PDF export applies print styles, so the sidebar no longer overlaps content, long tables render in full, and
   columns no longer break mid-word. Fixes [#123](https://github.com/VeeamHub/veeam-healthcheck/issues/123).
 - Printing the HTML report from a browser (Ctrl+P) no longer clips wide tables or prints scrollbars; tables

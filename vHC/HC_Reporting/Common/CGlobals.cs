@@ -206,6 +206,17 @@ namespace VeeamHealthCheck.Shared
 
         public static CLogger Logger { get { return mainlog; } }
 
+        /// <summary>
+        /// Rebuilds <see cref="mainlog"/> so its file lands under the current
+        /// <see cref="desiredPath"/>. The logger is created during static initialization,
+        /// before any output folder is chosen, and fixes its file path at construction.
+        /// Call this once the final output folder is known (CLI /outdir, GUI Run).
+        /// </summary>
+        public static void RelocateMainLog()
+        {
+            mainlog = new CLogger("HealthCheck");
+        }
+
         public static CScrubHandler Scrubber { get { return scrubberMain; } }
 
         public static bool OpenHtml { get { return openHtml; } set { openHtml = value; } }
