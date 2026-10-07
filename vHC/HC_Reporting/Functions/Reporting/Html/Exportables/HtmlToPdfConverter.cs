@@ -26,7 +26,7 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.Exportables
         // overflow: auto in the screen CSS and would otherwise render as a clipped box.
         private const string PrintCss = @"<style>
 @media print {
-    table { width: 100%; table-layout: fixed; page-break-inside: auto; }
+    table { width: 100%; page-break-inside: auto; }
     tr { page-break-inside: avoid; page-break-after: auto; }
     td, th { word-wrap: break-word; overflow-wrap: break-word; }
     .section-body, .content { overflow: visible !important; }
