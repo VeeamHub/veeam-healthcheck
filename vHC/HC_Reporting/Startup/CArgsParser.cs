@@ -313,11 +313,11 @@ namespace VeeamHealthCheck.Startup
             // to "do nothing". Treat that intent as an implied /run, and set RunFullReport
             // (default false) so the report actually compiles rather than moving the no-op
             // downstream into CReportModeSelector. See ShouldImplyRun.
-            if (ShouldImplyRun(run, ui, runHfd, CGlobals.REMOTEEXEC, CGlobals.REMOTEHOST, CGlobals.TargetProductType))
+            bool runImplied = ShouldImplyRun(run, ui, runHfd, helpRequested, CGlobals.REMOTEEXEC, CGlobals.REMOTEHOST, CGlobals.TargetProductType);
+            if (runImplied)
             {
                 run = true;
                 CGlobals.RunFullReport = true;
-                CGlobals.Logger.Info("No /run given, but collection-intent flags were provided - implying /run.", false);
             }
 
             // ----------------------------------------------------------------
@@ -353,6 +353,13 @@ namespace VeeamHealthCheck.Startup
                 {
                     Environment.Exit(credfileExit);
                 }
+            }
+
+            // Logged here rather than where run was implied: /savecreds and an invalid
+            // /credfile= exit above, so claiming "implying /run" earlier would be untrue.
+            if (runImplied)
+            {
+                CGlobals.Logger.Info("No /run given, but collection-intent flags were provided - implying /run.", false);
             }
 
             // Now that arguments are parsed, detect VBR version - see
@@ -434,6 +441,11 @@ namespace VeeamHealthCheck.Startup
             if (IsNoActionRequested(run, ui, runHfd, helpRequested))
             {
                 CGlobals.Logger.Warning("No action specified - nothing was collected or reported.", false);
+                if (CGlobals.ClearStoredCreds)
+                {
+                    CGlobals.Logger.Warning("/clearcreds only takes effect during a run - no stored credentials were cleared.", false);
+                }
+
                 CGlobals.Logger.Warning("Add /run to execute a health check, or /gui to open the interface.", false);
                 CGlobals.Logger.Warning("Example: VeeamHealthCheck.exe /run /remote /host=HOSTNAME", false);
                 if (!CGlobals.Silent)
@@ -452,13 +464,14 @@ namespace VeeamHealthCheck.Startup
         /// was given. Historically that combination parsed everything, validated
         /// credentials, then returned 0 without doing anything (the "/remote /host=...
         /// does nothing" report). The caller treats this as an implied /run.
-        /// An explicit verb (run/ui/runHfd already set) is always honoured as-is.
+        /// An explicit verb (run/ui/runHfd already set) is always honoured as-is, and so
+        /// is /help: asking for help never starts a collection.
         /// </summary>
-        internal static bool ShouldImplyRun(bool run, bool ui, bool runHfd, bool remoteExec, string remoteHost, TargetProduct product)
+        internal static bool ShouldImplyRun(bool run, bool ui, bool runHfd, bool helpRequested, bool remoteExec, string remoteHost, TargetProduct product)
         {
-            if (run || ui || runHfd)
+            if (run || ui || runHfd || helpRequested)
             {
-                return false; // an explicit verb already decided the action
+                return false; // an explicit verb (or a help request) already decided the action
             }
 
             bool hasHost = !string.IsNullOrEmpty(remoteHost);
