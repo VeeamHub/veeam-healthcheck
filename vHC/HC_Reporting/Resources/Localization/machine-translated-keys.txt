@@ -1,0 +1,29 @@
+# Keys whose satellite (non-English) values were machine-generated, not human-reviewed.
+# Users can raise a GitHub issue to request corrections to the localized text.
+# Distinct from untranslated-keys.txt, which lists keys still carrying English placeholders.
+# Not read by any test. Remove a line once a human has reviewed that translation.
+# Format: Culture:KeyName
+fR-FR:NavCredentialsLink
+ja:NavCredentialsLink
+zh-cn:NavCredentialsLink
+zh-tw:NavCredentialsLink
+fR-FR:NavUserRolesLink
+ja:NavUserRolesLink
+zh-cn:NavUserRolesLink
+zh-tw:NavUserRolesLink
+fR-FR:NavEmailNotificationLink
+ja:NavEmailNotificationLink
+zh-cn:NavEmailNotificationLink
+zh-tw:NavEmailNotificationLink
+fR-FR:NavServerSizingLink
+ja:NavServerSizingLink
+zh-cn:NavServerSizingLink
+zh-tw:NavServerSizingLink
+fR-FR:NavObjStorageLink
+ja:NavObjStorageLink
+zh-cn:NavObjStorageLink
+zh-tw:NavObjStorageLink
+fR-FR:NavGeneralSettingsSection
+ja:NavGeneralSettingsSection
+zh-cn:NavGeneralSettingsSection
+zh-tw:NavGeneralSettingsSection

@@ -1979,4 +1979,22 @@ VeeamHealthCheck.exe /run /remote /host=your-vbr-server
 
 Would you like to add a remote server now?</value>
   </data>
+  <data name="NavCredentialsLink" xml:space="preserve">
+    <value>Credentials</value>
+  </data>
+  <data name="NavUserRolesLink" xml:space="preserve">
+    <value>User Roles</value>
+  </data>
+  <data name="NavEmailNotificationLink" xml:space="preserve">
+    <value>Email Notification</value>
+  </data>
+  <data name="NavServerSizingLink" xml:space="preserve">
+    <value>Server Sizing</value>
+  </data>
+  <data name="NavObjStorageLink" xml:space="preserve">
+    <value>Object Storage Repositories</value>
+  </data>
+  <data name="NavGeneralSettingsSection" xml:space="preserve">
+    <value>General Settings</value>
+  </data>
 </root>

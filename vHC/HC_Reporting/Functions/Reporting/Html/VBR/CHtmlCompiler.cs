@@ -8,6 +8,7 @@ using System.Net;
 using System.Reflection;
 using VeeamHealthCheck.Functions.Reporting.CsvHandlers;
 using VeeamHealthCheck.Functions.Reporting.Html.Shared;
+using VeeamHealthCheck.Functions.Reporting.Html.VBR.VbrTables.Security;
 using VeeamHealthCheck.Html.VBR;
 using VeeamHealthCheck.Resources.Localization;
 using VeeamHealthCheck.Shared;
@@ -487,16 +488,27 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR
             }
         }
 
-        private string BuildSidebar()
+        internal string BuildSidebar()
         {
             string nav = "";
 
-            // Overview
-            nav += this.form.NavSection("Overview",
+            // Overview — the Compliance cards only render when a compliance scan produced data
+            // (same conditions as CComplianceTable), so gate their links the same way.
+            var compliance = new CComplianceTable();
+            string overviewLinks =
                 this.form.NavLink("license", VbrLocalizationHelper.NavLicInfoLink, true) +
-                this.form.NavLink("secsummary", VbrLocalizationHelper.NavSecSumLink) +
-                this.form.NavLink("ComplianceSummary", "Compliance Summary") +
-                this.form.NavLink("ComplianceTable", "Compliance Details"));
+                this.form.NavLink("secsummary", VbrLocalizationHelper.NavSecSumLink);
+            if (compliance.HasSummary)
+            {
+                overviewLinks += this.form.NavLink("ComplianceSummary", "Compliance Summary");
+            }
+
+            if (compliance.HasDetails)
+            {
+                overviewLinks += this.form.NavLink("ComplianceTable", "Compliance Details");
+            }
+
+            nav += this.form.NavSection("Overview", overviewLinks);
 
             // Infrastructure
             nav += this.form.NavSection("Infrastructure",
@@ -504,8 +516,13 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR
                 this.form.NavLink("serversummary", "Infrastructure Types") +
                 this.form.NavLink("managedServerInfo", VbrLocalizationHelper.NavSrvInfoLink) +
                 this.form.NavLink("proxies", VbrLocalizationHelper.NavProxyInfoLink) +
+                this.form.NavLink("serversrequirements", VbrLocalizationHelper.NavServerSizingLink) +
                 this.form.NavLink("repos", VbrLocalizationHelper.NavRepoInfoLink) +
                 this.form.NavLink("sobr", VbrLocalizationHelper.NavSobrInfoLink) +
+                this.form.NavLink("extents", VbrLocalizationHelper.NavSobrExtLink) +
+                this.form.NavLink("capextents", VbrLocalizationHelper.NavCapTierLink) +
+                this.form.NavLink("archextents", VbrLocalizationHelper.NavArchTierLink) +
+                this.form.NavLink("objstorage", VbrLocalizationHelper.NavObjStorageLink) +
                 this.form.NavLink("orphanedsupersededbackups", "Orphaned & Superseded Backups"));
 
             // Cloud Connect — only emit these nav links when the Cloud Connect section
@@ -539,6 +556,12 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR
             nav += this.form.NavSection("Performance",
                 this.form.NavLink("jobcon", VbrLocalizationHelper.NavJobConLink) +
                 this.form.NavLink("taskcon", VbrLocalizationHelper.NavTaskConLink));
+
+            // General Settings — rendered after the job tables and before Registry Keys.
+            nav += this.form.NavSection(VbrLocalizationHelper.NavGeneralSettingsSection,
+                this.form.NavLink("credentials", VbrLocalizationHelper.NavCredentialsLink) +
+                this.form.NavLink("userroles", VbrLocalizationHelper.NavUserRolesLink) +
+                this.form.NavLink("emailnotification", VbrLocalizationHelper.NavEmailNotificationLink));
 
             // Misc
             nav += this.form.NavSection("Misc",

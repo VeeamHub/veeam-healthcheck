@@ -1865,4 +1865,22 @@ VeeamHealthCheck.exe /run /remote /host=your-vbr-server
 
 Would you like to add a remote server now?</value>
   </data>
+  <data name="NavCredentialsLink" xml:space="preserve">
+    <value>凭据</value>
+  </data>
+  <data name="NavUserRolesLink" xml:space="preserve">
+    <value>用户角色</value>
+  </data>
+  <data name="NavEmailNotificationLink" xml:space="preserve">
+    <value>电子邮件通知</value>
+  </data>
+  <data name="NavServerSizingLink" xml:space="preserve">
+    <value>服务器规模评估</value>
+  </data>
+  <data name="NavObjStorageLink" xml:space="preserve">
+    <value>对象存储存储库</value>
+  </data>
+  <data name="NavGeneralSettingsSection" xml:space="preserve">
+    <value>常规设置</value>
+  </data>
 </root>

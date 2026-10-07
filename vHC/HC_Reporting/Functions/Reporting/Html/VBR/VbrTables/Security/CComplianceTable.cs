@@ -33,6 +33,18 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR.VbrTables.Security
             };
         }
 
+        /// <summary>
+        /// True when the "ComplianceSummary" card will render (rule rows or scan metadata exist).
+        /// Shared with CHtmlCompiler.BuildSidebar so the nav link only exists when its target does.
+        /// </summary>
+        public bool HasSummary => this.csvResults.Any() || this.meta != null;
+
+        /// <summary>
+        /// True when the "ComplianceTable" card will render (rule rows exist).
+        /// Shared with CHtmlCompiler.BuildSidebar so the nav link only exists when its target does.
+        /// </summary>
+        public bool HasDetails => this.csvResults.Any();
+
         public string ComplianceSummaryTable()
         {
             string t = string.Empty;
@@ -41,7 +53,7 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR.VbrTables.Security
                 bool hasRules = this.csvResults != null && this.csvResults.Any();
                 bool hasMeta  = this.meta != null;
 
-                if (!hasRules && !hasMeta)
+                if (!this.HasSummary)
                 {
                     CGlobals.Logger.Warning("No compliance data available - CSV file may not have been generated");
                     return t;
@@ -143,7 +155,7 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR.VbrTables.Security
             try
             {
                 // Return early if no data
-                if (this.csvResults == null || !this.csvResults.Any())
+                if (!this.HasDetails)
                 {
                     CGlobals.Logger.Warning("No compliance data available - CSV file may not have been generated");
                     CHtmlTables.SetSectionPublic("complianceTable", new List<string> { "Best Practice", "Status" }, new List<List<string>>(), null);
