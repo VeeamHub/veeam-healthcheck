@@ -71,6 +71,9 @@ checksums, and scan results.
 - The pre-v12 version guard now blocks 3.x and later builds as intended and no longer throws on short or
   non-numeric versions. Fixes [#245](https://github.com/VeeamHub/veeam-healthcheck/issues/245).
 - Collection logging is more detailed, and SQL connections use an explicit timeout.
+- CLI runs with `/remote`, `/host=`, `/vbr` or `/vb365` but no `/run` now collect and report instead of silently
+  exiting with code 0, and `/lite` now renders its report; when no action is selected the tool prints guidance.
+  Fixes [#226](https://github.com/VeeamHub/veeam-healthcheck/issues/226).
 
 ### Security
 
