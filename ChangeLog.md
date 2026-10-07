@@ -73,6 +73,7 @@ checksums, and scan results.
 - Collection logging is more detailed, and SQL connections use an explicit timeout.
 - CLI runs with `/remote`, `/host=`, `/vbr` or `/vb365` but no `/run` now collect and report instead of silently
   exiting with code 0, and `/lite` now renders its report; when no action is selected the tool prints guidance.
+  `/help` and `/clearcreds` never imply a run (`/clearcreds` still needs an explicit `/run`).
   Fixes [#226](https://github.com/VeeamHub/veeam-healthcheck/issues/226).
 
 ### Security

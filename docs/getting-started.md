@@ -100,7 +100,7 @@ VeeamHealthCheck.exe [options]
 | `/silent` | Never prompt; fail fast with an [exit code](getting-started.md#exit-codes). Mutually exclusive with `/savecreds` |
 | `/savecreds` | One-shot interactive seed: prompts for a username and password and stores them (DPAPI, current user) for `/host=` (default: localhost), then exits |
 | `/credfile=<path>` | Load host credentials from a JSON credfile into memory only (nothing is persisted). Composes with `/silent` |
-| `/clearcreds` | Clear stored credentials |
+| `/clearcreds` | Clear stored credentials before a run (use with `/run`) |
 | `/debug` | Enable debug logging |
 
 ## Remote Execution
@@ -169,7 +169,7 @@ In silent mode the process exit code reports the outcome:
 | **"No Veeam installation detected"** | Tool must run on a system with VBR Console or VB365 installed |
 | **Low disk space errors** | Ensure `C:\` has at least 500 MB free |
 | **PowerShell errors** | Verify PowerShell 7 is installed and meets the VBR module's minimum version (7.6+ for VBR v13). In silent mode this is exit code 8 |
-| **Credentials not working** | Run `/clearcreds` then re-authenticate |
+| **Credentials not working** | Add `/clearcreds` to a `/run` (for example `/run /remote /host=<server>`) so the saved credentials are cleared and you are prompted again. `/clearcreds` on its own does nothing |
 
 ## Sample Report
 
