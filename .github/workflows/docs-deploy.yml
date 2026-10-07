@@ -42,7 +42,7 @@ jobs:
 
       - name: Sync changelog from ChangeLog.md
         run: |
-          { printf '# Changelog\n\n> This page is auto-synced from [ChangeLog.md](${{ env.REPO_URL }}/blob/master/ChangeLog.md) on every push to `master`.\n\n'; cat ChangeLog.md; } > docs/changelog.md
+          { printf '# Changelog\n\n> This page is auto-synced from [ChangeLog.md](${{ env.REPO_URL }}/blob/master/ChangeLog.md) on every push to `master`.\n\n'; sed '1{/^# /d;}' ChangeLog.md; } > docs/changelog.md
 
       - name: Generate feature timeline from git log
         run: |

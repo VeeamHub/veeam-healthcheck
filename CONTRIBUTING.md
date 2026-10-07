@@ -47,6 +47,12 @@ If your PR may be squash-merged, **make the PR title a Conventional Commit**: af
 
 The `Commit Lint` check on your PR only warns about messages that don't follow the convention; it never blocks a merge. The full rules, and how to preview the version a commit would get, are in the [Versioning section of the workflows README](.github/workflows/README.md#versioning).
 
+## Changelog
+
+User-visible changes are recorded in [`ChangeLog.md`](ChangeLog.md), which follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). If your PR changes what a user sees or gets (new or changed report content, CLI arguments, behaviour, a fix for a reported problem, a security fix), add one line for it under `## [Unreleased]` in the matching group (`Added`, `Changed`, `Deprecated`, `Removed`, `Fixed`, `Security`). Write it for someone reading the report, not the diff, and link the issue (`[#N](https://github.com/VeeamHub/veeam-healthcheck/issues/N)`) when there is one. Refactors, tests, CI and docs-only changes do not need an entry.
+
+When a release is cut, a maintainer renames `[Unreleased]` to `[x.y.z.r] - YYYY-MM-DD`, starts a fresh empty `[Unreleased]`, and updates the compare links at the bottom of the file. The docs site's Changelog page is copied from this file by CI, so edit `ChangeLog.md` only, never `docs/changelog.md`.
+
 ## License
 
 By contributing, you agree that your contributions will be licensed under the projects original open source license.
