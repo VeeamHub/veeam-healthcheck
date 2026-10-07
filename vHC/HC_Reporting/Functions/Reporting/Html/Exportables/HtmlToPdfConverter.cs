@@ -19,20 +19,25 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.Exportables
             this.converter = new SynchronizedConverter(new PdfTools());
         }
 
-        public void ConvertHtmlToPdf(string htmlContent, string outputPath)
-        {
-            var printCss = @"<style>
+        // wkhtmltopdf renders with screen CSS unless PrintMediaType is set, so the report's own
+        // @media print rules (hide the fixed sidebar, drop the .main margin) never applied (#123).
+        // The injected block below also un-clips the scrollable section containers: the report
+        // has no .table-responsive wrapper, tables sit in .section-body / .content, which are
+        // overflow: auto in the screen CSS and would otherwise render as a clipped box.
+        private const string PrintCss = @"<style>
 @media print {
-    table { width: 100%; table-layout: fixed; page-break-inside: auto; }
+    table { width: 100%; page-break-inside: auto; }
     tr { page-break-inside: avoid; page-break-after: auto; }
     td, th { word-wrap: break-word; overflow-wrap: break-word; }
-    .table-responsive { overflow: visible !important; }
+    .section-body, .content { overflow: visible !important; }
 }
 </style>";
 
-            var html = htmlContent.Replace("</head>", printCss + "</head>");
+        internal static HtmlToPdfDocument BuildDocument(string htmlContent)
+        {
+            var html = htmlContent.Replace("</head>", PrintCss + "</head>");
 
-            var doc = new HtmlToPdfDocument()
+            return new HtmlToPdfDocument()
             {
                 GlobalSettings = {
                     ColorMode = DinkToPdf.ColorMode.Color,
@@ -44,10 +49,15 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.Exportables
                     new ObjectSettings()
                     {
                         HtmlContent = html,
-                        WebSettings = { DefaultEncoding = "utf-8" },
+                        WebSettings = { DefaultEncoding = "utf-8", PrintMediaType = true },
                     }
                 }
             };
+        }
+
+        public void ConvertHtmlToPdf(string htmlContent, string outputPath)
+        {
+            var doc = BuildDocument(htmlContent);
 
             // Run conversion on a dedicated STA thread to avoid deadlocking the WPF UI thread.
             // DinkToPdf's SynchronizedConverter uses COM interop which requires an STA thread.
