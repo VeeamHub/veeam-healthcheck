@@ -589,7 +589,9 @@ button.collapsible.classBtn:hover { background: var(--hover); }
 .content { border: 1px solid var(--border); border-top: none; border-radius: 0 0 8px 8px; padding: 0; overflow: auto; }
 
 /* ===== Print ===== */
-/* Landscape gives wide tables room; paper size stays the user's (or the PDF exporter's) choice. */
+/* Wide tables need the width, so browser print is forced to landscape: Chromium and Edge render a
+   page-defined size regardless of the Layout option. Paper size stays the user's (or the PDF
+   exporter's) choice. */
 @page { size: landscape; }
 
 @media print {

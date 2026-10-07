@@ -69,7 +69,7 @@ namespace VhcXTests.Functions.Reporting.Html.Shared
         }
 
         [Fact]
-        public void PrintCss_Page_DefaultsToLandscape()
+        public void PrintCss_Page_IsForcedToLandscape()
         {
             var css = CHtmlFormatting.GetEmbeddedCssContent("css.css");
             Assert.Matches(@"@page\s*\{[^}]*size:\s*landscape", css);

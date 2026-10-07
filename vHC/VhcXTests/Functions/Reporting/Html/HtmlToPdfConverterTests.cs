@@ -1,4 +1,5 @@
 using VeeamHealthCheck.Functions.Reporting.Html.Exportables;
+using VeeamHealthCheck.Functions.Reporting.Html.Shared;
 using Xunit;
 
 namespace VhcXTests.Functions.Reporting.Html
@@ -43,7 +44,20 @@ namespace VhcXTests.Functions.Reporting.Html
         }
 
         [Fact]
-        public void BuildDocument_HtmlWithoutOpenTag_LeavesContentIntact()
+        public void BuildDocument_RealReportHeader_MarksHtmlElementAsPdfExport()
+        {
+            // Guards against CHtmlFormatting.Header() changing its <html> tag (for example adding an
+            // attribute) and silently losing the marker that keeps the A3 PDF at its normal size.
+            var reportHtml = new CHtmlFormatting().Header() + "<body></body></html>";
+
+            var doc = HtmlToPdfConverter.BuildDocument(reportHtml);
+
+            var html = Assert.Single(doc.Objects).HtmlContent;
+            Assert.Contains("<html class=\"" + HtmlToPdfConverter.PdfExportClass + "\">", html);
+        }
+
+        [Fact]
+        public void BuildDocument_HtmlWithoutOpenTag_AddsNoPdfExportClass()
         {
             var doc = HtmlToPdfConverter.BuildDocument("<p>x</p></head>");
 
