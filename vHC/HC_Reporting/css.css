@@ -589,6 +589,11 @@ button.collapsible.classBtn:hover { background: var(--hover); }
 .content { border: 1px solid var(--border); border-top: none; border-radius: 0 0 8px 8px; padding: 0; overflow: auto; }
 
 /* ===== Print ===== */
+/* Wide tables need the width, so browser print is forced to landscape: Chromium and Edge render a
+   page-defined size regardless of the Layout option. Paper size stays the user's (or the PDF
+   exporter's) choice. */
+@page { size: landscape; }
+
 @media print {
   .sidebar { display: none; }
   .main { margin-left: 0; padding: 16px; }
@@ -598,6 +603,23 @@ button.collapsible.classBtn:hover { background: var(--hover); }
   .toolbar { display: none; }
   #myBtn { display: none !important; }
   footer { margin-left: 0; }
+
+  /* Wide tables: un-clip the scroll containers and wrap cells so tables fit the page instead of
+     printing a clipped box with a scrollbar (#257). overflow-wrap: anywhere is deliberate: unlike
+     break-word it lets the table shrink columns below their longest word. */
+  .section-card { overflow: visible; }
+  .section-body, .content { overflow: visible !important; }
+  table { table-layout: auto; page-break-inside: auto; }
+  thead { display: table-header-group; }
+  tr { page-break-inside: avoid; page-break-after: auto; }
+  th, td { white-space: normal; word-wrap: break-word; overflow-wrap: anywhere; }
+
+  /* Shrink tables for browser print (Letter/A4). The PDF exporter marks <html class="pdf-export">
+     and prints on A3, where this made the text needlessly small, so it is skipped there. */
+  html:not(.pdf-export) .section-body { padding: 12px; }
+  html:not(.pdf-export) table { font-size: 10px; }
+  html:not(.pdf-export) thead th { padding: 4px 6px; font-size: 9px; letter-spacing: 0; }
+  html:not(.pdf-export) tbody td { padding: 4px 6px; }
 }
 
 /* Status Badges */
