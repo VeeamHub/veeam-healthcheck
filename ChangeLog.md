@@ -35,6 +35,9 @@ checksums, and scan results.
 - Release versions are now computed from commit types
   ([ADR 0031](https://github.com/VeeamHub/veeam-healthcheck/blob/dev/docs/adr/0031-commit-driven-four-part-versioning-with-csproj-floor.md),
   [ADR 0032](https://github.com/VeeamHub/veeam-healthcheck/blob/dev/docs/adr/0032-base-tag-is-highest-ga-tag.md)).
+- The VBR report's left navigation is now fully localized (group titles and every link, including Cloud
+  Connect and Orphaned & Superseded Backups). The French, Japanese, and Chinese labels for these entries are
+  machine-translated; please open an issue to request corrections.
 
 ### Fixed
 
@@ -75,6 +78,11 @@ checksums, and scan results.
   exiting with code 0, and `/lite` now renders its report; when no action is selected the tool prints guidance.
   `/help` and `/clearcreds` never imply a run (`/clearcreds` still needs an explicit `/run`).
   Fixes [#226](https://github.com/VeeamHub/veeam-healthcheck/issues/226).
+- The VBR report's left navigation now links every top-level section: Server Sizing, SOBR Extent Info,
+  Capacity and Archive Tier Configuration, Object Storage Repositories, and a new General Settings group
+  (Credentials, User Roles, Email Notification). The Compliance Summary and Compliance Details links are
+  hidden when the compliance scan produced no data instead of pointing at a missing section.
+  Fixes [#184](https://github.com/VeeamHub/veeam-healthcheck/issues/184).
 
 ### Security
 

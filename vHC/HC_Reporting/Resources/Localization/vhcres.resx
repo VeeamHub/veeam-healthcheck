@@ -1979,4 +1979,85 @@ VeeamHealthCheck.exe /run /remote /host=your-vbr-server
 
 Would you like to add a remote server now?</value>
   </data>
+  <data name="NavCredentialsLink" xml:space="preserve">
+    <value>Credentials</value>
+  </data>
+  <data name="NavUserRolesLink" xml:space="preserve">
+    <value>User Roles</value>
+  </data>
+  <data name="NavEmailNotificationLink" xml:space="preserve">
+    <value>Email Notification</value>
+  </data>
+  <data name="NavServerSizingLink" xml:space="preserve">
+    <value>Server Sizing</value>
+  </data>
+  <data name="NavObjStorageLink" xml:space="preserve">
+    <value>Object Storage Repositories</value>
+  </data>
+  <data name="NavGeneralSettingsSection" xml:space="preserve">
+    <value>General Settings</value>
+  </data>
+  <data name="NavOverviewSection" xml:space="preserve">
+    <value>Overview</value>
+  </data>
+  <data name="NavInfrastructureSection" xml:space="preserve">
+    <value>Infrastructure</value>
+  </data>
+  <data name="NavCloudConnectSection" xml:space="preserve">
+    <value>Cloud Connect</value>
+  </data>
+  <data name="NavBackupJobsSection" xml:space="preserve">
+    <value>Backup Jobs</value>
+  </data>
+  <data name="NavPerformanceSection" xml:space="preserve">
+    <value>Performance</value>
+  </data>
+  <data name="NavMiscSection" xml:space="preserve">
+    <value>Misc</value>
+  </data>
+  <data name="NavOrphanedBackupsLink" xml:space="preserve">
+    <value>Orphaned &amp; Superseded Backups</value>
+  </data>
+  <data name="NavComplianceSummaryLink" xml:space="preserve">
+    <value>Compliance Summary</value>
+  </data>
+  <data name="NavComplianceDetailsLink" xml:space="preserve">
+    <value>Compliance Details</value>
+  </data>
+  <data name="NavInfraTypesLink" xml:space="preserve">
+    <value>Infrastructure Types</value>
+  </data>
+  <data name="NavCloudGatewaysLink" xml:space="preserve">
+    <value>Gateways</value>
+  </data>
+  <data name="NavCloudGatewayPoolsLink" xml:space="preserve">
+    <value>Gateway Pools</value>
+  </data>
+  <data name="NavCloudTenantPerfLink" xml:space="preserve">
+    <value>Tenant Performance</value>
+  </data>
+  <data name="NavCloudTenantsLink" xml:space="preserve">
+    <value>Tenants</value>
+  </data>
+  <data name="NavCloudTenantBackupLink" xml:space="preserve">
+    <value>Tenant Backup Storage</value>
+  </data>
+  <data name="NavCloudTenantReplicaLink" xml:space="preserve">
+    <value>Tenant Replica Resources</value>
+  </data>
+  <data name="NavCloudHwPlansLink" xml:space="preserve">
+    <value>Hardware Plans</value>
+  </data>
+  <data name="NavCloudHwPlanDatastoresLink" xml:space="preserve">
+    <value>HW Plan Datastores</value>
+  </data>
+  <data name="NavCloudReplicasLink" xml:space="preserve">
+    <value>Replicas</value>
+  </data>
+  <data name="NavCloudFailoverPlansLink" xml:space="preserve">
+    <value>Failover Plans</value>
+  </data>
+  <data name="NavCloudFailoverPlanVmsLink" xml:space="preserve">
+    <value>Failover Plan VMs</value>
+  </data>
 </root>

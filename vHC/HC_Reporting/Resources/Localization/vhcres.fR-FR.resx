@@ -1838,4 +1838,85 @@ VeeamHealthCheck.exe /run /remote /host=your-vbr-server
 
 Would you like to add a remote server now?</value>
   </data>
+  <data name="NavCredentialsLink" xml:space="preserve">
+    <value>Informations d'identification</value>
+  </data>
+  <data name="NavUserRolesLink" xml:space="preserve">
+    <value>Rôles utilisateur</value>
+  </data>
+  <data name="NavEmailNotificationLink" xml:space="preserve">
+    <value>Notification par e-mail</value>
+  </data>
+  <data name="NavServerSizingLink" xml:space="preserve">
+    <value>Dimensionnement des serveurs</value>
+  </data>
+  <data name="NavObjStorageLink" xml:space="preserve">
+    <value>Repositories de stockage objet</value>
+  </data>
+  <data name="NavGeneralSettingsSection" xml:space="preserve">
+    <value>Paramètres généraux</value>
+  </data>
+  <data name="NavOverviewSection" xml:space="preserve">
+    <value>Vue d'ensemble</value>
+  </data>
+  <data name="NavInfrastructureSection" xml:space="preserve">
+    <value>Infrastructure</value>
+  </data>
+  <data name="NavCloudConnectSection" xml:space="preserve">
+    <value>Cloud Connect</value>
+  </data>
+  <data name="NavBackupJobsSection" xml:space="preserve">
+    <value>Jobs de sauvegarde</value>
+  </data>
+  <data name="NavPerformanceSection" xml:space="preserve">
+    <value>Performance</value>
+  </data>
+  <data name="NavMiscSection" xml:space="preserve">
+    <value>Divers</value>
+  </data>
+  <data name="NavOrphanedBackupsLink" xml:space="preserve">
+    <value>Sauvegardes orphelines et remplacées</value>
+  </data>
+  <data name="NavComplianceSummaryLink" xml:space="preserve">
+    <value>Résumé de conformité</value>
+  </data>
+  <data name="NavComplianceDetailsLink" xml:space="preserve">
+    <value>Détails de conformité</value>
+  </data>
+  <data name="NavInfraTypesLink" xml:space="preserve">
+    <value>Types d'infrastructure</value>
+  </data>
+  <data name="NavCloudGatewaysLink" xml:space="preserve">
+    <value>Passerelles</value>
+  </data>
+  <data name="NavCloudGatewayPoolsLink" xml:space="preserve">
+    <value>Pools de passerelles</value>
+  </data>
+  <data name="NavCloudTenantPerfLink" xml:space="preserve">
+    <value>Performances des tenants</value>
+  </data>
+  <data name="NavCloudTenantsLink" xml:space="preserve">
+    <value>Tenants</value>
+  </data>
+  <data name="NavCloudTenantBackupLink" xml:space="preserve">
+    <value>Stockage de sauvegarde des tenants</value>
+  </data>
+  <data name="NavCloudTenantReplicaLink" xml:space="preserve">
+    <value>Ressources de réplication des tenants</value>
+  </data>
+  <data name="NavCloudHwPlansLink" xml:space="preserve">
+    <value>Plans matériels</value>
+  </data>
+  <data name="NavCloudHwPlanDatastoresLink" xml:space="preserve">
+    <value>Datastores des plans matériels</value>
+  </data>
+  <data name="NavCloudReplicasLink" xml:space="preserve">
+    <value>Réplicas</value>
+  </data>
+  <data name="NavCloudFailoverPlansLink" xml:space="preserve">
+    <value>Plans de basculement</value>
+  </data>
+  <data name="NavCloudFailoverPlanVmsLink" xml:space="preserve">
+    <value>VM des plans de basculement</value>
+  </data>
 </root>
