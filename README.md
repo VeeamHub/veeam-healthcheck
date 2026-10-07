@@ -100,7 +100,7 @@ VeeamHealthCheck.exe [options]
 | `/silent` | Never prompt; fail fast with an [exit code](https://veeamhub.github.io/veeam-healthcheck/getting-started/#exit-codes). Mutually exclusive with `/savecreds` |
 | `/savecreds` | One-shot interactive seed: prompts for a username and password and stores them (DPAPI, current user) for `/host=` (default: localhost), then exits |
 | `/credfile=<path>` | Load host credentials from a JSON credfile into memory only (nothing is persisted). Composes with `/silent` |
-| `/clearcreds` | Clear stored credentials |
+| `/clearcreds` | Clear stored credentials before a run (use with `/run`) |
 | `/debug` | Enable debug logging |
 
 ### Examples
