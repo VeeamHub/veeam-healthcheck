@@ -38,8 +38,10 @@ namespace VhcXTests.Functions.Reporting.Html
             var doc = HtmlToPdfConverter.BuildDocument(Html);
 
             var html = Assert.Single(doc.Objects).HtmlContent;
-            Assert.Contains(".section-body, .content", html);
-            Assert.Contains("overflow: visible !important", html);
+            foreach (var selector in new[] { @"\.section-body", @"\.content" })
+            {
+                Assert.Matches(selector + @"\b[^{}]*\{[^}]*overflow:\s*visible\s*!important", html);
+            }
         }
     }
 }

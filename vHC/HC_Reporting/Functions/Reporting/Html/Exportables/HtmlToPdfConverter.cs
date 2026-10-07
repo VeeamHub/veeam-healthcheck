@@ -29,7 +29,7 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.Exportables
     table { width: 100%; table-layout: fixed; page-break-inside: auto; }
     tr { page-break-inside: avoid; page-break-after: auto; }
     td, th { word-wrap: break-word; overflow-wrap: break-word; }
-    .section-body, .content, .table-responsive { overflow: visible !important; }
+    .section-body, .content { overflow: visible !important; }
 }
 </style>";
 
