@@ -19,6 +19,9 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.Exportables
             this.converter = new SynchronizedConverter(new PdfTools());
         }
 
+        // Marker class added to <html> so css.css can skip rules meant only for browser printing.
+        internal const string PdfExportClass = "pdf-export";
+
         // wkhtmltopdf renders with screen CSS unless PrintMediaType is set, so the report's own
         // @media print rules (hide the fixed sidebar, drop the .main margin) never applied (#123).
         // The injected block below also un-clips the scrollable section containers: the report
@@ -36,6 +39,13 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.Exportables
         internal static HtmlToPdfDocument BuildDocument(string htmlContent)
         {
             var html = htmlContent.Replace("</head>", PrintCss + "</head>");
+
+            // Lets css.css skip its browser-print table shrink: the PDF is A3, so it needs no shrinking.
+            var htmlTag = html.IndexOf("<html>", StringComparison.Ordinal);
+            if (htmlTag >= 0)
+            {
+                html = html.Remove(htmlTag, "<html>".Length).Insert(htmlTag, "<html class=\"" + PdfExportClass + "\">");
+            }
 
             return new HtmlToPdfDocument()
             {

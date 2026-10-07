@@ -33,6 +33,25 @@ namespace VhcXTests.Functions.Reporting.Html
         }
 
         [Fact]
+        public void BuildDocument_HtmlWithOpenTag_MarksHtmlElementAsPdfExport()
+        {
+            var doc = HtmlToPdfConverter.BuildDocument(Html);
+
+            var html = Assert.Single(doc.Objects).HtmlContent;
+            Assert.Contains("<html class=\"" + HtmlToPdfConverter.PdfExportClass + "\">", html);
+            Assert.DoesNotContain("<html>", html);
+        }
+
+        [Fact]
+        public void BuildDocument_HtmlWithoutOpenTag_LeavesContentIntact()
+        {
+            var doc = HtmlToPdfConverter.BuildDocument("<p>x</p></head>");
+
+            var html = Assert.Single(doc.Objects).HtmlContent;
+            Assert.DoesNotContain(HtmlToPdfConverter.PdfExportClass, html);
+        }
+
+        [Fact]
         public void BuildDocument_AnyHtml_UnclipsSectionContainersThatHoldTables()
         {
             var doc = HtmlToPdfConverter.BuildDocument(Html);

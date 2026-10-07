@@ -1,4 +1,5 @@
 using System.Text.RegularExpressions;
+using VeeamHealthCheck.Functions.Reporting.Html.Exportables;
 using VeeamHealthCheck.Functions.Reporting.Html.Shared;
 using Xunit;
 
@@ -50,11 +51,21 @@ namespace VhcXTests.Functions.Reporting.Html.Shared
         }
 
         [Fact]
-        public void PrintCss_Tables_ShrinkAndRepeatHeaderAcrossPages()
+        public void PrintCss_Tables_RepeatHeaderAcrossPages()
+        {
+            Assert.Matches(@"thead\s*\{[^}]*display:\s*table-header-group", PrintBlock());
+        }
+
+        [Fact]
+        public void PrintCss_TableShrink_AppliesToBrowserPrintButNotPdfExport()
         {
             var block = PrintBlock();
-            Assert.Matches(@"\btable\s*\{[^}]*font-size:\s*\d+px", block);
-            Assert.Matches(@"thead\s*\{[^}]*display:\s*table-header-group", block);
+            var pdfExport = HtmlToPdfConverter.PdfExportClass;
+            Assert.Matches(@"html:not\(\." + pdfExport + @"\)\s+table\s*\{[^}]*font-size:\s*\d+px", block);
+            Assert.Matches(@"html:not\(\." + pdfExport + @"\)\s+tbody td\s*\{[^}]*padding:", block);
+
+            // Unscoped, the shrink would also shrink the A3 PDF export.
+            Assert.DoesNotMatch(@"(?m)^\s*table\s*\{[^}]*font-size:", block);
         }
 
         [Fact]
