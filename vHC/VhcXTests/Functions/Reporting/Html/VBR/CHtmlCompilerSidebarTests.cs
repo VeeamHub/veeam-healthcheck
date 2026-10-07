@@ -57,6 +57,44 @@ namespace VhcXTests.Functions.Reporting.Html.VBR
                 "Top-level section cards with no sidebar link: " + string.Join(", ", unlinked));
         }
 
+        [Theory]
+        [InlineData("serversrequirements")]
+        [InlineData("extents")]
+        [InlineData("capextents")]
+        [InlineData("archextents")]
+        [InlineData("objstorage")]
+        [InlineData("credentials")]
+        [InlineData("userroles")]
+        [InlineData("emailnotification")]
+        public void BuildSidebar_SectionsFromIssue184_AreRenderedAndLinked(string id)
+        {
+            // Independent of the nesting rule above: if a table ever emits unbalanced markup,
+            // later cards would parse as nested and the top-level check would skip them.
+            var doc = Render();
+
+            Assert.NotNull(doc.GetElementById(id));
+            Assert.Contains(id, NavTargets(doc));
+        }
+
+        [Fact]
+        public void BuildSidebar_ScrubbedReport_StillLinksEveryTopLevelCard()
+        {
+            var doc = Render(scrub: true);
+            var targets = NavTargets(doc);
+
+            var unlinked = doc.QuerySelectorAll(".section-card[id]")
+                .Where(IsTopLevel)
+                .Select(c => c.Id)
+                .Where(id => !targets.Contains(id))
+                .ToList();
+            var dead = targets
+                .Where(id => !string.IsNullOrEmpty(id) && doc.GetElementById(id) == null)
+                .ToList();
+
+            Assert.True(unlinked.Count == 0, "Scrubbed: cards with no link: " + string.Join(", ", unlinked));
+            Assert.True(dead.Count == 0, "Scrubbed: dead links: " + string.Join(", ", dead));
+        }
+
         [Fact]
         public void BuildSidebar_NavLinks_AllPointAtRenderedElements()
         {
