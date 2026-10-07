@@ -1883,4 +1883,67 @@ Would you like to add a remote server now?</value>
   <data name="NavGeneralSettingsSection" xml:space="preserve">
     <value>常规设置</value>
   </data>
+  <data name="NavOverviewSection" xml:space="preserve">
+    <value>概览</value>
+  </data>
+  <data name="NavInfrastructureSection" xml:space="preserve">
+    <value>基础架构</value>
+  </data>
+  <data name="NavCloudConnectSection" xml:space="preserve">
+    <value>Cloud Connect</value>
+  </data>
+  <data name="NavBackupJobsSection" xml:space="preserve">
+    <value>备份作业</value>
+  </data>
+  <data name="NavPerformanceSection" xml:space="preserve">
+    <value>性能</value>
+  </data>
+  <data name="NavMiscSection" xml:space="preserve">
+    <value>其他</value>
+  </data>
+  <data name="NavOrphanedBackupsLink" xml:space="preserve">
+    <value>孤立和已被取代的备份</value>
+  </data>
+  <data name="NavComplianceSummaryLink" xml:space="preserve">
+    <value>合规性摘要</value>
+  </data>
+  <data name="NavComplianceDetailsLink" xml:space="preserve">
+    <value>合规性详细信息</value>
+  </data>
+  <data name="NavInfraTypesLink" xml:space="preserve">
+    <value>基础架构类型</value>
+  </data>
+  <data name="NavCloudGatewaysLink" xml:space="preserve">
+    <value>网关</value>
+  </data>
+  <data name="NavCloudGatewayPoolsLink" xml:space="preserve">
+    <value>网关池</value>
+  </data>
+  <data name="NavCloudTenantPerfLink" xml:space="preserve">
+    <value>租户性能</value>
+  </data>
+  <data name="NavCloudTenantsLink" xml:space="preserve">
+    <value>租户</value>
+  </data>
+  <data name="NavCloudTenantBackupLink" xml:space="preserve">
+    <value>租户备份存储</value>
+  </data>
+  <data name="NavCloudTenantReplicaLink" xml:space="preserve">
+    <value>租户副本资源</value>
+  </data>
+  <data name="NavCloudHwPlansLink" xml:space="preserve">
+    <value>硬件计划</value>
+  </data>
+  <data name="NavCloudHwPlanDatastoresLink" xml:space="preserve">
+    <value>硬件计划数据存储</value>
+  </data>
+  <data name="NavCloudReplicasLink" xml:space="preserve">
+    <value>副本</value>
+  </data>
+  <data name="NavCloudFailoverPlansLink" xml:space="preserve">
+    <value>故障转移计划</value>
+  </data>
+  <data name="NavCloudFailoverPlanVmsLink" xml:space="preserve">
+    <value>故障转移计划虚拟机</value>
+  </data>
 </root>

@@ -1883,4 +1883,67 @@ Would you like to add a remote server now?</value>
   <data name="NavGeneralSettingsSection" xml:space="preserve">
     <value>一般設定</value>
   </data>
+  <data name="NavOverviewSection" xml:space="preserve">
+    <value>概要</value>
+  </data>
+  <data name="NavInfrastructureSection" xml:space="preserve">
+    <value>インフラストラクチャ</value>
+  </data>
+  <data name="NavCloudConnectSection" xml:space="preserve">
+    <value>クラウドコネクト</value>
+  </data>
+  <data name="NavBackupJobsSection" xml:space="preserve">
+    <value>バックアップジョブ</value>
+  </data>
+  <data name="NavPerformanceSection" xml:space="preserve">
+    <value>パフォーマンス</value>
+  </data>
+  <data name="NavMiscSection" xml:space="preserve">
+    <value>その他</value>
+  </data>
+  <data name="NavOrphanedBackupsLink" xml:space="preserve">
+    <value>孤立および置き換えられたバックアップ</value>
+  </data>
+  <data name="NavComplianceSummaryLink" xml:space="preserve">
+    <value>コンプライアンスの概要</value>
+  </data>
+  <data name="NavComplianceDetailsLink" xml:space="preserve">
+    <value>コンプライアンスの詳細</value>
+  </data>
+  <data name="NavInfraTypesLink" xml:space="preserve">
+    <value>インフラストラクチャの種類</value>
+  </data>
+  <data name="NavCloudGatewaysLink" xml:space="preserve">
+    <value>ゲートウェイ</value>
+  </data>
+  <data name="NavCloudGatewayPoolsLink" xml:space="preserve">
+    <value>ゲートウェイプール</value>
+  </data>
+  <data name="NavCloudTenantPerfLink" xml:space="preserve">
+    <value>テナントのパフォーマンス</value>
+  </data>
+  <data name="NavCloudTenantsLink" xml:space="preserve">
+    <value>テナント</value>
+  </data>
+  <data name="NavCloudTenantBackupLink" xml:space="preserve">
+    <value>テナントのバックアップストレージ</value>
+  </data>
+  <data name="NavCloudTenantReplicaLink" xml:space="preserve">
+    <value>テナントのレプリカリソース</value>
+  </data>
+  <data name="NavCloudHwPlansLink" xml:space="preserve">
+    <value>ハードウェアプラン</value>
+  </data>
+  <data name="NavCloudHwPlanDatastoresLink" xml:space="preserve">
+    <value>ハードウェアプランのデータストア</value>
+  </data>
+  <data name="NavCloudReplicasLink" xml:space="preserve">
+    <value>レプリカ</value>
+  </data>
+  <data name="NavCloudFailoverPlansLink" xml:space="preserve">
+    <value>フェイルオーバープラン</value>
+  </data>
+  <data name="NavCloudFailoverPlanVmsLink" xml:space="preserve">
+    <value>フェイルオーバープランのVM</value>
+  </data>
 </root>

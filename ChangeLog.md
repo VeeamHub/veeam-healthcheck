@@ -35,6 +35,9 @@ checksums, and scan results.
 - Release versions are now computed from commit types
   ([ADR 0031](https://github.com/VeeamHub/veeam-healthcheck/blob/dev/docs/adr/0031-commit-driven-four-part-versioning-with-csproj-floor.md),
   [ADR 0032](https://github.com/VeeamHub/veeam-healthcheck/blob/dev/docs/adr/0032-base-tag-is-highest-ga-tag.md)).
+- The VBR report's left navigation is now fully localized (group titles and every link, including Cloud
+  Connect and Orphaned & Superseded Backups). The French, Japanese, and Chinese labels for these entries are
+  machine-translated; please open an issue to request corrections.
 
 ### Fixed
 
