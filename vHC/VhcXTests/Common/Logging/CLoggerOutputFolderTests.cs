@@ -24,6 +24,9 @@ namespace VhcXTests.Common.Logging
         {
             CGlobals.desiredPath = this.originalDesiredPath;
             CGlobals.mainlog = this.originalMainLog;
+
+            // The shared logger is relocated in place, so point it back at the original folder.
+            CGlobals.RelocateMainLog();
             try
             {
                 if (!OperatingSystem.IsWindows())
@@ -63,6 +66,46 @@ namespace VhcXTests.Common.Logging
         }
 
         [Fact]
+        public void RelocateMainLog_ReferenceCapturedBeforeRelocation_WritesToNewFile()
+        {
+            // Many classes capture CGlobals.Logger in a field before the output folder is known.
+            var captured = CGlobals.Logger;
+            CGlobals.desiredPath = Path.Combine(this.tempRoot, "custom");
+
+            CGlobals.RelocateMainLog();
+            captured.Info("captured probe", true);
+
+            Assert.Contains("captured probe", File.ReadAllText(CGlobals.mainlog.logFile));
+        }
+
+        [Fact]
+        public void RelocateMainLog_OutputFolderUnchanged_KeepsLogFile()
+        {
+            CGlobals.desiredPath = Path.Combine(this.tempRoot, "same");
+            CGlobals.RelocateMainLog();
+            string before = CGlobals.mainlog.logFile;
+
+            CGlobals.RelocateMainLog();
+
+            Assert.Equal(before, CGlobals.mainlog.logFile);
+        }
+
+        [Fact]
+        public void RelocateMainLog_FolderChanged_LinksOldAndNewFiles()
+        {
+            CGlobals.desiredPath = Path.Combine(this.tempRoot, "first");
+            CGlobals.RelocateMainLog();
+            string first = CGlobals.mainlog.logFile;
+            CGlobals.Logger.Info("before move", true);
+
+            CGlobals.desiredPath = Path.Combine(this.tempRoot, "second");
+            CGlobals.RelocateMainLog();
+
+            Assert.Contains("Log continues in " + CGlobals.mainlog.logFile, File.ReadAllText(first));
+            Assert.Contains("Log continued from " + first, File.ReadAllText(CGlobals.mainlog.logFile));
+        }
+
+        [Fact]
         public void Constructor_OutputFolderCannotBeCreated_DoesNotThrow()
         {
             // A regular file where a parent directory is needed makes CreateDirectory fail
@@ -88,7 +131,7 @@ namespace VhcXTests.Common.Logging
 
             CGlobals.desiredPath = this.tempRoot;
             var logger = new CLogger("HealthCheck");
-            File.SetUnixFileMode(this.tempRoot, UnixFileMode.UserRead | UnixFileMode.UserExecute);
+            File.SetUnixFileMode(Path.GetDirectoryName(logger.logFile), UnixFileMode.UserRead | UnixFileMode.UserExecute);
 
             var ex = Record.Exception(() => logger.Info("cannot be written", true));
 
