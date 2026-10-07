@@ -40,7 +40,8 @@ REMOTE OPERATIONS:
   /host=<hostname>  Specify remote Veeam server hostname (required with /remote)
                     Note: Credentials will be prompted if needed
                     Note: /remote, /host=, /vbr, or /vb365 imply /run - a health
-                    check is executed even if /run is omitted. Arguments with no
+                    check is executed even if /run is omitted (not with /help or
+                    /clearcreds, which need an explicit /run). Arguments with no
                     action flag print this help instead of exiting silently.
 
 SPECIAL MODES:

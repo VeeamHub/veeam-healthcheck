@@ -183,29 +183,35 @@ namespace VhcXTests
 
         [Theory]
         // remote + explicit host, no verb -> imply run
-        [InlineData(false, false, false, false, true, "vbr01", TargetProduct.Auto, true)]
+        [InlineData(false, false, false, false, false, true, "vbr01", TargetProduct.Auto, true)]
         // host only (local-host detection can leave REMOTEEXEC false but host set) -> imply
-        [InlineData(false, false, false, false, false, "vbr01", TargetProduct.Auto, true)]
+        [InlineData(false, false, false, false, false, false, "vbr01", TargetProduct.Auto, true)]
         // product target only -> imply
-        [InlineData(false, false, false, false, false, "", TargetProduct.Vbr, true)]
-        [InlineData(false, false, false, false, false, "", TargetProduct.Vb365, true)]
+        [InlineData(false, false, false, false, false, false, "", TargetProduct.Vbr, true)]
+        [InlineData(false, false, false, false, false, false, "", TargetProduct.Vb365, true)]
         // /remote alone, host not yet supplied -> imply (dispatch then warns about missing host)
-        [InlineData(false, false, false, false, true, "", TargetProduct.Auto, true)]
+        [InlineData(false, false, false, false, false, true, "", TargetProduct.Auto, true)]
         // explicit /run already set -> do NOT re-imply (verb wins)
-        [InlineData(true, false, false, false, true, "vbr01", TargetProduct.Auto, false)]
+        [InlineData(true, false, false, false, false, true, "vbr01", TargetProduct.Auto, false)]
         // /gui selected -> do NOT imply a run
-        [InlineData(false, true, false, false, true, "vbr01", TargetProduct.Auto, false)]
+        [InlineData(false, true, false, false, false, true, "vbr01", TargetProduct.Auto, false)]
         // /hotfix selected -> do NOT imply a run
-        [InlineData(false, false, true, false, false, "", TargetProduct.Auto, false)]
+        [InlineData(false, false, true, false, false, false, "", TargetProduct.Auto, false)]
         // /help with collection-intent flags -> help wins, never start a collection
-        [InlineData(false, false, false, true, true, "vbr01", TargetProduct.Auto, false)]
-        [InlineData(false, false, false, true, false, "", TargetProduct.Vbr, false)]
+        [InlineData(false, false, false, true, false, true, "vbr01", TargetProduct.Auto, false)]
+        [InlineData(false, false, false, true, false, false, "", TargetProduct.Vbr, false)]
+        // /clearcreds with collection-intent flags -> never imply a run (would wipe every host's stored creds)
+        [InlineData(false, false, false, false, true, false, "vbr01", TargetProduct.Auto, false)]
+        [InlineData(false, false, false, false, true, true, "vbr01", TargetProduct.Auto, false)]
+        [InlineData(false, false, false, false, true, false, "", TargetProduct.Vbr, false)]
+        // /clearcreds with an explicit /run -> verb already set, nothing to imply
+        [InlineData(true, false, false, false, true, true, "vbr01", TargetProduct.Auto, false)]
         // no verb and no collection intent -> nothing to imply
-        [InlineData(false, false, false, false, false, "", TargetProduct.Auto, false)]
+        [InlineData(false, false, false, false, false, false, "", TargetProduct.Auto, false)]
         public void ShouldImplyRun_FlagCombination_ReturnsExpected(
-            bool run, bool ui, bool runHfd, bool helpRequested, bool remoteExec, string remoteHost, TargetProduct product, bool expected)
+            bool run, bool ui, bool runHfd, bool helpRequested, bool clearStoredCreds, bool remoteExec, string remoteHost, TargetProduct product, bool expected)
         {
-            Assert.Equal(expected, CArgsParser.ShouldImplyRun(run, ui, runHfd, helpRequested, remoteExec, remoteHost, product));
+            Assert.Equal(expected, CArgsParser.ShouldImplyRun(run, ui, runHfd, helpRequested, clearStoredCreds, remoteExec, remoteHost, product));
         }
 
         [Theory]

@@ -313,7 +313,7 @@ namespace VeeamHealthCheck.Startup
             // to "do nothing". Treat that intent as an implied /run, and set RunFullReport
             // (default false) so the report actually compiles rather than moving the no-op
             // downstream into CReportModeSelector. See ShouldImplyRun.
-            bool runImplied = ShouldImplyRun(run, ui, runHfd, helpRequested, CGlobals.REMOTEEXEC, CGlobals.REMOTEHOST, CGlobals.TargetProductType);
+            bool runImplied = ShouldImplyRun(run, ui, runHfd, helpRequested, CGlobals.ClearStoredCreds, CGlobals.REMOTEEXEC, CGlobals.REMOTEHOST, CGlobals.TargetProductType);
             if (runImplied)
             {
                 run = true;
@@ -465,13 +465,17 @@ namespace VeeamHealthCheck.Startup
         /// credentials, then returned 0 without doing anything (the "/remote /host=...
         /// does nothing" report). The caller treats this as an implied /run.
         /// An explicit verb (run/ui/runHfd already set) is always honoured as-is, and so
-        /// is /help: asking for help never starts a collection.
+        /// is /help: asking for help never starts a collection. /clearcreds is likewise
+        /// never read as collection intent: the stored credentials are only cleared once a
+        /// run asks for them, and wiping every host's credentials as a side effect of an
+        /// implied run (e.g. "/clearcreds /host=X", or under /silent) would be a surprise,
+        /// so it keeps its previous behavior and needs an explicit /run.
         /// </summary>
-        internal static bool ShouldImplyRun(bool run, bool ui, bool runHfd, bool helpRequested, bool remoteExec, string remoteHost, TargetProduct product)
+        internal static bool ShouldImplyRun(bool run, bool ui, bool runHfd, bool helpRequested, bool clearStoredCreds, bool remoteExec, string remoteHost, TargetProduct product)
         {
-            if (run || ui || runHfd || helpRequested)
+            if (run || ui || runHfd || helpRequested || clearStoredCreds)
             {
-                return false; // an explicit verb (or a help request) already decided the action
+                return false; // an explicit verb, a help request, or /clearcreds already decided the action
             }
 
             bool hasHost = !string.IsNullOrEmpty(remoteHost);
