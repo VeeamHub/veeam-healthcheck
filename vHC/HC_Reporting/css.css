@@ -589,6 +589,9 @@ button.collapsible.classBtn:hover { background: var(--hover); }
 .content { border: 1px solid var(--border); border-top: none; border-radius: 0 0 8px 8px; padding: 0; overflow: auto; }
 
 /* ===== Print ===== */
+/* Landscape gives wide tables room; paper size stays the user's (or the PDF exporter's) choice. */
+@page { size: landscape; }
+
 @media print {
   .sidebar { display: none; }
   .main { margin-left: 0; padding: 16px; }
@@ -598,6 +601,19 @@ button.collapsible.classBtn:hover { background: var(--hover); }
   .toolbar { display: none; }
   #myBtn { display: none !important; }
   footer { margin-left: 0; }
+
+  /* Wide tables: un-clip the scroll containers and shrink-and-wrap the tables so they fit the
+     page instead of printing a clipped box with a scrollbar (#257). overflow-wrap: anywhere is
+     deliberate: unlike break-word it lets the table shrink columns below their longest word. */
+  .section-card { overflow: visible; }
+  .section-body, .content { overflow: visible !important; }
+  .section-body { padding: 12px; }
+  table { table-layout: auto; font-size: 10px; page-break-inside: auto; }
+  thead { display: table-header-group; }
+  tr { page-break-inside: avoid; page-break-after: auto; }
+  thead th { padding: 4px 6px; font-size: 9px; letter-spacing: 0; }
+  tbody td { padding: 4px 6px; }
+  th, td { white-space: normal; word-wrap: break-word; overflow-wrap: anywhere; }
 }
 
 /* Status Badges */

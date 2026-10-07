@@ -43,6 +43,9 @@ checksums, and scan results.
 
 - PDF export applies print styles, so the sidebar no longer overlaps content, long tables render in full, and
   columns no longer break mid-word. Fixes [#123](https://github.com/VeeamHub/veeam-healthcheck/issues/123).
+- Printing the HTML report from a browser (Ctrl+P) no longer clips wide tables or prints scrollbars; tables
+  shrink and wrap to fit the page, and the page defaults to landscape.
+  Fixes [#257](https://github.com/VeeamHub/veeam-healthcheck/issues/257).
 - Job Session Summary showed every job with 0 sessions and 0 backup size on machines with a day-first date
   locale (for example en-AU or en-GB); session dates are now parsed correctly.
   Fixes [#217](https://github.com/VeeamHub/veeam-healthcheck/issues/217).
