@@ -654,6 +654,11 @@ namespace VeeamHealthCheck
         // OnlyOnRanToCompletion, which this doesn't specify).
         private void Run(bool import)
         {
+            // The log file path is fixed when the logger is built, which happens before the
+            // user can pick an output folder. Move it now that the folder is final (#259);
+            // otherwise the log stays in the default folder, which may not be writable.
+            CGlobals.RelocateMainLog();
+
             System.Threading.Tasks.Task.Factory.StartNew(() =>
             {
                 // The whole run happens on a background task. Historically the body

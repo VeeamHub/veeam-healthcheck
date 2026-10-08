@@ -751,7 +751,7 @@ namespace VeeamHealthCheck.Startup
         {
             if (string.IsNullOrEmpty(parsedOutDir)) return;
             CGlobals.desiredPath = parsedOutDir;
-            CGlobals.mainlog = new CLogger("HealthCheck");
+            CGlobals.RelocateMainLog();
         }
 
         /// <summary>
