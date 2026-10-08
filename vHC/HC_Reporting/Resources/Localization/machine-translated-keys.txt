@@ -111,3 +111,7 @@ fR-FR:NavCloudFailoverPlanVmsLink
 ja:NavCloudFailoverPlanVmsLink
 zh-cn:NavCloudFailoverPlanVmsLink
 zh-tw:NavCloudFailoverPlanVmsLink
+fR-FR:GuiPdfUnavailableScrubTooltip
+ja:GuiPdfUnavailableScrubTooltip
+zh-cn:GuiPdfUnavailableScrubTooltip
+zh-tw:GuiPdfUnavailableScrubTooltip

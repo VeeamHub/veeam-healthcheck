@@ -220,6 +220,43 @@ namespace VhcXTests.Functions.Reporting.Html
         }
 
         [Fact]
+        public void ExportVbrHtml_ScrubbedWithPdfAndPptxRequested_SkipsBothAndWarns()
+        {
+            // #261: the exports are skipped for a scrubbed report; that must be logged, not silent.
+            var exporter = new CHtmlExporter("TestServer");
+            var testHtml = "<html><head><title>Test</title></head><body>Test content</body></html>";
+
+            bool originalOpenHtml = CGlobals.OpenHtml;
+            bool originalExportPdf = CGlobals.EXPORTPDF;
+            bool originalExportPptx = CGlobals.EXPORTPPTX;
+
+            CGlobals.OpenHtml = false;
+            CGlobals.EXPORTPDF = true;
+            CGlobals.EXPORTPPTX = true;
+
+            try
+            {
+                var result = exporter.ExportVbrHtml(testHtml, true);
+
+                Assert.Equal(0, result);
+
+                var anonDir = Path.Combine(_testOutputDir, CVariables.safeSuffix.TrimStart('\\'));
+                Assert.Empty(Directory.GetFiles(anonDir, "*.pdf"));
+                Assert.Empty(Directory.GetFiles(anonDir, "*.pptx"));
+
+                var log = File.ReadAllText(CGlobals.Logger.logFile);
+                Assert.Contains("PDF export skipped: it is not available for scrubbed reports", log);
+                Assert.Contains("PowerPoint export skipped: it is not available for scrubbed reports", log);
+            }
+            finally
+            {
+                CGlobals.OpenHtml = originalOpenHtml;
+                CGlobals.EXPORTPDF = originalExportPdf;
+                CGlobals.EXPORTPPTX = originalExportPptx;
+            }
+        }
+
+        [Fact]
         public void ExportVbrHtml_ValidHtml_JsonReportIncludesVhcVersion()
         {
             // Arrange

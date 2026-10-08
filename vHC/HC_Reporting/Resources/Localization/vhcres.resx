@@ -1873,6 +1873,9 @@ The files may be anonymized to hide sensitive data. Accepting the Terms means th
   <data name="GuiPdfUnavailableTooltip" xml:space="preserve">
     <value>PDF Export not available when both VB365 &amp; VBR are detected on the same machine.</value>
   </data>
+  <data name="GuiPdfUnavailableScrubTooltip" xml:space="preserve">
+    <value>PDF export is not available while scrubbing is on ("{0}" is ticked). Untick it to export a PDF as well; the report will then not be scrubbed.</value>
+  </data>
   <data name="GuiMonitorStatusHeader" xml:space="preserve">
     <value>Monitor Status</value>
   </data>

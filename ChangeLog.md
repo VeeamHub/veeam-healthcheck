@@ -41,6 +41,10 @@ checksums, and scan results.
 
 ### Fixed
 
+- PDF and PowerPoint export are no longer skipped silently when scrubbing is on: the GUI disables the PDF
+  option with a tooltip explaining why, the CLI warns when `/pdf` or `/pptx` is combined with `/scrub:true`,
+  and the log records the skip and each PDF export step.
+  Fixes [#261](https://github.com/VeeamHub/veeam-healthcheck/issues/261).
 - The GUI now writes the main log file to the chosen output folder instead of the default folder, and a log
   folder that can't be written to no longer causes errors. Fixes [#259](https://github.com/VeeamHub/veeam-healthcheck/issues/259).
 - PDF export applies print styles, so the sidebar no longer overlaps content, long tables render in full, and

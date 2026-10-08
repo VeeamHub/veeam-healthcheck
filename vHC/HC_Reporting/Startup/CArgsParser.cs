@@ -11,6 +11,7 @@ using Avalonia;
 using VeeamHealthCheck.Functions.Collection.PSCollections;
 using VeeamHealthCheck.Functions.CredsWindow;
 using VeeamHealthCheck.Functions.Monitor;
+using VeeamHealthCheck.Functions.Reporting.Html.Exportables;
 using VeeamHealthCheck.Functions.UserInteraction;
 
 // using VeeamHealthCheck.Reporting.vsac;
@@ -297,6 +298,8 @@ namespace VeeamHealthCheck.Startup
                         return monitorExitCode;
                 }
             }
+
+            this.WarnIfScrubSkipsExports();
 
             // If a product flag and host are provided, imply remote execution
             if (CGlobals.TargetProductType != TargetProduct.Auto
@@ -745,6 +748,32 @@ namespace VeeamHealthCheck.Startup
                         break;
                 }
             }
+        }
+
+        /// <summary>
+        /// /pdf and /pptx are only honoured for the original report, so combining either with
+        /// /scrub:true produces neither. Warn up front (after the whole command line is parsed, since
+        /// the flags can come in any order) instead of letting the run finish without them (#261).
+        /// A warning, not an error, so existing scripts keep producing their HTML report.
+        /// </summary>
+        private void WarnIfScrubSkipsExports()
+        {
+            foreach (string warning in GetScrubExportWarnings(CGlobals.Scrub, CGlobals.EXPORTPDF, CGlobals.EXPORTPPTX))
+            {
+                CGlobals.Logger.Warning(warning);
+            }
+        }
+
+        internal static IReadOnlyList<string> GetScrubExportWarnings(bool scrub, bool exportPdf, bool exportPptx)
+        {
+            var warnings = new List<string>();
+            foreach (string format in ScrubbedExportPolicy.SkippedFormats(scrub, exportPdf, exportPptx))
+            {
+                string flag = format == "PDF" ? "/pdf" : "/pptx";
+                warnings.Add($"{flag} is ignored: {format} export is not available for scrubbed reports (/scrub:true). Use /scrub:false to export a {format}.");
+            }
+
+            return warnings;
         }
 
         private void ApplyOutDir(string parsedOutDir)

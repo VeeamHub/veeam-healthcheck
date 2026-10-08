@@ -1732,6 +1732,9 @@ Les fichiers peuvent être anonymisés pour masquer les données sensibles. L'ac
   <data name="GuiPdfUnavailableTooltip" xml:space="preserve">
     <value>PDF Export not available when both VB365 &amp; VBR are detected on the same machine.</value>
   </data>
+  <data name="GuiPdfUnavailableScrubTooltip" xml:space="preserve">
+    <value>L'export PDF n'est pas disponible lorsque l'option « {0} » est cochée. Décochez-la pour exporter aussi un PDF ; le rapport ne sera alors pas anonymisé.</value>
+  </data>
   <data name="GuiMonitorStatusHeader" xml:space="preserve">
     <value>Monitor Status</value>
   </data>
