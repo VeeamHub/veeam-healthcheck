@@ -27,6 +27,9 @@ checksums, and scan results.
 
 ### Changed
 
+- Moved the runtime from .NET 8 (end of support November 2026) to .NET 10 (LTS). The release is still a
+  self-contained single-file executable, so nothing needs installing, and the embedded PowerShell SDK
+  moves to 7.6.
 - Experimental features are now disabled unless explicitly enabled with an environment flag.
 - The PowerShell 7 preflight check now stops the run with a clear message when PowerShell 7 is missing
   entirely, and when the installed version is lower than the one the VBR PowerShell module requires (VBR 13.1

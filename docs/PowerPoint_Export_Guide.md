@@ -189,6 +189,6 @@ For issues or questions about PowerPoint export:
 PowerPoint export feature added in version 3.0+
 
 Requires:
-- .NET 8.0 or higher
+- .NET 10.0 or higher
 - Windows 7 or higher
 - PowerPoint not required (files can be opened in Google Slides, LibreOffice Impress, etc.)

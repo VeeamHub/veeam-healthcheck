@@ -74,7 +74,7 @@ function Add-Result { param($r) [void]$script:results.Add($r); $tag = if ($r.Pas
 
 # --- Locate exe -------------------------------------------------------------
 if (-not $ExePath) {
-    $candidate = Join-Path $hcReporting 'bin\Debug\net8.0-windows7.0\win-x64\VeeamHealthCheck.exe'
+    $candidate = Join-Path $hcReporting 'bin\Debug\net10.0-windows7.0\win-x64\VeeamHealthCheck.exe'
     if (Test-Path $candidate) { $ExePath = $candidate }
 }
 

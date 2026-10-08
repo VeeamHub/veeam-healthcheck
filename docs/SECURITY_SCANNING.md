@@ -86,7 +86,7 @@ Instead of single-file publish, use framework-dependent with separate DLLs:
 - Smaller download size
 
 **Cons:**
-- Requires .NET 8 runtime on target machine
+- Requires .NET 10 runtime on target machine
 - Multiple files to manage
 
 ### 4. Windows Defender Scan (Pre-check)

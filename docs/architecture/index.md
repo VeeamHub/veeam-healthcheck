@@ -58,7 +58,7 @@ Each product has separate collection scripts, HTML compilers, and table renderer
 
 | Technology | Usage |
 |---|---|
-| **.NET 8.0** | Windows 7.0+ target |
+| **.NET 10.0** | Windows 7.0+ target |
 | **Avalonia** | GUI |
 | **PowerShell 7 SDK** | Embedded script execution |
 | **CsvHelper** | CSV processing |

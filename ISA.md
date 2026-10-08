@@ -33,7 +33,7 @@ A field engineer runs `VeeamHealthCheck.exe /run` on a customer's Veeam server, 
 
 ## Constraints
 
-- **Runtime:** Currently .NET 8.0 targeting `net8.0-windows7.0`; planned upgrade to **.NET 10** (see Decisions 2026-05-15). Avalonia for GUI. PowerShell 7 SDK embedded for script execution. No Mono, no cross-compile of the main binary.
+- **Runtime:** .NET 10.0 targeting `net10.0-windows7.0` (upgraded from .NET 8; see Decisions 2026-05-15). Avalonia for GUI. PowerShell 7 SDK embedded for script execution. No Mono, no cross-compile of the main binary.
 - **Deployment:** Single-file self-contained `.exe` packaged via `VeeamHealthCheck.zip`. Must run from an arbitrary directory without an installer.
 - **Privileges:** Runs at any privilege level. **Elevation is not required.** Limited-privilege runs surface a clearly-degraded capability set (e.g. WMI/SQL probes that need admin are skipped with a recorded reason) rather than hard-failing. Full-fidelity collection benefits from Veeam Backup Administrator role.
 - **Output isolation:** Default working directory `C:\temp\vHC`. No write outside the configured `outdir`. A specific free-disk-space minimum has not been measured against current report sizes — the historical "500 MB on `C:\`" figure was an initial guess and is flagged for re-measurement (see Decisions 2026-05-15).

@@ -91,7 +91,7 @@ The implementation follows the existing pattern used for PDF export:
 
 ### Dependencies
 - **DocumentFormat.OpenXml 3.1.0**: Microsoft's official library for creating Office documents
-- Compatible with .NET 8.0 Windows framework
+- Compatible with .NET 10.0 Windows framework
 
 ### Customization Points
 Constants in `HtmlToPptxConverter.cs` can be adjusted:

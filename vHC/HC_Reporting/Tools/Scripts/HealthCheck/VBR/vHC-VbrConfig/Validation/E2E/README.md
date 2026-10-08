@@ -51,6 +51,6 @@ exact drifted section, which is precisely the regression signal you want before 
 - **both** — run both passes.
 
 ## Gotchas
-- Windows-only (builds/runs `VeeamHealthCheck.exe` `net8.0-windows7.0` via `dotnet.exe`/`pwsh.exe`).
+- Windows-only (builds/runs `VeeamHealthCheck.exe` `net10.0-windows7.0` via `dotnet.exe`/`pwsh.exe`).
 - Known-benign log errors (e.g. optional-CSV-missing in import replay) are ignorable via
   `-IgnoreLogPatterns`; the default already ignores `Failed to load VBR CSV data or no data found`.
