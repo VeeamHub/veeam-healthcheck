@@ -1759,6 +1759,9 @@
   <data name="GuiPdfUnavailableTooltip" xml:space="preserve">
     <value>PDF Export not available when both VB365 &amp; VBR are detected on the same machine.</value>
   </data>
+  <data name="GuiPdfUnavailableScrubTooltip" xml:space="preserve">
+    <value>勾選「{0}」時無法匯出 PDF。若還需匯出 PDF，請取消勾選該選項；此時報告中的敏感數據將不會被刪除。</value>
+  </data>
   <data name="GuiMonitorStatusHeader" xml:space="preserve">
     <value>Monitor Status</value>
   </data>

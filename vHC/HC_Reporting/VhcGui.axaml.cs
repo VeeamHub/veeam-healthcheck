@@ -16,6 +16,7 @@ using Avalonia.Threading;
 using VeeamHealthCheck.Functions.AboutDialog;
 using VeeamHealthCheck.Functions.ManageServers;
 using VeeamHealthCheck.Functions.Monitor;
+using VeeamHealthCheck.Functions.Reporting.Html.Exportables;
 using VeeamHealthCheck.Functions.UserInteraction;
 using VeeamHealthCheck.Resources.Localization;
 using VeeamHealthCheck.Shared;
@@ -392,11 +393,7 @@ namespace VeeamHealthCheck
                 this.Title = modeCheckResult;
             }
 
-            if (CGlobals.IsVb365 && CGlobals.IsVbr)
-            {
-                pdfCheckBox.IsEnabled = false;
-                ToolTip.SetTip(pdfCheckBox, VbrLocalizationHelper.GuiPdfUnavailableTooltip);
-            }
+            this.UpdatePdfCheckBox();
 
             // Originally the tail of the single synchronous SetUi(), which ran
             // entirely before the WPF window was ever shown. SetUiAsync() below
@@ -785,6 +782,46 @@ namespace VeeamHealthCheck
         // showProgressBar (or anything else Dispatcher-posted) would silently reopen this.
         private bool _guiLockedForRun;
 
+        // PDF can't be offered when both products are detected, nor while scrubbing is on (a run
+        // builds one report, and PDF is only generated from the unscrubbed one, #261). Scrubbing is
+        // ticked by default (SetUiAsync ticks it once PreRunCheck finishes), so the box is disabled
+        // from then on, with a tooltip saying why and how to get it back. ShowOnDisabled is needed
+        // or Avalonia never shows a tooltip on a disabled control. EXPORTPDF is cleared explicitly
+        // as well: unchecking an already-unchecked box raises no event, so a /pdf passed on the
+        // command line with /gui would otherwise survive.
+        private void UpdatePdfCheckBox()
+        {
+            if (_guiLockedForRun)
+            {
+                return;
+            }
+
+            var state = ScrubbedExportPolicy.GetPdfCheckBoxState(
+                CGlobals.IsVb365 && CGlobals.IsVbr,
+                scrubBox.IsChecked == true);
+
+            ToolTip.SetShowOnDisabled(pdfCheckBox, true);
+            switch (state)
+            {
+                case ScrubbedExportPolicy.PdfCheckBoxState.UnavailableBothProducts:
+                    pdfCheckBox.IsChecked = false;
+                    CGlobals.EXPORTPDF = false;
+                    pdfCheckBox.IsEnabled = false;
+                    ToolTip.SetTip(pdfCheckBox, VbrLocalizationHelper.GuiPdfUnavailableTooltip);
+                    break;
+                case ScrubbedExportPolicy.PdfCheckBoxState.UnavailableScrubbing:
+                    pdfCheckBox.IsChecked = false;
+                    CGlobals.EXPORTPDF = false;
+                    pdfCheckBox.IsEnabled = false;
+                    ToolTip.SetTip(pdfCheckBox, string.Format(VbrLocalizationHelper.GuiPdfUnavailableScrubTooltip, VbrLocalizationHelper.GuiSensData));
+                    break;
+                default:
+                    pdfCheckBox.IsEnabled = true;
+                    ToolTip.SetTip(pdfCheckBox, null);
+                    break;
+            }
+        }
+
         private void DisableButtons()
         {
             _guiLockedForRun = true;
@@ -909,6 +946,7 @@ namespace VeeamHealthCheck
         {
             this.functions.LogUIAction("Scrub = true");
             CGlobals.Scrub = true;
+            this.UpdatePdfCheckBox();
         }
 
         private void htmlChecked(object sender, RoutedEventArgs e)
@@ -927,6 +965,7 @@ namespace VeeamHealthCheck
         {
             this.functions.LogUIAction("Scrub = false");
             CGlobals.Scrub = false;
+            this.UpdatePdfCheckBox();
         }
 
         private void explorerShowBox_Checked(object sender, RoutedEventArgs e)

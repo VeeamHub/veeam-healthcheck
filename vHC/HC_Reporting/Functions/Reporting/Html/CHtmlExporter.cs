@@ -70,6 +70,8 @@ namespace VeeamHealthCheck.Functions.Reporting.Html
                 this.WriteHtmlToFile(htmlString);
                 this.log.Info("exporting xml to html..done!");
 
+                this.WarnIfExportsSkippedForScrub(scrub);
+
                 // test export to PDF:
                 if (!scrub && CGlobals.EXPORTPDF)
                 {
@@ -109,6 +111,8 @@ namespace VeeamHealthCheck.Functions.Reporting.Html
                 // Export JSON report alongside HTML
                 this.ExportJsonReport(scrub);
 
+                this.WarnIfExportsSkippedForScrub(scrub);
+
                 // test export to PDF:
                 if (!scrub && CGlobals.EXPORTPDF)
                 {
@@ -131,8 +135,19 @@ namespace VeeamHealthCheck.Functions.Reporting.Html
             }
         }
 
+        // PDF and PowerPoint are only generated for the original report (see ScrubbedExportPolicy),
+        // so say so instead of skipping them silently (#261).
+        private void WarnIfExportsSkippedForScrub(bool scrub)
+        {
+            foreach (string format in ScrubbedExportPolicy.SkippedFormats(scrub, CGlobals.EXPORTPDF, CGlobals.EXPORTPPTX))
+            {
+                this.log.Warning($"{format} export skipped: it is not available for scrubbed reports. Run without scrubbing to export a {format}.");
+            }
+        }
+
         private void ExportHtmlStringToPDF(string htmlString)
         {
+            this.log.Info("Exporting HTML to PDF...");
             HtmlToPdfConverter pdf = new HtmlToPdfConverter();
 
             // find all instances of "display: none;" and replace with "display: block;" in the htmlString
@@ -163,8 +178,24 @@ namespace VeeamHealthCheck.Functions.Reporting.Html
             htmlShowAll = htmlShowAll.Replace("⚠️", "(!)");
             htmlShowAll = htmlShowAll.Replace("&#9432;", "ℹ️");
 
-            pdf.ConvertHtmlToPdf(htmlShowAll, this.latestReport.Replace(".html", ".pdf"));
-            pdf.Dispose();
+            string pdfPath = this.latestReport.Replace(".html", ".pdf");
+            try
+            {
+                pdf.ConvertHtmlToPdf(htmlShowAll, pdfPath);
+            }
+            catch (Exception ex)
+            {
+                // Still fatal for the run, as before (the caller's catch reports "Failed at HTML Export");
+                // this just names PDF as the step that failed.
+                this.log.Error("Failed to export PDF: " + ex.Message);
+                throw;
+            }
+            finally
+            {
+                pdf.Dispose();
+            }
+
+            this.log.Info("PDF export completed: " + pdfPath);
 
             // var htmlToDocx = new CHtmlToDocx();
             // htmlToDocx.ExportHtmlToDocx(htmlShowAll, _latestReport.Replace(".html", ".docx"));
