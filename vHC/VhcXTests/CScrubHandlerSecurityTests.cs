@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Security.AccessControl;
 using System.Security.Principal;
+using VeeamHealthCheck.Functions.Reporting.Html.VBR;
 using VeeamHealthCheck.Scrubber;
 using Xunit;
 
@@ -105,6 +106,136 @@ namespace VhcXTests
         {
             var map = new Dictionary<string, string>();
             Assert.Equal("nothing to do here", CScrubHandler.ReplaceRegisteredValues("nothing to do here", map));
+        }
+
+        // ---- ReplaceRegisteredValuesInHtml (#263) ------------------------
+
+        [Fact]
+        public void ReplaceRegisteredValuesInHtml_RootRegistered_LeavesCssRootSelectorIntact()
+        {
+            var map = new Dictionary<string, string> { ["root"] = "Item_8" };
+            string html = "<html><head><style>:root { --green: #00d15f; }</style></head><body><td>root</td></body></html>";
+
+            string result = CScrubHandler.ReplaceRegisteredValuesInHtml(html, map);
+
+            Assert.Contains(":root { --green: #00d15f; }", result);
+            Assert.Contains("<td>Item_8</td>", result);
+        }
+
+        [Fact]
+        public void ReplaceRegisteredValuesInHtml_ReportCssAndScript_AreNotChangedByAnyShortWordValue()
+        {
+            // The real embedded stylesheet and script, with values a user could plausibly register
+            // that are also CSS/JS words. None of them may alter either block.
+            string css = CHtmlCompiler.GetEmbeddedCssContent("css.css");
+            string js = CHtmlCompiler.GetEmbeddedCssContent("ReportScript.js");
+            var map = new Dictionary<string, string>
+            {
+                ["root"] = "Item_0", ["none"] = "Item_1", ["auto"] = "Item_2", ["flex"] = "Item_3",
+                ["grid"] = "Item_4", ["bold"] = "Item_5", ["block"] = "Item_6", ["table"] = "Item_7",
+                ["function"] = "Item_8", ["document"] = "Item_9",
+            };
+            string html = "<html><head><style type=\"text/css\">" + css + "</style></head><body>x"
+                + "<script type=\"text/javascript\">" + js + "</script></body></html>";
+
+            Assert.Equal(html, CScrubHandler.ReplaceRegisteredValuesInHtml(html, map));
+        }
+
+        [Fact]
+        public void ReplaceRegisteredValuesInHtml_MarkupWordRegistered_LeavesTagsAndAttributeNamesIntact()
+        {
+            var map = new Dictionary<string, string> { ["body"] = "Item_1", ["span"] = "Item_2", ["title"] = "Item_3" };
+            string html = "<body><span class=\"body\" id=\"span\" title=\"x\">body span</span></body>";
+
+            string result = CScrubHandler.ReplaceRegisteredValuesInHtml(html, map);
+
+            Assert.Equal("<body><span class=\"body\" id=\"span\" title=\"x\">Item_1 Item_2</span></body>", result);
+        }
+
+        [Fact]
+        public void ReplaceRegisteredValuesInHtml_HostnameInTextAndTitleAttribute_IsReplacedInBoth()
+        {
+            var map = new Dictionary<string, string> { ["srv01host"] = "Server_0" };
+            string html = "<td title=\"\\\\srv01host\\share\">\\\\srv01host\\share</td><td title='srv01host'>ok</td>";
+
+            string result = CScrubHandler.ReplaceRegisteredValuesInHtml(html, map);
+
+            Assert.Equal("<td title=\"\\\\Server_0\\share\">\\\\Server_0\\share</td><td title='Server_0'>ok</td>", result);
+        }
+
+        [Fact]
+        public void ReplaceRegisteredValuesInHtml_AttributesHoldingIdentifiers_AreLeftAlone()
+        {
+            var map = new Dictionary<string, string> { ["target"] = "Item_1" };
+            string html = "<a href=\"#target\" onclick=\"go('target')\" data-x=\"target\">target</a>";
+
+            string result = CScrubHandler.ReplaceRegisteredValuesInHtml(html, map);
+
+            Assert.Equal("<a href=\"#target\" onclick=\"go('target')\" data-x=\"Item_1\">Item_1</a>", result);
+        }
+
+        [Fact]
+        public void ReplaceRegisteredValuesInHtml_GreaterThanInsideQuotedAttribute_DoesNotEndTheTagEarly()
+        {
+            var map = new Dictionary<string, string> { ["secret"] = "Item_1" };
+            string html = "<td title=\"a > secret\">secret</td>";
+
+            Assert.Equal("<td title=\"a > Item_1\">Item_1</td>", CScrubHandler.ReplaceRegisteredValuesInHtml(html, map));
+        }
+
+        // Cell data is written into the report unencoded, so these literal '<' characters really do
+        // reach the final pass. They are text, not tags, and must still be scrubbed.
+        [Theory]
+        [InlineData("<td>Owner: <jsmith@corp.local></td>", "<td>Owner: <Item_1@corp.local></td>")]
+        [InlineData("<td>Owner: <jsmith></td>", "<td>Owner: <Item_1></td>")]
+        [InlineData("<td>if x<y then srv01host</td>", "<td>if x<y then Server_0</td>")]
+        [InlineData("<td>Notes: copy <a few files from srv01host> later</td>", "<td>Notes: copy <a few files from Server_0> later</td>")]
+        public void ReplaceRegisteredValuesInHtml_LiteralAngleBracketInCellData_IsTreatedAsTextAndScrubbed(string html, string expected)
+        {
+            var map = new Dictionary<string, string> { ["jsmith"] = "Item_1", ["srv01host"] = "Server_0" };
+
+            Assert.Equal(expected, CScrubHandler.ReplaceRegisteredValuesInHtml(html, map));
+        }
+
+        [Fact]
+        public void ReplaceRegisteredValuesInHtml_GeneratedTableMarkup_IsRecognisedAsTags()
+        {
+            // Markup in the shape the report generators emit. With 'cell', 'danger', 'title' and 'span'
+            // registered, only the cell text may change.
+            var map = new Dictionary<string, string>
+            {
+                ["cell"] = "Item_1", ["danger"] = "Item_2", ["title"] = "Item_3", ["span"] = "Item_4", ["data"] = "Item_5",
+            };
+            string html = "<table><thead><tr><th>cell</th></tr></thead><tbody>"
+                + "<tr><td title=\"cell\" class=\"cell-danger\">danger</td><td><span class=\"danger\">span</span><br></td></tr>"
+                + "</tbody></table><img src=\"data:image/png;base64,data\" alt=\"data\" />";
+
+            string expected = "<table><thead><tr><th>Item_1</th></tr></thead><tbody>"
+                + "<tr><td title=\"Item_1\" class=\"cell-danger\">Item_2</td><td><span class=\"danger\">Item_4</span><br></td></tr>"
+                + "</tbody></table><img src=\"data:image/png;base64,data\" alt=\"Item_5\" />";
+
+            Assert.Equal(expected, CScrubHandler.ReplaceRegisteredValuesInHtml(html, map));
+        }
+
+        [Fact]
+        public void ReplaceRegisteredValuesInHtml_LongestFirst_AvoidsPartialMatch()
+        {
+            var map = new Dictionary<string, string>
+            {
+                ["prodbox"] = "Server_6",
+                ["prodbox-vbr-01"] = "Server_7",
+            };
+
+            Assert.Equal("<td>Server_7</td>", CScrubHandler.ReplaceRegisteredValuesInHtml("<td>prodbox-vbr-01</td>", map));
+        }
+
+        [Theory]
+        [InlineData(null)]
+        [InlineData("")]
+        public void ReplaceRegisteredValuesInHtml_EmptyHtml_IsPassedThrough(string? html)
+        {
+            var map = new Dictionary<string, string> { ["something"] = "Server_0" };
+            Assert.Equal(html, CScrubHandler.ReplaceRegisteredValuesInHtml(html, map));
         }
 
         // ---- RestrictFileToOwner (ACL lockdown) -------------------------

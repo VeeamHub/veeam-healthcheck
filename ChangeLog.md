@@ -41,6 +41,10 @@ checksums, and scan results.
 
 ### Fixed
 
+- Scrubbed reports no longer lose their theme when a registered value such as a user named `root` matches a
+  CSS or HTML word: the final scrub pass now only replaces values in text and attribute values, and leaves
+  the embedded stylesheet and script, tag names and attribute names alone.
+  Fixes [#263](https://github.com/VeeamHub/veeam-healthcheck/issues/263).
 - PDF and PowerPoint export are no longer skipped silently when scrubbing is on: the GUI disables the PDF
   option with a tooltip explaining why, the CLI warns when `/pdf` or `/pptx` is combined with `/scrub:true`,
   and the log records the skip and each PDF export step.
