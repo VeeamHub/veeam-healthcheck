@@ -152,6 +152,14 @@ so it is still reported as Orphaned. Tier 3 runs only when tier 2 found no
 name match, so if another job now carries the backup's old name, tier 2 wins
 and the chain is not rescued; that is a known limit.
 
+The same last backup is used for a Backup Copy job's source size. The sweep
+hands the agent-sourced chains to the per-source worker job that owns them,
+so the parent's own restore points cover only its VM-sourced chains. For the
+source size only, the worker-owned restore points whose `BackupId` is in the
+parent's last backup are added before the latest point per `ObjectId` is
+taken, so an object that appears in both chains is counted once. On-disk size
+is not touched here; the report adds the worker's on-disk size to the parent.
+
 **Snapshot / Replica — routed around the sweep entirely:** `Snapshot`-type
 restore points never resolve via `GetSourceJob()` (100% throw rate,
 5,461/5,461 in the on-prem lab — exceptions at this scale measured at ~43s

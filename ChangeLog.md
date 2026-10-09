@@ -47,7 +47,8 @@ checksums, and scan results.
 - A Backup Copy job that was renamed after it was created no longer loses the sizing of its VM-sourced chains
   (unless another job now carries its old name): the restore-point sweep now attributes them to the job
   through its last backup, so the job's on-disk and source size are no longer understated and the chains are
-  no longer listed as Orphaned in Orphaned & Superseded Backups. Fixes [#268](https://github.com/VeeamHub/veeam-healthcheck/issues/268).
+  no longer listed as Orphaned in Orphaned & Superseded Backups. The job's source size also now includes its
+  agent-sourced chains, counting each protected object once. Fixes [#268](https://github.com/VeeamHub/veeam-healthcheck/issues/268).
 - The internal per-source worker inside a Backup Copy job (named `Parent\Child`) is no longer listed as a
   job of its own: it no longer adds a section to Job Info or a `SimpleBackupCopyParentWorker` count to the
   job summary and missing-jobs check, and its on-disk size is added to the parent Backup Copy job's row so

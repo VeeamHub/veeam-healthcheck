@@ -337,6 +337,7 @@ function Get-VhcJob {
     # (e.g. only sweep jobs with >1 backup chain, or cache across runs).
     $NeedsSweep = $true
 
+    $BackupCopyJobTypes = @('SimpleBackupCopyPolicy', 'BackupSync')
     $RestorePointsByJob = @{}
     # SweepRan=false does not mean the cache is empty - the stale-ObjectId
     # guard below (in the main per-job loop) writes StaleObject entries
@@ -475,7 +476,6 @@ function Get-VhcJob {
             # unresolved after tier 2, so a run with nothing to rescue pays
             # nothing. Tier 3 only ever sees groups tiers 1 and 2 left
             # unresolved, so it cannot take a chain from another job.
-            $BackupCopyJobTypes        = @('SimpleBackupCopyPolicy', 'BackupSync')
             $BackupCopyJobIdByBackupId = $null
             $Tier3Matched              = 0
 
@@ -763,12 +763,51 @@ function Get-VhcJob {
                 $TotalOnDiskGB += $OnDiskGB
             }
 
+            # A Backup Copy job's last backup spans every source it copies, but the
+            # sweep hands the agent-sourced chains to the per-source worker job
+            # ($Jobs row of type SimpleBackupCopyParentWorker) that owns them.
+            # Their on-disk size is added to the parent when the report is built;
+            # their source size has to be added here, where the restore points are
+            # still available, so a protected object that appears in both chains
+            # is counted once (latest point per ObjectId, below). Matched by
+            # BackupId against this job's own last backup, not by job name, and
+            # used for the source size only, so no restore point is counted twice
+            # in OnDiskGB.
+            $SizingPoints = $RestorePoints
+            if ([string]$Job.JobType -in $BackupCopyJobTypes) {
+                try {
+                    # Only worker jobs that own restore points matter; with none
+                    # (the common case) the last backup is not even listed.
+                    $WorkerPointSets = @(foreach ($WorkerJob in @($Jobs)) {
+                        if ($null -eq $WorkerJob -or $null -eq $WorkerJob.Id -or [string]$WorkerJob.JobType -ne 'SimpleBackupCopyParentWorker') { continue }
+                        $WorkerKey = $WorkerJob.Id.ToString()
+                        if ($RestorePointsByJob.ContainsKey($WorkerKey) -and $RestorePointsByJob[$WorkerKey].Count -gt 0) { , $RestorePointsByJob[$WorkerKey] }
+                    })
+                    $LastBackupForSizing = if ($WorkerPointSets.Count -gt 0) { $Job.GetLastBackup() } else { $null }
+                    if ($null -ne $LastBackupForSizing) {
+                        $LastBackupIds = [System.Collections.Generic.HashSet[string]]::new([System.StringComparer]::OrdinalIgnoreCase)
+                        foreach ($LastPoint in @(Get-VBRRestorePoint -Backup $LastBackupForSizing -WarningAction SilentlyContinue)) {
+                            if ($null -ne $LastPoint -and $null -ne $LastPoint.BackupId) { [void]$LastBackupIds.Add($LastPoint.BackupId.ToString()) }
+                        }
+                        $WorkerPoints = [System.Collections.Generic.List[object]]::new()
+                        foreach ($WorkerPointSet in $WorkerPointSets) {
+                            foreach ($WorkerPoint in $WorkerPointSet) {
+                                if ($null -ne $WorkerPoint.BackupId -and $LastBackupIds.Contains($WorkerPoint.BackupId.ToString())) { $WorkerPoints.Add($WorkerPoint) }
+                            }
+                        }
+                        if ($WorkerPoints.Count -gt 0) { $SizingPoints = @($RestorePoints) + @($WorkerPoints) }
+                    }
+                } catch {
+                    try { Write-LogFile "Backup Copy job '$($Job.Name)': could not add its worker chains to the source size - $($_.Exception.Message)" -LogLevel "WARNING" } catch {}
+                }
+            }
+
             # CalculatedOriginalSize: prefer ApproxSize from latest restore point per object;
             # fall back to IncludedSize for legacy backups or when no restore points exist.
             $CalculatedOriginalSize = 0
             try {
-                if ($RestorePoints -and $RestorePoints.Count -gt 0) {
-                    $LatestPoints = $RestorePoints |
+                if ($SizingPoints -and $SizingPoints.Count -gt 0) {
+                    $LatestPoints = $SizingPoints |
                         Group-Object -Property { $_.ObjectId } |
                         ForEach-Object {
                             $_.Group | Sort-Object CreationTimeUtc -Descending | Select-Object -First 1

@@ -1012,7 +1012,8 @@ namespace VeeamHealthCheck.Functions.Reporting.CsvHandlers
         /// the worker is bookkeeping inside its parent Backup Copy job, and listing it inflates
         /// the job count and adds a bucket to the job summary. The restore points the sweep
         /// attributes to a worker are real copy storage, though, so its OnDiskGB is added to the
-        /// parent's row. Its source size is not: that duplicates the source job's own row. A worker
+        /// parent's row. Its source size is not added here: collection already includes the worker's chains
+        /// in the parent's source size, counting each protected object once (issue #268). A worker
         /// whose parent row is missing stays in the list rather than losing its data. The rows
         /// stay in the collected _Jobs.csv for diagnostics (issue #225).
         /// </summary>

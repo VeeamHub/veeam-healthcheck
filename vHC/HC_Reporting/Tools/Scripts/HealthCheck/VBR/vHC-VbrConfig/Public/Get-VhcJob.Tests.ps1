@@ -1341,6 +1341,112 @@ Describe 'Tier 3: Backup Copy chains attributed by BackupId through GetLastBacku
     }
 }
 
+Describe 'Backup Copy source size spans the worker chains in its last backup (#268)' {
+
+    BeforeEach {
+        $script:CapturedJobRows = @()
+        Mock Write-LogFile                 -MockWith { }
+        Mock Get-VBRConfigurationBackupJob -MockWith { $null }
+        Mock Invoke-VhciJobSubCollectors   -MockWith { }
+        Mock Add-VhciModuleError           -MockWith { }
+        Mock Get-VBRBackup                 -MockWith { @() }
+        $script:VhcOrphanedSupersededCache = $null
+        Mock Export-VhciCsv -MockWith {
+            if ($FileName -eq '_Jobs.csv' -and $InputObject) {
+                $script:CapturedJobRows += @($InputObject)
+            }
+        }
+
+        $script:VmBackupId    = [guid]'b1000000-0000-0000-0000-000000000001'
+        $script:AgentBackupId = [guid]'b1000000-0000-0000-0000-000000000002'
+        $script:VmObjectId    = [guid]'b2000000-0000-0000-0000-000000000001'
+        $script:AgentObjectId = [guid]'b2000000-0000-0000-0000-000000000002'
+        # Per-source child for the VM chain: its Id is never in $Jobs (ADR 0021).
+        $script:VmChild = script:New-FakeJob -Name 'Copy F\Hyper-V - Servers' -TypeToString 'Backup Copy'
+        # The agent chain's per-source worker IS in $Jobs (tier C), so tier 1 resolves to it.
+        $script:Worker  = script:New-FakeJob -Name 'Copy F\Physical - Servers' -JobType 'SimpleBackupCopyParentWorker' -TypeToString 'Backup Copy'
+        $script:VmPoint = script:New-FakeRestorePoint -Name 'vm01' -ObjectId $script:VmObjectId -BackupId $script:VmBackupId -ApproxSize 60GB -BackupSize 40GB -SourceJob $script:VmChild -BackupParentOrThisName 'Copy F (original name)'
+        $script:AgentPoint = script:New-FakeRestorePoint -Name 'agent01' -ObjectId $script:AgentObjectId -BackupId $script:AgentBackupId -ApproxSize 50GB -BackupSize 28.6GB -SourceJob $script:Worker
+    }
+
+    It 'adds the worker chain''s source size to the parent, and leaves the on-disk size to the roll-up' {
+        $Copy = script:New-FakeJob -Name 'Copy F' -JobType 'SimpleBackupCopyPolicy' -TypeToString 'Backup Copy' -LastBackup ([PSCustomObject]@{ Name = 'Copy F (original name)' })
+        Mock Get-VBRJob -MockWith { @($Copy, $script:Worker) }
+        Mock Get-VBRRestorePoint -MockWith {
+            if ($null -eq $Backup) { @($script:VmPoint, $script:AgentPoint) } else { @($script:VmPoint, $script:AgentPoint) }
+        }
+
+        Get-VhcJob | Out-Null
+
+        $Parent = $script:CapturedJobRows | Where-Object { $_.Name -eq 'Copy F' }
+        $Parent.OriginalSize | Should -Be 110GB
+        $Parent.OnDiskGB     | Should -Be 40
+        $Child = $script:CapturedJobRows | Where-Object { $_.Name -eq 'Copy F\Physical - Servers' }
+        $Child.OriginalSize | Should -Be 50GB
+        $Child.OnDiskGB     | Should -Be 28.6
+    }
+
+    It 'counts a protected object once when both chains hold it' {
+        $OlderAgentCopy = script:New-FakeRestorePoint -Name 'vm01-agent' -ObjectId $script:VmObjectId -BackupId $script:AgentBackupId -ApproxSize 50GB -BackupSize 28.6GB -SourceJob $script:Worker -CreationTimeUtc (Get-Date).AddDays(-3)
+        $Copy = script:New-FakeJob -Name 'Copy F' -JobType 'SimpleBackupCopyPolicy' -TypeToString 'Backup Copy' -LastBackup ([PSCustomObject]@{ Name = 'Copy F (original name)' })
+        Mock Get-VBRJob -MockWith { @($Copy, $script:Worker) }
+        Mock Get-VBRRestorePoint -MockWith { @($script:VmPoint, $OlderAgentCopy) }
+
+        Get-VhcJob | Out-Null
+
+        ($script:CapturedJobRows | Where-Object { $_.Name -eq 'Copy F' }).OriginalSize | Should -Be 60GB
+    }
+
+    It 'ignores a worker chain that is not in the parent''s last backup' {
+        $Copy = script:New-FakeJob -Name 'Copy F' -JobType 'SimpleBackupCopyPolicy' -TypeToString 'Backup Copy' -LastBackup ([PSCustomObject]@{ Name = 'Copy F (original name)' })
+        Mock Get-VBRJob -MockWith { @($Copy, $script:Worker) }
+        Mock Get-VBRRestorePoint -MockWith {
+            if ($null -eq $Backup) { @($script:VmPoint, $script:AgentPoint) } else { @($script:VmPoint) }
+        }
+
+        Get-VhcJob | Out-Null
+
+        ($script:CapturedJobRows | Where-Object { $_.Name -eq 'Copy F' }).OriginalSize | Should -Be 60GB
+    }
+
+    It 'uses the worker chain for a parent that has no restore points of its own' {
+        $Copy = script:New-FakeJob -Name 'Copy F' -JobType 'SimpleBackupCopyPolicy' -TypeToString 'Backup Copy' -IncludedSize 5GB -LastBackup ([PSCustomObject]@{ Name = 'Copy F (original name)' })
+        Mock Get-VBRJob -MockWith { @($Copy, $script:Worker) }
+        Mock Get-VBRRestorePoint -MockWith {
+            if ($null -eq $Backup) { @($script:AgentPoint) } else { @($script:AgentPoint) }
+        }
+
+        Get-VhcJob | Out-Null
+
+        $Parent = $script:CapturedJobRows | Where-Object { $_.Name -eq 'Copy F' }
+        $Parent.OriginalSize | Should -Be 50GB
+        $Parent.OnDiskGB     | Should -Be 0
+    }
+
+    It 'keeps the parent''s own source size, and does not fail the run, when GetLastBackup() throws' {
+        $NamedPoint = script:New-FakeRestorePoint -Name 'vm01' -ObjectId $script:VmObjectId -BackupId $script:VmBackupId -ApproxSize 60GB -BackupSize 40GB -SourceJob $script:VmChild -BackupParentOrThisName 'Copy F'
+        $Copy = script:New-FakeJob -Name 'Copy F' -JobType 'SimpleBackupCopyPolicy' -TypeToString 'Backup Copy' -ThrowOnGetLastBackup
+        Mock Get-VBRJob -MockWith { @($Copy, $script:Worker) }
+        Mock Get-VBRRestorePoint -MockWith { @($NamedPoint, $script:AgentPoint) }
+
+        { Get-VhcJob | Out-Null } | Should -Not -Throw
+
+        ($script:CapturedJobRows | Where-Object { $_.Name -eq 'Copy F' }).OriginalSize | Should -Be 60GB
+        Should -Invoke Add-VhciModuleError -Times 0 -Exactly
+    }
+
+    It 'does not add anything to a job that is not a Backup Copy job' {
+        $Vm = script:New-FakeJob -Name 'VMware - Prod' -JobType 'Backup' -TypeToString 'VMware Backup' -LastBackup ([PSCustomObject]@{ Name = 'VMware - Prod' })
+        $Own = script:New-FakeRestorePoint -Name 'vm01' -ObjectId $script:VmObjectId -BackupId $script:VmBackupId -ApproxSize 60GB -BackupSize 40GB -SourceJob $Vm
+        Mock Get-VBRJob -MockWith { @($Vm, $script:Worker) }
+        Mock Get-VBRRestorePoint -MockWith { @($Own, $script:AgentPoint) }
+
+        Get-VhcJob | Out-Null
+
+        ($script:CapturedJobRows | Where-Object { $_.Name -eq 'VMware - Prod' }).OriginalSize | Should -Be 60GB
+    }
+}
+
 Describe 'BackupId grouping (ADR 0023): one lookup per group, applied to every restore point in it' {
 
     BeforeEach {
