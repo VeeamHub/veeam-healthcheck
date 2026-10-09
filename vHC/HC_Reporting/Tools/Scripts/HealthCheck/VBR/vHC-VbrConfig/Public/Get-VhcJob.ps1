@@ -460,6 +460,25 @@ function Get-VhcJob {
                 [string[]]$RestorePointsByJob.Keys,
                 [System.StringComparer]::OrdinalIgnoreCase
             )
+
+            # Tier 3 (#268): Id-based fallback for Backup Copy jobs only. A
+            # Backup Copy chain built from VMs resolves, in tier 1, to a
+            # per-source child job whose Id is not in $Jobs (ADR 0021), and
+            # Backup.JobId is per-child rather than the policy Id, so there is
+            # no Id route back to the job from the restore point itself. The
+            # name fallback above then fails whenever the job was renamed
+            # after its backup was created, since the backup keeps the old
+            # name. What does not change on a rename is which backup the job
+            # currently writes to: $Job.GetLastBackup() returns it, and every
+            # restore point under it carries the BackupId of one of its
+            # chains. Built lazily, once, and only if a group is still
+            # unresolved after tier 2, so a run with nothing to rescue pays
+            # nothing. Tier 3 only ever sees groups tiers 1 and 2 left
+            # unresolved, so it cannot take a chain from another job.
+            $BackupCopyJobTypes        = @('SimpleBackupCopyPolicy', 'BackupSync')
+            $BackupCopyJobIdByBackupId = $null
+            $Tier3Matched              = 0
+
             foreach ($GroupPoints in $UnresolvedGroups) {
                 $Representative = $GroupPoints[0]
 
@@ -468,6 +487,35 @@ function Get-VhcJob {
                     $ParentName = $Representative.GetBackup().GetParentOrThis().Name
                     if ($ParentName -and $JobIdByName.ContainsKey($ParentName)) { $JobIdKey = $JobIdByName[$ParentName] }
                 } catch {}
+
+                $ResolvedViaCopyBackup = $false
+                if (-not $JobIdKey) {
+                    if ($null -eq $BackupCopyJobIdByBackupId) {
+                        $BackupCopyJobIdByBackupId = @{}
+                        foreach ($CopyJob in @($Jobs)) {
+                            if ($null -eq $CopyJob -or $null -eq $CopyJob.Id -or [string]$CopyJob.JobType -notin $BackupCopyJobTypes) { continue }
+                            try {
+                                $CopyBackup = $CopyJob.GetLastBackup()
+                                if ($null -eq $CopyBackup) { continue }
+                                foreach ($CopyPoint in @(Get-VBRRestorePoint -Backup $CopyBackup -WarningAction SilentlyContinue)) {
+                                    if ($null -eq $CopyPoint -or $null -eq $CopyPoint.BackupId) { continue }
+                                    $CopyBackupIdKey = $CopyPoint.BackupId.ToString()
+                                    if (-not $BackupCopyJobIdByBackupId.ContainsKey($CopyBackupIdKey)) {
+                                        $BackupCopyJobIdByBackupId[$CopyBackupIdKey] = $CopyJob.Id.ToString()
+                                    }
+                                }
+                            } catch {
+                                try { Write-LogFile "Backup Copy job '$($CopyJob.Name)': could not list its last backup's restore points for tier-3 matching - $($_.Exception.Message)" -LogLevel "WARNING" } catch {}
+                            }
+                        }
+                    }
+                    $GroupBackupIdKey = $null
+                    try { $GroupBackupIdKey = $Representative.BackupId.ToString() } catch {}
+                    if ($GroupBackupIdKey -and $BackupCopyJobIdByBackupId.ContainsKey($GroupBackupIdKey)) {
+                        $JobIdKey              = $BackupCopyJobIdByBackupId[$GroupBackupIdKey]
+                        $ResolvedViaCopyBackup = $true
+                    }
+                }
                 if (-not $JobIdKey) {
                     # Neither tier resolved this group to any current job -
                     # a #192 Orphaned candidate (or a Tape Backup - excluded
@@ -480,7 +528,7 @@ function Get-VhcJob {
                     })
                     continue
                 }
-                if ($Tier1MatchedJobIds.Contains($JobIdKey)) {
+                if (-not $ResolvedViaCopyBackup -and $Tier1MatchedJobIds.Contains($JobIdKey)) {
                     # Named a real job, but that job already has a tier-1
                     # match elsewhere - a #192 Superseded candidate.
                     [void]$script:VhcOrphanedSupersededCache.CandidateGroups.Add([PSCustomObject]@{
@@ -495,11 +543,11 @@ function Get-VhcJob {
                     $RestorePointsByJob[$JobIdKey] = [System.Collections.ArrayList]::new()
                 }
                 foreach ($RestorePoint in $GroupPoints) { [void]$RestorePointsByJob[$JobIdKey].Add($RestorePoint) }
-                $Tier2Matched += $GroupPoints.Count
+                if ($ResolvedViaCopyBackup) { $Tier3Matched += $GroupPoints.Count } else { $Tier2Matched += $GroupPoints.Count }
             }
 
             try {
-                Write-LogFile "Restore point matching: $Tier1Matched matched via tier 1, $Tier1Failed tier-1 lookup failures, $Tier2Matched tier-2, $($AllRestorePoints.Count - $Tier1Matched - $Tier2Matched) unmatched/orphaned/snapshot"
+                Write-LogFile "Restore point matching: $Tier1Matched matched via tier 1, $Tier1Failed tier-1 lookup failures, $Tier2Matched tier-2, $Tier3Matched tier-3 (Backup Copy last backup), $($AllRestorePoints.Count - $Tier1Matched - $Tier2Matched - $Tier3Matched) unmatched/orphaned/snapshot"
             } catch {}
             try {
                 Write-LogFile "BackupId grouping: $($AllRestorePoints.Count) restore points reduced to $($Groups.Count) groups ($($Groups.Count) tier-1 lookups + $($UnresolvedGroups.Count) tier-2 lookups attempted, vs. $($AllRestorePoints.Count) lookups pre-grouping)"
