@@ -89,7 +89,7 @@ Each product has separate:
 
 ## Tech Stack
 
-- **.NET 10.0** targeting Windows 7.0+ (`net10.0-windows7.0`)
+- **.NET 10.0** targeting `net10.0-windows7.0` (`windows7.0` is the TFM platform version, not the OS minimum; .NET 8 and later need Windows 10 1607+ or Windows Server 2012+)
 - **Avalonia** for GUI
 - **PowerShell 7 SDK** for embedded script execution
 - **CsvHelper** for CSV processing

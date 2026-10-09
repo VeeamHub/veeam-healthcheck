@@ -408,7 +408,7 @@ jobs:
         $notes.Add('```')
         $notes.Add("")
         $notes.Add("### 📋 Requirements")
-        $notes.Add("- Windows 7 or later")
+        $notes.Add("- Windows 10 (1607) or later, or Windows Server 2012 or later")
         $notes.Add("- .NET 10 runtime (included in self-contained build)")
         $notes.Add("- PowerShell 5.1 or later")
         $notes.Add("")
