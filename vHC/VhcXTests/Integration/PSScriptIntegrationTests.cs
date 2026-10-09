@@ -17,7 +17,7 @@ namespace VhcXTests.Integration
 
         public PSScriptIntegrationTests()
         {
-            // Navigate up from bin/Debug/net8.0-windows7.0 to project root
+            // Navigate up from bin/Debug/net10.0-windows7.0 to project root
             _projectRoot = Path.GetFullPath(Path.Combine(
                 AppDomain.CurrentDomain.BaseDirectory,
                 "..", "..", "..", "..", "HC_Reporting"));

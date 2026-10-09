@@ -27,7 +27,7 @@ jobs:
     - name: Setup .NET
       uses: actions/setup-dotnet@67a3573c9a986a3f9c594539f4ab511d57bb3ce9 # v4
       with:
-        dotnet-version: '8.0.x'
+        dotnet-version: '10.0.x'
 
     # The release version is computed from commits by .github/scripts/Get-VhcVersion.ps1
     # (the "Compute version from commits" step below). The csproj Major.Minor is only a floor.
@@ -3009,8 +3009,8 @@ jobs:
         $n.Add('```')
         $n.Add("")
         $n.Add("### 📋 Requirements")
-        $n.Add("- Windows 7 or later")
-        $n.Add("- .NET 8 runtime (included in self-contained build)")
+        $n.Add("- Windows 10 (1607) or later, or Windows Server 2012 or later")
+        $n.Add("- .NET 10 runtime (included in self-contained build)")
         $n.Add("- PowerShell 5.1 or later")
         $n.Add("")
         $n.Add("### 🚀 Quick Start")
@@ -3196,8 +3196,8 @@ jobs:
         $n.Add('```')
         $n.Add("")
         $n.Add("### 📋 Requirements")
-        $n.Add("- Windows 7 or later")
-        $n.Add("- .NET 8 runtime (included in self-contained build)")
+        $n.Add("- Windows 10 (1607) or later, or Windows Server 2012 or later")
+        $n.Add("- .NET 10 runtime (included in self-contained build)")
         $n.Add("- PowerShell 5.1 or later")
         $n.Add("")
         $n.Add("---")

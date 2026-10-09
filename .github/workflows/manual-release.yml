@@ -50,7 +50,7 @@ jobs:
     - name: Setup .NET
       uses: actions/setup-dotnet@67a3573c9a986a3f9c594539f4ab511d57bb3ce9 # v4
       with:
-        dotnet-version: '8.0.x'
+        dotnet-version: '10.0.x'
 
     - name: Restore dependencies
       run: dotnet restore vHC/HC.sln
@@ -408,8 +408,8 @@ jobs:
         $notes.Add('```')
         $notes.Add("")
         $notes.Add("### 📋 Requirements")
-        $notes.Add("- Windows 7 or later")
-        $notes.Add("- .NET 8 runtime (included in self-contained build)")
+        $notes.Add("- Windows 10 (1607) or later, or Windows Server 2012 or later")
+        $notes.Add("- .NET 10 runtime (included in self-contained build)")
         $notes.Add("- PowerShell 5.1 or later")
         $notes.Add("")
         $notes.Add("### 🚀 Quick Start")

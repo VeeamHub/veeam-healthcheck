@@ -89,7 +89,7 @@ Each product has separate:
 
 ## Tech Stack
 
-- **.NET 8.0** targeting Windows 7.0+ (`net8.0-windows7.0`)
+- **.NET 10.0** targeting `net10.0-windows7.0` (`windows7.0` is the TFM platform version, not the OS minimum; .NET 8 and later need Windows 10 1607+ or Windows Server 2012+)
 - **Avalonia** for GUI
 - **PowerShell 7 SDK** for embedded script execution
 - **CsvHelper** for CSV processing
@@ -153,7 +153,7 @@ Release versions are computed from commits, not hand-edited ([ADR 0031](docs/adr
 
 ## Important Notes
 
-- Tests build and run on Windows, macOS, and Linux. `EnableWindowsTargeting=true` in `VeeamHealthCheck.csproj` is what lets the `net8.0-windows7.0` TFM build off-Windows at all, combined with the WPF → Avalonia GUI migration (PR #211) replacing the Windows-only UI toolkit. Genuinely Windows-only tests (DPAPI, registry, etc.) are marked `[WindowsOnlyFact]` and skip individually rather than gating the whole suite.
+- Tests build and run on Windows, macOS, and Linux. `EnableWindowsTargeting=true` in `VeeamHealthCheck.csproj` is what lets the `net10.0-windows7.0` TFM build off-Windows at all, combined with the WPF → Avalonia GUI migration (PR #211) replacing the Windows-only UI toolkit. Genuinely Windows-only tests (DPAPI, registry, etc.) are marked `[WindowsOnlyFact]` and skip individually rather than gating the whole suite.
 - A second test project, `VhcXTests.CrossPlatform` (`net10.0`), compiles a hand-picked subset of source files directly rather than referencing `VeeamHealthCheck.csproj`.
 - Internal types exposed to `VhcXTests` via `InternalsVisibleTo` in csproj
 - Local builds auto-increment the csproj build segment via `increment_version.ps1`; CI ignores it (see Versioning). Revert the csproj after building: `git checkout -- vHC/HC_Reporting/VeeamHealthCheck.csproj`

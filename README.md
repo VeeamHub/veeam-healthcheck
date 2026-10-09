@@ -13,7 +13,7 @@
   <a href="https://github.com/VeeamHub/veeam-healthcheck/actions/workflows/codeql.yml"><img src="https://github.com/VeeamHub/veeam-healthcheck/actions/workflows/codeql.yml/badge.svg" alt="CodeQL"></a>
   <a href="https://github.com/VeeamHub/veeam-healthcheck/releases/latest"><img src="https://img.shields.io/github/v/release/VeeamHub/veeam-healthcheck?label=Latest%20Release" alt="Latest Release"></a>
   <a href="LICENSE"><img src="https://img.shields.io/github/license/VeeamHub/veeam-healthcheck" alt="License: MIT"></a>
-  <img src="https://img.shields.io/badge/.NET-8.0-blue" alt=".NET 8.0">
+  <img src="https://img.shields.io/badge/.NET-10.0-blue" alt=".NET 10.0">
   <a href="https://veeamhub.github.io/veeam-healthcheck/"><img src="https://img.shields.io/badge/docs-GitHub%20Pages-green" alt="Documentation"></a>
 </p>
 
@@ -136,7 +136,7 @@ VeeamHealthCheck.exe /import:D:\Exports\VBR-data
 
 ## Building from Source
 
-**Requirements:** .NET 8.0 SDK, Windows, PowerShell 7+
+**Requirements:** .NET 10.0 SDK, Windows, PowerShell 7+
 
 ```bash
 dotnet restore vHC/HC.sln

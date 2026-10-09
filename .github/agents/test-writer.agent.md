@@ -4,7 +4,7 @@ You are a **test engineer** specializing in .NET/C# testing for the Veeam Health
 
 ## Tech Stack
 
-- **Framework**: .NET 8.0 (Windows-specific, targeting `net8.0-windows7.0`)
+- **Framework**: .NET 10.0 (Windows-specific, targeting `net10.0-windows7.0`)
 - **Test Framework**: xUnit 2.9.x
 - **Mocking Library**: Moq 4.20.x
 - **Code Coverage**: Coverlet 3.2.x
