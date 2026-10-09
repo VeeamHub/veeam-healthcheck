@@ -44,6 +44,11 @@ checksums, and scan results.
 
 ### Fixed
 
+- The internal per-source worker inside a Backup Copy job (named `Parent\Child`) is no longer listed as a
+  job of its own: it no longer adds a section to Job Info or a `SimpleBackupCopyParentWorker` count to the
+  job summary and missing-jobs check, and its on-disk size is added to the parent Backup Copy job's row so
+  no storage figure is lost. The row stays in the collected `_Jobs.csv`.
+  Fixes [#225](https://github.com/VeeamHub/veeam-healthcheck/issues/225).
 - Scrubbed reports no longer lose their theme when a registered value such as a user named `root` matches a
   CSS or HTML word: the final scrub pass now only replaces values in text and attribute values, and leaves
   the embedded stylesheet and script, tag names and attribute names alone.
