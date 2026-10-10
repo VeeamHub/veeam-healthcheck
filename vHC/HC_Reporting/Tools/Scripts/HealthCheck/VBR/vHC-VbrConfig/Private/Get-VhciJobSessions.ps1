@@ -52,11 +52,13 @@ function Get-VhciJobSessions {
         # double-count them downstream. Keep the first copy by session Id.
         # A session without a usable Id cannot be compared and is always kept.
         $seenSessionIds = [System.Collections.Generic.HashSet[string]]::new([System.StringComparer]::OrdinalIgnoreCase)
+        $duplicateCount = 0
         foreach ($job in $Jobs) {
             try {
                 $jobResults = @(Invoke-VhciCBackupSessionFetch -JobId $job.Id -Since $Since -Until $until)
                 foreach ($session in $jobResults) {
                     if ($null -ne $session -and $null -ne $session.Id -and -not $seenSessionIds.Add($session.Id.ToString())) {
+                        $duplicateCount++
                         continue
                     }
                     [void]$results.Add($session)
@@ -64,6 +66,9 @@ function Get-VhciJobSessions {
             } catch {
                 Write-LogFile "[$PathLabel] Failed to fetch sessions for job '$($job.Name)': $($_.Exception.Message)" -LogLevel 'WARNING'
             }
+        }
+        if ($duplicateCount -gt 0) {
+            Write-LogFile "[$PathLabel] Dropped $duplicateCount duplicate session(s) returned for more than one job"
         }
         Write-LogFile "[$PathLabel] Collected $($results.Count) sessions via fast path"
         return @($results)

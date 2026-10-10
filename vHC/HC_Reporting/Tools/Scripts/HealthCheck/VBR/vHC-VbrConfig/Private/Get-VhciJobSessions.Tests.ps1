@@ -354,6 +354,23 @@ Describe 'GJS-9: A session returned for more than one job is collected once' {
         @($r | Where-Object { $_.Id -eq $script:Own.Id }).Count | Should -Be 1
     }
 
+    It 'logs how many duplicate sessions it dropped, with the path label' {
+        $script:logged = [System.Collections.Generic.List[string]]::new()
+        Mock Write-LogFile -MockWith { $script:logged.Add($Message) }
+        $null = @(Get-VhciJobSessions -Jobs @($script:ParentJob, $script:WorkerJob) -Since (Get-Date).AddDays(-7) `
+            -SlowPathCommand { @() } -PathLabel 'VM/BackupCopy')
+        @($script:logged | Where-Object { $_ -match '^\[VM/BackupCopy\] Dropped 1 duplicate session' }).Count | Should -Be 1
+    }
+
+    It 'does not log a drop line when there were no duplicates' {
+        $script:logged = [System.Collections.Generic.List[string]]::new()
+        Mock Write-LogFile -MockWith { $script:logged.Add($Message) }
+        Mock Invoke-VhciCBackupSessionFetch -MockWith { @($script:Own) }
+        $null = @(Get-VhciJobSessions -Jobs @($script:ParentJob) -Since (Get-Date).AddDays(-7) `
+            -SlowPathCommand { @() } -PathLabel 'VM/BackupCopy')
+        @($script:logged | Where-Object { $_ -match 'duplicate session' }).Count | Should -Be 0
+    }
+
     It 'keeps sessions that have no Id (cannot be compared, so never dropped)' {
         $a = [PSCustomObject]@{ CreationTime = (Get-Date).AddHours(-1); JobName = 'A' }
         $b = [PSCustomObject]@{ CreationTime = (Get-Date).AddHours(-1); JobName = 'B' }
