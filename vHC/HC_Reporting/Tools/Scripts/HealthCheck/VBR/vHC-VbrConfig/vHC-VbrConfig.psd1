@@ -12,6 +12,7 @@
         'Get-VhcConcurrencyData',
         'Get-VhcEntraId',
         'Get-VhcJob',
+        'Get-VhcJobDiscovery',
         'Get-VhcLicense',
         'Get-VhcModuleErrors',
         'Get-VhcMajorVersion',

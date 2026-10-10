@@ -234,3 +234,82 @@ Describe 'ISC-7: Return is a flat [object[]]' {
         }
     }
 }
+
+# ---------------------------------------------------------------------------
+# ISC-8  Issue #224: jobs Get-VBRJob does not return (found by the shared
+#        discovery step) must reach the per-job session fetch
+# ---------------------------------------------------------------------------
+Describe 'ISC-8: Discovered jobs are queried for sessions (#224)' {
+
+    BeforeEach {
+        Mock Write-LogFile -MockWith { }
+        $script:VisibleJob    = script:New-FakeJob 'Visible'
+        $script:HiddenJob     = script:New-FakeJob 'HiddenFromGetVBRJob'
+        $script:AgentJob      = script:New-FakeJob 'Agent1'
+        Mock Get-VBRJob               -MockWith { @($script:VisibleJob) }
+        Mock Get-VBRComputerBackupJob -MockWith { @($script:AgentJob) }
+        Mock Get-VBREPJob             -MockWith { @() }
+        Mock Get-VhciJobSessions      -MockWith { @() }
+        $script:StandaloneJob = script:New-FakeJob 'StandaloneAgent'
+        $script:Discovery = [PSCustomObject]@{
+            VbrJobs             = @($script:VisibleJob)
+            StandaloneAgentJobs = @($script:StandaloneJob)
+            DiscoveredJobs      = @($script:HiddenJob)
+        }
+    }
+
+    It 'does not query standalone agent jobs (the session path has never queried them)' {
+        $null = @(Get-VhcBackupSessions -ReportInterval 7 -JobDiscovery $script:Discovery)
+        Should -Invoke Get-VhciJobSessions -Times 1 -Exactly -ParameterFilter {
+            $PathLabel -eq 'VM/BackupCopy' -and
+            @($Jobs | Where-Object { $_.Id -eq $script:StandaloneJob.Id }).Count -eq 0
+        }
+    }
+
+    It 'tolerates null VbrJobs and null elements in a discovery object' {
+        $script:Discovery.VbrJobs        = $null
+        $script:Discovery.DiscoveredJobs = @($script:HiddenJob, $null)
+        $null = @(Get-VhcBackupSessions -ReportInterval 7 -JobDiscovery $script:Discovery)
+        Should -Invoke Get-VhciJobSessions -Times 1 -Exactly -ParameterFilter {
+            $PathLabel -eq 'VM/BackupCopy' -and @($Jobs).Count -eq 1 -and $Jobs[0].Id -eq $script:HiddenJob.Id
+        }
+    }
+
+    It 'passes the discovered job to the VM/BackupCopy session fetch' {
+        $null = @(Get-VhcBackupSessions -ReportInterval 7 -JobDiscovery $script:Discovery)
+        Should -Invoke Get-VhciJobSessions -Times 1 -Exactly -ParameterFilter {
+            $PathLabel -eq 'VM/BackupCopy' -and
+            @($Jobs | Where-Object { $_.Id -eq $script:HiddenJob.Id }).Count -eq 1
+        }
+    }
+
+    It 'still passes the Get-VBRJob-visible job exactly once' {
+        $null = @(Get-VhcBackupSessions -ReportInterval 7 -JobDiscovery $script:Discovery)
+        Should -Invoke Get-VhciJobSessions -Times 1 -Exactly -ParameterFilter {
+            $PathLabel -eq 'VM/BackupCopy' -and
+            @($Jobs | Where-Object { $_.Id -eq $script:VisibleJob.Id }).Count -eq 1
+        }
+    }
+
+    It 'does not call Get-VBRJob again when discovery is supplied' {
+        $null = @(Get-VhcBackupSessions -ReportInterval 7 -JobDiscovery $script:Discovery)
+        Should -Invoke Get-VBRJob -Times 0 -Exactly
+    }
+
+    It 'subtracts an agent job that discovery also returned (no duplicate fetch)' {
+        $script:Discovery.DiscoveredJobs = @($script:HiddenJob, $script:AgentJob)
+        $null = @(Get-VhcBackupSessions -ReportInterval 7 -JobDiscovery $script:Discovery)
+        Should -Invoke Get-VhciJobSessions -Times 1 -Exactly -ParameterFilter {
+            $PathLabel -eq 'VM/BackupCopy' -and
+            @($Jobs | Where-Object { $_.Id -eq $script:AgentJob.Id }).Count -eq 0
+        }
+    }
+
+    It 'falls back to its own Get-VBRJob when no discovery is supplied (unchanged behaviour)' {
+        $null = @(Get-VhcBackupSessions -ReportInterval 7)
+        Should -Invoke Get-VBRJob -Times 1 -Exactly
+        Should -Invoke Get-VhciJobSessions -Times 1 -Exactly -ParameterFilter {
+            $PathLabel -eq 'VM/BackupCopy' -and @($Jobs).Count -eq 1
+        }
+    }
+}

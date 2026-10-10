@@ -249,6 +249,17 @@ $RepositoryDetails = $repoResult.Output
 # ---------------------------------------------------------------------------
 
 # ---------------------------------------------------------------------------
+# Job discovery, run once and shared (issue #224). Get-VBRJob does not return
+# every job (e.g. Nutanix AHV on VBR 12.3.x), so discovery adds the tier B/C
+# fallbacks on top of it. Both the session collector below and Get-VhcJob use
+# this one result, so a job found here is in the job inventory AND has its
+# sessions collected. $jobDiscoveryResult.Output is $null if discovery fails;
+# both consumers then fall back to their own job lookup, as before.
+$jobDiscoveryResult = Invoke-VhcCollector -Name 'JobDiscovery' -Action { Get-VhcJobDiscovery -VBRVersion $VBRVersion }
+$collectorResults.Add($jobDiscoveryResult)
+# ---------------------------------------------------------------------------
+
+# ---------------------------------------------------------------------------
 # Fetch backup sessions as live .NET objects and pass them explicitly to SessionReport.
 # Uses Get-VhciJobSessions which probes the Veeam.Backup.Core.CBackupSession
 # fast path and falls back to unfiltered cmdlets (Get-VBRBackupSession,
@@ -256,7 +267,7 @@ $RepositoryDetails = $repoResult.Output
 # either case, the returned objects are never serialised so .NET methods
 # (GetTaskSessions, Logger.GetLog) remain available to Get-VhcSessionReport. See ADR 0006.
 $backupSessionsResult = Invoke-VhcCollector -Name 'BackupSessions' -Action {
-    Get-VhcBackupSessions -ReportInterval $ReportInterval
+    Get-VhcBackupSessions -ReportInterval $ReportInterval -JobDiscovery $jobDiscoveryResult.Output
 }
 $collectorResults.Add($backupSessionsResult)
 
@@ -270,7 +281,7 @@ $collectorResults.Add((Invoke-VhcCollector -Name 'SessionReport' -Action {
 # ---------------------------------------------------------------------------
 # Task 7: Job collectors (require $RepositoryDetails from Task 6)
 $jobsResult = Invoke-VhcCollector -Name 'Jobs' -Action {
-    Get-VhcJob -RepositoryDetails $RepositoryDetails -VBRVersion $VBRVersion
+    Get-VhcJob -RepositoryDetails $RepositoryDetails -VBRVersion $VBRVersion -JobDiscovery $jobDiscoveryResult.Output
 }
 $collectorResults.Add($jobsResult)
 # ---------------------------------------------------------------------------
