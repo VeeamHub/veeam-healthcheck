@@ -150,6 +150,17 @@ gate would suppress is still accepted when that job's last backup lists its
 confirmed for Nutanix, Proxmox, HPE Morpheus or other plug-in job types,
 which is why the name fallback stays.
 
+Two consequences of the Id route are accepted. A renamed job's older chain
+that still records the job's `JobId` is now attributed to it instead of
+staying unresolved: Superseded when the job already has a tier-1 match,
+otherwise counted. For a Backup Copy job with no tier-1 match (the usual
+case, since its VM chains resolve in tier 1 to per-source children outside
+`$Jobs`) the Id route is ungated, so an older backup of that job that still
+carries its `JobId` is counted toward its size, as a never-renamed job's
+older chain already is through the name route. Confirming such chains
+against the job's last backup was considered and left out until a lab shows
+the case.
+
 **Tier 3 — Backup Copy last backup, by `BackupId` (added for
 [#268](https://github.com/VeeamHub/veeam-healthcheck/issues/268)):** for
 restore points still unresolved after the Id and name routes, and only for Backup Copy jobs
@@ -166,7 +177,8 @@ gated on the job having no tier-1 match: membership in the job's own last
 backup is identity, not a display-name coincidence. It is built lazily,
 once, only when a group needs it. A chain from an older backup
 the job no longer writes to is not in its last backup and stays unresolved,
-so it is still reported as Orphaned. Tier 3 runs only when the Id and name
+so it is still reported as Orphaned, unless its backup still records the
+job's `JobId` and the Id route places it (see above). Tier 3 runs only when the Id and name
 routes found no job (or the Id route found a Backup Copy job the gate would
 suppress), so it never moves
 a chain to a different job than they chose. The Id route resolves the case

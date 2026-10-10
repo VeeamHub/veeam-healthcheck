@@ -52,7 +52,9 @@ checksums, and scan results.
 - The restore-point sweep now resolves a backup chain to its job by the job's Id before falling back to its
   name, so a chain is no longer attributed to the wrong job when a job was renamed and another job now
   carries the old name. An unknown or all-zero Id still falls back to the name, so that case is not yet covered
-  when the backup does not record the job's Id.
+  when the backup does not record the job's Id. A renamed job's older chain that still records the job's Id is
+  now attributed to it (counted, or listed as Superseded when the job already has a current chain) instead of
+  being listed as Orphaned.
   Fixes [#270](https://github.com/VeeamHub/veeam-healthcheck/issues/270).
 - The internal per-source worker inside a Backup Copy job (named `Parent\Child`) is no longer listed as a
   job of its own: it no longer adds a section to Job Info or a `SimpleBackupCopyParentWorker` count to the

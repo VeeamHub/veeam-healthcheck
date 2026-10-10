@@ -1409,6 +1409,21 @@ Describe 'Parent backup JobId is preferred over a name match (#270)' {
         ($script:CapturedJobRows | Where-Object { $_.Name -eq 'Linux-01' }).OnDiskGB | Should -Be 40
     }
 
+    It 'does not treat an all-zero parent JobId as a job even when a job in the list has an all-zero Id' {
+        # The zero check is what keeps a placeholder Id from resolving to
+        # whichever job happens to carry one; the name must win instead.
+        $ZeroIdJob = script:New-FakeJob -Name 'Zero-Id job' -Id ([guid]::Empty) -TypeToString 'Azure IaaS Backup'
+        $NamedJob  = script:New-FakeJob -Name 'Linux-01' -TypeToString 'Azure IaaS Backup'
+        $Point = script:New-FakeRestorePoint -Name 'vm01' -BackupId $script:IdBackupId1 -ApproxSize 60GB -BackupSize 40GB -ThrowOnGetSourceJob -BackupParentOrThisName 'Linux-01' -BackupParentJobId ([guid]::Empty)
+        Mock Get-VBRJob -MockWith { @($ZeroIdJob, $NamedJob) }
+        Mock Get-VBRRestorePoint -MockWith { @($Point) }
+
+        Get-VhcJob | Out-Null
+
+        ($script:CapturedJobRows | Where-Object { $_.Name -eq 'Linux-01' }).OnDiskGB | Should -Be 40
+        ($script:CapturedJobRows | Where-Object { $_.Name -eq 'Zero-Id job' }).OnDiskGB | Should -Be 0
+    }
+
     It 'falls back to the name when the parent JobId is not a job in the collected list' {
         $Job = script:New-FakeJob -Name 'Linux-01' -TypeToString 'Azure IaaS Backup'
         $Point = script:New-FakeRestorePoint -Name 'vm01' -BackupId $script:IdBackupId1 -ApproxSize 60GB -BackupSize 40GB -ThrowOnGetSourceJob -BackupParentOrThisName 'Linux-01' -BackupParentJobId ([guid]'b2000000-0000-0000-0000-0000000000ff')
