@@ -268,14 +268,19 @@ BeforeAll {
     function script:New-FakeBackup {
         param(
             [string]$ParentOrThisName = 'FakeJob',
-            [switch]$ThrowOnGetParentOrThis
+            [switch]$ThrowOnGetParentOrThis,
+            # The owning job's Id as GetParentOrThis().JobId reports it (#270).
+            # $null (the default) models "not populated"; [guid]::Empty models
+            # the all-zero Id a chain keeps after its job record was replaced.
+            $ParentJobId = $null
         )
         $NameCapture  = $ParentOrThisName
+        $JobIdCapture = $ParentJobId
         $ThrowCapture = [bool]$ThrowOnGetParentOrThis
         $Backup = [PSCustomObject]@{}
         $Backup | Add-Member -MemberType ScriptMethod -Name GetParentOrThis -Value {
             if ($ThrowCapture) { throw 'GetParentOrThis failed' }
-            [PSCustomObject]@{ Name = $NameCapture }
+            [PSCustomObject]@{ Name = $NameCapture; JobId = $JobIdCapture }
         }.GetNewClosure()
         return $Backup
     }
@@ -296,13 +301,14 @@ BeforeAll {
             [switch]$ThrowOnGetSourceJob,
             [switch]$ThrowOnGetBackup,
             [string]$BackupParentOrThisName,
-            [switch]$ThrowOnGetParentOrThis
+            [switch]$ThrowOnGetParentOrThis,
+            $BackupParentJobId = $null
         )
         $SourceJobCapture      = $SourceJob
         $ThrowSourceJobCapture = [bool]$ThrowOnGetSourceJob
         $ThrowGetBackupCapture = [bool]$ThrowOnGetBackup
-        $FakeBackup            = if ($BackupParentOrThisName) {
-            script:New-FakeBackup -ParentOrThisName $BackupParentOrThisName -ThrowOnGetParentOrThis:$ThrowOnGetParentOrThis
+        $FakeBackup            = if ($BackupParentOrThisName -or $null -ne $BackupParentJobId) {
+            script:New-FakeBackup -ParentOrThisName $BackupParentOrThisName -ThrowOnGetParentOrThis:$ThrowOnGetParentOrThis -ParentJobId $BackupParentJobId
         } else { $null }
         # $CallCounts is a Hashtable (reference type), captured below as a
         # plain LOCAL alias before .GetNewClosure() runs, then mutated in
@@ -1338,6 +1344,200 @@ Describe 'Tier 3: Backup Copy chains attributed by BackupId through GetLastBacku
 
         ($script:CapturedJobRows | Where-Object { $_.Name -eq 'Copy A2' }).OnDiskGB | Should -Be 5
         ($script:CapturedJobRows | Where-Object { $_.Name -eq 'Copy B2' }).OnDiskGB | Should -Be 12
+    }
+}
+
+# ---------------------------------------------------------------------------
+# #270: the parent backup's JobId is tried before the name. A name is not an
+# identity (it fails after a rename and can hit the wrong job); the Id is.
+# ---------------------------------------------------------------------------
+Describe 'Parent backup JobId is preferred over a name match (#270)' {
+
+    BeforeEach {
+        $script:CapturedJobRows = @()
+        Mock Write-LogFile                 -MockWith { }
+        Mock Get-VBRConfigurationBackupJob -MockWith { $null }
+        Mock Invoke-VhciJobSubCollectors   -MockWith { }
+        Mock Add-VhciModuleError           -MockWith { }
+        Mock Get-VBRBackup                 -MockWith { @() }
+        $script:VhcOrphanedSupersededCache = $null
+        Mock Export-VhciCsv -MockWith {
+            if ($FileName -eq '_Jobs.csv' -and $InputObject) {
+                $script:CapturedJobRows += @($InputObject)
+            }
+        }
+        $script:CopyChild = script:New-FakeJob -Name 'Copy A\Hyper-V - Management' -TypeToString 'Backup Copy'
+        $script:IdBackupId1 = [guid]'b1000000-0000-0000-0000-000000000001'
+        $script:IdBackupId2 = [guid]'b1000000-0000-0000-0000-000000000002'
+    }
+
+    It 'attributes a chain to the job its parent JobId names, not to another job now carrying the old name' {
+        # The #269 known miss: the renamed Backup Copy job's old name was
+        # reused by a different job, so the name lookup lands on the wrong one.
+        $CopyJob  = script:New-FakeJob -Name 'Copy A' -JobType 'SimpleBackupCopyPolicy' -TypeToString 'Backup Copy'
+        $NameHolder = script:New-FakeJob -Name 'Copy A (original name)' -TypeToString 'Azure IaaS Backup'
+        $Point = script:New-FakeRestorePoint -Name 'vm01' -BackupId $script:IdBackupId1 -ApproxSize 60GB -BackupSize 40GB -SourceJob $script:CopyChild -BackupParentOrThisName 'Copy A (original name)' -BackupParentJobId $CopyJob.Id
+        Mock Get-VBRJob -MockWith { @($CopyJob, $NameHolder) }
+        Mock Get-VBRRestorePoint -MockWith { @($Point) }
+
+        Get-VhcJob | Out-Null
+
+        ($script:CapturedJobRows | Where-Object { $_.Name -eq 'Copy A' }).OnDiskGB | Should -Be 40
+        ($script:CapturedJobRows | Where-Object { $_.Name -eq 'Copy A (original name)' }).OnDiskGB | Should -Be 0
+    }
+
+    It 'resolves a renamed job from the Id alone, with no name match and no last backup to fall back on' {
+        $Job = script:New-FakeJob -Name 'Renamed job' -TypeToString 'Azure IaaS Backup'
+        $Point = script:New-FakeRestorePoint -Name 'vm01' -BackupId $script:IdBackupId1 -ApproxSize 60GB -BackupSize 40GB -ThrowOnGetSourceJob -BackupParentOrThisName 'Old job name' -BackupParentJobId $Job.Id
+        Mock Get-VBRJob -MockWith { @($Job) }
+        Mock Get-VBRRestorePoint -MockWith { @($Point) }
+
+        Get-VhcJob | Out-Null
+
+        ($script:CapturedJobRows | Where-Object { $_.Name -eq 'Renamed job' }).OnDiskGB | Should -Be 40
+        @($script:VhcOrphanedSupersededCache.CandidateGroups | Where-Object { $_.Reason -eq 'Unresolved' }) | Should -HaveCount 0
+    }
+
+    It 'falls back to the name when the parent JobId is all zeros (the original job record was replaced)' {
+        $Job = script:New-FakeJob -Name 'Linux-01' -TypeToString 'Azure IaaS Backup'
+        $Point = script:New-FakeRestorePoint -Name 'vm01' -BackupId $script:IdBackupId1 -ApproxSize 60GB -BackupSize 40GB -ThrowOnGetSourceJob -BackupParentOrThisName 'Linux-01' -BackupParentJobId ([guid]::Empty)
+        Mock Get-VBRJob -MockWith { @($Job) }
+        Mock Get-VBRRestorePoint -MockWith { @($Point) }
+
+        Get-VhcJob | Out-Null
+
+        ($script:CapturedJobRows | Where-Object { $_.Name -eq 'Linux-01' }).OnDiskGB | Should -Be 40
+    }
+
+    It 'does not treat an all-zero parent JobId as a job even when a job in the list has an all-zero Id' {
+        # The zero check is what keeps a placeholder Id from resolving to
+        # whichever job happens to carry one; the name must win instead.
+        $ZeroIdJob = script:New-FakeJob -Name 'Zero-Id job' -Id ([guid]::Empty) -TypeToString 'Azure IaaS Backup'
+        $NamedJob  = script:New-FakeJob -Name 'Linux-01' -TypeToString 'Azure IaaS Backup'
+        $Point = script:New-FakeRestorePoint -Name 'vm01' -BackupId $script:IdBackupId1 -ApproxSize 60GB -BackupSize 40GB -ThrowOnGetSourceJob -BackupParentOrThisName 'Linux-01' -BackupParentJobId ([guid]::Empty)
+        Mock Get-VBRJob -MockWith { @($ZeroIdJob, $NamedJob) }
+        Mock Get-VBRRestorePoint -MockWith { @($Point) }
+
+        Get-VhcJob | Out-Null
+
+        ($script:CapturedJobRows | Where-Object { $_.Name -eq 'Linux-01' }).OnDiskGB | Should -Be 40
+        ($script:CapturedJobRows | Where-Object { $_.Name -eq 'Zero-Id job' }).OnDiskGB | Should -Be 0
+    }
+
+    It 'falls back to the name when the parent JobId is not a job in the collected list' {
+        $Job = script:New-FakeJob -Name 'Linux-01' -TypeToString 'Azure IaaS Backup'
+        $Point = script:New-FakeRestorePoint -Name 'vm01' -BackupId $script:IdBackupId1 -ApproxSize 60GB -BackupSize 40GB -ThrowOnGetSourceJob -BackupParentOrThisName 'Linux-01' -BackupParentJobId ([guid]'b2000000-0000-0000-0000-0000000000ff')
+        Mock Get-VBRJob -MockWith { @($Job) }
+        Mock Get-VBRRestorePoint -MockWith { @($Point) }
+
+        Get-VhcJob | Out-Null
+
+        ($script:CapturedJobRows | Where-Object { $_.Name -eq 'Linux-01' }).OnDiskGB | Should -Be 40
+    }
+
+    It 'still resolves by name when the parent backup carries no JobId at all' {
+        $Job = script:New-FakeJob -Name 'Linux-01' -TypeToString 'Azure IaaS Backup'
+        $Point = script:New-FakeRestorePoint -Name 'vm01' -BackupId $script:IdBackupId1 -ApproxSize 60GB -BackupSize 40GB -ThrowOnGetSourceJob -BackupParentOrThisName 'Linux-01'
+        Mock Get-VBRJob -MockWith { @($Job) }
+        Mock Get-VBRRestorePoint -MockWith { @($Point) }
+
+        Get-VhcJob | Out-Null
+
+        ($script:CapturedJobRows | Where-Object { $_.Name -eq 'Linux-01' }).OnDiskGB | Should -Be 40
+    }
+
+    It 'applies the Superseded gate to an Id-resolved job that already has a tier-1 match' {
+        $Job = script:New-FakeJob -Name 'Job A' -TypeToString 'Azure IaaS Backup'
+        $Current = script:New-FakeRestorePoint -Name 'vm01' -BackupId $script:IdBackupId1 -ApproxSize 60GB -BackupSize 40GB -SourceJob $Job
+        $Old     = script:New-FakeRestorePoint -Name 'vm01' -BackupId $script:IdBackupId2 -ApproxSize 60GB -BackupSize 25GB -ThrowOnGetSourceJob -BackupParentOrThisName 'Job A (old name)' -BackupParentJobId $Job.Id
+        Mock Get-VBRJob -MockWith { @($Job) }
+        Mock Get-VBRRestorePoint -MockWith { @($Current, $Old) }
+
+        Get-VhcJob | Out-Null
+
+        ($script:CapturedJobRows | Where-Object { $_.Name -eq 'Job A' }).OnDiskGB | Should -Be 40
+        $Suppressed = @($script:VhcOrphanedSupersededCache.CandidateGroups | Where-Object { $_.Reason -eq 'Tier2Suppressed' })
+        $Suppressed | Should -HaveCount 1
+        $Suppressed[0].CurrentJobId | Should -Be $Job.Id.ToString()
+    }
+
+    It 'keeps a Backup Copy job''s current chain when its Id resolves it but the job already owns another chain through tier 1' {
+        # Same shape as the tier-3 case above, now with the Id populated: the
+        # Id says which job, not whether the chain is current, so the job's
+        # last backup still has to be allowed to confirm it.
+        $CopyJob = script:New-FakeJob -Name 'Copy E' -JobType 'SimpleBackupCopyPolicy' -TypeToString 'Backup Copy' -LastBackup ([PSCustomObject]@{ Name = 'Copy E (original name)' })
+        $OwnPoint = script:New-FakeRestorePoint -Name 'vm01' -BackupId $script:IdBackupId1 -ApproxSize 30GB -BackupSize 20GB -SourceJob $CopyJob
+        $ViaId    = script:New-FakeRestorePoint -Name 'vm02' -BackupId $script:IdBackupId2 -ApproxSize 60GB -BackupSize 40GB -SourceJob $script:CopyChild -BackupParentOrThisName 'Copy E (original name)' -BackupParentJobId $CopyJob.Id
+        Mock Get-VBRJob -MockWith { @($CopyJob) }
+        Mock Get-VBRRestorePoint -MockWith {
+            if ($null -eq $Backup) { @($OwnPoint, $ViaId) } else { @($ViaId) }
+        }
+
+        Get-VhcJob | Out-Null
+
+        ($script:CapturedJobRows | Where-Object { $_.Name -eq 'Copy E' }).OnDiskGB | Should -Be 60
+        @($script:VhcOrphanedSupersededCache.CandidateGroups | Where-Object { $_.Reason -in 'Tier2Suppressed', 'Unresolved' }) | Should -HaveCount 0
+    }
+
+    It 'still gates a name match on a Backup Copy job that already has a tier-1 match, even if its last backup lists the chain' {
+        # Only the Id route is exempted; a name match behaves as it did before #270.
+        $CopyJob  = script:New-FakeJob -Name 'Copy X' -JobType 'SimpleBackupCopyPolicy' -TypeToString 'Backup Copy' -LastBackup ([PSCustomObject]@{ Name = 'Copy X' })
+        $OwnPoint = script:New-FakeRestorePoint -Name 'vm01' -BackupId $script:IdBackupId1 -ApproxSize 30GB -BackupSize 20GB -SourceJob $CopyJob
+        $ByName   = script:New-FakeRestorePoint -Name 'vm02' -BackupId $script:IdBackupId2 -ApproxSize 60GB -BackupSize 40GB -SourceJob $script:CopyChild -BackupParentOrThisName 'Copy X'
+        Mock Get-VBRJob -MockWith { @($CopyJob) }
+        Mock Get-VBRRestorePoint -MockWith {
+            if ($null -eq $Backup) { @($OwnPoint, $ByName) } else { @($ByName) }
+        }
+
+        Get-VhcJob | Out-Null
+
+        ($script:CapturedJobRows | Where-Object { $_.Name -eq 'Copy X' }).OnDiskGB | Should -Be 20
+        @($script:VhcOrphanedSupersededCache.CandidateGroups | Where-Object { $_.Reason -eq 'Tier2Suppressed' }) | Should -HaveCount 1
+    }
+
+    It 'does not list any Backup Copy job''s last backup to rescue a group the gate suppressed on a non-Backup-Copy job' {
+        $Job      = script:New-FakeJob -Name 'Job A' -TypeToString 'Azure IaaS Backup'
+        $CopyJob  = script:New-FakeJob -Name 'Copy Z' -JobType 'SimpleBackupCopyPolicy' -TypeToString 'Backup Copy' -LastBackup ([PSCustomObject]@{ Name = 'Copy Z' })
+        $Current  = script:New-FakeRestorePoint -Name 'vm01' -BackupId $script:IdBackupId1 -ApproxSize 60GB -BackupSize 40GB -SourceJob $Job
+        $Old      = script:New-FakeRestorePoint -Name 'vm01' -BackupId $script:IdBackupId2 -ApproxSize 60GB -BackupSize 25GB -ThrowOnGetSourceJob -BackupParentOrThisName 'Job A (old name)' -BackupParentJobId $Job.Id
+        Mock Get-VBRJob -MockWith { @($Job, $CopyJob) }
+        Mock Get-VBRRestorePoint -MockWith { @($Current, $Old) }
+
+        Get-VhcJob | Out-Null
+
+        @($script:VhcOrphanedSupersededCache.CandidateGroups | Where-Object { $_.Reason -eq 'Tier2Suppressed' }) | Should -HaveCount 1
+        Should -Invoke Get-VBRRestorePoint -Times 0 -Exactly -ParameterFilter { $null -ne $Backup }
+    }
+
+    It 'does not move an Id-resolved chain to a different Backup Copy job whose last backup lists it' {
+        $CopyX = script:New-FakeJob -Name 'Copy X2' -JobType 'SimpleBackupCopyPolicy' -TypeToString 'Backup Copy' -LastBackup ([PSCustomObject]@{ Name = 'X' })
+        $CopyY = script:New-FakeJob -Name 'Copy Y2' -JobType 'SimpleBackupCopyPolicy' -TypeToString 'Backup Copy' -LastBackup ([PSCustomObject]@{ Name = 'Y' })
+        $OwnX    = script:New-FakeRestorePoint -Name 'vm01' -BackupId $script:IdBackupId1 -ApproxSize 30GB -BackupSize 20GB -SourceJob $CopyX
+        $Stray   = script:New-FakeRestorePoint -Name 'vm02' -BackupId $script:IdBackupId2 -ApproxSize 60GB -BackupSize 40GB -SourceJob $script:CopyChild -BackupParentOrThisName 'Old' -BackupParentJobId $CopyX.Id
+        Mock Get-VBRJob -MockWith { @($CopyX, $CopyY) }
+        Mock Get-VBRRestorePoint -MockWith {
+            if ($null -eq $Backup) { @($OwnX, $Stray) }
+            elseif ($Backup.Name -eq 'Y') { @($Stray) }
+            else { @($OwnX) }
+        }
+
+        Get-VhcJob | Out-Null
+
+        ($script:CapturedJobRows | Where-Object { $_.Name -eq 'Copy Y2' }).OnDiskGB | Should -Be 0
+        ($script:CapturedJobRows | Where-Object { $_.Name -eq 'Copy X2' }).OnDiskGB | Should -Be 20
+        @($script:VhcOrphanedSupersededCache.CandidateGroups | Where-Object { $_.Reason -eq 'Tier2Suppressed' -and $_.CurrentJobId -eq $CopyX.Id.ToString() }) | Should -HaveCount 1
+    }
+
+    It 'does not list a Backup Copy job''s last backup when every unresolved chain was placed by Id' {
+        $CopyJob = script:New-FakeJob -Name 'Copy B' -JobType 'SimpleBackupCopyPolicy' -TypeToString 'Backup Copy' -LastBackup ([PSCustomObject]@{ Name = 'Copy B' })
+        $Point = script:New-FakeRestorePoint -Name 'vm01' -BackupId $script:IdBackupId1 -ApproxSize 60GB -BackupSize 40GB -SourceJob $script:CopyChild -BackupParentOrThisName 'Copy B (original name)' -BackupParentJobId $CopyJob.Id
+        Mock Get-VBRJob -MockWith { @($CopyJob) }
+        Mock Get-VBRRestorePoint -MockWith { @($Point) }
+
+        Get-VhcJob | Out-Null
+
+        ($script:CapturedJobRows | Where-Object { $_.Name -eq 'Copy B' }).OnDiskGB | Should -Be 40
+        Should -Invoke Get-VBRRestorePoint -Times 0 -Exactly -ParameterFilter { $null -ne $Backup }
     }
 }
 

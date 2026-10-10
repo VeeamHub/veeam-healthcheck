@@ -133,24 +133,56 @@ for the same VMs — genuinely undecidable from the available VBR API
 surface, since the HPE Morpheus case proves a name match alone can't tell
 the two scenarios apart.
 
+**Tier 2, Id first (added for
+[#270](https://github.com/VeeamHub/veeam-healthcheck/issues/270)):** the
+same `GetBackup().GetParentOrThis()` call also carries the owning job's
+`JobId`. For a group tier 1 left unresolved, a non-zero `JobId` that is in
+`$Jobs` is tried before the name, so a renamed job is found by identity and a
+different job that now carries the old name cannot take its chain. An
+all-zero `JobId` (a chain whose original job record was replaced by a
+same-named job) or one not in `$Jobs` is not evidence against a name match
+and falls through to the name; the name is skipped only when the Id already
+resolved the group. The gate above applies to the result whichever route
+found the job. The Id says which job, not whether the chain is that job's
+current one, so a group the Id route placed on a Backup Copy job that the
+gate would suppress is still accepted when that job's last backup lists its
+`BackupId` (tier 3's check). A name match gets no such exemption. Not
+confirmed for Nutanix, Proxmox, HPE Morpheus or other plug-in job types,
+which is why the name fallback stays.
+
+Two consequences of the Id route are accepted. A renamed job's older chain
+that still records the job's `JobId` is now attributed to it instead of
+staying unresolved: Superseded when the job already has a tier-1 match,
+otherwise counted. For a Backup Copy job with no tier-1 match (the usual
+case, since its VM chains resolve in tier 1 to per-source children outside
+`$Jobs`) the Id route is ungated, so an older backup of that job that still
+carries its `JobId` is counted toward its size, as a never-renamed job's
+older chain already is through the name route. Confirming such chains
+against the job's last backup was considered and left out until a lab shows
+the case.
+
 **Tier 3 — Backup Copy last backup, by `BackupId` (added for
 [#268](https://github.com/VeeamHub/veeam-healthcheck/issues/268)):** for
-restore points still unresolved after tier 2, and only for Backup Copy jobs
+restore points still unresolved after the Id and name routes, and only for Backup Copy jobs
 (`SimpleBackupCopyPolicy`, `BackupSync`), match the group's `BackupId`
 against the restore points of each such job's `GetLastBackup()`. Tier 2
 cannot resolve a Backup Copy chain once the job has been renamed, because
 the backup keeps the name it was created under and the per-source child
 has no Id route back to the policy (see tier 1). Which backup a job
 currently writes to does not change on a rename, so it is the one Id-based
-link left. Tier 3 only sees groups tiers 1 and 2 left unresolved, so it
+link left. Tier 3 only sees groups tiers 1 and 2 left unresolved (or that
+the Id route placed on a Backup Copy job the gate would suppress), so it
 cannot take a chain another job already owns, and unlike tier 2 it is not
 gated on the job having no tier-1 match: membership in the job's own last
 backup is identity, not a display-name coincidence. It is built lazily,
-once, only when a group is still unresolved. A chain from an older backup
+once, only when a group needs it. A chain from an older backup
 the job no longer writes to is not in its last backup and stays unresolved,
-so it is still reported as Orphaned. Tier 3 runs only when tier 2 found no
-name match, so if another job now carries the backup's old name, tier 2 wins
-and the chain is not rescued; that is a known limit.
+so it is still reported as Orphaned, unless its backup still records the
+job's `JobId` and the Id route places it (see above). Tier 3 runs only when the Id and name
+routes found no job (or the Id route found a Backup Copy job the gate would
+suppress), so it never moves
+a chain to a different job than they chose. The Id route resolves the case
+where another job now carries the backup's old name.
 
 The same last backup is used for a Backup Copy job's source size. The sweep
 hands the agent-sourced chains to the per-source worker job that owns them,
