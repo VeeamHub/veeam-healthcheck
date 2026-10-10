@@ -103,3 +103,114 @@ Describe 'GVSR-1: Session CSV includes JobId/PolicyName/PolicyTag columns' {
         $rows[0].JobId      | Should -Be '68621a52-2a9c-4fc5-a3f4-acc1c2caa44e'
     }
 }
+
+# ---------------------------------------------------------------------------
+# GVSR-2  Issue #224 follow-up: the JobId -> current-name map includes jobs found
+#         by the shared discovery step, so a renamed job that Get-VBRJob does not
+#         return is labelled with its current name. Backup Copy workers and
+#         standalone agent jobs stay out of the map.
+# ---------------------------------------------------------------------------
+Describe 'GVSR-2: Rename map uses the shared job discovery (#224)' {
+
+    BeforeEach {
+        Mock Write-LogFile -MockWith { }
+        Mock Get-VBRJob               -MockWith { @() }
+        Mock Get-VBRComputerBackupJob -MockWith { @() }
+        Mock Get-VBREPJob             -MockWith { @() }
+        Mock Get-VhciSessionLogWithTimeout -MockWith { @() }
+
+        $script:HiddenId  = [guid]::NewGuid()
+        $script:HiddenJob = [pscustomobject]@{ Id = $script:HiddenId; Name = 'CurrentName'; JobType = 'VmbApiPolicyTempJob' }
+        # A session recorded under the job's OLD name; the task carries that name too.
+        $script:OldNameSession = [pscustomobject]@{
+            Name = 'OldName'; JobId = $script:HiddenId
+            Info = [pscustomobject]@{ PolicyName = ''; PolicyTag = [guid]::Empty }
+        }
+        $script:Task = [pscustomobject]@{
+            Name = 'vm01'; Status = 'Success'; JobName = 'OldName'
+            ObjectPlatform = [pscustomobject]@{ IsEpAgentPlatform = $false; Platform = 'VMware' }
+            JobSess = [pscustomobject]@{
+                IsRetryMode = $false
+                CreationTime = (Get-Date).AddDays(-1)
+                BackupStats = [pscustomobject]@{ BackupSize = 100; DataSize = 200; DedupRatio = 1; CompressRatio = 1 }
+                Progress = [pscustomobject]@{
+                    TransferedSize = 0; ReadSize = 0; Duration = [timespan]::FromMinutes(5)
+                    BottleneckInfo = [pscustomobject]@{ Source=0; Proxy=0; Network=0; Target=0; Bottleneck=0 }
+                }
+                Info = [pscustomobject]@{ SessionAlgorithm = 1 }
+            }
+            WorkDetails = [pscustomobject]@{ TaskAlgorithm = 'Increment'; WorkDuration = [timespan]::FromMinutes(5) }
+        }
+        Mock Get-VBRTaskSession -RemoveParameterType 'Session' -MockWith { @($script:Task) }
+        $script:Discovery = [pscustomobject]@{
+            Jobs                = @($script:HiddenJob)
+            VbrJobs             = @()
+            StandaloneAgentJobs = @()
+            DiscoveredJobs      = @($script:HiddenJob)
+        }
+        function script:Get-Row { @(Import-Csv -Path (Join-Path $script:tempDir 'VeeamSessionReport.csv'))[0] }
+    }
+
+    It 'renames a session of a discovered job to the job''s current name' {
+        Get-VhcSessionReport -BackupSessions @($script:OldNameSession) -JobDiscovery $script:Discovery
+        (script:Get-Row).JobName | Should -Be 'CurrentName'
+    }
+
+    It 'does not call Get-VBRJob again when discovery is supplied' {
+        Get-VhcSessionReport -BackupSessions @($script:OldNameSession) -JobDiscovery $script:Discovery
+        Should -Invoke Get-VBRJob -Times 0 -Exactly
+    }
+
+    It 'still uses Get-VBRJob and the old behaviour when no discovery is supplied' {
+        Mock Get-VBRJob -MockWith { @($script:HiddenJob) }
+        Get-VhcSessionReport -BackupSessions @($script:OldNameSession)
+        Should -Invoke Get-VBRJob -Times 1 -Exactly
+        (script:Get-Row).JobName | Should -Be 'CurrentName'
+    }
+
+    It 'a job visible to Get-VBRJob keeps its current name and is not affected by discovery' {
+        $visId = [guid]::NewGuid()
+        $vis = [pscustomobject]@{ Id = $visId; Name = 'VisibleCurrent'; JobType = 'Backup' }
+        $session = [pscustomobject]@{ Name = 'VisibleOld'; JobId = $visId; Info = [pscustomobject]@{ PolicyName = ''; PolicyTag = [guid]::Empty } }
+        $script:Task.JobName = 'VisibleOld'
+        $disc = [pscustomobject]@{ Jobs = @($vis, $script:HiddenJob); VbrJobs = @($vis); StandaloneAgentJobs = @(); DiscoveredJobs = @($script:HiddenJob) }
+        Get-VhcSessionReport -BackupSessions @($session) -JobDiscovery $disc
+        (script:Get-Row).JobName | Should -Be 'VisibleCurrent'
+    }
+
+    It 'leaves a Backup Copy worker''s self-referencing child session unchanged (PolicyName stays empty)' {
+        # ADR 0030: a per-object child reports PolicyTag == its own JobId and an
+        # empty PolicyName. If the worker's Id were a map key, PolicyName would be
+        # rewritten to the worker's Name and the CSV would change on healthy servers.
+        $workerId = [guid]::NewGuid()
+        $worker   = [pscustomobject]@{ Id = $workerId; Name = 'WorkerRenamedName'; JobType = 'SimpleBackupCopyParentWorker' }
+        $session  = [pscustomobject]@{
+            Name = 'Parent\Child Backup'; JobId = $workerId
+            Info = [pscustomobject]@{ PolicyName = ''; PolicyTag = $workerId }
+        }
+        $script:Task.JobName = 'Parent\Child Backup'
+        $disc = [pscustomobject]@{ Jobs = @($worker); VbrJobs = @(); StandaloneAgentJobs = @(); DiscoveredJobs = @($worker) }
+        Get-VhcSessionReport -BackupSessions @($session) -JobDiscovery $disc
+        $row = script:Get-Row
+        $row.PolicyName | Should -Be ''
+        $row.JobName    | Should -Be 'Parent\Child Backup'
+    }
+
+    It 'does not map standalone agent jobs' {
+        $saId = [guid]::NewGuid()
+        $sa   = [pscustomobject]@{ Id = $saId; Name = 'StandaloneCurrent'; JobType = 'EpAgentBackup' }
+        $session = [pscustomobject]@{ Name = 'StandaloneOld'; JobId = $saId; Info = [pscustomobject]@{ PolicyName = ''; PolicyTag = [guid]::Empty } }
+        $script:Task.JobName = 'StandaloneOld'
+        $disc = [pscustomobject]@{ Jobs = @($sa); VbrJobs = @(); StandaloneAgentJobs = @($sa); DiscoveredJobs = @() }
+        Get-VhcSessionReport -BackupSessions @($session) -JobDiscovery $disc
+        (script:Get-Row).JobName | Should -Be 'StandaloneOld'
+    }
+
+    It 'with a discovery object that has no jobs, uses an empty map and does not fall back to Get-VBRJob' {
+        Mock Get-VBRJob -MockWith { @($script:HiddenJob) }
+        $disc = [pscustomobject]@{ Jobs = $null; VbrJobs = $null; StandaloneAgentJobs = @(); DiscoveredJobs = @($null) }
+        { Get-VhcSessionReport -BackupSessions @($script:OldNameSession) -JobDiscovery $disc } | Should -Not -Throw
+        Should -Invoke Get-VBRJob -Times 0 -Exactly
+        (script:Get-Row).JobName | Should -Be 'OldName'
+    }
+}

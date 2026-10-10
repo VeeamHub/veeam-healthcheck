@@ -44,6 +44,10 @@ checksums, and scan results.
 
 ### Fixed
 
+- A renamed job that `Get-VBRJob` does not return (for example a Nutanix AHV job on some VBR 12.3.x servers) is now
+  listed under its current name in the session report and Job Session Summary, matching its Jobs entry, instead of
+  the name it had when its older sessions ran. Follows
+  [#224](https://github.com/VeeamHub/veeam-healthcheck/issues/224).
 - Session history, success rate and size data are now collected for jobs that `Get-VBRJob` does not return
   (for example Nutanix AHV jobs on some VBR 12.3.x servers). The session collector previously never queried
   them, so they had no rows in the session report. Job discovery now runs once and is shared by the job

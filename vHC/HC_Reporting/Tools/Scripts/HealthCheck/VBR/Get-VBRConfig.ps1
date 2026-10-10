@@ -274,7 +274,7 @@ $collectorResults.Add($backupSessionsResult)
 # Generate VeeamSessionReport.csv from the sessions returned above.
 # Uses Get-VBRTaskSession for all session types (VM, Backup Copy, agent). See ADR 0004, 0012.
 $collectorResults.Add((Invoke-VhcCollector -Name 'SessionReport' -Action {
-    Get-VhcSessionReport -BackupSessions $backupSessionsResult.Output
+    Get-VhcSessionReport -BackupSessions $backupSessionsResult.Output -JobDiscovery $jobDiscoveryResult.Output
 }))
 # ---------------------------------------------------------------------------
 

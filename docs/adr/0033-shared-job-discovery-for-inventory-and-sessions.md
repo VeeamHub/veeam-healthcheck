@@ -36,6 +36,16 @@ The result separates the parts, because the two consumers need different sets:
 | `DiscoveredJobs` | tier B and tier C additions only | `Get-VhcBackupSessions` |
 | `StandaloneAgentJobs` | standalone agent jobs | `Get-VhcJob` (via `Jobs`) only |
 
+`Get-VhcSessionReport` also receives the result: its `VbrJobs` and
+`DiscoveredJobs` replace its own `Get-VBRJob` call when it builds the JobId to
+current-name map, so a renamed job that `Get-VBRJob` does not return is
+labelled with its current name. Backup Copy per-source workers
+(`SimpleBackupCopyParentWorker`) and standalone agent jobs are left out of the
+map. A worker's Id is the `PolicyTag` of its self-referencing child sessions
+(ADR 0030), so mapping it would rewrite those sessions' `PolicyName` and change
+the CSV on servers where nothing is hidden. The agent and EP job lookups there
+still run.
+
 `Get-VhcBackupSessions` queries `VbrJobs` + `DiscoveredJobs`. Standalone agent
 jobs stay out of the session path: it has never queried them, and adding them
 would change session output on environments that never had the #224 gap.
