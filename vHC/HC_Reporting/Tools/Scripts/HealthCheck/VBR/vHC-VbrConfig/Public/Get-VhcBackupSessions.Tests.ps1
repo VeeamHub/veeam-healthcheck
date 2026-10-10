@@ -250,9 +250,28 @@ Describe 'ISC-8: Discovered jobs are queried for sessions (#224)' {
         Mock Get-VBRComputerBackupJob -MockWith { @($script:AgentJob) }
         Mock Get-VBREPJob             -MockWith { @() }
         Mock Get-VhciJobSessions      -MockWith { @() }
+        $script:StandaloneJob = script:New-FakeJob 'StandaloneAgent'
         $script:Discovery = [PSCustomObject]@{
-            VbrJobs        = @($script:VisibleJob)
-            DiscoveredJobs = @($script:HiddenJob)
+            VbrJobs             = @($script:VisibleJob)
+            StandaloneAgentJobs = @($script:StandaloneJob)
+            DiscoveredJobs      = @($script:HiddenJob)
+        }
+    }
+
+    It 'does not query standalone agent jobs (the session path has never queried them)' {
+        $null = @(Get-VhcBackupSessions -ReportInterval 7 -JobDiscovery $script:Discovery)
+        Should -Invoke Get-VhciJobSessions -Times 1 -Exactly -ParameterFilter {
+            $PathLabel -eq 'VM/BackupCopy' -and
+            @($Jobs | Where-Object { $_.Id -eq $script:StandaloneJob.Id }).Count -eq 0
+        }
+    }
+
+    It 'tolerates null VbrJobs and null elements in a discovery object' {
+        $script:Discovery.VbrJobs        = $null
+        $script:Discovery.DiscoveredJobs = @($script:HiddenJob, $null)
+        $null = @(Get-VhcBackupSessions -ReportInterval 7 -JobDiscovery $script:Discovery)
+        Should -Invoke Get-VhciJobSessions -Times 1 -Exactly -ParameterFilter {
+            $PathLabel -eq 'VM/BackupCopy' -and @($Jobs).Count -eq 1 -and $Jobs[0].Id -eq $script:HiddenJob.Id
         }
     }
 

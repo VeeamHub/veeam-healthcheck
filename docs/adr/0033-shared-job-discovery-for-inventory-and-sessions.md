@@ -66,6 +66,13 @@ passed (`Get-VhcJob` runs discovery itself; `Get-VhcBackupSessions` calls
 * **Neutral:** `_CollectionManifest.csv` gains a `JobDiscovery` row. Discovery
   errors are still attributed to the `Jobs` collector, so a `Get-VBRJob`
   failure fails `Jobs` exactly as before.
+* **Neutral:** only the fast path is affected. The slow path ignores the job
+  list and fetches every session with one unfiltered cmdlet call, so it never
+  had the #224 gap. Both lab collections used the fast path.
+* **Neutral:** if `Get-VBRJob` fails inside discovery, the collector still
+  returns a result with an empty `VbrJobs`, and the session collector no longer
+  retries `Get-VBRJob` itself as it did before. Such failures are usually
+  persistent, and the error is still recorded under `Jobs`.
 * **Bad:** a job found by tier B/C that is also an agent job but missing from
   `Get-VBRComputerBackupJob` would be queried on the VM/BackupCopy path. Agent
   Ids that both lists contain are subtracted as before.

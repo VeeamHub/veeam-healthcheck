@@ -56,7 +56,7 @@ function Get-VhcJobDiscovery {
     # Standalone (unmanaged) agent jobs are not returned by Get-VBRJob.
     # Enumerate them via the backup objects they own; .GetJob() returns
     # a CBackupJob with the same shape Get-VBRJob produces, so they flow
-    # through the projection below unchanged.
+    # through Get-VhcJob's per-job projection unchanged.
     try {
         $standaloneBackups = @(Get-VBRBackup -WarningAction SilentlyContinue |
             Where-Object { $_.IsAgentStandaloneJob -eq $true })
@@ -86,8 +86,8 @@ function Get-VhcJobDiscovery {
     # One HashSet, not one per tier: a job either tier discovers must never
     # be merged twice, and a job tier B already found must not be
     # re-discovered by tier C. OrdinalIgnoreCase to stay consistent with
-    # $KnownJobIds further down in this function, which performs the same
-    # kind of Id membership check against the same underlying $Jobs Ids.
+    # $KnownJobIds in Get-VhcJob.ps1, which performs the same kind of Id
+    # membership check against the same underlying $Jobs Ids.
     $KnownJobIdSet = [System.Collections.Generic.HashSet[string]]::new([System.StringComparer]::OrdinalIgnoreCase)
     foreach ($ExistingJob in @($Jobs)) {
         if ($null -ne $ExistingJob -and $null -ne $ExistingJob.Id) {
@@ -155,7 +155,7 @@ function Get-VhcJobDiscovery {
             if ($null -eq $ResolvedJob -or $null -eq $ResolvedJob.Id) { continue }
 
             # Walk up to the parent job, mirroring the sweep's own Tier 1
-            # resolution further down in this file (GetSourceJob() then
+            # resolution in Get-VhcJob.ps1 (GetSourceJob() then
             # GetParentJob()) - .GetJob() can resolve to a per-machine
             # child job object (an agent policy child, or a Backup Copy
             # per-object child), and without this walk-up tier B would add
@@ -204,8 +204,8 @@ function Get-VhcJobDiscovery {
     # platform types, in case that also turns out to differ on 12.3.x.
     #
     # Uses .GetParent(), NOT .GetParentJob() - two different methods on
-    # the same type. .GetParentJob() is what the sweep logic further down
-    # in this file already calls (Tier 1 restore-point resolution) -
+    # the same type. .GetParentJob() is what the sweep logic in
+    # Get-VhcJob.ps1 already calls (Tier 1 restore-point resolution) -
     # unrelated to this block, do not confuse the two. .GetParent()
     # resolves to this class's explicit IEpModeDetectable.GetParent()
     # implementation and was confirmed via a live Get-Member dump to
