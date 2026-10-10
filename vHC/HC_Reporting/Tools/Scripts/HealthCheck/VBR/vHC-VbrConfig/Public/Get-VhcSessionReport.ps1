@@ -20,11 +20,16 @@ function Get-VhcSessionReport {
         Live Veeam backup session objects returned by Get-VhcBackupSessions. Pass $null or an
         empty array to produce a descriptive error rather than a silent empty CSV.
     .Parameter JobDiscovery
-        Result of Get-VhcJobDiscovery (issue #224). Its Jobs replace this
-        function's own Get-VBRJob call when building the JobId -> current-name
-        map, so a renamed job that Get-VBRJob does not return still collapses
-        onto one row. The agent and EP job lookups below still run. When
-        omitted or $null, this function calls Get-VBRJob itself, as before.
+        Result of Get-VhcJobDiscovery (issue #224). Its VbrJobs and
+        DiscoveredJobs replace this function's own Get-VBRJob call when
+        building the JobId -> current-name map, so a renamed job that
+        Get-VBRJob does not return is labelled with its current name. Backup
+        Copy per-source workers (SimpleBackupCopyParentWorker) and standalone
+        agent jobs are left out of the map: they are not jobs this function
+        has ever mapped, and mapping a worker would rewrite the PolicyName of
+        its child sessions. The agent and EP job lookups below still run.
+        When omitted or $null, this function calls Get-VBRJob itself, as
+        before.
     #>
     [CmdletBinding()]
     param (
@@ -51,8 +56,11 @@ function Get-VhcSessionReport {
     # row, letting the C# rollup aggregate them as one job.
     $vbrJobs = @()
     if ($null -ne $JobDiscovery) {
-        # Discovery already ran Get-VBRJob plus the tier B/C fallbacks.
-        $vbrJobs = @(@($JobDiscovery.Jobs) | Where-Object { $null -ne $_ })
+        # Discovery already ran Get-VBRJob plus the tier B/C fallbacks. Same
+        # job set the session collector queries (ADR 0033), minus Backup Copy
+        # per-source workers (see the .Parameter note above).
+        $vbrJobs = @(@($JobDiscovery.VbrJobs) + @($JobDiscovery.DiscoveredJobs) |
+            Where-Object { $null -ne $_ -and [string]$_.JobType -ne 'SimpleBackupCopyParentWorker' })
     } else {
         try {
             $vbrJobs = @(Get-VBRJob -ErrorAction SilentlyContinue)
