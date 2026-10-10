@@ -36,6 +36,11 @@ The result separates the parts, because the two consumers need different sets:
 | `DiscoveredJobs` | tier B and tier C additions only | `Get-VhcBackupSessions` |
 | `StandaloneAgentJobs` | standalone agent jobs | `Get-VhcJob` (via `Jobs`) only |
 
+`Get-VhcSessionReport` also receives the result: its `Jobs` replace its own
+`Get-VBRJob` call when it builds the JobId to current-name map that collapses
+a renamed job's old and new sessions onto one row. The agent and EP job
+lookups there still run, so the map can only gain entries.
+
 `Get-VhcBackupSessions` queries `VbrJobs` + `DiscoveredJobs`. Standalone agent
 jobs stay out of the session path: it has never queried them, and adding them
 would change session output on environments that never had the #224 gap.
