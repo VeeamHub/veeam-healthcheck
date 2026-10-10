@@ -323,3 +323,43 @@ Describe 'GJS-8: Empty $Jobs + slow path still invokes the scriptblock' {
         $result.Count | Should -Be 1
     }
 }
+
+# ---------------------------------------------------------------------------
+# GJS-9  Fast path returns each session once even when two queried jobs return
+#        it (issue #224: a Backup Copy worker found by tier B/C is queried
+#        alongside its parent, and the parent's query already returns the
+#        per-machine child sessions - ADR 0018)
+# ---------------------------------------------------------------------------
+Describe 'GJS-9: A session returned for more than one job is collected once' {
+
+    BeforeEach {
+        Mock Write-LogFile -MockWith { }
+        Mock Test-VhciCBackupSessionFastPath -MockWith { $true }
+        $script:SharedId = [guid]::NewGuid()
+        $script:Shared   = [PSCustomObject]@{ Id = $script:SharedId; CreationTime = (Get-Date).AddHours(-1); JobName = 'Parent\Child' }
+        $script:Own      = [PSCustomObject]@{ Id = [guid]::NewGuid(); CreationTime = (Get-Date).AddHours(-2); JobName = 'Worker' }
+        $script:ParentJob = script:New-FakeJob 'Parent'
+        $script:WorkerJob = script:New-FakeJob 'Parent\Child'
+        Mock Invoke-VhciCBackupSessionFetch -MockWith {
+            if ($JobId -eq $script:ParentJob.Id) { return @($script:Shared) }
+            return @($script:Shared, $script:Own)
+        }
+    }
+
+    It 'returns the shared session once and keeps the session only one job returned' {
+        $r = @(Get-VhciJobSessions -Jobs @($script:ParentJob, $script:WorkerJob) -Since (Get-Date).AddDays(-7) `
+            -SlowPathCommand { @() } -PathLabel 'VM/BackupCopy')
+        $r.Count | Should -Be 2
+        @($r | Where-Object { $_.Id -eq $script:SharedId }).Count | Should -Be 1
+        @($r | Where-Object { $_.Id -eq $script:Own.Id }).Count | Should -Be 1
+    }
+
+    It 'keeps sessions that have no Id (cannot be compared, so never dropped)' {
+        $a = [PSCustomObject]@{ CreationTime = (Get-Date).AddHours(-1); JobName = 'A' }
+        $b = [PSCustomObject]@{ CreationTime = (Get-Date).AddHours(-1); JobName = 'B' }
+        Mock Invoke-VhciCBackupSessionFetch -MockWith { @($a, $b) }
+        $r = @(Get-VhciJobSessions -Jobs @($script:ParentJob, $script:WorkerJob) -Since (Get-Date).AddDays(-7) `
+            -SlowPathCommand { @() } -PathLabel 'VM/BackupCopy')
+        $r.Count | Should -Be 4
+    }
+}

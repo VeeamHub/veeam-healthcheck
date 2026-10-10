@@ -44,6 +44,10 @@ checksums, and scan results.
 
 ### Fixed
 
+- Session history, success rate and size data are now collected for jobs that `Get-VBRJob` does not return
+  (for example Nutanix AHV jobs on some VBR 12.3.x servers). The session collector previously never queried
+  them, so they had no rows in the session report. Job discovery now runs once and is shared by the job
+  inventory and the session collector. Fixes [#224](https://github.com/VeeamHub/veeam-healthcheck/issues/224).
 - A Backup Copy job that was renamed after it was created no longer loses the sizing of its VM-sourced chains
   (unless another job now carries its old name): the restore-point sweep now attributes them to the job
   through its last backup, so the job's on-disk and source size are no longer understated and the chains are

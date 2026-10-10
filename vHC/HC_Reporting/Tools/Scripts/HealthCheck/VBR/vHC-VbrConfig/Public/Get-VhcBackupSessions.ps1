@@ -29,6 +29,14 @@ function Get-VhcBackupSessions {
     .Parameter ReportInterval
         Number of days back to collect sessions for. Matches the -ReportInterval
         parameter passed to Get-VBRConfig.ps1.
+    .Parameter JobDiscovery
+        Result object from Get-VhcJobDiscovery (issue #224). Its VbrJobs and
+        DiscoveredJobs are queried for sessions, so jobs Get-VBRJob does not
+        return (e.g. Nutanix AHV on VBR 12.3.x) are no longer skipped.
+        Standalone agent jobs in the result are deliberately not used here:
+        they are not queried today and are left out to keep this path's
+        behaviour unchanged. When omitted or $null, this function calls
+        Get-VBRJob itself, as it did before the parameter existed.
     .Outputs
         [object[]] -- mixed array of Veeam backup session objects.
     .NOTES
@@ -39,7 +47,10 @@ function Get-VhcBackupSessions {
     #>
     [CmdletBinding()]
     param (
-        [Parameter(Mandatory)] [int] $ReportInterval
+        [Parameter(Mandatory)] [int] $ReportInterval,
+
+        [Parameter(Mandatory = $false)]
+        [object] $JobDiscovery = $null
     )
 
     Write-LogFile "Fetching backup sessions for the last $ReportInterval days..."
@@ -50,10 +61,16 @@ function Get-VhcBackupSessions {
     # not loaded). Wrap in try/catch so a missing dependency degrades to
     # an empty job list instead of throwing out of this function.
     $jobs = @()
-    try {
-        $jobs = @(Get-VBRJob -ErrorAction SilentlyContinue)
-    } catch {
-        Write-LogFile "Get-VBRJob unavailable: $($_.Exception.Message)" -LogLevel 'WARNING'
+    if ($null -ne $JobDiscovery) {
+        # The shared discovery step already ran Get-VBRJob plus the tier B/C
+        # fallbacks, so Get-VBRJob is not called a second time here.
+        $jobs = @(@($JobDiscovery.VbrJobs) + @($JobDiscovery.DiscoveredJobs) | Where-Object { $null -ne $_ })
+    } else {
+        try {
+            $jobs = @(Get-VBRJob -ErrorAction SilentlyContinue)
+        } catch {
+            Write-LogFile "Get-VBRJob unavailable: $($_.Exception.Message)" -LogLevel 'WARNING'
+        }
     }
 
     $agentJobs = @()

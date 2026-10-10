@@ -409,6 +409,7 @@ BeforeAll {
     # Dot-source Write-LogFile then the function under test.
     $moduleRoot = Split-Path -Parent $PSScriptRoot
     . (Join-Path $moduleRoot 'Public/Write-LogFile.ps1')
+    . (Join-Path $moduleRoot 'Public/Get-VhcJobDiscovery.ps1')
     . $PSCommandPath.Replace('.Tests.ps1', '.ps1')
 }
 
@@ -2434,5 +2435,51 @@ Describe 'Tier C: version gate (issue #222)' {
     It 'does not invoke the core-job-fetch function when VBRVersion is 13 or above' {
         Get-VhcJob -VBRVersion 13
         Should -Invoke Invoke-VhciCBackupJobFetch -Times 0 -Exactly
+    }
+}
+
+# ---------------------------------------------------------------------------
+# Shared discovery (issue #224): the orchestrator runs Get-VhcJobDiscovery once
+# and hands the result to Get-VhcJob, which must use it instead of discovering
+# a second time.
+# ---------------------------------------------------------------------------
+Describe 'Shared job discovery (issue #224)' {
+
+    BeforeEach {
+        Mock Write-LogFile                  -MockWith { }
+        Mock Get-VBRJob                     -MockWith { @() }
+        Mock Get-VBRBackup                  -MockWith { @() }
+        Mock Get-VBRConfigurationBackupJob  -MockWith { $null }
+        Mock Invoke-VhciJobSubCollectors    -MockWith { }
+        Mock Export-VhciCsv                 -MockWith { }
+        Mock Add-VhciModuleError            -MockWith { }
+        Mock Invoke-VhciCBackupJobFetch     -MockWith { @() }
+        $script:SharedJob = script:New-FakeJob -Name 'SharedDiscoveryJob'
+        $script:Shared = [PSCustomObject]@{
+            Jobs                = @($script:SharedJob)
+            VbrJobs             = @()
+            StandaloneAgentJobs = @()
+            DiscoveredJobs      = @($script:SharedJob)
+        }
+    }
+
+    It 'hands the supplied discovery jobs to the sub-collectors' {
+        Get-VhcJob -JobDiscovery $script:Shared
+        Should -Invoke Invoke-VhciJobSubCollectors -Times 1 -Exactly -ParameterFilter {
+            @($Jobs).Count -eq 1 -and $Jobs[0].Id -eq $script:SharedJob.Id
+        }
+    }
+
+    It 'does not rediscover when discovery is supplied' {
+        Get-VhcJob -JobDiscovery $script:Shared
+        Should -Invoke Get-VBRJob -Times 0 -Exactly
+        Should -Invoke Get-VBRBackup -Times 0 -Exactly
+        Should -Invoke Invoke-VhciCBackupJobFetch -Times 0 -Exactly
+    }
+
+    It 'runs discovery itself when none is supplied (unchanged standalone behaviour)' {
+        Get-VhcJob -VBRVersion 12
+        Should -Invoke Get-VBRJob -Times 1 -Exactly
+        Should -Invoke Invoke-VhciCBackupJobFetch -Times 1 -Exactly
     }
 }
