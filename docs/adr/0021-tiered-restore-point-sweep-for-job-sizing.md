@@ -133,6 +133,33 @@ for the same VMs — genuinely undecidable from the available VBR API
 surface, since the HPE Morpheus case proves a name match alone can't tell
 the two scenarios apart.
 
+**Tier 3 — Backup Copy last backup, by `BackupId` (added for
+[#268](https://github.com/VeeamHub/veeam-healthcheck/issues/268)):** for
+restore points still unresolved after tier 2, and only for Backup Copy jobs
+(`SimpleBackupCopyPolicy`, `BackupSync`), match the group's `BackupId`
+against the restore points of each such job's `GetLastBackup()`. Tier 2
+cannot resolve a Backup Copy chain once the job has been renamed, because
+the backup keeps the name it was created under and the per-source child
+has no Id route back to the policy (see tier 1). Which backup a job
+currently writes to does not change on a rename, so it is the one Id-based
+link left. Tier 3 only sees groups tiers 1 and 2 left unresolved, so it
+cannot take a chain another job already owns, and unlike tier 2 it is not
+gated on the job having no tier-1 match: membership in the job's own last
+backup is identity, not a display-name coincidence. It is built lazily,
+once, only when a group is still unresolved. A chain from an older backup
+the job no longer writes to is not in its last backup and stays unresolved,
+so it is still reported as Orphaned. Tier 3 runs only when tier 2 found no
+name match, so if another job now carries the backup's old name, tier 2 wins
+and the chain is not rescued; that is a known limit.
+
+The same last backup is used for a Backup Copy job's source size. The sweep
+hands the agent-sourced chains to the per-source worker job that owns them,
+so the parent's own restore points cover only its VM-sourced chains. For the
+source size only, the worker-owned restore points whose `BackupId` is in the
+parent's last backup are added before the latest point per `ObjectId` is
+taken, so an object that appears in both chains is counted once. On-disk size
+is not touched here; the report adds the worker's on-disk size to the parent.
+
 **Snapshot / Replica — routed around the sweep entirely:** `Snapshot`-type
 restore points never resolve via `GetSourceJob()` (100% throw rate,
 5,461/5,461 in the on-prem lab — exceptions at this scale measured at ~43s
