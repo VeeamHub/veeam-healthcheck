@@ -17,8 +17,7 @@ namespace VeeamHealthCheck.Functions.ManageServers
     // Membership only - this dialog never changes the active server selection. The
     // spike's version returned the selected server as its dialog result; this one
     // returns true if changes were committed and false otherwise, and leaves the
-    // caller to repopulate its own picker. That matters because the selection is read
-    // by BOTH tabs (monitorQuickSetupBtn_Click reads it too).
+    // caller to repopulate its own picker.
     public partial class ManageServersDialog : Window
     {
         private readonly ServerListEditor _editor;

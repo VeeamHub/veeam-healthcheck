@@ -12,7 +12,7 @@ MIT License
         WindowStartupLocation="CenterScreen"
         CanResize="True">
 
-    <Grid RowDefinitions="Auto,Auto,*,Auto">
+    <Grid RowDefinitions="Auto,*,Auto">
 
         <!-- Header row -->
         <Grid Grid.Row="0" ColumnDefinitions="*,Auto,Auto,Auto,Auto" Margin="25,16,25,8">
@@ -27,22 +27,12 @@ MIT License
                     Click="AboutButton_Click" />
         </Grid>
 
-        <!-- Tab strip row. Hidden unless VHC_EXPERIMENTS is on (VhcGui.axaml.cs reveals it):
-             Continuous Monitoring is the only other tab, so a lone Ad-hoc tab is just noise. -->
-        <StackPanel x:Name="tabStrip" Grid.Row="1" Orientation="Horizontal" Spacing="8" Margin="25,0,25,12"
-                    IsVisible="False">
-            <Button x:Name="AdHocTabButton" Classes="tab tab-active"
-                    Click="AdHocTabButton_Click" />
-            <Button x:Name="MonitoringTabButton" Classes="tab"
-                    Click="MonitoringTabButton_Click" />
-        </StackPanel>
-
-        <!-- Tab content row -->
-        <ScrollViewer Grid.Row="2" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" Margin="25,0,25,15">
+        <!-- Content row -->
+        <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" Margin="25,0,25,15">
             <Panel>
 
                 <!-- Ad-hoc Health Check tab -->
-                <Grid x:Name="AdHocTabPanel" ColumnDefinitions="*,20,*">
+                <Grid ColumnDefinitions="*,20,*">
                     <StackPanel Grid.Column="0">
                         <Border Classes="card" Margin="0,0,0,15">
                             <StackPanel TextElement.FontWeight="SemiBold">
@@ -155,85 +145,11 @@ MIT License
                     </StackPanel>
                 </Grid>
 
-                <!-- Continuous Monitoring tab -->
-                <Grid x:Name="MonitoringTabPanel" ColumnDefinitions="*,20,*" IsVisible="False">
-                    <Border Grid.Column="0" Classes="card" VerticalAlignment="Top">
-                        <StackPanel TextElement.FontWeight="SemiBold">
-                            <TextBlock x:Name="monitorStatusHeader" Classes="card-title" />
-                            <StackPanel Margin="5,10,5,0">
-                                <StackPanel Orientation="Horizontal" Margin="0,0,0,6">
-                                    <TextBlock x:Name="monitorStatusLabel" Classes="secondary-text" VerticalAlignment="Center" />
-                                    <TextBlock x:Name="monitorStatusText" FontSize="13" FontWeight="SemiBold"
-                                               Foreground="{DynamicResource StatusNeutralBrush}" VerticalAlignment="Center" />
-                                </StackPanel>
-
-                                <TextBlock x:Name="monitorLastRunText" Classes="secondary-text" FontSize="11"
-                                           Margin="0,0,0,10" IsVisible="False" TextWrapping="Wrap" />
-
-                                <Grid ColumnDefinitions="*,8,*,8,*">
-                                    <Button x:Name="monitorQuickSetupBtn" Grid.Column="0"
-                                            Height="32" FontSize="11"
-                                            Classes="primary" IsEnabled="False"
-                                            Click="monitorQuickSetupBtn_Click" />
-                                    <Button x:Name="monitorVhcSetupBtn" Grid.Column="2"
-                                            Height="32" FontSize="11"
-                                            Classes="secondary" IsEnabled="False"
-                                            Click="monitorVhcSetupBtn_Click" />
-                                    <Button x:Name="monitorRunBtn" Grid.Column="4"
-                                            Height="32" FontSize="11"
-                                            Classes="secondary" IsEnabled="False"
-                                            Click="monitorRunBtn_Click" />
-                                </Grid>
-                            </StackPanel>
-                        </StackPanel>
-                    </Border>
-
-                    <Border Grid.Column="2" Classes="card" VerticalAlignment="Top">
-                        <StackPanel TextElement.FontWeight="SemiBold">
-                            <TextBlock x:Name="alertNotificationsHeader" Classes="card-title" />
-                            <StackPanel Margin="5,10,5,0">
-                                <Grid Margin="0,0,0,8" ColumnDefinitions="100,8,*">
-                                    <ComboBox x:Name="notifTypeBox" Grid.Column="0"
-                                              Classes="modern" Height="32" FontSize="12"
-                                              SelectedIndex="0"
-                                              SelectionChanged="notifTypeBox_SelectionChanged">
-                                        <ComboBoxItem Content="ntfy" Tag="ntfy" IsSelected="True" />
-                                        <ComboBoxItem Content="Teams" Tag="Teams" />
-                                        <ComboBoxItem Content="Slack" Tag="Slack" />
-                                        <ComboBoxItem Content="PagerDuty" Tag="PagerDuty" />
-                                    </ComboBox>
-                                    <TextBox x:Name="notifUrlBox" Grid.Column="2"
-                                             Classes="modern" Height="32" FontSize="12"
-                                             Tag="https://ntfy.sh/your-topic" />
-                                </Grid>
-                                <StackPanel Orientation="Horizontal" Margin="0,0,0,12">
-                                    <TextBlock x:Name="minSeverityLabel" Classes="field-label"
-                                               VerticalAlignment="Center" Margin="0,0,8,0" />
-                                    <!-- Content uses {x:Static} for the same reason as productTypeSelector above
-                                         (Avalonia never re-reads a ComboBoxItem's Content after attach). Tag (from
-                                         Stage D Task 1) is unrelated and still carries the fixed English protocol
-                                         value the correctness fix depends on. -->
-                                    <ComboBox x:Name="notifSeverityBox" Width="110"
-                                              Classes="modern" Height="28" FontSize="12"
-                                              SelectedIndex="0">
-                                        <ComboBoxItem Content="{x:Static loc:VbrLocalizationHelper.GuiNotifSeverityWarning}" Tag="warning" IsSelected="True" />
-                                        <ComboBoxItem Content="{x:Static loc:VbrLocalizationHelper.GuiNotifSeverityCritical}" Tag="critical" />
-                                        <ComboBoxItem Content="{x:Static loc:VbrLocalizationHelper.GuiNotifSeverityOk}" Tag="ok" />
-                                    </ComboBox>
-                                </StackPanel>
-                            </StackPanel>
-                        </StackPanel>
-                    </Border>
-                </Grid>
-
             </Panel>
         </ScrollViewer>
 
-        <!-- Bottom bar row (fixed - never inside the ScrollViewer). termsCheckBox/run follow the
-             active tab (ad-hoc-only workflow); the progress stack does NOT - a real health
-             check run can take minutes, and a user switching to Continuous Monitoring
-             mid-run must not lose visibility into it. -->
-        <Border Grid.Row="3" Background="{DynamicResource CardBackgroundBrush}" BorderBrush="{DynamicResource CardBorderBrush}" BorderThickness="0,1,0,0">
+        <!-- Bottom bar row (fixed - never inside the ScrollViewer). -->
+        <Border Grid.Row="2" Background="{DynamicResource CardBackgroundBrush}" BorderBrush="{DynamicResource CardBorderBrush}" BorderThickness="0,1,0,0">
             <!-- Margin and run's Height trimmed slightly (15->12, 45->42, progressText's
                  top margin 8->6) to reclaim a few px for row 2's ScrollViewer - at the
                  window's default 620px height the two-column card layout was just tall

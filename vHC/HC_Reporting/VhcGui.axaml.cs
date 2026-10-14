@@ -15,7 +15,6 @@ using Avalonia.Styling;
 using Avalonia.Threading;
 using VeeamHealthCheck.Functions.AboutDialog;
 using VeeamHealthCheck.Functions.ManageServers;
-using VeeamHealthCheck.Functions.Monitor;
 using VeeamHealthCheck.Functions.Reporting.Html.Exportables;
 using VeeamHealthCheck.Functions.UserInteraction;
 using VeeamHealthCheck.Resources.Localization;
@@ -31,16 +30,6 @@ namespace VeeamHealthCheck
     {
         private readonly CClientFunctions functions = new();
         private bool _modeCheckFailed;
-
-        // Bumped by every InitializeMonitorStatus call AND by every monitor action
-        // handler, so a slow, older probe (the scheduled-task check can take up to
-        // 30 s) cannot overwrite fresher state: neither a later refresh's result nor
-        // the disabled buttons / "in progress" text an action set after it started
-        // (which would re-enable Run Now mid-run and allow a second concurrent run).
-        private int _monitorRefreshSeq;
-
-        private void InvalidateMonitorRefreshes() =>
-            System.Threading.Interlocked.Increment(ref _monitorRefreshSeq);
 
         private const string LocalhostName = "localhost";
 
@@ -115,14 +104,6 @@ namespace VeeamHealthCheck
                     break;
             }
 
-            // Establishes SelectTab as the single source of truth for the Ad-hoc-tab
-            // default (XAML alone encodes it three separate ways: AdHocTabPanel's
-            // implicit IsVisible=true, AdHocTabButton's tab-active class, and
-            // termsCheckBox/run's implicit default Opacity/IsHitTestVisible/Focusable) -
-            // without this call, a future edit to one could silently drift from the
-            // others, and termsCheckBox/run would start Focusable=true from XAML alone.
-            SelectTab(isAdHoc: true);
-
             ThemeToggleButton.Content = ThemeLabelFor(NextThemeVariant(Application.Current!.RequestedThemeVariant));
 
             // AvaloniaUiNotifier passes this as the ShowDialog owner. Set it
@@ -135,25 +116,15 @@ namespace VeeamHealthCheck
             pathBox.IsEnabled = true;
             this.InitializeServerList();
 
-            // Experimental (VHC_EXPERIMENTS, see CFeatureFlags): everything monitor-related
-            // stays hidden unless the flag is on. InitializeMonitorStatus also spawns
-            // PowerShell probes on a worker thread, so skipping it saves that work too.
-            if (CFeatureFlags.ExperimentsEnabled)
-            {
-                this.tabStrip.IsVisible = true;
-                this.InitializeMonitorStatus();
-            }
-
             // pdfCheckBox.IsEnabled = false;
 
             this.Loaded += async (s, e) => await this.SetUiAsync();
         }
 
-        // Safe to call from the constructor (e.g. InitializeMonitorStatus above, before Show()):
-        // resolution reaches Application.Resources at construction time, not tree-attach time.
-        // Only holds because App.axaml keeps the four Status*Brush keys flat, outside
-        // ResourceDictionary.ThemeDictionaries - moving them into per-theme dictionaries would
-        // make this lookup theme-variant-sensitive before a variant can be resolved pre-attachment.
+        // Resolves a Status*Brush from Application.Resources. Only holds because App.axaml
+        // keeps the four Status*Brush keys flat, outside ResourceDictionary.ThemeDictionaries -
+        // moving them into per-theme dictionaries would make this lookup theme-variant-sensitive
+        // before a variant can be resolved pre-attachment.
         private IBrush GetStatusBrush(string resourceKey) => (IBrush)this.FindResource(resourceKey);
 
         private void ThemeToggleButton_Click(object sender, RoutedEventArgs e)
@@ -189,50 +160,12 @@ namespace VeeamHealthCheck
             await new AboutDisclaimerDialog().ShowDialog(this);
         }
 
-        private void AdHocTabButton_Click(object sender, RoutedEventArgs e) => SelectTab(isAdHoc: true);
-
-        private void MonitoringTabButton_Click(object sender, RoutedEventArgs e) => SelectTab(isAdHoc: false);
-
-        // termsCheckBox/run belong to the ad-hoc workflow and follow the active tab; the
-        // progress stack does not (see the bottom-bar comment in VhcGui.axaml) - a
-        // real run can take minutes and must stay visible from either tab.
-        //
-        // termsCheckBox and run each sit alone in their own Auto column of the bottom
-        // bar's Grid. IsVisible=false removes a control from layout entirely, so
-        // an Auto column with nothing else to measure collapses to zero width -
-        // the same reflow this plan already fixed for progressText, just
-        // triggered by a tab switch instead of a run starting/stopping, and
-        // horizontal instead of vertical. Toggling Opacity/IsHitTestVisible
-        // instead (matching pBar's existing pattern) keeps both Auto columns at
-        // their reserved width always, so the progress stack's position never
-        // shifts when switching tabs.
-        private void SelectTab(bool isAdHoc)
-        {
-            AdHocTabPanel.IsVisible = isAdHoc;
-            MonitoringTabPanel.IsVisible = !isAdHoc;
-
-            // Opacity/IsHitTestVisible alone block pointer input, not keyboard focus -
-            // without Focusable=false too, Tab navigation could still land on and
-            // activate the invisible button from the wrong tab.
-            termsCheckBox.Opacity = isAdHoc ? 1 : 0;
-            termsCheckBox.IsHitTestVisible = isAdHoc;
-            termsCheckBox.Focusable = isAdHoc;
-            run.Opacity = isAdHoc ? 1 : 0;
-            run.IsHitTestVisible = isAdHoc;
-            run.Focusable = isAdHoc;
-
-            AdHocTabButton.Classes.Set("tab-active", isAdHoc);
-            MonitoringTabButton.Classes.Set("tab-active", !isAdHoc);
-        }
-
         // preserveSelection distinguishes the two callers, and the distinction is
         // load-bearing. At startup there is no selection to keep, so CAppSettings.
         // ChooseDefaultServer (below) picks its own default. After the dialog commits,
         // silently reasserting that default would move a user who was sitting on
         // vbr01 back to localhost - flipping REMOTEEXEC to false and pointing the next
         // run at the local box - even if they pressed Done having changed nothing.
-        // Both tabs read that selection (monitorQuickSetupBtn_Click), so it must
-        // survive a repopulate.
         private void InitializeServerList(bool preserveSelection = false)
         {
             string previous = preserveSelection
@@ -552,8 +485,6 @@ namespace VeeamHealthCheck
             ToolTip.SetTip(this.importButton, VbrLocalizationHelper.GuiImportTooltip);
             ToolTip.SetTip(this.ThemeToggleButton, VbrLocalizationHelper.GuiThemeToggleTooltip);
             this.aboutButton.Content = VbrLocalizationHelper.GuiAboutButton;
-            this.AdHocTabButton.Content = VbrLocalizationHelper.GuiAdHocTab;
-            this.MonitoringTabButton.Content = VbrLocalizationHelper.GuiMonitoringTab;
             this.serverCardTitle.Text = VbrLocalizationHelper.GuiServerCardTitle;
             this.productTypeLabel.Text = VbrLocalizationHelper.GuiProductTypeLabel;
             ToolTip.SetTip(this.productTypeSelector, VbrLocalizationHelper.GuiProductTypeTooltip);
@@ -565,15 +496,6 @@ namespace VeeamHealthCheck
             this.securityPrivacyLabel.Text = VbrLocalizationHelper.GuiSecurityPrivacyLabel;
             ToolTip.SetTip(this.scrubBox, VbrLocalizationHelper.GuiScrubTooltip);
             ToolTip.SetTip(this.clearCredsCheckBox, VbrLocalizationHelper.GuiClearCredsTooltip);
-            this.monitorStatusHeader.Text = VbrLocalizationHelper.GuiMonitorStatusHeader;
-            this.monitorStatusLabel.Text = VbrLocalizationHelper.GuiMonitorStatusLabel;
-            ToolTip.SetTip(this.monitorQuickSetupBtn, VbrLocalizationHelper.GuiMonitorQuickSetupTooltip);
-            this.monitorVhcSetupBtn.Content = VbrLocalizationHelper.GuiMonitorVhcSetup;
-            ToolTip.SetTip(this.monitorVhcSetupBtn, VbrLocalizationHelper.GuiMonitorVhcSetupTooltip);
-            this.monitorRunBtn.Content = VbrLocalizationHelper.GuiMonitorRunNow;
-            ToolTip.SetTip(this.monitorRunBtn, VbrLocalizationHelper.GuiMonitorRunTooltip);
-            this.alertNotificationsHeader.Text = VbrLocalizationHelper.GuiAlertNotificationsHeader;
-            this.minSeverityLabel.Text = VbrLocalizationHelper.GuiMinSeverityLabel;
             this.progressText.Text = VbrLocalizationHelper.GuiProcessingText;
         }
 
@@ -668,7 +590,6 @@ namespace VeeamHealthCheck
                 {
                     this.functions.StartPrimaryFunctions();
                     this.UpdateCollectionStatusText();
-                    this.OfferMonitorSetupIfNeeded();
                     this.ShowCollectionWarningsIfAny();
                     Environment.Exit(0);
                 }
@@ -1172,249 +1093,5 @@ namespace VeeamHealthCheck
 
         #endregion
 
-        #region Monitor Integration
-
-        // Refreshes the Monitor tab without blocking the UI thread: the probes
-        // (powershell.exe for the scheduled task, the monitor exe for its version) can
-        // take up to 30 s each, and this runs from the constructor and after every
-        // monitor action. They run on a worker thread; the result is applied on the UI
-        // thread via Post rather than an awaited continuation, because the constructor
-        // call happens before the window is shown.
-        private void InitializeMonitorStatus()
-        {
-            // Set now, before the probes return, so the button has a correct label as
-            // soon as this method runs (constructor time, before SetUiText() ever runs
-            // on Loaded). ApplyMonitorStatus overrides it to GuiMonitorReconfigure when
-            // the monitor is already installed.
-            monitorQuickSetupBtn.Content = VbrLocalizationHelper.GuiMonitorQuickSetup;
-
-            int seq = System.Threading.Interlocked.Increment(ref _monitorRefreshSeq);
-
-            System.Threading.Tasks.Task.Run(() =>
-            {
-                CVhcMonitorIntegration.MonitorStatusSnapshot snapshot;
-                try
-                {
-                    snapshot = CVhcMonitorIntegration.CaptureStatus();
-                }
-                catch (Exception ex)
-                {
-                    CGlobals.Logger.Error($"Monitor status refresh failed: {ex.Message}", false);
-                    return;
-                }
-
-                Dispatcher.UIThread.Post(() =>
-                {
-                    // A newer refresh started after this one; let it apply instead.
-                    if (seq == _monitorRefreshSeq)
-                    {
-                        this.ApplyMonitorStatus(snapshot);
-                    }
-                });
-            });
-        }
-
-        private void ApplyMonitorStatus(CVhcMonitorIntegration.MonitorStatusSnapshot snapshot)
-        {
-            bool bundled = snapshot.Bundled;
-            bool installed = snapshot.Installed;
-            bool taskActive = snapshot.TaskActive;
-
-            monitorQuickSetupBtn.Content = VbrLocalizationHelper.GuiMonitorQuickSetup;
-
-            if (!bundled)
-            {
-                monitorStatusText.Text = VbrLocalizationHelper.GuiMonitorNotBundled;
-                monitorStatusText.Foreground = GetStatusBrush("StatusNeutralBrush");
-                monitorQuickSetupBtn.IsEnabled = false;
-                monitorVhcSetupBtn.IsEnabled = false;
-                monitorRunBtn.IsEnabled = false;
-            }
-            else if (!installed || !taskActive)
-            {
-                monitorStatusText.Text = VbrLocalizationHelper.GuiMonitorAvailableNotSetUp;
-                monitorStatusText.Foreground = GetStatusBrush("StatusWarningBrush");
-                monitorQuickSetupBtn.IsEnabled = true;
-                monitorRunBtn.IsEnabled = false;
-            }
-            else
-            {
-                monitorStatusText.Text = string.Format(VbrLocalizationHelper.GuiMonitorRunningVersion, snapshot.Version);
-                monitorStatusText.Foreground = GetStatusBrush("StatusSuccessBrush");
-                monitorQuickSetupBtn.Content = VbrLocalizationHelper.GuiMonitorReconfigure;
-                monitorQuickSetupBtn.IsEnabled = true;
-                monitorRunBtn.IsEnabled = true;
-
-                var status = snapshot.LastRun;
-                if (status != null)
-                {
-                    monitorLastRunText.Text = string.Format(VbrLocalizationHelper.GuiMonitorLastRun, status.Timestamp?.ToString("g") ?? string.Empty, status.Summary);
-                    monitorLastRunText.IsVisible = true;
-                }
-            }
-        }
-
-        private (string notifType, string notifUrl, string minSeverity) GetNotifSettings()
-        {
-            string notifType = (notifTypeBox.SelectedItem as ComboBoxItem)?.Tag?.ToString()?.ToLower() ?? "ntfy";
-            string notifUrl = notifUrlBox.Text?.Trim() ?? string.Empty;
-            string minSeverity = (notifSeverityBox.SelectedItem as ComboBoxItem)?.Tag?.ToString() ?? "warning";
-            return (notifType, notifUrl, minSeverity);
-        }
-
-        private void monitorQuickSetupBtn_Click(object sender, RoutedEventArgs e)
-        {
-            string server = serverSelector.SelectedItem?.ToString() ?? CGlobals.VBRServerName;
-            (string Username, string Password)? creds = null;
-            try
-            {
-                creds = CredentialStore.Get(server);
-            }
-            catch (CryptographicException ex)
-            {
-                // The stored blob cannot be decrypted on this machine/profile (creds.json
-                // copied from elsewhere). Treat it as "no stored credentials" so the user
-                // gets the prompt below instead of an unhandled UI-thread exception.
-                CGlobals.Logger.Warning($"Stored credentials for '{server}' could not be decrypted: {ex.Message}", false);
-            }
-
-            string username = creds?.Username ?? string.Empty;
-            string password = creds?.Password ?? string.Empty;
-
-            if (string.IsNullOrEmpty(username))
-            {
-                _ = CGlobals.Notifier.ShowErrorAsync(
-                    $"No stored credentials found for '{server}'.\nPlease add credentials by running a health check first, or use the credential prompt.",
-                    "Credentials Required");
-                return;
-            }
-
-            if (!CVhcMonitorIntegration.IsExePresentInBundle())
-            {
-                _ = CGlobals.Notifier.ShowErrorAsync("vhc-monitor.exe not found in the VHC installation directory.", "Monitor Not Found");
-                return;
-            }
-
-            this.InvalidateMonitorRefreshes();
-            monitorQuickSetupBtn.IsEnabled = false;
-            monitorStatusText.Text = VbrLocalizationHelper.GuiMonitorInstalling;
-
-            var (notifType, notifUrl, minSeverity) = this.GetNotifSettings();
-
-            System.Threading.Tasks.Task.Run(() =>
-            {
-                try
-                {
-                    CVhcMonitorIntegration.Install(server, username, password, notifType, notifUrl, minSeverity);
-                    Dispatcher.UIThread.Post(this.InitializeMonitorStatus);
-                }
-                catch (Exception ex)
-                {
-                    CGlobals.Logger.Error($"Monitor setup failed: {ex.Message}", false);
-                    Dispatcher.UIThread.Post(() =>
-                    {
-                        monitorStatusText.Text = VbrLocalizationHelper.GuiMonitorSetupFailed;
-                        monitorStatusText.Foreground = GetStatusBrush("StatusErrorBrush");
-                        monitorQuickSetupBtn.IsEnabled = true;
-                    });
-                }
-            });
-        }
-
-        private void monitorVhcSetupBtn_Click(object sender, RoutedEventArgs e)
-        {
-            this.InvalidateMonitorRefreshes();
-            monitorVhcSetupBtn.IsEnabled = false;
-            monitorStatusText.Text = VbrLocalizationHelper.GuiMonitorInstallingFromVhc;
-
-            var (notifType, notifUrl, minSeverity) = this.GetNotifSettings();
-
-            System.Threading.Tasks.Task.Run(() =>
-            {
-                try
-                {
-                    CVhcMonitorIntegration.InstallFromVhcData(notifType, notifUrl, minSeverity);
-                    Dispatcher.UIThread.Post(this.InitializeMonitorStatus);
-                }
-                catch (Exception ex)
-                {
-                    CGlobals.Logger.Error($"Monitor VHC-assisted setup failed: {ex.Message}", false);
-                    Dispatcher.UIThread.Post(() =>
-                    {
-                        monitorStatusText.Text = VbrLocalizationHelper.GuiMonitorSetupFailed;
-                        monitorStatusText.Foreground = GetStatusBrush("StatusErrorBrush");
-                        monitorVhcSetupBtn.IsEnabled = true;
-                    });
-                }
-            });
-        }
-
-        private void monitorRunBtn_Click(object sender, RoutedEventArgs e)
-        {
-            this.InvalidateMonitorRefreshes();
-            monitorRunBtn.IsEnabled = false;
-            monitorLastRunText.Text = VbrLocalizationHelper.GuiMonitorCheckInProgress;
-            monitorLastRunText.IsVisible = true;
-
-            System.Threading.Tasks.Task.Run(() =>
-            {
-                try
-                {
-                    CVhcMonitorIntegration.RunNow();
-                    Dispatcher.UIThread.Post(this.InitializeMonitorStatus);
-                }
-                catch (Exception ex)
-                {
-                    // RunNow throws if the monitor exe cannot be started. Without this
-                    // the fault went unobserved, "check in progress" stayed on screen
-                    // and the button stayed disabled until the app was restarted.
-                    CGlobals.Logger.Error($"Monitor on-demand run failed: {ex.Message}", false);
-                    Dispatcher.UIThread.Post(() =>
-                    {
-                        monitorLastRunText.IsVisible = false;
-                        this.InitializeMonitorStatus();
-                    });
-                }
-            });
-        }
-
-        private void notifTypeBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
-        {
-            if (notifUrlBox == null) return;
-            // No .ToLower() here, unlike GetNotifSettings()'s reads - the switch below
-            // compares Tag case-sensitively against "Teams"/"Slack"/"PagerDuty". Adding
-            // .ToLower() "for consistency" would make every arm fall through to the
-            // default case instead of matching.
-            string type = (notifTypeBox.SelectedItem as ComboBoxItem)?.Tag?.ToString() ?? "ntfy";
-            // unrelated dead code: nothing reads notifUrlBox.Tag today
-            notifUrlBox.Tag = type switch
-            {
-                "Teams" => "https://org.webhook.office.com/...",
-                "Slack" => "https://hooks.slack.com/services/...",
-                "PagerDuty" => "https://events.pagerduty.com/...",
-                _ => "https://ntfy.sh/your-topic"
-            };
-        }
-
-        // Same Invoke-not-Post reasoning as UpdateCollectionStatusText/
-        // ShowCollectionWarningsIfAny above - called from the background
-        // thread right before Environment.Exit(0) in Run().
-        private void OfferMonitorSetupIfNeeded()
-        {
-            if (!CFeatureFlags.ExperimentsEnabled) return;
-            if (!CVhcMonitorIntegration.IsExePresentInBundle()) return;
-            if (CVhcMonitorIntegration.IsTaskRegistered()) return;
-
-            Dispatcher.UIThread.Invoke(() =>
-            {
-                monitorVhcSetupBtn.IsEnabled = true;
-                monitorLastRunText.Text = string.Format(VbrLocalizationHelper.GuiMonitorCompleteSetupPrompt, VbrLocalizationHelper.GuiMonitorVhcSetup);
-                monitorLastRunText.IsVisible = true;
-                monitorStatusText.Text = VbrLocalizationHelper.GuiMonitorAvailableNotSetUp;
-                monitorStatusText.Foreground = GetStatusBrush("StatusWarningBrush");
-            });
-        }
-
-        #endregion
     }
 }
