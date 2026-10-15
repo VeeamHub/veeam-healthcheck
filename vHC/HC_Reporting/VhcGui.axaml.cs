@@ -122,8 +122,7 @@ namespace VeeamHealthCheck
 
         // Resolves a Status*Brush from Application.Resources. Only holds because App.axaml
         // keeps the two Status*Brush keys flat, outside ResourceDictionary.ThemeDictionaries -
-        // moving them into per-theme dictionaries would make this lookup theme-variant-sensitive
-        // before a variant can be resolved pre-attachment.
+        // moving them into per-theme dictionaries would make this lookup theme-variant-sensitive.
         private IBrush GetStatusBrush(string resourceKey) => (IBrush)this.FindResource(resourceKey);
 
         private void ThemeToggleButton_Click(object sender, RoutedEventArgs e)
@@ -477,8 +476,8 @@ namespace VeeamHealthCheck
             ToolTip.SetTip(this.manageServersBtn, VbrLocalizationHelper.GuiManageServersTooltip);
 
             // Stage D: resx-back the strings VhcGui.axaml previously hardcoded.
-            // productTypeSelector's and notifSeverityBox's ComboBoxItem.Content values are
-            // NOT set here - they're {x:Static}-bound directly in XAML. See the comments
+            // productTypeSelector's ComboBoxItem.Content values are NOT set here -
+            // they're {x:Static}-bound directly in XAML. See the comments
             // there for why (ComboBox never re-reads Content after attach).
             this.appHeaderText.Text = VbrLocalizationHelper.GuiTitle;
             ToolTip.SetTip(this.importButton, VbrLocalizationHelper.GuiImportTooltip);
@@ -998,8 +997,8 @@ namespace VeeamHealthCheck
         // because this handler's own write looks harmless in isolation.
         //
         // The value comes from Tag rather than Name or Content because Content is
-        // localized, and parsing a localized label as data is exactly the mistake
-        // notifSeverityBox used to make - fixed in Stage D Task 1.
+        // localized, and parsing a localized label as data breaks as soon as the
+        // language changes.
         private void PeriodRadio_Checked(object sender, RoutedEventArgs e)
         {
             // "7" is listed explicitly rather than folded into the `_` default, so `_`

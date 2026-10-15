@@ -5,11 +5,10 @@ using Xunit;
 
 namespace VhcXTests
 {
-    [Collection("GlobalState")]
     public class CMessagesHelpMenuTests
     {
         [Fact]
-        public void HelpMenu_DoesNotMentionMonitoring()
+        public void HelpMenu_Always_DoesNotMentionMonitoring()
         {
             string help = CMessages.helpMenu;
 
@@ -18,7 +17,7 @@ namespace VhcXTests
         }
 
         [Fact]
-        public void HelpMenu_KeepsNeighbouringSectionsSeparatedByOneBlankLine()
+        public void HelpMenu_Always_KeepsNeighbouringSectionsSeparatedByOneBlankLine()
         {
             string help = CMessages.helpMenu.Replace("\r\n", "\n");
 

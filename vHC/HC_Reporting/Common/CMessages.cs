@@ -9,6 +9,9 @@ namespace VeeamHealthCheck.Shared
     {
         private static readonly string ProcEnd = "DONE!";
 
+        // HelpMenuHead / HelpMenuTail were split only to slot in the since-removed monitor
+        // section, so the split is possibly no longer required and the two constants could
+        // be merged into one.
         public static string helpMenu =>
             HelpMenuHead + HelpMenuTail;
 

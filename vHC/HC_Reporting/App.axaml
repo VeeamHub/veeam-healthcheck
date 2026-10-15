@@ -128,8 +128,8 @@
             <Setter Property="Background" Value="{DynamicResource CardBorderBrush}" />
         </Style>
         <!-- New, beyond the spike: the spike's Button.secondary was never exercised
-             disabled, so it has no :disabled override. Matches Button.primary:disabled's translucent-gray
-             treatment. -->
+             disabled, so it has no :disabled override. Matches Button.primary:disabled's
+             translucent-gray treatment. -->
         <Style Selector="Button.secondary:disabled /template/ ContentPresenter">
             <Setter Property="Background" Value="#66808080" />
             <Setter Property="TextElement.Foreground" Value="{DynamicResource SecondaryTextBrush}" />
@@ -218,7 +218,8 @@
              RadioButton ControlTheme repaints Background/BorderBrush on /template/
              Border#RootBorder for both :pointerover and :pressed, and Foreground on
              /template/ ContentPresenter#PART_ContentPresenter - all at StyleTrigger
-             priority, which outranks the plain setters above (Background alone is not enough there). Without these, hovering or pressing a pill replaces its
+             priority, which outranks the plain setters above (Background alone is not
+             enough). Without these, hovering or pressing a pill replaces its
              Background AND BorderBrush with FluentTheme's own theme-native defaults,
              which don't contrast against this app's own page background - the pill's
              outline disappears and the highlight blends into the page. -->

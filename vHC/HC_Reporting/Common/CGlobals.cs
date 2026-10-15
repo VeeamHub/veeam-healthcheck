@@ -2,7 +2,6 @@
 // MIT License
 using System;
 using System.Collections.Generic;
-using System.IO;
 using VeeamHealthCheck.Functions.Analysis.DataModels;
 using VeeamHealthCheck.Functions.Reporting.DataTypes;
 using VeeamHealthCheck.Functions.UserInteraction;
