@@ -20,14 +20,12 @@
             <Color x:Key="SystemAccentColorLight3">#99E0AA</Color>
 
             <!-- Runtime status colors used by VhcGui.axaml.cs (progress
-                 text). Flat because these 4 exact values already ship today across both
+                 text). Flat because these 2 exact values already ship today across both
                  themes and are legible against both page backgrounds - naming them here
-                 replaces 8 inline `new SolidColorBrush(...)` call sites with a single
+                 replaces inline `new SolidColorBrush(...)` call sites with a single
                  source of truth; it does not change any color. -->
-            <SolidColorBrush x:Key="StatusNeutralBrush">#999999</SolidColorBrush>
             <SolidColorBrush x:Key="StatusWarningBrush">#F0AD4E</SolidColorBrush>
             <SolidColorBrush x:Key="StatusSuccessBrush">#5CB85C</SolidColorBrush>
-            <SolidColorBrush x:Key="StatusErrorBrush">#D9534F</SolidColorBrush>
 
             <ResourceDictionary.ThemeDictionaries>
                 <ResourceDictionary x:Key="Light">

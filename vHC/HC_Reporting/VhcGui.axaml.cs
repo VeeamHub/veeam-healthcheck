@@ -3,7 +3,6 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Security.Cryptography;
 using System.Threading.Tasks;
 using Avalonia;
 using Avalonia.Controls;
@@ -122,7 +121,7 @@ namespace VeeamHealthCheck
         }
 
         // Resolves a Status*Brush from Application.Resources. Only holds because App.axaml
-        // keeps the four Status*Brush keys flat, outside ResourceDictionary.ThemeDictionaries -
+        // keeps the two Status*Brush keys flat, outside ResourceDictionary.ThemeDictionaries -
         // moving them into per-theme dictionaries would make this lookup theme-variant-sensitive
         // before a variant can be resolved pre-attachment.
         private IBrush GetStatusBrush(string resourceKey) => (IBrush)this.FindResource(resourceKey);
