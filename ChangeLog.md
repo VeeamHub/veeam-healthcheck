@@ -131,6 +131,9 @@ checksums, and scan results.
   catches leaked hostnames and private-range IPv4 addresses in scrubbed HTML.
 - CSV formula injection is neutralized on the PowerShell export path (including the session report), and
   usernames and hosts are escaped in every PowerShell command builder.
+- Updated `System.Security.Cryptography.Xml` and `System.Security.Cryptography.Pkcs` to 10.0.13, which fixes
+  five denial-of-service advisories published on 2026-10-13 (GHSA-7hqp-7c5m-4vq6, GHSA-c399-9853-6jmj,
+  GHSA-r955-8q5j-3h83, GHSA-846f-f764-76mx, GHSA-2fmv-rv2c-59x7).
 
 ## [3.0.1.193] - 2026-06-04
 
