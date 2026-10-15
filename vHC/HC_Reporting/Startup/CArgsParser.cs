@@ -10,7 +10,6 @@ using System.Text.RegularExpressions;
 using Avalonia;
 using VeeamHealthCheck.Functions.Collection.PSCollections;
 using VeeamHealthCheck.Functions.CredsWindow;
-using VeeamHealthCheck.Functions.Monitor;
 using VeeamHealthCheck.Functions.Reporting.Html.Exportables;
 using VeeamHealthCheck.Functions.UserInteraction;
 
@@ -294,8 +293,6 @@ namespace VeeamHealthCheck.Startup
                             CGlobals.REMOTEHOST = providedHost;
                         }
                         break;
-                    case var _ when this.TryHandleMonitorCommand(a, out int monitorExitCode):
-                        return monitorExitCode;
                 }
             }
 
@@ -836,87 +833,6 @@ namespace VeeamHealthCheck.Startup
             CGlobals.Logger.Info("Output is stored in " + targetDir, false);
 
             return res;
-        }
-
-        // Experimental (VHC_EXPERIMENTS, see CFeatureFlags): the /monitor:* commands are
-        // inert unless the flag is on. That includes /monitor:disable on purpose, so the
-        // flag hides the feature completely rather than leaving one stray command visible
-        // (vhc-monitor is a beta feature that was never officially released). With the flag
-        // off this returns false and the argument is treated like any other unrecognised
-        // one: ParseAllArgs's switch has no default case, so it is ignored.
-        internal bool TryHandleMonitorCommand(string arg, out int exitCode)
-        {
-            exitCode = 0;
-            if (!CFeatureFlags.ExperimentsEnabled)
-            {
-                return false;
-            }
-
-            switch (arg)
-            {
-                case "/monitor:setup":
-                    this.RunMonitorSetup();
-                    return true;
-                case "/monitor:run":
-                    exitCode = this.RunMonitorNow();
-                    return true;
-                case "/monitor:status":
-                    this.PrintMonitorStatus();
-                    return true;
-                case "/monitor:disable":
-                    CVhcMonitorIntegration.Uninstall();
-                    CGlobals.Logger.Info("VHC Monitor scheduled task removed.", false);
-                    return true;
-                default:
-                    return false;
-            }
-        }
-
-        private void RunMonitorSetup()
-        {
-            if (!CVhcMonitorIntegration.IsExePresentInBundle())
-            {
-                CGlobals.Logger.Error("vhc-monitor.exe not found alongside VeeamHealthCheck.exe. Cannot set up.", false);
-                return;
-            }
-            var creds = CredentialStore.Get(CGlobals.VBRServerName);
-            if (creds == null)
-            {
-                CGlobals.Logger.Warning("No stored credentials for " + CGlobals.VBRServerName + ". Run interactively to store credentials first.", false);
-                return;
-            }
-            CVhcMonitorIntegration.Install(CGlobals.VBRServerName, creds.Value.Username, creds.Value.Password);
-            CGlobals.Logger.Info("VHC Monitor installed and scheduled task registered.", false);
-        }
-
-        private int RunMonitorNow()
-        {
-            if (!CVhcMonitorIntegration.IsInstalled())
-            {
-                CGlobals.Logger.Error("VHC Monitor not installed. Run /monitor:setup first.", false);
-                return 1;
-            }
-            var (exitCode, output) = CVhcMonitorIntegration.RunNow();
-            Console.WriteLine(output);
-            return exitCode;
-        }
-
-        private void PrintMonitorStatus()
-        {
-            bool bundled = CVhcMonitorIntegration.IsExePresentInBundle();
-            bool installed = CVhcMonitorIntegration.IsInstalled();
-            bool taskActive = CVhcMonitorIntegration.IsTaskRegistered();
-            string version = installed ? CVhcMonitorIntegration.GetInstalledVersion() : "n/a";
-            var lastRun = CVhcMonitorIntegration.GetLastRunStatus();
-
-            Console.WriteLine("=== VHC Monitor Status ===");
-            Console.WriteLine($"  Bundled:        {(bundled ? "Yes" : "No")}");
-            Console.WriteLine($"  Installed:      {(installed ? "Yes (" + version + ")" : "No")}");
-            Console.WriteLine($"  Scheduled Task: {(taskActive ? "Registered" : "Not registered")}");
-            Console.WriteLine($"  Config:         {CGlobals.VhcMonitorConfigPath}");
-            if (lastRun != null)
-                Console.WriteLine($"  Last Run:       {lastRun.Timestamp:g} — {lastRun.Summary}");
-            Console.WriteLine("==========================");
         }
     }
 }

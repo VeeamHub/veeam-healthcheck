@@ -47,9 +47,7 @@ Edit `ChangeLog.md` only. This site's [Changelog](changelog.md) page is regenera
 
 Work that is not ready for general use ships hidden behind the `VHC_EXPERIMENTS` environment variable. The values `1` and `true` (case-insensitive) turn it on. Anything else, including `0`, `false`, `yes` or leaving it unset, keeps it off. The variable is read from the environment of the process that launches `VeeamHealthCheck.exe`, so set it in the same shell session. In code, check `CFeatureFlags.ExperimentsEnabled`.
 
-Currently gated:
-
-- **vhc-monitor (continuous monitoring, beta):** the `/monitor:setup`, `/monitor:run`, `/monitor:status` and `/monitor:disable` commands, their `/help` entries, and the Continuous Monitoring tab in the GUI. Release builds still bundle `vhc-monitor.exe` so testers do not need a separate download.
+Currently gated: nothing.
 
 When a feature graduates, delete its `CFeatureFlags.ExperimentsEnabled` checks and its entry in this list.
 

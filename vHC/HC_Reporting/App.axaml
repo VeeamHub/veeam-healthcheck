@@ -19,15 +19,13 @@
             <Color x:Key="SystemAccentColorLight2">#66D183</Color>
             <Color x:Key="SystemAccentColorLight3">#99E0AA</Color>
 
-            <!-- Runtime status colors used by VhcGui.axaml.cs (monitor status / progress
-                 text). Flat because these 4 exact values already ship today across both
+            <!-- Runtime status colors used by VhcGui.axaml.cs (progress
+                 text). Flat because these 2 exact values already ship today across both
                  themes and are legible against both page backgrounds - naming them here
-                 replaces 8 inline `new SolidColorBrush(...)` call sites with a single
+                 replaces inline `new SolidColorBrush(...)` call sites with a single
                  source of truth; it does not change any color. -->
-            <SolidColorBrush x:Key="StatusNeutralBrush">#999999</SolidColorBrush>
             <SolidColorBrush x:Key="StatusWarningBrush">#F0AD4E</SolidColorBrush>
             <SolidColorBrush x:Key="StatusSuccessBrush">#5CB85C</SolidColorBrush>
-            <SolidColorBrush x:Key="StatusErrorBrush">#D9534F</SolidColorBrush>
 
             <ResourceDictionary.ThemeDictionaries>
                 <ResourceDictionary x:Key="Light">
@@ -130,59 +128,11 @@
             <Setter Property="Background" Value="{DynamicResource CardBorderBrush}" />
         </Style>
         <!-- New, beyond the spike: the spike's Button.secondary was never exercised
-             disabled, so it has no :disabled override. The real monitorQuickSetupBtn/
-             monitorVhcSetupBtn/monitorRunBtn all ship IsEnabled="False" from first
-             launch and need one. Matches Button.primary:disabled's translucent-gray
-             treatment. -->
+             disabled, so it has no :disabled override. Matches Button.primary:disabled's
+             translucent-gray treatment. -->
         <Style Selector="Button.secondary:disabled /template/ ContentPresenter">
             <Setter Property="Background" Value="#66808080" />
             <Setter Property="TextElement.Foreground" Value="{DynamicResource SecondaryTextBrush}" />
-        </Style>
-
-        <!-- Tab header buttons -->
-        <Style Selector="Button.tab">
-            <Setter Property="Background" Value="Transparent" />
-            <Setter Property="BorderThickness" Value="0,0,0,2" />
-            <Setter Property="BorderBrush" Value="Transparent" />
-            <Setter Property="CornerRadius" Value="0" />
-            <Setter Property="Foreground" Value="{DynamicResource SecondaryTextBrush}" />
-            <Setter Property="Padding" Value="4,8" />
-            <Setter Property="FontSize" Value="14" />
-            <Setter Property="Cursor" Value="Hand" />
-        </Style>
-        <Style Selector="Button.tab.tab-active">
-            <Setter Property="BorderBrush" Value="{DynamicResource AccentBrush}" />
-            <Setter Property="Foreground" Value="{DynamicResource PrimaryTextBrush}" />
-            <Setter Property="FontWeight" Value="SemiBold" />
-        </Style>
-        <!-- FluentTheme's Button ControlTheme sets Background, BorderBrush AND Foreground
-             on ContentPresenter#PART_ContentPresenter for both :pointerover and :pressed.
-             Those setters live on the ContentPresenter at StyleTrigger priority, which
-             outranks the TemplateBinding (Template priority) that carries this Button's
-             own BorderBrush - so every one of the three has to be neutralized here or
-             Fluent's value wins. BorderBrush matters most for tabs: the 2px bottom border
-             IS the active-tab indicator, so without these overrides hovering an inactive
-             tab paints a phantom underline and hovering the active tab replaces the accent
-             underline with Fluent's gray ButtonBorderBrushPointerOver/Pressed. -->
-        <Style Selector="Button.tab:pointerover /template/ ContentPresenter">
-            <Setter Property="Background" Value="Transparent" />
-            <Setter Property="BorderBrush" Value="Transparent" />
-            <Setter Property="TextElement.Foreground" Value="{DynamicResource SecondaryTextBrush}" />
-        </Style>
-        <Style Selector="Button.tab:pressed /template/ ContentPresenter">
-            <Setter Property="Background" Value="Transparent" />
-            <Setter Property="BorderBrush" Value="Transparent" />
-            <Setter Property="TextElement.Foreground" Value="{DynamicResource SecondaryTextBrush}" />
-        </Style>
-        <Style Selector="Button.tab.tab-active:pointerover /template/ ContentPresenter">
-            <Setter Property="Background" Value="Transparent" />
-            <Setter Property="BorderBrush" Value="{DynamicResource AccentBrush}" />
-            <Setter Property="TextElement.Foreground" Value="{DynamicResource PrimaryTextBrush}" />
-        </Style>
-        <Style Selector="Button.tab.tab-active:pressed /template/ ContentPresenter">
-            <Setter Property="Background" Value="Transparent" />
-            <Setter Property="BorderBrush" Value="{DynamicResource AccentBrush}" />
-            <Setter Property="TextElement.Foreground" Value="{DynamicResource PrimaryTextBrush}" />
         </Style>
 
         <Style Selector="Border.card">
@@ -268,9 +218,8 @@
              RadioButton ControlTheme repaints Background/BorderBrush on /template/
              Border#RootBorder for both :pointerover and :pressed, and Foreground on
              /template/ ContentPresenter#PART_ContentPresenter - all at StyleTrigger
-             priority, which outranks the plain setters above (same class of override
-             Button.tab needed in Stage B: Background alone was not enough there
-             either). Without these, hovering or pressing a pill replaces its
+             priority, which outranks the plain setters above (Background alone is not
+             enough). Without these, hovering or pressing a pill replaces its
              Background AND BorderBrush with FluentTheme's own theme-native defaults,
              which don't contrast against this app's own page background - the pill's
              outline disappears and the highlight blends into the page. -->

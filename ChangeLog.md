@@ -15,7 +15,7 @@ checksums, and scan results.
 
 ### Added
 
-- Redesigned GUI, migrated from WPF to Avalonia: new theme, a fixed-size tabbed layout with two-column
+- Redesigned GUI, migrated from WPF to Avalonia: new theme, a fixed-size layout with two-column
   cards, a localization pass over the GUI strings, and the console window is hidden on double-click.
   ([#247](https://github.com/VeeamHub/veeam-healthcheck/pull/247))
 - New VBR report section, **Orphaned & Superseded Backups**: restore points that do not count toward any
@@ -30,7 +30,6 @@ checksums, and scan results.
 - Moved the runtime from .NET 8 (end of support November 2026) to .NET 10 (LTS). The release is still a
   self-contained single-file executable, so nothing needs installing, and the embedded PowerShell SDK
   moves to 7.6.
-- Experimental features are now disabled unless explicitly enabled with an environment flag.
 - The PowerShell 7 preflight check now stops the run with a clear message when PowerShell 7 is missing
   entirely, and when the installed version is lower than the one the VBR PowerShell module requires (VBR 13.1
   raised it to 7.6). Fixes [#135](https://github.com/VeeamHub/veeam-healthcheck/issues/135) and
@@ -41,6 +40,12 @@ checksums, and scan results.
 - The VBR report's left navigation is now fully localized (group titles and every link, including Cloud
   Connect and Orphaned & Superseded Backups). The French, Japanese, and Chinese labels for these entries are
   machine-translated; please open an issue to request corrections.
+
+### Removed
+
+- Removed the experimental vhc-monitor integration: the `/monitor:*` command-line options and their
+  `/help` section. The options are now ignored.
+  ([#275](https://github.com/VeeamHub/veeam-healthcheck/pull/275))
 
 ### Fixed
 
