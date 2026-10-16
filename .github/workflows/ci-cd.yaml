@@ -3104,13 +3104,15 @@ jobs:
       env:
         GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       run: |
+        # Read run context from the runner's default env vars instead of expression interpolation (Semgrep run-shell-injection).
+        $reportOnly = $env:GITHUB_REF -notin @('refs/heads/dev', 'refs/heads/master')
         ./.github/scripts/Invoke-ScaDriftProposal.ps1 `
           -TriageDir sca-triage `
-          -Repo '${{ github.repository }}' `
-          -RunUrl '${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}' `
+          -Repo $env:GITHUB_REPOSITORY `
+          -RunUrl "$env:GITHUB_SERVER_URL/$env:GITHUB_REPOSITORY/actions/runs/$env:GITHUB_RUN_ID" `
           -ConfigPath 'vHC/HC_Reporting/Tools/Scripts/HealthCheck/VBR/VbrConfig.json' `
           -OutDir sca-proposal `
-          -ReportOnly:$${{ github.ref != 'refs/heads/dev' && github.ref != 'refs/heads/master' }}
+          -ReportOnly:$reportOnly
 
     - name: Upload SCA proposal
       if: always()
