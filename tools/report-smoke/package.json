@@ -1,0 +1,14 @@
+{
+  "name": "vhc-report-smoke",
+  "private": true,
+  "version": "0.1.0",
+  "description": "Headless-browser smoke test for generated Veeam Health Check HTML reports",
+  "type": "module",
+  "scripts": {
+    "smoke": "bun smoke.ts",
+    "selftest": "bun selftest.ts"
+  },
+  "dependencies": {
+    "playwright": "1.49.1"
+  }
+}
