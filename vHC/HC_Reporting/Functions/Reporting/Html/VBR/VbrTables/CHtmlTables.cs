@@ -243,7 +243,7 @@ namespace VeeamHealthCheck.Html.VBR
                 this.log.Error("\t" + e.Message);
             }
 
-            s += this.form.SectionEnd(summary);
+            s += this.form.SectionEndWithEmptyState(s, summary);
             return s;
         }
 
@@ -1051,7 +1051,7 @@ namespace VeeamHealthCheck.Html.VBR
                 this.log.Error("\t" + e.Message);
             }
 
-            s += this.form.SectionEnd(summary);
+            s += this.form.SectionEndWithEmptyState(s, summary);
 
             // JSON extents
             if (fetched)
@@ -1393,7 +1393,7 @@ namespace VeeamHealthCheck.Html.VBR
                     "</td></tr>";
             }
 
-            s += this.form.SectionEnd(summary);
+            s += this.form.SectionEndWithEmptyState(s, summary);
 
             // JSON capture
             try

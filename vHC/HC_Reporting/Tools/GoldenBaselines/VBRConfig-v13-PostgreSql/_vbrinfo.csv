@@ -1,0 +1,2 @@
+"Version","Fixes","SqlServer","Instance","PgHost","PgDb","MsHost","MsDb","DbType","MFA"
+"13.0.1.1071","","","","localhost","VeeamBackup","","","PostgreSql","Enabled"

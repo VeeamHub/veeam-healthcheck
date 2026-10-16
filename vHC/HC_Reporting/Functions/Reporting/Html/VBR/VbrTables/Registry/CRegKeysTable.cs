@@ -76,7 +76,7 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR.VbrTables.Registry
                 log.Error("\t" + e.Message);
             }
 
-            s += form.SectionEnd(summary);
+            s += form.SectionEndWithEmptyState(s, summary);
 
             // JSON reg keys
             if (list != null)

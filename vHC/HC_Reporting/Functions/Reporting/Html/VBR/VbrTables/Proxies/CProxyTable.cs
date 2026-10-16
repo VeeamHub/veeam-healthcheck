@@ -125,7 +125,7 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR.VbrTables.Proxies
                      "</td></tr>";
             }
 
-            s += form.SectionEnd(summary);
+            s += form.SectionEndWithEmptyState(s, summary);
 
             // JSON proxies
             try

@@ -192,7 +192,7 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR.VbrTables.Security
                     jsonRows.Add(new List<string> { res.BestPractice, res.Status.ToString() });
                 }
 
-                t += this.form.SectionEnd();
+                t += this.form.SectionEndWithEmptyState(t, string.Empty);
 
                 // Per-rule rows — additive alongside the existing ComplianceScan metadata object.
                 CHtmlTables.SetSectionPublic(

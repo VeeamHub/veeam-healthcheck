@@ -64,7 +64,7 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR.VbrTables.TapeInfra
                 CGlobals.Logger.Error("Failed to render Tape Libraries table: " + e.Message);
             }
 
-            s += this.form.SectionEnd();
+            s += this.form.SectionEndWithEmptyState(s, string.Empty);
 
             return s;
         }

@@ -1,0 +1,4 @@
+"Name","Role","AccountSid","Description","ObjectType","CreationTime"
+"VEEAM\admin","Veeam Backup Administrator","S-1-5-21-1234567890-1234567890-1234567890-1001","Built-in administrator role","User","2024-01-15T08:30:00.0000000"
+"VEEAM\backup_operator","Veeam Backup Operator","S-1-5-21-1234567890-1234567890-1234567890-1002","Backup operator with restore rights","User","2024-01-15T09:15:00.0000000"
+"VEEAM\restore_operator","Veeam Restore Operator","S-1-5-21-1234567890-1234567890-1234567890-1003","Restore-only operator","User","2024-02-01T10:00:00.0000000"

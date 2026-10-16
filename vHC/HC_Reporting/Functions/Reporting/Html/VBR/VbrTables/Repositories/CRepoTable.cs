@@ -149,7 +149,7 @@ form.TableHeader(VbrLocalizationHelper.SbrExt15, VbrLocalizationHelper.SbrExt15T
                 log.Error("\t" + e.Message);
             }
 
-            s += form.SectionEnd(summary);
+            s += form.SectionEndWithEmptyState(s, summary);
 
             // JSON repos
             if (fetched)

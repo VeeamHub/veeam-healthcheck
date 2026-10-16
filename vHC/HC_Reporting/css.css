@@ -386,6 +386,13 @@ tbody tr:last-child td { border-bottom: none; }
 
 tbody tr:hover { background: #f9fafb; }
 
+/* The license table has 16 columns; at the default cell padding it is wider than the card at 1440px
+   and clips its right-hand columns. Tighter padding and wrapping headers keep every column visible. */
+#license table { font-size: 12px; }
+#license thead th { padding: 8px 4px; font-size: 10px; letter-spacing: 0; vertical-align: bottom; }
+#license tbody td { padding: 8px 4px; }
+#license tbody td:nth-child(13), #license tbody td:nth-child(14) { overflow-wrap: anywhere; }
+
 /* ===== Badges ===== */
 
 /* ===== Progress bars ===== */

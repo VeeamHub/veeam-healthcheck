@@ -78,7 +78,7 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR.VbrTables.GeneralSetting
                 CGlobals.Logger.Error("Failed to render User Roles table: " + e.Message);
             }
 
-            s += this.form.SectionEnd();
+            s += this.form.SectionEndWithEmptyState(s, string.Empty);
 
             CHtmlTables.SetSectionPublic("userRoles", new List<string> { "Name", "Role", "Description" }, jsonRows, null);
 

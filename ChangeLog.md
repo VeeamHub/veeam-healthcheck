@@ -50,6 +50,15 @@ checksums, and scan results.
 
 ### Fixed
 
+- The VBR report's License Summary table no longer clips its right-hand columns (expiration dates, Cloud
+  Connect, Auto Update) at 1440px wide; its cell padding and header size are tighter so all 16 columns fit without
+  horizontal scrolling.
+- The VBR report's Config Database row no longer shows a blank DATABASE TYPE on remote (`/remote /host`) and
+  imported runs, where there is no local registry to read. The type now comes from the collected
+  `_vbrinfo.csv`, and shows "Unknown" when the collection does not record one.
+- VBR report tables with no collected data (SOBR, SOBR extents, capacity and archive tier, standalone
+  repositories, object storage, license, managed servers, and every other section table) now show a single
+  "No data available" row instead of rendering as a header-only table.
 - Orphaned & Superseded Backups no longer labels a backup whose job could not be matched as **Orphaned** when
   something is still writing to it. The whole parent backup is judged on its newest restore point: if any of its
   restore points, across all of its VMs, is less than 35 days old (tunable via `OrphanedActiveChainWindowDays` in `VbrConfig.json`), every row is listed as

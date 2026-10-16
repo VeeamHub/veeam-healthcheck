@@ -65,7 +65,7 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR.VbrTables.Replication
                 CGlobals.Logger.Error("Failed to render Replica Jobs table: " + e.Message);
             }
 
-            s += this.form.SectionEnd();
+            s += this.form.SectionEndWithEmptyState(s, string.Empty);
 
             return s;
         }
