@@ -106,7 +106,7 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR.VbrTables.Managed_Server
                 log.Error("\t" + e.Message);
             }
 
-            s += form.SectionEnd(summary);
+            s += form.SectionEndWithEmptyState(s, summary);
 
             // JSON managed servers
             try

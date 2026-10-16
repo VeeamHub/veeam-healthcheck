@@ -83,6 +83,42 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.Shared
             return s;
         }
 
+        /// <summary>
+        /// Closes a table section like <see cref="SectionEnd(string)"/>, but when the table built so far
+        /// (<paramref name="cardHtml"/>) has no body rows, emits one "No data available" row spanning
+        /// every column so an empty section never reads as a rendering bug.
+        /// </summary>
+        public string SectionEndWithEmptyState(string cardHtml, string summary)
+        {
+            return EmptyStateRowFor(cardHtml) + this.SectionEnd(summary);
+        }
+
+        internal static string EmptyStateRowFor(string cardHtml)
+        {
+            if (string.IsNullOrEmpty(cardHtml))
+            {
+                return string.Empty;
+            }
+
+            int bodyStart = cardHtml.LastIndexOf("<tbody", StringComparison.OrdinalIgnoreCase);
+            if (bodyStart < 0 || cardHtml.IndexOf("<tr", bodyStart, StringComparison.OrdinalIgnoreCase) >= 0)
+            {
+                return string.Empty;
+            }
+
+            int headStart = cardHtml.LastIndexOf("<thead", bodyStart, StringComparison.OrdinalIgnoreCase);
+            int columns = headStart < 0
+                ? 1
+                : System.Text.RegularExpressions.Regex.Matches(cardHtml.Substring(headStart, bodyStart - headStart), @"<th[\s>]", System.Text.RegularExpressions.RegexOptions.IgnoreCase).Count;
+
+            return EmptyStateRow(Math.Max(columns, 1));
+        }
+
+        public static string EmptyStateRow(int columns, string message = "No data available")
+        {
+            return $"<tr><td colspan=\"{columns}\" style=\"text-align: center; padding: 20px; color: #666;\"><em>{message}</em></td></tr>";
+        }
+
         public string SectionEnd()
         {
              return this.SectionEnd(string.Empty);

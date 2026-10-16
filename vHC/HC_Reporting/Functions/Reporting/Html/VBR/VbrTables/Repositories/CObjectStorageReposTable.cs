@@ -36,9 +36,11 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR.VbrTables.Repositories
             try
             {
                 CCsvParser c = new();
-                var data = c.GetDynamicObjectStorageRepos();
+                var data = c.GetDynamicObjectStorageRepos()?
+                    .Where(r => ((IDictionary<string, object>)r).Values.Any(v => !string.IsNullOrWhiteSpace(v as string)))
+                    .ToList();
 
-                if (data == null || !data.Any())
+                if (data == null || data.Count == 0)
                 {
                     s += "<tr><td colspan='9' style='text-align: center; padding: 20px; color: #666;'><em>No object storage repositories detected.</em></td></tr>";
                 }
@@ -83,7 +85,7 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR.VbrTables.Repositories
                 CGlobals.Logger.Error("Failed to render Object Storage Repositories table: " + e.Message);
             }
 
-            s += this.form.SectionEnd();
+            s += this.form.SectionEndWithEmptyState(s, string.Empty);
 
             return s;
         }

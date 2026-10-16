@@ -50,6 +50,9 @@ checksums, and scan results.
 
 ### Fixed
 
+- VBR report tables with no collected data (SOBR, SOBR extents, capacity and archive tier, standalone
+  repositories, object storage, license, managed servers, and every other section table) now show a single
+  "No data available" row instead of rendering as a header-only table.
 - Orphaned & Superseded Backups no longer labels a backup whose job could not be matched as **Orphaned** when
   something is still writing to it. The whole parent backup is judged on its newest restore point: if any of its
   restore points, across all of its VMs, is less than 35 days old (tunable via `OrphanedActiveChainWindowDays` in `VbrConfig.json`), every row is listed as
