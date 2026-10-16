@@ -2793,6 +2793,8 @@ jobs:
   create-release:
     needs: [build-and-test, virustotal-scan]
     runs-on: windows-latest
+    # Production releases only come from this environment (master only, requires approval)
+    environment: production
     # Strict security gate: only create release with zero VirusTotal detections
     if: |
       github.ref == 'refs/heads/master' &&
@@ -2960,6 +2962,31 @@ jobs:
         ($n -join "`n") | Out-File -FilePath "release_notes.md" -Encoding UTF8
         Write-Host "Generated release notes"
 
+    # The v* tag ruleset only lets the release app create tags, so mint its token here.
+    # Until the app is configured (RELEASE_APP_ID empty) fall back to GITHUB_TOKEN.
+    - name: Check release app configuration
+      id: app_check
+      shell: pwsh
+      env:
+        RELEASE_APP_ID: ${{ secrets.RELEASE_APP_ID }}
+      run: |
+        if ([string]::IsNullOrEmpty($env:RELEASE_APP_ID)) {
+          echo "use_app=false" >> $env:GITHUB_OUTPUT
+          echo "::warning::RELEASE_APP_ID is not set - release app is not configured; falling back to GITHUB_TOKEN"
+          Write-Host "Release token: GITHUB_TOKEN (fallback)"
+        } else {
+          echo "use_app=true" >> $env:GITHUB_OUTPUT
+          Write-Host "Release token: release app installation token"
+        }
+
+    - name: Create release app token
+      id: app_token
+      if: steps.app_check.outputs.use_app == 'true'
+      uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 # v3.2.0
+      with:
+        app-id: ${{ secrets.RELEASE_APP_ID }}
+        private-key: ${{ secrets.RELEASE_APP_PRIVATE_KEY }}
+
     - name: Create GitHub Release
       id: create_release
       uses: softprops/action-gh-release@de2c0eb89ae2a093876385947365aca7b0e5f844 # v1
@@ -2972,192 +2999,9 @@ jobs:
         prerelease: false
         files: release-files/*
       env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        GITHUB_TOKEN: ${{ steps.app_token.outputs.token || secrets.GITHUB_TOKEN }}
 
     - name: Release created successfully
       run: |
         echo "🎉 Release v${{ needs.build-and-test.outputs.version }} created successfully!"
         echo "URL: ${{ steps.create_release.outputs.url }}"
-
-  # Automated dev pre-release — triggers on every passing dev push
-  create-prerelease:
-    needs: [build-and-test, virustotal-scan]
-    runs-on: windows-latest
-    if: |
-      github.ref == 'refs/heads/dev' &&
-      needs.virustotal-scan.outputs.zip_clean == 'true'
-
-    steps:
-    - name: Checkout repository
-      uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
-      with:
-        fetch-depth: 0
-
-    - name: Download ZIP artifact
-      uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
-      with:
-        name: veeam-healthcheck-zip
-        path: release-files
-
-    - name: Compute release hash
-      id: release_hash
-      run: |
-        $zipPath = Get-ChildItem "release-files/*.zip" | Select-Object -First 1
-        $hash = (Get-FileHash $zipPath -Algorithm SHA256).Hash
-        $sizeMB = [math]::Round($zipPath.Length / 1MB, 2)
-        echo "hash=$hash" >> $env:GITHUB_OUTPUT
-        echo "size_mb=$sizeMB" >> $env:GITHUB_OUTPUT
-
-    - name: Generate pre-release notes
-      id: prerelease_notes
-      env:
-        GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      run: |
-        $version   = "${{ needs.build-and-test.outputs.version }}"
-        $zipHash   = "${{ steps.release_hash.outputs.hash }}"
-        $sizeMB    = "${{ steps.release_hash.outputs.size_mb }}"
-        $commitSha = "${{ github.sha }}"
-        $repo      = "${{ github.repository }}"
-        $buildDate = "${{ github.event.head_commit.timestamp }}"
-
-        # Start of the notes range: the most recent GA or -dev tag, computed in build-and-test
-        $lastTag = "${{ needs.build-and-test.outputs.notes_from_tag }}"
-        if (-not $lastTag) { $lastTag = git rev-list --max-parents=0 HEAD }
-
-        $features = [System.Collections.Generic.List[string]]::new()
-        $fixes    = [System.Collections.Generic.List[string]]::new()
-        $testsCI  = [System.Collections.Generic.List[string]]::new()
-        $other    = [System.Collections.Generic.List[string]]::new()
-
-        # Tracks issue numbers already folded into a descriptive fix bullet below,
-        # so the $fixedIssues fallback list (generic "Fixes #N" lines) doesn't
-        # repeat them as a separate line.
-        $handledIssues = [System.Collections.Generic.HashSet[string]]::new()
-        $RS = [char]0x1E
-        $FS = [char]0x1F
-
-        foreach ($record in ((git log "$lastTag..HEAD" --pretty=format:"%h$FS%s$FS%b$RS" --no-merges) -join "`n") -split $RS) {
-          if ([string]::IsNullOrWhiteSpace($record)) { continue }
-          $fields = $record -split $FS, 3
-          $sha    = $fields[0].Trim()
-          $subj   = $fields[1].Trim()
-          $body   = if ($fields.Count -gt 2) { $fields[2] } else { '' }
-
-          # Only attribute when GitHub can resolve the commit's author email to a
-          # verified account; unresolved commits render with no attribution rather
-          # than a guessed or fallback name.
-          $login       = gh api "repos/$repo/commits/$sha" --jq '.author.login // empty' 2>$null
-          $attribution = if ($login) { " — @$login" } else { '' }
-
-          if ($subj -match '^feat(?:\([^)]+\))?!?:\s*(.+)') {
-            $features.Add("- $($Matches[1].Trim()) ($sha)$attribution")
-          } elseif ($subj -match '^fix(?:\([^)]+\))?!?:\s*(.+)') {
-            $desc      = $Matches[1].Trim()
-            $issueRefs = [regex]::Matches($body, '(?:Fixes|Closes|Resolves)\s+#(\d+)', 'IgnoreCase') |
-              ForEach-Object { $_.Groups[1].Value } | Sort-Object -Unique
-            $closesNote = if ($issueRefs.Count -gt 0) {
-              ', closes ' + (($issueRefs | ForEach-Object { "[#$_](https://github.com/$repo/issues/$_)" }) -join ', ')
-            } else { '' }
-            $fixes.Add("- $desc ($sha)$closesNote$attribution")
-            $issueRefs | ForEach-Object { [void]$handledIssues.Add($_) }
-          } elseif ($subj -match '^(?:test|ci|chore|docs|build|refactor|style|perf)(?:\([^)]+\))?!?:\s*(.+)') {
-            $testsCI.Add("- $($Matches[1].Trim()) ($sha)$attribution")
-          } else {
-            $other.Add("- $subj ($sha)$attribution")
-          }
-        }
-
-        $fixedIssues = (git log "$lastTag..HEAD" --pretty=format:"%B") |
-          Select-String -Pattern '(?:Fixes|Closes|Resolves)\s+#(\d+)' -AllMatches |
-          ForEach-Object { $_.Matches } | ForEach-Object { $_.Groups[1].Value } |
-          Sort-Object -Unique |
-          Where-Object { -not $handledIssues.Contains($_) }
-
-        $n = [System.Collections.Generic.List[string]]::new()
-        $n.Add("## Veeam Health Check v$version — Dev Pre-release")
-        $n.Add("")
-        $n.Add("> ⚠️ **Automated dev pre-release.** Built from the ``dev`` branch after CI/CD passes. Not recommended for production — use the [latest stable release](https://github.com/$repo/releases/latest).")
-        $n.Add("")
-
-        if ($features.Count -gt 0) {
-          $n.Add("### ✨ Features")
-          $n.Add("")
-          $features | ForEach-Object { $n.Add($_) }
-          $n.Add("")
-        }
-
-        if ($fixes.Count -gt 0 -or $fixedIssues.Count -gt 0) {
-          $n.Add("### 🐛 Bug Fixes")
-          $n.Add("")
-          $fixes | ForEach-Object { $n.Add($_) }
-          $fixedIssues | ForEach-Object { $n.Add("- Fixes #$_ ([#$_](https://github.com/$repo/issues/$_))") }
-          $n.Add("")
-        }
-
-        if ($testsCI.Count -gt 0) {
-          $n.Add("### 🧪 Tests & CI")
-          $n.Add("")
-          $testsCI | ForEach-Object { $n.Add($_) }
-          $n.Add("")
-        }
-
-        if ($other.Count -gt 0) {
-          $n.Add("### 📝 Other Changes")
-          $n.Add("")
-          $other | ForEach-Object { $n.Add($_) }
-          $n.Add("")
-        }
-
-        $hasChanges = ($features.Count + $fixes.Count + $fixedIssues.Count + $testsCI.Count + $other.Count) -gt 0
-        if ($hasChanges) { $n.Add("---"); $n.Add("") }
-
-        $n.Add("### ✅ CI Verification")
-        $n.Add("- ✅ Build & Unit Tests: **Passed**")
-        $n.Add("- ✅ VirusTotal Scan: **Clean** (0 detections)")
-        $n.Add("- ✅ Integration Tests: **Passed** (VBR v12, v13, v13+SQL)")
-        $n.Add("")
-        $n.Add("### 📦 Download")
-        $n.Add("**VeeamHealthCheck-$version.zip** ($sizeMB MB)")
-        $n.Add("")
-        $n.Add("**SHA256 Checksum:**")
-        $n.Add('```')
-        $n.Add($zipHash)
-        $n.Add('```')
-        $n.Add("")
-        $n.Add("**Verification Command:**")
-        $n.Add('```powershell')
-        $n.Add("(Get-FileHash ``VeeamHealthCheck-$version.zip``).Hash")
-        $n.Add('```')
-        $n.Add("")
-        $n.Add("### 📋 Requirements")
-        $n.Add("- Windows 10 (1607) or later, or Windows Server 2012 or later")
-        $n.Add("- .NET 10 runtime (included in self-contained build)")
-        $n.Add("- PowerShell 5.1 or later")
-        $n.Add("")
-        $n.Add("---")
-        $n.Add("")
-        $n.Add("**Branch:** ``dev``")
-        $n.Add("**Built from:** [$commitSha](https://github.com/$repo/commit/$commitSha)")
-        $n.Add("**Build Date:** $buildDate")
-
-        ($n -join "`n") | Out-File -FilePath "prerelease_notes.md" -Encoding UTF8
-        Write-Host "Generated pre-release notes"
-
-    - name: Create GitHub pre-release
-      id: create_prerelease
-      uses: softprops/action-gh-release@de2c0eb89ae2a093876385947365aca7b0e5f844 # v1
-      with:
-        tag_name: v${{ needs.build-and-test.outputs.version }}-dev
-        target_commitish: ${{ github.sha }}
-        name: "[Dev] Veeam Health Check v${{ needs.build-and-test.outputs.version }}"
-        body_path: prerelease_notes.md
-        draft: false
-        prerelease: true
-        files: release-files/*
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-    - name: Pre-release created successfully
-      run: |
-        echo "🎉 Pre-release v${{ needs.build-and-test.outputs.version }}-dev created!"
-        echo "URL: ${{ steps.create_prerelease.outputs.url }}"
