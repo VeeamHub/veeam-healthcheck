@@ -1,19 +1,20 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "title": "Security Compliance CSV Schema",
-  "description": "Maps _SecurityCompliance.csv to CComplianceCsv C# class",
+  "description": "Maps _SecurityCompliance.csv to CComplianceCsv C# class. Columns 2-5 are optional: older CSVs (and the golden baseline) carry only Best Practice and Status. RuleId is the last column, the SDK rule Id GUID (blank when the SDK object has no Id); it is read only by CI triage (.github/scripts/ScaTriage.psm1) and is not rendered in the report or JSON export.",
   "csvFile": "_SecurityCompliance.csv",
   "csharpClass": "VeeamHealthCheck.Functions.Reporting.CsvHandlers.CComplianceCsv",
   "csharpFile": "Functions/Reporting/CsvHandlers/CComplianceCsv.cs",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "vbrVersionRequired": "12.0",
   "columns": [
     {
       "index": 0,
-      "csvName": "BestPractice",
+      "csvName": "Best Practice",
       "csharpProperty": "BestPractice",
       "csharpType": "string",
       "nullable": false,
+      "nameMapping": "[Name(\"Best Practice\")]",
       "description": "Security best practice name"
     },
     {
@@ -22,14 +23,47 @@
       "csharpProperty": "Status",
       "csharpType": "string",
       "nullable": false,
-      "expectedValues": ["Passed", "NotImplemented", "UnableToDetect", "Suppressed"],
-      "description": "Compliance status"
+      "expectedValues": ["Passed", "Not Implemented", "Unable to detect", "Suppressed"],
+      "description": "Compliance status (display strings from Get-VhcSecurityCompliance.ps1 StatusObj)"
+    },
+    {
+      "index": 2,
+      "csvName": "RuleType",
+      "csharpProperty": "RuleType",
+      "csharpType": "string",
+      "optional": true,
+      "description": "SDK rule type enum name"
+    },
+    {
+      "index": 3,
+      "csvName": "IsMapped",
+      "csharpProperty": "IsMapped",
+      "csharpType": "bool?",
+      "optional": true,
+      "description": "True when the rule type has a label in VbrConfig.json SecurityComplianceRuleNames"
+    },
+    {
+      "index": 4,
+      "csvName": "LabelSource",
+      "csharpProperty": "LabelSource",
+      "csharpType": "string",
+      "optional": true,
+      "description": "Where the displayed label came from"
+    },
+    {
+      "index": 5,
+      "csvName": "RuleId",
+      "csharpProperty": "RuleId",
+      "csharpType": "string",
+      "optional": true,
+      "description": "SDK rule Id GUID (equals the REST securityAnalyzer best-practice id); blank when the SDK object has no Id. Always the last column. CI-only, never rendered."
     }
   ],
   "validationRules": {
-    "requiredColumns": ["BestPractice", "Status"],
+    "requiredColumns": ["Best Practice", "Status"],
     "guidColumns": [],
-    "booleanColumns": [],
+    "nullableGuidColumns": ["RuleId"],
+    "booleanColumns": ["IsMapped"],
     "numericColumns": []
   }
 }
