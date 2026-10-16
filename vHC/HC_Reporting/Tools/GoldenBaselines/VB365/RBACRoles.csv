@@ -1,0 +1,3 @@
+"Name","Description","Role Type","Operators","Selected Items","Excluded Items"
+"Contoso Helpdesk Restore Operators","Tier-1 restore rights","Operators","helpdesk1@contoso.example, helpdesk2@contoso.example","Contoso Holdings Ltd","Executives"
+"Contoso München Admins","","Administrators","admin.muenchen@contoso.example","",""

@@ -1,0 +1,3 @@
+"Name","Description","Cloud","Type","Bucket/Container","Path","Size Limit","Used Space","Free Space","Bound Repo"
+"contoso-archive-bucket","Azure Blob archive tier","AzureBlob","Archive","contoso-vb365-container","vb365/archive","1,024.00 TB","512.25 TB","511.75 TB","Contoso-Archive-Repo"
+"contoso-s3-primary","","AmazonS3","Primary","contoso-vb365-s3","","Unlimited","88.10 TB","Unlimited",""

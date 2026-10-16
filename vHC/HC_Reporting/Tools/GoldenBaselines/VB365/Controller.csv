@@ -1,0 +1,2 @@
+"VB365 Version","OS Version","CPUs","RAM","Proxies Managed","Repos Managed","Orgs Managed","Jobs Managed","PowerShell Installed?","Proxy Installed?","REST Installed?","Console Installed?","VM Name","VM Location","VM SKU","VM Size"
+"8.1.0.1142 (v8)","Microsoft Windows NT 10.0.20348.0","8","32 GB","3","3","3","4","True","True","True","True","contoso-vb365-ctl01","westeurope (Zone 1)","2022-datacenter-azure-edition","Standard_D8s_v5"
