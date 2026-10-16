@@ -1296,16 +1296,32 @@ jobs:
         # Non-zero PDF and PPTX next to the HTML report (requested by /pdf /pptx on the run step).
         & "${{ github.workspace }}\.github\scripts\Test-VhcLiveRun.ps1" -Check Exports
 
-    - name: Check SCA label drift
+    # SCA label triage: detect-only, never writes to GitHub. Evaluated rules (the CSV the report is built
+    # from) are joined with VBR REST console labels on the rule GUID; unevaluated enums are "dormant".
+    # Degrades to a CSV-only verdict (with a notice) when REST is unreachable. The single sca-drift-proposal
+    # job below turns every server's sca-triage.json into one PR/issue. See docs/contributing.md.
+    - name: SCA label triage
       if: success() || failure()
+      continue-on-error: true
       shell: pwsh
       env:
-        GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        SCA_REST_HOST: ${{ secrets.VBR_HOST }}
+        SCA_REST_USER: ${{ secrets.VBR_USERNAME }}
+        SCA_REST_PASSWORD: ${{ secrets.VBR_13_REMOTE_PW }}
       run: |
         & "${{ github.workspace }}\.github\scripts\Invoke-SecurityComplianceDriftCheck.ps1" `
-          -CatalogPath 'C:\temp\vHC\Original\VBR\*\*\_SecurityComplianceCatalog.csv' `
-          -Repo '${{ github.repository }}' `
-          -RunUrl '${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}'
+          -CatalogPath 'C:\temp\vHC\Original\VBR\*\*\*_SecurityComplianceCatalog.csv' `
+          -Server vbr-2 `
+          -OutDir "${{ runner.temp }}\sca-triage"
+
+    - name: Upload SCA triage
+      if: always()
+      uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+      with:
+        name: sca-triage-vbr-2
+        path: ${{ runner.temp }}\sca-triage\sca-triage.json
+        if-no-files-found: ignore
+        retention-days: 7
 
     - name: Collect performance metrics
       if: always()
@@ -1914,16 +1930,33 @@ jobs:
 
         Write-Host "✅ HTML table row validation complete" -ForegroundColor Green
 
-    - name: Check SCA label drift
+    # SCA label triage: detect-only, never writes to GitHub. Evaluated rules (the CSV the report is built
+    # from) are joined with VBR REST console labels on the rule GUID; unevaluated enums are "dormant".
+    # Degrades to a CSV-only verdict (with a notice) when REST is unreachable. The single sca-drift-proposal
+    # job below turns every server's sca-triage.json into one PR/issue. See docs/contributing.md.
+    - name: SCA label triage
       if: success() || failure()
+      continue-on-error: true
       shell: pwsh
       env:
-        GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        SCA_REST_HOST: localhost
+        SCA_REST_USER: ${{ secrets.VBR_WIN_USER }}
+        SCA_REST_PASSWORD: ${{ secrets.VBR_WIN_PWD }}
       run: |
         & "${{ github.workspace }}\.github\scripts\Invoke-SecurityComplianceDriftCheck.ps1" `
-          -CatalogPath 'C:\temp\vHC\Original\VBR\*\*\_SecurityComplianceCatalog.csv' `
-          -Repo '${{ github.repository }}' `
-          -RunUrl '${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}'
+          -CatalogPath 'C:\temp\vHC\Original\VBR\*\*\*_SecurityComplianceCatalog.csv' `
+          -Server vbr-13-sql `
+          -OutDir "${{ runner.temp }}\sca-triage" `
+          -VbrExePath 'C:\Program Files\Veeam\Backup and Replication\Backup\Veeam.Backup.Service.exe'
+
+    - name: Upload SCA triage
+      if: always()
+      uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+      with:
+        name: sca-triage-vbr-13-sql
+        path: ${{ runner.temp }}\sca-triage\sca-triage.json
+        if-no-files-found: ignore
+        retention-days: 7
 
     - name: Collect performance metrics
       if: always()
@@ -2479,6 +2512,34 @@ jobs:
 
         Write-Host "✅ HTML table row validation complete" -ForegroundColor Green
 
+    # SCA label triage: detect-only, never writes to GitHub. Evaluated rules (the CSV the report is built
+    # from) are joined with VBR REST console labels on the rule GUID; unevaluated enums are "dormant".
+    # Degrades to a CSV-only verdict (with a notice) when REST is unreachable. The single sca-drift-proposal
+    # job below turns every server's sca-triage.json into one PR/issue. See docs/contributing.md.
+    - name: SCA label triage
+      if: success() || failure()
+      continue-on-error: true
+      shell: pwsh
+      env:
+        SCA_REST_HOST: localhost
+        SCA_REST_USER: ${{ secrets.VBR_USERNAME }}
+        SCA_REST_PASSWORD: ${{ secrets.VBR_PASSWORD }}
+      run: |
+        & "${{ github.workspace }}\.github\scripts\Invoke-SecurityComplianceDriftCheck.ps1" `
+          -CatalogPath 'C:\temp\vHC\Original\VBR\*\*\*_SecurityComplianceCatalog.csv' `
+          -Server vbr-12 `
+          -OutDir "${{ runner.temp }}\sca-triage" `
+          -VbrExePath 'C:\Program Files\Veeam\Backup and Replication\Backup\Veeam.Backup.Service.exe'
+
+    - name: Upload SCA triage
+      if: always()
+      uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+      with:
+        name: sca-triage-vbr-12
+        path: ${{ runner.temp }}\sca-triage\sca-triage.json
+        if-no-files-found: ignore
+        retention-days: 7
+
     - name: Collect performance metrics
       if: always()
       run: |
@@ -3005,3 +3066,59 @@ jobs:
       run: |
         echo "🎉 Release v${{ needs.build-and-test.outputs.version }} created successfully!"
         echo "URL: ${{ steps.create_release.outputs.url }}"
+
+  # Single SCA drift proposer. Unions the per-server sca-triage.json artifacts and, on dev/master only,
+  # opens or updates ONE draft PR (bot/sca-labels -> dev, AI-assisted label) that edits VbrConfig.json
+  # with the exact console labels, plus ONE sca-drift issue linking it; a clean run closes both.
+  # Everywhere else it is report-only (zero gh/git calls; the patch is in the job summary + artifact).
+  # It is a leaf: nothing needs it, so it cannot gate virustotal-scan, the release jobs or the beta
+  # gate, and continue-on-error keeps a failure here from turning the run red.
+  # Note: pushes made with GITHUB_TOKEN do not trigger other workflows, so the bot PR gets no
+  # automatic checks until a human pushes to it or re-runs them.
+  sca-drift-proposal:
+    needs: [integration-test-vbr-2, integration-test-vbr-13-sql, integration-test-vbr-12]
+    if: always() && github.event_name != 'pull_request'
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    permissions:
+      contents: write        # push the fixed bot branch
+      pull-requests: write   # create/update the draft PR
+      issues: write          # the sca-drift issue and the AI-assisted label
+    concurrency:
+      group: sca-drift-proposal
+      cancel-in-progress: false
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+
+    - name: Download SCA triage artifacts
+      continue-on-error: true
+      uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
+      with:
+        pattern: sca-triage-*
+        path: sca-triage
+
+    - name: Propose SCA label fixes
+      shell: pwsh
+      env:
+        GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      run: |
+        # Read run context from the runner's default env vars instead of expression interpolation (Semgrep run-shell-injection).
+        $reportOnly = $env:GITHUB_REF -notin @('refs/heads/dev', 'refs/heads/master')
+        ./.github/scripts/Invoke-ScaDriftProposal.ps1 `
+          -TriageDir sca-triage `
+          -Repo $env:GITHUB_REPOSITORY `
+          -RunUrl "$env:GITHUB_SERVER_URL/$env:GITHUB_REPOSITORY/actions/runs/$env:GITHUB_RUN_ID" `
+          -ConfigPath 'vHC/HC_Reporting/Tools/Scripts/HealthCheck/VBR/VbrConfig.json' `
+          -OutDir sca-proposal `
+          -ReportOnly:$reportOnly
+
+    - name: Upload SCA proposal
+      if: always()
+      uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+      with:
+        name: sca-proposal
+        path: sca-proposal
+        if-no-files-found: ignore
+        retention-days: 14

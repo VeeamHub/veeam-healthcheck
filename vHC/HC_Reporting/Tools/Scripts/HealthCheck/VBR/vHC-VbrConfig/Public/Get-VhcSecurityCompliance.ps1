@@ -237,12 +237,20 @@ function Get-VhcSecurityCompliance {
                     $complianceStatus
                 }
 
+                # RuleId is the SDK rule Id, which equals the REST securityAnalyzer best-practice id.
+                # CI joins on it to read the exact console label (see .github/scripts/ScaTriage.psm1).
+                $ruleId = ''
+                if ($null -ne $SecurityCompliance.PSObject.Properties['Id'] -and $null -ne $SecurityCompliance.Id) {
+                    $ruleId = $SecurityCompliance.Id.ToString()
+                }
+
                 $inObj = [pscustomobject][ordered]@{
                     'Best Practice' = $ruleName
                     'Status'        = $statusDisplay
                     'RuleType'      = $complianceType
                     'IsMapped'      = $resolved.IsMapped
                     'LabelSource'   = $resolved.Source
+                    'RuleId'        = $ruleId
                 }
                 [void]$OutObj.Add($inObj)
                 $processedCount++

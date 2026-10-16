@@ -66,6 +66,15 @@ It builds your branch, then runs the three integration jobs. Release publishing 
 
 The jobs assert on the output, not only on the exit code: core CSVs exist and are non-empty, the Jobs CSV has rows, the HTML report has its core sections, and on `vbr-2` the JSON, PDF and PPTX exports are checked and a second `/scrub:true` pass (with `VHC_EXPERIMENTS=1`) confirms the real hostname is absent and the Orphaned & Superseded Backups section is present. The shared checks are in `.github/scripts/Test-VhcLiveRun.ps1`.
 
+### Security & Compliance Analyzer label triage
+
+Each live job runs a deterministic (no AI) SCA label triage after the report is built. Console labels for the Security & Compliance Analyzer rules live in `VbrConfig.json` (`SecurityComplianceRuleNames`); when a VBR release adds or renames a rule, the report falls back to a PascalCase label.
+
+- **Drift means evaluated rules only.** The rules a server actually evaluated (`*_SecurityCompliance.csv`, the same rows the report shows) count. An evaluated rule is `missing` (no map entry) or `label-changed` (its VBR console label differs from the map). Enum values the server never evaluates are `dormant`: they appear in the job summary and never open an issue.
+- **Exact labels come from a join.** `*_SecurityCompliance.csv` carries the SDK rule `RuleId`; the VBR REST `GET /api/v1/securityAnalyzer/bestPractices` returns the same GUID with the full console label. Each job writes `sca-triage.json` (evaluated rules with verdict, console and map labels, plus dormant enums and the VBR version) as an `sca-triage-<server>` artifact. If REST is unreachable, credentials are missing, or the server's API has no analyzer endpoint (possible on v12), the job falls back to a CSV-only verdict with a notice and never fails.
+- **One proposer.** The `sca-drift-proposal` job unions the artifacts. On `dev` and `master` it opens or updates one draft PR from `bot/sca-labels` into `dev` (label `AI-assisted`) that edits `SecurityComplianceRuleNames` with the exact console labels and bumps `SecurityComplianceRulesValidatedForVbrVersion`, and one `sca-drift` issue linking it; a clean run closes both. Everywhere else it is report-only: the proposed `VbrConfig.json` is in the job summary and the `sca-proposal` artifact. If the repo setting that lets Actions create PRs is off, the exact changes go into the issue body instead. A human reviews and merges the PR.
+- Code: `.github/scripts/Invoke-SecurityComplianceDriftCheck.ps1` (per server), `Invoke-ScaDriftProposal.ps1` (proposer), `ScaTriage.psm1` (join and patch logic), with Pester tests beside them.
+
 ## License
 
 By contributing, you agree that your contributions will be licensed under the project's [MIT License](https://github.com/VeeamHub/veeam-healthcheck/blob/master/LICENSE).
