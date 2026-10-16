@@ -11,8 +11,6 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "VhcXTests", "VhcXTests\VhcX
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "VhcGuiTests", "VhcGuiTests\VhcGuiTests.csproj", "{4D2D6E16-5626-4279-9ACB-5A06689E2715}"
 EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "HC_Reporting", "HC_Reporting", "{635C7B6F-B1E5-C64F-A638-5DFD9DAA77D2}"
-EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
