@@ -50,6 +50,9 @@ checksums, and scan results.
 
 ### Fixed
 
+- The VBR report's Config Database row no longer shows a blank DATABASE TYPE on remote (`/remote /host`) and
+  imported runs, where there is no local registry to read. The type now comes from the collected
+  `_vbrinfo.csv`, and shows "Unknown" when the collection does not record one.
 - VBR report tables with no collected data (SOBR, SOBR extents, capacity and archive tier, standalone
   repositories, object storage, license, managed servers, and every other section table) now show a single
   "No data available" row instead of rendering as a header-only table.

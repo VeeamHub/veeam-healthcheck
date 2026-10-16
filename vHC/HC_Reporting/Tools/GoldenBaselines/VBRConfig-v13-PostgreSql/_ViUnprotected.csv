@@ -1,0 +1,4 @@
+"Name","PowerState","ProvisionedSize","UsedSize","Path","Type"
+"TEST-VM01","PoweredOff","53687091200","21474836480","VCENTER01.lab.local\Datacenter1\Test\Development","Vm"
+"DEV-SANDBOX","PoweredOn","107374182400","53687091200","VCENTER01.lab.local\Datacenter1\Test\Sandbox","Vm"
+"TEMPLATE-WIN2022","PoweredOff","42949672960","21474836480","VCENTER01.lab.local\Datacenter1\Templates","VmTemplate"
