@@ -1,10 +1,11 @@
 # GUI and live collection
 
-A field engineer runs VHC on (or against) a Veeam server: the GUI or `/run` collects configuration with PowerShell, SQL, registry, WMI and log parsing, then builds the report and optional PDF/PowerPoint exports. **None of this can be driven on macOS or Linux, and this skill does not claim to verify it.**
+A field engineer runs VHC on (or against) a Veeam server: the GUI or `/run` collects configuration with PowerShell, SQL, registry, WMI and log parsing, then builds the report and optional PDF/PowerPoint exports. **Collection and the real GUI window cannot be driven on macOS or Linux, and this skill does not claim to verify them.** The one exception is the headless GUI suite below, which proves GUI logic without a real window.
 
 ## Sub-features
 
-- `gui-launch` opens the Avalonia window (`/gui` or no arguments).
+- `gui-headless` runs the Avalonia.Headless xUnit suite against the real windows. **Drivable here**; see the section below.
+- `gui-launch` opens a real Avalonia window (`/gui` or no arguments).
 - `collect-vbr` runs the VBR PowerShell collection scripts under `vHC/HC_Reporting/Tools/Scripts/HealthCheck/VBR/`.
 - `collect-vb365` runs the VB365 scripts.
 - `collect-remote` uses `/remote /host=<name>` with stored or file-supplied credentials (`/savecreds`, `/credfile=`, `/silent`).
@@ -33,7 +34,31 @@ What was attempted and what happened off Windows:
 
 What a Windows verification should do (for whoever has the host): run `VeeamHealthCheck.exe /run /outdir=<scratch>` on a lab VBR server, then compare the produced `vHC-Report` HTML and `Original\VBR\<server>\<timestamp>\*.csv` against the same CSVs fed back through `/import` (see [csv-import](./csv-import.md)); that closes the collection-to-report loop that this skill cannot.
 
+## gui-headless
+
+`vHC/VhcGuiTests` has 22 Avalonia.Headless xUnit tests that construct the real windows (main window, ManageServers, credential prompt, About disclaimer, `AvaloniaUiNotifier`) with no display, and drive them by name.
+
+Recipe: `.claude/skills/verify-vhc/scripts/vhc-verify.sh tests <ID>` (runs it with `CI=true`, which skips a local SMB post-build copy). Expect `Passed!  - Failed: 0, Passed: 22 ... VhcGuiTests.dll` and `gui=0` on the exit-codes line. Evidence: `.verify-vhc/evidence/<ID>/tests-gui.log`.
+
+Proves:
+
+- The windows construct and the named controls exist and bind to state.
+- Click and type flows: terms accept/decline, Run enable/disable, period radios, scrub and PDF toggles, path box, product selector, theme toggle (persisted).
+- Dialog flows: add, cancel and remove servers (including stored credentials), credential prompt, About, confirm-yes/no.
+- State changes land in `CGlobals` and the settings store, which the tests isolate and restore.
+- Clicking Run calls the `RunAction` seam, which the tests replace, so no collection ever runs.
+
+Does not prove:
+
+- Real Win32 window and console hide on Run.
+- DPAPI credential storage (the tests isolate the stores and never exercise Windows DPAPI).
+- The native folder picker.
+- How it renders on real Windows (fonts, DPI, theme fidelity).
+- Live collection, or what `Run` itself does once invoked.
+
 ## Gotchas
+
+- Without `CI=true` the GUI test project's post-build step tries a local SMB copy; the helper sets `CI=true` to skip it.
 
 - A passing macOS `import-report` run says nothing about the collection scripts. Do not cite it as proof of collection or GUI behavior.
 - `CGlobals.REMOTEEXEC` does not mean the scripts run on the remote server; the PowerShell module always runs locally and connects out. Preflight checks must run regardless (repo CLAUDE.md).

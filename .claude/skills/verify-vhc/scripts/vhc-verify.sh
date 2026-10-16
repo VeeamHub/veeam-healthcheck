@@ -7,7 +7,7 @@
 #   import-report [ID]    run the CLI in /import mode against the checked-in golden CSVs,
 #                         then assert on the generated HTML/JSON; evidence -> .verify-vhc/evidence/ID/
 #   import-scrub [ID]     same, with /scrub:true; asserts identifying names are ABSENT from the output
-#   tests [ID]            run the cross-platform test projects; evidence -> .verify-vhc/evidence/ID/
+#   tests [ID]            run the xUnit projects (VhcXTests, CrossPlatform, headless GUI); evidence -> .verify-vhc/evidence/ID/
 #   cleanup [ID]          stop only the process this skill started, remove scratch input; KEEPS evidence
 #
 # Everything is repo-relative. State lives in .verify-vhc/ (git-ignored).
@@ -94,7 +94,7 @@ cmd_doctor() {
   else
     say "warn csproj is modified (build auto-bump?): git diff -- $CSPROJ"
   fi
-  say "info os=$(uname -s) arch=$(uname -m); the GUI cannot start here, see features/gui-and-collection.md"
+  say "info os=$(uname -s) arch=$(uname -m); a real GUI window cannot open here, but the headless GUI suite runs (tests); see features/gui-and-collection.md"
   if [ "$ok" -eq 1 ]; then say "DOCTOR: ready"; else say "DOCTOR: not ready"; exit 1; fi
 }
 
@@ -191,10 +191,12 @@ cmd_tests() {
   note_csproj_state
   dotnet test vHC/VhcXTests.CrossPlatform/VhcXTests.CrossPlatform.csproj > "$ev/tests-crossplatform.log" 2>&1; rc1=$?
   dotnet test vHC/VhcXTests/VhcXTests.csproj > "$ev/tests-vhcxtests.log" 2>&1; rc2=$?
+  # CI=true skips the project's local SMB post-build copy; the headless GUI suite needs no display.
+  CI=true dotnet test vHC/VhcGuiTests/VhcGuiTests.csproj > "$ev/tests-gui.log" 2>&1; rc3=$?
   revert_csproj_if_we_dirtied
-  grep -h -E 'Passed!|Failed!' "$ev/tests-crossplatform.log" "$ev/tests-vhcxtests.log"
-  say "exit codes: crossplatform=$rc1 vhcxtests=$rc2; logs in $ev"
-  if [ "$rc1" -ne 0 ] || [ "$rc2" -ne 0 ]; then exit 1; fi
+  grep -h -E 'Passed!|Failed!' "$ev/tests-crossplatform.log" "$ev/tests-vhcxtests.log" "$ev/tests-gui.log"
+  say "exit codes: crossplatform=$rc1 vhcxtests=$rc2 gui=$rc3; logs in $ev"
+  if [ "$rc1" -ne 0 ] || [ "$rc2" -ne 0 ] || [ "$rc3" -ne 0 ]; then exit 1; fi
 }
 
 cmd_cleanup() {
