@@ -27,7 +27,8 @@
     "SqlRAMMin": 2,
     "SqlCPUMin": 1,
     "CompliancePollMaxSeconds": 600,
-    "ComplianceHeartbeatSeconds": 15
+    "ComplianceHeartbeatSeconds": 15,
+    "OrphanedActiveChainWindowDays": 35
   },
   "SecurityComplianceRuleNames": {
     "WindowsScriptHostDisabled": "Windows Script Host should be disabled",

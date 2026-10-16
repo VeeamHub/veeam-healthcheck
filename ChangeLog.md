@@ -51,8 +51,8 @@ checksums, and scan results.
 
 - Orphaned & Superseded Backups no longer labels a backup whose job could not be matched as **Orphaned** when
   something is still writing to it. The whole parent backup is judged on its newest restore point: if any of its
-  restore points, across all of its VMs, is less than 7 days old, every row is listed as **Unresolved** (not safe to
-  reclaim; check it in the VBR console). A restore point with no usable timestamp is listed as Unresolved, not
+  restore points, across all of its VMs, is less than 35 days old (tunable via `OrphanedActiveChainWindowDays` in `VbrConfig.json`), every row is listed as
+  **Unresolved** (not safe to reclaim; check it in the VBR console). A restore point with no usable timestamp is listed as Unresolved, not
   dropped, with Oldest/Newest taken from the dated points only (blank when there are none); a local-time timestamp is
   converted to UTC once, and the report shows the instant that was judged. Unresolved rows are counted in "backups
   flagged" but excluded from the "potentially reclaimable" GB totals, which report them separately as still being

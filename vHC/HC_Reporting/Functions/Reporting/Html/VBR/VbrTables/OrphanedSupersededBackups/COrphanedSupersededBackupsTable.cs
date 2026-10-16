@@ -281,7 +281,7 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR.VbrTables.OrphanedSupers
                     {
                         CategoryOrphaned => "<p class=\"label\">No live job - this name/type came from the backup's own retained metadata, not a current VBR job.</p>",
                         CategorySuperseded => "<p class=\"label\">Still a live job - these points belong to an object no longer part of its currently-active membership.</p>",
-                        CategoryUnresolved => "<p class=\"label\">Job not matched, but this backup received a restore point shortly before collection, so something is still writing to it. Not safe to reclaim; check it in the VBR console.</p>",
+                        CategoryUnresolved => "<p class=\"label\">Job not matched, but this backup received a restore point recently, so something is still writing to it. Not safe to reclaim; check it in the VBR console.</p>",
                         _ => "<p class=\"label\">Unrecognized category - showing raw data without further interpretation.</p>",
                     };
                     // BackupId shown per-object rather than used to group

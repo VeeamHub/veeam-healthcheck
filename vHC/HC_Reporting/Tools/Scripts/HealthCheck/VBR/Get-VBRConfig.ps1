@@ -297,8 +297,17 @@ $collectorResults.Add($jobsResult)
 # the call site and removes the ordering requirement entirely.
 # -RepositoryDetails is the same variable Get-VhcJob uses above, resolving
 # RepositoryId -> a human-readable name for the report's per-repo grouping.
+# OrphanedActiveChainWindowDays is deliberately not in $requiredThresholds: a
+# VbrConfig.json that predates it (or holds a non-integer) falls back to the
+# function's own default instead of failing the whole collection.
+$orphanedWindowParams = @{}
+$orphanedWindowDays = 0
+if ([int]::TryParse([string]$config.Thresholds.OrphanedActiveChainWindowDays, [ref]$orphanedWindowDays) -and
+    $orphanedWindowDays -ge 0 -and $orphanedWindowDays -le 3650) {
+    $orphanedWindowParams.ActiveChainWindowDays = $orphanedWindowDays
+}
 $collectorResults.Add((Invoke-VhcCollector -Name 'OrphanedSupersededBackups' -Action {
-    Get-VhcOrphanedSupersededBackups -RepositoryDetails $RepositoryDetails -OrphanedSupersededCache $jobsResult.Output
+    Get-VhcOrphanedSupersededBackups -RepositoryDetails $RepositoryDetails -OrphanedSupersededCache $jobsResult.Output @orphanedWindowParams
 }))
 # ---------------------------------------------------------------------------
 

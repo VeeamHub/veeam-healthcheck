@@ -18,7 +18,8 @@ function Get-VhcOrphanedSupersededBackups {
         restore point, across every candidate of that parent, is within this many days of collection is
         still being written to, so it is reported as Category 'Unresolved'
         rather than 'Orphaned' (#221): "safe to consider reclaiming" must not
-        be claimed for a chain something is actively writing. Default 7.
+        be claimed for a chain something is actively writing. Default 35 (Get-VBRConfig.ps1 passes VbrConfig.json
+        Thresholds.OrphanedActiveChainWindowDays).
     .Parameter OrphanedSupersededCache
         The sweep-result object Get-VhcJob now returns explicitly. Pass it
         here (Get-VBRConfig.ps1 does) rather than relying on this function
@@ -40,7 +41,7 @@ function Get-VhcOrphanedSupersededBackups {
 
         [Parameter(Mandatory = $false)]
         [ValidateRange(0, 3650)]
-        [int]$ActiveChainWindowDays = 7
+        [int]$ActiveChainWindowDays = 35
     )
 
     $message = "Collecting orphaned and superseded backups..."
