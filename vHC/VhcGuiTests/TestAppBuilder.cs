@@ -4,7 +4,6 @@ using Avalonia;
 using Avalonia.Headless;
 using Avalonia.Headless.XUnit;
 using VeeamHealthCheck;
-using VeeamHealthCheck.Startup;
 using Xunit;
 
 [assembly: AvaloniaTestApplication(typeof(VhcGuiTests.TestAppBuilder))]
@@ -23,9 +22,7 @@ namespace VhcGuiTests
             // before any test constructor runs, so the stores must be redirected first.
             var dir = Path.Combine(Path.GetTempPath(), "vhcgui-" + Guid.NewGuid().ToString("N"));
             Directory.CreateDirectory(dir);
-            CAppSettings.StorePath = Path.Combine(dir, "settings.json");
-            CredentialStore.StorePath = Path.Combine(dir, "creds.json");
-            CredentialStore.InitializeCache();
+            IsolatedStores.Redirect(dir);
 
             // Skia with real drawing is required for CaptureRenderedFrame().
             return AppBuilder.Configure<App>()

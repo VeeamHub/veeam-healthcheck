@@ -46,11 +46,5 @@ jobs:
     - name: Run cross-platform tests
       run: dotnet test vHC/VhcXTests.CrossPlatform/VhcXTests.CrossPlatform.csproj --no-build --verbosity normal
 
-    - name: Restore GUI tests
-      run: dotnet restore vHC/VhcGuiTests/VhcGuiTests.csproj
-
-    - name: Build GUI tests
-      run: dotnet build vHC/VhcGuiTests/VhcGuiTests.csproj --no-restore
-
     - name: Run headless GUI tests
-      run: dotnet test vHC/VhcGuiTests/VhcGuiTests.csproj --no-build --verbosity normal
+      run: dotnet test vHC/VhcGuiTests/VhcGuiTests.csproj --verbosity normal

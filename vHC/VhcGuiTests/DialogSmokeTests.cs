@@ -17,8 +17,7 @@ namespace VhcGuiTests
         [AvaloniaFact]
         public async Task AboutDisclaimerDialog_ClickClose_Closes()
         {
-            var owner = Track(new Window());
-            owner.Show();
+            var owner = ShowOwner();
             var dialog = Track(new AboutDisclaimerDialog());
             var closed = dialog.ShowDialog(owner);
 
@@ -39,9 +38,7 @@ namespace VhcGuiTests
         [AvaloniaFact]
         public async Task AvaloniaUiNotifier_ConfirmClickNo_ReturnsFalse()
         {
-            var owner = Track(new Window());
-            owner.Show();
-            AvaloniaHost.MainWindow = owner;
+            var owner = ShowOwner();
 
             var answer = new AvaloniaUiNotifier().ConfirmAsync("msg", "title");
             var dialog = Owned<NotifierDialog>(owner);

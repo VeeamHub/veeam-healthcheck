@@ -5,35 +5,51 @@ using Xunit;
 
 namespace VhcGuiTests
 {
-    // Tests run serially in declaration order per class; the second one proves the first one's
-    // mutations did not survive GuiTestBase.Dispose.
-    public class GuiTestBaseIsolationTests : GuiTestBase
+    public class GuiTestBaseIsolationTests
     {
-        [Fact]
-        public void Baseline_MutateStaticsAndSettings_ChangesAreVisibleWithinTest()
+        // A probe base is built and disposed inside the test, so "original" is whatever the
+        // statics held when the test began and the result doesn't depend on other tests.
+        private sealed class Probe : GuiTestBase
         {
-            CGlobals.ReportDays = 90;
-            CGlobals.Scrub = true;
-            CGlobals.REMOTEEXEC = true;
-            CGlobals.IsVbr = true;
-            CGlobals.TargetProductType = TargetProduct.Vbr;
-            SeedServers("leaky01");
+            public string Settings => SettingsPath;
 
-            Assert.True(File.Exists(SettingsPath));
-            Assert.Contains("leaky01", CAppSettings.Get().Servers);
+            public StubUiNotifier Notifier => Stub;
+
+            public void Seed(string server) => SeedServers(server);
         }
 
         [Fact]
-        public void Baseline_AfterPreviousTestMutations_StartsClean()
+        public void Dispose_AfterMutatingStaticsAndSettings_RestoresOriginals()
         {
-            Assert.Equal(7, CGlobals.ReportDays);
-            Assert.False(CGlobals.Scrub);
-            Assert.False(CGlobals.REMOTEEXEC);
-            Assert.False(CGlobals.IsVbr);
-            Assert.Equal(TargetProduct.Auto, CGlobals.TargetProductType);
-            Assert.False(File.Exists(SettingsPath));
-            Assert.DoesNotContain("leaky01", CAppSettings.Get().Servers ?? new System.Collections.Generic.List<string>());
-            Assert.Same(Stub, CGlobals.Notifier);
+            var days = CGlobals.ReportDays;
+            var scrub = CGlobals.Scrub;
+            var remote = CGlobals.REMOTEEXEC;
+            var vbr = CGlobals.IsVbr;
+            var product = CGlobals.TargetProductType;
+            var notifier = CGlobals.Notifier;
+            var settingsPath = CAppSettings.StorePath;
+
+            var probe = new Probe();
+            Assert.Same(probe.Notifier, CGlobals.Notifier);
+            CGlobals.ReportDays = 90;
+            CGlobals.Scrub = !scrub;
+            CGlobals.REMOTEEXEC = !remote;
+            CGlobals.IsVbr = !vbr;
+            CGlobals.TargetProductType = TargetProduct.Vbr;
+            probe.Seed("leaky01");
+            Assert.True(File.Exists(probe.Settings));
+            Assert.Contains("leaky01", CAppSettings.Get().Servers);
+
+            probe.Dispose();
+
+            Assert.Equal(days, CGlobals.ReportDays);
+            Assert.Equal(scrub, CGlobals.Scrub);
+            Assert.Equal(remote, CGlobals.REMOTEEXEC);
+            Assert.Equal(vbr, CGlobals.IsVbr);
+            Assert.Equal(product, CGlobals.TargetProductType);
+            Assert.Same(notifier, CGlobals.Notifier);
+            Assert.Equal(settingsPath, CAppSettings.StorePath);
+            Assert.False(Directory.Exists(Path.GetDirectoryName(probe.Settings)));
         }
     }
 }

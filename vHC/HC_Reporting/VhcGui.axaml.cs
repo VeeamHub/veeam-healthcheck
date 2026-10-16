@@ -30,7 +30,7 @@ namespace VeeamHealthCheck
         private readonly CClientFunctions functions = new();
         private bool _modeCheckFailed;
 
-        // Test seam: headless GUI tests replace this so clicking Run never starts collection or reaches Run()'s Environment.Exit(0). Production never reassigns it.
+        // Test seam: headless GUI tests swap this so Run never collects or exits. Production never reassigns it.
         internal Action<bool> RunAction;
 
         private const string LocalhostName = "localhost";

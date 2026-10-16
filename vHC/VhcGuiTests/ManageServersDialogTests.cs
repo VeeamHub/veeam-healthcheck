@@ -20,8 +20,7 @@ namespace VhcGuiTests
             CredentialStore.Set("vbr01", "svc", "pw");
             Stub.ConfirmResult = true;
 
-            var owner = Track(new Window());
-            owner.Show();
+            var owner = ShowOwner();
             var dialog = new ManageServersDialog(new[] { "vbr01", "vbr02" }, Array.Empty<string>());
             Track(dialog);
             var result = dialog.ShowDialog<bool>(owner);

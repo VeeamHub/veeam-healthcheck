@@ -2,9 +2,9 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Threading.Tasks;
 using Avalonia;
 using Avalonia.Controls;
-using Avalonia.Styling;
 using Avalonia.Threading;
 using VeeamHealthCheck;
 using VeeamHealthCheck.Functions.UserInteraction;
@@ -22,65 +22,48 @@ namespace VhcGuiTests
     public abstract class GuiTestBase : IDisposable
     {
         private readonly List<Window> _windows = new();
+        private readonly List<Action> _undo = new();
         private readonly string _dir;
-        private readonly string _origSettingsPath;
-        private readonly string _origCredsPath;
-        private readonly Window _origMainWindow;
-        private readonly ThemeVariant _origTheme;
-
-        private readonly bool _isVbr, _isVb365, _isVbrInstalled, _remoteExec, _guiExec, _silent, _import;
-        private readonly bool _scrub, _openHtml, _openExplorer, _exportPdf, _clearCreds, _rescan;
-        private readonly int _reportDays;
-        private readonly string _remoteHost, _vbrServerName, _desiredPath;
-        private readonly TargetProduct _targetProduct;
-        private readonly IUiNotifier _notifier;
+        private bool _disposed;
 
         protected GuiTestBase()
         {
-            _isVbr = CGlobals.IsVbr;
-            _isVb365 = CGlobals.IsVb365;
-            _isVbrInstalled = CGlobals.IsVbrInstalled;
-            _remoteExec = CGlobals.REMOTEEXEC;
-            _remoteHost = CGlobals.REMOTEHOST;
-            _vbrServerName = CGlobals.VBRServerName;
-            _reportDays = CGlobals.ReportDays;
-            _scrub = CGlobals.Scrub;
-            _openHtml = CGlobals.OpenHtml;
-            _openExplorer = CGlobals.OpenExplorer;
-            _exportPdf = CGlobals.EXPORTPDF;
-            _clearCreds = CGlobals.ClearStoredCreds;
-            _rescan = CGlobals.RescanHosts;
-            _targetProduct = CGlobals.TargetProductType;
-            _desiredPath = CGlobals.desiredPath;
-            _import = CGlobals.IMPORT;
-            _guiExec = CGlobals.GUIEXEC;
-            _silent = CGlobals.Silent;
-            _notifier = CGlobals.Notifier;
-            _origMainWindow = AvaloniaHost.MainWindow;
-            _origTheme = Application.Current?.RequestedThemeVariant;
-            _origSettingsPath = CAppSettings.StorePath;
-            _origCredsPath = CredentialStore.StorePath;
+            Save(() => CGlobals.IsVbr, v => CGlobals.IsVbr = v, false);
+            Save(() => CGlobals.IsVb365, v => CGlobals.IsVb365 = v, false);
+            Save(() => CGlobals.IsVbrInstalled, v => CGlobals.IsVbrInstalled = v, false);
+            Save(() => CGlobals.GUIEXEC, v => CGlobals.GUIEXEC = v, false);
+            Save(() => CGlobals.Silent, v => CGlobals.Silent = v, false);
+            Save(() => CGlobals.IMPORT, v => CGlobals.IMPORT = v, false);
+            Save(() => CGlobals.REMOTEEXEC, v => CGlobals.REMOTEEXEC = v, false);
+            Save(() => CGlobals.REMOTEHOST, v => CGlobals.REMOTEHOST = v, string.Empty);
+            Save(() => CGlobals.ReportDays, v => CGlobals.ReportDays = v, 7);
+            Save(() => CGlobals.Scrub, v => CGlobals.Scrub = v, false);
+            Save(() => CGlobals.EXPORTPDF, v => CGlobals.EXPORTPDF = v, false);
+            Save(() => CGlobals.TargetProductType, v => CGlobals.TargetProductType = v, TargetProduct.Auto);
+            Save(() => CGlobals.Notifier, v => CGlobals.Notifier = v, Stub = new StubUiNotifier());
 
-            CGlobals.IsVbr = false;
-            CGlobals.IsVb365 = false;
-            CGlobals.IsVbrInstalled = false;
-            CGlobals.GUIEXEC = false;
-            CGlobals.Silent = false;
-            CGlobals.IMPORT = false;
-            CGlobals.REMOTEEXEC = false;
-            CGlobals.REMOTEHOST = string.Empty;
-            CGlobals.ReportDays = 7;
-            CGlobals.Scrub = false;
-            CGlobals.EXPORTPDF = false;
-            CGlobals.TargetProductType = TargetProduct.Auto;
-            CGlobals.Notifier = Stub = new StubUiNotifier();
+            // Mutated by the GUI but not baselined: keep the current value.
+            Save(() => CGlobals.VBRServerName, v => CGlobals.VBRServerName = v);
+            Save(() => CGlobals.OpenHtml, v => CGlobals.OpenHtml = v);
+            Save(() => CGlobals.OpenExplorer, v => CGlobals.OpenExplorer = v);
+            Save(() => CGlobals.ClearStoredCreds, v => CGlobals.ClearStoredCreds = v);
+            Save(() => CGlobals.RescanHosts, v => CGlobals.RescanHosts = v);
+            Save(() => CGlobals.desiredPath, v => CGlobals.desiredPath = v);
+            Save(() => AvaloniaHost.MainWindow, v => AvaloniaHost.MainWindow = v);
+            Save(() => Application.Current?.RequestedThemeVariant, v =>
+            {
+                if (Application.Current != null)
+                {
+                    Application.Current.RequestedThemeVariant = v;
+                }
+            });
 
             _dir = Path.Combine(Path.GetTempPath(), "vhcgui-test-" + Guid.NewGuid().ToString("N"));
             Directory.CreateDirectory(_dir);
-            SettingsPath = Path.Combine(_dir, "settings.json");
-            CAppSettings.StorePath = SettingsPath;
-            CredentialStore.StorePath = Path.Combine(_dir, "creds.json");
-            CredentialStore.InitializeCache();
+            Save(() => CAppSettings.StorePath, v => CAppSettings.StorePath = v);
+            Save(() => CredentialStore.StorePath, v => CredentialStore.StorePath = v);
+            IsolatedStores.Redirect(_dir);
+            SettingsPath = CAppSettings.StorePath;
         }
 
         protected StubUiNotifier Stub { get; }
@@ -99,6 +82,9 @@ namespace VhcGuiTests
         /// <summary>Seeds the persisted server list (default setup is one server, "vbr01").</summary>
         protected static void SeedServers(params string[] servers) => CAppSettings.SetServers(servers);
 
+        /// <summary>The persisted server list, never null.</summary>
+        protected static List<string> ServersInSettings() => CAppSettings.Get().Servers ?? new List<string>();
+
         /// <summary>Constructs and shows a VhcGui, tracked for cleanup.</summary>
         protected VhcGui ShowMainWindow()
         {
@@ -107,8 +93,41 @@ namespace VhcGuiTests
             return w;
         }
 
+        /// <summary>Seeds servers (default "vbr01"), shows the main window and waits for startup to finish.</summary>
+        protected async Task<VhcGui> ShowReadyWindow(params string[] servers)
+        {
+            SeedServers(servers.Length > 0 ? servers : new[] { "vbr01" });
+            var w = ShowMainWindow();
+            await UiDriver.WaitForStartup(w);
+            return w;
+        }
+
+        /// <summary>Shows a plain tracked window and makes it the host's main window, as the owner for dialogs.</summary>
+        protected Window ShowOwner()
+        {
+            var owner = Track(new Window());
+            owner.Show();
+            AvaloniaHost.MainWindow = owner;
+            return owner;
+        }
+
+        /// <summary>Replaces the Run seam; the returned list receives each call's import flag.</summary>
+        protected static List<bool> CaptureRuns(VhcGui w)
+        {
+            var calls = new List<bool>();
+            w.RunAction = calls.Add;
+            return calls;
+        }
+
         public void Dispose()
         {
+            if (_disposed)
+            {
+                return;
+            }
+
+            _disposed = true;
+
             foreach (var w in _windows.AsEnumerable().Reverse())
             {
                 CloseWithOwned(w);
@@ -116,33 +135,11 @@ namespace VhcGuiTests
 
             Dispatcher.UIThread.RunJobs();
 
-            CGlobals.IsVbr = _isVbr;
-            CGlobals.IsVb365 = _isVb365;
-            CGlobals.IsVbrInstalled = _isVbrInstalled;
-            CGlobals.REMOTEEXEC = _remoteExec;
-            CGlobals.REMOTEHOST = _remoteHost;
-            CGlobals.VBRServerName = _vbrServerName;
-            CGlobals.ReportDays = _reportDays;
-            CGlobals.Scrub = _scrub;
-            CGlobals.OpenHtml = _openHtml;
-            CGlobals.OpenExplorer = _openExplorer;
-            CGlobals.EXPORTPDF = _exportPdf;
-            CGlobals.ClearStoredCreds = _clearCreds;
-            CGlobals.RescanHosts = _rescan;
-            CGlobals.TargetProductType = _targetProduct;
-            CGlobals.desiredPath = _desiredPath;
-            CGlobals.IMPORT = _import;
-            CGlobals.GUIEXEC = _guiExec;
-            CGlobals.Silent = _silent;
-            CGlobals.Notifier = _notifier;
-            AvaloniaHost.MainWindow = _origMainWindow;
-            if (Application.Current != null)
+            foreach (var undo in _undo.AsEnumerable().Reverse())
             {
-                Application.Current.RequestedThemeVariant = _origTheme;
+                undo();
             }
 
-            CAppSettings.StorePath = _origSettingsPath;
-            CredentialStore.StorePath = _origCredsPath;
             CredentialStore.InitializeCache();
 
             try
@@ -156,6 +153,18 @@ namespace VhcGuiTests
             {
                 // Best effort cleanup
             }
+        }
+
+        private void Save<T>(Func<T> get, Action<T> set, T baseline)
+        {
+            Save(get, set);
+            set(baseline);
+        }
+
+        private void Save<T>(Func<T> get, Action<T> set)
+        {
+            var original = get();
+            _undo.Add(() => set(original));
         }
 
         private static void CloseWithOwned(Window w)

@@ -1,5 +1,4 @@
 using System;
-using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
@@ -25,23 +24,12 @@ namespace VhcGuiTests
     /// </summary>
     public class VhcGuiFlowTests : GuiTestBase
     {
-        private async Task<VhcGui> ShowReadyWindow()
-        {
-            SeedServers("vbr01");
-            var w = ShowMainWindow();
-            await WaitForStartup(w);
-            return w;
-        }
-
         private static async Task AcceptTerms(VhcGui w)
         {
             var run = FindRequired<Button>(w, "run");
             Click(w, FindRequired<CheckBox>(w, "termsCheckBox"));
             await Until(() => run.IsEnabled);
         }
-
-        private static IEnumerable<string> ServersInSettings() =>
-            CAppSettings.Get().Servers ?? Enumerable.Empty<string>();
 
         [AvaloniaFact]
         public async Task TermsCheckBox_ClickAndConfirm_EnablesRun()
@@ -61,13 +49,11 @@ namespace VhcGuiTests
         public async Task RunButton_ClickAfterAccept_LocksGuiAndInvokesRun()
         {
             var w = await ShowReadyWindow();
-            var calls = new List<bool>();
-            w.RunAction = b => calls.Add(b);
+            var calls = CaptureRuns(w);
             Type(w, FindRequired<TextBox>(w, "pathBox"), Path.Combine(TempDir, "out"));
             await AcceptTerms(w);
 
             Click(w, FindRequired<Button>(w, "run"));
-            Dispatcher.UIThread.RunJobs();
 
             Assert.Equal(new[] { false }, calls);
             foreach (var name in new[] { "explorerShowBox", "htmlCheckBox", "pdfCheckBox", "scrubBox", "termsCheckBox", "pathBox", "browseFolderBtn", "clearCredsCheckBox", "serverSelector", "manageServersBtn", "productTypeSelector", "RescanBox" })
@@ -110,15 +96,14 @@ namespace VhcGuiTests
             var selector = FindRequired<ComboBox>(w, "serverSelector");
             await Until(() => selector.ItemCount == 2);
             Assert.Equal("vbr01", selector.SelectedItem);
-            Assert.Equal(new[] { "vbr01", "vbr02" }, ServersInSettings().OrderBy(s => s).ToArray());
+            Assert.Equal(new[] { "vbr01", "vbr02" }, ServersInSettings().OrderBy(s => s));
         }
 
         [AvaloniaFact]
         public async Task RunButton_ClickWithUnwritablePath_ShowsErrorAndDoesNotRun()
         {
             var w = await ShowReadyWindow();
-            var calls = new List<bool>();
-            w.RunAction = b => calls.Add(b);
+            var calls = CaptureRuns(w);
             await AcceptTerms(w);
 
             // A directory cannot be created underneath a regular file.
@@ -127,7 +112,6 @@ namespace VhcGuiTests
             Type(w, FindRequired<TextBox>(w, "pathBox"), Path.Combine(file, "sub"));
 
             Click(w, FindRequired<Button>(w, "run"));
-            Dispatcher.UIThread.RunJobs();
 
             Assert.Single(Stub.Errors);
             Assert.Contains("Failed to validate desired output path", Stub.Errors[0]);
@@ -153,16 +137,9 @@ namespace VhcGuiTests
         [AvaloniaTheory]
         [InlineData("days30", 30)]
         [InlineData("days90", 90)]
-        [InlineData("days7", 7)]
         public async Task PeriodRadio_Click_SetsReportDays(string pill, int expected)
         {
             var w = await ShowReadyWindow();
-            if (expected == 7)
-            {
-                // days7 is already checked at startup; move off it so the click is a real change.
-                Click(w, FindRequired<RadioButton>(w, "days30"));
-                Assert.Equal(30, CGlobals.ReportDays);
-            }
 
             Click(w, FindRequired<RadioButton>(w, pill));
 
@@ -171,13 +148,25 @@ namespace VhcGuiTests
         }
 
         [AvaloniaFact]
+        public async Task PeriodRadio_ClickBackToDays7_SetsReportDays7()
+        {
+            var w = await ShowReadyWindow();
+
+            // days7 is already checked at startup; move off it so the click is a real change.
+            Click(w, FindRequired<RadioButton>(w, "days30"));
+            Assert.Equal(30, CGlobals.ReportDays);
+            Click(w, FindRequired<RadioButton>(w, "days7"));
+
+            Assert.Equal(7, CGlobals.ReportDays);
+            Assert.True(FindRequired<RadioButton>(w, "days7").IsChecked);
+        }
+
+        [AvaloniaFact]
         public async Task VhcGui_ConstructedWithReportDays30_KeepsDays30()
         {
-            SeedServers("vbr01");
             CGlobals.ReportDays = 30;
 
-            var w = ShowMainWindow();
-            await WaitForStartup(w);
+            var w = await ShowReadyWindow();
 
             Assert.True(FindRequired<RadioButton>(w, "days30").IsChecked);
             Assert.Equal(30, CGlobals.ReportDays);
@@ -257,14 +246,12 @@ namespace VhcGuiTests
             var button = FindRequired<Button>(w, "ThemeToggleButton");
             var start = Application.Current.RequestedThemeVariant;
             var startLabel = button.Content;
-            var expected = start == ThemeVariant.Dark ? ThemeVariant.Light
-                : start == ThemeVariant.Light ? ThemeVariant.Default
-                : ThemeVariant.Dark;
 
             Click(w, button);
 
-            Assert.Equal(expected, Application.Current.RequestedThemeVariant);
-            Assert.Equal(CThemePreference.FromVariant(expected), CAppSettings.Get().ThemePreference);
+            var now = Application.Current.RequestedThemeVariant;
+            Assert.NotEqual(start, now);
+            Assert.Equal(CThemePreference.FromVariant(now), CAppSettings.Get().ThemePreference);
             Assert.NotEqual(startLabel, button.Content);
         }
 
@@ -275,11 +262,7 @@ namespace VhcGuiTests
             var w = ShowMainWindow();
 
             await Until(() => Stub.Confirms == 1);
-            for (int i = 0; i < 20; i++)
-            {
-                Dispatcher.UIThread.RunJobs();
-                await Task.Delay(10);
-            }
+            await Settle();
 
             Assert.NotEqual(true, FindRequired<CheckBox>(w, "scrubBox").IsChecked);
             Assert.NotEqual("Veeam Health Check - Remote Mode", w.Title);

@@ -3,8 +3,6 @@ using Avalonia.Controls;
 using Avalonia.Headless;
 using Avalonia.Headless.XUnit;
 using Avalonia.Input;
-using Avalonia.VisualTree;
-using System.Linq;
 using VeeamHealthCheck.Functions.CredsWindow;
 using VeeamHealthCheck.Functions.UserInteraction;
 using VeeamHealthCheck.Startup;
@@ -20,9 +18,7 @@ namespace VhcGuiTests
         {
             // AddServer leaves a never-seeded (null) list alone, so seed one first.
             SeedServers("vbr01");
-            var owner = Track(new Window());
-            owner.Show();
-            AvaloniaHost.MainWindow = owner;
+            var owner = ShowOwner();
 
             var prompt = new AvaloniaCredentialPrompter().PromptAsync("vbr03");
             var dialog = Owned<CredentialPromptWindow>(owner);

@@ -24,13 +24,11 @@ namespace VhcGuiTests
         [AvaloniaFact]
         public async Task VhcGui_RemoteServerPersisted_RendersWithAllNamedControls()
         {
-            SeedServers("vbr01");
-            var w = ShowMainWindow();
-            await WaitForStartup(w);
+            var w = await ShowReadyWindow();
 
             foreach (var name in NamedControls)
             {
-                Assert.True(w.FindControl<Control>(name) != null, "missing control: " + name);
+                FindRequired<Control>(w, name);
             }
 
             Assert.False(w.FindControl<Button>("run").IsEnabled);

@@ -19,6 +19,7 @@ namespace VhcGuiTests
             var p = c.TranslatePoint(new Point(c.Bounds.Width / 2, c.Bounds.Height / 2), w)!.Value;
             w.MouseDown(p, MouseButton.Left);
             w.MouseUp(p, MouseButton.Left);
+            Dispatcher.UIThread.RunJobs();
         }
 
         /// <summary>Replaces the TextBox contents with <paramref name="text"/> via key text input.</summary>
@@ -27,6 +28,7 @@ namespace VhcGuiTests
             box.Focus();
             box.SelectAll();
             w.KeyTextInput(text);
+            Dispatcher.UIThread.RunJobs();
         }
 
         /// <summary>
@@ -47,6 +49,16 @@ namespace VhcGuiTests
         /// <summary>Waits for SetUiAsync to finish; scrubBox being checked is its last step.</summary>
         public static Task WaitForStartup(VhcGui w) =>
             Until(() => w.FindControl<CheckBox>("scrubBox").IsChecked == true);
+
+        /// <summary>Lets queued and trailing async UI work run for about 200ms.</summary>
+        public static async Task Settle()
+        {
+            for (int i = 0; i < 20; i++)
+            {
+                Dispatcher.UIThread.RunJobs();
+                await Task.Delay(10);
+            }
+        }
 
         public static T FindRequired<T>(Window w, string name) where T : Control
         {
