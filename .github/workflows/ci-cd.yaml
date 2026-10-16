@@ -1034,6 +1034,16 @@ jobs:
         # Jobs CSV must have >0 rows; the session report too (this server has session history).
         & "${{ github.workspace }}\.github\scripts\Test-VhcLiveRun.ps1" -Check RowCounts -RequireSessionRows
 
+    - name: Validate every collector CSV output
+      # Test-VhcLiveRun.ps1 -Check CsvOutputs: enumerates every CSV the collectors can write and
+      # fails (naming the CSV and the collector that writes it) on a missing required file, a broken
+      # header, or an empty required file. Expectations: .github/scripts/live-csv-expectations.json.
+      if: always()
+      env:
+        LAB_PROFILE: vbr-2
+      run: |
+        & "$env:GITHUB_WORKSPACE\.github\scripts\Test-VhcLiveRun.ps1" -Check CsvOutputs -LabProfile $env:LAB_PROFILE
+
     - name: Validate CSV column schemas
       # P2-1: extract to composite action
       if: always()
@@ -1229,6 +1239,17 @@ jobs:
         # The real hostname must appear nowhere in the scrubbed HTML or JSON, and the Orphaned &
         # Superseded Backups section (HTML) and OrphanedSupersededBackups key (JSON) must be present.
         & "${{ github.workspace }}\.github\scripts\Test-VhcLiveRun.ps1" -Check Scrub -ScrubHost $env:VBR_HOST -NewerThan ([datetime]'${{ steps.scrub_run.outputs.pass_start }}')
+
+    - name: Upload collector CSVs
+      # Raw collector output so the next failure (and the next baseline refresh) has the real files.
+      # Lab data only; short retention.
+      if: always()
+      uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+      with:
+        name: health-check-csv-${{ github.run_number }}-remote-2
+        path: C:\temp\vHC\Original\VBR\**\*.csv
+        if-no-files-found: warn
+        retention-days: 3
 
     - name: Upload health check logs
       if: always()
@@ -1516,6 +1537,16 @@ jobs:
         # Jobs CSV must have >0 rows.
         & "${{ github.workspace }}\.github\scripts\Test-VhcLiveRun.ps1" -Check RowCounts
 
+    - name: Validate every collector CSV output
+      # Test-VhcLiveRun.ps1 -Check CsvOutputs: enumerates every CSV the collectors can write and
+      # fails (naming the CSV and the collector that writes it) on a missing required file, a broken
+      # header, or an empty required file. Expectations: .github/scripts/live-csv-expectations.json.
+      if: always()
+      env:
+        LAB_PROFILE: vbr-13-sql
+      run: |
+        & "$env:GITHUB_WORKSPACE\.github\scripts\Test-VhcLiveRun.ps1" -Check CsvOutputs -LabProfile $env:LAB_PROFILE
+
     - name: Validate CSV column schemas
       # P2-1: extract to composite action
       if: always()
@@ -1716,6 +1747,17 @@ jobs:
         # The real hostname must appear nowhere in the scrubbed HTML or JSON, and the Orphaned &
         # Superseded Backups section (HTML) and OrphanedSupersededBackups key (JSON) must be present.
         & "$env:GITHUB_WORKSPACE\.github\scripts\Test-VhcLiveRun.ps1" -Check Scrub -ScrubHost $env:VBR_HOST -NewerThan ([datetime]$env:PASS_START)
+
+    - name: Upload collector CSVs
+      # Raw collector output so the next failure (and the next baseline refresh) has the real files.
+      # Lab data only; short retention.
+      if: always()
+      uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+      with:
+        name: health-check-csv-${{ github.run_number }}-v13-sql
+        path: C:\temp\vHC\Original\VBR\**\*.csv
+        if-no-files-found: warn
+        retention-days: 3
 
     - name: Upload health check logs
       if: always()
@@ -1994,6 +2036,16 @@ jobs:
         # Jobs CSV must have >0 rows.
         & "${{ github.workspace }}\.github\scripts\Test-VhcLiveRun.ps1" -Check RowCounts
 
+    - name: Validate every collector CSV output
+      # Test-VhcLiveRun.ps1 -Check CsvOutputs: enumerates every CSV the collectors can write and
+      # fails (naming the CSV and the collector that writes it) on a missing required file, a broken
+      # header, or an empty required file. Expectations: .github/scripts/live-csv-expectations.json.
+      if: always()
+      env:
+        LAB_PROFILE: vbr-12
+      run: |
+        & "$env:GITHUB_WORKSPACE\.github\scripts\Test-VhcLiveRun.ps1" -Check CsvOutputs -LabProfile $env:LAB_PROFILE
+
     - name: Validate CSV column schemas
       # P2-1: extract to composite action
       if: always()
@@ -2187,6 +2239,17 @@ jobs:
         # The real hostname must appear nowhere in the scrubbed HTML or JSON, and the Orphaned &
         # Superseded Backups section (HTML) and OrphanedSupersededBackups key (JSON) must be present.
         & "$env:GITHUB_WORKSPACE\.github\scripts\Test-VhcLiveRun.ps1" -Check Scrub -ScrubHost $env:VBR_HOST -NewerThan ([datetime]$env:PASS_START)
+
+    - name: Upload collector CSVs
+      # Raw collector output so the next failure (and the next baseline refresh) has the real files.
+      # Lab data only; short retention.
+      if: always()
+      uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+      with:
+        name: health-check-csv-${{ github.run_number }}-v12
+        path: C:\temp\vHC\Original\VBR\**\*.csv
+        if-no-files-found: warn
+        retention-days: 3
 
     - name: Upload health check logs
       if: always()
