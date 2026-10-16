@@ -113,26 +113,28 @@ namespace VhcXTests.Functions.Reporting.Html.VBR.VbrTables.OrphanedSupersededBac
             string html = table.Render(new List<OrphanedSupersededBackupRecord> { orphaned, superseded, unresolved }, sweepEvaluated: true, scrub: false, out string summary);
 
             Assert.Equal(
-                "2 orphaned/superseded backups found, ~5 GB potentially reclaimable. 1 still being written (~100 GB), not counted.",
+                "3 backups found (1 still being written, ~100 GB not counted as reclaimable), ~5 GB potentially reclaimable.",
                 summary);
-            Assert.Contains("2 backups flagged &middot; ~5 GB potentially reclaimable", html);
+            Assert.Contains("3 backups flagged &middot; ~5 GB potentially reclaimable", html);
             Assert.Contains("1 still being written (~100 GB), not counted", html);
             Assert.DoesNotContain("~105 GB", html);
             Assert.DoesNotContain("~105 GB", summary);
         }
 
         [Fact]
-        public void Render_OnlyUnresolvedRecords_ReportsNothingReclaimable()
+        public void Render_OnlyUnresolvedRecords_CountsTheListedRowButNoReclaimableGb()
         {
             var table = new COrphanedSupersededBackupsTable();
             var unresolved = JobRecord("repo-1", "Repo01", "Active Chain", "Unresolved");
             unresolved.TotalSizeBytes = 100L * 1073741824;
 
-            table.Render(new List<OrphanedSupersededBackupRecord> { unresolved }, sweepEvaluated: true, scrub: false, out string summary);
+            string html = table.Render(new List<OrphanedSupersededBackupRecord> { unresolved }, sweepEvaluated: true, scrub: false, out string summary);
 
             Assert.Equal(
-                "0 orphaned/superseded backups found, ~0 GB potentially reclaimable. 1 still being written (~100 GB), not counted.",
+                "1 backups found (1 still being written, ~100 GB not counted as reclaimable), ~0 GB potentially reclaimable.",
                 summary);
+            Assert.Contains("1 backups flagged &middot; ~0 GB potentially reclaimable &middot; 1 still being written (~100 GB), not counted", html);
+            Assert.DoesNotContain("0 backups flagged", html);
         }
 
         [Fact]
@@ -165,6 +167,22 @@ namespace VhcXTests.Functions.Reporting.Html.VBR.VbrTables.OrphanedSupersededBac
             Assert.Equal("Unresolved", record.Category);
             string json = System.Text.Json.JsonSerializer.Serialize(records);
             Assert.Contains("\"Category\":\"Unresolved\"", json);
+        }
+
+        [Fact]
+        public void LoadRecords_RealCsvHelperPipeline_BlankRestorePointDatesAreKeptAndRenderBlank()
+        {
+            WriteDataCsv(
+                "repo-1,Repo01 (Local ReFS),Undated Chain,00000000-0000-0000-0000-000000000000,Unresolved," +
+                "VMware Backup,obj-1,backup-1,vm-1,1,0,12000000000,0,12000000000,,\n");
+
+            var table = new COrphanedSupersededBackupsTable();
+            var records = table.LoadRecords();
+
+            var record = Assert.Single(records);
+            Assert.Equal("Unresolved", record.Category);
+            string html = table.Render(records, sweepEvaluated: true, scrub: false, out _);
+            Assert.DoesNotContain("0001-01-01", html);
         }
 
         [Fact]

@@ -34,6 +34,9 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR.VbrTables.OrphanedSupers
         private static string FormatGb(double bytes) =>
             (bytes / BytesPerGb).ToString("N0", CultureInfo.InvariantCulture);
 
+        private static string FormatDate(DateTime d) =>
+            d == DateTime.MinValue ? string.Empty : d.ToString("yyyy-MM-dd");
+
         private static string StillWritingText(List<OrphanedSupersededBackupRecord> records)
         {
             var unresolved = records.Where(r => r.Category == CategoryUnresolved).ToList();
@@ -231,7 +234,7 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR.VbrTables.OrphanedSupers
                 // independent collapse toggle instead of a bare, unstyled
                 // div ("orphaned-repo-group" had no CSS rule at all).
                 string cardTitle = $"{WebUtility.HtmlEncode(repoLabel)} " +
-                    $"<span class=\"label\">{repoReclaimable.Count} backups flagged &middot; " +
+                    $"<span class=\"label\">{repoRecords.Count} backups flagged &middot; " +
                     $"~{FormatGb(repoReclaimableBytes)} GB potentially reclaimable" +
                     (repoStillWriting.Length == 0 ? string.Empty : " &middot; " + repoStillWriting) +
                     "</span>";
@@ -269,8 +272,8 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR.VbrTables.OrphanedSupers
                     s += $"<td>{job.FullCount}</td>";
                     s += $"<td>{job.IncrementalCount}</td>";
                     s += $"<td>{totalGb.ToString("N1", CultureInfo.InvariantCulture)} GB</td>";
-                    s += $"<td>{job.OldestRestorePoint:yyyy-MM-dd}</td>";
-                    s += $"<td>{job.NewestRestorePoint:yyyy-MM-dd}</td>";
+                    s += $"<td>{FormatDate(job.OldestRestorePoint)}</td>";
+                    s += $"<td>{FormatDate(job.NewestRestorePoint)}</td>";
                     s += "</tr>";
 
                     s += "<tr class=\"detail-row\"><td colspan=\"9\">";
@@ -316,8 +319,8 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR.VbrTables.OrphanedSupers
                         s += $"<td>{(obj.AvgFullSizeBytes / 1073741824d).ToString("N1", CultureInfo.InvariantCulture)} GB</td>";
                         s += $"<td>{(obj.AvgIncrementalSizeBytes / 1073741824d).ToString("N1", CultureInfo.InvariantCulture)} GB</td>";
                         s += $"<td>{(obj.TotalSizeBytes / 1073741824d).ToString("N1", CultureInfo.InvariantCulture)} GB</td>";
-                        s += $"<td>{obj.OldestRestorePoint:yyyy-MM-dd}</td>";
-                        s += $"<td>{obj.NewestRestorePoint:yyyy-MM-dd}</td>";
+                        s += $"<td>{FormatDate(obj.OldestRestorePoint)}</td>";
+                        s += $"<td>{FormatDate(obj.NewestRestorePoint)}</td>";
                         s += "</tr>";
                     }
                     s += "</tbody></table></td></tr>";
@@ -326,10 +329,12 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR.VbrTables.OrphanedSupers
                 s += this.form.SectionEnd(string.Empty);
             }
 
-            string stillWriting = StillWritingText(records);
+            var stillWritingRecords = records.Where(r => r.Category == CategoryUnresolved).ToList();
+            string backupsFound = stillWritingRecords.Count == 0
+                ? $"{grandReclaimableCount} orphaned/superseded backups found"
+                : $"{records.Count} backups found ({stillWritingRecords.Count} still being written, ~{FormatGb(stillWritingRecords.Sum(r => r.TotalSizeBytes))} GB not counted as reclaimable)";
             summary = (sweepEvaluated ? "" : "Orphaned Backups: not evaluated for this environment. ")
-                + $"{grandReclaimableCount} orphaned/superseded backups found, ~{FormatGb(grandReclaimableBytes)} GB potentially reclaimable."
-                + (stillWriting.Length == 0 ? string.Empty : " " + stillWriting + ".");
+                + $"{backupsFound}, ~{FormatGb(grandReclaimableBytes)} GB potentially reclaimable.";
             return s;
         }
     }

@@ -156,6 +156,45 @@ namespace VhcXTests.Functions.Reporting.DataFormers.OrphanedSupersededBackups
         }
 
         [Fact]
+        public void Build_BlankRestorePointDates_KeepsRowAndRollsUpFromDatedObjectsOnly()
+        {
+            // #221: the producer exports an undated (Unresolved) chain with
+            // blank Oldest/Newest instead of dropping it.
+            var rows = new List<dynamic>
+            {
+                RawRow("repo-1", "Repo01", "Mixed", Guid.Empty.ToString(), "Unresolved",
+                    "VMware Backup", "obj-a", "backup-a", "vm-a",
+                    "1", "0", "1", "0", "1", "", ""),
+                RawRow("repo-1", "Repo01", "Mixed", Guid.Empty.ToString(), "Unresolved",
+                    "VMware Backup", "obj-b", "backup-b", "vm-b",
+                    "1", "0", "1", "0", "1", "2026-10-01T00:00:00.0000000Z", "2026-10-15T00:00:00.0000000Z")
+            };
+
+            var result = OrphanedSupersededBackupAggregator.Build(rows);
+
+            var job = Assert.Single(result);
+            Assert.Equal(2, job.Objects.Count);
+            Assert.Equal(DateTime.MinValue, job.Objects.Single(o => o.ObjectName == "vm-a").OldestRestorePoint);
+            Assert.Equal(DateTime.Parse("2026-10-01T00:00:00Z").ToUniversalTime(), job.OldestRestorePoint.ToUniversalTime());
+            Assert.Equal(DateTime.Parse("2026-10-15T00:00:00Z").ToUniversalTime(), job.NewestRestorePoint.ToUniversalTime());
+        }
+
+        [Fact]
+        public void Build_AllBlankRestorePointDates_KeepsRowWithMinValueDates()
+        {
+            var rows = new List<dynamic>
+            {
+                RawRow("repo-1", "Repo01", "Undated", Guid.Empty.ToString(), "Unresolved",
+                    "VMware Backup", "obj-a", "backup-a", "vm-a",
+                    "1", "0", "1", "0", "1", "", "")
+            };
+
+            var job = Assert.Single(OrphanedSupersededBackupAggregator.Build(rows));
+            Assert.Equal(DateTime.MinValue, job.OldestRestorePoint);
+            Assert.Equal(DateTime.MinValue, job.NewestRestorePoint);
+        }
+
+        [Fact]
         public void Build_DifferentCategoriesForSameJobName_ProducesSeparateRecords()
         {
             // Same BackupId group could in principle produce an Orphaned row

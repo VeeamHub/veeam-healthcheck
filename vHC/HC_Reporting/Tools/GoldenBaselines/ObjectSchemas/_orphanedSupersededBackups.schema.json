@@ -21,8 +21,8 @@
     { "index": 11, "csvName": "AvgFullSizeBytes", "csharpProperty": "AvgFullSizeBytes", "csharpType": "double", "nullable": false, "description": "Average size of full restore points, bytes" },
     { "index": 12, "csvName": "AvgIncrementalSizeBytes", "csharpProperty": "AvgIncrementalSizeBytes", "csharpType": "double", "nullable": false, "description": "Average size of incremental restore points, bytes" },
     { "index": 13, "csvName": "TotalSizeBytes", "csharpProperty": "TotalSizeBytes", "csharpType": "double", "nullable": false, "description": "Sum of all retained restore points for this ObjectId, bytes" },
-    { "index": 14, "csvName": "OldestRestorePoint", "csharpProperty": "OldestRestorePoint", "csharpType": "DateTime", "nullable": false, "description": "Oldest restore point CreationTimeUtc for this ObjectId" },
-    { "index": 15, "csvName": "NewestRestorePoint", "csharpProperty": "NewestRestorePoint", "csharpType": "DateTime", "nullable": false, "description": "Newest restore point CreationTimeUtc for this ObjectId" }
+    { "index": 14, "csvName": "OldestRestorePoint", "csharpProperty": "OldestRestorePoint", "csharpType": "DateTime", "nullable": true, "description": "Oldest usable restore point CreationTimeUtc (UTC, ISO 8601) for this ObjectId; blank when no restore point had a usable timestamp" },
+    { "index": 15, "csvName": "NewestRestorePoint", "csharpProperty": "NewestRestorePoint", "csharpType": "DateTime", "nullable": true, "description": "Newest usable restore point CreationTimeUtc (UTC, ISO 8601) for this ObjectId; blank when no restore point had a usable timestamp" }
   ],
   "validationRules": {
     "requiredColumns": ["Category", "BackupId"],

@@ -68,7 +68,7 @@ namespace VeeamHealthCheck.Functions.Reporting.DataFormers.OrphanedSupersededBac
                     FullCount = objects.Sum(o => o.FullCount),
                     IncrementalCount = objects.Sum(o => o.IncrementalCount),
                     TotalSizeBytes = objects.Sum(o => o.TotalSizeBytes),
-                    OldestRestorePoint = objects.Min(o => o.OldestRestorePoint),
+                    OldestRestorePoint = objects.Select(o => o.OldestRestorePoint).Where(d => d != DateTime.MinValue).DefaultIfEmpty(DateTime.MinValue).Min(),
                     NewestRestorePoint = objects.Max(o => o.NewestRestorePoint),
                     Objects = objects,
                 };
@@ -144,11 +144,11 @@ namespace VeeamHealthCheck.Functions.Reporting.DataFormers.OrphanedSupersededBac
             // now pins explicitly (DateTime.Parse would otherwise still
             // accept - and misparse - a current-culture-formatted date if one
             // ever slipped through, e.g. day/month swapped on a dd/MM host).
-            if (!DateTime.TryParseExact((string)rawOldest, DateWireFormat, CultureInfo.InvariantCulture, DateTimeStyles.RoundtripKind, out DateTime oldestRestorePoint))
+            if (!TryParseRestorePointDate(rawOldest, out DateTime oldestRestorePoint))
             {
                 return LogAndDrop("OldestRestorePoint", rawOldest);
             }
-            if (!DateTime.TryParseExact((string)rawNewest, DateWireFormat, CultureInfo.InvariantCulture, DateTimeStyles.RoundtripKind, out DateTime newestRestorePoint))
+            if (!TryParseRestorePointDate(rawNewest, out DateTime newestRestorePoint))
             {
                 return LogAndDrop("NewestRestorePoint", rawNewest);
             }
@@ -185,6 +185,21 @@ namespace VeeamHealthCheck.Functions.Reporting.DataFormers.OrphanedSupersededBac
                 Log.Warning($"{LogPrefix}Dropping a row from _orphanedSupersededBackups.csv: unexpected error mapping its remaining columns: {ex.Message}");
                 return null;
             }
+        }
+
+        // The producer exports a blank date when none of an object's restore
+        // points carried a usable timestamp (#221); that maps to MinValue
+        // ("no date") rather than dropping the row.
+        private static bool TryParseRestorePointDate(object raw, out DateTime value)
+        {
+            string text = (string)raw;
+            if (string.IsNullOrEmpty(text))
+            {
+                value = DateTime.MinValue;
+                return true;
+            }
+
+            return DateTime.TryParseExact(text, DateWireFormat, CultureInfo.InvariantCulture, DateTimeStyles.RoundtripKind, out value);
         }
 
         private static MappedRow LogAndDrop(string fieldName, object rawValue)
