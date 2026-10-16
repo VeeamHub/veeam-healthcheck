@@ -72,6 +72,22 @@ Automatic pipeline that runs on every push to master/dev branches.
 
 ---
 
+## Beta Release Workflow
+
+**File:** `beta-release.yml`
+
+Nightly (`0 6 * * *` UTC, about 02:00 Eastern) or manual (**Actions** → **Beta Release**). Replaces the old per-push dev prerelease: `ci-cd.yaml` no longer publishes releases for `dev`.
+
+- **Promotion, not rebuild.** It picks the newest `ci-cd.yaml` push run on `dev` that fully passed and ships that run's `veeam-healthcheck-zip` artifact, so what was tested is what ships. Artifacts expire after 7 days; if the newest green build is older than that the run fails with a clear message.
+- **Gate.** The run must have concluded `success` and its `virustotal-scan` job (including the `Evaluate ZIP scan result` step) must have succeeded, which is the same condition as `zip_clean == true`.
+- **No change, no release.** If the green build's commit is already the latest beta, the run exits with a notice. Manual runs can set `force` to cut anyway (fails if that tag exists).
+- **Tag and title.** `3.1.0.250` becomes tag `v3.1.0-beta.250`, titled `[Beta] Veeam Health Check v3.1.0-beta.250`, marked prerelease, targeting the built commit. Notes list commits since the highest GA, legacy `-dev` or `-beta` tag, plus the zip SHA256. `-beta.N` tags never become a Base Tag.
+- **Retention.** After a cut, only the newest 10 `-beta.` releases are kept; older ones are deleted with their tags. GA, `-rc` and legacy `-dev` releases are never touched.
+- **Environments.** Scheduled runs use `beta` (no approval); manual runs use `beta-manual`, which waits for the required reviewer. Both are limited to `dev`.
+- **Tokens.** Tags under `v*` are protected by a tag ruleset, so releases are created with a GitHub App token from `RELEASE_APP_ID` / `RELEASE_APP_PRIVATE_KEY`. If `RELEASE_APP_ID` is empty the run logs a warning and falls back to `GITHUB_TOKEN`.
+
+---
+
 ## Other Workflows
 
 | Workflow | Trigger | Purpose |
@@ -96,6 +112,8 @@ Automatic pipeline that runs on every push to master/dev branches.
 | `VBR_HOST` | Secret | Integration tests | VBR server hostname |
 | `VBR_USER` | Secret | Integration tests | VBR username |
 | `VBR_PASSWORD` | Secret | Integration tests | VBR password |
+| `RELEASE_APP_ID` | Environment secret (`beta`, `beta-manual`) | Beta release | GitHub App that may create/delete `v*` tags |
+| `RELEASE_APP_PRIVATE_KEY` | Environment secret (`beta`, `beta-manual`) | Beta release | Private key for that app |
 
 ## Self-Hosted Runners
 

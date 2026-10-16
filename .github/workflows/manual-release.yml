@@ -35,6 +35,8 @@ permissions:
 jobs:
   build-and-release:
     runs-on: windows-latest
+    # Release candidates (prerelease) build from dev only; production releases from master only, with approval
+    environment: ${{ inputs.prerelease && 'beta-manual' || 'production' }}
 
     steps:
     - name: Checkout repository
@@ -399,11 +401,37 @@ jobs:
         path: publish/VeeamHealthCheck-${{ steps.get_version.outputs.version }}.zip
         retention-days: 90
 
+    # The v* tag ruleset only lets the release app create tags, so mint its token here.
+    # Until the app is configured (RELEASE_APP_ID empty) fall back to GITHUB_TOKEN.
+    - name: Check release app configuration
+      id: app_check
+      if: ${{ !inputs.dry_run }}
+      shell: pwsh
+      env:
+        RELEASE_APP_ID: ${{ secrets.RELEASE_APP_ID }}
+      run: |
+        if ([string]::IsNullOrEmpty($env:RELEASE_APP_ID)) {
+          echo "use_app=false" >> $env:GITHUB_OUTPUT
+          echo "::warning::RELEASE_APP_ID is not set - release app is not configured; falling back to GITHUB_TOKEN"
+          Write-Host "Release token: GITHUB_TOKEN (fallback)"
+        } else {
+          echo "use_app=true" >> $env:GITHUB_OUTPUT
+          Write-Host "Release token: release app installation token"
+        }
+
+    - name: Create release app token
+      id: app_token
+      if: ${{ !inputs.dry_run && steps.app_check.outputs.use_app == 'true' }}
+      uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 # v3.2.0
+      with:
+        app-id: ${{ secrets.RELEASE_APP_ID }}
+        private-key: ${{ secrets.RELEASE_APP_PRIVATE_KEY }}
+
     - name: Create GitHub Release
       if: ${{ !inputs.dry_run }}
       shell: pwsh
       env:
-        GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        GH_TOKEN: ${{ steps.app_token.outputs.token || secrets.GITHUB_TOKEN }}
         RELEASE_VERSION: ${{ steps.get_version.outputs.version }}
         RELEASE_TAG: ${{ steps.get_version.outputs.tag }}
         IS_PRERELEASE: ${{ inputs.prerelease }}
