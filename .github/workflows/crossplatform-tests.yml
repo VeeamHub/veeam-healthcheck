@@ -10,6 +10,9 @@ on:
       - 'vHC/**/*.resx'
       - 'vHC/VhcXTests.CrossPlatform/**'
       - 'vHC/VhcGuiTests/**'
+      - 'vHC/HC_Reporting/**/*.css'
+      - '.claude/skills/verify-vhc/**'
+      - 'tools/report-smoke/**'
       - '.github/workflows/crossplatform-tests.yml'
   pull_request:
     branches: [master, dev]
@@ -20,6 +23,9 @@ on:
       - 'vHC/**/*.resx'
       - 'vHC/VhcXTests.CrossPlatform/**'
       - 'vHC/VhcGuiTests/**'
+      - 'vHC/HC_Reporting/**/*.css'
+      - '.claude/skills/verify-vhc/**'
+      - 'tools/report-smoke/**'
       - '.github/workflows/crossplatform-tests.yml'
 
 jobs:
@@ -48,3 +54,64 @@ jobs:
 
     - name: Run headless GUI tests
       run: dotnet test vHC/VhcGuiTests/VhcGuiTests.csproj --verbosity normal
+
+  # Drives the real CLI in /import mode against the golden CSVs and opens the resulting reports in a
+  # browser. Same commands a developer runs locally: .claude/skills/verify-vhc/scripts/vhc-verify.sh
+  verify-vhc:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    env:
+      VHC: .claude/skills/verify-vhc/scripts/vhc-verify.sh
+
+    steps:
+    - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+
+    - name: Setup .NET
+      uses: actions/setup-dotnet@67a3573c9a986a3f9c594539f4ab511d57bb3ce9 # v4
+      with:
+        dotnet-version: '10.0.x'
+
+    - name: Setup Bun
+      uses: oven-sh/setup-bun@ecf28ddc73e819eb6fa29df6b34ef8921c743461 # v2.1.3
+
+    - name: verify-vhc build
+      run: $VHC build
+
+    - name: verify-vhc import-report
+      run: $VHC import-report ci
+
+    - name: verify-vhc import-scrub
+      run: $VHC import-scrub ci-scrub
+
+    - name: verify-vhc cli-checks
+      run: $VHC cli-checks ci
+
+    - name: verify-vhc cli-matrix
+      run: $VHC cli-matrix ci
+
+    - name: verify-vhc import-layouts
+      run: $VHC import-layouts ci
+
+    - name: Install report-smoke browser
+      working-directory: tools/report-smoke
+      run: |
+        bun install --frozen-lockfile
+        bunx playwright install --with-deps chromium
+
+    - name: verify-vhc render
+      run: $VHC render ci
+
+    - name: Upload verify-vhc evidence
+      if: always()
+      uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+      with:
+        name: verify-vhc-evidence
+        path: |
+          .verify-vhc/evidence/ci/render
+          .verify-vhc/evidence/*/stdout.log
+          .verify-vhc/evidence/ci/cli-checks/*.log
+          .verify-vhc/evidence/ci/cli-matrix/*.log
+          .verify-vhc/evidence/ci/import-layouts/*.log
+        if-no-files-found: ignore
+        retention-days: 14
