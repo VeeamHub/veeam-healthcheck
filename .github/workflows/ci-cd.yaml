@@ -1303,9 +1303,10 @@ jobs:
         GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       run: |
         & "${{ github.workspace }}\.github\scripts\Invoke-SecurityComplianceDriftCheck.ps1" `
-          -CatalogPath 'C:\temp\vHC\Original\VBR\*\*\_SecurityComplianceCatalog.csv' `
+          -CatalogPath 'C:\temp\vHC\Original\VBR\*\*\*_SecurityComplianceCatalog.csv' `
           -Repo '${{ github.repository }}' `
-          -RunUrl '${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}'
+          -RunUrl '${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}' `
+          -ReportOnly:$${{ github.ref != 'refs/heads/dev' && github.ref != 'refs/heads/master' }}
 
     - name: Collect performance metrics
       if: always()
@@ -1921,9 +1922,10 @@ jobs:
         GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       run: |
         & "${{ github.workspace }}\.github\scripts\Invoke-SecurityComplianceDriftCheck.ps1" `
-          -CatalogPath 'C:\temp\vHC\Original\VBR\*\*\_SecurityComplianceCatalog.csv' `
+          -CatalogPath 'C:\temp\vHC\Original\VBR\*\*\*_SecurityComplianceCatalog.csv' `
           -Repo '${{ github.repository }}' `
-          -RunUrl '${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}'
+          -RunUrl '${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}' `
+          -ReportOnly:$${{ github.ref != 'refs/heads/dev' && github.ref != 'refs/heads/master' }}
 
     - name: Collect performance metrics
       if: always()

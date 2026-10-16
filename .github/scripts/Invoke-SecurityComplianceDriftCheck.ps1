@@ -7,9 +7,14 @@
 #
 # USAGE (from GitHub Actions step):
 #   ./Invoke-SecurityComplianceDriftCheck.ps1 `
-#     -CatalogPath 'C:\temp\vHC\Original\VBR\*\*\_SecurityComplianceCatalog.csv' `
+#     -CatalogPath 'C:\temp\vHC\Original\VBR\*\*\*_SecurityComplianceCatalog.csv' `
 #     -Repo 'org/repo' `
-#     -RunUrl 'https://github.com/org/repo/actions/runs/123'
+#     -RunUrl 'https://github.com/org/repo/actions/runs/123' `
+#     [-ReportOnly]
+#
+# -ReportOnly: detect and summarise drift, but never open, edit, comment on or close
+# the sca-drift issue. CI passes it on every ref except dev and master so feature-branch
+# dispatches cannot churn the canonical issue.
 #
 # REQUIREMENTS: gh CLI authenticated via GH_TOKEN env var, issues: write permission
 # EXIT CODES: always 0 (drift is informational, not a build break)
@@ -17,7 +22,8 @@
 param(
     [Parameter(Mandatory=$true)][string]$CatalogPath,
     [Parameter(Mandatory=$true)][string]$Repo,
-    [Parameter(Mandatory=$true)][string]$RunUrl
+    [Parameter(Mandatory=$true)][string]$RunUrl,
+    [switch]$ReportOnly
 )
 
 $ErrorActionPreference = 'Stop'
@@ -47,6 +53,8 @@ $unmapped = @($rows | Where-Object { $_.IsMapped -eq 'False' })
 if ($unmapped.Count -eq 0) {
     Write-Host "SCA: no drift detected - all rules mapped"
     Write-Summary "## SCA Drift Check`n`n> All compliance rules mapped. No action required."
+
+    if ($ReportOnly) { Write-Host "Report-only: not touching the sca-drift issue"; exit 0 }
 
     # Auto-close any open drift issue
     $open = gh issue list --label sca-drift --state open --json number --repo $Repo 2>$null | ConvertFrom-Json
@@ -86,6 +94,12 @@ $table
 "@
 
 $title = "[SCA Drift] $($unmapped.Count) unmapped compliance rule(s) (VBR $vbrVersion)"
+
+if ($ReportOnly) {
+    Write-Host "Report-only: $($unmapped.Count) unmapped rule(s); not touching the sca-drift issue"
+    Write-Summary "## SCA Drift Check`n`n> **$($unmapped.Count) unmapped compliance rule(s) detected** (VBR $vbrVersion). Report-only run: no issue opened.`n`n$table"
+    exit 0
+}
 
 # Idempotent: find existing open drift issue
 $existing = gh issue list --label sca-drift --state open --json number,title --repo $Repo 2>$null | ConvertFrom-Json
