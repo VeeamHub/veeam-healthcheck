@@ -1,0 +1,4 @@
+"Friendly Name","DeviceId","Bus Type","Media Type","Manufacturer","Model","Size","Allocated Size","Operational Status","Health Status","Boot Drive"
+"Msft Virtual Disk","0","SAS","SSD","Msft","Virtual Disk","0.12 TB","0.12 TB","OK","Healthy","True"
+"Contoso Data Disk","1","SAS","HDD","Contoso Storage","CSD-8000","8.00 TB","7.50 TB","OK","Healthy","False"
+"Contoso Archive Disk","2","iSCSI","Unspecified","","","1,024.00 TB","512.25 TB","Degraded","Warning","False"
