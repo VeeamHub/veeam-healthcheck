@@ -1,0 +1,77 @@
+{
+  "_comment": "Expectations for Test-VhcLiveRun.ps1 -Check CsvOutputs. Keys are CSV names without the hostname prefix, leading underscore and .csv (Servers = <host>_Servers.csv). The CSV list itself is enumerated from the collector source; this file only says which CSVs must exist and be non-empty. Anything not listed is feature-dependent: may be absent, but must have a valid header when present. Export-VhciCsv writes no file for zero records, so a listed CSV that is missing means its collector found nothing or failed.",
+  "required": {
+    "vbrinfo": "every VBR server reports its version (Get-VhcVbrInfo always emits one row)",
+    "Servers": "every VBR server lists at least itself (Get-VBRServer)",
+    "Proxies": "every VBR server has a default VMware backup proxy",
+    "Repositories": "every VBR server has at least the Default Backup Repository",
+    "Jobs": "the labs run jobs; an empty Jobs.csv means job discovery broke (also asserted by RowCounts)",
+    "LicInfo": "every VBR server has a license object (Community edition included)",
+    "SecurityCompliance": "Security & Compliance Analyzer always returns best-practice rows on VBR 12+",
+    "SecurityComplianceMeta": "sidecar written unconditionally by Export-VhciComplianceMeta",
+    "UserRoles": "every VBR server has at least the installing admin role assignment",
+    "configBackup": "every VBR server has a configuration backup job object (enabled or not)",
+    "orphanedSupersededBackupsMeta": "one-row signal file, written unconditionally by Get-VhcOrphanedSupersededBackups",
+    "AllServersRequirementsComparison": "concurrency analysis emits a row for every server role; written on all three labs",
+    "CollectionManifest": "written unconditionally at the end of Get-VBRConfig.ps1 (not in the collector log, so not observed in run 38980131816)"
+  },
+  "labCommon": {
+    "Credentials": "written with rows on all three lab servers in run 38980131816 (collector log: Exporting data, no 'No records to export')",
+    "EmailNotification": "written with rows on all three lab servers in run 38980131816 (collector log: Exporting data, no 'No records to export')",
+    "Gateways": "written with rows on all three lab servers in run 38980131816 (collector log: Exporting data, no 'No records to export')",
+    "HvUnprotected": "written with rows on all three lab servers in run 38980131816 (collector log: Exporting data, no 'No records to export')",
+    "malware_settings": "written with rows on all three lab servers in run 38980131816 (collector log: Exporting data, no 'No records to export')",
+    "NasProxy": "written with rows on all three lab servers in run 38980131816 (collector log: Exporting data, no 'No records to export')",
+    "ObjectStorageRepos": "written with rows on all three lab servers in run 38980131816 (collector log: Exporting data, no 'No records to export')",
+    "RepositoryServers": "written with rows on all three lab servers in run 38980131816 (collector log: Exporting data, no 'No records to export')",
+    "TapeMediaPools": "written with rows on all three lab servers in run 38980131816 (collector log: Exporting data, no 'No records to export')",
+    "trafficRules": "written with rows on all three lab servers in run 38980131816 (collector log: Exporting data, no 'No records to export')"
+  },
+  "profiles": {
+    "vbr-2": {
+      "description": "integration-test-vbr-2: remote collection against the usdemo VBR 13.1.1.18 demo server",
+      "nonEmpty": {
+        "SOBRs": "written with rows by this demo server in run 38980131816",
+        "SOBRExtents": "written with rows by this demo server in run 38980131816",
+        "TapeJobs": "written with rows by this demo server in run 38980131816",
+        "TapeLibraries": "written with rows by this demo server in run 38980131816",
+        "TapeServers": "written with rows by this demo server in run 38980131816",
+        "TapeVaults": "written with rows by this demo server in run 38980131816",
+        "SureBackupJob": "written with rows by this demo server in run 38980131816",
+        "SureBackupAppGroups": "written with rows by this demo server in run 38980131816",
+        "SureBackupVirtualLabs": "written with rows by this demo server in run 38980131816",
+        "ReplicaJobs": "written with rows by this demo server in run 38980131816",
+        "Replicas": "written with rows by this demo server in run 38980131816",
+        "FailoverPlans": "written with rows by this demo server in run 38980131816",
+        "ViProtected": "written with rows by this demo server in run 38980131816",
+        "HvProtected": "written with rows by this demo server in run 38980131816",
+        "PhysProtected": "written with rows by this demo server in run 38980131816",
+        "AgentBackupJob": "written with rows by this demo server in run 38980131816",
+        "nasBackup": "written with rows by this demo server in run 38980131816",
+        "nasBCJ": "written with rows by this demo server in run 38980131816",
+        "entraLogJob": "written with rows by this demo server in run 38980131816",
+        "entraTenantJob": "written with rows by this demo server in run 38980131816",
+        "entraTenants": "written with rows by this demo server in run 38980131816",
+        "SecurityComplianceCatalog": "written with rows by this demo server in run 38980131816",
+        "orphanedSupersededBackups": "written with rows by this demo server in run 38980131816",
+        "VeeamSessionReport": "vbr-2 has session history (268 rows in run 38980131816); also enforced by RowCounts -RequireSessionRows"
+      }
+    },
+    "vbr-13-sql": {
+      "description": "integration-test-vbr-13-sql: local collection on VBR 13.1.0.411 with SQL Server",
+      "nonEmpty": {
+        "regkeys": "local run reads the registry (written in run 38980131816; the remote vbr-2 run cannot)",
+        "SecurityComplianceCatalog": "VBR 13 compliance catalog, written in run 38980131816",
+        "entraLogJob": "lab has Entra ID tenant and log job, written in run 38980131816",
+        "entraTenantJob": "as above",
+        "entraTenants": "as above"
+      }
+    },
+    "vbr-12": {
+      "description": "integration-test-vbr-12: local collection on VBR 12.2.0.334",
+      "nonEmpty": {
+        "regkeys": "local run reads the registry (written in run 38980131816; the remote vbr-2 run cannot)"
+      }
+    }
+  }
+}

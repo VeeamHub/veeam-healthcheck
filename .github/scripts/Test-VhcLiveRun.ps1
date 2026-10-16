@@ -8,6 +8,7 @@
 # USAGE (from a workflow step):
 #   & "$env:GITHUB_WORKSPACE\.github\scripts\Test-VhcLiveRun.ps1" -Check CsvContent
 #   & "$env:GITHUB_WORKSPACE\.github\scripts\Test-VhcLiveRun.ps1" -Check RowCounts [-RequireSessionRows]
+#   & "$env:GITHUB_WORKSPACE\.github\scripts\Test-VhcLiveRun.ps1" -Check CsvOutputs -LabProfile vbr-2|vbr-13-sql|vbr-12
 #   & "$env:GITHUB_WORKSPACE\.github\scripts\Test-VhcLiveRun.ps1" -Check SessionLog [-RequireSessionRows]
 #   & "$env:GITHUB_WORKSPACE\.github\scripts\Test-VhcLiveRun.ps1" -Check ReportContent [-ReportPath <html>]
 #   & "$env:GITHUB_WORKSPACE\.github\scripts\Test-VhcLiveRun.ps1" -Check ReportTables [-ReportPath <html>]
@@ -23,7 +24,7 @@
 # is a glob on the suffix; the hostname prefix is never assumed.
 
 param(
-    [ValidateSet('', 'CsvContent', 'RowCounts', 'SessionLog', 'ReportContent', 'ReportTables', 'Json', 'Exports', 'Scrub')]
+    [ValidateSet('', 'CsvContent', 'RowCounts', 'CsvOutputs', 'SessionLog', 'ReportContent', 'ReportTables', 'Json', 'Exports', 'Scrub')]
     [string]$Check = '',
     [string]$CsvRoot = 'C:\temp\vHC\Original\VBR',
     [string]$ReportDir = 'C:\temp\vHC\vHC-Report',
@@ -33,7 +34,11 @@ param(
     [switch]$RequireSessionRows,
     [string[]]$ScrubHost = @(),
     [datetime]$NewerThan = [datetime]::MinValue,
-    [string]$E2EChecksPath = ''
+    [string]$E2EChecksPath = '',
+    [string]$LabProfile = '',
+    [string]$RepoRoot = '',
+    [string]$BaselineRoot = '',
+    [string]$ManifestPath = ''
 )
 
 # Top-level keys of the JSON export that every VBR report carries (CFullReportJson).
@@ -202,6 +207,192 @@ function Test-VhcCsvRowCounts {
     } elseif ($sessions) {
         Write-Host "  [INFO] $($sessions.Name): $(Get-VhcRowCount $sessions.FullName) rows (not required on this server)"
     }
+    return , $failures.ToArray()
+}
+
+# --- CsvOutputs ------------------------------------------------------------
+# Every CSV the collectors can write, enumerated from the collector source (not a hand list):
+#   Export-VhciCsv -FileName '_X.csv'              (the vHC-VbrConfig module)
+#   ${VBRServer}_X.csv                             (direct Export-Csv: Get-NasInfo, the collection manifest)
+#   -ChildPath "X.csv"                             (the session report, which has no hostname prefix)
+# For each one the check asserts, by tier from .github/scripts/live-csv-expectations.json:
+#   required / profile nonEmpty: the file exists, has a valid header and at least one data row.
+#   anything else (feature-dependent): may be absent (Export-VhciCsv writes nothing for zero
+#   records), but when present it must have a valid header.
+# "Valid header" = no blank or duplicate column names, and every column the golden baselines
+# (intersection across GoldenBaselines/VBRConfig*) and ObjectSchemas requiredColumns list for that
+# CSV. Extra columns are allowed. CSVs with no baseline get the structural check only.
+
+function Get-VhcRepoRoot {
+    param([string]$Root)
+    if ($Root) { return $Root }
+    (Resolve-Path (Join-Path $PSScriptRoot '..\..')).Path
+}
+
+function Get-VhcCsvKey {
+    param([string]$FileName)
+    ([IO.Path]::GetFileNameWithoutExtension($FileName)).TrimStart('_')
+}
+
+# Key (name without leading '_' and '.csv') -> @{ Key; Suffix; Collector }.
+function Get-VhcCollectorCsvMap {
+    param([string]$Root)
+    $vbr = Join-Path $Root 'vHC\HC_Reporting\Tools\Scripts\HealthCheck\VBR'
+    $map = @{}
+    $files = Get-ChildItem -Path $vbr -Recurse -File -Filter '*.ps1' -ErrorAction SilentlyContinue |
+        Where-Object { $_.FullName -notmatch '\.Tests\.ps1$' -and $_.FullName -notmatch '[\\/]Validation[\\/]' }
+    $patterns = @(
+        "-FileName\s+'([A-Za-z0-9_]+\.csv)'",
+        '\$\{?VBRServer\}?(_[A-Za-z0-9_]+\.csv)',
+        '-ChildPath\s+"([A-Za-z0-9_]+\.csv)"'
+    )
+    foreach ($f in $files) {
+        $rel = $f.FullName.Substring($vbr.Length).TrimStart('\', '/')
+        foreach ($line in (Get-Content -Path $f.FullName)) {
+            if ($line -match '^\s*#') { continue }
+            foreach ($pat in $patterns) {
+                foreach ($m in [regex]::Matches($line, $pat)) {
+                    $suffix = $m.Groups[1].Value
+                    $key = Get-VhcCsvKey $suffix
+                    if (-not $map.ContainsKey($key)) { $map[$key] = @{ Key = $key; Suffix = $suffix; Collector = $rel } }
+                }
+            }
+        }
+    }
+    return $map
+}
+
+function ConvertFrom-VhcCsvHeaderLine {
+    param([string]$Line)
+    $l = $Line.TrimStart([char]0xFEFF)
+    @([regex]::Split($l, ',(?=(?:[^"]*"[^"]*")*[^"]*$)') | ForEach-Object {
+        $c = $_.Trim()
+        if ($c.Length -ge 2 -and $c.StartsWith('"') -and $c.EndsWith('"')) { $c = $c.Substring(1, $c.Length - 2).Replace('""', '"') }
+        $c
+    })
+}
+
+function Get-VhcCsvHeader {
+    param([string]$Path)
+    $line = Get-Content -Path $Path -TotalCount 1 -ErrorAction SilentlyContinue
+    if (-not $line) { return @() }
+    , @(ConvertFrom-VhcCsvHeaderLine ([string]$line))
+}
+
+# Key -> string[] of columns every healthy output must carry.
+function Get-VhcExpectedColumns {
+    param([string]$BaselineDir)
+    $expected = @{}
+    $dirs = @('VBRConfig', 'VBRConfig-v13-MsSql', 'VBRConfig-v13-PostgreSql', 'NasInfo', 'SessionReports')
+    $perKey = @{}
+    foreach ($d in $dirs) {
+        $p = Join-Path $BaselineDir $d
+        if (-not (Test-Path $p)) { continue }
+        foreach ($f in (Get-ChildItem -Path $p -File -Filter '*.csv')) {
+            $h = Get-VhcCsvHeader $f.FullName
+            if ($h.Count -eq 0) { continue }
+            $k = Get-VhcCsvKey $f.Name
+            if (-not $perKey.ContainsKey($k)) { $perKey[$k] = New-Object System.Collections.ArrayList }
+            [void]$perKey[$k].Add($h)
+        }
+    }
+    foreach ($k in $perKey.Keys) {
+        $common = @($perKey[$k][0])
+        foreach ($h in $perKey[$k]) { $common = @($common | Where-Object { $h -contains $_ }) }
+        $expected[$k] = $common
+    }
+    $schemaDir = Join-Path $BaselineDir 'ObjectSchemas'
+    if (Test-Path $schemaDir) {
+        foreach ($f in (Get-ChildItem -Path $schemaDir -File -Filter '*.schema.json')) {
+            $s = Get-Content -Path $f.FullName -Raw | ConvertFrom-Json
+            $req = @()
+            if ($s.validationRules -and $s.validationRules.requiredColumns) { $req = @($s.validationRules.requiredColumns) }
+            $k = Get-VhcCsvKey $s.csvFile
+            $existing = @(); if ($expected.ContainsKey($k)) { $existing = @($expected[$k]) }
+            $expected[$k] = @($existing + ($req | Where-Object { $existing -notcontains $_ }))
+        }
+    }
+    return $expected
+}
+
+function Test-VhcCsvOutputs {
+    param(
+        [string]$Dir,
+        [string]$LabName = '',
+        [string]$Root = '',
+        [string]$BaselineDir = '',
+        [string]$Manifest = ''
+    )
+    $failures = New-Object System.Collections.ArrayList
+    $Root = Get-VhcRepoRoot $Root
+    if (-not $BaselineDir) { $BaselineDir = Join-Path $Root 'vHC\HC_Reporting\Tools\GoldenBaselines' }
+    if (-not $Manifest) { $Manifest = Join-Path $PSScriptRoot 'live-csv-expectations.json' }
+
+    if (-not (Test-Path $Manifest)) { Write-Fail "expectations manifest not found: $Manifest"; return , @('manifest missing') }
+    $exp = Get-Content -Path $Manifest -Raw | ConvertFrom-Json
+
+    $nonEmpty = @{}   # key -> reason
+    foreach ($p in $exp.required.PSObject.Properties) { $nonEmpty[$p.Name] = [string]$p.Value }
+    if ($LabName) {
+        $prof = $exp.profiles.PSObject.Properties[$LabName]
+        if (-not $prof) { Write-Fail "unknown LabProfile '$LabName' (manifest has: $(@($exp.profiles.PSObject.Properties.Name) -join ', '))"; return , @("unknown LabProfile $LabName") }
+        if ($exp.labCommon) { foreach ($p in $exp.labCommon.PSObject.Properties) { $nonEmpty[$p.Name] = [string]$p.Value } }
+        foreach ($p in $prof.Value.nonEmpty.PSObject.Properties) { $nonEmpty[$p.Name] = [string]$p.Value }
+    }
+
+    $map = Get-VhcCollectorCsvMap $Root
+    if ($map.Count -eq 0) { Write-Fail "no CSV writers found under $Root (collector source missing?)"; return , @('no collectors enumerated') }
+    foreach ($k in $nonEmpty.Keys) {
+        if (-not $map.ContainsKey($k)) {
+            Write-Fail "manifest names '$k' but no collector writes it (stale manifest entry)"
+            [void]$failures.Add("$k manifest entry has no collector")
+        }
+    }
+    $baseline = Get-VhcExpectedColumns $BaselineDir
+
+    $present = 0; $absentOk = 0
+    foreach ($k in ($map.Keys | Sort-Object)) {
+        $entry = $map[$k]
+        $label = "$($entry.Suffix.TrimStart('_')) [collector: $($entry.Collector)]"
+        $isRequired = $nonEmpty.ContainsKey($k)
+        $file = $null
+        if ($entry.Suffix.StartsWith('_')) { $file = Find-VhcCsv $Dir ($entry.Suffix.TrimStart('_') -replace '\.csv$', '') }
+        else { $file = Get-ChildItem -Path $Dir -File -Filter $entry.Suffix -ErrorAction SilentlyContinue | Select-Object -First 1 }
+
+        if (-not $file) {
+            if ($isRequired) { Write-Fail "$label MISSING (required: $($nonEmpty[$k]))"; [void]$failures.Add("$($entry.Suffix.TrimStart('_')) missing (collector $($entry.Collector))") }
+            else { $absentOk++; Write-Host "  [INFO] $label not written (feature-dependent, allowed)" }
+            continue
+        }
+        $present++
+        $header = Get-VhcCsvHeader $file.FullName
+        $problems = @()
+        if ($header.Count -eq 0) { $problems += 'no header line' }
+        else {
+            if (@($header | Where-Object { [string]::IsNullOrWhiteSpace($_) }).Count -gt 0) { $problems += 'blank column name' }
+            $dups = @($header | Group-Object | Where-Object { $_.Count -gt 1 } | ForEach-Object { $_.Name })
+            if ($dups.Count -gt 0) { $problems += "duplicate column(s): $($dups -join ', ')" }
+            if ($baseline.ContainsKey($k)) {
+                $missingCols = @($baseline[$k] | Where-Object { $header -notcontains $_ })
+                if ($missingCols.Count -gt 0) { $problems += "missing expected column(s): $($missingCols -join ', ')" }
+            }
+        }
+        if ($problems.Count -gt 0) {
+            Write-Fail "$label header broken: $($problems -join '; ')"
+            [void]$failures.Add("$($file.Name) header broken: $($problems -join '; ') (collector $($entry.Collector))")
+            continue
+        }
+        $rows = Get-VhcRowCount $file.FullName
+        if ($isRequired -and $rows -eq 0) {
+            Write-Fail "$label has a header but 0 data rows (required: $($nonEmpty[$k]))"
+            [void]$failures.Add("$($file.Name) empty (collector $($entry.Collector))")
+            continue
+        }
+        $src = 'structural check only'; if ($baseline.ContainsKey($k)) { $src = "$(@($baseline[$k]).Count) baseline columns" }
+        $tier = 'optional'; if ($isRequired) { $tier = 'required' }
+        Write-Pass "$label $tier, $rows rows, $($header.Count) columns ($src)"
+    }
+    Write-Host "  CSV outputs: $present written, $absentOk feature-dependent not written, $($nonEmpty.Count) required, $($map.Count) enumerated from collectors"
     return , $failures.ToArray()
 }
 
@@ -594,6 +785,11 @@ switch ($Check) {
         $dir = Get-VhcLatestCsvDir $CsvRoot
         if (-not $dir) { Write-Fail "no CSV output directory under $CsvRoot"; $failures = @('csv dir missing') }
         else { Write-Host "CSV directory: $($dir.FullName)"; $failures = Test-VhcCsvRowCounts -Dir $dir.FullName -RequireSessions:$RequireSessionRows }
+    }
+    'CsvOutputs' {
+        $dir = Get-VhcLatestCsvDir $CsvRoot
+        if (-not $dir) { Write-Fail "no CSV output directory under $CsvRoot"; $failures = @('csv dir missing') }
+        else { Write-Host "CSV directory: $($dir.FullName)"; $failures = Test-VhcCsvOutputs -Dir $dir.FullName -LabName $LabProfile -Root $RepoRoot -BaselineDir $BaselineRoot -Manifest $ManifestPath }
     }
     'SessionLog' { $failures = Test-VhcSessionLog -Dir $LogDir -RequireSessions:$RequireSessionRows }
     'ReportContent' {
