@@ -23,9 +23,11 @@ BeforeAll {
             [string]$Name = 'FakeJob',
             [string]$TypeToString = 'VMware Backup',
             [guid]$RepositoryId = [guid]::NewGuid(),
-            [switch]$IsTapeBackup
+            [switch]$IsTapeBackup,
+            $Id = $null
         )
         $b = [PSCustomObject]@{
+            Id            = $Id
             Name          = $Name
             TypeToString  = $TypeToString
             RepositoryId  = $RepositoryId
@@ -73,6 +75,57 @@ BeforeAll {
             [PSCustomObject]@{ Stats = [PSCustomObject]@{ BackupSize = $this.BackupSizeValue } }
         }.GetNewClosure()
         return $rp
+    }
+
+    # Runs the function over ONE candidate group and returns the exported
+    # rows. -AgesInDays gives each restore point's age relative to now
+    # (one point per entry; entries on distinct ObjectIds unless
+    # -SameObject); $null means "no usable timestamp" ([datetime]::MinValue).
+    function script:Invoke-CategoryProbe {
+        param(
+            [string]$Reason = 'Unresolved',
+            [object[]]$AgesInDays,
+            [hashtable]$ExtraParams = @{}
+        )
+        $Backup = script:New-FakeBackupObject -Name 'ProbeJob'
+        $BackupId = [guid]::NewGuid()
+        $Points = foreach ($Age in $AgesInDays) {
+            $When = if ($null -eq $Age) { [datetime]::MinValue } else { [datetime]::UtcNow.AddDays(-[double]$Age) }
+            script:New-FakeCandidateRestorePoint -Name 'probe-vm' -Type 'Full' -BackupId $BackupId -BackupObject $Backup -CreationTimeUtc $When
+        }
+        $script:VhcOrphanedSupersededCache = [PSCustomObject]@{
+            SweepRan        = $true
+            CandidateGroups = [System.Collections.Generic.List[object]]::new()
+        }
+        $script:VhcOrphanedSupersededCache.CandidateGroups.Add([PSCustomObject]@{
+            Reason        = $Reason
+            CurrentJobId  = $null
+            RestorePoints = @($Points)
+        })
+        Get-VhcOrphanedSupersededBackups @ExtraParams
+    }
+
+    # Runs one Unresolved candidate whose restore points carry exactly
+    # the supplied CreationTimeUtc values, untouched - including $null
+    # and strings, which the [datetime]-typed fixture parameter cannot
+    # express. One point per entry, each on its own ObjectId.
+    function script:Invoke-RawTimeProbe {
+        param([object[]]$Times, [hashtable]$ExtraParams = @{})
+        $Backup   = script:New-FakeBackupObject -Name 'RawProbe'
+        $BackupId = [guid]::NewGuid()
+        $Points = foreach ($Time in $Times) {
+            $Point = script:New-FakeCandidateRestorePoint -Name 'raw-vm' -Type 'Full' -BackupId $BackupId -BackupObject $Backup
+            $Point.CreationTimeUtc = $Time
+            $Point
+        }
+        $script:VhcOrphanedSupersededCache = [PSCustomObject]@{
+            SweepRan        = $true
+            CandidateGroups = [System.Collections.Generic.List[object]]::new()
+        }
+        $script:VhcOrphanedSupersededCache.CandidateGroups.Add([PSCustomObject]@{
+            Reason = 'Unresolved'; CurrentJobId = $null; RestorePoints = @($Points)
+        })
+        Get-VhcOrphanedSupersededBackups @ExtraParams
     }
 
     $moduleRoot = Split-Path -Parent $PSScriptRoot
@@ -124,7 +177,7 @@ Describe 'Get-VhcOrphanedSupersededBackups' {
 
     It 'exports an Orphaned row for an Unresolved group, using the backup''s own retained name/type/repo' {
         $Backup = script:New-FakeBackupObject -Name 'Proxmox - Malware Lab' -TypeToString 'Proxmox Backup' -RepositoryId ([guid]'11111111-1111-1111-1111-111111111111')
-        $Point  = script:New-FakeCandidateRestorePoint -Name 'pve-vm-201' -Type 'Full' -ApproxSize 10GB -BackupObject $Backup
+        $Point  = script:New-FakeCandidateRestorePoint -Name 'pve-vm-201' -Type 'Full' -ApproxSize 10GB -BackupObject $Backup -CreationTimeUtc ([datetime]::UtcNow.AddDays(-60))
         $script:VhcOrphanedSupersededCache = [PSCustomObject]@{
             SweepRan        = $true
             CandidateGroups = [System.Collections.Generic.List[object]]::new()
@@ -142,6 +195,317 @@ Describe 'Get-VhcOrphanedSupersededBackups' {
         $script:CapturedRows[0].JobName | Should -Be 'Proxmox - Malware Lab'
         $script:CapturedRows[0].OriginalJobType | Should -Be 'Proxmox Backup'
         $script:CapturedRows[0].CurrentJobId | Should -Be ([guid]::Empty).ToString()
+    }
+
+    Context 'recency guard (#221): an Unresolved chain still being written is not Orphaned' {
+
+        It 'labels an Unresolved candidate Unresolved when its newest restore point is 1 day old' {
+            script:Invoke-CategoryProbe -AgesInDays @(1)
+
+            $script:CapturedRows | Should -HaveCount 1
+            $script:CapturedRows[0].Category | Should -Be 'Unresolved'
+        }
+
+        It 'labels every row Unresolved when only one object of a multi-object candidate is recent' {
+            # Distinct ObjectIds: two stale objects and one written yesterday.
+            $Backup = script:New-FakeBackupObject -Name 'MultiObj'
+            $BkId   = [guid]::NewGuid()
+            $Points = @(
+                (script:New-FakeCandidateRestorePoint -Name 'old-a'  -Type 'Full' -BackupId $BkId -BackupObject $Backup -CreationTimeUtc ([datetime]::UtcNow.AddDays(-90))),
+                (script:New-FakeCandidateRestorePoint -Name 'old-b'  -Type 'Full' -BackupId $BkId -BackupObject $Backup -CreationTimeUtc ([datetime]::UtcNow.AddDays(-60))),
+                (script:New-FakeCandidateRestorePoint -Name 'fresh'  -Type 'Full' -BackupId $BkId -BackupObject $Backup -CreationTimeUtc ([datetime]::UtcNow.AddDays(-1)))
+            )
+            $script:VhcOrphanedSupersededCache = [PSCustomObject]@{
+                SweepRan        = $true
+                CandidateGroups = [System.Collections.Generic.List[object]]::new()
+            }
+            $script:VhcOrphanedSupersededCache.CandidateGroups.Add([PSCustomObject]@{
+                Reason = 'Unresolved'; CurrentJobId = $null; RestorePoints = $Points
+            })
+
+            Get-VhcOrphanedSupersededBackups
+
+            $script:CapturedRows | Should -HaveCount 3
+            @($script:CapturedRows | Where-Object { $_.Category -ne 'Unresolved' }) | Should -HaveCount 0
+        }
+
+        It 'labels an Unresolved candidate Unresolved when no restore point has a usable timestamp' {
+            script:Invoke-CategoryProbe -AgesInDays @($null)
+
+            $script:CapturedRows | Should -HaveCount 1
+            $script:CapturedRows[0].Category | Should -Be 'Unresolved'
+        }
+
+        It 'treats a future-dated restore point (clock skew) as recent' {
+            script:Invoke-CategoryProbe -AgesInDays @(-3)
+
+            $script:CapturedRows | Should -HaveCount 1
+            $script:CapturedRows[0].Category | Should -Be 'Unresolved'
+        }
+
+        It 'still labels an Unresolved candidate Orphaned when its newest restore point is 60 days old' {
+            script:Invoke-CategoryProbe -AgesInDays @(60, 70)
+
+            $script:CapturedRows | Should -HaveCount 2
+            @($script:CapturedRows | Where-Object { $_.Category -ne 'Orphaned' }) | Should -HaveCount 0
+        }
+
+        It 'is Unresolved just inside the window and Orphaned just outside it' {
+            script:Invoke-CategoryProbe -AgesInDays @((23 / 24)) -ExtraParams @{ ActiveChainWindowDays = 1 }
+            $script:CapturedRows[0].Category | Should -Be 'Unresolved'
+
+            $script:CapturedRows.Clear()
+            script:Invoke-CategoryProbe -AgesInDays @((25 / 24)) -ExtraParams @{ ActiveChainWindowDays = 1 }
+            $script:CapturedRows[0].Category | Should -Be 'Orphaned'
+        }
+
+        It 'defaults the window to 35 days' {
+            script:Invoke-CategoryProbe -AgesInDays @(34)
+            $script:CapturedRows[0].Category | Should -Be 'Unresolved'
+
+            $script:CapturedRows.Clear()
+            script:Invoke-CategoryProbe -AgesInDays @(36)
+            $script:CapturedRows[0].Category | Should -Be 'Orphaned'
+        }
+
+        It 'ships the same 35-day window in VbrConfig.json Thresholds that Get-VBRConfig.ps1 passes in' {
+            $Config = Get-Content -Raw (Join-Path (Split-Path -Parent (Split-Path -Parent $PSScriptRoot)) 'VbrConfig.json') | ConvertFrom-Json
+            $Config.Thresholds.OrphanedActiveChainWindowDays | Should -Be 35
+        }
+
+        It 'keeps Superseded for <Reason> regardless of recency' -ForEach @(
+            @{ Reason = 'StaleObject' }
+            @{ Reason = 'Tier2Suppressed' }
+        ) {
+            script:Invoke-CategoryProbe -Reason $Reason -AgesInDays @(0.01)
+
+            $script:CapturedRows | Should -HaveCount 1
+            $script:CapturedRows[0].Category | Should -Be 'Superseded'
+        }
+    }
+
+    Context 'recency guard (#221): input domain of CreationTimeUtc' {
+
+        It 'judges a recent restore point Unresolved for DateTimeKind <Kind>' -ForEach @(
+            @{ Kind = 'Utc' }
+            @{ Kind = 'Unspecified' }
+        ) {
+            $Recent = [datetime]::SpecifyKind([datetime]::UtcNow.AddDays(-1), [System.DateTimeKind]$Kind)
+            script:Invoke-RawTimeProbe -Times @($Recent)
+
+            $script:CapturedRows | Should -HaveCount 1
+            $script:CapturedRows[0].Category | Should -Be 'Unresolved'
+        }
+
+        It 'judges an old restore point Orphaned for DateTimeKind <Kind>' -ForEach @(
+            @{ Kind = 'Utc' }
+            @{ Kind = 'Unspecified' }
+        ) {
+            $Old = [datetime]::SpecifyKind([datetime]::UtcNow.AddDays(-60), [System.DateTimeKind]$Kind)
+            script:Invoke-RawTimeProbe -Times @($Old)
+
+            $script:CapturedRows | Should -HaveCount 1
+            $script:CapturedRows[0].Category | Should -Be 'Orphaned'
+        }
+
+        It 'treats [datetime]::MaxValue as future-dated, hence active' {
+            script:Invoke-RawTimeProbe -Times @([datetime]::MaxValue)
+
+            $script:CapturedRows | Should -HaveCount 1
+            $script:CapturedRows[0].Category | Should -Be 'Unresolved'
+        }
+
+        It 'does not let a [datetime]::MinValue placeholder next to a recent point mask the recent point' {
+            script:Invoke-RawTimeProbe -Times @([datetime]::MinValue, [datetime]::UtcNow.AddDays(-1))
+
+            $script:CapturedRows | Should -HaveCount 2
+            @($script:CapturedRows | Where-Object { $_.Category -ne 'Unresolved' }) | Should -HaveCount 0
+        }
+
+        It 'treats the candidate as Unresolved when one point has a [datetime]::MinValue placeholder next to a 30-day-old point' {
+            script:Invoke-RawTimeProbe -Times @([datetime]::MinValue, [datetime]::UtcNow.AddDays(-60))
+
+            $script:CapturedRows | Should -HaveCount 2
+            @($script:CapturedRows | Where-Object { $_.Category -ne 'Unresolved' }) | Should -HaveCount 0
+        }
+
+        It 'converts a DateTimeKind.Local value to UTC before comparing it to the window' {
+            # Offset-dependent by construction: the raw Local value differs from
+            # the real UTC instant by the machine offset, so the instant is placed
+            # +/- half that offset either side of the window edge, on the side
+            # where comparing the raw value would give the wrong answer.
+            $Offset = [TimeZoneInfo]::Local.GetUtcOffset([datetime]::Now)
+            if ($Offset -eq [TimeSpan]::Zero) {
+                Set-ItResult -Skipped -Because 'machine UTC offset is zero, so Local and Utc values are indistinguishable'
+                return
+            }
+            $Half = [TimeSpan]::FromTicks([math]::Abs($Offset.Ticks) / 2)
+            if ($Offset -lt [TimeSpan]::Zero) {
+                $Age = [TimeSpan]::FromDays(35) - $Half
+                $Expected = 'Unresolved'
+            } else {
+                $Age = [TimeSpan]::FromDays(35) + $Half
+                $Expected = 'Orphaned'
+            }
+            $Local = [datetime]::UtcNow.Subtract($Age).ToLocalTime()
+            $Local.Kind | Should -Be ([System.DateTimeKind]::Local)
+
+            script:Invoke-RawTimeProbe -Times @($Local)
+
+            $script:CapturedRows | Should -HaveCount 1
+            $script:CapturedRows[0].Category | Should -Be $Expected
+        }
+
+        It 'keeps every row Unresolved when a very old point precedes a recent one' {
+            script:Invoke-RawTimeProbe -Times @([datetime]::UtcNow.AddDays(-400), [datetime]::UtcNow.AddDays(-2))
+
+            $script:CapturedRows | Should -HaveCount 2
+            @($script:CapturedRows | Where-Object { $_.Category -ne 'Unresolved' }) | Should -HaveCount 0
+        }
+
+        It 'with -ActiveChainWindowDays 0 treats a point from an hour ago as Orphaned' {
+            script:Invoke-RawTimeProbe -Times @([datetime]::UtcNow.AddHours(-1)) -ExtraParams @{ ActiveChainWindowDays = 0 }
+
+            $script:CapturedRows | Should -HaveCount 1
+            $script:CapturedRows[0].Category | Should -Be 'Orphaned'
+        }
+
+        It 'with -ActiveChainWindowDays 0 still treats a future-dated point as Unresolved' {
+            script:Invoke-RawTimeProbe -Times @([datetime]::UtcNow.AddHours(1)) -ExtraParams @{ ActiveChainWindowDays = 0 }
+
+            $script:CapturedRows | Should -HaveCount 1
+            $script:CapturedRows[0].Category | Should -Be 'Unresolved'
+        }
+
+        It 'with -ActiveChainWindowDays 0 and no usable timestamp stays Unresolved' {
+            script:Invoke-RawTimeProbe -Times @([datetime]::MinValue) -ExtraParams @{ ActiveChainWindowDays = 0 }
+
+            $script:CapturedRows | Should -HaveCount 1
+            $script:CapturedRows[0].Category | Should -Be 'Unresolved'
+        }
+
+        It 'rejects a negative -ActiveChainWindowDays' {
+            { script:Invoke-RawTimeProbe -Times @([datetime]::UtcNow) -ExtraParams @{ ActiveChainWindowDays = -1 } } | Should -Throw
+        }
+    }
+
+    Context 'recency guard (#221): undated points are exported, not dropped' {
+
+        It 'exports an Unresolved row with blank Oldest/Newest when the only point has a <Label> timestamp' -ForEach @(
+            @{ Label = 'null'; Value = $null }
+            @{ Label = 'string'; Value = 'not a date' }
+        ) {
+            script:Invoke-RawTimeProbe -Times @($Value)
+
+            $script:CapturedRows | Should -HaveCount 1
+            $script:CapturedRows[0].Category | Should -Be 'Unresolved'
+            $script:CapturedRows[0].OldestRestorePoint | Should -BeNullOrEmpty
+            $script:CapturedRows[0].NewestRestorePoint | Should -BeNullOrEmpty
+        }
+
+        It 'derives Oldest/Newest from the usable points only when a <Label> timestamp sits next to dated ones' -ForEach @(
+            @{ Label = 'null'; Value = $null }
+            @{ Label = 'string'; Value = 'not a date' }
+        ) {
+            $Old    = [datetime]::UtcNow.AddDays(-60)
+            $Recent = [datetime]::UtcNow.AddDays(-1)
+            $Backup = script:New-FakeBackupObject -Name 'MixedTimes'
+            $Id     = [guid]::NewGuid()
+            $ObjectId = [guid]::NewGuid()
+            $Points = @($Old, $Value, $Recent) | ForEach-Object {
+                $p = script:New-FakeCandidateRestorePoint -Name 'vm' -Type 'Full' -ObjectId $ObjectId -BackupId $Id -BackupObject $Backup
+                $p.CreationTimeUtc = $_
+                $p
+            }
+            $script:VhcOrphanedSupersededCache = [PSCustomObject]@{ SweepRan = $true; CandidateGroups = [System.Collections.Generic.List[object]]::new() }
+            $script:VhcOrphanedSupersededCache.CandidateGroups.Add([PSCustomObject]@{ Reason = 'Unresolved'; CurrentJobId = $null; RestorePoints = @($Points) })
+
+            Get-VhcOrphanedSupersededBackups
+
+            $script:CapturedRows | Should -HaveCount 1
+            $script:CapturedRows[0].Category | Should -Be 'Unresolved'
+            $script:CapturedRows[0].OldestRestorePoint | Should -Be $Old.ToString('o', [System.Globalization.CultureInfo]::InvariantCulture)
+            $script:CapturedRows[0].NewestRestorePoint | Should -Be $Recent.ToString('o', [System.Globalization.CultureInfo]::InvariantCulture)
+        }
+
+        It 'exports the same UTC instant it classified for a DateTimeKind.Local point' {
+            $Local = [datetime]::UtcNow.AddDays(-60).ToLocalTime()
+            $Local.Kind | Should -Be ([System.DateTimeKind]::Local)
+
+            script:Invoke-RawTimeProbe -Times @($Local)
+
+            $script:CapturedRows | Should -HaveCount 1
+            $script:CapturedRows[0].NewestRestorePoint | Should -Be $Local.ToUniversalTime().ToString('o', [System.Globalization.CultureInfo]::InvariantCulture)
+            $script:CapturedRows[0].NewestRestorePoint | Should -Match 'Z$'
+        }
+    }
+
+    Context 'recency guard (#221): recency is judged per parent backup' {
+
+        BeforeAll {
+            # One candidate per VM (per-VM chains), each with its own BackupId,
+            # all hanging off -Parent. Ages are days before collection.
+            function script:Invoke-ParentProbe {
+                param([object[]]$Candidates)
+                $script:VhcOrphanedSupersededCache = [PSCustomObject]@{ SweepRan = $true; CandidateGroups = [System.Collections.Generic.List[object]]::new() }
+                foreach ($c in $Candidates) {
+                    $point = script:New-FakeCandidateRestorePoint -Name $c.Name -Type 'Full' -BackupId ([guid]::NewGuid()) -BackupObject $c.Parent `
+                        -CreationTimeUtc ([datetime]::UtcNow.AddDays(-[double]$c.Age))
+                    $script:VhcOrphanedSupersededCache.CandidateGroups.Add([PSCustomObject]@{ Reason = 'Unresolved'; CurrentJobId = $null; RestorePoints = @($point) })
+                }
+                Get-VhcOrphanedSupersededBackups
+            }
+        }
+
+        It 'keeps every sibling Unresolved when only some VMs of the same parent backup are recent' {
+            $Parent = script:New-FakeBackupObject -Name 'LiveJob' -Id ([guid]::NewGuid())
+            script:Invoke-ParentProbe -Candidates @(
+                @{ Name = 'vm-a'; Parent = $Parent; Age = 1 }
+                @{ Name = 'vm-b'; Parent = $Parent; Age = 2 }
+                @{ Name = 'vm-c'; Parent = $Parent; Age = 60 }
+            )
+
+            $script:CapturedRows | Should -HaveCount 3
+            @($script:CapturedRows | Where-Object { $_.Category -ne 'Unresolved' }) | Should -HaveCount 0
+        }
+
+        It 'labels a parent backup Orphaned when all of its candidates are old' {
+            $Parent = script:New-FakeBackupObject -Name 'DeadJob' -Id ([guid]::NewGuid())
+            script:Invoke-ParentProbe -Candidates @(
+                @{ Name = 'vm-a'; Parent = $Parent; Age = 60 }
+                @{ Name = 'vm-b'; Parent = $Parent; Age = 70 }
+            )
+
+            $script:CapturedRows | Should -HaveCount 2
+            @($script:CapturedRows | Where-Object { $_.Category -ne 'Orphaned' }) | Should -HaveCount 0
+        }
+
+        It 'judges different parent backups independently' {
+            $Live = script:New-FakeBackupObject -Name 'LiveJob' -Id ([guid]::NewGuid())
+            $Dead = script:New-FakeBackupObject -Name 'DeadJob' -Id ([guid]::NewGuid())
+            script:Invoke-ParentProbe -Candidates @(
+                @{ Name = 'live-vm'; Parent = $Live; Age = 1 }
+                @{ Name = 'dead-vm'; Parent = $Dead; Age = 60 }
+            )
+
+            ($script:CapturedRows | Where-Object { $_.ObjectName -eq 'live-vm' }).Category | Should -Be 'Unresolved'
+            ($script:CapturedRows | Where-Object { $_.ObjectName -eq 'dead-vm' }).Category | Should -Be 'Orphaned'
+        }
+
+        It 'keeps a parent backup Unresolved when an undated point sits in a sibling candidate' {
+            $Parent = script:New-FakeBackupObject -Name 'MixedJob' -Id ([guid]::NewGuid())
+            $script:VhcOrphanedSupersededCache = [PSCustomObject]@{ SweepRan = $true; CandidateGroups = [System.Collections.Generic.List[object]]::new() }
+            foreach ($When in @([datetime]::UtcNow.AddDays(-60), $null)) {
+                $p = script:New-FakeCandidateRestorePoint -Name 'vm' -Type 'Full' -BackupId ([guid]::NewGuid()) -BackupObject $Parent
+                $p.CreationTimeUtc = $When
+                $script:VhcOrphanedSupersededCache.CandidateGroups.Add([PSCustomObject]@{ Reason = 'Unresolved'; CurrentJobId = $null; RestorePoints = @($p) })
+            }
+
+            Get-VhcOrphanedSupersededBackups
+
+            $script:CapturedRows | Should -HaveCount 2
+            @($script:CapturedRows | Where-Object { $_.Category -ne 'Unresolved' }) | Should -HaveCount 0
+        }
     }
 
     It 'uses the explicit -OrphanedSupersededCache parameter over $script:VhcOrphanedSupersededCache when both are present' {

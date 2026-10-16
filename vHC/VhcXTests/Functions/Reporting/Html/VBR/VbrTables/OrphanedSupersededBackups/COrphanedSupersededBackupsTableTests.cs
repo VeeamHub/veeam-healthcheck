@@ -39,7 +39,7 @@ namespace VhcXTests.Functions.Reporting.Html.VBR.VbrTables.OrphanedSupersededBac
                 RepositoryId = repositoryId,
                 RepositoryName = repositoryName,
                 JobName = jobName,
-                CurrentJobId = category == "Orphaned" ? Guid.Empty.ToString() : Guid.NewGuid().ToString(),
+                CurrentJobId = category is "Orphaned" or "Unresolved" ? Guid.Empty.ToString() : Guid.NewGuid().ToString(),
                 Category = category,
                 OriginalJobType = "VMware Backup",
                 FullCount = 1,
@@ -82,6 +82,107 @@ namespace VhcXTests.Functions.Reporting.Html.VBR.VbrTables.OrphanedSupersededBac
             string html = table.Render(new List<OrphanedSupersededBackupRecord> { record }, sweepEvaluated: true, scrub: false, out string summary);
 
             Assert.Contains("11111111-2222-3333-4444-555555555555", html);
+        }
+
+        [Fact]
+        public void Render_UnresolvedRecord_ShowsUnresolvedBadgeAndStillWritingSentence()
+        {
+            var table = new COrphanedSupersededBackupsTable();
+            var record = JobRecord("repo-1", "Repo01 (Local ReFS)", "Active Chain", "Unresolved");
+
+            string html = table.Render(new List<OrphanedSupersededBackupRecord> { record }, sweepEvaluated: true, scrub: false, out string summary);
+
+            Assert.Contains("<span class=\"badge badge-unresolved\">Unresolved</span>", html);
+            Assert.Contains("something is still writing to it. Not safe to reclaim", html);
+            Assert.DoesNotContain("badge-unknown", html);
+            Assert.DoesNotContain("badge-orphaned", html);
+            Assert.DoesNotContain("Unrecognized category", html);
+        }
+
+        [Fact]
+        public void Render_MixedOrphanedAndUnresolved_ReclaimableTotalsExcludeUnresolvedBytes()
+        {
+            var table = new COrphanedSupersededBackupsTable();
+            var orphaned = JobRecord("repo-1", "Repo01", "Dead Job", "Orphaned");
+            orphaned.TotalSizeBytes = 2L * 1073741824;
+            var superseded = JobRecord("repo-1", "Repo01", "Old Chain", "Superseded");
+            superseded.TotalSizeBytes = 3L * 1073741824;
+            var unresolved = JobRecord("repo-1", "Repo01", "Active Chain", "Unresolved");
+            unresolved.TotalSizeBytes = 100L * 1073741824;
+
+            string html = table.Render(new List<OrphanedSupersededBackupRecord> { orphaned, superseded, unresolved }, sweepEvaluated: true, scrub: false, out string summary);
+
+            Assert.Equal(
+                "3 backups found (1 still being written, ~100 GB not counted as reclaimable), ~5 GB potentially reclaimable.",
+                summary);
+            Assert.Contains("3 backups flagged &middot; ~5 GB potentially reclaimable", html);
+            Assert.Contains("1 still being written (~100 GB), not counted", html);
+            Assert.DoesNotContain("~105 GB", html);
+            Assert.DoesNotContain("~105 GB", summary);
+        }
+
+        [Fact]
+        public void Render_OnlyUnresolvedRecords_CountsTheListedRowButNoReclaimableGb()
+        {
+            var table = new COrphanedSupersededBackupsTable();
+            var unresolved = JobRecord("repo-1", "Repo01", "Active Chain", "Unresolved");
+            unresolved.TotalSizeBytes = 100L * 1073741824;
+
+            string html = table.Render(new List<OrphanedSupersededBackupRecord> { unresolved }, sweepEvaluated: true, scrub: false, out string summary);
+
+            Assert.Equal(
+                "1 backups found (1 still being written, ~100 GB not counted as reclaimable), ~0 GB potentially reclaimable.",
+                summary);
+            Assert.Contains("1 backups flagged &middot; ~0 GB potentially reclaimable &middot; 1 still being written (~100 GB), not counted", html);
+            Assert.DoesNotContain("0 backups flagged", html);
+        }
+
+        [Fact]
+        public void Render_NoUnresolvedRecords_SummaryAndRepoLabelUnchanged()
+        {
+            var table = new COrphanedSupersededBackupsTable();
+            var orphaned = JobRecord("repo-1", "Repo01", "Dead Job", "Orphaned");
+            orphaned.TotalSizeBytes = 2L * 1073741824;
+            var superseded = JobRecord("repo-1", "Repo01", "Old Chain", "Superseded");
+            superseded.TotalSizeBytes = 3L * 1073741824;
+
+            string html = table.Render(new List<OrphanedSupersededBackupRecord> { orphaned, superseded }, sweepEvaluated: true, scrub: false, out string summary);
+
+            Assert.Equal("2 orphaned/superseded backups found, ~5 GB potentially reclaimable.", summary);
+            Assert.Contains("2 backups flagged &middot; ~5 GB potentially reclaimable</span>", html);
+            Assert.DoesNotContain("still being written", html);
+        }
+
+        [Fact]
+        public void LoadRecords_RealCsvHelperPipeline_UnresolvedCategoryFlowsThroughUnchanged()
+        {
+            WriteDataCsv(
+                "repo-1,Repo01 (Local ReFS),Active Chain,00000000-0000-0000-0000-000000000000,Unresolved," +
+                "VMware Backup,obj-1,backup-1,vm-1,1,6,12000000000,500000000,15000000000," +
+                "2026-10-01T00:00:00.0000000Z,2026-10-15T00:00:00.0000000Z\n");
+
+            var records = new COrphanedSupersededBackupsTable().LoadRecords();
+
+            var record = Assert.Single(records);
+            Assert.Equal("Unresolved", record.Category);
+            string json = System.Text.Json.JsonSerializer.Serialize(records);
+            Assert.Contains("\"Category\":\"Unresolved\"", json);
+        }
+
+        [Fact]
+        public void LoadRecords_RealCsvHelperPipeline_BlankRestorePointDatesAreKeptAndRenderBlank()
+        {
+            WriteDataCsv(
+                "repo-1,Repo01 (Local ReFS),Undated Chain,00000000-0000-0000-0000-000000000000,Unresolved," +
+                "VMware Backup,obj-1,backup-1,vm-1,1,0,12000000000,0,12000000000,,\n");
+
+            var table = new COrphanedSupersededBackupsTable();
+            var records = table.LoadRecords();
+
+            var record = Assert.Single(records);
+            Assert.Equal("Unresolved", record.Category);
+            string html = table.Render(records, sweepEvaluated: true, scrub: false, out _);
+            Assert.DoesNotContain("0001-01-01", html);
         }
 
         [Fact]

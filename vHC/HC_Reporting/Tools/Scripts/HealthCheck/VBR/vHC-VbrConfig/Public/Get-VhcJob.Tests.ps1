@@ -2483,3 +2483,96 @@ Describe 'Shared job discovery (issue #224)' {
         Should -Invoke Invoke-VhciCBackupJobFetch -Times 1 -Exactly
     }
 }
+
+Describe 'Candidate grouping keeps a backup chain whole (#221 premise)' {
+    # Get-VhcOrphanedSupersededBackups labels an 'Unresolved' candidate
+    # Orphaned only when the newest CreationTimeUtc across the candidate's
+    # RestorePoints is older than the active-chain window. That is sound only
+    # if the sweep never splits one BackupId's points - recent ones landing in
+    # another candidate (or a job) while the stale ones form an 'Unresolved'
+    # candidate on their own. The sweep groups by BackupId and resolves each
+    # group once, from its first point, so every point of a BackupId must end
+    # up in exactly one destination.
+
+    BeforeEach {
+        Mock Write-LogFile                 -MockWith { }
+        Mock Get-VBRConfigurationBackupJob -MockWith { $null }
+        Mock Invoke-VhciJobSubCollectors   -MockWith { }
+        Mock Add-VhciModuleError           -MockWith { }
+        Mock Get-VBRBackup                 -MockWith { @() }
+        Mock Export-VhciCsv                -MockWith { }
+        $script:VhcOrphanedSupersededCache = $null
+        $script:VmJob = script:New-FakeJob -Name 'VMware - Prod' -JobType 'Backup' -TypeToString 'VMware Backup' -LastBackup ([PSCustomObject]@{ Name = 'VMware - Prod' })
+        Mock Get-VBRJob -MockWith { @($script:VmJob) }
+    }
+
+    It 'keeps every point of an unresolvable BackupId in one Unresolved candidate, however the points are ordered and spread over ObjectIds' {
+        $BackupIdA = [guid]'b1000000-0000-0000-0000-00000000000a'
+        $BackupIdB = [guid]'b1000000-0000-0000-0000-00000000000b'
+        $ObjectX   = [guid]'b2000000-0000-0000-0000-000000000001'
+        $ObjectY   = [guid]'b2000000-0000-0000-0000-000000000002'
+        $Old    = script:New-FakeRestorePoint -Name 'x-old'    -ObjectId $ObjectX -BackupId $BackupIdA -CreationTimeUtc ([datetime]::UtcNow.AddDays(-90)) -ThrowOnGetSourceJob -BackupParentOrThisName 'Gone'
+        $Mid    = script:New-FakeRestorePoint -Name 'y-mid'    -ObjectId $ObjectY -BackupId $BackupIdA -CreationTimeUtc ([datetime]::UtcNow.AddDays(-30)) -ThrowOnGetSourceJob -BackupParentOrThisName 'Gone'
+        $Newest = script:New-FakeRestorePoint -Name 'x-newest' -ObjectId $ObjectX -BackupId $BackupIdA -CreationTimeUtc ([datetime]::UtcNow.AddHours(-2)) -ThrowOnGetSourceJob -BackupParentOrThisName 'Gone'
+        $Other  = script:New-FakeRestorePoint -Name 'other'    -ObjectId $ObjectX -BackupId $BackupIdB -CreationTimeUtc ([datetime]::UtcNow.AddDays(-60)) -ThrowOnGetSourceJob -BackupParentOrThisName 'Gone'
+        # Newest first and interleaved with another BackupId's point.
+        Mock Get-VBRRestorePoint -MockWith { @($Newest, $Other, $Old, $Mid) }
+
+        Get-VhcJob | Out-Null
+
+        $Candidates = @($script:VhcOrphanedSupersededCache.CandidateGroups | Where-Object { $_.Reason -eq 'Unresolved' })
+        $Candidates | Should -HaveCount 2
+        $ForA = @($Candidates | Where-Object { $_.RestorePoints[0].BackupId -eq $BackupIdA })
+        $ForA | Should -HaveCount 1
+        @($ForA[0].RestorePoints).Name | Sort-Object | Should -Be @('x-newest', 'x-old', 'y-mid')
+        $ForB = @($Candidates | Where-Object { $_.RestorePoints[0].BackupId -eq $BackupIdB })
+        @($ForB[0].RestorePoints).Name | Should -Be @('other')
+    }
+
+    It 'moves a whole BackupId to the job its first point resolves to, leaving no stale remainder Unresolved' {
+        $BackupId = [guid]'b1000000-0000-0000-0000-0000000000c1'
+        $Resolves = script:New-FakeRestorePoint -Name 'resolves'  -BackupId $BackupId -CreationTimeUtc ([datetime]::UtcNow.AddDays(-90)) -SourceJob $script:VmJob
+        $Throws   = script:New-FakeRestorePoint -Name 'recent'    -BackupId $BackupId -CreationTimeUtc ([datetime]::UtcNow.AddHours(-1)) -ThrowOnGetSourceJob -BackupParentOrThisName 'Gone'
+        Mock Get-VBRRestorePoint -MockWith { @($Resolves, $Throws) }
+
+        Get-VhcJob | Out-Null
+
+        @($script:VhcOrphanedSupersededCache.CandidateGroups | Where-Object { $_.Reason -in 'Unresolved', 'Tier2Suppressed' }) | Should -HaveCount 0
+    }
+
+    It 'sends a whole BackupId to Unresolved when its first point cannot be resolved, including a point that could have been' {
+        $BackupId = [guid]'b1000000-0000-0000-0000-0000000000c2'
+        $Throws   = script:New-FakeRestorePoint -Name 'first-throws' -BackupId $BackupId -CreationTimeUtc ([datetime]::UtcNow.AddDays(-90)) -ThrowOnGetSourceJob -BackupParentOrThisName 'Gone'
+        $Resolves = script:New-FakeRestorePoint -Name 'recent'       -BackupId $BackupId -CreationTimeUtc ([datetime]::UtcNow.AddHours(-1)) -SourceJob $script:VmJob
+        Mock Get-VBRRestorePoint -MockWith { @($Throws, $Resolves) }
+
+        Get-VhcJob | Out-Null
+
+        $Candidates = @($script:VhcOrphanedSupersededCache.CandidateGroups | Where-Object { $_.Reason -eq 'Unresolved' })
+        $Candidates | Should -HaveCount 1
+        @($Candidates[0].RestorePoints).Name | Sort-Object | Should -Be @('first-throws', 'recent')
+    }
+
+    It 'places every restore point in exactly one destination across mixed Unresolved, tier-1 and tier-2 groups' {
+        $Points = foreach ($i in 1..12) {
+            $Bk = [guid]::Parse(('b3000000-0000-0000-0000-{0:d12}' -f ($i % 4)))
+            $Throw = ($i % 4) -ne 0
+            if ($Throw) {
+                script:New-FakeRestorePoint -Name "p$i" -BackupId $Bk -CreationTimeUtc ([datetime]::UtcNow.AddDays(-$i)) -ThrowOnGetSourceJob -BackupParentOrThisName 'Gone'
+            } else {
+                script:New-FakeRestorePoint -Name "p$i" -BackupId $Bk -CreationTimeUtc ([datetime]::UtcNow.AddDays(-$i)) -SourceJob $script:VmJob
+            }
+        }
+        Mock Get-VBRRestorePoint -MockWith { @($Points | Sort-Object { Get-Random }) }
+
+        Get-VhcJob | Out-Null
+
+        $Candidates = @($script:VhcOrphanedSupersededCache.CandidateGroups)
+        # One candidate per unresolvable BackupId (1, 2, 3); BackupId 0 went to the job.
+        $Candidates | Should -HaveCount 3
+        foreach ($Candidate in $Candidates) {
+            @($Candidate.RestorePoints.BackupId | Select-Object -Unique) | Should -HaveCount 1
+        }
+        @($Candidates.RestorePoints).Count | Should -Be 9
+    }
+}

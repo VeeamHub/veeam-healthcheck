@@ -16,12 +16,34 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR.VbrTables.OrphanedSupers
         private readonly CHtmlFormatting form = new();
 
         // Get-VhcOrphanedSupersededBackups.ps1 is the sole producer of
-        // Category and only ever writes one of these two literals - named
+        // Category and only ever writes one of these three literals - named
         // here rather than repeating raw strings so a future producer-side
         // typo/rename fails a compile instead of silently mislabeling rows.
         private const string CategoryOrphaned = "Orphaned";
         private const string CategorySuperseded = "Superseded";
+        private const string CategoryUnresolved = "Unresolved";
 
+        private const double BytesPerGb = 1073741824d;
+
+        // Only Orphaned and Superseded are safe to reclaim. Unresolved rows
+        // are still being written to (#221) and must never feed a
+        // "potentially reclaimable" figure.
+        private static bool IsReclaimable(OrphanedSupersededBackupRecord r) =>
+            r.Category == CategoryOrphaned || r.Category == CategorySuperseded;
+
+        private static string FormatGb(double bytes) =>
+            (bytes / BytesPerGb).ToString("N0", CultureInfo.InvariantCulture);
+
+        private static string FormatDate(DateTime d) =>
+            d == DateTime.MinValue ? string.Empty : d.ToString("yyyy-MM-dd");
+
+        private static string StillWritingText(List<OrphanedSupersededBackupRecord> records)
+        {
+            var unresolved = records.Where(r => r.Category == CategoryUnresolved).ToList();
+            return unresolved.Count == 0
+                ? string.Empty
+                : $"{unresolved.Count} still being written (~{FormatGb(unresolved.Sum(r => r.TotalSizeBytes))} GB), not counted";
+        }
 
         // No try/catch here: a real parse failure must propagate to the
         // caller (AddOrphanedSupersededBackupsTable), which already logs
@@ -169,16 +191,18 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR.VbrTables.OrphanedSupers
 
             string s = notEvaluatedNotice;
             var byRepo = records.GroupBy(r => r.RepositoryId ?? "unknown");
-            long grandTotalBytes = 0;
-            int grandTotalCount = 0;
+            double grandReclaimableBytes = 0;
+            int grandReclaimableCount = 0;
             int repoGroupIndex = 0;
 
             foreach (var repoGroup in byRepo)
             {
                 var repoRecords = repoGroup.ToList();
-                double repoTotalGb = repoRecords.Sum(r => r.TotalSizeBytes) / 1073741824d;
-                grandTotalBytes += (long)repoRecords.Sum(r => r.TotalSizeBytes);
-                grandTotalCount += repoRecords.Count;
+                var repoReclaimable = repoRecords.Where(IsReclaimable).ToList();
+                double repoReclaimableBytes = repoReclaimable.Sum(r => r.TotalSizeBytes);
+                grandReclaimableBytes += repoReclaimableBytes;
+                grandReclaimableCount += repoReclaimable.Count;
+                string repoStillWriting = StillWritingText(repoRecords);
 
                 // Group by RepositoryId (stable, always present) but display
                 // RepositoryName - a bare Guid is meaningless as a section
@@ -211,7 +235,9 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR.VbrTables.OrphanedSupers
                 // div ("orphaned-repo-group" had no CSS rule at all).
                 string cardTitle = $"{WebUtility.HtmlEncode(repoLabel)} " +
                     $"<span class=\"label\">{repoRecords.Count} backups flagged &middot; " +
-                    $"~{repoTotalGb.ToString("N0", CultureInfo.InvariantCulture)} GB potentially reclaimable</span>";
+                    $"~{FormatGb(repoReclaimableBytes)} GB potentially reclaimable" +
+                    (repoStillWriting.Length == 0 ? string.Empty : " &middot; " + repoStillWriting) +
+                    "</span>";
                 // repoGroup.Key is a RepositoryId Guid (or the literal
                 // "unknown" fallback) and must never appear in the rendered
                 // output, scrubbed or not - use the loop position instead so
@@ -225,15 +251,16 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR.VbrTables.OrphanedSupers
                 {
                     string jobName = scrub ? CGlobals.Scrubber.ScrubItem(job.JobName, ScrubItemType.Job) : job.JobName;
                     double totalGb = job.TotalSizeBytes / 1073741824d;
-                    // Explicit three-way check, not a binary ?: on the
+                    // Explicit per-category check, not a binary ?: on the
                     // Orphaned case alone: an unexpected Category value
-                    // (typo, future third category) must not silently
+                    // (typo, future category) must not silently
                     // render as - and pair with the explanatory sentence
                     // for - "Superseded", which would be factually wrong.
                     string badgeClass = job.Category switch
                     {
                         CategoryOrphaned => "badge-orphaned",
                         CategorySuperseded => "badge-superseded",
+                        CategoryUnresolved => "badge-unresolved",
                         _ => "badge-unknown",
                     };
 
@@ -245,8 +272,8 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR.VbrTables.OrphanedSupers
                     s += $"<td>{job.FullCount}</td>";
                     s += $"<td>{job.IncrementalCount}</td>";
                     s += $"<td>{totalGb.ToString("N1", CultureInfo.InvariantCulture)} GB</td>";
-                    s += $"<td>{job.OldestRestorePoint:yyyy-MM-dd}</td>";
-                    s += $"<td>{job.NewestRestorePoint:yyyy-MM-dd}</td>";
+                    s += $"<td>{FormatDate(job.OldestRestorePoint)}</td>";
+                    s += $"<td>{FormatDate(job.NewestRestorePoint)}</td>";
                     s += "</tr>";
 
                     s += "<tr class=\"detail-row\"><td colspan=\"9\">";
@@ -254,6 +281,7 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR.VbrTables.OrphanedSupers
                     {
                         CategoryOrphaned => "<p class=\"label\">No live job - this name/type came from the backup's own retained metadata, not a current VBR job.</p>",
                         CategorySuperseded => "<p class=\"label\">Still a live job - these points belong to an object no longer part of its currently-active membership.</p>",
+                        CategoryUnresolved => "<p class=\"label\">Job not matched, but this backup received a restore point recently, so something is still writing to it. Not safe to reclaim; check it in the VBR console.</p>",
                         _ => "<p class=\"label\">Unrecognized category - showing raw data without further interpretation.</p>",
                     };
                     // BackupId shown per-object rather than used to group
@@ -291,8 +319,8 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR.VbrTables.OrphanedSupers
                         s += $"<td>{(obj.AvgFullSizeBytes / 1073741824d).ToString("N1", CultureInfo.InvariantCulture)} GB</td>";
                         s += $"<td>{(obj.AvgIncrementalSizeBytes / 1073741824d).ToString("N1", CultureInfo.InvariantCulture)} GB</td>";
                         s += $"<td>{(obj.TotalSizeBytes / 1073741824d).ToString("N1", CultureInfo.InvariantCulture)} GB</td>";
-                        s += $"<td>{obj.OldestRestorePoint:yyyy-MM-dd}</td>";
-                        s += $"<td>{obj.NewestRestorePoint:yyyy-MM-dd}</td>";
+                        s += $"<td>{FormatDate(obj.OldestRestorePoint)}</td>";
+                        s += $"<td>{FormatDate(obj.NewestRestorePoint)}</td>";
                         s += "</tr>";
                     }
                     s += "</tbody></table></td></tr>";
@@ -301,8 +329,12 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR.VbrTables.OrphanedSupers
                 s += this.form.SectionEnd(string.Empty);
             }
 
+            var stillWritingRecords = records.Where(r => r.Category == CategoryUnresolved).ToList();
+            string backupsFound = stillWritingRecords.Count == 0
+                ? $"{grandReclaimableCount} orphaned/superseded backups found"
+                : $"{records.Count} backups found ({stillWritingRecords.Count} still being written, ~{FormatGb(stillWritingRecords.Sum(r => r.TotalSizeBytes))} GB not counted as reclaimable)";
             summary = (sweepEvaluated ? "" : "Orphaned Backups: not evaluated for this environment. ")
-                + $"{grandTotalCount} orphaned/superseded backups found, ~{(grandTotalBytes / 1073741824d).ToString("N0", CultureInfo.InvariantCulture)} GB potentially reclaimable.";
+                + $"{backupsFound}, ~{FormatGb(grandReclaimableBytes)} GB potentially reclaimable.";
             return s;
         }
     }

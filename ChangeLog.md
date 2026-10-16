@@ -49,6 +49,15 @@ checksums, and scan results.
 
 ### Fixed
 
+- Orphaned & Superseded Backups no longer labels a backup whose job could not be matched as **Orphaned** when
+  something is still writing to it. The whole parent backup is judged on its newest restore point: if any of its
+  restore points, across all of its VMs, is less than 35 days old (tunable via `OrphanedActiveChainWindowDays` in `VbrConfig.json`), every row is listed as
+  **Unresolved** (not safe to reclaim; check it in the VBR console). A restore point with no usable timestamp is listed as Unresolved, not
+  dropped, with Oldest/Newest taken from the dated points only (blank when there are none); a local-time timestamp is
+  converted to UTC once, and the report shows the instant that was judged. Unresolved rows are counted in "backups
+  flagged" but excluded from the "potentially reclaimable" GB totals, which report them separately as still being
+  written. In the JSON output `Category` can now be `Unresolved`, so consumers that sum every row as reclaimable
+  should filter on `Category`. Fixes [#221](https://github.com/VeeamHub/veeam-healthcheck/issues/221).
 - A renamed job that `Get-VBRJob` does not return (for example a Nutanix AHV job on some VBR 12.3.x servers) is now
   listed under its current name in the session report and Job Session Summary, matching its Jobs entry, instead of
   the name it had when its older sessions ran. Follows

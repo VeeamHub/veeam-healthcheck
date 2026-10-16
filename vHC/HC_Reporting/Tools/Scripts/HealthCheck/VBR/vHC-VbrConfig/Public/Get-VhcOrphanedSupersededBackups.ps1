@@ -5,7 +5,7 @@ function Get-VhcOrphanedSupersededBackups {
     .Synopsis
         Reads the sweep cache Get-VhcJob populates, excludes Tape Backups,
         classifies each remaining BackupId group's restore points as
-        Orphaned or Superseded, splits into one row per (BackupId,
+        Orphaned, Superseded or Unresolved, splits into one row per (BackupId,
         ObjectId), and exports _orphanedSupersededBackups.csv.
     .Parameter RepositoryDetails
         ArrayList of [pscustomobject]@{ID; Name} rows returned by
@@ -13,6 +13,13 @@ function Get-VhcOrphanedSupersededBackups {
         way: resolving RepositoryId to a human-readable RepositoryName for
         the report's per-repo grouping. May be $null - RepositoryName will
         be blank in that case, matching Get-VhcJob's own RepoName behavior.
+    .Parameter ActiveChainWindowDays
+        An 'Unresolved' candidate (no job matched) whose parent backup's newest
+        restore point, across every candidate of that parent, is within this many days of collection is
+        still being written to, so it is reported as Category 'Unresolved'
+        rather than 'Orphaned' (#221): "safe to consider reclaiming" must not
+        be claimed for a chain something is actively writing. Default 35 (Get-VBRConfig.ps1 passes VbrConfig.json
+        Thresholds.OrphanedActiveChainWindowDays).
     .Parameter OrphanedSupersededCache
         The sweep-result object Get-VhcJob now returns explicitly. Pass it
         here (Get-VBRConfig.ps1 does) rather than relying on this function
@@ -30,7 +37,11 @@ function Get-VhcOrphanedSupersededBackups {
         [object]$RepositoryDetails = $null,
 
         [Parameter(Mandatory = $false)]
-        [object]$OrphanedSupersededCache = $null
+        [object]$OrphanedSupersededCache = $null,
+
+        [Parameter(Mandatory = $false)]
+        [ValidateRange(0, 3650)]
+        [int]$ActiveChainWindowDays = 35
     )
 
     $message = "Collecting orphaned and superseded backups..."
@@ -58,6 +69,34 @@ function Get-VhcOrphanedSupersededBackups {
         }
     }
 
+    # One pass over a candidate's restore points: converts each usable
+    # CreationTimeUtc to UTC exactly once (Kind=Local is converted, Utc and
+    # Unspecified are taken as UTC) and tracks the newest usable instant.
+    # Unusable = not a [datetime], or at/below MinValue (a placeholder).
+    # Utc is index-aligned with the input, $null where unusable, so the same
+    # instants drive both the Orphaned/Unresolved decision and the exported
+    # Oldest/NewestRestorePoint.
+    function script:Get-VhciPointTimeScan {
+        param([object[]]$Points)
+        $Utc = [System.Collections.Generic.List[object]]::new()
+        $Newest = $null
+        $HasUnusable = $false
+        foreach ($Point in $Points) {
+            $When = $Point.CreationTimeUtc
+            if ($When -is [datetime] -and $When -gt [datetime]::MinValue) {
+                if ($When.Kind -eq [System.DateTimeKind]::Local) { $When = $When.ToUniversalTime() }
+                if ($null -eq $Newest -or $When -gt $Newest) { $Newest = $When }
+                $Utc.Add($When)
+            } else {
+                $Utc.Add($null)
+                $HasUnusable = $true
+            }
+        }
+        [PSCustomObject]@{ Utc = $Utc; Newest = $Newest; HasUnusable = $HasUnusable }
+    }
+
+    # Captured once so every candidate is judged against the same instant.
+    $CollectionTimeUtc = [datetime]::UtcNow
     $Rows  = [System.Collections.Generic.List[object]]::new()
     $SweepRan = $false
     $Cache = if ($null -ne $OrphanedSupersededCache) { $OrphanedSupersededCache } else { $script:VhcOrphanedSupersededCache }
@@ -87,7 +126,47 @@ function Get-VhcOrphanedSupersededBackups {
             Write-LogFile "Global restore-point sweep did not run for this environment - Orphaned Backup detection not evaluated." -LogLevel "INFO"
         }
 
-        foreach ($Candidate in $Cache.CandidateGroups) {
+        # Pre-pass (#221): recency is judged per PARENT backup, not per
+        # candidate. With per-VM chains each VM is its own candidate and
+        # BackupId, so a live job writing VM-A and VM-B daily would otherwise
+        # still leave VM-C (removed long ago, same job) looking Orphaned.
+        # The parent is keyed on GetParentOrThis().Id, falling back to the
+        # candidate's own BackupId when the parent Id is unavailable.
+        $Candidates  = @($Cache.CandidateGroups)
+        $Scans       = [object[]]::new($Candidates.Count)
+        $CandidateParentKeys = [string[]]::new($Candidates.Count)
+        $ParentState = @{}
+        for ($i = 0; $i -lt $Candidates.Count; $i++) {
+            $Points = @($Candidates[$i].RestorePoints)
+            if ($Points.Count -eq 0) { continue }
+            $Scans[$i] = script:Get-VhciPointTimeScan -Points $Points
+            if ($Candidates[$i].Reason -ne 'Unresolved') { continue }
+
+            $PreBackup = $null
+            try { $PreBackup = $Points[0].GetBackup() } catch { $PreBackup = $null }
+            if ($null -eq $PreBackup) { continue }
+            $PreParent = $null
+            try { $PreParent = $PreBackup.GetParentOrThis() } catch { $PreParent = $PreBackup }
+            if ($null -eq $PreParent) { $PreParent = $PreBackup }
+            $ParentId = $null
+            try { $ParentId = $PreParent.Id } catch { $ParentId = $null }
+            $Key = if ($ParentId) { "parent:$ParentId" }
+                   elseif ($Points[0].BackupId) { "backup:$($Points[0].BackupId)" }
+                   else { "candidate:$i" }
+            $CandidateParentKeys[$i] = $Key
+
+            if (-not $ParentState.ContainsKey($Key)) {
+                $ParentState[$Key] = [PSCustomObject]@{ Newest = $null; HasUnusable = $false }
+            }
+            $State = $ParentState[$Key]
+            if ($Scans[$i].HasUnusable) { $State.HasUnusable = $true }
+            if ($null -ne $Scans[$i].Newest -and ($null -eq $State.Newest -or $Scans[$i].Newest -gt $State.Newest)) {
+                $State.Newest = $Scans[$i].Newest
+            }
+        }
+
+        for ($CandidateIndex = 0; $CandidateIndex -lt $Candidates.Count; $CandidateIndex++) {
+            $Candidate = $Candidates[$CandidateIndex]
             try {
                 $RestorePoints = @($Candidate.RestorePoints)
                 if ($RestorePoints.Count -eq 0) { continue }
@@ -158,7 +237,28 @@ function Get-VhcOrphanedSupersededBackups {
                 # is true. Only 'Unresolved' (Tier 1 + Tier 2 both failed to
                 # resolve any job) is genuinely Orphaned; 'Tier2Suppressed'
                 # and 'StaleObject' both name a real, current job.
-                $Category = if ($Candidate.Reason -eq 'Unresolved') { 'Orphaned' } else { 'Superseded' }
+                #
+                # 'Unresolved' alone is not enough to call a chain Orphaned
+                # (#221): a job the sweep could not match can still be
+                # receiving restore points (hundreds of TB written within a
+                # day of collection were labeled Orphaned in the field).
+                # Recency is judged on the newest restore point of the whole
+                # PARENT backup (every Unresolved candidate sharing it, see
+                # the pre-pass above), so one live VM keeps every sibling out
+                # of "safe to reclaim". Fails safe: any unusable timestamp
+                # anywhere in the parent, or a point newer than the window
+                # edge (including future-dated, clock skew), keeps it
+                # Unresolved.
+                $Scan = $Scans[$CandidateIndex]
+                $Category = if ($Candidate.Reason -ne 'Unresolved') {
+                    'Superseded'
+                } else {
+                    $State = $ParentState[$CandidateParentKeys[$CandidateIndex]]
+                    if ($State.HasUnusable -or $null -eq $State.Newest -or
+                        $State.Newest -gt $CollectionTimeUtc.AddDays(-$ActiveChainWindowDays)) {
+                        'Unresolved'
+                    } else { 'Orphaned' }
+                }
 
                 # A null ObjectId can't be safely merged under any key shared
                 # with another restore point - two unrelated null-ObjectId
@@ -173,8 +273,10 @@ function Get-VhcOrphanedSupersededBackups {
                 # here by giving each null-ObjectId point its own singleton
                 # key instead of ever calling .ToString() on it.
                 $ByObjectId = @{}
+                $ByObjectIdTimes = @{}
                 $NullObjectIdSequence = 0
-                foreach ($RestorePoint in $RestorePoints) {
+                for ($PointIndex = 0; $PointIndex -lt $RestorePoints.Count; $PointIndex++) {
+                    $RestorePoint = $RestorePoints[$PointIndex]
                     if ($null -eq $RestorePoint.ObjectId) {
                         # NOT $($NullObjectIdSequence++) - a bare postfix
                         # increment used as a value (even inside a string
@@ -192,15 +294,25 @@ function Get-VhcOrphanedSupersededBackups {
                     }
                     if (-not $ByObjectId.ContainsKey($ObjKey)) {
                         $ByObjectId[$ObjKey] = [System.Collections.Generic.List[object]]::new()
+                        $ByObjectIdTimes[$ObjKey] = [System.Collections.Generic.List[object]]::new()
                     }
                     $ByObjectId[$ObjKey].Add($RestorePoint)
+                    $ByObjectIdTimes[$ObjKey].Add($Scan.Utc[$PointIndex])
                 }
 
                 foreach ($ObjKey in $ByObjectId.Keys) {
                     $ObjectPoints = $ByObjectId[$ObjKey]
                     $Fulls        = @($ObjectPoints | Where-Object { $_.Type -eq 'Full' })
                     $Increments   = @($ObjectPoints | Where-Object { $_.Type -eq 'Increment' })
-                    $Sorted       = $ObjectPoints | Sort-Object CreationTimeUtc
+
+                    $OldestUtc = $null
+                    $NewestUtc = $null
+                    foreach ($When in $ByObjectIdTimes[$ObjKey]) {
+                        if ($null -eq $When) { continue }
+                        if ($null -eq $OldestUtc -or $When -lt $OldestUtc) { $OldestUtc = $When }
+                        if ($null -eq $NewestUtc -or $When -gt $NewestUtc) { $NewestUtc = $When }
+                    }
+                    $Invariant = [System.Globalization.CultureInfo]::InvariantCulture
 
                     # GetStorage().Stats.BackupSize, not ApproxSize: ApproxSize is
                     # the source VM's original/uncompressed size (what Get-VhcJob.ps1
@@ -259,8 +371,8 @@ function Get-VhcOrphanedSupersededBackups {
                         AvgFullSizeBytes         = $AvgFullSize.ToString([System.Globalization.CultureInfo]::InvariantCulture)
                         AvgIncrementalSizeBytes  = $AvgIncrementalSize.ToString([System.Globalization.CultureInfo]::InvariantCulture)
                         TotalSizeBytes           = $TotalSize.ToString([System.Globalization.CultureInfo]::InvariantCulture)
-                        OldestRestorePoint       = $Sorted[0].CreationTimeUtc.ToString('o', [System.Globalization.CultureInfo]::InvariantCulture)
-                        NewestRestorePoint       = $Sorted[-1].CreationTimeUtc.ToString('o', [System.Globalization.CultureInfo]::InvariantCulture)
+                        OldestRestorePoint       = if ($null -ne $OldestUtc) { $OldestUtc.ToString('o', $Invariant) } else { '' }
+                        NewestRestorePoint       = if ($null -ne $NewestUtc) { $NewestUtc.ToString('o', $Invariant) } else { '' }
                     })
                 }
             } catch {
