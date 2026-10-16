@@ -9,6 +9,7 @@ on:
       - 'vHC/**/*.axaml'
       - 'vHC/**/*.resx'
       - 'vHC/VhcXTests.CrossPlatform/**'
+      - 'vHC/VhcGuiTests/**'
       - '.github/workflows/crossplatform-tests.yml'
   pull_request:
     branches: [master, dev]
@@ -18,6 +19,7 @@ on:
       - 'vHC/**/*.axaml'
       - 'vHC/**/*.resx'
       - 'vHC/VhcXTests.CrossPlatform/**'
+      - 'vHC/VhcGuiTests/**'
       - '.github/workflows/crossplatform-tests.yml'
 
 jobs:
@@ -43,3 +45,6 @@ jobs:
 
     - name: Run cross-platform tests
       run: dotnet test vHC/VhcXTests.CrossPlatform/VhcXTests.CrossPlatform.csproj --no-build --verbosity normal
+
+    - name: Run headless GUI tests
+      run: dotnet test vHC/VhcGuiTests/VhcGuiTests.csproj --verbosity normal

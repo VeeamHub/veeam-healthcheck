@@ -1,6 +1,6 @@
 ---
 name: verify-vhc
-description: Prove Veeam Health Check (VHC Core) behavior off Windows. Builds the .NET solution, runs the CLI in /import mode against the repo's golden CSV fixtures to generate real HTML/JSON reports (plain and scrubbed), and runs the cross-platform test suites, capturing evidence. Use when a change touches report generation, CSV parsing, scrubbing, CLI arguments or anything else that must be shown working, and no Windows + VBR server is available. States plainly what only a Windows host can verify.
+description: Prove Veeam Health Check (VHC Core) behavior off Windows. Builds the .NET solution, runs the CLI in /import mode against the repo's golden CSV fixtures to generate real HTML/JSON reports (plain and scrubbed), and runs the cross-platform and headless GUI test suites, capturing evidence. Use when a change touches report generation, CSV parsing, scrubbing, CLI arguments or anything else that must be shown working, and no Windows + VBR server is available. States plainly what only a Windows host can verify.
 ---
 
 # Verify Veeam Health Check (macOS / Linux)
@@ -15,9 +15,10 @@ VHC is a Windows utility (Avalonia GUI + CLI). It collects data from a Veeam Bac
 | CSV parsing + report generation (VBR) | yes | `import-report` |
 | Scrub / anonymize path | yes | `import-scrub` |
 | CLI argument parsing, `/help`, bad-input handling | yes | [cli-arguments](features/cli-arguments.md) |
-| xUnit suites (about 1,100 + 119 tests) | yes | `tests` |
+| xUnit suites (about 1,100 + 121 tests) | yes | `tests` |
+| Avalonia GUI logic and dialogs, headless (22 tests) | yes, headless only | `tests`, [gui-and-collection](features/gui-and-collection.md#gui-headless) |
 | Live collection (PowerShell, SQL, registry, WMI, logs) | **no, needs Windows + VBR/VB365** | [gui-and-collection](features/gui-and-collection.md) |
-| Avalonia GUI | **no, needs Windows** (it throws at startup on macOS) | [gui-and-collection](features/gui-and-collection.md) |
+| Real GUI window (Win32 hide, native picker, Windows rendering) | **no, needs Windows** (it throws at startup on macOS) | [gui-and-collection](features/gui-and-collection.md) |
 | PDF export (`/pdf`), Windows-only tests (DPAPI, registry) | **no / skipped** | [gui-and-collection](features/gui-and-collection.md) |
 
 An `/import` run proves the report pipeline given known inputs. It says nothing about whether the collection scripts gather correct data on a real server. Never report a Windows-only surface as verified from this skill.
@@ -33,7 +34,7 @@ One script, repo-relative, executable. Run from anywhere inside the repo:
 .claude/skills/verify-vhc/scripts/vhc-verify.sh doctor              # read-only readiness check
 .claude/skills/verify-vhc/scripts/vhc-verify.sh import-report [ID]  # /import against golden CSVs, assert on HTML + JSON
 .claude/skills/verify-vhc/scripts/vhc-verify.sh import-scrub  [ID]  # same with /scrub:true, assert names are gone
-.claude/skills/verify-vhc/scripts/vhc-verify.sh tests         [ID]  # both test projects, logs captured
+.claude/skills/verify-vhc/scripts/vhc-verify.sh tests         [ID]  # all three test projects, logs captured
 .claude/skills/verify-vhc/scripts/vhc-verify.sh cleanup       [ID]  # stop what we started, remove scratch input, keep evidence
 ```
 
@@ -78,7 +79,7 @@ Everything lands in `.verify-vhc/evidence/<ID>/` (git-ignored):
 - `command.txt`, `stdout.log`, `exit_code.txt`: the action and raw output
 - `output/vHC-Report/*.html|json` (or `output/vHC-AnonymousReport/` for scrub): the resulting state
 - `MANIFEST.sha256`: hashes of every output file
-- `tests-*.log`: for the `tests` subcommand
+- `tests-crossplatform.log`, `tests-vhcxtests.log`, `tests-gui.log`: for the `tests` subcommand
 
 Proof standard: exercise the CLI entry point; capture the command and its output, then assert on the **content** of the generated files (side effects), not only that files exist; confirm tracked inputs were not modified. Mocks are not used: the inputs are real CSV files in the production schema.
 

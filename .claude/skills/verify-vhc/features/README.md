@@ -21,12 +21,12 @@ This directory is the maintained source for verifying user-facing behavior of Ve
 
 - Record the feature ID and entry point with every artifact.
 - Report an unreachable path with the attempted command and the unmet precondition (for example "needs Windows + VBR").
-- Do not report a skipped entry point as verified through a different path. An `/import` report does not verify collection; a passing xUnit run does not verify the GUI.
+- Do not report a skipped entry point as verified through a different path. An `/import` report does not verify collection; a passing xUnit run does not verify live collection or the real Windows GUI; the headless GUI suite verifies only what [gui-headless](./gui-and-collection.md#gui-headless) lists.
 
 ## Features
 
 - [CSV import](./csv-import.md) covers `/import` generating the HTML and JSON report from collected CSVs. Drivable here.
 - [Scrubbed report](./scrubbed-report.md) covers `/scrub:true` anonymization of the same report. Drivable here.
 - [CLI arguments](./cli-arguments.md) covers `/help`, no-action handling and bad import paths. Drivable here.
-- [Build and tests](./build-and-tests.md) covers `dotnet build` and the xUnit suites. Drivable here.
-- [GUI and live collection](./gui-and-collection.md) covers the Avalonia GUI, VBR/VB365 collection, PDF export and Windows-only tests. **Not drivable on macOS**; documents what a Windows host must do.
+- [Build and tests](./build-and-tests.md) covers `dotnet build` and the xUnit suites, including the headless GUI project. Drivable here.
+- [GUI and live collection](./gui-and-collection.md) covers two things. `gui-headless` (Avalonia.Headless tests of the real windows) is drivable here. The real GUI window, VBR/VB365 collection, PDF export and Windows-only tests are **not drivable on macOS**; the file documents what a Windows host must do.
