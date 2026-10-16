@@ -53,13 +53,35 @@ Preconditions:
 - `vhc-verify.sh doctor` prints `DOCTOR: ready`.
 - Use an absolute scratch directory that you created for the run for any `/outdir`.
 
-There is no wrapper subcommand; run the binary directly and capture output with `> .verify-vhc/evidence/<ID>/cli.log 2>&1`.
+Two subcommands drive this surface and assert on logs, exit codes and the (absent) output folder:
+
+- `vhc-verify.sh cli-checks <ID>` covers `/help`, `/bogus`, a nonexistent `/import` path, an `/import` dir with no CSVs, and the `/import:<path>` colon form. Ends with `CLI-CHECKS: verified` and `assertions: 19/19 passed`.
+- `vhc-verify.sh cli-matrix <ID>` combines `/import` with the other flags and asserts per flag (below). Ends with `CLI-MATRIX: verified` and `assertions: 40/40 passed`.
+
+The bullets below are the underlying recipes, for driving a case by hand:
 
 - **Help.** Run `dotnet vHC/HC_Reporting/bin/Debug/net10.0-windows7.0/VeeamHealthCheck.dll /help`. Stdout contains `Veeam Health Check - Command Line Help` and lines beginning `  /run`, `  /import`, `  /scrub:true`, `  /outdir=<path>`. Filter the noise with `grep -v dlopen`.
 - **No action.** Run the same binary with `/bogus`. The log contains `WARN No action specified - nothing was collected or reported.` and `Add /run to execute a health check, or /gui to open the interface.`
 - **Bad import path.** Run with `/import=/nonexistent-dir /outdir=<abs scratch> /run`. The log contains `ERROR Import path does not exist: /nonexistent-dir` and `Failed to resolve import path. Exiting.`; `<scratch>` contains no `vHC-Report` folder.
 - **Good import path.** See [csv-import](./csv-import.md).
 - **Proof.** Save the log and `ls` of the output folder showing the absence (bad path) or presence (good path) of `vHC-Report`.
+
+## Flag matrix (`cli-matrix`)
+
+Semantics are from `CArgsParser.ParseAllArgs`. Each case runs `/import=<golden copy> /outdir=<scratch> /run <flag>`.
+
+| Flag | What is asserted |
+|---|---|
+| (none) | VBR html + json written; header says `7 day report`; `id="jobsummary"` present |
+| `/lite` | exit 0; VBR html + json still written (the parser sets `RunFullReport`). Per-job HTML exports do not exist on the import path either way, so `/lite` cannot be told apart from the baseline here; that difference needs a live collection |
+| `/security` | `Report_VBR_Security_*.html` written; log has `Starting Security Report generation`; **no** full VBR report and **no** json |
+| `/days:7`, `12`, `30`, `90` | log `Days set to N`; report header `N day report` |
+| `/debug` | the log has `DEBUG` lines (114 vs 0 for the baseline) |
+| `/show:files`, `/show:report`, `/show:all` | exit 0, report written, nothing launched (CLI mode forces open-explorer/open-html off) |
+| `/scrub:false` | log `Setting SCRUB = false`; real names still present |
+| `/pptx` | `Report_VBR_*.pptx` written and is a valid OOXML zip containing `ppt/presentation.xml` |
+
+Not driven: `/pdf` (DinkToPdf's native library throws an unhandled `NullReferenceException` in a finalizer, exit 134, and no VBR report is written off Windows), `/gui`, `/remote`, `/host=`, `/vbr`, `/vb365` (collection intent, needs Veeam), `/savecreds`, `/credfile=`, `/silent`, `/clearcreds`, `/hotfix`, `/path=`.
 
 ## Gotchas
 
