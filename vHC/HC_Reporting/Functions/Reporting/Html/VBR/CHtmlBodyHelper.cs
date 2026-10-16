@@ -323,6 +323,12 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR
 
         private void OrphanedSupersededBackupsTable()
         {
+            // Ships dark behind VHC_EXPERIMENTS. Skipping the call also skips the
+            // CGlobals.FullReportJson fill inside AddOrphanedSupersededBackupsTable.
+            // CHtmlCompiler.BuildSidebar gates the nav link on the same flag.
+            if (!CFeatureFlags.ExperimentsEnabled)
+                return;
+
             this.HTMLSTRING += this.tables.AddOrphanedSupersededBackupsTable(this.SCRUB);
         }
 

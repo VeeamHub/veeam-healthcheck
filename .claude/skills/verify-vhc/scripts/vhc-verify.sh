@@ -118,7 +118,8 @@ cmd_import_report() {
   say "run: dotnet $DLL /import=<repo>/$in /outdir=<repo>/$out /run /scrub:$scrub"
   say "dotnet $DLL /import=$in /outdir=$out /run /scrub:$scrub (paths relative to repo root)" > "$ev/command.txt"
 
-  dotnet "$DLL" "/import=$abs_in" "/outdir=$abs_out" /run "/scrub:$scrub" > "$ev/stdout.log" 2>&1 &
+  # VHC_EXPERIMENTS is unset for the run so the default (experiments off) report is what gets checked.
+  env -u VHC_EXPERIMENTS dotnet "$DLL" "/import=$abs_in" "/outdir=$abs_out" /run "/scrub:$scrub" > "$ev/stdout.log" 2>&1 &
   pid=$!
   echo "$pid" > "$PIDFILE"
   waited=0
@@ -153,6 +154,9 @@ cmd_import_report() {
   }
   check "$html" "<title>Veeam HealthCheck Report</title>"
   check "$html" "12.1.2.172"             # _vbrinfo.csv Version (not anonymized)
+  # Orphaned & Superseded Backups ships dark behind VHC_EXPERIMENTS: no section card, no nav link.
+  absent "$html" 'id="orphanedsupersededbackups"'
+  absent "$html" 'href="#orphanedsupersededbackups"'
   if [ "$scrub" = "true" ]; then
     # Scrub must remove identifying names that exist in the input CSVs.
     absent "$html" "Production-VM-Backup"  # _Jobs.csv row 1
