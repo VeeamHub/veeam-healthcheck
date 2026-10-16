@@ -1304,10 +1304,8 @@ jobs:
       if: success() || failure()
       continue-on-error: true
       shell: pwsh
-      env:
-        SCA_REST_HOST: ${{ secrets.VBR_HOST }}
-        SCA_REST_USER: ${{ secrets.VBR_USERNAME }}
-        SCA_REST_PASSWORD: ${{ secrets.VBR_13_REMOTE_PW }}
+      # No REST here: the console-host runner cannot reach the VBR REST API on 9419. vbr-13-sql
+      # is the exact-console-label source; vbr-2 triages from its CSV only.
       run: |
         & "${{ github.workspace }}\.github\scripts\Invoke-SecurityComplianceDriftCheck.ps1" `
           -CatalogPath 'C:\temp\vHC\Original\VBR\*\*\*_SecurityComplianceCatalog.csv' `

@@ -51,25 +51,29 @@ function Write-Summary {
 }
 
 try {
-    $catalogFile = Get-ChildItem -Path $CatalogPath -ErrorAction SilentlyContinue |
+    # The evaluated-rules CSV is what triage needs. The catalog (every SDK enum value) only adds
+    # the dormant list, and VBR 12's SDK cannot produce it ("VBRBestPracticeType enum not
+    # loadable"), so a missing catalog degrades to "no dormant list" instead of skipping.
+    $complianceGlob = $CatalogPath -replace '_SecurityComplianceCatalog\.csv$', '_SecurityCompliance.csv'
+    $complianceFile = Get-ChildItem -Path $complianceGlob -ErrorAction SilentlyContinue |
         Sort-Object LastWriteTime -Descending | Select-Object -First 1
-    if ($null -eq $catalogFile) {
-        Write-Host "::warning::No _SecurityComplianceCatalog.csv found at '$CatalogPath' - SCA triage skipped"
-        Write-Summary "## SCA Triage`n`n> Skipped - no catalog CSV found (Phase 1 may not have run on this branch)."
+    if ($null -eq $complianceFile) {
+        Write-Host "::warning::No _SecurityCompliance.csv found at '$complianceGlob' - SCA triage skipped"
+        Write-Summary "## SCA Triage`n`n> Skipped - no evaluated-rules CSV found (the analyzer produced no results)."
         exit 0
     }
-    $compliancePath = Join-Path $catalogFile.DirectoryName ($catalogFile.Name -replace '_SecurityComplianceCatalog\.csv$', '_SecurityCompliance.csv')
-    if (-not (Test-Path $compliancePath)) {
-        Write-Host "::warning::No evaluated-rules CSV at '$compliancePath' - SCA triage skipped"
-        Write-Summary "## SCA Triage`n`n> Skipped - no _SecurityCompliance.csv next to the catalog (the analyzer produced no results)."
-        exit 0
-    }
-    if (-not $Server) { $Server = $catalogFile.Name -replace '_SecurityComplianceCatalog\.csv$', '' }
+    if (-not $Server) { $Server = $complianceFile.Name -replace '_SecurityCompliance\.csv$', '' }
 
-    Write-Host "Reading evaluated rules: $compliancePath"
-    Write-Host "Reading catalog:         $($catalogFile.FullName)"
-    $evaluated = @(Import-Csv -Path $compliancePath)
-    $catalog   = @(Import-Csv -Path $catalogFile.FullName)
+    $catalogPathForRun = Join-Path $complianceFile.DirectoryName ($complianceFile.Name -replace '_SecurityCompliance\.csv$', '_SecurityComplianceCatalog.csv')
+    $catalog = @()
+    Write-Host "Reading evaluated rules: $($complianceFile.FullName)"
+    if (Test-Path $catalogPathForRun) {
+        Write-Host "Reading catalog:         $catalogPathForRun"
+        $catalog = @(Import-Csv -Path $catalogPathForRun)
+    } else {
+        Write-Host "::notice::No SDK catalog next to the evaluated rules (expected on VBR 12). Triaging evaluated rules only; no dormant list."
+    }
+    $evaluated = @(Import-Csv -Path $complianceFile.FullName)
 
     if (-not $VbrConfigPath) {
         $VbrConfigPath = Join-Path $PSScriptRoot '../../vHC/HC_Reporting/Tools/Scripts/HealthCheck/VBR/VbrConfig.json'
