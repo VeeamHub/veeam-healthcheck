@@ -153,7 +153,26 @@ internal sealed class GoldenVbrReport : IDisposable
         CultureInfo.CurrentCulture = culture;
         CultureInfo.CurrentUICulture = uiCulture;
         Environment.SetEnvironmentVariable("VHC_EXPERIMENTS", experiments);
-        if (Directory.Exists(Root))
-            Directory.Delete(Root, recursive: true);
+        DeleteTempRoot();
+    }
+
+    // CCsvReader returns CsvReaders over StreamReaders that callers never dispose, so on Windows the
+    // fixture CSVs stay locked until those readers are finalized. Collect them, retry, and leave the
+    // temp dir behind rather than fail a test on cleanup.
+    private void DeleteTempRoot()
+    {
+        for (int attempt = 0; attempt < 5 && Directory.Exists(Root); attempt++)
+        {
+            try
+            {
+                Directory.Delete(Root, recursive: true);
+            }
+            catch (Exception ex) when (ex is IOException || ex is UnauthorizedAccessException)
+            {
+                GC.Collect();
+                GC.WaitForPendingFinalizers();
+                System.Threading.Thread.Sleep(100);
+            }
+        }
     }
 }
