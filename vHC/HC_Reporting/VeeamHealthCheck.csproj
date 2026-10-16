@@ -30,6 +30,7 @@
 	</PropertyGroup>
 	<ItemGroup>
 		<InternalsVisibleTo Include="VhcXTests" />
+		<InternalsVisibleTo Include="VhcGuiTests" />
 	</ItemGroup>
 	<PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
 		<ShouldCreateLogs>True</ShouldCreateLogs>
@@ -172,7 +173,7 @@
 		</ItemGroup>
 		<!-- Execute the appropriate script based on OS -->
 		<Exec Command="call @(LocalPostBuildBat)" Condition="'$(OS)' == 'Windows_NT' AND '@(LocalPostBuildBat)' != ''" ContinueOnError="true" />
-		<Exec Command="bash @(LocalPostBuildSh)" Condition="'$(OS)' != 'Windows_NT' AND '@(LocalPostBuildSh)' != ''" ContinueOnError="true" />
+		<Exec Command="bash @(LocalPostBuildSh)" Condition="'$(OS)' != 'Windows_NT' AND '@(LocalPostBuildSh)' != '' AND '$(CI)' != 'true'" ContinueOnError="true" />
 	</Target>
 	<ItemGroup>
 		<None Include="Tools/build/BuildCopy.sh" />

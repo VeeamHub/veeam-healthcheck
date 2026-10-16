@@ -30,6 +30,9 @@ namespace VeeamHealthCheck
         private readonly CClientFunctions functions = new();
         private bool _modeCheckFailed;
 
+        // Test seam: headless GUI tests replace this so clicking Run never starts collection or reaches Run()'s Environment.Exit(0). Production never reassigns it.
+        internal Action<bool> RunAction;
+
         private const string LocalhostName = "localhost";
 
         // Resolved inside SetUiSync(), right after ModeCheck() runs - see that
@@ -58,6 +61,7 @@ namespace VeeamHealthCheck
 
         public VhcGui()
         {
+            RunAction = this.Run;
             // Captured before InitializeComponent() touches it - see the resync
             // immediately below for why.
             int reportDaysAtStartup = CGlobals.ReportDays;
@@ -537,7 +541,7 @@ namespace VeeamHealthCheck
             this.functions.LogUIAction("Import");
             CGlobals.IMPORT = true;
             this.DisableGuiAndStartProgressBar();
-            this.Run(true);
+            this.RunAction(true);
         }
 
         private void run_Click(object sender, RoutedEventArgs e)
@@ -555,7 +559,7 @@ namespace VeeamHealthCheck
             if (this.functions.VerifyPath())
             {
                 this.DisableGuiAndStartProgressBar();
-                this.Run(false);
+                this.RunAction(false);
             }
         }
 
