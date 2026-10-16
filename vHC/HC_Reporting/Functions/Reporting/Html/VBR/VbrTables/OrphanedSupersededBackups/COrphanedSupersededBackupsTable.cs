@@ -23,6 +23,24 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR.VbrTables.OrphanedSupers
         private const string CategorySuperseded = "Superseded";
         private const string CategoryUnresolved = "Unresolved";
 
+        private const double BytesPerGb = 1073741824d;
+
+        // Only Orphaned and Superseded are safe to reclaim. Unresolved rows
+        // are still being written to (#221) and must never feed a
+        // "potentially reclaimable" figure.
+        private static bool IsReclaimable(OrphanedSupersededBackupRecord r) =>
+            r.Category == CategoryOrphaned || r.Category == CategorySuperseded;
+
+        private static string FormatGb(double bytes) =>
+            (bytes / BytesPerGb).ToString("N0", CultureInfo.InvariantCulture);
+
+        private static string StillWritingText(List<OrphanedSupersededBackupRecord> records)
+        {
+            var unresolved = records.Where(r => r.Category == CategoryUnresolved).ToList();
+            return unresolved.Count == 0
+                ? string.Empty
+                : $"{unresolved.Count} still being written (~{FormatGb(unresolved.Sum(r => r.TotalSizeBytes))} GB), not counted";
+        }
 
         // No try/catch here: a real parse failure must propagate to the
         // caller (AddOrphanedSupersededBackupsTable), which already logs
@@ -170,16 +188,18 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR.VbrTables.OrphanedSupers
 
             string s = notEvaluatedNotice;
             var byRepo = records.GroupBy(r => r.RepositoryId ?? "unknown");
-            long grandTotalBytes = 0;
-            int grandTotalCount = 0;
+            double grandReclaimableBytes = 0;
+            int grandReclaimableCount = 0;
             int repoGroupIndex = 0;
 
             foreach (var repoGroup in byRepo)
             {
                 var repoRecords = repoGroup.ToList();
-                double repoTotalGb = repoRecords.Sum(r => r.TotalSizeBytes) / 1073741824d;
-                grandTotalBytes += (long)repoRecords.Sum(r => r.TotalSizeBytes);
-                grandTotalCount += repoRecords.Count;
+                var repoReclaimable = repoRecords.Where(IsReclaimable).ToList();
+                double repoReclaimableBytes = repoReclaimable.Sum(r => r.TotalSizeBytes);
+                grandReclaimableBytes += repoReclaimableBytes;
+                grandReclaimableCount += repoReclaimable.Count;
+                string repoStillWriting = StillWritingText(repoRecords);
 
                 // Group by RepositoryId (stable, always present) but display
                 // RepositoryName - a bare Guid is meaningless as a section
@@ -211,8 +231,10 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR.VbrTables.OrphanedSupers
                 // independent collapse toggle instead of a bare, unstyled
                 // div ("orphaned-repo-group" had no CSS rule at all).
                 string cardTitle = $"{WebUtility.HtmlEncode(repoLabel)} " +
-                    $"<span class=\"label\">{repoRecords.Count} backups flagged &middot; " +
-                    $"~{repoTotalGb.ToString("N0", CultureInfo.InvariantCulture)} GB potentially reclaimable</span>";
+                    $"<span class=\"label\">{repoReclaimable.Count} backups flagged &middot; " +
+                    $"~{FormatGb(repoReclaimableBytes)} GB potentially reclaimable" +
+                    (repoStillWriting.Length == 0 ? string.Empty : " &middot; " + repoStillWriting) +
+                    "</span>";
                 // repoGroup.Key is a RepositoryId Guid (or the literal
                 // "unknown" fallback) and must never appear in the rendered
                 // output, scrubbed or not - use the loop position instead so
@@ -304,8 +326,10 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR.VbrTables.OrphanedSupers
                 s += this.form.SectionEnd(string.Empty);
             }
 
+            string stillWriting = StillWritingText(records);
             summary = (sweepEvaluated ? "" : "Orphaned Backups: not evaluated for this environment. ")
-                + $"{grandTotalCount} orphaned/superseded backups found, ~{(grandTotalBytes / 1073741824d).ToString("N0", CultureInfo.InvariantCulture)} GB potentially reclaimable.";
+                + $"{grandReclaimableCount} orphaned/superseded backups found, ~{FormatGb(grandReclaimableBytes)} GB potentially reclaimable."
+                + (stillWriting.Length == 0 ? string.Empty : " " + stillWriting + ".");
             return s;
         }
     }

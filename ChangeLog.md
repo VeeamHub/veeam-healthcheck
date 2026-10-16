@@ -52,7 +52,9 @@ checksums, and scan results.
 - Orphaned & Superseded Backups no longer labels a backup chain whose job could not be matched as **Orphaned**
   when it received a restore point within the last 7 days (judged on the newest restore point of the whole chain).
   Such chains are now listed as **Unresolved** with a note that something is still writing to them and they are not
-  safe to reclaim. Fixes [#221](https://github.com/VeeamHub/veeam-healthcheck/issues/221).
+  safe to reclaim. A restore point with no usable timestamp, or a local-time one, is now judged correctly, and
+  Unresolved chains are no longer counted in the "potentially reclaimable" totals (they are reported separately as
+  still being written). Fixes [#221](https://github.com/VeeamHub/veeam-healthcheck/issues/221).
 - A renamed job that `Get-VBRJob` does not return (for example a Nutanix AHV job on some VBR 12.3.x servers) is now
   listed under its current name in the session report and Job Session Summary, matching its Jobs entry, instead of
   the name it had when its older sessions ran. Follows

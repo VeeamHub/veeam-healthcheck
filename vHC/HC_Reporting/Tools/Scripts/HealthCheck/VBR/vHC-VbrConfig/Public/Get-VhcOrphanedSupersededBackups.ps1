@@ -178,14 +178,17 @@ function Get-VhcOrphanedSupersededBackups {
                 # Recency is judged on the newest restore point of the WHOLE
                 # candidate, not per object, so one live object keeps every
                 # row of its chain out of "safe to reclaim". Fails safe: no
-                # usable timestamp, or one in the future (clock skew), counts
-                # as recent.
+                # usable timestamp on ANY point, or one in the future (clock
+                # skew), counts as recent. A Local-kind value is converted to
+                # UTC first; Utc and Unspecified are taken as UTC.
                 $Category = if ($Candidate.Reason -ne 'Unresolved') {
                     'Superseded'
                 } else {
-                    $UsableTimes = @($RestorePoints | ForEach-Object { $_.CreationTimeUtc } |
-                        Where-Object { $_ -is [datetime] -and $_ -gt [datetime]::MinValue })
-                    $IsActive = $UsableTimes.Count -eq 0 -or
+                    $PointTimes = @($RestorePoints | ForEach-Object { $_.CreationTimeUtc })
+                    $UsableTimes = @($PointTimes |
+                        Where-Object { $_ -is [datetime] -and $_ -gt [datetime]::MinValue } |
+                        ForEach-Object { if ($_.Kind -eq [System.DateTimeKind]::Local) { $_.ToUniversalTime() } else { $_ } })
+                    $IsActive = $PointTimes.Count -eq 0 -or $UsableTimes.Count -ne $PointTimes.Count -or
                         (($UsableTimes | Measure-Object -Maximum).Maximum -gt $CollectionTimeUtc.AddDays(-$ActiveChainWindowDays))
                     if ($IsActive) { 'Unresolved' } else { 'Orphaned' }
                 }

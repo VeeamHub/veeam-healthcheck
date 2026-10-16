@@ -100,6 +100,58 @@ namespace VhcXTests.Functions.Reporting.Html.VBR.VbrTables.OrphanedSupersededBac
         }
 
         [Fact]
+        public void Render_MixedOrphanedAndUnresolved_ReclaimableTotalsExcludeUnresolvedBytes()
+        {
+            var table = new COrphanedSupersededBackupsTable();
+            var orphaned = JobRecord("repo-1", "Repo01", "Dead Job", "Orphaned");
+            orphaned.TotalSizeBytes = 2L * 1073741824;
+            var superseded = JobRecord("repo-1", "Repo01", "Old Chain", "Superseded");
+            superseded.TotalSizeBytes = 3L * 1073741824;
+            var unresolved = JobRecord("repo-1", "Repo01", "Active Chain", "Unresolved");
+            unresolved.TotalSizeBytes = 100L * 1073741824;
+
+            string html = table.Render(new List<OrphanedSupersededBackupRecord> { orphaned, superseded, unresolved }, sweepEvaluated: true, scrub: false, out string summary);
+
+            Assert.Equal(
+                "2 orphaned/superseded backups found, ~5 GB potentially reclaimable. 1 still being written (~100 GB), not counted.",
+                summary);
+            Assert.Contains("2 backups flagged &middot; ~5 GB potentially reclaimable", html);
+            Assert.Contains("1 still being written (~100 GB), not counted", html);
+            Assert.DoesNotContain("~105 GB", html);
+            Assert.DoesNotContain("~105 GB", summary);
+        }
+
+        [Fact]
+        public void Render_OnlyUnresolvedRecords_ReportsNothingReclaimable()
+        {
+            var table = new COrphanedSupersededBackupsTable();
+            var unresolved = JobRecord("repo-1", "Repo01", "Active Chain", "Unresolved");
+            unresolved.TotalSizeBytes = 100L * 1073741824;
+
+            table.Render(new List<OrphanedSupersededBackupRecord> { unresolved }, sweepEvaluated: true, scrub: false, out string summary);
+
+            Assert.Equal(
+                "0 orphaned/superseded backups found, ~0 GB potentially reclaimable. 1 still being written (~100 GB), not counted.",
+                summary);
+        }
+
+        [Fact]
+        public void Render_NoUnresolvedRecords_SummaryAndRepoLabelUnchanged()
+        {
+            var table = new COrphanedSupersededBackupsTable();
+            var orphaned = JobRecord("repo-1", "Repo01", "Dead Job", "Orphaned");
+            orphaned.TotalSizeBytes = 2L * 1073741824;
+            var superseded = JobRecord("repo-1", "Repo01", "Old Chain", "Superseded");
+            superseded.TotalSizeBytes = 3L * 1073741824;
+
+            string html = table.Render(new List<OrphanedSupersededBackupRecord> { orphaned, superseded }, sweepEvaluated: true, scrub: false, out string summary);
+
+            Assert.Equal("2 orphaned/superseded backups found, ~5 GB potentially reclaimable.", summary);
+            Assert.Contains("2 backups flagged &middot; ~5 GB potentially reclaimable</span>", html);
+            Assert.DoesNotContain("still being written", html);
+        }
+
+        [Fact]
         public void LoadRecords_RealCsvHelperPipeline_UnresolvedCategoryFlowsThroughUnchanged()
         {
             WriteDataCsv(

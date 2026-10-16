@@ -315,6 +315,40 @@ Describe 'Get-VhcOrphanedSupersededBackups' {
             @($script:CapturedRows | Where-Object { $_.Category -ne 'Unresolved' }) | Should -HaveCount 0
         }
 
+        It 'treats the candidate as Unresolved when one point has a [datetime]::MinValue placeholder next to a 30-day-old point' {
+            script:Invoke-RawTimeProbe -Times @([datetime]::MinValue, [datetime]::UtcNow.AddDays(-30))
+
+            $script:CapturedRows | Should -HaveCount 2
+            @($script:CapturedRows | Where-Object { $_.Category -ne 'Unresolved' }) | Should -HaveCount 0
+        }
+
+        It 'converts a DateTimeKind.Local value to UTC before comparing it to the window' {
+            # Offset-dependent by construction: the raw Local value differs from
+            # the real UTC instant by the machine offset, so the instant is placed
+            # +/- half that offset either side of the window edge, on the side
+            # where comparing the raw value would give the wrong answer.
+            $Offset = [TimeZoneInfo]::Local.GetUtcOffset([datetime]::Now)
+            if ($Offset -eq [TimeSpan]::Zero) {
+                Set-ItResult -Skipped -Because 'machine UTC offset is zero, so Local and Utc values are indistinguishable'
+                return
+            }
+            $Half = [TimeSpan]::FromTicks([math]::Abs($Offset.Ticks) / 2)
+            if ($Offset -lt [TimeSpan]::Zero) {
+                $Age = [TimeSpan]::FromDays(7) - $Half
+                $Expected = 'Unresolved'
+            } else {
+                $Age = [TimeSpan]::FromDays(7) + $Half
+                $Expected = 'Orphaned'
+            }
+            $Local = [datetime]::UtcNow.Subtract($Age).ToLocalTime()
+            $Local.Kind | Should -Be ([System.DateTimeKind]::Local)
+
+            script:Invoke-RawTimeProbe -Times @($Local)
+
+            $script:CapturedRows | Should -HaveCount 1
+            $script:CapturedRows[0].Category | Should -Be $Expected
+        }
+
         It 'keeps every row Unresolved when a very old point precedes a recent one' {
             script:Invoke-RawTimeProbe -Times @([datetime]::UtcNow.AddDays(-400), [datetime]::UtcNow.AddDays(-2))
 
