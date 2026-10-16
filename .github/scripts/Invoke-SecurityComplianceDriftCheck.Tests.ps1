@@ -120,6 +120,20 @@ Describe 'Invoke-SecurityComplianceDriftCheck' {
         @($t.evaluated | Where-Object verdict -ne 'ok') | Should -HaveCount 0
     }
 
+    It 'triages evaluated rules without a catalog, as on VBR 12 where the SDK enum is not loadable' {
+        New-Fixture -Root $script:Root -Evaluated @(
+            @{ Type = 'RuleA'; Id = $script:IdA; Mapped = $true },
+            @{ Type = 'RuleC'; Id = $script:IdC; Mapped = $false; Source = 'PascalCaseFallback' })
+        Remove-Item (Join-Path $script:Root 'vbr-01/20261016_101104/vbr-01_SecurityComplianceCatalog.csv')
+        $out = & $script:Run
+        $out | Should -Not -Match 'triage skipped'
+        $out | Should -Match 'No SDK catalog'
+        $t = Get-Content (Join-Path $script:Out 'sca-triage.json') -Raw | ConvertFrom-Json
+        $t.counts.evaluated | Should -Be 2
+        $t.counts.dormant | Should -Be 0
+        ($t.evaluated | Where-Object enum -eq 'RuleC').verdict | Should -Be 'missing'
+    }
+
     It 'degrades to the CSV-only verdict with a visible notice when REST credentials are absent' {
         New-Fixture -Root $script:Root -Evaluated @(
             @{ Type = 'RuleA'; Id = $script:IdA; Mapped = $true },
