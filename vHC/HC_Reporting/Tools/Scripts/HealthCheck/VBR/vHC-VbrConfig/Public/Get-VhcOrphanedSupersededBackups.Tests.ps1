@@ -103,6 +103,29 @@ BeforeAll {
         Get-VhcOrphanedSupersededBackups @ExtraParams
     }
 
+    # Runs one Unresolved candidate whose restore points carry exactly
+    # the supplied CreationTimeUtc values, untouched - including $null
+    # and strings, which the [datetime]-typed fixture parameter cannot
+    # express. One point per entry, each on its own ObjectId.
+    function script:Invoke-RawTimeProbe {
+        param([object[]]$Times, [hashtable]$ExtraParams = @{})
+        $Backup   = script:New-FakeBackupObject -Name 'RawProbe'
+        $BackupId = [guid]::NewGuid()
+        $Points = foreach ($Time in $Times) {
+            $Point = script:New-FakeCandidateRestorePoint -Name 'raw-vm' -Type 'Full' -BackupId $BackupId -BackupObject $Backup
+            $Point.CreationTimeUtc = $Time
+            $Point
+        }
+        $script:VhcOrphanedSupersededCache = [PSCustomObject]@{
+            SweepRan        = $true
+            CandidateGroups = [System.Collections.Generic.List[object]]::new()
+        }
+        $script:VhcOrphanedSupersededCache.CandidateGroups.Add([PSCustomObject]@{
+            Reason = 'Unresolved'; CurrentJobId = $null; RestorePoints = @($Points)
+        })
+        Get-VhcOrphanedSupersededBackups @ExtraParams
+    }
+
     $moduleRoot = Split-Path -Parent $PSScriptRoot
     . (Join-Path $moduleRoot 'Public/Write-LogFile.ps1')
     . $PSCommandPath.Replace('.Tests.ps1', '.ps1')
@@ -251,6 +274,77 @@ Describe 'Get-VhcOrphanedSupersededBackups' {
 
             $script:CapturedRows | Should -HaveCount 1
             $script:CapturedRows[0].Category | Should -Be 'Superseded'
+        }
+    }
+
+    Context 'recency guard (#221): input domain of CreationTimeUtc' {
+
+        It 'judges a recent restore point Unresolved for DateTimeKind <Kind>' -ForEach @(
+            @{ Kind = 'Utc' }
+            @{ Kind = 'Unspecified' }
+        ) {
+            $Recent = [datetime]::SpecifyKind([datetime]::UtcNow.AddDays(-1), [System.DateTimeKind]$Kind)
+            script:Invoke-RawTimeProbe -Times @($Recent)
+
+            $script:CapturedRows | Should -HaveCount 1
+            $script:CapturedRows[0].Category | Should -Be 'Unresolved'
+        }
+
+        It 'judges an old restore point Orphaned for DateTimeKind <Kind>' -ForEach @(
+            @{ Kind = 'Utc' }
+            @{ Kind = 'Unspecified' }
+        ) {
+            $Old = [datetime]::SpecifyKind([datetime]::UtcNow.AddDays(-30), [System.DateTimeKind]$Kind)
+            script:Invoke-RawTimeProbe -Times @($Old)
+
+            $script:CapturedRows | Should -HaveCount 1
+            $script:CapturedRows[0].Category | Should -Be 'Orphaned'
+        }
+
+        It 'treats [datetime]::MaxValue as future-dated, hence active' {
+            script:Invoke-RawTimeProbe -Times @([datetime]::MaxValue)
+
+            $script:CapturedRows | Should -HaveCount 1
+            $script:CapturedRows[0].Category | Should -Be 'Unresolved'
+        }
+
+        It 'does not let a [datetime]::MinValue placeholder next to a recent point mask the recent point' {
+            script:Invoke-RawTimeProbe -Times @([datetime]::MinValue, [datetime]::UtcNow.AddDays(-1))
+
+            $script:CapturedRows | Should -HaveCount 2
+            @($script:CapturedRows | Where-Object { $_.Category -ne 'Unresolved' }) | Should -HaveCount 0
+        }
+
+        It 'keeps every row Unresolved when a very old point precedes a recent one' {
+            script:Invoke-RawTimeProbe -Times @([datetime]::UtcNow.AddDays(-400), [datetime]::UtcNow.AddDays(-2))
+
+            $script:CapturedRows | Should -HaveCount 2
+            @($script:CapturedRows | Where-Object { $_.Category -ne 'Unresolved' }) | Should -HaveCount 0
+        }
+
+        It 'with -ActiveChainWindowDays 0 treats a point from an hour ago as Orphaned' {
+            script:Invoke-RawTimeProbe -Times @([datetime]::UtcNow.AddHours(-1)) -ExtraParams @{ ActiveChainWindowDays = 0 }
+
+            $script:CapturedRows | Should -HaveCount 1
+            $script:CapturedRows[0].Category | Should -Be 'Orphaned'
+        }
+
+        It 'with -ActiveChainWindowDays 0 still treats a future-dated point as Unresolved' {
+            script:Invoke-RawTimeProbe -Times @([datetime]::UtcNow.AddHours(1)) -ExtraParams @{ ActiveChainWindowDays = 0 }
+
+            $script:CapturedRows | Should -HaveCount 1
+            $script:CapturedRows[0].Category | Should -Be 'Unresolved'
+        }
+
+        It 'with -ActiveChainWindowDays 0 and no usable timestamp stays Unresolved' {
+            script:Invoke-RawTimeProbe -Times @([datetime]::MinValue) -ExtraParams @{ ActiveChainWindowDays = 0 }
+
+            $script:CapturedRows | Should -HaveCount 1
+            $script:CapturedRows[0].Category | Should -Be 'Unresolved'
+        }
+
+        It 'rejects a negative -ActiveChainWindowDays' {
+            { script:Invoke-RawTimeProbe -Times @([datetime]::UtcNow) -ExtraParams @{ ActiveChainWindowDays = -1 } } | Should -Throw
         }
     }
 
