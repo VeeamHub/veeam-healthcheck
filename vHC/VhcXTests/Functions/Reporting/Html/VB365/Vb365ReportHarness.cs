@@ -63,7 +63,13 @@ namespace VhcXTests.Functions.Reporting.Html.VB365
         /// <summary>Rewrites one staged fixture CSV, e.g. to inject an edge case.</summary>
         public void Edit(string csvName, Func<string, string> edit)
         {
-            string p = Path.Combine(this.CsvDir, csvName);
+            string fileName = Path.GetFileName(csvName);
+            if (fileName != csvName)
+            {
+                throw new ArgumentException($"Expected a bare fixture file name, got '{csvName}'.", nameof(csvName));
+            }
+
+            string p = Path.Join(this.CsvDir, fileName);
             File.WriteAllText(p, edit(File.ReadAllText(p)));
         }
 
