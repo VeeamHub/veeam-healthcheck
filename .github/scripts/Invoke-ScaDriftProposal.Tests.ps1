@@ -158,10 +158,55 @@ Describe 'Invoke-ScaDriftProposal' {
         @($global:VhcCalls | Where-Object { $_ -like 'gh pr create*' }) | Should -HaveCount 1
         $calls | Should -Match 'gh pr create --draft --base dev --head bot/sca-labels'
         $calls | Should -Match '--label AI-assisted'
-        $calls | Should -Match 'git push --force-with-lease origin bot/sca-labels'
+        $calls | Should -Match 'git push origin bot/sca-labels'
+        $calls | Should -Match 'git checkout -B bot/sca-labels origin/dev'
         @($global:VhcCalls | Where-Object { $_ -like 'gh issue create*' }) | Should -HaveCount 1
         (Get-Content (Join-Path $script:Out 'issue-body.md') -Raw) | Should -Match 'https://example.invalid/pr/7'
         (Get-Content $script:Cfg -Raw) | Should -Match '"RuleC": "Brand new"'
+    }
+
+    It 'builds on the existing bot branch and pushes a plain fast-forward' {
+        Save-Triage -Dir $script:In -Triage $script:Drift
+        $global:VhcGit = { param($l) if ($l -like 'diff --quiet*') { $global:LASTEXITCODE = 1 } }   # fetch of the bot branch succeeds
+        & $script:Proposer @Common 6>&1 | Out-Null
+        $calls = $global:VhcCalls -join "`n"
+        $calls | Should -Match 'git checkout -B bot/sca-labels origin/bot/sca-labels'
+        $calls | Should -Match 'git push origin bot/sca-labels'
+    }
+
+    It 'does not push when the existing bot branch already carries the labels' {
+        Save-Triage -Dir $script:In -Triage $script:Drift
+        $global:VhcGit = { param($l) }
+        $updated = Update-VbrConfigLabels -Text (Get-Content $script:Cfg -Raw) -Labels ([ordered]@{ RuleC = 'Brand new' }) -ValidatedFor '13.1.1.18'
+        Set-Content -Path $script:Cfg -Value $updated -NoNewline
+        & $script:Proposer @Common 6>&1 | Out-Null
+        ($global:VhcCalls -join "`n") | Should -Not -Match 'git push'
+        ($global:VhcCalls -join "`n") | Should -Match 'gh pr create'
+    }
+
+    It 'falls back to the issue, never forces, when the push is rejected' {
+        Save-Triage -Dir $script:In -Triage $script:Drift
+        $global:VhcGit = { param($l) if ($l -like 'push*') { $global:LASTEXITCODE = 1 }; if ($l -like 'fetch origin bot/*') { $global:LASTEXITCODE = 0 } }
+        & $script:Proposer @Common 6>&1 3>&1 | Out-Null
+        $calls = $global:VhcCalls -join "`n"
+        @($global:VhcCalls | Where-Object { $_ -like 'git push*' }) | Should -HaveCount 1
+        $calls | Should -Not -Match 'gh pr create'
+        (Get-Content (Join-Path $script:Out 'issue-body.md') -Raw) | Should -Match 'push was rejected'
+        (Get-Content (Join-Path $script:Out 'issue-body.md') -Raw) | Should -Match 'RuleC: Brand new'
+    }
+
+    It 'never uses a force flag on any git call, in any scenario' {
+        foreach ($git in @(
+                { param($l) if ($l -like 'fetch origin bot/*' -or $l -like 'diff --quiet*') { $global:LASTEXITCODE = 1 } },
+                { param($l) },
+                { param($l) if ($l -like 'push*') { $global:LASTEXITCODE = 1 } })) {
+            $global:VhcCalls.Clear()
+            $global:VhcGit = $git
+            Save-Triage -Dir $script:In -Triage $script:Drift
+            & $script:Proposer @Common 6>&1 3>&1 | Out-Null
+            @($global:VhcCalls | Where-Object { $_ -like 'git *' }).Count | Should -BeGreaterThan 0
+            @($global:VhcCalls | Where-Object { $_ -like 'git *' -and $_ -match '(^|\s)(--force\S*|-f|--force-with-lease\S*|\+\S+)(\s|$)' }) | Should -HaveCount 0
+        }
     }
 
     It 'does not merge anything' {

@@ -164,31 +164,31 @@ try {
     $prNote = ''
     if ($null -ne $newText) {
         $pushed = $false
+        # Never force-push (repo rule). Build on the existing bot branch when there is one so the
+        # push is a plain fast-forward; otherwise cut it from the base branch. A stale base is fine:
+        # the draft PR merges server-side.
         Invoke-Native git @('fetch', 'origin', $BaseBranch) | Out-Null
-        Invoke-Native git @('checkout', '-B', $BotBranch, "origin/$BaseBranch") | Out-Null
+        Invoke-Native git @('fetch', 'origin', $BotBranch) | Out-Null
+        $remoteExists = $script:NativeOk
+        $from = if ($remoteExists) { "origin/$BotBranch" } else { "origin/$BaseBranch" }
+        Invoke-Native git @('checkout', '-B', $BotBranch, $from) | Out-Null
         if ($script:NativeOk) {
-            # Re-apply on the base branch's own file so the PR diff is only the label edits.
-            $baseText = Get-Content -Path $ConfigPath -Raw
+            $currentText = Get-Content -Path $ConfigPath -Raw
             $labels = [ordered]@{}
             foreach ($p in $m.patchable) { $labels[$p.enum] = $p.proposedLabel }
-            $patched = Update-VbrConfigLabels -Text $baseText -Labels $labels -ValidatedFor $bump
-            if ($patched -ceq $baseText) {
-                $prNote = "The base branch ($BaseBranch) already carries these labels; no PR needed."
+            $patched = Update-VbrConfigLabels -Text $currentText -Labels $labels -ValidatedFor $bump
+            if ($patched -ceq $currentText) {
+                if ($remoteExists) { $pushed = $true; Write-Host "Bot branch $BotBranch already carries these labels; nothing to push" }
+                else { $prNote = "The base branch ($BaseBranch) already carries these labels; no PR needed." }
             }
             else {
                 Set-Content -Path $ConfigPath -Value $patched -Encoding UTF8 -NoNewline
                 Invoke-Native git @('add', '--', $ConfigPath) | Out-Null
                 Invoke-Native git @('-c', 'user.name=github-actions[bot]', '-c', 'user.email=41898282+github-actions[bot]@users.noreply.github.com',
                     'commit', '-m', 'fix(config): refresh SCA rule labels from the VBR console', '-m', "Proposed automatically from $RunUrl") | Out-Null
-                Invoke-Native git @('fetch', 'origin', $BotBranch) | Out-Null
-                $remoteExists = $script:NativeOk
-                $same = $false
-                if ($remoteExists) { Invoke-Native git @('diff', '--quiet', 'HEAD', "origin/$BotBranch") | Out-Null; $same = $script:NativeOk }
-                if ($same) { $pushed = $true; Write-Host "Bot branch $BotBranch already has this exact content; not re-pushing" }
-                else {
-                    Invoke-Native git @('push', '--force-with-lease', 'origin', $BotBranch) | Out-Null
-                    $pushed = $script:NativeOk
-                }
+                Invoke-Native git @('push', 'origin', $BotBranch) | Out-Null
+                $pushed = $script:NativeOk
+                if (-not $pushed) { $prNote = 'The bot branch push was rejected (not a fast-forward or no permission) and the proposer never force-pushes, so the exact changes are in this issue instead.' }
             }
         }
 
@@ -230,6 +230,7 @@ try {
     if ($prNote) { $issueBody += "> $prNote`n`n" }
     $issueBody += $detail.ToString()
     $issueBody += "Dormant enum values (never evaluated) are not drift and are not listed here; see the run's job summary.`nThis issue closes automatically on the first clean run."
+    if ($prNote) { [void]$summary.AppendLine(''); [void]$summary.AppendLine("> $prNote") }
     $issueFile = Join-Path $OutDir 'issue-body.md'
     Set-Content -Path $issueFile -Value $issueBody -Encoding UTF8
 
