@@ -1,0 +1,2 @@
+"Id","Name","Description","JobType","SourceVAppId","TargetVdc","ScheduleEnabled","ScheduleOptions","RetentionPolicy"
+"55556666-7777-8888-9999-aaaa00001111","VCD-Replica-Job","VCD vApp replication","VCD Replica","66667777-8888-9999-aaaa-bbbb00001111","DR-VDC01","True","Daily at 00:00","7 restore points"

@@ -63,7 +63,7 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR.VbrTables.SureBackup
                 CGlobals.Logger.Error("Failed to render SureBackup Application Groups table: " + e.Message);
             }
 
-            s += this.form.SectionEnd();
+            s += this.form.SectionEndWithEmptyState(s, string.Empty);
 
             return s;
         }

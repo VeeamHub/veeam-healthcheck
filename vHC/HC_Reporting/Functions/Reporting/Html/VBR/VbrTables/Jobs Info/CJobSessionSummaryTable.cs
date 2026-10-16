@@ -140,7 +140,7 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR.VbrTables.Jobs_Info
                 this.log.Error("\t" + e.Message);
             }
 
-            s += this.form.SectionEnd(summary);
+            s += this.form.SectionEndWithEmptyState(s, summary);
             this.log.Info("Job Session Summary Table added");
 
             // JSON job session summary
@@ -361,7 +361,7 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR.VbrTables.Jobs_Info
                             s += totalRow;
                         }
 
-                        s += this.form.SectionEnd(summary);
+                        s += this.form.SectionEndWithEmptyState(s, summary);
                     }
 
                     s += this.AddOffloadsTable(OffloadJobs);
@@ -539,7 +539,7 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR.VbrTables.Jobs_Info
                 totalRow += "</tr>";
                 s += totalRow;
 
-                s += this.form.SectionEnd(string.Empty);
+                s += this.form.SectionEndWithEmptyState(s, string.Empty);
             }
             catch (Exception e)
             {

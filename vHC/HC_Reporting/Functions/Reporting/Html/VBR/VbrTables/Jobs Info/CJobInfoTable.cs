@@ -344,7 +344,7 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR.VbrTables.Jobs_Info
                             s += "</tr>";
                         }
 
-                        s += this.form.SectionEnd(summary);
+                        s += this.form.SectionEndWithEmptyState(s, summary);
                     }
 
                     // add tape table

@@ -326,7 +326,7 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR.VbrTables.OrphanedSupers
                     s += "</tbody></table></td></tr>";
                 }
 
-                s += this.form.SectionEnd(string.Empty);
+                s += this.form.SectionEndWithEmptyState(s, string.Empty);
             }
 
             var stillWritingRecords = records.Where(r => r.Category == CategoryUnresolved).ToList();

@@ -90,7 +90,7 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR.VbrTables.GeneralSetting
                 CGlobals.Logger.Error("Failed to render Email Notification table: " + e.Message);
             }
 
-            s += this.form.SectionEnd();
+            s += this.form.SectionEndWithEmptyState(s, string.Empty);
 
             CHtmlTables.SetSectionPublic(
                 "emailNotification",

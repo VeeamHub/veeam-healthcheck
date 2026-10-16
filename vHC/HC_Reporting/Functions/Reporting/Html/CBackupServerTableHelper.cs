@@ -56,12 +56,53 @@ namespace VeeamHealthCheck.Functions.Reporting.Html
 
         private void SetBackupServerWithDbInfo()
         {
-            this.backupServer.DbType = CGlobals.DBTYPE;
+            this.backupServer.DbType = ResolveDbType(CGlobals.DBTYPE, string.IsNullOrWhiteSpace(CGlobals.DBTYPE) ? this.ReadCollectedDbType() : null);
             this.backupServer.Edition = CGlobals.DBEdition;
             this.backupServer.DbVersion = CGlobals.DBVERSION;
             this.backupServer.DbCores = CGlobals.DBCORES;
             this.backupServer.DbRAM = CGlobals.DBRAM;
             this.backupServer.DbHostName = CGlobals.DBHOSTNAME;
+        }
+
+        /// <summary>
+        /// The report's database type label. The local registry read (CGlobals.DBTYPE) wins; remote and
+        /// imported runs have no local registry, so fall back to the DbType column of the collected
+        /// vbrinfo CSV ("MsSql" / "PostgreSql"), and to "Unknown" rather than leave the cell blank.
+        /// </summary>
+        internal static string ResolveDbType(string liveDbType, string collectedDbType)
+        {
+            if (!string.IsNullOrWhiteSpace(liveDbType))
+            {
+                return liveDbType;
+            }
+
+            string collected = collectedDbType?.Trim().Trim('"');
+            if (string.Equals(collected, "MsSql", StringComparison.OrdinalIgnoreCase))
+            {
+                return CGlobals.SqlTypeName;
+            }
+
+            if (string.Equals(collected, "PostgreSql", StringComparison.OrdinalIgnoreCase))
+            {
+                return CGlobals.PgTypeName;
+            }
+
+            return UnknownDbType;
+        }
+
+        internal const string UnknownDbType = "Unknown";
+
+        private string ReadCollectedDbType()
+        {
+            try
+            {
+                return new CCsvParser().BnrCsvParser().FirstOrDefault()?.DbType;
+            }
+            catch (Exception e)
+            {
+                log.Warning("Could not read DbType from vbrinfo CSV: " + e.Message);
+                return null;
+            }
         }
 
         private void ScrubElements()
