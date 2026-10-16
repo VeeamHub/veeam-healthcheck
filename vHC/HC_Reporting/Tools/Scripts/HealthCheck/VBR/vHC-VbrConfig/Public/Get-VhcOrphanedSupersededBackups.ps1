@@ -5,7 +5,7 @@ function Get-VhcOrphanedSupersededBackups {
     .Synopsis
         Reads the sweep cache Get-VhcJob populates, excludes Tape Backups,
         classifies each remaining BackupId group's restore points as
-        Orphaned or Superseded, splits into one row per (BackupId,
+        Orphaned, Superseded or Unresolved, splits into one row per (BackupId,
         ObjectId), and exports _orphanedSupersededBackups.csv.
     .Parameter RepositoryDetails
         ArrayList of [pscustomobject]@{ID; Name} rows returned by
@@ -13,6 +13,12 @@ function Get-VhcOrphanedSupersededBackups {
         way: resolving RepositoryId to a human-readable RepositoryName for
         the report's per-repo grouping. May be $null - RepositoryName will
         be blank in that case, matching Get-VhcJob's own RepoName behavior.
+    .Parameter ActiveChainWindowDays
+        An 'Unresolved' candidate (no job matched) whose newest restore point,
+        across the whole candidate, is within this many days of collection is
+        still being written to, so it is reported as Category 'Unresolved'
+        rather than 'Orphaned' (#221): "safe to consider reclaiming" must not
+        be claimed for a chain something is actively writing. Default 7.
     .Parameter OrphanedSupersededCache
         The sweep-result object Get-VhcJob now returns explicitly. Pass it
         here (Get-VBRConfig.ps1 does) rather than relying on this function
@@ -30,7 +36,11 @@ function Get-VhcOrphanedSupersededBackups {
         [object]$RepositoryDetails = $null,
 
         [Parameter(Mandatory = $false)]
-        [object]$OrphanedSupersededCache = $null
+        [object]$OrphanedSupersededCache = $null,
+
+        [Parameter(Mandatory = $false)]
+        [ValidateRange(0, 3650)]
+        [int]$ActiveChainWindowDays = 7
     )
 
     $message = "Collecting orphaned and superseded backups..."
@@ -58,6 +68,8 @@ function Get-VhcOrphanedSupersededBackups {
         }
     }
 
+    # Captured once so every candidate is judged against the same instant.
+    $CollectionTimeUtc = [datetime]::UtcNow
     $Rows  = [System.Collections.Generic.List[object]]::new()
     $SweepRan = $false
     $Cache = if ($null -ne $OrphanedSupersededCache) { $OrphanedSupersededCache } else { $script:VhcOrphanedSupersededCache }
@@ -158,7 +170,25 @@ function Get-VhcOrphanedSupersededBackups {
                 # is true. Only 'Unresolved' (Tier 1 + Tier 2 both failed to
                 # resolve any job) is genuinely Orphaned; 'Tier2Suppressed'
                 # and 'StaleObject' both name a real, current job.
-                $Category = if ($Candidate.Reason -eq 'Unresolved') { 'Orphaned' } else { 'Superseded' }
+                #
+                # 'Unresolved' alone is not enough to call a chain Orphaned
+                # (#221): a job the sweep could not match can still be
+                # receiving restore points (hundreds of TB written within a
+                # day of collection were labeled Orphaned in the field).
+                # Recency is judged on the newest restore point of the WHOLE
+                # candidate, not per object, so one live object keeps every
+                # row of its chain out of "safe to reclaim". Fails safe: no
+                # usable timestamp, or one in the future (clock skew), counts
+                # as recent.
+                $Category = if ($Candidate.Reason -ne 'Unresolved') {
+                    'Superseded'
+                } else {
+                    $UsableTimes = @($RestorePoints | ForEach-Object { $_.CreationTimeUtc } |
+                        Where-Object { $_ -is [datetime] -and $_ -gt [datetime]::MinValue })
+                    $IsActive = $UsableTimes.Count -eq 0 -or
+                        (($UsableTimes | Measure-Object -Maximum).Maximum -gt $CollectionTimeUtc.AddDays(-$ActiveChainWindowDays))
+                    if ($IsActive) { 'Unresolved' } else { 'Orphaned' }
+                }
 
                 # A null ObjectId can't be safely merged under any key shared
                 # with another restore point - two unrelated null-ObjectId

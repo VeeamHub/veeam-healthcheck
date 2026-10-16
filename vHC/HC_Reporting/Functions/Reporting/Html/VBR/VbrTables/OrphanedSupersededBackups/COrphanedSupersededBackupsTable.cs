@@ -16,11 +16,12 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR.VbrTables.OrphanedSupers
         private readonly CHtmlFormatting form = new();
 
         // Get-VhcOrphanedSupersededBackups.ps1 is the sole producer of
-        // Category and only ever writes one of these two literals - named
+        // Category and only ever writes one of these three literals - named
         // here rather than repeating raw strings so a future producer-side
         // typo/rename fails a compile instead of silently mislabeling rows.
         private const string CategoryOrphaned = "Orphaned";
         private const string CategorySuperseded = "Superseded";
+        private const string CategoryUnresolved = "Unresolved";
 
 
         // No try/catch here: a real parse failure must propagate to the
@@ -225,15 +226,16 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR.VbrTables.OrphanedSupers
                 {
                     string jobName = scrub ? CGlobals.Scrubber.ScrubItem(job.JobName, ScrubItemType.Job) : job.JobName;
                     double totalGb = job.TotalSizeBytes / 1073741824d;
-                    // Explicit three-way check, not a binary ?: on the
+                    // Explicit per-category check, not a binary ?: on the
                     // Orphaned case alone: an unexpected Category value
-                    // (typo, future third category) must not silently
+                    // (typo, future category) must not silently
                     // render as - and pair with the explanatory sentence
                     // for - "Superseded", which would be factually wrong.
                     string badgeClass = job.Category switch
                     {
                         CategoryOrphaned => "badge-orphaned",
                         CategorySuperseded => "badge-superseded",
+                        CategoryUnresolved => "badge-unresolved",
                         _ => "badge-unknown",
                     };
 
@@ -254,6 +256,7 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR.VbrTables.OrphanedSupers
                     {
                         CategoryOrphaned => "<p class=\"label\">No live job - this name/type came from the backup's own retained metadata, not a current VBR job.</p>",
                         CategorySuperseded => "<p class=\"label\">Still a live job - these points belong to an object no longer part of its currently-active membership.</p>",
+                        CategoryUnresolved => "<p class=\"label\">Job not matched, but this backup received a restore point shortly before collection, so something is still writing to it. Not safe to reclaim; check it in the VBR console.</p>",
                         _ => "<p class=\"label\">Unrecognized category - showing raw data without further interpretation.</p>",
                     };
                     // BackupId shown per-object rather than used to group

@@ -312,6 +312,15 @@ body {
   border: 1px solid #b6d4fe;
 }
 
+/* Job not matched but still being written to (#221): amber with a dashed
+   border so it reads as "unconfirmed", distinct from the solid orange
+   .badge-orphaned that means safe to reclaim. */
+.badge-unresolved {
+  background-color: #fff3cd;
+  color: #664d03;
+  border: 1px dashed #e0a800;
+}
+
 html.dark-theme .badge-orphaned {
   background-color: #5a3a1a;
   color: #ffb74d;
@@ -322,6 +331,12 @@ html.dark-theme .badge-superseded {
   background-color: #1a3a5a;
   color: #64b5f6;
   border-color: #2a5278;
+}
+
+html.dark-theme .badge-unresolved {
+  background-color: #3d3300;
+  color: #ffd54f;
+  border-color: #8a7000;
 }
 
 /* Defensive fallback for an unexpected Category value; not part of the

@@ -39,7 +39,7 @@ namespace VhcXTests.Functions.Reporting.Html.VBR.VbrTables.OrphanedSupersededBac
                 RepositoryId = repositoryId,
                 RepositoryName = repositoryName,
                 JobName = jobName,
-                CurrentJobId = category == "Orphaned" ? Guid.Empty.ToString() : Guid.NewGuid().ToString(),
+                CurrentJobId = category is "Orphaned" or "Unresolved" ? Guid.Empty.ToString() : Guid.NewGuid().ToString(),
                 Category = category,
                 OriginalJobType = "VMware Backup",
                 FullCount = 1,
@@ -82,6 +82,37 @@ namespace VhcXTests.Functions.Reporting.Html.VBR.VbrTables.OrphanedSupersededBac
             string html = table.Render(new List<OrphanedSupersededBackupRecord> { record }, sweepEvaluated: true, scrub: false, out string summary);
 
             Assert.Contains("11111111-2222-3333-4444-555555555555", html);
+        }
+
+        [Fact]
+        public void Render_UnresolvedRecord_ShowsUnresolvedBadgeAndStillWritingSentence()
+        {
+            var table = new COrphanedSupersededBackupsTable();
+            var record = JobRecord("repo-1", "Repo01 (Local ReFS)", "Active Chain", "Unresolved");
+
+            string html = table.Render(new List<OrphanedSupersededBackupRecord> { record }, sweepEvaluated: true, scrub: false, out string summary);
+
+            Assert.Contains("<span class=\"badge badge-unresolved\">Unresolved</span>", html);
+            Assert.Contains("something is still writing to it. Not safe to reclaim", html);
+            Assert.DoesNotContain("badge-unknown", html);
+            Assert.DoesNotContain("badge-orphaned", html);
+            Assert.DoesNotContain("Unrecognized category", html);
+        }
+
+        [Fact]
+        public void LoadRecords_RealCsvHelperPipeline_UnresolvedCategoryFlowsThroughUnchanged()
+        {
+            WriteDataCsv(
+                "repo-1,Repo01 (Local ReFS),Active Chain,00000000-0000-0000-0000-000000000000,Unresolved," +
+                "VMware Backup,obj-1,backup-1,vm-1,1,6,12000000000,500000000,15000000000," +
+                "2026-10-01T00:00:00.0000000Z,2026-10-15T00:00:00.0000000Z\n");
+
+            var records = new COrphanedSupersededBackupsTable().LoadRecords();
+
+            var record = Assert.Single(records);
+            Assert.Equal("Unresolved", record.Category);
+            string json = System.Text.Json.JsonSerializer.Serialize(records);
+            Assert.Contains("\"Category\":\"Unresolved\"", json);
         }
 
         [Fact]

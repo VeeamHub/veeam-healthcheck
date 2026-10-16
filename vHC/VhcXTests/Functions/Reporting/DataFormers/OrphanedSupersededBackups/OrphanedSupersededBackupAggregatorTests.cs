@@ -132,6 +132,30 @@ namespace VhcXTests.Functions.Reporting.DataFormers.OrphanedSupersededBackups
         }
 
         [Fact]
+        public void Build_UnresolvedCategory_GroupsSeparatelyAndPassesThroughUnchanged()
+        {
+            // #221 added a third Category value. The aggregator must neither
+            // reject nor merge it with Orphaned for the same job name.
+            var rows = new List<dynamic>
+            {
+                Row("repo-1", "Repo01", "Windows01", Guid.Empty.ToString(), "Unresolved",
+                    "VMware Backup", "obj-a", "backup-a", "Windows01",
+                    1, 0, 50_000_000_000, 0, 50_000_000_000,
+                    new DateTime(2026, 10, 1), new DateTime(2026, 10, 15)),
+                Row("repo-1", "Repo01", "Windows01", Guid.Empty.ToString(), "Orphaned",
+                    "VMware Backup", "obj-b", "backup-b", "Windows01",
+                    1, 0, 50_000_000_000, 0, 50_000_000_000,
+                    new DateTime(2026, 3, 1), new DateTime(2026, 3, 1))
+            };
+
+            var result = OrphanedSupersededBackupAggregator.Build(rows);
+
+            Assert.Equal(2, result.Count);
+            Assert.Single(result, r => r.Category == "Unresolved");
+            Assert.Single(result, r => r.Category == "Orphaned");
+        }
+
+        [Fact]
         public void Build_DifferentCategoriesForSameJobName_ProducesSeparateRecords()
         {
             // Same BackupId group could in principle produce an Orphaned row

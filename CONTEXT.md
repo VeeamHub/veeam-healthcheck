@@ -92,6 +92,13 @@ safe-allowlist job types; see
 _Avoid_: Unmatched restore point (describes the symptom; use only when the
 cause is genuinely unknown)
 
+**Unresolved Backup**:
+The report category for a candidate that would otherwise be Orphaned (no
+resolvable owning Job) but whose newest Restore Point, across the whole
+candidate, is within the active-chain window of collection (7 days by default,
+`-ActiveChainWindowDays`), or has no usable timestamp. Something is still
+writing to it, so it is not a reclaim candidate (#221).
+
 **Superseded Restore Point**:
 A Restore Point that resolves by name to a real, currently-existing Job,
 but belongs to data no longer counted as that Job's active state — either
