@@ -20,7 +20,7 @@ Preconditions:
 
 - Same as [csv-import](./csv-import.md).
 
-- **Run the scrubbed import.** Run `.claude/skills/verify-vhc/scripts/vhc-verify.sh import-scrub <ID>`. Output ends with `IMPORT-REPORT: verified` and `assertions: 9/9 passed`.
+- **Run the scrubbed import.** Run `.claude/skills/verify-vhc/scripts/vhc-verify.sh import-scrub <ID>`. Output ends with `IMPORT-REPORT: verified` and `assertions: 12/12 passed` (the same checks as the plain run, with the five name-absence checks in place of the four presence checks).
 - **Names absent.** The helper asserts these strings from the input CSVs are NOT in the anonymized HTML: `Production-VM-Backup`, `SQL-Servers-Backup`, `Linux Hardened Repo`, `PROXY01`, `VEEAM-VBR01`.
 - **Structure retained.** The HTML still has `<title>Veeam HealthCheck Report</title>` and the VBR version `12.1.2.172`; sections are generic labels such as `Job 1`, `Repository 1`.
 - **Proof.** Keep `.verify-vhc/evidence/<ID>/output/vHC-AnonymousReport/` and `MANIFEST.sha256`. A side effect to note: the run writes `Original\vHC_KeyFile.xml|json` (the scrub mapping) under `/outdir`.
