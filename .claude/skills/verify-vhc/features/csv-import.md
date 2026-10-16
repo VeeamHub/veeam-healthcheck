@@ -22,9 +22,10 @@ Preconditions:
 - `vhc-verify.sh build` succeeded and `vhc-verify.sh doctor` prints `DOCTOR: ready`.
 - The golden CSVs are present under `vHC/HC_Reporting/Tools/GoldenBaselines/VBRConfig`, `NasInfo` and `SessionReports`.
 
-- **Run the import.** Run `.claude/skills/verify-vhc/scripts/vhc-verify.sh import-report <ID>`. Output ends with `IMPORT-REPORT: verified`, `exit code: 0`, and `assertions: 8/8 passed`.
+- **Run the import.** Run `.claude/skills/verify-vhc/scripts/vhc-verify.sh import-report <ID>`. Output ends with `IMPORT-REPORT: verified`, `exit code: 0`, and `assertions: 10/10 passed`.
 - **Output exists.** `ls .verify-vhc/evidence/<ID>/output/vHC-Report/` lists a `Report_VBR_*.html` of roughly 130 KB and a `Report_VBR_*.json`.
 - **Content reflects input rows.** The helper greps the HTML for `<title>Veeam HealthCheck Report</title>`, `Production-VM-Backup` and `SQL-Servers-Backup` (from `_Jobs.csv`), `Linux Hardened Repo` (from `_Repositories.csv`), `PROXY01` (from `_Proxies.csv`) and `12.1.2.172` (from `_vbrinfo.csv`). All must be present.
+- **Experiments gate.** The helper unsets `VHC_EXPERIMENTS` for the run and asserts the HTML has neither `id="orphanedsupersededbackups"` nor a `#orphanedsupersededbackups` nav link (the Orphaned & Superseded Backups section ships dark). To see the section, run the CLI by hand with `VHC_EXPERIMENTS=1` and expect both.
 - **JSON shape.** The helper parses the JSON and requires `VhcVersion` and a non-empty `Sections` array (names such as `backupServer`, `securitySummary`, `jobSummary`).
 - **Inputs untouched.** The helper asserts `git diff --quiet -- vHC/HC_Reporting/Tools/GoldenBaselines`.
 - **Proof.** Keep `.verify-vhc/evidence/<ID>/{command.txt,stdout.log,exit_code.txt,MANIFEST.sha256,output/}`. The MANIFEST hashes every generated file.

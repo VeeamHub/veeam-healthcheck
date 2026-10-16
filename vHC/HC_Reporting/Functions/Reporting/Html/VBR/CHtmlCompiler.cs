@@ -511,7 +511,7 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR
             nav += this.form.NavSection(VbrLocalizationHelper.NavOverviewSection, overviewLinks);
 
             // Infrastructure
-            nav += this.form.NavSection(VbrLocalizationHelper.NavInfrastructureSection,
+            string infrastructureLinks =
                 this.form.NavLink("vbrserver", VbrLocalizationHelper.NavBkpSrvLink) +
                 this.form.NavLink("serversummary", VbrLocalizationHelper.NavInfraTypesLink) +
                 this.form.NavLink("managedServerInfo", VbrLocalizationHelper.NavSrvInfoLink) +
@@ -522,8 +522,15 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR
                 this.form.NavLink("extents", VbrLocalizationHelper.NavSobrExtLink) +
                 this.form.NavLink("capextents", VbrLocalizationHelper.NavCapTierLink) +
                 this.form.NavLink("archextents", VbrLocalizationHelper.NavArchTierLink) +
-                this.form.NavLink("objstorage", VbrLocalizationHelper.NavObjStorageLink) +
-                this.form.NavLink("orphanedsupersededbackups", VbrLocalizationHelper.NavOrphanedBackupsLink));
+                this.form.NavLink("objstorage", VbrLocalizationHelper.NavObjStorageLink);
+
+            // Ships dark behind VHC_EXPERIMENTS; CHtmlBodyHelper gates the section itself on the same flag.
+            if (CFeatureFlags.ExperimentsEnabled)
+            {
+                infrastructureLinks += this.form.NavLink("orphanedsupersededbackups", VbrLocalizationHelper.NavOrphanedBackupsLink);
+            }
+
+            nav += this.form.NavSection(VbrLocalizationHelper.NavInfrastructureSection, infrastructureLinks);
 
             // Cloud Connect — only emit these nav links when the Cloud Connect section
             // actually renders (same data condition as CHtmlBodyHelper.CloudConnectSection).

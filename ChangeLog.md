@@ -20,7 +20,8 @@ checksums, and scan results.
   ([#247](https://github.com/VeeamHub/veeam-healthcheck/pull/247))
 - New VBR report section, **Orphaned & Superseded Backups**: restore points that do not count toward any
   job's active size, grouped per repository with a job-level rollup and an expandable per-object breakdown
-  (HTML and JSON). Fixes [#192](https://github.com/VeeamHub/veeam-healthcheck/issues/192).
+  (HTML and JSON). Fixes [#192](https://github.com/VeeamHub/veeam-healthcheck/issues/192). Gated behind
+  the `VHC_EXPERIMENTS` environment variable (set it to `1` or `true`); hidden by default.
 - JSON export now includes the `credentials`, `userRoles`, `emailNotification`, and `complianceTable`
   sections that were previously HTML-only, and stamps the `VhcVersion` that produced the file.
   Fixes [#169](https://github.com/VeeamHub/veeam-healthcheck/issues/169).
