@@ -50,6 +50,9 @@ checksums, and scan results.
 
 ### Fixed
 
+- The VBR report's License Summary table no longer clips its right-hand columns (expiration dates, Cloud
+  Connect, Auto Update) at 1440px wide; its cell padding and header size are tighter so all 16 columns fit without
+  horizontal scrolling.
 - The VBR report's Config Database row no longer shows a blank DATABASE TYPE on remote (`/remote /host`) and
   imported runs, where there is no local registry to read. The type now comes from the collected
   `_vbrinfo.csv`, and shows "Unknown" when the collection does not record one.
