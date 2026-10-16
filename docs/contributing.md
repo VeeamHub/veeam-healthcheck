@@ -51,6 +51,19 @@ Currently gated: nothing.
 
 When a feature graduates, delete its `CFeatureFlags.ExperimentsEnabled` checks and its entry in this list.
 
+## Live VBR Integration Tests Before Merge
+
+The `CI/CD Pipeline` workflow (`.github/workflows/ci-cd.yaml`) runs the tool against real Veeam Backup & Replication servers on self-hosted runners. It triggers on pushes to `master` and `dev`, so a pull request gets no live run by default. To run it against your branch before merging:
+
+```bash
+gh workflow run "CI/CD Pipeline" --ref <your-branch>
+gh run list --workflow "CI/CD Pipeline" --branch <your-branch> --limit 1
+```
+
+It builds your branch, then runs the three integration jobs. Release publishing is gated on `master` (release) and `dev` (prerelease), so a feature-branch run publishes nothing. Never dispatch it with `--ref master` or `--ref dev` unless you mean to release.
+
+The jobs assert on the output, not only on the exit code: core CSVs exist and are non-empty, the Jobs CSV has rows, the HTML report has its core sections, and on `vbr-2` the JSON, PDF and PPTX exports are checked and a second `/scrub:true` pass (with `VHC_EXPERIMENTS=1`) confirms the real hostname is absent and the Orphaned & Superseded Backups section is present. The shared checks are in `.github/scripts/Test-VhcLiveRun.ps1`.
+
 ## License
 
 By contributing, you agree that your contributions will be licensed under the project's [MIT License](https://github.com/VeeamHub/veeam-healthcheck/blob/master/LICENSE).

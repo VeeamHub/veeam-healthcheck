@@ -1,3 +1,15 @@
+# Live-VBR integration jobs (integration-test-vbr-2, -13-sql, -12) run on self-hosted runners and
+# only after a push to master/dev, or on a manual dispatch of any branch. To run them against a
+# feature branch BEFORE merging (builds that branch, then runs all three jobs):
+#
+#   gh workflow run "CI/CD Pipeline" --ref <branch>
+#   gh run watch   # or: gh run list --workflow "CI/CD Pipeline" --branch <branch>
+#
+# Nothing is published from a non-master/dev ref: virustotal-scan is gated on refs/heads/master|dev,
+# create-release on master and create-prerelease on dev, so on a feature branch they are skipped.
+# Do NOT dispatch with --ref master or --ref dev unless you intend to publish.
+# Shared assertions for these jobs live in .github/scripts/Test-VhcLiveRun.ps1.
+
 name: CI/CD Pipeline
 
 on:
@@ -826,8 +838,9 @@ jobs:
         # Run from the extracted directory so it can find relative paths
         Push-Location (Split-Path $exePath)
         try {
+          # /pdf and /pptx ride this non-scrub pass: scrub mode skips both by design (#261).
           $process = Start-Process -FilePath $exePath `
-            -ArgumentList "/run", "/remote", "/host=$env:VBR_HOST", "/credfile=$credFile", "/silent" `
+            -ArgumentList "/run", "/remote", "/host=$env:VBR_HOST", "/credfile=$credFile", "/silent", "/pdf", "/pptx" `
             -NoNewWindow -PassThru -Wait
           
           $exitCode = $process.ExitCode
@@ -1015,60 +1028,15 @@ jobs:
     - name: Validate CSV content quality
       if: always()
       run: |
-        $csvDir = Get-ChildItem "C:\temp\vHC\Original\VBR\*\*" -Directory -ErrorAction SilentlyContinue | Sort-Object LastWriteTime -Descending | Select-Object -First 1
+        # Shared logic in .github/scripts/Test-VhcLiveRun.ps1. Files are named <hostname>_<Name>.csv,
+        # so it resolves them by glob; a missing core file fails the step instead of being skipped.
+        & "${{ github.workspace }}\.github\scripts\Test-VhcLiveRun.ps1" -Check CsvContent
 
-        if ($csvDir) {
-          Write-Host "🔍 Validating CSV Content Quality..." -ForegroundColor Cyan
-
-          # Validate _vbrinfo.csv version format
-          $vbrinfoPath = Join-Path $csvDir.FullName "_vbrinfo.csv"
-          if (Test-Path $vbrinfoPath) {
-            $vbrinfo = Import-Csv $vbrinfoPath
-            if ($vbrinfo.Version -match '^\d{1,2}\.\d{1,2}\.\d{1,2}\.\d{3,4}$') {
-              Write-Host "  ✅ VBR version format valid: $($vbrinfo.Version)" -ForegroundColor Green
-            } else {
-              Write-Host "  ⚠️ VBR version format unexpected: $($vbrinfo.Version)" -ForegroundColor Yellow
-            }
-          }
-
-          # Validate Repositories.csv data integrity
-          $reposPath = Join-Path $csvDir.FullName "_Repositories.csv"
-          if (Test-Path $reposPath) {
-            $repos = Import-Csv $reposPath
-            $invalidRepos = $repos | Where-Object {
-              [long]$_.FreeSpace -gt [long]$_.TotalSpace
-            }
-            if ($invalidRepos.Count -eq 0) {
-              Write-Host "  ✅ All repositories have valid FreeSpace <= TotalSpace" -ForegroundColor Green
-            } else {
-              Write-Host "  ❌ Found $($invalidRepos.Count) repositories with FreeSpace > TotalSpace" -ForegroundColor Red
-              $invalidRepos | ForEach-Object { Write-Host "    - $($_.Name): Free=$($_.FreeSpace) > Total=$($_.TotalSpace)" }
-              exit 1
-            }
-          }
-
-          # Validate Proxies reference valid Servers
-          $serversPath = Join-Path $csvDir.FullName "_Servers.csv"
-          $proxiesPath = Join-Path $csvDir.FullName "_Proxies.csv"
-          if ((Test-Path $serversPath) -and (Test-Path $proxiesPath)) {
-            $servers = Import-Csv $serversPath
-            $proxies = Import-Csv $proxiesPath
-            $serverNames = $servers.Name
-
-            $orphanProxies = $proxies | Where-Object {
-              $serverNames -notcontains $_.Host
-            }
-
-            if ($orphanProxies.Count -eq 0) {
-              Write-Host "  ✅ All proxy hosts have corresponding server entries" -ForegroundColor Green
-            } else {
-              Write-Host "  ⚠️ Found $($orphanProxies.Count) proxies with missing server entries" -ForegroundColor Yellow
-              $orphanProxies | ForEach-Object { Write-Host "    - Proxy '$($_.Name)' references unknown host '$($_.Host)'" }
-            }
-          }
-
-          Write-Host "✅ CSV content validation complete" -ForegroundColor Green
-        }
+    - name: Validate CSV row counts
+      if: always()
+      run: |
+        # Jobs CSV must have >0 rows; the session report too (this server has session history).
+        & "${{ github.workspace }}\.github\scripts\Test-VhcLiveRun.ps1" -Check RowCounts -RequireSessionRows
 
     - name: Validate CSV column schemas
       # P2-1: extract to composite action
@@ -1316,6 +1284,18 @@ jobs:
 
         Write-Host "✅ HTML table row validation complete" -ForegroundColor Green
 
+    - name: Validate JSON export
+      if: always()
+      run: |
+        # Parses the .json written next to the HTML report; checks top-level keys and section keys.
+        & "${{ github.workspace }}\.github\scripts\Test-VhcLiveRun.ps1" -Check Json
+
+    - name: Validate PDF and PPTX exports
+      if: always()
+      run: |
+        # Non-zero PDF and PPTX next to the HTML report (requested by /pdf /pptx on the run step).
+        & "${{ github.workspace }}\.github\scripts\Test-VhcLiveRun.ps1" -Check Exports
+
     - name: Check SCA label drift
       if: success() || failure()
       shell: pwsh
@@ -1353,6 +1333,50 @@ jobs:
             }
           }
         }
+
+    - name: Run VeeamHealthCheck scrubbed pass
+      id: scrub_run
+      if: always() && steps.run_healthcheck.outcome != 'skipped'
+      env:
+        VBR_HOST: ${{ secrets.VBR_HOST }}
+        VBR_USERNAME: ${{ secrets.VBR_USERNAME }}
+        VBR_PASSWORD: ${{ secrets.VBR_13_REMOTE_PW }}
+        # Reveals gated sections (Orphaned & Superseded Backups may be hidden without it).
+        # This is the pass where they stay tested; the default pass asserts nothing about them.
+        VHC_EXPERIMENTS: '1'
+      run: |
+        $exePath = "${{ github.workspace }}\test-run\VeeamHealthCheck.exe"
+        $pwB64 = [Convert]::ToBase64String([Text.Encoding]::UTF8.GetBytes($env:VBR_PASSWORD))
+        $credFile = Join-Path $env:RUNNER_TEMP ("vbr-creds-" + [guid]::NewGuid().ToString() + ".json")
+        @{ "$env:VBR_HOST" = @{ Username = $env:VBR_USERNAME; PasswordBase64 = $pwB64 } } |
+          ConvertTo-Json -Depth 4 | Set-Content -Path $credFile -Encoding UTF8
+
+        $passStart = Get-Date
+        echo "pass_start=$($passStart.ToString('o'))" >> $env:GITHUB_OUTPUT
+        Push-Location (Split-Path $exePath)
+        try {
+          # No /pdf or /pptx here: scrub mode skips both by design.
+          $process = Start-Process -FilePath $exePath `
+            -ArgumentList "/run", "/remote", "/host=$env:VBR_HOST", "/credfile=$credFile", "/silent", "/scrub:true" `
+            -NoNewWindow -PassThru -Wait
+          if ($process.ExitCode -ne 0) {
+            Write-Host "Scrubbed pass failed with exit code: $($process.ExitCode)" -ForegroundColor Red
+            exit $process.ExitCode
+          }
+          Write-Host "Scrubbed pass completed" -ForegroundColor Green
+        } finally {
+          Pop-Location
+          Remove-Item -Path $credFile -Force -ErrorAction SilentlyContinue
+        }
+
+    - name: Validate scrubbed output
+      if: always() && steps.scrub_run.outputs.pass_start != ''
+      env:
+        VBR_HOST: ${{ secrets.VBR_HOST }}
+      run: |
+        # The real hostname must appear nowhere in the scrubbed HTML or JSON, and the Orphaned &
+        # Superseded Backups section (HTML) and OrphanedSupersededBackups key (JSON) must be present.
+        & "${{ github.workspace }}\.github\scripts\Test-VhcLiveRun.ps1" -Check Scrub -ScrubHost $env:VBR_HOST -NewerThan ([datetime]'${{ steps.scrub_run.outputs.pass_start }}')
 
     - name: Upload health check logs
       if: always()
@@ -1634,60 +1658,15 @@ jobs:
     - name: Validate CSV content quality
       if: always()
       run: |
-        $csvDir = Get-ChildItem "C:\temp\vHC\Original\VBR\*\*" -Directory -ErrorAction SilentlyContinue | Sort-Object LastWriteTime -Descending | Select-Object -First 1
+        # Shared logic in .github/scripts/Test-VhcLiveRun.ps1. Files are named <hostname>_<Name>.csv,
+        # so it resolves them by glob; a missing core file fails the step instead of being skipped.
+        & "${{ github.workspace }}\.github\scripts\Test-VhcLiveRun.ps1" -Check CsvContent
 
-        if ($csvDir) {
-          Write-Host "🔍 Validating CSV Content Quality..." -ForegroundColor Cyan
-
-          # Validate _vbrinfo.csv version format
-          $vbrinfoPath = Join-Path $csvDir.FullName "_vbrinfo.csv"
-          if (Test-Path $vbrinfoPath) {
-            $vbrinfo = Import-Csv $vbrinfoPath
-            if ($vbrinfo.Version -match '^\d{1,2}\.\d{1,2}\.\d{1,2}\.\d{3,4}$') {
-              Write-Host "  ✅ VBR version format valid: $($vbrinfo.Version)" -ForegroundColor Green
-            } else {
-              Write-Host "  ⚠️ VBR version format unexpected: $($vbrinfo.Version)" -ForegroundColor Yellow
-            }
-          }
-
-          # Validate Repositories.csv data integrity
-          $reposPath = Join-Path $csvDir.FullName "_Repositories.csv"
-          if (Test-Path $reposPath) {
-            $repos = Import-Csv $reposPath
-            $invalidRepos = $repos | Where-Object {
-              [long]$_.FreeSpace -gt [long]$_.TotalSpace
-            }
-            if ($invalidRepos.Count -eq 0) {
-              Write-Host "  ✅ All repositories have valid FreeSpace <= TotalSpace" -ForegroundColor Green
-            } else {
-              Write-Host "  ❌ Found $($invalidRepos.Count) repositories with FreeSpace > TotalSpace" -ForegroundColor Red
-              $invalidRepos | ForEach-Object { Write-Host "    - $($_.Name): Free=$($_.FreeSpace) > Total=$($_.TotalSpace)" }
-              exit 1
-            }
-          }
-
-          # Validate Proxies reference valid Servers
-          $serversPath = Join-Path $csvDir.FullName "_Servers.csv"
-          $proxiesPath = Join-Path $csvDir.FullName "_Proxies.csv"
-          if ((Test-Path $serversPath) -and (Test-Path $proxiesPath)) {
-            $servers = Import-Csv $serversPath
-            $proxies = Import-Csv $proxiesPath
-            $serverNames = $servers.Name
-
-            $orphanProxies = $proxies | Where-Object {
-              $serverNames -notcontains $_.Host
-            }
-
-            if ($orphanProxies.Count -eq 0) {
-              Write-Host "  ✅ All proxy hosts have corresponding server entries" -ForegroundColor Green
-            } else {
-              Write-Host "  ⚠️ Found $($orphanProxies.Count) proxies with missing server entries" -ForegroundColor Yellow
-              $orphanProxies | ForEach-Object { Write-Host "    - Proxy '$($_.Name)' references unknown host '$($_.Host)'" }
-            }
-          }
-
-          Write-Host "✅ CSV content validation complete" -ForegroundColor Green
-        }
+    - name: Validate CSV row counts
+      if: always()
+      run: |
+        # Jobs CSV must have >0 rows.
+        & "${{ github.workspace }}\.github\scripts\Test-VhcLiveRun.ps1" -Check RowCounts
 
     - name: Validate CSV column schemas
       # P2-1: extract to composite action
@@ -2244,60 +2223,15 @@ jobs:
     - name: Validate CSV content quality
       if: always()
       run: |
-        $csvDir = Get-ChildItem "C:\temp\vHC\Original\VBR\*\*" -Directory -ErrorAction SilentlyContinue | Sort-Object LastWriteTime -Descending | Select-Object -First 1
+        # Shared logic in .github/scripts/Test-VhcLiveRun.ps1. Files are named <hostname>_<Name>.csv,
+        # so it resolves them by glob; a missing core file fails the step instead of being skipped.
+        & "${{ github.workspace }}\.github\scripts\Test-VhcLiveRun.ps1" -Check CsvContent
 
-        if ($csvDir) {
-          Write-Host "🔍 Validating CSV Content Quality..." -ForegroundColor Cyan
-
-          # Validate _vbrinfo.csv version format
-          $vbrinfoPath = Join-Path $csvDir.FullName "_vbrinfo.csv"
-          if (Test-Path $vbrinfoPath) {
-            $vbrinfo = Import-Csv $vbrinfoPath
-            if ($vbrinfo.Version -match '^\d{1,2}\.\d{1,2}\.\d{1,2}\.\d{3,4}$') {
-              Write-Host "  ✅ VBR version format valid: $($vbrinfo.Version)" -ForegroundColor Green
-            } else {
-              Write-Host "  ⚠️ VBR version format unexpected: $($vbrinfo.Version)" -ForegroundColor Yellow
-            }
-          }
-
-          # Validate Repositories.csv data integrity
-          $reposPath = Join-Path $csvDir.FullName "_Repositories.csv"
-          if (Test-Path $reposPath) {
-            $repos = Import-Csv $reposPath
-            $invalidRepos = $repos | Where-Object {
-              [long]$_.FreeSpace -gt [long]$_.TotalSpace
-            }
-            if ($invalidRepos.Count -eq 0) {
-              Write-Host "  ✅ All repositories have valid FreeSpace <= TotalSpace" -ForegroundColor Green
-            } else {
-              Write-Host "  ❌ Found $($invalidRepos.Count) repositories with FreeSpace > TotalSpace" -ForegroundColor Red
-              $invalidRepos | ForEach-Object { Write-Host "    - $($_.Name): Free=$($_.FreeSpace) > Total=$($_.TotalSpace)" }
-              exit 1
-            }
-          }
-
-          # Validate Proxies reference valid Servers
-          $serversPath = Join-Path $csvDir.FullName "_Servers.csv"
-          $proxiesPath = Join-Path $csvDir.FullName "_Proxies.csv"
-          if ((Test-Path $serversPath) -and (Test-Path $proxiesPath)) {
-            $servers = Import-Csv $serversPath
-            $proxies = Import-Csv $proxiesPath
-            $serverNames = $servers.Name
-
-            $orphanProxies = $proxies | Where-Object {
-              $serverNames -notcontains $_.Host
-            }
-
-            if ($orphanProxies.Count -eq 0) {
-              Write-Host "  ✅ All proxy hosts have corresponding server entries" -ForegroundColor Green
-            } else {
-              Write-Host "  ⚠️ Found $($orphanProxies.Count) proxies with missing server entries" -ForegroundColor Yellow
-              $orphanProxies | ForEach-Object { Write-Host "    - Proxy '$($_.Name)' references unknown host '$($_.Host)'" }
-            }
-          }
-
-          Write-Host "✅ CSV content validation complete" -ForegroundColor Green
-        }
+    - name: Validate CSV row counts
+      if: always()
+      run: |
+        # Jobs CSV must have >0 rows.
+        & "${{ github.workspace }}\.github\scripts\Test-VhcLiveRun.ps1" -Check RowCounts
 
     - name: Validate CSV column schemas
       # P2-1: extract to composite action
