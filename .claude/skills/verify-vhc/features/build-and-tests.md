@@ -15,7 +15,7 @@ A contributor builds the solution and runs the automated suites to prove that co
 - `dotnet build vHC/HC.sln --configuration Debug`
 - `dotnet test vHC/VhcXTests/VhcXTests.csproj`
 - `dotnet test vHC/VhcXTests.CrossPlatform/VhcXTests.CrossPlatform.csproj`
-- `CI=true dotnet test vHC/VhcGuiTests/VhcGuiTests.csproj` (`CI=true` skips a local SMB post-build copy)
+- `dotnet test vHC/VhcGuiTests/VhcGuiTests.csproj`
 - A single class: add `--filter "FullyQualifiedName~CredentialHelperTests"` (see the repo CLAUDE.md).
 
 ## Driving it with vhc-verify.sh

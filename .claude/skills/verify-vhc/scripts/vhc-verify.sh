@@ -191,8 +191,7 @@ cmd_tests() {
   note_csproj_state
   dotnet test vHC/VhcXTests.CrossPlatform/VhcXTests.CrossPlatform.csproj > "$ev/tests-crossplatform.log" 2>&1; rc1=$?
   dotnet test vHC/VhcXTests/VhcXTests.csproj > "$ev/tests-vhcxtests.log" 2>&1; rc2=$?
-  # CI=true skips the project's local SMB post-build copy; the headless GUI suite needs no display.
-  CI=true dotnet test vHC/VhcGuiTests/VhcGuiTests.csproj > "$ev/tests-gui.log" 2>&1; rc3=$?
+  dotnet test vHC/VhcGuiTests/VhcGuiTests.csproj > "$ev/tests-gui.log" 2>&1; rc3=$?
   revert_csproj_if_we_dirtied
   grep -h -E 'Passed!|Failed!' "$ev/tests-crossplatform.log" "$ev/tests-vhcxtests.log" "$ev/tests-gui.log"
   say "exit codes: crossplatform=$rc1 vhcxtests=$rc2 gui=$rc3; logs in $ev"

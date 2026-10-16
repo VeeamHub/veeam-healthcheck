@@ -34,7 +34,7 @@ One script, repo-relative, executable. Run from anywhere inside the repo:
 .claude/skills/verify-vhc/scripts/vhc-verify.sh doctor              # read-only readiness check
 .claude/skills/verify-vhc/scripts/vhc-verify.sh import-report [ID]  # /import against golden CSVs, assert on HTML + JSON
 .claude/skills/verify-vhc/scripts/vhc-verify.sh import-scrub  [ID]  # same with /scrub:true, assert names are gone
-.claude/skills/verify-vhc/scripts/vhc-verify.sh tests         [ID]  # all three test projects (GUI with CI=true), logs captured
+.claude/skills/verify-vhc/scripts/vhc-verify.sh tests         [ID]  # all three test projects, logs captured
 .claude/skills/verify-vhc/scripts/vhc-verify.sh cleanup       [ID]  # stop what we started, remove scratch input, keep evidence
 ```
 

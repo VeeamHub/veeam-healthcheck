@@ -38,7 +38,7 @@ What a Windows verification should do (for whoever has the host): run `VeeamHeal
 
 `vHC/VhcGuiTests` has 22 Avalonia.Headless xUnit tests that construct the real windows (main window, ManageServers, credential prompt, About disclaimer, `AvaloniaUiNotifier`) with no display, and drive them by name.
 
-Recipe: `.claude/skills/verify-vhc/scripts/vhc-verify.sh tests <ID>` (runs it with `CI=true`, which skips a local SMB post-build copy). Expect `Passed!  - Failed: 0, Passed: 22 ... VhcGuiTests.dll` and `gui=0` on the exit-codes line. Evidence: `.verify-vhc/evidence/<ID>/tests-gui.log`.
+Recipe: `.claude/skills/verify-vhc/scripts/vhc-verify.sh tests <ID>`. Expect `Passed!  - Failed: 0, Passed: 22 ... VhcGuiTests.dll` and `gui=0` on the exit-codes line. Evidence: `.verify-vhc/evidence/<ID>/tests-gui.log`.
 
 Proves:
 
@@ -58,7 +58,6 @@ Does not prove:
 
 ## Gotchas
 
-- Without `CI=true` the GUI test project's post-build step tries a local SMB copy; the helper sets `CI=true` to skip it.
 
 - A passing macOS `import-report` run says nothing about the collection scripts. Do not cite it as proof of collection or GUI behavior.
 - `CGlobals.REMOTEEXEC` does not mean the scripts run on the remote server; the PowerShell module always runs locally and connects out. Preflight checks must run regardless (repo CLAUDE.md).

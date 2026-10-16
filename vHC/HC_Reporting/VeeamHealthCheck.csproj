@@ -161,23 +161,16 @@
 		<Exec Command="which pwsh &gt; /dev/null 2&gt;&amp;1 &amp;&amp; pwsh -NoProfile -ExecutionPolicy Bypass -File &quot;$(ProjectDir)increment_version.ps1&quot; || bash &quot;$(ProjectDir)increment_version.sh&quot;" Condition="'$(OS)' != 'Windows_NT'" />
 	</Target>
 	<Target Name="PostBuild" AfterTargets="PostBuildEvent">
-		<!-- Log the check for BuildCopy.bat and BuildCopy.sh -->
+		<!-- Optional, untracked per-developer hook (gitignored): Tools\build\BuildCopy.bat -->
 		<Message Text="Checking if BuildCopy.bat exists: $(ProjectDir)Tools\build\BuildCopy.bat" Importance="High" Condition="'$(OS)' == 'Windows_NT'" />
-		<Message Text="Checking if BuildCopy.sh exists: $(ProjectDir)Tools\build\BuildCopy.sh" Importance="High" Condition="'$(OS)' != 'Windows_NT'" />
-		<!-- Define items for the batch and shell scripts based on OS -->
+		<!-- Define the item only when the local script exists -->
 		<ItemGroup>
 			<!-- Windows: Check for BuildCopy.bat -->
 			<LocalPostBuildBat Include="$(ProjectDir)Tools\build\BuildCopy.bat" Condition="'$(OS)' == 'Windows_NT' AND Exists('$(ProjectDir)Tools\build\BuildCopy.bat')" />
-			<!-- macOS/Linux: Check for BuildCopy.sh -->
-			<LocalPostBuildSh Include="$(ProjectDir)Tools\build\BuildCopy.sh" Condition="'$(OS)' != 'Windows_NT' AND Exists('$(ProjectDir)Tools\build\BuildCopy.sh')" />
 		</ItemGroup>
-		<!-- Execute the appropriate script based on OS -->
+		<!-- Run it if present -->
 		<Exec Command="call @(LocalPostBuildBat)" Condition="'$(OS)' == 'Windows_NT' AND '@(LocalPostBuildBat)' != ''" ContinueOnError="true" />
-		<Exec Command="bash @(LocalPostBuildSh)" Condition="'$(OS)' != 'Windows_NT' AND '@(LocalPostBuildSh)' != '' AND '$(CI)' != 'true'" ContinueOnError="true" />
 	</Target>
-	<ItemGroup>
-		<None Include="Tools/build/BuildCopy.sh" />
-	</ItemGroup>
 	<ItemGroup>
 		<None Include="Functions\Reporting\DataTypes\NAS\CNasFileDataVmc.cs" />
 		<None Include="Functions\Reporting\Html\VBR\VbrTables\Job Session Summary\JobSessionSummaryRow.cs" />
