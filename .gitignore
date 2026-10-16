@@ -368,8 +368,9 @@ FodyWeavers.xsd
 /VeeamHealthCheck.cer
 vHC/HC_Reporting/Tools/build/BuildCopy.sh
 
-# Claude working folder
-.claude/
+# Claude working folder (project skills under .claude/skills are tracked)
+.claude/*
+!.claude/skills/
 
 # Test run log
 test_run_log.txt
@@ -402,3 +403,6 @@ labs-config.json
 
 # C# Dev Kit language-service cache (regenerated automatically)
 *.lscache
+
+# verify-vhc skill: run evidence and scratch
+.verify-vhc/
