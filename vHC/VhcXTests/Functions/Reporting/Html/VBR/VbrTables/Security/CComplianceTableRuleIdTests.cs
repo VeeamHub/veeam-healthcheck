@@ -1,8 +1,10 @@
 // Copyright (c) 2021, Adam Congdon <adam.congdon2@gmail.com>
 // MIT License
+using System;
 using System.IO;
 using System.Linq;
 using System.Text.Json;
+using VeeamHealthCheck;
 using VeeamHealthCheck.Functions.Reporting.CsvHandlers;
 using VeeamHealthCheck.Functions.Reporting.DataTypes;
 using VeeamHealthCheck.Functions.Reporting.Html.VBR.VbrTables.Security;
@@ -55,8 +57,15 @@ namespace VhcXTests.Functions.Reporting.Html.VBR.VbrTables.Security
 
         private (string Html, string Json) Render(string complianceCsv)
         {
-            File.WriteAllText(Path.Combine(this.VbrDir, "_SecurityCompliance.csv"), complianceCsv);
-            File.WriteAllText(Path.Combine(this.VbrDir, "_SecurityComplianceMeta.csv"), MetaCsv);
+            // A fresh folder per render: the CSV reader can still hold the previous file open, and
+            // Windows refuses to overwrite an open file. The base class restores the import paths.
+            string dir = Path.Combine(this.TestBaseDir, "render-" + Guid.NewGuid().ToString("N"));
+            Directory.CreateDirectory(dir);
+            CGlobals.IMPORT_PATH = dir;
+            CVariables.ResolvedImportPath = dir;
+
+            File.WriteAllText(Path.Combine(dir, "_SecurityCompliance.csv"), complianceCsv);
+            File.WriteAllText(Path.Combine(dir, "_SecurityComplianceMeta.csv"), MetaCsv);
             CGlobals.FullReportJson = new CFullReportJson();
 
             var ct = new CComplianceTable();
