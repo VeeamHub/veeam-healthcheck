@@ -33,6 +33,9 @@
     <None Include="..\HC_Reporting\Resources\Localization\locale-known-missing.txt"
           Link="Resources\Localization\locale-known-missing.txt"
           CopyToOutputDirectory="PreserveNewest" />
+    <None Include="..\HC_Reporting\Tools\GoldenBaselines\VB365\*.csv"
+          Link="TestData\VB365\%(Filename)%(Extension)"
+          CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 
 </Project>
