@@ -1034,6 +1034,16 @@ jobs:
         # Jobs CSV must have >0 rows; the session report too (this server has session history).
         & "${{ github.workspace }}\.github\scripts\Test-VhcLiveRun.ps1" -Check RowCounts -RequireSessionRows
 
+    - name: Validate every collector CSV output
+      # Test-VhcLiveRun.ps1 -Check CsvOutputs: enumerates every CSV the collectors can write and
+      # fails (naming the CSV and the collector that writes it) on a missing required file, a broken
+      # header, or an empty required file. Expectations: .github/scripts/live-csv-expectations.json.
+      if: always()
+      env:
+        LAB_PROFILE: vbr-2
+      run: |
+        & "$env:GITHUB_WORKSPACE\.github\scripts\Test-VhcLiveRun.ps1" -Check CsvOutputs -LabProfile $env:LAB_PROFILE
+
     - name: Validate CSV column schemas
       # P2-1: extract to composite action
       if: always()
@@ -1516,6 +1526,16 @@ jobs:
         # Jobs CSV must have >0 rows.
         & "${{ github.workspace }}\.github\scripts\Test-VhcLiveRun.ps1" -Check RowCounts
 
+    - name: Validate every collector CSV output
+      # Test-VhcLiveRun.ps1 -Check CsvOutputs: enumerates every CSV the collectors can write and
+      # fails (naming the CSV and the collector that writes it) on a missing required file, a broken
+      # header, or an empty required file. Expectations: .github/scripts/live-csv-expectations.json.
+      if: always()
+      env:
+        LAB_PROFILE: vbr-13-sql
+      run: |
+        & "$env:GITHUB_WORKSPACE\.github\scripts\Test-VhcLiveRun.ps1" -Check CsvOutputs -LabProfile $env:LAB_PROFILE
+
     - name: Validate CSV column schemas
       # P2-1: extract to composite action
       if: always()
@@ -1993,6 +2013,16 @@ jobs:
       run: |
         # Jobs CSV must have >0 rows.
         & "${{ github.workspace }}\.github\scripts\Test-VhcLiveRun.ps1" -Check RowCounts
+
+    - name: Validate every collector CSV output
+      # Test-VhcLiveRun.ps1 -Check CsvOutputs: enumerates every CSV the collectors can write and
+      # fails (naming the CSV and the collector that writes it) on a missing required file, a broken
+      # header, or an empty required file. Expectations: .github/scripts/live-csv-expectations.json.
+      if: always()
+      env:
+        LAB_PROFILE: vbr-12
+      run: |
+        & "$env:GITHUB_WORKSPACE\.github\scripts\Test-VhcLiveRun.ps1" -Check CsvOutputs -LabProfile $env:LAB_PROFILE
 
     - name: Validate CSV column schemas
       # P2-1: extract to composite action
