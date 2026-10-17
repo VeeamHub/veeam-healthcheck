@@ -1036,6 +1036,7 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VB365
             s += this.form.TableHeader("Start Time", "Start Time");
             s += this.form.TableHeader("End Time", "End Time");
             s += this.form.TableHeader("Duration", "Duration");
+            s += this.form.TableHeader("Avg. Throughput", "Avg. Throughput");
             s += this.form.TableHeader("Log", "Log");
 
             s += "</tr>";
@@ -1053,7 +1054,7 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VB365
                         string output = g.Value;
                         if (CGlobals.Scrub)
                         {
-                            if (counter == 0 || counter == 5)
+                            if (counter == 0)
                             {
                                 output = this.scrubber.ScrubItem(output, Scrubber.ScrubItemType.Job);
                             }

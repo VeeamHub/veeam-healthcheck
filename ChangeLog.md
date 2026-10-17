@@ -148,6 +148,9 @@ checksums, and scan results.
   (Credentials, User Roles, Email Notification). The Compliance Summary and Compliance Details links are
   hidden when the compliance scan produced no data instead of pointing at a missing section.
   Fixes [#184](https://github.com/VeeamHub/veeam-healthcheck/issues/184).
+- VB365 Job Sessions table: the `Avg. Throughput` column now has its own header (the `Log` header was sitting
+  over throughput and the log column had none), and scrub mode no longer replaces the throughput value with a
+  job placeholder.
 
 ### Security
 

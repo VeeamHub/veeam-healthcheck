@@ -277,7 +277,7 @@ namespace VhcXTests.Functions.Reporting.Html.VB365
             Assert.DoesNotMatch(@"\bNaN\b|\bundefined\b|\bInfinity\b", this.ScrubbedContent);
         }
 
-        [Fact(Skip = "bug: Vb365JobSessions scrubs cell 5 (Avg. Throughput) as a Job name; only the Name cell holds a job")]
+        [Fact]
         public void Vb365JobSessions_ScrubMode_KeepsThroughputValues()
         {
             string sessions = Section(this.ScrubbedContent, "jobsessions");
