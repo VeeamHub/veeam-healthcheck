@@ -2773,3 +2773,60 @@ jobs:
         path: sca-proposal
         if-no-files-found: ignore
         retention-days: 14
+
+  # Opens the real reports the three live integration jobs produced in a headless browser and fails on
+  # console errors, broken nav anchors, dead section toggles or empty core sections (tools/report-smoke).
+  # Runs even when an integration job failed, as long as it got far enough to upload a report.
+  # Read-only and secret-free: it only consumes artifacts this run already uploaded.
+  report-render-smoke:
+    needs: [integration-test-vbr-2, integration-test-vbr-13-sql, integration-test-vbr-12]
+    if: always()
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+
+    - name: Download health check reports
+      continue-on-error: true
+      uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
+      with:
+        pattern: health-check-report-*
+        path: reports
+
+    - name: Find reports
+      id: find
+      run: |
+        count=$(find reports -name '*.html' 2>/dev/null | wc -l)
+        echo "count=$count" >> "$GITHUB_OUTPUT"
+        if [ "$count" -eq 0 ]; then
+          echo "::notice::No health-check-report-* artifacts were produced by the integration jobs; nothing to render."
+        else
+          find reports -name '*.html'
+        fi
+
+    - name: Setup Bun
+      if: steps.find.outputs.count != '0'
+      uses: oven-sh/setup-bun@ecf28ddc73e819eb6fa29df6b34ef8921c743461 # v2.1.3
+
+    - name: Install report-smoke and browser
+      if: steps.find.outputs.count != '0'
+      working-directory: tools/report-smoke
+      run: |
+        bun install --frozen-lockfile
+        bunx playwright install --with-deps chromium
+
+    - name: Render reports in a browser
+      if: steps.find.outputs.count != '0'
+      run: bun tools/report-smoke/smoke.ts --out report-smoke-out reports
+
+    - name: Upload screenshots
+      if: always() && steps.find.outputs.count != '0'
+      uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+      with:
+        name: report-smoke-screenshots
+        path: report-smoke-out
+        if-no-files-found: ignore
+        retention-days: 14

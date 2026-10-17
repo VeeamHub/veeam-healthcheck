@@ -19,6 +19,8 @@ namespace VhcXTests.Functions.Reporting.Html
         [InlineData(true, false, true, "PowerPoint")]
         [InlineData(true, false, false, "")]
         [InlineData(false, true, true, "")]
+        [InlineData(false, true, false, "")]
+        [InlineData(false, false, true, "")]
         [InlineData(false, false, false, "")]
         public void SkippedFormats_ScrubAndRequestedFormats_ListsOnlyRequestedFormatsWhenScrubbing(
             bool scrub, bool pdf, bool pptx, string expected)
@@ -56,6 +58,19 @@ namespace VhcXTests.Functions.Reporting.Html
         public void GetScrubExportWarnings_NothingSkipped_ReturnsNoWarnings(bool scrub, bool pdf, bool pptx)
         {
             Assert.Empty(CArgsParser.GetScrubExportWarnings(scrub, pdf, pptx));
+        }
+
+        [Fact]
+        public void SkippedFormats_RepeatedCalls_DoesNotRetainPreviouslyRequestedFormats()
+        {
+            var both = SkippedFormats(true, true, true);
+            var neither = SkippedFormats(true, false, false);
+            var pptxOnly = SkippedFormats(true, false, true);
+
+            Assert.Equal(new[] { "PDF", "PowerPoint" }, both);
+            Assert.Empty(neither);
+            Assert.Equal(new[] { "PowerPoint" }, pptxOnly);
+            Assert.NotSame(both, pptxOnly);
         }
     }
 }

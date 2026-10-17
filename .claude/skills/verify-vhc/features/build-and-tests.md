@@ -5,7 +5,7 @@ A contributor builds the solution and runs the automated suites to prove that co
 ## Sub-features
 
 - `build-solution` builds `vHC/HC.sln` (Debug) with the .NET 10 SDK off Windows.
-- `tests-vhcxtests` runs `vHC/VhcXTests` (about 1,100 passing; Windows-only tests marked `[WindowsOnlyFact]` skip individually).
+- `tests-vhcxtests` runs `vHC/VhcXTests` (1,117 passing, 15 skipped on macOS; Windows-only tests marked `[WindowsOnlyFact]` skip individually).
 - `tests-crossplatform` runs `vHC/VhcXTests.CrossPlatform` (121 tests, `net10.0`).
 - `tests-gui` runs `vHC/VhcGuiTests` (22 Avalonia.Headless tests; see [gui-and-collection](./gui-and-collection.md#gui-headless)).
 - `tests-filter` runs one class or category.

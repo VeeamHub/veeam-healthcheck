@@ -1,0 +1,5 @@
+"Organization","Name","Description","Job Type","Scope Type","Processing Options","Selected Objects","Excluded Objects","Repository","Bound Proxy","Enabled?","Schedule","Related Job"
+"contoso-m365-prod","Contoso-Prod-Mailbox-Backup","Daily mailbox backup","Backup","EntireOrganization","Mailbox, Archive, OneDrive","5210","12","Contoso-Primary-Repo","contoso-prx01.contoso.example","True","Everyday @ 22:00:00","Contoso-Prod-Mailbox-Copy"
+"contoso-m365-prod","Contoso-Prod-Mailbox-Copy","Copy to archive tier","Backup Copy","SelectedItems","Mailbox, Archive","5210","","Contoso-Archive-Repo","contoso-prx02.contoso.example","True","Periodically every 4 Hours (Window?: False)","Contoso-Prod-Mailbox-Backup"
+"Contoso München GmbH","München-SharePoint-Teams-Backup","","Backup","SelectedItems","Sites, Teams","87","60","Contoso-Düsseldorf-Repo","contoso-prx03.contoso.example","False","Not scheduled",""
+"Contoso OnPrem Lab","OnPrem-Exchange-Backup","Lab exchange","Backup","EntireOrganization","Mailbox","40","0","Contoso-Primary-Repo","contoso-prx01.contoso.example","True","Immediate",""
