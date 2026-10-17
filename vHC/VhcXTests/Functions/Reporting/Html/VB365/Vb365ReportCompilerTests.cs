@@ -285,7 +285,7 @@ namespace VhcXTests.Functions.Reporting.Html.VB365
             Assert.Contains("35.210 MB/s", sessions);
         }
 
-        [Fact(Skip = "bug: scrub mode leaves the License Contact (a person's name) in the Global table")]
+        [Fact]
         public void Globals_ScrubMode_RemovesLicenseContact()
         {
             Assert.DoesNotContain("Alex Contoso", Section(this.ScrubbedContent, "global"));

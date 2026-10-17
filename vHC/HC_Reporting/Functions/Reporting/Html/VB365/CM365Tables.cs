@@ -82,7 +82,7 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VB365
                         s += this.form.TableData(gl.LicensedTo, string.Empty);
                     }
 
-                    s += this.form.TableData(gl.LicenseContact, string.Empty);
+                    s += this.form.TableData(CGlobals.Scrub ? CGlobals.Scrubber.ScrubItem(gl.LicenseContact, Scrubber.ScrubItemType.Item) : gl.LicenseContact, string.Empty);
                     s += this.form.TableData(gl.LicensedFor, string.Empty);
 
                     if (percentUsed > 95)
@@ -1362,6 +1362,7 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VB365
                                 counter == 4 ||
                                 counter == 5 ||
                                 counter == 6 ||
+                                counter == 7 ||
                                 counter == 8 ||
                                 counter == 9)
                             {

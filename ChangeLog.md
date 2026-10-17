@@ -158,6 +158,8 @@ checksums, and scan results.
 - Scrub mode: the JSON report now gets the same final safety pass as the HTML (registered values and
   private-range IPv4 addresses), so a value the per-field scrub missed, such as a CDP proxy name, no longer
   survives in the JSON.
+- Scrub mode: the VB365 report now scrubs the License Contact (a person's name) and the SharePoint Online app
+  certificate name, which was left in clear while the Exchange Online one was scrubbed.
 - Updated `System.Security.Cryptography.Xml` and `System.Security.Cryptography.Pkcs` to 10.0.13, which fixes
   five denial-of-service advisories published on 2026-10-13 (GHSA-7hqp-7c5m-4vq6, GHSA-c399-9853-6jmj,
   GHSA-r955-8q5j-3h83, GHSA-846f-f764-76mx, GHSA-2fmv-rv2c-59x7).
