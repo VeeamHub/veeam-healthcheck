@@ -8,6 +8,7 @@ using System.Linq;
 using System.Security.AccessControl;
 using System.Security.Principal;
 using System.Text.Json;
+using System.Text.Json.Nodes;
 using System.Text.RegularExpressions;
 using System.Xml.Linq;
 
@@ -144,6 +145,49 @@ namespace VeeamHealthCheck.Scrubber
             text = ReplaceRegisteredValuesInHtml(text, this.matchDictionary);
             text = ScrubRawPrivateIPv4(text);
             return text;
+        }
+
+        /// <summary>
+        /// JSON counterpart of <see cref="FinalizeScrubbedText"/>. The JSON report is built
+        /// from the same cell data as the HTML but never passed through the HTML safety pass,
+        /// so a value the per-field scrub missed survived in the JSON only. Rewrites every
+        /// string value (property names are left alone) with the registered-value and
+        /// private-IPv4 passes. Runs ONLY on the scrubbed output path.
+        /// </summary>
+        public string FinalizeScrubbedJson(string json)
+        {
+            JsonNode root = JsonNode.Parse(json);
+            JsonNode scrubbed = this.FinalizeScrubbedNode(root);
+            return scrubbed?.ToJsonString(new JsonSerializerOptions { WriteIndented = true }) ?? json;
+        }
+
+        private JsonNode FinalizeScrubbedNode(JsonNode node)
+        {
+            switch (node)
+            {
+                case JsonObject obj:
+                    var scrubbedObject = new JsonObject();
+                    foreach (var property in obj)
+                    {
+                        scrubbedObject[property.Key] = this.FinalizeScrubbedNode(property.Value);
+                    }
+
+                    return scrubbedObject;
+                case JsonArray array:
+                    var scrubbedArray = new JsonArray();
+                    foreach (var item in array)
+                    {
+                        scrubbedArray.Add(this.FinalizeScrubbedNode(item));
+                    }
+
+                    return scrubbedArray;
+                case JsonValue value when value.TryGetValue(out string text):
+                    return JsonValue.Create(ScrubRawPrivateIPv4(ReplaceRegisteredValues(text, this.matchDictionary)));
+                case JsonValue value:
+                    return value.DeepClone();
+                default:
+                    return null;
+            }
         }
 
         // Splits an HTML document into the parts the registered-value pass must leave alone

@@ -31,7 +31,7 @@ public sealed class GoldenImportScrubTests
         Assert.True(leaks.Length == 0, "HTML identifier leaks:\n" + string.Join("\n", leaks.Select(identifier => $"{identifier.File}:{identifier.Column} = {identifier.Value}")));
     }
 
-    [Fact(Skip = "bug: scrubbed JSON exposes _CdpProxy.Name CDP-PROXY01 (also matching _Proxies.Name PROXY01) in proxies.Rows[2][8]")]
+    [Fact]
     public void RunFullVbrReport_ScrubbedGoldenImport_RemovesEveryIdentifierColumnValueFromHtmlAndJson()
     {
         using var report = new GoldenVbrReport();
