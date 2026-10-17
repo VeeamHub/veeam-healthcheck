@@ -163,6 +163,9 @@ checksums, and scan results.
   survives in the JSON.
 - Scrub mode: the VB365 report now scrubs the License Contact (a person's name) and the SharePoint Online app
   certificate name, which was left in clear while the Exchange Online one was scrubbed.
+- Scrub mode: Microsoft Entra ID tenant names (Entra Backups table, Entra Jobs tables, and the Protected Workloads
+  JSON) and the Entra tenant cache repository are now scrubbed at the source. They previously survived in the
+  HTML and JSON unless the same value happened to appear in another scrubbed column.
 - Updated `System.Security.Cryptography.Xml` and `System.Security.Cryptography.Pkcs` to 10.0.13, which fixes
   five denial-of-service advisories published on 2026-10-13 (GHSA-7hqp-7c5m-4vq6, GHSA-c399-9853-6jmj,
   GHSA-r955-8q5j-3h83, GHSA-846f-f764-76mx, GHSA-2fmv-rv2c-59x7).
