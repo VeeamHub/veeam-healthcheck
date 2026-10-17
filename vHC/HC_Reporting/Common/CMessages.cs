@@ -9,7 +9,13 @@ namespace VeeamHealthCheck.Shared
     {
         private static readonly string ProcEnd = "DONE!";
 
-        public static string helpMenu = @"
+        // HelpMenuHead / HelpMenuTail were split only to slot in the since-removed monitor
+        // section, so the split is possibly no longer required and the two constants could
+        // be merged into one.
+        public static string helpMenu =>
+            HelpMenuHead + HelpMenuTail;
+
+        private const string HelpMenuHead = @"
 Veeam Health Check - Command Line Help
 
 USAGE: VeeamHealthCheck.exe [options]
@@ -36,6 +42,10 @@ REMOTE OPERATIONS:
   /remote           Enable remote execution mode
   /host=<hostname>  Specify remote Veeam server hostname (required with /remote)
                     Note: Credentials will be prompted if needed
+                    Note: /remote, /host=, /vbr, or /vb365 imply /run - a health
+                    check is executed even if /run is omitted (not with /help or
+                    /clearcreds, which need an explicit /run). Arguments with no
+                    action flag print this help instead of exiting silently.
 
 SPECIAL MODES:
   /security         Run security-focused assessment only
@@ -57,13 +67,9 @@ UTILITY OPTIONS:
   /clearcreds       Clear stored credentials from Windows Credential Manager
   /debug            Enable debug logging for troubleshooting
 
-CONTINUOUS MONITORING:
-  /monitor:setup    Install vhc-monitor and register a 5-minute scheduled task
-  /monitor:run      Trigger an immediate monitor check
-  /monitor:status   Show current monitor installation and last-run status
-  /monitor:disable  Remove the scheduled task (keeps config and files)
+";
 
-UNATTENDED / SILENT MODE:
+        private const string HelpMenuTail = @"UNATTENDED / SILENT MODE:
   /silent           Master ""never prompt, fail fast"" flag. Suppresses GUI
                     dialogs, console password prompts, and PowerShell
                     Get-Credential calls. Required for unattended (Task
@@ -92,6 +98,7 @@ UNATTENDED / SILENT MODE:
     5  Host unreachable
     6  /credfile= invalid (malformed JSON, missing fields, bad Base64)
     7  No Veeam product detected and no /host= provided
+    8  PowerShell 7 missing, or its installed version is below what the VBR PowerShell module requires
 
   Worked example (Task Scheduler / 20-server fleet):
     Seed once on each server as the service account:

@@ -48,7 +48,8 @@ namespace VeeamHealthCheck.Functions.Reporting.CsvHandlers
         public string PwdKeyId { get; set; }
 
         [Index(13)]
-        public double OriginalSize { get; set; }
+        [Optional]
+        public double? OriginalSize { get; set; }
 
         // convert each of these to an object with indexing label: RetentionType	RetentionCount	RetainDaysToKeep	DeletedVmRetentionDays	DeletedVmRetention	CompressionLevel	Deduplication	BlockSize	IntegrityChecks	SpecificStorageEncryption	StgEncryptionEnabled	KeepFirstFullBackup	EnableFullBackup	BackupIsAttached	GfsWeeklyIsEnabled	GfsWeeklyCount	GfsMonthlyEnabled	GfsMonthlyCount	GfsYearlyEnabled	GfsYearlyCount	IndexingType
         [Index(14)]

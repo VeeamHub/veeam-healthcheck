@@ -82,7 +82,10 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR.VbrTables.Jobs_Info
                         string retentionValue = tenantJob.RetentionPolicy?.ToString() ?? "N/A";
                         CGlobals.Logger.Debug($"Processing tenant job: {tenantJob.Name}, Retention: {retentionValue}");
                         t += "<tr>";
-                        t += this.form.TableDataLeftAligned(tenantJob.Name, "colspan='2'");
+                        string tenantJobName = CGlobals.Scrub
+                            ? CGlobals.Scrubber.ScrubItem(tenantJob.Name, ScrubItemType.Tenant)
+                            : tenantJob.Name;
+                        t += this.form.TableDataLeftAligned(tenantJobName, "colspan='2'");
                         t += this.form.TableData(retentionValue, string.Empty);
                         t += "</tr>";
                     }
@@ -114,7 +117,7 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR.VbrTables.Jobs_Info
                         if (CGlobals.Scrub)
                         {
                             jobName = CGlobals.Scrubber.ScrubItem(jobName, ScrubItemType.Job);
-                            tenant = CGlobals.Scrubber.ScrubItem(tenant, ScrubItemType.MediaPool);
+                            tenant = CGlobals.Scrubber.ScrubItem(tenant, ScrubItemType.Tenant);
                             stRepo = CGlobals.Scrubber.ScrubItem(stRepo, ScrubItemType.MediaPool);
                         }
 

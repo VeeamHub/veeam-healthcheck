@@ -1,0 +1,3 @@
+"Id","Name","Description","ScheduleEnabled","ScheduleOptions","RetentionType"
+"11112222-3333-4444-5555-666611112222","Physical-Servers-Backup","Physical Windows server backup","True","Daily at 22:00","RestorePoints"
+"22223333-4444-5555-6666-777722223333","Linux-Agents-Backup","Linux physical server backup","True","Daily at 21:00","Days"

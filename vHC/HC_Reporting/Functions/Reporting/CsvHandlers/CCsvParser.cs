@@ -69,6 +69,7 @@ namespace VeeamHealthCheck.Functions.Reporting.CsvHandlers
         // Job files
         public readonly string piReportName = "pluginjobs";
         public readonly string jobReportName = "Jobs";
+        private const string BackupCopyParentWorkerJobType = "SimpleBackupCopyParentWorker";
 
         // make string for these job types: "AgentBackupJob.csv", "catalystJob", "cdpjobs", EndpointJob, nasBackup, nasBCJ, SureBackupJob
         public readonly string agentBackupJob = "AgentBackupJob";
@@ -78,6 +79,8 @@ namespace VeeamHealthCheck.Functions.Reporting.CsvHandlers
         public readonly string nasBackup = "nasBackup";
         public readonly string nasBCJ = "nasBCJ";
         public readonly string SureBackupJob = "SureBackupJob";
+        public readonly string orphanedSupersededBackups = "orphanedSupersededBackups";
+        public readonly string orphanedSupersededBackupsMeta = "orphanedSupersededBackupsMeta";
 
         public readonly string tapeJobInfo = "TapeJobs";
 
@@ -381,6 +384,16 @@ namespace VeeamHealthCheck.Functions.Reporting.CsvHandlers
             return this.VbrGetDynamicCsvRecs(this.nasBackup, CVariables.vbrDir);
         }
 
+        public IEnumerable<dynamic> GetDynamicOrphanedSupersededBackups()
+        {
+            return this.VbrGetDynamicCsvRecs(this.orphanedSupersededBackups, CVariables.vbrDir);
+        }
+
+        public IEnumerable<dynamic> GetDynamicOrphanedSupersededBackupsMeta()
+        {
+            return this.VbrGetDynamicCsvRecs(this.orphanedSupersededBackupsMeta, CVariables.vbrDir);
+        }
+
         public IEnumerable<dynamic> GetDynamicNasBCJ()
         {
             return this.VbrGetDynamicCsvRecs(this.nasBCJ, CVariables.vbrDir);
@@ -511,11 +524,6 @@ namespace VeeamHealthCheck.Functions.Reporting.CsvHandlers
             return this.VbrGetDynamicCsvRecs(this.userRoles, CVariables.vbrDir);
         }
 
-        public IEnumerable<dynamic> GetDynamicBjobs()
-        {
-            return this.VbrGetDynamicCsvRecs(this.bjobs, CVariables.vbrDir);
-        }
-
         public IEnumerable<dynamic> GetDynamincConfigBackup()
         {
             return this.VbrGetDynamicCsvRecs(this.configBackup, CVariables.vbrDir);
@@ -620,7 +628,16 @@ namespace VeeamHealthCheck.Functions.Reporting.CsvHandlers
             if (string.IsNullOrEmpty(fileName))
                 return null;
 
-            fileName = Path.GetFileName(fileName);
+            // These file names originate from the VBR server's (always-Windows) collection
+            // folder structure, independent of the OS this parser runs on, so the separator
+            // must be treated as literal rather than via Path.GetFileName's host-OS behavior
+            // (which ignores '\' entirely on non-Windows).
+            int lastSeparator = fileName.LastIndexOfAny(new[] { '\\', '/' });
+            if (lastSeparator >= 0)
+            {
+                fileName = fileName[(lastSeparator + 1)..];
+            }
+
             if (!fileName.EndsWith(VbrInfoCsvSuffix, StringComparison.OrdinalIgnoreCase))
                 return null;
 
@@ -989,17 +1006,56 @@ namespace VeeamHealthCheck.Functions.Reporting.CsvHandlers
             return Enumerable.Empty<CWanCsvInfos>();
         }
 
+        /// <summary>
+        /// Job rows for the report. Rows for VBR's internal per-source Backup Copy worker
+        /// (<c>SimpleBackupCopyParentWorker</c>, named "Parent\Child") are not returned as jobs:
+        /// the worker is bookkeeping inside its parent Backup Copy job, and listing it inflates
+        /// the job count and adds a bucket to the job summary. The restore points the sweep
+        /// attributes to a worker are real copy storage, though, so its OnDiskGB is added to the
+        /// parent's row. Its source size is not added here: collection already includes the worker's chains
+        /// in the parent's source size, counting each protected object once (issue #268). A worker
+        /// whose parent row is missing stays in the list rather than losing its data. The rows
+        /// stay in the collected _Jobs.csv for diagnostics (issue #225).
+        /// </summary>
         public IEnumerable<CJobCsvInfos> JobCsvParser()
         {
             var res = this.VbrFileReader(this.jobReportName);
-            if (res != null)
+            if (res == null)
             {
-
-                return res.GetRecords<CJobCsvInfos>();
+                return Enumerable.Empty<CJobCsvInfos>();
             }
 
+            var all = res.GetRecords<CJobCsvInfos>().ToList();
+            var parents = new Dictionary<string, CJobCsvInfos>(StringComparer.OrdinalIgnoreCase);
+            foreach (var job in all)
+            {
+                if (job.JobType != BackupCopyParentWorkerJobType && job.Name != null)
+                {
+                    parents.TryAdd(job.Name, job);
+                }
+            }
 
-            return Enumerable.Empty<CJobCsvInfos>();
+            var result = new List<CJobCsvInfos>(all.Count);
+            foreach (var job in all)
+            {
+                if (job.JobType != BackupCopyParentWorkerJobType)
+                {
+                    result.Add(job);
+                    continue;
+                }
+
+                int split = job.Name?.IndexOf('\\') ?? -1;
+                if (split > 0 && parents.TryGetValue(job.Name.Substring(0, split), out var parent))
+                {
+                    parent.OnDiskGB = (parent.OnDiskGB ?? 0) + (job.OnDiskGB ?? 0);
+                }
+                else
+                {
+                    result.Add(job);
+                }
+            }
+
+            return result;
         }
 
         public IEnumerable<CBjobCsv> BJobCsvParser()

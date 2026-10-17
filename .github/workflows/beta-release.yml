@@ -1,0 +1,331 @@
+name: Beta Release
+
+# Promotes the newest fully green dev CI build to a [Beta] prerelease. It never rebuilds:
+# the zip that ci-cd.yaml built, tested and VirusTotal-scanned is the zip that ships.
+#
+# Schedule: GitHub cron is UTC only. 06:00 UTC = 02:00 EDT (Mar-Nov) / 01:00 EST (Nov-Mar).
+# Scheduled runs use the 'beta' environment (no approval). Manual runs use 'beta-manual',
+# which waits for the required reviewer.
+on:
+  schedule:
+    - cron: '0 6 * * *'
+  workflow_dispatch:
+    inputs:
+      force:
+        description: 'Cut a beta even if the newest green dev build is already the latest beta (fails if that tag exists)'
+        type: boolean
+        default: false
+
+permissions:
+  contents: write
+  actions: read
+
+concurrency:
+  group: beta-release
+  cancel-in-progress: false
+
+jobs:
+  beta-release:
+    runs-on: ubuntu-latest
+    environment: ${{ github.event_name == 'schedule' && 'beta' || 'beta-manual' }}
+    env:
+      RELEASE_APP_ID: ${{ secrets.RELEASE_APP_ID }}
+      REPO: ${{ github.repository }}
+      GH_REPO: ${{ github.repository }}
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      with:
+        ref: dev
+        fetch-depth: 0  # full history and tags: release notes are built from commits since the last tag
+
+    # The tag ruleset on refs/tags/v* only lets the release app create or delete v* tags.
+    - name: Create release app token
+      id: app_token
+      if: ${{ env.RELEASE_APP_ID != '' }}
+      uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 # v3.2.0
+      with:
+        app-id: ${{ secrets.RELEASE_APP_ID }}
+        private-key: ${{ secrets.RELEASE_APP_PRIVATE_KEY }}
+
+    - name: Log release token
+      shell: pwsh
+      env:
+        HAVE_APP_TOKEN: ${{ steps.app_token.outputs.token != '' }}
+      run: |
+        if ($env:HAVE_APP_TOKEN -eq 'true') {
+          Write-Host "Release token: GitHub App installation token (RELEASE_APP_ID)"
+        } else {
+          Write-Host "Release token: GITHUB_TOKEN (fallback)"
+          Write-Host "::warning title=No release app::RELEASE_APP_ID is empty; falling back to GITHUB_TOKEN. Release and tag writes only work while the v* tag ruleset is disabled."
+        }
+
+    - name: Find newest green dev build
+      id: pick
+      shell: pwsh
+      env:
+        GH_TOKEN: ${{ github.token }}
+        FORCE: ${{ inputs.force }}
+      run: |
+        $ErrorActionPreference = 'Stop'
+        function Out-Pick($k, $v) { "$k=$v" >> $env:GITHUB_OUTPUT }
+
+        # Gate: a ci-cd.yaml push run on dev whose conclusion is success AND whose virustotal-scan
+        # job and its 'Evaluate ZIP scan result' step both succeeded. That step exits 1 on every
+        # path that does not set zip_clean=true, so step success == zip_clean true. The explicit
+        # job check matters because a run can be 'success' with virustotal-scan skipped.
+        $runs = gh run list --workflow ci-cd.yaml --branch dev --event push --status completed --limit 30 `
+          --json databaseId,headSha,conclusion,createdAt | ConvertFrom-Json
+        $picked = $null
+        foreach ($r in ($runs | Where-Object conclusion -eq 'success' | Sort-Object createdAt -Descending)) {
+          $jobs = (gh api "repos/$env:REPO/actions/runs/$($r.databaseId)/jobs?per_page=100" | ConvertFrom-Json).jobs
+          $vt = $jobs | Where-Object name -eq 'virustotal-scan' | Select-Object -First 1
+          $eval = $vt.steps | Where-Object name -eq 'Evaluate ZIP scan result' | Select-Object -First 1
+          if ($vt -and $vt.conclusion -eq 'success' -and $eval -and $eval.conclusion -eq 'success') {
+            $picked = $r; break
+          }
+          Write-Host "Skipping run $($r.databaseId): virustotal-scan not a clean success"
+        }
+        if (-not $picked) {
+          Write-Host "::error::No fully green ci-cd.yaml run found on dev in the last 30 completed runs."
+          exit 1
+        }
+        Write-Host "Newest green run: $($picked.databaseId) at $($picked.headSha)"
+
+        # Latest existing beta release -> the commit it was cut from.
+        $betaRe = '^v(\d+)\.(\d+)\.(\d+)-beta\.(\d+)$'
+        $betas = @(gh release list --limit 200 --json tagName | ConvertFrom-Json |
+          Where-Object { $_.tagName -match $betaRe })
+        $latest = $betas | Sort-Object { [version]($_.tagName -replace $betaRe, '$1.$2.$3.$4') } -Descending |
+          Select-Object -First 1
+        if ($latest) {
+          $latestSha = gh api "repos/$env:REPO/commits/$($latest.tagName)" --jq .sha
+          Write-Host "Latest beta: $($latest.tagName) at $latestSha"
+          if ($latestSha -eq $picked.headSha -and $env:FORCE -ne 'true') {
+            Write-Host "::notice title=No change::No change since last beta ($($latest.tagName)); nothing to release."
+            Out-Pick 'skip' 'true'
+            exit 0
+          }
+        } else {
+          Write-Host "No existing beta release."
+        }
+        Out-Pick 'skip' 'false'
+        Out-Pick 'run_id' $picked.databaseId
+        Out-Pick 'sha' $picked.headSha
+
+    - name: Download tested artifact
+      if: steps.pick.outputs.skip == 'false'
+      id: fetch
+      shell: pwsh
+      env:
+        GH_TOKEN: ${{ github.token }}
+        RUN_ID: ${{ steps.pick.outputs.run_id }}
+      run: |
+        $ErrorActionPreference = 'Stop'
+        $arts = (gh api "repos/$env:REPO/actions/runs/$env:RUN_ID/artifacts?name=veeam-healthcheck-zip" | ConvertFrom-Json).artifacts
+        $art = $arts | Select-Object -First 1
+        if (-not $art -or $art.expired) {
+          Write-Host "::error title=Artifact expired::veeam-healthcheck-zip from run $env:RUN_ID is gone (7-day retention). Push a new green dev build and re-run."
+          exit 1
+        }
+        gh run download $env:RUN_ID --repo $env:REPO --name veeam-healthcheck-zip --dir release-files
+        if ($LASTEXITCODE -ne 0) { throw "gh run download failed" }
+        $zip = Get-ChildItem release-files -Filter 'VeeamHealthCheck-*.zip' | Select-Object -First 1
+        if (-not $zip) { throw "No VeeamHealthCheck-*.zip in the downloaded artifact" }
+        if ($zip.BaseName -notmatch '^VeeamHealthCheck-(\d+)\.(\d+)\.(\d+)\.(\d+)$') {
+          throw "Cannot derive version from zip name '$($zip.Name)'"
+        }
+        $version = "$($Matches[1]).$($Matches[2]).$($Matches[3]).$($Matches[4])"
+        $tag = "v$($Matches[1]).$($Matches[2]).$($Matches[3])-beta.$($Matches[4])"
+        $hash = (Get-FileHash $zip.FullName -Algorithm SHA256).Hash
+        $sizeMB = [math]::Round($zip.Length / 1MB, 2)
+        "version=$version" >> $env:GITHUB_OUTPUT
+        "tag=$tag" >> $env:GITHUB_OUTPUT
+        "zip=$($zip.FullName)" >> $env:GITHUB_OUTPUT
+        "zip_name=$($zip.Name)" >> $env:GITHUB_OUTPUT
+        "hash=$hash" >> $env:GITHUB_OUTPUT
+        "size_mb=$sizeMB" >> $env:GITHUB_OUTPUT
+        Write-Host "Version $version -> $tag, sha256 $hash"
+
+    - name: Generate release notes
+      if: steps.pick.outputs.skip == 'false'
+      shell: pwsh
+      env:
+        GH_TOKEN: ${{ github.token }}
+        SHA: ${{ steps.pick.outputs.sha }}
+        RUN_ID: ${{ steps.pick.outputs.run_id }}
+        VERSION: ${{ steps.fetch.outputs.version }}
+        TAG: ${{ steps.fetch.outputs.tag }}
+        ZIP_NAME: ${{ steps.fetch.outputs.zip_name }}
+        ZIP_HASH: ${{ steps.fetch.outputs.hash }}
+        SIZE_MB: ${{ steps.fetch.outputs.size_mb }}
+      run: |
+        $ErrorActionPreference = 'Stop'
+        $repo = $env:REPO
+        $sha = $env:SHA
+        $version = $env:VERSION
+
+        # Start of the notes range: the highest of GA, legacy -dev and -beta tags (a legacy -dev
+        # tag covers the first beta). Tag parts compare numerically; prerelease suffixes never
+        # affect which GA tag is the Base Tag.
+        Import-Module ./.github/scripts/VhcVersion.psm1 -Force
+        $tags = @(git tag --list 'v*')
+        $cands = [System.Collections.Generic.List[object]]::new()
+        $ga = Select-VhcHighestTag -Tags $tags -IncludeDev
+        if ($ga) { $cands.Add([pscustomobject]@{ Name = $ga.Name; Version = $ga.Version }) }
+        foreach ($t in $tags) {
+          if ($t -match '^v([0-9]+)\.([0-9]+)\.([0-9]+)-beta\.([0-9]+)$') {
+            try { $cands.Add([pscustomobject]@{ Name = $t; Version = [version]"$($Matches[1]).$($Matches[2]).$($Matches[3]).$($Matches[4])" }) } catch { }
+          }
+        }
+        $lastTag = ($cands | Sort-Object Version -Descending | Select-Object -First 1).Name
+        if (-not $lastTag) { $lastTag = git rev-list --max-parents=0 $sha | Select-Object -First 1 }
+        Write-Host "Notes range: $lastTag..$sha"
+
+        $features = [System.Collections.Generic.List[string]]::new()
+        $fixes    = [System.Collections.Generic.List[string]]::new()
+        $testsCI  = [System.Collections.Generic.List[string]]::new()
+        $other    = [System.Collections.Generic.List[string]]::new()
+        $handledIssues = [System.Collections.Generic.HashSet[string]]::new()
+        $RS = [char]0x1E
+        $FS = [char]0x1F
+
+        foreach ($record in ((git log "$lastTag..$sha" --pretty=format:"%h$FS%s$FS%b$RS" --no-merges) -join "`n") -split $RS) {
+          if ([string]::IsNullOrWhiteSpace($record)) { continue }
+          $fields = $record -split $FS, 3
+          $short  = $fields[0].Trim()
+          $subj   = $fields[1].Trim()
+          $body   = if ($fields.Count -gt 2) { $fields[2] } else { '' }
+
+          # Attribute only when GitHub resolves the commit author to a verified account.
+          $login       = gh api "repos/$repo/commits/$short" --jq '.author.login // empty' 2>$null
+          $attribution = if ($login) { " — @$login" } else { '' }
+
+          if ($subj -match '^feat(?:\([^)]+\))?!?:\s*(.+)') {
+            $features.Add("- $($Matches[1].Trim()) ($short)$attribution")
+          } elseif ($subj -match '^fix(?:\([^)]+\))?!?:\s*(.+)') {
+            $desc      = $Matches[1].Trim()
+            $issueRefs = [regex]::Matches($body, '(?:Fixes|Closes|Resolves)\s+#(\d+)', 'IgnoreCase') |
+              ForEach-Object { $_.Groups[1].Value } | Sort-Object -Unique
+            $closesNote = if ($issueRefs.Count -gt 0) {
+              ', closes ' + (($issueRefs | ForEach-Object { "[#$_](https://github.com/$repo/issues/$_)" }) -join ', ')
+            } else { '' }
+            $fixes.Add("- $desc ($short)$closesNote$attribution")
+            $issueRefs | ForEach-Object { [void]$handledIssues.Add($_) }
+          } elseif ($subj -match '^(?:test|ci|chore|docs|build|refactor|style|perf)(?:\([^)]+\))?!?:\s*(.+)') {
+            $testsCI.Add("- $($Matches[1].Trim()) ($short)$attribution")
+          } else {
+            $other.Add("- $subj ($short)$attribution")
+          }
+        }
+
+        $fixedIssues = (git log "$lastTag..$sha" --pretty=format:"%B") |
+          Select-String -Pattern '(?:Fixes|Closes|Resolves)\s+#(\d+)' -AllMatches |
+          ForEach-Object { $_.Matches } | ForEach-Object { $_.Groups[1].Value } |
+          Sort-Object -Unique |
+          Where-Object { -not $handledIssues.Contains($_) }
+
+        $n = [System.Collections.Generic.List[string]]::new()
+        $n.Add("## Veeam Health Check $env:TAG — Beta")
+        $n.Add("")
+        $n.Add("> ⚠️ **Nightly beta.** Promoted from the newest fully green ``dev`` build; the zip below is the exact artifact CI built and tested, not a rebuild. Not recommended for production — use the [latest stable release](https://github.com/$repo/releases/latest).")
+        $n.Add("")
+
+        if ($features.Count -gt 0) {
+          $n.Add("### ✨ Features"); $n.Add("")
+          $features | ForEach-Object { $n.Add($_) }; $n.Add("")
+        }
+        if ($fixes.Count -gt 0 -or $fixedIssues.Count -gt 0) {
+          $n.Add("### 🐛 Bug Fixes"); $n.Add("")
+          $fixes | ForEach-Object { $n.Add($_) }
+          $fixedIssues | ForEach-Object { $n.Add("- Fixes #$_ ([#$_](https://github.com/$repo/issues/$_))") }
+          $n.Add("")
+        }
+        if ($testsCI.Count -gt 0) {
+          $n.Add("### 🧪 Tests & CI"); $n.Add("")
+          $testsCI | ForEach-Object { $n.Add($_) }; $n.Add("")
+        }
+        if ($other.Count -gt 0) {
+          $n.Add("### 📝 Other Changes"); $n.Add("")
+          $other | ForEach-Object { $n.Add($_) }; $n.Add("")
+        }
+        if (($features.Count + $fixes.Count + $fixedIssues.Count + $testsCI.Count + $other.Count) -gt 0) {
+          $n.Add("---"); $n.Add("")
+        }
+
+        $n.Add("### ✅ CI Verification")
+        $n.Add("- ✅ Build, tests, integration tests and VirusTotal scan all passed in [CI run $env:RUN_ID](https://github.com/$repo/actions/runs/$env:RUN_ID)")
+        $n.Add("")
+        $n.Add("### 📦 Download")
+        $n.Add("**$env:ZIP_NAME** ($env:SIZE_MB MB)")
+        $n.Add("")
+        $n.Add("**SHA256 Checksum:**")
+        $n.Add('```')
+        $n.Add($env:ZIP_HASH)
+        $n.Add('```')
+        $n.Add("")
+        $n.Add("**Verification Command:**")
+        $n.Add('```powershell')
+        $n.Add("(Get-FileHash ``$env:ZIP_NAME``).Hash")
+        $n.Add('```')
+        $n.Add("")
+        $n.Add("### 📋 Requirements")
+        $n.Add("- Windows 10 (1607) or later, or Windows Server 2012 or later")
+        $n.Add("- .NET 10 runtime (included in self-contained build)")
+        $n.Add("- PowerShell 5.1 or later")
+        $n.Add("")
+        $n.Add("---")
+        $n.Add("")
+        $n.Add("**Branch:** ``dev``")
+        $n.Add("**Built from:** [$sha](https://github.com/$repo/commit/$sha)")
+        $n.Add("**Build version:** $version")
+
+        ($n -join "`n") | Out-File -FilePath "beta_notes.md" -Encoding UTF8
+        Write-Host "Generated beta release notes"
+
+    - name: Create beta release
+      if: steps.pick.outputs.skip == 'false'
+      shell: pwsh
+      env:
+        GH_TOKEN: ${{ steps.app_token.outputs.token || github.token }}
+        SHA: ${{ steps.pick.outputs.sha }}
+        TAG: ${{ steps.fetch.outputs.tag }}
+        VERSION: ${{ steps.fetch.outputs.version }}
+        ZIP: ${{ steps.fetch.outputs.zip }}
+      run: |
+        $ErrorActionPreference = 'Stop'
+        $existing = @(gh release list --limit 200 --json tagName,isDraft | ConvertFrom-Json | Where-Object tagName -eq $env:TAG)
+        if ($existing | Where-Object { -not $_.isDraft }) {
+          throw "Release $env:TAG already exists; refusing to overwrite. Delete it first if you really want to recut."
+        }
+        # A draft left by a crashed earlier run would make a duplicate; draft releases have no tag yet.
+        if ($existing) { gh release delete $env:TAG --yes; if ($LASTEXITCODE -ne 0) { throw "could not delete stale draft" } }
+
+        # Draft first, publish after the asset is attached, so a half-uploaded release is never public
+        # and never counts as "the latest beta".
+        gh release create $env:TAG $env:ZIP --draft --prerelease --target $env:SHA `
+          --title "[Beta] Veeam Health Check $env:TAG" --notes-file beta_notes.md
+        if ($LASTEXITCODE -ne 0) { throw "gh release create failed" }
+        gh release edit $env:TAG --draft=false --prerelease
+        if ($LASTEXITCODE -ne 0) { throw "gh release publish failed" }
+        Write-Host "Published $env:TAG at $env:SHA"
+
+    - name: Prune old beta releases
+      if: steps.pick.outputs.skip == 'false'
+      shell: pwsh
+      env:
+        GH_TOKEN: ${{ steps.app_token.outputs.token || github.token }}
+      run: |
+        $ErrorActionPreference = 'Stop'
+        $keep = 10
+        # Only -beta.N releases; GA, -rc and legacy -dev releases are never matched.
+        $betaRe = '^v(\d+)\.(\d+)\.(\d+)-beta\.(\d+)$'
+        $betas = @(gh release list --limit 200 --json tagName,isDraft | ConvertFrom-Json |
+          Where-Object { -not $_.isDraft -and $_.tagName -match $betaRe } |
+          Sort-Object { [version]($_.tagName -replace $betaRe, '$1.$2.$3.$4') } -Descending)
+        Write-Host "$($betas.Count) beta release(s); keeping $keep"
+        foreach ($old in ($betas | Select-Object -Skip $keep)) {
+          Write-Host "Deleting $($old.tagName)"
+          gh release delete $old.tagName --cleanup-tag --yes
+          if ($LASTEXITCODE -ne 0) { Write-Host "::warning::Could not delete $($old.tagName)" }
+        }

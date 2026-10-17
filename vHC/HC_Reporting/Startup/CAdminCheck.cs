@@ -1,5 +1,6 @@
 ﻿// Copyright (c) 2021, Adam Congdon <adam.congdon2@gmail.com>
 // MIT License
+using System;
 using System.Security.Principal;
 
 namespace VeeamHealthCheck
@@ -8,12 +9,14 @@ namespace VeeamHealthCheck
     {
         public bool IsAdmin()
         {
-            using (WindowsIdentity identity = WindowsIdentity.GetCurrent())
+            if (!OperatingSystem.IsWindows())
             {
-                WindowsPrincipal principal = new WindowsPrincipal(identity);
-                bool IsAdmin = principal.IsInRole(WindowsBuiltInRole.Administrator);
-                return IsAdmin;
+                return Environment.IsPrivilegedProcess;
             }
+
+            // WindowsIdentity owns a token handle; dispose it (the pre-Avalonia code did).
+            using var identity = WindowsIdentity.GetCurrent();
+            return new WindowsPrincipal(identity).IsInRole(WindowsBuiltInRole.Administrator);
         }
     }
 }

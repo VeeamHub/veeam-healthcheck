@@ -6,7 +6,8 @@ namespace VhcXTests
 {
     // Serializes every test class that mutates shared mutable static state
     // (CGlobals.desiredPath / IMPORT / IMPORT_PATH / Scrubber, CVariables.ResolvedImportPath,
-    // and the static CLogger). xUnit parallelizes test classes across threads by default,
+    // the static CLogger, and CredentialStore's static _cache/StorePath). xUnit parallelizes
+    // test classes across threads by default,
     // and the ctor/Dispose save-restore pattern only guards SEQUENTIAL leakage on one thread —
     // it cannot stop a concurrent thread mutating the same statics. Placing all such classes in
     // this single DisableParallelization collection makes the suite deterministic without

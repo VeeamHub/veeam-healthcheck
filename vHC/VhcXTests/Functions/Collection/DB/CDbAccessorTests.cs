@@ -25,10 +25,6 @@
 //
 // xUnit conventions followed: [Fact] / [Theory], Arrange-Act-Assert, naming convention
 //   MethodUnderTest_Scenario_ExpectedBehavior. Matches CredentialHelperTests.cs style.
-//
-// These tests require Windows (WPF dependency in VeeamHealthCheck.csproj).
-// If the project does not compile on this machine (macOS / non-Windows), the test file
-// is committed and ISC-12 through ISC-18 evidence comes from Windows CI.
 
 using System;
 using System.Collections.Generic;

@@ -17,7 +17,8 @@ A manually-triggered workflow for creating releases with full control over the p
 | Input | Required | Description |
 |-------|----------|-------------|
 | `pr_number` | No | PR number to extract changelog from. Leave empty for no changelog. |
-| `version_override` | No | Override version (e.g., `3.0.0.500`). Leave empty to use AssemblyVersion from csproj. |
+| `version_override` | No | Override the version (four parts, e.g., `3.2.0.5`; must be above the last GA version). Leave empty to compute it from commits. |
+| `prerelease` | No | Mark as pre-release. The tag gets an `-rc` suffix, so it never becomes a Base Tag. |
 | `skip_virustotal` | No | Check to skip VirusTotal scanning |
 | `dry_run` | No | Check to build without creating release (preview mode) |
 
@@ -71,6 +72,22 @@ Automatic pipeline that runs on every push to master/dev branches.
 
 ---
 
+## Beta Release Workflow
+
+**File:** `beta-release.yml`
+
+Nightly (`0 6 * * *` UTC, about 02:00 Eastern) or manual (**Actions** → **Beta Release**). Replaces the old per-push dev prerelease: `ci-cd.yaml` no longer publishes releases for `dev`.
+
+- **Promotion, not rebuild.** It picks the newest `ci-cd.yaml` push run on `dev` that fully passed and ships that run's `veeam-healthcheck-zip` artifact, so what was tested is what ships. Artifacts expire after 7 days; if the newest green build is older than that the run fails with a clear message.
+- **Gate.** The run must have concluded `success` and its `virustotal-scan` job (including the `Evaluate ZIP scan result` step) must have succeeded, which is the same condition as `zip_clean == true`.
+- **No change, no release.** If the green build's commit is already the latest beta, the run exits with a notice. Manual runs can set `force` to cut anyway (fails if that tag exists).
+- **Tag and title.** `3.1.0.250` becomes tag `v3.1.0-beta.250`, titled `[Beta] Veeam Health Check v3.1.0-beta.250`, marked prerelease, targeting the built commit. Notes list commits since the highest GA, legacy `-dev` or `-beta` tag, plus the zip SHA256. `-beta.N` tags never become a Base Tag.
+- **Retention.** After a cut, only the newest 10 `-beta.` releases are kept; older ones are deleted with their tags. GA, `-rc` and legacy `-dev` releases are never touched.
+- **Environments.** Scheduled runs use `beta` (no approval); manual runs use `beta-manual`, which waits for the required reviewer. Both are limited to `dev`.
+- **Tokens.** Tags under `v*` are protected by a tag ruleset, so releases are created with a GitHub App token from `RELEASE_APP_ID` / `RELEASE_APP_PRIVATE_KEY`. If `RELEASE_APP_ID` is empty the run logs a warning and falls back to `GITHUB_TOKEN`.
+
+---
+
 ## Other Workflows
 
 | Workflow | Trigger | Purpose |
@@ -95,6 +112,8 @@ Automatic pipeline that runs on every push to master/dev branches.
 | `VBR_HOST` | Secret | Integration tests | VBR server hostname |
 | `VBR_USER` | Secret | Integration tests | VBR username |
 | `VBR_PASSWORD` | Secret | Integration tests | VBR password |
+| `RELEASE_APP_ID` | Environment secret (`beta`, `beta-manual`) | Beta release | GitHub App that may create/delete `v*` tags |
+| `RELEASE_APP_PRIVATE_KEY` | Environment secret (`beta`, `beta-manual`) | Beta release | Private key for that app |
 
 ## Self-Hosted Runners
 
@@ -104,3 +123,45 @@ Integration tests require self-hosted runners with these labels:
 - `VBR13SQL_HOST` - VBR v13 with SQL
 
 If runners aren't configured, integration tests will be skipped and releases will proceed normally.
+
+## Versioning
+
+Release versions are computed from commits by `.github/scripts/Get-VhcVersion.ps1` (see
+[ADR 0031](../../docs/adr/0031-commit-driven-four-part-versioning-with-csproj-floor.md) and
+[ADR 0032](../../docs/adr/0032-base-tag-is-highest-ga-tag.md)). `ci-cd.yaml`,
+`manual-release.yml`, `pr-release-prep.yml` and `sbom-generation.yml` all call it. Two exceptions:
+`pr-release-prep.yml` falls back to the csproj version when a fork's branch lacks the script, and
+`sbom-generation.yml` uses the release tag's version on `release` events.
+
+- `Major.Minor.Patch` comes from the Conventional Commits since the last GA tag
+  (`!:` / `BREAKING CHANGE:` = major, `feat:` = minor, anything else = patch), raised to the csproj
+  `Major.Minor` floor, or set by a `Release-As: X.Y.Z` commit footer. With no non-merge commits since
+  the last GA tag the bump is `none`: the version is that tag's `Major.Minor.Patch` (raised to the floor).
+- `Release-As:` and `BREAKING CHANGE:` footers are read from non-merge commits only (`git log --no-merges`),
+  so a footer in a merge commit message is ignored. The highest `Release-As` wins and overrides the
+  commit-derived bump. A malformed one (non-numeric, out of range, non-ASCII digits) fails the compute
+  step with a `Malformed Release-As footer` error. An out-of-range stray tag is ignored when choosing the
+  last GA tag.
+- `Revision` is a run number: `ci-cd.yaml`, `pr-release-prep.yml` and `version-preview.yml` use their own
+  `github.run_number`; `manual-release.yml` and the non-release path of `sbom-generation.yml` use the
+  latest `ci-cd.yaml` run number.
+- Any job that calls the script needs `actions/checkout` with `fetch-depth: 0` so tags and history exist.
+- Release tags are created on the commit that was built (`target_commitish`), not the default branch tip.
+
+### Version Preview (`version-preview.yml`)
+
+Runs on PRs into `master` or `dev` and on manual dispatch. It prints the version the commit would get,
+without building anything or touching the lab runners. Check the job summary. Only `Major.Minor.Patch`
+is meaningful: the Revision is this workflow's own run number. On dispatch the preview uses the `dev`
+channel, which only affects `notes_from_tag`.
+
+### Commit Lint (`commit-lint.yml`)
+
+Advisory: annotates PR titles and commits that are not Conventional Commits (an untyped commit counts
+as a patch), use an unknown commit type, or carry a malformed `Release-As:` footer. It never fails the PR. To enforce it, add `-Strict` to the script call and mark the check
+required in branch protection.
+
+### Pester tests
+
+`.github/scripts/VhcVersion.Tests.ps1` runs in `pester-tests.yml`. Locally:
+`pwsh -NoProfile -Command "Invoke-Pester -Path .github/scripts/VhcVersion.Tests.ps1 -Output Detailed"`.

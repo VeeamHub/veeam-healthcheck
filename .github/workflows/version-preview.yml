@@ -1,0 +1,32 @@
+name: Version Preview
+
+# Shows the version the commit-driven scheme (docs/adr/0031) would compute for this commit,
+# without building or releasing anything. Runs on every PR and on demand.
+# The revision shown is this workflow's own run number, so only Major.Minor.Patch is meaningful.
+
+on:
+  pull_request:
+    branches: [master, dev]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  preview:
+    name: Computed version
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          fetch-depth: 0  # full history and tags
+
+      - name: Compute version
+        shell: pwsh
+        env:
+          BASE_REF: ${{ github.base_ref }}
+        run: |
+          $channel = if ($env:BASE_REF -eq 'master') { 'ga' } else { 'dev' }
+          ./.github/scripts/Get-VhcVersion.ps1 -Revision ${{ github.run_number }} -Channel $channel -GitHubOutput

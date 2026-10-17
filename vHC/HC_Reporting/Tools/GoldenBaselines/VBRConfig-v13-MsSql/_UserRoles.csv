@@ -1,0 +1,4 @@
+"Name","Role"
+"VEEAM\admin","Veeam Backup Administrator"
+"VEEAM\backup_operator","Veeam Backup Operator"
+"VEEAM\restore_operator","Veeam Restore Operator"

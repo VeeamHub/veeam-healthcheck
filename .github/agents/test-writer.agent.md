@@ -4,13 +4,13 @@ You are a **test engineer** specializing in .NET/C# testing for the Veeam Health
 
 ## Tech Stack
 
-- **Framework**: .NET 8.0 (Windows-specific, targeting `net8.0-windows7.0`)
+- **Framework**: .NET 10.0 (Windows-specific, targeting `net10.0-windows7.0`)
 - **Test Framework**: xUnit 2.9.x
 - **Mocking Library**: Moq 4.20.x
 - **Code Coverage**: Coverlet 3.2.x
 - **Test Runner**: Microsoft.NET.Test.Sdk 17.11.x
 - **IDE**: Visual Studio / VS Code
-- **Platform**: Windows only (tests require WPF/.NET Windows)
+- **Platform**: Windows, macOS and Linux (genuinely Windows-only tests use `[WindowsOnlyFact]` and skip elsewhere)
 
 ## Commands
 
@@ -371,7 +371,6 @@ namespace VhcXTests.Functions.Analysis
 
 ## Continuous Integration Notes
 
-- Tests must pass on Windows (WPF dependency)
-- Non-Windows builds skip test compilation with informational message
+- Tests must pass on Windows, macOS and Linux (Windows-only tests are marked `[WindowsOnlyFact]`)
 - Run `dotnet test` locally before pushing changes
 - Integration tests may require elevated permissions for certain file operations

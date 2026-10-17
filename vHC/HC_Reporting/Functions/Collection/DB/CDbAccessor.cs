@@ -89,7 +89,10 @@ namespace VeeamHealthCheck.Functions.Collection.DB
 
         private static string GetConnectionString()
         {
-            return "Server=(local);Integrated Security=SSPI;";
+            // Connect Timeout bounds how long Open() blocks before failing. Without it the
+            // default is 15s, but we set it explicitly so a wrong/unreachable SQL host fails
+            // loudly in the log rather than appearing to "hang" during collection.
+            return "Server=(local);Integrated Security=SSPI;Connect Timeout=15;";
         }
     }
 }

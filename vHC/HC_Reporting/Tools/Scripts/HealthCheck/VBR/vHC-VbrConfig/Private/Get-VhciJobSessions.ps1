@@ -44,15 +44,31 @@ function Get-VhciJobSessions {
         $until = Get-Date
 
         $results = New-Object System.Collections.ArrayList
+
+        # A session can come back for more than one queried job: the query
+        # for a policy job already returns its per-machine child sessions
+        # (ADR 0018), so a job that also owns them (a Backup Copy worker
+        # found by discovery, issue #224) would return them a second time and
+        # double-count them downstream. Keep the first copy by session Id.
+        # A session without a usable Id cannot be compared and is always kept.
+        $seenSessionIds = [System.Collections.Generic.HashSet[string]]::new([System.StringComparer]::OrdinalIgnoreCase)
+        $duplicateCount = 0
         foreach ($job in $Jobs) {
             try {
                 $jobResults = @(Invoke-VhciCBackupSessionFetch -JobId $job.Id -Since $Since -Until $until)
-                if ($jobResults.Count -gt 0) {
-                    [void]$results.AddRange($jobResults)
+                foreach ($session in $jobResults) {
+                    if ($null -ne $session -and $null -ne $session.Id -and -not $seenSessionIds.Add($session.Id.ToString())) {
+                        $duplicateCount++
+                        continue
+                    }
+                    [void]$results.Add($session)
                 }
             } catch {
                 Write-LogFile "[$PathLabel] Failed to fetch sessions for job '$($job.Name)': $($_.Exception.Message)" -LogLevel 'WARNING'
             }
+        }
+        if ($duplicateCount -gt 0) {
+            Write-LogFile "[$PathLabel] Dropped $duplicateCount duplicate session(s) returned for more than one job"
         }
         Write-LogFile "[$PathLabel] Collected $($results.Count) sessions via fast path"
         return @($results)

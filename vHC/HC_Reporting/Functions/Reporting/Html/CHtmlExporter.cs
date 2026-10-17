@@ -6,8 +6,6 @@ using System;
 using System.Diagnostics;
 using System.IO;
 using System.Text.Json;
-using System.Windows;
-using System.Windows.Controls;
 using VeeamHealthCheck.Functions.Collection.LogParser;
 using VeeamHealthCheck.Functions.Reporting.Html.Exportables;
 using VeeamHealthCheck.Scrubber;
@@ -26,8 +24,8 @@ namespace VeeamHealthCheck.Functions.Reporting.Html
 
         // path settings
         private readonly string basePath = CGlobals.desiredPath;
-        private readonly string anonPath = CGlobals.desiredPath + CVariables.safeSuffix;
-        private readonly string origPath = CGlobals.desiredPath + CVariables.unsafeSuffix;
+        private readonly string anonPath = CCrossPlatformPath.Combine(CGlobals.desiredPath, CVariables.safeSuffix);
+        private readonly string origPath = CCrossPlatformPath.Combine(CGlobals.desiredPath, CVariables.unsafeSuffix);
 
         private readonly string backupServerName;
         private string latestReport;
@@ -63,9 +61,16 @@ namespace VeeamHealthCheck.Functions.Reporting.Html
             try
             {
                 this.log.Info("exporting xml to html");
-                this.latestReport = this.SetReportNameAndPath(scrub, "VB365");
+                this.latestReport = this.SetReportNameAndPath(scrub, "VB365", VmcLogMode.Vb365);
+                if (scrub)
+                {
+                    htmlString = CGlobals.Scrubber.FinalizeScrubbedText(htmlString);
+                }
+
                 this.WriteHtmlToFile(htmlString);
                 this.log.Info("exporting xml to html..done!");
+
+                this.WarnIfExportsSkippedForScrub(scrub);
 
                 // test export to PDF:
                 if (!scrub && CGlobals.EXPORTPDF)
@@ -94,12 +99,19 @@ namespace VeeamHealthCheck.Functions.Reporting.Html
             try
             {
                 this.log.Info("exporting xml to html");
-                this.latestReport = this.SetReportNameAndPath(scrub, "VBR");
+                this.latestReport = this.SetReportNameAndPath(scrub, "VBR", VmcLogMode.Vbr);
+                if (scrub)
+                {
+                    htmlString = CGlobals.Scrubber.FinalizeScrubbedText(htmlString);
+                }
+
                 this.WriteHtmlToFile(htmlString);
                 this.log.Info("exporting xml to html..done!");
 
                 // Export JSON report alongside HTML
                 this.ExportJsonReport(scrub);
+
+                this.WarnIfExportsSkippedForScrub(scrub);
 
                 // test export to PDF:
                 if (!scrub && CGlobals.EXPORTPDF)
@@ -123,8 +135,19 @@ namespace VeeamHealthCheck.Functions.Reporting.Html
             }
         }
 
+        // PDF and PowerPoint are only generated for the original report (see ScrubbedExportPolicy),
+        // so say so instead of skipping them silently (#261).
+        private void WarnIfExportsSkippedForScrub(bool scrub)
+        {
+            foreach (string format in ScrubbedExportPolicy.SkippedFormats(scrub, CGlobals.EXPORTPDF, CGlobals.EXPORTPPTX))
+            {
+                this.log.Warning($"{format} export skipped: it is not available for scrubbed reports. Run without scrubbing to export a {format}.");
+            }
+        }
+
         private void ExportHtmlStringToPDF(string htmlString)
         {
+            this.log.Info("Exporting HTML to PDF...");
             HtmlToPdfConverter pdf = new HtmlToPdfConverter();
 
             // find all instances of "display: none;" and replace with "display: block;" in the htmlString
@@ -132,6 +155,14 @@ namespace VeeamHealthCheck.Functions.Reporting.Html
 
             // find all instances of class="collapsible classBtn" and replace with class="collapsible classBtn active"
             htmlShowAll = htmlShowAll.Replace("collapsible classBtn", "collapsible classBtn active");
+
+            // Orphaned & Superseded Backups' per-object detail rows are hidden
+            // via the .detail-row CSS class (css.css), not an inline style, so
+            // the "display: none" replace above never matches them. An inline
+            // style here wins over the class rule's specificity and forces the
+            // row visible for this export copy only - the saved .html report
+            // (htmlString, untouched) still hides it by default.
+            htmlShowAll = htmlShowAll.Replace("<tr class=\"detail-row\">", "<tr class=\"detail-row\" style=\"display: table-row\">");
 
             // find all instance of overflow: scroll; and replace with overflow: visible;
             htmlShowAll = htmlShowAll.Replace("overflow: scroll;", "overflow: visible;");
@@ -147,8 +178,24 @@ namespace VeeamHealthCheck.Functions.Reporting.Html
             htmlShowAll = htmlShowAll.Replace("⚠️", "(!)");
             htmlShowAll = htmlShowAll.Replace("&#9432;", "ℹ️");
 
-            pdf.ConvertHtmlToPdf(htmlShowAll, this.latestReport.Replace(".html", ".pdf"));
-            pdf.Dispose();
+            string pdfPath = this.latestReport.Replace(".html", ".pdf");
+            try
+            {
+                pdf.ConvertHtmlToPdf(htmlShowAll, pdfPath);
+            }
+            catch (Exception ex)
+            {
+                // Still fatal for the run, as before (the caller's catch reports "Failed at HTML Export");
+                // this just names PDF as the step that failed.
+                this.log.Error("Failed to export PDF: " + ex.Message);
+                throw;
+            }
+            finally
+            {
+                pdf.Dispose();
+            }
+
+            this.log.Info("PDF export completed: " + pdfPath);
 
             // var htmlToDocx = new CHtmlToDocx();
             // htmlToDocx.ExportHtmlToDocx(htmlShowAll, _latestReport.Replace(".html", ".docx"));
@@ -164,6 +211,11 @@ namespace VeeamHealthCheck.Functions.Reporting.Html
                 // Expand all collapsed sections for export
                 string htmlShowAll = htmlString.Replace("style=\"display: none\">", "style=\"display: block\">");
                 htmlShowAll = htmlShowAll.Replace("collapsible classBtn", "collapsible classBtn active");
+
+                // See the identical fix/comment in ExportHtmlStringToPDF:
+                // .detail-row is hidden via a CSS class, not an inline style,
+                // so it needs its own explicit replace here too.
+                htmlShowAll = htmlShowAll.Replace("<tr class=\"detail-row\">", "<tr class=\"detail-row\" style=\"display: table-row\">");
 
                 string pptxPath = this.latestReport.Replace(".html", ".pptx");
                 pptx.ConvertHtmlToPptx(htmlShowAll, pptxPath);
@@ -181,7 +233,11 @@ namespace VeeamHealthCheck.Functions.Reporting.Html
         public int ExportVbrSecurityHtml(string htmlString, bool scrub)
         {
             this.log.Info("exporting xml to html");
-            this.latestReport = this.SetReportNameAndPath(scrub, "VBR_Security");
+            this.latestReport = this.SetReportNameAndPath(scrub, "VBR_Security", VmcLogMode.Vbr);
+            if (scrub)
+            {
+                htmlString = CGlobals.Scrubber.FinalizeScrubbedText(htmlString);
+            }
 
             this.WriteHtmlToFile(htmlString);
             this.log.Info("exporting xml to html..done!");
@@ -212,8 +268,15 @@ namespace VeeamHealthCheck.Functions.Reporting.Html
                 string jsonPath = this.latestReport.Replace(".html", ".json");
                 this.log.Info("Exporting JSON report to: " + jsonPath);
 
+                CGlobals.FullReportJson.VhcVersion = CGlobals.VHCVERSION;
+
                 var options = new JsonSerializerOptions { WriteIndented = true };
                 string json = JsonSerializer.Serialize(CGlobals.FullReportJson, options);
+                if (scrub)
+                {
+                    json = CGlobals.Scrubber.FinalizeScrubbedJson(json);
+                }
+
                 File.WriteAllText(jsonPath, json);
 
                 this.log.Info("JSON report exported successfully");
@@ -224,7 +287,7 @@ namespace VeeamHealthCheck.Functions.Reporting.Html
             }
         }
 
-        private string SetReportNameAndPath(bool scrub, string vbrOrVb365)
+        private string SetReportNameAndPath(bool scrub, string vbrOrVb365, VmcLogMode vmcMode)
         {
             string installID = null;
             string htmlCore = string.Empty;
@@ -235,13 +298,13 @@ namespace VeeamHealthCheck.Functions.Reporting.Html
 
                 if (scrub)
                 {
-                    installID = this.TrySetInstallId(CLogOptions.INSTALLID);
+                    installID = this.TrySetInstallId(CLogOptions.GetInstallId(vmcMode));
 
-                    htmlCore = this.anonPath + "\\" + this.htmlName + "_" + vbrOrVb365 + "_" + installID + dateTime.ToString("_yyyy.MM.dd.HHmmss") + ".html";
+                    htmlCore = Path.Combine(this.anonPath, this.htmlName + "_" + vbrOrVb365 + "_" + installID + dateTime.ToString("_yyyy.MM.dd.HHmmss") + ".html");
                 }
                 else if (!scrub)
                 {
-                    htmlCore = this.origPath + "\\" + this.htmlName + "_" + vbrOrVb365 + "_" + this.backupServerName + dateTime.ToString("_yyyy.MM.dd.HHmmss") + ".html";
+                    htmlCore = Path.Combine(this.origPath, this.htmlName + "_" + vbrOrVb365 + "_" + this.backupServerName + dateTime.ToString("_yyyy.MM.dd.HHmmss") + ".html");
 
                     // log.Warning("htmlcore = " + htmlCore, false);
                 }
@@ -317,17 +380,12 @@ namespace VeeamHealthCheck.Functions.Reporting.Html
 
         private void ExecBrowser()
         {
-            Application.Current.Dispatcher.Invoke(delegate
+            var p = new Process();
+            p.StartInfo = new ProcessStartInfo(this.latestReport)
             {
-                WebBrowser w1 = new();
-
-                var p = new Process();
-                p.StartInfo = new ProcessStartInfo(this.latestReport)
-                {
-                    UseShellExecute = true
-                };
-                p.Start();
-            });
+                UseShellExecute = true
+            };
+            p.Start();
         }
     }
 }

@@ -4,7 +4,9 @@ param(
     [Parameter(Mandatory = $false)]
     [string]$Username = '',
     [Parameter(Mandatory = $false)]
-    [string]$PasswordBase64 = ''
+    [string]$PasswordBase64 = '',
+    [Parameter(Mandatory = $false)]
+    [int]$VBRVersion = 0
 )
 
 # Suppress ANSI color codes in PS7+ so stderr is always plain text
@@ -123,8 +125,12 @@ if ($MyInvocation.InvocationName -ne '.') {
         Write-Host "[VERBOSE] Username: $Username"
 
         # Use -User and -Password parameters directly (same as manual CLI usage)
-        # This approach works better for local accounts vs -Credential
-        Connect-VBRServer -Server $Server -User $Username -Password $password -ForceAcceptTlsCertificate -ErrorAction Stop
+        # This approach works better for local accounts vs -Credential.
+        # -ForceAcceptTlsCertificate only exists on VBR v13+; gate by version so v12 (where the
+        # parameter does not exist and would throw) still connects (issue #149 v12-regression guard).
+        $certParam = @{}
+        if ($VBRVersion -ge 13) { $certParam['ForceAcceptTlsCertificate'] = $true }
+        Connect-VBRServer -Server $Server -User $Username -Password $password @certParam -ErrorAction Stop
         Write-Host "[VERBOSE] Successfully connected to VBR Server."
         exit 0
     }

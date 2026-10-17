@@ -286,6 +286,68 @@ body {
   display: block;
 }
 
+/* ===== Orphaned & Superseded Backups: row-level detail ===== */
+.detail-toggle {
+  cursor: pointer;
+}
+
+.detail-row {
+  display: none;
+}
+
+/* Light-theme defaults, following the same light-bg/dark-text pairing as
+   every other .badge-* variant below (.badge-success/-warning/-danger/-info/
+   -neutral) - the dark colors originally given for these two are only
+   correct once html.dark-theme is active, matching how those other
+   variants split their own light/dark pairs. */
+.badge-orphaned {
+  background-color: #ffe8cc;
+  color: #7a4a00;
+  border: 1px solid #ffd9a8;
+}
+
+.badge-superseded {
+  background-color: #cfe2ff;
+  color: #0a3875;
+  border: 1px solid #b6d4fe;
+}
+
+/* Job not matched but still being written to (#221): amber with a dashed
+   border so it reads as "unconfirmed", distinct from the solid orange
+   .badge-orphaned that means safe to reclaim. */
+.badge-unresolved {
+  background-color: #fff3cd;
+  color: #664d03;
+  border: 1px dashed #e0a800;
+}
+
+html.dark-theme .badge-orphaned {
+  background-color: #5a3a1a;
+  color: #ffb74d;
+  border-color: #7a5228;
+}
+
+html.dark-theme .badge-superseded {
+  background-color: #1a3a5a;
+  color: #64b5f6;
+  border-color: #2a5278;
+}
+
+html.dark-theme .badge-unresolved {
+  background-color: #3d3300;
+  color: #ffd54f;
+  border-color: #8a7000;
+}
+
+/* Defensive fallback for an unexpected Category value; not part of the
+   plan's literal spec, so it follows the existing .badge-neutral
+   light/dark pair (below) rather than inventing new colors. */
+.badge-unknown {
+  background-color: #e2e3e5;
+  color: #383d41;
+  border: 1px solid #d6d8db;
+}
+
 /* ===== Tables ===== */
 table {
   width: 100%;
@@ -323,6 +385,13 @@ tbody td {
 tbody tr:last-child td { border-bottom: none; }
 
 tbody tr:hover { background: #f9fafb; }
+
+/* The license table has 16 columns; at the default cell padding it is wider than the card at 1440px
+   and clips its right-hand columns. Tighter padding and wrapping headers keep every column visible. */
+#license table { font-size: 12px; }
+#license thead th { padding: 8px 4px; font-size: 10px; letter-spacing: 0; vertical-align: bottom; }
+#license tbody td { padding: 8px 4px; }
+#license tbody td:nth-child(13), #license tbody td:nth-child(14) { overflow-wrap: anywhere; }
 
 /* ===== Badges ===== */
 
@@ -542,14 +611,37 @@ button.collapsible.classBtn:hover { background: var(--hover); }
 .content { border: 1px solid var(--border); border-top: none; border-radius: 0 0 8px 8px; padding: 0; overflow: auto; }
 
 /* ===== Print ===== */
+/* Wide tables need the width, so browser print is forced to landscape: Chromium and Edge render a
+   page-defined size regardless of the Layout option. Paper size stays the user's (or the PDF
+   exporter's) choice. */
+@page { size: landscape; }
+
 @media print {
   .sidebar { display: none; }
   .main { margin-left: 0; padding: 16px; }
   .section-card.open .section-body, .section-body { display: block !important; }
   .content { display: block !important; }
+  .detail-row { display: table-row !important; }
   .toolbar { display: none; }
   #myBtn { display: none !important; }
   footer { margin-left: 0; }
+
+  /* Wide tables: un-clip the scroll containers and wrap cells so tables fit the page instead of
+     printing a clipped box with a scrollbar (#257). overflow-wrap: anywhere is deliberate: unlike
+     break-word it lets the table shrink columns below their longest word. */
+  .section-card { overflow: visible; }
+  .section-body, .content { overflow: visible !important; }
+  table { table-layout: auto; page-break-inside: auto; }
+  thead { display: table-header-group; }
+  tr { page-break-inside: avoid; page-break-after: auto; }
+  th, td { white-space: normal; word-wrap: break-word; overflow-wrap: anywhere; }
+
+  /* Shrink tables for browser print (Letter/A4). The PDF exporter marks <html class="pdf-export">
+     and prints on A3, where this made the text needlessly small, so it is skipped there. */
+  html:not(.pdf-export) .section-body { padding: 12px; }
+  html:not(.pdf-export) table { font-size: 10px; }
+  html:not(.pdf-export) thead th { padding: 4px 6px; font-size: 9px; letter-spacing: 0; }
+  html:not(.pdf-export) tbody td { padding: 4px 6px; }
 }
 
 /* Status Badges */
@@ -619,6 +711,12 @@ html.dark-theme .badge-info {
 }
 
 html.dark-theme .badge-neutral {
+    background-color: #2a2d30;
+    color: #a0a4a8;
+    border-color: #3a3d40;
+}
+
+html.dark-theme .badge-unknown {
     background-color: #2a2d30;
     color: #a0a4a8;
     border-color: #3a3d40;

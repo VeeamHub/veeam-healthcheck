@@ -7,19 +7,17 @@ BeforeAll {
 
 Describe 'Invoke-VhciCBackupSessionFetch' {
 
-    It 'requires JobId parameter' {
-        # Mandatory params throw a parameter binding exception when missing.
-        # We invoke the function with no args; PowerShell prompts in interactive
-        # mode but throws here because -NoProfile + non-interactive.
-        { Invoke-VhciCBackupSessionFetch -Since (Get-Date).AddDays(-7) -Until (Get-Date) } | Should -Throw
-    }
-
-    It 'requires Since parameter' {
-        { Invoke-VhciCBackupSessionFetch -JobId ([guid]::NewGuid()) -Until (Get-Date) } | Should -Throw
-    }
-
-    It 'requires Until parameter' {
-        { Invoke-VhciCBackupSessionFetch -JobId ([guid]::NewGuid()) -Since (Get-Date).AddDays(-7) } | Should -Throw
+    # Check the Mandatory attribute directly instead of calling the function with a
+    # parameter missing: a missing mandatory parameter makes PowerShell prompt for it
+    # unless the host is -NonInteractive, which can hang a test run.
+    It 'declares <Name> as a mandatory parameter' -ForEach @(
+        @{ Name = 'JobId' }
+        @{ Name = 'Since' }
+        @{ Name = 'Until' }
+    ) {
+        $param = (Get-Command Invoke-VhciCBackupSessionFetch).Parameters[$Name]
+        $param | Should -Not -BeNullOrEmpty
+        ($param.Attributes | Where-Object { $_ -is [System.Management.Automation.ParameterAttribute] }).Mandatory | Should -Contain $true
     }
 
     It 'accepts [guid] JobId, [datetime] Since and [datetime] Until without a ParameterBindingException' {

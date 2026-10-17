@@ -7,11 +7,36 @@ namespace VeeamHealthCheck.Shared.Logging
 {
     public class CLogger
     {
-        public readonly string logFile;
+        private readonly string jobName;
+
+        public string logFile { get; private set; }
 
         public CLogger(string jobName)
         {
+            this.jobName = jobName;
             this.logFile = this.CreateLogFile(jobName);
+        }
+
+        /// <summary>
+        /// Moves this logger to a new log file under the current output folder
+        /// (<see cref="CVariables.unsafeDir"/>). Done in place, not by replacing the
+        /// instance, because many classes capture <c>CGlobals.Logger</c> in a field
+        /// before the output folder is known and would otherwise keep writing to the old
+        /// file. Does nothing when the folder hasn't changed, so a run in the default
+        /// folder keeps a single log file.
+        /// </summary>
+        public void Relocate()
+        {
+            string newFile = this.CreateLogFile(this.jobName);
+            if (string.Equals(Path.GetDirectoryName(newFile), Path.GetDirectoryName(this.logFile), StringComparison.OrdinalIgnoreCase))
+            {
+                return;
+            }
+
+            string oldFile = this.logFile;
+            this.Info("Log continues in " + newFile, true);
+            this.logFile = newFile;
+            this.Info("Log continued from " + oldFile, true);
         }
 
         public string CreateLogFile(string jobName)
@@ -21,9 +46,19 @@ namespace VeeamHealthCheck.Shared.Logging
             // string currentDir = Environment.CurrentDirectory;
             string currentDir = CVariables.unsafeDir;
             string logDir = Path.Combine(currentDir + "\\Log");
-            if (!Directory.Exists(logDir))
+            try
             {
-                Directory.CreateDirectory(logDir);
+                if (!Directory.Exists(logDir))
+                {
+                    Directory.CreateDirectory(logDir);
+                }
+            }
+            catch
+            {
+                // Don't crash if the folder can't be created (e.g. no permission on the
+                // default location). This runs during CGlobals static initialization, so a
+                // throw here would stop the whole program. Writes to the file fail
+                // silently in LogLine.
             }
 
 
@@ -124,6 +159,11 @@ namespace VeeamHealthCheck.Shared.Logging
                 {
                     // Silent fail - don't crash if logging fails
                 }
+            }
+            catch
+            {
+                // Silent fail - e.g. UnauthorizedAccessException (not an IOException) when
+                // the log folder isn't writable. Logging must never crash the program.
             }
         }
 

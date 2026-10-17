@@ -1,0 +1,5 @@
+"Name","Average Duration (min)","Max Duration (min)","Average Data Transferred","Max Data Transferred","Average Objects (#)","Max Objects (#)","Average Items (#)","Max Items (#)","Typical Bottleneck","Job Avg Throughput","Job Avg Processing Rate"
+"Contoso-Prod-Mailbox-Backup","00:42:17","01:55:03","12.345 GB","98.765 GB","5210","5300","184223","1234567","Source","35.210 MB/s","12.500 items/s"
+"Contoso-Prod-Mailbox-Copy","01:10:00","02:30:45","1,024.500 GB","2,048.250 GB","5210","5300","90000","95000","Target","120.000 MB/s","80.250 items/s"
+"München-SharePoint-Teams-Backup","00:05:09","00:09:30","0.512 GB","1.250 GB","87","90","1200","1500","None","3.400 MB/s","4.100 items/s"
+"OnPrem-Exchange-Backup","00:01:30","00:02:00","0.010 GB","0.020 GB","40","40","300","320","","0.500 MB/s","1.000 items/s"

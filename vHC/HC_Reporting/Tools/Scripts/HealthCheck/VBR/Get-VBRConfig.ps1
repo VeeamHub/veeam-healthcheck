@@ -157,6 +157,11 @@ $useCreds = (-not [string]::IsNullOrWhiteSpace($User) -and
 # even if a prerequisite collector aborts the run early.
 try {
     Write-StartupLog "Connecting to VBR server '$VBRServer' (useCreds=$useCreds)..."
+    # -ForceAcceptTlsCertificate only exists on VBR v13+; passing it on v12 throws
+    # "A parameter cannot be found that matches parameter name 'ForceAcceptTlsCertificate'"
+    # and aborts collection. Gate it by version (issue #149 v12-regression guard).
+    $certParam = @{}
+    if ($VBRVersion -ge 13) { $certParam['ForceAcceptTlsCertificate'] = $true }
     if ($useCreds) {
         if (-not [string]::IsNullOrWhiteSpace($PasswordBase64)) {
             $passwordBytes = [System.Convert]::FromBase64String($PasswordBase64)
@@ -166,9 +171,9 @@ try {
         }
         $securePassword = ConvertTo-SecureString -String $plainPassword -AsPlainText -Force
         $credential     = New-Object System.Management.Automation.PSCredential($User, $securePassword)
-        Connect-VBRServer -Server $VBRServer -Credential $credential -ErrorAction Stop
+        Connect-VBRServer -Server $VBRServer -Credential $credential @certParam -ErrorAction Stop
     } else {
-        Connect-VBRServer -Server $VBRServer -ErrorAction Stop
+        Connect-VBRServer -Server $VBRServer @certParam -ErrorAction Stop
     }
     Write-StartupLog "Connected to VBR server '$VBRServer'."
 
@@ -244,6 +249,17 @@ $RepositoryDetails = $repoResult.Output
 # ---------------------------------------------------------------------------
 
 # ---------------------------------------------------------------------------
+# Job discovery, run once and shared (issue #224). Get-VBRJob does not return
+# every job (e.g. Nutanix AHV on VBR 12.3.x), so discovery adds the tier B/C
+# fallbacks on top of it. Both the session collector below and Get-VhcJob use
+# this one result, so a job found here is in the job inventory AND has its
+# sessions collected. $jobDiscoveryResult.Output is $null if discovery fails;
+# both consumers then fall back to their own job lookup, as before.
+$jobDiscoveryResult = Invoke-VhcCollector -Name 'JobDiscovery' -Action { Get-VhcJobDiscovery -VBRVersion $VBRVersion }
+$collectorResults.Add($jobDiscoveryResult)
+# ---------------------------------------------------------------------------
+
+# ---------------------------------------------------------------------------
 # Fetch backup sessions as live .NET objects and pass them explicitly to SessionReport.
 # Uses Get-VhciJobSessions which probes the Veeam.Backup.Core.CBackupSession
 # fast path and falls back to unfiltered cmdlets (Get-VBRBackupSession,
@@ -251,21 +267,47 @@ $RepositoryDetails = $repoResult.Output
 # either case, the returned objects are never serialised so .NET methods
 # (GetTaskSessions, Logger.GetLog) remain available to Get-VhcSessionReport. See ADR 0006.
 $backupSessionsResult = Invoke-VhcCollector -Name 'BackupSessions' -Action {
-    Get-VhcBackupSessions -ReportInterval $ReportInterval
+    Get-VhcBackupSessions -ReportInterval $ReportInterval -JobDiscovery $jobDiscoveryResult.Output
 }
 $collectorResults.Add($backupSessionsResult)
 
 # Generate VeeamSessionReport.csv from the sessions returned above.
 # Uses Get-VBRTaskSession for all session types (VM, Backup Copy, agent). See ADR 0004, 0012.
 $collectorResults.Add((Invoke-VhcCollector -Name 'SessionReport' -Action {
-    Get-VhcSessionReport -BackupSessions $backupSessionsResult.Output
+    Get-VhcSessionReport -BackupSessions $backupSessionsResult.Output -JobDiscovery $jobDiscoveryResult.Output
 }))
 # ---------------------------------------------------------------------------
 
 # ---------------------------------------------------------------------------
 # Task 7: Job collectors (require $RepositoryDetails from Task 6)
-$collectorResults.Add((Invoke-VhcCollector -Name 'Jobs' -Action {
-    Get-VhcJob -RepositoryDetails $RepositoryDetails -VBRVersion $VBRVersion
+$jobsResult = Invoke-VhcCollector -Name 'Jobs' -Action {
+    Get-VhcJob -RepositoryDetails $RepositoryDetails -VBRVersion $VBRVersion -JobDiscovery $jobDiscoveryResult.Output
+}
+$collectorResults.Add($jobsResult)
+# ---------------------------------------------------------------------------
+
+# ---------------------------------------------------------------------------
+# Orphaned/Superseded backups (#192). $jobsResult.Output is the sweep-cache
+# object Get-VhcJob now returns explicitly - passed here instead of letting
+# Get-VhcOrphanedSupersededBackups reach for $script:VhcOrphanedSupersededCache
+# as an implicit side effect of Get-VhcJob having already run above in this
+# same pass. That ordering dependency used to be enforced only by a comment,
+# so a future reorder/parallelization of this collector list could silently
+# break it; threading the value explicitly makes the dependency visible at
+# the call site and removes the ordering requirement entirely.
+# -RepositoryDetails is the same variable Get-VhcJob uses above, resolving
+# RepositoryId -> a human-readable name for the report's per-repo grouping.
+# OrphanedActiveChainWindowDays is deliberately not in $requiredThresholds: a
+# VbrConfig.json that predates it (or holds a non-integer) falls back to the
+# function's own default instead of failing the whole collection.
+$orphanedWindowParams = @{}
+$orphanedWindowDays = 0
+if ([int]::TryParse([string]$config.Thresholds.OrphanedActiveChainWindowDays, [ref]$orphanedWindowDays) -and
+    $orphanedWindowDays -ge 0 -and $orphanedWindowDays -le 3650) {
+    $orphanedWindowParams.ActiveChainWindowDays = $orphanedWindowDays
+}
+$collectorResults.Add((Invoke-VhcCollector -Name 'OrphanedSupersededBackups' -Action {
+    Get-VhcOrphanedSupersededBackups -RepositoryDetails $RepositoryDetails -OrphanedSupersededCache $jobsResult.Output @orphanedWindowParams
 }))
 # ---------------------------------------------------------------------------
 
@@ -338,5 +380,5 @@ $manifest | Export-Csv -Path (Join-Path $ReportPath "${VBRServer}_CollectionMani
 
 Write-Host "[Get-VBRConfig] Collection complete. Output: $ReportPath"
 } finally {
-    Disconnect-VBRServer -ErrorAction SilentlyContinue
+    try { Disconnect-VBRServer -ErrorAction SilentlyContinue } catch {}
 }

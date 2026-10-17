@@ -1,0 +1,8 @@
+"Name","Status","Start Time","End Time","Duration","Avg. Throughput","Log"
+"Contoso-Prod-Mailbox-Backup","Success","2026/10/14 22:00:03","2026/10/14 22:42:20","00:42:17","35.210 MB/s",""
+"Contoso-Prod-Mailbox-Backup","Warning","2026/10/13 22:00:01","2026/10/13 23:12:44","01:12:43","28.900 MB/s","Warning: skipped 3 inaccessible items
+<br />Throttled by Microsoft 365 (HTTP 429)"
+"Contoso-Prod-Mailbox-Copy","Success","2026/10/14 18:00:00","2026/10/14 19:10:00","01:10:00","120.000 MB/s",""
+"Contoso-Prod-Mailbox-Copy","Failed","2026/10/13 18:00:00","2026/10/13 18:03:21","00:03:21","0.000 MB/s","Error: repository Contoso-Archive-Repo is out of sync"
+"München-SharePoint-Teams-Backup","Success","2026/10/12 02:00:00","2026/10/12 02:05:09","00:05:09","3.400 MB/s",""
+"OnPrem-Exchange-Backup","Success","2026/10/14 03:00:00","2026/10/14 03:01:30","00:01:30","0.500 MB/s",""

@@ -13,7 +13,7 @@ Please note we have a [Code of Conduct](#code-of-conduct). Please follow it in a
 
 ## Report Bugs/Feature Requests using the Github Issue Tracker
 
-We use GitHub's Issue Tracker to track bugs/feature Requests. Report a bug or feature request by [opening a new issue](https://github.com/VeeamHub/{repo-name}/issues/new/choose). It's that easy!
+We use GitHub's Issue Tracker to track bugs/feature Requests. Report a bug or feature request by [opening a new issue](https://github.com/VeeamHub/veeam-healthcheck/issues/new/choose). It's that easy!
 
 ## Branching strategy
 
@@ -32,6 +32,32 @@ gh pr create --base dev --title "..." --body "..."
 If you accidentally opened a PR against `master`, you can change the base branch to `dev` in the GitHub UI ("Edit" next to the title → change base) — no need to close and reopen. Maintainers may also retarget your PR for you.
 
 PRs to `master` will appear stuck (mergeability "blocked") because `master`'s required `build-and-test` check only runs on push events, not on PRs. Targeting `dev` avoids this entirely.
+
+## Commit messages and versioning
+
+Release versions are computed from commit messages, so the prefix you choose matters. Use [Conventional Commits](https://www.conventionalcommits.org/):
+
+| Commit | Next version |
+|---|---|
+| `feat: ...` | minor bump (`3.0.x` → `3.1.0`) |
+| `fix: ...`, `chore: ...`, `docs: ...`, anything else | patch bump (`3.1.0` → `3.1.1`) |
+| `feat!: ...` (any type with `!`) or a `BREAKING CHANGE:` footer | major bump |
+
+If your PR may be squash-merged, **make the PR title a Conventional Commit**: after a squash, the title is the only place the type is read. `Release-As:` and `BREAKING CHANGE:` footers are read from the commit body.
+
+The `Commit Lint` check on your PR only warns about messages that don't follow the convention; it never blocks a merge. The full rules, and how to preview the version a commit would get, are in the [Versioning section of the workflows README](.github/workflows/README.md#versioning).
+
+## Changelog
+
+User-visible changes are recorded in [`ChangeLog.md`](ChangeLog.md), which follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). If your PR changes what a user sees or gets (new or changed report content, CLI arguments, behaviour, a fix for a reported problem, a security fix), add one line for it under `## [Unreleased]` in the matching group (`Added`, `Changed`, `Deprecated`, `Removed`, `Fixed`, `Security`). Write it for someone reading the report, not the diff, and link the issue (`[#N](https://github.com/VeeamHub/veeam-healthcheck/issues/N)`) when there is one. Refactors, tests, CI and docs-only changes do not need an entry.
+
+When a release is cut, a maintainer stamps the changelog on `dev`, as the last commit before the `dev` -> `master` release merge:
+
+1. Rename `[Unreleased]` to `[x.y.z] - YYYY-MM-DD` and start a fresh empty `[Unreleased]`. Use the three-part version that the **Computed version** check shows on the release PR. The fourth segment is the CI run number on `master`, so it is only known once the release exists and does not go in the heading. The tag, ZIP and GitHub Release still carry the full four-part version (`vx.y.z.N`).
+2. Re-check that version right before merging (`pwsh ./.github/scripts/Get-VhcVersion.ps1 -Revision 999 -Channel ga`). A later `feat:` or breaking commit, or a `Release-As:` footer, changes `x.y.z`.
+3. Leave the compare links for the new release out of that commit, because the tag does not exist yet. Once the release is published, add the `[x.y.z]` link and move the `[Unreleased]` link's base to the new tag in a small PR **into `dev`**. It ships with the next release.
+
+Never commit to `master` after the release merge. Every push to `master` builds and publishes a new GA release, even for a changelog-only change. The docs site's Changelog page is copied from this file by CI, so edit `ChangeLog.md` only, never `docs/changelog.md`.
 
 ## License
 

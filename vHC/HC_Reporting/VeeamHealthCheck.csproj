@@ -2,25 +2,24 @@
 <Project Sdk="Microsoft.NET.Sdk">
 	<PropertyGroup>
 		<OutputType>Exe</OutputType>
-		<TargetFramework>net8.0-windows7.0</TargetFramework>
+		<TargetFramework>net10.0-windows7.0</TargetFramework>
 		<EnableWindowsTargeting>true</EnableWindowsTargeting>
-		<UseWPF>true</UseWPF>
 		<Platforms>AnyCPU;x64</Platforms>
 		<PackageIcon></PackageIcon>
 		<PackageIconUrl />
 		<Company>Veeam</Company>
 		<Authors>AdamC</Authors>
 		<ApplicationIcon>Health_Check_Icon.ico</ApplicationIcon>
-		<AssemblyVersion>3.0.0.753</AssemblyVersion>
+		<AssemblyVersion>3.1.0.0</AssemblyVersion>
 		<SignAssembly>False</SignAssembly>
 		<DelaySign>false</DelaySign>
-		<FileVersion>3.0.0.753</FileVersion>
+		<FileVersion>3.1.0.0</FileVersion>
 		<DebugType>full</DebugType>
-		<SelfContained>true</SelfContained>
+		<SelfContained Condition="'$(OS)' == 'Windows_NT'">true</SelfContained>
 		<!--These 2 lines are what produce the single file utility. Possibly doesn't work...-->
 		<!--<PublishSingleFile>true</PublishSingleFile>-->
 		<!--<IncludeAllContentForSelfExtract>true</IncludeAllContentForSelfExtract>-->
-		<RuntimeIdentifier>win-x64</RuntimeIdentifier>
+		<RuntimeIdentifier Condition="'$(OS)' == 'Windows_NT'">win-x64</RuntimeIdentifier>
 		<NeutralLanguage>en-US</NeutralLanguage>
 		<AnalysisLevel>latest</AnalysisLevel>
 		<AnalysisMode>Default</AnalysisMode>
@@ -31,6 +30,7 @@
 	</PropertyGroup>
 	<ItemGroup>
 		<InternalsVisibleTo Include="VhcXTests" />
+		<InternalsVisibleTo Include="VhcGuiTests" />
 	</ItemGroup>
 	<PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
 		<ShouldCreateLogs>True</ShouldCreateLogs>
@@ -54,24 +54,6 @@
 		<InheritWinAppVersionFrom>None</InheritWinAppVersionFrom>
 		<AssemblyFileVersionSettings>None.None.None.Increment</AssemblyFileVersionSettings>
 	</PropertyGroup>
-	<ItemGroup>
-		<Compile Remove="Functions\Reporting\Html\VBR\VbrTables\NewFolder\**" />
-		<Compile Remove="Softwares\**" />
-		<Compile Remove="Startup\GUI\**" />
-		<Compile Remove="VBO\**" />
-		<EmbeddedResource Remove="Functions\Reporting\Html\VBR\VbrTables\NewFolder\**" />
-		<EmbeddedResource Remove="Softwares\**" />
-		<EmbeddedResource Remove="Startup\GUI\**" />
-		<EmbeddedResource Remove="VBO\**" />
-		<None Remove="Functions\Reporting\Html\VBR\VbrTables\NewFolder\**" />
-		<None Remove="Softwares\**" />
-		<None Remove="Startup\GUI\**" />
-		<None Remove="VBO\**" />
-		<Page Remove="Functions\Reporting\Html\VBR\VbrTables\NewFolder\**" />
-		<Page Remove="Softwares\**" />
-		<Page Remove="Startup\GUI\**" />
-		<Page Remove="VBO\**" />
-	</ItemGroup>
 	<ItemGroup>
 		<Compile Remove="Functions\Reporting\DataTypes\NAS\CNasFileDataVmc.cs" />
 		<Compile Remove="Functions\Reporting\Html\VBR\VbrTables\Job Session Summary\JobSessionSummaryRow.cs" />
@@ -112,21 +94,26 @@
 		</Content>
 	</ItemGroup>
 	<ItemGroup>
+		<PackageReference Include="AngleSharp" Version="1.5.0" />
+		<PackageReference Include="Avalonia" Version="11.3.20" />
+		<PackageReference Include="Avalonia.Desktop" Version="11.3.20" />
+		<PackageReference Include="Avalonia.Themes.Fluent" Version="11.3.20" />
 		<PackageReference Include="CsvHelper" Version="33.0.1" />
 		<PackageReference Include="DinkToPdf.Standard" Version="1.1.0" />
 		<PackageReference Include="DocumentFormat.OpenXml" Version="3.1.0" />
 		<PackageReference Include="HtmlToOpenXml.dll" Version="3.2.2" />
 		<PackageReference Include="Microsoft.Management.Infrastructure" Version="3.0.0" />
-		<PackageReference Include="Microsoft.PowerShell.SDK" Version="7.4.6" />
+		<PackageReference Include="Microsoft.PowerShell.SDK" Version="7.6.6" />
 		<PackageReference Include="Node.js" Version="5.3.0" />
 		<PackageReference Include="Npm" Version="3.5.2" />
-		<PackageReference Include="System.Data.SqlClient" Version="4.8.6" />
-		<!-- Pinned to fix GHSA-37gx-xxp4-5rgx and GHSA-w3x6-4m5h-cxqf (transitive vuln from PowerShell SDK) -->
-		<PackageReference Include="System.Security.Cryptography.Xml" Version="8.0.3" />
-		<PackageReference Include="System.Management.Automation" Version="7.4.6" />
+		<PackageReference Include="System.Data.SqlClient" Version="4.9.1" />
+		<!-- Pinned to fix GHSA-7hqp-7c5m-4vq6, GHSA-c399-9853-6jmj and GHSA-r955-8q5j-3h83 (Xml) and GHSA-846f-f764-76mx and GHSA-2fmv-rv2c-59x7 (Pkcs) (transitive vulns from PowerShell SDK) -->
+		<PackageReference Include="System.Security.Cryptography.Pkcs" Version="10.0.13" />
+		<PackageReference Include="System.Security.Cryptography.Xml" Version="10.0.13" />
+		<PackageReference Include="System.Management.Automation" Version="7.6.6" />
 		<PackageReference Include="TaskScheduler" Version="2.12.1" />
 		<!-- Code Quality Analyzers -->
-		<PackageReference Include="Microsoft.CodeAnalysis.NetAnalyzers" Version="8.0.0">
+		<PackageReference Include="Microsoft.CodeAnalysis.NetAnalyzers" Version="10.0.401">
 			<PrivateAssets>all</PrivateAssets>
 			<IncludeAssets>runtime; build; native; contentfiles; analyzers</IncludeAssets>
 		</PackageReference>
@@ -166,13 +153,6 @@
 			<CopyToOutputDirectory>Never</CopyToOutputDirectory>
 		</None>
 	</ItemGroup>
-	<ItemGroup>
-		<Folder Include="Functions\Reporting\CsvHandlers\Proxies\" />
-		<Folder Include="Functions\Reporting\CsvHandlers\Repositories\" />
-		<Folder Include="Functions\Reporting\DataTypes\NewFolder\" />
-		<Folder Include="Functions\Reporting\TableDatas\" />
-		<Folder Include="Resources\Localization\VBR\" />
-	</ItemGroup>
 	<Target Name="IncrementVersion" BeforeTargets="BeforeBuild">
 		<Message Text="Incrementing version..." Importance="High" />
 		<!-- Windows: Use PowerShell -->
@@ -181,23 +161,16 @@
 		<Exec Command="which pwsh &gt; /dev/null 2&gt;&amp;1 &amp;&amp; pwsh -NoProfile -ExecutionPolicy Bypass -File &quot;$(ProjectDir)increment_version.ps1&quot; || bash &quot;$(ProjectDir)increment_version.sh&quot;" Condition="'$(OS)' != 'Windows_NT'" />
 	</Target>
 	<Target Name="PostBuild" AfterTargets="PostBuildEvent">
-		<!-- Log the check for BuildCopy.bat and BuildCopy.sh -->
+		<!-- Optional, untracked per-developer hook (gitignored): Tools\build\BuildCopy.bat -->
 		<Message Text="Checking if BuildCopy.bat exists: $(ProjectDir)Tools\build\BuildCopy.bat" Importance="High" Condition="'$(OS)' == 'Windows_NT'" />
-		<Message Text="Checking if BuildCopy.sh exists: $(ProjectDir)Tools\build\BuildCopy.sh" Importance="High" Condition="'$(OS)' != 'Windows_NT'" />
-		<!-- Define items for the batch and shell scripts based on OS -->
+		<!-- Define the item only when the local script exists -->
 		<ItemGroup>
 			<!-- Windows: Check for BuildCopy.bat -->
 			<LocalPostBuildBat Include="$(ProjectDir)Tools\build\BuildCopy.bat" Condition="'$(OS)' == 'Windows_NT' AND Exists('$(ProjectDir)Tools\build\BuildCopy.bat')" />
-			<!-- macOS/Linux: Check for BuildCopy.sh -->
-			<LocalPostBuildSh Include="$(ProjectDir)Tools\build\BuildCopy.sh" Condition="'$(OS)' != 'Windows_NT' AND Exists('$(ProjectDir)Tools\build\BuildCopy.sh')" />
 		</ItemGroup>
-		<!-- Execute the appropriate script based on OS -->
+		<!-- Run it if present -->
 		<Exec Command="call @(LocalPostBuildBat)" Condition="'$(OS)' == 'Windows_NT' AND '@(LocalPostBuildBat)' != ''" ContinueOnError="true" />
-		<Exec Command="bash @(LocalPostBuildSh)" Condition="'$(OS)' != 'Windows_NT' AND '@(LocalPostBuildSh)' != ''" ContinueOnError="true" />
 	</Target>
-	<ItemGroup>
-		<None Include="Tools/build/BuildCopy.sh" />
-	</ItemGroup>
 	<ItemGroup>
 		<None Include="Functions\Reporting\DataTypes\NAS\CNasFileDataVmc.cs" />
 		<None Include="Functions\Reporting\Html\VBR\VbrTables\Job Session Summary\JobSessionSummaryRow.cs" />

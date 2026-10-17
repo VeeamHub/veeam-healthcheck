@@ -1,0 +1,2 @@
+"Id","Name","Description","JobType","SourceVMs","TargetHost","TargetDatastore","RPOSeconds","ShortTermRetention","LongTermRetention"
+"77778888-9999-aaaa-bbbb-cccc77778888","CDP-Critical-VMs","Continuous data protection for critical VMs","CDP Policy","SQL-PROD01;DC01","ESXI02.lab.local","DatastoreCDP","15","24 hours","7 days"

@@ -491,17 +491,10 @@ namespace VeeamHealthCheck.Functions.Reporting.Html
             return outList;
         }
 
-        private string SetGateHosts(string original, bool scrub)
+        internal string SetGateHosts(string original, bool scrub)
         {
             string[] hosts = original.Split(' ');
-            if (hosts.Count() == 1 && String.IsNullOrEmpty(hosts[0]))
-            {
-                return hosts[0];
-            }
-
-            string r = string.Empty;
-            int counter = 1;
-            int end = hosts.Length;
+            List<string> processed = new();
             foreach (string host in hosts)
             {
                 string newhost = host;
@@ -510,21 +503,10 @@ namespace VeeamHealthCheck.Functions.Reporting.Html
                     newhost = CGlobals.Scrubber.ScrubItem(host, ScrubItemType.Server);
                 }
 
-
-                if (counter == end)
-                {
-                    r += newhost + "<br>";
-                }
-                else
-                {
-                    r += newhost + ",<br>";
-                }
-
-
-                counter++;
+                processed.Add(newhost);
             }
 
-            return r;
+            return string.Join(CGlobals.MultiValueDelimiter, processed);
         }
 
         public List<CRepository> ExtentXmlFromCsv(bool scrub)
@@ -980,9 +962,21 @@ namespace VeeamHealthCheck.Functions.Reporting.Html
             return helper.FinalConcurrency(ctList);
         }
 
-        public Dictionary<string, string> RegOptions()
+        public Dictionary<string, string> RegOptions() => this.RegOptions(out _);
+
+        /// <summary>
+        /// Reads the diff between the collected registry keys and their defaults.
+        /// </summary>
+        /// <param name="multiValueKeys">
+        /// Keys whose value was joined from a multi-value (string[]) registry entry using
+        /// <see cref="CGlobals.MultiValueDelimiter"/>. HTML renderers must only convert the
+        /// delimiter to a line break for these keys — a single-value entry may legitimately
+        /// contain a literal "|" character.
+        /// </param>
+        public Dictionary<string, string> RegOptions(out HashSet<string> multiValueKeys)
         {
             Dictionary<string, string> returnDict = new();
+            HashSet<string> multiValues = new();
 
             var reg = new CCsvParser();
 
@@ -994,43 +988,44 @@ namespace VeeamHealthCheck.Functions.Reporting.Html
             foreach (var r in RegOptions2)
             {
                 string workingValue = string.Empty;
-                if (r.Value.GetType() == typeof(string[]))
+                bool isMultiValue = false;
+                if (r.Value is string[] valueArray)
                 {
-                    var values = r.Value as IEnumerable;
-                    List<string> valueArray = new();
-                    foreach (var v in values)
-                    {
-                        valueArray.Add(v.ToString());
-                    }
-
-                    workingValue = string.Join("<br>", valueArray);
+                    workingValue = string.Join(CGlobals.MultiValueDelimiter, valueArray);
+                    isMultiValue = valueArray.Length > 1;
                 }
+                else if (r.Value is byte[] byteValue)
+                    workingValue = Convert.ToHexString(byteValue);
                 else
                     workingValue = r.Value.ToString();
 
-                if (defaults.defaultKeys.ContainsKey(r.Key))
+                if (CRegistrySkipKeys.SkipKeys.Contains(r.Key))
                 {
-                    string[] skipKeys = CRegistrySkipKeys.SkipKeys;
-                    if (skipKeys.Contains(r.Key))
-                    {
-                        continue;
-                    }
+                    continue;
+                }
 
-
-                    defaults.defaultKeys.TryGetValue(r.Key, out string setValue);
+                if (defaults.defaultKeys.TryGetValue(r.Key, out string setValue))
+                {
                     if (setValue != workingValue)
                     {
                         returnDict.Add(r.Key, workingValue);
+                        if (isMultiValue)
+                        {
+                            multiValues.Add(r.Key);
+                        }
                     }
                 }
-
-                if (!defaults.defaultKeys.ContainsKey(r.Key))
+                else
                 {
-                    defaults.defaultKeys.TryGetValue(r.Key, out string setValue);
                     returnDict.Add(r.Key, workingValue);
+                    if (isMultiValue)
+                    {
+                        multiValues.Add(r.Key);
+                    }
                 }
             }
 
+            multiValueKeys = multiValues;
             return returnDict;
         }
 
@@ -1106,9 +1101,9 @@ namespace VeeamHealthCheck.Functions.Reporting.Html
 
         /// <summary>
         /// Summarizes repeated role types into a count format with friendly names.
-        /// Example: "Gateway/ Gateway/ Gateway/ Repository/ Gateway" becomes "Gateway Server ×4<br>Repository ×1"
+        /// Example: "Gateway/ Gateway/ Gateway/ Repository/ Gateway" becomes "Gateway Server ×4|Repository ×1"
         /// </summary>
-        private string SummarizeRoleTypes(string typeString)
+        internal string SummarizeRoleTypes(string typeString)
         {
             if (string.IsNullOrWhiteSpace(typeString))
                 return typeString;
@@ -1132,8 +1127,8 @@ namespace VeeamHealthCheck.Functions.Reporting.Html
                                   .ThenBy(g => g.Key)
                                   .Select(g => g.Count() > 1 ? $"{g.Key} ×{g.Count()}" : g.Key);
 
-            // Join with HTML line breaks for vertical display
-            return string.Join("<br>", typeCounts);
+            // Join with a plain delimiter; HTML call sites convert to <br> for display (issue #171)
+            return string.Join(CGlobals.MultiValueDelimiter, typeCounts);
         }
 
         /// <summary>

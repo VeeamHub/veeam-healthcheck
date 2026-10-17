@@ -18,6 +18,18 @@ function toggleAll() {
   });
 }
 
+// ===== Row-Level Detail Toggle (Orphaned & Superseded Backups) =====
+// Each job row is immediately followed by a sibling <tr class="detail-row">
+// holding the per-object breakdown, hidden by default. Toggle it directly
+// via inline style rather than a class, matching the existing Legacy
+// Collapsible Toggle's approach for <table>-shaped content below a button.
+function toggleDetailRow(rowElement) {
+  var detailRow = rowElement.nextElementSibling;
+  if (detailRow && detailRow.classList.contains('detail-row')) {
+    detailRow.style.display = (detailRow.style.display === 'table-row') ? 'none' : 'table-row';
+  }
+}
+
 // ===== Legacy Collapsible Toggle (for sections using SectionStartWithButton) =====
 // The element a collapsible button reveals is simply whatever follows it. Historically
 // that was a <div class="content">, but the VB365 stat sections (Job Statistics,
@@ -43,10 +55,39 @@ function sortTableByColumn(table, column, asc) {
   var dirModifier = asc ? 1 : -1;
   var tBody = table.tBodies[0];
   if (!tBody) return;
-  var rows = Array.from(tBody.querySelectorAll("tr"));
-  var sortedRows = rows.sort(function(a, b) {
-    var aCell = a.querySelector("td:nth-child(" + (column + 1) + ")");
-    var bCell = b.querySelector("td:nth-child(" + (column + 1) + ")");
+  // Direct children only, not tBody.querySelectorAll("tr"): the Orphaned &
+  // Superseded Backups table nests a full <table> (the per-object
+  // breakdown) inside a <td colspan> inside a sibling <tr class="detail-row">.
+  // A descendant query would also match that inner table's own <tr>s, and
+  // appendChild()-ing an already-attached node MOVES it - flattening the
+  // nested table into this one and destroying the toggle/detail-row pairing.
+  // Each "detail-row" is paired with the primary row immediately before it
+  // and must move together with it, not be sorted independently.
+  var directRows = Array.prototype.filter.call(tBody.children, function(el) {
+    return el.tagName === "TR";
+  });
+  var groups = [];
+  // claimedAsDetail tracks which detail-row indices were already consumed
+  // as some earlier primary row's paired detail, so the check below can
+  // tell "already handled, safe to skip" apart from "never claimed by
+  // anyone" (e.g. two consecutive detail-rows, or a leading detail-row with
+  // nothing before it) - the latter must still become its own group, not
+  // silently vanish when tBody is emptied and rebuilt from `groups` below.
+  var claimedAsDetail = {};
+  for (var g = 0; g < directRows.length; g++) {
+    if (directRows[g].classList.contains("detail-row")) {
+      if (claimedAsDetail[g]) { continue; }
+      groups.push({ primary: directRows[g], detail: null });
+      continue;
+    }
+    var next = directRows[g + 1];
+    var detail = (next && next.classList.contains("detail-row")) ? next : null;
+    if (detail) { claimedAsDetail[g + 1] = true; }
+    groups.push({ primary: directRows[g], detail: detail });
+  }
+  var sortedGroups = groups.sort(function(a, b) {
+    var aCell = a.primary.querySelector("td:nth-child(" + (column + 1) + ")");
+    var bCell = b.primary.querySelector("td:nth-child(" + (column + 1) + ")");
     if (!aCell || !bCell) return 0;
     var aColText = aCell.textContent.trim();
     var bColText = bCell.textContent.trim();
@@ -59,7 +100,10 @@ function sortTableByColumn(table, column, asc) {
     }
   });
   while (tBody.firstChild) { tBody.removeChild(tBody.firstChild); }
-  for (var i = 0; i < sortedRows.length; i++) { tBody.appendChild(sortedRows[i]); }
+  for (var i = 0; i < sortedGroups.length; i++) {
+    tBody.appendChild(sortedGroups[i].primary);
+    if (sortedGroups[i].detail) { tBody.appendChild(sortedGroups[i].detail); }
+  }
   table.querySelectorAll("th").forEach(function(th) {
     th.classList.remove("th-sort-asc", "th-sort-desc");
   });

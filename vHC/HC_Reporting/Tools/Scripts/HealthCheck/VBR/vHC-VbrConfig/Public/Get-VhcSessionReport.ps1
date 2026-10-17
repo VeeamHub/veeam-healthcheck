@@ -19,12 +19,26 @@ function Get-VhcSessionReport {
     .Parameter BackupSessions
         Live Veeam backup session objects returned by Get-VhcBackupSessions. Pass $null or an
         empty array to produce a descriptive error rather than a silent empty CSV.
+    .Parameter JobDiscovery
+        Result of Get-VhcJobDiscovery (issue #224). Its VbrJobs and
+        DiscoveredJobs replace this function's own Get-VBRJob call when
+        building the JobId -> current-name map, so a renamed job that
+        Get-VBRJob does not return is labelled with its current name. Backup
+        Copy per-source workers (SimpleBackupCopyParentWorker) and standalone
+        agent jobs are left out of the map: they are not jobs this function
+        has ever mapped, and mapping a worker would rewrite the PolicyName of
+        its child sessions. The agent and EP job lookups below still run.
+        When omitted or $null, this function calls Get-VBRJob itself, as
+        before.
     #>
     [CmdletBinding()]
     param (
         [Parameter(Mandatory = $false)]
         [AllowNull()]
-        [object[]] $BackupSessions
+        [object[]] $BackupSessions,
+
+        [Parameter(Mandatory = $false)]
+        [object] $JobDiscovery = $null
     )
 
     if (-not $BackupSessions -or @($BackupSessions).Count -eq 0) {
@@ -41,10 +55,18 @@ function Get-VhcSessionReport {
     # CSV's JobName collapses historical and current sessions onto the same
     # row, letting the C# rollup aggregate them as one job.
     $vbrJobs = @()
-    try {
-        $vbrJobs = @(Get-VBRJob -ErrorAction SilentlyContinue)
-    } catch {
-        Write-LogFile "Get-VBRJob unavailable: $($_.Exception.Message)" -LogLevel 'WARNING'
+    if ($null -ne $JobDiscovery) {
+        # Discovery already ran Get-VBRJob plus the tier B/C fallbacks. Same
+        # job set the session collector queries (ADR 0033), minus Backup Copy
+        # per-source workers (see the .Parameter note above).
+        $vbrJobs = @(@($JobDiscovery.VbrJobs) + @($JobDiscovery.DiscoveredJobs) |
+            Where-Object { $null -ne $_ -and [string]$_.JobType -ne 'SimpleBackupCopyParentWorker' })
+    } else {
+        try {
+            $vbrJobs = @(Get-VBRJob -ErrorAction SilentlyContinue)
+        } catch {
+            Write-LogFile "Get-VBRJob unavailable: $($_.Exception.Message)" -LogLevel 'WARNING'
+        }
     }
 
     $agentJobs = @()
@@ -112,6 +134,20 @@ function Get-VhcSessionReport {
                 try { $jobDuration  = $task.JobSess.Progress.Duration.ToString() } catch { $jobDuration  = '' }
                 try { $taskDuration = $task.WorkDetails.WorkDuration.ToString() }  catch { $taskDuration = '' }
 
+                # Pin CreationTime to an invariant, unambiguous round-trip string ("o") instead of
+                # leaving it as a raw [DateTime] for Export-Csv to stringify implicitly using the
+                # collecting host's CURRENT culture. That implicit stringification is what made
+                # Issue #217 possible: a day-first host (en-AU, en-GB, ...) and a month-first host
+                # (en-US) write CreationTime differently, and /import lets the CSV be read back on
+                # a DIFFERENT machine than the one that wrote it, so no single reporting-machine
+                # culture can un-ambiguously re-parse every collecting-machine's format. Round-trip
+                # ("o") has no locale ambiguity, so CDataTypesParser.TryParseDateTime can parse it
+                # exactly regardless of which machine collected it or which machine reports on it.
+                # See the remarks on TryParseDateTime for the concrete cross-machine failure this
+                # replaces, and Get-VhcOrphanedSupersededBackups.ps1 for the same pattern already
+                # used for restore-point dates.
+                try { $creationTime = $task.JobSess.CreationTime.ToString('o', [System.Globalization.CultureInfo]::InvariantCulture) } catch { $creationTime = '' }
+
                 # Agent task JobName has the machine name appended by Veeam; use the parent
                 # session Name for the clean job name instead. See ADR 0012.
                 $jobName = if ($task.ObjectPlatform.IsEpAgentPlatform) { $session.Name } else { $task.JobName }
@@ -152,7 +188,7 @@ function Get-VhcSessionReport {
                     'JobDuration'       = $jobDuration
                     'TaskDuration'      = $taskDuration
                     'TaskAlgorithm'     = $task.WorkDetails.TaskAlgorithm
-                    'CreationTime'      = $task.JobSess.CreationTime
+                    'CreationTime'      = $creationTime
                     # NAS jobs leave BackupStats at 0; fall back to Progress fields (see ADR 0005)
                     'BackupSizeGB'      = if ($task.JobSess.BackupStats.BackupSize -gt 0) {
                         [math]::Round(($task.JobSess.BackupStats.BackupSize / 1GB), 4)
@@ -183,7 +219,7 @@ function Get-VhcSessionReport {
 
     $csvPath = Join-Path -Path $script:ReportPath -ChildPath "VeeamSessionReport.csv"
     if ($allOutput.Count -gt 0) {
-        $allOutput | Export-Csv -Path $csvPath -NoTypeInformation -Encoding UTF8
+        $allOutput | Protect-VhciCsvInjection | Export-Csv -Path $csvPath -NoTypeInformation -Encoding UTF8
         Write-LogFile "Exported $($allOutput.Count) session rows to $csvPath"
     } else {
         Write-LogFile "No session rows produced - writing header-only CSV" -LogLevel "WARNING"

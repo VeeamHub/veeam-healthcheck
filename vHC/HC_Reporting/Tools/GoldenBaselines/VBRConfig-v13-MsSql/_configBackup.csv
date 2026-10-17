@@ -1,0 +1,2 @@
+"Enabled","Repository","ScheduleOptions","RestorePointsToKeep","EncryptionOptions","NotificationOptions","NextRun","Target","Type","LastResult","LastState","Id","Name","Description"
+"True","Default Backup Repository","Daily at 02:00","14","Enabled","EmailOnFailure","2024-03-02T02:00:00.0000000","\\BACKUP-NAS01\ConfigBackups","BackupToRepository","Success","Idle","dddd4444-eeee-ffff-0000-111144444444","Configuration Backup Job","Configuration backup job"

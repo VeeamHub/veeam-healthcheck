@@ -16,7 +16,11 @@
     <value>利用規約に同意する</value>
   </data>
   <data name="GuiAcceptText" xml:space="preserve">
-    <value>このツールは、Veeam構成を評価するための無料のユーティリティとして提供されています。 「自己責任で」提供されます。\n\nこのツールは、PowerShellとSQLを使用してデータを収集し、ファイルとフォルダーをローカルディスクに出力します。 \n\nファイルは、機密データを隠すために匿名化されている場合があります。本規約に同意することは、ユーザーが本プログラムをフルに実行することに同意することを意味します。</value>
+    <value>このツールは、Veeam構成を評価するための無料のユーティリティとして提供されています。 「自己責任で」提供されます。
+
+このツールは、PowerShellとSQLを使用してデータを収集し、ファイルとフォルダーをローカルディスクに出力します。
+
+ファイルは、機密データを隠すために匿名化されている場合があります。本規約に同意することは、ユーザーが本プログラムをフルに実行することに同意することを意味します。</value>
   </data>
   <data name="GuiImportButton" xml:space="preserve">
     <value>インポート</value>
@@ -1691,5 +1695,183 @@
   </data>
   <data name="v365NavValue13" xml:space="preserve">
     <value>最近のジョブ実行の詳細。</value>
+  </data>
+  <data name="GuiImportTooltip" xml:space="preserve">
+    <value>Create a report from previously collected data</value>
+  </data>
+  <data name="GuiThemeToggleTooltip" xml:space="preserve">
+    <value>Toggle light/dark theme</value>
+  </data>
+  <data name="GuiAboutButton" xml:space="preserve">
+    <value>About / Disclaimer</value>
+  </data>
+  <data name="GuiServerCardTitle" xml:space="preserve">
+    <value>Veeam Server</value>
+  </data>
+  <data name="GuiProductTypeLabel" xml:space="preserve">
+    <value>Product Type:</value>
+  </data>
+  <data name="GuiProductTypeTooltip" xml:space="preserve">
+    <value>For remote servers, specifying the product type avoids connection failures. If set to Auto-detect, the tool will try both connection types.</value>
+  </data>
+  <data name="GuiProductTypeAuto" xml:space="preserve">
+    <value>Auto-detect</value>
+  </data>
+  <data name="GuiProductTypeVbr" xml:space="preserve">
+    <value>VBR (Backup &amp; Replication)</value>
+  </data>
+  <data name="GuiProductTypeVb365" xml:space="preserve">
+    <value>VB365 (Backup for Microsoft 365)</value>
+  </data>
+  <data name="GuiProductTypeBoth" xml:space="preserve">
+    <value>Both</value>
+  </data>
+  <data name="GuiExportOptionsLabel" xml:space="preserve">
+    <value>Export Options</value>
+  </data>
+  <data name="GuiHtmlReportTooltip" xml:space="preserve">
+    <value>Display the HTML report in your default browser after generation</value>
+  </data>
+  <data name="GuiDataCollectionLabel" xml:space="preserve">
+    <value>Data Collection</value>
+  </data>
+  <data name="GuiCollectionPeriodLabel" xml:space="preserve">
+    <value>Collection Period:</value>
+  </data>
+  <data name="GuiRescanTooltip" xml:space="preserve">
+    <value>Rescan for Hardware change</value>
+  </data>
+  <data name="GuiSecurityPrivacyLabel" xml:space="preserve">
+    <value>Security &amp; Privacy</value>
+  </data>
+  <data name="GuiScrubTooltip" xml:space="preserve">
+    <value>Anonymize sensitive data according to Veeam KB 2462</value>
+  </data>
+  <data name="GuiClearCredsTooltip" xml:space="preserve">
+    <value>Clear any previously saved credentials before running</value>
+  </data>
+  <data name="GuiPdfUnavailableTooltip" xml:space="preserve">
+    <value>PDF Export not available when both VB365 &amp; VBR are detected on the same machine.</value>
+  </data>
+  <data name="GuiPdfUnavailableScrubTooltip" xml:space="preserve">
+    <value>「{0}」がオンの間は PDF をエクスポートできません。PDF もエクスポートするには、このオプションをオフにしてください。その場合、レポートの機密データは削除されません。</value>
+  </data>
+  <data name="GuiProcessingText" xml:space="preserve">
+    <value>Processing health check...</value>
+  </data>
+  <data name="GuiExportPdfLabel" xml:space="preserve">
+    <value>Export PDF</value>
+  </data>
+  <data name="GuiClearCredsLabel" xml:space="preserve">
+    <value>Clear Saved Credentials</value>
+  </data>
+  <data name="GuiCollectionCompleteWarnings" xml:space="preserve">
+    <value>Collection complete — {0} collector warning(s)</value>
+  </data>
+  <data name="GuiCollectionComplete" xml:space="preserve">
+    <value>Collection complete</value>
+  </data>
+  <data name="GuiThemeDark" xml:space="preserve">
+    <value>Dark</value>
+  </data>
+  <data name="GuiThemeLight" xml:space="preserve">
+    <value>Light</value>
+  </data>
+  <data name="GuiThemeSystem" xml:space="preserve">
+    <value>System</value>
+  </data>
+  <data name="GuiNoVeeamDetectedTitle" xml:space="preserve">
+    <value>Veeam Software Not Detected</value>
+  </data>
+  <data name="GuiNoVeeamDetectedMessage" xml:space="preserve">
+    <value>No Veeam Software detected on this machine.
+
+This tool requires Veeam Backup &amp; Replication (VBR) or Veeam Backup for Microsoft 365 (VB365) to be installed locally, or a remote server to connect to.
+
+Alternatively, quit and run from the command line instead:
+VeeamHealthCheck.exe /run /remote /host=your-vbr-server
+
+Would you like to add a remote server now?</value>
+  </data>
+  <data name="NavCredentialsLink" xml:space="preserve">
+    <value>資格情報</value>
+  </data>
+  <data name="NavUserRolesLink" xml:space="preserve">
+    <value>ユーザーロール</value>
+  </data>
+  <data name="NavEmailNotificationLink" xml:space="preserve">
+    <value>メール通知</value>
+  </data>
+  <data name="NavServerSizingLink" xml:space="preserve">
+    <value>サーバーのサイジング</value>
+  </data>
+  <data name="NavObjStorageLink" xml:space="preserve">
+    <value>オブジェクトストレージリポジトリ</value>
+  </data>
+  <data name="NavGeneralSettingsSection" xml:space="preserve">
+    <value>一般設定</value>
+  </data>
+  <data name="NavOverviewSection" xml:space="preserve">
+    <value>概要</value>
+  </data>
+  <data name="NavInfrastructureSection" xml:space="preserve">
+    <value>インフラストラクチャ</value>
+  </data>
+  <data name="NavCloudConnectSection" xml:space="preserve">
+    <value>クラウドコネクト</value>
+  </data>
+  <data name="NavBackupJobsSection" xml:space="preserve">
+    <value>バックアップジョブ</value>
+  </data>
+  <data name="NavPerformanceSection" xml:space="preserve">
+    <value>パフォーマンス</value>
+  </data>
+  <data name="NavMiscSection" xml:space="preserve">
+    <value>その他</value>
+  </data>
+  <data name="NavOrphanedBackupsLink" xml:space="preserve">
+    <value>孤立および置き換えられたバックアップ</value>
+  </data>
+  <data name="NavComplianceSummaryLink" xml:space="preserve">
+    <value>コンプライアンスの概要</value>
+  </data>
+  <data name="NavComplianceDetailsLink" xml:space="preserve">
+    <value>コンプライアンスの詳細</value>
+  </data>
+  <data name="NavInfraTypesLink" xml:space="preserve">
+    <value>インフラストラクチャの種類</value>
+  </data>
+  <data name="NavCloudGatewaysLink" xml:space="preserve">
+    <value>ゲートウェイ</value>
+  </data>
+  <data name="NavCloudGatewayPoolsLink" xml:space="preserve">
+    <value>ゲートウェイプール</value>
+  </data>
+  <data name="NavCloudTenantPerfLink" xml:space="preserve">
+    <value>テナントのパフォーマンス</value>
+  </data>
+  <data name="NavCloudTenantsLink" xml:space="preserve">
+    <value>テナント</value>
+  </data>
+  <data name="NavCloudTenantBackupLink" xml:space="preserve">
+    <value>テナントのバックアップストレージ</value>
+  </data>
+  <data name="NavCloudTenantReplicaLink" xml:space="preserve">
+    <value>テナントのレプリカリソース</value>
+  </data>
+  <data name="NavCloudHwPlansLink" xml:space="preserve">
+    <value>ハードウェアプラン</value>
+  </data>
+  <data name="NavCloudHwPlanDatastoresLink" xml:space="preserve">
+    <value>ハードウェアプランのデータストア</value>
+  </data>
+  <data name="NavCloudReplicasLink" xml:space="preserve">
+    <value>レプリカ</value>
+  </data>
+  <data name="NavCloudFailoverPlansLink" xml:space="preserve">
+    <value>フェイルオーバープラン</value>
+  </data>
+  <data name="NavCloudFailoverPlanVmsLink" xml:space="preserve">
+    <value>フェイルオーバープランのVM</value>
   </data>
 </root>

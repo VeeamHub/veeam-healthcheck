@@ -117,8 +117,9 @@
       "index": 13,
       "csvName": "OriginalSize",
       "csharpProperty": "OriginalSize",
-      "csharpType": "double",
-      "nullable": false,
+      "csharpType": "double?",
+      "nullable": true,
+      "optional": true,
       "description": "Original data size in bytes"
     },
     {

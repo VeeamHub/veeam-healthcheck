@@ -4,6 +4,7 @@ using System.Linq;
 using VeeamHealthCheck.Functions.Analysis.DataModels;
 using VeeamHealthCheck.Functions.Reporting.CsvHandlers;
 using VeeamHealthCheck.Functions.Reporting.Html.Shared;
+using VeeamHealthCheck.Html.VBR;
 using VeeamHealthCheck.Shared;
 
 namespace VeeamHealthCheck.Functions.Reporting.Html.VBR.VbrTables.Security
@@ -32,6 +33,18 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR.VbrTables.Security
             };
         }
 
+        /// <summary>
+        /// True when the "ComplianceSummary" card will render (rule rows or scan metadata exist).
+        /// Shared with CHtmlCompiler.BuildSidebar so the nav link only exists when its target does.
+        /// </summary>
+        public bool HasSummary => this.csvResults.Any() || this.meta != null;
+
+        /// <summary>
+        /// True when the "ComplianceTable" card will render (rule rows exist).
+        /// Shared with CHtmlCompiler.BuildSidebar so the nav link only exists when its target does.
+        /// </summary>
+        public bool HasDetails => this.csvResults.Any();
+
         public string ComplianceSummaryTable()
         {
             string t = string.Empty;
@@ -40,7 +53,7 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR.VbrTables.Security
                 bool hasRules = this.csvResults != null && this.csvResults.Any();
                 bool hasMeta  = this.meta != null;
 
-                if (!hasRules && !hasMeta)
+                if (!this.HasSummary)
                 {
                     CGlobals.Logger.Warning("No compliance data available - CSV file may not have been generated");
                     return t;
@@ -142,9 +155,10 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR.VbrTables.Security
             try
             {
                 // Return early if no data
-                if (this.csvResults == null || !this.csvResults.Any())
+                if (!this.HasDetails)
                 {
                     CGlobals.Logger.Warning("No compliance data available - CSV file may not have been generated");
+                    CHtmlTables.SetSectionPublic("complianceTable", new List<string> { "Best Practice", "Status" }, new List<List<string>>(), null);
                     return t;
                 }
 
@@ -160,6 +174,9 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR.VbrTables.Security
                 t += this.form.TableHeaderEnd();
                 t += this.form.TableBodyStart();
 
+                // Plain text — no badge markup or NEW span, unlike the HTML cells below.
+                var jsonRows = new List<List<string>>();
+
                 foreach (var res in this.csvResults)
                 {
                     string labelCell = res.BestPractice;
@@ -171,9 +188,18 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR.VbrTables.Security
                     t += this.form.TableDataLeftAligned(labelCell, string.Empty);
                     t += this.form.TableData(ComplianceBadge(res.Status.ToString()), string.Empty);
                     t += this.form.TableRowEnd();
+
+                    jsonRows.Add(new List<string> { res.BestPractice, res.Status.ToString() });
                 }
 
-                t += this.form.SectionEnd();
+                t += this.form.SectionEndWithEmptyState(t, string.Empty);
+
+                // Per-rule rows — additive alongside the existing ComplianceScan metadata object.
+                CHtmlTables.SetSectionPublic(
+                    "complianceTable",
+                    new List<string> { "Best Practice", "Status" },
+                    jsonRows,
+                    null);
             }
             catch (Exception e)
             {

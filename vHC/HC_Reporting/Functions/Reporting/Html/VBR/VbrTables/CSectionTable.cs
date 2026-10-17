@@ -78,7 +78,7 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR.VbrTables
                 this.log.Error("\t" + e.Message);
             }
 
-            s += this.form.SectionEnd(summary);
+            s += this.form.SectionEndWithEmptyState(s, summary);
 
             // JSON capture
             try

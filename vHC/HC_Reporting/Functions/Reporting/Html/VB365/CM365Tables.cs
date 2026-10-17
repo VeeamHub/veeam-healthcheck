@@ -82,7 +82,7 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VB365
                         s += this.form.TableData(gl.LicensedTo, string.Empty);
                     }
 
-                    s += this.form.TableData(gl.LicenseContact, string.Empty);
+                    s += this.form.TableData(CGlobals.Scrub ? CGlobals.Scrubber.ScrubItem(gl.LicenseContact, Scrubber.ScrubItemType.Item) : gl.LicenseContact, string.Empty);
                     s += this.form.TableData(gl.LicensedFor, string.Empty);
 
                     if (percentUsed > 95)
@@ -1036,6 +1036,7 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VB365
             s += this.form.TableHeader("Start Time", "Start Time");
             s += this.form.TableHeader("End Time", "End Time");
             s += this.form.TableHeader("Duration", "Duration");
+            s += this.form.TableHeader("Avg. Throughput", "Avg. Throughput");
             s += this.form.TableHeader("Log", "Log");
 
             s += "</tr>";
@@ -1053,7 +1054,7 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VB365
                         string output = g.Value;
                         if (CGlobals.Scrub)
                         {
-                            if (counter == 0 || counter == 5)
+                            if (counter == 0)
                             {
                                 output = this.scrubber.ScrubItem(output, Scrubber.ScrubItemType.Job);
                             }
@@ -1362,6 +1363,7 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VB365
                                 counter == 4 ||
                                 counter == 5 ||
                                 counter == 6 ||
+                                counter == 7 ||
                                 counter == 8 ||
                                 counter == 9)
                             {
