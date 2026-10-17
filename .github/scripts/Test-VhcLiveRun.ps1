@@ -219,9 +219,16 @@ function Test-VhcCsvRowCounts {
 #   required / profile nonEmpty: the file exists, has a valid header and at least one data row.
 #   anything else (feature-dependent): may be absent (Export-VhciCsv writes nothing for zero
 #   records), but when present it must have a valid header.
-# "Valid header" = no blank or duplicate column names, and every column the golden baselines
-# (intersection across GoldenBaselines/VBRConfig*) and ObjectSchemas requiredColumns list for that
-# CSV. Extra columns are allowed. CSVs with no baseline get the structural check only.
+# "Valid header" = no blank or duplicate column names, and every column expected for that CSV.
+# Extra columns are allowed. Expected columns come from two places:
+#   1. the manifest's "columns" section: the columns the C# report actually reads, each entry citing
+#      its reader. These REPLACE the baseline for that CSV (the golden baselines were hand-written
+#      from the C# classes and invent columns the collectors never write).
+#   2. otherwise the golden baselines (intersection across GoldenBaselines/VBRConfig*) plus the
+#      ObjectSchemas requiredColumns, which run 38984338014 confirmed are real for every CSV that
+#      has no "columns" entry.
+# CSVs with neither get the structural check only. A manifest "emptyFileOk" CSV may be a zero-byte
+# file (the collector creates it unconditionally and writes no header when it found no rows).
 
 function Get-VhcRepoRoot {
     param([string]$Root)
@@ -281,7 +288,7 @@ function Get-VhcCsvHeader {
 
 # Key -> string[] of columns every healthy output must carry.
 function Get-VhcExpectedColumns {
-    param([string]$BaselineDir)
+    param([string]$BaselineDir, [hashtable]$Overrides = @{})
     $expected = @{}
     $dirs = @('VBRConfig', 'VBRConfig-v13-MsSql', 'VBRConfig-v13-PostgreSql', 'NasInfo', 'SessionReports')
     $perKey = @{}
@@ -312,6 +319,7 @@ function Get-VhcExpectedColumns {
             $expected[$k] = @($existing + ($req | Where-Object { $existing -notcontains $_ }))
         }
     }
+    foreach ($k in $Overrides.Keys) { $expected[$k] = @($Overrides[$k]) }
     return $expected
 }
 
@@ -340,15 +348,31 @@ function Test-VhcCsvOutputs {
         foreach ($p in $prof.Value.nonEmpty.PSObject.Properties) { $nonEmpty[$p.Name] = [string]$p.Value }
     }
 
+    $overrides = @{}   # key -> columns the report reads
+    $knownGaps = @{}   # key -> @{ column = text }
+    if ($exp.columns) {
+        foreach ($p in $exp.columns.PSObject.Properties) {
+            $overrides[$p.Name] = @($p.Value.required)
+            if ($p.Value.knownGaps) {
+                $gaps = @{}
+                foreach ($g in $p.Value.knownGaps.PSObject.Properties) { $gaps[$g.Name] = [string]$g.Value }
+                $knownGaps[$p.Name] = $gaps
+            }
+        }
+    }
+    $emptyOk = @{}     # key -> reason
+    if ($exp.emptyFileOk) { foreach ($p in $exp.emptyFileOk.PSObject.Properties) { $emptyOk[$p.Name] = [string]$p.Value } }
+
     $map = Get-VhcCollectorCsvMap $Root
     if ($map.Count -eq 0) { Write-Fail "no CSV writers found under $Root (collector source missing?)"; return , @('no collectors enumerated') }
-    foreach ($k in $nonEmpty.Keys) {
+    $named = @($nonEmpty.Keys) + @($overrides.Keys) + @($emptyOk.Keys)
+    foreach ($k in $named) {
         if (-not $map.ContainsKey($k)) {
             Write-Fail "manifest names '$k' but no collector writes it (stale manifest entry)"
             [void]$failures.Add("$k manifest entry has no collector")
         }
     }
-    $baseline = Get-VhcExpectedColumns $BaselineDir
+    $baseline = Get-VhcExpectedColumns $BaselineDir $overrides
 
     $present = 0; $absentOk = 0
     foreach ($k in ($map.Keys | Sort-Object)) {
@@ -367,6 +391,10 @@ function Test-VhcCsvOutputs {
         $present++
         $header = Get-VhcCsvHeader $file.FullName
         $problems = @()
+        if ($header.Count -eq 0 -and $emptyOk.ContainsKey($k) -and $file.Length -eq 0 -and -not $isRequired) {
+            Write-Host "  [INFO] $label is a zero-byte file (allowed: $($emptyOk[$k]))"
+            continue
+        }
         if ($header.Count -eq 0) { $problems += 'no header line' }
         else {
             if (@($header | Where-Object { [string]::IsNullOrWhiteSpace($_) }).Count -gt 0) { $problems += 'blank column name' }
@@ -381,6 +409,12 @@ function Test-VhcCsvOutputs {
             Write-Fail "$label header broken: $($problems -join '; ')"
             [void]$failures.Add("$($file.Name) header broken: $($problems -join '; ') (collector $($entry.Collector))")
             continue
+        }
+        if ($knownGaps.ContainsKey($k)) {
+            foreach ($g in $knownGaps[$k].Keys) {
+                if ($header -notcontains $g) { Write-Host "  [INFO] $label has no '$g' column (known gap: $($knownGaps[$k][$g]))" }
+                else { Write-Host "  [INFO] $label now has a '$g' column; remove it from knownGaps and require it in live-csv-expectations.json" }
+            }
         }
         $rows = Get-VhcRowCount $file.FullName
         if ($isRequired -and $rows -eq 0) {

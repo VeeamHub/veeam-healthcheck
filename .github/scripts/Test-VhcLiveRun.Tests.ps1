@@ -485,6 +485,61 @@ Describe 'CsvOutputs' {
         $r.Out | Should -Match 'NoSuchCsv'
     }
 
+    It 'requires the columns the report reads, not the golden columns the collector never writes' {
+        $fx = New-CsvOutputsRoot
+        # PhysProtected: the report reads Type; the golden used to list HostName/OSType that no collector writes
+        $p = Join-Path $fx.Dir 'localhost_PhysProtected.csv'
+        $lines = Get-Content $p
+        $lines[0] = $lines[0].Replace('"Type",', '')
+        Set-Content $p $lines
+        $r = Invoke-CsvOutputs $fx
+        $r.Exit | Should -Be 1
+        $r.Out | Should -Match 'PhysProtected\.csv header broken.*Type'
+        # a column only the old golden listed is not required
+        "`"Id`",`"Name`",`"Type`"`r`n`"a`",`"b`",`"Computer`"" | Set-Content $p
+        (Invoke-CsvOutputs $fx).Exit | Should -Be 0
+    }
+
+    It 'logs a known gap instead of failing when the column is absent' {
+        $fx = New-CsvOutputsRoot
+        $r = Invoke-CsvOutputs $fx
+        $r.Exit | Should -Be 0
+        $r.Out | Should -Match "UserRoles\.csv.*no 'Description' column \(known gap"
+    }
+
+    It 'accepts a zero-byte NAS CSV but still fails a zero-byte CSV that is not allowed empty' {
+        $fx = New-CsvOutputsRoot
+        New-Item -ItemType File -Path (Join-Path $fx.Dir 'localhost_NasSharesize.csv') | Out-Null
+        $r = Invoke-CsvOutputs $fx
+        $r.Exit | Should -Be 0
+        $r.Out | Should -Match 'NasSharesize\.csv.*zero-byte'
+        New-Item -ItemType File -Path (Join-Path $fx.Dir 'localhost_TapeLibraries.csv') | Out-Null
+        $r = Invoke-CsvOutputs $fx
+        $r.Exit | Should -Be 1
+        $r.Out | Should -Match 'TapeLibraries\.csv.*no header line'
+    }
+
+    It 'fails a manifest columns or emptyFileOk entry no collector writes' {
+        $fx = New-CsvOutputsRoot
+        $m = Join-Path $TestDrive 'm2.json'
+        '{"required":{},"profiles":{},"columns":{"NoSuchCsv":{"required":["A"]}},"emptyFileOk":{"AlsoNoSuch":"x"}}' | Set-Content $m
+        $r = Invoke-CsvOutputs $fx @('-ManifestPath', $m)
+        $r.Exit | Should -Be 1
+        $r.Out | Should -Match 'NoSuchCsv'
+        $r.Out | Should -Match 'AlsoNoSuch'
+    }
+
+    It 'every manifest columns/emptyFileOk entry has a collector and a reader citation' {
+        . $script:LiveScript
+        $map = Get-VhcCollectorCsvMap $script:RepoRootDir
+        $exp = Get-Content (Join-Path $PSScriptRoot 'live-csv-expectations.json') -Raw | ConvertFrom-Json
+        foreach ($p in $exp.columns.PSObject.Properties) {
+            $map.ContainsKey($p.Name) | Should -BeTrue -Because "columns entry '$($p.Name)' must be written by a collector"
+            [string]$p.Value.reader | Should -Not -BeNullOrEmpty -Because "columns entry '$($p.Name)' must cite its C# reader"
+        }
+        foreach ($n in $exp.emptyFileOk.PSObject.Properties.Name) { $map.ContainsKey($n) | Should -BeTrue }
+    }
+
     It 'fails when the CSV directory is missing' {
         $r = Invoke-Live @('-Check', 'CsvOutputs', '-CsvRoot', (New-FixtureDir))
         $r.Exit | Should -Be 1

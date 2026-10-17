@@ -1,5 +1,5 @@
 {
-  "_comment": "Expectations for Test-VhcLiveRun.ps1 -Check CsvOutputs. Keys are CSV names without the hostname prefix, leading underscore and .csv (Servers = <host>_Servers.csv). The CSV list itself is enumerated from the collector source; this file only says which CSVs must exist and be non-empty. Anything not listed is feature-dependent: may be absent, but must have a valid header when present. Export-VhciCsv writes no file for zero records, so a listed CSV that is missing means its collector found nothing or failed.",
+  "_comment": "Expectations for Test-VhcLiveRun.ps1 -Check CsvOutputs. Keys are CSV names without the hostname prefix, leading underscore and .csv (Servers = <host>_Servers.csv). The CSV list itself is enumerated from the collector source. 'required'/'labCommon'/'profiles' say which CSVs must exist and be non-empty; anything not listed is feature-dependent: may be absent, but must have a valid header when present. Export-VhciCsv writes no file for zero records, so a listed CSV that is missing means its collector found nothing or failed. 'columns' says which columns a CSV must carry: the columns the C# report reads (reader file:line in each 'reader'), not whatever the hand-written golden baselines list. A CSV without a 'columns' entry falls back to golden baselines plus ObjectSchemas requiredColumns. Most collectors pipe a Veeam cmdlet's objects straight to Export-VhciCsv, so their column set is the cmdlet's property set; 'dropped' records golden columns that run 38984338014 showed the live output does not have and that no reader consumes. 'knownGaps' are columns a reader consumes that the collector does not write (a product bug, logged as INFO, not enforced). 'emptyFileOk' CSVs are created unconditionally and are a zero-byte file when there is nothing to report.",
   "required": {
     "vbrinfo": "every VBR server reports its version (Get-VhcVbrInfo always emits one row)",
     "Servers": "every VBR server lists at least itself (Get-VBRServer)",
@@ -73,5 +73,217 @@
         "regkeys": "local run reads the registry (written in run 38980131816; the remote vbr-2 run cannot)"
       }
     }
+  },
+  "columns": {
+    "configBackup": {
+      "required": [
+        "Enabled",
+        "Target",
+        "LastResult",
+        "EncryptionOptions"
+      ],
+      "reader": "CBackupServerTableHelper.cs:124-129 (CConfigBackupCsv, positional) and CDataFormer.cs:213 (dynamic 'encryptionoptions'). RestorePointsToKeep (CConfigBackupCsv index 3) is read at CBackupServerTableHelper.cs:130 but never rendered, so it is not required.",
+      "dropped": {
+        "RetentionRestorePointsCount": "never written: Get-VBRConfigurationBackupJob exposes RestorePointsToKeep (Get-VhcJob.ps1:53,713); run 38984338014 live output lacks it; no C# reader consumes it"
+      }
+    },
+    "malware_settings": {
+      "required": [
+        "InlineMalwareScanEnabled",
+        "Sensitivity",
+        "QuickBackupOnExternalEventEnabled",
+        "GuestIndexScanEnabled",
+        "UpdateExtensionsListPeriodically",
+        "NotificationOptions"
+      ],
+      "reader": "CMalwareObjectMap (CMalwareObject.cs) via CCsvParser.MalwareSettings(); rendered at CMalwareTable.cs:52-109. DetectionEngine, ScanArchives and UseIndicatorsOfCompromiseEnabled are Optional() in the map (version dependent) so they are not required.",
+      "dropped": {
+        "DetectionEnabled": "run 38984338014 live output lacks it; no C# reader consumes it (Get-VBRMalwareDetectionOptions, Get-VhcMalwareDetection.ps1:25 emits the cmdlet object as is)",
+        "DetectDuringRestore": "run 38984338014 live output lacks it; no C# reader consumes it (Get-VBRMalwareDetectionOptions, Get-VhcMalwareDetection.ps1:25 emits the cmdlet object as is)",
+        "DetectDuringBackup": "run 38984338014 live output lacks it; no C# reader consumes it (Get-VBRMalwareDetectionOptions, Get-VhcMalwareDetection.ps1:25 emits the cmdlet object as is)",
+        "ScanEntireRestorePoint": "run 38984338014 live output lacks it; no C# reader consumes it (Get-VBRMalwareDetectionOptions, Get-VhcMalwareDetection.ps1:25 emits the cmdlet object as is)",
+        "DetectionAction": "run 38984338014 live output lacks it; no C# reader consumes it (Get-VBRMalwareDetectionOptions, Get-VhcMalwareDetection.ps1:25 emits the cmdlet object as is)",
+        "NotifyOnDetection": "run 38984338014 live output lacks it; no C# reader consumes it (Get-VBRMalwareDetectionOptions, Get-VhcMalwareDetection.ps1:25 emits the cmdlet object as is)",
+        "Notifications": "run 38984338014 live output lacks it; no C# reader consumes it (Get-VBRMalwareDetectionOptions, Get-VhcMalwareDetection.ps1:25 emits the cmdlet object as is)"
+      }
+    },
+    "malware_events": {
+      "required": [
+        "DetectionTime",
+        "ObjectId",
+        "Message"
+      ],
+      "reader": "CMalwareEvents (CMalwareObject.cs, positional) via CCsvParser.MalwareEvents(); CMalwareTable.cs:202,237,243 read DetectionTime, ObjectId, Message.",
+      "dropped": {
+        "EventTime": "run 38984338014 live output lacks it; no C# reader consumes it (Get-VBRMalwareDetectionEvent, Get-VhcMalwareDetection.ps1:27)",
+        "EventType": "run 38984338014 live output lacks it; no C# reader consumes it (Get-VBRMalwareDetectionEvent, Get-VhcMalwareDetection.ps1:27)",
+        "ObjectType": "run 38984338014 live output lacks it; no C# reader consumes it (Get-VBRMalwareDetectionEvent, Get-VhcMalwareDetection.ps1:27)",
+        "ThreatName": "run 38984338014 live output lacks it; no C# reader consumes it (Get-VBRMalwareDetectionEvent, Get-VhcMalwareDetection.ps1:27)",
+        "Details": "run 38984338014 live output lacks it; no C# reader consumes it (Get-VBRMalwareDetectionEvent, Get-VhcMalwareDetection.ps1:27)",
+        "SessionId": "run 38984338014 live output lacks it; no C# reader consumes it (Get-VBRMalwareDetectionEvent, Get-VhcMalwareDetection.ps1:27)"
+      }
+    },
+    "malware_infectedobject": {
+      "required": [
+        "ObjectName",
+        "ObjectHostName",
+        "DetectedDateTime",
+        "Severity",
+        "Types",
+        "Platform"
+      ],
+      "reader": "CMalwareInfectedObjects (CMalwareObject.cs, positional) via CCsvParser.MalwareInfectedObjects(); rendered at CMalwareTable.cs:304-319.",
+      "dropped": {
+        "Id": "run 38984338014 live output lacks it; no C# reader consumes it (Get-VBRMalwareDetectionObject, Get-VhcMalwareDetection.ps1:26)",
+        "ObjectType": "run 38984338014 live output lacks it; no C# reader consumes it (Get-VBRMalwareDetectionObject, Get-VhcMalwareDetection.ps1:26)",
+        "DetectionTime": "run 38984338014 live output lacks it; no C# reader consumes it (Get-VBRMalwareDetectionObject, Get-VhcMalwareDetection.ps1:26)",
+        "ThreatName": "run 38984338014 live output lacks it; no C# reader consumes it (Get-VBRMalwareDetectionObject, Get-VhcMalwareDetection.ps1:26)",
+        "ThreatType": "run 38984338014 live output lacks it; no C# reader consumes it (Get-VBRMalwareDetectionObject, Get-VhcMalwareDetection.ps1:26)",
+        "Status": "run 38984338014 live output lacks it; no C# reader consumes it (Get-VBRMalwareDetectionObject, Get-VhcMalwareDetection.ps1:26)",
+        "BackupId": "run 38984338014 live output lacks it; no C# reader consumes it (Get-VBRMalwareDetectionObject, Get-VhcMalwareDetection.ps1:26)",
+        "RestorePointId": "run 38984338014 live output lacks it; no C# reader consumes it (Get-VBRMalwareDetectionObject, Get-VhcMalwareDetection.ps1:26)"
+      }
+    },
+    "Proxies": {
+      "required": [
+        "Id",
+        "Name",
+        "Description",
+        "Info",
+        "HostId",
+        "Host",
+        "Type",
+        "IsDisabled",
+        "Options",
+        "MaxTasksCount",
+        "UseSsl",
+        "FailoverToNetwork",
+        "TransportMode",
+        "IsVbrProxy",
+        "ChosenVm",
+        "ChassisType"
+      ],
+      "reader": "CProxyCsvInfos.cs (16 columns, positional) via CCsvParser; the collector writes exactly those 16 (Get-VhciViHvProxy.ps1:50-67).",
+      "dropped": {
+        "CachePath": "belongs to _CdpProxy.csv (Get-VhciCdpProxy.ps1:37), never written to _Proxies.csv (git log -S: absent since 39e28d9); golden was hand-written wrong",
+        "CacheSize": "as CachePath (Get-VhciCdpProxy.ps1:36)"
+      }
+    },
+    "UserRoles": {
+      "required": [
+        "Name",
+        "Role"
+      ],
+      "reader": "CUserRolesTable.cs:37-55 (dynamic name, role, description) via CCsvParser.GetDynamicUserRoles().",
+      "dropped": {
+        "AccountSid": "run 38984338014 live output lacks it; no C# reader consumes it",
+        "ObjectType": "run 38984338014 live output lacks it; no C# reader consumes it",
+        "CreationTime": "run 38984338014 live output lacks it; no C# reader consumes it"
+      },
+      "knownGaps": {
+        "Description": "CUserRolesTable.cs renders a Description column but Get-VBRUserRoleAssignment (Get-VhcUserRoles.ps1:15) has no such property, so the User Roles table Description column is always blank (all 3 labs, run 38984338014 HTML)"
+      }
+    },
+    "AgentBackupJob": {
+      "required": [],
+      "reader": "no reader: CCsvParser.GetDynamicAgentBackupJob has no caller; agent jobs are reported from _Jobs.csv (AgentJobAggregator).",
+      "dropped": {
+        "JobType": "run 38984338014 live output lacks it; no C# reader consumes it",
+        "TargetRepositoryId": "run 38984338014 live output lacks it; no C# reader consumes it",
+        "RetentionCount": "run 38984338014 live output lacks it; no C# reader consumes it"
+      }
+    },
+    "nasBackup": {
+      "required": [
+        "Name",
+        "OnDiskGB",
+        "SourceGB"
+      ],
+      "reader": "CJobInfoTable.cs:122,129 (dynamic name, ondiskgb, sourcegb); OnDiskGB/SourceGB are added by Get-VhciNasJob.ps1:78-79. CJobSummaryTable.cs:27 and CHtmlTables.cs:664 only count rows.",
+      "dropped": {
+        "IsEnabled": "run 38984338014 live output lacks it; no C# reader consumes it",
+        "TargetRepositoryId": "run 38984338014 live output lacks it; no C# reader consumes it",
+        "CreationTime": "run 38984338014 live output lacks it; no C# reader consumes it"
+      }
+    },
+    "nasBCJ": {
+      "required": [],
+      "reader": "CJobSummaryTable.cs:28 only counts rows.",
+      "dropped": {
+        "IsEnabled": "run 38984338014 live output lacks it; no C# reader consumes it",
+        "SourceJobId": "run 38984338014 live output lacks it; no C# reader consumes it",
+        "RetentionPolicy": "run 38984338014 live output lacks it; no C# reader consumes it"
+      }
+    },
+    "PhysProtected": {
+      "required": [
+        "Name",
+        "Type"
+      ],
+      "reader": "CDataFormer.cs:348-353 (dynamic p.type == \"Computer\", p.name); without Type the report shows 0 protected physical machines.",
+      "dropped": {
+        "Description": "run 38984338014 live output lacks it; no C# reader consumes it",
+        "HostName": "run 38984338014 live output lacks it; no C# reader consumes it",
+        "OSType": "run 38984338014 live output lacks it; no C# reader consumes it",
+        "DiscoveryTime": "run 38984338014 live output lacks it; no C# reader consumes it"
+      }
+    },
+    "PhysNotProtected": {
+      "required": [
+        "Name",
+        "Type"
+      ],
+      "reader": "CDataFormer.cs:336-339 (u.type, u.name). Same Get-VBRDiscoveredComputer objects as PhysProtected (Get-VhcProtectedWorkloads.ps1:133-134), whose Type is confirmed live."
+    },
+    "SureBackupJob": {
+      "required": [],
+      "reader": "CJobSummaryTable.cs:29 only counts rows.",
+      "dropped": {
+        "VirtualLabId": "run 38984338014 live output lacks it; no C# reader consumes it",
+        "ApplicationGroupId": "run 38984338014 live output lacks it; no C# reader consumes it",
+        "LinkedJobIds": "run 38984338014 live output lacks it; no C# reader consumes it"
+      }
+    },
+    "TapeJobs": {
+      "required": [
+        "Name",
+        "FullBackupMediaPool",
+        "ProcessIncrementalBackup",
+        "IncrementalBackupMediaPool",
+        "UseHardwareCompression",
+        "EjectCurrentMedium",
+        "ExportCurrentMediaSet",
+        "Enabled",
+        "NextRun",
+        "LastResult"
+      ],
+      "reader": "CTapeJobInfo.cs (positional) via CCsvParser.GetTapeJobInfoFromCsv(); rendered at CTapeJobInfoTable.cs:50-77. The Tape Jobs table shows correct values on vbr-2, so these are the real Get-VBRTapeJob property names.",
+      "dropped": {
+        "MediaPoolId": "run 38984338014 live output lacks it; no C# reader consumes it",
+        "ScheduleEnabled": "run 38984338014 live output lacks it; no C# reader consumes it",
+        "SourceType": "run 38984338014 live output lacks it; no C# reader consumes it",
+        "SourceId": "run 38984338014 live output lacks it; no C# reader consumes it"
+      }
+    },
+    "NasFileData": {
+      "required": [],
+      "reader": "no reader: the CsvHelper reader is commented out (CCsvParser.cs:835)",
+      "note": "golden NasInfo columns are invented; the real header comes from VMC.log key names (Get-NasInfo.ps1 ConvertTo-LogProperties)"
+    },
+    "NasObjectSourceStorageSize": {
+      "required": [],
+      "reader": "CObjectShareVmcInfo (positional) via GetDynamicNasObjectSize(); no live lab has object NAS data, so the names are unverified and not enforced",
+      "note": "golden NasInfo columns are invented; the real header comes from VMC.log key names (Get-NasInfo.ps1 ConvertTo-LogProperties)"
+    },
+    "NasSharesize": {
+      "required": [],
+      "reader": "CNasVmcInfo via GetDynamicNasShareSize() (NasSourceInfo.cs:30); no live lab has NAS share data, so the names are unverified and not enforced",
+      "note": "golden NasInfo columns are invented; the real header comes from VMC.log key names (Get-NasInfo.ps1 ConvertTo-LogProperties)"
+    }
+  },
+  "emptyFileOk": {
+    "NasFileData": "Get-NasInfo.ps1 always creates the file via Export-Csv; with no VMC.log NAS records it is a zero-byte file ('Exported 0 row(s)' in CollectorNasInfo.log, run 38984338014)",
+    "NasObjectSourceStorageSize": "Get-NasInfo.ps1 always creates the file via Export-Csv; with no VMC.log NAS records it is a zero-byte file ('Exported 0 row(s)' in CollectorNasInfo.log, run 38984338014)",
+    "NasSharesize": "Get-NasInfo.ps1 always creates the file via Export-Csv; with no VMC.log NAS records it is a zero-byte file ('Exported 0 row(s)' in CollectorNasInfo.log, run 38984338014)"
   }
 }
