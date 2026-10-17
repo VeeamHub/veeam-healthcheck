@@ -8,6 +8,11 @@
 #                         then assert on the generated HTML/JSON; evidence -> .verify-vhc/evidence/ID/
 #   import-scrub [ID]     same, with /scrub:true; asserts identifying names are ABSENT from the output
 #   tests [ID]            run the xUnit projects (VhcXTests, CrossPlatform, headless GUI); evidence -> .verify-vhc/evidence/ID/
+#   cli-checks [ID]       /help, no-action (/bogus) and bad /import path, asserted on log lines, exit code and absent output
+#   cli-matrix [ID]       /import combined with /lite /security /days:N /debug /show:* /pptx /scrub:false; per-flag output/log assertions
+#   import-layouts [ID]   /import over every documented CSV folder layout; asserts byte-identical reports
+#   render [ID]           open the import-report output (plain + scrubbed) in a browser via tools/report-smoke
+#   ci [ID]               build, import-report, import-scrub, cli-checks, cli-matrix, import-layouts, render (what crossplatform-tests.yml runs)
 #   cleanup [ID]          stop only the process this skill started, remove scratch input; KEEPS evidence
 #
 # Everything is repo-relative. State lives in .verify-vhc/ (git-ignored).
@@ -98,28 +103,35 @@ cmd_doctor() {
   if [ "$ok" -eq 1 ]; then say "DOCTOR: ready"; else say "DOCTOR: not ready"; exit 1; fi
 }
 
-cmd_import_report() {
-  id="${1:-$(date +%Y%m%d-%H%M%S)}"
-  scrub="${2:-false}"   # "true" exercises the anonymizing (scrub) path
-  if [ "$scrub" = "true" ]; then rdir="vHC-AnonymousReport"; rglob="Veeam Health Check Report_VBR_anon_*"; else rdir="vHC-Report"; rglob="Veeam Health Check Report_VBR_*"; fi
-  ev="$STATE/evidence/$id"
-  in="$STATE/scratch/$id/input"
-  out="$ev/output"
+# ---------------------------------------------------------------------------
+# Shared helpers
+# ---------------------------------------------------------------------------
+
+PASS=0; TOTAL=0
+check_reset() { PASS=0; TOTAL=0; }
+ok_if() {   # ok_if <description> <exit-status-of-test>
+  TOTAL=$((TOTAL + 1))
+  if [ "$2" -eq 0 ]; then PASS=$((PASS + 1)); say "  PASS  $1"; else say "  FAIL  $1"; fi
+}
+has()    { grep -q -F -- "$2" "$1"; ok_if "contains '$2'" $?; }
+hasnt()  { if grep -q -F -- "$2" "$1"; then ok_if "absent   '$2'" 1; else ok_if "absent   '$2'" 0; fi; }
+finish() {  # finish <label>
+  say "assertions: $PASS/$TOTAL passed"
+  [ "$PASS" -eq "$TOTAL" ] || fail "$1: assertions failed"
+}
+
+# stage_golden <dir>: copy the tracked golden CSVs (never the originals) flat into <dir>
+stage_golden() {
+  mkdir -p "$1"
+  cp "$FIXTURES"/VBRConfig/*.csv "$FIXTURES"/NasInfo/*.csv "$FIXTURES"/SessionReports/*.csv "$1/"
+}
+
+# run_cli <logfile> <args...>: run the real CLI in the background with the recorded pid and timeout.
+# Sets RC. VHC_EXPERIMENTS is unset so the default (experiments off) report is what gets checked.
+run_cli() {
+  logf="$1"; shift
   [ -f "$DLL" ] || fail "no binary; run: $0 build"
-  mkdir -p "$in" "$out"
-
-  # Stage a COPY of the fixtures so the tracked files can never be touched by the run.
-  cp "$FIXTURES"/VBRConfig/*.csv "$FIXTURES"/NasInfo/*.csv "$FIXTURES"/SessionReports/*.csv "$in/"
-  say "staged $(ls "$in" | wc -l | tr -d ' ') fixture CSVs into $in"
-
-  # The CLI wants absolute paths for /import and /outdir.
-  abs_in="$ROOT/$in"
-  abs_out="$ROOT/$out"
-  say "run: dotnet $DLL /import=<repo>/$in /outdir=<repo>/$out /run /scrub:$scrub"
-  say "dotnet $DLL /import=$in /outdir=$out /run /scrub:$scrub (paths relative to repo root)" > "$ev/command.txt"
-
-  # VHC_EXPERIMENTS is unset for the run so the default (experiments off) report is what gets checked.
-  env -u VHC_EXPERIMENTS dotnet "$DLL" "/import=$abs_in" "/outdir=$abs_out" /run "/scrub:$scrub" > "$ev/stdout.log" 2>&1 &
+  env -u VHC_EXPERIMENTS dotnet "$ROOT/$DLL" "$@" > "$logf" 2>&1 &
   pid=$!
   echo "$pid" > "$PIDFILE"
   waited=0
@@ -130,62 +142,307 @@ cmd_import_report() {
     fi
     sleep 1; waited=$((waited + 1))
   done
-  wait "$pid"; rc=$?
+  wait "$pid"; RC=$?
   rm -f "$PIDFILE"
-  echo "$rc" > "$ev/exit_code.txt"
-  say "exit code: $rc (after ${waited}s)"
-  [ "$rc" -eq 0 ] || fail "CLI exited $rc; see $ev/stdout.log"
+}
 
-  html="$(find "$out/$rdir" -maxdepth 1 -name "$rglob.html" | head -n 1)"
-  json="$(find "$out/$rdir" -maxdepth 1 -name "$rglob.json" | head -n 1)"
+# Full VBR report (not the /security one) and its json, in report dir $1 ($2 = file glob suffix)
+vbr_file() { find "$1" -maxdepth 1 -name "Veeam Health Check Report_VBR_*.$2" 2>/dev/null | grep -v '_VBR_Security_' | head -n 1; }
+vb365_file() { find "$1" -maxdepth 1 -name "Veeam Health Check Report_VB365_*.$2" 2>/dev/null | head -n 1; }
+
+# Every in-page nav anchor (<a href="#id">) must have an element with that id.
+nav_sections_present() {  # nav_sections_present <html>
+  python3 -I - "$1" <<'PY'
+import re, sys
+h = open(sys.argv[1], encoding="utf-8").read()
+hrefs = {m for m in re.findall(r'<a [^>]*href="#([^"]+)"', h) if "'" not in m and "+" not in m}
+ids = set(re.findall(r'\bid="([^"]+)"', h))
+missing = sorted(hrefs - ids)
+print(f"nav anchors: {len(hrefs)}, missing section ids: {missing or 'none'}")
+sys.exit(1 if missing or not hrefs else 0)
+PY
+}
+
+cmd_import_report() {
+  id="${1:-$(date +%Y%m%d-%H%M%S)}"
+  scrub="${2:-false}"   # "true" exercises the anonymizing (scrub) path
+  if [ "$scrub" = "true" ]; then rdir="vHC-AnonymousReport"; else rdir="vHC-Report"; fi
+  ev="$STATE/evidence/$id"
+  in="$STATE/scratch/$id/input"
+  out="$ev/output"
+  mkdir -p "$in" "$out"
+
+  # Stage a COPY of the fixtures so the tracked files can never be touched by the run.
+  stage_golden "$in"
+  say "staged $(ls "$in" | wc -l | tr -d ' ') fixture CSVs into $in"
+
+  # The CLI wants absolute paths for /import and /outdir.
+  abs_in="$ROOT/$in"
+  abs_out="$ROOT/$out"
+  say "run: dotnet $DLL /import=<repo>/$in /outdir=<repo>/$out /run /scrub:$scrub"
+  say "dotnet $DLL /import=$in /outdir=$out /run /scrub:$scrub (paths relative to repo root)" > "$ev/command.txt"
+  run_cli "$ev/stdout.log" "/import=$abs_in" "/outdir=$abs_out" /run "/scrub:$scrub"
+  echo "$RC" > "$ev/exit_code.txt"
+  say "exit code: $RC (after ${waited}s)"
+  [ "$RC" -eq 0 ] || fail "CLI exited $RC; see $ev/stdout.log"
+
+  html="$(vbr_file "$out/$rdir" html)"
+  json="$(vbr_file "$out/$rdir" json)"
   [ -n "$html" ] || fail "no VBR html report under $out/$rdir"
   [ -n "$json" ] || fail "no VBR json report under $out/$rdir"
   say "html: $(wc -c < "$html" | tr -d ' ') bytes"
 
   # Assertions: the report must reflect the INPUT csv rows, not just exist.
-  pass=0; total=0
-  check() {
-    total=$((total + 1))
-    if grep -q -F -- "$2" "$1"; then pass=$((pass + 1)); say "  PASS  contains '$2'"; else say "  FAIL  missing  '$2'"; fi
-  }
-  absent() {
-    total=$((total + 1))
-    if grep -q -F -- "$2" "$1"; then say "  FAIL  leaked   '$2'"; else pass=$((pass + 1)); say "  PASS  absent   '$2'"; fi
-  }
-  check "$html" "<title>Veeam HealthCheck Report</title>"
-  check "$html" "12.1.2.172"             # _vbrinfo.csv Version (not anonymized)
+  check_reset
+  has "$html" "<title>Veeam HealthCheck Report</title>"
+  has "$html" "12.1.2.172"             # _vbrinfo.csv Version (not anonymized)
   # Orphaned & Superseded Backups ships dark behind VHC_EXPERIMENTS: no section card, no nav link.
-  absent "$html" 'id="orphanedsupersededbackups"'
-  absent "$html" 'href="#orphanedsupersededbackups"'
+  hasnt "$html" 'id="orphanedsupersededbackups"'
+  hasnt "$html" 'href="#orphanedsupersededbackups"'
   if [ "$scrub" = "true" ]; then
     # Scrub must remove identifying names that exist in the input CSVs.
-    absent "$html" "Production-VM-Backup"  # _Jobs.csv row 1
-    absent "$html" "SQL-Servers-Backup"    # _Jobs.csv row 4
-    absent "$html" "Linux Hardened Repo"   # _Repositories.csv row 3
-    absent "$html" "PROXY01"               # _Proxies.csv row 1
-    absent "$html" "VEEAM-VBR01"           # _vbrinfo.csv SqlServer / host name
+    hasnt "$html" "Production-VM-Backup"  # _Jobs.csv row 1
+    hasnt "$html" "SQL-Servers-Backup"    # _Jobs.csv row 4
+    hasnt "$html" "Linux Hardened Repo"   # _Repositories.csv row 3
+    hasnt "$html" "PROXY01"               # _Proxies.csv row 1
+    hasnt "$html" "VEEAM-VBR01"           # _vbrinfo.csv SqlServer / host name
   else
-    check "$html" "Production-VM-Backup"
-    check "$html" "SQL-Servers-Backup"
-    check "$html" "Linux Hardened Repo"
-    check "$html" "PROXY01"
+    has "$html" "Production-VM-Backup"
+    has "$html" "SQL-Servers-Backup"
+    has "$html" "Linux Hardened Repo"
+    has "$html" "PROXY01"
   fi
-  total=$((total + 1))
-  if python3 -I -c "import json,sys; d=json.load(open(sys.argv[1])); assert d['Sections'] and 'VhcVersion' in d" "$json"; then
-    pass=$((pass + 1)); say "  PASS  json parses and has Sections + VhcVersion"
-  else
-    say "  FAIL  json structure"
-  fi
+  nav_out="$(nav_sections_present "$html")"; nav_rc=$?
+  ok_if "every nav href has a section with that id ($nav_out)" "$nav_rc"
+  python3 -I -c "import json,sys; d=json.load(open(sys.argv[1])); assert d['Sections'] and 'VhcVersion' in d" "$json"
+  ok_if "json parses and has Sections + VhcVersion" $?
 
   # Tracked fixtures must be byte-identical afterwards.
-  total=$((total + 1))
-  if git diff --quiet -- "$FIXTURES"; then pass=$((pass + 1)); say "  PASS  tracked fixtures untouched"; else say "  FAIL  tracked fixtures modified"; fi
+  git diff --quiet -- "$FIXTURES"; ok_if "tracked fixtures untouched" $?
 
   ( cd "$out" && find . -type f -print0 | xargs -0 shasum -a 256 ) > "$ev/MANIFEST.sha256"
-  say "assertions: $pass/$total passed; manifest: $ev/MANIFEST.sha256"
+  say "manifest: $ev/MANIFEST.sha256"
   say "evidence: $ev"
-  [ "$pass" -eq "$total" ] || fail "assertions failed"
+  finish "import-report"
   say "IMPORT-REPORT: verified"
+}
+
+# ---------------------------------------------------------------------------
+# cli-checks: parse-level behaviour, asserted on log lines + exit code + absent output
+# ---------------------------------------------------------------------------
+cmd_cli_checks() {
+  id="${1:-$(date +%Y%m%d-%H%M%S)}"
+  ev="$STATE/evidence/$id/cli-checks"
+  mkdir -p "$ev"
+  check_reset
+
+  say "[/help]"
+  run_cli "$ev/help.log" /help
+  ok_if "/help exits 0 (got $RC)" "$([ "$RC" -eq 0 ]; echo $?)"
+  has "$ev/help.log" "Veeam Health Check - Command Line Help"
+  for f in "  /run" "  /import" "  /scrub:true" "  /outdir=<path>" "  /lite" "  /security"; do has "$ev/help.log" "$f"; done
+
+  say "[/bogus: unknown flag, no action]"
+  run_cli "$ev/bogus.log" /bogus "/outdir=$ROOT/$ev/bogus-out"
+  ok_if "/bogus exits 0 (got $RC)" "$([ "$RC" -eq 0 ]; echo $?)"
+  has "$ev/bogus.log" "No action specified - nothing was collected or reported."
+  has "$ev/bogus.log" "Add /run to execute a health check, or /gui to open the interface."
+  [ ! -d "$ev/bogus-out/vHC-Report" ]; ok_if "no vHC-Report written for /bogus" $?
+
+  say "[bad /import path]"
+  run_cli "$ev/badimport.log" "/import=/nonexistent-dir-vhc-verify" "/outdir=$ROOT/$ev/bad-out" /run
+  ok_if "bad /import exits 0 (EntryPoint swallows it; got $RC)" "$([ "$RC" -eq 0 ]; echo $?)"
+  has "$ev/badimport.log" "Import path does not exist: /nonexistent-dir-vhc-verify"
+  has "$ev/badimport.log" "Failed to resolve import path. Exiting."
+  [ ! -d "$ev/bad-out/vHC-Report" ]; ok_if "no vHC-Report written for bad /import" $?
+
+  say "[empty dir /import: no CSVs]"
+  mkdir -p "$ev/empty-in"
+  run_cli "$ev/emptyimport.log" "/import=$ROOT/$ev/empty-in" "/outdir=$ROOT/$ev/empty-out" /run
+  has "$ev/emptyimport.log" "Failed to resolve import path. Exiting."
+  [ ! -d "$ev/empty-out/vHC-Report" ]; ok_if "no vHC-Report written for CSV-less /import dir" $?
+
+  say "[/import:<path> colon form]"
+  stage_golden "$ev/colon-in"
+  run_cli "$ev/colon.log" "/import:$ROOT/$ev/colon-in" "/outdir=$ROOT/$ev/colon-out" /run
+  [ -n "$(vbr_file "$ev/colon-out/vHC-Report" html)" ]; ok_if "colon form produced a VBR html report (exit $RC)" $?
+
+  rm -r "$ev/colon-in" "$ev/empty-in" 2>/dev/null
+  say "evidence: $ev"
+  finish "cli-checks"
+  say "CLI-CHECKS: verified"
+}
+
+# ---------------------------------------------------------------------------
+# cli-matrix: flags combined with /import. Semantics from CArgsParser.ParseAllArgs.
+# ---------------------------------------------------------------------------
+matrix_case() {  # matrix_case <name> <flags...>   -> runs; sets MOUT (outdir), MLOG
+  name="$1"; shift
+  MOUT="$ROOT/$mev/$name"; MLOG="$mev/$name.log"
+  run_cli "$MLOG" "/import=$ROOT/$mev/in" "/outdir=$MOUT" /run "$@"
+  say "[$name] flags: $* -> exit $RC"
+  ok_if "$name: exit 0 (got $RC)" "$([ "$RC" -eq 0 ]; echo $?)"
+}
+
+cmd_cli_matrix() {
+  id="${1:-$(date +%Y%m%d-%H%M%S)}"
+  mev="$STATE/evidence/$id/cli-matrix"
+  mkdir -p "$mev"
+  stage_golden "$mev/in"
+  check_reset
+
+  # baseline for comparison
+  matrix_case baseline
+  base_html="$(vbr_file "$MOUT/vHC-Report" html)"
+  [ -n "$base_html" ] && [ -n "$(vbr_file "$MOUT/vHC-Report" json)" ]; ok_if "baseline: VBR html + json written" $?
+  has "$base_html" "7 day report"
+  has "$base_html" 'id="jobsummary"'
+  base_dbg="$(grep -c 'DEBUG' "$MLOG")"
+
+  # /lite: still renders the main report (CArgsParser sets RunFullReport); only per-job exports are skipped
+  matrix_case lite /lite
+  l_html="$(vbr_file "$MOUT/vHC-Report" html)"
+  [ -n "$l_html" ] && [ -n "$(vbr_file "$MOUT/vHC-Report" json)" ]; ok_if "lite: VBR html + json written" $?
+  has "$l_html" 'id="jobsummary"'
+
+  # /security: security report only, no full VBR report, no json
+  matrix_case security /security
+  sec_html="$(find "$MOUT/vHC-Report" -maxdepth 1 -name 'Veeam Health Check Report_VBR_Security_*.html' | head -n 1)"
+  [ -n "$sec_html" ]; ok_if "security: Security-only html written" $?
+  has "$MLOG" "Starting Security Report generation"
+  [ -z "$(vbr_file "$MOUT/vHC-Report" html)" ]; ok_if "security: no full VBR report" $?
+  [ -z "$(vbr_file "$MOUT/vHC-Report" json)" ]; ok_if "security: no VBR json" $?
+
+  # /days:N: log line + report header
+  for d in 7 12 30 90; do
+    matrix_case "days$d" "/days:$d"
+    has "$MLOG" "Days set to $d"
+    has "$(vbr_file "$MOUT/vHC-Report" html)" "$d day report"
+  done
+
+  # /debug: DEBUG-level lines appear in the log
+  matrix_case debug /debug
+  dbg="$(grep -c 'DEBUG' "$MLOG")"
+  [ "$dbg" -gt "$base_dbg" ]; ok_if "debug: DEBUG log lines $dbg > baseline $base_dbg" $?
+  [ -n "$(vbr_file "$MOUT/vHC-Report" html)" ]; ok_if "debug: VBR html written" $?
+
+  # /show:*: CLI mode forces openexplorer/openhtml off, so these must not hang or launch anything and still render
+  for s in files report all; do
+    matrix_case "show-$s" "/show:$s"
+    [ -n "$(vbr_file "$MOUT/vHC-Report" html)" ]; ok_if "show-$s: VBR html written" $?
+  done
+
+  # /scrub:false is the explicit default
+  matrix_case scrub-false /scrub:false
+  has "$MLOG" "Setting SCRUB = false"
+  has "$(vbr_file "$MOUT/vHC-Report" html)" "Production-VM-Backup"
+
+  # /pptx: a real, openable pptx next to the html
+  matrix_case pptx /pptx
+  pptx="$(find "$MOUT/vHC-Report" -maxdepth 1 -name 'Veeam Health Check Report_VBR_*.pptx' | head -n 1)"
+  [ -n "$pptx" ]; ok_if "pptx: VBR pptx written" $?
+  python3 -I -c "import sys,zipfile; z=zipfile.ZipFile(sys.argv[1]); assert z.testzip() is None and 'ppt/presentation.xml' in z.namelist()" "$pptx"
+  ok_if "pptx: valid OOXML zip with ppt/presentation.xml" $?
+
+  # /pdf is deliberately absent: DinkToPdf's native library crashes the process on non-Windows (exit 134)
+  say "note: /pdf is not driven here (native DinkToPdf crash off Windows); see features/cli-arguments.md"
+
+  git diff --quiet -- "$FIXTURES"; ok_if "tracked fixtures untouched" $?
+  rm -r "$mev/in" 2>/dev/null
+  say "evidence: $mev"
+  finish "cli-matrix"
+  say "CLI-MATRIX: verified"
+}
+
+# ---------------------------------------------------------------------------
+# import-layouts: every layout CImportPathResolver documents must yield the same report
+# ---------------------------------------------------------------------------
+normalize_html() { sed -E 's/Generated [A-Z][a-z]{2} [0-9]{1,2}, [0-9]{4}/Generated X/g' "$1"; }
+
+cmd_import_layouts() {
+  id="${1:-$(date +%Y%m%d-%H%M%S)}"
+  lev="$STATE/evidence/$id/import-layouts"
+  mkdir -p "$lev"
+  check_reset
+  ts="2026.10.16.120000"
+
+  # name:relative-dir-holding-the-CSVs (Strategy numbers are CImportPathResolver.FindCsvDirectory's)
+  layouts="flat:.
+vbr-direct:VBR
+vbr-server-ts:VBR/VBR01/$ts
+original-vbr:Original/VBR
+original-vbr-server-ts:Original/VBR/VBR01/$ts
+recursive:archive/2026/customer-a/collected"
+
+  ref_html=""; ref_json=""
+  while IFS=: read -r name rel; do
+    root="$lev/$name-in"
+    stage_golden "$root/$rel"
+    run_cli "$lev/$name.log" "/import=$ROOT/$root" "/outdir=$ROOT/$lev/$name-out" /run
+    h="$(vbr_file "$lev/$name-out/vHC-Report" html)"; j="$(vbr_file "$lev/$name-out/vHC-Report" json)"
+    say "[$name] CSVs at <root>/$rel -> exit $RC"
+    [ -n "$h" ] && [ -n "$j" ]; ok_if "$name: VBR html + json written" $?
+    [ -n "$h" ] || continue
+    if [ -z "$ref_html" ]; then
+      ref_html="$h"; ref_json="$j"; ref_name="$name"
+    else
+      diff -q <(normalize_html "$ref_html") <(normalize_html "$h") >/dev/null
+      ok_if "$name: html identical to $ref_name" $?
+      diff -q <(python3 -I -c "import json,sys; print(json.dumps(json.load(open(sys.argv[1])),sort_keys=True))" "$ref_json") \
+              <(python3 -I -c "import json,sys; print(json.dumps(json.load(open(sys.argv[1])),sort_keys=True))" "$j") >/dev/null
+      ok_if "$name: json identical to $ref_name" $?
+    fi
+    rm -r "$root"
+  done <<EOF
+$layouts
+EOF
+
+  git diff --quiet -- "$FIXTURES"; ok_if "tracked fixtures untouched" $?
+  say "evidence: $lev"
+  finish "import-layouts"
+  say "IMPORT-LAYOUTS: verified"
+}
+
+# ---------------------------------------------------------------------------
+# render: open the generated report in a real browser (tools/report-smoke)
+# ---------------------------------------------------------------------------
+cmd_render() {
+  rid="${1:-$(date +%Y%m%d-%H%M%S)}"
+  command -v bun >/dev/null || fail "bun is required for render (https://bun.sh)"
+  # Reuse a prior import-report/import-scrub for this ID if present, else generate both.
+  [ -d "$STATE/evidence/$rid/output/vHC-Report" ] || cmd_import_report "$rid" false >/dev/null || fail "import-report failed"
+  scrub_id="$rid-scrub"
+  [ -d "$STATE/evidence/$scrub_id/output/vHC-AnonymousReport" ] || cmd_import_report "$scrub_id" true >/dev/null || fail "import-scrub failed"
+
+  if [ -z "${REPORT_SMOKE_CHANNEL:-}" ] && [ "$(uname -s)" = "Darwin" ] && [ -d "/Applications/Google Chrome.app" ]; then
+    export REPORT_SMOKE_CHANNEL=chrome
+    say "using system Chrome (REPORT_SMOKE_CHANNEL=chrome)"
+  fi
+  ( cd tools/report-smoke && bun install --frozen-lockfile >/dev/null ) || fail "bun install failed in tools/report-smoke"
+  shots="$ROOT/$STATE/evidence/$rid/render"
+  set -o pipefail
+  bun tools/report-smoke/smoke.ts --out "$shots" \
+    "$STATE/evidence/$rid/output/vHC-Report" "$STATE/evidence/$scrub_id/output/vHC-AnonymousReport" | tee "$STATE/evidence/$rid/render.log"
+  rc=$?
+  set +o pipefail
+  [ "$rc" -eq 0 ] || fail "report-smoke found problems (see above)"
+  say "screenshots: $shots"
+  say "RENDER: verified"
+}
+
+# ---------------------------------------------------------------------------
+# ci: the subcommands crossplatform-tests.yml runs
+# ---------------------------------------------------------------------------
+cmd_ci() {
+  cid="${1:-ci-$(date +%Y%m%d-%H%M%S)}"
+  cmd_build || exit 1
+  ( cmd_import_report "$cid" false ) || exit 1
+  ( cmd_import_report "$cid-scrub" true ) || exit 1
+  ( cmd_cli_checks "$cid" ) || exit 1
+  ( cmd_cli_matrix "$cid" ) || exit 1
+  ( cmd_import_layouts "$cid" ) || exit 1
+  ( cmd_render "$cid" ) || exit 1
+  say "CI: all verified"
 }
 
 cmd_tests() {
@@ -223,7 +480,12 @@ case "${1:-}" in
   doctor) cmd_doctor ;;
   import-report) shift; cmd_import_report "${1:-}" false ;;
   import-scrub) shift; cmd_import_report "${1:-}" true ;;
+  cli-checks) shift; cmd_cli_checks "$@" ;;
+  cli-matrix) shift; cmd_cli_matrix "$@" ;;
+  import-layouts) shift; cmd_import_layouts "$@" ;;
+  render) shift; cmd_render "$@" ;;
+  ci) shift; cmd_ci "$@" ;;
   tests) shift; cmd_tests "$@" ;;
   cleanup) shift; cmd_cleanup "$@" ;;
-  *) sed -n '2,13p' "$0"; exit 2 ;;
+  *) sed -n '2,19p' "$0"; exit 2 ;;
 esac
