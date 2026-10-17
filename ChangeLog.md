@@ -148,6 +148,9 @@ checksums, and scan results.
   (Credentials, User Roles, Email Notification). The Compliance Summary and Compliance Details links are
   hidden when the compliance scan produced no data instead of pointing at a missing section.
   Fixes [#184](https://github.com/VeeamHub/veeam-healthcheck/issues/184).
+- VB365 Job Sessions table: the `Avg. Throughput` column now has its own header (the `Log` header was sitting
+  over throughput and the log column had none), and scrub mode no longer replaces the throughput value with a
+  job placeholder.
 
 ### Security
 
@@ -155,6 +158,14 @@ checksums, and scan results.
   catches leaked hostnames and private-range IPv4 addresses in scrubbed HTML.
 - CSV formula injection is neutralized on the PowerShell export path (including the session report), and
   usernames and hosts are escaped in every PowerShell command builder.
+- Scrub mode: the JSON report now gets the same final safety pass as the HTML (registered values and
+  private-range IPv4 addresses), so a value the per-field scrub missed, such as a CDP proxy name, no longer
+  survives in the JSON.
+- Scrub mode: the VB365 report now scrubs the License Contact (a person's name) and the SharePoint Online app
+  certificate name, which was left in clear while the Exchange Online one was scrubbed.
+- Scrub mode: Microsoft Entra ID tenant names (Entra Backups table, Entra Jobs tables, and the Protected Workloads
+  JSON) and the Entra tenant cache repository are now scrubbed at the source. They previously survived in the
+  HTML and JSON unless the same value happened to appear in another scrubbed column.
 - Updated `System.Security.Cryptography.Xml` and `System.Security.Cryptography.Pkcs` to 10.0.13, which fixes
   five denial-of-service advisories published on 2026-10-13 (GHSA-7hqp-7c5m-4vq6, GHSA-c399-9853-6jmj,
   GHSA-r955-8q5j-3h83, GHSA-846f-f764-76mx, GHSA-2fmv-rv2c-59x7).

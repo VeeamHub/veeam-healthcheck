@@ -5,6 +5,8 @@ using System.Text;
 using System.Threading.Tasks;
 using VeeamHealthCheck.Functions.Reporting.CsvHandlers;
 using VeeamHealthCheck.Functions.Reporting.DataTypes;
+using VeeamHealthCheck.Scrubber;
+using VeeamHealthCheck.Shared;
 
 namespace VeeamHealthCheck.Functions.Reporting.Html.VBR.VbrTables.ProtectedWorkloads
 {
@@ -22,8 +24,12 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR.VbrTables.ProtectedWorkl
                 foreach (var rec in n)
                 {
                     EntraWorkloads entra = new();
-                    entra.TenantName = rec.TenantName;
-                    entra.CacheRepoName = rec.CacheRepoName;
+                    entra.TenantName = CGlobals.Scrub
+                        ? CGlobals.Scrubber.ScrubItem(rec.TenantName, ScrubItemType.Tenant)
+                        : rec.TenantName;
+                    entra.CacheRepoName = CGlobals.Scrub
+                        ? CGlobals.Scrubber.ScrubItem(rec.CacheRepoName, ScrubItemType.Repository)
+                        : rec.CacheRepoName;
                     if(!String.IsNullOrEmpty(entra.TenantName) && !String.IsNullOrEmpty(entra.CacheRepoName))
                     {
                         p.entraWorkloads.Add(entra);

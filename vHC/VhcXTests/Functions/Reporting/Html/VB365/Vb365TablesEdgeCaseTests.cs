@@ -111,7 +111,7 @@ namespace VhcXTests.Functions.Reporting.Html.VB365
             Assert.Contains("contoso-vb365-ctl01", rows[0][12]);
         }
 
-        [Fact(Skip = "bug: Vb365JobSessions renders 7 collector columns under 6 headers, so 'Log' sits over Avg. Throughput")]
+        [Fact]
         public void Vb365JobSessions_FixtureData_HeaderCountMatchesCellCount()
         {
             using var h = new Vb365ReportHarness();
@@ -121,7 +121,7 @@ namespace VhcXTests.Functions.Reporting.Html.VB365
             Assert.All(Vb365ReportHarness.Rows(html), r => Assert.Equal(Vb365ReportHarness.HeaderCount(html), r.Count));
         }
 
-        [Fact(Skip = "bug: Vb365JobSessions scrub branch replaces cell 5 (Avg. Throughput) with a Job_n placeholder")]
+        [Fact]
         public void Vb365JobSessions_ScrubMode_LeavesThroughputCellUnscrubbed()
         {
             using var h = new Vb365ReportHarness(scrub: true);

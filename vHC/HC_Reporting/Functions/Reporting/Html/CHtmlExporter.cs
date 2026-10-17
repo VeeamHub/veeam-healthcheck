@@ -272,6 +272,11 @@ namespace VeeamHealthCheck.Functions.Reporting.Html
 
                 var options = new JsonSerializerOptions { WriteIndented = true };
                 string json = JsonSerializer.Serialize(CGlobals.FullReportJson, options);
+                if (scrub)
+                {
+                    json = CGlobals.Scrubber.FinalizeScrubbedJson(json);
+                }
+
                 File.WriteAllText(jsonPath, json);
 
                 this.log.Info("JSON report exported successfully");
