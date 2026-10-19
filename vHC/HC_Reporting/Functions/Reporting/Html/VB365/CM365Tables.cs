@@ -1311,7 +1311,7 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VB365
                     s += this.form.TableData(path, string.Empty);
                     s += this.form.TableData(sizelimit, string.Empty);
                     s += this.form.TableData(usedspace, string.Empty);
-                    s += this.form.TableData(freespace, string.Empty);
+                    s += this.form.TableData(freespace, string.Empty, freeSpaceShade);
                     s += this.form.TableData(boundrepo, string.Empty, boundRepoShade);
                     s += "</tr>";
                 }

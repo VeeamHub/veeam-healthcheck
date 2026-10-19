@@ -233,7 +233,7 @@ namespace VhcXTests.Functions.Reporting.Html.VB365
             }
         }
 
-        [Fact(Skip = "bug: Vb365ObjectRepos computes freeSpaceShade but never passes it to TableData")]
+        [Fact]
         public void Vb365ObjectRepos_AlmostFullRepo_FreeSpaceCellIsShaded()
         {
             using var h = new Vb365ReportHarness();
@@ -242,6 +242,7 @@ namespace VhcXTests.Functions.Reporting.Html.VB365
             var rows = Vb365ReportHarness.Rows(new CM365Tables().Vb365ObjectRepos());
 
             Assert.Contains("class=\"cell-", rows[0][8]);
+            Assert.Contains("cell-danger", rows[0][8]);
         }
 
         [Fact(Skip = "bug: Vb365Security computes cert-expiry shades but never passes them to TableData, so an expired cert is not flagged")]
