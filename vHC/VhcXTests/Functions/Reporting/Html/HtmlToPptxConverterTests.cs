@@ -17,7 +17,7 @@ public sealed class HtmlToPptxConverterTests : IDisposable
 
     public HtmlToPptxConverterTests() => Directory.CreateDirectory(root);
 
-    [Fact(Skip = "bug: golden report PPTX drops source rows including Production-VM-Backup despite their presence in HTML")]
+    [Fact]
     public void ConvertHtmlToPptx_GoldenImport_CreatesReadableDeckWithCoverAndSourceRows()
     {
         using var report = new GoldenVbrReport();
@@ -37,7 +37,7 @@ public sealed class HtmlToPptxConverterTests : IDisposable
         AssertWithinSlideBounds(deck);
     }
 
-    [Fact(Skip = "bug: PPTX derives section titles from HTML IDs instead of preserving the report's visible headings")]
+    [Fact]
     public void ConvertHtmlToPptx_GoldenImport_PreservesEveryMajorSectionTitle()
     {
         using var report = new GoldenVbrReport();
