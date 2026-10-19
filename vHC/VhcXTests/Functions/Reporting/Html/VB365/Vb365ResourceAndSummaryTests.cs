@@ -25,11 +25,7 @@ namespace VhcXTests.Functions.Reporting.Html.VB365
             Assert.True(StringFields.Length > 100, $"expected many resource strings, found {StringFields.Length}");
         }
 
-        // Keys whose source line in vb365_vhcres.txt is malformed ("orgTTEXOApp Cert = ...", "ObjStgType<TAB>= ..."),
-        // so the compiled resource has no entry for them.
-        private static readonly string[] KnownMissingKeys = { "ObjStgType", "orgTTEXOApp", "orgTTSPOApp" };
-
-        [Fact(Skip = "bug: resource keys ObjStgType, orgTTEXOApp, orgTTSPOApp are malformed in vb365_vhcres.txt, so the handler returns null (Orgs tooltips lost)")]
+        [Fact]
         public void PublicStaticStrings_AreAllNonNull()
         {
             string[] missing = StringFields.Where(f => f.GetValue(null) is null).Select(f => f.Name).ToArray();
@@ -38,10 +34,9 @@ namespace VhcXTests.Functions.Reporting.Html.VB365
         }
 
         [Fact]
-        public void PublicStaticStrings_ExceptKnownMissingKeys_AreNonNullAndNonEmpty()
+        public void PublicStaticStrings_AreNonNullAndNonEmpty()
         {
             string[] bad = StringFields
-                .Where(f => !KnownMissingKeys.Contains(f.Name))
                 .Where(f => string.IsNullOrWhiteSpace((string?)f.GetValue(null)))
                 .Select(f => f.Name)
                 .ToArray();

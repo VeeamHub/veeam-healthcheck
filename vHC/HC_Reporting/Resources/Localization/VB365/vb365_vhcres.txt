@@ -96,7 +96,7 @@ ObjStgNotes3 = o	It is often the default thought that “Cool” or “Infrequen
 ObjStgNotes4 = o	Ensure no data/storage lifecycle or tiering policies are applied to object storage buckets/containers used by VB365. This is not supported and has potential to irreparably damage the backup dataset. Instead consider adding <a href="https://helpcenter.veeam.com/docs/vbo365/guide/vbo_new_copy_job.html" target="_blank">Backup Copy Jobs</a> for longer retention, which can support an Archive-class object storage repository within VB365.
 ObjStgNotes5 = o	As your dataset grows within the bucket/container, keep in mind that the required metadata in the local cache will also grow. Review the <a href="https://bp.veeam.com/vbo/guide/buildconfig/proxy-repo.html#object-storage-repository" target="_blank">VB365 Best Practices guide</a> for estimating this required space.
 ObjStgNotes6 = o	Review credentials/keys and IAM. As a best practice, limit credentials access to as few systems/persons as possible, and apply restrictive access policies for solely what is required. Generally, it is better to have a more individualized credentials with lesser access (e.g. per-bucket/container), than having fewer credentials with wider access (e.g. per-cloud/account/subscription). In the former scenario, if one bucket is compromised, the remaining ones remain secured.
-ObjStgType	= Primary bucket/container for backup jobs vs. Archive bucket/container for backup copy jobs
+ObjStgType = Primary bucket/container for backup jobs vs. Archive bucket/container for backup copy jobs
 ObjStgPath = The ‘folder’ (aka key name prefix) that objects destined for this bucket/container will end up within
 ObjStgSizeLimit = Storage consumption soft limit that is applied in the Advanced section of the bucket/container definition
 ObjStgFreeSpace = The remaining space available against the defined storage consumption limit
@@ -219,9 +219,9 @@ orgNote1 = •	Basic, Modern w/ legacy protocols, and Modern app-only authentica
 orgNote2 = •	Aux Apps (Backup Applications) configured for Organizations using modern authentication may impact production SharePoint environments.  This functionality will be deprecated in future versions of VB365.
 orgNote3 = •	Aux Accounts/Apps have evolving best practices <a href="https://helpcenter.veeam.com/docs/vbo365/guide/adding_backup_accounts.html?zoom_highlight=auxiliary&ver=60" target="_blank">detailed further here.</a>
 orgTTEXOSettings = Exchange Online Settings
-orgTTEXOApp Cert = Exchange Online Application Certificate
+orgTTEXOApp = Exchange Online Application Certificate
 orgTTSPOSettings = Sharepoint Online Settings
-orgTTSPOApp Cert = Sharepoint Online Application Certificate
+orgTTSPOApp = Sharepoint Online Application Certificate
 orgTTAuxAccountsApps = Auxi
 
 jobSessSummary = •	This section details historical job sessions in chronological order.  Warning and Error messages are provided if a session was not successful.
