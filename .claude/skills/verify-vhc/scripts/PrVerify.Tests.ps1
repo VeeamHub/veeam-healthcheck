@@ -10,7 +10,7 @@ BeforeAll {
     Import-Module (Join-Path $PSScriptRoot 'PrVerifyRun.psm1') -Force -DisableNameChecking
     $script:MapPath = Join-Path $script:Root '.claude/skills/verify-vhc/pr-surfaces.json'
     $script:Map = Read-PrSurfaceMap -Path $script:MapPath
-    $script:Tracked = @(git -C $script:Root ls-files --cached --others --exclude-standard)
+    $script:Tracked = @(git -C $script:Root ls-files --cached)
     $env:PRVERIFY_NO_GIT = '1'   # make Get-FileAtRef go through the (scripted) contents API so results do not depend on local objects
 
     # ---- scripted gh -------------------------------------------------------------------------------------------
