@@ -174,14 +174,11 @@
         "Name",
         "Role"
       ],
-      "reader": "CUserRolesTable.cs:37-55 (dynamic name, role, description) via CCsvParser.GetDynamicUserRoles().",
+      "reader": "CUserRolesTable.cs (dynamic name, role) via CCsvParser.GetDynamicUserRoles().",
       "dropped": {
         "AccountSid": "run 38984338014 live output lacks it; no C# reader consumes it",
         "ObjectType": "run 38984338014 live output lacks it; no C# reader consumes it",
         "CreationTime": "run 38984338014 live output lacks it; no C# reader consumes it"
-      },
-      "knownGaps": {
-        "Description": "CUserRolesTable.cs renders a Description column but Get-VBRUserRoleAssignment (Get-VhcUserRoles.ps1:15) has no such property, so the User Roles table Description column is always blank (all 3 labs, run 38984338014 HTML)"
       }
     },
     "AgentBackupJob": {
