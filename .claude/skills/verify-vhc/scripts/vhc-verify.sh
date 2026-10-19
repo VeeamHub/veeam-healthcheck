@@ -13,6 +13,11 @@
 #   import-layouts [ID]   /import over every documented CSV folder layout; asserts byte-identical reports
 #   render [ID]           open the import-report output (plain + scrubbed) in a browser via tools/report-smoke
 #   ci [ID]               build, import-report, import-scrub, cli-checks, cli-matrix, import-layouts, render (what crossplatform-tests.yml runs)
+#   pr <N|branch> [opts]  verify a pull request: did its green checks exercise what it changed? Writes
+#                         .verify-vhc/evidence/pr-N/report.md + report.json; exit 0 only on VERIFIED
+#                         (1 FAILED, 2 NEEDS-RUN, 3 NEEDS-HUMAN). Options: --run (run the missing local checks),
+#                         --dispatch (ci-cd.yaml on the PR branch if live-lab checks are missing), --comment (one
+#                         sticky PR comment), --repo OWNER/REPO, --wait MINUTES. Needs pwsh 7 and gh.
 #   cleanup [ID]          stop only the process this skill started, remove scratch input; KEEPS evidence
 #
 # Everything is repo-relative. State lives in .verify-vhc/ (git-ignored).
@@ -475,6 +480,27 @@ cmd_cleanup() {
   say "cleanup done. evidence kept under $STATE/evidence/"
 }
 
+cmd_pr() {
+  command -v pwsh >/dev/null || fail "pwsh (PowerShell 7) is required for 'pr'"
+  [ $# -ge 1 ] || fail "usage: $0 pr <number|branch> [--run] [--dispatch] [--comment] [--repo OWNER/REPO] [--wait MINUTES]"
+  target="$1"; shift
+  pargs=()
+  while [ $# -gt 0 ]; do
+    case "$1" in
+      --run) pargs+=(-Run) ;;
+      --dispatch) pargs+=(-Dispatch) ;;
+      --comment) pargs+=(-Comment) ;;
+      --repo) shift; pargs+=(-Repo "${1:?--repo needs OWNER/REPO}") ;;
+      --wait) shift; pargs+=(-WaitMinutes "${1:?--wait needs minutes}") ;;
+      --self-workflow) shift; pargs+=(-SelfWorkflow "${1:?--self-workflow needs a file name}") ;;
+      --out-dir) shift; pargs+=(-OutDir "${1:?--out-dir needs a path}") ;;
+      *) fail "unknown option for pr: $1" ;;
+    esac
+    shift
+  done
+  exec pwsh -NoProfile -File "$ROOT/.claude/skills/verify-vhc/scripts/Invoke-PrVerify.ps1" "$target" ${pargs[@]+"${pargs[@]}"}
+}
+
 case "${1:-}" in
   build) cmd_build ;;
   doctor) cmd_doctor ;;
@@ -486,6 +512,7 @@ case "${1:-}" in
   render) shift; cmd_render "$@" ;;
   ci) shift; cmd_ci "$@" ;;
   tests) shift; cmd_tests "$@" ;;
+  pr) shift; cmd_pr "$@" ;;
   cleanup) shift; cmd_cleanup "$@" ;;
-  *) sed -n '2,19p' "$0"; exit 2 ;;
+  *) sed -n '2,25p' "$0"; exit 2 ;;
 esac

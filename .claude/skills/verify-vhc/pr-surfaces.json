@@ -1,0 +1,486 @@
+{
+  "version": 1,
+  "description": "Change -> surface map for `vhc-verify.sh pr`. Every tracked file must match at least one surface path glob (a Pester test enforces it). A surface lists the checks that exercise it: CI jobs (any-of), local vhc-verify.sh subcommands (all-of), builtin static checks, or a human step. See .claude/skills/verify-vhc/features/pr-verification.md.",
+  "globSyntax": "`**/` = zero or more directories, `**` = anything incl. '/', `*` = anything except '/', `?` = one char except '/'. Paths are repo-relative with '/'.",
+  "triggerKinds": {
+    "pr": "runs on every pull_request to master/dev",
+    "pr-path-filtered": "runs on pull_request only when the diff touches the workflow's path filters; otherwise it is simply absent",
+    "pr-same-repo-only": "pull_request job gated to same-repo PRs",
+    "pr-fork-only": "pull_request job gated to fork PRs",
+    "push-or-dispatch": "never runs on a pull_request; runs on push to master/dev or workflow_dispatch",
+    "dispatch-only": "runs only on workflow_dispatch",
+    "publish-only": "runs only when publishing (master/release/tag); cannot be exercised from a PR",
+    "scheduled": "cron only",
+    "self": "this PR-verification workflow itself"
+  },
+  "hygiene": {
+    "productCode": [
+      "vHC/HC_Reporting/**"
+    ],
+    "productExclude": [
+      "vHC/HC_Reporting/Tools/GoldenBaselines/**",
+      "vHC/HC_Reporting/Tools/build/**",
+      "vHC/HC_Reporting/**/*.md",
+      "vHC/HC_Reporting/**/*.Tests.ps1",
+      "vHC/HC_Reporting/**/*.licenseheader",
+      "vHC/HC_Reporting/**/.editorconfig",
+      "vHC/HC_Reporting/Properties/**"
+    ],
+    "changelogExemptTypes": ["refactor", "test", "ci", "docs", "chore", "style", "build"],
+    "generatedFiles": [
+      "docs/changelog.md"
+    ]
+  },
+  "workflows": {
+    "ci-cd.yaml": {
+      "dispatch": true,
+      "autoDispatch": true,
+      "jobs": {
+        "build-and-test": { "trigger": "push-or-dispatch" },
+        "integration-test-vbr-2": { "trigger": "push-or-dispatch", "lab": true },
+        "integration-test-vbr-13-sql": { "trigger": "push-or-dispatch", "lab": true },
+        "integration-test-vbr-12": { "trigger": "push-or-dispatch", "lab": true },
+        "virustotal-scan": { "trigger": "publish-only" },
+        "create-release": { "trigger": "publish-only" },
+        "sca-drift-proposal": { "trigger": "push-or-dispatch" },
+        "report-render-smoke": { "trigger": "push-or-dispatch" }
+      }
+    },
+    "crossplatform-tests.yml": {
+      "dispatch": false,
+      "jobs": {
+        "test-crossplatform": { "trigger": "pr-path-filtered" },
+        "verify-vhc": { "trigger": "pr-path-filtered" }
+      }
+    },
+    "pester-tests.yml": {
+      "dispatch": true,
+      "jobs": { "pester": { "trigger": "pr-path-filtered" } }
+    },
+    "ps51-syntax-validation.yml": {
+      "dispatch": true,
+      "jobs": { "validate-ps51-syntax": { "trigger": "pr-path-filtered" } }
+    },
+    "codeql.yml": {
+      "dispatch": false,
+      "jobs": { "analyze": { "trigger": "pr" } }
+    },
+    "Semgrep.yml": {
+      "dispatch": false,
+      "jobs": { "semgrep": { "trigger": "pr" } }
+    },
+    "dependency-scan.yml": {
+      "dispatch": true,
+      "jobs": { "dependency-review": { "trigger": "pr" } }
+    },
+    "virus-scan.yml": {
+      "dispatch": false,
+      "jobs": { "virus-scan": { "trigger": "pr" } }
+    },
+    "version-preview.yml": {
+      "dispatch": true,
+      "jobs": { "preview": { "trigger": "pr" } }
+    },
+    "commit-lint.yml": {
+      "dispatch": false,
+      "jobs": { "commit-lint": { "trigger": "pr" } }
+    },
+    "pr-release-prep.yml": {
+      "dispatch": false,
+      "jobs": {
+        "build-for-pr": { "trigger": "pr-fork-only" },
+        "test-same-repo-pr": { "trigger": "pr-same-repo-only" }
+      }
+    },
+    "pr-verify.yml": {
+      "dispatch": false,
+      "jobs": { "verify": { "trigger": "self" } }
+    },
+    "validate-csv-schemas.yml": {
+      "dispatch": true,
+      "jobs": {
+        "validate-schemas": { "trigger": "dispatch-only" },
+        "validate-object-mappings": { "trigger": "dispatch-only" },
+        "summary": { "trigger": "dispatch-only" }
+      }
+    },
+    "docs-deploy.yml": {
+      "dispatch": true,
+      "jobs": { "deploy": { "trigger": "publish-only" } }
+    },
+    "sbom-generation.yml": {
+      "dispatch": true,
+      "jobs": { "sbom": { "trigger": "publish-only" } }
+    },
+    "stale.yml": {
+      "dispatch": true,
+      "jobs": { "stale": { "trigger": "scheduled" } }
+    },
+    "manual-release.yml": {
+      "dispatch": true,
+      "jobs": { "build-and-release": { "trigger": "publish-only" } }
+    },
+    "beta-release.yml": {
+      "dispatch": true,
+      "jobs": { "beta-release": { "trigger": "publish-only" } }
+    }
+  },
+  "surfaces": {
+    "docs": {
+      "title": "Documentation and repo text",
+      "paths": [
+        "**/*.md",
+        "docs/**",
+        "Plans/**",
+        "code-review-findings/**",
+        "code-review-findings-opus/**",
+        "Auto Run Docs/**",
+        "mkdocs.yml",
+        "requirements-docs.txt",
+        "docwatch.json",
+        "LICENSE",
+        "SAMPLE/**",
+        "**/*.example",
+        "**/*.example.*",
+        ".github/CODEOWNERS",
+        ".github/ISSUE_TEMPLATE/**",
+        ".github/agents/**"
+      ],
+      "exclude": ["ChangeLog.md"],
+      "checks": [
+        { "id": "docs-sanity", "title": "Markdown sanity: relative links resolve, code fences balanced, no conflict markers (new problems only)", "builtin": "docs-sanity" }
+      ]
+    },
+    "changelog": {
+      "title": "ChangeLog.md",
+      "paths": ["ChangeLog.md"],
+      "checks": [
+        { "id": "changelog-format", "title": "Keep a Changelog structure: [Unreleased] present, known groups, a link definition per version (new problems only)", "builtin": "changelog-format" }
+      ]
+    },
+    "repo-meta": {
+      "title": "Repo metadata, git hooks and agent config",
+      "paths": [
+        ".gitignore",
+        "**/.gitignore",
+        "**/.gitkeep",
+        ".githooks/**",
+        ".claude/**"
+      ],
+      "exclude": [".claude/skills/verify-vhc/**"],
+      "checks": [
+        { "id": "shell-syntax", "title": "bash -n on changed shell scripts and hooks", "builtin": "shell-syntax" },
+        { "id": "json-syntax", "title": "Changed .json files parse", "builtin": "json-syntax" }
+      ]
+    },
+    "build-tests": {
+      "title": "Build and unit tests",
+      "paths": [
+        "vHC/**/*.cs",
+        "vHC/**/*.csproj",
+        "vHC/HC.sln",
+        "vHC/**/.editorconfig",
+        "vHC/**/*.licenseheader",
+        "run-tests.sh",
+        "run-tests.ps1",
+        "vHC/HC_Reporting/increment_version.sh",
+        "vHC/HC_Reporting/increment_version.ps1"
+      ],
+      "checks": [
+        {
+          "id": "xunit-crossplatform",
+          "title": "Cross-platform xUnit + headless GUI tests (ubuntu + macos)",
+          "ci": [{ "workflow": "crossplatform-tests.yml", "job": "test-crossplatform" }],
+          "local": ["tests"]
+        },
+        {
+          "id": "windows-build-and-tests",
+          "title": "Windows build and full VhcXTests on the PR (pr-release-prep)",
+          "ci": [
+            { "workflow": "pr-release-prep.yml", "job": "test-same-repo-pr" },
+            { "workflow": "pr-release-prep.yml", "job": "build-for-pr" }
+          ]
+        }
+      ]
+    },
+    "cli": {
+      "title": "CLI entry point, arguments and shared startup code",
+      "paths": [
+        "vHC/HC_Reporting/Startup/**",
+        "vHC/HC_Reporting/Common/*.cs",
+        "vHC/HC_Reporting/Common/Logging/**",
+        "vHC/HC_Reporting/Shared/**",
+        "vHC/HC_Reporting/Properties/**",
+        "vHC/HC_Reporting/banner_string.txt",
+        "vHC/HC_Reporting/pubstrings.txt"
+      ],
+      "checks": [
+        {
+          "id": "cli-drive",
+          "title": "Real CLI driven: /help, bad input, /import with each flag",
+          "ci": [{ "workflow": "crossplatform-tests.yml", "job": "verify-vhc" }],
+          "local": ["build", "cli-checks", "cli-matrix"]
+        }
+      ],
+      "residue": [
+        "CLI flags that only act during live collection (/vbr /vb365 /host= /remote /silent /credfile=) and the Windows credential store are not driven off Windows (features/cli-arguments.md)"
+      ]
+    },
+    "report-pipeline": {
+      "title": "CSV parsing, report generation, report assets and localization",
+      "paths": [
+        "vHC/HC_Reporting/Functions/Reporting/**",
+        "vHC/HC_Reporting/Functions/Analysis/**",
+        "vHC/HC_Reporting/Functions/Collection/CImportPathResolver.cs",
+        "vHC/HC_Reporting/Functions/Collection/CCsvValidator.cs",
+        "vHC/HC_Reporting/css.css",
+        "vHC/HC_Reporting/ReportScript.js",
+        "vHC/HC_Reporting/Resources/**",
+        "tools/report-smoke/**"
+      ],
+      "checks": [
+        {
+          "id": "import-and-render",
+          "title": "/import against golden CSVs (plain, scrubbed, six layouts) and the report opened in a browser",
+          "ci": [{ "workflow": "crossplatform-tests.yml", "job": "verify-vhc" }],
+          "local": ["build", "import-report", "import-layouts", "render"]
+        }
+      ],
+      "residue": [
+        "Print/PDF output, a narrow viewport and non-Chromium browsers are not checked (features/render.md)"
+      ]
+    },
+    "exports": {
+      "title": "HTML, JSON, PDF and PPTX exporters",
+      "paths": [
+        "vHC/HC_Reporting/Functions/Reporting/Html/Exportables/**",
+        "vHC/HC_Reporting/Functions/Reporting/Html/CHtmlExporter.cs"
+      ],
+      "checks": [
+        {
+          "id": "export-drive",
+          "title": "/pptx and the html/json export driven through the CLI",
+          "ci": [{ "workflow": "crossplatform-tests.yml", "job": "verify-vhc" }],
+          "local": ["build", "import-report", "cli-matrix"]
+        }
+      ],
+      "residue": [
+        "PDF content: /pdf crashes off Windows (DinkToPdf native library); only a Windows host can produce and inspect a PDF",
+        "PPTX slide content is not asserted beyond a valid OOXML container"
+      ]
+    },
+    "scrub": {
+      "title": "Scrub / anonymize path",
+      "paths": [
+        "vHC/HC_Reporting/Common/Scrubber/**",
+        "vHC/HC_Reporting/**/*Scrub*"
+      ],
+      "checks": [
+        {
+          "id": "scrub-drive",
+          "title": "/scrub:true import asserts identifying names are absent",
+          "ci": [{ "workflow": "crossplatform-tests.yml", "job": "verify-vhc" }],
+          "local": ["build", "import-scrub"]
+        }
+      ],
+      "residue": [
+        "Scrub completeness is asserted for five known names only; live-run scrub leaks need the live jobs"
+      ]
+    },
+    "gui": {
+      "title": "Avalonia GUI, dialogs and GUI tests",
+      "paths": [
+        "**/*.axaml",
+        "**/*.axaml.cs",
+        "vHC/HC_Reporting/Functions/AboutDialog/**",
+        "vHC/HC_Reporting/Functions/CredsWindow/**",
+        "vHC/HC_Reporting/Functions/ManageServers/**",
+        "vHC/HC_Reporting/Functions/UserInteraction/**",
+        "vHC/HC_Reporting/Health_Check_Icon.ico",
+        "vHC/VhcGuiTests/**"
+      ],
+      "checks": [
+        {
+          "id": "gui-headless",
+          "title": "Avalonia.Headless GUI suite (included in test-crossplatform)",
+          "ci": [{ "workflow": "crossplatform-tests.yml", "job": "test-crossplatform" }],
+          "local": ["tests"]
+        }
+      ],
+      "residue": [
+        "Windows GUI smoke: launch the real window on Windows (console hide, native pickers, rendering) and click through the changed dialog"
+      ]
+    },
+    "collection-dotnet": {
+      "title": "Live collection code (PowerShell host, SQL, registry, logs, credentials)",
+      "paths": [
+        "vHC/HC_Reporting/Functions/Collection/**"
+      ],
+      "exclude": [
+        "vHC/HC_Reporting/Functions/Collection/CImportPathResolver.cs",
+        "vHC/HC_Reporting/Functions/Collection/CCsvValidator.cs"
+      ],
+      "checks": [
+        {
+          "id": "live-vbr-12",
+          "title": "Live run against VBR v12 (self-hosted lab)",
+          "ci": [{ "workflow": "ci-cd.yaml", "job": "integration-test-vbr-12" }]
+        },
+        {
+          "id": "live-vbr-13-sql",
+          "title": "Live run against VBR v13, local SQL (self-hosted lab)",
+          "ci": [{ "workflow": "ci-cd.yaml", "job": "integration-test-vbr-13-sql" }]
+        },
+        {
+          "id": "live-vbr-2-remote",
+          "title": "Live run against a remote VBR host (self-hosted lab)",
+          "ci": [{ "workflow": "ci-cd.yaml", "job": "integration-test-vbr-2" }]
+        }
+      ],
+      "residue": [
+        "VB365 live collection has no runner; a changed VB365 collection path needs a human on a VB365 host"
+      ]
+    },
+    "collection-scripts-vbr": {
+      "title": "VBR collection scripts and hotfix detection",
+      "paths": [
+        "vHC/HC_Reporting/Tools/Scripts/HealthCheck/VBR/**",
+        "vHC/HC_Reporting/Tools/Scripts/HotfixDetection/**"
+      ],
+      "exclude": ["**/*.md", "**/*.example", "**/*.example.*"],
+      "checks": [
+        {
+          "id": "pester",
+          "title": "Pester suite (windows)",
+          "ci": [{ "workflow": "pester-tests.yml", "job": "pester" }],
+          "local": ["pester"]
+        },
+        {
+          "id": "ps51-syntax",
+          "title": "PowerShell 5.1 syntax validation (windows)",
+          "ci": [{ "workflow": "ps51-syntax-validation.yml", "job": "validate-ps51-syntax" }]
+        },
+        {
+          "id": "live-vbr-12",
+          "title": "Live run against VBR v12 (self-hosted lab)",
+          "ci": [{ "workflow": "ci-cd.yaml", "job": "integration-test-vbr-12" }]
+        },
+        {
+          "id": "live-vbr-13-sql",
+          "title": "Live run against VBR v13, local SQL (self-hosted lab)",
+          "ci": [{ "workflow": "ci-cd.yaml", "job": "integration-test-vbr-13-sql" }]
+        },
+        {
+          "id": "live-vbr-2-remote",
+          "title": "Live run against a remote VBR host (self-hosted lab)",
+          "ci": [{ "workflow": "ci-cd.yaml", "job": "integration-test-vbr-2" }]
+        }
+      ]
+    },
+    "collection-scripts-vb365": {
+      "title": "VB365 collection script",
+      "paths": [
+        "vHC/HC_Reporting/Tools/Scripts/HealthCheck/VB365/**"
+      ],
+      "exclude": ["**/*.md"],
+      "checks": [
+        {
+          "id": "pester",
+          "title": "Pester suite (windows)",
+          "ci": [{ "workflow": "pester-tests.yml", "job": "pester" }],
+          "local": ["pester"]
+        },
+        {
+          "id": "ps51-syntax",
+          "title": "PowerShell 5.1 syntax validation (windows)",
+          "ci": [{ "workflow": "ps51-syntax-validation.yml", "job": "validate-ps51-syntax" }]
+        },
+        {
+          "id": "live-vb365",
+          "title": "Live VB365 collection on a real VB365 server",
+          "human": "No CI runner has VB365. Run the changed script against a VB365 host and attach the CSV/report."
+        }
+      ]
+    },
+    "powershell-other": {
+      "title": "Any PowerShell file (Pester path filter)",
+      "paths": ["**/*.ps1", "**/*.psm1", "**/*.psd1"],
+      "checks": [
+        {
+          "id": "pester",
+          "title": "Pester suite (windows)",
+          "ci": [{ "workflow": "pester-tests.yml", "job": "pester" }],
+          "local": ["pester"]
+        }
+      ]
+    },
+    "golden-fixtures": {
+      "title": "Golden CSV baselines and schemas",
+      "paths": ["vHC/HC_Reporting/Tools/GoldenBaselines/**"],
+      "exclude": ["**/*.md", "**/*.ps1"],
+      "checks": [
+        {
+          "id": "import-and-render",
+          "title": "/import against the (changed) golden CSVs and the report opened in a browser",
+          "ci": [{ "workflow": "crossplatform-tests.yml", "job": "verify-vhc" }],
+          "local": ["build", "import-report", "import-layouts", "render"]
+        },
+        {
+          "id": "xunit-crossplatform",
+          "title": "Cross-platform xUnit + headless GUI tests",
+          "ci": [{ "workflow": "crossplatform-tests.yml", "job": "test-crossplatform" }],
+          "local": ["tests"]
+        }
+      ]
+    },
+    "packaging": {
+      "title": "Publish scripts and bundled binaries",
+      "paths": [
+        "vHC/HC_Reporting/Tools/build/**",
+        "vHC/HC_Reporting/Tools/Veeam.Hotfix.Detector.zip"
+      ],
+      "checks": [
+        {
+          "id": "windows-publish",
+          "title": "Windows build, test and single-file publish (ci-cd build-and-test)",
+          "ci": [{ "workflow": "ci-cd.yaml", "job": "build-and-test" }]
+        }
+      ]
+    },
+    "ci-workflows": {
+      "title": "GitHub Actions workflows",
+      "kind": "workflow",
+      "paths": [".github/workflows/*.yml", ".github/workflows/*.yaml"],
+      "checks": [],
+      "residue": [
+        "A workflow change is proven only by the changed job running on this head SHA; jobs that only run on publish, a schedule or the other PR kind cannot be exercised from here"
+      ]
+    },
+    "ci-scripts": {
+      "title": "CI helper scripts and their data",
+      "paths": [".github/scripts/**"],
+      "checks": [
+        {
+          "id": "pester",
+          "title": "Pester suite (windows); .github/scripts/*.json does not match the workflow's path filter",
+          "ci": [{ "workflow": "pester-tests.yml", "job": "pester" }],
+          "local": ["pester"]
+        }
+      ]
+    },
+    "verify-skill": {
+      "title": "verify-vhc skill, PR verifier and its map",
+      "paths": [".claude/skills/verify-vhc/**"],
+      "exclude": ["**/*.md"],
+      "checks": [
+        {
+          "id": "skill-ci",
+          "title": "verify-vhc CI job (runs on any skill change; includes the map-completeness Pester test)",
+          "ci": [{ "workflow": "crossplatform-tests.yml", "job": "verify-vhc" }],
+          "local": ["pester"]
+        },
+        { "id": "json-syntax", "title": "Changed .json files parse", "builtin": "json-syntax" }
+      ]
+    }
+  }
+}

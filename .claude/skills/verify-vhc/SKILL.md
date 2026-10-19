@@ -42,11 +42,25 @@ One script, repo-relative, executable. Run from anywhere inside the repo:
 .claude/skills/verify-vhc/scripts/vhc-verify.sh import-layouts [ID] # /import over 6 folder layouts, reports must be identical
 .claude/skills/verify-vhc/scripts/vhc-verify.sh render        [ID]  # open the import output (plain + scrubbed) in a browser via tools/report-smoke; needs bun
 .claude/skills/verify-vhc/scripts/vhc-verify.sh ci            [ID]  # build + every subcommand above except tests (what CI runs)
+.claude/skills/verify-vhc/scripts/vhc-verify.sh pr <N|branch> [--run] [--dispatch] [--comment]  # verify a PR: did its green checks exercise what it changed? (needs pwsh 7 + gh)
 .claude/skills/verify-vhc/scripts/vhc-verify.sh tests         [ID]  # all three test projects, logs captured
 .claude/skills/verify-vhc/scripts/vhc-verify.sh cleanup       [ID]  # stop what we started, remove scratch input, keep evidence
 ```
 
 `ID` names the evidence folder; default is a timestamp.
+
+## Verify a PR
+
+Green PR checks do not prove the changed code ran: a workflow that never ran shows up as absent, not failed. `ci-cd.yaml` (the live VBR jobs) never runs on a pull request, and the path-filtered workflows (`crossplatform-tests.yml`, `pester-tests.yml`, `ps51-syntax-validation.yml`) skip silently when their paths are not touched. `pr` closes that gap.
+
+```bash
+.claude/skills/verify-vhc/scripts/vhc-verify.sh pr 295             # read-only: map the diff to surfaces, read the real check-runs on the head SHA
+.claude/skills/verify-vhc/scripts/vhc-verify.sh pr 295 --run       # also run the missing local checks (needs a checkout of the PR head)
+.claude/skills/verify-vhc/scripts/vhc-verify.sh pr 295 --dispatch  # dispatch ci-cd.yaml on the PR branch if live-lab jobs never ran (one per head SHA)
+.claude/skills/verify-vhc/scripts/vhc-verify.sh pr 295 --comment   # create or update the one sticky PR comment
+```
+
+It writes `.verify-vhc/evidence/pr-<N>/report.md` and `report.json` and exits 0 only on **VERIFIED**. The other verdicts are **NEEDS-RUN** (exit 2: something touched was not exercised; the report prints the exact command), **FAILED** (exit 1) and **NEEDS-HUMAN** (exit 3: only a human, Windows or a live VB365 host can prove it, or a changed file maps to no surface). `.github/workflows/pr-verify.yml` runs the read-only form on every PR. Paste the verdict into the PR body. Recipe, map format and limits: [features/pr-verification.md](features/pr-verification.md).
 
 ## Launch
 

@@ -97,6 +97,14 @@ jobs:
     steps:
     - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
 
+    # Fails when a tracked file matches no surface glob in pr-surfaces.json, or the map names a workflow/job that
+    # does not exist, so the PR verifier cannot rot silently. Also covers the verifier's own logic.
+    - name: PR-verify map and logic tests (Pester)
+      shell: pwsh
+      run: |
+        Import-Module Pester -MinimumVersion 5.0.0
+        Invoke-Pester -Path .claude/skills/verify-vhc/scripts/PrVerify.Tests.ps1 -CI
+
     - name: Setup .NET
       uses: actions/setup-dotnet@67a3573c9a986a3f9c594539f4ab511d57bb3ce9 # v4
       with:
