@@ -37,7 +37,7 @@ namespace VeeamHealthCheck.Functions.Collection
         {
             "Organizations.csv",
             "Proxies.csv",
-            "Repositories.csv"
+            "LocalRepositories.csv"
         };
 
         /// <summary>

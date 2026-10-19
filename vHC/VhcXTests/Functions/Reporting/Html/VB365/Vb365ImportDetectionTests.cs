@@ -62,7 +62,7 @@ namespace VhcXTests.Functions.Reporting.Html.VB365
             Assert.Contains("Proxies.csv", result.PresentFiles);
         }
 
-        [Fact(Skip = "bug: CriticalVb365Files lists Repositories.csv but the collector writes LocalRepositories.csv, so a complete VB365 export is reported as missing a critical file")]
+        [Fact]
         public void ValidateCsvFiles_CompleteVb365Export_HasNoMissingCriticalFiles()
         {
             using var h = new Vb365ReportHarness();
