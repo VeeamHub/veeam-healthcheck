@@ -26,6 +26,11 @@ namespace VeeamHealthCheck.Functions.Reporting.CsvHandlers
         [Name("LabelSource")]
         [Optional]
         public string LabelSource { get; set; }
+
+        /// <summary>SDK rule Id GUID; CI triage input only. Never rendered in the report or JSON export.</summary>
+        [Name("RuleId")]
+        [Optional]
+        public string RuleId { get; set; }
     }
 }
 

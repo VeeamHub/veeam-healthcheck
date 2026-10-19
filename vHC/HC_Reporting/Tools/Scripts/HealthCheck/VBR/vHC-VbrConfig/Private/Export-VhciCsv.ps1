@@ -36,7 +36,10 @@ function Export-VhciCsv {
             return
         }
         try {
-            $allObjects | Export-Csv -Path $file -NoTypeInformation -ErrorAction Stop
+            # Neutralize CSV/spreadsheet formula injection (leading = + - @ TAB CR
+            # on non-numeric string cells) before writing the file an operator may
+            # open in Excel/Sheets. Numbers are preserved; see Protect-VhciCsvInjection.
+            $allObjects | Protect-VhciCsvInjection | Export-Csv -Path $file -NoTypeInformation -ErrorAction Stop
         } catch {
             Write-LogFile "Export-VhciCsv failed writing '$file': $($_.Exception.Message)" -LogLevel "ERROR"
             throw

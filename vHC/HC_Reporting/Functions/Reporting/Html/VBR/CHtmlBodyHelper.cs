@@ -213,6 +213,8 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR
             this.RepoTable();
 
             this.HTMLSTRING += this.tables.AddRepositoryInfoFooter();
+
+            this.OrphanedSupersededBackupsTable();
         }
 
         private void CloudConnectSection()
@@ -317,6 +319,17 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR
         private void ProtectedWorkloadsTable()
         {
             this.HTMLSTRING += this.tables.AddProtectedWorkLoadsTable(this.SCRUB);
+        }
+
+        private void OrphanedSupersededBackupsTable()
+        {
+            // Ships dark behind VHC_EXPERIMENTS. Skipping the call also skips the
+            // CGlobals.FullReportJson fill inside AddOrphanedSupersededBackupsTable.
+            // CHtmlCompiler.BuildSidebar gates the nav link on the same flag.
+            if (!CFeatureFlags.ExperimentsEnabled)
+                return;
+
+            this.HTMLSTRING += this.tables.AddOrphanedSupersededBackupsTable(this.SCRUB);
         }
 
         private void ManagedServersTable()

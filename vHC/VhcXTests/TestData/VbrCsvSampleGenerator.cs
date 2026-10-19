@@ -533,6 +533,46 @@ namespace VhcXTests.TestData
                    "\"\"";
         }
 
+        /// <summary>
+        /// Generate a _Jobs.csv shaped like the one in issue #225: one Backup Copy job (10 GB on
+        /// disk), the internal per-source worker VBR names "Parent\\Child"
+        /// (SimpleBackupCopyParentWorker, 25.25 GB on disk), and the plug-in job that worker
+        /// copies from (40 GB on disk).
+        /// </summary>
+        public static string GenerateJobsWithBackupCopyWorker()
+        {
+            return JobHeaderWithPlatform + "\n" +
+                   BuildJobRow("CopyJobA", "SimpleBackupCopyPolicy", "Backup Copy", "10") + "\n" +
+                   BuildJobRow("CopyJobA\\SourceJobA - Nutanix Backup", "SimpleBackupCopyParentWorker", "Nutanix ", "25.25") + "\n" +
+                   BuildJobRow("SourceJobA - Nutanix Backup", "VmbApiPolicyTempJob", "Nutanix Backup", "40");
+        }
+
+        /// <summary>
+        /// Like <see cref="GenerateJobsWithBackupCopyWorker"/> but the worker's parent row is
+        /// absent, so there is nothing to fold the worker's data into.
+        /// </summary>
+        public static string GenerateJobsWithBackupCopyWorkerAndNoParent()
+        {
+            return JobHeaderWithPlatform + "\n" +
+                   BuildJobRow("CopyJobA\\SourceJobA - Nutanix Backup", "SimpleBackupCopyParentWorker", "Nutanix ", "25.25");
+        }
+
+        // One 44-column _Jobs.csv data row: the same values GenerateJobsWithPlatform uses,
+        // with the identifying columns (Name, JobType, TypeToString) and OnDiskGB supplied by
+        // the caller.
+        private static string BuildJobRow(string name, string jobType, string typeToString, string onDiskGb = "50.5")
+        {
+            string[] fields =
+            {
+                name, jobType, "01/01/2026 02:00:00 a.m.", "Start time: [01/01/2026 2:00:00 a.m.]", "14",
+                "Default Backup Repository", "Increment", "Daily", "Sunday", "False", "False", "Sunday",
+                "00000000-0000-0000-0000-000000000000", "0", "Days", "14", "14", "14", "False", "5", "True",
+                "KbBlockSize1024", "True", "False", "False", "False", "False", "False", "False", "4", "False",
+                "1", "False", "1", "None", onDiskGb, "", "", "", "", "True", "False", "", typeToString,
+            };
+            return string.Join(",", Array.ConvertAll(fields, f => "\"" + f.Replace("\"", "\"\"") + "\""));
+        }
+
         #endregion
 
         #region Helper Methods

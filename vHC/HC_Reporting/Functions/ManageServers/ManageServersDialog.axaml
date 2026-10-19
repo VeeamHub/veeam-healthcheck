@@ -1,0 +1,37 @@
+<!--
+Copyright (c) 2021, Adam Congdon <adam.congdon2@gmail.com>
+MIT License
+-->
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        x:Class="VeeamHealthCheck.Functions.ManageServers.ManageServersDialog"
+        Width="420" Height="380"
+        CanResize="False"
+        WindowStartupLocation="CenterOwner">
+    <Grid RowDefinitions="Auto,*,Auto,Auto" Margin="20">
+
+        <Grid Grid.Row="0" ColumnDefinitions="*,8,Auto" Margin="0,0,0,12">
+            <TextBox x:Name="newServerBox" Grid.Column="0" Classes="modern" Height="32" FontSize="12" />
+            <Button x:Name="addBtn" Grid.Column="2" Classes="primary"
+                    Height="32" FontSize="12" Width="70" Click="addBtn_Click" />
+        </Grid>
+
+        <!-- The row list is the only Star row, so it absorbs the window's spare height
+             and scrolls internally rather than pushing the footer off-screen. -->
+        <Border Grid.Row="1" BorderBrush="{DynamicResource CardBorderBrush}" BorderThickness="1"
+                Background="{DynamicResource CardBackgroundBrush}" CornerRadius="4">
+            <ListBox x:Name="serverRows" BorderThickness="0" Padding="4"
+                     SelectionMode="Single" FontSize="13" />
+        </Border>
+
+        <TextBlock x:Name="pendingText" Grid.Row="2" Classes="secondary-text"
+                   Margin="0,12,0,8" TextWrapping="Wrap" />
+
+        <Grid Grid.Row="3" ColumnDefinitions="*,Auto,8,Auto">
+            <Button x:Name="cancelBtn" Grid.Column="1" Classes="secondary"
+                    Height="32" FontSize="12" Padding="14,5" Click="cancelBtn_Click" />
+            <Button x:Name="doneBtn" Grid.Column="3" Classes="primary"
+                    Height="32" FontSize="12" Padding="14,5" Click="doneBtn_Click" />
+        </Grid>
+    </Grid>
+</Window>

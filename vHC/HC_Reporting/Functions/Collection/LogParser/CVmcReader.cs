@@ -1,9 +1,7 @@
 ﻿// Copyright (c) 2021, Adam Congdon <adam.congdon2@gmail.com>
 // MIT License
 using System;
-using System.Collections.Generic;
 using System.IO;
-using System.Linq;
 using VeeamHealthCheck.Functions.Collection.DB;
 using VeeamHealthCheck.Shared;
 
@@ -14,53 +12,53 @@ namespace VeeamHealthCheck.Functions.Collection.LogParser
         private string LOGLOCATION;
         public string INSTALLID;
 
-        private readonly string mode;
-        private readonly string vb365Logs = @"C:\ProgramData\Veeam\Backup365\Logs\";
+        private readonly VmcLogMode mode;
 
-        private DateTime DbLineDate;
+        // Test seams - production never sets these, defaults preserve real behavior.
+        internal string Vb365LogsDir { get; set; } = @"C:\ProgramData\Veeam\Backup365\Logs\";
+        internal Action<string> WarningSink { get; set; } = msg => CGlobals.Logger.Warning(msg);
+        internal Action<string> ErrorSink { get; set; } = msg => CGlobals.Logger.Error(msg);
 
-        public CVmcReader(string mode)
+        public CVmcReader(VmcLogMode mode)
         {
             this.mode = mode;
         }
 
         public void PopulateVmc()
         {
-            this.GetLogDir();
             try
             {
-                this.ReadVmc();
+                this.GetLogDir();
+                if (!string.IsNullOrEmpty(this.LOGLOCATION))
+                {
+                    this.ReadVmc();
+                }
             }
             catch (Exception e)
             {
-                CGlobals.Logger.Error(e.Message);
+                this.ErrorSink(e.Message);
             }
         }
 
         private void GetLogDir()
         {
-            if (this.mode == "vbr")
+            if (this.mode == VmcLogMode.Vbr)
             {
                 CRegReader reg = new();
                 string regDir = reg.DefaultLogDir();
                 this.LOGLOCATION = Path.Combine(regDir + CLogOptions.VMCLOG);
             }
-            else if (this.mode == "vb365")
+            else
             {
-                string[] filesList = Directory.GetFiles(this.vb365Logs);
-                List<FileInfo> fileInfoList = new();
-                foreach (var f in filesList)
+                string[] filesList = Directory.GetFiles(this.Vb365LogsDir, "*VMC.log*");
+                string match = CVmcLogFileSelector.SelectVmcLogFile(filesList);
+                if (match == null)
                 {
-                    if (f.Contains("VMC.log"))
-                    {
-                        FileInfo fileInfo = new FileInfo(f);
-                        fileInfoList.Add(fileInfo);
-                    }
+                    this.WarningSink($"[VMC reader] No VMC.log file found under '{this.Vb365LogsDir}' - skipping VB365 install ID lookup.");
+                    return;
                 }
 
-                fileInfoList.OrderBy(x => x.Name);
-                string fileName = fileInfoList.FirstOrDefault().Name;
-                this.LOGLOCATION = Path.Combine(this.vb365Logs + fileName);
+                this.LOGLOCATION = match;
             }
         }
 
@@ -75,39 +73,36 @@ namespace VeeamHealthCheck.Functions.Collection.LogParser
                     {
                         this.ParseInstallId(line);
                     }
-                    else if (line.Contains("[SQL Server version]"))
-                    {
-                        this.ParseConfigDbInfo(line);
-                    }
                 }
             }
         }
 
-        private void ParseConfigDbInfo(string line)
-        {
-            DateTime dbLineDate = this.ParseLineDate(line);
-            if ( dbLineDate.Ticks - this.DbLineDate.Ticks == 0)
-            {
-                this.DbLineDate = this.ParseLineDate(line);
-            }
-        }
-
-        private DateTime ParseLineDate(string line)
-        {
-            string newLine = line.Substring(1, 25);
-            DateTime.TryParse(newLine, out DateTime dt);
-            return dt;
-        }
-
         private void ParseInstallId(string line)
         {
-            string[] id = line.Substring(40).Split();
-            this.INSTALLID = id[1];
-        }
+            // A malformed/truncated line here must not be indistinguishable from "no VMC.log
+            // found at all" - log it explicitly instead of letting it fall through to
+            // PopulateVmc's generic catch, which only logs the bare exception message.
+            if (line.Length <= 40)
+            {
+                this.WarningSink($"[VMC reader] '{CLogOptions.installIdLine}' line is shorter than expected - skipping install ID parse. Line: '{line}'");
+                return;
+            }
 
-        private void TrimLogLine(string line)
-        {
-            string newLine = line.Substring(40);
+            // Locate the label token itself rather than assuming it lands at a fixed offset:
+            // this tolerates any amount of drift in the assumed 40-char prefix width (which
+            // isn't documented anywhere in this repo or the local VBR docs mirror) instead of
+            // silently mis-parsing a shifted line. The install ID's own format is likewise
+            // unverified, so don't assume a shape for it either - just take whatever token
+            // immediately follows the label.
+            string[] tokens = line.Substring(40).Split((char[])null, StringSplitOptions.RemoveEmptyEntries);
+            int labelIndex = Array.IndexOf(tokens, CLogOptions.installIdLine);
+            if (labelIndex < 0 || labelIndex + 1 >= tokens.Length)
+            {
+                this.WarningSink($"[VMC reader] '{CLogOptions.installIdLine}' line did not contain an install ID token after the label - skipping. Line: '{line}'");
+                return;
+            }
+
+            this.INSTALLID = tokens[labelIndex + 1];
         }
     }
 }

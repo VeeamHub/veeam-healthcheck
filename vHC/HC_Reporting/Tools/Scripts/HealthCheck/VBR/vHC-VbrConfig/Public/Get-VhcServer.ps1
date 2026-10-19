@@ -25,7 +25,40 @@ function Get-VhcServer {
             @{ name = 'Cores';    expression = { $_.GetPhysicalHost().hardwareinfo.CoresCount       } },
             @{ name = 'CPUCount'; expression = { $_.GetPhysicalHost().hardwareinfo.CPUCount          } },
             @{ name = 'RAM';      expression = { $_.GetPhysicalHost().hardwareinfo.PhysicalRamTotal  } },
-            @{ name = 'OSInfo';   expression = { $_.Info.Info                                        } },
+            @{ name = 'OSInfo';   expression = {
+                $server = $_
+                # $_.Info.Info holds a good caption for hypervisor-managed hosts (e.g. ESXi:
+                # "VMware ESXi 8.0.2 build-23305546") but is unpopulated for the backup
+                # server's own host record. Only fall back to GetPhysicalHost() when the
+                # primary source is empty, since GetPhysicalHost().OsType reports "Other"
+                # for host types like ESXi where Info.Info is the better source.
+                try {
+                    if ($_.Info -and $_.Info.Info) {
+                        return $_.Info.Info
+                    }
+
+                    $physHost = @($_.GetPhysicalHost())[0]
+                    if (-not $physHost) { return '' }
+
+                    $unixInfo = $null
+                    $unixProp = $physHost.PSObject.Properties['UnixBasedOsInfo']
+                    if ($unixProp) { $unixInfo = $unixProp.Value }
+
+                    # VBR reports Type='Unknown'/DistribVersion='0.0' as a sentinel for
+                    # non-OS-bearing entries (e.g. ExternalInfrastructureServer); treat
+                    # that as no data rather than surfacing a fabricated OS caption.
+                    if ($unixInfo -and $unixInfo.Type -and $unixInfo.Type -ne 'Unknown') {
+                        "$($unixInfo.Type) $($unixInfo.DistribVersion)".Trim()
+                    } elseif ($null -ne $physHost.OsType -and $physHost.OsType.ToString() -notin @('Other', 'Unknown')) {
+                        $physHost.OsType.ToString()
+                    } else {
+                        ''
+                    }
+                } catch {
+                    Write-LogFile "OS info unavailable for '$($server.Name)' - defaulting to blank OS Version." -LogLevel "WARNING"
+                    ''
+                }
+            } },
             @{ name = 'Platform'; expression = {
                 $key = if ($_.Name) { $_.Name.ToLowerInvariant() } else { '' }
                 if ($script:PlatformMap -and $script:PlatformMap.ContainsKey($key)) {

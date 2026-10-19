@@ -15,16 +15,16 @@ jobs:
     
     steps:
     - name: Checkout PR code
-      uses: actions/checkout@v4
+      uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
       with:
         repository: ${{ github.event.pull_request.head.repo.full_name }}
         ref: ${{ github.event.pull_request.head.sha }}
         fetch-depth: 0
       
     - name: Setup .NET
-      uses: actions/setup-dotnet@v4
+      uses: actions/setup-dotnet@67a3573c9a986a3f9c594539f4ab511d57bb3ce9 # v4
       with:
-        dotnet-version: '8.0.x'
+        dotnet-version: '10.0.x'
         
     - name: Restore dependencies
       run: dotnet restore vHC/HC.sln
@@ -35,16 +35,23 @@ jobs:
     - name: Run tests
       run: dotnet test vHC/HC.sln --configuration Release --no-build --verbosity normal
     
-    - name: Get version from assembly
+    - name: Compute version from commits
       id: get_version
+      shell: pwsh
       run: |
-        $csproj = [xml](Get-Content vHC/HC_Reporting/VeeamHealthCheck.csproj)
-        $version = $csproj.Project.PropertyGroup[0].AssemblyVersion
-        echo "version=$version" >> $env:GITHUB_OUTPUT
-        echo "Version: $version"
+        # A fork's branch may predate the version script; fall back to the csproj version then.
+        if (Test-Path ./.github/scripts/Get-VhcVersion.ps1) {
+          ./.github/scripts/Get-VhcVersion.ps1 -Revision ${{ github.run_number }} -Channel dev -GitHubOutput
+        } else {
+          $csproj = [xml](Get-Content vHC/HC_Reporting/VeeamHealthCheck.csproj)
+          $version = $csproj.Project.PropertyGroup[0].AssemblyVersion
+          "version=$version" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
+          Write-Host "Version (csproj fallback): $version"
+        }
     
     - name: Publish single-file executable
       run: |
+        $version = "${{ steps.get_version.outputs.version }}"
         dotnet publish vHC/HC_Reporting/VeeamHealthCheck.csproj `
           -c Release `
           -r win-x64 `
@@ -52,6 +59,9 @@ jobs:
           -p:PublishSingleFile=true `
           -p:IncludeNativeLibrariesForSelfExtract=true `
           -p:EnableCompressionInSingleFile=true `
+          -p:Version=$version `
+          -p:AssemblyVersion=$version `
+          -p:FileVersion=$version `
           -o publish/out
     
     - name: Create ZIP archive
@@ -69,7 +79,7 @@ jobs:
         echo "zip_name=$($zipPath.Name)" >> $env:GITHUB_OUTPUT
     
     - name: Upload ZIP artifact
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
       with:
         name: veeam-healthcheck-pr-${{ github.event.pull_request.number }}
         path: publish/VeeamHealthCheck-${{ steps.get_version.outputs.version }}.zip
@@ -87,3 +97,25 @@ jobs:
         echo "download_url=$downloadUrl" >> $env:GITHUB_OUTPUT
     
     # Commenting is handled by a separate safe workflow using pull_request_target
+
+  test-same-repo-pr:
+    runs-on: windows-latest
+    if: github.event.pull_request.base.repo.full_name == github.event.pull_request.head.repo.full_name
+
+    steps:
+    - name: Checkout PR code
+      uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+
+    - name: Setup .NET
+      uses: actions/setup-dotnet@67a3573c9a986a3f9c594539f4ab511d57bb3ce9 # v4
+      with:
+        dotnet-version: '10.0.x'
+
+    - name: Restore dependencies
+      run: dotnet restore vHC/HC.sln
+
+    - name: Build solution
+      run: dotnet build vHC/HC.sln --configuration Release --no-restore
+
+    - name: Run tests
+      run: dotnet test vHC/HC.sln --configuration Release --no-build --verbosity normal

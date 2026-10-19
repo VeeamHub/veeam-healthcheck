@@ -4,6 +4,7 @@ using System;
 using System.IO;
 using System.Reflection;
 using System.Text.Json;
+using VeeamHealthCheck.Functions.Collection.Security;
 using VeeamHealthCheck.Functions.CredsWindow;
 using VeeamHealthCheck.Shared;
 using VeeamHealthCheck.Startup;
@@ -20,16 +21,18 @@ namespace VhcXTests
     ///
     /// Naming convention: [Method]_[Scenario]_[Expected].
     /// </summary>
-    [Collection("Credential Store Tests")]
+    [Collection("GlobalState")]
     [Trait("Category", "Silent")]
     public class SilentModeTests : IDisposable
     {
+        private readonly IsolatedCredentialStore _store;
         private readonly string _credStorePath;
         private readonly bool _origSilent;
         private readonly string _origCredFilePath;
         private readonly bool _origSaveCredsOnly;
         private readonly bool _origClearStored;
         private readonly string _origRemoteHost;
+        private readonly bool _origRemoteExec;
 
         public SilentModeTests()
         {
@@ -38,10 +41,13 @@ namespace VhcXTests
             _origSaveCredsOnly = CGlobals.SaveCredsOnly;
             _origClearStored = CGlobals.ClearStoredCreds;
             _origRemoteHost = CGlobals.REMOTEHOST;
+            _origRemoteExec = CGlobals.REMOTEEXEC;
 
-            _credStorePath = Path.Combine(
-                Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
-                "VeeamHealthCheck", "creds.json");
+            // Every Set/Remove in this class goes to a temp creds.json, never the
+            // real %APPDATA%\VeeamHealthCheck\creds.json, so a crash between a Set
+            // and its cleanup cannot leave test credentials in a developer's store.
+            _store = new IsolatedCredentialStore();
+            _credStorePath = _store.StorePath;
 
             // Start each test from a clean slate
             CGlobals.Silent = false;
@@ -58,6 +64,8 @@ namespace VhcXTests
             CGlobals.SaveCredsOnly = _origSaveCredsOnly;
             CGlobals.ClearStoredCreds = _origClearStored;
             CGlobals.REMOTEHOST = _origRemoteHost;
+            CGlobals.REMOTEEXEC = _origRemoteExec;
+            _store.Dispose();
         }
 
         // ----------------------------------------------------------------
@@ -305,9 +313,12 @@ namespace VhcXTests
                 object[] invokeArgs = new object[] { null };
                 string args = (string)method.Invoke(invoker, invokeArgs);
 
-                // Assert
+                // Assert. The username is escaped for the double-quoted argument
+                // context (backslash is doubled), so assert the escaped form that
+                // the command builder now emits — this guards the injection fix.
+                string expectedUserInArgs = CredentialHelper.EscapeForPowerShellDoubleQuotes(user);
                 Assert.Contains("-Username", args);
-                Assert.Contains(user, args);
+                Assert.Contains(expectedUserInArgs, args);
                 Assert.Contains("-PasswordBase64", args);
                 Assert.Contains(expectedB64, args);
             }

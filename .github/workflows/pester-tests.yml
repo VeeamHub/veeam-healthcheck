@@ -1,26 +1,39 @@
 name: Pester Tests (Windows)
 
+# Runs every *.Tests.ps1 tracked in the repo (discovered by glob, so new test
+# files are picked up automatically).
+
 on:
   push:
     branches: [master, dev]
     paths:
-      - 'vHC/HC_Reporting/Functions/Collection/PSCollections/Scripts/TestMfa.ps1'
-      - 'vHC/HC_Reporting/Functions/Collection/PSCollections/Scripts/TestMfa.Tests.ps1'
+      - '**/*.ps1'
+      - '**/*.psm1'
+      - '**/*.psd1'
+      - 'vHC/HC_Reporting/Tools/Scripts/**/*.json'
+      - 'vHC/HC_Reporting/Tools/Scripts/**/*.csv'
+      - 'vHC/HC_Reporting/Functions/Collection/PSCollections/**'
+      - '.github/workflows/pester-tests.yml'
   pull_request:
     branches: [master, dev]
     paths:
-      - 'vHC/HC_Reporting/Functions/Collection/PSCollections/Scripts/TestMfa.ps1'
-      - 'vHC/HC_Reporting/Functions/Collection/PSCollections/Scripts/TestMfa.Tests.ps1'
+      - '**/*.ps1'
+      - '**/*.psm1'
+      - '**/*.psd1'
+      - 'vHC/HC_Reporting/Tools/Scripts/**/*.json'
+      - 'vHC/HC_Reporting/Tools/Scripts/**/*.csv'
+      - 'vHC/HC_Reporting/Functions/Collection/PSCollections/**'
+      - '.github/workflows/pester-tests.yml'
   workflow_dispatch:
 
 jobs:
   pester:
-    name: Pester — Resolve-VeeamConsolePath
+    name: Pester — all test files
     runs-on: windows-latest
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
 
       - name: Ensure Pester v5 is available
         shell: pwsh
@@ -39,11 +52,25 @@ jobs:
         run: |
           Import-Module Pester -MinimumVersion 5.0.0
 
-          $testFile = 'vHC/HC_Reporting/Functions/Collection/PSCollections/Scripts/TestMfa.Tests.ps1'
+          # Discover every tracked *.Tests.ps1 (no hard-coded list).
+          $testFiles = @(git ls-files '*.Tests.ps1')
+          if ($LASTEXITCODE -ne 0) {
+            Write-Host "::error::git ls-files failed"
+            exit 1
+          }
+          if ($testFiles.Count -eq 0) {
+            Write-Host '::error::No *.Tests.ps1 files found'
+            exit 1
+          }
+          Write-Host "Discovered $($testFiles.Count) test file(s):"
+          $testFiles | ForEach-Object { Write-Host "  $_" }
+          $testFiles | Out-File -FilePath 'pester-test-files.txt' -Encoding utf8
+
           $resultsFile = 'pester-results.xml'
 
           $config = New-PesterConfiguration
-          $config.Run.Path = $testFile
+          $config.Run.Path = [string[]]$testFiles
+          $config.Run.PassThru = $true
           $config.Output.Verbosity = 'Detailed'
           $config.TestResult.Enabled = $true
           $config.TestResult.OutputFormat = 'NUnitXml'
@@ -52,61 +79,59 @@ jobs:
           $result = Invoke-Pester -Configuration $config
 
           # Surface counts for summary step
+          "files=$($testFiles.Count)"       | Out-File -FilePath $env:GITHUB_OUTPUT -Append
           "passed=$($result.PassedCount)"   | Out-File -FilePath $env:GITHUB_OUTPUT -Append
           "failed=$($result.FailedCount)"   | Out-File -FilePath $env:GITHUB_OUTPUT -Append
           "skipped=$($result.SkippedCount)" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
           "total=$($result.TotalCount)"     | Out-File -FilePath $env:GITHUB_OUTPUT -Append
 
-          if ($result.FailedCount -gt 0) {
-            Write-Host "::error::$($result.FailedCount) Pester test(s) failed"
+          if ($result.FailedCount -gt 0 -or $result.FailedBlocksCount -gt 0 -or $result.FailedContainersCount -gt 0) {
+            Write-Host "::error::Pester failures: $($result.FailedCount) test(s), $($result.FailedBlocksCount) block(s), $($result.FailedContainersCount) container(s)"
             exit 1
           }
 
       - name: Upload test results
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: pester-results-${{ github.run_number }}
-          path: pester-results.xml
+          path: |
+            pester-results.xml
+            pester-test-files.txt
           retention-days: 30
 
       - name: Write job summary
         if: always()
         shell: pwsh
         run: |
+          $files   = '${{ steps.pester_run.outputs.files }}'
           $passed  = '${{ steps.pester_run.outputs.passed }}'
           $failed  = '${{ steps.pester_run.outputs.failed }}'
           $skipped = '${{ steps.pester_run.outputs.skipped }}'
           $total   = '${{ steps.pester_run.outputs.total }}'
 
-          $status = if ($failed -eq '0') { ':white_check_mark: All tests passed' } else { ":x: $failed test(s) failed" }
+          if ('${{ steps.pester_run.outcome }}' -eq 'success') {
+            $status = ':white_check_mark: All tests passed'
+          } else {
+            $status = ':x: Pester run failed (see job log)'
+          }
+
+          $fileList = ''
+          if (Test-Path 'pester-test-files.txt') {
+            $fileList = (Get-Content 'pester-test-files.txt' | ForEach-Object { "- ``$_``" }) -join "`n"
+          }
 
           $summary = @"
-          ## Pester Test Results — Resolve-VeeamConsolePath
+          ## Pester Test Results
 
           **$status**
 
-          | Passed | Failed | Skipped | Total |
-          |--------|--------|---------|-------|
-          | $passed | $failed | $skipped | $total |
+          | Files | Passed | Failed | Skipped | Total |
+          |-------|--------|--------|---------|-------|
+          | $files | $passed | $failed | $skipped | $total |
 
-          ### Test File
-          ``vHC/HC_Reporting/Functions/Collection/PSCollections/Scripts/TestMfa.Tests.ps1``
-
-          ### Contexts
-          | # | Description |
-          |---|-------------|
-          | T1 | CorePath registry present — default install Console exists |
-          | T2 | CorePath registry present — non-default (D:\) install |
-          | T3 | CorePath absent, Mount Service registry present (fallback) |
-          | T4 | Mount Service fallback — non-default (D:\) install |
-          | T5 | Mount Service rejects UNC InstallationPath (security) |
-          | T6 | Mount Service candidate appears in attempted-paths error |
-          | T7 | Both registry probes absent — env-var ProgramFiles fallback |
-          | T8 | All probes fail — returns null, error lists all candidates |
-          | T9 | Attempted-path ordering: CorePath → MountSvc → PF → PF(x86) |
-          | T10 | Dot-source guard — Connect-VBRServer not invoked on dot-source |
-          | T11 | CorePath absent, Get-Package finds path |
+          ### Test files
+          $fileList
 
           > Full NUnit XML results available in the **pester-results-${{ github.run_number }}** artifact.
           "@

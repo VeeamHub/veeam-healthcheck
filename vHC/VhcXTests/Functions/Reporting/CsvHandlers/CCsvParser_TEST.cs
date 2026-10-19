@@ -234,6 +234,52 @@ namespace VhcXTests.Functions.Reporting.CsvHandlers
         }
 
         [Fact]
+        public void JobCsvParser_BackupCopyWorkerRow_IsNotReturnedAsAJob()
+        {
+            VbrCsvSampleGenerator.CreateCsvFile(_vbrDir, "_Jobs.csv", VbrCsvSampleGenerator.GenerateJobsWithBackupCopyWorker());
+            var parser = new CCsvParser(_vbrDir);
+
+            var jobs = parser.JobCsvParser().ToList();
+
+            Assert.Equal(new[] { "CopyJobA", "SourceJobA - Nutanix Backup" }, jobs.Select(j => j.Name).ToArray());
+            Assert.DoesNotContain(jobs, j => j.JobType == "SimpleBackupCopyParentWorker");
+        }
+
+        [Fact]
+        public void JobCsvParser_BackupCopyWorkerRow_AddsItsOnDiskSizeToTheParent()
+        {
+            VbrCsvSampleGenerator.CreateCsvFile(_vbrDir, "_Jobs.csv", VbrCsvSampleGenerator.GenerateJobsWithBackupCopyWorker());
+            var parser = new CCsvParser(_vbrDir);
+
+            var jobs = parser.JobCsvParser().ToList();
+
+            Assert.Equal(35.25, jobs.Single(j => j.Name == "CopyJobA").OnDiskGB);
+            Assert.Equal(40, jobs.Single(j => j.Name == "SourceJobA - Nutanix Backup").OnDiskGB);
+        }
+
+        [Fact]
+        public void JobCsvParser_BackupCopyWorkerWithoutParentRow_IsKept()
+        {
+            VbrCsvSampleGenerator.CreateCsvFile(_vbrDir, "_Jobs.csv", VbrCsvSampleGenerator.GenerateJobsWithBackupCopyWorkerAndNoParent());
+            var parser = new CCsvParser(_vbrDir);
+
+            var jobs = parser.JobCsvParser().ToList();
+
+            var kept = Assert.Single(jobs);
+            Assert.Equal("SimpleBackupCopyParentWorker", kept.JobType);
+            Assert.Equal(25.25, kept.OnDiskGB);
+        }
+
+        [Fact]
+        public void GetDynamicJobInfo_BackupCopyWorkerRow_StaysInTheRawCsv()
+        {
+            VbrCsvSampleGenerator.CreateCsvFile(_vbrDir, "_Jobs.csv", VbrCsvSampleGenerator.GenerateJobsWithBackupCopyWorker());
+            var parser = new CCsvParser(_vbrDir);
+
+            Assert.Equal(3, parser.GetDynamicJobInfo().Count());
+        }
+
+        [Fact]
         public void GetDynamicJobInfo_ValidFile_ReturnsRecords()
         {
             var parser = new CCsvParser(_vbrDir);

@@ -646,6 +646,53 @@ namespace VhcXTests.Functions.Reporting.Html.VBR.VbrTables
             }
         }
 
+        [Fact]
+        public void SessionStats_SessionOutsideDateTimeNowWindow_ButInsideToolStartWindow_IsCounted()
+        {
+            // Regression test for Issue #218: SessionStats used to re-filter on DateTime.Now
+            // instead of reusing JobSessionInfoList()'s GetToolStart-anchored TargetDate().
+            // Simulate a long-running collection: GetToolStart was 2 days ago, and ReportDays
+            // is 7, so the window is [toolStart - 7d, ...] = [now - 9d, ...]. A session created
+            // 8 days ago sits inside that window (survives JobSessionInfoList()) but would have
+            // failed the old "DateTime.Now - CreationTime < ReportDays" check (8 days > 7).
+            var session = new VeeamHealthCheck.Functions.Reporting.DataTypes.CJobSessionInfo
+            {
+                Name = "Test Job",
+                JobName = "Test Job",
+                Status = "Success",
+                IsRetry = "False",
+                JobDuration = "00:10:00",
+                VmName = "VM1",
+                DataSize = 100.0,
+                BackupSize = 50.0,
+                Alg = "Full",
+                JobType = "Backup",
+                CreationTime = DateTime.Now.AddDays(-8),
+            };
+
+            var previousDtParser = CGlobals.DtParser;
+            var previousReportDays = CGlobals.ReportDays;
+            var previousToolStart = CGlobals.GetToolStart;
+            try
+            {
+                CGlobals.GetToolStart = DateTime.Now.AddDays(-2);
+                CGlobals.ReportDays = 7;
+                CGlobals.DtParser = new CDataTypesParser();
+                CGlobals.DtParser.JobSessions = new System.Collections.Generic.List<VeeamHealthCheck.Functions.Reporting.DataTypes.CJobSessionInfo> { session };
+
+                var helper = new VeeamHealthCheck.Functions.Reporting.Html.VBR.VbrTables.Job_Session_Summary.CJobSessSummaryHelper();
+                var stats = helper.SessionStats("Test Job");
+
+                Assert.Equal(1, stats.SessionCount);
+            }
+            finally
+            {
+                CGlobals.DtParser = previousDtParser;
+                CGlobals.ReportDays = previousReportDays;
+                CGlobals.GetToolStart = previousToolStart;
+            }
+        }
+
         #endregion
 
         [Fact]

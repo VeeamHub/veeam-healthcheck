@@ -6,6 +6,9 @@
 > If you opened this PR against `master` by mistake, change the base branch to `dev` in the dropdown above (no need to close and reopen).
 > See [CONTRIBUTING.md → Branching strategy](../blob/dev/CONTRIBUTING.md#branching-strategy) for details.
 
+> [!TIP]
+> **Use a Conventional Commit PR title** (`feat: ...`, `fix: ...`, or `feat!: ...` for a breaking change). The release version is computed from commit messages, and if this PR is squash-merged the title is what gets read. See [CONTRIBUTING.md → Commit messages and versioning](../blob/dev/CONTRIBUTING.md#commit-messages-and-versioning).
+
 By contributing, you agree that your contributions will be licensed under the projects original open source license.
 
 ## Summary
@@ -37,7 +40,7 @@ Fixes # (issue)
 
 * [ ] Bug fix (non-breaking change which fixes an issue)
 * [ ] New feature (non-breaking change which adds functionality)
-* [ ] Breaking change (fix or feature that would cause existing functionality to not work as expected)
+* [ ] Breaking change (fix or feature that would cause existing functionality to not work as expected; mark the PR title with `!`, e.g. `feat!:`)
 * [ ] This change requires a documentation update
 
 ### How Has This Been Tested?

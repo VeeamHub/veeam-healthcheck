@@ -20,8 +20,8 @@ namespace VeeamHealthCheck.Shared
             }
 
             FileVersionInfo fvi = FileVersionInfo.GetVersionInfo(exePath);
-            CGlobals.VHCVERSION = fvi.FileVersion;
-            return fvi.FileVersion;
+            CGlobals.VHCVERSION = fvi.FileVersion ?? string.Empty;
+            return CGlobals.VHCVERSION;
         }
     }
 }

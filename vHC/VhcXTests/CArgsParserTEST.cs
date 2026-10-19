@@ -11,8 +11,23 @@ using Xunit;
 namespace VhcXTests
 {
     [Collection("GlobalState")]
-    public class CArgsParserTests
+    public class CArgsParserTests : IDisposable
     {
+        private readonly TargetProduct _origTargetProductType;
+        private readonly int _origMajorVersion;
+
+        public CArgsParserTests()
+        {
+            _origTargetProductType = CGlobals.TargetProductType;
+            _origMajorVersion = CGlobals.VBRMAJORVERSION;
+        }
+
+        public void Dispose()
+        {
+            CGlobals.TargetProductType = _origTargetProductType;
+            CGlobals.VBRMAJORVERSION = _origMajorVersion;
+        }
+
         // Helper method to access private ParsePath method via reflection
         private string? InvokeParsePathMethod(CArgsParser parser, string input)
         {
@@ -160,6 +175,58 @@ namespace VhcXTests
             // Arrange & Assert - Verify all documented switches are properly formatted
             Assert.StartsWith("/", arg);
             Assert.NotEmpty(arg);
+        }
+
+        #endregion
+
+        #region Implied-Run Tests (issue: "/remote /host=... does nothing")
+
+        [Theory]
+        // remote + explicit host, no verb -> imply run
+        [InlineData(false, false, false, false, false, true, "vbr01", TargetProduct.Auto, true)]
+        // host only (local-host detection can leave REMOTEEXEC false but host set) -> imply
+        [InlineData(false, false, false, false, false, false, "vbr01", TargetProduct.Auto, true)]
+        // product target only -> imply
+        [InlineData(false, false, false, false, false, false, "", TargetProduct.Vbr, true)]
+        [InlineData(false, false, false, false, false, false, "", TargetProduct.Vb365, true)]
+        // /remote alone, host not yet supplied -> imply (dispatch then warns about missing host)
+        [InlineData(false, false, false, false, false, true, "", TargetProduct.Auto, true)]
+        // explicit /run already set -> do NOT re-imply (verb wins)
+        [InlineData(true, false, false, false, false, true, "vbr01", TargetProduct.Auto, false)]
+        // /gui selected -> do NOT imply a run
+        [InlineData(false, true, false, false, false, true, "vbr01", TargetProduct.Auto, false)]
+        // /hotfix selected -> do NOT imply a run
+        [InlineData(false, false, true, false, false, false, "", TargetProduct.Auto, false)]
+        // /help with collection-intent flags -> help wins, never start a collection
+        [InlineData(false, false, false, true, false, true, "vbr01", TargetProduct.Auto, false)]
+        [InlineData(false, false, false, true, false, false, "", TargetProduct.Vbr, false)]
+        // /clearcreds with collection-intent flags -> never imply a run (would wipe every host's stored creds)
+        [InlineData(false, false, false, false, true, false, "vbr01", TargetProduct.Auto, false)]
+        [InlineData(false, false, false, false, true, true, "vbr01", TargetProduct.Auto, false)]
+        [InlineData(false, false, false, false, true, false, "", TargetProduct.Vbr, false)]
+        // /clearcreds with an explicit /run -> verb already set, nothing to imply
+        [InlineData(true, false, false, false, true, true, "vbr01", TargetProduct.Auto, false)]
+        // no verb and no collection intent -> nothing to imply
+        [InlineData(false, false, false, false, false, false, "", TargetProduct.Auto, false)]
+        public void ShouldImplyRun_FlagCombination_ReturnsExpected(
+            bool run, bool ui, bool runHfd, bool helpRequested, bool clearStoredCreds, bool remoteExec, string remoteHost, TargetProduct product, bool expected)
+        {
+            Assert.Equal(expected, CArgsParser.ShouldImplyRun(run, ui, runHfd, helpRequested, clearStoredCreds, remoteExec, remoteHost, product));
+        }
+
+        [Theory]
+        // nothing selected, help not requested -> this is the silent no-op state we now guard
+        [InlineData(false, false, false, false, true)]
+        // help requested -> handled by the /help branch, not treated as "no action"
+        [InlineData(false, false, false, true, false)]
+        // an action was selected -> not "no action"
+        [InlineData(true, false, false, false, false)]
+        [InlineData(false, true, false, false, false)]
+        [InlineData(false, false, true, false, false)]
+        public void IsNoActionRequested_FlagCombination_ReturnsExpected(
+            bool run, bool ui, bool runHfd, bool helpRequested, bool expected)
+        {
+            Assert.Equal(expected, CArgsParser.IsNoActionRequested(run, ui, runHfd, helpRequested));
         }
 
         #endregion
@@ -825,5 +892,51 @@ namespace VhcXTests
         }
 
         #endregion
+
+        [Fact]
+        public void DetectVbrVersionIfTargeted_TargetProductVb365_SkipsVbrDetection()
+        {
+            CGlobals.TargetProductType = TargetProduct.Vb365;
+            CGlobals.VBRMAJORVERSION = -1;
+
+            var parser = new CArgsParser(new string[] { });
+
+            Exception? ex = Record.Exception(() => parser.DetectVbrVersionIfTargeted());
+
+            Assert.Null(ex);
+            Assert.Equal(-1, CGlobals.VBRMAJORVERSION);
+        }
+
+        [Fact]
+        public void DetectVbrVersionIfTargeted_TargetProductAuto_DoesNotThrow()
+        {
+            // Smoke test only: DetectVbrVersion() swallows its own exceptions internally, so
+            // this can't distinguish "Auto mode correctly still attempted detection" from "the
+            // gate was wrongly broadened to skip it" - both look identical here. The actual
+            // guard against over-broadening this to EffectiveIsVbr-style logic (which would
+            // incorrectly skip Auto-mode detection, since ModeCheck() hasn't run yet at this
+            // point in the CLI flow) is DetectVbrVersionIfTargeted()'s own doc comment.
+            CGlobals.TargetProductType = TargetProduct.Auto;
+
+            var parser = new CArgsParser(new string[] { });
+
+            Exception? ex = Record.Exception(() => parser.DetectVbrVersionIfTargeted());
+
+            Assert.Null(ex);
+        }
+
+        [Theory]
+        [InlineData(true, 0u, false, false, false)]  // API failure - never hide
+        [InlineData(true, 1u, false, false, true)]   // only our process on the console: launched by double-click
+        [InlineData(true, 2u, false, false, false)]  // shell + us: launched from a terminal
+        [InlineData(true, 5u, false, false, false)]
+        [InlineData(false, 1u, false, false, false)] // no console window (e.g. CreateNoWindow/DETACHED_PROCESS parent) - nothing to hide
+        [InlineData(false, 0u, false, false, false)]
+        [InlineData(true, 1u, true, false, false)]   // debugger launched us on a fresh console: keep the live log visible
+        [InlineData(true, 1u, false, true, false)]   // /security remote run prompts on the console: hiding it would look like a hang
+        public void ShouldHideConsole_ConsoleStateAndRunMode_HidesOnlyWhenSoleOwnerAndNoConsoleNeeded(bool hasConsoleWindow, uint count, bool debuggerAttached, bool consoleInputRequired, bool expected)
+        {
+            Assert.Equal(expected, CArgsParser.ShouldHideConsole(hasConsoleWindow, count, debuggerAttached, consoleInputRequired));
+        }
     }
 }

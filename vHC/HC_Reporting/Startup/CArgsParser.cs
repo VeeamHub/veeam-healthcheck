@@ -7,9 +7,11 @@ using System.Runtime.InteropServices;
 using System.Text;
 using System.Text.Json;
 using System.Text.RegularExpressions;
+using Avalonia;
 using VeeamHealthCheck.Functions.Collection.PSCollections;
 using VeeamHealthCheck.Functions.CredsWindow;
-using VeeamHealthCheck.Functions.Monitor;
+using VeeamHealthCheck.Functions.Reporting.Html.Exportables;
+using VeeamHealthCheck.Functions.UserInteraction;
 
 // using VeeamHealthCheck.Reporting.vsac;
 using VeeamHealthCheck.Shared;
@@ -22,11 +24,16 @@ namespace VeeamHealthCheck.Startup
         [DllImport("kernel32.dll")]
         static extern IntPtr GetConsoleWindow();
 
+        // Returns the number of processes attached to the calling process's console,
+        // or 0 on failure (e.g. no console). If the buffer is too small it returns the
+        // required count without filling it, which is all we need.
+        [DllImport("kernel32.dll")]
+        static extern uint GetConsoleProcessList(uint[] processList, uint processCount);
+
         [DllImport("user32.dll")]
         static extern bool ShowWindow(IntPtr hWnd, int nCmdShow);
 
         const int SW_HIDE = 0;
-        const int SW_SHOW = 5;
 
         private readonly string[] args;
         private readonly CClientFunctions functions = new();
@@ -47,12 +54,12 @@ namespace VeeamHealthCheck.Startup
 
             if (this.args.Length == 0){
                 CGlobals.Logger.Debug("No arguments provided. Launching GUI", false);
-                return this.LaunchUi(this.Handle(), true);
+                return this.LaunchUi();
             }
             else if (this.args != null && this.args.Length > 0)
                 return this.ParseAllArgs(this.args);
             else
-                return this.LaunchUi(this.Handle(), false);
+                return this.LaunchUi();
         }
 
         private void LogInitialInfo()
@@ -64,46 +71,69 @@ namespace VeeamHealthCheck.Startup
             f.Dispose();
         }
 
-        private int LaunchUi(IntPtr handle, bool hide)
+        private int LaunchUi()
         {
             CGlobals.Logger.Info("Executing GUI", false);
             CGlobals.RunFullReport = true;
             CGlobals.GUIEXEC = true;
+            CGlobals.Notifier = new AvaloniaUiNotifier();
+            CGlobals.CredentialPrompter = new AvaloniaCredentialPrompter();
 
-            // if (hide)
-            //     ShowWindow(handle, SW_HIDE);
-            var app = new System.Windows.Application();
-            return app.Run(new VhcGui());
+            HideConsoleIfOwned();
+            return AppBuilder.Configure<App>()
+                .UsePlatformDetect()
+                .LogToTrace()
+                .StartWithClassicDesktopLifetime(Array.Empty<string>());
         }
 
-        private IntPtr Handle()
+        // Double-clicking the exe makes Explorer create a fresh console with us as its
+        // only process; launching from cmd/pwsh/Terminal puts the shell on it too. Hide
+        // rather than FreeConsole: a child started with UseShellExecute=false and
+        // CreateNoWindow=false (the local VB365 MFA check) inherits our console, so
+        // detaching it would make that child allocate its own visible console. Children
+        // with CreateNoWindow=true, and UseShellExecute=true ones (ShellExecuteEx makes
+        // its own console), get a console of their own either way.
+        private static void HideConsoleIfOwned()
         {
-            return GetConsoleWindow();
+            // The console P/Invokes are Windows-only; calling them elsewhere throws
+            // DllNotFoundException.
+            if (!OperatingSystem.IsWindows())
+            {
+                return;
+            }
+
+            IntPtr hwnd = GetConsoleWindow();
+            bool hasConsoleWindow = hwnd != IntPtr.Zero;
+            uint count = hasConsoleWindow ? GetConsoleProcessList(new uint[2], 2) : 0;
+            bool debuggerAttached = System.Diagnostics.Debugger.IsAttached;
+            bool consoleInputRequired = CGlobals.RunSecReport;
+            bool hide = ShouldHideConsole(hasConsoleWindow, count, debuggerAttached, consoleInputRequired);
+            CGlobals.Logger.Debug($"Console window present = {hasConsoleWindow}; console process count = {count}; debugger attached = {debuggerAttached}; console input required = {consoleInputRequired}; hiding console = {hide}", false);
+            if (hide)
+            {
+                ShowWindow(hwnd, SW_HIDE);
+            }
         }
 
-        // private int ParseZeroArgs()
-        // {
-        //    var pos = Console.GetCursorPosition();
-        //    CGlobals.Logger.Debug("pos = " + pos.ToString(), false);
-        //    if (pos == (0, 1) || pos == (0, 2))
-        //    {
-        //        CGlobals.Logger.Info("0s");
-        //         return LaunchUi(Handle(), true);
-        //    }
-        //    else
-        //    {
-        //        CGlobals.Logger.Info("not 0");
-        //        Console.WriteLine(CMessages.helpMenu);
-        //        return 0;
-        //    }
-        // }
+        // Hide only when a console window exists and we are the sole process on it. A debugger
+        // (F5 from Visual Studio/Rider) launches us on a fresh console too, but a developer
+        // debugging wants the live console log, so never hide under a debugger. /security
+        // (CGlobals.RunSecReport) with a remote host prompts for credentials via
+        // CImpersonation's Console.ReadLine/ReadKey even in GUI mode, and an invisible
+        // console would look like a hang, so keep the console visible for that run mode.
+        internal static bool ShouldHideConsole(bool hasConsoleWindow, uint consoleProcessCount, bool debuggerAttached, bool consoleInputRequired) =>
+            hasConsoleWindow && consoleProcessCount == 1 && !debuggerAttached && !consoleInputRequired;
+
         private int ParseAllArgs(string[] args)
         {
             bool run = false;
             bool ui = false;
             bool runHfd = false;
+            bool helpRequested = false;
             string _hfdPath = string.Empty;
 
+            // Same intentional Windows-only default as CVariables.outDir - see that
+            // comment for why this isn't cross-platform-guarded.
             string targetDir = @"C:\temp\vHC";
             foreach (var a in args)
             {
@@ -112,6 +142,7 @@ namespace VeeamHealthCheck.Startup
                     case "/help":
                         CGlobals.Logger.Info("entering help menu", false);
                         Console.WriteLine(CMessages.helpMenu);
+                        helpRequested = true;
                         break;
                     case "/run":
                         run = true;
@@ -148,6 +179,13 @@ namespace VeeamHealthCheck.Startup
                         break;
                     case "/lite":
                         run = true;
+                        // /lite still produces the main report - it only skips the
+                        // per-job HTML exports. RunFullReport gates whether the report
+                        // compiles at all (default false), so it must be set here or
+                        // "/lite" alone collects data and then renders nothing. In
+                        // practice /lite is documented paired with /run (which sets it),
+                        // which is why the gap went unnoticed.
+                        CGlobals.RunFullReport = true;
                         CGlobals.EXPORTINDIVIDUALJOBHTMLS = false;
                         break;
                     case "/import":
@@ -226,13 +264,9 @@ namespace VeeamHealthCheck.Startup
                             CGlobals.TargetProductType = TargetProduct.Vb365;
                         CGlobals.Logger.Info("Target product: VB365", false);
                         break;
-                    case var match when new Regex("/path=.*").IsMatch(a):
+                    case var match when new Regex("/path=.*", RegexOptions.IgnoreCase).IsMatch(a):
                         _hfdPath = this.ParsePath(a);
-                        CGlobals.Logger.Info("HFD path: " + targetDir);
-                        break;
-                    case var match when new Regex("/PATH=.*").IsMatch(a):
-                        _hfdPath = this.ParsePath(a);
-                        CGlobals.Logger.Info("HFD path: " + targetDir);
+                        CGlobals.Logger.Info("HFD path: " + _hfdPath);
                         break;
                     case var match when new Regex("/outdir=.*", RegexOptions.IgnoreCase).IsMatch(a):
                         string parsedOutDir = this.ParsePath(a);
@@ -259,20 +293,10 @@ namespace VeeamHealthCheck.Startup
                             CGlobals.REMOTEHOST = providedHost;
                         }
                         break;
-                    case "/monitor:setup":
-                        this.RunMonitorSetup();
-                        return 0;
-                    case "/monitor:run":
-                        return this.RunMonitorNow();
-                    case "/monitor:status":
-                        this.PrintMonitorStatus();
-                        return 0;
-                    case "/monitor:disable":
-                        CVhcMonitorIntegration.Uninstall();
-                        CGlobals.Logger.Info("VHC Monitor scheduled task removed.", false);
-                        return 0;
                 }
             }
+
+            this.WarnIfScrubSkipsExports();
 
             // If a product flag and host are provided, imply remote execution
             if (CGlobals.TargetProductType != TargetProduct.Auto
@@ -280,6 +304,20 @@ namespace VeeamHealthCheck.Startup
                 && !CGlobals.REMOTEHOST.Equals("localhost", StringComparison.OrdinalIgnoreCase))
             {
                 CGlobals.REMOTEEXEC = true;
+            }
+
+            // Collection-intent flags (/remote, /host=, /vbr, /vb365) express intent to
+            // collect and report even when no explicit execution verb (/run) was given.
+            // Without this, "VeeamHealthCheck.exe /remote /host=X" parsed everything,
+            // validated credentials, then returned 0 with no report - the tool appeared
+            // to "do nothing". Treat that intent as an implied /run, and set RunFullReport
+            // (default false) so the report actually compiles rather than moving the no-op
+            // downstream into CReportModeSelector. See ShouldImplyRun.
+            bool runImplied = ShouldImplyRun(run, ui, runHfd, helpRequested, CGlobals.ClearStoredCreds, CGlobals.REMOTEEXEC, CGlobals.REMOTEHOST, CGlobals.TargetProductType);
+            if (runImplied)
+            {
+                run = true;
+                CGlobals.RunFullReport = true;
             }
 
             // ----------------------------------------------------------------
@@ -317,13 +355,17 @@ namespace VeeamHealthCheck.Startup
                 }
             }
 
-            // Now that arguments are parsed, detect VBR version
-            // This must happen after parsing so REMOTEEXEC flag is properly set
-            try { this.functions.GetVbrVersion(); }
-            catch (Exception ex)
+            // Logged here rather than where run was implied: /savecreds and an invalid
+            // /credfile= exit above, so claiming "implying /run" earlier would be untrue.
+            if (runImplied)
             {
-                CGlobals.Logger.Debug($"VBR version detection skipped: {ex.Message}");
+                CGlobals.Logger.Info("No /run given, but collection-intent flags were provided - implying /run.", false);
             }
+
+            // Now that arguments are parsed, detect VBR version - see
+            // DetectVbrVersionIfTargeted()'s doc comment for the full rationale.
+            // This must happen after parsing so REMOTEEXEC flag is properly set.
+            this.DetectVbrVersionIfTargeted();
 
             int result = 0;
             if (string.IsNullOrEmpty(CGlobals.REMOTEHOST))
@@ -341,9 +383,18 @@ namespace VeeamHealthCheck.Startup
                 this.functions.RunHotfixDetector(_hfdPath, string.Empty);
             }
             else if (ui)
-                this.LaunchUi(this.Handle(), false);
+                this.LaunchUi();
             else if (run)
             {
+                // The PS 7.6+ module gate is no longer called here. It's private on
+                // CClientFunctions and enforced from StartCollections() - the choke point every
+                // path below (import, remote, local) eventually reaches via
+                // FullRun -> CliRun -> StartPrimaryFunctions - and, since issue #233, also from
+                // CCollections.ExecPSScripts()'s DynamicFallback-confirmed-VBR branch, for the
+                // Auto+remote+no-local-detection case StartCollections()'s own EffectiveIsVbr gate
+                // can't cover. Calling it here too used to run it unconditionally even for
+                // /import (which never reaches real collection) and spawn pwsh.exe a second time
+                // on the plain local /run path.
                 if (CGlobals.IMPORT)
                      result = this.FullRun(targetDir);
                 else if (CGlobals.REMOTEEXEC && CGlobals.REMOTEHOST == string.Empty)
@@ -380,7 +431,67 @@ namespace VeeamHealthCheck.Startup
                 }
             }
 
+            // Nothing - explicit or implied - selected an action to perform, yet
+            // arguments were supplied. This is the state that used to return 0 in
+            // silence (e.g. only modifier flags, or a bare /clearcreds): the tool
+            // "did nothing" with no guidance. Tell the user what to add instead.
+            // Guarded by helpRequested so a bare "/help" does not print the menu
+            // twice, and the menu is suppressed under /silent to honour its
+            // no-console contract (the warnings still reach the log file).
+            if (IsNoActionRequested(run, ui, runHfd, helpRequested))
+            {
+                CGlobals.Logger.Warning("No action specified - nothing was collected or reported.", false);
+                if (CGlobals.ClearStoredCreds)
+                {
+                    CGlobals.Logger.Warning("/clearcreds only takes effect during a run - no stored credentials were cleared.", false);
+                }
+
+                CGlobals.Logger.Warning("Add /run to execute a health check, or /gui to open the interface.", false);
+                CGlobals.Logger.Warning("Example: VeeamHealthCheck.exe /run /remote /host=HOSTNAME", false);
+                if (!CGlobals.Silent)
+                {
+                    Console.WriteLine(CMessages.helpMenu);
+                }
+            }
+
             return result;
+        }
+
+        /// <summary>
+        /// True when the parsed arguments express intent to collect from / report on a
+        /// Veeam server - remote execution, an explicit host, or a product target - but
+        /// no explicit execution verb (/run, /lite, /security, /import, /gui, /hotfix)
+        /// was given. Historically that combination parsed everything, validated
+        /// credentials, then returned 0 without doing anything (the "/remote /host=...
+        /// does nothing" report). The caller treats this as an implied /run.
+        /// An explicit verb (run/ui/runHfd already set) is always honoured as-is, and so
+        /// is /help: asking for help never starts a collection. /clearcreds is likewise
+        /// never read as collection intent: the stored credentials are only cleared once a
+        /// run asks for them, and wiping every host's credentials as a side effect of an
+        /// implied run (e.g. "/clearcreds /host=X", or under /silent) would be a surprise,
+        /// so it keeps its previous behavior and needs an explicit /run.
+        /// </summary>
+        internal static bool ShouldImplyRun(bool run, bool ui, bool runHfd, bool helpRequested, bool clearStoredCreds, bool remoteExec, string remoteHost, TargetProduct product)
+        {
+            if (run || ui || runHfd || helpRequested || clearStoredCreds)
+            {
+                return false; // an explicit verb, a help request, or /clearcreds already decided the action
+            }
+
+            bool hasHost = !string.IsNullOrEmpty(remoteHost);
+            bool hasProductTarget = product != TargetProduct.Auto;
+            return remoteExec || hasHost || hasProductTarget;
+        }
+
+        /// <summary>
+        /// True when arguments were supplied but none of them - directly or by
+        /// implication - selects an action to perform (and help was not requested).
+        /// This is the state that used to return 0 silently; the caller logs guidance
+        /// plus the help menu instead of doing nothing.
+        /// </summary>
+        internal static bool IsNoActionRequested(bool run, bool ui, bool runHfd, bool helpRequested)
+        {
+            return !run && !ui && !runHfd && !helpRequested;
         }
 
         private string ParsePath(string input)
@@ -636,11 +747,65 @@ namespace VeeamHealthCheck.Startup
             }
         }
 
+        /// <summary>
+        /// /pdf and /pptx are only honoured for the original report, so combining either with
+        /// /scrub:true produces neither. Warn up front (after the whole command line is parsed, since
+        /// the flags can come in any order) instead of letting the run finish without them (#261).
+        /// A warning, not an error, so existing scripts keep producing their HTML report.
+        /// </summary>
+        private void WarnIfScrubSkipsExports()
+        {
+            foreach (string warning in GetScrubExportWarnings(CGlobals.Scrub, CGlobals.EXPORTPDF, CGlobals.EXPORTPPTX))
+            {
+                CGlobals.Logger.Warning(warning);
+            }
+        }
+
+        internal static IReadOnlyList<string> GetScrubExportWarnings(bool scrub, bool exportPdf, bool exportPptx)
+        {
+            var warnings = new List<string>();
+            foreach (string format in ScrubbedExportPolicy.SkippedFormats(scrub, exportPdf, exportPptx))
+            {
+                string flag = format == "PDF" ? "/pdf" : "/pptx";
+                warnings.Add($"{flag} is ignored: {format} export is not available for scrubbed reports (/scrub:true). Use /scrub:false to export a {format}.");
+            }
+
+            return warnings;
+        }
+
         private void ApplyOutDir(string parsedOutDir)
         {
             if (string.IsNullOrEmpty(parsedOutDir)) return;
             CGlobals.desiredPath = parsedOutDir;
-            CGlobals.mainlog = new CLogger("HealthCheck");
+            CGlobals.RelocateMainLog();
+        }
+
+        /// <summary>
+        /// Detects the VBR version right after CLI argument parsing, for any run that might
+        /// touch VBR. Skipped only for an explicit /vb365-only target: DetectVbrVersion()
+        /// reads the LOCAL machine's VBR registry keys, which are legitimately absent on a
+        /// VB365-only server, and its failure branch logs 5 ERROR-level lines for a totally
+        /// expected condition. Checked against the explicit TargetProductType flag only (not
+        /// EffectiveIsVbr/IsVbr): ModeCheck(), which populates the auto-detected
+        /// IsVbr/IsVb365 flags, hasn't run yet at this point in the CLI flow (it runs later,
+        /// and only for a subset of dispatch branches), so an Auto-mode run's real product mix
+        /// is still unknown here and detection must still be attempted.
+        /// </summary>
+        internal void DetectVbrVersionIfTargeted()
+        {
+            if (CGlobals.TargetProductType == TargetProduct.Vb365)
+            {
+                return;
+            }
+
+            try
+            {
+                this.functions.DetectVbrVersion();
+            }
+            catch (Exception ex)
+            {
+                CGlobals.Logger.Debug($"VBR version detection skipped: {ex.Message}");
+            }
         }
 
         /// <summary>
@@ -668,53 +833,6 @@ namespace VeeamHealthCheck.Startup
             CGlobals.Logger.Info("Output is stored in " + targetDir, false);
 
             return res;
-        }
-
-        private void RunMonitorSetup()
-        {
-            if (!CVhcMonitorIntegration.IsExePresentInBundle())
-            {
-                CGlobals.Logger.Error("vhc-monitor.exe not found alongside VeeamHealthCheck.exe. Cannot set up.", false);
-                return;
-            }
-            var creds = CredentialStore.Get(CGlobals.VBRServerName);
-            if (creds == null)
-            {
-                CGlobals.Logger.Warning("No stored credentials for " + CGlobals.VBRServerName + ". Run interactively to store credentials first.", false);
-                return;
-            }
-            CVhcMonitorIntegration.Install(CGlobals.VBRServerName, creds.Value.Username, creds.Value.Password);
-            CGlobals.Logger.Info("VHC Monitor installed and scheduled task registered.", false);
-        }
-
-        private int RunMonitorNow()
-        {
-            if (!CVhcMonitorIntegration.IsInstalled())
-            {
-                CGlobals.Logger.Error("VHC Monitor not installed. Run /monitor:setup first.", false);
-                return 1;
-            }
-            var (exitCode, output) = CVhcMonitorIntegration.RunNow();
-            Console.WriteLine(output);
-            return exitCode;
-        }
-
-        private void PrintMonitorStatus()
-        {
-            bool bundled = CVhcMonitorIntegration.IsExePresentInBundle();
-            bool installed = CVhcMonitorIntegration.IsInstalled();
-            bool taskActive = CVhcMonitorIntegration.IsTaskRegistered();
-            string version = installed ? CVhcMonitorIntegration.GetInstalledVersion() : "n/a";
-            var lastRun = CVhcMonitorIntegration.GetLastRunStatus();
-
-            Console.WriteLine("=== VHC Monitor Status ===");
-            Console.WriteLine($"  Bundled:        {(bundled ? "Yes" : "No")}");
-            Console.WriteLine($"  Installed:      {(installed ? "Yes (" + version + ")" : "No")}");
-            Console.WriteLine($"  Scheduled Task: {(taskActive ? "Registered" : "Not registered")}");
-            Console.WriteLine($"  Config:         {CGlobals.VhcMonitorConfigPath}");
-            if (lastRun != null)
-                Console.WriteLine($"  Last Run:       {lastRun.Timestamp:g} — {lastRun.Summary}");
-            Console.WriteLine("==========================");
         }
     }
 }

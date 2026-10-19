@@ -13,7 +13,7 @@
   <a href="https://github.com/VeeamHub/veeam-healthcheck/actions/workflows/codeql.yml"><img src="https://github.com/VeeamHub/veeam-healthcheck/actions/workflows/codeql.yml/badge.svg" alt="CodeQL"></a>
   <a href="https://github.com/VeeamHub/veeam-healthcheck/releases/latest"><img src="https://img.shields.io/github/v/release/VeeamHub/veeam-healthcheck?label=Latest%20Release" alt="Latest Release"></a>
   <a href="LICENSE"><img src="https://img.shields.io/github/license/VeeamHub/veeam-healthcheck" alt="License: MIT"></a>
-  <img src="https://img.shields.io/badge/.NET-8.0-blue" alt=".NET 8.0">
+  <img src="https://img.shields.io/badge/.NET-10.0-blue" alt=".NET 10.0">
   <a href="https://veeamhub.github.io/veeam-healthcheck/"><img src="https://img.shields.io/badge/docs-GitHub%20Pages-green" alt="Documentation"></a>
 </p>
 
@@ -28,6 +28,10 @@
 
 > [!NOTE]
 > This is a community-supported tool from [VeeamHub](https://github.com/VeeamHub) and is not an officially supported Veeam product. It does not phone home or communicate with anything beyond your Veeam infrastructure components.
+
+<p align="center">
+  <img src="docs/images/vhc-gui-light_dark.png" alt="The Veeam Health Check GUI in light and dark themes, showing the Ad-hoc Health Check tab" width="700">
+</p>
 
 ## What It Does
 
@@ -61,6 +65,7 @@ Export as **HTML**, **PDF**, or **PowerPoint**. Use **scrubbed mode** to anonymi
 
 - Run as an **elevated user** with **Backup Administrator** role
 - Must execute on a system with VBR Console or VB365 installed
+- **PowerShell 7** on the machine running the tool, even for `/remote` runs. Required for VBR v13, where the minimum version comes from the installed VBR PowerShell module (7.6 or later for current v13 builds). VBR v12.3 can run under Windows PowerShell 5.1.
 - **500 MB** free disk space on `C:\` (default output: `C:\temp\vHC`)
 - Veeam Cloud Service Provider servers are **not** supported
 
@@ -73,21 +78,29 @@ VeeamHealthCheck.exe [options]
 | Option | Description |
 |---|---|
 | `/run` | Execute health check via CLI |
-| `/gui` | Launch graphical interface |
+| `/gui` | Launch graphical interface (also the default when run with no arguments) |
 | `/help` | Show full help menu |
 | `/days:<N>` | Reporting window: 7, 12, 30, or 90 days (default: 7) |
 | `/outdir=<path>` | Output directory (default: `C:\temp\vHC`) |
 | `/pdf` | Also export as PDF |
 | `/pptx` | Also export as PowerPoint |
 | `/scrub:true` | Anonymize sensitive data |
+| `/scrub:false` | Keep full detail (disable anonymization) |
 | `/lite` | Skip per-job HTML exports (faster) |
 | `/show:report` | Open report in browser when done |
 | `/show:files` | Open output folder in Explorer |
+| `/vbr`, `/vb365` | Target VBR or VB365 instead of auto-detecting; use both (`/vbr /vb365`) for a server running both products |
 | `/remote` | Enable remote execution |
 | `/host=<hostname>` | Target remote Veeam server |
 | `/security` | Run security-focused assessment only |
-| `/import[:<path>]` | Generate report from existing CSV data |
-| `/clearcreds` | Clear stored credentials |
+| `/import` | Generate report from existing data, no new collection (default path: `C:\temp\vHC`) |
+| `/import:<path>` | Generate report from CSV files at `<path>` (flat or nested `Original\VBR\<server>\<timestamp>` layout) |
+| `/hotfix` | Run hotfix detection |
+| `/path=<dir>` | Path for hotfix detection (used with `/hotfix`) |
+| `/silent` | Never prompt; fail fast with an [exit code](https://veeamhub.github.io/veeam-healthcheck/getting-started/#exit-codes). Mutually exclusive with `/savecreds` |
+| `/savecreds` | One-shot interactive seed: prompts for a username and password and stores them (DPAPI, current user) for `/host=` (default: localhost), then exits |
+| `/credfile=<path>` | Load host credentials from a JSON credfile into memory only (nothing is persisted). Composes with `/silent` |
+| `/clearcreds` | Clear stored credentials before a run (use with `/run`) |
 | `/debug` | Enable debug logging |
 
 ### Examples
@@ -119,18 +132,18 @@ VeeamHealthCheck.exe /import:D:\Exports\VBR-data
 | **"Access Denied"** | Run as Administrator with Backup Administrator role |
 | **"No Veeam installation detected"** | Tool must run on a system with VBR Console or VB365 installed |
 | **Low disk space errors** | Ensure `C:\` has at least 500 MB free |
-| **PowerShell errors** | Verify PowerShell 7+ is installed |
+| **PowerShell errors** | Verify PowerShell 7 is installed and meets the VBR module's minimum version (7.6+ for VBR v13). In silent mode this is exit code 8 |
 
 ## Building from Source
 
-**Requirements:** .NET 8.0 SDK, Windows, PowerShell 7+
+**Requirements:** .NET 10.0 SDK, Windows, PowerShell 7+
 
 ```bash
 dotnet restore vHC/HC.sln
 dotnet build vHC/HC.sln --configuration Release
 ```
 
-**Run tests** (Windows only):
+**Run tests** (Windows, macOS, or Linux; Windows-only tests skip elsewhere):
 ```bash
 dotnet test vHC/VhcXTests/VhcXTests.csproj
 ```

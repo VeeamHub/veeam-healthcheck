@@ -1,0 +1,4 @@
+"Name","Description","Threads","Throttling?","State","Type","Outdated?","Internet Proxy","Objects Managed","OS Version","CPUs","RAM","Extended Logging?"
+"contoso-prx01.contoso.example","Primary proxy for EMEA tenants","64","disabled","Online","Local","False","False","152340","Microsoft Windows NT 10.0.17763.0","16","64 GB","False"
+"contoso-prx02.contoso.example","Secondary proxy, throttled","32","50 MBytePerSec","Offline","Remote","True","True","4100","Microsoft Windows NT 10.0.20348.0","8","32 GB","True"
+"contoso-prx03.contoso.example","","64","disabled","Online","Remote","False","False","","Microsoft Windows NT 6.3.9600.0","2","4 GB","False"

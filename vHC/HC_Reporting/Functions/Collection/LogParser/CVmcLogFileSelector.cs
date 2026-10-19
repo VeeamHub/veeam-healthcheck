@@ -1,0 +1,37 @@
+// Copyright (c) 2021, Adam Congdon <adam.congdon2@gmail.com>
+// MIT License
+#nullable enable
+using System;
+using System.Collections.Generic;
+using System.Linq;
+
+namespace VeeamHealthCheck.Functions.Collection.LogParser
+{
+    internal static class CVmcLogFileSelector
+    {
+        private const string VmcLogFileName = "VMC.log";
+
+        internal static string? SelectVmcLogFile(IEnumerable<string>? filePaths)
+        {
+            if (filePaths == null)
+            {
+                return null;
+            }
+
+            List<string> matches = filePaths.Where(f => f.IndexOf(VmcLogFileName, StringComparison.OrdinalIgnoreCase) >= 0).ToList();
+
+            // Directory.GetFiles() enumeration order is filesystem-defined, not chronological, so
+            // when a rotated backup (VMC.log.1, VMC.log.2, ...) sits alongside the live file, prefer
+            // the exact "VMC.log" name deterministically instead of whichever the OS happens to list first.
+            // These are always Windows-style paths (vb365Logs is a hardcoded "C:\..." constant), so
+            // check the suffix directly rather than via Path.GetFileName, which splits on the host
+            // OS's separator and would treat the whole backslash-delimited path as one filename here
+            // when running on non-Windows (e.g. this cross-platform test project on macOS/Linux CI).
+            // When no exact "VMC.log" exists, the fallback below returns whichever rotated backup is
+            // first in the caller-supplied order - there is no recency (LastWriteTime) tie-break here,
+            // since this helper only ever sees path strings.
+            return matches.FirstOrDefault(f => f.EndsWith(@"\" + VmcLogFileName, StringComparison.OrdinalIgnoreCase))
+                ?? matches.FirstOrDefault();
+        }
+    }
+}

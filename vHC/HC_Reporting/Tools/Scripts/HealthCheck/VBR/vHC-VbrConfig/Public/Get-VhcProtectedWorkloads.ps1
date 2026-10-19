@@ -100,7 +100,7 @@ function Get-VhcProtectedWorkloads {
 
     # Hyper-V workloads
     try {
-        $hvvmbackups      = Get-VBRBackup | Where-Object { $_.TypeToString -eq "Hyper-v Backup" }
+        $hvvmbackups      = Get-VBRBackup | Where-Object { $_.TypeToString -eq "Hyper-V Backup" }
         $hvProtectedNames = Get-VhcProtectedNames -Backups $hvvmbackups
 
         # Partition a single Find-VBRHvEntity enumeration by name membership -- symmetric protected

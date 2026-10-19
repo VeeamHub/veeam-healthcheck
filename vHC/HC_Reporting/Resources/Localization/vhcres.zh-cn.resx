@@ -16,7 +16,11 @@
     <value>接受条款</value>
   </data>
   <data name="GuiAcceptText" xml:space="preserve">
-    <value>该工具作为免费实用程序提供，用于评估您的 Veeam 配置。它是“自担风险”提供的。 \n\n该工具将使用 PowerShell 和 SQL 来收集数据，然后将文件和文件夹输出到本地磁盘。\n\n这些文件可能会被匿名化以隐藏敏感数据。接受条款意味着用户同意以全部能力执行此程序。</value>
+    <value>该工具作为免费实用程序提供，用于评估您的 Veeam 配置。它是“自担风险”提供的。
+
+该工具将使用 PowerShell 和 SQL 来收集数据，然后将文件和文件夹输出到本地磁盘。
+
+这些文件可能会被匿名化以隐藏敏感数据。接受条款意味着用户同意以全部能力执行此程序。</value>
   </data>
   <data name="GuiImportButton" xml:space="preserve">
     <value>导入</value>
@@ -1691,5 +1695,183 @@
   </data>
   <data name="v365NavValue13" xml:space="preserve">
     <value>最近作业运行的详细信息。</value>
+  </data>
+  <data name="GuiImportTooltip" xml:space="preserve">
+    <value>Create a report from previously collected data</value>
+  </data>
+  <data name="GuiThemeToggleTooltip" xml:space="preserve">
+    <value>Toggle light/dark theme</value>
+  </data>
+  <data name="GuiAboutButton" xml:space="preserve">
+    <value>About / Disclaimer</value>
+  </data>
+  <data name="GuiServerCardTitle" xml:space="preserve">
+    <value>Veeam Server</value>
+  </data>
+  <data name="GuiProductTypeLabel" xml:space="preserve">
+    <value>Product Type:</value>
+  </data>
+  <data name="GuiProductTypeTooltip" xml:space="preserve">
+    <value>For remote servers, specifying the product type avoids connection failures. If set to Auto-detect, the tool will try both connection types.</value>
+  </data>
+  <data name="GuiProductTypeAuto" xml:space="preserve">
+    <value>Auto-detect</value>
+  </data>
+  <data name="GuiProductTypeVbr" xml:space="preserve">
+    <value>VBR (Backup &amp; Replication)</value>
+  </data>
+  <data name="GuiProductTypeVb365" xml:space="preserve">
+    <value>VB365 (Backup for Microsoft 365)</value>
+  </data>
+  <data name="GuiProductTypeBoth" xml:space="preserve">
+    <value>Both</value>
+  </data>
+  <data name="GuiExportOptionsLabel" xml:space="preserve">
+    <value>Export Options</value>
+  </data>
+  <data name="GuiHtmlReportTooltip" xml:space="preserve">
+    <value>Display the HTML report in your default browser after generation</value>
+  </data>
+  <data name="GuiDataCollectionLabel" xml:space="preserve">
+    <value>Data Collection</value>
+  </data>
+  <data name="GuiCollectionPeriodLabel" xml:space="preserve">
+    <value>Collection Period:</value>
+  </data>
+  <data name="GuiRescanTooltip" xml:space="preserve">
+    <value>Rescan for Hardware change</value>
+  </data>
+  <data name="GuiSecurityPrivacyLabel" xml:space="preserve">
+    <value>Security &amp; Privacy</value>
+  </data>
+  <data name="GuiScrubTooltip" xml:space="preserve">
+    <value>Anonymize sensitive data according to Veeam KB 2462</value>
+  </data>
+  <data name="GuiClearCredsTooltip" xml:space="preserve">
+    <value>Clear any previously saved credentials before running</value>
+  </data>
+  <data name="GuiPdfUnavailableTooltip" xml:space="preserve">
+    <value>PDF Export not available when both VB365 &amp; VBR are detected on the same machine.</value>
+  </data>
+  <data name="GuiPdfUnavailableScrubTooltip" xml:space="preserve">
+    <value>勾选“{0}”时无法导出 PDF。若还需导出 PDF，请取消勾选该选项；此时报告中的敏感数据将不会被删除。</value>
+  </data>
+  <data name="GuiProcessingText" xml:space="preserve">
+    <value>Processing health check...</value>
+  </data>
+  <data name="GuiExportPdfLabel" xml:space="preserve">
+    <value>Export PDF</value>
+  </data>
+  <data name="GuiClearCredsLabel" xml:space="preserve">
+    <value>Clear Saved Credentials</value>
+  </data>
+  <data name="GuiCollectionCompleteWarnings" xml:space="preserve">
+    <value>Collection complete — {0} collector warning(s)</value>
+  </data>
+  <data name="GuiCollectionComplete" xml:space="preserve">
+    <value>Collection complete</value>
+  </data>
+  <data name="GuiThemeDark" xml:space="preserve">
+    <value>Dark</value>
+  </data>
+  <data name="GuiThemeLight" xml:space="preserve">
+    <value>Light</value>
+  </data>
+  <data name="GuiThemeSystem" xml:space="preserve">
+    <value>System</value>
+  </data>
+  <data name="GuiNoVeeamDetectedTitle" xml:space="preserve">
+    <value>Veeam Software Not Detected</value>
+  </data>
+  <data name="GuiNoVeeamDetectedMessage" xml:space="preserve">
+    <value>No Veeam Software detected on this machine.
+
+This tool requires Veeam Backup &amp; Replication (VBR) or Veeam Backup for Microsoft 365 (VB365) to be installed locally, or a remote server to connect to.
+
+Alternatively, quit and run from the command line instead:
+VeeamHealthCheck.exe /run /remote /host=your-vbr-server
+
+Would you like to add a remote server now?</value>
+  </data>
+  <data name="NavCredentialsLink" xml:space="preserve">
+    <value>凭据</value>
+  </data>
+  <data name="NavUserRolesLink" xml:space="preserve">
+    <value>用户角色</value>
+  </data>
+  <data name="NavEmailNotificationLink" xml:space="preserve">
+    <value>电子邮件通知</value>
+  </data>
+  <data name="NavServerSizingLink" xml:space="preserve">
+    <value>服务器规模评估</value>
+  </data>
+  <data name="NavObjStorageLink" xml:space="preserve">
+    <value>对象存储存储库</value>
+  </data>
+  <data name="NavGeneralSettingsSection" xml:space="preserve">
+    <value>常规设置</value>
+  </data>
+  <data name="NavOverviewSection" xml:space="preserve">
+    <value>概览</value>
+  </data>
+  <data name="NavInfrastructureSection" xml:space="preserve">
+    <value>基础架构</value>
+  </data>
+  <data name="NavCloudConnectSection" xml:space="preserve">
+    <value>Cloud Connect</value>
+  </data>
+  <data name="NavBackupJobsSection" xml:space="preserve">
+    <value>备份作业</value>
+  </data>
+  <data name="NavPerformanceSection" xml:space="preserve">
+    <value>性能</value>
+  </data>
+  <data name="NavMiscSection" xml:space="preserve">
+    <value>其他</value>
+  </data>
+  <data name="NavOrphanedBackupsLink" xml:space="preserve">
+    <value>孤立和已被取代的备份</value>
+  </data>
+  <data name="NavComplianceSummaryLink" xml:space="preserve">
+    <value>合规性摘要</value>
+  </data>
+  <data name="NavComplianceDetailsLink" xml:space="preserve">
+    <value>合规性详细信息</value>
+  </data>
+  <data name="NavInfraTypesLink" xml:space="preserve">
+    <value>基础架构类型</value>
+  </data>
+  <data name="NavCloudGatewaysLink" xml:space="preserve">
+    <value>网关</value>
+  </data>
+  <data name="NavCloudGatewayPoolsLink" xml:space="preserve">
+    <value>网关池</value>
+  </data>
+  <data name="NavCloudTenantPerfLink" xml:space="preserve">
+    <value>租户性能</value>
+  </data>
+  <data name="NavCloudTenantsLink" xml:space="preserve">
+    <value>租户</value>
+  </data>
+  <data name="NavCloudTenantBackupLink" xml:space="preserve">
+    <value>租户备份存储</value>
+  </data>
+  <data name="NavCloudTenantReplicaLink" xml:space="preserve">
+    <value>租户副本资源</value>
+  </data>
+  <data name="NavCloudHwPlansLink" xml:space="preserve">
+    <value>硬件计划</value>
+  </data>
+  <data name="NavCloudHwPlanDatastoresLink" xml:space="preserve">
+    <value>硬件计划数据存储</value>
+  </data>
+  <data name="NavCloudReplicasLink" xml:space="preserve">
+    <value>副本</value>
+  </data>
+  <data name="NavCloudFailoverPlansLink" xml:space="preserve">
+    <value>故障转移计划</value>
+  </data>
+  <data name="NavCloudFailoverPlanVmsLink" xml:space="preserve">
+    <value>故障转移计划虚拟机</value>
   </data>
 </root>

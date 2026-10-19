@@ -1,5 +1,6 @@
 using System;
 using System.IO;
+using System.Linq;
 using VeeamHealthCheck;
 using VeeamHealthCheck.Functions.Reporting.Html;
 using VeeamHealthCheck.Shared;
@@ -59,8 +60,8 @@ namespace VhcXTests.Functions.Reporting.Html
 
             // Assert
             Assert.True(Directory.Exists(CGlobals.desiredPath));
-            Assert.True(Directory.Exists(CGlobals.desiredPath + CVariables.safeSuffix));
-            Assert.True(Directory.Exists(CGlobals.desiredPath + CVariables.unsafeSuffix));
+            Assert.True(Directory.Exists(Path.Combine(CGlobals.desiredPath, CVariables.safeSuffix.TrimStart('\\'))));
+            Assert.True(Directory.Exists(Path.Combine(CGlobals.desiredPath, CVariables.unsafeSuffix.TrimStart('\\'))));
         }
 
         [Fact]
@@ -91,8 +92,8 @@ namespace VhcXTests.Functions.Reporting.Html
             Assert.Equal(1, result);
         }
 
-        // Note: OpenHtmlIfEnabled(true) cannot be easily tested as it tries to launch a browser
-        // and depends on WPF Application.Current.Dispatcher
+        // Note: OpenHtmlIfEnabled(true) cannot be easily tested as it shell-executes the report
+        // to launch a browser
 
         #endregion
 
@@ -215,6 +216,83 @@ namespace VhcXTests.Functions.Reporting.Html
                 CGlobals.OpenHtml = originalOpenHtml;
                 CGlobals.EXPORTPDF = originalExportPdf;
                 CGlobals.EXPORTPPTX = originalExportPptx;
+            }
+        }
+
+        [Fact]
+        public void ExportVbrHtml_ScrubbedWithPdfAndPptxRequested_SkipsBothAndWarns()
+        {
+            // #261: the exports are skipped for a scrubbed report; that must be logged, not silent.
+            var exporter = new CHtmlExporter("TestServer");
+            var testHtml = "<html><head><title>Test</title></head><body>Test content</body></html>";
+
+            bool originalOpenHtml = CGlobals.OpenHtml;
+            bool originalExportPdf = CGlobals.EXPORTPDF;
+            bool originalExportPptx = CGlobals.EXPORTPPTX;
+
+            CGlobals.OpenHtml = false;
+            CGlobals.EXPORTPDF = true;
+            CGlobals.EXPORTPPTX = true;
+
+            try
+            {
+                var result = exporter.ExportVbrHtml(testHtml, true);
+
+                Assert.Equal(0, result);
+
+                var anonDir = Path.Combine(_testOutputDir, CVariables.safeSuffix.TrimStart('\\'));
+                Assert.Empty(Directory.GetFiles(anonDir, "*.pdf"));
+                Assert.Empty(Directory.GetFiles(anonDir, "*.pptx"));
+
+                var log = File.ReadAllText(CGlobals.Logger.logFile);
+                Assert.Contains("PDF export skipped: it is not available for scrubbed reports", log);
+                Assert.Contains("PowerPoint export skipped: it is not available for scrubbed reports", log);
+            }
+            finally
+            {
+                CGlobals.OpenHtml = originalOpenHtml;
+                CGlobals.EXPORTPDF = originalExportPdf;
+                CGlobals.EXPORTPPTX = originalExportPptx;
+            }
+        }
+
+        [Fact]
+        public void ExportVbrHtml_ValidHtml_JsonReportIncludesVhcVersion()
+        {
+            // Arrange
+            var exporter = new CHtmlExporter("TestServer");
+            var testHtml = "<html><head><title>Test</title></head><body>Test content</body></html>";
+
+            bool originalOpenHtml = CGlobals.OpenHtml;
+            bool originalExportPdf = CGlobals.EXPORTPDF;
+            bool originalExportPptx = CGlobals.EXPORTPPTX;
+            string originalVersion = CGlobals.VHCVERSION;
+            var originalFullReportJson = CGlobals.FullReportJson;
+
+            CGlobals.OpenHtml = false;
+            CGlobals.EXPORTPDF = false;
+            CGlobals.EXPORTPPTX = false;
+            CGlobals.VHCVERSION = "9.9.9.9";
+            CGlobals.FullReportJson = new VeeamHealthCheck.Functions.Reporting.DataTypes.CFullReportJson();
+
+            try
+            {
+                // Act
+                exporter.ExportVbrHtml(testHtml, false);
+
+                // Assert
+                var origDir = Path.Combine(_testOutputDir, CVariables.unsafeSuffix.TrimStart('\\'));
+                var jsonFile = Directory.GetFiles(origDir, "*.json").Single();
+                var json = File.ReadAllText(jsonFile);
+                Assert.Contains("\"VhcVersion\": \"9.9.9.9\"", json);
+            }
+            finally
+            {
+                CGlobals.OpenHtml = originalOpenHtml;
+                CGlobals.EXPORTPDF = originalExportPdf;
+                CGlobals.EXPORTPPTX = originalExportPptx;
+                CGlobals.VHCVERSION = originalVersion;
+                CGlobals.FullReportJson = originalFullReportJson;
             }
         }
 

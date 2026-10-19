@@ -4,6 +4,8 @@
 
 `vhc-monitor` is a standalone Python-compiled Windows executable that performs continuous health monitoring of Veeam Backup & Replication servers. It is bundled alongside `VeeamHealthCheck.exe` and managed through the VHC GUI and CLI.
 
+> **Experimental.** The VHC integration described in this spec is hidden unless the `VHC_EXPERIMENTS` environment variable is `1` or `true` (see [Experimental Features](docs/contributing.md#experimental-features)). With it unset, the `/monitor:*` commands, their `/help` entries and the GUI tab are absent. `vhc-monitor.exe` is still bundled in release builds.
+
 ## Bundle Layout
 
 ```

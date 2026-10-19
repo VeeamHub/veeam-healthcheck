@@ -1,26 +1,47 @@
 #Requires -Version 7
 # Invoke-SecurityComplianceDriftCheck.ps1
-# Reads _SecurityComplianceCatalog.csv from a VHC run and manages a canonical
-# GitHub issue (label: sca-drift) for unmapped compliance rule types.
-# Idempotent: updates the existing open issue rather than creating duplicates.
-# Auto-closes the issue on a clean run (no unmapped rules).
+# Per-runner Security & Compliance Analyzer (SCA) label triage. Detect-only: this script never
+# touches GitHub. It writes sca-triage.json (uploaded as an artifact) and a job summary; the single
+# downstream job Invoke-ScaDriftProposal.ps1 unions every server's triage and opens the PR/issue.
 #
-# USAGE (from GitHub Actions step):
+# WHAT COUNTS AS DRIFT
+#   Only rules the server actually evaluated (<host>_SecurityCompliance.csv, the rules customers
+#   see in the report). An evaluated rule is drift when
+#     - IsMapped is false / the label map has no entry          -> verdict "missing"
+#     - its console label (REST) differs from the map value     -> verdict "label-changed"
+#   The catalog (<host>_SecurityComplianceCatalog.csv) lists every value of the SDK enum
+#   VBRBestPracticeType, including ones this server never evaluates. Those are "dormant": listed in
+#   the job summary and sca-triage.json, never a reason to open an issue.
+#
+# CONSOLE LABELS (deterministic join, no AI)
+#   REST GET /api/v1/securityAnalyzer/bestPractices returns {id, bestPractice (full console label)}.
+#   REST id == SDK rule Id == RuleId column of _SecurityCompliance.csv, so evaluated rule -> console
+#   label is a join on that GUID. If REST is unreachable, credentials are absent, or the server's
+#   API has no analyzer endpoint, the verdict degrades to CSV-only (IsMapped) with a visible
+#   notice. This script never fails the build.
+#
+# USAGE (workflow step)
 #   ./Invoke-SecurityComplianceDriftCheck.ps1 `
-#     -CatalogPath 'C:\temp\vHC\Original\VBR\*\*\_SecurityComplianceCatalog.csv' `
-#     -Repo 'org/repo' `
-#     -RunUrl 'https://github.com/org/repo/actions/runs/123'
+#     -CatalogPath 'C:\temp\vHC\Original\VBR\*\*\*_SecurityComplianceCatalog.csv' `
+#     -Server vbr-13-sql -OutDir "$env:RUNNER_TEMP\sca-triage" `
+#     -RestHost localhost [-VbrExePath '<Veeam.Backup.Service.exe>']
+#   REST credentials come from env only (never parameters, never logged):
+#     SCA_REST_USER, SCA_REST_PASSWORD   (SCA_REST_HOST / SCA_REST_PORT optional defaults)
 #
-# REQUIREMENTS: gh CLI authenticated via GH_TOKEN env var, issues: write permission
 # EXIT CODES: always 0 (drift is informational, not a build break)
 
 param(
-    [Parameter(Mandatory=$true)][string]$CatalogPath,
-    [Parameter(Mandatory=$true)][string]$Repo,
-    [Parameter(Mandatory=$true)][string]$RunUrl
+    [Parameter(Mandatory = $true)][string]$CatalogPath,
+    [string]$Server = '',
+    [string]$OutDir = '.',
+    [string]$VbrConfigPath = '',
+    [string]$RestHost = $env:SCA_REST_HOST,
+    [int]$RestPort = $(if ($env:SCA_REST_PORT) { [int]$env:SCA_REST_PORT } else { 9419 }),
+    [string]$VbrExePath = ''
 )
 
 $ErrorActionPreference = 'Stop'
+Import-Module (Join-Path $PSScriptRoot 'ScaTriage.psm1') -Force
 
 function Write-Summary {
     param([string]$Text)
@@ -29,85 +50,98 @@ function Write-Summary {
     }
 }
 
-# Resolve catalog file (glob path support)
-$catalog = Get-ChildItem -Path $CatalogPath -ErrorAction SilentlyContinue `
-    | Sort-Object LastWriteTime -Descending `
-    | Select-Object -First 1
-
-if ($null -eq $catalog) {
-    Write-Host "::warning::No _SecurityComplianceCatalog.csv found at '$CatalogPath' - drift check skipped"
-    Write-Summary "## SCA Drift Check`n`n> Skipped - no catalog CSV found (Phase 1 may not have run on this branch)."
-    exit 0
-}
-
-Write-Host "Reading catalog: $($catalog.FullName)"
-$rows     = Import-Csv -Path $catalog.FullName
-$unmapped = @($rows | Where-Object { $_.IsMapped -eq 'False' })
-
-if ($unmapped.Count -eq 0) {
-    Write-Host "SCA: no drift detected - all rules mapped"
-    Write-Summary "## SCA Drift Check`n`n> All compliance rules mapped. No action required."
-
-    # Auto-close any open drift issue
-    $open = gh issue list --label sca-drift --state open --json number --repo $Repo 2>$null | ConvertFrom-Json
-    if ($open -and $open.Count -gt 0) {
-        $issueNum = $open[0].number
-        gh issue close $issueNum --repo $Repo --comment "Drift resolved - all rules now mapped. Closing automatically." 2>$null
-        Write-Host "Closed drift issue #$issueNum"
+try {
+    # The evaluated-rules CSV is what triage needs. The catalog (every SDK enum value) only adds
+    # the dormant list, and VBR 12's SDK cannot produce it ("VBRBestPracticeType enum not
+    # loadable"), so a missing catalog degrades to "no dormant list" instead of skipping.
+    $complianceGlob = $CatalogPath -replace '_SecurityComplianceCatalog\.csv$', '_SecurityCompliance.csv'
+    $complianceFile = Get-ChildItem -Path $complianceGlob -ErrorAction SilentlyContinue |
+        Sort-Object LastWriteTime -Descending | Select-Object -First 1
+    if ($null -eq $complianceFile) {
+        Write-Host "::warning::No _SecurityCompliance.csv found at '$complianceGlob' - SCA triage skipped"
+        Write-Summary "## SCA Triage`n`n> Skipped - no evaluated-rules CSV found (the analyzer produced no results)."
+        exit 0
     }
-    exit 0
+    if (-not $Server) { $Server = $complianceFile.Name -replace '_SecurityCompliance\.csv$', '' }
+
+    $catalogPathForRun = Join-Path $complianceFile.DirectoryName ($complianceFile.Name -replace '_SecurityCompliance\.csv$', '_SecurityComplianceCatalog.csv')
+    $catalog = @()
+    Write-Host "Reading evaluated rules: $($complianceFile.FullName)"
+    if (Test-Path $catalogPathForRun) {
+        Write-Host "Reading catalog:         $catalogPathForRun"
+        $catalog = @(Import-Csv -Path $catalogPathForRun)
+    } else {
+        Write-Host "::notice::No SDK catalog next to the evaluated rules (expected on VBR 12). Triaging evaluated rules only; no dormant list."
+    }
+    $evaluated = @(Import-Csv -Path $complianceFile.FullName)
+
+    if (-not $VbrConfigPath) {
+        $VbrConfigPath = Join-Path $PSScriptRoot '../../vHC/HC_Reporting/Tools/Scripts/HealthCheck/VBR/VbrConfig.json'
+    }
+    $config = Get-Content -Path $VbrConfigPath -Raw | ConvertFrom-Json
+    $labelMap = $config.SecurityComplianceRuleNames
+    $validatedFor = [string]$config.SecurityComplianceRulesValidatedForVbrVersion
+
+    $vbrMajor = [string](($catalog | Select-Object -First 1).VbrVersion)
+
+    $rest = Get-ScaRestBestPractices -RestHost $RestHost -Port $RestPort `
+        -User $env:SCA_REST_USER -Password $env:SCA_REST_PASSWORD
+
+    # Full build version: REST serverInfo first, then the local Veeam service binary. A remote
+    # console host's local binary would describe the console, not the server, so it is opt-in.
+    $vbrVersion = ''
+    if ($rest.BuildVersion) { $vbrVersion = $rest.BuildVersion }
+    elseif ($VbrExePath -and (Test-Path $VbrExePath)) {
+        $vbrVersion = (Get-Item $VbrExePath).VersionInfo.ProductVersion
+    }
+
+    $triage = Get-ScaTriage -Server $Server -Evaluated $evaluated -Catalog $catalog -LabelMap $labelMap `
+        -ValidatedFor $validatedFor -VbrMajor $vbrMajor -VbrVersion $vbrVersion -Rest $rest
+
+    $evaluatedHaveIds = @($evaluated | Where-Object { $_.PSObject.Properties['RuleId'] -and $_.RuleId }).Count -gt 0
+    $notices = [System.Collections.Generic.List[string]]::new()
+    if (-not $triage.rest.available) {
+        $notices.Add("REST console labels unavailable ($($triage.rest.reason)). Verdicts are CSV-only: unmapped rules are reported but no exact label can be proposed from this server.")
+    }
+    elseif (-not $evaluatedHaveIds) {
+        $notices.Add('REST answered but _SecurityCompliance.csv has no RuleId column or values, so rules could not be joined to console labels. CSV-only verdicts.')
+    }
+    foreach ($n in $notices) { Write-Host "::notice title=SCA triage ($Server)::$n" }
+
+    New-Item -ItemType Directory -Path $OutDir -Force | Out-Null
+    $jsonPath = Join-Path $OutDir 'sca-triage.json'
+    $triage | ConvertTo-Json -Depth 8 | Set-Content -Path $jsonPath -Encoding UTF8
+    Write-Host "Wrote $jsonPath"
+
+    $drift = @($triage.evaluated | Where-Object { $_.verdict -ne 'ok' })
+    $c = $triage.counts
+    if ($drift.Count -eq 0) {
+        Write-Host "SCA: no drift - $($c.evaluated) evaluated rule(s) all ok; $($c.dormant) dormant enum(s) not evaluated"
+    }
+    else {
+        Write-Host "SCA: $($drift.Count) evaluated rule(s) with drift:"
+        foreach ($d in $drift) { Write-Host "  $($d.verdict) $($d.enum) -> $(if ($d.proposedLabel) { $d.proposedLabel } else { '(console label unknown)' })" }
+    }
+
+    $sb = [System.Text.StringBuilder]::new()
+    [void]$sb.AppendLine("## SCA Triage - $Server")
+    [void]$sb.AppendLine('')
+    [void]$sb.AppendLine("VBR $(if ($vbrVersion) { $vbrVersion } else { "major $vbrMajor" }); map validated for $validatedFor; evaluated $($c.evaluated), ok $($c.ok), missing $($c.missing), label-changed $($c.labelChanged); dormant $($c.dormant) ($($c.dormantUnmapped) unmapped).")
+    foreach ($n in $notices) { [void]$sb.AppendLine(''); [void]$sb.AppendLine("> Notice: $n") }
+    if ($drift.Count -gt 0) {
+        [void]$sb.AppendLine(''); [void]$sb.AppendLine('| Verdict | RuleType | Map label | Console label |'); [void]$sb.AppendLine('|---|---|---|---|')
+        foreach ($d in $drift) { [void]$sb.AppendLine("| $($d.verdict) | ``$($d.enum)`` | $($d.mapLabel) | $($d.consoleLabel) |") }
+    }
+    if ($triage.dormant.Count -gt 0) {
+        [void]$sb.AppendLine(''); [void]$sb.AppendLine("<details><summary>$($triage.dormant.Count) dormant enum value(s) (never evaluated here; informational only)</summary>"); [void]$sb.AppendLine('')
+        [void]$sb.AppendLine((($triage.dormant | ForEach-Object { "- ``$($_.enum)``$(if (-not $_.mapped) { ' (no map entry)' })" }) -join "`n"))
+        [void]$sb.AppendLine(''); [void]$sb.AppendLine('</details>')
+    }
+    Write-Summary $sb.ToString()
 }
-
-# Build issue content
-$vbrVersion   = ($rows | Select-Object -First 1).VbrVersion
-$validatedFor = ($rows | Select-Object -First 1).ValidatedFor
-
-$tableLines = @('| RuleType | LabelSource | FallbackLabel |', '|---|---|---|')
-foreach ($r in $unmapped) {
-    $tableLines += "| ``$($r.RuleType)`` | $($r.LabelSource) | $($r.MappedLabel) |"
+catch {
+    Write-Host "::warning::SCA triage failed and was skipped: $($_.Exception.Message)"
+    Write-Summary "## SCA Triage`n`n> Skipped - triage errored: $($_.Exception.Message)"
 }
-$table = $tableLines -join "`n"
-
-$body = @"
-## $($unmapped.Count) unmapped VBR compliance rule(s) detected
-
-**VBR version on runner:** $vbrVersion
-**Mapping validated for:** $validatedFor
-**Detected in run:** $RunUrl
-
-$table
-
-### How to fix
-
-1. Run ``.\Check-SecurityComplianceDrift-REST.ps1`` against a lab to confirm the console labels.
-2. Add each RuleType to ``VbrConfig.json`` SecurityComplianceRuleNames with the correct label.
-3. Bump ``SecurityComplianceRulesValidatedForVbrVersion`` to match the current VBR version.
-4. Push - CI will auto-close this issue on the next clean run.
-"@
-
-$title = "[SCA Drift] $($unmapped.Count) unmapped compliance rule(s) (VBR $vbrVersion)"
-
-# Idempotent: find existing open drift issue
-$existing = gh issue list --label sca-drift --state open --json number,title --repo $Repo 2>$null | ConvertFrom-Json
-
-if ($existing -and $existing.Count -gt 0) {
-    $issueNum = $existing[0].number
-    gh issue edit $issueNum --body $body --repo $Repo 2>$null
-    gh issue comment $issueNum --body "Re-checked by run $RunUrl - $($unmapped.Count) unmapped rule(s) still present." --repo $Repo 2>$null
-    Write-Host "Updated drift issue #$issueNum"
-} else {
-    $created = gh issue create --label sca-drift --title $title --body $body --repo $Repo 2>$null
-    Write-Host "Created drift issue: $created"
-}
-
-Write-Summary @"
-## SCA Drift Check
-
-> **$($unmapped.Count) unmapped compliance rule(s) detected** (VBR $vbrVersion)
-
-$table
-
-See [workflow run]($RunUrl) for details. A GitHub issue has been opened/updated with remediation steps.
-"@
 
 exit 0
