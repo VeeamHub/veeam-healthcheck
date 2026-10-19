@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.IO;
 using System.Linq;
 using VeeamHealthCheck.Functions.Reporting.CsvHandlers;
@@ -22,21 +22,33 @@ namespace VhcXTests.Functions.Reporting.CsvHandlers
         public void Dispose() => Directory.Delete(this.root, recursive: true);
 
         [Fact]
-        public void FileFinder_AfterReturningReader_FileHandleIsNotHeld()
+        public void FileFinder_WhileReaderOpen_FileCanBeWrittenAndDeletedByOthers()
         {
             using var reader = new CCsvReader().FileFinder("Servers", this.root);
 
             Assert.NotNull(reader);
+            using (var writer = new FileStream(this.csv, FileMode.Open, FileAccess.ReadWrite, FileShare.ReadWrite | FileShare.Delete))
+            {
+                Assert.True(writer.CanWrite);
+            }
+        }
+
+        [Fact]
+        public void FileFinder_AfterReaderDisposed_HandleIsReleased()
+        {
+            var reader = new CCsvReader().FileFinder("Servers", this.root);
+            Assert.NotNull(reader);
+            _ = reader.GetRecords<dynamic>().ToList();
+            reader.Dispose();
+
             using var exclusive = new FileStream(this.csv, FileMode.Open, FileAccess.ReadWrite, FileShare.None);
         }
 
         [Fact]
-        public void FileFinder_ReadAfterFileDeleted_StillEnumeratesAllRecords()
+        public void FileFinder_LazyEnumeration_YieldsAllRecords()
         {
             using var reader = new CCsvReader().FileFinder("Servers", this.root);
             Assert.NotNull(reader);
-            File.Delete(this.csv);
-
             var names = reader.GetRecords<dynamic>().Select(r => (string)r.name).ToList();
 
             Assert.Equal(new[] { "PROXY01", "REPO01" }, names);

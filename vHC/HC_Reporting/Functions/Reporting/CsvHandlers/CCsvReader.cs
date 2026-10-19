@@ -64,11 +64,12 @@ namespace VeeamHealthCheck.Functions.Reporting.CsvHandlers
 
         private CsvReader CReader(string csvToRead)
         {
-            // Callers enumerate GetRecords lazily and never dispose the reader, so a StreamReader here
-            // would hold the file handle (and a Windows lock) until finalization. Read the text up
-            // front: the handle is closed before returning and lazy enumeration still works.
-            TextReader reader = new StringReader(File.ReadAllText(csvToRead));
-            return new CsvReader(reader, this.csvConfig);
+            // Streamed, not buffered: session CSVs can be hundreds of MB. Callers enumerate GetRecords
+            // lazily and may never dispose, so share Delete/Write to keep Windows from locking the
+            // file against delete or replace while the reader is alive. Disposing the CsvReader
+            // closes the handle.
+            var stream = new FileStream(csvToRead, FileMode.Open, FileAccess.Read, FileShare.ReadWrite | FileShare.Delete);
+            return new CsvReader(new StreamReader(stream), this.csvConfig);
         }
 
         private CsvConfiguration GetCsvConfig()
