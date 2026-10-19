@@ -40,6 +40,7 @@
         "integration-test-vbr-2": { "trigger": "push-or-dispatch", "lab": true },
         "integration-test-vbr-13-sql": { "trigger": "push-or-dispatch", "lab": true },
         "integration-test-vbr-12": { "trigger": "push-or-dispatch", "lab": true },
+        "gui-e2e": { "trigger": "push-or-dispatch", "lab": true },
         "virustotal-scan": { "trigger": "publish-only" },
         "create-release": { "trigger": "publish-only" },
         "sca-drift-proposal": { "trigger": "push-or-dispatch" },
@@ -297,7 +298,9 @@
         "vHC/HC_Reporting/Functions/ManageServers/**",
         "vHC/HC_Reporting/Functions/UserInteraction/**",
         "vHC/HC_Reporting/Health_Check_Icon.ico",
-        "vHC/VhcGuiTests/**"
+        "vHC/VhcGuiTests/**",
+        "vHC/VhcGuiE2ETests/**",
+        "vHC/HC_Reporting/Startup/CArgsParser.cs"
       ],
       "checks": [
         {
@@ -305,10 +308,16 @@
           "title": "Avalonia.Headless GUI suite (included in test-crossplatform)",
           "ci": [{ "workflow": "crossplatform-tests.yml", "job": "test-crossplatform" }],
           "local": ["tests"]
+        },
+        {
+          "id": "gui-e2e",
+          "title": "FlaUI end-to-end on the lab VBR 13 box: real window, console hidden, native folder picker, scrubbed GUI Run (push or dispatch only; needs an interactive runner session)",
+          "ci": [{ "workflow": "ci-cd.yaml", "job": "gui-e2e" }]
         }
       ],
       "residue": [
-        "Windows GUI smoke: launch the real window on Windows (console hide, native pickers, rendering) and click through the changed dialog"
+        "gui-e2e never runs on a pull_request: dispatch ci-cd.yaml on the PR branch to exercise it, and treat it as unproven until its first green run",
+        "Dialogs other than the terms prompt, the Import button, Manage Servers/credential prompts and real Windows rendering of the changed layout are not driven end to end"
       ]
     },
     "collection-dotnet": {
