@@ -612,7 +612,8 @@ v12 updates
 
 - Suppressed errors caused by certain job types that were not configured in an environment.
 
-[Unreleased]: https://github.com/VeeamHub/veeam-healthcheck/compare/v3.0.1.193...dev
+[Unreleased]: https://github.com/VeeamHub/veeam-healthcheck/compare/v3.1.0.279...dev
+[3.1.0]: https://github.com/VeeamHub/veeam-healthcheck/compare/v3.0.1.193...v3.1.0.279
 [3.0.1.193]: https://github.com/VeeamHub/veeam-healthcheck/compare/v3.0.1.178...v3.0.1.193
 [3.0.1.178]: https://github.com/VeeamHub/veeam-healthcheck/compare/v3.0.1.169...v3.0.1.178
 [3.0.1.169]: https://github.com/VeeamHub/veeam-healthcheck/compare/v3.0.1.163...v3.0.1.169
