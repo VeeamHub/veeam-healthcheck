@@ -1,6 +1,7 @@
 ﻿// Copyright (c) 2021, Adam Congdon <adam.congdon2@gmail.com>
 // MIT License
 using System.IO;
+using VeeamHealthCheck.Functions.Collection;
 using VeeamHealthCheck.Functions.Reporting.Html.VB365;
 using VeeamHealthCheck.Functions.Reporting.Html.VBR;
 using VeeamHealthCheck.Shared;
@@ -37,12 +38,20 @@ namespace VeeamHealthCheck.Startup
 
             if (!CGlobals.RunSecReport)
             {
-                if (Directory.Exists(CVariables.vb365dir) && CGlobals.RunFullReport)
+                // With /import both directories resolve to the same folder, so the product
+                // has to come from the files in it; otherwise the wrong compiler also runs.
+                string importProduct = CGlobals.IMPORT
+                    ? CImportPathResolver.ValidateCsvFiles(CVariables.vb365dir).ProductType
+                    : null;
+                bool runVb365 = importProduct != "VBR";
+                bool runVbr = importProduct != "VB365";
+
+                if (runVb365 && Directory.Exists(CVariables.vb365dir) && CGlobals.RunFullReport)
                 {
                     this.StartM365Report();
                 }
 
-                if (Directory.Exists(CVariables.vbrDir) && CGlobals.RunFullReport)
+                if (runVbr && Directory.Exists(CVariables.vbrDir) && CGlobals.RunFullReport)
                 {
                     res = this.StartVbrReport();
                 }

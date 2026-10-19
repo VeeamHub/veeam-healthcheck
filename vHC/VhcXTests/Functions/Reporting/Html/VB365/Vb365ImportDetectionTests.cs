@@ -107,7 +107,7 @@ namespace VhcXTests.Functions.Reporting.Html.VB365
             }
         }
 
-        [Fact(Skip = "bug: with /import, vb365dir == vbrDir, so CReportModeSelector also runs the VBR compiler over VB365 CSVs and writes a bogus _VBR_ report")]
+        [Fact]
         public void ModeSelector_Vb365Import_DoesNotProduceVbrReport()
         {
             using var h = new Vb365ReportHarness();
