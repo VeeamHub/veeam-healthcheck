@@ -12,11 +12,21 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.Exportables
     public class HtmlToPdfConverter
     {
         private IConverter converter;
+        private PdfTools tools;
         private readonly CLogger log = CGlobals.Logger;
 
-        public HtmlToPdfConverter()
+        // The native wkhtmltopdf wrapper is created on first use. An unused PdfTools has no loaded
+        // module, and its finalizer throws NullReferenceException on the finalizer thread, which
+        // terminates the process (exit 134 off Windows with /pdf + /import).
+        private IConverter GetConverter()
         {
-            this.converter = new SynchronizedConverter(new PdfTools());
+            if (this.converter == null)
+            {
+                this.tools = new PdfTools();
+                this.converter = new SynchronizedConverter(this.tools);
+            }
+
+            return this.converter;
         }
 
         // Marker class added to <html> so css.css can skip rules meant only for browser printing.
@@ -68,6 +78,7 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.Exportables
         public void ConvertHtmlToPdf(string htmlContent, string outputPath)
         {
             var doc = BuildDocument(htmlContent);
+            var engine = this.GetConverter();
 
             // Run conversion on a dedicated STA thread to avoid deadlocking the WPF UI thread.
             // DinkToPdf's SynchronizedConverter uses COM interop which requires an STA thread.
@@ -78,7 +89,7 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.Exportables
             {
                 try
                 {
-                    pdf = this.converter.Convert(doc);
+                    pdf = engine.Convert(doc);
                 }
                 catch (Exception ex)
                 {
@@ -105,6 +116,14 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.Exportables
 
         public void Dispose()
         {
+            // If conversion was attempted but the native library never loaded (wkhtmltopdf missing),
+            // PdfTools.Dispose would throw from its finalizer too, so skip it.
+            if (this.tools != null && !this.tools.IsLoaded)
+            {
+                GC.SuppressFinalize(this.tools);
+            }
+
+            this.tools = null;
             this.converter = null;
         }
     }

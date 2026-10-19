@@ -231,40 +231,21 @@ namespace VhcXTests.Functions.Reporting.Html
         private static void SetConverter(HtmlToPdfConverter converter, IConverter engine) =>
             typeof(HtmlToPdfConverter).GetField("converter", BindingFlags.Instance | BindingFlags.NonPublic)!.SetValue(converter, engine);
 
-        [Fact(Skip = "bug: disposing an unused PDF converter leaves PdfTools.Finalize throwing NullReferenceException")]
+        [Fact]
         public void Dispose_UnusedConverter_NativeToolsFinalizerDoesNotThrow()
         {
-            using var report = new GoldenVbrReport();
             var converter = new HtmlToPdfConverter();
-            object tools = NativeTools(converter);
-            try
-            {
-                converter.Dispose();
-                MethodInfo finalizer = tools.GetType().GetMethod("Finalize", BindingFlags.Instance | BindingFlags.NonPublic)!;
-                Exception? error = Record.Exception(() => finalizer.Invoke(tools, null));
-                Assert.Null(error);
-            }
-            finally
-            {
-                // Invoke deterministically above instead of letting a finalizer exception
-                // terminate the whole test host during an unrelated test.
-                GC.SuppressFinalize(tools);
-            }
+            converter.Dispose();
+
+            // An eagerly created PdfTools would now be finalized and throw on the finalizer thread,
+            // crashing the test host.
+            GC.Collect();
+            GC.WaitForPendingFinalizers();
+
+            Assert.Null(typeof(HtmlToPdfConverter).GetField("converter", BindingFlags.Instance | BindingFlags.NonPublic)!.GetValue(converter));
+            Assert.Null(typeof(HtmlToPdfConverter).GetField("tools", BindingFlags.Instance | BindingFlags.NonPublic)!.GetValue(converter));
         }
 
-        private static HtmlToPdfConverter CreateConverterForFlowTest()
-        {
-            var converter = new HtmlToPdfConverter();
-            // These tests never initialize wkhtmltopdf. Its unused PdfTools finalizer
-            // crashes the host; the separate Dispose regression records that defect.
-            GC.SuppressFinalize(NativeTools(converter));
-            return converter;
-        }
-
-        private static object NativeTools(HtmlToPdfConverter converter)
-        {
-            object engine = typeof(HtmlToPdfConverter).GetField("converter", BindingFlags.Instance | BindingFlags.NonPublic)!.GetValue(converter)!;
-            return typeof(BasicConverter).GetField("Tools", BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public)!.GetValue(engine)!;
-        }
+        private static HtmlToPdfConverter CreateConverterForFlowTest() => new HtmlToPdfConverter();
     }
 }
