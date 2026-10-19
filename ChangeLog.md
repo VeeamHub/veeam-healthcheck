@@ -13,6 +13,8 @@ checksums, and scan results.
 
 ## [Unreleased]
 
+## [3.1.0] - 2026-10-16
+
 ### Added
 
 - Redesigned GUI, migrated from WPF to Avalonia: new theme, a fixed-size layout with two-column
