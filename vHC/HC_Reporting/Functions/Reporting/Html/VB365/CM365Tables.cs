@@ -586,61 +586,61 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VB365
                     int portalDateShade = 0;
                     int operatorDateShade = 0;
 
-                    DateTime.TryParse(g.ServerCertExpires, out DateTime sCertExpiry);
-                    DateTime.TryParse(g.APICertExpires, out DateTime aCertExpiry);
-                    DateTime.TryParse(g.TenantAuthCertExpires, out DateTime tCertExpiry);
-                    DateTime.TryParse(g.RestorePortalCertExpires, out DateTime pCertExpiry);
-                    DateTime.TryParse(g.OperatorAuthCertExpires, out DateTime oCertExpiry);
+                    bool hasServerExpiry = DateTime.TryParse(g.ServerCertExpires, out DateTime sCertExpiry);
+                    bool hasApiExpiry = DateTime.TryParse(g.APICertExpires, out DateTime aCertExpiry);
+                    bool hasTenantExpiry = DateTime.TryParse(g.TenantAuthCertExpires, out DateTime tCertExpiry);
+                    bool hasPortalExpiry = DateTime.TryParse(g.RestorePortalCertExpires, out DateTime pCertExpiry);
+                    bool hasOperatorExpiry = DateTime.TryParse(g.OperatorAuthCertExpires, out DateTime oCertExpiry);
 
-                    if (sCertExpiry < DateTime.Now)
+                    if (hasServerExpiry && sCertExpiry < DateTime.Now)
                     {
                         serverDateShade = 1;
                     }
 
 
-                    if (sCertExpiry > DateTime.Now && sCertExpiry < DateTime.Now.AddDays(60))
+                    if (hasServerExpiry && sCertExpiry > DateTime.Now && sCertExpiry < DateTime.Now.AddDays(60))
                     {
                         serverDateShade |= 3;
                     }
 
 
-                    if (aCertExpiry < DateTime.Now)
+                    if (hasApiExpiry && aCertExpiry < DateTime.Now)
                     {
                         apiDateShade = 1;
                     }
 
 
-                    if (aCertExpiry > DateTime.Now && aCertExpiry < DateTime.Now.AddDays(60))
+                    if (hasApiExpiry && aCertExpiry > DateTime.Now && aCertExpiry < DateTime.Now.AddDays(60))
                     {
                         apiDateShade |= 3;
                     }
 
-                    if (tCertExpiry < DateTime.Now)
+                    if (hasTenantExpiry && tCertExpiry < DateTime.Now)
                     {
                         tenantDateShade = 1;
                     }
 
-                    if (tCertExpiry > DateTime.Now && tCertExpiry < DateTime.Now.AddDays(60))
+                    if (hasTenantExpiry && tCertExpiry > DateTime.Now && tCertExpiry < DateTime.Now.AddDays(60))
                     {
                         tenantDateShade |= 3;
                     }
 
-                    if (pCertExpiry < DateTime.Now)
+                    if (hasPortalExpiry && pCertExpiry < DateTime.Now)
                     {
                         portalDateShade = 1;
                     }
 
-                    if (pCertExpiry > DateTime.Now && pCertExpiry < DateTime.Now.AddDays(60))
+                    if (hasPortalExpiry && pCertExpiry > DateTime.Now && pCertExpiry < DateTime.Now.AddDays(60))
                     {
                         portalDateShade |= 3;
                     }
 
-                    if (oCertExpiry < DateTime.Now)
+                    if (hasOperatorExpiry && oCertExpiry < DateTime.Now)
                     {
                         operatorDateShade = 1;
                     }
 
-                    if (oCertExpiry > DateTime.Now && oCertExpiry < DateTime.Now.AddDays(60))
+                    if (hasOperatorExpiry && oCertExpiry > DateTime.Now && oCertExpiry < DateTime.Now.AddDays(60))
                     {
                         operatorDateShade |= 3;
                     }
@@ -673,7 +673,7 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VB365
                     s += this.form.TableData(string.Empty, string.Empty);// enabled
                     s += this.form.TableData(string.Empty, string.Empty);// port
                     s += this.form.TableData(serverCert, string.Empty);// cert
-                    s += this.form.TableData(g.ServerCertExpires, string.Empty);// expires
+                    s += this.form.TableData(g.ServerCertExpires, string.Empty, serverDateShade);// expires
                     s += this.form.TableData(g.ServerCertSelfSigned, string.Empty, serverCertSignShade);// self signed
                     s += "</tr><tr>";
 
@@ -681,21 +681,21 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VB365
                     s += this.form.TableData(g.APIEnabled, string.Empty);
                     s += this.form.TableData(g.APIPort, string.Empty);
                     s += this.form.TableData(apiCert, string.Empty);
-                    s += this.form.TableData(g.APICertExpires, string.Empty);
+                    s += this.form.TableData(g.APICertExpires, string.Empty, apiDateShade);
                     s += this.form.TableData(g.APICertSelfSigned, string.Empty, apiCertSignShade);
                     s += "</tr><tr>";
                     s += this.form.TableData("Tenant Auth", string.Empty);
                     s += this.form.TableData(g.TenantAuthEnabled, string.Empty);
                     s += this.form.TableData(string.Empty, string.Empty);
                     s += this.form.TableData(tenantCert, string.Empty);
-                    s += this.form.TableData(g.TenantAuthCertExpires, string.Empty);
+                    s += this.form.TableData(g.TenantAuthCertExpires, string.Empty, tenantDateShade);
                     s += this.form.TableData(g.TenantAuthCertSelfSigned, string.Empty, tenantCertSignShade);
                     s += "</tr><tr>";
                     s += this.form.TableData("Restore Portal", string.Empty);
                     s += this.form.TableData(g.RestorePortalEnabled, string.Empty);
                     s += this.form.TableData(string.Empty, string.Empty);
                     s += this.form.TableData(portalCert, string.Empty);
-                    s += this.form.TableData(g.RestorePortalCertExpires, string.Empty);
+                    s += this.form.TableData(g.RestorePortalCertExpires, string.Empty, portalDateShade);
                     s += this.form.TableData(g.RestorePortalCertSelfSigned, string.Empty, portalCertSignShade);
                     s += "</tr>";
                     s += "</tr><tr>";
@@ -703,7 +703,7 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VB365
                     s += this.form.TableData(g.OperatorAuthEnabled, string.Empty);
                     s += this.form.TableData(string.Empty, string.Empty);
                     s += this.form.TableData(operatorCert, string.Empty);
-                    s += this.form.TableData(g.OperatorAuthCertExpires, string.Empty);
+                    s += this.form.TableData(g.OperatorAuthCertExpires, string.Empty, operatorDateShade);
                     s += this.form.TableData(g.OperatorAuthCertSelfSigned, string.Empty, operatorCertSignShade);
                     s += "</tr>";
                 }

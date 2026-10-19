@@ -245,7 +245,7 @@ namespace VhcXTests.Functions.Reporting.Html.VB365
             Assert.Contains("cell-danger", rows[0][8]);
         }
 
-        [Fact(Skip = "bug: Vb365Security computes cert-expiry shades but never passes them to TableData, so an expired cert is not flagged")]
+        [Fact]
         public void Vb365Security_ExpiredCertificate_ExpiryCellIsDanger()
         {
             using var h = new Vb365ReportHarness();
@@ -255,6 +255,36 @@ namespace VhcXTests.Functions.Reporting.Html.VB365
             // Restore Portal cert expired 01/15/2020.
             var portal = rows.Single(r => Cell(r[0]) == "Restore Portal");
             Assert.Contains("cell-danger", portal[4]);
+        }
+
+        [Theory]
+        [InlineData(-1, "cell-danger")]
+        [InlineData(30, "cell-warning")]
+        [InlineData(90, "")]
+        public void Vb365Security_CertificateExpiryThresholds_ShadeEveryService(int daysUntilExpiry, string expectedShade)
+        {
+            using var h = new Vb365ReportHarness();
+            string expiry = System.DateTime.Today.AddDays(daysUntilExpiry).ToString("MM/dd/yyyy", System.Globalization.CultureInfo.InvariantCulture);
+            h.Edit("Security.csv", s => s
+                .Replace("\"06/30/2099\"", $"\"{expiry}\"")
+                .Replace("\"01/15/2020\"", $"\"{expiry}\"")
+                .Replace("\"False\",\"\",\"\",\"False\"", $"\"False\",\"\",\"{expiry}\",\"False\""));
+
+            var rows = Vb365ReportHarness.Rows(new CM365Tables().Vb365Security()).Where(r => r.Count == 6).ToList();
+
+            Assert.Equal(5, rows.Count);
+            Assert.All(rows, row =>
+            {
+                Assert.Equal(expiry, Cell(row[4]));
+                if (expectedShade.Length == 0)
+                {
+                    Assert.DoesNotContain("class=", row[4]);
+                }
+                else
+                {
+                    Assert.Contains(expectedShade, row[4]);
+                }
+            });
         }
 
         [Fact]
