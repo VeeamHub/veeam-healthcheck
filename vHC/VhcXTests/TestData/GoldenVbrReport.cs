@@ -156,9 +156,8 @@ internal sealed class GoldenVbrReport : IDisposable
         DeleteTempRoot();
     }
 
-    // CCsvReader returns CsvReaders over StreamReaders that callers never dispose, so on Windows the
-    // fixture CSVs stay locked until those readers are finalized. Collect them, retry, and leave the
-    // temp dir behind rather than fail a test on cleanup.
+    // Other code paths (exporters, log readers) may still hold a fixture file briefly on Windows.
+    // Collect finalizers, retry, and leave the temp dir behind rather than fail a test on cleanup.
     private void DeleteTempRoot()
     {
         for (int attempt = 0; attempt < 5 && Directory.Exists(Root); attempt++)

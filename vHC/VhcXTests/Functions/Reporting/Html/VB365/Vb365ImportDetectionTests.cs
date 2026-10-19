@@ -129,5 +129,30 @@ namespace VhcXTests.Functions.Reporting.Html.VB365
                 CGlobals.RunSecReport = origSec;
             }
         }
+
+        [Fact]
+        public void ModeSelector_VbrImport_DoesNotProduceVb365Report()
+        {
+            using var h = new VhcXTests.TestData.GoldenVbrReport();
+            bool origFull = CGlobals.RunFullReport;
+            bool origSec = CGlobals.RunSecReport;
+            try
+            {
+                CGlobals.RunFullReport = true;
+                CGlobals.RunSecReport = false;
+
+                new CReportModeSelector().Run();
+
+                string output = Path.Combine(h.Root, "vHC-Report");
+                Assert.NotEmpty(Directory.GetFiles(output, "*_VBR_*.html"));
+                var vb365 = Directory.GetFiles(output, "*_VB365_*");
+                Assert.True(vb365.Length == 0, "unexpected VB365 output: " + string.Join(", ", vb365.Select(Path.GetFileName)));
+            }
+            finally
+            {
+                CGlobals.RunFullReport = origFull;
+                CGlobals.RunSecReport = origSec;
+            }
+        }
     }
 }
