@@ -1100,7 +1100,7 @@ $map.LocalRepositories = $Global:VBOEnvironment.VBORepository | mde @(
     #Dropped Jun 17 #'Outdated?=>IsOutdated'
     'State=>$states = Join($(if ($.IsOutOfSync) { "Out of Sync" }),$(if ($.IsOutdated) { "Out of Date" }),$(if ($.IsOutOfOrder) { "Invalid: " + $.OutOfOrderReason })); if ($states -eq "") {"Healthy"} else { $states }'
     'Capacity=>($.Capacity/1TB).ToString("#,##0.000 TB")'
-    'Free=>($.FreeSpace/1TB).ToString("#,##0.000 TB") +" ("+ (($.FreeSpace/$.Capacity)/1TB).ToString("#,##0.00 %") + ")"' #updated 3/23/23 per feature request
+    'Free=>($.FreeSpace/1TB).ToString("#,##0.000 TB") +" ("+ ($.FreeSpace/$.Capacity).ToString("#,##0.00 %") + ")"' #updated 3/23/23 per feature request
     'Data Stored=>$repoUsage = ($Global:VBOEnvironment.VBOUsageData | ? { $_.RepositoryId -eq $.Id}); $SpaceUsed = if (($repoUsage.ObjectStorageUsedSpace | measure -Sum).Sum/1TB -gt 0) {($repoUsage.ObjectStorageUsedSpace | measure -Sum).Sum/1TB} else {($repoUsage.UsedSpace | measure -Sum).Sum/1TB}; $SpaceUsed.ToString("#,##0.000 TB")'
     'Cache Space Used=>((($Global:VBOEnvironment.VBOUsageData | ? { $_.RepositoryId -eq $.Id}).LocalCacheUsedSpace | measure -Sum).Sum/1TB).ToString("#,##0.000 TB")'
     #replaced below with change to a GB rate rather than %. Then it reflects just the change in the data transferred and not against the repo storage.
