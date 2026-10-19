@@ -17,6 +17,9 @@ checksums, and scan results.
 
 - The VBR User Roles table no longer shows a Description column. VBR does not expose a description for role
   assignments, so the column was always blank.
+- The `proxies` section of the JSON export uses new column names that match the values in each row:
+  `IsOnHost`, `NetBufferSize`, `MaxConcurrentJobs` and `IsHvOffload` are replaced by `FailoverToNetwork`,
+  `ChassisType`, `CachePath`, `CacheSize` and `IsDisabled`. Anything that reads those keys needs updating.
 
 ### Fixed
 
@@ -35,8 +38,7 @@ checksums, and scan results.
 - CSV files are no longer left locked after they are read.
 - Remote VBR runs now report the configuration database type (MS SQL or PostgreSQL) instead of "Unknown",
   read from the VBR REST API.
-- The proxies section of the JSON export now labels each value with the right column, including CDP proxy
-  cache path and size.
+- VB365 collection now records the real free-space percentage for local repositories instead of 0.00 %.
 - Scrubbed reports now anonymize the CDP proxy cache path.
 
 ## [3.1.0] - 2026-10-16
