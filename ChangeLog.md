@@ -13,6 +13,32 @@ checksums, and scan results.
 
 ## [Unreleased]
 
+### Changed
+
+- The VBR User Roles table no longer shows a Description column. VBR does not expose a description for role
+  assignments, so the column was always blank.
+
+### Fixed
+
+- Importing CSVs with `/import` now produces only the report for the product the files came from. A VB365
+  import no longer also writes an empty VBR report, and a VBR import no longer writes a VB365 report.
+- A complete VB365 export is no longer reported as missing a critical file (`LocalRepositories.csv`).
+- VB365 report: Jobs rows after a job with no organization are no longer dropped, unscheduled jobs get their
+  warning shading, the license row renders when 0 licenses are assigned, Controllers rows with a short OS string
+  are no longer dropped, repository and object storage free-space shading now applies, and expired
+  certificates on the Security table are flagged.
+- VB365 report: tooltips on the Organizations and Object Storage tables that were missing are back.
+- PowerPoint export now carries every table row and uses the report's visible section headings as slide
+  titles.
+- `/pdf` no longer crashes the process (exit code 134) when the PDF engine is unavailable, such as off
+  Windows.
+- CSV files are no longer left locked after they are read.
+- Remote VBR runs now report the configuration database type (MS SQL or PostgreSQL) instead of "Unknown",
+  read from the VBR REST API.
+- The proxies section of the JSON export now labels each value with the right column, including CDP proxy
+  cache path and size.
+- Scrubbed reports now anonymize the CDP proxy cache path.
+
 ## [3.1.0] - 2026-10-16
 
 ### Added
