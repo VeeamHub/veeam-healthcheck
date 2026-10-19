@@ -234,7 +234,7 @@ namespace VhcXTests.Functions.Reporting.Html.VB365
             Assert.Equal("10", cells[0]);
         }
 
-        [Fact(Skip = "bug: Globals() divides licensesUsed by licensedFor in decimal; 0 licensed throws DivideByZeroException into an empty catch and the whole row disappears")]
+        [Fact]
         public void Globals_ZeroLicensedUsers_StillRendersLicenseStatus()
         {
             using var h = new Vb365ReportHarness();
@@ -243,6 +243,35 @@ namespace VhcXTests.Functions.Reporting.Html.VB365
             string html = new CM365Tables().Globals();
 
             Assert.Contains("Contoso Holdings Ltd", html);
+            var row = Assert.Single(Vb365ReportHarness.Rows(html));
+            Assert.Equal("0", Cell(row[6]));
+            Assert.Equal("4300", Cell(row[7]));
+            Assert.Contains("cell-danger", row[7]);
+        }
+
+        [Theory]
+        [InlineData("0", "0", "")]
+        [InlineData("5000", "4500", "")]
+        [InlineData("5000", "4501", "cell-warning")]
+        [InlineData("5000", "4750", "cell-warning")]
+        [InlineData("5000", "4751", "cell-danger")]
+        public void Globals_LicenseUsageThresholds_ApplyExpectedShade(string licensedFor, string used, string expectedShade)
+        {
+            using var h = new Vb365ReportHarness();
+            h.Edit("Global.csv", s => s.Replace("\"5000\"", $"\"{licensedFor}\"").Replace("\"4300\"", $"\"{used}\""));
+
+            var row = Assert.Single(Vb365ReportHarness.Rows(new CM365Tables().Globals()));
+
+            Assert.Equal(licensedFor, Cell(row[6]));
+            Assert.Equal(used, Cell(row[7]));
+            if (expectedShade.Length == 0)
+            {
+                Assert.DoesNotContain("class=", row[7]);
+            }
+            else
+            {
+                Assert.Contains(expectedShade, row[7]);
+            }
         }
     }
 }

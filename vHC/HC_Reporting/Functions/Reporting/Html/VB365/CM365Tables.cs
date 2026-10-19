@@ -50,7 +50,6 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VB365
                     // parse lic to int:
                     decimal.TryParse(gl.LicensedFor, out decimal licFor);
                     decimal.TryParse(gl.LicensesUsed, out decimal licUsed);
-                    decimal percentUsed = licUsed / licFor * 100;
 
                     DateTime.TryParse(gl.LicenseExpiry, out DateTime expireDate);
 
@@ -85,11 +84,11 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VB365
                     s += this.form.TableData(CGlobals.Scrub ? CGlobals.Scrubber.ScrubItem(gl.LicenseContact, Scrubber.ScrubItemType.Item) : gl.LicenseContact, string.Empty);
                     s += this.form.TableData(gl.LicensedFor, string.Empty);
 
-                    if (percentUsed > 95)
+                    if (licUsed > licFor * 0.95m)
                     {
                         s += this.form.TableData(gl.LicensesUsed, string.Empty, 1);
                     }
-                    else if (percentUsed > 90)
+                    else if (licUsed > licFor * 0.90m)
                     {
                         s += this.form.TableData(gl.LicensesUsed, string.Empty, 3);
                     }
