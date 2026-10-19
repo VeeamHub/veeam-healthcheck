@@ -155,6 +155,7 @@ $useCreds = (-not [string]::IsNullOrWhiteSpace($User) -and
 
 # Wrap Connect -> Collectors -> Disconnect in try/finally so Disconnect always runs,
 # even if a prerequisite collector aborts the run early.
+$credential = $null
 try {
     Write-StartupLog "Connecting to VBR server '$VBRServer' (useCreds=$useCreds)..."
     # -ForceAcceptTlsCertificate only exists on VBR v13+; passing it on v12 throws
@@ -327,7 +328,7 @@ $collectorResults.Add((Invoke-VhcCollector -Name 'ProtectedWorkloads' -Action { 
 # ---------------------------------------------------------------------------
 
 # VbrInfo runs last - reads many registry paths that must not block earlier collectors
-$collectorResults.Add((Invoke-VhcCollector -Name 'VbrInfo' -Action { Get-VhcVbrInfo -VBRVersion $VBRVersion -RemoteExecution $RemoteExecution.IsPresent }))
+$collectorResults.Add((Invoke-VhcCollector -Name 'VbrInfo' -Action { Get-VhcVbrInfo -VBRVersion $VBRVersion -RemoteExecution $RemoteExecution.IsPresent -Server $VBRServer -Credential $credential }))
 # ---------------------------------------------------------------------------
 
 # ---------------------------------------------------------------------------
