@@ -935,25 +935,6 @@ jobs:
         echo "report_path=$($latestReport.FullName)" >> $env:GITHUB_OUTPUT
         echo "report_name=$($latestReport.Name)" >> $env:GITHUB_OUTPUT
     
-    - name: Upload health check report
-      if: always() && steps.find_report.outputs.report_path
-      uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
-      with:
-        name: health-check-report-${{ github.run_number }}-remote-2
-        path: ${{ steps.find_report.outputs.report_path }}
-        retention-days: 30
-
-    - name: Upload PDF and PPTX exports
-      if: always() && steps.find_report.outputs.report_path
-      uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
-      with:
-        name: health-check-exports-${{ github.run_number }}-remote-2
-        path: |
-          C:\temp\vHC\vHC-Report\*.pdf
-          C:\temp\vHC\vHC-Report\*.pptx
-        if-no-files-found: error
-        retention-days: 30
-
     - name: Validate session report generation
       if: always()
       run: |
@@ -1232,6 +1213,7 @@ jobs:
         }
 
     - name: Validate scrubbed output
+      id: scrub_validate
       if: always() && steps.scrub_run.outputs.pass_start != ''
       env:
         VBR_HOST: ${{ secrets.VBR_HOST }}
@@ -1240,15 +1222,34 @@ jobs:
         # Superseded Backups section (HTML) and OrphanedSupersededBackups key (JSON) must be present.
         & "${{ github.workspace }}\.github\scripts\Test-VhcLiveRun.ps1" -Check Scrub -ScrubHost $env:VBR_HOST -NewerThan ([datetime]'${{ steps.scrub_run.outputs.pass_start }}')
 
-    - name: Upload health check logs
-      if: always()
+    # Only the scrubbed report is ever published: this repo is public, so artifacts are world-readable.
+    # The upload is gated on -Check Scrub passing, so a scrub leak fails the job instead of shipping.
+    - name: Find scrubbed report
+      id: find_scrubbed
+      if: always() && steps.scrub_validate.outcome == 'success'
+      env:
+        PASS_START: ${{ steps.scrub_run.outputs.pass_start }}
+      run: |
+        # Same selection as Test-VhcLiveRun.ps1 -Check Scrub: newest HTML in the anonymous-report dir written since pass_start.
+        $passStart = [datetime]$env:PASS_START
+        $scrubbed = Get-ChildItem -Path 'C:\temp\vHC\vHC-AnonymousReport' -Filter '*.html' -File |
+          Where-Object { $_.LastWriteTime -ge $passStart } |
+          Sort-Object LastWriteTime -Descending | Select-Object -First 1
+        if (-not $scrubbed) {
+          Write-Host "::error::No scrubbed HTML report found for this pass"
+          exit 1
+        }
+        echo "report_path=$($scrubbed.FullName)" >> $env:GITHUB_OUTPUT
+
+    - name: Upload scrubbed health check report
+      if: always() && steps.scrub_validate.outcome == 'success' && steps.find_scrubbed.outputs.report_path
       uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
       with:
-        name: health-check-logs-${{ github.run_number }}-remote-2
-        path: C:\temp\vHC\Original\Log\*.log
-        if-no-files-found: warn
-        retention-days: 7
-    
+        name: health-check-report-${{ github.run_number }}-remote-2
+        path: ${{ steps.find_scrubbed.outputs.report_path }}
+        if-no-files-found: error
+        retention-days: 30
+
     - name: Cleanup
       if: always()
       continue-on-error: true
@@ -1427,25 +1428,6 @@ jobs:
         echo "report_path=$($latestReport.FullName)" >> $env:GITHUB_OUTPUT
         echo "report_name=$($latestReport.Name)" >> $env:GITHUB_OUTPUT
     
-    - name: Upload health check report
-      if: always() && steps.find_report.outputs.report_path
-      uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
-      with:
-        name: health-check-report-${{ github.run_number }}-v13-sql
-        path: ${{ steps.find_report.outputs.report_path }}
-        retention-days: 30
-
-    - name: Upload PDF and PPTX exports
-      if: always() && steps.find_report.outputs.report_path
-      uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
-      with:
-        name: health-check-exports-${{ github.run_number }}-v13-sql
-        path: |
-          C:\temp\vHC\vHC-Report\*.pdf
-          C:\temp\vHC\vHC-Report\*.pptx
-        if-no-files-found: error
-        retention-days: 30
-
     - name: Validate session report generation
       if: always()
       run: |
@@ -1728,6 +1710,7 @@ jobs:
           Remove-Item -Path $credFile -Force -ErrorAction SilentlyContinue
         }
     - name: Validate scrubbed output
+      id: scrub_validate
       if: always() && steps.scrub_run.outputs.pass_start != ''
       env:
         VBR_HOST: ${{ secrets.VBR_HOST }}
@@ -1737,14 +1720,33 @@ jobs:
         # Superseded Backups section (HTML) and OrphanedSupersededBackups key (JSON) must be present.
         & "$env:GITHUB_WORKSPACE\.github\scripts\Test-VhcLiveRun.ps1" -Check Scrub -ScrubHost $env:VBR_HOST -NewerThan ([datetime]$env:PASS_START)
 
-    - name: Upload health check logs
-      if: always()
+    # Only the scrubbed report is ever published: this repo is public, so artifacts are world-readable.
+    # The upload is gated on -Check Scrub passing, so a scrub leak fails the job instead of shipping.
+    - name: Find scrubbed report
+      id: find_scrubbed
+      if: always() && steps.scrub_validate.outcome == 'success'
+      env:
+        PASS_START: ${{ steps.scrub_run.outputs.pass_start }}
+      run: |
+        # Same selection as Test-VhcLiveRun.ps1 -Check Scrub: newest HTML in the anonymous-report dir written since pass_start.
+        $passStart = [datetime]$env:PASS_START
+        $scrubbed = Get-ChildItem -Path 'C:\temp\vHC\vHC-AnonymousReport' -Filter '*.html' -File |
+          Where-Object { $_.LastWriteTime -ge $passStart } |
+          Sort-Object LastWriteTime -Descending | Select-Object -First 1
+        if (-not $scrubbed) {
+          Write-Host "::error::No scrubbed HTML report found for this pass"
+          exit 1
+        }
+        echo "report_path=$($scrubbed.FullName)" >> $env:GITHUB_OUTPUT
+
+    - name: Upload scrubbed health check report
+      if: always() && steps.scrub_validate.outcome == 'success' && steps.find_scrubbed.outputs.report_path
       uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
       with:
-        name: health-check-logs-${{ github.run_number }}-v13-sql
-        path: C:\temp\vHC\Original\Log\*.log
-        if-no-files-found: warn
-        retention-days: 7
+        name: health-check-report-${{ github.run_number }}-v13-sql
+        path: ${{ steps.find_scrubbed.outputs.report_path }}
+        if-no-files-found: error
+        retention-days: 30
 
     - name: Cleanup
       if: always()
@@ -1915,25 +1917,6 @@ jobs:
         echo "report_path=$($latestReport.FullName)" >> $env:GITHUB_OUTPUT
         echo "report_name=$($latestReport.Name)" >> $env:GITHUB_OUTPUT
     
-    - name: Upload health check report
-      if: always() && steps.find_report.outputs.report_path
-      uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
-      with:
-        name: health-check-report-${{ github.run_number }}-v12
-        path: ${{ steps.find_report.outputs.report_path }}
-        retention-days: 30
-
-    - name: Upload PDF and PPTX exports
-      if: always() && steps.find_report.outputs.report_path
-      uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
-      with:
-        name: health-check-exports-${{ github.run_number }}-v12
-        path: |
-          C:\temp\vHC\vHC-Report\*.pdf
-          C:\temp\vHC\vHC-Report\*.pptx
-        if-no-files-found: error
-        retention-days: 30
-
     - name: Validate session report generation
       if: always()
       run: |
@@ -2209,6 +2192,7 @@ jobs:
           Pop-Location
         }
     - name: Validate scrubbed output
+      id: scrub_validate
       if: always() && steps.scrub_run.outputs.pass_start != ''
       env:
         VBR_HOST: ${{ secrets.VBR_HOST }}
@@ -2218,14 +2202,33 @@ jobs:
         # Superseded Backups section (HTML) and OrphanedSupersededBackups key (JSON) must be present.
         & "$env:GITHUB_WORKSPACE\.github\scripts\Test-VhcLiveRun.ps1" -Check Scrub -ScrubHost $env:VBR_HOST -NewerThan ([datetime]$env:PASS_START)
 
-    - name: Upload health check logs
-      if: always()
+    # Only the scrubbed report is ever published: this repo is public, so artifacts are world-readable.
+    # The upload is gated on -Check Scrub passing, so a scrub leak fails the job instead of shipping.
+    - name: Find scrubbed report
+      id: find_scrubbed
+      if: always() && steps.scrub_validate.outcome == 'success'
+      env:
+        PASS_START: ${{ steps.scrub_run.outputs.pass_start }}
+      run: |
+        # Same selection as Test-VhcLiveRun.ps1 -Check Scrub: newest HTML in the anonymous-report dir written since pass_start.
+        $passStart = [datetime]$env:PASS_START
+        $scrubbed = Get-ChildItem -Path 'C:\temp\vHC\vHC-AnonymousReport' -Filter '*.html' -File |
+          Where-Object { $_.LastWriteTime -ge $passStart } |
+          Sort-Object LastWriteTime -Descending | Select-Object -First 1
+        if (-not $scrubbed) {
+          Write-Host "::error::No scrubbed HTML report found for this pass"
+          exit 1
+        }
+        echo "report_path=$($scrubbed.FullName)" >> $env:GITHUB_OUTPUT
+
+    - name: Upload scrubbed health check report
+      if: always() && steps.scrub_validate.outcome == 'success' && steps.find_scrubbed.outputs.report_path
       uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
       with:
-        name: health-check-logs-${{ github.run_number }}-v12
-        path: C:\temp\vHC\Original\Log\*.log
-        if-no-files-found: warn
-        retention-days: 7
+        name: health-check-report-${{ github.run_number }}-v12
+        path: ${{ steps.find_scrubbed.outputs.report_path }}
+        if-no-files-found: error
+        retention-days: 30
 
     - name: Cleanup
       if: always()
