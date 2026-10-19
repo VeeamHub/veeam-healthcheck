@@ -99,7 +99,7 @@ namespace VhcXTests.Functions.Reporting.Html.VB365
             Assert.Contains("cell-warning", row[2]);
         }
 
-        [Fact(Skip = "bug: Vb365Controllers does Split()[3] on the OS string; a short value throws into an empty catch and the row vanishes")]
+        [Fact]
         public void Vb365Controllers_ShortOsVersionString_StillRendersRow()
         {
             using var h = new Vb365ReportHarness();
@@ -109,6 +109,34 @@ namespace VhcXTests.Functions.Reporting.Html.VB365
 
             Assert.Single(rows);
             Assert.Contains("contoso-vb365-ctl01", rows[0][12]);
+            Assert.Equal("Windows", Cell(rows[0][1]));
+        }
+
+        [Theory]
+        [InlineData("", "")]
+        [InlineData("Microsoft Windows NT", "")]
+        [InlineData("Microsoft Windows NT unknown", "")]
+        [InlineData("Microsoft Windows NT 6", "")]
+        [InlineData("Microsoft Windows NT 6.1.7601.0", "cell-danger")]
+        [InlineData("Microsoft Windows NT 6.3.9600.0", "cell-warning")]
+        [InlineData("Microsoft Windows NT 10.0.20348.0", "")]
+        public void Vb365Controllers_OsVersionFormats_PreserveRowAndKnownVersionShades(string osVersion, string expectedShade)
+        {
+            using var h = new Vb365ReportHarness();
+            h.Edit("Controller.csv", s => s.Replace("Microsoft Windows NT 10.0.20348.0", osVersion));
+
+            var row = Assert.Single(Vb365ReportHarness.Rows(new CM365Tables().Vb365Controllers()));
+
+            Assert.Contains("contoso-vb365-ctl01", row[12]);
+            Assert.Equal(osVersion, Cell(row[1]));
+            if (expectedShade.Length == 0)
+            {
+                Assert.DoesNotContain("class=", row[1]);
+            }
+            else
+            {
+                Assert.Contains(expectedShade, row[1]);
+            }
         }
 
         [Fact]

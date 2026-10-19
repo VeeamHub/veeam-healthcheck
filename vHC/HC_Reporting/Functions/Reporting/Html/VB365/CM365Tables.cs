@@ -823,19 +823,18 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VB365
                     }
 
                     string[] osVersionString = osVersion.Split();
-                    string[] osVersionNumbers = osVersionString[3].Split(".");
-                    int.TryParse(osVersionNumbers[0], out int osversion);
-                    int.TryParse(osVersionNumbers[1], out int osSubVersion);
                     int osShade = 0;
-                    if (osversion < 10)
+                    if (osVersionString.Length > 3 && Version.TryParse(osVersionString[3], out Version osversion))
                     {
-                        osShade = 3;
-                    }
+                        if (osversion.Major < 10)
+                        {
+                            osShade = 3;
+                        }
 
-
-                    if (osversion == 6 && osSubVersion < 2)
-                    {
-                        osShade = 1;
+                        if (osversion.Major == 6 && osversion.Minor < 2)
+                        {
+                            osShade = 1;
+                        }
                     }
 
 
