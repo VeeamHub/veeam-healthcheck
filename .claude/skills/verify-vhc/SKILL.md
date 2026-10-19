@@ -20,6 +20,7 @@ VHC is a Windows utility (Avalonia GUI + CLI). It collects data from a Veeam Bac
 | CLI flags combined with `/import` (`/lite`, `/security`, `/days:N`, `/debug`, `/show:*`, `/pptx`) | yes | `cli-matrix` |
 | xUnit suites (1,117 passed + 15 skipped, and 121 tests) | yes | `tests` |
 | Avalonia GUI logic and dialogs, headless (22 tests) | yes, headless only | `tests`, [gui-and-collection](features/gui-and-collection.md#gui-headless) |
+| Pester suites, every tracked `*.Tests.ps1` (collector logic with mocked cmdlets, `.github/scripts`) | yes, needs `pwsh` | `pester` (also run by `tests`) |
 | Live collection (PowerShell, SQL, registry, WMI, logs) | **no, needs Windows + VBR/VB365** | [gui-and-collection](features/gui-and-collection.md) |
 | Real GUI window (Win32 hide, native picker, Windows rendering) | **no, needs Windows** (it throws at startup on macOS) | [gui-and-collection](features/gui-and-collection.md) |
 | PDF export (`/pdf`), Windows-only tests (DPAPI, registry) | **no / skipped** | [gui-and-collection](features/gui-and-collection.md) |
@@ -42,7 +43,8 @@ One script, repo-relative, executable. Run from anywhere inside the repo:
 .claude/skills/verify-vhc/scripts/vhc-verify.sh import-layouts [ID] # /import over 6 folder layouts, reports must be identical
 .claude/skills/verify-vhc/scripts/vhc-verify.sh render        [ID]  # open the import output (plain + scrubbed) in a browser via tools/report-smoke; needs bun
 .claude/skills/verify-vhc/scripts/vhc-verify.sh ci            [ID]  # build + every subcommand above except tests (what CI runs)
-.claude/skills/verify-vhc/scripts/vhc-verify.sh tests         [ID]  # all three test projects, logs captured
+.claude/skills/verify-vhc/scripts/vhc-verify.sh tests         [ID]  # all three test projects plus pester, logs captured
+.claude/skills/verify-vhc/scripts/vhc-verify.sh pester        [ID]  # every tracked *.Tests.ps1, same discovery as pester-tests.yml; needs pwsh + Pester 5+
 .claude/skills/verify-vhc/scripts/vhc-verify.sh cleanup       [ID]  # stop what we started, remove scratch input, keep evidence
 ```
 

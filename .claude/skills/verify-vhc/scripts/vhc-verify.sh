@@ -7,7 +7,8 @@
 #   import-report [ID]    run the CLI in /import mode against the checked-in golden CSVs,
 #                         then assert on the generated HTML/JSON; evidence -> .verify-vhc/evidence/ID/
 #   import-scrub [ID]     same, with /scrub:true; asserts identifying names are ABSENT from the output
-#   tests [ID]            run the xUnit projects (VhcXTests, CrossPlatform, headless GUI); evidence -> .verify-vhc/evidence/ID/
+#   tests [ID]            run the xUnit projects (VhcXTests, CrossPlatform, headless GUI) and pester; evidence -> .verify-vhc/evidence/ID/
+#   pester [ID]           run every tracked *.Tests.ps1 with Pester 5+, discovered the way pester-tests.yml does
 #   cli-checks [ID]       /help, no-action (/bogus) and bad /import path, asserted on log lines, exit code and absent output
 #   cli-matrix [ID]       /import combined with /lite /security /days:N /debug /show:* /pptx /scrub:false; per-flag output/log assertions
 #   import-layouts [ID]   /import over every documented CSV folder layout; asserts byte-identical reports
@@ -454,9 +455,38 @@ cmd_tests() {
   dotnet test vHC/VhcXTests/VhcXTests.csproj > "$ev/tests-vhcxtests.log" 2>&1; rc2=$?
   dotnet test vHC/VhcGuiTests/VhcGuiTests.csproj > "$ev/tests-gui.log" 2>&1; rc3=$?
   revert_csproj_if_we_dirtied
+  ( cmd_pester "$id" ); rc4=$?
   grep -h -E 'Passed!|Failed!' "$ev/tests-crossplatform.log" "$ev/tests-vhcxtests.log" "$ev/tests-gui.log"
-  say "exit codes: crossplatform=$rc1 vhcxtests=$rc2 gui=$rc3; logs in $ev"
-  if [ "$rc1" -ne 0 ] || [ "$rc2" -ne 0 ] || [ "$rc3" -ne 0 ]; then exit 1; fi
+  say "exit codes: crossplatform=$rc1 vhcxtests=$rc2 gui=$rc3 pester=$rc4; logs in $ev"
+  if [ "$rc1" -ne 0 ] || [ "$rc2" -ne 0 ] || [ "$rc3" -ne 0 ] || [ "$rc4" -ne 0 ]; then exit 1; fi
+}
+
+# ---------------------------------------------------------------------------
+# pester: every tracked *.Tests.ps1, discovered the way pester-tests.yml does.
+# Not part of ci: Windows CI already runs it in pester-tests.yml.
+# ---------------------------------------------------------------------------
+cmd_pester() {
+  id="${1:-pester-$(date +%Y%m%d-%H%M%S)}"
+  ev="$STATE/evidence/$id"
+  mkdir -p "$ev"
+  command -v pwsh >/dev/null 2>&1 || fail "pwsh not found (install PowerShell 7, then: Install-Module Pester -MinimumVersion 5.0.0)"
+  pwsh -NoProfile -NonInteractive -Command '
+    $ErrorActionPreference = "Stop"
+    Import-Module Pester -MinimumVersion 5.0.0
+    $files = @(git ls-files "*.Tests.ps1")
+    if ($files.Count -eq 0) { Write-Host "no *.Tests.ps1 files found"; exit 1 }
+    $config = New-PesterConfiguration
+    $config.Run.Path = [string[]]$files
+    $config.Run.PassThru = $true
+    $config.Output.Verbosity = "Detailed"
+    $r = Invoke-Pester -Configuration $config
+    Write-Host "PESTER: files=$($files.Count) passed=$($r.PassedCount) failed=$($r.FailedCount) skipped=$($r.SkippedCount) failedBlocks=$($r.FailedBlocksCount) failedContainers=$($r.FailedContainersCount)"
+    if ($r.FailedCount -gt 0 -or $r.FailedBlocksCount -gt 0 -or $r.FailedContainersCount -gt 0) { exit 1 }
+  ' > "$ev/tests-pester.log" 2>&1
+  rc=$?
+  grep -E '^\s*\[-\]|^PESTER:' "$ev/tests-pester.log"
+  [ "$rc" -eq 0 ] || fail "pester failures (see $ev/tests-pester.log)"
+  say "PESTER: verified; log in $ev/tests-pester.log"
 }
 
 cmd_cleanup() {
@@ -486,6 +516,7 @@ case "${1:-}" in
   render) shift; cmd_render "$@" ;;
   ci) shift; cmd_ci "$@" ;;
   tests) shift; cmd_tests "$@" ;;
+  pester) shift; cmd_pester "$@" ;;
   cleanup) shift; cmd_cleanup "$@" ;;
-  *) sed -n '2,19p' "$0"; exit 2 ;;
+  *) sed -n '2,20p' "$0"; exit 2 ;;
 esac
