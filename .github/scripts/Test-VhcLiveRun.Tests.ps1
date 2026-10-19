@@ -502,9 +502,12 @@ Describe 'CsvOutputs' {
 
     It 'logs a known gap instead of failing when the column is absent' {
         $fx = New-CsvOutputsRoot
-        $r = Invoke-CsvOutputs $fx
+        # Own manifest, so the mechanism stays tested whether or not the real one lists a live gap.
+        $m = Join-Path $TestDrive 'gap.json'
+        '{"required":{},"profiles":{},"columns":{"UserRoles":{"required":["Name"],"knownGaps":{"Description":"fixture-only gap"}}}}' | Set-Content $m
+        $r = Invoke-CsvOutputs $fx @('-ManifestPath', $m)
         $r.Exit | Should -Be 0
-        $r.Out | Should -Match "UserRoles\.csv.*no 'Description' column \(known gap"
+        $r.Out | Should -Match "UserRoles\.csv.*no 'Description' column \(known gap: fixture-only gap\)"
     }
 
     It 'accepts a zero-byte NAS CSV but still fails a zero-byte CSV that is not allowed empty' {
