@@ -195,7 +195,7 @@ namespace VhcXTests.Functions.Reporting.Html.VB365
             Assert.Contains("cell-warning", row[11]);
         }
 
-        [Fact(Skip = "bug: Vb365Repos parses '8.250 TB (0.00 %)' with double.TryParse, which fails, so the free-space shade never applies (and 'freeSpace = 1' was meant to be 'freeShade = 1')")]
+        [Fact]
         public void Vb365Repos_RepoUnderFivePercentFree_FreeCellIsDanger()
         {
             using var h = new Vb365ReportHarness();
@@ -205,6 +205,32 @@ namespace VhcXTests.Functions.Reporting.Html.VB365
             // Contoso-Düsseldorf-Repo: 0.040 TB free of 1.000 TB.
             Assert.Contains("cell-danger", rows[2][9]);
             Assert.DoesNotContain("class=", rows[0][9]);
+            Assert.DoesNotContain("class=", rows[1][9]);
+        }
+
+        [Theory]
+        [InlineData("0.000 TB (0.00 %)", "cell-danger")]
+        [InlineData("0.049 TB (0.00 %)", "cell-danger")]
+        [InlineData("0.050 TB (0.00 %)", "cell-warning")]
+        [InlineData("0.099 TB (0.00 %)", "cell-warning")]
+        [InlineData("0.100 TB (0.00 %)", "")]
+        public void Vb365Repos_FreeSpaceThresholds_ApplyExpectedShade(string freeSpace, string expectedShade)
+        {
+            using var h = new Vb365ReportHarness();
+            h.Edit("LocalRepositories.csv", s => s.Replace("0.040 TB (0.00 %)", freeSpace));
+
+            var rows = Vb365ReportHarness.Rows(new CM365Tables().Vb365Repos());
+
+            Assert.Equal(3, rows.Count);
+            Assert.Equal(freeSpace, Cell(rows[2][9]));
+            if (expectedShade.Length == 0)
+            {
+                Assert.DoesNotContain("class=", rows[2][9]);
+            }
+            else
+            {
+                Assert.Contains(expectedShade, rows[2][9]);
+            }
         }
 
         [Fact(Skip = "bug: Vb365ObjectRepos computes freeSpaceShade but never passes it to TableData")]

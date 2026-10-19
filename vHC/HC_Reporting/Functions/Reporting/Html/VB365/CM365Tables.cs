@@ -1,6 +1,7 @@
 ﻿// Copyright (c) 2021, Adam Congdon <adam.congdon2@gmail.com>
 // MIT License
 using System;
+using System.Globalization;
 using System.Linq;
 using VeeamHealthCheck.Functions.Reporting.CsvHandlers;
 using VeeamHealthCheck.Functions.Reporting.Html.Shared;
@@ -397,18 +398,22 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VB365
                     }
 
 
-                    double.TryParse(g.Free, out double freeSpace);
-                    double.TryParse(g.Capacity, out double capacity);
-
-                    if (freeSpace / capacity * 100 < 10)
+                    string free = g.Free;
+                    string capacityText = g.Capacity;
+                    // The collector's displayed percentage can be zero even when space is free.
+                    if (double.TryParse(free.Split()[0], NumberStyles.Number, CultureInfo.InvariantCulture, out double freeSpace)
+                        && double.TryParse(capacityText.Split()[0], NumberStyles.Number, CultureInfo.InvariantCulture, out double capacity)
+                        && capacity > 0)
                     {
-                        freeShade = 3;
-                    }
-
-
-                    if (freeSpace / capacity * 100 < 5)
-                    {
-                        freeSpace = 1;
+                        double freePercent = freeSpace / capacity * 100;
+                        if (freePercent < 5)
+                        {
+                            freeShade = 1;
+                        }
+                        else if (freePercent < 10)
+                        {
+                            freeShade = 3;
+                        }
                     }
 
 
