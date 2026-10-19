@@ -1638,12 +1638,6 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VB365
                         }
                     }
 
-                    if (string.IsNullOrEmpty(org))
-                    {
-                        break;
-                    }
-
-
                     int.TryParse(selItems, out int selectedItemsCount);
                     if (selectedItemsCount > 5000)
                     {

@@ -143,7 +143,7 @@ namespace VhcXTests.Functions.Reporting.Html.VB365
                 names);
         }
 
-        [Fact(Skip = "bug: Jobs() uses 'break' on an empty Organization, so every later job row is dropped (should be 'continue' or render it)")]
+        [Fact]
         public void Jobs_RowWithEmptyOrganization_DoesNotDropLaterRows()
         {
             using var h = new Vb365ReportHarness();
@@ -151,6 +151,8 @@ namespace VhcXTests.Functions.Reporting.Html.VB365
 
             var names = Vb365ReportHarness.Rows(new CM365Tables().Jobs()).Select(r => Cell(r[1])).ToArray();
 
+            Assert.Equal(4, names.Length);
+            Assert.Contains("München-SharePoint-Teams-Backup", names);
             Assert.Contains("OnPrem-Exchange-Backup", names);
         }
 
