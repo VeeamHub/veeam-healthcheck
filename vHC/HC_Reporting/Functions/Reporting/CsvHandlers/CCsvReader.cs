@@ -64,9 +64,11 @@ namespace VeeamHealthCheck.Functions.Reporting.CsvHandlers
 
         private CsvReader CReader(string csvToRead)
         {
-            TextReader reader = new StreamReader(csvToRead);
-            var csvReader = new CsvReader(reader, this.csvConfig);
-            return csvReader;
+            // Callers enumerate GetRecords lazily and never dispose the reader, so a StreamReader here
+            // would hold the file handle (and a Windows lock) until finalization. Read the text up
+            // front: the handle is closed before returning and lazy enumeration still works.
+            TextReader reader = new StringReader(File.ReadAllText(csvToRead));
+            return new CsvReader(reader, this.csvConfig);
         }
 
         private CsvConfiguration GetCsvConfig()
