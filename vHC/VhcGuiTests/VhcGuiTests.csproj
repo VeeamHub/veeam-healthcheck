@@ -15,6 +15,7 @@
       <PrivateAssets>all</PrivateAssets>
     </PackageReference>
     <PackageReference Include="Avalonia.Headless.XUnit" Version="11.3.20" />
+    <PackageReference Include="coverlet.collector" Version="3.2.0" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\HC_Reporting\VeeamHealthCheck.csproj" />

@@ -50,10 +50,40 @@ jobs:
       run: dotnet build vHC/VhcXTests.CrossPlatform/VhcXTests.CrossPlatform.csproj --no-restore
 
     - name: Run cross-platform tests
-      run: dotnet test vHC/VhcXTests.CrossPlatform/VhcXTests.CrossPlatform.csproj --no-build --verbosity normal
+      run: dotnet test vHC/VhcXTests.CrossPlatform/VhcXTests.CrossPlatform.csproj --no-build --verbosity normal --collect:"XPlat Code Coverage" --results-directory "${{ github.workspace }}/TestResults/crossplatform" -- DataCollectionRunSettings.DataCollectors.DataCollector.Configuration.IncludeTestAssembly=true "DataCollectionRunSettings.DataCollectors.DataCollector.Configuration.ExcludeByFile=**/VhcXTests.CrossPlatform/**"
 
     - name: Run headless GUI tests
-      run: dotnet test vHC/VhcGuiTests/VhcGuiTests.csproj --verbosity normal
+      run: dotnet test vHC/VhcGuiTests/VhcGuiTests.csproj --verbosity normal --collect:"XPlat Code Coverage" --results-directory "${{ github.workspace }}/TestResults/gui"
+
+    - name: Install ReportGenerator
+      if: always()
+      run: dotnet tool install -g dotnet-reportgenerator-globaltool
+
+    - name: Generate coverage report
+      if: always()
+      run: |
+        export PATH="$PATH:$HOME/.dotnet/tools"
+        files=$(find "${{ github.workspace }}/TestResults" -name coverage.cobertura.xml 2>/dev/null | paste -sd ';' -)
+        if [ -n "$files" ]; then
+          reportgenerator \
+            -reports:"$files" \
+            -targetdir:"${{ github.workspace }}/CoverageReport" \
+            -reporttypes:"Html;Cobertura;MarkdownSummaryGithub"
+          if [ -f "${{ github.workspace }}/CoverageReport/SummaryGithub.md" ]; then
+            cat "${{ github.workspace }}/CoverageReport/SummaryGithub.md" >> "$GITHUB_STEP_SUMMARY"
+          fi
+        else
+          echo "::warning::No coverage files found"
+        fi
+
+    - name: Upload coverage report
+      if: always()
+      uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+      with:
+        name: code-coverage-report-${{ matrix.os }}
+        path: ${{ github.workspace }}/CoverageReport
+        retention-days: 30
+        if-no-files-found: warn
 
   # Drives the real CLI in /import mode against the golden CSVs and opens the resulting reports in a
   # browser. Same commands a developer runs locally: .claude/skills/verify-vhc/scripts/vhc-verify.sh
