@@ -18,6 +18,7 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.Exportables
         // Layout constants
         private const int MaxRowsPerSlide = 12;
         private const int MaxColumnsForNormalLayout = 6;
+        private const int CompactCellMaxLength = 40;
         private const long SlideWidth = 12192000; // 16:9 widescreen
         private const long SlideHeight = 6858000;
         private const long Margin = 457200; // 0.5 inch
@@ -705,6 +706,9 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.Exportables
                 {
                     cleanedText = "-";
                 }
+
+                // Compact slides fit many rows; an unbounded cell wraps and pushes rows off the slide.
+                cleanedText = TruncateText(cleanedText, CompactCellMaxLength);
 
                 A.Run run = new A.Run();
                 A.RunProperties runProperties = new A.RunProperties()
@@ -1476,11 +1480,6 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.Exportables
             {
                 if (node.LocalName == "table")
                 {
-                    if (node.ParentElement?.Closest("table") != null)
-                    {
-                        continue;
-                    }
-
                     TableData tableData = ParseTable(node, ResolveTableTitle(node));
                     if (tableData.Rows.Count > 0)
                     {
@@ -1629,14 +1628,15 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.Exportables
         {
             TableData tableData = new TableData { Title = title };
 
-            foreach (IElement th in table.QuerySelectorAll("thead th"))
+            // Own headers and rows only: a table nested in a detail row is parsed as its own TableData.
+            foreach (IElement th in table.QuerySelectorAll("thead th").Where(th => th.Closest("table") == table))
             {
                 tableData.Headers.Add(CellText(th));
             }
 
             tableData.ColumnCount = tableData.Headers.Count > 0 ? tableData.Headers.Count : 1;
 
-            bool hasHead = table.QuerySelector("thead") != null;
+            bool hasHead = table.QuerySelectorAll("thead").Any(h => h.Closest("table") == table);
             foreach (IElement tr in table.QuerySelectorAll("tr"))
             {
                 if (tr.Closest("table") != table || (hasHead && tr.ParentElement?.LocalName == "thead"))
@@ -1645,7 +1645,7 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.Exportables
                 }
 
                 IElement[] cells = tr.Children.Where(c => c.LocalName is "td" or "th").ToArray();
-                if (cells.Length == 0)
+                if (cells.Length == 0 || cells.Any(c => c.QuerySelector("table") != null))
                 {
                     continue;
                 }

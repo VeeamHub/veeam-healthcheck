@@ -195,6 +195,42 @@ public sealed class HtmlToPptxConverterTests : IDisposable
         AssertWithinSlideBounds(deck);
     }
 
+    [Fact]
+    public void ConvertHtmlToPptx_NestedDetailTable_KeepsOuterColumnsAndEmitsNestedRowsSeparately()
+    {
+        string html = "<div class=\"section-card\" id=\"orph\"><div class=\"section-header\"><h2><span>O</span> Orphaned Backups</h2></div><div class=\"section-body\">"
+            + "<table><thead><tr><th>Job</th><th>Size</th></tr></thead><tbody>"
+            + "<tr><td>OuterJob1</td><td>10 GB</td></tr>"
+            + "<tr class=\"detail-row\"><td colspan=\"2\"><p>label</p><table><thead><tr><th>Object</th><th>Fulls</th><th>Newest</th></tr></thead><tbody>"
+            + "<tr><td>NestedObj1</td><td>3</td><td>2024-01-01</td></tr></tbody></table></td></tr>"
+            + "</tbody></table></div></div>";
+        using PresentationDocument deck = Convert(html);
+        SlidePart[] slides = Slides(deck);
+        string text = string.Join("\n", slides.Select(Text));
+        Assert.Contains("OuterJob1", text);
+        Assert.Contains("NestedObj1", text);
+        Assert.Contains("Orphaned Backups", text);
+        int[] widths = slides.SelectMany(slide => slide.Slide.Descendants<A.Table>())
+            .Select(table => table.Descendants<A.GridColumn>().Count()).ToArray();
+        Assert.DoesNotContain(widths, width => width > 3);
+        Assert.DoesNotContain("Object", slides.SelectMany(slide => slide.Slide.Descendants<A.Text>())
+            .Where(value => value.Text.Contains("OuterJob1")).Select(value => value.Text));
+    }
+
+    [Fact]
+    public void ConvertHtmlToPptx_CompactTable_TruncatesLongCellsButKeepsJobNames()
+    {
+        string head = string.Concat(Enumerable.Range(1, 8).Select(i => $"<th>C{i}</th>"));
+        string rows = string.Concat(Enumerable.Range(1, 5).Select(i =>
+            $"<tr><td>Production-VM-Backup</td>{string.Concat(Enumerable.Range(2, 6).Select(_ => "<td>v</td>"))}<td>{new string('p', 200)}</td></tr>"));
+        string html = $"<div class=\"card\" id=\"wide\"><table><thead><tr>{head}</tr></thead><tbody>{rows}</tbody></table></div>";
+        using PresentationDocument deck = Convert(html);
+        string[] cells = Slides(deck).SelectMany(slide => slide.Slide.Descendants<A.Text>()).Select(value => value.Text).ToArray();
+        Assert.Contains("Production-VM-Backup", cells);
+        Assert.DoesNotContain(cells, value => value.Length > 40 && value.StartsWith("ppp", StringComparison.Ordinal));
+        Assert.Contains(cells, value => value.StartsWith("ppp", StringComparison.Ordinal) && value.EndsWith("...", StringComparison.Ordinal));
+    }
+
     [Theory]
     [InlineData("<h1>Fixture Company</h1>", "Fixture Company")]
     [InlineData("<table><tr><td>License Company</td><td>EnterprisePlus</td></tr></table>", "License Company")]
