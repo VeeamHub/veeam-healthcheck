@@ -111,7 +111,7 @@ Priority 5 (M365):
 
 **High Priority:**
 1. `_Proxies.csv` - Column order completely different (IsVbrProxy field pending)
-2. `_CdpProxy.csv` - Columns differ significantly from class definition
+2. ~~`_CdpProxy.csv` - Columns differ significantly from class definition~~ fixed: fixtures now carry the collector header and column order
 3. `_HvProxy.csv` - Order and names differ from CCdpProxyCsvInfos
 4. `_configBackup.csv` - Complete mismatch between CSV and CConfigBackupCsv
 
