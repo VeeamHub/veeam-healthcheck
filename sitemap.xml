@@ -2,192 +2,212 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
     <url>
          <loc>https://veeamhub.github.io/veeam-healthcheck/</loc>
-         <lastmod>2026-06-03</lastmod>
+         <lastmod>2026-10-19</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://veeamhub.github.io/veeam-healthcheck/PowerPoint_Export_Guide/</loc>
-         <lastmod>2026-06-03</lastmod>
+         <lastmod>2026-10-19</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://veeamhub.github.io/veeam-healthcheck/SECURITY_SCANNING/</loc>
-         <lastmod>2026-06-03</lastmod>
+         <lastmod>2026-10-19</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://veeamhub.github.io/veeam-healthcheck/changelog/</loc>
-         <lastmod>2026-06-03</lastmod>
+         <lastmod>2026-10-19</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://veeamhub.github.io/veeam-healthcheck/contributing/</loc>
-         <lastmod>2026-06-03</lastmod>
+         <lastmod>2026-10-19</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://veeamhub.github.io/veeam-healthcheck/features/</loc>
-         <lastmod>2026-06-03</lastmod>
+         <lastmod>2026-10-19</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://veeamhub.github.io/veeam-healthcheck/getting-started/</loc>
-         <lastmod>2026-06-03</lastmod>
+         <lastmod>2026-10-19</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://veeamhub.github.io/veeam-healthcheck/timeline/</loc>
-         <lastmod>2026-06-03</lastmod>
+         <lastmod>2026-10-19</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://veeamhub.github.io/veeam-healthcheck/adr/0001-vbr-config-modular-decomposition/</loc>
-         <lastmod>2026-06-03</lastmod>
+         <lastmod>2026-10-19</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://veeamhub.github.io/veeam-healthcheck/adr/0002-integrate-session-reporting-into-module/</loc>
-         <lastmod>2026-06-03</lastmod>
+         <lastmod>2026-10-19</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://veeamhub.github.io/veeam-healthcheck/adr/0003-session-processingmode-via-log-parsing/</loc>
-         <lastmod>2026-06-03</lastmod>
+         <lastmod>2026-10-19</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://veeamhub.github.io/veeam-healthcheck/adr/0004-unify-session-report-gettasksessions/</loc>
-         <lastmod>2026-06-03</lastmod>
+         <lastmod>2026-10-19</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://veeamhub.github.io/veeam-healthcheck/adr/0005-nas-backupsize-progress-fallback/</loc>
-         <lastmod>2026-06-03</lastmod>
+         <lastmod>2026-10-19</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://veeamhub.github.io/veeam-healthcheck/adr/0006-explicit-data-passing-between-collectors/</loc>
-         <lastmod>2026-06-03</lastmod>
+         <lastmod>2026-10-19</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://veeamhub.github.io/veeam-healthcheck/adr/0007-collection-manifest-for-error-surfacing/</loc>
-         <lastmod>2026-06-03</lastmod>
+         <lastmod>2026-10-19</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://veeamhub.github.io/veeam-healthcheck/adr/0008-host-role-accumulation-via-helper/</loc>
-         <lastmod>2026-06-03</lastmod>
+         <lastmod>2026-10-19</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://veeamhub.github.io/veeam-healthcheck/adr/0009-skip-empty-csv-export/</loc>
-         <lastmod>2026-06-03</lastmod>
+         <lastmod>2026-10-19</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://veeamhub.github.io/veeam-healthcheck/adr/0010-os-overhead-max-of-roles/</loc>
-         <lastmod>2026-06-03</lastmod>
+         <lastmod>2026-10-19</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://veeamhub.github.io/veeam-healthcheck/adr/0011-concurrency-cores-to-tasks-multiplier/</loc>
-         <lastmod>2026-06-03</lastmod>
+         <lastmod>2026-10-19</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://veeamhub.github.io/veeam-healthcheck/adr/0012-agent-session-collection-via-get-vbrtasksession/</loc>
-         <lastmod>2026-06-03</lastmod>
+         <lastmod>2026-10-19</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://veeamhub.github.io/veeam-healthcheck/adr/0013-bottleneck-via-structured-property/</loc>
-         <lastmod>2026-06-03</lastmod>
+         <lastmod>2026-10-19</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://veeamhub.github.io/veeam-healthcheck/adr/0014-standalone-agent-jobs-via-getbackup-getjob/</loc>
-         <lastmod>2026-06-03</lastmod>
+         <lastmod>2026-10-19</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://veeamhub.github.io/veeam-healthcheck/adr/0015-hybrid-friendly-type-rule/</loc>
-         <lastmod>2026-06-03</lastmod>
+         <lastmod>2026-10-19</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://veeamhub.github.io/veeam-healthcheck/adr/0016-jobname-based-session-type-lookup/</loc>
-         <lastmod>2026-06-03</lastmod>
+         <lastmod>2026-10-19</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://veeamhub.github.io/veeam-healthcheck/adr/0017-rollup-policy-child-sessions/</loc>
-         <lastmod>2026-06-03</lastmod>
+         <lastmod>2026-10-19</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://veeamhub.github.io/veeam-healthcheck/adr/0018-cbackupsession-fast-path-for-session-collection/</loc>
-         <lastmod>2026-06-03</lastmod>
+         <lastmod>2026-10-19</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://veeamhub.github.io/veeam-healthcheck/adr/0019-policy-link-based-session-rollup/</loc>
-         <lastmod>2026-06-03</lastmod>
+         <lastmod>2026-10-19</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://veeamhub.github.io/veeam-healthcheck/adr/0020-jobinfo-type-resolution-alignment/</loc>
-         <lastmod>2026-06-03</lastmod>
+         <lastmod>2026-10-19</lastmod>
+         <changefreq>daily</changefreq>
+    </url>
+    <url>
+         <loc>https://veeamhub.github.io/veeam-healthcheck/adr/0021-tiered-restore-point-sweep-for-job-sizing/</loc>
+         <lastmod>2026-10-19</lastmod>
+         <changefreq>daily</changefreq>
+    </url>
+    <url>
+         <loc>https://veeamhub.github.io/veeam-healthcheck/adr/0022-allowlist-gate-for-restore-point-sweep/</loc>
+         <lastmod>2026-10-19</lastmod>
+         <changefreq>daily</changefreq>
+    </url>
+    <url>
+         <loc>https://veeamhub.github.io/veeam-healthcheck/adr/0023-backupid-grouped-tiered-matching-for-all-job-types/</loc>
+         <lastmod>2026-10-19</lastmod>
+         <changefreq>daily</changefreq>
+    </url>
+    <url>
+         <loc>https://veeamhub.github.io/veeam-healthcheck/adr/0024-superseded-backup-detection-two-mechanisms/</loc>
+         <lastmod>2026-10-19</lastmod>
+         <changefreq>daily</changefreq>
+    </url>
+    <url>
+         <loc>https://veeamhub.github.io/veeam-healthcheck/adr/0025-orphaned-detection-bounded-by-sweep-gate/</loc>
+         <lastmod>2026-10-19</lastmod>
+         <changefreq>daily</changefreq>
+    </url>
+    <url>
+         <loc>https://veeamhub.github.io/veeam-healthcheck/adr/0026-tape-exclusion-via-istapebackup/</loc>
+         <lastmod>2026-10-19</lastmod>
+         <changefreq>daily</changefreq>
+    </url>
+    <url>
+         <loc>https://veeamhub.github.io/veeam-healthcheck/adr/0027-backupid-objectid-grain-correction/</loc>
+         <lastmod>2026-10-19</lastmod>
+         <changefreq>daily</changefreq>
+    </url>
+    <url>
+         <loc>https://veeamhub.github.io/veeam-healthcheck/adr/0028-nested-json-via-dedicated-property/</loc>
+         <lastmod>2026-10-19</lastmod>
+         <changefreq>daily</changefreq>
+    </url>
+    <url>
+         <loc>https://veeamhub.github.io/veeam-healthcheck/adr/0029-html-free-values-in-json-export-producers/</loc>
+         <lastmod>2026-10-19</lastmod>
+         <changefreq>daily</changefreq>
+    </url>
+    <url>
+         <loc>https://veeamhub.github.io/veeam-healthcheck/adr/0030-unconditional-hierarchical-rollup-merge/</loc>
+         <lastmod>2026-10-19</lastmod>
+         <changefreq>daily</changefreq>
+    </url>
+    <url>
+         <loc>https://veeamhub.github.io/veeam-healthcheck/adr/0031-commit-driven-four-part-versioning-with-csproj-floor/</loc>
+         <lastmod>2026-10-19</lastmod>
+         <changefreq>daily</changefreq>
+    </url>
+    <url>
+         <loc>https://veeamhub.github.io/veeam-healthcheck/adr/0032-base-tag-is-highest-ga-tag/</loc>
+         <lastmod>2026-10-19</lastmod>
+         <changefreq>daily</changefreq>
+    </url>
+    <url>
+         <loc>https://veeamhub.github.io/veeam-healthcheck/adr/0033-shared-job-discovery-for-inventory-and-sessions/</loc>
+         <lastmod>2026-10-19</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://veeamhub.github.io/veeam-healthcheck/architecture/</loc>
-         <lastmod>2026-06-03</lastmod>
-         <changefreq>daily</changefreq>
-    </url>
-    <url>
-         <loc>https://veeamhub.github.io/veeam-healthcheck/plans/2026-02-21-vbr-config-refactor/</loc>
-         <lastmod>2026-06-03</lastmod>
-         <changefreq>daily</changefreq>
-    </url>
-    <url>
-         <loc>https://veeamhub.github.io/veeam-healthcheck/plans/2026-03-05-vbr-config-dry-solid-refactor/</loc>
-         <lastmod>2026-06-03</lastmod>
-         <changefreq>daily</changefreq>
-    </url>
-    <url>
-         <loc>https://veeamhub.github.io/veeam-healthcheck/plans/2026-03-09-private-function-naming-hostRoles-refactor/</loc>
-         <lastmod>2026-06-03</lastmod>
-         <changefreq>daily</changefreq>
-    </url>
-    <url>
-         <loc>https://veeamhub.github.io/veeam-healthcheck/plans/2026-04-03-account-cloud-infra-mapping/</loc>
-         <lastmod>2026-06-03</lastmod>
-         <changefreq>daily</changefreq>
-    </url>
-    <url>
-         <loc>https://veeamhub.github.io/veeam-healthcheck/plans/2026-05-05-vhcxtests-ci-wiring/</loc>
-         <lastmod>2026-06-03</lastmod>
-         <changefreq>daily</changefreq>
-    </url>
-    <url>
-         <loc>https://veeamhub.github.io/veeam-healthcheck/plans/2026-05-26-agent-jobs-managed-standalone/</loc>
-         <lastmod>2026-06-03</lastmod>
-         <changefreq>daily</changefreq>
-    </url>
-    <url>
-         <loc>https://veeamhub.github.io/veeam-healthcheck/plans/2026-05-27-vbr-session-fast-path/</loc>
-         <lastmod>2026-06-03</lastmod>
-         <changefreq>daily</changefreq>
-    </url>
-    <url>
-         <loc>https://veeamhub.github.io/veeam-healthcheck/plans/2026-05-27-vbr-session-policy-link/</loc>
-         <lastmod>2026-06-03</lastmod>
-         <changefreq>daily</changefreq>
-    </url>
-    <url>
-         <loc>https://veeamhub.github.io/veeam-healthcheck/superpowers/specs/2026-05-27-vbr-session-fast-path-design/</loc>
-         <lastmod>2026-06-03</lastmod>
+         <lastmod>2026-10-19</lastmod>
          <changefreq>daily</changefreq>
     </url>
 </urlset>

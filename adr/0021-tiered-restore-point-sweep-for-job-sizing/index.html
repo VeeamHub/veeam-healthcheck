@@ -1,0 +1,1117 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Generate comprehensive configuration reports for your Veeam environment in minutes.">
+      
+      
+      
+        <link rel="canonical" href="https://veeamhub.github.io/veeam-healthcheck/adr/0021-tiered-restore-point-sweep-for-job-sizing/">
+      
+      
+      
+      
+        
+      
+      
+      <link rel="icon" href="../../images/health-check-icon.png">
+      <meta name="generator" content="mkdocs-1.6.0, mkdocs-material-9.7.7">
+    
+    
+      
+        <title>ADR 0021: Global Restore-Point Sweep with Tiered (Id-Based + Gated Name-Based) Job Matching Replaces Per-Job GetLastBackup() - Veeam Health Check</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/stylesheets/main.ec1eaa64.min.css">
+      
+        
+        <link rel="stylesheet" href="../../assets/stylesheets/palette.ab4e12ef.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="green" data-md-color-accent="light-green">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#adr-0021-global-restore-point-sweep-with-tiered-id-based-gated-name-based-job-matching-replaces-per-job-getlastbackup" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+<header class="md-header" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../.." title="Veeam Health Check" class="md-header__button md-logo" aria-label="Veeam Health Check" data-md-component="logo">
+      
+  <img src="../../images/health-check-icon.png" alt="logo">
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            Veeam Health Check
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              ADR 0021: Global Restore-Point Sweep with Tiered (Id-Based + Gated Name-Based) Job Matching Replaces Per-Job GetLastBackup()
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="default" data-md-color-primary="green" data-md-color-accent="light-green"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a4 4 0 0 0-4 4 4 4 0 0 0 4 4 4 4 0 0 0 4-4 4 4 0 0 0-4-4m0 10a6 6 0 0 1-6-6 6 6 0 0 1 6-6 6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="slate" data-md-color-primary="green" data-md-color-accent="light-green"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 18c-.89 0-1.74-.2-2.5-.55C11.56 16.5 13 14.42 13 12s-1.44-4.5-3.5-5.45C10.26 6.2 11.11 6 12 6a6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/VeeamHub/veeam-healthcheck" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    VeeamHub/veeam-healthcheck
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+            
+<nav class="md-tabs" aria-label="Tabs" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../.." class="md-tabs__link">
+        
+  
+  
+    
+  
+  Home
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../getting-started/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Getting Started
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../features/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Features
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../changelog/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Changelog
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../timeline/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Feature Timeline
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../architecture/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Architecture
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../contributing/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Contributing
+
+      </a>
+    </li>
+  
+
+      
+    </ul>
+  </div>
+</nav>
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+<nav class="md-nav md-nav--primary md-nav--lifted" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../.." title="Veeam Health Check" class="md-nav__button md-logo" aria-label="Veeam Health Check" data-md-component="logo">
+      
+  <img src="../../images/health-check-icon.png" alt="logo">
+
+    </a>
+    Veeam Health Check
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/VeeamHub/veeam-healthcheck" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    VeeamHub/veeam-healthcheck
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../.." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Home
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../getting-started/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Getting Started
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../features/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Features
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../changelog/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Changelog
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../timeline/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Feature Timeline
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../architecture/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Architecture
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../contributing/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Contributing
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#context-and-problem-statement" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Context and Problem Statement
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#considered-options" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Considered Options
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Considered Options">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#option-a-per-job-jobgetobjectsinjob-objectid-get-vbrrestorepoint-objectid-forward" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Option A — Per-job, Job.GetObjectsInJob() → ObjectId → Get-VBRRestorePoint -ObjectId ("Forward")
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#option-b-global-sweep-id-based-matching-only-getsourcejob-getparentjob-walk-up-no-name-based-fallback" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Option B — Global sweep, Id-based matching only (GetSourceJob() + GetParentJob() walk-up), no name-based fallback
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#option-c-global-sweep-with-tiered-matching-chosen" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Option C — Global sweep with tiered matching (chosen)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#decision" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Decision
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#rationale" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Rationale
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#consequences" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Consequences
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Consequences">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#positive" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Positive
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#negative" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Negative
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#validation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Validation
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+    <a href="https://github.com/VeeamHub/veeam-healthcheck/edit/dev/docs/adr/0021-tiered-restore-point-sweep-for-job-sizing.md" title="Edit this page" class="md-content__button md-icon" rel="edit">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M10 20H6V4h7v5h5v3.1l2-2V8l-6-6H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h4zm10.2-7c.1 0 .3.1.4.2l1.3 1.3c.2.2.2.6 0 .8l-1 1-2.1-2.1 1-1c.1-.1.2-.2.4-.2m0 3.9L14.1 23H12v-2.1l6.1-6.1z"/></svg>
+    </a>
+  
+  
+
+
+<h1 id="adr-0021-global-restore-point-sweep-with-tiered-id-based-gated-name-based-job-matching-replaces-per-job-getlastbackup">ADR 0021: Global Restore-Point Sweep with Tiered (Id-Based + Gated Name-Based) Job Matching Replaces Per-Job GetLastBackup()<a class="headerlink" href="#adr-0021-global-restore-point-sweep-with-tiered-id-based-gated-name-based-job-matching-replaces-per-job-getlastbackup" title="Permanent link">&para;</a></h1>
+<ul>
+<li><strong>Status:</strong> Accepted; Snapshot/Replica-handling section amended by <a href="../0023-backupid-grouped-tiered-matching-for-all-job-types/">ADR 0023</a></li>
+<li><strong>Date:</strong> 2026-08-21</li>
+<li><strong>Decider:</strong> Ben Thomas (@comnam90)</li>
+<li><strong>Consulted:</strong> Claude Code (design, empirical validation across 4 live labs)</li>
+</ul>
+<blockquote>
+<p><strong>Correction (2026-08-22):</strong> The "Snapshot / Replica — routed around the
+sweep entirely" section below states "<code>Snapshot</code>-type restore points never
+resolve via <code>GetSourceJob()</code> (100% throw rate, 5,461/5,461...)". Live
+evidence contradicts this for Replication Jobs specifically — the throws
+almost certainly came from an unrelated feature (Storage-Snapshot Backups)
+that also produces <code>Type=Snapshot</code> restore points. See
+<a href="../0023-backupid-grouped-tiered-matching-for-all-job-types/">ADR 0023</a> for
+the corrected design. The rest of this ADR (Options A/B rejection, the
+Tier 1/Tier 2 mechanism) is unaffected and still applies.</p>
+</blockquote>
+<h2 id="context-and-problem-statement">Context and Problem Statement<a class="headerlink" href="#context-and-problem-statement" title="Permanent link">&para;</a></h2>
+<p><code>Get-VhcJob.ps1</code> computes Source Size GB / Est. On Disk GB per job via
+<code>$Job.GetLastBackup()</code> → <code>Get-VBRRestorePoint -Backup $LastBackup</code>
+(<code>Get-VhcJob.ps1:89-92</code>). <code>GetLastBackup()</code> returns only the single
+most-recent backup chain object for a job, and this call path fails
+outright for whole classes of jobs:</p>
+<ol>
+<li><strong>On-prem policy/plug-in-backed platforms</strong> — HPE Morpheus VME Backup,
+   Nutanix AHV Backup, oVirt KVM Backup, Proxmox Backup — where
+   <code>Get-VBRRestorePoint -Backup $LastBackup</code> throws <code>Cannot get restore
+   points from backup &lt;name&gt;, because it is encrypted or created by an
+   enterprise application plug-in.</code> The exception is inside the existing
+   outer per-job <code>try/catch</code>, so it's silently swallowed: 0 MB Source Size /
+   0 GB Est. On Disk GB reported.</li>
+<li><strong>Public cloud plug-in platforms</strong> (AWS EC2/RDS/FSx/EFS, Azure IaaS/SQL,
+   GCE) — where <code>$Job.GetLastBackup()</code> itself throws <code>Backup for job &lt;name&gt;
+   does not exist</code>, even when the job has real, current restore points.
+   These jobs record backups under per-machine child backup names (e.g.
+   <code>Linux-01 Backup</code>) rather than under any backup owned by the parent
+   job's own <code>Id</code>, so the parent job object can never find a backup tied to
+   itself. Same downstream effect: 0/0 reported.</li>
+</ol>
+<p>Both failure modes produce a plausible-looking 0/0 with no visible error in
+the report — the exact kind of silent wrongness a health-check tool exists
+to avoid.</p>
+<h2 id="considered-options">Considered Options<a class="headerlink" href="#considered-options" title="Permanent link">&para;</a></h2>
+<h3 id="option-a-per-job-jobgetobjectsinjob-objectid-get-vbrrestorepoint-objectid-forward">Option A — Per-job, <code>Job.GetObjectsInJob()</code> → <code>ObjectId</code> → <code>Get-VBRRestorePoint -ObjectId</code> ("Forward")<a class="headerlink" href="#option-a-per-job-jobgetobjectsinjob-objectid-get-vbrrestorepoint-objectid-forward" title="Permanent link">&para;</a></h3>
+<p>A documented, scoped <code>Get-VBRRestorePoint</code> parameter. Candidate advantages:
+no global unscoped fetch, no reverse-matching heuristics, might sidestep
+the <code>-Backup</code> "encrypted or plug-in" restriction.</p>
+<p><strong>Rejected.</strong> Confirmed unsafe across two independent live labs whenever two
+jobs protect the same object — <code>Get-VBRRestorePoint -ObjectId</code> returns
+every restore point for that object across <em>any</em> job that ever touched it,
+with no way to filter to "produced by this job":
+- On-prem: duplicated <code>Hyper-V - Windows/Linux</code>'s exact numbers onto
+  <code>Hyper-V - Replicas</code>, and <code>VMware - HPE - BfSS</code>'s exact On-Disk figure
+  onto <code>VMware - HPE - Snapshot Only</code>.
+- Cloud lab: <code>VMs DIrect to Vault</code> (13.03 GB) and <code>VMs for Direct Restore to
+  Azure / AWS</code> (12.74 GB) — two distinct, real jobs — collapsed to 0.00 GB
+  and 25.77 GB, where 25.77 = 13.03 + 12.74 exactly. Forward pooled both
+  jobs' restore points onto one and zeroed the other.
+- Silently returned 0/0 for <code>VBR Managed Agents - Linux</code> with no error at
+  all, and found only 1 of 9 real objects for a VMware Cloud Director vApp
+  job (<code>GetObjectsInJob()</code> returned the vApp container, not its nested
+  VMs).
+- Not reliably faster either: 9.6s vs. the sweep's 17.35s on the on-prem
+  lab (5,752 restore points / 18 jobs), but 6.52s vs. the sweep's 1.27s on
+  the cloud lab (40 restore points / 18 jobs) — Forward's cost scales with
+  job count × per-job round-trip, not restore-point volume, so its
+  apparent speed advantage was an artifact of one lab's ratio, not a
+  property of the approach.</p>
+<h3 id="option-b-global-sweep-id-based-matching-only-getsourcejob-getparentjob-walk-up-no-name-based-fallback">Option B — Global sweep, Id-based matching only (<code>GetSourceJob()</code> + <code>GetParentJob()</code> walk-up), no name-based fallback<a class="headerlink" href="#option-b-global-sweep-id-based-matching-only-getsourcejob-getparentjob-walk-up-no-name-based-fallback" title="Permanent link">&para;</a></h3>
+<p>Resolves every restore point's owning job via <code>.GetSourceJob()</code>, walking up
+per-machine child jobs (policy-driven platforms) via <code>.GetParentJob()</code>.</p>
+<p><strong>Rejected as insufficient alone.</strong> Fixes the on-prem plug-in platforms
+(confirmed: HPE Morpheus, Nutanix AHV, oVirt KVM, Proxmox all go from 0/0
+to real numbers), but does nothing for the public cloud platforms —
+<code>.GetSourceJob()</code> doesn't return blank for these, it <strong>throws</strong>
+(<code>Unable to get job for backup: &lt;id&gt;</code>), and there is no <code>Id</code>-yielding path
+back to a job at all.</p>
+<h3 id="option-c-global-sweep-with-tiered-matching-chosen">Option C — Global sweep with tiered matching (chosen)<a class="headerlink" href="#option-c-global-sweep-with-tiered-matching-chosen" title="Permanent link">&para;</a></h3>
+<h2 id="decision">Decision<a class="headerlink" href="#decision" title="Permanent link">&para;</a></h2>
+<p>Replace the per-job <code>GetLastBackup()</code> + scoped <code>Get-VBRRestorePoint -Backup</code>
+call with a single global, unscoped <code>Get-VBRRestorePoint</code> sweep, resolved
+in two tiers, with <code>Snapshot</code>-type (Replica) restore points routed around
+both tiers entirely. (Whether the sweep runs at all is a separate decision,
+gated behind a performance check — see <a href="../0022-allowlist-gate-for-restore-point-sweep/">ADR 0022</a>.)</p>
+<p><strong>Tier 1 — Id-based, via <code>GetSourceJob()</code>:</strong> for each non-<code>Snapshot</code>
+restore point, resolve via <code>.GetSourceJob()</code>, then <code>.GetParentJob()</code> if
+non-null (walks a per-machine child job up to the real top-level policy
+job for Managed Agents, Nutanix AHV, HPE Morpheus, oVirt KVM — confirmed
+live; safe no-op for already-top-level types). <strong>The resolved <code>Id</code> must
+then be validated against a <code>HashSet</code> built from <code>$Jobs</code>'s own Ids</strong> — a
+non-null <code>GetSourceJob()</code> result is not sufficient evidence of a match.
+Confirmed live: Backup Copy jobs expose their restore points through a
+per-source-job/per-VM child object (e.g. <code>GetSourceJob().Name</code> returning
+<code>Backup Copy - VMware to Vault\VMware - Backup to Vault Direct</code>) whose <code>Id</code>
+was never a member of <code>$Jobs</code>, and <code>.GetParentJob()</code> either returns that
+same child back or walks up only one level to another child — never
+reaching the real copy job's own <code>Id</code>. Without this check, tier 1 "succeeds"
+by bucketing the restore point under a key nothing ever looks up, silently
+losing the data and pre-empting tier 2's chance to resolve it correctly.</p>
+<p><strong>Tier 2 — name-based fallback, via <code>.GetBackup().GetParentOrThis().Name</code>,
+GATED:</strong> for restore points tier 1 could not resolve at all (threw,
+returned <code>$null</code>, or resolved to an unknown Id), call
+<code>.GetBackup().GetParentOrThis().Name</code> and match against <code>$Jobs</code> by name.
+This is the only path that resolves for public cloud plug-in jobs and for
+Backup Copy jobs whose per-source child object has no Id-based route back
+to the real job. <strong>A tier-2 match is only accepted if the resolved job has
+zero tier-1 matches already</strong> — otherwise it's discarded ("suppressed").
+This is a correctness requirement, not caution: live-lab evidence proves
+restore-point display names are not reliable identity across distinct
+backup objects. A suppressed restore point named <code>Windows01</code>
+(<code>BackupId 740675ec...</code>) and the currently tier-1-matched <code>Windows01</code>
+(<code>BackupId f4f2c7be...</code>) under <code>HPE Morpheus - Windows - Linux</code> are two
+different backup objects that happen to share a display name — the
+policy's earlier machine pair (<code>linux01</code>/<code>win01-1</code>) was swapped out for the
+current one (<code>Rocky01</code>/<code>Windows01</code>). Ungated matching would have
+misattributed ~117 GB of a decommissioned machine's data onto the
+currently-active job. The accepted cost: <code>Nutanix AHV - Windows - Linux</code>
+has 2 suppressed restore points that <em>might</em> be a legitimate second chain
+for the same VMs — genuinely undecidable from the available VBR API
+surface, since the HPE Morpheus case proves a name match alone can't tell
+the two scenarios apart.</p>
+<p><strong>Tier 2, Id first (added for
+<a href="https://github.com/VeeamHub/veeam-healthcheck/issues/270">#270</a>):</strong> the
+same <code>GetBackup().GetParentOrThis()</code> call also carries the owning job's
+<code>JobId</code>. For a group tier 1 left unresolved, a non-zero <code>JobId</code> that is in
+<code>$Jobs</code> is tried before the name, so a renamed job is found by identity and a
+different job that now carries the old name cannot take its chain. An
+all-zero <code>JobId</code> (a chain whose original job record was replaced by a
+same-named job) or one not in <code>$Jobs</code> is not evidence against a name match
+and falls through to the name; the name is skipped only when the Id already
+resolved the group. The gate above applies to the result whichever route
+found the job. The Id says which job, not whether the chain is that job's
+current one, so a group the Id route placed on a Backup Copy job that the
+gate would suppress is still accepted when that job's last backup lists its
+<code>BackupId</code> (tier 3's check). A name match gets no such exemption. Not
+confirmed for Nutanix, Proxmox, HPE Morpheus or other plug-in job types,
+which is why the name fallback stays.</p>
+<p>Two consequences of the Id route are accepted. A renamed job's older chain
+that still records the job's <code>JobId</code> is now attributed to it instead of
+staying unresolved: Superseded when the job already has a tier-1 match,
+otherwise counted. For a Backup Copy job with no tier-1 match (the usual
+case, since its VM chains resolve in tier 1 to per-source children outside
+<code>$Jobs</code>) the Id route is ungated, so an older backup of that job that still
+carries its <code>JobId</code> is counted toward its size, as a never-renamed job's
+older chain already is through the name route. Confirming such chains
+against the job's last backup was considered and left out until a lab shows
+the case.</p>
+<p><strong>Tier 3 — Backup Copy last backup, by <code>BackupId</code> (added for
+<a href="https://github.com/VeeamHub/veeam-healthcheck/issues/268">#268</a>):</strong> for
+restore points still unresolved after the Id and name routes, and only for Backup Copy jobs
+(<code>SimpleBackupCopyPolicy</code>, <code>BackupSync</code>), match the group's <code>BackupId</code>
+against the restore points of each such job's <code>GetLastBackup()</code>. Tier 2
+cannot resolve a Backup Copy chain once the job has been renamed, because
+the backup keeps the name it was created under and the per-source child
+has no Id route back to the policy (see tier 1). Which backup a job
+currently writes to does not change on a rename, so it is the one Id-based
+link left. Tier 3 only sees groups tiers 1 and 2 left unresolved (or that
+the Id route placed on a Backup Copy job the gate would suppress), so it
+cannot take a chain another job already owns, and unlike tier 2 it is not
+gated on the job having no tier-1 match: membership in the job's own last
+backup is identity, not a display-name coincidence. It is built lazily,
+once, only when a group needs it. A chain from an older backup
+the job no longer writes to is not in its last backup and stays unresolved,
+so it is still reported as Orphaned, unless its backup still records the
+job's <code>JobId</code> and the Id route places it (see above). Tier 3 runs only when the Id and name
+routes found no job (or the Id route found a Backup Copy job the gate would
+suppress), so it never moves
+a chain to a different job than they chose. The Id route resolves the case
+where another job now carries the backup's old name.</p>
+<p>The same last backup is used for a Backup Copy job's source size. The sweep
+hands the agent-sourced chains to the per-source worker job that owns them,
+so the parent's own restore points cover only its VM-sourced chains. For the
+source size only, the worker-owned restore points whose <code>BackupId</code> is in the
+parent's last backup are added before the latest point per <code>ObjectId</code> is
+taken, so an object that appears in both chains is counted once. On-disk size
+is not touched here; the report adds the worker's on-disk size to the parent.</p>
+<p><strong>Snapshot / Replica — routed around the sweep entirely:</strong> <code>Snapshot</code>-type
+restore points never resolve via <code>GetSourceJob()</code> (100% throw rate,
+5,461/5,461 in the on-prem lab — exceptions at this scale measured at ~43s
+for that population alone) and are excluded from tier 2 as well. Instead,
+jobs where <code>TypeToString -like "*Replication*"</code> are sized via the same
+<code>GetLastBackup()</code> + <code>Get-VBRRestorePoint -Backup</code> call used today,
+unchanged — already correct for replicas, since replication jobs never hit
+the plug-in/encryption restriction that motivated this design.</p>
+<p>Restore points from multiple distinct tier-1-matched backup chains that
+resolve to the same job Id (e.g. before/after a repository retarget) are
+summed together — an intentional behavior change surfacing disk usage
+previously invisible to the report.</p>
+<h2 id="rationale">Rationale<a class="headerlink" href="#rationale" title="Permanent link">&para;</a></h2>
+<ul>
+<li><strong>Id-based matching is the safe default; name-based matching must be
+  gated.</strong> <code>Id</code> survives a job rename; a display name does not survive a
+  machine swap. Tier 1 is trusted unconditionally once it has any match;
+  tier 2 only rescues jobs tier 1 found nothing for at all.</li>
+<li><strong>A resolved <code>Id</code> is only trustworthy if it's a member of <code>$Jobs</code>.</strong>
+  <code>GetSourceJob()</code>/<code>GetParentJob()</code> can return a real, non-null object that
+  still isn't one of the jobs this report is sizing (Backup Copy's
+  per-source/per-VM children). Treating "non-null" as "match" is the
+  specific bug that caused two Backup Copy jobs to silently regress to 0/0
+  in testing before this check was added.</li>
+<li><strong>Tape backups are a permanent, expected unmatched category, not a gap.</strong>
+  VBR names tape backups <code>&lt;source job name&gt; on Tape</code> (confirmed live in the
+  console's Tape view); they're real backup records with no corresponding
+  <code>Get-VBRJob</code> entry. Tier 2's name lookup correctly can't match them, and
+  they fall to unmatched — the same treatment as any other orphaned or
+  imported restore point.</li>
+</ul>
+<h2 id="consequences">Consequences<a class="headerlink" href="#consequences" title="Permanent link">&para;</a></h2>
+<h3 id="positive">Positive<a class="headerlink" href="#positive" title="Permanent link">&para;</a></h3>
+<ul>
+<li>Fixes the confirmed 0/0 bug for HPE Morpheus VME, Nutanix AHV, oVirt KVM,
+  and Proxmox Backup jobs (tier 1), and for public cloud plug-in jobs
+  (AWS/Azure/GCE, tier 2) and Backup Copy jobs whose <code>-Backup</code> scoping
+  resolves to a per-source child object (tier 2, via the <code>$knownJobIds</code>
+  check).</li>
+<li>Zero regressions across 4 live labs, 56 jobs tested: <code>VMware - Domain
+  Controller</code> (245 restore points, the highest-volume job tested) and every
+  previously-correct job matched old exactly.</li>
+<li>Surfaces previously-invisible multi-chain disk usage (post-retarget
+  scenarios) for tier-1-matched jobs.</li>
+</ul>
+<h3 id="negative">Negative<a class="headerlink" href="#negative" title="Permanent link">&para;</a></h3>
+<ul>
+<li>Real, measured performance cost when the sweep runs — see
+  <a href="../0022-allowlist-gate-for-restore-point-sweep/">ADR 0022</a> for how this
+  is contained.</li>
+<li>Accepted undercount risk: <code>Nutanix AHV - Windows - Linux</code>'s 2
+  tier-2-suppressed restore points may be legitimate additional history for
+  the same VMs, discarded because there's no safe way to distinguish that
+  from the HPE Morpheus stale-machine pattern.</li>
+<li>The Replica per-job path is validated as behavior-preserving (both
+  replica jobs in the on-prem lab reported 0 restore points before and
+  after this change) but has never been exercised against a live replica
+  chain with real snapshots.</li>
+<li><code>VMware Cloud Director - vApp Backup</code> jobs' Source Size double-count
+  (the vApp container's own restore point double-counts against its
+  children's <code>ApproxSize</code>, filed as
+  <a href="https://github.com/VeeamHub/veeam-healthcheck/issues/193">#193</a>) is
+  unaffected by this change — it's a pre-existing aggregation bug in a
+  correctly-scoped restore-point set, not a matching bug this design
+  addresses.</li>
+</ul>
+<h2 id="validation">Validation<a class="headerlink" href="#validation" title="Permanent link">&para;</a></h2>
+<p>Validated via a standalone, read-only comparison script
+(<code>Test-JobSizingRestorePointMatching.ps1</code>, not part of the codebase) run
+against 4 live VBR v13 labs, 56 jobs total, with no changes to
+<code>Get-VhcJob.ps1</code> itself:</p>
+<table>
+<thead>
+<tr>
+<th>Lab</th>
+<th>Jobs</th>
+<th>Restore points</th>
+<th>Result</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>On-prem</td>
+<td>18</td>
+<td>5,752</td>
+<td>Tier 1 alone fixed HPE Morpheus, Nutanix AHV, oVirt KVM; 0 regressions; 15 unchanged</td>
+</tr>
+<tr>
+<td>Cloud</td>
+<td>18</td>
+<td>40</td>
+<td>Tier 2 alone fixed <code>Linux-01</code> (0/0 → 157.00 GB / 29.30 GB, 36 restore points); 0 regressions</td>
+</tr>
+<tr>
+<td>Agent</td>
+<td>4</td>
+<td>12</td>
+<td>Confirmed standalone (ADR 0014) and managed agent jobs resolve via tier 1 identically to today</td>
+</tr>
+<tr>
+<td>Backup Copy</td>
+<td>16</td>
+<td>112</td>
+<td>Confirmed the <code>$knownJobIds</code> fix (2 Backup Copy jobs matched old exactly after the fix); confirmed Proxmox as a 4th tier-1 platform; confirmed <code>web01-schedule-backups</code> as a 2nd independent tier-2 case</td>
+</tr>
+</tbody>
+</table>
+<p>Full detail, including the HPE Morpheus <code>BackupId</code> evidence and the tape-
+backup naming confirmation (cross-checked against the live VBR console), is
+recorded in
+<a href="https://github.com/VeeamHub/veeam-healthcheck/blob/dev/docs/superpowers/specs/2026-08-21-job-sizing-restore-point-matching-design.md"><code>docs/superpowers/specs/2026-08-21-job-sizing-restore-point-matching-design.md</code></a>.</p>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  Back to top
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["navigation.tabs", "navigation.sections", "navigation.expand", "navigation.top", "search.suggest", "search.highlight", "content.code.copy", "content.action.edit"], "search": "../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../../assets/javascripts/bundle.d7400e89.min.js"></script>
+      
+    
+  </body>
+</html>
