@@ -276,21 +276,27 @@ namespace VeeamHealthCheck.Functions.Collection
 
             // Check for VBR critical files (at least 3 of 5)
             // Match both exact name and {servername}_{filename} pattern
-            int vbrMatches = CriticalVbrFiles.Count(f =>
-                csvFiles.Any(c =>
-                    c.Equals(f, StringComparison.OrdinalIgnoreCase) ||
-                    c.EndsWith("_" + f, StringComparison.OrdinalIgnoreCase)));
+            int vbrMatches = CriticalVbrFiles.Count(f => csvFiles.Any(c => IsCsvMatch(c, f)));
 
             if (vbrMatches >= 3)
                 return true;
 
             // Check for VB365 critical files (at least 2 of 3)
-            int vb365Matches = CriticalVb365Files.Count(f =>
-                csvFiles.Any(c =>
-                    c.Equals(f, StringComparison.OrdinalIgnoreCase) ||
-                    c.EndsWith("_" + f, StringComparison.OrdinalIgnoreCase)));
+            int vb365Matches = CriticalVb365Files.Count(f => csvFiles.Any(c => IsCsvMatch(c, f)));
 
             return vb365Matches >= 2;
+        }
+
+        /// <summary>
+        /// True when a CSV file name is the expected name, or the expected name behind a server
+        /// prefix ("SRV01_Proxies.csv"). Names that already start with "_" ("_Jobs.csv") are
+        /// written as "SRV01_Jobs.csv", so the separator is not doubled.
+        /// </summary>
+        private static bool IsCsvMatch(string file, string expected)
+        {
+            string suffix = expected.StartsWith("_", StringComparison.Ordinal) ? expected : "_" + expected;
+            return file.Equals(expected, StringComparison.OrdinalIgnoreCase) ||
+                   file.EndsWith(suffix, StringComparison.OrdinalIgnoreCase);
         }
 
         /// <summary>
@@ -318,9 +324,11 @@ namespace VeeamHealthCheck.Functions.Collection
             var csvFiles = GetCsvFilesInDirectory(csvPath);
             Log.Info($"{LogPrefix}Found {csvFiles.Count} CSV files in: {csvPath}");
 
-            // Determine if this is VBR or VB365 based on files present
-            bool isVbr = csvFiles.Any(f => f.Equals("_Jobs.csv", StringComparison.OrdinalIgnoreCase) ||
-                                           f.Equals("vbrinfo.csv", StringComparison.OrdinalIgnoreCase));
+            // Determine if this is VBR or VB365 based on files present. The VBR collector
+            // prefixes every file with the server name (e.g. SRV01_Jobs.csv).
+            bool isVbr = csvFiles.Any(f => f.EndsWith("_Jobs.csv", StringComparison.OrdinalIgnoreCase) ||
+                                           f.Equals("vbrinfo.csv", StringComparison.OrdinalIgnoreCase) ||
+                                           f.EndsWith("_vbrinfo.csv", StringComparison.OrdinalIgnoreCase));
             bool isVb365 = csvFiles.Any(f => f.Equals("Organizations.csv", StringComparison.OrdinalIgnoreCase));
 
             string[] criticalFiles = isVbr ? CriticalVbrFiles : CriticalVb365Files;
@@ -328,9 +336,7 @@ namespace VeeamHealthCheck.Functions.Collection
             foreach (var criticalFile in criticalFiles)
             {
                 // Match both exact name and {servername}_{filename} pattern
-                if (csvFiles.Any(f =>
-                    f.Equals(criticalFile, StringComparison.OrdinalIgnoreCase) ||
-                    f.EndsWith("_" + criticalFile, StringComparison.OrdinalIgnoreCase)))
+                if (csvFiles.Any(f => IsCsvMatch(f, criticalFile)))
                 {
                     result.PresentFiles.Add(criticalFile);
                 }

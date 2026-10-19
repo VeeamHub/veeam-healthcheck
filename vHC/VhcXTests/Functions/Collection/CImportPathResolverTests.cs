@@ -223,6 +223,22 @@ namespace VeeamHealthCheck.Tests.Collection
         }
 
         [Fact]
+        public void ValidateCsvFiles_ServerPrefixedVbrFiles_DetectsVbrProduct()
+        {
+            // Arrange - the collector names every file <VBRServer><FileName>, e.g. SRV01_Jobs.csv
+            foreach (string name in new[] { "_Jobs.csv", "_Proxies.csv", "_Repositories.csv", "_Servers.csv", "_vbrinfo.csv" })
+                File.WriteAllText(Path.Combine(_testDirectory, "SRV01" + name), "Header\nValue");
+
+            // Act
+            var result = CImportPathResolver.ValidateCsvFiles(_testDirectory);
+
+            // Assert
+            Assert.Equal("VBR", result.ProductType);
+            Assert.True(result.IsValid);
+            Assert.Empty(result.MissingCriticalFiles);
+        }
+
+        [Fact]
         public void ValidateCsvFiles_ReturnsPartiallyValid_WhenSomeCriticalFilesMissing()
         {
             // Arrange - create only some critical files
