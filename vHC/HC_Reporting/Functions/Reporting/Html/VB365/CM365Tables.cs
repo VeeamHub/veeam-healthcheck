@@ -1657,7 +1657,7 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VB365
                     }
 
 
-                    if (schedul == "Not Scheduled")
+                    if (string.Equals(schedul, "Not Scheduled", StringComparison.OrdinalIgnoreCase))
                     {
                         scheduleShade = 3;
                     }
