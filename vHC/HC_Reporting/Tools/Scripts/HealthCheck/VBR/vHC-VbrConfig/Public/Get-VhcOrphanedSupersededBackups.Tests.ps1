@@ -508,6 +508,93 @@ Describe 'Get-VhcOrphanedSupersededBackups' {
         }
     }
 
+    Context 'R3 (#221 follow-up): parent-level liveness must include sibling chains that resolved to a live job' {
+        # Hypothesis R3 (orphaned-validation-plan.md section 2): the #278 guard
+        # builds parent-level "newest point" state ONLY from Unresolved
+        # candidates (the `continue` before $ParentState is filled). The #278
+        # PR text promises "nothing under its PARENT BACKUP was written within
+        # the window", so a sibling chain under the same parent that resolved
+        # to a live job and was written today (the #268 shape: VM chain
+        # unresolved, agent/worker chain resolved) must keep the old
+        # Unresolved sibling out of Orphaned.
+        #
+        # Visibility: the sweep cache (Get-VhcJob) holds ONLY unplaced groups,
+        # see the Get-VhcJob.Tests.ps1 test 'R3: the sweep cache never holds a
+        # resolved sibling chain'. So a fix has to look the siblings up itself.
+        # The fixture models that lookup as `Get-VBRRestorePoint -Backup
+        # <parent>` returning every point under the parent, which is how the
+        # plan's oracle reads it. Whether VBR returns child-backup points for a
+        # parent backup this way is not verified here (no lab); the test only
+        # needs the sibling's recent point to be reachable from the parent.
+
+        BeforeAll {
+            if (-not (Get-Command Get-VBRRestorePoint -ErrorAction SilentlyContinue | Where-Object { $_.CommandType -eq 'Cmdlet' })) {
+                function global:Get-VBRRestorePoint { [CmdletBinding()] param($Backup) }
+            }
+        }
+
+        It 'known bug: R3 - keeps an old Unresolved chain Unresolved when a resolved sibling chain under the same parent was written today' -Skip {
+            # known bug: R3 - recency state ignores resolved sibling chains (Get-VhcOrphanedSupersededBackups.ps1 ~143)
+            $Parent = script:New-FakeBackupObject -Name 'BackupCopy - Prod' -Id ([guid]::NewGuid())
+            $ChildVm = script:New-FakeBackupObject -Name 'BackupCopy - Prod' -Id ([guid]::NewGuid())
+            $ChildVm | Add-Member -MemberType ScriptMethod -Name GetParentOrThis -Value { return $Parent }.GetNewClosure() -Force
+            $ChildAgent = script:New-FakeBackupObject -Name 'BackupCopy - Prod' -Id ([guid]::NewGuid())
+            $ChildAgent | Add-Member -MemberType ScriptMethod -Name GetParentOrThis -Value { return $Parent }.GetNewClosure() -Force
+
+            $OldVm  = script:New-FakeCandidateRestorePoint -Name 'old-vm' -Type 'Full' -BackupObject $ChildVm -CreationTimeUtc ([datetime]::UtcNow.AddDays(-90))
+            $LiveAgent = script:New-FakeCandidateRestorePoint -Name 'live-agent' -Type 'Increment' -BackupObject $ChildAgent -CreationTimeUtc ([datetime]::UtcNow.AddHours(-2))
+            $script:R3ParentPoints = @($OldVm, $LiveAgent)
+            Mock Get-VBRRestorePoint -MockWith { $script:R3ParentPoints }
+
+            # Only the unresolved VM chain is in the cache; the agent chain resolved to a job and is not.
+            $script:VhcOrphanedSupersededCache = [PSCustomObject]@{ SweepRan = $true; CandidateGroups = [System.Collections.Generic.List[object]]::new() }
+            $script:VhcOrphanedSupersededCache.CandidateGroups.Add([PSCustomObject]@{ Reason = 'Unresolved'; CurrentJobId = $null; RestorePoints = @($OldVm) })
+
+            Get-VhcOrphanedSupersededBackups
+
+            $script:CapturedRows | Should -HaveCount 1
+            # Expected: Unresolved (parent written 2h ago). Actual on dev: Orphaned.
+            $script:CapturedRows[0].Category | Should -Be 'Unresolved'
+        }
+    }
+
+    Context 'R1: Superseded has no liveness guard but is counted as potentially reclaimable' {
+        # Hypothesis R1: only Unresolved goes through the #278 recency window
+        # (Get-VhcOrphanedSupersededBackups.ps1 ~253-261); every other Reason
+        # becomes Superseded unconditionally, and the C# table sums Superseded
+        # into "potentially reclaimable" (COrphanedSupersededBackupsTable.cs).
+        # A StaleObject group can be minutes old (VM removed right after its
+        # last run) and a Tier2Suppressed chain can be one the job still writes.
+        #
+        # DECISION NAMED (product call for Ben / comnam90): these tests encode
+        # the SAFEST reading, the one #278 applied to Unresolved. A Superseded
+        # group whose newest point is inside the active-chain window is NOT
+        # presented as reclaimable; the only existing non-reclaimable category
+        # is 'Unresolved' ("still being written, not counted"). Other readings
+        # (a new category, or leaving StaleObject as Superseded because VBR
+        # purges removed-VM data itself, plan S5b) are Ben's to choose, and
+        # these tests would then be rewritten, not just un-skipped.
+
+        It 'known bug: R1 - does not call a <Reason> group Superseded when its newest point is inside the window' -ForEach @(
+            @{ Reason = 'StaleObject' }
+            @{ Reason = 'Tier2Suppressed' }
+        ) -Skip {
+            # known bug: R1 - Superseded ignores recency (Get-VhcOrphanedSupersededBackups.ps1 ~253)
+            $rows = script:Invoke-CategoryProbe -Reason $Reason -AgesInDays @(0.04)
+            $script:CapturedRows | Should -HaveCount 1
+            $script:CapturedRows[0].Category | Should -Be 'Unresolved'
+        }
+
+        It 'R1 control: a <Reason> group whose newest point is older than the window is still Superseded' -ForEach @(
+            @{ Reason = 'StaleObject' }
+            @{ Reason = 'Tier2Suppressed' }
+        ) {
+            $rows = script:Invoke-CategoryProbe -Reason $Reason -AgesInDays @(60)
+            $script:CapturedRows | Should -HaveCount 1
+            $script:CapturedRows[0].Category | Should -Be 'Superseded'
+        }
+    }
+
     It 'uses the explicit -OrphanedSupersededCache parameter over $script:VhcOrphanedSupersededCache when both are present' {
         # Get-VBRConfig.ps1 now passes Get-VhcJob's return value here
         # explicitly, rather than relying on this function reaching for

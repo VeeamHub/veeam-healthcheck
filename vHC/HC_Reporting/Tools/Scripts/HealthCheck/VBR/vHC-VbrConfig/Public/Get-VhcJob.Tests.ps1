@@ -2079,6 +2079,52 @@ Describe 'Stale-ObjectId guard: GetObjectsInJob() cross-reference' {
         $stale[0].RestorePoints[0].Name | Should -Be 'STALE'
     }
 
+    It 'known bug: R2 - does not flag VMs that live only inside a container job object (host/folder/tag/cluster) as StaleObject' -Skip {
+        # known bug: R2 - the stale-ObjectId guard compares against the raw GetObjectsInJob() list; only 'Vapp' containers are special-cased (Get-VhcJob.ps1 ~457-467)
+        #
+        # Shape: a job with ONE explicit VM plus ONE container object (a host,
+        # folder, tag or cluster). The container's members are backed up daily
+        # but are not ObjectIds in GetObjectsInJob(), so VM2/VM3 look stale
+        # while being written today. VM1 matches, so MatchedAny is true and the
+        # zero-overlap guard (ADR 0024) does not switch the check off.
+        #
+        # NOT VERIFIED against a real SDK: this models the container as one
+        # CObjectInJob entry (ObjectId = the container's own id, no expansion
+        # to nested VMs), the only shape ADR 0021/0024 confirmed live, and
+        # that was for a VMware Cloud Director vApp. The Object.Type string
+        # 'Host' below is a placeholder; the real type names for host, folder,
+        # tag and cluster entries are unknown. ADR 0024 / the code comment at
+        # ~457 say other dynamic-scope types are "deliberately left uncovered
+        # without live evidence". Plan scenarios S9/S10 settle this on zbook.
+        $Vm1Id       = [guid]'a2000000-0000-0000-0000-000000000001'
+        $Vm2Id       = [guid]'a2000000-0000-0000-0000-000000000002'
+        $Vm3Id       = [guid]'a2000000-0000-0000-0000-000000000003'
+        $ContainerId = [guid]'a2000000-0000-0000-0000-0000000000ff'
+        $FakeJob = script:New-FakeJob -Name 'Hyper-V - Host + VM' -TypeToString 'Hyper-V Backup' -ObjectsInJobIds @($Vm1Id, $ContainerId)
+        $FakeJob | Add-Member -MemberType ScriptMethod -Name GetObjectsInJob -Value {
+            @(
+                [PSCustomObject]@{ ObjectId = $Vm1Id;       Object = [PSCustomObject]@{ Type = 'Vm' } }
+                [PSCustomObject]@{ ObjectId = $ContainerId; Object = [PSCustomObject]@{ Type = 'Host' } }
+            )
+        }.GetNewClosure() -Force
+        Mock Get-VBRJob -MockWith { @($FakeJob) }
+        $Now = [datetime]::UtcNow
+        $Vm1 = script:New-FakeRestorePoint -Name 'vm1' -ObjectId $Vm1Id -ApproxSize 100GB -BackupSize 30GB -SourceJob $FakeJob -CreationTimeUtc $Now
+        $Vm2 = script:New-FakeRestorePoint -Name 'vm2' -ObjectId $Vm2Id -ApproxSize 100GB -BackupSize 30GB -SourceJob $FakeJob -CreationTimeUtc $Now
+        $Vm3 = script:New-FakeRestorePoint -Name 'vm3' -ObjectId $Vm3Id -ApproxSize 100GB -BackupSize 30GB -SourceJob $FakeJob -CreationTimeUtc $Now
+        Mock Get-VBRRestorePoint -MockWith {
+            if ($null -eq $Backup) { @($Vm1, $Vm2, $Vm3) } else { @() }
+        }
+
+        Get-VhcJob | Out-Null
+
+        $job = $script:CapturedJobRows | Where-Object { $_.Name -eq 'Hyper-V - Host + VM' }
+        $stale = @($script:VhcOrphanedSupersededCache.CandidateGroups | Where-Object { $_.Reason -eq 'StaleObject' })
+        # Expected: no StaleObject candidates and all 90 GB on disk. Actual on dev: VM2 and VM3 are StaleObject, 30 GB.
+        @($stale.RestorePoints.Name) | Should -BeNullOrEmpty
+        [double]$job.OnDiskGB | Should -BeGreaterThan 89
+    }
+
     # SKIPPED (2026-08-26): same non-sweep-only fixture limitation - see the
     # $NeedsSweep override note above.
     It 'treats a restore point with a null ObjectId as active (uncertain, so not excluded) without aborting the job''s size calc' -Skip {
@@ -2551,6 +2597,27 @@ Describe 'Candidate grouping keeps a backup chain whole (#221 premise)' {
         $Candidates = @($script:VhcOrphanedSupersededCache.CandidateGroups | Where-Object { $_.Reason -eq 'Unresolved' })
         $Candidates | Should -HaveCount 1
         @($Candidates[0].RestorePoints).Name | Sort-Object | Should -Be @('first-throws', 'recent')
+    }
+
+    It 'R3 visibility: the sweep cache never holds a resolved sibling chain, so the classifier cannot see one' {
+        # Supports hypothesis R3 (see Get-VhcOrphanedSupersededBackups.Tests.ps1):
+        # two chains share a parent backup name; the VM chain is unplaced
+        # (Unresolved), the agent chain resolves by tier 1 to a live job. Only
+        # the unplaced chain reaches CandidateGroups; the resolved chain goes
+        # into the job's own restore points and nowhere in the cache.
+        $BackupVm    = [guid]'c1000000-0000-0000-0000-0000000000a1'
+        $BackupAgent = [guid]'c1000000-0000-0000-0000-0000000000a2'
+        $LiveJob = script:New-FakeJob -Name 'BackupCopy - Prod' -JobType 'Backup' -TypeToString 'VMware Backup' -LastBackup ([PSCustomObject]@{ Name = 'BackupCopy - Prod' })
+        $OldVm     = script:New-FakeRestorePoint -Name 'old-vm'     -BackupId $BackupVm    -CreationTimeUtc ([datetime]::UtcNow.AddDays(-90)) -ThrowOnGetSourceJob -BackupParentOrThisName 'Gone'
+        $LiveAgent = script:New-FakeRestorePoint -Name 'live-agent' -BackupId $BackupAgent -CreationTimeUtc ([datetime]::UtcNow.AddHours(-2)) -SourceJob $LiveJob
+        Mock Get-VBRJob -MockWith { @($LiveJob) }
+        Mock Get-VBRRestorePoint -MockWith { if ($null -eq $Backup) { @($OldVm, $LiveAgent) } else { @() } }
+
+        Get-VhcJob | Out-Null
+
+        $names = @($script:VhcOrphanedSupersededCache.CandidateGroups.RestorePoints.Name)
+        $names | Should -Contain 'old-vm'
+        $names | Should -Not -Contain 'live-agent'
     }
 
     It 'places every restore point in exactly one destination across mixed Unresolved, tier-1 and tier-2 groups' {
