@@ -484,16 +484,21 @@ function Get-VhcJob {
             $LeafObjectTypes = @('Vm', 'VirtualMachine')
             $MembershipCheckable = ($null -ne $CurrentJobObjects)
             $VappContainerIds = [System.Collections.Generic.HashSet[string]]::new([System.StringComparer]::OrdinalIgnoreCase)
+            $SeenObjectTypes = [System.Collections.Generic.HashSet[string]]::new([System.StringComparer]::OrdinalIgnoreCase)
             foreach ($JobObject in @($CurrentJobObjects)) {
                 $ObjType = $null
                 try { $ObjType = $JobObject.Object.Type } catch { $ObjType = $null }
+                if ($null -eq $ObjType) { [void]$SeenObjectTypes.Add('<none>') } else { [void]$SeenObjectTypes.Add([string]$ObjType) }
                 if ($ObjType -eq 'Vapp') {
                     try { [void]$VappContainerIds.Add($JobObject.ObjectId.ToString()) } catch {}
                 }
                 if ($null -eq $ObjType -or [string]$ObjType -notin $LeafObjectTypes) { $MembershipCheckable = $false }
             }
             if (-not $MembershipCheckable -and $null -ne $CurrentJobObjects) {
-                try { Write-LogFile "Job '$($Job.Name)': GetObjectsInJob() includes a container or unrecognised object type, so job membership is not checkable; no restore points will be treated as stale for this job (see ADR 0034)." -LogLevel "INFO" } catch {}
+                # The observed type names are logged so live runs show the real Object.Type strings
+                # the allowlist must cover (only 'Vm' and 'Vapp' are confirmed so far).
+                $SeenTypeList = (@($SeenObjectTypes) | Sort-Object) -join ', '
+                try { Write-LogFile "Job '$($Job.Name)': GetObjectsInJob() includes a container or unrecognised object type ($SeenTypeList), so job membership is not checkable; no restore points will be treated as stale for this job (see ADR 0034)." -LogLevel "INFO" } catch {}
             }
 
             if ($VappContainerIds.Count -gt 0 -and $RestorePoints.Count -gt 0) {
