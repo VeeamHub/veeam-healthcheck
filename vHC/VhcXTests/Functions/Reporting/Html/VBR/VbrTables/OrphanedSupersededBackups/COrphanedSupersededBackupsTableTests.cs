@@ -122,6 +122,30 @@ namespace VhcXTests.Functions.Reporting.Html.VBR.VbrTables.OrphanedSupersededBac
         }
 
         [Fact]
+        public void Render_UnresolvedRecordWithLiveCurrentJobId_IsNotCountedAsReclaimable()
+        {
+            // A Superseded group (StaleObject / Tier2Suppressed) whose newest
+            // point is still inside the active-chain window is exported as
+            // Unresolved while keeping its live job's CurrentJobId. It must be
+            // excluded from the reclaimable total exactly like an Unresolved
+            // row with no job.
+            var table = new COrphanedSupersededBackupsTable();
+            var superseded = JobRecord("repo-1", "Repo01", "Old Chain", "Superseded");
+            superseded.TotalSizeBytes = 3L * 1073741824;
+            var stillWriting = JobRecord("repo-1", "Repo01", "Live Job", "Unresolved");
+            stillWriting.CurrentJobId = Guid.NewGuid().ToString();
+            stillWriting.TotalSizeBytes = 50L * 1073741824;
+
+            string html = table.Render(new List<OrphanedSupersededBackupRecord> { superseded, stillWriting }, sweepEvaluated: true, scrub: false, out string summary);
+
+            Assert.Equal(
+                "2 backups found (1 still being written, ~50 GB not counted as reclaimable), ~3 GB potentially reclaimable.",
+                summary);
+            Assert.DoesNotContain("~53 GB", html);
+            Assert.DoesNotContain("~53 GB", summary);
+        }
+
+        [Fact]
         public void Render_OnlyUnresolvedRecords_CountsTheListedRowButNoReclaimableGb()
         {
             var table = new COrphanedSupersededBackupsTable();

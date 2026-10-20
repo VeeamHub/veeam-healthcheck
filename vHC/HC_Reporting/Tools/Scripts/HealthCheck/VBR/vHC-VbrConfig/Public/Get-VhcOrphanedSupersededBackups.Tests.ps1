@@ -273,11 +273,11 @@ Describe 'Get-VhcOrphanedSupersededBackups' {
             $Config.Thresholds.OrphanedActiveChainWindowDays | Should -Be 35
         }
 
-        It 'keeps Superseded for <Reason> regardless of recency' -ForEach @(
+        It 'keeps Superseded for <Reason> once its newest point is older than the window (R1 pins the in-window case)' -ForEach @(
             @{ Reason = 'StaleObject' }
             @{ Reason = 'Tier2Suppressed' }
         ) {
-            script:Invoke-CategoryProbe -Reason $Reason -AgesInDays @(0.01)
+            script:Invoke-CategoryProbe -Reason $Reason -AgesInDays @(40)
 
             $script:CapturedRows | Should -HaveCount 1
             $script:CapturedRows[0].Category | Should -Be 'Superseded'
@@ -508,53 +508,82 @@ Describe 'Get-VhcOrphanedSupersededBackups' {
         }
     }
 
-    Context 'R3 (#221 follow-up): parent-level liveness must include sibling chains that resolved to a live job' {
-        # Hypothesis R3 (orphaned-validation-plan.md section 2): the #278 guard
-        # builds parent-level "newest point" state ONLY from Unresolved
-        # candidates (the `continue` before $ParentState is filled). The #278
-        # PR text promises "nothing under its PARENT BACKUP was written within
-        # the window", so a sibling chain under the same parent that resolved
-        # to a live job and was written today (the #268 shape: VM chain
-        # unresolved, agent/worker chain resolved) must keep the old
-        # Unresolved sibling out of Orphaned.
-        #
-        # Visibility: the sweep cache (Get-VhcJob) holds ONLY unplaced groups,
-        # see the Get-VhcJob.Tests.ps1 test 'R3: the sweep cache never holds a
-        # resolved sibling chain'. So a fix has to look the siblings up itself.
-        # The fixture models that lookup as `Get-VBRRestorePoint -Backup
-        # <parent>` returning every point under the parent, which is how the
-        # plan's oracle reads it. Whether VBR returns child-backup points for a
-        # parent backup this way is not verified here (no lab); the test only
-        # needs the sibling's recent point to be reachable from the parent.
+    Context 'R3 (#221 follow-up): parent-level liveness includes sibling chains that resolved to a live job' {
+        # The #278 PR text promises "nothing under its PARENT BACKUP was
+        # written within the window". Get-VhcJob hands the classifier every
+        # group a tier placed on a job (Cache.ResolvedGroups) so a sibling
+        # chain that resolved to a live job and was written today (the #268
+        # shape: VM chain unresolved, agent/worker chain resolved) keeps an
+        # old Unresolved sibling out of Orphaned. The fixtures share one
+        # parent through GetParentOrThis(); that real VBR returns the same
+        # parent Id for such siblings is plan scenario S4.
 
-        BeforeAll {
-            if (-not (Get-Command Get-VBRRestorePoint -ErrorAction SilentlyContinue | Where-Object { $_.CommandType -eq 'Cmdlet' })) {
-                function global:Get-VBRRestorePoint { [CmdletBinding()] param($Backup) }
-            }
+        BeforeEach {
+            $script:R3Parent = script:New-FakeBackupObject -Name 'BackupCopy - Prod' -Id ([guid]::NewGuid())
+            $Parent = $script:R3Parent
+            $script:R3ChildVm = script:New-FakeBackupObject -Name 'BackupCopy - Prod' -Id ([guid]::NewGuid())
+            $script:R3ChildVm | Add-Member -MemberType ScriptMethod -Name GetParentOrThis -Value { return $Parent }.GetNewClosure() -Force
+            $script:R3ChildAgent = script:New-FakeBackupObject -Name 'BackupCopy - Prod' -Id ([guid]::NewGuid())
+            $script:R3ChildAgent | Add-Member -MemberType ScriptMethod -Name GetParentOrThis -Value { return $Parent }.GetNewClosure() -Force
+            $script:OldVm = script:New-FakeCandidateRestorePoint -Name 'old-vm' -Type 'Full' -BackupObject $script:R3ChildVm -CreationTimeUtc ([datetime]::UtcNow.AddDays(-90))
+            $script:VhcOrphanedSupersededCache = [PSCustomObject]@{ SweepRan = $true; CandidateGroups = [System.Collections.Generic.List[object]]::new(); ResolvedGroups = [System.Collections.Generic.List[object]]::new() }
+            $script:VhcOrphanedSupersededCache.CandidateGroups.Add([PSCustomObject]@{ Reason = 'Unresolved'; CurrentJobId = $null; RestorePoints = @($script:OldVm) })
         }
 
-        It 'known bug: R3 - keeps an old Unresolved chain Unresolved when a resolved sibling chain under the same parent was written today' -Skip {
-            # known bug: R3 - recency state ignores resolved sibling chains (Get-VhcOrphanedSupersededBackups.ps1 ~143)
-            $Parent = script:New-FakeBackupObject -Name 'BackupCopy - Prod' -Id ([guid]::NewGuid())
-            $ChildVm = script:New-FakeBackupObject -Name 'BackupCopy - Prod' -Id ([guid]::NewGuid())
-            $ChildVm | Add-Member -MemberType ScriptMethod -Name GetParentOrThis -Value { return $Parent }.GetNewClosure() -Force
-            $ChildAgent = script:New-FakeBackupObject -Name 'BackupCopy - Prod' -Id ([guid]::NewGuid())
-            $ChildAgent | Add-Member -MemberType ScriptMethod -Name GetParentOrThis -Value { return $Parent }.GetNewClosure() -Force
-
-            $OldVm  = script:New-FakeCandidateRestorePoint -Name 'old-vm' -Type 'Full' -BackupObject $ChildVm -CreationTimeUtc ([datetime]::UtcNow.AddDays(-90))
-            $LiveAgent = script:New-FakeCandidateRestorePoint -Name 'live-agent' -Type 'Increment' -BackupObject $ChildAgent -CreationTimeUtc ([datetime]::UtcNow.AddHours(-2))
-            $script:R3ParentPoints = @($OldVm, $LiveAgent)
-            Mock Get-VBRRestorePoint -MockWith { $script:R3ParentPoints }
-
-            # Only the unresolved VM chain is in the cache; the agent chain resolved to a job and is not.
-            $script:VhcOrphanedSupersededCache = [PSCustomObject]@{ SweepRan = $true; CandidateGroups = [System.Collections.Generic.List[object]]::new() }
-            $script:VhcOrphanedSupersededCache.CandidateGroups.Add([PSCustomObject]@{ Reason = 'Unresolved'; CurrentJobId = $null; RestorePoints = @($OldVm) })
+        It 'known bug: R3 - keeps an old Unresolved chain Unresolved when a resolved sibling chain under the same parent was written today' {
+            $LiveAgent = script:New-FakeCandidateRestorePoint -Name 'live-agent' -Type 'Increment' -BackupObject $script:R3ChildAgent -CreationTimeUtc ([datetime]::UtcNow.AddHours(-2))
+            $script:VhcOrphanedSupersededCache.ResolvedGroups.Add(@($LiveAgent))
 
             Get-VhcOrphanedSupersededBackups
 
             $script:CapturedRows | Should -HaveCount 1
-            # Expected: Unresolved (parent written 2h ago). Actual on dev: Orphaned.
             $script:CapturedRows[0].Category | Should -Be 'Unresolved'
+        }
+
+        It 'R3 control: a resolved sibling chain older than the window does not keep the Unresolved chain out of Orphaned' {
+            $OldAgent = script:New-FakeCandidateRestorePoint -Name 'old-agent' -Type 'Increment' -BackupObject $script:R3ChildAgent -CreationTimeUtc ([datetime]::UtcNow.AddDays(-60))
+            $script:VhcOrphanedSupersededCache.ResolvedGroups.Add(@($OldAgent))
+
+            Get-VhcOrphanedSupersededBackups
+
+            $script:CapturedRows | Should -HaveCount 1
+            $script:CapturedRows[0].Category | Should -Be 'Orphaned'
+        }
+
+        It 'R3 control: a recent resolved chain under a DIFFERENT parent does not affect the Unresolved chain' {
+            $OtherParent = script:New-FakeBackupObject -Name 'Other' -Id ([guid]::NewGuid())
+            $Elsewhere = script:New-FakeCandidateRestorePoint -Name 'elsewhere' -Type 'Increment' -BackupObject $OtherParent -CreationTimeUtc ([datetime]::UtcNow.AddHours(-2))
+            $script:VhcOrphanedSupersededCache.ResolvedGroups.Add(@($Elsewhere))
+
+            Get-VhcOrphanedSupersededBackups
+
+            $script:CapturedRows | Should -HaveCount 1
+            $script:CapturedRows[0].Category | Should -Be 'Orphaned'
+        }
+
+        It 'R3: a resolved sibling with an unusable timestamp keeps the Unresolved chain Unresolved (fail safe)' {
+            $Undated = script:New-FakeCandidateRestorePoint -Name 'undated' -Type 'Increment' -BackupObject $script:R3ChildAgent -CreationTimeUtc ([datetime]::MinValue)
+            $script:VhcOrphanedSupersededCache.ResolvedGroups.Add(@($Undated))
+
+            Get-VhcOrphanedSupersededBackups
+
+            $script:CapturedRows[0].Category | Should -Be 'Unresolved'
+        }
+
+        It 'R3: a recent Tier2Suppressed candidate under the same parent also keeps the Unresolved chain Unresolved' {
+            $Suppressed = script:New-FakeCandidateRestorePoint -Name 'suppressed' -Type 'Increment' -BackupObject $script:R3ChildAgent -CreationTimeUtc ([datetime]::UtcNow.AddHours(-2))
+            $script:VhcOrphanedSupersededCache.CandidateGroups.Add([PSCustomObject]@{ Reason = 'Tier2Suppressed'; CurrentJobId = [guid]::NewGuid().ToString(); RestorePoints = @($Suppressed) })
+
+            Get-VhcOrphanedSupersededBackups
+
+            @($script:CapturedRows | Where-Object { $_.ObjectName -eq 'old-vm' }).Category | Should -Be 'Unresolved'
+        }
+
+        It 'R3: tolerates a cache object that has no ResolvedGroups property' {
+            $script:VhcOrphanedSupersededCache.PSObject.Properties.Remove('ResolvedGroups')
+
+            { Get-VhcOrphanedSupersededBackups } | Should -Not -Throw
+            $script:CapturedRows[0].Category | Should -Be 'Orphaned'
         }
     }
 
@@ -578,8 +607,8 @@ Describe 'Get-VhcOrphanedSupersededBackups' {
         It 'known bug: R1 - does not call a <Reason> group Superseded when its newest point is inside the window' -ForEach @(
             @{ Reason = 'StaleObject' }
             @{ Reason = 'Tier2Suppressed' }
-        ) -Skip {
-            # known bug: R1 - Superseded ignores recency (Get-VhcOrphanedSupersededBackups.ps1 ~253)
+        ) {
+            # known bug: R1 - Superseded ignored recency (fixed: StaleObject/Tier2Suppressed use the same window as Unresolved)
             $rows = script:Invoke-CategoryProbe -Reason $Reason -AgesInDays @(0.04)
             $script:CapturedRows | Should -HaveCount 1
             $script:CapturedRows[0].Category | Should -Be 'Unresolved'
@@ -591,6 +620,44 @@ Describe 'Get-VhcOrphanedSupersededBackups' {
         ) {
             $rows = script:Invoke-CategoryProbe -Reason $Reason -AgesInDays @(60)
             $script:CapturedRows | Should -HaveCount 1
+            $script:CapturedRows[0].Category | Should -Be 'Superseded'
+        }
+    }
+
+    Context 'R1: window edge and unusable timestamps for Superseded' {
+        It 'R1: a <Reason> group with a future-dated newest point is Unresolved (unusable/future counts as active)' -ForEach @(
+            @{ Reason = 'StaleObject' }
+            @{ Reason = 'Tier2Suppressed' }
+        ) {
+            script:Invoke-CategoryProbe -Reason $Reason -AgesInDays @(-3)
+            $script:CapturedRows[0].Category | Should -Be 'Unresolved'
+        }
+
+        It 'R1: a <Reason> group with an unusable timestamp is Unresolved' -ForEach @(
+            @{ Reason = 'StaleObject' }
+            @{ Reason = 'Tier2Suppressed' }
+        ) {
+            script:Invoke-CategoryProbe -Reason $Reason -AgesInDays @(60, $null)
+            $script:CapturedRows | ForEach-Object { $_.Category | Should -Be 'Unresolved' }
+        }
+
+        It 'R1: respects -ActiveChainWindowDays for Superseded (3-day-old group: Unresolved at 35, Superseded at 1)' {
+            script:Invoke-CategoryProbe -Reason 'StaleObject' -AgesInDays @(3)
+            $script:CapturedRows[0].Category | Should -Be 'Unresolved'
+            $script:CapturedRows.Clear()
+            script:Invoke-CategoryProbe -Reason 'StaleObject' -AgesInDays @(3) -ExtraParams @{ ActiveChainWindowDays = 1 }
+            $script:CapturedRows[0].Category | Should -Be 'Superseded'
+        }
+
+        It 'R1: an old StaleObject chain stays Superseded even when a live sibling shares its parent (judged on its own points)' {
+            $Parent = script:New-FakeBackupObject -Name 'PerVmJob' -Id ([guid]::NewGuid())
+            $Old  = script:New-FakeCandidateRestorePoint -Name 'removed-vm' -Type 'Full' -BackupObject $Parent -CreationTimeUtc ([datetime]::UtcNow.AddDays(-60))
+            $Live = script:New-FakeCandidateRestorePoint -Name 'live-vm' -Type 'Full' -BackupObject $Parent -CreationTimeUtc ([datetime]::UtcNow.AddHours(-1))
+            $script:VhcOrphanedSupersededCache = [PSCustomObject]@{ SweepRan = $true; CandidateGroups = [System.Collections.Generic.List[object]]::new() }
+            $script:VhcOrphanedSupersededCache.CandidateGroups.Add([PSCustomObject]@{ Reason = 'StaleObject'; CurrentJobId = [guid]::NewGuid().ToString(); RestorePoints = @($Old) })
+
+            Get-VhcOrphanedSupersededBackups
+
             $script:CapturedRows[0].Category | Should -Be 'Superseded'
         }
     }
@@ -630,7 +697,7 @@ Describe 'Get-VhcOrphanedSupersededBackups' {
 
     It 'exports a Superseded row for a Tier2Suppressed/StaleObject group, using the given CurrentJobId' {
         $Backup = script:New-FakeBackupObject -Name 'VBR Managed Agents - Windows' -TypeToString 'Windows Agent Policy'
-        $Point  = script:New-FakeCandidateRestorePoint -Name 'WindowsAgent08' -Type 'Increment' -ApproxSize 8GB -BackupObject $Backup
+        $Point  = script:New-FakeCandidateRestorePoint -Name 'WindowsAgent08' -Type 'Increment' -ApproxSize 8GB -BackupObject $Backup -CreationTimeUtc ([datetime]::UtcNow.AddDays(-60))
         $RealJobId = [guid]::NewGuid()
         $script:VhcOrphanedSupersededCache = [PSCustomObject]@{
             SweepRan        = $true
@@ -659,7 +726,7 @@ Describe 'Get-VhcOrphanedSupersededBackups' {
         # truthiness, or this candidate gets misclassified as 'Orphaned'
         # ("no live job") when the opposite is true.
         $Backup = script:New-FakeBackupObject -Name 'VBR Managed Agents - Windows' -TypeToString 'Windows Agent Policy'
-        $Point  = script:New-FakeCandidateRestorePoint -Name 'WindowsAgent08' -Type 'Increment' -ApproxSize 8GB -BackupObject $Backup
+        $Point  = script:New-FakeCandidateRestorePoint -Name 'WindowsAgent08' -Type 'Increment' -ApproxSize 8GB -BackupObject $Backup -CreationTimeUtc ([datetime]::UtcNow.AddDays(-60))
         $script:VhcOrphanedSupersededCache = [PSCustomObject]@{
             SweepRan        = $true
             CandidateGroups = [System.Collections.Generic.List[object]]::new()
