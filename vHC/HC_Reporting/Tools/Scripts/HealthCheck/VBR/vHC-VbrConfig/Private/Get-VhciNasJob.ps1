@@ -18,7 +18,7 @@ function Get-VhciNasJob {
     $nasBCJ    = $null
 
     Write-LogFile "Calling Get-VBRUnstructuredBackupJob..."
-    $nasBackup = Get-VBRUnstructuredBackupJob
+    $nasBackup = @(Get-VhciNasJobResilient)
     Write-LogFile "Found $(@($nasBackup).Count) NAS backup jobs"
 
     if (@($nasBackup).Count -gt 0) {
@@ -26,7 +26,12 @@ function Get-VhciNasJob {
         # Get-VBRUnstructuredBackupRestorePoint requires VBRUnstructuredBackup objects,
         # not the VBRNASBackupJob objects returned by Get-VBRUnstructuredBackupJob.
         Write-LogFile "Calling Get-VBRUnstructuredBackup for restore-point size metrics..."
-        $unstructuredBackups = @(Get-VBRUnstructuredBackup)
+        $unstructuredBackups = @()
+        try {
+            $unstructuredBackups = @(Get-VBRUnstructuredBackup)
+        } catch {
+            Write-LogFile "Warning: Get-VBRUnstructuredBackup failed, NAS size metrics will be 0: $($_.Exception.Message)" -LogLevel "WARNING"
+        }
         Write-LogFile "Found $(@($unstructuredBackups).Count) unstructured backup chain(s)"
 
         $jobCounter = 0
@@ -81,11 +86,67 @@ function Get-VhciNasJob {
         }
     }
 
-    $nasBCJ = Get-VBRNASBackupCopyJob
+    # No per-job path is known for copy jobs; a failure here must still not
+    # stop the NAS backup rows from being written below.
+    try {
+        $nasBCJ = Get-VBRNASBackupCopyJob
+    } catch {
+        Write-LogFile "Warning: Get-VBRNASBackupCopyJob failed, NAS backup copy jobs are missing from the report: $($_.Exception.Message)" -LogLevel "WARNING"
+    }
     Write-LogFile "Found $(@($nasBCJ).Count) NAS backup copy jobs"
 
     $nasBackup | Export-VhciCsv -FileName '_nasBackup.csv'
     $nasBCJ    | Export-VhciCsv -FileName '_nasBCJ.csv'
 
     Write-LogFile ($message + "DONE")
+}
+
+function Get-VhciNasJobResilient {
+    <#
+    .Synopsis
+        Returns NAS backup jobs, tolerating jobs the SDK cannot wrap.
+    .Description
+        Get-VBRUnstructuredBackupJob wraps every NAS job while enumerating, so
+        one job whose repository was deleted ("Failed to wrap nas backup job
+        [id]: Backup repository 'id' was not found") makes the whole call throw
+        and no job is returned (observed on a VBR 13 lab; whether the cmdlet
+        throws on the first bad job or after wrapping all is not visible from
+        the error). On failure this falls back to one call per job name, names
+        taken from Get-VBRUnstructuredBackup, each in its own try/catch.
+
+        UNCONFIRMED SDK BEHAVIOUR (needs a live run on VBR 12 and 13): that
+        Get-VBRUnstructuredBackupJob accepts -Name, that a -Name call wraps only
+        the named job, and that a job's backup chain shares the job's name (the
+        existing size-metric code already relies on the name match). A NAS job
+        with no backup chain yet is not found by the fallback; this is logged.
+    #>
+    [CmdletBinding()]
+    param()
+
+    try {
+        return @(Get-VBRUnstructuredBackupJob)
+    } catch {
+        Write-LogFile "Warning: Get-VBRUnstructuredBackupJob failed for the whole list ($($_.Exception.Message)); retrying one job at a time." -LogLevel "WARNING"
+    }
+
+    $names = @()
+    try {
+        $names = @(Get-VBRUnstructuredBackup | ForEach-Object { $_.Name } | Where-Object { $_ } | Select-Object -Unique)
+    } catch {
+        Write-LogFile "Warning: Get-VBRUnstructuredBackup failed, cannot list NAS jobs one at a time; NAS backup jobs are missing from the report: $($_.Exception.Message)" -LogLevel "WARNING"
+        return @()
+    }
+
+    $jobs = [System.Collections.Generic.List[object]]::new()
+    foreach ($name in $names) {
+        try {
+            foreach ($j in @(Get-VBRUnstructuredBackupJob -Name $name)) {
+                if ($null -ne $j) { $jobs.Add($j) }
+            }
+        } catch {
+            Write-LogFile "Warning: skipping NAS job '$name': $($_.Exception.Message)" -LogLevel "WARNING"
+        }
+    }
+    Write-LogFile "Per-job NAS collection returned $($jobs.Count) of $($names.Count) job name(s). NAS jobs without a backup chain cannot be found this way."
+    return @($jobs)
 }
