@@ -1,0 +1,102 @@
+using System.Globalization;
+using System.Net;
+using VeeamHealthCheck.Functions.Reporting.Html.VBR.VbrTables.Jobs_Info;
+using VhcXTests.TestData;
+using Xunit;
+
+namespace VhcXTests.Functions.Reporting.Html;
+
+[Collection("GlobalState")]
+public sealed class JobInfoNasSizeTests
+{
+    private const string NasJobName = "NAS-Orphaned-Repo-Job";
+    private const string ImportFailedMessage = "Job Info Data import failed";
+
+    [Fact]
+    public void RunFullVbrReport_NasJobWithNasBackupCsvMissing_RendersJobInfoWithoutImportError()
+    {
+        using var report = new GoldenVbrReport();
+        AddNasJobToJobsCsv(report.Input, NasJobName);
+        DeleteNasBackupCsv(report.Input);
+
+        string html = WebUtility.HtmlDecode(report.Generate(scrub: false));
+
+        AssertNoImportError(report);
+        Assert.Contains(NasJobName, html);
+    }
+
+    [Fact]
+    public void RunFullVbrReport_NasJobAbsentFromNasBackupCsv_RendersJobInfoWithoutImportError()
+    {
+        using var report = new GoldenVbrReport();
+        AddNasJobToJobsCsv(report.Input, NasJobName);
+
+        string html = WebUtility.HtmlDecode(report.Generate(scrub: false));
+
+        AssertNoImportError(report);
+        Assert.Contains(NasJobName, html);
+    }
+
+    [Fact]
+    public void RunFullVbrReport_NasJobPresentInNasBackupCsv_ShowsSizeFromCsv()
+    {
+        using var report = new GoldenVbrReport();
+        AddNasJobToJobsCsv(report.Input, "NAS-FileShare-Backup");
+
+        string html = WebUtility.HtmlDecode(report.Generate(scrub: false));
+
+        AssertNoImportError(report);
+        Assert.Contains("512", html);
+    }
+
+    [Fact]
+    public void ParseSizeGb_NullValue_ReturnsZero()
+    {
+        Assert.Equal(0, CJobInfoTable.ParseSizeGb(null!));
+    }
+
+    [Theory]
+    [InlineData("", 0)]
+    [InlineData("not-a-number", 0)]
+    [InlineData("256.75", 256.75)]
+    [InlineData("1024.50", 1024.5)]
+    public void ParseSizeGb_StringValue_ParsesInvariantOrReturnsZero(string raw, double expected)
+    {
+        CultureInfo previous = CultureInfo.CurrentCulture;
+        CultureInfo.CurrentCulture = new CultureInfo("de-DE");
+        try
+        {
+            Assert.Equal(expected, CJobInfoTable.ParseSizeGb(raw));
+        }
+        finally
+        {
+            CultureInfo.CurrentCulture = previous;
+        }
+    }
+
+    private static void AssertNoImportError(GoldenVbrReport report)
+    {
+        string[] lines = File.ReadAllLines(Path.Combine(report.Root, "report.log"));
+        int failed = Array.FindIndex(lines, line => line.Contains(ImportFailedMessage, StringComparison.Ordinal));
+        string detail = failed < 0 ? string.Empty : string.Join(Environment.NewLine, lines.Skip(failed).Take(3));
+        Assert.True(failed < 0, "Job Info import logged an error:" + Environment.NewLine + detail);
+    }
+
+    private static void DeleteNasBackupCsv(string input)
+    {
+        string[] files = Directory.GetFiles(input, "*nasBackup.csv");
+        Assert.Single(files);
+        File.Delete(files[0]);
+    }
+
+    // Appends a NasBackup row to the copied _Jobs.csv by reusing the columns of the first golden row.
+    private static void AddNasJobToJobsCsv(string input, string name)
+    {
+        string jobsCsv = Assert.Single(Directory.GetFiles(input, "*_Jobs.csv"));
+        string template = File.ReadAllLines(jobsCsv)[1];
+        int afterName = template.IndexOf("\",\"", StringComparison.Ordinal);
+        int afterType = template.IndexOf("\",\"", afterName + 3, StringComparison.Ordinal);
+        string nasRow = "\"" + name + "\",\"NasBackup" + template.Substring(afterType);
+        File.AppendAllText(jobsCsv, Environment.NewLine + nasRow + Environment.NewLine);
+    }
+}

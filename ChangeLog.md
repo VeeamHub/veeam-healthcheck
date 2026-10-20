@@ -28,6 +28,7 @@ checksums, and scan results.
 
 ### Fixed
 
+- The Job Info table no longer fails to load when NAS job data is missing.
 - Importing CSVs with `/import` now produces only the report for the product the files came from. A VB365
   import no longer also writes an empty VBR report, and a VBR import no longer writes a VB365 report.
 - A complete VB365 export is no longer reported as missing a critical file (`LocalRepositories.csv`).

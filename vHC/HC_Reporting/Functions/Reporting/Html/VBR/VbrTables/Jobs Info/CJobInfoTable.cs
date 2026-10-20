@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
 using VeeamHealthCheck.Functions.Reporting.CsvHandlers;
 using VeeamHealthCheck.Functions.Reporting.DataFormers.AgentJobs;
@@ -20,6 +21,18 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR.VbrTables.Jobs_Info
         private readonly CDataFormer df = new();
         private readonly CVbrSummaries sum = new();
         private readonly CLogger log = CGlobals.Logger;
+
+        /// <summary>
+        /// Parses a size-in-GB cell read from a dynamic CSV row. The value is converted to a string
+        /// first so a null (job missing from the CSV, or the CSV absent) never reaches a dynamically
+        /// bound <c>double.TryParse</c> call, which cannot pick an overload for a null argument.
+        /// Unknown or unparseable values yield 0, matching the table's existing default.
+        /// </summary>
+        internal static double ParseSizeGb(object raw)
+        {
+            string text = Convert.ToString(raw, CultureInfo.InvariantCulture);
+            return double.TryParse(text, NumberStyles.Any, CultureInfo.InvariantCulture, out double value) ? value : 0;
+        }
 
         // Job types that support Application Aware Image Processing (guest OS quiescence)
         private static readonly HashSet<string> AaipSupportedJobTypes = new(StringComparer.OrdinalIgnoreCase)
@@ -121,14 +134,14 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR.VbrTables.Jobs_Info
                                 var diskGb = x.Where(x => x.name == job.Name)
                                     .Select(x => x.ondiskgb)
                                     .FirstOrDefault();
-                                double.TryParse(diskGb, out onDiskGB);
+                                onDiskGB = ParseSizeGb(diskGb);
                                 onDiskGB = Math.Round(onDiskGB, 2);
                                 onDiskTotalGB += onDiskGB;
 
                                 var sourceGb = x.Where(x => x.name == job.Name)
                                     .Select(x => x.sourcegb)
                                     .FirstOrDefault();
-                                double.TryParse(sourceGb, out sourceSizeGB);
+                                sourceSizeGB = ParseSizeGb(sourceGb);
                                 sourceSizeGB = Math.Round(sourceSizeGB, 2);
                             }
                             else
