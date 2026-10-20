@@ -15,12 +15,12 @@ BeforeAll {
 
     # ---- scripted gh -------------------------------------------------------------------------------------------
     function script:New-Scenario {
-        param([string]$Title = 'ci: change the live jobs', [string]$Body = '', [object[]]$Files, [object[]]$Runs = @(), [object[]]$CheckRuns = @(), [string]$HeadSha = ('a' * 40), [string]$Branch = 'ci/x', [string]$State = 'open', [bool]$Fork = $false, [string]$CommitMsg = 'ci: change the live jobs')
+        param([string]$Title = 'ci: change the live jobs', [string]$Body = '', [object[]]$Files, [object[]]$Runs = @(), [object[]]$CheckRuns = @(), [object[]]$Statuses = @(), [string]$HeadSha = ('a' * 40), [string]$Branch = 'ci/x', [string]$State = 'open', [bool]$Fork = $false, [string]$CommitMsg = 'ci: change the live jobs')
         @{
             Pr = @{ number = 900; title = $Title; body = $Body; state = $State; merged = $false; draft = $false; html_url = 'https://github.com/o/r/pull/900'; user = @{ login = 'adam' }
                 base = @{ ref = 'dev'; sha = ('b' * 40); repo = @{ full_name = 'o/r' } }
                 head = @{ ref = $Branch; sha = $HeadSha; repo = @{ full_name = $(if ($Fork) { 'fork/r' } else { 'o/r' }) } } }
-            Files = $Files; Runs = $Runs; CheckRuns = $CheckRuns; Commits = @(@{ commit = @{ message = $CommitMsg } })
+            Files = $Files; Runs = $Runs; CheckRuns = $CheckRuns; Statuses = $Statuses; Commits = @(@{ commit = @{ message = $CommitMsg } })
             Calls = [System.Collections.Generic.List[string]]::new(); Comments = [System.Collections.Generic.List[object]]::new(); BranchTip = $HeadSha
         }
     }
@@ -38,6 +38,7 @@ BeforeAll {
             if ($j -match '/pulls/900/commits') { return $(if ($page -eq 1) { ConvertTo-Json @($S.Commits) -Depth 20 } else { '[]' }) }
             if ($j -match 'actions/runs\?head_sha=') { return (@{ workflow_runs = $(if ($page -eq 1) { @($S.Runs) } else { @() }) } | ConvertTo-Json -Depth 20) }
             if ($j -match '/check-runs') { return (@{ check_runs = $(if ($page -eq 1) { @($S.CheckRuns) } else { @() }) } | ConvertTo-Json -Depth 20) }
+            if ($j -match '/commits/[0-9a-f]+/statuses') { return $(if ($page -eq 1) { ConvertTo-Json @($S.Statuses) -Depth 5 -AsArray } else { '[]' }) }
             if ($j -match 'git/ref/heads/') { return (@{ object = @{ sha = $S.BranchTip } } | ConvertTo-Json) }
             if ($j -match 'git/trees/') { return (@{ tree = @(git -C $root ls-files | ForEach-Object { @{ type = 'blob'; path = $_ } }) } | ConvertTo-Json -Depth 5) }
             if ($j -match '^api repos/o/r/contents/(?<p>[^?]+)\?ref=') {
@@ -76,6 +77,7 @@ BeforeAll {
     }
     function script:New-Run { param([int]$Id, [string]$Path, [string]$Event = 'pull_request', [string]$Sha = ('a' * 40), [int]$Suite = $Id, [string]$Created = '2026-10-19T10:00:00Z') @{ id = $Id; path = ".github/workflows/$Path"; event = $Event; status = 'completed'; head_sha = $Sha; check_suite_id = $Suite; created_at = $Created; html_url = "https://github.com/o/r/actions/runs/$Id" } }
     function script:New-CheckRun { param([int]$Id, [string]$Name, [int]$Suite, [string]$Status = 'completed', $Conclusion = 'success') @{ id = $Id; name = $Name; status = $Status; conclusion = $Conclusion; check_suite = @{ id = $Suite }; html_url = "https://github.com/o/r/runs/$Id" } }
+    function script:New-Status { param([int]$Id, [string]$Description, [string]$State = 'success', [string]$Context = 'verify-vhc/windows-host', [string]$Created = '2026-10-19T12:00:00Z') @{ id = $Id; state = $State; context = $Context; description = $Description; created_at = $Created; target_url = '' } }
     $script:LabJobs = 'integration-test-vbr-2', 'integration-test-vbr-13-sql', 'integration-test-vbr-12'
 }
 
@@ -436,6 +438,75 @@ Describe 'end to end on scripted PRs (offline)' {
             $r = Invoke-Scenario $s -Comment
             $s.Comments.Count | Should -Be 0
             $r.CommentNote | Should -Match 'fork'
+        }
+    }
+}
+
+Describe 'windows-host commit status (vhc-verify.sh winhost --status)' {
+    BeforeAll {
+        $script:Green = 'build ok; xunit 1180 pass 0 fail 15 skip; live ok 8 checks; gui 3 pass 0 fail 0 skip'
+        # A GUI test project change maps to the gui and build-tests surfaces; the headless/cross-platform CI job is green.
+        function script:New-GuiScenario {
+            param([object[]]$Statuses = @())
+            $run = New-Run -Id 500 -Path 'crossplatform-tests.yml' -Suite 500
+            $crs = @(New-CheckRun -Id 501 -Name 'test-crossplatform (ubuntu-latest)' -Suite 500)
+            $files = @(@{ filename = 'vHC/VhcGuiE2ETests/VhcAppSession.cs'; status = 'modified'; patch = '@@ -1,1 +1,1 @@' + "`n-a`n+b`n" })
+            New-Scenario -Title 'test(gui-e2e): fix a picker id' -CommitMsg 'test(gui-e2e): fix a picker id' -Files $files -Runs @($run) -CheckRuns $crs -Statuses $Statuses
+        }
+    }
+    Context 'Get-StatusStepResult' {
+        It 'passes a step that the success status names with no failures' {
+            $st = @(New-Status -Id 1 -Description $script:Green)
+            foreach ($step in 'build', 'xunit', 'live', 'gui') { (Get-StatusStepResult -Statuses $st -Context 'verify-vhc/windows-host' -Step $step).State | Should -Be 'passed' -Because $step }
+        }
+        It 'does not count a step the description does not name' {
+            $st = @(New-Status -Id 1 -Description 'build ok; xunit 10 pass 0 fail 0 skip')
+            (Get-StatusStepResult -Statuses $st -Context 'verify-vhc/windows-host' -Step 'gui').State | Should -Be 'none'
+            (Get-StatusStepResult -Statuses $st -Context 'verify-vhc/windows-host' -Step 'live').State | Should -Be 'none'
+        }
+        It 'fails a step with failures, and a failure state never vouches for a step' {
+            $st = @(New-Status -Id 1 -State failure -Description 'build ok; xunit 10 pass 2 fail 0 skip; gui 3 pass 0 fail 0 skip')
+            (Get-StatusStepResult -Statuses $st -Context 'verify-vhc/windows-host' -Step 'xunit').State | Should -Be 'failed'
+            (Get-StatusStepResult -Statuses $st -Context 'verify-vhc/windows-host' -Step 'gui').State | Should -Be 'failed'
+        }
+        It 'does not count a GUI suite that skipped tests' {
+            $st = @(New-Status -Id 1 -Description 'build ok; xunit 10 pass 0 fail 0 skip; gui 2 pass 0 fail 1 skip')
+            (Get-StatusStepResult -Statuses $st -Context 'verify-vhc/windows-host' -Step 'gui').State | Should -Be 'none'
+        }
+        It 'only the newest status of the context counts' {
+            $old = New-Status -Id 1 -Description $script:Green -Created '2026-10-19T10:00:00Z'
+            $new = New-Status -Id 2 -State failure -Description 'build ok; xunit 10 pass 1 fail 0 skip' -Created '2026-10-19T11:00:00Z'
+            (Get-StatusStepResult -Statuses @($old, $new) -Context 'verify-vhc/windows-host' -Step 'xunit').State | Should -Be 'failed'
+        }
+        It 'ignores other contexts' {
+            $st = @(New-Status -Id 1 -Context 'some/other' -Description $script:Green)
+            (Get-StatusStepResult -Statuses $st -Context 'verify-vhc/windows-host' -Step 'gui').State | Should -Be 'none'
+        }
+    }
+    Context 'a PR touching GUI test code' {
+        It 'NEEDS-RUN with no status, and the remedy names the winhost command' {
+            $r = Invoke-Scenario (New-GuiScenario)
+            $r.Verdict | Should -Be 'NEEDS-RUN'
+            $r.Markdown | Should -Match 'winhost <ID> --live --gui --status'
+        }
+        It 'VERIFIED when the status on the head SHA covers xunit and gui' {
+            $r = Invoke-Scenario (New-GuiScenario -Statuses @(New-Status -Id 1 -Description $script:Green))
+            $r.Verdict | Should -Be 'VERIFIED' -Because $r.Markdown
+        }
+        It 'NEEDS-RUN when the status ran gui with a skipped test' {
+            $r = Invoke-Scenario (New-GuiScenario -Statuses @(New-Status -Id 1 -Description 'build ok; xunit 1180 pass 0 fail 15 skip; gui 2 pass 0 fail 1 skip'))
+            $r.Verdict | Should -Be 'NEEDS-RUN'
+        }
+        It 'FAILED when the status reports failures' {
+            $r = Invoke-Scenario (New-GuiScenario -Statuses @(New-Status -Id 1 -State failure -Description 'build ok; xunit 1180 pass 0 fail 15 skip; gui 2 pass 1 fail 0 skip'))
+            $r.Verdict | Should -Be 'FAILED'
+        }
+    }
+    Context 'the map' {
+        It 'rejects a status entry with an unknown step or no context' {
+            $m = (Get-Content -LiteralPath $script:MapPath -Raw) | ConvertFrom-Json -Depth 32
+            $m.surfaces.gui.checks[1].status[0].step = 'bogus'
+            (Test-PrSurfaceMap -Map $m -RepoRoot $script:Root -TrackedFiles $script:Tracked) -join "`n" | Should -Match "unknown status step 'bogus'"
         }
     }
 }

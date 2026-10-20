@@ -8,6 +8,7 @@ $ErrorActionPreference = 'Stop'
 
 $script:KnownLocal    = @('build', 'import-report', 'import-scrub', 'cli-checks', 'cli-matrix', 'import-layouts', 'render', 'tests', 'pester')
 $script:KnownBuiltin  = @('docs-sanity', 'changelog-format', 'shell-syntax', 'json-syntax')
+$script:KnownStatusStep = @('build', 'xunit', 'live', 'gui')
 $script:KnownTrigger  = @('pr', 'pr-path-filtered', 'pr-same-repo-only', 'pr-fork-only', 'push-or-dispatch', 'dispatch-only', 'publish-only', 'scheduled', 'self')
 $script:ReportMarker  = '<!-- vhc-pr-verify -->'
 $script:Repo          = $null
@@ -18,6 +19,7 @@ $script:Cache         = @{}
 function Get-PrVerifyKnownLocal { $script:KnownLocal }
 function Get-PrVerifyKnownBuiltin { $script:KnownBuiltin }
 function Get-PrVerifyKnownTrigger { $script:KnownTrigger }
+function Get-PrVerifyKnownStatusStep { $script:KnownStatusStep }
 function Get-PrVerifyMarker { $script:ReportMarker }
 
 function Initialize-PrVerify {
@@ -365,6 +367,32 @@ function Resolve-CiEntries {
     [pscustomobject]@{ State = $state; Alts = $alts }
 }
 
+function Get-StatusStepResult {
+    # A commit status posted by `vhc-verify.sh winhost --status` on the head SHA -> did it exercise $Step?
+    # The description is a fixed counts-only grammar (see vhc-verify.sh wh_status_description):
+    #   build ok | build FAIL; xunit P pass F fail S skip; live ok N checks | live FAIL K of N checks; gui P pass F fail S skip
+    # Only the newest status of the context counts, so a later failing run overrides an earlier green one. A step that is
+    # not named in the description was not run and is reported 'none', never passed.
+    param($Statuses, [string]$Context, [string]$Step)
+    $latest = @($Statuses | Where-Object { $_.context -eq $Context } | Sort-Object { [datetime]$_.created_at }, { [long]$_.id } -Descending) | Select-Object -First 1
+    if (-not $latest) { return [pscustomobject]@{ State = 'none'; Detail = "no '$Context' status on this SHA"; Url = '' } }
+    $url = [string]$latest.target_url
+    $segment = @(([string]$latest.description) -split ';\s*' | Where-Object { $_ -match "^$([regex]::Escape($Step))\b" }) | Select-Object -First 1
+    if (-not $segment) { return [pscustomobject]@{ State = 'none'; Detail = "status '$Context' ($($latest.state)) does not cover '$Step': $($latest.description)"; Url = $url } }
+    $rest = ($segment -replace "^$([regex]::Escape($Step))\s*", '')
+    $state =
+        if ($rest -cmatch '\bFAIL\b') { 'failed' }
+        elseif ($rest -match '^(\d+) pass (\d+) fail(?: (\d+) skip)?') {
+            # a GUI suite with skipped tests did not run everything (the full-Run test needs --live), so it does not count
+            if ([int]$Matches[2] -gt 0) { 'failed' } elseif ([int]$Matches[1] -gt 0 -and -not ($Step -eq 'gui' -and $Matches[3] -and [int]$Matches[3] -gt 0)) { 'passed' } else { 'none' }
+        }
+        elseif ($rest -match '^ok\b') { 'passed' }
+        else { 'none' }
+    # a success state can only vouch for a passing step, and a failure state never for one
+    if ($state -eq 'passed' -and $latest.state -ne 'success') { $state = 'failed' }
+    [pscustomobject]@{ State = $state; Detail = "status '$Context' is $($latest.state): $($latest.description)"; Url = $url }
+}
+
 function Get-CheckResult {
     param($Map, $Check, $Ctx, [bool]$Required = $true)
     $id = $Check.id; $title = $Check.title
@@ -396,6 +424,16 @@ function Get-CheckResult {
         }
     }
 
+    $statusEntries = @(Get-MapProp $Check 'status' @())
+    $statusState = 'none'; $statusDetail = ''
+    if ($statusEntries.Count -gt 0) {
+        $sr = @($statusEntries | ForEach-Object { Get-StatusStepResult -Statuses @($Ctx.Statuses) -Context $_.context -Step $_.step })
+        $statusState = Merge-CheckStates @($sr | ForEach-Object { $_.State -replace '^none$', 'skipped' })
+        if ($statusState -eq 'skipped') { $statusState = 'none' }
+        $statusDetail = ($sr | ForEach-Object { $_.Detail }) -join ' | '
+        if (-not $url) { $url = (@($sr | ForEach-Object { $_.Url } | Where-Object { $_ }) | Select-Object -First 1) }
+    }
+
     $localStatus = 'none'; $localDetail = ''
     if ($localIds.Count -gt 0 -and $Ctx.Local.Count -gt 0) {
         $res = @($localIds | ForEach-Object { $Ctx.Local[$_] })
@@ -409,15 +447,19 @@ function Get-CheckResult {
     }
 
     $status =
-        if ($ciStatus -eq 'failed' -or $localStatus -eq 'failed') { 'failed' }
-        elseif ($ciStatus -eq 'passed' -or $localStatus -eq 'passed') { 'passed' }
+        if ($ciStatus -eq 'failed' -or $localStatus -eq 'failed' -or $statusState -eq 'failed') { 'failed' }
+        elseif ($ciStatus -eq 'passed' -or $localStatus -eq 'passed' -or $statusState -eq 'passed') { 'passed' }
         elseif ($ciStatus -eq 'pending') { 'pending' }
         elseif ($ciStatus -eq 'cancelled') { 'not-run' }
         else { 'not-run' }
-    $detail = (@($ciDetail, $localDetail) | Where-Object { $_ }) -join ' || '
+    $detail = (@($ciDetail, $statusDetail, $localDetail) | Where-Object { $_ }) -join ' || '
+    if ($statusEntries.Count -gt 0 -and $status -eq 'not-run') {
+        $steps = (@($statusEntries | ForEach-Object { $_.step }) | Select-Object -Unique) -join ', '
+        $remedy = @($remedy) + "from a clean checkout of the PR head, on a Windows host: $($script:VerifyCmd) winhost <ID> --live --gui --status    # needs VHC_WINHOST; posts the 'verify-vhc/windows-host' status that covers: $steps"
+    }
     if ($status -eq 'passed' -and $ciStatus -ne 'passed') { $remedy = @() }
     if ($status -eq 'passed' -or $status -eq 'failed') { $remedy = @() }
-    $kind = if ($ciEntries.Count -gt 0) { 'ci' } else { 'local' }
+    $kind = if ($ciEntries.Count -gt 0) { 'ci' } elseif ($statusEntries.Count -gt 0 -and $localIds.Count -eq 0) { 'status' } else { 'local' }
     New-CheckResult -Id $id -Title $title -Status $status -Detail $detail -Remedy $remedy -Required $Required -Kind $kind -Url $url -Lab $lab
 }
 
@@ -507,9 +549,13 @@ function Test-PrSurfaceMap {
             if ($ids -contains $c.id) { $p.Add("$where is duplicated") }
             $ids += $c.id
             if (-not (Get-MapProp $c 'title')) { $p.Add("$where has no title") }
-            $has = @('ci', 'local', 'builtin', 'human') | Where-Object { Get-MapProp $c $_ }
-            if (@($has).Count -eq 0) { $p.Add("$where has none of ci/local/builtin/human") }
+            $has = @('ci', 'local', 'builtin', 'human', 'status') | Where-Object { Get-MapProp $c $_ }
+            if (@($has).Count -eq 0) { $p.Add("$where has none of ci/local/builtin/human/status") }
             if ((Get-MapProp $c 'builtin') -and (Get-MapProp $c 'builtin') -notin $script:KnownBuiltin) { $p.Add("$where names unknown builtin '$($c.builtin)'") }
+            foreach ($st in @(Get-MapProp $c 'status' @())) {
+                if (-not (Get-MapProp $st 'context')) { $p.Add("$where has a status entry with no context") }
+                if ((Get-MapProp $st 'step') -notin $script:KnownStatusStep) { $p.Add("$where names unknown status step '$((Get-MapProp $st 'step'))'") }
+            }
             foreach ($l in @(Get-MapProp $c 'local' @())) { if ($l -notin $script:KnownLocal) { $p.Add("$where names unknown local check '$l'") } }
             foreach ($e in @(Get-MapProp $c 'ci' @())) {
                 $wf = Get-MapProp $Map.workflows $e.workflow
@@ -925,4 +971,4 @@ Export-ModuleMember -Function Initialize-PrVerify, Invoke-Gh, Invoke-GhJson, Get
     New-CheckResult, Get-CheckResult, Get-WorkflowSurfaceChecks, Get-SurfaceVerdict, Get-OverallVerdict, Test-DispatchAllowed,
     Get-MarkdownProblems, Invoke-DocsSanity, Get-ChangelogProblems, Invoke-ChangelogFormat, Invoke-ShellSyntax, Invoke-JsonSyntax,
     Get-CommitType, Get-Hygiene, Get-ChangelogUnreleasedAdditions, Format-PrReportMarkdown,
-    Test-PrSurfaceMap, Get-PinRatio, Get-PrVerifyKnownLocal, Get-PrVerifyKnownBuiltin, Get-PrVerifyKnownTrigger, Get-PrVerifyMarker
+    Test-PrSurfaceMap, Get-PinRatio, Get-PrVerifyKnownLocal, Get-PrVerifyKnownBuiltin, Get-PrVerifyKnownTrigger, Get-PrVerifyKnownStatusStep, Get-StatusStepResult, Get-PrVerifyMarker

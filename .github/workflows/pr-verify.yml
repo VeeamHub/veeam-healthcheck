@@ -41,6 +41,7 @@ jobs:
       contents: read
       pull-requests: write   # the sticky comment (same-repo PRs only; fork PRs get a read-only token)
       checks: read
+      statuses: read         # the verify-vhc/windows-host commit status (vhc-verify.sh winhost --status)
       actions: read
     env:
       PR_VERIFY_STRICT: 'false'

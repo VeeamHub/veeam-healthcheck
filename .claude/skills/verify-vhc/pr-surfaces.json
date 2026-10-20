@@ -196,11 +196,12 @@
         },
         {
           "id": "windows-build-and-tests",
-          "title": "Windows build and full VhcXTests on the PR (pr-release-prep)",
+          "title": "Windows build and full VhcXTests, Windows-only tests included (pr-release-prep, or a verify-vhc/windows-host status on the head SHA)",
           "ci": [
             { "workflow": "pr-release-prep.yml", "job": "test-same-repo-pr" },
             { "workflow": "pr-release-prep.yml", "job": "build-for-pr" }
-          ]
+          ],
+          "status": [{ "context": "verify-vhc/windows-host", "step": "xunit" }]
         }
       ]
     },
@@ -311,12 +312,13 @@
         },
         {
           "id": "gui-e2e",
-          "title": "FlaUI end-to-end on the lab VBR 13 box: real window, console hidden, native folder picker, scrubbed GUI Run (push or dispatch only; needs an interactive runner session)",
-          "ci": [{ "workflow": "ci-cd.yaml", "job": "gui-e2e" }]
+          "title": "FlaUI end-to-end: real window, console hidden, native folder picker, scrubbed GUI Run (ci-cd gui-e2e on push or dispatch, or a verify-vhc/windows-host status from `winhost --live --gui` on the head SHA)",
+          "ci": [{ "workflow": "ci-cd.yaml", "job": "gui-e2e" }],
+          "status": [{ "context": "verify-vhc/windows-host", "step": "gui" }]
         }
       ],
       "residue": [
-        "gui-e2e never runs on a pull_request: dispatch ci-cd.yaml on the PR branch to exercise it, and treat it as unproven until its first green run",
+        "gui-e2e never runs on a pull_request: dispatch ci-cd.yaml on the PR branch, or run `vhc-verify.sh winhost <ID> --live --gui --status` on a Windows host you control (a status only counts when the suite ran with no skipped tests)",
         "Dialogs other than the terms prompt, the Import button, Manage Servers/credential prompts and real Windows rendering of the changed layout are not driven end to end"
       ]
     },
@@ -344,6 +346,12 @@
           "id": "live-vbr-2-remote",
           "title": "Live run against a remote VBR host (self-hosted lab)",
           "ci": [{ "workflow": "ci-cd.yaml", "job": "integration-test-vbr-2" }]
+        },
+        {
+          "id": "live-vbr-13-pg-winhost",
+          "title": "Live /run on a Windows host with a local VBR 13 on PostgreSQL (a verify-vhc/windows-host status from `winhost --live`; advisory, no CI job covers PostgreSQL)",
+          "required": false,
+          "status": [{ "context": "verify-vhc/windows-host", "step": "live" }]
         }
       ],
       "residue": [
@@ -383,6 +391,12 @@
           "id": "live-vbr-2-remote",
           "title": "Live run against a remote VBR host (self-hosted lab)",
           "ci": [{ "workflow": "ci-cd.yaml", "job": "integration-test-vbr-2" }]
+        },
+        {
+          "id": "live-vbr-13-pg-winhost",
+          "title": "Live /run on a Windows host with a local VBR 13 on PostgreSQL (a verify-vhc/windows-host status from `winhost --live`; advisory, no CI job covers PostgreSQL)",
+          "required": false,
+          "status": [{ "context": "verify-vhc/windows-host", "step": "live" }]
         }
       ]
     },
