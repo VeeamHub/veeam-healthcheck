@@ -35,25 +35,33 @@ namespace VhcGuiE2ETests
             // The window is up, so the startup hide has already happened.
             AssertConsoleHidden(app, "after launch");
 
-            // Not the unscrubbed-report/Explorer/browser side effects on a shared desktop.
-            Assert.True(VhcAppSession.PollTrue(() => app.CheckBox("scrubBox").IsChecked == true, TimeSpan.FromSeconds(60)), "scrub is not checked by default");
-            foreach (var id in new[] { "explorerShowBox", "htmlCheckBox" })
-            {
-                var box = app.CheckBox(id);
-                if (box.IsChecked == true)
-                {
-                    box.Toggle();
-                }
-            }
+            // Scrub is switched on explicitly rather than assumed (the default follows the user's saved settings), and the
+            // Explorer and browser pop-ups are switched off: nothing here should open windows on a shared desktop.
+            Assert.True(VhcAppSession.PollTrue(() => app.CheckBox("scrubBox").IsEnabled, TimeSpan.FromSeconds(60)), "scrub box never became available");
+            SetChecked(app.CheckBox("scrubBox"), true);
+            SetChecked(app.CheckBox("explorerShowBox"), false);
+            SetChecked(app.CheckBox("htmlCheckBox"), false);
 
             app.TextBox("pathBox").Text = outDir;
             Assert.True(VhcAppSession.PollTrue(() => SamePath(app.TextBox("pathBox").Text, outDir), TimeSpan.FromSeconds(5)), "path box did not take the output folder");
 
+            // Accepting the terms raises a confirm dialog; a non-elevated session also gets the "Administrator Privileges Recommended"
+            // confirm. Both are answered Yes (accept, continue) until Run enables.
             app.CheckBox("termsCheckBox").Toggle();
-            var terms = app.WaitForOtherWindow(TimeSpan.FromSeconds(20));
-            Assert.NotNull(terms);
-            VhcAppSession.ClickDialogButton(terms, "YesOkButton");
-            Assert.True(VhcAppSession.PollTrue(() => app.Button("run").IsEnabled, TimeSpan.FromSeconds(20)), "Run did not enable after accepting the terms");
+            Assert.True(
+                VhcAppSession.PollTrue(
+                    () =>
+                    {
+                        foreach (var dialog in app.OtherWindows())
+                        {
+                            this.output.WriteLine($"dialog before run: [{Redact.Clean(dialog.Title)}] {VhcAppSession.DialogText(dialog)}");
+                            VhcAppSession.ClickDialogButton(dialog, "YesOkButton");
+                        }
+
+                        return app.Button("run").IsEnabled;
+                    },
+                    TimeSpan.FromSeconds(40)),
+                "Run did not enable after accepting the terms");
 
             app.Button("run").Invoke();
 
@@ -76,12 +84,25 @@ namespace VhcGuiE2ETests
             this.output.WriteLine($"report: {report.Name}, {report.Length} bytes");
         }
 
+        private static void SetChecked(CheckBox box, bool wanted)
+        {
+            if ((box.IsChecked == true) != wanted)
+            {
+                box.Toggle();
+            }
+
+            Assert.True(VhcAppSession.PollTrue(() => (box.IsChecked == true) == wanted, TimeSpan.FromSeconds(5)), box.AutomationId + " did not become " + wanted);
+        }
+
         private void AssertConsoleHidden(VhcAppSession app, string when)
         {
+            // Windows Terminal (the default terminal on current Windows 11) opens its window asynchronously and hides it on the
+            // app's ShowWindow(SW_HIDE) a moment later, so give it a few seconds before calling the console visible.
+            VhcAppSession.PollTrue(() => app.Console().Hidden, TimeSpan.FromSeconds(10));
             var state = app.Console();
-            this.output.WriteLine($"console {when}: {state.Describe()}");
+            this.output.WriteLine($"console {when}: {Redact.Clean(state.Describe())}");
             Assert.NotEqual(ConsoleKind.Unobservable, state.Kind);
-            Assert.True(state.Hidden, $"the console is visible {when} ({state.Describe()})");
+            Assert.True(state.Hidden, $"the console is visible {when} ({Redact.Clean(state.Describe())})");
             if (state.Kind == ConsoleKind.PseudoConsole)
             {
                 this.output.WriteLine("NOTE: default terminal delegation (ConPTY) is active; the pseudo window is always invisible, so this check proves only that no conhost/Windows Terminal window appeared.");

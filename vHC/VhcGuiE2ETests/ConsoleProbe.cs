@@ -18,7 +18,7 @@ namespace VhcGuiE2ETests
         PseudoConsole,
     }
 
-    internal sealed record ConsoleState(ConsoleKind Kind, string ClassName, bool WindowVisible, int NewVisibleConsoleHostWindows)
+    internal sealed record ConsoleState(ConsoleKind Kind, string ClassName, bool WindowVisible, int NewVisibleConsoleHostWindows, string NewWindows = "")
     {
         /// <summary>
         /// Deterministic for Classic (the window is hidden) and for WindowLess. For PseudoConsole it can only say
@@ -33,7 +33,7 @@ namespace VhcGuiE2ETests
         };
 
         public string Describe() =>
-            $"kind={this.Kind}, class={this.ClassName}, windowVisible={this.WindowVisible}, newVisibleConsoleHosts={this.NewVisibleConsoleHostWindows}";
+            $"kind={this.Kind}, class={this.ClassName}, windowVisible={this.WindowVisible}, newVisibleConsoleHosts={this.NewVisibleConsoleHostWindows}{(this.NewWindows.Length > 0 ? " [" + this.NewWindows + "]" : string.Empty)}";
     }
 
     /// <summary>
@@ -68,16 +68,18 @@ namespace VhcGuiE2ETests
                 }
             }
 
-            int fresh = Native.VisibleConsoleHostWindows().Count(h => !baseline.Contains(h));
+            var freshWindows = Native.VisibleConsoleHostWindows().Where(h => !baseline.Contains(h)).ToList();
+            int fresh = freshWindows.Count;
+            string freshText = string.Join("; ", freshWindows.Select(h => "class=" + Native.ClassName(h) + " title='" + Native.WindowText(h) + "'"));
             if (hwnd == IntPtr.Zero)
             {
-                return new ConsoleState(ConsoleKind.WindowLess, string.Empty, false, fresh);
+                return new ConsoleState(ConsoleKind.WindowLess, string.Empty, false, fresh, freshText);
             }
 
             string cls = Native.ClassName(hwnd);
             bool visible = Native.IsWindowVisible(hwnd);
             var kind = cls == "ConsoleWindowClass" ? ConsoleKind.Classic : ConsoleKind.PseudoConsole;
-            return new ConsoleState(kind, cls, visible, fresh);
+            return new ConsoleState(kind, cls, visible, fresh, freshText);
         }
     }
 }

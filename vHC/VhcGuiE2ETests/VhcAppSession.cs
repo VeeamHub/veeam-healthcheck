@@ -1,6 +1,8 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Drawing;
+using System.Drawing.Imaging;
 using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices;
@@ -62,7 +64,14 @@ namespace VhcGuiE2ETests
 
         public bool HasExited => this.process.HasExited;
 
-        public int ExitCode => this.process.ExitCode;
+        /// <summary>
+        /// Exit code read from the handle CreateProcess returned. Process.ExitCode throws for a process that this Process object
+        /// did not start (GetProcessById), which is how the app was launched.
+        /// </summary>
+        public int ExitCode =>
+            Native.GetExitCodeProcess(this.processHandle, out var code)
+                ? unchecked((int)code)
+                : throw new InvalidOperationException("GetExitCodeProcess failed, Win32 error " + Marshal.GetLastWin32Error());
 
         public Window MainWindow { get; private set; }
 
@@ -103,6 +112,13 @@ namespace VhcGuiE2ETests
                         "The test process is in session 0 / non-interactive; GUI tests need an interactive desktop session. " +
                         "Start the runner from an interactive logon (run.cmd at logon, auto-logon, no screen lock).");
                 }
+            }
+
+            if (!Native.CanReachInputDesktop())
+            {
+                throw new InvalidOperationException(
+                    "The interactive desktop is locked or the RDP session is disconnected (the input desktop is not reachable). " +
+                    "GUI tests need an unlocked, connected desktop; keep the RDP session open and disable the screen lock.");
             }
 
             string exe = ExePath();
@@ -177,7 +193,7 @@ namespace VhcGuiE2ETests
             if (window == null)
             {
                 throw new TimeoutException(this.process.HasExited
-                    ? "VeeamHealthCheck.exe exited before its main window appeared (exit code " + this.process.ExitCode + ")."
+                    ? "VeeamHealthCheck.exe exited before its main window appeared (exit code " + this.ExitCode + ")."
                     : "The main window (containing control 'run') did not appear within " + WindowTimeout.TotalSeconds + "s.");
             }
 
@@ -197,16 +213,32 @@ namespace VhcGuiE2ETests
 
         public TextBox TextBox(string id) => this.Find(id).AsTextBox();
 
-        /// <summary>Top-level windows of the app other than the main window (dialogs, pickers).</summary>
+        /// <summary>
+        /// Windows of the app other than the main window (dialogs, pickers). A modal dialog is an owned window, and UI Automation
+        /// lists an owned window under its owner rather than under the desktop, so both places are searched.
+        /// </summary>
         public IReadOnlyList<Window> OtherWindows()
         {
             var cf = this.automation.ConditionFactory;
             var main = this.MainWindow.Properties.NativeWindowHandle.ValueOrDefault;
-            return this.automation.GetDesktop().FindAllChildren(cf.ByProcessId(this.Pid))
-                .Where(e => e.Properties.ClassName.ValueOrDefault != "ConsoleWindowClass")
-                .Where(e => e.Properties.NativeWindowHandle.ValueOrDefault != main)
-                .Select(e => e.AsWindow())
-                .ToList();
+            var found = new Dictionary<IntPtr, Window>();
+            var candidates = this.automation.GetDesktop().FindAllChildren(cf.ByProcessId(this.Pid))
+                .Concat(this.MainWindow.FindAllChildren(cf.ByControlType(FlaUI.Core.Definitions.ControlType.Window)));
+            foreach (var e in candidates)
+            {
+                if (e.Properties.ClassName.ValueOrDefault == "ConsoleWindowClass")
+                {
+                    continue;
+                }
+
+                var handle = e.Properties.NativeWindowHandle.ValueOrDefault;
+                if (handle != IntPtr.Zero && handle != main)
+                {
+                    found[handle] = e.AsWindow();
+                }
+            }
+
+            return found.Values.ToList();
         }
 
         public Window WaitForOtherWindow(TimeSpan timeout) =>
@@ -226,13 +258,62 @@ namespace VhcGuiE2ETests
             button.Invoke();
         }
 
-        public CaptureImage Screenshot(string path)
+        /// <summary>
+        /// Saves a picture of the main window. A screen grab of the window's rectangle shows whatever is on top of it, and on a
+        /// shared desktop that is often another application (a scheduled task cannot take the foreground), so the window is rendered
+        /// with PrintWindow instead. If that comes back flat, the window is raised topmost for a screen grab and lowered again.
+        /// </summary>
+        public Bitmap Screenshot(string path)
         {
-            this.MainWindow.SetForeground();
-            Thread.Sleep(500);
-            var image = Capture.Element(this.MainWindow);
-            image.ToFile(path);
-            return image;
+            var hwnd = this.MainWindow.Properties.NativeWindowHandle.Value;
+            var rect = this.MainWindow.BoundingRectangle;
+            var bmp = new Bitmap(rect.Width, rect.Height);
+            using (var g = Graphics.FromImage(bmp))
+            {
+                var hdc = g.GetHdc();
+                try
+                {
+                    Native.PrintWindow(hwnd, hdc, Native.PW_RENDERFULLCONTENT);
+                }
+                finally
+                {
+                    g.ReleaseHdc(hdc);
+                }
+            }
+
+            if (DistinctColours(bmp) < 8)
+            {
+                bmp.Dispose();
+                Native.SetTopmost(hwnd, true);
+                try
+                {
+                    Thread.Sleep(700);
+                    using var grab = Capture.Rectangle(rect);
+                    bmp = new Bitmap(grab.Bitmap);
+                }
+                finally
+                {
+                    Native.SetTopmost(hwnd, false);
+                }
+            }
+
+            bmp.Save(path, ImageFormat.Png);
+            return bmp;
+        }
+
+        /// <summary>Number of distinct colours on a coarse grid; a frame that is one flat colour has not painted.</summary>
+        public static int DistinctColours(Bitmap bmp)
+        {
+            var colours = new HashSet<int>();
+            for (int y = 0; y < bmp.Height; y += 7)
+            {
+                for (int x = 0; x < bmp.Width; x += 7)
+                {
+                    colours.Add(bmp.GetPixel(x, y).ToArgb());
+                }
+            }
+
+            return colours.Count;
         }
 
         public ConsoleState Console() => ConsoleProbe.Inspect(this.Pid, this.ConsoleBaseline);
