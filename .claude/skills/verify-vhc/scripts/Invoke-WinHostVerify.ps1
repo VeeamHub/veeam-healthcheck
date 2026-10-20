@@ -244,19 +244,17 @@ function Invoke-LiveStep {
         @{ Check = 'ReportContent'; Args = @('-ReportPath', "$($report.FullName)") },
         @{ Check = 'ReportTables';  Args = @('-ReportPath', "$($report.FullName)") },
         @{ Check = 'Json';          Args = @('-ReportDir', $anon) },
-        @{ Check = 'Scrub';         Args = @('-AnonDir', $anon, '-ScrubHost', $env:COMPUTERNAME, '-NewerThan', $started.AddSeconds(-5).ToString('o')) }
+        @{ Check = 'Scrub';         Args = @('-AnonDir', $anon, '-ScrubHost', $env:COMPUTERNAME, '-NewerThan', $started.AddSeconds(-5).ToString('o')) },
+        # No Entra tenant on a home-lab host is the normal case: the check prints INFO and passes, and a tenant job's RetentionPolicy is only reported.
+        @{ Check = 'EntraTenantJob'; Args = @('-CsvRoot', (Join-Path $out 'Original\VBR'), '-Informational') }
     )
+    # Which configuration database this run collected from (vbrinfo DbType, registry value on a local run): the shared
+    # DbType check, so a host on another engine, or an empty/Unknown value, fails here rather than passing quietly.
+    if ($ExpectDbType) {
+        $plan = @(@{ Check = 'DbType'; Args = @('-CsvRoot', (Join-Path $out 'Original\VBR'), '-ExpectedDbType', $ExpectDbType) }) + $plan
+    }
     $failed = @(); $passed = 0
 
-    # Which configuration database this run actually collected from: the vbrinfo row records it (Get-VhcVbrInfo -> DbType).
-    # This is what makes the run evidence for that engine, so a host on another engine fails here rather than passing quietly.
-    $dbLog = Join-Path $liveEv 'check-DbType.log'
-    if ($ExpectDbType) {
-        $infoCsv = Get-ChildItem -Path (Join-Path $out 'Original\VBR') -Recurse -File -Filter '*_vbrinfo.csv' -ErrorAction SilentlyContinue | Select-Object -First 1
-        $actual = if ($infoCsv) { [string]((Import-Csv -LiteralPath $infoCsv.FullName | Select-Object -First 1).DbType) } else { '<no vbrinfo csv>' }
-        "expected DbType '$ExpectDbType', collected '$actual'" | Set-Content -LiteralPath $dbLog
-        if ($actual -eq $ExpectDbType) { $passed++; Say "  check DbType: pass ($actual)" } else { $failed += 'DbType'; Say "  check DbType: FAIL (expected $ExpectDbType, collected $actual)" }
-    }
     foreach ($p in $plan) {
         $log = Join-Path $liveEv "check-$($p.Check).log"
         if (-not $report -and $p.Check -in 'ReportContent', 'ReportTables', 'Json', 'Scrub') {

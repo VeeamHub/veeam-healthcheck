@@ -9,6 +9,10 @@
 #   & "$env:GITHUB_WORKSPACE\.github\scripts\Test-VhcLiveRun.ps1" -Check CsvContent
 #   & "$env:GITHUB_WORKSPACE\.github\scripts\Test-VhcLiveRun.ps1" -Check RowCounts [-RequireSessionRows]
 #   & "$env:GITHUB_WORKSPACE\.github\scripts\Test-VhcLiveRun.ps1" -Check CsvOutputs -LabProfile vbr-2|vbr-13-sql|vbr-12
+#   & "$env:GITHUB_WORKSPACE\.github\scripts\Test-VhcLiveRun.ps1" -Check DbType (-ExpectedDbType MsSql|PostgreSql | -KnownGap)
+#   & "$env:GITHUB_WORKSPACE\.github\scripts\Test-VhcLiveRun.ps1" -Check EntraTenantJob [-RequireTenant] [-Informational]
+#   $env:VHC_REST_USER / VHC_REST_PASSWORD set, then:
+#   & "$env:GITHUB_WORKSPACE\.github\scripts\Test-VhcLiveRun.ps1" -Check RestDbType -RestServer localhost (-ExpectedDbType MsSql | -KnownGap)
 #   & "$env:GITHUB_WORKSPACE\.github\scripts\Test-VhcLiveRun.ps1" -Check SessionLog [-RequireSessionRows]
 #   & "$env:GITHUB_WORKSPACE\.github\scripts\Test-VhcLiveRun.ps1" -Check ReportContent [-ReportPath <html>]
 #   & "$env:GITHUB_WORKSPACE\.github\scripts\Test-VhcLiveRun.ps1" -Check ReportTables [-ReportPath <html>]
@@ -24,7 +28,7 @@
 # is a glob on the suffix; the hostname prefix is never assumed.
 
 param(
-    [ValidateSet('', 'CsvContent', 'RowCounts', 'CsvOutputs', 'SessionLog', 'ReportContent', 'ReportTables', 'Json', 'Exports', 'Scrub')]
+    [ValidateSet('', 'CsvContent', 'RowCounts', 'CsvOutputs', 'DbType', 'EntraTenantJob', 'RestDbType', 'SessionLog', 'ReportContent', 'ReportTables', 'Json', 'Exports', 'Scrub')]
     [string]$Check = '',
     [string]$CsvRoot = 'C:\temp\vHC\Original\VBR',
     [string]$ReportDir = 'C:\temp\vHC\vHC-Report',
@@ -38,7 +42,14 @@ param(
     [string]$LabProfile = '',
     [string]$RepoRoot = '',
     [string]$BaselineRoot = '',
-    [string]$ManifestPath = ''
+    [string]$ManifestPath = '',
+    [ValidateSet('', 'MsSql', 'PostgreSql')]
+    [string]$ExpectedDbType = '',
+    [switch]$KnownGap,
+    [switch]$RequireTenant,
+    [switch]$Informational,
+    [string]$RestServer = '',
+    [string]$ModuleDir = ''
 )
 
 # Top-level keys of the JSON export that every VBR report carries (CFullReportJson).
@@ -428,6 +439,120 @@ function Test-VhcCsvOutputs {
         Write-Pass "$label $tier, $rows rows, $($header.Count) columns ($src)"
     }
     Write-Host "  CSV outputs: $present written, $absentOk feature-dependent not written, $($nonEmpty.Count) required, $($map.Count) enumerated from collectors"
+    return , $failures.ToArray()
+}
+
+# --- DbType ----------------------------------------------------------------
+# vbrinfo.DbType is the registry value on a local run and the REST serverInfo databaseVendor on a
+# remote run with credentials. 'Unknown' is what the report prints when the CSV value is empty, so an
+# empty value fails here too. -KnownGap prints the actual value and passes (a lab that cannot get a
+# value yet); a missing vbrinfo file still fails.
+function Test-VhcDbType {
+    param([string]$Dir, [string]$Expected, [switch]$Gap)
+    $failures = New-Object System.Collections.ArrayList
+    $file = Find-VhcCsv $Dir 'vbrinfo'
+    if (-not $file) { Write-Fail '*_vbrinfo.csv not found'; [void]$failures.Add('vbrinfo.csv missing'); return , $failures.ToArray() }
+    $row = @(Import-Csv -Path $file.FullName) | Select-Object -First 1
+    if (-not $row) { Write-Fail "$($file.Name) has no data row"; [void]$failures.Add('vbrinfo.csv empty'); return , $failures.ToArray() }
+    $value = ([string]$row.DbType).Trim()
+    if ($Gap) {
+        $shown = $value; if (-not $shown) { $shown = '(empty)' }
+        $hint = '(set -ExpectedDbType once this lab is known)'
+        if ($Expected) { $hint = "(expected '$Expected')" }
+        Write-Host "  [INFO] known gap: vbrinfo DbType is '$shown' $hint; not enforced" -ForegroundColor Cyan
+        return , $failures.ToArray()
+    }
+    if (-not $Expected) { Write-Fail 'DbType check needs -ExpectedDbType'; [void]$failures.Add('no expected DbType'); return , $failures.ToArray() }
+    if (-not $value -or $value -eq 'Unknown') {
+        Write-Fail "vbrinfo DbType is '$value' (empty/Unknown); expected '$Expected'"
+        [void]$failures.Add('DbType empty')
+    } elseif ($value -ne $Expected) {
+        Write-Fail "vbrinfo DbType is '$value'; expected '$Expected'"
+        [void]$failures.Add('DbType mismatch')
+    } else {
+        Write-Pass "vbrinfo DbType is '$value' ($($file.Name))"
+    }
+    return , $failures.ToArray()
+}
+
+# --- EntraTenantJob --------------------------------------------------------
+# Get-VhcEntraId always builds a row; on a server with no Entra tenant it is all blank (the 1-row CSV on
+# vbr-13-sql). Only a row with a Name is a tenant job, and its RetentionPolicy (days) must be an integer.
+# No tenant is INFO and passes unless -RequireTenant. -Informational downgrades violations to WARN.
+function Test-VhcEntraTenantJob {
+    param([string]$Dir, [switch]$NeedTenant, [switch]$Soft)
+    $failures = New-Object System.Collections.ArrayList
+    $file = Find-VhcCsv $Dir 'entraTenantJob'
+    $named = @()
+    if ($file) { $named = @(Import-Csv -Path $file.FullName -ErrorAction SilentlyContinue | Where-Object { -not [string]::IsNullOrWhiteSpace([string]$_.Name) }) }
+    if ($named.Count -eq 0) {
+        if ($NeedTenant) {
+            Write-Fail 'no Entra tenant job row with a Name in *_entraTenantJob.csv, but this lab must have one'
+            [void]$failures.Add('entraTenantJob no tenant')
+        } else {
+            Write-Host '  [INFO] no Entra tenant job rows with a Name; RetentionPolicy not evaluated' -ForegroundColor Cyan
+        }
+        return , $failures.ToArray()
+    }
+    foreach ($r in $named) {
+        $ret = ([string]$r.RetentionPolicy).Trim()
+        if ($ret -match '^\d+$') {
+            Write-Pass "Entra tenant job '$($r.Name)' RetentionPolicy is numeric: $ret"
+        } elseif ($Soft) {
+            Write-Warn "Entra tenant job '$($r.Name)' RetentionPolicy is not numeric: '$ret' (informational)"
+        } else {
+            Write-Fail "Entra tenant job '$($r.Name)' RetentionPolicy is not numeric: '$ret'"
+            [void]$failures.Add('entraTenantJob RetentionPolicy not numeric')
+        }
+    }
+    return , $failures.ToArray()
+}
+
+# --- RestDbType ------------------------------------------------------------
+# Runs the module's real Get-VhciRestDbType (the code remote runs use) against a live VBR REST API and
+# checks the normalised result. Credentials come from VHC_REST_USER / VHC_REST_PASSWORD, never arguments.
+# This is the live proof of the REST path: a same-box /remote VHC run cannot be one, because
+# Get-VhcVbrInfo reads the local registry first and only calls REST when it is empty.
+# -Gap prints the outcome and passes (a runner that may not reach port 9419).
+function Test-VhcRestDbType {
+    param([string]$Server, [string]$Expected, [string]$ModDir, [switch]$Gap)
+    $failures = New-Object System.Collections.ArrayList
+    if (-not $ModDir) { $ModDir = Join-Path (Get-VhcRepoRoot '') 'vHC\HC_Reporting\Tools\Scripts\HealthCheck\VBR\vHC-VbrConfig\Private' }
+    if (-not $Server) { Write-Fail 'RestDbType needs -RestServer'; [void]$failures.Add('no REST server'); return , $failures.ToArray() }
+    if (-not $env:VHC_REST_USER -or -not $env:VHC_REST_PASSWORD) {
+        Write-Fail 'VHC_REST_USER / VHC_REST_PASSWORD are not set'; [void]$failures.Add('REST credentials missing'); return , $failures.ToArray()
+    }
+    foreach ($f in @('Invoke-VhciRestApi.ps1', 'Get-VhciRestDbType.ps1')) {
+        $path = Join-Path $ModDir $f
+        if (-not (Test-Path $path)) { Write-Fail "$path not found"; [void]$failures.Add("$f missing"); return , $failures.ToArray() }
+        . $path
+    }
+    $script:RestLog = New-Object System.Collections.ArrayList
+    function Write-LogFile {
+        param([string]$Message, [string]$LogLevel = 'INFO')
+        [void]$script:RestLog.Add(@{ Level = $LogLevel; Message = $Message })
+        Write-Host "  [LOG:$LogLevel] $Message"
+    }
+    $secure = ConvertTo-SecureString -String $env:VHC_REST_PASSWORD -AsPlainText -Force
+    $cred = New-Object System.Management.Automation.PSCredential($env:VHC_REST_USER, $secure)
+    $got = Get-VhciRestDbType -Server $Server -Credential $cred
+    $raw = $null
+    foreach ($e in $script:RestLog) { if ($e.Message -match "databaseVendor raw value '([^']*)'") { $raw = $Matches[1] } }
+    if ($Gap) {
+        $shownRaw = $raw; if ($null -eq $shownRaw) { $shownRaw = '(no REST answer)' }
+        $shownGot = $got; if (-not $shownGot) { $shownGot = '(null)' }
+        Write-Host "  [INFO] known gap: REST $Server databaseVendor raw '$shownRaw' -> '$shownGot'; not enforced" -ForegroundColor Cyan
+        return , $failures.ToArray()
+    }
+    if ($null -eq $raw) {
+        Write-Fail "REST serverInfo on $Server gave no databaseVendor (port 9419 unreachable, login rejected, or no such field)"
+        [void]$failures.Add('REST serverInfo unavailable')
+    } elseif ($got -ne $Expected) {
+        Write-Fail "REST databaseVendor raw '$raw' normalised to '$got'; expected '$Expected'"
+        [void]$failures.Add('REST DbType mismatch')
+    } else {
+        Write-Pass "REST databaseVendor raw '$raw' normalised to '$got'"
+    }
     return , $failures.ToArray()
 }
 
@@ -826,6 +951,17 @@ switch ($Check) {
         if (-not $dir) { Write-Fail "no CSV output directory under $CsvRoot"; $failures = @('csv dir missing') }
         else { Write-Host "CSV directory: $($dir.FullName)"; $failures = Test-VhcCsvOutputs -Dir $dir.FullName -LabName $LabProfile -Root $RepoRoot -BaselineDir $BaselineRoot -Manifest $ManifestPath }
     }
+    'DbType' {
+        $dir = Get-VhcLatestCsvDir $CsvRoot
+        if (-not $dir) { Write-Fail "no CSV output directory under $CsvRoot"; $failures = @('csv dir missing') }
+        else { Write-Host "CSV directory: $($dir.FullName)"; $failures = Test-VhcDbType -Dir $dir.FullName -Expected $ExpectedDbType -Gap:$KnownGap }
+    }
+    'EntraTenantJob' {
+        $dir = Get-VhcLatestCsvDir $CsvRoot
+        if (-not $dir) { Write-Fail "no CSV output directory under $CsvRoot"; $failures = @('csv dir missing') }
+        else { Write-Host "CSV directory: $($dir.FullName)"; $failures = Test-VhcEntraTenantJob -Dir $dir.FullName -NeedTenant:$RequireTenant -Soft:$Informational }
+    }
+    'RestDbType' { $failures = Test-VhcRestDbType -Server $RestServer -Expected $ExpectedDbType -ModDir $ModuleDir -Gap:$KnownGap }
     'SessionLog' { $failures = Test-VhcSessionLog -Dir $LogDir -RequireSessions:$RequireSessionRows }
     'ReportContent' {
         $rf = Resolve-VhcReportFile -Path $ReportPath -Dir $ReportDir

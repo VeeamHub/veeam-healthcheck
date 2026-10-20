@@ -1025,6 +1025,19 @@ jobs:
       run: |
         & "$env:GITHUB_WORKSPACE\.github\scripts\Test-VhcLiveRun.ps1" -Check CsvOutputs -LabProfile $env:LAB_PROFILE
 
+    - name: Check config DB type (known gap, not enforced)
+      # Remote run with credentials: DbType is expected to come from REST serverInfo, but the console-host runner reportedly cannot reach port 9419, so the value may be empty/Unknown. The actual value is printed. Promote to enforced (drop -KnownGap, add -ExpectedDbType <engine>) once the REST probe below passes.
+      if: always()
+      run: |
+        & "$env:GITHUB_WORKSPACE\.github\scripts\Test-VhcLiveRun.ps1" -Check DbType -KnownGap
+
+    - name: Assert Entra tenant job retention is numeric
+      # Uses only the PowerShell-collected _entraTenantJob.csv. This lab has an Entra tenant job, so a missing
+      # one fails, and its RetentionPolicy must be an integer (number of days).
+      if: always()
+      run: |
+        & "$env:GITHUB_WORKSPACE\.github\scripts\Test-VhcLiveRun.ps1" -Check EntraTenantJob -RequireTenant
+
     - name: Validate CSV column schemas
       # P2-1: extract to composite action
       if: always()
@@ -1149,6 +1162,16 @@ jobs:
         path: ${{ runner.temp }}\sca-triage\sca-triage.json
         if-no-files-found: ignore
         retention-days: 7
+
+    - name: Probe REST serverInfo reachability (known gap, not enforced)
+      # Reveals whether this runner can reach 9419 on the demo VBR and what databaseVendor it reports. Not enforced: the runner reportedly cannot reach REST. Drop -KnownGap and add -ExpectedDbType <engine> once it passes.
+      if: always()
+      env:
+        VHC_REST_USER: ${{ secrets.VBR_USERNAME }}
+        VHC_REST_PASSWORD: ${{ secrets.VBR_13_REMOTE_PW }}
+        VHC_REST_HOST: ${{ secrets.VBR_HOST }}
+      run: |
+        & "$env:GITHUB_WORKSPACE\.github\scripts\Test-VhcLiveRun.ps1" -Check RestDbType -RestServer $env:VHC_REST_HOST -KnownGap
 
     - name: Collect performance metrics
       if: always()
@@ -1518,6 +1541,18 @@ jobs:
       run: |
         & "$env:GITHUB_WORKSPACE\.github\scripts\Test-VhcLiveRun.ps1" -Check CsvOutputs -LabProfile $env:LAB_PROFILE
 
+    - name: Assert config DB type
+      # vbrinfo DbType must be MsSql (local run: read from the registry). Empty or Unknown fails.
+      if: always()
+      run: |
+        & "$env:GITHUB_WORKSPACE\.github\scripts\Test-VhcLiveRun.ps1" -Check DbType -ExpectedDbType MsSql
+
+    - name: Check Entra tenant job retention (informational)
+      # No Entra tenant here is the normal case (INFO, passes). A tenant job with a non-numeric RetentionPolicy only warns.
+      if: always()
+      run: |
+        & "$env:GITHUB_WORKSPACE\.github\scripts\Test-VhcLiveRun.ps1" -Check EntraTenantJob -Informational
+
     - name: Validate CSV column schemas
       # P2-1: extract to composite action
       if: always()
@@ -1647,6 +1682,16 @@ jobs:
         path: ${{ runner.temp }}\sca-triage\sca-triage.json
         if-no-files-found: ignore
         retention-days: 7
+
+    - name: Assert REST serverInfo databaseVendor
+      # Runs the module's real Get-VhciRestDbType against this lab's REST API (port 9419, as the SCA triage does) and logs the raw databaseVendor string. A same-box /remote VHC run cannot prove this path: Get-VhcVbrInfo reads the local registry first and only asks REST when it is empty.
+      if: always()
+      env:
+        VHC_REST_USER: ${{ secrets.VBR_WIN_USER }}
+        VHC_REST_PASSWORD: ${{ secrets.VBR_WIN_PWD }}
+        VHC_REST_HOST: localhost
+      run: |
+        & "$env:GITHUB_WORKSPACE\.github\scripts\Test-VhcLiveRun.ps1" -Check RestDbType -RestServer $env:VHC_REST_HOST -ExpectedDbType MsSql
 
     - name: Collect performance metrics
       if: always()
@@ -2006,6 +2051,18 @@ jobs:
         LAB_PROFILE: vbr-12
       run: |
         & "$env:GITHUB_WORKSPACE\.github\scripts\Test-VhcLiveRun.ps1" -Check CsvOutputs -LabProfile $env:LAB_PROFILE
+
+    - name: Assert config DB type
+      # vbrinfo DbType must be PostgreSql (local run: read from the registry). Empty or Unknown fails.
+      if: always()
+      run: |
+        & "$env:GITHUB_WORKSPACE\.github\scripts\Test-VhcLiveRun.ps1" -Check DbType -ExpectedDbType PostgreSql
+
+    - name: Check Entra tenant job retention (informational)
+      # No Entra tenant here is the normal case (INFO, passes). A tenant job with a non-numeric RetentionPolicy only warns.
+      if: always()
+      run: |
+        & "$env:GITHUB_WORKSPACE\.github\scripts\Test-VhcLiveRun.ps1" -Check EntraTenantJob -Informational
 
     - name: Validate CSV column schemas
       # P2-1: extract to composite action

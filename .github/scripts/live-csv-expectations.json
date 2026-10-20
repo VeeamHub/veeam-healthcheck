@@ -83,6 +83,20 @@
     }
   },
   "columns": {
+    "vbrinfo": {
+      "required": [
+        "Version",
+        "DbType"
+      ],
+      "reader": "CBackupServerTableHelper.cs:59,95-99 (ReadCollectedDbType: CCsvParser.BnrCsvParser().FirstOrDefault().DbType, used when the local registry value CGlobals.DBTYPE is empty, i.e. remote runs); Version is read by the same CBnRCsvInfo row. Get-VhcVbrInfo.ps1 always emits the DbType property (registry value, or REST serverInfo databaseVendor via Get-VhciRestDbType.ps1 on remote runs), so the column exists even when its value is empty; the value itself is asserted by -Check DbType."
+    },
+    "entraTenantJob": {
+      "required": [
+        "Name",
+        "RetentionPolicy"
+      ],
+      "reader": "CEntraObjects.cs:46-55 (CEntraTenantJobs, positional Name, RetentionPolicy as int?) via CCsvParser.GetDynamicEntraTenantJobs() (CCsvParser.cs:881); rendered at CEntraJobsTable.cs:79-88. Get-VhcEntraId.ps1 writes both columns. The numeric value is asserted by -Check EntraTenantJob."
+    },
     "configBackup": {
       "required": [
         "Enabled",
