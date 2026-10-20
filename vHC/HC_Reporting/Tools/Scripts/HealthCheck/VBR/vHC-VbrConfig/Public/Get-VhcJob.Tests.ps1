@@ -746,8 +746,14 @@ Describe 'Performance gate: sweep triggers on unrecognized job types' {
                 (script:New-FakeJob -Name 'MorpheusJob' -TypeToString 'HPE Morpheus VME Backup' -LastBackup ([PSCustomObject]@{ Id = [guid]::NewGuid() }))
             )
         }
+        # The bulk call throws and the per-backup fallback is unavailable
+        # (Get-VBRBackup throws once the bulk call has), so the sweep is
+        # disabled and every job takes the per-job method.
+        $script:BulkSweepThrew = $false
+        Mock Get-VBRBackup -MockWith { if ($script:BulkSweepThrew) { throw 'Simulated Get-VBRBackup failure' } else { @() } }
         Mock Get-VBRRestorePoint -MockWith {
             if ($null -eq $Backup) {
+                $script:BulkSweepThrew = $true
                 throw 'Simulated sweep failure'
             } else {
                 @( (script:New-FakeRestorePoint -ObjectId ([guid]'12121212-1212-1212-1212-121212121212') -ApproxSize 9GB -BackupSize 6GB) )
@@ -807,8 +813,13 @@ Describe 'Sweep resilience: a logging failure does not disable the sweep' {
         Mock Write-LogFile -MockWith {
             if ($Message -match 'Restore point sweep failed') { throw 'Simulated logging failure' }
         }
+        # The sweep now falls back to per-backup reads when the bulk call
+        # throws, so the outer catch is only reached if Get-VBRBackup fails too.
+        $script:BulkSweepThrew = $false
+        Mock Get-VBRBackup -MockWith { if ($script:BulkSweepThrew) { throw 'Simulated Get-VBRBackup failure' } else { @() } }
         Mock Get-VBRRestorePoint -MockWith {
             if ($null -eq $Backup) {
+                $script:BulkSweepThrew = $true
                 throw 'Simulated sweep failure'
             } else {
                 @( (script:New-FakeRestorePoint -ObjectId ([guid]'73737373-7373-7373-7373-737373737373') -ApproxSize 9GB -BackupSize 6GB) )
@@ -817,6 +828,105 @@ Describe 'Sweep resilience: a logging failure does not disable the sweep' {
         { Get-VhcJob } | Should -Not -Throw
         $Row = $script:CapturedJobRows | Where-Object { $_.Name -eq 'RealJob' }
         $Row.OnDiskGB | Should -Be 6
+    }
+}
+
+# ---------------------------------------------------------------------------
+# Sweep resilience: one backup whose restore points cannot be read (e.g. it
+# points at a deleted repository) must not disable the sweep for the server.
+# ---------------------------------------------------------------------------
+Describe 'Sweep resilience: a broken backup does not disable the sweep' {
+
+    BeforeEach {
+        $script:CapturedJobRows = @()
+        $script:LogEntries = [System.Collections.Generic.List[object]]::new()
+        $script:BadBackup  = [PSCustomObject]@{ Name = 'BrokenRepoBackup' }
+        $script:GoodBackup = [PSCustomObject]@{ Name = 'HealthyBackup' }
+        Mock Write-LogFile -MockWith { $script:LogEntries.Add([PSCustomObject]@{ Message = $Message; Level = $LogLevel }) }
+        Mock Get-VBRJob                    -MockWith { @() }
+        Mock Get-VBRConfigurationBackupJob -MockWith { $null }
+        Mock Invoke-VhciJobSubCollectors   -MockWith { }
+        Mock Add-VhciModuleError           -MockWith { }
+        Mock Export-VhciCsv -MockWith {
+            if ($FileName -eq '_Jobs.csv' -and $InputObject) {
+                $script:CapturedJobRows += @($InputObject)
+            }
+        }
+    }
+
+    It 'sweeps the healthy backup, warns about the broken one, and logs no sweep-failed ERROR' {
+        Mock Get-VBRBackup -MockWith { @($script:BadBackup, $script:GoodBackup) }
+        Mock Get-VBRRestorePoint -MockWith {
+            if ($null -eq $Backup) { throw 'Unable to find repository id 280cd331-b099-4617-b59b-7488ad8d6046' }
+            if ($Backup.Name -eq 'BrokenRepoBackup') { throw 'Unable to find repository id 280cd331-b099-4617-b59b-7488ad8d6046' }
+            @(
+                (script:New-FakeRestorePoint -BackupId ([guid]'aaaaaaaa-0000-0000-0000-000000000001') -ThrowOnGetSourceJob),
+                (script:New-FakeRestorePoint -BackupId ([guid]'aaaaaaaa-0000-0000-0000-000000000001') -ThrowOnGetSourceJob)
+            )
+        }
+        Get-VhcJob
+
+        $script:VhcOrphanedSupersededCache.SweepRan | Should -BeTrue
+        @($script:LogEntries | Where-Object { $_.Message -match 'Restore point sweep failed' }).Count | Should -Be 0
+        Should -Invoke Add-VhciModuleError -Times 0 -Exactly
+        $Warn = @($script:LogEntries | Where-Object { $_.Level -eq 'WARNING' -and $_.Message -match "skipping backup 'BrokenRepoBackup'" -and $_.Message -match 'Unable to find repository id' })
+        $Warn.Count | Should -Be 1
+        @($script:LogEntries | Where-Object { $_.Message -match 'read 1 of 2 backup\(s\), skipped 1, 2 restore points' }).Count | Should -Be 1
+        @($script:LogEntries | Where-Object { $_.Message -match 'Restore point sweep: \d+ms elapsed, 2 restore points' }).Count | Should -Be 1
+    }
+
+    It 'keeps the bulk call count at one when the bulk call succeeds' {
+        Mock Get-VBRBackup -MockWith { @($script:GoodBackup) }
+        Mock Get-VBRRestorePoint -MockWith { @() }
+        Get-VhcJob
+
+        Should -Invoke Get-VBRRestorePoint -Times 1 -Exactly -ParameterFilter { $null -eq $Backup }
+        Should -Invoke Get-VBRRestorePoint -Times 0 -Exactly -ParameterFilter { $null -ne $Backup }
+        @($script:LogEntries | Where-Object { $_.Message -match 'retrying one backup at a time' }).Count | Should -Be 0
+    }
+
+    It 'keeps the original failure behaviour when Get-VBRBackup also throws' {
+        # Get-VBRBackup is also called outside the sweep; only throw once the
+        # bulk restore-point call has, so the sweep's own fallback is what fails.
+        $script:BulkSweepThrew = $false
+        Mock Get-VBRBackup -MockWith { if ($script:BulkSweepThrew) { throw 'Simulated Get-VBRBackup failure' } else { @() } }
+        Mock Get-VBRRestorePoint -MockWith {
+            if ($null -eq $Backup) { $script:BulkSweepThrew = $true; throw 'Simulated sweep failure' } else { @() }
+        }
+        { Get-VhcJob } | Should -Not -Throw
+
+        $script:VhcOrphanedSupersededCache.SweepRan | Should -BeFalse
+        $script:VhcOrphanedSupersededCache.CandidateGroups.Count | Should -Be 0
+        $Err = @($script:LogEntries | Where-Object { $_.Level -eq 'ERROR' -and $_.Message -match 'Restore point sweep failed: Simulated Get-VBRBackup failure' })
+        $Err.Count | Should -Be 1
+        Should -Invoke Add-VhciModuleError -Times 1 -Exactly -ParameterFilter { $CollectorName -eq 'Jobs' }
+    }
+
+    It 'fails the sweep when the per-backup fallback reads no backup at all' {
+        Mock Get-VBRBackup -MockWith { @($script:BadBackup) }
+        Mock Get-VBRRestorePoint -MockWith { throw 'Unable to find repository id 280cd331-b099-4617-b59b-7488ad8d6046' }
+        { Get-VhcJob } | Should -Not -Throw
+
+        $script:VhcOrphanedSupersededCache.SweepRan | Should -BeFalse
+        $Err = @($script:LogEntries | Where-Object { $_.Level -eq 'ERROR' -and $_.Message -match 'Restore point sweep failed: Per-backup restore point sweep read none of 1 backup' })
+        $Err.Count | Should -Be 1
+        Should -Invoke Add-VhciModuleError -Times 1 -Exactly -ParameterFilter { $CollectorName -eq 'Jobs' }
+    }
+
+    It 'skips a restore point with no BackupId instead of aborting the sweep' {
+        Mock Get-VBRBackup -MockWith { @() }
+        Mock Get-VBRRestorePoint -MockWith {
+            $NoId = [PSCustomObject]@{ Name = 'NoBackupId'; BackupId = $null; ObjectId = [guid]::NewGuid() }
+            @(
+                $NoId,
+                (script:New-FakeRestorePoint -BackupId ([guid]'bbbbbbbb-0000-0000-0000-000000000001') -ThrowOnGetSourceJob)
+            )
+        }
+        Get-VhcJob
+
+        $script:VhcOrphanedSupersededCache.SweepRan | Should -BeTrue
+        @($script:LogEntries | Where-Object { $_.Message -match 'Restore point sweep failed' }).Count | Should -Be 0
+        @($script:LogEntries | Where-Object { $_.Level -eq 'WARNING' -and $_.Message -match '1 restore point\(s\) had no BackupId' }).Count | Should -Be 1
     }
 }
 
