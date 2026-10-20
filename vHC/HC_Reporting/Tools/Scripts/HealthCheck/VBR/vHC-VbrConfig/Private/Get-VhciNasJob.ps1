@@ -21,6 +21,15 @@ function Get-VhciNasJob {
     $nasBackup = @(Get-VhciNasJobResilient)
     Write-LogFile "Found $(@($nasBackup).Count) NAS backup jobs"
 
+    # Export-Csv takes its columns from the first object, so every job must carry
+    # the same members up front. Jobs without a backup chain (or every job, when
+    # Get-VBRUnstructuredBackup fails) keep 0 instead of dropping the columns.
+    foreach ($nasJob in $nasBackup) {
+        $nasJob | Add-Member -MemberType NoteProperty -Name JobType  -Value "NAS Backup" -Force
+        $nasJob | Add-Member -MemberType NoteProperty -Name OnDiskGB -Value 0            -Force
+        $nasJob | Add-Member -MemberType NoteProperty -Name SourceGB -Value 0            -Force
+    }
+
     if (@($nasBackup).Count -gt 0) {
 
         # Get-VBRUnstructuredBackupRestorePoint requires VBRUnstructuredBackup objects,
@@ -56,17 +65,10 @@ function Get-VhciNasJob {
 
                 foreach ($shareName in $shareLatest.Keys) {
                     try {
-                        $point      = $shareLatest[$shareName]
-                        $backupInfo = [Veeam.Backup.Core.CNasBackup]::GetByNasPointId($point.Id)
-                        $pointInfo  = [Veeam.Backup.Core.CNasBackupPoint]::Get($point.Id)
-                        $shortTerm  = $backupInfo.GetNasBackupShortTerm()
-
-                        $shareOnDisk = [Math]::Round(($shortTerm.Info.DataSize + $shortTerm.Info.MetaSize) / 1GB, 2)
-                        $shareSource = [Math]::Round($pointInfo.Info.ProtectedSize / 1GB, 2)
-
-                        $onDiskGB += $shareOnDisk
-                        $sourceGB += $shareSource
-                        Write-LogFile "    Share '$shareName': SourceGB=$shareSource, OnDiskGB=$shareOnDisk"
+                        $size = Get-VhciNasShareSize -PointId $shareLatest[$shareName].Id
+                        $onDiskGB += $size.OnDiskGB
+                        $sourceGB += $size.SourceGB
+                        Write-LogFile "    Share '$shareName': SourceGB=$($size.SourceGB), OnDiskGB=$($size.OnDiskGB)"
                     } catch {
                         Write-LogFile "    Warning: size fetch failed for share '$shareName' in '$($job.Name)': $($_.Exception.Message)" -LogLevel "WARNING"
                     }
@@ -79,7 +81,6 @@ function Get-VhciNasJob {
 
             $nasJob = @($nasBackup) | Where-Object { $_.Name -eq $job.Name } | Select-Object -First 1
             if ($null -ne $nasJob) {
-                $nasJob | Add-Member -MemberType NoteProperty -Name JobType  -Value "NAS Backup" -Force
                 $nasJob | Add-Member -MemberType NoteProperty -Name OnDiskGB -Value $onDiskGB    -Force
                 $nasJob | Add-Member -MemberType NoteProperty -Name SourceGB -Value $sourceGB    -Force
             }
@@ -99,6 +100,24 @@ function Get-VhciNasJob {
     $nasBCJ    | Export-VhciCsv -FileName '_nasBCJ.csv'
 
     Write-LogFile ($message + "DONE")
+}
+
+function Get-VhciNasShareSize {
+    <#
+    .Synopsis
+        Returns OnDiskGB and SourceGB for one restore point of a NAS share.
+    #>
+    [CmdletBinding()]
+    param([Parameter(Mandatory)]$PointId)
+
+    $backupInfo = [Veeam.Backup.Core.CNasBackup]::GetByNasPointId($PointId)
+    $pointInfo  = [Veeam.Backup.Core.CNasBackupPoint]::Get($PointId)
+    $shortTerm  = $backupInfo.GetNasBackupShortTerm()
+
+    [pscustomobject]@{
+        OnDiskGB = [Math]::Round(($shortTerm.Info.DataSize + $shortTerm.Info.MetaSize) / 1GB, 2)
+        SourceGB = [Math]::Round($pointInfo.Info.ProtectedSize / 1GB, 2)
+    }
 }
 
 function Get-VhciNasJobResilient {

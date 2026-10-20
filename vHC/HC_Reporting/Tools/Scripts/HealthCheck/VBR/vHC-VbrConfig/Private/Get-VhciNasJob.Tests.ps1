@@ -89,4 +89,52 @@ Describe 'Get-VhciNasJob' {
         @($script:Exports['_nasBackup.csv']).Count | Should -Be 1
         @($script:Logs | Where-Object { $_.Level -eq 'WARNING' -and $_.Msg -match 'copy' }).Count | Should -BeGreaterThan 0
     }
+
+    It 'Get-VBRUnstructuredBackup throws: every exported job still carries JobType, OnDiskGB and SourceGB as 0' {
+        Mock Get-VBRUnstructuredBackupJob { @($script:Good1, $script:Good2) }
+        Mock Get-VBRUnstructuredBackup { throw 'chain enumeration failed' }
+        Get-VhciNasJob
+        $rows = @($script:Exports['_nasBackup.csv'])
+        $rows.Count | Should -Be 2
+        foreach ($row in $rows) {
+            $row.PSObject.Properties.Name | Should -Contain 'JobType'
+            $row.PSObject.Properties.Name | Should -Contain 'OnDiskGB'
+            $row.PSObject.Properties.Name | Should -Contain 'SourceGB'
+            $row.JobType  | Should -Be 'NAS Backup'
+            $row.OnDiskGB | Should -Be 0
+            $row.SourceGB | Should -Be 0
+        }
+        @($script:Logs | Where-Object { $_.Level -eq 'WARNING' -and $_.Msg -match 'size metrics will be 0' }).Count | Should -BeGreaterThan 0
+    }
+
+    It 'only some jobs have chains: every job has the size columns and unmatched jobs keep 0' {
+        Mock Get-VBRUnstructuredBackupJob { @($script:Good1, $script:Good2) }
+        Mock Get-VBRUnstructuredBackup { @([pscustomobject]@{ Name = 'NAS-Good-2' }) }
+        Get-VhciNasJob
+        $rows = @($script:Exports['_nasBackup.csv'])
+        $rows.Count | Should -Be 2
+        foreach ($row in $rows) {
+            $row.PSObject.Properties.Name | Should -Contain 'OnDiskGB'
+            $row.PSObject.Properties.Name | Should -Contain 'SourceGB'
+            $row.PSObject.Properties.Name | Should -Contain 'JobType'
+        }
+        ($rows | Where-Object Name -eq 'NAS-Good-1').OnDiskGB | Should -Be 0
+        ($rows | Where-Object Name -eq 'NAS-Good-1').SourceGB | Should -Be 0
+    }
+
+    It 'matched chain with sizes: the matched job carries its sizes, the unmatched job keeps 0' {
+        Mock Get-VBRUnstructuredBackupJob { @($script:Good1, $script:Good2) }
+        Mock Get-VBRUnstructuredBackup { @([pscustomobject]@{ Name = 'NAS-Good-2' }) }
+        Mock Get-VBRUnstructuredBackupRestorePoint { @([pscustomobject]@{ ServerName = 'share1'; Id = 'p1' }) }
+        Mock Get-VhciNasShareSize { [pscustomobject]@{ OnDiskGB = 12.5; SourceGB = 40.25 } }
+        Get-VhciNasJob
+        $rows = @($script:Exports['_nasBackup.csv'])
+        $matched = $rows | Where-Object Name -eq 'NAS-Good-2'
+        $matched.OnDiskGB | Should -Be 12.5
+        $matched.SourceGB | Should -Be 40.25
+        $matched.JobType  | Should -Be 'NAS Backup'
+        $other = $rows | Where-Object Name -eq 'NAS-Good-1'
+        $other.OnDiskGB | Should -Be 0
+        $other.SourceGB | Should -Be 0
+    }
 }
