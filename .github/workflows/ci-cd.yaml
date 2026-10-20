@@ -2246,6 +2246,104 @@ jobs:
         #   Remove-Item -Path "C:\temp\vHC" -Recurse -Force
         # }
 
+  # GUI end-to-end: drives the real published exe with FlaUI (UI Automation) on the lab VBR 13 box.
+  # Proves what Avalonia.Headless cannot: the real Win32 window, the console staying hidden, the native
+  # folder picker, and a full scrubbed Run from the GUI producing a report.
+  #
+  # - Serialised after integration-test-vbr-13-sql (it runs VHC on the same box and both write to disk), and
+  #   it runs whether that job passed or failed. No other job needs it yet, so it cannot block a release.
+  # - Needs an INTERACTIVE desktop session. A runner installed as a Windows service is in session 0 and has no
+  #   desktop; the first step fails fast with a clear message instead of hanging.
+  # - This repo is public and artifacts/logs are world-readable. Nothing from the run is uploaded (not the
+  #   report, the logs or the screenshots, which show the host name and paths) and the tests redact the machine
+  #   identity from anything they print.
+  # - Off until an interactive runner exists: it targets the `vbr-13-sql-gui` label (a second runner on the
+  #   VBR 13 box, started from a logged-on desktop rather than as a service) and runs only when the repository
+  #   variable GUI_E2E_ENABLED is 'true'. Until then it is skipped, so dev runs stay green, and pre-PR GUI
+  #   coverage comes from `vhc-verify.sh winhost --gui` (features/windows-host.md).
+  gui-e2e:
+    needs: [build-and-test, integration-test-vbr-13-sql]
+    runs-on: [self-hosted, vbr-13-sql-gui]
+    if: always() && vars.GUI_E2E_ENABLED == 'true' && github.event_name != 'pull_request' && needs.build-and-test.result == 'success'
+    timeout-minutes: 60
+    permissions:
+      contents: read
+
+    steps:
+    - name: Session probe (GUI tests need an interactive desktop)
+      run: |
+        $sessionId = (Get-Process -Id $PID).SessionId
+        $interactive = [Environment]::UserInteractive
+        Write-Host "Runner process session id: $sessionId; Environment.UserInteractive: $interactive"
+        if ($sessionId -eq 0 -or -not $interactive) {
+          Write-Host "::error::runner is a Windows service in session 0; GUI tests need the runner started from an interactive logon (run.cmd at logon, auto-logon, no screen lock)"
+          exit 1
+        }
+        if (Get-Process -Name LogonUI -ErrorAction SilentlyContinue) {
+          Write-Host "::error::the interactive session is locked (LogonUI is running); GUI tests need an unlocked desktop (auto-logon, no screen lock)"
+          exit 1
+        }
+
+    - name: Checkout repository
+      uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+
+    - name: Setup .NET
+      uses: actions/setup-dotnet@67a3573c9a986a3f9c594539f4ab511d57bb3ce9 # v4
+      with:
+        dotnet-version: '10.0.x'
+
+    - name: Download ZIP artifact
+      uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
+      with:
+        name: veeam-healthcheck-zip
+        path: ${{ github.workspace }}/test-download
+
+    - name: Extract ZIP
+      run: |
+        $zipFile = Get-ChildItem "${{ github.workspace }}\test-download\*.zip" | Select-Object -First 1
+        $extractPath = "${{ github.workspace }}\test-run"
+        Write-Host "Extracting: $($zipFile.Name)" -ForegroundColor Cyan
+        Expand-Archive -Path $zipFile.FullName -DestinationPath $extractPath -Force
+        if (-not (Test-Path "$extractPath\VeeamHealthCheck.exe")) {
+          Write-Host "Extraction failed - EXE not found" -ForegroundColor Red
+          exit 1
+        }
+
+    - name: Run GUI E2E tests
+      env:
+        VHC_E2E_EXE: ${{ github.workspace }}\test-run\VeeamHealthCheck.exe
+        VHC_E2E_LIVE: '1'
+        VHC_E2E_OUT: ${{ runner.temp }}\vhc-e2e
+        VHC_E2E_RUN_TIMEOUT_MIN: '30'
+      run: |
+        dotnet test vHC/VhcGuiE2ETests/VhcGuiE2ETests.csproj `
+          --configuration Release `
+          --verbosity normal `
+          --logger "console;verbosity=detailed"
+        if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
+    - name: Log screenshot facts (not uploaded)
+      if: always()
+      run: |
+        # The window screenshot shows the lab host name and paths, so it stays on the runner. Log only name, size and dimensions.
+        Add-Type -AssemblyName System.Drawing
+        $shots = Get-ChildItem "${{ runner.temp }}\vhc-e2e\screenshots\*.png" -ErrorAction SilentlyContinue
+        if (-not $shots) { Write-Host "No screenshots were produced."; exit 0 }
+        foreach ($shot in $shots) {
+          $img = [System.Drawing.Image]::FromFile($shot.FullName)
+          try { Write-Host "$($shot.Name): $($img.Width)x$($img.Height)px, $($shot.Length) bytes (not uploaded)" } finally { $img.Dispose() }
+        }
+
+    - name: Cleanup
+      if: always()
+      continue-on-error: true
+      run: |
+        # Each test kills only the PID it started. Nothing is killed by name here either.
+        Start-Sleep -Seconds 2
+        foreach ($dir in @("${{ github.workspace }}\test-run", "${{ github.workspace }}\test-download", "${{ runner.temp }}\vhc-e2e")) {
+          if (Test-Path $dir) { Remove-Item -Path $dir -Recurse -Force -ErrorAction SilentlyContinue }
+        }
+
   # VirusTotal scan - runs on master (full release gate) and dev (pre-release gate)
   virustotal-scan:
     needs: [integration-test-vbr-2, integration-test-vbr-13-sql, integration-test-vbr-12] # TODO: re-add integration-test-vbr once CONSOLE_HOST console version is fixed and its job above is uncommented

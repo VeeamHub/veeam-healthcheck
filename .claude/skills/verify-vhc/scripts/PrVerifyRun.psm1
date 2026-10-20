@@ -20,6 +20,7 @@ function Get-RunData {
     @{
         Runs      = @(Get-GhList -Endpoint "repos/$Repo/actions/runs?head_sha=$HeadSha" -Key 'workflow_runs')
         CheckRuns = @(Get-GhList -Endpoint "repos/$Repo/commits/$HeadSha/check-runs" -Key 'check_runs')
+        Statuses  = @(Get-GhList -Endpoint "repos/$Repo/commits/$HeadSha/statuses")
     }
 }
 
@@ -222,7 +223,7 @@ function Invoke-PrVerification {
         $d = Get-RunData -Repo $Repo -HeadSha $headSha
         $selfSuites = @($d.Runs | Where-Object { $SelfWorkflow -and $_.path -eq ".github/workflows/$SelfWorkflow" } | ForEach-Object { $_.check_suite_id })
         $ctx = @{
-            Runs = @($d.Runs); CheckRuns = @($d.CheckRuns | Where-Object { $selfSuites -notcontains $_.check_suite.id })
+            Runs = @($d.Runs); Statuses = @($d.Statuses); CheckRuns = @($d.CheckRuns | Where-Object { $selfSuites -notcontains $_.check_suite.id })
             WorkflowName = $wfJobs; WorkflowChange = $wfChange; SelfWorkflow = $SelfWorkflow; IsFork = $isFork
             Builtin = $builtin; Local = $local; Branch = $pr.head.ref; PrNumber = $prNum
             RepoFlag = " --repo $Repo"; Claimed = [System.Collections.Generic.HashSet[string]]::new()

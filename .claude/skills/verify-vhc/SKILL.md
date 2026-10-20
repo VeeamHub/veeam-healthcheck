@@ -1,6 +1,6 @@
 ---
 name: verify-vhc
-description: Prove Veeam Health Check (VHC Core) behavior off Windows. Builds the .NET solution, runs the CLI in /import mode against the repo's golden CSV fixtures to generate real HTML/JSON reports (plain and scrubbed), and opens the reports in a browser, exercises the CLI flags, and runs the cross-platform and headless GUI test suites, capturing evidence. Use when a change touches report generation, CSV parsing, scrubbing, CLI arguments or anything else that must be shown working, and no Windows + VBR server is available. States plainly what only a Windows host can verify.
+description: Prove Veeam Health Check (VHC Core) behavior off Windows, and before a PR exists on a remote Windows host you control (winhost). Builds the .NET solution, runs the CLI in /import mode against the repo's golden CSV fixtures to generate real HTML/JSON reports (plain and scrubbed), and opens the reports in a browser, exercises the CLI flags, and runs the cross-platform and headless GUI test suites, capturing evidence. Use when a change touches report generation, CSV parsing, scrubbing, CLI arguments or anything else that must be shown working, and no Windows + VBR server is available. States plainly what only a Windows host can verify.
 ---
 
 # Verify Veeam Health Check (macOS / Linux)
@@ -44,6 +44,7 @@ One script, repo-relative, executable. Run from anywhere inside the repo:
 .claude/skills/verify-vhc/scripts/vhc-verify.sh ci            [ID]  # build + every subcommand above except tests (what CI runs)
 .claude/skills/verify-vhc/scripts/vhc-verify.sh pr <N|branch> [--run] [--dispatch] [--comment]  # verify a PR: did its green checks exercise what it changed? (needs pwsh 7 + gh)
 .claude/skills/verify-vhc/scripts/vhc-verify.sh tests         [ID]  # all three test projects, logs captured
+.claude/skills/verify-vhc/scripts/vhc-verify.sh winhost       [ID] [--gui] [--live] [--status]  # this working tree, built and tested on a remote Windows host over SSH (needs VHC_WINHOST)
 .claude/skills/verify-vhc/scripts/vhc-verify.sh cleanup       [ID]  # stop what we started, remove scratch input, keep evidence
 ```
 
@@ -61,6 +62,19 @@ Green PR checks do not prove the changed code ran: a workflow that never ran sho
 ```
 
 It writes `.verify-vhc/evidence/pr-<N>/report.md` and `report.json` and exits 0 only on **VERIFIED**. The other verdicts are **NEEDS-RUN** (exit 2: something touched was not exercised; the report prints the exact command), **FAILED** (exit 1) and **NEEDS-HUMAN** (exit 3: only a human, Windows or a live VB365 host can prove it, or a changed file maps to no surface). `.github/workflows/pr-verify.yml` runs the read-only form on every PR. Paste the verdict into the PR body. Recipe, map format and limits: [features/pr-verification.md](features/pr-verification.md).
+
+## Windows host
+
+Everything above runs on macOS or Linux and says nothing about Windows-only behavior. `winhost` closes that gap before a PR exists, with no CI and no self-hosted runner: it ships the current working tree (uncommitted changes included) to a Windows machine you can SSH into and runs the real build, tests, a live collection and the real GUI there.
+
+```bash
+export VHC_WINHOST=user@winbox                       # SSH key auth, no prompt; the host's default SSH shell is PowerShell 7
+.claude/skills/verify-vhc/scripts/vhc-verify.sh winhost my-run                  # dotnet build + full VhcXTests (Windows-only tests included)
+.claude/skills/verify-vhc/scripts/vhc-verify.sh winhost my-run --live --gui     # + a real /run on the host's local VBR and the FlaUI suite in its desktop
+.claude/skills/verify-vhc/scripts/vhc-verify.sh winhost my-run --live --gui --status   # + post commit status verify-vhc/windows-host on HEAD (clean tree only)
+```
+
+Each step is reported pass, fail or skip in a summary, evidence lands in `.verify-vhc/evidence/<ID>/winhost/` (git-ignored, local), and the exit code is non-zero on any failure. The host is left clean: the scratch folder and the scheduled task are removed, and only recorded PIDs are ever killed. `--gui` needs an unlocked, connected interactive desktop (an RDP session you keep open); without one it fails at once with a single message. `--status` makes the PR verifier count the run as evidence for the Windows unit tests, GUI E2E and live PostgreSQL surfaces. Setup, what it proves and what it does not, and why this beats registering a home machine as a self-hosted runner on a public repo: [features/windows-host.md](features/windows-host.md). No host name, user or address belongs in the repo; configure the host through the environment only.
 
 ## Launch
 
