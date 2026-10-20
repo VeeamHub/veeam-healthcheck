@@ -119,6 +119,12 @@ function Get-VhcJob {
     $script:VhcOrphanedSupersededCache = [PSCustomObject]@{
         SweepRan        = $false
         CandidateGroups = [System.Collections.Generic.List[object]]::new()
+        # Every sweep group a tier placed on a job, handed over as-is (a list
+        # of restore-point lists, no extra SDK calls here). The classifier
+        # uses it only to see whether a resolved sibling chain under the same
+        # parent backup was written recently (#221 / R3): a candidate chain
+        # is not "orphaned" while anything under its parent is still live.
+        ResolvedGroups  = [System.Collections.Generic.List[object]]::new()
     }
     if ($NeedsSweep) {
         $SweepStopwatch = [System.Diagnostics.Stopwatch]::StartNew()
@@ -210,6 +216,7 @@ function Get-VhcJob {
                         $RestorePointsByJob[$JobIdKey] = [System.Collections.ArrayList]::new()
                     }
                     foreach ($RestorePoint in $GroupPoints) { [void]$RestorePointsByJob[$JobIdKey].Add($RestorePoint) }
+                    [void]$script:VhcOrphanedSupersededCache.ResolvedGroups.Add($GroupPoints)
                     $Tier1Matched += $GroupPoints.Count
                 } else {
                     [void]$UnresolvedGroups.Add($GroupPoints)
@@ -360,6 +367,7 @@ function Get-VhcJob {
                     $RestorePointsByJob[$JobIdKey] = [System.Collections.ArrayList]::new()
                 }
                 foreach ($RestorePoint in $GroupPoints) { [void]$RestorePointsByJob[$JobIdKey].Add($RestorePoint) }
+                [void]$script:VhcOrphanedSupersededCache.ResolvedGroups.Add($GroupPoints)
                 if ($ResolvedViaCopyBackup) { $Tier3Matched += $GroupPoints.Count }
                 else {
                     $Tier2Matched += $GroupPoints.Count
@@ -406,6 +414,7 @@ function Get-VhcJob {
             # StaleObject entries are added later, in the separate per-job
             # loop below, which hasn't run yet at this point.
             $script:VhcOrphanedSupersededCache.CandidateGroups.Clear()
+            $script:VhcOrphanedSupersededCache.ResolvedGroups.Clear()
         }
     }
     $script:VhcOrphanedSupersededCache.SweepRan = $NeedsSweep
@@ -457,13 +466,39 @@ function Get-VhcJob {
             $CurrentJobObjects = $null
             try { $CurrentJobObjects = @($Job.GetObjectsInJob()) } catch { $CurrentJobObjects = $null }
 
+            # Membership is only checkable (R2) when every entry is a known
+            # leaf workload. Trusted: 'Vm', the one leaf Object.Type string
+            # the fixtures and ADR 0021/0024 model ('Vapp' is the only
+            # container type confirmed live, a Cloud Director vApp).
+            # 'VirtualMachine' is accepted as the same thing under a longer
+            # name. Everything else - Host, Folder, Cluster, Tag, Datastore,
+            # ResourcePool, protection groups, agent computers, and any type
+            # not listed - is treated as "membership not checkable", because
+            # a container entry does not enumerate the VMs backed up through
+            # it, so those VMs would all look stale while being written
+            # daily. Only a lab can confirm the real Object.Type strings for
+            # agent computers, protection groups and the other workload
+            # types; until then they fail safe (nothing is excluded or cached
+            # as StaleObject for that job). A job whose GetObjectsInJob()
+            # threw has no membership to check either.
+            $LeafObjectTypes = @('Vm', 'VirtualMachine')
+            $MembershipCheckable = ($null -ne $CurrentJobObjects)
             $VappContainerIds = [System.Collections.Generic.HashSet[string]]::new([System.StringComparer]::OrdinalIgnoreCase)
+            $SeenObjectTypes = [System.Collections.Generic.HashSet[string]]::new([System.StringComparer]::OrdinalIgnoreCase)
             foreach ($JobObject in @($CurrentJobObjects)) {
                 $ObjType = $null
                 try { $ObjType = $JobObject.Object.Type } catch { $ObjType = $null }
+                if ($null -eq $ObjType) { [void]$SeenObjectTypes.Add('<none>') } else { [void]$SeenObjectTypes.Add([string]$ObjType) }
                 if ($ObjType -eq 'Vapp') {
                     try { [void]$VappContainerIds.Add($JobObject.ObjectId.ToString()) } catch {}
                 }
+                if ($null -eq $ObjType -or [string]$ObjType -notin $LeafObjectTypes) { $MembershipCheckable = $false }
+            }
+            if (-not $MembershipCheckable -and $null -ne $CurrentJobObjects) {
+                # The observed type names are logged so live runs show the real Object.Type strings
+                # the allowlist must cover (only 'Vm' and 'Vapp' are confirmed so far).
+                $SeenTypeList = (@($SeenObjectTypes) | Sort-Object) -join ', '
+                try { Write-LogFile "Job '$($Job.Name)': GetObjectsInJob() includes a container or unrecognised object type ($SeenTypeList), so job membership is not checkable; no restore points will be treated as stale for this job (see ADR 0034)." -LogLevel "INFO" } catch {}
             }
 
             if ($VappContainerIds.Count -gt 0 -and $RestorePoints.Count -gt 0) {
@@ -518,7 +553,7 @@ function Get-VhcJob {
                     $CurrentObjectIds = $null
                 }
 
-                if ($null -ne $CurrentObjectIds) {
+                if ($MembershipCheckable -and $null -ne $CurrentObjectIds) {
                     # A null RestorePoint.ObjectId can't be classified as
                     # either current or stale - .ToString() on it would
                     # throw, caught by this job's own outer try/catch, which

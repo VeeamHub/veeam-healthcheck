@@ -126,33 +126,49 @@ function Get-VhcOrphanedSupersededBackups {
             Write-LogFile "Global restore-point sweep did not run for this environment - Orphaned Backup detection not evaluated." -LogLevel "INFO"
         }
 
-        # Pre-pass (#221): recency is judged per PARENT backup, not per
-        # candidate. With per-VM chains each VM is its own candidate and
-        # BackupId, so a live job writing VM-A and VM-B daily would otherwise
-        # still leave VM-C (removed long ago, same job) looking Orphaned.
-        # The parent is keyed on GetParentOrThis().Id, falling back to the
-        # candidate's own BackupId when the parent Id is unavailable.
+        # Pre-pass (#221): recency of an Unresolved candidate is judged per
+        # PARENT backup, not per candidate. With per-VM chains each VM is its
+        # own candidate and BackupId, so a live job writing VM-A and VM-B
+        # daily would otherwise still leave VM-C (removed long ago, same job)
+        # looking Orphaned. The parent is keyed on GetParentOrThis().Id,
+        # falling back to the candidate's own BackupId when the parent Id is
+        # unavailable.
+        #
+        # The parent's newest point comes from EVERY chain under it that the
+        # sweep saw (R3): other candidates of any Reason, and groups a tier
+        # already placed on a job (Cache.ResolvedGroups). A sibling chain that
+        # resolved to a live job and was written today keeps an old Unresolved
+        # chain out of Orphaned, as the #278 text promises.
         $Candidates  = @($Cache.CandidateGroups)
         $Scans       = [object[]]::new($Candidates.Count)
         $CandidateParentKeys = [string[]]::new($Candidates.Count)
         $ParentState = @{}
+        $ActiveEdgeUtc = $CollectionTimeUtc.AddDays(-$ActiveChainWindowDays)
+        $HasUnresolvedCandidate = $false
+
+        function script:Get-VhciParentKey {
+            param($Point, [string]$Fallback)
+            $PointBackup = $null
+            try { $PointBackup = $Point.GetBackup() } catch { $PointBackup = $null }
+            if ($null -eq $PointBackup) { return $null }
+            $PointParent = $null
+            try { $PointParent = $PointBackup.GetParentOrThis() } catch { $PointParent = $PointBackup }
+            if ($null -eq $PointParent) { $PointParent = $PointBackup }
+            $PointParentId = $null
+            try { $PointParentId = $PointParent.Id } catch { $PointParentId = $null }
+            if ($PointParentId) { return "parent:$PointParentId" }
+            if ($Point.BackupId) { return "backup:$($Point.BackupId)" }
+            return $Fallback
+        }
+
         for ($i = 0; $i -lt $Candidates.Count; $i++) {
             $Points = @($Candidates[$i].RestorePoints)
             if ($Points.Count -eq 0) { continue }
             $Scans[$i] = script:Get-VhciPointTimeScan -Points $Points
-            if ($Candidates[$i].Reason -ne 'Unresolved') { continue }
+            if ($Candidates[$i].Reason -eq 'Unresolved') { $HasUnresolvedCandidate = $true }
 
-            $PreBackup = $null
-            try { $PreBackup = $Points[0].GetBackup() } catch { $PreBackup = $null }
-            if ($null -eq $PreBackup) { continue }
-            $PreParent = $null
-            try { $PreParent = $PreBackup.GetParentOrThis() } catch { $PreParent = $PreBackup }
-            if ($null -eq $PreParent) { $PreParent = $PreBackup }
-            $ParentId = $null
-            try { $ParentId = $PreParent.Id } catch { $ParentId = $null }
-            $Key = if ($ParentId) { "parent:$ParentId" }
-                   elseif ($Points[0].BackupId) { "backup:$($Points[0].BackupId)" }
-                   else { "candidate:$i" }
+            $Key = script:Get-VhciParentKey -Point $Points[0] -Fallback "candidate:$i"
+            if ($null -eq $Key) { continue }
             $CandidateParentKeys[$i] = $Key
 
             if (-not $ParentState.ContainsKey($Key)) {
@@ -162,6 +178,32 @@ function Get-VhcOrphanedSupersededBackups {
             if ($Scans[$i].HasUnusable) { $State.HasUnusable = $true }
             if ($null -ne $Scans[$i].Newest -and ($null -eq $State.Newest -or $Scans[$i].Newest -gt $State.Newest)) {
                 $State.Newest = $Scans[$i].Newest
+            }
+        }
+
+        # Resolved sibling chains only matter to a parent an Unresolved
+        # candidate belongs to, and only when they could change the verdict
+        # (inside the window, or with an unusable timestamp). Skipping the
+        # rest keeps the extra GetBackup()/GetParentOrThis() calls to the
+        # groups that can matter; a run with no Unresolved candidate pays none.
+        $ResolvedGroups = if ($Cache.PSObject.Properties['ResolvedGroups']) { @($Cache.ResolvedGroups) } else { @() }
+        if ($HasUnresolvedCandidate) {
+            $UnresolvedKeys = [System.Collections.Generic.HashSet[string]]::new()
+            for ($i = 0; $i -lt $Candidates.Count; $i++) {
+                if ($Candidates[$i].Reason -eq 'Unresolved' -and $CandidateParentKeys[$i]) { [void]$UnresolvedKeys.Add($CandidateParentKeys[$i]) }
+            }
+            foreach ($GroupPoints in $ResolvedGroups) {
+                $GroupPoints = @($GroupPoints)
+                if ($GroupPoints.Count -eq 0) { continue }
+                $GroupScan = script:Get-VhciPointTimeScan -Points $GroupPoints
+                if (-not $GroupScan.HasUnusable -and $null -ne $GroupScan.Newest -and $GroupScan.Newest -le $ActiveEdgeUtc) { continue }
+                $Key = script:Get-VhciParentKey -Point $GroupPoints[0] -Fallback $null
+                if ($null -eq $Key -or -not $UnresolvedKeys.Contains($Key)) { continue }
+                $State = $ParentState[$Key]
+                if ($GroupScan.HasUnusable) { $State.HasUnusable = $true }
+                if ($null -ne $GroupScan.Newest -and ($null -eq $State.Newest -or $GroupScan.Newest -gt $State.Newest)) {
+                    $State.Newest = $GroupScan.Newest
+                }
             }
         }
 
@@ -249,16 +291,22 @@ function Get-VhcOrphanedSupersededBackups {
                 # anywhere in the parent, or a point newer than the window
                 # edge (including future-dated, clock skew), keeps it
                 # Unresolved.
+                #
+                # The same window guards 'Superseded' (R1): a StaleObject or
+                # Tier2Suppressed group whose own newest point is inside the
+                # window is still being written (a VM removed minutes ago, a
+                # chain the job still extends), so it is reported as
+                # 'Unresolved' (not counted as reclaimable) instead. Judged on
+                # the group's own points, not the parent: under per-VM chains
+                # a removed VM shares its parent with live siblings, and
+                # parent-level recency would never let any of them be
+                # Superseded. Outside the window it stays Superseded.
                 $Scan = $Scans[$CandidateIndex]
-                $Category = if ($Candidate.Reason -ne 'Unresolved') {
-                    'Superseded'
-                } else {
-                    $State = $ParentState[$CandidateParentKeys[$CandidateIndex]]
-                    if ($State.HasUnusable -or $null -eq $State.Newest -or
-                        $State.Newest -gt $CollectionTimeUtc.AddDays(-$ActiveChainWindowDays)) {
-                        'Unresolved'
-                    } else { 'Orphaned' }
-                }
+                $RecencyState = if ($Candidate.Reason -eq 'Unresolved') { $ParentState[$CandidateParentKeys[$CandidateIndex]] } else { $Scan }
+                $StillActive = $RecencyState.HasUnusable -or $null -eq $RecencyState.Newest -or $RecencyState.Newest -gt $ActiveEdgeUtc
+                $Category = if ($StillActive) { 'Unresolved' }
+                            elseif ($Candidate.Reason -eq 'Unresolved') { 'Orphaned' }
+                            else { 'Superseded' }
 
                 # A null ObjectId can't be safely merged under any key shared
                 # with another restore point - two unrelated null-ObjectId

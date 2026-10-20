@@ -13,6 +13,10 @@ checksums, and scan results.
 
 ## [Unreleased]
 
+### Fixed
+
+- Orphaned & Superseded Backups (experimental): a chain is no longer called Orphaned while a sibling chain under the same parent backup was written within the active-chain window; Superseded groups (removed objects, suppressed matches) still being written are reported as still being written instead of reclaimable; and jobs that mix an explicit VM with a host, folder, tag, cluster or protection-group entry no longer have the VMs inside that container flagged as removed.
+
 ## [3.1.0] - 2026-10-16
 
 ### Added
