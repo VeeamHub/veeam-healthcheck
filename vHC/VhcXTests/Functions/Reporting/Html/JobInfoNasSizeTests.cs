@@ -1,3 +1,4 @@
+using System.Dynamic;
 using System.Globalization;
 using System.Net;
 using VeeamHealthCheck.Functions.Reporting.Html.VBR.VbrTables.Jobs_Info;
@@ -50,6 +51,77 @@ public sealed class JobInfoNasSizeTests
     }
 
     [Fact]
+    public void RunFullVbrReport_NasBackupCsvWithoutSizeColumns_RendersJobInfoWithoutImportError()
+    {
+        using var report = new GoldenVbrReport();
+        AddNasJobToJobsCsv(report.Input, "NAS-FileShare-Backup");
+        ReplaceNasBackupCsv(
+            report.Input,
+            "\"Id\",\"Name\",\"Description\"" + Environment.NewLine
+            + "\"eeee5555-ffff-0000-1111-222255555555\",\"NAS-FileShare-Backup\",\"File share backup job\"" + Environment.NewLine);
+
+        string html = WebUtility.HtmlDecode(report.Generate(scrub: false));
+
+        AssertNoImportError(report);
+        Assert.Contains("NAS-FileShare-Backup", html);
+    }
+
+    [Fact]
+    public void RunFullVbrReport_NasBackupCsvWithoutNameColumn_RendersJobInfoWithoutImportError()
+    {
+        using var report = new GoldenVbrReport();
+        AddNasJobToJobsCsv(report.Input, NasJobName);
+        ReplaceNasBackupCsv(
+            report.Input,
+            "\"Id\",\"Description\"" + Environment.NewLine
+            + "\"eeee5555-ffff-0000-1111-222255555555\",\"File share backup job\"" + Environment.NewLine);
+
+        string html = WebUtility.HtmlDecode(report.Generate(scrub: false));
+
+        AssertNoImportError(report);
+        Assert.Contains(NasJobName, html);
+    }
+
+    [Fact]
+    public void ReadOptionalField_FieldPresent_ReturnsValue()
+    {
+        dynamic row = new ExpandoObject();
+        row.ondiskgb = "12.5";
+
+        Assert.Equal("12.5", CJobInfoTable.ReadOptionalField((object)row, "ondiskgb"));
+    }
+
+    [Fact]
+    public void ReadOptionalField_FieldMissing_ReturnsNull()
+    {
+        dynamic row = new ExpandoObject();
+        row.name = "job";
+
+        Assert.Null(CJobInfoTable.ReadOptionalField((object)row, "ondiskgb"));
+    }
+
+    [Fact]
+    public void ReadOptionalField_DifferentCase_ReturnsValue()
+    {
+        dynamic row = new ExpandoObject();
+        row.OnDiskGB = "7";
+
+        Assert.Equal("7", CJobInfoTable.ReadOptionalField((object)row, "ondiskgb"));
+    }
+
+    [Fact]
+    public void ReadOptionalField_NullRow_ReturnsNull()
+    {
+        Assert.Null(CJobInfoTable.ReadOptionalField(null!, "ondiskgb"));
+    }
+
+    [Fact]
+    public void ReadOptionalField_RowNotADictionary_ReturnsNull()
+    {
+        Assert.Null(CJobInfoTable.ReadOptionalField(new object(), "ondiskgb"));
+    }
+
+    [Fact]
     public void ParseSizeGb_NullValue_ReturnsZero()
     {
         Assert.Equal(0, CJobInfoTable.ParseSizeGb(null!));
@@ -80,6 +152,12 @@ public sealed class JobInfoNasSizeTests
         int failed = Array.FindIndex(lines, line => line.Contains(ImportFailedMessage, StringComparison.Ordinal));
         string detail = failed < 0 ? string.Empty : string.Join(Environment.NewLine, lines.Skip(failed).Take(3));
         Assert.True(failed < 0, "Job Info import logged an error:" + Environment.NewLine + detail);
+    }
+
+    private static void ReplaceNasBackupCsv(string input, string content)
+    {
+        string path = Assert.Single(Directory.GetFiles(input, "*nasBackup.csv"));
+        File.WriteAllText(path, content);
     }
 
     private static void DeleteNasBackupCsv(string input)

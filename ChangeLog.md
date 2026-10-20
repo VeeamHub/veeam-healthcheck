@@ -28,8 +28,8 @@ checksums, and scan results.
 
 ### Fixed
 
-- The Job Info table no longer fails to load when NAS job data is missing.
-- One NAS backup job whose repository was deleted no longer stops every NAS job (and Entra ID data) from being collected. The broken job is skipped with a warning naming it.
+- The Job Info table no longer fails to load when NAS job data, or its size columns, are missing.
+- One NAS backup job whose repository was deleted no longer stops every NAS job (and Entra ID data) from being collected. The broken job is skipped with a warning naming it, and NAS jobs always export `OnDiskGB` and `SourceGB` (0 when sizes cannot be read).
 - Importing CSVs with `/import` now produces only the report for the product the files came from. A VB365
   import no longer also writes an empty VBR report, and a VBR import no longer writes a VB365 report.
 - A complete VB365 export is no longer reported as missing a critical file (`LocalRepositories.csv`).

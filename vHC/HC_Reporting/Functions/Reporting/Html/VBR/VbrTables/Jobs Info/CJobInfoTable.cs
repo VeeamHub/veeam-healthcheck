@@ -34,6 +34,29 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR.VbrTables.Jobs_Info
             return double.TryParse(text, NumberStyles.Any, CultureInfo.InvariantCulture, out double value) ? value : 0;
         }
 
+        /// <summary>
+        /// Reads a column from a CsvHelper dynamic row without throwing when the column is absent.
+        /// CsvHelper dynamic rows implement <see cref="IDictionary{TKey, TValue}"/>; the name is
+        /// matched case-insensitively. Returns null for a null row, a row of another shape, or a missing column.
+        /// </summary>
+        internal static object ReadOptionalField(object row, string name)
+        {
+            if (row is not IDictionary<string, object> fields)
+            {
+                return null;
+            }
+
+            foreach (var pair in fields)
+            {
+                if (string.Equals(pair.Key, name, StringComparison.OrdinalIgnoreCase))
+                {
+                    return pair.Value;
+                }
+            }
+
+            return null;
+        }
+
         // Job types that support Application Aware Image Processing (guest OS quiescence)
         private static readonly HashSet<string> AaipSupportedJobTypes = new(StringComparer.OrdinalIgnoreCase)
         {
@@ -131,15 +154,21 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR.VbrTables.Jobs_Info
                             {
                                 var x = csvparser.GetDynamicNasBackup().ToList();
 
-                                var diskGb = x.Where(x => x.name == job.Name)
-                                    .Select(x => x.ondiskgb)
+                                string nasJobName = job.Name;
+                                var matches = x.Where(r => string.Equals(
+                                    Convert.ToString(ReadOptionalField((object)r, "name"), CultureInfo.InvariantCulture),
+                                    nasJobName,
+                                    StringComparison.Ordinal)).ToList();
+
+                                var diskGb = matches
+                                    .Select(r => ReadOptionalField((object)r, "ondiskgb"))
                                     .FirstOrDefault();
                                 onDiskGB = ParseSizeGb(diskGb);
                                 onDiskGB = Math.Round(onDiskGB, 2);
                                 onDiskTotalGB += onDiskGB;
 
-                                var sourceGb = x.Where(x => x.name == job.Name)
-                                    .Select(x => x.sourcegb)
+                                var sourceGb = matches
+                                    .Select(r => ReadOptionalField((object)r, "sourcegb"))
                                     .FirstOrDefault();
                                 sourceSizeGB = ParseSizeGb(sourceGb);
                                 sourceSizeGB = Math.Round(sourceSizeGB, 2);
