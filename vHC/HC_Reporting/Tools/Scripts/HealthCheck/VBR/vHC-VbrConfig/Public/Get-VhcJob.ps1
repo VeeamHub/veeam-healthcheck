@@ -491,6 +491,13 @@ function Get-VhcJob {
             # nested VMs, per ADR 0021) - trust nothing, exclude nothing,
             # rather than flag every real object Superseded and zero the
             # job's size.
+            # Disk-used and source-size are different questions. Every point that
+            # survives the vApp-container filter occupies this job's backup, so
+            # $OnDiskPoints keeps them all (as GA did). The partition below only
+            # narrows $RestorePoints, which feeds source size (OriginalSize): a
+            # removed object is no longer protected by the job.
+            $OnDiskPoints = $RestorePoints
+
             if ($RestorePoints.Count -gt 0) {
                 $CurrentObjectIds = $null
                 try {
@@ -578,7 +585,7 @@ function Get-VhcJob {
 
             $TotalOnDiskGB = 0
 
-            $RestorePoints.ForEach{
+            $OnDiskPoints.ForEach{
                 $RestorePoint  = $PSItem
                 $OnDiskGB      = $RestorePoint.GetStorage().Stats.BackupSize / 1GB
                 $TotalOnDiskGB += $OnDiskGB

@@ -13,6 +13,10 @@ checksums, and scan results.
 
 ## [Unreleased]
 
+### Fixed
+
+- Job backup data size again includes restore points of objects removed from the job (as in 3.0.1.193); source size still excludes them.
+
 ## [3.1.0] - 2026-10-16
 
 ### Added

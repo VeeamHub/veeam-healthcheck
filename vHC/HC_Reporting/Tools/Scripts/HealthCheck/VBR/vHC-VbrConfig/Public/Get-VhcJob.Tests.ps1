@@ -1918,36 +1918,26 @@ Describe 'Stale-ObjectId guard: GetObjectsInJob() cross-reference' {
         $script:VhcOrphanedSupersededCache = $null
     }
 
-    # SKIPPED (2026-08-26): this fixture only mocks Get-VBRRestorePoint's
-    # non-sweep (-Backup) call signature. Get-VhcJob.ps1 currently forces
-    # $NeedsSweep = $true unconditionally (temporary override - see that
-    # file's comment near $KnownSafeJobTypes), so this job now takes the
-    # unscoped sweep branch instead, which this mock returns @() for - the
-    # guard logic itself is still exercised and passing via the dedicated
-    # sweep-path test below ('...via the sweep path too'). Re-enable (or
-    # rewire this fixture to also populate $RestorePointsByJob) when the
-    # override is reverted.
-    It 'excludes a stale ObjectId from CalculatedOriginalSize and TotalOnDiskGB, caches it as StaleObject' -Skip {
+    It 'counts a removed object''s points in OnDiskGB but not OriginalSize, and caches it as StaleObject' {
         $CurrentId = [guid]'44444444-4444-4444-4444-444444444444'
         $StaleId   = [guid]'55555555-5555-5555-5555-555555555555'
         $FakeJob = script:New-FakeJob -Name 'VMware - Malware' -TypeToString 'VMware Backup' -ObjectsInJobIds @($CurrentId)
         Mock Get-VBRJob -MockWith { @($FakeJob) }
-        $CurrentPoint = script:New-FakeRestorePoint -Name 'MALWARE' -ObjectId $CurrentId -ApproxSize 150GB -BackupSize 50GB
-        $StalePoint   = script:New-FakeRestorePoint -Name 'MALWARE' -ObjectId $StaleId -ApproxSize 90GB -BackupSize 30GB
-        $FakeJob | Add-Member -MemberType ScriptMethod -Name GetLastBackup -Value { @($CurrentPoint) } -Force
+        $CurrentPoint = script:New-FakeRestorePoint -Name 'MALWARE' -ObjectId $CurrentId -ApproxSize 150GB -BackupSize 50GB -SourceJob $FakeJob
+        $StalePoint   = script:New-FakeRestorePoint -Name 'MALWARE' -ObjectId $StaleId -ApproxSize 90GB -BackupSize 30GB -SourceJob $FakeJob
         Mock Get-VBRRestorePoint -MockWith {
-            if ($null -ne $Backup) { @($CurrentPoint, $StalePoint) } else { @() }
+            if ($null -eq $Backup) { @($CurrentPoint, $StalePoint) } else { @() }
         }
 
         Get-VhcJob | Out-Null
 
         $job = $script:CapturedJobRows | Where-Object { $_.Name -eq 'VMware - Malware' }
-        # OnDiskGB should reflect only the current object's 50GB, not 80GB combined.
-        [double]$job.OnDiskGB | Should -BeGreaterThan 49
-        [double]$job.OnDiskGB | Should -BeLessThan 51
-        # OriginalSize should reflect only the current object's 150GB
-        # ApproxSize, not 240GB (150GB + 90GB) if the stale point leaked
-        # into CalculatedOriginalSize's per-ObjectId sum.
+        # The removed object's 30GB still occupies this job's backup, so it
+        # counts toward on-disk size: 50GB + 30GB.
+        [double]$job.OnDiskGB | Should -BeGreaterThan 79
+        [double]$job.OnDiskGB | Should -BeLessThan 81
+        # The object is no longer protected, so its 90GB ApproxSize stays out
+        # of source size (150GB, not 240GB).
         $job.OriginalSize | Should -Be 150GB
 
         $stale = $script:VhcOrphanedSupersededCache.CandidateGroups | Where-Object { $_.Reason -eq 'StaleObject' }
@@ -1957,9 +1947,33 @@ Describe 'Stale-ObjectId guard: GetObjectsInJob() cross-reference' {
         $stale[0].RestorePoints[0].ObjectId | Should -Be $StaleId
     }
 
-    # SKIPPED (2026-08-26): same non-sweep-only fixture limitation as above
-    # - see the $NeedsSweep override note there.
-    It 'excludes the vApp container restore point (not the real VMs) when GetObjectsInJob() returns a Vapp-typed container' -Skip {
+    It 'writes one StaleObject cache group per removed object, each holding all of that object''s points, while OnDiskGB counts them all' {
+        $CurrentId = [guid]'44444444-4444-4444-4444-444444444441'
+        $StaleA    = [guid]'55555555-5555-5555-5555-555555555551'
+        $StaleB    = [guid]'55555555-5555-5555-5555-555555555552'
+        $FakeJob = script:New-FakeJob -Name 'VMware - TwoStale' -TypeToString 'VMware Backup' -ObjectsInJobIds @($CurrentId)
+        Mock Get-VBRJob -MockWith { @($FakeJob) }
+        $Points = @(
+            (script:New-FakeRestorePoint -Name 'CUR'  -ObjectId $CurrentId -ApproxSize 100GB -BackupSize 10GB -SourceJob $FakeJob)
+            (script:New-FakeRestorePoint -Name 'A1'   -ObjectId $StaleA -ApproxSize 20GB -BackupSize 5GB -SourceJob $FakeJob)
+            (script:New-FakeRestorePoint -Name 'A2'   -ObjectId $StaleA -ApproxSize 20GB -BackupSize 5GB -SourceJob $FakeJob)
+            (script:New-FakeRestorePoint -Name 'B1'   -ObjectId $StaleB -ApproxSize 30GB -BackupSize 7GB -SourceJob $FakeJob)
+        )
+        Mock Get-VBRRestorePoint -MockWith { if ($null -eq $Backup) { $Points } else { @() } }
+
+        Get-VhcJob | Out-Null
+
+        $stale = @($script:VhcOrphanedSupersededCache.CandidateGroups | Where-Object { $_.Reason -eq 'StaleObject' })
+        $stale | Should -HaveCount 2
+        (@($stale | ForEach-Object { @($_.RestorePoints).Count } | Sort-Object)) | Should -Be @(1, 2)
+
+        $job = $script:CapturedJobRows | Where-Object { $_.Name -eq 'VMware - TwoStale' }
+        [double]$job.OnDiskGB | Should -BeGreaterThan 26.9
+        [double]$job.OnDiskGB | Should -BeLessThan 27.1
+        $job.OriginalSize | Should -Be 100GB
+    }
+
+    It 'excludes the vApp container restore point (not the real VMs) when GetObjectsInJob() returns a Vapp-typed container' {
         # Live-lab-confirmed shape (VBR v13, 'VMware Cloud Director - vApp
         # Backup'): GetObjectsInJob() returns exactly ONE CObjectInJob entry
         # for the vApp container itself (Object.Type = 'Vapp', a
@@ -1981,12 +1995,11 @@ Describe 'Stale-ObjectId guard: GetObjectsInJob() cross-reference' {
         $FakeJob = script:New-FakeJob -Name 'VMware Cloud Director - vApp Backup' -TypeToString 'Cloud Director Backup' `
             -ObjectsInJobIds @($VappId) -VappContainerIds @($VappId)
         Mock Get-VBRJob -MockWith { @($FakeJob) }
-        $VappPoint = script:New-FakeRestorePoint -Name 'v13' -ObjectId $VappId -ApproxSize 200GB -BackupSize 0
-        $Vm1Point  = script:New-FakeRestorePoint -Name 'vm1' -ObjectId $Vm1Id  -ApproxSize 120GB -BackupSize 40GB
-        $Vm2Point  = script:New-FakeRestorePoint -Name 'vm2' -ObjectId $Vm2Id  -ApproxSize 80GB  -BackupSize 20GB
-        $FakeJob | Add-Member -MemberType ScriptMethod -Name GetLastBackup -Value { @($VappPoint) } -Force
+        $VappPoint = script:New-FakeRestorePoint -Name 'v13' -ObjectId $VappId -ApproxSize 200GB -BackupSize 0 -SourceJob $FakeJob
+        $Vm1Point  = script:New-FakeRestorePoint -Name 'vm1' -ObjectId $Vm1Id  -ApproxSize 120GB -BackupSize 40GB -SourceJob $FakeJob
+        $Vm2Point  = script:New-FakeRestorePoint -Name 'vm2' -ObjectId $Vm2Id  -ApproxSize 80GB  -BackupSize 20GB -SourceJob $FakeJob
         Mock Get-VBRRestorePoint -MockWith {
-            if ($null -ne $Backup) { @($VappPoint, $Vm1Point, $Vm2Point) } else { @() }
+            if ($null -eq $Backup) { @($VappPoint, $Vm1Point, $Vm2Point) } else { @() }
         }
 
         Get-VhcJob | Out-Null
@@ -2007,19 +2020,16 @@ Describe 'Stale-ObjectId guard: GetObjectsInJob() cross-reference' {
         [double]$job.OnDiskGB | Should -BeLessThan 61
     }
 
-    # SKIPPED (2026-08-26): same non-sweep-only fixture limitation - see the
-    # $NeedsSweep override note above.
-    It 'excludes nothing when GetObjectsInJob() matches zero restore points (Cloud Director vApp-container signature, no container RP present)' -Skip {
+    It 'excludes nothing when GetObjectsInJob() matches zero restore points (Cloud Director vApp-container signature, no container RP present)' {
         $VappContainerId = [guid]'66666666-6666-6666-6666-666666666666'
         $RealVm1 = [guid]'77777777-7777-7777-7777-777777777777'
         $RealVm2 = [guid]'88888888-8888-8888-8888-888888888888'
         $FakeJob = script:New-FakeJob -Name 'VCD - vApp' -TypeToString 'Cloud Director Backup' -ObjectsInJobIds @($VappContainerId)
         Mock Get-VBRJob -MockWith { @($FakeJob) }
-        $Point1 = script:New-FakeRestorePoint -Name 'vm1' -ObjectId $RealVm1 -ApproxSize 10GB -BackupSize 5GB
-        $Point2 = script:New-FakeRestorePoint -Name 'vm2' -ObjectId $RealVm2 -ApproxSize 10GB -BackupSize 5GB
-        $FakeJob | Add-Member -MemberType ScriptMethod -Name GetLastBackup -Value { @($Point1) } -Force
+        $Point1 = script:New-FakeRestorePoint -Name 'vm1' -ObjectId $RealVm1 -ApproxSize 10GB -BackupSize 5GB -SourceJob $FakeJob
+        $Point2 = script:New-FakeRestorePoint -Name 'vm2' -ObjectId $RealVm2 -ApproxSize 10GB -BackupSize 5GB -SourceJob $FakeJob
         Mock Get-VBRRestorePoint -MockWith {
-            if ($null -ne $Backup) { @($Point1, $Point2) } else { @() }
+            if ($null -eq $Backup) { @($Point1, $Point2) } else { @() }
         }
 
         Get-VhcJob | Out-Null
@@ -2028,6 +2038,7 @@ Describe 'Stale-ObjectId guard: GetObjectsInJob() cross-reference' {
         # Both real VMs' data must still be counted - zero overlap means the
         # guard trusts nothing and excludes nothing.
         [double]$job.OnDiskGB | Should -BeGreaterThan 9
+        $job.OriginalSize | Should -Be 20GB
         $stale = $script:VhcOrphanedSupersededCache.CandidateGroups | Where-Object { $_.Reason -eq 'StaleObject' -and $_.CurrentJobId -eq $FakeJob.Id.ToString() }
         $stale | Should -BeNullOrEmpty
     }
@@ -2068,8 +2079,11 @@ Describe 'Stale-ObjectId guard: GetObjectsInJob() cross-reference' {
         Get-VhcJob | Out-Null
 
         $job = $script:CapturedJobRows | Where-Object { $_.Name -eq 'HPE Morpheus - Sweep' }
-        [double]$job.OnDiskGB | Should -BeGreaterThan 49
-        [double]$job.OnDiskGB | Should -BeLessThan 51
+        # Removed object's 30GB still counts toward on-disk size; its 90GB
+        # source size does not.
+        [double]$job.OnDiskGB | Should -BeGreaterThan 79
+        [double]$job.OnDiskGB | Should -BeLessThan 81
+        $job.OriginalSize | Should -Be 150GB
 
         $script:VhcOrphanedSupersededCache.SweepRan | Should -BeTrue
 
@@ -2079,9 +2093,7 @@ Describe 'Stale-ObjectId guard: GetObjectsInJob() cross-reference' {
         $stale[0].RestorePoints[0].Name | Should -Be 'STALE'
     }
 
-    # SKIPPED (2026-08-26): same non-sweep-only fixture limitation - see the
-    # $NeedsSweep override note above.
-    It 'treats a restore point with a null ObjectId as active (uncertain, so not excluded) without aborting the job''s size calc' -Skip {
+    It 'treats a restore point with a null ObjectId as active (uncertain, so not excluded) without aborting the job''s size calc' {
         # Regression guard for the same class of bug this file already
         # pins elsewhere (e.g. "skips a restore point whose resolved job
         # has no Id, without aborting the sweep"): an unguarded
@@ -2106,12 +2118,14 @@ Describe 'Stale-ObjectId guard: GetObjectsInJob() cross-reference' {
         $CurrentId = [guid]'99999999-9999-9999-9999-999999999993'
         $FakeJob = script:New-FakeJob -Name 'VMware - NullObjectId' -TypeToString 'VMware Backup' -ObjectsInJobIds @($CurrentId)
         Mock Get-VBRJob -MockWith { @($FakeJob) }
-        $CurrentPoint = script:New-FakeRestorePoint -Name 'CURRENT' -ObjectId $CurrentId -ApproxSize 150GB -BackupSize 50GB
-        $NullIdPoint  = [PSCustomObject]@{ Name = 'NULLID'; ObjectId = $null; CreationTimeUtc = (Get-Date); ApproxSize = 20GB }
+        $CurrentPoint = script:New-FakeRestorePoint -Name 'CURRENT' -ObjectId $CurrentId -ApproxSize 150GB -BackupSize 50GB -SourceJob $FakeJob
+        # The sweep groups by BackupId and resolves ownership via GetSourceJob(),
+        # so the hand-built point needs both alongside its null ObjectId.
+        $NullIdPoint  = [PSCustomObject]@{ Name = 'NULLID'; ObjectId = $null; BackupId = [guid]::NewGuid(); CreationTimeUtc = (Get-Date); ApproxSize = 20GB }
+        $NullIdPoint | Add-Member -MemberType ScriptMethod -Name GetSourceJob -Value { $FakeJob }.GetNewClosure()
         $NullIdPoint | Add-Member -MemberType ScriptMethod -Name GetStorage -Value { [PSCustomObject]@{ Stats = [PSCustomObject]@{ BackupSize = 20GB } } }
-        $FakeJob | Add-Member -MemberType ScriptMethod -Name GetLastBackup -Value { @($CurrentPoint) } -Force
         Mock Get-VBRRestorePoint -MockWith {
-            if ($null -ne $Backup) { @($NullIdPoint, $CurrentPoint) } else { @() }
+            if ($null -eq $Backup) { @($NullIdPoint, $CurrentPoint) } else { @() }
         }
 
         { Get-VhcJob } | Should -Not -Throw
@@ -2125,10 +2139,7 @@ Describe 'Stale-ObjectId guard: GetObjectsInJob() cross-reference' {
         @($script:LogMessages | Where-Object { $_ -match 'Could not calculate restore point sizes' }).Count | Should -Be 0
     }
 
-    # SKIPPED (2026-08-26): same non-sweep-only fixture limitation - see the
-    # $NeedsSweep override note above. This test's own name ("...on the
-    # non-sweep path") is exactly the path currently bypassed.
-    It 'guards against a null $Job.Id when caching a StaleObject entry on the non-sweep path' -Skip {
+    It 'guards against a null $Job.Id when caching a StaleObject entry' {
         # Same failure class as the null-RestorePoint.ObjectId guard above,
         # but for $Job.Id instead: the sweep path elsewhere in this
         # function already checks ($null -ne $Job.Id) before using it, but
@@ -2139,14 +2150,26 @@ Describe 'Stale-ObjectId guard: GetObjectsInJob() cross-reference' {
         # not merely skipping the CurrentJobId field on the cache entry.
         $CurrentId = [guid]'99999999-9999-9999-9999-999999999994'
         $StaleId   = [guid]'99999999-9999-9999-9999-999999999995'
-        $FakeJob = script:New-FakeJob -Name 'VMware - NullJobId' -TypeToString 'VMware Backup' -ObjectsInJobIds @($CurrentId)
-        $FakeJob.Id = $null
+        $FakeJob  = script:New-FakeJob -Name 'VMware - NullJobId' -TypeToString 'VMware Backup' -ObjectsInJobIds @($CurrentId)
+        $RealJobId = $FakeJob.Id
+        # The sweep only hands restore points to a job whose Id resolves, so a
+        # job that is null from the start never reaches the guard. Model the
+        # reachable shape instead: Id resolves for the sweep lookup, then reads
+        # null once the guard's GetObjectsInJob() call has run. Points report
+        # a separate job object that keeps the real Id.
+        $SourceJob = script:New-FakeJob -Name 'VMware - NullJobId' -Id $RealJobId -TypeToString 'VMware Backup'
+        $IdState   = @{ Cleared = $false }
+        $InnerGetObjects = $FakeJob.GetObjectsInJob
+        $FakeJob | Add-Member -MemberType ScriptProperty -Name Id -Force -Value { if ($IdState.Cleared) { $null } else { $RealJobId } }.GetNewClosure()
+        $FakeJob | Add-Member -MemberType ScriptMethod -Name GetObjectsInJob -Force -Value {
+            $IdState.Cleared = $true
+            @([PSCustomObject]@{ ObjectId = $CurrentId; Object = [PSCustomObject]@{ Type = 'Vm' } })
+        }.GetNewClosure()
         Mock Get-VBRJob -MockWith { @($FakeJob) }
-        $CurrentPoint = script:New-FakeRestorePoint -Name 'CURRENT' -ObjectId $CurrentId -ApproxSize 150GB -BackupSize 50GB
-        $StalePoint   = script:New-FakeRestorePoint -Name 'STALE'   -ObjectId $StaleId   -ApproxSize 90GB  -BackupSize 30GB
-        $FakeJob | Add-Member -MemberType ScriptMethod -Name GetLastBackup -Value { @($CurrentPoint) } -Force
+        $CurrentPoint = script:New-FakeRestorePoint -Name 'CURRENT' -ObjectId $CurrentId -ApproxSize 150GB -BackupSize 50GB -SourceJob $SourceJob
+        $StalePoint   = script:New-FakeRestorePoint -Name 'STALE'   -ObjectId $StaleId   -ApproxSize 90GB  -BackupSize 30GB -SourceJob $SourceJob
         Mock Get-VBRRestorePoint -MockWith {
-            if ($null -ne $Backup) { @($CurrentPoint, $StalePoint) } else { @() }
+            if ($null -eq $Backup) { @($CurrentPoint, $StalePoint) } else { @() }
         }
 
         { Get-VhcJob } | Should -Not -Throw
@@ -2154,8 +2177,8 @@ Describe 'Stale-ObjectId guard: GetObjectsInJob() cross-reference' {
         $job = $script:CapturedJobRows | Where-Object { $_.Name -eq 'VMware - NullJobId' }
         # The job's real size must survive intact - a throw on the null Id
         # would have zeroed this to 0 via the per-job catch.
-        [double]$job.OnDiskGB | Should -BeGreaterThan 49
-        [double]$job.OnDiskGB | Should -BeLessThan 51
+        [double]$job.OnDiskGB | Should -BeGreaterThan 79
+        [double]$job.OnDiskGB | Should -BeLessThan 81
 
         $stale = $script:VhcOrphanedSupersededCache.CandidateGroups | Where-Object { $_.Reason -eq 'StaleObject' }
         $stale | Should -HaveCount 1
