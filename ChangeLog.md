@@ -43,6 +43,8 @@ checksums, and scan results.
 - A PDF export failure no longer stops the PowerPoint export, and a PowerPoint failure no longer skips
   opening the report. Each failed format is logged as an error, and the HTML report is still reported as
   written.
+- A second PDF export in the same session (for example, running two reports from the GUI) no longer hangs
+  for five minutes. The PDF engine can only be started once per process, so it is now shared.
 - CSV files are no longer left locked after they are read.
 - Remote VBR runs now report the configuration database type (MS SQL or PostgreSQL) instead of "Unknown",
   read from the VBR REST API.
