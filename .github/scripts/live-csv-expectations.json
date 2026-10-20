@@ -11,9 +11,13 @@
     "SecurityComplianceMeta": "sidecar written unconditionally by Export-VhciComplianceMeta",
     "UserRoles": "every VBR server has at least the installing admin role assignment",
     "configBackup": "every VBR server has a configuration backup job object (enabled or not)",
-    "orphanedSupersededBackupsMeta": "one-row signal file, written unconditionally by Get-VhcOrphanedSupersededBackups",
+    "orphanedSupersededBackupsMeta": "one-row signal file, written unconditionally by Get-VhcOrphanedSupersededBackups when VHC_EXPERIMENTS is on (see requiresExperiments)",
     "AllServersRequirementsComparison": "concurrency analysis emits a row for every server role; written on all three labs",
     "CollectionManifest": "written unconditionally at the end of Get-VBRConfig.ps1 (not in the collector log, so not observed in run 38980131816)"
+  },
+  "requiresExperiments": {
+    "orphanedSupersededBackups": "Orphaned & Superseded Backups detail rows; only collected with VHC_EXPERIMENTS on. Test-VhcLiveRun.ps1 -ExperimentsOff drops it from every required/profile list",
+    "orphanedSupersededBackupsMeta": "Orphaned & Superseded Backups signal file; only guaranteed with VHC_EXPERIMENTS on. Allowed either way when -ExperimentsOff"
   },
   "labCommon": {
     "Credentials": "written with rows on all three lab servers in run 38980131816 (collector log: Exporting data, no 'No records to export')",

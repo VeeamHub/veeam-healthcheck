@@ -368,6 +368,43 @@ Describe 'Scrub' {
         (Invoke-Live @('-Check', 'Scrub', '-AnonDir', $d, '-ScrubHost', 'vbr-real-host')).Exit | Should -Not -Be 0
     }
 
+    It 'experiments off: passes when the Orphaned section and nav link are absent' {
+        $d = New-FixtureDir
+        [void](Write-Report -Dir $d -Html '<html><body><style>/* Orphaned & Superseded Backups */</style><a href="#repos" class="nav-link">Repos</a></body></html>')
+        Set-Content -Path (Join-Path $d 'report.json') -Value '{"Sections":{}}'
+        $r = Invoke-Live @('-Check', 'Scrub', '-AnonDir', $d, '-ScrubHost', 'vbr-real-host', '-ExperimentsOff')
+        $r.Exit | Should -Be 0
+        $r.Out | Should -Match 'absent from HTML'
+    }
+
+    It 'experiments off: fails when the Orphaned section element is present' {
+        $d = New-AnonDir
+        $r = Invoke-Live @('-Check', 'Scrub', '-AnonDir', $d, '-ScrubHost', 'vbr-real-host', '-ExperimentsOff')
+        $r.Exit | Should -Not -Be 0
+        $r.Out | Should -Match 'must be gated'
+    }
+
+    It 'experiments off: fails when only the Orphaned nav link leaks' {
+        $d = New-FixtureDir
+        [void](Write-Report -Dir $d -Html '<html><body><a href="#orphanedsupersededbackups" class="nav-link">Orphaned</a></body></html>')
+        Set-Content -Path (Join-Path $d 'report.json') -Value '{"Sections":{}}'
+        (Invoke-Live @('-Check', 'Scrub', '-AnonDir', $d, '-ScrubHost', 'vbr-real-host', '-ExperimentsOff')).Exit | Should -Not -Be 0
+    }
+
+    It 'experiments off: still fails on a hostname leak' {
+        $d = New-FixtureDir
+        [void](Write-Report -Dir $d -Html '<html><body><p>vbr-real-host</p></body></html>')
+        Set-Content -Path (Join-Path $d 'report.json') -Value '{"Sections":{}}'
+        (Invoke-Live @('-Check', 'Scrub', '-AnonDir', $d, '-ScrubHost', 'vbr-real-host', '-ExperimentsOff')).Exit | Should -Not -Be 0
+    }
+
+    It 'experiments on (default): a report lacking the section still fails, so omitting the switch never loosens' {
+        $d = New-FixtureDir
+        [void](Write-Report -Dir $d -Html '<html><body></body></html>')
+        Set-Content -Path (Join-Path $d 'report.json') -Value '{"Sections":{}}'
+        (Invoke-Live @('-Check', 'Scrub', '-AnonDir', $d, '-ScrubHost', 'vbr-real-host')).Exit | Should -Not -Be 0
+    }
+
     It 'fails when the scrubbed JSON export is missing' {
         $d = New-AnonDir -Json ''
         (Invoke-Live @('-Check', 'Scrub', '-AnonDir', $d, '-ScrubHost', 'vbr-real-host')).Exit | Should -Not -Be 0
@@ -451,6 +488,45 @@ Describe 'CsvOutputs' {
         $r = Invoke-CsvOutputs $fx
         $r.Exit | Should -Be 1
         $r.Out | Should -Match 'Repositories\.csv.*0 data rows'
+    }
+
+    It 'experiments on (default): a missing orphanedSupersededBackupsMeta is a failure' {
+        $fx = New-CsvOutputsRoot
+        Remove-Item (Join-Path $fx.Dir 'localhost_orphanedSupersededBackupsMeta.csv')
+        $r = Invoke-CsvOutputs $fx
+        $r.Exit | Should -Be 1
+        $r.Out | Should -Match 'orphanedSupersededBackupsMeta'
+    }
+
+    It 'experiments off: a missing orphanedSupersededBackupsMeta is allowed' {
+        $fx = New-CsvOutputsRoot
+        Remove-Item (Join-Path $fx.Dir 'localhost_orphanedSupersededBackupsMeta.csv')
+        $r = Invoke-CsvOutputs $fx @('-ExperimentsOff')
+        $r.Exit | Should -Be 0
+        $r.Out | Should -Match 'orphanedSupersededBackupsMeta.*not written'
+    }
+
+    It 'experiments off: a present but header-broken orphaned CSV still fails' {
+        $fx = New-CsvOutputsRoot
+        "`"Name`",`"Name`"`r`n`"a`",`"b`"" | Set-Content (Join-Path $fx.Dir 'localhost_orphanedSupersededBackupsMeta.csv')
+        (Invoke-CsvOutputs $fx @('-ExperimentsOff')).Exit | Should -Be 1
+    }
+
+    It 'vbr-2 profile: a missing orphanedSupersededBackups fails with experiments on and is allowed with them off' {
+        $fx = New-CsvOutputsRoot
+        $on = Invoke-CsvOutputs $fx @('-LabProfile', 'vbr-2')
+        $on.Out | Should -Match 'orphanedSupersededBackups\.csv.*MISSING'
+        $off = Invoke-CsvOutputs $fx @('-LabProfile', 'vbr-2', '-ExperimentsOff')
+        $off.Out | Should -Not -Match 'orphanedSupersededBackups\.csv.*MISSING'
+    }
+
+    It 'a requiresExperiments entry no collector writes is still flagged stale when experiments are off' {
+        $fx = New-CsvOutputsRoot
+        $m = Join-Path $TestDrive 'stale-exp.json'
+        Set-Content $m '{"required":{},"requiresExperiments":{"noSuchCsv":"x"}}'
+        $r = Invoke-CsvOutputs $fx @('-ManifestPath', $m, '-ExperimentsOff')
+        $r.Exit | Should -Be 1
+        $r.Out | Should -Match 'noSuchCsv'
     }
 
     It 'allows an optional feature CSV to be absent' {

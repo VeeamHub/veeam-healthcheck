@@ -8,7 +8,7 @@
 # USAGE (from a workflow step):
 #   & "$env:GITHUB_WORKSPACE\.github\scripts\Test-VhcLiveRun.ps1" -Check CsvContent
 #   & "$env:GITHUB_WORKSPACE\.github\scripts\Test-VhcLiveRun.ps1" -Check RowCounts [-RequireSessionRows]
-#   & "$env:GITHUB_WORKSPACE\.github\scripts\Test-VhcLiveRun.ps1" -Check CsvOutputs -LabProfile vbr-2|vbr-13-sql|vbr-12
+#   & "$env:GITHUB_WORKSPACE\.github\scripts\Test-VhcLiveRun.ps1" -Check CsvOutputs -LabProfile vbr-2|vbr-13-sql|vbr-12 [-ExperimentsOff]
 #   & "$env:GITHUB_WORKSPACE\.github\scripts\Test-VhcLiveRun.ps1" -Check DbType (-ExpectedDbType MsSql|PostgreSql | -KnownGap)
 #   & "$env:GITHUB_WORKSPACE\.github\scripts\Test-VhcLiveRun.ps1" -Check EntraTenantJob [-RequireTenant] [-Informational]
 #   $env:VHC_REST_USER / VHC_REST_PASSWORD set, then:
@@ -18,7 +18,12 @@
 #   & "$env:GITHUB_WORKSPACE\.github\scripts\Test-VhcLiveRun.ps1" -Check ReportTables [-ReportPath <html>]
 #   & "$env:GITHUB_WORKSPACE\.github\scripts\Test-VhcLiveRun.ps1" -Check Json
 #   & "$env:GITHUB_WORKSPACE\.github\scripts\Test-VhcLiveRun.ps1" -Check Exports
-#   & "$env:GITHUB_WORKSPACE\.github\scripts\Test-VhcLiveRun.ps1" -Check Scrub -ScrubHost $env:VBR_HOST -NewerThan $passStart
+#   & "$env:GITHUB_WORKSPACE\.github\scripts\Test-VhcLiveRun.ps1" -Check Scrub -ScrubHost $env:VBR_HOST -NewerThan $passStart [-ExperimentsOff]
+#
+# -ExperimentsOff declares that the lab ran its collection with VHC_EXPERIMENTS unset (the GA default
+# path customers run). Checks that only mean something with experiments on (the Orphaned & Superseded
+# CSVs, HTML section and JSON key) then relax or invert. Omitting it keeps the strict experiments-on
+# expectations, so a lab that forgets the switch can only fail louder, never silently loosen.
 #
 # Dot-source it with no -Check to load the functions (used by the local RED/GREEN tests).
 # EXIT CODE: 1 when any assertion fails, 0 otherwise.
@@ -36,6 +41,7 @@ param(
     [string]$LogDir = 'C:\temp\vHC\Original\Log',
     [string]$ReportPath = '',
     [switch]$RequireSessionRows,
+    [switch]$ExperimentsOff,
     [string[]]$ScrubHost = @(),
     [datetime]$NewerThan = [datetime]::MinValue,
     [string]$E2EChecksPath = '',
@@ -340,7 +346,8 @@ function Test-VhcCsvOutputs {
         [string]$LabName = '',
         [string]$Root = '',
         [string]$BaselineDir = '',
-        [string]$Manifest = ''
+        [string]$Manifest = '',
+        [switch]$ExperimentsOff
     )
     $failures = New-Object System.Collections.ArrayList
     $Root = Get-VhcRepoRoot $Root
@@ -360,6 +367,16 @@ function Test-VhcCsvOutputs {
         foreach ($p in $prof.Value.nonEmpty.PSObject.Properties) { $nonEmpty[$p.Name] = [string]$p.Value }
     }
 
+    # requiresExperiments: CSVs the collector only guarantees with VHC_EXPERIMENTS on. With the flag
+    # off they are allowed either way (may be absent; a present file still gets the header checks).
+    $experimentOnly = @{}
+    if ($exp.requiresExperiments) { foreach ($p in $exp.requiresExperiments.PSObject.Properties) { $experimentOnly[$p.Name] = [string]$p.Value } }
+    if ($ExperimentsOff) {
+        foreach ($k in @($experimentOnly.Keys)) {
+            if ($nonEmpty.ContainsKey($k)) { $nonEmpty.Remove($k) }
+        }
+    }
+
     $overrides = @{}   # key -> columns the report reads
     $knownGaps = @{}   # key -> @{ column = text }
     if ($exp.columns) {
@@ -377,7 +394,7 @@ function Test-VhcCsvOutputs {
 
     $map = Get-VhcCollectorCsvMap $Root
     if ($map.Count -eq 0) { Write-Fail "no CSV writers found under $Root (collector source missing?)"; return , @('no collectors enumerated') }
-    $named = @($nonEmpty.Keys) + @($overrides.Keys) + @($emptyOk.Keys)
+    $named = @($nonEmpty.Keys) + @($overrides.Keys) + @($emptyOk.Keys) + @($experimentOnly.Keys)
     foreach ($k in $named) {
         if (-not $map.ContainsKey($k)) {
             Write-Fail "manifest names '$k' but no collector writes it (stale manifest entry)"
@@ -880,7 +897,7 @@ function Test-VhcPptxContent {
 
 # --- Scrub -----------------------------------------------------------------
 function Test-VhcScrubbedReport {
-    param([string]$HtmlDir, [string[]]$HostName, [datetime]$NewerThan)
+    param([string]$HtmlDir, [string[]]$HostName, [datetime]$NewerThan, [switch]$ExperimentsOff)
     $failures = New-Object System.Collections.ArrayList
     # Every real name that must not survive scrubbing (for example the VBR host secret and, on a
     # local run, the runner's own computer name). Blank entries are dropped.
@@ -912,9 +929,17 @@ function Test-VhcScrubbedReport {
     }
 
     # The CSS and JS of every report mention "Orphaned & Superseded Backups" in comments, so a
-    # plain substring check passes even when the section is gone. Anchor on the section element.
+    # plain substring check passes even when the section is gone. Anchor on the section element
+    # (and, for absence, on the nav link too, which CHtmlCompiler gates on the same flag).
     $htmlText = Get-Content -Path $html.FullName -Raw -Encoding UTF8
-    if ($htmlText -match '(?s)id="orphanedsupersededbackups".{0,500}?Orphaned (?:&amp;|&) Superseded Backups\s*</h2>') {
+    if ($ExperimentsOff) {
+        if ($htmlText -match 'id="orphanedsupersededbackups"' -or $htmlText -match 'href="#orphanedsupersededbackups"') {
+            Write-Fail 'Orphaned & Superseded Backups section or nav link present in HTML with experiments off (must be gated)'
+            [void]$failures.Add('orphaned html section present with experiments off')
+        } else {
+            Write-Pass 'Orphaned & Superseded Backups section and nav link absent from HTML (experiments off)'
+        }
+    } elseif ($htmlText -match '(?s)id="orphanedsupersededbackups".{0,500}?Orphaned (?:&amp;|&) Superseded Backups\s*</h2>') {
         Write-Pass 'Orphaned & Superseded Backups section present in HTML'
     } else {
         Write-Fail 'Orphaned & Superseded Backups section missing from HTML'
@@ -925,6 +950,7 @@ function Test-VhcScrubbedReport {
         $json = $null
         try { $json = Get-Content -Path $jsonPath -Raw -Encoding UTF8 | ConvertFrom-Json } catch { }
         if ($null -eq $json) { Write-Fail 'scrubbed JSON is not valid JSON'; [void]$failures.Add('scrubbed json invalid') }
+        elseif ($ExperimentsOff) { Write-Host '  [INFO] OrphanedSupersededBackups JSON key not asserted (experiments off: allowed either way)' }
         elseif (@($json.PSObject.Properties.Name) -contains 'OrphanedSupersededBackups') { Write-Pass 'OrphanedSupersededBackups key present in scrubbed JSON' }
         else { Write-Fail 'OrphanedSupersededBackups key missing from scrubbed JSON'; [void]$failures.Add('orphaned json key') }
     }
@@ -949,7 +975,7 @@ switch ($Check) {
     'CsvOutputs' {
         $dir = Get-VhcLatestCsvDir $CsvRoot
         if (-not $dir) { Write-Fail "no CSV output directory under $CsvRoot"; $failures = @('csv dir missing') }
-        else { Write-Host "CSV directory: $($dir.FullName)"; $failures = Test-VhcCsvOutputs -Dir $dir.FullName -LabName $LabProfile -Root $RepoRoot -BaselineDir $BaselineRoot -Manifest $ManifestPath }
+        else { Write-Host "CSV directory: $($dir.FullName)"; $failures = Test-VhcCsvOutputs -Dir $dir.FullName -LabName $LabProfile -Root $RepoRoot -BaselineDir $BaselineRoot -Manifest $ManifestPath -ExperimentsOff:$ExperimentsOff }
     }
     'DbType' {
         $dir = Get-VhcLatestCsvDir $CsvRoot
@@ -975,7 +1001,7 @@ switch ($Check) {
     }
     'Json'    { $failures = Test-VhcJsonExport -HtmlDir $ReportDir -E2EChecksPath $E2EChecksPath }
     'Exports' { $failures = Test-VhcExports -HtmlDir $ReportDir }
-    'Scrub'   { $failures = Test-VhcScrubbedReport -HtmlDir $AnonDir -HostName $ScrubHost -NewerThan $NewerThan }
+    'Scrub'   { $failures = Test-VhcScrubbedReport -HtmlDir $AnonDir -HostName $ScrubHost -NewerThan $NewerThan -ExperimentsOff:$ExperimentsOff }
 }
 
 if (@($failures).Count -gt 0) {

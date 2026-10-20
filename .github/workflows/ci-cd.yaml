@@ -1019,11 +1019,13 @@ jobs:
       # Test-VhcLiveRun.ps1 -Check CsvOutputs: enumerates every CSV the collectors can write and
       # fails (naming the CSV and the collector that writes it) on a missing required file, a broken
       # header, or an empty required file. Expectations: .github/scripts/live-csv-expectations.json.
+      # The default pass runs with VHC_EXPERIMENTS unset, so -ExperimentsOff: the Orphaned & Superseded
+      # CSVs are only written with experiments on, and the scrubbed pass checks that section instead.
       if: always()
       env:
         LAB_PROFILE: vbr-2
       run: |
-        & "$env:GITHUB_WORKSPACE\.github\scripts\Test-VhcLiveRun.ps1" -Check CsvOutputs -LabProfile $env:LAB_PROFILE
+        & "$env:GITHUB_WORKSPACE\.github\scripts\Test-VhcLiveRun.ps1" -Check CsvOutputs -LabProfile $env:LAB_PROFILE -ExperimentsOff
 
     - name: Assert config DB type
       # Remote run with credentials: the console host has no local VBR registry, so DbType comes from REST serverInfo. The demo VBR is PostgreSQL (run 39429245251).
@@ -1535,11 +1537,13 @@ jobs:
       # Test-VhcLiveRun.ps1 -Check CsvOutputs: enumerates every CSV the collectors can write and
       # fails (naming the CSV and the collector that writes it) on a missing required file, a broken
       # header, or an empty required file. Expectations: .github/scripts/live-csv-expectations.json.
+      # The default pass runs with VHC_EXPERIMENTS unset, so -ExperimentsOff: the Orphaned & Superseded
+      # CSVs are only written with experiments on, and the scrubbed pass checks that section instead.
       if: always()
       env:
         LAB_PROFILE: vbr-13-sql
       run: |
-        & "$env:GITHUB_WORKSPACE\.github\scripts\Test-VhcLiveRun.ps1" -Check CsvOutputs -LabProfile $env:LAB_PROFILE
+        & "$env:GITHUB_WORKSPACE\.github\scripts\Test-VhcLiveRun.ps1" -Check CsvOutputs -LabProfile $env:LAB_PROFILE -ExperimentsOff
 
     - name: Assert config DB type
       # vbrinfo DbType must be MsSql (local run: read from the registry). Empty or Unknown fails.
@@ -2046,11 +2050,13 @@ jobs:
       # Test-VhcLiveRun.ps1 -Check CsvOutputs: enumerates every CSV the collectors can write and
       # fails (naming the CSV and the collector that writes it) on a missing required file, a broken
       # header, or an empty required file. Expectations: .github/scripts/live-csv-expectations.json.
+      # This lab runs with VHC_EXPERIMENTS unset (the GA default path), so -ExperimentsOff makes the
+      # Orphaned & Superseded CSVs allowed-either-way here; vbr-2 and vbr-13-sql still require them.
       if: always()
       env:
         LAB_PROFILE: vbr-12
       run: |
-        & "$env:GITHUB_WORKSPACE\.github\scripts\Test-VhcLiveRun.ps1" -Check CsvOutputs -LabProfile $env:LAB_PROFILE
+        & "$env:GITHUB_WORKSPACE\.github\scripts\Test-VhcLiveRun.ps1" -Check CsvOutputs -LabProfile $env:LAB_PROFILE -ExperimentsOff
 
     - name: Assert config DB type
       # vbrinfo DbType must be PostgreSql (local run: read from the registry). Empty or Unknown fails.
@@ -2226,8 +2232,8 @@ jobs:
       if: always() && steps.run_healthcheck.outcome != 'skipped'
       env:
         VBR_HOST: ${{ secrets.VBR_HOST }}
-        # Reveals gated sections (Orphaned & Superseded Backups may be hidden without it).
-        VHC_EXPERIMENTS: '1'
+        # Deliberately NO VHC_EXPERIMENTS: this lab exercises the flag-off path customers run.
+        # vbr-2 and vbr-13-sql set it to keep the experimental sections tested.
       run: |
         $exePath = "$env:GITHUB_WORKSPACE\test-run\VeeamHealthCheck.exe"
         # Same invocation as the main run step above: no credentials, the runner is the VBR server.
@@ -2255,9 +2261,9 @@ jobs:
         VBR_HOST: ${{ secrets.VBR_HOST }}
         PASS_START: ${{ steps.scrub_run.outputs.pass_start }}
       run: |
-        # The real hostname must appear nowhere in the scrubbed HTML or JSON, and the Orphaned &
-        # Superseded Backups section (HTML) and OrphanedSupersededBackups key (JSON) must be present.
-        & "$env:GITHUB_WORKSPACE\.github\scripts\Test-VhcLiveRun.ps1" -Check Scrub -ScrubHost $env:VBR_HOST -NewerThan ([datetime]$env:PASS_START)
+        # The real hostname must appear nowhere in the scrubbed HTML or JSON, and (flag off) the Orphaned &
+        # Superseded Backups section and nav link must be ABSENT from the HTML (-ExperimentsOff).
+        & "$env:GITHUB_WORKSPACE\.github\scripts\Test-VhcLiveRun.ps1" -Check Scrub -ScrubHost $env:VBR_HOST -NewerThan ([datetime]$env:PASS_START) -ExperimentsOff
 
     # Only the scrubbed report is ever published: this repo is public, so artifacts are world-readable.
     # The upload is gated on -Check Scrub passing, so a scrub leak fails the job instead of shipping.
