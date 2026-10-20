@@ -164,6 +164,14 @@ Describe 'workflow parsing' {
         @(Get-TouchedJobIds -Jobs $script:CiCdJobs -TouchedLines $top).Count | Should -Be $script:CiCdJobs.Count
         @(Get-TouchedJobIds -Jobs $script:CiCdJobs -TouchedLines $null).Count | Should -Be $script:CiCdJobs.Count
     }
+    It 'gives a new job its own header comment, not the job above it' {
+        $t = "on: push`njobs:`n  a:`n    runs-on: x`n    # a's own trailing comment`n`n  # header for b`n  #`n  # more about b`n  b:`n    runs-on: y`n`n  c:`n    runs-on: z`n"
+        $jobs = @(Get-WorkflowJobs -Text $t)
+        ($jobs | Where-Object Id -eq 'a').End | Should -Be 6
+        ($jobs | Where-Object Id -eq 'b').Start | Should -Be 7
+        ($jobs | Where-Object Id -eq 'b').End | Should -Be 12
+        @(Get-TouchedJobIds -Jobs $jobs -TouchedLines @(7, 8, 9, 10, 11, 12)) | Should -Be @('b')
+    }
 }
 
 Describe 'check status from real data' {

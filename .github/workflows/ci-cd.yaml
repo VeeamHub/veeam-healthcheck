@@ -2257,10 +2257,14 @@ jobs:
   # - This repo is public and artifacts/logs are world-readable. Nothing from the run is uploaded (not the
   #   report, the logs or the screenshots, which show the host name and paths) and the tests redact the machine
   #   identity from anything they print.
+  # - Off until an interactive runner exists: it targets the `vbr-13-sql-gui` label (a second runner on the
+  #   VBR 13 box, started from a logged-on desktop rather than as a service) and runs only when the repository
+  #   variable GUI_E2E_ENABLED is 'true'. Until then it is skipped, so dev runs stay green, and pre-PR GUI
+  #   coverage comes from `vhc-verify.sh winhost --gui` (features/windows-host.md).
   gui-e2e:
     needs: [build-and-test, integration-test-vbr-13-sql]
-    runs-on: [self-hosted, vbr-13-sql]
-    if: always() && github.event_name != 'pull_request' && needs.build-and-test.result == 'success'
+    runs-on: [self-hosted, vbr-13-sql-gui]
+    if: always() && vars.GUI_E2E_ENABLED == 'true' && github.event_name != 'pull_request' && needs.build-and-test.result == 'success'
     timeout-minutes: 60
     permissions:
       contents: read

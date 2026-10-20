@@ -198,12 +198,27 @@ function Get-WorkflowJobs {
     for ($i = $jobsAt + 1; $i -le $end; $i++) {
         if ($lines[$i] -match '^  ([A-Za-z0-9_-]+):\s*(#.*)?$') { $starts += , @($i, $Matches[1]) }
     }
+    # A job-level (two-space) comment block directly above a job key belongs to that job, not the one before it;
+    # otherwise a new job's header comment counts as an edit to the previous job. A blank line belongs to the
+    # next job only when it sits inside such a comment block, so the blank separator between jobs stays put.
+    $lead = @()
+    for ($k = 0; $k -lt $starts.Count; $k++) {
+        $b = $starts[$k][0]
+        while ($k -gt 0 -and $b - 1 -gt $starts[$k - 1][0]) {
+            $above = $lines[$b - 1]
+            if ($above -match '^  #') { $b--; continue }
+            if ($above -match '^\s*$' -and $b - 2 -gt $starts[$k - 1][0] -and $lines[$b - 2] -match '^  #' -and $lines[$b] -match '^  #') { $b--; continue }
+            break
+        }
+        $lead += $b
+    }
     $jobs = @()
     for ($k = 0; $k -lt $starts.Count; $k++) {
-        $s = $starts[$k][0]
-        $e = if ($k + 1 -lt $starts.Count) { $starts[$k + 1][0] - 1 } else { $end }
+        $s = $lead[$k]
+        $e = if ($k + 1 -lt $starts.Count) { $lead[$k + 1] - 1 } else { $end }
         $name = $starts[$k][1]
-        for ($j = $s + 1; $j -le [Math]::Min($e, $s + 6); $j++) {
+        $key = $starts[$k][0]
+        for ($j = $key + 1; $j -le [Math]::Min($e, $key + 6); $j++) {
             if ($lines[$j] -match '^    name:\s*(.+?)\s*$') {
                 $n = $Matches[1] -replace '\s+#.*$', ''
                 $name = $n.Trim("'", '"')

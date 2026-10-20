@@ -59,7 +59,7 @@ Does not prove:
 
 ## gui-e2e
 
-`vHC/VhcGuiE2ETests` (`net10.0-windows`, xUnit, FlaUI.UIA3) launches the real published `VeeamHealthCheck.exe` and drives it through UI Automation. CI job: `ci-cd.yaml#gui-e2e` on the `[self-hosted, vbr-13-sql]` runner, after `integration-test-vbr-13-sql`. It runs on push to dev/master or a dispatch, never on a pull_request. The first real runs were done with `vhc-verify.sh winhost --live --gui` on a Windows 11 host (VBR 13, PostgreSQL): 4 of 4 passed once the fixes below were in, so the suite is proven there; the CI job itself has still not run green because its runner is a session-0 service.
+`vHC/VhcGuiE2ETests` (`net10.0-windows`, xUnit, FlaUI.UIA3) launches the real published `VeeamHealthCheck.exe` and drives it through UI Automation. CI job: `ci-cd.yaml#gui-e2e` on a `[self-hosted, vbr-13-sql-gui]` runner (a second runner on the VBR 13 box, started from a logged-on desktop rather than as a service), after `integration-test-vbr-13-sql`. It is off until the repository variable `GUI_E2E_ENABLED` is `true`, so dev runs stay green until that runner exists. It runs on push to dev/master or a dispatch, never on a pull_request. The first real runs were done with `vhc-verify.sh winhost --live --gui` on a Windows 11 host (VBR 13, PostgreSQL): 4 of 4 passed once the fixes below were in, so the suite is proven there; the CI job itself has still not run green because its runner is a session-0 service.
 
 Controls are found by AutomationId. Avalonia's `ControlAutomationPeer.GetAutomationIdCore` returns `AutomationProperties.AutomationId ?? Owner.Name` (checked in 11.3.20), so the `x:Name` values the headless tests use are the ids; no XAML change.
 
