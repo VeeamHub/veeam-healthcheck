@@ -20,6 +20,11 @@ checksums, and scan results.
 - The `proxies` section of the JSON export uses new column names that match the values in each row:
   `IsOnHost`, `NetBufferSize`, `MaxConcurrentJobs` and `IsHvOffload` are replaced by `FailoverToNetwork`,
   `ChassisType`, `CachePath`, `CacheSize` and `IsDisabled`. Anything that reads those keys needs updating.
+- Since 3.1.0, a job's backup data size and source size no longer include restore points for objects that
+  were removed from the job (for example, a VM taken out of a job whose older restore points are still on
+  disk). This was not called out in the 3.1.0 notes. Those restore points are listed only in the Orphaned &
+  Superseded Backups section, which is hidden unless `VHC_EXPERIMENTS` is set, so jobs with removed objects
+  can show smaller sizes than in 3.0.1.193.
 
 ### Fixed
 
