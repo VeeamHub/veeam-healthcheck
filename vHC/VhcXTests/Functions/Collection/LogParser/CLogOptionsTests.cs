@@ -14,6 +14,11 @@
 // INSTALLID null. If this ever runs somewhere VBR IS installed, the assertion below is what
 // should fail - that's a real signal, not a reason to change this test.
 //
+// On a machine that DOES have VBR installed (a lab box, a VBR server used for pre-PR runs) the
+// premise is false rather than the code wrong: CVmcReader finds the real install ID. Those hosts
+// skip the test with that reason instead of failing it, so a full run there can go green while
+// still reporting the skip.
+//
 // installIdsByMode is shared static state, so this test needs to run in the "GlobalState"
 // collection (DisableParallelization = true) alongside everything else that touches shared
 // static state (e.g. CHtmlExporterTEST) - a separate single-test collection would still run
@@ -23,13 +28,33 @@
 // These tests require Windows (WPF dependency in VeeamHealthCheck.csproj) and can only be
 // compiled/run in CI (windows-latest) or a local Windows box - not on macOS.
 
+using System;
 using System.Collections.Generic;
 using System.Reflection;
+using Microsoft.Win32;
 using VeeamHealthCheck.Functions.Collection.LogParser;
 using Xunit;
 
 namespace VeeamHealthCheck.Tests.Functions.Collection.LogParser
 {
+    /// <summary>A fact whose premise is "no VBR on this machine"; skipped, with the reason, where VBR is installed.</summary>
+    public sealed class FactWhenVbrNotInstalledAttribute : FactAttribute
+    {
+        public FactWhenVbrNotInstalledAttribute()
+        {
+            if (OperatingSystem.IsWindows() && IsVbrInstalled())
+            {
+                this.Skip = "VBR is installed on this machine, so CVmcReader finds a real install ID; the test assumes none.";
+            }
+        }
+
+        private static bool IsVbrInstalled()
+        {
+            using RegistryKey key = Registry.LocalMachine.OpenSubKey("Software\\Veeam\\Veeam Backup and Replication");
+            return key != null;
+        }
+    }
+
     [Collection("GlobalState")]
     public class CLogOptionsTests
     {
@@ -41,7 +66,7 @@ namespace VeeamHealthCheck.Tests.Functions.Collection.LogParser
             return (Dictionary<VmcLogMode, string>)field.GetValue(null)!;
         }
 
-        [Fact]
+        [FactWhenVbrNotInstalled]
         public void Constructor_LookupFindsNothingOnRetry_OverwritesStaleIdInsteadOfKeepingIt()
         {
             // Arrange - seed the static dictionary as if a previous run in this process had

@@ -475,6 +475,21 @@ Describe 'CsvOutputs' {
         (Invoke-CsvOutputs $fx @('-LabProfile', 'vbr-12')).Exit | Should -Be 0
     }
 
+    It 'a profile with "labCommon": false does not require the CI labs'' shared CSVs (vbr-13-pg is a bare VBR host)' {
+        $fx = New-CsvOutputsRoot
+        # no labCommon CSVs (Gateways, TapeMediaPools, ...) in the fixture: vbr-12 inherits them and fails, vbr-13-pg opts out
+        (Invoke-CsvOutputs $fx @('-LabProfile', 'vbr-12')).Exit | Should -Be 1
+        $cat = Join-Path $fx.Dir 'localhost_SecurityComplianceCatalog.csv'
+        if (-not (Test-Path $cat)) { "`"Id`",`"Name`"`r`n`"a`",`"b`"" | Set-Content $cat }
+        $r = Invoke-CsvOutputs $fx @('-LabProfile', 'vbr-13-pg')
+        $r.Exit | Should -Be 0 -Because $r.Out
+        $reg = Join-Path $fx.Dir 'localhost_regkeys.csv'
+        Move-Item $reg (Join-Path $TestDrive 'regkeys.bak2')
+        $r = Invoke-CsvOutputs $fx @('-LabProfile', 'vbr-13-pg')
+        $r.Exit | Should -Be 1
+        $r.Out | Should -Match 'regkeys\.csv.*Get-VhcRegistrySettings\.ps1'
+    }
+
     It 'fails on an unknown profile and on a manifest entry no collector writes' {
         $fx = New-CsvOutputsRoot
         (Invoke-CsvOutputs $fx @('-LabProfile', 'nope')).Exit | Should -Be 1

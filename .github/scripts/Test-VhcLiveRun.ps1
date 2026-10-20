@@ -344,7 +344,8 @@ function Test-VhcCsvOutputs {
     if ($LabName) {
         $prof = $exp.profiles.PSObject.Properties[$LabName]
         if (-not $prof) { Write-Fail "unknown LabProfile '$LabName' (manifest has: $(@($exp.profiles.PSObject.Properties.Name) -join ', '))"; return , @("unknown LabProfile $LabName") }
-        if ($exp.labCommon) { foreach ($p in $exp.labCommon.PSObject.Properties) { $nonEmpty[$p.Name] = [string]$p.Value } }
+        # labCommon is what the three CI labs share (gateways, tape pools, traffic rules...); a profile for a bare VBR host opts out with "labCommon": false.
+        if ($exp.labCommon -and $prof.Value.labCommon -ne $false) { foreach ($p in $exp.labCommon.PSObject.Properties) { $nonEmpty[$p.Name] = [string]$p.Value } }
         foreach ($p in $prof.Value.nonEmpty.PSObject.Properties) { $nonEmpty[$p.Name] = [string]$p.Value }
     }
 
