@@ -28,6 +28,11 @@ namespace VeeamHealthCheck.Functions.Reporting.Html
         private readonly string origPath = CCrossPlatformPath.Combine(CGlobals.desiredPath, CVariables.unsafeSuffix);
 
         private readonly string backupServerName;
+
+        // Test seams: when set, replace the real converters (the PDF engine is unavailable off Windows).
+        internal Action<string, string> PdfConverter { get; set; }
+
+        internal Action<string, string> PptxConverter { get; set; }
         private string latestReport;
 
         public CHtmlExporter(string serverName)
@@ -72,17 +77,7 @@ namespace VeeamHealthCheck.Functions.Reporting.Html
 
                 this.WarnIfExportsSkippedForScrub(scrub);
 
-                // test export to PDF:
-                if (!scrub && CGlobals.EXPORTPDF)
-                {
-                    this.ExportHtmlStringToPDF(htmlString);
-                }
-
-                // Export to PowerPoint:
-                if (!scrub && CGlobals.EXPORTPPTX)
-                {
-                    this.ExportHtmlStringToPptx(htmlString);
-                }
+                this.RunOptionalExports(htmlString, scrub);
 
                 this.OpenHtmlIfEnabled(CGlobals.OpenHtml);
                 return 0;
@@ -113,17 +108,7 @@ namespace VeeamHealthCheck.Functions.Reporting.Html
 
                 this.WarnIfExportsSkippedForScrub(scrub);
 
-                // test export to PDF:
-                if (!scrub && CGlobals.EXPORTPDF)
-                {
-                    this.ExportHtmlStringToPDF(htmlString);
-                }
-
-                // Export to PowerPoint:
-                if (!scrub && CGlobals.EXPORTPPTX)
-                {
-                    this.ExportHtmlStringToPptx(htmlString);
-                }
+                this.RunOptionalExports(htmlString, scrub);
 
                 this.OpenHtmlIfEnabled(CGlobals.OpenHtml);
                 return 0;
@@ -132,6 +117,51 @@ namespace VeeamHealthCheck.Functions.Reporting.Html
             {
                 this.log.Error("Failed at HTML Export:");
                 this.log.Error("\t" + e.Message); return 1;
+            }
+        }
+
+        // PDF and PowerPoint are optional exports of an HTML report that is already on disk, so each one
+        // fails on its own: it logs an ERROR naming the format, and neither the other export nor
+        // OpenHtmlIfEnabled is skipped. The HTML export itself still returns 0, because the report the
+        // run exists to produce was written and callers read a non-zero result as "no report" (the
+        // PowerPoint export has always behaved this way). The failure is not silent: it is logged at
+        // ERROR per format, plus a closing summary naming every format that did not come out.
+        private void RunOptionalExports(string htmlString, bool scrub)
+        {
+            if (scrub)
+            {
+                return;
+            }
+
+            var failed = new System.Collections.Generic.List<string>();
+            if (CGlobals.EXPORTPDF && !this.TryExport("PDF", () => this.ExportHtmlStringToPDF(htmlString)))
+            {
+                failed.Add("PDF");
+            }
+
+            if (CGlobals.EXPORTPPTX && !this.TryExport("PowerPoint", () => this.ExportHtmlStringToPptx(htmlString)))
+            {
+                failed.Add("PowerPoint");
+            }
+
+            if (failed.Count > 0)
+            {
+                this.log.Error($"HTML report written, but these requested exports failed: {string.Join(", ", failed)}. See the errors above.");
+            }
+        }
+
+        private bool TryExport(string format, Action export)
+        {
+            try
+            {
+                export();
+                return true;
+            }
+            catch (Exception ex)
+            {
+                this.log.Error($"Failed to export {format}: {ex.Message}");
+                this.log.Debug(ex.ToString());
+                return false;
             }
         }
 
@@ -145,10 +175,10 @@ namespace VeeamHealthCheck.Functions.Reporting.Html
             }
         }
 
+        // Throws on failure; RunOptionalExports logs it as a PDF failure and carries on.
         private void ExportHtmlStringToPDF(string htmlString)
         {
             this.log.Info("Exporting HTML to PDF...");
-            HtmlToPdfConverter pdf = new HtmlToPdfConverter();
 
             // find all instances of "display: none;" and replace with "display: block;" in the htmlString
             string htmlShowAll = htmlString.Replace("style=\"display: none\">", "style=\"display: block\">");
@@ -179,20 +209,21 @@ namespace VeeamHealthCheck.Functions.Reporting.Html
             htmlShowAll = htmlShowAll.Replace("&#9432;", "ℹ️");
 
             string pdfPath = this.latestReport.Replace(".html", ".pdf");
-            try
+            if (this.PdfConverter != null)
             {
-                pdf.ConvertHtmlToPdf(htmlShowAll, pdfPath);
+                this.PdfConverter(htmlShowAll, pdfPath);
             }
-            catch (Exception ex)
+            else
             {
-                // Still fatal for the run, as before (the caller's catch reports "Failed at HTML Export");
-                // this just names PDF as the step that failed.
-                this.log.Error("Failed to export PDF: " + ex.Message);
-                throw;
-            }
-            finally
-            {
-                pdf.Dispose();
+                HtmlToPdfConverter pdf = new HtmlToPdfConverter();
+                try
+                {
+                    pdf.ConvertHtmlToPdf(htmlShowAll, pdfPath);
+                }
+                finally
+                {
+                    pdf.Dispose();
+                }
             }
 
             this.log.Info("PDF export completed: " + pdfPath);
@@ -201,33 +232,39 @@ namespace VeeamHealthCheck.Functions.Reporting.Html
             // htmlToDocx.ExportHtmlToDocx(htmlShowAll, _latestReport.Replace(".html", ".docx"));
         }
 
+        // Throws on failure; RunOptionalExports logs it as a PowerPoint failure.
         private void ExportHtmlStringToPptx(string htmlString)
         {
-            try
+            this.log.Info("Exporting HTML to PowerPoint...");
+
+            // Expand all collapsed sections for export
+            string htmlShowAll = htmlString.Replace("style=\"display: none\">", "style=\"display: block\">");
+            htmlShowAll = htmlShowAll.Replace("collapsible classBtn", "collapsible classBtn active");
+
+            // See the identical fix/comment in ExportHtmlStringToPDF:
+            // .detail-row is hidden via a CSS class, not an inline style,
+            // so it needs its own explicit replace here too.
+            htmlShowAll = htmlShowAll.Replace("<tr class=\"detail-row\">", "<tr class=\"detail-row\" style=\"display: table-row\">");
+
+            string pptxPath = this.latestReport.Replace(".html", ".pptx");
+            if (this.PptxConverter != null)
             {
-                this.log.Info("Exporting HTML to PowerPoint...");
+                this.PptxConverter(htmlShowAll, pptxPath);
+            }
+            else
+            {
                 HtmlToPptxConverter pptx = new HtmlToPptxConverter();
-
-                // Expand all collapsed sections for export
-                string htmlShowAll = htmlString.Replace("style=\"display: none\">", "style=\"display: block\">");
-                htmlShowAll = htmlShowAll.Replace("collapsible classBtn", "collapsible classBtn active");
-
-                // See the identical fix/comment in ExportHtmlStringToPDF:
-                // .detail-row is hidden via a CSS class, not an inline style,
-                // so it needs its own explicit replace here too.
-                htmlShowAll = htmlShowAll.Replace("<tr class=\"detail-row\">", "<tr class=\"detail-row\" style=\"display: table-row\">");
-
-                string pptxPath = this.latestReport.Replace(".html", ".pptx");
-                pptx.ConvertHtmlToPptx(htmlShowAll, pptxPath);
-                pptx.Dispose();
-
-                this.log.Info("PowerPoint export completed: " + pptxPath);
+                try
+                {
+                    pptx.ConvertHtmlToPptx(htmlShowAll, pptxPath);
+                }
+                finally
+                {
+                    pptx.Dispose();
+                }
             }
-            catch (Exception ex)
-            {
-                this.log.Error("Failed to export PowerPoint: " + ex.Message);
-                this.log.Error(ex.StackTrace);
-            }
+
+            this.log.Info("PowerPoint export completed: " + pptxPath);
         }
 
         public int ExportVbrSecurityHtml(string htmlString, bool scrub)

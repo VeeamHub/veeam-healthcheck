@@ -40,6 +40,9 @@ checksums, and scan results.
   titles.
 - `/pdf` no longer crashes the process (exit code 134) when the PDF engine is unavailable, such as off
   Windows.
+- A PDF export failure no longer stops the PowerPoint export, and a PowerPoint failure no longer skips
+  opening the report. Each failed format is logged as an error, and the HTML report is still reported as
+  written.
 - CSV files are no longer left locked after they are read.
 - Remote VBR runs now report the configuration database type (MS SQL or PostgreSQL) instead of "Unknown",
   read from the VBR REST API.
