@@ -21,6 +21,14 @@ function Get-VhcJob {
         Result of Get-VhcJobDiscovery. The orchestrator runs discovery once
         and passes it to this function and to Get-VhcBackupSessions. When
         omitted or $null, this function runs discovery itself.
+    .Parameter Experiments
+        Turns on the experimental Orphaned & Superseded Backups collection
+        (CFeatureFlags.ExperimentsEnabled on the C# side, VHC_EXPERIMENTS).
+        Off (the default), job sizing follows the ADR 0022 allowlist gate
+        and every job's size is taken from the restore points it owns, with
+        no StaleObject partition. On, the restore-point sweep is forced for
+        every run and restore points of objects no longer in a job are
+        partitioned out of its OnDiskGB/OriginalSize into the sweep cache.
     #>
     [CmdletBinding()]
     param(
@@ -31,7 +39,10 @@ function Get-VhcJob {
         [int]$VBRVersion = 0,
 
         [Parameter(Mandatory = $false)]
-        [object]$JobDiscovery = $null
+        [object]$JobDiscovery = $null,
+
+        [Parameter(Mandatory = $false)]
+        [switch]$Experiments
     )
 
     $message = "Collecting jobs info..."
@@ -81,12 +92,8 @@ function Get-VhcJob {
     $NeedsSweep = [bool]($Jobs | Where-Object { $null -ne $_ -and $_.TypeToString -notin $KnownSafeJobTypes } | Select-Object -First 1)
     $NeedsSweepNatural = $NeedsSweep
 
-    # TEMPORARY OVERRIDE (2026-08-26, Ben Thomas) - DO NOT LEAVE IN PLACE:
-    # forces every collection run through the global sweep, bypassing the
-    # ADR 0022 allowlist gate above, regardless of what it computed.
-    # $KnownSafeJobTypes / $NeedsSweep are left intact (not deleted) so this
-    # is a one-line revert - delete the line below and the gate returns to
-    # normal ADR 0022 behavior.
+    # Experiments only (Orphaned & Superseded Backups): force every run through
+    # the global sweep, bypassing the ADR 0022 allowlist gate above.
     #
     # Why: an environment where every job is a $KnownSafeJobTypes type
     # (e.g. VMware-only) never triggers the sweep, so Get-VhcJob only ever
@@ -100,19 +107,18 @@ function Get-VhcJob {
     # chain at all (see ADR 0021's "previously-invisible multi-chain disk
     # usage" note).
     #
-    # A customer needs an accurate run in the next few minutes and complete
-    # Orphaned/Superseded data matters more than the sweep's performance
-    # cost for that run. Review after: if the perf hit is broadly
-    # acceptable, consider making this permanent (supersedes ADR 0022); if
-    # not, revert this line and find a cheaper way to close the same gap
-    # (e.g. only sweep jobs with >1 backup chain, or cache across runs).
-    $NeedsSweep = $true
+    # Without -Experiments the feature is benched: the sweep runs only when
+    # the allowlist gate says so, which is what keeps default job sizing
+    # close to GA (v3.0.1.193 read GetLastBackup() for every job).
+    if ($Experiments) {
+        $NeedsSweep = $true
+    }
 
     $BackupCopyJobTypes = @('SimpleBackupCopyPolicy', 'BackupSync')
     $RestorePointsByJob = @{}
     # SweepRan=false does not mean the cache is empty - the stale-ObjectId
-    # guard below (in the main per-job loop) writes StaleObject entries
-    # unconditionally, independent of the sweep. Unresolved/Tier2Suppressed
+    # guard below (in the main per-job loop, -Experiments only) writes
+    # StaleObject entries independent of the sweep. Unresolved/Tier2Suppressed
     # entries only ever come from inside the $NeedsSweep block below, so
     # those two Reasons are absent when SweepRan is false, but StaleObject
     # can still be present and trustworthy.
@@ -428,7 +434,7 @@ function Get-VhcJob {
             try {
                 Write-LogFile "BackupId grouping: $($AllRestorePoints.Count) restore points reduced to $($Groups.Count) groups ($($Groups.Count) tier-1 lookups + $($UnresolvedGroups.Count) tier-2 lookups attempted, vs. $($AllRestorePoints.Count) lookups pre-grouping)"
             } catch {}
-            # Perf diagnostics for the temporary NeedsSweep override above: natural-gate
+            # Perf diagnostics for the -Experiments NeedsSweep override above: natural-gate
             # is what ADR 0022's allowlist would have decided on its own, so a future
             # perf complaint can be checked against whether the override actually
             # changed the outcome for that run (natural-gate=False) or the sweep would
@@ -535,8 +541,10 @@ function Get-VhcJob {
                 }
             }
 
-            # Stale-ObjectId guard (#192 Superseded / #197 fix): runs for
-            # every job regardless of $NeedsSweep, since GetObjectsInJob()
+            # Stale-ObjectId guard (#192 Superseded / #197 fix): runs only with
+            # -Experiments, because it removes restore points of objects no
+            # longer in the job from the job's size and GA did not. When it
+            # runs it covers every job regardless of $NeedsSweep, since GetObjectsInJob()
             # and the sweep-cache lookup above are both per-job already -
             # this isn't the expensive global sweep ADR 0022 gates. Zero
             # overlap between this job's restore points and its current
@@ -546,7 +554,7 @@ function Get-VhcJob {
             # nested VMs, per ADR 0021) - trust nothing, exclude nothing,
             # rather than flag every real object Superseded and zero the
             # job's size.
-            if ($RestorePoints.Count -gt 0) {
+            if ($Experiments -and $RestorePoints.Count -gt 0) {
                 $CurrentObjectIds = $null
                 try {
                     # @(...), not a bare pipeline: PowerShell collapses a

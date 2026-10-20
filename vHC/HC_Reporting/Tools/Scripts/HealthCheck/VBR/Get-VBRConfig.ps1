@@ -42,7 +42,13 @@ param(
     [string]$LogPath = "C:\temp\vHC\Original\Log",
 
     [Parameter(Mandatory = $false)]
-    [switch]$RescanHosts
+    [switch]$RescanHosts,
+
+    # Experimental Orphaned & Superseded Backups collection (VHC_EXPERIMENTS on the
+    # C# side, which passes this switch). Off: job sizing follows the allowlist gate
+    # with no StaleObject partition, and the orphaned/superseded collector does not run.
+    [Parameter(Mandatory = $false)]
+    [switch]$Experiments
 )
 
 Set-StrictMode -Version Latest
@@ -282,7 +288,7 @@ $collectorResults.Add((Invoke-VhcCollector -Name 'SessionReport' -Action {
 # ---------------------------------------------------------------------------
 # Task 7: Job collectors (require $RepositoryDetails from Task 6)
 $jobsResult = Invoke-VhcCollector -Name 'Jobs' -Action {
-    Get-VhcJob -RepositoryDetails $RepositoryDetails -VBRVersion $VBRVersion -JobDiscovery $jobDiscoveryResult.Output
+    Get-VhcJob -RepositoryDetails $RepositoryDetails -VBRVersion $VBRVersion -JobDiscovery $jobDiscoveryResult.Output -Experiments:$Experiments
 }
 $collectorResults.Add($jobsResult)
 # ---------------------------------------------------------------------------
@@ -307,9 +313,16 @@ if ([int]::TryParse([string]$config.Thresholds.OrphanedActiveChainWindowDays, [r
     $orphanedWindowDays -ge 0 -and $orphanedWindowDays -le 3650) {
     $orphanedWindowParams.ActiveChainWindowDays = $orphanedWindowDays
 }
-$collectorResults.Add((Invoke-VhcCollector -Name 'OrphanedSupersededBackups' -Action {
-    Get-VhcOrphanedSupersededBackups -RepositoryDetails $RepositoryDetails -OrphanedSupersededCache $jobsResult.Output @orphanedWindowParams
-}))
+if ($Experiments) {
+    $collectorResults.Add((Invoke-VhcCollector -Name 'OrphanedSupersededBackups' -Action {
+        Get-VhcOrphanedSupersededBackups -RepositoryDetails $RepositoryDetails -OrphanedSupersededCache $jobsResult.Output @orphanedWindowParams
+    }))
+} else {
+    # Benched without -Experiments: neither _orphanedSupersededBackups.csv nor
+    # _orphanedSupersededBackupsMeta.csv is written, and Get-VhcJob did not build
+    # the StaleObject data this collector reports from.
+    Write-LogFile "Orphaned/Superseded backups collection skipped (experimental, not enabled)." -LogLevel "INFO"
+}
 # ---------------------------------------------------------------------------
 
 # ---------------------------------------------------------------------------

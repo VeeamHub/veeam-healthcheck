@@ -659,7 +659,7 @@ Describe 'Performance gate: sweep triggers on unrecognized job types' {
         $script:UnscopedCalls | Should -Be 1
     }
 
-    It 'logs the natural gate value separately from the overridden effective gate' {
+    It 'logs the natural gate value separately from the overridden effective gate (-Experiments)' {
         $script:LogMessages = [System.Collections.Generic.List[string]]::new()
         Mock Write-LogFile -MockWith { $script:LogMessages.Add($Message) }
         Mock Get-VBRJob -MockWith {
@@ -668,7 +668,7 @@ Describe 'Performance gate: sweep triggers on unrecognized job types' {
                 (script:New-FakeJob -Name 'HyperVJob' -TypeToString 'Hyper-V Backup' -LastBackup ([PSCustomObject]@{ Id = [guid]::NewGuid() }))
             )
         }
-        Get-VhcJob
+        Get-VhcJob -Experiments
         $SweepLine = $script:LogMessages | Where-Object { $_ -match '^Restore point sweep:' } | Select-Object -Last 1
         $SweepLine | Should -Match 'natural-gate=False'
         $SweepLine | Should -Match 'effective-gate=True'
@@ -691,13 +691,9 @@ Describe 'Performance gate: sweep triggers on unrecognized job types' {
         $SweepLine | Should -Match '\b1 jobs\b'
     }
 
-    # SKIPPED (2026-08-26): Get-VhcJob.ps1 currently forces $NeedsSweep =
-    # $true unconditionally (temporary override, see that file's comment
-    # near $KnownSafeJobTypes) to close a data-completeness gap for the
-    # customer - the allowlist gate this Describe block tests is bypassed
-    # on purpose for now. Re-enable these 3 tests when that override is
-    # reverted.
-    It 'never calls Get-VBRRestorePoint without -Backup when every job is a known-safe type' -Skip {
+    # Without -Experiments the ADR 0022 allowlist gate decides on its own
+    # (the forced sweep is -Experiments only), so these three assert it.
+    It 'never calls Get-VBRRestorePoint without -Backup when every job is a known-safe type' {
         Mock Get-VBRJob -MockWith {
             @(
                 (script:New-FakeJob -Name 'VMwareJob' -TypeToString 'VMware Backup' -LastBackup ([PSCustomObject]@{ Id = [guid]::NewGuid() })),
@@ -709,8 +705,7 @@ Describe 'Performance gate: sweep triggers on unrecognized job types' {
         $script:ScopedCalls   | Should -Be 2
     }
 
-    # SKIPPED (2026-08-26): see the $NeedsSweep override note above.
-    It 'never calls Get-VBRRestorePoint without -Backup when the only jobs are Replication and other known-safe types' -Skip {
+    It 'never calls Get-VBRRestorePoint without -Backup when the only jobs are Replication and other known-safe types' {
         Mock Get-VBRJob -MockWith {
             @(
                 (script:New-FakeJob -Name 'VMwareJob' -TypeToString 'VMware Backup'      -LastBackup ([PSCustomObject]@{ Id = [guid]::NewGuid() })),
@@ -722,9 +717,7 @@ Describe 'Performance gate: sweep triggers on unrecognized job types' {
         $script:ScopedCalls   | Should -Be 2
     }
 
-    # SKIPPED (2026-08-26): see the $NeedsSweep override note above - the
-    # "old per-job method" this asserts on is the exact path being bypassed.
-    It 'produces correct OnDiskGB and OriginalSize via the old per-job method when the gate is off' -Skip {
+    It 'produces correct OnDiskGB and OriginalSize via the old per-job method when the gate is off' {
         Mock Get-VBRJob -MockWith {
             @( (script:New-FakeJob -Name 'VMwareJob' -TypeToString 'VMware Backup' -LastBackup ([PSCustomObject]@{ Id = [guid]::NewGuid() })) )
         }
@@ -864,7 +857,7 @@ Describe 'Sweep resilience: a broken backup does not disable the sweep' {
                 (script:New-FakeRestorePoint -BackupId ([guid]'aaaaaaaa-0000-0000-0000-000000000001') -ThrowOnGetSourceJob)
             )
         }
-        Get-VhcJob
+        Get-VhcJob -Experiments
 
         $script:VhcOrphanedSupersededCache.SweepRan | Should -BeTrue
         @($script:LogEntries | Where-Object { $_.Message -match 'Restore point sweep failed' }).Count | Should -Be 0
@@ -878,7 +871,7 @@ Describe 'Sweep resilience: a broken backup does not disable the sweep' {
     It 'keeps the bulk call count at one when the bulk call succeeds' {
         Mock Get-VBRBackup -MockWith { @($script:GoodBackup) }
         Mock Get-VBRRestorePoint -MockWith { @() }
-        Get-VhcJob
+        Get-VhcJob -Experiments
 
         Should -Invoke Get-VBRRestorePoint -Times 1 -Exactly -ParameterFilter { $null -eq $Backup }
         Should -Invoke Get-VBRRestorePoint -Times 0 -Exactly -ParameterFilter { $null -ne $Backup }
@@ -893,7 +886,7 @@ Describe 'Sweep resilience: a broken backup does not disable the sweep' {
         Mock Get-VBRRestorePoint -MockWith {
             if ($null -eq $Backup) { $script:BulkSweepThrew = $true; throw 'Simulated sweep failure' } else { @() }
         }
-        { Get-VhcJob } | Should -Not -Throw
+        { Get-VhcJob -Experiments } | Should -Not -Throw
 
         $script:VhcOrphanedSupersededCache.SweepRan | Should -BeFalse
         $script:VhcOrphanedSupersededCache.CandidateGroups.Count | Should -Be 0
@@ -905,7 +898,7 @@ Describe 'Sweep resilience: a broken backup does not disable the sweep' {
     It 'fails the sweep when the per-backup fallback reads no backup at all' {
         Mock Get-VBRBackup -MockWith { @($script:BadBackup) }
         Mock Get-VBRRestorePoint -MockWith { throw 'Unable to find repository id 280cd331-b099-4617-b59b-7488ad8d6046' }
-        { Get-VhcJob } | Should -Not -Throw
+        { Get-VhcJob -Experiments } | Should -Not -Throw
 
         $script:VhcOrphanedSupersededCache.SweepRan | Should -BeFalse
         $Err = @($script:LogEntries | Where-Object { $_.Level -eq 'ERROR' -and $_.Message -match 'Restore point sweep failed: Per-backup restore point sweep read none of 1 backup' })
@@ -922,7 +915,7 @@ Describe 'Sweep resilience: a broken backup does not disable the sweep' {
                 (script:New-FakeRestorePoint -BackupId ([guid]'bbbbbbbb-0000-0000-0000-000000000001') -ThrowOnGetSourceJob)
             )
         }
-        Get-VhcJob
+        Get-VhcJob -Experiments
 
         $script:VhcOrphanedSupersededCache.SweepRan | Should -BeTrue
         @($script:LogEntries | Where-Object { $_.Message -match 'Restore point sweep failed' }).Count | Should -Be 0
@@ -1387,7 +1380,7 @@ Describe 'Tier 3: Backup Copy chains attributed by BackupId through GetLastBacku
         Mock Get-VBRJob -MockWith { @($VmJob) }
         Mock Get-VBRRestorePoint -MockWith { @($Point) }
 
-        Get-VhcJob | Out-Null
+        Get-VhcJob -Experiments | Out-Null
 
         @($script:VhcOrphanedSupersededCache.CandidateGroups | Where-Object { $_.Reason -eq 'Unresolved' }) | Should -HaveCount 1
         $Row = $script:CapturedJobRows | Where-Object { $_.Name -eq 'VMware - Prod' }
@@ -1976,11 +1969,7 @@ Describe 'Orphaned/Superseded cache: sweep group retention' {
         $suppressed[0].RestorePoints[0].Name | Should -Be 'WindowsAgent08'
     }
 
-    # SKIPPED (2026-08-26): Get-VhcJob.ps1 currently forces $NeedsSweep =
-    # $true unconditionally (temporary override - see that file's comment
-    # near $KnownSafeJobTypes), so SweepRan is never $false right now.
-    # Re-enable when that override is reverted.
-    It 'sets SweepRan to $false when the environment needs no sweep at all' -Skip {
+    It 'sets SweepRan to $false when the environment needs no sweep at all' {
         $FakeJob = script:New-FakeJob -Name 'VMware - Safe' -TypeToString 'VMware Backup' -LastBackup $null
         Mock Get-VBRJob -MockWith { @($FakeJob) }
 
@@ -2029,14 +2018,12 @@ Describe 'Stale-ObjectId guard: GetObjectsInJob() cross-reference' {
     }
 
     # SKIPPED (2026-08-26): this fixture only mocks Get-VBRRestorePoint's
-    # non-sweep (-Backup) call signature. Get-VhcJob.ps1 currently forces
-    # $NeedsSweep = $true unconditionally (temporary override - see that
-    # file's comment near $KnownSafeJobTypes), so this job now takes the
-    # unscoped sweep branch instead, which this mock returns @() for - the
-    # guard logic itself is still exercised and passing via the dedicated
-    # sweep-path test below ('...via the sweep path too'). Re-enable (or
-    # rewire this fixture to also populate $RestorePointsByJob) when the
-    # override is reverted.
+    # non-sweep (-Backup) call signature. The stale-ObjectId guard now runs
+    # only with -Experiments, which forces the sweep, so a stale-object job
+    # always takes the unscoped sweep branch (this mock returns @() for it)
+    # and the guard is covered by the dedicated sweep-path test below
+    # ('...via the sweep path too'). Rewire this fixture to also populate
+    # $RestorePointsByJob before re-enabling.
     It 'excludes a stale ObjectId from CalculatedOriginalSize and TotalOnDiskGB, caches it as StaleObject' -Skip {
         $CurrentId = [guid]'44444444-4444-4444-4444-444444444444'
         $StaleId   = [guid]'55555555-5555-5555-5555-555555555555'
@@ -2067,9 +2054,9 @@ Describe 'Stale-ObjectId guard: GetObjectsInJob() cross-reference' {
         $stale[0].RestorePoints[0].ObjectId | Should -Be $StaleId
     }
 
-    # SKIPPED (2026-08-26): same non-sweep-only fixture limitation as above
-    # - see the $NeedsSweep override note there.
-    It 'excludes the vApp container restore point (not the real VMs) when GetObjectsInJob() returns a Vapp-typed container' -Skip {
+    # The vApp-container exclusion (#193) is not behind -Experiments, so this
+    # runs on the non-sweep path with the switch off.
+    It 'excludes the vApp container restore point (not the real VMs) when GetObjectsInJob() returns a Vapp-typed container' {
         # Live-lab-confirmed shape (VBR v13, 'VMware Cloud Director - vApp
         # Backup'): GetObjectsInJob() returns exactly ONE CObjectInJob entry
         # for the vApp container itself (Object.Type = 'Vapp', a
@@ -2118,7 +2105,7 @@ Describe 'Stale-ObjectId guard: GetObjectsInJob() cross-reference' {
     }
 
     # SKIPPED (2026-08-26): same non-sweep-only fixture limitation - see the
-    # $NeedsSweep override note above.
+    # -Experiments note above.
     It 'excludes nothing when GetObjectsInJob() matches zero restore points (Cloud Director vApp-container signature, no container RP present)' -Skip {
         $VappContainerId = [guid]'66666666-6666-6666-6666-666666666666'
         $RealVm1 = [guid]'77777777-7777-7777-7777-777777777777'
@@ -2175,7 +2162,7 @@ Describe 'Stale-ObjectId guard: GetObjectsInJob() cross-reference' {
             if ($null -eq $Backup) { @($CurrentPoint, $StalePoint) } else { @() }
         }
 
-        Get-VhcJob | Out-Null
+        Get-VhcJob -Experiments | Out-Null
 
         $job = $script:CapturedJobRows | Where-Object { $_.Name -eq 'HPE Morpheus - Sweep' }
         [double]$job.OnDiskGB | Should -BeGreaterThan 49
@@ -2190,7 +2177,7 @@ Describe 'Stale-ObjectId guard: GetObjectsInJob() cross-reference' {
     }
 
     # SKIPPED (2026-08-26): same non-sweep-only fixture limitation - see the
-    # $NeedsSweep override note above.
+    # -Experiments note above.
     It 'treats a restore point with a null ObjectId as active (uncertain, so not excluded) without aborting the job''s size calc' -Skip {
         # Regression guard for the same class of bug this file already
         # pins elsewhere (e.g. "skips a restore point whose resolved job
@@ -2236,7 +2223,7 @@ Describe 'Stale-ObjectId guard: GetObjectsInJob() cross-reference' {
     }
 
     # SKIPPED (2026-08-26): same non-sweep-only fixture limitation - see the
-    # $NeedsSweep override note above. This test's own name ("...on the
+    # -Experiments note above. This test's own name ("...on the
     # non-sweep path") is exactly the path currently bypassed.
     It 'guards against a null $Job.Id when caching a StaleObject entry on the non-sweep path' -Skip {
         # Same failure class as the null-RestorePoint.ObjectId guard above,
@@ -2628,7 +2615,7 @@ Describe 'Candidate grouping keeps a backup chain whole (#221 premise)' {
         # Newest first and interleaved with another BackupId's point.
         Mock Get-VBRRestorePoint -MockWith { @($Newest, $Other, $Old, $Mid) }
 
-        Get-VhcJob | Out-Null
+        Get-VhcJob -Experiments | Out-Null
 
         $Candidates = @($script:VhcOrphanedSupersededCache.CandidateGroups | Where-Object { $_.Reason -eq 'Unresolved' })
         $Candidates | Should -HaveCount 2
@@ -2656,7 +2643,7 @@ Describe 'Candidate grouping keeps a backup chain whole (#221 premise)' {
         $Resolves = script:New-FakeRestorePoint -Name 'recent'       -BackupId $BackupId -CreationTimeUtc ([datetime]::UtcNow.AddHours(-1)) -SourceJob $script:VmJob
         Mock Get-VBRRestorePoint -MockWith { @($Throws, $Resolves) }
 
-        Get-VhcJob | Out-Null
+        Get-VhcJob -Experiments | Out-Null
 
         $Candidates = @($script:VhcOrphanedSupersededCache.CandidateGroups | Where-Object { $_.Reason -eq 'Unresolved' })
         $Candidates | Should -HaveCount 1
@@ -2675,7 +2662,7 @@ Describe 'Candidate grouping keeps a backup chain whole (#221 premise)' {
         }
         Mock Get-VBRRestorePoint -MockWith { @($Points | Sort-Object { Get-Random }) }
 
-        Get-VhcJob | Out-Null
+        Get-VhcJob -Experiments | Out-Null
 
         $Candidates = @($script:VhcOrphanedSupersededCache.CandidateGroups)
         # One candidate per unresolvable BackupId (1, 2, 3); BackupId 0 went to the job.
@@ -2684,5 +2671,111 @@ Describe 'Candidate grouping keeps a backup chain whole (#221 premise)' {
             @($Candidate.RestorePoints.BackupId | Select-Object -Unique) | Should -HaveCount 1
         }
         @($Candidates.RestorePoints).Count | Should -Be 9
+    }
+}
+
+# ---------------------------------------------------------------------------
+# -Experiments: the Orphaned & Superseded Backups collection is benched unless
+# the switch is passed (VHC_EXPERIMENTS on the C# side). Off, job sizing must
+# follow the ADR 0022 allowlist gate and keep a removed object's restore
+# points in OnDiskGB and OriginalSize; on, the sweep is forced and the
+# StaleObject partition runs.
+# ---------------------------------------------------------------------------
+Describe 'Experiments switch gates the Orphaned/Superseded behaviour' {
+
+    BeforeEach {
+        $script:UnscopedCalls   = 0
+        $script:ScopedCalls     = 0
+        $script:CapturedJobRows = @()
+        $script:LogMessages     = [System.Collections.Generic.List[string]]::new()
+        $script:VhcOrphanedSupersededCache = $null
+        Mock Write-LogFile                 -MockWith { $script:LogMessages.Add($Message) }
+        Mock Get-VBRConfigurationBackupJob -MockWith { $null }
+        Mock Invoke-VhciJobSubCollectors   -MockWith { }
+        Mock Add-VhciModuleError           -MockWith { }
+        Mock Get-VBRBackup                 -MockWith { @() }
+        Mock Export-VhciCsv -MockWith {
+            if ($FileName -eq '_Jobs.csv' -and $InputObject) {
+                $script:CapturedJobRows += @($InputObject)
+            }
+        }
+
+        # A known-safe job (natural gate off) whose last backup still holds a
+        # restore point for an object that has since left the job.
+        $script:CurrentId = [guid]'44444444-4444-4444-4444-444444444444'
+        $script:StaleId   = [guid]'55555555-5555-5555-5555-555555555555'
+        $script:SafeJob   = script:New-FakeJob -Name 'VMware - Safe' -TypeToString 'VMware Backup' -ObjectsInJobIds @($script:CurrentId)
+        $script:CurrentPoint = script:New-FakeRestorePoint -Name 'CURRENT' -ObjectId $script:CurrentId -ApproxSize 150GB -BackupSize 50GB -SourceJob $script:SafeJob
+        $script:StalePoint   = script:New-FakeRestorePoint -Name 'STALE'   -ObjectId $script:StaleId   -ApproxSize 90GB  -BackupSize 30GB -SourceJob $script:SafeJob
+        $script:SafeJob | Add-Member -MemberType ScriptMethod -Name GetLastBackup -Value { [PSCustomObject]@{ Id = [guid]::NewGuid() } } -Force
+        Mock Get-VBRJob -MockWith { @($script:SafeJob) }
+        Mock Get-VBRRestorePoint -MockWith {
+            if ($null -eq $Backup) {
+                $script:UnscopedCalls++
+                @($script:CurrentPoint, $script:StalePoint)
+            } else {
+                $script:ScopedCalls++
+                @($script:CurrentPoint, $script:StalePoint)
+            }
+        }
+    }
+
+    Context 'without -Experiments' {
+        It 'does not force the sweep: a known-safe job is sized from its own last backup' {
+            Get-VhcJob | Out-Null
+            $script:UnscopedCalls | Should -Be 0
+            $script:ScopedCalls   | Should -Be 1
+            $script:VhcOrphanedSupersededCache.SweepRan | Should -BeFalse
+        }
+
+        It 'writes no sweep summary line when the sweep does not run' {
+            Get-VhcJob | Out-Null
+            $script:LogMessages | Where-Object { $_ -match '^Restore point sweep:' } | Should -BeNullOrEmpty
+        }
+
+        It 'keeps the removed object in OnDiskGB and OriginalSize and caches no StaleObject' {
+            Get-VhcJob | Out-Null
+            $Row = $script:CapturedJobRows | Where-Object { $_.Name -eq 'VMware - Safe' }
+            [double]$Row.OnDiskGB | Should -BeGreaterThan 79
+            [double]$Row.OnDiskGB | Should -BeLessThan 81
+            # Latest point per ObjectId, both objects: 150GB + 90GB.
+            $Row.OriginalSize | Should -Be 240GB
+            @($script:VhcOrphanedSupersededCache.CandidateGroups | Where-Object { $_.Reason -eq 'StaleObject' }).Count | Should -Be 0
+        }
+
+        It 'still follows the natural gate for a non-allowlisted job type, without partitioning the removed object' {
+            $MorpheusJob = script:New-FakeJob -Name 'Morpheus' -TypeToString 'HPE Morpheus VME Backup' -ObjectsInJobIds @($script:CurrentId)
+            $script:CurrentPoint = script:New-FakeRestorePoint -Name 'CURRENT' -ObjectId $script:CurrentId -ApproxSize 150GB -BackupSize 50GB -SourceJob $MorpheusJob
+            $script:StalePoint   = script:New-FakeRestorePoint -Name 'STALE'   -ObjectId $script:StaleId   -ApproxSize 90GB  -BackupSize 30GB -SourceJob $MorpheusJob
+            Mock Get-VBRJob -MockWith { @($MorpheusJob) }
+            Get-VhcJob | Out-Null
+            $script:UnscopedCalls | Should -Be 1
+            $Row = $script:CapturedJobRows | Where-Object { $_.Name -eq 'Morpheus' }
+            [double]$Row.OnDiskGB | Should -BeGreaterThan 79
+            $Row.OriginalSize | Should -Be 240GB
+            @($script:VhcOrphanedSupersededCache.CandidateGroups | Where-Object { $_.Reason -eq 'StaleObject' }).Count | Should -Be 0
+        }
+    }
+
+    Context 'with -Experiments' {
+        It 'forces the sweep for a known-safe job and logs natural-gate=False, effective-gate=True' {
+            Get-VhcJob -Experiments | Out-Null
+            $script:UnscopedCalls | Should -Be 1
+            $script:VhcOrphanedSupersededCache.SweepRan | Should -BeTrue
+            $SweepLine = $script:LogMessages | Where-Object { $_ -match '^Restore point sweep:' } | Select-Object -Last 1
+            $SweepLine | Should -Match 'natural-gate=False'
+            $SweepLine | Should -Match 'effective-gate=True'
+        }
+
+        It 'partitions the removed object out of OnDiskGB and OriginalSize and caches it as StaleObject' {
+            Get-VhcJob -Experiments | Out-Null
+            $Row = $script:CapturedJobRows | Where-Object { $_.Name -eq 'VMware - Safe' }
+            [double]$Row.OnDiskGB | Should -BeGreaterThan 49
+            [double]$Row.OnDiskGB | Should -BeLessThan 51
+            $Row.OriginalSize | Should -Be 150GB
+            $Stale = @($script:VhcOrphanedSupersededCache.CandidateGroups | Where-Object { $_.Reason -eq 'StaleObject' })
+            $Stale | Should -HaveCount 1
+            $Stale[0].RestorePoints[0].Name | Should -Be 'STALE'
+        }
     }
 }

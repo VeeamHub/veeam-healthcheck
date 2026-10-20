@@ -20,14 +20,13 @@ checksums, and scan results.
 - The `proxies` section of the JSON export uses new column names that match the values in each row:
   `IsOnHost`, `NetBufferSize`, `MaxConcurrentJobs` and `IsHvOffload` are replaced by `FailoverToNetwork`,
   `ChassisType`, `CachePath`, `CacheSize` and `IsDisabled`. Anything that reads those keys needs updating.
-- Since 3.1.0, a job's backup data size and source size no longer include restore points for objects that
-  were removed from the job (for example, a VM taken out of a job whose older restore points are still on
-  disk). This was not called out in the 3.1.0 notes. Those restore points are listed only in the Orphaned &
-  Superseded Backups section, which is hidden unless `VHC_EXPERIMENTS` is set, so jobs with removed objects
-  can show smaller sizes than in 3.0.1.193.
 
 ### Fixed
 
+- Job backup data size and source size include restore points for objects removed from the job again (for
+  example, a VM taken out of a job whose older restore points are still on disk), as in 3.0.1.193. 3.1.0 left
+  them out to list them in the Orphaned & Superseded Backups section, which is hidden by default. That split,
+  and the full restore point scan it forced on every run, now happen only when `VHC_EXPERIMENTS` is set.
 - The Job Info table no longer fails to load when NAS job data, or its size columns, are missing.
 - One NAS backup job whose repository was deleted no longer stops every NAS job (and Entra ID data) from being collected. The broken job is skipped with a warning naming it, and NAS jobs always export `OnDiskGB` and `SourceGB` (0 when sizes cannot be read).
 - Importing CSVs with `/import` now produces only the report for the product the files came from. A VB365
