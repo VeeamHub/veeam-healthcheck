@@ -86,6 +86,20 @@ namespace VhcGuiE2ETests
             return Path.GetFullPath(exe);
         }
 
+        private static string DotnetHost()
+        {
+            var fromEnv = Environment.GetEnvironmentVariable("DOTNET_HOST_PATH");
+            if (!string.IsNullOrWhiteSpace(fromEnv) && File.Exists(fromEnv))
+            {
+                return fromEnv;
+            }
+
+            var standard = Path.Combine(Environment.GetEnvironmentVariable("ProgramFiles") ?? @"C:\Program Files", "dotnet", "dotnet.exe");
+            return File.Exists(standard)
+                ? standard
+                : throw new FileNotFoundException("dotnet.exe was not found; set DOTNET_HOST_PATH to run a .dll in VHC_E2E_EXE.");
+        }
+
         public static string OutputRoot()
         {
             var root = Environment.GetEnvironmentVariable("VHC_E2E_OUT");
@@ -124,8 +138,18 @@ namespace VhcGuiE2ETests
             string exe = ExePath();
             var baseline = Native.VisibleConsoleHostWindows();
             var si = new Native.STARTUPINFO { cb = Marshal.SizeOf<Native.STARTUPINFO>() };
+
+            // A .dll is started with the dotnet host. Windows 11 Smart App Control blocks unsigned executables (the published
+            // exe) on some hosts, while the signed dotnet host loading the same managed code is not blocked.
+            string application = exe;
             var cmd = new StringBuilder("\"" + exe + "\"");
-            if (!Native.CreateProcessW(exe, cmd, IntPtr.Zero, IntPtr.Zero, false, Native.CREATE_NEW_CONSOLE, IntPtr.Zero, Path.GetDirectoryName(exe), ref si, out var pi))
+            if (exe.EndsWith(".dll", StringComparison.OrdinalIgnoreCase))
+            {
+                application = DotnetHost();
+                cmd = new StringBuilder("\"" + application + "\" \"" + exe + "\"");
+            }
+
+            if (!Native.CreateProcessW(application, cmd, IntPtr.Zero, IntPtr.Zero, false, Native.CREATE_NEW_CONSOLE, IntPtr.Zero, Path.GetDirectoryName(exe), ref si, out var pi))
             {
                 throw new InvalidOperationException("CreateProcess failed, Win32 error " + Marshal.GetLastWin32Error());
             }
