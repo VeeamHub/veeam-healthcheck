@@ -11,22 +11,36 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.Exportables
 {
     public class HtmlToPdfConverter
     {
-        private IConverter converter;
-        private PdfTools tools;
-        private readonly CLogger log = CGlobals.Logger;
-
-        // The native wkhtmltopdf wrapper is created on first use. An unused PdfTools has no loaded
+        // wkhtmltopdf initializes a Qt application once per process (wkhtmltopdf_init) and must keep
+        // being driven from the thread that did it. DinkToPdf's PdfTools.Load calls init for every
+        // instance and every SynchronizedConverter starts its own worker thread, so a second
+        // instance in one process (a second report in the GUI) hangs inside the native convert.
+        // One lazily created converter is therefore shared by the whole process and never disposed.
+        // Nothing native is touched until the first conversion: an unused PdfTools has no loaded
         // module, and its finalizer throws NullReferenceException on the finalizer thread, which
         // terminates the process (exit 134 off Windows with /pdf + /import).
+        private static readonly object SharedEngineLock = new object();
+        private static IConverter sharedEngine;
+
+        // Overrides the shared engine; tests use it to inject a fake.
+        private IConverter converter;
+        private readonly CLogger log = CGlobals.Logger;
+
+        internal static bool SharedEngineCreated => sharedEngine != null;
+
+        internal TimeSpan ConversionTimeout { get; set; } = TimeSpan.FromMinutes(5);
+
         private IConverter GetConverter()
         {
-            if (this.converter == null)
+            if (this.converter != null)
             {
-                this.tools = new PdfTools();
-                this.converter = new SynchronizedConverter(this.tools);
+                return this.converter;
             }
 
-            return this.converter;
+            lock (SharedEngineLock)
+            {
+                return sharedEngine ??= new SynchronizedConverter(new PdfTools());
+            }
         }
 
         // Marker class added to <html> so css.css can skip rules meant only for browser printing.
@@ -99,10 +113,10 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.Exportables
             thread.SetApartmentState(ApartmentState.STA);
             thread.Start();
 
-            if (!thread.Join(TimeSpan.FromMinutes(5)))
+            if (!thread.Join(this.ConversionTimeout))
             {
-                this.log.Error("[PdfConverter] PDF conversion timed out after 5 minutes.", false);
-                throw new TimeoutException("PDF conversion timed out after 5 minutes.");
+                this.log.Error($"[PdfConverter] PDF conversion timed out after {this.ConversionTimeout.TotalMinutes:0.##} minutes.", false);
+                throw new TimeoutException($"PDF conversion timed out after {this.ConversionTimeout.TotalMinutes:0.##} minutes.");
             }
 
             if (conversionError != null)
@@ -114,19 +128,11 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.Exportables
             File.WriteAllBytes(outputPath, pdf);
         }
 
+        // The native engine is process-wide and cannot be re-initialized, so only the per-instance
+        // override is released here.
         public void Dispose()
         {
-            // If conversion was attempted but the native library never loaded (wkhtmltopdf missing),
-            // PdfTools.Dispose would throw from its finalizer too, so skip it.
-            if (this.tools != null && !this.tools.IsLoaded)
-            {
-                GC.SuppressFinalize(this.tools);
-            }
-
-            this.tools = null;
             this.converter = null;
         }
     }
 }
-
-

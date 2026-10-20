@@ -185,6 +185,30 @@ namespace VhcXTests.Functions.Reporting.Html
         }
 
         [WindowsOnlyFact]
+        public void ConvertHtmlToPdf_TwoConvertersInOneProcess_BothWritePdf()
+        {
+            // wkhtmltopdf can be initialized once per process. A second converter instance that
+            // initialized its own native tools hung until the conversion timeout.
+            using var report = new GoldenVbrReport();
+            const string page = "<html><head><meta charset=\"utf-8\"></head><body><h1>Second conversion</h1></body></html>";
+            foreach (string name in new[] { "first.pdf", "second.pdf" })
+            {
+                string path = Path.Combine(report.Root, name);
+                var converter = new HtmlToPdfConverter { ConversionTimeout = TimeSpan.FromSeconds(90) };
+                try
+                {
+                    converter.ConvertHtmlToPdf(page, path);
+                }
+                finally
+                {
+                    converter.Dispose();
+                }
+
+                Assert.Equal("%PDF", Encoding.ASCII.GetString(File.ReadAllBytes(path), 0, 4));
+            }
+        }
+
+        [WindowsOnlyFact]
         public void ConvertHtmlToPdf_ConverterThrows_PropagatesErrorWithoutWritingOutput()
         {
             using var report = new GoldenVbrReport();
@@ -234,6 +258,7 @@ namespace VhcXTests.Functions.Reporting.Html
         [Fact]
         public void Dispose_UnusedConverter_NativeToolsFinalizerDoesNotThrow()
         {
+            bool engineExistedBefore = HtmlToPdfConverter.SharedEngineCreated;
             var converter = new HtmlToPdfConverter();
             converter.Dispose();
 
@@ -243,7 +268,7 @@ namespace VhcXTests.Functions.Reporting.Html
             GC.WaitForPendingFinalizers();
 
             Assert.Null(typeof(HtmlToPdfConverter).GetField("converter", BindingFlags.Instance | BindingFlags.NonPublic)!.GetValue(converter));
-            Assert.Null(typeof(HtmlToPdfConverter).GetField("tools", BindingFlags.Instance | BindingFlags.NonPublic)!.GetValue(converter));
+            Assert.Equal(engineExistedBefore, HtmlToPdfConverter.SharedEngineCreated);
         }
 
         private static HtmlToPdfConverter CreateConverterForFlowTest() => new HtmlToPdfConverter();
