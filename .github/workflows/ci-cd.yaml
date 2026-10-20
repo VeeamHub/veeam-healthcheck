@@ -1025,11 +1025,11 @@ jobs:
       run: |
         & "$env:GITHUB_WORKSPACE\.github\scripts\Test-VhcLiveRun.ps1" -Check CsvOutputs -LabProfile $env:LAB_PROFILE
 
-    - name: Check config DB type (known gap, not enforced)
-      # Remote run with credentials: DbType is expected to come from REST serverInfo, but the console-host runner reportedly cannot reach port 9419, so the value may be empty/Unknown. The actual value is printed. Promote to enforced (drop -KnownGap, add -ExpectedDbType <engine>) once the REST probe below passes.
+    - name: Assert config DB type
+      # Remote run with credentials: the console host has no local VBR registry, so DbType comes from REST serverInfo. The demo VBR is PostgreSQL (run 39429245251).
       if: always()
       run: |
-        & "$env:GITHUB_WORKSPACE\.github\scripts\Test-VhcLiveRun.ps1" -Check DbType -KnownGap
+        & "$env:GITHUB_WORKSPACE\.github\scripts\Test-VhcLiveRun.ps1" -Check DbType -ExpectedDbType PostgreSql
 
     - name: Assert Entra tenant job retention is numeric
       # Uses only the PowerShell-collected _entraTenantJob.csv. This lab has an Entra tenant job, so a missing
@@ -1146,8 +1146,8 @@ jobs:
       if: success() || failure()
       continue-on-error: true
       shell: pwsh
-      # No REST here: the console-host runner cannot reach the VBR REST API on 9419. vbr-13-sql
-      # is the exact-console-label source; vbr-2 triages from its CSV only.
+      # No REST here: vbr-13-sql is the exact-console-label source; vbr-2 triages from its CSV only.
+      # (This runner can reach 9419 since run 39429245251, so REST triage here is possible later.)
       run: |
         & "${{ github.workspace }}\.github\scripts\Invoke-SecurityComplianceDriftCheck.ps1" `
           -CatalogPath 'C:\temp\vHC\Original\VBR\*\*\*_SecurityComplianceCatalog.csv' `
@@ -1163,15 +1163,15 @@ jobs:
         if-no-files-found: ignore
         retention-days: 7
 
-    - name: Probe REST serverInfo reachability (known gap, not enforced)
-      # Reveals whether this runner can reach 9419 on the demo VBR and what databaseVendor it reports. Not enforced: the runner reportedly cannot reach REST. Drop -KnownGap and add -ExpectedDbType <engine> once it passes.
+    - name: Assert REST serverInfo databaseVendor
+      # This runner reaches 9419 on the demo VBR (run 39429245251: raw 'PostgreSQL'), so the remote REST DbType path is enforced here.
       if: always()
       env:
         VHC_REST_USER: ${{ secrets.VBR_USERNAME }}
         VHC_REST_PASSWORD: ${{ secrets.VBR_13_REMOTE_PW }}
         VHC_REST_HOST: ${{ secrets.VBR_HOST }}
       run: |
-        & "$env:GITHUB_WORKSPACE\.github\scripts\Test-VhcLiveRun.ps1" -Check RestDbType -RestServer $env:VHC_REST_HOST -KnownGap
+        & "$env:GITHUB_WORKSPACE\.github\scripts\Test-VhcLiveRun.ps1" -Check RestDbType -RestServer $env:VHC_REST_HOST -ExpectedDbType PostgreSql
 
     - name: Collect performance metrics
       if: always()
