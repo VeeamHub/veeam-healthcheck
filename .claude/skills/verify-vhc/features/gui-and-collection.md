@@ -86,6 +86,8 @@ $env:VHC_E2E_LIVE = '1'                                  # enables the full Run;
 dotnet test vHC/VhcGuiE2ETests/VhcGuiE2ETests.csproj
 ```
 
+`VHC_E2E_EXE` may also be a `VeeamHealthCheck.dll`, which the tests start with the dotnet host (`DOTNET_HOST_PATH`, else `Program Files\dotnet\dotnet.exe`); `vhc-verify.sh winhost` does this because Smart App Control can block the unsigned exe.
+
 Optional: `VHC_E2E_OUT` (output and screenshots folder, default `%TEMP%\vhc-e2e`), `VHC_E2E_RUN_TIMEOUT_MIN` (default 30). `dotnet test vHC/HC.sln` skips these tests, so build-and-test and pr-release-prep are unaffected. Each test kills only the PID it started.
 
 Elevation: the task `winhost` registers runs with the highest privileges. VHC shows an "Administrator Privileges Recommended" confirm to a non-elevated user on a local VBR, which the picker test does not expect, and an elevated process gets classic conhost instead of Windows Terminal (above). The Run test answers that confirm and the terms confirm with Yes.

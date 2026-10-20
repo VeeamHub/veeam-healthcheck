@@ -4,12 +4,17 @@
 # Proves, on a scratch copy of the caller's working tree:
 #   build   dotnet build vHC/HC.sln
 #   tests   dotnet test VhcXTests (Windows-only tests included), counts from the TRX
-#   live    single-file publish, a real /run on the local VBR (scrub on, explicit /outdir), then the
-#           same Test-VhcLiveRun.ps1 checks the CI live jobs use
+#   live    a real /run on the local VBR (scrub on, explicit /outdir), then the same Test-VhcLiveRun.ps1
+#           checks the CI live jobs use
 #   gui     VhcGuiE2ETests inside the interactive desktop session (a scheduled task with an interactive logon)
 #
 # Everything it starts is recorded by PID (and start time) in <Root>\work\state.json, and nothing is ever
 # killed by name. -Mode Cleanup stops what is still recorded, unregisters the scheduled task and removes <Root>.
+#
+# VHC is started as `dotnet VeeamHealthCheck.dll`, from the build step's output, not as a published single-file exe.
+# Smart App Control and similar Application Control policies block unsigned executables on many Windows 11 machines
+# (verdicts vary build to build); the signed dotnet host loading a managed dll is not blocked, so the run is the same
+# on every host. The single-file publish stays covered by ci-cd.yaml build-and-test.
 #
 # Exit codes: 0 every requested step passed; 1 a step failed; 4 --gui requested but no usable interactive session.
 
@@ -196,21 +201,18 @@ function Invoke-TestsStep {
     else { Add-Result 'tests' 'pass' $detail $c }
 }
 
-# --- step: publish (shared by live and gui) ------------------------------------
-function Invoke-PublishStep {
-    $exe = Join-Path $work 'publish\VeeamHealthCheck.exe'
-    if (Test-Path -LiteralPath $exe) { return $exe }
-    # The same single-file self-contained publish the release build and the CI live jobs use.
-    $r = Invoke-Recorded -Exe 'dotnet' -WorkDir $tree -Log (Join-Path $ev 'publish.log') -TimeoutMin 30 -What 'dotnet publish' `
-        -ArgLine "publish vHC/HC_Reporting/VeeamHealthCheck.csproj -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true -p:EnableCompressionInSingleFile=true -nodeReuse:false -p:UseSharedCompilation=false --nologo -o `"$(Join-Path $work 'publish')`""
-    if ($r.Exit -ne 0 -or -not (Test-Path -LiteralPath $exe)) { Say "publish failed (exit $($r.Exit)); see publish.log"; return $null }
-    Say "published $([math]::Round((Get-Item $exe).Length / 1MB, 1)) MB single-file exe"
-    $exe
+# --- launcher: dotnet <dll> from the build output (see the header) -----------------
+function Get-Launcher {
+    # The build puts the dll under bin\Debug\<tfm>\<rid>\; take the newest one rather than hard-coding the runtime id.
+    $dll = Get-ChildItem -Path (Join-Path $tree 'vHC\HC_Reporting\bin\Debug') -Recurse -File -Filter 'VeeamHealthCheck.dll' -ErrorAction SilentlyContinue |
+        Sort-Object LastWriteTime -Descending | Select-Object -First 1
+    if (-not $dll) { return $null }
+    @{ Dotnet = (Get-Command dotnet).Source; Dll = $dll.FullName }
 }
 
 # --- step: live ----------------------------------------------------------------
 function Invoke-LiveStep {
-    param([string]$Exe)
+    param($Launcher)
     $liveEv = Join-Path $ev 'live'
     New-Item -ItemType Directory -Force -Path $liveEv | Out-Null
     $out = Join-Path $work 'live-out'
@@ -220,8 +222,8 @@ function Invoke-LiveStep {
     # Scrub on; experiments on so the gated sections render and -Check Scrub can find them (as the CI scrubbed pass does).
     $env:VHC_EXPERIMENTS = '1'
     try {
-        $r = Invoke-Recorded -Exe $Exe -WorkDir (Split-Path $Exe -Parent) -Log (Join-Path $liveEv 'vhc-run.log') -TimeoutMin $LiveTimeoutMin -What 'VeeamHealthCheck /run' `
-            -ArgLine "/run /outdir=`"$out`" /silent /scrub:true"
+        $r = Invoke-Recorded -Exe $Launcher.Dotnet -WorkDir (Split-Path $Launcher.Dll -Parent) -Log (Join-Path $liveEv 'vhc-run.log') -TimeoutMin $LiveTimeoutMin -What 'VeeamHealthCheck /run' `
+            -ArgLine "`"$($Launcher.Dll)`" /run /outdir=`"$out`" /silent /scrub:true"
     } finally { Remove-Item Env:\VHC_EXPERIMENTS -ErrorAction SilentlyContinue }
     if ($r.TimedOut) { Add-Result 'live' 'fail' "the /run did not finish within $LiveTimeoutMin min" @{}; return }
     if ($r.Exit -ne 0) { Add-Result 'live' 'fail' "VeeamHealthCheck /run exited $($r.Exit); see live/vhc-run.log" @{}; return }
@@ -273,7 +275,7 @@ function Invoke-LiveStep {
 
 # --- step: gui -------------------------------------------------------------------
 function Invoke-GuiStep {
-    param([string]$Exe, [bool]$Live)
+    param($Launcher, [bool]$Live)
     $guiEv = Join-Path $ev 'gui'
     $guiOut = Join-Path $work 'gui-out'
     New-Item -ItemType Directory -Force -Path $guiEv, $guiOut | Out-Null
@@ -288,7 +290,8 @@ function Invoke-GuiStep {
     @"
 `$ErrorActionPreference = 'Continue'
 Set-Content -LiteralPath '$pidFile' -Value `$PID
-`$env:VHC_E2E_EXE = '$Exe'
+`$env:VHC_E2E_EXE = '$($Launcher.Dll)'
+`$env:DOTNET_HOST_PATH = '$($Launcher.Dotnet)'
 `$env:VHC_E2E_OUT = '$guiOut'
 `$env:VHC_E2E_RUN_TIMEOUT_MIN = '$LiveTimeoutMin'
 if ('$liveFlag' -eq '1') { `$env:VHC_E2E_LIVE = '1' }
@@ -392,18 +395,21 @@ try {
         Say $s.Message
     }
 
-    $built = Invoke-BuildStep
+    $built = $false
+    try { $built = Invoke-BuildStep } catch { Add-Result 'build' 'fail' "step threw: $($_.Exception.Message)" @{} }
     if (-not ($requested -contains 'tests')) { Add-Result 'tests' 'skip' 'not requested (--no-tests)' @{} }
-    elseif ($built) { Invoke-TestsStep }
+    elseif ($built) { try { Invoke-TestsStep } catch { Add-Result 'tests' 'fail' "step threw: $($_.Exception.Message)" @{} } }
     else { Add-Result 'tests' 'skip' 'build failed' @{} }
 
-    $exe = $null
+    $launcher = $null
     if ($wantLive -or $wantGui) {
-        if ($built) { $exe = Invoke-PublishStep }
-        if (-not $exe) { $why = $(if ($built) { 'single-file publish failed; see publish.log' } else { 'build failed' }) }
+        if ($built) { $launcher = Get-Launcher }
+        $why = if (-not $built) { 'build failed' } elseif (-not $launcher) { 'VeeamHealthCheck.dll is missing from the build output' } else { '' }
     }
-    if ($wantLive) { if ($exe) { Invoke-LiveStep -Exe $exe } else { Add-Result 'live' 'fail' $why @{} } } else { Add-Result 'live' 'skip' 'not requested (use --live)' @{} }
-    if ($wantGui) { if ($exe) { Invoke-GuiStep -Exe $exe -Live $wantLive } else { Add-Result 'gui' 'fail' $why @{} } } else { Add-Result 'gui' 'skip' 'not requested (use --gui)' @{} }
+    # A step that throws is a failed step with the reason, never a missing summary.
+    $guarded = { param([string]$Name, [scriptblock]$Body) try { & $Body } catch { Add-Result $Name 'fail' "step threw: $($_.Exception.Message)" @{} } }
+    if ($wantLive) { if ($launcher) { & $guarded 'live' { Invoke-LiveStep -Launcher $launcher } } else { Add-Result 'live' 'fail' $why @{} } } else { Add-Result 'live' 'skip' 'not requested (use --live)' @{} }
+    if ($wantGui) { if ($launcher) { & $guarded 'gui' { Invoke-GuiStep -Launcher $launcher -Live $wantLive } } else { Add-Result 'gui' 'fail' $why @{} } } else { Add-Result 'gui' 'skip' 'not requested (use --gui)' @{} }
 } finally {
     Stop-Recorded
     Remove-GuiTask

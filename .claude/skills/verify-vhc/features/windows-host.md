@@ -11,7 +11,7 @@ export VHC_WINHOST=user@winbox        # required; there is no default and no hos
 
 - `winhost-build` runs `dotnet build vHC/HC.sln` on the host.
 - `winhost-tests` runs the whole `VhcXTests` project there, so the `[WindowsOnlyFact]` tests (DPAPI, registry, native PDF render) run instead of skipping. Counts come from the TRX.
-- `winhost-live` (`--live`) publishes the single-file exe the release build produces, runs a real `/run` on the host's local VBR with scrub on and an explicit `/outdir`, then runs the same `Test-VhcLiveRun.ps1` checks the CI live jobs use.
+- `winhost-live` (`--live`) runs a real `/run` on the host's local VBR with scrub on and an explicit `/outdir`, then runs the same `Test-VhcLiveRun.ps1` checks the CI live jobs use. VHC is started as `dotnet VeeamHealthCheck.dll` from the build output (see "The launcher" below).
 - `winhost-gui` (`--gui`) runs `VhcGuiE2ETests` inside the host's interactive desktop session (see below), not in the SSH session.
 - `winhost-status` (`--status`) posts a GitHub commit status on `HEAD`, so the PR verifier can count the run.
 
@@ -28,7 +28,7 @@ Scratch space is `%LOCALAPPDATA%\vhc-verify\<ID>` on the host, removed at the en
 ## What it does
 
 1. Archives `git ls-files --cached --others --exclude-standard` (files that exist now), copies the tarball over `scp`, unpacks it in the scratch folder.
-2. Runs `Invoke-WinHostVerify.ps1` there, which builds, tests, publishes, runs and drives the GUI, writing logs, TRX files and `summary.json`.
+2. Runs `Invoke-WinHostVerify.ps1` there, which builds, tests, runs the live collection and drives the GUI, writing logs, TRX files and `summary.json`.
 3. Copies the evidence back to `.verify-vhc/evidence/<ID>/winhost/` (git-ignored, local only), then removes the scratch folder and checks the host is clean.
 4. Prints the summary and exits non-zero on any failure.
 
@@ -38,9 +38,13 @@ Evidence includes the host's logs and a window screenshot, so it is for you; do 
 
 UI Automation needs a real desktop, and an SSH session is session 0 with none. `--gui` first checks that the SSH user has an `Active`, unlocked interactive session (`query user`, no `LogonUI.exe` in that session). If not, it stops before building, with one message such as `GUI-UNAVAILABLE: ... disconnected ...`.
 
-Otherwise it registers a scheduled task with an **interactive logon for that user and the highest privileges** (no password is stored or needed; it runs only while the user is signed in), starts it, streams the test log back, and unregisters it in a `finally`. The task runs `dotnet test` of `VhcGuiE2ETests` with `VHC_E2E_EXE` pointing at the freshly published exe, so the tests drive the real window on the real desktop. The full-Run test only runs with `--live`; without it that test is skipped, and a status posted from such a run does not count as GUI coverage.
+Otherwise it registers a scheduled task with an **interactive logon for that user and the highest privileges** (no password is stored or needed; it runs only while the user is signed in), starts it, streams the test log back, and unregisters it in a `finally`. The task runs `dotnet test` of `VhcGuiE2ETests` with `VHC_E2E_EXE` pointing at the build's `VeeamHealthCheck.dll` (the tests start it with the dotnet host), so they drive the real window on the real desktop. The full-Run test only runs with `--live`; without it that test is skipped, and a status posted from such a run does not count as GUI coverage.
 
 Why elevated: VHC shows an "Administrator Privileges Recommended" confirm to a non-elevated user on a local VBR, and an elevated process gets a classic console host rather than Windows Terminal. The consequence is that the console-hidden assertions describe the classic-conhost case. A non-elevated launch under Windows Terminal leaves a console window visible (see [gui-and-collection](./gui-and-collection.md#gui-e2e)); this tool does not exercise that case.
+
+### The launcher: `dotnet VeeamHealthCheck.dll`, not the published exe
+
+The release build publishes a single-file, self-contained, unsigned exe, and `winhost` does not use it. Windows 11 **Smart App Control** blocks unsigned executables by cloud reputation, with a verdict that differs from build to build: on the reference host the exe started in two runs and then the same step failed with "An Application Control policy has blocked this file" (Code Integrity events 3033 and 3077). The signed dotnet host loading the same managed code is not blocked, so `--live` and `--gui` start `dotnet VeeamHealthCheck.dll` from the step-(a) build output, which gives the same result on every host and saves the publish. It does not prove the single-file packaging (self-extracting native libraries, the bundle); `ci-cd.yaml` `build-and-test` still publishes it. `VHC_E2E_EXE` accepts a `.dll` for this reason; the CI `gui-e2e` job keeps passing the exe.
 
 ### Cleanup guarantees
 
