@@ -34,6 +34,16 @@ Describe 'Get-VhcVbrInfo DbType on remote runs' {
         Should -Invoke Invoke-VhciRestApi -ParameterFilter { $Path -eq '/api/v1/serverInfo' } -Times 1 -Exactly
     }
 
+    It 'logs the raw databaseVendor string at INFO when REST succeeds' {
+        Mock Connect-VhciRestApi { [pscustomobject]@{ BaseUrl = 'x'; Headers = @{} } }
+        Mock Invoke-VhciRestApi { [pscustomobject]@{ databaseVendor = 'PostgreSql' } }
+        Mock Write-LogFile { }
+
+        Get-VhcVbrInfo -VBRVersion 13 -RemoteExecution $true -Server 'vbr01' -Credential $script:Cred
+
+        Should -Invoke Write-LogFile -Times 1 -Exactly -ParameterFilter { -not $LogLevel -and $Message -eq "Get-VhciRestDbType: serverInfo databaseVendor raw value 'PostgreSql'" }
+    }
+
     It 'authenticates once through the shared client with the credential, not in a URL' {
         Mock Connect-VhciRestApi { [pscustomobject]@{ BaseUrl = 'https://vbr01:9419'; Headers = @{} } }
         Mock Invoke-VhciRestApi { [pscustomobject]@{ databaseVendor = 'PostgreSql' } }

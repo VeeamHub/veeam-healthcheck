@@ -31,6 +31,8 @@ function Get-VhciRestDbType {
     }
 
     $vendor = if ($info -and $info.PSObject.Properties['databaseVendor']) { [string]$info.databaseVendor } else { '' }
+    # The raw string is logged on every successful call so a live run records the vendor values the API really returns.
+    Write-LogFile "Get-VhciRestDbType: serverInfo databaseVendor raw value '$vendor'"
     switch -Regex ($vendor) {
         '^(?i)(MsSql|MicrosoftSql|SqlServer|Microsoft SQL Server)$' { return 'MsSql' }
         '^(?i)(PostgreSql|Postgres)$'                               { return 'PostgreSql' }
