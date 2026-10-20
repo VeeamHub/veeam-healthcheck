@@ -14,6 +14,17 @@
 #   import-layouts [ID]   /import over every documented CSV folder layout; asserts byte-identical reports
 #   render [ID]           open the import-report output (plain + scrubbed) in a browser via tools/report-smoke
 #   ci [ID]               build, import-report, import-scrub, cli-checks, cli-matrix, import-layouts, render (what crossplatform-tests.yml runs)
+#   pr <N|branch> [opts]  verify a pull request: did its green checks exercise what it changed? Writes
+#                         .verify-vhc/evidence/pr-N/report.md + report.json; exit 0 only on VERIFIED
+#                         (1 FAILED, 2 NEEDS-RUN, 3 NEEDS-HUMAN). Options: --run (run the missing local checks),
+#                         --dispatch (ci-cd.yaml on the PR branch if live-lab checks are missing), --comment (one
+#                         sticky PR comment), --repo OWNER/REPO, --wait MINUTES. Needs pwsh 7 and gh.
+#   winhost [ID] [opts]   verify the CURRENT working tree (uncommitted changes included) on a remote Windows host over SSH.
+#                         Always: dotnet build + full VhcXTests (Windows-only tests included; --no-tests skips them).
+#                         --live: a real /run on the host's local VBR, then the Test-VhcLiveRun.ps1 checks.
+#                         --gui: the FlaUI suite inside the host's interactive desktop (the full-Run test needs --live).
+#                         --status: post commit status verify-vhc/windows-host on HEAD (clean tree only; counts only).
+#                         Host from $VHC_WINHOST (user@host); evidence -> .verify-vhc/evidence/ID/winhost/; exit non-zero on any failure.
 #   cleanup [ID]          stop only the process this skill started, remove scratch input; KEEPS evidence
 #
 # Everything is repo-relative. State lives in .verify-vhc/ (git-ignored).
@@ -505,6 +516,198 @@ cmd_cleanup() {
   say "cleanup done. evidence kept under $STATE/evidence/"
 }
 
+cmd_pr() {
+  command -v pwsh >/dev/null || fail "pwsh (PowerShell 7) is required for 'pr'"
+  [ $# -ge 1 ] || fail "usage: $0 pr <number|branch> [--run] [--dispatch] [--comment] [--repo OWNER/REPO] [--wait MINUTES]"
+  target="$1"; shift
+  pargs=()
+  while [ $# -gt 0 ]; do
+    case "$1" in
+      --run) pargs+=(-Run) ;;
+      --dispatch) pargs+=(-Dispatch) ;;
+      --comment) pargs+=(-Comment) ;;
+      --repo) shift; pargs+=(-Repo "${1:?--repo needs OWNER/REPO}") ;;
+      --wait) shift; pargs+=(-WaitMinutes "${1:?--wait needs minutes}") ;;
+      --self-workflow) shift; pargs+=(-SelfWorkflow "${1:?--self-workflow needs a file name}") ;;
+      --out-dir) shift; pargs+=(-OutDir "${1:?--out-dir needs a path}") ;;
+      *) fail "unknown option for pr: $1" ;;
+    esac
+    shift
+  done
+  exec pwsh -NoProfile -File "$ROOT/.claude/skills/verify-vhc/scripts/Invoke-PrVerify.ps1" "$target" ${pargs[@]+"${pargs[@]}"}
+}
+
+# ---------------------------------------------------------------------------
+# winhost: pre-PR verification on a remote Windows host (see features/windows-host.md)
+# ---------------------------------------------------------------------------
+WINHOST_CONTEXT="verify-vhc/windows-host"
+WINHOST_PS1='.claude/skills/verify-vhc/scripts/Invoke-WinHostVerify.ps1'
+
+# Runs a PowerShell command on the host. The host's default shell must be PowerShell 7.
+wh_ssh() { ssh $WH_SSH_OPTS "$WH_HOST" "$@"; }
+
+wh_cleanup_remote() {  # stop what is still recorded, unregister the task, remove the scratch folder
+  [ -n "${WH_RROOT:-}" ] || return 0
+  wh_ssh "if (Test-Path '$WH_RROOT\\tree\\$WH_PS1_WIN') { & pwsh -NoProfile -File '$WH_RROOT\\tree\\$WH_PS1_WIN' -Root '$WH_RROOT' -Mode Cleanup } else { Remove-Item -LiteralPath '$WH_RROOT' -Recurse -Force -ErrorAction SilentlyContinue }" 2>&1 | sed 's/^/  host: /'
+}
+
+# Reads <evidence>/winhost/summary.json and prints the table; sets WH_OVERALL.
+wh_print_summary() {  # wh_print_summary <summary.json>
+  python3 -I - "$1" <<'PY'
+import json, sys
+d = json.load(open(sys.argv[1]))
+print("WINHOST SUMMARY")
+for s in d["steps"]:
+    print("  %-5s %-6s %s" % (s["status"].upper(), s["name"], s["detail"]))
+print("  overall: " + d["overall"].upper())
+PY
+}
+
+# Builds the status description from counts only (never any host detail). Grammar parsed by PrVerify.psm1:
+#   build ok | build FAIL; xunit P pass F fail S skip; live ok N checks | live FAIL K of N checks; gui P pass F fail S skip
+wh_status_description() {  # wh_status_description <summary.json>
+  python3 -I - "$1" <<'PY'
+import json, sys
+d = json.load(open(sys.argv[1]))
+parts = []
+for s in d["steps"]:
+    n, st, c = s["name"], s["status"], s.get("counts") or {}
+    if st == "skip":
+        continue
+    if n == "build":
+        parts.append("build ok" if st == "pass" else "build FAIL")
+    elif n in ("tests", "gui"):
+        tok = "xunit" if n == "tests" else "gui"
+        if c.get("total") is None:
+            parts.append(tok + " FAIL")
+        else:
+            parts.append("%s %d pass %d fail %d skip" % (tok, c.get("passed", 0), c.get("failed", 0), c.get("skipped", 0)))
+    elif n == "live":
+        ok, bad = c.get("checks_passed", 0), c.get("checks_failed", 0)
+        parts.append("live ok %d checks" % ok if st == "pass" else "live FAIL %d of %d checks" % (bad, ok + bad))
+print("; ".join(parts)[:140])
+PY
+}
+
+wh_post_status() {  # wh_post_status <summary.json> <overall>
+  sha="$(git rev-parse HEAD)"
+  desc="$(wh_status_description "$1")"
+  if [ "$2" = "pass" ]; then state=success; else state=failure; fi
+  repo="${VHC_STATUS_REPO:-}"
+  if [ -z "$repo" ]; then repo="$(gh repo view --json nameWithOwner -q .nameWithOwner 2>/dev/null)" || fail "cannot work out the repo for --status; set VHC_STATUS_REPO=OWNER/REPO"; fi
+  if [ "${VHC_STATUS_DRY_RUN:-0}" = "1" ]; then
+    say "STATUS (dry run, not posted): $repo@${sha} $state $WINHOST_CONTEXT \"$desc\""
+    return 0
+  fi
+  gh api "repos/$repo/statuses/$sha" -f state="$state" -f context="$WINHOST_CONTEXT" -f description="$desc" --jq '"STATUS posted: " + .state + " " + .context + " \"" + .description + "\""' \
+    || fail "could not post the commit status (is $sha pushed to $repo?)"
+}
+
+cmd_winhost() {
+  id=""; want_gui=0; want_live=0; want_status=0; want_tests=1
+  while [ $# -gt 0 ]; do
+    case "$1" in
+      --gui) want_gui=1 ;;
+      --live) want_live=1 ;;
+      --status) want_status=1 ;;
+      --no-tests) want_tests=0 ;;
+      -*) fail "unknown option for winhost: $1 (usage: winhost [ID] [--gui] [--live] [--status] [--no-tests])" ;;
+      *) [ -z "$id" ] || fail "winhost takes one ID"; id="$1" ;;
+    esac
+    shift
+  done
+  id="${id:-wh-$(date +%Y%m%d-%H%M%S)}"
+  case "$id" in *[!A-Za-z0-9._-]*|"") fail "ID may only contain letters, digits, '.', '_' and '-'" ;; esac
+
+  WH_HOST="${VHC_WINHOST:-}"
+  [ -n "$WH_HOST" ] || fail "VHC_WINHOST is not set. Set it to user@host of a Windows machine you can SSH into with a key, for example: export VHC_WINHOST=user@winbox (see .claude/skills/verify-vhc/features/windows-host.md)"
+  case "$WH_HOST" in -*) fail "VHC_WINHOST must not start with '-'" ;; esac
+  WH_SSH_OPTS="${VHC_WINHOST_SSH_OPTS:--o BatchMode=yes -o ConnectTimeout=15 -o ServerAliveInterval=30}"
+  command -v python3 >/dev/null || fail "python3 is required for winhost (summary parsing)"
+
+  head_sha="$(git rev-parse HEAD)"
+  if [ -n "$(git status --porcelain)" ]; then dirty=1; else dirty=0; fi
+  if [ "$want_status" -eq 1 ] && [ "$dirty" -eq 1 ]; then
+    fail "--status refuses a dirty working tree: the status would describe $head_sha but you verified uncommitted changes. Commit (or stash) first."
+  fi
+
+  steps="build"
+  [ "$want_tests" -eq 1 ] && steps="$steps,tests"
+  [ "$want_live" -eq 1 ] && steps="$steps,live"
+  [ "$want_gui" -eq 1 ] && steps="$steps,gui"
+  ev="$STATE/evidence/$id"
+  evh="$ev/winhost"
+  rm -rf "$evh"; mkdir -p "$evh"
+  say "winhost $id: steps=$steps head=${head_sha:0:7} dirty=$dirty"
+  say "winhost $id --gui=$want_gui --live=$want_live --status=$want_status (host from VHC_WINHOST)" > "$ev/command.txt"
+
+  # Remote scratch folder, derived on the host so no user name is assumed.
+  rbase="$(wh_ssh '$env:LOCALAPPDATA' | tr -d '\r')" || fail "cannot reach the host over SSH (key auth, no prompt). Try: ssh \$VHC_WINHOST_SSH_OPTS \$VHC_WINHOST"
+  [ -n "$rbase" ] || fail "the host returned no LOCALAPPDATA; is its default SSH shell PowerShell 7?"
+  WH_RROOT="$rbase\\vhc-verify\\$id"
+  WH_PS1_WIN="$(printf '%s' "$WINHOST_PS1" | tr '/' '\\')"
+  rroot_scp="/$(printf '%s' "$WH_RROOT" | tr '\\' '/')"
+  trap 'wh_cleanup_remote' EXIT
+
+  # Ship the working tree: tracked + untracked-not-ignored files that exist now (deleted files drop out).
+  tgz="$STATE/winhost-$id.tgz"; list="$STATE/winhost-$id.list"
+  git ls-files -z --cached --others --exclude-standard | while IFS= read -r -d '' f; do [ -e "$f" ] && printf '%s\0' "$f"; done > "$list"
+  COPYFILE_DISABLE=1 tar --null -T "$list" -czf "$tgz" || fail "could not archive the working tree"
+  say "archived $(tr -cd '\0' < "$list" | wc -c | tr -d ' ') files, $(wc -c < "$tgz" | tr -d ' ') bytes"
+
+  wh_cleanup_remote
+  wh_ssh "New-Item -ItemType Directory -Force -Path '$WH_RROOT\\tree' | Out-Null" || fail "cannot create the scratch folder on the host"
+  # shellcheck disable=SC2086
+  scp $WH_SSH_OPTS "$tgz" "$WH_HOST:$rroot_scp/tree.tgz" >/dev/null || fail "could not copy the working tree to the host"
+  wh_ssh "tar -xzf '$WH_RROOT\\tree.tgz' -C '$WH_RROOT\\tree'; if (\$LASTEXITCODE -ne 0) { exit 1 }; Remove-Item -LiteralPath '$WH_RROOT\\tree.tgz'" || fail "could not unpack the working tree on the host"
+  rm -f "$tgz" "$list"
+
+  say "running on the host (this takes a while)..."
+  # Lab profile (a key in .github/scripts/live-csv-expectations.json) and expected config DB engine; set either to empty to disable it.
+  lab_profile="${VHC_WINHOST_LAB_PROFILE-vbr-13-pg}"; expect_db="${VHC_WINHOST_EXPECT_DB-PostgreSql}"
+  case "$lab_profile$expect_db" in *[!A-Za-z0-9._-]*) fail "VHC_WINHOST_LAB_PROFILE and VHC_WINHOST_EXPECT_DB may only contain letters, digits, '.', '_' and '-'" ;; esac
+  [ -n "$lab_profile" ] || lab_profile=none
+  [ -n "$expect_db" ] || expect_db=none
+  wh_ssh "& pwsh -NoProfile -File '$WH_RROOT\\tree\\$WH_PS1_WIN' -Root '$WH_RROOT' -Steps '$steps' -LabProfile '$lab_profile' -ExpectDbType '$expect_db'; exit \$LASTEXITCODE" 2>&1 | tee "$evh/winhost.log"
+  rc=${PIPESTATUS[0]}
+
+  # Evidence back, then remove the scratch folder and prove the host is clean.
+  ptmp="$STATE/winhost-fetch-$id"; rm -rf "$ptmp"; mkdir -p "$ptmp"
+  # shellcheck disable=SC2086
+  scp -r $WH_SSH_OPTS "$WH_HOST:$rroot_scp/evidence" "$ptmp/" >/dev/null 2>&1 || say "warn: could not fetch the evidence folder from the host"
+  if [ -d "$ptmp/evidence" ]; then cp -R "$ptmp/evidence/." "$evh/"; fi
+  rm -rf "$ptmp"
+
+  if [ "${VHC_WINHOST_KEEP:-0}" = "1" ]; then
+    say "VHC_WINHOST_KEEP=1: scratch folder left on the host: $WH_RROOT"
+  else
+    wh_cleanup_remote
+    clean="$(wh_ssh "\$left = @(); if (Test-Path -LiteralPath '$WH_RROOT') { \$left += 'scratch folder' }; if (Get-ScheduledTask -ErrorAction SilentlyContinue | Where-Object TaskName -like 'vhc-verify-*') { \$left += 'scheduled task' }; if (\$left.Count) { 'DIRTY: ' + (\$left -join ', ') } else { 'CLEAN' }" | tr -d '\r')"
+    say "host after cleanup: ${clean:-unknown}"
+    [ "$clean" = "CLEAN" ] || rc=1
+  fi
+  WH_RROOT=""; trap - EXIT
+
+  summary="$evh/summary.json"
+  if [ ! -f "$summary" ]; then
+    say "FAIL: the host produced no summary (see $evh/winhost.log)"
+    exit 1
+  fi
+  wh_print_summary "$summary"
+  overall="$(python3 -I -c "import json,sys; print(json.load(open(sys.argv[1]))['overall'])" "$summary")"
+  python3 -I - "$summary" "$head_sha" "$dirty" > "$evh/summary-local.json" <<'PY'
+import json, sys
+d = json.load(open(sys.argv[1])); d["head"] = sys.argv[2]; d["dirty"] = sys.argv[3] == "1"
+print(json.dumps(d, indent=2))
+PY
+  ( cd "$evh" && find . -type f ! -name MANIFEST.sha256 -print0 | xargs -0 shasum -a 256 ) > "$evh/MANIFEST.sha256"
+  say "evidence: $evh"
+
+  if [ "$want_status" -eq 1 ]; then wh_post_status "$summary" "$overall"; fi
+  if [ "$overall" != "pass" ] || [ "$rc" -ne 0 ]; then say "WINHOST: FAILED"; exit 1; fi
+  say "WINHOST: verified"
+}
+
 case "${1:-}" in
   build) cmd_build ;;
   doctor) cmd_doctor ;;
@@ -517,6 +720,8 @@ case "${1:-}" in
   ci) shift; cmd_ci "$@" ;;
   tests) shift; cmd_tests "$@" ;;
   pester) shift; cmd_pester "$@" ;;
+  pr) shift; cmd_pr "$@" ;;
+  winhost) shift; cmd_winhost "$@" ;;
   cleanup) shift; cmd_cleanup "$@" ;;
-  *) sed -n '2,20p' "$0"; exit 2 ;;
+  *) sed -n '2,31p' "$0"; exit 2 ;;
 esac

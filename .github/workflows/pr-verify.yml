@@ -1,0 +1,80 @@
+name: PR Verify
+
+# Advisory report on every PR: did the green checks actually exercise what this PR changed?
+# A workflow that never ran shows up as absent, not as failed, so green alone proves little: path-filtered
+# workflows skip silently, and ci-cd.yaml (the live VBR lab jobs) never runs on a pull_request at all.
+#
+# This job maps the diff to surfaces (.claude/skills/verify-vhc/pr-surfaces.json), reads the real check-runs and
+# workflow runs on the head SHA, and writes a verdict (VERIFIED / NEEDS-RUN / FAILED / NEEDS-HUMAN) to the job
+# summary and, for same-repo PRs, to ONE sticky PR comment.
+#
+# Waiting strategy: poll (not workflow_run). workflow_run executes the default branch's copy of this file with a
+# write token and would let a fork PR trigger it; polling runs the PR's own copy with the PR's token. The poll
+# excludes this workflow's own run and check-runs, so it cannot wait on itself. concurrency cancels the older run
+# when the PR is pushed again.
+#
+# It never dispatches workflows: ci-cd.yaml runs on self-hosted lab runners that hold lab credentials. A missing
+# live-lab run is reported as NEEDS-RUN with the command; `vhc-verify.sh pr <N> --dispatch` does it from a laptop.
+#
+# Advisory today (PR_VERIFY_STRICT=false), like commit-lint. To enforce, set it to 'true' and require the
+# "PR verification report" check in branch protection.
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, ready_for_review, edited]
+    branches: [master, dev]
+
+permissions: {}
+
+concurrency:
+  group: pr-verify-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  verify:
+    name: PR verification report
+    # `edited` also fires for body edits (pasting the verdict into the body would re-run this); only a title change matters.
+    if: github.event.action != 'edited' || github.event.changes.title != null
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    permissions:
+      contents: read
+      pull-requests: write   # the sticky comment (same-repo PRs only; fork PRs get a read-only token)
+      checks: read
+      statuses: read         # the verify-vhc/windows-host commit status (vhc-verify.sh winhost --status)
+      actions: read
+    env:
+      PR_VERIFY_STRICT: 'false'
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+
+      - name: Verify PR
+        id: verify
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          HEAD_REPO: ${{ github.event.pull_request.head.repo.full_name }}
+        run: |
+          $sameRepo = ($env:HEAD_REPO -eq $env:GITHUB_REPOSITORY)
+          $p = @{ Pr = $env:PR_NUMBER; Repo = $env:GITHUB_REPOSITORY; WaitMinutes = 45; SelfWorkflow = 'pr-verify.yml' }
+          if ($sameRepo) { $p.Comment = $true }
+          & ./.claude/skills/verify-vhc/scripts/Invoke-PrVerify.ps1 @p
+          $rc = $LASTEXITCODE
+          $report = ".verify-vhc/evidence/pr-$($env:PR_NUMBER)/report.md"
+          if (Test-Path $report) { Get-Content -LiteralPath $report -Raw | Add-Content -LiteralPath $env:GITHUB_STEP_SUMMARY }
+          if ($rc -eq 70) { Write-Host '::error::pr-verify itself failed (see the log above)'; exit 1 }
+          if ($rc -ne 0) { Write-Host "::warning title=PR verification::verdict is not VERIFIED (exit $rc); see the job summary." }
+          if ($rc -ne 0 -and $env:PR_VERIFY_STRICT -eq 'true') { exit $rc }
+          exit 0
+
+      - name: Upload report
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: pr-verify-report
+          path: .verify-vhc/evidence/pr-*/report.*
+          if-no-files-found: ignore
+          retention-days: 14

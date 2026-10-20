@@ -158,3 +158,4 @@ Release versions are computed from commits, not hand-edited ([ADR 0031](docs/adr
 - Internal types exposed to `VhcXTests` via `InternalsVisibleTo` in csproj
 - Local builds auto-increment the csproj build segment via `increment_version.ps1`; CI ignores it (see Versioning). Revert the csproj after building: `git checkout -- vHC/HC_Reporting/VeeamHealthCheck.csproj`
 - Suppressed code analysis warnings: CA1305, CA1307, CA1820, CA2242, CA1031, CA1806, CA1822
+- Before marking a PR ready, run `.claude/skills/verify-vhc/scripts/vhc-verify.sh pr <N>` and paste its verdict (VERIFIED / NEEDS-RUN / FAILED / NEEDS-HUMAN) into the PR body: green checks alone do not prove the changed code ran (recipe: `.claude/skills/verify-vhc/features/pr-verification.md`).

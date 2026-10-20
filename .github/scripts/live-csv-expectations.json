@@ -72,6 +72,14 @@
       "nonEmpty": {
         "regkeys": "local run reads the registry (written in run 38980131816; the remote vbr-2 run cannot)"
       }
+    },
+    "vbr-13-pg": {
+      "description": "verify-vhc winhost --live: local collection on a Windows host with VBR 13 and a PostgreSQL configuration database. labCommon is not assumed: a bare VBR host has no gateways, tape pools or traffic rules.",
+      "labCommon": false,
+      "nonEmpty": {
+        "regkeys": "local run reads the registry (29 rows in the first verify-vhc winhost run; a remote run cannot)",
+        "SecurityComplianceCatalog": "VBR 13 compliance catalog (70 rows in the first verify-vhc winhost run)"
+      }
     }
   },
   "columns": {
