@@ -6,16 +6,27 @@
 # variable once and removes it from the process environment. These tests extract that function from
 # the real script files (via the PowerShell AST, so the scripts themselves are not run) and check it.
 
+# Pester 5 runs a file in two phases: discovery (BeforeDiscovery, Context/Describe bodies and
+# -ForEach data) and run (BeforeAll and the It bodies). Variables set in BeforeDiscovery do not
+# exist in the run phase, so the script list is built in BOTH places: BeforeDiscovery feeds the
+# -ForEach below, BeforeAll feeds the It blocks that read $script:ScriptFiles directly.
 BeforeDiscovery {
-    $hcReporting = Resolve-Path (Join-Path $PSScriptRoot '..\..\..\..')
+    $hcReporting = Resolve-Path (Join-Path $PSScriptRoot '../../../..')
     $script:ScriptFiles = @(
-        (Join-Path $hcReporting 'Tools\Scripts\HealthCheck\VBR\Get-VBRConfig.ps1'),
-        (Join-Path $hcReporting 'Tools\Scripts\HealthCheck\VB365\Collect-VB365Data.ps1'),
+        (Join-Path $hcReporting 'Tools/Scripts/HealthCheck/VBR/Get-VBRConfig.ps1'),
+        (Join-Path $hcReporting 'Tools/Scripts/HealthCheck/VB365/Collect-VB365Data.ps1'),
         (Join-Path $PSScriptRoot 'TestMfa.ps1')
     ) | ForEach-Object { @{ Path = $_; Name = Split-Path $_ -Leaf } }
 }
 
 BeforeAll {
+    $hcReporting = Resolve-Path (Join-Path $PSScriptRoot '../../../..')
+    $script:ScriptFiles = @(
+        (Join-Path $hcReporting 'Tools/Scripts/HealthCheck/VBR/Get-VBRConfig.ps1'),
+        (Join-Path $hcReporting 'Tools/Scripts/HealthCheck/VB365/Collect-VB365Data.ps1'),
+        (Join-Path $PSScriptRoot 'TestMfa.ps1')
+    ) | ForEach-Object { @{ Path = $_; Name = Split-Path $_ -Leaf } }
+
     function Get-ScriptAst([string]$Path) {
         $tokens = $null; $errors = $null
         $ast = [System.Management.Automation.Language.Parser]::ParseFile($Path, [ref]$tokens, [ref]$errors)
@@ -89,7 +100,9 @@ Describe 'Get-VhcCredentialPasswordFromEnvironment' {
     }
 
     It 'is the identical function in every script (no drift between copies)' {
-        $texts = $script:ScriptFiles | ForEach-Object { Get-ReaderFunctionText $_.Path }
+        $script:ScriptFiles.Count | Should -Be 3
+        $texts = @($script:ScriptFiles | ForEach-Object { Get-ReaderFunctionText $_.Path })
+        $texts | ForEach-Object { $_ | Should -Not -BeNullOrEmpty }
         ($texts | Select-Object -Unique).Count | Should -Be 1
     }
 }
