@@ -1,0 +1,156 @@
+name: PSScriptAnalyzer
+
+# Advisory: runs PSScriptAnalyzer over every tracked *.ps1, *.psm1 and *.psd1 with the repo-root
+# PSScriptAnalyzerSettings.psd1 and never fails the PR.
+#
+# - Findings in files the PR changes become annotations (GitHub shows about 10 per type per step).
+# - The job summary counts every finding in the repo by rule and severity, so the backlog is visible.
+# - The full list is uploaded as the psscriptanalyzer-results artifact (CSV).
+#
+# Runs on Windows so cmdlet-alias rules see the same alias table as the hosts the scripts target.
+
+on:
+  pull_request:
+    branches: [master, dev]
+    paths:
+      - '**/*.ps1'
+      - '**/*.psm1'
+      - '**/*.psd1'
+      - '.github/workflows/psscriptanalyzer.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  PSSA_VERSION: '1.25.0'
+
+jobs:
+  psscriptanalyzer:
+    name: PSScriptAnalyzer (advisory)
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          fetch-depth: 0
+
+      - name: Install PSScriptAnalyzer ${{ env.PSSA_VERSION }}
+        id: install
+        continue-on-error: true
+        shell: pwsh
+        run: |
+          Install-Module -Name PSScriptAnalyzer -RequiredVersion $env:PSSA_VERSION -Repository PSGallery -Scope CurrentUser -Force
+          Import-Module PSScriptAnalyzer -RequiredVersion $env:PSSA_VERSION
+          Get-Module PSScriptAnalyzer | Format-Table Name, Version
+
+      - name: Analyze PowerShell
+        id: analyze
+        if: steps.install.outcome == 'success'
+        continue-on-error: true
+        shell: pwsh
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: |
+          $ErrorActionPreference = 'Continue'
+          Import-Module PSScriptAnalyzer -RequiredVersion $env:PSSA_VERSION
+
+          function ConvertTo-AnnotationData([string]$s) { $s -replace '%', '%25' -replace "`r", '%0D' -replace "`n", '%0A' }
+          function ConvertTo-AnnotationProperty([string]$s) { (ConvertTo-AnnotationData $s) -replace ':', '%3A' -replace ',', '%2C' }
+
+          $files = @(git ls-files -- '*.ps1' '*.psm1' '*.psd1')
+          $changed = @()
+          if ($env:BASE_SHA -and $env:HEAD_SHA) {
+            $changed = @(git diff --name-only --diff-filter=d "$($env:BASE_SHA)...$($env:HEAD_SHA)" -- '*.ps1' '*.psm1' '*.psd1')
+          }
+          Write-Host "Analyzing $($files.Count) file(s); $($changed.Count) changed in this PR."
+
+          $results = [System.Collections.Generic.List[object]]::new()
+          $toolErrors = 0
+          foreach ($file in $files) {
+            try {
+              foreach ($r in @(Invoke-ScriptAnalyzer -Path $file -Settings ./PSScriptAnalyzerSettings.psd1 -ErrorAction Stop)) {
+                $results.Add([pscustomobject]@{
+                  File     = $file
+                  Line     = $r.Line
+                  Column   = $r.Column
+                  Severity = "$($r.Severity)"
+                  Rule     = $r.RuleName
+                  Message  = $r.Message
+                })
+              }
+            } catch {
+              $toolErrors++
+              Write-Host "::warning file=$(ConvertTo-AnnotationProperty $file),title=PSScriptAnalyzer could not analyze this file::$(ConvertTo-AnnotationData $_.Exception.Message)"
+            }
+          }
+
+          $results | Export-Csv -Path psscriptanalyzer-results.csv -NoTypeInformation -Encoding utf8
+
+          # Annotations: changed files only on a PR, everything on a manual run.
+          $annotate = if ($env:BASE_SHA) { $results | Where-Object { $changed -contains $_.File } } else { $results }
+          foreach ($r in $annotate) {
+            $level = if ($r.Severity -eq 'Information') { 'notice' } else { 'warning' }
+            $title = ConvertTo-AnnotationProperty "$($r.Rule) ($($r.Severity))"
+            Write-Host "::$level file=$(ConvertTo-AnnotationProperty $r.File),line=$($r.Line),col=$($r.Column),title=$title::$(ConvertTo-AnnotationData $r.Message)"
+          }
+
+          # Job summary: the whole-repo backlog.
+          $sb = [System.Text.StringBuilder]::new()
+          [void]$sb.AppendLine('## PSScriptAnalyzer (advisory)')
+          [void]$sb.AppendLine()
+          [void]$sb.AppendLine("PSScriptAnalyzer $($env:PSSA_VERSION), settings ``PSScriptAnalyzerSettings.psd1``. This check never fails the PR.")
+          [void]$sb.AppendLine()
+          $changedCount = @($results | Where-Object { $changed -contains $_.File }).Count
+          [void]$sb.AppendLine("**$($results.Count) finding(s)** in $($files.Count) file(s). In files this PR changes: **$changedCount**.")
+          if ($toolErrors -gt 0) { [void]$sb.AppendLine("PSScriptAnalyzer failed on $toolErrors file(s); see the warnings in the log.") }
+          [void]$sb.AppendLine()
+
+          if ($results.Count -gt 0) {
+            [void]$sb.AppendLine('| Severity | Findings |')
+            [void]$sb.AppendLine('|---|---:|')
+            foreach ($g in ($results | Group-Object Severity | Sort-Object Count -Descending)) {
+              [void]$sb.AppendLine("| $($g.Name) | $($g.Count) |")
+            }
+            [void]$sb.AppendLine()
+            [void]$sb.AppendLine('| Rule | Severity | Findings | Files |')
+            [void]$sb.AppendLine('|---|---|---:|---:|')
+            foreach ($g in ($results | Group-Object Rule, Severity | Sort-Object Count -Descending)) {
+              $first = $g.Group[0]
+              $fileCount = @($g.Group | Select-Object -ExpandProperty File -Unique).Count
+              [void]$sb.AppendLine("| $($first.Rule) | $($first.Severity) | $($g.Count) | $fileCount |")
+            }
+            [void]$sb.AppendLine()
+            [void]$sb.AppendLine('<details><summary>Top 15 files by findings</summary>')
+            [void]$sb.AppendLine()
+            [void]$sb.AppendLine('| File | Findings |')
+            [void]$sb.AppendLine('|---|---:|')
+            foreach ($g in ($results | Group-Object File | Sort-Object Count -Descending | Select-Object -First 15)) {
+              [void]$sb.AppendLine("| ``$($g.Name)`` | $($g.Count) |")
+            }
+            [void]$sb.AppendLine()
+            [void]$sb.AppendLine('</details>')
+            [void]$sb.AppendLine()
+            [void]$sb.AppendLine('Full list: the **psscriptanalyzer-results** artifact (CSV).')
+          }
+          $sb.ToString() | Out-File -FilePath $env:GITHUB_STEP_SUMMARY -Append -Encoding utf8
+          exit 0
+
+      - name: Upload results
+        if: always() && steps.analyze.outcome != 'skipped'
+        continue-on-error: true
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: psscriptanalyzer-results
+          path: psscriptanalyzer-results.csv
+          if-no-files-found: ignore
+          retention-days: 30
+
+      - name: Report a skipped analysis
+        if: always() && (steps.install.outcome != 'success' || steps.analyze.outcome == 'failure')
+        shell: pwsh
+        run: |
+          Write-Host "::warning title=PSScriptAnalyzer (advisory)::Analysis did not complete (install: ${{ steps.install.outcome }}, analyze: ${{ steps.analyze.outcome }}). This check is advisory and does not block the PR."
+          "## PSScriptAnalyzer (advisory)`n`nAnalysis did not complete (install: ${{ steps.install.outcome }}, analyze: ${{ steps.analyze.outcome }}). See the job log." | Out-File -FilePath $env:GITHUB_STEP_SUMMARY -Append -Encoding utf8
