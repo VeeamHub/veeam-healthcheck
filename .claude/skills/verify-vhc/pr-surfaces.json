@@ -481,7 +481,7 @@
     "ci-workflows": {
       "title": "GitHub Actions workflows",
       "kind": "workflow",
-      "paths": [".github/workflows/*.yml", ".github/workflows/*.yaml", ".github/actionlint.yaml"],
+      "paths": [".github/workflows/*.yml", ".github/workflows/*.yaml"],
       "checks": [
         {
           "id": "actionlint",
@@ -491,6 +491,17 @@
       ],
       "residue": [
         "A workflow change is proven only by the changed job running on this head SHA; jobs that only run on publish, a schedule or the other PR kind cannot be exercised from here"
+      ]
+    },
+    "ci-lint-config": {
+      "title": "actionlint configuration",
+      "paths": [".github/actionlint.yaml"],
+      "checks": [
+        {
+          "id": "actionlint",
+          "title": "actionlint (blocking on workflow errors; shellcheck findings advisory)",
+          "ci": [{ "workflow": "actionlint.yml", "job": "actionlint" }]
+        }
       ]
     },
     "ci-scripts": {
