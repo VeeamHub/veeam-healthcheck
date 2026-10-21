@@ -64,6 +64,34 @@ namespace VeeamHealthCheck.Functions.Collection
         }
 
         /// <summary>
+        /// Builds the process for the remote VBR MFA pre-check (<c>TestMfa.ps1</c>). Server and user
+        /// name go on the command line (escaped for the double-quoted argument context, which
+        /// prevents PowerShell argument injection through those fields); the password is placed in the
+        /// child's environment via <see cref="PsCredentialChannel"/> and is never part of the
+        /// argument string.
+        /// </summary>
+        internal static ProcessStartInfo BuildRemoteMfaScriptStartInfo(
+            string pwshPath, string scriptPath, string server, string username, string password, int vbrMajorVersion)
+        {
+            string escapedServer = CredentialHelper.EscapeForPowerShellDoubleQuotes(server);
+            string escapedUser = CredentialHelper.EscapeForPowerShellDoubleQuotes(username);
+
+            string args = $"-NoProfile -ExecutionPolicy Bypass -File \"{scriptPath}\" -Server \"{escapedServer}\" -Username \"{escapedUser}\" -VBRVersion {vbrMajorVersion}";
+
+            var processInfo = new ProcessStartInfo
+            {
+                FileName = pwshPath,
+                Arguments = args,
+                RedirectStandardOutput = true,
+                RedirectStandardError = true,
+                UseShellExecute = false,
+                CreateNoWindow = true
+            };
+            PsCredentialChannel.SetPassword(processInfo, password);
+            return processInfo;
+        }
+
+        /// <summary>
         /// Starts a PowerShell process from <paramref name="startInfo"/> and runs it under a hard
         /// timeout with non-blocking (async) reads of BOTH output streams. Prevents the historical
         /// hang where an interactive prompt (e.g. an unaccepted VBR server certificate on v13) or a
@@ -478,31 +506,12 @@ namespace VeeamHealthCheck.Functions.Collection
                     CGlobals.REMOTEHOST = "localhost";
                 }
 
-                // Base64-encode only to avoid PowerShell arg quoting issues (argument-safety,
-                // NOT encryption — Base64 is reversible; the script decodes it to plaintext).
-                string base64Password = CredentialHelper.EncodePasswordToBase64(creds.Value.Password);
-                // Escape server and username for the double-quoted argument context
-                // (prevents PowerShell argument injection via these fields).
-                string escapedServer = CredentialHelper.EscapeForPowerShellDoubleQuotes(CGlobals.REMOTEHOST);
-                string escapedUser = CredentialHelper.EscapeForPowerShellDoubleQuotes(creds.Value.Username);
+                // The password reaches TestMfa.ps1 through the child's environment, never on the
+                // command line (see PsCredentialChannel), so the argument string is safe to log.
+                var processInfo = BuildRemoteMfaScriptStartInfo(
+                    pwshPath, scriptPath, CGlobals.REMOTEHOST, creds.Value.Username, creds.Value.Password, CGlobals.VBRMAJORVERSION);
 
-                // Build PowerShell arguments with Base64-encoded password
-                // Use double quotes around Base64 string to avoid issues with special characters
-                string args = $"-NoProfile -ExecutionPolicy Bypass -File \"{scriptPath}\" -Server \"{escapedServer}\" -Username \"{escapedUser}\" -PasswordBase64 \"{base64Password}\" -VBRVersion {CGlobals.VBRMAJORVERSION}";
-
-                var processInfo = new ProcessStartInfo
-                {
-                    FileName = pwshPath,
-                    Arguments = args,
-                    RedirectStandardOutput = true,
-                    RedirectStandardError = true,
-                    UseShellExecute = false,
-                    CreateNoWindow = true
-                };
-
-                // Log processInfo settings - construct safe log message without ever including sensitive data
-                string safeArgs = $"-NoProfile -ExecutionPolicy Bypass -File \"{scriptPath}\" -Server \"{escapedServer}\" -Username \"{escapedUser}\" -PasswordBase64 \"****\" -VBRVersion {CGlobals.VBRMAJORVERSION}";
-                CGlobals.Logger.Debug($"ProcessStartInfo Settings:\n  FileName: {processInfo.FileName}\n  Arguments: {safeArgs}\n  RedirectStandardOutput: {processInfo.RedirectStandardOutput}\n  RedirectStandardError: {processInfo.RedirectStandardError}\n  UseShellExecute: {processInfo.UseShellExecute}\n  CreateNoWindow: {processInfo.CreateNoWindow}");
+                CGlobals.Logger.Debug($"ProcessStartInfo Settings:\n  FileName: {processInfo.FileName}\n  Arguments: {processInfo.Arguments}\n  RedirectStandardOutput: {processInfo.RedirectStandardOutput}\n  RedirectStandardError: {processInfo.RedirectStandardError}\n  UseShellExecute: {processInfo.UseShellExecute}\n  CreateNoWindow: {processInfo.CreateNoWindow}");
                 // Run under a bounded timeout with async reads so an interactive prompt or a full
                 // pipe buffer cannot hang the remote MFA check forever (issue #149 defense-in-depth).
                 // The cert flag is handled inside TestMfa.ps1, gated on the -VBRVersion we pass above.

@@ -30,6 +30,11 @@ checksums, and scan results.
 - The HTML report no longer loads the Inter font from Google Fonts, so opening a report makes no network
   request.
 - Manual releases can no longer skip the VirusTotal scan, and a scan that is not clean now blocks the release.
+- Passwords for remote and credentialed runs (`/remote`, `/host=`, `/savecreds`, `/credfile=`) are no longer
+  passed to PowerShell on the command line, where other local processes and process-creation auditing
+  (event 4688, Sysmon) could read them. They now reach the collector through its environment, and the
+  collector clears them once read. The `-Password` and `-PasswordBase64` script parameters still work for
+  manual runs.
 
 ## [3.1.0] - 2026-10-16
 

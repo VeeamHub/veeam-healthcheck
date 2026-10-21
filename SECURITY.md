@@ -49,6 +49,7 @@ The report contains infrastructure details such as server names, IP addresses, j
   - `/savecreds` stores them in `%APPDATA%\VeeamHealthCheck\creds.json`, with the password encrypted by Windows DPAPI for the current user on the current machine. `/clearcreds` removes them.
   - `/credfile=<path>` reads credentials from a JSON file you provide. Passwords in that file are only Base64-encoded, **not encrypted**, so protect it like a plaintext password file: restrict its ACL, keep it out of shared locations and source control, and delete it after the run.
   - `/silent` keeps unattended runs from ever prompting.
+- vHC passes credentials to its PowerShell collectors without putting them on the command line (the password goes in the collector process's own environment and the script removes it right after reading it), so a password does not appear in process listings or in command-line process-creation auditing such as Windows event 4688 and Sysmon event 1.
 
 ## How releases are built
 
