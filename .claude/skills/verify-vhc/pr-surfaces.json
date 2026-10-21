@@ -86,6 +86,14 @@
       "dispatch": false,
       "jobs": { "commit-lint": { "trigger": "pr" } }
     },
+    "actionlint.yml": {
+      "dispatch": true,
+      "jobs": { "actionlint": { "trigger": "pr-path-filtered" } }
+    },
+    "psscriptanalyzer.yml": {
+      "dispatch": true,
+      "jobs": { "psscriptanalyzer": { "trigger": "pr-path-filtered" } }
+    },
     "pr-release-prep.yml": {
       "dispatch": false,
       "jobs": {
@@ -474,9 +482,26 @@
       "title": "GitHub Actions workflows",
       "kind": "workflow",
       "paths": [".github/workflows/*.yml", ".github/workflows/*.yaml"],
-      "checks": [],
+      "checks": [
+        {
+          "id": "actionlint",
+          "title": "actionlint (blocking on workflow errors; shellcheck findings advisory)",
+          "ci": [{ "workflow": "actionlint.yml", "job": "actionlint" }]
+        }
+      ],
       "residue": [
         "A workflow change is proven only by the changed job running on this head SHA; jobs that only run on publish, a schedule or the other PR kind cannot be exercised from here"
+      ]
+    },
+    "ci-lint-config": {
+      "title": "actionlint configuration",
+      "paths": [".github/actionlint.yaml"],
+      "checks": [
+        {
+          "id": "actionlint",
+          "title": "actionlint (blocking on workflow errors; shellcheck findings advisory)",
+          "ci": [{ "workflow": "actionlint.yml", "job": "actionlint" }]
+        }
       ]
     },
     "ci-scripts": {
