@@ -110,7 +110,7 @@ namespace VeeamHealthCheck.Functions.Collection.PSCollections
             return version == PowerShellVersion.PowerShell7 ? this.pwshPath : this.powershellPath;
         }
 
-        private ProcessStartInfo CreatePsStartInfo(string arguments, bool useShellExecute, bool createNoWindow, bool redirectStdErr, PowerShellVersion version)
+        internal ProcessStartInfo CreatePsStartInfo(string arguments, bool useShellExecute, bool createNoWindow, bool redirectStdErr, PowerShellVersion version, string password = null)
         {
             var exePath = this.GetPowerShellExecutable(version);
             if (string.IsNullOrEmpty(exePath))
@@ -120,7 +120,7 @@ namespace VeeamHealthCheck.Functions.Collection.PSCollections
             }
 
 
-            return new ProcessStartInfo()
+            var startInfo = new ProcessStartInfo()
             {
                 FileName = exePath,
                 Arguments = arguments,
@@ -129,10 +129,18 @@ namespace VeeamHealthCheck.Functions.Collection.PSCollections
                 RedirectStandardOutput = true,
                 RedirectStandardError = true // Always redirect stderr for logging
             };
+
+            // The password travels in the child's environment, never in `arguments`.
+            if (password != null)
+            {
+                PsCredentialChannel.SetPassword(startInfo, password);
+            }
+
+            return startInfo;
         }
 
         // Refactor script invocation to use failover
-        public bool ExecutePsScriptWithFailover(string arguments, bool useShellExecute = false, bool createNoWindow = true, bool redirectStdErr = false)
+        public bool ExecutePsScriptWithFailover(string arguments, bool useShellExecute = false, bool createNoWindow = true, bool redirectStdErr = false, string password = null)
         {
             if (this.preferredVersion == null)
             {
@@ -154,7 +162,7 @@ namespace VeeamHealthCheck.Functions.Collection.PSCollections
 
                 try
                 {
-                    var startInfo = this.CreatePsStartInfo(arguments, useShellExecute, createNoWindow, redirectStdErr, version);
+                    var startInfo = this.CreatePsStartInfo(arguments, useShellExecute, createNoWindow, redirectStdErr, version, password);
 
                     // log.Debug($"[PS] StartInfo: {startInfo.FileName} {startInfo.Arguments}");
                     var process = new Process { StartInfo = startInfo };
@@ -252,13 +260,54 @@ namespace VeeamHealthCheck.Functions.Collection.PSCollections
         /// server-certificate trust prompt that would otherwise hang this headless process (issue #149).
         /// <c>-ErrorAction Stop</c> makes a failed connect surface as a non-zero exit. Callers MUST
         /// pass values already escaped for a single-quoted PowerShell context via
-        /// <see cref="CredentialHelper.EscapeForPowerShellSingleQuotes"/>.
+        /// <see cref="CredentialHelper.EscapeForPowerShellSingleQuotes"/>. The password is NOT part of
+        /// this string: the script reads it from the child's environment
+        /// (<see cref="PsCredentialChannel"/>), so it never appears on the command line.
         /// </summary>
-        internal static string BuildRemoteMfaConnectArgs(string escapedServer, string escapedUser, string escapedPassword, int vbrMajorVersion)
+        internal static string BuildRemoteMfaConnectArgs(string escapedServer, string escapedUser, int vbrMajorVersion)
         {
             string certFlag = vbrMajorVersion >= 13 ? " -ForceAcceptTlsCertificate" : string.Empty;
-            return $"Import-Module Veeam.Backup.PowerShell; Connect-VBRServer -Server '{escapedServer}' " +
-                   $"-User '{escapedUser}' -Password '{escapedPassword}'{certFlag} -ErrorAction Stop";
+            return "Import-Module Veeam.Backup.PowerShell; " +
+                   PsCredentialChannel.ReadAndClearPasswordStatement("$vhcPw") +
+                   $"Connect-VBRServer -Server '{escapedServer}' " +
+                   $"-User '{escapedUser}' -Password $vhcPw{certFlag} -ErrorAction Stop";
+        }
+
+        /// <summary>
+        /// The log line for the remote VBR MFA check, in place of the inline script. Built only from
+        /// the server, user name and VBR version, never from the script text, so nothing that handles
+        /// the credential can end up in the log. Says where the password travels without showing it.
+        /// </summary>
+        internal static string DescribeRemoteMfaConnectForLog(string server, string username, int vbrMajorVersion)
+        {
+            string certFlag = vbrMajorVersion >= 13 ? " -ForceAcceptTlsCertificate" : string.Empty;
+            return $"inline Connect-VBRServer -Server '{server ?? "localhost"}' -User '{username}'{certFlag} " +
+                   "(password supplied through the child process environment, not shown)";
+        }
+
+        /// <summary>
+        /// Builds the process for the remote / PS5-failover VBR MFA check: the command line from
+        /// <see cref="BuildRemoteMfaConnectArgs"/> plus the password in the child's environment.
+        /// </summary>
+        internal static ProcessStartInfo BuildRemoteMfaStartInfo(string server, string username, string password, int vbrMajorVersion)
+        {
+            // Single-quote escaping for the server/user values embedded in the script text.
+            string escapedUser = CredentialHelper.EscapeForPowerShellSingleQuotes(username);
+            string escapedServer = CredentialHelper.EscapeForPowerShellSingleQuotes(server ?? "localhost");
+
+            var startInfo = new ProcessStartInfo
+            {
+                FileName = "powershell.exe",
+                // Args (incl. -ForceAcceptTlsCertificate for v13+ only, issue #149) are built by
+                // BuildRemoteMfaConnectArgs.
+                Arguments = BuildRemoteMfaConnectArgs(escapedServer, escapedUser, vbrMajorVersion),
+                RedirectStandardOutput = true,
+                RedirectStandardError = true,
+                UseShellExecute = false,
+                CreateNoWindow = true
+            };
+            PsCredentialChannel.SetPassword(startInfo, password);
+            return startInfo;
         }
 
         public bool TestMfa()
@@ -274,38 +323,17 @@ namespace VeeamHealthCheck.Functions.Collection.PSCollections
                 CredsHandler ch = new();
                 var creds = ch.GetCreds();
 
-                // Properly escape the password, username and server for the
-                // single-quoted PowerShell argument context (prevents argument injection).
-                string escapedPassword = CredentialHelper.EscapeForPowerShellSingleQuotes(creds.Value.Password);
-                string escapedUser = CredentialHelper.EscapeForPowerShellSingleQuotes(creds.Value.Username);
-                string escapedServer = CredentialHelper.EscapeForPowerShellSingleQuotes(CGlobals.REMOTEHOST ?? "localhost");
-
-
-                ProcessStartInfo startInfo = new ProcessStartInfo
-                {
-                    FileName = "powershell.exe",
-                    // Args (incl. -ForceAcceptTlsCertificate for v13+ only, issue #149) are built by
-                    // BuildRemoteMfaConnectArgs; server/user/password are single-quote escaped above.
-                    Arguments = BuildRemoteMfaConnectArgs(escapedServer, escapedUser, escapedPassword, CGlobals.VBRMAJORVERSION),
-                    RedirectStandardOutput = true,
-                    RedirectStandardError = true,
-                    UseShellExecute = false,
-                    CreateNoWindow = true
-                };
-
-                // Log the command with a masked password. Built as a SEPARATE literal (NOT via
-                // BuildRemoteMfaConnectArgs) on purpose: if the real-password call and the masked-log
-                // call share one method, CodeQL's interprocedural taint summary treats the masked log
-                // as carrying the real password (cs/cleartext-storage false positive). Keeping them
-                // separate keeps the real password provably off every logging path. The cert flag
-                // mirrors the real args (v13+ only — it does not exist on v12).
-                string certFlag = CGlobals.VBRMAJORVERSION >= 13 ? " -ForceAcceptTlsCertificate" : string.Empty;
-                string safeLogArgs = $"Import-Module Veeam.Backup.PowerShell; Connect-VBRServer -Server '{escapedServer}' -User '{escapedUser}' -Password '****'{certFlag} -ErrorAction Stop";
-                CGlobals.Logger.Info("[TestMfa] Arguments: " + safeLogArgs);
+                // The password goes in the child's environment (PsCredentialChannel), not on the
+                // command line. The inline script is NOT logged: what is logged is a description
+                // assembled from the server, user and version alone (DescribeRemoteMfaConnectForLog),
+                // so no text derived from the credential-handling script can reach the log file.
+                ProcessStartInfo startInfo = BuildRemoteMfaStartInfo(
+                    CGlobals.REMOTEHOST, creds.Value.Username, creds.Value.Password, CGlobals.VBRMAJORVERSION);
 
                 this.log.Info($"[TestMfa] Creating ProcessStartInfo for MFA test:");
                 this.log.Info($"[TestMfa] FileName: {startInfo.FileName}");
-                this.log.Info($"[TestMfa] Arguments: {safeLogArgs}");
+                this.log.Info("[TestMfa] Command: " + DescribeRemoteMfaConnectForLog(
+                    CGlobals.REMOTEHOST, creds.Value.Username, CGlobals.VBRMAJORVERSION));
                 this.log.Info($"[TestMfa] RedirectStandardOutput: {startInfo.RedirectStandardOutput}");
                 this.log.Info($"[TestMfa] RedirectStandardError: {startInfo.RedirectStandardError}");
                 this.log.Info($"[TestMfa] UseShellExecute: {startInfo.UseShellExecute}");
@@ -382,6 +410,22 @@ namespace VeeamHealthCheck.Functions.Collection.PSCollections
                 return false;
             }
         }
+        /// <summary>
+        /// Builds the remote VB365 connectivity-check script. The password is NOT part of the text:
+        /// the script reads it from the child's environment (<see cref="PsCredentialChannel"/>).
+        /// </summary>
+        internal static string BuildVb365RemoteMfaArgs(string username, string server)
+        {
+            // Username sits in a single-quoted PSCredential() argument; server is double-quoted.
+            string escapedUser = CredentialHelper.EscapeForPowerShellSingleQuotes(username);
+            string escapedServer = CredentialHelper.EscapeForPowerShellDoubleQuotes(server);
+            return "Import-Module Veeam.Archiver.PowerShell -WarningAction Ignore; " +
+                PsCredentialChannel.ReadAndClearPasswordStatement("$pw") +
+                "$secpw = ConvertTo-SecureString $pw -AsPlainText -Force; " +
+                $"$cred = New-Object System.Management.Automation.PSCredential('{escapedUser}', $secpw); " +
+                $"Connect-VBOServer -Server \"{escapedServer}\" -Credential $cred";
+        }
+
         public bool TestMfaVB365()
         {
             if (string.IsNullOrEmpty(CGlobals.REMOTEHOST))
@@ -401,19 +445,13 @@ namespace VeeamHealthCheck.Functions.Collection.PSCollections
                     return true; // true = MFA failure, stops collection
                 }
 
-                string base64Password = CredentialHelper.EncodePasswordToBase64(creds.Value.Password);
-                // Username sits in a single-quoted PSCredential() argument; server is double-quoted.
-                string escapedUser = CredentialHelper.EscapeForPowerShellSingleQuotes(creds.Value.Username);
-                string escapedServer = CredentialHelper.EscapeForPowerShellDoubleQuotes(CGlobals.REMOTEHOST);
-                string argString = "Import-Module Veeam.Archiver.PowerShell -WarningAction Ignore; " +
-                    $"$pw = [System.Text.Encoding]::UTF8.GetString([System.Convert]::FromBase64String('{base64Password}')); " +
-                    "$secpw = ConvertTo-SecureString $pw -AsPlainText -Force; " +
-                    $"$cred = New-Object System.Management.Automation.PSCredential('{escapedUser}', $secpw); " +
-                    $"Connect-VBOServer -Server \"{escapedServer}\" -Credential $cred";
+                string argString = BuildVb365RemoteMfaArgs(creds.Value.Username, CGlobals.REMOTEHOST);
 
                 CGlobals.Logger.Info("[VB365 MFA Check] Testing remote connection...", false);
+
+                // The password travels in the child's environment, not in argString.
                 return this.ExecutePsScriptWithFailover(argString, useShellExecute: false,
-                    createNoWindow: true, redirectStdErr: true);
+                    createNoWindow: true, redirectStdErr: true, password: creds.Value.Password);
             }
             else
             {
@@ -589,7 +627,7 @@ namespace VeeamHealthCheck.Functions.Collection.PSCollections
             else return new PsErrorTypes { Success = true, Message = "Success" };
         }
 
-        private ProcessStartInfo VbrConfigStartInfo()
+        internal ProcessStartInfo VbrConfigStartInfo()
         {
             this.log.Info(CMessages.PsVbrConfigStart, false);
 
@@ -627,23 +665,22 @@ namespace VeeamHealthCheck.Functions.Collection.PSCollections
 
             // Add LogPath parameter so collector logs follow the configured output root
             argString += $"-LogPath \"{CollectorLogPath()}\" ";
-            // Add credentials if needed for remote execution
-            string safeArgString = argString; // For logging without sensitive data
+            // Add credentials if needed for remote execution. Only the user name goes on the command
+            // line; the password is handed to the child through its environment (PsCredentialChannel).
+            string password = null;
             if (needsCredentials)
             {
                 CredsHandler ch = new();
                 var creds = ch.GetCreds();
                 if (creds != null)
                 {
-                    byte[] passwordBytes = System.Text.Encoding.UTF8.GetBytes(creds.Value.Password);
-                    string passwordBase64 = Convert.ToBase64String(passwordBytes);
                     string escapedUser = CredentialHelper.EscapeForPowerShellDoubleQuotes(creds.Value.Username);
-                    argString += $"-User \"{escapedUser}\" -PasswordBase64 \"{passwordBase64}\" ";
-                    safeArgString += $"-User \"{escapedUser}\" -PasswordBase64 \"****\" ";
+                    argString += $"-User \"{escapedUser}\" ";
+                    password = creds.Value.Password;
                 }
             }
 
-            this.log.Debug(this.logStart + "PS ArgString = " + safeArgString, false);
+            this.log.Debug(this.logStart + "PS ArgString = " + argString, false);
 
             // Use same PowerShell version logic as other methods
             string exePath = null;
@@ -662,7 +699,7 @@ namespace VeeamHealthCheck.Functions.Collection.PSCollections
 
             this.log.Debug(this.logStart + $"Using PowerShell executable: {exePath}", false);
 
-            return new ProcessStartInfo()
+            var startInfo = new ProcessStartInfo()
             {
                 FileName = exePath,
                 Arguments = argString,
@@ -671,6 +708,12 @@ namespace VeeamHealthCheck.Functions.Collection.PSCollections
                 RedirectStandardOutput = true,
                 RedirectStandardError = true
             };
+            if (password != null)
+            {
+                PsCredentialChannel.SetPassword(startInfo, password);
+            }
+
+            return startInfo;
         }
 
         // CVariables.unsafeDir is Path.Combine(CGlobals.desiredPath ?? outDir, "Original"),
@@ -779,7 +822,7 @@ namespace VeeamHealthCheck.Functions.Collection.PSCollections
             };
         }
 
-        private ProcessStartInfo ConfigStartInfo(string scriptLocation, int days, string path)
+        internal ProcessStartInfo ConfigStartInfo(string scriptLocation, int days, string path)
         {
             if (CGlobals.REMOTEHOST == string.Empty)
             {
@@ -792,18 +835,20 @@ namespace VeeamHealthCheck.Functions.Collection.PSCollections
             bool needsCredentials = CGlobals.REMOTEEXEC;
 
             string argString;
-            string safeArgString; // For logging without sensitive data
             string escapedServer = CredentialHelper.EscapeForPowerShellDoubleQuotes(CGlobals.REMOTEHOST);
+
+            // The password never joins argString: it is handed to the child through its environment
+            // (PsCredentialChannel) once the process is built below.
+            string password = null;
             if (days != 0)
             {
                 argString =
                     $"-NoProfile -ExecutionPolicy unrestricted -file \"{scriptLocation}\" -VBRServer \"{escapedServer}\" -ReportInterval {CGlobals.ReportDays} ";
-                safeArgString = argString;
+
                 // Add ReportPath parameter if provided
                 if (!string.IsNullOrEmpty(path))
                 {
                     argString += $"-ReportPath \"{path}\" ";
-                    safeArgString += $"-ReportPath \"{path}\" ";
                 }
                 if (needsCredentials)
                 {
@@ -811,12 +856,9 @@ namespace VeeamHealthCheck.Functions.Collection.PSCollections
                     var creds = ch.GetCreds();
                     if (creds != null)
                     {
-                        // Encode password in Base64 for secure transmission
-                        byte[] passwordBytes = System.Text.Encoding.UTF8.GetBytes(creds.Value.Password);
-                        string passwordBase64 = Convert.ToBase64String(passwordBytes);
                         string escapedUser = CredentialHelper.EscapeForPowerShellDoubleQuotes(creds.Value.Username);
-                        argString += $"-User \"{escapedUser}\" -PasswordBase64 \"{passwordBase64}\" ";
-                        safeArgString += $"-User \"{escapedUser}\" -PasswordBase64 \"****\" ";
+                        argString += $"-User \"{escapedUser}\" ";
+                        password = creds.Value.Password;
                     }
                 }
             }
@@ -824,35 +866,30 @@ namespace VeeamHealthCheck.Functions.Collection.PSCollections
             {
                 argString =
                     $"-NoProfile -ExecutionPolicy unrestricted -file \"{scriptLocation}\" -VBRServer \"{escapedServer}\" -VBRVersion \"{CGlobals.VBRMAJORVERSION}\" ";
-                safeArgString = argString;
+
                 // Add ReportPath parameter if provided
                 if (!string.IsNullOrEmpty(path))
                 {
                     argString += $"-ReportPath \"{path}\" ";
-                    safeArgString += $"-ReportPath \"{path}\" ";
                 }
                 // Add LogPath so this phase (e.g. Get-NasInfo) writes its own log next to the
                 // configured output root instead of running silently. Mirrors VbrConfigStartInfo.
                 string nasLogPath = CollectorLogPath();
                 argString += $"-LogPath \"{nasLogPath}\" ";
-                safeArgString += $"-LogPath \"{nasLogPath}\" ";
                 if (needsCredentials)
                 {
                     CredsHandler ch = new();
                     var creds = ch.GetCreds();
                     if (creds != null)
                     {
-                        // Encode password in Base64 for secure transmission
-                        byte[] passwordBytes = System.Text.Encoding.UTF8.GetBytes(creds.Value.Password);
-                        string passwordBase64 = Convert.ToBase64String(passwordBytes);
                         string escapedUser = CredentialHelper.EscapeForPowerShellDoubleQuotes(creds.Value.Username);
-                        argString += $"-User \"{escapedUser}\" -PasswordBase64 \"{passwordBase64}\" ";
-                        safeArgString += $"-User \"{escapedUser}\" -PasswordBase64 \"****\" ";
+                        argString += $"-User \"{escapedUser}\" ";
+                        password = creds.Value.Password;
                     }
                 }
             }
 
-            this.log.Debug(this.logStart + "PS ArgString = " + safeArgString, false);
+            this.log.Debug(this.logStart + "PS ArgString = " + argString, false);
 
             // Use the same PowerShell version failover logic as ExecutePsScriptWithFailover
             // Prefer PowerShell 7, then 5, else throw
@@ -877,7 +914,7 @@ namespace VeeamHealthCheck.Functions.Collection.PSCollections
             // log which powershell we're using as debug logging
 
             this.log.Debug(this.logStart + $"Using PowerShell executable: {exePath}", false);
-            return new ProcessStartInfo()
+            var startInfo = new ProcessStartInfo()
             {
                 FileName = exePath,
                 Arguments = argString,
@@ -886,6 +923,12 @@ namespace VeeamHealthCheck.Functions.Collection.PSCollections
                 RedirectStandardOutput = true,
                 RedirectStandardError = true
             };
+            if (password != null)
+            {
+                PsCredentialChannel.SetPassword(startInfo, password);
+            }
+
+            return startInfo;
         }
 
         public bool InvokeVb365Collect()
@@ -894,22 +937,11 @@ namespace VeeamHealthCheck.Functions.Collection.PSCollections
             var scriptFile = this.vb365Script;
             this.UnblockFile(scriptFile);
 
-            // Build the argument string (with credentials, when needed) and a
-            // separate masked variant for logging so the password never lands
-            // in any log file. Mirrors the VBR pattern at VbrConfigStartInfo.
-            string args = this.BuildVb365Arguments(out string safeArgs);
-
-            var startInfo = new ProcessStartInfo()
-            {
-                FileName = "powershell.exe",
-                Arguments = args,
-                UseShellExecute = false,
-                CreateNoWindow = true,
-                RedirectStandardOutput = true,
-                RedirectStandardError = true
-            };
+            // Build the process (with credentials, when needed). The password is carried in the
+            // child's environment, so the argument string holds no secret and is safe to log.
+            var startInfo = this.BuildVb365StartInfo();
             this.log.Info("[PS] Starting VB365 Collection Powershell process", false);
-            this.log.Info("[PS] [ARGS]: " + safeArgs, false);
+            this.log.Info("[PS] [ARGS]: " + startInfo.Arguments, false);
             var result = Process.Start(startInfo);
             this.log.Info("[PS] Process started with ID: " + result.Id.ToString(), false);
 
@@ -947,28 +979,25 @@ namespace VeeamHealthCheck.Functions.Collection.PSCollections
         }
 
         /// <summary>
-        /// Assembles the PowerShell argument string for the VB365 collection
-        /// script. When VB365 collection is remote (REMOTEEXEC), the call
-        /// fetches credentials via <see cref="CredsHandler"/> and appends
-        /// <c>-Username "..." -PasswordBase64 "..."</c> matching the
-        /// VBR pattern. The <paramref name="safeArgs"/> output replaces the
-        /// password with <c>****</c> for safe logging.
+        /// Builds the PowerShell process for the VB365 collection script. When VB365
+        /// collection is remote (REMOTEEXEC), the call fetches credentials via
+        /// <see cref="CredsHandler"/>, appends <c>-Username "..."</c> to the command line and
+        /// hands the password to the child through its environment
+        /// (<see cref="PsCredentialChannel"/>) — the argument string carries no secret.
         /// </summary>
-        internal string BuildVb365Arguments(out string safeArgs)
+        internal ProcessStartInfo BuildVb365StartInfo()
         {
             string scriptFile = this.vb365Script;
             string escapedServer = CredentialHelper.EscapeForPowerShellDoubleQuotes(CGlobals.REMOTEHOST);
             string serverArg = CGlobals.REMOTEEXEC ? $" -VBOServerFqdnOrIp \"{escapedServer}\"" : string.Empty;
 
-            string baseArgs =
+            string args =
                 $"-NoProfile -ExecutionPolicy unrestricted -file \"{scriptFile}\" " +
                 $"-ReportingIntervalDays \"{CGlobals.ReportDays}\"{serverArg}";
 
-            string args = baseArgs;
-            safeArgs = baseArgs;
-
             // Credentials are only needed for remote VB365 collection; local
             // VB365 uses the current Windows session.
+            string password = null;
             bool needsCredentials = CGlobals.REMOTEEXEC;
             if (needsCredentials)
             {
@@ -976,14 +1005,27 @@ namespace VeeamHealthCheck.Functions.Collection.PSCollections
                 var creds = ch.GetCreds();
                 if (creds != null)
                 {
-                    string passwordBase64 = CredentialHelper.EncodePasswordToBase64(creds.Value.Password);
                     string escapedUser = CredentialHelper.EscapeForPowerShellDoubleQuotes(creds.Value.Username);
-                    args += $" -Username \"{escapedUser}\" -PasswordBase64 \"{passwordBase64}\"";
-                    safeArgs += $" -Username \"{escapedUser}\" -PasswordBase64 \"****\"";
+                    args += $" -Username \"{escapedUser}\"";
+                    password = creds.Value.Password;
                 }
             }
 
-            return args;
+            var startInfo = new ProcessStartInfo()
+            {
+                FileName = "powershell.exe",
+                Arguments = args,
+                UseShellExecute = false,
+                CreateNoWindow = true,
+                RedirectStandardOutput = true,
+                RedirectStandardError = true
+            };
+            if (password != null)
+            {
+                PsCredentialChannel.SetPassword(startInfo, password);
+            }
+
+            return startInfo;
         }
 
         private void UnblockFile(string file)

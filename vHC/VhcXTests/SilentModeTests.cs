@@ -17,7 +17,7 @@ namespace VhcXTests
     /// for the fleet-deployable VHC scenario. Tests cover CLI parsing,
     /// CredentialStore.SetTransient transient cache behavior,
     /// CredsHandler silent-mode short-circuit, and the
-    /// PSInvoker VB365 -Username / -PasswordBase64 plumbing.
+    /// PSInvoker VB365 -Username plumbing (password via environment).
     ///
     /// Naming convention: [Method]_[Scenario]_[Expected].
     /// </summary>
@@ -286,7 +286,7 @@ namespace VhcXTests
         // ----------------------------------------------------------------
 
         [Fact]
-        public void PSInvoker_VB365Args_IncludesUsernameAndPasswordBase64WhenNeedsCredentials()
+        public void PSInvoker_VB365StartInfo_PutsPasswordInEnvironmentNotArguments()
         {
             // Arrange - simulate remote VB365 with stored credentials.
             string host = $"vb365-args-{Guid.NewGuid()}";
@@ -303,24 +303,23 @@ namespace VhcXTests
             {
                 var invoker = new VeeamHealthCheck.Functions.Collection.PSCollections.PSInvoker();
 
-                // Act - invoke the internal seam that returns the assembled VB365 arg string.
-                // BuildVb365Arguments has a single overload taking `out string safeArgs`.
-                // Reflection requires passing a placeholder slot for the out param;
-                // we ignore the resulting safeArgs value.
-                var method = typeof(VeeamHealthCheck.Functions.Collection.PSCollections.PSInvoker)
-                    .GetMethod("BuildVb365Arguments", BindingFlags.NonPublic | BindingFlags.Instance);
-                Assert.NotNull(method);
-                object[] invokeArgs = new object[] { null };
-                string args = (string)method.Invoke(invoker, invokeArgs);
+                // Act - the internal seam that assembles the VB365 process.
+                var startInfo = invoker.BuildVb365StartInfo();
+                string args = startInfo.Arguments;
 
                 // Assert. The username is escaped for the double-quoted argument
                 // context (backslash is doubled), so assert the escaped form that
-                // the command builder now emits — this guards the injection fix.
+                // the command builder emits — this guards the injection fix.
                 string expectedUserInArgs = CredentialHelper.EscapeForPowerShellDoubleQuotes(user);
                 Assert.Contains("-Username", args);
                 Assert.Contains(expectedUserInArgs, args);
-                Assert.Contains("-PasswordBase64", args);
-                Assert.Contains(expectedB64, args);
+
+                // The password must not be on the command line (plain or Base64); it travels
+                // in the child's environment instead.
+                Assert.DoesNotContain("-PasswordBase64", args);
+                Assert.DoesNotContain(pass, args);
+                Assert.DoesNotContain(expectedB64, args);
+                Assert.Equal(pass, startInfo.Environment[PsCredentialChannel.PasswordVariable]);
             }
             finally
             {

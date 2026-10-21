@@ -9,6 +9,15 @@ param(
     [int]$VBRVersion = 0
 )
 
+# vHC hands the password over in the VHC_CRED_PASSWORD environment variable (never on the command
+# line, where other processes and process-creation auditing could read it). Read it once and remove
+# it from this process's environment immediately. -PasswordBase64 still works for manual runs.
+function Get-VhcCredentialPasswordFromEnvironment {
+    $value = [Environment]::GetEnvironmentVariable('VHC_CRED_PASSWORD', 'Process')
+    [Environment]::SetEnvironmentVariable('VHC_CRED_PASSWORD', $null, 'Process')
+    return $value
+}
+
 # Suppress ANSI color codes in PS7+ so stderr is always plain text
 if (Get-Variable -Name PSStyle -ErrorAction SilentlyContinue) {
     $PSStyle.OutputRendering = 'PlainText'
@@ -100,6 +109,9 @@ function Resolve-VeeamConsolePath {
 }
 
 if ($MyInvocation.InvocationName -ne '.') {
+    # Take the password out of the environment before anything else runs.
+    $envPassword = Get-VhcCredentialPasswordFromEnvironment
+
     try {
         Write-Host "[VERBOSE] PowerShell Version: $($PSVersionTable.PSVersion.ToString())"
 
@@ -116,9 +128,17 @@ if ($MyInvocation.InvocationName -ne '.') {
         Import-Module Veeam.Backup.PowerShell -Force -WarningAction Ignore
         Write-Host "[VERBOSE] Module imported. Attempting to connect to VBR Server: $Server with user $Username."
 
-        # Decode Base64 password
-        $passwordBytes = [System.Convert]::FromBase64String($PasswordBase64)
-        $password = [System.Text.Encoding]::UTF8.GetString($passwordBytes)
+        # Password source: -PasswordBase64 (manual runs) wins; otherwise the VHC_CRED_PASSWORD value
+        # vHC supplied through the environment.
+        if (-not [string]::IsNullOrEmpty($PasswordBase64)) {
+            $passwordBytes = [System.Convert]::FromBase64String($PasswordBase64)
+            $password = [System.Text.Encoding]::UTF8.GetString($passwordBytes)
+        } elseif ($null -ne $envPassword) {
+            $password = $envPassword
+        } else {
+            $password = ''
+        }
+        $envPassword = $null
 
         Write-Host "[VERBOSE] Password decoded successfully (length: $($password.Length))"
         Write-Host "[VERBOSE] Server: $Server"

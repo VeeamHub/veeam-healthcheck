@@ -7,6 +7,9 @@
 .Notes
     Version: 1.0.0
     Part of the vHC VBR Config refactor - see docs/plans/2026-02-21-vbr-config-refactor.md
+    Credentials: vHC passes the password in the VHC_CRED_PASSWORD environment variable, which this
+    script reads once at startup and removes from its environment, so it is never on a command line.
+    -Password / -PasswordBase64 remain for manual runs and take precedence over the variable.
 .EXAMPLE
     Get-VBRConfig.ps1 -VBRServer myserver -VBRVersion 12
     Get-VBRConfig.ps1 -VBRServer myserver -VBRVersion 13 -User admin -PasswordBase64 <base64>
@@ -21,7 +24,8 @@ param(
     [Parameter(Mandatory = $false)]
     [string]$User = "",
 
-    # Plain-text password for manual CLI invocations. The C# invoker exclusively uses $PasswordBase64.
+    # Plain-text password for manual CLI invocations. The vHC invoker does not use it (or
+    # $PasswordBase64): it supplies the password through the VHC_CRED_PASSWORD environment variable.
     # When both are provided, $PasswordBase64 takes precedence.
     [Parameter(Mandatory = $false)]
     [string]$Password = "",
@@ -44,6 +48,16 @@ param(
     [Parameter(Mandatory = $false)]
     [switch]$RescanHosts
 )
+
+# vHC hands the password over in the VHC_CRED_PASSWORD environment variable (never on the command
+# line, where other processes and process-creation auditing could read it). Read it once and remove
+# it from this process's environment immediately, before anything else can inherit it.
+function Get-VhcCredentialPasswordFromEnvironment {
+    $value = [Environment]::GetEnvironmentVariable('VHC_CRED_PASSWORD', 'Process')
+    [Environment]::SetEnvironmentVariable('VHC_CRED_PASSWORD', $null, 'Process')
+    return $value
+}
+$envPassword = Get-VhcCredentialPasswordFromEnvironment
 
 Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
@@ -151,7 +165,8 @@ try { Disconnect-VBRServer -ErrorAction SilentlyContinue } catch {}
 
 $useCreds = (-not [string]::IsNullOrWhiteSpace($User) -and
             (-not [string]::IsNullOrWhiteSpace($PasswordBase64) -or
-             -not [string]::IsNullOrWhiteSpace($Password)))
+             -not [string]::IsNullOrWhiteSpace($Password) -or
+             -not [string]::IsNullOrEmpty($envPassword)))
 
 # Wrap Connect -> Collectors -> Disconnect in try/finally so Disconnect always runs,
 # even if a prerequisite collector aborts the run early.
@@ -166,8 +181,10 @@ try {
         if (-not [string]::IsNullOrWhiteSpace($PasswordBase64)) {
             $passwordBytes = [System.Convert]::FromBase64String($PasswordBase64)
             $plainPassword = [System.Text.Encoding]::UTF8.GetString($passwordBytes)
-        } else {
+        } elseif (-not [string]::IsNullOrWhiteSpace($Password)) {
             $plainPassword = $Password
+        } else {
+            $plainPassword = $envPassword
         }
         $securePassword = ConvertTo-SecureString -String $plainPassword -AsPlainText -Force
         $credential     = New-Object System.Management.Automation.PSCredential($User, $securePassword)
