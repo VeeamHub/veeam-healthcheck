@@ -18,6 +18,10 @@ checksums, and scan results.
 - `SECURITY.md`: how to report a vulnerability privately, what the tool reads and writes, how releases are
   built, how to verify a download, and the known gaps.
 
+### Fixed
+
+- Job Info no longer stops rendering when a NAS backup job has no matching row in `_nasBackup.csv`; the later job sections and the Tape and Entra tables now appear.
+
 ### Removed
 
 - The release package no longer ships the developer validation harness (`vHC-VbrConfig\Validation`) or the
