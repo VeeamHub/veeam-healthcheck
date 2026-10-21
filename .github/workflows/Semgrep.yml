@@ -16,19 +16,24 @@ jobs:
     - name: Checkout repository
       uses: actions/checkout@0717577d45739eb3c851188b29f50ed6c0b2194e # v2
 
+    # Do not use '3.x'. ubuntu-latest images in the pool carry different Python versions, and
+    # '3.x' resolved to 3.15.0 on some of them. On 3.15.0 semgrep-core dies with
+    # "semgrep-core exited with -11" (SIGSEGV, about a second after the rules load; not an
+    # out-of-memory kill, whatever the engine's error text says). Every 3.15.0 run since
+    # 2026-10-19 failed and every 3.14.8 run passed, on semgrep 1.181.0 and 1.182.0 alike.
+    # semgrep's wheels list cp310-cp314 only. Move this when semgrep ships cp315 wheels.
     - name: Set up Python
       uses: actions/setup-python@e9aba2c848f5ebd159c070c61ea2c4e2b122355e # v2
       with:
-        python-version: '3.x'
+        python-version: '3.14'
 
+    # Pinned so a mid-week semgrep release cannot change the engine under a push. The rule
+    # sets still come from the registry. Bump on purpose, after one green run on a PR.
     - name: Install Semgrep
-      run: pip install semgrep
+      run: pip install semgrep==1.182.0
 
-    # The engine is occasionally killed for running out of memory on the runner
-    # ("semgrep-core exited with unexpected output", exit 2). Fewer parallel jobs
-    # and a per-file memory cap keep it inside the runner's RAM.
     - name: Run Semgrep
-      run: semgrep --config auto --error --jobs 2 --max-memory 4000
+      run: semgrep --config auto --error
 
     - name: SemGrep SupplyChain
-      run: semgrep --config "p/supply-chain" --jobs 2 --max-memory 4000
+      run: semgrep --config "p/supply-chain"
