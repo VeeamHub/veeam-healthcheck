@@ -19,7 +19,7 @@ A manually-triggered workflow for creating releases with full control over the p
 | `pr_number` | No | PR number to extract changelog from. Leave empty for no changelog. |
 | `version_override` | No | Override the version (four parts, e.g., `3.2.0.5`; must be above the last GA version). Leave empty to compute it from commits. |
 | `prerelease` | No | Mark as pre-release. The tag gets an `-rc` suffix, so it never becomes a Base Tag. |
-| `skip_virustotal` | No | Check to skip VirusTotal scanning |
+| `skip_virustotal` | No | Skip VirusTotal scanning. Dry runs only: a run that publishes a release fails if this is checked. |
 | `dry_run` | No | Check to build without creating release (preview mode) |
 
 ### Features
