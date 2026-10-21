@@ -1,0 +1,12 @@
+# actionlint configuration, read by .github/workflows/actionlint.yml.
+# https://github.com/rhysd/actionlint/blob/main/docs/config.md
+
+self-hosted-runner:
+  # Custom labels on the lab runners used by the integration-test jobs in ci-cd.yaml.
+  # Without them actionlint reports every self-hosted job as an unknown-label error.
+  labels:
+    - CONSOLE_HOST    # VBR v13 (job currently commented out in ci-cd.yaml)
+    - CONSOLE_HOST_2  # VBR v13, second remote environment
+    - vbr-v12         # VBR v12
+    - vbr-13-sql      # VBR v13 with SQL
+    - vbr-13-sql-gui  # VBR v13 with SQL, GUI end-to-end tests
