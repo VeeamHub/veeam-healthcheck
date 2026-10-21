@@ -4,8 +4,6 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
-using System.Management.Automation;
-using System.Reflection;
 
 // using System.Management.Automation;
 using System.Runtime.InteropServices;
@@ -888,71 +886,6 @@ namespace VeeamHealthCheck.Functions.Collection.PSCollections
                 RedirectStandardOutput = true,
                 RedirectStandardError = true
             };
-        }
-
-        public void InvokeVb365CollectEmbedded()
-        {
-            this.log.Info("[PS] Enter VB365 collection invoker...", false);
-
-            string scriptContent = this.GetEmbeddedScript("VeeamHealthCheck.Functions.Collection.PSCollections.Scripts.Collect-VB365Data.ps1");
-
-            if (string.IsNullOrEmpty(scriptContent))
-            {
-                this.log.Error("[PS] Failed to load embedded script.", false);
-                return;
-            }
-
-            this.ExecuteEmbeddedScript(scriptContent);
-        }
-
-        private void ExecuteEmbeddedScript(string scriptContent)
-        {
-            using (PowerShell ps = PowerShell.Create())
-            {
-                ps.AddScript(scriptContent)
-                    .AddParameter("ReportingIntervalDays", CGlobals.ReportDays);
-
-                this.log.Info("[PS] Starting VB365 Collection PowerShell process", false);
-                try
-                {
-                    var results = ps.Invoke();
-                }
-                catch (Exception ex)
-                {
-                    this.log.Error("[PS] VB365 collection failed.", false);
-                    this.log.Error(ex.Message, false);
-                }
-
-                if (ps.HadErrors)
-                {
-                    foreach (var error in ps.Streams.Error)
-                    {
-                        this.log.Error($"[PS] {error}", false);
-                    }
-                }
-                else
-                {
-                    this.log.Info("[PS] VB365 collection complete!", false);
-                }
-            }
-        }
-
-        private string GetEmbeddedScript(string resourceName)
-        {
-            var assembly = Assembly.GetExecutingAssembly();
-            using (var stream = assembly.GetManifestResourceStream(resourceName))
-            {
-                if (stream == null)
-                {
-                    this.log.Error($"[PS] Resource '{resourceName}' not found.", false);
-                    return null;
-                }
-
-                using (var reader = new StreamReader(stream))
-                {
-                    return reader.ReadToEnd();
-                }
-            }
         }
 
         public bool InvokeVb365Collect()
