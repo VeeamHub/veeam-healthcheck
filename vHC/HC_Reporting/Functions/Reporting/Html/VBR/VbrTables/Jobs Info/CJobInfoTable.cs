@@ -118,21 +118,15 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR.VbrTables.Jobs_Info
                             {
                                 var x = csvparser.GetDynamicNasBackup().ToList();
 
-                                // Cast to string: a job with no row in _nasBackup.csv gives a null
-                                // dynamic here, and double.TryParse(dynamic null, ...) is ambiguous at
-                                // runtime on .NET 10 (string vs ReadOnlySpan<byte>).
-                                string diskGb = x.Where(x => x.name == job.Name)
-                                    .Select(x => (string)x.ondiskgb)
-                                    .FirstOrDefault();
-                                double.TryParse(diskGb, out onDiskGB);
-                                onDiskGB = Math.Round(onDiskGB, 2);
+                                // The size columns are optional: a job with no row in _nasBackup.csv,
+                                // a job whose size is unknown (blank), or a CSV from an older or
+                                // partial collector without the columns at all must show 0, not
+                                // throw. CDynamicCsvRecord reads them without a dynamic binder.
+                                object nasRow = x.FirstOrDefault(r => CDynamicCsvRecord.GetString((object)r, "name") == job.Name);
+                                onDiskGB = Math.Round(CDynamicCsvRecord.GetDouble(nasRow, "ondiskgb"), 2);
                                 onDiskTotalGB += onDiskGB;
 
-                                string sourceGb = x.Where(x => x.name == job.Name)
-                                    .Select(x => (string)x.sourcegb)
-                                    .FirstOrDefault();
-                                double.TryParse(sourceGb, out sourceSizeGB);
-                                sourceSizeGB = Math.Round(sourceSizeGB, 2);
+                                sourceSizeGB = Math.Round(CDynamicCsvRecord.GetDouble(nasRow, "sourcegb"), 2);
                             }
                             else
                             {
