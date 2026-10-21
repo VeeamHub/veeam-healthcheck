@@ -1,5 +1,7 @@
 # GUI Redesign Stage D: Localization Sweep — Design
 
+> **Historical note (2026-10):** the Continuous Monitoring tab and the companion monitor integration this document references were removed in #275 (commit 602d2a7d). Those parts describe code that no longer exists; they are kept only as a record of completed work.
+
 **Branch:** `stage-d/localization`, off `feature/gui-redesign-port` @ `a5e9d74a` (Stage C, PR #223).
 
 **Revision note:** this spec was independently reviewed by a fresh agent before implementation
@@ -52,11 +54,11 @@ backend value:
   (currently dead — see Recorded, not fixed) URL-hint switch.
 
 **The severity read is the dangerous half, not the type read.**
-`CVhcMonitorIntegration.GenerateConfig` (`CVhcMonitorIntegration.cs:93`) defensively
+The monitor integration's `GenerateConfig` (removed in #275) defensively
 lowercases and falls back the notif *type* to `"ntfy"` if it doesn't match a known webhook
 type — a localized type label degrades to the default, silently wrong but not corrupting
 config. `minSeverity`, however, is written **raw**, unvalidated, straight into the generated
-YAML: `sb.AppendLine($"    min_severity: \"{minSeverity}\"");` (`CVhcMonitorIntegration.cs:104`).
+YAML via its `min_severity` line.
 Localizing `notifSeverityBox`'s `Content` without this fix emits `min_severity: "Warnung"`
 into a live monitor config file.
 

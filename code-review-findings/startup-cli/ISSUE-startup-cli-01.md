@@ -9,10 +9,10 @@ confidence: High
 ---
 
 ## Summary
-`Main` captures the result of `CArgsParser.InitializeProgram()` into `res`, logs it, and then unconditionally returns `0`. The carefully-plumbed exit codes from `FullRun` / `CliRun` / `RunMonitorNow` (and any non-zero result from report generation) never reach the OS unless a code path calls `Environment.Exit` directly.
+`Main` captures the result of `CArgsParser.InitializeProgram()` into `res`, logs it, and then unconditionally returns `0`. The carefully-plumbed exit codes from `FullRun` / `CliRun` (and any non-zero result from report generation) never reach the OS unless a code path calls `Environment.Exit` directly.
 
 ## Impact
-The whole silent/unattended feature set (help menu documents exit codes 0-7; Task Scheduler / fleet usage is the advertised scenario) is undermined: a failed run that returns `1` up the call stack still exits the process with `0`. Schedulers, monitoring, and CI wrappers will report success on failed health-check runs. `/monitor:run` exit codes are also swallowed (`return this.RunMonitorNow()` → returned to `Main` → discarded).
+The whole silent/unattended feature set (help menu documents exit codes 0-7; Task Scheduler / fleet usage is the advertised scenario) is undermined: a failed run that returns `1` up the call stack still exits the process with `0`. Schedulers, monitoring, and CI wrappers will report success on failed health-check runs.
 
 ## Evidence
 `vHC/HC_Reporting/Startup/EntryPoint.cs:26-28`:

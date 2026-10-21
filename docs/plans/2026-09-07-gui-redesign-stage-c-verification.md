@@ -11,7 +11,7 @@ Requires a real Windows machine with VBR installed. Nothing here can be checked 
 - [ ] Dismissing the modal via its OS close button behaves the same as declining.
 - [ ] Unchecking manually disables Run again.
 - [ ] No hang when checking the box (this is the deadlock guard — `Task.Run` around `AcceptTerms`).
-- [ ] Switching to Continuous Monitoring and back causes no bottom-bar reflow or shifting of the progress area.
+- ~~[ ] Switching to Continuous Monitoring and back causes no bottom-bar reflow or shifting of the progress area.~~ Obsolete: the Monitoring tab was removed in #275.
 - [ ] Check the box, and before the disclaimer modal resolves, click **Import**: once the modal is answered (either way), `run.IsEnabled` is not silently flipped back on and the checkbox is not silently re-enabled — the in-flight accept flow must recognize it's now stale and do nothing observable. (Task 9's `_guiLockedForRun` race fix — reachable specifically via Import, which does not itself wait on terms acceptance.)
 
 ## Manage Servers

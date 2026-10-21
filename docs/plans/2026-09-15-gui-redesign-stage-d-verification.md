@@ -3,23 +3,11 @@
 This sandbox cannot render Avalonia (native platform bootstrap crash). Everything below
 needs a real Windows machine with VBR and/or VB365 installed.
 
-## Task 1 correctness fix (highest priority — verify first)
+> **Obsolete items (2026-10):** the Continuous Monitoring tab was removed in #275 (commit 602d2a7d). The Task 1 section and the monitor-tab items below no longer apply to any code. They are struck through below; the full original wording is in git history.
 
-- [ ] Open Continuous Monitoring tab. Select each of the 4 notif types (ntfy/Teams/Slack/
-      PagerDuty) and each of the 3 severities (warning/critical/ok) in turn, click Quick
-      Setup or Setup from VHC, and confirm the generated monitor config
-      (`CVhcMonitorIntegration`'s output — check its config file location) contains the
-      exact English protocol string for both fields, matching the selected item, not a
-      localized label. (Correct today regardless of OS UI culture — Tag values are English
-      literals unconditionally. This step is about confirming no regression, since prior
-      to Task 1 this happened to also read English text; the trap only fires under a
-      non-English UI culture.)
-- [ ] Switch Windows display language to French, Japanese, Simplified Chinese, or
-      Traditional Chinese. Repeat the notif type/severity selection above. Confirm the
-      generated config's `min_severity` and notif type are still the English protocol
-      strings even though the dropdown labels themselves may now render in that language
-      for `notifSeverityBox` (ok/warning/critical are localized `Content`; the brand names
-      on `notifTypeBox` are intentionally not localized, so those labels stay English).
+## ~~Task 1 correctness fix~~ (obsolete: the notif-type/severity boxes were removed with the Monitoring tab in #275)
+
+- ~~Notif type/severity protocol-string checks, English and non-English UI.~~ Removed with the Monitoring tab.
 
 ## XAML/code-behind sweep (Tasks 2-3)
 
@@ -39,22 +27,11 @@ complete, since neither this sandbox nor either guard test can confirm that on i
       value back into `SetUiText()`), both boxes render blank until the user manually opens
       and re-selects an item.
       **Confirmed 2026-09-16 on Windows, English UI, general click-through.**
-- [ ] On a machine with the monitor already installed and its scheduled task registered,
-      confirm the "Quick Setup" button reads "Reconfigure" **immediately** on window open —
-      not "Quick Setup" that then flips to "Reconfigure", and not blank. This is the specific
-      symptom of Task 3's `InitializeMonitorStatus()`/`SetUiText()` ordering fix; a
-      regression here means something reintroduced a `SetUiText()` write to
-      `monitorQuickSetupBtn.Content` without removing the unconditional one now at the top
-      of `InitializeMonitorStatus()`.
-      **Partially confirmed 2026-09-16**: Continuous Monitoring tab button/status text
-      rendered correctly (no blanks) in English on a general click-through, but the
-      specific pre-installed-monitor "immediate Reconfigure, not Quick-Setup-then-flip"
-      condition wasn't isolated — still needs a machine with the monitor already installed
-      and its scheduled task registered to fully close this item.
+- ~~[ ] Pre-installed-monitor "Reconfigure" button ordering check (Task 3 `SetUiText()` ordering).~~ Obsolete: the Monitoring tab was removed in #275.
 
 - [ ] With Windows display language set to French, Japanese, Simplified Chinese, or
       Traditional Chinese, open the app and confirm no blank labels, buttons, or tooltips
-      appear anywhere in the main window or the Continuous Monitoring tab. A blank control
+      appear anywhere in the main window. A blank control
       here means a resx key typo the guard test's neutral-only check could not catch on its
       own machine (though the per-satellite guard test in Task 6 should have caught it at
       test time — this step is the real-hardware backstop).
@@ -64,9 +41,7 @@ complete, since neither this sandbox nor either guard test can confirm that on i
       equivalent) shows correctly in the progress area, and that the collection-complete
       message (with or without a warning count) renders correctly in that language,
       including the `{0} collector warning(s)` count substitution.
-- [ ] Exercise every Continuous Monitoring status transition (not bundled / available-not-
-      set-up / installing / running / setup failed) by installing, uninstalling, and
-      forcing a failure, and confirm each status string renders correctly in that language.
+- ~~[ ] Exercise every Monitoring-tab status transition in that language.~~ Obsolete: the Monitoring tab was removed in #275.
 - [ ] Confirm the PDF export tooltip ("PDF Export not available when both VB365 & VBR are
       detected on the same machine.") renders correctly, on a machine with both products
       installed.

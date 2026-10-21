@@ -1,5 +1,7 @@
 # GUI Redesign Stage C: Interaction Model — Design
 
+> **Historical note (2026-10):** the Continuous Monitoring tab and the companion monitor integration this document references were removed in #275 (commit 602d2a7d). Those parts describe code that no longer exists; they are kept only as a record of completed work.
+
 **Date:** 2026-09-07
 **Branch:** `stage-c/interaction-model` (off `feature/gui-redesign-port` @ `39ab236`)
 **Depends on:** Stage A (theme/style port, `48336ec`), Stage B (layout restructure, `39ab236`, PR #215)

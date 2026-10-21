@@ -2,7 +2,7 @@
 title: "Localization helpers have no missing-key fallback and a single-point-of-failure static initializer"
 severity: Medium
 labels: [reliability]
-domain: analysis-monitor
+domain: analysis-common
 files:
   - vHC/HC_Reporting/Resources/Localization/VbrLocalizationHelper.cs:6
   - vHC/HC_Reporting/Resources/Localization/VB365/Vb365ResourceHandler.cs:6

@@ -1,5 +1,7 @@
 # GUI Redesign Stage B: Layout Restructure Implementation Plan
 
+> **Historical note (2026-10):** the Continuous Monitoring tab and the companion monitor integration this document references were removed in #275 (commit 602d2a7d). Those parts describe code that no longer exists; they are kept only as a record of completed work.
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** Restructure the real `VhcGui.axaml` into the spike's fixed-window / header / tab-strip / two-column-per-tab / fixed-bottom-bar structure, fixing the two Stage A deferred findings (doesn't fit 1080p, theme toggle overlaps content) without changing any existing interaction model.
