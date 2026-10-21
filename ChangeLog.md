@@ -13,6 +13,24 @@ checksums, and scan results.
 
 ## [Unreleased]
 
+### Added
+
+- `SECURITY.md`: how to report a vulnerability privately, what the tool reads and writes, how releases are
+  built, how to verify a download, and the known gaps.
+
+### Removed
+
+- The release package no longer ships the developer validation harness (`vHC-VbrConfig\Validation`) or the
+  module's Pester test files.
+
+### Security
+
+- Release zips now carry a signed build-provenance attestation. Verify one with
+  `gh attestation verify <zip> --repo VeeamHub/veeam-healthcheck`.
+- The HTML report no longer loads the Inter font from Google Fonts, so opening a report makes no network
+  request.
+- Manual releases can no longer skip the VirusTotal scan, and a scan that is not clean now blocks the release.
+
 ## [3.1.0] - 2026-10-16
 
 ### Added

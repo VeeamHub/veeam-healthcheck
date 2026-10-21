@@ -15,21 +15,21 @@ Each file under `code-review-findings-opus/<category>/ISSUE-<category>-NN.md` is
 | Severity | Count |
 |----------|-------|
 | 🔴 Critical | 1 |
-| 🟠 High | 20 |
-| 🟡 Medium | 45 |
-| ⚪ Low | 36 |
-| **Total** | **102** |
+| 🟠 High | 18 |
+| 🟡 Medium | 41 |
+| ⚪ Low | 32 |
+| **Total** | **92** |
 
 | Category | Findings | Dir |
 |----------|----------|-----|
-| Startup / CLI / global state | 22 | [`startup-cli/`](startup-cli/) |
+| Startup / CLI / global state | 21 | [`startup-cli/`](startup-cli/) |
 | Collection / data sources | 16 | [`collection-data/`](collection-data/) |
 | Credentials / security | 10 | [`collection-security/`](collection-security/) |
 | CSV parsing / data types | 10 | [`csv-datatypes/`](csv-datatypes/) |
 | VBR report core | 12 | [`reporting-vbr-core/`](reporting-vbr-core/) |
 | VBR table renderers | 10 | [`reporting-vbr-tables/`](reporting-vbr-tables/) |
 | VB365 reporting | 12 | [`reporting-vb365/`](reporting-vb365/) |
-| Analysis / Monitor | 10 | [`analysis-monitor/`](analysis-monitor/) |
+| Analysis / data models | 1 | [`analysis-common/`](analysis-common/) |
 
 ---
 
@@ -39,11 +39,11 @@ These patterns recur across multiple subsystems and are the highest-leverage fix
 
 1. **Systemic unescaped-HTML / XSS at the report sink.** The legacy `Shared/CHtmlFormatting.cs` `TableData`/`TableHeader` helpers emit collected values (server/VM/job/repo names, paths, registry values) into HTML with **no encoding**, while a newer encoding-aware path (`CHtmlBuilder`/`CSectionTable` using `WebUtility.HtmlEncode`) exists but is not used by 35+ VBR renderers nor any VB365 renderer. → `reporting-vbr-core-01/02/03/04`, `reporting-vbr-tables-01`, `reporting-vb365-01`. **Fix once at the helper, benefit everywhere.**
 
-2. **Plaintext credentials despite a DPAPI store.** The product carefully DPAPI-encrypts passwords at rest, then decrypts and (a) writes them as cleartext YAML for the monitor agent, (b) passes them as `-Password` on the `powershell.exe` command line, (c) Base64-"encodes" them on the process command line. Base64 ≠ encryption. → `analysis-monitor-01/02`, `collection-security-04/10`, `collection-data-07`, `startup-cli-06/12`.
+2. **Plaintext credentials despite a DPAPI store.** The product carefully DPAPI-encrypts passwords at rest, then decrypts and (a) passes them as `-Password` on the `powershell.exe` command line, (b) Base64-"encodes" them on the process command line. Base64 ≠ encryption. → `collection-security-04/10`, `collection-data-07`, `startup-cli-12`.
 
-3. **PowerShell argument injection on the log-collection paths.** Most collection paths use the hardened escaping helper, but the hotfix/log-collection paths (`PSInvoker.RunVbrLogCollect` / `RunServerDump`) interpolate unescaped server/path with `UseShellExecute=true`. → `collection-data-01/02`, `collection-security-01`, `analysis-monitor-06`.
+3. **PowerShell argument injection on the log-collection paths.** Most collection paths use the hardened escaping helper, but the hotfix/log-collection paths (`PSInvoker.RunVbrLogCollect` / `RunServerDump`) interpolate unescaped server/path with `UseShellExecute=true`. → `collection-data-01/02`, `collection-security-01`.
 
-4. **Culture-sensitive parse/format.** CSVs are invariant-formatted but parsed/formatted with current culture in many places — silent wrong values (sizes read as 0, DD/MM vs MM/DD date flips, Turkish-I) on non-US machines. CA1305 is suppressed, but these are **real correctness bugs**, not style. → `csv-datatypes-02/10`, `reporting-vbr-tables-07`, `reporting-vbr-core-09`, `reporting-vb365-07`, `analysis-monitor-05/08`.
+4. **Culture-sensitive parse/format.** CSVs are invariant-formatted but parsed/formatted with current culture in many places — silent wrong values (sizes read as 0, DD/MM vs MM/DD date flips, Turkish-I) on non-US machines. CA1305 is suppressed, but these are **real correctness bugs**, not style. → `csv-datatypes-02/10`, `reporting-vbr-tables-07`, `reporting-vbr-core-09`, `reporting-vb365-07`.
 
 5. **Empty/broad catch blocks drop whole sections silently.** Several report sections and collection steps swallow exceptions and emit nothing, so a single bad row hides an entire table/section with no signal. → `csv-datatypes-04`, `reporting-vbr-core-06`, `reporting-vb365-05`, `reporting-vbr-tables-03`, `startup-cli-19`, `collection-data-12`.
 
@@ -59,7 +59,7 @@ These patterns recur across multiple subsystems and are the highest-leverage fix
 |----|-------|------|
 | [startup-cli-01](startup-cli/ISSUE-startup-cli-01.md) | VB365 HTML report never generated — compiler disposed immediately after construction | `Startup/CReportModeSelector.cs:65` |
 
-## 🟠 High (20)
+## 🟠 High (18)
 
 | ID | Title | File |
 |----|-------|------|
@@ -81,14 +81,11 @@ These patterns recur across multiple subsystems and are the highest-leverage fix
 | [reporting-vb365-02](reporting-vb365/ISSUE-reporting-vb365-02.md) | Repo free-space threshold sets value instead of shade — low-space never flags | `CM365Tables.cs:412` |
 | [reporting-vb365-03](reporting-vb365/ISSUE-reporting-vb365-03.md) | `Jobs()` uses `break` on empty Organization — silently drops all remaining jobs | `CM365Tables.cs:1639` |
 | [reporting-vb365-04](reporting-vb365/ISSUE-reporting-vb365-04.md) | Unguarded array indexing on split OS/RAM strings crashes Backup Server table | `CM365Tables.cs:826` |
-| [analysis-monitor-01](analysis-monitor/ISSUE-analysis-monitor-01.md) | VBR credential password written to disk in cleartext YAML | `Monitor/CVhcMonitorIntegration.cs:83` |
-| [analysis-monitor-02](analysis-monitor/ISSUE-analysis-monitor-02.md) | Monitor config hardcodes `verify_ssl: false` — creds over unauthenticated TLS | `Monitor/CVhcMonitorIntegration.cs:86` |
 
-## 🟡 Medium (45)
+## 🟡 Medium (41)
 
 | ID | Title | File |
 |----|-------|------|
-| [startup-cli-06](startup-cli/ISSUE-startup-cli-06.md) | Decrypted plaintext passwords passed to monitor install / held in GUI locals | `Startup/CredentialStore.cs:133` |
 | [startup-cli-07](startup-cli/ISSUE-startup-cli-07.md) | `/outdir`,`/path`,`/host` args not validated against traversal/quoting | `Startup/CArgsParser.cs:386` |
 | [startup-cli-08](startup-cli/ISSUE-startup-cli-08.md) | `CScrubHandler` shared static singleton, non-thread-safe IO-on-every-call | `Common/Scrubber/CXmlHandler.cs:100` |
 | [startup-cli-09](startup-cli/ISSUE-startup-cli-09.md) | `CredentialStore` static cache mutated without locking across threads | `Startup/CredentialStore.cs:24` |
@@ -130,11 +127,8 @@ These patterns recur across multiple subsystems and are the highest-leverage fix
 | [reporting-vb365-06](reporting-vb365/ISSUE-reporting-vb365-06.md) | Divide-by-zero on license/free-space/size-limit percentages drops sections | `CM365Tables.cs:53` |
 | [reporting-vb365-07](reporting-vb365/ISSUE-reporting-vb365-07.md) | Culture-sensitive number/date parsing across all VB365 tables | `CM365Tables.cs:55` |
 | [reporting-vb365-12](reporting-vb365/ISSUE-reporting-vb365-12.md) | Positional-index scrubbing brittle — risks emitting identifiers unscrubbed | `CM365Tables.cs:1360` |
-| [analysis-monitor-03](analysis-monitor/ISSUE-analysis-monitor-03.md) | `EscapeYaml` insufficient for YAML double-quoted scalars — config corruption/inject | `Monitor/CVhcMonitorIntegration.cs:297` |
-| [analysis-monitor-06](analysis-monitor/ISSUE-analysis-monitor-06.md) | Scheduled-task PowerShell built by interpolation with fragile quote escaping | `Monitor/CVhcMonitorIntegration.cs:136` |
-| [analysis-monitor-07](analysis-monitor/ISSUE-analysis-monitor-07.md) | Uninstall leaves plaintext-credential config and copied exe on disk | `Monitor/CVhcMonitorIntegration.cs:202` |
 
-## ⚪ Low (36)
+## ⚪ Low (32)
 
 | ID | Title | File |
 |----|-------|------|
@@ -169,19 +163,15 @@ These patterns recur across multiple subsystems and are the highest-leverage fix
 | [reporting-vb365-09](reporting-vb365/ISSUE-reporting-vb365-09.md) | Security cert date shades use bitwise-or, never rendered (dead coloring) | `CM365Tables.cs:599` |
 | [reporting-vb365-10](reporting-vb365/ISSUE-reporting-vb365-10.md) | Quadratic string concatenation building VB365 tables and document | `CM365Tables.cs:1046` |
 | [reporting-vb365-11](reporting-vb365/ISSUE-reporting-vb365-11.md) | `ProtStat` user totals can double-count; percentage ignores stale users | `CM365Tables.cs:1513` |
-| [analysis-monitor-04](analysis-monitor/ISSUE-analysis-monitor-04.md) | `min_severity` written to YAML without escaping | `Monitor/CVhcMonitorIntegration.cs:104` |
-| [analysis-monitor-05](analysis-monitor/ISSUE-analysis-monitor-05.md) | `notifType` lowercased with culture-sensitive `ToLower()` for control flow | `Monitor/CVhcMonitorIntegration.cs:93` |
-| [analysis-monitor-08](analysis-monitor/ISSUE-analysis-monitor-08.md) | Monitor state timestamp parsed with culture-sensitive `DateTime.TryParse` | `Monitor/CVhcMonitorIntegration.cs:235` |
-| [analysis-monitor-09](analysis-monitor/ISSUE-analysis-monitor-09.md) | `IsTaskRegistered` uses substring match — false positive | `Monitor/CVhcMonitorIntegration.cs:44` |
-| [analysis-monitor-10](analysis-monitor/ISSUE-analysis-monitor-10.md) | Dead/stub data models in Analysis/DataModels | `Analysis/DataModels/SOBR.cs:9` |
+| [analysis-common-10](analysis-common/ISSUE-analysis-common-10.md) | Dead/stub data models in Analysis/DataModels | `Analysis/DataModels/SOBR.cs:9` |
 
 ---
 
 ## Suggested triage order
 
 1. **Critical** — `startup-cli-01` (VB365 reports silently never generated) is a functional regression; confirm against a live VB365 run first.
-2. **Credential exposure** — `analysis-monitor-01/02`, `collection-security-10`, `collection-data-07`: cleartext creds on disk / cmdline / over `verify_ssl:false`. Highest real-world risk.
-3. **PowerShell injection** — `collection-data-01`, `collection-security-01`, `analysis-monitor-06`: the un-hardened collection paths.
+2. **Credential exposure** — `collection-security-10`, `collection-data-07`: cleartext creds on the process command line. Highest real-world risk.
+3. **PowerShell injection** — `collection-data-01`, `collection-security-01`: the un-hardened collection paths.
 4. **The one HTML-encoding fix** — `reporting-vbr-core-01` at `CHtmlFormatting.TableData`/`TableHeader` resolves the bulk of `reporting-vbr-tables-01` and `reporting-vb365-01` in one place.
 5. **High-impact correctness** — `startup-cli-02/03/04`, `collection-data-05/06`, `reporting-vb365-02/03/04`, `csv-datatypes-02`.
 6. Everything else by severity.
