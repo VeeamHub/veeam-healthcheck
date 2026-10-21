@@ -24,8 +24,11 @@ jobs:
     - name: Install Semgrep
       run: pip install semgrep
 
+    # The engine is occasionally killed for running out of memory on the runner
+    # ("semgrep-core exited with unexpected output", exit 2). Fewer parallel jobs
+    # and a per-file memory cap keep it inside the runner's RAM.
     - name: Run Semgrep
-      run: semgrep --config auto --error
+      run: semgrep --config auto --error --jobs 2 --max-memory 4000
 
     - name: SemGrep SupplyChain
-      run: semgrep --config "p/supply-chain"
+      run: semgrep --config "p/supply-chain" --jobs 2 --max-memory 4000
