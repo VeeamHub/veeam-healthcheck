@@ -118,15 +118,18 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR.VbrTables.Jobs_Info
                             {
                                 var x = csvparser.GetDynamicNasBackup().ToList();
 
-                                var diskGb = x.Where(x => x.name == job.Name)
-                                    .Select(x => x.ondiskgb)
+                                // Cast to string: a job with no row in _nasBackup.csv gives a null
+                                // dynamic here, and double.TryParse(dynamic null, ...) is ambiguous at
+                                // runtime on .NET 10 (string vs ReadOnlySpan<byte>).
+                                string diskGb = x.Where(x => x.name == job.Name)
+                                    .Select(x => (string)x.ondiskgb)
                                     .FirstOrDefault();
                                 double.TryParse(diskGb, out onDiskGB);
                                 onDiskGB = Math.Round(onDiskGB, 2);
                                 onDiskTotalGB += onDiskGB;
 
-                                var sourceGb = x.Where(x => x.name == job.Name)
-                                    .Select(x => x.sourcegb)
+                                string sourceGb = x.Where(x => x.name == job.Name)
+                                    .Select(x => (string)x.sourcegb)
                                     .FirstOrDefault();
                                 double.TryParse(sourceGb, out sourceSizeGB);
                                 sourceSizeGB = Math.Round(sourceSizeGB, 2);

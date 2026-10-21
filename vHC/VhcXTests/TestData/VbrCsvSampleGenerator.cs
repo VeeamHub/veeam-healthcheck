@@ -548,6 +548,17 @@ namespace VhcXTests.TestData
         }
 
         /// <summary>
+        /// A _Jobs.csv with a NAS backup job followed (by name order) by a VMware backup job.
+        /// The NAS job sorts first so a failure while rendering it would drop the VM section.
+        /// </summary>
+        public static string GenerateJobsWithNasBackupThenVmBackup()
+        {
+            return JobHeaderWithPlatform + "\n" +
+                   BuildJobRow("A NAS Job", "NasBackup", "NAS Backup", "5") + "\n" +
+                   BuildJobRow("B VM Job", "Backup", "VMware Backup", "7");
+        }
+
+        /// <summary>
         /// Like <see cref="GenerateJobsWithBackupCopyWorker"/> but the worker's parent row is
         /// absent, so there is nothing to fold the worker's data into.
         /// </summary>
