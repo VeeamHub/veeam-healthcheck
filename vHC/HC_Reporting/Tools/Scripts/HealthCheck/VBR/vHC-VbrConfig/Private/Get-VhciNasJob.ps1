@@ -121,6 +121,23 @@ function Get-VhciNasJob {
         }
     }
 
+    # Export-Csv takes the whole file's header from the FIRST object. A job with no readable
+    # backup chain (for instance one whose repository is gone) never got the size columns
+    # above, and if it came first the header lost them for every row. Give every row the full,
+    # stable column set; an unknown value stays empty rather than becoming 0.
+    foreach ($nasRow in @($nasBackup)) {
+        if ($null -eq $nasRow) { continue }
+        if ($null -eq $nasRow.PSObject.Properties['JobType']) {
+            $nasRow | Add-Member -MemberType NoteProperty -Name JobType -Value "NAS Backup"
+        }
+        if ($null -eq $nasRow.PSObject.Properties['OnDiskGB']) {
+            $nasRow | Add-Member -MemberType NoteProperty -Name OnDiskGB -Value $null
+        }
+        if ($null -eq $nasRow.PSObject.Properties['SourceGB']) {
+            $nasRow | Add-Member -MemberType NoteProperty -Name SourceGB -Value $null
+        }
+    }
+
     $nasBCJ = @(Invoke-VhciTolerantEnumeration -ObjectType 'NAS backup copy job' -Collector 'NAS' `
         -Command { Get-VBRNASBackupCopyJob -ErrorAction Continue } `
         -PerObjectCommand { param($Name) Get-VBRNASBackupCopyJob -Name $Name } `

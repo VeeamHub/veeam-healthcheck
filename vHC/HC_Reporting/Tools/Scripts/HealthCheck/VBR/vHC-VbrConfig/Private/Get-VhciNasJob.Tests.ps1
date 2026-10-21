@@ -180,6 +180,45 @@ Describe 'Get-VhciNasJob: a NAS job references a repository that no longer exist
         Should -Invoke Write-LogFile -Times 0 -ParameterFilter { $LogLevel -eq 'ERROR' }
     }
 
+    It 'gives every row the size columns, so the CSV header survives when the FIRST job is the broken one' {
+        # Export-Csv takes the header from the first object: the broken job has no backup
+        # chain, so it never gets OnDiskGB/SourceGB from the size loop.
+        Mock Get-VBRUnstructuredBackupJob -MockWith { @($script:JobBad, $script:JobA) }
+        Mock Get-VBRUnstructuredBackup -MockWith { @($script:JobA) }
+
+        { Get-VhciNasJob } | Should -Not -Throw
+
+        $Rows = @($script:Exported['_nasBackup.csv'])
+        $Rows | Should -HaveCount 2
+        $Rows[0].Name | Should -Be 'NasBad'
+        foreach ($Row in $Rows) {
+            $Row.PSObject.Properties.Name | Should -Contain 'OnDiskGB'
+            $Row.PSObject.Properties.Name | Should -Contain 'SourceGB'
+            $Row.PSObject.Properties.Name | Should -Contain 'JobType'
+        }
+        $Header = ($Rows | ConvertTo-Csv -NoTypeInformation)[0]
+        $Header | Should -Match '"OnDiskGB"'
+        $Header | Should -Match '"SourceGB"'
+        # Unknown, not 0.
+        $Rows[0].OnDiskGB | Should -BeNullOrEmpty
+        $Rows[1].OnDiskGB | Should -Be 0
+    }
+
+    It 'gives the size columns to a job whose restore points threw a missing-repository error, even when it is first' {
+        Mock Get-VBRUnstructuredBackupJob -MockWith { @($script:JobBad, $script:JobA) }
+        Mock Get-VBRUnstructuredBackup -MockWith { @($script:JobBad, $script:JobA) }
+        Mock Get-VBRUnstructuredBackupRestorePoint -MockWith {
+            if ($Backup.Name -eq 'NasBad') { throw $script:MissingRepoMessage }
+            @()
+        }
+
+        Get-VhciNasJob
+
+        $Header = (@($script:Exported['_nasBackup.csv']) | ConvertTo-Csv -NoTypeInformation)[0]
+        $Header | Should -Match '"OnDiskGB"'
+        $Header | Should -Match '"SourceGB"'
+    }
+
     It 'still fails on an error that is not a missing repository' {
         Mock Get-VBRUnstructuredBackupJob -MockWith { throw 'The RPC server is unavailable' }
 

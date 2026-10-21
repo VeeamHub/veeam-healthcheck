@@ -2642,10 +2642,39 @@ Describe 'Restore point sweep tolerates a backup whose repository no longer exis
         $Entries[0].RepositoryId | Should -Be '280cd331-b099-4617-b59b-7488ad8d6046'
     }
 
-    It 'still fails the sweep (ERROR) on an error that is not a missing repository' {
-        Mock Get-VBRRestorePoint -MockWith { throw 'Simulated sweep failure' }
+    It 'skips a backup that is encrypted or plug-in created with a WARNING naming it and the reason, and keeps the others' {
+        $script:EncryptedMessage = 'Cannot get restore points from backup EncryptedBackup, because it is encrypted or created by an enterprise application plug-in.'
+        $script:EncryptedBackup  = [PSCustomObject]@{ Name = 'EncryptedBackup'; Id = [guid]::NewGuid() }
+        Mock Get-VBRBackup -MockWith { @($script:EncryptedBackup, $script:GoodBackup) }
+        Mock Get-VBRRestorePoint -MockWith {
+            if ($null -eq $Backup -or $Backup.Name -eq 'EncryptedBackup') { throw $script:EncryptedMessage }
+            @($script:GoodPoint)
+        }
+
+        { Get-VhcJob } | Should -Not -Throw
+
+        $Row = $script:CapturedJobRows | Where-Object { $_.Name -eq 'GoodJob' }
+        $Row.OnDiskGB | Should -Be 9
+        Should -Invoke Write-LogFile -ParameterFilter {
+            $LogLevel -eq 'WARNING' -and $Message -match "backup 'EncryptedBackup' was skipped" -and $Message -match 'encrypted or created by an enterprise application plug-in'
+        }
+        Should -Invoke Write-LogFile -Times 0 -ParameterFilter { $LogLevel -eq 'ERROR' }
+        # Not a missing repository, so nothing is recorded for the report.
+        @($script:BrokenRepositoryReferences) | Should -HaveCount 0
+    }
+
+    It 'still fails the sweep (ERROR) when the backups cannot be listed either' {
+        Mock Get-VBRRestorePoint -MockWith { throw 'The RPC server is unavailable' }
+        Mock Get-VBRBackup       -MockWith { throw 'The RPC server is unavailable' }
         { Get-VhcJob } | Should -Not -Throw
         Should -Invoke Write-LogFile -ParameterFilter { $LogLevel -eq 'ERROR' -and $Message -match 'Restore point sweep failed' }
         @($script:BrokenRepositoryReferences) | Should -HaveCount 0
+    }
+
+    It 'still fails the sweep (ERROR) when there are no backups to fall back to' {
+        Mock Get-VBRRestorePoint -MockWith { throw 'Simulated sweep failure' }
+        Mock Get-VBRBackup       -MockWith { @() }
+        { Get-VhcJob } | Should -Not -Throw
+        Should -Invoke Write-LogFile -ParameterFilter { $LogLevel -eq 'ERROR' -and $Message -match 'Restore point sweep failed: Simulated sweep failure' }
     }
 }
