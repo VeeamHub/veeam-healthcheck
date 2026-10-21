@@ -43,6 +43,7 @@ namespace VhcXTests
         private readonly string _origStubOut;
         private readonly string _stubDir;
         private readonly string _stubOut;
+        private readonly long _logOffset;
 
         public PasswordNotOnCommandLineTests()
         {
@@ -80,6 +81,9 @@ namespace VhcXTests
 
             Environment.SetEnvironmentVariable("PATH", _stubDir + Path.PathSeparator + _origPath);
             Environment.SetEnvironmentVariable("VHC_STUB_OUT", _stubOut);
+
+            // Everything vHC writes to its log from here on belongs to the test in progress.
+            _logOffset = File.Exists(CGlobals.Logger.logFile) ? new FileInfo(CGlobals.Logger.logFile).Length : 0;
         }
 
         public void Dispose()
@@ -199,6 +203,79 @@ namespace VhcXTests
         }
 
         // ----------------------------------------------------------------
+        // The log file: no credential-derived text may be written to it
+        // ----------------------------------------------------------------
+
+        /// <summary>What vHC wrote to its log file since this test started.</summary>
+        private string LogWrittenByThisTest()
+        {
+            string file = CGlobals.Logger.logFile;
+            if (!File.Exists(file))
+            {
+                return string.Empty;
+            }
+
+            using var fs = new FileStream(file, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
+            fs.Seek(Math.Min(_logOffset, fs.Length), SeekOrigin.Begin);
+            using var reader = new StreamReader(fs);
+            return reader.ReadToEnd();
+        }
+
+        /// <summary>
+        /// The log must be non-empty for the path under test (so this cannot pass vacuously) and
+        /// must hold neither the password, its Base64 form, nor any -Password argument text.
+        /// </summary>
+        private void AssertLogHasNoSecret(params string[] mustContain)
+        {
+            string log = LogWrittenByThisTest();
+
+            foreach (string expected in mustContain)
+            {
+                Assert.Contains(expected, log);
+            }
+
+            Assert.DoesNotContain(Password, log);
+            Assert.DoesNotContain(PasswordBase64, log);
+            Assert.DoesNotContain("-PasswordBase64", log);
+            Assert.DoesNotContain("-Password", log.Replace("-Password $vhcPw", string.Empty));
+            Assert.DoesNotContain("GetEnvironmentVariable('" + PsCredentialChannel.PasswordVariable, log);
+        }
+
+        [Fact]
+        public void VbrConfigStartInfo_RemoteRun_LogHasNoSecret()
+        {
+            new PSInvoker().VbrConfigStartInfo();
+
+            AssertLogHasNoSecret("PS ArgString", "-User");
+        }
+
+        [Theory]
+        [InlineData(0)]
+        [InlineData(1)]
+        public void ConfigStartInfo_RemoteRun_LogHasNoSecret(int days)
+        {
+            new PSInvoker().ConfigStartInfo("nas.ps1", days, Path.GetTempPath());
+
+            AssertLogHasNoSecret("PS ArgString", "-User");
+        }
+
+        [Fact]
+        public void DescribeRemoteMfaConnectForLog_ShowsServerAndUserNeverTheScriptOrPassword()
+        {
+            string described = PSInvoker.DescribeRemoteMfaConnectForLog(Host, User, 13);
+
+            Assert.Contains(Host, described);
+            Assert.Contains(User, described);
+            Assert.Contains("-ForceAcceptTlsCertificate", described);
+            Assert.DoesNotContain("-ForceAcceptTlsCertificate", PSInvoker.DescribeRemoteMfaConnectForLog(Host, User, 12));
+            Assert.DoesNotContain(Password, described);
+            Assert.DoesNotContain(PasswordBase64, described);
+            Assert.DoesNotContain(PsCredentialChannel.PasswordVariable, described);
+            Assert.DoesNotContain("$vhcPw", described);
+            Assert.DoesNotContain("Import-Module", described);
+        }
+
+        // ----------------------------------------------------------------
         // Process level: a real child is started and we read what it received
         // ----------------------------------------------------------------
 
@@ -237,6 +314,7 @@ namespace VhcXTests
         {
             Assert.True(new PSInvoker().RunVbrConfigCollect());
             AssertChildGotSecretOnlyByEnvironment();
+            AssertLogHasNoSecret("PS ArgString", "[PS] Script execution started");
         }
 
         [UnixOnlyFact]
@@ -244,6 +322,7 @@ namespace VhcXTests
         {
             Assert.True(new PSInvoker().InvokeVb365Collect());
             AssertChildGotSecretOnlyByEnvironment();
+            AssertLogHasNoSecret("[PS] [ARGS]", "-Username");
         }
 
         [UnixOnlyFact]
@@ -251,6 +330,7 @@ namespace VhcXTests
         {
             Assert.True(new PSInvoker().TestMfaVB365());
             AssertChildGotSecretOnlyByEnvironment();
+            AssertLogHasNoSecret("[VB365 MFA Check]", "[PS] Script execution started");
         }
 
         [UnixOnlyFact]
@@ -258,6 +338,18 @@ namespace VhcXTests
         {
             new PSInvoker().TestMfa();
             AssertChildGotSecretOnlyByEnvironment();
+
+            // The inline script must not be logged; the description of it must be.
+            AssertLogHasNoSecret("[TestMfa] Command:", Host, User);
+            Assert.DoesNotContain("Import-Module", LogWrittenByThisTest());
+        }
+
+        [UnixOnlyFact]
+        public void TestMfa_RealChild_LogDoesNotEchoTheInlineScript()
+        {
+            new PSInvoker().TestMfa();
+
+            Assert.DoesNotContain("[TestMfa] Arguments:", LogWrittenByThisTest());
         }
     }
 }

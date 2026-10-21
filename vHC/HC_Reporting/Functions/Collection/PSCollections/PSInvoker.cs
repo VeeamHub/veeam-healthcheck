@@ -274,6 +274,18 @@ namespace VeeamHealthCheck.Functions.Collection.PSCollections
         }
 
         /// <summary>
+        /// The log line for the remote VBR MFA check, in place of the inline script. Built only from
+        /// the server, user name and VBR version, never from the script text, so nothing that handles
+        /// the credential can end up in the log. Says where the password travels without showing it.
+        /// </summary>
+        internal static string DescribeRemoteMfaConnectForLog(string server, string username, int vbrMajorVersion)
+        {
+            string certFlag = vbrMajorVersion >= 13 ? " -ForceAcceptTlsCertificate" : string.Empty;
+            return $"inline Connect-VBRServer -Server '{server ?? "localhost"}' -User '{username}'{certFlag} " +
+                   "(password supplied through the child process environment, not shown)";
+        }
+
+        /// <summary>
         /// Builds the process for the remote / PS5-failover VBR MFA check: the command line from
         /// <see cref="BuildRemoteMfaConnectArgs"/> plus the password in the child's environment.
         /// </summary>
@@ -312,15 +324,16 @@ namespace VeeamHealthCheck.Functions.Collection.PSCollections
                 var creds = ch.GetCreds();
 
                 // The password goes in the child's environment (PsCredentialChannel), not on the
-                // command line, so the argument string is safe to log as-is.
+                // command line. The inline script is NOT logged: what is logged is a description
+                // assembled from the server, user and version alone (DescribeRemoteMfaConnectForLog),
+                // so no text derived from the credential-handling script can reach the log file.
                 ProcessStartInfo startInfo = BuildRemoteMfaStartInfo(
                     CGlobals.REMOTEHOST, creds.Value.Username, creds.Value.Password, CGlobals.VBRMAJORVERSION);
 
-                CGlobals.Logger.Info("[TestMfa] Arguments: " + startInfo.Arguments);
-
                 this.log.Info($"[TestMfa] Creating ProcessStartInfo for MFA test:");
                 this.log.Info($"[TestMfa] FileName: {startInfo.FileName}");
-                this.log.Info($"[TestMfa] Arguments: {startInfo.Arguments}");
+                this.log.Info("[TestMfa] Command: " + DescribeRemoteMfaConnectForLog(
+                    CGlobals.REMOTEHOST, creds.Value.Username, CGlobals.VBRMAJORVERSION));
                 this.log.Info($"[TestMfa] RedirectStandardOutput: {startInfo.RedirectStandardOutput}");
                 this.log.Info($"[TestMfa] RedirectStandardError: {startInfo.RedirectStandardError}");
                 this.log.Info($"[TestMfa] UseShellExecute: {startInfo.UseShellExecute}");
