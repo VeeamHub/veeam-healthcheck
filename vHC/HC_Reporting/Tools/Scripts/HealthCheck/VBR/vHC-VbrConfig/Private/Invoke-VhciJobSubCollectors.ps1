@@ -36,7 +36,7 @@ function Invoke-VhciJobSubCollectors {
         Write-LogFile "Get-VhciTapeInfrastructure failed: $($_.Exception.Message)" -LogLevel "ERROR"
         Add-VhciModuleError -CollectorName 'Jobs' -ErrorMessage $_.Exception.Message
     }
-    try { Get-VhciNasJob } catch {
+    try { Get-VhciNasJob -Jobs @($Jobs) } catch {
         Write-LogFile "Get-VhciNasJob failed: $($_.Exception.Message)" -LogLevel "ERROR"
         Add-VhciModuleError -CollectorName 'Jobs' -ErrorMessage $_.Exception.Message
     }

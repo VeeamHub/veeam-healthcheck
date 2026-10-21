@@ -133,7 +133,7 @@ Each sub-collector exports its CSV(s) and returns an array of role-entry descrip
 | `Get-VhciAgentJob` | `_AgentBackupJob.csv` `_EndpointJob.csv` | Computer backup jobs and legacy endpoint jobs. |
 | `Get-VhciSureBackup` | `_SureBackupJob.csv` `_SureBackupAppGroups.csv` `_SureBackupVirtualLabs.csv` | |
 | `Get-VhciTapeInfrastructure` | `_TapeJobs.csv` `_TapeServers.csv` `_TapeLibraries.csv` `_TapeMediaPools.csv` `_TapeVaults.csv` | |
-| `Get-VhciNasJob` | `_nasBackup.csv` `_nasBCJ.csv` | Size metrics use `Get-VBRUnstructuredBackupRestorePoint` + `CNasBackup`/`CNasBackupPoint` .NET types. Per-share and per-job failures are caught and warned; other shares/jobs continue. |
+| `Get-VhciNasJob` | `_nasBackup.csv` `_nasBCJ.csv` | Size metrics use `Get-VBRUnstructuredBackupRestorePoint` + `CNasBackup`/`CNasBackupPoint` .NET types. Per-share and per-job failures are caught and warned; other shares/jobs continue. A job, backup or share whose repository no longer exists ("Unable to find repository id") is skipped or left with blank sizes via `Invoke-VhciTolerantEnumeration`, logged as a WARNING and recorded in `_BrokenRepositoryReferences.csv`. |
 | `Get-VhciPluginAndCdpJob` | `_pluginjobs.csv` `_cdpjobs.csv` `_vcdjobs.csv` | |
 | `Get-VhciReplication` | `_ReplicaJobs.csv` `_Replicas.csv` `_FailoverPlans.csv` | Receives the already-fetched `$Jobs` array to avoid a second `Get-VBRJob` call. |
 | `Get-VhciCloudConnect` | `_CloudGateways.csv` `_CloudTenants.csv` | Errors when VCC service provider licence is not installed — caught and logged. |
@@ -164,6 +164,7 @@ Each sub-collector exports its CSV(s) and returns an array of role-entry descrip
 - `Invoke-VhcCollector` provides an outer catch so that even an unhandled exception in a collector does not propagate to `Get-VBRConfig.ps1`.
 - Functions with multiple independent sub-sections (e.g. `Get-VhcProtectedWorkloads` across VMware / Hyper-V / Physical) use **per-section** inner try/catch blocks so a failure on one platform does not suppress data from the others.
 - `Get-VhcJob` similarly wraps each of its nine sub-collector calls individually.
+- **A deleted repository is not a collector failure.** When Veeam reports "Unable to find repository id <guid>" for one object, `Get-VhciNasJob` and the restore-point sweep (`Get-VhciAllRestorePoints`) skip only that object, log a **WARNING** (never ERROR: the CI log scan fails on ERROR, EXCEPTION and FATAL, so a handled broken reference must not use those words), and record it with `Register-VhciBrokenRepositoryReference`. `Export-VhcBrokenRepositoryReferences` writes the list to `_BrokenRepositoryReferences.csv` (`ObjectType, ObjectName, RepositoryId, Collector`). Any other error is rethrown unchanged.
 
 ---
 

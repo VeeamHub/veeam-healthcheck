@@ -331,6 +331,13 @@ $collectorResults.Add((Invoke-VhcCollector -Name 'VbrInfo' -Action { Get-VhcVbrI
 # ---------------------------------------------------------------------------
 
 # ---------------------------------------------------------------------------
+# Objects the collectors skipped because they reference a repository that no longer
+# exists. Runs after every collector so it sees all of them; writes
+# _BrokenRepositoryReferences.csv only when there is something to report.
+$collectorResults.Add((Invoke-VhcCollector -Name 'BrokenRepositoryReferences' -Action { Export-VhcBrokenRepositoryReferences }))
+# ---------------------------------------------------------------------------
+
+# ---------------------------------------------------------------------------
 # Collector run summary
 # ---------------------------------------------------------------------------
 if ($collectorResults.Count -gt 0) {

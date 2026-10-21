@@ -28,6 +28,10 @@ function Initialize-VhcModule {
     $script:LogLevel     = $LogLevel
     $script:LogPath      = $LogPath
     $script:ModuleErrors = [System.Collections.Generic.List[PSCustomObject]]::new()
+    # Objects skipped because they reference a repository that no longer exists; written to
+    # _BrokenRepositoryReferences.csv by Export-VhcBrokenRepositoryReferences. Infrastructure state
+    # in the same sense as ModuleErrors (ADR 0007), not a data channel between collectors.
+    $script:BrokenRepositoryReferences = [System.Collections.Generic.List[PSCustomObject]]::new()
 
     if (-not (Test-Path $ReportPath)) {
         New-Item -Path $ReportPath -ItemType Directory -Force | Out-Null

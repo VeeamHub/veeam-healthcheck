@@ -123,7 +123,9 @@ function Get-VhcJob {
     if ($NeedsSweep) {
         $SweepStopwatch = [System.Diagnostics.Stopwatch]::StartNew()
         try {
-            $AllRestorePoints = @(Get-VBRRestorePoint -WarningAction SilentlyContinue | Where-Object { $null -ne $_ })
+            # Get-VhciAllRestorePoints falls back to one backup at a time when a backup
+            # references a repository that no longer exists, so that backup alone is lost.
+            $AllRestorePoints = @(Get-VhciAllRestorePoints)
 
             # Same null-placeholder risk both structures below guard against -
             # a $Jobs element can be a non-null object with no populated Id

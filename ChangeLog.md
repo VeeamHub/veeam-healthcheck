@@ -20,6 +20,7 @@ checksums, and scan results.
 
 ### Fixed
 
+- Collection no longer loses `_nasBackup.csv`, `_nasBCJ.csv` or the restore-point sizing sweep when a job or backup references a repository that was deleted ("Unable to find repository id"). The broken object is skipped with a warning and everything else is collected; the skipped objects are listed in `_BrokenRepositoryReferences.csv`.
 - Job Info no longer stops rendering when a NAS backup job has no matching row in `_nasBackup.csv`; the later job sections and the Tape and Entra tables now appear.
 
 ### Removed

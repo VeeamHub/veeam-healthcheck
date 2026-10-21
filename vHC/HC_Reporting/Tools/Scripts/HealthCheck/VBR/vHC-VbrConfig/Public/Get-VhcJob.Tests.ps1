@@ -410,6 +410,9 @@ BeforeAll {
     $moduleRoot = Split-Path -Parent $PSScriptRoot
     . (Join-Path $moduleRoot 'Public/Write-LogFile.ps1')
     . (Join-Path $moduleRoot 'Public/Get-VhcJobDiscovery.ps1')
+    . (Join-Path $moduleRoot 'Private/Get-VhciMissingRepositoryId.ps1')
+    . (Join-Path $moduleRoot 'Private/Register-VhciBrokenRepositoryReference.ps1')
+    . (Join-Path $moduleRoot 'Private/Get-VhciAllRestorePoints.ps1')
     . $PSCommandPath.Replace('.Tests.ps1', '.ps1')
 }
 
@@ -2574,5 +2577,75 @@ Describe 'Candidate grouping keeps a backup chain whole (#221 premise)' {
             @($Candidate.RestorePoints.BackupId | Select-Object -Unique) | Should -HaveCount 1
         }
         @($Candidates.RestorePoints).Count | Should -Be 9
+    }
+}
+
+# ---------------------------------------------------------------------------
+# A backup references a repository that was deleted. Veeam then throws
+# "Unable to find repository id <guid>" from the unscoped Get-VBRRestorePoint
+# the global sweep uses. The customer's estate is what it is: the sweep must
+# keep every other backup, log a WARNING (not ERROR) naming the broken backup
+# and the repository id, and _Jobs.csv must still be written.
+# ---------------------------------------------------------------------------
+Describe 'Restore point sweep tolerates a backup whose repository no longer exists' {
+
+    BeforeEach {
+        $script:CapturedJobRows = @()
+        $script:BrokenRepositoryReferences = [System.Collections.Generic.List[PSCustomObject]]::new()
+        $script:MissingRepoMessage = 'Unable to find repository id 280cd331-b099-4617-b59b-7488ad8d6046'
+        Mock Write-LogFile                 -MockWith { }
+        Mock Get-VBRConfigurationBackupJob -MockWith { $null }
+        Mock Invoke-VhciJobSubCollectors   -MockWith { }
+        Mock Add-VhciModuleError           -MockWith { }
+        Mock Export-VhciCsv -MockWith {
+            if ($FileName -eq '_Jobs.csv' -and $InputObject) {
+                $script:CapturedJobRows += @($InputObject)
+            }
+        }
+
+        $script:GoodJob     = script:New-FakeJob -Name 'GoodJob' -TypeToString 'HPE Morpheus VME Backup'
+        $script:GoodBackup  = [PSCustomObject]@{ Name = 'GoodBackup'; Id = [guid]::NewGuid() }
+        $script:BadBackup   = [PSCustomObject]@{ Name = 'BadBackup';  Id = [guid]::NewGuid() }
+        $script:GoodPoint   = script:New-FakeRestorePoint -ObjectId ([guid]'55555555-5555-5555-5555-555555555555') -ApproxSize 20GB -BackupSize 9GB -SourceJob $script:GoodJob
+        $script:GoodPoint | Add-Member -MemberType NoteProperty -Name Id -Value ([guid]::NewGuid())
+
+        Mock Get-VBRJob    -MockWith { @($script:GoodJob) }
+        Mock Get-VBRBackup -MockWith { @($script:GoodBackup, $script:BadBackup) }
+        Mock Get-VBRRestorePoint -MockWith {
+            if ($null -eq $Backup -or $Backup.Name -eq 'BadBackup') { throw $script:MissingRepoMessage }
+            @($script:GoodPoint)
+        }
+    }
+
+    It 'keeps the other backups and still writes _Jobs.csv' {
+        { Get-VhcJob } | Should -Not -Throw
+        $Row = $script:CapturedJobRows | Where-Object { $_.Name -eq 'GoodJob' }
+        $Row | Should -Not -BeNullOrEmpty
+        $Row.OnDiskGB | Should -Be 9
+    }
+
+    It 'logs a WARNING naming the broken backup and the repository id, and no ERROR' {
+        Get-VhcJob | Out-Null
+        Should -Invoke Write-LogFile -ParameterFilter {
+            $LogLevel -eq 'WARNING' -and $Message -match "Backup 'BadBackup'" -and $Message -match '280cd331-b099-4617-b59b-7488ad8d6046'
+        }
+        Should -Invoke Write-LogFile -Times 0 -ParameterFilter { $LogLevel -eq 'ERROR' }
+        Should -Invoke Add-VhciModuleError -Times 0
+    }
+
+    It 'records the broken backup for the report' {
+        Get-VhcJob | Out-Null
+        $Entries = @($script:BrokenRepositoryReferences)
+        $Entries | Should -HaveCount 1
+        $Entries[0].ObjectType   | Should -Be 'Backup'
+        $Entries[0].ObjectName   | Should -Be 'BadBackup'
+        $Entries[0].RepositoryId | Should -Be '280cd331-b099-4617-b59b-7488ad8d6046'
+    }
+
+    It 'still fails the sweep (ERROR) on an error that is not a missing repository' {
+        Mock Get-VBRRestorePoint -MockWith { throw 'Simulated sweep failure' }
+        { Get-VhcJob } | Should -Not -Throw
+        Should -Invoke Write-LogFile -ParameterFilter { $LogLevel -eq 'ERROR' -and $Message -match 'Restore point sweep failed' }
+        @($script:BrokenRepositoryReferences) | Should -HaveCount 0
     }
 }
