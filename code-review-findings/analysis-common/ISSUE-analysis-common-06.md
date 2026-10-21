@@ -2,7 +2,7 @@
 title: "CLogger.LogLine only retries IOException — other exceptions from the logging path can crash the app"
 severity: Medium
 labels: [reliability]
-domain: analysis-monitor
+domain: analysis-common
 files:
   - vHC/HC_Reporting/Common/Logging/CLogger.cs:111
   - vHC/HC_Reporting/Common/Logging/CLogger.cs:105

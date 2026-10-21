@@ -125,6 +125,12 @@ VeeamHealthCheck.exe /security /host=vbrserver.veeam.local
 VeeamHealthCheck.exe /import:D:\Exports\VBR-data
 ```
 
+## Security
+
+- Report vulnerabilities privately through [GitHub private vulnerability reporting](https://github.com/VeeamHub/veeam-healthcheck/security). See [SECURITY.md](SECURITY.md) for the full policy.
+- vHC reads your Veeam configuration and job history, writes its output locally (default `C:\temp\vHC`), sends no telemetry, and makes no internet connections. Reports contain infrastructure details, so use `/scrub:true` before sharing one.
+- Verify a download before running it: `gh attestation verify <zip> --repo VeeamHub/veeam-healthcheck` checks its build provenance, and the release notes list its SHA256. The executable is not code-signed yet; the known gaps are listed in [SECURITY.md](SECURITY.md#known-gaps).
+
 ## Troubleshooting
 
 | Problem | Solution |

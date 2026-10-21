@@ -1,8 +1,8 @@
 # Veeam Health Check — Merged & Deduplicated Code Review Index
 
 > Merge of two independent full reviews of the `dev` branch (260 `.cs` files):
-> - **Fable** = `code-review-findings/` (Fable 5, 2026-06-11, 107 findings)
-> - **Opus** = `code-review-findings-opus/` (Claude Opus 4.8, 2026-06-12, 102 findings)
+> - **Fable** = `code-review-findings/` (Fable 5, 2026-06-11, 101 findings)
+> - **Opus** = `code-review-findings-opus/` (Claude Opus 4.8, 2026-06-12, 92 findings)
 >
 > Matched by **file:line + symptom** (the per-review IDs do **not** align). Each row is one distinct work item.
 > `Source` column: **both** = independently found by both reviews · **fable** / **opus** = found by only that review.
@@ -12,17 +12,17 @@
 
 | | Count |
 |---|---|
-| **Distinct issues (merged)** | **~150** |
-| Found by both | 55 |
-| Unique to Fable | 51 |
-| Unique to Opus | 44 |
+| **Distinct issues (merged)** | **~138** |
+| Found by both | 51 |
+| Unique to Fable | 49 |
+| Unique to Opus | 38 |
 | 🔴 Critical (Opus-only) | 1 |
 
 ### Severity is the higher of the two reviews where they overlap.
 
 ### Top of the triage list (cross-validated or critical)
 1. 🔴 **`opus startup-cli-01`** — VB365 HTML report **never generated** (compiler disposed right after construction). Only Opus caught it; it's a live functional regression. Confirm against a real VB365 run first.
-2. **Credential exposure cluster** — cleartext YAML (both `am-01`), `verify_ssl:false` (opus `am-02`), `-Password` on cmdline (both), Base64≠encryption (opus `cd-07`/`startup-12`), Scrub=false tri-state bypass (opus `startup-21`).
+2. **Credential exposure cluster** — `-Password` on cmdline (both), Base64≠encryption (opus `cd-07`/`startup-12`), Scrub=false tri-state bypass (opus `startup-21`).
 3. **PowerShell injection** on log-collection paths (both `cd` + `cs-01`).
 4. **The one HTML-encoding fix** at `CHtmlFormatting.TableData/TableHeader` (both, every subsystem) — fix once, fixes the bulk of the XSS findings.
 
@@ -178,26 +178,15 @@
 
 ---
 
-## Analysis & Monitor (`analysis-monitor`)
+## Analysis & common (`analysis-common`)
 
 | Sev | Source | Fable | Opus | Issue | Location |
 |---|---|---|---|---|---|
-| High | both | am-01 | am-01 | VBR credential password written to disk as cleartext YAML | `CVhcMonitorIntegration.cs:84` |
-| High | both | am-03 | am-03 | `EscapeYaml` insufficient (newlines/control chars, double-quoted scalars) → injection/corruption | `CVhcMonitorIntegration.cs:297` |
-| Med | both² | am-04 | am-06 | Scheduled task: Fable=no principal/logon (stops on logoff); Opus=fragile PS quote escaping | `CVhcMonitorIntegration.cs:136` |
-| Med | both² | am-11 | am-09 | `IsTaskRegistered`: Fable=sync PS ≤30s on WPF UI thread; Opus=substring false positive | `CVhcMonitorIntegration.cs:38` |
-| Low | both | am-10 | am-10 | Dead/stub Analysis data models (empty SOBR, unused Repository) | `Analysis/DataModels/SOBR.cs:9` |
-| High | fable | am-02 | — | Truncated process output: `WaitForExit(timeout)` returns before async stdout/stderr drain | `CVhcMonitorIntegration.cs:286` |
-| High | fable | am-05 | — | `RunNow`/`TestConnection` `Process.Start` exception escapes into `Task.Run`, strands GUI | `CVhcMonitorIntegration.cs:176` |
-| High | fable | am-06 | — | `CLogger.LogLine` only retries `IOException` — other exceptions can crash the app | `CLogger.cs:111` |
-| High | fable | am-09 | — | Localization helpers: no missing-key fallback + single-point-of-failure static init | `VbrLocalizationHelper.cs:6` |
-| Low | fable | am-07 | — | `CLogger.Debug` ignores its `silent` parameter | `CLogger.cs:70` |
-| Low | fable | am-08 | — | Unbounded log accumulation + per-line file open/close in `CLogger` | `CLogger.cs:17` |
-| High | opus | — | am-02 | Monitor config hardcodes `verify_ssl: false` → creds over unauthenticated TLS | `CVhcMonitorIntegration.cs:86` |
-| Med | opus | — | am-07 | Uninstall leaves plaintext-credential config + copied exe on disk | `CVhcMonitorIntegration.cs:202` |
-| Low | opus | — | am-04 | `min_severity` written to YAML without escaping | `CVhcMonitorIntegration.cs:104` |
-| Low | opus | — | am-05 | `notifType` lowercased with culture-sensitive `ToLower()` for control flow | `CVhcMonitorIntegration.cs:93` |
-| Low | opus | — | am-08 | Monitor state timestamp parsed with culture-sensitive `DateTime.TryParse` | `CVhcMonitorIntegration.cs:235` |
+| Low | both | ac-10 | ac-10 | Dead/stub Analysis data models (empty SOBR, unused Repository) | `Analysis/DataModels/SOBR.cs:9` |
+| High | fable | ac-06 | — | `CLogger.LogLine` only retries `IOException` — other exceptions can crash the app | `CLogger.cs:111` |
+| High | fable | ac-09 | — | Localization helpers: no missing-key fallback + single-point-of-failure static init | `VbrLocalizationHelper.cs:6` |
+| Low | fable | ac-07 | — | `CLogger.Debug` ignores its `silent` parameter | `CLogger.cs:70` |
+| Low | fable | ac-08 | — | Unbounded log accumulation + per-line file open/close in `CLogger` | `CLogger.cs:17` |
 
 ---
 
@@ -221,7 +210,6 @@
 | High | fable | startup-cli-14 | — | `/import:<bad-path>` logs an error but continues the run against the default path | `CArgsParser.cs:158` |
 | Low | fable | startup-cli-13 | — | `CMessages.PsVbrFunctionDone` built from the wrong constant (copy-paste error) | `CMessages.cs:125` |
 | High | opus | — | startup-cli-04 | `/silent` with no credential source falls back to interactive prompt | `CClientFunctions.cs:499` |
-| Med | opus | — | startup-cli-06 | Decrypted plaintext passwords passed to monitor install / held in GUI locals | `CredentialStore.cs:133` |
 | Med | opus | — | startup-cli-08 | `CScrubHandler` shared static singleton, non-thread-safe IO-on-every-call | `CXmlHandler.cs:100` |
 | Med | opus | — | startup-cli-09 | `CredentialStore` static cache mutated without locking across threads | `CredentialStore.cs:24` |
 | Med | opus | — | startup-cli-10 | `run_Click` calls `VerifyPath()` twice and proceeds after failure | `VhcGui.xaml.cs:236` |
@@ -235,6 +223,6 @@
 
 ## Where the two reviews diverge (meta)
 
-- **Opus skews security & robustness**: the lone Critical, `verify_ssl:false`, Base64-creds, the Scrub=false anonymization bypass, thread-safety of static caches (`CScrubHandler`/`CredentialStore`/`CGlobals`), credential lifecycle (ACLs, zeroing, TOCTOU), and O(n²) perf.
+- **Opus skews security & robustness**: the lone Critical, Base64-creds, the Scrub=false anonymization bypass, thread-safety of static caches (`CScrubHandler`/`CredentialStore`/`CGlobals`), credential lifecycle (ACLs, zeroing, TOCTOU), and O(n²) perf.
 - **Fable skews functional correctness & cleanup**: inverted return semantics, deadlocks/timeout ordering, the PS1 collection scripts (CSV injection), `CLogger` robustness, dead-code removal, and a deeper VB365/VBR-tables correctness pass.
-- **Neither is a superset.** A complete backlog needs both. 55 of ~150 issues were independently confirmed by both reviewers — those are the highest-confidence fixes.
+- **Neither is a superset.** A complete backlog needs both. 51 of ~138 issues were independently confirmed by both reviewers — those are the highest-confidence fixes.

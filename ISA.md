@@ -29,7 +29,7 @@ A field engineer runs `VeeamHealthCheck.exe /run` on a customer's Veeam server, 
 - **Veeam Cloud Service Provider (VCSP) environments.** VCSP-specific topologies are explicitly not supported.
 - **Non-Windows execution of the main `VeeamHealthCheck.exe`.** A separate `VhcXTests.CrossPlatform` project exists for portable unit tests, but the GUI/CLI binary is Windows-only.
 - **Active mitigation or change.** VHC is a read-only assessment tool. It never modifies the VBR/VB365 configuration it inspects.
-- **NOT A Replacement for Veeam ONE or other live monitoring.** Continuous monitoring is the responsibility of the companion `vhc-monitor` (see `COMPANION_SPEC.md`), not VHC Core.
+- **NOT A Replacement for Veeam ONE or other live monitoring.** Continuous monitoring is out of scope. VHC is a point-in-time assessment tool and ships no companion monitor; use Veeam ONE for live monitoring.
 
 ## Constraints
 
@@ -130,12 +130,13 @@ Deliver a Windows executable that, when run on a host with Veeam VBR or VB365 in
 
 ## Decisions
 
-- **2026-05-15** — Seed-generated draft created from README, `COMPANION_SPEC.md`, repository structure, and the most recent 30 commits. ISCs ISC-1..ISC-22 are seeded conservatively; expect refinement when a human author runs the Interview workflow. Principles section deliberately left as a TODO — those are author-driven and Seed will not fabricate them.
+- **2026-05-15** — Seed-generated draft created from README, the companion-monitor spec (since deleted), repository structure, and the most recent 30 commits. ISCs ISC-1..ISC-22 are seeded conservatively; expect refinement when a human author runs the Interview workflow. Principles section deliberately left as a TODO — those are author-driven and Seed will not fabricate them.
 - **2026-05-15** — Out of Scope captures the four loud constraints surfaced by the README + recent commit history: no phone-home, no VCSP, no non-Windows main binary, read-only. These were chosen as the prose guardrails most likely to be violated by future drift.
 - **2026-05-15** — Cross-platform test project (`VhcXTests.CrossPlatform`) treated as a first-class Feature and pinned to ISC-4 rather than folded into ISC-3 — the two are independently meaningful: Windows tests catch WPF/COM regressions, cross-platform tests keep portable logic honest in CI on Linux runners.
 - **2026-05-15** — *refined:* **Runtime upgrade to .NET 10 is in scope.** The Seed draft pinned the Constraint to .NET 8.0 because that matches the current csproj; on review, Adam flagged that .NET 8 is reaching the end of its useful window and the project should target .NET 10. Constraint updated to "currently .NET 8.0; planned upgrade to .NET 10." A future ISC family (TBD when the upgrade work is scoped) will cover: csproj targets bumped, CI runner images updated, dependency compatibility audit (CsvHelper, DocumentFormat.OpenXml, HtmlToOpenXml, DinkToPdf, PowerShell SDK), build/test/Pester green on .NET 10.
 - **2026-05-15** — *refined:* **Elevation is not a hard requirement.** The Seed draft incorrectly stated the tool refuses to start when not elevated. Corrected by Adam: VHC runs at any privilege level with a degraded capability surface when elevation is missing. Constraint and ISC-17 reworded; ID preserved per the ID-stability rule. Verification at VERIFY phase should include a non-elevated lab run and confirm the "skipped probes" list is surfaced in the report.
 - **2026-05-15** — *refined:* **The 500 MB free-disk minimum is unverified.** The Seed draft pulled "500 MB on `C:\`" from the README, which itself was an initial-creation guess. Constraint reworded to flag the figure as unmeasured. Action: measure peak outdir size across a representative VBR full run, a VB365 full run, and the worst-case `/days:90 /pdf /pptx` matrix; replace the hand-wavy threshold with a measured one and update README accordingly.
-- **Source artifacts consulted:** `README.md`, `COMPANION_SPEC.md`, `CLAUDE.md`, `vHC/HC.sln`, top-level `Functions/` subdirectories, last 30 `git log --oneline` commits.
+- **2026-10-21** — **Continuous monitoring is out of scope, with no companion.** The companion monitor integration (its CLI options, GUI tab, bundling step and spec) was removed in #275 (commit 602d2a7d), and its leftover docs were cleared afterwards. VHC stays a point-in-time assessment tool; live monitoring belongs to Veeam ONE.
+- **Source artifacts consulted:** `README.md`, the companion-monitor spec (since deleted), `CLAUDE.md`, `vHC/HC.sln`, top-level `Functions/` subdirectories, last 30 `git log --oneline` commits.
 
 <!-- TODO: run `Skill('ISA', 'interview me on this file')` to author Principles, refine Vision, and audit Criteria against actual lab runs. -->

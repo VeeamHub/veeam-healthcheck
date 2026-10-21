@@ -1,5 +1,7 @@
 # GUI Redesign Stage B: Layout Restructure — Design
 
+> **Historical note (2026-10):** the Continuous Monitoring tab and the companion monitor integration this document references were removed in #275 (commit 602d2a7d). Those parts describe code that no longer exists; they are kept only as a record of completed work.
+
 **Date:** 2026-09-04
 **Branch:** `stage-b/layout-restructure` (off `feature/gui-redesign-port` @ `48336ec`)
 **Depends on:** Stage A (theme/style port, merged into `feature/gui-redesign-port` as `48336ec`)

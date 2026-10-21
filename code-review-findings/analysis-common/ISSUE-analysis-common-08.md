@@ -2,7 +2,7 @@
 title: "Unbounded log accumulation and per-line file open/close in CLogger"
 severity: Low
 labels: [performance, maintainability]
-domain: analysis-monitor
+domain: analysis-common
 files:
   - vHC/HC_Reporting/Common/Logging/CLogger.cs:17
   - vHC/HC_Reporting/Common/Logging/CLogger.cs:105
@@ -15,7 +15,7 @@ Two related smells: (1) every `CLogger` instance creates a new timestamped log f
 
 ## Impact
 
-- Disk creep on customer servers (`C:\temp\vHC\Original\Log` grows without bound), especially once vhc-monitor/scheduled usage makes runs frequent.
+- Disk creep on customer servers (`C:\temp\vHC\Original\Log` grows without bound), especially when scheduled usage makes runs frequent.
 - Per-line open/close measurably slows large collections and produces the lock contention the retry logic compensates for.
 - Possible garbled lines when GUI + background tasks log simultaneously.
 

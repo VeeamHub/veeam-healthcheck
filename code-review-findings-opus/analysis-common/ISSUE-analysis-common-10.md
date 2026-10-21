@@ -1,6 +1,6 @@
 # Dead/stub data models in Analysis/DataModels (empty SOBR, unused Repository)
 
-**Category:** analysis-monitor
+**Category:** analysis-common
 **Severity:** Low
 **Type:** Maintainability
 **File(s):** `vHC/HC_Reporting/Functions/Analysis/DataModels/SOBR.cs:9-11`, `vHC/HC_Reporting/Functions/Analysis/DataModels/Repository.cs:9-18`

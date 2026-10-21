@@ -9,10 +9,10 @@
 | Severity | Count |
 |---|---|
 | Critical | 0 |
-| High | 27 |
-| Medium | 55 |
+| High | 26 |
+| Medium | 50 |
 | Low | 25 |
-| **Total** | **107** |
+| **Total** | **101** |
 
 ### By domain
 
@@ -24,7 +24,7 @@
 | `startup-cli` | 14 |
 | `reporting-vbr-tables` | 12 |
 | `csv-datatypes` | 12 |
-| `analysis-monitor` | 11 |
+| `analysis-common` | 5 |
 | `collection-security` | 5 |
 
 ### Cross-cutting themes (appear in multiple domains)
@@ -42,7 +42,6 @@
 
 | ID | Domain | Title | Conf | First location |
 |---|---|---|---|---|
-| [`analysis-monitor-01`](analysis-monitor/ISSUE-analysis-monitor-01.md) | analysis-monitor | Stop writing DPAPI-protected credentials as plaintext to vhc-monitor.yaml | High | `vHC/HC_Reporting/Functions/Monitor/CVhcMonitorIntegration.cs:84` |
 | [`collection-data-01`](collection-data/ISSUE-collection-data-01.md) | collection-data | Fix ExecutePsScriptWithFailover so it actually fails over to PowerShell 5 | High | `vHC/HC_Reporting/Functions/Collection/PSCollections/PSInvoker.cs:194` |
 | [`collection-data-02`](collection-data/ISSUE-collection-data-02.md) | collection-data | Eliminate WaitForExit-before-ReadToEnd and sequential stream reads that can deadlock child PowerShell processes | High | `vHC/HC_Reporting/Functions/Collection/PSCollections/PSInvoker.cs:160` |
 | [`collection-data-04`](collection-data/ISSUE-collection-data-04.md) | collection-data | TestMfa error-parsing loop is dead code; method always returns true | High | `vHC/HC_Reporting/Functions/Collection/PSCollections/PSInvoker.cs:297` |
@@ -74,13 +73,8 @@
 
 | ID | Domain | Title | Conf | First location |
 |---|---|---|---|---|
-| [`analysis-monitor-02`](analysis-monitor/ISSUE-analysis-monitor-02.md) | analysis-monitor | Fix truncated process output: WaitForExit(timeout) returns before async stdout/stderr drain | High | `vHC/HC_Reporting/Functions/Monitor/CVhcMonitorIntegration.cs:286` |
-| [`analysis-monitor-03`](analysis-monitor/ISSUE-analysis-monitor-03.md) | analysis-monitor | Harden EscapeYaml against newlines/control characters and escape vbrServer in URL (YAML injection) | High | `vHC/HC_Reporting/Functions/Monitor/CVhcMonitorIntegration.cs:297` |
-| [`analysis-monitor-04`](analysis-monitor/ISSUE-analysis-monitor-04.md) | analysis-monitor | Scheduled task registered without principal/logon type — monitor likely stops when user logs off | Medium | `vHC/HC_Reporting/Functions/Monitor/CVhcMonitorIntegration.cs:136` |
-| [`analysis-monitor-05`](analysis-monitor/ISSUE-analysis-monitor-05.md) | analysis-monitor | Guard RunNow/TestConnection against missing exe — Process.Start exception escapes into Task.Run and strands the GUI | High | `vHC/HC_Reporting/Functions/Monitor/CVhcMonitorIntegration.cs:176` |
-| [`analysis-monitor-06`](analysis-monitor/ISSUE-analysis-monitor-06.md) | analysis-monitor | CLogger.LogLine only retries IOException — other exceptions from the logging path can crash the app | High | `vHC/HC_Reporting/Common/Logging/CLogger.cs:111` |
-| [`analysis-monitor-09`](analysis-monitor/ISSUE-analysis-monitor-09.md) | analysis-monitor | Localization helpers have no missing-key fallback and a single-point-of-failure static initializer | High | `vHC/HC_Reporting/Resources/Localization/VbrLocalizationHelper.cs:6` |
-| [`analysis-monitor-11`](analysis-monitor/ISSUE-analysis-monitor-11.md) | analysis-monitor | IsTaskRegistered spawns PowerShell synchronously (up to 30s) and is called on the WPF UI thread | High | `vHC/HC_Reporting/Functions/Monitor/CVhcMonitorIntegration.cs:38` |
+| [`analysis-common-06`](analysis-common/ISSUE-analysis-common-06.md) | analysis-common | CLogger.LogLine only retries IOException — other exceptions from the logging path can crash the app | High | `vHC/HC_Reporting/Common/Logging/CLogger.cs:111` |
+| [`analysis-common-09`](analysis-common/ISSUE-analysis-common-09.md) | analysis-common | Localization helpers have no missing-key fallback and a single-point-of-failure static initializer | High | `vHC/HC_Reporting/Resources/Localization/VbrLocalizationHelper.cs:6` |
 | [`collection-data-03`](collection-data/ISSUE-collection-data-03.md) | collection-data | Reorder ExecutePsScript timeout handling: stream tasks are awaited before the timeout/kill branch can run | High | `vHC/HC_Reporting/Functions/Collection/PSCollections/PSInvoker.cs:417` |
 | [`collection-data-09`](collection-data/ISSUE-collection-data-09.md) | collection-data | CRegReader.DefaultLogDir returns null instead of the default path when the Veeam registry key is missing | High | `vHC/HC_Reporting/Functions/Collection/DB/CRegReader.cs:557` |
 | [`collection-data-10`](collection-data/ISSUE-collection-data-10.md) | collection-data | CLogParser silently swallows per-file errors and writes unvalidated parse results into waits.csv | High | `vHC/HC_Reporting/Functions/Collection/LogParser/CLogParser.cs:163` |
@@ -134,9 +128,9 @@
 
 | ID | Domain | Title | Conf | First location |
 |---|---|---|---|---|
-| [`analysis-monitor-07`](analysis-monitor/ISSUE-analysis-monitor-07.md) | analysis-monitor | CLogger.Debug ignores its silent parameter | High | `vHC/HC_Reporting/Common/Logging/CLogger.cs:70` |
-| [`analysis-monitor-08`](analysis-monitor/ISSUE-analysis-monitor-08.md) | analysis-monitor | Unbounded log accumulation and per-line file open/close in CLogger | High | `vHC/HC_Reporting/Common/Logging/CLogger.cs:17` |
-| [`analysis-monitor-10`](analysis-monitor/ISSUE-analysis-monitor-10.md) | analysis-monitor | Remove dead Analysis data models: empty SOBR class and unused Repository class | High | `vHC/HC_Reporting/Functions/Analysis/DataModels/SOBR.cs:9` |
+| [`analysis-common-07`](analysis-common/ISSUE-analysis-common-07.md) | analysis-common | CLogger.Debug ignores its silent parameter | High | `vHC/HC_Reporting/Common/Logging/CLogger.cs:70` |
+| [`analysis-common-08`](analysis-common/ISSUE-analysis-common-08.md) | analysis-common | Unbounded log accumulation and per-line file open/close in CLogger | High | `vHC/HC_Reporting/Common/Logging/CLogger.cs:17` |
+| [`analysis-common-10`](analysis-common/ISSUE-analysis-common-10.md) | analysis-common | Remove dead Analysis data models: empty SOBR class and unused Repository class | High | `vHC/HC_Reporting/Functions/Analysis/DataModels/SOBR.cs:9` |
 | [`collection-data-14`](collection-data/ISSUE-collection-data-14.md) | collection-data | Ps7Executor.IsModuleInstalled always returns true; RunScript invokes script path via -Command | High | `vHC/HC_Reporting/Functions/Collection/PSCollections/PowerShell7Executor.cs:39` |
 | [`collection-data-16`](collection-data/ISSUE-collection-data-16.md) | collection-data | CCsvValidator wildcard substring matching can validate the wrong file as present | Medium | `vHC/HC_Reporting/Functions/Collection/CCsvValidator.cs:138` |
 | [`collection-data-17`](collection-data/ISSUE-collection-data-17.md) | collection-data | CRegReader stores per-instance registry results in static fields | High | `vHC/HC_Reporting/Functions/Collection/DB/CRegReader.cs:17` |

@@ -196,7 +196,7 @@ the `PowerShellVersion` enum, lives in `Functions.Collection.PSCollections`). So
 `Functions.Collection` specifically, this call site genuinely is the first *live* instance of
 that coupling direction. But "first live instance anywhere in the repo" overstated it: several
 other `Functions.*` classes (`CredsHandler`, `AvaloniaCredentialPrompter`, `ServerListCommitter`,
-`ServerListEditor`, `ManageServersDialog`, `CVhcMonitorIntegration`) already reach into `Startup`
+`ServerListEditor`, `ManageServersDialog`, and at the time the since-removed monitor integration) already reach into `Startup`
 live, via `CredentialStore` and similar. This diff does create a new two-way namespace dependency
 specifically for `Functions.Collection` ↔ `Startup` (`CClientFunctions.cs` already depends on
 `Functions.Collection` via its own `using`, so this adds the reverse edge for that one namespace
