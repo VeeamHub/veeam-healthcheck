@@ -22,6 +22,8 @@ checksums, and scan results.
 
 - Collection no longer loses `_nasBackup.csv`, `_nasBCJ.csv` or the restore-point sizing sweep when a job or backup references a repository that was deleted ("Unable to find repository id"). The broken object is skipped with a warning and everything else is collected; the skipped objects are listed in `_BrokenRepositoryReferences.csv`. The restore-point sweep also skips any single backup it cannot read (for example an encrypted or plug-in backup) with a warning instead of failing as a whole, `_nasBackup.csv` always carries its size columns, and Job Info shows 0 instead of failing when a CSV lacks them.
 - Job Info no longer stops rendering when a NAS backup job has no matching row in `_nasBackup.csv`; the later job sections and the Tape and Entra tables now appear.
+- VB365: the Local Repositories Free column now shows the real free-space percentage instead of always `0.00 %`.
+- VB365: jobs with no schedule now get the warning highlight in the Jobs table; a case mismatch ("Not Scheduled" vs the collector's "Not scheduled") kept it from ever applying.
 
 ### Removed
 
