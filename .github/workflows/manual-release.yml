@@ -73,7 +73,6 @@ jobs:
 
     - name: Run tests
       run: dotnet test vHC/HC.sln --configuration Release --no-build --verbosity normal
-      continue-on-error: true
 
     - name: Get version
       id: get_version

@@ -11,9 +11,13 @@
     "SecurityComplianceMeta": "sidecar written unconditionally by Export-VhciComplianceMeta",
     "UserRoles": "every VBR server has at least the installing admin role assignment",
     "configBackup": "every VBR server has a configuration backup job object (enabled or not)",
-    "orphanedSupersededBackupsMeta": "one-row signal file, written unconditionally by Get-VhcOrphanedSupersededBackups",
+    "orphanedSupersededBackupsMeta": "one-row signal file, written unconditionally by Get-VhcOrphanedSupersededBackups when VHC_EXPERIMENTS is on (see requiresExperiments)",
     "AllServersRequirementsComparison": "concurrency analysis emits a row for every server role; written on all three labs",
     "CollectionManifest": "written unconditionally at the end of Get-VBRConfig.ps1 (not in the collector log, so not observed in run 38980131816)"
+  },
+  "requiresExperiments": {
+    "orphanedSupersededBackups": "Orphaned & Superseded Backups detail rows; only collected with VHC_EXPERIMENTS on. Test-VhcLiveRun.ps1 -ExperimentsOff drops it from every required/profile list",
+    "orphanedSupersededBackupsMeta": "Orphaned & Superseded Backups signal file; only guaranteed with VHC_EXPERIMENTS on. Allowed either way when -ExperimentsOff"
   },
   "labCommon": {
     "Credentials": "written with rows on all three lab servers in run 38980131816 (collector log: Exporting data, no 'No records to export')",
@@ -83,6 +87,20 @@
     }
   },
   "columns": {
+    "vbrinfo": {
+      "required": [
+        "Version",
+        "DbType"
+      ],
+      "reader": "CBackupServerTableHelper.cs:59,95-99 (ReadCollectedDbType: CCsvParser.BnrCsvParser().FirstOrDefault().DbType, used when the local registry value CGlobals.DBTYPE is empty, i.e. remote runs); Version is read by the same CBnRCsvInfo row. Get-VhcVbrInfo.ps1 always emits the DbType property (registry value, or REST serverInfo databaseVendor via Get-VhciRestDbType.ps1 on remote runs), so the column exists even when its value is empty; the value itself is asserted by -Check DbType."
+    },
+    "entraTenantJob": {
+      "required": [
+        "Name",
+        "RetentionPolicy"
+      ],
+      "reader": "CEntraObjects.cs:46-55 (CEntraTenantJobs, positional Name, RetentionPolicy as int?) via CCsvParser.GetDynamicEntraTenantJobs() (CCsvParser.cs:881); rendered at CEntraJobsTable.cs:79-88. Get-VhcEntraId.ps1 writes both columns. The numeric value is asserted by -Check EntraTenantJob."
+    },
     "configBackup": {
       "required": [
         "Enabled",
@@ -182,14 +200,11 @@
         "Name",
         "Role"
       ],
-      "reader": "CUserRolesTable.cs:37-55 (dynamic name, role, description) via CCsvParser.GetDynamicUserRoles().",
+      "reader": "CUserRolesTable.cs (dynamic name, role) via CCsvParser.GetDynamicUserRoles().",
       "dropped": {
         "AccountSid": "run 38984338014 live output lacks it; no C# reader consumes it",
         "ObjectType": "run 38984338014 live output lacks it; no C# reader consumes it",
         "CreationTime": "run 38984338014 live output lacks it; no C# reader consumes it"
-      },
-      "knownGaps": {
-        "Description": "CUserRolesTable.cs renders a Description column but Get-VBRUserRoleAssignment (Get-VhcUserRoles.ps1:15) has no such property, so the User Roles table Description column is always blank (all 3 labs, run 38984338014 HTML)"
       }
     },
     "AgentBackupJob": {

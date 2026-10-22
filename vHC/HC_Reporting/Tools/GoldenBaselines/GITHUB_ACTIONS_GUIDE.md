@@ -158,7 +158,7 @@ The Algorithm agent identified **14 CSV-to-C# mapping mismatches** that need fix
 ### High Priority Fixes
 
 1. **_Proxies.csv** - Column order completely different from CProxyCsvInfos.cs
-2. **_CdpProxy.csv** - Column names and order differ significantly
+2. ~~**_CdpProxy.csv** - Column names and order differ significantly~~ fixed: fixture regenerated to the collector header (Get-VhciCdpProxy.ps1)
 3. **_HvProxy.csv** - Column order and names differ
 4. **_configBackup.csv** - Column order completely different
 5. **malware_*.csv** - CSV columns don't match C# properties at all

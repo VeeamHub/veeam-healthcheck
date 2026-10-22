@@ -62,7 +62,7 @@ namespace VhcXTests.Functions.Reporting.Html.VB365
             Assert.Contains("Proxies.csv", result.PresentFiles);
         }
 
-        [Fact(Skip = "bug: CriticalVb365Files lists Repositories.csv but the collector writes LocalRepositories.csv, so a complete VB365 export is reported as missing a critical file")]
+        [Fact]
         public void ValidateCsvFiles_CompleteVb365Export_HasNoMissingCriticalFiles()
         {
             using var h = new Vb365ReportHarness();
@@ -107,7 +107,7 @@ namespace VhcXTests.Functions.Reporting.Html.VB365
             }
         }
 
-        [Fact(Skip = "bug: with /import, vb365dir == vbrDir, so CReportModeSelector also runs the VBR compiler over VB365 CSVs and writes a bogus _VBR_ report")]
+        [Fact]
         public void ModeSelector_Vb365Import_DoesNotProduceVbrReport()
         {
             using var h = new Vb365ReportHarness();
@@ -122,6 +122,31 @@ namespace VhcXTests.Functions.Reporting.Html.VB365
 
                 var vbr = Directory.GetFiles(Path.Combine(h.Root, "vHC-Report"), "*_VBR_*");
                 Assert.True(vbr.Length == 0, "unexpected VBR output: " + string.Join(", ", vbr.Select(Path.GetFileName)));
+            }
+            finally
+            {
+                CGlobals.RunFullReport = origFull;
+                CGlobals.RunSecReport = origSec;
+            }
+        }
+
+        [Fact]
+        public void ModeSelector_VbrImport_DoesNotProduceVb365Report()
+        {
+            using var h = new VhcXTests.TestData.GoldenVbrReport();
+            bool origFull = CGlobals.RunFullReport;
+            bool origSec = CGlobals.RunSecReport;
+            try
+            {
+                CGlobals.RunFullReport = true;
+                CGlobals.RunSecReport = false;
+
+                new CReportModeSelector().Run();
+
+                string output = Path.Combine(h.Root, "vHC-Report");
+                Assert.NotEmpty(Directory.GetFiles(output, "*_VBR_*.html"));
+                var vb365 = Directory.GetFiles(output, "*_VB365_*");
+                Assert.True(vb365.Length == 0, "unexpected VB365 output: " + string.Join(", ", vb365.Select(Path.GetFileName)));
             }
             finally
             {

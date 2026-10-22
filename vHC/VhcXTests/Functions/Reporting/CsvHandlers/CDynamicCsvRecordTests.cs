@@ -54,6 +54,25 @@ namespace VhcXTests.Functions.Reporting.CsvHandlers
             Assert.Equal(34, CDynamicCsvRecord.GetDouble((object)rows[0], "SOURCEGB"));
         }
 
+        [Theory]
+        [InlineData("256.75", 256.75)]
+        [InlineData("1024.50", 1024.5)]
+        [InlineData("not-a-number", 0)]
+        public void GetDouble_GermanCurrentCulture_ParsesInvariant(string raw, double expected)
+        {
+            var rows = Read("Name,OnDiskGB\nnas1," + raw + "\n");
+            CultureInfo previous = CultureInfo.CurrentCulture;
+            CultureInfo.CurrentCulture = new CultureInfo("de-DE");
+            try
+            {
+                Assert.Equal(expected, CDynamicCsvRecord.GetDouble((object)rows[0], "ondiskgb"));
+            }
+            finally
+            {
+                CultureInfo.CurrentCulture = previous;
+            }
+        }
+
         [Fact]
         public void GetString_NullRecordOrNonRecord_ReturnsNull()
         {

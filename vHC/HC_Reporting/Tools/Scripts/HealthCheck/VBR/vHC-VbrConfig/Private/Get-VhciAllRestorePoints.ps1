@@ -15,8 +15,8 @@ function Get-VhciAllRestorePoints {
         repository is also recorded for the report. Restore points are de-duplicated by Id
         because a parent backup can list its children's points too.
 
-        If there are no backups to fall back to, or the backups themselves cannot be
-        listed, the original error is rethrown, so a real failure (the VBR server is
+        If there are no backups to fall back to, the backups themselves cannot be listed,
+        or not one backup can be read, the original error is rethrown, so a real failure (the VBR server is
         unreachable, say) still fails the sweep and is logged as ERROR by Get-VhcJob.
     .Outputs
         [object[]] the restore points that could be read.
@@ -43,6 +43,7 @@ function Get-VhciAllRestorePoints {
 
     $seen   = [System.Collections.Generic.HashSet[string]]::new([System.StringComparer]::OrdinalIgnoreCase)
     $points = [System.Collections.Generic.List[object]]::new()
+    $backupsRead = 0
 
     foreach ($backup in $backups) {
         try {
@@ -53,6 +54,7 @@ function Get-VhciAllRestorePoints {
                 if ($key -and -not $seen.Add($key)) { continue }
                 $points.Add($point)
             }
+            $backupsRead++
         } catch {
             $backupRepoId = Get-VhciMissingRepositoryId -Message $_.Exception.Message
             if ($backupRepoId) {
@@ -63,6 +65,10 @@ function Get-VhciAllRestorePoints {
             }
         }
     }
+
+    # Reading no backup at all recovered nothing; an empty sweep would report a clean
+    # server and skip per-job sizing, so fail the sweep as the bulk call did.
+    if ($backupsRead -eq 0) { throw $firstError }
 
     return $points.ToArray()
 }

@@ -64,9 +64,12 @@ namespace VeeamHealthCheck.Functions.Reporting.CsvHandlers
 
         private CsvReader CReader(string csvToRead)
         {
-            TextReader reader = new StreamReader(csvToRead);
-            var csvReader = new CsvReader(reader, this.csvConfig);
-            return csvReader;
+            // Streamed, not buffered: session CSVs can be hundreds of MB. Callers enumerate GetRecords
+            // lazily and may never dispose, so share Delete/Write to keep Windows from locking the
+            // file against delete or replace while the reader is alive. Disposing the CsvReader
+            // closes the handle.
+            var stream = new FileStream(csvToRead, FileMode.Open, FileAccess.Read, FileShare.ReadWrite | FileShare.Delete);
+            return new CsvReader(new StreamReader(stream), this.csvConfig);
         }
 
         private CsvConfiguration GetCsvConfig()

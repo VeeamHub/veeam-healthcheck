@@ -1,2 +1,2 @@
-"Id","Name","HostId","CacheRepository","CachePath","CacheSizeGB","MaxTaskCount","ServerId","IsEnabled"
-"cccccccc-dddd-eeee-ffff-000000000000","CDP-PROXY01","33333333-4444-5555-6666-777777777777","Default Backup Repository","E:\CDPCache","100","4","33333333-4444-5555-6666-777777777777","True"
+"ServerId","CacheSize","CachePath","IsEnabled","SourceProxyTrafficPort","TargetProxyTrafficPort","Id","Name","Description"
+"33333333-4444-5555-6666-777777777777","100","E:\CDPCache","True","16001","16002","cccccccc-dddd-eeee-ffff-000000000000","CDP-PROXY01",""

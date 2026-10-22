@@ -80,6 +80,21 @@ namespace VhcXTests.Functions.Reporting.Html.VBR
             Assert.Equal(expected, ConfigDatabaseDbType());
         }
 
+        // Remote runs: every registry-derived column is empty and DbType comes from REST serverInfo.
+        [Theory]
+        [InlineData("PostgreSql", "PG SQL")]
+        [InlineData("MsSql", "MS SQL")]
+        [InlineData("", "Unknown")]
+        public void Render_RemoteShapedVbrInfoWithRestDbType_ShowsVendorOrUnknown(string restVendor, string expected)
+        {
+            File.WriteAllText(
+                Path.Combine(VbrDir, "srv_vbrinfo.csv"),
+                "\"Version\",\"Fixes\",\"SqlServer\",\"Instance\",\"PgHost\",\"PgDb\",\"MsHost\",\"MsDb\",\"DbType\",\"MFA\"\r\n" +
+                $"\"13.0.1.1071\",\"\",\"\",\"\",\"\",\"\",\"\",\"\",\"{restVendor}\",\"Enabled\"");
+
+            Assert.Equal(expected, ConfigDatabaseDbType());
+        }
+
         [Fact]
         public void Render_NoLiveDbTypeAndNoVbrInfo_ShowsUnknownNotBlank()
         {
@@ -102,6 +117,8 @@ namespace VhcXTests.Functions.Reporting.Html.VBR
         [InlineData("", "Unknown")]
         [InlineData(null, "Unknown")]
         [InlineData("Oracle", "Unknown")]
+        [InlineData("postgresql", "PG SQL")]
+        [InlineData(" MsSql ", "MS SQL")]
         public void ResolveDbType_NoLiveValue_MapsCollectedValue(string collected, string expected)
         {
             Assert.Equal(expected, CBackupServerTableHelper.ResolveDbType(null, collected));

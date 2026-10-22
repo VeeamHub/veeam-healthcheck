@@ -99,7 +99,7 @@ namespace VhcXTests.Functions.Reporting.Html.VB365
             Assert.Contains("cell-warning", row[2]);
         }
 
-        [Fact(Skip = "bug: Vb365Controllers does Split()[3] on the OS string; a short value throws into an empty catch and the row vanishes")]
+        [Fact]
         public void Vb365Controllers_ShortOsVersionString_StillRendersRow()
         {
             using var h = new Vb365ReportHarness();
@@ -109,6 +109,34 @@ namespace VhcXTests.Functions.Reporting.Html.VB365
 
             Assert.Single(rows);
             Assert.Contains("contoso-vb365-ctl01", rows[0][12]);
+            Assert.Equal("Windows", Cell(rows[0][1]));
+        }
+
+        [Theory]
+        [InlineData("", "")]
+        [InlineData("Microsoft Windows NT", "")]
+        [InlineData("Microsoft Windows NT unknown", "")]
+        [InlineData("Microsoft Windows NT 6", "")]
+        [InlineData("Microsoft Windows NT 6.1.7601.0", "cell-danger")]
+        [InlineData("Microsoft Windows NT 6.3.9600.0", "cell-warning")]
+        [InlineData("Microsoft Windows NT 10.0.20348.0", "")]
+        public void Vb365Controllers_OsVersionFormats_PreserveRowAndKnownVersionShades(string osVersion, string expectedShade)
+        {
+            using var h = new Vb365ReportHarness();
+            h.Edit("Controller.csv", s => s.Replace("Microsoft Windows NT 10.0.20348.0", osVersion));
+
+            var row = Assert.Single(Vb365ReportHarness.Rows(new CM365Tables().Vb365Controllers()));
+
+            Assert.Contains("contoso-vb365-ctl01", row[12]);
+            Assert.Equal(osVersion, Cell(row[1]));
+            if (expectedShade.Length == 0)
+            {
+                Assert.DoesNotContain("class=", row[1]);
+            }
+            else
+            {
+                Assert.Contains(expectedShade, row[1]);
+            }
         }
 
         [Fact]
@@ -143,7 +171,7 @@ namespace VhcXTests.Functions.Reporting.Html.VB365
                 names);
         }
 
-        [Fact(Skip = "bug: Jobs() uses 'break' on an empty Organization, so every later job row is dropped (should be 'continue' or render it)")]
+        [Fact]
         public void Jobs_RowWithEmptyOrganization_DoesNotDropLaterRows()
         {
             using var h = new Vb365ReportHarness();
@@ -151,10 +179,12 @@ namespace VhcXTests.Functions.Reporting.Html.VB365
 
             var names = Vb365ReportHarness.Rows(new CM365Tables().Jobs()).Select(r => Cell(r[1])).ToArray();
 
+            Assert.Equal(4, names.Length);
+            Assert.Contains("München-SharePoint-Teams-Backup", names);
             Assert.Contains("OnPrem-Exchange-Backup", names);
         }
 
-        [Fact(Skip = "bug: Jobs() compares Schedule to 'Not Scheduled' but the collector writes 'Not scheduled', so the warning shade never applies")]
+        [Fact]
         public void Jobs_NotScheduledJob_ScheduleCellIsWarning()
         {
             using var h = new Vb365ReportHarness();
@@ -165,7 +195,7 @@ namespace VhcXTests.Functions.Reporting.Html.VB365
             Assert.Contains("cell-warning", row[11]);
         }
 
-        [Fact(Skip = "bug: Vb365Repos parses '8.250 TB (0.00 %)' with double.TryParse, which fails, so the free-space shade never applies (and 'freeSpace = 1' was meant to be 'freeShade = 1')")]
+        [Fact]
         public void Vb365Repos_RepoUnderFivePercentFree_FreeCellIsDanger()
         {
             using var h = new Vb365ReportHarness();
@@ -175,9 +205,35 @@ namespace VhcXTests.Functions.Reporting.Html.VB365
             // Contoso-Düsseldorf-Repo: 0.040 TB free of 1.000 TB.
             Assert.Contains("cell-danger", rows[2][9]);
             Assert.DoesNotContain("class=", rows[0][9]);
+            Assert.DoesNotContain("class=", rows[1][9]);
         }
 
-        [Fact(Skip = "bug: Vb365ObjectRepos computes freeSpaceShade but never passes it to TableData")]
+        [Theory]
+        [InlineData("0.000 TB (0.00 %)", "cell-danger")]
+        [InlineData("0.049 TB (0.00 %)", "cell-danger")]
+        [InlineData("0.050 TB (0.00 %)", "cell-warning")]
+        [InlineData("0.099 TB (0.00 %)", "cell-warning")]
+        [InlineData("0.100 TB (0.00 %)", "")]
+        public void Vb365Repos_FreeSpaceThresholds_ApplyExpectedShade(string freeSpace, string expectedShade)
+        {
+            using var h = new Vb365ReportHarness();
+            h.Edit("LocalRepositories.csv", s => s.Replace("0.040 TB (0.00 %)", freeSpace));
+
+            var rows = Vb365ReportHarness.Rows(new CM365Tables().Vb365Repos());
+
+            Assert.Equal(3, rows.Count);
+            Assert.Equal(freeSpace, Cell(rows[2][9]));
+            if (expectedShade.Length == 0)
+            {
+                Assert.DoesNotContain("class=", rows[2][9]);
+            }
+            else
+            {
+                Assert.Contains(expectedShade, rows[2][9]);
+            }
+        }
+
+        [Fact]
         public void Vb365ObjectRepos_AlmostFullRepo_FreeSpaceCellIsShaded()
         {
             using var h = new Vb365ReportHarness();
@@ -186,9 +242,10 @@ namespace VhcXTests.Functions.Reporting.Html.VB365
             var rows = Vb365ReportHarness.Rows(new CM365Tables().Vb365ObjectRepos());
 
             Assert.Contains("class=\"cell-", rows[0][8]);
+            Assert.Contains("cell-danger", rows[0][8]);
         }
 
-        [Fact(Skip = "bug: Vb365Security computes cert-expiry shades but never passes them to TableData, so an expired cert is not flagged")]
+        [Fact]
         public void Vb365Security_ExpiredCertificate_ExpiryCellIsDanger()
         {
             using var h = new Vb365ReportHarness();
@@ -198,6 +255,36 @@ namespace VhcXTests.Functions.Reporting.Html.VB365
             // Restore Portal cert expired 01/15/2020.
             var portal = rows.Single(r => Cell(r[0]) == "Restore Portal");
             Assert.Contains("cell-danger", portal[4]);
+        }
+
+        [Theory]
+        [InlineData(-1, "cell-danger")]
+        [InlineData(30, "cell-warning")]
+        [InlineData(90, "")]
+        public void Vb365Security_CertificateExpiryThresholds_ShadeEveryService(int daysUntilExpiry, string expectedShade)
+        {
+            using var h = new Vb365ReportHarness();
+            string expiry = System.DateTime.Today.AddDays(daysUntilExpiry).ToString("MM/dd/yyyy", System.Globalization.CultureInfo.InvariantCulture);
+            h.Edit("Security.csv", s => s
+                .Replace("\"06/30/2099\"", $"\"{expiry}\"")
+                .Replace("\"01/15/2020\"", $"\"{expiry}\"")
+                .Replace("\"False\",\"\",\"\",\"False\"", $"\"False\",\"\",\"{expiry}\",\"False\""));
+
+            var rows = Vb365ReportHarness.Rows(new CM365Tables().Vb365Security()).Where(r => r.Count == 6).ToList();
+
+            Assert.Equal(5, rows.Count);
+            Assert.All(rows, row =>
+            {
+                Assert.Equal(expiry, Cell(row[4]));
+                if (expectedShade.Length == 0)
+                {
+                    Assert.DoesNotContain("class=", row[4]);
+                }
+                else
+                {
+                    Assert.Contains(expectedShade, row[4]);
+                }
+            });
         }
 
         [Fact]
@@ -232,7 +319,7 @@ namespace VhcXTests.Functions.Reporting.Html.VB365
             Assert.Equal("10", cells[0]);
         }
 
-        [Fact(Skip = "bug: Globals() divides licensesUsed by licensedFor in decimal; 0 licensed throws DivideByZeroException into an empty catch and the whole row disappears")]
+        [Fact]
         public void Globals_ZeroLicensedUsers_StillRendersLicenseStatus()
         {
             using var h = new Vb365ReportHarness();
@@ -241,6 +328,35 @@ namespace VhcXTests.Functions.Reporting.Html.VB365
             string html = new CM365Tables().Globals();
 
             Assert.Contains("Contoso Holdings Ltd", html);
+            var row = Assert.Single(Vb365ReportHarness.Rows(html));
+            Assert.Equal("0", Cell(row[6]));
+            Assert.Equal("4300", Cell(row[7]));
+            Assert.Contains("cell-danger", row[7]);
+        }
+
+        [Theory]
+        [InlineData("0", "0", "")]
+        [InlineData("5000", "4500", "")]
+        [InlineData("5000", "4501", "cell-warning")]
+        [InlineData("5000", "4750", "cell-warning")]
+        [InlineData("5000", "4751", "cell-danger")]
+        public void Globals_LicenseUsageThresholds_ApplyExpectedShade(string licensedFor, string used, string expectedShade)
+        {
+            using var h = new Vb365ReportHarness();
+            h.Edit("Global.csv", s => s.Replace("\"5000\"", $"\"{licensedFor}\"").Replace("\"4300\"", $"\"{used}\""));
+
+            var row = Assert.Single(Vb365ReportHarness.Rows(new CM365Tables().Globals()));
+
+            Assert.Equal(licensedFor, Cell(row[6]));
+            Assert.Equal(used, Cell(row[7]));
+            if (expectedShade.Length == 0)
+            {
+                Assert.DoesNotContain("class=", row[7]);
+            }
+            else
+            {
+                Assert.Contains(expectedShade, row[7]);
+            }
         }
     }
 }

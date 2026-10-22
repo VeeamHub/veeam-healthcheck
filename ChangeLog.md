@@ -18,15 +18,49 @@ checksums, and scan results.
 - `SECURITY.md`: how to report a vulnerability privately, what the tool reads and writes, how releases are
   built, how to verify a download, and the known gaps.
 
-### Fixed
+### Changed
 
-- Collection no longer loses `_nasBackup.csv`, `_nasBCJ.csv` or the restore-point sizing sweep when a job or backup references a repository that was deleted ("Unable to find repository id"). The broken object is skipped with a warning and everything else is collected; the skipped objects are listed in `_BrokenRepositoryReferences.csv`. The restore-point sweep also skips any single backup it cannot read (for example an encrypted or plug-in backup) with a warning instead of failing as a whole, `_nasBackup.csv` always carries its size columns, and Job Info shows 0 instead of failing when a CSV lacks them.
-- Job Info no longer stops rendering when a NAS backup job has no matching row in `_nasBackup.csv`; the later job sections and the Tape and Entra tables now appear.
+- The VBR User Roles table no longer shows a Description column. VBR does not expose a description for role
+  assignments, so the column was always blank.
+- The `proxies` section of the JSON export uses new column names that match the values in each row:
+  `IsOnHost`, `NetBufferSize`, `MaxConcurrentJobs` and `IsHvOffload` are replaced by `FailoverToNetwork`,
+  `ChassisType`, `CachePath`, `CacheSize` and `IsDisabled`. Anything that reads those keys needs updating.
 
 ### Removed
 
 - The release package no longer ships the developer validation harness (`vHC-VbrConfig\Validation`) or the
   module's Pester test files.
+
+### Fixed
+
+- Job backup data size and source size include restore points for objects removed from the job again (for
+  example, a VM taken out of a job whose older restore points are still on disk), as in 3.0.1.193. 3.1.0 left
+  them out to list them in the Orphaned & Superseded Backups section, which is hidden by default. That split,
+  and the full restore point scan it forced on every run, now happen only when `VHC_EXPERIMENTS` is set.
+- Importing CSVs with `/import` now produces only the report for the product the files came from. A VB365
+  import no longer also writes an empty VBR report, and a VBR import no longer writes a VB365 report.
+- A complete VB365 export is no longer reported as missing a critical file (`LocalRepositories.csv`).
+- VB365 report: Jobs rows after a job with no organization are no longer dropped, unscheduled jobs get their
+  warning shading, the license row renders when 0 licenses are assigned, Controllers rows with a short OS string
+  are no longer dropped, repository and object storage free-space shading now applies, and expired
+  certificates on the Security table are flagged.
+- VB365 report: tooltips on the Organizations and Object Storage tables that were missing are back.
+- PowerPoint export now carries every table row and uses the report's visible section headings as slide
+  titles.
+- `/pdf` no longer crashes the process (exit code 134) when the PDF engine is unavailable, such as off
+  Windows.
+- A PDF export failure no longer stops the PowerPoint export, and a PowerPoint failure no longer skips
+  opening the report. Each failed format is logged as an error, and the HTML report is still reported as
+  written.
+- A second PDF export in the same session (for example, running two reports from the GUI) no longer hangs
+  for five minutes. The PDF engine can only be started once per process, so it is now shared.
+- CSV files are no longer left locked after they are read.
+- Remote VBR runs now report the configuration database type (MS SQL or PostgreSQL) instead of "Unknown",
+  read from the VBR REST API.
+- VB365 collection now records the real free-space percentage for local repositories instead of 0.00 %.
+- Scrubbed reports now anonymize the CDP proxy cache path.
+- Collection no longer loses `_nasBackup.csv`, `_nasBCJ.csv` or the restore-point sizing sweep when a job or backup references a repository that was deleted ("Unable to find repository id"). The broken object is skipped with a warning and everything else is collected; the skipped objects are listed in `_BrokenRepositoryReferences.csv`. The restore-point sweep also skips any single backup it cannot read (for example an encrypted or plug-in backup) with a warning instead of failing as a whole, `_nasBackup.csv` always carries its size columns, and Job Info shows 0 instead of failing when a CSV lacks them.
+- Job Info no longer stops rendering when a NAS backup job has no matching row in `_nasBackup.csv`; the later job sections and the Tape and Entra tables now appear.
 
 ### Security
 
@@ -40,6 +74,7 @@ checksums, and scan results.
   (event 4688, Sysmon) could read them. They now reach the collector through its environment, and the
   collector clears them once read. The `-Password` and `-PasswordBase64` script parameters still work for
   manual runs.
+
 
 ## [3.1.0] - 2026-10-16
 

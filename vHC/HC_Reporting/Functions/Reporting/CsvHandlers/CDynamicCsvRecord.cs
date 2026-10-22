@@ -43,6 +43,8 @@ namespace VeeamHealthCheck.Functions.Reporting.CsvHandlers
         /// <summary>
         /// Returns <paramref name="column"/> parsed as a number, or 0 when the column is
         /// missing, empty or not a number (unknown is shown as 0, as a blank cell always was).
+        /// Parsed with the invariant culture, as the collector writes it: under a culture such as
+        /// de-DE, CurrentCulture would read "256.75" as 25675.
         /// </summary>
         /// <param name="record">A record from a dynamic CSV read.</param>
         /// <param name="column">The column name.</param>
@@ -50,7 +52,7 @@ namespace VeeamHealthCheck.Functions.Reporting.CsvHandlers
         internal static double GetDouble(object record, string column)
         {
             string text = GetString(record, column);
-            return double.TryParse(text, NumberStyles.Float | NumberStyles.AllowThousands, CultureInfo.CurrentCulture, out double value) ? value : 0;
+            return double.TryParse(text, NumberStyles.Float | NumberStyles.AllowThousands, CultureInfo.InvariantCulture, out double value) ? value : 0;
         }
     }
 }

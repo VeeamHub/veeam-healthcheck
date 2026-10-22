@@ -23,7 +23,6 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR.VbrTables.GeneralSetting
 
             s += this.form.TableHeaderLeftAligned("Name", string.Empty);
             s += this.form.TableHeader("Role", string.Empty);
-            s += this.form.TableHeader("Description", string.Empty);
 
             s += this.form.TableHeaderEnd();
             s += this.form.TableBodyStart();
@@ -38,7 +37,7 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR.VbrTables.GeneralSetting
 
                 if (!data.Any())
                 {
-                    s += "<tr><td colspan='3' style='text-align: center; padding: 20px; color: #666;'><em>No user role assignments detected.</em></td></tr>";
+                    s += "<tr><td colspan='2' style='text-align: center; padding: 20px; color: #666;'><em>No user role assignments detected.</em></td></tr>";
                 }
                 else
                 {
@@ -48,7 +47,7 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR.VbrTables.GeneralSetting
 
                         // CsvHelper's FastDynamicObject implements IDictionary<string, object> and
                         // PrepareHeaderForMatch lowercases keys. TryGetValue avoids RuntimeBinderException
-                        // when a real-world CSV omits a column (e.g. _UserRoles.csv has no Description column).
+                        // when a real-world CSV omits a column.
                         var row = (IDictionary<string, object>)item;
                         string name = row.TryGetValue("name", out var n) ? (string)(n ?? "") : "";
                         if (scrub)
@@ -57,19 +56,12 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR.VbrTables.GeneralSetting
                         }
 
                         string role = row.TryGetValue("role", out var r) ? (string)(r ?? "") : ""; // Role is a Veeam-internal enum string, not PII — intentionally not scrubbed
-                        string description = row.TryGetValue("description", out var d) ? (string)(d ?? "") : "";
-                        if (scrub)
-                        {
-                            description = CGlobals.Scrubber.ScrubItem(description, ScrubItemType.Item);
-                        }
-
                         s += this.form.TableDataLeftAligned(name, string.Empty);
                         s += this.form.TableData(role, string.Empty);
-                        s += this.form.TableData(description, string.Empty);
 
                         s += "</tr>";
 
-                        jsonRows.Add(new List<string> { name, role, description });
+                        jsonRows.Add(new List<string> { name, role });
                     }
                 }
             }
@@ -80,7 +72,7 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR.VbrTables.GeneralSetting
 
             s += this.form.SectionEndWithEmptyState(s, string.Empty);
 
-            CHtmlTables.SetSectionPublic("userRoles", new List<string> { "Name", "Role", "Description" }, jsonRows, null);
+            CHtmlTables.SetSectionPublic("userRoles", new List<string> { "Name", "Role" }, jsonRows, null);
 
             return s;
         }

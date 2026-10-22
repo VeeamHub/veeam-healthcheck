@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text.RegularExpressions;
+using AngleSharp.Dom;
+using AngleSharp.Html.Parser;
 using DocumentFormat.OpenXml;
 using DocumentFormat.OpenXml.Packaging;
 using DocumentFormat.OpenXml.Presentation;
@@ -16,6 +18,7 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.Exportables
         // Layout constants
         private const int MaxRowsPerSlide = 12;
         private const int MaxColumnsForNormalLayout = 6;
+        private const int CompactCellMaxLength = 40;
         private const long SlideWidth = 12192000; // 16:9 widescreen
         private const long SlideHeight = 6858000;
         private const long Margin = 457200; // 0.5 inch
@@ -81,6 +84,12 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.Exportables
                 int tableIndex = 0;
                 foreach (var table in tables)
                 {
+                    if (table.Rows.Count == 0)
+                    {
+                        CreateSectionDividerSlide(presentationPart, table.Title);
+                        continue;
+                    }
+
                     // Create section divider for major sections (every 4 tables)
                     if (tableIndex % 4 == 0)
                     {
@@ -697,8 +706,9 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.Exportables
                 {
                     cleanedText = "-";
                 }
-                // More aggressive truncation for compact mode
-                cleanedText = TruncateText(cleanedText, 18);
+
+                // Compact slides fit many rows; an unbounded cell wraps and pushes rows off the slide.
+                cleanedText = TruncateText(cleanedText, CompactCellMaxLength);
 
                 A.Run run = new A.Run();
                 A.RunProperties runProperties = new A.RunProperties()
@@ -1313,6 +1323,7 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.Exportables
                 {
                     cleanedText = "-";
                 }
+
                 cleanedText = TruncateText(cleanedText, 50);
 
                 A.Run run = new A.Run();
@@ -1457,122 +1468,121 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.Exportables
 
         #region HTML Parsing
 
+        // Walks every top-level <table> in document order so no source row is dropped, and titles each
+        // one with the visible heading of its section rather than a title-cased HTML id.
         private List<TableData> ParseHtmlTables(string htmlContent)
         {
-            List<TableData> tables = new List<TableData>();
-            HashSet<string> processedTableSignatures = new HashSet<string>();
+            var tables = new List<TableData>();
+            var document = new HtmlParser().ParseDocument(htmlContent);
 
-            // Method 1: Find all tables directly and get their containing div's id for the title
-            var allTableMatches = Regex.Matches(htmlContent, @"<table[^>]*class=""[^""]*content-table[^""]*""[^>]*>(.*?)</table>",
-                RegexOptions.Singleline | RegexOptions.IgnoreCase);
-
-            foreach (Match tableMatch in allTableMatches)
+            // Document order, so a section with no table of its own still yields its heading.
+            foreach (IElement node in document.QuerySelectorAll("table, .section-card"))
             {
-                string tableHtml = tableMatch.Groups[1].Value;
-
-                // Find the div that contains this table by looking backwards in the HTML
-                int tableStart = tableMatch.Index;
-                string beforeTable = htmlContent.Substring(Math.Max(0, tableStart - 500), Math.Min(500, tableStart));
-
-                // Look for the most recent id= in a div with card class
-                string title = "Data";
-                var idMatch = Regex.Match(beforeTable, @"id=""([^""]+)""[^>]*>\s*$", RegexOptions.RightToLeft);
-                if (idMatch.Success)
+                if (node.LocalName == "table")
                 {
-                    title = FormatSectionTitle(idMatch.Groups[1].Value);
-                }
-
-                TableData tableData = ParseTable(tableHtml, title);
-
-                if (tableData.Rows.Count > 0)
-                {
-                    // Create signature to avoid duplicates
-                    string signature = $"{tableData.Title}_{tableData.ColumnCount}_{tableData.Rows.Count}";
-                    if (!processedTableSignatures.Contains(signature))
+                    TableData tableData = ParseTable(node, ResolveTableTitle(node));
+                    if (tableData.Rows.Count > 0)
                     {
-                        processedTableSignatures.Add(signature);
                         tables.Add(tableData);
                     }
+
+                    continue;
                 }
-            }
 
-            // Method 2: Look for card divs with tables - improved regex
-            var cardDivMatches = Regex.Matches(htmlContent,
-                @"<div[^>]*(?:class=""[^""]*card[^""]*""[^>]*id=""([^""]+)""|id=""([^""]+)""[^>]*class=""[^""]*card[^""]*"")[^>]*>",
-                RegexOptions.Singleline | RegexOptions.IgnoreCase);
-
-            foreach (Match cardMatch in cardDivMatches)
-            {
-                string cardId = !string.IsNullOrEmpty(cardMatch.Groups[1].Value)
-                    ? cardMatch.Groups[1].Value
-                    : cardMatch.Groups[2].Value;
-
-                // Find the table content after this div opening
-                int divStart = cardMatch.Index + cardMatch.Length;
-                int searchEnd = Math.Min(divStart + 50000, htmlContent.Length);
-                string afterDiv = htmlContent.Substring(divStart, searchEnd - divStart);
-
-                // Find the first table in this section
-                var tableMatch = Regex.Match(afterDiv, @"<table[^>]*>(.*?)</table>",
-                    RegexOptions.Singleline | RegexOptions.IgnoreCase);
-
-                if (tableMatch.Success)
+                if (node.QuerySelector("table") != null)
                 {
-                    string title = FormatSectionTitle(cardId);
-                    TableData tableData = ParseTable(tableMatch.Groups[1].Value, title);
-
-                    if (tableData.Rows.Count > 0)
+                    // Tables inside carry the title; a container with several nested cards still gets its divider.
+                    if (node.QuerySelector(":scope > .section-body > table") != null)
                     {
-                        string signature = $"{tableData.Title}_{tableData.ColumnCount}_{tableData.Rows.Count}";
-                        if (!processedTableSignatures.Contains(signature))
-                        {
-                            processedTableSignatures.Add(signature);
-                            tables.Add(tableData);
-                        }
+                        continue;
                     }
                 }
-            }
 
-            // Method 3: Match collapsible sections with tables
-            var sectionMatches = Regex.Matches(htmlContent,
-                @"<button[^>]*class=""[^""]*collapsible[^""]*""[^>]*>([^<]+)</button>",
-                RegexOptions.Singleline | RegexOptions.IgnoreCase);
-
-            foreach (Match sectionMatch in sectionMatches)
-            {
-                string sectionTitle = CleanHtmlText(sectionMatch.Groups[1].Value);
-
-                // Find tables after this button
-                int buttonEnd = sectionMatch.Index + sectionMatch.Length;
-                int searchEnd = Math.Min(buttonEnd + 100000, htmlContent.Length);
-                string afterButton = htmlContent.Substring(buttonEnd, searchEnd - buttonEnd);
-
-                // Look for next button to bound our search
-                var nextButtonMatch = Regex.Match(afterButton, @"<button[^>]*class=""[^""]*collapsible");
-                string sectionContent = nextButtonMatch.Success
-                    ? afterButton.Substring(0, nextButtonMatch.Index)
-                    : afterButton;
-
-                var tableMatches = Regex.Matches(sectionContent, @"<table[^>]*>(.*?)</table>",
-                    RegexOptions.Singleline | RegexOptions.IgnoreCase);
-
-                foreach (Match tableMatch in tableMatches)
+                string title = HeadingText(node.QuerySelector(".section-header h2"));
+                if (title.Length == 0)
                 {
-                    TableData tableData = ParseTable(tableMatch.Groups[1].Value, sectionTitle);
-
-                    if (tableData.Rows.Count > 0)
-                    {
-                        string signature = $"{tableData.Title}_{tableData.ColumnCount}_{tableData.Rows.Count}";
-                        if (!processedTableSignatures.Contains(signature))
-                        {
-                            processedTableSignatures.Add(signature);
-                            tables.Add(tableData);
-                        }
-                    }
+                    continue;
                 }
+
+                tables.Add(ParseStatSection(node, title));
             }
 
             return tables;
+        }
+
+        // Sections rendered as chips or stat tiles instead of a table: carry their label/value pairs as rows.
+        private static TableData ParseStatSection(IElement card, string title)
+        {
+            var data = new TableData { Title = title, ColumnCount = 2 };
+            foreach (IElement chip in card.QuerySelectorAll(".infra-chip"))
+            {
+                string count = CellText(chip.QuerySelector(".infra-chip-count") ?? chip);
+                string label = Regex.Replace(chip.TextContent, @"\s+", " ").Trim();
+                if (count.Length > 0 && label.StartsWith(count, StringComparison.Ordinal))
+                {
+                    label = label.Substring(count.Length).Trim();
+                }
+
+                data.Rows.Add(new List<string> { label, count });
+            }
+
+            foreach (IElement stat in card.QuerySelectorAll(".compliance-stat"))
+            {
+                data.Rows.Add(new List<string>
+                {
+                    CellText(stat.QuerySelector(".compliance-label") ?? stat),
+                    CellText(stat.QuerySelector(".compliance-count") ?? stat),
+                });
+            }
+
+            if (data.Rows.Count > 0)
+            {
+                data.Headers.AddRange(new[] { "Item", "Value" });
+            }
+
+            return data;
+        }
+
+        private string ResolveTableTitle(IElement table)
+        {
+            IElement card = table.Closest(".section-card");
+            IElement heading = card?.QuerySelector(".section-header h2") ?? card?.QuerySelector("h2, h3");
+            string title = HeadingText(heading);
+            if (title.Length > 0)
+            {
+                return title;
+            }
+
+            // Collapsible layouts: the nearest preceding collapsible button or heading names the table.
+            for (IElement node = table; node != null; node = node.ParentElement)
+            {
+                for (IElement prev = node.PreviousElementSibling; prev != null; prev = prev.PreviousElementSibling)
+                {
+                    if (prev.LocalName is "h1" or "h2" or "h3" or "h4" || prev.ClassList.Contains("collapsible"))
+                    {
+                        title = HeadingText(prev);
+                        if (title.Length > 0)
+                        {
+                            return title;
+                        }
+                    }
+                }
+            }
+
+            IElement withId = table.Closest("[id]");
+            return withId != null ? FormatSectionTitle(withId.Id) : "Data";
+        }
+
+        // Visible heading text, minus decorative <span> children such as the section icon and toggle.
+        private static string HeadingText(IElement heading)
+        {
+            if (heading == null)
+            {
+                return string.Empty;
+            }
+
+            string text = string.Concat(heading.ChildNodes.Where(node => node.NodeName != "SPAN").Select(node => node.TextContent));
+            return Regex.Replace(text, @"\s+", " ").Trim();
         }
 
         private string FormatSectionTitle(string id)
@@ -1614,43 +1624,40 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.Exportables
             return FormatSectionTitle(fallbackId);
         }
 
-        private TableData ParseTable(string tableHtml, string title)
+        private TableData ParseTable(IElement table, string title)
         {
             TableData tableData = new TableData { Title = title };
 
-            var headerMatch = Regex.Match(tableHtml, @"<thead>(.*?)</thead>", RegexOptions.Singleline);
-            if (headerMatch.Success)
+            // Own headers and rows only: a table nested in a detail row is parsed as its own TableData.
+            foreach (IElement th in table.QuerySelectorAll("thead th").Where(th => th.Closest("table") == table))
             {
-                string headerHtml = headerMatch.Groups[1].Value;
-                var headerCells = Regex.Matches(headerHtml, @"<th[^>]*>(.*?)</th>", RegexOptions.Singleline);
-
-                foreach (Match cell in headerCells)
-                {
-                    tableData.Headers.Add(CleanHtmlText(cell.Groups[1].Value));
-                }
+                tableData.Headers.Add(CellText(th));
             }
 
             tableData.ColumnCount = tableData.Headers.Count > 0 ? tableData.Headers.Count : 1;
 
-            var bodyMatch = Regex.Match(tableHtml, @"<tbody>(.*?)</tbody>", RegexOptions.Singleline);
-            string rowsHtml = bodyMatch.Success ? bodyMatch.Groups[1].Value : tableHtml;
-
-            var rowMatches = Regex.Matches(rowsHtml, @"<tr[^>]*>(.*?)</tr>", RegexOptions.Singleline);
-
-            foreach (Match rowMatch in rowMatches)
+            bool hasHead = table.QuerySelectorAll("thead").Any(h => h.Closest("table") == table);
+            foreach (IElement tr in table.QuerySelectorAll("tr"))
             {
-                string rowHtml = rowMatch.Groups[1].Value;
-                var cellMatches = Regex.Matches(rowHtml, @"<t[dh][^>]*>(.*?)</t[dh]>", RegexOptions.Singleline);
-
-                if (cellMatches.Count == 0)
+                if (tr.Closest("table") != table || (hasHead && tr.ParentElement?.LocalName == "thead"))
                 {
                     continue;
                 }
 
-                List<string> row = new List<string>();
-                foreach (Match cellMatch in cellMatches)
+                IElement[] cells = tr.Children.Where(c => c.LocalName is "td" or "th").ToArray();
+                if (cells.Length == 0 || cells.Any(c => c.QuerySelector("table") != null))
                 {
-                    row.Add(CleanHtmlText(cellMatch.Groups[1].Value));
+                    continue;
+                }
+
+                List<string> row = cells.Select(CellText).ToList();
+
+                // Some generated tables put <th> cells straight under <table> with no <thead>.
+                if (tableData.Headers.Count == 0 && tableData.Rows.Count == 0 && cells.All(c => c.LocalName == "th"))
+                {
+                    tableData.Headers.AddRange(row);
+                    tableData.ColumnCount = row.Count;
+                    continue;
                 }
 
                 if (row.Count > tableData.ColumnCount)
@@ -1663,6 +1670,8 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.Exportables
 
             return tableData;
         }
+
+        private static string CellText(IElement cell) => Regex.Replace(cell.TextContent, @"\s+", " ").Trim();
 
         private Dictionary<string, string> ExtractSummaryMetrics(string htmlContent)
         {

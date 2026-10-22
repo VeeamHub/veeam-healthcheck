@@ -73,11 +73,11 @@ Trust: anyone who can push to the repo can post any commit status, so this is ev
 | Solution builds on Windows | `build` | `dotnet build vHC/HC.sln` exit 0, 0 errors |
 | Full `VhcXTests` including `[WindowsOnlyFact]` (DPAPI, registry, native PDF render) | `tests` | TRX counts: passed, failed, skipped |
 | PDF render unit tests, VB365 report compilers, credential stores (coverage matrix rows 11, 15, 19) | `tests` | the same TRX; they run on every PR in `pr-release-prep.yml`, here they run before the PR |
-| Live collection against the host's VBR 13 on PostgreSQL, and the report built from it (rows 4-6 shape, row 17) | `live` | `Test-VhcLiveRun.ps1`: `SessionLog`, `CsvContent`, `RowCounts`, `CsvOutputs`, `ReportContent`, `ReportTables`, `Json`, `Scrub` |
+| Live collection against the host's VBR 13 on PostgreSQL, and the report built from it (rows 4-6 shape, row 17) | `live` | `Test-VhcLiveRun.ps1`: `SessionLog`, `CsvContent`, `RowCounts`, `CsvOutputs`, `ReportContent`, `ReportTables`, `Json`, `Scrub`, plus `DbType` and `EntraTenantJob` |
 | The scrub path on a live run | `live` | `Scrub`: the host name is absent from the HTML and JSON |
 | Real window, console hidden, native folder picker, scrubbed GUI Run, screenshot not blank (row 18) | `gui` | the FlaUI TRX |
 
-`Exports` (PDF/PPTX content) is skipped by design: a scrubbed run writes neither. The live step also adds one check of its own, `DbType`, before the shared ones. Raw (unscrubbed) CSVs stay on the host.
+`Exports` (PDF/PPTX content) is skipped by design: a scrubbed run writes neither. `DbType` is now the shared `Test-VhcLiveRun.ps1 -Check DbType` (it also fails on an empty or `Unknown` value), run first; `EntraTenantJob` runs informationally (no tenant is INFO, a non-numeric `RetentionPolicy` is a WARN). Raw (unscrubbed) CSVs stay on the host.
 
 ## What it does not prove
 

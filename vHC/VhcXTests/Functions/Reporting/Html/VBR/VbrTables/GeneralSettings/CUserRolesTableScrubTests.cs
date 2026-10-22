@@ -15,12 +15,8 @@ namespace VhcXTests.Functions.Reporting.Html.VBR.VbrTables.GeneralSettings
     {
         // FileFinder matches "_UserRoles.csv"; row dict keys match CSV header casing exactly.
         private const string UserRolesCsv =
-            "\"Name\",\"Role\",\"Description\"\r\n" +
-            "\"CORP\\jdoe\",\"Veeam Backup Administrator\",\"John Doe - IT Admin - john.doe@corp.example.com\"";
-
-        private const string UserRolesCsvEmptyDescription =
-            "\"Name\",\"Role\",\"Description\"\r\n" +
-            "\"CORP\\jdoe\",\"Veeam Backup Administrator\",\"\"";
+            "\"Name\",\"Role\"\r\n" +
+            "\"CORP\\jdoe\",\"Veeam Backup Administrator\"";
 
         public CUserRolesTableScrubTests() : base("VhcUserRolesScrubTests_")
         {
@@ -31,31 +27,32 @@ namespace VhcXTests.Functions.Reporting.Html.VBR.VbrTables.GeneralSettings
             File.WriteAllText(System.IO.Path.Combine(VbrDir, "_UserRoles.csv"), content);
 
         [Fact]
-        public void Render_ScrubTrue_DescriptionIsReplacedWithToken()
+        public void Render_ScrubTrue_NameIsReplacedWithToken()
         {
             WriteUserRolesCsv(UserRolesCsv);
             string html = new CUserRolesTable().Render(scrub: true);
 
-            Assert.DoesNotContain("John Doe", html);
-            Assert.DoesNotContain("john.doe@corp.example.com", html);
+            Assert.DoesNotContain("jdoe", html);
             Assert.Contains("Item_", html);
         }
 
         [Fact]
-        public void Render_ScrubFalse_DescriptionPassesThroughUnchanged()
+        public void Render_ScrubFalse_NamePassesThroughUnchanged()
         {
             WriteUserRolesCsv(UserRolesCsv);
             string html = new CUserRolesTable().Render(scrub: false);
 
-            Assert.Contains("John Doe - IT Admin - john.doe@corp.example.com", html);
+            Assert.Contains("CORP\\jdoe", html);
         }
 
+        // Get-VBRUserRoleAssignment exposes no description, so the table must not render an always-blank column.
         [Fact]
-        public void Render_ScrubTrue_EmptyDescription_DoesNotThrow()
+        public void Render_NoDescriptionColumn()
         {
-            WriteUserRolesCsv(UserRolesCsvEmptyDescription);
-            var exception = Record.Exception(() => new CUserRolesTable().Render(scrub: true));
-            Assert.Null(exception);
+            WriteUserRolesCsv(UserRolesCsv);
+            string html = new CUserRolesTable().Render(scrub: false);
+
+            Assert.DoesNotContain("Description", html);
         }
 
         // --- JSON section capture ---
@@ -77,7 +74,7 @@ namespace VhcXTests.Functions.Reporting.Html.VBR.VbrTables.GeneralSettings
             new CUserRolesTable().Render(scrub: false);
 
             var section = CGlobals.FullReportJson.Sections["userRoles"];
-            Assert.Equal(new List<string> { "Name", "Role", "Description" }, section.Headers);
+            Assert.Equal(new List<string> { "Name", "Role" }, section.Headers);
         }
 
         [Fact]
@@ -90,7 +87,7 @@ namespace VhcXTests.Functions.Reporting.Html.VBR.VbrTables.GeneralSettings
             Assert.Single(section.Rows);
             Assert.Equal("CORP\\jdoe", section.Rows[0][0]);                         // Name
             Assert.Equal("Veeam Backup Administrator", section.Rows[0][1]);         // Role
-            Assert.Contains("John Doe", section.Rows[0][2]);                        // Description
+            Assert.Equal(2, section.Rows[0].Count);
         }
 
         [Fact]
@@ -119,7 +116,7 @@ namespace VhcXTests.Functions.Reporting.Html.VBR.VbrTables.GeneralSettings
         public void Render_EmptyData_JsonSection_StillPresentWithZeroRows()
         {
             File.WriteAllText(System.IO.Path.Combine(VbrDir, "_UserRoles.csv"),
-                "\"Name\",\"Role\",\"Description\"\r\n");
+                "\"Name\",\"Role\"\r\n");
             new CUserRolesTable().Render(scrub: false);
 
             Assert.True(CGlobals.FullReportJson.Sections.ContainsKey("userRoles"));

@@ -131,13 +131,10 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR.VbrTables.Proxies
             try
             {
                 var list = df.ProxyXmlFromCsv(scrub);
-                List<string> headers = new() { "Name", "Type", "Tasks", "Cores", "Ram", "IsOnHost", "TransportMode", "NetBufferSize", "MaxConcurrentJobs", "Host", "IsHvOffload" };
+                List<string> headers = new() { "Name", "Tasks", "Cores", "Ram", "Type", "TransportMode", "FailoverToNetwork", "ChassisType", "CachePath", "CacheSize", "Host", "IsDisabled" };
 
-                // mapping indices from original array
-                List<List<string>> rows = list.Select(d => new List<string>
-                {
-                    d[0], d[1], d[2], d[3], d[4], d[6], d[7], d[8], d[9], d[10], d[11],
-                }).ToList();
+                // ProxyXmlFromCsv already returns the columns in header order (indices 0-11); index 12 (Provisioning) is HTML-only.
+                List<List<string>> rows = list.Select(d => d.Take(headers.Count).ToList()).ToList();
                 CHtmlTables.SetSectionPublic("proxies", headers, rows, summary);
             }
             catch (Exception ex)

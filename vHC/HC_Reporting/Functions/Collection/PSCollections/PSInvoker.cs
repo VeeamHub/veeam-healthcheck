@@ -627,6 +627,36 @@ namespace VeeamHealthCheck.Functions.Collection.PSCollections
             else return new PsErrorTypes { Success = true, Message = "Success" };
         }
 
+        /// <summary>
+        /// Leading Get-VBRConfig.ps1 arguments. <c>-Experiments</c> travels as an explicit switch (like
+        /// <c>-RescanHosts</c>) so the collector never reads VHC_EXPERIMENTS itself; it is passed only
+        /// when <see cref="CFeatureFlags.ExperimentsEnabled"/> is true.
+        /// </summary>
+        internal static string BuildVbrConfigArgs(string script, string escapedServer, int vbrMajorVersion, int reportDays, bool rescanHosts, bool remoteExec)
+        {
+            string argString = $"-NoProfile -ExecutionPolicy Bypass -file \"{script}\" " +
+                               $"-VBRServer \"{escapedServer}\" " +
+                               $"-VBRVersion \"{vbrMajorVersion}\" " +
+                               $"-ReportInterval {reportDays} ";
+
+            if (rescanHosts)
+            {
+                argString += "-RescanHosts ";
+            }
+
+            if (remoteExec)
+            {
+                argString += "-RemoteExecution ";
+            }
+
+            if (CFeatureFlags.ExperimentsEnabled)
+            {
+                argString += "-Experiments ";
+            }
+
+            return argString;
+        }
+
         internal ProcessStartInfo VbrConfigStartInfo()
         {
             this.log.Info(CMessages.PsVbrConfigStart, false);
@@ -642,20 +672,13 @@ namespace VeeamHealthCheck.Functions.Collection.PSCollections
             // Use Bypass (not Unrestricted) so PS never prompts for unsigned/internet-sourced
             // scripts - Unrestricted still prompts interactively which hangs a windowless process.
             string escapedServer = CredentialHelper.EscapeForPowerShellDoubleQuotes(CGlobals.REMOTEHOST);
-            string argString = $"-NoProfile -ExecutionPolicy Bypass -file \"{this.vbrConfigScript}\" " +
-                               $"-VBRServer \"{escapedServer}\" " +
-                               $"-VBRVersion \"{CGlobals.VBRMAJORVERSION}\" " +
-                               $"-ReportInterval {CGlobals.ReportDays} ";
-
-            if (CGlobals.RescanHosts)
-            {
-                argString += "-RescanHosts ";
-            }
-
-            if (CGlobals.REMOTEEXEC)
-            {
-                argString += "-RemoteExecution ";
-            }
+            string argString = BuildVbrConfigArgs(
+                this.vbrConfigScript,
+                escapedServer,
+                CGlobals.VBRMAJORVERSION,
+                CGlobals.ReportDays,
+                CGlobals.RescanHosts,
+                CGlobals.REMOTEEXEC);
 
             // Add ReportPath parameter
             if (!string.IsNullOrEmpty(CVariables.vbrDir))

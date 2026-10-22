@@ -368,6 +368,43 @@ Describe 'Scrub' {
         (Invoke-Live @('-Check', 'Scrub', '-AnonDir', $d, '-ScrubHost', 'vbr-real-host')).Exit | Should -Not -Be 0
     }
 
+    It 'experiments off: passes when the Orphaned section and nav link are absent' {
+        $d = New-FixtureDir
+        [void](Write-Report -Dir $d -Html '<html><body><style>/* Orphaned & Superseded Backups */</style><a href="#repos" class="nav-link">Repos</a></body></html>')
+        Set-Content -Path (Join-Path $d 'report.json') -Value '{"Sections":{}}'
+        $r = Invoke-Live @('-Check', 'Scrub', '-AnonDir', $d, '-ScrubHost', 'vbr-real-host', '-ExperimentsOff')
+        $r.Exit | Should -Be 0
+        $r.Out | Should -Match 'absent from HTML'
+    }
+
+    It 'experiments off: fails when the Orphaned section element is present' {
+        $d = New-AnonDir
+        $r = Invoke-Live @('-Check', 'Scrub', '-AnonDir', $d, '-ScrubHost', 'vbr-real-host', '-ExperimentsOff')
+        $r.Exit | Should -Not -Be 0
+        $r.Out | Should -Match 'must be gated'
+    }
+
+    It 'experiments off: fails when only the Orphaned nav link leaks' {
+        $d = New-FixtureDir
+        [void](Write-Report -Dir $d -Html '<html><body><a href="#orphanedsupersededbackups" class="nav-link">Orphaned</a></body></html>')
+        Set-Content -Path (Join-Path $d 'report.json') -Value '{"Sections":{}}'
+        (Invoke-Live @('-Check', 'Scrub', '-AnonDir', $d, '-ScrubHost', 'vbr-real-host', '-ExperimentsOff')).Exit | Should -Not -Be 0
+    }
+
+    It 'experiments off: still fails on a hostname leak' {
+        $d = New-FixtureDir
+        [void](Write-Report -Dir $d -Html '<html><body><p>vbr-real-host</p></body></html>')
+        Set-Content -Path (Join-Path $d 'report.json') -Value '{"Sections":{}}'
+        (Invoke-Live @('-Check', 'Scrub', '-AnonDir', $d, '-ScrubHost', 'vbr-real-host', '-ExperimentsOff')).Exit | Should -Not -Be 0
+    }
+
+    It 'experiments on (default): a report lacking the section still fails, so omitting the switch never loosens' {
+        $d = New-FixtureDir
+        [void](Write-Report -Dir $d -Html '<html><body></body></html>')
+        Set-Content -Path (Join-Path $d 'report.json') -Value '{"Sections":{}}'
+        (Invoke-Live @('-Check', 'Scrub', '-AnonDir', $d, '-ScrubHost', 'vbr-real-host')).Exit | Should -Not -Be 0
+    }
+
     It 'fails when the scrubbed JSON export is missing' {
         $d = New-AnonDir -Json ''
         (Invoke-Live @('-Check', 'Scrub', '-AnonDir', $d, '-ScrubHost', 'vbr-real-host')).Exit | Should -Not -Be 0
@@ -453,6 +490,45 @@ Describe 'CsvOutputs' {
         $r.Out | Should -Match 'Repositories\.csv.*0 data rows'
     }
 
+    It 'experiments on (default): a missing orphanedSupersededBackupsMeta is a failure' {
+        $fx = New-CsvOutputsRoot
+        Remove-Item (Join-Path $fx.Dir 'localhost_orphanedSupersededBackupsMeta.csv')
+        $r = Invoke-CsvOutputs $fx
+        $r.Exit | Should -Be 1
+        $r.Out | Should -Match 'orphanedSupersededBackupsMeta'
+    }
+
+    It 'experiments off: a missing orphanedSupersededBackupsMeta is allowed' {
+        $fx = New-CsvOutputsRoot
+        Remove-Item (Join-Path $fx.Dir 'localhost_orphanedSupersededBackupsMeta.csv')
+        $r = Invoke-CsvOutputs $fx @('-ExperimentsOff')
+        $r.Exit | Should -Be 0
+        $r.Out | Should -Match 'orphanedSupersededBackupsMeta.*not written'
+    }
+
+    It 'experiments off: a present but header-broken orphaned CSV still fails' {
+        $fx = New-CsvOutputsRoot
+        "`"Name`",`"Name`"`r`n`"a`",`"b`"" | Set-Content (Join-Path $fx.Dir 'localhost_orphanedSupersededBackupsMeta.csv')
+        (Invoke-CsvOutputs $fx @('-ExperimentsOff')).Exit | Should -Be 1
+    }
+
+    It 'vbr-2 profile: a missing orphanedSupersededBackups fails with experiments on and is allowed with them off' {
+        $fx = New-CsvOutputsRoot
+        $on = Invoke-CsvOutputs $fx @('-LabProfile', 'vbr-2')
+        $on.Out | Should -Match 'orphanedSupersededBackups\.csv.*MISSING'
+        $off = Invoke-CsvOutputs $fx @('-LabProfile', 'vbr-2', '-ExperimentsOff')
+        $off.Out | Should -Not -Match 'orphanedSupersededBackups\.csv.*MISSING'
+    }
+
+    It 'a requiresExperiments entry no collector writes is still flagged stale when experiments are off' {
+        $fx = New-CsvOutputsRoot
+        $m = Join-Path $TestDrive 'stale-exp.json'
+        Set-Content $m '{"required":{},"requiresExperiments":{"noSuchCsv":"x"}}'
+        $r = Invoke-CsvOutputs $fx @('-ManifestPath', $m, '-ExperimentsOff')
+        $r.Exit | Should -Be 1
+        $r.Out | Should -Match 'noSuchCsv'
+    }
+
     It 'allows an optional feature CSV to be absent' {
         $fx = New-CsvOutputsRoot
         Remove-Item (Join-Path $fx.Dir 'localhost_TapeJobs.csv')
@@ -517,9 +593,12 @@ Describe 'CsvOutputs' {
 
     It 'logs a known gap instead of failing when the column is absent' {
         $fx = New-CsvOutputsRoot
-        $r = Invoke-CsvOutputs $fx
+        # Own manifest, so the mechanism stays tested whether or not the real one lists a live gap.
+        $m = Join-Path $TestDrive 'gap.json'
+        '{"required":{},"profiles":{},"columns":{"UserRoles":{"required":["Name"],"knownGaps":{"Description":"fixture-only gap"}}}}' | Set-Content $m
+        $r = Invoke-CsvOutputs $fx @('-ManifestPath', $m)
         $r.Exit | Should -Be 0
-        $r.Out | Should -Match "UserRoles\.csv.*no 'Description' column \(known gap"
+        $r.Out | Should -Match "UserRoles\.csv.*no 'Description' column \(known gap: fixture-only gap\)"
     }
 
     It 'accepts a zero-byte NAS CSV but still fails a zero-byte CSV that is not allowed empty' {
@@ -571,5 +650,192 @@ Describe 'CsvOutputs' {
         $names = @($exp.required.PSObject.Properties.Name) + @($exp.labCommon.PSObject.Properties.Name)
         foreach ($p in $exp.profiles.PSObject.Properties) { $names += @($p.Value.nonEmpty.PSObject.Properties.Name) }
         foreach ($n in $names) { $map.ContainsKey($n) | Should -BeTrue -Because "manifest entry '$n' must be written by a collector" }
+    }
+}
+
+Describe 'DbType' {
+    BeforeAll {
+        function New-VbrinfoRoot {
+            param([string]$DbType, [switch]$NoFile)
+            $root = New-FixtureDir
+            $d = Join-Path $root 'host\20260101'
+            New-Item -ItemType Directory -Path $d -Force | Out-Null
+            if (-not $NoFile) {
+                "`"Version`",`"DbType`"`r`n`"13.1.0.411`",`"$DbType`"" | Set-Content (Join-Path $d 'localhost_vbrinfo.csv')
+            }
+            return $root
+        }
+    }
+
+    It 'passes when DbType matches the expected engine' -ForEach @(
+        @{ db = 'MsSql' }, @{ db = 'PostgreSql' }
+    ) {
+        $r = Invoke-Live @('-Check', 'DbType', '-ExpectedDbType', $db, '-CsvRoot', (New-VbrinfoRoot $db))
+        $r.Exit | Should -Be 0
+        $r.Out | Should -Match "DbType is '$db'"
+    }
+
+    It 'fails on the wrong engine' {
+        $r = Invoke-Live @('-Check', 'DbType', '-ExpectedDbType', 'MsSql', '-CsvRoot', (New-VbrinfoRoot 'PostgreSql'))
+        $r.Exit | Should -Be 1
+        $r.Out | Should -Match "DbType is 'PostgreSql'; expected 'MsSql'"
+    }
+
+    It 'fails on an empty value and on Unknown' -ForEach @(
+        @{ db = '' }, @{ db = 'Unknown' }
+    ) {
+        $r = Invoke-Live @('-Check', 'DbType', '-ExpectedDbType', 'MsSql', '-CsvRoot', (New-VbrinfoRoot $db))
+        $r.Exit | Should -Be 1
+        $r.Out | Should -Match 'empty/Unknown'
+    }
+
+    It 'fails when vbrinfo.csv is missing' {
+        $r = Invoke-Live @('-Check', 'DbType', '-ExpectedDbType', 'MsSql', '-CsvRoot', (New-VbrinfoRoot '' -NoFile))
+        $r.Exit | Should -Be 1
+        $r.Out | Should -Match 'vbrinfo.csv not found'
+    }
+
+    It 'fails without an expectation unless it is a known gap' {
+        $r = Invoke-Live @('-Check', 'DbType', '-CsvRoot', (New-VbrinfoRoot 'MsSql'))
+        $r.Exit | Should -Be 1
+    }
+
+    It 'prints the actual value and passes for a known gap, even when empty' {
+        $r = Invoke-Live @('-Check', 'DbType', '-KnownGap', '-CsvRoot', (New-VbrinfoRoot ''))
+        $r.Exit | Should -Be 0
+        $r.Out | Should -Match "known gap: vbrinfo DbType is '\(empty\)'"
+    }
+
+    It 'still fails a known gap when vbrinfo.csv is missing' {
+        $r = Invoke-Live @('-Check', 'DbType', '-KnownGap', '-CsvRoot', (New-VbrinfoRoot '' -NoFile))
+        $r.Exit | Should -Be 1
+    }
+}
+
+Describe 'EntraTenantJob' {
+    BeforeAll {
+        function New-EntraRoot {
+            param([string[]]$Lines, [switch]$NoFile)
+            $root = New-FixtureDir
+            $d = Join-Path $root 'host\20260101'
+            New-Item -ItemType Directory -Path $d -Force | Out-Null
+            if (-not $NoFile) { $Lines | Set-Content (Join-Path $d 'localhost_entraTenantJob.csv') }
+            return $root
+        }
+        $script:Hdr = '"Name","RetentionPolicy"'
+    }
+
+    It 'passes on a numeric RetentionPolicy' {
+        $r = Invoke-Live @('-Check', 'EntraTenantJob', '-CsvRoot', (New-EntraRoot @($script:Hdr, '"contoso.onmicrosoft.com","7"')))
+        $r.Exit | Should -Be 0
+        $r.Out | Should -Match 'RetentionPolicy is numeric: 7'
+    }
+
+    It 'fails on a non-numeric or blank RetentionPolicy for a named tenant' -ForEach @(
+        @{ ret = 'Days7' }, @{ ret = '' }, @{ ret = '7.5' }
+    ) {
+        $r = Invoke-Live @('-Check', 'EntraTenantJob', '-CsvRoot', (New-EntraRoot @($script:Hdr, "`"contoso.onmicrosoft.com`",`"$ret`"")))
+        $r.Exit | Should -Be 1
+        $r.Out | Should -Match 'RetentionPolicy is not numeric'
+    }
+
+    It 'only warns for a non-numeric value with -Informational' {
+        $r = Invoke-Live @('-Check', 'EntraTenantJob', '-Informational', '-CsvRoot', (New-EntraRoot @($script:Hdr, '"contoso.onmicrosoft.com","x"')))
+        $r.Exit | Should -Be 0
+        $r.Out | Should -Match 'not numeric.*informational'
+    }
+
+    It 'prints INFO and passes for a blank row (no tenant)' {
+        $r = Invoke-Live @('-Check', 'EntraTenantJob', '-CsvRoot', (New-EntraRoot @($script:Hdr, '"",""')))
+        $r.Exit | Should -Be 0
+        $r.Out | Should -Match 'no Entra tenant job rows'
+    }
+
+    It 'prints INFO and passes when the CSV is absent or has no rows' {
+        (Invoke-Live @('-Check', 'EntraTenantJob', '-CsvRoot', (New-EntraRoot @() -NoFile))).Exit | Should -Be 0
+        (Invoke-Live @('-Check', 'EntraTenantJob', '-CsvRoot', (New-EntraRoot @($script:Hdr)))).Exit | Should -Be 0
+    }
+
+    It 'fails with -RequireTenant when there is no named tenant row' {
+        $r = Invoke-Live @('-Check', 'EntraTenantJob', '-RequireTenant', '-CsvRoot', (New-EntraRoot @($script:Hdr, '"",""')))
+        $r.Exit | Should -Be 1
+        $r.Out | Should -Match 'must have one'
+    }
+
+    It 'passes with -RequireTenant when a tenant has a numeric RetentionPolicy' {
+        $r = Invoke-Live @('-Check', 'EntraTenantJob', '-RequireTenant', '-CsvRoot', (New-EntraRoot @($script:Hdr, '"contoso.onmicrosoft.com","7"')))
+        $r.Exit | Should -Be 0
+    }
+}
+
+Describe 'RestDbType' {
+    BeforeAll {
+        $script:RealPrivate = Join-Path $PSScriptRoot '..\..\vHC\HC_Reporting\Tools\Scripts\HealthCheck\VBR\vHC-VbrConfig\Private'
+        # The real Get-VhciRestDbType.ps1 on top of a stub REST client that answers from the environment,
+        # so no network is involved but the code under test is the shipped function.
+        function New-RestModuleDir {
+            $d = New-FixtureDir
+            Copy-Item (Join-Path $script:RealPrivate 'Get-VhciRestDbType.ps1') $d
+            @'
+function Connect-VhciRestApi { param($Server, $Credential, $TimeoutSec)
+    if ($env:VHC_STUB_FAIL) { throw 'connection refused' }
+    [pscustomobject]@{ BaseUrl = "https://$Server:9419"; Headers = @{} } }
+function Invoke-VhciRestApi { param($Session, $Path, $TimeoutSec)
+    [pscustomobject]@{ databaseVendor = $env:VHC_STUB_VENDOR } }
+'@ | Set-Content (Join-Path $d 'Invoke-VhciRestApi.ps1')
+            return $d
+        }
+        function Invoke-Rest {
+            param([string]$Vendor, [switch]$Fail, [string[]]$Extra = @(), [switch]$NoCreds)
+            $env:VHC_STUB_VENDOR = $Vendor
+            if ($Fail) { $env:VHC_STUB_FAIL = '1' } else { Remove-Item Env:\VHC_STUB_FAIL -ErrorAction SilentlyContinue }
+            if (-not $NoCreds) { $env:VHC_REST_USER = 'svc'; $env:VHC_REST_PASSWORD = 'not-a-real-secret' }
+            try {
+                Invoke-Live (@('-Check', 'RestDbType', '-RestServer', 'localhost', '-ModuleDir', (New-RestModuleDir)) + $Extra)
+            } finally {
+                Remove-Item Env:\VHC_STUB_VENDOR, Env:\VHC_STUB_FAIL, Env:\VHC_REST_USER, Env:\VHC_REST_PASSWORD -ErrorAction SilentlyContinue
+            }
+        }
+    }
+
+    It 'passes and shows the raw vendor string when REST returns the expected engine' {
+        $r = Invoke-Rest -Vendor 'MsSql' -Extra @('-ExpectedDbType', 'MsSql')
+        $r.Exit | Should -Be 0
+        $r.Out | Should -Match "databaseVendor raw value 'MsSql'"
+        $r.Out | Should -Match "normalised to 'MsSql'"
+        $r.Out | Should -Not -Match 'not-a-real-secret'
+    }
+
+    It 'fails when REST reports a different engine' {
+        $r = Invoke-Rest -Vendor 'PostgreSql' -Extra @('-ExpectedDbType', 'MsSql')
+        $r.Exit | Should -Be 1
+        $r.Out | Should -Match "raw 'PostgreSql' normalised to 'PostgreSql'; expected 'MsSql'"
+    }
+
+    It 'fails on an unrecognised vendor and shows it' {
+        $r = Invoke-Rest -Vendor 'Oracle' -Extra @('-ExpectedDbType', 'MsSql')
+        $r.Exit | Should -Be 1
+        $r.Out | Should -Match "raw value 'Oracle'"
+    }
+
+    It 'fails when REST is unreachable' {
+        $r = Invoke-Rest -Vendor '' -Fail -Extra @('-ExpectedDbType', 'MsSql')
+        $r.Exit | Should -Be 1
+        $r.Out | Should -Match 'no databaseVendor'
+    }
+
+    It 'prints the outcome and passes for a known gap, reachable or not' {
+        $ok = Invoke-Rest -Vendor 'MsSql' -Extra @('-KnownGap')
+        $ok.Exit | Should -Be 0
+        $ok.Out | Should -Match "known gap: REST localhost databaseVendor raw 'MsSql' -> 'MsSql'"
+        $down = Invoke-Rest -Vendor '' -Fail -Extra @('-KnownGap')
+        $down.Exit | Should -Be 0
+        $down.Out | Should -Match 'no REST answer'
+    }
+
+    It 'fails without credentials in the environment' {
+        $r = Invoke-Rest -Vendor 'MsSql' -NoCreds -Extra @('-ExpectedDbType', 'MsSql')
+        $r.Exit | Should -Be 1
+        $r.Out | Should -Match 'VHC_REST_USER'
     }
 }

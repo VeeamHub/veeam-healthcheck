@@ -8,11 +8,18 @@ function Get-VhcVbrInfo {
         many registry paths that must not block earlier collectors if they fail.
     .Parameter VBRVersion
         Major VBR version integer (as returned by Get-VhcMajorVersion).
+    .Parameter Server
+        VBR server host, used with Credential to read the database vendor from REST
+        GET /api/v1/serverInfo when the registry is unavailable (remote runs).
+    .Parameter Credential
+        VBR account for the REST call. Without it, a remote run leaves DbType empty.
     #>
     [CmdletBinding()]
     param (
         [Parameter(Mandatory)] [int] $VBRVersion,
-        [Parameter(Mandatory = $false)] [bool] $RemoteExecution = $false
+        [Parameter(Mandatory = $false)] [bool] $RemoteExecution = $false,
+        [Parameter(Mandatory = $false)] [string] $Server = '',
+        [Parameter(Mandatory = $false)] [System.Management.Automation.PSCredential] $Credential = $null
     )
 
     Write-LogFile "Collecting VBR Version info... (VBRVersion=$VBRVersion)"
@@ -56,8 +63,9 @@ function Get-VhcVbrInfo {
         # DLL version and patch notes
         # TODO: Replace this entire block with a REST API call to GET /api/v1/serverInfo
         # (default port 9419) once REST API collection is implemented. The response
-        # provides buildVersion, patches, and databaseVendor without registry access,
-        # making it the correct long-term solution for both local and remote runs.
+        # provides buildVersion and patches without registry access, making it the correct
+        # long-term solution for both local and remote runs. databaseVendor is already read
+        # via Get-VhciRestDbType below.
         if ($RemoteExecution) {
             # Short-term workaround: registry is not accessible in remote sessions;
             # use the VBR PowerShell API instead (same source as Get-VhcMajorVersion).
@@ -97,6 +105,17 @@ function Get-VhcVbrInfo {
         Add-VhciModuleError -CollectorName 'VbrInfo' -ErrorMessage $_.Exception.Message
     }
 
+    # Remote runs cannot read the registry, so DbType is empty; ask REST serverInfo for databaseVendor.
+    $dbTypeValue = $dbType.SqlActiveConfiguration
+    if ([string]::IsNullOrWhiteSpace($dbTypeValue) -and $Server -and $Credential -and $Credential.UserName) {
+        try {
+            $dbTypeValue = Get-VhciRestDbType -Server $Server -Credential $Credential
+            if ($dbTypeValue) { Write-LogFile "Get-VhcVbrInfo: DbType '$dbTypeValue' obtained via REST serverInfo" }
+        } catch {
+            Write-LogFile "Get-VhcVbrInfo: REST DbType lookup failed: $($_.Exception.Message)" -LogLevel "WARNING"
+        }
+    }
+
     # MFA global setting - only available on VBR 12+; fails gracefully on earlier versions
     try {
         Write-LogFile "Getting MFA Global Setting"
@@ -115,7 +134,7 @@ function Get-VhcVbrInfo {
         'PgDb'      = $pgDbDbName.SqlDatabaseName
         'MsHost'    = $msDbHost.SqlServerName
         'MsDb'      = $msDbName.SqlDatabaseName
-        'DbType'    = $dbType.SqlActiveConfiguration
+        'DbType'    = $dbTypeValue
         'MFA'       = $MFAGlobalSetting
     } | Export-VhciCsv -FileName '_vbrinfo.csv'
 

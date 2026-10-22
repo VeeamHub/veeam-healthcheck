@@ -1,6 +1,7 @@
 ﻿// Copyright (c) 2021, Adam Congdon <adam.congdon2@gmail.com>
 // MIT License
 using System;
+using System.Globalization;
 using System.Linq;
 using VeeamHealthCheck.Functions.Reporting.CsvHandlers;
 using VeeamHealthCheck.Functions.Reporting.Html.Shared;
@@ -50,7 +51,6 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VB365
                     // parse lic to int:
                     decimal.TryParse(gl.LicensedFor, out decimal licFor);
                     decimal.TryParse(gl.LicensesUsed, out decimal licUsed);
-                    decimal percentUsed = licUsed / licFor * 100;
 
                     DateTime.TryParse(gl.LicenseExpiry, out DateTime expireDate);
 
@@ -85,11 +85,11 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VB365
                     s += this.form.TableData(CGlobals.Scrub ? CGlobals.Scrubber.ScrubItem(gl.LicenseContact, Scrubber.ScrubItemType.Item) : gl.LicenseContact, string.Empty);
                     s += this.form.TableData(gl.LicensedFor, string.Empty);
 
-                    if (percentUsed > 95)
+                    if (licUsed > licFor * 0.95m)
                     {
                         s += this.form.TableData(gl.LicensesUsed, string.Empty, 1);
                     }
-                    else if (percentUsed > 90)
+                    else if (licUsed > licFor * 0.90m)
                     {
                         s += this.form.TableData(gl.LicensesUsed, string.Empty, 3);
                     }
@@ -398,18 +398,22 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VB365
                     }
 
 
-                    double.TryParse(g.Free, out double freeSpace);
-                    double.TryParse(g.Capacity, out double capacity);
-
-                    if (freeSpace / capacity * 100 < 10)
+                    string free = g.Free;
+                    string capacityText = g.Capacity;
+                    // The collector's displayed percentage can be zero even when space is free.
+                    if (double.TryParse(free.Split()[0], NumberStyles.Number, CultureInfo.InvariantCulture, out double freeSpace)
+                        && double.TryParse(capacityText.Split()[0], NumberStyles.Number, CultureInfo.InvariantCulture, out double capacity)
+                        && capacity > 0)
                     {
-                        freeShade = 3;
-                    }
-
-
-                    if (freeSpace / capacity * 100 < 5)
-                    {
-                        freeSpace = 1;
+                        double freePercent = freeSpace / capacity * 100;
+                        if (freePercent < 5)
+                        {
+                            freeShade = 1;
+                        }
+                        else if (freePercent < 10)
+                        {
+                            freeShade = 3;
+                        }
                     }
 
 
@@ -582,61 +586,61 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VB365
                     int portalDateShade = 0;
                     int operatorDateShade = 0;
 
-                    DateTime.TryParse(g.ServerCertExpires, out DateTime sCertExpiry);
-                    DateTime.TryParse(g.APICertExpires, out DateTime aCertExpiry);
-                    DateTime.TryParse(g.TenantAuthCertExpires, out DateTime tCertExpiry);
-                    DateTime.TryParse(g.RestorePortalCertExpires, out DateTime pCertExpiry);
-                    DateTime.TryParse(g.OperatorAuthCertExpires, out DateTime oCertExpiry);
+                    bool hasServerExpiry = DateTime.TryParse(g.ServerCertExpires, out DateTime sCertExpiry);
+                    bool hasApiExpiry = DateTime.TryParse(g.APICertExpires, out DateTime aCertExpiry);
+                    bool hasTenantExpiry = DateTime.TryParse(g.TenantAuthCertExpires, out DateTime tCertExpiry);
+                    bool hasPortalExpiry = DateTime.TryParse(g.RestorePortalCertExpires, out DateTime pCertExpiry);
+                    bool hasOperatorExpiry = DateTime.TryParse(g.OperatorAuthCertExpires, out DateTime oCertExpiry);
 
-                    if (sCertExpiry < DateTime.Now)
+                    if (hasServerExpiry && sCertExpiry < DateTime.Now)
                     {
                         serverDateShade = 1;
                     }
 
 
-                    if (sCertExpiry > DateTime.Now && sCertExpiry < DateTime.Now.AddDays(60))
+                    if (hasServerExpiry && sCertExpiry > DateTime.Now && sCertExpiry < DateTime.Now.AddDays(60))
                     {
                         serverDateShade |= 3;
                     }
 
 
-                    if (aCertExpiry < DateTime.Now)
+                    if (hasApiExpiry && aCertExpiry < DateTime.Now)
                     {
                         apiDateShade = 1;
                     }
 
 
-                    if (aCertExpiry > DateTime.Now && aCertExpiry < DateTime.Now.AddDays(60))
+                    if (hasApiExpiry && aCertExpiry > DateTime.Now && aCertExpiry < DateTime.Now.AddDays(60))
                     {
                         apiDateShade |= 3;
                     }
 
-                    if (tCertExpiry < DateTime.Now)
+                    if (hasTenantExpiry && tCertExpiry < DateTime.Now)
                     {
                         tenantDateShade = 1;
                     }
 
-                    if (tCertExpiry > DateTime.Now && tCertExpiry < DateTime.Now.AddDays(60))
+                    if (hasTenantExpiry && tCertExpiry > DateTime.Now && tCertExpiry < DateTime.Now.AddDays(60))
                     {
                         tenantDateShade |= 3;
                     }
 
-                    if (pCertExpiry < DateTime.Now)
+                    if (hasPortalExpiry && pCertExpiry < DateTime.Now)
                     {
                         portalDateShade = 1;
                     }
 
-                    if (pCertExpiry > DateTime.Now && pCertExpiry < DateTime.Now.AddDays(60))
+                    if (hasPortalExpiry && pCertExpiry > DateTime.Now && pCertExpiry < DateTime.Now.AddDays(60))
                     {
                         portalDateShade |= 3;
                     }
 
-                    if (oCertExpiry < DateTime.Now)
+                    if (hasOperatorExpiry && oCertExpiry < DateTime.Now)
                     {
                         operatorDateShade = 1;
                     }
 
-                    if (oCertExpiry > DateTime.Now && oCertExpiry < DateTime.Now.AddDays(60))
+                    if (hasOperatorExpiry && oCertExpiry > DateTime.Now && oCertExpiry < DateTime.Now.AddDays(60))
                     {
                         operatorDateShade |= 3;
                     }
@@ -669,7 +673,7 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VB365
                     s += this.form.TableData(string.Empty, string.Empty);// enabled
                     s += this.form.TableData(string.Empty, string.Empty);// port
                     s += this.form.TableData(serverCert, string.Empty);// cert
-                    s += this.form.TableData(g.ServerCertExpires, string.Empty);// expires
+                    s += this.form.TableData(g.ServerCertExpires, string.Empty, serverDateShade);// expires
                     s += this.form.TableData(g.ServerCertSelfSigned, string.Empty, serverCertSignShade);// self signed
                     s += "</tr><tr>";
 
@@ -677,21 +681,21 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VB365
                     s += this.form.TableData(g.APIEnabled, string.Empty);
                     s += this.form.TableData(g.APIPort, string.Empty);
                     s += this.form.TableData(apiCert, string.Empty);
-                    s += this.form.TableData(g.APICertExpires, string.Empty);
+                    s += this.form.TableData(g.APICertExpires, string.Empty, apiDateShade);
                     s += this.form.TableData(g.APICertSelfSigned, string.Empty, apiCertSignShade);
                     s += "</tr><tr>";
                     s += this.form.TableData("Tenant Auth", string.Empty);
                     s += this.form.TableData(g.TenantAuthEnabled, string.Empty);
                     s += this.form.TableData(string.Empty, string.Empty);
                     s += this.form.TableData(tenantCert, string.Empty);
-                    s += this.form.TableData(g.TenantAuthCertExpires, string.Empty);
+                    s += this.form.TableData(g.TenantAuthCertExpires, string.Empty, tenantDateShade);
                     s += this.form.TableData(g.TenantAuthCertSelfSigned, string.Empty, tenantCertSignShade);
                     s += "</tr><tr>";
                     s += this.form.TableData("Restore Portal", string.Empty);
                     s += this.form.TableData(g.RestorePortalEnabled, string.Empty);
                     s += this.form.TableData(string.Empty, string.Empty);
                     s += this.form.TableData(portalCert, string.Empty);
-                    s += this.form.TableData(g.RestorePortalCertExpires, string.Empty);
+                    s += this.form.TableData(g.RestorePortalCertExpires, string.Empty, portalDateShade);
                     s += this.form.TableData(g.RestorePortalCertSelfSigned, string.Empty, portalCertSignShade);
                     s += "</tr>";
                     s += "</tr><tr>";
@@ -699,7 +703,7 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VB365
                     s += this.form.TableData(g.OperatorAuthEnabled, string.Empty);
                     s += this.form.TableData(string.Empty, string.Empty);
                     s += this.form.TableData(operatorCert, string.Empty);
-                    s += this.form.TableData(g.OperatorAuthCertExpires, string.Empty);
+                    s += this.form.TableData(g.OperatorAuthCertExpires, string.Empty, operatorDateShade);
                     s += this.form.TableData(g.OperatorAuthCertSelfSigned, string.Empty, operatorCertSignShade);
                     s += "</tr>";
                 }
@@ -824,19 +828,18 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VB365
                     }
 
                     string[] osVersionString = osVersion.Split();
-                    string[] osVersionNumbers = osVersionString[3].Split(".");
-                    int.TryParse(osVersionNumbers[0], out int osversion);
-                    int.TryParse(osVersionNumbers[1], out int osSubVersion);
                     int osShade = 0;
-                    if (osversion < 10)
+                    if (osVersionString.Length > 3 && Version.TryParse(osVersionString[3], out Version osversion))
                     {
-                        osShade = 3;
-                    }
+                        if (osversion.Major < 10)
+                        {
+                            osShade = 3;
+                        }
 
-
-                    if (osversion == 6 && osSubVersion < 2)
-                    {
-                        osShade = 1;
+                        if (osversion.Major == 6 && osversion.Minor < 2)
+                        {
+                            osShade = 1;
+                        }
                     }
 
 
@@ -1308,7 +1311,7 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VB365
                     s += this.form.TableData(path, string.Empty);
                     s += this.form.TableData(sizelimit, string.Empty);
                     s += this.form.TableData(usedspace, string.Empty);
-                    s += this.form.TableData(freespace, string.Empty);
+                    s += this.form.TableData(freespace, string.Empty, freeSpaceShade);
                     s += this.form.TableData(boundrepo, string.Empty, boundRepoShade);
                     s += "</tr>";
                 }
@@ -1638,12 +1641,6 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VB365
                         }
                     }
 
-                    if (string.IsNullOrEmpty(org))
-                    {
-                        break;
-                    }
-
-
                     int.TryParse(selItems, out int selectedItemsCount);
                     if (selectedItemsCount > 5000)
                     {
@@ -1663,7 +1660,7 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VB365
                     }
 
 
-                    if (schedul == "Not Scheduled")
+                    if (string.Equals(schedul, "Not Scheduled", StringComparison.OrdinalIgnoreCase))
                     {
                         scheduleShade = 3;
                     }

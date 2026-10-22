@@ -740,7 +740,9 @@ namespace VeeamHealthCheck.Functions.Reporting.Html
                     s[5] += c.TransportMode;
                     s[6] += c.FailoverToNetwork;
                     s[7] += c.ChassisType;
-                    s[8] += c.CachePath;
+                    s[8] += scrub && !string.IsNullOrEmpty(c.CachePath)
+                        ? CGlobals.Scrubber.ScrubItem(c.CachePath, ScrubItemType.Path)
+                        : c.CachePath;
                     s[9] += c.CacheSize;
                     s[10] += c.Host;
                     s[11] += c.IsDisabled;
