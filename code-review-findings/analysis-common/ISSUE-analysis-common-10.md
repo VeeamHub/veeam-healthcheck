@@ -2,7 +2,7 @@
 title: "Remove dead Analysis data models: empty SOBR class and unused Repository class"
 severity: Low
 labels: [maintainability]
-domain: analysis-monitor
+domain: analysis-common
 files:
   - vHC/HC_Reporting/Functions/Analysis/DataModels/SOBR.cs:9
   - vHC/HC_Reporting/Functions/Analysis/DataModels/Repository.cs:9

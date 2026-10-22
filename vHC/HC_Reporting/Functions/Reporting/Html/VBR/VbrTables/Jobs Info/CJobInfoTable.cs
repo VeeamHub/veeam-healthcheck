@@ -22,41 +22,6 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR.VbrTables.Jobs_Info
         private readonly CVbrSummaries sum = new();
         private readonly CLogger log = CGlobals.Logger;
 
-        /// <summary>
-        /// Parses a size-in-GB cell read from a dynamic CSV row. The value is converted to a string
-        /// first so a null (job missing from the CSV, or the CSV absent) never reaches a dynamically
-        /// bound <c>double.TryParse</c> call, which cannot pick an overload for a null argument.
-        /// Unknown or unparseable values yield 0, matching the table's existing default.
-        /// </summary>
-        internal static double ParseSizeGb(object raw)
-        {
-            string text = Convert.ToString(raw, CultureInfo.InvariantCulture);
-            return double.TryParse(text, NumberStyles.Any, CultureInfo.InvariantCulture, out double value) ? value : 0;
-        }
-
-        /// <summary>
-        /// Reads a column from a CsvHelper dynamic row without throwing when the column is absent.
-        /// CsvHelper dynamic rows implement <see cref="IDictionary{TKey, TValue}"/>; the name is
-        /// matched case-insensitively. Returns null for a null row, a row of another shape, or a missing column.
-        /// </summary>
-        internal static object ReadOptionalField(object row, string name)
-        {
-            if (row is not IDictionary<string, object> fields)
-            {
-                return null;
-            }
-
-            foreach (var pair in fields)
-            {
-                if (string.Equals(pair.Key, name, StringComparison.OrdinalIgnoreCase))
-                {
-                    return pair.Value;
-                }
-            }
-
-            return null;
-        }
-
         // Job types that support Application Aware Image Processing (guest OS quiescence)
         private static readonly HashSet<string> AaipSupportedJobTypes = new(StringComparer.OrdinalIgnoreCase)
         {
@@ -154,24 +119,15 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR.VbrTables.Jobs_Info
                             {
                                 var x = csvparser.GetDynamicNasBackup().ToList();
 
-                                string nasJobName = job.Name;
-                                var matches = x.Where(r => string.Equals(
-                                    Convert.ToString(ReadOptionalField((object)r, "name"), CultureInfo.InvariantCulture),
-                                    nasJobName,
-                                    StringComparison.Ordinal)).ToList();
-
-                                var diskGb = matches
-                                    .Select(r => ReadOptionalField((object)r, "ondiskgb"))
-                                    .FirstOrDefault();
-                                onDiskGB = ParseSizeGb(diskGb);
-                                onDiskGB = Math.Round(onDiskGB, 2);
+                                // The size columns are optional: a job with no row in _nasBackup.csv,
+                                // a job whose size is unknown (blank), or a CSV from an older or
+                                // partial collector without the columns at all must show 0, not
+                                // throw. CDynamicCsvRecord reads them without a dynamic binder.
+                                object nasRow = x.FirstOrDefault(r => CDynamicCsvRecord.GetString((object)r, "name") == job.Name);
+                                onDiskGB = Math.Round(CDynamicCsvRecord.GetDouble(nasRow, "ondiskgb"), 2);
                                 onDiskTotalGB += onDiskGB;
 
-                                var sourceGb = matches
-                                    .Select(r => ReadOptionalField((object)r, "sourcegb"))
-                                    .FirstOrDefault();
-                                sourceSizeGB = ParseSizeGb(sourceGb);
-                                sourceSizeGB = Math.Round(sourceSizeGB, 2);
+                                sourceSizeGB = Math.Round(CDynamicCsvRecord.GetDouble(nasRow, "sourcegb"), 2);
                             }
                             else
                             {

@@ -7,9 +7,22 @@ function Get-VhciNasJob {
         Exports _nasBackup.csv, _nasBCJ.csv.
         Size metrics use Get-VBRUnstructuredBackupRestorePoint + CNasBackup/.GetNasBackupShortTerm()
         rather than session Progress fields, which are unreliable when the latest session failed.
+
+        A job, backup or share that references a repository which no longer exists is skipped
+        or left with blank sizes, logged as a WARNING and recorded for the report; every other
+        object is still collected and both CSVs are still written. Any other failure is
+        rethrown to the caller as before.
+    .Parameter Jobs
+        Jobs found by job discovery (Get-VBRJob does not resolve repositories, so it still
+        lists a NAS job whose repository is gone). Only used when Veeam aborts a NAS job
+        listing at a broken object: the names of the NAS jobs in it are then read one by one,
+        so just the broken ones are lost.
     #>
     [CmdletBinding()]
-    param()
+    param(
+        [Parameter(Mandatory = $false)]
+        [object[]]$Jobs = @()
+    )
 
     $message = "Collecting NAS jobs..."
     Write-LogFile $message
@@ -17,30 +30,23 @@ function Get-VhciNasJob {
     $nasBackup = $null
     $nasBCJ    = $null
 
-    Write-LogFile "Calling Get-VBRUnstructuredBackupJob..."
-    $nasBackup = @(Get-VhciNasJobResilient)
-    Write-LogFile "Found $(@($nasBackup).Count) NAS backup jobs"
+    $nasBackupNames = @(@($Jobs) | Where-Object { $null -ne $_ -and [string]$_.JobType -in @('NasBackup', 'ENasBackup') } | ForEach-Object { [string]$_.Name })
+    $nasCopyNames   = @(@($Jobs) | Where-Object { $null -ne $_ -and [string]$_.JobType -eq 'NasBackupCopy' } | ForEach-Object { [string]$_.Name })
 
-    # Export-Csv takes its columns from the first object, so every job must carry
-    # the same members up front. Jobs without a backup chain (or every job, when
-    # Get-VBRUnstructuredBackup fails) keep 0 instead of dropping the columns.
-    foreach ($nasJob in $nasBackup) {
-        $nasJob | Add-Member -MemberType NoteProperty -Name JobType  -Value "NAS Backup" -Force
-        $nasJob | Add-Member -MemberType NoteProperty -Name OnDiskGB -Value 0            -Force
-        $nasJob | Add-Member -MemberType NoteProperty -Name SourceGB -Value 0            -Force
-    }
+    Write-LogFile "Calling Get-VBRUnstructuredBackupJob..."
+    $nasBackup = @(Invoke-VhciTolerantEnumeration -ObjectType 'NAS backup job' -Collector 'NAS' `
+        -Command { Get-VBRUnstructuredBackupJob -ErrorAction Continue } `
+        -PerObjectCommand { param($Name) Get-VBRUnstructuredBackupJob -Name $Name } `
+        -ObjectNames $nasBackupNames)
+    Write-LogFile "Found $(@($nasBackup).Count) NAS backup jobs"
 
     if (@($nasBackup).Count -gt 0) {
 
         # Get-VBRUnstructuredBackupRestorePoint requires VBRUnstructuredBackup objects,
         # not the VBRNASBackupJob objects returned by Get-VBRUnstructuredBackupJob.
         Write-LogFile "Calling Get-VBRUnstructuredBackup for restore-point size metrics..."
-        $unstructuredBackups = @()
-        try {
-            $unstructuredBackups = @(Get-VBRUnstructuredBackup)
-        } catch {
-            Write-LogFile "Warning: Get-VBRUnstructuredBackup failed, NAS size metrics will be 0: $($_.Exception.Message)" -LogLevel "WARNING"
-        }
+        $unstructuredBackups = @(Invoke-VhciTolerantEnumeration -ObjectType 'NAS backup' -Collector 'NAS' `
+            -Command { Get-VBRUnstructuredBackup -ErrorAction Continue })
         Write-LogFile "Found $(@($unstructuredBackups).Count) unstructured backup chain(s)"
 
         $jobCounter = 0
@@ -48,8 +54,9 @@ function Get-VhciNasJob {
             $jobCounter++
             Write-LogFile "Processing NAS job $jobCounter/$(@($unstructuredBackups).Count): $($job.Name)"
 
-            $onDiskGB = 0
-            $sourceGB = 0
+            $onDiskGB        = 0
+            $sourceGB        = 0
+            $sizesUnresolved = $false
 
             try {
                 $points = Get-VBRUnstructuredBackupRestorePoint -Backup $job
@@ -65,107 +72,80 @@ function Get-VhciNasJob {
 
                 foreach ($shareName in $shareLatest.Keys) {
                     try {
-                        $size = Get-VhciNasShareSize -PointId $shareLatest[$shareName].Id
-                        $onDiskGB += $size.OnDiskGB
-                        $sourceGB += $size.SourceGB
-                        Write-LogFile "    Share '$shareName': SourceGB=$($size.SourceGB), OnDiskGB=$($size.OnDiskGB)"
+                        $point      = $shareLatest[$shareName]
+                        $backupInfo = [Veeam.Backup.Core.CNasBackup]::GetByNasPointId($point.Id)
+                        $pointInfo  = [Veeam.Backup.Core.CNasBackupPoint]::Get($point.Id)
+                        $shortTerm  = $backupInfo.GetNasBackupShortTerm()
+
+                        $shareOnDisk = [Math]::Round(($shortTerm.Info.DataSize + $shortTerm.Info.MetaSize) / 1GB, 2)
+                        $shareSource = [Math]::Round($pointInfo.Info.ProtectedSize / 1GB, 2)
+
+                        $onDiskGB += $shareOnDisk
+                        $sourceGB += $shareSource
+                        Write-LogFile "    Share '$shareName': SourceGB=$shareSource, OnDiskGB=$shareOnDisk"
                     } catch {
-                        Write-LogFile "    Warning: size fetch failed for share '$shareName' in '$($job.Name)': $($_.Exception.Message)" -LogLevel "WARNING"
+                        $shareRepoId = Get-VhciMissingRepositoryId -Message $_.Exception.Message
+                        if ($shareRepoId) {
+                            Register-VhciBrokenRepositoryReference -ObjectType 'NAS share' -ObjectName "$($job.Name) / $shareName" -RepositoryId $shareRepoId -Collector 'NAS' `
+                                -Consequence 'Its size is left out of the job total; the other shares are included.'
+                        } else {
+                            Write-LogFile "    Warning: size fetch failed for share '$shareName' in '$($job.Name)': $($_.Exception.Message)" -LogLevel "WARNING"
+                        }
                     }
                 }
 
                 Write-LogFile "  Total - OnDiskGB: $onDiskGB, SourceGB: $sourceGB"
             } catch {
-                Write-LogFile "  Warning: Failed to get restore points for job '$($job.Name)': $($_.Exception.Message)" -LogLevel "WARNING"
+                $jobRepoId = Get-VhciMissingRepositoryId -Message $_.Exception.Message
+                if ($jobRepoId) {
+                    # The size is unknown, not zero: leave it blank rather than report 0 GB.
+                    $sizesUnresolved = $true
+                    Register-VhciBrokenRepositoryReference -ObjectType 'NAS backup' -ObjectName $job.Name -RepositoryId $jobRepoId -Collector 'NAS' `
+                        -Consequence 'Its restore points cannot be read, so its size is left blank; the job is still listed.'
+                } else {
+                    Write-LogFile "  Warning: Failed to get restore points for job '$($job.Name)': $($_.Exception.Message)" -LogLevel "WARNING"
+                }
             }
 
             $nasJob = @($nasBackup) | Where-Object { $_.Name -eq $job.Name } | Select-Object -First 1
             if ($null -ne $nasJob) {
-                $nasJob | Add-Member -MemberType NoteProperty -Name OnDiskGB -Value $onDiskGB    -Force
-                $nasJob | Add-Member -MemberType NoteProperty -Name SourceGB -Value $sourceGB    -Force
+                $nasJob | Add-Member -MemberType NoteProperty -Name JobType  -Value "NAS Backup" -Force
+                if ($sizesUnresolved) {
+                    $nasJob | Add-Member -MemberType NoteProperty -Name OnDiskGB -Value $null -Force
+                    $nasJob | Add-Member -MemberType NoteProperty -Name SourceGB -Value $null -Force
+                } else {
+                    $nasJob | Add-Member -MemberType NoteProperty -Name OnDiskGB -Value $onDiskGB -Force
+                    $nasJob | Add-Member -MemberType NoteProperty -Name SourceGB -Value $sourceGB -Force
+                }
             }
         }
     }
 
-    # No per-job path is known for copy jobs; a failure here must still not
-    # stop the NAS backup rows from being written below.
-    try {
-        $nasBCJ = Get-VBRNASBackupCopyJob
-    } catch {
-        Write-LogFile "Warning: Get-VBRNASBackupCopyJob failed, NAS backup copy jobs are missing from the report: $($_.Exception.Message)" -LogLevel "WARNING"
+    # Export-Csv takes the whole file's header from the FIRST object. A job with no readable
+    # backup chain (for instance one whose repository is gone) never got the size columns
+    # above, and if it came first the header lost them for every row. Give every row the full,
+    # stable column set; an unknown value stays empty rather than becoming 0.
+    foreach ($nasRow in @($nasBackup)) {
+        if ($null -eq $nasRow) { continue }
+        if ($null -eq $nasRow.PSObject.Properties['JobType']) {
+            $nasRow | Add-Member -MemberType NoteProperty -Name JobType -Value "NAS Backup"
+        }
+        if ($null -eq $nasRow.PSObject.Properties['OnDiskGB']) {
+            $nasRow | Add-Member -MemberType NoteProperty -Name OnDiskGB -Value $null
+        }
+        if ($null -eq $nasRow.PSObject.Properties['SourceGB']) {
+            $nasRow | Add-Member -MemberType NoteProperty -Name SourceGB -Value $null
+        }
     }
+
+    $nasBCJ = @(Invoke-VhciTolerantEnumeration -ObjectType 'NAS backup copy job' -Collector 'NAS' `
+        -Command { Get-VBRNASBackupCopyJob -ErrorAction Continue } `
+        -PerObjectCommand { param($Name) Get-VBRNASBackupCopyJob -Name $Name } `
+        -ObjectNames $nasCopyNames)
     Write-LogFile "Found $(@($nasBCJ).Count) NAS backup copy jobs"
 
     $nasBackup | Export-VhciCsv -FileName '_nasBackup.csv'
     $nasBCJ    | Export-VhciCsv -FileName '_nasBCJ.csv'
 
     Write-LogFile ($message + "DONE")
-}
-
-function Get-VhciNasShareSize {
-    <#
-    .Synopsis
-        Returns OnDiskGB and SourceGB for one restore point of a NAS share.
-    #>
-    [CmdletBinding()]
-    param([Parameter(Mandatory)]$PointId)
-
-    $backupInfo = [Veeam.Backup.Core.CNasBackup]::GetByNasPointId($PointId)
-    $pointInfo  = [Veeam.Backup.Core.CNasBackupPoint]::Get($PointId)
-    $shortTerm  = $backupInfo.GetNasBackupShortTerm()
-
-    [pscustomobject]@{
-        OnDiskGB = [Math]::Round(($shortTerm.Info.DataSize + $shortTerm.Info.MetaSize) / 1GB, 2)
-        SourceGB = [Math]::Round($pointInfo.Info.ProtectedSize / 1GB, 2)
-    }
-}
-
-function Get-VhciNasJobResilient {
-    <#
-    .Synopsis
-        Returns NAS backup jobs, tolerating jobs the SDK cannot wrap.
-    .Description
-        Get-VBRUnstructuredBackupJob wraps every NAS job while enumerating, so
-        one job whose repository was deleted ("Failed to wrap nas backup job
-        [id]: Backup repository 'id' was not found") makes the whole call throw
-        and no job is returned (observed on a VBR 13 lab; whether the cmdlet
-        throws on the first bad job or after wrapping all is not visible from
-        the error). On failure this falls back to one call per job name, names
-        taken from Get-VBRUnstructuredBackup, each in its own try/catch.
-
-        UNCONFIRMED SDK BEHAVIOUR (needs a live run on VBR 12 and 13): that
-        Get-VBRUnstructuredBackupJob accepts -Name, that a -Name call wraps only
-        the named job, and that a job's backup chain shares the job's name (the
-        existing size-metric code already relies on the name match). A NAS job
-        with no backup chain yet is not found by the fallback; this is logged.
-    #>
-    [CmdletBinding()]
-    param()
-
-    try {
-        return @(Get-VBRUnstructuredBackupJob)
-    } catch {
-        Write-LogFile "Warning: Get-VBRUnstructuredBackupJob failed for the whole list ($($_.Exception.Message)); retrying one job at a time." -LogLevel "WARNING"
-    }
-
-    $names = @()
-    try {
-        $names = @(Get-VBRUnstructuredBackup | ForEach-Object { $_.Name } | Where-Object { $_ } | Select-Object -Unique)
-    } catch {
-        Write-LogFile "Warning: Get-VBRUnstructuredBackup failed, cannot list NAS jobs one at a time; NAS backup jobs are missing from the report: $($_.Exception.Message)" -LogLevel "WARNING"
-        return @()
-    }
-
-    $jobs = [System.Collections.Generic.List[object]]::new()
-    foreach ($name in $names) {
-        try {
-            foreach ($j in @(Get-VBRUnstructuredBackupJob -Name $name)) {
-                if ($null -ne $j) { $jobs.Add($j) }
-            }
-        } catch {
-            Write-LogFile "Warning: skipping NAS job '$name': $($_.Exception.Message)" -LogLevel "WARNING"
-        }
-    }
-    Write-LogFile "Per-job NAS collection returned $($jobs.Count) of $($names.Count) job name(s). NAS jobs without a backup chain cannot be found this way."
-    return @($jobs)
 }

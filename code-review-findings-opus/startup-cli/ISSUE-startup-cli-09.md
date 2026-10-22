@@ -6,7 +6,7 @@
 **File(s):** `vHC/HC_Reporting/Startup/CredentialStore.cs:24,103-248`
 
 ## Summary
-`CredentialStore` is a static class whose `_cache` dictionary and backing `creds.json` file are mutated by `Set`, `SetTransient`, `Clear`, and `Remove` with no synchronization. The GUI calls `CredentialStore.Get/Remove/GetAllServers` on the UI thread and on background `Task.Run` monitor-setup threads (VhcGui.xaml.cs:673, 700), while collection code may call `Set` concurrently. Reassigning `_cache = new Dictionary(...)` in `Clear()`/`InitializeCache()` while another thread enumerates it (`GetAllServers().ToList()`, `PersistCacheToDisk()'s ToDictionary`) is a race.
+`CredentialStore` is a static class whose `_cache` dictionary and backing `creds.json` file are mutated by `Set`, `SetTransient`, `Clear`, and `Remove` with no synchronization. The GUI calls `CredentialStore.Get/Remove/GetAllServers` on the UI thread and on background `Task.Run` monitor-setup threads (VhcGui.xaml.cs:673, 700; those threads were removed with the monitor integration in #275), while collection code may call `Set` concurrently. Reassigning `_cache = new Dictionary(...)` in `Clear()`/`InitializeCache()` while another thread enumerates it (`GetAllServers().ToList()`, `PersistCacheToDisk()'s ToDictionary`) is a race.
 
 ## Evidence
 ```csharp

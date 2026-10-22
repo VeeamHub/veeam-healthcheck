@@ -2671,6 +2671,14 @@ jobs:
     runs-on: windows-latest
     # Production releases only come from this environment (master only, requires approval)
     environment: production
+    # A job-level block replaces the workflow-level one, so the three existing grants are restated;
+    # id-token + attestations are the additions, needed to sign the build provenance attestation.
+    permissions:
+      contents: write
+      checks: write
+      pull-requests: write
+      id-token: write
+      attestations: write
     # Strict security gate: only create release with zero VirusTotal detections
     if: |
       github.ref == 'refs/heads/master' &&
@@ -2820,6 +2828,11 @@ jobs:
         $n.Add("(Get-FileHash `"VeeamHealthCheck-$version.zip`").Hash")
         $n.Add('```')
         $n.Add("")
+        $n.Add("**Build Provenance** (proves this ZIP was built by this repository's public workflow):")
+        $n.Add('```')
+        $n.Add("gh attestation verify VeeamHealthCheck-$version.zip --repo $repo")
+        $n.Add('```')
+        $n.Add("")
         $n.Add("### 📋 Requirements")
         $n.Add("- Windows 10 (1607) or later, or Windows Server 2012 or later")
         $n.Add("- .NET 10 runtime (included in self-contained build)")
@@ -2862,6 +2875,13 @@ jobs:
       with:
         app-id: ${{ secrets.RELEASE_APP_ID }}
         private-key: ${{ secrets.RELEASE_APP_PRIVATE_KEY }}
+
+    # Sign a build provenance attestation for the exact ZIP that gets published. It runs before the
+    # release is created, so a failed attestation stops the release rather than shipping an unsigned ZIP.
+    - name: Attest build provenance
+      uses: actions/attest-build-provenance@4d101475d8b20a2381f78447822ac1eab6504dd8 # v4.2.2
+      with:
+        subject-path: release-files/VeeamHealthCheck-${{ needs.build-and-test.outputs.version }}.zip
 
     - name: Create GitHub Release
       id: create_release

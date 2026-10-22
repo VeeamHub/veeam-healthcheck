@@ -17,7 +17,7 @@ on:
         type: boolean
         default: false
       skip_virustotal:
-        description: 'Skip VirusTotal scan'
+        description: 'Skip VirusTotal scan (dry runs only; a real release always requires a clean scan)'
         required: false
         type: boolean
         default: false
@@ -37,8 +37,24 @@ jobs:
     runs-on: windows-latest
     # Release candidates (prerelease) build from dev only; production releases from master only, with approval
     environment: ${{ inputs.prerelease && 'beta-manual' || 'production' }}
+    # A job-level block replaces the workflow-level one, so the existing grants are restated;
+    # id-token + attestations are the additions, needed to sign the build provenance attestation.
+    permissions:
+      actions: read
+      contents: write
+      pull-requests: read
+      id-token: write
+      attestations: write
 
     steps:
+    # A published release can never skip the VirusTotal scan. Fail before any build work.
+    - name: Reject VirusTotal skip on a real release
+      if: ${{ inputs.skip_virustotal && !inputs.dry_run }}
+      shell: pwsh
+      run: |
+        Write-Host "::error::skip_virustotal is only allowed together with dry_run. A release that is published must pass the VirusTotal scan."
+        exit 1
+
     - name: Checkout repository
       uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
       with:
@@ -216,6 +232,21 @@ jobs:
         }
         "vt_clean=skipped" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
 
+    # Hard gate: a run that publishes must have a completed, clean VirusTotal scan. The scan step is
+    # continue-on-error, so without this a malicious, timed-out or failed scan would still publish.
+    - name: Require clean VirusTotal scan
+      if: ${{ !inputs.dry_run }}
+      shell: pwsh
+      env:
+        VT_CLEAN: ${{ steps.virustotal.outputs.vt_clean }}
+        VT_RESULT: ${{ steps.virustotal.outputs.vt_result }}
+      run: |
+        if ($env:VT_CLEAN -ne 'true') {
+          Write-Host "::error::VirusTotal gate failed (vt_clean='$env:VT_CLEAN', result='$env:VT_RESULT'). Nothing was published. Re-run once the scan is clean."
+          exit 1
+        }
+        Write-Host "VirusTotal gate passed: $env:VT_RESULT"
+
     - name: Get PR changelog
       id: changelog
       if: ${{ inputs.pr_number != '' }}
@@ -375,6 +406,11 @@ jobs:
         $notes.Add("(Get-FileHash `"VeeamHealthCheck-$version.zip`").Hash")
         $notes.Add('```')
         $notes.Add("")
+        $notes.Add("**Build Provenance** (proves this ZIP was built by this repository's public workflow):")
+        $notes.Add('```')
+        $notes.Add("gh attestation verify VeeamHealthCheck-$version.zip --repo $repo")
+        $notes.Add('```')
+        $notes.Add("")
         $notes.Add("### 📋 Requirements")
         $notes.Add("- Windows 10 (1607) or later, or Windows Server 2012 or later")
         $notes.Add("- .NET 10 runtime (included in self-contained build)")
@@ -425,6 +461,14 @@ jobs:
       with:
         app-id: ${{ secrets.RELEASE_APP_ID }}
         private-key: ${{ secrets.RELEASE_APP_PRIVATE_KEY }}
+
+    # Sign a build provenance attestation for the exact ZIP that gets published. It runs before the
+    # release is created, so a failed attestation stops the release rather than shipping an unsigned ZIP.
+    - name: Attest build provenance
+      if: ${{ !inputs.dry_run }}
+      uses: actions/attest-build-provenance@4d101475d8b20a2381f78447822ac1eab6504dd8 # v4.2.2
+      with:
+        subject-path: publish/VeeamHealthCheck-${{ steps.get_version.outputs.version }}.zip
 
     - name: Create GitHub Release
       if: ${{ !inputs.dry_run }}

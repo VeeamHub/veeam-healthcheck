@@ -1,0 +1,101 @@
+name: actionlint
+
+# Lints every workflow under .github/workflows with actionlint.
+#
+# Blocking: syntax, expression, job-graph, action-input and runner-label errors fail the check.
+# Self-hosted runner labels are declared in .github/actionlint.yaml.
+#
+# Advisory: shellcheck findings in `run:` blocks are reported (annotations + job summary) but
+# never fail the check. The lab jobs in ci-cd.yaml run PowerShell on Windows self-hosted runners
+# whose labels don't say "windows", so actionlint treats those scripts as bash and shellcheck
+# reports ~200 parse errors that aren't real. Making that pass blocking would need edits to
+# unrelated workflows (an explicit `shell: pwsh`), which is out of scope here.
+
+on:
+  push:
+    branches: [master, dev]
+    paths:
+      - '.github/workflows/**'
+      - '.github/actionlint.yaml'
+  pull_request:
+    branches: [master, dev]
+    paths:
+      - '.github/workflows/**'
+      - '.github/actionlint.yaml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  ACTIONLINT_VERSION: '1.7.12'
+  # sha256 of actionlint_${ACTIONLINT_VERSION}_linux_amd64.tar.gz from the release's checksums.txt
+  ACTIONLINT_SHA256: '8aca8db96f1b94770f1b0d72b6dddcb1ebb8123cb3712530b08cc387b349a3d8'
+
+jobs:
+  actionlint:
+    name: actionlint
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+
+      - name: Install actionlint
+        run: |
+          set -euo pipefail
+          archive="actionlint_${ACTIONLINT_VERSION}_linux_amd64.tar.gz"
+          curl -fsSL --retry 3 -o "$RUNNER_TEMP/$archive" \
+            "https://github.com/rhysd/actionlint/releases/download/v${ACTIONLINT_VERSION}/${archive}"
+          echo "${ACTIONLINT_SHA256}  $RUNNER_TEMP/$archive" | sha256sum -c -
+          mkdir -p "$RUNNER_TEMP/actionlint"
+          tar -xzf "$RUNNER_TEMP/$archive" -C "$RUNNER_TEMP/actionlint" actionlint
+          echo "$RUNNER_TEMP/actionlint" >> "$GITHUB_PATH"
+          "$RUNNER_TEMP/actionlint/actionlint" -version
+          shellcheck --version | head -n 2
+
+      - name: Lint workflows (blocking, shellcheck off)
+        run: |
+          # The format is a Go template for actionlint, not shell, so single quotes are intended.
+          # shellcheck disable=SC2016
+          actionlint -shellcheck= -pyflakes= \
+            -format '{{range $err := .}}::error file={{$err.Filepath}},line={{$err.Line}},col={{$err.Column}},title=actionlint [{{$err.Kind}}]::{{$err.Message}}\n{{end}}'
+
+      - name: Shellcheck run blocks (advisory)
+        if: always()
+        run: |
+          set -uo pipefail
+          report="$RUNNER_TEMP/actionlint-shellcheck.json"
+          rc=0
+          actionlint -pyflakes= -format '{{json .}}' > "$report" || rc=$?
+          if [ "$rc" -gt 1 ]; then
+            echo "::warning title=actionlint (advisory)::actionlint exited $rc during the shellcheck pass; findings below may be incomplete."
+          fi
+          [ -s "$report" ] || echo '[]' > "$report"
+
+          sc='[.[] | select(.kind == "shellcheck")]'
+          total=$(jq "$sc | length" "$report")
+
+          # Annotations. GitHub shows at most 10 warnings per step; the job summary has the full count.
+          jq -r "$sc | .[] | \"::warning file=\(.filepath),line=\(.line),col=\(.column),title=shellcheck (advisory)::\(.message)\"" "$report"
+
+          {
+            echo "## Shellcheck in workflow \`run:\` blocks (advisory)"
+            echo
+            if [ "$total" -eq 0 ]; then
+              echo "No shellcheck findings."
+            else
+              echo "**$total finding(s).** These never fail the check. Most come from PowerShell steps on"
+              echo "Windows self-hosted runners that actionlint parses as bash (see the comment at the top of"
+              echo "\`.github/workflows/actionlint.yml\`)."
+              echo
+              echo "| Workflow | Findings |"
+              echo "|---|---:|"
+              jq -r "$sc | group_by(.filepath) | sort_by(-length) | .[] | \"| \`\(.[0].filepath)\` | \(length) |\"" "$report"
+              echo
+              echo "| Code | Severity | Findings |"
+              echo "|---|---|---:|"
+              jq -r "$sc | map(.message | capture(\"(?<code>SC[0-9]+):(?<sev>[a-z]+):\")) | group_by(.code) | sort_by(-length) | .[] | \"| \(.[0].code) | \(.[0].sev) | \(length) |\"" "$report"
+            fi
+          } >> "$GITHUB_STEP_SUMMARY"
+          exit 0

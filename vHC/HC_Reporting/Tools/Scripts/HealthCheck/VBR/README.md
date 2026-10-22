@@ -48,6 +48,11 @@ disconnects.
     -ReportPath "C:\temp\vHC\Original\VBR\myserver\20260101_120000"
 ```
 
+`-Password` and `-PasswordBase64` are for manual runs only: anything on a command line is visible to other
+local processes and to process-creation auditing. vHC itself supplies the password in the
+`VHC_CRED_PASSWORD` environment variable, which the script reads and removes at startup, and you can do the
+same by hand: `$env:VHC_CRED_PASSWORD = '<password>'`, then run the script with `-User` only.
+
 CSV output is written to `<ReportPath>\<VBRServer>_<FileName>.csv`.
 
 ---

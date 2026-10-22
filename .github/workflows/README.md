@@ -19,7 +19,7 @@ A manually-triggered workflow for creating releases with full control over the p
 | `pr_number` | No | PR number to extract changelog from. Leave empty for no changelog. |
 | `version_override` | No | Override the version (four parts, e.g., `3.2.0.5`; must be above the last GA version). Leave empty to compute it from commits. |
 | `prerelease` | No | Mark as pre-release. The tag gets an `-rc` suffix, so it never becomes a Base Tag. |
-| `skip_virustotal` | No | Check to skip VirusTotal scanning |
+| `skip_virustotal` | No | Skip VirusTotal scanning. Dry runs only: a run that publishes a release fails if this is checked. |
 | `dry_run` | No | Check to build without creating release (preview mode) |
 
 ### Features
@@ -100,6 +100,41 @@ Nightly (`0 6 * * *` UTC, about 02:00 Eastern) or manual (**Actions** → **Beta
 | `pr-comment.yml` | PR | Post build info as PR comment |
 | `sbom-generation.yml` | Push | Generate software bill of materials |
 | `stale.yml` | Schedule | Mark stale issues/PRs |
+| `actionlint.yml` | Push/PR touching workflows | Lint workflows (blocking); see [Linting](#linting) |
+| `psscriptanalyzer.yml` | PR touching PowerShell | PSScriptAnalyzer backlog (advisory); see [Linting](#linting) |
+
+---
+
+## Linting
+
+### actionlint (`actionlint.yml`)
+
+Runs [actionlint](https://github.com/rhysd/actionlint) (pinned version, checksum-verified) on
+`ubuntu-latest` for pushes and PRs into `master`/`dev` that touch `.github/workflows/**` or
+`.github/actionlint.yaml`.
+
+- **Blocking:** syntax, expression, `needs:`, action-input and runner-label errors fail the check, as
+  annotations on the offending line.
+- **Advisory:** shellcheck findings in `run:` blocks are annotated and counted in the job summary but
+  never fail it. Most of them are PowerShell steps on the Windows lab runners, which actionlint parses as
+  bash because their labels don't say `windows`. Adding `shell: pwsh` to those steps would clear them.
+- **New self-hosted runner label?** Add it to `.github/actionlint.yaml`, or every job using it fails
+  with an unknown-label error.
+- Locally: `actionlint -shellcheck= -pyflakes=` from the repo root (the blocking pass), or plain
+  `actionlint` to see shellcheck too.
+
+### PSScriptAnalyzer (`psscriptanalyzer.yml`)
+
+Advisory: never fails the PR. Runs a pinned
+[PSScriptAnalyzer](https://github.com/PowerShell/PSScriptAnalyzer) on `windows-latest` over every
+tracked `*.ps1`, `*.psm1` and `*.psd1` when a PR into `master`/`dev` touches one, or on manual dispatch.
+
+- Findings in files the PR changes are annotated (GitHub shows about 10 per type per step).
+- The job summary counts all findings in the repo by severity and by rule, with the top files; the full
+  list is the `psscriptanalyzer-results` CSV artifact.
+- Rules are configured in `PSScriptAnalyzerSettings.psd1` at the repo root. Each excluded rule has a
+  one-line reason there.
+- Locally: `Invoke-ScriptAnalyzer -Path <file> -Settings ./PSScriptAnalyzerSettings.psd1`.
 
 ---
 

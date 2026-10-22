@@ -5,6 +5,7 @@
     Description       = 'VBR configuration collector module for Veeam Health Check'
     Author            = 'Veeam Health Check'
     FunctionsToExport = @(
+        'Export-VhcBrokenRepositoryReferences',
         'Get-VhcArchiveTier',
         'Get-VhcBackupSessions',
         'Get-VhcCapacityTier',

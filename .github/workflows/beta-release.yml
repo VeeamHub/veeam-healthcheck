@@ -28,6 +28,12 @@ jobs:
   beta-release:
     runs-on: ubuntu-latest
     environment: ${{ github.event_name == 'schedule' && 'beta' || 'beta-manual' }}
+    # Job-level permissions replace the workflow-level block, so contents/actions are restated.
+    permissions:
+      contents: write
+      actions: read
+      id-token: write
+      attestations: write
     env:
       RELEASE_APP_ID: ${{ secrets.RELEASE_APP_ID }}
       REPO: ${{ github.repository }}
@@ -269,6 +275,11 @@ jobs:
         $n.Add("(Get-FileHash ``$env:ZIP_NAME``).Hash")
         $n.Add('```')
         $n.Add("")
+        $n.Add("**Build Provenance** (signed attestation from this repository's release workflow):")
+        $n.Add('```')
+        $n.Add("gh attestation verify $env:ZIP_NAME --repo $repo")
+        $n.Add('```')
+        $n.Add("")
         $n.Add("### 📋 Requirements")
         $n.Add("- Windows 10 (1607) or later, or Windows Server 2012 or later")
         $n.Add("- .NET 10 runtime (included in self-contained build)")
@@ -282,6 +293,12 @@ jobs:
 
         ($n -join "`n") | Out-File -FilePath "beta_notes.md" -Encoding UTF8
         Write-Host "Generated beta release notes"
+
+    - name: Attest build provenance
+      if: steps.pick.outputs.skip == 'false'
+      uses: actions/attest-build-provenance@4d101475d8b20a2381f78447822ac1eab6504dd8 # v4.2.2
+      with:
+        subject-path: ${{ steps.fetch.outputs.zip }}
 
     - name: Create beta release
       if: steps.pick.outputs.skip == 'false'

@@ -13,6 +13,11 @@ checksums, and scan results.
 
 ## [Unreleased]
 
+### Added
+
+- `SECURITY.md`: how to report a vulnerability privately, what the tool reads and writes, how releases are
+  built, how to verify a download, and the known gaps.
+
 ### Changed
 
 - The VBR User Roles table no longer shows a Description column. VBR does not expose a description for role
@@ -21,14 +26,17 @@ checksums, and scan results.
   `IsOnHost`, `NetBufferSize`, `MaxConcurrentJobs` and `IsHvOffload` are replaced by `FailoverToNetwork`,
   `ChassisType`, `CachePath`, `CacheSize` and `IsDisabled`. Anything that reads those keys needs updating.
 
+### Removed
+
+- The release package no longer ships the developer validation harness (`vHC-VbrConfig\Validation`) or the
+  module's Pester test files.
+
 ### Fixed
 
 - Job backup data size and source size include restore points for objects removed from the job again (for
   example, a VM taken out of a job whose older restore points are still on disk), as in 3.0.1.193. 3.1.0 left
   them out to list them in the Orphaned & Superseded Backups section, which is hidden by default. That split,
   and the full restore point scan it forced on every run, now happen only when `VHC_EXPERIMENTS` is set.
-- The Job Info table no longer fails to load when NAS job data, or its size columns, are missing.
-- One NAS backup job whose repository was deleted no longer stops every NAS job (and Entra ID data) from being collected. The broken job is skipped with a warning naming it, and NAS jobs always export `OnDiskGB` and `SourceGB` (0 when sizes cannot be read).
 - Importing CSVs with `/import` now produces only the report for the product the files came from. A VB365
   import no longer also writes an empty VBR report, and a VBR import no longer writes a VB365 report.
 - A complete VB365 export is no longer reported as missing a critical file (`LocalRepositories.csv`).
@@ -51,6 +59,22 @@ checksums, and scan results.
   read from the VBR REST API.
 - VB365 collection now records the real free-space percentage for local repositories instead of 0.00 %.
 - Scrubbed reports now anonymize the CDP proxy cache path.
+- Collection no longer loses `_nasBackup.csv`, `_nasBCJ.csv` or the restore-point sizing sweep when a job or backup references a repository that was deleted ("Unable to find repository id"). The broken object is skipped with a warning and everything else is collected; the skipped objects are listed in `_BrokenRepositoryReferences.csv`. The restore-point sweep also skips any single backup it cannot read (for example an encrypted or plug-in backup) with a warning instead of failing as a whole, `_nasBackup.csv` always carries its size columns, and Job Info shows 0 instead of failing when a CSV lacks them.
+- Job Info no longer stops rendering when a NAS backup job has no matching row in `_nasBackup.csv`; the later job sections and the Tape and Entra tables now appear.
+
+### Security
+
+- Release zips now carry a signed build-provenance attestation. Verify one with
+  `gh attestation verify <zip> --repo VeeamHub/veeam-healthcheck`.
+- The HTML report no longer loads the Inter font from Google Fonts, so opening a report makes no network
+  request.
+- Manual releases can no longer skip the VirusTotal scan, and a scan that is not clean now blocks the release.
+- Passwords for remote and credentialed runs (`/remote`, `/host=`, `/savecreds`, `/credfile=`) are no longer
+  passed to PowerShell on the command line, where other local processes and process-creation auditing
+  (event 4688, Sysmon) could read them. They now reach the collector through its environment, and the
+  collector clears them once read. The `-Password` and `-PasswordBase64` script parameters still work for
+  manual runs.
+
 
 ## [3.1.0] - 2026-10-16
 

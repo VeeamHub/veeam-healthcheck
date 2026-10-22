@@ -129,53 +129,9 @@ function Get-VhcJob {
     if ($NeedsSweep) {
         $SweepStopwatch = [System.Diagnostics.Stopwatch]::StartNew()
         try {
-            # One backup pointing at a deleted repository makes the unscoped
-            # call throw ("Unable to find repository id ...", observed on a
-            # VBR 13 lab) and return nothing, which would disable the sweep
-            # for the whole server. On failure, fall back to one call per
-            # backup, each in its own try/catch, and keep every point we can
-            # read. If Get-VBRBackup itself throws, that propagates to the
-            # outer catch exactly as a failed bulk call did before.
-            #
-            # UNCONFIRMED SDK BEHAVIOUR (needs a live run on VBR 12 and 13):
-            # that Get-VBRBackup returns the broken backup without throwing,
-            # and that Get-VBRRestorePoint -Backup is scoped to that backup
-            # alone, so only the broken backup's call throws.
-            try {
-                $AllRestorePoints = @(Get-VBRRestorePoint -WarningAction SilentlyContinue | Where-Object { $null -ne $_ })
-            } catch {
-                try {
-                    Write-LogFile "Warning: Get-VBRRestorePoint failed for the whole list ($($_.Exception.Message)); retrying one backup at a time." -LogLevel "WARNING"
-                } catch {}
-
-                $SweepBackups = @(Get-VBRBackup -WarningAction SilentlyContinue | Where-Object { $null -ne $_ })
-                $PerBackupPoints = [System.Collections.Generic.List[object]]::new()
-                $BackupsRead    = 0
-                $BackupsSkipped = 0
-                foreach ($SweepBackup in $SweepBackups) {
-                    try {
-                        foreach ($SweepPoint in @(Get-VBRRestorePoint -Backup $SweepBackup -WarningAction SilentlyContinue)) {
-                            if ($null -ne $SweepPoint) { $PerBackupPoints.Add($SweepPoint) }
-                        }
-                        $BackupsRead++
-                    } catch {
-                        $BackupsSkipped++
-                        try {
-                            Write-LogFile "Warning: skipping backup '$($SweepBackup.Name)' in the restore point sweep: $($_.Exception.Message)" -LogLevel "WARNING"
-                        } catch {}
-                    }
-                }
-                $AllRestorePoints = @($PerBackupPoints)
-                try {
-                    Write-LogFile "Per-backup restore point sweep read $BackupsRead of $($SweepBackups.Count) backup(s), skipped $BackupsSkipped, $($AllRestorePoints.Count) restore points."
-                } catch {}
-                # Nothing read means the fallback recovered nothing; sweeping
-                # zero points would report a clean server and skip the per-job
-                # sizing fallback, so fail the sweep as the bulk call did.
-                if ($BackupsRead -eq 0) {
-                    throw "Per-backup restore point sweep read none of $($SweepBackups.Count) backup(s)"
-                }
-            }
+            # Get-VhciAllRestorePoints falls back to one backup at a time when a backup
+            # references a repository that no longer exists, so that backup alone is lost.
+            $AllRestorePoints = @(Get-VhciAllRestorePoints)
 
             # Same null-placeholder risk both structures below guard against -
             # a $Jobs element can be a non-null object with no populated Id

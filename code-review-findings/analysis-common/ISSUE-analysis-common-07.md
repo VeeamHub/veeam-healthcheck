@@ -2,7 +2,7 @@
 title: "CLogger.Debug ignores its silent parameter"
 severity: Low
 labels: [bug, maintainability]
-domain: analysis-monitor
+domain: analysis-common
 files:
   - vHC/HC_Reporting/Common/Logging/CLogger.cs:70
 confidence: High

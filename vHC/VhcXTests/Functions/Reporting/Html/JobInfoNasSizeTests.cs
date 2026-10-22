@@ -1,5 +1,3 @@
-using System.Dynamic;
-using System.Globalization;
 using System.Net;
 using VeeamHealthCheck.Functions.Reporting.Html.VBR.VbrTables.Jobs_Info;
 using VhcXTests.TestData;
@@ -80,70 +78,6 @@ public sealed class JobInfoNasSizeTests
 
         AssertNoImportError(report);
         Assert.Contains(NasJobName, html);
-    }
-
-    [Fact]
-    public void ReadOptionalField_FieldPresent_ReturnsValue()
-    {
-        dynamic row = new ExpandoObject();
-        row.ondiskgb = "12.5";
-
-        Assert.Equal("12.5", CJobInfoTable.ReadOptionalField((object)row, "ondiskgb"));
-    }
-
-    [Fact]
-    public void ReadOptionalField_FieldMissing_ReturnsNull()
-    {
-        dynamic row = new ExpandoObject();
-        row.name = "job";
-
-        Assert.Null(CJobInfoTable.ReadOptionalField((object)row, "ondiskgb"));
-    }
-
-    [Fact]
-    public void ReadOptionalField_DifferentCase_ReturnsValue()
-    {
-        dynamic row = new ExpandoObject();
-        row.OnDiskGB = "7";
-
-        Assert.Equal("7", CJobInfoTable.ReadOptionalField((object)row, "ondiskgb"));
-    }
-
-    [Fact]
-    public void ReadOptionalField_NullRow_ReturnsNull()
-    {
-        Assert.Null(CJobInfoTable.ReadOptionalField(null!, "ondiskgb"));
-    }
-
-    [Fact]
-    public void ReadOptionalField_RowNotADictionary_ReturnsNull()
-    {
-        Assert.Null(CJobInfoTable.ReadOptionalField(new object(), "ondiskgb"));
-    }
-
-    [Fact]
-    public void ParseSizeGb_NullValue_ReturnsZero()
-    {
-        Assert.Equal(0, CJobInfoTable.ParseSizeGb(null!));
-    }
-
-    [Theory]
-    [InlineData("", 0)]
-    [InlineData("not-a-number", 0)]
-    [InlineData("256.75", 256.75)]
-    [InlineData("1024.50", 1024.5)]
-    public void ParseSizeGb_StringValue_ParsesInvariantOrReturnsZero(string raw, double expected)
-    {
-        CultureInfo previous = CultureInfo.CurrentCulture;
-        CultureInfo.CurrentCulture = new CultureInfo("de-DE");
-        try
-        {
-            Assert.Equal(expected, CJobInfoTable.ParseSizeGb(raw));
-        }
-        finally
-        {
-            CultureInfo.CurrentCulture = previous;
-        }
     }
 
     private static void AssertNoImportError(GoldenVbrReport report)

@@ -61,13 +61,11 @@
 	<ItemGroup>
 		<None Remove="banner_string.txt" />
 		<None Remove="css.css" />
-		<None Remove="Functions\Collection\PSCollections\Collect-VB365Data.ps1" />
 		<None Remove="Functions\Collection\PSCollections\Scripts\TestMfa.ps1" />
 		<None Remove="Functions\Reporting\Html\Shared\JavaScript1.js" />
 		<None Remove="ReportScript.js" />
 		<None Remove="RVTools4.1.4.msi" />
 		<None Remove="Tools\Get-VBRConfig - Copy.ps1" />
-		<None Remove="Tools\Scripts\Collect-VB365Data.ps1" />
 		<None Remove="Tools\Scripts\Collect-VBRLogs.ps1" />
 		<None Remove="Tools\Scripts\DumpManagedServerToText.ps1" />
 		<None Remove="Tools\Scripts\Get-VBRConfig.ps1" />
@@ -75,9 +73,6 @@
 		<None Remove="Tools\Scripts\HealthCheck\VBR\Get-NasInfo.ps1" />
 	</ItemGroup>
 	<ItemGroup>
-		<EmbeddedResource Include="Functions\Collection\PSCollections\Scripts\Collect-VB365Data.ps1">
-			<CopyToOutputDirectory>Never</CopyToOutputDirectory>
-		</EmbeddedResource>
 		<Content Include="Functions\Collection\PSCollections\Scripts\TestMfa.ps1">
 			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
 		</Content>
@@ -129,7 +124,13 @@
 		<Content Include="Tools\Scripts\HealthCheck\VBR\VbrConfig.json">
 			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
 		</Content>
-		<Content Include="Tools\Scripts\HealthCheck\VBR\vHC-VbrConfig\**\*">
+		<!--
+			Ship only what the collector needs at runtime. Excluded from build/publish output (they stay in the source tree):
+			- Validation\**: lab-only validation/E2E harness (creates and deletes VBR objects). CI runs it from the checkout, not the package.
+			- *.Tests.ps1: Pester tests. CI discovers them with `git ls-files`, and the C# tests read the source tree.
+			- .gitkeep: placeholder files.
+		-->
+		<Content Include="Tools\Scripts\HealthCheck\VBR\vHC-VbrConfig\**\*" Exclude="Tools\Scripts\HealthCheck\VBR\vHC-VbrConfig\Validation\**;Tools\Scripts\HealthCheck\VBR\vHC-VbrConfig\**\*.Tests.ps1;Tools\Scripts\HealthCheck\VBR\vHC-VbrConfig\**\.gitkeep">
 			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
 		</Content>
 	</ItemGroup>

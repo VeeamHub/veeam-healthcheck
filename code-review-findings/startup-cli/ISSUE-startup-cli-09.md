@@ -16,7 +16,7 @@ The argument `switch` in `ParseAllArgs` has no `default` branch, so any unrecogn
 Real-world misuse produces a successful-looking run with wrong behavior: `/days:60` yields a 7-day report; `/scrub` (without `:true`) yields an unscrubbed report; a typo'd `/silnet` runs interactively in a scheduler context. For a tool whose primary consumers are field SEs driving it from documentation and scheduled tasks, silent acceptance of bad flags is a recurring support generator.
 
 ## Evidence
-`vHC/HC_Reporting/Startup/CArgsParser.cs:108-274` — the `foreach`/`switch` ends at the `/monitor:disable` case with no `default:`.
+`vHC/HC_Reporting/Startup/CArgsParser.cs:108-274` — the `foreach`/`switch` ends at its last case with no `default:`.
 
 `vHC/HC_Reporting/Startup/CArgsParser.cs:129-144`:
 

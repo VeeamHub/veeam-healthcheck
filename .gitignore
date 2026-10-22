@@ -388,7 +388,6 @@ vHC/Plans/
 !docs/plans/
 !docs/plans/**
 .playwright-mcp/
-docs/MONITOR_NATIVE_ARCHITECTURE.md
 entities.json
 mempalace.yaml
 MEMORY/

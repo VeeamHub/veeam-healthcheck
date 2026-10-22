@@ -25,6 +25,17 @@ param (
     [string]$Username = "",
     [string]$PasswordBase64 = ""
 )
+
+# vHC hands the password over in the VHC_CRED_PASSWORD environment variable (never on the command
+# line, where other processes and process-creation auditing could read it). Read it once and remove
+# it from this process's environment immediately. -PasswordBase64 still works for manual runs.
+function Get-VhcCredentialPasswordFromEnvironment {
+    $value = [Environment]::GetEnvironmentVariable('VHC_CRED_PASSWORD', 'Process')
+    [Environment]::SetEnvironmentVariable('VHC_CRED_PASSWORD', $null, 'Process')
+    return $value
+}
+$script:VhcEnvPassword = Get-VhcCredentialPasswordFromEnvironment
+
 enum LogLevel {
     TRACE
     PROFILE
@@ -721,13 +732,18 @@ Write-LogFile -LogLevel INFO -Message ("System Memory: " + [Math]::Round($memory
 Import-Module -Name Veeam.Archiver.PowerShell,Veeam.Exchange.PowerShell,Veeam.SharePoint.PowerShell,Veeam.Teams.PowerShell
 if ($global:SETTINGS.VBOServerFqdnOrIp -ne "localhost") {
     if ($null -eq $global:VBO_SERVER_CREDS) {
-        if ($Username -and $PasswordBase64) {
-            $plain = [System.Text.Encoding]::UTF8.GetString([Convert]::FromBase64String($PasswordBase64))
+        if ($Username -and ($PasswordBase64 -or $script:VhcEnvPassword)) {
+            if ($PasswordBase64) {
+                $plain = [System.Text.Encoding]::UTF8.GetString([Convert]::FromBase64String($PasswordBase64))
+            } else {
+                $plain = $script:VhcEnvPassword
+            }
             $sec   = ConvertTo-SecureString $plain -AsPlainText -Force
             $global:VBO_SERVER_CREDS = New-Object System.Management.Automation.PSCredential($Username, $sec)
             Remove-Variable plain
+            $script:VhcEnvPassword = $null
         } else {
-            Write-Error "VB365 remote collection requires -Username and -PasswordBase64 in unattended mode." -ErrorAction Stop
+            Write-Error "VB365 remote collection requires -Username and a password (VHC_CRED_PASSWORD environment variable, or -PasswordBase64 for manual runs) in unattended mode." -ErrorAction Stop
         }
     }
     Connect-VBOServer -Server $global:SETTINGS.VBOServerFqdnOrIp -Credential $global:VBO_SERVER_CREDS -ErrorAction Stop

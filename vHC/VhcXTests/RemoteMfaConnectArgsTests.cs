@@ -22,7 +22,7 @@ namespace VhcXTests
         [InlineData(14)]
         public void BuildRemoteMfaConnectArgs_V13Plus_ForcesTlsCertificateAcceptance_Issue149(int major)
         {
-            string args = PSInvoker.BuildRemoteMfaConnectArgs("srv", "user", "pw", major);
+            string args = PSInvoker.BuildRemoteMfaConnectArgs("srv", "user", major);
             Assert.Contains("-ForceAcceptTlsCertificate", args);
         }
 
@@ -31,7 +31,7 @@ namespace VhcXTests
         [InlineData(0)]
         public void BuildRemoteMfaConnectArgs_V12OrUnknown_OmitsTlsFlag_NoParamNotFound(int major)
         {
-            string args = PSInvoker.BuildRemoteMfaConnectArgs("srv", "user", "pw", major);
+            string args = PSInvoker.BuildRemoteMfaConnectArgs("srv", "user", major);
             Assert.DoesNotContain("-ForceAcceptTlsCertificate", args);
         }
 
@@ -43,11 +43,11 @@ namespace VhcXTests
             // -ErrorAction Stop surfaces failures as a non-zero exit; the three operator-supplied
             // fields stay inside single quotes (escaping is CredentialHelper's job upstream) so a
             // refactor cannot silently drop the quoting and reopen an injection vector.
-            string args = PSInvoker.BuildRemoteMfaConnectArgs("srv", "user", "pw", major);
+            string args = PSInvoker.BuildRemoteMfaConnectArgs("srv", "user", major);
             Assert.Contains("-ErrorAction Stop", args);
             Assert.Contains("-Server 'srv'", args);
             Assert.Contains("-User 'user'", args);
-            Assert.Contains("-Password 'pw'", args);
+            Assert.Contains("-Password $vhcPw", args);
         }
     }
 }
