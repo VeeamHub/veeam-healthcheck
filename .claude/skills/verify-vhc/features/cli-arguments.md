@@ -18,7 +18,7 @@ Every flag `CArgsParser.ParseAllArgs` recognizes, matched case-sensitively excep
 |---|---|
 | `/help` | Prints the help menu. |
 | `/run` | Runs a health check. |
-| `/show:files` | Opens the output folder in Explorer afterwards (also `/show:report`, `/show:all`). |
+| `/show:files` | Opens the output folder in Explorer afterwards (also `/show:report`, which opens the HTML report instead, and `/show:all`, which is accepted but sets nothing). |
 | `/days:7` | Report window in days (also `/days:30`, `/days:90`, `/days:12`). |
 | `/gui` | Opens the GUI. |
 | `/lite` | Implies `/run`; skips the per-job HTML exports. |
@@ -85,8 +85,8 @@ Not driven: `/pdf` (DinkToPdf's native library throws an unhandled `NullReferenc
 
 ## Gotchas
 
-- Exit code is `0` for every case above, including the failed import: `EntryPoint.Main` returns 0 unless an exception escapes. Assert on log lines and on the files in the output folder.
+- Exit code is `0` for every case above, including the failed import: `EntryPoint.Main` returns 0 unless an exception escapes. Assert on log lines and on the files in the output folder. The undriven credential paths bypass `Main` with `Environment.Exit` instead: `/silent` with `/savecreds` exits 2, `/savecreds` exits with its flow's code, and a bad `/credfile=` exits 6.
 - Argument parsing is covered in depth by unit tests (`vHC/VhcXTests/CArgsParserTEST.cs`, `Startup/`); run them via [build-and-tests](./build-and-tests.md) for flag-combination logic that is not worth driving by hand.
 - `/help` on non-Windows prints several `WARN Script unblock failed ... kernel32` blocks before the menu. Ignore them.
-- Collection-intent flags (`/vbr`, `/vb365`, `/host=`, `/remote`) imply `/run` and then try to collect, so on macOS they fail on missing Veeam components; do not use them for verification here.
+- Collection-intent flags (`/vbr`, `/vb365`, `/host=`, `/remote`) imply `/run` and then try to collect, so on macOS they fail on missing Veeam components; do not use them for verification here. The exception is `/remote` without `/host=`: it logs `Remote execution selected but no host defined` and exits 0 before collecting.
 - No-argument launch and `/gui` fail on macOS with an Avalonia/native-library exception in `LaunchUi`. That is the platform limit, not a regression.
