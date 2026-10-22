@@ -7,9 +7,9 @@ A field engineer runs VHC on (or against) a Veeam server: the GUI or `/run` coll
 - `gui-headless` runs the Avalonia.Headless xUnit suite against the real windows. **Drivable here**; see the section below.
 - `gui-e2e` drives the real published exe with FlaUI on a Windows desktop: the lab runner (push or dispatch only) or, before a PR, a Windows host through `vhc-verify.sh winhost --gui` ([windows-host](./windows-host.md)). **Not drivable on macOS/Linux**; see the section below.
 - `gui-launch` opens a real Avalonia window (`/gui` or no arguments).
-- `collect-vbr` runs the VBR PowerShell collection scripts under `vHC/HC_Reporting/Tools/Scripts/HealthCheck/VBR/`.
+- `collect-vbr` runs the VBR PowerShell collection scripts under `vHC/HC_Reporting/Tools/Scripts/HealthCheck/VBR/`. A job, backup or scale-out repository that points at a repository that no longer exists is skipped with a `WARNING` instead of aborting its collector, and is listed in `_BrokenRepositoryReferences.csv` (ObjectType, ObjectName, RepositoryId, Collector; written only when there is one). The report does not read that CSV, so it appears only in the collected `Original\VBR\...` folder.
 - `collect-vb365` runs the VB365 scripts.
-- `collect-remote` uses `/remote /host=<name>` with stored or file-supplied credentials (`/savecreds`, `/credfile=`, `/silent`).
+- `collect-remote` uses `/remote /host=<name>` with stored or file-supplied credentials (`/savecreds`, `/credfile=`, `/silent`). The password reaches the child PowerShell process in the `VHC_CRED_PASSWORD` environment variable (`PsCredentialChannel`), never on its command line; `PasswordNotOnCommandLineTests` (partly `[UnixOnlyFact]`, so it runs here) and the Pester `PasswordEnvironment.Tests.ps1` cover it. Checking real child command lines needs a Windows remote run.
 - `export-pdf` produces a PDF with `/pdf` (DinkToPdf native library, Windows).
 - `export-pptx` produces a PowerPoint with `/pptx` (not available with `/scrub:true`).
 - `credentials-dpapi` stores credentials with Windows DPAPI.

@@ -18,7 +18,7 @@ Open `Veeam Health Check Report_VBR_*.html` in any browser.
 
 Preconditions:
 
-- `bun` on PATH. A browser: on macOS with Google Chrome installed the helper uses it (`REPORT_SMOKE_CHANNEL=chrome`); elsewhere run `cd tools/report-smoke && bun install --frozen-lockfile && bunx playwright install chromium` once.
+- `bun` on PATH, recent enough to read the committed `tools/report-smoke/bun.lock` (`"lockfileVersion": 2`); CI installs the latest bun with `setup-bun`. `doctor` prints the local bun version. An older bun fails at `bun install --frozen-lockfile` with `Unknown lockfile version`; upgrade bun rather than regenerating the lockfile. A browser: on macOS with Google Chrome installed the helper uses it (`REPORT_SMOKE_CHANNEL=chrome`); elsewhere run `cd tools/report-smoke && bun install --frozen-lockfile && bunx playwright install chromium` once.
 
 - **Render the import output.** `.claude/skills/verify-vhc/scripts/vhc-verify.sh render <ID>` runs `import-report <ID>` and `import-scrub <ID>-scrub` if their output is missing, then opens every html in both `vHC-Report/` and `vHC-AnonymousReport/` (the VBR and the VB365 sibling, plain and scrubbed = 4 files). Output ends with `report-smoke: 4/4 reports clean` and `RENDER: verified`.
 - **Screenshots.** `.verify-vhc/evidence/<ID>/render/*.png` (full page, 1440 px wide).

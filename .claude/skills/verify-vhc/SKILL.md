@@ -18,7 +18,7 @@ VHC is a Windows utility (Avalonia GUI + CLI). It collects data from a Veeam Bac
 | The report works when opened in a browser (console, nav, toggles, core sections, screenshots) | yes | `render` |
 | CLI argument parsing, `/help`, bad-input handling | yes | `cli-checks`, [cli-arguments](features/cli-arguments.md) |
 | CLI flags combined with `/import` (`/lite`, `/security`, `/days:N`, `/debug`, `/show:*`, `/pptx`) | yes | `cli-matrix` |
-| xUnit suites (1,117 passed + 15 skipped, and 121 tests) | yes | `tests` |
+| xUnit suites (1,375 passed + 31 skipped, and 121 tests) | yes | `tests` |
 | Avalonia GUI logic and dialogs, headless (22 tests) | yes, headless only | `tests`, [gui-and-collection](features/gui-and-collection.md#gui-headless) |
 | Live collection (PowerShell, SQL, registry, WMI, logs) | **no, needs Windows + VBR/VB365** | [gui-and-collection](features/gui-and-collection.md) |
 | Real GUI window (Win32 hide, native picker, Windows rendering) | **no, needs Windows** (it throws at startup on macOS) | [gui-and-collection](features/gui-and-collection.md) |
@@ -44,7 +44,7 @@ One script, repo-relative, executable. Run from anywhere inside the repo:
 .claude/skills/verify-vhc/scripts/vhc-verify.sh ci            [ID]  # build + every subcommand above except tests (what CI runs)
 .claude/skills/verify-vhc/scripts/vhc-verify.sh pr <N|branch> [--run] [--dispatch] [--comment]  # verify a PR: did its green checks exercise what it changed? (needs pwsh 7 + gh)
 .claude/skills/verify-vhc/scripts/vhc-verify.sh tests         [ID]  # all three test projects, logs captured
-.claude/skills/verify-vhc/scripts/vhc-verify.sh winhost       [ID] [--gui] [--live] [--status]  # this working tree, built and tested on a remote Windows host over SSH (needs VHC_WINHOST)
+.claude/skills/verify-vhc/scripts/vhc-verify.sh winhost       [ID] [--gui] [--live] [--status] [--no-tests]  # this working tree, built and tested on a remote Windows host over SSH (needs VHC_WINHOST)
 .claude/skills/verify-vhc/scripts/vhc-verify.sh cleanup       [ID]  # stop what we started, remove scratch input, keep evidence
 ```
 
