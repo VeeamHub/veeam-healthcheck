@@ -110,6 +110,11 @@ cmd_doctor() {
   else
     say "warn csproj is modified (build auto-bump?): git diff -- $CSPROJ"
   fi
+  if command -v bun >/dev/null; then
+    say "info bun $(bun --version 2>/dev/null || echo '?') (render only; it must read tools/report-smoke/bun.lock)"
+  else
+    say "info bun not found; render is unavailable, everything else is not affected"
+  fi
   say "info os=$(uname -s) arch=$(uname -m); a real GUI window cannot open here, but the headless GUI suite runs (tests); see features/gui-and-collection.md"
   if [ "$ok" -eq 1 ]; then say "DOCTOR: ready"; else say "DOCTOR: not ready"; exit 1; fi
 }
@@ -429,7 +434,8 @@ cmd_render() {
     export REPORT_SMOKE_CHANNEL=chrome
     say "using system Chrome (REPORT_SMOKE_CHANNEL=chrome)"
   fi
-  ( cd tools/report-smoke && bun install --frozen-lockfile >/dev/null ) || fail "bun install failed in tools/report-smoke"
+  ( cd tools/report-smoke && bun install --frozen-lockfile >/dev/null ) \
+    || fail "bun install failed in tools/report-smoke (bun $(bun --version 2>/dev/null || echo '?')). 'Unknown lockfile version' above means this bun is older than the one that wrote bun.lock: upgrade bun (CI uses the latest via setup-bun); do not regenerate the lockfile"
   shots="$ROOT/$STATE/evidence/$rid/render"
   set -o pipefail
   bun tools/report-smoke/smoke.ts --out "$shots" \

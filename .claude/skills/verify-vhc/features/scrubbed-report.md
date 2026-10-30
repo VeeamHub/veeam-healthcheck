@@ -7,7 +7,7 @@ A user who must share a report outside the customer environment runs with scrubb
 - `scrub-html` writes `vHC-AnonymousReport/Veeam Health Check Report_VBR_anon_<timestamp>.html`.
 - `scrub-json` writes the matching anonymized `.json`.
 - `scrub-names-removed` removes identifying names that exist in the input CSVs.
-- `scrub-pptx-skipped` ignores `/pptx` when scrubbing (a warning is logged).
+- `scrub-exports-skipped` ignores `/pptx` and `/pdf` when scrubbing; each logs `/<flag> is ignored: <FORMAT> export is not available for scrubbed reports (/scrub:true). ...`.
 
 ## How to get to it (user POV)
 
@@ -29,6 +29,6 @@ Preconditions:
 
 - The scrub key files hold the real-to-anonymous mapping. With fixture data that is harmless; on a real customer run treat them as sensitive and keep them out of any shared evidence.
 - Off Windows, stdout shows many `[Scrub] Failed to restrict key-file ACLs` lines because the ACL hardening is Windows-only. The key files are still written; this is expected here and a thing to check on Windows.
-- `/pptx` and per-job HTML exports are skipped under scrub by design. Do not report them as failures.
+- `/pptx` and `/pdf` are skipped under scrub by design. Do not report them as failures. Per-job HTML exports are **not** skipped: they go to `vHC-AnonymousReport/JobSessionReports/` (only `/lite` and `/security` turn them off). On the import path that folder is created but stays empty, so scrubbing of per-job reports needs a live collection to check.
 - Absence of a few known names proves those names are scrubbed, not that every identifier is. Add a fixture string to the assertion list when a change touches a new field.
 - Also logs `Failed to load VBR CSV data or no data found.` once before the scrubbed report is built; the report is still produced.

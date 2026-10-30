@@ -49,7 +49,8 @@ The release build publishes a single-file, self-contained, unsigned exe, and `wi
 ### Cleanup guarantees
 
 - Every process the script starts is recorded with its PID and start time. A cleanup kills a recorded PID only while its start time still matches, and never kills anything by name.
-- The scheduled task is unregistered whether the run passed, failed, timed out or was interrupted (the next run's pre-clean and `winhost`'s `EXIT` trap run the same cleanup).
+- The scheduled task is unregistered whether the run passed, failed, timed out or was interrupted (`winhost`'s `EXIT` trap runs the same cleanup, and so does the pre-clean of a later run **with the same ID**, because it reads that ID's own scratch `state.json`; a run with a different ID does not remove the leftover, but its final check still reports it as `DIRTY`).
+- `VHC_WINHOST_KEEP=1` leaves the scratch folder on the host for debugging and skips both the cleanup and the "host is clean" check; unset it for a normal run.
 - The build runs with `-nodeReuse:false -p:UseSharedCompilation=false`, so it leaves no build servers behind.
 - One verification runs on a host at a time.
 - After cleanup the tool asks the host whether the scratch folder or any `vhc-verify-*` task is left, and fails if so.
