@@ -26,7 +26,7 @@ VHC is a Windows utility (Avalonia GUI + CLI). It collects data from a Veeam Bac
 
 An `/import` run proves the report pipeline given known inputs. It says nothing about whether the collection scripts gather correct data on a real server. Never report a Windows-only surface as verified from this skill.
 
-The feature map and the coverage matrix (which of the 21 surfaces are gated, partial or unchecked) are in [features/README.md](features/README.md). Read it, then use the matching feature file as the recipe.
+The feature map and the coverage matrix (which of the 23 surfaces are gated, partial or unchecked) are in [features/README.md](features/README.md). Read it, then use the matching feature file as the recipe.
 
 ## Helper
 
@@ -41,11 +41,11 @@ One script, repo-relative, executable. Run from anywhere inside the repo:
 .claude/skills/verify-vhc/scripts/vhc-verify.sh cli-matrix    [ID]  # /import + /lite /security /days:N /debug /show:* /scrub:false /pptx, per-flag assertions
 .claude/skills/verify-vhc/scripts/vhc-verify.sh import-layouts [ID] # /import over 6 folder layouts, reports must be identical
 .claude/skills/verify-vhc/scripts/vhc-verify.sh render        [ID]  # open the import output (plain + scrubbed) in a browser via tools/report-smoke; needs bun
-.claude/skills/verify-vhc/scripts/vhc-verify.sh ci            [ID]  # build + every subcommand above except tests (what CI runs)
+.claude/skills/verify-vhc/scripts/vhc-verify.sh ci            [ID]  # build, import-report, import-scrub (as <ID>-scrub), cli-checks, cli-matrix, import-layouts, render (what CI runs)
 .claude/skills/verify-vhc/scripts/vhc-verify.sh pr <N|branch> [--run] [--dispatch] [--comment]  # verify a PR: did its green checks exercise what it changed? (needs pwsh 7 + gh)
 .claude/skills/verify-vhc/scripts/vhc-verify.sh tests         [ID]  # all three test projects, logs captured
 .claude/skills/verify-vhc/scripts/vhc-verify.sh winhost       [ID] [--gui] [--live] [--status] [--no-tests]  # this working tree, built and tested on a remote Windows host over SSH (needs VHC_WINHOST)
-.claude/skills/verify-vhc/scripts/vhc-verify.sh cleanup       [ID]  # stop what we started, remove scratch input, keep evidence
+.claude/skills/verify-vhc/scripts/vhc-verify.sh cleanup       [ID]  # stop what we started, remove scratch input (ID: only scratch/<ID>; none: all), keep evidence
 ```
 
 `ID` names the evidence folder; default is a timestamp.
@@ -127,7 +127,7 @@ Do not trust the exit code alone: `EntryPoint.Main` returns 0 even when import r
 .claude/skills/verify-vhc/scripts/vhc-verify.sh cleanup my-run
 ```
 
-Stops only the PID recorded in `.verify-vhc/run.pid` (and only if its command line is this DLL), removes `.verify-vhc/scratch/`, never touches `.verify-vhc/evidence/`. Never `pkill` or kill by process name. Run cleanup after every failed attempt too. After cleanup, confirm `ls .verify-vhc/evidence/<ID>` still lists the report and `MANIFEST.sha256`.
+Stops only the PID recorded in `.verify-vhc/run.pid` (and only if its command line is this DLL), removes the scratch input copies, never touches `.verify-vhc/evidence/`. With an ID it removes only `.verify-vhc/scratch/<ID>`; `ci` and `render` also stage `<ID>-scrub`, so after those run `cleanup` with no ID, which removes all of `.verify-vhc/scratch/`. Never `pkill` or kill by process name. Run cleanup after every failed attempt too. After cleanup, confirm `ls .verify-vhc/evidence/<ID>` still lists the report and `MANIFEST.sha256`.
 
 ## Isolation
 
