@@ -44,7 +44,7 @@ Preconditions:
 | `original-vbr-server-ts` | `<root>/Original/VBR/VBR01/2026.10.16.120000/` |
 | `recursive` | `<root>/archive/2026/customer-a/collected/` (found by the depth-5 recursive search) |
 
-Output ends with `IMPORT-LAYOUTS: verified` and `assertions: 17/17 passed`. VB365 trees (`VB365/<server>/<ts>`) resolve through the same code but are not driven here; there are no VB365 fixtures yet.
+Output ends with `IMPORT-LAYOUTS: verified` and `assertions: 17/17 passed`. VB365 trees (`VB365/<server>/<ts>`) resolve through the same code but are not driven here. VB365 golden CSVs exist under `vHC/HC_Reporting/Tools/GoldenBaselines/VB365/`, but only the xUnit suites read them (coverage matrix row 15); no helper subcommand imports them.
 
 ## Gotchas
 
