@@ -56,7 +56,7 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR.VbrTables.Repositories
                         {
                             // Same scrub kind the object's own table uses, so a scrubbed name here
                             // matches the scrubbed name in the managed server / proxy / repository tables.
-                            location = CGlobals.Scrubber.ScrubItem(location, ScrubItemType.Item);
+                            location = CGlobals.Scrubber.ScrubItem(location, ScrubItemType.Location);
                             objectName = objectName.Length > 0 ? CGlobals.Scrubber.ScrubItem(objectName, ScrubKindFor(objectType)) : objectName;
                         }
 

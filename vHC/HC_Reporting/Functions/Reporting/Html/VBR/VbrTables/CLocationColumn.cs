@@ -59,7 +59,7 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR.VbrTables
             string location = Lookup.Find(id, name, objectTypes);
             if (scrub && location.Length > 0 && CGlobals.Scrubber != null)
             {
-                location = CGlobals.Scrubber.ScrubItem(location, ScrubItemType.Item) ?? string.Empty;
+                location = CGlobals.Scrubber.ScrubItem(location, ScrubItemType.Location) ?? string.Empty;
             }
 
             return location;

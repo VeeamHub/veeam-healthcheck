@@ -190,6 +190,8 @@ namespace VhcXTests.Functions.Reporting.Html.VBR
                 .Select(r => r.QuerySelectorAll("td")[1].TextContent.Trim()));
             string repoToken = doc.GetElementById("repos")!.QuerySelectorAll("tbody tr")
                 .Select(r => r.QuerySelectorAll("td")[1].TextContent.Trim()).Single(t => t.Length > 0);
+            Assert.StartsWith("Location_", repoToken);
+            Assert.DoesNotContain("Item_", doc.GetElementById("locations")!.TextContent);
             Assert.Contains(repoToken, LastCells("managedServerInfo"));
             Assert.Contains(repoToken, LastCells("proxies"));
             Assert.Contains(repoToken, doc.GetElementById("locations")!.TextContent);
