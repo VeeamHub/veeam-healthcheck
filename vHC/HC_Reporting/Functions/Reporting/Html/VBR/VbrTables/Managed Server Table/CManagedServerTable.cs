@@ -32,21 +32,24 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR.VbrTables.Managed_Server
 
             string s = form.SectionStartWithButton("managedServerInfo", VbrLocalizationHelper.ManSrvTitle, VbrLocalizationHelper.ManSrvBtn);
             string summary = sum.ManagedServers();
+            bool showLocation = CLocationColumn.ShowFor(() => df.ServerXmlFromCsv(scrub).Select(d => d.Location));
+            int o = showLocation ? 1 : 0;
             s +=
            form.TableHeader(VbrLocalizationHelper.ManSrv0, VbrLocalizationHelper.ManSrv0TT, 0) +
-           form.TableHeader(VbrLocalizationHelper.ManSrv1, VbrLocalizationHelper.ManSrv1TT, 1) +
-           form.TableHeader(VbrLocalizationHelper.ManSrv2, VbrLocalizationHelper.ManSrv2TT, 2) +
-           form.TableHeader(VbrLocalizationHelper.ManSrv3, VbrLocalizationHelper.ManSrv3TT, 3) +
-           form.TableHeader("OS Info", VbrLocalizationHelper.ManSrv3TT, 4) +
-           form.TableHeader(VbrLocalizationHelper.ManSrv4, VbrLocalizationHelper.ManSrv4TT, 5) +
-           form.TableHeader(VbrLocalizationHelper.ManSrv5, VbrLocalizationHelper.ManSrv5TT, 6) +
-           form.TableHeader(VbrLocalizationHelper.ManSrv6, VbrLocalizationHelper.ManSrv6TT, 7) +
-           form.TableHeader(VbrLocalizationHelper.ManSrv7, VbrLocalizationHelper.ManSrv7TT, 8) +
-           form.TableHeader(VbrLocalizationHelper.ManSrv8, VbrLocalizationHelper.ManSrv8TT, 9) +
-           form.TableHeader(VbrLocalizationHelper.ManSrv9, VbrLocalizationHelper.ManSrv9TT, 10) +
-           form.TableHeader(VbrLocalizationHelper.ManSrv10, VbrLocalizationHelper.ManSrv10TT, 11) +
-           form.TableHeader(VbrLocalizationHelper.ManSrv11, VbrLocalizationHelper.ManSrv11TT, 12) +
-           form.TableHeader("Platform", CHtmlTablesHelper.PlatformColumnTooltip, 13);
+           (showLocation ? CLocationColumn.Header(form, 1) : string.Empty) +
+           form.TableHeader(VbrLocalizationHelper.ManSrv1, VbrLocalizationHelper.ManSrv1TT, 1 + o) +
+           form.TableHeader(VbrLocalizationHelper.ManSrv2, VbrLocalizationHelper.ManSrv2TT, 2 + o) +
+           form.TableHeader(VbrLocalizationHelper.ManSrv3, VbrLocalizationHelper.ManSrv3TT, 3 + o) +
+           form.TableHeader("OS Info", VbrLocalizationHelper.ManSrv3TT, 4 + o) +
+           form.TableHeader(VbrLocalizationHelper.ManSrv4, VbrLocalizationHelper.ManSrv4TT, 5 + o) +
+           form.TableHeader(VbrLocalizationHelper.ManSrv5, VbrLocalizationHelper.ManSrv5TT, 6 + o) +
+           form.TableHeader(VbrLocalizationHelper.ManSrv6, VbrLocalizationHelper.ManSrv6TT, 7 + o) +
+           form.TableHeader(VbrLocalizationHelper.ManSrv7, VbrLocalizationHelper.ManSrv7TT, 8 + o) +
+           form.TableHeader(VbrLocalizationHelper.ManSrv8, VbrLocalizationHelper.ManSrv8TT, 9 + o) +
+           form.TableHeader(VbrLocalizationHelper.ManSrv9, VbrLocalizationHelper.ManSrv9TT, 10 + o) +
+           form.TableHeader(VbrLocalizationHelper.ManSrv10, VbrLocalizationHelper.ManSrv10TT, 11 + o) +
+           form.TableHeader(VbrLocalizationHelper.ManSrv11, VbrLocalizationHelper.ManSrv11TT, 12 + o) +
+           form.TableHeader("Platform", CHtmlTablesHelper.PlatformColumnTooltip, 13 + o);
             s += form.TableHeaderEnd();
             s += form.TableBodyStart();
 
@@ -60,6 +63,11 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR.VbrTables.Managed_Server
                     s += "<tr>";
 
                     s += form.TableData(d.Name, string.Empty);
+                    if (showLocation)
+                    {
+                        s += CLocationColumn.Cell(form, d.Location);
+                    }
+
                     s += form.TableData(d.Cores.ToString(), string.Empty);
                     s += form.TableData(d.Ram.ToString(), string.Empty);
                     s += form.TableData(d.Type, string.Empty);
@@ -112,7 +120,7 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR.VbrTables.Managed_Server
             try
             {
                 var list = df.ServerXmlFromCsv(scrub);
-                List<string> headers = new() { "Name", "Cores", "Ram", "Type", "OsInfo", "ApiVersion", "ProtectedVms", "NotProtectedVms", "TotalVms", "IsProxy", "IsRepo", "IsWan", "IsUnavailable", "Platform" };
+                List<string> headers = new() { "Name", "Cores", "Ram", "Type", "OsInfo", "ApiVersion", "ProtectedVms", "NotProtectedVms", "TotalVms", "IsProxy", "IsRepo", "IsWan", "IsUnavailable", "Platform", "Location" };
                 List<List<string>> rows = list.Select(d => new List<string>
                 {
                     d.Name,
@@ -129,6 +137,7 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR.VbrTables.Managed_Server
                     d.IsWan ? "True" : "False",
                     d.IsUnavailable.ToString(),
                     d.Platform ?? "",
+                    d.Location ?? "",
                 }).ToList();
                 CHtmlTables.SetSectionPublic("managedServers", headers, rows, summary);
             }

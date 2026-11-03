@@ -8,9 +8,9 @@
 
 BeforeAll {
     foreach ($name in 'Get-VBRLocation', 'Get-VBRBackupRepository', 'Get-VBRObjectStorageRepository',
-                      'Get-VBRServer', 'Get-VBRViProxy', 'Get-VBRHvProxy') {
+                      'Get-VBRServer', 'Get-VBRViProxy', 'Get-VBRHvProxy', 'Get-VBRRepositoryExtent') {
         if (-not (Get-Command $name -ErrorAction SilentlyContinue | Where-Object { $_.CommandType -eq 'Cmdlet' })) {
-            Set-Item -Path "function:global:$name" -Value { param($Object, [switch]$ErrorAction) }
+            Set-Item -Path "function:global:$name" -Value { param($Object, $Repository, [switch]$ScaleOut, [switch]$ErrorAction) }
         }
     }
     if (-not (Get-Command Add-VhciModuleError -ErrorAction SilentlyContinue | Where-Object { $_.CommandType -eq 'Cmdlet' })) {
@@ -45,6 +45,8 @@ Describe 'Get-VhcLocation' {
         Mock Get-VBRViProxy { @() }
         Mock Get-VBRHvProxy { @() }
         Mock Get-VBRServer { @() }
+        Mock Get-VBRBackupRepository { @() }
+        Mock Get-VBRRepositoryExtent { @() } -RemoveParameterType Repository
     }
 
     It 'writes one row per assigned object and a blank-object row for an unassigned location' {
@@ -52,7 +54,7 @@ Describe 'Get-VhcLocation' {
         $esx  = [pscustomobject]@{ Name = 'esx-01';           Id = [guid]::NewGuid() }
         Mock Get-VBRLocation { @($script:Columbus, $script:Dublin) } -ParameterFilter { -not $Object }
         Mock Get-VBRLocation { $script:Columbus } -ParameterFilter { $Object -and $Object.Name -in 'Hardened Repo 01', 'esx-01' }
-        Mock Get-VBRBackupRepository { @($repo) }
+        Mock Get-VBRBackupRepository { @($repo) } -ParameterFilter { -not $ScaleOut }
         Mock Get-VBRServer { @($esx) }
 
         Get-VhcLocation
@@ -67,6 +69,27 @@ Describe 'Get-VhcLocation' {
         $dublin.ObjectName | Should -Be ''
         $dublin.LocationId | Should -Be "$($script:DublinId)"
         $global:VhcTestExported[0].PSObject.Properties.Name | Should -Be @('Location', 'LocationId', 'ObjectType', 'ObjectName', 'ObjectId')
+    }
+
+    It 'labels scale-out repositories SOBR and their performance extents Extent, one row per object' {
+        $sobr   = [pscustomobject]@{ Name = 'SOBR-01';  Id = [guid]::NewGuid() }
+        $extRepo = [pscustomobject]@{ Name = 'Extent-A'; Id = [guid]::NewGuid() }
+        Mock Get-VBRLocation { @($script:Columbus) } -ParameterFilter { -not $Object }
+        Mock Get-VBRLocation { $script:Columbus } -ParameterFilter { $Object }
+        # -RemoveParameterType: with the real Veeam module loaded, -Repository is typed
+        # VBRScaleOutBackupRepository[] and would reject the stand-in objects.
+        # VBR may list an extent's repository both as a plain repository and as an extent.
+        Mock Get-VBRBackupRepository { @($extRepo) } -ParameterFilter { -not $ScaleOut }
+        Mock Get-VBRBackupRepository { @($sobr) } -ParameterFilter { $ScaleOut }
+        Mock Get-VBRRepositoryExtent { @([pscustomobject]@{ Repository = $extRepo }) } -RemoveParameterType Repository
+
+        Get-VhcLocation
+
+        $global:VhcTestExported.Count | Should -Be 2
+        ($global:VhcTestExported | Where-Object ObjectName -eq 'SOBR-01').ObjectType | Should -Be 'SOBR'
+        @($global:VhcTestExported | Where-Object ObjectName -eq 'Extent-A').Count | Should -Be 1
+        ($global:VhcTestExported | Where-Object ObjectName -eq 'Extent-A').ObjectType | Should -Be 'Extent'
+        ($global:VhcTestExported | Where-Object ObjectName -eq 'Extent-A').ObjectId | Should -Be "$($extRepo.Id)"
     }
 
     It 'skips objects that cannot take a location without recording an error' {

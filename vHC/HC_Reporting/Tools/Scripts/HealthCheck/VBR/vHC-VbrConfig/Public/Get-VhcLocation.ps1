@@ -43,17 +43,29 @@ function Get-VhcLocation {
         # Objects a location can be assigned to. Each lookup is isolated: a failure on
         # one object kind (or one object) never costs the others.
         $candidates = [System.Collections.Generic.List[object]]::new()
+        # Kinds match the report tables that show a Location column: Server (managed
+        # servers), ViProxy/HvProxy (proxies), SOBR, Extent (SOBR performance extents),
+        # Repository (standalone repositories), plus ObjectStore for the Locations table.
+        # SOBR and Extent come first so an extent's repository, which VBR may also list as a
+        # plain repository, is labelled Extent.
         $sources = [ordered]@{
+            'SOBR'        = { Get-VBRBackupRepository -ScaleOut }
+            'Extent'      = { foreach ($sobr in @(Get-VBRBackupRepository -ScaleOut)) { foreach ($e in @(Get-VBRRepositoryExtent -Repository $sobr)) { $e.Repository } } }
             'Repository'  = { Get-VBRBackupRepository }
             'ObjectStore' = { Get-VBRObjectStorageRepository }
             'Server'      = { Get-VBRServer }
             'ViProxy'     = { Get-VBRViProxy }
             'HvProxy'     = { Get-VBRHvProxy }
         }
+        $seen = [System.Collections.Generic.HashSet[string]]::new([System.StringComparer]::OrdinalIgnoreCase)
         foreach ($kind in $sources.Keys) {
             try {
                 foreach ($o in @(& $sources[$kind])) {
-                    if ($null -ne $o) { $candidates.Add([pscustomobject]@{ Kind = $kind; Object = $o }) }
+                    if ($null -eq $o) { continue }
+                    # One row per object: an object returned by two lookups keeps its first kind.
+                    $oid = "$($o.Id)"
+                    if ($oid -and -not $seen.Add($oid)) { continue }
+                    $candidates.Add([pscustomobject]@{ Kind = $kind; Object = $o })
                 }
             } catch {
                 Write-LogFile "Location lookup: could not list $kind objects: $($_.Exception.Message)" -LogLevel "WARNING"
