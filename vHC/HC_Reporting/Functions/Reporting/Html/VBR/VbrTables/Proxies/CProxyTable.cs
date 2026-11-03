@@ -34,6 +34,13 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR.VbrTables.Proxies
             string s = form.SectionStartWithButton("proxies", VbrLocalizationHelper.PrxTitle, VbrLocalizationHelper.PrxBtn);
             string summary = sum.Proxies();
             s += form.TableHeader(VbrLocalizationHelper.Prx0, VbrLocalizationHelper.Prx0TT);
+            bool showLocation = CLocationColumn.ShowFor(() => df.ProxyXmlFromCsv(scrub).Select(d => d.Length > 13 ? d[13] : null));
+            int columns = showLocation ? 13 : 12;
+            if (showLocation)
+            {
+                s += CLocationColumn.Header(form);
+            }
+
             s += form.TableHeader(VbrLocalizationHelper.Prx1, VbrLocalizationHelper.Prx1TT);
             s += form.TableHeader(VbrLocalizationHelper.Prx2, VbrLocalizationHelper.Prx2TT);
             s += form.TableHeader(VbrLocalizationHelper.Prx3, VbrLocalizationHelper.Prx3TT);
@@ -56,7 +63,7 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR.VbrTables.Proxies
                 // Check if proxy data is available
                 if (list == null || list.Count == 0)
                 {
-                    s += "<tr><td colspan='12' style='text-align: center; padding: 20px; color: #666;'>" +
+                    s += $"<tr><td colspan='{columns}' style='text-align: center; padding: 20px; color: #666;'>" +
                          "<em>No proxy data available. The proxy CSV file may be missing or empty.</em>" +
                          "</td></tr>";
                     log.Warning("[CProxyTable] No proxy data found - displaying placeholder message.");
@@ -73,6 +80,11 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR.VbrTables.Proxies
                         else
                         {
                             s += form.TableData(d[0], string.Empty);
+                        }
+
+                        if (showLocation)
+                        {
+                            s += CLocationColumn.Cell(form, d.Length > 13 ? d[13] : string.Empty);
                         }
 
                         s += form.TableData(d[1], string.Empty);
@@ -120,7 +132,7 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR.VbrTables.Proxies
             {
                 log.Error("PROXY Data import failed. ERROR:");
                 log.Error("\t" + e.Message);
-                s += "<tr><td colspan='12' style='text-align: center; padding: 20px; color: #d9534f;'>" +
+                s += $"<tr><td colspan='{columns}' style='text-align: center; padding: 20px; color: #d9534f;'>" +
                      "<em>Error loading proxy data. See logs for details.</em>" +
                      "</td></tr>";
             }
@@ -131,12 +143,12 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR.VbrTables.Proxies
             try
             {
                 var list = df.ProxyXmlFromCsv(scrub);
-                List<string> headers = new() { "Name", "Type", "Tasks", "Cores", "Ram", "IsOnHost", "TransportMode", "NetBufferSize", "MaxConcurrentJobs", "Host", "IsHvOffload" };
+                List<string> headers = new() { "Name", "Type", "Tasks", "Cores", "Ram", "IsOnHost", "TransportMode", "NetBufferSize", "MaxConcurrentJobs", "Host", "IsHvOffload", "Location" };
 
                 // mapping indices from original array
                 List<List<string>> rows = list.Select(d => new List<string>
                 {
-                    d[0], d[1], d[2], d[3], d[4], d[6], d[7], d[8], d[9], d[10], d[11],
+                    d[0], d[1], d[2], d[3], d[4], d[6], d[7], d[8], d[9], d[10], d[11], d.Length > 13 ? d[13] ?? string.Empty : string.Empty,
                 }).ToList();
                 CHtmlTables.SetSectionPublic("proxies", headers, rows, summary);
             }

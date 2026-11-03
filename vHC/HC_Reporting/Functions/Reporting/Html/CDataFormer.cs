@@ -1,4 +1,4 @@
-﻿// <copyright file="CDataFormer.cs" company="PlaceholderCompany">
+// <copyright file="CDataFormer.cs" company="PlaceholderCompany">
 // Copyright (c) PlaceholderCompany. All rights reserved.
 // </copyright>
 
@@ -10,6 +10,7 @@ using System.IO;
 using System.Linq;
 using System.Xml.Linq;
 using CsvHelper;
+using VeeamHealthCheck.Functions.Reporting.Html.VBR.VbrTables;
 using VeeamHealthCheck.Functions.Analysis.DataModels;
 using VeeamHealthCheck.Functions.Collection.DB;
 using VeeamHealthCheck.Functions.Reporting.CsvHandlers;
@@ -482,6 +483,7 @@ namespace VeeamHealthCheck.Functions.Reporting.Html
                     ImmutePeriod = c.ImmutePeriod,
                     SizeLimitEnabled = c.SizeLimitEnabled,
                     SizeLimit = c.SizeLimit,
+                    Location = CLocationColumn.For(c.Id, c.Name, scrub, "SOBR"),
                 };
 
                 outList.Add(sobr);
@@ -597,7 +599,8 @@ namespace VeeamHealthCheck.Functions.Reporting.Html
                         
                         IsImmutabilitySupported = immutability,
                         Type = type,
-                        Provisioning = c.Povisioning
+                        Provisioning = c.Povisioning,
+                        Location = CLocationColumn.For(c.Id, c.RepoName, scrub, "Extent", "Repository"),
                     };
 
                     repoList.Add(repo);
@@ -691,7 +694,8 @@ namespace VeeamHealthCheck.Functions.Reporting.Html
                         IsImmutabilitySupported = c.IsImmutabilitySupported,
                         Type = c.Type,
                         Provisioning = c.Povisioning,
-                        IsPerVmBackupFiles = c.SplitStoragesPerVm
+                        IsPerVmBackupFiles = c.SplitStoragesPerVm,
+                        Location = CLocationColumn.For(c.Id, c.Name, scrub, "Repository"),
                     };
 
                     list.Add(repo);
@@ -725,7 +729,16 @@ namespace VeeamHealthCheck.Functions.Reporting.Html
 
                 foreach (var c in csv)
                 {
-                    string[] s = new string[13];
+                    string[] s = new string[14];
+
+                    // Location before scrubbing (the name fallback needs the real name). A proxy
+                    // with no location of its own shows the location of the server it runs on.
+                    string location = CLocationColumn.For(c.Id, c.Name, scrub, "ViProxy", "HvProxy");
+                    if (location.Length == 0)
+                    {
+                        location = CLocationColumn.For(c.HostId, c.Host, scrub, "Server");
+                    }
+
                     if (scrub)
                     {
                         c.Name = CGlobals.Scrubber.ScrubItem(c.Name, ScrubItemType.Server);
@@ -745,6 +758,7 @@ namespace VeeamHealthCheck.Functions.Reporting.Html
                     s[10] += c.Host;
                     s[11] += c.IsDisabled;
                     s[12] += c.Provisioning;
+                    s[13] = location;
 
                     list.Add(s);
                 }
@@ -870,6 +884,7 @@ namespace VeeamHealthCheck.Functions.Reporting.Html
                     server.OsInfo = c.OSInfo;
                     server.IsUnavailable = c.IsUnavailable;
                     server.Platform = c.Platform;
+                    server.Location = CLocationColumn.For(c.Id, c.Name, scrub, "Server");
 
                     list.Add(server);
                 }

@@ -1,4 +1,4 @@
-﻿// Copyright (c) 2021, Adam Congdon <adam.congdon2@gmail.com>
+// Copyright (c) 2021, Adam Congdon <adam.congdon2@gmail.com>
 // MIT License
 using System;
 using System.Collections.Generic;
@@ -936,6 +936,12 @@ namespace VeeamHealthCheck.Html.VBR
             string s = this.form.SectionStartWithButton("extents", VbrLocalizationHelper.SbrExtTitle, VbrLocalizationHelper.SbrExtBtn);
             string summary = this.sum.Extents();
             s += this.form.TableHeader(VbrLocalizationHelper.SbrExt0, VbrLocalizationHelper.SbrExt0TT);
+            bool showLocation = CLocationColumn.ShowFor(() => this.df.ExtentXmlFromCsv(scrub).Select(d => d.Location));
+            if (showLocation)
+            {
+                s += CLocationColumn.Header(this.form);
+            }
+
             s += this.form.TableHeader(VbrLocalizationHelper.SbrExt1, VbrLocalizationHelper.SbrExt1TT);
             s += this.form.TableHeader(VbrLocalizationHelper.SbrExt2, VbrLocalizationHelper.SbrExt2TT);
             s += this.form.TableHeader(VbrLocalizationHelper.SbrExt3, VbrLocalizationHelper.SbrExt3TT);
@@ -983,6 +989,11 @@ namespace VeeamHealthCheck.Html.VBR
 
                     s += "<tr>";
                     s += this.form.TableData(d.Name, string.Empty);
+                    if (showLocation)
+                    {
+                        s += CLocationColumn.Cell(this.form, d.Location);
+                    }
+
                     s += this.form.TableData(d.SobrName, string.Empty);
                     s += this.form.TableData(d.MaxTasks.ToString(), string.Empty, shade);
                     s += this.form.TableData(d.Cores.ToString(), string.Empty);
@@ -1040,7 +1051,6 @@ namespace VeeamHealthCheck.Html.VBR
                     }
 
                     s += this.form.TableData(d.Type, string.Empty);
-
                     // s += _form.TableData(d[16], "");
                     s += "</tr>";
                 }
@@ -1058,7 +1068,7 @@ namespace VeeamHealthCheck.Html.VBR
             {
                 try
                 {
-                    List<string> headers = new() { "Name", "SobrName", "MaxTasks", "Cores", "Ram", "IsAutoGate", "Host", "Path", "FreeSpace", "TotalSpace", "FreeSpacePercent", "IsDecompress", "AlignBlocks", "IsRotatedDrives", "IsImmutabilitySupported", "Type" };
+                    List<string> headers = new() { "Name", "SobrName", "MaxTasks", "Cores", "Ram", "IsAutoGate", "Host", "Path", "FreeSpace", "TotalSpace", "FreeSpacePercent", "IsDecompress", "AlignBlocks", "IsRotatedDrives", "IsImmutabilitySupported", "Type", "Location" };
                     List<List<string>> rows = list.Select(d => new List<string>
                     {
                         d.Name,
@@ -1077,6 +1087,7 @@ namespace VeeamHealthCheck.Html.VBR
                         d.IsRotatedDrives ? "True" : "False",
                         d.IsImmutabilitySupported ? "True" : "False",
                         d.Type,
+                        d.Location ?? string.Empty,
                     }).ToList();
                     SetSection("extents", headers, rows, summary);
                 }
@@ -1764,6 +1775,12 @@ namespace VeeamHealthCheck.Html.VBR
         public string AddObjectStorageReposTable(bool scrub)
         {
             var table = new CObjectStorageReposTable();
+            return table.Render(scrub);
+        }
+
+        public string AddLocationsTable(bool scrub)
+        {
+            var table = new CLocationsTable();
             return table.Render(scrub);
         }
 

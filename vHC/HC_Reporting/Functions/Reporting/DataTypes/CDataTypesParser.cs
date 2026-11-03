@@ -1,4 +1,4 @@
-﻿// Copyright (c) 2021, Adam Congdon <adam.congdon2@gmail.com>
+// Copyright (c) 2021, Adam Congdon <adam.congdon2@gmail.com>
 // MIT License
 using System;
 using System.Collections.Generic;
@@ -48,6 +48,9 @@ namespace VeeamHealthCheck.Functions.Reporting.DataTypes
         public CConfigBackupCsv ConfigBackup = new();
         public List<CNetTrafficRulesCsv> NetTrafficRules = new();
 
+        /// <summary>VBR Location assignments (_Locations.csv), parsed once and looked up by the infrastructure tables.</summary>
+        public CLocationLookup Locations = new();
+
         public List<int> ProtectedJobIds { get { return this.protectedJobIds; } }
 
         public CDataTypesParser()
@@ -62,6 +65,10 @@ namespace VeeamHealthCheck.Functions.Reporting.DataTypes
             {
                 this.log.Info("[CDataTypesParser] Creating server summary dictionary...");
                 this.serverSummaryInfo = new Dictionary<string, int>();
+
+                // First, and never throws: a later parser failing must not cost the location columns.
+                this.log.Info("[CDataTypesParser] Parsing Locations...");
+                this.Locations = CLocationLookup.FromCsv();
                 this.log.Info("[CDataTypesParser] Parsing JobInfo...");
                 this.JobInfos = this.JobInfo();
                 this.log.Info("[CDataTypesParser] Parsing JobSessionInfo...");
@@ -395,6 +402,7 @@ namespace VeeamHealthCheck.Functions.Reporting.DataTypes
                     CRepoTypeInfos eInfo = new CRepoTypeInfos();
 
                     // eInfo.Host = s.HostName;
+                    eInfo.Id = s.Id;
                     eInfo.RepoName = s.Name;
                     eInfo.Path = s.FriendlyPath;
                     bool.TryParse(s.IsUnavailable, out bool isUnavail);
