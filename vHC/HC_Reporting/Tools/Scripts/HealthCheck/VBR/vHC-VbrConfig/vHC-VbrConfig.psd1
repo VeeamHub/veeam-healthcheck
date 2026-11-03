@@ -15,6 +15,7 @@
         'Get-VhcJob',
         'Get-VhcJobDiscovery',
         'Get-VhcLicense',
+        'Get-VhcLocation',
         'Get-VhcModuleErrors',
         'Get-VhcMajorVersion',
         'Get-VhcMalwareDetection',

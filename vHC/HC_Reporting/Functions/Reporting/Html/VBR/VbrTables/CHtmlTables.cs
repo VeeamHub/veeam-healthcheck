@@ -1767,5 +1767,11 @@ namespace VeeamHealthCheck.Html.VBR
             return table.Render(scrub);
         }
 
+        public string AddLocationsTable(bool scrub)
+        {
+            var table = new CLocationsTable();
+            return table.Render(scrub);
+        }
+
     }
 }

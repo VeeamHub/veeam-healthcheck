@@ -17,6 +17,11 @@ checksums, and scan results.
 
 - `SECURITY.md`: how to report a vulnerability privately, what the tool reads and writes, how releases are
   built, how to verify a download, and the known gaps.
+- VBR Locations: collection now reads the geographic Locations defined in Veeam Backup & Replication
+  (`Get-VBRLocation`, VBR 12.1 and later) and the repositories, servers and proxies assigned to each, writes them
+  to `_Locations.csv`, and the report shows them in a new Locations section under Infrastructure (names are
+  anonymized in scrubbed reports). A location with nothing assigned is still listed, and a server with no
+  locations shows an empty-state row. Read-only.
 
 ### Fixed
 
