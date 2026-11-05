@@ -4,7 +4,7 @@ Entry point: `.claude/skills/verify-vhc/scripts/vhc-verify.sh pr <number|branch>
 
 Answers one question: **did this PR's green checks actually exercise the code the PR changed?** It exists because a workflow that never ran shows up as *absent*, not as failed. PR #295 changed the three live-VBR jobs in `ci-cd.yaml`, every PR check was green, and none of them ran those jobs, because `ci-cd.yaml` only triggers on push to master/dev and `workflow_dispatch`.
 
-Implementation: PowerShell 7 (`scripts/Invoke-PrVerify.ps1` -> `PrVerifyRun.psm1` orchestration -> `PrVerify.psm1` pure logic), shelling out to `gh` with whatever auth is ambient. Tests: `scripts/PrVerify.Tests.ps1` (Pester 5, offline).
+Implementation: PowerShell 7 (`scripts/Invoke-PrVerify.ps1` -> `PrVerifyRun.psm1` orchestration -> `PrVerify.psm1` pure logic), shelling out to `gh` with whatever auth is ambient. Every mode reads the GitHub API, so `gh` must be authenticated (`gh auth login` or `GH_TOKEN`); without it the run stops at the first `gh` call with exit 70 and `pr-verify error: gh ... failed (exit 4): To get started with GitHub CLI, please run:  gh auth login ...`. That is a missing precondition, not a verdict. Tests: `scripts/PrVerify.Tests.ps1` (Pester 5, offline).
 
 ## What it does
 
@@ -24,7 +24,7 @@ Workflow edits are judged per job: the patch hunks are intersected with the job 
 | FAILED | 1 | A required check failed, or any other check on the SHA failed, or a hygiene check is `fail`. |
 | NEEDS-RUN | 2 | Something touched was not exercised (or is still running). The report prints the command that would exercise it. |
 | NEEDS-HUMAN | 3 | Only a human can prove it (live VB365, a publish-only job), or a changed file maps to no surface. |
-| (tool error) | 70 | The verifier itself broke. |
+| (tool error) | 70 | The verifier itself broke, or `gh` is not authenticated. Read the `pr-verify error:` line. (A missing `pwsh` is caught earlier by `vhc-verify.sh`, which fails with `pwsh (PowerShell 7) is required for 'pr'`.) |
 
 Precedence: FAILED > NEEDS-RUN > NEEDS-HUMAN > VERIFIED. Run the NEEDS-RUN commands first; what is left is the human part.
 

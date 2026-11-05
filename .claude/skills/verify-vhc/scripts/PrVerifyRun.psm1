@@ -161,7 +161,8 @@ function Invoke-PrVerification {
         if ($env:GITHUB_REPOSITORY) { $Repo = $env:GITHUB_REPOSITORY }
         else {
             Push-Location $RepoRoot
-            try { $Repo = (gh repo view --json nameWithOwner -q .nameWithOwner).Trim() } finally { Pop-Location }
+            # Through Invoke-Gh so an unauthenticated or missing gh fails with gh's own message, not a null .Trim().
+            try { $Repo = ([string](Invoke-Gh -GhArgs @('repo', 'view', '--json', 'nameWithOwner', '-q', '.nameWithOwner'))).Trim() } finally { Pop-Location }
         }
         Initialize-PrVerify -Repo $Repo -RepoRoot $RepoRoot -GhInvoker $GhInvoker
     }
