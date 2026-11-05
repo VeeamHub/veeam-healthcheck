@@ -1,4 +1,5 @@
 using System.IO;
+using Avalonia.Headless.XUnit;
 using VeeamHealthCheck.Shared;
 using VeeamHealthCheck.Startup;
 using Xunit;
@@ -18,7 +19,10 @@ namespace VhcGuiTests
             public void Seed(string server) => SeedServers(server);
         }
 
-        [Fact]
+        // GuiTestBase reads Application.Current, which belongs to the headless UI thread once any
+        // [AvaloniaFact] has started the app. A plain [Fact] then threw "Call from invalid thread",
+        // so this test passed or failed depending on which test class ran first.
+        [AvaloniaFact]
         public void Dispose_AfterMutatingStaticsAndSettings_RestoresOriginals()
         {
             var days = CGlobals.ReportDays;
