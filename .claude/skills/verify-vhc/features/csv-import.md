@@ -6,7 +6,7 @@ A user points VHC at a folder of already-collected CSV files and gets a self-con
 
 - `import-resolve` finds the CSV folder from a flat path, a `VBR/<server>/<timestamp>` tree, an `Original/VBR` tree, or a recursive search.
 - `import-render-html` writes `vHC-Report/Veeam Health Check Report_VBR_<host>_<timestamp>.html` with sections built from the CSVs.
-- `import-render-json` writes the matching `.json` with `VhcVersion` and a `Sections` array.
+- `import-render-json` writes the matching `.json` with `VhcVersion` and a `Sections` object keyed by section name.
 - `import-no-collect` does not start PowerShell collection or touch the input CSVs.
 - `import-vb365-sibling` also writes a `Report_VB365_*.html` (see Gotchas).
 
@@ -27,7 +27,7 @@ Preconditions:
 - **Content reflects input rows.** The helper greps the HTML for `<title>Veeam HealthCheck Report</title>`, `Production-VM-Backup` and `SQL-Servers-Backup` (from `_Jobs.csv`), `Linux Hardened Repo` (from `_Repositories.csv`), `PROXY01` (from `_Proxies.csv`) and `12.1.2.172` (from `_vbrinfo.csv`). All must be present.
 - **Experiments gate.** The helper unsets `VHC_EXPERIMENTS` for the run and asserts the HTML has neither `id="orphanedsupersededbackups"` nor a `#orphanedsupersededbackups` nav link (the Orphaned & Superseded Backups section ships dark). To see the section, run the CLI by hand with `VHC_EXPERIMENTS=1` and expect both.
 - **Nav anchors resolve.** The helper statically parses the HTML and requires every in-page `<a href="#id">` (26 in the golden report) to have an element with that `id`. The browser-side equivalent (click and visibility) is `render`, see [render](./render.md).
-- **JSON shape.** The helper parses the JSON and requires `VhcVersion` and a non-empty `Sections` array (names such as `backupServer`, `securitySummary`, `jobSummary`).
+- **JSON shape.** The helper parses the JSON and requires `VhcVersion` and a non-empty `Sections`. `Sections` is a JSON object (not an array) keyed by section name, such as `backupServer`, `securitySummary`, `jobSummary`.
 - **Inputs untouched.** The helper asserts `git diff --quiet -- vHC/HC_Reporting/Tools/GoldenBaselines`.
 - **Proof.** Keep `.verify-vhc/evidence/<ID>/{command.txt,stdout.log,exit_code.txt,MANIFEST.sha256,output/}`. The MANIFEST hashes every generated file.
 
