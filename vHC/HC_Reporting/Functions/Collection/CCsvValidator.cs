@@ -55,6 +55,7 @@ namespace VeeamHealthCheck.Functions.Collection
             { "capTier", CsvValidationSeverity.Info },
             { "archTier", CsvValidationSeverity.Info },
             { "trafficRules", CsvValidationSeverity.Info },
+            { "Locations", CsvValidationSeverity.Info },
             { "waits", CsvValidationSeverity.Info },
             { "ViProtected", CsvValidationSeverity.Info },
             { "ViUnprotected", CsvValidationSeverity.Info },

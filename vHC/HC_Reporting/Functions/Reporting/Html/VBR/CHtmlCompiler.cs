@@ -522,7 +522,8 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR
                 this.form.NavLink("extents", VbrLocalizationHelper.NavSobrExtLink) +
                 this.form.NavLink("capextents", VbrLocalizationHelper.NavCapTierLink) +
                 this.form.NavLink("archextents", VbrLocalizationHelper.NavArchTierLink) +
-                this.form.NavLink("objstorage", VbrLocalizationHelper.NavObjStorageLink);
+                this.form.NavLink("objstorage", VbrLocalizationHelper.NavObjStorageLink) +
+                this.form.NavLink("locations", "Locations");
 
             // Ships dark behind VHC_EXPERIMENTS; CHtmlBodyHelper gates the section itself on the same flag.
             if (CFeatureFlags.ExperimentsEnabled)

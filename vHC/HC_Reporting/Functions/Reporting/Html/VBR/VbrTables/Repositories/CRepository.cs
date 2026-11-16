@@ -1,4 +1,4 @@
-﻿
+
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -54,6 +54,9 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR
         public bool ImmutableEnabled { get; set; }
 
         public string Status { get; set; }
+
+        /// <summary>VBR Location the repository is assigned to; "" when none or unknown.</summary>
+        public string Location { get; set; } = string.Empty;
 
         // public string GateHosts { get; set; }
     }

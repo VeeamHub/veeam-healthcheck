@@ -1,4 +1,4 @@
-﻿// Copyright (c) 2021, Adam Congdon <adam.congdon2@gmail.com>
+// Copyright (c) 2021, Adam Congdon <adam.congdon2@gmail.com>
 // MIT License
 namespace VeeamHealthCheck.Reporting.Html.VBR
 {
@@ -31,5 +31,8 @@ namespace VeeamHealthCheck.Reporting.Html.VBR
         public string IsUnavailable { get; set; }
 
         public string Platform { get; set; }
+
+        /// <summary>VBR Location the server is assigned to; "" when none or unknown.</summary>
+        public string Location { get; set; } = string.Empty;
     }
 }

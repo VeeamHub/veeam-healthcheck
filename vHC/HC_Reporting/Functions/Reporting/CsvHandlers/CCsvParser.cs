@@ -116,6 +116,7 @@ namespace VeeamHealthCheck.Functions.Reporting.CsvHandlers
         public readonly string credentials = "Credentials";
         public readonly string objectStorageRepos = "ObjectStorageRepos";
         public readonly string userRoles = "UserRoles";
+        public readonly string locations = "Locations";
 
         // VBO Files
         private readonly string vboGlobalCsv = "Global";
@@ -517,6 +518,11 @@ namespace VeeamHealthCheck.Functions.Reporting.CsvHandlers
         public IEnumerable<dynamic> GetDynamicObjectStorageRepos()
         {
             return this.VbrGetDynamicCsvRecs(this.objectStorageRepos, CVariables.vbrDir);
+        }
+
+        public IEnumerable<dynamic> GetDynamicLocations()
+        {
+            return this.VbrGetDynamicCsvRecs(this.locations, CVariables.vbrDir);
         }
 
         public IEnumerable<dynamic> GetDynamicUserRoles()

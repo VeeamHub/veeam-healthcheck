@@ -77,6 +77,8 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR
             this.RepositoryInfoSection();
             this.log.Info(this.logStart + "Repository Info section completed.");
 
+            this.HTMLSTRING += this.tables.AddLocationsTable(this.SCRUB);
+
             this.log.Info(this.logStart + "Generating Cloud Connect section...");
             this.CloudConnectSection();
             this.log.Info(this.logStart + "Cloud Connect section completed.");

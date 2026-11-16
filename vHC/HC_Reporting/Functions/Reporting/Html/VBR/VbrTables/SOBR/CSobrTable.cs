@@ -25,6 +25,12 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR.VbrTables.SOBR
             string s = this.form.SectionStartWithButton("sobr", VbrLocalizationHelper.SbrTitle, VbrLocalizationHelper.SbrBtn);
             string summary = this.sum.Sobr();
             s += this.form.TableHeader(VbrLocalizationHelper.Sbr0, VbrLocalizationHelper.Sbr0TT);
+            bool showLocation = CLocationColumn.ShowFor(() => this.df.SobrInfoToXml(scrub).Select(d => d.Location));
+            if (showLocation)
+            {
+                s += CLocationColumn.Header(this.form);
+            }
+
             s += this.form.TableHeader(VbrLocalizationHelper.Sbr1, VbrLocalizationHelper.Sbr1TT);
             s += this.form.TableHeader(VbrLocalizationHelper.Repo0, VbrLocalizationHelper.Repo1TT);
             s += this.form.TableHeader(VbrLocalizationHelper.Sbr2, VbrLocalizationHelper.Sbr2TT);
@@ -56,6 +62,11 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR.VbrTables.SOBR
                 {
                     s += "<tr>";
                     s += this.form.TableData(d.Name, string.Empty);
+                    if (showLocation)
+                    {
+                        s += CLocationColumn.Cell(this.form, d.Location);
+                    }
+
                     s += this.form.TableData(d.ExtentCount.ToString(), string.Empty);
                     s += this.form.TableData(d.JobCount.ToString(), string.Empty);
                     s += this.form.TableData(d.PolicyType, string.Empty);
@@ -84,7 +95,7 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR.VbrTables.SOBR
             try
             {
                 var list = this.df.SobrInfoToXml(scrub) ?? new List<CSobrTypeInfos>();
-                List<string> headers = new() { "Name", "ExtentCount", "JobCount", "PolicyType", "EnableCapacityTier", "CapacityTierCopy", "CapacityTierMove", "ArchiveTierEnabled", "UsePerVMFiles", "CapTierType", "ImmutableEnabled", "ImmutablePeriod", "SizeLimitEnabled", "SizeLimit" };
+                List<string> headers = new() { "Name", "ExtentCount", "JobCount", "PolicyType", "EnableCapacityTier", "CapacityTierCopy", "CapacityTierMove", "ArchiveTierEnabled", "UsePerVMFiles", "CapTierType", "ImmutableEnabled", "ImmutablePeriod", "SizeLimitEnabled", "SizeLimit", "Location" };
                 List<List<string>> rows = list.Select(d => new List<string>
                 {
                     d.Name,
@@ -101,6 +112,7 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR.VbrTables.SOBR
                     d.ImmutePeriod,
                     d.SizeLimitEnabled ? "True" : "False",
                     d.SizeLimit,
+                    d.Location ?? string.Empty,
                 }).ToList();
                 CHtmlTables.SetSectionPublic("sobr", headers, rows, summary);
             }

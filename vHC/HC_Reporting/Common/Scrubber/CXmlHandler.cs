@@ -394,6 +394,8 @@ namespace VeeamHealthCheck.Scrubber
                     break;
                 case ScrubItemType.Tenant:
                     break;
+                case ScrubItemType.Location:
+                    break;
             }
 
             if (!this.matchDictionary.ContainsKey(item))
@@ -438,6 +440,7 @@ namespace VeeamHealthCheck.Scrubber
         VM = 5,
         SOBR = 6,
         Tenant = 7,
+        Location = 8,
 
         Item = 99
     }

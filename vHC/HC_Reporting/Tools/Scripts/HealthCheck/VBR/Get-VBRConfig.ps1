@@ -332,6 +332,7 @@ $collectorResults.Add((Invoke-VhcCollector -Name 'OrphanedSupersededBackups' -Ac
 # Task 9: WAN accelerators and license (spec positions 17 & 18 - after Jobs, before Malware)
 $collectorResults.Add((Invoke-VhcCollector -Name 'WanAccelerator' -Action { Get-VhcWanAccelerator }))
 $collectorResults.Add((Invoke-VhcCollector -Name 'License'        -Action { Get-VhcLicense }))
+$collectorResults.Add((Invoke-VhcCollector -Name 'Location'       -Action { Get-VhcLocation }))
 # ---------------------------------------------------------------------------
 
 # ---------------------------------------------------------------------------
