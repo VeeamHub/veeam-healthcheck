@@ -39,6 +39,11 @@ namespace VeeamHealthCheck.Scrubber
         private string matchListPath => CVariables.unsafeDir + @"\vHC_KeyFile.xml";
         private Dictionary<string, string> matchDictionary;
         private readonly Dictionary<string, int> typeCounters = new();
+
+        // Every token this handler has handed out. ScrubItem returns these unchanged, so a value
+        // scrubbed twice in one run keeps its token, while a real name that merely looks like a
+        // token ("Job_Nightly") is still scrubbed.
+        private readonly HashSet<string> issuedTokens = new(StringComparer.Ordinal);
         private readonly XDocument doc;
 
         public CScrubHandler()
@@ -358,7 +363,9 @@ namespace VeeamHealthCheck.Scrubber
             }
 
 
-            if (item.StartsWith(type + "_"))
+            // Only tokens this handler issued pass through. A prefix check ("Job_*") let any real
+            // name that starts with the type prefix into the scrubbed report unchanged.
+            if (this.issuedTokens.Contains(item))
             {
                 return item;
             }
@@ -393,8 +400,17 @@ namespace VeeamHealthCheck.Scrubber
             {
                 if (!this.typeCounters.ContainsKey(type))
                     this.typeCounters[type] = 0;
-                int counter = this.typeCounters[type]++;
-                string newName = type + "_" + counter.ToString();
+
+                // Skip any token equal to a registered real name (a job literally named "Job_1"):
+                // the final pass rewrites registered names, so it would rewrite that token too.
+                string newName;
+                do
+                {
+                    newName = type + "_" + this.typeCounters[type]++.ToString();
+                }
+                while (this.matchDictionary.ContainsKey(newName) || newName == item);
+
+                this.issuedTokens.Add(newName);
                 this.matchDictionary.Add(item, newName);
                 this.AddItemToList(type, item, newName);
                 return newName;

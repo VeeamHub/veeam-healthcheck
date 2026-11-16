@@ -4,10 +4,10 @@ task: "Project ISA — Veeam Health Check (VHC Core)"
 effort: E3
 effort_source: explicit
 phase: observe
-progress: 0/22
+progress: 0/23
 mode: interactive
 started: 2026-05-15T18:30:00Z
-updated: 2026-05-15T18:45:00Z
+updated: 2026-11-04T00:00:00Z
 ---
 
 # Veeam Health Check — Project ISA
@@ -79,6 +79,7 @@ Deliver a Windows executable that, when run on a host with Veeam VBR or VB365 in
 - [ ] **ISC-20**: **Anti:** No code path in the running binary issues an outbound network request to a non-customer-controlled host (no analytics, no auto-update ping, no telemetry). Verified by a network capture of a clean `/run`.
 - [ ] **ISC-21**: **Anti:** The tool never writes outside the configured `outdir` (default `C:\temp\vHC`). Verified by Process Monitor trace on a `/run`.
 - [ ] **ISC-22**: **Anti:** The tool never modifies VBR/VB365 configuration. Verified by a before/after `Get-VBR*` baseline diff on a `/run`.
+- [ ] **ISC-23**: **Anti:** Scrubbed job session reports contain no raw identifiers. No file under `vHC-AnonymousReport/JobSessionReports/` contains a real job, VM or server name anywhere in its HTML (heading, rows or free-text columns), and each file's `<h2>` shows the same scrubbed token as its file name.
 
 ## Test Strategy
 
@@ -106,6 +107,7 @@ Deliver a Windows executable that, when run on a host with Veeam VBR or VB365 in
 | ISC-20 | integration | clean `/run` with packet capture | zero non-Veeam outbound | Wireshark / pktmon |
 | ISC-21 | integration | clean `/run` with Process Monitor | no writes outside outdir | Procmon |
 | ISC-22 | integration | before/after VBR config diff | zero deltas attributable to VHC | PowerShell `Get-VBR*` |
+| ISC-23 | unit + integration | `IndividualJobSessionsHelperScrubTests`; on a `/scrub:true` run, grep every `JobSessionReports/*.html` in the anonymous report for each original in `vHC_KeyFile.json` | zero raw names; `<h2>` token equals file name | xUnit + grep |
 
 ## Features
 
@@ -121,7 +123,7 @@ Deliver a Windows executable that, when run on a host with Veeam VBR or VB365 in
 | HTML rendering — VB365 | `Functions/Reporting/Html/VB365/CVb365HtmlCompiler.cs`. | ISC-9 | Data processing | yes |
 | PDF export | DinkToPdf wrapper invoked by `/pdf`. | ISC-10 | HTML rendering | yes |
 | PowerPoint export | HtmlToOpenXml + DocumentFormat.OpenXml; `/pptx`. | ISC-11 | HTML rendering | yes |
-| Scrub mode | `CScrubHandler` — anonymizes IPs, hostnames, credentials, and email From/To. | ISC-12, ISC-20 | HTML rendering | yes |
+| Scrub mode | `CScrubHandler` — anonymizes IPs, hostnames, credentials, and email From/To. | ISC-12, ISC-20, ISC-23 | HTML rendering | yes |
 | Remote execution | `/remote /host=<fqdn>` path through Collection. | ISC-14 | Collection (either) | no |
 | Import mode | `/import:<path>` — bypass collection, render from prior CSV. | ISC-13 | Data processing | yes |
 | CI/CD | `.github/workflows/ci-cd.yaml`, `codeql.yml` — build, .NET tests, Pester tests, CodeQL. | ISC-1, ISC-2, ISC-3, ISC-5, ISC-6 | — | yes |
@@ -137,6 +139,8 @@ Deliver a Windows executable that, when run on a host with Veeam VBR or VB365 in
 - **2026-05-15** — *refined:* **Elevation is not a hard requirement.** The Seed draft incorrectly stated the tool refuses to start when not elevated. Corrected by Adam: VHC runs at any privilege level with a degraded capability surface when elevation is missing. Constraint and ISC-17 reworded; ID preserved per the ID-stability rule. Verification at VERIFY phase should include a non-elevated lab run and confirm the "skipped probes" list is surfaced in the report.
 - **2026-05-15** — *refined:* **The 500 MB free-disk minimum is unverified.** The Seed draft pulled "500 MB on `C:\`" from the README, which itself was an initial-creation guess. Constraint reworded to flag the figure as unmeasured. Action: measure peak outdir size across a representative VBR full run, a VB365 full run, and the worst-case `/days:90 /pdf /pptx` matrix; replace the hand-wavy threshold with a measured one and update README accordingly.
 - **2026-10-21** — **Continuous monitoring is out of scope, with no companion.** The companion monitor integration (its CLI options, GUI tab, bundling step and spec) was removed in #275 (commit 602d2a7d), and its leftover docs were cleared afterwards. VHC stays a point-in-time assessment tool; live monitoring belongs to Veeam ONE.
+- **2026-11-04** — **Per-job session reports join the scrub contract (ISC-23).** Real anonymized output showed the `<h2>` of nearly every `JobSessionReports/*.html` carrying the real job name while the file name and rows were scrubbed. ISC-12 covered only the main report, so the per-job files had no criterion. They now run through the same `FinalizeScrubbedText` pass as the main report.
+- **2026-11-05** — **A name that looks like a token is still a name (ISC-12, ISC-23).** `ScrubItem` used to return any value starting with `<Type>_` unchanged, so a real job named `Job_Nightly` reached every scrubbed report. It now passes through only tokens it issued itself, and never issues a token equal to a registered real name (the final pass would rewrite it).
 - **Source artifacts consulted:** `README.md`, the companion-monitor spec (since deleted), `CLAUDE.md`, `vHC/HC.sln`, top-level `Functions/` subdirectories, last 30 `git log --oneline` commits.
 
 <!-- TODO: run `Skill('ISA', 'interview me on this file')` to author Principles, refine Vision, and audit Criteria against actual lab runs. -->

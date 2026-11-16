@@ -120,27 +120,10 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR.VbrTables.Job_Session_Su
                     string mainDir = this.SetMainDir(mainDirBase, displayName);
                     string scrubDir = this.SetScrubDir(scrubDirBase, displayName);
 
-                    string mainString = this.ReturnTableHeaderString(displayName);
-                    File.WriteAllText(mainDir, mainString);
+                    File.WriteAllText(mainDir, this.BuildJobSessionReport(displayName, sessionsForJob, false));
+                    File.WriteAllText(scrubDir, this.BuildJobSessionReport(displayName, sessionsForJob, true));
 
-                    string scrubString = this.ReturnTableHeaderString(displayName);
-                    File.WriteAllText(scrubDir, scrubString);
-
-                    foreach (var cs in sessionsForJob)
-                    {
-                        try
-                        {
-                            File.AppendAllText(mainDir, this.FormHtmlString(cs, mainString, false));
-                            File.AppendAllText(scrubDir, this.FormHtmlString(cs, scrubString, true));
-                        }
-                        catch (Exception e)
-                        {
-                            this.log.Error("Exception at individual job session parse:");
-                            this.log.Error(e.Message);
-                        }
-
-                        percentCounter++;
-                    }
+                    percentCounter += sessionsForJob.Count;
                 }
                 catch (Exception e)
                 {
@@ -150,6 +133,40 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR.VbrTables.Job_Session_Su
             }
 
             this.LogJobSessionParseProgress(100, 100);
+        }
+
+        /// <summary>
+        /// Builds the complete HTML for one job's session report. When <paramref name="scrub"/>
+        /// is set, the heading carries the same token as the file name, every row is scrubbed
+        /// from its raw identity, and the whole document then goes through the scrubber's final
+        /// pass (the one the main report runs) so no registered name survives in any column.
+        /// </summary>
+        internal string BuildJobSessionReport(string displayName, IEnumerable<CJobSessionInfo> sessions, bool scrub)
+        {
+            this.scrubber ??= CGlobals.Scrubber;
+
+            string heading = scrub ? this.scrubber.ScrubItem(displayName, ScrubItemType.Job) : displayName;
+            var sb = new System.Text.StringBuilder(this.ReturnTableHeaderString(heading));
+            foreach (var cs in sessions)
+            {
+                try
+                {
+                    sb.Append(this.FormHtmlString(cs, scrub));
+                }
+                catch (Exception e)
+                {
+                    this.log.Error("Exception at individual job session parse:");
+                    this.log.Error(e.Message);
+                }
+            }
+
+            string html = sb.ToString();
+            return scrub ? this.scrubber.FinalizeScrubbedText(html) : html;
+        }
+
+        internal IndividualJobSessionsHelper(CScrubHandler scrubber)
+        {
+            this.scrubber = scrubber;
         }
 
         private static string BuildReportDir(string suffix, string folderName)
@@ -233,22 +250,23 @@ namespace VeeamHealthCheck.Functions.Reporting.Html.VBR.VbrTables.Job_Session_Su
             return s;
         }
 
-        private string FormHtmlString(CJobSessionInfo c, string htmlString, bool scrub)
+        private string FormHtmlString(CJobSessionInfo c, bool scrub)
         {
-            string s = string.Empty; // htmlString;
-            string jname = c.JobName;
-            if (jname.Contains("\\"))
-            {
-                jname = jname.Replace("\\", "--");
-            }
-
+            string s = string.Empty;
+            string jname = c.JobName ?? string.Empty;
             string vmName = c.VmName;
 
-            // string repo = _scrubber.ScrubItem(c.)
             if (scrub)
             {
+                // Scrub the raw identity. Rewriting "\" to "--" first registered a different
+                // original than the rest of the report uses, so the final pass could not
+                // recognise the real "<Parent>\<child>" name.
                 jname = this.scrubber.ScrubItem(jname, ScrubItemType.Job);
                 vmName = this.scrubber.ScrubItem(c.VmName, ScrubItemType.VM);
+            }
+            else
+            {
+                jname = jname.Replace("\\", "--");
             }
 
             s += "<tr>";
