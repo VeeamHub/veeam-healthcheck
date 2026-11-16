@@ -154,7 +154,7 @@ namespace VhcXTests.Functions.Reporting.Html.VB365
             Assert.Contains("OnPrem-Exchange-Backup", names);
         }
 
-        [Fact(Skip = "bug: Jobs() compares Schedule to 'Not Scheduled' but the collector writes 'Not scheduled', so the warning shade never applies")]
+        [Fact]
         public void Jobs_NotScheduledJob_ScheduleCellIsWarning()
         {
             using var h = new Vb365ReportHarness();
