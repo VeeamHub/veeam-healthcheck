@@ -55,7 +55,7 @@ Run the map test locally:
 pwsh -NoProfile -c 'Import-Module Pester -MinimumVersion 5.0.0; Invoke-Pester -Path .claude/skills/verify-vhc/scripts/PrVerify.Tests.ps1 -CI'
 ```
 
-It runs in CI in `crossplatform-tests.yml` job `verify-vhc` (any PR touching `.claude/skills/verify-vhc/**`) and in `pester-tests.yml` (any PR touching a `.ps1`). It asserts: every tracked file matches a glob, every glob matches a tracked file, the registry equals the workflow files and their jobs, every `ci` / `local` / `builtin` reference resolves, plus the verdict logic, the dispatch gates and an offline replay of the PR #295 failure mode.
+It runs in CI in `crossplatform-tests.yml` job `verify-vhc` (any PR touching that workflow's paths: `.claude/skills/verify-vhc/**`, `tools/report-smoke/**`, and `vHC/**` `.cs`, `.csproj`, `.axaml`, `.resx` or `HC_Reporting` `.css` files) and in `pester-tests.yml` (any PR touching a `.ps1`). It asserts: every tracked file matches a glob, every glob matches a tracked file, the registry equals the workflow files and their jobs, every `ci` / `local` / `builtin` reference resolves, plus the verdict logic, the dispatch gates and an offline replay of the PR #295 failure mode.
 
 ## Flags
 
@@ -92,4 +92,4 @@ Runs on every PR to master/dev, writes the report to the job summary, and posts 
 - Publish-only jobs (`create-release`, `virustotal-scan`, `manual-release.yml`, `beta-release.yml`, `docs-deploy.yml`, `sbom-generation.yml`) and cron jobs cannot be exercised from a PR; a PR that edits them is NEEDS-HUMAN.
 - A job that ran on an older SHA does not count. A PR whose branch moved after a dispatch needs a new run.
 - It trusts the GitHub API's check-run conclusions. A job that exits 0 without testing anything (a fail-open step) is still reported as passing; the coverage matrix records those.
-- `pr-verify.yml` and the map test only fail a PR on a rotted map when the PR touches the skill or a `.ps1`; elsewhere an unmapped new file shows up as NEEDS-HUMAN in the report instead.
+- `pr-verify.yml` and the map test only fail a PR on a rotted map when the PR touches a path that triggers `crossplatform-tests.yml` (the skill, most `vHC/**` source) or a `.ps1`; elsewhere an unmapped new file shows up as NEEDS-HUMAN in the report instead.
