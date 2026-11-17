@@ -4,7 +4,8 @@ A user who must share a report outside the customer environment runs with scrubb
 
 ## Sub-features
 
-- `scrub-html` writes `vHC-AnonymousReport/Veeam Health Check Report_VBR_anon_<timestamp>.html`.
+- `scrub-html` writes `vHC-AnonymousReport/Veeam Health Check Report_VBR_anon_<timestamp>.html`. `anon` is the fallback when there is no install ID, which is always the case off Windows; a live run uses the first 7 characters of the install ID there.
+- `scrub-job-sessions` writes per-job reports to `vHC-AnonymousReport/JobSessionReports/` named by the job token (`Job_N.html`), with the token in the heading too, and runs the whole file through the final scrub pass.
 - `scrub-json` writes the matching anonymized `.json`.
 - `scrub-names-removed` removes identifying names that exist in the input CSVs.
 - `scrub-exports-skipped` ignores `/pptx` and `/pdf` when scrubbing; each logs `/<flag> is ignored: <FORMAT> export is not available for scrubbed reports (/scrub:true). ...`.
@@ -22,13 +23,14 @@ Preconditions:
 
 - **Run the scrubbed import.** Run `.claude/skills/verify-vhc/scripts/vhc-verify.sh import-scrub <ID>`. Output ends with `IMPORT-REPORT: verified` and `assertions: 12/12 passed` (the same checks as the plain run, with the five name-absence checks in place of the four presence checks).
 - **Names absent.** The helper asserts these strings from the input CSVs are NOT in the anonymized HTML: `Production-VM-Backup`, `SQL-Servers-Backup`, `Linux Hardened Repo`, `PROXY01`, `VEEAM-VBR01`.
-- **Structure retained.** The HTML still has `<title>Veeam HealthCheck Report</title>` and the VBR version `12.1.2.172`; sections are generic labels such as `Job 1`, `Repository 1`.
+- **Structure retained.** The HTML still has `<title>Veeam HealthCheck Report</title>` and the VBR version `12.1.2.172`; names become per-type tokens numbered from 0, such as `Job_0`, `Repository_0`, `Server_0` and `Location_0`.
 - **Proof.** Keep `.verify-vhc/evidence/<ID>/output/vHC-AnonymousReport/` and `MANIFEST.sha256`. A side effect to note: the run writes `Original\vHC_KeyFile.xml|json` (the scrub mapping) under `/outdir`.
 
 ## Gotchas
 
 - The scrub key files hold the real-to-anonymous mapping. With fixture data that is harmless; on a real customer run treat them as sensitive and keep them out of any shared evidence.
 - Off Windows, stdout shows many `[Scrub] Failed to restrict key-file ACLs` lines because the ACL hardening is Windows-only. The key files are still written; this is expected here and a thing to check on Windows.
-- `/pptx` and `/pdf` are skipped under scrub by design. Do not report them as failures. Per-job HTML exports are **not** skipped: they go to `vHC-AnonymousReport/JobSessionReports/` (only `/lite` and `/security` turn them off). On the import path that folder is created but stays empty, so scrubbing of per-job reports needs a live collection to check.
+- `/pptx` and `/pdf` are skipped under scrub by design. Do not report them as failures. Per-job HTML exports are **not** skipped: they go to `vHC-AnonymousReport/JobSessionReports/` (only `/lite` and `/security` turn them off). With the golden fixtures that folder is created but stays empty, because per-job reports keep only sessions newer than the report window and `SessionReports/VeeamSessionReport.csv` is dated 2024. The unit tests (`IndividualJobSessionsHelperTests`, `CScrubHandlerTokenTests`) cover per-job scrubbing; an import of session CSVs with recent dates, or a live collection, would show it end to end.
+- No golden fixture has a `_Locations.csv`, so the Locations section renders only its empty-state row and no Location column or `Location_N` token appears. Location scrubbing is covered by unit tests only.
 - Absence of a few known names proves those names are scrubbed, not that every identifier is. Add a fixture string to the assertion list when a change touches a new field.
 - Also logs `Failed to load VBR CSV data or no data found.` once before the scrubbed report is built; the report is still produced.

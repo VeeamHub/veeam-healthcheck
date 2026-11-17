@@ -18,7 +18,7 @@ VHC is a Windows utility (Avalonia GUI + CLI). It collects data from a Veeam Bac
 | The report works when opened in a browser (console, nav, toggles, core sections, screenshots) | yes | `render` |
 | CLI argument parsing, `/help`, bad-input handling | yes | `cli-checks`, [cli-arguments](features/cli-arguments.md) |
 | CLI flags combined with `/import` (`/lite`, `/security`, `/days:N`, `/debug`, `/show:*`, `/pptx`) | yes | `cli-matrix` |
-| xUnit suites (1,375 passed + 31 skipped, and 121 tests) | yes | `tests` |
+| xUnit suites (1,408 passed + 30 skipped, and 121 tests) | yes | `tests` |
 | Avalonia GUI logic and dialogs, headless (22 tests) | yes, headless only | `tests`, [gui-and-collection](features/gui-and-collection.md#gui-headless) |
 | Live collection (PowerShell, SQL, registry, WMI, logs) | **no, needs Windows + VBR/VB365** | [gui-and-collection](features/gui-and-collection.md) |
 | Real GUI window (Win32 hide, native picker, Windows rendering) | **no, needs Windows** (it throws at startup on macOS) | [gui-and-collection](features/gui-and-collection.md) |
