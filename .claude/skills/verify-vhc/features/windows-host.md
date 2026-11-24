@@ -23,6 +23,8 @@ export VHC_WINHOST=user@winbox        # required; there is no default and no hos
 4. **For `--live`:** VBR installed and running locally with the Veeam PowerShell module, and an SSH account that is a VBR administrator. VHC on the VBR server uses Windows authentication, so no credential is passed or stored. The step fails unless the collected `_vbrinfo` `DbType` is `PostgreSql` (profile `vbr-13-pg`); for a host on another engine set `VHC_WINHOST_EXPECT_DB` (for example `MsSql`) and `VHC_WINHOST_LAB_PROFILE` (a key of `.github/scripts/live-csv-expectations.json`, or empty for none).
 5. **For `--gui`: an interactive desktop session that stays connected.** Sign in over RDP as the same user and leave the session open. **Disconnecting an RDP session locks the desktop, and a locked desktop has no UI Automation tree.** Close the RDP *window* only if your client keeps the session (check `query user` shows `Active`, not `Disc`), or use a console/auto-logon session instead. Also disable the screen lock and the screen saver timeout on that account.
 
+On the local machine, `winhost` also needs `python3` (it parses the host's `summary.json`); without it the command fails before any ssh call with `python3 is required for winhost (summary parsing)`.
+
 Scratch space is `%LOCALAPPDATA%\vhc-verify\<ID>` on the host, removed at the end of every run.
 
 ## What it does

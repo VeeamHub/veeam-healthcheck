@@ -77,7 +77,7 @@ Semantics are from `CArgsParser.ParseAllArgs`. Each case runs `/import=<golden c
 | `/security` | `Report_VBR_Security_*.html` written; log has `Starting Security Report generation`; **no** full VBR report and **no** json |
 | `/days:7`, `12`, `30`, `90` | log `Days set to N`; report header `N day report` |
 | `/debug` | the log has `DEBUG` lines (114 vs 0 for the baseline) |
-| `/show:files`, `/show:report`, `/show:all` | exit 0, report written, nothing launched (CLI mode forces open-explorer/open-html off) |
+| `/show:files`, `/show:report`, `/show:all` | exit 0, report written. CLI mode forces only open-explorer off: `/show:files` and `/show:all` log `HTML not opened. Option not enabled`, but `/show:report` logs `opening html` and hands each generated HTML to the OS default handler (on a desktop session that opens browser tabs). The log line `Setting openexplorer & openhtml to false` is wrong about open-html |
 | `/scrub:false` | log `Setting SCRUB = false`; real names still present |
 | `/pptx` | `Report_VBR_*.pptx` written and is a valid OOXML zip containing `ppt/presentation.xml` |
 
@@ -88,5 +88,5 @@ Not driven: `/pdf` (DinkToPdf's native library throws an unhandled `NullReferenc
 - Exit code is `0` for every case above, including the failed import: `EntryPoint.Main` returns 0 unless an exception escapes. Assert on log lines and on the files in the output folder. The undriven credential paths bypass `Main` with `Environment.Exit` instead: `/silent` with `/savecreds` exits 2, `/savecreds` exits with its flow's code, and a bad `/credfile=` exits 6.
 - Argument parsing is covered in depth by unit tests (`vHC/VhcXTests/CArgsParserTEST.cs`, `Startup/`); run them via [build-and-tests](./build-and-tests.md) for flag-combination logic that is not worth driving by hand.
 - `/help` on non-Windows prints several `WARN Script unblock failed ... kernel32` blocks before the menu. Ignore them.
-- Collection-intent flags (`/vbr`, `/vb365`, `/host=`, `/remote`) imply `/run` and then try to collect, so on macOS they fail on missing Veeam components; do not use them for verification here. The exception is `/remote` without `/host=`: it logs `Remote execution selected but no host defined` and exits 0 before collecting.
+- Collection-intent flags (`/vbr`, `/vb365`, `/host=`, `/remote`) imply `/run` and then try to collect, so on macOS they fail on missing Veeam components; do not use them for verification here. The exception is `/remote` without `/host=`: it logs `Remote execution selected but no host defined` and exits 0 before collecting, through `Environment.Exit(0)` rather than by returning from `Main`.
 - No-argument launch and `/gui` fail on macOS with an Avalonia/native-library exception in `LaunchUi`. That is the platform limit, not a regression.
