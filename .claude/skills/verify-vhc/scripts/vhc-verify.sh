@@ -314,12 +314,16 @@ cmd_cli_matrix() {
   has "$base_html" "7 day report"
   has "$base_html" 'id="jobsummary"'
   base_dbg="$(grep -c 'DEBUG' "$MLOG")"
+  # per-job export (CHtmlCompiler -> IndividualJobHtmlBuilder) runs on import too; the folder is
+  # created even when the 2024 fixture sessions fall outside the day window and leave it empty
+  [ -d "$MOUT/vHC-Report/JobSessionReports" ]; ok_if "baseline: per-job JobSessionReports/ folder created" $?
 
-  # /lite: still renders the main report (CArgsParser sets RunFullReport); only per-job exports are skipped
+  # /lite: still renders the main report (CArgsParser sets RunFullReport) but clears EXPORTINDIVIDUALJOBHTMLS
   matrix_case lite /lite
   l_html="$(vbr_file "$MOUT/vHC-Report" html)"
   [ -n "$l_html" ] && [ -n "$(vbr_file "$MOUT/vHC-Report" json)" ]; ok_if "lite: VBR html + json written" $?
   has "$l_html" 'id="jobsummary"'
+  [ ! -e "$MOUT/vHC-Report/JobSessionReports" ]; ok_if "lite: no per-job JobSessionReports/ folder" $?
 
   # /security: security report only, no full VBR report, no json
   matrix_case security /security

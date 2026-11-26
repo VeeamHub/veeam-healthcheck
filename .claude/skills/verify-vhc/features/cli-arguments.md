@@ -56,7 +56,7 @@ Preconditions:
 Two subcommands drive this surface and assert on logs, exit codes and the (absent) output folder:
 
 - `vhc-verify.sh cli-checks <ID>` covers `/help`, `/bogus`, a nonexistent `/import` path, an `/import` dir with no CSVs, and the `/import:<path>` colon form. Ends with `CLI-CHECKS: verified` and `assertions: 19/19 passed`.
-- `vhc-verify.sh cli-matrix <ID>` combines `/import` with the other flags and asserts per flag (below). Ends with `CLI-MATRIX: verified` and `assertions: 40/40 passed`.
+- `vhc-verify.sh cli-matrix <ID>` combines `/import` with the other flags and asserts per flag (below). Ends with `CLI-MATRIX: verified` and `assertions: 42/42 passed`.
 
 The bullets below are the underlying recipes, for driving a case by hand:
 
@@ -72,8 +72,8 @@ Semantics are from `CArgsParser.ParseAllArgs`. Each case runs `/import=<golden c
 
 | Flag | What is asserted |
 |---|---|
-| (none) | VBR html + json written; header says `7 day report`; `id="jobsummary"` present |
-| `/lite` | exit 0; VBR html + json still written (the parser sets `RunFullReport`). Per-job HTML exports do not exist on the import path either way, so `/lite` cannot be told apart from the baseline here; that difference needs a live collection |
+| (none) | VBR html + json written; header says `7 day report`; `id="jobsummary"` present; a `vHC-Report/JobSessionReports/` folder is created |
+| `/lite` | exit 0; VBR html + json still written (the parser sets `RunFullReport`); **no** `vHC-Report/JobSessionReports/` folder. The per-job export runs on the import path too (`CHtmlCompiler` calls `IndividualJobHtmlBuilder` while `EXPORTINDIVIDUALJOBHTMLS` is set, and `/lite` clears it), so the folder is what tells `/lite` apart. The baseline's folder is empty because the golden session rows are from 2024 and fall outside every day window, so the per-job file *content* is still unproven here |
 | `/security` | `Report_VBR_Security_*.html` written; log has `Starting Security Report generation`; **no** full VBR report and **no** json |
 | `/days:7`, `12`, `30`, `90` | log `Days set to N`; report header `N day report` |
 | `/debug` | the log has `DEBUG` lines (114 vs 0 for the baseline) |

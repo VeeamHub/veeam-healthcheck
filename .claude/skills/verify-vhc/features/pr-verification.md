@@ -55,7 +55,7 @@ Run the map test locally:
 pwsh -NoProfile -c 'Import-Module Pester -MinimumVersion 5.0.0; Invoke-Pester -Path .claude/skills/verify-vhc/scripts/PrVerify.Tests.ps1 -CI'
 ```
 
-It runs in CI in `crossplatform-tests.yml` job `verify-vhc` (any PR touching that workflow's paths: `.claude/skills/verify-vhc/**`, `tools/report-smoke/**`, and `vHC/**` `.cs`, `.csproj`, `.axaml`, `.resx` or `HC_Reporting` `.css` files) and in `pester-tests.yml` (any PR touching a `.ps1`). It asserts: every tracked file matches a glob, every glob matches a tracked file, the registry equals the workflow files and their jobs, every `ci` / `local` / `builtin` reference resolves, plus the verdict logic, the dispatch gates and an offline replay of the PR #295 failure mode.
+It runs in CI in `crossplatform-tests.yml` job `verify-vhc` (any PR touching that workflow's paths: `.claude/skills/verify-vhc/**`, `tools/report-smoke/**`, `vHC/VhcXTests.CrossPlatform/**`, `vHC/VhcGuiTests/**`, the workflow file itself, and `vHC/**` `.cs`, `.csproj`, `.axaml`, `.resx` or `HC_Reporting` `.css` files) and in `pester-tests.yml` (any PR touching a `.ps1`). It asserts: every tracked file matches a glob, every glob matches a tracked file, the registry equals the workflow files and their jobs, every `ci` / `local` / `builtin` reference resolves, plus the verdict logic, the dispatch gates and an offline replay of the PR #295 failure mode.
 
 ## Flags
 
